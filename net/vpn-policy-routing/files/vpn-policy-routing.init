@@ -18,6 +18,7 @@ if type extra_command 1>/dev/null 2>&1; then
 			WARNING: while paste.ee uploads are unlisted, they are still publicly available
 		List domain names after options to include their lookup in report"
 	extra_command 'version' 'Show version information'
+	extra_command 'reload_interface' 'Reload specific interface only'
 else
 # shellcheck disable=SC2034
 	EXTRA_COMMANDS='support version'
@@ -56,9 +57,6 @@ ipsetSupported='true'
 configLoaded='false'
 
 version() { echo "$PKG_VERSION"; }
-create_lock() { [ -e "$PIDFile" ] && return 1; touch "$PIDFile"; }
-remove_lock() { [ -e "$PIDFile" ] && rm -f "$PIDFile"; }
-trap remove_lock EXIT
 output_ok() { output 1 "$_OK_"; output 2 "$__OK__\\n"; }
 output_okn() { output 1 "$_OK_\\n"; output 2 "$__OK__\\n"; }
 output_fail() { s=1; output 1 "$_FAIL_"; output 2 "$__FAIL__\\n"; }
@@ -622,7 +620,7 @@ table_destroy(){
 
 # shellcheck disable=SC2086
 table_create(){
-	local tid="$1" mark="$2" iface="$3" gw4="$4" dev="$5" gw6="$6" dev6="$7" dscp s=0 i ipv4_error=0 ipv6_error=1
+	local tid="$1" mark="$2" iface="$3" gw4="$4" dev="$5" gw6="$6" dev6="$7" match="$8" dscp s=0 i ipv4_error=0 ipv6_error=1
 
 	if [ -z "$tid" ] || [ -z "$mark" ] || [ -z "$iface" ]; then
 		return 1
@@ -646,9 +644,11 @@ table_create(){
 		done
 		ip -4 route flush cache || ipv4_error=1
 		ip -4 rule add fwmark "${mark}/${fwMask}" table "$tid" || ipv4_error=1
-		ipt -t mangle -N "VPR_MARK${mark}" || ipv4_error=1
-		ipt -t mangle -A "VPR_MARK${mark}" -j MARK --set-xmark "${mark}/${fwMask}" || ipv4_error=1
-		ipt -t mangle -A "VPR_MARK${mark}" -j RETURN || ipv4_error=1
+		if [ -z "$match" ]; then # do not try to create chain if we're reloading interface
+			ipt -t mangle -N "VPR_MARK${mark}" || ipv4_error=1
+			ipt -t mangle -A "VPR_MARK${mark}" -j MARK --set-xmark "${mark}/${fwMask}" || ipv4_error=1
+			ipt -t mangle -A "VPR_MARK${mark}" -j RETURN || ipv4_error=1
+		fi
 	fi
 
 	if [ "$ipv6Enabled" -ne 0 ]; then
@@ -705,7 +705,7 @@ table_create(){
 }
 
 process_interface(){
-	local gw4 gw6 dev dev6 s=0 dscp iface="$1" action="$2" displayText
+	local gw4 gw6 dev dev6 s=0 dscp iface="$1" action="$2" match="$3" displayText
 
 	is_supported_interface "$iface" || return 0
 	is_wan6 "$iface" && return 0
@@ -729,7 +729,9 @@ process_interface(){
 		create)
 			eval "mark_${iface//-/_}"='$ifaceMark'
 			eval "tid_${iface//-/_}"='$ifaceTableID'
-			table_destroy "${ifaceTableID}" "${iface}"
+			if [ -z "$match" ] || [ "$iface" = "$match" ]; then
+				table_destroy "$ifaceTableID" "$iface"
+			fi
 			vpr_get_gateway gw4 "$iface" "$dev"
 			vpr_get_gateway6 gw6 "$iface" "$dev6"
 			if [ "$iface" = "$dev" ]; then
@@ -738,14 +740,19 @@ process_interface(){
 				displayText="${iface}/${dev}/${gw4:-0.0.0.0}"
 			fi
 			[ "$ipv6Enabled" -ne 0 ] && displayText="${displayText}/${gw6:-::/0}"
-			output 2 "Creating table '$displayText' "
-			is_default_dev "$dev" && displayText="${displayText} ${__OK__}"
-			if table_create "$ifaceTableID" "$ifaceMark" "$iface" "$gw4" "$dev" "$gw6" "$dev6"; then
-				gatewaySummary="${gatewaySummary}${displayText}\\n"
-				output_ok
+			if [ -z "$match" ] || [ "$iface" = "$match" ]; then
+				output 2 "Creating table '$displayText' "
+				is_default_dev "$dev" && displayText="${displayText} ${__OK__}"
+				if table_create "$ifaceTableID" "$ifaceMark" "$iface" "$gw4" "$dev" "$gw6" "$dev6" "$match"; then
+					gatewaySummary="${gatewaySummary}${displayText}\\n"
+					output_ok
+				else
+					errorSummary="${errorSummary}${_ERROR_}: Failed to set up '$displayText'\\n"
+					output_fail
+				fi
 			else
-				errorSummary="${errorSummary}${_ERROR_}: Failed to set up '$displayText'\\n"
-				output_fail
+				is_default_dev "$dev" && displayText="${displayText} ${__OK__}"
+				gatewaySummary="${gatewaySummary}${displayText}\\n"
 			fi
 			ifaceTableID="$((ifaceTableID + 1))"; ifaceMark="$(printf '0x%06x' $((ifaceMark + wanMark)))";
 			;;
@@ -893,76 +900,83 @@ process_user_file(){
 	fi
 }
 
+boot() { rc_procd start_service && rc_procd service_triggers; }
+
 start_service() {
-	local dnsmasqStoredHash dnsmasqNewHash i modprobeStatus=0
+	local dnsmasqStoredHash dnsmasqNewHash i modprobeStatus=0 reloadedIface="$1"
 	convert_config
 	is_enabled 'on_start' || return 1
 	is_wan_up || return 1
-	if create_lock; then
-		if [ -s "$dnsmasqFile" ]; then
-			dnsmasqStoredHash="$(md5sum $dnsmasqFile | awk '{ print $1; }')"
-			rm -f "$dnsmasqFile"
-		fi
 
-		for i in xt_set ip_set ip_set_hash_ip; do
-			modprobe "$i" >/dev/null 2>/dev/null || modprobeStatus=$((modprobeStatus + 1))
-		done
+	iptables -t 'mangle' --list 'VPR_PREROUTING' >/dev/null 2>&1 || unset reloadedIface
 
-		if [ "$modprobeStatus" -gt 0 ] && ! is_chaos_calmer; then
-			errorSummary="${errorSummary}${_ERROR_}: Failed to load kernel modules\\n"
-		fi
+	if [ -s "$dnsmasqFile" ]; then
+		dnsmasqStoredHash="$(md5sum $dnsmasqFile | awk '{ print $1; }')"
+		rm -f "$dnsmasqFile"
+	fi
 
+	for i in xt_set ip_set ip_set_hash_ip; do
+		modprobe "$i" >/dev/null 2>/dev/null || modprobeStatus=$((modprobeStatus + 1))
+	done
+
+	if [ "$modprobeStatus" -gt 0 ] && ! is_chaos_calmer; then
+		errorSummary="${errorSummary}${_ERROR_}: Failed to load kernel modules\\n"
+	fi
+
+	if [ -z "$reloadedIface" ]; then
 		for i in $usedChainsList; do
 			ipt -t mangle -N "VPR_${i}"
 			ipt -t mangle "$insertOption" "$i" -m mark --mark "0x0/${fwMask}" -j "VPR_${i}"
 		done
+	fi
 
+	if [ -z "$reloadedIface" ]; then
 		output 1 'Processing Interfaces '
 		config_load 'network'; config_foreach process_interface 'interface' 'create';
 		process_tor_interface 'tor' 'destroy'; is_tor_running && process_tor_interface 'tor' 'create';
 		output 1 '\n'
-		if is_config_enabled 'policy'; then
-			output 1 'Processing Policies '
-			config_load "$packageName"; config_foreach process_policy 'policy';
-			output 1 '\n'
-		fi
-		if is_config_enabled 'include'; then
-			output 1 'Processing User File(s) '
-			config_load "$packageName"; config_foreach process_user_file 'include';
-			output 1 '\n'
-		fi
-
-		if [ -s "$dnsmasqFile" ]; then
-			dnsmasqNewHash="$(md5sum $dnsmasqFile | awk '{ print $1; }')"
-		fi
-		[ "$dnsmasqNewHash" != "$dnsmasqStoredHash" ] && dnsmasq_restart
-
-		if [ -z "$gatewaySummary" ]; then
-			errorSummary="${errorSummary}${_ERROR_}: failed to set up any gateway!\\n"
-		fi
-		procd_open_instance "main"
-		procd_set_param command /bin/true
-		procd_set_param stdout 1
-		procd_set_param stderr 1
-		procd_open_data
-		json_add_array 'status'
-		json_add_object ''
-		[ -n "$gatewaySummary" ] && json_add_string gateway "$gatewaySummary"
-		[ -n "$errorSummary" ] && json_add_string error "$errorSummary"
-		[ -n "$warningSummary" ] && json_add_string warning "$warningSummary"
-		if [ "$strictMode" -ne 0 ] && str_contains "$gatewaySummary" '0.0.0.0'; then
-			json_add_string mode "strict"
-		fi
-		json_close_object
-		json_close_array
-		procd_close_data
-		procd_close_instance
-		remove_lock
 	else
-		output "$serviceName: another instance of ${packageName} is currently running "
-		output_failn
-		return 1
+		output 1 "Reloading Interface $reloadedIface "
+		config_load 'network'; config_foreach process_interface 'interface' 'create' "$reloadedIface";
+		output 1 '\n'
 	fi
+
+	if is_config_enabled 'policy'; then
+		output 1 'Processing Policies '
+		config_load "$packageName"; config_foreach process_policy 'policy' "$reloadedIface";
+		output 1 '\n'
+	fi
+	if is_config_enabled 'include'; then
+		output 1 'Processing User File(s) '
+		config_load "$packageName"; config_foreach process_user_file 'include';
+		output 1 '\n'
+	fi
+
+	if [ -s "$dnsmasqFile" ]; then
+		dnsmasqNewHash="$(md5sum $dnsmasqFile | awk '{ print $1; }')"
+	fi
+	[ "$dnsmasqNewHash" != "$dnsmasqStoredHash" ] && dnsmasq_restart
+
+	if [ -z "$gatewaySummary" ]; then
+		errorSummary="${errorSummary}${_ERROR_}: failed to set up any gateway!\\n"
+	fi
+	procd_open_instance "main"
+	procd_set_param command /bin/true
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_open_data
+	json_add_array 'status'
+	json_add_object ''
+	[ -n "$gatewaySummary" ] && json_add_string gateway "$gatewaySummary"
+	[ -n "$errorSummary" ] && json_add_string error "$errorSummary"
+	[ -n "$warningSummary" ] && json_add_string warning "$warningSummary"
+	if [ "$strictMode" -ne 0 ] && str_contains "$gatewaySummary" '0.0.0.0'; then
+		json_add_string mode "strict"
+	fi
+	json_close_object
+	json_close_array
+	procd_close_data
+	procd_close_instance
 }
 
 tmpfs() {
@@ -1025,30 +1039,25 @@ service_started() {
 stop_service() {
 	local i
 	iptables -t mangle -L | grep -q VPR_PREROUTING || return 0
-	if create_lock; then
-		load_package_config
-		for i in PREROUTING FORWARD INPUT OUTPUT; do
-			ipt -t mangle -D "${i}" -m mark --mark "0x0/${fwMask}" -j "VPR_${i}"
-			ipt -t mangle -F "VPR_${i}"; ipt -t mangle -X "VPR_${i}";
-		done
-		config_load 'network'; config_foreach process_interface 'interface' 'destroy';
-		process_tor_interface 'tor' 'destroy'
-		unset ifaceTableID; unset ifaceMark;
-		if [ -s "$dnsmasqFile" ]; then
-			rm -f "$dnsmasqFile"
-			dnsmasq_restart
-		fi
-		if [ "$serviceEnabled" -ne 0 ]; then
-			output "$serviceName stopped "; output_okn;
-		fi
-		remove_lock
-	else
-		output "$serviceName: another instance of ${packageName} is currently running "; output_failn;
-		return 1
+	load_package_config
+	for i in PREROUTING FORWARD INPUT OUTPUT; do
+		ipt -t mangle -D "${i}" -m mark --mark "0x0/${fwMask}" -j "VPR_${i}"
+		ipt -t mangle -F "VPR_${i}"; ipt -t mangle -X "VPR_${i}";
+	done
+	config_load 'network'; config_foreach process_interface 'interface' 'destroy';
+	process_tor_interface 'tor' 'destroy'
+	unset ifaceTableID; unset ifaceMark;
+	if [ -s "$dnsmasqFile" ]; then
+		rm -f "$dnsmasqFile"
+		dnsmasq_restart
+	fi
+	if [ "$serviceEnabled" -ne 0 ]; then
+		output "$serviceName stopped "; output_okn;
 	fi
 }
 
-# shellcheck disable=SC2119
+reload_interface() { rc_procd start_service "$1"; }
+
 service_triggers() {
 	local n
 	is_enabled || return 1
@@ -1070,7 +1079,9 @@ service_triggers() {
 			procd_add_service_trigger "service.restart" "firewall" /etc/init.d/${packageName} reload
 		fi
 		procd_add_config_trigger "config.change" "${packageName}" /etc/init.d/${packageName} reload
-		for n in $ifSupported; do procd_add_reload_interface_trigger "$n"; procd_add_interface_trigger "interface.*" "$n" /etc/init.d/${packageName} reload; done;
+		for n in $ifSupported; do 
+			procd_add_interface_trigger "interface.*" "$n" /etc/init.d/${packageName} reload_interface "$n"
+		done
 	procd_close_trigger
 
 	output 3 "$serviceName monitoring interfaces: $ifSupported"; output_okn;
