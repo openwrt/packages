@@ -6,7 +6,7 @@ set -e
 
 CACHE_DOMAINS_SRC="https://api.github.com/repos/uklans/cache-domains/tarball/master"
 CACHE_DOMAINS_DIR="/var/cache-domains"
-CACHE_DOMAINS_HOSTS_DIR="${CACHE_DOMAINS_DIR}/scripts/output/dnsmasq"
+CACHE_DOMAINS_HOSTS_DIR="${CACHE_DOMAINS_DIR}/scripts/output/dnsmasq/hosts"
 CONFIG_FILE="/etc/cache-domains.json"
 
 uci_changes() {
@@ -41,8 +41,8 @@ configure() {
 	INITIAL_DIR="$(pwd)"
 	cd "${CACHE_DOMAINS_DIR}/scripts/"
 	cp "${CONFIG_FILE}" "config.json"
-	./create-dnsmasq.sh
-	rm "config.json" "${CACHE_DOMAINS_HOSTS_DIR}/lancache.conf"
+	./create-dnsmasq.sh > /dev/null
+	rm "config.json" "${CACHE_DOMAINS_HOSTS_DIR}/../lancache.conf"
 	cd "${INITIAL_DIR}"
 
 	while uci_get "dhcp" "@dnsmasq[${I}]" > /dev/null; do
