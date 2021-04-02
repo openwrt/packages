@@ -5,7 +5,7 @@
    #include <pthread.h>
  
 -  #ifdef PLATFORM_LINUX
-+  #if defined(PLATFORM_LINUX) && defined(__UCLIBC__)
++  #if defined(PLATFORM_LINUX) && defined(__GLIBC__)
    # define _MUTEX_RECURSIVE PTHREAD_MUTEX_RECURSIVE_NP
    #else
      /* OS X, ... */
