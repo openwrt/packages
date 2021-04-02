@@ -9,21 +9,18 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmaxminddb
 PKG_VERSION:=1.5.2
-PKG_RELEASE=1
+PKG_RELEASE=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/maxmind/libmaxminddb/releases/download/$(PKG_VERSION)/
 PKG_HASH:=5237076d250a5f7c297e331c35a433eeaaf0dc205e070e4db353c9ba10f340a2
 
-PKG_INSTALL:=1
-PKG_FIXUP:=autoreconf
-PKG_BUILD_PARALLEL:=1
+PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
-
 include $(INCLUDE_DIR)/package.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/libmaxminddb
   SECTION:=libs
@@ -36,11 +33,15 @@ define Package/libmaxminddb/description
  The libmaxminddb library provides functions for working MaxMind DB files.
 endef
 
+CMAKE_OPTIONS += \
+	-DBUILD_SHARED_LIBS=ON \
+	-DBUILD_TESTING=OFF
+
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/* $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libmaxminddb.{a,so*} $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libmaxminddb.so* $(1)/usr/lib/
 endef
 
 define Package/libmaxminddb/install
