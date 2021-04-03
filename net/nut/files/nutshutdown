@@ -24,7 +24,7 @@ do_fsd() {
 		mount -o remount,ro /overlay /overlay
 		mount -o remount,ro / /
 
-		. ${IPKG_INSTOOT}/lib/functions.sh
+		. ${IPKG_INSTROOT}/lib/functions.sh
 
 		if [ -f /etc/config/nut_server ]; then
 			config_load nut_server
