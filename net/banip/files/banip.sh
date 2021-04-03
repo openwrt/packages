@@ -542,22 +542,18 @@ f_iptables()
 	then
 		for dev in ${ban_ipdevs}
 		do
-			if [ ! -f "${ban_tmpfile}.${src_name}.delete" ]
+			if [ "${src_name}" = "maclist" ]
 			then
-				> "${ban_tmpfile}.${src_name}.delete"
-				if [ "${src_name}" = "maclist" ]
-				then
-					f_iptrule "-D" "${ban_chain}" "-o ${dev} -m set --match-set ${src_name} src -j RETURN"
-				elif [ "${src_name%_*}" = "whitelist" ]
-				then
-					f_iptrule "-D" "${ban_chain}" "-i ${dev} -m set --match-set ${src_name} src -j RETURN"
-					f_iptrule "-D" "${ban_chain}" "-o ${dev} -m set --match-set ${src_name} dst -j RETURN"
-				else
-					f_iptrule "-D" "${ban_chain}" "-i ${dev} -m set --match-set ${src_name} src -j ${ban_logtarget_src}"
-					f_iptrule "-D" "${ban_chain}" "-o ${dev} -m set --match-set ${src_name} dst -j ${ban_logtarget_dst}"
-					f_iptrule "-D" "${ban_chain}" "-i ${dev} -m set --match-set ${src_name} src -j ${ban_logchain_src}"
-					f_iptrule "-D" "${ban_chain}" "-o ${dev} -m set --match-set ${src_name} dst -j ${ban_logchain_dst}"
-				fi
+				f_iptrule "-D" "${ban_chain}" "-o ${dev} -m set --match-set ${src_name} src -j RETURN"
+			elif [ "${src_name%_*}" = "whitelist" ]
+			then
+				f_iptrule "-D" "${ban_chain}" "-i ${dev} -m set --match-set ${src_name} src -j RETURN"
+				f_iptrule "-D" "${ban_chain}" "-o ${dev} -m set --match-set ${src_name} dst -j RETURN"
+			else
+				f_iptrule "-D" "${ban_chain}" "-i ${dev} -m set --match-set ${src_name} src -j ${ban_logtarget_src}"
+				f_iptrule "-D" "${ban_chain}" "-o ${dev} -m set --match-set ${src_name} dst -j ${ban_logtarget_dst}"
+				f_iptrule "-D" "${ban_chain}" "-i ${dev} -m set --match-set ${src_name} src -j ${ban_logchain_src}"
+				f_iptrule "-D" "${ban_chain}" "-o ${dev} -m set --match-set ${src_name} dst -j ${ban_logchain_dst}"
 			fi
 		done
 	fi
