@@ -12,15 +12,17 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
 
 --- a/server/meson.build
 +++ b/server/meson.build
-@@ -36,11 +36,7 @@ spice_server_headers = [
+@@ -43,13 +43,7 @@ spice_server_headers = [
  
  install_headers(spice_server_headers, subdir : 'spice-server')
  
 -# generate enums
 -gnome = import('gnome')
--spice_server_enums = gnome.mkenums_simple('spice-server-enums',
--                                          sources : 'spice-server.h',
--                                          symbol_prefix : 'SPICE')
+-spice_server_enums = gnome.mkenums('spice-server-enums',
+-                                   sources : 'spice-server.h',
+-                                   symbol_prefix : 'SPICE',
+-                                   c_template: 'spice-server-enums.c.tmpl',
+-                                   h_template: 'spice-server-enums.h.tmpl')
 +spice_server_enums = ['spice-server-enums.c', 'spice-server-enums.h']
  
  spice_server_sources = [
