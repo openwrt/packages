@@ -12,7 +12,7 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
 
 --- a/subprojects/spice-common/common/meson.build
 +++ b/subprojects/spice-common/common/meson.build
-@@ -187,4 +187,17 @@ if spice_common_generate_server_code
+@@ -189,4 +189,17 @@ if spice_common_generate_server_code
    spice_common_server_dep = declare_dependency(sources : spice_common_server_dep_sources,
                                                 link_with : spice_common_server_lib,
                                                 dependencies : spice_common_dep)
