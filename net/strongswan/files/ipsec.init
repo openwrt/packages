@@ -331,6 +331,12 @@ reload_service() {
 	start
 }
 
+stop_service() {
+	ipsec_reset
+	swan_reset
+	secret_reset
+}
+
 check_ipsec_interface() {
 	local intf
 
