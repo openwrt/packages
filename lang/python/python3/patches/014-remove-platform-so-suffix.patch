@@ -11,7 +11,7 @@
  
 --- a/configure.ac
 +++ b/configure.ac
-@@ -4770,7 +4770,7 @@ AC_SUBST(SOABI)
+@@ -4777,7 +4777,7 @@ AC_SUBST(SOABI)
  AC_MSG_CHECKING(ABIFLAGS)
  AC_MSG_RESULT($ABIFLAGS)
  AC_MSG_CHECKING(SOABI)
