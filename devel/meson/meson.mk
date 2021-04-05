@@ -88,7 +88,7 @@ define Meson/CreateCrossFile
 		-e "s|@CXXFLAGS@|$(foreach FLAG,$(TARGET_CXXFLAGS) $(EXTRA_CXXFLAGS) $(TARGET_CPPFLAGS) $(EXTRA_CPPFLAGS),'$(FLAG)',)|" \
 		-e "s|@LDFLAGS@|$(foreach FLAG,$(TARGET_LDFLAGS) $(EXTRA_LDFLAGS),'$(FLAG)',)|" \
 		-e "s|@ARCH@|$(MESON_ARCH)|" \
-		-e "s|@CPU@|$(MESON_CPU))|" \
+		-e "s|@CPU@|$(MESON_CPU)|" \
 		-e "s|@ENDIAN@|$(if $(CONFIG_BIG_ENDIAN),big,little)|" \
 		< $(MESON_DIR)/openwrt-cross.txt.in \
 		> $(1)
