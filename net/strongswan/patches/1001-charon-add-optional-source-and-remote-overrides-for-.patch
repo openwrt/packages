@@ -1,0 +1,587 @@
+From 809c18140e39d9f16137e478c2142f7c55f39b1c Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Timo=20Ter=C3=A4s?= <timo.teras@iki.fi>
+Date: Mon, 21 Sep 2015 13:41:58 +0300
+Subject: [PATCH 2/4] charon: add optional source and remote overrides for
+ initiate
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+This introduces support for specifying optional IKE SA specific
+source and remote address for child sa initiation. This allows
+to initiate wildcard connection for known address via vici.
+
+In addition this allows impler implementation of trap-any patches
+and is a prerequisite for dmvpn support.
+
+Signed-off-by: Timo Teräs <timo.teras@iki.fi>
+---
+ src/charon-cmd/cmd/cmd_connection.c           |  2 +-
+ src/libcharon/control/controller.c            | 43 ++++++++++++-
+ src/libcharon/control/controller.h            |  3 +
+ src/libcharon/plugins/stroke/stroke_control.c |  5 +-
+ src/libcharon/plugins/vici/vici_config.c      |  2 +-
+ src/libcharon/plugins/vici/vici_control.c     | 64 ++++++++++++++++---
+ .../processing/jobs/start_action_job.c        |  2 +-
+ src/libcharon/sa/ike_sa_manager.c             | 51 ++++++++++++++-
+ src/libcharon/sa/ike_sa_manager.h             |  8 ++-
+ src/libcharon/sa/trap_manager.c               | 45 ++++++-------
+ src/swanctl/commands/initiate.c               | 40 +++++++++++-
+ 11 files changed, 218 insertions(+), 47 deletions(-)
+
+diff --git a/src/charon-cmd/cmd/cmd_connection.c b/src/charon-cmd/cmd/cmd_connection.c
+index b91c89830..55f8d224f 100644
+--- a/src/charon-cmd/cmd/cmd_connection.c
++++ b/src/charon-cmd/cmd/cmd_connection.c
+@@ -439,7 +439,7 @@ static job_requeue_t initiate(private_cmd_connection_t *this)
+ 	child_cfg = create_child_cfg(this, peer_cfg);
+ 
+ 	if (charon->controller->initiate(charon->controller, peer_cfg, child_cfg,
+-								controller_cb_empty, NULL, 0, FALSE) != SUCCESS)
++								NULL, NULL, controller_cb_empty, NULL, 0, FALSE) != SUCCESS)
+ 	{
+ 		terminate(pid);
+ 	}
+diff --git a/src/libcharon/control/controller.c b/src/libcharon/control/controller.c
+index 0c86275e2..baa83f440 100644
+--- a/src/libcharon/control/controller.c
++++ b/src/libcharon/control/controller.c
+@@ -15,6 +15,28 @@
+  * for more details.
+  */
+ 
++/*
++ * Copyright (C) 2014 Timo Teräs <timo.teras@iki.fi>
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a copy
++ * of this software and associated documentation files (the "Software"), to deal
++ * in the Software without restriction, including without limitation the rights
++ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++ * copies of the Software, and to permit persons to whom the Software is
++ * furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
++ * THE SOFTWARE.
++ */
++
+ #include "controller.h"
+ 
+ #include <sys/types.h>
+@@ -102,6 +124,16 @@ struct interface_listener_t {
+ 	 */
+ 	ike_sa_t *ike_sa;
+ 
++	/**
++	 * Our host hint.
++	 */
++	host_t *my_host;
++
++	/**
++	 * Other host hint.
++	 */
++	host_t *other_host;
++
+ 	/**
+ 	 * unique ID, used for various methods
+ 	 */
+@@ -414,9 +446,14 @@ METHOD(job_t, initiate_execute, job_requeue_t,
+ 	ike_sa_t *ike_sa;
+ 	interface_listener_t *listener = &job->listener;
+ 	peer_cfg_t *peer_cfg = listener->peer_cfg;
++	host_t *my_host = listener->my_host;
++	host_t *other_host = listener->other_host;
+ 
+ 	ike_sa = charon->ike_sa_manager->checkout_by_config(charon->ike_sa_manager,
+-														peer_cfg);
++														peer_cfg, my_host, other_host);
++	DESTROY_IF(my_host);
++	DESTROY_IF(other_host);
++
+ 	if (!ike_sa)
+ 	{
+ 		DESTROY_IF(listener->child_cfg);
+@@ -425,6 +462,7 @@ METHOD(job_t, initiate_execute, job_requeue_t,
+ 		listener_done(listener);
+ 		return JOB_REQUEUE_NONE;
+ 	}
++
+ 	listener->lock->lock(listener->lock);
+ 	listener->ike_sa = ike_sa;
+ 	listener->lock->unlock(listener->lock);
+@@ -497,6 +535,7 @@ METHOD(job_t, initiate_execute, job_requeue_t,
+ 
+ METHOD(controller_t, initiate, status_t,
+ 	private_controller_t *this, peer_cfg_t *peer_cfg, child_cfg_t *child_cfg,
++	host_t *my_host, host_t *other_host,
+ 	controller_cb_t callback, void *param, u_int timeout, bool limits)
+ {
+ 	interface_job_t *job;
+@@ -519,6 +558,8 @@ METHOD(controller_t, initiate, status_t,
+ 			.status = FAILED,
+ 			.child_cfg = child_cfg,
+ 			.peer_cfg = peer_cfg,
++			.my_host = my_host ? my_host->clone(my_host) : NULL,
++			.other_host = other_host ? other_host->clone(other_host) : NULL,
+ 			.lock = spinlock_create(),
+ 			.options.limits = limits,
+ 		},
+diff --git a/src/libcharon/control/controller.h b/src/libcharon/control/controller.h
+index b4ccfced2..7a088b122 100644
+--- a/src/libcharon/control/controller.h
++++ b/src/libcharon/control/controller.h
+@@ -79,6 +79,8 @@ struct controller_t {
+ 	 *
+ 	 * @param peer_cfg		peer_cfg to use for IKE_SA setup
+ 	 * @param child_cfg		optional child_cfg to set up CHILD_SA from
++	 * @param my_host		optional address hint for source
++	 * @param other_host		optional address hint for destination
+ 	 * @param cb			logging callback
+ 	 * @param param			parameter to include in each call of cb
+ 	 * @param timeout		timeout in ms to wait for callbacks, 0 to disable
+@@ -92,6 +94,7 @@ struct controller_t {
+ 	 */
+ 	status_t (*initiate)(controller_t *this,
+ 						 peer_cfg_t *peer_cfg, child_cfg_t *child_cfg,
++						 host_t *my_host, host_t *other_host,
+ 						 controller_cb_t callback, void *param, u_int timeout,
+ 						 bool limits);
+ 
+diff --git a/src/libcharon/plugins/stroke/stroke_control.c b/src/libcharon/plugins/stroke/stroke_control.c
+index 8d84b934e..b00d0e62d 100644
+--- a/src/libcharon/plugins/stroke/stroke_control.c
++++ b/src/libcharon/plugins/stroke/stroke_control.c
+@@ -108,7 +108,7 @@ static void charon_initiate(private_stroke_control_t *this, peer_cfg_t *peer_cfg
+ 	if (msg->output_verbosity < 0)
+ 	{
+ 		charon->controller->initiate(charon->controller, peer_cfg, child_cfg,
+-									 NULL, NULL, 0, FALSE);
++									 NULL, NULL, NULL, NULL, 0, FALSE);
+ 	}
+ 	else
+ 	{
+@@ -116,7 +116,8 @@ static void charon_initiate(private_stroke_control_t *this, peer_cfg_t *peer_cfg
+ 		status_t status;
+ 
+ 		status = charon->controller->initiate(charon->controller,
+-							peer_cfg, child_cfg, (controller_cb_t)stroke_log,
++							peer_cfg, child_cfg, NULL, NULL,
++							(controller_cb_t)stroke_log,
+ 							&info, this->timeout, FALSE);
+ 		switch (status)
+ 		{
+diff --git a/src/libcharon/plugins/vici/vici_config.c b/src/libcharon/plugins/vici/vici_config.c
+index 1ff0754f4..6a133decd 100644
+--- a/src/libcharon/plugins/vici/vici_config.c
++++ b/src/libcharon/plugins/vici/vici_config.c
+@@ -2122,7 +2122,7 @@ static void run_start_action(private_vici_config_t *this, peer_cfg_t *peer_cfg,
+ 			DBG1(DBG_CFG, "initiating '%s'", child_cfg->get_name(child_cfg));
+ 			charon->controller->initiate(charon->controller,
+ 					peer_cfg->get_ref(peer_cfg), child_cfg->get_ref(child_cfg),
+-					NULL, NULL, 0, FALSE);
++					NULL, NULL, NULL, NULL, 0, FALSE);
+ 			break;
+ 		case ACTION_ROUTE:
+ 			DBG1(DBG_CFG, "installing '%s'", child_cfg->get_name(child_cfg));
+diff --git a/src/libcharon/plugins/vici/vici_control.c b/src/libcharon/plugins/vici/vici_control.c
+index 4c09b578d..abd7b5d4b 100644
+--- a/src/libcharon/plugins/vici/vici_control.c
++++ b/src/libcharon/plugins/vici/vici_control.c
+@@ -16,6 +16,28 @@
+  * for more details.
+  */
+ 
++/*
++ * Copyright (C) 2014 Timo Teräs <timo.teras@iki.fi>
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a copy
++ * of this software and associated documentation files (the "Software"), to deal
++ * in the Software without restriction, including without limitation the rights
++ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++ * copies of the Software, and to permit persons to whom the Software is
++ * furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
++ * THE SOFTWARE.
++ */
++
+ #include "vici_control.h"
+ #include "vici_builder.h"
+ 
+@@ -174,9 +196,11 @@ static child_cfg_t* find_child_cfg(char *name, char *pname, peer_cfg_t **out)
+ CALLBACK(initiate, vici_message_t*,
+ 	private_vici_control_t *this, char *name, u_int id, vici_message_t *request)
+ {
++	vici_message_t* msg;
+ 	peer_cfg_t *peer_cfg = NULL;
+ 	child_cfg_t *child_cfg;
+-	char *child, *ike, *type, *sa;
++	host_t *my_host = NULL, *other_host = NULL;
++	char *child, *ike, *type, *sa, *my_host_str, *other_host_str;
+ 	int timeout;
+ 	bool limits;
+ 	controller_cb_t log_cb = NULL;
+@@ -190,6 +214,8 @@ CALLBACK(initiate, vici_message_t*,
+ 	timeout = request->get_int(request, 0, "timeout");
+ 	limits = request->get_bool(request, FALSE, "init-limits");
+ 	log.level = request->get_int(request, 1, "loglevel");
++	my_host_str = request->get_str(request, NULL, "my-host");
++	other_host_str = request->get_str(request, NULL, "other-host");
+ 
+ 	if (!child && !ike)
+ 	{
+@@ -200,31 +226,51 @@ CALLBACK(initiate, vici_message_t*,
+ 		log_cb = (controller_cb_t)log_vici;
+ 	}
+ 
++	if (my_host_str)
++	{
++		my_host = host_create_from_string(my_host_str, 0);
++	}
++	if (other_host_str)
++	{
++		other_host = host_create_from_string(other_host_str, 0);
++	}
++
++
+ 	type = child ? "CHILD_SA" : "IKE_SA";
+ 	sa = child ?: ike;
+ 
+ 	child_cfg = find_child_cfg(child, ike, &peer_cfg);
+ 
+-	DBG1(DBG_CFG, "vici initiate %s '%s'", type, sa);
++	DBG1(DBG_CFG, "vici initiate %s '%s', me %H, other %H, limits %d", type, sa, my_host, other_host, limits);
+ 	if (!peer_cfg)
+ 	{
+-		return send_reply(this, "%s config '%s' not found", type, sa);
++		msg = send_reply(this, "%s config '%s' not found", type, sa);
++		goto ret;
+ 	}
+-	switch (charon->controller->initiate(charon->controller, peer_cfg,
+-									child_cfg, log_cb, &log, timeout, limits))
++	switch (charon->controller->initiate(charon->controller,
++				peer_cfg, child_cfg, my_host, other_host,
++				log_cb, &log, timeout, limits))
+ 	{
+ 		case SUCCESS:
+-			return send_reply(this, NULL);
++			msg = send_reply(this, NULL);
++			break;
+ 		case OUT_OF_RES:
+-			return send_reply(this, "%s '%s' not established after %dms", type,
++			msg = send_reply(this, "%s '%s' not established after %dms", type,
+ 							  sa, timeout);
++			break;
+ 		case INVALID_STATE:
+-			return send_reply(this, "establishing %s '%s' not possible at the "
++			msg = send_reply(this, "establishing %s '%s' not possible at the "
+ 							  "moment due to limits", type, sa);
++			break;
+ 		case FAILED:
+ 		default:
+-			return send_reply(this, "establishing %s '%s' failed", type, sa);
++			msg = send_reply(this, "establishing %s '%s' failed", type, sa);
++			break;
+ 	}
++ret:
++	if (my_host) my_host->destroy(my_host);
++	if (other_host) other_host->destroy(other_host);
++	return msg;
+ }
+ 
+ CALLBACK(terminate, vici_message_t*,
+diff --git a/src/libcharon/processing/jobs/start_action_job.c b/src/libcharon/processing/jobs/start_action_job.c
+index 3a0ed879f..e3399007b 100644
+--- a/src/libcharon/processing/jobs/start_action_job.c
++++ b/src/libcharon/processing/jobs/start_action_job.c
+@@ -61,7 +61,7 @@ METHOD(job_t, execute, job_requeue_t,
+ 					charon->controller->initiate(charon->controller,
+ 												 peer_cfg->get_ref(peer_cfg),
+ 												 child_cfg->get_ref(child_cfg),
+-												 NULL, NULL, 0, FALSE);
++												 NULL, NULL, NULL, NULL, 0, FALSE);
+ 					break;
+ 				case ACTION_ROUTE:
+ 					DBG1(DBG_JOB, "start action: route '%s'", name);
+diff --git a/src/libcharon/sa/ike_sa_manager.c b/src/libcharon/sa/ike_sa_manager.c
+index 440894e9b..493599413 100644
+--- a/src/libcharon/sa/ike_sa_manager.c
++++ b/src/libcharon/sa/ike_sa_manager.c
+@@ -17,6 +17,28 @@
+  * for more details.
+  */
+ 
++/*
++ * Copyright (C) 2014 Timo Teräs <timo.teras@iki.fi>
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a copy
++ * of this software and associated documentation files (the "Software"), to deal
++ * in the Software without restriction, including without limitation the rights
++ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++ * copies of the Software, and to permit persons to whom the Software is
++ * furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
++ * THE SOFTWARE.
++ */
++
+ #include <string.h>
+ #include <inttypes.h>
+ 
+@@ -1423,7 +1445,8 @@ out:
+ }
+ 
+ METHOD(ike_sa_manager_t, checkout_by_config, ike_sa_t*,
+-	private_ike_sa_manager_t *this, peer_cfg_t *peer_cfg)
++	private_ike_sa_manager_t *this, peer_cfg_t *peer_cfg,
++	host_t *my_host, host_t *other_host)
+ {
+ 	enumerator_t *enumerator;
+ 	entry_t *entry;
+@@ -1432,7 +1455,17 @@ METHOD(ike_sa_manager_t, checkout_by_config, ike_sa_t*,
+ 	ike_cfg_t *current_ike;
+ 	u_int segment;
+ 
+-	DBG2(DBG_MGR, "checkout IKE_SA by config");
++	if (my_host && my_host->get_port(my_host) == 0)
++	{
++		my_host->set_port(my_host, IKEV2_UDP_PORT);
++	}
++	if (other_host && other_host->get_port(other_host) == 0)
++	{
++		other_host->set_port(other_host, IKEV2_UDP_PORT);
++	}
++
++	DBG2(DBG_MGR, "checkout IKE_SA by config '%s', me %H, other %H",
++		 peer_cfg->get_name(peer_cfg), my_host, other_host);
+ 
+ 	if (this->reuse_ikesa || peer_cfg->get_ike_version(peer_cfg) == IKEV1)
+ 	{
+@@ -1449,6 +1482,15 @@ METHOD(ike_sa_manager_t, checkout_by_config, ike_sa_t*,
+ 			continue;
+ 		}
+ 
++		if (my_host && !my_host->ip_equals(my_host, entry->ike_sa->get_my_host(entry->ike_sa)))
++		{
++			continue;
++		}
++		if (other_host && !other_host->ip_equals(other_host, entry->ike_sa->get_other_host(entry->ike_sa)))
++		{
++			continue;
++		}
++
+ 		current_peer = entry->ike_sa->get_peer_cfg(entry->ike_sa);
+ 		if (current_peer && current_peer->equals(current_peer, peer_cfg))
+ 		{
+@@ -1480,6 +1523,10 @@ METHOD(ike_sa_manager_t, checkout_by_config, ike_sa_t*,
+ 			return NULL;
+ 		}
+ 		ike_sa = checkout_new(this, peer_cfg->get_ike_version(peer_cfg), TRUE);
++		if (my_host || other_host)
++		{
++			ike_sa->update_hosts(ike_sa, my_host, other_host, TRUE);
++		}
+ 	}
+ 	charon->bus->set_sa(charon->bus, ike_sa);
+ 
+diff --git a/src/libcharon/sa/ike_sa_manager.h b/src/libcharon/sa/ike_sa_manager.h
+index efad2e4d6..c43edabbb 100644
+--- a/src/libcharon/sa/ike_sa_manager.h
++++ b/src/libcharon/sa/ike_sa_manager.h
+@@ -93,7 +93,8 @@ struct ike_sa_manager_t {
+ 	ike_sa_t* (*checkout_by_message) (ike_sa_manager_t* this, message_t *message);
+ 
+ 	/**
+-	 * Checkout an IKE_SA for initiation by a peer_config.
++	 * Checkout an IKE_SA for initiation by a peer_config and optional
++	 * source and remote host addresses.
+ 	 *
+ 	 * To initiate, a CHILD_SA may be established within an existing IKE_SA.
+ 	 * This call checks for an existing IKE_SA by comparing the configuration.
+@@ -103,10 +104,13 @@ struct ike_sa_manager_t {
+ 	 * the found IKE_SA is in the DELETING state.
+ 	 *
+ 	 * @param peer_cfg			configuration used to find an existing IKE_SA
++	 * @param my_host			source host address for wildcard peer_cfg
++	 * @param other_host		remote host address for wildcard peer_cfg
+ 	 * @return					checked out/created IKE_SA
+ 	 */
+ 	ike_sa_t* (*checkout_by_config) (ike_sa_manager_t* this,
+-									 peer_cfg_t *peer_cfg);
++									 peer_cfg_t *peer_cfg,
++									 host_t *my_host, host_t *other_host);
+ 
+ 	/**
+ 	 * Reset initiator SPI.
+diff --git a/src/libcharon/sa/trap_manager.c b/src/libcharon/sa/trap_manager.c
+index 2bc531b38..7220ea597 100644
+--- a/src/libcharon/sa/trap_manager.c
++++ b/src/libcharon/sa/trap_manager.c
+@@ -432,7 +432,7 @@ METHOD(trap_manager_t, acquire, void,
+ 	peer_cfg_t *peer;
+ 	child_cfg_t *child;
+ 	ike_sa_t *ike_sa;
+-	host_t *host;
++	host_t *host, *my_host = NULL, *other_host = NULL;
+ 	bool wildcard, ignore = FALSE;
+ 
+ 	this->lock->read_lock(this->lock);
+@@ -508,36 +508,27 @@ METHOD(trap_manager_t, acquire, void,
+ 	this->lock->unlock(this->lock);
+ 
+ 	if (wildcard)
+-	{	/* the peer config would match IKE_SAs with other peers */
+-		ike_sa = charon->ike_sa_manager->checkout_new(charon->ike_sa_manager,
+-											peer->get_ike_version(peer), TRUE);
+-		if (ike_sa)
+-		{
+-			ike_cfg_t *ike_cfg;
+-			uint16_t port;
+-			uint8_t mask;
+-
+-			ike_sa->set_peer_cfg(ike_sa, peer);
+-			ike_cfg = ike_sa->get_ike_cfg(ike_sa);
++	{
++		ike_cfg_t *ike_cfg;
++		uint16_t port;
++		uint8_t mask;
+ 
+-			port = ike_cfg->get_other_port(ike_cfg);
+-			dst->to_subnet(dst, &host, &mask);
+-			host->set_port(host, port);
+-			ike_sa->set_other_host(ike_sa, host);
++		ike_cfg = peer->get_ike_cfg(peer);
+ 
+-			port = ike_cfg->get_my_port(ike_cfg);
+-			src->to_subnet(src, &host, &mask);
+-			host->set_port(host, port);
+-			ike_sa->set_my_host(ike_sa, host);
++		port = ike_cfg->get_other_port(ike_cfg);
++		dst->to_subnet(dst, &other_host, &mask);
++		other_host->set_port(other_host, port);
+ 
+-			charon->bus->set_sa(charon->bus, ike_sa);
+-		}
+-	}
+-	else
+-	{
+-		ike_sa = charon->ike_sa_manager->checkout_by_config(
+-											charon->ike_sa_manager, peer);
++		port = ike_cfg->get_my_port(ike_cfg);
++		src->to_subnet(src, &my_host, &mask);
++		my_host->set_port(my_host, port);
+ 	}
++	ike_sa = charon->ike_sa_manager->checkout_by_config(
++											charon->ike_sa_manager, peer,
++											my_host, other_host);
++	DESTROY_IF(my_host);
++	DESTROY_IF(other_host);
++
+ 	if (ike_sa)
+ 	{
+ 		if (ike_sa->get_peer_cfg(ike_sa) == NULL)
+diff --git a/src/swanctl/commands/initiate.c b/src/swanctl/commands/initiate.c
+index 8ade8bf41..03b2cb0f4 100644
+--- a/src/swanctl/commands/initiate.c
++++ b/src/swanctl/commands/initiate.c
+@@ -13,6 +13,28 @@
+  * for more details.
+  */
+ 
++/*
++ * Copyright (C) 2014 Timo Teräs <timo.teras@iki.fi>
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a copy
++ * of this software and associated documentation files (the "Software"), to deal
++ * in the Software without restriction, including without limitation the rights
++ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++ * copies of the Software, and to permit persons to whom the Software is
++ * furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
++ * THE SOFTWARE.
++ */
++
+ #include "command.h"
+ 
+ #include <errno.h>
+@@ -37,7 +59,7 @@ static int initiate(vici_conn_t *conn)
+ 	vici_req_t *req;
+ 	vici_res_t *res;
+ 	command_format_options_t format = COMMAND_FORMAT_NONE;
+-	char *arg, *child = NULL, *ike = NULL;
++	char *arg, *child = NULL, *ike = NULL, *my_host = NULL, *other_host = NULL;
+ 	int ret = 0, timeout = 0, level = 1;
+ 
+ 	while (TRUE)
+@@ -64,6 +86,12 @@ static int initiate(vici_conn_t *conn)
+ 			case 'l':
+ 				level = atoi(arg);
+ 				continue;
++			case 'S':
++				my_host = arg;
++				continue;
++			case 'R':
++				other_host = arg;
++				continue;
+ 			case EOF:
+ 				break;
+ 			default:
+@@ -87,6 +115,14 @@ static int initiate(vici_conn_t *conn)
+ 	{
+ 		vici_add_key_valuef(req, "ike", "%s", ike);
+ 	}
++	if (my_host)
++	{
++		vici_add_key_valuef(req, "my-host", "%s", my_host);
++	}
++	if (other_host)
++	{
++		vici_add_key_valuef(req, "other-host", "%s", other_host);
++	}
+ 	if (timeout)
+ 	{
+ 		vici_add_key_valuef(req, "timeout", "%d", timeout * 1000);
+@@ -133,6 +169,8 @@ static void __attribute__ ((constructor))reg()
+ 			{"help",		'h', 0, "show usage information"},
+ 			{"child",		'c', 1, "initiate a CHILD_SA configuration"},
+ 			{"ike",			'i', 1, "initiate an IKE_SA, or name of child's parent"},
++			{"source",		'S', 1, "override source address"},
++			{"remote",		'R', 1, "override remote address"},
+ 			{"timeout",		't', 1, "timeout in seconds before detaching"},
+ 			{"raw",			'r', 0, "dump raw response message"},
+ 			{"pretty",		'P', 0, "dump raw response message in pretty print"},
+-- 
+2.24.0
+

@@ -1,0 +1,131 @@
+From 62802d545bc6c9143d44511d25d2df435d3099aa Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Timo=20Ter=C3=A4s?= <timo.teras@iki.fi>
+Date: Mon, 21 Sep 2015 13:42:05 +0300
+Subject: [PATCH 3/4] vici: send certificates for ike-sa events
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Timo Teräs <timo.teras@iki.fi>
+---
+ src/libcharon/plugins/vici/vici_query.c | 48 +++++++++++++++++++++----
+ 1 file changed, 41 insertions(+), 7 deletions(-)
+
+diff --git a/src/libcharon/plugins/vici/vici_query.c b/src/libcharon/plugins/vici/vici_query.c
+index 16e3c8b1f..2ca885e8b 100644
+--- a/src/libcharon/plugins/vici/vici_query.c
++++ b/src/libcharon/plugins/vici/vici_query.c
+@@ -348,7 +348,7 @@ static void list_vips(private_vici_query_t *this, vici_builder_t *b,
+  * List details of an IKE_SA
+  */
+ static void list_ike(private_vici_query_t *this, vici_builder_t *b,
+-					 ike_sa_t *ike_sa, time_t now)
++					 ike_sa_t *ike_sa, time_t now, bool add_certs)
+ {
+ 	time_t t;
+ 	ike_sa_id_t *id;
+@@ -357,6 +357,8 @@ static void list_ike(private_vici_query_t *this, vici_builder_t *b,
+ 	uint32_t if_id;
+ 	uint16_t alg, ks;
+ 	host_t *host;
++	auth_cfg_t *auth_cfg;
++	enumerator_t *enumerator;
+ 
+ 	b->add_kv(b, "uniqueid", "%u", ike_sa->get_unique_id(ike_sa));
+ 	b->add_kv(b, "version", "%u", ike_sa->get_version(ike_sa));
+@@ -366,11 +368,43 @@ static void list_ike(private_vici_query_t *this, vici_builder_t *b,
+ 	b->add_kv(b, "local-host", "%H", host);
+ 	b->add_kv(b, "local-port", "%d", host->get_port(host));
+ 	b->add_kv(b, "local-id", "%Y", ike_sa->get_my_id(ike_sa));
++	if (add_certs)
++	{
++		enumerator = ike_sa->create_auth_cfg_enumerator(ike_sa, TRUE);
++		if (enumerator->enumerate(enumerator, &auth_cfg))
++		{
++			certificate_t *cert = auth_cfg->get(auth_cfg, AUTH_RULE_SUBJECT_CERT);
++			chunk_t encoding;
++
++			if (cert && cert->get_encoding(cert, CERT_ASN1_DER, &encoding))
++			{
++				b->add(b, VICI_KEY_VALUE, "local-cert-data", encoding);
++				free(encoding.ptr);
++			}
++		}
++		enumerator->destroy(enumerator);
++	}
+ 
+ 	host = ike_sa->get_other_host(ike_sa);
+ 	b->add_kv(b, "remote-host", "%H", host);
+ 	b->add_kv(b, "remote-port", "%d", host->get_port(host));
+ 	b->add_kv(b, "remote-id", "%Y", ike_sa->get_other_id(ike_sa));
++	if (add_certs)
++	{
++		enumerator = ike_sa->create_auth_cfg_enumerator(ike_sa, FALSE);
++		if (enumerator->enumerate(enumerator, &auth_cfg))
++		{
++			certificate_t *cert = auth_cfg->get(auth_cfg, AUTH_RULE_SUBJECT_CERT);
++			chunk_t encoding;
++
++			if (cert && cert->get_encoding(cert, CERT_ASN1_DER, &encoding))
++			{
++				b->add(b, VICI_KEY_VALUE, "remote-cert-data", encoding);
++				free(encoding.ptr);
++			}
++		}
++		enumerator->destroy(enumerator);
++	}
+ 
+ 	eap = ike_sa->get_other_eap_id(ike_sa);
+ 
+@@ -500,7 +534,7 @@ CALLBACK(list_sas, vici_message_t*,
+ 		b = vici_builder_create();
+ 		b->begin_section(b, ike_sa->get_name(ike_sa));
+ 
+-		list_ike(this, b, ike_sa, now);
++		list_ike(this, b, ike_sa, now, TRUE);
+ 
+ 		b->begin_section(b, "child-sas");
+ 		csas = ike_sa->create_child_sa_enumerator(ike_sa);
+@@ -1673,7 +1707,7 @@ METHOD(listener_t, ike_updown, bool,
+ 	}
+ 
+ 	b->begin_section(b, ike_sa->get_name(ike_sa));
+-	list_ike(this, b, ike_sa, now);
++	list_ike(this, b, ike_sa, now, up);
+ 	b->end_section(b);
+ 
+ 	this->dispatcher->raise_event(this->dispatcher,
+@@ -1698,10 +1732,10 @@ METHOD(listener_t, ike_rekey, bool,
+ 	b = vici_builder_create();
+ 	b->begin_section(b, old->get_name(old));
+ 	b->begin_section(b, "old");
+-	list_ike(this, b, old, now);
++	list_ike(this, b, old, now, TRUE);
+ 	b->end_section(b);
+ 	b->begin_section(b, "new");
+-	list_ike(this, b, new, now);
++	list_ike(this, b, new, now, TRUE);
+ 	b->end_section(b);
+ 	b->end_section(b);
+ 
+@@ -1731,7 +1765,7 @@ METHOD(listener_t, child_updown, bool,
+ 	}
+ 
+ 	b->begin_section(b, ike_sa->get_name(ike_sa));
+-	list_ike(this, b, ike_sa, now);
++	list_ike(this, b, ike_sa, now, up);
+ 	b->begin_section(b, "child-sas");
+ 
+ 	b->begin_section(b, child_sa->get_name(child_sa));
+@@ -1763,7 +1797,7 @@ METHOD(listener_t, child_rekey, bool,
+ 	b = vici_builder_create();
+ 
+ 	b->begin_section(b, ike_sa->get_name(ike_sa));
+-	list_ike(this, b, ike_sa, now);
++	list_ike(this, b, ike_sa, now, TRUE);
+ 	b->begin_section(b, "child-sas");
+ 
+ 	b->begin_section(b, old->get_name(old));
+-- 
+2.24.0
+
