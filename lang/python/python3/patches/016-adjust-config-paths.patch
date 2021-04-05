@@ -20,7 +20,7 @@
          abi=sys.abiflags,
 --- a/Makefile.pre.in
 +++ b/Makefile.pre.in
-@@ -1534,7 +1534,7 @@ libinstall:	build_all $(srcdir)/Modules/
+@@ -1535,7 +1535,7 @@ libinstall:	build_all $(srcdir)/Modules/
  			esac; \
  		done; \
  	done
@@ -29,7 +29,7 @@
  		$(DESTDIR)$(LIBDEST); \
  	$(INSTALL_DATA) $(srcdir)/LICENSE $(DESTDIR)$(LIBDEST)/LICENSE.txt
  ifeq (@COMPILE_ALL_TESTS@,yes)
-@@ -1692,7 +1692,7 @@ sharedinstall: sharedmods
+@@ -1693,7 +1693,7 @@ sharedinstall: sharedmods
  		--install-scripts=$(BINDIR) \
  		--install-platlib=$(DESTSHARED) \
  		--root=$(DESTDIR)/
@@ -49,7 +49,7 @@
      fi
  elif test "$cross_compiling" = maybe; then
      as_fn_error $? "Cross compiling required --host=HOST-TUPLE and --build=ARCH" "$LINENO" 5
-@@ -15435,7 +15435,7 @@ fi
+@@ -15436,7 +15436,7 @@ fi
  
  
  
@@ -60,7 +60,7 @@
    LIBPL='$(prefix)'"/${PLATLIBDIR}/python${VERSION}/config-${LDVERSION}-${PLATFORM_TRIPLET}"
 --- a/configure.ac
 +++ b/configure.ac
-@@ -75,7 +75,7 @@ if test "$cross_compiling" = yes; then
+@@ -82,7 +82,7 @@ if test "$cross_compiling" = yes; then
  	    AC_MSG_ERROR([python$PACKAGE_VERSION interpreter not found])
  	fi
          AC_MSG_RESULT($interp)
@@ -69,7 +69,7 @@
      fi
  elif test "$cross_compiling" = maybe; then
      AC_MSG_ERROR([Cross compiling required --host=HOST-TUPLE and --build=ARCH])
-@@ -4828,7 +4828,7 @@ fi],
+@@ -4835,7 +4835,7 @@ fi],
  
  dnl define LIBPL after ABIFLAGS and LDVERSION is defined.
  AC_SUBST(PY_ENABLE_SHARED)
