@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2020 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
+# Copyright (C) 2019-2021 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-zeroconf
-PKG_VERSION:=0.28.5
+PKG_VERSION:=0.29.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=zeroconf
-PKG_HASH:=c08dbb90c116626cb6c5f19ebd14cd4846cffe7151f338c19215e6938d334980
+PKG_HASH:=7aefbb658b452b1fd7e51124364f938c6f5e42d6ea893fa2557bea8c06c540af
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=Apache-2.0
