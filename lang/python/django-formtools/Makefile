@@ -28,7 +28,7 @@ define Package/python3-django-formtools
   URL:=https://django-formtools.readthedocs.io
   DEPENDS:= \
 	+python3 \
-	+python3-django1
+	+python3-django
 endef
 
 define Package/python3-django-formtools/description

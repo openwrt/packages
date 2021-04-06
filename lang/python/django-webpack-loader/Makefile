@@ -28,7 +28,7 @@ define Package/python3-django-webpack-loader
   URL:=https://github.com/owais/django-webpack-loader
   DEPENDS:= \
 	+python3 \
-	+python3-django1
+	+python3-django
 endef
 
 define Package/python3-django-webpack-loader/description

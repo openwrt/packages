@@ -30,7 +30,7 @@ define Package/python3-django-appconf
   URL:=https://django-appconf.readthedocs.io
   DEPENDS:= \
 	+python3 \
-	+python3-django1 \
+	+python3-django \
 	+python3-six
 endef
 

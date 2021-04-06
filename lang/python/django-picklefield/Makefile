@@ -33,7 +33,7 @@ define Package/python3-django-picklefield
   URL:=https://github.com/gintas/django-picklefield/
   DEPENDS:= \
 	+python3 \
-	+python3-django1
+	+python3-django
 endef
 
 define Package/python3-django-picklefield/description

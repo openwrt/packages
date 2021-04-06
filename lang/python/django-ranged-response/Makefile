@@ -28,7 +28,7 @@ define Package/python3-django-ranged-response
   URL:=https://github.com/i3thuan5/django-ranged-response
   DEPENDS:= \
 	+python3 \
-	+python3-django1
+	+python3-django
 endef
 
 define Package/python3-django-ranged-response/description

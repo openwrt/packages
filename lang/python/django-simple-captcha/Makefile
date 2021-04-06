@@ -32,7 +32,7 @@ define Package/python3-django-simple-captcha
   DEPENDS:= \
 	+python3 \
 	+python3-six \
-	+python3-django1 \
+	+python3-django \
 	+python3-pillow \
 	+python3-django-ranged-response
 endef

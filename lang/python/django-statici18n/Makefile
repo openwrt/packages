@@ -30,7 +30,7 @@ define Package/python3-django-statici18n
   URL:=https://django-statici18n.readthedocs.io
   DEPENDS:= \
 	+python3 \
-	+python3-django1 \
+	+python3-django \
 	+python3-django-appconf \
 	+python3-six
 endef
