@@ -10,12 +10,12 @@ PKG_RELRO_FULL:=0
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=knot-resolver
-PKG_VERSION:=5.3.0
+PKG_VERSION:=5.3.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://secure.nic.cz/files/knot-resolver
-PKG_HASH:=fb6cb2c03f4fffbdd8a0098127383d03b14cf7d6abf3a0cd229fb13ff68ee33e
+PKG_HASH:=9d4d6b7bcdf114acc948e5ee68c83fcbb3944f48a13b9751dbbbc190cdd729c9
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=GPL-3.0-later
