@@ -1,0 +1,90 @@
+--- a/setup.py
++++ b/setup.py
+@@ -34,23 +34,23 @@ CLASSIFIERS = [
+ # the original system version of readline.so was compiled. Set up flags here.
+ UNIVERSAL = ''
+ platform = distutils.util.get_platform()
+-if platform.startswith('macosx'):
+-    osx_version = platform.split('-')[1]
+-    SDK = ''
+-    if osx_version == '10.5':
+-        SDK = '/Developer/SDKs/MacOSX10.5.sdk'
+-        UNIVERSAL = '-arch i386 -arch ppc -arch x86_64 -arch ppc64'
+-    elif osx_version == '10.6':
+-        # Starting with 10.6 (Snow Leopard), only Intel architecture is supported
+-        SDK = '/Developer/SDKs/MacOSX10.6.sdk'
+-        UNIVERSAL = '-arch i386 -arch x86_64'
+-    elif osx_version > '10.6':
+-        # Starting with 10.7 (Lion) and Xcode 4.3, the developer sysroot is inside the Xcode.app - ignore it
+-        UNIVERSAL = '-arch i386 -arch x86_64'
++#if platform.startswith('macosx'):
++#    osx_version = platform.split('-')[1]
++#    SDK = ''
++#    if osx_version == '10.5':
++#        SDK = '/Developer/SDKs/MacOSX10.5.sdk'
++#        UNIVERSAL = '-arch i386 -arch ppc -arch x86_64 -arch ppc64'
++#    elif osx_version == '10.6':
++#        # Starting with 10.6 (Snow Leopard), only Intel architecture is supported
++#        SDK = '/Developer/SDKs/MacOSX10.6.sdk'
++#        UNIVERSAL = '-arch i386 -arch x86_64'
++#    elif osx_version > '10.6':
++#        # Starting with 10.7 (Lion) and Xcode 4.3, the developer sysroot is inside the Xcode.app - ignore it
++#        UNIVERSAL = '-arch i386 -arch x86_64'
+ 
+-    if os.path.exists(SDK):
+-        # only add sysroot if it exists:
+-        UNIVERSAL = "-isysroot %s %s" % (SDK, UNIVERSAL)
++#    if os.path.exists(SDK):
++#        # only add sysroot if it exists:
++#        UNIVERSAL = "-isysroot %s %s" % (SDK, UNIVERSAL)
+ 
+ # Since we have the latest readline (post 4.2), enable all readline functionality
+ # These macros can be found in pyconfig.h.in in the main directory of the Python tarball
+@@ -69,24 +69,24 @@ DEFINE_MACROS = [
+ building = False
+ verbose = True
+ for s in sys.argv[1:]:
+-    if s.startswith('bdist') or s.startswith('build') or s.startswith('install'):
+-        building = True
++#    if s.startswith('bdist') or s.startswith('build') or s.startswith('install'):
++#        building = True
+     if s in ['--quiet', '-q']:
+         verbose = False
+     if s in ['--verbose', '-v']:
+         verbose = True
+     
+ # Build readline first, if it is not there and we are building the module
+-if building and not os.path.exists('readline/libreadline.a'):
+-    if verbose:
+-        print("\n============ Building the readline library ============\n")
+-        os.system('cd rl && /bin/bash ./build.sh')
+-        print("\n============ Building the readline extension module ============\n")
+-    else:
+-        os.system('cd rl && /bin/bash ./build.sh > /dev/null 2>&1')
+-    # Add symlink that simplifies include and link paths to real library
+-    if not (os.path.exists('readline') or os.path.islink('readline')):
+-        os.symlink(os.path.join('rl','readline-lib'), 'readline')
++#if building and not os.path.exists('readline/libreadline.a'):
++#    if verbose:
++#        print("\n============ Building the readline library ============\n")
++#        os.system('cd rl && /bin/bash ./build.sh')
++#        print("\n============ Building the readline extension module ============\n")
++#    else:
++#        os.system('cd rl && /bin/bash ./build.sh > /dev/null 2>&1')
++#    # Add symlink that simplifies include and link paths to real library
++#    if not (os.path.exists('readline') or os.path.islink('readline')):
++#        os.symlink(os.path.join('rl','readline-lib'), 'readline')
+ 
+ setup(
+     name="readline",
+@@ -107,8 +107,8 @@ setup(
+                   define_macros=DEFINE_MACROS,
+                   extra_compile_args=['-Wno-strict-prototypes'] + UNIVERSAL.split(),
+                   extra_link_args=UNIVERSAL.split(),
+-                  extra_objects=['readline/libreadline.a', 'readline/libhistory.a'], 
+-                  libraries=['ncurses']
++                  extra_objects=[],
++                  libraries=['ncurses', 'readline', 'history']
+         ),
+     ],
+     zip_safe=False,

@@ -1,0 +1,11 @@
+--- a/setup.py
++++ b/setup.py
+@@ -83,7 +83,7 @@ if building and not os.path.exists('read
+         os.system('cd rl && /bin/bash ./build.sh')
+         print("\n============ Building the readline extension module ============\n")
+     else:
+-        os.system('cd rl && /bin/bash ./build.sh > /dev/null 2>&1')        
++        os.system('cd rl && /bin/bash ./build.sh > /dev/null 2>&1')
+     # Add symlink that simplifies include and link paths to real library
+     if not (os.path.exists('readline') or os.path.islink('readline')):
+         os.symlink(os.path.join('rl','readline-lib'), 'readline')
