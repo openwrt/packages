@@ -89,6 +89,7 @@ PKG_MOD_AVAILABLE:= \
 	updown \
 	vici \
 	whitelist \
+	wolfssl \
 	x509 \
 	xauth-eap \
 	xauth-generic \
@@ -211,6 +212,7 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-updown \
 	+strongswan-mod-vici \
 	+strongswan-mod-whitelist \
+	+strongswan-mod-wolfssl \
 	+strongswan-mod-x509 \
 	+strongswan-mod-xauth-eap \
 	+strongswan-mod-xauth-generic \
@@ -692,6 +694,7 @@ $(eval $(call BuildPlugin,unity,Cisco Unity extension,))
 $(eval $(call BuildPlugin,updown,updown firewall,))
 $(eval $(call BuildPlugin,vici,Versatile IKE Configuration Interface,))
 $(eval $(call BuildPlugin,whitelist,peer identity whitelisting,))
+$(eval $(call BuildPlugin,wolfssl,WolfSSL crypto,+PACKAGE_strongswan-mod-wolfssl:libwolfssl))
 $(eval $(call BuildPlugin,x509,x509 certificate,))
 $(eval $(call BuildPlugin,xauth-eap,EAP XAuth backend,))
 $(eval $(call BuildPlugin,xauth-generic,generic XAuth backend,))
