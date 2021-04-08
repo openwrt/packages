@@ -58,7 +58,46 @@ warning() {
 	echo "WARNING: $@" >&2
 }
 
-add_crypto_proposal() {
+is_aead() {
+	local cipher="$1"
+
+	case "$cipher" in
+	aes*gcm*|aes*ccm*|aes*gmac*)
+		return 0 ;;
+	esac
+
+	return 1
+}
+
+add_esp_proposal() {
+	local encryption_algorithm
+	local hash_algorithm
+	local dh_group
+
+	config_get encryption_algorithm  "$1" encryption_algorithm
+	config_get hash_algorithm        "$1" hash_algorithm
+	config_get dh_group              "$1" dh_group
+
+	# check for AEAD and clobber hash_algorithm if set
+	if is_aead "$encryption_algorithm" && [ -n "$hash_algorithm" ]; then
+		warning "Can't have $hash_algorithm with $encryption_algorithm"
+		hash_algorithm=
+	fi
+
+	[ -n "$encryption_algorithm" ] && \
+		crypto="${crypto:+${crypto},}${encryption_algorithm}${hash_algorithm:+-${hash_algorithm}}${dh_group:+-${dh_group}}"
+}
+
+parse_esp_proposal() {
+	local conf="$1"
+	local crypto=""
+
+	config_list_foreach "$conf" crypto_proposal add_esp_proposal
+
+	echo "$crypto"
+}
+
+add_ike_proposal() {
 	local encryption_algorithm
 	local hash_algorithm
 	local dh_group
@@ -69,17 +108,27 @@ add_crypto_proposal() {
 	config_get dh_group              "$1" dh_group
 	config_get prf_algorithm         "$1" prf_algorithm
 
+	# check for AEAD and clobber hash_algorithm if set
+	if is_aead "$encryption_algorithm"; then
+		if [ -n "$hash_algorithm" ]; then
+			warning "Can't have $hash_algorithm with $encryption_algorithm"
+			hash_algorithm=
+		elif [ -z "$prf_algorithm" ]; then
+			warning "PRF algorithm required with AEAD encryption"
+		fi
+	fi
+
 	[ -n "$encryption_algorithm" ] && \
 		crypto="${crypto:+${crypto},}${encryption_algorithm}${hash_algorithm:+-${hash_algorithm}}${prf_algorithm:+-${prf_algorithm}}${dh_group:+-${dh_group}}"
 }
 
-set_crypto_proposal() {
+parse_ike_proposal() {
 	local conf="$1"
 	local crypto=""
 
-	config_list_foreach "$conf" crypto_proposal add_crypto_proposal
+	config_list_foreach "$conf" crypto_proposal add_ike_proposal
 
-	crypto_proposal="$crypto"
+	echo "$crypto"
 }
 
 config_conn() {
@@ -142,6 +191,8 @@ config_conn() {
 	config_get_bool mobike              "$1"           mobike 1
 	config_get local_cert               "$1"           local_cert ""
 	config_get local_key                "$1"           local_key ""
+
+	local esp_proposal="$(parse_esp_proposal "$1")"
 
 	[ -n "$local_nat" ] && local_subnet="$local_nat"
 
@@ -208,9 +259,8 @@ config_conn() {
 	[ -n "$packet_marker" ] && ipsec_xappend "  mark=$packet_marker"
 	ipsec_xappend "  keyexchange=$keyexchange"
 
-	set_crypto_proposal "$1"
 	[ -n "$ike_proposal" ] && ipsec_xappend "  ike=$ike_proposal"
-	[ -n "$crypto_proposal" ] && ipsec_xappend "  esp=$crypto_proposal"
+	[ -n "$esp_proposal" ] && ipsec_xappend "  esp=$esp_proposal"
 }
 
 config_tunnel() {
@@ -255,8 +305,7 @@ config_remote() {
 		secret_xappend ": PSK \"$pre_shared_key\""
 	fi
 
-	set_crypto_proposal "$1"
-	ike_proposal="$crypto_proposal"
+	local ike_proposal="$(parse_ike_proposal "$1")"
 
 	config_list_foreach "$1" tunnel config_tunnel
 
