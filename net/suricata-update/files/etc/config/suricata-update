@@ -1,0 +1,23 @@
+config suricata-update 'update'
+        option defaultpath '/var/lib/suricata'
+        #option rulespath '/var/lib/rules'
+        option reload 1
+        option enable_sources_on_startup 1
+	option testupdate 0
+        list sources 'et/open'
+        list sources 'oisf/trafficid'
+        list sources 'ptresearch/attackdetection'
+        list sources 'sslbl/ssl-fp-blacklist'
+        list sources 'sslbl/ja3-fingerprints'
+        list sources 'etnetera/aggressive'
+        list sources 'tgreen/hunting'
+
+config source
+        option name 'et/open'
+        option secret 'ashkan'
+
+config source
+        option name 'scwx/security'
+        option secret 'jjjj'
+
+

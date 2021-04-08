@@ -1,0 +1,74 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+STOP=10
+
+USE_PROCD=1
+PROG=/usr/bin/suricata-update
+
+validate_suricata_update_section() {
+        uci_load_validate suricata-update suricata-update "$1" "$2" \
+                'rulespath:string' \
+                'defaultpath:string:/var/lib/suricata' \
+                'reload:bool' \
+                'enable_sources_on_startup:bool' \
+		'test_update:bool' \
+                'sources:list(string)'
+
+        # If suricata-update doesn't exist, install it.
+        [ ! -f $PROG ] && \
+            /usr/bin/pip3 install suricata-update && \
+            echo "Suricata-Update is now installed to $PROG" && \
+            echo "Please Restart the suricata-update service" && \
+            exit
+}
+
+enable_list() {
+    suricata-update enable-source $1 -D $defaultpath
+}
+enable_source() {
+    local config="$1"
+    config_get source_name $config name
+    config_get secret $config secret
+}
+
+
+start_suricata_update() {
+        [ "$2" = 0 ] || {
+                echo "validation failed"
+                return 1
+        }
+
+	[ $enable_sources_on_startup -eq "1" ] && {
+	        suricata-update update-sources -D $defaultpath
+	        config_list_foreach update sources enable_list
+	        config_foreach enable_source source
+	}
+	procd_open_instance
+	procd_set_param command $PROG -v
+	[ $defaultpath ] && procd_append_param command -D $defaultpath
+	[ $rulespath ] && procd_append_param command -o $rulespath
+	[ $test_update -eq 0 ] && procd_append_param command --no-test
+	[ $reload -eq 1 ] && procd_append_param command --reload-command "/etc/init.d/suricata restart"
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_close_instance
+}
+
+stop_service()
+{
+        service_stop ${PROG}
+}
+start_service() {
+config_load "suricata"
+validate_suricata_update_section update start_suricata_update
+
+}
+
+service_triggers()
+{
+        procd_add_reload_trigger "suricata-update"
+        procd_add_validation validate_suricata_update_section
+}
+
+
