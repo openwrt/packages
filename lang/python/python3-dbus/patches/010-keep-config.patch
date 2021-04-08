@@ -1,0 +1,47 @@
+--- a/setup.py
++++ b/setup.py
+@@ -25,10 +25,10 @@
+ # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ # DEALINGS IN THE SOFTWARE.
+ 
+-from distutils.dir_util import copy_tree, mkpath
+-from distutils.file_util import copy_file
+ from setuptools.dist import Distribution
+ from setuptools import setup, Extension
++from distutils.dir_util import copy_tree, mkpath
++from distutils.file_util import copy_file
+ import os
+ import subprocess
+ import sys
+@@ -47,27 +47,16 @@ class Build(Distribution().get_command_c
+     def run(self):
+         srcdir = os.getcwd()
+         builddir = os.path.join(srcdir, self.build_temp)
+-        configure = os.path.join(srcdir, 'configure')
+         mkpath(builddir)
+ 
+-        if not os.path.exists(configure):
+-            configure = os.path.join(srcdir, 'autogen.sh')
+-
+-        subprocess.check_call([
+-                configure,
+-                '--disable-maintainer-mode',
+-                'PYTHON=' + sys.executable,
+-                # Put the documentation, etc. out of the way: we only want
+-                # the Python code and extensions
+-                '--prefix=' + os.path.join(builddir, 'prefix'),
+-            ],
+-            cwd=builddir)
+         make_args = [
+             'pythondir=' + os.path.join(srcdir, self.build_lib),
+             'pyexecdir=' + os.path.join(srcdir, self.build_lib),
++            'DESTDIR=' + os.path.join(srcdir, 'ipkg-install'),
+         ]
+-        subprocess.check_call(['make', '-C', builddir] + make_args)
+-        subprocess.check_call(['make', '-C', builddir, 'install'] + make_args)
++
++        subprocess.check_call(['make', '-C', srcdir] + make_args)
++        #subprocess.check_call(['make', '-C', srcdir, 'install'] + make_args)
+ 
+ class BuildExt(Distribution().get_command_class('build_ext')):
+     def run(self):
