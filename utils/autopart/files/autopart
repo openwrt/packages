@@ -70,7 +70,7 @@ autopart_init() {
 	lvmpart=$(get_partition_by_name $diskdev $OWRT_VOLUMES)
 
 	[ "$lvmpart" ] || return
-	lvm_init /dev/$lvmpart "${OWRT_VOLUMES}${diskserial}"
+	lvm_init /dev/$lvmpart "${OWRT_VOLUMES}${diskserial:+-${diskserial:2}}"
 }
 
 autopart_init
