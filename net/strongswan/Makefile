@@ -25,8 +25,10 @@ PKG_MOD_AVAILABLE:= \
 	agent \
 	attr \
 	attr-sql \
+	bliss \
 	blowfish \
 	ccm \
+	chapoly \
 	cmac \
 	constraints \
 	connmark \
@@ -60,7 +62,10 @@ PKG_MOD_AVAILABLE:= \
 	nonce \
 	md4 \
 	md5 \
+	mgf1 \
 	mysql \
+	newhope \
+	ntru \
 	openssl \
 	pem \
 	pgp \
@@ -76,6 +81,7 @@ PKG_MOD_AVAILABLE:= \
 	revocation \
 	sha1 \
 	sha2 \
+	sha3 \
 	smp \
 	socket-default \
 	socket-dynamic \
@@ -144,14 +150,17 @@ $(call Package/strongswan/Default)
 	+strongswan-charon \
 	+strongswan-charon-cmd \
 	+strongswan-ipsec \
+	+strongswan-libnttfft \
 	+strongswan-mod-addrblock \
 	+strongswan-mod-aes \
 	+strongswan-mod-af-alg \
 	+strongswan-mod-agent \
 	+strongswan-mod-attr \
 	+strongswan-mod-attr-sql \
+	+strongswan-mod-bliss \
 	+strongswan-mod-blowfish \
 	+strongswan-mod-ccm \
+	+strongswan-mod-chapoly \
 	+strongswan-mod-cmac \
 	+strongswan-mod-constraints \
 	+strongswan-mod-connmark \
@@ -183,7 +192,10 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-nonce \
 	+strongswan-mod-md4 \
 	+strongswan-mod-md5 \
+	+strongswan-mod-mgf1 \
 	+strongswan-mod-mysql \
+	+strongswan-mod-newhope \
+	+strongswan-mod-ntru \
 	+strongswan-mod-openssl \
 	+strongswan-mod-pem \
 	+strongswan-mod-pgp \
@@ -199,6 +211,7 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-revocation \
 	+strongswan-mod-sha1 \
 	+strongswan-mod-sha2 \
+	+strongswan-mod-sha3 \
 	+strongswan-mod-smp \
 	+strongswan-mod-socket-default \
 	+strongswan-mod-sql \
@@ -361,6 +374,17 @@ $(call Package/strongswan/description/Default)
  This package contains the ipsec utility.
 endef
 
+define Package/strongswan-libnttfft
+$(call Package/strongswan/Default)
+  TITLE+= nttfft library
+  DEPENDS:= +strongswan
+endef
+
+define Package/strongswan-libnttfft/description
+$(call Package/strongswan/description/Default)
+ This package contains the Number Theoretic Transforms library.
+endef
+
 define Package/strongswan-pki
 $(call Package/strongswan/Default)
   TITLE+= PKI tool
@@ -518,6 +542,11 @@ opkg list-changed-conffiles | grep -qx /etc/ipsec.conf || {
 }
 endef
 
+define Package/strongswan-libnttfft/install
+	$(INSTALL_DIR) $(1)/usr/lib/ipsec
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/libnttfft.so.* $(1)/usr/lib/ipsec/
+endef
+
 define Package/strongswan-pki/install
 	$(INSTALL_DIR) $(1)/etc/strongswan.d
 	$(CP) $(PKG_INSTALL_DIR)/etc/strongswan.d/pki.conf $(1)/etc/strongswan.d/
@@ -618,6 +647,7 @@ $(eval $(call BuildPackage,strongswan-isakmp))
 $(eval $(call BuildPackage,strongswan-charon))
 $(eval $(call BuildPackage,strongswan-charon-cmd))
 $(eval $(call BuildPackage,strongswan-ipsec))
+$(eval $(call BuildPackage,strongswan-libnttfft))
 $(eval $(call BuildPackage,strongswan-pki))
 $(eval $(call BuildPackage,strongswan-scepclient))
 $(eval $(call BuildPackage,strongswan-swanctl))
@@ -628,8 +658,10 @@ $(eval $(call BuildPlugin,af-alg,AF_ALG crypto interface to Linux Crypto API,+km
 $(eval $(call BuildPlugin,agent,SSH agent signing,))
 $(eval $(call BuildPlugin,attr,file based config,))
 $(eval $(call BuildPlugin,attr-sql,SQL based config,+strongswan-charon))
+$(eval $(call BuildPlugin,bliss,BLISS crypto,+strongswan-libnttfft +strongswan-mod-mgf1 +strongswan-mod-hmac))
 $(eval $(call BuildPlugin,blowfish,Blowfish crypto,))
 $(eval $(call BuildPlugin,ccm,CCM AEAD wrapper crypto,))
+$(eval $(call BuildPlugin,chapoly,ChaCha20-Poly1305 AEAD crypto,))
 $(eval $(call BuildPlugin,cmac,CMAC crypto,))
 $(eval $(call BuildPlugin,connmark,netfilter connection marking,))
 $(eval $(call BuildPlugin,constraints,advanced X509 constraint checking,))
@@ -663,7 +695,10 @@ $(eval $(call BuildPlugin,load-tester,load testing,))
 $(eval $(call BuildPlugin,nonce,nonce genereation,))
 $(eval $(call BuildPlugin,md4,MD4 crypto,))
 $(eval $(call BuildPlugin,md5,MD5 crypto,))
+$(eval $(call BuildPlugin,mgf1,MGF1 crypto,))
 $(eval $(call BuildPlugin,mysql,MySQL database interface,+strongswan-mod-sql +PACKAGE_strongswan-mod-mysql:libmysqlclient-r))
+$(eval $(call BuildPlugin,newhope,New Hope crypto,+strongswan-libnttfft +strongswan-mod-chapoly +strongswan-mod-sha3))
+$(eval $(call BuildPlugin,ntru,NTRU crypto,+strongswan-mod-mgf1))
 $(eval $(call BuildPlugin,openssl,OpenSSL crypto,+PACKAGE_strongswan-mod-openssl:libopenssl))
 $(eval $(call BuildPlugin,pem,PEM decoding,))
 $(eval $(call BuildPlugin,pgp,PGP key decoding,))
@@ -679,6 +714,7 @@ $(eval $(call BuildPlugin,resolve,DNS resolver,))
 $(eval $(call BuildPlugin,revocation,X509 CRL/OCSP revocation,))
 $(eval $(call BuildPlugin,sha1,SHA1 crypto,))
 $(eval $(call BuildPlugin,sha2,SHA2 crypto,))
+$(eval $(call BuildPlugin,sha3,SHA3 and SHAKE crypto,))
 $(eval $(call BuildPlugin,smp,SMP configuration and control interface,+PACKAGE_strongswan-mod-smp:libxml2))
 $(eval $(call BuildPlugin,socket-default,default socket implementation for charon,))
 $(eval $(call BuildPlugin,socket-dynamic,dynamic socket implementation for charon,))
