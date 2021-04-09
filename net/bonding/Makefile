@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=proto-bonding
-PKG_VERSION:=2020-03-30
+PKG_VERSION:=2021-04-09
 PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0
