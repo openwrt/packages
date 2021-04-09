@@ -77,7 +77,7 @@
 		"descurl": "https://github.com/Perflyst/PiHoleBlocklist"
 	},
 	"games_tracking": {
-		"url": "https://raw.githubusercontent.com/KodoPengin/GameIndustry-hosts-Template/master/Main%20template/hosts",
+		"url": "https://raw.githubusercontent.com/KodoPengin/GameIndustry-hosts-Template/master/Main-Template/hosts",
 		"rule": "/^0\\.0\\.0\\.0[[:space:]]+([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
 		"size": "S",
 		"focus": "tracking",
