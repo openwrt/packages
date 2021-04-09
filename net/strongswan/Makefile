@@ -377,7 +377,7 @@ endef
 define Package/strongswan-libnttfft
 $(call Package/strongswan/Default)
   TITLE+= nttfft library
-  DEPENDS:= +strongswan
+  DEPENDS:= strongswan
 endef
 
 define Package/strongswan-libnttfft/description
