@@ -22,8 +22,9 @@ define Package/ovsd
   SECTION:=net
   SUBMENU:=Open vSwitch
   CATEGORY:=Network
-  DEPENDS:=+openvswitch +libubox +libubus +netifd
   TITLE:=Open vSwtich configuration daemon for netifd
+  URL:=https://gitlab.hhi.fraunhofer.de/wn-ina/ovsd
+  DEPENDS:=+openvswitch +libubox +libubus +netifd
 endef
 
 define Package/ovsd/description
