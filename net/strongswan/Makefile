@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=strongswan
 PKG_VERSION:=5.9.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://download.strongswan.org/ https://download2.strongswan.org/
@@ -377,7 +377,7 @@ endef
 define Package/strongswan-libnttfft
 $(call Package/strongswan/Default)
   TITLE+= nttfft library
-  DEPENDS:= +strongswan
+  DEPENDS:= strongswan
 endef
 
 define Package/strongswan-libnttfft/description
