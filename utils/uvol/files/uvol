@@ -1,0 +1,9 @@
+#!/bin/sh
+
+uvol_backend=
+for backend in /usr/libexec/uvol/*.sh; do
+	total=$($backend total)
+	[ "$total" ] && uvol_backend=$backend
+done
+
+flock -x /tmp/run/uvol.lock $uvol_backend "$@"
