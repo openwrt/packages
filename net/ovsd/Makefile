@@ -1,33 +1,30 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ovsd
-PKG_VERSION:=2020-10-12
+PKG_SOURCE_DATE:=2020-12-08
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://gitlab.hhi.fraunhofer.de/wn-ina/ovsd.git
-PKG_SOURCE_VERSION:=e6a07f27dd8a5893eb6110c69922077995b9b26a
-PKG_MIRROR_HASH:=9d903b3fecd8a3e102e1477efe479fc3851b1814ea0852e1dae39065b88cd157
-
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+PKG_SOURCE_URL:=https://gitlab.hhi.fraunhofer.de/wn-ina/ovsd
+PKG_SOURCE_VERSION:=3a03476e2fececed3752ba4e68c92e71160c7db1
+PKG_MIRROR_HASH:=306e0cfa675299260142831e7a16c77e6e9e52ad7067bf20362f06af4faad69c
 
 PKG_MAINTAINER:=Arne Kappen <akappen@inet.tu-berlin.de>
-PKG_LICENSE:=GPL-2.0
+PKG_LICENSE:=GPL-2.0-only
+PKG_LICENSE_FILES:=LICENSE
 
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
-
 define Package/ovsd
   SECTION:=net
   SUBMENU:=Open vSwitch
   CATEGORY:=Network
-  DEPENDS:=+openvswitch +libubox +libubus +netifd
   TITLE:=Open vSwtich configuration daemon for netifd
-  MAINTAINER:=Arne Kappen <akappen@inet.tu-berlin.de>
+  URL:=https://gitlab.hhi.fraunhofer.de/wn-ina/ovsd
+  DEPENDS:=+openvswitch +libubox +libubus +netifd
 endef
 
 define Package/ovsd/description

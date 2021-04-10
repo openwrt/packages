@@ -4,10 +4,9 @@ START=19
 USE_PROCD=1
 
 start_service() {
-        procd_open_instance
-        procd_set_param command /sbin/ovsd
-        procd_set_param respawn
+	procd_open_instance
+	procd_set_param command /sbin/ovsd
+	procd_set_param respawn
 	procd_set_param watch ovs
-
-        procd_close_instance
+	procd_close_instance
 }
