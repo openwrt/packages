@@ -48,6 +48,8 @@ TARGET_CXXFLAGS += -flto
 define Build/InstallDev
 	$(call Build/InstallDev/cmake,$(1))
 	$(SED) '/^prefix=\|^exec_prefix=/s|/usr|$(STAGING_DIR)/usr|' $(1)/usr/bin/taglib-config
+	$(SED) '/^includedir=/s|/usr|$(STAGING_DIR)/usr|' $(1)/usr/bin/taglib-config
+	$(SED) '/^libdir=/s|/usr|$(STAGING_DIR)/usr|' $(1)/usr/bin/taglib-config
 	$(SED) 's,/usr/include,$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/taglib.pc
 	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/taglib.pc
 	$(INSTALL_DIR) $(2)/bin
