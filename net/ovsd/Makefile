@@ -27,7 +27,6 @@ define Package/ovsd
   CATEGORY:=Network
   DEPENDS:=+openvswitch +libubox +libubus +netifd
   TITLE:=Open vSwtich configuration daemon for netifd
-  MAINTAINER:=Arne Kappen <akappen@inet.tu-berlin.de>
 endef
 
 define Package/ovsd/description
