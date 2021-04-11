@@ -1,5 +1,13 @@
 #!/bin/sh
 
+cmd="$1"
+shift
+
+if [ "$cmd" = "name" ]; then
+	echo "UBI"
+	return 0
+fi
+
 test -e /sys/class/ubi/version || return 0
 read ubiver < /sys/class/ubi/version
 [ "$ubiver" = "1" ] || return 1
@@ -65,8 +73,8 @@ getuserdev() {
 }
 
 createvol() {
-	local mode
-	local existdev=$(getdev "$1")
+	local mode ret
+	local existdev=$(getdev "$@")
 	[ "$existdev" ] && return 17
 	case "$3" in
 		ro)
@@ -80,6 +88,9 @@ createvol() {
 			;;
 	esac
 	ubimkvol /dev/$ubidev -N "uvol-$mode-$1" -s "$2"
+	ret=$?
+	[ $ret -eq 0 ] || return $ret
+	ubiupdatevol -t /dev/$(getdev "$@")
 }
 
 removevol() {
@@ -120,14 +131,36 @@ getstatus() {
 	return 0
 }
 
-cmd="$1"
-shift
+listvols() {
+	local volname volmode volsize
+	for voldir in /sys/devices/virtual/ubi/${ubidev}/${ubidev}_*; do
+		read volname < $voldir/name
+		case "$volname" in
+			uvol-r[wo]*)
+				read volsize < $voldir/data_bytes
+				;;
+			*)
+				continue
+				;;
+		esac
+		volmode=${volname:5:2}
+		volname=${volname:8}
+		echo "$volname $volmode $volsize"
+	done
+}
+
 case "$cmd" in
+	align)
+		echo "$ebsize"
+		;;
 	free)
 		freebytes
 		;;
 	total)
 		totalbytes
+		;;
+	list)
+		listvols "$@"
 		;;
 	create)
 		createvol "$@"

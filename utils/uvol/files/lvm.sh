@@ -1,15 +1,23 @@
 #!/bin/sh
 
-command -v lvm || return 1
+cmd="$1"
+shift
+
+if [ "$cmd" = "name" ]; then
+	echo "LVM"
+	return 0
+fi
+
+command -v lvm >/dev/null || return 1
 
 . /lib/functions.sh
 . /lib/upgrade/common.sh
+. /usr/share/libubox/jshn.sh
 
 export_bootdevice
 [ "$BOOTDEV_MAJOR" ] || return 1
 export_partdevice rootdev 0
 [ "$rootdev" ] || return 1
-LVM_SUPPRESS_FD_WARNINGS=1
 
 case "$rootdev" in
 	mtd*|\
@@ -18,93 +26,157 @@ case "$rootdev" in
 		return 1
 esac
 
-lvs() {
+lvm_cmd() {
 	local cmd="$1"
-	local cb="$2"
-	local param="${3:+-S vg_name=${vgname} -S lv_name=~^r[ow]_$3\$}"
-	local oIFS="$IFS"
-	IFS=" "
-	set -- $(LVM_SUPPRESS_FD_WARNINGS=1 $cmd -c $param)
-	[ "$1" ] || {
-		IFS="$oIFS"
-		return 1
-	}
-	IFS=":"
-	set -- $1
-	IFS="$oIFS"
-	$cb "$@"
+	shift
+	LVM_SUPPRESS_FD_WARNINGS=1 lvm "$cmd" "$@"
 }
 
-pvvars() {
-	case "${1:5}" in
-		"$rootdev"*)
-			partdev="$1"
-			vgname="$2"
-			;;
-	esac
+pvs() {
+	lvm_cmd pvs --reportformat json --units b "$@"
 }
 
-vgvars() {
-	[ "$1" = "$vgname" ] || return
-	vgbs="${13}"
-	vgts="${14}"
-	vgus="${15}"
-	vgfs="${16}"
+vgs() {
+	lvm_cmd vgs --reportformat json --units b "$@"
 }
 
-lvvars() {
-	lvpath="$1"
-	lvsize=$(( 512 * $7 ))
+lvs() {
+	lvm_cmd vgs --reportformat json --units b "$@"
 }
 
 freebytes() {
-	echo $((vgfs * vgbs * 1024))
+	echo $(($vg_free_count * $vg_extent_size * 1024))
 }
 
 totalbytes() {
-	echo $((vgts * vgbs * 1024))
+	echo $(($vg_extent_count * $vg_extent_size * 1024))
 }
 
 existvol() {
 	[ "$1" ] || return 1
-	test -e "/dev/$vgname/ro_$1" || test -e "/dev/$vgname/rw_$1"
+	test -e "/dev/$vg_name/ro_$1" || test -e "/dev/$vg_name/rw_$1"
 	return $?
 }
 
-getlvname() {
-	lvs lvdisplay lvvars "$1"
+vg_name=
+exportpv() {
+	local reports rep pv pvs
+	vg_name=
+	json_init
+	json_load "$(pvs -o vg_name -S "pv_name=~^/dev/$rootdev.*\$")"
+	json_select report
+	json_get_keys reports
+	for rep in $reports; do
+		json_select "$rep"
+		json_select pv
+		json_get_keys pvs
+		for pv in $pvs; do
+			json_select "$pv"
+			json_get_vars vg_name
+			json_select ..
+			break
+		done
+		json_select ..
+		break
+	done
+}
 
-	[ "$lvpath" ] && echo ${lvpath:5}
+vg_extent_size=
+vg_extent_count=
+vg_free_count=
+exportvg() {
+	local reports rep vg vgs
+	vg_extent_size=
+	vg_extent_count=
+	vg_free_count=
+	json_init
+	json_load "$(vgs -o vg_extent_size,vg_extent_count,vg_free_count -S "vg_name=$vg_name")"
+	json_select report
+	json_get_keys reports
+	for rep in $reports; do
+		json_select "$rep"
+		json_select vg
+		json_get_keys vgs
+		for vg in $vgs; do
+			json_select "$vg"
+			json_get_vars vg_extent_size vg_extent_count vg_free_count
+			vg_extent_size=${vg_extent_size%B}
+			json_select ..
+			break
+		done
+		json_select ..
+		break
+	done
+}
+
+lv_full_name=
+lv_path=
+lv_dm_path=
+lv_size=
+exportlv() {
+	local reports rep lv lvs
+	lv_full_name=
+	lv_path=
+	lv_dm_path=
+	lv_size=
+	json_init
+
+	json_load "$(lvs -o lv_full_name,lv_size,lv_path,lv_dm_path -S "lv_name=~^r[ow]_$1\$ && vg_name=$vg_name")"
+	json_select report
+	json_get_keys reports
+	for rep in $reports; do
+		json_select "$rep"
+		json_select lv
+		json_get_keys lvs
+		for lv in $lvs; do
+			json_select "$lv"
+			json_get_vars lv_full_name lv_size lv_path lv_dm_path
+			lv_size=${lv_size%B}
+			json_select ..
+			break
+		done
+		json_select ..
+		break
+	done
 }
 
 getdev() {
 	existvol "$1" || return 1
-	readlink /dev/$(getlvname "$1")
+	exportlv "$1"
+	echo $lv_dm_path
 }
 
 getsize() {
-	lvs lvdisplay lvvars "$1"
-	[ "$lvsize" ] && echo $lvsize
+	exportlv "$1"
+	[ "$lv_size" ] && echo $lv_size
 }
 
 activatevol() {
-	LVM_SUPPRESS_FD_WARNINGS=1 lvchange -a y "$(getlvname "$1")"
+	exportlv "$1"
+	lvm_cmd lvchange -a y "$lv_full_name"
 }
 
 disactivatevol() {
-	existvol "$1" || return 1
-	LVM_SUPPRESS_FD_WARNINGS=1 lvchange -a n "$(getlvname "$1")"
+	exportlv "$1"
+	lvm_cmd lvchange -a n "$lv_full_name"
 }
 
 getstatus() {
-	lvs lvdisplay lvvars "$1"
-	[ "$lvsize" ] || return 2
+	exportlv "$1"
+	[ "$lv_full_name" ] || return 2
 	existvol "$1" || return 1
 	return 0
 }
 
 createvol() {
-	local mode ret lvname
+	local mode ret
+	local volsize=$(($2))
+	[ "$volsize" ] || return 22
+	exportlv "$1"
+	[ "$lv_size" ] && return 17
+	size_ext=$((volsize / vg_extent_size))
+	[ $((size_ext * vg_extent_size)) -lt $volsize ] && size_ext=$((size_ext + 1))
+
 	case "$3" in
 		ro)
 			mode=r
@@ -117,52 +189,81 @@ createvol() {
 			;;
 	esac
 
-	LVM_SUPPRESS_FD_WARNINGS=1 lvcreate -p $mode -a n -y -W n -Z n -n "${3}_${1}" -L "$2" $vgname
+	lvm_cmd lvcreate -p $mode -a n -y -W n -Z n -n "${3}_${1}" -l "$size_ext" $vg_name
 	ret=$?
 	if [ ! $ret -eq 0 ] || [ "$mode" = "r" ]; then
 		return $ret
 	fi
-	lvs lvdisplay lvvars "$1"
-	[ "$lvpath" ] || return 22
-	lvname=${lvpath:5}
-	LVM_SUPPRESS_FD_WARNINGS=1 lvchange -a y /dev/$lvname || return 1
-	if [ $lvsize -gt $(( 100 * 1024 * 1024 )) ]; then
-		mkfs.f2fs -f -l "$1" $lvpath || return 1
+	exportlv "$1"
+	[ "$lv_full_name" ] || return 22
+	lvm_cmd lvchange -a y "$lv_full_name" || return 1
+	if [ $lv_size -gt $(( 100 * 1024 * 1024 )) ]; then
+		mkfs.f2fs -f -l "$1" "$lv_path" || return 1
 	else
-		mke2fs -F -L "$1" $lvpath || return 1
+		mke2fs -F -L "$1" "$lv_path" || return 1
 	fi
 	return 0
 }
 
 removevol() {
-	local lvname="$(getlvname "$1")"
-	[ "$lvname" ] || return 2
-	LVM_SUPPRESS_FD_WARNINGS=1 lvremove -y "$(getlvname "$1")"
+	exportlv "$1"
+	[ "$lv_full_name" ] || return 2
+	lvm_cmd lvremove -y "$lv_full_name"
 }
 
 updatevol() {
-	lvs lvdisplay lvvars "$1"
-	[ "$lvpath" ] || return 2
-	[ $lvsize -ge $2 ] || return 27
-	LVM_SUPPRESS_FD_WARNINGS=1 lvchange -a y -p rw ${lvpath:5}
-	dd of=$lvpath
-	case "$lvpath" in
+	exportlv "$1"
+	[ "$lv_full_name" ] || return 2
+	[ $lv_size -ge $2 ] || return 27
+	lvm_cmd lvchange -a y -p rw "$lv_full_name"
+	dd of=$lv_path
+	case "$lv_path" in
 		/dev/*/ro_*)
-			LVM_SUPPRESS_FD_WARNINGS=1 lvchange -p r ${lvpath:5}
+			lvm_cmd lvchange -p r "$lv_full_name"
 			;;
 	esac
 }
 
-lvs pvdisplay pvvars
-lvs vgdisplay vgvars
-cmd="$1"
-shift
+listvols() {
+	local reports rep lv lvs lv_name lv_size lv_mode volname
+	volname=${1:-.*}
+	json_init
+	json_load "$(lvs -o lv_name,lv_size -S "lv_name=~^r[ow]_$volname\$ && vg_name=$vg_name")"
+	json_select report
+	json_get_keys reports
+	for rep in $reports; do
+		json_select "$rep"
+		json_select lv
+		json_get_keys lvs
+		for lv in $lvs; do
+			json_select "$lv"
+			json_get_vars lv_name lv_size
+			lv_mode="${lv_name:0:2}"
+			lv_name="${lv_name:3}"
+			lv_size=${lv_size%B}
+			echo "$lv_name $lv_mode $lv_size"
+			json_select ..
+		done
+		json_select ..
+		break
+	done
+}
+
+exportpv
+exportvg
+
 case "$cmd" in
+	align)
+		echo "$vg_extent_size"
+		;;
 	free)
 		freebytes
 		;;
 	total)
 		totalbytes
+		;;
+	list)
+		listvols "$@"
 		;;
 	create)
 		createvol "$@"
