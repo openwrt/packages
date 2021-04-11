@@ -26,7 +26,7 @@ define Package/crun
   CATEGORY:=Utilities
   TITLE:=crun
   URL:=https://github.com/containers/crun
-  DEPENDS:=+libseccomp +libcap
+  DEPENDS:=@!arc +libseccomp +libcap
 endef
 
 define Package/crun/description
