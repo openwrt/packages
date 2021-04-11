@@ -110,7 +110,7 @@ start_service() {
 		procd_open_data
 		json_add_array firewall
 		for c in $forceDNSPorts; do
-			if netstat -tuln | grep LISTEN | grep ":${c}" >/dev/null 2>&1; then
+			if netstat -tuln | grep 'LISTEN' | grep ":${c}" >/dev/null 2>&1 || [ "$c" = "53" ]; then
 				json_add_object ""
 				json_add_string type redirect
 				json_add_string target DNAT
