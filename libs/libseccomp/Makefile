@@ -56,7 +56,6 @@ endef
 define Package/libseccomp
 $(call Package/libseccomp/Default)
   TITLE+= (library)
-  DEPENDS+= @!arc
 endef
 
 define Package/scmp_sys_resolver
