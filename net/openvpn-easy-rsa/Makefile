@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=openvpn-easy-rsa
 
 PKG_VERSION:=3.0.8
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_SOURCE_URL:=https://codeload.github.com/OpenVPN/easy-rsa/tar.gz/v$(PKG_VERSION)?
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_HASH:=fd6b67d867c3b8afd53efa2ca015477f6658a02323e1799432083472ac0dd200
@@ -43,6 +43,7 @@ define Package/openvpn-easy-rsa/conffiles
 /etc/easy-rsa/vars
 /etc/easy-rsa/openssl-1.0.cnf
 /etc/easy-rsa/openssl-easyrsa.cnf
+/etc/profile.d/50-$(PKG_NAME).sh
 endef
 
 define Build/Configure
