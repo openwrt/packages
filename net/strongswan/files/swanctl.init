@@ -160,11 +160,13 @@ add_esp_proposal() {
 
 parse_esp_proposal() {
 	local conf="$1"
+	local var="$2"
+
 	local crypto=""
 
 	config_list_foreach "$conf" crypto_proposal add_esp_proposal
 
-	echo "$crypto"
+	export -n "$var=$crypto"
 }
 
 add_ike_proposal() {
@@ -190,11 +192,13 @@ add_ike_proposal() {
 
 parse_ike_proposal() {
 	local conf="$1"
+	local var="$2"
+
 	local crypto=""
 
 	config_list_foreach "$conf" crypto_proposal add_ike_proposal
 
-	echo "$crypto"
+	export -n "$var=$crypto"
 }
 
 config_conn() {
@@ -228,7 +232,8 @@ config_conn() {
 	config_get if_id "$1" if_id ""
 	config_get rekeytime "$1" rekeytime ""
 
-	local esp_proposal="$(parse_esp_proposal "$1")"
+	local esp_proposal
+	parse_esp_proposal "$1" esp_proposal
 
 	# translate from ipsec to swanctl
 	case "$startaction" in
@@ -387,7 +392,8 @@ config_remote() {
 		local_gateway=`ip -o route get $ipdest | awk '/ src / { gsub(/^.* src /,""); gsub(/ .*$/, ""); print $0}'`
 	}
 
-	local ike_proposal="$(parse_ike_proposal "$1")"
+	local ike_proposal
+	parse_ike_proposal "$1" ike_proposal
 
 	[ -n "$firewall" ] && warning "Firewall not supported"
 
