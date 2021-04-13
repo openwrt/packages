@@ -1,6 +1,6 @@
 --- a/meson.build
 +++ b/meson.build
-@@ -2185,16 +2185,10 @@ endif
+@@ -2220,16 +2220,10 @@ endif
  
  glib_conf.set('HAVE_PROC_SELF_CMDLINE', have_proc_self_cmdline)
  
@@ -17,4 +17,4 @@
 -
  # Determine which user environment-dependent files that we want to install
  have_bash = find_program('bash', required : false).found() # For completion scripts
- have_sh = find_program('sh', required : false).found() # For glib-gettextize
+ bash_comp_dep = dependency('bash-completion', version: '>=2.0', required: false)
