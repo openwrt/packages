@@ -9,6 +9,7 @@ config OCSERV_PAM
 
 config OCSERV_SECCOMP
 	bool "enable seccomp"
+	depends on !arc
 	default n
 
 config OCSERV_RADIUS
