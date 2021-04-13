@@ -434,7 +434,7 @@ $(eval $(call BuildPlugin,chrony,chrony status input,chrony,))
 $(eval $(call BuildPlugin,conntrack,connection tracking table size input,conntrack,))
 $(eval $(call BuildPlugin,contextswitch,context switch input,contextswitch,))
 $(eval $(call BuildPlugin,cpu,CPU input,cpu,))
-$(eval $(call BuildPlugin,cpufreq,CPU Freq input,cpufreq,@(TARGET_x86||TARGET_x86_64||TARGET_mvebu||TARGET_ipq806x||TARGET_armvirt||TARGET_ipq40xx||TARGET_bcm27xx_bcm2709))) # Only enable on targets with CPUs supporting frequency scaling
+$(eval $(call BuildPlugin,cpufreq,CPU Freq input,cpufreq,@(TARGET_x86||TARGET_x86_64||TARGET_mvebu||TARGET_ipq806x||TARGET_armvirt||TARGET_ipq40xx||TARGET_bcm27xx_bcm2709||TARGET_rockchip))) # Only enable on targets with CPUs supporting frequency scaling
 $(eval $(call BuildPlugin,csv,CSV output,csv,))
 $(eval $(call BuildPlugin,curl,cURL input,curl,+PACKAGE_collectd-mod-curl:libcurl))
 #$(eval $(call BuildPlugin,dbi,relational database input,dbi,+PACKAGE_collectd-mod-dbi:libdbi))
