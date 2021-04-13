@@ -1,6 +1,6 @@
 --- a/meson.build
 +++ b/meson.build
-@@ -2003,8 +2003,8 @@ endif
+@@ -2038,8 +2038,8 @@ endif
  # FIXME: glib-gettext.m4 has much more checks to detect broken/uncompatible
  # implementations. This could be extended if issues are found in some platforms.
  libintl_deps = []

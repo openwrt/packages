@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=glib2
-PKG_VERSION:=2.66.4
-PKG_RELEASE:=1
+PKG_VERSION:=2.68.1
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=glib-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=@GNOME/glib/2.66
-PKG_HASH:=97df8670e32f9fd4f7392b0980e661dd625012015d58350da1e58e343f4af984
+PKG_SOURCE_URL:=@GNOME/glib/2.68
+PKG_HASH:=241654b96bd36b88aaa12814efc4843b578e55d47440103727959ac346944333
 
 PKG_MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -57,15 +57,19 @@ COMP_ARGS= \
 	-Dman=false \
 	-Ddtrace=false \
 	-Dsystemtap=false \
+	-Dsysprof=disabled \
 	-Dgtk_doc=false \
 	-Dbsymbolic_functions=true \
 	-Dforce_posix_threads=true \
 	-Dfam=false \
+	-Dtests=false \
 	-Dinstalled_tests=false \
 	-Dnls=$(if $(CONFIG_BUILD_NLS),en,dis)abled \
 	-Doss_fuzz=disabled \
+	-Dglib_debug=disabled \
 	-Dglib_assert=false \
-	-Dglib_checks=false
+	-Dglib_checks=false \
+	-Dlibelf=disabled
 
 MESON_HOST_ARGS += $(COMP_ARGS) -Dxattr=false
 MESON_ARGS += $(COMP_ARGS) -Dxattr=true -Db_lto=true
