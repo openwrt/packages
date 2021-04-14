@@ -17,6 +17,8 @@ SWANCTL_VAR_CONF_FILE=/var/swanctl/swanctl.conf
 
 WAIT_FOR_INTF=0
 
+CONFIG_FAIL=0
+
 time2seconds()
 {
 	local timestring="$1"
@@ -128,11 +130,18 @@ warning() {
 	echo "WARNING: $@" >&2
 }
 
+fatal() {
+	echo "ERROR: $@" >&2
+	CONFIG_FAIL=1
+}
+
 is_aead() {
 	local cipher="$1"
 
 	case "$cipher" in
 	aes*gcm*|aes*ccm*|aes*gmac*)
+		return 0 ;;
+	chacha20poly1305)
 		return 0 ;;
 	esac
 
@@ -150,7 +159,7 @@ add_esp_proposal() {
 
 	# check for AEAD and clobber hash_algorithm if set
 	if is_aead "$encryption_algorithm" && [ -n "$hash_algorithm" ]; then
-		warning "Can't have $hash_algorithm with $encryption_algorithm"
+		fatal "Can't have $hash_algorithm with $encryption_algorithm"
 		hash_algorithm=
 	fi
 
@@ -160,11 +169,13 @@ add_esp_proposal() {
 
 parse_esp_proposal() {
 	local conf="$1"
+	local var="$2"
+
 	local crypto=""
 
 	config_list_foreach "$conf" crypto_proposal add_esp_proposal
 
-	echo "$crypto"
+	export -n "$var=$crypto"
 }
 
 add_ike_proposal() {
@@ -180,7 +191,7 @@ add_ike_proposal() {
 
 	# check for AEAD and clobber hash_algorithm if set
 	if is_aead "$encryption_algorithm" && [ -n "$hash_algorithm" ]; then
-		warning "Can't have $hash_algorithm with $encryption_algorithm"
+		fatal "Can't have $hash_algorithm with $encryption_algorithm"
 		hash_algorithm=
 	fi
 
@@ -190,11 +201,13 @@ add_ike_proposal() {
 
 parse_ike_proposal() {
 	local conf="$1"
+	local var="$2"
+
 	local crypto=""
 
 	config_list_foreach "$conf" crypto_proposal add_ike_proposal
 
-	echo "$crypto"
+	export -n "$var=$crypto"
 }
 
 config_conn() {
@@ -228,7 +241,8 @@ config_conn() {
 	config_get if_id "$1" if_id ""
 	config_get rekeytime "$1" rekeytime ""
 
-	local esp_proposal="$(parse_esp_proposal "$1")"
+	local esp_proposal
+	parse_esp_proposal "$1" esp_proposal
 
 	# translate from ipsec to swanctl
 	case "$startaction" in
@@ -240,7 +254,7 @@ config_conn() {
 		# already using new syntax
 		;;
 	*)
-		warning "Startaction $startaction unknown"
+		fatal "Startaction $startaction unknown"
 		startaction=
 		;;
 	esac
@@ -256,7 +270,7 @@ config_conn() {
 		# already using new syntax
 		;;
 	*)
-		warning "Closeaction $closeaction unknown"
+		fatal "Closeaction $closeaction unknown"
 		closeaction=
 		;;
 	esac
@@ -278,7 +292,7 @@ config_conn() {
 		# already using new syntax
 		;;
 	*)
-		warning "Dpdaction $dpdaction unknown"
+		fatal "Dpdaction $dpdaction unknown"
 		dpdaction=
 		;;
 	esac
@@ -373,7 +387,7 @@ config_remote() {
 		# already using new syntax
 		;;
 	*)
-		warning "Fragmentation $fragmentation not supported"
+		fatal "Fragmentation $fragmentation not supported"
 		fragmentation=
 		;;
 	esac
@@ -387,9 +401,10 @@ config_remote() {
 		local_gateway=`ip -o route get $ipdest | awk '/ src / { gsub(/^.* src /,""); gsub(/ .*$/, ""); print $0}'`
 	}
 
-	local ike_proposal="$(parse_ike_proposal "$1")"
+	local ike_proposal
+	parse_ike_proposal "$1" ike_proposal
 
-	[ -n "$firewall" ] && warning "Firewall not supported"
+	[ -n "$firewall" ] && fatal "Firewall not supported"
 
 	swanctl_xappend0 "# config for $config_name"
 	swanctl_xappend0 "connections {"
@@ -428,7 +443,7 @@ config_remote() {
 	ikev2)
 		swanctl_xappend2 "version = 2" ;;
 	*)
-		warning "Keyexchange $keyexchange not supported"
+		fatal "Keyexchange $keyexchange not supported"
 		keyexchange=
 		;;
 	esac
@@ -483,7 +498,7 @@ config_remote() {
 			fi
 		fi
 	else
-		warning "AuthenticationMode $auth_mode not supported"
+		fatal "AuthenticationMode $auth_mode not supported"
 	fi
 
 	swanctl_xappend0 ""
@@ -586,6 +601,11 @@ start_service() {
 	prepare_env
 
 	[ $WAIT_FOR_INTF -eq 1 ] && return
+
+	if [ $CONFIG_FAIL -ne 0 ]; then
+		procd_set_param error "Invalid configuration"
+		return
+	fi
 
 	procd_open_instance
 
