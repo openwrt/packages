@@ -34,8 +34,8 @@ SHORT_DOMAIN="${DOMAIN%%.*}"
 ORG="$1"; shift
 
 # invariants...
-STRONGSWANDIR=/etc
-SWANCTL_DIR=$STRONGSWANDIR/swanctl
+SYSCONFDIR=/etc
+SWANCTL_DIR="$SYSCONFDIR/swanctl"
 : ${KEYINFO:="rsa:4096"}
 : ${CADAYS:=3650}
 : ${CRTDAYS:=730}
@@ -140,7 +140,7 @@ ROOTDN="$(makeDN "$C" "$ORG" "Root CA")"
 
 [ -f "$SWANCTL_DIR/x509ca/$SHORT_DOMAIN.crt" ] || genca
 
-PARENT="$STRONGSWANDIR"
+PARENT="$SYSCONFDIR"
 BASEDIR="${SWANCTL_DIR##$PARENT/}"
 
 for name in "$@"; do
