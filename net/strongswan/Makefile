@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=strongswan
 PKG_VERSION:=5.9.2
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://download.strongswan.org/ https://download2.strongswan.org/
@@ -418,6 +418,17 @@ $(call Package/strongswan/description/Default)
  This package contains the swanctl utility.
 endef
 
+define Package/strongswan-gencerts
+$(call Package/strongswan/Default)
+  TITLE+= X.509 certificate generation utility
+  DEPENDS:= strongswan +strongswan-pki bash
+endef
+
+define Package/strongswan-gencerts/description
+$(call Package/strongswan/description/Default)
+ This package contains the X.509 certificate generation utility.
+endef
+
 define Package/strongswan-libtls
 $(call Package/strongswan/Default)
   TITLE+= libtls
@@ -576,6 +587,11 @@ define Package/strongswan-swanctl/install
 	$(INSTALL_BIN) ./files/swanctl.init $(1)/etc/init.d/swanctl
 endef
 
+define Package/strongswan-gencerts/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) ./files/gencerts.sh $(1)/usr/bin/gencerts
+endef
+
 define Package/strongswan-libtls/install
 	$(INSTALL_DIR) $(1)/usr/lib/ipsec
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/libtls.so.* $(1)/usr/lib/ipsec/
@@ -651,6 +667,7 @@ $(eval $(call BuildPackage,strongswan-libnttfft))
 $(eval $(call BuildPackage,strongswan-pki))
 $(eval $(call BuildPackage,strongswan-scepclient))
 $(eval $(call BuildPackage,strongswan-swanctl))
+$(eval $(call BuildPackage,strongswan-gencerts))
 $(eval $(call BuildPackage,strongswan-libtls))
 $(eval $(call BuildPlugin,addrblock,RFC 3779 address block constraint support,))
 $(eval $(call BuildPlugin,aes,AES crypto,))
