@@ -31,17 +31,17 @@ getdev() {
 	local voldir volname devname
 	for voldir in /sys/devices/virtual/ubi/${ubidev}/${ubidev}_*; do
 		read volname < "${voldir}/name"
-		[ "$volname" = "uvol-ro-$1" ] || [ "$volname" = "uvol-rw-$1" ] || continue
+		[ "$volname" = "uvol-ro-$1" ] || [ "$volname" = "uvol-wp-$1" ] || [ "$volname" = "uvol-rw-$1" ] || [ "$volname" = "uvol-wo-$1" ] || continue
 		basename "$voldir"
 	done
 }
 
-needs_ubiblock() {
+vol_is_mode() {
 	local voldev="$1"
 	local volname
 	read volname < "/sys/devices/virtual/ubi/${ubidev}/${voldev}/name"
 	case "$volname" in
-		uvol-ro-*)
+		uvol-$2-*)
 			return 0
 			;;
 	esac
@@ -51,7 +51,8 @@ needs_ubiblock() {
 getstatus() {
 	local voldev=$(getdev "$@")
 	[ "$voldev" ] || return 2
-	needs_ubiblock $voldev && [ ! -e "/dev/ubiblock${voldev:3}" ] && return 1
+	vol_is_mode $voldev wo && return 1
+	vol_is_mode $voldev ro && [ ! -e "/dev/ubiblock${voldev:3}" ] && return 1
 	return 0
 }
 
@@ -65,9 +66,9 @@ getsize() {
 getuserdev() {
 	local voldev=$(getdev "$@")
 	[ "$voldev" ] || return 2
-	if needs_ubiblock $voldev ; then
+	if vol_is_mode $voldev ro ; then
 		echo "/dev/ubiblock${voldev:3}"
-	else
+	elif vol_is_mode $voldev rw ; then
 		echo "/dev/$voldev"
 	fi
 }
@@ -77,11 +78,11 @@ createvol() {
 	local existdev=$(getdev "$@")
 	[ "$existdev" ] && return 17
 	case "$3" in
-		ro)
-			mode=ro
+		ro|wo)
+			mode=wo
 			;;
 		rw)
-			mode=rw
+			mode=wp
 			;;
 		*)
 			return 22
@@ -91,6 +92,12 @@ createvol() {
 	ret=$?
 	[ $ret -eq 0 ] || return $ret
 	ubiupdatevol -t /dev/$(getdev "$@")
+	[ "$mode" = "wp" ] || return 0
+	local tmp_mp=$(mktemp -d)
+	mount -t ubifs /dev/$(getdev "$@") $tmp_mp
+	umount $tmp_mp
+	rmdir $tmp_mp
+	ubirename /dev/$ubidev uvol-wp-$1 uvol-rw-$1
 }
 
 removevol() {
@@ -103,7 +110,8 @@ removevol() {
 activatevol() {
 	local voldev=$(getdev "$@")
 	[ "$voldev" ] || return 2
-	needs_ubiblock $voldev || return 0
+	vol_is_mode $voldev wo || return 1
+	vol_is_mode $voldev ro || return 0
 	[ -e "/dev/ubiblock${voldev:3}" ] && return 0
 	ubiblock --create /dev/$voldev
 }
@@ -111,7 +119,7 @@ activatevol() {
 disactivatevol() {
 	local voldev=$(getdev "$@")
 	[ "$voldev" ] || return 2
-	needs_ubiblock $voldev || return 0
+	vol_is_mode $voldev ro || return 0
 	[ -e "/dev/ubiblock${voldev:3}" ] || return 0
 	ubiblock --remove /dev/$voldev
 }
@@ -120,15 +128,9 @@ updatevol() {
 	local voldev=$(getdev "$@")
 	[ "$voldev" ] || return 2
 	[ "$2" ] || return 22
-	needs_ubiblock $voldev || return 22
+	vol_is_mode $voldev wo || return 22
 	ubiupdatevol -s $2 /dev/$voldev -
-}
-
-getstatus() {
-	local voldev=$(getdev "$@")
-	[ "$voldev" ] || return 2
-	needs_ubiblock $voldev && [ ! -e "/dev/ubiblock${voldev:3}" ] && return 1
-	return 0
+	ubirename /dev/$ubidev uvol-wo-$1 uvol-ro-$1
 }
 
 listvols() {

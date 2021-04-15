@@ -41,7 +41,7 @@ vgs() {
 }
 
 lvs() {
-	lvm_cmd vgs --reportformat json --units b "$@"
+	lvm_cmd lvs --reportformat json --units b "$@"
 }
 
 freebytes() {
@@ -121,7 +121,7 @@ exportlv() {
 	lv_size=
 	json_init
 
-	json_load "$(lvs -o lv_full_name,lv_size,lv_path,lv_dm_path -S "lv_name=~^r[ow]_$1\$ && vg_name=$vg_name")"
+	json_load "$(lvs -o lv_full_name,lv_size,lv_path,lv_dm_path -S "lv_name=~^[rw][ow]_$1\$ && vg_name=$vg_name")"
 	json_select report
 	json_get_keys reports
 	for rep in $reports; do
@@ -153,7 +153,15 @@ getsize() {
 
 activatevol() {
 	exportlv "$1"
-	lvm_cmd lvchange -a y "$lv_full_name"
+	case "$lv_path" in
+		/dev/*/wo_*)
+			return 22
+			;;
+		*)
+			lvm_cmd lvchange -a y "$lv_full_name"
+			return 0
+			;;
+	esac
 }
 
 disactivatevol() {
@@ -169,7 +177,7 @@ getstatus() {
 }
 
 createvol() {
-	local mode ret
+	local mode lvmode ret
 	local volsize=$(($2))
 	[ "$volsize" ] || return 22
 	exportlv "$1"
@@ -178,10 +186,12 @@ createvol() {
 	[ $((size_ext * vg_extent_size)) -lt $volsize ] && size_ext=$((size_ext + 1))
 
 	case "$3" in
-		ro)
-			mode=r
+		ro|wo)
+			lvmode=r
+			mode=wo
 			;;
 		rw)
+			lvmode=rw
 			mode=rw
 			;;
 		*)
@@ -189,9 +199,9 @@ createvol() {
 			;;
 	esac
 
-	lvm_cmd lvcreate -p $mode -a n -y -W n -Z n -n "${3}_${1}" -l "$size_ext" $vg_name
+	lvm_cmd lvcreate -p $lvmode -a n -y -W n -Z n -n "${mode}_${1}" -l "$size_ext" $vg_name
 	ret=$?
-	if [ ! $ret -eq 0 ] || [ "$mode" = "r" ]; then
+	if [ ! $ret -eq 0 ] || [ "$lvmode" = "r" ]; then
 		return $ret
 	fi
 	exportlv "$1"
@@ -215,11 +225,16 @@ updatevol() {
 	exportlv "$1"
 	[ "$lv_full_name" ] || return 2
 	[ $lv_size -ge $2 ] || return 27
-	lvm_cmd lvchange -a y -p rw "$lv_full_name"
-	dd of=$lv_path
 	case "$lv_path" in
-		/dev/*/ro_*)
+		/dev/*/wo_*)
+			lvm_cmd lvchange -a y -p rw "$lv_full_name"
+			dd of=$lv_path
 			lvm_cmd lvchange -p r "$lv_full_name"
+			lvm_cmd lvrename "$lv_full_name" "${lv_full_name%%/*}/ro_$1"
+			return 0
+			;;
+		default)
+			return 22
 			;;
 	esac
 }
@@ -228,7 +243,7 @@ listvols() {
 	local reports rep lv lvs lv_name lv_size lv_mode volname
 	volname=${1:-.*}
 	json_init
-	json_load "$(lvs -o lv_name,lv_size -S "lv_name=~^r[ow]_$volname\$ && vg_name=$vg_name")"
+	json_load "$(lvs -o lv_name,lv_size -S "lv_name=~^[rw][ow]_$volname\$ && vg_name=$vg_name")"
 	json_select report
 	json_get_keys reports
 	for rep in $reports; do

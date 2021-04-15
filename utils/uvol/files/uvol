@@ -2,8 +2,6 @@
 
 # uvol prototype
 # future development roadmap (aka. to-do):
-# * atomic create using temp volnames
-# * create read-only volumes as 'write-once', introduce 'pending' state until written
 # * re-implement in C (use libubox, execve lvm/ubi*)
 # * add atomic batch processing for use by container/package manager
 
