@@ -11,6 +11,7 @@ uvol storage volume manager
 syntax: uvol command ...
 
 commands:
+  boot				get active volumes ready (called on boot)
   free				show number of bytes available
   total				show total number of bytes
   align				show sector size in bytes
