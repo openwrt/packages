@@ -68,6 +68,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * Supports five different DNS backend formats: dnsmasq, unbound, named (bind), kresd or raw (e.g. used by dnscrypt-proxy)
 * Supports four different SSL-enabled download utilities: uclient-fetch, wget, curl or aria2c
 * Supports SafeSearch for google, bing, duckduckgo, yandex, youtube and pixabay
+* Supports RPZ-trigger 'RPZ-CLIENT-IP' to always allow/deny certain DNS clients based on their IP address (currently only supported by bind dns backend)
 * Fast downloads & list processing as they are handled in parallel running background jobs with multicore support
 * Supports a wide range of router modes, even AP modes are supported
 * Full IPv4 and IPv6 support
@@ -159,7 +160,7 @@ Available commands:
 | adb_dnsinstance    | 0, first instance                  | set to the relevant dns backend instance used by adblock (dnsmasq only)                        |
 | adb_dnsflush       | 0, disabled                        | set to 1 to flush the DNS Cache before & after adblock processing                              |
 | adb_dnsinotify     | -, not set                         | set to 1 to prevent adblock triggered restarts for DNS backends with autoload functions        |
-| adb_dnsallow       | -, not set                         | set to 1 to disable selective DNS whitelisting (RPZ pass through)                              |
+| adb_dnsallow       | -, not set                         | set to 1 to disable selective DNS whitelisting (RPZ-PASSTHRU)                                  |
 | adb_lookupdomain   | example.com                        | external domain to check for a successful DNS backend restart or 'false' to disable this check |
 | adb_portlist       | 53 853 5353                        | space separated list of firewall ports which should be redirected locally                      |
 | adb_report         | 0, disabled                        | set to 1 to enable the background tcpdump gathering process for reporting                      |
@@ -189,7 +190,6 @@ No further configuration is needed, adblock deposits the final blocklist 'adb_li
 
 **Change the DNS backend to 'named' (bind):**  
 Adblock deposits the final blocklist 'adb_list.overall' in '/var/lib/bind'.  
-To preserve the DNS cache after adblock processing you need to install & configure 'bind-rdnc'.  
 To use the blocklist please modify '/etc/bind/named.conf':
 <pre><code>
 in the 'options' namespace add:
@@ -209,7 +209,7 @@ Adblock deposits the final blocklist 'adb_list.overall' in '/etc/kresd', no furt
 <b>Please note:</b> The knot-resolver (kresd) is only available on Turris devices and does not support the SafeSearch functionality yet.
 
 **Use restrictive jail modes:**  
-You can enable a restrictive 'adb_list.jail' to block access to all domains except those listed in the whitelist file. Usually this list will be generated as an additional list for guest or kidsafe configurations (for a separate dns server instance). If the jail directory points to your primary dns directory, adblock enables the restrice jail mode (jail mode only).
+You can enable a restrictive 'adb_list.jail' to block access to all domains except those listed in the whitelist file. Usually this list will be generated as an additional list for guest or kidsafe configurations (for a separate dns server instance). If the jail directory points to your primary dns directory, adblock enables the restrictive jail mode automatically (jail mode only).
 
 **Enable E-Mail notification via 'msmtp':**  
 To use the email notification you have to install & configure the package 'msmtp'.  
