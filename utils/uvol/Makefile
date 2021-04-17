@@ -63,10 +63,11 @@ define Package/autopart/install
 endef
 
 define Package/uvol/install
-	$(INSTALL_DIR) $(1)/usr/sbin $(1)/usr/libexec/uvol
-	$(INSTALL_BIN) ./files/uvol $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/etc/init.d $(1)/usr/libexec/uvol $(1)/usr/sbin
+	$(INSTALL_BIN) ./files/uvol.init $(1)/etc/init.d/uvol
 	$(INSTALL_BIN) ./files/ubi.sh $(1)/usr/libexec/uvol/20-ubi.sh
 	$(INSTALL_BIN) ./files/lvm.sh $(1)/usr/libexec/uvol/50-lvm.sh
+	$(INSTALL_BIN) ./files/uvol $(1)/usr/sbin
 endef
 
 $(eval $(call BuildPackage,autopart))

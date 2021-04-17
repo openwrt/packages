@@ -31,8 +31,15 @@ getdev() {
 	local voldir volname devname
 	for voldir in /sys/devices/virtual/ubi/${ubidev}/${ubidev}_*; do
 		read volname < "${voldir}/name"
-		[ "$volname" = "uvol-ro-$1" ] || [ "$volname" = "uvol-wp-$1" ] || [ "$volname" = "uvol-rw-$1" ] || [ "$volname" = "uvol-wo-$1" ] || continue
-		basename "$voldir"
+		case "$volname" in
+			uvol-[rw][owpd]-$1)
+				basename "$voldir"
+				break
+				;;
+			*)
+				continue
+				;;
+		esac
 	done
 }
 
@@ -51,7 +58,9 @@ vol_is_mode() {
 getstatus() {
 	local voldev=$(getdev "$@")
 	[ "$voldev" ] || return 2
-	vol_is_mode $voldev wo && return 1
+	vol_is_mode $voldev wo && return 22
+	vol_is_mode $voldev wp && return 16
+	vol_is_mode $voldev wd && return 1
 	vol_is_mode $voldev ro && [ ! -e "/dev/ubiblock${voldev:3}" ] && return 1
 	return 0
 }
@@ -73,10 +82,17 @@ getuserdev() {
 	fi
 }
 
+mkubifs() {
+	local tmp_mp=$(mktemp -d)
+	mount -t ubifs $1 $tmp_mp
+	umount $tmp_mp
+	rmdir $tmp_mp
+}
+
 createvol() {
 	local mode ret
-	local existdev=$(getdev "$@")
-	[ "$existdev" ] && return 17
+	local voldev=$(getdev "$@")
+	[ "$voldev" ] && return 17
 	case "$3" in
 		ro|wo)
 			mode=wo
@@ -91,37 +107,61 @@ createvol() {
 	ubimkvol /dev/$ubidev -N "uvol-$mode-$1" -s "$2"
 	ret=$?
 	[ $ret -eq 0 ] || return $ret
-	ubiupdatevol -t /dev/$(getdev "$@")
+	voldev=$(getdev "$@")
+	ubiupdatevol -t /dev/$voldev
 	[ "$mode" = "wp" ] || return 0
-	local tmp_mp=$(mktemp -d)
-	mount -t ubifs /dev/$(getdev "$@") $tmp_mp
-	umount $tmp_mp
-	rmdir $tmp_mp
+	mkubifs /dev/$voldev
 	ubirename /dev/$ubidev uvol-wp-$1 uvol-rw-$1
+	ubus send block.volume "{\"name\": \"$1\", \"action\": \"up\", \"mode\": \"rw\", \"fstype\": \"ubifs\", \"device\": \"/dev/$voldev\"}"
 }
 
 removevol() {
 	local voldev=$(getdev "$@")
+	local evdata
 	[ "$voldev" ] || return 2
 	local volnum=${voldev#${ubidev}_}
-	ubirmvol /dev/$ubidev -n $volnum
+	if vol_is_mode $voldev rw ; then
+		evdata="{\"name\": \"$1\", \"action\": \"down\", \"device\": \"/dev/$voldev\"}"
+	elif vol_is_mode $voldev ro ; then
+		evdata="{\"name\": \"$1\", \"action\": \"down\", \"device\": \"/dev/ubiblock${voldev:3}\"}"
+	fi
+	ubirmvol /dev/$ubidev -n $volnum || return $?
+	ubus send block.volume "$evdata"
 }
 
 activatevol() {
 	local voldev=$(getdev "$@")
 	[ "$voldev" ] || return 2
-	vol_is_mode $voldev wo || return 1
-	vol_is_mode $voldev ro || return 0
-	[ -e "/dev/ubiblock${voldev:3}" ] && return 0
-	ubiblock --create /dev/$voldev
+	vol_is_mode $voldev rw && return 0
+	vol_is_mode $voldev wo && return 22
+	vol_is_mode $voldev wp && return 16
+	if vol_is_mode $voldev ro; then
+		[ -e "/dev/ubiblock${voldev:3}" ] && return 0
+		ubiblock --create /dev/$voldev
+		ubus send block.volume "{\"name\": \"$1\", \"action\": \"up\", \"mode\": \"ro\", \"device\": \"/dev/ubiblock${voldev:3}\"}"
+		return 0
+	elif vol_is_mode $voldev wd; then
+		ubirename /dev/$ubidev uvol-wd-$1 uvol-rw-$1
+		ubus send block.volume "{\"name\": \"$1\", \"action\": \"up\", \"mode\": \"rw\", \"fstype\": \"ubifs\", \"device\": \"/dev/$voldev\"}"
+		return 0
+	fi
 }
 
 disactivatevol() {
 	local voldev=$(getdev "$@")
 	[ "$voldev" ] || return 2
-	vol_is_mode $voldev ro || return 0
-	[ -e "/dev/ubiblock${voldev:3}" ] || return 0
-	ubiblock --remove /dev/$voldev
+	vol_is_mode $voldev wo && return 22
+	vol_is_mode $voldev wp && return 16
+	if vol_is_mode $voldev ro; then
+		[ -e "/dev/ubiblock${voldev:3}" ] || return 0
+		ubiblock --remove /dev/$voldev || return $?
+		ubus send block.volume "{\"name\": \"$1\", \"action\": \"down\", \"mode\": \"ro\", \"device\": \"/dev/ubiblock${voldev:3}\"}"
+		return 0
+	elif vol_is_mode $voldev rw; then
+		ubirename /dev/$ubidev uvol-rw-$1 uvol-wd-$1 || return $?
+		ubus send block.volume "{\"name\": \"$1\", \"action\": \"down\", \"mode\": \"rw\", \"device\": \"/dev/$voldev\"}"
+		return 0
+	fi
 }
 
 updatevol() {
@@ -131,6 +171,8 @@ updatevol() {
 	vol_is_mode $voldev wo || return 22
 	ubiupdatevol -s $2 /dev/$voldev -
 	ubirename /dev/$ubidev uvol-wo-$1 uvol-ro-$1
+	ubiblock --create /dev/$voldev
+	ubus send block.volume "{\"name\": \"$1\", \"action\": \"up\", \"mode\": \"ro\", \"device\": \"/dev/ubiblock${voldev:3}\"}"
 }
 
 listvols() {
@@ -138,7 +180,7 @@ listvols() {
 	for voldir in /sys/devices/virtual/ubi/${ubidev}/${ubidev}_*; do
 		read volname < $voldir/name
 		case "$volname" in
-			uvol-r[wo]*)
+			uvol-[rw][wod]*)
 				read volsize < $voldir/data_bytes
 				;;
 			*)
@@ -151,6 +193,31 @@ listvols() {
 	done
 }
 
+bootvols() {
+	local volname volmode volsize voldev fstype
+	for voldir in /sys/devices/virtual/ubi/${ubidev}/${ubidev}_*; do
+		read volname < $voldir/name
+		voldev=$(basename $voldir)
+		fstype=
+		case "$volname" in
+			uvol-ro-*)
+				voldev="/dev/ubiblock${voldev:3}"
+				ubiblock --create /dev/$voldev
+				;;
+			uvol-rw-*)
+				voldev="/dev/$voldev"
+				fstype="ubifs"
+				;;
+			*)
+				continue
+				;;
+		esac
+		volmode=${volname:5:2}
+		volname=${volname:8}
+		ubus send block.volume "{\"name\": \"$volname\", \"action\": \"up\", \"mode\": \"$volmode\",${fstype:+ \"fstype\": \"$fstype\", }\"device\": \"$voldev\"}"
+	done
+}
+
 case "$cmd" in
 	align)
 		echo "$ebsize"
@@ -160,6 +227,9 @@ case "$cmd" in
 		;;
 	total)
 		totalbytes
+		;;
+	boot)
+		bootvols
 		;;
 	list)
 		listvols "$@"
