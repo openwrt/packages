@@ -1,6 +1,6 @@
 --- a/irqbalance.h
 +++ b/irqbalance.h
-@@ -162,7 +162,7 @@ extern unsigned int log_mask;
+@@ -165,7 +165,7 @@ extern unsigned int log_mask;
  #endif /* HAVE_LIBSYSTEMD */
  
  #define SOCKET_PATH "irqbalance"
