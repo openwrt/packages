@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nextdns
-PKG_VERSION:=1.11.0
+PKG_VERSION:=1.12.3
 PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 PKG_SOURCE_URL:=https://github.com/nextdns/nextdns.git
-PKG_MIRROR_HASH:=3653c320504d20032dd844bd20a7629a3e6eba589bac552218ddfe826f3ce481
+PKG_MIRROR_HASH:=a8aab394d717a838345413323341767650d3171c0336e14ddf90f3ec826ba7e2
 
 PKG_MAINTAINER:=Olivier Poitrey <rs@nextdns.io>
 PKG_LICENSE:=MIT
@@ -27,6 +27,7 @@ PKG_USE_MIPS16:=0
 GO_PKG:=github.com/nextdns/nextdns
 GO_PKG_LDFLAGS:=-s -w
 GO_PKG_LDFLAGS_X:=main.version=$(PKG_VERSION)
+GO_PKG_TAGS:=nohttp3
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
