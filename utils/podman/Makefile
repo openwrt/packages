@@ -1,9 +1,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=podman
-PKG_VERSION:=3.0.1
+PKG_VERSION:=3.1.1
 PKG_RELEASE:=$(AUTORELEASE)
-PKG_HASH:=259e682d6e90595573fe8880e0252cc8b08c813e19408b911c43383a6edd6852
+PKG_HASH:=4e6fb106c6363566b6edc4ac6caee0bdf6b788e01255c3b3bfcb64f4b6842229
 
 PKG_SOURCE_URL:=https://github.com/containers/podman/archive/v$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -17,7 +17,7 @@ PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
 GO_PKG:=github.com/containers/podman/
-GO_PKG_BUILD_PKG:=github.com/containers/podman/v2/cmd/podman/
+GO_PKG_BUILD_PKG:=github.com/containers/podman/v3/cmd/podman/
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
@@ -79,9 +79,9 @@ endef
 Package/podman-selinux/conffiles = $(Package/podman/conffiles)
 
 ifeq ($(BUILD_VARIANT),selinux)
-  GO_PKG_TAGS=seccomp,exclude_graphdriver_devicemapper,selinux
+  GO_PKG_TAGS=seccomp,exclude_graphdriver_devicemapper,selinux,apparmor
 else
-  GO_PKG_TAGS=seccomp,exclude_graphdriver_devicemapper
+  GO_PKG_TAGS=seccomp,exclude_graphdriver_devicemapper,apparmor
 endif
 
 define Build/Prepare
