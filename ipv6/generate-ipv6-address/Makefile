@@ -7,7 +7,6 @@ PKG_RELEASE:=$(AUTORELEASE)
 PKG_SOURCE:=generate-ipv6-address-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.irif.fr/~jch/software/files/
 PKG_HASH:=e1356d245d5f891fa39b796a8a2deefdaa89f08130dc97a378738ca5ed9a20fa
-PKG_INSTALL:=1
 
 PKG_MAINTAINER:=Nick Hainke <vincent@systemli.org>
 PKG_LICENSE:=MIT
@@ -27,12 +26,13 @@ define Package/generate-ipv6-address/description
  address (an Ethernet hardware address) or a randomly drawn host number.
 endef
 
-MAKE_FLAGS += \
-	PREFIX="$(PKG_INSTALL_DIR)/usr"
+define Build/Compile
+	$(TARGET_CC) $(TARGET_CFLAGS) $(TARGET_LDFLAGS) $(PKG_BUILD_DIR)/generate-ipv6-address.c -o $(PKG_BUILD_DIR)/generate-ipv6-address
+endef
 
 define Package/generate-ipv6-address/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/generate-ipv6-address $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/generate-ipv6-address $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,generate-ipv6-address))
