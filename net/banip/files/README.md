@@ -50,6 +50,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * auto-add unsuccessful LuCI, nginx or ssh login attempts via 'dropbear'/'sshd' to local blacklist
 * auto-add the uplink subnet to local whitelist
 * black- and whitelist also accept domain names as input to allow IP filtering based on these names
+* supports a 'whitelist only' mode, this option allows to restrict Internet access from/to a small number of secure websites/IPs
 * provides a small background log monitor to ban unsuccessful login attempts in real-time
 * per source configuration of SRC (incoming) and DST (outgoing)
 * integrated IPSet-Lookup
@@ -122,6 +123,7 @@ Available commands:
 | ban_logdst_enabled      | option | 0                             | enable the dst-related logchain                                                       |
 | ban_autoblacklist       | option | 1                             | add suspicious IPs automatically to the local blacklist                               |
 | ban_autowhitelist       | option | 1                             | add wan IPs/subnets automatically to the local whitelist                              |
+| ban_whitelistonly       | option | 0                             | allow to restrict Internet access from/to a small number of secure websites/IPs       |
 | ban_maxqueue            | option | 4                             | size of the download queue to handle downloads and processing in parallel             |
 | ban_reportdir           | option | /tmp/banIP-Report             | directory where banIP stores the report files                                         |
 | ban_backupdir           | option | /tmp/banIP-Backup             | directory where banIP stores the compressed backup files                              |
@@ -206,24 +208,26 @@ Available commands:
 ~# /etc/init.d/banip status
 ::: banIP runtime information
   + status          : enabled
-  + version         : 0.7.5
-  + ipset_info      : 27 IPSets with 280704 IPs/Prefixes
-  + active_sources  : blacklist, country, darklist, debl, doh, drop, dshield, feodo, firehol1, greensnow, iblockspy, nix
-                      spam, sslbl, talos, threat, tor, uceprotect1, voip, whitelist, yoyo
-  + active_devs     : eth3
-  + active_ifaces   : wan, wan6
-  + active_logterms : dropbear, luci
-  + active_subnets  : xxx.xxx.x.xxx/24, xxxx:xxxx:xxxx:0:xxxx:xxxx:xxxx:xxxx/64
-  + run_infos       : settype: src+dst, backup_dir: /mnt/data/banIP/backup, report_dir: /mnt/data/banIP/report
-  + run_flags       : protocols (4/6): ✔/✔, log (src/dst): ✔/✘, monitor: ✔, mail: ✔
-  + last_run        : refresh, 0m 15s, 4019/3743/3784, 15.03.2021 09:28:01
-  + system          : PC Engines apu4, OpenWrt SNAPSHOT r16186-bf4aa0c6a2
+  + version         : 0.7.7
+  + ipset_info      : 2 IPSets with 30 IPs/Prefixes
+  + active_sources  : whitelist
+  + active_devs     : wlan0
+  + active_ifaces   : trm_wwan, trm_wwan6
+  + active_logterms : dropbear, sshd, luci, nginx
+  + active_subnets  : xxx.xxx.xxx.xxx/24, xxxx:xxxx:xxxx:xx::xxx/128
+  + run_infos       : settype: src+dst, backup_dir: /tmp/banIP-Backup, report_dir: /tmp/banIP-Report
+  + run_flags       : protocols (4/6): ✔/✔, log (src/dst): ✔/✘, monitor: ✔, mail: ✘, whitelist only: ✔
+  + last_run        : restart, 0m 3s, 122/30/14, 21.04.2021 20:14:36
+  + system          : TP-Link RE650 v1, OpenWrt SNAPSHOT r16574-f7e00d81bc
 </code></pre>
   
 **black-/whitelist handling:**  
 banIP supports a local black & whitelist (IPv4, IPv6, CIDR notation or domain names), located by default in /etc/banip/banip.whitelist and /etc/banip/banip.blacklist.  
 Unsuccessful LuCI logins, suspicious nginx request or ssh login attempts via 'dropbear'/'sshd' could be tracked and automatically added to the local blacklist (see the 'ban_autoblacklist' option). Furthermore the uplink subnet could be automatically added to local whitelist (see 'ban_autowhitelist' option). The list behaviour could be further tweaked with different timeout and counter options (see the config options section above).  
 Last but not least, both lists also accept domain names as input to allow IP filtering based on these names. The corresponding IPs (IPv4 & IPv6) will be resolved in a detached background process and added to the IPsets. The detached name lookup takes place only during 'restart' or 'reload' action, 'start' and 'refresh' actions are using an auto-generated backup instead.
+  
+**whitelist-only mode:**  
+banIP supports a "whitelist only" mode. This option allows to restrict the internet access from/to a small number of secure websites/IPs, and block access from/to the rest of the internet. All IPs and Domains which are _not_ listed in the whitelist are blocked. Please note: suspend/resume does not work in this mode.
   
 **generate an IPSet report:**  
 <pre><code>
