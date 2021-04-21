@@ -1,0 +1,18 @@
+--- a/src/include/gnunet_common.h
++++ b/src/include/gnunet_common.h
+@@ -150,7 +150,6 @@ enum GNUNET_GenericReturnValue
+  * Endian operations
+  */
+ 
+-#if __BYTE_ORDER == __LITTLE_ENDIAN
+ #ifdef HAVE_BYTESWAP_H
+ #define BYTE_SWAP_16(x) bswap_16 (x)
+ #define BYTE_SWAP_32(x) bswap_32 (x)
+@@ -170,6 +169,7 @@ enum GNUNET_GenericReturnValue
+                                              56))
+ #endif
+ 
++#if __BYTE_ORDER == __LITTLE_ENDIAN
+ #define GNUNET_htobe16(x) BYTE_SWAP_16 (x)
+ #define GNUNET_htole16(x) (x)
+ #define GNUNET_be16toh(x) BYTE_SWAP_16 (x)

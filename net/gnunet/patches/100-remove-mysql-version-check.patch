@@ -1,0 +1,38 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -981,33 +981,13 @@ AC_ARG_WITH([mysql],
+     AC_CHECK_LIB([mysqlclient], [mysql_init],
+       [AC_CHECK_HEADERS([mysql/mysql.h],
+          [MYSQL_LDFLAGS="-L$MYSQL_LIBDIR"
+-          mysql=true],
++          mysql=true
++          mysql8=true],
+          [mysql=false])],
+       [mysql=false])])
+ AC_SUBST(MYSQL_LDFLAGS)
+ AC_SUBST(MYSQL_CPPFLAGS)
+ 
+-# additional version checks for mysql
+-AS_IF([test "x$mysql" = "xtrue"],
+-  [AC_MSG_CHECKING([for mysql version])
+-   AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+-     [[include <mysql/mysql_version.h>]],
+-     [[#if (MYSQL_VERSION_ID < 40100)
+-#error required at least version 4.1
+-#endif]])],
+-     [mysql=true],
+-     [mysql=false])
+-   AS_IF([test "x$mysql" = "xfalse"],
+-     [AC_MSG_RESULT([< 4.1])
+-      AC_MSG_RESULT([mysql version >= 4.1 required. Will not use MySQL])])
+-   AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+-     [[#include <mysql/mysql_version.h>]],
+-     [[#if (MYSQL_VERSION_ID < 80000)
+-#error needs at least version 8.0
+-#endif]])],
+-     [mysql8=true],
+-     [mysql8=false])])
+-
+ AS_IF([test "x$mysql" = "xtrue"],
+   [AS_IF([test "x$mysql8" = "xfalse"],
+      [AC_MSG_RESULT([between 4.1 and 8.0])],
