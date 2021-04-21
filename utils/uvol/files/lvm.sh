@@ -231,7 +231,9 @@ createvol() {
 	[ "$lv_full_name" ] || return 22
 	lvm_cmd lvchange -a y "$lv_full_name" || return 1
 	if [ $lv_size -gt $(( 100 * 1024 * 1024 )) ]; then
-		mkfs.f2fs -f -l "$1" "$lv_path" || return 1
+		mkfs.f2fs -f -l "$1" "$lv_path"
+		ret=$?
+		[ $ret != 0 ] && [ $ret != 134 ] && return 1
 	else
 		mke2fs -F -L "$1" "$lv_path" || return 1
 	fi
@@ -271,7 +273,7 @@ listvols() {
 	local reports rep lv lvs lv_name lv_size lv_mode volname
 	volname=${1:-.*}
 	json_init
-	json_load "$(lvs -o lv_name,lv_size -S "lv_name=~^[rw][ow]_$volname\$ && vg_name=$vg_name")"
+	json_load "$(lvs -o lv_name,lv_size -S "lv_name=~^[rw][owp]_$volname\$ && vg_name=$vg_name")"
 	json_select report
 	json_get_keys reports
 	for rep in $reports; do
