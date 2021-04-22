@@ -1,0 +1,1 @@
+../dockerd/test.sh
