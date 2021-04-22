@@ -12,7 +12,7 @@
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 set -o pipefail
-ban_ver="0.7.6"
+ban_ver="0.7.7"
 ban_enabled="0"
 ban_mail_enabled="0"
 ban_proto4_enabled="0"
@@ -23,6 +23,7 @@ ban_monitor_enabled="0"
 ban_autodetect="1"
 ban_autoblacklist="1"
 ban_autowhitelist="1"
+ban_whitelistonly="0"
 ban_logterms=""
 ban_loglimit="100"
 ban_ssh_logcount="3"
@@ -240,7 +241,7 @@ f_conf()
 	fi
 	ban_localsources="${ban_localsources:-"maclist whitelist blacklist"}"
 	ban_logterms="${ban_logterms:-"dropbear sshd luci nginx"}"
-	f_log "debug" "f_conf  ::: ifaces: ${ban_ifaces:-"-"}, chain: ${ban_chain}, set_type: ${ban_global_settype}, log_chains (src/dst): ${ban_logchain_src}/${ban_logchain_dst}, targets (src/dst): ${ban_target_src}/${ban_target_dst}"
+	f_log "debug" "f_conf  ::: ifaces: ${ban_ifaces:-"-"}, chain: ${ban_chain}, set_type: ${ban_global_settype}, log_chains (src/dst): ${ban_logchain_src}/${ban_logchain_dst}, targets (src/dst): ${ban_target_src}/${ban_target_dst}, whitelist_only: ${ban_whitelistonly}"
 	f_log "debug" "f_conf  ::: lan_inputs (4/6): ${ban_lan_inputchains_4}/${ban_lan_inputchains_6}, lan_forwards (4/6): ${ban_lan_forwardchains_4}/${ban_lan_forwardchains_6}, wan_inputs (4/6): ${ban_wan_inputchains_4}/${ban_wan_inputchains_6}, wan_forwards (4/6): ${ban_wan_forwardchains_4}/${ban_wan_forwardchains_6}"
 	f_log "debug" "f_conf  ::: local_sources: ${ban_localsources:-"-"}, extra_sources: ${ban_extrasources:-"-"}, log_terms: ${ban_logterms:-"-"}, log_prefixes (src/dst): ${ban_logprefix_src}/${ban_logprefix_dst}, log_options (src/dst): ${ban_logopts_src}/${ban_logopts_dst}"
 }
@@ -547,8 +548,14 @@ f_iptables()
 				f_iptrule "-D" "${ban_chain}" "-o ${dev} -m set --match-set ${src_name} src -j RETURN"
 			elif [ "${src_name%_*}" = "whitelist" ]
 			then
-				f_iptrule "-D" "${ban_chain}" "-i ${dev} -m set --match-set ${src_name} src -j RETURN"
-				f_iptrule "-D" "${ban_chain}" "-o ${dev} -m set --match-set ${src_name} dst -j RETURN"
+				if [ "${ban_whitelistonly}" = "1" ]
+				then
+					f_iptrule "-D" "${ban_chain}" "-i ${dev} -m set ! --match-set ${src_name} src -j ${ban_logtarget_src}"
+					f_iptrule "-D" "${ban_chain}" "-o ${dev} -m set ! --match-set ${src_name} dst -j ${ban_logtarget_dst}"
+				else
+					f_iptrule "-D" "${ban_chain}" "-i ${dev} -m set --match-set ${src_name} src -j RETURN"
+					f_iptrule "-D" "${ban_chain}" "-o ${dev} -m set --match-set ${src_name} dst -j RETURN"
+				fi
 			else
 				f_iptrule "-D" "${ban_chain}" "-i ${dev} -m set --match-set ${src_name} src -j ${ban_logtarget_src}"
 				f_iptrule "-D" "${ban_chain}" "-o ${dev} -m set --match-set ${src_name} dst -j ${ban_logtarget_dst}"
@@ -599,7 +606,12 @@ f_iptables()
 				elif [ "${src_name%_*}" = "whitelist" ]
 				then
 					pos="$(( $("${ipt_cmd}" "${timeout}" -vnL "${ban_chain}" --line-numbers | grep -cF "RETURN")+1))"
-					f_iptrule "-I" "${ban_chain}" "-i ${dev} -m set --match-set ${src_name} src -j RETURN" "${pos}"
+					if [ "${ban_whitelistonly}" = "1" ]
+					then
+						f_iptrule "-I" "${ban_chain}" "-i ${dev} -m set ! --match-set ${src_name} src -j ${ban_target_src}" "${pos}"
+					else
+						f_iptrule "-I" "${ban_chain}" "-i ${dev} -m set --match-set ${src_name} src -j RETURN" "${pos}"
+					fi
 				else
 					f_iptrule "${action:-"-A"}" "${ban_chain}" "-i ${dev} -m set --match-set ${src_name} src -j ${ban_target_src}"
 				fi
@@ -612,7 +624,12 @@ f_iptables()
 				if [ "${src_name%_*}" = "whitelist" ]
 				then
 					pos="$(( $("${ipt_cmd}" "${timeout}" -vnL "${ban_chain}" --line-numbers | grep -cF "RETURN")+1))"
-					f_iptrule "-I" "${ban_chain}" "-o ${dev} -m set --match-set ${src_name} dst -j RETURN" "${pos}"
+					if [ "${ban_whitelistonly}" = "1" ]
+					then
+						f_iptrule "-I" "${ban_chain}" "-o ${dev} -m set ! --match-set ${src_name} dst -j ${ban_target_dst}" "${pos}"
+					else
+						f_iptrule "-I" "${ban_chain}" "-o ${dev} -m set --match-set ${src_name} dst -j RETURN" "${pos}"
+					fi
 				elif [ "${src_name}" != "maclist" ]
 				then
 					f_iptrule "${action:-"-A"}" "${ban_chain}" "-o ${dev} -m set --match-set ${src_name} dst -j ${ban_target_dst}"
@@ -913,7 +930,7 @@ f_bgsrv()
 	local bg_pid action="${1}"
 
 	bg_pid="$(pgrep -f "^/bin/sh ${ban_logservice}|${ban_logread_cmd}|^grep -qE Exit before auth|^grep -qE error: maximum|^grep -qE luci: failed|^grep -qE nginx" | awk '{ORS=" "; print $1}')"
-	if [ "${action}" = "start" ] && [ -x "${ban_logservice}" ] && [ "${ban_monitor_enabled}" = "1" ]
+	if [ "${action}" = "start" ] && [ -x "${ban_logservice}" ] && [ "${ban_monitor_enabled}" = "1" ] && [ "${ban_whitelistonly}" = "0" ]
 	then
 		if [ -n "${bg_pid}" ]
 		then
@@ -1269,7 +1286,7 @@ f_main()
 		fi
 		if [ "${ban_proto4_enabled}" = "1" ]
 		then
-			if [ "${src_name}" = "blacklist" ] && [ -s "${ban_blacklist}" ]
+			if [ "${src_name}" = "blacklist" ] && [ -s "${ban_blacklist}" ] && [ "${ban_whitelistonly}" = "0" ]
 			then
 				(
 					src_rule_4="/^(([0-9]{1,3}\\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\\/(1?[0-9]|2?[0-9]|3?[0-2]))?)([[:space:]]|$)/{print \"add ${src_name}_4 \"\$1}"
@@ -1290,7 +1307,7 @@ f_main()
 		fi
 		if [ "${ban_proto6_enabled}" = "1" ]
 		then
-			if [ "${src_name}" = "blacklist" ] && [ -s "${ban_blacklist}" ]
+			if [ "${src_name}" = "blacklist" ] && [ -s "${ban_blacklist}" ] && [ "${ban_whitelistonly}" = "0" ]
 			then
 				(
 					src_rule_6="/^(([0-9A-f]{0,4}:){1,7}[0-9A-f]{0,4}:?(\\/(1?[0-2][0-8]|[0-9][0-9]))?)([[:space:]]|$)/{print \"add ${src_name}_6 \"\$1}"
@@ -1314,50 +1331,53 @@ f_main()
 
 	# loop over all external sources
 	#
-	for src_name in ${ban_sources}
-	do
-		# get source data from JSON file
-		#
-		json_select "${src_name}" >/dev/null 2>&1
-		if [ "${?}" != "0" ]
-		then
-			continue
-		fi
-		json_objects="url_4 rule_4 url_6 rule_6 comp"
-		for object in ${json_objects}
+	if [ "${ban_whitelistonly}" = "0" ]
+	then
+		for src_name in ${ban_sources}
 		do
-			eval json_get_var src_${object} "\${object}" >/dev/null 2>&1
+			# get source data from JSON file
+			#
+			json_select "${src_name}" >/dev/null 2>&1
+			if [ "${?}" != "0" ]
+			then
+				continue
+			fi
+			json_objects="url_4 rule_4 url_6 rule_6 comp"
+			for object in ${json_objects}
+			do
+				eval json_get_var src_${object} "\${object}" >/dev/null 2>&1
+			done
+			json_select ..
+
+			# handle external IPv4 source downloads in a subshell
+			#
+			if [ "${ban_proto4_enabled}" = "1" ] && [ -n "${src_url_4}" ] && [ -n "${src_rule_4}" ]
+			then
+				(
+					f_down "${src_name}" "4" "inet" "${src_url_4}" "${src_rule_4}" "${src_comp}"
+				)&
+			fi
+
+			# handle external IPv6 source downloads in a subshell
+			#
+			if [ "${ban_proto6_enabled}" = "1" ] && [ -n "${src_url_6}" ] && [ -n "${src_rule_6}" ]
+			then
+				(
+					f_down "${src_name}" "6" "inet6" "${src_url_6}" "${src_rule_6}" "${src_comp}"
+				)&
+			fi
+
+			# control/limit download queues
+			#
+			hold=$((cnt%ban_maxqueue))
+			if [ "${hold}" = "0" ]
+			then
+				wait
+			fi
+			cnt=$((cnt+1))
 		done
-		json_select ..
-
-		# handle external IPv4 source downloads in a subshell
-		#
-		if [ "${ban_proto4_enabled}" = "1" ] && [ -n "${src_url_4}" ] && [ -n "${src_rule_4}" ]
-		then
-			(
-				f_down "${src_name}" "4" "inet" "${src_url_4}" "${src_rule_4}" "${src_comp}"
-			)&
-		fi
-
-		# handle external IPv6 source downloads in a subshell
-		#
-		if [ "${ban_proto6_enabled}" = "1" ] && [ -n "${src_url_6}" ] && [ -n "${src_rule_6}" ]
-		then
-			(
-				f_down "${src_name}" "6" "inet6" "${src_url_6}" "${src_rule_6}" "${src_comp}"
-			)&
-		fi
-
-		# control/limit download queues
-		#
-		hold=$((cnt%ban_maxqueue))
-		if [ "${hold}" = "0" ]
-		then
-			wait
-		fi
-		cnt=$((cnt+1))
-	done
-	wait
+		wait
+	fi
 
 	# error out
 	#
@@ -1635,6 +1655,7 @@ f_report()
 			json_select ".."
 		done
 		content="$(cat "${report_txt}" 2>/dev/null)"
+		rm -f "${report_txt}"
 	fi
 
 	# report output
@@ -1726,7 +1747,7 @@ f_jsnup()
 	done
 	json_close_array
 	json_add_string "run_infos" "settype: ${ban_global_settype}, backup_dir: ${ban_backupdir}, report_dir: ${ban_reportdir}"
-	json_add_string "run_flags" "protocols (4/6): $(f_char ${ban_proto4_enabled})/$(f_char ${ban_proto6_enabled}), log (src/dst): $(f_char ${ban_logsrc_enabled})/$(f_char ${ban_logdst_enabled}), monitor: $(f_char ${ban_monitor_enabled}), mail: $(f_char ${ban_mail_enabled})"
+	json_add_string "run_flags" "protocols (4/6): $(f_char ${ban_proto4_enabled})/$(f_char ${ban_proto6_enabled}), log (src/dst): $(f_char ${ban_logsrc_enabled})/$(f_char ${ban_logdst_enabled}), monitor: $(f_char ${ban_monitor_enabled}), mail: $(f_char ${ban_mail_enabled}), whitelist only: $(f_char ${ban_whitelistonly})"
 	json_add_string "last_run" "${runtime:-"-"}"
 	json_add_string "system" "${ban_sysver}"
 	json_dump > "${ban_rtfile}"
@@ -1783,7 +1804,7 @@ case "${ban_action}" in
 		f_main
 	;;
 	"suspend")
-		if [ "${ban_status}" = "enabled" ]
+		if [ "${ban_status}" = "enabled" ] && [ "${ban_whitelistonly}" = "0" ]
 		then
 			f_bgsrv "stop"
 			f_jsnup "running"
@@ -1793,7 +1814,7 @@ case "${ban_action}" in
 		f_rmtmp
 	;;
 	"resume")
-		if [ "${ban_status}" = "paused" ]
+		if [ "${ban_status}" = "paused" ] && [ "${ban_whitelistonly}" = "0" ]
 		then
 			f_env
 			f_main
