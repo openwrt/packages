@@ -2,12 +2,13 @@
 
 USE_PROCD=1
 START=30
-EXTRA_COMMANDS="get_key probeid log create_backup load_backup"
+EXTRA_COMMANDS="get_key probeid log create_backup load_backup create_key"
 EXTRA_HELP="	get_key	print probe public key (used for probe registration)
 	probeid	print probe id
 	log	print probe status log
 	create_backup 	backup ssh key to tar.gz
 	load_backup 'backup.tar.gz' 	load backup ssh key from tar.gz
+	create_key create probe priv/pub key 
 "
 
 SCRIPTS_DIR="/usr/libexec/atlas-probe-scripts"
@@ -55,6 +56,58 @@ create_backup() {
 		print_msg "Error: private or public key does not exists."
 		exit 1
 	fi
+}
+
+create_key() {
+	local username
+	local probe_key=/etc/atlas/probe_key
+	local probe_pub_key=/etc/atlas/probe_key.pub
+
+	config_load atlas
+
+	config_get username "common" username
+
+	if [ -f "$PRIV_KEY_FILE" ]; then
+		if [ ! -f $probe_key ]; then
+			print_msg "Missing probe_key in /etc/atlas"
+			print_msg "The key will be lost on sysupgrade. Cosider moving the keys in /etc/atlas and create a link in the $SCRIPTS_DIR/etc/ dir."
+		fi
+
+		print_msg "probe_key already present. Exiting..."
+		exit 1
+	fi
+
+	if [ -z "$username" ]; then
+		print_msg "Username not set in atlas config file. Enter your ripe-atlas username."
+		exit 1
+	fi
+
+	if [ -n "$(which ssh-keygen)" ]; then
+		ssh-keygen -t rsa -b 2048 -f $probe_key -N ""
+		sed -i "s/ \S*$/ "$username"/" $probe_pub_key
+	elif [ -n "$(which dropbearkey)" ] && [ -n "$(which dropbearconvert)" ]; then
+		local public_key
+
+		public_key="$(dropbearkey -t rsa -f /etc/atlas/probe_key_dropbear -s 2048 | sed -n 2p)"
+		public_key="$(echo "$public_key" | sed "s/ \S*$/ "$username"/")"
+		echo $public_key > $probe_pub_key
+		dropbearconvert dropbear openssh /etc/atlas/probe_key_dropbear $probe_key
+		rm /etc/atlas/probe_key_dropbear
+	else
+		print_msg "Can't find a way to generate key."
+		exit 1
+	fi
+
+	#Link priv/pub key
+	[ -f $PRIV_KEY_FILE ] || ln -s $probe_key $PRIV_KEY_FILE
+	[ -f $PRIV_KEY_FILE ] || ln -s $probe_pub_key $PUB_KEY_FILE
+
+	#Fix permission
+	chown atlas $probe_key $probe_pub_key
+	chgrp atlas $probe_key $probe_pub_key
+	chmod 644 $probe_key $probe_pub_key
+
+	print_msg "Key generated successfully. Use the get_key command to show the public key and get instruction on how to register your probe."
 }
 
 log() {
@@ -154,6 +207,12 @@ start_service() {
 	local log_stdout
 	local rxtxrpt
 	local test_setting
+
+	if [ ! -f $PRIV_KEY_FILE ]; then
+		print_msg "Missing probe_key. To init the key follow instruction in /etc/atlas/atlas.readme"
+		print_msg "Assuming atlas-sw-probe not init. Exiting..."
+		exit 1
+	fi
 
 	create_tmp_dirs
 

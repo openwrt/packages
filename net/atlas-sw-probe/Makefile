@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=atlas-sw-probe
 PKG_VERSION:=5020
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/RIPE-NCC/ripe-atlas-software-probe.git
@@ -30,7 +30,7 @@ define Package/atlas-sw-probe
   CATEGORY:=Network
   TITLE:=RIPE Atlas software probe
   URL:=https://atlas.ripe.net/about/probes/
-  DEPENDS:=+atlas-probe
+  DEPENDS:=+atlas-probe +PACKAGE_dropbear:dropbearconvert
 endef
 
 define Package/atlas-sw-probe/description
@@ -68,6 +68,7 @@ exit 0
 endef
 
 define Package/atlas-sw-probe/conffiles
+/etc/atlas/
 /etc/config/atlas
 /usr/libexec/atlas-probe-scripts/state/config.txt
 endef
@@ -103,6 +104,10 @@ define Package/atlas-sw-probe/install
 
 	# Fix permision
 	chmod 755 $(1)/$(SCRIPTS_DIR)/bin
+
+	# Add registration instruction
+	$(INSTALL_DIR) $(1)/etc/atlas/
+	$(CP) ./files/atlas.readme $(1)/etc/atlas/
 
 	# Create softlinks for writable dirs
 	$(LN) $(TMP_BASE_DIR)/crons $(1)/$(SCRIPTS_DIR)/crons
