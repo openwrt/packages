@@ -68,6 +68,12 @@ menu "Configuration"
 		help
 			"Enable Net-SNMP support for dnsdist"
 		default y
+
+	config DNSDIST_RE2
+		bool "RE2 support"
+		help
+			"Enable RE2 support for dnsdist"
+		default y
 endmenu
 endef
 
@@ -81,13 +87,14 @@ define Package/dnsdist
 	  +DNSDIST_GNUTLS:libgnutls \
 	  +DNSDIST_OPENSSL:libopenssl \
 	  +DNSDIST_NET_SNMP:libnetsnmp \
+	  +DNSDIST_RE2:re2 \
 	  +libatomic \
 	  +libcap \
 	  +libedit \
 	  +libfstrm \
 	  +libsodium \
+	  +libstdcpp \
 	  +lmdb \
-	  +re2 \
 	  +liblua \
 	  +tinycdb
   URL:=https://dnsdist.org/
@@ -108,14 +115,21 @@ endef
 # not everything groks --disable-nls
 DISABLE_NLS:=
 
+# OpenWRT's setting of CXX destroys dnsdist's -std=c++17
+# --with-re2 compensates for that because it compensates for a bug in re2.pc that also destroys it
+# so this addition is for the --without-re2 case
+#
+# none of this is pretty
+TARGET_CXX+=-std=c++17
+
 CONFIGURE_ARGS+= \
 	--enable-option-checking=fatal \
 	--enable-dnscrypt \
 	--enable-dnstap \
 	--with-libsodium \
 	--with-pic \
-	--with-re2 \
 	--with-lua=lua \
+	$(if $(CONFIG_DNSDIST_RE2),--with,--without)-re2 \
 	$(if $(CONFIG_DNSDIST_NET_SNMP),--with,--without)-net-snmp \
 	$(if $(CONFIG_DNSDIST_GNUTLS),--with,--without)-gnutls \
 	$(if $(CONFIG_DNSDIST_OPENSSL),--with,--without)-libssl \
