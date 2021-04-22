@@ -9,13 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=net-tools
-PKG_SOURCE_DATE:=2018-11-03
-PKG_SOURCE_VERSION:=0eebece8c964e3cfa8a018f42b2e7e751a7009a0
+PKG_VERSION:=2.10
 PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://git.code.sf.net/p/net-tools/code
-PKG_MIRROR_HASH:=9d978b9f8ccae4af623a299155c62d9b3d31213182c785f925bf8704d48a04c9
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=https://sourceforge.net/projects/net-tools/files/
+PKG_HASH:=b262435a5241e89bfa51c3cabd5133753952f7a7b7b93f32e08cb9d96f580d69
 
 PKG_MAINTAINER:=Stijn Segers <borromini.reg@protonmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
