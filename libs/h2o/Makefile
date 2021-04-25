@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=h2o
 PKG_VERSION:=2.2.6
-PKG_RELEASE:=8
+PKG_RELEASE:=9
 
 PKG_SOURCE_URL:=https://codeload.github.com/h2o/h2o/tar.gz/v${PKG_VERSION}?
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -47,12 +47,12 @@ endef
 
 define Package/libh2o-evloop/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/libh2o-evloop.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libh2o-evloop.so* $(1)/usr/lib/
 endef
 
 define Package/libh2o/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/libh2o.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libh2o.so* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,libh2o-evloop))
