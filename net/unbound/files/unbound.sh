@@ -473,7 +473,7 @@ unbound_zone() {
     fi
     ;;
 
-  htpps-dns-proxy)
+  htpps-dns-proxy | https-dns-proxy)
     if [ -x /usr/sbin/https-dns-proxy ] \
     && [ -x /etc/init.d/https-dns-proxy ] ; then
       if /etc/init.d/https-dns-proxy ; then
