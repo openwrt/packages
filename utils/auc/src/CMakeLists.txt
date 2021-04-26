@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 2.6...3.12)
 
 PROJECT(auc C)
 ADD_DEFINITIONS(-Os -ggdb -Wall --std=gnu99 -Wmissing-declarations)
