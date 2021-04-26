@@ -63,8 +63,7 @@ convert_mosq_general() {
 		echo "bind_address localhost" >> $TCONF
 	fi
 
-	config_get port "$1" port 1883
-	echo "port $port" >> $TCONF
+	append_if "$1" port
 	append_if "$1" acl_file
 	append_optional_bool "$1" allow_anonymous
 	append_optional_bool "$1" allow_duplicate_messages
