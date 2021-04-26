@@ -3,6 +3,7 @@
 # uvol prototype
 # future development roadmap (aka. to-do):
 # * re-implement in C (use libubox, execve lvm/ubi*)
+# * hash to validate volume while writing
 # * add atomic batch processing for use by container/package manager
 
 if [ -z "$1" ]; then cat <<EOF
