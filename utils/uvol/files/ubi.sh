@@ -119,14 +119,14 @@ removevol() {
 	local voldev=$(getdev "$@")
 	local evdata
 	[ "$voldev" ] || return 2
-	local volnum=${voldev#${ubidev}_}
 	if vol_is_mode $voldev rw ; then
 		evdata="{\"name\": \"$1\", \"action\": \"down\", \"device\": \"/dev/$voldev\"}"
-	elif vol_is_mode $voldev ro ; then
+	elif vol_is_mode $voldev ro && [ -e "/dev/ubiblock${voldev:3}" ]; then
 		evdata="{\"name\": \"$1\", \"action\": \"down\", \"device\": \"/dev/ubiblock${voldev:3}\"}"
 	fi
+	local volnum=${voldev#${ubidev}_}
 	ubirmvol /dev/$ubidev -n $volnum || return $?
-	ubus send block.volume "$evdata"
+	[ "$evdata" ] && ubus send block.volume "$evdata"
 }
 
 activatevol() {
