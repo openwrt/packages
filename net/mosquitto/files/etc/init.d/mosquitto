@@ -75,7 +75,7 @@ convert_mosq_general() {
 	append_optional_bool "$1" log_timestamp
 	config_get log_types "$1" log_types
 	for log_type in $log_types; do
-		echo "log_dest $log_type" >> $TCONF
+		echo "log_type $log_type" >> $TCONF
 	done
 	append_if "$1" max_inflight_bytes
 	append_if "$1" max_inflight_messages
