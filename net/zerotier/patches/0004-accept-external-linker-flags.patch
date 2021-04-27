@@ -9,7 +9,7 @@ Subject: [PATCH 4/8] accept external linker flags
 
 --- a/make-linux.mk
 +++ b/make-linux.mk
-@@ -77,7 +77,7 @@ else
+@@ -73,7 +73,7 @@ else
  	override CFLAGS+=-Wall -Wno-deprecated -pthread $(INCLUDES) -DNDEBUG $(DEFS)
  	CXXFLAGS?=-O3 -fstack-protector
  	override CXXFLAGS+=-Wall -Wno-deprecated -std=c++11 -pthread $(INCLUDES) -DNDEBUG $(DEFS)
