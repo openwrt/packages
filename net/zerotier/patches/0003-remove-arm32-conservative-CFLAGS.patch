@@ -9,7 +9,7 @@ Subject: [PATCH 3/8] remove arm32 conservative CFLAGS
 
 --- a/make-linux.mk
 +++ b/make-linux.mk
-@@ -276,7 +276,7 @@ ifeq ($(ZT_CONTROLLER),1)
+@@ -272,7 +272,7 @@ ifeq ($(ZT_CONTROLLER),1)
  endif
  
  # ARM32 hell -- use conservative CFLAGS
