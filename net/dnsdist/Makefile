@@ -80,6 +80,12 @@ menu "Configuration"
 		help
 			"Enable DNSTAP support for dnsdist"
 		default y
+
+	config DNSDIST_SODIUM
+		bool "Build with libsodium
+		help
+			"Build with libsodium - for encrypted console connections, and DNSCrypt"
+		default y
 endmenu
 endef
 
@@ -95,10 +101,10 @@ define Package/dnsdist
 	  +DNSDIST_NET_SNMP:libnetsnmp \
 	  +DNSDIST_RE2:re2 \
 	  +DNSDIST_DNSTAP:libfstrm \
+	  +DNSDIST_SODIUM:libsodium \
 	  +libatomic \
 	  +libcap \
 	  +libedit \
-	  +libsodium \
 	  +libstdcpp \
 	  +lmdb \
 	  +liblua \
@@ -130,10 +136,9 @@ TARGET_CXX+=-std=c++17
 
 CONFIGURE_ARGS+= \
 	--enable-option-checking=fatal \
-	--enable-dnscrypt \
-	--with-libsodium \
 	--with-pic \
 	--with-lua=lua \
+	$(if $(CONFIG_DNSDIST_SODIUM),--enable-dnscrypt --with-libsodium,--disable-dnscrypt --without-libsodium) \
 	$(if $(CONFIG_DNSDIST_DNSTAP),--enable-dnstap=yes,--enable-dnstap=no) \
 	$(if $(CONFIG_DNSDIST_RE2),--with,--without)-re2 \
 	$(if $(CONFIG_DNSDIST_NET_SNMP),--with,--without)-net-snmp \
