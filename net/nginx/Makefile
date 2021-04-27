@@ -450,6 +450,7 @@ ifeq ($(CONFIG_NGINX_RTMP_MODULE),y)
   define  Prepare/nginx-rtmp
 	$(eval $(Download/nginx-rtmp))
 	xzcat $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
+	$(call PatchDir,$(PKG_BUILD_DIR)/nginx-rtmp,./patches-rtmp-nginx)
   endef
 endif
 
