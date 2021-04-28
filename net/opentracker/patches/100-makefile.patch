@@ -19,7 +19,7 @@
  
  BINDIR?=$(PREFIX)/bin
  
-@@ -66,7 +66,7 @@ CFLAGS_debug = $(CFLAGS) $(OPTS_debug) $
+@@ -71,7 +71,7 @@ CFLAGS_debug = $(CFLAGS) $(OPTS_debug) $
  
  $(BINARY): $(OBJECTS) $(HEADERS)
  	$(CC) -o $@ $(OBJECTS) $(LDFLAGS)
