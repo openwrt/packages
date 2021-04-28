@@ -1,9 +1,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-mail-spamassassin
-PKG_RELEASE:=4
-PKG_VERSION:=3.4.4
-PKG_HASH:=8ea27a165b81e3ce8c84ae85c3ecba1f2edfa04ef4a86f07fe28ab612fc8ff60
+PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=3.4.6
+PKG_HASH:=500c7e2a7cdf3aa4dd822d97aaff2ab22235a60cf17a68ab817861d215a4e568
 
 PKG_SOURCE_NAME:=Mail-SpamAssassin
 PKG_SOURCE_URL:=@APACHE/spamassassin/source
