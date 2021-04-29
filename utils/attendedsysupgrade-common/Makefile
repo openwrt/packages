@@ -1,12 +1,9 @@
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
-#
+# SPDX-License-Identifier: GPL-2.0
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=attendedsysupgrade-common
-PKG_VERSION:=0.2
-PKG_RELEASE:=1
+PKG_VERSION:=$(COMMITCOUNT)
 PKG_LICENSE:=GPL-2.0
 
 include $(INCLUDE_DIR)/package.mk
@@ -15,7 +12,7 @@ define Package/attendedsysupgrade-common
   SECTION:=utils
   CATEGORY:=Base system
   TITLE:=Common files neede by attendedsysupgrade packages
-  MAINTAINER:=Paul Spooren <paul@spooren.de>
+  MAINTAINER:=Paul Spooren <mail@aparcar.org>
   DEPENDS:=+rpcd +rpcd-mod-rpcsys
   PKGARCH:=all
 endef
@@ -27,20 +24,21 @@ define Package/attendedsysupgrade-common/description
 
 	UCI options:
 
-	attendedsysupgrade.server.url
-	URL of compatible upgrade server [1]
+	* attendedsysupgrade.server.url
+	  URL of compatible upgrade server [1]
 
-	attendedsysupgrade.client.upgrade_packages
-	Client should request image also if no new release but new packages upgrade are available.
+	* attendedsysupgrade.client.upgrade_packages
+	  Client should request image also if no new release but new packages
+	  upgrade are available.
 
-	attendedsysupgrade.client.advanced_mode
-	Offer advanced options like editing packages before request and show additional information.
+	* attendedsysupgrade.client.advanced_mode
+	  Offer advanced options like editing packages before request and show
+	  additional information.
 
-	attendedsysupgrade.client.auto_search
-	Tells the client to automattically search for upgrades
-	This can be done when opening luci or login in to console - depends on client.
+	* attendedsysupgrade.client.auto_search
+	  Tells the client to automattically search for upgrades
 
-	[1]: https://github.com/aparcar/gsoc17-attended-sysupgrade
+	[1]: https://github.com/aparcar/asu
 endef
 
 define Build/Compile
@@ -54,7 +52,7 @@ define Package/attendedsysupgrade-common/install
 	$(INSTALL_BIN) ./files/attendedsysupgrade.defaults $(1)/etc/uci-defaults/attendedsysupgrade
 
 	$(INSTALL_DIR) $(1)/etc/opkg/keys/
-	$(INSTALL_BIN) ./files/c06d891233ba699 $(1)/etc/opkg/keys/c06d891233ba699
+	$(INSTALL_BIN) ./files/86241a707a30cb7f $(1)/etc/opkg/keys/86241a707a30cb7f
 endef
 
 $(eval $(call BuildPackage,attendedsysupgrade-common))
