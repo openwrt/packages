@@ -98,7 +98,7 @@
 		"descurl": "https://github.com/notracking/hosts-blocklists"
 	},
 	"oisd_basic": {
-		"url": "https://dbl.oisd.nl/basic",
+		"url": "https://dbl.oisd.nl/basic/",
 		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
 		"size": "L",
 		"focus": "general",
@@ -312,6 +312,6 @@
 		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
 		"size": "S",
 		"focus": "general",
-		"descurl": "https://pgl.yoyo.org"
+		"descurl": "https://pgl.yoyo.org/as"
 	}
 }
