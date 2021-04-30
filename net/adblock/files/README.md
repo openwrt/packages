@@ -186,10 +186,12 @@ Available commands:
 
 ## Examples
 **Change the DNS backend to 'unbound':**  
-No further configuration is needed, adblock deposits the final blocklist 'adb_list.overall' in '/var/lib/unbound' by default.
+No further configuration is needed, adblock deposits the final blocklist 'adb_list.overall' in '/var/lib/unbound' by default.  
+To preserve the DNS cache after adblock processing please install the additional package 'unbound-control'.
 
-**Change the DNS backend to 'named' (bind):**  
-Adblock deposits the final blocklist 'adb_list.overall' in '/var/lib/bind'.  
+**Change the DNS backend to 'bind':**  
+Adblock deposits the final blocklist 'adb_list.overall' in '/var/lib/bind' by default.  
+To preserve the DNS cache after adblock processing please install the additional package 'bind-rdnc'.
 To use the blocklist please modify '/etc/bind/named.conf':
 <pre><code>
 in the 'options' namespace add:
