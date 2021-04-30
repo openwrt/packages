@@ -11,7 +11,7 @@ PKG_NAME:=icu4c
 MAJOR_VERSION:=68
 MINOR_VERSION:=2
 PKG_VERSION:=$(MAJOR_VERSION).$(MINOR_VERSION)
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(MAJOR_VERSION)_$(MINOR_VERSION)-src.tgz
 PKG_SOURCE_URL:=https://github.com/unicode-org/icu/releases/download/release-$(MAJOR_VERSION)-$(MINOR_VERSION)
@@ -41,6 +41,7 @@ define Package/icu
   TITLE:=International Components for Unicode
   URL:=http://icu-project.org
   DEPENDS:=+libstdcpp +libpthread
+  ABI_VERSION:=$(MAJOR_VERSION)
 endef
 
 define Package/icu/description
@@ -54,6 +55,7 @@ define Package/icu-full-data
   TITLE:=Full ICU Data
   URL:=http://icu-project.org
   DEPENDS:=+icu
+  ABI_VERSION:=$(MAJOR_VERSION)
 endef
 
 define Package/icu-full-data/description
