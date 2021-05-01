@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 include ../python3-version.mk
 
 PKG_NAME:=python3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_VERSION:=$(PYTHON3_VERSION).$(PYTHON3_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
@@ -66,10 +66,21 @@ define Package/python3/Default/description
  the development of higher quality, more maintainable code.
 endef
 
+define Package/libpython3
+$(call Package/python3/Default)
+  TITLE:=Python $(PYTHON3_VERSION) core library
+  DEPENDS:=+libpthread +zlib
+  ABI_VERSION:=$(PYTHON3_VERSION)
+endef
+
+define Package/libpython3/description
+  This package contains only core Python library.
+endef
+
 define Package/python3-base
 $(call Package/python3/Default)
   TITLE:=Python $(PYTHON3_VERSION) interpreter
-  DEPENDS:=+libpthread +zlib
+  DEPENDS:=+libpthread +zlib +libpython3
 endef
 
 define Package/python3-base/description
@@ -269,13 +280,16 @@ define Py3Package/python3-light/filespec
 $(subst $(space),$(newline),$(foreach lib_file,$(PYTHON3_LIB_FILES_DEL),-|$(lib_file)))
 endef
 
-define Py3Package/python3-base/install
+define Package/libpython3/install
 	# Adding the lib-dynload folder (even just empty) suppresses 2 warnings when starting Python
 	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON3_VERSION)/lib-dynload/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON3_VERSION).so* $(1)/usr/lib/
+endef
+
+define Py3Package/python3-base/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(LN) python$(PYTHON3_VERSION) $(1)/usr/bin/python3
 	$(LN) python$(PYTHON3_VERSION) $(1)/usr/bin/python
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON3_VERSION).so* $(1)/usr/lib/
   # This depends on being called before filespec is processed
 	$(SED) 's|$(TARGET_AR)|ar|g;s|$(TARGET_CROSS)readelf|readelf|g;s|$(TARGET_CC)|gcc|g;s|$(TARGET_CXX)|g++|g' \
 		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON3_VERSION)/_sysconfigdata.py
@@ -356,6 +370,8 @@ $(foreach package, $(PYTHON3_PACKAGES),  \
 	$(eval $(call BuildPackage,$(package))) \
 	$(eval $(call BuildPackage,$(package)-src)) \
 )
+
+$(eval $(call BuildPackage,libpython3))
 
 $(eval $(call Py3Package,python3-base))
 $(eval $(call Py3Package,python3-light))
