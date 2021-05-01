@@ -48,6 +48,13 @@ time2seconds() {
 	echo $(( number * multiplier ))
 }
 
+trim()
+{
+	local arg="$1"
+
+	echo "$arg" | sed -e 's/^ *//' -e 's/ *$//'
+}
+
 # duplicated from dnsmasq init script
 hex_to_hostid() {
 	local var="$1"
@@ -122,12 +129,14 @@ append_routes() {
 	for tuple in $tuples; do
 		local network prefix router save octets compacted
 
-		save="${tuple% *}"
-		router="${tuple#${save} }"
+		tuple="$(trim "$tuple")"
 
-		network="${save%/[0-9]*}"
-		prefix="${save##${network}}"
-		prefix="${prefix:1}"
+		save="${tuple% *}"
+		router="$(trim "${tuple#${save} }")"
+
+		network="$(trim "${save%/[0-9]*}")"
+
+		prefix="$(trim "${save##${network}/}")"
 
 		octets=$((($prefix + 7) / 8))
 		compacted="$(echo "$network" | cut -d. -f1-$octets)"
