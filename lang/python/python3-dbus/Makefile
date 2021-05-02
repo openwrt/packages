@@ -30,7 +30,7 @@ define Package/python3-dbus/description
   the reference implementation of the D-Bus protocol.
 endef
 
-PYTHON3_PKG_SETUP_ARGS=
+PYTHON3_PKG_SETUP_ARGS:=
 
 CONFIGURE_VARS += \
 	PYTHON_LIBS="-L$(PYTHON3_LIB_DIR) -L$(STAGING_DIR)/usr/lib -lpython$(PYTHON3_VERSION)" \
