@@ -96,8 +96,7 @@ get_mwan3_status() {
 	local age=0
 	local online=0
 	local offline=0
-	local up="0"
-	local enabled time_p time_n time_u time_d status track_status
+	local enabled time_p time_n time_u time_d status track_status up uptime
 
 	if [ "${iface}" != "${iface_select}" ] && [ "${iface_select}" != "" ]; then
 		return
@@ -109,15 +108,19 @@ get_mwan3_status() {
 	online=$(get_online_time "$iface")
 	offline=$(get_offline_time "$iface")
 
-	local uptime="0"
-
 	config_get enabled "$iface" enabled 0
-	network_get_uptime uptime "$iface"
-	network_is_up "$iface" && up="1"
 
-	if [ -f "$MWAN3TRACK_STATUS_DIR/${iface}/STATUS" ]; then
-		status="$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/STATUS")"
+	if [ -d "${MWAN3_STATUS_DIR}" ]; then
+		network_get_uptime uptime "$iface"
+		network_is_up "$iface" && up="1"
+		if [ -f "$MWAN3TRACK_STATUS_DIR/${iface}/STATUS" ]; then
+			status="$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/STATUS")"
+		else
+			status="notracking"
+		fi
 	else
+		uptime=0
+		up=0
 		status="unknown"
 	fi
 
