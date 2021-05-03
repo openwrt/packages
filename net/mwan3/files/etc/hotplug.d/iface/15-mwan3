@@ -66,7 +66,7 @@ case "$ACTION" in
 		mwan3_set_iface_hotplug_state $INTERFACE "$status"
 		if [ "$MWAN3_STARTUP" != "init" ]; then
 			mwan3_create_iface_route $INTERFACE $DEVICE
-	                mwan3_set_general_rules
+			mwan3_set_general_rules
 			[ "$status" = "online" ] && mwan3_set_policies_iptables
 		fi
 		[ "$ACTION" = ifup ] && procd_running mwan3 "track_$INTERFACE" && procd_send_signal mwan3 "track_$INTERFACE" USR2
