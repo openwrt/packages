@@ -12,7 +12,7 @@
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 set -o pipefail
-ban_ver="0.7.7"
+ban_ver="0.7.8"
 ban_enabled="0"
 ban_mail_enabled="0"
 ban_proto4_enabled="0"
@@ -63,6 +63,7 @@ ban_wan_forwardchains_4=""
 ban_wan_forwardchains_6=""
 ban_action="${1:-"start"}"
 ban_pidfile="/var/run/banip.pid"
+ban_bgpidfile="/var/run/banip_bg.pid"
 ban_tmpbase="/tmp"
 ban_rtfile="${ban_tmpbase}/ban_runtime.json"
 ban_srcfile="${ban_tmpbase}/ban_sources.json"
@@ -921,18 +922,29 @@ f_log()
 	fi
 }
 
+# kill all relevant background processes
+#
+f_pidx()
+{
+	local pids ppid="${1}"
+
+	pids="$(pgrep -P "${ppid}" 2>/dev/null | awk '{ORS=" ";print $0}')"
+	kill -HUP "${ppid}" "${pids}" 2>/dev/null
+	> "${ban_bgpidfile}"
+}
+
 # start log service to trace failed ssh/luci logins
 #
 f_bgsrv()
 {
 	local bg_pid action="${1}"
 
-	bg_pid="$(pgrep -f "^/bin/sh ${ban_logservice}|${ban_logread_cmd}|^grep -qE Exit before auth|^grep -qE error: maximum|^grep -qE luci: failed|^grep -qE nginx" | awk '{ORS=" "; print $1}')"
+	bg_pid="$(cat "${ban_bgpidfile}" 2>/dev/null)"
 	if [ "${action}" = "start" ] && [ -x "${ban_logservice}" ] && [ "${ban_monitor_enabled}" = "1" ] && [ "${ban_whitelistonly}" = "0" ]
 	then
 		if [ -n "${bg_pid}" ]
 		then
-			kill -HUP "${bg_pid}" 2>/dev/null
+			f_pidx "${bg_pid}"
 		fi
 		if [ -n "$(printf "%s\n" "${ban_logterms}" | grep -F "dropbear")" ]
 		then
@@ -950,12 +962,15 @@ f_bgsrv()
 		then
 			ban_search="${ban_search}nginx\[[0-9]+\]:.*\[error\].*open().*client: [[:alnum:].:]+|"
 		fi
-		( "${ban_logservice}" "${ban_ver}" "${ban_search%?}" & )
-	elif [ "${action}" = "stop" ] && [ -n "${bg_pid}" ]
+		(
+			"${ban_logservice}" "${ban_ver}" "${ban_search%?}" &
+			printf "%s" "${!}" > "${ban_bgpidfile}"
+		)
+	elif { [ "${action}" = "stop" ] || [ "${ban_monitor_enabled}" = "0" ]; } && [ -n "${bg_pid}" ]
 	then
-		kill -HUP "${bg_pid}" 2>/dev/null
+		f_pidx "${bg_pid}"
 	fi
-	f_log "debug" "f_bgsrv ::: action: ${action:-"-"}, bg_pid: ${bg_pid:-"-"}, monitor_enabled: ${ban_monitor_enabled:-"-"}, log_service: ${ban_logservice:-"-"}"
+	f_log "debug" "f_bgsrv ::: action: ${action:-"-"}, bg_pid (old/new): ${bg_pid}/$(cat "${ban_bgpidfile}" 2>/dev/null), monitor_enabled: ${ban_monitor_enabled:-"-"}, log_service: ${ban_logservice:-"-"}"
 }
 
 # download controller
