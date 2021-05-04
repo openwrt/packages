@@ -1,0 +1,30 @@
+--- a/common/Makefile.am.in	2020-01-21 12:21:48.000000000 -0700
++++ b/common/Makefile.am.in	2021-02-01 12:23:23.340882126 -0700
+@@ -1,4 +1,6 @@
+-AM_CPPFLAGS = -I$(top_srcdir) -DLOCALSTATEDIR='"@Q@localstatedir@Q@"'
++include ../make/includes
++
++AM_CPPFLAGS = -I$(top_srcdir) -DXXX=.am.in $(ISC_INCLUDES) -DLOCALSTATEDIR='"@Q@localstatedir@Q@"'
+ AM_CFLAGS = $(LDAP_CFLAGS)
+ 
+ lib_@DHLIBS@ = libdhcp.@A@
+--- a/common/Makefile.in	2021-02-01 13:57:13.616763985 -0700
++++ b/common/Makefile.in	2021-02-01 13:52:57.222845478 -0700
+@@ -14,6 +14,8 @@
+ 
+ @SET_MAKE@
+ 
++include make/includes
++
+ VPATH = @srcdir@
+ am__is_gnu_make = { \
+   if test -z '$(MAKELEVEL)'; then \
+@@ -370,7 +372,7 @@ target_alias = @target_alias@
+ top_build_prefix = @top_build_prefix@
+ top_builddir = @top_builddir@
+ top_srcdir = @top_srcdir@
+-AM_CPPFLAGS = -I$(top_srcdir) -DLOCALSTATEDIR='"@localstatedir@"'
++AM_CPPFLAGS = -I$(top_srcdir) $(ISC_INCLUDES) -DXXX=.in -DLOCALSTATEDIR='"@localstatedir@"'
+ AM_CFLAGS = $(LDAP_CFLAGS)
+ lib_LIBRARIES = libdhcp.a
+ libdhcp_a_SOURCES = alloc.c bpf.c comapi.c conflex.c ctrace.c dhcp4o6.c \

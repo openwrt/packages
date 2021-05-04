@@ -9,8 +9,8 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=isc-dhcp
 UPSTREAM_NAME:=dhcp
-PKG_VERSION:=4.4.1
-PKG_RELEASE:=17
+PKG_VERSION:=4.4.2
+PKG_RELEASE:=1
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -21,7 +21,7 @@ PKG_SOURCE:=$(UPSTREAM_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=ftp://ftp.isc.org/isc/dhcp/$(PKG_VERSION) \
 		http://ftp.funet.fi/pub/mirrors/ftp.isc.org/isc/dhcp/$(PKG_VERSION) \
 		http://ftp.iij.ad.jp/pub/network/isc/dhcp/$(PKG_VERSION)
-PKG_HASH:=2a22508922ab367b4af4664a0472dc220cc9603482cf3c16d9aff14f3a76b608
+PKG_HASH:=1a7ccd64a16e5e68f7b5e0f527fd07240a2892ea53fe245620f4f5f607004521
 
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
@@ -204,6 +204,24 @@ ifeq ($(BUILD_VARIANT),ipv6)
 endif
 
 TARGET_CFLAGS += -fcommon
+
+define Build/Prepare
+	echo "*** BEFORE ***"
+	cat $(PKG_BUILD_DIR)/common/Makefile.in || true
+	$(call Build/Prepare/Default)
+	echo "*** AFTER ***"
+	cat $(PKG_BUILD_DIR)/common/Makefile.in
+endef
+
+define Build/Configure
+	echo "*** BEFORE ***"
+	cat $(PKG_BUILD_DIR)/common/Makefile.in
+	$(call Build/Configure/Default)
+	echo "*** AFTER ***"
+	cat $(PKG_BUILD_DIR)/common/Makefile.in
+	echo "*** AFTER ***"
+	cat $(PKG_BUILD_DIR)/common/Makefile.am
+endef
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR)			\
