@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libassuan
 PKG_VERSION:=2.5.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://gnupg.org/ftp/gcrypt/$(PKG_NAME)
@@ -31,6 +31,9 @@ Libassuan is a small library implementing the so-called Assuan
 protocol. This protocol is used for IPC between most newer GnuPG
 components. Both, server and client side functions are provided. 
 endef
+
+CONFIGURE_VARS += \
+		ac_cv_path_GPGRT_CONFIG="no"
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(2)/bin $(1)/usr/bin
