@@ -45,7 +45,7 @@
  X509_set_pubkey(x509, pkey);
  
  name = X509_get_subject_name(x509);
-@@ -3900,8 +3903,8 @@ fprintf(f, "Library version: OpenSSL: Co
+@@ -3897,8 +3900,8 @@ fprintf(f, "Library version: OpenSSL: Co
             "                          Runtime: %s\n"
             "                                 : %s\n",
             OPENSSL_VERSION_TEXT,
@@ -56,7 +56,7 @@
  /* third line is 38 characters for the %s and the line is 73 chars long;
  the OpenSSL output includes a "built on: " prefix already. */
  }
-@@ -3943,8 +3946,6 @@ if (pidnow != pidlast)
+@@ -3940,8 +3943,6 @@ if (pidnow != pidlast)
    is unique for each thread", this doesn't apparently apply across processes,
    so our own warning from vaguely_random_number_fallback() applies here too.
    Fix per PostgreSQL. */
