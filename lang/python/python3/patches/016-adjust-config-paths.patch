@@ -20,7 +20,7 @@
          abi=sys.abiflags,
 --- a/Makefile.pre.in
 +++ b/Makefile.pre.in
-@@ -1535,7 +1535,7 @@ libinstall:	build_all $(srcdir)/Modules/
+@@ -1555,7 +1555,7 @@ libinstall:	build_all $(srcdir)/Modules/
  			esac; \
  		done; \
  	done
@@ -29,7 +29,7 @@
  		$(DESTDIR)$(LIBDEST); \
  	$(INSTALL_DATA) $(srcdir)/LICENSE $(DESTDIR)$(LIBDEST)/LICENSE.txt
  ifeq (@COMPILE_ALL_TESTS@,yes)
-@@ -1693,7 +1693,7 @@ sharedinstall: sharedmods
+@@ -1713,7 +1713,7 @@ sharedinstall: sharedmods
  		--install-scripts=$(BINDIR) \
  		--install-platlib=$(DESTSHARED) \
  		--root=$(DESTDIR)/
@@ -40,7 +40,7 @@
  # Here are a couple of targets for MacOSX again, to install a full
 --- a/configure
 +++ b/configure
-@@ -2977,7 +2977,7 @@ $as_echo_n "checking for python interpre
+@@ -2979,7 +2979,7 @@ $as_echo_n "checking for python interpre
  	fi
          { $as_echo "$as_me:${as_lineno-$LINENO}: result: $interp" >&5
  $as_echo "$interp" >&6; }
@@ -49,7 +49,7 @@
      fi
  elif test "$cross_compiling" = maybe; then
      as_fn_error $? "Cross compiling required --host=HOST-TUPLE and --build=ARCH" "$LINENO" 5
-@@ -15436,7 +15436,7 @@ fi
+@@ -15441,7 +15441,7 @@ fi
  
  
  
@@ -69,7 +69,7 @@
      fi
  elif test "$cross_compiling" = maybe; then
      AC_MSG_ERROR([Cross compiling required --host=HOST-TUPLE and --build=ARCH])
-@@ -4835,7 +4835,7 @@ fi],
+@@ -4839,7 +4839,7 @@ fi],
  
  dnl define LIBPL after ABIFLAGS and LDVERSION is defined.
  AC_SUBST(PY_ENABLE_SHARED)

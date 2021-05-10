@@ -1,6 +1,6 @@
 --- a/Makefile.pre.in
 +++ b/Makefile.pre.in
-@@ -764,6 +764,16 @@ regen-all: regen-opcode regen-opcode-tar
+@@ -774,6 +774,16 @@ regen-all: regen-opcode regen-opcode-tar
  ############################################################################
  # Special rules for object files
  
@@ -17,7 +17,7 @@
  Modules/getbuildinfo.o: $(PARSER_OBJS) \
  		$(OBJECT_OBJS) \
  		$(PYTHON_OBJS) \
-@@ -772,6 +782,8 @@ Modules/getbuildinfo.o: $(PARSER_OBJS) \
+@@ -782,6 +792,8 @@ Modules/getbuildinfo.o: $(PARSER_OBJS) \
  		$(DTRACE_OBJS) \
  		$(srcdir)/Modules/getbuildinfo.c
  	$(CC) -c $(PY_CORE_CFLAGS) \
