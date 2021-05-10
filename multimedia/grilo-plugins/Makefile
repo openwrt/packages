@@ -6,8 +6,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=grilo-plugins
-PKG_VERSION:=0.3.12
-PKG_RELEASE:=2
+PKG_VERSION:=0.3.13
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=LGPLv2.1
@@ -15,7 +15,7 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNOME/grilo-plugins/0.3/
-PKG_HASH:=c6b6df086a164d65c206d70139ce80591f8feca3545612e45b823fb4fe4b2577
+PKG_HASH:=1c4305d67364a930543836cc1982f30e946973b8ff6af3efe31d87709ab520f8
 
 PKG_INSTALL:=1
 PKG_BUILD_DEPENDS:=meson/host
@@ -53,7 +53,7 @@ MESON_ARGS += \
 	-Denable-flickr=no \
 	-Denable-freebox=no \
 	-Denable_gravatar=$(if $(CONFIG_PACKAGE_grilo-plugins-gravatar),yes,no) \
-	-Denable_jamendo=$(if $(CONFIG_PACKAGE_grilo-plugins-jamendo),yes,no) \
+	-Dhelp=no \
 	-Denable-local-metadata=no \
 	-Denable-lua-factory=no \
 	-Denable-magnatune=$(if $(CONFIG_PACKAGE_grilo-plugins-magnatune),yes,no) \
@@ -101,7 +101,6 @@ $(eval $(call BuildPlugin,chromaprint,Chromaprint,chromaprint,+libgstreamer1,30)
 $(eval $(call BuildPlugin,dleyna,DLNA sharing,dleyna,,30))
 $(eval $(call BuildPlugin,dmap,DAAP and DPAP sharing,daap dpap,libdmapsharing,30))
 $(eval $(call BuildPlugin,gravatar,Gravatar provider,gravatar,,30))
-$(eval $(call BuildPlugin,jamendo,Jamendo sharing,jamendo,,30))
 $(eval $(call BuildPlugin,magnatune,Magnatune sharing,magnatune,,30))
 $(eval $(call BuildPlugin,metadata-store,Metadata Store,metadatastore,,30))
 $(eval $(call BuildPlugin,opensubtitles,Open subtitles provider,opensubtitles,,30))
