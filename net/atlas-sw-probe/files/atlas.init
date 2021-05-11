@@ -207,7 +207,16 @@ start_service() {
 	local log_stdout
 	local rxtxrpt
 	local test_setting
+	local probe_key=/etc/atlas/probe_key
+	local probe_pub_key=/etc/atlas/probe_key.pub
 
+	# The link is not saved across sysupgrade, recreate if missing
+	if [ ! -f $PRIV_KEY_FILE ]; then
+		[ -f $probe_key ] && ln -s $probe_key $PRIV_KEY_FILE
+		[ -f $probe_pub_key ] && ln -s $probe_pub_key $PUB_KEY_FILE
+	fi
+
+	# With the precheck done, check if the priv key is actually present
 	if [ ! -f $PRIV_KEY_FILE ]; then
 		print_msg "Missing probe_key. To init the key follow instruction in /etc/atlas/atlas.readme"
 		print_msg "Assuming atlas-sw-probe not init. Exiting..."
