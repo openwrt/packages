@@ -248,7 +248,6 @@ $(call Package/strongswan/Default)
   TITLE+= (default)
   DEPENDS:= strongswan \
 	+strongswan-charon \
-	+strongswan-ipsec \
 	+strongswan-mod-aes \
 	+strongswan-mod-attr \
 	+strongswan-mod-connmark \
@@ -273,11 +272,11 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-sha2 \
 	+strongswan-mod-socket-default \
 	+strongswan-mod-sshkey \
-	+strongswan-mod-stroke \
 	+strongswan-mod-updown \
 	+strongswan-mod-x509 \
 	+strongswan-mod-xauth-generic \
-	+strongswan-mod-xcbc
+	+strongswan-mod-xcbc \
+	+strongswan-swanctl
 endef
 
 define Package/strongswan-default/description
