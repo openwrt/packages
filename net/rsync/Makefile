@@ -69,6 +69,15 @@ define Package/rsyncd
   URL:=https://rsync.samba.org/
 endef
 
+define Package/rrsync
+  SECTION:=net
+  CATEGORY:=Network
+  SUBMENU:=File Transfer
+  TITLE:=Restricted rsync script
+  DEPENDS:=+rsync +perlbase-file +perl @(PACKAGE_openssh-server||PACKAGE_openssh-server-pam)
+  URL:=https://www.samba.org/ftp/unpacked/rsync/support/rrsync
+endef
+
 define Package/rsync/description
  rsync is a program that allows files to be copied to and from remote machines
  in much the same way as rcp. It has many more options than rcp, and uses the
@@ -100,5 +109,17 @@ define Package/rsyncd/install
 	$(INSTALL_BIN) ./files/rsyncd.init $(1)/etc/init.d/rsyncd
 endef
 
+define Package/rrsync/description
+  rrsync is a script which wraps around rsync to restrict its permission to a
+  particular subdirectory via ~/.ssh/authorized_keys and/or to read-only
+  or write-only mode
+endef
+
+define Package/rrsync/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/support/rrsync $(1)/usr/bin
+endef
+
 $(eval $(call BuildPackage,rsync))
 $(eval $(call BuildPackage,rsyncd))
+$(eval $(call BuildPackage,rrsync))
