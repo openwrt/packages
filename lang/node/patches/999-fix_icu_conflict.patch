@@ -1,14 +1,14 @@
 --- a/tools/icu/icu-generic.gyp
 +++ b/tools/icu/icu-generic.gyp
-@@ -181,6 +181,7 @@
-               '<(icu_path)/source/i18n/uspoof_wsconf.h',
-             ]}],
-             ],
+@@ -107,6 +107,7 @@
+           'sources': [
+             '<@(icu_src_i18n)'
+           ],
 +          'include_dirs!': [ '<!@(echo "$STAGING_DIR"/usr/include)' ],
            'include_dirs': [
              '<(icu_path)/source/i18n',
            ],
-@@ -189,6 +190,7 @@
+@@ -115,6 +116,7 @@
            ],
            'dependencies': [ 'icuucx', 'icu_implementation', 'icu_uconfig', 'icu_uconfig_target' ],
            'direct_dependent_settings': {
@@ -16,7 +16,7 @@
              'include_dirs': [
                '<(icu_path)/source/i18n',
              ],
-@@ -275,6 +277,7 @@
+@@ -201,6 +203,7 @@
                # full data - no trim needed
                'sources': [ '<(SHARED_INTERMEDIATE_DIR)/icudt<(icu_ver_major)_dat.<(icu_asm_ext)' ],
                'dependencies': [ 'genccode#host', 'icupkg#host', 'icu_implementation#host', 'icu_uconfig' ],
@@ -24,7 +24,7 @@
                'include_dirs': [
                  '<(icu_path)/source/common',
                ],
-@@ -359,6 +362,7 @@
+@@ -285,6 +288,7 @@
                # This file contains the small ICU data
                'sources': [ '<(SHARED_INTERMEDIATE_DIR)/icusmdt<(icu_ver_major)_dat.<(icu_asm_ext)' ],
                # for umachine.h
@@ -32,7 +32,7 @@
                'include_dirs': [
                  '<(icu_path)/source/common',
                ],
-@@ -375,6 +379,7 @@
+@@ -301,6 +305,7 @@
        'sources': [
          '<@(icu_src_stubdata)'
        ],
@@ -40,7 +40,7 @@
        'include_dirs': [
          '<(icu_path)/source/common',
        ],
-@@ -443,6 +448,7 @@
+@@ -340,6 +345,7 @@
            '_XOPEN_SOURCE_EXTENDED=0',
          ]}],
        ],
@@ -48,7 +48,7 @@
        'include_dirs': [
          '<(icu_path)/source/common',
        ],
-@@ -452,6 +458,7 @@
+@@ -349,6 +355,7 @@
        'cflags_c': ['-std=c99'],
        'export_dependent_settings': [ 'icu_uconfig', 'icu_uconfig_target' ],
        'direct_dependent_settings': {
@@ -56,7 +56,7 @@
          'include_dirs': [
            '<(icu_path)/source/common',
          ],
-@@ -482,6 +489,7 @@
+@@ -379,6 +386,7 @@
          '<(icu_path)/source/tools/toolutil/dbgutil.cpp',
          '<(icu_path)/source/tools/toolutil/dbgutil.h',
        ],
@@ -64,7 +64,7 @@
        'include_dirs': [
          '<(icu_path)/source/common',
          '<(icu_path)/source/i18n',
-@@ -501,6 +509,7 @@
+@@ -398,6 +406,7 @@
          }]
        ],
        'direct_dependent_settings': {
