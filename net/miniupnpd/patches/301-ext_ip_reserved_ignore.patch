@@ -33,7 +33,7 @@ Date:   Sun Jul 5 10:42:52 2020 +0800
  			return 1;
 --- a/miniupnpd.c
 +++ b/miniupnpd.c
-@@ -1225,6 +1225,10 @@ init(int argc, char * * argv, struct run
+@@ -1241,6 +1241,10 @@ init(int argc, char * * argv, struct run
  			case UPNPEXT_IP:
  				use_ext_ip_addr = ary_options[i].value;
  				break;
@@ -54,7 +54,7 @@ Date:   Sun Jul 5 10:42:52 2020 +0800
 +#ext_ip_reserved_ignore=yes
  # WAN interface must have public IP address. Otherwise it is behind NAT
  # and port forwarding is impossible. In some cases WAN interface can be
- # behind unrestricted NAT 1:1 when all incoming traffic is NAT-ed and
+ # behind unrestricted full-cone NAT 1:1 when all incoming traffic is NAT-ed and
 --- a/options.c
 +++ b/options.c
 @@ -34,6 +34,7 @@ static const struct {
