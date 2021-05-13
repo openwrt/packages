@@ -32,9 +32,6 @@ protocol. This protocol is used for IPC between most newer GnuPG
 components. Both, server and client side functions are provided. 
 endef
 
-CONFIGURE_VARS += \
-		ac_cv_path_GPGRT_CONFIG="no"
-
 define Build/InstallDev
 	$(INSTALL_DIR) $(2)/bin $(1)/usr/bin
 	$(INSTALL_BIN) \
