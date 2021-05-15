@@ -49,4 +49,4 @@ if [ -z "$uvol_backend" ]; then
 	return 2
 fi
 
-flock -x /tmp/run/uvol.lock $uvol_backend "$@"
+flock -x /tmp/run/uvol.lock "$uvol_backend" "$@"

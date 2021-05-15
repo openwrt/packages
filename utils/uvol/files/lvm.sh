@@ -46,11 +46,11 @@ lvs() {
 }
 
 freebytes() {
-	echo $(($vg_free_count * $vg_extent_size * 1024))
+	echo $((vg_free_count * vg_extent_size * 1024))
 }
 
 totalbytes() {
-	echo $(($vg_extent_count * $vg_extent_size * 1024))
+	echo $((vg_extent_count * vg_extent_size * 1024))
 }
 
 existvol() {
@@ -148,12 +148,12 @@ exportlv() {
 getdev() {
 	existvol "$1" || return 1
 	exportlv "$1"
-	echo $lv_dm_path
+	echo "$lv_dm_path"
 }
 
 getsize() {
 	exportlv "$1"
-	[ "$lv_size" ] && echo $lv_size
+	[ "$lv_size" ] && echo "$lv_size"
 }
 
 activatevol() {
@@ -166,8 +166,8 @@ activatevol() {
 			;;
 		*)
 			[ "$lv_active" = "active" ] && return 0
-			lvm_cmd lvchange -a y "$lv_full_name" || return $?
 			lvm_cmd lvchange -k n "$lv_full_name" || return $?
+			lvm_cmd lvchange -a y "$lv_full_name" || return $?
 			ubus send block.volume "{\"name\": \"$1\", \"action\": \"up\", \"mode\": \"${lv_name:0:2}\", \"device\": \"$lv_dm_path\"}"
 			return 0
 			;;
@@ -222,7 +222,7 @@ createvol() {
 			;;
 	esac
 
-	lvm_cmd lvcreate -p $lvmode -a n -y -W n -Z n -n "${mode}_$1" -l "$size_ext" $vg_name
+	lvm_cmd lvcreate -p "$lvmode" -a n -y -W n -Z n -n "${mode}_$1" -l "$size_ext" "$vg_name"
 	ret=$?
 	if [ ! $ret -eq 0 ] || [ "$lvmode" = "r" ]; then
 		return $ret
@@ -230,7 +230,7 @@ createvol() {
 	exportlv "$1"
 	[ "$lv_full_name" ] || return 22
 	lvm_cmd lvchange -a y "$lv_full_name" || return 1
-	if [ $lv_size -gt $(( 100 * 1024 * 1024 )) ]; then
+	if [ "$lv_size" -gt $(( 100 * 1024 * 1024 )) ]; then
 		mkfs.f2fs -f -l "$1" "$lv_path"
 		ret=$?
 		[ $ret != 0 ] && [ $ret != 134 ] && return 1
@@ -253,11 +253,11 @@ removevol() {
 updatevol() {
 	exportlv "$1"
 	[ "$lv_full_name" ] || return 2
-	[ $lv_size -ge $2 ] || return 27
+	[ "$lv_size" -ge "$2" ] || return 27
 	case "$lv_path" in
 		/dev/*/wo_*)
 			lvm_cmd lvchange -a y -p rw "$lv_full_name"
-			dd of=$lv_path
+			dd of="$lv_path"
 			lvm_cmd lvchange -p r "$lv_full_name"
 			lvm_cmd lvrename "$lv_full_name" "${lv_full_name%%/*}/ro_$1"
 			ubus send block.volume "{\"name\": \"$1\", \"action\": \"up\", \"mode\": \"ro\", \"device\": \"$(getdev "$@")\"}"
