@@ -15,8 +15,9 @@ init_database() {
 
 	local database_count="$(ls "$lib" 2>/dev/null | wc -l)"
 
+	# only init database when folder is empty, as it would prevent import of legacy databases
 	if [ "$database_count" -eq "0" ]; then
-		/usr/sbin/vnstatd -n --noadd >/dev/null 
+		/usr/sbin/vnstatd --initdb >/dev/null
 	fi
 }
 
