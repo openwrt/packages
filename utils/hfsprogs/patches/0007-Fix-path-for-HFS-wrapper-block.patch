@@ -8,11 +8,9 @@ systems (since it is arch independent).
  newfs_hfs.tproj/makehfs.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/newfs_hfs.tproj/makehfs.c b/newfs_hfs.tproj/makehfs.c
-index 7609779..2233ef7 100644
 --- a/newfs_hfs.tproj/makehfs.c
 +++ b/newfs_hfs.tproj/makehfs.c
-@@ -70,7 +70,7 @@ extern Boolean _CFStringGetFileSystemRepresentation(CFStringRef string, UInt8 *b
+@@ -70,7 +70,7 @@ extern Boolean _CFStringGetFileSystemRep
  #include "readme.h"
  
  

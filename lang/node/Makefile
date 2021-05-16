@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=node
-PKG_VERSION:=v14.15.3
+PKG_VERSION:=v14.17.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://nodejs.org/dist/$(PKG_VERSION)
-PKG_HASH:=32cfb19be9bd15cfdfaf842b29c80cc1c1c4b841a3b8ce05de74e1aca1cbf4fe
+PKG_HASH:=56e05bff9331039317db417f772e635e0cd1c55f733f7b1b079d71ab5842c9ed
 
 PKG_MAINTAINER:=Hirokazu MORIKAWA <morikw2@gmail.com>, Adrian Panella <ianchi74@outlook.com>
 PKG_LICENSE:=MIT
@@ -71,7 +71,7 @@ define Package/node/config
 	if PACKAGE_node
 	choice
 		prompt "i18n features"
-		default NODEJS_ICU_NONE
+		default NODEJS_ICU_SMALL
 		help
 		 Select i18n features
 
@@ -127,7 +127,7 @@ HOST_CONFIGURE_VARS:=
 
 HOST_CONFIGURE_ARGS:= \
 	--dest-os=$(if $(findstring Darwin,$(HOST_OS)),mac,linux) \
-	--with-intl=none \
+	--with-intl=small-icu \
 	--prefix=$(STAGING_DIR_HOSTPKG)
 
 define Build/InstallDev

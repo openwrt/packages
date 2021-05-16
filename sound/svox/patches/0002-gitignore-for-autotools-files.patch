@@ -8,9 +8,6 @@ Subject: [PATCH 2/7] gitignore for autotools files
  1 files changed, 32 insertions(+), 0 deletions(-)
  create mode 100644 pico/.gitignore
 
-diff --git a/pico/.gitignore b/pico/.gitignore
-new file mode 100644
-index 0000000..4235569
 --- /dev/null
 +++ b/pico/.gitignore
 @@ -0,0 +1,32 @@
@@ -46,6 +43,3 @@ index 0000000..4235569
 +.libs
 +libttspico.la
 +
--- 
-1.7.1
-

@@ -9,13 +9,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=LVM2
-PKG_VERSION:=2.03.10
-PKG_RELEASE:=2
+PKG_VERSION:=2.03.12
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME).$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=https://sourceware.org/pub/lvm2
-PKG_HASH:=5ad1645a480440892e35f31616682acba0dc204ed049635d2df3e5a5929d0ed0
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME).$(PKG_VERSION)
+PKG_HASH:=76075cf2a2dd12ef526a583f0b3c72a6deaa10691fab28216b0821d01cff0cea
+PKG_BUILD_DIR:=$(BUILD_DIR)/lvm2-$(BUILD_VARIANT)/$(PKG_NAME).$(PKG_VERSION)
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-2.0 LGPL-2.1
@@ -26,12 +26,25 @@ PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/libdevmapper
+define Package/libdevmapper/Default
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=The Linux Kernel Device Mapper userspace library
   URL:=https://sourceware.org/dm/
-  DEPENDS:=+kmod-dm +libpthread +libuuid +librt +libblkid +libselinux
+  DEPENDS:=+kmod-dm +libpthread +libuuid +librt +libblkid
+endef
+
+
+define Package/libdevmapper
+  $(call Package/libdevmapper/Default)
+  VARIANT := normal
+endef
+
+define Package/libdevmapper-selinux
+  $(call Package/libdevmapper/Default)
+  VARIANT := selinux
+  DEPENDS += +libselinux
+  PROVIDES := libdevmapper
 endef
 
 define Package/libdevmapper/description
@@ -39,13 +52,32 @@ define Package/libdevmapper/description
  volume management. It is required by LVM2 and EVMS.
 endef
 
-define Package/lvm2
+define Package/libdevmapper-selinux/description
+$(call Package/libdevmapper/description)
+ This variant supports SELinux
+
+endef
+
+define Package/lvm2/default
   SECTION:=utils
   CATEGORY:=Utilities
   SUBMENU:=Disc
   TITLE:=The Linux Logical Volume Manager
   URL:=https://sourceware.org/lvm2/
-  DEPENDS:=+libdevmapper +libreadline +libncurses +libaio
+  DEPENDS:=+libreadline +libncurses +libaio
+endef
+
+define Package/lvm2
+  $(call Package/lvm2/default)
+  VARIANT := normal
+  DEPENDS += +libdevmapper
+endef
+
+define Package/lvm2-selinux
+  $(call Package/lvm2/default)
+  VARIANT := selinux
+  DEPENDS += +libdevmapper-selinux
+  PROVIDES := lvm2
 endef
 
 define Package/lvm2/description
@@ -54,12 +86,20 @@ define Package/lvm2/description
  LVM toolset.
 endef
 
+define Package/lvm2-selinux/description
+$(call Package/lvm2/description)
+ This variant supports SELinux
+
+endef
+
+
 CONFIGURE_ARGS += \
 	--disable-o_direct \
 	--with-default-pid-dir=/var/run \
 	--with-default-dm-run-dir=/var/run \
 	--with-default-run-dir=/var/run/lvm \
-	--with-default-locking-dir=/var/lock/lvm
+	--with-default-locking-dir=/var/lock/lvm \
+	--$(if $(findstring selinux,$(BUILD_VARIANT)),en,dis)able-selinux
 
 ifneq ($(shell /bin/sh -c "echo -n 'X'"),X)
 MAKE_SHELL = SHELL=/bin/bash
@@ -88,6 +128,8 @@ define Package/libdevmapper/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdevmapper.so.* $(1)/usr/lib
 endef
 
+Package/libdevmapper-selinux/install = $(Package/libdevmapper/install)
+
 define Package/lvm2/install
 	$(INSTALL_DIR) $(1)/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/lvm $(1)/sbin
@@ -105,9 +147,15 @@ define Package/lvm2/install
 	$(FIND) $(PKG_INSTALL_DIR)/usr/sbin/ -type l -exec $(CP) -a {} $(1)/sbin/ \;
 endef
 
+Package/lvm2-selinux/install = $(Package/lvm2/install)
+
 define Package/lvm2/conffiles
 /etc/lvm/lvm.conf
 endef
 
+Package/lvm2-selinux/conffiles = $(Package/lvm2/conffiles)
+
 $(eval $(call BuildPackage,libdevmapper))
+$(eval $(call BuildPackage,libdevmapper-selinux))
 $(eval $(call BuildPackage,lvm2))
+$(eval $(call BuildPackage,lvm2-selinux))

@@ -8,21 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ttyd
-PKG_VERSION:=1.6.1
-PKG_RELEASE:=3
+PKG_VERSION:=1.6.3
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/tsl0922/ttyd/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=d72dcca3dec00cda87b80a0a25ae4fee2f8b9098c1cdb558508dcb14fbb6fafc
+PKG_HASH:=1116419527edfe73717b71407fb6e06f46098fc8a8e6b0bb778c4c75dc9f64b9
 
 PKG_MAINTAINER:=Shuanglei Tao <tsl0922@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_PARALLEL:=1
-
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/ttyd
 	SECTION:=utils

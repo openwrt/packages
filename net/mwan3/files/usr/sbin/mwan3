@@ -129,7 +129,6 @@ use() {
 
 	local interface device src_ip family
 	mwan3_init
-	config_load mwan3
 
 	interface=$1 ; shift
 	[ -z "$*" ] && echo "no command specified for mwan3 use" && return

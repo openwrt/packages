@@ -33,5 +33,5 @@ CONFIGURE_ARGS+= \
 	--with-krb5=shared,"$(STAGING_DIR)/usr" \
 	--with-krb5config=$(STAGING_DIR)/usr/bin/krb5-config
 
-$(eval $(call PECLPackage,krb5,$(PECL_LONGNAME),+krb5-libs,30))
+$(eval $(call PHP7PECLPackage,krb5,$(PECL_LONGNAME),+krb5-libs,30))
 $(eval $(call BuildPackage,$(PKG_NAME)))

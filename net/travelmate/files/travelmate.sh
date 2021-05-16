@@ -1,6 +1,6 @@
 #!/bin/sh
 # travelmate, a wlan connection manager for travel router
-# Copyright (c) 2016-2020 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2016-2021 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # set (s)hellcheck exceptions
@@ -10,7 +10,7 @@ export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 set -o pipefail
 
-trm_ver="2.0.2"
+trm_ver="2.0.3"
 trm_enabled=0
 trm_debug=0
 trm_iface=""
@@ -200,29 +200,27 @@ f_char()
 #
 f_reconf()
 {
-	local radio cnt="0"
+	local radio tmp_radio cnt="0"
 
 	"${trm_wifi}" reconf
 	for radio in ${trm_radiolist}
 	do
 		while [ "$(ubus -S call network.wireless status | jsonfilter -l1 -e "@.${radio}.up")" != "true" ]
 		do
-			if [ "${cnt}" = "$((trm_maxwait/2))" ]
-			then
-				if [ -x "/etc/init.d/wpad" ]
-				then
-					/etc/init.d/wpad restart
-				fi
-			fi
 			if [ "${cnt}" -ge "${trm_maxwait}" ]
 			then
 				break 2
+			fi
+			if [ "${radio}" != "${tmp_radio}" ]
+			then
+				"${trm_wifi}" up "${radio}"
+				tmp_radio="${radio}"
 			fi
 			cnt="$((cnt+1))"
 			sleep 1
 		done
 	done
-	f_log "debug" "f_reconf  ::: radio_list: ${trm_radiolist}, cnt: ${cnt}"
+	f_log "debug" "f_reconf  ::: radio_list: ${trm_radiolist}, radio: ${radio}, cnt: ${cnt}"
 }
 
 # vpn helper function

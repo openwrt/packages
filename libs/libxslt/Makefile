@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libxslt
 PKG_VERSION:=1.1.34
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
@@ -29,11 +29,12 @@ HOST_BUILD_DEPENDS:=libxml2/host
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/libxslt
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libxml2
+  DEPENDS:=+libxml2 $(ICONV_DEPENDS)
   TITLE:=Gnome XSLT library
   URL:=http://xmlsoft.org/XSLT/
 endef

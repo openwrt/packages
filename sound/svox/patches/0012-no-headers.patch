@@ -1,7 +1,6 @@
-diff -urN a/pico/Makefile.am b/pico/Makefile.am
---- a/pico/Makefile.am	2015-01-22 01:33:21.470895431 +0100
-+++ b/pico/Makefile.am	2015-01-22 01:36:03.042228475 +0100
-@@ -34,42 +34,6 @@
+--- a/pico/Makefile.am
++++ b/pico/Makefile.am
+@@ -34,42 +34,6 @@ libttspico_la_SOURCES = \
  	lib/picotrns.c \
  	lib/picowa.c
  

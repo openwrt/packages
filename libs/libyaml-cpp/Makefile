@@ -22,10 +22,9 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:yaml-cpp_project:yaml-cpp
 
 CMAKE_INSTALL:=1
-PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/libyaml-cpp
   SECTION:=development

@@ -8,11 +8,9 @@ Subject: [PATCH] Fix compilation under OpenSSL 1.1 without deprecated APIs
  ssl.h | 2 ++
  2 files changed, 6 insertions(+)
 
-diff --git a/ssl.c b/ssl.c
-index 6c67879..1a222bb 100644
 --- a/ssl.c
 +++ b/ssl.c
-@@ -359,7 +359,9 @@ static SSL_CTX *ssl_create_context(char *keyfile, char *certfile,
+@@ -359,7 +359,9 @@ static SSL_CTX *ssl_create_context(char
  			debug("continuing anyway...");
  		}
  	}
@@ -22,7 +20,7 @@ index 6c67879..1a222bb 100644
  	SSL_CTX_set_info_callback(ssl_context, ssl_info_cb);
  	SSL_CTX_set_tlsext_status_cb(ssl_context, ssl_stapling_cb);
  	SSL_CTX_set_tlsext_servername_callback(ssl_context, ssl_sni_cb);
-@@ -405,8 +407,10 @@ static SSL_CTX *ssl_create_context(char *keyfile, char *certfile,
+@@ -405,8 +407,10 @@ static SSL_CTX *ssl_create_context(char
  
  int ssl_init(void)
  {
@@ -33,8 +31,6 @@ index 6c67879..1a222bb 100644
  	ssl_context = ssl_create_context(keyfile, certfile, cacert_dir, cacert_file);
  	if (ssl_context == NULL) {
  		error("Unable to create default context");
-diff --git a/ssl.h b/ssl.h
-index a0dcd18..b63161e 100644
 --- a/ssl.h
 +++ b/ssl.h
 @@ -1,6 +1,8 @@
@@ -46,4 +42,3 @@ index a0dcd18..b63161e 100644
  
  #define SRV_SSL_V23 0
  #define SRV_SSL_V2 1
-

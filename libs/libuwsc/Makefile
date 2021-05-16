@@ -8,18 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libuwsc
-PKG_VERSION:=3.3.4
-PKG_RELEASE:=1
+PKG_VERSION:=3.3.5
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL=https://github.com/zhaojh329/libuwsc/releases/download/v$(PKG_VERSION)
-PKG_HASH:=ef789ff35e537e5191ec0d13f3e0df54187a54eace611e283ad4172d4411d08b
+PKG_HASH:=a06b7324671e181ffe3165e93e6f94c7ac1380f69e32a52e80c8da7016acd60d
 
 PKG_MAINTAINER:=Jianhui Zhao <jianhuizhao329@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_PARALLEL:=1
 CMAKE_INSTALL:=1
 
 PKG_CONFIG_DEPENDS:= \
@@ -29,7 +28,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_LIBUWSC_nossl_LUA_BINDING
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/libuwsc/Default
   SECTION:=libs

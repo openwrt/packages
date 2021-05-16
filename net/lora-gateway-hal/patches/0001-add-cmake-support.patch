@@ -29,9 +29,6 @@ Signed-off-by: Xue Liu <liuxuenetmail@gmail.com>
  create mode 100644 util_tx_continuous/CMakeLists.txt
  create mode 100644 util_tx_test/CMakeLists.txt
 
-diff --git a/CMakeLists.txt b/CMakeLists.txt
-new file mode 100644
-index 0000000..b112150
 --- /dev/null
 +++ b/CMakeLists.txt
 @@ -0,0 +1,77 @@
@@ -112,16 +109,10 @@ index 0000000..b112150
 +
 +# -- add util_tx_test
 +add_subdirectory(util_tx_test)
-diff --git a/cmake/loragw-config.cmake b/cmake/loragw-config.cmake
-new file mode 100644
-index 0000000..ee8687b
 --- /dev/null
 +++ b/cmake/loragw-config.cmake
 @@ -0,0 +1 @@
 +include("${CMAKE_CURRENT_LIST_DIR}/loragw-targets.cmake")
-diff --git a/libloragw/CMakeLists.txt b/libloragw/CMakeLists.txt
-new file mode 100644
-index 0000000..b2102ae
 --- /dev/null
 +++ b/libloragw/CMakeLists.txt
 @@ -0,0 +1,150 @@
@@ -275,9 +266,6 @@ index 0000000..b2102ae
 +
 +endforeach()
 +
-diff --git a/libloragw/loragw.pc.in b/libloragw/loragw.pc.in
-new file mode 100644
-index 0000000..01bb3cf
 --- /dev/null
 +++ b/libloragw/loragw.pc.in
 @@ -0,0 +1,10 @@
@@ -291,9 +279,6 @@ index 0000000..01bb3cf
 +Version: @lora_gateway_VERSION@
 +Cflags: -I${includedir}
 +Libs: -L${libdir} -lloragw
-diff --git a/libloragw/loragw_config.h.in b/libloragw/loragw_config.h.in
-new file mode 100644
-index 0000000..76ad35a
 --- /dev/null
 +++ b/libloragw/loragw_config.h.in
 @@ -0,0 +1,14 @@
@@ -311,9 +296,6 @@ index 0000000..76ad35a
 +#cmakedefine01 DEBUG_LBT
 +
 +#endif
-diff --git a/util_lbt_test/CMakeLists.txt b/util_lbt_test/CMakeLists.txt
-new file mode 100644
-index 0000000..f184b82
 --- /dev/null
 +++ b/util_lbt_test/CMakeLists.txt
 @@ -0,0 +1,23 @@
@@ -340,9 +322,6 @@ index 0000000..f184b82
 +	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 +	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 +)
-diff --git a/util_pkt_logger/CMakeLists.txt b/util_pkt_logger/CMakeLists.txt
-new file mode 100644
-index 0000000..82cfc86
 --- /dev/null
 +++ b/util_pkt_logger/CMakeLists.txt
 @@ -0,0 +1,29 @@
@@ -375,9 +354,6 @@ index 0000000..82cfc86
 +	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 +	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 +)
-diff --git a/util_spectral_scan/CMakeLists.txt b/util_spectral_scan/CMakeLists.txt
-new file mode 100644
-index 0000000..3cec2a9
 --- /dev/null
 +++ b/util_spectral_scan/CMakeLists.txt
 @@ -0,0 +1,23 @@
@@ -404,9 +380,6 @@ index 0000000..3cec2a9
 +	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 +	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 +)
-diff --git a/util_spi_stress/CMakeLists.txt b/util_spi_stress/CMakeLists.txt
-new file mode 100644
-index 0000000..d5f0eea
 --- /dev/null
 +++ b/util_spi_stress/CMakeLists.txt
 @@ -0,0 +1,23 @@
@@ -433,9 +406,6 @@ index 0000000..d5f0eea
 +	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 +	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 +)
-diff --git a/util_tx_continuous/CMakeLists.txt b/util_tx_continuous/CMakeLists.txt
-new file mode 100644
-index 0000000..97c70e5
 --- /dev/null
 +++ b/util_tx_continuous/CMakeLists.txt
 @@ -0,0 +1,23 @@
@@ -462,9 +432,6 @@ index 0000000..97c70e5
 +	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 +	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 +)
-diff --git a/util_tx_test/CMakeLists.txt b/util_tx_test/CMakeLists.txt
-new file mode 100644
-index 0000000..6cc0e04
 --- /dev/null
 +++ b/util_tx_test/CMakeLists.txt
 @@ -0,0 +1,23 @@
@@ -491,6 +458,3 @@ index 0000000..6cc0e04
 +	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 +	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 +)
--- 
-2.20.1
-

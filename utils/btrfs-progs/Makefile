@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=btrfs-progs
-PKG_VERSION:=5.7
+PKG_VERSION:=5.11
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/kernel/people/kdave/btrfs-progs
-PKG_HASH:=5c2f048b8c814852614b0b262ab2d468ea02774ef01124ebc0ab708df262de5c
+PKG_HASH:=d41961b0a92160c80f894ad9a1882822889c2e1d084cbf3e08b8c214a5cf0137
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-v$(PKG_VERSION)
 
 PKG_MAINTAINER:=Karel Kočí <karel.koci@nic.cz>
@@ -33,6 +33,7 @@ define Package/btrfs-progs
   DEPENDS:= \
     +libattr \
     +libuuid \
+    +libmount \
     +zlib \
     +libblkid \
     +liblzo \

@@ -1,6 +1,6 @@
 --- a/Makefile
 +++ b/Makefile
-@@ -25,11 +25,7 @@
+@@ -25,11 +25,7 @@ SOLIBNAME = libhttp_parser
  SOMAJOR = 2
  SOMINOR = 9
  SOREV   = 4
@@ -13,7 +13,7 @@
  CC = winegcc
  BINEXT = .exe.so
  HELPER = wine
-@@ -65,12 +61,8 @@
+@@ -65,12 +61,8 @@ PREFIX ?= /usr/local
  LIBDIR = $(PREFIX)/lib
  INCLUDEDIR = $(PREFIX)/include
  
@@ -26,7 +26,7 @@
  
  test: test_g test_fast
  	$(HELPER) ./test_g$(BINEXT)
-@@ -131,14 +123,18 @@
+@@ -131,14 +123,18 @@ tags: http_parser.c http_parser.h test.c
  	ctags $^
  
  install: library

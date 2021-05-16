@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pkgconf
-PKG_VERSION:=1.7.3
-PKG_RELEASE:=1
+PKG_VERSION:=1.7.4
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://distfiles.dereferenced.org/pkgconf
-PKG_HASH:=b846aea51cf696c3392a0ae58bef93e2e72f8e7073ca6ad1ed8b01c85871f9c0
+PKG_HASH:=d73f32c248a4591139a6b17777c80d4deab6b414ec2b3d21d0a24be348c476ab
 
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_LICENSE:=MIT
@@ -57,7 +57,7 @@ MESON_ARGS += \
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/libpkgconf
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/libpkgconf/*.h $(1)/usr/include/libpkgconf/
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/pkgconf/libpkgconf/*.h $(1)/usr/include/libpkgconf
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpkgconf.so* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/share/aclocal/

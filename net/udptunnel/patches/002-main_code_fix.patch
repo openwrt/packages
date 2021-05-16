@@ -1,10 +1,8 @@
 Description: remove yp host lookup and fix some types
 Author: Jan Delgado <jdelgado@gmx.net>
 
-Index: udptunnel-1.1/host2ip.c
-===================================================================
---- udptunnel-1.1.orig/host2ip.c
-+++ udptunnel-1.1/host2ip.c
+--- a/host2ip.c
++++ b/host2ip.c
 @@ -4,7 +4,6 @@
  #include <netdb.h>           /* gethostbyname() */
  #include <netinet/in.h>      /* sockaddr_in */
@@ -33,10 +31,8 @@ Index: udptunnel-1.1/host2ip.c
    }
    return in;
  } /* host2ip */
-Index: udptunnel-1.1/udptunnel.c
-===================================================================
---- udptunnel-1.1.orig/udptunnel.c
-+++ udptunnel-1.1/udptunnel.c
+--- a/udptunnel.c
++++ b/udptunnel.c
 @@ -423,7 +423,7 @@ static void await_incoming_connections(s
      for (i = 0; i < relay_count; i++) {
        if (FD_ISSET(relays[i].tcp_listen_sock, &readfds)) {

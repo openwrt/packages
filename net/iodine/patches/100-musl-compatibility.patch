@@ -11,8 +11,6 @@ Date:   Thu Jun 25 19:38:24 2015 +0300
     The reason for such brutal intrusiuon is explained in musl FAQ:
     http://wiki.musl-libc.org/wiki/FAQ#Q:_why_is_there_no_MUSL_macro_.3F
 
-diff --git a/src/common.c b/src/common.c
-index 2715979..5f0e370 100644
 --- a/src/common.c
 +++ b/src/common.c
 @@ -57,7 +57,7 @@

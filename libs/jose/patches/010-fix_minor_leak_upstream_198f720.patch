@@ -7,8 +7,6 @@ Subject: [PATCH] Fix minor FILE* leak
  cmd/jwe/pwd.h | 5 ++++-
  1 file changed, 4 insertions(+), 1 deletion(-)
 
-diff --git a/cmd/jwe/pwd.h b/cmd/jwe/pwd.h
-index 0b5be54..2f021eb 100644
 --- a/cmd/jwe/pwd.h
 +++ b/cmd/jwe/pwd.h
 @@ -57,8 +57,10 @@ jwe_getpass(const char *prompt)

@@ -1,6 +1,6 @@
---- a/CMakeLists.txt	2020-07-01 22:17:14.424445933 +0100
-+++ b/CMakeLists.txt	2020-07-01 22:17:57.032637638 +0100
-@@ -115,14 +115,26 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -115,14 +115,26 @@ install(FILES AUTHORS COPYING ChangeLog
  
  # Ensure the file gets CRLF line endings on Windows.
  file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/stubby.yml INPUT ${CMAKE_CURRENT_SOURCE_DIR}/stubby.yml.example)

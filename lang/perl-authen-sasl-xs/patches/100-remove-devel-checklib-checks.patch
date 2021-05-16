@@ -1,5 +1,5 @@
---- a/Makefile.PL	2009-09-22 16:22:09.000000000 -0600
-+++ b/Makefile.PL	2018-01-01 18:54:13.023366252 -0700
+--- a/Makefile.PL
++++ b/Makefile.PL
 @@ -1,7 +1,6 @@
  # Do yourself a favour, and don't edit this file, see README for build instructions
  
@@ -8,7 +8,7 @@
  
  my @inc_search = qw(/opt/local/include /usr/local/include);
  my @lib_search = qw(/opt/local/lib64 /usr/local/lib64 /opt/local/lib /usr/local/lib);
-@@ -12,15 +12,7 @@ unless (exists $args{INC} or exists $arg
+@@ -13,28 +12,13 @@ unless (exists $args{INC} or exists $arg
  
    my @incpath = grep {-d} @inc_search;
    my @libpath = grep {-d} @lib_search;
@@ -25,7 +25,6 @@
  
    if ($have_sasl2) {
      $mmopt{DEFINE} = "-DSASL2" unless $use_sasl2;
-@@ -28,13 +27,6 @@ unless (exists $args{INC} or exists $arg
    }
    else {
      exit(0) if $use_sasl2;
@@ -39,7 +38,7 @@
    }
  
    $mmopt{INC}  = join " ", map {"-I$_"} @incpath;
-@@ -58,7 +50,6 @@ WriteMakefile(
+@@ -58,7 +42,6 @@ WriteMakefile(
            repository => 'http://github.com/gbarr/perl-authen-sasl-xs',
          },
          build_requires => {

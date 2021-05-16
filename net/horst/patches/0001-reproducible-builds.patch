@@ -1,7 +1,5 @@
-Index: horst-5.1/conf_options.c
-===================================================================
---- horst-5.1.orig/conf_options.c
-+++ horst-5.1/conf_options.c
+--- a/conf_options.c
++++ b/conf_options.c
 @@ -519,7 +519,7 @@ void config_parse_file_and_cmdline(int a
  			conf_filename = optarg;
  			break;
@@ -11,10 +9,8 @@ Index: horst-5.1/conf_options.c
  			exit(0);
  		case 'h':
  		case '?':
-Index: horst-5.1/display-help.c
-===================================================================
---- horst-5.1.orig/display-help.c
-+++ horst-5.1/display-help.c
+--- a/display-help.c
++++ b/display-help.c
 @@ -36,7 +36,7 @@ void update_help_win(WINDOW *win)
  	print_centered(win, 2, COLS, "HORST - Horsts OLSR Radio Scanning Tool (or)");
  	print_centered(win, 3, COLS, "HORST - Highly Optimized Radio Scanning Tool");

@@ -1,6 +1,6 @@
 --- a/src/util/dict_db.c
 +++ b/src/util/dict_db.c
-@@ -750,8 +750,8 @@ static DICT *dict_db_open(const char *class, const char *path, int open_flags,
+@@ -750,8 +750,8 @@ static DICT *dict_db_open(const char *cl
  	msg_fatal("create DB database: %m");
      if (db == 0)
  	msg_panic("db_create null result");

@@ -1,6 +1,6 @@
 --- a/src/server.c
 +++ b/src/server.c
-@@ -2013,11 +2013,8 @@ static void dispatch_method(lo_server s, const char *path,
+@@ -2013,11 +2013,8 @@ static void dispatch_method(lo_server s,
  
                      tmp = (char*) malloc(strlen(it->path + len) + 1);
                      strcpy(tmp, it->path + len);

@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unrar
-PKG_VERSION:=6.0.2
-PKG_RELEASE:=1
+PKG_VERSION:=6.0.4
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=unrarsrc-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.rarlab.com/rar
-PKG_HASH:=81bf188333f89c976780a477af27f651f54aa7da9312303d8d1a804696d3edd3
+PKG_HASH:=130197e495d6e2c2ee790a5beee123edeed642508be13f0159672e5397aca6c1
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)-$(BUILD_VARIANT)/unrar
 
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>, \
@@ -23,20 +23,16 @@ PKG_CPE_ID:=cpe:/a:rarlab:unrar
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
-include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
-ifeq ($(CONFIG_USE_UCLIBCXX),y)
-TARGET_LDFLAGS +=-nodefaultlibs
-endif
 TARGET_CXXFLAGS +=-fno-rtti -flto
-TARGET_LDFLAGS +=$(FPIC) -Wl,--gc-sections
+TARGET_LDFLAGS +=$(FPIC) -Wl,--gc-sections $(if $(CONFIG_USE_GLIBC),-lpthread)
 
 define Package/unrar/Default
   TITLE:=UnRAR
   SUBMENU:=Compression
   URL:=https://www.rarlab.com/
-  DEPENDS:=$(CXX_DEPENDS) +libpthread
+  DEPENDS:=+libstdcpp +libpthread
 endef
 
 define Package/unrar

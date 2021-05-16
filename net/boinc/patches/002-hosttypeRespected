@@ -1,7 +1,5 @@
-Index: boinc-client_release-7.16-7.16.6/client/cs_platforms.cpp
-===================================================================
---- boinc-client_release-7.16-7.16.6.orig/client/cs_platforms.cpp
-+++ boinc-client_release-7.16-7.16.6/client/cs_platforms.cpp
+--- a/client/cs_platforms.cpp
++++ b/client/cs_platforms.cpp
 @@ -76,6 +76,21 @@ void CLIENT_STATE::add_platform(const ch
  //
  void CLIENT_STATE::detect_platforms() {
@@ -24,7 +22,7 @@ Index: boinc-client_release-7.16-7.16.6/client/cs_platforms.cpp
  #if defined(_WIN32) && !defined(__CYGWIN32__)
  #if defined(_WIN64) && defined(_M_X64)
      add_platform("windows_x86_64");
-@@ -206,15 +221,6 @@ void CLIENT_STATE::detect_platforms() {
+@@ -210,15 +225,6 @@ void CLIENT_STATE::detect_platforms() {
          add_platform("i686-pc-linux-gnu");
      }
  
@@ -40,7 +38,7 @@ Index: boinc-client_release-7.16-7.16.6/client/cs_platforms.cpp
  #elif defined(sun)
      // Check if we can run 64-bit binaries...
      // this assumes there isn't a 64-bit only solaris.  (Every 64-bit solaris can run 32 bit binaries)
-@@ -290,6 +296,8 @@ void CLIENT_STATE::detect_platforms() {
+@@ -294,6 +300,8 @@ void CLIENT_STATE::detect_platforms() {
  #endif
  
  #endif

@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=attr
-PKG_VERSION:=2.4.48
-PKG_RELEASE:=2
+PKG_VERSION:=2.5.1
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://git.savannah.nongnu.org/cgit/attr.git/snapshot
-PKG_HASH:=095699f71230ace37e5bc680c6f9d15cf8e53eb38d00b2c46db5cc7e0712e5f3
+PKG_HASH:=69991b2fc5fe7917d996b05d5d4fe3c44d074c9d806dd263b14a42fab57bfc2f
 
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 

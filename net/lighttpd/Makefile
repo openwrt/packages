@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lighttpd
-PKG_VERSION:=1.4.57
-PKG_RELEASE:=1
+PKG_VERSION:=1.4.59
+PKG_RELEASE:=2
 # release candidate ~rcX testing; remove for release
-#PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-1.4.57
+#PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-1.4.59
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://download.lighttpd.net/lighttpd/releases-1.4.x
-PKG_HASH:=52ca961b89c12f7ecbb2e4e0c5a9e79b2863c64e33c42832a165e7f894d6217f
+PKG_HASH:=fb953db273daef08edb6e202556cae8a3d07eed6081c96bd9903db957d1084d5
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=BSD-3-Clause
@@ -104,7 +104,8 @@ MESON_ARGS += \
 	-Dwith_webdav_props=$(if $(CONFIG_PACKAGE_lighttpd-mod-webdav),true,false) \
 	-Dwith_wolfssl=$(if $(CONFIG_PACKAGE_lighttpd-mod-wolfssl),true,false) \
 	-Dwith_xattr=false \
-	-Dwith_zlib=$(if $(CONFIG_PACKAGE_lighttpd-mod-deflate),true,false)
+	-Dwith_zlib=$(if $(CONFIG_PACKAGE_lighttpd-mod-deflate),true,false) \
+	-Dwith_zstd=false
 
 BASE_MODULES:=dirlisting indexfile staticfile
 
@@ -184,6 +185,7 @@ $(eval $(call BuildPlugin,authn_sasl,SASL-based authentication,lighttpd-mod-auth
 # Finally, everything else.
 $(eval $(call BuildPlugin,access,Access restrictions,,30))
 $(eval $(call BuildPlugin,accesslog,Access logging,,30))
+$(eval $(call BuildPlugin,ajp13,AJP13 Tomcat connector,,30))
 $(eval $(call BuildPlugin,alias,Directory alias,,30))
 $(eval $(call BuildPlugin,cgi,CGI,,30))
 $(eval $(call BuildPlugin,cml,Cache Meta Language,+PACKAGE_lighttpd-mod-cml:liblua +PACKAGE_lighttpd-mod-cml:libnettle,30))

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libndpi
 PKG_VERSION:=3.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ntop/nDPI/tar.gz/$(PKG_VERSION)?
@@ -25,7 +25,6 @@ PKG_REMOVE_FILES:=autogen.sh
 PKG_BUILD_DEPENDS:=libpcap
 PKG_BUILD_PARALLEL:=1
 
-include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
 ifeq ($(CONFIG_LIBNDPI_GCRYPT),)
@@ -37,7 +36,7 @@ define Package/libndpi
   CATEGORY:=Libraries
   TITLE:=Library for deep-packet inspection
   URL:=https://github.com/ntop/nDPI
-  DEPENDS:=$(CXX_DEPENDS) +LIBNDPI_GCRYPT:libgcrypt +libpcap +libjson-c
+  DEPENDS:=+LIBNDPI_GCRYPT:libgcrypt +libpcap +libjson-c
 endef
 
 define Package/libndpi/description

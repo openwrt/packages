@@ -9,11 +9,9 @@ Subject: [PATCH] Fix compilation without deprecated APIs
  keys.c          | 1 +
  3 files changed, 5 insertions(+)
 
-diff --git a/dnssec_verify.c b/dnssec_verify.c
-index d22962eb..99a7515d 100644
 --- a/dnssec_verify.c
 +++ b/dnssec_verify.c
-@@ -597,7 +597,9 @@ ldns_dnssec_trust_tree_print_sm_fmt(FILE *out,
+@@ -597,7 +597,9 @@ ldns_dnssec_trust_tree_print_sm_fmt(FILE
  						if (tree->parent_status[i]
  						    == LDNS_STATUS_SSL_ERR) {
  							printf("; SSL Error: ");
@@ -23,8 +21,6 @@ index d22962eb..99a7515d 100644
  							ERR_print_errors_fp(stdout);
  							printf("\n");
  						}
-diff --git a/drill/drill.c b/drill/drill.c
-index 6efd29a5..186bdff2 100644
 --- a/drill/drill.c
 +++ b/drill/drill.c
 @@ -994,10 +994,12 @@ main(int argc, char *argv[])
@@ -40,8 +36,6 @@ index 6efd29a5..186bdff2 100644
  #ifdef USE_WINSOCK
  	WSACleanup();
  #endif
-diff --git a/keys.c b/keys.c
-index 016f9731..06afb739 100644
 --- a/keys.c
 +++ b/keys.c
 @@ -15,6 +15,7 @@

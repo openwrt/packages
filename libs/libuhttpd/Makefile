@@ -8,22 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libuhttpd
-PKG_VERSION:=3.6.0
+PKG_VERSION:=3.11.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL=https://github.com/zhaojh329/libuhttpd/releases/download/v$(PKG_VERSION)
-PKG_HASH:=5cdbff570430530b46ed071363c52cc655bbb349943008b57f63061481586391
+PKG_HASH:=dcd95fac7b29d43f57e942db6e9fb4c8745d4284684cd627d60c8a7f8c76cd32
 
 PKG_MAINTAINER:=Jianhui Zhao <zhaojh329@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_PARALLEL:=1
 CMAKE_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/libuhttpd/Default
   SECTION:=libs

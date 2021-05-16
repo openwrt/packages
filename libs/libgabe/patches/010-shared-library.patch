@@ -7,8 +7,6 @@ Subject: [PATCH] shared library
  Makefile.in | 13 ++++++-------
  1 file changed, 6 insertions(+), 7 deletions(-)
 
-diff --git a/Makefile.in b/Makefile.in
-index f23bf90..c8c19fa 100644
 --- a/Makefile.in
 +++ b/Makefile.in
 @@ -18,13 +18,12 @@ LDFLAGS = @LDFLAGS@ \
@@ -28,7 +26,7 @@ index f23bf90..c8c19fa 100644
  
  # test: test.o libgabe.a
  # 	$(CC) -o $@ $(LDFLAGS) $^
-@@ -44,14 +43,14 @@ dist: AUTHORS COPYING INSTALL NEWS README \
+@@ -44,14 +43,14 @@ dist: AUTHORS COPYING INSTALL NEWS READM
  	tar zc $(DISTNAME) > $(DISTNAME).tar.gz
  	rm -rf $(DISTNAME)
  
@@ -46,6 +44,3 @@ index f23bf90..c8c19fa 100644
  	/bin/rm -f $(DESTDIR)$(includedir)/gabe.h
  
  # development and meta stuff
--- 
-2.17.1
-

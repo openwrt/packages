@@ -1,6 +1,6 @@
 --- a/modules/md/md_crypt.c
 +++ b/modules/md/md_crypt.c
-@@ -708,23 +708,23 @@ const char *md_cert_get_serial_number(const md_cert_t *cert, apr_pool_t *p)
+@@ -708,23 +708,23 @@ const char *md_cert_get_serial_number(co
  
  int md_cert_is_valid_now(const md_cert_t *cert)
  {
@@ -31,7 +31,7 @@
  int md_cert_covers_domain(md_cert_t *cert, const char *domain_name)
 --- a/modules/ssl/ssl_engine_init.c
 +++ b/modules/ssl/ssl_engine_init.c
-@@ -226,7 +226,7 @@ apr_status_t ssl_init_Module(apr_pool_t *p, apr_pool_t *plog,
+@@ -226,7 +226,7 @@ apr_status_t ssl_init_Module(apr_pool_t
      apr_status_t rv;
      apr_array_header_t *pphrases;
  
@@ -42,7 +42,7 @@
                       "a newer library (%s, version currently loaded is %s)"
 --- a/modules/ssl/ssl_engine_io.c
 +++ b/modules/ssl/ssl_engine_io.c
-@@ -1255,9 +1255,9 @@ static apr_status_t ssl_io_filter_handshake(ssl_filter_ctx_t *filter_ctx)
+@@ -1255,9 +1255,9 @@ static apr_status_t ssl_io_filter_handsh
          if (dc->proxy->ssl_check_peer_expire != FALSE) {
              if (!cert
                  || (X509_cmp_current_time(
@@ -56,7 +56,7 @@
                                "SSL Proxy: Peer certificate is expired");
 --- a/modules/ssl/ssl_engine_log.c
 +++ b/modules/ssl/ssl_engine_log.c
-@@ -161,10 +161,10 @@ static void ssl_log_cert_error(const char *file, int line, int level,
+@@ -161,10 +161,10 @@ static void ssl_log_cert_error(const cha
                  BIO_puts(bio, "(ERROR)");
  
              BIO_puts(bio, " / notbefore: ");
@@ -71,7 +71,7 @@
  
 --- a/modules/ssl/ssl_engine_vars.c
 +++ b/modules/ssl/ssl_engine_vars.c
-@@ -490,13 +490,13 @@ static char *ssl_var_lookup_ssl_cert(apr_pool_t *p, request_rec *r, X509 *xs,
+@@ -490,13 +490,13 @@ static char *ssl_var_lookup_ssl_cert(apr
          result = ssl_var_lookup_ssl_cert_serial(p, xs);
      }
      else if (strcEQ(var, "V_START")) {
@@ -102,7 +102,7 @@
   * when the user points at an explicit non-engine flavor of OpenSSL
 --- a/support/ab.c
 +++ b/support/ab.c
-@@ -652,11 +652,11 @@ static void ssl_print_cert_info(BIO *bio, X509 *cert)
+@@ -652,11 +652,11 @@ static void ssl_print_cert_info(BIO *bio
  
      BIO_printf(bio, "Certificate version: %ld\n", X509_get_version(cert)+1);
      BIO_printf(bio,"Valid from: ");
@@ -116,7 +116,7 @@
      BIO_printf(bio,"\n");
  
      pk = X509_get_pubkey(cert);
-@@ -2634,8 +2634,10 @@ int main(int argc, const char * const argv[])
+@@ -2634,8 +2634,10 @@ int main(int argc, const char * const ar
      CRYPTO_malloc_init();
  #endif
  #endif

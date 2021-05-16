@@ -6,9 +6,9 @@ local function get_wifi_interfaces()
   local status = u:call("network.wireless", "status", {})
   local interfaces = {}
 
-  for dev, dev_table in pairs(status) do
+  for _, dev_table in pairs(status) do
     for _, intf in ipairs(dev_table['interfaces']) do
-      table.insert(interfaces, intf['config']['ifname'])
+      table.insert(interfaces, intf['ifname'])
     end
   end
 

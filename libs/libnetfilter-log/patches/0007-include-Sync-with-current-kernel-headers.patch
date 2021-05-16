@@ -9,8 +9,6 @@ Signed-off-by: Pablo Neira Ayuso <pablo@netfilter.org>
  include/libnetfilter_log/linux_nfnetlink_log.h | 51 +++++++++++++-------------
  1 file changed, 25 insertions(+), 26 deletions(-)
 
-diff --git a/include/libnetfilter_log/linux_nfnetlink_log.h b/include/libnetfilter_log/linux_nfnetlink_log.h
-index 4c802c8..9f38277 100644
 --- a/include/libnetfilter_log/linux_nfnetlink_log.h
 +++ b/include/libnetfilter_log/linux_nfnetlink_log.h
 @@ -20,33 +20,31 @@ enum nfulnl_msg_types {
@@ -103,6 +101,3 @@ index 4c802c8..9f38277 100644
  
  #define NFULNL_CFG_F_SEQ	0x0001
  #define NFULNL_CFG_F_SEQ_GLOBAL	0x0002
--- 
-2.11.0
-

@@ -11,13 +11,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=boost
-PKG_VERSION:=1.75.0
-PKG_SOURCE_VERSION:=1_75_0
-PKG_RELEASE:=1
+PKG_VERSION:=1.76.0
+PKG_SOURCE_VERSION:=1_76_0
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_SOURCE_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)/$(PKG_NAME)/$(PKG_VERSION) https://dl.bintray.com/boostorg/release/$(PKG_VERSION)/source/
-PKG_HASH:=953db31e016db7bb207f11432bef7df100516eeb746843fa0486a222e3fd49cb
+PKG_HASH:=f0397ba6e982c4450f27bf32a2a83292aba035b827a5623a14636ea583318c41
 
 PKG_MAINTAINER:=Carlos M. Ferreira <carlosmf.pt@gmail.com>
 PKG_LICENSE:=BSL-1.0
@@ -42,7 +42,7 @@ define Package/boost/Default
 endef
 
 define Package/boost/description
-This package provides the Boost v1.75.0 libraries.
+This package provides the Boost v1.76.0 libraries.
 Boost is a set of free, peer-reviewed, portable C++ source libraries.
 
 This package provides the following run-time libraries:
@@ -77,7 +77,7 @@ This package provides the following run-time libraries:
  - wave
 
 There are many more header-only libraries supported by Boost.
-See more at http://www.boost.org/doc/libs/1_75_0/
+See more at http://www.boost.org/doc/libs/1_76_0/
 endef
 
 PKG_BUILD_DEPENDS:=boost/host
@@ -117,7 +117,7 @@ define Package/boost/config
 	# Invisible config dependency
 	config boost-context-exclude
 		bool
-		default y if (TARGET_arc770 || TARGET_archs38 || TARGET_octeon || TARGET_octeontx)
+		default y if (TARGET_arc770 || TARGET_archs38)
 		default n
 
 	config boost-coroutine-exclude
@@ -387,7 +387,7 @@ EXTRA_CXXFLAGS += $(if $(CONFIG_GCC_USE_VERSION_10),-std=gnu++20,$(if $(CONFIG_G
 ifneq ($(findstring mips,$(ARCH)),)
     BOOST_ABI = o32
     ifneq ($(findstring 64,$(ARCH)),)
-        BOOST_ABI = o64
+        BOOST_ABI = n64
     endif
 else ifneq ($(findstring arm,$(ARCH)),)
     BOOST_ABI = aapcs

@@ -1,6 +1,6 @@
 --- a/newfs_hfs.tproj/makehfs.c
 +++ b/newfs_hfs.tproj/makehfs.c
-@@ -376,7 +376,7 @@ make_hfsplus(const DriveInfo *driveInfo, hfsparams_t *defaults)
+@@ -376,7 +376,7 @@ make_hfsplus(const DriveInfo *driveInfo,
  	if ( (temp & 0x01FF) != 0 )
  		temp = (temp + kBytesPerSector) & 0xFFFFFE00;
  	
@@ -9,7 +9,7 @@
  	if (nodeBuffer == NULL)
  		err(1, NULL);
  
-@@ -1814,7 +1814,7 @@ ClearDisk(const DriveInfo *driveInfo, UInt64 startingSector, UInt32 numberOfSect
+@@ -1814,7 +1814,7 @@ ClearDisk(const DriveInfo *driveInfo, UI
  
  	bufferSize = bufferSizeInSectors << kLog2SectorSize;
  

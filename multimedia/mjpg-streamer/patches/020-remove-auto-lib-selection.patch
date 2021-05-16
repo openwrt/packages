@@ -3,11 +3,11 @@
 @@ -49,8 +49,7 @@ set (MJPG_STREAMER_PLUGIN_INSTALL_PATH "
  # Global dependencies
  #
-
+ 
 -find_library(JPEG_LIB jpeg)
 -
 +#find_library(JPEG_LIB jpeg)
-
+ 
  #
  # Input plugins
 --- a/plugins/input_uvc/CMakeLists.txt

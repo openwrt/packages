@@ -21,10 +21,9 @@ PKG_LICENSE_FILES:=LICENSE.md
 PKG_CPE_ID:=cpe:/a:c-ares_project:c-ares
 
 CMAKE_INSTALL:=1
-PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/libcares
   SECTION:=libs

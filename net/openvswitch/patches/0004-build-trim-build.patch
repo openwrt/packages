@@ -8,8 +8,6 @@ Signed-off-by: Yousong Zhou <zhouyousong@yunionyun.com>
  Makefile.am | 2 --
  1 file changed, 2 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index 7effb5fec..d6df91e8b 100644
 --- a/Makefile.am
 +++ b/Makefile.am
 @@ -475,12 +475,10 @@ dist-docs:

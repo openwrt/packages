@@ -9,8 +9,6 @@ Subject: Fix compilation on 64-bit arches
  fsck_hfs.tproj/dfalib/hfs_endian.c   |  2 +-
  4 files changed, 16 insertions(+), 13 deletions(-)
 
-diff --git a/fsck_hfs.tproj/dfalib/BTreePrivate.h b/fsck_hfs.tproj/dfalib/BTreePrivate.h
-index 058c75b..2fc2f28 100644
 --- a/fsck_hfs.tproj/dfalib/BTreePrivate.h
 +++ b/fsck_hfs.tproj/dfalib/BTreePrivate.h
 @@ -104,6 +104,9 @@ typedef enum {
@@ -23,7 +21,7 @@ index 058c75b..2fc2f28 100644
  typedef struct BTreeControlBlock {					// fields specific to BTree CBs
  
  	UInt8		keyCompareType;   /* Key string Comparison Type */
-@@ -144,7 +147,7 @@ typedef struct BTreeControlBlock {					// fields specific to BTree CBs
+@@ -144,7 +147,7 @@ typedef struct BTreeControlBlock {					/
  	UInt32						 numPossibleHints;	// Looks like a formated hint
  	UInt32						 numValidHints;		// Hint used to find correct record.
  	
@@ -32,8 +30,6 @@ index 058c75b..2fc2f28 100644
  	SFCB						*fcbPtr;		// fcb of btree file
  	
  } BTreeControlBlock, *BTreeControlBlockPtr;
-diff --git a/fsck_hfs.tproj/dfalib/SControl.c b/fsck_hfs.tproj/dfalib/SControl.c
-index 37eb242..4ce9e16 100644
 --- a/fsck_hfs.tproj/dfalib/SControl.c
 +++ b/fsck_hfs.tproj/dfalib/SControl.c
 @@ -1034,7 +1034,7 @@ static int ScavTerm( SGlobPtr GPtr )
@@ -70,11 +66,9 @@ index 37eb242..4ce9e16 100644
  			}
  		}
  	}
-diff --git a/fsck_hfs.tproj/dfalib/SVerify1.c b/fsck_hfs.tproj/dfalib/SVerify1.c
-index c272d4d..a273bf3 100644
 --- a/fsck_hfs.tproj/dfalib/SVerify1.c
 +++ b/fsck_hfs.tproj/dfalib/SVerify1.c
-@@ -789,8 +789,8 @@ OSErr	CreateExtentsBTreeControlBlock( SGlobPtr GPtr )
+@@ -789,8 +789,8 @@ OSErr	CreateExtentsBTreeControlBlock( SG
  	//
  	//	set up our DFA extended BTCB area.  Will we have enough memory on all HFS+ volumes.
  	//
@@ -85,7 +79,7 @@ index c272d4d..a273bf3 100644
  		err = R_NoMem;
  		goto exit;
  	}
-@@ -1144,8 +1144,8 @@ OSErr	CreateCatalogBTreeControlBlock( SGlobPtr GPtr )
+@@ -1144,8 +1144,8 @@ OSErr	CreateCatalogBTreeControlBlock( SG
  	//	set up our DFA extended BTCB area.  Will we have enough memory on all HFS+ volumes.
  	//
  
@@ -96,7 +90,7 @@ index c272d4d..a273bf3 100644
  		err = R_NoMem;
  		goto exit;
  	}
-@@ -1779,8 +1779,8 @@ OSErr	CreateAttributesBTreeControlBlock( SGlobPtr GPtr )
+@@ -1779,8 +1779,8 @@ OSErr	CreateAttributesBTreeControlBlock(
  	//
  	//	set up our DFA extended BTCB area.  Will we have enough memory on all HFS+ volumes.
  	//
@@ -107,7 +101,7 @@ index c272d4d..a273bf3 100644
  		err = R_NoMem;
  		goto exit;
  	}
-@@ -1793,7 +1793,7 @@ OSErr	CreateAttributesBTreeControlBlock( SGlobPtr GPtr )
+@@ -1793,7 +1793,7 @@ OSErr	CreateAttributesBTreeControlBlock(
  	}
  	else
  	{
@@ -116,8 +110,6 @@ index c272d4d..a273bf3 100644
  			err = R_NoMem;
  			goto exit;
  		}
-diff --git a/fsck_hfs.tproj/dfalib/hfs_endian.c b/fsck_hfs.tproj/dfalib/hfs_endian.c
-index 69500c1..3cc9eb4 100755
 --- a/fsck_hfs.tproj/dfalib/hfs_endian.c
 +++ b/fsck_hfs.tproj/dfalib/hfs_endian.c
 @@ -437,7 +437,7 @@ hfs_swap_HFSPlusBTInternalNode (

@@ -37,7 +37,7 @@
     }
  
     verbosef("local network address: %s", addr_to_str(&localnet));
-@@ -138,11 +145,15 @@ static int addr_is_local(const struct addr * const a,
+@@ -138,11 +145,15 @@ static int addr_is_local(const struct ad
     if (is_localip(a, local_ips))
        return 1;
     if (a->family == IPv4 && using_localnet4) {
@@ -59,7 +59,7 @@
  }
 --- a/darkstat.c
 +++ b/darkstat.c
-@@ -193,7 +193,7 @@ static struct cmdline_arg cmdline_args[] = {
+@@ -193,7 +193,7 @@ static struct cmdline_arg cmdline_args[]
     {"-r",             "capfile",         cb_capfile,      0},
     {"-p",             "port",            cb_port,         0},
     {"-b",             "bindaddr",        cb_bindaddr,    -1},

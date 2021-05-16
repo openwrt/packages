@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=go-ethereum
-PKG_VERSION:=1.9.22
+PKG_VERSION:=1.9.25
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ethereum/go-ethereum/tar.gz/v${PKG_VERSION}?
-PKG_HASH:=cda67de8e76afaad28b8bb4d3e5a95d01f88f69ab2c25964bc8ee2d368794d8c
+PKG_HASH:=d7b733aeef4eba97f5351ba435001fa7365f55adabffdfdda909700335e98b0e
 
 PKG_MAINTAINER:=Mislav Novakovic <mislav.novakovic@sartura.hr>
 PKG_LICENSE:=GPL-3.0-or-later LGPL-3.0-or-later
@@ -35,7 +35,7 @@ define Package/geth
   CATEGORY:=Network
   TITLE:=Ethereum Go client
   URL:=https://geth.ethereum.org/
-  DEPENDS:=$(GO_ARCH_DEPENDS)
+  DEPENDS:=$(GO_ARCH_DEPENDS) $(ICONV_DEPENDS)
 endef
 
 define Package/geth/description

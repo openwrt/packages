@@ -1,8 +1,6 @@
-Index: netcat-0.7.1/src/flagset.c
-===================================================================
---- netcat-0.7.1.orig/src/flagset.c	2009-02-06 19:56:01.000000000 +0100
-+++ netcat-0.7.1/src/flagset.c	2009-02-06 19:56:13.000000000 +0100
-@@ -134,7 +134,7 @@
+--- a/src/flagset.c
++++ b/src/flagset.c
+@@ -134,7 +134,7 @@ unsigned short netcat_flag_next(unsigned
  
  int netcat_flag_count(void)
  {
@@ -11,7 +9,7 @@ Index: netcat-0.7.1/src/flagset.c
    register int i;
    int ret = 0;
  
-@@ -154,7 +154,7 @@
+@@ -154,7 +154,7 @@ int netcat_flag_count(void)
  	Assumed that the bit number 1 is the sign, and that we will shift the
  	bit 1 (or the bit that takes its place later) until the the most right,
  	WHY it has to keep the wrong sign? */

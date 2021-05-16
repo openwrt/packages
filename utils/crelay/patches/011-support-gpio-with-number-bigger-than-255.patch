@@ -11,8 +11,6 @@ Signed-off-by: Pawel Dembicki <paweldembicki@gmail.com>
  src/relay_drv_gpio.c | 10 +++++-----
  2 files changed, 13 insertions(+), 13 deletions(-)
 
-diff --git a/src/data_types.h b/src/data_types.h
-index f13baeb..d4dc7b1 100644
 --- a/src/data_types.h
 +++ b/src/data_types.h
 @@ -56,14 +56,14 @@ typedef struct
@@ -38,8 +36,6 @@ index f13baeb..d4dc7b1 100644
      
      /* [Sainsmart drv] */
      uint8_t sainsmart_num_relays;
-diff --git a/src/relay_drv_gpio.c b/src/relay_drv_gpio.c
-index 705c157..28464be 100644
 --- a/src/relay_drv_gpio.c
 +++ b/src/relay_drv_gpio.c
 @@ -53,7 +53,7 @@
@@ -51,7 +47,7 @@ index 705c157..28464be 100644
  {
    0, // dummy
    0, // pin 1
-@@ -85,7 +85,7 @@ int set_relay_generic_gpio(char* portname, uint8_t relay, relay_state_t relay_st
+@@ -85,7 +85,7 @@ int set_relay_generic_gpio(char* portnam
   *         -1 - fail
   *         -2 - already exported
   *********************************************************/
@@ -69,7 +65,7 @@ index 705c157..28464be 100644
  {
     int fd;
     char b[64];
-@@ -261,7 +261,7 @@ int get_relay_generic_gpio(char* portname, uint8_t relay, relay_state_t* relay_s
+@@ -261,7 +261,7 @@ int get_relay_generic_gpio(char* portnam
     int fd;
     char b[64];
     char d[1];
@@ -78,7 +74,7 @@ index 705c157..28464be 100644
  
     if (relay<FIRST_RELAY || relay>(FIRST_RELAY+g_num_relays-1))
     {
-@@ -324,7 +324,7 @@ int set_relay_generic_gpio(char* portname, uint8_t relay, relay_state_t relay_st
+@@ -324,7 +324,7 @@ int set_relay_generic_gpio(char* portnam
     int fd;
     char b[64];
     char d[1];
@@ -87,6 +83,3 @@ index 705c157..28464be 100644
     
     if (relay<FIRST_RELAY || relay>(FIRST_RELAY+g_num_relays-1))
     {
--- 
-2.17.1
-

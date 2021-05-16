@@ -1,5 +1,5 @@
---- a/lib/util/util_paths.c	2020-07-03
-+++ b/lib/util/util_paths.c	2020-07-03
+--- a/lib/util/util_paths.c
++++ b/lib/util/util_paths.c
 @@ -26,6 +26,9 @@
  #include "dynconfig/dynconfig.h"
  #include "lib/util/util_paths.h"

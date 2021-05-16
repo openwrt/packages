@@ -1,7 +1,6 @@
-diff --recursive -u gcc-7.4.0-vanilla/libitm/beginend.cc gcc-7.4.0/libitm/beginend.cc
---- gcc-7.4.0-vanilla/libitm/beginend.cc	2017-01-01 07:07:43.905435000 -0500
-+++ gcc-7.4.0/libitm/beginend.cc	2019-11-09 00:31:10.093128945 -0500
-@@ -431,7 +431,7 @@
+--- a/libitm/beginend.cc
++++ b/libitm/beginend.cc
+@@ -431,7 +431,7 @@ GTM::gtm_transaction_cp::save(gtm_thread
    // Save everything that we might have to restore on restarts or aborts.
    jb = tx->jb;
    undolog_size = tx->undolog.size();
@@ -10,7 +9,7 @@ diff --recursive -u gcc-7.4.0-vanilla/libitm/beginend.cc gcc-7.4.0/libitm/begine
    user_actions_size = tx->user_actions.size();
    id = tx->id;
    prop = tx->prop;
-@@ -449,7 +449,7 @@
+@@ -449,7 +449,7 @@ GTM::gtm_transaction_cp::commit(gtm_thre
    // commits of nested transactions. Allocation actions must be committed
    // before committing the snapshot.
    tx->jb = jb;
@@ -19,7 +18,7 @@ diff --recursive -u gcc-7.4.0-vanilla/libitm/beginend.cc gcc-7.4.0/libitm/begine
    tx->id = id;
    tx->prop = prop;
  }
-@@ -485,7 +485,7 @@
+@@ -485,7 +485,7 @@ GTM::gtm_thread::rollback (gtm_transacti
        prop = cp->prop;
        if (cp->disp != abi_disp())
  	set_abi_disp(cp->disp);
@@ -28,10 +27,9 @@ diff --recursive -u gcc-7.4.0-vanilla/libitm/beginend.cc gcc-7.4.0/libitm/begine
        nesting = cp->nesting;
      }
    else
-diff --recursive -u gcc-7.4.0-vanilla/libitm/method-ml.cc gcc-7.4.0/libitm/method-ml.cc
---- gcc-7.4.0-vanilla/libitm/method-ml.cc	2017-01-01 07:07:43.905435000 -0500
-+++ gcc-7.4.0/libitm/method-ml.cc	2019-11-09 01:12:58.674388557 -0500
-@@ -138,7 +138,9 @@
+--- a/libitm/method-ml.cc
++++ b/libitm/method-ml.cc
+@@ -138,7 +138,9 @@ struct ml_mg : public method_group
      // This store is only executed while holding the serial lock, so relaxed
      // memory order is sufficient here.  Same holds for the memset.
      time.store(0, memory_order_relaxed);

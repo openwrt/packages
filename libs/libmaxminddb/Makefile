@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2020 CZ.NIC z.s.p.o. (http://www.nic.cz/)
+# Copyright (C) 2019-2021 CZ.NIC z.s.p.o. (http://www.nic.cz/)
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,22 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmaxminddb
-PKG_VERSION:=1.4.3
+PKG_VERSION:=1.6.0
 PKG_RELEASE=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/maxmind/libmaxminddb/releases/download/$(PKG_VERSION)/
-PKG_HASH:=a5fdf6c7b4880fdc7620f8ace5bd5cbe9f65650c9493034b5b9fc7d83551a439
+PKG_HASH:=7620ac187c591ce21bcd7bf352376a3c56a933e684558a1f6bef4bd4f3f98267
 
-PKG_INSTALL:=1
-PKG_FIXUP:=autoreconf
-PKG_BUILD_PARALLEL:=1
+PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
-
 include $(INCLUDE_DIR)/package.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/libmaxminddb
   SECTION:=libs
@@ -36,11 +33,15 @@ define Package/libmaxminddb/description
  The libmaxminddb library provides functions for working MaxMind DB files.
 endef
 
+CMAKE_OPTIONS += \
+	-DBUILD_SHARED_LIBS=ON \
+	-DBUILD_TESTING=OFF
+
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/* $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libmaxminddb.{a,so*} $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libmaxminddb.so* $(1)/usr/lib/
 endef
 
 define Package/libmaxminddb/install

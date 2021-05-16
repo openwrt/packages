@@ -9,11 +9,9 @@ character of them.
  fsck_hfs.tproj/dfalib/SBTree.c       | 14 +++++------
  2 files changed, 31 insertions(+), 31 deletions(-)
 
-diff --git a/fsck_hfs.tproj/dfalib/BTreeTreeOps.c b/fsck_hfs.tproj/dfalib/BTreeTreeOps.c
-index b812b14..37fb170 100644
 --- a/fsck_hfs.tproj/dfalib/BTreeTreeOps.c
 +++ b/fsck_hfs.tproj/dfalib/BTreeTreeOps.c
-@@ -223,7 +223,7 @@ OSStatus	SearchTree	(BTreeControlBlockPtr	 btreePtr,
+@@ -223,7 +223,7 @@ OSStatus	SearchTree	(BTreeControlBlockPt
          //
          if (curNodeNum == 0)
          {
@@ -22,7 +20,7 @@ index b812b14..37fb170 100644
              err = fsBTInvalidNodeErr;
              goto ErrorExit;
          }
-@@ -433,7 +433,7 @@ OSStatus	InsertLevel (BTreeControlBlockPtr		 btreePtr,
+@@ -433,7 +433,7 @@ OSStatus	InsertLevel (BTreeControlBlockP
  		M_ExitOnError (err);
  		
  		if ( DEBUG_BUILD && updateParent && newRoot )
@@ -31,7 +29,7 @@ index b812b14..37fb170 100644
  	}
  
  	//////////////////////// Update Parent(s) ///////////////////////////////
-@@ -448,7 +448,7 @@ OSStatus	InsertLevel (BTreeControlBlockPtr		 btreePtr,
+@@ -448,7 +448,7 @@ OSStatus	InsertLevel (BTreeControlBlockP
  		
  		secondaryKey = nil;
  		
@@ -40,7 +38,7 @@ index b812b14..37fb170 100644
  
  		++level;
  
-@@ -456,7 +456,7 @@ OSStatus	InsertLevel (BTreeControlBlockPtr		 btreePtr,
+@@ -456,7 +456,7 @@ OSStatus	InsertLevel (BTreeControlBlockP
  		index = treePathTable [level].index;
  		parentNodeNum = treePathTable [level].node;
  
@@ -49,7 +47,7 @@ index b812b14..37fb170 100644
  
  		err = GetNode (btreePtr, parentNodeNum, &parentNode);	// released as target node in next level up
  		M_ExitOnError (err);
-@@ -470,7 +470,7 @@ OSStatus	InsertLevel (BTreeControlBlockPtr		 btreePtr,
+@@ -470,7 +470,7 @@ OSStatus	InsertLevel (BTreeControlBlockP
  		{
  			//¥¥Êdebug: check if ptr == targetNodeNum
  			GetRecordByIndex (btreePtr, parentNode.buffer, index, &keyPtr, &recPtr, &recSize);
@@ -67,7 +65,7 @@ index b812b14..37fb170 100644
  
  	return	err;
  
-@@ -566,7 +566,7 @@ static OSErr	InsertNode	(BTreeControlBlockPtr	 btreePtr,
+@@ -566,7 +566,7 @@ static OSErr	InsertNode	(BTreeControlBlo
  
  	*rootSplit = false;
  	
@@ -76,7 +74,7 @@ index b812b14..37fb170 100644
  	
  	leftNodeNum = ((NodeDescPtr) targetNode->buffer)->bLink;
  	rightNodeNum = ((NodeDescPtr) targetNode->buffer)->fLink;
-@@ -606,7 +606,7 @@ static OSErr	InsertNode	(BTreeControlBlockPtr	 btreePtr,
+@@ -606,7 +606,7 @@ static OSErr	InsertNode	(BTreeControlBlo
  	
  	if ( leftNodeNum > 0 )
  	{
@@ -85,7 +83,7 @@ index b812b14..37fb170 100644
  
  		if ( siblingNode->buffer == nil )
  		{
-@@ -614,7 +614,7 @@ static OSErr	InsertNode	(BTreeControlBlockPtr	 btreePtr,
+@@ -614,7 +614,7 @@ static OSErr	InsertNode	(BTreeControlBlo
  			M_ExitOnError (err);
  		}
  
@@ -94,7 +92,7 @@ index b812b14..37fb170 100644
  
  		if ( !key->skipRotate )		// are rotates allowed?
  		{
-@@ -703,7 +703,7 @@ OSStatus	DeleteTree			(BTreeControlBlockPtr		 btreePtr,
+@@ -703,7 +703,7 @@ OSStatus	DeleteTree			(BTreeControlBlock
  
  	targetNodeNum = treePathTable[level].node;
  	targetNodePtr = targetNode->buffer;
@@ -103,7 +101,7 @@ index b812b14..37fb170 100644
  
  	DeleteRecord (btreePtr, targetNodePtr, index);
  		
-@@ -797,7 +797,7 @@ OSStatus	DeleteTree			(BTreeControlBlockPtr		 btreePtr,
+@@ -797,7 +797,7 @@ OSStatus	DeleteTree			(BTreeControlBlock
  			 
  			//¥¥Êdebug: check if ptr == targetNodeNum
  			GetRecordByIndex (btreePtr, parentNode.buffer, index, &keyPtr, &recPtr, &recSize);
@@ -112,7 +110,7 @@ index b812b14..37fb170 100644
  			
  			// need to delete and re-insert this parent key/ptr
  			DeleteRecord (btreePtr, parentNode.buffer, index);
-@@ -1018,7 +1018,7 @@ static OSStatus	RotateLeft		(BTreeControlBlockPtr		 btreePtr,
+@@ -1018,7 +1018,7 @@ static OSStatus	RotateLeft		(BTreeContro
  										keyPtr, keyLength, recPtr, recSize);
  			if ( !didItFit )
  			{
@@ -121,7 +119,7 @@ index b812b14..37fb170 100644
  				err = fsBTBadRotateErr;
  				goto ErrorExit;
  			}
-@@ -1031,7 +1031,7 @@ static OSStatus	RotateLeft		(BTreeControlBlockPtr		 btreePtr,
+@@ -1031,7 +1031,7 @@ static OSStatus	RotateLeft		(BTreeContro
  			didItFit = RotateRecordLeft (btreePtr, leftNode, rightNode);
  			if ( !didItFit )
  			{
@@ -130,7 +128,7 @@ index b812b14..37fb170 100644
  				err = fsBTBadRotateErr;
  				goto ErrorExit;
  			}
-@@ -1048,7 +1048,7 @@ static OSStatus	RotateLeft		(BTreeControlBlockPtr		 btreePtr,
+@@ -1048,7 +1048,7 @@ static OSStatus	RotateLeft		(BTreeContro
  									keyPtr, keyLength, recPtr, recSize);
  		if ( !didItFit )
  		{
@@ -139,7 +137,7 @@ index b812b14..37fb170 100644
  			err = fsBTBadRotateErr;
  			goto ErrorExit;
  		}
-@@ -1117,7 +1117,7 @@ static OSStatus	SplitLeft		(BTreeControlBlockPtr		 btreePtr,
+@@ -1117,7 +1117,7 @@ static OSStatus	SplitLeft		(BTreeControl
  	right = rightNode->buffer;
  	left  = leftNode->buffer;
  	
@@ -148,7 +146,7 @@ index b812b14..37fb170 100644
  	
  	//¥¥ type should be kLeafNode or kIndexNode
  	
-@@ -1240,8 +1240,8 @@ static OSStatus	AddNewRootNode	(BTreeControlBlockPtr	 btreePtr,
+@@ -1240,8 +1240,8 @@ static OSStatus	AddNewRootNode	(BTreeCon
  	Boolean				didItFit;
  	UInt16				keyLength;	
  	
@@ -159,7 +157,7 @@ index b812b14..37fb170 100644
  	
  	
  	/////////////////////// Initialize New Root Node ////////////////////////////
-@@ -1264,7 +1264,7 @@ static OSStatus	AddNewRootNode	(BTreeControlBlockPtr	 btreePtr,
+@@ -1264,7 +1264,7 @@ static OSStatus	AddNewRootNode	(BTreeCon
  	didItFit = InsertKeyRecord ( btreePtr, rootNode.buffer, 0, keyPtr, keyLength,
  								 (UInt8 *) &rightNode->bLink, 4 );
  
@@ -168,7 +166,7 @@ index b812b14..37fb170 100644
  
  
  	//////////////////// Insert Right Node Index Record /////////////////////////
-@@ -1275,7 +1275,7 @@ static OSStatus	AddNewRootNode	(BTreeControlBlockPtr	 btreePtr,
+@@ -1275,7 +1275,7 @@ static OSStatus	AddNewRootNode	(BTreeCon
  	didItFit = InsertKeyRecord ( btreePtr, rootNode.buffer, 1, keyPtr, keyLength,
  								 (UInt8 *) &leftNode->fLink, 4 );
  
@@ -177,7 +175,7 @@ index b812b14..37fb170 100644
  
  
  #if DEBUG_TREEOPS
-@@ -1355,7 +1355,7 @@ static OSStatus	SplitRight		(BTreeControlBlockPtr		 btreePtr,
+@@ -1355,7 +1355,7 @@ static OSStatus	SplitRight		(BTreeContro
  	}
  	rightPtr = rightNodePtr->buffer;
  	
@@ -186,7 +184,7 @@ index b812b14..37fb170 100644
  	
  	//¥¥ type should be kLeafNode or kIndexNode
  	
-@@ -1557,7 +1557,7 @@ static OSStatus	RotateRight		(BTreeControlBlockPtr		 btreePtr,
+@@ -1557,7 +1557,7 @@ static OSStatus	RotateRight		(BTreeContr
  									keyPtr, keyLength, recPtr, recSize);
  		if ( !didItFit )
  		{
@@ -195,7 +193,7 @@ index b812b14..37fb170 100644
  			err = fsBTBadRotateErr;
  			goto ErrorExit;
  		}
-@@ -1572,7 +1572,7 @@ static OSStatus	RotateRight		(BTreeControlBlockPtr		 btreePtr,
+@@ -1572,7 +1572,7 @@ static OSStatus	RotateRight		(BTreeContr
  		didItFit = RotateRecordRight( btreePtr, leftNodePtr, rightNodePtr );
  		if ( !didItFit )
  		{
@@ -204,7 +202,7 @@ index b812b14..37fb170 100644
  			err = fsBTBadRotateErr;
  			goto ErrorExit;
  		}
-@@ -1583,7 +1583,7 @@ static OSStatus	RotateRight		(BTreeControlBlockPtr		 btreePtr,
+@@ -1583,7 +1583,7 @@ static OSStatus	RotateRight		(BTreeContr
  										keyPtr, keyLength, recPtr, recSize);
  			if ( !didItFit )
  			{
@@ -213,7 +211,7 @@ index b812b14..37fb170 100644
  				err = fsBTBadRotateErr;
  				goto ErrorExit;
  			}
-@@ -1607,7 +1607,7 @@ static OSStatus	RotateRight		(BTreeControlBlockPtr		 btreePtr,
+@@ -1607,7 +1607,7 @@ static OSStatus	RotateRight		(BTreeContr
  									keyPtr, keyLength, recPtr, recSize);
  		if ( !didItFit )
  		{
@@ -222,11 +220,9 @@ index b812b14..37fb170 100644
  			err = fsBTBadRotateErr;
  			goto ErrorExit;
  		}
-diff --git a/fsck_hfs.tproj/dfalib/SBTree.c b/fsck_hfs.tproj/dfalib/SBTree.c
-index cd81b13..eeb4e8c 100644
 --- a/fsck_hfs.tproj/dfalib/SBTree.c
 +++ b/fsck_hfs.tproj/dfalib/SBTree.c
-@@ -103,7 +103,7 @@ OSErr SearchBTreeRecord(SFCB *fcb, const void* key, UInt32 hint, void* foundKey,
+@@ -103,7 +103,7 @@ OSErr SearchBTreeRecord(SFCB *fcb, const
  			CopyMemory(&resultIterator->key, foundKey, CalcKeySize(btcb, &resultIterator->key));	//¥¥ warning, this could overflow user's buffer!!!
  
  		if ( DEBUG_BUILD && !ValidHFSRecord(data, btcb, *dataSize) )
@@ -235,7 +231,7 @@ index cd81b13..eeb4e8c 100644
  	}
  
  ErrorExit:
-@@ -211,7 +211,7 @@ OSErr GetBTreeRecord(SFCB *fcb, SInt16 selectionIndex, void* key, void* data, UI
+@@ -211,7 +211,7 @@ OSErr GetBTreeRecord(SFCB *fcb, SInt16 s
  		CopyMemory(&iterator->key, key, CalcKeySize(btcb, &iterator->key));	//¥¥ warning, this could overflow user's buffer!!!
  		
  		if ( DEBUG_BUILD && !ValidHFSRecord(data, btcb, *dataSize) )
@@ -244,7 +240,7 @@ index cd81b13..eeb4e8c 100644
  
  	}
  	
-@@ -243,7 +243,7 @@ OSErr InsertBTreeRecord(SFCB *fcb, const void* key, const void* data, UInt16 dat
+@@ -243,7 +243,7 @@ OSErr InsertBTreeRecord(SFCB *fcb, const
  	CopyMemory(key, &iterator.key, CalcKeySize(btcb, (BTreeKey *) key));	//¥¥ should we range check against maxkeylen?
  
  	if ( DEBUG_BUILD && !ValidHFSRecord(data, btcb, dataSize) )
@@ -253,7 +249,7 @@ index cd81b13..eeb4e8c 100644
  
  	result = BTInsertRecord( fcb, &iterator, &btRecord, dataSize );
  
-@@ -305,7 +305,7 @@ OSErr ReplaceBTreeRecord(SFCB *fcb, const void* key, UInt32 hint, void *newData,
+@@ -305,7 +305,7 @@ OSErr ReplaceBTreeRecord(SFCB *fcb, cons
  	CopyMemory(key, &iterator.key, CalcKeySize(btcb, (BTreeKey *) key));		//¥¥ should we range check against maxkeylen?
  
  	if ( DEBUG_BUILD && !ValidHFSRecord(newData, btcb, dataSize) )
@@ -262,7 +258,7 @@ index cd81b13..eeb4e8c 100644
  
  	result = BTReplaceRecord( fcb, &iterator, &btRecord, dataSize );
  
-@@ -344,7 +344,7 @@ SetEndOfForkProc ( SFCB *filePtr, FSSize minEOF, FSSize maxEOF )
+@@ -344,7 +344,7 @@ SetEndOfForkProc ( SFCB *filePtr, FSSize
  	else
  	{
  		if ( DEBUG_BUILD )
@@ -271,7 +267,7 @@ index cd81b13..eeb4e8c 100644
  		return -1;
  	}
  
-@@ -370,7 +370,7 @@ SetEndOfForkProc ( SFCB *filePtr, FSSize minEOF, FSSize maxEOF )
+@@ -370,7 +370,7 @@ SetEndOfForkProc ( SFCB *filePtr, FSSize
  	//	Make sure we got at least as much space as we needed
  	//
  	if (filePtr->fcbLogicalSize < minEOF) {
@@ -280,7 +276,7 @@ index cd81b13..eeb4e8c 100644
  		return dskFulErr;
  	}
  	
-@@ -442,7 +442,7 @@ static OSErr CheckBTreeKey(const BTreeKey *key, const BTreeControlBlock *btcb)
+@@ -442,7 +442,7 @@ static OSErr CheckBTreeKey(const BTreeKe
  	if ( (keyLen < 6) || (keyLen > btcb->maxKeyLength) )
  	{
  		if ( DEBUG_BUILD )

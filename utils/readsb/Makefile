@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=readsb
-PKG_VERSION:=3.8.3
-PKG_RELEASE:=2
+PKG_VERSION:=3.9.0
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/Mictronics/readsb/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=bf59b8ecd0ff66945b210c55a5b824aa63ff8cbb1704249528d30a4902e716b2
+PKG_HASH:=234e2f5f45d69d8be376272e9a08be54bdc48ed5ad7ebad2c4374bbd754d9426
 
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING LICENSE
@@ -50,7 +50,7 @@ MAKE_FLAGS += \
 
 TARGET_CFLAGS += -ffunction-sections -fdata-sections -flto
 TARGET_LDFLAGS += \
-	$(if $(CONFIG_LIBC_USE_GLIBC),,-largp) \
+	$(if $(CONFIG_USE_GLIBC),,-largp) \
 	-Wl,--gc-sections,--as-needed
 
 define Package/readsb/conffiles

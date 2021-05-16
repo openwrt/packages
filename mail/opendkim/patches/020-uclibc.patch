@@ -10,7 +10,7 @@
  	int n;
  	int ret;
  	struct dkim_res_qh *rq;
-@@ -209,6 +212,7 @@ dkim_res_query(void *srv, int type, unsigned char *query, unsigned char *buf,
+@@ -209,6 +212,7 @@ dkim_res_query(void *srv, int type, unsi
  	*qh = (void *) rq;
  
  	return DKIM_DNS_SUCCESS;

@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openldap
-PKG_VERSION:=2.4.56
-PKG_RELEASE:=1
+PKG_VERSION:=2.4.58
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=https://gpl.savoirfairelinux.net/pub/mirrors/openldap/openldap-release/ \
 	http://mirror.eu.oneandone.net/software/openldap/openldap-release/ \
 	http://mirror.switch.ch/ftp/software/mirror/OpenLDAP/openldap-release/ \
 	https://www.openldap.org/software/download/OpenLDAP/openldap-release/
-PKG_HASH:=25520e0363c93f3bcb89802a4aa3db33046206039436e0c7c9262db5a61115e0
+PKG_HASH:=57b59254be15d0bf6a9ab3d514c1c05777b02123291533134a87c94468f8f47b
 PKG_LICENSE:=OLDAP-2.8
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:openldap:openldap

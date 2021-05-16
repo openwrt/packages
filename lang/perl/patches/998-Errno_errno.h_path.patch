@@ -1,6 +1,6 @@
 --- a/ext/Errno/Errno_pm.PL
 +++ b/ext/Errno/Errno_pm.PL
-@@ -133,7 +133,7 @@
+@@ -133,7 +133,7 @@ sub get_files {
  	# Some Linuxes have weird errno.hs which generate
  	# no #file or #line directives
  	my ($linux_errno_h) = grep { -e $_ } map { "$_/errno.h" }

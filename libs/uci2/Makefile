@@ -6,17 +6,15 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=https://github.com/sartura/uci2.git
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=2d082b587d32ce019fd94317026911e9b51f90dd
-PKG_MIRROR_HASH:=965339e85ff60724fc25ef812c117d203df63055821aa4d0006cc7f59c421b5b
+PKG_SOURCE_VERSION:=24b7471a0aead99115c189f04236f5fe52492579
+PKG_MIRROR_HASH:=ea8f4627163ce40f62393a87a0155869f034bb78c9f7fb644f18461cbdaf5333
 
 PKG_MAINTAINER:=Jakov Petrina <jakov.petrina@sartura.hr>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_PARALLEL:=1
-
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/libuci2/Default
 	TITLE:=AST-based C parser library for UCI

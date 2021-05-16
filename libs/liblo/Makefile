@@ -21,11 +21,10 @@ PKG_LICENSE_FILES:=COPYING
 
 CMAKE_INSTALL:=1
 CMAKE_SOURCE_SUBDIR:=cmake
-PKG_BUILD_PARALLEL:=1
 PKG_CONFIG_DEPENDS:=CONFIG_PACKAGE_liblo-utils
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/liblo/Default
   TITLE:=Lightweight Open Sound Control (OSC)

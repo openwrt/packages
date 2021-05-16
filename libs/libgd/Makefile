@@ -8,22 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libgd
-PKG_VERSION:=2.3.0
-PKG_RELEASE:=3
+PKG_VERSION:=2.3.2
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/$(PKG_NAME)/$(PKG_NAME)/releases/download/gd-$(PKG_VERSION)/
-PKG_HASH:=ecd9155b9a417fb3f837f29e5966323796de247789163761dd72dbf83bfcac58
+PKG_HASH:=478a047084e0d89b83616e4c2cf3c9438175fb0cc55d8c8967f06e0427f7d7fb
 
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:libgd:libgd
 
-PKG_BUILD_PARALLEL:=1
-
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/libgd/default
   SECTION:=libs

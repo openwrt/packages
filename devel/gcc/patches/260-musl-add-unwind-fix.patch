@@ -19,7 +19,7 @@ git-svn-id: svn+ssh://gcc.gnu.org/svn/gcc/trunk@222328 138bc75d-0d04-0410-961f-8
 
 --- a/libgcc/unwind-dw2-fde-dip.c
 +++ b/libgcc/unwind-dw2-fde-dip.c
-@@ -59,6 +59,12 @@
+@@ -65,6 +65,12 @@
  
  #if !defined(inhibit_libc) && defined(HAVE_LD_EH_FRAME_HDR) \
      && defined(TARGET_DL_ITERATE_PHDR) \

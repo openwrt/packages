@@ -26,8 +26,6 @@ Signed-off-by: Alexey Brodkin <abrodkin at synopsys.com>
  2 files changed, 24 insertions(+)
  create mode 100644 src/syscfg/lock-obj-pub.arc-unknown-linux-gnu.h
 
-diff --git a/src/Makefile.am b/src/Makefile.am
-index 380ea7c09c04..bd00961c2f27 100644
 --- a/src/Makefile.am
 +++ b/src/Makefile.am
 @@ -48,6 +48,7 @@ lock_obj_pub = \
@@ -38,9 +36,6 @@ index 380ea7c09c04..bd00961c2f27 100644
          syscfg/lock-obj-pub.arm-unknown-linux-androideabi.h \
          syscfg/lock-obj-pub.arm-unknown-linux-gnueabi.h     \
  	syscfg/lock-obj-pub.arm-apple-darwin.h              \
-diff --git a/src/syscfg/lock-obj-pub.arc-unknown-linux-gnu.h b/src/syscfg/lock-obj-pub.arc-unknown-linux-gnu.h
-new file mode 100644
-index 000000000000..3b1a8fadf8a7
 --- /dev/null
 +++ b/src/syscfg/lock-obj-pub.arc-unknown-linux-gnu.h
 @@ -0,0 +1,23 @@
@@ -67,5 +62,3 @@ index 000000000000..3b1a8fadf8a7
 +## buffer-read-only: t
 +## End:
 +##
--- 
-2.17.1

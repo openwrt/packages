@@ -11,8 +11,6 @@ Signed-off-by: Thomas Petazzoni <thomas.petazzoni@bootlin.com>
  sepolgen/src/sepolgen/audit.py | 4 ++--
  1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/sepolgen/src/sepolgen/audit.py b/sepolgen/src/sepolgen/audit.py
-index 4adb851f..5eafa587 100644
 --- a/sepolgen/src/sepolgen/audit.py
 +++ b/sepolgen/src/sepolgen/audit.py
 @@ -41,7 +41,7 @@ def get_audit_boot_msgs():
@@ -33,6 +31,3 @@ index 4adb851f..5eafa587 100644
                                stdout=subprocess.PIPE).communicate()[0]
      if util.PY3:
          output = util.decode_input(output)
--- 
-2.21.0
-

@@ -28,8 +28,6 @@ Reduce the buffer size to 65535 bytes instead.
  main/unzip_stream.h | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/main/unzip_stream.h b/main/unzip_stream.h
-index 136fcefd9..813f2489a 100644
 --- a/main/unzip_stream.h
 +++ b/main/unzip_stream.h
 @@ -135,7 +135,7 @@ namespace clx {
@@ -41,6 +39,3 @@ index 136fcefd9..813f2489a 100644
  				unz_file_info info;
  				unzGetCurrentFileInfo(handler_, &info, path, sizeof(path), NULL, 0, NULL, 0);
  				path_ = path;
--- 
-2.26.2
-

@@ -1,6 +1,6 @@
---- pcmciautils-018/src/lex_config.l
-+++ pcmciautils-018/src/lex_config.l
-@@ -1,8 +1,8 @@
+--- a/src/lex_config.l
++++ b/src/lex_config.l
+@@ -1,6 +1,6 @@
  /* Special state for handling include files */
  %x src
 -%option noinput nounput
@@ -8,11 +8,7 @@
  
  %{
  /*
-  * Startup tool for non statically mapped PCMCIA sockets
-  *
-@@ -75,14 +75,10 @@ module		/* skip */ ;
- 
- .		return yytext[0];
+@@ -77,10 +77,6 @@ module		/* skip */ ;
  
  %%
  
@@ -23,5 +19,3 @@
  /*======================================================================
  
      Stuff to parse basic data types
- 
- ======================================================================*/

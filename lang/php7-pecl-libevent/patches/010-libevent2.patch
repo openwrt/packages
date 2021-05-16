@@ -1,7 +1,7 @@
 --- a/libevent.c
 +++ b/libevent.c
-@@ -42,10 +42,12 @@
- 	(rsrc = (rsrc_type) zend_fetch_resource(passed_id TSRMLS_CC, default_id, resource_type_name, NULL, 1, resource_type))
+@@ -37,10 +37,12 @@
+ # define LIBEVENT_SOCKETS_SUPPORT
  #endif
  
 -#ifdef PHP_WIN32

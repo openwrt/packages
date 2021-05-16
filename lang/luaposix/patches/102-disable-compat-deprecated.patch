@@ -1,5 +1,3 @@
-diff --git a/lib/posix/init.lua b/lib/posix/init.lua
-index cf51bf3..e66af04 100644
 --- a/lib/posix/init.lua
 +++ b/lib/posix/init.lua
 @@ -325,14 +325,6 @@ do

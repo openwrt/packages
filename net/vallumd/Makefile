@@ -15,13 +15,12 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/stintel/vallumd/tar.gz/vallumd-$(PKG_VERSION)?
 PKG_HASH:=d6119f84840ff36f05c273f0a6f3e0f9eacf3a07c1583271c4fef62a7b199428
 
+PKG_MAINTAINER:=Stijn Tintel <stijn@linux-ipv6.be>
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=COPYING
 
-PKG_MAINTAINER:=Stijn Tintel <stijn@linux-ipv6.be>
-
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/vallumd
   SECTION:=net

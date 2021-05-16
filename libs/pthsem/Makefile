@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pthsem
 PKG_VERSION:=2.0.8
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.auto.tuwien.ac.at/~mkoegler/pth/
@@ -40,10 +40,8 @@ endef
 
 # The musl libc provides a proper implementation of sigaltstack() so
 # prevent configure from wrongly assuming a broken Linux platform
-ifneq ($(CONFIG_USE_GLIBC),y)
-  CONFIGURE_VARS += \
+CONFIGURE_VARS += \
 	ac_cv_check_sjlj=ssjlj
-endif
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/bin

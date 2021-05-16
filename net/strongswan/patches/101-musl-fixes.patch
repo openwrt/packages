@@ -81,3 +81,14 @@
  #include <sys/socket.h>
  #include <linux/netlink.h>
  #include <linux/rtnetlink.h>
+--- a/src/libstrongswan/plugins/bliss/bliss_huffman.c
++++ b/src/libstrongswan/plugins/bliss/bliss_huffman.c
+@@ -17,6 +17,8 @@
+ #include "bliss_param_set.h"
+ 
+ #include <library.h>
++#undef fprintf
++#undef printf
+ 
+ #include <stdio.h>
+ #include <math.h>

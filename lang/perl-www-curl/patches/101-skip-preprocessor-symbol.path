@@ -16,8 +16,6 @@ Signed-off-by: Petr Písař <ppisar@redhat.com>
  Makefile.PL | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/Makefile.PL b/Makefile.PL
-index f9170bb..ad2bd3d 100644
 --- a/Makefile.PL
 +++ b/Makefile.PL
 @@ -127,7 +127,7 @@ if (!defined($curl_h)) {
@@ -29,6 +27,3 @@ index f9170bb..ad2bd3d 100644
            next;
         }
         my ($group) = $e =~ m/^([^_]+_)/;
--- 
-2.7.4
-

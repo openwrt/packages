@@ -9,8 +9,6 @@ system call, so check the return value.
  pki.c | 37 ++++++++++++++++++++++++++++++++-----
  1 file changed, 32 insertions(+), 5 deletions(-)
 
-diff --git a/pki.c b/pki.c
-index 486d9bb..57ea664 100644
 --- a/pki.c
 +++ b/pki.c
 @@ -9,12 +9,13 @@
@@ -28,7 +26,7 @@ index 486d9bb..57ea664 100644
  #include <libisns/isns.h>
  #include "security.h"
  #include <libisns/util.h>
-@@ -431,17 +432,43 @@ isns_dsa_load_params(const char *filename)
+@@ -431,17 +432,43 @@ isns_dsa_load_params(const char *filenam
  	return dsa;
  }
  
@@ -75,7 +73,7 @@ index 486d9bb..57ea664 100644
  	return 0;
  }
  
-@@ -478,7 +505,7 @@ isns_dsa_init_params(const char *filename)
+@@ -478,7 +505,7 @@ isns_dsa_init_params(const char *filenam
  	dsa = DSA_generate_parameters(dsa_key_bits, NULL, 0,
  			NULL, NULL, isns_dsa_param_gen_callback, NULL);
  #endif

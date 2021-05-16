@@ -1,15 +1,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=runc
-PKG_VERSION:=1.0.0-rc92
+PKG_VERSION:=1.0.0-rc93
 PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/opencontainers/runc/tar.gz/v${PKG_VERSION}?
-PKG_HASH:=28378df983a3c586ed3ec8c76a774a9b10f36a0c323590a284b801cce95cc61f
-PKG_SOURCE_VERSION:=ff819c7e9184c13b7c2607fe6c30ae19403a7aff
+PKG_HASH:=e42456078d2f76c925cdd656e4f423b918525d8188521de05e893b6bb473a6f8
+PKG_SOURCE_VERSION:=12644e614e25b05da6fd08a38ffa0cfe1903fdec
 
 PKG_MAINTAINER:=Gerard Ryan <G.M0N3Y.2503@gmail.com>
 
@@ -28,7 +28,7 @@ define Package/runc
   CATEGORY:=Utilities
   TITLE:=runc container runtime
   URL:=https://www.opencontainers.org/
-  DEPENDS:=$(GO_ARCH_DEPENDS) @(aarch64||arm||x86_64) +KERNEL_SECCOMP_FILTER:libseccomp
+  DEPENDS:=$(GO_ARCH_DEPENDS) +KERNEL_SECCOMP_FILTER:libseccomp
 endef
 
 define Package/runc/description

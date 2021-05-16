@@ -1,14 +1,3 @@
---- a/src/Utils.cpp
-+++ b/src/Utils.cpp
-@@ -29,7 +29,7 @@
- #include <openssl/ssl.h>
- #include <openssl/bn.h>
- #include <openssl/rsa.h>
--#if (OPENSSL_VERSION_NUMBER < 0x10100000L) || (LIBRESSL_VERSION_NUMBER < 0x20700000L)
-+#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
- #define X509_getm_notBefore X509_get_notBefore
- #define X509_getm_notAfter X509_get_notAfter
- #endif
 --- a/third_party/Csocket/Csocket.cc
 +++ b/third_party/Csocket/Csocket.cc
 @@ -47,10 +47,16 @@
@@ -29,15 +18,20 @@
  #define HAVE_ERR_REMOVE_STATE
  #ifdef OPENSSL_VERSION_NUMBER
  # if OPENSSL_VERSION_NUMBER >= 0x10000000
-@@ -583,6 +589,7 @@ bool InitCsocket()
- void ShutdownCsocket()
- {
- #ifdef HAVE_LIBSSL
-+#if OPENSSL_VERSION_NUMBER < 0x10100000L
- #if defined( HAVE_ERR_REMOVE_THREAD_STATE )
- 	ERR_remove_thread_state( NULL );
+@@ -588,15 +594,17 @@ void ShutdownCsocket()
  #elif defined( HAVE_ERR_REMOVE_STATE )
-@@ -597,6 +604,7 @@ void ShutdownCsocket()
+ 	ERR_remove_state( 0 );
+ #endif
+-#ifndef OPENSSL_NO_ENGINE
+-	ENGINE_cleanup();
+-#endif
+ #ifndef OPENSSL_IS_BORINGSSL
+ 	CONF_modules_unload( 1 );
+ #endif
++#if OPENSSL_VERSION_NUMBER < 0x10100000L
++#ifndef OPENSSL_NO_ENGINE
++	ENGINE_cleanup();
++#endif
  	ERR_free_strings();
  	EVP_cleanup();
  	CRYPTO_cleanup_all_ex_data();

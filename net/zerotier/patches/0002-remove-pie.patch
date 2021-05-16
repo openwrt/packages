@@ -11,7 +11,7 @@ when making a shared object; recompile with -fPIC" error
 
 --- a/make-linux.mk
 +++ b/make-linux.mk
-@@ -73,11 +73,11 @@ ifeq ($(ZT_DEBUG),1)
+@@ -69,11 +69,11 @@ ifeq ($(ZT_DEBUG),1)
  	# C25519 in particular is almost UNUSABLE in -O0 even on a 3ghz box!
  node/Salsa20.o node/SHA512.o node/C25519.o node/Poly1305.o: CXXFLAGS=-Wall -O2 -g -pthread $(INCLUDES) $(DEFS)
  else

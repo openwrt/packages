@@ -54,7 +54,8 @@ define Package/backuppc/install
 	    --bin-path smbclient=/usr/sbin/smbclient --bin-path nmblookup=/usr/sbin/nmblookup \
 	    --bin-path rsync=/usr/bin/rsync --bin-path ping=/usr/bin/ping --bin-path df=/bin/df \
 	    --bin-path ssh=/usr/bin/ssh --bin-path gzip=/bin/gzip \
-	    --bin-path sendmail=/usr/sbin/sendmail --bin-path bzip2=/usr/bin/bzip2
+	    --bin-path sendmail=/usr/sbin/sendmail --bin-path bzip2=/usr/bin/bzip2 \
+	    --bin-path par2=
 	$(INSTALL_DIR) $(strip $(1))/usr/share/backuppc/conf
 	chmod 755 $(strip $(1))/data
 	mv $(strip $(1))/data/backuppc/conf/config.pl $(strip $(1))/usr/share/backuppc/conf/config.pl

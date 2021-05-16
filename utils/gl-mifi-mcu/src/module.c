@@ -5,6 +5,7 @@
 #include <linux/ktime.h>
 #include <linux/proc_fs.h>
 #include <linux/seq_file.h>
+#include <linux/version.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Nuno Goncalves");
@@ -36,13 +37,22 @@ static int proc_open(struct inode *inode, struct  file *file)
   return single_open(file, proc_show, NULL);
 }
 
-static const struct file_operations hello_proc_fops = {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,6,0)
+static const struct proc_ops hello_proc_ops = {
+  .proc_open = proc_open,
+  .proc_read = seq_read,
+  .proc_lseek = seq_lseek,
+  .proc_release = single_release,
+};
+#else
+static const struct file_operations hello_proc_ops = {
   .owner = THIS_MODULE,
   .open = proc_open,
   .read = seq_read,
   .llseek = seq_lseek,
   .release = single_release,
 };
+#endif
 
 static irq_handler_t handle_rx_start(unsigned int irq, void* device, struct pt_regs* registers)
 {
@@ -158,7 +168,7 @@ static int __init init(void)
 {
   bool success = true;
 
-  proc_create("gl_mifi_mcu", 0, NULL, &hello_proc_fops);
+  proc_create("gl_mifi_mcu", 0, NULL, &hello_proc_ops);
 
   success &= gpio_request(gpio_tx, "soft_uart_tx") == 0;
   success &= gpio_direction_output(gpio_tx, 1) == 0;

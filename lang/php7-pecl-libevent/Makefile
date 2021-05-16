@@ -33,5 +33,5 @@ include ../php7/pecl.mk
 
 CONFIGURE_ARGS+= --with-libevent=shared,"$(STAGING_DIR)/usr"
 
-$(eval $(call PECLPackage,$(PECL_NAME),$(PECL_LONGNAME),+libevent2 +php7-mod-sockets,25))
+$(eval $(call PHP7PECLPackage,$(PECL_NAME),$(PECL_LONGNAME),+libevent2 +php7-mod-sockets,25))
 $(eval $(call BuildPackage,$(PKG_NAME)))

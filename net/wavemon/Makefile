@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wavemon
-PKG_VERSION:=0.9.2
-PKG_RELEASE:=1
+PKG_VERSION:=0.9.3
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/uoaerg/wavemon/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=13334ff17720ba4d17f4658dd2b93a50a6b5bc0583dedd72b88fd0cb90db686a
+PKG_HASH:=ddbeb6ec8ed7d94fa895e5d57ecfe338495df3991f6facc7cf40aa121bf7ff60
 
 PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later

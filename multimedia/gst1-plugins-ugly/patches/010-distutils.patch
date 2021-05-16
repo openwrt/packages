@@ -1,6 +1,6 @@
 --- a/meson.build
 +++ b/meson.build
-@@ -257,7 +257,7 @@ if get_option('default_library') == 'shared'
+@@ -257,7 +257,7 @@ if get_option('default_library') == 'sha
    plugins_pkgconfig_install_dir = disabler()
  endif
  

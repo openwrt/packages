@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2020 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
+# Copyright (C) 2019-2021 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-babel
-PKG_VERSION:=2.8.0
+PKG_VERSION:=2.9.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=Babel
-PKG_HASH:=1aac2ae2d0d8ea368fa90906567f5c08463d98ade155c0c4bfedd6a0f7160e38
+PKG_HASH:=da031ab54472314f210b0adcff1588ee5d1d1d0ba4dbd07b94dba82bde791e05
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 PKG_LICENSE:=BSD-3-Clause

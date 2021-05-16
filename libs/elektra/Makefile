@@ -32,7 +32,7 @@ PKG_SOURCE_URL:=http://ftp.libelektra.org/ftp/elektra/releases
 PKG_BUILD_DEPENDS:= lua
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 include $(INCLUDE_DIR)/nls.mk
 
 define Package/libelektra/Default
@@ -286,7 +286,7 @@ endef
 
 CMAKE_BINARY_SUBDIR=build
 
-CMAKE_OPTIONS = \
+CMAKE_OPTIONS += \
 	-DTARGET_PLUGIN_FOLDER="" \
 	-DCARGO_EXECUTABLE=OFF \
 	-DBUILD_FULL=OFF \

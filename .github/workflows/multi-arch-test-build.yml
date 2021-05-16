@@ -2,8 +2,6 @@ name: Test Build
 
 on:
   pull_request:
-    branches:
-      - master
 
 jobs:
   build:
@@ -12,21 +10,41 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch:
-          - arc_arc700
-          - arm_cortex-a9_vfpv3-d16
-          - mips_24kc
-          - powerpc_464fp
-          - powerpc_8540
-        runtime_test: [false]
         include:
+          - arch: arc_archs
+            target: archs38-generic
+            runtime_test: false
+
+          - arch: arm_cortex-a9_vfpv3-d16
+            target: mvebu-cortexa9
+            runtime_test: false
+
+          - arch: mips_24kc
+            target: ath79-generic
+            runtime_test: false
+
+          - arch: powerpc_464fp
+            target: apm821xx-nand
+            runtime_test: false
+
+          - arch: powerpc_8540
+            target: mpc85xx-p1010
+            runtime_test: false
+
           - arch: aarch64_cortex-a53
+            target: mvebu-cortexa53
             runtime_test: true
+
           - arch: arm_cortex-a15_neon-vfpv4
+            target: armvirt-32
             runtime_test: true
+
           - arch: i386_pentium-mmx
+            target: x86-geode
             runtime_test: true
+
           - arch: x86_64
+            target: x86-64
             runtime_test: true
 
     steps:
@@ -34,16 +52,32 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Determine branch name
+        run: |
+          BRANCH="${GITHUB_BASE_REF#refs/heads/}"
+          echo "Building for $BRANCH"
+          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
+
       - name: Determine changed packages
         run: |
-          # only detect packages with changed Makefiles
-          PACKAGES="$(git diff --diff-filter=d --name-only origin/master \
-            | grep -E 'Makefile$|test.sh$' | grep -Ev '/files/|/src/' \
-            | awk -F/ '{ print $(NF-1) }' | tr '\n' ' ')"
+          # only detect packages with changes
+          PKG_ROOTS=$(find . -name Makefile | \
+            grep -v ".*/src/Makefile" | \
+            sed -e 's@./\(.*\)/Makefile@\1/@')
+          CHANGES=$(git diff --diff-filter=d --name-only origin/$BRANCH)
+
+          for ROOT in $PKG_ROOTS; do
+            for CHANGE in $CHANGES; do
+              if [[ "$CHANGE" == "$ROOT"* ]]; then
+                PACKAGES+=$(echo "$ROOT" | sed -e 's@.*/\(.*\)/@\1 @')
+                break
+              fi
+            done
+          done
 
           # fallback to test packages if nothing explicitly changes this is
           # should run if other mechanics in packages.git changed
-          PACKAGES="${PACKAGES:-vim tmux bmon}"
+          PACKAGES="${PACKAGES:-vim attendedsysupgrade-common bmon}"
 
           echo "Building $PACKAGES"
           echo "PACKAGES=$PACKAGES" >> $GITHUB_ENV
@@ -51,7 +85,7 @@ jobs:
       - name: Build
         uses: openwrt/gh-action-sdk@v1
         env:
-          ARCH: ${{ matrix.arch }}
+          ARCH: ${{ matrix.arch }}-${{ env.BRANCH }}
           FEEDNAME: packages_ci
 
       - name: Move created packages to project dir

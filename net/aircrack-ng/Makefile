@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=aircrack-ng
 PKG_VERSION:=1.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:aircrack-ng:aircrack-ng
@@ -34,13 +34,12 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_AIRCRACK_NG_HWLOC \
 	CONFIG_AIRCRACK_NG_SQLITE3
 
-include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
 define Package/aircrack-ng
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+AIRCRACK_NG_HWLOC:libhwloc +libpcap +libpcre +libpthread $(CXX_DEPENDS)
+  DEPENDS:=+AIRCRACK_NG_HWLOC:libhwloc +libpcap +libpcre +libpthread +libstdcpp
   DEPENDS += +AIRCRACK_NG_OPENSSL:libopenssl
   DEPENDS += +AIRCRACK_NG_GCRYPT:libgcrypt
   DEPENDS += +AIRCRACK_NG_SQLITE3:libsqlite3

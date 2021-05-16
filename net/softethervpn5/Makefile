@@ -23,7 +23,7 @@ PKG_BUILD_DEPENDS:=softethervpn5/host
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/nls.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/softethervpn5/Default
   SECTION:=net
@@ -84,7 +84,7 @@ export USE_MUSL=YES
 # BUG: outdated host/include/elf.h
 HOST_CFLAGS += $(FPIC) -DAT_HWCAP2=26
 TARGET_CFLAGS += $(FPIC)
-CMAKE_OPTIONS = -DICONV_LIB_PATH="$(ICONV_PREFIX)/lib"
+CMAKE_OPTIONS += -DICONV_LIB_PATH="$(ICONV_PREFIX)/lib"
 
 # static build for host (hamcorebuilder), avoid -fpic on ncurses/host and shared libs can't be found on host
 define Host/Prepare

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2019 OpenWrt.org
+# Copyright (C) 2007-2021 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,16 +8,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tinc
-PKG_VERSION:=1.0.36
-PKG_RELEASE:=3
+PKG_VERSION:=1.1-git
+PKG_RELEASE=$(PKG_SOURCE_VERSION)-1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://www.tinc-vpn.org/packages
-PKG_HASH:=40f73bb3facc480effe0e771442a706ff0488edea7a5f2505d4ccb2aa8163108
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=http://tinc-vpn.org/git/tinc
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE_VERSION:=3ee0d5dd
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+PKG_MIRROR_HASH:=fe57dcce5c17ec2cea96fefc69c5af977df7d457f1ae7c4775e00a21878a2c19
 
 PKG_CPE_ID:=cpe:/a:tinc:tinc
 
 PKG_BUILD_PARALLEL:=1
+PKG_CONFIG_DEPENDS:=zlib lzo openssl
+PKG_BUILD_DEPENDS:=zlib lzo openssl
+PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -25,10 +31,10 @@ include $(INCLUDE_DIR)/package.mk
 define Package/tinc
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+liblzo +libopenssl +kmod-tun +zlib
+  DEPENDS:=+kmod-tun +liblzo +libopenssl +librt +zlib
   TITLE:=VPN tunneling daemon
   URL:=http://www.tinc-vpn.org/
-  MAINTAINER:=Saverio Proto <zioproto@gmail.com>
+  MAINTAINER:=Erwan Mas <erwan@mas.nom.fr>
   SUBMENU:=VPN
 endef
 
@@ -41,14 +47,17 @@ TARGET_CFLAGS += -std=gnu99
 
 CONFIGURE_ARGS += \
 	--with-kernel="$(LINUX_DIR)" \
-	--with-zlib="$(STAGING_DIR)/usr" \
-	--with-lzo-include="$(STAGING_DIR)/usr/include/lzo"
+	--disable-curses \
+	--disable-readline \
+	--with-lzo-include="$(STAGING_DIR)/usr/include/lzo" \
+	--with-zlib="$(STAGING_DIR)/usr"
 
 CONFIGURE_VARS += \
 	ac_cv_have_decl_OpenSSL_add_all_algorithms=yes
 
 define Package/tinc/install
 	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/tinc $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/tincd $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/init.d/
 	$(INSTALL_BIN) files/$(PKG_NAME).init $(1)/etc/init.d/$(PKG_NAME)

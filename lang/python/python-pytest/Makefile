@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
+# Copyright (C) 2020-2021 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pytest
-PKG_VERSION:=6.1.2
+PKG_VERSION:=6.2.3
 PKG_RELEASE:=1
 
 PYPI_NAME:=pytest
-PKG_HASH:=c0a7e94a8cdbc5422a51ccdad8e6f1024795939cc89159a0ae7f0b316ad3823e
+PKG_HASH:=671238a46e4df0f3498d1c3270e5deb9b32d25134c99b7d75370a68cfbe9b634
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=MIT

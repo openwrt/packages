@@ -10,8 +10,6 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
  server/meson.build | 6 +-----
  1 file changed, 1 insertion(+), 5 deletions(-)
 
-diff --git a/server/meson.build b/server/meson.build
-index b2eb410..b79b8d9 100644
 --- a/server/meson.build
 +++ b/server/meson.build
 @@ -36,11 +36,7 @@ spice_server_headers = [

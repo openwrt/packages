@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2020 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
+# Copyright (C) 2019-2021 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-py
-PKG_VERSION:=1.9.0
-PKG_RELEASE:=2
+PKG_VERSION:=1.10.0
+PKG_RELEASE:=1
 
 PYPI_NAME:=py
-PKG_HASH:=9ca6883ce56b4e8da7e79ac18787889fa5206c79dcc67fb065376cd2fe03f342
+PKG_HASH:=21b81bda15b66ef5e1a777a21c4dcd9c20ad3efd0b3f817e7a809035269e1bd3
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=MIT

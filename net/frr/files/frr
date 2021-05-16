@@ -12,6 +12,8 @@ log_failure_msg() {
         echo "$@" >&2
 }
 
+# "/usr/lib/frr/frrinit.sh start somenamespace"
+FRR_PATHSPACE="$2"
 self="`dirname $0`"
 if [ -r "$self/frrcommon.sh" ]; then
 	. "$self/frrcommon.sh"

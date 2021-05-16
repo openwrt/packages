@@ -1,5 +1,5 @@
 #!/bin/sh /etc/rc.common
-# Copyright (c) 2015-2020 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2015-2021 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # set (s)hellcheck exceptions
@@ -8,13 +8,26 @@
 START=30
 USE_PROCD=1
 
-extra_command "suspend" "Suspend adblock processing"
-extra_command "resume" "Resume adblock processing"
-extra_command "query" "<domain> Query active blocklists and backups for a specific domain"
-extra_command "report" "[<search>] Print DNS statistics with an optional search parameter"
-extra_command "list" "[[<add>|<remove>] [source(s)]] List available adblock sources or add/remove them from config"
-extra_command "timer" "<action> <hour> [<minute>] [<weekday>] Set a cron based update interval"
-extra_command "version" "Print version information"
+if [ -n "$(type -t extra_command)" ]
+then
+	extra_command "suspend" "Suspend adblock processing"
+	extra_command "resume" "Resume adblock processing"
+	extra_command "query" "<domain> Query active blocklists and backups for a specific domain"
+	extra_command "report" "[[<cli>|<mail>|<gen>|<json>] [<count>] [<search>]] Print DNS statistics with an optional search parameter"
+	extra_command "list" "[<add>|<add_sha>|<add_utc>|<add_eng>|<add_stb>|<remove>|<remove_sha>|<remove_utc>|<remove_eng>|<remove_stb>] <source(s)> List/Edit available sources"
+	extra_command "timer" "[<add> <tasks> <hour> [<minute>] [<weekday>]]|[<remove> <line no.>] List/Edit cron update intervals"
+	extra_command "version" "Print version information"
+else
+	EXTRA_COMMANDS="status suspend resume query report list timer version"
+	EXTRA_HELP="	status	Service status
+	suspend	Suspend adblock processing
+	resume	Resume adblock processing
+	query	<domain> Query active blocklists and backups for a specific domain
+	report	[[<cli>|<mail>|<gen>|<json>] [<count>] [<search>]] Print DNS statistics with an optional search parameter
+	list	[<add>|<add_sha>|<add_utc>|<add_eng>|<add_stb>|<remove>|<remove_sha>|<remove_utc>|<remove_eng>|<remove_stb>] <source(s)> List/Edit available sources
+	timer	[<add> <tasks> <hour> [<minute>] [<weekday>]]|[<remove> <line no.>] List/Edit cron update intervals
+	version	Print version information"
+fi
 
 adb_init="/etc/init.d/adblock"
 adb_script="/usr/bin/adblock.sh"
@@ -92,32 +105,90 @@ query()
 
 report()
 {
-	rc_procd "${adb_script}" report "${1:-"+"}" "${2:-"50"}" "${3:-"true"}" "${4:-"cli"}"
+	rc_procd "${adb_script}" report "${1:-"cli"}" "${2}" "${3}"
 }
 
 list()
 {
-	local src_archive src_file src_enabled enabled name action="${1}"
+	local src_archive src_file src_enabled enabled name sha_list utc_list action="${1}"
 
-	if [ "${action}" = "add" ] || [ "${action}" = "remove" ]
+	if [ "${action%_*}" = "add" ] || [ "${action%_*}" = "remove" ]
 	then
 		shift
 		for name in "${@}"
 		do
-			if [ "${action}" = "add" ]
-			then
-				if [ -z "$(uci_get adblock global adb_sources | grep -Fo "${name}")" ]
-				then
-					uci_add_list adblock global adb_sources "${name}"
-					printf "%s\\n" "::: adblock source '${name}' added to config"
-				fi
-			else
-				if [ -n "$(uci_get adblock global adb_sources | grep -Fo "${name}")" ]
-				then
-					uci_remove_list adblock global adb_sources "${name}"
-					printf "%s\\n" "::: adblock source '${name}' removed from config"
-				fi
-			fi
+			case "${action}" in
+				"add")
+					if [ -z "$(uci_get adblock global adb_sources | grep -Fo "${name}")" ]
+					then
+						uci_add_list adblock global adb_sources "${name}"
+						printf "%s\n" "::: adblock source '${name}' added to config"
+					fi
+				;;
+				"remove")
+					if [ -n "$(uci_get adblock global adb_sources | grep -Fo "${name}")" ]
+					then
+						uci_remove_list adblock global adb_sources "${name}"
+						printf "%s\n" "::: adblock source '${name}' removed from config"
+					fi
+				;;
+				"add_sha")
+					if [ -z "$(uci_get adblock global adb_sha_sources | grep -Fo "${name}")" ]
+					then
+						uci_add_list adblock global adb_sha_sources "${name}"
+						printf "%s\n" "::: adblock shallalist '${name}' added to config"
+					fi
+				;;
+				"remove_sha")
+					if [ -n "$(uci_get adblock global adb_sha_sources | grep -Fo "${name}")" ]
+					then
+						uci_remove_list adblock global adb_sha_sources "${name}"
+						printf "%s\n" "::: adblock shallalist '${name}' removed from config"
+					fi
+				;;
+				"add_utc")
+					if [ -z "$(uci_get adblock global adb_utc_sources | grep -Fo "${name}")" ]
+					then
+						uci_add_list adblock global adb_utc_sources "${name}"
+						printf "%s\n" "::: adblock utcapitole '${name}' added to config"
+					fi
+				;;
+				"remove_utc")
+					if [ -n "$(uci_get adblock global adb_utc_sources | grep -Fo "${name}")" ]
+					then
+						uci_remove_list adblock global adb_utc_sources "${name}"
+						printf "%s\n" "::: adblock utcapitole '${name}' removed from config"
+					fi
+				;;
+				"add_eng")
+					if [ -z "$(uci_get adblock global adb_eng_sources | grep -Fo "${name}")" ]
+					then
+						uci_add_list adblock global adb_eng_sources "${name}"
+						printf "%s\n" "::: adblock energized '${name}' added to config"
+					fi
+				;;
+				"remove_eng")
+					if [ -n "$(uci_get adblock global adb_eng_sources | grep -Fo "${name}")" ]
+					then
+						uci_remove_list adblock global adb_eng_sources "${name}"
+						printf "%s\n" "::: adblock energized '${name}' removed from config"
+					fi
+				;;
+				"add_stb")
+					if [ -z "$(uci_get adblock global adb_stb_sources | grep -Fo "${name}")" ]
+					then
+						uci_add_list adblock global adb_stb_sources "${name}"
+						printf "%s\n" "::: adblock stevenblack '${name}' added to config"
+					fi
+				;;
+				"remove_stb")
+					if [ -n "$(uci_get adblock global adb_stb_sources | grep -Fo "${name}")" ]
+					then
+						uci_remove_list adblock global adb_stb_sources "${name}"
+						printf "%s\n" "::: adblock stevenblack '${name}' removed from config"
+					fi
+				;;
+			esac
 		done
 		if [ -n "$(uci -q changes adblock)" ]
 		then
@@ -132,16 +203,16 @@ list()
 		then
 			zcat "${src_archive}" > "${src_file}"
 		else
-			printf "%s\\n" "::: adblock source archive '${src_archive}' not found"
+			printf "%s\n" "::: adblock source archive '${src_archive}' not found"
 		fi
 		if [ -r "${src_file}" ]
 		then
 			src_enabled="${src_enabled#*=}"
 			src_enabled="${src_enabled//\'}"
-			printf "%s\\n" "::: Available adblock sources"
-			printf "%s\\n" ":::"
-			printf "%-25s%-10s%-7s%-21s%s\\n" "    Name" "Enabled" "Size" "Focus" "Info URL"
-			printf "%s\\n" "    -------------------------------------------------------------------"
+			printf "%s\n" "::: Available adblock sources"
+			printf "%s\n" ":::"
+			printf "%-25s%-10s%-7s%-21s%s\n" "    Name" "Enabled" "Size" "Focus" "Info URL"
+			printf "%s\n" "    -------------------------------------------------------------------"
 			json_load_file "${src_file}"
 			json_get_keys keylist
 			for key in ${keylist}
@@ -161,98 +232,140 @@ list()
 						enabled=" "
 					fi
 					src_enabled="${src_enabled/${key}}"
-					printf "  + %-21s%-10s%-7s%-21s%s\\n" "${key:0:20}" "${enabled}" "${size:0:3}" "${focus:0:20}" "${descurl:0:50}"
+					printf "  + %-21s%-10s%-7s%-21s%s\n" "${key:0:20}" "${enabled}" "${size:0:3}" "${focus:0:20}" "${descurl:0:50}"
 				else
 					src_enabled="${src_enabled} ${key}"
 				fi
 				json_select ..
 			done
+			sha_list="$(uci_get adblock global adb_sha_sources "-")"
+			utc_list="$(uci_get adblock global adb_utc_sources "-")"
+			eng_list="$(uci_get adblock global adb_eng_sources "-")"
+			stb_list="$(uci_get adblock global adb_stb_sources "-")"
+			printf "%s\n" "    ---------------------------------------------------------------------------"
+			printf "  * %s\n" "Configured shallalist categories: ${sha_list// /, }"
+			printf "  * %s\n" "Configured utcapitole categories: ${utc_list// /, }"
+			printf "  * %s\n" "Configured energized variants: ${eng_list// /, }"
+			printf "  * %s\n" "Configured stevenblack variants: ${stb_list// /, }"
+
 			if [ -n "${src_enabled// }" ]
 			then
-				printf "%s\\n" "    ----------------------------------------------"
-				printf "%s\\n" "    Sources without valid configuration"
-				printf "%s\\n" "    ----------------------------------------------"
+				printf "%s\n" "    ---------------------------------------------------------------------------"
+				printf "%s\n" "    Sources without valid configuration"
+				printf "%s\n" "    ---------------------------------------------------------------------------"
 				for key in ${src_enabled}
 				do
-					printf "  - %s\\n" "${key:0:20}"
+					printf "  - %s\n" "${key:0:20}"
 				done
 			fi
 		else
-			printf "%s\\n" "::: adblock source file '${src_file}' not found"
+			printf "%s\n" "::: adblock source file '${src_file}' not found"
 		fi
 	fi
 }
 
+status()
+{
+	status_service
+}
+
 status_service()
 {
-	local key keylist value rtfile
+	local key keylist value idxval values rtfile
 
 	rtfile="$(uci_get adblock global adb_rtfile "/tmp/adb_runtime.json")"
-	if [ -s "${rtfile}" ]
+
+	json_load_file "${rtfile}" >/dev/null 2>&1
+	json_get_keys keylist
+	if [ -n "${keylist}" ]
 	then
-		printf "%s\\n" "::: adblock runtime information"
-		json_load_file "${rtfile}"
-		json_select data
-		json_get_keys keylist
+		printf "%s\n" "::: adblock runtime information"
 		for key in ${keylist}
 		do
-			json_get_var value "${key}"
-			if [ "${key}" = "active_sources" ]
+			json_get_var value "${key}" >/dev/null 2>&1
+			if [ "${key%_*}" = "active" ]
 			then
 				printf "  + %-15s : " "${key}"
-				json_select "${key}"
+				json_select "${key}" >/dev/null 2>&1
+				values=""
 				index=1
-				while json_get_type status "${index}" && [ "${status}" = "object" ]
+				while json_get_type type "${index}" && [ "${type}" = "object" ]
 				do
-					json_get_values source "${index}"
-					printf "%s " "${source}"
+					json_get_values idxval "${index}" >/dev/null 2>&1
+					if [ "${index}" = "1" ]
+					then
+						values="${idxval}"
+					else
+						values="${values}, ${idxval}"
+					fi
 					index=$((index+1))
 				done
-				printf "\\n"
+				values="$(printf "%s" "${values}" | awk '{NR=1;max=98;if(length($0)>max+1)while($0){if(NR==1){print substr($0,1,max)}else{printf"%-22s%s\n","",substr($0,1,max)}{$0=substr($0,max+1);NR=NR+1}}else print}')"
+				printf "%s\n" "${values:-"-"}"
 				json_select ".."
 			else
-				printf "  + %-15s : %s\\n" "${key}" "${value}"
+				printf "  + %-15s : %s\n" "${key}" "${value:-"-"}"
 			fi
 		done
 	else
-		printf "%s\\n" "::: no adblock runtime information available"
+		printf "%s\n" "::: no adblock runtime information available"
 	fi
 }
 
 timer()
 {
-	local action="${1}" hour="${2}" minute="${3:-0}" weekday="${4:-"*"}"
+	local cron_file cron_content cron_lineno action="${1:-"list"}" cron_tasks="${2}" hour="${3}" minute="${4:-0}" weekday="${5:-"*"}"
 
-	hour="${hour//[[:alpha:]]/}"
-	minute="${minute//[[:alpha:]]/}"
-	if [ -n "${action}" ] && [ -n "${hour}" ] && [ -n "${minute}" ] && [ -n "${weekday}" ] && \
-		[ "${hour}" -ge 0 ] && [ "${hour}" -le 23 ] && \
-		[ "${minute}" -ge 0 ] && [ "${minute}" -le 59 ]
+	cron_file="/etc/crontabs/root"
+
+	if [ -s "${cron_file}" ] && [ "${action}" = "list" ]
 	then
-		if [ -r "/etc/crontabs/root" ]
+		awk '{print NR ">  " $0}' "${cron_file}"
+	elif [ "${action}" = "add" ]
+	then
+		hour="${hour//[[:alpha:]]/}"
+		minute="${minute//[[:alpha:]]/}"
+		if [ -n "${cron_tasks}" ] && [ -n "${hour}" ] && [ -n "${minute}" ] && [ -n "${weekday}" ] && \
+			[ "${hour}" -ge 0 ] && [ "${hour}" -le 23 ] && \
+			[ "${minute}" -ge 0 ] && [ "${minute}" -le 59 ]
 		then
-			search="${adb_init//\//\\/}"
-			search="${search//./\\.}"
-			sed -i "/${search}/d" "/etc/crontabs/root"
+			printf "%02d %02d %s\n" "${minute}" "${hour}" "* * ${weekday} ${adb_init} ${cron_tasks}" >> "${cron_file}"
+			/etc/init.d/cron restart
 		fi
-		printf "%02d %02d %s\\n" "${minute}" "${hour}" "* * ${weekday} ${adb_init} ${action}" >> "/etc/crontabs/root"
-		/etc/init.d/cron restart
-	else
-		printf "%s\\n" "::: the refresh timer could not been updated"
+	elif [ -s "${cron_file}" ] && [ "${action}" = "remove" ]
+	then
+		cron_tasks="${cron_tasks//[[:alpha:]]/}"
+		cron_lineno="$(awk 'END{print NR}' "${cron_file}")"
+		cron_content="$(awk '{print $0}' "${cron_file}")"
+		if [ "${cron_tasks:-"0"}" -le "${cron_lineno:-"1"}" ] && [ -n "${cron_content}" ]
+		then
+			printf "%s\n" "${cron_content}" | awk "NR!~/^${cron_tasks}$/" > "${cron_file}"
+			/etc/init.d/cron restart
+		fi
 	fi
 }
 
 service_triggers()
 {
-	local trigger delay type
+	local iface delay
 
-	trigger="$(uci_get adblock global adb_trigger)"
-	delay="$(uci_get adblock global adb_triggerdelay "2")"
-	type="$(uci_get adblock global adb_starttype "start")"
+	iface="$(uci_get adblock global adb_trigger)"
+	delay="$(uci_get adblock global adb_triggerdelay "5")"
 	PROCD_RELOAD_DELAY=$((delay*1000))
-	if [ -n "${trigger}" ]
+
+	if [ -z "${iface}" ]
 	then
-		procd_add_interface_trigger "interface.*.up" "${trigger}" "${adb_init}" "${type}"
+		. "/lib/functions/network.sh"
+		network_find_wan iface
+		if [ -n "${iface}" ]
+		then
+			uci_set adblock global adb_trigger "${iface}"
+			uci_commit "adblock"
+		fi
+	fi
+	if [ -n "${iface}" ]
+	then
+		procd_add_interface_trigger "interface.*.up" "${iface}" "${adb_init}" "start"
 	fi
 	procd_add_reload_trigger "adblock"
 }

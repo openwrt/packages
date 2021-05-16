@@ -13,8 +13,6 @@ Reviewed-by: Wolfram Sang <wsa+renesas@sang-engineering.com>
  lsmmc.c | 5 ++---
  1 file changed, 2 insertions(+), 3 deletions(-)
 
-diff --git a/lsmmc.c b/lsmmc.c
-index 06cc0b8..05d59e8 100644
 --- a/lsmmc.c
 +++ b/lsmmc.c
 @@ -393,10 +393,9 @@ char *read_file(char *name)
@@ -30,6 +28,3 @@ index 06cc0b8..05d59e8 100644
  }
  
  /* Hexadecimal string parsing functions */
--- 
-2.17.1
-

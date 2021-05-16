@@ -12,11 +12,9 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
  src/cpu/intel_cpus.cpp | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/src/cpu/intel_cpus.cpp b/src/cpu/intel_cpus.cpp
-index 0030dba..4dffadc 100644
 --- a/src/cpu/intel_cpus.cpp
 +++ b/src/cpu/intel_cpus.cpp
-@@ -92,7 +92,7 @@ int is_supported_intel_cpu(int model, int cpu)
+@@ -92,7 +92,7 @@ int is_supported_intel_cpu(int model, in
  
  int is_intel_pstate_driver_loaded()
  {
@@ -25,6 +23,3 @@ index 0030dba..4dffadc 100644
  	const string intel_pstate("intel_pstate");
  	char line[32] = { '\0' };
  	ifstream file;
--- 
-2.17.1
-

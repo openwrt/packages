@@ -1,7 +1,5 @@
-Index: libuwsc-3.3.1/cmake/Modules/FindLua.cmake
-===================================================================
 --- /dev/null
-+++ libuwsc-3.3.1/cmake/Modules/FindLua.cmake
++++ b/cmake/Modules/FindLua.cmake
 @@ -0,0 +1,18 @@
 +# - Try to find lua
 +# Once done this will define

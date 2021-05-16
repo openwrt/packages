@@ -12,8 +12,6 @@ Signed-off-by: Pablo Neira Ayuso <pablo@netfilter.org>
  src/ulogd.c | 1 +
  1 file changed, 1 insertion(+)
 
-diff --git a/src/ulogd.c b/src/ulogd.c
-index b8bc57c..9cd64e8 100644
 --- a/src/ulogd.c
 +++ b/src/ulogd.c
 @@ -65,6 +65,7 @@
@@ -24,6 +22,3 @@ index b8bc57c..9cd64e8 100644
  #include <ulogd/conffile.h>
  #include <ulogd/ulogd.h>
  #ifdef DEBUG
--- 
-cgit v1.2.1
-

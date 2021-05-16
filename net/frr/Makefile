@@ -7,16 +7,16 @@
 
 include $(TOPDIR)/rules.mk
 PKG_NAME:=frr
-PKG_VERSION:=7.5
+PKG_VERSION:=7.5.1
 PKG_RELEASE:=1
-PKG_SOURCE_DATE:=2020-12-02
+PKG_SOURCE_DATE:=2021-03-25
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
-PKG_SOURCE_VERSION:=b1e06590a7b4d4b8f7309f432ababebb1b3fa754
+PKG_SOURCE_VERSION:=18f209926fb659790926b82dd4e30727311d22aa
 PKG_SOURCE_URL:=https://codeload.github.com/FRRouting/frr/tar.gz/$(PKG_SOURCE_VERSION)?
 
 
-PKG_HASH:=901763a6deff56c7e1738c4fadbfbb9846548d3d2a2572d4d1a75109805bd055
+PKG_HASH:=a2e21ea5f5c73afda521280c7b1bab3e6734f78517e7cf1b86cbbc0e5f9856cc
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_SOURCE_VERSION)
@@ -164,6 +164,7 @@ define Host/Configure
 	$(SED) 's/$$$$(MAKE) $$$$(AM_MAKEFLAGS) install-am/# $$$$(MAKE) $$$$(AM_MAKEFLAGS) install-am/' $(HOST_BUILD_DIR)/Makefile.in
 endef
 
+#HOST_CPPFLAGS += -I$(STAGING_DIR_HOST)/include/libelf
 HOST_CONFIGURE_ARGS+= \
 	--enable-clippy-only
 
@@ -177,6 +178,7 @@ CONFIGURE_ARGS+= \
 	--prefix=/usr \
 	--enable-shared \
 	--disable-static \
+	--disable-pathd \
 	--enable-user=network \
 	--enable-group=network \
 	--disable-ospfclient \

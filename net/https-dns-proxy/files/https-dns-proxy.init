@@ -8,13 +8,17 @@ START=80
 # shellcheck disable=SC2034
 USE_PROCD=1
 
+if type extra_command 1>/dev/null 2>&1; then
+	extra_command 'version' 'Show version information'
+else
 # shellcheck disable=SC2034
-EXTRA_COMMANDS='version'
+	EXTRA_COMMANDS='version'
+fi
+
+readonly PROG=/usr/sbin/https-dns-proxy
+dnsmasqConfig=''; forceDNS=''; forceDNSPorts='';
+
 version() { echo "$PKG_VERSION"; }
-
-dnsmasqConfig=''
-
-PROG=/usr/sbin/https-dns-proxy
 
 xappend() { param="$param $1"; }
 
@@ -42,11 +46,12 @@ append_parm() {
 
 start_instance() {
 	local cfg="$1" param listen_addr listen_port i
-
+	append_parm "$cfg" 'resolver_url' '-r'
+	append_parm "$cfg" 'polling_interval' '-i'
 	append_parm "$cfg" 'listen_addr' '-a' '127.0.0.1'
 	append_parm "$cfg" 'listen_port' '-p' "$p"
+	append_parm "$cfg" 'dscp_codepoint' '-c'
 	append_parm "$cfg" 'bootstrap_dns' '-b'
-	append_parm "$cfg" 'resolver_url' '-r'
 	append_parm "$cfg" 'user' '-u' 'nobody'
 	append_parm "$cfg" 'group' '-g' 'nogroup'
 	append_parm "$cfg" 'proxy_server' '-t'
@@ -86,17 +91,50 @@ start_instance() {
 	p="$((p+1))"
 }
 
-service_triggers() {
-	procd_add_reload_trigger 'https-dns-proxy'
-}
+is_force_dns_active() { iptables-save | grep -q -w -- '--dport 53'; }
 
 start_service() {
-	local p=5053
+	local p=5053 c
 	config_load 'https-dns-proxy'
 	config_get dnsmasqConfig	'config' 'update_dnsmasq_config' '*'
+	config_get_bool forceDNS	'config' 'force_dns' '1'
+	config_get forceDNSPorts	'config' 'force_dns_port' '53 853'
 	dhcp_backup 'create'
 	config_load 'https-dns-proxy'
 	config_foreach start_instance 'https-dns-proxy'
+	if [ "$forceDNS" -ne 0 ]; then
+		procd_open_instance 'main'
+		procd_set_param command /bin/true
+		procd_set_param stdout 1
+		procd_set_param stderr 1
+		procd_open_data
+		json_add_array firewall
+		for c in $forceDNSPorts; do
+			if netstat -tuln | grep 'LISTEN' | grep ":${c}" >/dev/null 2>&1 || [ "$c" = "53" ]; then
+				json_add_object ""
+				json_add_string type redirect
+				json_add_string target DNAT
+				json_add_string src lan
+				json_add_string proto "tcp udp"
+				json_add_string src_dport "$c"
+				json_add_string dest_port "$c"
+				json_add_boolean reflection 0
+				json_close_object
+			else
+				json_add_object ""
+				json_add_string type rule
+				json_add_string src lan
+				json_add_string dest "*"
+				json_add_string proto "tcp udp"
+				json_add_string dest_port "$c"
+				json_add_string target REJECT
+				json_close_object
+			fi
+		done
+		json_close_array
+		procd_close_data
+		procd_close_instance
+	fi
 	if [ -n "$(uci -q changes dhcp)" ]; then
 		uci -q commit dhcp
 		[ -x /etc/init.d/dnsmasq ] && /etc/init.d/dnsmasq restart >/dev/null 2>&1
@@ -105,7 +143,7 @@ start_service() {
 
 stop_service() {
 	config_load 'https-dns-proxy'
-	config_get dnsmasqConfig	'config' 'update_dnsmasq_config' '*'
+	config_get dnsmasqConfig 'config' 'update_dnsmasq_config' '*'
 	dhcp_backup 'restore'
 	if [ -n "$(uci -q changes dhcp)" ]; then
 		uci -q commit dhcp
@@ -114,8 +152,11 @@ stop_service() {
 }
 
 service_triggers() {
-		procd_add_reload_trigger 'https-dns-proxy'
+	procd_add_config_trigger "config.change" "https-dns-proxy" /etc/init.d/https-dns-proxy reload
 }
+
+service_started() { procd_set_config_changed firewall; }
+service_stopped() { procd_set_config_changed firewall; }
 
 dnsmasq_add_doh_server() {
 	local cfg="$1" address="$2" port="$3"

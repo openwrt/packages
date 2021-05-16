@@ -1,15 +1,14 @@
 #!/bin/sh
 #
-[ "${ACTION}" != "add" ] && exit 0
-
-ban_iface="wan"
-[ -r "/lib/functions/network.sh" ] && { . "/lib/functions/network.sh"; network_find_wan ban_iface; }
-[ "${INTERFACE}" != "${ban_iface}" ] && exit 0
-
 ban_pidfile="/var/run/banip.pid"
 ban_enabled="$(/etc/init.d/banip enabled; printf "%u" "${?}")"
-if [ "${ban_enabled}" = "0" ] && [ ! -s "${ban_pidfile}" ]
+
+if [ "${ban_enabled}" = "0" ] && [ "${ACTION}" = "add" ] && [ -n "${INTERFACE}" ]
 then
-	/etc/init.d/banip refresh
+	ban_ifaces="$(uci_get banip global ban_ifaces)"
+	if [ ! -s "${ban_pidfile}" ] && [ -n "$(printf "%s\n" "${ban_ifaces}" | grep -F "${INTERFACE}")" ]
+	then
+		/etc/init.d/banip refresh
+	fi
 fi
 exit 0

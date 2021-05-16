@@ -72,7 +72,7 @@
          int f = open("conftest.mmap", O_RDWR|O_CREAT|O_TRUNC, 0600);
 --- a/m4/want_gssapi.m4
 +++ b/m4/want_gssapi.m4
-@@ -54,7 +54,7 @@ AC_DEFUN([DOVECOT_WANT_GSSAPI], [
+@@ -55,7 +55,7 @@ AC_DEFUN([DOVECOT_WANT_GSSAPI], [
    
    				# does the kerberos library support SPNEGO?
    				AC_CACHE_CHECK([whether GSSAPI supports SPNEGO],i_cv_gssapi_spnego,[
@@ -81,7 +81,7 @@
    				    #ifdef HAVE_GSSAPI_H
    				    #  include <gssapi.h>
    				    #else
-@@ -62,6 +62,7 @@ AC_DEFUN([DOVECOT_WANT_GSSAPI], [
+@@ -63,6 +63,7 @@ AC_DEFUN([DOVECOT_WANT_GSSAPI], [
    				    #endif
    				    #include <krb5.h>
    				    #include <string.h>

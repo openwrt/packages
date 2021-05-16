@@ -1,6 +1,6 @@
 --- a/lib/crypto/c_src/crypto_callback.c
 +++ b/lib/crypto/c_src/crypto_callback.c
-@@ -112,6 +112,7 @@ static ErlNifRWLock** lock_vec = NULL; /* Static locks used by openssl */
+@@ -112,6 +112,7 @@ static ErlNifRWLock** lock_vec = NULL; /
  
  #include <openssl/crypto.h>
  
@@ -8,7 +8,7 @@
  static INLINE void locking(int mode, ErlNifRWLock* lock)
  {
      switch (mode) {
-@@ -132,7 +133,6 @@ static INLINE void locking(int mode, ErlNifRWLock* lock)
+@@ -132,7 +133,6 @@ static INLINE void locking(int mode, Erl
      }
  }
  
@@ -18,7 +18,7 @@
      locking(mode, lock_vec[n]);
 --- a/lib/crypto/c_src/engine.c
 +++ b/lib/crypto/c_src/engine.c
-@@ -244,7 +244,7 @@ ERL_NIF_TERM engine_load_dynamic_nif(ErlNifEnv* env, int argc, const ERL_NIF_TER
+@@ -244,7 +244,7 @@ ERL_NIF_TERM engine_load_dynamic_nif(Erl
  #ifdef HAS_ENGINE_SUPPORT
      ASSERT(argc == 0);
  
@@ -41,7 +41,7 @@
  #ifdef HAVE_DYNAMIC_CRYPTO_LIB
  
  # if defined(DEBUG)
-@@ -77,7 +82,7 @@ ERL_NIF_TERM info_lib(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+@@ -77,7 +82,7 @@ ERL_NIF_TERM info_lib(ErlNifEnv *env, in
      ASSERT(argc == 0);
  
      name_sz = strlen(libname);

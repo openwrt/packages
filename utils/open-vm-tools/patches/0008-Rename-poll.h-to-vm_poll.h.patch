@@ -42,10 +42,6 @@
  #include "vm_basic_asm.h"
  
  #if defined(__cplusplus)
-diff --git a/lib/include/poll.h b/lib/include/vm_poll.h
-rename from lib/include/poll.h
-rename to lib/include/vm_poll.h
-diff --git a/lib/rpcIn/rpcin.c b/lib/rpcIn/rpcin.c
 --- a/lib/rpcIn/rpcin.c
 +++ b/lib/rpcIn/rpcin.c
 @@ -57,7 +57,7 @@

@@ -7,11 +7,9 @@ Subject: [PATCH 4/4] Move the 43xx firmware into /lib/firmware
  tools/hciattach_bcm43xx.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-Index: bluez-5.51/tools/hciattach_bcm43xx.c
-===================================================================
---- bluez-5.51.orig/tools/hciattach_bcm43xx.c
-+++ bluez-5.51/tools/hciattach_bcm43xx.c
-@@ -44,7 +44,7 @@
+--- a/tools/hciattach_bcm43xx.c
++++ b/tools/hciattach_bcm43xx.c
+@@ -31,7 +31,7 @@
  #include "hciattach.h"
  
  #ifndef FIRMWARE_DIR

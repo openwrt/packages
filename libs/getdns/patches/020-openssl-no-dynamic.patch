@@ -1,6 +1,6 @@
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -334,6 +334,9 @@ check_include_file(openssl/err.h HAVE_OPENSSL_ERR_H)
+@@ -334,6 +334,9 @@ check_include_file(openssl/err.h HAVE_OP
  check_include_file(openssl/rand.h HAVE_OPENSSL_RAND_H)
  check_include_file(openssl/conf.h HAVE_OPENSSL_CONF_H)
  check_include_file(openssl/engine.h HAVE_OPENSSL_ENGINE_H)

@@ -28,7 +28,7 @@ export CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 export NO_TIMESTAMP=1
 
 UHTTPD_LISTEN_HTTP=
-STATE_DIR='/etc/acme'
+PRODUCTION_STATE_DIR='/etc/acme'
 STAGING_STATE_DIR='/etc/acme/staging'
 
 ACCOUNT_EMAIL=
@@ -219,6 +219,8 @@ issue_cert()
     local staging=
     local HOOK=
 
+    # reload uci values, as the value of use_staging may have changed
+    config_load acme
     config_get_bool enabled "$section" enabled 0
     config_get_bool use_staging "$section" use_staging
     config_get_bool update_uhttpd "$section" update_uhttpd
@@ -236,23 +238,29 @@ issue_cert()
     UPDATE_HAPROXY=$update_haproxy
     USER_CLEANUP=$user_cleanup
 
-    [ "$enabled" -eq "1" ] || return
+    [ "$enabled" -eq "1" ] || return 0
 
     if [ "$APP" = "uacme" ]; then
 	[ "$DEBUG" -eq "1" ] && debug="--verbose --verbose"
     elif [ "$APP" = "acme" ]; then
 	[ "$DEBUG" -eq "1" ] && acme_args="$acme_args --debug"
     fi
-    [ "$use_staging" -eq "1" ] && STATE_DIR="$STAGING_STATE_DIR" && staging="--staging"
+    if [ "$use_staging" -eq "1" ]; then
+	STATE_DIR="$STAGING_STATE_DIR";
+	staging="--staging";
+    else
+	STATE_DIR="$PRODUCTION_STATE_DIR";
+	staging="";
+    fi
 
     set -- $domains
     main_domain=$1
 
     if [ -n "$user_setup" ] && [ -f "$user_setup" ]; then
 	log "Running user-provided setup script from $user_setup."
-	"$user_setup" "$main_domain" || return 1
+	"$user_setup" "$main_domain" || return 2
     else
-	[ -n "$webroot" ] || [ -n "$dns" ] || pre_checks "$main_domain" || return 1
+	[ -n "$webroot" ] || [ -n "$dns" ] || pre_checks "$main_domain" || return 2
     fi
 
     log "Running $APP for $main_domain"
@@ -266,7 +274,7 @@ issue_cert()
 	if [ -f "$STATE_DIR/$main_domain/cert.pem" ]; then
 	    log "Found previous cert config, use staging=$use_staging. Issuing renew."
 	    export CHALLENGE_PATH="$webroot"
-	    $ACME $debug --confdir "$STATE_DIR" $staging --never-create issue $domains --hook=$HPROGRAM && ret=0 || ret=1
+	    $ACME $debug --confdir "$STATE_DIR" $staging --never-create issue $domains --hook=$HPROGRAM; ret=$?
 	    post_checks
 	    return $ret
 	fi
@@ -284,7 +292,7 @@ issue_cert()
 		mv "$STATE_DIR/$main_domain" "$STATE_DIR/$main_domain.staging"
 	    else
 		log "Found previous cert config. Issuing renew."
-		$ACME --home "$STATE_DIR" --renew -d "$main_domain" "$acme_args" && ret=0 || ret=1
+		$ACME --home "$STATE_DIR" --renew -d "$main_domain" "$acme_args"; ret=$?
 		post_checks
 		return $ret
 	    fi
@@ -304,7 +312,7 @@ issue_cert()
 	    acme_args="$acme_args --dns $dns"
 	else
 	    log "Using dns mode, dns-01 is not wrapped yet"
-	    return 1
+	    return 2
 #	    uacme_args="$uacme_args --dns $dns"
 	fi
     elif [ -z "$webroot" ]; then
@@ -313,13 +321,13 @@ issue_cert()
 	    acme_args="$acme_args --standalone --listen-v6"
 	else
 	    log "Standalone not supported by $APP"
-	    return 1
+	    return 2
 	fi
     else
 	if [ ! -d "$webroot" ]; then
 	    err "$main_domain: Webroot dir '$webroot' does not exist!"
 	    post_checks
-	    return 1
+	    return 2
 	fi
 	log "Using webroot dir: $webroot"
 	if [ "$APP" = "uacme" ]; then
@@ -335,13 +343,15 @@ issue_cert()
     else
 	workdir="--home"
     fi
-    if ! $ACME $debug $workdir "$STATE_DIR" $staging issue $acme_args $HOOK; then
+
+    $ACME $debug $workdir "$STATE_DIR" $staging issue $acme_args $HOOK; ret=$?
+    if [ "$ret" -ne 0 ]; then
 	failed_dir="$STATE_DIR/${main_domain}.failed-$(date +%s)"
 	err "Issuing cert for $main_domain failed. Moving state to $failed_dir"
 	[ -d "$STATE_DIR/$main_domain" ] && mv "$STATE_DIR/$main_domain" "$failed_dir"
 	[ -d "$STATE_DIR/private/$main_domain" ] && mv "$STATE_DIR/private/$main_domain" "$failed_dir"
 	post_checks
-	return 1
+	return $ret
     fi
 
     if [ -e /etc/init.d/uhttpd ] && [ "$update_uhttpd" -eq "1" ]; then
@@ -355,7 +365,23 @@ issue_cert()
 	# commit and reload is in post_checks
     fi
 
-    if [ -e /etc/init.d/nginx ] && [ "$update_nginx" -eq "1" ]; then
+    local nginx_updated
+    nginx_updated=0
+    if command -v nginx-util 2>/dev/null && [ "$update_nginx" -eq "1" ]; then
+	nginx_updated=1
+	for domain in $domains; do
+	    if [ "$APP" = "uacme" ]; then
+		nginx-util add_ssl "${domain}" uacme "$STATE_DIR/${main_domain}/cert.pem" \
+		    "$STATE_DIR/private/${main_domain}/key.pem" || nginx_updated=0
+	    else
+		nginx-util add_ssl "${domain}" acme "$STATE_DIR/${main_domain}/fullchain.cer" \
+		    "$STATE_DIR/${main_domain}/${main_domain}.key" || nginx_updated=0
+	    fi
+	done
+	# reload is in post_checks
+    fi
+
+    if [ "$nginx_updated" -eq "0" ] && [ -w /etc/nginx/nginx.conf ] && [ "$update_nginx" -eq "1" ]; then
 	if [ "$APP" = "uacme" ]; then
 	    sed -i "s#ssl_certificate\ .*#ssl_certificate $STATE_DIR/${main_domain}/cert.pem;#g" /etc/nginx/nginx.conf
 	    sed -i "s#ssl_certificate_key\ .*#ssl_certificate_key $STATE_DIR/private/${main_domain}/key.pem;#g" /etc/nginx/nginx.conf
@@ -377,34 +403,106 @@ issue_cert()
     post_checks
 }
 
+issue_cert_with_retries() {
+	local section="$1"
+	local use_staging
+	local retries
+	local use_auto_staging
+	local infinite_retries
+	config_get_bool use_staging "$section" use_staging
+	config_get_bool use_auto_staging "$section" use_auto_staging
+	config_get_bool enabled "$section" enabled
+	config_get retries "$section" retries
+
+	[ -z "$retries" ] && retries=1
+	[ -z "$use_auto_staging" ] && use_auto_staging=0
+	[ "$retries" -eq "0" ] && infinite_retries=1
+	[ "$enabled" -eq "1" ] || return 0
+
+	while true; do
+		issue_cert "$1"; ret=$?
+
+		if [ "$ret" -eq "2" ]; then
+			# An error occurred while retrieving the certificate.
+			retries="$((retries-1))"
+
+			if [ "$use_auto_staging" -eq "1" ] && [ "$use_staging" -eq "0" ]; then
+				log "Production certificate could not be obtained. Switching to staging server."
+				use_staging=1
+				uci set "acme.$1.use_staging=1"
+				uci commit acme
+			fi
+
+			if [ -z "$infinite_retries" ] && [ "$retries" -lt "1" ]; then
+				log "An error occurred while retrieving the certificate. Retries exceeded."
+				return "$ret"
+			fi
+
+			if [ "$use_staging" -eq "1" ]; then
+				# The "Failed Validations" limit of LetsEncrypt is 60 per hour. This
+				# means one failure every minute. Here we wait 2 minutes to be within
+				# limits for sure.
+				sleeptime=120
+			else
+				# There is a "Failed Validation" limit of LetsEncrypt is 5 failures per
+				# account, per hostname, per hour. This means one failure every 12
+				# minutes. Here we wait 25 minutes to be within limits for sure.
+				sleeptime=1500
+			fi
+
+			log "An error occurred while retrieving the certificate. Retrying in $sleeptime seconds."
+			sleep "$sleeptime"
+			continue
+		else
+			if [ "$use_auto_staging" -eq "1" ]; then
+				if [ "$use_staging" -eq "0" ]; then
+					log "Production certificate obtained. Exiting."
+				else
+					log "Staging certificate obtained. Continuing with production server."
+					use_staging=0
+					uci set "acme.$1.use_staging=0"
+					uci commit acme
+					continue
+				fi
+			fi
+
+			return "$ret"
+		fi
+	done
+}
+
 load_vars()
 {
     local section="$1"
 
-    STATE_DIR=$(config_get "$section" state_dir)
-    STAGING_STATE_DIR=$STATE_DIR/staging
+    PRODUCTION_STATE_DIR=$(config_get "$section" state_dir)
+    STAGING_STATE_DIR=$PRODUCTION_STATE_DIR/staging
     ACCOUNT_EMAIL=$(config_get "$section" account_email)
     DEBUG=$(config_get "$section" debug)
 }
 
-check_cron
-[ -n "$CHECK_CRON" ] && exit 0
-[ -e "/var/run/acme_boot" ] && rm -f "/var/run/acme_boot" && exit 0
+if [ -z "$INCLUDE_ONLY" ]; then
+    check_cron
+    [ -n "$CHECK_CRON" ] && exit 0
+    [ -e "/var/run/acme_boot" ] && rm -f "/var/run/acme_boot" && exit 0
+fi
 
 config_load acme
 config_foreach load_vars acme
 
-if [ -z "$STATE_DIR" ] || [ -z "$ACCOUNT_EMAIL" ]; then
+if [ -z "$PRODUCTION_STATE_DIR" ] || [ -z "$ACCOUNT_EMAIL" ]; then
     err "state_dir and account_email must be set"
     exit 1
 fi
 
-[ -d "$STATE_DIR" ] || mkdir -p "$STATE_DIR"
+[ -d "$PRODUCTION_STATE_DIR" ] || mkdir -p "$PRODUCTION_STATE_DIR"
 [ -d "$STAGING_STATE_DIR" ] || mkdir -p "$STAGING_STATE_DIR"
 
 trap err_out HUP TERM
 trap int_out INT
 
-config_foreach issue_cert cert
+if [ -z "$INCLUDE_ONLY" ]; then
+    config_foreach issue_cert_with_retries cert
 
-exit 0
+    exit 0
+fi

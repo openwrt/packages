@@ -1,6 +1,6 @@
 --- a/setup.py
 +++ b/setup.py
-@@ -536,6 +536,7 @@ class PyBuildExt(build_ext):
+@@ -521,6 +521,7 @@ class PyBuildExt(build_ext):
              print("Failed to build these modules:")
              print_three_column(failed)
              print()

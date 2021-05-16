@@ -188,8 +188,6 @@ Subject: Remove SBR
  delete mode 100644 libSBRenc/src/tran_det.cpp
  delete mode 100644 libSBRenc/src/tran_det.h
 
-diff --git a/Android.bp b/Android.bp
-index dce6fdd..95d56df 100644
 --- a/Android.bp
 +++ b/Android.bp
 @@ -9,8 +9,6 @@ cc_library_static {
@@ -210,8 +208,6 @@ index dce6fdd..95d56df 100644
          "libArithCoding/include",
          "libDRCdec/include",
          "libSACdec/include",
-diff --git a/Makefile.am b/Makefile.am
-index fe6b867..28efc79 100644
 --- a/Makefile.am
 +++ b/Makefile.am
 @@ -8,8 +8,6 @@ AM_CPPFLAGS = \
@@ -293,8 +289,6 @@ index fe6b867..28efc79 100644
      $(top_srcdir)/libSYS/include/*.h \
      $(top_srcdir)/libPCMutils/include/*.h \
      $(top_srcdir)/libPCMutils/src/*.h \
-diff --git a/Makefile.vc b/Makefile.vc
-index a90b530..ac3c097 100644
 --- a/Makefile.vc
 +++ b/Makefile.vc
 @@ -23,8 +23,6 @@ AM_CPPFLAGS = \
@@ -373,8 +367,6 @@ index a90b530..ac3c097 100644
  	del /f libSYS\src\*.obj 2>NUL
  
  install: $(INST_DIRS)
-diff --git a/libAACdec/src/aacdec_drc.cpp b/libAACdec/src/aacdec_drc.cpp
-index 922a09e..ae05379 100644
 --- a/libAACdec/src/aacdec_drc.cpp
 +++ b/libAACdec/src/aacdec_drc.cpp
 @@ -105,8 +105,6 @@ amm-info@iis.fraunhofer.de
@@ -400,7 +392,7 @@ index 922a09e..ae05379 100644
    int band, bin, numBands;
    int bottom = 0;
    int modifyBins = 0;
-@@ -867,7 +865,6 @@ void aacDecoder_drcApply(HANDLE_AAC_DRC self, void *pSbrDec,
+@@ -867,7 +865,6 @@ void aacDecoder_drcApply(HANDLE_AAC_DRC
    }
  
    if (self->enable != ON) {
@@ -408,7 +400,7 @@ index 922a09e..ae05379 100644
      if (extGain != NULL) {
        INT gainScale = (INT)*extGain;
        /* The gain scaling must be passed to the function in the buffer pointed
-@@ -1020,7 +1017,7 @@ void aacDecoder_drcApply(HANDLE_AAC_DRC self, void *pSbrDec,
+@@ -1020,7 +1017,7 @@ void aacDecoder_drcApply(HANDLE_AAC_DRC
     *  short blocks must take care that bands fall on
     *  block boundaries!
     */
@@ -417,7 +409,7 @@ index 922a09e..ae05379 100644
      bottom = 0;
  
      if (!modifyBins) {
-@@ -1058,14 +1055,6 @@ void aacDecoder_drcApply(HANDLE_AAC_DRC self, void *pSbrDec,
+@@ -1058,14 +1055,6 @@ void aacDecoder_drcApply(HANDLE_AAC_DRC
          pSpecScale[win] += max_exponent;
        }
      }
@@ -432,8 +424,6 @@ index 922a09e..ae05379 100644
    }
  
    return;
-diff --git a/libAACdec/src/aacdec_drc.h b/libAACdec/src/aacdec_drc.h
-index 924ec6f..19018b6 100644
 --- a/libAACdec/src/aacdec_drc.h
 +++ b/libAACdec/src/aacdec_drc.h
 @@ -152,10 +152,8 @@ int aacDecoder_drcProlog(
@@ -464,8 +454,6 @@ index 924ec6f..19018b6 100644
  
  int aacDecoder_drcEpilog(
      HANDLE_AAC_DRC self, HANDLE_FDK_BITSTREAM hBs,
-diff --git a/libAACdec/src/aacdecoder.cpp b/libAACdec/src/aacdecoder.cpp
-index 8f03328..2419ecc 100644
 --- a/libAACdec/src/aacdecoder.cpp
 +++ b/libAACdec/src/aacdecoder.cpp
 @@ -161,8 +161,6 @@ amm-info@iis.fraunhofer.de
@@ -477,7 +465,7 @@ index 8f03328..2419ecc 100644
  #include "sac_dec_lib.h"
  
  #include "aacdec_hcr.h"
-@@ -249,9 +247,6 @@ void CAacDecoder_SyncQmfMode(HANDLE_AACDECODER self) {
+@@ -249,9 +247,6 @@ void CAacDecoder_SyncQmfMode(HANDLE_AACD
      }
    }
  
@@ -487,7 +475,7 @@ index 8f03328..2419ecc 100644
    self->psPossible =
        ((CAN_DO_PS(self->streamInfo.aot) &&
          !PS_IS_EXPLICITLY_DISABLED(self->streamInfo.aot, self->flags[0]) &&
-@@ -936,7 +931,6 @@ static AAC_DECODER_ERROR CAacDecoder_ExtPayloadParse(
+@@ -936,7 +931,6 @@ static AAC_DECODER_ERROR CAacDecoder_Ext
        FDK_FALLTHROUGH;
      case EXT_SBR_DATA:
        if (IS_CHANNEL_ELEMENT(previous_element)) {
@@ -495,7 +483,7 @@ index 8f03328..2419ecc 100644
          UCHAR configMode = 0;
          UCHAR configChanged = 0;
  
-@@ -944,29 +938,6 @@ static AAC_DECODER_ERROR CAacDecoder_ExtPayloadParse(
+@@ -944,29 +938,6 @@ static AAC_DECODER_ERROR CAacDecoder_Ext
  
          configMode |= AC_CM_ALLOC_MEM;
  
@@ -525,7 +513,7 @@ index 8f03328..2419ecc 100644
          /* Citation from ISO/IEC 14496-3 chapter 4.5.2.1.5.2
          Fill elements containing an extension_payload() with an extension_type
          of EXT_SBR_DATA or EXT_SBR_DATA_CRC shall not contain any other
-@@ -978,9 +949,7 @@ static AAC_DECODER_ERROR CAacDecoder_ExtPayloadParse(
+@@ -978,9 +949,7 @@ static AAC_DECODER_ERROR CAacDecoder_Ext
          } else {
            /* If this is not a fill element with a known length, we are screwed
             * and further parsing makes no sense. */
@@ -536,7 +524,7 @@ index 8f03328..2419ecc 100644
          }
        } else {
          error = AAC_DEC_PARSE_ERROR;
-@@ -1107,54 +1076,10 @@ static AAC_DECODER_ERROR aacDecoder_ParseExplicitMpsAndSbr(
+@@ -1107,54 +1076,10 @@ static AAC_DECODER_ERROR aacDecoder_Pars
  
    if ((self->flags[0] & AC_SBR_PRESENT) &&
        (self->flags[0] & (AC_USAC | AC_RSVD50 | AC_ELD | AC_DRM))) {
@@ -595,7 +583,7 @@ index 8f03328..2419ecc 100644
    }
  
    if ((bitCnt > 0) && (self->flags[0] & (AC_USAC | AC_RSVD50))) {
-@@ -1827,14 +1752,8 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
+@@ -1827,14 +1752,8 @@ CAacDecoder_Init(HANDLE_AACDECODER self,
    }
    self->flags[streamIndex] |= (asc->m_sbrPresentFlag) ? AC_SBR_PRESENT : 0;
    self->flags[streamIndex] |= (asc->m_psPresentFlag) ? AC_PS_PRESENT : 0;
@@ -612,7 +600,7 @@ index 8f03328..2419ecc 100644
      if (downscaleFactor != 1 && (downscaleFactor)&1) {
        return AAC_DEC_UNSUPPORTED_SAMPLINGRATE; /* SBR needs an even downscale
                                                    factor */
-@@ -1944,31 +1863,6 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
+@@ -1944,31 +1863,6 @@ CAacDecoder_Init(HANDLE_AACDECODER self,
    /* set AC_USAC_SCFGI3 globally if any usac element uses */
    switch (asc->m_aot) {
      case AOT_USAC:
@@ -644,7 +632,7 @@ index 8f03328..2419ecc 100644
        break;
      default:
        break;
-@@ -1981,39 +1875,11 @@ CAacDecoder_Init(HANDLE_AACDECODER self, const CSAudioSpecificConfig *asc,
+@@ -1981,39 +1875,11 @@ CAacDecoder_Init(HANDLE_AACDECODER self,
      */
      switch (asc->m_aot) {
        case AOT_USAC:
@@ -685,7 +673,7 @@ index 8f03328..2419ecc 100644
            mpegSurroundDecoder_ConfigureQmfDomain(
                (CMpegSurroundDecoder *)self->pMpegSurroundDecoder, sac_interface,
                (UINT)self->streamInfo.aacSampleRate, asc->m_aot);
-@@ -2625,34 +2491,6 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
+@@ -2625,34 +2491,6 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecod
            } else {
              self->frameOK = 0;
            }
@@ -720,7 +708,7 @@ index 8f03328..2419ecc 100644
          }
  
          el_cnt[type]++;
-@@ -3047,7 +2885,6 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
+@@ -3047,7 +2885,6 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecod
                (8) * sizeof(AUDIO_CHANNEL_TYPE)); /* restore */
      FDKmemcpy(self->channelIndices, self->channelIndicesPrev,
                (8) * sizeof(UCHAR)); /* restore */
@@ -728,7 +716,7 @@ index 8f03328..2419ecc 100644
    } else {
      /* store or restore the number of channels and the corresponding info */
      if (self->frameOK && !(flags & AACDEC_CONCEAL)) {
-@@ -3056,7 +2893,6 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
+@@ -3056,7 +2893,6 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecod
                  (8) * sizeof(AUDIO_CHANNEL_TYPE)); /* store */
        FDKmemcpy(self->channelIndicesPrev, self->channelIndices,
                  (8) * sizeof(UCHAR)); /* store */
@@ -736,7 +724,7 @@ index 8f03328..2419ecc 100644
      } else {
        if (self->aacChannels > 0) {
          if ((self->buildUpStatus == AACDEC_RSV60_BUILD_UP_ON) ||
-@@ -3071,7 +2907,6 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
+@@ -3071,7 +2907,6 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecod
                    (8) * sizeof(AUDIO_CHANNEL_TYPE)); /* restore */
          FDKmemcpy(self->channelIndices, self->channelIndicesPrev,
                    (8) * sizeof(UCHAR)); /* restore */
@@ -744,7 +732,7 @@ index 8f03328..2419ecc 100644
        }
      }
    }
-@@ -3302,9 +3137,9 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecoder_DecodeFrame(
+@@ -3302,9 +3137,9 @@ LINKSPEC_CPP AAC_DECODER_ERROR CAacDecod
          self->extGain[0] = (FIXP_DBL)TDL_GAIN_SCALING;
          /* DRC processing */
          aacDecoder_drcApply(
@@ -756,8 +744,6 @@ index 8f03328..2419ecc 100644
  
          );
  
-diff --git a/libAACdec/src/aacdecoder.h b/libAACdec/src/aacdecoder.h
-index 20f4c45..0711160 100644
 --- a/libAACdec/src/aacdecoder.h
 +++ b/libAACdec/src/aacdecoder.h
 @@ -118,8 +118,6 @@ amm-info@iis.fraunhofer.de
@@ -789,7 +775,7 @@ index 20f4c45..0711160 100644
  
    CProgramConfig pce;
    CStreamInfo
-@@ -272,12 +264,7 @@ This structure is allocated once for each CPE. */
+@@ -272,12 +264,7 @@ This structure is allocated once for eac
                                  supported) ELD downscale factor discovered in
                                  the bitstream */
  
@@ -802,8 +788,6 @@ index 20f4c45..0711160 100644
  
    UCHAR *pDrmBsBuffer; /*!< Pointer to dynamic buffer which is used to reverse
                            the bits of the DRM SBR payload */
-diff --git a/libAACdec/src/aacdecoder_lib.cpp b/libAACdec/src/aacdecoder_lib.cpp
-index 7df17b9..bde978e 100644
 --- a/libAACdec/src/aacdecoder_lib.cpp
 +++ b/libAACdec/src/aacdecoder_lib.cpp
 @@ -107,8 +107,6 @@ amm-info@iis.fraunhofer.de
@@ -815,7 +799,7 @@ index 7df17b9..bde978e 100644
  #include "conceal.h"
  
  #include "aacdec_drc.h"
-@@ -330,13 +328,6 @@ static INT aacDecoder_FreeMemCallback(void *handle,
+@@ -330,13 +328,6 @@ static INT aacDecoder_FreeMemCallback(vo
      errTp = TRANSPORTDEC_UNKOWN_ERROR;
    }
  
@@ -829,7 +813,7 @@ index 7df17b9..bde978e 100644
    /* free pSpatialDec and mpsData */
    if (self->pMpegSurroundDecoder != NULL) {
      if (mpegSurroundDecoder_FreeMem(
-@@ -368,23 +359,6 @@ static INT aacDecoder_CtrlCFGChangeCallback(
+@@ -368,23 +359,6 @@ static INT aacDecoder_CtrlCFGChangeCallb
    return errTp;
  }
  
@@ -853,7 +837,7 @@ index 7df17b9..bde978e 100644
  static INT aacDecoder_SscCallback(void *handle, HANDLE_FDK_BITSTREAM hBs,
                                    const AUDIO_OBJECT_TYPE coreCodec,
                                    const INT samplingRate, const INT frameSize,
-@@ -557,7 +531,6 @@ static AAC_DECODER_ERROR setConcealMethod(
+@@ -557,7 +531,6 @@ static AAC_DECODER_ERROR setConcealMetho
    AAC_DECODER_ERROR errorStatus = AAC_DEC_OK;
    CConcealParams *pConcealData = NULL;
    int method_revert = 0;
@@ -861,7 +845,7 @@ index 7df17b9..bde978e 100644
    HANDLE_AAC_DRC hDrcInfo = NULL;
    HANDLE_PCM_DOWNMIX hPcmDmx = NULL;
    CConcealmentMethod backupMethod = ConcealMethodNone;
-@@ -567,7 +540,6 @@ static AAC_DECODER_ERROR setConcealMethod(
+@@ -567,7 +540,6 @@ static AAC_DECODER_ERROR setConcealMetho
    /* check decoder handle */
    if (self != NULL) {
      pConcealData = &self->concealCommonData;
@@ -869,7 +853,7 @@ index 7df17b9..bde978e 100644
      hDrcInfo = self->hDrcInfo;
      hPcmDmx = self->hPcmUtils;
      if (self->flags[0] & (AC_USAC | AC_RSVD50 | AC_RSV603DA) && method >= 2) {
-@@ -603,27 +575,6 @@ static AAC_DECODER_ERROR setConcealMethod(
+@@ -603,27 +575,6 @@ static AAC_DECODER_ERROR setConcealMetho
    /* Get new delay */
    bsDelay = CConcealment_GetDelay(pConcealData);
  
@@ -906,7 +890,7 @@ index 7df17b9..bde978e 100644
      /* Revert DRC bitstream delay */
      aacDecoder_drcSetParam(hDrcInfo, DRC_BS_DELAY, backupDelay);
      /* Revert PCM mixdown bitstream delay */
-@@ -973,14 +922,7 @@ LINKSPEC_CPP HANDLE_AACDECODER aacDecoder_Open(TRANSPORT_TYPE transportFmt,
+@@ -973,14 +922,7 @@ LINKSPEC_CPP HANDLE_AACDECODER aacDecode
        pIn, aacDecoder_CtrlCFGChangeCallback, (void *)aacDec);
  
    FDKmemclear(&aacDec->qmfDomain, sizeof(FDK_QMF_DOMAIN));
@@ -921,7 +905,7 @@ index 7df17b9..bde978e 100644
  
    if (mpegSurroundDecoder_Open(
            (CMpegSurroundDecoder **)&aacDec->pMpegSurroundDecoder,
-@@ -1067,9 +1009,6 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecoder_Fill(HANDLE_AACDECODER self,
+@@ -1067,9 +1009,6 @@ LINKSPEC_CPP AAC_DECODER_ERROR aacDecode
  static void aacDecoder_SignalInterruption(HANDLE_AACDECODER self) {
    CAacDecoder_SignalInterruption(self);
  
@@ -931,7 +915,7 @@ index 7df17b9..bde978e 100644
    if (self->mpsEnableUser) {
      mpegSurroundDecoder_SetParam(
          (CMpegSurroundDecoder *)self->pMpegSurroundDecoder,
-@@ -1274,7 +1213,6 @@ aacDecoder_DecodeFrame(HANDLE_AACDECODER self, INT_PCM *pTimeData_extern,
+@@ -1274,7 +1213,6 @@ aacDecoder_DecodeFrame(HANDLE_AACDECODER
         Tell other modules to clear states if required. */
      if (flags & AACDEC_CLRHIST) {
        if (!(self->flags[0] & AC_USAC)) {
@@ -939,7 +923,7 @@ index 7df17b9..bde978e 100644
          mpegSurroundDecoder_SetParam(
              (CMpegSurroundDecoder *)self->pMpegSurroundDecoder,
              SACDEC_CLEAR_HISTORY, 1);
-@@ -1393,9 +1331,7 @@ aacDecoder_DecodeFrame(HANDLE_AACDECODER self, INT_PCM *pTimeData_extern,
+@@ -1393,9 +1331,7 @@ aacDecoder_DecodeFrame(HANDLE_AACDECODER
  
        if (!self->qmfDomain.globalConf.qmfDomainExplicitConfig &&
            self->mpsEnableCurr) {
@@ -950,7 +934,7 @@ index 7df17b9..bde978e 100644
          /* needs to be done before first SBR apply. */
          mpegSurroundDecoder_ConfigureQmfDomain(
              (CMpegSurroundDecoder *)self->pMpegSurroundDecoder, sac_interface,
-@@ -1423,8 +1359,6 @@ aacDecoder_DecodeFrame(HANDLE_AACDECODER self, INT_PCM *pTimeData_extern,
+@@ -1423,8 +1359,6 @@ aacDecoder_DecodeFrame(HANDLE_AACDECODER
            break;
        }
  
@@ -959,7 +943,7 @@ index 7df17b9..bde978e 100644
        if ((ErrorStatus != AAC_DEC_OK) || (flags & AACDEC_CONCEAL) ||
            self->pAacDecoderStaticChannelInfo[0]->concealmentInfo.concealState >
                ConcealState_FadeIn) {
-@@ -1432,110 +1366,6 @@ aacDecoder_DecodeFrame(HANDLE_AACDECODER self, INT_PCM *pTimeData_extern,
+@@ -1432,110 +1366,6 @@ aacDecoder_DecodeFrame(HANDLE_AACDECODER
                                decoder too */
        }
  
@@ -1070,7 +1054,7 @@ index 7df17b9..bde978e 100644
        if (self->mpsEnableCurr) {
          int err, sac_interface, nChannels, frameSize;
  
-@@ -1543,8 +1373,6 @@ aacDecoder_DecodeFrame(HANDLE_AACDECODER self, INT_PCM *pTimeData_extern,
+@@ -1543,8 +1373,6 @@ aacDecoder_DecodeFrame(HANDLE_AACDECODER
          frameSize = self->streamInfo.frameSize;
          sac_interface = SAC_INTERFACE_TIME;
  
@@ -1079,7 +1063,7 @@ index 7df17b9..bde978e 100644
          if (self->streamInfo.aot == AOT_USAC) {
            if (self->flags[0] & AC_USAC_SCFGI3) {
              sac_interface = SAC_INTERFACE_TIME;
-@@ -1593,50 +1421,6 @@ aacDecoder_DecodeFrame(HANDLE_AACDECODER self, INT_PCM *pTimeData_extern,
+@@ -1593,50 +1421,6 @@ aacDecoder_DecodeFrame(HANDLE_AACDECODER
          }
        }
  
@@ -1130,7 +1114,7 @@ index 7df17b9..bde978e 100644
        /* Use dedicated memory for PCM postprocessing */
        pTimeDataPcmPost = self->pTimeData2;
        timeDataPcmPostSize = self->timeData2Size;
-@@ -1672,7 +1456,6 @@ aacDecoder_DecodeFrame(HANDLE_AACDECODER self, INT_PCM *pTimeData_extern,
+@@ -1672,7 +1456,6 @@ aacDecoder_DecodeFrame(HANDLE_AACDECODER
            /* If SBR and/or MPS is active, the DRC gains are aligned to the QMF
               domain signal before the QMF synthesis. Therefore the DRC gains
               need to be delayed by the QMF synthesis delay. */
@@ -1138,7 +1122,7 @@ index 7df17b9..bde978e 100644
            if (self->mpsEnableCurr) drcDelay = 257;
            /* Take into account concealment delay */
            drcDelay += CConcealment_GetDelay(&self->concealCommonData) *
-@@ -1693,7 +1476,7 @@ aacDecoder_DecodeFrame(HANDLE_AACDECODER self, INT_PCM *pTimeData_extern,
+@@ -1693,7 +1476,7 @@ aacDecoder_DecodeFrame(HANDLE_AACDECODER
             * necessary for FDK_drcDec_ProcessTime, which accepts deinterleaved
             * audio only. */
            if ((self->streamInfo.numChannels > 1) &&
@@ -1147,7 +1131,7 @@ index 7df17b9..bde978e 100644
              /* interleaving/deinterleaving is performed on upper part of
               * pTimeDataPcmPost. Check if this buffer is large enough. */
              if (timeDataPcmPostSize <
-@@ -1766,7 +1549,6 @@ aacDecoder_DecodeFrame(HANDLE_AACDECODER self, INT_PCM *pTimeData_extern,
+@@ -1766,7 +1549,6 @@ aacDecoder_DecodeFrame(HANDLE_AACDECODER
          }
  
          INT interleaved = 0;
@@ -1155,7 +1139,7 @@ index 7df17b9..bde978e 100644
          interleaved |= (self->mpsEnableCurr) ? 1 : 0;
  
          /* do PCM post processing */
-@@ -1804,7 +1586,7 @@ aacDecoder_DecodeFrame(HANDLE_AACDECODER self, INT_PCM *pTimeData_extern,
+@@ -1804,7 +1586,7 @@ aacDecoder_DecodeFrame(HANDLE_AACDECODER
            pcmLimiter_SetSampleRate(self->hLimiter, self->streamInfo.sampleRate);
            pcmLimiterScale += PCM_OUT_HEADROOM;
  
@@ -1164,7 +1148,7 @@ index 7df17b9..bde978e 100644
                (self->mpsEnableCurr)) {
              pInterleaveBuffer = (PCM_LIM *)pTimeDataPcmPost;
            } else {
-@@ -1828,7 +1610,7 @@ aacDecoder_DecodeFrame(HANDLE_AACDECODER self, INT_PCM *pTimeData_extern,
+@@ -1828,7 +1610,7 @@ aacDecoder_DecodeFrame(HANDLE_AACDECODER
            /* If numChannels = 1 we do not need interleaving. The same applies if
            SBR or MPS are used, since their output is interleaved already
            (resampled or not) */
@@ -1173,7 +1157,7 @@ index 7df17b9..bde978e 100644
                (self->mpsEnableCurr)) {
              scaleValuesSaturate(
                  pTimeData, pTimeDataPcmPost,
-@@ -1972,10 +1754,6 @@ LINKSPEC_CPP void aacDecoder_Close(HANDLE_AACDECODER self) {
+@@ -1972,10 +1754,6 @@ LINKSPEC_CPP void aacDecoder_Close(HANDL
          (CMpegSurroundDecoder *)self->pMpegSurroundDecoder);
    }
  
@@ -1184,7 +1168,7 @@ index 7df17b9..bde978e 100644
    if (self->hInput != NULL) {
      transportDec_Close(&self->hInput);
    }
-@@ -1994,7 +1772,6 @@ LINKSPEC_CPP INT aacDecoder_GetLibInfo(LIB_INFO *info) {
+@@ -1994,7 +1772,6 @@ LINKSPEC_CPP INT aacDecoder_GetLibInfo(L
      return -1;
    }
  
@@ -1192,8 +1176,6 @@ index 7df17b9..bde978e 100644
    mpegSurroundDecoder_GetLibInfo(info);
    transportDec_GetLibInfo(info);
    FDK_toolsGetLibInfo(info);
-diff --git a/libAACenc/src/aacenc.h b/libAACenc/src/aacenc.h
-index 291ea54..798730d 100644
 --- a/libAACenc/src/aacenc.h
 +++ b/libAACenc/src/aacenc.h
 @@ -108,8 +108,6 @@ amm-info@iis.fraunhofer.de
@@ -1214,8 +1196,6 @@ index 291ea54..798730d 100644
    UCHAR useTns; /* flag: use temporal noise shaping */
    UCHAR usePns; /* flag: use perceptual noise substitution */
    UCHAR useIS;  /* flag: use intensity coding */
-diff --git a/libAACenc/src/aacenc_lib.cpp b/libAACenc/src/aacenc_lib.cpp
-index 8df33a4..51f3f49 100644
 --- a/libAACenc/src/aacenc_lib.cpp
 +++ b/libAACenc/src/aacenc_lib.cpp
 @@ -122,8 +122,6 @@ amm-info@iis.fraunhofer.de
@@ -1417,7 +1397,7 @@ index 8df33a4..51f3f49 100644
  /****************************************************************************
                                 Allocate Encoder
  ****************************************************************************/
-@@ -672,46 +519,14 @@ AAC_ENCODER_ERROR aacEncDefaultConfig(HANDLE_AACENC_CONFIG hAacConfig,
+@@ -672,46 +519,14 @@ AAC_ENCODER_ERROR aacEncDefaultConfig(HA
  
    config->userAncDataRate = 0;
  
@@ -1465,7 +1445,7 @@ index 8df33a4..51f3f49 100644
                                     const UINT syntaxFlags,
                                     const AUDIO_OBJECT_TYPE aot) {
    INT coreSamplingRate;
-@@ -719,89 +534,18 @@ static INT aacEncoder_LimitBitrate(const HANDLE_TRANSPORTENC hTpEnc,
+@@ -719,89 +534,18 @@ static INT aacEncoder_LimitBitrate(const
  
    FDKaacEnc_InitChannelMapping(channelMode, CH_ORDER_MPEG, &cm);
  
@@ -1557,7 +1537,7 @@ index 8df33a4..51f3f49 100644
          bitRate);
    }
  
-@@ -814,25 +558,13 @@ static INT aacEncoder_LimitBitrate(const HANDLE_TRANSPORTENC hTpEnc,
+@@ -814,25 +558,13 @@ static INT aacEncoder_LimitBitrate(const
   * \hAacConfig Internal encoder config
   * \return     Bitrate
   */
@@ -1584,7 +1564,7 @@ index 8df33a4..51f3f49 100644
    } else {
      bitrate = bitrate + (bitrate >> 1); /* 1.5 bits per sample */
    }
-@@ -886,10 +618,6 @@ static AACENC_ERROR FDKaacEnc_AdjustEncSettings(HANDLE_AACENCODER hAacEncoder,
+@@ -886,10 +618,6 @@ static AACENC_ERROR FDKaacEnc_AdjustEncS
      return AACENC_INVALID_CONFIG; /* downscaling only allowed for AOT_ER_AAC_ELD
                                     */
    }
@@ -1595,7 +1575,7 @@ index 8df33a4..51f3f49 100644
    if (config->userDownscaleFactor > 1 && config->userChannelMode == 128) {
      return AACENC_INVALID_CONFIG; /* disallow downscaling for AAC-ELDv2 */
    }
-@@ -943,8 +671,6 @@ static AACENC_ERROR FDKaacEnc_AdjustEncSettings(HANDLE_AACENCODER hAacEncoder,
+@@ -943,8 +671,6 @@ static AACENC_ERROR FDKaacEnc_AdjustEncS
        hAacConfig->syntaxFlags |= ((config->userErTools & 0x2) ? AC_ER_HCR : 0);
        hAacConfig->syntaxFlags |= ((config->userErTools & 0x4) ? AC_ER_RVLC : 0);
        hAacConfig->syntaxFlags |=
@@ -1604,7 +1584,7 @@ index 8df33a4..51f3f49 100644
            ((config->userChannelMode == MODE_212) ? AC_LD_MPS : 0);
        config->userTpType =
            (config->userTpType != TT_UNKNOWN) ? config->userTpType : TT_MP4_LOAS;
-@@ -974,25 +700,6 @@ static AACENC_ERROR FDKaacEnc_AdjustEncSettings(HANDLE_AACENCODER hAacEncoder,
+@@ -974,25 +700,6 @@ static AACENC_ERROR FDKaacEnc_AdjustEncS
        break;
    }
  
@@ -1630,7 +1610,7 @@ index 8df33a4..51f3f49 100644
    /* Set default bitrate */
    hAacConfig->bitRate = config->userBitrate;
  
-@@ -1001,7 +708,7 @@ static AACENC_ERROR FDKaacEnc_AdjustEncSettings(HANDLE_AACENCODER hAacEncoder,
+@@ -1001,7 +708,7 @@ static AACENC_ERROR FDKaacEnc_AdjustEncS
        /* Set default bitrate if no external bitrate declared. */
        if (config->userBitrate == (UINT)-1) {
          hAacConfig->bitRate =
@@ -1639,7 +1619,7 @@ index 8df33a4..51f3f49 100644
        }
        hAacConfig->averageBits = -1;
        break;
-@@ -1074,33 +781,8 @@ static AACENC_ERROR FDKaacEnc_AdjustEncSettings(HANDLE_AACENCODER hAacEncoder,
+@@ -1074,33 +781,8 @@ static AACENC_ERROR FDKaacEnc_AdjustEncS
      }
    }
  
@@ -1674,7 +1654,7 @@ index 8df33a4..51f3f49 100644
  
      if ((hAacConfig->audioObjectType == AOT_AAC_LC ||
           hAacConfig->audioObjectType == AOT_SBR ||
-@@ -1112,15 +794,6 @@ static AACENC_ERROR FDKaacEnc_AdjustEncSettings(HANDLE_AACENCODER hAacEncoder,
+@@ -1112,15 +794,6 @@ static AACENC_ERROR FDKaacEnc_AdjustEncS
        /* For backward compatible explicit signaling, AMV1 has to be active */
        return AACENC_INVALID_CONFIG;
      }
@@ -1690,7 +1670,7 @@ index 8df33a4..51f3f49 100644
    }
  
    switch (hAacConfig->bitrateMode) {
-@@ -1135,7 +808,6 @@ static AACENC_ERROR FDKaacEnc_AdjustEncSettings(HANDLE_AACENCODER hAacEncoder,
+@@ -1135,7 +808,6 @@ static AACENC_ERROR FDKaacEnc_AdjustEncS
                      NULL, hAacConfig->sampleRate, hAacConfig->framelength,
                      hAacConfig->nChannels, hAacConfig->channelMode,
                      hAacConfig->bitRate, hAacConfig->nSubFrames,
@@ -1698,7 +1678,7 @@ index 8df33a4..51f3f49 100644
                      hAacConfig->syntaxFlags, hAacConfig->audioObjectType))) {
          return AACENC_INVALID_CONFIG;
        }
-@@ -1167,13 +839,6 @@ static AACENC_ERROR FDKaacEnc_AdjustEncSettings(HANDLE_AACENCODER hAacEncoder,
+@@ -1167,13 +839,6 @@ static AACENC_ERROR FDKaacEnc_AdjustEncS
      }
    }
  
@@ -1712,7 +1692,7 @@ index 8df33a4..51f3f49 100644
    /* Meta data restriction. */
    switch (hAacConfig->audioObjectType) {
      /* Allow metadata support */
-@@ -1198,22 +863,6 @@ static AACENC_ERROR FDKaacEnc_AdjustEncSettings(HANDLE_AACENCODER hAacEncoder,
+@@ -1198,22 +863,6 @@ static AACENC_ERROR FDKaacEnc_AdjustEncS
    return err;
  }
  
@@ -1735,7 +1715,7 @@ index 8df33a4..51f3f49 100644
  INT aacenc_SscCallback(void *self, HANDLE_FDK_BITSTREAM hBs,
                         const AUDIO_OBJECT_TYPE coreCodec,
                         const INT samplingRate, const INT frameSize,
-@@ -1230,7 +879,6 @@ static AACENC_ERROR aacEncInit(HANDLE_AACENCODER hAacEncoder, ULONG InitFlags,
+@@ -1230,7 +879,6 @@ static AACENC_ERROR aacEncInit(HANDLE_AA
    AACENC_ERROR err = AACENC_OK;
  
    INT aacBufferOffset = 0;
@@ -1743,7 +1723,7 @@ index 8df33a4..51f3f49 100644
    HANDLE_AACENC_CONFIG hAacConfig = &hAacEncoder->aacConfig;
  
    hAacEncoder->nZerosAppended = 0; /* count appended zeros */
-@@ -1245,11 +893,6 @@ static AACENC_ERROR aacEncInit(HANDLE_AACENCODER hAacEncoder, ULONG InitFlags,
+@@ -1245,11 +893,6 @@ static AACENC_ERROR aacEncInit(HANDLE_AA
        return err;
      }
      frameLength = hAacConfig->framelength; /* adapt temporal framelength */
@@ -1755,7 +1735,7 @@ index 8df33a4..51f3f49 100644
    }
  
    /* Clear input buffer */
-@@ -1275,78 +918,13 @@ static AACENC_ERROR aacEncInit(HANDLE_AACENCODER hAacEncoder, ULONG InitFlags,
+@@ -1275,78 +918,13 @@ static AACENC_ERROR aacEncInit(HANDLE_AA
      hAacConfig->ancDataBitRate = 0;
    }
  
@@ -1835,7 +1815,7 @@ index 8df33a4..51f3f49 100644
                            frameLength, /* for dual rate sbr this value is
                                            already multiplied by 2 */
                            hAacEncoder->inputBufferSizePerChannel,
-@@ -1365,8 +943,7 @@ static AACENC_ERROR aacEncInit(HANDLE_AACENCODER hAacEncoder, ULONG InitFlags,
+@@ -1365,8 +943,7 @@ static AACENC_ERROR aacEncInit(HANDLE_AA
  
      FDKaacEnc_MapConfig(
          &hAacEncoder->coderConfig, config,
@@ -1845,7 +1825,7 @@ index 8df33a4..51f3f49 100644
          hAacConfig);
  
      /* create flags for transport encoder */
-@@ -1405,11 +982,6 @@ static AACENC_ERROR aacEncInit(HANDLE_AACENCODER hAacEncoder, ULONG InitFlags,
+@@ -1405,11 +982,6 @@ static AACENC_ERROR aacEncInit(HANDLE_AA
        ((InitFlags & AACENC_INIT_CONFIG) || (InitFlags & AACENC_INIT_STATES))) {
      INT inputDataDelay = DELAY_AAC(hAacConfig->framelength);
  
@@ -1857,7 +1837,7 @@ index 8df33a4..51f3f49 100644
      if (FDK_MetadataEnc_Init(hAacEncoder->hMetadataEnc,
                               ((InitFlags & AACENC_INIT_STATES) ? 1 : 0),
                               config->userMetaDataMode, inputDataDelay,
-@@ -1428,10 +1000,6 @@ static AACENC_ERROR aacEncInit(HANDLE_AACENCODER hAacEncoder, ULONG InitFlags,
+@@ -1428,10 +1000,6 @@ static AACENC_ERROR aacEncInit(HANDLE_AA
      hAacEncoder->nDelayCore =
          hAacEncoder->nDelay -
          fMax(0, FDK_MpegsEnc_GetDecDelay(hAacEncoder->hMpsEnc));
@@ -1868,7 +1848,7 @@ index 8df33a4..51f3f49 100644
    } else {
      hAacEncoder->nDelayCore = hAacEncoder->nDelay;
    }
-@@ -1497,17 +1065,10 @@ AACENC_ERROR aacEncOpen(HANDLE_AACENCODER *phAacEncoder, const UINT encModules,
+@@ -1497,17 +1065,10 @@ AACENC_ERROR aacEncOpen(HANDLE_AACENCODE
    /* Determine max channel configuration. */
    if (maxChannels == 0) {
      hAacEncoder->nMaxAacChannels = (8);
@@ -1887,7 +1867,7 @@ index 8df33a4..51f3f49 100644
        err = AACENC_INVALID_CONFIG;
        goto bail;
      }
-@@ -1515,7 +1076,6 @@ AACENC_ERROR aacEncOpen(HANDLE_AACENCODER *phAacEncoder, const UINT encModules,
+@@ -1515,7 +1076,6 @@ AACENC_ERROR aacEncOpen(HANDLE_AACENCODE
  
    /* Max number of elements could be tuned any more. */
    hAacEncoder->nMaxAacElements = fixMin(((8)), hAacEncoder->nMaxAacChannels);
@@ -1895,7 +1875,7 @@ index 8df33a4..51f3f49 100644
  
    /* In case of memory overlay, allocate memory out of libraries */
  
-@@ -1533,23 +1093,6 @@ AACENC_ERROR aacEncOpen(HANDLE_AACENCODER *phAacEncoder, const UINT encModules,
+@@ -1533,23 +1093,6 @@ AACENC_ERROR aacEncOpen(HANDLE_AACENCODE
      goto bail;
    }
  
@@ -1919,7 +1899,7 @@ index 8df33a4..51f3f49 100644
    /* Open Aac Encoder */
    if (FDKaacEnc_Open(&hAacEncoder->hAacEnc, hAacEncoder->nMaxAacElements,
                       hAacEncoder->nMaxAacChannels, (1)) != AAC_ENC_OK) {
-@@ -1603,11 +1146,6 @@ AACENC_ERROR aacEncOpen(HANDLE_AACENCODER *phAacEncoder, const UINT encModules,
+@@ -1603,11 +1146,6 @@ AACENC_ERROR aacEncOpen(HANDLE_AACENCODE
  
      C_ALLOC_SCRATCH_END(_pLibInfo, LIB_INFO, FDK_MODULE_LAST)
    }
@@ -1931,7 +1911,7 @@ index 8df33a4..51f3f49 100644
    if (transportEnc_RegisterSscCallback(hAacEncoder->hTpEnc, aacenc_SscCallback,
                                         hAacEncoder) != 0) {
      err = AACENC_INIT_TP_ERROR;
-@@ -1655,13 +1193,6 @@ AACENC_ERROR aacEncClose(HANDLE_AACENCODER *phAacEncoder) {
+@@ -1655,13 +1193,6 @@ AACENC_ERROR aacEncClose(HANDLE_AACENCOD
        hAacEncoder->outBuffer = NULL;
      }
  
@@ -1945,7 +1925,7 @@ index 8df33a4..51f3f49 100644
      if (hAacEncoder->hAacEnc) {
        FDKaacEnc_Close(&hAacEncoder->hAacEnc);
      }
-@@ -1825,9 +1356,6 @@ AACENC_ERROR aacEncEncode(const HANDLE_AACENCODER hAacEncoder,
+@@ -1825,9 +1356,6 @@ AACENC_ERROR aacEncEncode(const HANDLE_A
    for (i = 0; i < MAX_TOTAL_EXT_PAYLOADS; i++) {
      hAacEncoder->extPayload[i].associatedChElement = -1;
    }
@@ -1955,7 +1935,7 @@ index 8df33a4..51f3f49 100644
  
    /*
     * Calculate Meta Data info.
-@@ -1895,41 +1423,6 @@ AACENC_ERROR aacEncEncode(const HANDLE_AACENCODER hAacEncoder,
+@@ -1895,41 +1423,6 @@ AACENC_ERROR aacEncEncode(const HANDLE_A
      }
    }
  
@@ -1997,7 +1977,7 @@ index 8df33a4..51f3f49 100644
    if ((inargs->numAncBytes > 0) &&
        (getBufDescIdx(inBufDesc, IN_ANCILLRY_DATA) != -1)) {
      INT idx = getBufDescIdx(inBufDesc, IN_ANCILLRY_DATA);
-@@ -1962,14 +1455,6 @@ AACENC_ERROR aacEncEncode(const HANDLE_AACENCODER hAacEncoder,
+@@ -1962,14 +1455,6 @@ AACENC_ERROR aacEncEncode(const HANDLE_A
    hAacEncoder->nSamplesRead -= hAacEncoder->nSamplesToRead;
  
    /*
@@ -2012,7 +1992,7 @@ index 8df33a4..51f3f49 100644
     * Make bitstream public
     */
    if ((outBufDesc != NULL) && (outBufDesc->numBufs >= 1)) {
-@@ -2043,7 +1528,6 @@ AACENC_ERROR aacEncGetLibInfo(LIB_INFO *info) {
+@@ -2043,7 +1528,6 @@ AACENC_ERROR aacEncGetLibInfo(LIB_INFO *
  
    FDK_toolsGetLibInfo(info);
    transportEnc_GetLibInfo(info);
@@ -2020,7 +2000,7 @@ index 8df33a4..51f3f49 100644
    FDK_MpegsEnc_GetLibInfo(info);
  
    /* search for next free tab */
-@@ -2242,23 +1726,10 @@ AACENC_ERROR aacEncoder_SetParam(const HANDLE_AACENCODER hAacEncoder,
+@@ -2242,23 +1726,10 @@ AACENC_ERROR aacEncoder_SetParam(const H
        }
        break;
      case AACENC_SBR_RATIO:
@@ -2046,7 +2026,7 @@ index 8df33a4..51f3f49 100644
        break;
      case AACENC_TRANSMUX:
        if (settings->userTpType != (TRANSPORT_TYPE)value) {
-@@ -2421,21 +1892,16 @@ UINT aacEncoder_GetParam(const HANDLE_AACENCODER hAacEncoder,
+@@ -2421,21 +1892,16 @@ UINT aacEncoder_GetParam(const HANDLE_AA
        value = (UINT)hAacEncoder->aacConfig.framelength;
        break;
      case AACENC_SBR_RATIO:
@@ -2071,11 +2051,9 @@ index 8df33a4..51f3f49 100644
        break;
      case AACENC_PROTECTION:
        value = (UINT)settings->userTpProtection;
-diff --git a/libMpegTPDec/include/tp_data.h b/libMpegTPDec/include/tp_data.h
-index b015332..180b097 100644
 --- a/libMpegTPDec/include/tp_data.h
 +++ b/libMpegTPDec/include/tp_data.h
-@@ -372,15 +372,6 @@ typedef INT (*cbSsc_t)(void *, HANDLE_FDK_BITSTREAM,
+@@ -372,15 +372,6 @@ typedef INT (*cbSsc_t)(void *, HANDLE_FD
                         const INT coreSbrFrameLengthIndex, const INT configBytes,
                         const UCHAR configMode, UCHAR *configChanged);
  
@@ -2100,11 +2078,9 @@ index b015332..180b097 100644
    cbUsac_t cbUsac;
    void *cbUsacData;
    cbUniDrc_t cbUniDrc; /*!< Function pointer for uniDrcConfig and
-diff --git a/libMpegTPDec/include/tpdec_lib.h b/libMpegTPDec/include/tpdec_lib.h
-index 30e53c1..04e3d07 100644
 --- a/libMpegTPDec/include/tpdec_lib.h
 +++ b/libMpegTPDec/include/tpdec_lib.h
-@@ -435,18 +435,6 @@ int transportDec_RegisterSscCallback(HANDLE_TRANSPORTDEC hTp,
+@@ -435,18 +435,6 @@ int transportDec_RegisterSscCallback(HAN
                                       const cbSsc_t cbSscParse, void *user_data);
  
  /**
@@ -2123,11 +2099,9 @@ index 30e53c1..04e3d07 100644
   * \brief                Register USAC SC parser callback.
   * \param hTp            Handle of transport decoder.
   * \param cbUpdateConfig Pointer to a callback function to handle USAC SC
-diff --git a/libMpegTPDec/src/tpdec_asc.cpp b/libMpegTPDec/src/tpdec_asc.cpp
-index 28bc22d..bee0917 100644
 --- a/libMpegTPDec/src/tpdec_asc.cpp
 +++ b/libMpegTPDec/src/tpdec_asc.cpp
-@@ -1296,27 +1296,6 @@ static INT ld_sbr_header(CSAudioSpecificConfig *asc, const INT dsFactor,
+@@ -1296,27 +1296,6 @@ static INT ld_sbr_header(CSAudioSpecific
                                     1)) {
      return TRANSPORTDEC_PARSE_ERROR;
    }
@@ -2155,7 +2129,7 @@ index 28bc22d..bee0917 100644
    return error;
  }
  
-@@ -1353,40 +1332,6 @@ static TRANSPORTDEC_ERROR EldSpecificConfig_Parse(CSAudioSpecificConfig *asc,
+@@ -1353,40 +1332,6 @@ static TRANSPORTDEC_ERROR EldSpecificCon
  
      asc->m_extensionSamplingFrequency = asc->m_samplingFrequency
                                          << esc->m_sbrSamplingRate;
@@ -2196,7 +2170,7 @@ index 28bc22d..bee0917 100644
    }
    esc->m_useLdQmfTimeAlign = 0;
  
-@@ -1751,21 +1696,10 @@ static TRANSPORTDEC_ERROR UsacRsv60DecoderConfig_Parse(
+@@ -1751,21 +1696,10 @@ static TRANSPORTDEC_ERROR UsacRsv60Decod
          usc->element[i].m_noiseFilling = FDKreadBits(hBs, 1);
          /* end of UsacCoreConfig() */
          if (usc->m_sbrRatioIndex > 0) {
@@ -2218,7 +2192,7 @@ index 28bc22d..bee0917 100644
            /* end of SbrConfig() */
          }
          usc->m_nUsacChannels += 1;
-@@ -1780,7 +1714,6 @@ static TRANSPORTDEC_ERROR UsacRsv60DecoderConfig_Parse(
+@@ -1780,7 +1714,6 @@ static TRANSPORTDEC_ERROR UsacRsv60Decod
          usc->element[i].m_noiseFilling = FDKreadBits(hBs, 1);
          /* end of UsacCoreConfig() */
          if (usc->m_sbrRatioIndex > 0) {
@@ -2226,7 +2200,7 @@ index 28bc22d..bee0917 100644
            /* SbrConfig() ISO/IEC FDIS 23003-3 */
            usc->element[i].m_harmonicSBR = FDKreadBit(hBs);
            usc->element[i].m_interTes = FDKreadBit(hBs);
-@@ -1798,14 +1731,6 @@ static TRANSPORTDEC_ERROR UsacRsv60DecoderConfig_Parse(
+@@ -1798,14 +1731,6 @@ static TRANSPORTDEC_ERROR UsacRsv60Decod
                   usc->element[i].m_stereoConfigIndex == 2)
                      ? ID_SCE
                      : ID_CPE;
@@ -2241,7 +2215,7 @@ index 28bc22d..bee0917 100644
            }
            /* end of SbrConfig() */
  
-@@ -1847,19 +1772,9 @@ static TRANSPORTDEC_ERROR UsacRsv60DecoderConfig_Parse(
+@@ -1847,19 +1772,9 @@ static TRANSPORTDEC_ERROR UsacRsv60Decod
          usc->element[i].m_noiseFilling = 0;
          usc->m_nUsacChannels += 1;
          if (usc->m_sbrRatioIndex > 0) {
@@ -2261,7 +2235,7 @@ index 28bc22d..bee0917 100644
          }
          channelElementIdx++;
          break;
-@@ -2301,19 +2216,6 @@ static TRANSPORTDEC_ERROR Drm_xHEAACDecoderConfig(
+@@ -2301,19 +2216,6 @@ static TRANSPORTDEC_ERROR Drm_xHEAACDeco
          if (cb == NULL) {
            return ErrorStatus;
          }
@@ -2281,7 +2255,7 @@ index 28bc22d..bee0917 100644
        }
        break;
      case 2: /* stereo: ID_USAC_CPE */
-@@ -2362,15 +2264,6 @@ static TRANSPORTDEC_ERROR Drm_xHEAACDecoderConfig(
+@@ -2362,15 +2264,6 @@ static TRANSPORTDEC_ERROR Drm_xHEAACDeco
                 usc->element[elemIdx].m_stereoConfigIndex == 2)
                    ? ID_SCE
                    : ID_CPE;
@@ -2297,11 +2271,9 @@ index 28bc22d..bee0917 100644
          }
          /*usc->element[elemIdx].m_stereoConfigIndex =*/FDKreadBits(hBs, 2);
          if (usc->element[elemIdx].m_stereoConfigIndex > 0) {
-diff --git a/libMpegTPDec/src/tpdec_lib.cpp b/libMpegTPDec/src/tpdec_lib.cpp
-index 1976cb9..75b5150 100644
 --- a/libMpegTPDec/src/tpdec_lib.cpp
 +++ b/libMpegTPDec/src/tpdec_lib.cpp
-@@ -602,16 +602,6 @@ int transportDec_RegisterSscCallback(HANDLE_TRANSPORTDEC hTpDec,
+@@ -602,16 +602,6 @@ int transportDec_RegisterSscCallback(HAN
    return 0;
  }
  
@@ -2318,11 +2290,9 @@ index 1976cb9..75b5150 100644
  int transportDec_RegisterUsacCallback(HANDLE_TRANSPORTDEC hTpDec,
                                        const cbUsac_t cbUsac, void *user_data) {
    if (hTpDec == NULL) {
-diff --git a/libMpegTPEnc/include/tpenc_lib.h b/libMpegTPEnc/include/tpenc_lib.h
-index 4eb89a7..ba6d672 100644
 --- a/libMpegTPEnc/include/tpenc_lib.h
 +++ b/libMpegTPEnc/include/tpenc_lib.h
-@@ -148,18 +148,6 @@ typedef struct TRANSPORTENC *HANDLE_TRANSPORTENC;
+@@ -148,18 +148,6 @@ typedef struct TRANSPORTENC *HANDLE_TRAN
  CHANNEL_MODE transportEnc_GetChannelMode(int noChannels);
  
  /**
@@ -2341,11 +2311,9 @@ index 4eb89a7..ba6d672 100644
   * \brief                Register USAC SC writer callback.
   * \param hTp            Handle of transport decoder.
   * \param cbUpdateConfig Pointer to a callback function to handle USAC
-diff --git a/libMpegTPEnc/src/tpenc_asc.cpp b/libMpegTPEnc/src/tpenc_asc.cpp
-index 0b484a0..0f84b45 100644
 --- a/libMpegTPEnc/src/tpenc_asc.cpp
 +++ b/libMpegTPEnc/src/tpenc_asc.cpp
-@@ -769,25 +769,6 @@ static int transportEnc_writeELDSpecificConfig(HANDLE_FDK_BITSTREAM hBs,
+@@ -769,25 +769,6 @@ static int transportEnc_writeELDSpecific
      FDKwriteBits(hBs, (config->samplingRate == config->extSamplingRate) ? 0 : 1,
                   1); /* Samplerate Flag */
      FDKwriteBits(hBs, (config->flags & CC_SBRCRC) ? 1 : 0, 1); /* SBR CRC flag*/
@@ -2371,9 +2339,6 @@ index 0b484a0..0f84b45 100644
    }
  
    if ((config->flags & CC_SAC) && (cb->cbSsc != NULL)) {
-diff --git a/libSBRdec/include/sbrdecoder.h b/libSBRdec/include/sbrdecoder.h
-deleted file mode 100644
-index cc55572..0000000
 --- a/libSBRdec/include/sbrdecoder.h
 +++ /dev/null
 @@ -1,401 +0,0 @@
@@ -2778,9 +2743,6 @@ index cc55572..0000000
 -#endif
 -
 -#endif
-diff --git a/libSBRdec/src/HFgen_preFlat.cpp b/libSBRdec/src/HFgen_preFlat.cpp
-deleted file mode 100644
-index 96adbb9..0000000
 --- a/libSBRdec/src/HFgen_preFlat.cpp
 +++ /dev/null
 @@ -1,993 +0,0 @@
@@ -3777,9 +3739,6 @@ index 96adbb9..0000000
 -    }
 -  }
 -}
-diff --git a/libSBRdec/src/HFgen_preFlat.h b/libSBRdec/src/HFgen_preFlat.h
-deleted file mode 100644
-index c1fc49d..0000000
 --- a/libSBRdec/src/HFgen_preFlat.h
 +++ /dev/null
 @@ -1,132 +0,0 @@
@@ -3915,9 +3874,6 @@ index c1fc49d..0000000
 -                                 const int stopSample);
 -
 -#endif /* __HFGEN_PREFLAT_H */
-diff --git a/libSBRdec/src/arm/lpp_tran_arm.cpp b/libSBRdec/src/arm/lpp_tran_arm.cpp
-deleted file mode 100644
-index db1948f..0000000
 --- a/libSBRdec/src/arm/lpp_tran_arm.cpp
 +++ /dev/null
 @@ -1,159 +0,0 @@
@@ -4080,9 +4036,6 @@ index db1948f..0000000
 -#endif /* #ifdef FUNCTION_LPPTRANSPOSER_func1 */
 -
 -#endif /* __arm__ */
-diff --git a/libSBRdec/src/env_calc.cpp b/libSBRdec/src/env_calc.cpp
-deleted file mode 100644
-index cb1474f..0000000
 --- a/libSBRdec/src/env_calc.cpp
 +++ /dev/null
 @@ -1,3158 +0,0 @@
@@ -7244,9 +7197,6 @@ index cb1474f..0000000
 -
 -  return SBRDEC_OK;
 -}
-diff --git a/libSBRdec/src/env_calc.h b/libSBRdec/src/env_calc.h
-deleted file mode 100644
-index cff365d..0000000
 --- a/libSBRdec/src/env_calc.h
 +++ /dev/null
 @@ -1,182 +0,0 @@
@@ -7432,9 +7382,6 @@ index cff365d..0000000
 -                          int highSubband, int start_pos, int stop_pos);
 -
 -#endif  // ENV_CALC_H
-diff --git a/libSBRdec/src/env_dec.cpp b/libSBRdec/src/env_dec.cpp
-deleted file mode 100644
-index 95807c9..0000000
 --- a/libSBRdec/src/env_dec.cpp
 +++ /dev/null
 @@ -1,873 +0,0 @@
@@ -8311,9 +8258,6 @@ index 95807c9..0000000
 -    }
 -  }
 -}
-diff --git a/libSBRdec/src/env_dec.h b/libSBRdec/src/env_dec.h
-deleted file mode 100644
-index 0b11ce1..0000000
 --- a/libSBRdec/src/env_dec.h
 +++ /dev/null
 @@ -1,119 +0,0 @@
@@ -8436,9 +8380,6 @@ index 0b11ce1..0000000
 -                   HANDLE_SBR_PREV_FRAME_DATA h_prev_data_right);
 -
 -#endif
-diff --git a/libSBRdec/src/env_extr.cpp b/libSBRdec/src/env_extr.cpp
-deleted file mode 100644
-index c72a7b6..0000000
 --- a/libSBRdec/src/env_extr.cpp
 +++ /dev/null
 @@ -1,1728 +0,0 @@
@@ -10170,9 +10111,6 @@ index c72a7b6..0000000
 -
 -  return 1;
 -}
-diff --git a/libSBRdec/src/env_extr.h b/libSBRdec/src/env_extr.h
-deleted file mode 100644
-index 38c04a3..0000000
 --- a/libSBRdec/src/env_extr.h
 +++ /dev/null
 @@ -1,415 +0,0 @@
@@ -10591,9 +10529,6 @@ index 38c04a3..0000000
 -/* Convert headroom bits to exponent */
 -#define SCALE2EXP(s) (15 - (s))
 -#define EXP2SCALE(e) (15 - (e))
-diff --git a/libSBRdec/src/hbe.cpp b/libSBRdec/src/hbe.cpp
-deleted file mode 100644
-index 3310dcd..0000000
 --- a/libSBRdec/src/hbe.cpp
 +++ /dev/null
 @@ -1,2202 +0,0 @@
@@ -12799,9 +12734,6 @@ index 3310dcd..0000000
 -  else
 -    return 0;
 -}
-diff --git a/libSBRdec/src/hbe.h b/libSBRdec/src/hbe.h
-deleted file mode 100644
-index fdffe1e..0000000
 --- a/libSBRdec/src/hbe.h
 +++ /dev/null
 @@ -1,200 +0,0 @@
@@ -13005,9 +12937,6 @@ index fdffe1e..0000000
 -
 -int Get41SbrQmfTransposer(HANDLE_HBE_TRANSPOSER hQmfTransposer);
 -#endif /* HBE_H */
-diff --git a/libSBRdec/src/huff_dec.cpp b/libSBRdec/src/huff_dec.cpp
-deleted file mode 100644
-index 90c9541..0000000
 --- a/libSBRdec/src/huff_dec.cpp
 +++ /dev/null
 @@ -1,137 +0,0 @@
@@ -13148,9 +13077,6 @@ index 90c9541..0000000
 -
 -  return value;
 -}
-diff --git a/libSBRdec/src/huff_dec.h b/libSBRdec/src/huff_dec.h
-deleted file mode 100644
-index 9aa62b4..0000000
 --- a/libSBRdec/src/huff_dec.h
 +++ /dev/null
 @@ -1,117 +0,0 @@
@@ -13271,9 +13197,6 @@ index 9aa62b4..0000000
 -int DecodeHuffmanCW(Huffman h, HANDLE_FDK_BITSTREAM hBitBuf);
 -
 -#endif
-diff --git a/libSBRdec/src/lpp_tran.cpp b/libSBRdec/src/lpp_tran.cpp
-deleted file mode 100644
-index 2ef07eb..0000000
 --- a/libSBRdec/src/lpp_tran.cpp
 +++ /dev/null
 @@ -1,1471 +0,0 @@
@@ -14748,9 +14671,6 @@ index 2ef07eb..0000000
 -
 -  return SBRDEC_OK;
 -}
-diff --git a/libSBRdec/src/lpp_tran.h b/libSBRdec/src/lpp_tran.h
-deleted file mode 100644
-index 51b4395..0000000
 --- a/libSBRdec/src/lpp_tran.h
 +++ /dev/null
 @@ -1,275 +0,0 @@
@@ -15029,9 +14949,6 @@ index 51b4395..0000000
 -                   UCHAR noNoiseBands, UCHAR usb, UINT fs);
 -
 -#endif /* LPP_TRAN_H */
-diff --git a/libSBRdec/src/psbitdec.cpp b/libSBRdec/src/psbitdec.cpp
-deleted file mode 100644
-index 82bb65b..0000000
 --- a/libSBRdec/src/psbitdec.cpp
 +++ /dev/null
 @@ -1,594 +0,0 @@
@@ -15629,9 +15546,6 @@ index 82bb65b..0000000
 -
 -  return (startbits - (INT)FDKgetValidBits(hBitBuf));
 -}
-diff --git a/libSBRdec/src/psbitdec.h b/libSBRdec/src/psbitdec.h
-deleted file mode 100644
-index f0fc43a..0000000
 --- a/libSBRdec/src/psbitdec.h
 +++ /dev/null
 @@ -1,116 +0,0 @@
@@ -15751,9 +15665,6 @@ index f0fc43a..0000000
 -             PS_DEC_COEFFICIENTS *pCoef);
 -
 -#endif /* PSBITDEC_H */
-diff --git a/libSBRdec/src/psdec.cpp b/libSBRdec/src/psdec.cpp
-deleted file mode 100644
-index b31b310..0000000
 --- a/libSBRdec/src/psdec.cpp
 +++ /dev/null
 @@ -1,722 +0,0 @@
@@ -16479,9 +16390,6 @@ index b31b310..0000000
 -  C_ALLOC_SCRATCH_END(pHybridData, FIXP_DBL, 4 * NO_HYBRID_DATA_BANDS);
 -
 -} /* END ApplyPsSlot */
-diff --git a/libSBRdec/src/psdec.h b/libSBRdec/src/psdec.h
-deleted file mode 100644
-index 029eac4..0000000
 --- a/libSBRdec/src/psdec.h
 +++ /dev/null
 @@ -1,333 +0,0 @@
@@ -16818,9 +16726,6 @@ index 029eac4..0000000
 -    const int scaleFactorHighBand, const int lsb, const int usb);
 -
 -#endif /* PSDEC_H */
-diff --git a/libSBRdec/src/psdec_drm.cpp b/libSBRdec/src/psdec_drm.cpp
-deleted file mode 100644
-index 6971f53..0000000
 --- a/libSBRdec/src/psdec_drm.cpp
 +++ /dev/null
 @@ -1,108 +0,0 @@
@@ -16932,9 +16837,6 @@ index 6971f53..0000000
 -*/
 -
 -#include "psdec_drm.h"
-diff --git a/libSBRdec/src/psdec_drm.h b/libSBRdec/src/psdec_drm.h
-deleted file mode 100644
-index 5e2575d..0000000
 --- a/libSBRdec/src/psdec_drm.h
 +++ /dev/null
 @@ -1,113 +0,0 @@
@@ -17051,9 +16953,6 @@ index 5e2575d..0000000
 -#include "sbrdecoder.h"
 -
 -#endif /* PSDEC_DRM_H */
-diff --git a/libSBRdec/src/psdecrom_drm.cpp b/libSBRdec/src/psdecrom_drm.cpp
-deleted file mode 100644
-index 2033a83..0000000
 --- a/libSBRdec/src/psdecrom_drm.cpp
 +++ /dev/null
 @@ -1,108 +0,0 @@
@@ -17165,9 +17064,6 @@ index 2033a83..0000000
 -*/
 -
 -#include "psdec_drm.h"
-diff --git a/libSBRdec/src/pvc_dec.cpp b/libSBRdec/src/pvc_dec.cpp
-deleted file mode 100644
-index b477122..0000000
 --- a/libSBRdec/src/pvc_dec.cpp
 +++ /dev/null
 @@ -1,683 +0,0 @@
@@ -17854,9 +17750,6 @@ index b477122..0000000
 -
 -  return;
 -}
-diff --git a/libSBRdec/src/pvc_dec.h b/libSBRdec/src/pvc_dec.h
-deleted file mode 100644
-index f5a467f..0000000
 --- a/libSBRdec/src/pvc_dec.h
 +++ /dev/null
 @@ -1,238 +0,0 @@
@@ -18098,9 +17991,6 @@ index f5a467f..0000000
 -                   SCHAR *pOutput_exp);
 -
 -#endif /* PVC_DEC_H*/
-diff --git a/libSBRdec/src/sbr_crc.cpp b/libSBRdec/src/sbr_crc.cpp
-deleted file mode 100644
-index ba0fd05..0000000
 --- a/libSBRdec/src/sbr_crc.cpp
 +++ /dev/null
 @@ -1,192 +0,0 @@
@@ -18296,9 +18186,6 @@ index ba0fd05..0000000
 -
 -  return (crcResult);
 -}
-diff --git a/libSBRdec/src/sbr_crc.h b/libSBRdec/src/sbr_crc.h
-deleted file mode 100644
-index 9633717..0000000
 --- a/libSBRdec/src/sbr_crc.h
 +++ /dev/null
 @@ -1,138 +0,0 @@
@@ -18440,9 +18327,6 @@ index 9633717..0000000
 -int SbrCrcCheck(HANDLE_FDK_BITSTREAM hBitBuf, LONG NrCrcBits);
 -
 -#endif
-diff --git a/libSBRdec/src/sbr_deb.cpp b/libSBRdec/src/sbr_deb.cpp
-deleted file mode 100644
-index 13cd211..0000000
 --- a/libSBRdec/src/sbr_deb.cpp
 +++ /dev/null
 @@ -1,108 +0,0 @@
@@ -18554,9 +18438,6 @@ index 13cd211..0000000
 -*/
 -
 -#include "sbr_deb.h"
-diff --git a/libSBRdec/src/sbr_deb.h b/libSBRdec/src/sbr_deb.h
-deleted file mode 100644
-index 97d572a..0000000
 --- a/libSBRdec/src/sbr_deb.h
 +++ /dev/null
 @@ -1,113 +0,0 @@
@@ -18673,9 +18554,6 @@ index 97d572a..0000000
 -#include "sbrdecoder.h"
 -
 -#endif
-diff --git a/libSBRdec/src/sbr_dec.cpp b/libSBRdec/src/sbr_dec.cpp
-deleted file mode 100644
-index 30611e7..0000000
 --- a/libSBRdec/src/sbr_dec.cpp
 +++ /dev/null
 @@ -1,1480 +0,0 @@
@@ -20159,9 +20037,6 @@ index 30611e7..0000000
 -
 -  return sbrError;
 -}
-diff --git a/libSBRdec/src/sbr_dec.h b/libSBRdec/src/sbr_dec.h
-deleted file mode 100644
-index 156da03..0000000
 --- a/libSBRdec/src/sbr_dec.h
 +++ /dev/null
 @@ -1,204 +0,0 @@
@@ -20369,9 +20244,6 @@ index 156da03..0000000
 -            const UINT flags, HANDLE_SBR_FRAME_DATA hFrameData);
 -
 -#endif
-diff --git a/libSBRdec/src/sbr_ram.cpp b/libSBRdec/src/sbr_ram.cpp
-deleted file mode 100644
-index 8b35fd2..0000000
 --- a/libSBRdec/src/sbr_ram.cpp
 +++ /dev/null
 @@ -1,191 +0,0 @@
@@ -20566,9 +20438,6 @@ index 8b35fd2..0000000
 -  </pre>
 -
 -*/
-diff --git a/libSBRdec/src/sbr_ram.h b/libSBRdec/src/sbr_ram.h
-deleted file mode 100644
-index e00f8b5..0000000
 --- a/libSBRdec/src/sbr_ram.h
 +++ /dev/null
 @@ -1,186 +0,0 @@
@@ -20758,9 +20627,6 @@ index e00f8b5..0000000
 -H_ALLOC_MEM(Ram_ps_dec, PS_DEC)
 -
 -#endif /* SBR_RAM_H */
-diff --git a/libSBRdec/src/sbr_rom.cpp b/libSBRdec/src/sbr_rom.cpp
-deleted file mode 100644
-index 8a6688a..0000000
 --- a/libSBRdec/src/sbr_rom.cpp
 +++ /dev/null
 @@ -1,1705 +0,0 @@
@@ -22469,9 +22335,6 @@ index 8a6688a..0000000
 -    0x42bc, 0x4299, 0x4277, 0x4254, 0x4232, 0x4210, 0x41ee, 0x41cc, 0x41aa,
 -    0x4189, 0x4167, 0x4146, 0x4125, 0x4104, 0x40e3, 0x40c2, 0x40a1, 0x4081,
 -    0x4060, 0x4040, 0x4020, 0x4000};
-diff --git a/libSBRdec/src/sbr_rom.h b/libSBRdec/src/sbr_rom.h
-deleted file mode 100644
-index 039743c..0000000
 --- a/libSBRdec/src/sbr_rom.h
 +++ /dev/null
 @@ -1,216 +0,0 @@
@@ -22691,9 +22554,6 @@ index 039743c..0000000
 -extern const FIXP_SGL FDK_sbrDecoder_invTable[INV_TABLE_SIZE];
 -
 -#endif  // SBR_ROM_H
-diff --git a/libSBRdec/src/sbrdec_drc.cpp b/libSBRdec/src/sbrdec_drc.cpp
-deleted file mode 100644
-index 2d73f32..0000000
 --- a/libSBRdec/src/sbrdec_drc.cpp
 +++ /dev/null
 @@ -1,528 +0,0 @@
@@ -23225,9 +23085,6 @@ index 2d73f32..0000000
 -
 -  *scaleFactor += maxShift;
 -}
-diff --git a/libSBRdec/src/sbrdec_drc.h b/libSBRdec/src/sbrdec_drc.h
-deleted file mode 100644
-index 2eb0e20..0000000
 --- a/libSBRdec/src/sbrdec_drc.h
 +++ /dev/null
 @@ -1,149 +0,0 @@
@@ -23380,9 +23237,6 @@ index 2eb0e20..0000000
 -                         int numQmfSubSamples, int *scaleFactor);
 -
 -#endif /* SBRDEC_DRC_H */
-diff --git a/libSBRdec/src/sbrdec_freq_sca.cpp b/libSBRdec/src/sbrdec_freq_sca.cpp
-deleted file mode 100644
-index 165f94b..0000000
 --- a/libSBRdec/src/sbrdec_freq_sca.cpp
 +++ /dev/null
 @@ -1,835 +0,0 @@
@@ -24221,9 +24075,6 @@ index 165f94b..0000000
 -
 -  return SBRDEC_OK;
 -}
-diff --git a/libSBRdec/src/sbrdec_freq_sca.h b/libSBRdec/src/sbrdec_freq_sca.h
-deleted file mode 100644
-index 7e6b8e8..0000000
 --- a/libSBRdec/src/sbrdec_freq_sca.h
 +++ /dev/null
 @@ -1,127 +0,0 @@
@@ -24354,9 +24205,6 @@ index 7e6b8e8..0000000
 -resetFreqBandTables(HANDLE_SBR_HEADER_DATA hHeaderData, const UINT flags);
 -
 -#endif
-diff --git a/libSBRdec/src/sbrdecoder.cpp b/libSBRdec/src/sbrdecoder.cpp
-deleted file mode 100644
-index 4bc6f69..0000000
 --- a/libSBRdec/src/sbrdecoder.cpp
 +++ /dev/null
 @@ -1,2023 +0,0 @@
@@ -26383,9 +26231,6 @@ index 4bc6f69..0000000
 -
 -  return (outputDelay);
 -}
-diff --git a/libSBRdec/src/transcendent.h b/libSBRdec/src/transcendent.h
-deleted file mode 100644
-index 0e815c2..0000000
 --- a/libSBRdec/src/transcendent.h
 +++ /dev/null
 @@ -1,372 +0,0 @@
@@ -26761,9 +26606,6 @@ index 0e815c2..0000000
 -}
 -
 -#endif
-diff --git a/libSBRenc/include/sbr_encoder.h b/libSBRenc/include/sbr_encoder.h
-deleted file mode 100644
-index d979ba6..0000000
 --- a/libSBRenc/include/sbr_encoder.h
 +++ /dev/null
 @@ -1,483 +0,0 @@
@@ -27250,9 +27092,6 @@ index d979ba6..0000000
 -#endif
 -
 -#endif /* ifndef __SBR_MAIN_H */
-diff --git a/libSBRenc/src/bit_sbr.cpp b/libSBRenc/src/bit_sbr.cpp
-deleted file mode 100644
-index 5a65e98..0000000
 --- a/libSBRenc/src/bit_sbr.cpp
 +++ /dev/null
 @@ -1,1049 +0,0 @@
@@ -28305,9 +28144,6 @@ index 5a65e98..0000000
 -
 -  return (extDataBits + 7) >> 3;
 -}
-diff --git a/libSBRenc/src/bit_sbr.h b/libSBRenc/src/bit_sbr.h
-deleted file mode 100644
-index e90f52c..0000000
 --- a/libSBRenc/src/bit_sbr.h
 +++ /dev/null
 @@ -1,267 +0,0 @@
@@ -28578,9 +28414,6 @@ index e90f52c..0000000
 -/*#define SBR_PAYLOAD_MONITOR*/
 -
 -#endif
-diff --git a/libSBRenc/src/cmondata.h b/libSBRenc/src/cmondata.h
-deleted file mode 100644
-index 0779b4d..0000000
 --- a/libSBRenc/src/cmondata.h
 +++ /dev/null
 @@ -1,127 +0,0 @@
@@ -28711,9 +28544,6 @@ index 0779b4d..0000000
 -typedef struct COMMON_DATA *HANDLE_COMMON_DATA;
 -
 -#endif
-diff --git a/libSBRenc/src/code_env.cpp b/libSBRenc/src/code_env.cpp
-deleted file mode 100644
-index fb0f6a4..0000000
 --- a/libSBRenc/src/code_env.cpp
 +++ /dev/null
 @@ -1,602 +0,0 @@
@@ -29319,9 +29149,6 @@ index fb0f6a4..0000000
 -
 -  return (0);
 -}
-diff --git a/libSBRenc/src/code_env.h b/libSBRenc/src/code_env.h
-deleted file mode 100644
-index 673a783..0000000
 --- a/libSBRenc/src/code_env.h
 +++ /dev/null
 @@ -1,161 +0,0 @@
@@ -29486,9 +29313,6 @@ index 673a783..0000000
 -                                   AMP_RES amp_res);
 -
 -#endif
-diff --git a/libSBRenc/src/env_bit.cpp b/libSBRenc/src/env_bit.cpp
-deleted file mode 100644
-index 41812ac..0000000
 --- a/libSBRenc/src/env_bit.cpp
 +++ /dev/null
 @@ -1,257 +0,0 @@
@@ -29749,9 +29573,6 @@ index 41812ac..0000000
 -
 -  FDKsyncCache(&hCmonData->tmpWriteBitbuf);
 -}
-diff --git a/libSBRenc/src/env_bit.h b/libSBRenc/src/env_bit.h
-deleted file mode 100644
-index b91802c..0000000
 --- a/libSBRenc/src/env_bit.h
 +++ /dev/null
 @@ -1,135 +0,0 @@
@@ -29890,9 +29711,6 @@ index b91802c..0000000
 -                                    UINT sbrSyntaxFlags);
 -
 -#endif /* #ifndef ENV_BIT_H */
-diff --git a/libSBRenc/src/env_est.cpp b/libSBRenc/src/env_est.cpp
-deleted file mode 100644
-index 0eb8425..0000000
 --- a/libSBRenc/src/env_est.cpp
 +++ /dev/null
 @@ -1,1985 +0,0 @@
@@ -31881,9 +31699,6 @@ index 0eb8425..0000000
 -          - hSbr->rBufferReadOffset); /* in reference hold half spec and calc
 -                                         nrg's on overlapped spec */
 -}
-diff --git a/libSBRenc/src/env_est.h b/libSBRenc/src/env_est.h
-deleted file mode 100644
-index 006f55b..0000000
 --- a/libSBRenc/src/env_est.h
 +++ /dev/null
 @@ -1,223 +0,0 @@
@@ -32110,9 +31925,6 @@ index 006f55b..0000000
 -INT FDKsbrEnc_GetEnvEstDelay(HANDLE_SBR_EXTRACT_ENVELOPE hSbr);
 -
 -#endif
-diff --git a/libSBRenc/src/fram_gen.cpp b/libSBRenc/src/fram_gen.cpp
-deleted file mode 100644
-index 7ed6e79..0000000
 --- a/libSBRenc/src/fram_gen.cpp
 +++ /dev/null
 @@ -1,1965 +0,0 @@
@@ -34081,9 +33893,6 @@ index 7ed6e79..0000000
 -    }
 -  }
 -}
-diff --git a/libSBRenc/src/fram_gen.h b/libSBRenc/src/fram_gen.h
-deleted file mode 100644
-index 0c5edc3..0000000
 --- a/libSBRenc/src/fram_gen.h
 +++ /dev/null
 @@ -1,343 +0,0 @@
@@ -34430,9 +34239,6 @@ index 0c5edc3..0000000
 -                             const int *v_tuning);
 -
 -#endif
-diff --git a/libSBRenc/src/invf_est.cpp b/libSBRenc/src/invf_est.cpp
-deleted file mode 100644
-index 53b47ac..0000000
 --- a/libSBRenc/src/invf_est.cpp
 +++ /dev/null
 @@ -1,610 +0,0 @@
@@ -35046,9 +34852,6 @@ index 53b47ac..0000000
 -
 -  return (0);
 -}
-diff --git a/libSBRenc/src/invf_est.h b/libSBRenc/src/invf_est.h
-deleted file mode 100644
-index 3ab6726..0000000
 --- a/libSBRenc/src/invf_est.h
 +++ /dev/null
 @@ -1,181 +0,0 @@
@@ -35233,9 +35036,6 @@ index 3ab6726..0000000
 -                                   INT numDetectorBands);
 -
 -#endif /* _QMF_INV_FILT_H */
-diff --git a/libSBRenc/src/mh_det.cpp b/libSBRenc/src/mh_det.cpp
-deleted file mode 100644
-index 2f3b386..0000000
 --- a/libSBRenc/src/mh_det.cpp
 +++ /dev/null
 @@ -1,1396 +0,0 @@
@@ -36635,9 +36435,6 @@ index 2f3b386..0000000
 -
 -  return 0;
 -}
-diff --git a/libSBRenc/src/mh_det.h b/libSBRenc/src/mh_det.h
-deleted file mode 100644
-index 89d81b5..0000000
 --- a/libSBRenc/src/mh_det.h
 +++ /dev/null
 @@ -1,204 +0,0 @@
@@ -36845,9 +36642,6 @@ index 89d81b5..0000000
 -    INT nSfb);
 -
 -#endif
-diff --git a/libSBRenc/src/nf_est.cpp b/libSBRenc/src/nf_est.cpp
-deleted file mode 100644
-index 290ec35..0000000
 --- a/libSBRenc/src/nf_est.cpp
 +++ /dev/null
 @@ -1,612 +0,0 @@
@@ -37463,9 +37257,6 @@ index 290ec35..0000000
 -    */
 -  }
 -}
-diff --git a/libSBRenc/src/nf_est.h b/libSBRenc/src/nf_est.h
-deleted file mode 100644
-index c2f16e9..0000000
 --- a/libSBRenc/src/nf_est.h
 +++ /dev/null
 @@ -1,185 +0,0 @@
@@ -37654,9 +37445,6 @@ index c2f16e9..0000000
 -                                   */
 -
 -#endif
-diff --git a/libSBRenc/src/ps_bitenc.cpp b/libSBRenc/src/ps_bitenc.cpp
-deleted file mode 100644
-index e30af2a..0000000
 --- a/libSBRenc/src/ps_bitenc.cpp
 +++ /dev/null
 @@ -1,624 +0,0 @@
@@ -38284,9 +38072,6 @@ index e30af2a..0000000
 -
 -  return bitCnt;
 -}
-diff --git a/libSBRenc/src/ps_bitenc.h b/libSBRenc/src/ps_bitenc.h
-deleted file mode 100644
-index 1d383e3..0000000
 --- a/libSBRenc/src/ps_bitenc.h
 +++ /dev/null
 @@ -1,173 +0,0 @@
@@ -38463,9 +38248,6 @@ index 1d383e3..0000000
 -#endif /* __cplusplus */
 -
 -#endif /* defined(PSENC_ENABLE) */
-diff --git a/libSBRenc/src/ps_const.h b/libSBRenc/src/ps_const.h
-deleted file mode 100644
-index b9a33f9..0000000
 --- a/libSBRenc/src/ps_const.h
 +++ /dev/null
 @@ -1,150 +0,0 @@
@@ -38619,9 +38401,6 @@ index b9a33f9..0000000
 -} FDK_PSENC_ERROR;
 -
 -#endif
-diff --git a/libSBRenc/src/ps_encode.cpp b/libSBRenc/src/ps_encode.cpp
-deleted file mode 100644
-index 88d3131..0000000
 --- a/libSBRenc/src/ps_encode.cpp
 +++ /dev/null
 @@ -1,1031 +0,0 @@
@@ -39656,9 +39435,6 @@ index 88d3131..0000000
 -
 -  return error;
 -}
-diff --git a/libSBRenc/src/ps_encode.h b/libSBRenc/src/ps_encode.h
-deleted file mode 100644
-index 4237a00..0000000
 --- a/libSBRenc/src/ps_encode.h
 +++ /dev/null
 @@ -1,185 +0,0 @@
@@ -39847,9 +39623,6 @@ index 4237a00..0000000
 -    const INT frameSize, const INT sendHeader);
 -
 -#endif
-diff --git a/libSBRenc/src/ps_main.cpp b/libSBRenc/src/ps_main.cpp
-deleted file mode 100644
-index 4d7a7a5..0000000
 --- a/libSBRenc/src/ps_main.cpp
 +++ /dev/null
 @@ -1,606 +0,0 @@
@@ -40459,9 +40232,6 @@ index 4d7a7a5..0000000
 -  *dmxScale = fixMax(0, fixMin(FRACT_BITS, CountLeadingBits((maxValue))));
 -#endif
 -}
-diff --git a/libSBRenc/src/ps_main.h b/libSBRenc/src/ps_main.h
-deleted file mode 100644
-index 88b2993..0000000
 --- a/libSBRenc/src/ps_main.h
 +++ /dev/null
 @@ -1,270 +0,0 @@
@@ -40735,9 +40505,6 @@ index 88b2993..0000000
 -                                HANDLE_FDK_BITSTREAM hBitstream);
 -
 -#endif /* PS_MAIN_H */
-diff --git a/libSBRenc/src/resampler.cpp b/libSBRenc/src/resampler.cpp
-deleted file mode 100644
-index b1781a7..0000000
 --- a/libSBRenc/src/resampler.cpp
 +++ /dev/null
 @@ -1,444 +0,0 @@
@@ -41185,9 +40952,6 @@ index b1781a7..0000000
 -
 -  return 0;
 -}
-diff --git a/libSBRenc/src/resampler.h b/libSBRenc/src/resampler.h
-deleted file mode 100644
-index 7aa1cae..0000000
 --- a/libSBRenc/src/resampler.h
 +++ /dev/null
 @@ -1,159 +0,0 @@
@@ -41350,9 +41114,6 @@ index 7aa1cae..0000000
 -    INT *numOutSamples);      /*!< pointer tp number of output samples */
 -
 -#endif /* RESAMPLER_H */
-diff --git a/libSBRenc/src/sbr.h b/libSBRenc/src/sbr.h
-deleted file mode 100644
-index 341dcab..0000000
 --- a/libSBRenc/src/sbr.h
 +++ /dev/null
 @@ -1,194 +0,0 @@
@@ -41550,9 +41311,6 @@ index 341dcab..0000000
 -} SBR_ENCODER;
 -
 -#endif /* SBR_H */
-diff --git a/libSBRenc/src/sbr_def.h b/libSBRenc/src/sbr_def.h
-deleted file mode 100644
-index 53eba71..0000000
 --- a/libSBRenc/src/sbr_def.h
 +++ /dev/null
 @@ -1,276 +0,0 @@
@@ -41832,9 +41590,6 @@ index 53eba71..0000000
 -} INVF_MODE;
 -
 -#endif
-diff --git a/libSBRenc/src/sbr_encoder.cpp b/libSBRenc/src/sbr_encoder.cpp
-deleted file mode 100644
-index df9e996..0000000
 --- a/libSBRenc/src/sbr_encoder.cpp
 +++ /dev/null
 @@ -1,2577 +0,0 @@
@@ -44415,9 +44170,6 @@ index df9e996..0000000
 -
 -  return 0;
 -}
-diff --git a/libSBRenc/src/sbr_misc.cpp b/libSBRenc/src/sbr_misc.cpp
-deleted file mode 100644
-index 83d7e36..0000000
 --- a/libSBRenc/src/sbr_misc.cpp
 +++ /dev/null
 @@ -1,265 +0,0 @@
@@ -44686,9 +44438,6 @@ index 83d7e36..0000000
 -
 -  return (tmp);
 -}
-diff --git a/libSBRenc/src/sbr_misc.h b/libSBRenc/src/sbr_misc.h
-deleted file mode 100644
-index fad853f..0000000
 --- a/libSBRenc/src/sbr_misc.h
 +++ /dev/null
 @@ -1,127 +0,0 @@
@@ -44819,9 +44568,6 @@ index fad853f..0000000
 -                                          FIXP_DBL scale);
 -
 -#endif
-diff --git a/libSBRenc/src/sbrenc_freq_sca.cpp b/libSBRenc/src/sbrenc_freq_sca.cpp
-deleted file mode 100644
-index c86e047..0000000
 --- a/libSBRenc/src/sbrenc_freq_sca.cpp
 +++ /dev/null
 @@ -1,674 +0,0 @@
@@ -45499,9 +45245,6 @@ index c86e047..0000000
 -  }
 -
 -} /* End FDKsbrEnc_UpdateLoRes */
-diff --git a/libSBRenc/src/sbrenc_freq_sca.h b/libSBRenc/src/sbrenc_freq_sca.h
-deleted file mode 100644
-index 9b8d360..0000000
 --- a/libSBRenc/src/sbrenc_freq_sca.h
 +++ /dev/null
 @@ -1,132 +0,0 @@
@@ -45637,9 +45380,6 @@ index 9b8d360..0000000
 -INT FDKsbrEnc_getSbrStartFreqRAW(INT startFreq, INT fsCore);
 -INT FDKsbrEnc_getSbrStopFreqRAW(INT stopFreq, INT fsCore);
 -#endif
-diff --git a/libSBRenc/src/sbrenc_ram.cpp b/libSBRenc/src/sbrenc_ram.cpp
-deleted file mode 100644
-index fb30fa2..0000000
 --- a/libSBRenc/src/sbrenc_ram.cpp
 +++ /dev/null
 @@ -1,249 +0,0 @@
@@ -45892,9 +45632,6 @@ index fb30fa2..0000000
 -}
 -
 -/* @} */
-diff --git a/libSBRenc/src/sbrenc_ram.h b/libSBRenc/src/sbrenc_ram.h
-deleted file mode 100644
-index cf23378..0000000
 --- a/libSBRenc/src/sbrenc_ram.h
 +++ /dev/null
 @@ -1,199 +0,0 @@
@@ -46097,9 +45834,6 @@ index cf23378..0000000
 -
 -H_ALLOC_MEM(Ram_ParamStereo, PARAMETRIC_STEREO)
 -#endif
-diff --git a/libSBRenc/src/sbrenc_rom.cpp b/libSBRenc/src/sbrenc_rom.cpp
-deleted file mode 100644
-index 737afaf..0000000
 --- a/libSBRenc/src/sbrenc_rom.cpp
 +++ /dev/null
 @@ -1,910 +0,0 @@
@@ -47013,9 +46747,6 @@ index 737afaf..0000000
 -};
 -
 -//@}
-diff --git a/libSBRenc/src/sbrenc_rom.h b/libSBRenc/src/sbrenc_rom.h
-deleted file mode 100644
-index 18c1fb9..0000000
 --- a/libSBRenc/src/sbrenc_rom.h
 +++ /dev/null
 @@ -1,145 +0,0 @@
@@ -47164,9 +46895,6 @@ index 18c1fb9..0000000
 -extern const psTuningTable_t psTuningTable[4];
 -
 -#endif
-diff --git a/libSBRenc/src/ton_corr.cpp b/libSBRenc/src/ton_corr.cpp
-deleted file mode 100644
-index 1c050e2..0000000
 --- a/libSBRenc/src/ton_corr.cpp
 +++ /dev/null
 @@ -1,891 +0,0 @@
@@ -48061,9 +47789,6 @@ index 1c050e2..0000000
 -        &hTonCorr->sbrMissingHarmonicsDetector);
 -  }
 -}
-diff --git a/libSBRenc/src/ton_corr.h b/libSBRenc/src/ton_corr.h
-deleted file mode 100644
-index 91aa278..0000000
 --- a/libSBRenc/src/ton_corr.h
 +++ /dev/null
 @@ -1,258 +0,0 @@
@@ -48325,9 +48050,6 @@ index 91aa278..0000000
 -    INT noQmfChannels  /*!< Number of QMF channels. */
 -);
 -#endif
-diff --git a/libSBRenc/src/tran_det.cpp b/libSBRenc/src/tran_det.cpp
-deleted file mode 100644
-index 3b6765a..0000000
 --- a/libSBRenc/src/tran_det.cpp
 +++ /dev/null
 @@ -1,1092 +0,0 @@
@@ -49423,9 +49145,6 @@ index 3b6765a..0000000
 -    delta_energy_scale[timeSlot] = delta_energy_scale[nTimeSlots + timeSlot];
 -  }
 -}
-diff --git a/libSBRenc/src/tran_det.h b/libSBRenc/src/tran_det.h
-deleted file mode 100644
-index d10a7db..0000000
 --- a/libSBRenc/src/tran_det.h
 +++ /dev/null
 @@ -1,191 +0,0 @@
@@ -49620,6 +49339,3 @@ index d10a7db..0000000
 -    UCHAR *tran_vector, int YBufferWriteOffset, int YBufferSzShift, int nSfb,
 -    int timeStep, int no_cols, FIXP_DBL *tonality);
 -#endif
--- 
-cgit v1.1
-

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
+# Copyright (C) 2020-2021 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gitlab-runner
-PKG_VERSION:=13.5.0
+PKG_VERSION:=13.11.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://gitlab.com/gitlab-org/gitlab-runner/-/archive/v$(PKG_VERSION)
-PKG_HASH:=765c1556ed9dd4c1b36f9946224c62f068b171e2c1581eeb8f71055327d8a274
+PKG_HASH:=7bc15d89f7b0551c4dd236d3ef846cf7840175fa1638fa58d0ccd12f3c04a56b
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=MIT
@@ -33,9 +33,7 @@ define Package/gitlab-runner
   CATEGORY:=Development
   TITLE:=Runner for CI/CD
   URL:=https://docs.gitlab.com/runner
-  DEPENDS:= \
-    $(GO_ARCH_DEPENDS) \
-    @!(mips||mipsel) # Disabled because of docker engine error https://gitlab.com/gitlab-org/gitlab-runner/-/issues/27234
+  DEPENDS:=$(GO_ARCH_DEPENDS)
 endef
 
 define Package/gitlab-runner/description

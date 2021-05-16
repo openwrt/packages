@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ctop
-PKG_VERSION:=0.7.4
+PKG_VERSION:=0.7.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/bcicen/ctop/archive
-PKG_HASH:=55d9a3c6d4cddf6f1afdd52401bb709d3265a96c45fdc51bfa4223467c5d7fb1
+PKG_HASH:=a9a3be0e5eab2fee6b44a5d063188a354f9c0dde3d96a169d1490981f7826e9a
 
 PKG_MAINTAINER:=Javier Marcet <javier@marcet.info>
 PKG_LICENSE:=MIT
@@ -14,6 +14,7 @@ PKG_LICENSE_FILES:=LICENSE
 
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
+PKG_USE_MIPS16:=0
 
 GO_PKG:=github.com/bcicen/ctop
 
@@ -25,7 +26,7 @@ define Package/ctop
   CATEGORY:=Utilities
   TITLE:=Top-like interface for container metrics
   URL:=https://ctop.sh/
-  DEPENDS:=$(GO_ARCH_DEPENDS) @(aarch64||arm||x86_64)
+  DEPENDS:=$(GO_ARCH_DEPENDS)
 endef
 
 define Package/ctop/description

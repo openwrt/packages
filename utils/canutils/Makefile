@@ -8,22 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=canutils
-PKG_VERSION:=2020.11.0
+PKG_VERSION:=2020.12.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/linux-can/can-utils/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=b8e53081c076fca248c39ae9ae5791359a81f1eb3e5fe23ff6fb0d0e1f1033fa
+PKG_HASH:=c5c22a00ce2ea7578d7617ac0affef8f47a349be58e708780d703b979f324a2b
 PKG_BUILD_DIR:=$(BUILD_DIR)/can-utils-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Anton Glukhov <anton.a.glukhov@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
-PKG_BUILD_PARALLEL:=1
-
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/canutils/Default
   SECTION:=utils

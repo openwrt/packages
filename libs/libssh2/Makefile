@@ -21,14 +21,13 @@ PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:libssh2:libssh2
 
 CMAKE_INSTALL:=1
-PKG_BUILD_PARALLEL:=1
 
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_LIBSSH2_MBEDTLS \
 	CONFIG_LIBSSH2_OPENSSL
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/libssh2
   SECTION:=libs

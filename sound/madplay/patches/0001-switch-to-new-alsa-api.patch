@@ -2,24 +2,24 @@ Switch madplay to the new API. This is done thanks to a patch written
 by Micha Nelissen <micha@neli.hopto.org> and available at
 http://article.gmane.org/gmane.comp.audio.mad.devel/729.
 
---- madplay-0.15.2b/audio_alsa.c	2008-10-18 15:10:16.000000000 +0200
-+++ madplay-0.15.2b/audio_alsa.c.new	2008-10-18 15:03:27.000000000 +0200
+--- a/audio_alsa.c
++++ b/audio_alsa.c
 @@ -28,31 +28,30 @@
-
+ 
  #include <errno.h>
-
+ 
 -#define ALSA_PCM_OLD_HW_PARAMS_API
 -#define ALSA_PCM_OLD_SW_PARAMS_API
  #include <alsa/asoundlib.h>
-
+ 
  #include <mad.h>
-
+ 
  #include "audio.h"
-
+ 
 -char *buf	= NULL;
 -int paused	= 0;
 +#define BUFFER_TIME_MAX     500000
-
+ 
 -int rate	= -1;
 -int channels	= -1;
 -int bitdepth	= -1;
@@ -39,17 +39,17 @@ http://article.gmane.org/gmane.comp.audio.mad.devel/729.
 +unsigned int buffer_time;
 +unsigned int period_time;
 +char *defaultdev	    = "plughw:0,0";
-
+ 
  snd_pcm_hw_params_t *alsa_hwparams;
  snd_pcm_sw_params_t *alsa_swparams;
-
+ 
 -snd_pcm_sframes_t buffer_size;
 -snd_pcm_sframes_t period_size;
 +snd_pcm_uframes_t buffer_size;
-
+ 
  snd_pcm_format_t  alsa_format = -1;
  snd_pcm_access_t  alsa_access = SND_PCM_ACCESS_MMAP_INTERLEAVED;
-@@ -66,14 +65,20 @@
+@@ -66,14 +65,20 @@ int set_hwparams(snd_pcm_t *handle,
  		 snd_pcm_hw_params_t *params,
  		 snd_pcm_access_t access)
  {
@@ -72,7 +72,7 @@ http://article.gmane.org/gmane.comp.audio.mad.devel/729.
  	/* set the sample format */
  	err = snd_pcm_hw_params_set_format(handle, params, alsa_format);
  	if (err < 0) {
-@@ -87,29 +92,38 @@
+@@ -87,29 +92,38 @@ int set_hwparams(snd_pcm_t *handle,
  		return err;
  	}
  	/* set the stream rate */
@@ -120,15 +120,15 @@ http://article.gmane.org/gmane.comp.audio.mad.devel/729.
  	/* write the parameters to device */
  	err = snd_pcm_hw_params(handle, params);
  	if (err < 0) {
-@@ -123,6 +137,7 @@
+@@ -123,6 +137,7 @@ static
  int set_swparams(snd_pcm_t *handle,
  		 snd_pcm_sw_params_t *params)
  {
 +        unsigned int start_threshold;
  	int err;
-
+ 
          /* get current swparams */
-@@ -136,13 +151,7 @@
+@@ -136,13 +151,7 @@ int set_swparams(snd_pcm_t *handle,
          if (err < 0) {
                  printf("Unable to set start threshold mode for playback: %s\n", snd_strerror(err));
                  return err;
@@ -143,31 +143,30 @@ http://article.gmane.org/gmane.comp.audio.mad.devel/729.
          /* align all transfers to 1 samples */
          err = snd_pcm_sw_params_set_xfer_align(handle, params, 1);
          if (err < 0) {
-@@ -190,7 +199,7 @@
+@@ -190,7 +199,7 @@ int config(struct audio_config *config)
  	rate		= config->speed;
-
+ 
  	if ( bitdepth == 0 )
 -		config->precision = bitdepth = 32;
 +		config->precision = bitdepth = 16;
-
+ 
  	switch (bitdepth)
  	{
-@@ -241,7 +250,7 @@
+@@ -241,7 +250,7 @@ int config(struct audio_config *config)
  		return -1;
  	}
-
+ 
 -	buf = malloc(buffer_size);
 +	buf = malloc(buffer_size * sample_size);
  	if (buf == NULL) {
  		audio_error="unable to allocate output buffer table";
  		return -1;
-@@ -279,7 +288,7 @@
+@@ -279,7 +288,7 @@ static
  int play(struct audio_play *play)
  {
  	int err, len;
 -	char *ptr;
 +	unsigned char *ptr;
-
+ 
  	ptr = buf;
  	len = play->nsamples;
-

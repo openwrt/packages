@@ -1,6 +1,6 @@
 --- a/Foundation/src/Error.cpp
 +++ b/Foundation/src/Error.cpp
-@@ -70,7 +70,7 @@ namespace Poco {
+@@ -64,7 +64,7 @@ namespace Poco {
  
  #if (_XOPEN_SOURCE >= 600) || POCO_OS == POCO_OS_ANDROID || __APPLE__
  			setMessage(strerror_r(err, _buffer, sizeof(_buffer)));

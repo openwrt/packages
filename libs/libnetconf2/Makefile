@@ -8,22 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libnetconf2
-PKG_VERSION:=1.1.26
-PKG_RELEASE:=1
+PKG_VERSION:=1.1.43
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/CESNET/libnetconf2/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=2ce2b819f3544fd46a3a4c8ba6dd0a3798cab2a63aa347bc1eb5275a2c89b7bd
+PKG_HASH:=66139fc9e68aa89c82235f4135dba9e44f5db663541279c14c74131e22b7f571
 
 PKG_MAINTAINER:=Jakov Smolic <jakov.smolic@sartura.hr>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 
 CMAKE_INSTALL:=1
-PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/libnetconf2
   SECTION:=libs

@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=curl
-PKG_VERSION:=7.74.0
-PKG_RELEASE:=1
+PKG_VERSION:=7.76.0
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://dl.uxnr.de/mirror/curl/ \
 	https://curl.mirror.anstey.ca/ \
 	https://curl.askapache.com/download/ \
 	https://curl.haxx.se/download/
-PKG_HASH:=999d5f2c403cf6e25d58319fdd596611e455dd195208746bc6e6d197a77e878b
+PKG_HASH:=6302e2d75c59cdc6b35ce3fbe716481dd4301841bbb5fd71854653652a014fc8
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
@@ -181,5 +181,5 @@ define Package/libcurl/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libcurl.so.* $(1)/usr/lib/
 endef
 
-$(eval $(call BuildPackage,curl))
 $(eval $(call BuildPackage,libcurl))
+$(eval $(call BuildPackage,curl))

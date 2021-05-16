@@ -13,10 +13,9 @@ PKG_LICENSE:=BSD-3-Clause IJG zlib
 PKG_LICENSE_FILES:=LICENSE.md
 
 PKG_USE_MIPS16:=0 #Allows ASM compilation for speed.
-PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/libjpeg-turbo/Default
   TITLE:=libjpeg-turbo

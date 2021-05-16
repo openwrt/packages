@@ -37,5 +37,5 @@ define Build/InstallDev
 	cp $(PKG_BUILD_DIR)/php_raphf_api.h $(STAGING_DIR)/usr/include/php7/ext/$(PECL_NAME)/
 endef
 
-$(eval $(call PECLPackage,$(PECL_NAME),$(PECL_LONGNAME)))
+$(eval $(call PHP7PECLPackage,$(PECL_NAME),$(PECL_LONGNAME)))
 $(eval $(call BuildPackage,$(PKG_NAME)))

@@ -14,8 +14,8 @@ Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
 --- a/rpi-eeprom-config
 +++ b/rpi-eeprom-config
 @@ -1,4 +1,4 @@
--#!/usr/bin/python
-+#!/usr/bin/python3
+-#!/usr/bin/env python
++#!/usr/bin/env python3
  
- # rpi-eeprom-config
- # Utility for reading and writing the configuration file in the
+ """
+ rpi-eeprom-config

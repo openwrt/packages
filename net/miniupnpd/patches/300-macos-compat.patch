@@ -1,6 +1,6 @@
 --- a/Makefile.linux
 +++ b/Makefile.linux
-@@ -94,13 +94,13 @@ $(info please install uuid-dev package /
+@@ -95,13 +95,13 @@ $(info please install uuid-dev package /
  endif # ($(TEST),1)
  endif # ($(TARGET_OPENWRT,)
  
@@ -20,7 +20,7 @@
  
  TESTUPNPDESCGENOBJS = testupnpdescgen.o upnpdescgen.o
  
-@@ -140,11 +140,11 @@ install:	miniupnpd $(SRCDIR)/miniupnpd.8
+@@ -141,11 +141,11 @@ install:	miniupnpd $(SRCDIR)/miniupnpd.8
  	$(INSTALL) $(SRCDIR)/netfilter/ip6tables_init.sh $(DESTDIR)$(ETCINSTALLDIR)
  	$(INSTALL) $(SRCDIR)/netfilter/ip6tables_removeall.sh $(DESTDIR)$(ETCINSTALLDIR)
  	$(INSTALL) $(SRCDIR)/netfilter/miniupnpd_functions.sh $(DESTDIR)$(ETCINSTALLDIR)

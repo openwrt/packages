@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ykpers
 PKG_VERSION:=1.20.0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://developers.yubico.com/yubikey-personalization/Releases
@@ -20,7 +20,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/ykpers
   SECTION:=utils
   CATEGORY:=Utilities
-  TITLE:=The Yuibco personalization package
+  TITLE:=The Yubico personalization package
   URL:=https://developers.yubico.com/yubikey-personalization/
   DEPENDS:=+curl +libyubikey +libjson-c +libusb-1.0
 endef

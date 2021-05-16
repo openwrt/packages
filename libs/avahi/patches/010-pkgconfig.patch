@@ -24,8 +24,6 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
  avahi-ui.pc.in               | 4 ++--
  14 files changed, 26 insertions(+), 26 deletions(-)
 
-diff --git a/avahi-client.pc.in b/avahi-client.pc.in
-index 65ee8d84..1e1bd249 100644
 --- a/avahi-client.pc.in
 +++ b/avahi-client.pc.in
 @@ -1,6 +1,6 @@
@@ -37,8 +35,6 @@ index 65ee8d84..1e1bd249 100644
  includedir=${prefix}/include
  
  Name: avahi-client
-diff --git a/avahi-compat-howl.pc.in b/avahi-compat-howl.pc.in
-index b3cd02a7..1bb42c6b 100644
 --- a/avahi-compat-howl.pc.in
 +++ b/avahi-compat-howl.pc.in
 @@ -1,6 +1,6 @@
@@ -50,8 +46,6 @@ index b3cd02a7..1bb42c6b 100644
  includedir=${prefix}/include/avahi-compat-howl/
  
  Name: avahi-compat-howl
-diff --git a/avahi-compat-libdns_sd.pc.in b/avahi-compat-libdns_sd.pc.in
-index d6196325..d4778a17 100644
 --- a/avahi-compat-libdns_sd.pc.in
 +++ b/avahi-compat-libdns_sd.pc.in
 @@ -1,6 +1,6 @@
@@ -63,8 +57,6 @@ index d6196325..d4778a17 100644
  includedir=${prefix}/include/avahi-compat-libdns_sd/
  
  Name: avahi-compat-libdns_sd
-diff --git a/avahi-core.pc.in b/avahi-core.pc.in
-index 52491b41..73412d45 100644
 --- a/avahi-core.pc.in
 +++ b/avahi-core.pc.in
 @@ -1,6 +1,6 @@
@@ -76,8 +68,6 @@ index 52491b41..73412d45 100644
  includedir=${prefix}/include
  
  Name: avahi-core
-diff --git a/avahi-glib.pc.in b/avahi-glib.pc.in
-index f163e899..3d0ff9fc 100644
 --- a/avahi-glib.pc.in
 +++ b/avahi-glib.pc.in
 @@ -1,6 +1,6 @@
@@ -89,8 +79,6 @@ index f163e899..3d0ff9fc 100644
  includedir=${prefix}/include
  
  Name: avahi-glib
-diff --git a/avahi-gobject.pc.in b/avahi-gobject.pc.in
-index bf382003..88146744 100644
 --- a/avahi-gobject.pc.in
 +++ b/avahi-gobject.pc.in
 @@ -1,6 +1,6 @@
@@ -102,8 +90,6 @@ index bf382003..88146744 100644
  includedir=${prefix}/include
  
  Name: avahi-gobject
-diff --git a/avahi-libevent.pc.in b/avahi-libevent.pc.in
-index a1dca01b..59b35e8e 100644
 --- a/avahi-libevent.pc.in
 +++ b/avahi-libevent.pc.in
 @@ -1,6 +1,6 @@
@@ -115,8 +101,6 @@ index a1dca01b..59b35e8e 100644
  includedir=${prefix}/include
  
  Name: avahi-libevent
-diff --git a/avahi-qt3.pc.in b/avahi-qt3.pc.in
-index c18f0809..d4fb4b88 100644
 --- a/avahi-qt3.pc.in
 +++ b/avahi-qt3.pc.in
 @@ -1,6 +1,6 @@
@@ -128,8 +112,6 @@ index c18f0809..d4fb4b88 100644
  includedir=${prefix}/include
  
  Name: avahi-qt3
-diff --git a/avahi-qt4.pc.in b/avahi-qt4.pc.in
-index f62f7171..aefc135a 100644
 --- a/avahi-qt4.pc.in
 +++ b/avahi-qt4.pc.in
 @@ -1,6 +1,6 @@
@@ -141,8 +123,6 @@ index f62f7171..aefc135a 100644
  includedir=${prefix}/include
  
  Name: avahi-qt4
-diff --git a/avahi-qt5.pc.in b/avahi-qt5.pc.in
-index 71548baf..fffe192a 100644
 --- a/avahi-qt5.pc.in
 +++ b/avahi-qt5.pc.in
 @@ -1,6 +1,6 @@
@@ -154,8 +134,6 @@ index 71548baf..fffe192a 100644
  includedir=${prefix}/include
  
  Name: avahi-qt5
-diff --git a/avahi-sharp.pc.in b/avahi-sharp.pc.in
-index 3cc78b60..4d4c15df 100644
 --- a/avahi-sharp.pc.in
 +++ b/avahi-sharp.pc.in
 @@ -1,6 +1,6 @@
@@ -166,8 +144,6 @@ index 3cc78b60..4d4c15df 100644
  
  Name: avahi-sharp
  Description: Mono bindings for the Avahi mDNS/DNS-SD stack
-diff --git a/avahi-ui-gtk3.pc.in b/avahi-ui-gtk3.pc.in
-index 27c4322d..56159481 100644
 --- a/avahi-ui-gtk3.pc.in
 +++ b/avahi-ui-gtk3.pc.in
 @@ -1,6 +1,6 @@
@@ -179,8 +155,6 @@ index 27c4322d..56159481 100644
  includedir=${prefix}/include
  
  Name: avahi-ui
-diff --git a/avahi-ui-sharp.pc.in b/avahi-ui-sharp.pc.in
-index cdc35e0d..d448b241 100644
 --- a/avahi-ui-sharp.pc.in
 +++ b/avahi-ui-sharp.pc.in
 @@ -1,6 +1,6 @@
@@ -191,8 +165,6 @@ index cdc35e0d..d448b241 100644
  
  Name: avahi-ui-sharp
  Description: Mono bindings for the Avahi mDNS/DNS-SD stack
-diff --git a/avahi-ui.pc.in b/avahi-ui.pc.in
-index 9edeea96..0dab729a 100644
 --- a/avahi-ui.pc.in
 +++ b/avahi-ui.pc.in
 @@ -1,6 +1,6 @@

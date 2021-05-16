@@ -1,7 +1,5 @@
-Index: diskdev_cmds-332.25/fsck_hfs.tproj/dfalib/SVerify1.c
-===================================================================
---- diskdev_cmds-332.25.orig/fsck_hfs.tproj/dfalib/SVerify1.c
-+++ diskdev_cmds-332.25/fsck_hfs.tproj/dfalib/SVerify1.c
+--- a/fsck_hfs.tproj/dfalib/SVerify1.c
++++ b/fsck_hfs.tproj/dfalib/SVerify1.c
 @@ -2848,7 +2848,7 @@ OSErr	VLockedChk( SGlobPtr GPtr )
  	}
  	else		//	Because we don't have the unicode converters, just fill it with a dummy name.

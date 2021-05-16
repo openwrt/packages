@@ -10,8 +10,6 @@ It can cause build failure, see [1]
  Makefile | 15 +++------------
  1 file changed, 3 insertions(+), 12 deletions(-)
 
-diff --git a/Makefile b/Makefile
-index 9927715..8a3eecd 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -115,10 +115,10 @@ BINDIR?=$(DESTDIR)${PREFIX}/bin

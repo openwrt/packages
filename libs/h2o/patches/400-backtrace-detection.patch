@@ -8,8 +8,6 @@ Subject: [PATCH] Autodetect backtrace and backtrace_symbols_fd
  src/main.c     | 10 ++++++----
  2 files changed, 19 insertions(+), 4 deletions(-)
 
-diff --git a/CMakeLists.txt b/CMakeLists.txt
-index abfab1f19..2a26fb98a 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -58,6 +58,19 @@ __sync_add_and_fetch(&a, 1);
@@ -32,8 +30,6 @@ index abfab1f19..2a26fb98a 100644
  SET(WITH_BUNDLED_SSL_DEFAULT "ON")
  IF ((NOT UNIX) OR CYGWIN)
      SET(WITH_BUNDLED_SSL_DEFAULT "OFF")
-diff --git a/src/main.c b/src/main.c
-index 7c346af18..edc7d5eb3 100644
 --- a/src/main.c
 +++ b/src/main.c
 @@ -48,7 +48,7 @@
@@ -45,7 +41,7 @@ index 7c346af18..edc7d5eb3 100644
  #include <execinfo.h>
  #endif
  #if H2O_USE_PICOTLS
-@@ -1435,7 +1435,8 @@ static void on_sigterm(int signo)
+@@ -1436,7 +1436,8 @@ static void on_sigterm(int signo)
      notify_all_threads();
  }
  
@@ -55,7 +51,7 @@ index 7c346af18..edc7d5eb3 100644
  static int popen_crash_handler(void)
  {
      char *cmd_fullpath = h2o_configurator_get_cmd_path(conf.crash_handler), *argv[] = {cmd_fullpath, NULL};
-@@ -1487,13 +1488,14 @@ static void on_sigfatal(int signo)
+@@ -1488,13 +1489,14 @@ static void on_sigfatal(int signo)
  
      raise(signo);
  }

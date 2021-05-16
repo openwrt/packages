@@ -1,6 +1,6 @@
 --- a/ext/opcache/ZendAccelerator.c
 +++ b/ext/opcache/ZendAccelerator.c
-@@ -2652,11 +2652,6 @@ static void accel_gen_system_id(void)
+@@ -2670,11 +2670,6 @@ static void accel_gen_system_id(void)
  	PHP_MD5Update(&context, PHP_VERSION, sizeof(PHP_VERSION)-1);
  	PHP_MD5Update(&context, ZEND_EXTENSION_BUILD_ID, sizeof(ZEND_EXTENSION_BUILD_ID)-1);
  	PHP_MD5Update(&context, ZEND_BIN_ID, sizeof(ZEND_BIN_ID)-1);
@@ -14,7 +14,7 @@
       */
 --- a/sapi/litespeed/lsapi_main.c
 +++ b/sapi/litespeed/lsapi_main.c
-@@ -1284,9 +1284,9 @@ static int cli_main( int argc, char * ar
+@@ -1288,9 +1288,9 @@ static int cli_main( int argc, char * ar
              case 'v':
                  if (php_request_startup() != FAILURE) {
  #if ZEND_DEBUG

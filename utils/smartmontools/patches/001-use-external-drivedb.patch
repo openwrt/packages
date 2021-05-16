@@ -1,8 +1,6 @@
-diff --git i/knowndrives.cpp w/knowndrives.cpp
-index 072160a..d57417b 100644
---- i/knowndrives.cpp
-+++ w/knowndrives.cpp
-@@ -40,11 +40,84 @@ const char * knowndrives_cpp_cvsid = "$Id: knowndrives.cpp 4842 2018-12-02 16:07
+--- a/knowndrives.cpp
++++ b/knowndrives.cpp
+@@ -40,11 +40,84 @@ const char * knowndrives_cpp_cvsid = "$I
  // see read_default_drive_databases() below.
  // The drive_settings structure is described in drivedb.h.
  const drive_settings builtin_knowndrives[] = {
@@ -70,7 +68,7 @@ index 072160a..d57417b 100644
 +    "-v 228,raw48,Power-off_Retract_Count "
 +    //  229 Unknown_Attribute
 +    "-v 230,raw48,Head_Amplitude,HDD "
-+    "-v 231,raw48,Temperature_Celsius "
++    "-v 231,raw48,Temperature_Celsius,HDD "
 +    "-v 232,raw48,Available_Reservd_Space "
 +    "-v 233,raw48,Media_Wearout_Indicator,SSD "
 +    //  234-239 Unknown_Attribute

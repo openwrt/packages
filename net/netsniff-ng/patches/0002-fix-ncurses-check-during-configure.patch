@@ -8,8 +8,6 @@ Signed-off-by: Toni Uhlig <matzeton@googlemail.com>
  configure | 5 +----
  1 file changed, 1 insertion(+), 4 deletions(-)
 
-diff --git a/configure b/configure
-index ceda000..f843d64 100755
 --- a/configure
 +++ b/configure
 @@ -434,11 +434,8 @@ int main(void)
@@ -25,6 +23,3 @@ index ceda000..f843d64 100755
  	if [ ! -x $TMPDIR/ncursestest ] ; then
  		echo "[NO]"
  		MISSING_DEFS=1
--- 
-2.20.1
-

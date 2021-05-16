@@ -1,8 +1,9 @@
 #!/bin/sh
 # miniupnpd integration for firewall3
 
-IPTABLES=/usr/sbin/iptables
-IP6TABLES=/usr/sbin/ip6tables
+IPTABLES="/usr/sbin/iptables"
+IP6TABLES="/usr/sbin/ip6tables"
+IPTARGS="-w 1"
 
 $IPTABLES -t filter -N MINIUPNPD 2>/dev/null
 $IPTABLES -t nat -N MINIUPNPD 2>/dev/null
@@ -19,7 +20,7 @@ iptables_prepend_rule() {
 	local chain="$3"
 	local target="$4"
 
-	$iptables -t "$table" -I "$chain" $($iptables -t "$table" --line-numbers -nL "$chain" | \
+	$iptables "$IPTARGS" -t "$table" -I "$chain" $($iptables "$IPTARGS" -t "$table" --line-numbers -nL "$chain" | \
 		sed -ne '$s/[^0-9].*//p') -j "$target"
 }
 

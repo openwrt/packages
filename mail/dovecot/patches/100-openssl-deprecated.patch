@@ -1,13 +1,3 @@
---- a/src/lib-dcrypt/dcrypt-openssl.c
-+++ b/src/lib-dcrypt/dcrypt-openssl.c
-@@ -20,6 +20,7 @@
- #include <openssl/engine.h>
- #include <openssl/hmac.h>
- #include <openssl/objects.h>
-+#include <openssl/bn.h>
- #include "dcrypt.h"
- #include "dcrypt-private.h"
- 
 --- a/src/lib-ssl-iostream/dovecot-openssl-common.c
 +++ b/src/lib-ssl-iostream/dovecot-openssl-common.c
 @@ -63,9 +63,11 @@ void dovecot_openssl_common_global_ref(v
@@ -40,17 +30,7 @@
  
 --- a/src/lib-ssl-iostream/iostream-openssl-context.c
 +++ b/src/lib-ssl-iostream/iostream-openssl-context.c
-@@ -6,6 +6,9 @@
- #include "dovecot-openssl-common.h"
- 
- #include <openssl/crypto.h>
-+#include <openssl/rsa.h>
-+#include <openssl/dh.h>
-+#include <openssl/bn.h>
- #include <openssl/x509.h>
- #include <openssl/pem.h>
- #include <openssl/ssl.h>
-@@ -514,8 +517,10 @@ ssl_proxy_ctx_set_crypto_params(SSL_CTX
+@@ -558,8 +558,10 @@ ssl_proxy_ctx_set_crypto_params(SSL_CTX
  	int nid;
  	const char *curve_name;
  #endif

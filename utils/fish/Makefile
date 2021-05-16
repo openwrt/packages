@@ -5,22 +5,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fish
-PKG_VERSION:=3.1.2
-PKG_RELEASE:=1
+PKG_VERSION:=3.2.1
+PKG_RELEASE:=$(AUTORELEASE)
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/fish-shell/fish-shell/releases/download/$(PKG_VERSION)
-PKG_HASH:=d5b927203b5ca95da16f514969e2a91a537b2f75bec9b21a584c4cd1c7aa74ed
+PKG_HASH:=d8e49f4090d3778df17dd825e4a2a80192015682423cd9dd02b6675d65c3af5b
 
 PKG_MAINTAINER:=Curtis Jiang <jqqqqqqqqqq@gmail.com>, Hao Dong <halbertdong@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:fishshell:fish
 
-PKG_BUILD_PARALLEL:=1
-
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/fish
   SECTION:=utils

@@ -1,5 +1,5 @@
---- a/include/libusb.h.in.orig	2015-02-21 18:53:51.023682068 +0100
-+++ a/include/libusb.h.in	2015-02-21 18:54:14.722788757 +0100
+--- a/include/libusb.h.in
++++ b/include/libusb.h.in
 @@ -6,4 +6,4 @@
   * path at configure time and various apcupsd bits include this
   * when they need libusb's usb.h.

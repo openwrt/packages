@@ -9,8 +9,6 @@ GCC 10 compatibility as per https://gcc.gnu.org/gcc-10/porting_to.html
  radsecproxy.h | 2 +-
  2 files changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/radsecproxy.c b/radsecproxy.c
-index a4b1211..b281e21 100644
 --- a/radsecproxy.c
 +++ b/radsecproxy.c
 @@ -84,6 +84,7 @@ extern int optind;
@@ -21,8 +19,6 @@ index a4b1211..b281e21 100644
  
  /* minimum required declarations to avoid reordering code */
  struct realm *adddynamicrealmserver(struct realm *realm, char *id);
-diff --git a/radsecproxy.h b/radsecproxy.h
-index 3082300..0f20f50 100644
 --- a/radsecproxy.h
 +++ b/radsecproxy.h
 @@ -262,7 +262,7 @@ int radsrv(struct request *rq);

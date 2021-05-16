@@ -8,17 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libdaq3
-PKG_VERSION:=3.0.0-beta1
-PKG_RELEASE:=1
+PKG_VERSION:=3.0.3
+PKG_RELEASE:=$(AUTORELEASE)
 
-PKG_SOURCE_URL:=https://www.snort.org/downloads/snortplus/
-PKG_SOURCE:=daq-$(PKG_VERSION).tar.gz
-PKG_HASH:=ef74aa1c30a6ee93eacbe7967d1c85d7df3214cf3783d4eabbb6b64305fd273e
-PKG_BUILD_DIR:=$(BUILD_DIR)/daq-$(PKG_VERSION)
-
-PKG_LICENSE:=GPL-2.0-only
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
+PKG_LICENSE:=GPL-2.0-only
+
+PKG_SOURCE:=libdaq-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/snort3/libdaq/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=920344f5c98ac68b401d1bc92ebaed78b0d15779b0480c213db279d0a60acc32
+PKG_BUILD_DIR:=$(BUILD_DIR)/libdaq-$(PKG_VERSION)
+
+PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
@@ -45,14 +47,12 @@ CONFIGURE_ARGS+= \
 	--with-libpcap-libraries="$(STAGING_DIR)/usr/lib" \
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(STAGING_DIR)/usr/include
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/*.h $(STAGING_DIR)/usr/include/
-	$(INSTALL_DIR) $(STAGING_DIR)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib* $(STAGING_DIR)/usr/lib/
-	$(INSTALL_DIR) $(STAGING_DIR)/usr/lib/daq
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/daq/* $(STAGING_DIR)/usr/lib/daq/
-	$(INSTALL_DIR) $(STAGING_DIR)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(STAGING_DIR)/usr/bin/
+	$(INSTALL_DIR) $(STAGING_DIR)/usr/include/daq3
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/. $(STAGING_DIR)/usr/include/daq3/
+	$(INSTALL_DIR) $(STAGING_DIR)/usr/lib/daq3
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib* $(STAGING_DIR)/usr/lib/daq3/
+	$(INSTALL_DIR) $(STAGING_DIR)/usr/lib/daq3/daq
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/daq/* $(STAGING_DIR)/usr/lib/daq3/daq/
 endef
 
 define Package/libdaq3/install

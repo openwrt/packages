@@ -1,6 +1,6 @@
---- a/bin/BackupPC_archive	2017-01-26 02:31:24.000000000 +0100
-+++ b/bin/BackupPC_archive	2018-04-05 21:11:14.428000000 +0200
-@@ -299,7 +299,7 @@
+--- a/bin/BackupPC_archive
++++ b/bin/BackupPC_archive
+@@ -299,7 +299,7 @@ sub ArchiveCleanup
      if ( $NeedPostCmd ) {
          UserCommandRun("ArchivePostUserCmd");
          if ( $? && $Conf{UserCmdCheckStatus} ) {
@@ -9,9 +9,9 @@
              $stat{xferOK} = 0;
          }
      }
---- a/bin/BackupPC_dump	2017-01-26 02:31:24.000000000 +0100
-+++ b/bin/BackupPC_dump	2018-04-05 21:12:23.640000000 +0200
-@@ -1067,7 +1067,7 @@
+--- a/bin/BackupPC_dump
++++ b/bin/BackupPC_dump
+@@ -1067,7 +1067,7 @@ sub catch_signal
  	    # Send ALRMs to BackupPC_tarExtract if we are using it
  	    #
  	    if ( $tarPid > 0 ) {
@@ -20,9 +20,9 @@
  	    }
  
  	    #
---- a/configure.pl	2017-01-26 02:31:24.000000000 +0100
-+++ b/configure.pl	2018-04-05 21:39:24.668000000 +0200
-@@ -333,7 +333,10 @@
+--- a/configure.pl
++++ b/configure.pl
+@@ -333,7 +333,10 @@ while ( 1 ) {
                                   $Conf{BackupPCUser} || "backuppc",
                                   "backuppc-user");
      if ( $opts{"set-perms"} ) {
@@ -34,7 +34,7 @@
          last if ( $name ne "" );
          print <<EOF;
  
-@@ -800,6 +803,7 @@
+@@ -800,6 +803,7 @@ $Conf{ParPath} = '' if ( $Conf{ParPath}
  #
  # Figure out sensible arguments for the ping command
  #
@@ -42,9 +42,9 @@
  if ( defined($Conf{PingArgs}) ) {
      $Conf{PingCmd} = '$pingPath ' . $Conf{PingArgs};
  } elsif ( !defined($Conf{PingCmd}) ) {
---- a/lib/BackupPC/CGI/View.pm	2017-01-26 02:31:24.000000000 +0100
-+++ b/lib/BackupPC/CGI/View.pm	2018-04-05 21:46:22.664000000 +0200
-@@ -46,7 +46,7 @@
+--- a/lib/BackupPC/CGI/View.pm
++++ b/lib/BackupPC/CGI/View.pm
+@@ -46,7 +46,7 @@ sub action
      my $compress = 0;
      my $fh;
      my $host = $In{host};
@@ -53,7 +53,7 @@
      my $type = $In{type};
      my $linkHosts = 0;
      my($file, $comment);
-@@ -136,6 +136,10 @@
+@@ -136,6 +136,10 @@ sub action
  		    }
  		    $s =~ s/[\n\r]+//g;
  		    if ( $s =~ /smb: \\>/
@@ -64,9 +64,9 @@
  			    || $s =~ /^\s*(\d+) \(\s*\d+\.\d kb\/s\) (.*)$/
  			    || $s =~ /^tar: dumped \d+ files/
  			    || $s =~ /^\s*added interface/i
---- a/lib/BackupPC/Lib.pm	2017-01-26 02:31:24.000000000 +0100
-+++ b/lib/BackupPC/Lib.pm	2018-04-05 21:48:38.048000000 +0200
-@@ -512,7 +512,8 @@
+--- a/lib/BackupPC/Lib.pm
++++ b/lib/BackupPC/Lib.pm
+@@ -512,7 +512,8 @@ sub dirRead
      }
      if ( $IODirentOk ) {
          @entries = sort({ $a->{inode} <=> $b->{inode} } readdirent($fh));
@@ -76,9 +76,9 @@
      } else {
          @entries = map { { name => $_} } readdir($fh);
      }
---- a/lib/BackupPC/Xfer/Smb.pm	2017-01-26 02:31:24.000000000 +0100
-+++ b/lib/BackupPC/Xfer/Smb.pm	2018-04-05 21:57:16.616000000 +0200
-@@ -219,7 +219,7 @@
+--- a/lib/BackupPC/Xfer/Smb.pm
++++ b/lib/BackupPC/Xfer/Smb.pm
+@@ -219,7 +219,7 @@ sub readOutput
          #
          # MAKSYM 14082016: The next regex will never match on Samba-4.3, as
          # smbclient doesn't produce output required; keeping it for older Sambas
@@ -87,7 +87,7 @@
              my $sambaFileSize = $1;
              my $pcFileName    = $2;
              (my $fileName = $pcFileName) =~ s/\\/\//g;
-@@ -281,6 +281,9 @@
+@@ -281,6 +281,9 @@ sub readOutput
          } elsif ( /smb: \\>/
                  || /^\s*tar:\d+/ # MAKSYM 14082016: ignoring 2 more Samba-4.3 specific lines
                  || /^\s*WARNING:/i

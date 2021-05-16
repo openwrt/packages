@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libradiotap
 PKG_VERSION:=2020-06-22
-PKG_RELEASE:=1
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/radiotap/radiotap-library.git
@@ -18,10 +18,8 @@ PKG_MAINTAINER:=Nick Hainke <vincent@systemli.org>
 PKG_LICENSE:=ISC
 PKG_LICENSE_FILES:=COPYING
 
-PKG_BUILD_PARALLEL:=1
-
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/libradiotap
 	SECTION:=libs

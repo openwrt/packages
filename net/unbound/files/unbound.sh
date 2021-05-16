@@ -473,7 +473,7 @@ unbound_zone() {
     fi
     ;;
 
-  htpps-dns-proxy)
+  htpps-dns-proxy | https-dns-proxy)
     if [ -x /usr/sbin/https-dns-proxy ] \
     && [ -x /etc/init.d/https-dns-proxy ] ; then
       if /etc/init.d/https-dns-proxy ; then
@@ -990,6 +990,7 @@ unbound_conf() {
     # Adaptive infrastructure info kept for 15 minutes
     echo "  cache-min-ttl: $UB_TTL_MIN"
     echo "  cache-max-ttl: 72000"
+    echo "  cache-max-negative-ttl: $UB_NEG_TTL_MAX"
     echo "  val-bogus-ttl: 300"
     echo "  infra-host-ttl: 900"
     echo
@@ -1364,6 +1365,7 @@ unbound_uci() {
 
   config_get UB_TTL_MIN     "$cfg" ttl_min 120
   config_get UB_TXT_DOMAIN  "$cfg" domain lan
+  config_get UB_NEG_TTL_MAX "$cfg" ttl_neg_max 1000
 
   config_list_foreach "$cfg" domain_insecure bundle_domain_insecure
   config_list_foreach "$cfg" iface_lan bundle_lan_networks

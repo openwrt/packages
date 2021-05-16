@@ -103,5 +103,5 @@ define Package/libfuse/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{fuse,ulockmgr}.so.* $(1)/usr/lib/
 endef
 
-$(eval $(call BuildPackage,fuse-utils))
 $(eval $(call BuildPackage,libfuse))
+$(eval $(call BuildPackage,fuse-utils))

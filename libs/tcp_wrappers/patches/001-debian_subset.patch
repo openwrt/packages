@@ -122,7 +122,7 @@
  extern char *hosts_allow_table;		/* for verification mode redirection */
  extern char *hosts_deny_table;		/* for verification mode redirection */
  extern int hosts_access_verbose;	/* for verbose matching mode */
-@@ -92,9 +118,14 @@ extern int resident;			/* > 0 if resident process */
+@@ -92,9 +118,14 @@ extern int resident;			/* > 0 if residen
    */
  
  #ifdef __STDC__
@@ -137,7 +137,7 @@
  extern struct request_info *request_init();	/* initialize request */
  extern struct request_info *request_set();	/* update request structure */
  #endif
-@@ -117,27 +148,31 @@ extern struct request_info *request_set();	/* update request structure */
+@@ -117,27 +148,31 @@ extern struct request_info *request_set(
    * host_info structures serve as caches for the lookup results.
    */
  

@@ -46,7 +46,9 @@ endef
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
+ifeq ($(QUILT),)
 	mv $(PKG_BUILD_DIR)/pico/* $(PKG_BUILD_DIR)
+endif
 endef
 
 define Package/svox/install

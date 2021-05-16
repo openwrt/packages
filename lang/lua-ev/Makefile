@@ -8,21 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua-ev
-PKG_RELEASE:=1
+PKG_VERSION:=1.5
+PKG_RELEASE:=$(AUTORELEASE)
 
-PKG_SOURCE_URL=https://github.com/brimworks/lua-ev.git
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_DATE=2015-8-4
-PKG_SOURCE_VERSION:=339426fbe528f11cb3cd1af69a88f06bba367981
-PKG_MIRROR_HASH:=fe138f05845d549998443628e1b63e07d797977548a30e75305085cca4b25567
-
-PKG_LICENSE:=MIT
-PKG_LICENSE_FILES:=
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/brimworks/lua-ev/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=26ac116722a241bf59daf5315ce0ffe751c1babea9a146ffc0a389f1af3facca
 
 PKG_MAINTAINER:=Jianhui Zhao <jianhuizhao329@gmail.com>
+PKG_LICENSE:=MIT
+PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
+include ../../devel/ninja/ninja-cmake.mk
 
 define Package/lua-ev
   SUBMENU:=Lua
@@ -39,7 +37,7 @@ endef
 
 define Package/lua-ev/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ev.so $(1)/usr/lib/lua
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/lua/cmod/ev.so $(1)/usr/lib/lua
 endef
 
 $(eval $(call BuildPackage,lua-ev))

@@ -9,8 +9,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bind
-PKG_VERSION:=9.16.8
-PKG_RELEASE:=3
+PKG_VERSION:=9.17.12
+PKG_RELEASE:=$(AUTORELEASE)
 USERID:=bind=57:bind=57
 
 PKG_MAINTAINER:=Noah Meyerhans <frodo@morgul.net>
@@ -22,7 +22,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:= \
 	https://www.mirrorservice.org/sites/ftp.isc.org/isc/bind9/$(PKG_VERSION) \
 	https://ftp.isc.org/isc/bind9/$(PKG_VERSION)
-PKG_HASH:=9e9b9c563692be86ec41f670f6b70e26c14e72445c742d7b5eb4db7d2b5e8d31
+PKG_HASH:=e77951eaa4aaa92b30e6f3ff6c915081a21c8cc70000e7f25a7a285eed0acbe7
 
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=aclocal.m4 libtool.m4
@@ -31,6 +31,8 @@ PKG_INSTALL:=1
 PKG_USE_MIPS16:=0
 PKG_BUILD_PARALLEL:=1
 
+PKG_BUILD_DEPENDS:=nghttp2
+
 PKG_CONFIG_DEPENDS := \
 	CONFIG_BIND_LIBJSON \
 	CONFIG_BIND_LIBXML2
@@ -38,6 +40,7 @@ PKG_CONFIG_DEPENDS := \
 PKG_BUILD_DEPENDS += BIND_LIBXML2:libxml2 BIND_LIBJSON:libjson-c
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/bind/Default
   SECTION:=net
@@ -51,8 +54,14 @@ endef
 define Package/bind-libs
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libopenssl +zlib +libpthread +libatomic +libuv \
-	+BIND_LIBXML2:libxml2 +BIND_LIBJSON:libjson-c
+  DEPENDS:=+libopenssl \
+	+zlib \
+	+libpthread \
+	+libatomic \
+	+libuv \
+	+libnghttp2 \
+	+BIND_LIBXML2:libxml2 \
+	+BIND_LIBJSON:libjson-c
   TITLE:=bind shared libraries
   URL:=https://www.isc.org/software/bind
 endef
@@ -202,8 +211,8 @@ define Package/bind-server/conffiles
 endef
 
 define Package/bind-server-filter-aaaa/install
-	$(INSTALL_DIR) $(1)/usr/lib/named
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/named/filter-aaaa.so $(1)/usr/lib/named
+	$(INSTALL_DIR) $(1)/usr/lib/bind
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/bind/filter-aaaa.so $(1)/usr/lib/bind
 endef
 
 define Package/bind-client/install
@@ -223,16 +232,16 @@ define Package/bind-rndc/install
 endef
 
 define Package/bind-check/install
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/named-checkconf $(1)/usr/sbin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/named-checkzone $(1)/usr/sbin/
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/named-checkconf $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/named-checkzone $(1)/usr/bin/
 endef
 
 define Package/bind-dnssec/install
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/dnssec-keygen $(1)/usr/sbin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/dnssec-settime $(1)/usr/sbin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/dnssec-signzone $(1)/usr/sbin/
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dnssec-keygen $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dnssec-settime $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dnssec-signzone $(1)/usr/bin/
 endef
 
 define Package/bind-host/install

@@ -5,31 +5,33 @@ USE_PROCD=1
 
 SMBD_IFACE=""
 
+config_get_sane()
+{
+	config_get "$@"
+	set -- "$(echo "$1" | tr -d '<>[]{};%?=#\n')"
+}
+
 smb_header()
 {
-	config_get SMBD_IFACE $1 interface "lan"
+	config_get_sane SMBD_IFACE "$1" interface "lan"
 
 	# resolve interfaces
-	local interfaces
 	interfaces=$(
 		. /lib/functions/network.sh
 
-		local net
 		for net in $SMBD_IFACE; do
-			local device
-			network_is_up $net || continue
+			network_is_up "$net" || continue
 			network_get_device device "$net"
-			echo -n "${device:-$net} "
+			printf "%s " "${device:-$net}"
 		done
 	)
 
-	local workgroup description
-	local hostname
-	hostname="$(cat /proc/sys/kernel/hostname)"
+	# we dont use netbios anymore as default and wsd/avahi is dns based
+	hostname="$(cat /proc/sys/kernel/hostname | tr -d '{};%?=#\n')"
 
-	config_get workgroup $1 workgroup "WORKGROUP"
-	config_get description $1 description "Ksmbd on OpenWrt"
-	config_get_bool ALLOW_LEGACY_PROTOCOLS $1 allow_legacy_protocols 0
+	config_get_sane workgroup "$1" workgroup "WORKGROUP"
+	config_get_sane description "$1" description "Ksmbd on OpenWrt"
+	config_get_bool ALLOW_LEGACY_PROTOCOLS "$1" allow_legacy_protocols 0
 
 	sed -e "s#|NAME|#$hostname#g" \
 	    -e "s#|WORKGROUP|#$workgroup#g" \
@@ -56,43 +58,24 @@ smb_header()
 
 smb_add_share()
 {
-	local name
-	local path
-	local comment
-	local users
-	local create_mask
-	local dir_mask
-	local browseable
-	local read_only
-	local writeable
-	local guest_ok
-	local force_root
-	local write_list
-	local read_list
-	local hide_dot_files
-	local veto_files
-	local inherit_owner
-	local force_create_mode
-	local force_directory_mode
-
-	config_get name $1 name
-	config_get path $1 path
-	config_get comment $1 comment
-	config_get users $1 users
-	config_get create_mask $1 create_mask
-	config_get dir_mask $1 dir_mask
-	config_get browseable $1 browseable
-	config_get read_only $1 read_only
-	config_get writeable $1 writeable
-	config_get guest_ok $1 guest_ok
-	config_get_bool force_root $1 force_root 0
-	config_get write_list $1 write_list
-	config_get read_list $1 read_list
-	config_get hide_dot_files $1 hide_dot_files
-	config_get veto_files $1 veto_files
-	config_get inherit_owner $1 inherit_owner
-	config_get force_create_mode $1 force_create_mode
-	config_get force_directory_mode $1 force_directory_mode
+	config_get_sane name "$1" name
+	config_get_sane path "$1" path
+	config_get_sane comment "$1" comment
+	config_get_sane users "$1" users
+	config_get_sane create_mask "$1" create_mask
+	config_get_sane dir_mask "$1" dir_mask
+	config_get_sane browseable "$1" browseable
+	config_get_sane read_only "$1" read_only
+	config_get_sane writeable "$1" writeable
+	config_get_sane guest_ok "$1" guest_ok
+	config_get_bool force_root "$1" force_root 0
+	config_get_sane write_list "$1" write_list
+	config_get_sane read_list "$1" read_list
+	config_get_sane hide_dot_files "$1" hide_dot_files
+	config_get_sane veto_files "$1" veto_files
+	config_get_sane inherit_owner "$1" inherit_owner
+	config_get_sane force_create_mode "$1" force_create_mode
+	config_get_sane force_directory_mode "$1" force_directory_mode
 
 	[ -z "$name" ] || [ -z "$path" ] && return
 
@@ -142,9 +125,8 @@ service_triggers()
 
 	procd_add_reload_trigger "dhcp" "system" "ksmbd"
 
-	local i
 	for i in $SMBD_IFACE; do
-		procd_add_reload_interface_trigger $i
+		procd_add_reload_interface_trigger "$i"
 	done
 }
 
@@ -178,7 +160,7 @@ start_service()
 
 	logger -p daemon.notice -t 'ksmbd' "Starting Ksmbd userspace service."
 	procd_open_instance
-	procd_add_mdns "smb" "tcp" "445"
+	procd_add_mdns "smb" "tcp" "445" "daemon=ksmbd"
 	procd_set_param command /usr/sbin/ksmbd.mountd --n
 	procd_set_param file /etc/ksmbd/smb.conf
 	procd_set_param limits nofile=16384

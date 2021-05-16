@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dnscrypt-proxy2
-PKG_VERSION:=2.0.44
-PKG_RELEASE:=1
+PKG_VERSION:=2.0.45
+PKG_RELEASE:=2
 
 PKG_SOURCE:=dnscrypt-proxy-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/DNSCrypt/dnscrypt-proxy/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=c2c9968f07a414e973ec5734f4598d756a35c32beedb18268590ea1355794237
+PKG_HASH:=f7aac28c6a60404683d436072b89d18ed3bb309f8d8a95c8e87ad250da190821
 PKG_BUILD_DIR:=$(BUILD_DIR)/dnscrypt-proxy-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
@@ -46,13 +46,13 @@ define Package/dnscrypt-proxy2/install
 
 	$(INSTALL_DIR) $(1)/etc/dnscrypt-proxy2
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/dnscrypt-proxy/example-dnscrypt-proxy.toml $(1)/etc/dnscrypt-proxy2/dnscrypt-proxy.toml
-	$(INSTALL_CONF) ./files/blacklist.txt $(1)/etc/dnscrypt-proxy2/blacklist.txt
+	$(INSTALL_CONF) ./files/blocked-names.txt $(1)/etc/dnscrypt-proxy2/blocked-names.txt
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/dnscrypt-proxy.init $(1)/etc/init.d/dnscrypt-proxy
 
 	sed -i "s/^listen_addresses = .*/listen_addresses = ['127.0.0.53:53']/" $(1)/etc/dnscrypt-proxy2/dnscrypt-proxy.toml
-	sed -i "s/^  # blacklist_file = 'blacklist.txt'/blacklist_file = 'blacklist.txt'/" $(1)/etc/dnscrypt-proxy2/dnscrypt-proxy.toml
+	sed -i "s/^  # blocked_names_file = 'blocked-names.txt'/blocked_names_file = 'blocked-names.txt'/" $(1)/etc/dnscrypt-proxy2/dnscrypt-proxy.toml
 endef
 
 define Package/dnscrypt-proxy2/description

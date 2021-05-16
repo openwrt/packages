@@ -12,11 +12,9 @@ Signed-off-by: Glenn Strauss <gstrauss@gluelogic.com>
  src/meson.build | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/src/meson.build b/src/meson.build
-index 71e4ec90..14ed9cec 100644
 --- a/src/meson.build
 +++ b/src/meson.build
-@@ -381,7 +381,7 @@ endif
+@@ -377,7 +377,7 @@ endif
  liblua = []
  if get_option('with_lua')
  	found_lua = false
@@ -25,6 +23,3 @@ index 71e4ec90..14ed9cec 100644
  		if not(found_lua)
  			liblua = dependency(l, required: false)
  			if (liblua.found())
--- 
-2.28.0
-
