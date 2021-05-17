@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=simple-adblock
 PKG_VERSION:=1.8.7
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.net>
 PKG_LICENSE:=GPL-3.0-or-later
 
@@ -17,7 +17,7 @@ define Package/simple-adblock
 	CATEGORY:=Network
 	TITLE:=Simple AdBlock Service
 	URL:=https://docs.openwrt.melmac.net/simple-adblock/
-	DEPENDS:=+jshn
+	DEPENDS:=+jshn +wget
 	PKGARCH:=all
 endef
 
@@ -42,7 +42,7 @@ define Package/simple-adblock/install
 	$(INSTALL_BIN) ./files/simple-adblock.init $(1)/etc/init.d/simple-adblock
 	$(SED) "s|^\(PKG_VERSION\).*|\1='$(PKG_VERSION)-$(PKG_RELEASE)'|" $(1)/etc/init.d/simple-adblock
 	$(INSTALL_CONF) ./files/simple-adblock.conf $(1)/etc/config/simple-adblock
-	$(INSTALL_CONF) ./files/simple-adblock.conf.update $(1)/tmp/simple-adblock.conf.update
+	$(INSTALL_DATA) ./files/simple-adblock.conf.update $(1)/tmp/simple-adblock.conf.update
 endef
 
 define Package/simple-adblock/postinst

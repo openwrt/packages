@@ -28,7 +28,7 @@ export CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 export NO_TIMESTAMP=1
 
 UHTTPD_LISTEN_HTTP=
-STATE_DIR='/etc/acme'
+PRODUCTION_STATE_DIR='/etc/acme'
 STAGING_STATE_DIR='/etc/acme/staging'
 
 ACCOUNT_EMAIL=
@@ -219,6 +219,8 @@ issue_cert()
     local staging=
     local HOOK=
 
+    # reload uci values, as the value of use_staging may have changed
+    config_load acme
     config_get_bool enabled "$section" enabled 0
     config_get_bool use_staging "$section" use_staging
     config_get_bool update_uhttpd "$section" update_uhttpd
@@ -243,7 +245,13 @@ issue_cert()
     elif [ "$APP" = "acme" ]; then
 	[ "$DEBUG" -eq "1" ] && acme_args="$acme_args --debug"
     fi
-    [ "$use_staging" -eq "1" ] && STATE_DIR="$STAGING_STATE_DIR" && staging="--staging"
+    if [ "$use_staging" -eq "1" ]; then
+	STATE_DIR="$STAGING_STATE_DIR";
+	staging="--staging";
+    else
+	STATE_DIR="$PRODUCTION_STATE_DIR";
+	staging="";
+    fi
 
     set -- $domains
     main_domain=$1
@@ -399,12 +407,17 @@ issue_cert_with_retries() {
 	local section="$1"
 	local use_staging
 	local retries
+	local use_auto_staging
 	local infinite_retries
 	config_get_bool use_staging "$section" use_staging
+	config_get_bool use_auto_staging "$section" use_auto_staging
+	config_get_bool enabled "$section" enabled
 	config_get retries "$section" retries
 
 	[ -z "$retries" ] && retries=1
+	[ -z "$use_auto_staging" ] && use_auto_staging=0
 	[ "$retries" -eq "0" ] && infinite_retries=1
+	[ "$enabled" -eq "1" ] || return 0
 
 	while true; do
 		issue_cert "$1"; ret=$?
@@ -412,6 +425,13 @@ issue_cert_with_retries() {
 		if [ "$ret" -eq "2" ]; then
 			# An error occurred while retrieving the certificate.
 			retries="$((retries-1))"
+
+			if [ "$use_auto_staging" -eq "1" ] && [ "$use_staging" -eq "0" ]; then
+				log "Production certificate could not be obtained. Switching to staging server."
+				use_staging=1
+				uci set "acme.$1.use_staging=1"
+				uci commit acme
+			fi
 
 			if [ -z "$infinite_retries" ] && [ "$retries" -lt "1" ]; then
 				log "An error occurred while retrieving the certificate. Retries exceeded."
@@ -434,7 +454,19 @@ issue_cert_with_retries() {
 			sleep "$sleeptime"
 			continue
 		else
-			return "$ret";
+			if [ "$use_auto_staging" -eq "1" ]; then
+				if [ "$use_staging" -eq "0" ]; then
+					log "Production certificate obtained. Exiting."
+				else
+					log "Staging certificate obtained. Continuing with production server."
+					use_staging=0
+					uci set "acme.$1.use_staging=0"
+					uci commit acme
+					continue
+				fi
+			fi
+
+			return "$ret"
 		fi
 	done
 }
@@ -443,8 +475,8 @@ load_vars()
 {
     local section="$1"
 
-    STATE_DIR=$(config_get "$section" state_dir)
-    STAGING_STATE_DIR=$STATE_DIR/staging
+    PRODUCTION_STATE_DIR=$(config_get "$section" state_dir)
+    STAGING_STATE_DIR=$PRODUCTION_STATE_DIR/staging
     ACCOUNT_EMAIL=$(config_get "$section" account_email)
     DEBUG=$(config_get "$section" debug)
 }
@@ -458,12 +490,12 @@ fi
 config_load acme
 config_foreach load_vars acme
 
-if [ -z "$STATE_DIR" ] || [ -z "$ACCOUNT_EMAIL" ]; then
+if [ -z "$PRODUCTION_STATE_DIR" ] || [ -z "$ACCOUNT_EMAIL" ]; then
     err "state_dir and account_email must be set"
     exit 1
 fi
 
-[ -d "$STATE_DIR" ] || mkdir -p "$STATE_DIR"
+[ -d "$PRODUCTION_STATE_DIR" ] || mkdir -p "$PRODUCTION_STATE_DIR"
 [ -d "$STAGING_STATE_DIR" ] || mkdir -p "$STAGING_STATE_DIR"
 
 trap err_out HUP TERM

@@ -143,9 +143,9 @@ smb_add_share() {
 			fi
 		fi
 		
-		# always enable io_uring if we can
-		if [ "$DISABLE_ASYNC_IO" -ne 1 ] && [ -e /usr/lib/samba/vfs/io_uring.so ] && grep "io_uring_setup" /proc/kallsyms >>2 ; then
-			logger -p daemon.info -t 'samba4-server' "io_uring support found in kernel, enabling VFS io_uring."
+		# always enable io_uring if we can ("should" fail silently via samba module load if no kernel support)
+		if [ "$DISABLE_ASYNC_IO" -ne 1 ] && [ -e /usr/lib/samba/vfs/io_uring.so ] ; then
+			logger -p daemon.info -t 'samba4-server' "io_uring module found, enabling VFS io_uring. (also needs Kernel 5.4+ Support)"
 			# make sure its last in list
 			if [ -n "$vfs_objects" ]; then
 				vfs_objects="$vfs_objects io_uring"

@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python3-bottle
-PKG_VERSION:=0.12.17
-PKG_RELEASE:=2
+PKG_VERSION:=0.12.19
+PKG_RELEASE:=1
 
 PYPI_NAME:=bottle
-PKG_HASH:=e9eaa412a60cc3d42ceb42f58d15864d9ed1b92e9d630b8130c871c5bb16107c
+PKG_HASH:=a9d73ffcbc6a1345ca2d7949638db46349f5b2b77dac65d6494d45c23628da2c
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 PKG_LICENSE:=MIT

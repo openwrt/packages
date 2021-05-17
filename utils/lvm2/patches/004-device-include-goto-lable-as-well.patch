@@ -15,7 +15,7 @@ on standard C libraries without O_DIRECT_SUPPORT.
 
 --- a/lib/device/dev-io.c
 +++ b/lib/device/dev-io.c
-@@ -379,7 +379,7 @@ int dev_open_flags(struct device *dev, i
+@@ -380,7 +380,7 @@ int dev_open_flags(struct device *dev, i
  		return 0;
  	}
  

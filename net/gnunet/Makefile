@@ -2,11 +2,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
 
-PKG_VERSION:=0.13.3
-PKG_RELEASE:=4
+PKG_VERSION:=0.14.1
+PKG_RELEASE:=$(AUTORELEASE)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/gnunet
-PKG_HASH:=318e06c4134d1a8ce3b4385d82b11316eaaeb9a4dbc5d4b646453dfc53199296
+PKG_HASH:=4a3205c570c30756f1a8b1ad0f1a63d078a92f0fac8e543471d54f4552da18c2
 
 PKG_LICENSE:=AGPL-3.0
 PKG_LICENSE_FILES:=COPYING
@@ -147,7 +147,7 @@ define Package/gnunet/install
 	    core datacache dht dns fragmentation friends hello \
 	    identity natauto natnew nse nt peerinfo peerstore regexblock regex revocation \
 	    scalarproduct set seti setu statistics transport transportapplication \
-	    transportcommunicator transportcore transportmonitor util; do \
+	    transportcore transportmonitor util; do \
 		$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgnunet$$$$lib.so* $(1)/usr/lib/ ; \
 	done )
 
@@ -166,7 +166,7 @@ define Package/gnunet/install
 		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/gnunet/libexec/gnunet-$$$$lex $(1)/usr/lib/gnunet/libexec ; \
 	done )
 
-	( for conf in arm ats cadet communicator-unix core datacache dht identity \
+	( for conf in arm ats cadet core datacache dht identity \
 	    nat nat-auto nse peerinfo peerstore regex revocation \
 	    scalarproduct set seti setu statistics topology transport util; do \
 		$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/gnunet/config.d/$$$$conf.conf $(1)/usr/share/gnunet/config.d ; \
@@ -272,6 +272,10 @@ LIB_datastore:=datastore
 LIBEXEC_datastore:=service-datastore
 CONF_datastore:=datastore
 
+BIN_messenger:=messenger
+LIB_messenger:=messenger
+LIBEXEC_messenger:=service-messenger
+CONF_messenger:=messenger
 
 DEPENDS_reclaim:=+gnunet-gns +gnunet-sqlite +libpbc +libgabe +jansson
 BIN_reclaim:=reclaim
@@ -281,7 +285,7 @@ CONF_reclaim:=consensus reclaim secretsharing
 PLUGIN_reclaim:=block_consensus gnsrecord_reclaim reclaim_credential_jwt reclaim_attribute_basic
 
 DEPENDS_rest:=+gnunet-gns +gnunet-reclaim +libmicrohttpd-ssl +jansson
-LIB_rest:=rest json
+LIB_rest:=rest json gnsrecordjson
 PLUGIN_rest:=rest_config rest_copying rest_gns rest_identity rest_namestore rest_peerinfo rest_openid_connect rest_reclaim
 LIBEXEC_rest:=rest-server
 CONF_rest:=rest
@@ -325,7 +329,6 @@ CONFLICTS_fs-pgsql:=gnunet-fs-sqlite
 DEPENDS_gns-pgsql:=+gnunet-pgsql +gnunet-gns
 PLUGIN_gns-pgsql:=namecache_postgres namestore_postgres
 CONFLICTS_gns-pgsql:=gnunet-gns-sqlite gnunet-gns-flat
-
 
 DEPENDS_sqlite:=+libsqlite3
 LIB_sqlite:=sq
@@ -399,7 +402,7 @@ $(eval $(call PostInstFixSUIDPerms,gnunet-transport-wlan))
 $(eval $(call PostInstFixSUIDPerms,gnunet-vpn))
 
 $(eval $(call BuildPackage,gnunet))
-$(eval $(call BuildComponent,abd,credential service components,))
+#$(eval $(call BuildComponent,abd,credential service components,))
 $(eval $(call BuildComponent,auction,auction components,))
 $(eval $(call BuildComponent,conversation,conversation component,))
 $(eval $(call BuildComponent,curl,cURL wrapper component,))
@@ -410,6 +413,7 @@ $(eval $(call BuildComponent,fs,file-sharing components,))
 $(eval $(call BuildComponent,gns,name resolution components,y))
 $(eval $(call BuildComponent,gns-proxy,gns-proxy component,))
 $(eval $(call BuildComponent,hostlist,HTTP bootstrap hostlist client and server,y))
+$(eval $(call BuildComponent,messenger,group chat messenger,))
 $(eval $(call BuildComponent,reclaim,reclaim identity-provider subsystem,))
 $(eval $(call BuildComponent,rest,REST interface,))
 $(eval $(call BuildComponent,rps,RPS routing component,y))

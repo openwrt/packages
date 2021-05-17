@@ -34,7 +34,7 @@ f_log()
 	then
 		"${adb_logger}" -p "${class}" -t "adblock-${adb_ver}[${$}]" "${log_msg}"
 	else
-		printf "%s %s %s\\n" "${class}" "adblock-${adb_ver}[${$}]" "${log_msg}"
+		printf "%s %s %s\n" "${class}" "adblock-${adb_ver}[${$}]" "${log_msg}"
 	fi
 }
 
@@ -44,17 +44,18 @@ then
 	exit ${adb_rc}
 fi
 
-if [ "${adb_debug}" -eq 1 ]
+if [ "${adb_debug}" = "1" ]
 then
 	debug="--debug"
 fi
 
-adb_mailhead="From: ${adb_mailsender}\\nTo: ${adb_mailreceiver}\\nSubject: ${adb_mailtopic}\\nReply-to: ${adb_mailsender}\\nMime-Version: 1.0\\nContent-Type: text/html\\nContent-Disposition: inline\\n\\n"
+adb_mailhead="From: ${adb_mailsender}\nTo: ${adb_mailreceiver}\nSubject: ${adb_mailtopic}\nReply-to: ${adb_mailsender}\nMime-Version: 1.0\nContent-Type: text/html;charset=utf-8\nContent-Disposition: inline\n\n"
 
 # info preparation
 #
 sys_info="$(strings /etc/banner 2>/dev/null; ubus call system board | sed -e 's/\"release\": {//' | sed -e 's/^[ \t]*//' | sed -e 's/[{}\",]//g' | sed -e 's/[ ]/  \t/' | sed '/^$/d' 2>/dev/null)"
 adb_info="$(/etc/init.d/adblock status 2>/dev/null)"
+rep_info="${2}"
 if [ -x "${adb_logread}" ]
 then
 	log_info="$("${adb_logread}" -l 100 -e "adblock-" | awk '{NR=1;max=120;if(length($0)>max+1)while($0){if(NR==1){print substr($0,1,max)}else{print substr($0,1,max)}{$0=substr($0,max+1);NR=NR+1}}else print}')"
@@ -63,9 +64,13 @@ fi
 # mail body
 #
 adb_mailtext="<html><body><pre style='display:block;font-family:monospace;font-size:1rem;padding:20;background-color:#f3eee5;white-space:pre'>"
-adb_mailtext="${adb_mailtext}\\n<strong>++\\n++ System Information ++\\n++</strong>\\n${sys_info}"
-adb_mailtext="${adb_mailtext}\\n\\n<strong>++\\n++ Adblock Information ++\\n++</strong>\\n${adb_info}"
-adb_mailtext="${adb_mailtext}\\n\\n<strong>++\\n++ Logfile Information ++\\n++</strong>\\n${log_info}"
+adb_mailtext="${adb_mailtext}\n<strong>++\n++ System Information ++\n++</strong>\n${sys_info}"
+adb_mailtext="${adb_mailtext}\n\n<strong>++\n++ Adblock Information ++\n++</strong>\n${adb_info}"
+if [ -n "${rep_info}" ]
+then
+	adb_mailtext="${adb_mailtext}\n\n<strong>++\n++ Report Information ++\n++</strong>\n${rep_info}"
+fi
+adb_mailtext="${adb_mailtext}\n\n<strong>++\n++ Logfile Information ++\n++</strong>\n${log_info}"
 adb_mailtext="${adb_mailtext}</pre></body></html>"
 
 # send mail

@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hcxdumptool
-PKG_VERSION:=6.0.1
-PKG_RELEASE:=1
+PKG_VERSION:=6.1.6
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/zerbea/hcxdumptool/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=32bc07b692f5682792dcfd1d5dcae749e5fed4a65a2a05d815ed59adc9b64b02
+PKG_HASH:=e3212bd808e228c28ecfeeb4a9709480aa178b2e8b15c0a7d96733b648f8da85
 
 PKG_MAINTAINER:=Andreas Nilsen <adde88@gmail.com>
 PKG_LICENSE:=MIT

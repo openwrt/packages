@@ -6,13 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=snort3
-PKG_VERSION:=3.1.0.0
-PKG_RELEASE:=2
+PKG_VERSION:=3.1.4.0
+PKG_RELEASE:=$(AUTORELEASE)
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://www.snort.org/downloads/snortplus/
-PKG_HASH:=c4e2e78e3afa879d7e35e482afe42a6c4b96ed26198a9979edf7953b5151ccbf
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)/$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE:=$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://github.com/snort3/snort3/archive/refs/tags/
+PKG_HASH:=a68af8ea46a038dfb0ad489e8d11dee62a3e63cb4a639f6bb4fac4ded955fe11
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=GPL-2.0-only
@@ -45,6 +44,7 @@ CMAKE_OPTIONS += \
 	-DENABLE_STATIC_DAQ:BOOL=NO \
 	-DDAQ_INCLUDE_DIR=$(STAGING_DIR)/usr/include/daq3 \
 	-DDAQ_LIBRARIES_DIR_HINT:PATH=$(STAGING_DIR)/usr/lib/daq3 \
+	-DFLEX_INCLUDES:PATH=$(STAGING_DIR_HOST)/include \
 	-DENABLE_COREFILES:BOOL=NO \
 	-DENABLE_GDB:BOOL=NO \
 	-DMAKE_DOC:BOOL=NO \
