@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tinc
 PKG_VERSION:=1.1-git
-PKG_RELEASE=$(PKG_SOURCE_VERSION)-1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=http://tinc-vpn.org/git/tinc
