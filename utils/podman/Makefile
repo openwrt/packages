@@ -1,9 +1,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=podman
-PKG_VERSION:=3.1.1
+PKG_VERSION:=3.1.2
 PKG_RELEASE:=$(AUTORELEASE)
-PKG_HASH:=4e6fb106c6363566b6edc4ac6caee0bdf6b788e01255c3b3bfcb64f4b6842229
+PKG_HASH:=5a0d42e03d15e32c5c54a147da5ef1b8928ec00982ac9e3f1edc82c5e614b6d2
 
 PKG_SOURCE_URL:=https://github.com/containers/podman/archive/v$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -40,12 +40,12 @@ define Package/podman/Default
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Podman
-  DEPENDS:=$(GO_ARCH_DEPENDS) +conmon +cni +cni-plugins +btrfs-progs +glib2 +gnupg2 +iptables +libgpg-error +libseccomp +libgpgme +nsenter +zoneinfo-simple +kmod-veth
   URL:=https://podman.io
 endef
 
 define Package/podman
   $(call Package/podman/Default)
+  DEPENDS:=$(GO_ARCH_DEPENDS) +conmon +cni +cni-plugins +btrfs-progs +glib2 +gnupg2 +iptables +libgpg-error +libseccomp +libgpgme +nsenter +zoneinfo-simple +kmod-veth
   CONFLICTS:=podman-selinux
   VARIANT:=default
   PROVIDES:=podman
@@ -53,8 +53,8 @@ endef
 
 define Package/podman-selinux
   $(call Package/podman/Default)
-  TITLE+= with SELinux support
-  DEPENDS+= libselinux
+  TITLE += with SELinux support
+  DEPENDS:=$(GO_ARCH_DEPENDS) +conmon +cni +cni-plugins +btrfs-progs +glib2 +gnupg2 +iptables +libgpg-error +libseccomp +libgpgme +nsenter +zoneinfo-simple +kmod-veth +libselinux
   VARIANT:=selinux
   PROVIDES:=podman
 endef
