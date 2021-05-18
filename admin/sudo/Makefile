@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sudo
-PKG_VERSION:=1.9.6p1
+PKG_VERSION:=1.9.7
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.sudo.ws/dist
-PKG_HASH:=a9e9cdc058fafeb9cd3ebfb864c81755e524d98aa022152763f25bce8ca3ca90
+PKG_HASH:=2bbe7c2d6699b84d950ef9a43f09d4d967b8bc244b73bc095c4202068ddbe549
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
@@ -53,6 +53,7 @@ CONFIGURE_ARGS += \
 	--with-editor=/bin/vi \
 	--without-lecture \
 	--disable-zlib \
+	--disable-openssl \
 	--with-rundir=/var/lib/sudo \
 	--with-vardir=/var/lib/sudo
 
