@@ -3,7 +3,7 @@
 @@ -73,7 +73,7 @@ SHELL = @SHELL@
  SED = @SED@
  
- INSTALL = $(SHELL) $(top_srcdir)/install-sh -c
+ INSTALL = $(SHELL) $(scriptdir)/install-sh -c
 -INSTALL_OWNER = -o $(install_uid) -g $(install_gid)
 +INSTALL_OWNER =
  
