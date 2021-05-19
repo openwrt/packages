@@ -3,10 +3,10 @@
 # based on Yuval Adam's route53.sh found at https://github.com/yuvadm/route53-ddns/blob/master/route53.sh
 # 2017 Max Berger <max at berger dot name>
 
-[ -z "${CURL_SSL}" ] && write_log 14 "Amazon AWS Route53 communication require cURL with SSL support. Please install"
-[ -z "{$username}" ] && write_log 14 "Service section not configured correctly! Missing key as 'username'"
-[ -z "${password}" ] && write_log 14 "Service section not configured correctly! Missing secret as 'password'"
-[ -z "${domain}" ] && write_log 14 "Service section not configured correctly! Missing zone id as 'domain'"
+[ -z "$CURL_SSL" ] && write_log 14 "Amazon AWS Route53 communication require cURL with SSL support. Please install"
+[ -z "$username" ] && write_log 14 "Service section not configured correctly! Missing key as 'username'"
+[ -z "$password" ] && write_log 14 "Service section not configured correctly! Missing secret as 'password'"
+[ -z "$domain" ] && write_log 14 "Service section not configured correctly! Missing zone id as 'domain'"
 
 ENDPOINT="route53.amazonaws.com"
 RECORD_TTL=300
@@ -17,8 +17,8 @@ RECORD_VALUE="${LOCAL_IP}"
 HOSTED_ZONE_ID="${domain}"
 API_PATH="/2013-04-01/hostedzone/${HOSTED_ZONE_ID}/rrset/"
 
-AWS_ACCESS_KEY_ID="${username}"
-AWS_SECRET_ACCESS_KEY="${password}"
+AWS_ACCESS_KEY_ID="$username"
+AWS_SECRET_ACCESS_KEY="$password"
 AWS_REGION='us-east-1'
 AWS_SERVICE='route53'
 
