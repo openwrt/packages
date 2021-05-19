@@ -70,11 +70,11 @@ IPV6_REGEX="\(\([0-9A-Fa-f]\{1,4\}:\)\{1,\}\)\(\([0-9A-Fa-f]\{1,4\}\)\{0,1\}\)\(
 # characters that are dangerous to pass to a shell command line
 SHELL_ESCAPE="[\"\'\`\$\!();><{}?|\[\]\*\\\\]"
 
-# dns character set
+# dns character set. "-" must be the last character
 DNS_CHARSET="[@a-zA-Z0-9._-]"
 
-# domains can have * for wildcard
-DNS_CHARSET_DOMAIN="[@a-zA-Z0-9._-*]"
+# domains can have * for wildcard. "-" must be the last character
+DNS_CHARSET_DOMAIN="[@a-zA-Z0-9._*-]"
 
 # detect if called by ddns-lucihelper.sh script, disable retrys (empty variable == false)
 LUCI_HELPER=$(printf %s "$MYPROG" | grep -i "luci")
