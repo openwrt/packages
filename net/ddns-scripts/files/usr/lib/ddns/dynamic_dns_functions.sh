@@ -73,6 +73,9 @@ SHELL_ESCAPE="[\"\'\`\$\!();><{}?|\[\]\*\\\\]"
 # dns character set
 DNS_CHARSET="[@a-zA-Z0-9._-]"
 
+# domains can have * for wildcard
+DNS_CHARSET_DOMAIN="[@a-zA-Z0-9._-*]"
+
 # detect if called by ddns-lucihelper.sh script, disable retrys (empty variable == false)
 LUCI_HELPER=$(printf %s "$MYPROG" | grep -i "luci")
 
