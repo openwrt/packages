@@ -1,0 +1,158 @@
+From c257743f25bb0a6fe812138e2a00d222504e17e8 Mon Sep 17 00:00:00 2001
+From: Florian Eckert <fe@dev.tdt.de>
+Date: Thu, 20 May 2021 13:28:35 +0200
+Subject: [PATCH 2/3] xr_usb_serial_common: fix compiler misleading-indentation
+ warning
+
+The source code is not formatted correctly. The compiler gives a
+`misleading-indentation` warning. To fix this, the code was reformatted
+from spaces to tabs, as in the rest of the source file.
+
+Signed-off-by: Florian Eckert <fe@dev.tdt.de>
+---
+ .../xr_usb_serial_common.c                    | 119 ++++++++----------
+ 1 file changed, 52 insertions(+), 67 deletions(-)
+
+diff --git a/xr_usb_serial_common-1a/xr_usb_serial_common.c b/xr_usb_serial_common-1a/xr_usb_serial_common.c
+index 201fbd3..01424b6 100644
+--- a/xr_usb_serial_common-1a/xr_usb_serial_common.c
++++ b/xr_usb_serial_common-1a/xr_usb_serial_common.c
+@@ -825,9 +825,9 @@ static int xr_usb_serial_tty_ioctl(struct tty_struct *tty,
+ {
+ 	struct xr_usb_serial *xr_usb_serial = tty->driver_data;
+ 	int rv = -ENOIOCTLCMD;
+-    unsigned int  channel, reg, val;
++	unsigned int channel, reg, val;
++	short *data;
+ 
+-    short	*data;
+ 	switch (cmd) {
+ 	case TIOCGSERIAL: /* gets serial port data */
+ 		rv = get_serial_info(xr_usb_serial, (struct serial_struct __user *) arg);
+@@ -835,73 +835,58 @@ static int xr_usb_serial_tty_ioctl(struct tty_struct *tty,
+ 	case TIOCSSERIAL:
+ 		rv = set_serial_info(xr_usb_serial, (struct serial_struct __user *) arg);
+ 		break;
+-    case XR_USB_SERIAL_GET_REG:
+-                if (get_user(channel, (int __user *)arg))
+-                        return -EFAULT;
+-                if (get_user(reg, (int __user *)(arg + sizeof(int))))
+-                        return -EFAULT;
+-
+-                data = kmalloc(2, GFP_KERNEL);
+-                if (data == NULL) {
+-                        dev_err(&xr_usb_serial->control->dev, "%s - Cannot allocate USB buffer.\n", __func__);
+-                        return -ENOMEM;
++	case XR_USB_SERIAL_GET_REG:
++		if (get_user(channel, (int __user *)arg))
++			return -EFAULT;
++		if (get_user(reg, (int __user *)(arg + sizeof(int))))
++			return -EFAULT;
++		data = kmalloc(2, GFP_KERNEL);
++		if (data == NULL) {
++			dev_err(&xr_usb_serial->control->dev, "%s - Cannot allocate USB buffer.\n", __func__);
++			return -ENOMEM;
+ 		}
+-        			
+-		        if (channel == -1)
+-		        {
+-		          rv = xr_usb_serial_get_reg(xr_usb_serial,reg, data);
+-		        }
+-				else
+-				{
+-			  	  rv = xr_usb_serial_get_reg_ext(xr_usb_serial,channel,reg, data);
+-				}
+-                if (rv != 1) {
+-                        dev_err(&xr_usb_serial->control->dev, "Cannot get register (%d)\n", rv);
+-                        kfree(data);
+-                        return -EFAULT;
+-                }
+-				if (put_user(le16_to_cpu(*data), (int __user *)(arg + 2 * sizeof(int))))
+-              	{
+-                   dev_err(&xr_usb_serial->control->dev, "Cannot put user result\n");
+-                   kfree(data);
+-                   return -EFAULT;
+-                }
+-                rv = 0;
+-                kfree(data);
+-                break;
+-
+-      case XR_USB_SERIAL_SET_REG:
+-                if (get_user(channel, (int __user *)arg))
+-                        return -EFAULT;
+-                if (get_user(reg, (int __user *)(arg + sizeof(int))))
+-                        return -EFAULT;
+-                if (get_user(val, (int __user *)(arg + 2 * sizeof(int))))
+-                        return -EFAULT;
+-
+-			if (channel == -1)
+-			{
+-				rv = xr_usb_serial_set_reg(xr_usb_serial,reg, val);
+-			}
+-			else
+-			{
+-			 	rv = xr_usb_serial_set_reg_ext(xr_usb_serial,channel,reg, val);
+-				
+-			}
+-		    if (rv < 0)
+-               return -EFAULT;  
+-			rv = 0;
+-            break;
++		if (channel == -1)
++			rv = xr_usb_serial_get_reg(xr_usb_serial,reg, data);
++		else
++			rv = xr_usb_serial_get_reg_ext(xr_usb_serial,channel,reg, data);
++		if (rv != 1) {
++			dev_err(&xr_usb_serial->control->dev, "Cannot get register (%d)\n", rv);
++			kfree(data);
++			return -EFAULT;
++		}
++		if (put_user(le16_to_cpu(*data), (int __user *)(arg + 2 * sizeof(int)))) {
++			dev_err(&xr_usb_serial->control->dev, "Cannot put user result\n");
++			kfree(data);
++			return -EFAULT;
++		}
++		rv = 0;
++		kfree(data);
++		break;
++	case XR_USB_SERIAL_SET_REG:
++		if (get_user(channel, (int __user *)arg))
++			return -EFAULT;
++		if (get_user(reg, (int __user *)(arg + sizeof(int))))
++			return -EFAULT;
++		if (get_user(val, (int __user *)(arg + 2 * sizeof(int))))
++			return -EFAULT;
++		if (channel == -1)
++			rv = xr_usb_serial_set_reg(xr_usb_serial,reg, val);
++		else
++			rv = xr_usb_serial_set_reg_ext(xr_usb_serial,channel,reg, val);
++		if (rv < 0)
++			return -EFAULT;
++		rv = 0;
++		break;
+ 	case XR_USB_SERIAL_LOOPBACK:
+-		     if (get_user(channel, (int __user *)arg))
+-                        return -EFAULT;
+-		     if (channel == -1)
+-			   channel = xr_usb_serial->channel;
+-			 rv = xr_usb_serial_set_loopback(xr_usb_serial,channel);
+-			 if (rv < 0)
+-               return -EFAULT;
+-			 rv = 0;
+-		     break;
+-		
++		if (get_user(channel, (int __user *)arg))
++			return -EFAULT;
++		if (channel == -1)
++			channel = xr_usb_serial->channel;
++		rv = xr_usb_serial_set_loopback(xr_usb_serial,channel);
++		if (rv < 0)
++			return -EFAULT;
++		rv = 0;
++		break;
+ 	}
+ 
+ 	return rv;
+-- 
+2.20.1
+

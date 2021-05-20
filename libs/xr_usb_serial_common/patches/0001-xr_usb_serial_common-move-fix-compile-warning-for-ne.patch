@@ -1,0 +1,98 @@
+From e27f270e005aacdd8dce748c66cb22dba998dc69 Mon Sep 17 00:00:00 2001
+From: Florian Eckert <fe@dev.tdt.de>
+Date: Thu, 20 May 2021 13:18:33 +0200
+Subject: [PATCH 1/3] xr_usb_serial_common: move fix compile warning for newer
+ kernels
+
+On newer kernel a compilation warning is triggerd, that die variable is
+not used. To fix this move the defintions into the precompiler path.
+
+Signed-off-by: Florian Eckert <fe@dev.tdt.de>
+---
+ .../xr_usb_serial_common.c                    | 22 +++++++++----------
+ 1 file changed, 11 insertions(+), 11 deletions(-)
+
+diff --git a/xr_usb_serial_common-1a/xr_usb_serial_common.c b/xr_usb_serial_common-1a/xr_usb_serial_common.c
+index 972a9e7..201fbd3 100644
+--- a/xr_usb_serial_common-1a/xr_usb_serial_common.c
++++ b/xr_usb_serial_common-1a/xr_usb_serial_common.c
+@@ -258,7 +258,6 @@ static void xr_usb_serial_ctrl_irq(struct urb *urb)
+ {
+ 	struct xr_usb_serial *xr_usb_serial = urb->context;
+ 	struct usb_cdc_notification *dr = urb->transfer_buffer;
+-	struct tty_struct *tty;
+ 	unsigned char *data;
+ 	int newctrl;
+ 	int retval;
+@@ -307,9 +306,10 @@ static void xr_usb_serial_ctrl_irq(struct urb *urb)
+ 					__func__);
+ 			tty_port_tty_hangup(&xr_usb_serial->port, false);
+ 		}
+-#else		
++#else
++		struct tty_struct *tty;
+ 		tty = tty_port_tty_get(&xr_usb_serial->port);
+-        newctrl = get_unaligned_le16(data);
++		newctrl = get_unaligned_le16(data);
+ 		if (tty)
+ 		{
+ 			if (!xr_usb_serial->clocal &&
+@@ -390,7 +390,6 @@ static int xr_usb_serial_submit_read_urbs(struct xr_usb_serial *xr_usb_serial, g
+ }
+ static void xr_usb_serial_process_read_urb(struct xr_usb_serial *xr_usb_serial, struct urb *urb)
+ {
+-    struct tty_struct *tty;
+ 	if (!urb->actual_length)
+ 		return;
+ #if LINUX_VERSION_CODE > KERNEL_VERSION(3, 9, 0)    
+@@ -398,7 +397,8 @@ static void xr_usb_serial_process_read_urb(struct xr_usb_serial *xr_usb_serial,
+ 			urb->actual_length);
+ 	tty_flip_buffer_push(&xr_usb_serial->port);
+ #else
+-    tty = tty_port_tty_get(&xr_usb_serial->port);
++	struct tty_struct *tty;
++	tty = tty_port_tty_get(&xr_usb_serial->port);
+ 	if (!tty)
+ 		return;
+ 	tty_insert_flip_string(tty, urb->transfer_buffer, urb->actual_length);
+@@ -465,18 +465,18 @@ static void xr_usb_serial_write_bulk(struct urb *urb)
+ static void xr_usb_serial_softint(struct work_struct *work)
+ {
+ 	struct xr_usb_serial *xr_usb_serial = container_of(work, struct xr_usb_serial, work);
+-    struct tty_struct *tty;
+-	
++
+ 	dev_vdbg(&xr_usb_serial->data->dev, "%s\n", __func__);
+ #if LINUX_VERSION_CODE > KERNEL_VERSION(3, 9, 0)
+ 	tty_port_tty_wakeup(&xr_usb_serial->port);
+-#else	
++#else
++	struct tty_struct *tty;
+ 	tty = tty_port_tty_get(&xr_usb_serial->port);
+ 	if (!tty)
+ 		return;
+ 	tty_wakeup(tty);
+ 	tty_kref_put(tty);
+-#endif	
++#endif
+ }
+ 
+ /*
+@@ -1622,12 +1622,12 @@ err_out:
+ static int xr_usb_serial_reset_resume(struct usb_interface *intf)
+ {
+ 	struct xr_usb_serial *xr_usb_serial = usb_get_intfdata(intf);
+-    struct tty_struct *tty;
+ 	if (test_bit(ASYNCB_INITIALIZED, &xr_usb_serial->port.flags)){
+ #if LINUX_VERSION_CODE > KERNEL_VERSION(3, 9, 0)	
+ 	tty_port_tty_hangup(&xr_usb_serial->port, false);
+ #else
+- 	tty = tty_port_tty_get(&xr_usb_serial->port);
++	struct tty_struct *tty;
++	tty = tty_port_tty_get(&xr_usb_serial->port);
+ 	if (tty) {
+ 		tty_hangup(tty);
+ 		tty_kref_put(tty);
+-- 
+2.20.1
+
