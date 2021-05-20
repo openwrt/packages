@@ -190,6 +190,7 @@ test_crypto
 tls_client
 tls_exit
 tls_server
+tun_ipv6
 up_delay
 up_restart
 username_as_common_name
