@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gpsd
 PKG_VERSION:=3.21
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SAVANNAH/$(PKG_NAME)
@@ -68,6 +68,18 @@ define Package/gpsd-clients/description
   $(call Package/gpsd/Default/description)
   This package contains auxiliary tools and example clients for monitoring and
   testing the GPS daemon.
+endef
+
+define Package/gpsd-utils
+  $(call Package/gpsd/Default)
+  SECTION:=utils
+  CATEGORY:=Utilities
+  TITLE:=GPS daemon utils
+endef
+
+define Package/gpsd-utils/description
+  $(call Package/gpsd/Default/description)
+  This package contains utilities for interacting with GPS daemon.
 endef
 
 define Package/libgps
@@ -137,6 +149,11 @@ define Package/gpsd-clients/install
 		$(1)/usr/bin/
 endef
 
+define Package/gpsd-utils/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/gpsdctl $(1)/usr/sbin/
+endef
+
 define Package/libgps/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgps.so.* $(1)/usr/lib/
@@ -144,4 +161,5 @@ endef
 
 $(eval $(call BuildPackage,gpsd))
 $(eval $(call BuildPackage,gpsd-clients))
+$(eval $(call BuildPackage,gpsd-utils))
 $(eval $(call BuildPackage,libgps))
