@@ -93,10 +93,10 @@ endef
 define Package/podman/install
 	$(call GoPackage/Package/Install/Bin,$(1))
 	$(INSTALL_DIR) $(1)/etc/containers
-	$(INSTALL_CONF) $(DL_DIR)/default-policy.json-362f70b056 $(1)/etc/containers/policy.json
-	$(INSTALL_CONF) $(DL_DIR)/registries.fedora-da9a9c8778 $(1)/etc/containers/registries.conf
-	$(INSTALL_CONF) $(PKG_BUILD_DIR)/vendor/github.com/containers/storage/storage.conf $(1)/etc/containers/storage.conf
-	$(INSTALL_CONF) ./files/containers.conf $(1)/etc/containers/containers.conf
+	$(INSTALL_DATA) $(DL_DIR)/default-policy.json-362f70b056 $(1)/etc/containers/policy.json
+	$(INSTALL_DATA) $(DL_DIR)/registries.fedora-da9a9c8778 $(1)/etc/containers/registries.conf
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/vendor/github.com/containers/storage/storage.conf $(1)/etc/containers/storage.conf
+	$(INSTALL_DATA) ./files/containers.conf $(1)/etc/containers/containers.conf
 	$(INSTALL_DIR) $(1)/etc/cni/net.d
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/cni/87-podman-bridge.conflist $(1)/etc/cni/net.d/
 	$(INSTALL_DIR) $(1)/etc/init.d
