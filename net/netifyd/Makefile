@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netifyd
-PKG_RELEASE:=3
+PKG_RELEASE:=1
 PKG_MAINTAINER:=Darryl Sokoloski <darryl@egloo.ca>
 PKG_LICENSE:=GPL-3.0-or-later
 
@@ -16,10 +16,10 @@ PKG_INSTALL:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://gitlab.com/netify.ai/public/netify-agent.git
-PKG_SOURCE_DATE:=2020-09-15
-PKG_SOURCE_VERSION:=v3.05
-#PKG_SOURCE_VERSION:=09fa5fb202ba95ee2d73a4eb0fefe9265d15c780
-PKG_MIRROR_HASH:=2bcaa54f1660a30070f0c79a79259e96f169a9c7a0fe4a1195bb74f7de184204
+PKG_SOURCE_DATE:=2021-05-19
+PKG_SOURCE_VERSION:=v3.07
+#PKG_SOURCE_VERSION:=a22c66b9d916347b34f6d26de2a95c94f446401b
+PKG_MIRROR_HASH:=de6c4ce7bb00ec72478a7eeaa44b1a30d2ef64202f8524a000bce6015441a5ca
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -80,6 +80,13 @@ endef
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/netifyd
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/netifyd/*.h $(1)/usr/include/netifyd
+	$(INSTALL_DIR) $(1)/usr/include/netifyd/pcap-compat
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/netifyd/pcap-compat/*.h $(1)/usr/include/netifyd/pcap-compat
+	$(INSTALL_DIR) $(1)/usr/include/netifyd/nlohmann
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/netifyd/nlohmann/*.hpp $(1)/usr/include/netifyd/nlohmann
+	$(INSTALL_DIR) $(1)/usr/include/libndpi-2.9.0
+	$(INSTALL_DIR) $(1)/usr/include/libndpi-2.9.0/libndpi
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/libndpi-2.9.0/libndpi/*.h $(1)/usr/include/libndpi-2.9.0/libndpi
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libnetifyd.{a,so*} $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
