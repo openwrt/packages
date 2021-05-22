@@ -3,7 +3,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=usb-serial-xr_usb_serial_common
 PKG_VERSION:=1a
-PKG_RELEASE=1
+PKG_RELEASE:=2
 
 PKG_LICENSE:=GPLv2
 PKG_LICENSE_FILES:=
