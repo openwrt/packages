@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gitlab-runner
-PKG_VERSION:=13.11.0
+PKG_VERSION:=13.12.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://gitlab.com/gitlab-org/gitlab-runner/-/archive/v$(PKG_VERSION)
-PKG_HASH:=7bc15d89f7b0551c4dd236d3ef846cf7840175fa1638fa58d0ccd12f3c04a56b
+PKG_HASH:=5cf7c2af3a3682f1044ef374dfe7f014febba6e5a53fa442b7f114b10811831e
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=MIT
