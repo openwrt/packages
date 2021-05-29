@@ -214,9 +214,9 @@ issue_cert()
 	local days
 
 	config_get_bool enabled "$section" enabled 0
-	config_get_bool use_staging "$section" use_staging
-	config_get_bool update_uhttpd "$section" update_uhttpd
-	config_get_bool update_nginx "$section" update_nginx
+	config_get_bool use_staging "$section" use_staging 0
+	config_get_bool update_uhttpd "$section" update_uhttpd 0
+	config_get_bool update_nginx "$section" update_nginx 0
 	config_get calias "$section" calias
 	config_get dalias "$section" dalias
 	config_get domains "$section" domains
@@ -361,7 +361,7 @@ load_vars()
 
 	STATE_DIR=$(config_get "$section" state_dir)
 	ACCOUNT_EMAIL=$(config_get "$section" account_email)
-	DEBUG=$(config_get "$section" debug)
+	DEBUG=$(config_get_bool "$section" debug 0)
 }
 
 check_cron
