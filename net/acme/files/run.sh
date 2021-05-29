@@ -43,7 +43,7 @@ err()
 
 debug()
 {
-	[ "$DEBUG" -eq "1" ] && logger -t acme -s -p daemon.debug -- "$@"
+	[ "$DEBUG" = "1" ] && logger -t acme -s -p daemon.debug -- "$@"
 }
 
 get_listeners() {
@@ -234,7 +234,7 @@ issue_cert()
 
 	[ "$enabled" -eq "1" ] || return
 
-	[ "$DEBUG" -eq "1" ] && acme_args="$acme_args --debug"
+	[ "$DEBUG" = "1" ] && acme_args="$acme_args --debug"
 
 	set -- $domains
 	main_domain=$1
@@ -262,7 +262,7 @@ issue_cert()
 	config_list_foreach "$section" credentials handle_credentials
 
 	if [ -e "$domain_dir" ]; then
-		if [ "$use_staging" -eq "0" ] && is_staging "$main_domain" "$domain_dir"; then
+		if [ "$use_staging" = "0" ] && is_staging "$main_domain" "$domain_dir"; then
 			log "Found previous cert issued using staging server. Moving it out of the way."
 			mv "$domain_dir" "${domain_dir}.staging"
 			moved_staging=1
