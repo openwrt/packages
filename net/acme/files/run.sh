@@ -33,7 +33,7 @@ check_cron()
 
 log()
 {
-	logger -t acme -s -p daemon.info -- "$@"
+	logger -t acme -p daemon.info -- "$@"
 }
 
 err()
