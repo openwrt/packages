@@ -146,7 +146,7 @@ post_checks()
 	iptables -D input_rule -p tcp --dport 80 -j ACCEPT -m comment --comment "ACME" 2>/dev/null
 	ip6tables -D input_rule -p tcp --dport 80 -j ACCEPT -m comment --comment "ACME" 2>/dev/null
 
-	if [ -e /etc/init.d/uhttpd ] && ( [ -n "$UHTTPD_LISTEN_HTTP" ] || [ "$UPDATE_UHTTPD" -eq 1 ] ); then
+	if [ -e /etc/init.d/uhttpd ] && ( [ -n "$UHTTPD_LISTEN_HTTP" ] || [ "$UPDATE_UHTTPD" = "1" ] ); then
 		if [ -n "$UHTTPD_LISTEN_HTTP" ]; then
 			uci set uhttpd.main.listen_http="$UHTTPD_LISTEN_HTTP"
 			UHTTPD_LISTEN_HTTP=
@@ -155,7 +155,7 @@ post_checks()
 		/etc/init.d/uhttpd reload
 	fi
 
-	if [ -e /etc/init.d/nginx ] && ( [ "$NGINX_WEBSERVER" -eq 1 ] || [ "$UPDATE_NGINX" -eq 1 ] ); then
+	if [ -e /etc/init.d/nginx ] && ( [ "$NGINX_WEBSERVER" -eq 1 ] || [ "$UPDATE_NGINX" = "1" ] ); then
 		NGINX_WEBSERVER=0
 		/etc/init.d/nginx restart
 	fi
@@ -232,7 +232,7 @@ issue_cert()
 	UPDATE_UHTTPD=$update_uhttpd
 	USER_CLEANUP=$user_cleanup
 
-	[ "$enabled" -eq "1" ] || return
+	[ "$enabled" = "1" ] || return
 
 	[ "$DEBUG" = "1" ] && acme_args="$acme_args --debug"
 
@@ -279,7 +279,7 @@ issue_cert()
 	acme_args="$acme_args $(for d in $domains; do echo -n "-d $d "; done)"
 	acme_args="$acme_args --keylength $keylength"
 	[ -n "$ACCOUNT_EMAIL" ] && acme_args="$acme_args --accountemail $ACCOUNT_EMAIL"
-	[ "$use_staging" -eq "1" ] && acme_args="$acme_args --staging"
+	[ "$use_staging" = "1" ] && acme_args="$acme_args --staging"
 
 	if [ -n "$acme_server" ]; then
 		log "Using custom ACME server URL"
@@ -329,7 +329,7 @@ issue_cert()
 		return 1
 	fi
 
-	if [ -e /etc/init.d/uhttpd ] && [ "$update_uhttpd" -eq "1" ]; then
+	if [ -e /etc/init.d/uhttpd ] && [ "$update_uhttpd" = "1" ]; then
 		uci set uhttpd.main.key="${domain_dir}/${main_domain}.key"
 		uci set uhttpd.main.cert="${domain_dir}/fullchain.cer"
 		# commit and reload is in post_checks
@@ -337,7 +337,7 @@ issue_cert()
 
 	local nginx_updated
 	nginx_updated=0
-	if command -v nginx-util 2>/dev/null && [ "$update_nginx" -eq "1" ]; then
+	if command -v nginx-util 2>/dev/null && [ "$update_nginx" = "1" ]; then
 		nginx_updated=1
 		for domain in $domains; do
 			nginx-util add_ssl "${domain}" acme "${domain_dir}/fullchain.cer" \
@@ -346,7 +346,7 @@ issue_cert()
 		# reload is in post_checks
 	fi
 
-	if [ "$nginx_updated" -eq "0" ] && [ -w /etc/nginx/nginx.conf ] && [ "$update_nginx" -eq "1" ]; then
+	if [ "$nginx_updated" -eq "0" ] && [ -w /etc/nginx/nginx.conf ] && [ "$update_nginx" = "1" ]; then
 		sed -i "s#ssl_certificate\ .*#ssl_certificate ${domain_dir}/fullchain.cer;#g" /etc/nginx/nginx.conf
 		sed -i "s#ssl_certificate_key\ .*#ssl_certificate_key ${domain_dir}/${main_domain}.key;#g" /etc/nginx/nginx.conf
 		# commit and reload is in post_checks
