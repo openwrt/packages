@@ -101,7 +101,7 @@ pre_checks()
 				fi
 				;;
 			nginx)
-				if [ "$NGINX_WEBSERVER" -eq "1" ]; then
+				if [ "$NGINX_WEBSERVER" = "1" ]; then
 					debug "Already handled nginx; skipping"
 					continue
 				fi
@@ -155,7 +155,7 @@ post_checks()
 		/etc/init.d/uhttpd reload
 	fi
 
-	if [ -e /etc/init.d/nginx ] && ( [ "$NGINX_WEBSERVER" -eq 1 ] || [ "$UPDATE_NGINX" = "1" ] ); then
+	if [ -e /etc/init.d/nginx ] && ( [ "$NGINX_WEBSERVER" = 1 ] || [ "$UPDATE_NGINX" = "1" ] ); then
 		NGINX_WEBSERVER=0
 		/etc/init.d/nginx restart
 	fi
@@ -268,7 +268,7 @@ issue_cert()
 			moved_staging=1
 		else
 			log "Found previous cert config. Issuing renew."
-			[ "$keylength_ecc" -eq "1" ] && acme_args="$acme_args --ecc"
+			[ "$keylength_ecc" = "1" ] && acme_args="$acme_args --ecc"
 			run_acme --home "$STATE_DIR" --renew -d "$main_domain" $acme_args && ret=0 || ret=1
 			post_checks
 			return $ret
@@ -321,7 +321,7 @@ issue_cert()
 		failed_dir="${domain_dir}.failed-$(date +%s)"
 		err "Issuing cert for $main_domain failed. Moving state to $failed_dir"
 		[ -d "$domain_dir" ] && mv "$domain_dir" "$failed_dir"
-		if [ "$moved_staging" -eq "1" ]; then
+		if [ "$moved_staging" = "1" ]; then
 			err "Restoring staging certificate"
 			mv "${domain_dir}.staging" "${domain_dir}"
 		fi
@@ -346,7 +346,7 @@ issue_cert()
 		# reload is in post_checks
 	fi
 
-	if [ "$nginx_updated" -eq "0" ] && [ -w /etc/nginx/nginx.conf ] && [ "$update_nginx" = "1" ]; then
+	if [ "$nginx_updated" = "0" ] && [ -w /etc/nginx/nginx.conf ] && [ "$update_nginx" = "1" ]; then
 		sed -i "s#ssl_certificate\ .*#ssl_certificate ${domain_dir}/fullchain.cer;#g" /etc/nginx/nginx.conf
 		sed -i "s#ssl_certificate_key\ .*#ssl_certificate_key ${domain_dir}/${main_domain}.key;#g" /etc/nginx/nginx.conf
 		# commit and reload is in post_checks
