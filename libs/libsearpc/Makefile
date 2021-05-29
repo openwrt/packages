@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libsearpc
 PKG_VERSION:=3.2.0
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/haiwen/libsearpc.git
@@ -17,7 +17,7 @@ PKG_SOURCE_VERSION:=d1fd7518a20b25766ff98d6fde6e40c63626ca0d
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)-$(call version_abbrev,$(PKG_SOURCE_VERSION))
 PKG_MIRROR_HASH:=ee8b8b50b480afbcb71bd73cd9c2a96cfa72e9dafaf5773574adbf348e49a0d4
 
-PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>, Jeffery To <jeffery.to@gmail.com>
+PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE.txt
 
