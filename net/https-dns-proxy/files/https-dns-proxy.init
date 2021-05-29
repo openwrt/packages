@@ -1,6 +1,6 @@
 #!/bin/sh /etc/rc.common
 # Copyright 2019-2020 Stan Grishin (stangri@melmac.net)
-# shellcheck disable=SC2039
+# shellcheck disable=SC2039,SC3043,SC3060
 PKG_VERSION='dev-test'
 
 # shellcheck disable=SC2034
@@ -171,7 +171,7 @@ dnsmasq_add_doh_server() {
 dnsmasq_create_server_backup() {
 	local cfg="$1"
 	local i
-	uci -q get "dhcp.${cfg}" >/dev/null || return 0
+	uci -q get "dhcp.${cfg}" >/dev/null || return 1
 	if ! uci -q get "dhcp.${cfg}.doh_backup_noresolv" >/dev/null; then
 		if [ -z "$(uci -q get "dhcp.${cfg}.noresolv")" ]; then
 			uci -q set "dhcp.${cfg}.noresolv=1"
@@ -182,13 +182,17 @@ dnsmasq_create_server_backup() {
 		fi
 	fi
 	if ! uci -q get "dhcp.${cfg}.doh_backup_server" >/dev/null; then
+		if [ -z "$(uci -q get "dhcp.${cfg}.server")" ]; then
+			uci -q add_list "dhcp.${cfg}.doh_backup_server="
+		fi
 		for i in $(uci -q get "dhcp.${cfg}.server"); do
 			uci -q add_list "dhcp.${cfg}.doh_backup_server=$i"
-			if [ "$i" = "${i//127.0.0.1}" ] && [ "$i" = "$(echo "$i" | tr -d /)" ]; then
+			if [ "$i" = "$(echo "$i" | tr -d /\#)" ]; then
 				uci -q del_list "dhcp.${cfg}.server=$i"
 			fi
 		done
 	fi
+	return 0
 }
 
 dnsmasq_restore_server_backup() {
@@ -221,7 +225,8 @@ dhcp_backup() {
 				config_foreach dnsmasq_create_server_backup 'dnsmasq'
 			elif [ -n "$dnsmasqConfig" ]; then
 				for i in $dnsmasqConfig; do
-					dnsmasq_create_server_backup "@dnsmasq[${i}]"
+					dnsmasq_create_server_backup "@dnsmasq[${i}]" || \
+						dnsmasq_create_server_backup "$i"
 				done
 			fi
 			;;
