@@ -28,7 +28,7 @@ define Package/gummiboot
   SECTION:=boot
   CATEGORY:=Boot Loaders
   TITLE:=Simple UEFI boot manager
-  DEPENDS:=@TARGET_X86_64 +libblkid
+  DEPENDS:=@TARGET_x86_64 +libblkid
   URL:=https://github.com/rzr/gummiboot
 endef
 
