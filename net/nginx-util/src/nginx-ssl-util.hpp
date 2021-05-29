@@ -166,9 +166,14 @@ static constexpr auto _escape = _Line{
         std::string ret{};
         for (char c : strptr) {
             switch (c) {
-                case '^': ret += '\\'; [[fallthrough]];
-                case '_': [[fallthrough]];
-                case '-': ret += c; break;
+                case '^':
+                    ret += '\\';
+                    ret += c;
+                    break;
+                case '_':
+                case '-':
+                    ret += c;
+                    break;
                 default:
                     if ((isalpha(c) != 0) || (isdigit(c) != 0)) {
                         ret += c;
