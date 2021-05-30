@@ -15,7 +15,7 @@
  
  ## Where to write pidfile (default: i2pd.pid, not used in Windows)
  # pidfile = /run/i2pd.pid
-@@ -25,12 +25,12 @@
+@@ -26,12 +26,12 @@
  ##  * stdout - print log entries to stdout
  ##  * file - log entries to a file
  ##  * syslog - use syslog, see man 3 syslog
@@ -30,16 +30,7 @@
  ## Write full CLF-formatted date and time to log (default: write only time)
  # logclftime = true
  
-@@ -61,7 +61,7 @@ ipv6 = false
- # ifname6 = 
- 
- ## Enable NTCP transport (default = true)
--# ntcp = true
-+ntcp = false
- ## If you run i2pd behind a proxy server, you can only use NTCP transport with ntcpproxy option 
- ## Should be http://address:port or socks://address:port
- # ntcpproxy = http://127.0.0.1:8118
-@@ -81,7 +81,7 @@ ipv6 = false
+@@ -84,7 +84,7 @@ ipv6 = false
  
  ## Router will not accept transit tunnels, disabling transit traffic completely
  ## (default = false)
@@ -47,8 +38,8 @@
 +notransit = true
  
  ## Router will be floodfill
- # floodfill = true
-@@ -91,8 +91,10 @@ ipv6 = false
+ ## Note: that mode uses much more network connections and CPU!
+@@ -95,8 +95,10 @@ ipv6 = false
  ## Uncomment and set to 'false' to disable Web Console
  # enabled = true
  ## Address and port service will listen on
@@ -59,8 +50,8 @@
 +# strictheaders = false
  ## Path to web console, default "/"
  # webroot = /
- ## Uncomment following lines to enable Web Console authentication 
-@@ -104,7 +106,7 @@ port = 7070
+ ## Uncomment following lines to enable Web Console authentication
+@@ -108,7 +110,7 @@ port = 7070
  ## Uncomment and set to 'false' to disable HTTP Proxy
  # enabled = true
  ## Address and port service will listen on
@@ -69,7 +60,7 @@
  port = 4444
  ## Optional keys file for proxy local destination
  # keys = http-proxy-keys.dat
-@@ -118,7 +120,7 @@ port = 4444
+@@ -122,7 +124,7 @@ port = 4444
  ## Uncomment and set to 'false' to disable SOCKS Proxy
  # enabled = true
  ## Address and port service will listen on
@@ -78,12 +69,14 @@
  port = 4447
  ## Optional keys file for proxy local destination
  # keys = socks-proxy-keys.dat
-@@ -228,7 +230,8 @@ verify = true
+@@ -237,9 +239,9 @@ verify = true
  
  [persist]
  ## Save peer profiles on disk (default: true)
 -# profiles = true
 +profiles = false
+ ## Save full addresses on disk (default: true)
+-# addressbook = true
 +addressbook = false
  
  [cpuext]
