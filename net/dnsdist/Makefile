@@ -82,7 +82,7 @@ menu "Configuration"
 		default y
 
 	config DNSDIST_SODIUM
-		bool "Build with libsodium
+		bool "Build with libsodium"
 		help
 			"Build with libsodium - for encrypted console connections, and DNSCrypt"
 		default y
