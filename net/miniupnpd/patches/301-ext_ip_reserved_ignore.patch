@@ -24,7 +24,7 @@ Date:   Sun Jul 5 10:42:52 2020 +0800
  	size_t i;
  
 +	if(GETFLAG(EXTIPRESERVEDIGNOREMASK)) {
-+		syslog(LOG_NOTICE, "private/reserved address checking is ignore");
++		syslog(LOG_NOTICE, "private/reserved address checking is ignored");
 +		return 0;
 +	}
 +
