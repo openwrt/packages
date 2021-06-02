@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vsftpd
-PKG_VERSION:=3.0.3
-PKG_RELEASE:=3
+PKG_VERSION:=3.0.4
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://security.appspot.com/downloads/
-PKG_HASH:=9d4d2bf6e6e2884852ba4e69e157a2cecd68c5a7635d66a3a8cf8d898c955ef7
+PKG_HASH:=6b9421bd27e8a6cdeed5b31154f294a20b003a11a26c09500715a0a6b1b86a26
 
 PKG_MAINTAINER:=Cezary Jackiewicz <cezary@eko.one.pl>
 PKG_LICENSE:=GPLv2
