@@ -4,7 +4,7 @@ START=90
 STOP=10
 
 USE_PROCD=1
-PROG=/usr/lib/ipsec/starter
+PROG=/usr/lib/ipsec/charon
 
 . $IPKG_INSTROOT/lib/functions.sh
 . $IPKG_INSTROOT/lib/functions/network.sh
@@ -614,7 +614,7 @@ start_service() {
 
 	procd_open_instance
 
-	procd_set_param command $PROG --daemon charon --nofork
+	procd_set_param command $PROG
 
 	procd_set_param file $SWANCTL_CONF_FILE
 	procd_append_param file /etc/swanctl/conf.d/*.conf
