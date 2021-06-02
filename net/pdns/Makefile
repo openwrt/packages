@@ -8,7 +8,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://downloads.powerdns.com/releases/
 PKG_HASH:=40cb81d9e0d34edcc7c95435a06125bde0bd1a51692e1db52413e31d7ede0b39
 
-PKG_MAINTAINER:=James Taylor <james@jtaylor.id.au>
+PKG_MAINTAINER:=Peter van Dijk <peter.van.dijk@powerdns.com>
 PKG_LICENCE:=GPL-2.0-only
 PKG_LICENCE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:powerdns:authoritative

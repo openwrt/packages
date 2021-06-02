@@ -2,13 +2,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=h2o
 PKG_VERSION:=2.2.6
-PKG_RELEASE:=9
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE_URL:=https://codeload.github.com/h2o/h2o/tar.gz/v${PKG_VERSION}?
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_HASH:=f8cbc1b530d85ff098f6efc2c3fdbc5e29baffb30614caac59d5c710f7bda201
 
-PKG_MAINTAINER:=James Taylor <james@jtaylor.id.au
+PKG_MAINTAINER:=Peter van Dijk <peter.van.dijk@powerdns.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
