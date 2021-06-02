@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tang
-PKG_VERSION:=8
-PKG_RELEASE:=1
+PKG_VERSION:=10
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/latchset/$(PKG_NAME)/releases/download/v$(PKG_VERSION)/
-PKG_HASH:=03958bf27c24aa9892f6138d287d39bcc149e7ad72163c27b529aa3c6b066ede
+PKG_HASH:=082f17e031708ab5e2f88c9b767d228bcf92a0d089fdb164d4ae93845cbd2a48
 
 PKG_MAINTAINER:=Tibor Dudlák <tibor.dudlak@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
