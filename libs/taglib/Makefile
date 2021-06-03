@@ -27,7 +27,6 @@ define Package/taglib
   TITLE:=taglib
   URL:=https://github.com/taglib/taglib
   DEPENDS:=+libstdcpp
-  BUILDONLY:=1
 endef
 
 define Package/taglib/description
@@ -38,6 +37,7 @@ define Package/taglib/description
 endef
 
 CMAKE_OPTIONS += \
+	-DBUILD_SHARED_LIBS=ON
 	-DBUILD_TESTS=OFF \
 	-DBUILD_EXAMPLES=OFF \
 	-DBUILD_BINDINGS=OFF \
@@ -54,6 +54,11 @@ define Build/InstallDev
 	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/taglib.pc
 	$(INSTALL_DIR) $(2)/bin
 	$(LN) ../../usr/bin/taglib-config $(2)/bin/taglib-config
+endef
+
+define Package/taglib/Install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libtag.so.* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,taglib))
