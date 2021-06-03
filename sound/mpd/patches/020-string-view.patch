@@ -23,12 +23,3 @@
  	for (unsigned i = 0; i < unsigned(TAG_NUM_OF_ITEM_TYPES); ++i)
  		names[tag_item_names[i]] = TagType(i);
  
-@@ -61,7 +67,7 @@ main(int argc, char **argv)
- 	char first = 0;
- 
- 	for (const auto &i : names) {
--		const std::string_view name = i.first;
-+		const string_view name = i.first;
- 		const TagType tag = i.second;
- 
- 		if (name.front() != first) {
