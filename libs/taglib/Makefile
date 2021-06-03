@@ -26,7 +26,7 @@ define Package/taglib
   CATEGORY:=Libraries
   TITLE:=taglib
   URL:=https://github.com/taglib/taglib
-  DEPENDS:=+libstdcpp
+  DEPENDS:=+zlib +libstdcpp
 endef
 
 define Package/taglib/description
