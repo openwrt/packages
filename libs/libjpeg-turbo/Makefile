@@ -62,6 +62,12 @@ CMAKE_OPTIONS += \
 	-DWITH_SIMD=O$(if $(findstring mips,$(CONFIG_ARCH)),FF,N) \
 	-DWITH_TURBOJPEG=OFF
 
+ifneq ($(findstring arm,$(CONFIG_ARCH)),)
+ifeq ($(findstring neon,$(CONFIG_CPU_TYPE)),)
+	CMAKE_OPTIONS += -DWITH_SIMD=OFF
+endif
+endif
+
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/*.h $(1)/usr/include/
