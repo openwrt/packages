@@ -8,18 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gerbera
-PKG_VERSION:=1.8.0
+PKG_VERSION:=1.8.2
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/gerbera/gerbera/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=02044abd1363c5f5604c5830e560b102ac456179afbf3be60e65847f47f4c599
+PKG_HASH:=b1e5591515f05a46de052ef4d95a2bb3387e96f565a5ce7abb6a77dbe581f09a
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=LICENSE.md
 
-PKG_BUILD_DEPENDS:=libmatroska pugixml spdlog taglib
+PKG_BUILD_DEPENDS:=libmatroska pugixml spdlog
 PKG_CONFIG_DEPENDS:=CONFIG_BUILD_PATENTED
 
 include $(INCLUDE_DIR)/package.mk
@@ -29,7 +29,7 @@ include ../../devel/ninja/ninja-cmake.mk
 define Package/gerbera
   SECTION:=multimedia
   CATEGORY:=Multimedia
-  DEPENDS:=+file +libnpupnp +libsqlite3 +libexif +libuuid +libfmt +libatomic +BUILD_PATENTED:libffmpeg $(ICONV_DEPENDS)
+  DEPENDS:=+file +libnpupnp +libsqlite3 +libexif +libuuid +libfmt +libatomic +taglib +BUILD_PATENTED:libffmpeg $(ICONV_DEPENDS)
   TITLE:=A free media server
   URL:=https://gerbera.io
   USERID:=gerbera:gerbera
