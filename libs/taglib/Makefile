@@ -56,7 +56,7 @@ define Build/InstallDev
 	$(LN) ../../usr/bin/taglib-config $(2)/bin/taglib-config
 endef
 
-define Package/taglib/Install
+define Package/taglib/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libtag.so.* $(1)/usr/lib/
 endef
