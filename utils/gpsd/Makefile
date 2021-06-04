@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gpsd
 PKG_VERSION:=3.21
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SAVANNAH/$(PKG_NAME)
@@ -95,6 +95,7 @@ define Package/libgps/description
 endef
 
 SCONS_VARS += \
+	CFLAGS="$(TARGET_CFLAGS) $(EXTRA_CFLAGS) -L$(STAGING_DIR)/usr/lib" \
 	LINKFLAGS="$(TARGET_LDFLAGS)"
 
 SCONS_OPTIONS += \
@@ -116,7 +117,7 @@ SCONS_OPTIONS += \
 	implicit_link=no \
 	chrpath=no \
 	manbuild=no \
-	sysroot="$(STAGING_DIR)" \
+	sysroot="$(TOOLCHAIN_DIR)" \
 	target="$(TARGET_CROSS:-=)"
 
 define Build/InstallDev
