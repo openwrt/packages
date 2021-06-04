@@ -12,17 +12,28 @@ PKG_VERSION:=1.14.2
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-src-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=@GITHUB/go-gitea/gitea-releases/master
+PKG_SOURCE_URL:=https://github.com/go-gitea/gitea/releases/download/v$(PKG_VERSION)/
+# https://github.com/go-gitea/gitea/releases/download/v1.14.2/gitea-src-1.14.2.tar.gz
 PKG_HASH:=d04bca934feba35600aaf739c82b7cbe7d8b911a086d7ac54f0710b689a85ac3
+PKG_BUILD_DIR:=$(BUILD_DIR)/${PKG_NAME}-$(PKG_VERSION)
+PKG_BUILD_DEPENDS:=golang/host
+PKG_BUILD_PARALLEL:=1
 
-# include $(INCLUDE_DIR)/package.mk
+GO_PKG:=github.com/go-gitea/gitea
+
+include $(INCLUDE_DIR)/package.mk
+include ../../lang/golang/golang-package.mk
+
+PKG_UNPACK:=$(HOST_TAR) -C "$(PKG_BUILD_DIR)" -xzf "$(DL_DIR)/$(PKG_SOURCE)"
 
 define Package/gitea
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=Version Control Systems
   DEPENDS:= \
-	+git
+	+git \
+	+golang \
+	$(GO_ARCH_DEPENDS)
 
   TITLE:=Web administration of git repositories
   URL:=https://gitea.com/
@@ -35,8 +46,22 @@ define Package/gitea/description
   git management with a web interface
 endef
 
-define Build/Configure
+#define Build/Configure
+#	true
+#endef
+
+define Build/Compile
+	$(call Build/Compile/Default,V=sc TAGS="bindata")
+	# $(call Build/Compile/Default,V=sc GO="/usr/lib/go-1.14/bin/go" TAGS="bindata" GOOS=linux GOARCH=mipsle)
+endef
+
+define Build/install
 	true
 endef
 
+define Package/gitea/install
+	true
+endef
+
+$(eval $(call GoBinPackage,gitea))
 $(eval $(call BuildPackage,gitea))
