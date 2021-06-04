@@ -56,7 +56,7 @@ start_instance() {
 	append_parm "$cfg" 'group' '-g' 'nogroup'
 	append_parm "$cfg" 'proxy_server' '-t'
 	append_parm "$cfg" 'logfile' '-l'
-	append_bool "$cfg" 'use_http1' '-x' '1'
+	append_bool "$cfg" 'use_http1' '-x'
 	config_get_bool ipv6_resolvers_only "$cfg" 'use_ipv6_resolvers_only' '0'
 	config_get verbosity "$cfg" 'verbosity' '0'
 
