@@ -56,6 +56,10 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(STAGING_DIR)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/libnet.h $(STAGING_DIR)/usr/include
 
+	$(INSTALL_DIR) $(STAGING_DIR)
+	$(CP) $(PKG_BUILD_DIR)/libnet-config $(STAGING_DIR)/usr
+	chmod a+x $(STAGING_DIR)/usr/libnet-config
+
 	$(INSTALL_DIR) $(STAGING_DIR)/usr/include/libnet
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/libnet/libnet-*.h $(STAGING_DIR)/usr/include/libnet
 
