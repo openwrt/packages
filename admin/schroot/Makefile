@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=schroot
 PKG_VERSION:=1.6.10
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).orig.tar.xz
 PKG_SOURCE_URL:=http://deb.debian.org/debian/pool/main/s/schroot
@@ -37,7 +37,7 @@ define Package/schroot/description
   Securely enter a chroot and run a command or login shell.
 endef
 
-define Package/sudo/conffiles
+define Package/schroot/conffiles
 /etc/schroot/
 endef
 
