@@ -1,0 +1,82 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2021 Ashkan Jazayeri <ashkan@jazayeri.net>
+
+START=99
+STOP=10
+
+USE_PROCD=1
+PROG=/usr/bin/suricata
+
+validate_suricata_section() {
+	uci_load_validate suricata suricata "$1" "$2" \
+		'scan_mode:string:af-packet' \
+		'interface:string' \
+		'config_file:string' \
+		'logdir:string' \
+		'pidfile:string' \
+		'rules_file:string' \
+		'verbose:range(0,4):0' \
+		'queue:list(range(0,65535))'
+}
+
+start_suricata_instance() {
+	[ "$2" = 0 ] || {
+		echo "validation failed"
+		return 1
+	}
+
+	[ -f $pidfile -a -z $(pgrep suricata) ] && rm $pidfile && \
+		logger -t suricata[init_script] -p daemon.alert -s \
+		"Suricata was not closed properly or it has crashed. Successfully removed the previous $pidfile"
+
+	[ ! -d $logdir ] && mkdir -p $logdir
+
+	procd_open_instance
+	procd_set_param command $PROG -c $config_file
+	[ $rules_file ] && \
+		procd_append_param command -s $rules_file
+	procd_set_param file $config_file
+
+	[ "$verbose" -gt 0 ] && {
+		procd_append_param command -$(printf 'v%.0s' $(seq 1 $verbose))
+		procd_set_param stdout 1
+		procd_set_param stderr 1
+	}
+
+		case "$scan_mode" in
+			"af-packet" )
+				procd_append_param command --af-packet
+				procd_append_param command -i $interface
+				;;
+			"nfq" )
+				[ -n "$queue" ] || {
+					logger -t suricata[init_script] -p daemon.emerg -s "No queue list provided. In NFQUEUE mode, a queue list must be specified under suricata config section (e.g. uci add_list suricata.service.queue=9)"
+					return 1
+				}
+				for number in $queue; do procd_append_param command -q $number ;done
+				;;
+		esac
+
+		procd_set_param respawn
+		procd_close_instance
+}
+
+start_service() {
+	validate_suricata_section service start_suricata_instance
+}
+
+
+stop_service()
+{
+	service_stop $PROG
+}
+
+reload_service() {
+	procd_send_signal suricata '*' SIGUSR2
+}
+
+service_triggers()
+{
+	procd_add_reload_trigger "suricata"
+	procd_add_validation validate_suricata_section
+}
