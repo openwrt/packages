@@ -19,30 +19,30 @@ function append_ifopts() {
 	local filter_expr=
 
 	for a in $1; do
-	    case $a in
-	    -F|--device-filter)
-	        filter=1
-	        procd_append_param command $a
-	        ;;
-	    -*)
-	        if [ $filter -gt 0 ]; then
-	            procd_append_param command "${filter_expr#\ }"
-	            filter=0; filter_expr=
-	        fi
-	        procd_append_param command $a
-	        ;;
-	    *)
-	        if [ $filter -gt 0 ]; then
-	            a=${a#\"}; a=${a%\"}; a=${a#\'}; a=${a%\'}
-	            filter_expr="$filter_expr $a"
-	        else
-	            procd_append_param command $a
-	        fi
-	    esac
+		case $a in
+		-F|--device-filter)
+			filter=1
+			procd_append_param command $a
+			;;
+		-*)
+			if [ $filter -gt 0 ]; then
+				procd_append_param command "${filter_expr#\ }"
+				filter=0; filter_expr=
+			fi
+			procd_append_param command $a
+			;;
+		*)
+			if [ $filter -gt 0 ]; then
+				a=${a#\"}; a=${a%\"}; a=${a#\'}; a=${a%\'}
+				filter_expr="$filter_expr $a"
+			else
+				procd_append_param command $a
+			fi
+		esac
 	done
 
 	if [ $filter -gt 0 ]; then
-	    procd_append_param command "${filter_expr#\ }"
+		procd_append_param command "${filter_expr#\ }"
 	fi
 }
 
@@ -55,7 +55,7 @@ function append_external_if() {
 }
 
 start_netifyd() {
-	local autoconfig enabled instance
+	local autoconfig enabled instance options
 
 	instance="$1"
 	config_get_bool enabled "$instance" enabled 0
@@ -75,8 +75,9 @@ start_netifyd() {
 	config_get_bool autoconfig "$instance" autoconfig 1
 
 	if [ "$autoconfig" -gt 0 ]; then
-	    NETIFYD_AUTODETECT=yes
-	    procd_append_param command "$(auto_detect_options)"
+		NETIFYD_AUTODETECT=yes
+		options="$(auto_detect_options)"
+		[ ! -z "$options" ] && procd_append_param command $options
 	fi
 
 	config_list_foreach "$instance" internal_if append_internal_if
