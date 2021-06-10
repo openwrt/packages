@@ -52,16 +52,10 @@ endef
 define Package/tang/postinst
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
-	mkdir -p /usr/share/tang/db && mkdir -p /usr/share/tang/cache
+	mkdir -p /usr/share/tang/db
 	KEYS=$(find /usr/share/tang/db/ -name "*.jw*" -maxdepth 1 | wc -l)
 	if [ "${KEYS}" = "0" ]; then # if db is empty generate new key pair
 		/usr/libexec/tangd-keygen /usr/share/tang/db/
-	elif [ "${KEYS}" = "1" ]; then # having 1 key should not happen
-		(>&2 echo "Please check the Tang's keys in /usr/share/tang/db \
-and regenate cache using /usr/libexec/tangd-update script.")
-	else
-		/usr/libexec/tangd-update /usr/share/tang/db/ /usr/share/tang/cache/
-	fi
 	(cat /etc/services | grep -E "tangd.*8888\/tcp") > /dev/null \
 		|| echo -e "tangd\t\t8888/tcp" >> /etc/services
 fi
