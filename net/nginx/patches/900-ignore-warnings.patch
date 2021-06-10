@@ -1,0 +1,33 @@
+--- a/auto/cc/clang
++++ b/auto/cc/clang
+@@ -89,7 +89,7 @@ if [ "$NGX_SYSTEM" = "Darwin" ]; then
+ fi
+ 
+ # stop on warning
+-CFLAGS="$CFLAGS -Werror"
++CFLAGS="$CFLAGS"
+ 
+ # debug
+ CFLAGS="$CFLAGS -g"
+--- a/auto/cc/gcc
++++ b/auto/cc/gcc
+@@ -166,7 +166,7 @@ esac
+ 
+ 
+ # stop on warning
+-CFLAGS="$CFLAGS -Werror"
++CFLAGS="$CFLAGS"
+ 
+ # debug
+ CFLAGS="$CFLAGS -g"
+--- a/auto/cc/icc
++++ b/auto/cc/icc
+@@ -111,7 +111,7 @@ case "$NGX_ICC_VER" in
+ esac
+ 
+ # stop on warning
+-CFLAGS="$CFLAGS -Werror"
++CFLAGS="$CFLAGS"
+ 
+ # debug
+ CFLAGS="$CFLAGS -g"
