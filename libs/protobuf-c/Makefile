@@ -29,7 +29,7 @@ CMAKE_SOURCE_SUBDIR:=build-cmake
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
-include ../../devel/ninja/ninja-cmake.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libprotobuf-c
   TITLE:=Protocol Buffers library

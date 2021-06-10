@@ -44,7 +44,7 @@ plugin-remote_io                := CLIENT_PLUGIN_REMOTE_IO
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
-include ../../devel/ninja/ninja-cmake.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 # Pass CPPFLAGS in the CFLAGS as otherwise the build system will
 # ignore them.

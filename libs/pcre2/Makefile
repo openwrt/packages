@@ -26,7 +26,7 @@ PKG_CONFIG_DEPENDS:=\
 	CONFIG_PCRE2_JIT_ENABLED
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/ninja/ninja-cmake.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libpcre2/default
   SECTION:=libs

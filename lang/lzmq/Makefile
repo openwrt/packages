@@ -18,7 +18,7 @@ PKG_SOURCE_URL:=https://codeload.github.com/zeromq/lzmq/tar.gz/v$(PKG_VERSION)?
 PKG_HASH:=cf70200045b8bcb0e929c338ad421b6a291cf1038053532888dc201af3224d8b
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/ninja/ninja-cmake.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/lzmq
   SUBMENU:=Lua

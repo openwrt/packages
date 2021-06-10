@@ -31,7 +31,7 @@ PKG_CONFIG_DEPENDS:= \
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
-include ../../devel/ninja/ninja-cmake.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 CMAKE_OPTIONS += -DWITH_DOC=OFF
 CMAKE_OPTIONS += -DENABLE_IPV6=$(if $(CONFIG_IPV6),ON,OFF)

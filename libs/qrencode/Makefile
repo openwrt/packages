@@ -22,7 +22,7 @@ PKG_LICENSE_FILES:=COPYING
 PKG_CONFIG_DEPENDS:=CONFIG_PACKAGE_qrencode
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/ninja/ninja-cmake.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libqrencode
   SECTION:=libs

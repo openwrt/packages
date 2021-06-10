@@ -22,7 +22,7 @@ PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Vasilis Tsiligiannis <b_tsiligiannis@silverton.gr>
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/ninja/ninja-cmake.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/rtl-sdr/Default
   TITLE:=Software Defined Radio with Realtek RTL2832U

@@ -24,7 +24,7 @@ PKG_CPE_ID:=cpe:/a:libuv_project:libuv
 CMAKE_BINARY_SUBDIR:=out/cmake
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/ninja/ninja-cmake.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libuv
   SECTION:=libs

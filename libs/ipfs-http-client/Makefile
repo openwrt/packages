@@ -20,7 +20,7 @@ PKG_LICENSE_FILES:=LICENSE.MIT
 PKG_BUILD_DEPENDS:=nlohmannjson
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/ninja/ninja-cmake.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/ipfs-http-client/Default/description
   IPFS (the InterPlanetary File System) is the Distributed Web.

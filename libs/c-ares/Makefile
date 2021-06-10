@@ -23,7 +23,7 @@ PKG_CPE_ID:=cpe:/a:c-ares_project:c-ares
 CMAKE_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/ninja/ninja-cmake.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libcares
   SECTION:=libs

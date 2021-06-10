@@ -22,7 +22,7 @@ PKG_LICENSE_FILES:=uvcdynctrl/COPYING
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
-include ../../devel/ninja/ninja-cmake.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/uvcdynctrl
   SECTION:=utils

@@ -21,7 +21,7 @@ PKG_LICENSE_FILES:=COPYRIGHT
 PKG_CPE_ID:=cpe:/a:libtiff:libtiff
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/ninja/ninja-cmake.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/tiff/Default
   TITLE:=TIFF

@@ -21,7 +21,7 @@ PKC_LICENSE_FILES:=LICENSE contrib/gregbook/COPYING contrib/gregbook/LICENSE
 PKG_CPE_ID:=cpe:/a:libpng:libpng
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/ninja/ninja-cmake.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libpng
   SECTION:=libs

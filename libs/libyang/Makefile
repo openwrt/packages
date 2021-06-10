@@ -23,7 +23,7 @@ CMAKE_INSTALL:=1
 CMAKE_BINARY_SUBDIR:=build
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/ninja/ninja-cmake.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libyang
   SECTION:=libs

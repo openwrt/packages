@@ -24,7 +24,7 @@ PKG_CPE_ID:=cpe:/a:sox:sox
 CMAKE_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/ninja/ninja-cmake.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libsoxr
   SECTION:=libs

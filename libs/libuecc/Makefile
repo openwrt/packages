@@ -20,7 +20,7 @@ PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=COPYRIGHT
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/ninja/ninja-cmake.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libuecc
   SECTION:=libs

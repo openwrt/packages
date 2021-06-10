@@ -28,7 +28,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_LIBUWSC_nossl_LUA_BINDING
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/ninja/ninja-cmake.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libuwsc/Default
   SECTION:=libs

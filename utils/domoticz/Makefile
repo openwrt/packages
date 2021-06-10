@@ -22,7 +22,7 @@ PKG_BUILD_DEPENDS:=python3 minizip cereal
 PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/ninja/ninja-cmake.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/domoticz
   SECTION:=utils

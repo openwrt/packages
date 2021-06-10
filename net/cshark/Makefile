@@ -20,7 +20,7 @@ PKG_MAINTAINER:=Luka Perkov <luka@openwrt.org>
 PKG_LICENSE:=BSD-2-Clause
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/ninja/ninja-cmake.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/cshark
   SECTION:=net

@@ -23,7 +23,7 @@ PKG_BUILD_DEPENDS:=softethervpn5/host
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/nls.mk
-include ../../devel/ninja/ninja-cmake.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/softethervpn5/Default
   SECTION:=net

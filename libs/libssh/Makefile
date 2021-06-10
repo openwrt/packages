@@ -25,7 +25,7 @@ CMAKE_BINARY_SUBDIR:=build
 PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/ninja/ninja-cmake.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libssh
   SECTION:=libs

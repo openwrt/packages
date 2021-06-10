@@ -24,7 +24,7 @@ PKG_LICENSE_FILES:=LICENSE
 CMAKE_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/ninja/ninja-cmake.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 CMAKE_OPTIONS += -DLWS_IPV6=$(if $(CONFIG_IPV6),ON,OFF)
 CMAKE_OPTIONS += -DISABLE_WERROR=ON

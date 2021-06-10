@@ -27,7 +27,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_LIBSSH2_OPENSSL
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/ninja/ninja-cmake.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libssh2
   SECTION:=libs

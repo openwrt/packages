@@ -15,7 +15,7 @@ PKG_LICENSE_FILES:=LICENSE.md
 PKG_USE_MIPS16:=0 #Allows ASM compilation for speed.
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/ninja/ninja-cmake.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libjpeg-turbo/Default
   TITLE:=libjpeg-turbo

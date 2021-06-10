@@ -272,7 +272,7 @@ $(eval $(call webskin,ice))
 PKG_CONFIG_DEPENDS += $(patsubst %,CONFIG_PACKAGE_%,$(ZNC_MODULES))
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/ninja/ninja-cmake.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 CMAKE_OPTIONS += \
 	-DWANT_ICU=O$(if $(CONFIG_ZNC_ICU),N,FF) \

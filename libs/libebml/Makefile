@@ -21,7 +21,7 @@ PKG_LICENSE_FILES:=LICENSE.LGPL
 CMAKE_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/ninja/ninja-cmake.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libebml
   SECTION:=libs

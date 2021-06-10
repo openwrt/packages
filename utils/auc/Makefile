@@ -10,7 +10,7 @@ PKG_RELEASE:=$(AUTORELEASE)
 PKG_LICENSE:=GPL-3.0
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/ninja/ninja-cmake.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/auc
   SECTION:=base

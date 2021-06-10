@@ -23,7 +23,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_GETDNS_ENABLE_IDN_LIBIDN2
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/ninja/ninja-cmake.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/getdns/Default
 	TITLE:=getdns

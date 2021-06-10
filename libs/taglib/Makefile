@@ -19,7 +19,7 @@ PKG_LICENSE_FILES:=COPYING.LGPL
 PKG_CPE_ID:=cpe:/a:taglib:taglib
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/ninja/ninja-cmake.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/taglib
   SECTION:=libs

@@ -24,7 +24,7 @@ PKG_CPE_ID:=cpe:/a:yaml-cpp_project:yaml-cpp
 CMAKE_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/ninja/ninja-cmake.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libyaml-cpp
   SECTION:=development
