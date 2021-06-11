@@ -1,37 +1,20 @@
---- a/src/twisted/python/_setup.py
-+++ b/src/twisted/python/_setup.py
-@@ -177,11 +177,6 @@ class ConditionalExtension(Extension, ob
- # The C extensions used for Twisted.
- _EXTENSIONS = [
-     ConditionalExtension(
--        "twisted.test.raiser",
--        sources=["src/twisted/test/raiser.c"],
--        condition=lambda _: _isCPython),
--
--    ConditionalExtension(
-         "twisted.internet.iocpreactor.iocpsupport",
-         sources=[
-             "src/twisted/internet/iocpreactor/iocpsupport/iocpsupport.c",
-@@ -275,12 +270,11 @@ def getSetupArgs(extensions=_EXTENSIONS,
-         # PyHamcrest 1.10.0 is Python 3 only, but lacks package metadata that
-         # says so. This condition can be dropped when Twisted drops support for
-         # Python 2.7.
--        "PyHamcrest >= 1.9.0, != 1.10.0",
-         "attrs >= 19.2.0",
-     ]
+--- a/setup.cfg
++++ b/setup.cfg
+@@ -90,6 +90,9 @@ osx_platform =
  
-     arguments.update(dict(
--        packages=find_packages("src"),
-+        packages=find_packages("src", exclude=["*.test", "*.test.*"]),
-         use_incremental=True,
-         setup_requires=["incremental >= 16.10.1"],
-         install_requires=requirements,
-@@ -290,7 +284,7 @@ def getSetupArgs(extensions=_EXTENSIONS,
-         cmdclass=command_classes,
-         include_package_data=True,
-         exclude_package_data={
--            "": ["*.c", "*.h", "*.pxi", "*.pyx", "build.bat"],
-+            "": ["*.c", "*.h", "*.pxi", "*.pyx", "build.bat", "test/*"],
-         },
-         zip_safe=False,
-         extras_require=_EXTRAS_REQUIRE,
+ [options.packages.find]
+ where = src
++exclude = 
++	*.test
++	*.test.*
+ 
+ [options.entry_points]
+ console_scripts = 
+@@ -109,6 +112,7 @@ console_scripts =
+ 	*.pxi
+ 	*.pyx
+ 	build.bat
++	test/*
+ 
+ [flake8]
+ disable-noqa = True

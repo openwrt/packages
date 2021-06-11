@@ -1,13 +1,13 @@
---- a/src/twisted/python/_setup.py
-+++ b/src/twisted/python/_setup.py
-@@ -151,7 +151,6 @@ _CONSOLE_SCRIPTS = [
-     "conch = twisted.conch.scripts.conch:run",
-     "mailmail = twisted.mail.scripts.mailmail:run",
-     "pyhtmlizer = twisted.scripts.htmlizer:run",
--    "tkconch = twisted.conch.scripts.tkconch:run",
-     "trial = twisted.scripts.trial:run",
-     "twist = twisted.application.twist._twist:Twist.main",
-     "twistd = twisted.scripts.twistd:run",
+--- a/setup.cfg
++++ b/setup.cfg
+@@ -98,7 +98,6 @@ console_scripts =
+ 	conch = twisted.conch.scripts.conch:run
+ 	mailmail = twisted.mail.scripts.mailmail:run
+ 	pyhtmlizer = twisted.scripts.htmlizer:run
+-	tkconch = twisted.conch.scripts.tkconch:run
+ 	trial = twisted.scripts.trial:run
+ 	twist = twisted.application.twist._twist:Twist.main
+ 	twistd = twisted.scripts.twistd:run
 --- a/src/twisted/python/twisted-completion.zsh
 +++ b/src/twisted/python/twisted-completion.zsh
 @@ -1,4 +1,4 @@
