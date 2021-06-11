@@ -5,13 +5,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=stubby
-PKG_VERSION:=0.3.0
+PKG_VERSION:=0.4.0
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/getdnsapi/$(PKG_NAME)
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_MIRROR_HASH:=f1585aa6881bf39c2c8f99df045d5739bb78403417a1e827644cb202fa4280f0
+PKG_MIRROR_HASH:=bc5f604da1b70287a6c3d89eac2e13ce8bca52840e7b72ab098a3deeb9935082
 
 PKG_MAINTAINER:=Jonathan Underwood <jonathan.underwood@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
