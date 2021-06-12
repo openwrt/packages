@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-twisted
 PKG_VERSION:=21.2.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=Twisted
 PKG_HASH:=77544a8945cf69b98d2946689bbe0c75de7d145cdf11f391dd487eae8fc95a12
@@ -33,12 +33,19 @@ define Package/python3-twisted
   URL:=https://twistedmatrix.com/
   DEPENDS:= \
       +python3 \
+      +python3-appdirs \
       +python3-attrs \
       +python3-automat \
+      +python3-bcrypt \
       +python3-constantly \
+      +python3-cryptography \
+      +python3-idna \
       +python3-incremental \
       +python3-hyperlink \
       +python3-pkg-resources \
+      +python3-pyasn1 \
+      +python3-pyopenssl \
+      +python3-service-identity \
       +python3-typing-extensions \
       +python3-zope-interface
 endef
