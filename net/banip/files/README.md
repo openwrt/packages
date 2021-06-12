@@ -146,6 +146,9 @@ Available commands:
 | ban_wan_inputchains_6   | list   | input_wan_rule                | list option to add IPv6 wan input chains                                              |
 | ban_wan_forwardchains_4 | list   | forwarding_wan_rule           | list option to add IPv4 wan forward chains                                            |
 | ban_wan_forwardchains_6 | list   | forwarding_wan_rule           | list option to add IPv6 wan forward chains                                            |
+| ban_fetchutil           | option | -, auto-detected              | 'uclient-fetch', 'wget', 'curl' or 'aria2c'                                           |
+| ban_fetchparm           | option | -, auto-detected              | manually override the config options for the selected download utility                |
+| ban_fetchinsecure       | option | 0, disabled                   | don't check SSL server certificates during download                                   |
 | ban_mailreceiver        | option | -                             | receiver address for banIP related notification E-Mails                               |
 | ban_mailsender          | option | no-reply@banIP                | sender address for banIP related notification E-Mails                                 |
 | ban_mailtopic           | option | banIP notification            | topic for banIP related notification E-Mails                                          |
@@ -228,6 +231,15 @@ Last but not least, both lists also accept domain names as input to allow IP fil
   
 **whitelist-only mode:**  
 banIP supports a "whitelist only" mode. This option allows to restrict the internet access from/to a small number of secure websites/IPs, and block access from/to the rest of the internet. All IPs and Domains which are _not_ listed in the whitelist are blocked. Please note: suspend/resume does not work in this mode.
+  
+**Manually override the download options:**  
+By default banIP uses the following pre-configured download options:  
+* aria2c: <code>--timeout=20 --allow-overwrite=true --auto-file-renaming=false --log-level=warn --dir=/ -o</code>
+* curl: <code>--connect-timeout 20 --silent --show-error --location -o</code>
+* uclient-fetch: <code>--timeout=20 -O</code>
+* wget: <code>--no-cache --no-cookies --max-redirect=0 --timeout=20 -O</code>
+
+To override the default set 'ban_fetchparm' manually to your needs.
   
 **generate an IPSet report:**  
 <pre><code>
