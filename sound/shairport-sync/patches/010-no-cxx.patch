@@ -25,7 +25,7 @@
  endif
 --- a/configure.ac
 +++ b/configure.ac
-@@ -19,7 +19,6 @@ with_os=`echo ${with_os} | tr '[[:upper:
+@@ -23,7 +23,6 @@ fi
  
  # Checks for programs.
  AC_PROG_CC
