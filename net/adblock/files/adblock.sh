@@ -11,7 +11,7 @@
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 set -o pipefail
-adb_ver="4.1.2"
+adb_ver="4.1.3"
 adb_enabled=0
 adb_debug=0
 adb_forcedns=0
@@ -459,7 +459,7 @@ f_dns()
 #
 f_fetch()
 {
-	local util utils cnt=0
+	local util utils insecure cnt=0
 
 	if [ -z "${adb_fetchutil}" ]
 	then
@@ -485,16 +485,32 @@ f_fetch()
 	fi
 	case "${adb_fetchutil}" in
 		"aria2c")
-			adb_fetchparm="${adb_fetchparm:-"--timeout=20 --allow-overwrite=true --auto-file-renaming=false --check-certificate=true --log-level=warn --dir=/ -o"}"
+			if [ "${adb_fetchinsecure}" = "1" ]
+			then
+				insecure="--check-certificate=false"
+			fi
+			adb_fetchparm="${adb_fetchparm:-"${insecure} --timeout=20 --allow-overwrite=true --auto-file-renaming=false --log-level=warn --dir=/ -o"}"
 		;;
 		"curl")
-			adb_fetchparm="${adb_fetchparm:-"--connect-timeout 20 --silent --show-error --location -o"}"
+			if [ "${adb_fetchinsecure}" = "1" ]
+			then
+				insecure="--insecure"
+			fi
+			adb_fetchparm="${adb_fetchparm:-"${insecure} --connect-timeout 20 --silent --show-error --location -o"}"
 		;;
 		"uclient-fetch")
-			adb_fetchparm="${adb_fetchparm:-"--timeout=20 -O"}"
+			if [ "${adb_fetchinsecure}" = "1" ]
+			then
+				insecure="--no-check-certificate"
+			fi
+			adb_fetchparm="${adb_fetchparm:-"${insecure} --timeout=20 -O"}"
 		;;
 		"wget")
-			adb_fetchparm="${adb_fetchparm:-"--no-cache --no-cookies --max-redirect=0 --timeout=20 -O"}"
+			if [ "${adb_fetchinsecure}" = "1" ]
+			then
+				insecure="--no-check-certificate"
+			fi
+			adb_fetchparm="${adb_fetchparm:-"${insecure} --no-cache --no-cookies --max-redirect=0 --timeout=20 -O"}"
 		;;
 	esac
 	if [ -n "${adb_fetchutil}" ] && [ -n "${adb_fetchparm}" ]
