@@ -3,7 +3,7 @@
 -- Metrics web server
 
 -- Copyright (c) 2016 Jeff Schornick <jeff@schornick.org>
--- Copyright (c) 2015 Kevin Lyda
+-- Copyright (c) 2015 Kevin Lyda <kevin@lyda.ie>
 -- Licensed under the Apache License, Version 2.0
 
 socket = require("socket")
