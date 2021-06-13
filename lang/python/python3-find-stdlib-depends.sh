@@ -25,6 +25,7 @@ python3-multiprocessing: multiprocessing
 python3-ncurses: ncurses
 python3-openssl: ssl
 python3-pydoc: doctest pydoc
+python3-readline: readline
 python3-sqlite3: sqlite3
 python3-unittest: unittest
 python3-urllib: urllib
