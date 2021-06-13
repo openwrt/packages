@@ -148,7 +148,8 @@ Available commands:
 | adb_srcfile        | -, /tmp/adb_sources.json           | full path to the used adblock source file, which has a higher precedence than the archive file |
 | adb_dns            | -, auto-detected                   | 'dnsmasq', 'unbound', 'named', 'kresd' or 'raw'                                                |
 | adb_fetchutil      | -, auto-detected                   | 'uclient-fetch', 'wget', 'curl' or 'aria2c'                                                    |
-| adb_fetchparm      | -, auto-detected                   | config options for the selected download utility, e.g. to disable the certificate check        |
+| adb_fetchparm      | -, auto-detected                   | manually override the config options for the selected download utility                         |
+| adb_fetchinsecure  | 0, disabled                        | don't check SSL server certificates during download                                            |
 | adb_trigger        | -, not set                         | trigger network interface or 'not set' to use a time-based startup                             |
 | adb_triggerdelay   | 2                                  | additional trigger delay in seconds before adblock processing begins                           |
 | adb_debug          | 0, disabled                        | set to 1 to enable the debug output                                                            |
@@ -212,6 +213,15 @@ Adblock deposits the final blocklist 'adb_list.overall' in '/etc/kresd', no furt
 
 **Use restrictive jail modes:**  
 You can enable a restrictive 'adb_list.jail' to block access to all domains except those listed in the whitelist file. Usually this list will be generated as an additional list for guest or kidsafe configurations (for a separate dns server instance). If the jail directory points to your primary dns directory, adblock enables the restrictive jail mode automatically (jail mode only).
+
+**Manually override the download options:**  
+By default adblock uses the following pre-configured download options:  
+* aria2c: <code>--timeout=20 --allow-overwrite=true --auto-file-renaming=false --log-level=warn --dir=/ -o</code>
+* curl: <code>--connect-timeout 20 --silent --show-error --location -o</code>
+* uclient-fetch: <code>--timeout=20 -O</code>
+* wget: <code>--no-cache --no-cookies --max-redirect=0 --timeout=20 -O</code>
+
+To override the default set 'adb_fetchparm' manually to your needs.
 
 **Enable E-Mail notification via 'msmtp':**  
 To use the email notification you have to install & configure the package 'msmtp'.  
