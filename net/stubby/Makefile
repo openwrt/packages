@@ -13,7 +13,7 @@ PKG_SOURCE_URL:=https://github.com/getdnsapi/$(PKG_NAME)
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 PKG_MIRROR_HASH:=bc5f604da1b70287a6c3d89eac2e13ce8bca52840e7b72ab098a3deeb9935082
 
-PKG_MAINTAINER:=Jonathan Underwood <jonathan.underwood@gmail.com>
+PKG_MAINTAINER:=
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
 
