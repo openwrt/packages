@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=frp
-PKG_VERSION:=0.34.3
-PKG_RELEASE:=1
+PKG_VERSION:=0.37.0
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/fatedier/frp/tar.gz/v${PKG_VERSION}?
-PKG_HASH:=f03e280d9e8fdd4948ed6a5d141e927bf9b5168d7a47a4f3e90a08065e5f192d
+PKG_HASH:=fa82c81c81a7cab28e3f7dd749889be683050274cf5edda7735a93596987fa53
 
 PKG_MAINTAINER:=Richard Yu <yurichard3839@gmail.com>
 PKG_LICENSE:=Apache-2.0
@@ -22,32 +22,6 @@ GO_PKG_BUILD_PKG:=github.com/fatedier/frp/cmd/...
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
 
-define Package/frp/template
-  SECTION:=net
-  CATEGORY:=Network
-  SUBMENU:=Web Servers/Proxies
-  TITLE:=frp - fast reverse proxy
-  URL:=https://github.com/fatedier/frp
-  DEPENDS:=$(GO_ARCH_DEPENDS)
-endef
-
-define Package/frpc
-  $(call Package/frp/template)
-  TITLE+= (client)
-endef
-
-define Package/frps
-  $(call Package/frp/template)
-  TITLE+= (server)
-endef
-
-define Package/frp/description
-  frp is a fast reverse proxy to help you expose a local server behind
-  a NAT or firewall to the internet.
-endef
-Package/frpc/description = $(Package/frp/description)
-Package/frps/description = $(Package/frp/description)
-
 define Package/frp/install
 	$(call GoPackage/Package/Install/Bin,$(PKG_INSTALL_DIR))
 
@@ -61,23 +35,31 @@ define Package/frp/install
 	$(INSTALL_BIN) ./files/$(2).init $(1)/etc/init.d/$(2)
 endef
 
-define Package/frpc/conffiles
-/etc/config/frpc
+define Package/frp/template
+  define Package/$(1)
+    SECTION:=net
+    CATEGORY:=Network
+    SUBMENU:=Web Servers/Proxies
+    TITLE:=$(1) - fast reverse proxy $(2)
+    URL:=https://github.com/fatedier/frp
+    DEPENDS:=$(GO_ARCH_DEPENDS)
+  endef
+
+  define Package/$(1)/description
+    $(1) is a fast reverse proxy $(2) to help you expose a local server behind
+    a NAT or firewall to the internet.
+  endef
+
+  define Package/$(1)/conffiles
+  /etc/config/$(1)
+  endef
+
+  define Package/$(1)/install
+    $(call Package/frp/install,$$(1),$(1))
+  endef
 endef
 
-define Package/frps/conffiles
-/etc/config/frps
-endef
-
-define Package/frpc/install
-  $(call Package/frp/install,$(1),frpc)
-endef
-
-define Package/frps/install
-  $(call Package/frp/install,$(1),frps)
-endef
-
-$(eval $(call GoBinPackage,frpc))
+$(eval $(call Package/frp/template,frpc,client))
+$(eval $(call Package/frp/template,frps,server))
 $(eval $(call BuildPackage,frpc))
-$(eval $(call GoBinPackage,frps))
 $(eval $(call BuildPackage,frps))
