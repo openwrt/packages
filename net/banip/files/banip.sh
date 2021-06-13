@@ -12,7 +12,7 @@
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 set -o pipefail
-ban_ver="0.7.8"
+ban_ver="0.7.9"
 ban_enabled="0"
 ban_mail_enabled="0"
 ban_proto4_enabled="0"
@@ -251,7 +251,7 @@ f_conf()
 #
 f_env()
 {
-	local util utils packages iface tmp cnt="0" cnt_max="10"
+	local util utils packages iface insecure tmp cnt="0" cnt_max="10"
 
 	ban_starttime="$(date "+%s")"
 	f_jsnup "running"
@@ -402,16 +402,32 @@ f_env()
 	fi
 	case "${ban_fetchutil}" in
 		"aria2c")
-			ban_fetchparm="${ban_fetchparm:-"--timeout=20 --allow-overwrite=true --auto-file-renaming=false --check-certificate=true --log-level=warn --dir=/ -o"}"
+			if [ "${ban_fetchinsecure}" = "1" ]
+			then
+				insecure="--check-certificate=false"
+			fi
+			ban_fetchparm="${ban_fetchparm:-"${insecure} --timeout=20 --allow-overwrite=true --auto-file-renaming=false --log-level=warn --dir=/ -o"}"
 		;;
 		"curl")
-			ban_fetchparm="${ban_fetchparm:-"--connect-timeout 20 --silent --show-error --location -o"}"
+			if [ "${ban_fetchinsecure}" = "1" ]
+			then
+				insecure="--insecure"
+			fi
+			ban_fetchparm="${ban_fetchparm:-"${insecure} --connect-timeout 20 --silent --show-error --location -o"}"
 		;;
 		"uclient-fetch")
-			ban_fetchparm="${ban_fetchparm:-"--timeout=20 -O"}"
+			if [ "${ban_fetchinsecure}" = "1" ]
+			then
+				insecure="--no-check-certificate"
+			fi
+			ban_fetchparm="${ban_fetchparm:-"${insecure} --timeout=20 -O"}"
 		;;
 		"wget")
-			ban_fetchparm="${ban_fetchparm:-"--no-cache --no-cookies --max-redirect=0 --timeout=20 -O"}"
+			if [ "${ban_fetchinsecure}" = "1" ]
+			then
+				insecure="--no-check-certificate"
+			fi
+			ban_fetchparm="${ban_fetchparm:-"${insecure} --no-cache --no-cookies --max-redirect=0 --timeout=20 -O"}"
 		;;
 	esac
 	if [ -n "${ban_fetchutil}" ] && [ -n "${ban_fetchparm}" ]
