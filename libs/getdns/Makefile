@@ -10,7 +10,7 @@ PKG_RELEASE:=1
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Jonathan Underwood <jonathan.underwood@gmail.com>
+PKG_MAINTAINER:=
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://getdnsapi.net/dist/
