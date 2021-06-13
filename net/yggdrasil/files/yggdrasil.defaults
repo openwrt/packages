@@ -89,6 +89,17 @@ EOF
     set firewall.@rule[-1].target=ACCEPT
 EOF
 
+  # allow LuCI access with SSL from yggdrasil zone, needs to be explicitly enabled
+  uci -q batch <<-EOF >/dev/null
+    add firewall rule
+    set firewall.@rule[-1].enabled=0
+    set firewall.@rule[-1].name='Allow-HTTPS-yggdrasil'
+    set firewall.@rule[-1].src=yggdrasil
+    set firewall.@rule[-1].proto=tcp
+    set firewall.@rule[-1].dest_port=443
+    set firewall.@rule[-1].target=ACCEPT
+EOF
+
   uci commit firewall
   uci commit network
 
