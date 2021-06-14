@@ -89,7 +89,7 @@
  # Option variables
  if [ ! -z "$PREFIX" ] ; then
    prefix="$PREFIX"
-@@ -327,79 +254,9 @@ if [ $static -ne 0 ] ; then
+@@ -327,80 +254,9 @@ if [ $static -ne 0 ] ; then
    ldflags="${ldflags}-static"
  fi
  
@@ -137,6 +137,7 @@
 -case "x$os" in
 -  "xLinux"|"xCYGWIN"*)
 -    cflags="$cflags -D_GNU_SOURCE -D__dead=\"__attribute__((__noreturn__))\" -Dst_mtimespec=st_mtim"
+-    libs="$libs -lutil"
 -    ;;
 -  "xDarwin")
 -    cflags="$cflags -DMSG_NOSIGNAL=SO_NOSIGPIPE -DLOGIN_NAME_MAX=MAXLOGNAME"
@@ -167,7 +168,7 @@
 -    ;;
 -esac
 +# OpenWrt
-+libs='-lncurses -lpcreposix'
++libs='-lncurses -lpcreposix -lutil'
 +cflags="$cflags -D_GNU_SOURCE -D__dead=\"__attribute__((__noreturn__))\" -Dst_mtimespec=st_mtim"
  
  cat << EOF > config.h
