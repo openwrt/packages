@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=stress-ng
-PKG_VERSION:=0.12.07
+PKG_VERSION:=0.12.10
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://kernel.ubuntu.com/~cking/tarballs/stress-ng
-PKG_HASH:=cf73e3a4c7d95afa46aa27fb9283a8a988f3971de4ce6ffe9f651ca341731ead
+PKG_HASH:=bd167b6559fa8a28680371b1defd3ffe2344eb550129d58dd7d5e2d568f2786e
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
