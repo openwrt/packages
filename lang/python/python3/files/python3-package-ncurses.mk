@@ -8,7 +8,7 @@
 define Package/python3-ncurses
 $(call Package/python3/Default)
   TITLE:=Python $(PYTHON3_VERSION) ncurses module
-  DEPENDS:=+python3-light +libncurses
+  DEPENDS:=+python3-light +libncursesw
 endef
 
 $(eval $(call Py3BasePackage,python3-ncurses, \
