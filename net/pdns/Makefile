@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pdns
-PKG_VERSION:=4.4.0
+PKG_VERSION:=4.4.1
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://downloads.powerdns.com/releases/
-PKG_HASH:=40cb81d9e0d34edcc7c95435a06125bde0bd1a51692e1db52413e31d7ede0b39
+PKG_HASH:=03fa7c181c666a5fc44a49affe7666bd385d46c1fe15088caff175967e85ab6c
 
 PKG_MAINTAINER:=Peter van Dijk <peter.van.dijk@powerdns.com>
 PKG_LICENCE:=GPL-2.0-only
@@ -186,10 +186,6 @@ CONFIGURE_ARGS+= \
 	--enable-lua-records \
 	--enable-reproducible \
 	$(if $(CONFIG_PACKAGE_pdns-ixfrdist),--enable-ixfrdist,)
-
-CONFIGURE_VARS += \
-	boost_cv_lib_program_options=yes \
-	boost_cv_lib_program_options_LIBS=-lboost_program_options
 
 define Package/pdns/install
 	$(INSTALL_DIR) $(1)/etc/powerdns
