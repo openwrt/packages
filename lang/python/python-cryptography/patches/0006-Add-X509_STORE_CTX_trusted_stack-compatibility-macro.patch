@@ -12,21 +12,7 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
 
 --- a/src/_cffi_src/openssl/x509_vfy.py
 +++ b/src/_cffi_src/openssl/x509_vfy.py
-@@ -157,8 +157,12 @@ int X509_STORE_CTX_init(X509_STORE_CTX *
-                         Cryptography_STACK_OF_X509 *);
- void X509_STORE_CTX_trusted_stack(X509_STORE_CTX *,
-                                   Cryptography_STACK_OF_X509 *);
-+void X509_STORE_CTX_set0_trusted_stack(X509_STORE_CTX *,
-+                                  Cryptography_STACK_OF_X509 *);
- void X509_STORE_CTX_set_cert(X509_STORE_CTX *, X509 *);
--void X509_STORE_CTX_set_chain(X509_STORE_CTX *,Cryptography_STACK_OF_X509 *);
-+void X509_STORE_CTX_set_chain(X509_STORE_CTX *, Cryptography_STACK_OF_X509 *);
-+void X509_STORE_CTX_set0_untrusted(X509_STORE_CTX *,
-+                                  Cryptography_STACK_OF_X509 *);
- X509_VERIFY_PARAM *X509_STORE_CTX_get0_param(X509_STORE_CTX *);
- void X509_STORE_CTX_set0_param(X509_STORE_CTX *, X509_VERIFY_PARAM *);
- int X509_STORE_CTX_set_default(X509_STORE_CTX *, const char *);
-@@ -260,4 +264,10 @@ static const long Cryptography_HAS_X509_
+@@ -265,4 +265,10 @@ static const long Cryptography_HAS_X509_
  #else
  static const long Cryptography_HAS_X509_CB_ISSUER_CHECK = 1;
  #endif
