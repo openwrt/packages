@@ -30,7 +30,7 @@ Reduce the buffer size to 65535 bytes instead.
 
 --- a/main/unzip_stream.h
 +++ b/main/unzip_stream.h
-@@ -135,7 +135,7 @@ namespace clx {
+@@ -143,7 +143,7 @@ namespace clx {
  		basic_unzip_stream& open(handler_type h) {
  			handler_ = h;
  			if (handler_) {
