@@ -17,9 +17,9 @@
  const char *_snd_module_pcm_shm = "";
 --- a/src/ucm/ucm_local.h
 +++ b/src/ucm/ucm_local.h
-@@ -53,6 +53,14 @@
- #define SEQUENCE_ELEMENT_TYPE_CSET_TLV	6
- #define SEQUENCE_ELEMENT_TYPE_CMPT_SEQ	7
+@@ -58,6 +58,14 @@
+ #define SEQUENCE_ELEMENT_TYPE_SYSSET		11
+ #define SEQUENCE_ELEMENT_TYPE_CFGSAVE		12
  
 +#if _POSIX_C_SOURCE >= 200809L
 +#define usleep(a) \
