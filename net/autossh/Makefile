@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=autossh
 PKG_VERSION:=1.4g
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=https://www.harding.motd.ca/autossh/
@@ -27,12 +27,8 @@ define Package/autossh
   SUBMENU:=SSH
 endef
 
-define Build/Compile
-	$(call Build/Compile/Default, -f Makefile \
-		CFLAGS="$(TARGET_CFLAGS) -Wall -D\"SSH_PATH=\\\"\$$$$(SSH)\\\"\" -D\"VER=\\\"\$$$$(VER)\\\"\"" \
-		all \
-	)
-endef
+CONFIGURE_VARS += \
+	ac_cv_path_ssh=/usr/bin/ssh
 
 define Package/autossh/install
 	$(INSTALL_DIR) $(1)/usr/sbin
