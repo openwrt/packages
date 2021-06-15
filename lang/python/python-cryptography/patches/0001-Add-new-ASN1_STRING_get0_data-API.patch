@@ -10,15 +10,7 @@ Introduced with OpenSSL 1.1
 
 --- a/src/_cffi_src/openssl/asn1.py
 +++ b/src/_cffi_src/openssl/asn1.py
-@@ -45,6 +45,7 @@ void ASN1_OBJECT_free(ASN1_OBJECT *);
- 
- /*  ASN1 STRING */
- unsigned char *ASN1_STRING_data(ASN1_STRING *);
-+const unsigned char *ASN1_STRING_get0_data(const ASN1_STRING *);
- int ASN1_STRING_set(ASN1_STRING *, const void *, int);
- 
- /*  ASN1 OCTET STRING */
-@@ -105,4 +106,7 @@ ASN1_NULL *ASN1_NULL_new(void);
+@@ -105,4 +105,7 @@ ASN1_NULL *ASN1_NULL_new(void);
  """
  
  CUSTOMIZATIONS = """
