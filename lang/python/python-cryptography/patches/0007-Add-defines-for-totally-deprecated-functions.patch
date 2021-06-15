@@ -12,7 +12,7 @@ Subject: [PATCH 7/7] Add defines for totally deprecated functions
 
 --- a/src/_cffi_src/openssl/conf.py
 +++ b/src/_cffi_src/openssl/conf.py
-@@ -18,4 +18,8 @@ void OPENSSL_no_config(void);
+@@ -17,4 +17,8 @@ void OPENSSL_no_config(void);
  """
  
  CUSTOMIZATIONS = """
@@ -23,7 +23,7 @@ Subject: [PATCH 7/7] Add defines for totally deprecated functions
  """
 --- a/src/_cffi_src/openssl/crypto.py
 +++ b/src/_cffi_src/openssl/crypto.py
-@@ -114,4 +114,8 @@ void *Cryptography_realloc_wrapper(void
+@@ -113,4 +113,8 @@ void *Cryptography_realloc_wrapper(void
  void Cryptography_free_wrapper(void *ptr, const char *path, int line) {
      free(ptr);
  }
@@ -34,7 +34,7 @@ Subject: [PATCH 7/7] Add defines for totally deprecated functions
  """
 --- a/src/_cffi_src/openssl/ecdh.py
 +++ b/src/_cffi_src/openssl/ecdh.py
-@@ -18,4 +18,7 @@ long SSL_CTX_set_ecdh_auto(SSL_CTX *, in
+@@ -17,4 +17,7 @@ long SSL_CTX_set_ecdh_auto(SSL_CTX *, in
  """
  
  CUSTOMIZATIONS = """
@@ -44,7 +44,7 @@ Subject: [PATCH 7/7] Add defines for totally deprecated functions
  """
 --- a/src/_cffi_src/openssl/ssl.py
 +++ b/src/_cffi_src/openssl/ssl.py
-@@ -739,4 +739,9 @@ long (*SSL_get_max_proto_version)(SSL *)
+@@ -745,4 +745,9 @@ long (*SSL_get_max_proto_version)(SSL *)
  #else
  static const long Cryptography_HAS_GET_PROTO_VERSION = 1;
  #endif

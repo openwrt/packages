@@ -10,7 +10,7 @@ Subject: [PATCH 3/7] Add compatibility for deprecated TLS methods
 
 --- a/src/_cffi_src/openssl/ssl.py
 +++ b/src/_cffi_src/openssl/ssl.py
-@@ -14,12 +14,14 @@ TYPES = """
+@@ -13,12 +13,14 @@ TYPES = """
  static const long Cryptography_HAS_SSL_ST;
  static const long Cryptography_HAS_TLS_ST;
  static const long Cryptography_HAS_SSL3_METHOD;
@@ -27,7 +27,7 @@ Subject: [PATCH 3/7] Add compatibility for deprecated TLS methods
  static const long Cryptography_HAS_SIGALGS;
  static const long Cryptography_HAS_PSK;
  static const long Cryptography_HAS_VERIFIED_CHAIN;
-@@ -543,8 +545,43 @@ static const long Cryptography_HAS_SSL3_
+@@ -548,8 +550,43 @@ static const long Cryptography_HAS_SSL3_
  
  static const long Cryptography_HAS_RELEASE_BUFFERS = 1;
  static const long Cryptography_HAS_OP_NO_COMPRESSION = 1;
@@ -75,7 +75,7 @@ Subject: [PATCH 3/7] Add compatibility for deprecated TLS methods
  static const long Cryptography_HAS_SSL_SET_SSL_CTX = 1;
 --- a/src/cryptography/hazmat/bindings/openssl/_conditional.py
 +++ b/src/cryptography/hazmat/bindings/openssl/_conditional.py
-@@ -33,6 +33,38 @@ def cryptography_has_ssl3_method():
+@@ -31,6 +31,38 @@ def cryptography_has_ssl3_method():
      ]
  
  
@@ -114,7 +114,7 @@ Subject: [PATCH 3/7] Add compatibility for deprecated TLS methods
  def cryptography_has_102_verification():
      return [
          "X509_V_ERR_SUITE_B_INVALID_VERSION",
-@@ -286,6 +318,10 @@ CONDITIONAL_NAMES = {
+@@ -285,6 +317,10 @@ CONDITIONAL_NAMES = {
      "Cryptography_HAS_RSA_OAEP_MD": cryptography_has_rsa_oaep_md,
      "Cryptography_HAS_RSA_OAEP_LABEL": cryptography_has_rsa_oaep_label,
      "Cryptography_HAS_SSL3_METHOD": cryptography_has_ssl3_method,
