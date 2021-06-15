@@ -11,7 +11,7 @@ Deprecated under OpenSSL 1.1.
 
 --- a/src/_cffi_src/openssl/x509_vfy.py
 +++ b/src/_cffi_src/openssl/x509_vfy.py
-@@ -22,6 +22,7 @@ TYPES = """
+@@ -21,6 +21,7 @@ TYPES = """
  static const long Cryptography_HAS_102_VERIFICATION;
  static const long Cryptography_HAS_110_VERIFICATION_PARAMS;
  static const long Cryptography_HAS_X509_STORE_CTX_GET_ISSUER;
@@ -19,7 +19,7 @@ Deprecated under OpenSSL 1.1.
  
  typedef ... Cryptography_STACK_OF_ASN1_OBJECT;
  typedef ... Cryptography_STACK_OF_X509_OBJECT;
-@@ -252,4 +253,11 @@ void (*X509_STORE_set_get_issuer)(X509_S
+@@ -257,4 +258,11 @@ void (*X509_STORE_set_get_issuer)(X509_S
  #else
  static const long Cryptography_HAS_X509_STORE_CTX_GET_ISSUER = 1;
  #endif
@@ -33,7 +33,7 @@ Deprecated under OpenSSL 1.1.
  """
 --- a/src/cryptography/hazmat/bindings/openssl/_conditional.py
 +++ b/src/cryptography/hazmat/bindings/openssl/_conditional.py
-@@ -270,6 +270,11 @@ def cryptography_has_get_proto_version()
+@@ -269,6 +269,11 @@ def cryptography_has_get_proto_version()
          "SSL_get_max_proto_version",
      ]
  
@@ -45,7 +45,7 @@ Deprecated under OpenSSL 1.1.
  
  # This is a mapping of
  # {condition: function-returning-names-dependent-on-that-condition} so we can
-@@ -319,4 +324,7 @@ CONDITIONAL_NAMES = {
+@@ -318,4 +323,7 @@ CONDITIONAL_NAMES = {
      "Cryptography_HAS_VERIFIED_CHAIN": cryptography_has_verified_chain,
      "Cryptography_HAS_SRTP": cryptography_has_srtp,
      "Cryptography_HAS_GET_PROTO_VERSION": cryptography_has_get_proto_version,
