@@ -1251,11 +1251,25 @@ static int add_upg_packages(struct blob_attr *reply, char *arch)
 
 	blobmsg_for_each_attr(cur, packages, rem) {
 		avpk = malloc(sizeof(struct avl_pkg));
+		if (!avpk)
+			return -ENOMEM;
+
 		avpk->name = strdup(blobmsg_name(cur));
+		if (!avpk->name)
+			return -ENOMEM;
+
 		avpk->version = strdup(blobmsg_get_string(cur));
+		if (!avpk->version)
+			return -ENOMEM;
+
 		avpk->avl.key = avpk->name;
-		if (!avpk->name || !avpk->version || avl_insert(&pkg_tree, &avpk->avl)) {
-			fprintf(stderr, "failed to insert package %s (%s)!\n", blobmsg_name(cur), blobmsg_get_string(cur));
+		if (avl_insert(&pkg_tree, &avpk->avl)) {
+
+#ifdef AUC_DEBUG
+			if (debug)
+				fprintf(stderr, "failed to insert package %s (%s)!\n", blobmsg_name(cur), blobmsg_get_string(cur));
+#endif
+
 			if (avpk->name)
 				free(avpk->name);
 
@@ -1263,7 +1277,6 @@ static int add_upg_packages(struct blob_attr *reply, char *arch)
 				free(avpk->version);
 
 			free(avpk);
-			return -ENOMEM;
 		}
 	}
 
