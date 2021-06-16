@@ -158,6 +158,8 @@ define Package/libunbound/config
 	endif
 endef
 
+CONFIGURE_VARS += UNAME=Linux
+
 CONFIGURE_ARGS += \
 	--disable-dsa \
 	--disable-gost \
