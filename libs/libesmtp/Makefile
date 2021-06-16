@@ -8,21 +8,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libesmtp
-PKG_VERSION:=1.0.6
-PKG_RELEASE:=5
+PKG_VERSION:=1.1.0
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_MAINTAINER:=Othmar Truniger <github@truniger.ch>
 PKG_LICENSE:=LGPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=https://ftp.osuosl.org/pub/blfs/conglomeration/libesmtp
-PKG_HASH:=d0a61a5c52d99fa7ce7d00ed0a07e341dbda67101dbed1ab0cdae3f37db4eb0b
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/libesmtp/libESMTP/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=32bc3614ca12d21c7d933f32d43410e8744b6f91fdca7732da9877a385e4e6c3
+PKG_BUILD_DIR:=$(BUILD_DIR)/libESMTP-$(PKG_VERSION)
 
-PKG_BUILD_PARALLEL:=1
-PKG_INSTALL:=1
+PKG_BUILD_DEPENDS:=meson/host
 
 include $(INCLUDE_DIR)/package.mk
+include ../../devel/meson/meson.mk
 
 define Package/libesmtp
   SECTION:=libs
@@ -33,21 +34,27 @@ define Package/libesmtp
 endef
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/libesmtp-config $(1)/usr/bin/
-	$(SED) 's,^\(prefix\|exec_prefix\)=.*,\1=$(STAGING_DIR)/usr,g' $(1)/usr/bin/libesmtp-config
-
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/*.h $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libesmtp.{a,so*} $(1)/usr/lib/
-	$(INSTALL_DIR) $(2)/bin
-	$(LN) ../../usr/bin/libesmtp-config $(2)/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libesmtp.so* $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib/esmtp-plugins-6.2.0
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/esmtp-plugins-6.2.0/sasl-crammd5.so $(1)/usr/lib/esmtp-plugins-6.2.0
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/esmtp-plugins-6.2.0/sasl-login.so $(1)/usr/lib/esmtp-plugins-6.2.0
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/esmtp-plugins-6.2.0/sasl-ntlm.so $(1)/usr/lib/esmtp-plugins-6.2.0
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/esmtp-plugins-6.2.0/sasl-plain.so $(1)/usr/lib/esmtp-plugins-6.2.0
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libesmtp-1.0.pc $(1)/usr/lib/pkgconfig
 endef
 
 define Package/libesmtp/install
-	$(INSTALL_DIR)  $(1)/usr/lib
+	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libesmtp.so.* $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib/esmtp-plugins-6.2.0
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/esmtp-plugins-6.2.0/sasl-crammd5.so $(1)/usr/lib/esmtp-plugins-6.2.0
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/esmtp-plugins-6.2.0/sasl-login.so $(1)/usr/lib/esmtp-plugins-6.2.0
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/esmtp-plugins-6.2.0/sasl-ntlm.so $(1)/usr/lib/esmtp-plugins-6.2.0
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/esmtp-plugins-6.2.0/sasl-plain.so $(1)/usr/lib/esmtp-plugins-6.2.0
 endef
 
 $(eval $(call BuildPackage,libesmtp))
