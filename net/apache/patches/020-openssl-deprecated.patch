@@ -1,6 +1,6 @@
 --- a/modules/md/md_crypt.c
 +++ b/modules/md/md_crypt.c
-@@ -708,23 +708,23 @@ const char *md_cert_get_serial_number(co
+@@ -1098,23 +1098,23 @@ const char *md_cert_get_serial_number(co
  
  int md_cert_is_valid_now(const md_cert_t *cert)
  {
@@ -28,10 +28,10 @@
 +    return md_asn1_time_get(X509_get0_notBefore(cert->x509));
  }
  
- int md_cert_covers_domain(md_cert_t *cert, const char *domain_name)
+ md_timeperiod_t md_cert_get_valid(const md_cert_t *cert)
 --- a/modules/ssl/ssl_engine_init.c
 +++ b/modules/ssl/ssl_engine_init.c
-@@ -226,7 +226,7 @@ apr_status_t ssl_init_Module(apr_pool_t
+@@ -231,7 +231,7 @@ apr_status_t ssl_init_Module(apr_pool_t
      apr_status_t rv;
      apr_array_header_t *pphrases;
  
@@ -42,7 +42,7 @@
                       "a newer library (%s, version currently loaded is %s)"
 --- a/modules/ssl/ssl_engine_io.c
 +++ b/modules/ssl/ssl_engine_io.c
-@@ -1255,9 +1255,9 @@ static apr_status_t ssl_io_filter_handsh
+@@ -1264,9 +1264,9 @@ static apr_status_t ssl_io_filter_handsh
          if (dc->proxy->ssl_check_peer_expire != FALSE) {
              if (!cert
                  || (X509_cmp_current_time(
@@ -90,7 +90,7 @@
      else if (*var && strcEQ(var+1, "_DN")) {
 --- a/modules/ssl/ssl_private.h
 +++ b/modules/ssl/ssl_private.h
-@@ -98,6 +98,9 @@
+@@ -99,6 +99,9 @@
  #include <openssl/x509v3.h>
  #include <openssl/x509_vfy.h>
  #include <openssl/ocsp.h>
