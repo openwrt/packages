@@ -65,6 +65,7 @@ start_service() {
 	procd_append_param command -c "$CONFIGFILE"
 	procd_append_param command -a "0.0.0.0#53"
 	procd_append_param command -a "::0#53"
+	procd_set_param nice '-5'
 	procd_close_instance
 }
 
