@@ -1254,11 +1254,11 @@ f_main()
 		fi
 		if [ -n "$(printf "%s\n" "${ban_logterms}" | grep -F "nginx")" ]
 		then
-			log_ips="$(printf "%s\n" "${log_raw}" | grep -oE "nginx\[[0-9]+\]:.*\[error\].*open().*client: [[:alnum:].:]+" | \
+			log_ips="$(printf "%s\n" "${log_raw}" | grep -oE "nginx(\[[0-9]+\])?:.*\[error\].*open\(\).*client: [[:alnum:].:]+" | \
 					awk '!seen[$NF]++' | awk '{ORS=" ";print $NF}')"
 			for ip in ${log_ips}
 			do
-				log_count="$(printf "%s\n" "${log_raw}" | grep -cE "nginx\[[0-9]+\]:.*\[error\].*open().*client: ${ip}")"
+				log_count="$(printf "%s\n" "${log_raw}" | grep -cE "nginx(\[[0-9]+\])?:.*\[error\].*open\(\).*client: ${ip}")"
 				if [ "${log_count}" -ge "${ban_nginx_logcount}" ]
 				then
 					log_merge="${log_merge} ${ip}"
