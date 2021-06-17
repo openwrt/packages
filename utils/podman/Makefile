@@ -100,7 +100,7 @@ define Package/podman/install
 	$(INSTALL_DIR) $(1)/etc/cni/net.d
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/cni/87-podman-bridge.conflist $(1)/etc/cni/net.d/
 	$(INSTALL_DIR) $(1)/usr/share/containers
-	$(INSTALL_CONF) $(PKG_BUILD_DIR)/vendor/github.com/containers/common/pkg/seccomp/seccomp.json $(1)/usr/share/containers/
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/vendor/github.com/containers/common/pkg/seccomp/seccomp.json $(1)/usr/share/containers/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/podman.init $(1)/etc/init.d/podman
 	$(SED) 's/driver = \"\"/driver = \"overlay\"/g' $(1)/etc/containers/storage.conf
