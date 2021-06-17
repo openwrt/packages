@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2020 OpenWrt.org
+# Copyright (C) 2008-2021 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -16,7 +16,7 @@ PKG_SOURCE_URL:=https://github.com/FreeRADIUS/freeradius-server/archive
 PKG_HASH:=6192b6a8d141545dc54c00c1a7af7f502f990418d780dcae76074163070dbb86
 
 PKG_MAINTAINER:=
-PKG_LICENSE:=GPL-2.0
+PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYRIGHT LICENSE
 PKG_CPE_ID:=cpe:/a:freeradius:freeradius
 
