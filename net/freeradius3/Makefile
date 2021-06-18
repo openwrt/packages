@@ -77,7 +77,6 @@ define Package/freeradius3-default
 +freeradius3-mod-digest \
 +freeradius3-mod-eap \
 +freeradius3-mod-eap-gtc \
-+freeradius3-mod-eap-leap \
 +freeradius3-mod-eap-md5 \
 +freeradius3-mod-eap-mschapv2 \
 +freeradius3-mod-eap-peap \
@@ -193,12 +192,6 @@ define Package/freeradius3-mod-eap-gtc
   $(call Package/freeradius3/Default)
   DEPENDS:=freeradius3-mod-eap
   TITLE:=EAP/GTC module
-endef
-
-define Package/freeradius3-mod-eap-leap
-  $(call Package/freeradius3/Default)
-  DEPENDS:=freeradius3-mod-eap
-  TITLE:=EAP/LEAP module
 endef
 
 define Package/freeradius3-mod-eap-md5
@@ -774,7 +767,6 @@ $(eval $(call BuildPlugin,freeradius3-mod-detail,rlm_detail,))
 $(eval $(call BuildPlugin,freeradius3-mod-digest,rlm_digest,))
 $(eval $(call BuildPlugin,freeradius3-mod-eap,rlm_eap,))
 $(eval $(call BuildPlugin,freeradius3-mod-eap-gtc,rlm_eap_gtc,))
-$(eval $(call BuildPlugin,freeradius3-mod-eap-leap,rlm_eap_leap,))
 $(eval $(call BuildPlugin,freeradius3-mod-eap-md5,rlm_eap_md5,))
 $(eval $(call BuildPlugin,freeradius3-mod-eap-mschapv2,rlm_eap_mschapv2,))
 $(eval $(call BuildPlugin,freeradius3-mod-eap-peap,rlm_eap_peap,))
