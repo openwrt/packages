@@ -6,17 +6,16 @@ USE_PROCD=1
 
 validate_section_addrwatch() {
 	uci_load_validate addrwatch addrwatch "$1" "$2" \
-		'disabled:bool:0' \
+		'enabled:bool:0' \
 		'interface:list(string):lan' \
-		'syslog:bool:1' \
+		'syslog:bool:0' \
 		'output:string' \
-		'quiet:bool:0' \
 		'verbose:bool:0' \
 		'ipv4only:bool:0' \
 		'ipv6only:bool:0' \
 		'blacklist:list(or(ip4addr,ip6addr))' \
-		'hashsize:range(1,65536):1024'\
-		'ratelimit:integer:3600'
+		'hashsize:range(1,65536):1'\
+		'ratelimit:integer:0'
 }
 
 start_instance() {
@@ -27,7 +26,7 @@ start_instance() {
 		echo "validation of config $cfg failed"
 		return 1
 	}
-	[ $disabled -ne 0 ] && return 1
+	[ $enabled -eq 1 ] || return 1
 
 	for iface in $interface; do
 		local netdev
@@ -36,15 +35,13 @@ start_instance() {
 	done
 
 	procd_open_instance
-	procd_set_param command /usr/sbin/addrwatch
-	[ "$syslog" -eq 1 ] && procd_append_param command --syslog
-	[ -n "$output" ] && procd_append_param command --output "$output"
-	[ "$quiet" -eq 1 ] && procd_append_param command --quiet
-	[ "$verbose" -eq 1 ] && procd_append_param command --verbose
-	[ "$ipv4only" -eq 1 ] && procd_append_param command --ipv4only
-	[ "$ipv6only" -eq 1 ] && procd_append_param command --ipv6only
-	[ -n "$hashsize" ] && procd_append_param command --hashsize "$hashsize"
-	[ -n "$ratelimit" ] && procd_append_param command --ratelimit "$ratelimit"
+	procd_set_param command /usr/sbin/addrwatch --quiet
+	[ -n "$output" ] && procd_append_param command "--output=$output"
+	[ "$verbose" -eq 1 ] && procd_append_param command "--verbose"
+	[ "$ipv4only" -eq 1 ] && procd_append_param command "--ipv4-only"
+	[ "$ipv6only" -eq 1 ] && procd_append_param command "--ipv6-only"
+	[ -n "$hashsize" ] && procd_append_param command "--hashsize=$hashsize"
+	[ -n "$ratelimit" ] && procd_append_param command "--ratelimit=$ratelimit"
 	for blitem in $blacklist; do
 		procd_append_param command "--blacklist=$blitem"
 	done
@@ -57,6 +54,18 @@ start_instance() {
 	done
 	procd_close_trigger
 	procd_close_instance
+
+	[ "$syslog" -eq 1 ] && {
+		if [ -x /usr/sbin/addrwatch_syslog ]; then
+			procd_open_instance
+			procd_set_param command /usr/sbin/addrwatch_syslog
+			procd_set_param respawn
+			procd_close_instance
+		else
+			echo "Cannot find /usr/sbin/addrwatch_syslog" >&2
+			echo "Install the addrwatch-syslog package to enable syslog output" >&2
+		fi
+	}
 }
 
 start_service() {
