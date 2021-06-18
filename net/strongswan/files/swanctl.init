@@ -486,12 +486,14 @@ config_remote() {
 		swanctl_xappend0 "secrets {"
 		swanctl_xappend1 "ike {"
 		swanctl_xappend2 "secret = $pre_shared_key"
-		if [ -z "$local_id" ]; then
+		if [ -n "$local_id" ]; then
 			swanctl_xappend2 "id1 = $local_id"
-			if [ -z "$remote_id" ]; then
+			if [ -n "$remote_id" ]; then
 				swanctl_xappend2 "id2 = $remote_id"
 			fi
 		fi
+		swanctl_xappend1 "}"
+		swanctl_xappend0 "}"
 	else
 		fatal "AuthenticationMode $auth_mode not supported"
 	fi
