@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=addrwatch
 PKG_VERSION:=1.0.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/fln/addrwatch/releases/download/v$(PKG_VERSION)
@@ -22,6 +22,7 @@ PKG_LICENSE_FILES:=COPYING
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=USE_UCLIBC:argp-standalone USE_MUSL:argp-standalone
+PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -45,8 +46,9 @@ define Package/addrwatch/conffiles
 endef
 
 define Package/addrwatch/install
-	$(INSTALL_DIR) $(1)/usr/bin $(1)/etc/config $(1)/etc/init.d
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/addrwatch $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/config $(1)/etc/init.d
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/addrwatch $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/addrwatch_syslog $(1)/usr/sbin/
 	$(INSTALL_BIN) ./files/addrwatch.init $(1)/etc/init.d/addrwatch
 	$(INSTALL_CONF) ./files/addrwatch.config $(1)/etc/config/addrwatch
 endef
