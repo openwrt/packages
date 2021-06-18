@@ -72,7 +72,7 @@ genca()
 
 	pki --self --ca --lifetime "$CADAYS" --in "$SWANCTL_DIR/private/$SHORT_DOMAIN.key" --type "$keytype" \
 		--dn "$ROOTDN" --outform pem > "$SWANCTL_DIR/x509ca/$SHORT_DOMAIN.crt"
-	chmod 0444 "$SWANCTL_DIR/cacerts/$SHORT_DOMAIN.crt"
+	chmod 0444 "$SWANCTL_DIR/x509ca/$SHORT_DOMAIN.crt"
 }
 
 genclientkey()
