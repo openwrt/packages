@@ -15,11 +15,14 @@ PKG_SOURCE:=$(PKG_NAME)-src-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/go-gitea/gitea/releases/download/v$(PKG_VERSION)/
 # https://github.com/go-gitea/gitea/releases/download/v1.14.2/gitea-src-1.14.2.tar.gz
 PKG_HASH:=d04bca934feba35600aaf739c82b7cbe7d8b911a086d7ac54f0710b689a85ac3
-PKG_BUILD_DIR:=$(BUILD_DIR)/${PKG_NAME}-$(PKG_VERSION)
+
+PKG_BUILD_DIR:=$(BUILD_DIR)/golang-${PKG_NAME}-$(PKG_VERSION)
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
+PKG_USE_MIPS16:=0
 
-GO_PKG:=github.com/go-gitea/gitea
+# GO_PKG:=github.com/go-gitea/gitea
+GO_PKG:=code.gitea.io
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
@@ -50,9 +53,21 @@ endef
 #	true
 #endef
 
+GO_PKG_INSTALL_ALL:=1
+MAKE_VARS += $(GO_PKG_VARS)
+MAKE_FLAGS += COMMIT=$(PKG_SOURCE_VERSION)
+
+ifeq ($(ARCH),mips)
+MAKE_FLAGS += EXTRA_FLAGS='-buildmode=default'
+endif
+
 define Build/Compile
-	$(call Build/Compile/Default,V=sc TAGS="bindata")
-	# $(call Build/Compile/Default,V=sc GO="/usr/lib/go-1.14/bin/go" TAGS="bindata" GOOS=linux GOARCH=mipsle)
+	+$(MAKE_VARS) \
+	$(GO_PKG_VARS) \
+	$(MAKE) $(PKG_JOBS) -C $(GO_PKG_BUILD_DIR)/src/$(GO_PKG) \
+		$(MAKE_FLAGS)
+	#$(call Build/Compile/Default,V=sc TAGS="bindata" )
+	#$(call GoPackage/Build/Compile, )
 endef
 
 define Build/install
