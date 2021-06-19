@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
-PKG_VERSION:=10.4.18
-PKG_RELEASE:=1
+PKG_VERSION:=10.6.1
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL := \
@@ -18,7 +18,7 @@ PKG_SOURCE_URL := \
 	https://ftp.yz.yamagata-u.ac.jp/pub/dbms/mariadb/$(PKG_NAME)-$(PKG_VERSION)/source \
 	https://downloads.mariadb.org/interstitial/$(PKG_NAME)-$(PKG_VERSION)/source
 
-PKG_HASH:=330d9e8273002fc92f0f3f3f9b08157a3cab1265a0f114adeb6235e4283a0d3e
+PKG_HASH:=f32cf8335d6586da52a00d524265b5321e914da59fcda95ea3ad0d1762eaeacc
 PKG_MAINTAINER:=Michal Hrusecky <Michal@Hrusecky.net>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING THIRDPARTY
@@ -38,13 +38,11 @@ SHARE_DIR:=/usr/share/mariadb
 MARIADB_SOCKET=/var/run/mysqld/mysqld.sock
 
 MARIADB_DISABLE_ENGINES := \
-	cassandra \
 	example \
 	mroonga \
 	oqgraph \
 	rocksdb \
-	test_sql_discovery \
-	tokudb
+	test_sql_discovery
 
 MARIADB_DISABLE_PLUGINS := \
 	audit_null \
@@ -288,7 +286,7 @@ define Package/mariadb-server-base
 	  $(MARIADB_COMMON_DEPENDS) \
 	  +libaio \
 	  +liblzma \
-	  +libpcre \
+	  +libpcre2 \
 	  +resolveip
   TITLE:=MariaDB database server base
   USERID:=mariadb=376:mariadb=376
@@ -394,6 +392,7 @@ CMAKE_OPTIONS += \
 	-DWITH_SAFEMALLOC=OFF \
 	-DWITH_SSL=system \
 	-DWITH_SYSTEMD=no \
+	-DWITH_URING=OFF \
 	-DWITH_VALGRIND=OFF \
 	-DWITH_ZLIB=system
 
@@ -468,6 +467,7 @@ endef
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
+	rm $(PKG_BUILD_DIR)/cmake/FindURING.cmake
 	$(SED) '/ADD_DEFINITIONS(-DLIBICONV_PLUG)/d' $(PKG_BUILD_DIR)/libmariadb/libmariadb/CMakeLists.txt
 	$(foreach e,$(MARIADB_DISABLE_ENGINES),$(call Package/mariadb/disable/engine,$(PKG_BUILD_DIR),$(e));)
 	$(foreach p,$(MARIADB_DISABLE_PLUGINS),$(call Package/mariadb/disable/plugin,$(PKG_BUILD_DIR),$(p));)
@@ -562,9 +562,9 @@ ifeq ($(1),auth_pam)
 					  $$(1)/lib/security
 endif
 ifeq ($(1),ha_spider)
-	  $(INSTALL_DIR) $$(1)$(SHARE_DIR)
-	  $(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/install_spider.sql \
-		  $$(1)$(SHARE_DIR)
+	  $(INSTALL_DIR) $$(1)$(PLUGIN_DIR)
+	  $(INSTALL_DATA) $(PKG_INSTALL_DIR)$(PLUGIN_DIR)/ha_spider.so \
+		  $$(1)$(PLUGIN_DIR)
 endif
   endef
   $$(eval $$(call BuildPackage,mariadb-server-plugin-$(subst _,-,$(1))))
