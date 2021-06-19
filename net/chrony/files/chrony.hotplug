@@ -17,6 +17,7 @@ fi
 [ "$ACTION" = ifup ] || exit 0
 
 . /lib/functions.sh
+. /lib/functions/network.sh
 . /etc/init.d/chronyd
 
 config_load chrony
