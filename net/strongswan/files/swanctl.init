@@ -329,6 +329,10 @@ config_transport() {
 	config_conn "$1" "transport"
 }
 
+append_pubkey() {
+	append pubkey_list "\"$1\"" ","
+}
+
 config_remote() {
 	local config_name="$1"
 
@@ -412,14 +416,24 @@ config_remote() {
 
 	swanctl_xappend2 "local {"
 	swanctl_xappend3 "auth = $auth_method"
-
 	[ -n "$local_identifier" ] && swanctl_xappend3 "id = \"$local_identifier\""
-	[ "$auth_method" = pubkey ] && [ -n "$local_cert" ] && swanctl_xappend3 "certs = $local_cert"
+	if [ "$auth_method" = pubkey ]; then
+		[ -n "$local_cert" ] && swanctl_xappend3 "certs = $local_cert"
+
+		local pubkey_list=""
+		config_list_foreach "$1" local_pubkeys append_pubkey
+		[ -n "$pubkey_list" ] && swanctl_xappend3 "pubkeys = $pubkey_list"
+	fi
 	swanctl_xappend2 "}"
 
 	swanctl_xappend2 "remote {"
 	swanctl_xappend3 "auth = $auth_method"
 	[ -n "$remote_identifier" ] && swanctl_xappend3 "id = \"$remote_identifier\""
+	if [ "$auth_method" = pubkey ]; then
+		local pubkey_list=""
+		config_list_foreach "$1" remote_pubkeys append_pubkey
+		[ -n "$pubkey_list" ] && swanctl_xappend3 "pubkeys = $pubkey_list"
+	fi
 	swanctl_xappend2 "}"
 
 	swanctl_xappend2 "children {"
