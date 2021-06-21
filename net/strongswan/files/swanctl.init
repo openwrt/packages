@@ -280,7 +280,6 @@ config_child() {
 	local mode="$2"
 
 	local local_ts
-	local local_nat
 	local updown
 	local firewall
 	local remote_ts
@@ -293,7 +292,6 @@ config_child() {
 
 	config_get startaction "$1" startaction "route"
 	config_get local_ts "$1" local_ts ""
-	config_get local_nat "$1" local_nat ""
 	config_get updown "$1" updown ""
 	config_get firewall "$1" firewall ""
 	config_get remote_ts "$1" remote_ts ""
@@ -358,8 +356,6 @@ config_child() {
 		dpdaction=
 		;;
 	esac
-
-	[ -n "$local_nat" ] && local_ts="$local_nat"
 
 	swanctl_xappend3 "$config_name {"
 
