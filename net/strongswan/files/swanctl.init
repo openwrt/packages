@@ -210,7 +210,7 @@ parse_ike_proposal() {
 	export -n "$var=$crypto"
 }
 
-config_conn() {
+config_child() {
 	# Generic swanctl.conf children section shared by tunnel and transport
 	local config_name="$1"
 	local mode="$2"
@@ -322,18 +322,18 @@ config_conn() {
 }
 
 config_tunnel() {
-	config_conn "$1" "tunnel"
+	config_child "$1" "tunnel"
 }
 
 config_transport() {
-	config_conn "$1" "transport"
+	config_child "$1" "transport"
 }
 
 append_pubkey() {
 	append pubkey_list "\"$1\"" ","
 }
 
-config_remote() {
+config_connection() {
 	local config_name="$1"
 
 	local enabled
@@ -577,7 +577,7 @@ prepare_env() {
 
 	config_load ipsec
 	config_foreach config_ipsec ipsec
-	config_foreach config_remote remote
+	config_foreach config_connection remote
 
 	do_postamble
 }
