@@ -338,7 +338,6 @@ config_remote() {
 
 	local enabled
 	local gateway
-	local local_gateway
 	local local_sourceip
 	local local_leftip
 	local remote_gateway
@@ -432,13 +431,6 @@ config_remote() {
 	[ -n "$local_sourceip" ] && swanctl_xappend2 "vips = $local_sourceip"
 
 	[ "$gateway" = "any" ] && remote_gateway="%any" || remote_gateway="$gateway"
-
-	[ -z "$local_gateway" ] && {
-		local ipdest
-
-		[ "$remote_gateway" = "%any" ] && ipdest="1.1.1.1" || ipdest="$remote_gateway"
-		local_gateway=`ip -o route get $ipdest | awk '/ src / { gsub(/^.* src /,""); gsub(/ .*$/, ""); print $0}'`
-	}
 
 	swanctl_xappend2 "local_addrs = $local_leftip"
 	swanctl_xappend2 "remote_addrs = $remote_gateway"
