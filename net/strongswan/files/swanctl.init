@@ -70,6 +70,10 @@ xappend() {
 	echo "$@" >> "$file"
 }
 
+append_quoted_comma() {
+	append quoted_comma_list "\"$1\"" ","
+}
+
 swan_reset() {
 	file_reset "$STRONGSWAN_VAR_CONF_FILE"
 }
@@ -146,6 +150,66 @@ is_aead() {
 	esac
 
 	return 1
+}
+
+authority_one_exclusive() {
+	fatal "Configure either cacert, file, or handle per authority section!"
+}
+
+config_authority() {
+	local config_name="$1"
+
+	local enabled
+
+	local cacert
+	local cert_uri_base
+	local crl_uris
+	local file
+	local handle
+	local module
+	local oscp_uris
+	local slot
+
+	config_get_bool enabled "$1" enabled 0
+	[ $enabled -eq 0 ] && return
+
+	config_get cacert "$1" cacert ""
+	config_get cert_uri_base "$1" cert_uri_base ""
+	config_get crl_uris "$1" crl_uris ""
+	config_get file "$1" file ""
+	config_get handle "$1" handle ""
+	config_get module "$1" module ""
+	config_get oscp_uris "$1" oscp_uris ""
+	config_get slot "$1" slot ""
+
+	[ -z "$cacert" ] && [ -z "$file" ] && [ -z "$handle" ] && authority_one_exclusive
+
+	[ -n "$cacert" ] && [ -n "$file" ] && authority_one_exclusive
+	[ -n "$cacert" ] && [ -n "$handle" ] && authority_one_exclusive
+	[ -n "$file" ] && [ -n "$handle" ] && authority_one_exclusive
+
+	swanctl_xappend0 "authorities {"
+	swanctl_xappend1 "$config_name {"
+	[ -n "$cacert" ] && swanctl_xappend2 "cacert = $cacert"
+	[ -n "$cert_uri_base" ] && swanctl_xappend2 "cert_uri_base = $cert_uri_base"
+
+	local quoted_comma_list=""
+	config_list_foreach "$1" crl_uris append_quoted_comma_list
+	[ -n "$quoted_comma_list" ] && swanctl_xappend3 "crl_uris = $quoted_comma_list"
+
+	[ -n "$file" ] && swanctl_xappend2 "file = $file"
+	[ -n "$handle" ] && swanctl_xappend2 "handle = $handle"
+	[ -n "$module" ] && swanctl_xappend2 "module = $module"
+
+	local quoted_comma_list=""
+	config_list_foreach "$1" oscp_uris append_quoted_comma_list
+	[ -n "$quoted_comma_list" ] && swanctl_xappend3 "oscp_uris = $quoted_comma_list"
+
+	[ -n "$slot" ] && swanctl_xappend2 "slot = $slot"
+	swanctl_xappend1 "}"
+	swanctl_xappend0 "}"
+
+	swanctl_xappend0 ""
 }
 
 add_esp_proposal() {
@@ -329,10 +393,6 @@ config_transport() {
 	config_child "$1" "transport"
 }
 
-append_pubkey() {
-	append pubkey_list "\"$1\"" ","
-}
-
 config_connection() {
 	local config_name="$1"
 
@@ -351,14 +411,12 @@ config_connection() {
 	local mobike
 	local local_cert
 	local local_key
-	local ca_cert
 	local rekeytime
 
 	config_get_bool enabled "$1" enabled 0
 	[ $enabled -eq 0 ] && return
 
 	config_get auth_method "$1" authentication_method
-	config_get ca_cert "$1" ca_cert ""
 	config_get dpddelay "$1" dpddelay "30s"
 	config_get fragmentation "$1" fragmentation "yes"
 	config_get gateway "$1" gateway
@@ -441,9 +499,9 @@ config_connection() {
 	if [ "$auth_method" = pubkey ]; then
 		[ -n "$local_cert" ] && swanctl_xappend3 "certs = $local_cert"
 
-		local pubkey_list=""
-		config_list_foreach "$1" local_pubkeys append_pubkey
-		[ -n "$pubkey_list" ] && swanctl_xappend3 "pubkeys = $pubkey_list"
+		local quoted_comma_list=""
+		config_list_foreach "$1" local_pubkeys append_quoted_comma_list
+		[ -n "$quoted_comma_list" ] && swanctl_xappend3 "pubkeys = $quoted_comma_list"
 	fi
 	swanctl_xappend2 "}"
 
@@ -451,9 +509,9 @@ config_connection() {
 	swanctl_xappend3 "auth = $auth_method"
 	[ -n "$remote_identifier" ] && swanctl_xappend3 "id = \"$remote_identifier\""
 	if [ "$auth_method" = pubkey ]; then
-		local pubkey_list=""
-		config_list_foreach "$1" remote_pubkeys append_pubkey
-		[ -n "$pubkey_list" ] && swanctl_xappend3 "pubkeys = $pubkey_list"
+		local quoted_comma_list=""
+		config_list_foreach "$1" remote_pubkeys append_quoted_comma_list
+		[ -n "$quoted_comma_list" ] && swanctl_xappend3 "pubkeys = $quoted_comma_list"
 	fi
 	swanctl_xappend2 "}"
 
@@ -472,17 +530,6 @@ config_connection() {
 		swanctl_xappend2 "filename = $local_key"
 		swanctl_xappend1 "}"
 		swanctl_xappend0 "}"
-
-		swanctl_xappend0 ""
-
-		if [ -n "$ca_cert" ]; then
-			swanctl_xappend0 "authorities {"
-			swanctl_xappend1 "$config_name {"
-			swanctl_xappend2 "cacert = $ca_cert"
-			swanctl_xappend1 "}"
-			swanctl_xappend0 "}"
-		fi
-
 	elif [ "$auth_method" = psk ]; then
 		swanctl_xappend0 ""
 
@@ -577,6 +624,7 @@ prepare_env() {
 
 	config_load ipsec
 	config_foreach config_ipsec ipsec
+	config_foreach config_authority authority
 	config_foreach config_connection remote
 
 	do_postamble
