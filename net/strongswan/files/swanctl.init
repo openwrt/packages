@@ -301,6 +301,7 @@ config_child() {
 	local config_name="$1"
 	local mode="$2"
 
+	local ipcomp
 	local priority
 	local ah_proposal
 	local esp_proposal
@@ -313,6 +314,7 @@ config_child() {
 	local if_id
 	local rekey_time
 
+	config_get_bool ipcomp "$1" ipcomp 0
 	config_get priority "$1" priority ""
 	config_get startaction "$1" startaction "route"
 	config_get updown "$1" updown ""
@@ -326,6 +328,7 @@ config_child() {
 	parse_ah_proposal "$1" ah_proposal
 	parse_esp_proposal "$1" esp_proposal
 
+	[ $ipcomp -eq 1 ] && swanctl_xappend4 "ipcomp = 1"
 	[ -n "$priority" ] && swanctl_xappend4 "priority = $priority"
 
 	# translate from ipsec to swanctl
