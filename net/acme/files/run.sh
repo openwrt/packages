@@ -43,7 +43,7 @@ err()
 
 debug()
 {
-	[ "$DEBUG" -eq "1" ] && logger -t acme -s -p daemon.debug -- "$@"
+	[ "$DEBUG" = "1" ] && logger -t acme -s -p daemon.debug -- "$@"
 }
 
 get_listeners() {
@@ -101,7 +101,7 @@ pre_checks()
 				fi
 				;;
 			nginx)
-				if [ "$NGINX_WEBSERVER" -eq "1" ]; then
+				if [ "$NGINX_WEBSERVER" = "1" ]; then
 					debug "Already handled nginx; skipping"
 					continue
 				fi
@@ -146,7 +146,7 @@ post_checks()
 	iptables -D input_rule -p tcp --dport 80 -j ACCEPT -m comment --comment "ACME" 2>/dev/null
 	ip6tables -D input_rule -p tcp --dport 80 -j ACCEPT -m comment --comment "ACME" 2>/dev/null
 
-	if [ -e /etc/init.d/uhttpd ] && ( [ -n "$UHTTPD_LISTEN_HTTP" ] || [ "$UPDATE_UHTTPD" -eq 1 ] ); then
+	if [ -e /etc/init.d/uhttpd ] && ( [ -n "$UHTTPD_LISTEN_HTTP" ] || [ "$UPDATE_UHTTPD" = "1" ] ); then
 		if [ -n "$UHTTPD_LISTEN_HTTP" ]; then
 			uci set uhttpd.main.listen_http="$UHTTPD_LISTEN_HTTP"
 			UHTTPD_LISTEN_HTTP=
@@ -155,7 +155,7 @@ post_checks()
 		/etc/init.d/uhttpd reload
 	fi
 
-	if [ -e /etc/init.d/nginx ] && ( [ "$NGINX_WEBSERVER" -eq 1 ] || [ "$UPDATE_NGINX" -eq 1 ] ); then
+	if [ -e /etc/init.d/nginx ] && ( [ "$NGINX_WEBSERVER" = 1 ] || [ "$UPDATE_NGINX" = "1" ] ); then
 		NGINX_WEBSERVER=0
 		/etc/init.d/nginx restart
 	fi
@@ -214,9 +214,9 @@ issue_cert()
 	local days
 
 	config_get_bool enabled "$section" enabled 0
-	config_get_bool use_staging "$section" use_staging
-	config_get_bool update_uhttpd "$section" update_uhttpd
-	config_get_bool update_nginx "$section" update_nginx
+	config_get_bool use_staging "$section" use_staging 0
+	config_get_bool update_uhttpd "$section" update_uhttpd 0
+	config_get_bool update_nginx "$section" update_nginx 0
 	config_get calias "$section" calias
 	config_get dalias "$section" dalias
 	config_get domains "$section" domains
@@ -232,9 +232,9 @@ issue_cert()
 	UPDATE_UHTTPD=$update_uhttpd
 	USER_CLEANUP=$user_cleanup
 
-	[ "$enabled" -eq "1" ] || return
+	[ "$enabled" = "1" ] || return
 
-	[ "$DEBUG" -eq "1" ] && acme_args="$acme_args --debug"
+	[ "$DEBUG" = "1" ] && acme_args="$acme_args --debug"
 
 	set -- $domains
 	main_domain=$1
@@ -262,13 +262,13 @@ issue_cert()
 	config_list_foreach "$section" credentials handle_credentials
 
 	if [ -e "$domain_dir" ]; then
-		if [ "$use_staging" -eq "0" ] && is_staging "$main_domain" "$domain_dir"; then
+		if [ "$use_staging" = "0" ] && is_staging "$main_domain" "$domain_dir"; then
 			log "Found previous cert issued using staging server. Moving it out of the way."
 			mv "$domain_dir" "${domain_dir}.staging"
 			moved_staging=1
 		else
 			log "Found previous cert config. Issuing renew."
-			[ "$keylength_ecc" -eq "1" ] && acme_args="$acme_args --ecc"
+			[ "$keylength_ecc" = "1" ] && acme_args="$acme_args --ecc"
 			run_acme --home "$STATE_DIR" --renew -d "$main_domain" $acme_args && ret=0 || ret=1
 			post_checks
 			return $ret
@@ -279,7 +279,7 @@ issue_cert()
 	acme_args="$acme_args $(for d in $domains; do echo -n "-d $d "; done)"
 	acme_args="$acme_args --keylength $keylength"
 	[ -n "$ACCOUNT_EMAIL" ] && acme_args="$acme_args --accountemail $ACCOUNT_EMAIL"
-	[ "$use_staging" -eq "1" ] && acme_args="$acme_args --staging"
+	[ "$use_staging" = "1" ] && acme_args="$acme_args --staging"
 
 	if [ -n "$acme_server" ]; then
 		log "Using custom ACME server URL"
@@ -321,7 +321,7 @@ issue_cert()
 		failed_dir="${domain_dir}.failed-$(date +%s)"
 		err "Issuing cert for $main_domain failed. Moving state to $failed_dir"
 		[ -d "$domain_dir" ] && mv "$domain_dir" "$failed_dir"
-		if [ "$moved_staging" -eq "1" ]; then
+		if [ "$moved_staging" = "1" ]; then
 			err "Restoring staging certificate"
 			mv "${domain_dir}.staging" "${domain_dir}"
 		fi
@@ -329,7 +329,7 @@ issue_cert()
 		return 1
 	fi
 
-	if [ -e /etc/init.d/uhttpd ] && [ "$update_uhttpd" -eq "1" ]; then
+	if [ -e /etc/init.d/uhttpd ] && [ "$update_uhttpd" = "1" ]; then
 		uci set uhttpd.main.key="${domain_dir}/${main_domain}.key"
 		uci set uhttpd.main.cert="${domain_dir}/fullchain.cer"
 		# commit and reload is in post_checks
@@ -337,7 +337,7 @@ issue_cert()
 
 	local nginx_updated
 	nginx_updated=0
-	if command -v nginx-util 2>/dev/null && [ "$update_nginx" -eq "1" ]; then
+	if command -v nginx-util 2>/dev/null && [ "$update_nginx" = "1" ]; then
 		nginx_updated=1
 		for domain in $domains; do
 			nginx-util add_ssl "${domain}" acme "${domain_dir}/fullchain.cer" \
@@ -346,7 +346,7 @@ issue_cert()
 		# reload is in post_checks
 	fi
 
-	if [ "$nginx_updated" -eq "0" ] && [ -w /etc/nginx/nginx.conf ] && [ "$update_nginx" -eq "1" ]; then
+	if [ "$nginx_updated" = "0" ] && [ -w /etc/nginx/nginx.conf ] && [ "$update_nginx" = "1" ]; then
 		sed -i "s#ssl_certificate\ .*#ssl_certificate ${domain_dir}/fullchain.cer;#g" /etc/nginx/nginx.conf
 		sed -i "s#ssl_certificate_key\ .*#ssl_certificate_key ${domain_dir}/${main_domain}.key;#g" /etc/nginx/nginx.conf
 		# commit and reload is in post_checks
@@ -361,7 +361,7 @@ load_vars()
 
 	STATE_DIR=$(config_get "$section" state_dir)
 	ACCOUNT_EMAIL=$(config_get "$section" account_email)
-	DEBUG=$(config_get "$section" debug)
+	DEBUG=$(config_get_bool "$section" debug 0)
 }
 
 check_cron
