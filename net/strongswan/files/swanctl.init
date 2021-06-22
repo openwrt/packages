@@ -569,7 +569,7 @@ config_connection() {
 	swanctl_xappend2 "children {"
 	config_list_foreach "$1" beet config_beet
 	config_list_foreach "$1" drop config_drop
-	config_list_foreach "$1" drop config_pass
+	config_list_foreach "$1" pass config_pass
 	config_list_foreach "$1" transport config_transport
 	config_list_foreach "$1" transport_proxy config_transport_proxy
 	config_list_foreach "$1" tunnel config_tunnel
