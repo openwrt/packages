@@ -301,6 +301,7 @@ config_child() {
 	local config_name="$1"
 	local mode="$2"
 
+	local hw_offload
 	local interface
 	local ipcomp
 	local priority
@@ -315,6 +316,7 @@ config_child() {
 	local if_id
 	local rekey_time
 
+	config_get hw_offload "$1" hw_offload ""
 	config_get interface "$1" interface ""
 	config_get_bool ipcomp "$1" ipcomp 0
 	config_get priority "$1" priority ""
@@ -393,6 +395,7 @@ config_child() {
 	config_list_foreach "$1" remote_ts append_quoted_comma_list
 	[ -n "$quoted_comma_list" ] && swanctl_xappend4 "remote_ts = $quoted_comma_list"
 
+	[ -n "$hw_offload" ] && swanctl_xappend4 "hw_offload = $hw_offload"
 	[ -n "$interface" ] && swanctl_xappend4 "interface = $interface"
 	[ $ipcomp -eq 1 ] && swanctl_xappend4 "ipcomp = 1"
 	[ -n "$priority" ] && swanctl_xappend4 "priority = $priority"
