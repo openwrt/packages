@@ -303,10 +303,8 @@ config_child() {
 
 	local ah_proposal
 	local esp_proposal
-	local local_ts
 	local updown
 	local firewall
-	local remote_ts
 	local lifetime
 	local dpdaction
 	local closeaction
@@ -315,10 +313,8 @@ config_child() {
 	local rekeytime
 
 	config_get startaction "$1" startaction "route"
-	config_get local_ts "$1" local_ts ""
 	config_get updown "$1" updown ""
 	config_get firewall "$1" firewall ""
-	config_get remote_ts "$1" remote_ts ""
 	config_get lifetime "$1" lifetime ""
 	config_get dpdaction "$1" dpdaction "none"
 	config_get closeaction "$1" closeaction "none"
@@ -383,8 +379,14 @@ config_child() {
 
 	swanctl_xappend3 "$config_name {"
 
-	[ -n "$local_ts" ] && swanctl_xappend4 "local_ts = $local_ts"
-	[ -n "$remote_ts" ] && swanctl_xappend4 "remote_ts = $remote_ts"
+	local quoted_comma_list=""
+	config_list_foreach "$1" local_ts append_quoted_comma_list
+	[ -n "$quoted_comma_list" ] && swanctl_xappend4 "local_ts = $quoted_comma_list"
+
+	local quoted_comma_list=""
+	config_list_foreach "$1" remote_ts append_quoted_comma_list
+	[ -n "$quoted_comma_list" ] && swanctl_xappend4 "remote_ts = $quoted_comma_list"
+
 	[ -n "$if_id" ] && { swanctl_xappend4 "if_id_in = $if_id" ; swanctl_xappend4 "if_id_out = $if_id" ; }
 	[ -n "$startaction" -a "$startaction" != "none" ] && swanctl_xappend4 "start_action = $startaction"
 	[ -n "$closeaction" -a "$closeaction" != "none" ] && swanctl_xappend4 "close_action = $closeaction"
