@@ -235,13 +235,13 @@ parse_ah_proposal() {
 }
 
 add_esp_proposal() {
+	local dh_group
 	local encryption_algorithm
 	local hash_algorithm
-	local dh_group
 
+	config_get dh_group "$1" dh_group
 	config_get encryption_algorithm "$1" encryption_algorithm
 	config_get hash_algorithm "$1" hash_algorithm
-	config_get dh_group "$1" dh_group
 
 	# check for AEAD and clobber hash_algorithm if set
 	if is_aead "$encryption_algorithm" && [ -n "$hash_algorithm" ]; then
@@ -265,14 +265,14 @@ parse_esp_proposal() {
 }
 
 add_ike_proposal() {
+	local dh_group
 	local encryption_algorithm
 	local hash_algorithm
-	local dh_group
 	local prf_algorithm
 
+	config_get dh_group "$1" dh_group
 	config_get encryption_algorithm "$1" encryption_algorithm
 	config_get hash_algorithm "$1" hash_algorithm
-	config_get dh_group "$1" dh_group
 	config_get prf_algorithm "$1" prf_algorithm
 
 	# check for AEAD and clobber hash_algorithm if set
@@ -301,36 +301,35 @@ config_child() {
 	local config_name="$1"
 	local mode="$2"
 
+	local ah_proposal
+	local closeaction
+	local dpd_action
+	local esp_proposal
+	local firewall
 	local hw_offload
+	local if_id
 	local interface
 	local ipcomp
-	local priority
-	local ah_proposal
-	local esp_proposal
-	local updown
-	local firewall
 	local life_time
-	local dpd_action
-	local closeaction
-	local startaction
-	local if_id
+	local priority
 	local rekey_time
-
-	config_get hw_offload "$1" hw_offload ""
-	config_get interface "$1" interface ""
-	config_get_bool ipcomp "$1" ipcomp 0
-	config_get priority "$1" priority ""
-	config_get startaction "$1" startaction "route"
-	config_get updown "$1" updown ""
-	config_get firewall "$1" firewall ""
-	config_get life_time "$1" life_time ""
-	config_get dpd_action "$1" dpd_action "none"
-	config_get closeaction "$1" closeaction "none"
-	config_get if_id "$1" if_id ""
-	config_get rekey_time "$1" rekey_time ""
+	local startaction
+	local updown
 
 	parse_ah_proposal "$1" ah_proposal
+	config_get closeaction "$1" closeaction "none"
+	config_get dpd_action "$1" dpd_action "none"
 	parse_esp_proposal "$1" esp_proposal
+	config_get firewall "$1" firewall ""
+	config_get hw_offload "$1" hw_offload ""
+	config_get if_id "$1" if_id ""
+	config_get interface "$1" interface ""
+	config_get_bool ipcomp "$1" ipcomp 0
+	config_get life_time "$1" life_time ""
+	config_get priority "$1" priority ""
+	config_get rekey_time "$1" rekey_time ""
+	config_get startaction "$1" startaction "route"
+	config_get updown "$1" updown ""
 
 	# translate from ipsec to swanctl
 	case "$startaction" in
@@ -448,20 +447,21 @@ config_connection() {
 	local config_name="$1"
 
 	local enabled
-	local gateway
-	local local_leftip
-	local remote_gateway
-	local pre_shared_key
+
 	local auth_method
-	local keyingtries
 	local dpd_delay
+	local fragmentation
+	local gateway
 	local inactivity
 	local keyexchange
-	local fragmentation
-	local mobike
+	local keyingtries
 	local local_cert
 	local local_key
+	local local_leftip
+	local mobike
+	local pre_shared_key
 	local rekey_time
+	local remote_gateway
 
 	config_get_bool enabled "$1" enabled 0
 	[ $enabled -eq 0 ] && return
@@ -615,10 +615,10 @@ append_interface() {
 }
 
 config_ipsec() {
-	local rtinstall_enabled
+	local interface
 	local routing_table
 	local routing_table_id
-	local interface
+	local rtinstall_enabled
 
 	config_get debug "$1" debug 0
 	config_get_bool rtinstall_enabled "$1" rtinstall_enabled 1
