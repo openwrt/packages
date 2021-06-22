@@ -449,7 +449,6 @@ config_connection() {
 
 	local enabled
 	local gateway
-	local local_sourceip
 	local local_leftip
 	local remote_gateway
 	local pre_shared_key
@@ -478,7 +477,6 @@ config_connection() {
 	config_get local_identifier "$1" local_identifier ""
 	config_get local_key "$1" local_key ""
 	config_get local_leftip "$1" local_leftip "%any"
-	config_get local_sourceip "$1" local_sourceip ""
 	config_get_bool mobike "$1" mobike 1
 	config_get over_time "$1" over_time
 	config_get pre_shared_key "$1" pre_shared_key
@@ -537,7 +535,9 @@ config_connection() {
 	[ -n "$dpd_delay" ] && swanctl_xappend2 "dpd_delay = $dpd_delay"
 	[ "$keyingtries" = "%forever" ] && swanctl_xappend2 "keyingtries = 0" || swanctl_xappend2 "keyingtries = $keyingtries"
 
-	[ -n "$local_sourceip" ] && swanctl_xappend2 "vips = $local_sourceip"
+	local quoted_comma_list=""
+	config_list_foreach "$1" vips append_quoted_comma_list
+	[ -n "$quoted_comma_list" ] && swanctl_xappend2 "vips = $quoted_comma_list"
 
 	[ "$gateway" = "any" ] && remote_gateway="%any" || remote_gateway="$gateway"
 
