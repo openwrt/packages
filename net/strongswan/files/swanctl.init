@@ -301,6 +301,7 @@ config_child() {
 	local config_name="$1"
 	local mode="$2"
 
+	local priority
 	local ah_proposal
 	local esp_proposal
 	local updown
@@ -312,6 +313,7 @@ config_child() {
 	local if_id
 	local rekey_time
 
+	config_get priority "$1" priority ""
 	config_get startaction "$1" startaction "route"
 	config_get updown "$1" updown ""
 	config_get firewall "$1" firewall ""
@@ -323,6 +325,8 @@ config_child() {
 
 	parse_ah_proposal "$1" ah_proposal
 	parse_esp_proposal "$1" esp_proposal
+
+	[ -n "$priority" ] && swanctl_xappend4 "priority = $priority"
 
 	# translate from ipsec to swanctl
 	case "$startaction" in
@@ -408,12 +412,28 @@ config_child() {
         swanctl_xappend3 "}"
 }
 
-config_tunnel() {
-	config_child "$1" "tunnel"
+config_beet() {
+	config_child "$1" "beet"
+}
+
+config_drop() {
+	config_child "$1" "drop"
+}
+
+config_pass() {
+	config_child "$1" "pass"
 }
 
 config_transport() {
 	config_child "$1" "transport"
+}
+
+config_transport_proxy() {
+	config_child "$1" "transport_proxy"
+}
+
+config_tunnel() {
+	config_child "$1" "tunnel"
 }
 
 config_connection() {
@@ -539,8 +559,12 @@ config_connection() {
 	swanctl_xappend2 "}"
 
 	swanctl_xappend2 "children {"
-	config_list_foreach "$1" tunnel config_tunnel
+	config_list_foreach "$1" beet config_beet
+	config_list_foreach "$1" drop config_drop
+	config_list_foreach "$1" drop config_pass
 	config_list_foreach "$1" transport config_transport
+	config_list_foreach "$1" transport_proxy config_transport_proxy
+	config_list_foreach "$1" tunnel config_tunnel
 	swanctl_xappend2 "}"
 	swanctl_xappend1 "}"
 	swanctl_xappend0 "}"
