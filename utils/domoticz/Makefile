@@ -8,13 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=domoticz
-PKG_VERSION:=2020.2
-PKG_RELEASE:=3
+PKG_VERSION:=2021.1
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/domoticz/domoticz/archive/$(PKG_VERSION)/$(PKG_SOURCE)
-PKG_HASH:=a02f589daad4eebff1f5e93815c1acd1864cf068f8f5c3185bcdd20207ae395e
+PKG_HASH:=c4dc3455edae8bf00d2e950002f70d5b90ac577b1559ef7ada6870d970069fbb
 
+PKG_MAINTAINER:=David Woodhouse <dwmw2@infradead.org>
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=License.txt
 
@@ -29,7 +30,6 @@ define Package/domoticz
   CATEGORY:=Utilities
   TITLE:=Open Source Home Automation System
   URL:=http://domoticz.com/
-  MAINTAINER:=David Woodhouse <dwmw2@infradead.org>
   USERID:=domoticz=6144:domoticz=6144
   DEPENDS:= \
 	+boost \
@@ -39,8 +39,9 @@ define Package/domoticz
 	+jsoncpp \
 	+libcurl \
 	+python3 \
-	+minizip @BROKEN \
+	+minizip \
 	+lua5.3 \
+	+libfmt \
 	+libmosquitto \
 	+libopenssl \
 	+libopenzwave \
@@ -57,11 +58,13 @@ endef
 CMAKE_OPTIONS += \
 	-DBUILD_SHARED_LIBS=yes \
 	-DBoost_NO_BOOST_CMAKE=yes \
+	-DGIT_SUBMODULE=no \
 	-DCMAKE_BUILD_TYPE=Release \
 	-DUSE_BUILTIN_MQTT=no \
 	-DUSE_BUILTIN_SQLITE=no \
 	-DUSE_BUILTIN_JSONCPP=no \
 	-DUSE_BUILTIN_MINIZIP=no \
+	-DUSE_BUILTIN_LIBFMT=no \
 	-DUSE_LUA_STATIC=no \
 	-DUSE_STATIC_BOOST=no \
 	-DUSE_STATIC_LIBSTDCXX=no \
