@@ -24,7 +24,8 @@
 # MESON_HOST_ARGS+=-Dfoo -Dbar=baz
 # MESON_HOST_VARS+=FOO=bar
 
-include $(dir $(lastword $(MAKEFILE_LIST)))/../../devel/ninja/ninja.mk
+PKG_BUILD_PARALLEL ?= 1
+HOST_BUILD_PARALLEL ?= 1
 
 MESON_DIR:=$(STAGING_DIR_HOSTPKG)/lib/meson
 
@@ -105,15 +106,15 @@ define Host/Configure/Meson
 endef
 
 define Host/Compile/Meson
-	$(call Ninja,-C $(MESON_HOST_BUILD_DIR),)
+	+$(NINJA) -C $(MESON_HOST_BUILD_DIR) $(1)
 endef
 
 define Host/Install/Meson
-	$(call Ninja,-C $(MESON_HOST_BUILD_DIR) install,)
+	+$(NINJA) -C $(MESON_HOST_BUILD_DIR) install
 endef
 
 define Host/Uninstall/Meson
-	-$(call Ninja,-C $(MESON_HOST_BUILD_DIR) uninstall,)
+	+$(NINJA) -C $(MESON_HOST_BUILD_DIR) uninstall
 endef
 
 define Build/Configure/Meson
@@ -130,11 +131,11 @@ define Build/Configure/Meson
 endef
 
 define Build/Compile/Meson
-	$(call Ninja,-C $(MESON_BUILD_DIR),)
+	+$(NINJA) -C $(MESON_BUILD_DIR) $(1)
 endef
 
 define Build/Install/Meson
-	$(call Ninja,-C $(MESON_BUILD_DIR) install,DESTDIR="$(PKG_INSTALL_DIR)")
+	+DESTDIR="$(PKG_INSTALL_DIR)" $(NINJA) -C $(MESON_BUILD_DIR) install
 endef
 
 Host/Configure=$(call Host/Configure/Meson)
