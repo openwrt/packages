@@ -328,9 +328,6 @@ config_child() {
 	parse_ah_proposal "$1" ah_proposal
 	parse_esp_proposal "$1" esp_proposal
 
-	[ $ipcomp -eq 1 ] && swanctl_xappend4 "ipcomp = 1"
-	[ -n "$priority" ] && swanctl_xappend4 "priority = $priority"
-
 	# translate from ipsec to swanctl
 	case "$startaction" in
 	add)
@@ -394,6 +391,8 @@ config_child() {
 	config_list_foreach "$1" remote_ts append_quoted_comma_list
 	[ -n "$quoted_comma_list" ] && swanctl_xappend4 "remote_ts = $quoted_comma_list"
 
+	[ $ipcomp -eq 1 ] && swanctl_xappend4 "ipcomp = 1"
+	[ -n "$priority" ] && swanctl_xappend4 "priority = $priority"
 	[ -n "$if_id" ] && { swanctl_xappend4 "if_id_in = $if_id" ; swanctl_xappend4 "if_id_out = $if_id" ; }
 	[ -n "$startaction" -a "$startaction" != "none" ] && swanctl_xappend4 "start_action = $startaction"
 	[ -n "$closeaction" -a "$closeaction" != "none" ] && swanctl_xappend4 "close_action = $closeaction"
