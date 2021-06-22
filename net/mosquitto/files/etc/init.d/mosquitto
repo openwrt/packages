@@ -243,6 +243,7 @@ start_service_real() {
 	# Makes /etc/init.d/mosquitto reload work if you edit the final file.
 	procd_set_param file $CONF_WATCH
 	[ "$write_pid" -eq 1 ] && procd_set_param pidfile /var/run/mosquitto.pid
+	procd_set_param respawn
 	procd_close_instance
 }
 
