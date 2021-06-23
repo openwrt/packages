@@ -70,32 +70,23 @@ xappend() {
 	echo "$@" >> "$file"
 }
 
+add_spaces() {
+        [ $1 -eq 0 ] && return
+        for i in $(seq 1 $1); do
+                with_spaces="  $with_spaces";
+        done
+}
+
 swan_reset() {
 	file_reset "$STRONGSWAN_VAR_CONF_FILE"
 }
 
 swan_xappend() {
-	xappend "$STRONGSWAN_VAR_CONF_FILE" "$@"
-}
-
-swan_xappend0() {
-	swan_xappend "$@"
-}
-
-swan_xappend1() {
-	swan_xappend "  ""$@"
-}
-
-swan_xappend2() {
-	swan_xappend "    ""$@"
-}
-
-swan_xappend3() {
-	swan_xappend "      ""$@"
-}
-
-swan_xappend4() {
-	swan_xappend "        ""$@"
+	local c="$1"
+        shift
+        local with_spaces="$@"
+        add_spaces $c
+	xappend "$STRONGSWAN_VAR_CONF_FILE" "$with_spaces"
 }
 
 swanctl_reset() {
@@ -103,27 +94,34 @@ swanctl_reset() {
 }
 
 swanctl_xappend() {
-	xappend "$SWANCTL_VAR_CONF_FILE" "$@"
+	local c="$1"
+        shift
+        local with_spaces="$@"
+        add_spaces $c
+	xappend "$SWANCTL_VAR_CONF_FILE" "$with_spaces"
 }
 
-swanctl_xappend0() {
-	swanctl_xappend "$@"
+# swanctl_xappend_cfg <indent> <section> <option> [<default>]
+swanctl_xappend_cfg() {
+	local cfgval
+	config_get cfgval "$2" $3 "$4"
+	[ -n "$cfgval" ] swanctl_xappend $1 "$3 = $cfgval"
 }
 
-swanctl_xappend1() {
-	swanctl_xappend "  ""$@"
+# swanctl_xappend_var <indent> <varname>
+swanctl_xappend_var() {
+	local varval
+	eval "varval=\"\$$2\""
+	[ -n "$varval" -a "$varval" != "\"\"" ] && swanctl_xappend $1 "$2 = $varval"
 }
 
-swanctl_xappend2() {
-	swanctl_xappend "    ""$@"
-}
-
-swanctl_xappend3() {
-	swanctl_xappend "      ""$@"
-}
-
-swanctl_xappend4() {
-	swanctl_xappend "        ""$@"
+# swanctl_xappend_opt <indent> <option_name> <value>
+swanctl_xappend_opt() {
+	local indent="$1"
+	local option="$2"
+	shift
+	shift
+	[ -n "$@" -a "$@" != "\"\"" ] && swanctl_xappend $indent "$option = $@"
 }
 
 warning() {
@@ -215,110 +213,109 @@ config_conn() {
 	local config_name="$1"
 	local mode="$2"
 
-	local local_subnet
+	local local_ts
+	local remote_ts
 	local local_nat
-	local updown
 	local firewall
-	local remote_subnet
-	local lifetime
-	local dpdaction
-	local closeaction
-	local startaction
+	local life_time
+	local dpd_action
+	local close_action
+	local start_action
 	local if_id
-	local rekeytime
+	local rekey_time
 
-	config_get startaction "$1" startaction "route"
-	config_get local_subnet "$1" local_subnet ""
+	config_get start_action "$1" startaction "route"
+	config_get local_ts "$1" local_subnet ""
 	config_get local_nat "$1" local_nat ""
-	config_get updown "$1" updown ""
 	config_get firewall "$1" firewall ""
-	config_get remote_subnet "$1" remote_subnet ""
-	config_get lifetime "$1" lifetime ""
-	config_get dpdaction "$1" dpdaction "none"
-	config_get closeaction "$1" closeaction "none"
+	config_get remote_ts "$1" remote_subnet ""
+	config_get life_time "$1" lifetime ""
+	config_get dpd_action "$1" dpdaction "none"
+	config_get close_action "$1" closeaction "none"
 	config_get if_id "$1" if_id ""
-	config_get rekeytime "$1" rekeytime ""
+	config_get rekey_time "$1" rekeytime ""
 
-	local esp_proposal
-	parse_esp_proposal "$1" esp_proposal
+	local esp_proposals
+	parse_esp_proposal "$1" esp_proposals
 
 	# translate from ipsec to swanctl
-	case "$startaction" in
+	case "$start_action" in
 	add)
-		startaction="none" ;;
+		start_action="none" ;;
 	route)
-		startaction="trap" ;;
+		start_action="trap" ;;
 	start|none|trap)
 		# already using new syntax
 		;;
 	*)
-		fatal "Startaction $startaction unknown"
-		startaction=
+		fatal "Startaction $start_action unknown"
+		start_action=
 		;;
 	esac
 
-	case "$closeaction" in
+	case "$close_action" in
 	none|clear)
-		closeaction="none" ;;
+		close_action="none" ;;
 	hold)
-		closeaction="trap" ;;
+		close_action="trap" ;;
 	restart)
-		closeaction="start" ;;
+		close_action="start" ;;
 	trap|start)
 		# already using new syntax
 		;;
 	*)
-		fatal "Closeaction $closeaction unknown"
-		closeaction=
+		fatal "Closeaction $close_action unknown"
+		close_action=
 		;;
 	esac
 
-	[ -n "$closeaction" -a "$closeaction" != "none" ] && warning "Closeaction $closeaction can cause instability"
+	[ -n "$close_action" -a "$close_action" != "none" ] && warning "Closeaction $close_action can cause instability"
 
-	case "$dpdaction" in
+	case "$dpd_action" in
 	none)
 		dpddelay="0s"
-		dpdaction=
+		dpd_action=
 		;;
 	clear)
 		;;
 	hold)
-		dpdaction="trap" ;;
+		dpd_action="trap" ;;
 	restart)
-		dpdaction="start" ;;
+		dpd_action="start" ;;
 	trap|start)
 		# already using new syntax
 		;;
 	*)
-		fatal "Dpdaction $dpdaction unknown"
-		dpdaction=
+		fatal "Dpdaction $dpd_action unknown"
+		dpd_action=
 		;;
 	esac
 
-	[ -n "$local_nat" ] && local_subnet="$local_nat"
+	[ -n "$local_nat" ] && local_ts="$local_nat"
 
-	swanctl_xappend3 "$config_name {"
+	swanctl_xappend 3 "$config_name {"
 
-	[ -n "$local_subnet" ] && swanctl_xappend4 "local_ts = $local_subnet"
-	[ -n "$remote_subnet" ] && swanctl_xappend4 "remote_ts = $remote_subnet"
-	[ -n "$if_id" ] && { swanctl_xappend4 "if_id_in = $if_id" ; swanctl_xappend4 "if_id_out = $if_id" ; }
-	[ -n "$startaction" -a "$startaction" != "none" ] && swanctl_xappend4 "start_action = $startaction"
-	[ -n "$closeaction" -a "$closeaction" != "none" ] && swanctl_xappend4 "close_action = $closeaction"
-	swanctl_xappend4 "esp_proposals = $esp_proposal"
-	swanctl_xappend4 "mode = $mode"
+	swanctl_xappend_var 4 local_ts
+	swanctl_xappend_var 4 remote_ts
+	swanctl_xappend_opt 4 if_id_in "$if_id"
+	swanctl_xappend_opt 4 if_id_out "$if_id"
+	[ "$start_action" != "none" ] && swanctl_xappend_var 4 start_action
+	[ "$close_action" != "none" ] && swanctl_xappend_var 4 close_action
+	swanctl_xappend_var 4 esp_proposals
+	swanctl_xappend_var 4 mode
 
-	if [ -n "$lifetime" ]; then
-		swanctl_xappend4 "life_time = $lifetime"
-	elif [ -n "$rekeytime" ]; then
-		swanctl_xappend4 "life_time = $(seconds2time $(((110 * $(time2seconds $rekeytime)) / 100)))"
+	if [ -n "$life_time" ]; then
+		swanctl_xappend_var 4 life_time
+	elif [ -n "$rekey_time" ]; then
+		swanctl_xappend_opt 4 life_time "$(seconds2time $(((110 * $(time2seconds $rekey_time)) / 100)))"
 	fi
-	[ -n "$rekeytime" ] && swanctl_xappend4 "rekey_time = $rekeytime"
-	[ -n "$inactivity" ] && swanctl_xappend4 "inactivity = $inactivity"
+	swanctl_xappend_var 4 rekey_time
+	swanctl_xappend_cfg 4 "$1" inactivity
 
-	[ -n "$updown" ] && swanctl_xappend4 "updown = $updown"
-	[ -n "$dpdaction" ] && swanctl_xappend4 "dpd_action = $dpdaction"
+	swanctl_xappend_cfg 4 "$1" updown
+	swanctl_xappend_var 4 dpd_action
 
-        swanctl_xappend3 "}"
+        swanctl_xappend 3 "}"
 }
 
 config_tunnel() {
@@ -338,8 +335,8 @@ config_remote() {
 	local local_sourceip
 	local local_leftip
 	local remote_gateway
-	local pre_shared_key
-	local auth_method
+	local secret
+	local auth
 	local keyingtries
 	local dpddelay
 	local inactivity
@@ -349,20 +346,20 @@ config_remote() {
 	local local_cert
 	local local_key
 	local ca_cert
-	local rekeytime
+	local rekey_time
 
 	config_get_bool enabled "$1" enabled 0
 	[ $enabled -eq 0 ] && return
 
 	config_get gateway "$1" gateway
-	config_get pre_shared_key "$1" pre_shared_key
-	config_get auth_method "$1" authentication_method
+	config_get secret "$1" pre_shared_key
+	config_get auth "$1" authentication_method
 	config_get local_identifier "$1" local_identifier ""
 	config_get remote_identifier "$1" remote_identifier ""
 	config_get local_sourceip "$1" local_sourceip ""
 	config_get local_leftip "$1" local_leftip "%any"
 	config_get keyingtries "$1" keyingtries "3"
-	config_get dpddelay "$1" dpddelay "30s"
+	config_get dpd_delay "$1" dpddelay "30s"
 	config_get inactivity "$1" inactivity
 	config_get keyexchange "$1" keyexchange "ikev2"
 	config_get fragmentation "$1" fragmentation "yes"
@@ -370,8 +367,8 @@ config_remote() {
 	config_get local_cert "$1" local_cert ""
 	config_get local_key "$1" local_key ""
 	config_get ca_cert "$1" ca_cert ""
-	config_get rekeytime "$1" rekeytime
-	config_get overtime "$1" overtime
+	config_get rekey_time "$1" rekeytime
+	config_get over_time "$1" overtime
 
 	case "$fragmentation" in
 	0)
@@ -396,113 +393,115 @@ config_remote() {
 		local_gateway=`ip -o route get $ipdest | awk '/ src / { gsub(/^.* src /,""); gsub(/ .*$/, ""); print $0}'`
 	}
 
-	local ike_proposal
-	parse_ike_proposal "$1" ike_proposal
+	local proposals
+	parse_ike_proposal "$1" proposals
 
 	[ -n "$firewall" ] && fatal "Firewall not supported"
 
-	swanctl_xappend0 "# config for $config_name"
-	swanctl_xappend0 "connections {"
-	swanctl_xappend1 "$config_name {"
-	swanctl_xappend2 "local_addrs = $local_leftip"
-	swanctl_xappend2 "remote_addrs = $remote_gateway"
+	swanctl_xappend 0 "# config for $config_name"
+	swanctl_xappend 0 "connections {"
+	swanctl_xappend 1 "$config_name {"
+	swanctl_xappend_opt 2 local_addrs "$local_leftip"
+	swanctl_xappend_opt 2 remote_addrs "$remote_gateway"
 
-	[ -n "$local_sourceip" ] && swanctl_xappend2 "vips = $local_sourceip"
-	[ -n "$fragmentation" ] && swanctl_xappend2 "fragmentation = $fragmentation"
+	swanctl_xappend_opt 2 vips "$local_sourceip"
+	swanctl_xappend_opt 2 fragmentation "$fragmentation"
 
-	swanctl_xappend2 "local {"
-	swanctl_xappend3 "auth = $auth_method"
+	swanctl_xappend 2 "local {"
+	swanctl_xappend_var 3 auth
 
-	[ -n "$local_identifier" ] && swanctl_xappend3 "id = \"$local_identifier\""
-	[ "$auth_method" = pubkey ] && swanctl_xappend3 "certs = $local_cert"
-	swanctl_xappend2 "}"
+	swanctl_xappend_opt 3 local_identifier "\"$local_identifier\""
+	[ "$auth" = pubkey ] && swanctl_xappend_opt 3 certs "$local_cert"
+	swanctl_xappend 2 "}"
 
-	swanctl_xappend2 "remote {"
-	swanctl_xappend3 "auth = $auth_method"
-	[ -n "$remote_identifier" ] && swanctl_xappend3 "id = \"$remote_identifier\""
-	swanctl_xappend2 "}"
+	swanctl_xappend 2 "remote {"
+	swanctl_xappend_var 3 auth
+	swanctl_xappend_opt 3 remote_identifier "\"$remote_identifier\""
+	swanctl_xappend 2 "}"
 
-	swanctl_xappend2 "children {"
+	swanctl_xappend 2 "children {"
 
 	config_list_foreach "$1" tunnel config_tunnel
 
 	config_list_foreach "$1" transport config_transport
 
-	swanctl_xappend2 "}"
+	swanctl_xappend 2 "}"
 
 	case "$keyexchange" in
 	ike)
 		;;
 	ikev1)
-		swanctl_xappend2 "version = 1" ;;
+		swanctl_xappend_opt 2 version 1 ;;
 	ikev2)
-		swanctl_xappend2 "version = 2" ;;
+		swanctl_xappend_opt 2 version 2 ;;
 	*)
 		fatal "Keyexchange $keyexchange not supported"
 		keyexchange=
 		;;
 	esac
 
-	[ $mobike -eq 1 ] && swanctl_xappend2 "mobike = yes" || swanctl_xappend2 "mobike = no"
+	[ $mobike -eq 1 ] && swanctl_xappend_opt 2 mobike yes || swanctl_xappend_opt 2 mobike no
 
-	if [ -n "$rekeytime" ]; then
-		swanctl_xappend2 "rekey_time = $rekeytime"
+	if [ -n "$rekey_time" ]; then
+		swanctl_xappend_var 2 rekey_time
 
-		if [ -z "$overtime" ]; then
-			overtime=$(seconds2time $(($(time2seconds $rekeytime) / 10)))
+		if [ -z "$over_time" ]; then
+			over_time=$(seconds2time $(($(time2seconds $rekey_time) / 10)))
 		fi
 	fi
-	[ -n "$overtime" ] && swanctl_xappend2 "over_time = $overtime"
+	swanctl_xappend_var 2 over_time
 
-	swanctl_xappend2 "proposals = $ike_proposal"
-	[ -n "$dpddelay" ] && swanctl_xappend2 "dpd_delay = $dpddelay"
-	[ "$keyingtries" = "%forever" ] && swanctl_xappend2 "keyingtries = 0" || swanctl_xappend2 "keyingtries = $keyingtries"
+	swanctl_xappend_var 2 proposals
+	swanctl_xappend_var 2 dpd_delay
 
-	swanctl_xappend1 "}"
-	swanctl_xappend0 "}"
+	[ "$keyingtries" = "%forever" ] && keyingtries=0
+	swanctl_xappend_var 2 keyingtries
+
+	swanctl_xappend 1 "}"
+	swanctl_xappend 0 "}"
 
 	if [ "$auth_method" = pubkey ]; then
-		swanctl_xappend0 ""
+		swanctl_xappend 0 ""
 
-		swanctl_xappend0 "secrets {"
-		swanctl_xappend1 "rsa {"
-		swanctl_xappend2 "filename = $local_key"
-		swanctl_xappend1 "}"
-		swanctl_xappend0 "}"
+		swanctl_xappend 0 "secrets {"
+		swanctl_xappend 1 "rsa {"
+		swanctl_xappend_opt 2 filename "$local_key"
+		swanctl_xappend 1 "}"
+		swanctl_xappend 0 "}"
 
-		swanctl_xappend0 ""
+		swanctl_xappend 0 ""
 
 		if [ -n "$ca_cert" ]; then
-			swanctl_xappend0 "authorities {"
-			swanctl_xappend1 "$config_name {"
-			swanctl_xappend2 "cacert = $ca_cert"
-			swanctl_xappend1 "}"
-			swanctl_xappend0 "}"
+			swanctl_xappend 0 "authorities {"
+			swanctl_xappend 1 "$config_name {"
+			swanctl_xappend_var ca_cert
+			swanctl_xappend 1 "}"
+			swanctl_xappend 0 "}"
 		fi
 
 	elif [ "$auth_method" = psk ]; then
-		swanctl_xappend0 ""
+		swanctl_xappend 0 ""
 
-		swanctl_xappend0 "secrets {"
-		swanctl_xappend1 "ike {"
-		swanctl_xappend2 "secret = $pre_shared_key"
+		swanctl_xappend 0 "secrets {"
+		swanctl_xappend 1 "ike {"
+		swanctl_xappend_var 2 secret
 		if [ -n "$local_id" ]; then
-			swanctl_xappend2 "id1 = $local_id"
+			swanctl_xappend_opt 2 id1 "$local_id"
 			if [ -n "$remote_id" ]; then
-				swanctl_xappend2 "id2 = $remote_id"
+				swanctl_xappend_opt 2 id2 "$remote_id"
 			fi
 		fi
-		swanctl_xappend1 "}"
-		swanctl_xappend0 "}"
+		swanctl_xappend 1 "}"
+		swanctl_xappend 0 "}"
 	else
 		fatal "AuthenticationMode $auth_mode not supported"
 	fi
 
-	swanctl_xappend0 ""
+	swanctl_xappend 0 ""
 }
 
 do_preamble() {
-	swanctl_xappend0 "# generated by /etc/init.d/swanctl"
+	swanctl_xappend 0 "# generated by /etc/init.d/swanctl"
 }
 
 append_interface() {
@@ -545,21 +544,21 @@ config_ipsec() {
 }
 
 do_postamble() {
-	swan_xappend0 "# generated by /etc/init.d/swanctl"
-	swan_xappend0 "charon {"
-	swan_xappend1 "install_routes = $install_routes"
-	[ -n "$routing_tables_ignored" ] && swan_xappend1 "ignore_routing_tables = $routing_tables_ignored"
-	[ -n "$device_list" ] && swan_xappend1 "interfaces_use = $device_list"
-	swan_xappend1 "start-scripts {"
-	swan_xappend2 "load-all = /usr/sbin/swanctl --load-all --noprompt"
-	swan_xappend1 "}"
-	swan_xappend1 "syslog {"
-	swan_xappend2 "identifier = ipsec"
-	swan_xappend2 "daemon {"
-	swan_xappend3 "default = $debug"
-	swan_xappend2 "}"
-	swan_xappend1 "}"
-	swan_xappend0 "}"
+	swan_xappend 0 "# generated by /etc/init.d/swanctl"
+	swan_xappend 0 "charon {"
+	swan_xappend 1 "install_routes = $install_routes"
+	[ -n "$routing_tables_ignored" ] && swan_xappend 1 "ignore_routing_tables = $routing_tables_ignored"
+	[ -n "$device_list" ] && swan_xappend 1 "interfaces_use = $device_list"
+	swan_xappend 1 "start-scripts {"
+	swan_xappend 2 "load-all = /usr/sbin/swanctl --load-all --noprompt"
+	swan_xappend 1 "}"
+	swan_xappend 1 "syslog {"
+	swan_xappend 2 "identifier = ipsec"
+	swan_xappend 2 "daemon {"
+	swan_xappend 3 "default = $debug"
+	swan_xappend 2 "}"
+	swan_xappend 1 "}"
+	swan_xappend 0 "}"
 }
 
 prepare_env() {
