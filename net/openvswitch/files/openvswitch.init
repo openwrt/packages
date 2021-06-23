@@ -2,7 +2,9 @@
 # Copyright (C) 2013 Julius Schulz-Zander <julius@net.t-labs.tu-berlin.de>
 # Copyright (C) 2014-2017 OpenWrt.org
 # Copyright (C) 2018 Yousong Zhou <yszhou4tech@gmail.com>
+# Copyright (C) 2021 Felix Fietkau <nbd@nbd.name>
 
+. /lib/functions/procd.sh
 START=15
 
 ovs_ctl="/usr/share/openvswitch/scripts/ovs-ctl"; [ -x "$ovs_ctl" ] || ovs_ctl=:
@@ -10,15 +12,35 @@ ovn_ctl="/usr/share/ovn/scripts/ovn-ctl"; [ -x "$ovn_ctl" ] || ovn_ctl=:
 
 extra_command "status" "Get status information"
 
+service_triggers() {
+	procd_add_reload_trigger openvswitch
+}
+
+init_triggers() {
+	procd_open_service "$(basename ${basescript:-$initscript})" "$initscript"
+	procd_close_service set
+}
+
 start() {
+	init_triggers
 	ovs_action start "$@"
 }
 
+reload() {
+	start
+}
+
+running() {
+	return 0
+}
+
 stop() {
+	procd_kill "$(basename ${basescript:-$initscript})"
 	ovs_action stop "$@"
 }
 
 restart() {
+	init_triggers
 	ovs_action restart "$@"
 }
 
@@ -68,6 +90,41 @@ ovs_xx() {
 	esac
 }
 
+ovs_bridge_parse_port() {
+	case "$1" in
+		*:*)
+			port="${1%%:*}"
+			type="${1#*:}"
+		;;
+		*)
+			port="$1"
+			type=""
+		;;
+	esac
+}
+
+ovs_bridge_port_add() {
+	[ -n "$1" ] || return
+
+	ovs_bridge_parse_port "$1"
+	cur_type="$(ovs-vsctl get interface "$port" type 2>/dev/null)"
+	[ "$?" = 0 ] && {
+		[ "$type" = "$cur_type" ] || ovs-vsctl del-port "$port"
+	}
+
+	ovs-vsctl --may-exist add-port "$name" "$port" ${type:+ -- set interface "$port" type="$type"}
+	__port_list="$__port_list ${port} "
+}
+
+ovs_bridge_port_cleanup() {
+	for port in `ovs-vsctl list-ports "$name"`; do
+		case "$__port_list" in
+			*" $port "*);;
+			*) ovs-vsctl del-port "$port";;
+		esac
+	done
+}
+
 ovs_bridge_init() {
 	local cfg="$1"
 
@@ -80,6 +137,10 @@ ovs_bridge_init() {
 
 	config_get name "$cfg" name $cfg
 	ovs-vsctl --may-exist add-br "$name"
+
+	config_list_foreach "$cfg" "ports" ovs_bridge_port_add
+	config_get_bool drop "$cfg" "drop_unknown_ports" 0
+	[ "$drop" == 1 ] && ovs_bridge_port_cleanup
 
 	config_get controller "$cfg" controller
 	[ -n "$controller" ] && \
