@@ -1,6 +1,6 @@
 --- a/src/Cedar/Server.h
 +++ b/src/Cedar/Server.h
-@@ -32,10 +32,10 @@ extern char *SERVER_CONFIG_FILE_NAME;
+@@ -35,10 +35,10 @@ extern char *SERVER_CONFIG_FILE_NAME;
  #define	SERVER_CONTROL_TCP_TIMEOUT		(60 * 1000)
  #define	SERVER_FARM_CONTROL_INTERVAL	(10 * 1000)
  
