@@ -129,7 +129,9 @@ local function scrape()
         current_station_values = {}
       else
         local name, value = string.match(line, "(.+)=(.+)")
-        current_station_values[name] = value
+        if name ~= nil then
+          current_station_values[name] = value
+        end
       end
     end
     labels.station = current_station
