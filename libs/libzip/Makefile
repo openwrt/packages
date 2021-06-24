@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libzip
 PKG_VERSION:=1.8.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://libzip.org/download/
@@ -17,8 +17,6 @@ PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
-
-CMAKE_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -106,6 +104,13 @@ CMAKE_OPTIONS += -DBUILD_REGRESS=OFF
 CMAKE_OPTIONS += -DBUILD_EXAMPLES=OFF
 CMAKE_OPTIONS += -DBUILD_DOC=OFF
 CMAKE_OPTIONS += -DBUILD_TOOLS=ON
+
+define Build/InstallDev
+	$(call Build/InstallDev/cmake,$(1))
+	$(SED) 's,/usr/bin,$$$${prefix}/bin,g' $(1)/usr/lib/pkgconfig/libzip.pc
+	$(SED) 's,/usr/include,$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/libzip.pc
+	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/libzip.pc
+endef
 
 define Package/libzip-$(BUILD_VARIANT)/install
 	$(INSTALL_DIR) $(1)/usr/lib
