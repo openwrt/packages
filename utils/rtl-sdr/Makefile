@@ -6,14 +6,17 @@
 
 include $(TOPDIR)/rules.mk
 
+PKG_SOURCE_PROTO:=git
 PKG_NAME:=rtl-sdr
-PKG_VERSION:=0.6.0
-PKG_RELEASE:=2
+PKG_VERSION:=master
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://git.osmocom.org/rtl-sdr/snapshot
-PKG_HASH:=ee10a76fe0c6601102367d4cdf5c26271e9442d0491aa8df27e5a9bf639cff7c
+PKG_SOURCE_URL:=https://github.com/osmocom/rtl-sdr
+PKG_SOURCE_DATE:=2020-10-31
+PKG_SOURCE_VERSION:=0847e93e0869feab50fd27c7afeb85d78ca04631
+PKG_MIRROR_HASH:=a2744895600759ea1fe58999c3ecfc326aa98d9a0fc11c0004f3766a0df1092f
 
+PKG_BUILD_PARALLEL:=1
 CMAKE_INSTALL:=1
 
 PKG_LICENSE:=GPLv2
@@ -73,10 +76,6 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/librtlsdr.pc $(1)/usr/lib/pkgconfig/
 endef
 
-define Package/rtl-sdr/conffiles
-/etc/config/rtl_tcp
-endef
-
 define Package/rtl-sdr/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/rtl_* $(1)/usr/bin/
@@ -93,3 +92,4 @@ endef
 
 $(eval $(call BuildPackage,rtl-sdr))
 $(eval $(call BuildPackage,librtlsdr))
+
