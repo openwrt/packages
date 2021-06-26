@@ -1,0 +1,21 @@
+Index: b/accel-pppd/CMakeLists.txt
+===================================================================
+--- a/accel-pppd/CMakeLists.txt
++++ b/accel-pppd/CMakeLists.txt
+@@ -119,16 +119,3 @@ set_property(TARGET accel-pppd PROPERTY
+ set_property(TARGET accel-pppd PROPERTY INSTALL_RPATH_USE_LINK_PATH FALSE)
+ set_property(TARGET accel-pppd PROPERTY INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}/accel-ppp)
+ 
+-INSTALL(TARGETS accel-pppd
+-	RUNTIME DESTINATION sbin
+-)
+-
+-INSTALL(FILES accel-ppp.conf.5 DESTINATION share/man/man5)
+-
+-IF (NOT DEFINED CPACK_TYPE)
+-	INSTALL(FILES accel-ppp.conf DESTINATION ${CMAKE_FIND_ROOT_PATH}/etc RENAME accel-ppp.conf.dist)
+-
+-	INSTALL(CODE "EXECUTE_PROCESS(COMMAND mkdir -p ${CMAKE_FIND_ROOT_PATH}/var/log/accel-ppp)")
+-	INSTALL(CODE "EXECUTE_PROCESS(COMMAND mkdir -p ${CMAKE_FIND_ROOT_PATH}/var/lib/accel-ppp)")
+-ENDIF (NOT DEFINED CPACK_TYPE)
+-
