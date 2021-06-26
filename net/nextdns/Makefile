@@ -11,9 +11,8 @@ PKG_NAME:=nextdns
 PKG_VERSION:=1.33.9
 PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_SOURCE_URL:=https://codeload.github.com/nextdns/nextdns/tar.gz/v1.33.9?
+PKG_SOURCE_URL:=https://codeload.github.com/nextdns/nextdns/tar.gz/v$(PKG_VERSION)?
 PKG_MIRROR_HASH:=6c3620613b6b2a7defeebd37eef393dc5d30b289f48f9a24c2c42a36fa1c3225
 
 PKG_MAINTAINER:=Olivier Poitrey <rs@nextdns.io>
