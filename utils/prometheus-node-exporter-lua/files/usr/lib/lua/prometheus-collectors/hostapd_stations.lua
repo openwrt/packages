@@ -139,26 +139,33 @@ local function scrape()
     local all_sta = handle:read("*a")
     handle:close()
 
-    local current_station = nil
-    local current_station_values = {}
+    local station = nil
+    local metrics = {}
 
     for line in all_sta:gmatch("[^\r\n]+") do
       if string.match(line, "^%x[0123456789aAbBcCdDeE]:%x%x:%x%x:%x%x:%x%x:%x%x$") then
-        if current_station ~= nil then
-          labels.station = current_station
-          evaluate_metrics(labels, current_station_values)
+        -- the first time we see a mac we have no previous station to eval, so don't
+        if station ~= nil then
+          labels.station = station
+          evaluate_metrics(labels, metrics)
         end
-        current_station = line
-        current_station_values = {}
+
+        -- remember current station bssid and truncate metrics
+        station = line
+        metrics = {}
       else
-        local name, value = string.match(line, "(.+)=(.+)")
-        if name ~= nil then
-          current_station_values[name] = value
+        local key, value = string.match(line, "(.+)=(.+)")
+        if key ~= nil then
+          metrics[key] = value
         end
       end
     end
-    labels.station = current_station
-    evaluate_metrics(labels, current_station_values)
+
+    -- the final station, check if there ever was one, will need a metrics eval as well
+    if station ~= nil then
+      labels.station = station
+      evaluate_metrics(labels, metrics)
+    end
   end
 end
 
