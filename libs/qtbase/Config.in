@@ -1,0 +1,37 @@
+choice
+	prompt "Build Variant"
+	default QT_BUILD_RELEASE
+	help
+		Choose which Qt variant should be built:
+		-> Release: Build Qt with debugging turned off.
+		-> Debug: Build Qt with debugging turned on.
+
+	config QT_BUILD_RELEASE
+		bool "Release"
+
+	config QT_BUILD_DEBUG
+		bool "Debug"
+endchoice
+
+config QT_OPTIMIZE_SIZE
+	depends on QT_BUILD_RELEASE
+	bool "Optimize Size"
+	default n
+	help
+		Optimize release builds for size instead of speed.
+		(Not available in debug variant)
+
+config QT_OPTIMIZE_DEBUG
+	depends on QT_BUILD_DEBUG
+	bool "Optimize Debug"
+	default n
+	help
+		Enable debug-friendly optimizations in debug builds.
+		(Not available in release variant)
+
+config QT_OPTIMIZE_TOOLS
+	depends on QT_BUILD_DEBUG
+	bool "Optimized Tools"
+	default n
+	help
+		Build optimized host tools even in debug build.
