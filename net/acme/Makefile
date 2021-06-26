@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=acme
-PKG_VERSION:=2.8.7
-PKG_RELEASE:=6
+PKG_VERSION:=2.9.0
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/acmesh-official/acme.sh/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=774010429730882f6bbfcd3756ff0fa755846106664841092af828a814159861
+PKG_HASH:=bb8cfb8333bc9e986bb8b7644d518bc238b353c871c343b7edf8cda7b7dd903c
 PKG_BUILD_DIR:=$(BUILD_DIR)/acme.sh-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Toke Høiland-Jørgensen <toke@toke.dk>
