@@ -44,7 +44,7 @@ debug() {
 
 get_listeners() {
 	local proto rq sq listen remote state program
-	netstat -nptl 2> /dev/null | while read proto rq sq listen remote state program; do
+	netstat -nptl 2> /dev/null | while read -r proto rq sq listen remote state program; do
 		case "$proto#$listen#$program" in
 			tcp#*:80#[0-9]*/*) echo -n "${program%% *} " ;;
 		esac
@@ -52,7 +52,7 @@ get_listeners() {
 }
 
 run_acme() {
-	debug "Running acme.sh as '$ACME $@'"
+	debug "Running acme.sh as '$ACME $*'"
 	$ACME "$@"
 }
 
@@ -139,7 +139,7 @@ post_checks() {
 	iptables -D input_rule -p tcp --dport 80 -j ACCEPT -m comment --comment "ACME" 2> /dev/null
 	ip6tables -D input_rule -p tcp --dport 80 -j ACCEPT -m comment --comment "ACME" 2> /dev/null
 
-	if [ -e /etc/init.d/uhttpd ] && ([ -n "$UHTTPD_LISTEN_HTTP" ] || [ "$UPDATE_UHTTPD" -eq 1 ]); then
+	if [ -e /etc/init.d/uhttpd ] && { [ -n "$UHTTPD_LISTEN_HTTP" ] || [ "$UPDATE_UHTTPD" -eq 1 ]; }; then
 		if [ -n "$UHTTPD_LISTEN_HTTP" ]; then
 			uci set uhttpd.main.listen_http="$UHTTPD_LISTEN_HTTP"
 			UHTTPD_LISTEN_HTTP=
@@ -148,7 +148,7 @@ post_checks() {
 		/etc/init.d/uhttpd reload
 	fi
 
-	if [ -e /etc/init.d/nginx ] && ([ "$NGINX_WEBSERVER" -eq 1 ] || [ "$UPDATE_NGINX" -eq 1 ]); then
+	if [ -e /etc/init.d/nginx ] && { [ "$NGINX_WEBSERVER" -eq 1 ] || [ "$UPDATE_NGINX" -eq 1 ]; }; then
 		NGINX_WEBSERVER=0
 		/etc/init.d/nginx restart
 	fi
@@ -235,7 +235,7 @@ issue_cert() {
 		[ -n "$webroot" ] || [ -n "$dns" ] || pre_checks "$main_domain" || return 1
 	fi
 
-	if echo $keylength | grep -q "^ec-"; then
+	if echo "$keylength" | grep -q "^ec-"; then
 		domain_dir="$STATE_DIR/${main_domain}_ecc"
 		keylength_ecc=1
 	else
