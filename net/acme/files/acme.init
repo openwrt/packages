@@ -5,8 +5,7 @@ USE_PROCD=1
 START=50
 SCRIPT=/usr/lib/acme/run-acme
 
-start_service()
-{
+start_service() {
 	procd_open_instance
 	procd_set_param command $SCRIPT
 	procd_set_param file /etc/config/acme
@@ -29,7 +28,6 @@ boot() {
 	start
 }
 
-service_triggers()
-{
+service_triggers() {
 	procd_add_reload_trigger acme
 }

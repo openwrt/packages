@@ -24,45 +24,39 @@ USER_CLEANUP=
 
 . /lib/functions.sh
 
-check_cron()
-{
+check_cron() {
 	[ -f "/etc/crontabs/root" ] && grep -q '/etc/init.d/acme' /etc/crontabs/root && return
 	echo "0 0 * * * /etc/init.d/acme start" >> /etc/crontabs/root
 	/etc/init.d/cron start
 }
 
-log()
-{
+log() {
 	logger -t acme -s -p daemon.info -- "$@"
 }
 
-err()
-{
+err() {
 	logger -t acme -s -p daemon.err -- "$@"
 }
 
-debug()
-{
+debug() {
 	[ "$DEBUG" -eq "1" ] && logger -t acme -s -p daemon.debug -- "$@"
 }
 
 get_listeners() {
 	local proto rq sq listen remote state program
-	netstat -nptl 2>/dev/null | while read proto rq sq listen remote state program; do
+	netstat -nptl 2> /dev/null | while read -r proto rq sq listen remote state program; do
 		case "$proto#$listen#$program" in
 			tcp#*:80#[0-9]*/*) echo -n "${program%% *} " ;;
 		esac
 	done
 }
 
-run_acme()
-{
-	debug "Running acme.sh as '$ACME $@'"
+run_acme() {
+	debug "Running acme.sh as '$ACME $*'"
 	$ACME "$@"
 }
 
-pre_checks()
-{
+pre_checks() {
 	main_domain="$1"
 
 	log "Running pre checks for $main_domain."
@@ -94,7 +88,7 @@ pre_checks()
 
 				uci set uhttpd.main.listen_http=''
 				uci commit uhttpd || return 1
-				if ! /etc/init.d/uhttpd reload ; then
+				if ! /etc/init.d/uhttpd reload; then
 					uci set uhttpd.main.listen_http="$UHTTPD_LISTEN_HTTP"
 					uci commit uhttpd
 					return 1
@@ -138,15 +132,14 @@ pre_checks()
 	return 0
 }
 
-post_checks()
-{
+post_checks() {
 	log "Running post checks (cleanup)."
 	# The comment ensures we only touch our own rules. If no rules exist, that
 	# is fine, so hide any errors
-	iptables -D input_rule -p tcp --dport 80 -j ACCEPT -m comment --comment "ACME" 2>/dev/null
-	ip6tables -D input_rule -p tcp --dport 80 -j ACCEPT -m comment --comment "ACME" 2>/dev/null
+	iptables -D input_rule -p tcp --dport 80 -j ACCEPT -m comment --comment "ACME" 2> /dev/null
+	ip6tables -D input_rule -p tcp --dport 80 -j ACCEPT -m comment --comment "ACME" 2> /dev/null
 
-	if [ -e /etc/init.d/uhttpd ] && ( [ -n "$UHTTPD_LISTEN_HTTP" ] || [ "$UPDATE_UHTTPD" -eq 1 ] ); then
+	if [ -e /etc/init.d/uhttpd ] && { [ -n "$UHTTPD_LISTEN_HTTP" ] || [ "$UPDATE_UHTTPD" -eq 1 ]; }; then
 		if [ -n "$UHTTPD_LISTEN_HTTP" ]; then
 			uci set uhttpd.main.listen_http="$UHTTPD_LISTEN_HTTP"
 			UHTTPD_LISTEN_HTTP=
@@ -155,7 +148,7 @@ post_checks()
 		/etc/init.d/uhttpd reload
 	fi
 
-	if [ -e /etc/init.d/nginx ] && ( [ "$NGINX_WEBSERVER" -eq 1 ] || [ "$UPDATE_NGINX" -eq 1 ] ); then
+	if [ -e /etc/init.d/nginx ] && { [ "$NGINX_WEBSERVER" -eq 1 ] || [ "$UPDATE_NGINX" -eq 1 ]; }; then
 		NGINX_WEBSERVER=0
 		/etc/init.d/nginx restart
 	fi
@@ -166,21 +159,18 @@ post_checks()
 	fi
 }
 
-err_out()
-{
+err_out() {
 	post_checks
 	exit 1
 }
 
-int_out()
-{
+int_out() {
 	post_checks
 	trap - INT
 	kill -INT $$
 }
 
-is_staging()
-{
+is_staging() {
 	local main_domain
 	local domain_dir
 	main_domain="$1"
@@ -190,8 +180,7 @@ is_staging()
 	return $?
 }
 
-issue_cert()
-{
+issue_cert() {
 	local section="$1"
 	local acme_args=
 	local enabled
@@ -246,7 +235,7 @@ issue_cert()
 		[ -n "$webroot" ] || [ -n "$dns" ] || pre_checks "$main_domain" || return 1
 	fi
 
-	if echo $keylength | grep -q "^ec-"; then
+	if echo "$keylength" | grep -q "^ec-"; then
 		domain_dir="$STATE_DIR/${main_domain}_ecc"
 		keylength_ecc=1
 	else
@@ -274,7 +263,6 @@ issue_cert()
 			return $ret
 		fi
 	fi
-
 
 	acme_args="$acme_args $(for d in $domains; do echo -n "-d $d "; done)"
 	acme_args="$acme_args --keylength $keylength"
@@ -337,7 +325,7 @@ issue_cert()
 
 	local nginx_updated
 	nginx_updated=0
-	if command -v nginx-util 2>/dev/null && [ "$update_nginx" -eq "1" ]; then
+	if command -v nginx-util 2> /dev/null && [ "$update_nginx" -eq "1" ]; then
 		nginx_updated=1
 		for domain in $domains; do
 			nginx-util add_ssl "${domain}" acme "${domain_dir}/fullchain.cer" \
@@ -355,8 +343,7 @@ issue_cert()
 	post_checks
 }
 
-load_vars()
-{
+load_vars() {
 	local section="$1"
 
 	STATE_DIR=$(config_get "$section" state_dir)
