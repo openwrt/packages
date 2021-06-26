@@ -218,6 +218,7 @@ config_child() {
 	local config_name="$1"
 	local mode="$2"
 
+	local hw_offload
 	local local_subnet
 	local local_nat
 	local updown
@@ -239,6 +240,7 @@ config_child() {
 	config_get closeaction "$1" closeaction "none"
 	config_get if_id "$1" if_id ""
 	config_get rekeytime "$1" rekeytime ""
+	config_get hw_offload "$1" hw_offload ""
 
 	config_list_foreach "$1" local_subnet append_var local_subnet ","
 	config_list_foreach "$1" remote_subnet append_var remote_subnet ","
@@ -299,12 +301,23 @@ config_child() {
 		;;
 	esac
 
+	case "$hw_offload" in
+	yes|no|auto|"")
+		;;
+	*)
+		fatal "hw_offload value $hw_offload invalid"
+		hw_offload=""
+		;;
+	esac
+
 	[ -n "$local_nat" ] && local_subnet="$local_nat"
 
 	swanctl_xappend3 "$config_name {"
 
 	[ -n "$local_subnet" ] && swanctl_xappend4 "local_ts = $local_subnet"
 	[ -n "$remote_subnet" ] && swanctl_xappend4 "remote_ts = $remote_subnet"
+
+	[ -n "$hw_offload" ] && swanctl_append4 "hw_offload = $hw_offload"
 	[ -n "$if_id" ] && { swanctl_xappend4 "if_id_in = $if_id" ; swanctl_xappend4 "if_id_out = $if_id" ; }
 	[ -n "$startaction" -a "$startaction" != "none" ] && swanctl_xappend4 "start_action = $startaction"
 	[ -n "$closeaction" -a "$closeaction" != "none" ] && swanctl_xappend4 "close_action = $closeaction"
