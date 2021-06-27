@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fastd
 PKG_VERSION:=22
-PKG_RELEASE=2
+PKG_RELEASE=3
 
 PKG_MAINTAINER:=Matthias Schiffer <mschiffer@universe-factory.net>
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
@@ -39,7 +39,8 @@ PKG_CONFIG_DEPENDS:=\
 	CONFIG_FASTD_WITH_CMDLINE_OPERATION \
 	CONFIG_FASTD_WITH_CMDLINE_COMMANDS \
 	CONFIG_FASTD_WITH_DYNAMIC_PEERS \
-	CONFIG_FASTD_WITH_STATUS_SOCKET
+	CONFIG_FASTD_WITH_STATUS_SOCKET \
+	CONFIG_FASTD_WITH_OFFLOAD_L2TP
 
 
 PKG_BUILD_DEPENDS:=meson/host nacl
@@ -55,14 +56,6 @@ define Package/fastd
   TITLE:=Fast and Secure Tunneling Daemon
   URL:=https://github.com/NeoRaider/fastd/
   SUBMENU:=VPN
-  VARIANT:=default
-endef
-define Package/fastd-l2tp
-$(Package/fastd)
-  DEPENDS+=+kmod-l2tp +kmod-l2tp-eth
-  TITLE+=(L2TP kernel offloading)
-  VARIANT:=l2tp
-  PROVIDES:=fastd
 endef
 
 define Package/fastd/config
@@ -93,32 +86,20 @@ MESON_ARGS += \
 	-Dmethod_null=$(call feature,ENABLE_METHOD_NULL) \
 	-Dmethod_null_l2tp=$(call feature,ENABLE_METHOD_NULL_L2TP) \
 	-Dstatus_socket=$(call feature,WITH_STATUS_SOCKET) \
-	-Doffload_l2tp=disabled \
+	-Doffload_l2tp=$(call feature,WITH_OFFLOAD_L2TP) \
 	-Dlibmnl_builtin=true \
 	-Dsystemd=disabled \
 	-Duse_nacl=true \
 	-Db_lto=true \
 	-Dprefix=/usr
 
-ifeq ($(BUILD_VARIANT),l2tp)
-  MESON_ARGS += \
-	-Dmethod_null_l2tp=enabled \
-	-Doffload_l2tp=enabled
-endif
-
 define Package/fastd/description
 Fast and secure tunneling daemon, which is optimized on small code size and few dependencies
-endef
-define Package/fastd-l2tp/description
-$(Package/fastd/description)
-
-This variant enables L2TP kernel offloadig support.
 endef
 
 define Package/fastd/conffiles
 /etc/config/fastd
 endef
-Package/fastd-l2tp/conffiles = $(Package/fastd/conffiles)
 
 define Package/fastd/install
 	$(INSTALL_DIR) $(1)/usr/bin
@@ -132,7 +113,5 @@ define Package/fastd/install
 	$(INSTALL_DIR) $(1)/lib/upgrade/keep.d
 	$(INSTALL_DATA) files/fastd.upgrade $(1)/lib/upgrade/keep.d/fastd
 endef
-Package/fastd-l2tp/install = $(Package/fastd/install)
 
 $(eval $(call BuildPackage,fastd))
-$(eval $(call BuildPackage,fastd-l2tp))

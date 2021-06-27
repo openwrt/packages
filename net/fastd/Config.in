@@ -1,4 +1,4 @@
-if PACKAGE_fastd || PACKAGE_fastd-l2tp
+if PACKAGE_fastd
 
 menu "Configuration"
 
@@ -74,6 +74,10 @@ config FASTD_WITH_DYNAMIC_PEERS
 
 config FASTD_WITH_STATUS_SOCKET
 	bool "Include support for status sockets"
+	default y
+
+config FASTD_WITH_OFFLOAD_L2TP
+	bool "Enable L2TP offloading"
 	default y
 
 endmenu
