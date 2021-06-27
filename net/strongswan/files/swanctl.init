@@ -221,6 +221,7 @@ config_child() {
 	local hw_offload
 	local interface
 	local ipcomp
+	local priority
 	local local_subnet
 	local local_nat
 	local updown
@@ -245,6 +246,7 @@ config_child() {
 	config_get_bool ipcomp "$1" ipcomp 0
 	config_get interface "$1" interface ""
 	config_get hw_offload "$1" hw_offload ""
+	config_get priority "$1" priority ""
 
 	config_list_foreach "$1" local_subnet append_var local_subnet ","
 	config_list_foreach "$1" remote_subnet append_var remote_subnet ","
@@ -324,6 +326,7 @@ config_child() {
 	[ -n "$hw_offload" ] && swanctl_append4 "hw_offload = $hw_offload"
 	[ $ipcomp -eq 1 ] && swanctl_xappend4 "ipcomp = 1"
 	[ -n "$interface" ] && swanctl_append4 "interface = $interface"
+	[ -n "$priority" ] && swanctl_append4 "priority = $priority"
 	[ -n "$if_id" ] && { swanctl_xappend4 "if_id_in = $if_id" ; swanctl_xappend4 "if_id_out = $if_id" ; }
 	[ -n "$startaction" -a "$startaction" != "none" ] && swanctl_xappend4 "start_action = $startaction"
 	[ -n "$closeaction" -a "$closeaction" != "none" ] && swanctl_xappend4 "close_action = $closeaction"
