@@ -15,8 +15,8 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/NeoRaider/fastd/releases/download/v$(PKG_VERSION)
 PKG_HASH:=19750b88705d66811b7c21b672537909c19ae6b21350688cbd1a3a54d08a8951
 
-PKG_LICENSE:=BSD-2-Clause
-PKG_LICENSE_FILES:=COPYRIGHT
+PKG_LICENSE:=BSD-2-Clause LGPL-2.1-or-later
+PKG_LICENSE_FILES:=COPYRIGHT src/dep/libmnl/COPYING
 
 PKG_CONFIG_DEPENDS:=\
 	CONFIG_FASTD_ENABLE_METHOD_CIPHER_TEST \
@@ -54,6 +54,14 @@ define Package/fastd
   TITLE:=Fast and Secure Tunneling Daemon
   URL:=https://github.com/NeoRaider/fastd/
   SUBMENU:=VPN
+  VARIANT:=default
+endef
+define Package/fastd-l2tp
+$(Package/fastd)
+  DEPENDS+=+kmod-l2tp +kmod-l2tp-eth
+  TITLE+=(L2TP kernel offloading)
+  VARIANT:=l2tp
+  PROVIDES:=fastd
 endef
 
 define Package/fastd/config
@@ -85,18 +93,31 @@ MESON_ARGS += \
 	-Dmethod_null_l2tp=$(call feature,ENABLE_METHOD_NULL_L2TP) \
 	-Dstatus_socket=$(call feature,WITH_STATUS_SOCKET) \
 	-Doffload_l2tp=disabled \
+	-Dlibmnl_builtin=true \
 	-Dsystemd=disabled \
 	-Duse_nacl=true \
 	-Db_lto=true \
 	-Dprefix=/usr
 
+ifeq ($(BUILD_VARIANT),l2tp)
+  MESON_ARGS += \
+	-Dmethod_null_l2tp=enabled \
+	-Doffload_l2tp=enabled
+endif
+
 define Package/fastd/description
- Fast and secure tunneling daemon, which is optimized on small code size and few dependencies
+Fast and secure tunneling daemon, which is optimized on small code size and few dependencies
+endef
+define Package/fastd-l2tp/description
+$(Package/fastd/description)
+
+This variant enables L2TP kernel offloadig support.
 endef
 
 define Package/fastd/conffiles
 /etc/config/fastd
 endef
+Package/fastd-l2tp/conffiles = $(Package/fastd/conffiles)
 
 define Package/fastd/install
 	$(INSTALL_DIR) $(1)/usr/bin
@@ -110,5 +131,7 @@ define Package/fastd/install
 	$(INSTALL_DIR) $(1)/lib/upgrade/keep.d
 	$(INSTALL_DATA) files/fastd.upgrade $(1)/lib/upgrade/keep.d/fastd
 endef
+Package/fastd-l2tp/install = $(Package/fastd/install)
 
 $(eval $(call BuildPackage,fastd))
+$(eval $(call BuildPackage,fastd-l2tp))

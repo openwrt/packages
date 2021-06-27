@@ -1,4 +1,4 @@
-if PACKAGE_fastd
+if PACKAGE_fastd || PACKAGE_fastd-l2tp
 
 menu "Configuration"
 
