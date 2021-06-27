@@ -220,6 +220,7 @@ config_child() {
 
 	local hw_offload
 	local interface
+	local ipcomp
 	local local_subnet
 	local local_nat
 	local updown
@@ -241,6 +242,7 @@ config_child() {
 	config_get closeaction "$1" closeaction "none"
 	config_get if_id "$1" if_id ""
 	config_get rekeytime "$1" rekeytime ""
+	config_get_bool ipcomp "$1" ipcomp 0
 	config_get interface "$1" interface ""
 	config_get hw_offload "$1" hw_offload ""
 
@@ -320,6 +322,7 @@ config_child() {
 	[ -n "$remote_subnet" ] && swanctl_xappend4 "remote_ts = $remote_subnet"
 
 	[ -n "$hw_offload" ] && swanctl_append4 "hw_offload = $hw_offload"
+	[ $ipcomp -eq 1 ] && swanctl_xappend4 "ipcomp = 1"
 	[ -n "$interface" ] && swanctl_append4 "interface = $interface"
 	[ -n "$if_id" ] && { swanctl_xappend4 "if_id_in = $if_id" ; swanctl_xappend4 "if_id_out = $if_id" ; }
 	[ -n "$startaction" -a "$startaction" != "none" ] && swanctl_xappend4 "start_action = $startaction"
