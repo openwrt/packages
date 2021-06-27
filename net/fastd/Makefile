@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fastd
-PKG_VERSION:=21
+PKG_VERSION:=22
 
 PKG_MAINTAINER:=Matthias Schiffer <mschiffer@universe-factory.net>
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/NeoRaider/fastd/releases/download/v$(PKG_VERSION)
-PKG_HASH:=942f33bcd794bcb8e19da4c30c875bdfd4d0f1c24ec4dcdf51237791bbfb0d4c
+PKG_HASH:=19750b88705d66811b7c21b672537909c19ae6b21350688cbd1a3a54d08a8951
 
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=COPYRIGHT
@@ -26,6 +26,7 @@ PKG_CONFIG_DEPENDS:=\
 	CONFIG_FASTD_ENABLE_METHOD_GENERIC_POLY1305 \
 	CONFIG_FASTD_ENABLE_METHOD_GENERIC_UMAC \
 	CONFIG_FASTD_ENABLE_METHOD_NULL \
+	CONFIG_FASTD_ENABLE_METHOD_NULL_L2TP \
 	CONFIG_FASTD_ENABLE_CIPHER_NULL \
 	CONFIG_FASTD_ENABLE_CIPHER_SALSA20 \
 	CONFIG_FASTD_ENABLE_CIPHER_SALSA2012 \
@@ -81,7 +82,9 @@ MESON_ARGS += \
 	-Dmethod_generic-poly1305=$(call feature,ENABLE_METHOD_GENERIC_POLY1305) \
 	-Dmethod_generic-umac=$(call feature,ENABLE_METHOD_GENERIC_UMAC) \
 	-Dmethod_null=$(call feature,ENABLE_METHOD_NULL) \
+	-Dmethod_null_l2tp=$(call feature,ENABLE_METHOD_NULL_L2TP) \
 	-Dstatus_socket=$(call feature,WITH_STATUS_SOCKET) \
+	-Doffload_l2tp=disabled \
 	-Dsystemd=disabled \
 	-Duse_nacl=true \
 	-Db_lto=true \

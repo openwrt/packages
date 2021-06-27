@@ -30,6 +30,10 @@ config FASTD_ENABLE_METHOD_NULL
 	bool "Enable null method"
 	default y
 
+config FASTD_ENABLE_METHOD_NULL_L2TP
+	bool "Enable null@l2tp method"
+	default y
+
 
 config FASTD_ENABLE_CIPHER_NULL
 	bool "Enable the null cipher"
