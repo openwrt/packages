@@ -1,35 +1,50 @@
 --- a/mac-vendor.txt
 +++ b/mac-vendor.txt
-@@ -37,6 +37,33 @@
+@@ -37,6 +37,48 @@
  # http://www.nta-monitor.com/wiki
  #
  
 +# From Transacom
-+00D861  Micro-Star INTL CO., LTD.
-+3C846A  TP-LINK TECHNOLOGIES CO.,LTD.
-+3C2AF4  Brother Industries, LTD.
-+449160  Murata Manufacturing Co., Ltd.
-+484BAA  Apple, Inc.
-+4CCC6A  Micro-Star INTL CO., LTD.
-+58EF68  Belkin International Inc.
-+704F57  TP-LINK TECHNOLOGIES CO.,LTD.
-+706BB9  Cisco Systems, Inc
-+7085C2  ASRock Incorporation
-+70AF24  TP Vision Belgium NV
-+7828ca  Sonos, Inc.
-+78DDD9  Guangzhou Shiyuan Electronics Co., Ltd.
-+70EF00  Apple, Inc.
-+805EC0  YEALINK(XIAMEN) NETWORK TECHNOLOGY CO.,LTD.
-+847BEB  Dell Inc.
-+94C691  EliteGroup Computer Systems Co., LTD
-+A4AE11  Hon Hai Precision Ind. Co., Ltd.
-+A860B6  Apple, Inc.
-+B04E26  TP-LINK TECHNOLOGIES CO.,LTD.
-+B40016  INGENICO TERMINALS SAS
-+C83C85  Apple, Inc.
-+D807B6  TP-LINK TECHNOLOGIES CO.,LTD.
-+D89EF3  Dell Inc.
-+DC56E7  Apple, Inc.
++00D861	Micro-Star Intl Co., Ltd.
++10E7C6	Hewlett Packard
++38AF29	Zhejiang Dahua Technology Co., Ltd.
++3C846A	TP-Link Technologies Co., Ltd.
++3C2AF4	Brother Industries, Ltd.
++449160	Murata Manufacturing Co., Ltd.
++484BAA	Apple, Inc.
++48A6B8	Sonos, Inc.
++4CCC6A	Micro-Star INTL CO., LTD.
++509A4C	Dell Inc.
++58EF68	Belkin International Inc.
++6032B1	TP-Link Technologies Co., Ltd.
++701F53	Cisco Systems, Inc
++704F57	TP-Link Technologies Co., Ltd.
++706BB9	Cisco Systems, Inc
++7085C2	ASRock Incorporation
++70AF24	TP Vision Belgium NV
++7828ca	Sonos, Inc.
++78DDD9	Guangzhou Shiyuan Electronics Co., Ltd.
++70EF00	Apple, Inc.
++805EC0	Yealink(XIAMEN) Network Technology Co.,Ltd.
++847BEB	Dell Inc.
++84A93E	Hewlett Packard
++84D81B	TP-Link Technologies Co., Ltd.
++94C691	EliteGroup Computer Systems Co., Ltd
++9C1463	Zhejiang Dahua Technology Co., Ltd.
++A0BD1D	Zhejiang Dahua Technology Co., Ltd.
++A4AE11	Hon Hai Precision Ind. Co., Ltd.
++A860B6	Apple, Inc.
++B04E26	TP-Link Technologies Co., Ltd.
++B40016	Ingenico Terminals SAS
++B8ECA3	Zyxel Communications Corporation
++C83C85	Apple, Inc.
++CC6EA4	Samsung Electronics Co., Ltd.
++D807B6	TP-Link Technologies Co., Ltd.
++D80D17	TP-Link Technologies Co., Ltd.
++D89EF3	Dell Inc.
++DC56E7	Apple, Inc.
++E454E8	Dell Inc.
++E8D8D1	HP Inc.
 +
  # From nmap Debian bug report #369681 dated 31 May 2006
  525400	QEMU
