@@ -1,7 +1,7 @@
 --- a/libavcodec/mips/cabac.h
 +++ b/libavcodec/mips/cabac.h
 @@ -28,6 +28,7 @@
- #include "libavutil/mips/mmiutils.h"
+ #include "libavutil/mips/asmdefs.h"
  #include "config.h"
  
 +#ifndef __mips16
