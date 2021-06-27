@@ -1,0 +1,25 @@
+--- a/agent/mibgroup/host/data_access/swrun_kinfo.c
++++ b/agent/mibgroup/host/data_access/swrun_kinfo.c
+@@ -176,7 +176,7 @@
+ netsnmp_arch_swrun_container_load( netsnmp_container *container, u_int flags)
+ {
+     struct SWRUN_TABLE  *proc_table;
+-    int                  nprocs, i, rc;
++    int                  nprocs, i;
+     char                 buf[BUFSIZ+1], **argv;
+     netsnmp_swrun_entry *entry;
+ 
+@@ -203,7 +203,12 @@
+         entry = netsnmp_swrun_entry_create(proc_table[i].SWRUN_K_PID);
+         if (NULL == entry)
+             continue;   /* error already logged by function */
+-        rc = CONTAINER_INSERT(container, entry);
++        if ( -1 == CONTAINER_INSERT(container, entry)) {
++            // entry didn't get inserted (duplicate key)
++            free(entry); 
++            continue;   
++        }
++
+ 
+         /*
+          * There are two possible sources for the command being run:
