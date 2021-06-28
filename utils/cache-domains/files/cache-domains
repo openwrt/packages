@@ -6,20 +6,15 @@ set -e
 
 CACHE_DOMAINS_SRC="https://api.github.com/repos/uklans/cache-domains/tarball/master"
 CACHE_DOMAINS_DIR="/var/cache-domains"
-CACHE_DOMAINS_HOSTS_DIR="${CACHE_DOMAINS_DIR}/scripts/output/dnsmasq/hosts"
+CACHE_DOMAINS_OUTPUT="${CACHE_DOMAINS_DIR}/scripts/output/dnsmasq"
+CACHE_DOMAINS_HOSTS_DIR="${CACHE_DOMAINS_OUTPUT}/hosts"
+CACHE_DOMAINS_CONF_FILE="${CACHE_DOMAINS_OUTPUT}/lancache.conf"
 CONFIG_FILE="/etc/cache-domains.json"
-
-uci_changes() {
-	local PACKAGE="$1"
-	local STATE="$2"
-
-	CHANGES=$(/sbin/uci ${UCI_CONFIG_DIR:+-c ${UCI_CONFIG_DIR}} ${STATE:+-P ${STATE}} -q changes "${PACKAGE}" | wc -l)
-	return "${CHANGES}"
-}
 
 configure() {
 	local INITIAL_DIR
 	local I=0
+	local DNSMASQ_CONF_DIR
 
 	mkdir -p "${CACHE_DOMAINS_DIR}"
 	rm -fr "${CACHE_DOMAINS_DIR:?}/"*
@@ -42,18 +37,15 @@ configure() {
 	cd "${CACHE_DOMAINS_DIR}/scripts/"
 	cp "${CONFIG_FILE}" "config.json"
 	./create-dnsmasq.sh > /dev/null
-	rm "config.json" "${CACHE_DOMAINS_HOSTS_DIR}/../lancache.conf"
+	rm "config.json"
 	cd "${INITIAL_DIR}"
 
+	# just change addn-hosts path instead of copying the files around
+	sed -i -r "s|/etc/dnsmasq/hosts|${CACHE_DOMAINS_HOSTS_DIR}|" "${CACHE_DOMAINS_CONF_FILE}"
+
 	while uci_get "dhcp" "@dnsmasq[${I}]" > /dev/null; do
-		if uci_changes "dhcp"; then
-			uci_remove_list	"dhcp" "@dnsmasq[${I}]" "addnhosts" "${CACHE_DOMAINS_HOSTS_DIR}"
-			uci_add_list	"dhcp" "@dnsmasq[${I}]" "addnhosts" "${CACHE_DOMAINS_HOSTS_DIR}"
-			uci_commit		"dhcp"
-		else
-			echo "ERROR: Unexpected changes in the dhcp configuration, commit changes and try again"
-			exit 1
-		fi
+		DNSMASQ_CONF_DIR="$(uci_get "dhcp" "@dnsmasq[${I}]" "confdir" "/tmp/dnsmasq.d"  || :)"
+		cp -u "${CACHE_DOMAINS_CONF_FILE}" "${DNSMASQ_CONF_DIR}/"
 
 		I=$((${I} + 1))
 	done
@@ -63,15 +55,11 @@ configure() {
 
 cleanup() {
 	local I=0
+	local DNSMASQ_CONF_DIR
 
 	while uci_get "dhcp" "@dnsmasq[${I}]" > /dev/null; do
-		if uci_changes "dhcp"; then
-			uci_remove_list	"dhcp" "@dnsmasq[${I}]" "addnhosts" "${CACHE_DOMAINS_HOSTS_DIR}"
-			uci_commit		"dhcp"
-		else
-			echo "ERROR: Unexpected changes in the dhcp configuration, commit changes and try again"
-			exit 1
-		fi
+		DNSMASQ_CONF_DIR="$(uci_get "dhcp" "@dnsmasq[${I}]" "confdir" "/tmp/dnsmasq.d" || :)"
+		rm -f "${DNSMASQ_CONF_DIR}/$(basename "${CACHE_DOMAINS_CONF_FILE}")"
 
 		I=$((${I} + 1))
 	done
