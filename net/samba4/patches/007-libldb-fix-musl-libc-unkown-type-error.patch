@@ -22,5 +22,5 @@ Signed-off-by: Changqing Li <changqing.li@windriver.com>
 +#include <sys/stat.h>
 +#include <sys/types.h>
  
- struct tevent_context;
- struct tevent_ops;
+ /* for old gcc releases that don't have the feature test macro __has_attribute */
+ #ifndef __has_attribute

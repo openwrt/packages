@@ -29,7 +29,7 @@
  
      conf.CHECK_CODE('''
                  struct ucred cred;
-@@ -809,9 +800,6 @@ def configure(conf):
+@@ -807,9 +798,6 @@ def configure(conf):
  
      # look for a method of finding the list of network interfaces
      for method in ['HAVE_IFACE_GETIFADDRS', 'HAVE_IFACE_AIX', 'HAVE_IFACE_IFCONF', 'HAVE_IFACE_IFREQ']:
@@ -39,7 +39,7 @@
          if conf.CHECK_CODE('''
                             #define %s 1
                             #define NO_CONFIG_H 1
-@@ -824,7 +812,7 @@ def configure(conf):
+@@ -822,7 +810,7 @@ def configure(conf):
                             #include "tests/getifaddrs.c"
                             ''' % method,
                             method,
@@ -48,7 +48,7 @@
                             addmain=False,
                             execute=True):
              break
-@@ -872,7 +860,6 @@ def build(bld):
+@@ -870,7 +858,6 @@ def build(bld):
                  break
  
      extra_libs = ''
