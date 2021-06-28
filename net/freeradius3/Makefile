@@ -52,8 +52,18 @@ endef
 
 define Package/freeradius3/conffiles
 /etc/freeradius3/clients.conf
+/etc/freeradius3/policy.d/abfab-tr
 /etc/freeradius3/policy.d/accounting
+/etc/freeradius3/policy.d/canonicalization
+/etc/freeradius3/policy.d/control
+/etc/freeradius3/policy.d/cui
+/etc/freeradius3/policy.d/debug
+/etc/freeradius3/policy.d/dhcp
+/etc/freeradius3/policy.d/eap
 /etc/freeradius3/policy.d/filter
+/etc/freeradius3/policy.d/moonshot-targeted-ids
+/etc/freeradius3/policy.d/operator-name
+/etc/freeradius3/policy.d/rfc7542
 /etc/freeradius3/proxy.conf
 /etc/freeradius3/radiusd.conf
 /etc/freeradius3/sites-available/default
@@ -131,6 +141,7 @@ define Package/freeradius3-mod-attr-filter/conffiles
 /etc/freeradius3/mods-config/attr_filter/access_challenge
 /etc/freeradius3/mods-config/attr_filter/access_reject
 /etc/freeradius3/mods-config/attr_filter/accounting_response
+/etc/freeradius3/mods-config/attr_filter/coa
 /etc/freeradius3/mods-config/attr_filter/post-proxy
 /etc/freeradius3/mods-config/attr_filter/pre-proxy
 endef
@@ -535,7 +546,7 @@ PKG_DICTIONARIES:= \
 	compat \
 	freeradius freeradius.internal \
 	rfc2865 rfc2866 rfc2867 rfc2868 rfc2869 rfc3162 rfc3576 rfc3580 \
-	rfc4372 rfc4675 rfc4679 rfc5580\
+	rfc4072 rfc4372 rfc4675 rfc4679 rfc5247 rfc5580 rfc7268 \
 	microsoft \
 	wispr \
 
