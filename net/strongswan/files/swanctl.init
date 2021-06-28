@@ -19,8 +19,7 @@ WAIT_FOR_INTF=0
 
 CONFIG_FAIL=0
 
-time2seconds()
-{
+time2seconds() {
 	local timestring="$1"
 	local multiplier number suffix
 
@@ -42,8 +41,7 @@ time2seconds()
 	echo $(( number * multiplier ))
 }
 
-seconds2time()
-{
+seconds2time() {
 	local seconds="$1"
 
 	if [ $seconds -eq 0 ]; then
@@ -135,6 +133,11 @@ fatal() {
 	CONFIG_FAIL=1
 }
 
+append_var() {
+	local var="$2" value="$1" delim="${3:- }"
+	append "$var" "$value" "$delim"
+}
+
 is_aead() {
 	local cipher="$1"
 
@@ -210,11 +213,15 @@ parse_ike_proposal() {
 	export -n "$var=$crypto"
 }
 
-config_conn() {
+config_child() {
 	# Generic ipsec conn section shared by tunnel and transport
 	local config_name="$1"
 	local mode="$2"
 
+	local hw_offload
+	local interface
+	local ipcomp
+	local priority
 	local local_subnet
 	local local_nat
 	local updown
@@ -228,16 +235,21 @@ config_conn() {
 	local rekeytime
 
 	config_get startaction "$1" startaction "route"
-	config_get local_subnet "$1" local_subnet ""
 	config_get local_nat "$1" local_nat ""
 	config_get updown "$1" updown ""
 	config_get firewall "$1" firewall ""
-	config_get remote_subnet "$1" remote_subnet ""
 	config_get lifetime "$1" lifetime ""
 	config_get dpdaction "$1" dpdaction "none"
 	config_get closeaction "$1" closeaction "none"
 	config_get if_id "$1" if_id ""
 	config_get rekeytime "$1" rekeytime ""
+	config_get_bool ipcomp "$1" ipcomp 0
+	config_get interface "$1" interface ""
+	config_get hw_offload "$1" hw_offload ""
+	config_get priority "$1" priority ""
+
+	config_list_foreach "$1" local_subnet append_var local_subnet ","
+	config_list_foreach "$1" remote_subnet append_var remote_subnet ","
 
 	local esp_proposal
 	parse_esp_proposal "$1" esp_proposal
@@ -295,12 +307,26 @@ config_conn() {
 		;;
 	esac
 
+	case "$hw_offload" in
+	yes|no|auto|"")
+		;;
+	*)
+		fatal "hw_offload value $hw_offload invalid"
+		hw_offload=""
+		;;
+	esac
+
 	[ -n "$local_nat" ] && local_subnet="$local_nat"
 
 	swanctl_xappend3 "$config_name {"
 
 	[ -n "$local_subnet" ] && swanctl_xappend4 "local_ts = $local_subnet"
 	[ -n "$remote_subnet" ] && swanctl_xappend4 "remote_ts = $remote_subnet"
+
+	[ -n "$hw_offload" ] && swanctl_append4 "hw_offload = $hw_offload"
+	[ $ipcomp -eq 1 ] && swanctl_xappend4 "ipcomp = 1"
+	[ -n "$interface" ] && swanctl_append4 "interface = $interface"
+	[ -n "$priority" ] && swanctl_append4 "priority = $priority"
 	[ -n "$if_id" ] && { swanctl_xappend4 "if_id_in = $if_id" ; swanctl_xappend4 "if_id_out = $if_id" ; }
 	[ -n "$startaction" -a "$startaction" != "none" ] && swanctl_xappend4 "start_action = $startaction"
 	[ -n "$closeaction" -a "$closeaction" != "none" ] && swanctl_xappend4 "close_action = $closeaction"
@@ -322,21 +348,21 @@ config_conn() {
 }
 
 config_tunnel() {
-	config_conn "$1" "tunnel"
+	config_child "$1" "tunnel"
 }
 
 config_transport() {
-	config_conn "$1" "transport"
+	config_child "$1" "transport"
 }
 
-config_remote() {
+config_connection() {
 	local config_name="$1"
 
 	local enabled
 	local gateway
 	local local_gateway
 	local local_sourceip
-	local local_leftip
+	local local_ip
 	local remote_gateway
 	local pre_shared_key
 	local auth_method
@@ -359,8 +385,7 @@ config_remote() {
 	config_get auth_method "$1" authentication_method
 	config_get local_identifier "$1" local_identifier ""
 	config_get remote_identifier "$1" remote_identifier ""
-	config_get local_sourceip "$1" local_sourceip ""
-	config_get local_leftip "$1" local_leftip "%any"
+	config_get local_ip "$1" local_ip "%any"
 	config_get keyingtries "$1" keyingtries "3"
 	config_get dpddelay "$1" dpddelay "30s"
 	config_get inactivity "$1" inactivity
@@ -372,6 +397,8 @@ config_remote() {
 	config_get ca_cert "$1" ca_cert ""
 	config_get rekeytime "$1" rekeytime
 	config_get overtime "$1" overtime
+
+	config_list_foreach "$1" local_sourceip append_var local_sourceip ","
 
 	case "$fragmentation" in
 	0)
@@ -389,22 +416,42 @@ config_remote() {
 
 	[ "$gateway" = "any" ] && remote_gateway="%any" || remote_gateway="$gateway"
 
-	[ -z "$local_gateway" ] && {
-		local ipdest
+	local ipdest
+	[ "$remote_gateway" = "%any" ] && ipdest="1.1.1.1" || ipdest="$remote_gateway"
+	local_gateway=`ip -o route get $ipdest | awk '/ src / { gsub(/^.* src /,""); gsub(/ .*$/, ""); print $0}'`
 
-		[ "$remote_gateway" = "%any" ] && ipdest="1.1.1.1" || ipdest="$remote_gateway"
-		local_gateway=`ip -o route get $ipdest | awk '/ src / { gsub(/^.* src /,""); gsub(/ .*$/, ""); print $0}'`
-	}
+	if [ -n "$local_key" ]; then
+		[ "$(dirname "$local_key")" != "." ] && \
+		   fatal "local_key $local_key can't be pathname"
+		[ -f "/etc/swanctl/private/$local_key" ] || \
+		   fatal "local_key $local_key not found"
+	fi
 
 	local ike_proposal
 	parse_ike_proposal "$1" ike_proposal
 
 	[ -n "$firewall" ] && fatal "Firewall not supported"
 
+	if [ "$auth_method" = pubkey ]; then
+		if [ -n "$ca_cert" ]; then
+			[ "$(dirname "$ca_cert")" != "." ] && \
+			    fatal "ca_cert $ca_cert can't be pathname"
+			[ -f "/etc/swanctl/x509ca/$ca_cert" ] || \
+			    fatal "ca_cert $ca_cert not found"
+		fi
+
+		if [ -n "$local_cert" ]; then
+			[ "$(dirname "$local_cert")" != "." ] && \
+			    fatal "local_cert $local_cert can't be pathname"
+			[ -f "/etc/swanctl/x509/$local_cert" ] || \
+			    fatal "local_cert $local_cert not found"
+		fi
+	fi
+
 	swanctl_xappend0 "# config for $config_name"
 	swanctl_xappend0 "connections {"
 	swanctl_xappend1 "$config_name {"
-	swanctl_xappend2 "local_addrs = $local_leftip"
+	swanctl_xappend2 "local_addrs = $local_ip"
 	swanctl_xappend2 "remote_addrs = $remote_gateway"
 
 	[ -n "$local_sourceip" ] && swanctl_xappend2 "vips = $local_sourceip"
@@ -414,7 +461,8 @@ config_remote() {
 	swanctl_xappend3 "auth = $auth_method"
 
 	[ -n "$local_identifier" ] && swanctl_xappend3 "id = \"$local_identifier\""
-	[ "$auth_method" = pubkey ] && swanctl_xappend3 "certs = $local_cert"
+	[ "$auth_method" = pubkey ] && [ -n "$local_cert" ] && \
+	    swanctl_xappend3 "certs = $local_cert"
 	swanctl_xappend2 "}"
 
 	swanctl_xappend2 "remote {"
@@ -464,14 +512,6 @@ config_remote() {
 	if [ "$auth_method" = pubkey ]; then
 		swanctl_xappend0 ""
 
-		swanctl_xappend0 "secrets {"
-		swanctl_xappend1 "rsa {"
-		swanctl_xappend2 "filename = $local_key"
-		swanctl_xappend1 "}"
-		swanctl_xappend0 "}"
-
-		swanctl_xappend0 ""
-
 		if [ -n "$ca_cert" ]; then
 			swanctl_xappend0 "authorities {"
 			swanctl_xappend1 "$config_name {"
@@ -505,15 +545,12 @@ do_preamble() {
 	swanctl_xappend0 "# generated by /etc/init.d/swanctl"
 }
 
-append_interface() {
-	append interface_list "$1" " "
-}
-
 config_ipsec() {
 	local rtinstall_enabled
 	local routing_table
 	local routing_table_id
 	local interface
+	local interface_list
 
 	config_get debug "$1" debug 0
 	config_get_bool rtinstall_enabled "$1" rtinstall_enabled 1
@@ -530,8 +567,7 @@ config_ipsec() {
 		[ -n "$routing_table_id" ] && append routing_tables_ignored "$routing_table_id"
 	done
 
-	local interface_list
-	config_list_foreach "$1" interface append_interface
+	config_list_foreach "$1" interface append_var interface_list
 
 	if [ -z "$interface_list" ]; then
 		WAIT_FOR_INTF=0
@@ -574,7 +610,7 @@ prepare_env() {
 
 	config_load ipsec
 	config_foreach config_ipsec ipsec
-	config_foreach config_remote remote
+	config_foreach config_connection remote
 
 	do_postamble
 }
