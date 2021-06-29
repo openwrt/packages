@@ -258,6 +258,13 @@
 		"focus": "general",
 		"descurl": "https://github.com/Dawsey21"
 	},
+	"stalkerware": {
+		"url": "https://raw.githubusercontent.com/astryzia/stalkerware-urls/main/stalkerware_urls.txt",
+		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
+		"size": "S",
+		"focus": "tracking",
+		"descurl": "https://github.com/astryzia/stalkerware-urls"
+	},
 	"stevenblack": {
 		"url": "https://raw.githubusercontent.com/StevenBlack/hosts/master/",
 		"rule": "/^0\\.0\\.0\\.0[[:space:]]+([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",

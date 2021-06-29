@@ -47,6 +47,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | shallalist          |         | VAR  | general          | [Link](https://www.shallalist.de)                                                 |
 | smarttv_tracking    |         | S    | tracking         | [Link](https://github.com/Perflyst/PiHoleBlocklist)                               |
 | spam404             |         | S    | general          | [Link](https://github.com/Dawsey21)                                               |
+| stalkerware         |         | S    | tracking         | [Link](https://github.com/astryzia/stalkerware-urls)                              |
 | stevenblack         |         | VAR  | compilation      | [Link](https://github.com/StevenBlack/hosts)                                      |
 | stopforumspam       |         | S    | spam             | [Link](https://www.stopforumspam.com)                                             |
 | utcapitole          |         | VAR  | general          | [Link](https://dsi.ut-capitole.fr/blacklists/index_en.php)                        |
@@ -170,6 +171,7 @@ Available commands:
 | adb_replisten      | 53                                 | space separated list of reporting port(s) used by tcpdump                                      |
 | adb_repchunkcnt    | 5                                  | report chunk count used by tcpdump                                                             |
 | adb_repchunksize   | 1                                  | report chunk size used by tcpdump in MB                                                        |
+| adb_represolve     | 0, disabled                        | resolve reporting IP addresses using reverse DNS (PTR) lookups                                 |
 | adb_backup         | 1, enabled                         | set to 0 to disable the backup function                                                        |
 | adb_backupdir      | /tmp                               | path for adblock backups                                                                       |
 | adb_tmpbase        | /tmp                               | path for all adblock related runtime operations, e.g. downloading, sorting, merging etc.       |
