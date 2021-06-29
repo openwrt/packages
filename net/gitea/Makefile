@@ -59,6 +59,7 @@ MAKE_FLAGS += COMMIT=$(PKG_SOURCE_VERSION)
 
 ifeq ($(ARCH),mips)
 MAKE_FLAGS += EXTRA_FLAGS='-buildmode=default'
+LDFLAGS := $(echo "${LDFLAGS}" | sed 's/-znow -zrelro//')
 endif
 
 define Build/Compile
