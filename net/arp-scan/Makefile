@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=arp-scan
 PKG_VERSION:=1.9-40-g69b2f70
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=GPL-3.0
 PKG_MAINTAINER:=Sergey Urushkin <urusha.v1.0@gmail.com>
 
@@ -41,8 +41,11 @@ define Package/arp-scan/description
 endef
 
 define Package/arp-scan/install
-	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/share/arp-scan
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/arp-scan $(1)/usr/bin/
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/ieee-iab.txt $(1)/usr/share/arp-scan/
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/ieee-oui.txt $(1)/usr/share/arp-scan/
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/mac-vendor.txt $(1)/usr/share/arp-scan/
 endef
 
 $(eval $(call BuildPackage,arp-scan))
