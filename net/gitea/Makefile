@@ -59,7 +59,10 @@ MAKE_FLAGS += COMMIT=$(PKG_SOURCE_VERSION)
 
 ifeq ($(ARCH),mips)
 MAKE_FLAGS += EXTRA_FLAGS='-buildmode=default'
+# Remove unsupported linker flags
 LDFLAGS := $(echo "${LDFLAGS}" | sed 's/-znow -zrelro//')
+# Add missing spaces between -L flag and it's argument (if no space)
+LDFLAGS := $(echo "${LDFLAGS}" | sed 's/-L[^\s]/-L /')
 endif
 
 define Build/Compile
@@ -71,13 +74,13 @@ define Build/Compile
 	#$(call GoPackage/Build/Compile, )
 endef
 
-define Build/install
-	true
-endef
+# define Build/install
+# 	true
+# endef
 
-define Package/gitea/install
-	true
-endef
+# define Package/gitea/install
+# 	true
+# endef
 
 $(eval $(call GoBinPackage,gitea))
 $(eval $(call BuildPackage,gitea))
