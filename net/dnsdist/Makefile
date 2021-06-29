@@ -135,7 +135,6 @@ DISABLE_NLS:=
 TARGET_CXX+=-std=c++17
 
 CONFIGURE_ARGS+= \
-	--enable-option-checking=fatal \
 	--with-pic \
 	--with-lua=lua \
 	$(if $(CONFIG_DNSDIST_SODIUM),--enable-dnscrypt --with-libsodium,--disable-dnscrypt --without-libsodium) \

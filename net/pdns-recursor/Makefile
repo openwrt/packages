@@ -43,7 +43,6 @@ endef
 DISABLE_NLS:=
 
 CONFIGURE_ARGS += \
-	--enable-option-checking=fatal \
 	--sysconfdir=/etc/powerdns \
 	--with-lua=lua \
 	--without-libcap \
