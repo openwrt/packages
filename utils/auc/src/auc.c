@@ -1356,7 +1356,24 @@ static int req_add_selected_packages(struct blob_buf *req)
 	return 0;
 }
 
-static int select_image(struct blob_attr *images, char **image_name, char **image_sha256)
+#if defined(__amd64__) || defined(__i386__)
+static int system_is_efi(void)
+{
+	const char efidname[] = "/sys/firmware/efi/efivars";
+	int fd = open(efidname, O_DIRECTORY | O_PATH);
+
+	if (fd != -1) {
+		close(fd);
+		return 1;
+	} else {
+		return 0;
+	}
+}
+#else
+static inline int system_is_efi(void) { return 0; }
+#endif
+
+static int get_image_by_type(struct blob_attr *images, const char *typestr, char **image_name, char **image_sha256)
 {
 	struct blob_attr *tb[__IMAGES_MAX];
 	struct blob_attr *cur;
@@ -1370,13 +1387,34 @@ static int select_image(struct blob_attr *images, char **image_name, char **imag
 		    !tb[IMAGES_SHA256])
 			continue;
 
-		if (!strcmp(blobmsg_get_string(tb[IMAGES_TYPE]), "sysupgrade")) {
+		if (!strcmp(blobmsg_get_string(tb[IMAGES_TYPE]), typestr)) {
 			*image_name = strdup(blobmsg_get_string(tb[IMAGES_NAME]));
 			*image_sha256 = strdup(blobmsg_get_string(tb[IMAGES_SHA256]));
 			ret = 0;
 			break;
 		}
 	}
+
+	return ret;
+}
+
+static int select_image(struct blob_attr *images, char **image_name, char **image_sha256)
+{
+	const char *combined_type;
+	int ret;
+
+	if (system_is_efi())
+		combined_type = "combined-efi";
+	else
+		combined_type = "combined";
+
+	DPRINTF("images: %s\n", blobmsg_format_json_indent(images, true, 0));
+
+	ret = get_image_by_type(images, "sysupgrade", image_name, image_sha256);
+	if (!ret)
+		return 0;
+
+	ret = get_image_by_type(images, combined_type, image_name, image_sha256);
 
 	return ret;
 }
