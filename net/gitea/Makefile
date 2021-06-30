@@ -60,9 +60,9 @@ MAKE_FLAGS += COMMIT=$(PKG_SOURCE_VERSION)
 ifeq ($(ARCH),mips)
 MAKE_FLAGS += EXTRA_FLAGS='-buildmode=default'
 # Remove unsupported linker flags
-LDFLAGS := $(echo "${LDFLAGS}" | sed 's/-znow -zrelro//')
+TARGET_LDFLAGS := $(echo "${TARGET_LDFLAGS}" | sed 's/-znow -zrelro//')
 # Add missing spaces between -L flag and it's argument (if no space)
-LDFLAGS := $(echo "${LDFLAGS}" | sed 's/-L[^\s]/-L /')
+TARGET_LDFLAGS := $(echo "${TARGET_LDFLAGS}" | sed 's/-L[^\s]/-L /')
 endif
 
 define Build/Compile
