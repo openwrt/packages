@@ -38,7 +38,7 @@ https://gitlab.alpinelinux.org/alpine/aports/commit/76b81b486480fd9c3294cd420bcf
 @@ -111,6 +115,7 @@ void qmp_guest_shutdown(bool has_mode, c
  
          execle("/sbin/shutdown", "shutdown", "-h", shutdown_flag, "+0",
-                "hypervisor initiated shutdown", (char*)NULL, environ);
+                "hypervisor initiated shutdown", (char *)NULL, environ);
 +        execle(fallback_cmd, fallback_cmd, (char*)NULL, environ);
          _exit(EXIT_FAILURE);
      } else if (pid < 0) {
