@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qemu
-PKG_VERSION:=5.0.0
-PKG_RELEASE:=5
+PKG_VERSION:=6.1.0
+PKG_RELEASE:=$(AUTORELEASE)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=2f13a92a0fa5c8b69ff0796b59b86b080bbb92ebad5d301a7724dd06b5e78cb6
+PKG_HASH:=eebc089db3414bbeedf1e464beda0a7515aad30f73261abc246c9b27503a3c96
 PKG_SOURCE_URL:=http://download.qemu.org/
-PKG_LICENSE:=GPL-2.0
+PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=LICENSE tcg/LICENSE
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 PKG_CPE_ID:=cpe:/a:qemu:qemu
@@ -23,7 +23,7 @@ PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 PKG_USE_MIPS16:=0
 
-PKG_BUILD_DEPENDS+=spice-protocol
+PKG_BUILD_DEPENDS+=spice-protocol meson/host
 
 include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/package.mk
@@ -96,7 +96,7 @@ endef
 
 define Package/qemu-img/install
 	$(INSTALL_DIR) $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/qemu-img $(1)/usr/bin/qemu-img
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/build/qemu-img $(1)/usr/bin/qemu-img
 endef
 
 
@@ -111,7 +111,7 @@ endef
 
 define Package/qemu-nbd/install
 	$(INSTALL_DIR) $(1)/usr/sbin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/qemu-nbd $(1)/usr/sbin/qemu-nbd
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/build/qemu-nbd $(1)/usr/sbin/qemu-nbd
 endef
 
 
@@ -190,12 +190,13 @@ define qemu-target
     SUBMENU:=Virtualization
     TITLE:=QEMU target $(1)
     URL:=http://www.qemu.org
-    DEPENDS:= +glib2 +libpthread +zlib $(QEMU_DEPS_IN_HOST) $(qemu-target-$(1)-deps) \
+    DEPENDS:= +glib2 +libpthread +zlib +libbpf $(QEMU_DEPS_IN_HOST) $(qemu-target-$(1)-deps) \
 	+QEMU_UI_VNC:qemu-keymaps \
 	+QEMU_UI_VNC_JPEG:libjpeg \
 	+QEMU_UI_VNC_PNG:libpng \
 	+QEMU_UI_VNC_SASL:libsasl2 \
 	+QEMU_UI_SPICE:libspice-server \
+	+QEMU_DEV_USB:libusb-1.0 \
 	$(if $(filter %-softmmu,$(1)),+libncurses +libfdt +pixman +qemu-firmware-efi $(ICONV_DEPENDS))
   endef
 
@@ -257,6 +258,9 @@ config QEMU_UI_VNC_SASL
 config QEMU_UI_SPICE
 	bool "QEMU SPICE ui support"
 
+config QEMU_DEV_USB
+	bool "QEMU USB passthrough support"
+
 endif
 endef
 
@@ -266,6 +270,7 @@ PKG_CONFIG_DEPENDS += \
 	CONFIG_QEMU_UI_VNC_PNG \
 	CONFIG_QEMU_UI_VNC_SASL \
 	CONFIG_QEMU_UI_SPICE \
+	CONFIG_QEMU_DEV_USB \
 
 
 # QEMU configure script does not recognize these options
@@ -299,7 +304,9 @@ CONFIGURE_ARGS +=			\
 	--enable-vhost-scsi		\
 	--enable-vhost-user		\
 	--enable-vhost-user-fs		\
+	--enable-vhost-user-blk-server	\
 	--enable-vhost-vsock		\
+	--enable-vhost-vdpa		\
 
 # Image formats support
 CONFIGURE_ARGS +=			\
@@ -351,6 +358,8 @@ CONFIGURE_ARGS +=			\
 	--enable-live-block-migration	\
 	--enable-membarrier		\
 	--enable-replication		\
+	--enable-lto			\
+	--enable-tools			\
 
 # Review configure options not explicitly specified here
 #
@@ -375,7 +384,7 @@ CONFIGURE_ARGS +=			\
 	--disable-debug-tcg		\
 	--disable-docs			\
 	--disable-gcrypt		\
-	--disable-git-update		\
+	--with-git-submodules=ignore	\
 	--disable-glusterfs		\
 	--disable-gnutls		\
 	--disable-guest-agent-msi	\
@@ -385,7 +394,7 @@ CONFIGURE_ARGS +=			\
 	--disable-libpmem		\
 	--disable-libssh		\
 	--disable-libudev		\
-	--disable-libusb		\
+	--$(if $(CONFIG_QEMU_DEV_USB),enable,disable)-libusb		\
 	--disable-libxml2		\
 	--disable-linux-aio		\
 	--disable-linux-io-uring	\
@@ -405,19 +414,16 @@ CONFIGURE_ARGS +=			\
 	--disable-rdma			\
 	--disable-sanitizers		\
 	--disable-seccomp		\
-	--disable-sheepdog		\
 	--disable-smartcard		\
 	--disable-snappy		\
 	--disable-sparse		\
 	--disable-strip			\
 	--disable-tcg-interpreter	\
 	--disable-tcmalloc		\
-	--disable-tools			\
 	--disable-tpm			\
 	--disable-usb-redir		\
 	--disable-vde			\
 	--disable-virtfs		\
-	--disable-vxhs			\
 	--disable-werror		\
 	--disable-xen-pci-passthrough	\
 	--disable-xkbcommon		\
@@ -434,17 +440,6 @@ MAKE_VARS += V=1
 MAKE_FLAGS:=$(filter-out	\
 	ARCH=%			\
 	,$(MAKE_FLAGS))
-
-QEMU_MAKE_TARGETS := \
-	$(if $(CONFIG_PACKAGE_qemu-ga),qemu-ga) \
-	$(if $(CONFIG_PACKAGE_qemu-bridge-helper),qemu-bridge-helper) \
-	$(if $(CONFIG_PACKAGE_qemu-img),qemu-img) \
-	$(if $(CONFIG_PACKAGE_qemu-nbd),qemu-nbd) \
-	$(foreach target,$(qemu-target-list),$(if $(CONFIG_PACKAGE_qemu-$(target)),$(target)/all)) \
-
-define Build/Compile
-	$(if $(strip $(QEMU_MAKE_TARGETS)),$(call Build/Compile/Default,$(QEMU_MAKE_TARGETS)))
-endef
 
 $(eval $(call BuildPackage,virtio-console-helper))
 $(eval $(call BuildPackage,qemu-ga))
