@@ -32,7 +32,7 @@ Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
  #endif /* CONFIG_LINUX */
  
  #include "qemu/osdep.h"
-@@ -27,6 +24,13 @@
+@@ -29,6 +26,13 @@
  #include <sys/vfs.h>
  #endif
  

@@ -9,9 +9,9 @@ Subject: [PATCH] configure: allow enabling/disabling libudev from command line
 
 --- a/configure
 +++ b/configure
-@@ -1601,6 +1601,10 @@ for opt do
+@@ -1581,6 +1581,10 @@ for opt do
    ;;
-   --gdb=*) gdb_bin="$optarg"
+   --disable-slirp-smbd) slirp_smbd=no
    ;;
 +  --enable-libudev) libudev=yes
 +  ;;
