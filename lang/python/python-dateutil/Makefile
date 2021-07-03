@@ -9,12 +9,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-dateutil
 PKG_VERSION:=2.8.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_LICENSE:=BSD-2-Clause
 
 PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=73ebfe9dbf22e832286dafa60473e4cd239f8592f699aa5adaf10050e6e1823c
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
+
+HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=setuptools-scm
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
