@@ -2,7 +2,7 @@ if PACKAGE_openvpn-openssl
 
 config OPENVPN_openssl_ENABLE_LZO
 	bool "Enable LZO compression support"
-	default n
+	default y
 
 config OPENVPN_openssl_ENABLE_LZ4
 	bool "Enable LZ4 compression support"
