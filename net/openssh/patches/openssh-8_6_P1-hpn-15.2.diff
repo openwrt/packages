@@ -1,0 +1,2678 @@
+--- /dev/null
++++ b/HPN-README
+@@ -0,0 +1,153 @@
++Notes:
++
++MULTI-THREADED CIPHER:
++The AES cipher in CTR mode has been multithreaded (MTR-AES-CTR). This will allow ssh installations
++on hosts with multiple cores to use more than one processing core during encryption.
++Tests have show significant throughput performance increases when using MTR-AES-CTR up
++to and including a full gigabit per second on quad core systems. It should be possible to
++achieve full line rate on dual core systems but OS and data management overhead makes this
++more difficult to achieve. The cipher stream from MTR-AES-CTR is entirely compatible with single
++thread AES-CTR (ST-AES-CTR) implementations and should be 100% backward compatible. Optimal
++performance requires the MTR-AES-CTR mode be enabled on both ends of the connection.
++The MTR-AES-CTR replaces ST-AES-CTR and is used in exactly the same way with the same
++nomenclature.
++Use examples:
++		ssh -caes128-ctr you@host.com
++		scp -oCipher=aes256-ctr file you@host.com:~/file
++
++NONE CIPHER:
++To use the NONE option you must have the NoneEnabled switch set on the server and
++you *must* have *both* NoneEnabled and NoneSwitch set to yes on the client. The NONE
++feature works with ALL ssh subsystems (as far as we can tell) *AS LONG AS* a tty is not
++spawned. If a user uses the -T switch to prevent a tty being created the NONE cipher will
++be disabled.
++
++The performance increase will only be as good as the network and TCP stack tuning
++on the reciever side of the connection allows. As a rule of thumb a user will need
++at least 10Mb/s connection with a 100ms RTT to see a doubling of performance. The
++HPN-SSH home page describes this in greater detail.
++
++http://www.psc.edu/networking/projects/hpn-ssh
++
++NONE MAC:
++Starting with HPN 15v1 users will have the option to disable HMAC (message
++authentication ciphers) when using the NONE cipher. You must enable the following:
++NoneEnabled, NoneSwitch, and NoneMacEnabled. If all three are not enabled the None MAC
++will be automatically disabled. In tests the use of the None MAC improved throuput by
++more than 30%.
++
++ex: scp -oNoneSwitch=yes -oNoneEnabled=yes -oNoneMacEnabled=yes file host:~
++
++BUFFER SIZES:
++
++If HPN is disabled the receive buffer size will be set to the
++OpenSSH default of 2MB (for OpenSSH versions before 4.7: 64KB).
++
++If an HPN system connects to a nonHPN system the receive buffer will
++be set to the HPNBufferSize value. The default is 2MB but user adjustable.
++
++If an HPN to HPN connection is established a number of different things might
++happen based on the user options and conditions.
++
++Conditions: HPNBufferSize NOT Set, TCPRcvBufPoll enabled, TCPRcvBuf NOT Set
++HPN Buffer Size = up to 64MB
++This is the default state. The HPN buffer size will grow to a maximum of 64MB
++as the TCP receive buffer grows. The maximum HPN Buffer size of 64MB is
++geared towards 10GigE transcontinental connections.
++
++Conditions: HPNBufferSize NOT Set, TCPRcvBufPoll disabled, TCPRcvBuf NOT Set
++HPN Buffer Size = TCP receive buffer value.
++Users on non-autotuning systems should disable TCPRcvBufPoll in the
++ssh_config and sshd_config
++
++Conditions: HPNBufferSize SET, TCPRcvBufPoll disabled, TCPRcvBuf NOT Set
++HPN Buffer Size = minimum of TCP receive buffer and HPNBufferSize.
++This would be the system defined TCP receive buffer (RWIN).
++
++Conditions: HPNBufferSize SET, TCPRcvBufPoll disabled, TCPRcvBuf SET
++HPN Buffer Size = minimum of TCPRcvBuf and HPNBufferSize.
++Generally there is no need to set both.
++
++Conditions: HPNBufferSize SET, TCPRcvBufPoll enabled, TCPRcvBuf NOT Set
++HPN Buffer Size = grows to HPNBufferSize
++The buffer will grow up to the maximum size specified here.
++
++Conditions: HPNBufferSize SET, TCPRcvBufPoll enabled, TCPRcvBuf SET
++HPN Buffer Size = minimum of TCPRcvBuf and HPNBufferSize.
++Generally there is no need to set both of these, especially on autotuning
++systems. However, if the users wishes to override the autotuning this would be
++one way to do it.
++
++Conditions: HPNBufferSize NOT Set, TCPRcvBufPoll enabled, TCPRcvBuf SET
++HPN Buffer Size = TCPRcvBuf.
++This will override autotuning and set the TCP recieve buffer to the user defined
++value.
++
++
++HPN Specific Configuration options
++
++TcpRcvBuf=[int]KB client
++      Set the TCP socket receive buffer to n Kilobytes. It can be set up to the
++maximum socket size allowed by the system. This is useful in situations where
++the tcp receive window is set low but the maximum buffer size is set
++higher (as is typical). This works on a per TCP connection basis. You can also
++use this to artifically limit the transfer rate of the connection. In these
++cases the throughput will be no more than n/RTT. The minimum buffer size is 1KB.
++Default is the current system wide tcp receive buffer size.
++
++TcpRcvBufPoll=[yes/no] client/server
++      Enable of disable the polling of the tcp receive buffer through the life
++of the connection. You would want to make sure that this option is enabled
++for systems making use of autotuning kernels (linux 2.4.24+, 2.6, MS Vista)
++default is yes.
++
++NoneEnabled=[yes/no] client/server
++      Enable or disable the use of the None cipher. Care must always be used
++when enabling this as it will allow users to send data in the clear. However,
++it is important to note that authentication information remains encrypted
++even if this option is enabled. Set to no by default.
++
++NoneMacEnabled=[yes/no] client/server
++      Enable or disable the use of the None MAC. When this is enabled ssh
++will *not* provide data integrity of any data being transmitted between hosts. Use
++with caution as it, unlike just using NoneEnabled, doesn't provide data integrity and
++protection against man-in-the-middle attacks. As with NoneEnabled all authentication
++remains encrypted and integrity is ensured. Default is no.
++
++NoneSwitch=[yes/no] client
++     Switch the encryption cipher being used to the None cipher after
++authentication takes place. NoneEnabled must be enabled on both the client
++and server side of the connection. When the connection switches to the NONE
++cipher a warning is sent to STDERR. The connection attempt will fail with an
++error if a client requests a NoneSwitch from the server that does not explicitly
++have NoneEnabled set to yes. Note: The NONE cipher cannot be used in
++interactive (shell) sessions and it will fail silently. Set to no by default.
++
++HPNDisabled=[yes/no] client/server
++     In some situations, such as transfers on a local area network, the impact
++of the HPN code produces a net decrease in performance. In these cases it is
++helpful to disable the HPN functionality. By default HPNDisabled is set to no.
++
++HPNBufferSize=[int]KB client/server
++     This is the default buffer size the HPN functionality uses when interacting
++with nonHPN SSH installations. Conceptually this is similar to the TcpRcvBuf
++option as applied to the internal SSH flow control. This value can range from
++1KB to 64MB (1-65536). Use of oversized or undersized buffers can cause performance
++problems depending on the length of the network path. The default size of this buffer
++is 2MB.
++
++DisableMTAES=[yes/no] client/server
++     Switch the encryption cipher being used from the multithreaded MT-AES-CTR cipher
++back to the stock single-threaded AES-CTR cipher. Useful on modern processors with
++AES-NI instructions which make the stock single-threaded AES-CTR cipher faster than
++the multithreaded MT-AES-CTR cipher. Set to no by default.
++
++
++Credits: This patch was conceived, designed, and led by Chris Rapier (rapier@psc.edu)
++         The majority of the actual coding for versions up to HPN12v1 was performed
++         by Michael Stevens (mstevens@andrew.cmu.edu). The MT-AES-CTR cipher was
++         implemented by Ben Bennet (ben@psc.edu) and improved by Mike Tasota
++         (tasota@gmail.com) an NSF REU grant recipient for 2013.
++	 Allan Jude provided the code for the NoneMac and buffer normalization.
++         This work was financed, in part, by Cisco System, Inc., the National
++         Library of Medicine, and the National Science Foundation.
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -47,7 +47,7 @@ CFLAGS=@CFLAGS@
+ CFLAGS_NOPIE=@CFLAGS_NOPIE@
+ CPPFLAGS=-I. -I$(srcdir) @CPPFLAGS@ $(PATHS) @DEFS@
+ PICFLAG=@PICFLAG@
+-LIBS=@LIBS@
++LIBS=@LIBS@ -lpthread
+ K5LIBS=@K5LIBS@
+ GSSLIBS=@GSSLIBS@
+ SSHDLIBS=@SSHDLIBS@
+@@ -93,7 +93,7 @@ LIBOPENSSH_OBJS=\
+ LIBSSH_OBJS=${LIBOPENSSH_OBJS} \
+ 	authfd.o authfile.o \
+ 	canohost.o channels.o cipher.o cipher-aes.o cipher-aesctr.o \
+-	cipher-ctr.o cleanup.o \
++	cipher-ctr.o cleanup.o cipher-ctr-mt.o \
+ 	compat.o fatal.o hostfile.o \
+ 	log.o match.o moduli.o nchan.o packet.o \
+ 	readpass.o ttymodes.o xmalloc.o addr.o addrmatch.o \
+--- a/auth2.c
++++ b/auth2.c
+@@ -53,6 +53,8 @@
+ #include "dispatch.h"
+ #include "pathnames.h"
+ #include "ssherr.h"
++#include "canohost.h"
++
+ #ifdef GSSAPI
+ #include "ssh-gss.h"
+ #endif
+@@ -74,6 +76,8 @@ extern Authmethod method_hostbased;
+ extern Authmethod method_gssapi;
+ #endif
+ 
++static int log_flag = 0;
++
+ Authmethod *authmethods[] = {
+ 	&method_none,
+ 	&method_pubkey,
+@@ -273,6 +277,11 @@ input_userauth_request(int type, u_int32
+ 	    (r = sshpkt_get_cstring(ssh, &method, NULL)) != 0)
+ 		goto out;
+ 	debug("userauth-request for user %s service %s method %s", user, service, method);
++	if (!log_flag) {
++		logit("SSH: Server;Ltype: Authname;Remote: %s-%d;Name: %s",
++		      ssh_remote_ipaddr(ssh), ssh_remote_port(ssh), user);
++		log_flag = 1;
++	}
+ 	debug("attempt %d failures %d", authctxt->attempt, authctxt->failures);
+ 
+ 	if ((style = strchr(user, ':')) != NULL)
+--- a/canohost.h
++++ b/canohost.h
+@@ -19,7 +19,7 @@ char		*get_peer_ipaddr(int);
+ int		 get_peer_port(int);
+ char		*get_local_ipaddr(int);
+ char		*get_local_name(int);
+-int		get_local_port(int);
++int		 get_local_port(int);
+ 
+ #endif /* _CANOHOST_H */
+ 
+--- a/channels.c
++++ b/channels.c
+@@ -220,6 +220,9 @@ static int rdynamic_connect_finish(struc
+ /* Setup helper */
+ static void channel_handler_init(struct ssh_channels *sc);
+ 
++static int hpn_disabled = 0;
++static int hpn_buffer_size = 2 * 1024 * 1024;
++
+ /* -- channel core */
+ 
+ void
+@@ -395,6 +398,7 @@ channel_new(struct ssh *ssh, char *ctype
+ 	c->local_window = window;
+ 	c->local_window_max = window;
+ 	c->local_maxpacket = maxpack;
++	c->dynamic_window = 0;
+ 	c->remote_name = xstrdup(remote_name);
+ 	c->ctl_chan = -1;
+ 	c->delayed = 1;		/* prevent call to channel_post handler */
+@@ -1082,6 +1086,28 @@ channel_pre_connecting(struct ssh *ssh,
+ 	FD_SET(c->sock, writeset);
+ }
+ 
++static int
++channel_tcpwinsz(struct ssh *ssh)
++{
++	u_int32_t tcpwinsz = 0;
++	socklen_t optsz = sizeof(tcpwinsz);
++	int ret = -1;
++
++	/* if we aren't on a socket return 128KB */
++	if (!ssh_packet_connection_is_on_socket(ssh))
++		return 128 * 1024;
++
++	ret = getsockopt(ssh_packet_get_connection_in(ssh),
++			 SOL_SOCKET, SO_RCVBUF, &tcpwinsz, &optsz);
++	/* return no more than SSHBUF_SIZE_MAX (currently 256MB) */
++	if ((ret == 0) && tcpwinsz > SSHBUF_SIZE_MAX)
++		tcpwinsz = SSHBUF_SIZE_MAX;
++
++	debug2("tcpwinsz: tcp connection %d, Receive window: %d",
++	       ssh_packet_get_connection_in(ssh), tcpwinsz);
++	return tcpwinsz;
++}
++
+ static void
+ channel_pre_open(struct ssh *ssh, Channel *c,
+     fd_set *readset, fd_set *writeset)
+@@ -2120,22 +2146,32 @@ channel_check_window(struct ssh *ssh, Ch
+ 
+ 	if (c->type == SSH_CHANNEL_OPEN &&
+ 	    !(c->flags & (CHAN_CLOSE_SENT|CHAN_CLOSE_RCVD)) &&
+-	    ((c->local_window_max - c->local_window >
+-	    c->local_maxpacket*3) ||
++	    ((ssh_packet_is_interactive(ssh) &&
++	    c->local_window_max - c->local_window > c->local_maxpacket*3) ||
+ 	    c->local_window < c->local_window_max/2) &&
+ 	    c->local_consumed > 0) {
++		u_int addition = 0;
++		u_int32_t tcpwinsz = channel_tcpwinsz(ssh);
++		/* adjust max window size if we are in a dynamic environment */
++		if (c->dynamic_window && (tcpwinsz > c->local_window_max)) {
++			/* grow the window somewhat aggressively to maintain pressure */
++			addition = 1.5 * (tcpwinsz - c->local_window_max);
++			c->local_window_max += addition;
++			debug("Channel: Window growth to %d by %d bytes", c->local_window_max, addition);
++		}
+ 		if (!c->have_remote_id)
+ 			fatal_f("channel %d: no remote id", c->self);
+ 		if ((r = sshpkt_start(ssh,
+ 		    SSH2_MSG_CHANNEL_WINDOW_ADJUST)) != 0 ||
+ 		    (r = sshpkt_put_u32(ssh, c->remote_id)) != 0 ||
+-		    (r = sshpkt_put_u32(ssh, c->local_consumed)) != 0 ||
++		    (r = sshpkt_put_u32(ssh, c->local_consumed + addition)) != 0 ||
+ 		    (r = sshpkt_send(ssh)) != 0) {
+ 			fatal_fr(r, "channel %i", c->self);
+ 		}
+-		debug2("channel %d: window %d sent adjust %d", c->self,
+-		    c->local_window, c->local_consumed);
+-		c->local_window += c->local_consumed;
++		debug2("channel %d: window %d sent adjust %d",
++		    c->self, c->local_window,
++		    c->local_consumed + addition);
++		c->local_window += c->local_consumed + addition;
+ 		c->local_consumed = 0;
+ 	}
+ 	return 1;
+@@ -2525,7 +2561,6 @@ channel_output_poll_input_open(struct ss
+ 		    (r = sshpkt_send(ssh)) != 0)
+ 			fatal_fr(r, "channel %i: send datagram", c->self);
+ 		c->remote_window -= plen;
+-		return;
+ 	}
+ 
+ 	/* Enqueue packet for buffered data. */
+@@ -2601,7 +2636,7 @@ channel_output_poll(struct ssh *ssh)
+ 		if ((c->flags & (CHAN_CLOSE_SENT|CHAN_CLOSE_RCVD))) {
+ 			/* XXX is this true? */
+ 			debug3("channel %d: will not send data after close",
+-			    c->self);
++			       c->self);
+ 			continue;
+ 		}
+ 
+@@ -3302,6 +3337,14 @@ channel_fwd_bind_addr(struct ssh *ssh, c
+ 	return addr;
+ }
+ 
++void
++channel_set_hpn(int external_hpn_disabled, int external_hpn_buffer_size)
++{
++	hpn_disabled = external_hpn_disabled;
++	hpn_buffer_size = external_hpn_buffer_size;
++	debug("HPN Disabled: %d, HPN Buffer Size: %d", hpn_disabled, hpn_buffer_size);
++}
++
+ static int
+ channel_setup_fwd_listener_tcpip(struct ssh *ssh, int type,
+     struct Forward *fwd, int *allocated_listen_port,
+@@ -3442,9 +3485,11 @@ channel_setup_fwd_listener_tcpip(struct
+ 		}
+ 
+ 		/* Allocate a channel number for the socket. */
++		/* explicitly test for hpn disabled option. if true use smaller window size */
+ 		c = channel_new(ssh, "port listener", type, sock, sock, -1,
+-		    CHAN_TCP_WINDOW_DEFAULT, CHAN_TCP_PACKET_DEFAULT,
+-		    0, "port listener", 1);
++				hpn_disabled ? CHAN_TCP_WINDOW_DEFAULT : hpn_buffer_size,
++				CHAN_TCP_PACKET_DEFAULT,
++				0, "port listener", 1);
+ 		c->path = xstrdup(host);
+ 		c->host_port = fwd->connect_port;
+ 		c->listening_addr = addr == NULL ? NULL : xstrdup(addr);
+@@ -3985,7 +4030,7 @@ channel_request_rforward_cancel_streamlo
+ 
+ 	return 0;
+ }
+- 
++
+ /*
+  * Request cancellation of remote forwarding of a connection from local side.
+  */
+@@ -4560,7 +4605,7 @@ x11_create_display_inet(struct ssh *ssh,
+ 				if ((errno != EINVAL) && (errno != EAFNOSUPPORT)
+ #ifdef EPFNOSUPPORT
+ 				    && (errno != EPFNOSUPPORT)
+-#endif 
++#endif
+ 				    ) {
+ 					error("socket: %.100s", strerror(errno));
+ 					freeaddrinfo(aitop);
+@@ -4612,8 +4657,9 @@ x11_create_display_inet(struct ssh *ssh,
+ 		sock = socks[n];
+ 		nc = channel_new(ssh, "x11 listener",
+ 		    SSH_CHANNEL_X11_LISTENER, sock, sock, -1,
+-		    CHAN_X11_WINDOW_DEFAULT, CHAN_X11_PACKET_DEFAULT,
+-		    0, "X11 inet listener", 1);
++				 hpn_disabled ? CHAN_X11_WINDOW_DEFAULT : hpn_buffer_size,
++				 CHAN_X11_PACKET_DEFAULT,
++				 0, "X11 inet listener", 1);
+ 		nc->single_connection = single_connection;
+ 		(*chanids)[n] = nc->self;
+ 	}
+--- a/channels.h
++++ b/channels.h
+@@ -158,8 +158,10 @@ struct Channel {
+ 	u_int	local_window_max;
+ 	u_int	local_consumed;
+ 	u_int	local_maxpacket;
++	int	dynamic_window;
+ 	int     extended_usage;
+ 	int	single_connection;
++	u_int	tcpwinsz;
+ 
+ 	char   *ctype;		/* type */
+ 
+@@ -221,7 +223,7 @@ struct Channel {
+ #define CHAN_LOCAL			0x10
+ 
+ /* Read buffer size */
+-#define CHAN_RBUF	(16*1024)
++#define CHAN_RBUF       CHAN_SES_PACKET_DEFAULT
+ 
+ /* Maximum channel input buffer size */
+ #define CHAN_INPUT_MAX	(16*1024*1024)
+@@ -352,4 +354,6 @@ void	 chan_rcvd_ieof(struct ssh *, Chann
+ void	 chan_write_failed(struct ssh *, Channel *);
+ void	 chan_obuf_empty(struct ssh *, Channel *);
+ 
++/* hpn handler */
++void     channel_set_hpn(int, int);
+ #endif
+--- /dev/null
++++ b/cipher-ctr-mt.c
+@@ -0,0 +1,677 @@
++/*
++ * OpenSSH Multi-threaded AES-CTR Cipher
++ *
++ * Author: Benjamin Bennett <ben@psc.edu>
++ * Author: Mike Tasota <tasota@gmail.com>
++ * Author: Chris Rapier <rapier@psc.edu>
++ * Copyright (c) 2008-2013 Pittsburgh Supercomputing Center. All rights reserved.
++ *
++ * Based on original OpenSSH AES-CTR cipher. Small portions remain unchanged,
++ * Copyright (c) 2003 Markus Friedl <markus@openbsd.org>
++ *
++ * Permission to use, copy, modify, and distribute this software for any
++ * purpose with or without fee is hereby granted, provided that the above
++ * copyright notice and this permission notice appear in all copies.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
++ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
++ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
++ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
++ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
++ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
++ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
++ */
++#include "includes.h"
++
++#if defined(WITH_OPENSSL)
++#include <sys/types.h>
++
++#include <stdarg.h>
++#include <string.h>
++
++#include <openssl/evp.h>
++
++#include "xmalloc.h"
++#include "log.h"
++#include <unistd.h>
++
++/* compatibility with old or broken OpenSSL versions */
++#include "openbsd-compat/openssl-compat.h"
++
++#ifndef USE_BUILTIN_RIJNDAEL
++#include <openssl/aes.h>
++#endif
++
++#include <pthread.h>
++
++/*-------------------- TUNABLES --------------------*/
++/* maximum number of threads and queues */
++#define MAX_THREADS      32
++#define MAX_NUMKQ        (MAX_THREADS * 2)
++
++/* Number of pregen threads to use */
++int cipher_threads = 2;
++
++/* Number of keystream queues */
++int numkq = 4;
++
++/* Length of a keystream queue */
++#define KQLEN		4096
++
++/* Processor cacheline length */
++#define CACHELINE_LEN	64
++
++/* Collect thread stats and print at cancellation when in debug mode */
++#define CIPHER_THREAD_STATS
++
++/* Can the system do unaligned loads natively? */
++#if defined(__aarch64__) || \
++    defined(__i386__)    || \
++    defined(__powerpc__) || \
++    defined(__x86_64__)
++# define CIPHER_UNALIGNED_OK
++#endif
++#if defined(__SIZEOF_INT128__)
++# define CIPHER_INT128_OK
++#endif
++/*-------------------- END TUNABLES --------------------*/
++
++
++const EVP_CIPHER *evp_aes_ctr_mt(void);
++
++#ifdef CIPHER_THREAD_STATS
++/*
++ * Struct to collect thread stats
++ */
++struct thread_stats {
++	u_int	fills;
++	u_int	skips;
++	u_int	waits;
++	u_int	drains;
++};
++
++/*
++ * Debug print the thread stats
++ * Use with pthread_cleanup_push for displaying at thread cancellation
++ */
++static void
++thread_loop_stats(void *x)
++{
++	struct thread_stats *s = x;
++	debug("AES-CTR MT tid %lu - %u fills, %u skips, %u waits", pthread_self(),
++			s->fills, s->skips, s->waits);
++}
++
++# define STATS_STRUCT(s)	struct thread_stats s
++# define STATS_INIT(s)		{ memset(&s, 0, sizeof(s)); }
++# define STATS_FILL(s)		{ s.fills++; }
++# define STATS_SKIP(s)		{ s.skips++; }
++# define STATS_WAIT(s)		{ s.waits++; }
++# define STATS_DRAIN(s)		{ s.drains++; }
++#else
++# define STATS_STRUCT(s)
++# define STATS_INIT(s)
++# define STATS_FILL(s)
++# define STATS_SKIP(s)
++# define STATS_WAIT(s)
++# define STATS_DRAIN(s)
++#endif
++
++/* Keystream Queue state */
++enum {
++	KQINIT,
++	KQEMPTY,
++	KQFILLING,
++	KQFULL,
++	KQDRAINING
++};
++
++/* Keystream Queue struct */
++struct kq {
++	u_char		keys[KQLEN][AES_BLOCK_SIZE];
++	u_char		ctr[AES_BLOCK_SIZE];
++	u_char		pad0[CACHELINE_LEN];
++	int		qstate;
++	pthread_mutex_t	lock;
++	pthread_cond_t	cond;
++	u_char		pad1[CACHELINE_LEN];
++};
++
++/* Context struct */
++struct ssh_aes_ctr_ctx_mt
++{
++	int             struct_id;
++	struct kq	q[MAX_NUMKQ];
++	AES_KEY		aes_ctx;
++	STATS_STRUCT(stats);
++	u_char		aes_counter[AES_BLOCK_SIZE];
++	pthread_t	tid[MAX_THREADS];
++	int             id[MAX_THREADS];
++	pthread_rwlock_t tid_lock;
++#ifdef __APPLE__
++	pthread_rwlock_t stop_lock;
++	int		exit_flag;
++#endif /* __APPLE__ */
++	int		state;
++	int		qidx;
++	int		ridx;
++};
++
++/* <friedl>
++ * increment counter 'ctr',
++ * the counter is of size 'len' bytes and stored in network-byte-order.
++ * (LSB at ctr[len-1], MSB at ctr[0])
++ */
++static void
++ssh_ctr_inc(u_char *ctr, size_t len)
++{
++	int i;
++
++	for (i = len - 1; i >= 0; i--)
++		if (++ctr[i])	/* continue on overflow */
++			return;
++}
++
++/*
++ * Add num to counter 'ctr'
++ */
++static void
++ssh_ctr_add(u_char *ctr, uint32_t num, u_int len)
++{
++	int i;
++	uint16_t n;
++
++	for (n = 0, i = len - 1; i >= 0 && (num || n); i--) {
++		n = ctr[i] + (num & 0xff) + n;
++		num >>= 8;
++		ctr[i] = n & 0xff;
++		n >>= 8;
++	}
++}
++
++/*
++ * Threads may be cancelled in a pthread_cond_wait, we must free the mutex
++ */
++static void
++thread_loop_cleanup(void *x)
++{
++	pthread_mutex_unlock((pthread_mutex_t *)x);
++}
++
++#ifdef __APPLE__
++/* Check if we should exit, we are doing both cancel and exit condition
++ * since on OSX threads seem to occasionally fail to notice when they have
++ * been cancelled. We want to have a backup to make sure that we won't hang
++ * when the main process join()-s the cancelled thread.
++ */
++static void
++thread_loop_check_exit(struct ssh_aes_ctr_ctx_mt *c)
++{
++	int exit_flag;
++
++	pthread_rwlock_rdlock(&c->stop_lock);
++	exit_flag = c->exit_flag;
++	pthread_rwlock_unlock(&c->stop_lock);
++
++	if (exit_flag)
++		pthread_exit(NULL);
++}
++#else
++# define thread_loop_check_exit(s)
++#endif /* __APPLE__ */
++
++/*
++ * Helper function to terminate the helper threads
++ */
++static void
++stop_and_join_pregen_threads(struct ssh_aes_ctr_ctx_mt *c)
++{
++	int i;
++
++#ifdef __APPLE__
++	/* notify threads that they should exit */
++	pthread_rwlock_wrlock(&c->stop_lock);
++	c->exit_flag = TRUE;
++	pthread_rwlock_unlock(&c->stop_lock);
++#endif /* __APPLE__ */
++
++	/* Cancel pregen threads */
++	for (i = 0; i < cipher_threads; i++) {
++		debug ("Canceled %lu (%d,%d)", c->tid[i], c->struct_id, c->id[i]);
++		pthread_cancel(c->tid[i]);
++	}
++	/* shouldn't need this - see commit logs for hpn-7_7_P1 -cjr 11/7/19*/
++	/* for (i = 0; i < numkq; i++) { */
++	/* 	pthread_mutex_lock(&c->q[i].lock); */
++	/* 	pthread_cond_broadcast(&c->q[i].cond); */
++	/* 	pthread_mutex_unlock(&c->q[i].lock); */
++	/* } */
++	for (i = 0; i < cipher_threads; i++) {
++		if (pthread_kill(c->tid[i], 0) != 0)
++			debug3("AES-CTR MT pthread_join failure: Invalid thread id %lu in %s", c->tid[i], __FUNCTION__);
++		else {
++			debug ("Joining %lu (%d, %d)", c->tid[i], c->struct_id, c->id[i]);
++			pthread_join(c->tid[i], NULL);
++		}
++	}
++}
++
++/*
++ * The life of a pregen thread:
++ *    Find empty keystream queues and fill them using their counter.
++ *    When done, update counter for the next fill.
++ */
++static void *
++thread_loop(void *x)
++{
++	AES_KEY key;
++	STATS_STRUCT(stats);
++	struct ssh_aes_ctr_ctx_mt *c = x;
++	struct kq *q;
++	int i;
++	int qidx;
++	pthread_t first_tid;
++
++	/* Threads stats on cancellation */
++	STATS_INIT(stats);
++#ifdef CIPHER_THREAD_STATS
++	pthread_cleanup_push(thread_loop_stats, &stats);
++#endif
++
++	/* Thread local copy of AES key */
++	memcpy(&key, &c->aes_ctx, sizeof(key));
++
++	pthread_rwlock_rdlock(&c->tid_lock);
++	first_tid = c->tid[0];
++	pthread_rwlock_unlock(&c->tid_lock);
++
++	/*
++	 * Handle the special case of startup, one thread must fill
++	 * the first KQ then mark it as draining. Lock held throughout.
++	 */
++	if (pthread_equal(pthread_self(), first_tid)) {
++		q = &c->q[0];
++		pthread_mutex_lock(&q->lock);
++		if (q->qstate == KQINIT) {
++			for (i = 0; i < KQLEN; i++) {
++				AES_encrypt(q->ctr, q->keys[i], &key);
++				ssh_ctr_inc(q->ctr, AES_BLOCK_SIZE);
++			}
++			ssh_ctr_add(q->ctr, KQLEN * (numkq - 1), AES_BLOCK_SIZE);
++			q->qstate = KQDRAINING;
++			STATS_FILL(stats);
++			pthread_cond_broadcast(&q->cond);
++		}
++		pthread_mutex_unlock(&q->lock);
++	} else
++		STATS_SKIP(stats);
++
++	/*
++	 * Normal case is to find empty queues and fill them, skipping over
++	 * queues already filled by other threads and stopping to wait for
++	 * a draining queue to become empty.
++	 *
++	 * Multiple threads may be waiting on a draining queue and awoken
++	 * when empty.  The first thread to wake will mark it as filling,
++	 * others will move on to fill, skip, or wait on the next queue.
++	 */
++	for (qidx = 1;; qidx = (qidx + 1) % numkq) {
++		/* Check if I was cancelled, also checked in cond_wait */
++		pthread_testcancel();
++
++		/* Check if we should exit as well */
++		thread_loop_check_exit(c);
++
++		/* Lock queue and block if its draining */
++		q = &c->q[qidx];
++		pthread_mutex_lock(&q->lock);
++		pthread_cleanup_push(thread_loop_cleanup, &q->lock);
++		while (q->qstate == KQDRAINING || q->qstate == KQINIT) {
++			STATS_WAIT(stats);
++			thread_loop_check_exit(c);
++			pthread_cond_wait(&q->cond, &q->lock);
++		}
++		pthread_cleanup_pop(0);
++
++		/* If filling or full, somebody else got it, skip */
++		if (q->qstate != KQEMPTY) {
++			pthread_mutex_unlock(&q->lock);
++			STATS_SKIP(stats);
++			continue;
++		}
++
++		/*
++		 * Empty, let's fill it.
++		 * Queue lock is relinquished while we do this so others
++		 * can see that it's being filled.
++		 */
++		q->qstate = KQFILLING;
++		pthread_cond_broadcast(&q->cond);
++		pthread_mutex_unlock(&q->lock);
++		for (i = 0; i < KQLEN; i++) {
++			AES_encrypt(q->ctr, q->keys[i], &key);
++			ssh_ctr_inc(q->ctr, AES_BLOCK_SIZE);
++		}
++
++		/* Re-lock, mark full and signal consumer */
++		pthread_mutex_lock(&q->lock);
++		ssh_ctr_add(q->ctr, KQLEN * (numkq - 1), AES_BLOCK_SIZE);
++		q->qstate = KQFULL;
++		STATS_FILL(stats);
++		pthread_cond_broadcast(&q->cond);
++		pthread_mutex_unlock(&q->lock);
++	}
++
++#ifdef CIPHER_THREAD_STATS
++	/* Stats */
++	pthread_cleanup_pop(1);
++#endif
++
++	return NULL;
++}
++
++static int
++ssh_aes_ctr(EVP_CIPHER_CTX *ctx, u_char *dest, const u_char *src,
++    LIBCRYPTO_EVP_INL_TYPE len)
++{
++	typedef union {
++#ifdef CIPHER_INT128_OK
++		__uint128_t *u128;
++#endif
++		uint64_t *u64;
++		uint32_t *u32;
++		uint8_t *u8;
++		const uint8_t *cu8;
++		uintptr_t u;
++	} ptrs_t;
++	ptrs_t destp, srcp, bufp;
++	uintptr_t align;
++	struct ssh_aes_ctr_ctx_mt *c;
++	struct kq *q, *oldq;
++	int ridx;
++	u_char *buf;
++
++	if (len == 0)
++		return 1;
++	if ((c = EVP_CIPHER_CTX_get_app_data(ctx)) == NULL)
++		return 0;
++
++	q = &c->q[c->qidx];
++	ridx = c->ridx;
++
++	/* src already padded to block multiple */
++	srcp.cu8 = src;
++	destp.u8 = dest;
++	while (len > 0) {
++		buf = q->keys[ridx];
++		bufp.u8 = buf;
++
++		/* figure out the alignment on the fly */
++#ifdef CIPHER_UNALIGNED_OK
++		align = 0;
++#else
++		align = destp.u | srcp.u | bufp.u;
++#endif
++
++#ifdef CIPHER_INT128_OK
++		if ((align & 0xf) == 0) {
++			destp.u128[0] = srcp.u128[0] ^ bufp.u128[0];
++		} else
++#endif
++		if ((align & 0x7) == 0) {
++			destp.u64[0] = srcp.u64[0] ^ bufp.u64[0];
++			destp.u64[1] = srcp.u64[1] ^ bufp.u64[1];
++		} else if ((align & 0x3) == 0) {
++			destp.u32[0] = srcp.u32[0] ^ bufp.u32[0];
++			destp.u32[1] = srcp.u32[1] ^ bufp.u32[1];
++			destp.u32[2] = srcp.u32[2] ^ bufp.u32[2];
++			destp.u32[3] = srcp.u32[3] ^ bufp.u32[3];
++		} else {
++			size_t i;
++			for (i = 0; i < AES_BLOCK_SIZE; ++i)
++				dest[i] = src[i] ^ buf[i];
++		}
++
++		destp.u += AES_BLOCK_SIZE;
++		srcp.u += AES_BLOCK_SIZE;
++		len -= AES_BLOCK_SIZE;
++		ssh_ctr_inc(c->aes_counter, AES_BLOCK_SIZE);
++
++		/* Increment read index, switch queues on rollover */
++		if ((ridx = (ridx + 1) % KQLEN) == 0) {
++			oldq = q;
++
++			/* Mark next queue draining, may need to wait */
++			c->qidx = (c->qidx + 1) % numkq;
++			q = &c->q[c->qidx];
++			pthread_mutex_lock(&q->lock);
++			while (q->qstate != KQFULL) {
++				STATS_WAIT(c->stats);
++				pthread_cond_wait(&q->cond, &q->lock);
++			}
++			q->qstate = KQDRAINING;
++			pthread_cond_broadcast(&q->cond);
++			pthread_mutex_unlock(&q->lock);
++
++			/* Mark consumed queue empty and signal producers */
++			pthread_mutex_lock(&oldq->lock);
++			oldq->qstate = KQEMPTY;
++			STATS_DRAIN(c->stats);
++			pthread_cond_broadcast(&oldq->cond);
++			pthread_mutex_unlock(&oldq->lock);
++		}
++	}
++	c->ridx = ridx;
++	return 1;
++}
++
++#define HAVE_NONE       0
++#define HAVE_KEY        1
++#define HAVE_IV         2
++int X = 0;
++
++static int
++ssh_aes_ctr_init(EVP_CIPHER_CTX *ctx, const u_char *key, const u_char *iv,
++    int enc)
++{
++	struct ssh_aes_ctr_ctx_mt *c;
++	int i;
++
++	/* get the number of cores in the system */
++	/* if it's not linux it currently defaults to 2 */
++	/* divide by 2 to get threads for each direction (MODE_IN||MODE_OUT) */
++#ifdef __linux__
++	cipher_threads = sysconf(_SC_NPROCESSORS_ONLN) / 2;
++#endif /*__linux__*/
++#ifdef __APPLE__
++	cipher_threads = sysconf(_SC_NPROCESSORS_ONLN) / 2;
++#endif /*__APPLE__*/
++#ifdef __FREEBSD__
++	int req[2];
++	size_t len;
++
++	req[0] = CTL_HW;
++	req[1] = HW_NCPU;
++
++	len = sizeof(ncpu);
++        sysctl(req, 2, &cipher_threads, &len, NULL, 0);
++	cipher_threads = cipher_threads / 2;
++#endif /*__FREEBSD__*/
++
++	/* if they have less than 4 cores spin up 4 threads anyway */
++	if (cipher_threads < 2)
++		cipher_threads = 2;
++
++	/* assure that we aren't trying to create more threads */
++	/* than we have in the struct. cipher_threads is half the */
++	/* total of allowable threads hence the odd looking math here */
++	if (cipher_threads * 2 > MAX_THREADS)
++		cipher_threads = MAX_THREADS / 2;
++
++	/* set the number of keystream queues */
++	numkq = cipher_threads * 2;
++
++	if ((c = EVP_CIPHER_CTX_get_app_data(ctx)) == NULL) {
++		c = xmalloc(sizeof(*c));
++		pthread_rwlock_init(&c->tid_lock, NULL);
++#ifdef __APPLE__
++		pthread_rwlock_init(&c->stop_lock, NULL);
++		c->exit_flag = FALSE;
++#endif /* __APPLE__ */
++
++		c->state = HAVE_NONE;
++		for (i = 0; i < numkq; i++) {
++			pthread_mutex_init(&c->q[i].lock, NULL);
++			pthread_cond_init(&c->q[i].cond, NULL);
++		}
++
++		STATS_INIT(c->stats);
++		EVP_CIPHER_CTX_set_app_data(ctx, c);
++	}
++
++	if (c->state == (HAVE_KEY | HAVE_IV)) {
++		/* tell the pregen threads to exit */
++		stop_and_join_pregen_threads(c);
++
++#ifdef __APPLE__
++		/* reset the exit flag */
++		c->exit_flag = FALSE;
++#endif /* __APPLE__ */
++
++		/* Start over getting key & iv */
++		c->state = HAVE_NONE;
++	}
++
++	if (key != NULL) {
++		AES_set_encrypt_key(key, EVP_CIPHER_CTX_key_length(ctx) * 8,
++		    &c->aes_ctx);
++		c->state |= HAVE_KEY;
++	}
++
++	if (iv != NULL) {
++		memcpy(c->aes_counter, iv, AES_BLOCK_SIZE);
++		c->state |= HAVE_IV;
++	}
++
++	if (c->state == (HAVE_KEY | HAVE_IV)) {
++		/* Clear queues */
++		memcpy(c->q[0].ctr, c->aes_counter, AES_BLOCK_SIZE);
++		c->q[0].qstate = KQINIT;
++		for (i = 1; i < numkq; i++) {
++			memcpy(c->q[i].ctr, c->aes_counter, AES_BLOCK_SIZE);
++			ssh_ctr_add(c->q[i].ctr, i * KQLEN, AES_BLOCK_SIZE);
++			c->q[i].qstate = KQEMPTY;
++		}
++		c->qidx = 0;
++		c->ridx = 0;
++
++		/* Start threads */
++		for (i = 0; i < cipher_threads; i++) {
++			pthread_rwlock_wrlock(&c->tid_lock);
++			if (pthread_create(&c->tid[i], NULL, thread_loop, c) != 0)
++				debug ("AES-CTR MT Could not create thread in %s", __FUNCTION__); /*should die here */
++			else {
++				if (!c->struct_id)
++					c->struct_id = X++;
++				c->id[i] = i;
++				debug ("AES-CTR MT spawned a thread with id %lu in %s (%d, %d)", c->tid[i], __FUNCTION__, c->struct_id, c->id[i]);
++			}
++			pthread_rwlock_unlock(&c->tid_lock);
++		}
++		pthread_mutex_lock(&c->q[0].lock);
++		while (c->q[0].qstate == KQINIT)
++			pthread_cond_wait(&c->q[0].cond, &c->q[0].lock);
++		pthread_mutex_unlock(&c->q[0].lock);
++	}
++	return 1;
++}
++
++/* this function is no longer used but might prove handy in the future
++ * this comment also applies to ssh_aes_ctr_thread_reconstruction
++ */
++void
++ssh_aes_ctr_thread_destroy(EVP_CIPHER_CTX *ctx)
++{
++	struct ssh_aes_ctr_ctx_mt *c;
++
++	c = EVP_CIPHER_CTX_get_app_data(ctx);
++	stop_and_join_pregen_threads(c);
++}
++
++void
++ssh_aes_ctr_thread_reconstruction(EVP_CIPHER_CTX *ctx)
++{
++	struct ssh_aes_ctr_ctx_mt *c;
++	int i;
++	c = EVP_CIPHER_CTX_get_app_data(ctx);
++	/* reconstruct threads */
++	for (i = 0; i < cipher_threads; i++) {
++		pthread_rwlock_wrlock(&c->tid_lock);
++		if (pthread_create(&c->tid[i], NULL, thread_loop, c) !=0 )
++			debug("AES-CTR MT could not create thread in %s", __FUNCTION__);
++		else {
++			c->struct_id = X++;
++			c->id[i] = i;
++			debug ("AES-CTR MT spawned a thread with id %lu in %s (%d, %d)", c->tid[i], __FUNCTION__, c->struct_id, c->id[i]);
++			debug("AES-CTR MT spawned a thread with id %lu in %s", c->tid[i], __FUNCTION__);
++		}
++		pthread_rwlock_unlock(&c->tid_lock);
++	}
++}
++
++static int
++ssh_aes_ctr_cleanup(EVP_CIPHER_CTX *ctx)
++{
++	struct ssh_aes_ctr_ctx_mt *c;
++
++	if ((c = EVP_CIPHER_CTX_get_app_data(ctx)) != NULL) {
++#ifdef CIPHER_THREAD_STATS
++		debug("AES-CTR MT main thread: %u drains, %u waits", c->stats.drains,
++		      c->stats.waits);
++#endif
++		stop_and_join_pregen_threads(c);
++
++		memset(c, 0, sizeof(*c));
++		free(c);
++		EVP_CIPHER_CTX_set_app_data(ctx, NULL);
++	}
++	return 1;
++}
++
++/* <friedl> */
++const EVP_CIPHER *
++evp_aes_ctr_mt(void)
++{
++# if OPENSSL_VERSION_NUMBER >= 0x10100000UL
++	static EVP_CIPHER *aes_ctr;
++	aes_ctr = EVP_CIPHER_meth_new(NID_undef, 16/*block*/, 16/*key*/);
++	EVP_CIPHER_meth_set_iv_length(aes_ctr, AES_BLOCK_SIZE);
++	EVP_CIPHER_meth_set_init(aes_ctr, ssh_aes_ctr_init);
++	EVP_CIPHER_meth_set_cleanup(aes_ctr, ssh_aes_ctr_cleanup);
++	EVP_CIPHER_meth_set_do_cipher(aes_ctr, ssh_aes_ctr);
++#  ifndef SSH_OLD_EVP
++	EVP_CIPHER_meth_set_flags(aes_ctr, EVP_CIPH_CBC_MODE
++				      | EVP_CIPH_VARIABLE_LENGTH
++				      | EVP_CIPH_ALWAYS_CALL_INIT
++				      | EVP_CIPH_CUSTOM_IV);
++#  endif /*SSH_OLD_EVP*/
++	return (aes_ctr);
++# else /*earlier versions of openssl*/
++	static EVP_CIPHER aes_ctr;
++	memset(&aes_ctr, 0, sizeof(EVP_CIPHER));
++	aes_ctr.nid = NID_undef;
++	aes_ctr.block_size = AES_BLOCK_SIZE;
++	aes_ctr.iv_len = AES_BLOCK_SIZE;
++	aes_ctr.key_len = 16;
++	aes_ctr.init = ssh_aes_ctr_init;
++	aes_ctr.cleanup = ssh_aes_ctr_cleanup;
++	aes_ctr.do_cipher = ssh_aes_ctr;
++#  ifndef SSH_OLD_EVP
++        aes_ctr.flags = EVP_CIPH_CBC_MODE | EVP_CIPH_VARIABLE_LENGTH |
++		EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CUSTOM_IV;
++#  endif /*SSH_OLD_EVP*/
++        return &aes_ctr;
++# endif /*OPENSSH_VERSION_NUMBER*/
++}
++
++#endif /* defined(WITH_OPENSSL) */
+--- a/cipher.c
++++ b/cipher.c
+@@ -48,6 +48,7 @@
+ #include "sshbuf.h"
+ #include "ssherr.h"
+ #include "digest.h"
++#include "log.h"
+ 
+ #include "openbsd-compat/openssl-compat.h"
+ 
+@@ -55,6 +56,9 @@
+ #define EVP_CIPHER_CTX void
+ #endif
+ 
++/* for multi-threaded aes-ctr cipher */
++extern const EVP_CIPHER *evp_aes_ctr_mt(void);
++
+ struct sshcipher_ctx {
+ 	int	plaintext;
+ 	int	encrypt;
+@@ -83,7 +87,7 @@ struct sshcipher {
+ #endif
+ };
+ 
+-static const struct sshcipher ciphers[] = {
++static struct sshcipher ciphers[] = {
+ #ifdef WITH_OPENSSL
+ #ifndef OPENSSL_NO_DES
+ 	{ "3des-cbc",		8, 24, 0, 0, CFLAG_CBC, EVP_des_ede3_cbc },
+@@ -94,6 +98,7 @@ static const struct sshcipher ciphers[]
+ 	{ "aes128-ctr",		16, 16, 0, 0, 0, EVP_aes_128_ctr },
+ 	{ "aes192-ctr",		16, 24, 0, 0, 0, EVP_aes_192_ctr },
+ 	{ "aes256-ctr",		16, 32, 0, 0, 0, EVP_aes_256_ctr },
++
+ # ifdef OPENSSL_HAVE_EVPGCM
+ 	{ "aes128-gcm@openssh.com",
+ 				16, 16, 12, 16, 0, EVP_aes_128_gcm },
+@@ -152,6 +157,29 @@ compression_alg_list(int compression)
+ #endif
+ }
+ 
++/* used to get the cipher name so when force rekeying to handle the
++ * single to multithreaded ctr cipher swap we only rekey when appropriate
++ */
++const char *
++cipher_ctx_name(const struct sshcipher_ctx *cc)
++{
++	return cc->cipher->name;
++}
++
++/* in order to get around sandbox and forking issues with a threaded cipher
++ * we set the initial pre-auth aes-ctr cipher to the default OpenSSH cipher
++ * post auth we set them to the new evp as defined by cipher-ctr-mt
++ */
++#ifdef WITH_OPENSSL
++void
++cipher_reset_multithreaded(void)
++{
++	cipher_by_name("aes128-ctr")->evptype = evp_aes_ctr_mt;
++	cipher_by_name("aes192-ctr")->evptype = evp_aes_ctr_mt;
++	cipher_by_name("aes256-ctr")->evptype = evp_aes_ctr_mt;
++}
++#endif
++
+ u_int
+ cipher_blocksize(const struct sshcipher *c)
+ {
+@@ -201,10 +229,10 @@ cipher_ctx_is_plaintext(struct sshcipher
+ 	return cc->plaintext;
+ }
+ 
+-const struct sshcipher *
++struct sshcipher *
+ cipher_by_name(const char *name)
+ {
+-	const struct sshcipher *c;
++	struct sshcipher *c;
+ 	for (c = ciphers; c->name != NULL; c++)
+ 		if (strcmp(c->name, name) == 0)
+ 			return c;
+@@ -226,7 +254,8 @@ ciphers_valid(const char *names)
+ 	for ((p = strsep(&cp, CIPHER_SEP)); p && *p != '\0';
+ 	    (p = strsep(&cp, CIPHER_SEP))) {
+ 		c = cipher_by_name(p);
+-		if (c == NULL || (c->flags & CFLAG_INTERNAL) != 0) {
++		  if (c == NULL || ((c->flags & CFLAG_INTERNAL) != 0 &&
++				    (c->flags & CFLAG_NONE) != 0)) {
+ 			free(cipher_list);
+ 			return 0;
+ 		}
+--- a/cipher.h
++++ b/cipher.h
+@@ -50,7 +50,9 @@
+ struct sshcipher;
+ struct sshcipher_ctx;
+ 
+-const struct sshcipher *cipher_by_name(const char *);
++void ssh_aes_ctr_thread_destroy(EVP_CIPHER_CTX *ctx); // defined in cipher-ctr-mt.c
++void ssh_aes_ctr_thread_reconstruction(EVP_CIPHER_CTX *ctx);
++struct sshcipher *cipher_by_name(const char *);
+ const char *cipher_warning_message(const struct sshcipher_ctx *);
+ int	 ciphers_valid(const char *);
+ char	*cipher_alg_list(char, int);
+@@ -68,7 +70,10 @@ u_int	 cipher_seclen(const struct sshcip
+ u_int	 cipher_authlen(const struct sshcipher *);
+ u_int	 cipher_ivlen(const struct sshcipher *);
+ u_int	 cipher_is_cbc(const struct sshcipher *);
++void	 cipher_reset_multithreaded(void);
++const char *cipher_ctx_name(const struct sshcipher_ctx *);
+ 
++const char *cipher_ctx_name(const struct sshcipher_ctx *);
+ u_int	 cipher_ctx_is_plaintext(struct sshcipher_ctx *);
+ 
+ int	 cipher_get_keyiv(struct sshcipher_ctx *, u_char *, size_t);
+--- a/clientloop.c
++++ b/clientloop.c
+@@ -1578,9 +1578,11 @@ client_request_x11(struct ssh *ssh, cons
+ 	sock = x11_connect_display(ssh);
+ 	if (sock < 0)
+ 		return NULL;
+-	c = channel_new(ssh, "x11",
+-	    SSH_CHANNEL_X11_OPEN, sock, sock, -1,
+-	    CHAN_TCP_WINDOW_DEFAULT, CHAN_X11_PACKET_DEFAULT, 0, "x11", 1);
++        c = channel_new(ssh, "x11",
++			SSH_CHANNEL_X11_OPEN, sock, sock, -1,
++			/* again is this really necessary for X11? */
++			options.hpn_disabled ? CHAN_TCP_WINDOW_DEFAULT : options.hpn_buffer_size,
++			CHAN_X11_PACKET_DEFAULT, 0, "x11", 1);
+ 	c->force_drain = 1;
+ 	return c;
+ }
+@@ -1608,9 +1610,10 @@ client_request_agent(struct ssh *ssh, co
+ 		return NULL;
+ 	}
+ 	c = channel_new(ssh, "authentication agent connection",
+-	    SSH_CHANNEL_OPEN, sock, sock, -1,
+-	    CHAN_X11_WINDOW_DEFAULT, CHAN_TCP_PACKET_DEFAULT, 0,
+-	    "authentication agent connection", 1);
++			SSH_CHANNEL_OPEN, sock, sock, -1,
++			options.hpn_disabled ? CHAN_X11_WINDOW_DEFAULT : options.hpn_buffer_size,
++			CHAN_TCP_PACKET_DEFAULT, 0,
++			"authentication agent connection", 1);
+ 	c->force_drain = 1;
+ 	return c;
+ }
+@@ -1635,10 +1638,13 @@ client_request_tun_fwd(struct ssh *ssh,
+ 	}
+ 	debug("Tunnel forwarding using interface %s", ifname);
+ 
+-	c = channel_new(ssh, "tun", SSH_CHANNEL_OPENING, fd, fd, -1,
+-	    CHAN_TCP_WINDOW_DEFAULT, CHAN_TCP_PACKET_DEFAULT, 0, "tun", 1);
++        c = channel_new(ssh, "tun", SSH_CHANNEL_OPENING, fd, fd, -1,
++	    options.hpn_disabled ? CHAN_TCP_WINDOW_DEFAULT : options.hpn_buffer_size,
++	    CHAN_TCP_PACKET_DEFAULT, 0, "tun", 1);
+ 	c->datagram = 1;
+ 
++
++
+ #if defined(SSH_TUN_FILTER)
+ 	if (options.tun_open == SSH_TUNMODE_POINTOPOINT)
+ 		channel_register_filter(ssh, c->self, sys_tun_infilter,
+--- a/compat.c
++++ b/compat.c
+@@ -149,6 +149,17 @@ compat_banner(struct ssh *ssh, const cha
+ 			debug_f("match: %s pat %s compat 0x%08x",
+ 			    version, check[i].pat, check[i].bugs);
+ 			ssh->compat = check[i].bugs;
++			/* Check to see if the remote side is OpenSSH and not HPN */
++			/* TODO: See if we can work this into the new method for bucg checks */
++			if (strstr(version, "OpenSSH") != NULL) {
++				if (strstr(version, "hpn") == NULL) {
++					ssh->compat |= SSH_BUG_LARGEWINDOW;
++					debug("Remote is NOT HPN enabled");
++				} else {
++					debug("Remote is HPN Enabled");
++				}
++			}
++			debug("ssh->compat is %u", ssh->compat);
+ 			return;
+ 		}
+ 	}
+--- a/compat.h
++++ b/compat.h
+@@ -57,6 +57,7 @@
+ #define SSH_BUG_CURVE25519PAD	0x10000000
+ #define SSH_BUG_HOSTKEYS	0x20000000
+ #define SSH_BUG_DHGEX_LARGE	0x40000000
++#define SSH_BUG_LARGEWINDOW	0x80000000
+ 
+ struct ssh;
+ 
+--- a/defines.h
++++ b/defines.h
+@@ -848,7 +848,7 @@ struct winsize {
+ #endif
+ 
+ #ifndef SSH_IOBUFSZ
+-# define SSH_IOBUFSZ 8192
++# define SSH_IOBUFSZ 32*1024
+ #endif
+ 
+ /*
+--- a/digest-openssl.c
++++ b/digest-openssl.c
+@@ -61,6 +61,7 @@ const struct ssh_digest digests[] = {
+ 	{ SSH_DIGEST_SHA256,	"SHA256",	32,	EVP_sha256 },
+ 	{ SSH_DIGEST_SHA384,	"SHA384",	48,	EVP_sha384 },
+ 	{ SSH_DIGEST_SHA512,	"SHA512",	64,	EVP_sha512 },
++	{ SSH_DIGEST_NULL,      "NONEMAC",       0,     EVP_md_null},
+ 	{ -1,			NULL,		0,	NULL },
+ };
+ 
+--- a/digest.h
++++ b/digest.h
+@@ -27,7 +27,8 @@
+ #define SSH_DIGEST_SHA256	2
+ #define SSH_DIGEST_SHA384	3
+ #define SSH_DIGEST_SHA512	4
+-#define SSH_DIGEST_MAX		5
++#define SSH_DIGEST_NULL         5
++#define SSH_DIGEST_MAX		6
+ 
+ struct sshbuf;
+ struct ssh_digest_ctx;
+--- a/kex.c
++++ b/kex.c
+@@ -60,6 +60,7 @@
+ 
+ #include "ssherr.h"
+ #include "sshbuf.h"
++#include "canohost.h"
+ #include "digest.h"
+ 
+ /* prototype */
+@@ -890,6 +891,11 @@ kex_choose_conf(struct ssh *ssh)
+ 	int nenc, nmac, ncomp;
+ 	u_int mode, ctos, need, dh_need, authlen;
+ 	int r, first_kex_follows;
++	int auth_flag = 0;
++	int log_flag = 0;
++
++	auth_flag = packet_authentication_state(ssh);
++	debug("AUTH STATE IS %d", auth_flag);
+ 
+ 	debug2("local %s KEXINIT proposal", kex->server ? "server" : "client");
+ 	if ((r = kex_buf2prop(kex->my, NULL, &my)) != 0)
+@@ -960,11 +966,40 @@ kex_choose_conf(struct ssh *ssh)
+ 			peer[ncomp] = NULL;
+ 			goto out;
+ 		}
++		debug("REQUESTED ENC.NAME is '%s'", newkeys->enc.name);
++		debug("REQUESTED MAC.NAME is '%s'", newkeys->mac.name);
++		if (strcmp(newkeys->enc.name, "none") == 0) {
++			if (auth_flag == 1) {
++				debug("None requested post authentication.");
++				ssh->none = 1;
++			}
++			else
++				fatal("Pre-authentication none cipher requests are not allowed.");
++			if (newkeys->mac.name != NULL && strcmp(newkeys->mac.name, "none") == 0)
++				debug("Requesting: NONEMAC. Authflag is %d", auth_flag);
++		}
++
+ 		debug("kex: %s cipher: %s MAC: %s compression: %s",
+ 		    ctos ? "client->server" : "server->client",
+ 		    newkeys->enc.name,
+ 		    authlen == 0 ? newkeys->mac.name : "<implicit>",
+ 		    newkeys->comp.name);
++		/*
++		 * client starts with ctos = 0 && log flag = 0 and no log.
++		 * 2nd client pass ctos = 1 and flag = 1 so no log.
++		 * server starts with ctos = 1 && log_flag = 0 so log.
++		 * 2nd sever pass ctos = 1 && log flag = 1 so no log.
++		 * -cjr
++		 */
++		if (ctos && !log_flag) {
++			logit("SSH: Server;Ltype: Kex;Remote: %s-%d;Enc: %s;MAC: %s;Comp: %s",
++			    ssh_remote_ipaddr(ssh),
++			    ssh_remote_port(ssh),
++			    newkeys->enc.name,
++			    authlen == 0 ? newkeys->mac.name : "<implicit>",
++			    newkeys->comp.name);
++		}
++		log_flag = 1;
+ 	}
+ 	need = dh_need = 0;
+ 	for (mode = 0; mode < MODE_MAX; mode++) {
+@@ -1188,7 +1223,7 @@ kex_exchange_identification(struct ssh *
+ 	if (version_addendum != NULL && *version_addendum == '\0')
+ 		version_addendum = NULL;
+ 	if ((r = sshbuf_putf(our_version, "SSH-%d.%d-%.100s%s%s\r\n",
+-	    PROTOCOL_MAJOR_2, PROTOCOL_MINOR_2, SSH_VERSION,
++	    PROTOCOL_MAJOR_2, PROTOCOL_MINOR_2, SSH_RELEASE,
+ 	    version_addendum == NULL ? "" : " ",
+ 	    version_addendum == NULL ? "" : version_addendum)) != 0) {
+ 		oerrno = errno;
+@@ -1324,6 +1359,14 @@ kex_exchange_identification(struct ssh *
+ 		r = SSH_ERR_INVALID_FORMAT;
+ 		goto out;
+ 	}
++
++	/* report the version information to syslog if this is the server */
++        if (timeout_ms == -1) { /* only the server uses this value */
++		logit("SSH: Server;Ltype: Version;Remote: %s-%d;Protocol: %d.%d;Client: %.100s",
++		      ssh_remote_ipaddr(ssh), ssh_remote_port(ssh),
++		      remote_major, remote_minor, remote_version);
++	}
++
+ 	debug("Remote protocol version %d.%d, remote software version %.100s",
+ 	    remote_major, remote_minor, remote_version);
+ 	compat_banner(ssh, remote_version);
+--- a/log.c
++++ b/log.c
+@@ -46,6 +46,11 @@
+ #include <syslog.h>
+ #include <unistd.h>
+ #include <errno.h>
++#include "packet.h" /* needed for host and port look ups */
++#ifdef HAVE_SYS_TIME_H
++# include <sys/time.h> /* to get current time */
++#endif
++
+ #if defined(HAVE_STRNVIS) && defined(HAVE_VIS_H) && !defined(BROKEN_STRNVIS)
+ # include <vis.h>
+ #endif
+@@ -65,6 +70,8 @@ static size_t nlog_verbose;
+ 
+ extern char *__progname;
+ 
++extern struct ssh *active_state;
++
+ #define LOG_SYSLOG_VIS	(VIS_CSTYLE|VIS_NL|VIS_TAB|VIS_OCTAL)
+ #define LOG_STDERR_VIS	(VIS_SAFE|VIS_OCTAL)
+ 
+--- a/mac.c
++++ b/mac.c
+@@ -63,6 +63,7 @@ static const struct macalg macs[] = {
+ 	{ "hmac-sha2-512",			SSH_DIGEST, SSH_DIGEST_SHA512, 0, 0, 0, 0 },
+ 	{ "hmac-md5",				SSH_DIGEST, SSH_DIGEST_MD5, 0, 0, 0, 0 },
+ 	{ "hmac-md5-96",			SSH_DIGEST, SSH_DIGEST_MD5, 96, 0, 0, 0 },
++	{ "none",                               SSH_DIGEST, SSH_DIGEST_NULL, 0, 0, 0, 0 },
+ 	{ "umac-64@openssh.com",		SSH_UMAC, 0, 0, 128, 64, 0 },
+ 	{ "umac-128@openssh.com",		SSH_UMAC128, 0, 0, 128, 128, 0 },
+ 
+--- a/packet.c
++++ b/packet.c
+@@ -245,7 +245,7 @@ ssh_alloc_session_state(void)
+ 	TAILQ_INIT(&ssh->public_keys);
+ 	state->connection_in = -1;
+ 	state->connection_out = -1;
+-	state->max_packet_size = 32768;
++	state->max_packet_size = CHAN_SES_PACKET_DEFAULT;
+ 	state->packet_timeout_ms = -1;
+ 	state->p_send.packets = state->p_read.packets = 0;
+ 	state->initialized = 1;
+@@ -293,7 +293,7 @@ struct ssh *
+ ssh_packet_set_connection(struct ssh *ssh, int fd_in, int fd_out)
+ {
+ 	struct session_state *state;
+-	const struct sshcipher *none = cipher_by_name("none");
++	struct sshcipher *none = cipher_by_name("none");
+ 	int r;
+ 
+ 	if (none == NULL) {
+@@ -942,18 +942,45 @@ ssh_set_newkeys(struct ssh *ssh, int mod
+ 	 * so enforce a 1GB limit for small blocksizes.
+ 	 * See RFC4344 section 3.2.
+ 	 */
+-	if (enc->block_size >= 16)
+-		*max_blocks = (u_int64_t)1 << (enc->block_size*2);
+-	else
+-		*max_blocks = ((u_int64_t)1 << 30) / enc->block_size;
++
++	/* we really don't need to rekey if we are using the none cipher
++	 * but there isn't a good way to disable it entirely that I can find
++	 * and using a blocksize larger that 16 doesn't work (dunno why)
++	 * so this seems to be a good limit for now - CJR 10/16/2020*/
++	if (ssh->none == 1) {
++		*max_blocks = (u_int64_t)1 << (16*2);
++	} else {
++		if (enc->block_size >= 16)
++			*max_blocks = (u_int64_t)1 << (enc->block_size*2);
++		else
++			*max_blocks = ((u_int64_t)1 << 30) / enc->block_size;
++	}
+ 	if (state->rekey_limit)
+ 		*max_blocks = MINIMUM(*max_blocks,
+ 		    state->rekey_limit / enc->block_size);
+ 	debug("rekey %s after %llu blocks", dir,
+-	    (unsigned long long)*max_blocks);
++	      (unsigned long long)*max_blocks);
+ 	return 0;
+ }
+ 
++/* this supports the forced rekeying required for the NONE cipher */
++int rekey_requested = 0;
++void
++packet_request_rekeying(void)
++{
++	rekey_requested = 1;
++}
++
++/* used to determine if pre or post auth when rekeying for aes-ctr
++ * and none cipher switch */
++int
++packet_authentication_state(const struct ssh *ssh)
++{
++	struct session_state *state = ssh->state;
++
++	return state->after_authentication;
++}
++
+ #define MAX_PACKETS	(1U<<31)
+ static int
+ ssh_packet_need_rekeying(struct ssh *ssh, u_int outbound_packet_len)
+@@ -980,13 +1007,20 @@ ssh_packet_need_rekeying(struct ssh *ssh
+ 	if (state->p_send.packets == 0 && state->p_read.packets == 0)
+ 		return 0;
+ 
++        /* used to force rekeying when called for by the none
++         * cipher switch and aes-mt-ctr methods -cjr */
++        if (rekey_requested == 1) {
++                rekey_requested = 0;
++                return 1;
++        }
++
+ 	/* Time-based rekeying */
+ 	if (state->rekey_interval != 0 &&
+ 	    (int64_t)state->rekey_time + state->rekey_interval <= monotime())
+ 		return 1;
+ 
+ 	/*
+-	 * Always rekey when MAX_PACKETS sent in either direction 
++	 * Always rekey when MAX_PACKETS sent in either direction
+ 	 * As per RFC4344 section 3.1 we do this after 2^31 packets.
+ 	 */
+ 	if (state->p_send.packets > MAX_PACKETS ||
+@@ -1317,7 +1351,7 @@ ssh_packet_read_seqnr(struct ssh *ssh, u
+ 	struct session_state *state = ssh->state;
+ 	int len, r, ms_remain;
+ 	fd_set *setp;
+-	char buf[8192];
++	char buf[SSH_IOBUFSZ];
+ 	struct timeval timeout, start, *timeoutp = NULL;
+ 
+ 	DBG(debug("packet_read()"));
+@@ -1849,17 +1883,21 @@ sshpkt_vfatal(struct ssh *ssh, int r, co
+ 	switch (r) {
+ 	case SSH_ERR_CONN_CLOSED:
+ 		ssh_packet_clear_keys(ssh);
++		sshpkt_final_log_entry(ssh);
+ 		logdie("Connection closed by %s", remote_id);
+ 	case SSH_ERR_CONN_TIMEOUT:
+ 		ssh_packet_clear_keys(ssh);
++		sshpkt_final_log_entry(ssh);
+ 		logdie("Connection %s %s timed out",
+ 		    ssh->state->server_side ? "from" : "to", remote_id);
+ 	case SSH_ERR_DISCONNECTED:
+ 		ssh_packet_clear_keys(ssh);
++		sshpkt_final_log_entry(ssh);
+ 		logdie("Disconnected from %s", remote_id);
+ 	case SSH_ERR_SYSTEM_ERROR:
+ 		if (errno == ECONNRESET) {
+ 			ssh_packet_clear_keys(ssh);
++			sshpkt_final_log_entry(ssh);
+ 			logdie("Connection reset by %s", remote_id);
+ 		}
+ 		/* FALLTHROUGH */
+@@ -1901,6 +1939,24 @@ sshpkt_fatal(struct ssh *ssh, int r, con
+ 	logdie_f("should have exited");
+ }
+ 
++/* this prints out the final log entry */
++void
++sshpkt_final_log_entry (struct ssh *ssh) {
++	double total_time;
++
++	if (ssh->start_time < 1)
++		/* this will produce a NaN in the output. -cjr */
++		total_time = 0;
++	else
++		total_time = monotime_double() - ssh->start_time;
++
++	logit("SSH: Server;LType: Throughput;Remote: %s-%d;IN: %lu;OUT: %lu;Duration: %.1f;tPut_in: %.1f;tPut_out: %.1f",
++	      ssh_remote_ipaddr(ssh), ssh_remote_port(ssh),
++	      ssh->stdin_bytes, ssh->fdout_bytes, total_time,
++	      ssh->stdin_bytes / total_time,
++	      ssh->fdout_bytes / total_time);
++}
++
+ /*
+  * Logs the error plus constructs and sends a disconnect packet, closes the
+  * connection, and exits.  This function never returns. The error message
+@@ -2707,3 +2763,10 @@ sshpkt_add_padding(struct ssh *ssh, u_ch
+ 	ssh->state->extra_pad = pad;
+ 	return 0;
+ }
++
++/* need this for the moment for the aes-ctr cipher */
++void *
++ssh_packet_get_send_context(struct ssh *ssh)
++{
++        return ssh->state->send_context;
++}
+--- a/packet.h
++++ b/packet.h
+@@ -86,6 +86,14 @@ struct ssh {
+ 
+ 	/* APP data */
+ 	void *app_data;
++
++	/* logging data for ServerLogging patch*/
++	double start_time;
++	u_long fdout_bytes;
++	u_long stdin_bytes;
++
++	/* track that we are in a none cipher/mac state */
++	int none;
+ };
+ 
+ typedef int (ssh_packet_hook_fn)(struct ssh *, struct sshbuf *,
+@@ -155,6 +163,8 @@ int	 ssh_packet_inc_alive_timeouts(struc
+ int	 ssh_packet_set_maxsize(struct ssh *, u_int);
+ u_int	 ssh_packet_get_maxsize(struct ssh *);
+ 
++int	 packet_authentication_state(const struct ssh *);
++
+ int	 ssh_packet_get_state(struct ssh *, struct sshbuf *);
+ int	 ssh_packet_set_state(struct ssh *, struct sshbuf *);
+ 
+@@ -169,6 +179,13 @@ time_t	 ssh_packet_get_rekey_timeout(str
+ 
+ void	*ssh_packet_get_input(struct ssh *);
+ void	*ssh_packet_get_output(struct ssh *);
++void	*ssh_packet_get_receive_context(struct ssh *);
++void	*ssh_packet_get_send_context(struct ssh *);
++
++/* for forced packet rekeying post auth */
++void	 packet_request_rekeying(void);
++/* final log entry support */
++void    sshpkt_final_log_entry (struct ssh *);
+ 
+ /* new API */
+ int	sshpkt_start(struct ssh *ssh, u_char type);
+--- a/progressmeter.c
++++ b/progressmeter.c
+@@ -68,6 +68,8 @@ static const char *file;	/* name of the
+ static off_t start_pos;		/* initial position of transfer */
+ static off_t end_pos;		/* ending position of transfer */
+ static off_t cur_pos;		/* transfer position as of last refresh */
++static off_t last_pos;
++static off_t max_delta_pos = 0;
+ static volatile off_t *counter;	/* progress counter */
+ static long stalled;		/* how long we have been stalled */
+ static int bytes_per_second;	/* current speed in bytes per second */
+@@ -127,6 +129,7 @@ refresh_progress_meter(int force_update)
+ 	int cur_speed;
+ 	int hours, minutes, seconds;
+ 	int file_len;
++	off_t delta_pos;
+ 
+ 	if ((!force_update && !alarm_fired && !win_resized) || !can_output())
+ 		return;
+@@ -142,6 +145,10 @@ refresh_progress_meter(int force_update)
+ 	now = monotime_double();
+ 	bytes_left = end_pos - cur_pos;
+ 
++	delta_pos = cur_pos - last_pos;
++	if (delta_pos > max_delta_pos)
++		max_delta_pos = delta_pos;
++
+ 	if (bytes_left > 0)
+ 		elapsed = now - last_update;
+ 	else {
+@@ -166,7 +173,7 @@ refresh_progress_meter(int force_update)
+ 
+ 	/* filename */
+ 	buf[0] = '\0';
+-	file_len = win_size - 36;
++	file_len = win_size - 45;
+ 	if (file_len > 0) {
+ 		buf[0] = '\r';
+ 		snmprintf(buf+1, sizeof(buf)-1, &file_len, "%-*s",
+@@ -191,6 +198,15 @@ refresh_progress_meter(int force_update)
+ 	    (off_t)bytes_per_second);
+ 	strlcat(buf, "/s ", win_size);
+ 
++	/* instantaneous rate */
++	if (bytes_left > 0)
++		format_rate(buf + strlen(buf), win_size - strlen(buf),
++			    delta_pos);
++	else
++		format_rate(buf + strlen(buf), win_size - strlen(buf),
++			    max_delta_pos);
++	strlcat(buf, "/s ", win_size);
++
+ 	/* ETA */
+ 	if (!transferred)
+ 		stalled += elapsed;
+@@ -227,6 +243,7 @@ refresh_progress_meter(int force_update)
+ 
+ 	atomicio(vwrite, STDOUT_FILENO, buf, win_size - 1);
+ 	last_update = now;
++	last_pos = cur_pos;
+ }
+ 
+ /*ARGSUSED*/
+--- a/readconf.c
++++ b/readconf.c
+@@ -67,6 +67,7 @@
+ #include "uidswap.h"
+ #include "myproposal.h"
+ #include "digest.h"
++#include "sshbuf.h"
+ 
+ /* Format of the configuration file:
+ 
+@@ -166,6 +167,9 @@ typedef enum {
+ 	oHashKnownHosts,
+ 	oTunnel, oTunnelDevice,
+ 	oLocalCommand, oPermitLocalCommand, oRemoteCommand,
++	oTcpRcvBufPoll, oTcpRcvBuf, oHPNDisabled, oHPNBufferSize,
++	oNoneEnabled, oNoneMacEnabled, oNoneSwitch,
++	oDisableMTAES,
+ 	oVisualHostKey,
+ 	oKexAlgorithms, oIPQoS, oRequestTTY, oIgnoreUnknown, oProxyUseFdpass,
+ 	oCanonicalDomains, oCanonicalizeHostname, oCanonicalizeMaxDots,
+@@ -297,6 +301,10 @@ static struct {
+ 	{ "kexalgorithms", oKexAlgorithms },
+ 	{ "ipqos", oIPQoS },
+ 	{ "requesttty", oRequestTTY },
++	{ "noneenabled", oNoneEnabled },
++	{ "nonemacenabled", oNoneMacEnabled },
++	{ "noneswitch", oNoneSwitch },
++        { "disablemtaes", oDisableMTAES },
+ 	{ "proxyusefdpass", oProxyUseFdpass },
+ 	{ "canonicaldomains", oCanonicalDomains },
+ 	{ "canonicalizefallbacklocal", oCanonicalizeFallbackLocal },
+@@ -316,7 +324,10 @@ static struct {
+ 	{ "proxyjump", oProxyJump },
+ 	{ "securitykeyprovider", oSecurityKeyProvider },
+ 	{ "knownhostscommand", oKnownHostsCommand },
+-
++	{ "tcprcvbufpoll", oTcpRcvBufPoll },
++	{ "tcprcvbuf", oTcpRcvBuf },
++	{ "hpndisabled", oHPNDisabled },
++	{ "hpnbuffersize", oHPNBufferSize },
+ 	{ NULL, oBadOption }
+ };
+ 
+@@ -1091,6 +1102,46 @@ parse_time:
+ 		intptr = &options->check_host_ip;
+ 		goto parse_flag;
+ 
++	case oHPNDisabled:
++		intptr = &options->hpn_disabled;
++		goto parse_flag;
++
++	case oHPNBufferSize:
++		intptr = &options->hpn_buffer_size;
++		goto parse_int;
++
++	case oTcpRcvBufPoll:
++		intptr = &options->tcp_rcv_buf_poll;
++		goto parse_flag;
++
++	case oNoneEnabled:
++		intptr = &options->none_enabled;
++		goto parse_flag;
++
++	case oNoneMacEnabled:
++		intptr = &options->nonemac_enabled;
++		goto parse_flag;
++
++        case oDisableMTAES:
++		intptr = &options->disable_multithreaded;
++		goto parse_flag;
++
++	/*
++	 * We check to see if the command comes from the command
++	 * line or not. If it does then enable it otherwise fail.
++	 *  NONE should never be a default configuration.
++	 */
++	case oNoneSwitch:
++		if (strcmp(filename, "command-line") == 0) {
++			intptr = &options->none_switch;
++			goto parse_flag;
++		} else {
++			error("NoneSwitch is found in %.200s.\nYou may only use this configuration option from the command line", filename);
++			error("Continuing...");
++			debug("NoneSwitch directive found in %.200s.", filename);
++			return 0;
++		}
++
+ 	case oVerifyHostKeyDNS:
+ 		intptr = &options->verify_host_key_dns;
+ 		multistate_ptr = multistate_yesnoask;
+@@ -1324,6 +1375,10 @@ parse_int:
+ 			*intptr = value;
+ 		break;
+ 
++	case oTcpRcvBuf:
++		intptr = &options->tcp_rcv_buf;
++		goto parse_int;
++
+ 	case oCiphers:
+ 		arg = strdelim(&s);
+ 		if (!arg || *arg == '\0') {
+@@ -2262,6 +2317,14 @@ initialize_options(Options * options)
+ 	options->ip_qos_interactive = -1;
+ 	options->ip_qos_bulk = -1;
+ 	options->request_tty = -1;
++	options->none_switch = -1;
++	options->none_enabled = -1;
++	options->nonemac_enabled = -1;
++        options->disable_multithreaded = -1;
++	options->hpn_disabled = -1;
++	options->hpn_buffer_size = -1;
++	options->tcp_rcv_buf_poll = -1;
++	options->tcp_rcv_buf = -1;
+ 	options->proxy_use_fdpass = -1;
+ 	options->ignored_unknown = NULL;
+ 	options->num_canonical_domains = 0;
+@@ -2426,6 +2489,43 @@ fill_default_options(Options * options)
+ 		options->server_alive_interval = 0;
+ 	if (options->server_alive_count_max == -1)
+ 		options->server_alive_count_max = 3;
++	if (options->hpn_disabled == -1)
++		options->hpn_disabled = 0;
++	if (options->hpn_buffer_size > -1) {
++		/* if a user tries to set the size to 0 set it to 1KB */
++		if (options->hpn_buffer_size == 0)
++			options->hpn_buffer_size = 1;
++		/* limit the buffer to SSHBUF_SIZE_MAX (currently 256MB) */
++		if (options->hpn_buffer_size > (SSHBUF_SIZE_MAX / 1024)) {
++			options->hpn_buffer_size = SSHBUF_SIZE_MAX;
++			debug("User requested buffer larger than 256MB. Request reverted to 256MB");
++		} else
++			options->hpn_buffer_size *= 1024;
++		debug("hpn_buffer_size set to %d", options->hpn_buffer_size);
++	}
++	if (options->tcp_rcv_buf == 0)
++		options->tcp_rcv_buf = 1;
++	if (options->tcp_rcv_buf > -1)
++		options->tcp_rcv_buf *=1024;
++	if (options->tcp_rcv_buf_poll == -1)
++		options->tcp_rcv_buf_poll = 1;
++	if (options->none_switch == -1)
++		options->none_switch = 0;
++	if (options->none_enabled == -1)
++		options->none_enabled = 0;
++	if (options->none_enabled == 0 && options->none_switch > 0) {
++		fprintf(stderr, "NoneEnabled must be enabled to use the None Switch option. None cipher disabled.\n");
++		options->none_enabled = 0;
++	}
++	if (options->nonemac_enabled == -1)
++		options->nonemac_enabled = 0;
++	if (options->nonemac_enabled > 0 && (options->none_enabled == 0 ||
++					     options->none_switch == 0)) {
++		fprintf(stderr, "None MAC can only be used with the None cipher. None MAC disabled.\n");
++		options->nonemac_enabled = 0;
++	}
++        if (options->disable_multithreaded == -1)
++		options->disable_multithreaded = 0;
+ 	if (options->control_master == -1)
+ 		options->control_master = 0;
+ 	if (options->control_persist == -1) {
+--- a/readconf.h
++++ b/readconf.h
+@@ -51,6 +51,10 @@ typedef struct {
+ 	int     strict_host_key_checking;	/* Strict host key checking. */
+ 	int     compression;	/* Compress packets in both directions. */
+ 	int     tcp_keep_alive;	/* Set SO_KEEPALIVE. */
++	int     tcp_rcv_buf; /* user switch to set tcp recv buffer */
++	int     tcp_rcv_buf_poll; /* Option to poll recv buf every window transfer */
++	int     hpn_disabled;    /* Switch to disable HPN buffer management */
++	int     hpn_buffer_size; /* User definable size for HPN buffer window */
+ 	int	ip_qos_interactive;	/* IP ToS/DSCP/class for interactive */
+ 	int	ip_qos_bulk;		/* IP ToS/DSCP/class for bulk traffic */
+ 	SyslogFacility log_facility;	/* Facility for system logging. */
+@@ -120,7 +124,12 @@ typedef struct {
+ 
+ 	int	enable_ssh_keysign;
+ 	int64_t rekey_limit;
++	int     none_switch;    /* Use none cipher */
++	int     none_enabled;   /* Allow none to be used */
++	int     nonemac_enabled;   /* Allow none to be used */
++	int     disable_multithreaded; /*disable multithreaded aes-ctr*/
+ 	int	rekey_interval;
++
+ 	int	no_host_authentication_for_localhost;
+ 	int	identities_only;
+ 	int	server_alive_interval;
+--- a/regress/integrity.sh
++++ b/regress/integrity.sh
+@@ -8,6 +8,7 @@ cp $OBJ/sshd_proxy $OBJ/sshd_proxy_bak
+ tries=10
+ startoffset=2900
+ macs=`${SSH} -Q mac`
++
+ # The following are not MACs, but ciphers with integrated integrity. They are
+ # handled specially below.
+ macs="$macs `${SSH} -Q cipher-auth`"
+@@ -21,6 +22,12 @@ macs="$macs `${SSH} -Q cipher-auth`"
+ cmd="$SUDO env SSH_SK_HELPER="$SSH_SK_HELPER" sh ${SRC}/sshd-log-wrapper.sh ${TEST_SSHD_LOGFILE} ${SSHD} -i -f $OBJ/sshd_proxy"
+ 
+ for m in $macs; do
++	# the none mac is now valid but tests against it will succeed when we expect it to
++	# fail. so we need to explicity remove it from the list of macs returned.
++	if [ "$m" = "none" ]; then
++		continue
++	fi
++
+ 	trace "test $tid: mac $m"
+ 	elen=0
+ 	epad=0
+--- a/sandbox-seccomp-filter.c
++++ b/sandbox-seccomp-filter.c
+@@ -219,6 +219,9 @@ static const struct sock_filter preauth_
+ #ifdef __NR_geteuid32
+ 	SC_ALLOW(__NR_geteuid32),
+ #endif
++#ifdef __NR_getpeername /* not defined on archs that go via socketcall(2) */
++	SC_ALLOW(__NR_getpeername),
++#endif
+ #ifdef __NR_getpgid
+ 	SC_ALLOW(__NR_getpgid),
+ #endif
+@@ -294,6 +297,9 @@ static const struct sock_filter preauth_
+ #ifdef __NR_sigprocmask
+ 	SC_ALLOW(__NR_sigprocmask),
+ #endif
++#ifdef __NR_socketcall
++	SC_ALLOW(__NR_socketcall),
++#endif
+ #ifdef __NR_time
+ 	SC_ALLOW(__NR_time),
+ #endif
+--- a/scp.c
++++ b/scp.c
+@@ -1246,7 +1246,7 @@ sink(int argc, char **argv, const char *
+ 	off_t size, statbytes;
+ 	unsigned long long ull;
+ 	int setimes, targisdir, wrerr;
+-	char ch, *cp, *np, *targ, *why, *vect[1], buf[2048], visbuf[2048];
++	char ch, *cp, *np, *targ, *why, *vect[1], buf[16384], visbuf[16384];
+ 	char **patterns = NULL;
+ 	size_t n, npatterns = 0;
+ 	struct timeval tv[2];
+--- a/servconf.c
++++ b/servconf.c
+@@ -70,6 +70,7 @@
+ #include "auth.h"
+ #include "myproposal.h"
+ #include "digest.h"
++#include "sshbuf.h"
+ 
+ static void add_listen_addr(ServerOptions *, const char *,
+     const char *, int);
+@@ -190,6 +191,12 @@ initialize_server_options(ServerOptions
+ 	options->authorized_principals_file = NULL;
+ 	options->authorized_principals_command = NULL;
+ 	options->authorized_principals_command_user = NULL;
++	options->tcp_rcv_buf_poll = -1;
++	options->hpn_disabled = -1;
++	options->hpn_buffer_size = -1;
++	options->none_enabled = -1;
++	options->nonemac_enabled = -1;
++	options->disable_multithreaded = -1;
+ 	options->ip_qos_interactive = -1;
+ 	options->ip_qos_bulk = -1;
+ 	options->version_addendum = NULL;
+@@ -275,6 +282,10 @@ void
+ fill_default_server_options(ServerOptions *options)
+ {
+ 	u_int i;
++	/* needed for hpn socket tests */
++	int sock;
++	int socksize;
++	int socksizelen = sizeof(int);
+ 
+ 	/* Portable-specific options */
+ 	if (options->use_pam == -1)
+@@ -426,6 +437,51 @@ fill_default_server_options(ServerOption
+ 	}
+ 	if (options->permit_tun == -1)
+ 		options->permit_tun = SSH_TUNMODE_NO;
++	if (options->none_enabled == -1)
++		options->none_enabled = 0;
++	if (options->nonemac_enabled == -1)
++		options->nonemac_enabled = 0;
++	if (options->nonemac_enabled > 0 && options->none_enabled == 0) {
++		debug ("Attempted to enabled None MAC without setting None Enabled to true. None MAC disabled.");
++		options->nonemac_enabled = 0;
++	}
++	if (options->disable_multithreaded == -1)
++		options->disable_multithreaded = 0;
++	if (options->hpn_disabled == -1)
++		options->hpn_disabled = 0;
++
++	if (options->hpn_buffer_size == -1) {
++		/* option not explicitly set. Now we have to figure out */
++		/* what value to use */
++		if (options->hpn_disabled == 1) {
++			options->hpn_buffer_size = CHAN_SES_WINDOW_DEFAULT;
++		} else {
++			/* get the current RCV size and set it to that */
++			/*create a socket but don't connect it */
++			/* we use that the get the rcv socket size */
++			sock = socket(AF_INET, SOCK_STREAM, 0);
++			getsockopt(sock, SOL_SOCKET, SO_RCVBUF,
++				   &socksize, &socksizelen);
++			close(sock);
++			options->hpn_buffer_size = socksize;
++			debug("HPN Buffer Size: %d", options->hpn_buffer_size);
++		}
++	} else {
++		/* we have to do this in case the user sets both values in a contradictory */
++		/* manner. hpn_disabled overrrides hpn_buffer_size*/
++		if (options->hpn_disabled <= 0) {
++			if (options->hpn_buffer_size == 0)
++				options->hpn_buffer_size = 1;
++			/* limit the maximum buffer to SSHBUF_SIZE_MAX (currently 256MB) */
++			if (options->hpn_buffer_size > (SSHBUF_SIZE_MAX / 1024)) {
++				options->hpn_buffer_size = SSHBUF_SIZE_MAX;
++			} else {
++				options->hpn_buffer_size *= 1024;
++			}
++		} else
++			options->hpn_buffer_size = CHAN_TCP_WINDOW_DEFAULT;
++	}
++
+ 	if (options->ip_qos_interactive == -1)
+ 		options->ip_qos_interactive = IPTOS_DSCP_AF21;
+ 	if (options->ip_qos_bulk == -1)
+@@ -498,6 +554,9 @@ typedef enum {
+ 	sPasswordAuthentication, sKbdInteractiveAuthentication,
+ 	sListenAddress, sAddressFamily,
+ 	sPrintMotd, sPrintLastLog, sIgnoreRhosts,
++	sNoneEnabled, sNoneMacEnabled,
++	sDisableMTAES,
++	sTcpRcvBufPoll, sHPNDisabled, sHPNBufferSize,
+ 	sX11Forwarding, sX11DisplayOffset, sX11UseLocalhost,
+ 	sPermitTTY, sStrictModes, sEmptyPasswd, sTCPKeepAlive,
+ 	sPermitUserEnvironment, sAllowTcpForwarding, sCompression,
+@@ -663,6 +722,12 @@ static struct {
+ 	{ "revokedkeys", sRevokedKeys, SSHCFG_ALL },
+ 	{ "trustedusercakeys", sTrustedUserCAKeys, SSHCFG_ALL },
+ 	{ "authorizedprincipalsfile", sAuthorizedPrincipalsFile, SSHCFG_ALL },
++	{ "hpndisabled", sHPNDisabled, SSHCFG_ALL },
++	{ "hpnbuffersize", sHPNBufferSize, SSHCFG_ALL },
++	{ "tcprcvbufpoll", sTcpRcvBufPoll, SSHCFG_ALL },
++	{ "noneenabled", sNoneEnabled, SSHCFG_ALL },
++	{ "disableMTAES", sDisableMTAES, SSHCFG_ALL },
++	{ "nonemacenabled", sNoneMacEnabled, SSHCFG_ALL },
+ 	{ "kexalgorithms", sKexAlgorithms, SSHCFG_GLOBAL },
+ 	{ "include", sInclude, SSHCFG_ALL },
+ 	{ "ipqos", sIPQoS, SSHCFG_ALL },
+@@ -721,6 +786,7 @@ parse_token(const char *cp, const char *
+ 
+ 	for (i = 0; keywords[i].name; i++)
+ 		if (strcasecmp(cp, keywords[i].name) == 0) {
++			debug("Config token is %s", keywords[i].name);
+ 			*flags = keywords[i].flags;
+ 			return keywords[i].opcode;
+ 		}
+@@ -1468,12 +1534,37 @@ process_server_config_line_depth(ServerO
+ 		multistate_ptr = multistate_ignore_rhosts;
+ 		goto parse_multistate;
+ 
++
++	case sTcpRcvBufPoll:
++		intptr = &options->tcp_rcv_buf_poll;
++		goto parse_flag;
++
++	case sHPNDisabled:
++		intptr = &options->hpn_disabled;
++		goto parse_flag;
++
++	case sHPNBufferSize:
++		intptr = &options->hpn_buffer_size;
++		goto parse_int;
++
+ 	case sIgnoreUserKnownHosts:
+ 		intptr = &options->ignore_user_known_hosts;
+  parse_flag:
+ 		multistate_ptr = multistate_flag;
+ 		goto parse_multistate;
+ 
++	case sNoneEnabled:
++		intptr = &options->none_enabled;
++		goto parse_flag;
++
++	case sNoneMacEnabled:
++		intptr = &options->nonemac_enabled;
++		goto parse_flag;
++
++	case sDisableMTAES:
++		intptr = &options->disable_multithreaded;
++		goto parse_flag;
++
+ 	case sHostbasedAuthentication:
+ 		intptr = &options->hostbased_authentication;
+ 		goto parse_flag;
+--- a/servconf.h
++++ b/servconf.h
+@@ -201,6 +201,12 @@ typedef struct {
+ 	char   *adm_forced_command;
+ 
+ 	int	use_pam;		/* Enable auth via PAM */
++        int     tcp_rcv_buf_poll;       /* poll tcp rcv window in autotuning kernels*/
++	int	hpn_disabled;		/* disable hpn functionality. false by default */
++	int	hpn_buffer_size;	/* set the hpn buffer size - default 3MB */
++	int	none_enabled;		/* Enable NONE cipher switch */
++        int     disable_multithreaded;  /*disable multithreaded aes-ctr cipher */
++	int     nonemac_enabled;        /* Enable NONE MAC switch */
+ 
+ 	int	permit_tun;
+ 
+--- a/serverloop.c
++++ b/serverloop.c
+@@ -322,7 +322,7 @@ static int
+ process_input(struct ssh *ssh, fd_set *readset, int connection_in)
+ {
+ 	int r, len;
+-	char buf[16384];
++	char buf[SSH_IOBUFSZ];
+ 
+ 	/* Read and buffer any input data from the client. */
+ 	if (FD_ISSET(connection_in, readset)) {
+@@ -343,6 +343,7 @@ process_input(struct ssh *ssh, fd_set *r
+ 		/* Buffer any received data. */
+ 		if ((r = ssh_packet_process_incoming(ssh, buf, len)) != 0)
+ 			fatal_fr(r, "ssh_packet_process_incoming");
++		ssh->fdout_bytes += len;
+ 	}
+ 	return 0;
+ }
+@@ -401,6 +402,7 @@ server_loop2(struct ssh *ssh, Authctxt *
+ 	u_int64_t rekey_timeout_ms = 0;
+ 
+ 	debug("Entering interactive session for SSH2.");
++	ssh->start_time = monotime_double();
+ 
+ 	ssh_signal(SIGCHLD, sigchld_handler);
+ 	child_terminated = 0;
+@@ -438,7 +440,9 @@ server_loop2(struct ssh *ssh, Authctxt *
+ 		    &readset, &writeset, &max_fd, &nalloc, rekey_timeout_ms);
+ 
+ 		if (received_sigterm) {
++			sshpkt_final_log_entry(ssh);
+ 			logit("Exiting on signal %d", (int)received_sigterm);
++			sshpkt_final_log_entry(ssh);
+ 			/* Clean up sessions, utmp, etc. */
+ 			cleanup_exit(255);
+ 		}
+@@ -455,9 +459,15 @@ server_loop2(struct ssh *ssh, Authctxt *
+ 	free(readset);
+ 	free(writeset);
+ 
++	/* write final log entry */
++	sshpkt_final_log_entry(ssh);
++
+ 	/* free all channels, no more reads and writes */
+ 	channel_free_all(ssh);
+ 
++	/* final entry must come after channels close -cjr */
++        sshpkt_final_log_entry(ssh);
++
+ 	/* free remaining sessions, e.g. remove wtmp entries */
+ 	session_destroy_all(ssh, NULL);
+ }
+@@ -608,7 +618,8 @@ server_request_tun(struct ssh *ssh)
+ 	debug("Tunnel forwarding using interface %s", ifname);
+ 
+ 	c = channel_new(ssh, "tun", SSH_CHANNEL_OPEN, sock, sock, -1,
+-	    CHAN_TCP_WINDOW_DEFAULT, CHAN_TCP_PACKET_DEFAULT, 0, "tun", 1);
++			options.hpn_disabled ? CHAN_TCP_WINDOW_DEFAULT : options.hpn_buffer_size,
++			CHAN_TCP_PACKET_DEFAULT, 0, "tun", 1);
+ 	c->datagram = 1;
+ #if defined(SSH_TUN_FILTER)
+ 	if (mode == SSH_TUNMODE_POINTOPOINT)
+@@ -659,6 +670,8 @@ server_request_session(struct ssh *ssh)
+ 	c = channel_new(ssh, "session", SSH_CHANNEL_LARVAL,
+ 	    -1, -1, -1, /*window size*/0, CHAN_SES_PACKET_DEFAULT,
+ 	    0, "server-session", 1);
++	if ((options.tcp_rcv_buf_poll) && (!options.hpn_disabled))
++		c->dynamic_window = 1;
+ 	if (session_open(the_authctxt, c->self) != 1) {
+ 		debug("session open failed, free channel %d", c->self);
+ 		channel_free(ssh, c);
+--- a/session.c
++++ b/session.c
+@@ -97,6 +97,7 @@
+ #include "sftp.h"
+ #include "atomicio.h"
+ 
++
+ #if defined(KRB5) && defined(USE_AFS)
+ #include <kafs.h>
+ #endif
+@@ -223,6 +224,7 @@ auth_input_request_forwarding(struct ssh
+ 		goto authsock_err;
+ 
+ 	/* Allocate a channel for the authentication agent socket. */
++	/* this shouldn't matter if its hpn or not - cjr */
+ 	nc = channel_new(ssh, "auth socket",
+ 	    SSH_CHANNEL_AUTH_SOCKET, sock, sock, -1,
+ 	    CHAN_X11_WINDOW_DEFAULT, CHAN_X11_PACKET_DEFAULT,
+@@ -1408,7 +1410,7 @@ do_setusercontext(struct passwd *pw)
+ 			perror("unable to set user context (setuser)");
+ 			exit(1);
+ 		}
+-		/* 
++		/*
+ 		 * FreeBSD's setusercontext() will not apply the user's
+ 		 * own umask setting unless running with the user's UID.
+ 		 */
+@@ -2250,10 +2252,11 @@ session_set_fds(struct ssh *ssh, Session
+ 	 */
+ 	if (s->chanid == -1)
+ 		fatal("no channel for session %d", s->self);
+-	channel_set_fds(ssh, s->chanid,
+-	    fdout, fdin, fderr,
+-	    ignore_fderr ? CHAN_EXTENDED_IGNORE : CHAN_EXTENDED_READ,
+-	    1, is_tty, CHAN_SES_WINDOW_DEFAULT);
++        channel_set_fds(ssh, s->chanid,
++			fdout, fdin, fderr,
++			ignore_fderr ? CHAN_EXTENDED_IGNORE : CHAN_EXTENDED_READ,
++			1, is_tty,
++			options.hpn_disabled ? CHAN_SES_WINDOW_DEFAULT : options.hpn_buffer_size);
+ }
+ 
+ /*
+--- a/sftp-client.c
++++ b/sftp-client.c
+@@ -65,7 +65,7 @@ extern int showprogress;
+ #define DEFAULT_COPY_BUFLEN	32768
+ 
+ /* Default number of concurrent outstanding requests */
+-#define DEFAULT_NUM_REQUESTS	64
++#define DEFAULT_NUM_REQUESTS	256
+ 
+ /* Minimum amount of data to read at a time */
+ #define MIN_READ_SIZE	512
+--- a/sftp.1
++++ b/sftp.1
+@@ -296,7 +296,8 @@ diagnostic messages from
+ Specify how many requests may be outstanding at any one time.
+ Increasing this may slightly improve file transfer speed
+ but will increase memory usage.
+-The default is 64 outstanding requests.
++The default is 256 outstanding requests providing for 8MB
++of outstanding data with a 32KB buffer.
+ .It Fl r
+ Recursively copy entire directories when uploading and downloading.
+ Note that
+--- a/ssh.c
++++ b/ssh.c
+@@ -1027,6 +1027,10 @@ main(int ac, char **av)
+ 			break;
+ 		case 'T':
+ 			options.request_tty = REQUEST_TTY_NO;
++			/* ensure that the user doesn't try to backdoor a */
++			/* null cipher switch on an interactive session */
++			/* so explicitly disable it no matter what */
++			options.none_switch=0;
+ 			break;
+ 		case 'o':
+ 			line = xstrdup(optarg);
+@@ -1744,6 +1748,8 @@ control_persist_detach(void)
+ 	setproctitle("%s [mux]", options.control_path);
+ }
+ 
++extern const EVP_CIPHER *evp_aes_ctr_mt(void);
++
+ /* Do fork() after authentication. Used by "ssh -f" */
+ static void
+ fork_postauth(void)
+@@ -2056,6 +2062,79 @@ ssh_session2_setup(struct ssh *ssh, int
+ 	    NULL, fileno(stdin), command, environ);
+ }
+ 
++static void
++hpn_options_init(struct ssh *ssh)
++{
++	/*
++	 * We need to check to see if what they want to do about buffer
++	 * sizes here. In a hpn to nonhpn connection we want to limit
++	 * the window size to something reasonable in case the far side
++	 * has the large window bug. In hpn to hpn connection we want to
++	 * use the max window size but allow the user to override it
++	 * lastly if they disabled hpn then use the ssh std window size.
++	 *
++	 * So why don't we just do a getsockopt() here and set the
++	 * ssh window to that? In the case of a autotuning receive
++	 * window the window would get stuck at the initial buffer
++	 * size generally less than 96k. Therefore we need to set the
++	 * maximum ssh window size to the maximum hpn buffer size
++	 * unless the user has specifically set the tcprcvbufpoll
++	 * to no. In which case we *can* just set the window to the
++	 * minimum of the hpn buffer size and tcp receive buffer size.
++	 */
++
++	if (tty_flag)
++		options.hpn_buffer_size = CHAN_SES_WINDOW_DEFAULT;
++	else
++		options.hpn_buffer_size = 2 * 1024 * 1024;
++
++	if (ssh->compat & SSH_BUG_LARGEWINDOW) {
++		debug("HPN to Non-HPN connection");
++	} else {
++		debug("HPN to HPN connection");
++		int sock, socksize;
++		socklen_t socksizelen;
++		if (options.tcp_rcv_buf_poll <= 0) {
++			sock = socket(AF_INET, SOCK_STREAM, 0);
++			socksizelen = sizeof(socksize);
++			getsockopt(sock, SOL_SOCKET, SO_RCVBUF,
++				   &socksize, &socksizelen);
++			close(sock);
++			debug("socksize %d", socksize);
++			options.hpn_buffer_size = socksize;
++			debug("HPNBufferSize set to TCP RWIN: %d", options.hpn_buffer_size);
++		} else {
++			if (options.tcp_rcv_buf > 0) {
++				/*
++				 * Create a socket but don't connect it:
++				 * we use that the get the rcv socket size
++				 */
++				sock = socket(AF_INET, SOCK_STREAM, 0);
++				/*
++				 * If they are using the tcp_rcv_buf option,
++				 * attempt to set the buffer size to that.
++				 */
++				if (options.tcp_rcv_buf) {
++					socksizelen = sizeof(options.tcp_rcv_buf);
++					setsockopt(sock, SOL_SOCKET, SO_RCVBUF,
++						   &options.tcp_rcv_buf, socksizelen);
++				}
++				socksizelen = sizeof(socksize);
++				getsockopt(sock, SOL_SOCKET, SO_RCVBUF,
++					   &socksize, &socksizelen);
++				close(sock);
++				debug("socksize %d", socksize);
++				options.hpn_buffer_size = socksize;
++				debug("HPNBufferSize set to user TCPRcvBuf: %d", options.hpn_buffer_size);
++			}
++		}
++	}
++
++	debug("Final hpn_buffer_size = %d", options.hpn_buffer_size);
++
++	channel_set_hpn(options.hpn_disabled, options.hpn_buffer_size);
++}
++
+ /* open new channel for a session */
+ static int
+ ssh_session2_open(struct ssh *ssh)
+@@ -2082,9 +2161,11 @@ ssh_session2_open(struct ssh *ssh)
+ 	if (!isatty(err))
+ 		set_nonblock(err);
+ 
+-	window = CHAN_SES_WINDOW_DEFAULT;
++	window = options.hpn_buffer_size;
++
+ 	packetmax = CHAN_SES_PACKET_DEFAULT;
+ 	if (tty_flag) {
++		window = CHAN_SES_WINDOW_DEFAULT;
+ 		window >>= 1;
+ 		packetmax >>= 1;
+ 	}
+@@ -2093,6 +2174,10 @@ ssh_session2_open(struct ssh *ssh)
+ 	    window, packetmax, CHAN_EXTENDED_WRITE,
+ 	    "client-session", /*nonblock*/0);
+ 
++	if (options.tcp_rcv_buf_poll > 0 && !options.hpn_disabled) {
++		c->dynamic_window = 1;
++		debug("Enabled Dynamic Window Scaling");
++	}
+ 	debug3_f("channel_new: %d", c->self);
+ 
+ 	channel_send_open(ssh, c->self);
+@@ -2109,6 +2194,13 @@ ssh_session2(struct ssh *ssh, const stru
+ 	int r, id = -1;
+ 	char *cp, *tun_fwd_ifname = NULL;
+ 
++	/*
++	 * We need to initialize this early because the forwarding logic below
++	 * might open channels that use the hpn buffer sizes.  We can't send a
++	 * window of -1 (the default) to the server as it breaks things.
++	 */
++	hpn_options_init(ssh);
++
+ 	/* XXX should be pre-session */
+ 	if (!options.control_persist)
+ 		ssh_init_stdio_forwarding(ssh);
+--- a/ssh_api.c
++++ b/ssh_api.c
+@@ -410,7 +410,7 @@ _ssh_send_banner(struct ssh *ssh, struct
+ 	char *cp;
+ 	int r;
+ 
+-	if ((r = sshbuf_putf(banner, "SSH-2.0-%.100s\r\n", SSH_VERSION)) != 0)
++	if ((r = sshbuf_putf(banner, "SSH-2.0-%.100s\r\n", SSH_RELEASE)) != 0)
+ 		return r;
+ 	if ((r = sshbuf_putb(ssh_packet_get_output(ssh), banner)) != 0)
+ 		return r;
+--- a/sshbuf.h
++++ b/sshbuf.h
+@@ -28,7 +28,7 @@
+ # endif /* OPENSSL_HAS_ECC */
+ #endif /* WITH_OPENSSL */
+ 
+-#define SSHBUF_SIZE_MAX		0x8000000	/* Hard maximum size */
++#define SSHBUF_SIZE_MAX		0xF000000	/* Hard maximum size 256MB */
+ #define SSHBUF_REFS_MAX		0x100000	/* Max child buffers */
+ #define SSHBUF_MAX_BIGNUM	(16384 / 8)	/* Max bignum *bytes* */
+ #define SSHBUF_MAX_ECPOINT	((528 * 2 / 8) + 1) /* Max EC point *bytes* */
+--- a/sshconnect.c
++++ b/sshconnect.c
+@@ -345,6 +345,30 @@ check_ifaddrs(const char *ifname, int af
+ #endif
+ 
+ /*
++ * Set TCP receive buffer if requested.
++ * Note: tuning needs to happen after the socket is
++ * created but before the connection happens
++ * so winscale is negotiated properly -cjr
++ */
++static void
++ssh_set_socket_recvbuf(int sock)
++{
++	void *buf = (void *)&options.tcp_rcv_buf;
++	int sz = sizeof(options.tcp_rcv_buf);
++	int socksize;
++	int socksizelen = sizeof(int);
++
++	debug("setsockopt Attempting to set SO_RCVBUF to %d", options.tcp_rcv_buf);
++	if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, buf, sz) >= 0) {
++	  getsockopt(sock, SOL_SOCKET, SO_RCVBUF, &socksize, &socksizelen);
++	  debug("setsockopt SO_RCVBUF: %.100s %d", strerror(errno), socksize);
++	}
++	else
++		error("Couldn't set socket receive buffer to %d: %.100s",
++		    options.tcp_rcv_buf, strerror(errno));
++}
++
++/*
+  * Creates a socket for use as the ssh connection.
+  */
+ static int
+@@ -366,6 +390,9 @@ ssh_create_socket(struct addrinfo *ai)
+ 	}
+ 	fcntl(sock, F_SETFD, FD_CLOEXEC);
+ 
++	if (options.tcp_rcv_buf > 0)
++		ssh_set_socket_recvbuf(sock);
++
+ 	/* Use interactive QOS (if specified) until authentication completed */
+ 	if (options.ip_qos_interactive != INT_MAX)
+ 		set_sock_tos(sock, options.ip_qos_interactive);
+--- a/sshconnect2.c
++++ b/sshconnect2.c
+@@ -86,6 +86,13 @@ extern char *server_version_string;
+ extern Options options;
+ 
+ /*
++ * tty_flag is set in ssh.c. Use this in ssh_userauth2:
++ * if it is set, then prevent the switch to the null cipher.
++ */
++
++extern int tty_flag;
++
++/*
+  * SSH2 key exchange
+  */
+ 
+@@ -212,6 +219,8 @@ order_hostkeyalgs(char *host, struct soc
+ 	return ret;
+ }
+ 
++static char *myproposal[PROPOSAL_MAX];
++static const char *myproposal_default[PROPOSAL_MAX] = { KEX_CLIENT };
+ void
+ ssh_kex2(struct ssh *ssh, char *host, struct sockaddr *hostaddr, u_short port,
+     const struct ssh_conn_info *cinfo)
+@@ -220,6 +229,10 @@ ssh_kex2(struct ssh *ssh, char *host, st
+ 	char *s, *all_key;
+ 	int r, use_known_hosts_order = 0;
+ 
++	memcpy(&myproposal, &myproposal_default, sizeof(myproposal));
++
++	memcpy(&myproposal, &myproposal_default, sizeof(myproposal));
++
+ 	xxx_host = host;
+ 	xxx_hostaddr = hostaddr;
+ 	xxx_conn_info = cinfo;
+@@ -489,6 +502,53 @@ ssh_userauth2(struct ssh *ssh, const cha
+ 
+ 	if (!authctxt.success)
+ 		fatal("Authentication failed.");
++
++	/*
++	 * If the user wants to use the none cipher and/or none mac, do it post authentication
++	 * and only if the right conditions are met -- both of the NONE commands
++	 * must be true and there must be no tty allocated.
++	 */
++	if (options.none_switch == 1 && options.none_enabled == 1) {
++		if (!tty_flag) { /* no null on tty sessions */
++			debug("Requesting none rekeying...");
++			memcpy(&myproposal, &myproposal_default, sizeof(myproposal));
++			myproposal[PROPOSAL_ENC_ALGS_STOC] = "none";
++			myproposal[PROPOSAL_ENC_ALGS_CTOS] = "none";
++			fprintf(stderr, "WARNING: ENABLED NONE CIPHER!!!\n");
++			/* NONEMAC can only be used in context of the NONE CIPHER */
++			if (options.nonemac_enabled == 1) {
++				myproposal[PROPOSAL_MAC_ALGS_STOC] = "none";
++				myproposal[PROPOSAL_MAC_ALGS_CTOS] = "none";
++				fprintf(stderr, "WARNING: ENABLED NONE MAC\n");
++			}
++			kex_prop2buf(ssh->kex->my, myproposal);
++			packet_request_rekeying();
++		} else {
++			/* requested NONE cipher when in a tty */
++			debug("Cannot switch to NONE cipher with tty allocated");
++			fprintf(stderr, "NONE cipher switch disabled when a TTY is allocated\n");
++		}
++	}
++
++#ifdef WITH_OPENSSL
++	if (options.disable_multithreaded == 0) {
++		/* if we are using aes-ctr there can be issues in either a fork or sandbox
++		 * so the initial aes-ctr is defined to point to the original single process
++		 * evp. After authentication we'll be past the fork and the sandboxed privsep
++		 * so we repoint the define to the multithreaded evp. To start the threads we
++		 * then force a rekey
++		 */
++	  const void *cc = ssh_packet_get_send_context(ssh);
++
++		/* only do this for the ctr cipher. otherwise gcm mode breaks. Don't know why though */
++		if (strstr(cipher_ctx_name(cc), "ctr")) {
++			debug("Single to Multithread CTR cipher swap - client request");
++			cipher_reset_multithreaded();
++			packet_request_rekeying();
++		}
++	}
++#endif
++
+ 	debug("Authentication succeeded (%s).", authctxt.method->name);
+ }
+ 
+--- a/sshd.c
++++ b/sshd.c
+@@ -371,6 +371,8 @@ grace_alarm_handler(int sig)
+ 	sigdie("Timeout before authentication for %s port %d",
+ 	    ssh_remote_ipaddr(the_active_state),
+ 	    ssh_remote_port(the_active_state));
++
++
+ }
+ 
+ /* Destroy the host and server keys.  They will no longer be needed. */
+@@ -1032,6 +1034,8 @@ listen_on_addrs(struct listenaddr *la)
+ 	int ret, listen_sock;
+ 	struct addrinfo *ai;
+ 	char ntop[NI_MAXHOST], strport[NI_MAXSERV];
++	int socksize;
++	int socksizelen = sizeof(int);
+ 
+ 	for (ai = la->addrs; ai; ai = ai->ai_next) {
+ 		if (ai->ai_family != AF_INET && ai->ai_family != AF_INET6)
+@@ -1077,6 +1081,11 @@ listen_on_addrs(struct listenaddr *la)
+ 
+ 		debug("Bind to port %s on %s.", strport, ntop);
+ 
++		getsockopt(listen_sock, SOL_SOCKET, SO_RCVBUF,
++				   &socksize, &socksizelen);
++		debug("Server TCP RWIN socket size: %d", socksize);
++		debug("HPN Buffer Size: %d", options.hpn_buffer_size);
++
+ 		/* Bind the socket to the desired port. */
+ 		if (bind(listen_sock, ai->ai_addr, ai->ai_addrlen) == -1) {
+ 			error("Bind to port %s on %s failed: %.200s.",
+@@ -1733,6 +1742,19 @@ main(int ac, char **av)
+ 	/* Fill in default values for those options not explicitly set. */
+ 	fill_default_server_options(&options);
+ 
++	if (options.none_enabled == 1) {
++		char *old_ciphers = options.ciphers;
++		xasprintf(&options.ciphers, "%s,none", old_ciphers);
++		free(old_ciphers);
++
++		/* only enable the none MAC in context of the none cipher -cjr */
++		if (options.nonemac_enabled == 1) {
++		  char *old_macs = options.macs;
++		  xasprintf(&options.macs, "%s,none", old_macs);
++		  free(old_macs);
++		}
++	}
++
+ 	/* challenge-response is implemented via keyboard interactive */
+ 	if (options.challenge_response_authentication)
+ 		options.kbd_interactive_authentication = 1;
+@@ -2174,6 +2196,9 @@ main(int ac, char **av)
+ 	    rdomain == NULL ? "" : "\"");
+ 	free(laddr);
+ 
++	/* set the HPN options for the child */
++	channel_set_hpn(options.hpn_disabled, options.hpn_buffer_size);
++
+ 	/*
+ 	 * We don't want to listen forever unless the other side
+ 	 * successfully authenticates itself.  So we set up an alarm which is
+@@ -2281,6 +2306,25 @@ main(int ac, char **av)
+ 	/* Try to send all our hostkeys to the client */
+ 	notify_hostkeys(ssh);
+ 
++#ifdef WITH_OPENSSL
++	if (options.disable_multithreaded == 0) {
++		/* if we are using aes-ctr there can be issues in either a fork or sandbox
++		 * so the initial aes-ctr is defined to point ot the original single process
++		 * evp. After authentication we'll be past the fork and the sandboxed privsep
++		 * so we repoint the define to the multithreaded evp. To start the threads we
++		 * then force a rekey
++		 */
++		const void *cc = ssh_packet_get_send_context(the_active_state);
++
++		/* only rekey if necessary. If we don't do this gcm mode cipher breaks */
++		if (strstr(cipher_ctx_name(cc), "ctr")) {
++			debug("Single to Multithreaded CTR cipher swap - server request");
++			cipher_reset_multithreaded();
++			packet_request_rekeying();
++		}
++	}
++#endif
++
+ 	/* Start session. */
+ 	do_authenticated(ssh, authctxt);
+ 
+@@ -2351,6 +2395,11 @@ do_ssh2_kex(struct ssh *ssh)
+ 	struct kex *kex;
+ 	int r;
+ 
++	if (options.none_enabled == 1)
++		debug("WARNING: None cipher enabled");
++	if (options.nonemac_enabled == 1)
++		debug("WARNING: None MAC enabled");
++
+ 	myproposal[PROPOSAL_KEX_ALGS] = compat_kex_proposal(ssh,
+ 	    options.kex_algorithms);
+ 	myproposal[PROPOSAL_ENC_ALGS_CTOS] = compat_cipher_proposal(ssh,
+--- a/sshd_config
++++ b/sshd_config
+@@ -108,6 +108,22 @@ AuthorizedKeysFile	.ssh/authorized_keys
+ # override default of no subsystems
+ Subsystem	sftp	/usr/libexec/sftp-server
+ 
++# the following are HPN related configuration options
++# tcp receive buffer polling. disable in non autotuning kernels
++#TcpRcvBufPoll yes
++
++# disable hpn performance boosts
++#HPNDisabled no
++
++# buffer size for hpn to non-hpn connections
++#HPNBufferSize 2048
++
++# allow the use of the none cipher
++#NoneEnabled no
++
++# allow the use of the none MAC
++#NoneMacEnabled no
++
+ # Example of overriding settings on a per-user basis
+ #Match User anoncvs
+ #	X11Forwarding no
+--- a/version.h
++++ b/version.h
+@@ -3,4 +3,5 @@
+ #define SSH_VERSION	"OpenSSH_8.6"
+ 
+ #define SSH_PORTABLE	"p1"
+-#define SSH_RELEASE	SSH_VERSION SSH_PORTABLE
++#define SSH_HPN         "-hpn15v2"
++#define SSH_RELEASE	SSH_VERSION SSH_PORTABLE SSH_HPN
