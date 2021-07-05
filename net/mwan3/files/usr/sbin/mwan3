@@ -6,26 +6,32 @@
 . /lib/mwan3/mwan3.sh
 . /lib/mwan3/common.sh
 
+command_help() {
+	local cmd="$1"
+	local help="$2"
+
+	echo "$(printf "%-25s%s" "${cmd}" "${help}")"
+}
+
 help()
 {
 	cat <<EOF
 Syntax: mwan3 [command]
 
 Available commands:
-	start               Load iptables rules, ip rules and ip routes
-	stop                Unload iptables rules, ip rules and ip routes
-	restart             Reload iptables rules, ip rules and ip routes
-	ifup <iface>        Load rules and routes for specific interface
-	ifdown <iface>      Unload rules and routes for specific interface
-	interfaces          Show interfaces status
-	policies            Show currently active policy
-	connected           Show directly connected networks
-	rules               Show active rules
-	status              Show all status
-	use <iface> <cmd>   Run a command bound to <iface> and avoid mwan3 rules
 EOF
+	command_help "start" "Load iptables rules, ip rules and ip routes"
+	command_help "stop" "Unload iptables rules, ip rules and ip routes"
+	command_help "restart" "Reload iptables rules, ip rules and ip routes"
+	command_help "ifup <iface>" "Load rules and routes for specific interface"
+	command_help "ifdown <iface>" "Unload rules and routes for specific interface"
+	command_help "interfaces" "Show interfaces status"
+	command_help "policies" "Show currently active policy"
+	command_help "connected" "Show directly connected networks"
+	command_help "rules" "Show active rules"
+	command_help "status" "Show all status"
+	command_help "use <iface> <cmd>" "Run a command bound to <iface> and avoid mwan3 rules"
 }
-
 
 ifdown() {
 	if [ -z "$1" ]; then
