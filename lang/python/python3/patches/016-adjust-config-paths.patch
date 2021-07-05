@@ -49,7 +49,7 @@
      fi
  elif test "$cross_compiling" = maybe; then
      as_fn_error $? "Cross compiling required --host=HOST-TUPLE and --build=ARCH" "$LINENO" 5
-@@ -15441,7 +15441,7 @@ fi
+@@ -15460,7 +15460,7 @@ fi
  
  
  
@@ -69,7 +69,7 @@
      fi
  elif test "$cross_compiling" = maybe; then
      AC_MSG_ERROR([Cross compiling required --host=HOST-TUPLE and --build=ARCH])
-@@ -4839,7 +4839,7 @@ fi],
+@@ -4858,7 +4858,7 @@ fi],
  
  dnl define LIBPL after ABIFLAGS and LDVERSION is defined.
  AC_SUBST(PY_ENABLE_SHARED)
