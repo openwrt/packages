@@ -190,6 +190,10 @@ define Build/Compile/python3-setuptools
 		$(PKG_BUILD_DIR)/Lib/ensurepip/_bundled/setuptools-$(PYTHON3_SETUPTOOLS_VERSION)-py3-none-any.whl
 	$(call PatchDir,$(PKG_BUILD_DIR)/install-setuptools/usr/lib/python$(PYTHON3_VERSION)/site-packages,./patches-setuptools,)
 endef
+else
+define Build/Compile/python3-setuptools
+	ls $(PKG_BUILD_DIR)/Lib/ensurepip/_bundled/setuptools-$(PYTHON3_SETUPTOOLS_VERSION)-py3-none-any.whl
+endef
 endif # CONFIG_PACKAGE_python3-setuptools
 
 ifdef CONFIG_PACKAGE_python3-pip
@@ -203,6 +207,10 @@ define Build/Compile/python3-pip
 		--prefix=/usr \
 		$(PKG_BUILD_DIR)/Lib/ensurepip/_bundled/pip-$(PYTHON3_PIP_VERSION)-py3-none-any.whl
 	$(call PatchDir,$(PKG_BUILD_DIR)/install-pip/usr/lib/python$(PYTHON3_VERSION)/site-packages,./patches-pip,)
+endef
+else
+define Build/Compile/python3-pip
+	ls $(PKG_BUILD_DIR)/Lib/ensurepip/_bundled/pip-$(PYTHON3_PIP_VERSION)-py3-none-any.whl
 endef
 endif # CONFIG_PACKAGE_python3-pip
 
