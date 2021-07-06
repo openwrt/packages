@@ -1,0 +1,28 @@
+--- a/compiler/rustc_target/src/spec/mod.rs
++++ b/compiler/rustc_target/src/spec/mod.rs
+@@ -667,6 +667,7 @@ supported_targets! {
+     ("mips-openwrt-linux-musl", mips_openwrt_linux_musl),
+     ("x86_64-openwrt-linux-musl", x86_64_openwrt_linux_musl),
+     ("arm-openwrt-linux-muslgnueabi", arm_openwrt_linux_muslgnueabi),
++    ("powerpc-openwrt-linux-musl", powerpc_openwrt_linux_musl),
+ }
+ 
+ /// Everything `rustc` knows about how to compile for a specific target.
+--- /dev/null
++++ b/compiler/rustc_target/src/spec/powerpc_openwrt_linux_musl.rs
+@@ -0,0 +1,15 @@
++use crate::spec::{LinkerFlavor, Target, TargetOptions};
++
++pub fn target() -> Target {
++    let mut base = super::linux_musl_base::opts();
++    base.pre_link_args.get_mut(&LinkerFlavor::Gcc).unwrap().push("-m32".to_string());
++    base.max_atomic_width = Some(32);
++
++    Target {
++        llvm_target: "powerpc-unknown-linux-musl".to_string(),
++        pointer_width: 32,
++        data_layout: "E-m:e-p:32:32-i64:64-n32".to_string(),
++        arch: "powerpc".to_string(),
++        options: TargetOptions { endian: "big".to_string(), mcount: "_mcount".to_string(), ..base },
++    }
++}

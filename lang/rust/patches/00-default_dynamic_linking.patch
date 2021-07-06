@@ -1,0 +1,11 @@
+--- a/compiler/rustc_target/src/spec/linux_musl_base.rs
++++ b/compiler/rustc_target/src/spec/linux_musl_base.rs
+@@ -10,7 +10,7 @@
+     base.crt_objects_fallback = Some(CrtObjectsFallback::Musl);
+
+     // These targets statically link libc by default
+-    base.crt_static_default = true;
++    base.crt_static_default = false;
+
+     base
+ }
