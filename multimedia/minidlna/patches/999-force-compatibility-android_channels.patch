@@ -1,0 +1,19 @@
+--- ./minissdp.c-orig	2020-11-24 19:53:50.000000000 +0100
++++ ./minissdp.c	2021-07-06 11:05:37.422070969 +0200
+@@ -650,11 +650,11 @@ ProcessSSDPRequest(struct event *ev)
+ 			DPRINTF(E_INFO, L_SSDP, "WARNING: Ignoring invalid SSDP M-SEARCH from %s [bad source port %d]\n",
+ 				inet_ntoa(sendername.sin_addr), ntohs(sendername.sin_port));
+ 		}
+-		else if (!man || (strncmp(man, "\"ssdp:discover\"", 15) != 0))
+-		{
+-			DPRINTF(E_INFO, L_SSDP, "WARNING: Ignoring invalid SSDP M-SEARCH from %s [bad %s header '%.*s']\n",
+-				inet_ntoa(sendername.sin_addr), "MAN", man_len, man);
+-		}
++//		else if (!man || (strncmp(man, "\"ssdp:discover\"", 15) != 0))
++//		{
++//			DPRINTF(E_INFO, L_SSDP, "WARNING: Ignoring invalid SSDP M-SEARCH from %s [bad %s header '%.*s']\n",
++//				inet_ntoa(sendername.sin_addr), "MAN", man_len, man);
++//		}
+ 		else if (!mx || mx == mx_end || mx_val < 0)
+ 		{
+ 			DPRINTF(E_INFO, L_SSDP, "WARNING: Ignoring invalid SSDP M-SEARCH from %s [bad %s header '%.*s']\n",
