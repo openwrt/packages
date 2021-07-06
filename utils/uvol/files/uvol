@@ -17,9 +17,9 @@ commands:
   total				show total number of bytes
   align				show sector size in bytes
   list [volname]		list volumes
-  create volname type size	create new volume
-    type: 'ro' or 'rw'
+  create volname size type	create new volume
     size: in bytes
+    type: 'ro' or 'rw'
   remove volname		delete volume
   device volname		show block device for mounting
   size volname			show size of volume

@@ -46,11 +46,11 @@ lvs() {
 }
 
 freebytes() {
-	echo $((vg_free_count * vg_extent_size * 1024))
+	echo $((vg_free_count * vg_extent_size))
 }
 
 totalbytes() {
-	echo $((vg_extent_count * vg_extent_size * 1024))
+	echo $((vg_extent_count * vg_extent_size))
 }
 
 existvol() {
