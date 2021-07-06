@@ -19,7 +19,7 @@ PKG_VERSION:=$(PYTHON_VERSION).$(PYTHON_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
-PKG_HASH:=f8d82e7572c86ec9d55c8627aae5040124fd2203af400c383c821b980306ee6b
+PKG_HASH:=ddb4196ab5c4f69e895920a422cb60d42b46e2de2b173ce7fd57f1435459a734
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>, Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=Python/2.0
