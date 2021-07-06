@@ -183,6 +183,7 @@ define Package/apparmor-utils/install
 	$(INSTALL_DIR) $(1)/etc/apparmor $(1)/usr/sbin $(1)/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)-utils/sbin/apparmor_parser $(1)/sbin/
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)-utils/etc/apparmor/*.conf $(1)/etc/apparmor/
+	$(INSTALL_CONF) $(PKG_BUILD_DIR)/parser/parser.conf $(1)/etc/apparmor/
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)-utils/etc/apparmor/severity.db $(1)/etc/apparmor/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)-utils/sbin/apparmor_parser $(1)/sbin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)-utils/usr/bin/{aa-exec,aa-easyprof,aa-enabled,aa-features-abi} $(1)/usr/sbin/
