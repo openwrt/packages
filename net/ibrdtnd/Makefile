@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ibrdtnd
 PKG_VERSION:=1.0.1
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/releases
@@ -45,6 +45,8 @@ CONFIGURE_ARGS += \
 	--without-wifip2p \
 	--without-vmime \
 	--disable-libdaemon
+
+TARGET_CXXFLAGS += -std=c++11
 
 define Package/ibrdtnd/install
 	$(INSTALL_DIR) $(1)/usr/sbin/
