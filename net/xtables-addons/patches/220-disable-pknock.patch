@@ -1,0 +1,41 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -1,7 +1,7 @@
+ # -*- Makefile -*-
+ 
+ ACLOCAL_AMFLAGS  = -I m4
+-SUBDIRS          = extensions extensions/ACCOUNT extensions/pknock geoip
++SUBDIRS          = extensions extensions/ACCOUNT geoip
+ 
+ man_MANS := xtables-addons.8
+ 
+--- a/configure.ac
++++ b/configure.ac
+@@ -74,6 +74,5 @@
+ AC_SUBST([kbuilddir])
+ AC_SUBST([xtlibdir])
+ AC_CONFIG_FILES([Makefile Makefile.iptrules Makefile.mans geoip/Makefile
+-	extensions/Makefile extensions/ACCOUNT/Makefile
+-	extensions/pknock/Makefile])
++	extensions/Makefile extensions/ACCOUNT/Makefile])
+ AC_OUTPUT
+--- a/extensions/Kbuild
++++ b/extensions/Kbuild
+@@ -24,7 +24,6 @@
+ obj-${build_ipv4options} += xt_ipv4options.o
+ obj-${build_length2}     += xt_length2.o
+ obj-${build_lscan}       += xt_lscan.o
+-obj-${build_pknock}      += pknock/
+ obj-${build_psd}         += xt_psd.o
+ obj-${build_quota2}      += xt_quota2.o
+ obj-${build_rtsp}        += rtsp/
+--- a/extensions/Mbuild
++++ b/extensions/Mbuild
+@@ -19,7 +19,6 @@
+ obj-${build_ipv4options} += libxt_ipv4options.so
+ obj-${build_length2}     += libxt_length2.so
+ obj-${build_lscan}       += libxt_lscan.so
+-obj-${build_pknock}      += pknock/
+ obj-${build_psd}         += libxt_psd.so
+ obj-${build_quota2}      += libxt_quota2.so
+ obj-${build_gradm}       += libxt_gradm.so
