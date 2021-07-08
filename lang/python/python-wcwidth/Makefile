@@ -15,7 +15,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=wcwidth
 PKG_HASH:=c4d647b99872929fdb7bdcaa4fbe7f01413ed3d98077df798530e5b04f116c83
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
+PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.txt
 

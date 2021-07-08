@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=execnet
 PKG_HASH:=b73c5565e517f24b62dea8a5ceac178c661c4309d3aa0c3e420856c072c411b4
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
+PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 

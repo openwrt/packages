@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=python-socketio
 PKG_HASH:=356a8a480fa316295b439d63a5f35a7a59fe65cee1ae35dee28e87d00e5aead6
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
+PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 

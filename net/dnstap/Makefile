@@ -15,7 +15,7 @@ PKG_SOURCE:=golang-dnstap-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/dnstap/golang-dnstap/archive/v$(PKG_VERSION)/
 PKG_HASH:=bf59ae30d81dd022b81d946254e2818b397011aec1e0a5bea0c0df9abe1f1f83
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
+PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 

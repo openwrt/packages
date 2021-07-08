@@ -14,7 +14,7 @@ PKG_RELEASE:=4
 PYPI_NAME:=pluggy
 PKG_HASH:=15b2acde666561e1298d71b523007ed7364de07029219b604cf808bfa1c765b0
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
+PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
