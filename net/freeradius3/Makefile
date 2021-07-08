@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2020 OpenWrt.org
+# Copyright (C) 2008-2021 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=freeradius3
-PKG_VERSION:=3_0_21
-PKG_RELEASE:=2
+PKG_VERSION:=3_0_23
+PKG_RELEASE:=1
 
 PKG_SOURCE:=release_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/FreeRADIUS/freeradius-server/archive
-PKG_HASH:=b2014372948a92f86cfe2cf43c58ef47921c03af05666eb9d6416bdc6eeaedc2
+PKG_HASH:=6192b6a8d141545dc54c00c1a7af7f502f990418d780dcae76074163070dbb86
 
 PKG_MAINTAINER:=
-PKG_LICENSE:=GPL-2.0
+PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYRIGHT LICENSE
 PKG_CPE_ID:=cpe:/a:freeradius:freeradius
 
@@ -52,8 +52,18 @@ endef
 
 define Package/freeradius3/conffiles
 /etc/freeradius3/clients.conf
+/etc/freeradius3/policy.d/abfab-tr
 /etc/freeradius3/policy.d/accounting
+/etc/freeradius3/policy.d/canonicalization
+/etc/freeradius3/policy.d/control
+/etc/freeradius3/policy.d/cui
+/etc/freeradius3/policy.d/debug
+/etc/freeradius3/policy.d/dhcp
+/etc/freeradius3/policy.d/eap
 /etc/freeradius3/policy.d/filter
+/etc/freeradius3/policy.d/moonshot-targeted-ids
+/etc/freeradius3/policy.d/operator-name
+/etc/freeradius3/policy.d/rfc7542
 /etc/freeradius3/proxy.conf
 /etc/freeradius3/radiusd.conf
 /etc/freeradius3/sites-available/default
@@ -77,7 +87,6 @@ define Package/freeradius3-default
 +freeradius3-mod-digest \
 +freeradius3-mod-eap \
 +freeradius3-mod-eap-gtc \
-+freeradius3-mod-eap-leap \
 +freeradius3-mod-eap-md5 \
 +freeradius3-mod-eap-mschapv2 \
 +freeradius3-mod-eap-peap \
@@ -132,6 +141,7 @@ define Package/freeradius3-mod-attr-filter/conffiles
 /etc/freeradius3/mods-config/attr_filter/access_challenge
 /etc/freeradius3/mods-config/attr_filter/access_reject
 /etc/freeradius3/mods-config/attr_filter/accounting_response
+/etc/freeradius3/mods-config/attr_filter/coa
 /etc/freeradius3/mods-config/attr_filter/post-proxy
 /etc/freeradius3/mods-config/attr_filter/pre-proxy
 endef
@@ -193,12 +203,6 @@ define Package/freeradius3-mod-eap-gtc
   $(call Package/freeradius3/Default)
   DEPENDS:=freeradius3-mod-eap
   TITLE:=EAP/GTC module
-endef
-
-define Package/freeradius3-mod-eap-leap
-  $(call Package/freeradius3/Default)
-  DEPENDS:=freeradius3-mod-eap
-  TITLE:=EAP/LEAP module
 endef
 
 define Package/freeradius3-mod-eap-md5
@@ -542,7 +546,7 @@ PKG_DICTIONARIES:= \
 	compat \
 	freeradius freeradius.internal \
 	rfc2865 rfc2866 rfc2867 rfc2868 rfc2869 rfc3162 rfc3576 rfc3580 \
-	rfc4372 rfc4675 rfc4679 rfc5580\
+	rfc4072 rfc4372 rfc4675 rfc4679 rfc5247 rfc5580 rfc7268 \
 	microsoft \
 	wispr \
 
@@ -774,7 +778,6 @@ $(eval $(call BuildPlugin,freeradius3-mod-detail,rlm_detail,))
 $(eval $(call BuildPlugin,freeradius3-mod-digest,rlm_digest,))
 $(eval $(call BuildPlugin,freeradius3-mod-eap,rlm_eap,))
 $(eval $(call BuildPlugin,freeradius3-mod-eap-gtc,rlm_eap_gtc,))
-$(eval $(call BuildPlugin,freeradius3-mod-eap-leap,rlm_eap_leap,))
 $(eval $(call BuildPlugin,freeradius3-mod-eap-md5,rlm_eap_md5,))
 $(eval $(call BuildPlugin,freeradius3-mod-eap-mschapv2,rlm_eap_mschapv2,))
 $(eval $(call BuildPlugin,freeradius3-mod-eap-peap,rlm_eap_peap,))
