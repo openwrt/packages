@@ -11,12 +11,13 @@ _log() {
 start_service() {
 	. /lib/functions/network.sh
 
-	local interface ipv6 port bind
+	local interface ipv6 port bind all
 
 	config_load prometheus-node-exporter-lua.main
 	config_get interface "main" listen_interface "loopback"
 	config_get_bool ipv6 "main" listen_ipv6 0
 	config_get port "main" listen_port 9100
+	config_get_bool all "main" listen_all 0
 
 	if [ "$interface" = "*" ]; then
 		[ "$ipv6" = 1 ] && bind="::" || bind="0.0.0.0"
@@ -38,6 +39,9 @@ start_service() {
 	procd_set_param command /usr/bin/prometheus-node-exporter-lua
 	procd_append_param command --bind ${bind}
 	procd_append_param command --port ${port}
+	if [ "$all" = 1 ]; then
+		procd_append_param command -a
+	fi
 
 	procd_set_param stdout 1
 	procd_set_param stderr 1
