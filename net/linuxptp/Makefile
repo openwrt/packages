@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=linuxptp
-PKG_VERSION:=3.1
+PKG_VERSION:=3.1.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)/v$(PKG_VERSION)
-PKG_HASH:=f58f5b11cf14dc7c4f7c9efdfb27190e43d02cf20c3525f6639edac10528ce7d
+PKG_HASH:=94d6855f9b7f2d8e9b0ca6d384e3fae6226ce6fc012dbad02608bdef3be1c0d9
 
 PKG_MAINTAINER:=Wojciech Dubowik <Wojciech.Dubowik@westermo.com>
 PKG_LICENSE:=GPL-2.0
