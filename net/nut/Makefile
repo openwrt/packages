@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nut
 PKG_VERSION:=2.7.4
-PKG_RELEASE:=22
+PKG_RELEASE:=23
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.networkupstools.org/source/2.7/
@@ -541,6 +541,8 @@ CONFIGURE_ARGS += \
 	--with-group=root \
 	$(if $(CONFIG_PACKAGE_nut-web-cgi),--with-gd-includes="`pkg-config --cflags gdlib`") \
 	$(if $(CONFIG_PACKAGE_nut-web-cgi),--with-gd-libs="`pkg-config --libs gdlib`")
+
+TARGET_CXXFLAGS += -std=c++98
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include $(1)/usr/lib/pkgconfig
