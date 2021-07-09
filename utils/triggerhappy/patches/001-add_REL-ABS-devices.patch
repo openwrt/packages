@@ -1,0 +1,26 @@
+Date: 28 Feb 2018 18:29:50 +0100
+Subject: [PATCH] added support for pure REL/ABS devices (such as rotary encoders)
+
+Some input devices such as rotary encoders don't have keys or switches, 
+but can generate EV_REL/EV_ABS events.
+This simple change allows these devices to be used with triggerhappy.
+
+Developer: https://github.com/trurle
+
+Signed-off-by: Semen Kreyda <aswerklon@gmail.com>
+---
+ devices.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletions(-)
+
+--- a/devices.c
++++ b/devices.c
+@@ -45,7 +45,8 @@
+ 	int rc = ioctl(fd, EVIOCGBIT(0,sizeof(bits)), bits);
+ 	return rc > 0 && (
+ 		/* we only consider devices with keys or switches suitable */
+-		test_bit(EV_KEY, bits) || test_bit(EV_SW, bits)
++		test_bit(EV_KEY, bits) || test_bit(EV_SW, bits) ||
++		test_bit(EV_REL, bits) || test_bit(EV_ABS, bits)
+ 	);
+ }
+ 
