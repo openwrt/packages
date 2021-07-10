@@ -20,7 +20,10 @@ PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=79329a07d8f79c19eadd7ea2752b4c4e1574b015
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 
+HOST_BUILD_DEPENDS:=lua/host
+
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 
 define Package/lua-lzlib
   SUBMENU:=Lua
@@ -39,6 +42,10 @@ MAKE_FLAGS += \
 	LUA="$(STAGING_DIR)/usr" \
 	OFLAGS="$(TARGET_CFLAGS)" \
 
+HOST_MAKE_FLAGS += \
+	LUA="$(STAGING_DIR_HOSTPKG)" \
+	OFLAGS="$(HOST_CFLAGS)" \
+
 define Package/lua-lzlib/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/zlib.so $(1)/usr/lib/lua/
@@ -46,4 +53,12 @@ define Package/lua-lzlib/install
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/gzip.lua $(1)/usr/lib/lua/
 endef
 
+define Host/Install
+	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/lib/lua/5.1
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/zlib.so $(STAGING_DIR_HOSTPKG)/lib/lua/5.1
+
+	$(INSTALL_DATA) $(HOST_BUILD_DIR)/gzip.lua $(STAGING_DIR_HOSTPKG)/lib/lua/5.1
+endef
+
 $(eval $(call BuildPackage,lua-lzlib))
+$(eval $(call HostBuild))
