@@ -1,0 +1,4 @@
+#!/bin/sh /etc/rc.common
+/usr/bin/python3 -m pip install --upgrade pip
+/usr/bin/pip3 install suricata-update
+/etc/init.d/suricata-update start
