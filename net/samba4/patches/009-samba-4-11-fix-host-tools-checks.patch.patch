@@ -1,6 +1,8 @@
 --- a/wscript_configure_embedded_heimdal
 +++ b/wscript_configure_embedded_heimdal
-@@ -1 +1,12 @@
+@@ -2,3 +2,14 @@ if not conf.env['FLEX']:
+     conf.fatal("Embedded Heimdal build requires flex but it was not found.  Install flex or use --with-system-mitkrb5 or --with-system-heimdalkrb5")
+ 
  conf.RECURSE('source4/heimdal_build')
 +
 +def check_system_heimdal_binary(name):

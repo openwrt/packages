@@ -1,6 +1,6 @@
 --- a/source3/wscript
 +++ b/source3/wscript
-@@ -907,7 +907,7 @@ msg.msg_accrightslen = sizeof(fd);
+@@ -885,7 +885,7 @@ msg.msg_accrightslen = sizeof(fd);
          if conf.env.with_iconv:
              conf.DEFINE('HAVE_ICONV', 1)
  
@@ -9,7 +9,7 @@
          use_pam=True
          conf.CHECK_HEADERS('security/pam_appl.h pam/pam_appl.h')
          if not conf.CONFIG_SET('HAVE_SECURITY_PAM_APPL_H') and not conf.CONFIG_SET('HAVE_PAM_PAM_APPL_H'):
-@@ -984,6 +984,17 @@ int i; i = PAM_RADIO_TYPE;
+@@ -962,6 +962,17 @@ int i; i = PAM_RADIO_TYPE;
                         "or headers not found. Use --without-pam to disable "
                         "PAM support.");
  
