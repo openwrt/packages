@@ -1,0 +1,11 @@
+--- a/Makefile
++++ b/Makefile
+@@ -4,7 +4,7 @@
+ -include config.mk
+ 
+ PACKAGE := apk-tools
+-VERSION := 2.12.0
++VERSION := 3.0.0_pre0
+ 
+ export VERSION
+ 

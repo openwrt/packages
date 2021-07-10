@@ -1,0 +1,20 @@
+From c72ea983e287ec1d8b1f2b3aab1bf40aa7a30b03 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Wed, 4 Aug 2021 21:37:40 +0100
+Subject: [PATCH] tar: include <limits.h> to fix build with glibc
+
+Signed-off-by: Daniel Golle <daniel@makrotopia.org>
+---
+ src/tar.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+--- a/src/tar.c
++++ b/src/tar.c
+@@ -9,6 +9,7 @@
+ 
+ #include <sys/stat.h>
+ #include <sys/sysmacros.h>
++#include <limits.h> /* for SSIZE_MAX with glibc */
+ 
+ #include "apk_defines.h"
+ #include "apk_tar.h"
