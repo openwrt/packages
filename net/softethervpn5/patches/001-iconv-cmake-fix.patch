@@ -1,7 +1,7 @@
 --- a/src/Mayaqua/CMakeLists.txt
 +++ b/src/Mayaqua/CMakeLists.txt
-@@ -59,7 +59,7 @@ if(UNIX)
-   find_package(ZLIB REQUIRED)
+@@ -55,7 +55,7 @@ if(UNIX)
+   find_package(Threads REQUIRED)
  
    # In some cases libiconv is not included in libc
 -  find_library(LIB_ICONV iconv)
