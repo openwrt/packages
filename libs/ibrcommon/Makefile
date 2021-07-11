@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ibrcommon
 PKG_VERSION:=1.0.1
-PKG_RELEASE:=8
+PKG_RELEASE:=9
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/releases
@@ -31,6 +31,8 @@ endef
 
 CONFIGURE_ARGS += \
 	--with-openssl
+
+TARGET_CXXFLAGS += -std=c++11
 
 define Package/ibrcommon/description
  A library with common functions for C++.
