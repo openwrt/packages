@@ -13,6 +13,9 @@ start_service() {
 
 	. /lib/functions/network.sh
 
+	# needs long delay, otherwise service may not register correctly on stratup/reboot (not sure what the issues is?)
+	sleep 5
+
 	if [ -e /etc/ksmbd/smb.conf ] && [ -e /etc/init.d/ksmbd ] && /etc/init.d/ksmbd running; then
 		SMB_CONF="/etc/ksmbd/smb.conf"
 	fi
@@ -84,6 +87,6 @@ start_service() {
 }
 
 service_triggers() {
-	PROCD_RELOAD_DELAY=1000
+	# PROCD_RELOAD_DELAY=1000
 	procd_add_reload_trigger "dhcp" "system" "samba" "samba4" "ksmbd"
 }
