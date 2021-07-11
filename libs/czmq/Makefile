@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=czmq
 PKG_VERSION:=4.2.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/zeromq/czmq/releases/download/v$(PKG_VERSION)/
@@ -42,7 +42,7 @@ define Package/czmq/description
 endef
 
 TARGET_CFLAGS += --std=c99
-CONFIGURE_ARGS += --without-docs
+CONFIGURE_ARGS += --without-docs --with-nss=no
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
