@@ -3,16 +3,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=softethervpn5
-PKG_VERSION:=5.01.9674
-PKG_RELEASE:=1
+PKG_VERSION:=5.02.5180
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE_URL:=https://github.com/SoftEtherVPN/SoftEtherVPN/releases/download/$(PKG_VERSION)/
-PKG_SOURCE:=softether-vpn-src-$(PKG_VERSION).tar.gz
-PKG_HASH:=c4dc53f4912605a25c18357b0a0bf6dc059286ca901cb981abdf1a22d1649ddc
+PKG_SOURCE:=SoftEtherVPN-$(PKG_VERSION).tar.xz
+PKG_HASH:=b5649a8ea3cc6477325e09e2248ef708d434ee3b2251eb8764bcfc15fb1de456
 
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/SoftEtherVPN-$(PKG_VERSION)
 PKG_BUILD_DIR:=$(BUILD_DIR)/SoftEtherVPN-$(PKG_VERSION)
@@ -42,7 +42,7 @@ endef
 
 define Package/softethervpn5-libs
   $(call Package/softethervpn5/Default)
-  DEPENDS:=+libpthread +librt +libreadline +libopenssl +libncurses +kmod-tun +zlib $(ICONV_DEPENDS)
+  DEPENDS:=+libsodium +libpthread +librt +libreadline +libopenssl +libncurses +kmod-tun +zlib $(ICONV_DEPENDS)
   TITLE+= libs
   HIDDEN:=1
 endef
@@ -84,7 +84,7 @@ export USE_MUSL=YES
 # BUG: outdated host/include/elf.h
 HOST_CFLAGS += $(FPIC) -DAT_HWCAP2=26
 TARGET_CFLAGS += $(FPIC)
-CMAKE_OPTIONS = -DICONV_LIB_PATH="$(ICONV_PREFIX)/lib"
+CMAKE_OPTIONS += -DICONV_LIB_PATH="$(ICONV_PREFIX)/lib"
 
 # static build for host (hamcorebuilder), avoid -fpic on ncurses/host and shared libs can't be found on host
 define Host/Prepare
@@ -92,6 +92,7 @@ define Host/Prepare
 	$(SED) 's,SHARED,STATIC,g' $(HOST_BUILD_DIR)/src/Mayaqua/CMakeLists.txt
 	$(SED) 's,SHARED,STATIC,g' $(HOST_BUILD_DIR)/src/Cedar/CMakeLists.txt
 	$(SED) 's,readline,libreadline.a,g' $(HOST_BUILD_DIR)/src/Cedar/CMakeLists.txt
+	$(SED) 's,libsodium REQUIRED,libsodium,g' $(HOST_BUILD_DIR)/src/Cedar/CMakeLists.txt
 endef
 
 define Host/Compile
@@ -100,23 +101,29 @@ endef
 
 define Host/Install
 	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/bin/
-	$(INSTALL_BIN) $(HOST_BUILD_DIR)/tmp/hamcorebuilder $(STAGING_DIR_HOSTPKG)/bin/
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/hamcorebuilder/hamcorebuilder $(STAGING_DIR_HOSTPKG)/bin/
+endef
+
+# disable SSE detection, disables BLAKE2 lib
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	$(SED) 's,cmake_host_system_information,#cmake_host_system_information,g' $(PKG_BUILD_DIR)/src/Cedar/CMakeLists.txt
 endef
 
 define Build/Compile
 	$(call Build/Compile/Default,vpnserver vpnbridge vpnclient vpncmd hamcore-archive-build)
 endef
 
-define Build/Install
-endef
-
 define Package/softethervpn5-libs/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_BUILD_DIR)/build/libcedar.so $(1)/usr/lib/
-	$(CP) $(PKG_BUILD_DIR)/build/libmayaqua.so $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libcedar.so $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libmayaqua.so $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/libexec/softethervpn
-	$(CP) $(PKG_BUILD_DIR)/build/hamcore.se2 $(1)/usr/libexec/softethervpn/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/build/vpncmd $(1)/usr/libexec/softethervpn/
+	$(CP) $(PKG_INSTALL_DIR)/usr/libexec/softether/vpncmd/hamcore.se2 $(1)/usr/libexec/softethervpn/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/libexec/softether/vpncmd/vpncmd $(1)/usr/libexec/softethervpn/
+	$(INSTALL_DIR) $(1)/usr/bin
+	if [ -f $(PKG_INSTALL_DIR)/usr/bin/list_cpu_features ]; then \
+		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/list_cpu_features $(1)/usr/bin/ ; fi 
 	$(INSTALL_BIN) files/launcher.sh $(1)/usr/libexec/softethervpn/
 	$(INSTALL_DATA) files/dummy $(1)/usr/libexec/softethervpn/lang.config
 	$(INSTALL_DIR) $(1)/usr/bin
@@ -125,7 +132,7 @@ endef
 
 define Package/softethervpn5-server/install
 	$(INSTALL_DIR) $(1)/usr/libexec/softethervpn
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/build/vpnserver $(1)/usr/libexec/softethervpn/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/libexec/softether/vpnserver/vpnserver $(1)/usr/libexec/softethervpn/
 	$(INSTALL_DATA) files/dummy $(1)/usr/libexec/softethervpn/vpn_server.config
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) files/vpnserver.init $(1)/etc/init.d/softethervpnserver
@@ -133,7 +140,7 @@ endef
 
 define Package/softethervpn5-bridge/install
 	$(INSTALL_DIR) $(1)/usr/libexec/softethervpn
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/build/vpnbridge $(1)/usr/libexec/softethervpn/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/libexec/softether/vpnbridge/vpnbridge $(1)/usr/libexec/softethervpn/
 	$(INSTALL_DATA) files/dummy $(1)/usr/libexec/softethervpn/vpn_bridge.config
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) files/vpnbridge.init $(1)/etc/init.d/softethervpnbridge
@@ -141,7 +148,7 @@ endef
 
 define Package/softethervpn5-client/install
 	$(INSTALL_DIR) $(1)/usr/libexec/softethervpn
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/build/vpnclient $(1)/usr/libexec/softethervpn/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/libexec/softether/vpnclient/vpnclient $(1)/usr/libexec/softethervpn/
 	$(INSTALL_DATA) files/dummy $(1)/usr/libexec/softethervpn/vpn_client.config
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) files/vpnclient.init $(1)/etc/init.d/softethervpnclient
