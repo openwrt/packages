@@ -1,0 +1,47 @@
+From a08242fc033b39be7e782ad6455973ec07f62b61 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?St=C3=A9phane=20Graber?= <stgraber@ubuntu.com>
+Date: Sun, 27 Jun 2021 23:42:52 -0400
+Subject: [PATCH] lxc-download: Switch GPG server
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+A few days ago, sks-keyservers.net pool announced that their service is
+deprecated and no longer maintained.
+
+References:
+Reddit.com [1]
+sks-keyservers.net [2] with invalid SSL certificate
+
+[1] https://www.reddit.com/r/crypto/comments/o7oh4w/skskeyserversnet_pool_dns_records_disabled/
+[2] https://sks-keyservers.net/
+
+Signed-off-by: Stéphane Graber <stgraber@ubuntu.com>
+(cherry picked from commit f2a5d95d00a55bed27ef9920d67617cc75fecad8)
+Signed-off-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
+[added commit message]
+---
+ templates/lxc-download.in | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/templates/lxc-download.in b/templates/lxc-download.in
+index 490552138..d6761e0cd 100644
+--- a/templates/lxc-download.in
++++ b/templates/lxc-download.in
+@@ -54,11 +54,11 @@ LXC_PATH=
+ LXC_ROOTFS=
+ 
+ if [ -z "${DOWNLOAD_KEYSERVER:-}" ]; then
+-	DOWNLOAD_KEYSERVER="hkp://pool.sks-keyservers.net"
++	DOWNLOAD_KEYSERVER="hkp://keyserver.ubuntu.com"
+ 
+ 	# Deal with GPG over http proxy
+ 	if [ -n "${http_proxy:-}" ]; then
+-	    DOWNLOAD_KEYSERVER="hkp://p80.pool.sks-keyservers.net:80"
++	    DOWNLOAD_KEYSERVER="hkp://keyserver.ubuntu.com:80"
+ 	fi
+ fi
+ 
+-- 
+2.30.2
+
