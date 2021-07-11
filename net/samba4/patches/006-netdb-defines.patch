@@ -1,6 +1,6 @@
 --- a/nsswitch/wins.c
 +++ b/nsswitch/wins.c
-@@ -39,6 +39,14 @@ static pthread_mutex_t wins_nss_mutex =
+@@ -40,6 +40,14 @@ static pthread_mutex_t wins_nss_mutex =
  #define INADDRSZ 4
  #endif
  
