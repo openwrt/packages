@@ -1,3 +1,15 @@
+From c779da992bdd440e336383da0eb75ef3a2ea6cde Mon Sep 17 00:00:00 2001
+From: Noel Kuntze <noel.kuntze@thermi.consulting>
+Date: Mon, 12 Jul 2021 01:32:20 +0200
+Subject: [PATCH 903/904] updown: Call /sbin/hotplug-call ipsec "$1" in updown
+ script. Patch taken verbatim from openwrt package sources.
+
+---
+ src/_updown/_updown.in | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/src/_updown/_updown.in b/src/_updown/_updown.in
+index 34eaf68c7d..3af04b9de7 100644
 --- a/src/_updown/_updown.in
 +++ b/src/_updown/_updown.in
 @@ -22,6 +22,13 @@
@@ -14,3 +26,6 @@
  #      PLUTO_VERSION
  #              indicates  what  version of this interface is being
  #              used.  This document describes version  1.1.   This
+-- 
+2.32.0
+
