@@ -58,6 +58,7 @@ CONFIGURE_ARGS +=  \
 	--enable-json=yes \
 	--enable-http=yes \
 	--disable-smtp \
+	--disable-mqtt \
 	--disable-redis \
 	--disable-dependency-tracking \
 	--disable-python \
