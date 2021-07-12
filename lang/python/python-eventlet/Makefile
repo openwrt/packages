@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=eventlet
 PKG_HASH:=1811b122d9a45eb5bafba092d36911bca825f835cb648a862bbf984030acff9d
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
+PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 

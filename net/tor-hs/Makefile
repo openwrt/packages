@@ -11,7 +11,7 @@ PKG_NAME:=tor-hs
 PKG_VERSION:=0.0.1
 PKG_RELEASE:=3
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
+PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
 
 include $(INCLUDE_DIR)/package.mk

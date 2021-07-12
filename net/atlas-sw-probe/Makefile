@@ -17,7 +17,7 @@ PKG_SOURCE:=ripe-atlas-software-probe-$(PKG_VERSION).tar.gz
 PKG_MIRROR_HASH:=846aa20ff4bc938c07526a9893dcae4ac7dfa41982a5b2bcfe2dd53c974ecdc9
 PKG_SOURCE_VERSION:=edee49c942b726a1d8865d91c8d7f32843bc8ad1
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
+PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=LICENSE
 

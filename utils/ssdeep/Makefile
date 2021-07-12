@@ -20,7 +20,7 @@ PKG_BUILD_PARALLEL:=1
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
+PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 
 include $(INCLUDE_DIR)/package.mk
 

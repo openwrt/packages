@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=pytest-xdist
 PKG_HASH:=718887296892f92683f6a51f25a3ae584993b06f7076ce1e1fd482e59a8220a2
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
+PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
