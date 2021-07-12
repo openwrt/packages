@@ -1,0 +1,14 @@
+--- a/OMXPlayerSubtitles.cpp
++++ b/OMXPlayerSubtitles.cpp
+@@ -43,9 +43,9 @@ OMXPlayerSubtitles::OMXPlayerSubtitles()
+   m_centered(),
+   m_ghost_box(),
+   m_lines(),
+-  m_av_clock(),
++  m_av_clock()
+ #ifndef NDEBUG
+-  m_open()
++  , m_open()
+ #endif
+ {}
+ 
