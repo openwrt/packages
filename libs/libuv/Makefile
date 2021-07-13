@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libuv
-PKG_VERSION:=1.41.0
+PKG_VERSION:=1.41.1
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://dist.libuv.org/dist/v$(PKG_VERSION)/
-PKG_HASH:=1184533907e1ddad9c0dcd30a5abb0fe25288c287ff7fee303fff7b9b2d6eb6e
+PKG_HASH:=65db0c7f2438bc8cd48865de282bf6670027f3557d6e3cb62fb65b2e350a687d
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-v$(PKG_VERSION)
 
 PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
