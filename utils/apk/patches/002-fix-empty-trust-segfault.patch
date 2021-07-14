@@ -1,0 +1,12 @@
+--- a/src/adb.c
++++ b/src/adb.c
+@@ -1040,6 +1040,9 @@ int adb_trust_write_signatures(struct ap
+ 	r = adb_digest_adb(vfy, APK_DIGEST_SHA512, db->adb, &md);
+ 	if (r) return r;
+ 
++	if (IS_ERR_OR_NULL(trust))
++		return 0;
++
+ 	list_for_each_entry(tkey, &trust->private_key_list, key_node) {
+ 		sig.v0 = (struct adb_sign_v0) {
+ 			.hdr.sign_ver = 0,
