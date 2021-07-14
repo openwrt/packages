@@ -8,12 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
-PKG_VERSION:=1.19.6
+PKG_VERSION:=quic
 PKG_RELEASE:=2
 
-PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://nginx.org/download/
-PKG_HASH:=b11195a02b1d3285ddf2987e02c6b6d28df41bb1b1dd25f33542848ef4fc33b5
+PKG_SOURCE_PROTO:=hg
+PKG_SOURCE_URL:=https://hg.nginx.org/nginx-quic
+PKG_SOURCE_DATE:=2021-06-10
+PKG_SOURCE_VERSION:=80d396fd8ee8
+PKG_MIRROR_HASH:=66434b8bed907fc72d7e1e881531cd26381a000ab199ab2a170c53408c39d99d
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de> \
 				Ansuel Smith <ansuelsmth@gmail.com>
@@ -82,7 +84,7 @@ define Package/nginx/default
   SUBMENU:=Web Servers/Proxies
   TITLE:=Nginx web server
   URL:=http://nginx.org/
-  DEPENDS:=+libopenssl +libpthread
+  DEPENDS:=+boringssl +libpthread
   # TODO: add PROVIDES when removing nginx
   # PROVIDES:=nginx
 endef
@@ -345,9 +347,11 @@ CONFIGURE_ARGS += \
 			--http-proxy-temp-path=/var/lib/nginx/proxy \
 			--http-fastcgi-temp-path=/var/lib/nginx/fastcgi \
 			--with-cc="$(TARGET_CC)" \
-			--with-cc-opt="$(TARGET_CPPFLAGS) $(TARGET_CFLAGS)" \
-			--with-ld-opt="$(TARGET_LDFLAGS)" \
-			--without-http_upstream_zone_module
+			--with-cc-opt="$(TARGET_CPPFLAGS) $(TARGET_CFLAGS) -I$(STAGING_DIR)/boringssl/include" \
+                        --with-ld-opt="$(TARGET_LDFLAGS) -L$(STAGING_DIR)/boringssl/lib" \
+			--without-http_upstream_zone_module \
+                        --with-debug \
+                        --with-http_v3_module
 
 define Package/nginx-mod-luci/install
 	$(INSTALL_DIR) $(1)/etc/nginx/conf.d
@@ -399,6 +403,9 @@ define Build/Prepare
 	$(Prepare/nginx-ubus-module)
 endef
 
+define Build/Configure
+        cd $(PKG_BUILD_DIR) && ln -s ./auto/configure ./configure && ./configure ${CONFIGURE_ARGS}
+endef
 
 ifeq ($(CONFIG_NGINX_HEADERS_MORE),y)
   define Download/nginx-headers-more

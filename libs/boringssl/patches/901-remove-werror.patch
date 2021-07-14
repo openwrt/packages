@@ -1,0 +1,28 @@
+From 78d361dacb5833f78ce339a26afa86db3e9d485b Mon Sep 17 00:00:00 2001
+From: Martin Schneider <martschneider@google.com>
+Date: Sat, 10 Jul 2021 04:09:09 +0800
+Subject: [PATCH 2/2] Remove -Werror
+
+Don't treat warnings as errors.
+
+Signed-off-by: Martin Schneider <martschneider@google.com>
+---
+ CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 99e8cf455..82667b3e3 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -117,7 +117,7 @@ endif()
+ if(CMAKE_COMPILER_IS_GNUCXX OR CLANG)
+   # Note clang-cl is odd and sets both CLANG and MSVC. We base our configuration
+   # primarily on our normal Clang one.
+-  set(C_CXX_FLAGS "-Werror -Wformat=2 -Wsign-compare -Wmissing-field-initializers -Wwrite-strings -Wvla")
++  set(C_CXX_FLAGS "-Wformat=2 -Wsign-compare -Wmissing-field-initializers -Wwrite-strings -Wvla")
+   if(MSVC)
+     # clang-cl sets different default warnings than clang. It also treats -Wall
+     # as -Weverything, to match MSVC. Instead -W3 is the alias for -Wall.
+-- 
+2.32.0.93.g670b81a890-goog
+
