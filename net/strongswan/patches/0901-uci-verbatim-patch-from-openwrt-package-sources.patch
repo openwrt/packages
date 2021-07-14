@@ -1,6 +1,17 @@
+From 81be4fa54760aa4fed53c6d93da443f57a66f262 Mon Sep 17 00:00:00 2001
+From: Noel Kuntze <noel.kuntze@thermi.consulting>
+Date: Mon, 12 Jul 2021 01:30:32 +0200
+Subject: [PATCH 901/904] uci: verbatim patch from openwrt package sources
+
+---
+ src/libcharon/plugins/uci/uci_parser.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/libcharon/plugins/uci/uci_parser.c b/src/libcharon/plugins/uci/uci_parser.c
+index 9fef34dad3..5a4a6da6cc 100644
 --- a/src/libcharon/plugins/uci/uci_parser.c
 +++ b/src/libcharon/plugins/uci/uci_parser.c
-@@ -75,7 +75,7 @@ METHOD(enumerator_t, section_enumerator_
+@@ -75,7 +75,7 @@ METHOD(enumerator_t, section_enumerator_enumerate, bool,
  		if (uci_lookup(this->ctx, &element, this->package,
  					   this->current->name, "name") == UCI_OK)
  		{	/* use "name" attribute as config name if available ... */
@@ -9,7 +20,7 @@
  		}
  		else
  		{	/* ... or the section name becomes config name */
-@@ -90,7 +90,7 @@ METHOD(enumerator_t, section_enumerator_
+@@ -90,7 +90,7 @@ METHOD(enumerator_t, section_enumerator_enumerate, bool,
  		if (value && uci_lookup(this->ctx, &element, this->package,
  						  this->current->name, this->keywords[i]) == UCI_OK)
  		{
@@ -18,3 +29,6 @@
  		}
  	}
  
+-- 
+2.32.0
+
