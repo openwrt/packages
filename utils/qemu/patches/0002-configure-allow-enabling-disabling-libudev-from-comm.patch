@@ -9,9 +9,9 @@ Subject: [PATCH] configure: allow enabling/disabling libudev from command line
 
 --- a/configure
 +++ b/configure
-@@ -1601,6 +1601,10 @@ for opt do
+@@ -1565,6 +1565,10 @@ for opt do
    ;;
-   --gdb=*) gdb_bin="$optarg"
+   --disable-gio) gio=no
    ;;
 +  --enable-libudev) libudev=yes
 +  ;;

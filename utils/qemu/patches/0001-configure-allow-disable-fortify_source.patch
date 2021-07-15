@@ -11,9 +11,9 @@ OpenWrt base build system decide flavor of fortify_source to use
 
 --- a/configure
 +++ b/configure
-@@ -1601,6 +1601,8 @@ for opt do
+@@ -1565,6 +1565,8 @@ for opt do
    ;;
-   --gdb=*) gdb_bin="$optarg"
+   --disable-gio) gio=no
    ;;
 +  --disable-fortify-source) fortify_source="no"
 +  ;;
