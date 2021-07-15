@@ -333,8 +333,10 @@ define Package/ddns-scripts_no-ip_com/postinst
 	#!/bin/sh
 	# remove old services file entries
 	/bin/sed -i '/no-ip\.com/d' $${IPKG_INSTROOT}/etc/ddns/services	>/dev/null 2>&1
+	/bin/sed -i '/no-ip\.com/d' $${IPKG_INSTROOT}/etc/ddns/services_ipv6 >/dev/null 2>&1
 	# and create new
 	printf "%s\\t%s\\n" '"no-ip.com"' '"update_no-ip_com.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services
+	printf "%s\\t%s\\n" '"no-ip.com"' '"update_no-ip_com.sh"' >> $${IPKG_INSTROOT}/etc/ddns/services_ipv6
 	# on real system restart service if enabled
 	[ -z "$${IPKG_INSTROOT}" ] && {
 		[ -x /etc/uci-defaults/ddns_no-ip_com ] && \
@@ -351,6 +353,7 @@ define Package/ddns-scripts_no-ip_com/prerm
 	[ -z "$${IPKG_INSTROOT}" ] && /etc/init.d/ddns stop		>/dev/null 2>&1
 	# remove services file entries
 	/bin/sed -i '/no-ip\.com/d' $${IPKG_INSTROOT}/etc/ddns/services	>/dev/null 2>&1
+	/bin/sed -i '/no-ip\.com/d' $${IPKG_INSTROOT}/etc/ddns/services_ipv6 >/dev/null 2>&1
 	exit 0	# suppress errors
 endef
 
