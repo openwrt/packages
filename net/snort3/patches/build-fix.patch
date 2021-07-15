@@ -1,0 +1,16 @@
+Index: snort3-3.1.4.0/src/network_inspectors/appid/service_plugins/service_rpc.cc
+===================================================================
+--- snort3-3.1.4.0.orig/src/network_inspectors/appid/service_plugins/service_rpc.cc
++++ snort3-3.1.4.0/src/network_inspectors/appid/service_plugins/service_rpc.cc
+@@ -27,11 +27,7 @@
+ 
+ #include <netdb.h>
+ 
+-#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(USE_TIRPC)
+-#include <rpc/rpc.h>
+-#elif defined(__sun)
+ #include <rpc/rpcent.h>
+-#endif
+ 
+ #include "detection/ips_context.h"
+ #include "log/messages.h"
