@@ -1,6 +1,6 @@
 --- a/templates/lxc-download.in
 +++ b/templates/lxc-download.in
-@@ -505,20 +505,7 @@ fi
+@@ -512,20 +512,7 @@ fi
  # Unpack the rootfs
  echo "Unpacking the rootfs"
  

@@ -13,7 +13,7 @@ Signed-off-by: Stéphane Graber <stgraber@ubuntu.com>
 
 --- a/templates/lxc-download.in
 +++ b/templates/lxc-download.in
-@@ -55,11 +55,11 @@ LXC_PATH=
+@@ -56,11 +56,11 @@ LXC_PATH=
  LXC_ROOTFS=
  
  if [ -z "${DOWNLOAD_KEYSERVER:-}" ]; then
