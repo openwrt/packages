@@ -239,7 +239,6 @@ createvol() {
 	fi
 	lvm_cmd lvrename "$vg_name" "wp_$1" "rw_$1"
 	exportlv "$1"
-	ubus send block.volume "{\"name\": \"$1\", \"action\": \"up\", \"mode\": \"${lv_name:0:2}\", \"device\": \"$lv_dm_path\"}"
 	return 0
 }
 
@@ -247,7 +246,6 @@ removevol() {
 	exportlv "$1"
 	[ "$lv_full_name" ] || return 2
 	lvm_cmd lvremove -y "$lv_full_name"
-	ubus send block.volume "{\"name\": \"$1\", \"action\": \"down\", \"mode\": \"${lv_name:0:2}\", \"device\": \"$lv_dm_path\"}"
 }
 
 updatevol() {
@@ -256,11 +254,12 @@ updatevol() {
 	[ "$lv_size" -ge "$2" ] || return 27
 	case "$lv_path" in
 		/dev/*/wo_*)
-			lvm_cmd lvchange -a y -p rw "$lv_full_name"
+			lvm_cmd lvchange -p rw "$lv_full_name"
+			lvm_cmd lvchange -a y "$lv_full_name"
 			dd of="$lv_path"
+			lvm_cmd lvchange -a n "$lv_full_name"
 			lvm_cmd lvchange -p r "$lv_full_name"
 			lvm_cmd lvrename "$lv_full_name" "${lv_full_name%%/*}/ro_$1"
-			ubus send block.volume "{\"name\": \"$1\", \"action\": \"up\", \"mode\": \"ro\", \"device\": \"$(getdev "$@")\"}"
 			return 0
 			;;
 		default)

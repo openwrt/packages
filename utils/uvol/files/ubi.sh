@@ -114,22 +114,15 @@ createvol() {
 	ubiupdatevol -t "/dev/$voldev"
 	[ "$mode" = "wp" ] || return 0
 	mkubifs "/dev/$voldev"
-	ubirename "/dev/$ubidev" "uvol-wp-$1" "uvol-rw-$1"
-	ubus send block.volume "{\"name\": \"$1\", \"action\": \"up\", \"mode\": \"rw\", \"fstype\": \"ubifs\", \"device\": \"/dev/$voldev\"}"
+	ubirename "/dev/$ubidev" "uvol-wp-$1" "uvol-wd-$1"
 }
 
 removevol() {
-	local voldev evdata
+	local voldev
 	voldev=$(getdev "$@")
 	[ "$voldev" ] || return 2
-	if vol_is_mode "$voldev" rw ; then
-		evdata="{\"name\": \"$1\", \"action\": \"down\", \"device\": \"/dev/$voldev\"}"
-	elif vol_is_mode "$voldev" ro && [ -e "/dev/ubiblock${voldev:3}" ]; then
-		evdata="{\"name\": \"$1\", \"action\": \"down\", \"device\": \"/dev/ubiblock${voldev:3}\"}"
-	fi
 	local volnum="${voldev#${ubidev}_}"
 	ubirmvol "/dev/$ubidev" -n "$volnum" || return $?
-	[ "$evdata" ] && ubus send block.volume "$evdata"
 }
 
 activatevol() {
@@ -137,16 +130,15 @@ activatevol() {
 	voldev="$(getdev "$@")"
 	[ "$voldev" ] || return 2
 	vol_is_mode "$voldev" rw && return 0
+	vol_is_mode "$voldev" ro && return 0
 	vol_is_mode "$voldev" wo && return 22
 	vol_is_mode "$voldev" wp && return 16
-	if vol_is_mode "$voldev" ro; then
-		[ -e "/dev/ubiblock${voldev:3}" ] && return 0
+	if vol_is_mode "$voldev" rd; then
+		ubirename "/dev/$ubidev" "uvol-rd-$1" "uvol-ro-$1"
 		ubiblock --create "/dev/$voldev"
-		ubus send block.volume "{\"name\": \"$1\", \"action\": \"up\", \"mode\": \"ro\", \"device\": \"/dev/ubiblock${voldev:3}\"}"
 		return 0
 	elif vol_is_mode "$voldev" wd; then
 		ubirename "/dev/$ubidev" "uvol-wd-$1" "uvol-rw-$1"
-		ubus send block.volume "{\"name\": \"$1\", \"action\": \"up\", \"mode\": \"rw\", \"fstype\": \"ubifs\", \"device\": \"/dev/$voldev\"}"
 		return 0
 	fi
 }
@@ -155,16 +147,17 @@ disactivatevol() {
 	local voldev
 	voldev="$(getdev "$@")"
 	[ "$voldev" ] || return 2
+	vol_is_mode "$voldev" rd && return 0
+	vol_is_mode "$voldev" wd && return 0
 	vol_is_mode "$voldev" wo && return 22
 	vol_is_mode "$voldev" wp && return 16
 	if vol_is_mode "$voldev" ro; then
 		[ -e "/dev/ubiblock${voldev:3}" ] || return 0
 		ubiblock --remove "/dev/$voldev" || return $?
-		ubus send block.volume "{\"name\": \"$1\", \"action\": \"down\", \"mode\": \"ro\", \"device\": \"/dev/ubiblock${voldev:3}\"}"
+		ubirename "/dev/$ubidev" "uvol-ro-$1" "uvol-rd-$1" || return $?
 		return 0
 	elif vol_is_mode "$voldev" rw; then
 		ubirename "/dev/$ubidev" "uvol-rw-$1" "uvol-wd-$1" || return $?
-		ubus send block.volume "{\"name\": \"$1\", \"action\": \"down\", \"mode\": \"rw\", \"device\": \"/dev/$voldev\"}"
 		return 0
 	fi
 }
@@ -176,9 +169,7 @@ updatevol() {
 	[ "$2" ] || return 22
 	vol_is_mode "$voldev" wo || return 22
 	ubiupdatevol -s "$2" "/dev/$voldev" -
-	ubirename "/dev/$ubidev" "uvol-wo-$1" "uvol-ro-$1"
-	ubiblock --create "/dev/$voldev"
-	ubus send block.volume "{\"name\": \"$1\", \"action\": \"up\", \"mode\": \"ro\", \"device\": \"/dev/ubiblock${voldev:3}\"}"
+	ubirename "/dev/$ubidev" "uvol-wo-$1" "uvol-rd-$1"
 }
 
 listvols() {
@@ -210,17 +201,12 @@ bootvols() {
 				voldev="/dev/ubiblock${voldev:3}"
 				ubiblock --create "/dev/$voldev"
 				;;
-			uvol-rw-*)
-				voldev="/dev/$voldev"
-				fstype="ubifs"
-				;;
 			*)
 				continue
 				;;
 		esac
 		volmode="${volname:5:2}"
 		volname="${volname:8}"
-		ubus send block.volume "{\"name\": \"$volname\", \"action\": \"up\", \"mode\": \"$volmode\",${fstype:+ \"fstype\": \"$fstype\", }\"device\": \"$voldev\"}"
 	done
 }
 
