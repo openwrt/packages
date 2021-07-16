@@ -197,6 +197,8 @@ ifneq ($(BUILD_VARIANT),all-module)
   endif
   ifneq ($(CONFIG_NGINX_HTTP_SCGI),y)
     ADDITIONAL_MODULES += --without-http_scgi_module
+  else
+    config_files += scgi_params
   endif
   ifneq ($(CONFIG_NGINX_HTTP_MEMCACHED),y)
     ADDITIONAL_MODULES += --without-http_memcached_module
