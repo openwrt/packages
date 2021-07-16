@@ -523,9 +523,10 @@ f_prepif()
 #
 f_net()
 {
-	local IFS err err_rc err_domain json_raw json_cp json_rc cp_domain result="net nok"
+	local IFS err err_rc err_domain json_raw json_tmp json_cp json_rc cp_domain result="net nok"
 
 	json_raw="$(${trm_fetch} --user-agent "${trm_useragent}" --referer "http://www.example.com" --write-out "%{json}" --silent --show-error --connect-timeout $((trm_maxwait/10)) "${trm_captiveurl}" 2>/tmp/trm_fetch.err)"
+	json_tmp="${json_raw%%\{*}"
 	json_raw="${json_raw#*\{}"
 	if [ -s "/tmp/trm_fetch.err" ]
 	then
@@ -548,6 +549,15 @@ f_net()
 			cp_domain="${json_cp#http*://*}"
 			cp_domain="${cp_domain%%/*}"
 			result="net cp '${cp_domain}'"
+		elif [ "${trm_captiveurl}" = "http://connectivitycheck.android.com/generate_204" ] && [ "${json_rc}" = "200" ]
+                then
+                        cp_domain="${json_tmp#*url=}"
+                        cp_domain="${cp_domain#http*://*}"
+                        cp_domain="${cp_domain%%/*}"
+                        if [ -n "${cp_domain}" ]
+                        then
+                                result="net cp '${cp_domain}'"
+                        fi
 		else
 			if [ "${json_rc}" = "200" ] || [ "${json_rc}" = "204" ]
 			then
