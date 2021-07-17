@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sane-backends
 PKG_VERSION:=1.0.32
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://gitlab.com/sane-project/backends/uploads/104f09c07d35519cc8e72e604f11643f
@@ -194,12 +194,12 @@ endef
 define Build/Install
 	$(call Build/Install/Default)
 	mkdir -p $(PKG_INSTALL_DIR)/usr/share/sane
-	$(foreach file, $(filter-out %/unsupported.desc ,$(wildcard $(PKG_BUILD_DIR)/doc/descriptions/*.desc)),
-		sed -rn -e '/^:usbid[[:blank:]]+"?0x(....)"?[[:blank:]]+"?0x(....)"?.*/{s//\1 \2/;p}' $(file) | \
-			sort -u > $(PKG_INSTALL_DIR)/usr/share/sane/$(basename $(notdir $(file))).usbid; \
-		awk '{ print $$$$2 > "$(PKG_INSTALL_DIR)/usr/share/sane/"$$$$1"-$(basename $(notdir $(file))).usbid" }' \
-			$(PKG_INSTALL_DIR)/usr/share/sane/$(basename $(notdir $(file))).usbid ;
-	)
+	cd $(PKG_BUILD_DIR)/doc/descriptions && for file in *.desc; do \
+		sed -rn -e '/^:usbid[[:blank:]]+"?0x(....)"?[[:blank:]]+"?0x(....)"?.*/{s//\1 \2/;p}' $$$$file | \
+			sort -u > $(PKG_INSTALL_DIR)/usr/share/sane/$$$${file/\.desc/}.usbid; \
+		awk -v path=$(PKG_INSTALL_DIR)/usr/share/sane -v file=$$$${file/\.desc/}.usbid '{ print $$$$2 > path"/"$$$$1"-"file }' \
+			$(PKG_INSTALL_DIR)/usr/share/sane/$$$${file/\.desc/}.usbid ; \
+	done
 endef
 
 define Package/libsane/install
