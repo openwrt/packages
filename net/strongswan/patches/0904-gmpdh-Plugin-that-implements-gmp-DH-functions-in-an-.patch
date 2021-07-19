@@ -1,3 +1,21 @@
+From 9f60c2ea6394facac55b90ef66466e1b9edef2a9 Mon Sep 17 00:00:00 2001
+From: Noel Kuntze <noel.kuntze@thermi.consulting>
+Date: Mon, 12 Jul 2021 01:34:23 +0200
+Subject: [PATCH 904/904] gmpdh: Plugin that implements gmp DH functions in an
+ extra plugin. Links and uses gmp plugin source and header files. Patch taken
+ verbatim from openwrt package sources.
+
+---
+ configure.ac                                  |   4 +
+ src/libstrongswan/Makefile.am                 |   7 ++
+ src/libstrongswan/plugins/gmpdh/Makefile.am   |  19 ++++
+ .../plugins/gmpdh/gmpdh_plugin.c              | 101 ++++++++++++++++++
+ .../plugins/gmpdh/gmpdh_plugin.h              |  42 ++++++++
+ 5 files changed, 173 insertions(+)
+ create mode 100644 src/libstrongswan/plugins/gmpdh/Makefile.am
+ create mode 100644 src/libstrongswan/plugins/gmpdh/gmpdh_plugin.c
+ create mode 100644 src/libstrongswan/plugins/gmpdh/gmpdh_plugin.h
+
 --- a/configure.ac
 +++ b/configure.ac
 @@ -146,6 +146,7 @@ ARG_DISBL_SET([fips-prf],       [disable
@@ -8,7 +26,7 @@
  ARG_DISBL_SET([curve25519],     [disable Curve25519 Diffie-Hellman plugin.])
  ARG_DISBL_SET([hmac],           [disable HMAC crypto implementation plugin.])
  ARG_ENABL_SET([md4],            [enable MD4 software implementation plugin.])
-@@ -1478,6 +1479,7 @@ ADD_PLUGIN([botan],                [s ch
+@@ -1483,6 +1484,7 @@ ADD_PLUGIN([botan],                [s ch
  ADD_PLUGIN([af-alg],               [s charon scepclient pki scripts medsrv attest nm cmd aikgen])
  ADD_PLUGIN([fips-prf],             [s charon nm cmd])
  ADD_PLUGIN([gmp],                  [s charon scepclient pki scripts manager medsrv attest nm cmd aikgen fuzz])
@@ -16,7 +34,7 @@
  ADD_PLUGIN([curve25519],           [s charon pki scripts nm cmd])
  ADD_PLUGIN([agent],                [s charon nm cmd])
  ADD_PLUGIN([keychain],             [s charon cmd])
-@@ -1619,6 +1621,7 @@ AM_CONDITIONAL(USE_SHA3, test x$sha3 = x
+@@ -1624,6 +1626,7 @@ AM_CONDITIONAL(USE_SHA3, test x$sha3 = x
  AM_CONDITIONAL(USE_MGF1, test x$mgf1 = xtrue)
  AM_CONDITIONAL(USE_FIPS_PRF, test x$fips_prf = xtrue)
  AM_CONDITIONAL(USE_GMP, test x$gmp = xtrue)
@@ -24,7 +42,7 @@
  AM_CONDITIONAL(USE_CURVE25519, test x$curve25519 = xtrue)
  AM_CONDITIONAL(USE_RDRAND, test x$rdrand = xtrue)
  AM_CONDITIONAL(USE_AESNI, test x$aesni = xtrue)
-@@ -1896,6 +1899,7 @@ AC_CONFIG_FILES([
+@@ -1901,6 +1904,7 @@ AC_CONFIG_FILES([
  	src/libstrongswan/plugins/mgf1/Makefile
  	src/libstrongswan/plugins/fips_prf/Makefile
  	src/libstrongswan/plugins/gmp/Makefile
@@ -65,9 +83,9 @@
 +
 +libstrongswan_gmpdh_la_SOURCES = \
 +	gmpdh_plugin.h gmpdh_plugin.c \
-+	../gmp/gmp_diffie_hellman.c ../gmp/gmp_diffie_hellman.h 
++	../gmp/gmp_diffie_hellman.c ../gmp/gmp_diffie_hellman.h
 +
-+	
++
 +libstrongswan_gmpdh_la_LDFLAGS = -module -avoid-version -Wl,-Bstatic -Wl,-lgmp -Wl,-Bdynamic -Wl,--as-needed $(FPIC)
 +libstrongswan_gmpdh_la_LIBADD  =
 --- /dev/null

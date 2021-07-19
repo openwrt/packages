@@ -1,3 +1,12 @@
+From 81be4fa54760aa4fed53c6d93da443f57a66f262 Mon Sep 17 00:00:00 2001
+From: Noel Kuntze <noel.kuntze@thermi.consulting>
+Date: Mon, 12 Jul 2021 01:30:32 +0200
+Subject: [PATCH 901/904] uci: verbatim patch from openwrt package sources
+
+---
+ src/libcharon/plugins/uci/uci_parser.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
 --- a/src/libcharon/plugins/uci/uci_parser.c
 +++ b/src/libcharon/plugins/uci/uci_parser.c
 @@ -75,7 +75,7 @@ METHOD(enumerator_t, section_enumerator_
