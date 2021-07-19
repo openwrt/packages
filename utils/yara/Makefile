@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=yara
-PKG_VERSION:=4.0.5
+PKG_VERSION:=4.1.1
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/VirusTotal/yara/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=ea7ebefad05831faf6f780cab721611b0135803f03a84c27eeba7bfe0afc3aae
+PKG_HASH:=5f85c69606fad5cdb42e8f8101c96f6962a4928667395d9471e5aaea961e9b1d
 
 PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 PKG_LICENSE:=BSD-3-Clause
