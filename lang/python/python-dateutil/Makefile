@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-dateutil
-PKG_VERSION:=2.8.1
-PKG_RELEASE:=3
+PKG_VERSION:=2.8.2
+PKG_RELEASE:=1
 PKG_LICENSE:=BSD-2-Clause
 
 PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=73ebfe9dbf22e832286dafa60473e4cd239f8592f699aa5adaf10050e6e1823c
+PKG_HASH:=0123cacc1627ae19ddf3c27a5de5bd67ee4586fbdd6440d9748f8abb483d3e86
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
 HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=setuptools-scm
