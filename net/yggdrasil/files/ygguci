@@ -13,28 +13,11 @@ function UCI.defaults()
 	return { 
 		AdminListen = "unix:///var/run/yggdrasil.sock", IfName = "ygg0", 
 		NodeInfoPrivacy = false,
-		LinkLocalTCPPort = 0, IfMTU = 65535,
+		IfMTU = 65535,
 
-		Peers = { }, Listen = { }, MulticastInterfaces = { }, AllowedEncryptionPublicKeys = { },
+		Peers = { }, Listen = { }, MulticastInterfaces = { }, AllowedPublicKeys = { },
 		InterfacePeers = setmetatable({ }, {__jsontype = "object"}),
-		NodeInfo = setmetatable({ }, {__jsontype = "object"}),
-
-		SessionFirewall = {
-			Enable = false,
-			AllowFromDirect = true,
-			AllowFromRemote = true,
-			AlwaysAllowOutbound = true,
-			WhitelistEncryptionPublicKeys = { },
-			BlacklistEncryptionPublicKeys = { }
-		},
-		TunnelRouting = {
-			Enable = false,
-			IPv6RemoteSubnets = setmetatable({ }, {__jsontype = "object"}),
-			IPv6LocalSubnets = { },
-			IPv4RemoteSubnets = setmetatable({ }, {__jsontype = "object"}),
-			IPv4LocalSubnets = { }
-		},
-		SwitchOptions = { MaxTotalQueueSize = 4194304 }
+		NodeInfo = setmetatable({ }, {__jsontype = "object"})
 	}
 end
 
@@ -48,19 +31,15 @@ function UCI.get()
 	local config = cursor:get_all("yggdrasil", "yggdrasil")
 	if not config then return obj end
 
-	obj.EncryptionPublicKey = config.EncryptionPublicKey
-	obj.EncryptionPrivateKey = config.EncryptionPrivateKey
-	obj.SigningPublicKey = config.SigningPublicKey
-	obj.SigningPrivateKey = config.SigningPrivateKey
+	obj.PublicKey = config.PublicKey
+	obj.PrivateKey = config.PrivateKey
 	obj.AdminListen = config.AdminListen or obj.AdminListen
 	obj.IfName = config.IfName or obj.IfName
 	obj.NodeInfo = dkjson.decode(config.NodeInfo) or obj.NodeInfo
 	for _, v in pairs({ "NodeInfoPrivacy" }) do
 		if config[v] ~= nil then obj[v] = to_bool(config[v]) end
 	end
-	for _, v in pairs({ "LinkLocalTCPPort", "IfMTU" }) do
-		if config[v] ~= nil then obj[v] = tonumber(config[v]) end
-	end
+	if config["IfMTU"] ~= nil then obj["IfMTU"] = tonumber(config["IfMTU"]) end
 
 	cursor:foreach("yggdrasil", "peer", function (s) 
 		table.insert(obj.Peers, s.uri)
@@ -69,10 +48,13 @@ function UCI.get()
 		table.insert(obj.Listen, s.uri)
 	end)
 	cursor:foreach("yggdrasil", "multicast_interface", function (s) 
-		table.insert(obj.MulticastInterfaces, s.name)
+		table.insert(obj.MulticastInterfaces, {
+			Beacon = to_bool(s.beacon), Listen = to_bool(s.listen),
+			Port = tonumber(s.port), Regex = s.regex
+		})
 	end)
-	cursor:foreach("yggdrasil", "allowed_encryption_public_key", function (s) 
-		table.insert(obj.AllowedEncryptionPublicKeys, s.key)
+	cursor:foreach("yggdrasil", "allowed_public_key", function (s) 
+		table.insert(obj.AllowedPublicKeys, s.key)
 	end)
 
 	cursor:foreach("yggdrasil", "interface_peer", function (s) 
@@ -81,43 +63,6 @@ function UCI.get()
 		end
 		table.insert(obj.InterfacePeers[s["interface"]], s.uri)
 	end)
-
-	-- session firewall config
-	local session_firewall_config = { "Enable", "AllowFromDirect", "AllowFromRemote", "AlwaysAllowOutbound" }
-	for _, v in pairs(session_firewall_config) do
-		if config["SessionFirewall_"..v] ~= nil then
-			obj.SessionFirewall[v] = to_bool(config["SessionFirewall_"..v])
-		end
-	end
-	cursor:foreach("yggdrasil", "whitelisted_encryption_public_key", function (s) 
-		table.insert(obj.SessionFirewall.WhitelistEncryptionPublicKeys, s.key)
-	end)
-	cursor:foreach("yggdrasil", "blacklisted_encryption_public_key", function (s) 
-		table.insert(obj.SessionFirewall.BlacklistEncryptionPublicKeys, s.key)
-	end)
-	-- /session firewall config
-
-	-- tunnel routing config
-	if config.TunnelRouting_Enable ~= nil then
-		obj.TunnelRouting.Enable = to_bool(config.TunnelRouting_Enable)
-	end
-	cursor:foreach("yggdrasil", "ipv6_remote_subnet", function (s) 
-		obj.TunnelRouting.IPv6RemoteSubnets[s.subnet] = s.key
-	end)
-	cursor:foreach("yggdrasil", "ipv6_local_subnet", function (s) 
-		table.insert(obj.TunnelRouting.IPv6LocalSubnets, s.subnet)
-	end)
-	cursor:foreach("yggdrasil", "ipv4_remote_subnet", function (s) 
-		obj.TunnelRouting.IPv4RemoteSubnets[s.subnet] = s.key
-	end)
-	cursor:foreach("yggdrasil", "ipv4_local_subnet", function (s) 
-		table.insert(obj.TunnelRouting.IPv4LocalSubnets, s.subnet)
-	end)
-	-- /tunnel routing config
-
-	if config.SwitchOptions_MaxTotalQueueSize ~= nil then
-		obj.SwitchOptions.MaxTotalQueueSize = tonumber(config.SwitchOptions_MaxTotalQueueSize)
-	end
 
 	return obj
 end
@@ -137,21 +82,26 @@ function UCI.set(obj)
 
 
 	cursor:set("yggdrasil", "yggdrasil", "yggdrasil")
-	cursor:set("yggdrasil", "yggdrasil", "EncryptionPublicKey", obj.EncryptionPublicKey) 
-	cursor:set("yggdrasil", "yggdrasil", "EncryptionPrivateKey", obj.EncryptionPrivateKey) 
-	cursor:set("yggdrasil", "yggdrasil", "SigningPublicKey", obj.SigningPublicKey) 
-	cursor:set("yggdrasil", "yggdrasil", "SigningPrivateKey", obj.SigningPrivateKey)
+	cursor:set("yggdrasil", "yggdrasil", "PublicKey", obj.PublicKey) 
+	cursor:set("yggdrasil", "yggdrasil", "PrivateKey", obj.PrivateKey) 
 	cursor:set("yggdrasil", "yggdrasil", "AdminListen", obj.AdminListen) 
 	cursor:set("yggdrasil", "yggdrasil", "IfName", obj.IfName) 
 	cursor:set("yggdrasil", "yggdrasil", "NodeInfoPrivacy", to_int(obj.NodeInfoPrivacy)) 
 	cursor:set("yggdrasil", "yggdrasil", "NodeInfo", dkjson.encode(obj.NodeInfo)) 
-	cursor:set("yggdrasil", "yggdrasil", "LinkLocalTCPPort", obj.LinkLocalTCPPort)
 	cursor:set("yggdrasil", "yggdrasil", "IfMTU", obj.IfMTU)
 
 	set_values(cursor, "peer", "uri", obj.Peers)
 	set_values(cursor, "listen_address", "uri", obj.Listen)
-	set_values(cursor, "multicast_interface", "name", obj.MulticastInterfaces)
-	set_values(cursor, "allowed_encryption_public_key", "key", obj.AllowedEncryptionPublicKeys)
+
+	for _, interface in pairs(obj.MulticastInterfaces) do
+		local name = cursor:add("yggdrasil", "multicast_interface")
+		cursor:set("yggdrasil", name, "beacon", to_int(interface.Beacon))
+		cursor:set("yggdrasil", name, "listen", to_int(interface.Listen))
+		cursor:set("yggdrasil", name, "port", interface.Port)
+		cursor:set("yggdrasil", name, "regex", interface.Regex)
+	end
+
+	set_values(cursor, "allowed_public_key", "key", obj.AllowedPublicKeys)
 
 	for interface, peers in pairs(obj.InterfacePeers) do
 		for _, v in pairs(peers) do
@@ -160,37 +110,6 @@ function UCI.set(obj)
 			cursor:set("yggdrasil", name, "uri", v)
 		end
 	end
-
-	-- session firewall config
-	cursor:set("yggdrasil", "yggdrasil", "SessionFirewall_Enable", to_int(obj.SessionFirewall.Enable)) 
-	cursor:set("yggdrasil", "yggdrasil", "SessionFirewall_AllowFromDirect", to_int(obj.SessionFirewall.AllowFromDirect)) 
-	cursor:set("yggdrasil", "yggdrasil", "SessionFirewall_AllowFromRemote", to_int(obj.SessionFirewall.AllowFromRemote)) 
-	cursor:set("yggdrasil", "yggdrasil", "SessionFirewall_AlwaysAllowOutbound", to_int(obj.SessionFirewall.AlwaysAllowOutbound)) 
-	set_values(cursor, "whitelisted_encryption_public_key", "key", obj.SessionFirewall.WhitelistEncryptionPublicKeys)
-	set_values(cursor, "blacklisted_encryption_public_key", "key", obj.SessionFirewall.BlacklistEncryptionPublicKeys)
-	-- /session firewall config
-
-	-- tunnel routing config
-	cursor:set("yggdrasil", "yggdrasil", "TunnelRouting_Enable", to_int(obj.TunnelRouting.Enable)) 
-	if obj.TunnelRouting.IPv6RemoteSubnets ~= nil then
-		for subnet, key in pairs(obj.TunnelRouting.IPv6RemoteSubnets) do
-			local name = cursor:add("yggdrasil", "ipv6_remote_subnet")
-			cursor:set("yggdrasil", name, "subnet", subnet)
-			cursor:set("yggdrasil", name, "key", key)
-		end
-	end
-	set_values(cursor, "ipv6_local_subnet", "subnet", obj.TunnelRouting.IPv6LocalSubnets)
-	if obj.TunnelRouting.IPv4RemoteSubnets ~= nil then
-		for subnet, key in pairs(obj.TunnelRouting.IPv4RemoteSubnets) do
-			local name = cursor:add("yggdrasil", "ipv4_remote_subnet")
-			cursor:set("yggdrasil", name, "subnet", subnet)
-			cursor:set("yggdrasil", name, "key", key)
-		end
-	end
-	set_values(cursor, "ipv4_local_subnet", "subnet", obj.TunnelRouting.IPv4LocalSubnets)
-	-- /tunnel routing config
-
-	cursor:set("yggdrasil", "yggdrasil", "SwitchOptions_MaxTotalQueueSize", obj.SwitchOptions.MaxTotalQueueSize) 
 
 	return cursor:commit("yggdrasil")
 end
