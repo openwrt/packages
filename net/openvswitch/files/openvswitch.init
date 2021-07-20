@@ -82,7 +82,7 @@ ovs_xx() {
 	case "$cfgtype" in
 		ovs)
 			"$ovs_ctl" "$action" \
-				--system-id=random
+				--system-id=random 1000>&-
 			;;
 		ovn_*)
 			"$ovn_ctl" "${action}_${cfgtype#ovn_}"
