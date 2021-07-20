@@ -1,0 +1,24 @@
+From 6b34436ac766dae64749b8d14f18c6910be40131 Mon Sep 17 00:00:00 2001
+From: Christos Zoulas <christos@zoulas.com>
+Date: Mon, 5 Apr 2021 16:36:14 +0000
+Subject: [PATCH] remove "u" from the pattern (Joerg Jenderek)
+
+---
+ magic/Magdir/mail.news | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/magic/Magdir/mail.news
++++ b/magic/Magdir/mail.news
+@@ -1,5 +1,5 @@
+ #------------------------------------------------------------------------------
+-# $File: mail.news,v 1.26 2021/03/21 14:37:03 christos Exp $
++# $File: mail.news,v 1.27 2021/04/05 16:36:14 christos Exp $
+ # mail.news:  file(1) magic for mail and news
+ #
+ # Unfortunately, saved netnews also has From line added in some news software.
+@@ -81,4 +81,4 @@
+ # File format spec: https://wiki.dovecot.org/Design/Dcrypt/#File_format
+ # From: Stephen Gildea
+ 0	string	CRYPTED\003\007		Dovecot encrypted message
+->9	byte	xu			\b, dcrypt version %d
++>9	byte	x			\b, dcrypt version %d
