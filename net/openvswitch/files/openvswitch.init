@@ -59,7 +59,12 @@ ovs_action() {
 		config_foreach "ovs_xx" "$cfgtype" "$action" "$cfgtype"
 	done
 
-	config_foreach ovs_bridge_init "ovs_bridge"
+	case "$action" in
+		restart|start)
+			config_foreach ovs_bridge_init "ovs_bridge"
+			;;
+	esac
+
 }
 
 ovs_xx() {
