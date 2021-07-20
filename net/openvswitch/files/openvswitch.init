@@ -121,6 +121,47 @@ ovs_bridge_port_add() {
 	__port_list="$__port_list ${port} "
 }
 
+ovs_bridge_port_add_complex() {
+	local cfg="$1"
+	local cur_bridge="$2"
+
+	local bridge disabled ofport port tag type
+	local cur_tag cur_type del_port
+
+	config_get_bool disabled "$cfg" disabled 0
+	[ "$disabled" = "0" ] || return
+
+	config_get bridge "$cfg" bridge
+	[ "$bridge" = "$cur_bridge" ] || return
+	ovs-vsctl br-exists "$bridge" || return
+
+	config_get port "$cfg" port
+	[ -n "$port" ] || return
+
+	config_get ofport "$cfg" ofport
+
+	config_get tag "$cfg" tag
+	if [ -n "$tag" ]; then
+		if cur_tag="$(ovs-vsctl get port "$port" tag 2>/dev/null)"; then
+			[ "$tag" = "$cur_tag" ] || del_port=1
+		fi
+	fi
+
+	config_get type "$cfg" type
+	if [ -n "$type" ]; then
+		if cur_type="$(ovs-vsctl get interface "$port" type 2>/dev/null)"; then
+			[ "$type" = "$cur_type" ] || del_port=1
+		fi
+	fi
+
+	[ "${del_port:-0}" -eq 1 ] && ovs-vsctl --if-exists del-port "$bridge" "$port"
+
+	ovs-vsctl --may-exist add-port "$bridge" "$port" ${tag:+tag="$tag"} \
+		${ofport:+ -- set interface "$port" ofport_request="$ofport"} \
+		${type:+ -- set interface "$port" type="$type"}
+	__port_list="$__port_list ${port} "
+}
+
 ovs_bridge_port_cleanup() {
 	for port in `ovs-vsctl list-ports "$name"`; do
 		case "$__port_list" in
@@ -144,6 +185,7 @@ ovs_bridge_init() {
 	ovs-vsctl --may-exist add-br "$name"
 
 	config_list_foreach "$cfg" "ports" ovs_bridge_port_add
+	config_foreach ovs_bridge_port_add_complex ovs_port "$name"
 	config_get_bool drop "$cfg" "drop_unknown_ports" 0
 	[ "$drop" == 1 ] && ovs_bridge_port_cleanup
 
