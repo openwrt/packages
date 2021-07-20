@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=delve
-PKG_VERSION:=1.6.1
+PKG_VERSION:=1.7.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/go-delve/delve/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=e73f7fc063632268d3bdf53486aeafd98cceb8f86f4af56903dedfebaefe690d
+PKG_HASH:=0504f7ea8d63a8f6eccac9f7071f9ac45f8123151ce53aedbf539f83808d122b
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
