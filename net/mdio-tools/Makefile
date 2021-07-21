@@ -5,9 +5,9 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=https://github.com/wkz/mdio-tools
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_DATE:=2021-07-02
-PKG_SOURCE_VERSION:=9f989622c21d5464168a4922542be044f21663b0
-PKG_MIRROR_HASH:=9ae5d920e23a7957a5d5a8c5764969382ce6a174c5c5e7f7841fac0c81bbac75
+PKG_SOURCE_DATE:=2021-07-19
+PKG_SOURCE_VERSION:=65f6898f25b00deebe1c38811e893d9dcd4d7ef3
+PKG_MIRROR_HASH:=9db854037b3e8596ccd71567a45aa60fd3cac88b01c9197d4dd9cf3f32589cb2
 
 PKG_FIXUP:=autoreconf
 
@@ -27,7 +27,7 @@ define Package/mdio-tools
 endef
 
 define Package/mdio-tools/description
-   mdio-tools Linux MDIO register access
+  mdio-tools Linux MDIO register access
 endef
 
 define Package/mdio-tools/install
