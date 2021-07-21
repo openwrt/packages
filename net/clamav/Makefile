@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=clamav
-PKG_VERSION:=0.103.1
-PKG_RELEASE:=2
+PKG_VERSION:=0.103.3
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.clamav.net/downloads/production/
-PKG_HASH:=7308c47b89b268af3b9f36140528927a49ff3e633a9c9c0aac2712d81056e257
+PKG_HASH:=9f6e3d18449f3d1a3992771d696685249dfa12736fe2b2929858f2c7d8276ae9
 
 PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr> \
 		Lucian Cristian <lucian.cristian@gmail.com>
