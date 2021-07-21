@@ -1,6 +1,6 @@
 #!/bin/sh /etc/rc.common
 # Copyright 2017-2020 Stan Grishin (stangri@melmac.net)
-# shellcheck disable=SC2039,SC1091,SC2086
+# shellcheck disable=SC2039,SC1091,SC2086,SC3043,SC3057,SC3060
 PKG_VERSION='dev-test'
 
 # shellcheck disable=SC2034
@@ -8,8 +8,13 @@ START=94
 # shellcheck disable=SC2034
 USE_PROCD=1
 
+if type extra_command 1>/dev/null 2>&1; then
+	extra_command 'version' 'Show version information'
+else
 # shellcheck disable=SC2034
-extra_command "version" "Print version information"
+	EXTRA_COMMANDS='version'
+fi
+
 version() { echo "$PKG_VERSION"; }
 
 readonly __ERROR__='\033[0;31mERROR\033[0m'
@@ -65,13 +70,13 @@ is_enabled() {
 		[ -n "$wan_if4" ] && network_get_gateway wan_gw "$wan_if4"
 		if [ $sleepCount -ge 25 ] || [ -n "$wan_gw" ]; then break; fi
 		output "$serviceName waiting for wan gateway...\\n"
-		sleep 2; network_flush_cache; let "sleepCount+=1";
+		sleep 2; network_flush_cache; sleepCount=$((sleepCount+1));
 	done
 	[ -n "$wan_gw" ] && return 0
 	output "$__ERROR__: $serviceName failed to discover WAN gateway.\\n"; return 1;
 }
 
-is_ovpn() { local dev; dev=$(uci -q get network."$1".ifname); if [ "${dev:0:3}" = "tun" ] || [ "${dev:0:3}" = "tap" ] || [ -f "/sys/devices/virtual/net/${dev}/tun_flags" ]; then return 0; else return 1; fi; }
+is_ovpn() { local dev i; for i in ifname device; do [ -z "$dev" ] && dev="$(uci -q get "network.${1}.${i}")"; done; if [ "${dev:0:3}" = "tun" ] || [ "${dev:0:3}" = "tap" ] || [ -f "/sys/devices/virtual/net/${dev}/tun_flags" ]; then return 0; else return 1; fi; }
 is_wan() { if [ -n "$wan_if4" ] && [ "$1" = "$wan_if4" ]; then return 0; else return 1; fi; }
 is_supported_interface() { if is_wan "$1" || is_ovpn "$1"; then return 0; else return 1; fi; }
 
@@ -98,20 +103,20 @@ start_service() {
 	procd_set_param stderr 1
 	procd_close_instance
 
-	ipt -t mangle -D PREROUTING -m mark --mark 0x00/${FW_MASK} -g VPNBYPASS >/dev/null 2>&1
-	{ ipt -t mangle -N VPNBYPASS; ipt -t mangle -A PREROUTING -m mark --mark 0x00/${FW_MASK} -g VPNBYPASS; } >/dev/null 2>&1
-	ipt -t mangle -A VPNBYPASS -m set --match-set $IPSET dst -j MARK --set-mark ${FW_MARK}/${FW_MASK} >/dev/null 2>&1
 	ip rule del fwmark "$FW_MARK" table "$TID" >/dev/null 2>&1; 
 	ipset -q flush "$IPSET"; ipset -q destroy "$IPSET";
 	ip route flush table "$TID"; ip route flush cache;
 	ip route add default via "$wan_gw" table "$TID"; ip route flush cache;
-	ipset -q -exist create "$IPSET" hash:ip; ipset -q flush "$IPSET"
 	ip rule add fwmark "$FW_MARK" table "$TID"
+	ipset -q -exist create "$IPSET" hash:ip; ipset -q flush "$IPSET"
 	{ modprobe xt_set; modprobe ip_set; modprobe ip_set_hash_ip; } >/dev/null 2>&1
-	for ll in ${ranges}; do ipt -t mangle -I VPNBYPASS 1 -j MARK --set-mark ${FW_MARK}/${FW_MASK} -s "$ll"; done
-	for ll in ${lports}; do ipt -t mangle -I VPNBYPASS 1 -j MARK --set-mark ${FW_MARK}/${FW_MASK} -p tcp -m multiport --sport "${ll//-/:}"; done
-	for ll in ${routes}; do ipt -t mangle -I VPNBYPASS 1 -j MARK --set-mark ${FW_MARK}/${FW_MASK} -d "$ll"; done
-	for ll in ${rports}; do ipt -t mangle -I VPNBYPASS 1 -j MARK --set-mark ${FW_MARK}/${FW_MASK} -p tcp -m multiport --dport "${ll//-/:}"; done
+	ipt -t mangle -D PREROUTING -m mark --mark 0x00/${FW_MASK} -g VPNBYPASS >/dev/null 2>&1
+	{ ipt -t mangle -N VPNBYPASS; ipt -t mangle -A PREROUTING -m mark --mark 0x00/${FW_MASK} -g VPNBYPASS; } >/dev/null 2>&1
+	ipt -t mangle -A VPNBYPASS -m set --match-set $IPSET dst -j MARK --set-mark ${FW_MARK}/${FW_MASK} >/dev/null 2>&1
+	for ll in ${ranges}; do ipt -t mangle -A VPNBYPASS -j MARK --set-mark ${FW_MARK}/${FW_MASK} -s "$ll"; done
+	for ll in ${lports}; do ipt -t mangle -A VPNBYPASS -j MARK --set-mark ${FW_MARK}/${FW_MASK} -p tcp -m multiport --sport "${ll//-/:}"; done
+	for ll in ${routes}; do ipt -t mangle -A VPNBYPASS -j MARK --set-mark ${FW_MARK}/${FW_MASK} -d "$ll"; done
+	for ll in ${rports}; do ipt -t mangle -A VPNBYPASS -j MARK --set-mark ${FW_MARK}/${FW_MASK} -p tcp -m multiport --dport "${ll//-/:}"; done
 	output "$serviceName started with TID: $TID; FW_MARK: $FW_MARK\\n"
 }
 
@@ -127,11 +132,15 @@ stop_service() {
 
 service_triggers_load_interface() { is_supported_interface "$1" && ifaces="${ifaces}${1} "; }
 service_triggers() {
-		local ifaces n
-		config_load network; config_foreach service_triggers_load_interface 'interface';
-		procd_add_reload_trigger 'firewall' 'openvpn' 'vpnbypass'
-		procd_open_trigger
-			for n in $ifaces; do procd_add_reload_interface_trigger "$n"; procd_add_interface_trigger "interface.*" "$n" /etc/init.d/vpnbypass reload; done;
-			output "$serviceName monitoring interfaces: $ifaces\\n"
-		procd_close_trigger
+	local ifaces n
+	config_load network; config_foreach service_triggers_load_interface 'interface';
+	procd_open_trigger
+		procd_add_reload_trigger 'openvpn'
+		if type procd_add_service_trigger 1>/dev/null 2>&1; then
+			procd_add_service_trigger "service.restart" "firewall" /etc/init.d/${packageName} reload
+		fi
+		procd_add_config_trigger "config.change" "${packageName}" /etc/init.d/${packageName} reload
+		for n in $ifaces; do procd_add_reload_interface_trigger "$n"; procd_add_interface_trigger "interface.*" "$n" /etc/init.d/vpnbypass reload; done;
+		output "$serviceName monitoring interfaces: $ifaces\\n"
+	procd_close_trigger
 }
