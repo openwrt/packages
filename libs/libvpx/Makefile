@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libvpx
-PKG_VERSION:=1.9.0
-PKG_RELEASE:=1
+PKG_VERSION:=1.10.0
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://chromium.googlesource.com/webm/libvpx
-PKG_MIRROR_HASH:=0984f8c899b345f6be6f52f5e4888a6d654a45641b7b36de49e1aab22e1ecb58
+PKG_MIRROR_HASH:=2f4d342e8efe566449dc5b2211dac22df81ec28792804b34d47c7dadf5c8a136
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
