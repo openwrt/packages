@@ -1,15 +1,15 @@
 --- a/src/minicom.c
 +++ b/src/minicom.c
-@@ -1161,7 +1161,7 @@ int main(int argc, char **argv)
+@@ -1248,7 +1248,7 @@ int main(int argc, char **argv)
        switch(c) {
- 	case 'v':
- 	  printf(_("%s version %s"), PACKAGE, VERSION);
+         case 'v':
+           printf(_("%s version %s"), PACKAGE, VERSION);
 -#ifdef __DATE__
-+#if 0 
- 	  printf(_(" (compiled %s)"), __DATE__);
++#if 0
+           printf(_(" (compiled %s)"), __DATE__);
  #endif
- 	  printf("\n");
-@@ -1464,7 +1464,7 @@ int main(int argc, char **argv)
+           printf("\n");
+@@ -1580,7 +1580,7 @@ int main(int argc, char **argv)
  
    mc_wprintf(us, "\n%s %s\r\n", _("Welcome to minicom"), VERSION);
    mc_wprintf(us, "\n%s: %s\r\n", _("OPTIONS"), option_string);
