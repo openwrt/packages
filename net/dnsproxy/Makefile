@@ -34,12 +34,22 @@ define Package/dnsproxy
   TITLE:=Simple DNS proxy with DoH, DoT, DoQ and DNSCrypt support
   URL:=https://github.com/AdguardTeam/dnsproxy
   DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle
+  USERID:=dnsproxy=411:dnsproxy=411
 endef
 
 define Package/dnsproxy/description
   A simple DNS proxy server that supports all existing DNS protocols including
   DNS-over-TLS, DNS-over-HTTPS, DNSCrypt, and DNS-over-QUIC.Moreover, it can
   work as a DNS-over-HTTPS, DNS-over-TLS or DNS-over-QUIC server.
+endef
+
+define Package/dnsproxy/install
+	$(call GoPackage/Package/Install/Bin,$(1))
+
+	$(INSTALL_DIR) $(1)/etc/config/
+	$(INSTALL_CONF) $(CURDIR)/files/dnsproxy.config $(1)/etc/config/dnsproxy
+	$(INSTALL_DIR) $(1)/etc/init.d/
+	$(INSTALL_BIN) $(CURDIR)/files/dnsproxy.init $(1)/etc/init.d/dnsproxy
 endef
 
 $(eval $(call GoBinPackage,dnsproxy))
