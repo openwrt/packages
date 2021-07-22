@@ -8,5 +8,5 @@
 +#define NGX_SYS_NERR  128
 +#endif
  
- /*
-  * The strerror() messages are copied because:
+ static ngx_str_t   ngx_unknown_error = ngx_string("Unknown error");
+ 
