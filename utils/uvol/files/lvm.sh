@@ -146,9 +146,14 @@ exportlv() {
 }
 
 getdev() {
+	local dms dm_name
 	existvol "$1" || return 1
 	exportlv "$1"
-	echo "$lv_dm_path"
+
+	for dms in /sys/devices/virtual/block/dm-* ; do
+		read -r dm_name < "$dms/dm/name"
+		[ $(basename "$lv_dm_path") = "$dm_name" ] && echo "$(basename "$dms")"
+	done
 }
 
 getsize() {
@@ -168,7 +173,6 @@ activatevol() {
 			[ "$lv_active" = "active" ] && return 0
 			lvm_cmd lvchange -k n "$lv_full_name" || return $?
 			lvm_cmd lvchange -a y "$lv_full_name" || return $?
-			ubus send block.volume "{\"name\": \"$1\", \"action\": \"up\", \"mode\": \"${lv_name:0:2}\", \"device\": \"$lv_dm_path\"}"
 			return 0
 			;;
 	esac
@@ -186,7 +190,6 @@ disactivatevol() {
 			[ "$lv_active" = "active" ] || return 0
 			lvm_cmd lvchange -a n "$lv_full_name" || return $?
 			lvm_cmd lvchange -k y "$lv_full_name" || return $?
-			ubus send block.volume "{\"name\": \"$1\", \"action\": \"down\", \"mode\": \"${lv_name:0:2}\", \"device\": \"$lv_dm_path\"}"
 			return 0
 			;;
 	esac
@@ -308,7 +311,6 @@ boot() {
 			json_get_vars lv_name lv_dm_path
 			lv_mode="${lv_name:0:2}"
 			lv_name="${lv_name:3}"
-			ubus send block.volume "{\"name\": \"$lv_name\", \"action\": \"up\", \"mode\": \"$lv_mode\", \"device\": \"$lv_dm_path\"}"
 			json_select ..
 		done
 		json_select ..
