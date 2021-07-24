@@ -100,10 +100,13 @@ define Package/alsa-lib/install
 		$(PKG_INSTALL_DIR)/usr/lib/libatopology.so.* \
 		$(1)/usr/lib/
 
-	$(INSTALL_DIR) $(1)/usr/share/alsa/{cards,pcm}
+	$(INSTALL_DIR) $(1)/usr/share/alsa/{cards,ctl,pcm}
 	$(INSTALL_DATA) \
 		$(PKG_INSTALL_DIR)/usr/share/alsa/alsa.conf \
 		$(1)/usr/share/alsa/
+	$(INSTALL_DATA) \
+		$(PKG_INSTALL_DIR)/usr/share/alsa/ctl/* \
+		$(1)/usr/share/alsa/ctl/
 	$(INSTALL_DATA) \
 		$(PKG_INSTALL_DIR)/usr/share/alsa/pcm/* \
 		$(1)/usr/share/alsa/pcm/
