@@ -17,6 +17,8 @@ ubidev=$(ls -1 /sys/devices/virtual/ubi | head -n 1)
 
 read -r ebsize < "/sys/devices/virtual/ubi/${ubidev}/eraseblock_size"
 
+. /lib/functions/uvol.sh
+
 freebytes() {
 	read -r availeb < "/sys/devices/virtual/ubi/${ubidev}/avail_eraseblocks"
 	echo $((availeb * ebsize))
@@ -87,9 +89,10 @@ getuserdev() {
 mkubifs() {
 	local tmp_mp
 	tmp_mp="$(mktemp -d)"
-	mount -t ubifs "$1" "$tmp_mp"
-	umount "$tmp_mp"
-	rmdir "$tmp_mp"
+	mount -t ubifs "$1" "$tmp_mp" || return $?
+	umount "$tmp_mp" || return $?
+	rmdir "$tmp_mp" || return $?
+	return 0
 }
 
 createvol() {
@@ -107,22 +110,33 @@ createvol() {
 			return 22
 			;;
 	esac
-	ubimkvol "/dev/$ubidev" -N "uvol-$mode-$1" -s "$2"
+	ubimkvol "/dev/$ubidev" -N "uvol-$mode-$1" -s "$2" || return $?
 	ret=$?
 	[ $ret -eq 0 ] || return $ret
 	voldev="$(getdev "$@")"
-	ubiupdatevol -t "/dev/$voldev"
+	ubiupdatevol -t "/dev/$voldev" || return $?
 	[ "$mode" = "wp" ] || return 0
-	mkubifs "/dev/$voldev"
-	ubirename "/dev/$ubidev" "uvol-wp-$1" "uvol-wd-$1"
+	mkubifs "/dev/$voldev" || return $?
+	uvol_uci_add "$1" "/dev/$voldev" "rw"
+	ubirename "/dev/$ubidev" "uvol-wp-$1" "uvol-wd-$1" || return $?
 }
 
 removevol() {
-	local voldev
+	local voldev volnum
 	voldev=$(getdev "$@")
 	[ "$voldev" ] || return 2
-	local volnum="${voldev#${ubidev}_}"
+	vol_is_mode "$voldev" rw && return 16
+	vol_is_mode "$voldev" ro && return 16
+	volnum="${voldev#${ubidev}_}"
 	ubirmvol "/dev/$ubidev" -n "$volnum" || return $?
+	uvol_uci_remove "$1"
+	uvol_uci_commit "$1"
+}
+
+block_hotplug() {
+	export ACTION="$1"
+	export DEVNAME="$2"
+	/sbin/block hotplug
 }
 
 activatevol() {
@@ -133,12 +147,15 @@ activatevol() {
 	vol_is_mode "$voldev" ro && return 0
 	vol_is_mode "$voldev" wo && return 22
 	vol_is_mode "$voldev" wp && return 16
+	uvol_uci_commit "$1"
 	if vol_is_mode "$voldev" rd; then
-		ubirename "/dev/$ubidev" "uvol-rd-$1" "uvol-ro-$1"
-		ubiblock --create "/dev/$voldev"
+		ubirename "/dev/$ubidev" "uvol-rd-$1" "uvol-ro-$1" || return $?
+		ubiblock --create "/dev/$voldev" || return $?
+		block_hotplug add "ubiblock${voldev:3}"
 		return 0
 	elif vol_is_mode "$voldev" wd; then
-		ubirename "/dev/$ubidev" "uvol-wd-$1" "uvol-rw-$1"
+		ubirename "/dev/$ubidev" "uvol-wd-$1" "uvol-rw-$1" || return $?
+		block_hotplug add "$voldev"
 		return 0
 	fi
 }
@@ -152,12 +169,14 @@ disactivatevol() {
 	vol_is_mode "$voldev" wo && return 22
 	vol_is_mode "$voldev" wp && return 16
 	if vol_is_mode "$voldev" ro; then
-		[ -e "/dev/ubiblock${voldev:3}" ] || return 0
-		ubiblock --remove "/dev/$voldev" || return $?
+		/sbin/block umount "ubiblock${voldev:3}"
+		ubiblock --remove "/dev/$voldev"
 		ubirename "/dev/$ubidev" "uvol-ro-$1" "uvol-rd-$1" || return $?
 		return 0
 	elif vol_is_mode "$voldev" rw; then
+		/sbin/block umount "$voldev"
 		ubirename "/dev/$ubidev" "uvol-rw-$1" "uvol-wd-$1" || return $?
+		block_hotplug remove "$voldev"
 		return 0
 	fi
 }
@@ -169,6 +188,7 @@ updatevol() {
 	[ "$2" ] || return 22
 	vol_is_mode "$voldev" wo || return 22
 	ubiupdatevol -s "$2" "/dev/$voldev" -
+	uvol_uci_add "$1" "/dev/$voldev" "ro"
 	ubirename "/dev/$ubidev" "uvol-wo-$1" "uvol-rd-$1"
 }
 
@@ -199,7 +219,7 @@ bootvols() {
 		case "$volname" in
 			uvol-ro-*)
 				voldev="/dev/ubiblock${voldev:3}"
-				ubiblock --create "/dev/$voldev"
+				ubiblock --create "/dev/$voldev" || return $?
 				;;
 			*)
 				continue

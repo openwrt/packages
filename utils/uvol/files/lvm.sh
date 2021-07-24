@@ -11,6 +11,7 @@ fi
 command -v lvm >/dev/null || return 1
 
 . /lib/functions.sh
+. /lib/functions/uvol.sh
 . /lib/upgrade/common.sh
 . /usr/share/libubox/jshn.sh
 
@@ -147,13 +148,19 @@ exportlv() {
 
 getdev() {
 	local dms dm_name
-	existvol "$1" || return 1
-	exportlv "$1"
 
 	for dms in /sys/devices/virtual/block/dm-* ; do
+		[ "$dms" = "/sys/devices/virtual/block/dm-*" ] && break
 		read -r dm_name < "$dms/dm/name"
 		[ $(basename "$lv_dm_path") = "$dm_name" ] && echo "$(basename "$dms")"
 	done
+}
+
+getuserdev() {
+	local dms dm_name
+	existvol "$1" || return 1
+	exportlv "$1"
+	getdev "$@"
 }
 
 getsize() {
@@ -171,8 +178,9 @@ activatevol() {
 			;;
 		*)
 			[ "$lv_active" = "active" ] && return 0
-			lvm_cmd lvchange -k n "$lv_full_name" || return $?
+			uvol_uci_commit "$1"
 			lvm_cmd lvchange -a y "$lv_full_name" || return $?
+			lvm_cmd lvchange -k n "$lv_full_name" || return $?
 			return 0
 			;;
 	esac
@@ -180,6 +188,7 @@ activatevol() {
 
 disactivatevol() {
 	exportlv "$1"
+	local devname
 	[ "$lv_path" ] || return 2
 	case "$lv_path" in
 		/dev/*/wo_*|\
@@ -188,7 +197,9 @@ disactivatevol() {
 			;;
 		*)
 			[ "$lv_active" = "active" ] || return 0
-			lvm_cmd lvchange -a n "$lv_full_name" || return $?
+			devname="$(getdev "$1")"
+			[ "$devname" ] && /sbin/block umount "$devname"
+			lvm_cmd lvchange -a n "$lv_full_name"
 			lvm_cmd lvchange -k y "$lv_full_name" || return $?
 			return 0
 			;;
@@ -225,30 +236,41 @@ createvol() {
 			;;
 	esac
 
-	lvm_cmd lvcreate -p "$lvmode" -a n -y -W n -Z n -n "${mode}_$1" -l "$size_ext" "$vg_name"
+	lvm_cmd lvcreate -p "$lvmode" -a n -y -W n -Z n -n "${mode}_$1" -l "$size_ext" "$vg_name" || return $?
 	ret=$?
 	if [ ! $ret -eq 0 ] || [ "$lvmode" = "r" ]; then
 		return $ret
 	fi
 	exportlv "$1"
 	[ "$lv_full_name" ] || return 22
-	lvm_cmd lvchange -a y "$lv_full_name" || return 1
+	lvm_cmd lvchange -a y "$lv_full_name" || return $?
 	if [ "$lv_size" -gt $(( 100 * 1024 * 1024 )) ]; then
 		mkfs.f2fs -f -l "$1" "$lv_path"
 		ret=$?
-		[ $ret != 0 ] && [ $ret != 134 ] && return 1
+		[ $ret != 0 ] && [ $ret != 134 ] && {
+			lvm_cmd lvchange -a n "$lv_full_name" || return $?
+			return $ret
+		}
 	else
-		mke2fs -F -L "$1" "$lv_path" || return 1
+		mke2fs -F -L "$1" "$lv_path" || {
+			ret=$?
+			lvm_cmd lvchange -a n "$lv_full_name" || return $?
+			return $ret
+		}
 	fi
-	lvm_cmd lvrename "$vg_name" "wp_$1" "rw_$1"
-	exportlv "$1"
+	uvol_uci_add "$1" "/dev/$(getdev "$1")" "rw"
+	lvm_cmd lvchange -a n "$lv_full_name" || return $?
+	lvm_cmd lvrename "$vg_name" "wp_$1" "rw_$1" || return $?
 	return 0
 }
 
 removevol() {
 	exportlv "$1"
 	[ "$lv_full_name" ] || return 2
-	lvm_cmd lvremove -y "$lv_full_name"
+	[ "$lv_active" = "active" ] && return 16
+	lvm_cmd lvremove -y "$lv_full_name" || return $?
+	uvol_uci_remove "$1"
+	uvol_uci_commit "$1"
 }
 
 updatevol() {
@@ -257,12 +279,13 @@ updatevol() {
 	[ "$lv_size" -ge "$2" ] || return 27
 	case "$lv_path" in
 		/dev/*/wo_*)
-			lvm_cmd lvchange -p rw "$lv_full_name"
-			lvm_cmd lvchange -a y "$lv_full_name"
+			lvm_cmd lvchange -p rw "$lv_full_name" || return $?
+			lvm_cmd lvchange -a y "$lv_full_name" || return $?
 			dd of="$lv_path"
-			lvm_cmd lvchange -a n "$lv_full_name"
-			lvm_cmd lvchange -p r "$lv_full_name"
-			lvm_cmd lvrename "$lv_full_name" "${lv_full_name%%/*}/ro_$1"
+			uvol_uci_add "$1" "/dev/$(getdev "$1")" "ro"
+			lvm_cmd lvchange -a n "$lv_full_name" || return $?
+			lvm_cmd lvchange -p r "$lv_full_name" || return $?
+			lvm_cmd lvrename "$lv_full_name" "${lv_full_name%%/*}/ro_$1" || return $?
 			return 0
 			;;
 		default)
@@ -344,7 +367,7 @@ case "$cmd" in
 		removevol "$@"
 		;;
 	device)
-		getdev "$@"
+		getuserdev "$@"
 		;;
 	size)
 		getsize "$@"
