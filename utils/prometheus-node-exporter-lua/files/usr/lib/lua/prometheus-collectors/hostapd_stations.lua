@@ -16,23 +16,29 @@ local function get_wifi_interface_labels()
       handle:close()
 
       local hostapd = {}
+      local bss_idx = -1
       for line in hostapd_status:gmatch("[^\r\n]+") do
         local name, value = string.match(line, "(.+)=(.+)")
-        if name == "phy" then
-          hostapd["vif"] = value
         elseif name == "freq" then
           hostapd["freq"] = value
         elseif name == "channel" then
           hostapd["channel"] = value
-        elseif name == "bssid[0]" then
-          hostapd["bssid"] = value
-        elseif name == "ssid[0]" then
-          hostapd["ssid"] = value
+        -- hostapd gives us all bss on the relevant phy, find the one we're interested in
+        elseif string.match(name, "bss%[%d%]") then
+          if value == cfg['ifname'] then
+            bss_idx = tonumber(string.match(name, "bss%[(%d)%]"))
+          end
+        elseif bss_idx >= 0 then
+          if name == "bssid[" .. bss_idx .. "]" then
+            hostapd["bssid"] = value
+          elseif name == "ssid[" .. bss_idx .. "]" then
+            hostapd["ssid"] = value
+          end
         end
       end
 
       local labels = {
-        vif = hostapd['vif'],
+        vif = cfg['ifname'],
         ssid = hostapd['ssid'],
         bssid = hostapd['bssid'],
         encryption = cfg['encryption'], -- In a mixed scenario it would be good to know if A or B was used
