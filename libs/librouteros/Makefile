@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=librouteros
 PKG_SOURCE_DATE:=2018-07-19
 PKG_SOURCE_VERSION:=c485c777ffbbbd87c3d72d843af36ba016803cae
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Sven Roederer <devel-sven@geroedel.de>
 PKG_LICENSE:=ISC
