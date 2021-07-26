@@ -1,10 +1,10 @@
 #!/bin/sh
 # send mail script for travelmate notifications
-# Copyright (c) 2020 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2020-2021 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # set (s)hellcheck exceptions
-# shellcheck disable=1091,2016,2039,2059,2086,2143,2181,2188
+# shellcheck disable=1091,3040
 
 # Please note: you have to setup the package 'msmtp' before using this script
 
@@ -12,8 +12,9 @@ export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 set -o pipefail
 
-if [ "$(uci_get 2>/dev/null; printf "%u" "${?}")" = "127" ]
-then
+# source function library if necessary
+#
+if [ -z "${_C}" ]; then
 	. "/lib/functions.sh"
 fi
 
@@ -25,32 +26,21 @@ trm_rtfile="$(uci_get travelmate global trm_rtfile "/tmp/trm_runtime.json")"
 trm_mailpgm="$(command -v msmtp)"
 trm_logger="$(command -v logger)"
 
-f_log()
-{
-	local class="${1}" log_msg="${2}"
-
-	if [ -x "${trm_logger}" ]
-	then
-		"${trm_logger}" -p "${class}" -t "trm-mail [${$}]" "${log_msg}"
-	else
-		printf "%s %s %s\\n" "${class}" "trm-mail [${$}]" "${log_msg}"
-	fi
-}
-
-if [ -z "${trm_mailreceiver}" ]
-then
-	f_log "err" "please set the mail receiver with the 'trm_mailreceiver' option"
+if [ -z "${trm_mailreceiver}" ]; then
+	"${trm_logger}" -p "err" -t "trm-mail [${$}]" "please set the mail receiver with the 'trm_mailreceiver' option" 2>/dev/null
 	exit 1
 fi
 
-if [ "${trm_debug}" = "1" ]
-then
+if [ "${trm_debug}" = "1" ]; then
 	debug="--debug"
 fi
 
 # info preparation
 #
-sys_info="$(strings /etc/banner 2>/dev/null; ubus call system board | sed -e 's/\"release\": {//' | sed -e 's/^[ \t]*//' | sed -e 's/[{}\",]//g' | sed -e 's/[ ]/  \t/' | sed '/^$/d' 2>/dev/null)"
+sys_info="$(
+	strings /etc/banner 2>/dev/null
+	ubus call system board | sed -e 's/\"release\": {//' | sed -e 's/^[ \t]*//' | sed -e 's/[{}\",]//g' | sed -e 's/[ ]/  \t/' | sed '/^$/d' 2>/dev/null
+)"
 trm_info="$(/etc/init.d/travelmate status 2>/dev/null)"
 sta_info="$(jsonfilter -i "${trm_rtfile}" -l1 -e '@.data.station_id')"
 trm_mailtopic="$(uci_get travelmate global trm_mailtopic "travelmate connection to '${sta_info}'")"
@@ -66,6 +56,4 @@ trm_mailtext="${trm_mailtext}</pre></body></html>"
 # send mail
 #
 printf "%b" "${trm_mailhead}${trm_mailtext}" 2>/dev/null | "${trm_mailpgm}" ${debug} -a "${trm_mailprofile}" "${trm_mailreceiver}" >/dev/null 2>&1
-mail_rc="${?}"
-f_log "info" "mail sent to '${trm_mailreceiver}' with rc '${mail_rc}'"
-exit ${mail_rc}
+"${trm_logger}" -p "info" -t "trm-mail [${$}]" "mail sent to '${trm_mailreceiver}' with rc '${?}'"  2>/dev/null
