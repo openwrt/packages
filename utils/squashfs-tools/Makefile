@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=squashfs-tools
-PKG_VERSION:=4.4
-PKG_RELEASE:=2
+PKG_VERSION:=4.5
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING
@@ -18,7 +18,7 @@ PKG_CPE_ID:=cpe:/a:phillip_lougher:squashfs
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/plougher/squashfs-tools/tar.gz/${PKG_VERSION}?
-PKG_HASH:=a7fa4845e9908523c38d4acf92f8a41fdfcd19def41bd5090d7ad767a6dc75c3
+PKG_HASH:=b9e16188e6dc1857fe312633920f7d71cc36b0162eb50f3ecb1f0040f02edddd
 
 PKG_BUILD_PARALLEL:=1
 include $(INCLUDE_DIR)/package.mk
@@ -83,11 +83,13 @@ endef
 define Package/squashfs-tools-mksquashfs/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/squashfs-tools/mksquashfs $(1)/usr/sbin/mksquashfs
+	$(LN) mksquashfs $(1)/usr/sbin/sqfstar
 endef
 
 define Package/squashfs-tools-unsquashfs/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/squashfs-tools/unsquashfs $(1)/usr/sbin/unsquashfs
+	$(LN) unsquashfs $(1)/usr/sbin/sqfscat
 endef
 
 $(eval $(call BuildPackage,squashfs-tools-mksquashfs))
