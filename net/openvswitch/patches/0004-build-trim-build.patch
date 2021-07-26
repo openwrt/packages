@@ -10,7 +10,7 @@ Signed-off-by: Yousong Zhou <zhouyousong@yunionyun.com>
 
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -475,12 +475,10 @@ dist-docs:
+@@ -477,12 +477,10 @@ dist-docs:
  	VERSION=$(VERSION) MAKE='$(MAKE)' $(srcdir)/build-aux/dist-docs $(srcdir) $(docs)
  .PHONY: dist-docs
  

@@ -63,7 +63,7 @@ E.g. replace in-tree datapath module with upstream version
 
 # UCI configuration options
 
-There are 4 config section types in package openvswitch:
+There are 5 config section types in package openvswitch:
 ovs ovn_northd, ovn_controller & ovs_bridge.
 
 Each of these supports a disabled option, which should be 
@@ -77,3 +77,14 @@ for initialising a virtual bridge with an OpenFlow controller.
 | disabled   | boolean | no       | 0                              | If set to true, disable initialisation of the named bridge |
 | name       | string  | no       | Inherits UCI config block name | The name of the switch in the OVS daemon                   |
 | controller | string  | no       | (none)                         | The endpoint of an OpenFlow controller for this bridge     |
+
+The ovs_port section can be used to add ports to a bridge. It supports the options below.
+
+| Name     | Type    | Required | Default | Description
+| ---------|---------|----------|---------|------------------------------------------------|
+| disabled | boolean | no       | 0       | If set to 1, do not add the port to the bridge |
+| bridge   | string  | yes      | (none)  | Name of the bridge to add the port to          |
+| port     | string  | yes      | (none)  | Name of the port to add to the bridge          |
+| ofport   | integer | no       | (none)  | OpenFlow port number to be used by the port    |
+| tag      | integer | no       | (none)  | 802.1Q VLAN tag to set on the port             |
+| type     | string  | no       | (none)  | Port type, e.g. internal, erspan, type, ...    |
