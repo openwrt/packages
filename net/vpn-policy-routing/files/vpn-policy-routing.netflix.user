@@ -15,17 +15,17 @@ _ret=1
 if [ ! -s "$TARGET_FNAME" ]; then
 	if [ "$DB_SOURCE" = "ipinfo.io" ]; then
 		TARGET_URL="https://ipinfo.io/AS${TARGET_ASN}"
-		curl "$TARGET_URL" 2>/dev/null | grep -E "a href.*${TARGET_ASN}\/" | grep -v ":" | sed "s/^.*<a href=\"\/AS${TARGET_ASN}\///; s/\" >//" > "$TARGET_FNAME"
+		uclient-fetch --no-check-certificate -qO- "$TARGET_URL" 2>/dev/null | grep -E "a href.*${TARGET_ASN}\/" | grep -v ":" | sed "s/^.*<a href=\"\/AS${TARGET_ASN}\///; s/\" >//" > "$TARGET_FNAME"
 	fi
 
 	if [ "$DB_SOURCE" = "api.hackertarget.com" ]; then
 		TARGET_URL="https://api.hackertarget.com/aslookup/?q=AS${TARGET_ASN}"
-		curl "$TARGET_URL" 2>/dev/null | sed '1d' > "$TARGET_FNAME"
+		uclient-fetch --no-check-certificate -qO- "$TARGET_URL" 2>/dev/null | sed '1d' > "$TARGET_FNAME"
 	fi
 
 	if [ "$DB_SOURCE" = "api.bgpview.io" ]; then
 		TARGET_URL="https://api.bgpview.io/asn/${TARGET_ASN}/prefixes"
-		curl -s "$TARGET_URL" 2>/dev/null | jsonfilter -e '@.data.ipv4_prefixes[*].prefix' > "$TARGET_FNAME"
+		uclient-fetch --no-check-certificate -qO- "$TARGET_URL" 2>/dev/null | jsonfilter -e '@.data.ipv4_prefixes[*].prefix' > "$TARGET_FNAME"
 	fi
 fi
 
