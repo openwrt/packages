@@ -90,6 +90,7 @@ ovs_xx() {
 		ovs)
 			"$ovs_ctl" "$action" \
 				--system-id=random 1000>&-
+			ovs_set_ssl
 			;;
 		ovn_*)
 			"$ovn_ctl" "${action}_${cfgtype#ovn_}"
@@ -215,4 +216,15 @@ ovs_bridge_init() {
 	config_get controller "$cfg" controller
 	[ -n "$controller" ] && \
 		ovs-vsctl set-controller "$name" "$controller"
+}
+
+ovs_set_ssl() {
+	local ca="$(uci -q get openvswitch.ovs.ca)"
+	[ -f "$ca" ] || return
+	local cert="$(uci get openvswitch.ovs.cert)"
+	[ -f "$cert" ] || return
+	local key="$(uci get openvswitch.ovs.key)"
+	[ -f "$key" ] || return
+
+	ovs-vsctl set-ssl "$key" "$cert" "$ca"
 }
