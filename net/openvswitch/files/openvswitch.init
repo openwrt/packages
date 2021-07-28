@@ -7,6 +7,8 @@
 . /lib/functions/procd.sh
 START=15
 
+basescript=$(readlink "$initscript")
+
 ovs_ctl="/usr/share/openvswitch/scripts/ovs-ctl"; [ -x "$ovs_ctl" ] || ovs_ctl=:
 ovn_ctl="/usr/share/ovn/scripts/ovn-ctl"; [ -x "$ovn_ctl" ] || ovn_ctl=:
 
