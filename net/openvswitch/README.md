@@ -69,6 +69,19 @@ ovs ovn_northd, ovn_controller & ovs_bridge.
 Each of these supports a disabled option, which should be 
 set to 0 to launch the respective daemons.
 
+The ovs section section also supports the options below, to configure a set of
+SSL CA, certificate and private key. After adding these to Open vSwitch, you
+may specify ssl: connection methods for e.g. the OpenFlow controller. Note that
+Open vSwitch only reads these files during startup, so it needs to be restarted
+after adding or changing these options.
+
+| Name     | Type    | Required | Default | Description                       |
+|----------|---------|----------|---------|-----------------------------------|
+| disabled | boolean | no       | 0       | If set to 1, do not configure SSL |
+| ca       | string  | no       | (none)  | Path to CA certificate            |
+| cert     | string  | no       | (none)  | Path to certificate               |
+| key      | string  | no       | (none)  | Path to private key               |
+
 The ovs_bridge section also supports the options below,
 for initialising a virtual bridge with an OpenFlow controller.
 
