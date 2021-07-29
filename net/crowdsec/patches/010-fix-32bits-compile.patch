@@ -1,0 +1,29 @@
+Author: Kerma Gérald <gandalf@gk2.net>
+Date:   Mon Sep 20 10:34:20 2021 +0200
+
+    Use math.MaxInt32 instead of math.MaxUint32
+    
+    To fix 32 bits compilation in v1.2.0
+    https://github.com/crowdsecurity/crowdsec/issues/979
+    
+    Signed-off-by: Kerma Gérald <gandalf@gk2.net>
+
+--- a/pkg/csplugin/broker.go
++++ b/pkg/csplugin/broker.go
+@@ -400,14 +400,14 @@ func getProccessAtr(username string, gro
+ 	if err != nil {
+ 		return nil, err
+ 	}
+-	if uid < 0 && uid > math.MaxUint32 {
++	if uid < 0 && uid > math.MaxInt32 {
+ 		return nil, fmt.Errorf("out of bound uid")
+ 	}
+ 	gid, err := strconv.Atoi(g.Gid)
+ 	if err != nil {
+ 		return nil, err
+ 	}
+-	if gid < 0 && gid > math.MaxUint32 {
++	if gid < 0 && gid > math.MaxInt32 {
+ 		return nil, fmt.Errorf("out of bound gid")
+ 	}
+ 	return &syscall.SysProcAttr{
