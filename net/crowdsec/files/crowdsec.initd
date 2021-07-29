@@ -1,0 +1,44 @@
+#!/bin/sh /etc/rc.common
+# (C) 2021 Gerald Kerma
+
+START=99
+USE_PROCD=1
+NAME=crowdsec
+PROG=/usr/bin/crowdsec
+CONFIG=/etc/crowdsec/config.yaml
+RUNCONFDIR=/srv/crowdsec/data
+VARCONFIGDIR=/var/etc/crowdsec
+VARCONFIG=/var/etc/crowdsec/config.yaml
+
+service_triggers() {
+	procd_add_reload_trigger crowdsec
+}
+
+init_config() {
+	config_load crowdsec
+	config_get data_dir crowdsec data_dir "${RUNCONFDIR}"
+	config_get db_path crowdsec db_path "${RUNCONFDIR}/crowdsec.db"
+
+	# Create tmp dir & permissions if needed
+	if [ ! -d "${VARCONFIGDIR}" ]; then
+		mkdir -m 0755 -p "${VARCONFIGDIR}"
+	fi;
+
+	cp $CONFIG $VARCONFIG
+
+	sed -i "s,^\(\s*data_dir\s*:\s*\).*\$,\1$data_dir," $VARCONFIG
+	sed -i "s,^\(\s*db_path\s*:\s*\).*\$,\1$db_path," $VARCONFIG
+
+	# Create data dir & permissions if needed
+	if [ ! -d "${RUNCONFDIR}" ]; then
+		mkdir -m 0755 -p "${RUNCONFDIR}"
+	fi;
+}
+
+start_service() {
+	init_config
+
+	procd_open_instance
+	procd_set_param command "$PROG" -c "$VARCONFIG"
+	procd_close_instance
+}
