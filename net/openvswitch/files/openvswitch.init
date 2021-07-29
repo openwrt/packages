@@ -171,18 +171,39 @@ ovs_bridge_port_cleanup() {
 	done
 }
 
+ovs_bridge_validate_datapath_id() {
+	local dpid="$1"
+
+	if expr "$dpid" : '[[:xdigit:]]\{16\}$' > /dev/null; then
+		return 0
+	elif expr "$dpid" : '0x[[:xdigit:]]\{1,16\}$' > /dev/null; then
+		return 0
+	else
+		logger -t openvswitch "invalid datapath_id: $dpid"
+		return 1
+	fi
+}
+
 ovs_bridge_init() {
 	local cfg="$1"
 
 	local disabled
 	local name
 	local controller
+	local datapath_id
 
 	config_get_bool disabled "$cfg" disabled 0
 	[ "$disabled" == "0" ] || return
 
 	config_get name "$cfg" name $cfg
 	ovs-vsctl --may-exist add-br "$name"
+
+	config_get datapath_id "$cfg" datapath_id
+	[ -n "$datapath_id" ] && {
+		ovs_bridge_validate_datapath_id "$datapath_id" && {
+			ovs-vsctl --if-exists set bridge "$name" other-config:datapath-id="$datapath_id"
+		}
+	}
 
 	config_list_foreach "$cfg" "ports" ovs_bridge_port_add
 	config_foreach ovs_bridge_port_add_complex ovs_port "$name"

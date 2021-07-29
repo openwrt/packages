@@ -72,11 +72,12 @@ set to 0 to launch the respective daemons.
 The ovs_bridge section also supports the options below,
 for initialising a virtual bridge with an OpenFlow controller.
 
-| Name       | Type    | Required | Default                        | Description                                                |
-|------------|---------|----------|--------------------------------|------------------------------------------------------------|
-| disabled   | boolean | no       | 0                              | If set to true, disable initialisation of the named bridge |
-| name       | string  | no       | Inherits UCI config block name | The name of the switch in the OVS daemon                   |
-| controller | string  | no       | (none)                         | The endpoint of an OpenFlow controller for this bridge     |
+| Name        | Type    | Required | Default                        | Description                                                |
+|-------------|---------|----------|--------------------------------|------------------------------------------------------------|
+| disabled    | boolean | no       | 0                              | If set to true, disable initialisation of the named bridge |
+| name        | string  | no       | Inherits UCI config block name | The name of the switch in the OVS daemon                   |
+| controller  | string  | no       | (none)                         | The endpoint of an OpenFlow controller for this bridge     |
+| datapath_id | string  | no       | (none)                         | The OpenFlow datapath ID for this bridge                   |
 
 The ovs_port section can be used to add ports to a bridge. It supports the options below.
 
