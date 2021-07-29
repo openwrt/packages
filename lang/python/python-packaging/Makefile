@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=packaging
 PKG_HASH:=5b327ac1320dc863dca72f4514ecc086f31186744b84a230374cc1fd776feae5
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
+PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=Apache-2.0 BSD-2-Clause
 PKG_LICENSE_FILES:=LICENSE.APACHE LICENSE.BSD
 

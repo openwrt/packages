@@ -17,7 +17,7 @@ PKG_HASH:=c5a3aca026cd1a3b93a77b159b36cd7a1098eb6d90e9ae4a69872cd7a419a87b
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/ripe-atlas-probe-busybox-$(PKG_VERSION)
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
+PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=LICENSE
 

@@ -15,7 +15,7 @@ PKG_SOURCE_URL:=https://people.torproject.org/~dgoulet/torsocks/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_HASH:=b9f1b981d6b3fd4e1820de1eee325f8a7038c84765d5a6cd9af12571d5cc3622
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
+PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=GPLv2
 PKG_LICENSE_FILES:=LICENSE
 

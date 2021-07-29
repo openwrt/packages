@@ -14,7 +14,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/slimm609/checksec.sh/archive/$(PKG_VERSION)
 PKG_HASH:=05bb28e22a916ff5f43d60ddf7b00f233618bbf8f283a059f8e0ceb695bc4ac0
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
+PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE_FILES:=LICENSE.txt
 
 PKG_INSTALL:=1

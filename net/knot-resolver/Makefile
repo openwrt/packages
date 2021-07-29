@@ -17,7 +17,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://secure.nic.cz/files/knot-resolver
 PKG_HASH:=8b6f447d5fe93422d4c129a2d4004a977369c3aa6e55258ead1cbd488bc01436
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
+PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=GPL-3.0-later
 PKG_LICENSE_FILES:=COPYING
 
