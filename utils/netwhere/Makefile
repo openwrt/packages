@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netwhere
 PKG_VERSION:=0.9
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=netwhere-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/benhsmith/netwhere/archive/$(PKG_VERSION)/
@@ -12,8 +12,6 @@ PKG_MAINTAINER:=Ben Smith <le.ben.smith@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_DEPENDS:=boost
-
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
@@ -22,7 +20,7 @@ define Package/netwhere
   CATEGORY:=Utilities
   TITLE:=Netwhere
   URL:=https://github.com/benhsmith/netwhere
-  DEPENDS:=+libtins +libmicrohttpd
+  DEPENDS:=+boost +libtins +libmicrohttpd
 endef
 
 define Package/netwhere/description
