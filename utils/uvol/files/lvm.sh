@@ -179,8 +179,8 @@ activatevol() {
 		*)
 			[ "$lv_active" = "active" ] && return 0
 			uvol_uci_commit "$1"
-			lvm_cmd lvchange -a y "$lv_full_name" || return $?
 			lvm_cmd lvchange -k n "$lv_full_name" || return $?
+			lvm_cmd lvchange -a y "$lv_full_name" || return $?
 			return 0
 			;;
 	esac
