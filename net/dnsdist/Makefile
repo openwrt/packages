@@ -17,7 +17,6 @@ PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
 PKG_ASLR_PIE:=0
-PKG_BUILD_DEPENDS:=boost
 
 PKG_CONFIG_DEPENDS:= \
   CONFIG_DNSDIST_GNUTLS \
@@ -102,10 +101,10 @@ define Package/dnsdist
 	  +DNSDIST_RE2:re2 \
 	  +DNSDIST_DNSTAP:libfstrm \
 	  +DNSDIST_SODIUM:libsodium \
+	  +boost \
 	  +libatomic \
 	  +libcap \
 	  +libedit \
-	  +libstdcpp \
 	  +lmdb \
 	  +liblua \
 	  +tinycdb
