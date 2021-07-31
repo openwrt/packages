@@ -12,8 +12,14 @@ start_service() {
 	local web_listen_address
 	config_load "prometheus"
 	config_get config_file prometheus config_file "$CONFFILE"
-	config_get storage_tsdb_path prometheus storage_tsdb_path "/data"
+	config_get storage_tsdb_path prometheus storage_tsdb_path "/srv/prometheus"
 	config_get web_listen_address prometheus web_listen_address "127.0.0.1:9090"
+	
+	# Create tsdb dir & permissions if needed
+	if [ ! -d "$storage_tsdb_path" ]; then
+		mkdir "$storage_tsdb_path"
+		chown prometheus:prometheus "$storage_tsdb_path"
+	fi;
 
 	procd_open_instance
 	procd_set_param command "$PROG"
