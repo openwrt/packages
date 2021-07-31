@@ -47,6 +47,9 @@ Prometheus, a Cloud Native Computing Foundation project, is a systems and
 service monitoring system. It collects metrics from configured targets at given
 intervals, evaluates rule expressions, displays the results, and can trigger
 alerts if some condition is observed to be true.
+
+Default tsdb path is /srv/prometheus, you might want to edit /etc/config/prometheus
+in order to place it on USB storage or external SD card.
 endef
 
 define Package/prometheus/install
