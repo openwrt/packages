@@ -19,12 +19,3 @@
  
  BINDIR?=$(PREFIX)/bin
  
-@@ -71,7 +71,7 @@ CFLAGS_debug = $(CFLAGS) $(OPTS_debug) $
- 
- $(BINARY): $(OBJECTS) $(HEADERS)
- 	$(CC) -o $@ $(OBJECTS) $(LDFLAGS)
--	strip $@
-+	$(STRIP) $@
- $(BINARY).debug: $(OBJECTS_debug) $(HEADERS)
- 	$(CC) -o $@ $(OBJECTS_debug) $(LDFLAGS)
- proxy: $(OBJECTS_proxy) $(HEADERS)
