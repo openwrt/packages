@@ -120,6 +120,16 @@ define Package/kea-admin/description
 checking versions, upgrading etc.).
 endef
 
+###### *************************************************************************
+define Package/kea-hook-lease-cmds
+	$(call Package/kea/Default)
+	TITLE+=Lease Commands hook library
+	DEPENDS:=+kea-libs
+endef
+define Package/kea-hook-lease-cmds/description
+	The lease commands hook library.
+endef
+
 ##### *************************************************************************
 define Package/kea-lfc
 	$(call Package/kea/Default)
@@ -235,6 +245,11 @@ define Package/kea-admin/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/kea-admin $(1)/usr/sbin/kea-admin
 endef
 
+define Package/kea-hook-lease-cmds/install
+	$(INSTALL_DIR) $(1)/usr/lib/kea/hooks
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/kea/hooks/libdhcp_lease_cmds.so $(1)/usr/lib/kea/hooks
+endef
+
 define Package/kea-ctrl/install
 	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/kea
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/keactrl $(1)/usr/sbin/keactrl
@@ -265,6 +280,7 @@ $(eval $(call BuildPackage,kea-dhcp4))
 $(eval $(call BuildPackage,kea-dhcp6))
 $(eval $(call BuildPackage,kea-dhcp-ddns))
 $(eval $(call BuildPackage,kea-admin))
+$(eval $(call BuildPackage,kea-hook-lease-cmds))
 $(eval $(call BuildPackage,kea-lfc))
 $(eval $(call BuildPackage,kea-perfdhcp))
 $(eval $(call BuildPackage,kea-shell))
