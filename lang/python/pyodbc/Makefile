@@ -5,7 +5,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pyodbc
-PKG_VERSION:=4.0.30
+PKG_VERSION:=4.0.31
 PKG_RELEASE:=1
 
 PYPI_NAME:=$(PKG_NAME)
