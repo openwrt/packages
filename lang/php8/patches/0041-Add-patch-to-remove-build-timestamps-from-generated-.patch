@@ -6,7 +6,7 @@ Subject: Add patch to remove build timestamps from generated binaries.
 
 --- a/ext/standard/info.c
 +++ b/ext/standard/info.c
-@@ -791,7 +791,6 @@ PHPAPI ZEND_COLD void php_print_info(int
+@@ -792,7 +792,6 @@ PHPAPI ZEND_COLD void php_print_info(int
  		php_info_print_box_end();
  		php_info_print_table_start();
  		php_info_print_table_row(2, "System", ZSTR_VAL(php_uname));

@@ -41,7 +41,7 @@ Signed-off-by: Michael Heimpold <mhei@heimpold.de>
 +    AC_CHECK_FUNC(mmap,[dnl
 +        AC_DEFINE(HAVE_SHM_MMAP_ANON, 1, [Define if you have mmap(MAP_ANON) SHM support])
 +        have_shm_mmap_anon=yes],[have_shm_mmap_anon=no])])
-   AC_MSG_RESULT([$have_shm_mmap_anon=yes])
+   AC_MSG_RESULT([$have_shm_mmap_anon])
  
    PHP_CHECK_FUNC_LIB(shm_open, rt, root)
 @@ -294,8 +300,11 @@ int main() {
