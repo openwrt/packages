@@ -66,7 +66,7 @@ reload_service() {
 }
 
 
-extra_command "relog" "Reopen log files (without reloading)"
+# extra_command "relog" "Reopen log files (without reloading)"
 relog() {
 	[ -d /var/log/nginx ] || mkdir -p /var/log/nginx
 	procd_send_signal nginx '*' USR1
