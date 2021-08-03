@@ -268,7 +268,10 @@ service_triggers()
 
     if [ "$trigger" != "none" ] && [ "$trigger" != "timed" ]; then
         PROCD_RELOAD_DELAY=$((${delay:-2} * 1000))
-        procd_add_interface_trigger "interface.*.up" "$trigger" "$stubby_init" start
+        for trigger_item in $trigger
+        do
+            procd_add_interface_trigger "interface.*.up" "$trigger_item" "$stubby_init" start
+        done
     fi
     procd_add_reload_trigger "stubby"
 }
