@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ccid
-PKG_VERSION:=1.4.34
+PKG_VERSION:=1.4.35
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://ccid.apdu.fr/files/
-PKG_HASH:=e6f7645b59a9a2844eb4b1a7eff512960d7f04a4654af02f7fd2f8aded5db40a
+PKG_HASH:=7c3e2a7924edda722189ca57c8d1cffa51e7f9354a23e81aecd9d1ae8d9710ca
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
