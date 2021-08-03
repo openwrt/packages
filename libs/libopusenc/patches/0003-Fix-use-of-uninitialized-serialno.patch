@@ -1,0 +1,47 @@
+From 427d61131a1af5eed48d5428e723ab4602b56cc1 Mon Sep 17 00:00:00 2001
+From: Mark Harris <mark.hsj@gmail.com>
+Date: Tue, 29 Dec 2020 01:43:37 -0800
+Subject: [PATCH] Fix use of uninitialized serialno
+
+Also do not crash if OPE_GET_SERIALNO_REQUEST is used after draining.
+---
+ src/opusenc.c | 14 +++++++++++---
+ 1 file changed, 11 insertions(+), 3 deletions(-)
+
+--- a/src/opusenc.c
++++ b/src/opusenc.c
+@@ -356,6 +356,11 @@ fail:
+   return NULL;
+ }
+ 
++static void stream_generate_serialno(EncStream *stream) {
++  stream->serialno = rand();
++  stream->serialno_is_set = 1;
++}
++
+ static void stream_destroy(EncStream *stream) {
+   if (stream->comment) free(stream->comment);
+   free(stream);
+@@ -512,9 +517,7 @@ int ope_encoder_deferred_init_with_mappi
+ 
+ static void init_stream(OggOpusEnc *enc) {
+   assert(!enc->streams->stream_is_init);
+-  if (!enc->streams->serialno_is_set) {
+-    enc->streams->serialno = rand();
+-  }
++  if (!enc->streams->serialno_is_set) stream_generate_serialno(enc->streams);
+ 
+   if (enc->oggp != NULL) oggp_chain(enc->oggp, enc->streams->serialno);
+   else {
+@@ -1071,6 +1074,11 @@ int ope_encoder_ctl(OggOpusEnc *enc, int
+     case OPE_GET_SERIALNO_REQUEST:
+     {
+       opus_int32 *value = va_arg(ap, opus_int32*);
++      if (!enc->last_stream) {
++        ret = OPE_TOO_LATE;
++        break;
++      }
++      if (!enc->last_stream->serialno_is_set) stream_generate_serialno(enc->last_stream);
+       *value = enc->last_stream->serialno;
+     }
+     break;
