@@ -16,7 +16,13 @@ else
 fi
 
 readonly PROG=/usr/sbin/https-dns-proxy
+readonly DEFAULT_BOOTSTRAP='1.1.1.1,1.0.0.1,2606:4700:4700::1111,2606:4700:4700::1001,8.8.8.8,8.8.4.4,2001:4860:4860::8888,2001:4860:4860::8844'
 dnsmasqConfig=''; forceDNS=''; forceDNSPorts='';
+
+str_contains() { [ -n "$2" ] && [ "${1//$2}" != "$1" ]; }
+is_mac_address() { expr "$1" : '[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]$' >/dev/null; }
+is_ipv4() { expr "$1" : '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >/dev/null; }
+is_ipv6() { ! is_mac_address "$1" && str_contains "$1" ":"; }
 
 version() { echo "$PKG_VERSION"; }
 
@@ -26,11 +32,10 @@ append_bool() {
 	local section="$1"
 	local option="$2"
 	local value="$3"
-	local default="$4"
+	local default="${4:-0}"
 	local _loctmp
-	[ -z "$default" ] && default="0"
 	config_get_bool _loctmp "$section" "$option" "$default"
-	[ "$_loctmp" != "0" ] && xappend "$value"
+	[ "$_loctmp" -ne 0 ] && xappend "$value"
 }
 
 append_parm() {
@@ -40,41 +45,94 @@ append_parm() {
 	local default="$4"
 	local _loctmp
 	config_get _loctmp "$section" "$option" "$default"
+	[ -n "$_loctmp" ] && xappend "$switch $_loctmp"
+}
+
+append_counter() {
+	local section="$1"
+	local option="$2"
+	local switch="$3"
+	local default="${4:-0}"
+	local _loctmp i
+	config_get _loctmp "$section" "$option" "$default"
+# shellcheck disable=SC2086,SC2154
+	for i in $(seq 1 $_loctmp); do
+		xappend '-v'
+	done
+}
+
+append_bootstrap() {
+	local section="$1"
+	local option="$2"
+	local switch="$3"
+	local default="$4"
+	local _old_ifs="$IFS"
+	local _loctmp _newtmp i
+	config_get _loctmp "$section" "$option" "$default"
 	[ -z "$_loctmp" ] && return 0
-	xappend "$switch $_loctmp"
+	IFS=" ,"
+	for i in $_loctmp; do
+		if { [ "$ipv6_resolvers_only" -eq 0 ] && is_ipv4 "$i"; } || \
+			{ [ "$ipv6_resolvers_only" -ne 0 ] && is_ipv6 "$i"; }; then
+			[ -z "$_newtmp" ] && _newtmp="$i" || _newtmp="${_newtmp},${i}"
+		fi
+	done
+	IFS="$_old_ifs"
+	[ -n "$_newtmp" ] && xappend "$switch $_newtmp"
+	[ "$ipv6_resolvers_only" -eq 0 ] && xappend '-4'
 }
 
 start_instance() {
-	local cfg="$1" param listen_addr listen_port i
+	local cfg="$1" param listen_addr listen_port i ipv6_resolvers_only
+	config_get_bool ipv6_resolvers_only "$cfg" 'use_ipv6_resolvers_only' '0'
 	append_parm "$cfg" 'resolver_url' '-r'
 	append_parm "$cfg" 'polling_interval' '-i'
 	append_parm "$cfg" 'listen_addr' '-a' '127.0.0.1'
 	append_parm "$cfg" 'listen_port' '-p' "$p"
 	append_parm "$cfg" 'dscp_codepoint' '-c'
-	append_parm "$cfg" 'bootstrap_dns' '-b'
+	append_bootstrap "$cfg" 'bootstrap_dns' '-b' "$DEFAULT_BOOTSTRAP"
 	append_parm "$cfg" 'user' '-u' 'nobody'
 	append_parm "$cfg" 'group' '-g' 'nogroup'
 	append_parm "$cfg" 'proxy_server' '-t'
 	append_parm "$cfg" 'logfile' '-l'
 	append_bool "$cfg" 'use_http1' '-x'
-	config_get_bool ipv6_resolvers_only "$cfg" 'use_ipv6_resolvers_only' '0'
-	config_get verbosity "$cfg" 'verbosity' '0'
-
-# shellcheck disable=SC2086,SC2154
-	for i in $(seq 1 $verbosity); do
-		xappend '-v'
-	done
-# shellcheck disable=SC2154
-	if [ "$ipv6_resolvers_only" = 0 ]; then
-		xappend '-4'
-	fi
+	append_counter "$cfg" 'verbosity' '-v' '0'
 
 	procd_open_instance
 # shellcheck disable=SC2086
-	procd_set_param command ${PROG} ${param}
+	procd_set_param command $PROG $param
 	procd_set_param stderr 1
 	procd_set_param stdout 1
 	procd_set_param respawn
+	if [ "$forceDNS" -ne 0 ]; then
+		procd_open_data
+		json_add_array firewall
+		for c in $forceDNSPorts; do
+			if netstat -tuln | grep 'LISTEN' | grep ":${c}" >/dev/null 2>&1 || [ "$c" = "53" ]; then
+				json_add_object ""
+				json_add_string type redirect
+				json_add_string target DNAT
+				json_add_string src lan
+				json_add_string proto "tcp udp"
+				json_add_string src_dport "$c"
+				json_add_string dest_port "$c"
+				json_add_boolean reflection 0
+				json_close_object
+			else
+				json_add_object ""
+				json_add_string type rule
+				json_add_string src lan
+				json_add_string dest "*"
+				json_add_string proto "tcp udp"
+				json_add_string dest_port "$c"
+				json_add_string target REJECT
+				json_close_object
+			fi
+		done
+		json_close_array
+		procd_close_data
+		forceDNS='0'
+	fi
 	procd_close_instance
 
 	config_get listen_addr "$cfg" 'listen_addr' '127.0.0.1'
@@ -102,39 +160,6 @@ start_service() {
 	dhcp_backup 'create'
 	config_load 'https-dns-proxy'
 	config_foreach start_instance 'https-dns-proxy'
-	if [ "$forceDNS" -ne 0 ]; then
-		procd_open_instance 'main'
-		procd_set_param command /bin/true
-		procd_set_param stdout 1
-		procd_set_param stderr 1
-		procd_open_data
-		json_add_array firewall
-		for c in $forceDNSPorts; do
-			if netstat -tuln | grep 'LISTEN' | grep ":${c}" >/dev/null 2>&1 || [ "$c" = "53" ]; then
-				json_add_object ""
-				json_add_string type redirect
-				json_add_string target DNAT
-				json_add_string src lan
-				json_add_string proto "tcp udp"
-				json_add_string src_dport "$c"
-				json_add_string dest_port "$c"
-				json_add_boolean reflection 0
-				json_close_object
-			else
-				json_add_object ""
-				json_add_string type rule
-				json_add_string src lan
-				json_add_string dest "*"
-				json_add_string proto "tcp udp"
-				json_add_string dest_port "$c"
-				json_add_string target REJECT
-				json_close_object
-			fi
-		done
-		json_close_array
-		procd_close_data
-		procd_close_instance
-	fi
 	if [ -n "$(uci -q changes dhcp)" ]; then
 		uci -q commit dhcp
 		[ -x /etc/init.d/dnsmasq ] && /etc/init.d/dnsmasq restart >/dev/null 2>&1
