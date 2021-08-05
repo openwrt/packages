@@ -21,5 +21,5 @@ index 2c0c27526..72b2124c7 100644
 -ZSCANNER_TOOL="$BUILD"/zscanner-tool
 +ZSCANNER_TOOL="$SOURCE"/zscanner-tool
  
- plan 84
+ plan 86
  
