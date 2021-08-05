@@ -39,6 +39,14 @@ define Package/kea/Default
   URL:=https://www.isc.org/kea
 endef
 
+define Package/kea/conffiles
+/etc/kea/
+endef
+
+Package/kea-ctrl/conffiles = $(Package/kea/conffiles)
+Package/kea-dhcp4/conffiles = $(Package/kea/conffiles)
+Package/kea-dhcp6/conffiles = $(Package/kea/conffiles)
+Package/kea-dhcp-ddns/conffiles = $(Package/kea/conffiles)
 
 ###### *************************************************************************
 define Package/kea
