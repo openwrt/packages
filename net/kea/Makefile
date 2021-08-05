@@ -183,6 +183,17 @@ Control Agent.
 endef
 
 ###### *************************************************************************
+define Package/kea-uci
+	$(call Package/kea/Default)
+	TITLE+=UCI support
+	DEPENDS:=@(PACKAGE_kea-ctrl||PACKAGE_kea-dhcp4||PACKAGE_kea-dhcp6||PACKAGE_kea-dhcp-ddns)
+endef
+define Package/kea-uci/description
+	Kea PROCD/UCI support. This package installs a UCI config file and
+	a PROCD service file.
+endef
+
+###### *************************************************************************
 HOST_CONFIGURE_ARGS += \
 	--with-boost-include="$(STAGING_DIR_HOSTPKG)" \
 	--with-log4cplus="$(STAGING_DIR_HOSTPKG)" \
@@ -296,6 +307,12 @@ define Package/kea-shell/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/kea-shell $(1)/usr/sbin/kea-shell
 endef
 
+define Package/kea-uci/install
+	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/init.d
+	$(INSTALL_CONF) ./files/kea.config $(1)/etc/config/kea
+	$(INSTALL_BIN) ./files/kea.init $(1)/etc/init.d/kea
+endef
+
 $(eval $(call HostBuild))
 $(eval $(call BuildPackage,kea-libs))
 $(eval $(call BuildPackage,kea-ctrl))
@@ -308,3 +325,4 @@ $(eval $(call BuildPackage,kea-hook-lease-cmds))
 $(eval $(call BuildPackage,kea-lfc))
 $(eval $(call BuildPackage,kea-perfdhcp))
 $(eval $(call BuildPackage,kea-shell))
+$(eval $(call BuildPackage,kea-uci))
