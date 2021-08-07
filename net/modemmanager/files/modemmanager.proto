@@ -343,6 +343,7 @@ proto_modemmanager_init_config() {
 	proto_config_add_string	 password
 	proto_config_add_string	 pincode
 	proto_config_add_string	 iptype
+	proto_config_add_string	 plmn
 	proto_config_add_int	 signalrate
 	proto_config_add_boolean lowpower
 	proto_config_add_defaults
@@ -355,11 +356,11 @@ proto_modemmanager_setup() {
 	local bearermethod_ipv4 bearermethod_ipv6 auth cliauth
 	local operatorname operatorid registration accesstech signalquality
 
-	local device apn allowedauth username password pincode iptype metric signalrate
+	local device apn allowedauth username password pincode iptype plmn metric signalrate
 
 	local address prefix gateway mtu dns1 dns2
 
-	json_get_vars device apn allowedauth username password pincode iptype metric signalrate
+	json_get_vars device apn allowedauth username password pincode iptype plmn metric signalrate
 
 	# validate sysfs path given in config
 	[ -n "${device}" ] || {
@@ -392,7 +393,7 @@ proto_modemmanager_setup() {
 	echo "starting connection with apn '${apn}'..."
 	proto_notify_error "${interface}" MM_CONNECT_IN_PROGRESS
 
-	connectargs="apn=${apn}${iptype:+,ip-type=${iptype}}${cliauth:+,allowed-auth=${cliauth}}${username:+,user=${username}}${password:+,password=${password}}${pincode:+,pin=${pincode}}"
+	connectargs="apn=${apn}${iptype:+,ip-type=${iptype}}${plmn:+,operator-id=${plmn}}${cliauth:+,allowed-auth=${cliauth}}${username:+,user=${username}}${password:+,password=${password}}${pincode:+,pin=${pincode}}"
 	mmcli --modem="${device}" --timeout 120 --simple-connect="${connectargs}" || {
 		proto_notify_error "${interface}" MM_CONNECT_FAILED
 		proto_block_restart "${interface}"
