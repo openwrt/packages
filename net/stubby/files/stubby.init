@@ -266,9 +266,12 @@ service_triggers()
     trigger="$(uci_get stubby global trigger)"
     delay="$(uci_get stubby global triggerdelay "2")"
 
-    if [ "$trigger" != "none" ] && [ "$trigger" != "timed" ]; then
-        PROCD_RELOAD_DELAY=$((${delay:-2} * 1000))
-        procd_add_interface_trigger "interface.*.up" "$trigger" "$stubby_init" start
-    fi
+    PROCD_RELOAD_DELAY=$((${delay:-2} * 1000))
+
+    for trigger_item in $trigger
+    do
+        procd_add_interface_trigger "interface.*.up" "$trigger_item" "$stubby_init" start
+    done
+
     procd_add_reload_trigger "stubby"
 }
