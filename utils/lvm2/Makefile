@@ -144,6 +144,8 @@ define Package/lvm2/install
 	$(INSTALL_DATA) ./files/lvm2.preinit $(1)/lib/preinit/80_lvm2
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/lvm2.init $(1)/etc/init.d/lvm2
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/block
+	$(INSTALL_DATA) ./files/lvm2.hotplug $(1)/etc/hotplug.d/block/20-lvm2
 	$(FIND) $(PKG_INSTALL_DIR)/usr/sbin/ -type l -exec $(CP) -a {} $(1)/sbin/ \;
 endef
 
