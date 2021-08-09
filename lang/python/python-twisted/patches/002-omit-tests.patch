@@ -1,6 +1,6 @@
 --- a/setup.cfg
 +++ b/setup.cfg
-@@ -90,6 +90,9 @@ osx_platform =
+@@ -97,6 +97,9 @@ mypy =
  
  [options.packages.find]
  where = src
@@ -10,7 +10,7 @@
  
  [options.entry_points]
  console_scripts = 
-@@ -109,6 +112,7 @@ console_scripts =
+@@ -116,6 +119,7 @@ console_scripts =
  	*.pxi
  	*.pyx
  	build.bat
