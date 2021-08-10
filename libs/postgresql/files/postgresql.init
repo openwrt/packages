@@ -32,40 +32,57 @@ start_service() {
 	user_exists postgres 5432 || user_add postgres 5432
 	group_exists postgres 5432 || group_add postgres 5432
 
+	[ "$_BOOT" = "1" ] &&
+		[ "$(procd_get_mountpoints $pgdata)" ] && return 0
+
 	fix_perms
 	fix_hosts
 
-	if [ ! -d "${pgdata}" ]; then
+	if [ ! -e "${pgdata}/PG_VERSION" ]; then
 		pg_init_data ${pgdata}
 		[ $? -gt 0 ] && return 1
 	fi
 
 	cleanup "${pgdata}"
 
-	procd_open_instance
+	mkdir -m 0755 -p /var/run/postgresql
+	chmod 0750 /var/run/postgresql
+	chown postgres:postgres /var/run/postgresql
+	procd_open_instance postmaster
 	procd_set_param user postgres
 	procd_set_param command $PROG
 	procd_append_param command -D "${pgdata}"
+	procd_append_param command -k "/var/run/postgresql"
 	[ -n "${pgopts}" ] && procd_append_param command -o "${pgopts}"
 	procd_set_param respawn retry=60
+	procd_add_jail postgresql log
+	procd_add_jail_mount /usr/lib/postgresql /usr/share/postgresql
+	procd_add_jail_mount_rw /var/run/postgresql "${pgdata}"
+	procd_add_jail_mount_rw /dev/shm
+	procd_set_param stderr 1
+	procd_set_param stdout 1
 	procd_close_instance
 
-	procd_open_instance
+	procd_open_instance uci_dbinit
 	procd_set_param user postgres
 	procd_set_param command /lib/functions/postgresql.sh init "${pgdata}"
+	procd_set_param stdout 1
+	procd_set_param stderr 1
 	procd_close_instance
 }
 
-reload_service() {
+boot() {
+	_BOOT=1 start
+}
+
+service_triggers() {
 	config_load "postgresql"
 	config_get pgdata config PGDATA
-	/usr/bin/pg_ctl reload -U postgres -D "${pgdata}" -s
+	procd_add_restart_mount_trigger "${pgdata}"
 }
 
 stop_service() {
-	config_load "postgresql"
-	config_get pgdata config PGDATA
-	/usr/bin/pg_ctl stop -U postgres -D "${pgdata}" -s
+	procd_send_signal "postgresql" postmaster SIGTERM
 }
 
 status_service() {

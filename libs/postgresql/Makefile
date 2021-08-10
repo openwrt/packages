@@ -70,7 +70,7 @@ endef
 define Package/pgsql-server
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+pgsql-cli
+  DEPENDS:=+pgsql-cli +blockd
   TITLE:=PostgreSQL databases Server
   URL:=http://www.postgresql.org/
   SUBMENU:=Database
