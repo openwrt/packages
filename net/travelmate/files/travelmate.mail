@@ -39,21 +39,21 @@ fi
 #
 sys_info="$(
 	strings /etc/banner 2>/dev/null
-	ubus call system board | sed -e 's/\"release\": {//' | sed -e 's/^[ \t]*//' | sed -e 's/[{}\",]//g' | sed -e 's/[ ]/  \t/' | sed '/^$/d' 2>/dev/null
+	ubus call system board | awk 'BEGIN{FS="[{}\"]"}{if($2=="kernel"||$2=="hostname"||$2=="system"||$2=="model"||$2=="description")printf "  + %-12s: %s\n",$2,$4}'
 )"
 trm_info="$(/etc/init.d/travelmate status 2>/dev/null)"
-sta_info="$(jsonfilter -i "${trm_rtfile}" -l1 -e '@.data.station_id')"
+sta_info="$(jsonfilter -i "${trm_rtfile}" -q -l1 -e '@.data.station_id')"
 trm_mailtopic="$(uci_get travelmate global trm_mailtopic "travelmate connection to '${sta_info}'")"
-trm_mailhead="From: ${trm_mailsender}\\nTo: ${trm_mailreceiver}\\nSubject: ${trm_mailtopic}\\nReply-to: ${trm_mailsender}\\nMime-Version: 1.0\\nContent-Type: text/html; charset=UTF-8\\nContent-Disposition: inline\\n\\n"
+trm_mailhead="From: ${trm_mailsender}\nTo: ${trm_mailreceiver}\nSubject: ${trm_mailtopic}\nReply-to: ${trm_mailsender}\nMime-Version: 1.0\nContent-Type: text/html;charset=utf-8\nContent-Disposition: inline\n\n"
 
 # mail body
 #
 trm_mailtext="<html><body><pre style='display:block;font-family:monospace;font-size:1rem;padding:20;background-color:#f3eee5;white-space:pre'>"
-trm_mailtext="${trm_mailtext}\\n<strong>++\\n++ System Information ++\\n++</strong>\\n${sys_info}"
-trm_mailtext="${trm_mailtext}\\n\\n<strong>++\\n++ Travelmate Information ++\\n++</strong>\\n${trm_info}"
+trm_mailtext="${trm_mailtext}\n<strong>++\n++ System Information ++\n++</strong>\n${sys_info}"
+trm_mailtext="${trm_mailtext}\n\n<strong>++\n++ Travelmate Information ++\n++</strong>\n${trm_info}"
 trm_mailtext="${trm_mailtext}</pre></body></html>"
 
 # send mail
 #
 printf "%b" "${trm_mailhead}${trm_mailtext}" 2>/dev/null | "${trm_mailpgm}" ${debug} -a "${trm_mailprofile}" "${trm_mailreceiver}" >/dev/null 2>&1
-"${trm_logger}" -p "info" -t "trm-mail [${$}]" "mail sent to '${trm_mailreceiver}' with rc '${?}'"  2>/dev/null
+"${trm_logger}" -p "info" -t "trm-mail [${$}]" "mail sent to '${trm_mailreceiver}' with rc '${?}'" 2>/dev/null
