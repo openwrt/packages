@@ -1196,17 +1196,18 @@ static struct branch *select_branch(char *name, char *select_version)
 
 	list_for_each_entry(br, &branches, list) {
 		/* if branch name doesn't match version *prefix*, skip */
+		fprintf(stderr, "checking branch %s for %s\n", br->name, name);
 		if (strncmp(br->name, name, strlen(br->name)))
 			continue;
 
 		if (select_version) {
-			if (!strcmp(br->version, select_version)) {
+			if (!strcasecmp(br->version, select_version)) {
 				abr = br;
 				break;
 			}
 		} else {
 			/* if we are on a snapshot branch, stay there */
-			if (strcasestr(version, "snapshot")) {
+			if (strcasestr(name, "snapshot")) {
 				if (strcasestr(br->version, "snapshot")) {
 					abr = br;
 					break;
@@ -1464,7 +1465,7 @@ int main(int args, char *argv[]) {
 	uint32_t id;
 	int valid;
 	char url[256];
-	char *sanetized_board_name, *image_name, *image_sha256, *tmp;
+	char *sanetized_board_name, *image_name, *image_sha256, *target_branch = NULL, *target_version = NULL, *tmp;
 	struct blob_attr *tbr[__REPLY_MAX];
 	struct blob_attr *tb[__TARGET_MAX] = {}; /* make sure tb is NULL initialized even if blobmsg_parse isn't called */
 	struct stat imgstat;
@@ -1472,8 +1473,9 @@ int main(int args, char *argv[]) {
 	int retry_delay = 0;
 	int upg_check = 0;
 	int revcmp;
+	int addargs;
 	unsigned char argc = 1;
-	bool force = false, use_get = false, in_queue = false;
+	bool force = false, use_get = false, in_queue = false, dont_ask = false, release_only = false;
 
 	snprintf(user_agent, sizeof(user_agent), "%s (%s)", argv[0], AUC_VERSION);
 	fprintf(stdout, "%s\n", user_agent);
@@ -1482,27 +1484,54 @@ int main(int args, char *argv[]) {
 		if (!strncmp(argv[argc], "-h", 3) ||
 		    !strncmp(argv[argc], "--help", 7)) {
 			fprintf(stdout, "%s: Attended sysUpgrade CLI client\n", argv[0]);
-			fprintf(stdout, "Usage: auc [-d] [-h]\n");
-			fprintf(stdout, " -c\tonly check if system is up-to-date\n");
-			fprintf(stdout, " -f\tuse force\n");
+			fprintf(stdout, "Usage: auc [-b <branch>] [-B <ver>] [-c] %s[-f] [-h] [-r] [-y]\n",
 #ifdef AUC_DEBUG
-			fprintf(stdout, " -d\tenable debugging output\n");
+"[-d] "
+#else
+""
 #endif
-			fprintf(stdout, " -h\toutput help\n");
+				);
+			fprintf(stdout, " -b <branch>\tuse specific release branch\n");
+			fprintf(stdout, " -B <ver>\tuse specific release version\n");
+			fprintf(stdout, " -c\t\tonly check if system is up-to-date\n");
+#ifdef AUC_DEBUG
+			fprintf(stdout, " -d\t\tenable debugging output\n");
+#endif
+			fprintf(stdout, " -f\t\tuse force\n");
+			fprintf(stdout, " -h\t\toutput help\n");
+			fprintf(stdout, " -r\t\tcheck only for release upgrades\n");
+			fprintf(stdout, " -y\t\tdon't wait for user confirmation\n");
 			return 0;
 		}
 
+		addargs = 0;
 #ifdef AUC_DEBUG
 		if (!strncmp(argv[argc], "-d", 3))
 			debug = 1;
 #endif
+		if (!strncmp(argv[argc], "-b", 3)) {
+			target_branch = argv[argc + 1];
+			addargs = 1;
+		}
+
+		if (!strncmp(argv[argc], "-B", 3)) {
+			target_version = argv[argc + 1];
+			addargs = 1;
+		}
+
 		if (!strncmp(argv[argc], "-c", 3))
 			check_only = 1;
 
 		if (!strncmp(argv[argc], "-f", 3))
 			force = true;
 
-		argc++;
+		if (!strncmp(argv[argc], "-r", 3))
+			release_only = true;
+
+		if (!strncmp(argv[argc], "-y", 3))
+			dont_ask = true;
+
+		argc += 1 + addargs;
 	};
 
 	if (load_config()) {
@@ -1551,14 +1580,15 @@ int main(int args, char *argv[]) {
 		goto freebufs;
 	}
 
-	fprintf(stdout, "Running:   %s %s on %s (%s)\n", version, revision, target, board_name);
+	fprintf(stdout, "Running: %s %s on %s (%s)\n", version, revision, target, board_name);
+	fprintf(stdout, "Server:  %s\n", serverurl);
 
-	if (request_branches(true)) {
+	if (request_branches(!target_branch)) {
 		rc=-ENETUNREACH;
 		goto freeboard;
 	}
 
-	branch = select_branch(NULL, NULL);
+	branch = select_branch(target_branch, target_version);
 	if (!branch) {
 		rc=-EINVAL;
 		goto freebranches;
@@ -1574,6 +1604,11 @@ int main(int args, char *argv[]) {
 
 	if ((rc = request_packages(branch)))
 		goto freebranches;
+
+	if (release_only && !(upg_check & PKG_UPGRADE)) {
+		rc=0;
+		goto freebranches;
+	}
 
 	upg_check |= check_installed_packages(reqbuf.head);
 	if (upg_check & PKG_ERROR) {
@@ -1595,9 +1630,11 @@ int main(int args, char *argv[]) {
 	if (check_only)
 		goto freebranches;
 
-	rc = ask_user();
-	if (rc)
+	if (!dont_ask) {
+		rc = ask_user();
+		if (rc)
 		goto freebranches;
+	}
 
 	blobmsg_add_string(&reqbuf, "version", branch->version);
 	blobmsg_add_string(&reqbuf, "version_code", branch->version_code);
@@ -1696,7 +1733,7 @@ int main(int args, char *argv[]) {
 	         blobmsg_get_string(tb[TARGET_BINDIR]),
 	         image_name);
 
-	DPRINTF("downloading image from %s\n", url);
+	fprintf(stderr, "Downloading image from %s\n", url);
 	rc = server_request(url, NULL, NULL);
 	if (rc)
 		goto freebranches;
