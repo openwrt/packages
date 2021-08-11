@@ -159,6 +159,7 @@ define Build/Configure
 	$(SED) 's%# SUPPORT_MBX=yes%SUPPORT_MBX=yes%' $(PKG_BUILD_DIR)/Local/Makefile
 # enable lookup modules
 	$(SED) 's%# LOOKUP_DSEARCH=yes%LOOKUP_DSEARCH=yes%' $(PKG_BUILD_DIR)/Local/Makefile
+	$(SED) 's%# TRANSPORT_LMTP=yes%TRANSPORT_LMTP=yes%' $(PKG_BUILD_DIR)/Local/Makefile
 ifdef CONFIG_PACKAGE_exim-lookup-dbmdb
 	$(SED) 's%LOOKUP_DBM=yes%LOOKUP_DBM=2%' $(PKG_BUILD_DIR)/Local/Makefile
 else
@@ -265,6 +266,10 @@ endef
 define Package/exim/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/build-Linux-$(ARCH)/exim $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/etc/exim
+	$(INSTALL_CONF) $(PKG_BUILD_DIR)/src/configure.default $(1)/etc/exim/exim.conf
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/exim.init $(1)/etc/init.d/exim
 endef
 
 Package/exim-gnutls/install = $(Package/exim/install)
