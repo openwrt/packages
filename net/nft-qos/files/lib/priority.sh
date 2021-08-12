@@ -67,8 +67,6 @@ qosdef_remove_priority() {
 
 # init traffic priority
 qosdef_init_priority() {
-	local ifname="br-lan"
-
 	[ "$2" = 0 ] || {
 		logger -t nft-qos-priority "validation failed"
 		return 1
@@ -76,16 +74,12 @@ qosdef_init_priority() {
 
 	[ $priority_enable -eq 0 ] && return 1
 
-	case "$priority_netdev" in
-		lan) [ "$(uci_get network.lan.type)" != "bridge" ] && {
-				network_get_device ifname "$priority_netdev" || \
-				ifname="$(uci_get network.lan.ifname)"
-			}
-		;;
-		wan*) network_get_device ifname "$priority_netdev" || \
-			ifname="$(uci_get network.$priority_netdev.ifname)"
-		;;
-	esac
+	local ifname
+	network_get_device ifname "$priority_netdev"
+	[ -n "$ifname" ] || {
+		logger -t nft-qos-priority "unable to get ifname for $priority_netdev"
+		return 1
+	}
 
 	qosdef_appendx "table netdev nft-qos-priority {\n"
 	qosdef_append_chain_priority filter priority $ifname
