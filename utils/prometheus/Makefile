@@ -42,11 +42,22 @@ $(call Package/prometheus/Default)
   CATEGORY:=Utilities
 endef
 
+define Package/prometheus-web-console
+$(call Package/prometheus/Default)
+  SECTION:=utils
+  CATEGORY:=Utilities
+  DEPENDS:=prometheus
+endef
+
 define Package/prometheus/description
 Prometheus, a Cloud Native Computing Foundation project, is a systems and
 service monitoring system. It collects metrics from configured targets at given
 intervals, evaluates rule expressions, displays the results, and can trigger
 alerts if some condition is observed to be true.
+endef
+
+define Package/prometheus-web-console/description
+Web console for the Prometheus monitoring service.
 endef
 
 define Package/prometheus/install
@@ -55,9 +66,18 @@ define Package/prometheus/install
 	$(CP) ./files/* $(1)/
 endef
 
+define Package/prometheus-web-console/install
+	$(INSTALL_DIR) $(1)/usr/share/prometheus/consoles
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/consoles/* $(1)/usr/share/prometheus/consoles/
+
+	$(INSTALL_DIR) $(1)/usr/share/prometheus/console_libraries
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/console_libraries/* $(1)/usr/share/prometheus/console_libraries/
+endef
+
 define Package/prometheus/conffiles
 /etc/prometheus.yml
 endef
 
 $(eval $(call GoBinPackage,prometheus))
 $(eval $(call BuildPackage,prometheus))
+$(eval $(call BuildPackage,prometheus-web-console))
