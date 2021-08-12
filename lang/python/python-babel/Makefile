@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-babel
-PKG_VERSION:=2.9.0
+PKG_VERSION:=2.9.1
 PKG_RELEASE:=1
 
 PYPI_NAME:=Babel
-PKG_HASH:=da031ab54472314f210b0adcff1588ee5d1d1d0ba4dbd07b94dba82bde791e05
+PKG_HASH:=bc0c176f9f6a994582230df350aa6e05ba2ebe4b3ac317eab29d9be5d2768da0
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 PKG_LICENSE:=BSD-3-Clause
