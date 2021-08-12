@@ -43,7 +43,7 @@ config_cb() {
 	fi
 
 	local type="$1"
-	local name="$2"
+	local name="$(uci -q get xinetd.$2.name || echo $2)"
 
 	if [ "$type" = "service" ]; then
 
@@ -62,7 +62,7 @@ config_cb() {
 			local option="$1"
 			local value="$2"
 
-			[ -n "$value" ] && echo -e "\t$option = $value" >> $GENERATED_CONF_FILE
+			[ -n "$value" ] && [ "$option" != "name" ] && echo -e "\t$option = $value" >> $GENERATED_CONF_FILE
 		}
 
 		# redefined callback for lists when calling config_load
@@ -71,7 +71,7 @@ config_cb() {
 			local value="$2"
 
 			# write out last list option if new list starts
-			if [ "$ListName" != "" -a "$ListName" != "$name" ]; then
+			if [ -n "$ListName" ] && [ "$ListName" != "$name" ]; then
 
 				echo -e "\t$ListName = $ListVals" >> $GENERATED_CONF_FILE
 
