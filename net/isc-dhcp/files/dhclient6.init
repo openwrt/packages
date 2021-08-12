@@ -8,7 +8,7 @@ pid_file=/var/run/dhclient6.pid
 script_file=/usr/sbin/dhclient-script
 
 start() {
-	/usr/sbin/dhclient -q -nw -6 -cf $config_file -lf $lease_file -pf $pid_file -sf $script_file `/sbin/uci get network.wan.ifname`
+	/usr/sbin/dhclient -q -nw -6 -cf $config_file -lf $lease_file -pf $pid_file -sf $script_file `uci_get_state network wan ifname`
 	
 	if [ $? -ne 0 ]; then
 		return 1
