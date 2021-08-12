@@ -5,7 +5,7 @@ USE_PROCD=1
 
 SMB_CONF=""
 BIND_IF_PARM=""
-NB_PARM="$(cat /proc/sys/kernel/hostname)"
+NB_PARM="$(sed 's/\..*//' /proc/sys/kernel/hostname)"
 WG_PARM="WORKGROUP"
 BI_PARM=""
 
