@@ -73,8 +73,6 @@ f_env() {
 		elif [ "${name}" = "uplink" ]; then
 			if [ "$(uci_get "travelmate.${type}.opensta")" = "1" ]; then
 				eval "trm_opensta=\"$((${trm_opensta:-0} + 1))\""
-			else
-				eval "trm_opensta=\"${trm_opensta:-0}\""
 			fi
 		else
 			option_cb() {
@@ -391,7 +389,7 @@ f_addsta() {
 	local IFS uci_cfg new_uplink="1" offset="1" radio="${1}" essid="${2}"
 
 
-	if [ "${trm_maxautoadd}" = "0" ] || [ "${trm_opensta}" -lt "${trm_maxautoadd}" ]; then
+	if [ "${trm_maxautoadd}" = "0" ] || [ "${trm_opensta:-0}" -lt "${trm_maxautoadd}" ]; then
 		config_cb() {
 			local type="${1}" name="${2}"
 
@@ -737,33 +735,35 @@ f_main() {
 		for radio in ${trm_radiolist}; do
 			if ! printf "%s" "${trm_stalist}" | grep -q "\\-${radio}"; then
 				if [ "${trm_autoadd}" = "0" ]; then
-					f_log "info" "no station on radio '${radio}'"
+					f_log "info" "no enabled station on radio '${radio}'"
 					continue
 				fi
 			fi
 
 			# station loop
 			#
-			for sta in ${trm_stalist}; do
-				section="${sta%%-*}"
-				sta_radio="$(uci_get "wireless" "${section}" "device")"
-				sta_essid="$(uci_get "wireless" "${section}" "ssid")"
-				sta_bssid="$(uci_get "wireless" "${section}" "bssid")"
-				sta_iface="$(uci_get "wireless" "${section}" "network")"
-				sta_mac="$(f_mac "get" "${section}")"
+			for sta in ${trm_stalist:-"${radio}"}; do
+				if [ "${sta}" != "${radio}" ]; then
+					section="${sta%%-*}"
+					sta_radio="$(uci_get "wireless" "${section}" "device")"
+					sta_essid="$(uci_get "wireless" "${section}" "ssid")"
+					sta_bssid="$(uci_get "wireless" "${section}" "bssid")"
+					sta_iface="$(uci_get "wireless" "${section}" "network")"
+					sta_mac="$(f_mac "get" "${section}")"
 
-				if [ -z "${sta_radio}" ] || [ -z "${sta_essid}" ] || [ -z "${sta_iface}" ]; then
-					f_log "info" "invalid wireless section '${section}'"
-					continue
-				fi
+					if [ -z "${sta_radio}" ] || [ -z "${sta_essid}" ] || [ -z "${sta_iface}" ]; then
+						f_log "info" "invalid wireless section '${section}'"
+						continue
+					fi
 
-				if [ "${radio}" = "${config_radio}" ] && [ "${sta_radio}" = "${config_radio}" ] &&
-					[ "${sta_essid}" = "${config_essid}" ] && [ "${sta_bssid}" = "${config_bssid}" ]; then
-					f_ctrack "refresh"
-					f_log "info" "uplink still in range '${config_radio}/${config_essid}/${config_bssid:-"-"}' with mac '${sta_mac:-"-"}'"
-					break 2
+					if [ "${radio}" = "${config_radio}" ] && [ "${sta_radio}" = "${config_radio}" ] &&
+						[ "${sta_essid}" = "${config_essid}" ] && [ "${sta_bssid}" = "${config_bssid}" ]; then
+						f_ctrack "refresh"
+						f_log "info" "uplink still in range '${config_radio}/${config_essid}/${config_bssid:-"-"}' with mac '${sta_mac:-"-"}'"
+						break 2
+					fi
+					f_log "debug" "f_main-4 ::: sta_radio: ${sta_radio}, sta_essid: \"${sta_essid}\", sta_bssid: ${sta_bssid:-"-"}"
 				fi
-				f_log "debug" "f_main-4 ::: sta_radio: ${sta_radio}, sta_essid: \"${sta_essid}\", sta_bssid: ${sta_bssid:-"-"}"
 				if [ -z "${scan_list}" ]; then
 					scan_dev="$(ubus -S call network.wireless status 2>/dev/null | jsonfilter -q -l1 -e "@.${radio}.interfaces[0].ifname")"
 					scan_list="$("${trm_iwinfo}" "${scan_dev:-${radio}}" scan 2>/dev/null |
