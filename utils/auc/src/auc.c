@@ -417,6 +417,23 @@ static int verrevcmp(const char *val, const char *ref)
 	return 0;
 }
 
+/*
+ * OpenWrt release version string comperator
+ * replaces '-rc' by '~' to fix ordering of release(s) (candidates).
+ */
+static int openwrt_release_verrevcmp(const char *ver1, const char *ver2)
+{
+	char mver1[16], mver2[16];
+
+	strncpy(mver1, ver1, sizeof(mver1) - 1);
+	strncpy(mver2, ver2, sizeof(mver2) - 1);
+
+	release_replace_rc(mver1);
+	release_replace_rc(mver2);
+
+	return verrevcmp(mver1, mver2);
+}
+
 
 /**
  * UBUS response callbacks
@@ -1122,7 +1139,6 @@ static void process_branch(struct blob_attr *branch, bool only_active)
 	blobmsg_for_each_attr(curver, tb[BRANCH_VERSIONS], remver) {
 		br = malloc(sizeof(struct branch));
 
-		br->snapshot = tb[BRANCH_SNAPSHOT] && blobmsg_get_bool(tb[BRANCH_SNAPSHOT]);
 		if (tb[BRANCH_GIT_BRANCH])
 			br->git_branch = strdup(blobmsg_get_string(tb[BRANCH_GIT_BRANCH]));
 
@@ -1138,6 +1154,7 @@ static void process_branch(struct blob_attr *branch, bool only_active)
 		json_to_string_arrays(tb[BRANCH_EXTRA_REPOS], &br->extra_repos, &br->extra_repos_names);
 
 		br->version = strdup(blobmsg_get_string(curver));
+		br->snapshot = !!strcasestr(blobmsg_get_string(curver), "snapshot");
 		br->path = alloc_replace_var(blobmsg_get_string(tb[BRANCH_PATH]), "version", br->version);
 		br->path_packages = alloc_replace_var(blobmsg_get_string(tb[BRANCH_PATH_PACKAGES]), "branch", br->name);
 		br->arch_packages = arch_packages;
@@ -1193,6 +1210,17 @@ static int request_branches(bool only_active)
 	return 0;
 }
 
+static inline void release_replace_rc(char *ver)
+{
+	char *tmp;
+
+	tmp = strstr(ver, "-rc");
+	if (tmp && strlen(tmp) > 3) {
+		*tmp = '~';
+		strcpy(tmp + 1, tmp + 3);
+	}
+}
+
 static struct branch *select_branch(char *name, char *select_version)
 {
 	struct branch *br, *abr = NULL;
@@ -1202,8 +1230,7 @@ static struct branch *select_branch(char *name, char *select_version)
 
 	list_for_each_entry(br, &branches, list) {
 		/* if branch name doesn't match version *prefix*, skip */
-		fprintf(stderr, "checking branch %s for %s\n", br->name, name);
-		if (strncmp(br->name, name, strlen(br->name)))
+		if (strncasecmp(br->name, name, strlen(br->name)))
 			continue;
 
 		if (select_version) {
@@ -1212,14 +1239,18 @@ static struct branch *select_branch(char *name, char *select_version)
 				break;
 			}
 		} else {
-			/* if we are on a snapshot branch, stay there */
 			if (strcasestr(name, "snapshot")) {
-				if (strcasestr(br->version, "snapshot")) {
+				/* if we are on the snapshot branch, stay there */
+				if (br->snapshot) {
 					abr = br;
 					break;
 				}
 			} else {
-				if (!abr || (verrevcmp(br->version, abr->version) > 0))
+				/* on release branch, skip snapshots and pick latest release */
+				if (br->snapshot)
+					continue;
+
+				if (!abr || (openwrt_release_verrevcmp(abr->version, br->version) < 0))
 					abr = br;
 			}
 		}
@@ -1613,13 +1644,13 @@ int main(int args, char *argv[]) {
 		goto freebufs;
 	}
 
-	fprintf(stdout, "Running: %s %s on %s (%s)\n", version, revision, target, board_name);
-	fprintf(stdout, "Server:  %s\n", serverurl);
+	fprintf(stdout, "Server:    %s\n", serverurl);
+	fprintf(stdout, "Running:   %s %s on %s (%s)\n", version, revision, target, board_name);
 	if (target_fstype && rootfs_type && strcmp(rootfs_type, target_fstype))
 		fprintf(stderr, "WARNING: will change rootfs type from '%s' to '%s'\n",
 			rootfs_type, target_fstype);
 
-	if (request_branches(!target_branch)) {
+	if (request_branches(!(target_branch || target_version))) {
 		rc=-ENETUNREACH;
 		goto freeboard;
 	}
@@ -1632,7 +1663,7 @@ int main(int args, char *argv[]) {
 
 	fprintf(stdout, "Available: %s %s\n", branch->version_number, branch->version_code);
 
-	revcmp = strcmp(revision, branch->version_code);
+	revcmp = openwrt_release_verrevcmp(revision, branch->version_code);
 	if (revcmp < 0)
 			upg_check |= PKG_UPGRADE;
 	else if (revcmp > 0)
