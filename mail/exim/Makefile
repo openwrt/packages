@@ -48,7 +48,7 @@ define Package/exim/Default
   DEPENDS:=+libdb47 +libpcre $(ICONV_DEPENDS) +BUILD_NLS:libidn2 +BUILD_NLS:libidn
   TITLE:=Exim message transfer agent
   URL:=http://www.exim.org/
-  USERID:=mail=42:mail=42
+  USERID:=exim=42:exim=42
 endef
 
 define Package/exim
@@ -149,8 +149,8 @@ define Build/Configure
 	echo "PID_FILE_PATH=/var/run/exim.pid" >> $(PKG_BUILD_DIR)/Local/Makefile
 	echo "BIN_DIRECTORY=/usr/sbin" >> $(PKG_BUILD_DIR)/Local/Makefile
 	$(SED) 's%CONFIGURE_FILE=/usr/exim/configure%CONFIGURE_FILE=/etc/exim/exim.conf%' $(PKG_BUILD_DIR)/Local/Makefile
-	$(SED) 's%# EXIM_GROUP=%EXIM_GROUP=42%' $(PKG_BUILD_DIR)/Local/Makefile
-	$(SED) 's%# EXIM_USER=exim%EXIM_USER=42%' $(PKG_BUILD_DIR)/Local/Makefile
+	$(SED) 's%# EXIM_GROUP=.*%EXIM_GROUP=42%' $(PKG_BUILD_DIR)/Local/Makefile
+	$(SED) 's%# EXIM_USER=.*%EXIM_USER=42%' $(PKG_BUILD_DIR)/Local/Makefile
 	$(SED) 's%# INCLUDE=.*%INCLUDE=-I$(STAGING_DIR)/usr/include -I$(STAGING_DIR)/usr/include%' $(PKG_BUILD_DIR)/Local/Makefile
 	$(SED) 's%# HAVE_IPV6=YES%HAVE_IPV6=YES%' $(PKG_BUILD_DIR)/Local/Makefile
 	$(SED) 's%# WITH_CONTENT_SCAN=yes%WITH_CONTENT_SCAN=yes%' $(PKG_BUILD_DIR)/Local/Makefile
@@ -263,13 +263,22 @@ endif
 	$(HOST_MAKE_VARS) $(MAKE) $(HOST_MAKE_FLAGS) $(HOST_MAKE_VARS) -C $(PKG_BUILD_DIR)/build-Linux-$(ARCH) macro_predef
 endef
 
+define Package/exim/conffiles
+/etc/exim/
+endef
+
+Package/exim-gnutls/conffiles = $(Package/exim/conffiles)
+Package/exim-openssl/conffiles = $(Package/exim/conffiles)
+Package/exim-ldap/conffiles = $(Package/exim/conffiles)
+
 define Package/exim/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/build-Linux-$(ARCH)/exim $(1)/usr/sbin
 	$(INSTALL_DIR) $(1)/etc/exim
-	$(INSTALL_CONF) $(PKG_BUILD_DIR)/src/configure.default $(1)/etc/exim/exim.conf
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/src/configure.default $(1)/etc/exim/exim.conf
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/exim.init $(1)/etc/init.d/exim
+	$(INSTALL_DIR) $(1)/usr/lib/exim/lookups
 endef
 
 Package/exim-gnutls/install = $(Package/exim/install)
