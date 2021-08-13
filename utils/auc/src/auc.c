@@ -81,6 +81,7 @@ static bool retry = false;
 static char *board_name = NULL;
 static char *target = NULL;
 static char *distribution = NULL, *version = NULL, *revision = NULL;
+static char *rootfs_type = NULL;
 static int uptodate;
 static char *filename = NULL;
 static int rc;
@@ -126,12 +127,14 @@ static int debug = 0;
 enum {
 	BOARD_BOARD_NAME,
 	BOARD_RELEASE,
+	BOARD_ROOTFS_TYPE,
 	__BOARD_MAX,
 };
 
 static const struct blobmsg_policy board_policy[__BOARD_MAX] = {
 	[BOARD_BOARD_NAME] = { .name = "board_name", .type = BLOBMSG_TYPE_STRING },
 	[BOARD_RELEASE] = { .name = "release", .type = BLOBMSG_TYPE_TABLE },
+	[BOARD_ROOTFS_TYPE] = { .name = "rootfs_type", .type = BLOBMSG_TYPE_STRING },
 };
 
 /*
@@ -570,6 +573,9 @@ static void board_cb(struct ubus_request *req, int type, struct blob_attr *msg) 
 		}
 		board_name = strdup(blobmsg_get_string(tb[BOARD_BOARD_NAME]));
 	}
+
+	if (tb[BOARD_ROOTFS_TYPE])
+		rootfs_type = strdup(blobmsg_get_string(tb[BOARD_ROOTFS_TYPE]));
 
 	blobmsg_add_string(buf, "distro", distribution);
 	blobmsg_add_string(buf, "target", target);
@@ -1374,7 +1380,7 @@ static int system_is_efi(void)
 static inline int system_is_efi(void) { return 0; }
 #endif
 
-static int get_image_by_type(struct blob_attr *images, const char *typestr, char **image_name, char **image_sha256)
+static int get_image_by_type(struct blob_attr *images, const char *typestr, const char *fstype, char **image_name, char **image_sha256)
 {
 	struct blob_attr *tb[__IMAGES_MAX];
 	struct blob_attr *cur;
@@ -1388,6 +1394,9 @@ static int get_image_by_type(struct blob_attr *images, const char *typestr, char
 		    !tb[IMAGES_SHA256])
 			continue;
 
+		if (fstype && strcmp(blobmsg_get_string(tb[IMAGES_FILESYSTEM]), fstype))
+			continue;
+
 		if (!strcmp(blobmsg_get_string(tb[IMAGES_TYPE]), typestr)) {
 			*image_name = strdup(blobmsg_get_string(tb[IMAGES_NAME]));
 			*image_sha256 = strdup(blobmsg_get_string(tb[IMAGES_SHA256]));
@@ -1399,10 +1408,14 @@ static int get_image_by_type(struct blob_attr *images, const char *typestr, char
 	return ret;
 }
 
-static int select_image(struct blob_attr *images, char **image_name, char **image_sha256)
+static int select_image(struct blob_attr *images, const char *target_fstype, char **image_name, char **image_sha256)
 {
 	const char *combined_type;
-	int ret;
+	const char *fstype = rootfs_type;
+	int ret = -ENOENT;
+
+	if (target_fstype)
+		fstype = target_fstype;
 
 	if (system_is_efi())
 		combined_type = "combined-efi";
@@ -1411,11 +1424,24 @@ static int select_image(struct blob_attr *images, char **image_name, char **imag
 
 	DPRINTF("images: %s\n", blobmsg_format_json_indent(images, true, 0));
 
-	ret = get_image_by_type(images, "sysupgrade", image_name, image_sha256);
-	if (!ret)
-		return 0;
+	if (fstype) {
+		ret = get_image_by_type(images, "sysupgrade", fstype, image_name, image_sha256);
+		if (!ret)
+			return 0;
 
-	ret = get_image_by_type(images, combined_type, image_name, image_sha256);
+		ret = get_image_by_type(images, combined_type, fstype, image_name, image_sha256);
+		if (!ret)
+			return 0;
+	}
+
+	/* fallback to squashfs unless fstype requested explicitly */
+	if (!target_fstype) {
+		ret = get_image_by_type(images, "sysupgrade", "squashfs", image_name, image_sha256);
+		if (!ret)
+			return 0;
+
+		ret = get_image_by_type(images, combined_type, "squashfs", image_name, image_sha256);
+	}
 
 	return ret;
 }
@@ -1465,7 +1491,8 @@ int main(int args, char *argv[]) {
 	uint32_t id;
 	int valid;
 	char url[256];
-	char *sanetized_board_name, *image_name, *image_sha256, *target_branch = NULL, *target_version = NULL, *tmp;
+	char *sanetized_board_name, *image_name, *image_sha256, *tmp;
+	char *target_branch = NULL, *target_version = NULL, *target_fstype = NULL;
 	struct blob_attr *tbr[__REPLY_MAX];
 	struct blob_attr *tb[__TARGET_MAX] = {}; /* make sure tb is NULL initialized even if blobmsg_parse isn't called */
 	struct stat imgstat;
@@ -1500,6 +1527,7 @@ int main(int args, char *argv[]) {
 			fprintf(stdout, " -f\t\tuse force\n");
 			fprintf(stdout, " -h\t\toutput help\n");
 			fprintf(stdout, " -r\t\tcheck only for release upgrades\n");
+			fprintf(stdout, " -F <fstype>\toverride filesystem type\n");
 			fprintf(stdout, " -y\t\tdon't wait for user confirmation\n");
 			return 0;
 		}
@@ -1524,6 +1552,11 @@ int main(int args, char *argv[]) {
 
 		if (!strncmp(argv[argc], "-f", 3))
 			force = true;
+
+		if (!strncmp(argv[argc], "-F", 3)) {
+			target_fstype = argv[argc + 1];
+			addargs = 1;
+		}
 
 		if (!strncmp(argv[argc], "-r", 3))
 			release_only = true;
@@ -1582,6 +1615,9 @@ int main(int args, char *argv[]) {
 
 	fprintf(stdout, "Running: %s %s on %s (%s)\n", version, revision, target, board_name);
 	fprintf(stdout, "Server:  %s\n", serverurl);
+	if (target_fstype && rootfs_type && strcmp(rootfs_type, target_fstype))
+		fprintf(stderr, "WARNING: will change rootfs type from '%s' to '%s'\n",
+			rootfs_type, target_fstype);
 
 	if (request_branches(!target_branch)) {
 		rc=-ENETUNREACH;
@@ -1615,6 +1651,7 @@ int main(int args, char *argv[]) {
 		rc=-ENOPKG;
 		goto freebranches;
 	}
+
 	if (!upg_check && !force) {
 		fprintf(stderr, "Nothing to be updated. Use '-f' to force.\n");
 		rc=0;
@@ -1726,7 +1763,7 @@ int main(int args, char *argv[]) {
 		goto freebranches;
 	}
 
-	if ((rc = select_image(tb[TARGET_IMAGES], &image_name, &image_sha256)))
+	if ((rc = select_image(tb[TARGET_IMAGES], target_fstype, &image_name, &image_sha256)))
 		goto freebranches;
 
 	snprintf(url, sizeof(url), "%s/%s/%s/%s", serverurl, API_STORE,
@@ -1807,6 +1844,9 @@ freebranches:
 
 	/* ToDo */
 freeboard:
+	if (rootfs_type)
+		free(rootfs_type);
+
 	free(board_name);
 	free(target);
 	free(distribution);
