@@ -2,7 +2,6 @@ OpenWrt (modification):
 Patch the default configuration file with the tiny memory
 configuration example from Unbound documentation. This is the best
 starting point for embedded routers if one is not going to use UCI.
-
 --- a/doc/example.conf.in
 +++ b/doc/example.conf.in
 @@ -19,6 +19,76 @@ server:
