@@ -418,8 +418,23 @@ static int verrevcmp(const char *val, const char *ref)
 }
 
 /*
+ * replace '-rc' by '~' in string
+ */
+static inline void release_replace_rc(char *ver)
+{
+	char *tmp;
+
+	tmp = strstr(ver, "-rc");
+	if (tmp && strlen(tmp) > 3) {
+		*tmp = '~';
+		strcpy(tmp + 1, tmp + 3);
+	}
+}
+
+/*
  * OpenWrt release version string comperator
- * replaces '-rc' by '~' to fix ordering of release(s) (candidates).
+ * replaces '-rc' by '~' to fix ordering of release(s) (candidates)
+ * using the void release_replace_rc(char *ver) function above.
  */
 static int openwrt_release_verrevcmp(const char *ver1, const char *ver2)
 {
@@ -1208,17 +1223,6 @@ static int request_branches(bool only_active)
 	blob_buf_free(&brbuf);
 
 	return 0;
-}
-
-static inline void release_replace_rc(char *ver)
-{
-	char *tmp;
-
-	tmp = strstr(ver, "-rc");
-	if (tmp && strlen(tmp) > 3) {
-		*tmp = '~';
-		strcpy(tmp + 1, tmp + 3);
-	}
 }
 
 static struct branch *select_branch(char *name, char *select_version)
