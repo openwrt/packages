@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=strongswan
 PKG_VERSION:=5.9.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://download.strongswan.org/ https://download2.strongswan.org/
@@ -343,7 +343,7 @@ endef
 define Package/strongswan-charon
 $(call Package/strongswan/Default)
   TITLE+= IKEv1/IKEv2 keying daemon
-  DEPENDS:= strongswan
+  DEPENDS:= strongswan strongswan-mod-socket
 endef
 
 define Package/strongswan-charon/description
@@ -441,10 +441,17 @@ $(call Package/strongswan/description/Default)
 endef
 
 define BuildPlugin
+  $(call BuildPluginProvides,$(1),$(2),$(3),)
+endef
+
+define BuildPluginProvides
   define Package/strongswan-mod-$(1)
     $$(call Package/strongswan/Default)
     TITLE:= StrongSwan $(2) plugin
     DEPENDS:= strongswan $(3)
+    ifneq ($(4),)
+      PROVIDES:=strongswan-mod-$(4)
+    endif
   endef
 
   define Package/strongswan-mod-$(1)/install
@@ -725,8 +732,8 @@ $(eval $(call BuildPlugin,sha1,SHA1 crypto,))
 $(eval $(call BuildPlugin,sha2,SHA2 crypto,))
 $(eval $(call BuildPlugin,sha3,SHA3 and SHAKE crypto,))
 $(eval $(call BuildPlugin,smp,SMP configuration and control interface,+PACKAGE_strongswan-mod-smp:libxml2))
-$(eval $(call BuildPlugin,socket-default,default socket implementation for charon,))
-$(eval $(call BuildPlugin,socket-dynamic,dynamic socket implementation for charon,))
+$(eval $(call BuildPluginProvides,socket-default,default socket implementation for charon,,socket))
+$(eval $(call BuildPluginProvides,socket-dynamic,dynamic socket implementation for charon,,socket))
 $(eval $(call BuildPlugin,sql,SQL database interface,))
 $(eval $(call BuildPlugin,sqlite,SQLite database interface,+strongswan-mod-sql +PACKAGE_strongswan-mod-sqlite:libsqlite3))
 $(eval $(call BuildPlugin,sshkey,SSH key decoding,))
