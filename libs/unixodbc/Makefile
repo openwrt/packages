@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unixodbc
 PKG_VERSION:=2.3.9
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=unixODBC-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.unixodbc.org
@@ -152,7 +152,7 @@ endef
 
 define Host/Install
 	$(INSTALL_DIR) $(STAGING_DIR_HOST)/bin
-	$(CP) $(HOST_BUILD_DIR)/exe/odbc_config $(STAGING_DIR_HOST)/bin
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/exe/odbc_config $(STAGING_DIR_HOST)/bin
 endef
 
 $(eval $(call BuildPackage,unixodbc))
