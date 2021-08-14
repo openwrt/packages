@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tvheadend
-PKG_VERSION:=4.0.10
-PKG_RELEASE:=6
+PKG_VERSION:=4.2.8
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/tvheadend/tvheadend/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=f610e7d9f3bf6cff05cd73830a66ee0c74bc5291c4c9d08369364c4c681ebf23
+PKG_HASH:=1aef889373d5fad2a7bd2f139156d4d5e34a64b6d38b87b868a2df415f01f7ad
 
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=LICENSE.md
@@ -29,9 +29,9 @@ define Package/tvheadend
   SECTION:=multimedia
   CATEGORY:=Multimedia
   TITLE:=Tvheadend is a TV streaming server for Linux
-  DEPENDS:=+libopenssl +librt +zlib +TVHEADEND_AVAHI_SUPPORT:libavahi-client $(ICONV_DEPENDS)
+  DEPENDS:=+libopenssl +librt +zlib +libffi +TVHEADEND_AVAHI_SUPPORT:libavahi-client $(ICONV_DEPENDS)
   URL:=https://tvheadend.org
-  MAINTAINER:=Jan Čermák <jan.cermak@nic.cz>
+  MAINTAINER:=Marius Dinu <m95d+git@psihoexpert.ro>
 endef
 
 define Package/tvheadend/description
@@ -70,7 +70,9 @@ CONFIGURE_ARGS += \
 	--arch=$(ARCH) \
 	--disable-dbus_1 \
 	--disable-libav \
-	--enable-bundle
+	--disable-ffmpeg_static \
+	--enable-bundle \
+	--nowerror=unused-variable
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
