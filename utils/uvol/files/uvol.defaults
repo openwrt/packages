@@ -1,0 +1,3 @@
+#!/bin/sh
+
+uci -q get fstab.@uvol[0].initialized >/dev/null || uvol detect || true

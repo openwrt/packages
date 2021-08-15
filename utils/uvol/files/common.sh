@@ -11,15 +11,27 @@ uvol_uci_add() {
 	local volname="$1"
 	local devname="$2"
 	local mode="$3"
-	local autofs uuid uciname
+	local autofs=0
+	local target="/var/run/uvol/$volname"
+	local uuid uciname
 
-	uciname=${volname//-/_}
+	[ "$mode" = "ro" ] && autofs=1
+	uciname="${volname//[-.]/_}"
+	uciname="${uciname//[!([:alnum:]_)]}"
 	uuid="$(/sbin/block info | grep "^$2" | xargs -n 1 echo | grep "^UUID=.*")"
 	[ "$uuid" ] || return 22
-	_uvol_init_spooldir
 	uuid="${uuid:5}"
-	autofs=0
-	[ "$mode" = "ro" ] && autofs=1
+
+	case "$uciname" in
+		"_uxc")
+			target="/var/state/uxc"
+			;;
+		"_"*)
+			return 1
+			;;
+	esac
+
+	_uvol_init_spooldir
 	if [ -e "${UCI_SPOOLDIR}/remove-$1" ]; then
 		rm "${UCI_SPOOLDIR}/remove-$1"
 	fi
@@ -27,11 +39,10 @@ uvol_uci_add() {
 	cat >"${UCI_SPOOLDIR}/add-$1" <<EOF
 set fstab.$uciname=mount
 set fstab.$uciname.uuid=$uuid
-set fstab.$uciname.target=/var/run/uvol/$volname
+set fstab.$uciname.target=$target
 set fstab.$uciname.options=$mode
 set fstab.$uciname.autofs=$autofs
 set fstab.$uciname.enabled=1
-commit fstab
 EOF
 }
 
@@ -39,7 +50,8 @@ uvol_uci_remove() {
 	local volname="$1"
 	local uciname
 
-	uciname=${volname//-/_}
+	uciname="${volname//-/_}"
+	uciname="${uciname//[!([:alnum:]_)]}"
 	if [ -e "${UCI_SPOOLDIR}/add-$1" ]; then
 		rm "${UCI_SPOOLDIR}/add-$1"
 		return
@@ -47,20 +59,25 @@ uvol_uci_remove() {
 	_uvol_init_spooldir
 	cat >"${UCI_SPOOLDIR}/remove-$1" <<EOF
 delete fstab.$uciname
-commit fstab
 EOF
 }
 
 uvol_uci_commit() {
 	local volname="$1"
+	local ucibatch
 
-	if [ -e "${UCI_SPOOLDIR}/add-$1" ]; then
-		uci batch < "${UCI_SPOOLDIR}/add-$1"
-		rm "${UCI_SPOOLDIR}/add-$1"
-	elif [ -e "${UCI_SPOOLDIR}/remove-$1" ]; then
-		uci batch < "${UCI_SPOOLDIR}/remove-$1"
-		rm "${UCI_SPOOLDIR}/remove-$1"
-	fi
+	for ucibatch in "${UCI_SPOOLDIR}/"*"-$volname"${volname+*} ; do
+		[ -e "$ucibatch" ] || break
+		uci batch < "$ucibatch"
+		[ $? -eq 0 ] && rm "$ucibatch"
+	done
 
+	uci commit fstab
 	return $?
+}
+
+uvol_uci_init() {
+	uci -q get fstab.@uvol[0] && return
+	uci add fstab uvol
+	uci set fstab.@uvol[-1].initialized=1
 }
