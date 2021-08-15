@@ -73,14 +73,11 @@ To avoid these kind of deadlocks, travelmate will set all station interfaces to 
 | trm_minquality     | 35                                 | minimum signal quality threshold as percent for conditional uplink (dis-) connections                 |
 | trm_maxwait        | 30                                 | how long should travelmate wait for a successful wlan uplink connection                               |
 | trm_timeout        | 60                                 | overall retry timeout in seconds                                                                      |
-| trm_scanbuffer     | 1024                               | buffer size in bytes to prepare nearby scan results                                                   |
-| trm_captiveurl     | http://captive.apple.com           | four pre-configured provider URLs that will be used for connectivity- and captive portal checks       |
-| trm_useragent      | Mozilla/5.0 (X11; Linux x86_64...  | five pre-configured user agents that will be used for connectivity- and captive portal checks         |
+| trm_maxautoadd     | 5                                  | limit the max. number of automatically added open uplinks. To disable this limitation set it to '0'   |
+| trm_maxscan        | 10                                 | limit nearby scan results to process only the strongest uplinks                                       |
+| trm_captiveurl     | http://detectportal.firefox.com    | pre-configured provider URLs that will be used for connectivity- and captive portal checks            |
+| trm_useragent      | Mozilla/5.0 ...                    | pre-configured user agents that will be used for connectivity- and captive portal checks              |
 | trm_nice           | 0, normal priority                 | change the priority of the travelmate background processing                                           |
-| trm_vpn            | 0, disabled                        | automatically handle VPN (re-) connections                                                            |
-| trm_vpnservice     | -, not set                         | reference the already configured 'wireguard' or 'openvpn' client instance as vpn provider             |
-| trm_vpniface       | -, not set                         | the logical vpn interface, e.g. 'wg0' or 'tun0'                                                       |
-| trm_laniface       | -, not set                         | the logical lan network interface, e.g. 'br-lan'                                                      |
 | trm_mail           | 0, disabled                        | sends notification e-mails after every succesful uplink connect                                       |
 | trm_mailreceiver   | -, not set                         | e-mail receiver address for travelmate notifications                                                  |
 | trm_mailsender     | no-reply@travelmate                | e-mail sender address for travelmate notifications                                                    |
@@ -101,6 +98,10 @@ To avoid these kind of deadlocks, travelmate will set all station interfaces to 
 | con_end_expiry     | 0, disabled                        | automatically (re-)enable the uplink after n minutes, e.g. after failed login attempts                |
 | script             | -, not set                         | reference to an external auto login script for captive portals                                        |
 | script_args        | -, not set                         | optional runtime args for the auto login script                                                       |
+| macaddr            | -, not set                         | use a specified MAC address for the uplink
+| vpn                | 0, disabled                        | automatically handle VPN (re-) connections                                                            |
+| vpnservice         | -, not set                         | reference the already configured 'wireguard' or 'openvpn' client instance as vpn provider             |
+| vpniface           | -, not set                         | the logical vpn interface, e.g. 'wg0' or 'tun0'                                                       |
   
 
 ## VPN client setup
@@ -135,11 +136,14 @@ password        zzz
 Finally enable E-Mail support in travelmate and add a valid E-Mail receiver address.
 
 ## Captive Portal auto-logins
-For automated captive portal logins you can reference an external shell script per uplink. All login scripts should be executable and located in '/etc/travelmate' with the extension '.login'. Currently the package ships five ready to run auto-login scripts:  
-    * 'wifionice.login' for german ICE hotspots
+For automated captive portal logins you can reference an external shell script per uplink. All login scripts should be executable and located in '/etc/travelmate' with the extension '.login'. The package ships multiple ready to run auto-login scripts:  
+    * 'wifionice.login' for ICE hotspots (DE)
     * 'db-bahn.login' for german DB railway hotspots via portal login API (still WIP, only tested at Hannover central station)
     * 'chs-hotel.login' for german chs hotels
-    * 'h-hotels.login' for Telekom hotspots in german h+hotels
+    * 'h-hotels.login' for Telekom hotspots in h+hotels (DE)
+    * 'julianahoeve.login' for Julianahoeve beach resort (NL)
+    * 'telekom.login' for telekom hotspots (DE)
+    * 'vodafone.login' for vodafone hotspots (DE)
     * 'generic-user-pass.login' a template to demonstrate the optional parameter handling in login scripts
 
 A typical and successful captive portal login looks like this:
