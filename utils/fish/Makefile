@@ -36,6 +36,8 @@ define Package/fish/description
   configuration required.
 endef
 
+CMAKE_OPTIONS += -DBUILD_DOCS=NO
+
 define Package/fish/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/fish $(1)/usr/bin
