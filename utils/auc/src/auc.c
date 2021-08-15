@@ -1202,6 +1202,7 @@ static int request_branches(bool only_active)
 	struct blob_attr *tb[__REPLY_MAX];
 	int rem;
 	char url[256];
+	struct blob_attr *data;
 
 	blobmsg_buf_init(&brbuf);
 	snprintf(url, sizeof(url), "%s/%s/%s%s", serverurl, API_JSON,
@@ -1214,10 +1215,16 @@ static int request_branches(bool only_active)
 
 	blobmsg_parse(reply_policy, __REPLY_MAX, tb, blob_data(brbuf.head), blob_len(brbuf.head));
 
-	if (!tb[REPLY_ARRAY])
+	/* newer server API replies OBJECT, older API replies ARRAY... */
+	if ((!tb[REPLY_ARRAY] && !tb[REPLY_OBJECT]))
 		return -ENODATA;
 
-	blobmsg_for_each_attr(cur, tb[REPLY_ARRAY], rem)
+	if (tb[REPLY_OBJECT])
+		data = tb[REPLY_OBJECT];
+	else
+		data = tb[REPLY_ARRAY];
+
+	blobmsg_for_each_attr(cur, data, rem)
 		process_branch(cur, only_active);
 
 	blob_buf_free(&brbuf);
