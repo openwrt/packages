@@ -27,7 +27,7 @@ smb_header()
 	)
 
 	# we dont use netbios anymore as default and wsd/avahi is dns based
-	hostname="$(cat /proc/sys/kernel/hostname | tr -d '{};%?=#\n')"
+	hostname="$(sed 's/\..*//' /proc/sys/kernel/hostname | tr -d '{};%?=#\n')"
 
 	config_get_sane workgroup "$1" workgroup "WORKGROUP"
 	config_get_sane description "$1" description "Ksmbd on OpenWrt"
