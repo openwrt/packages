@@ -10,10 +10,10 @@
  	struct btree_iter *current;
 --- a/tools/lvmdevices.c
 +++ b/tools/lvmdevices.c
-@@ -15,6 +15,7 @@
- #include "tools.h"
+@@ -16,6 +16,7 @@
  #include "lib/cache/lvmcache.h"
  #include "lib/device/device_id.h"
+ #include "lib/device/dev-type.h"
 +#include <sys/file.h>
  
  static void _search_devs_for_pvids(struct cmd_context *cmd, struct dm_list *search_pvids, struct dm_list *found_devs)
