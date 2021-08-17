@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=strongswan
 PKG_VERSION:=5.9.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://download.strongswan.org/ https://download2.strongswan.org/
@@ -572,6 +572,7 @@ define Package/strongswan-scepclient/install
 endef
 
 define Package/strongswan-swanctl/conffiles
+/etc/config/ipsec
 /etc/swanctl/
 endef
 

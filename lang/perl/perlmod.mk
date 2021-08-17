@@ -35,8 +35,8 @@ PERLMOD_TESTSDIR:=/usr/share/perl/perlmod-tests
 define perlmod/host/relink
 	rm -f $(1)/Makefile.aperl
 	$(MAKE) -C $(1) perl
-	$(CP) $(1)/perl $(PERL_CMD)
-	$(CP) $(1)/perl $(STAGING_DIR_HOSTPKG)/usr/bin/perl
+	$(INSTALL_BIN) $(1)/perl $(PERL_CMD)
+	$(INSTALL_BIN) $(1)/perl $(STAGING_DIR_HOSTPKG)/usr/bin/perl
 endef
 
 define perlmod/host/Configure

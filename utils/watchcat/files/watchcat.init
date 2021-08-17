@@ -19,11 +19,11 @@ append_string() {
 time_to_seconds() {
 	time=$1
 
-	{ [ "$time" -ge 1 ] 2>/dev/null && seconds="$time"; } ||
-		{ [ "${time%s}" -ge 1 ] 2>/dev/null && seconds="${time%s}"; } ||
-		{ [ "${time%m}" -ge 1 ] 2>/dev/null && seconds=$((${time%m} * 60)); } ||
-		{ [ "${time%h}" -ge 1 ] 2>/dev/null && seconds=$((${time%h} * 3600)); } ||
-		{ [ "${time%d}" -ge 1 ] 2>/dev/null && seconds=$((${time%d} * 86400)); }
+	{ [ "$time" -ge 1 ] 2> /dev/null && seconds="$time"; } ||
+		{ [ "${time%s}" -ge 1 ] 2> /dev/null && seconds="${time%s}"; } ||
+		{ [ "${time%m}" -ge 1 ] 2> /dev/null && seconds=$((${time%m} * 60)); } ||
+		{ [ "${time%h}" -ge 1 ] 2> /dev/null && seconds=$((${time%h} * 3600)); } ||
+		{ [ "${time%d}" -ge 1 ] 2> /dev/null && seconds=$((${time%d} * 86400)); }
 
 	echo $seconds
 	unset seconds
@@ -46,7 +46,7 @@ config_watchcat() {
 	[ "$mode" = "allways" ] && mode="periodic_reboot"
 	[ "$mode" = "always" ] && mode="periodic_reboot"
 	[ "$mode" = "ping" ] && mode="ping_reboot"
-  
+
 	# Checks for settings common to all operation modes
 	if [ "$mode" != "periodic_reboot" ] && [ "$mode" != "ping_reboot" ] && [ "$mode" != "restart_iface" ]; then
 		append_string "error" "mode must be 'periodic_reboot' or 'ping_reboot' or 'restart_iface'" "; "
@@ -87,30 +87,30 @@ config_watchcat() {
 		logger -p user.err -t "watchcat" "reboot program $1 not started - $error"
 		return
 	}
-	
+
 	# Need to conditionally run mode functions because they have different signatures
 	case "$mode" in
-		periodic_reboot)
-			procd_open_instance "watchcat_${1}"
-			procd_set_param command /usr/bin/watchcat.sh "periodic_reboot" "$period" "$forcedelay"
-			procd_set_param respawn ${respawn_threshold:-3600} ${respawn_timeout:-5} ${respawn_retry:-5}
-			procd_close_instance
-			;;
-		ping_reboot)
-			procd_open_instance "watchcat_${1}"
-			procd_set_param command /usr/bin/watchcat.sh "ping_reboot" "$period" "$forcedelay" "$pinghosts" "$pingperiod" "$pingsize"
-			procd_set_param respawn ${respawn_threshold:-3600} ${respawn_timeout:-5} ${respawn_retry:-5}
-			procd_close_instance
-			;;
-		restart_iface)
-			procd_open_instance "watchcat_${1}"
-			procd_set_param command /usr/bin/watchcat.sh "restart_iface" "$period" "$pinghosts" "$pingperiod" "$pingsize" "$interface" "$mmifacename"
-			procd_set_param respawn ${respawn_threshold:-3600} ${respawn_timeout:-5} ${respawn_retry:-5}
-			procd_close_instance
-			;;
-		*)
-			echo "Error starting Watchcat service. Invalid mode selection: $mode"
-			;;
+	periodic_reboot)
+		procd_open_instance "watchcat_${1}"
+		procd_set_param command /usr/bin/watchcat.sh "periodic_reboot" "$period" "$forcedelay"
+		procd_set_param respawn ${respawn_threshold:-3600} ${respawn_timeout:-5} ${respawn_retry:-5}
+		procd_close_instance
+		;;
+	ping_reboot)
+		procd_open_instance "watchcat_${1}"
+		procd_set_param command /usr/bin/watchcat.sh "ping_reboot" "$period" "$forcedelay" "$pinghosts" "$pingperiod" "$pingsize"
+		procd_set_param respawn ${respawn_threshold:-3600} ${respawn_timeout:-5} ${respawn_retry:-5}
+		procd_close_instance
+		;;
+	restart_iface)
+		procd_open_instance "watchcat_${1}"
+		procd_set_param command /usr/bin/watchcat.sh "restart_iface" "$period" "$pinghosts" "$pingperiod" "$pingsize" "$interface" "$mmifacename"
+		procd_set_param respawn ${respawn_threshold:-3600} ${respawn_timeout:-5} ${respawn_retry:-5}
+		procd_close_instance
+		;;
+	*)
+		echo "Error starting Watchcat service. Invalid mode selection: $mode"
+		;;
 	esac
 }
 

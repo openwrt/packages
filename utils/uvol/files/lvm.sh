@@ -177,8 +177,8 @@ activatevol() {
 			return 22
 			;;
 		*)
-			[ "$lv_active" = "active" ] && return 0
 			uvol_uci_commit "$1"
+			[ "$lv_active" = "active" ] && return 0
 			lvm_cmd lvchange -k n "$lv_full_name" || return $?
 			lvm_cmd lvchange -a y "$lv_full_name" || return $?
 			return 0
@@ -319,10 +319,37 @@ listvols() {
 	done
 }
 
-boot() {
-	local reports rep lv lvs lv_name lv_dm_path lv_mode volname
+
+detect() {
+	local reports rep lv lvs lv_name lv_full_name lv_mode volname devname lv_skip_activation
+	local temp_up=""
+
 	json_init
-	json_load "$(lvs -o lv_name,lv_dm_path -S "lv_name=~^[rw][ow]_.*\$ && vg_name=$vg_name && lv_active=active")"
+	json_load "$(lvs -o lv_full_name -S "lv_name=~^[rw][owp]_.*\$ && vg_name=$vg_name && lv_skip_activation!=0")"
+	json_select report
+	json_get_keys reports
+	for rep in $reports; do
+		json_select "$rep"
+		json_select lv
+		json_get_keys lvs
+		for lv in $lvs; do
+			json_select "$lv"
+			json_get_vars lv_full_name
+			echo "lvchange -a y $lv_full_name"
+			lvm_cmd lvchange -k n "$lv_full_name"
+			lvm_cmd lvchange -a y "$lv_full_name"
+			temp_up="$temp_up $lv_full_name"
+			json_select ..
+		done
+		json_select ..
+		break
+	done
+	sleep 1
+
+	uvol_uci_init
+
+	json_init
+	json_load "$(lvs -o lv_name,lv_dm_path -S "lv_name=~^[rw][owp]_.*\$ && vg_name=$vg_name")"
 	json_select report
 	json_get_keys reports
 	for rep in $reports; do
@@ -334,11 +361,25 @@ boot() {
 			json_get_vars lv_name lv_dm_path
 			lv_mode="${lv_name:0:2}"
 			lv_name="${lv_name:3}"
+			echo uvol_uci_add "$lv_name" "/dev/$(getdev "$lv_name")" "$lv_mode"
+			uvol_uci_add "$lv_name" "/dev/$(getdev "$lv_name")" "$lv_mode"
 			json_select ..
 		done
 		json_select ..
 		break
 	done
+
+	uvol_uci_commit
+
+	for lv_full_name in $temp_up; do
+		echo "lvchange -a n $lv_full_name"
+		lvm_cmd lvchange -a n "$lv_full_name"
+		lvm_cmd lvchange -k y "$lv_full_name"
+	done
+}
+
+boot() {
+	true ; # nothing to do, lvm does it all for us
 }
 
 exportpv
@@ -353,6 +394,9 @@ case "$cmd" in
 		;;
 	total)
 		totalbytes
+		;;
+	detect)
+		detect
 		;;
 	boot)
 		boot

@@ -230,6 +230,63 @@ bootvols() {
 	done
 }
 
+detect() {
+	local volname voldev volmode voldev fstype tmpdev=""
+	for voldir in "/sys/devices/virtual/ubi/${ubidev}/${ubidev}_"*; do
+		read -r volname < "$voldir/name"
+		voldev="$(basename "$voldir")"
+		fstype=
+		case "$volname" in
+			uvol-r[od]-*)
+				if ! [ -e "/dev/ubiblock${voldev:3}" ]; then
+					ubiblock --create "/dev/$voldev" || return $?
+				fi
+				case "$volname" in
+				uvol-rd-*)
+					tmpdev="$tmpdev $voldev"
+					;;
+				esac
+				;;
+			*)
+				continue
+				;;
+		esac
+		volmode="${volname:5:2}"
+		volname="${volname:8}"
+	done
+
+	uvol_uci_init
+
+	for voldir in "/sys/devices/virtual/ubi/${ubidev}/${ubidev}_"*; do
+		read -r volname < "$voldir/name"
+		voldev="$(basename "$voldir")"
+		case "$volname" in
+			uvol-[rw][wod]*)
+				true
+				;;
+			*)
+				continue
+				;;
+		esac
+		volmode="${volname:5:2}"
+		volname="${volname:8}"
+		case "$volmode" in
+		"ro" | "rd")
+			uvol_uci_add "$volname" "/dev/ubiblock${voldev:3}" "ro"
+			;;
+		"rw" | "wd")
+			uvol_uci_add "$volname" "/dev/${voldev}" "rw"
+			;;
+		esac
+	done
+
+	uvol_uci_commit
+
+	for voldev in $tmpdev ; do
+		ubiblock --remove "/dev/$voldev" || return $?
+	done
+}
+
 case "$cmd" in
 	align)
 		echo "$ebsize"
@@ -239,6 +296,9 @@ case "$cmd" in
 		;;
 	total)
 		totalbytes
+		;;
+	detect)
+		detect
 		;;
 	boot)
 		bootvols

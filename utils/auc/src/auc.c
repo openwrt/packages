@@ -418,8 +418,23 @@ static int verrevcmp(const char *val, const char *ref)
 }
 
 /*
+ * replace '-rc' by '~' in string
+ */
+static inline void release_replace_rc(char *ver)
+{
+	char *tmp;
+
+	tmp = strstr(ver, "-rc");
+	if (tmp && strlen(tmp) > 3) {
+		*tmp = '~';
+		strcpy(tmp + 1, tmp + 3);
+	}
+}
+
+/*
  * OpenWrt release version string comperator
- * replaces '-rc' by '~' to fix ordering of release(s) (candidates).
+ * replaces '-rc' by '~' to fix ordering of release(s) (candidates)
+ * using the void release_replace_rc(char *ver) function above.
  */
 static int openwrt_release_verrevcmp(const char *ver1, const char *ver2)
 {
@@ -1187,6 +1202,7 @@ static int request_branches(bool only_active)
 	struct blob_attr *tb[__REPLY_MAX];
 	int rem;
 	char url[256];
+	struct blob_attr *data;
 
 	blobmsg_buf_init(&brbuf);
 	snprintf(url, sizeof(url), "%s/%s/%s%s", serverurl, API_JSON,
@@ -1199,26 +1215,21 @@ static int request_branches(bool only_active)
 
 	blobmsg_parse(reply_policy, __REPLY_MAX, tb, blob_data(brbuf.head), blob_len(brbuf.head));
 
-	if (!tb[REPLY_ARRAY])
+	/* newer server API replies OBJECT, older API replies ARRAY... */
+	if ((!tb[REPLY_ARRAY] && !tb[REPLY_OBJECT]))
 		return -ENODATA;
 
-	blobmsg_for_each_attr(cur, tb[REPLY_ARRAY], rem)
+	if (tb[REPLY_OBJECT])
+		data = tb[REPLY_OBJECT];
+	else
+		data = tb[REPLY_ARRAY];
+
+	blobmsg_for_each_attr(cur, data, rem)
 		process_branch(cur, only_active);
 
 	blob_buf_free(&brbuf);
 
 	return 0;
-}
-
-static inline void release_replace_rc(char *ver)
-{
-	char *tmp;
-
-	tmp = strstr(ver, "-rc");
-	if (tmp && strlen(tmp) > 3) {
-		*tmp = '~';
-		strcpy(tmp + 1, tmp + 3);
-	}
 }
 
 static struct branch *select_branch(char *name, char *select_version)

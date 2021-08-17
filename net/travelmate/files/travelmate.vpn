@@ -29,7 +29,7 @@ trm_logger="$(command -v logger)"
 trm_fetch="$(command -v curl)"
 
 f_net() {
-	local IFS json_rc result="net nok"
+	local json_rc result="net nok"
 
 	json_rc="$(${trm_fetch} --user-agent "${trm_useragent}" --referer "http://www.example.com" --connect-timeout $((trm_maxwait / 10)) --header "Cache-Control: no-cache, no-store, must-revalidate" --header "Pragma: no-cache" --header "Expires: 0" --write-out "%{response_code}" --silent --output /dev/null "${trm_captiveurl}")"
 	if [ "${json_rc}" = "200" ] || [ "${json_rc}" = "204" ]; then
