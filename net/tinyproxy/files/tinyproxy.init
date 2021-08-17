@@ -121,6 +121,7 @@ start_proxy() {
 	proxy_atom "$1" MaxRequestsPerChild
 	proxy_list "$1" Allow
 
+	proxy_flag "$1" DisableViaHeader
 	proxy_string "$1" ViaProxyName
 	proxy_string "$1" Filter
 
