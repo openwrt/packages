@@ -22,7 +22,7 @@ while true; do
 
     # reload dnsmasq to apply changes
     logger -t bmx7-dnsupdate "dnsmasq updated due to new hosts"
-    killall -HUP dnsmasq
+    killall -s HUP dnsmasq
 
     # block until originators changes
     inotifywait -e create -e delete -q /var/run/bmx7/json/originators/ || sleep 10
