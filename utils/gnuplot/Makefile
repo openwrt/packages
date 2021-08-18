@@ -29,6 +29,8 @@ CONFIGURE_ARGS += \
     --without-latex \
     --without-libcerf
 
+CONFIGURE_VARS += ac_cv_have_x="have_x=no"
+
 # Since Qt is disabled there is no C++ code, so CXX is forced
 # to CC in order to avoid dependency on libstdcpp. This is 
 # horrible, but 'DEPENDS:=+libstdcpp' does not work for some
