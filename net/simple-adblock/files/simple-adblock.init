@@ -116,8 +116,8 @@ compare_values() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"; }
 is_chaos_calmer() { ubus -S call system board | grep -q 'Chaos Calmer'; }
 led_on(){ if [ -n "${1}" ] && [ -e "${1}/trigger" ]; then echo 'default-on' > "${1}/trigger" 2>&1; fi; }
 led_off(){ if [ -n "${1}" ] &&  [ -e "${1}/trigger" ]; then echo 'none' > "${1}/trigger" 2>&1; fi; }
-dnsmasq_hup() { killall -q -HUP dnsmasq; }
-dnsmasq_kill() { killall -q -KILL dnsmasq; }
+dnsmasq_hup() { killall -q -s HUP dnsmasq; }
+dnsmasq_kill() { killall -q -s KILL dnsmasq; }
 dnsmasq_restart() { /etc/init.d/dnsmasq restart >/dev/null 2>&1; }
 unbound_restart() { /etc/init.d/unbound restart >/dev/null 2>&1; }
 is_force_dns_active() { iptables-save | grep -q -w -- '--dport 53'; }
