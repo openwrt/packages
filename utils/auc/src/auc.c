@@ -48,7 +48,7 @@
 #define API_JSON "json"
 #define API_JSON_EXT "." API_JSON
 #define API_PACKAGES "packages"
-#define API_REQUEST "api/build"
+#define API_REQUEST "api/v1/build"
 #define API_STATUS_QUEUED "queued"
 #define API_STATUS_STARTED "started"
 #define API_STORE "store"
@@ -236,7 +236,7 @@ enum {
 	TARGET_ENQUEUED_AT,
 	TARGET_IMAGE_PREFIX,
 	TARGET_IMAGES,
-	TARGET_MESSAGE,
+	TARGET_DETAIL,
 	TARGET_MANIFEST,
 	TARGET_METADATA_VERSION,
 	TARGET_REQUEST_HASH,
@@ -263,7 +263,7 @@ static const struct blobmsg_policy target_policy[__TARGET_MAX] = {
 	[TARGET_IMAGE_PREFIX] = { .name = "image_prefix", .type = BLOBMSG_TYPE_STRING },
 	[TARGET_IMAGES] = { .name = "images", .type = BLOBMSG_TYPE_ARRAY },
 	[TARGET_MANIFEST] = { .name = "manifest", .type = BLOBMSG_TYPE_TABLE },
-	[TARGET_MESSAGE] = { .name = "message", .type = BLOBMSG_TYPE_STRING },
+	[TARGET_DETAIL] = { .name = "detail", .type = BLOBMSG_TYPE_STRING },
 	[TARGET_METADATA_VERSION] = { .name = "metadata_version", .type = BLOBMSG_TYPE_INT32 },
 	[TARGET_REQUEST_HASH] = { .name = "request_hash", .type = BLOBMSG_TYPE_STRING },
 	[TARGET_SOURCE_DATE_EPOCH] = { .name = "source_date_epoch", .type = BLOBMSG_TYPE_STRING },
@@ -317,6 +317,7 @@ enum {
 	H_LEN,
 	H_RANGE,
 	H_UNKNOWN_PACKAGE,
+	H_QUEUE_POSITION,
 	__H_MAX
 };
 
@@ -324,6 +325,7 @@ static const struct blobmsg_policy header_policy[__H_MAX] = {
 	[H_LEN] = { .name = "content-length", .type = BLOBMSG_TYPE_STRING },
 	[H_RANGE] = { .name = "content-range", .type = BLOBMSG_TYPE_STRING },
 	[H_UNKNOWN_PACKAGE] = { .name = "x-unknown-package", .type = BLOBMSG_TYPE_STRING },
+	[H_QUEUE_POSITION] = { .name = "x-queue-position", .type = BLOBMSG_TYPE_INT32 },
 };
 
 /*
@@ -441,7 +443,9 @@ static int openwrt_release_verrevcmp(const char *ver1, const char *ver2)
 	char mver1[16], mver2[16];
 
 	strncpy(mver1, ver1, sizeof(mver1) - 1);
+	mver1[sizeof(mver1) - 1] = '\0';
 	strncpy(mver2, ver2, sizeof(mver2) - 1);
+	mver2[sizeof(mver2) - 1] = '\0';
 
 	release_replace_rc(mver1);
 	release_replace_rc(mver2);
@@ -699,6 +703,12 @@ static void request_done(struct uclient *cl)
 static void header_done_cb(struct uclient *cl)
 {
 	struct blob_attr *tb[__H_MAX];
+	struct jsonblobber *jsb = (struct jsonblobber *)cl->priv;
+	struct blob_buf *outbuf = NULL;
+
+	if (jsb)
+		outbuf = jsb->outbuf;
+
 	uint64_t resume_offset = 0, resume_end, resume_size;
 
 	if (uclient_http_redirect(cl)) {
@@ -778,10 +788,20 @@ static void header_done_cb(struct uclient *cl)
 			fprintf(stderr, "Content-Range header is invalid\n");
 			break;
 		}
+	case 201:
 	case 202:
 		retry = true;
+		if (!outbuf)
+			break;
+
+		blobmsg_add_u32(outbuf, "status", cl->status_code);
+
+		if (tb[H_QUEUE_POSITION])
+			blobmsg_add_u32(outbuf, "queue_position", blobmsg_get_u32(tb[H_QUEUE_POSITION]));
+
 		break;
 	case 200:
+		retry = false;
 		if (cl->priv)
 			break;
 
@@ -1136,9 +1156,9 @@ static void process_branch(struct blob_attr *branch, bool only_active)
 
 	/* mandatory fields */
 	if (!(tb[BRANCH_ENABLED] && blobmsg_get_bool(tb[BRANCH_ENABLED]) &&
-		tb[BRANCH_NAME] && tb[BRANCH_PATH]) && tb[BRANCH_PATH_PACKAGES] &&
+		tb[BRANCH_NAME] && tb[BRANCH_PATH] && tb[BRANCH_PATH_PACKAGES] &&
 		tb[BRANCH_UPDATES] && tb[BRANCH_PUBKEY] && tb[BRANCH_REPOS] &&
-		tb[BRANCH_VERSIONS] && tb[BRANCH_TARGETS])
+		tb[BRANCH_VERSIONS] && tb[BRANCH_TARGETS]))
 		return;
 
 	brname = blobmsg_get_string(tb[BRANCH_NAME]);
@@ -1526,6 +1546,31 @@ static inline bool status_delay(const char *status)
 	       !strcmp(API_STATUS_STARTED, status);
 }
 
+static void usage(const char *arg0)
+{
+	fprintf(stdout, "%s: Attended sysUpgrade CLI client\n", arg0);
+	fprintf(stdout, "Usage: auc [-b <branch>] [-B <ver>] [-c] %s[-f] [-h] [-r] [-y]\n",
+#ifdef AUC_DEBUG
+"[-d] "
+#else
+""
+#endif
+		);
+	fprintf(stdout, " -b <branch>\tuse specific release branch\n");
+	fprintf(stdout, " -B <ver>\tuse specific release version\n");
+	fprintf(stdout, " -c\t\tonly check if system is up-to-date\n");
+#ifdef AUC_DEBUG
+	fprintf(stdout, " -d\t\tenable debugging output\n");
+#endif
+	fprintf(stdout, " -f\t\tuse force\n");
+	fprintf(stdout, " -h\t\toutput help\n");
+	fprintf(stdout, " -r\t\tcheck only for release upgrades\n");
+	fprintf(stdout, " -F <fstype>\toverride filesystem type\n");
+	fprintf(stdout, " -y\t\tdon't wait for user confirmation\n");
+
+}
+
+
 /* this main function is too big... todo: split */
 int main(int args, char *argv[]) {
 	static struct blob_buf checkbuf, infobuf, reqbuf, imgbuf, upgbuf;
@@ -1552,25 +1597,7 @@ int main(int args, char *argv[]) {
 	while (argc<args) {
 		if (!strncmp(argv[argc], "-h", 3) ||
 		    !strncmp(argv[argc], "--help", 7)) {
-			fprintf(stdout, "%s: Attended sysUpgrade CLI client\n", argv[0]);
-			fprintf(stdout, "Usage: auc [-b <branch>] [-B <ver>] [-c] %s[-f] [-h] [-r] [-y]\n",
-#ifdef AUC_DEBUG
-"[-d] "
-#else
-""
-#endif
-				);
-			fprintf(stdout, " -b <branch>\tuse specific release branch\n");
-			fprintf(stdout, " -B <ver>\tuse specific release version\n");
-			fprintf(stdout, " -c\t\tonly check if system is up-to-date\n");
-#ifdef AUC_DEBUG
-			fprintf(stdout, " -d\t\tenable debugging output\n");
-#endif
-			fprintf(stdout, " -f\t\tuse force\n");
-			fprintf(stdout, " -h\t\toutput help\n");
-			fprintf(stdout, " -r\t\tcheck only for release upgrades\n");
-			fprintf(stdout, " -F <fstype>\toverride filesystem type\n");
-			fprintf(stdout, " -y\t\tdon't wait for user confirmation\n");
+			usage(argv[0]);
 			return 0;
 		}
 
@@ -1662,7 +1689,7 @@ int main(int args, char *argv[]) {
 			rootfs_type, target_fstype);
 
 	if (request_branches(!(target_branch || target_version))) {
-		rc=-ENETUNREACH;
+		rc=-ENODATA;
 		goto freeboard;
 	}
 
@@ -1674,19 +1701,20 @@ int main(int args, char *argv[]) {
 
 	fprintf(stdout, "Available: %s %s\n", branch->version_number, branch->version_code);
 
-	revcmp = openwrt_release_verrevcmp(revision, branch->version_code);
+	revcmp = verrevcmp(revision, branch->version_code);
 	if (revcmp < 0)
 			upg_check |= PKG_UPGRADE;
 	else if (revcmp > 0)
 			upg_check |= PKG_DOWNGRADE;
 
-	if ((rc = request_packages(branch)))
-		goto freebranches;
-
 	if (release_only && !(upg_check & PKG_UPGRADE)) {
+		fprintf(stderr, "Nothing to be updated. Use '-f' to force.\n");
 		rc=0;
 		goto freebranches;
 	}
+
+	if ((rc = request_packages(branch)))
+		goto freebranches;
 
 	upg_check |= check_installed_packages(reqbuf.head);
 	if (upg_check & PKG_ERROR) {
@@ -1702,6 +1730,12 @@ int main(int args, char *argv[]) {
 
 	if (!force && (upg_check & PKG_DOWNGRADE)) {
 		fprintf(stderr, "Refusing to downgrade. Use '-f' to force.\n");
+		rc=-ENOTRECOVERABLE;
+		goto freebranches;
+	};
+
+	if (!force && (upg_check & PKG_NOT_FOUND)) {
+		fprintf(stderr, "Not all installed packages found in remote lists. Use '-f' to force.\n");
 		rc=-ENOTRECOVERABLE;
 		goto freebranches;
 	};
@@ -1747,8 +1781,15 @@ int main(int args, char *argv[]) {
 
 		blobmsg_parse(target_policy, __TARGET_MAX, tb, blobmsg_data(tbr[REPLY_OBJECT]), blobmsg_len(tbr[REPLY_OBJECT]));
 
-		if (tb[TARGET_REQUEST_HASH] && tb[TARGET_STATUS]) {
-			if (status_delay(blobmsg_get_string(tb[TARGET_STATUS]))) {
+		/* for compatibility with old server version, also support status in 200 reply */
+		if (tb[TARGET_STATUS]) {
+			tmp = blobmsg_get_string(tb[TARGET_STATUS]);
+			if (status_delay(tmp))
+				retry = 1;
+		}
+
+		if (tb[TARGET_REQUEST_HASH]) {
+			if (retry) {
 				if (!retry_delay)
 					fputs("Requesting build", stderr);
 
@@ -1775,7 +1816,6 @@ int main(int args, char *argv[]) {
 					 blobmsg_get_string(tb[TARGET_REQUEST_HASH]));
 				DPRINTF("polling via GET %s\n", url);
 			}
-			retry = true;
 			use_get = true;
 		} else if (retry_delay) {
 			fputc('\n', stderr);
@@ -1879,8 +1919,8 @@ freebranches:
 	    )
 		fputs(blobmsg_get_string(tb[TARGET_STDERR]), stderr);
 
-	if (tb[TARGET_MESSAGE]) {
-		fputs(blobmsg_get_string(tb[TARGET_MESSAGE]), stderr);
+	if (tb[TARGET_DETAIL]) {
+		fputs(blobmsg_get_string(tb[TARGET_DETAIL]), stderr);
 		fputc('\n', stderr);
 	}
 
