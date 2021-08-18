@@ -34,7 +34,7 @@ elif [ ! -e ${yggConfig} ]; then
   # create the network interface
   uci -q batch <<-EOF >/dev/null
     set network.yggdrasil=interface
-    set network.yggdrasil.ifname=ygg0
+    set network.yggdrasil.device=ygg0
     set network.yggdrasil.proto=none
 EOF
 
