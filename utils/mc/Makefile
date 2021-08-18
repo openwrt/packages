@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mc
-PKG_VERSION:=4.8.26
+PKG_VERSION:=4.8.27
 PKG_RELEASE:=1
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-3.0-or-later
@@ -14,7 +14,7 @@ PKG_CPE_ID:=cpe:/a:midnight_commander:midnight_commander
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://ftp.midnight-commander.org/
-PKG_HASH:=c6deadc50595f2d9a22dc6c299a9f28b393e358346ebf6ca444a8469dc166c27
+PKG_HASH:=31be59225ffa9920816e9a8b3be0ab225a16d19e4faf46890f25bdffa02a4ff4
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf gettext-version
 PKG_BUILD_DEPENDS:=MC_VFS:libtirpc
@@ -33,12 +33,12 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
 define Package/mc
-	SECTION:=utils
-	CATEGORY:=Utilities
-	DEPENDS:=+glib2 +libncurses +libmount +MC_VFS:libssh2 $(ICONV_DEPENDS)
-	TITLE:=Midnight Commander - a powerful visual file manager
-	URL:=https://www.midnight-commander.org/
-	MENU:=1
+  SECTION:=utils
+  CATEGORY:=Utilities
+  DEPENDS:=+glib2 +libncurses +libmount +MC_VFS:libssh2 $(ICONV_DEPENDS)
+  TITLE:=Midnight Commander - a powerful visual file manager
+  URL:=https://www.midnight-commander.org/
+  MENU:=1
 endef
 
 define Package/mc/config
@@ -125,4 +125,23 @@ define Package/mc/conffiles
 /etc/mc/skins/default.ini
 endef
 
+define Package/mc-skins
+  TITLE:=Midnight Commander - a powerful visual file manager - skins
+  URL:=https://www.midnight-commander.org/
+  SECTION:=utils
+  CATEGORY:=Utilities
+  DEPENDS:=+mc
+endef
+
+define Package/mc-skins/install
+	$(INSTALL_DIR) $(1)/etc/mc/skins
+	$(CP) $(PKG_BUILD_DIR)/misc/skins/*.ini $(1)/etc/mc/skins/
+	$(RM) $(1)/etc/mc/skins/default.ini
+endef
+
+define Package/mc-skins/conffiles
+/etc/mc/skins/
+endef
+
 $(eval $(call BuildPackage,mc))
+$(eval $(call BuildPackage,mc-skins))
