@@ -317,6 +317,7 @@ enum {
 	H_LEN,
 	H_RANGE,
 	H_UNKNOWN_PACKAGE,
+	H_QUEUE_POSITION,
 	__H_MAX
 };
 
@@ -324,6 +325,7 @@ static const struct blobmsg_policy header_policy[__H_MAX] = {
 	[H_LEN] = { .name = "content-length", .type = BLOBMSG_TYPE_STRING },
 	[H_RANGE] = { .name = "content-range", .type = BLOBMSG_TYPE_STRING },
 	[H_UNKNOWN_PACKAGE] = { .name = "x-unknown-package", .type = BLOBMSG_TYPE_STRING },
+	[H_QUEUE_POSITION] = { .name = "x-queue-position", .type = BLOBMSG_TYPE_INT32 },
 };
 
 /*
@@ -699,6 +701,12 @@ static void request_done(struct uclient *cl)
 static void header_done_cb(struct uclient *cl)
 {
 	struct blob_attr *tb[__H_MAX];
+	struct jsonblobber *jsb = (struct jsonblobber *)cl->priv;
+	struct blob_buf *outbuf = NULL;
+
+	if (jsb)
+		outbuf = jsb->outbuf;
+
 	uint64_t resume_offset = 0, resume_end, resume_size;
 
 	if (uclient_http_redirect(cl)) {
@@ -778,10 +786,20 @@ static void header_done_cb(struct uclient *cl)
 			fprintf(stderr, "Content-Range header is invalid\n");
 			break;
 		}
+	case 201:
 	case 202:
 		retry = true;
+		if (!outbuf)
+			break;
+
+		blobmsg_add_u32(outbuf, "status", cl->status_code);
+
+		if (tb[H_QUEUE_POSITION])
+			blobmsg_add_u32(outbuf, "queue_position", blobmsg_get_u32(tb[H_QUEUE_POSITION]));
+
 		break;
 	case 200:
+		retry = false;
 		if (cl->priv)
 			break;
 
@@ -1747,8 +1765,15 @@ int main(int args, char *argv[]) {
 
 		blobmsg_parse(target_policy, __TARGET_MAX, tb, blobmsg_data(tbr[REPLY_OBJECT]), blobmsg_len(tbr[REPLY_OBJECT]));
 
-		if (tb[TARGET_REQUEST_HASH] && tb[TARGET_STATUS]) {
-			if (status_delay(blobmsg_get_string(tb[TARGET_STATUS]))) {
+		/* for compatibility with old server version, also support status in 200 reply */
+		if (tb[TARGET_STATUS]) {
+			tmp = blobmsg_get_string(tb[TARGET_STATUS]);
+			if (status_delay(tmp))
+				retry = 1;
+		}
+
+		if (tb[TARGET_REQUEST_HASH]) {
+			if (retry) {
 				if (!retry_delay)
 					fputs("Requesting build", stderr);
 
@@ -1775,7 +1800,6 @@ int main(int args, char *argv[]) {
 					 blobmsg_get_string(tb[TARGET_REQUEST_HASH]));
 				DPRINTF("polling via GET %s\n", url);
 			}
-			retry = true;
 			use_get = true;
 		} else if (retry_delay) {
 			fputc('\n', stderr);
