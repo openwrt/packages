@@ -1,6 +1,6 @@
 --- a/lib/tty/tty.c
 +++ b/lib/tty/tty.c
-@@ -370,7 +370,7 @@ tty_init_xterm_support (gboolean is_xter
+@@ -402,7 +402,7 @@ tty_init_xterm_support (gboolean is_xter
      if (xmouse_seq != NULL)
      {
          if (strcmp (xmouse_seq, ESC_STR "[<") == 0)
