@@ -25,7 +25,7 @@ endef
 
 define Package/bcp38/description
  bcp38 implements IETF BCP38 for home routers.
- See https://tools.ietf.org/html/bcp38.
+ See https://www.rfc-editor.org/info/bcp38.
 
  This package provides BCP38 for IPv4 only - IPv6 uses source 
  specific default routes, so no firewall configuration is needed.
