@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mc
 PKG_VERSION:=4.8.27
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_CPE_ID:=cpe:/a:midnight_commander:midnight_commander
@@ -107,7 +107,8 @@ define Package/mc/install
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/mc.menu $(1)/etc/mc
 	$(INSTALL_DIR) $(1)/etc/mc/skins
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/skins/default.ini $(1)/etc/mc/skins
-	$(INSTALL_DIR) $(1)/etc/mc/mcedit/Syntax
+	$(INSTALL_DIR) $(1)/usr/share/mc/syntax
+	touch $(1)/usr/share/mc/syntax/Syntax
 ifeq ($(CONFIG_MC_DIFFVIEWER),y)
 	ln -sf mc $(1)/usr/bin/mcdiff
 endif
