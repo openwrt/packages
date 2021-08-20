@@ -90,7 +90,7 @@ proto_bonding_add_slave() {
 
 proto_bonding_setup() {
 	local cfg="$1"
-	local link="bonding-$cfg"
+	local link="bond-$cfg"
 
 	# Check for loaded kernel bonding driver (/sys/class/net/bonding_masters exists)
 	[ -f "$BONDING_MASTERS" ] || {
@@ -208,7 +208,7 @@ proto_bonding_setup() {
 
 proto_bonding_teardown() {
 	local cfg="$1"
-	local link="bonding-$cfg"
+	local link="bond-$cfg"
 
 	# Check for loaded kernel bonding driver (/sys/class/net/bonding_masters exists)
 	[ -f "$BONDING_MASTERS" ] || {
