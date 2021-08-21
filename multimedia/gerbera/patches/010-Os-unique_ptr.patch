@@ -1,0 +1,42 @@
+From 7071316114b7d196808d943ce654b355927e73e1 Mon Sep 17 00:00:00 2001
+From: Karlchen <k_straussberger@netzland.net>
+Date: Mon, 23 Aug 2021 09:04:36 +0200
+Subject: [PATCH] Fix linkage error in on aarch64 with g++-10
+
+fixes #1674
+---
+ src/content/content_manager.cc | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+--- a/src/content/content_manager.cc
++++ b/src/content/content_manager.cc
+@@ -622,17 +622,17 @@ void ContentManager::_rescanDirectory(co
+ 
+     std::error_code ec;
+     auto rootDir = fs::directory_entry(location, ec);
+-    fs::directory_iterator dIter;
++    std::unique_ptr<fs::directory_iterator> dIter;
+ 
+     if (!ec && rootDir.exists(ec) && rootDir.is_directory(ec)) {
+-        dIter = fs::directory_iterator(location, ec);
++        dIter = std::make_unique<fs::directory_iterator>(location, ec);
+         if (ec) {
+             log_error("_rescanDirectory: Failed to iterate {}, {}", location.c_str(), ec.message());
+         }
+     } else {
+         log_error("Could not open {}: {}", location.c_str(), ec.message());
+     }
+-    if (ec) {
++    if (ec || !dIter) {
+         if (adir->persistent()) {
+             removeObject(adir, containerID, false);
+             if (location == adir->getLocation()) {
+@@ -673,7 +673,7 @@ void ContentManager::_rescanDirectory(co
+     adir->setCurrentLMT(location, std::chrono::seconds::zero());
+ 
+     std::shared_ptr<CdsObject> firstObject;
+-    for (auto&& dirEnt : dIter) {
++    for (auto&& dirEnt : *dIter) {
+         auto&& newPath = dirEnt.path();
+         auto&& name = newPath.filename().string();
+         if (name[0] == '.' && !asSetting.hidden) {
