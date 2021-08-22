@@ -1,0 +1,30 @@
+--- a/meson.build
++++ b/meson.build
+@@ -480,7 +480,11 @@ if build_tools
+ You can disable the Wayland xkbcli programs with -Denable-wayland=false.''')
+         endif
+ 
+-        wayland_scanner = find_program(wayland_scanner_dep.get_pkgconfig_variable('wayland_scanner'))
++        if (get_option('scanner_bin') == '')
++            wayland_scanner = find_program(wayland_scanner_dep.get_pkgconfig_variable('wayland_scanner'))
++        else
++            wayland_scanner = find_program(get_option('scanner_bin'))
++        endif
+         wayland_scanner_code_gen = generator(
+             wayland_scanner,
+             output: '@BASENAME@-protocol.c',
+--- a/meson_options.txt
++++ b/meson_options.txt
+@@ -62,6 +62,12 @@ option(
+     description: 'Enable support for Wayland utility programs',
+ )
+ option(
++    'scanner_bin',
++    description: 'Path to wayland-scanner binary',
++    type: 'string',
++    value: ''
++)
++option(
+     'enable-xkbregistry',
+     type: 'boolean',
+     value: true,
