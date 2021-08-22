@@ -81,6 +81,5 @@ define Package/perl-xml-parser/install
 	$(call perlmod/Install,$(1),auto/XML XML)
 endef
 
-
 $(eval $(call BuildPackage,perl-xml-parser))
 $(eval $(call HostBuild))
