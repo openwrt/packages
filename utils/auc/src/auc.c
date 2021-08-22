@@ -48,7 +48,7 @@
 #define API_JSON "json"
 #define API_JSON_EXT "." API_JSON
 #define API_PACKAGES "packages"
-#define API_REQUEST "api/build"
+#define API_REQUEST "api/v1/build"
 #define API_STATUS_QUEUED "queued"
 #define API_STATUS_STARTED "started"
 #define API_STORE "store"
@@ -236,7 +236,7 @@ enum {
 	TARGET_ENQUEUED_AT,
 	TARGET_IMAGE_PREFIX,
 	TARGET_IMAGES,
-	TARGET_MESSAGE,
+	TARGET_DETAIL,
 	TARGET_MANIFEST,
 	TARGET_METADATA_VERSION,
 	TARGET_REQUEST_HASH,
@@ -263,7 +263,7 @@ static const struct blobmsg_policy target_policy[__TARGET_MAX] = {
 	[TARGET_IMAGE_PREFIX] = { .name = "image_prefix", .type = BLOBMSG_TYPE_STRING },
 	[TARGET_IMAGES] = { .name = "images", .type = BLOBMSG_TYPE_ARRAY },
 	[TARGET_MANIFEST] = { .name = "manifest", .type = BLOBMSG_TYPE_TABLE },
-	[TARGET_MESSAGE] = { .name = "message", .type = BLOBMSG_TYPE_STRING },
+	[TARGET_DETAIL] = { .name = "detail", .type = BLOBMSG_TYPE_STRING },
 	[TARGET_METADATA_VERSION] = { .name = "metadata_version", .type = BLOBMSG_TYPE_INT32 },
 	[TARGET_REQUEST_HASH] = { .name = "request_hash", .type = BLOBMSG_TYPE_STRING },
 	[TARGET_SOURCE_DATE_EPOCH] = { .name = "source_date_epoch", .type = BLOBMSG_TYPE_STRING },
@@ -1903,8 +1903,8 @@ freebranches:
 	    )
 		fputs(blobmsg_get_string(tb[TARGET_STDERR]), stderr);
 
-	if (tb[TARGET_MESSAGE]) {
-		fputs(blobmsg_get_string(tb[TARGET_MESSAGE]), stderr);
+	if (tb[TARGET_DETAIL]) {
+		fputs(blobmsg_get_string(tb[TARGET_DETAIL]), stderr);
 		fputc('\n', stderr);
 	}
 
