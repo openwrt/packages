@@ -95,8 +95,6 @@ define GoCompiler/Default/Install/Doc
 	$(call GoCompiler/Default/Install/make-dirs,$(2),$(3))
 
 	$(call GoCompiler/Default/Install/install-share-data,$(1),$(2),$(3),doc)
-	$(call GoCompiler/Default/Install/install-share-data,$(1),$(2),$(3),favicon.ico)
-	$(call GoCompiler/Default/Install/install-share-data,$(1),$(2),$(3),robots.txt)
 endef
 
 # $(1) source go root
