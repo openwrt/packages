@@ -1,0 +1,10 @@
+--- a/tests/timespec-test.c
++++ b/tests/timespec-test.c
+@@ -25,6 +25,7 @@
+ 
+ #include "config.h"
+ 
++#include <time.h>
+ #include <stdlib.h>
+ #include <stdint.h>
+ #include <stdio.h>
