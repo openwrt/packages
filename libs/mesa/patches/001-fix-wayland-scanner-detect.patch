@@ -1,0 +1,39 @@
+--- a/meson.build
++++ b/meson.build
+@@ -1830,12 +1830,17 @@ endif
+ # TODO: symbol mangling
+ 
+ if with_platform_wayland
+-  dep_wl_scanner = dependency('wayland-scanner', native: true)
+-  prog_wl_scanner = find_program(dep_wl_scanner.get_pkgconfig_variable('wayland_scanner'))
+-  if dep_wl_scanner.version().version_compare('>= 1.15')
+-    wl_scanner_arg = 'private-code'
++  if (get_option('scanner_bin') == '')
++    dep_wl_scanner = dependency('wayland-scanner', native: true)
++    prog_wl_scanner = find_program(dep_wl_scanner.get_pkgconfig_variable('wayland_scanner'))
++    if dep_wl_scanner.version().version_compare('>= 1.15')
++      wl_scanner_arg = 'private-code'
++    else
++      wl_scanner_arg = 'code'
++    endif
+   else
+-    wl_scanner_arg = 'code'
++    prog_wl_scanner = get_option('scanner_bin')
++    wl_scanner_arg = 'private-code'
+   endif
+   dep_wl_protocols = dependency('wayland-protocols', version : '>= 1.8')
+   dep_wayland_client = dependency('wayland-client', version : '>=1.18')
+--- a/meson_options.txt
++++ b/meson_options.txt
+@@ -456,6 +456,11 @@ option(
+   value : 25,
+   description : 'Android Platform SDK version. Default: Nougat version.'
+ )
++option('scanner_bin',
++  description: 'Path to wayland-scanner binary',
++  type: 'string',
++  value: ''
++)
+ option(
+   'zstd',
+   type : 'combo',
