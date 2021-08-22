@@ -1,0 +1,120 @@
+From 03a820b173ed1fdef6ff14b4468f5dbc02ff59be Mon Sep 17 00:00:00 2001
+From: Heiko Lewin <heiko.lewin@worldiety.de>
+Date: Tue, 15 Dec 2020 16:48:19 +0100
+Subject: [PATCH 1/3] Fix mask usage in image-compositor
+
+---
+ src/cairo-image-compositor.c                |   8 ++--
+ test/Makefile.sources                       |   1 +
+ test/bug-image-compositor.c                 |  39 ++++++++++++++++++++
+ test/reference/bug-image-compositor.ref.png | Bin 0 -> 185 bytes
+ 4 files changed, 44 insertions(+), 4 deletions(-)
+ create mode 100644 test/bug-image-compositor.c
+ create mode 100644 test/reference/bug-image-compositor.ref.png
+
+--- a/src/cairo-image-compositor.c
++++ b/src/cairo-image-compositor.c
+@@ -2601,14 +2601,14 @@ _inplace_src_spans (void *abstract_rende
+ 		    unsigned num_spans)
+ {
+     cairo_image_span_renderer_t *r = abstract_renderer;
+-    uint8_t *m;
++    uint8_t *m, *base = (uint8_t*)pixman_image_get_data(r->mask);
+     int x0;
+ 
+     if (num_spans == 0)
+ 	return CAIRO_STATUS_SUCCESS;
+ 
+     x0 = spans[0].x;
+-    m = r->_buf;
++    m = base;
+     do {
+ 	int len = spans[1].x - spans[0].x;
+ 	if (len >= r->u.composite.run_length && spans[0].coverage == 0xff) {
+@@ -2646,7 +2646,7 @@ _inplace_src_spans (void *abstract_rende
+ 				      spans[0].x, y,
+ 				      spans[1].x - spans[0].x, h);
+ 
+-	    m = r->_buf;
++	    m = base;
+ 	    x0 = spans[1].x;
+ 	} else if (spans[0].coverage == 0x0) {
+ 	    if (spans[0].x != x0) {
+@@ -2675,7 +2675,7 @@ _inplace_src_spans (void *abstract_rende
+ #endif
+ 	    }
+ 
+-	    m = r->_buf;
++	    m = base;
+ 	    x0 = spans[1].x;
+ 	} else {
+ 	    *m++ = spans[0].coverage;
+--- /dev/null
++++ b/test/bug-image-compositor.c
+@@ -0,0 +1,66 @@
++/*
++ * Copyright © 2020 Uli Schlachter, Heiko Lewin
++ *
++ * Permission is hereby granted, free of charge, to any person
++ * obtaining a copy of this software and associated documentation
++ * files (the "Software"), to deal in the Software without
++ * restriction, including without limitation the rights to use, copy,
++ * modify, merge, publish, distribute, sublicense, and/or sell copies
++ * of the Software, and to permit persons to whom the Software is
++ * furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be
++ * included in all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
++ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
++ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
++ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
++ * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
++ * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
++ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++ * SOFTWARE.
++ *
++ * Author: Uli Schlachter <psychon@znc.in>
++ * Author: Heiko Lewin <hlewin@gmx.de>
++ */
++#include "cairo-test.h"
++
++
++/* This test reproduces an overflow of a mask-buffer in cairo-image-compositor.c */
++
++static cairo_test_status_t
++draw (cairo_t *cr, int width, int height)
++{
++    cairo_set_source_rgb (cr, 0., 0., 0.);
++    cairo_paint (cr);
++
++    cairo_set_source_rgb (cr, 1., 1., 1.);
++    cairo_set_line_width (cr, 1.);
++
++    cairo_pattern_t *p = cairo_pattern_create_linear (0, 0, width, height);
++    cairo_pattern_add_color_stop_rgb (p, 0, 0.99, 1, 1);
++    cairo_pattern_add_color_stop_rgb (p, 1, 1, 1, 1);
++    cairo_set_source (cr, p);
++    cairo_pattern_destroy(p);
++
++    cairo_move_to (cr, 0.5, -1);
++    for (int i = 0; i < width; i+=3) {
++	cairo_rel_line_to (cr, 2, 2);
++	cairo_rel_line_to (cr, 1, -2);
++    }
++
++    cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
++    cairo_stroke (cr);
++
++    return CAIRO_TEST_SUCCESS;
++}
++
++
++CAIRO_TEST (bug_image_compositor,
++	    "Crash in image-compositor",
++	    "stroke, stress", /* keywords */
++	    NULL, /* requirements */
++	    10000, 1,
++	    NULL, draw)
++	    

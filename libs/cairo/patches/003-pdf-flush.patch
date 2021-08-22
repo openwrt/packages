@@ -1,0 +1,28 @@
+From https://cgit.freedesktop.org/cairo/commit/?id=4c8813f0eaacc32c27126ad2296951a626300b89
+
+Fixes https://gitlab.freedesktop.org/cairo/cairo/issues/342
+
+From 4c8813f0eaacc32c27126ad2296951a626300b89 Mon Sep 17 00:00:00 2001
+From: Adrian Johnson <ajohnson@redneon.com>
+Date: Thu, 25 Oct 2018 18:46:17 +1030
+Subject: pdf: add missing flush
+
+Issue #342
+---
+ src/cairo-pdf-surface.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+--- a/src/cairo-pdf-surface.c
++++ b/src/cairo-pdf-surface.c
+@@ -7711,6 +7711,11 @@ _cairo_pdf_surface_mask (void			*abstrac
+      * and most common, case to handle. */
+     if (_cairo_pattern_is_constant_alpha (mask, &extents.bounded, &alpha) &&
+ 	_can_paint_pattern (source)) {
++
++	status = _cairo_pdf_operators_flush (&surface->pdf_operators);
++	if (unlikely (status))
++	    goto cleanup;
++
+ 	_cairo_output_stream_printf (surface->output, "q\n");
+ 	status = _cairo_pdf_surface_paint_pattern (surface,
+ 						   op,
