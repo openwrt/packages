@@ -1,0 +1,30 @@
+--- a/src/meson.build
++++ b/src/meson.build
+@@ -59,8 +59,12 @@ if get_option('scanner')
+ endif
+ 
+ if meson.is_cross_build() or not get_option('scanner')
+-	scanner_dep = dependency('wayland-scanner', native: true, version: meson.project_version())
+-	wayland_scanner_for_build = find_program(scanner_dep.get_pkgconfig_variable('wayland_scanner'))
++	if (get_option('scanner_bin') != '')
++		wayland_scanner_for_build = get_option('scanner_bin')
++	else
++		scanner_dep = dependency('wayland-scanner', native: true, version: meson.project_version())
++		wayland_scanner_for_build = find_program(scanner_dep.get_pkgconfig_variable('wayland_scanner'))
++	endif
+ else
+ 	wayland_scanner_for_build = wayland_scanner
+ endif
+--- a/meson_options.txt
++++ b/meson_options.txt
+@@ -6,6 +6,10 @@ option('scanner',
+   description: 'Compile wayland-scanner binary',
+   type: 'boolean',
+   value: 'true')
++option('scanner_bin',
++  description: 'Path to wayland-scanner binary',
++  type: 'string',
++  value: '')
+ option('documentation',
+   description: 'Build the documentation (requires Doxygen, dot, xmlto, xsltproc)',
+   type: 'boolean',
