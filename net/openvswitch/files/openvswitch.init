@@ -187,6 +187,17 @@ ovs_bridge_validate_datapath_id() {
 	fi
 }
 
+ovs_bridge_validate_datapath_desc() {
+	local dpdesc="$1"
+
+	if [ "$(echo $dpdesc | wc -c)" -le 255 ]; then
+		return 0
+	else
+		logger -t openvswitch "invalid datapath_desc: $dpdesc"
+		return 1
+	fi
+}
+
 ovs_bridge_init() {
 	local cfg="$1"
 
@@ -205,6 +216,13 @@ ovs_bridge_init() {
 	[ -n "$datapath_id" ] && {
 		ovs_bridge_validate_datapath_id "$datapath_id" && {
 			ovs-vsctl --if-exists set bridge "$name" other-config:datapath-id="$datapath_id"
+		}
+	}
+
+	config_get datapath_desc "$cfg" datapath_desc
+	[ -n "$datapath_desc" ] && {
+		ovs_bridge_validate_datapath_desc "$datapath_desc" && {
+			ovs-vsctl --if-exists set bridge "$name" other-config:dp-desc="$datapath_desc"
 		}
 	}
 
