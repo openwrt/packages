@@ -12,7 +12,7 @@ start_instance () {
 	config_get port "$section" port
 	config_get memory "$section" memory
 
-	service_start /usr/bin/memcached -d -u ${user:-nobody} \
+	service_start /usr/bin/memcached -d -u ${user:-memcached} \
 		-c ${maxconn:-1024} -l ${listen:-0.0.0.0} \
 		-p ${port:-11211} -U ${port:-11211} -m ${memory:-64}
 }

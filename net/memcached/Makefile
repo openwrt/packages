@@ -32,6 +32,7 @@ define Package/memcached
   DEPENDS:=+libevent2 +libpthread
   TITLE:=The high-performance, distributed memory object caching system
   URL:=https://memcached.org/
+  USERID:=memcached=441:memcached=441
 endef
 
 define Package/memcached/description
