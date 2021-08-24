@@ -35,4 +35,9 @@ define Package/mdio-tools/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/mdio/mdio $(1)/usr/bin/
 endef
 
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	$(SED) 's/m4_esyscmd_s(.*)/$(PKG_VERSION)/' $(PKG_BUILD_DIR)/configure.ac
+endef
+
 $(eval $(call BuildPackage,mdio-tools))
