@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-simplejson
-PKG_VERSION:=3.17.3
-PKG_RELEASE:=1
+PKG_VERSION:=3.17.5
+PKG_RELEASE:=$(AUTORELEASE)
 PKG_LICENSE:=MIT
 PKG_CPE_ID:=cpe:/a:simplejson_project:simplejson
 
 PYPI_NAME:=simplejson
-PKG_HASH:=da72a452bcf4349fc467a12b54ab0e63e654a571cacc44084826d52bde12b6ee
+PKG_HASH:=91cfb43fb91ff6d1e4258be04eee84b51a4ef40a28d899679b9ea2556322fb50
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
 include ../pypi.mk
