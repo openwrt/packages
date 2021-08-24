@@ -90,7 +90,7 @@ CONFIGURE_ARGS += \
 	$(if $(CONFIG_AIRCRACK_NG_HWLOC),--enable-hwloc,--disable-hwloc) \
 	$(if $(CONFIG_AIRCRACK_NG_SQLITE3),--with-sqlite3=$(STAGING_DIR)/usr,--without-sqlite3)
 
-TARGET_CFLAGS += -Wall -Wextra -ffunction-sections -fdata-sections
+TARGET_CFLAGS += -Wall -Wextra -ffunction-sections -fdata-sections -fcommon
 
 ifeq ($(CONFIG_AIRCRACK_NG_OPTIMIZE_SPEED),y)
 	TARGET_CFLAGS := $(filter-out -O%,$(TARGET_CFLAGS)) -O3
