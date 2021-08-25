@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sudo
-PKG_VERSION:=1.9.7p2
+PKG_VERSION:=1.9.8p1
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.sudo.ws/dist
-PKG_HASH:=28b5ee725dbf89a7852f42f309ca877d2810a9531b4eecfe59f3a84b6b4afca8
+PKG_HASH:=0939ee24df7095a92e0ca4aa3bd53b2a10965a7b921d51a26ab70cdd24388d69
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
@@ -23,10 +23,8 @@ PKG_CPE_ID:=cpe:/a:todd_miller:sudo
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
-PKG_BUILD_DEPENDS:=sudo/host
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/host-build.mk
 
 define Package/sudo
   SECTION:=admin
@@ -61,16 +59,6 @@ CONFIGURE_VARS += \
 	sudo_cv_uid_t_len=10 \
 	sudo_cv_func_unsetenv_void=no
 
-define Host/Compile
-	cd $(HOST_BUILD_DIR)/lib/util; \
-	    $(MAKE) mksiglist; $(MAKE) mksigname
-endef
-
-define Host/Install
-	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/bin
-	$(CP) $(HOST_BUILD_DIR)/lib/util/mksig{list,name} $(STAGING_DIR_HOSTPKG)/bin/
-endef
-
 define Package/sudo/install
 	$(INSTALL_DIR) \
 		$(1)/etc/{init.d,sudoers.d} \
@@ -95,5 +83,4 @@ define Package/sudo/postinst
 }
 endef
 
-$(eval $(call HostBuild))
 $(eval $(call BuildPackage,sudo))
