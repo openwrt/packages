@@ -1,0 +1,189 @@
+From f408c6c45013c80d62ed4b793ee79d76e4b582e0 Mon Sep 17 00:00:00 2001
+From: Namjae Jeon <namjae.jeon@samsung.com>
+Date: Wed, 11 Aug 2021 15:21:04 +0900
+Subject: [PATCH] ksmbd: remove select FS_POSIX_ACL in Kconfig
+
+ksmbd is forcing to turn on FS_POSIX_ACL in Kconfig to use vfs acl
+functions(posix_acl_alloc, get_acl, set_posix_acl). OpenWRT and other
+platform doesn't use acl and this config is disable by default in
+kernel. This patch use IS_ENABLED() to know acl config is enable and use
+acl function if it is enable.
+
+Signed-off-by: Namjae Jeon <namjae.jeon@samsung.com>
+---
+ Kconfig   |  1 -
+ smb2pdu.c |  8 +++---
+ smbacl.c  | 80 ++++++++++++++++++++++++++++++++-----------------------
+ vfs.c     |  9 +++++++
+ 4 files changed, 60 insertions(+), 38 deletions(-)
+
+--- a/Kconfig
++++ b/Kconfig
+@@ -19,7 +19,6 @@ config SMB_SERVER
+ 	select CRYPTO_GCM
+ 	select ASN1
+ 	select OID_REGISTRY
+-	select FS_POSIX_ACL
+ 	default n
+ 	help
+ 	  Choose Y here if you want to allow SMB3 compliant clients
+--- a/smb2pdu.c
++++ b/smb2pdu.c
+@@ -2387,9 +2387,11 @@ static void ksmbd_acls_fattr(struct smb_
+ 	fattr->cf_mode = inode->i_mode;
+ 	fattr->cf_dacls = NULL;
+ 
+-	fattr->cf_acls = get_acl(inode, ACL_TYPE_ACCESS);
+-	if (S_ISDIR(inode->i_mode))
+-		fattr->cf_dacls = get_acl(inode, ACL_TYPE_DEFAULT);
++	if (IS_ENABLED(CONFIG_FS_POSIX_ACL)) {
++		fattr->cf_acls = get_acl(inode, ACL_TYPE_ACCESS);
++		if (S_ISDIR(inode->i_mode))
++			fattr->cf_dacls = get_acl(inode, ACL_TYPE_DEFAULT);
++	}
+ }
+ 
+ /**
+--- a/smbacl.c
++++ b/smbacl.c
+@@ -533,22 +533,29 @@ static void parse_dacl(struct user_names
+ 
+ 	if (acl_state.users->n || acl_state.groups->n) {
+ 		acl_state.mask.allow = 0x07;
+-		fattr->cf_acls = posix_acl_alloc(acl_state.users->n +
+-			acl_state.groups->n + 4, GFP_KERNEL);
+-		if (fattr->cf_acls) {
+-			cf_pace = fattr->cf_acls->a_entries;
+-			posix_state_to_acl(&acl_state, cf_pace);
++
++		if (IS_ENABLED(CONFIG_FS_POSIX_ACL)) {
++			fattr->cf_acls =
++				posix_acl_alloc(acl_state.users->n +
++					acl_state.groups->n + 4, GFP_KERNEL);
++			if (fattr->cf_acls) {
++				cf_pace = fattr->cf_acls->a_entries;
++				posix_state_to_acl(&acl_state, cf_pace);
++			}
+ 		}
+ 	}
+ 
+ 	if (default_acl_state.users->n || default_acl_state.groups->n) {
+ 		default_acl_state.mask.allow = 0x07;
+-		fattr->cf_dacls =
+-			posix_acl_alloc(default_acl_state.users->n +
+-			default_acl_state.groups->n + 4, GFP_KERNEL);
+-		if (fattr->cf_dacls) {
+-			cf_pdace = fattr->cf_dacls->a_entries;
+-			posix_state_to_acl(&default_acl_state, cf_pdace);
++
++		if (IS_ENABLED(CONFIG_FS_POSIX_ACL)) {
++			fattr->cf_dacls =
++				posix_acl_alloc(default_acl_state.users->n +
++				default_acl_state.groups->n + 4, GFP_KERNEL);
++			if (fattr->cf_dacls) {
++				cf_pdace = fattr->cf_dacls->a_entries;
++				posix_state_to_acl(&default_acl_state, cf_pdace);
++			}
+ 		}
+ 	}
+ 	free_acl_state(&acl_state);
+@@ -1221,31 +1228,36 @@ int smb_check_perm_dacl(struct ksmbd_con
+ 			granted = GENERIC_ALL_FLAGS;
+ 	}
+ 
+-	posix_acls = get_acl(d_inode(path->dentry), ACL_TYPE_ACCESS);
+-	if (posix_acls && !found) {
+-		unsigned int id = -1;
+-
+-		pa_entry = posix_acls->a_entries;
+-		for (i = 0; i < posix_acls->a_count; i++, pa_entry++) {
+-			if (pa_entry->e_tag == ACL_USER)
+-				id = from_kuid(user_ns,
+-					       pa_entry->e_uid);
+-			else if (pa_entry->e_tag == ACL_GROUP)
+-				id = from_kgid(user_ns,
+-					       pa_entry->e_gid);
+-			else
+-				continue;
+-
+-			if (id == uid) {
+-				mode_to_access_flags(pa_entry->e_perm, 0777, &access_bits);
+-				if (!access_bits)
+-					access_bits = SET_MINIMUM_RIGHTS;
+-				goto check_access_bits;
++	if (IS_ENABLED(CONFIG_FS_POSIX_ACL)) {
++		posix_acls = get_acl(d_inode(path->dentry), ACL_TYPE_ACCESS);
++		if (posix_acls && !found) {
++			unsigned int id = -1;
++
++			pa_entry = posix_acls->a_entries;
++			for (i = 0; i < posix_acls->a_count; i++, pa_entry++) {
++				if (pa_entry->e_tag == ACL_USER)
++					id = from_kuid(user_ns,
++						       pa_entry->e_uid);
++				else if (pa_entry->e_tag == ACL_GROUP)
++					id = from_kgid(user_ns,
++						       pa_entry->e_gid);
++				else
++					continue;
++
++				if (id == uid) {
++					mode_to_access_flags(pa_entry->e_perm,
++							     0777,
++							     &access_bits);
++					if (!access_bits)
++						access_bits =
++							SET_MINIMUM_RIGHTS;
++					goto check_access_bits;
++				}
+ 			}
+ 		}
++		if (posix_acls)
++			posix_acl_release(posix_acls);
+ 	}
+-	if (posix_acls)
+-		posix_acl_release(posix_acls);
+ 
+ 	if (!found) {
+ 		if (others_ace) {
+@@ -1308,7 +1320,7 @@ int set_info_sec(struct ksmbd_conn *conn
+ 
+ 	ksmbd_vfs_remove_acl_xattrs(user_ns, path->dentry);
+ 	/* Update posix acls */
+-	if (fattr.cf_dacls) {
++	if (IS_ENABLED(CONFIG_FS_POSIX_ACL) && fattr.cf_dacls) {
+ #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 12, 0)
+ 		rc = set_posix_acl(user_ns, inode,
+ 				   ACL_TYPE_ACCESS,
+--- a/vfs.c
++++ b/vfs.c
+@@ -1508,6 +1508,9 @@ static struct xattr_smb_acl *ksmbd_vfs_m
+ 	struct xattr_acl_entry *xa_entry;
+ 	int i;
+ 
++	if (!IS_ENABLED(CONFIG_FS_POSIX_ACL))
++		return NULL;
++
+ 	posix_acls = get_acl(inode, acl_type);
+ 	if (!posix_acls)
+ 		return NULL;
+@@ -2322,6 +2325,9 @@ int ksmbd_vfs_set_init_posix_acl(struct
+ 	struct posix_acl *acls;
+ 	int rc;
+ 
++	if (!IS_ENABLED(CONFIG_FS_POSIX_ACL))
++		return -EOPNOTSUPP;
++
+ 	ksmbd_debug(SMB, "Set posix acls\n");
+ 	rc = init_acl_state(&acl_state, 1);
+ 	if (rc)
+@@ -2377,6 +2383,9 @@ int ksmbd_vfs_inherit_posix_acl(struct u
+ 	struct posix_acl_entry *pace;
+ 	int rc, i;
+ 
++	if (!IS_ENABLED(CONFIG_FS_POSIX_ACL))
++		return -EOPNOTSUPP;
++
+ 	acls = get_acl(parent_inode, ACL_TYPE_DEFAULT);
+ 	if (!acls)
+ 		return -ENOENT;
