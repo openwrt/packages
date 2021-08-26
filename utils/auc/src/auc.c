@@ -96,18 +96,10 @@ struct branch {
 	char *version_code;
 	char *version_number;
 	bool snapshot;
-	time_t release_time;
-	time_t eol_time;
 	char *path;
 	char *path_packages;
 	char *arch_packages;
-	char *pubkey;
-	char *updates;
 	char **repos;
-	char **extra_repos;
-	char **extra_repos_names;
-	char **default_packages;
-	char **device_packages;
 };
 static LIST_HEAD(branches);
 
@@ -192,37 +184,25 @@ static const struct blobmsg_policy upgtest_policy[__UPGTEST_MAX] = {
  * policy for branches.json
  */
 enum {
-	BRANCH_DATE_EOL,
-	BRANCH_DATE_RELEASE,
 	BRANCH_ENABLED,
-	BRANCH_EXTRA_REPOS,
 	BRANCH_GIT_BRANCH,
 	BRANCH_NAME,
 	BRANCH_PATH,
 	BRANCH_PATH_PACKAGES,
-	BRANCH_PUBKEY,
-	BRANCH_REPOS,
 	BRANCH_SNAPSHOT,
 	BRANCH_TARGETS,
-	BRANCH_UPDATES,
 	BRANCH_VERSIONS,
 	__BRANCH_MAX,
 };
 
 static const struct blobmsg_policy branches_policy[__BRANCH_MAX] = {
-	[BRANCH_DATE_EOL] = { .name = "eol", .type = BLOBMSG_TYPE_STRING },
-	[BRANCH_DATE_RELEASE] = { .name = "release_date", .type = BLOBMSG_TYPE_STRING },
 	[BRANCH_ENABLED] = { .name = "enabled", .type = BLOBMSG_TYPE_BOOL },
-	[BRANCH_EXTRA_REPOS] = { .name = "extra_repos", .type = BLOBMSG_TYPE_TABLE },
 	[BRANCH_GIT_BRANCH] = { .name = "git_branch", .type = BLOBMSG_TYPE_STRING },
 	[BRANCH_NAME] = { .name = "name", .type = BLOBMSG_TYPE_STRING },
 	[BRANCH_PATH] = { .name = "path", .type = BLOBMSG_TYPE_STRING },
 	[BRANCH_PATH_PACKAGES] = { .name = "path_packages", .type = BLOBMSG_TYPE_STRING },
-	[BRANCH_PUBKEY] = { .name = "pubkey", .type = BLOBMSG_TYPE_STRING },
-	[BRANCH_REPOS] = { .name = "repos", .type = BLOBMSG_TYPE_ARRAY },
 	[BRANCH_SNAPSHOT] = { .name = "snapshot", .type = BLOBMSG_TYPE_BOOL },
 	[BRANCH_TARGETS] = { .name = "targets", .type = BLOBMSG_TYPE_TABLE },
-	[BRANCH_UPDATES] = { .name = "updates", .type = BLOBMSG_TYPE_STRING },
 	[BRANCH_VERSIONS] = { .name = "versions", .type = BLOBMSG_TYPE_ARRAY },
 };
 
@@ -232,22 +212,17 @@ static const struct blobmsg_policy branches_policy[__BRANCH_MAX] = {
 enum {
 	TARGET_ARCH_PACKAGES,
 	TARGET_BINDIR,
-	TARGET_BUILD_AT,
-	TARGET_DEFAULT_PACKAGES,
 	TARGET_DEVICE_PACKAGES,
 	TARGET_ENQUEUED_AT,
-	TARGET_IMAGE_PREFIX,
 	TARGET_IMAGES,
 	TARGET_DETAIL,
 	TARGET_MANIFEST,
 	TARGET_METADATA_VERSION,
 	TARGET_REQUEST_HASH,
-	TARGET_SOURCE_DATE_EPOCH,
 	TARGET_QUEUE_POSITION,
 	TARGET_STATUS,
 	TARGET_STDERR,
 	TARGET_STDOUT,
-	TARGET_SUPPORTED_DEVICES,
 	TARGET_TARGET,
 	TARGET_TITLES,
 	TARGET_VERSION_CODE,
@@ -258,22 +233,17 @@ enum {
 static const struct blobmsg_policy target_policy[__TARGET_MAX] = {
 	[TARGET_ARCH_PACKAGES] = { .name = "arch_packages", .type = BLOBMSG_TYPE_STRING },
 	[TARGET_BINDIR] = { .name = "bin_dir", .type = BLOBMSG_TYPE_STRING },
-	[TARGET_BUILD_AT] = { .name = "built_at", .type = BLOBMSG_TYPE_STRING },
-	[TARGET_DEFAULT_PACKAGES] = { .name = "default_packages", .type = BLOBMSG_TYPE_ARRAY },
 	[TARGET_DEVICE_PACKAGES] = { .name = "device_packages", .type = BLOBMSG_TYPE_ARRAY },
 	[TARGET_ENQUEUED_AT] = { .name = "enqueued_at", .type = BLOBMSG_TYPE_STRING },
-	[TARGET_IMAGE_PREFIX] = { .name = "image_prefix", .type = BLOBMSG_TYPE_STRING },
 	[TARGET_IMAGES] = { .name = "images", .type = BLOBMSG_TYPE_ARRAY },
 	[TARGET_MANIFEST] = { .name = "manifest", .type = BLOBMSG_TYPE_TABLE },
 	[TARGET_DETAIL] = { .name = "detail", .type = BLOBMSG_TYPE_STRING },
 	[TARGET_METADATA_VERSION] = { .name = "metadata_version", .type = BLOBMSG_TYPE_INT32 },
 	[TARGET_REQUEST_HASH] = { .name = "request_hash", .type = BLOBMSG_TYPE_STRING },
-	[TARGET_SOURCE_DATE_EPOCH] = { .name = "source_date_epoch", .type = BLOBMSG_TYPE_STRING },
 	[TARGET_QUEUE_POSITION] = { .name = "queue_position", .type = BLOBMSG_TYPE_INT32 },
 	[TARGET_STATUS] = { .name = "status", .type = BLOBMSG_TYPE_STRING },
 	[TARGET_STDERR] = { .name = "stderr", .type = BLOBMSG_TYPE_STRING },
 	[TARGET_STDOUT] = { .name = "stdout", .type = BLOBMSG_TYPE_STRING },
-	[TARGET_SUPPORTED_DEVICES] = { .name = "supported_devices", .type = BLOBMSG_TYPE_ARRAY },
 	[TARGET_TARGET] = { .name = "target", .type = BLOBMSG_TYPE_STRING },
 	[TARGET_TITLES] = { .name = "titles", .type = BLOBMSG_TYPE_ARRAY },
 	[TARGET_VERSION_CODE] = { .name = "version_code", .type = BLOBMSG_TYPE_STRING },
@@ -503,7 +473,8 @@ static void pkglist_check_cb(struct ubus_request *req, int type, struct blob_att
 
 		pkg = avl_find_element(&pkg_tree, blobmsg_name(cur), pkg, avl);
 		if (!pkg) {
-			fprintf(stderr, "installed package %s cannot be found in remote list!\n", blobmsg_name(cur));
+			fprintf(stderr, "installed package %s%s%s cannot be found in remote list!\n",
+				ANSI_COLOR_RED, blobmsg_name(cur), ANSI_COLOR_RESET);
 			*status |= PKG_NOT_FOUND;
 			continue;
 		}
@@ -615,7 +586,6 @@ static void board_cb(struct ubus_request *req, int type, struct blob_attr *msg) 
 	if (tb[BOARD_ROOTFS_TYPE])
 		rootfs_type = strdup(blobmsg_get_string(tb[BOARD_ROOTFS_TYPE]));
 
-	blobmsg_add_string(buf, "distro", distribution);
 	blobmsg_add_string(buf, "target", target);
 	blobmsg_add_string(buf, "version", version);
 	blobmsg_add_string(buf, "revision", revision);
@@ -735,61 +705,12 @@ static void header_done_cb(struct uclient *cl)
 		request_done(cl);
 		rc=-ESRCH;
 		break;
-	case 409:
-		fprintf(stderr, "Conflicting packages requested\n");
-		request_done(cl);
-		rc=-EINVAL;
-		break;
-	case 412:
-		fprintf(stderr, "%s target %s (%s) not found. Please report this at %s\n",
-			distribution, target, board_name, server_issues);
-		request_done(cl);
-		rc=-ENOSYS;
-		break;
-	case 413:
-		fprintf(stderr, "image too big.\n");
-		rc=-E2BIG;
-		request_done(cl);
-		break;
-	case 416:
-		fprintf(stderr, "File download already fully retrieved; nothing to do.\n");
-		request_done(cl);
-		break;
 	case 422:
 		fprintf(stderr, "unknown package '%s' requested.\n",
 			blobmsg_get_string(tb[H_UNKNOWN_PACKAGE]));
 		rc=-ENOPKG;
 		request_done(cl);
 		break;
-	case 501:
-		fprintf(stderr, "ImageBuilder didn't produce sysupgrade file.\n");
-		rc=-ENODATA;
-		request_done(cl);
-		break;
-	case 204:
-		fprintf(stdout, "system is up to date.\n");
-		uptodate=1;
-		rc=0;
-		request_done(cl);
-		break;
-	case 206:
-		if (!cur_resume) {
-			fprintf(stderr, "Error: Partial content received, full content requested\n");
-			request_done(cl);
-			break;
-		}
-
-		if (!tb[H_RANGE]) {
-			fprintf(stderr, "Content-Range header is missing\n");
-			break;
-		}
-
-		if (sscanf(blobmsg_get_string(tb[H_RANGE]),
-			   "bytes %"PRIu64"-%"PRIu64"/%"PRIu64,
-			   &resume_offset, &resume_end, &resume_size) != 3) {
-			fprintf(stderr, "Content-Range header is invalid\n");
-			break;
-		}
 	case 201:
 	case 202:
 		retry = true;
@@ -1030,52 +951,6 @@ static char* alloc_replace_var(char *in, const char *var, const char *replace)
 	return res;
 }
 
-static time_t parse_reldate(char *str)
-{
-	int m, d, y;
-
-	if (!str ||
-	    strlen(str) != 10 ||
-	    sscanf(str, "%4d-%2d-%2d", &y, &m, &d) != 3)
-		return (time_t)0;
-
-	struct tm time = {
-		.tm_mday = d,
-		.tm_mon = m - 1,
-		.tm_year = y - 1900,
-	};
-	return timegm(&time);
-}
-
-static int json_to_string_arrays(struct blob_attr *j, char ***vars, char ***names)
-{
-	int i = 0;
-	struct blob_attr *cur;
-	int rem;
-
-	if (j) {
-		i = blobmsg_check_array(j, BLOBMSG_TYPE_STRING);
-		if (i < 0)
-			return i;
-	}
-
-	if (i > 0) {
-		*vars = calloc((i + 1), sizeof(char *));
-		if (names)
-			*names = calloc((i + 1), sizeof(char *));
-
-		i = 0;
-		blobmsg_for_each_attr(cur, j, rem) {
-			if (names)
-				(*names)[i] = strdup(blobmsg_name(cur));
-
-			(*vars)[i++] = strdup(blobmsg_get_string(cur));
-		}
-	}
-
-	return i;
-}
-
 static int request_target(struct branch *br, char *url)
 {
 	static struct blob_buf boardbuf;
@@ -1097,12 +972,7 @@ static int request_target(struct branch *br, char *url)
 
 	if (!tb[TARGET_METADATA_VERSION] ||
 	    !tb[TARGET_ARCH_PACKAGES] ||
-	    !tb[TARGET_DEFAULT_PACKAGES] ||
-	    !tb[TARGET_DEVICE_PACKAGES] ||
-	    !tb[TARGET_IMAGE_PREFIX] ||
 	    !tb[TARGET_IMAGES] ||
-	    !tb[TARGET_SOURCE_DATE_EPOCH] ||
-	    !tb[TARGET_SUPPORTED_DEVICES] ||
 	    !tb[TARGET_TARGET]) {
 		blob_buf_free(&boardbuf);
 		return -ENODATA;
@@ -1118,9 +988,6 @@ static int request_target(struct branch *br, char *url)
 
 	if (strcmp(blobmsg_get_string(tb[TARGET_ARCH_PACKAGES]), br->arch_packages))
 		return -EINVAL;
-
-	json_to_string_arrays(tb[TARGET_DEFAULT_PACKAGES], &br->default_packages, NULL);
-	json_to_string_arrays(tb[TARGET_DEVICE_PACKAGES], &br->device_packages, NULL);
 
 	if (tb[TARGET_VERSION_CODE])
 		br->version_code = strdup(blobmsg_get_string(tb[TARGET_VERSION_CODE]));
@@ -1158,7 +1025,6 @@ static void process_branch(struct blob_attr *branch, bool only_active)
 	/* mandatory fields */
 	if (!(tb[BRANCH_ENABLED] && blobmsg_get_bool(tb[BRANCH_ENABLED]) &&
 		tb[BRANCH_NAME] && tb[BRANCH_PATH] && tb[BRANCH_PATH_PACKAGES] &&
-		tb[BRANCH_UPDATES] && tb[BRANCH_PUBKEY] && tb[BRANCH_REPOS] &&
 		tb[BRANCH_VERSIONS] && tb[BRANCH_TARGETS]))
 		return;
 
@@ -1181,13 +1047,6 @@ static void process_branch(struct blob_attr *branch, bool only_active)
 		br->name = strdup(blobmsg_get_string(tb[BRANCH_NAME]));
 		br->path = strdup(blobmsg_get_string(tb[BRANCH_PATH]));
 		br->path_packages = strdup(blobmsg_get_string(tb[BRANCH_PATH_PACKAGES]));
-		br->pubkey = strdup(blobmsg_get_string(tb[BRANCH_PUBKEY]));
-		br->updates = strdup(blobmsg_get_string(tb[BRANCH_UPDATES]));
-		br->release_time = parse_reldate(blobmsg_get_string(tb[BRANCH_DATE_RELEASE]));
-		br->eol_time = parse_reldate(blobmsg_get_string(tb[BRANCH_DATE_RELEASE]));
-
-		json_to_string_arrays(tb[BRANCH_REPOS], &br->repos, NULL);
-		json_to_string_arrays(tb[BRANCH_EXTRA_REPOS], &br->extra_repos, &br->extra_repos_names);
 
 		br->version = strdup(blobmsg_get_string(curver));
 		br->snapshot = !!strcasestr(blobmsg_get_string(curver), "snapshot");
@@ -1574,7 +1433,9 @@ static void usage(const char *arg0)
 	fprintf(stdout, " -r\t\tcheck only for release upgrades\n");
 	fprintf(stdout, " -F <fstype>\toverride filesystem type\n");
 	fprintf(stdout, " -y\t\tdon't wait for user confirmation\n");
-
+	fprintf(stdout, "\n");
+	fprintf(stdout, "Please report issues to improve the server:\n");
+	fprintf(stdout, "%s\n", server_issues);
 }
 
 
