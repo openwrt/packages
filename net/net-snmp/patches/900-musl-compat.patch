@@ -1,12 +1,11 @@
 --- a/agent/mibgroup/iwlib.h
 +++ b/agent/mibgroup/iwlib.h
-@@ -85,6 +85,11 @@
+@@ -85,6 +85,10 @@
        && LINUX_VERSION_CODE < KERNEL_VERSION(2,1,0)
  #define LIBC5_HEADERS
  
 +/* Musl */
-+#elif !defined(__GLIBC__) && !defined(__UCLIBC__) \
-+      && LINUX_VERSION_CODE >= KERNEL_VERSION(3,0,0)
++#elif !defined(__GLIBC__) && LINUX_VERSION_CODE >= KERNEL_VERSION(3,0,0)
 +#define GENERIC_HEADERS
 +
  /* Unsupported combination */
