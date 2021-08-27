@@ -1156,9 +1156,9 @@ static void process_branch(struct blob_attr *branch, bool only_active)
 
 	/* mandatory fields */
 	if (!(tb[BRANCH_ENABLED] && blobmsg_get_bool(tb[BRANCH_ENABLED]) &&
-		tb[BRANCH_NAME] && tb[BRANCH_PATH]) && tb[BRANCH_PATH_PACKAGES] &&
+		tb[BRANCH_NAME] && tb[BRANCH_PATH] && tb[BRANCH_PATH_PACKAGES] &&
 		tb[BRANCH_UPDATES] && tb[BRANCH_PUBKEY] && tb[BRANCH_REPOS] &&
-		tb[BRANCH_VERSIONS] && tb[BRANCH_TARGETS])
+		tb[BRANCH_VERSIONS] && tb[BRANCH_TARGETS]))
 		return;
 
 	brname = blobmsg_get_string(tb[BRANCH_NAME]);
@@ -1707,14 +1707,14 @@ int main(int args, char *argv[]) {
 	else if (revcmp > 0)
 			upg_check |= PKG_DOWNGRADE;
 
-	if ((rc = request_packages(branch)))
-		goto freebranches;
-
 	if (release_only && !(upg_check & PKG_UPGRADE)) {
 		fprintf(stderr, "Nothing to be updated. Use '-f' to force.\n");
 		rc=0;
 		goto freebranches;
 	}
+
+	if ((rc = request_packages(branch)))
+		goto freebranches;
 
 	upg_check |= check_installed_packages(reqbuf.head);
 	if (upg_check & PKG_ERROR) {
