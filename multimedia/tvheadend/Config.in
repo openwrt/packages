@@ -1,17 +1,101 @@
-config TVHEADEND_CWC_SUPPORT
-	bool "NewCamd support"
-	default y
+comment "Input & output support"
 
 config TVHEADEND_LINUXDVB_SUPPORT
-	bool "Linux DVB support"
+	bool "DVB tuners"
 	default y
+	help
+	  Include support for DVB tuners.
+	  Note: Kernel driver(s) and firmware must also be installed.
 
 config TVHEADEND_DVBSCAN_SUPPORT
 	bool "Fetch DVB-scan data"
 	depends on TVHEADEND_LINUXDVB_SUPPORT
 	default TVHEADEND_LINUXDVB_SUPPORT
+	help
+	  Download and include DVB scan tables.
+
+config TVHEADEND_IPTV
+	bool "IPTV client"
+	default y
+	help
+	  Include IP-TV client.
+
+config TVHEADEND_SATIP_CLIENT
+	bool "SAT>IP client"
+	default y
+	help
+	  Include SAT>IP client. This allows tvheadend to receive streams from a SAT>IP server.
+	  SAT>IP is a client-server communication protocol in which SAT>IP servers,
+	  connected to one or more DVB broadcast sources, send the program requested
+	  by an SAT>IP client over an IP based network.
+	  The main difference of SAT>IP to other IP-based TV distribution systems
+	  such as IP-TV and DLNA is that the SAT>IP client does not select a program
+	  from a server specific list, but has to specify the DVB reception parameters
+	  such as the signal source, frequency, polarisation, modulation, PIDs and others.
+
+config TVHEADEND_SATIP_SERVER
+	bool "SAT>IP server"
+	default y
+	help
+	  Include SAT>IP server. This allows tvheadend to stream to SAT>IP clients.
+	  SAT>IP is a client-server communication protocol in which SAT>IP servers,
+	  connected to one or more DVB broadcast sources, send the program requested
+	  by an SAT>IP client over an IP based network.
+	  The main difference of SAT>IP to other IP-based TV distribution systems
+	  such as IP-TV and DLNA is that the SAT>IP client does not select a program
+	  from a server specific list, but has to specify the DVB reception parameters
+	  such as the signal source, frequency, polarisation, modulation, PIDs and others.
+
+config TVHEADEND_HDHOMERUN_CLIENT
+	bool "HDHomeRun client"
+	default y
+	help
+	  Include HDHomeRun client.
+	  HDHomeRun is a network-attached, digital television tuner box.
+
+comment "SoftCAM (Software Conditional Access Module)"
+
+config TVHEADEND_CWC_SUPPORT
+	bool "CWC newcamd"
+	default y
+	help
+	  Support descrambling using Code Word Client newcamd protocol.
+
+config TVHEADEND_CAPMT_SUPPORT
+	bool "CWC capmnt"
+	default y
+	help
+	  Support descrambling using Code Word Client capmnt (Linux Network DVBAPI) protocol.
+
+config TVHEADEND_CONSTCW_SUPPORT
+	bool "CCW"
+	default y
+	help
+	  Support descrambling using Constant Code Word.
+
+comment "Other options"
 
 config TVHEADEND_AVAHI_SUPPORT
-	bool "Avahi client support"
+	bool "Avahi client"
 	select PACKAGE_libavahi-client
 	default n
+	help
+	  Enables the opensource implementation of Apple's zero configuration protocol.
+	  Tvheadend will advertise itself on the network using this protocol.
+
+config TVHEADEND_IMAGECACHE
+	bool "Image cache"
+	default n
+	help
+	  Support caching TV station logos and other images on disk.
+	  Note: Activating disk cache will increase fash memory wear.
+	  Selecting this option does not automatically enable disk caching. It only includes support for it.
+
+config TVHEADEND_TRACE
+	bool "Low level debug trace"
+	default n
+	help
+	  Support low level debug trace for tvheadend subsystems.
+	  For a list of available subsystems, run "tvheadend --subsystems" in OpenWRT console.
+	  Note: Selecting this option does not automatically enable trace logging.
+	  It only includes support for --trace command line option and GUI.

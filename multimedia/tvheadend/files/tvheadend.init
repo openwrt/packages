@@ -9,8 +9,22 @@ PROG=/usr/bin/tvheadend
 TEMP_CONFIG=/tmp/tvheadend
 PERSISTENT_CONFIG=/etc/tvheadend
 
+# If you change the user, update the owner of tvheadend configuration directory and files!
+# If you change the group, update USB hotplug script for DVB devices in /dev/hotplug.d/usb/
+# otherwise, tvheadend won't have permissions to open newly connected tuners!
+# Also update all other packages that use the dvb group.
+TVH_USER=tvheadend
+TVH_GROUP=dvb
+
+
 execute_first_run() {
-	"$PROG" -c "$1" -B -C -A >/dev/null 2>&1
+	mkdir -p "$1"
+	chown -R $TVH_USER "$1"
+	# This should create a new configuration including an admin account with no name and no password,
+	# but it aborts (-A) without saving it:
+	#"$PROG" -c "$1" -B -C -A -u $TVH_USER -g $TVH_GROUP >/dev/null 2>&1
+	# Instead, run it for 10s then kill it:
+	"$PROG" -c "$1" -B -C -u $TVH_USER -g $TVH_GROUP & TVH_PID=$! ; sleep 10 ; kill $TVH_PID ; sleep 2
 }
 
 ensure_config_exists() {
@@ -65,7 +79,8 @@ start_service() {
 	ensure_config_exists
 	procd_open_instance
 	procd_set_param file /etc/config/tvheadend
-	procd_set_param command "$PROG" -B
+	chown -R root:$TVH_GROUP /dev/dvb/*/*
+	procd_set_param command "$PROG" -B -u $TVH_USER -g $TVH_GROUP
 	load_uci_config
 	procd_close_instance
 }
