@@ -1,14 +1,10 @@
 #!/bin/sh
-#
-ban_pidfile="/var/run/banip.pid"
-ban_enabled="$(/etc/init.d/banip enabled; printf "%u" "${?}")"
+# firewall hotplug script for banIP
+# Copyright (c) 2019-2021 Dirk Brenken (dev@brenken.org)
+# This is free software, licensed under the GNU General Public License v3.
 
-if [ "${ban_enabled}" = "0" ] && [ "${ACTION}" = "add" ] && [ -n "${INTERFACE}" ]
-then
-	ban_ifaces="$(uci_get banip global ban_ifaces)"
-	if [ ! -s "${ban_pidfile}" ] && [ -n "$(printf "%s\n" "${ban_ifaces}" | grep -F "${INTERFACE}")" ]
-	then
+if /etc/init.d/banip enabled && [ "${ACTION}" = "add" ] && [ -n "${INTERFACE}" ]; then
+	if [ ! -s "/var/run/banip.pid" ] && uci_get banip global ban_ifaces | grep -q "${INTERFACE}"; then
 		/etc/init.d/banip refresh
 	fi
 fi
-exit 0
