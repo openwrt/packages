@@ -24,7 +24,7 @@ uvol_uci_add() {
 
 	case "$uciname" in
 		"_uxc")
-			target="/var/state/uxc"
+			target="/var/run/uxc"
 			;;
 		"_"*)
 			return 1
