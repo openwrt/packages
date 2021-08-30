@@ -99,7 +99,7 @@ r1: initial revision
  	/* read ID */
  	version = (*tzf)[3] - '0';
  	*tzf += 4;
-@@ -418,7 +436,429 @@ void timelib_dump_tzinfo(timelib_tzinfo
+@@ -435,7 +453,429 @@ void timelib_dump_tzinfo(timelib_tzinfo
  	}
  }
  
@@ -530,7 +530,7 @@ r1: initial revision
  {
  	int left = 0, right = tzdb->index_size - 1;
  
-@@ -444,9 +884,48 @@ static int seek_to_tz_position(const uns
+@@ -461,9 +901,48 @@ static int seek_to_tz_position(const uns
  	return 0;
  }
  
@@ -579,7 +579,7 @@ r1: initial revision
  }
  
  const timelib_tzdb_index_entry *timelib_timezone_identifiers_list(const timelib_tzdb *tzdb, int *count)
-@@ -458,7 +937,30 @@ const timelib_tzdb_index_entry *timelib_
+@@ -475,7 +954,30 @@ const timelib_tzdb_index_entry *timelib_
  int timelib_timezone_id_is_valid(const char *timezone, const timelib_tzdb *tzdb)
  {
  	const unsigned char *tzf;
@@ -611,7 +611,7 @@ r1: initial revision
  }
  
  static int skip_64bit_preamble(const unsigned char **tzf, timelib_tzinfo *tz)
-@@ -500,12 +1002,14 @@ static timelib_tzinfo* timelib_tzinfo_ct
+@@ -517,6 +1019,8 @@ static timelib_tzinfo* timelib_tzinfo_ct
  timelib_tzinfo *timelib_parse_tzfile(const char *timezone, const timelib_tzdb *tzdb, int *error_code)
  {
  	const unsigned char *tzf;
@@ -620,14 +620,16 @@ r1: initial revision
  	timelib_tzinfo *tmp;
  	int version;
  	int transitions_result, types_result;
- 	unsigned int type; /* TIMELIB_TZINFO_PHP or TIMELIB_TZINFO_ZONEINFO */
+@@ -524,7 +1028,7 @@ timelib_tzinfo *timelib_parse_tzfile(con
+ 
+ 	*error_code = TIMELIB_ERROR_NO_ERROR;
  
 -	if (seek_to_tz_position(&tzf, timezone, tzdb)) {
 +	if (seek_to_tz_position(&tzf, timezone, &memmap, &maplen, tzdb)) {
  		tmp = timelib_tzinfo_ctor(timezone);
  
  		version = read_preamble(&tzf, tmp, &type);
-@@ -540,11 +1044,36 @@ timelib_tzinfo *timelib_parse_tzfile(con
+@@ -563,11 +1067,36 @@ timelib_tzinfo *timelib_parse_tzfile(con
  		}
  		skip_posix_string(&tzf, tmp);
  
