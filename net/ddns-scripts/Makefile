@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ddns-scripts
 PKG_VERSION:=2.8.2
-PKG_RELEASE:=11
+PKG_RELEASE:=12
 
 PKG_LICENSE:=GPL-2.0
 
@@ -181,6 +181,21 @@ define Package/ddns-scripts-gandi/description
 endef
 
 
+define Package/ddns-scripts-pdns
+  $(call Package/ddns-scripts/Default)
+  TITLE:=PowerDNS API
+  DEPENDS:=ddns-scripts +curl
+endef
+
+define Package/ddns-scripts-pdns/description
+  Dynamic DNS Client scripts extension for "PowerDNS" via API.
+  It requires:
+  "option param_opt(Optional Parameter)" to be a valid root URL for the PowerDNS webserver
+  "option username" to be a valid subdomain for the PowerDNS domain
+  "option password" to be a valid API key for the PowerDNS webserver
+endef
+
+
 define Build/Configure
 endef
 
@@ -251,6 +266,7 @@ define Package/ddns-scripts-services/install
 	rm $(1)/usr/share/ddns/default/route53-v1.json
 	rm $(1)/usr/share/ddns/default/cnkuai.cn.json
 	rm $(1)/usr/share/ddns/default/gandi.net.json
+	rm $(1)/usr/share/ddns/default/pdns.json
 endef
 
 
@@ -425,6 +441,25 @@ exit 0
 endef
 
 
+define Package/ddns-scripts-pdns/install
+	$(INSTALL_DIR) $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_pdns.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/pdns.json \
+		$(1)/usr/share/ddns/default
+endef
+
+define Package/ddns-scripts-pdns/prerm
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
+endef
+
+
 $(eval $(call BuildPackage,ddns-scripts))
 $(eval $(call BuildPackage,ddns-scripts-services))
 $(eval $(call BuildPackage,ddns-scripts-cloudflare))
@@ -436,3 +471,4 @@ $(eval $(call BuildPackage,ddns-scripts-nsupdate))
 $(eval $(call BuildPackage,ddns-scripts-route53))
 $(eval $(call BuildPackage,ddns-scripts-cnkuai))
 $(eval $(call BuildPackage,ddns-scripts-gandi))
+$(eval $(call BuildPackage,ddns-scripts-pdns))
