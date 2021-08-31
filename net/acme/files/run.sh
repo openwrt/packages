@@ -20,6 +20,7 @@ DEBUG=0
 NGINX_WEBSERVER=0
 UPDATE_NGINX=0
 UPDATE_UHTTPD=0
+UPDATE_HAPROXY=0
 USER_CLEANUP=
 
 . /lib/functions.sh
@@ -153,6 +154,10 @@ post_checks() {
 		/etc/init.d/nginx restart
 	fi
 
+	if [ -e /etc/init.d/haproxy ] && [ "$UPDATE_HAPROXY" -eq 1 ] ; then
+		/etc/init.d/haproxy restart
+	fi
+
 	if [ -n "$USER_CLEANUP" ] && [ -f "$USER_CLEANUP" ]; then
 		log "Running user-provided cleanup script from $USER_CLEANUP."
 		"$USER_CLEANUP" || return 1
@@ -187,6 +192,7 @@ issue_cert() {
 	local use_staging
 	local update_uhttpd
 	local update_nginx
+	local update_haproxy
 	local keylength
 	local keylength_ecc=0
 	local domains
@@ -206,6 +212,7 @@ issue_cert() {
 	config_get_bool use_staging "$section" use_staging
 	config_get_bool update_uhttpd "$section" update_uhttpd
 	config_get_bool update_nginx "$section" update_nginx
+	config_get_bool update_haproxy "$section" update_haproxy
 	config_get calias "$section" calias
 	config_get dalias "$section" dalias
 	config_get domains "$section" domains
@@ -219,6 +226,7 @@ issue_cert() {
 
 	UPDATE_NGINX=$update_nginx
 	UPDATE_UHTTPD=$update_uhttpd
+	UPDATE_HAPROXY=$update_haproxy
 	USER_CLEANUP=$user_cleanup
 
 	[ "$enabled" -eq "1" ] || return
@@ -337,6 +345,12 @@ issue_cert() {
 	if [ "$nginx_updated" -eq "0" ] && [ -w /etc/nginx/nginx.conf ] && [ "$update_nginx" -eq "1" ]; then
 		sed -i "s#ssl_certificate\ .*#ssl_certificate ${domain_dir}/fullchain.cer;#g" /etc/nginx/nginx.conf
 		sed -i "s#ssl_certificate_key\ .*#ssl_certificate_key ${domain_dir}/${main_domain}.key;#g" /etc/nginx/nginx.conf
+		# commit and reload is in post_checks
+	fi
+
+	if [ -e /etc/init.d/haproxy ] && [ -w /etc/haproxy.cfg ] && [ "$update_haproxy" -eq "1" ]; then
+		cat "${domain_dir}/${main_domain}.key" "${domain_dir}/fullchain.cer" > "${domain_dir}/${main_domain}-haproxy.pem"
+		sed -i "s#bind :::443 v4v6 ssl crt .* alpn#bind :::443 v4v6 ssl crt ${domain_dir}/${main_domain}-haproxy.pem alpn#g" /etc/haproxy.cfg
 		# commit and reload is in post_checks
 	fi
 
