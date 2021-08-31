@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=htop
 PKG_VERSION:=3.0.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/htop-dev/htop/tar.gz/$(PKG_VERSION)?
@@ -23,6 +23,9 @@ PKG_CPE_ID:=cpe:/a:htop:htop
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+
+PKG_CONFIG_DEPENDS:= CONFIG_HTOP_LMSENSORS
+PKG_BUILD_DEPENDS:= HTOP_LMSENSORS:lm-sensors
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -41,7 +44,20 @@ define Package/htop/description
  see all processes and their full command lines.
 endef
 
+define Package/htop/config
+	config HTOP_LMSENSORS
+		bool "Compile Htop with lm-sensors support"
+		depends on PACKAGE_htop
+		default y if TARGET_x86
+		help
+			Build htop with lm-sensors support.
+			This doesn't add lm-sensors as dependency,
+			if present it'll loaded using dlopen().
+endef
+
 CONFIGURE_ARGS += \
+	--with-sensors=$(if $(CONFIG_HTOP_LMSENSORS),yes,no) \
+	--enable-linux-affinity \
 	--disable-unicode \
 	--disable-hwloc
 
