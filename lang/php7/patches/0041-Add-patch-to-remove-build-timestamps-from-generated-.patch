@@ -47,7 +47,7 @@ Subject: Add patch to remove build timestamps from generated binaries.
    *aix*)
 --- a/sapi/cgi/cgi_main.c
 +++ b/sapi/cgi/cgi_main.c
-@@ -2400,9 +2400,9 @@ parent_loop_end:
+@@ -2401,9 +2401,9 @@ parent_loop_end:
  							SG(headers_sent) = 1;
  							SG(request_info).no_headers = 1;
  #if ZEND_DEBUG
@@ -74,7 +74,7 @@ Subject: Add patch to remove build timestamps from generated binaries.
  #else
 --- a/sapi/fpm/fpm/fpm_main.c
 +++ b/sapi/fpm/fpm/fpm_main.c
-@@ -1717,9 +1717,9 @@ int main(int argc, char *argv[])
+@@ -1718,9 +1718,9 @@ int main(int argc, char *argv[])
  				SG(request_info).no_headers = 1;
  
  #if ZEND_DEBUG
