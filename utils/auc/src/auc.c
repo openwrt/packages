@@ -84,6 +84,7 @@ static char *distribution = NULL, *version = NULL, *revision = NULL;
 static char *rootfs_type = NULL;
 static int uptodate;
 static char *filename = NULL;
+static void *dlh = NULL;
 static int rc;
 
 struct branch {
@@ -429,7 +430,7 @@ static inline void release_replace_rc(char *ver)
 	tmp = strstr(ver, "-rc");
 	if (tmp && strlen(tmp) > 3) {
 		*tmp = '~';
-		strcpy(tmp + 1, tmp + 3);
+		memmove(tmp + 1, tmp + 3, strlen(tmp + 3) + 1);
 	}
 }
 
@@ -972,7 +973,6 @@ static int server_request(const char *url, struct blob_buf *inbuf, struct blob_b
  * ustream-ssl
  */
 static int init_ustream_ssl(void) {
-	void *dlh;
 	glob_t gl;
 	int i;
 
@@ -1324,12 +1324,17 @@ static int add_upg_packages(struct blob_attr *reply, char *arch)
 			return -ENOMEM;
 
 		avpk->name = strdup(blobmsg_name(cur));
-		if (!avpk->name)
+		if (!avpk->name) {
+			free(avpk);
 			return -ENOMEM;
+		}
 
 		avpk->version = strdup(blobmsg_get_string(cur));
-		if (!avpk->version)
+		if (!avpk->version) {
+			free(avpk->name);
+			free(avpk);
 			return -ENOMEM;
+		}
 
 		avpk->avl.key = avpk->name;
 		if (avl_insert(&pkg_tree, &avpk->avl)) {
@@ -1532,7 +1537,7 @@ static bool validate_sha256(char *filename, char *sha256str)
 
 sha256close:
 	fflush(f);
-	fclose(f);
+	pclose(f);
 sha256free:
 	free(cmd);
 	free(resstr);
@@ -1954,6 +1959,9 @@ freeubus:
 
 	if (ucl)
 		uclient_free(ucl);
+
+	if (dlh)
+		dlclose(dlh);
 
 	if (rc)
 		fprintf(stderr, "%s (%d)\n", strerror(-1 * rc), -1 * rc);
