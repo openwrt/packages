@@ -10,12 +10,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=haproxy
-PKG_VERSION:=2.4.1
+PKG_VERSION:=2.4.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.haproxy.org/download/2.4/src
-PKG_HASH:=1b2458b05e923d70cdc00a2c8e5579c2fcde9df16bbed8955f3f3030df14e62e
+PKG_HASH:=ce479380be5464faa881dcd829618931b60130ffeb01c88bc2bf95e230046405
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>, \
 		Christian Lachner <gladiac@gmail.com>
