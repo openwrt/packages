@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dnscrypt-proxy2
 PKG_VERSION:=2.1.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=dnscrypt-proxy-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/DNSCrypt/dnscrypt-proxy/tar.gz/$(PKG_VERSION)?
@@ -25,7 +25,6 @@ PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
 GO_PKG:=github.com/DNSCrypt/dnscrypt-proxy
-GO_PKG_LDFLAGS:=-s -w
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
