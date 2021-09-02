@@ -22,7 +22,6 @@ PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
 GO_PKG:=github.com/v2rayA/v2rayA
-GO_PKG_LDFLAGS:=-s -w
 GO_PKG_LDFLAGS_X:=$(GO_PKG)/global.Version=$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk

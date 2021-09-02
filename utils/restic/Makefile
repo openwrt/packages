@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=restic
 PKG_VERSION:=0.9.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/restic/restic/tar.gz/v${PKG_VERSION}?
@@ -18,7 +18,6 @@ PKG_USE_MIPS16:=0
 
 GO_PKG:=github.com/restic/restic/
 GO_PKG_BUILD_PKG:=github.com/restic/restic/cmd/restic/
-GO_PKG_LDFLAGS:=-s -w
 GO_PKG_LDFLAGS_X:=main.version=$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
