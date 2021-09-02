@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kcptun
 PKG_VERSION:=20190725
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/xtaci/kcptun/tar.gz/v${PKG_VERSION}?
@@ -47,7 +47,6 @@ Package/kcptun-c/description = $(Package/kcptun/description)
 Package/kcptun-s/description = $(Package/kcptun/description)
 
 GO_PKG_LDFLAGS_X:=main.VERSION=$(PKG_VERSION)
-GO_PKG_LDFLAGS:=-s -w
 
 define Package/kcptun/install
 	$(call GoPackage/Package/Install/Bin,$(PKG_INSTALL_DIR))
