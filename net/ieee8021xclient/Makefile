@@ -20,7 +20,7 @@ define Package/ieee8021xclient
   CATEGORY:=Network
   MAINTAINER:=David Yang <mmyangfl@gmail.com>
   TITLE:=Wired 802.1x client config support
-  DEPENDS:=+wpad
+  DEPENDS:=+wpa_supplicant
   PKGARCH:=all
 endef
 
