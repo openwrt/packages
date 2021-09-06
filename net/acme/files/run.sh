@@ -152,7 +152,7 @@ post_checks()
 			UHTTPD_LISTEN_HTTP=
 		fi
 		uci commit uhttpd
-		/etc/init.d/uhttpd reload
+		/etc/init.d/uhttpd restart
 	fi
 
 	if [ -e /etc/init.d/nginx ] && ( [ "$NGINX_WEBSERVER" -eq 1 ] || [ "$UPDATE_NGINX" -eq 1 ] ); then
