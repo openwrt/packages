@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
+# Copyright (C) 2019-2021 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-astral
-PKG_VERSION:=1.10.1
-PKG_RELEASE:=2
+PKG_VERSION:=2.2
+PKG_RELEASE:=1
 
 PYPI_NAME:=astral
-PKG_HASH:=d2a67243c4503131c856cafb1b1276de52a86e5b8a1d507b7e08bee51cb67bf1
+PKG_HASH:=e41d9967d5c48be421346552f0f4dedad43ff39a83574f5ff2ad32b6627b6fbe
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
