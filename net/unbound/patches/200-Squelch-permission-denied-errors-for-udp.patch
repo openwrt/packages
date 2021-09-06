@@ -1,0 +1,44 @@
+From ad45e9b89ee18bbfeff0ed45da2c243ac17acfe6 Mon Sep 17 00:00:00 2001
+From: "W.C.A. Wijngaards" <wouter@nlnetlabs.nl>
+Date: Fri, 13 Aug 2021 09:27:58 +0200
+Subject: [PATCH] - Fix for #431: Squelch permission denied errors for udp
+ connect,   and udp send, they are visible at higher verbosity settings.
+
+---
+ doc/Changelog              | 2 ++
+ services/outside_network.c | 1 +
+ util/netevent.c            | 1 +
+ 3 files changed, 4 insertions(+)
+
+# diff --git a/doc/Changelog b/doc/Changelog
+# index 62c747c85..1cd0f3bad 100644
+# --- a/doc/Changelog
+# +++ b/doc/Changelog
+# @@ -1,5 +1,7 @@
+#  13 August 2021: Wouter
+#  	- Support using system-wide crypto policies.
+# +	- Fix for #431: Squelch permission denied errors for udp connect,
+# +	  and udp send, they are visible at higher verbosity settings.
+ 
+#  12 August 2021: George
+#  	- Merge PR #514, from ziollek: Docker environment for run tests.
+--- a/services/outside_network.c
++++ b/services/outside_network.c
+@@ -1962,6 +1962,7 @@ static int udp_connect_needs_log(int err
+ 	case ENETDOWN:
+ #  endif
+ 	case EPERM:
++	case EACCES:
+ 		if(verbosity >= VERB_ALGO)
+ 			return 1;
+ 		return 0;
+--- a/util/netevent.c
++++ b/util/netevent.c
+@@ -300,6 +300,7 @@ udp_send_errno_needs_log(struct sockaddr
+ 		case ENETDOWN:
+ #  endif
+ 		case EPERM:
++		case EACCES:
+ 			if(verbosity < VERB_ALGO)
+ 				return 0;
+ 		default:
