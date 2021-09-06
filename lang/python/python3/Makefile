@@ -16,7 +16,8 @@ PKG_VERSION:=$(PYTHON3_VERSION).$(PYTHON3_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
-PKG_HASH:=397920af33efc5b97f2e0b57e91923512ef89fc5b3c1d21dbfc8c4828ce0108a
+# FIXME: if updating, get rid of [1] & [2] asap
+PKG_HASH:=f8145616e68c00041d1a6399b76387390388f8359581abc24432bb969b5e3c57
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>, Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=Python/2.0
@@ -206,6 +207,14 @@ define Build/Compile/python3-pip
 		--root=$(PKG_BUILD_DIR)/install-pip \
 		--prefix=/usr \
 		$(PKG_BUILD_DIR)/Lib/ensurepip/_bundled/pip-$(PYTHON3_PIP_VERSION)-py3-none-any.whl
+	# FIXME: [1] get rid of this asap; 'patch' doesn't like Windows endings, and this file is full of them...
+	#        I actually tried this in a number of ways and the only way to fix this is to implement
+	#        a poor-man's dos2unix using sed.
+	#        The issue is with the pip package; it seems that it throws in some Windows line-endings
+	#        and 'patch' won't handle them. So, we do a "dos2unix" and then patch.
+	#        We can get rid of this once this is solved upstream and in pip:
+	#            https://github.com/pypa/pep517/pull/130
+	sed 's/\r//' -i $(PKG_BUILD_DIR)/install-pip/usr/lib/python$(PYTHON3_VERSION)/site-packages/pip/_vendor/pep517/in_process/__init__.py
 	$(call PatchDir,$(PKG_BUILD_DIR)/install-pip/usr/lib/python$(PYTHON3_VERSION)/site-packages,./patches-pip,)
 endef
 else
@@ -364,6 +373,8 @@ define Host/Install
 		touch $(HOST_PYTHON3_PKG_DIR)/.setuptools_installed_$(PYTHON3_SETUPTOOLS_VERSION)-$(PYTHON3_SETUPTOOLS_PKG_RELEASE)
 	)
 	$(if $(wildcard $(HOST_PYTHON3_PKG_DIR)/.pip_installed_$(PYTHON3_PIP_VERSION)-$(PYTHON3_PIP_PKG_RELEASE)),,
+		# FIXME: [2] get rid of this asap; same as [1]
+		sed 's/\r//' -i $(HOST_PYTHON3_PKG_DIR)/pip/_vendor/pep517/in_process/__init__.py
 		$(call HostPatchDir,$(HOST_PYTHON3_PKG_DIR),./patches-pip,)
 		touch $(HOST_PYTHON3_PKG_DIR)/.pip_installed_$(PYTHON3_PIP_VERSION)-$(PYTHON3_PIP_PKG_RELEASE)
 	)
