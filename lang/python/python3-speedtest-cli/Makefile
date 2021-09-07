@@ -1,11 +1,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python3-speedtest-cli
-PKG_VERSION:=2.1.2
-PKG_RELEASE:=2
+PKG_VERSION:=2.1.3
+PKG_RELEASE:=1
 
 PYPI_NAME:=speedtest-cli
-PKG_HASH:=cf1d386222f94c324e3125ba9a0d187e46d4a13dca08c023bdb9a23096be2e54
+PKG_HASH:=5e2773233cedb5fa3d8120eb7f97bcc4974b5221b254d33ff16e2f1d413d90f0
 
 PKG_MAINTAINER:=Jaymin Patel <jem.patel@gmail.com>
 PKG_LICENSE:=Apache-2.0
