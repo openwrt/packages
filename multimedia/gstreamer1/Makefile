@@ -23,11 +23,11 @@ PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:gstreamer_project:gstreamer
 
 PKG_INSTALL:=1
-PKG_BUILD_DEPENDS:=meson/host glib2/host gettext-full/host
+PKG_BUILD_DEPENDS:=glib2/host gettext-full/host
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
-include ../../devel/meson/meson.mk
+include $(INCLUDE_DIR)/meson.mk
 
 define Package/gstreamer1/Default
   CATEGORY:=Multimedia

@@ -19,13 +19,8 @@ PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_DEPENDS:=meson/host
-
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/meson/meson.mk
-
-HOSTCC=$(HOSTCC_NOCACHE)
-HOSTCXX=$(HOSTCXX_NOCACHE)
+include $(INCLUDE_DIR)/meson.mk
 
 define Package/jsoncpp
   SECTION:=libs

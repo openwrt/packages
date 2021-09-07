@@ -20,10 +20,8 @@ PKG_SOURCE_URL:=https://codeload.github.com/libesmtp/libESMTP/tar.gz/v$(PKG_VERS
 PKG_HASH:=32bc3614ca12d21c7d933f32d43410e8744b6f91fdca7732da9877a385e4e6c3
 PKG_BUILD_DIR:=$(BUILD_DIR)/libESMTP-$(PKG_VERSION)
 
-PKG_BUILD_DEPENDS:=meson/host
-
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/meson/meson.mk
+include $(INCLUDE_DIR)/meson.mk
 
 define Package/libesmtp
   SECTION:=libs

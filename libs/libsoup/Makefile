@@ -18,12 +18,12 @@ PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:gnome:libsoup
 
-PKG_BUILD_DEPENDS:=meson/host glib2/host
+PKG_BUILD_DEPENDS:=glib2/host
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
-include ../../devel/meson/meson.mk
+include $(INCLUDE_DIR)/meson.mk
 
 define Package/libsoup
   SECTION:=libs

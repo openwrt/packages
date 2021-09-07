@@ -22,11 +22,10 @@ PKG_CPE_ID:=cpe:/a:pulseaudio:pulseaudio
 
 PKG_INSTALL:=1
 PKG_USE_MIPS16:=0
-PKG_BUILD_DEPENDS:=meson/host
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
-include ../../devel/meson/meson.mk
+include $(INCLUDE_DIR)/meson.mk
 
 define Package/pulseaudio/Default
   SECTION:=sound

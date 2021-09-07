@@ -20,10 +20,9 @@ PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=copyright.txt
 
 PKG_INSTALL:=1
-PKG_BUILD_DEPENDS:=meson/host
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/meson/meson.mk
+include $(INCLUDE_DIR)/meson.mk
 
 define Package/bonniexx
   SECTION:=utils
