@@ -286,9 +286,9 @@ f_env() {
 	ban_ipdevs="$("${ban_ip_cmd}" link show 2>/dev/null | awk 'BEGIN{FS="[@: ]"}/^[0-9:]/{if($3!="lo"){ORS=" ";print $3}}')"
 
 	if [ -z "${ban_ifaces}" ] || [ -z "${ban_devs}" ] || [ -z "${ban_ipdevs}" ]; then
-		f_log "err" "logical wan interface(s)/device(s) '${ban_ifaces:-"-"}/${ban_devs:-"-"}' not found, please please check your configuration"
+		f_log "err" "logical wan interface(s)/device(s) '${ban_ifaces:-"-"}/${ban_devs:-"-"}' not found, please check your configuration"
 	elif [ -z "${ban_ipdevs}" ]; then
-		f_log "err" "ip device(s) '${ban_ipdevs:-"-"}' not found, please please check your configuration"
+		f_log "err" "ip device(s) '${ban_ipdevs:-"-"}' not found, please check your configuration"
 	fi
 
 	if [ ! -x "${ban_ipset_cmd}" ]; then
@@ -877,7 +877,7 @@ f_down() {
 					awk "${src_rule}" "${src_url}" >"${tmp_dns}"
 					src_rc="${?}"
 					if [ "${src_rc}" = "0" ] && [ -s "${tmp_dns}" ]; then
-						("${ban_dnsservice}" "${ban_action}" "${src_name%_*}" "${tmp_dns}" &)
+						("${ban_dnsservice}" "${src_name%_*}" "${tmp_dns}" &)
 					else
 						rm -f "${tmp_dns}"
 					fi
