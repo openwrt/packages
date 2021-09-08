@@ -5,7 +5,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vpn-policy-routing
 PKG_VERSION:=0.3.5
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.net>
 
@@ -17,6 +17,7 @@ define Package/vpn-policy-routing
 	TITLE:=VPN Policy-Based Routing Service
 	URL:=https://docs.openwrt.melmac.net/vpn-policy-routing/
 	DEPENDS:=+jshn +ipset +iptables +resolveip +kmod-ipt-ipset +iptables-mod-ipopt +ip-full
+	CONFLICTS:=vpnbypass
 	PKGARCH:=all
 endef
 
@@ -40,7 +41,7 @@ define Package/vpn-policy-routing/install
 	$(INSTALL_BIN) ./files/vpn-policy-routing.init $(1)/etc/init.d/vpn-policy-routing
 	$(SED) "s|^\(PKG_VERSION\).*|\1='$(PKG_VERSION)-$(PKG_RELEASE)'|" $(1)/etc/init.d/vpn-policy-routing
 	$(INSTALL_CONF) ./files/vpn-policy-routing.config $(1)/etc/config/vpn-policy-routing
-	$(INSTALL_DATA) ./files/vpn-policy-routing.firewall.hotplug $(1)/etc/hotplug.d/firewall/70-vpn-policy-routing
+	$(INSTALL_DATA) ./files/vpn-policy-routing.hotplug.firewall $(1)/etc/hotplug.d/firewall/70-vpn-policy-routing
 	$(INSTALL_DATA) ./files/vpn-policy-routing.aws.user $(1)/etc/vpn-policy-routing.aws.user
 	$(INSTALL_DATA) ./files/vpn-policy-routing.netflix.user $(1)/etc/vpn-policy-routing.netflix.user
 endef
