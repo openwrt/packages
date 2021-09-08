@@ -7,13 +7,13 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=forked-daapd
-PKG_VERSION:=27.4
+PKG_NAME:=owntone
+PKG_VERSION:=28.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://github.com/ejurgensen/$(PKG_NAME)/releases/download/$(PKG_VERSION)/
-PKG_HASH:=00f71c687df268a3c4db77cecf37972e76832a99e34f09750d07a92934a0bfa8
+PKG_SOURCE_URL:=https://github.com/owntone/owntone-server/releases/download/$(PKG_VERSION)/
+PKG_HASH:=7e5a0142d852569dc28a99a2e26568856717544e894904aa0e63950fdafa2666
 
 PKG_FIXUP:=autoreconf
 PKG_USE_MIPS16:=0
@@ -26,38 +26,33 @@ PKG_LICENSE_FILES:=COPYING
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
-define Package/forked-daapd
+define Package/owntone
 SECTION:=sound
 CATEGORY:=Sound
 TITLE:=iTunes (DAAP) server for Apple Remote and AirPlay
-URL:=https://github.com/ejurgensen/forked-daapd
+URL:=https://github.com/owntone/owntone-server
 DEPENDS:=+libgpg-error +libgcrypt +libgdbm +zlib +libexpat +libunistring \
 	+libevent2 +libdaemon +libantlr3c +confuse +alsa-lib +libffmpeg-full \
 	+mxml +libavahi-client +sqlite3-cli +libplist +libcurl +libjson-c \
-	+libprotobuf-c +libgnutls +libsodium +libwebsockets $(ICONV_DEPENDS) \
-	+libuuid
+	+libprotobuf-c +libgnutls +libsodium +libwebsockets +libuuid $(ICONV_DEPENDS)
 endef
 
-define Package/forked-daapd/description
-  forked-daapd is a Linux/FreeBSD DAAP (iTunes), MPD (Music Player Daemon) and
+define Package/owntone/description
+  OwnTone is a Linux/FreeBSD DAAP (iTunes), MPD (Music Player Daemon) and
   RSP (Roku) media server. It has support for AirPlay speakers, Chromecast,
   Apple Remote (and compatibles), MPD clients, internet radio and LastFM. It
   does not support AirPlay/Chromecast video.
 endef
 
-define Package/forked-daapd/conffiles
-/etc/forked-daapd.conf
+define Package/owntone/conffiles
+/etc/owntone.conf
 endef
 
 CONFIGURE_ARGS += \
-	--enable-lastfm \
-	--enable-mpd \
 	--enable-chromecast \
-	--enable-verification \
-	--enable-webinterface \
-	--disable-spotify \
-	--with-libplist \
-	--with-libwebsockets \
+	--disable-install_systemd \
+	--disable-install_conf_file \
+	--disable-install_user \
 	--with-alsa \
 	--without-pulseaudio \
 	--without-libevent_pthreads
@@ -65,15 +60,15 @@ CONFIGURE_ARGS += \
 TARGET_CFLAGS += $(FPIC)
 TARGET_LDFLAGS += -Wl,-rpath-link,$(STAGING_DIR)/usr/lib
 
-define Package/forked-daapd/install
+define Package/owntone/install
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/forked-daapd $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/owntone $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc
-	$(INSTALL_CONF) ./files/forked-daapd.conf $(1)/etc/forked-daapd.conf
-	$(INSTALL_DIR) $(1)/usr/lib/forked-daapd
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/forked-daapd/* $(1)/usr/lib/forked-daapd/
+	$(INSTALL_CONF) ./files/owntone.conf $(1)/etc/owntone.conf
+	$(INSTALL_DIR) $(1)/usr/lib/owntone
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/owntone/* $(1)/usr/lib/owntone/
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/forked-daapd.init $(1)/etc/init.d/forked-daapd
+	$(INSTALL_BIN) ./files/owntone.init $(1)/etc/init.d/owntone
 endef
 
-$(eval $(call BuildPackage,forked-daapd))
+$(eval $(call BuildPackage,owntone))
