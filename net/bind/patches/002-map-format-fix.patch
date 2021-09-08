@@ -1,0 +1,23 @@
+From b70a2c2d074a57aac4b1ec996b881a5b93a2cf39 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Petr=20=C5=A0pa=C4=8Dek?= <pspacek@isc.org>
+Date: Thu, 19 Aug 2021 19:54:44 +0200
+Subject: [PATCH] increase MAPAPI
+
+bump the map zonefile version number to avoid an assertion
+failure when loading map files from versions of BIND prior to
+the most recent change to the in-memory structure of zone
+databases.
+
+(cherry picked from commit 4a68c7be225ddc3443d647bb8257278c1fdb4da8)
+---
+ lib/dns/mapapi | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/lib/dns/mapapi
++++ b/lib/dns/mapapi
+@@ -13,4 +13,4 @@
+ # Whenever releasing a new major release of BIND9, set this value
+ # back to 1.0 when releasing the first alpha.  Map files are *never*
+ # compatible across major releases.
+-MAPAPI=2.0
++MAPAPI=3.0
