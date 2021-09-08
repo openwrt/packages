@@ -105,14 +105,22 @@ validate_wrap() {
 }
 
 disconnected() {
+	local status="$(cat ${MWAN3TRACK_STATUS_DIR}/${INTERFACE}/STATUS)"
+
 	STATUS='offline'
 	echo "offline" > $MWAN3TRACK_STATUS_DIR/$INTERFACE/STATUS
 	get_uptime > $MWAN3TRACK_STATUS_DIR/$INTERFACE/OFFLINE
 	echo "0" > $MWAN3TRACK_STATUS_DIR/$INTERFACE/ONLINE
 	score=0
 	[ "$1" = 1 ] && return
-	LOG notice "Interface $INTERFACE ($DEVICE) is offline"
-	env -i ACTION="disconnected" INTERFACE="$INTERFACE" DEVICE="$DEVICE" /sbin/hotplug-call iface
+
+	# Only execute disconnectd action if status was online or disconnecting
+	if [ "$status" = "online" ] || [ "$status" = "disconnecting" ]; then
+		LOG notice "Interface $INTERFACE ($DEVICE) is offline"
+		env -i ACTION="disconnected" INTERFACE="$INTERFACE" DEVICE="$DEVICE" /sbin/hotplug-call iface
+	else
+		LOG notice "Skip disconnected event for $INTERFACE ($DEVICE)"
+	fi
 }
 
 connected() {
@@ -391,8 +399,8 @@ main() {
 
 		if [ "${IFDOWN_EVENT}" -eq 1 ]; then
 			LOG debug "Register ifdown event on interface ${INTERFACE} (${DEVICE})"
-			disabled
 			disconnected
+			disabled
 			IFDOWN_EVENT=0
 		fi
 		if [ "${IFUP_EVENT}" -eq 1 ]; then
