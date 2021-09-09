@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
 PKG_VERSION:=7.4.23
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 PKG_LICENSE:=PHP-3.01
@@ -526,6 +526,26 @@ define Package/php7-fpm/conffiles
 /etc/php7-fpm.conf
 /etc/php7-fpm.d/
 /etc/config/php7-fpm
+endef
+
+define Package/php7-mod-openssl/postinst
+#!/bin/sh
+[ -n "$$IPKG_INSTROOT" ] || {
+	if [ -e "/etc/php7/20_openssl.ini" ] && [ -e "/etc/php7/15_openssl.ini" ]; then
+		echo "Renaming PHP ini file '/etc/php7/20_openssl.ini' -> '/etc/php7/15_openssl.ini'"
+		mv /etc/php7/20_openssl.ini /etc/php7/15_openssl.ini
+	fi
+}
+endef
+
+define Package/php7-mod-mysqli/postinst
+#!/bin/sh
+[ -n "$$IPKG_INSTROOT" ] || {
+	if [ -e "/etc/php7/20_mysqli.ini" ] && [ -e "/etc/php7/30_mysqli.ini" ]; then
+		echo "Renaming PHP ini file '/etc/php7/20_mysqli.ini' -> '/etc/php7/30_mysqli.ini'"
+		mv /etc/php7/20_mysqli.ini /etc/php7/30_mysqli.ini
+	fi
+}
 endef
 
 define Build/Prepare
