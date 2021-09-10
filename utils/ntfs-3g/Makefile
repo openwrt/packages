@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ntfs-3g
 PKG_VERSION:=2017.3.23
-PKG_RELEASE:=4
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)_ntfsprogs-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=https://www.tuxera.com/opensource/
