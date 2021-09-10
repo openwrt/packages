@@ -1,0 +1,29 @@
+--- a/configure.in
++++ b/configure.in
+@@ -618,14 +618,14 @@ if test "$class_driver" = "no" && test "
+    fi
+ fi
+ 
+-SAVE_CPPFLAGS="$CPPFLAGS"
++SAVE_CFLAGS="$CFLAGS"
+ CFLAGS=`python-config --includes`
+-if [ $? -eq 0 ] 
++if test $? -eq 0
+ then
+    echo $FLAGS
+ else
+ CFLAGS=`python3-config --includes`
+-   if [ $? -eq 0 ]
++   if test $? -eq 0
+    then
+    echo $FLAGS
+    fi
+@@ -645,7 +645,7 @@ if test "$class_driver" = "no" && test "
+    AS_IF([test "x$FOUND_HEADER" != "xyes"],
+           [AC_MSG_ERROR([cannot find python-devel support], 6)])
+ fi
+-CFLAGS="$save_CFLAGS"
++CFLAGS="$SAVE_CFLAGS"
+ 
+ if test "$hpijs_only_build" = "no" && test "$scan_build" = "yes" && test "$hpcups_only_build" = "no"; then
+    AC_CHECK_LIB([sane], [sane_open], [LIBS="$LIBS"], [AC_MSG_ERROR([cannot find sane-backends-devel support (or --disable-scan-build)], 12)])
