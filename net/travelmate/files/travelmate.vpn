@@ -8,15 +8,11 @@
 
 # Please note: you have to setup the package 'wireguard' or 'openvpn' before using this script
 
+. "/lib/functions.sh"
+
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 set -o pipefail
-
-# source function library if necessary
-#
-if [ -z "${_C}" ]; then
-	. "/lib/functions.sh"
-fi
 
 vpn="${1}"
 vpn_action="${2}"
