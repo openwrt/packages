@@ -6,15 +6,7 @@
 # set (s)hellcheck exceptions
 # shellcheck disable=1091,3040,3043,3057
 
-export LC_ALL=C
-export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-set -o pipefail
-
-# source function library if necessary
-#
-if [ -z "${_C}" ]; then
-    . "/lib/functions.sh"
-fi
+. "/lib/functions.sh"
 
 # url encoding function
 #
@@ -39,6 +31,10 @@ urlencode()
     done
 }
 
+export LC_ALL=C
+export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
+set -o pipefail
+
 username="$(urlencode "${1}")"
 password="$(urlencode "${2}")"
 trm_domain="telekom.portal.fon.com"
@@ -51,14 +47,10 @@ trm_fetch="$(command -v curl)"
 #
 raw_html="$(${trm_fetch} --user-agent "${trm_useragent}" --referer "http://www.example.com" --connect-timeout $((trm_maxwait / 6)) --location --silent --show-error "${trm_captiveurl}")"
 redirect_url="$(printf "%s" "${raw_html}" | awk 'match(tolower($0),/<loginurl>.*<\/loginurl>/){printf "%s",substr($0,RSTART+10,RLENGTH-21)}' 2>/dev/null | awk '{gsub("&amp;","\\&");printf "%s",$0}' 2>/dev/null)"
-if [ -z "${redirect_url}" ]; then
-    exit 1
-fi
+[ -z "${redirect_url}" ] && exit 1
 
 # final login request
 #
 raw_html="$("${trm_fetch}" --user-agent "${trm_useragent}" --referer "https://${trm_domain}" --connect-timeout $((trm_maxwait / 6)) --header "content-type: application/x-www-form-urlencoded" --location --silent --show-error --data "UserName=${username}&Password=${password}&FNAME=0&button=Login&OriginatingServer=http%3A%2F%2F${trm_captiveurl}" "${redirect_url}")"
 login_url="$(printf "%s" "${raw_html}" | awk 'match(tolower($0),/<logoffurl>.*<\/logoffurl>/){printf "%s",substr($0,RSTART+11,RLENGTH-23)}' 2>/dev/null)"
-if [ -z "${login_url}" ]; then
-    exit 2
-fi
+[ -n "${login_url}" ] && exit 0 || exit 255

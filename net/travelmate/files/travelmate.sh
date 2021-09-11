@@ -10,7 +10,7 @@ export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 set -o pipefail
 
-trm_ver="2.0.6"
+trm_ver="2.0.7"
 trm_enabled="0"
 trm_debug="0"
 trm_iface=""
@@ -148,9 +148,9 @@ f_char() {
 # wifi helper function
 #
 f_wifi() {
-	local status radio timeout="0"
+	local status radio radio_up timeout="0"
 
-	"${trm_wifi}" reconf
+	"${trm_wifi}" reload
 	for radio in ${trm_radiolist}; do
 		while true; do
 			if [ "${timeout}" -ge "${trm_maxwait}" ]; then
@@ -159,6 +159,10 @@ f_wifi() {
 			status="$("${trm_wifi}" status 2>/dev/null)"
 			if [ "$(printf "%s" "${status}" | jsonfilter -q -l1 -e "@.${radio}.up")" != "true" ] ||
 				[ "$(printf "%s" "${status}" | jsonfilter -q -l1 -e "@.${radio}.pending")" != "false" ]; then
+				if [ "${radio}" != "${radio_up}" ]; then
+					"${trm_wifi}" up "${radio}"
+					radio_up="${radio}"
+				fi
 				timeout="$((timeout + 1))"
 				sleep 1
 			else
@@ -166,8 +170,10 @@ f_wifi() {
 			fi
 		done
 	done
-	sleep "$((trm_maxwait / 6))"
-	timeout="$((timeout + (trm_maxwait / 6)))"
+	if [ "${timeout}" -lt "${trm_maxwait}" ]; then
+		sleep "$((trm_maxwait / 6))"
+		timeout="$((timeout + (trm_maxwait / 6)))"
+	fi
 	f_log "debug" "f_wifi   ::: radio_list: ${trm_radiolist}, radio: ${radio}, timeout: ${timeout}"
 }
 
@@ -179,10 +185,9 @@ f_vpn() {
 	vpn="$(f_getval "vpn")"
 	vpn_service="$(f_getval "vpnservice")"
 	vpn_iface="$(f_getval "vpniface")"
-	if [ -z "${vpn_action}" ]; then
-		[ "${vpn}" = "1" ] && vpn_action="enable" || vpn_action="disable"
-	fi
-	if [ -x "${trm_vpnpgm}" ] && [ -n "${vpn_service}" ] && [ -n "${vpn_iface}" ]; then
+	[ -z "${vpn_action}" ] && { [ "${vpn}" = "1" ] && vpn_action="enable" || vpn_action="disable"; }
+
+	if [ -x "${trm_vpnpgm}" ] && [ -n "${vpn_service}" ] && [ -n "${vpn_iface}" ] && [ -f "${trm_ntpfile}" ]; then
 		if { [ "${vpn_action}" = "disable" ] && [ -f "${trm_vpnfile}" ]; } ||
 			{ [ "${vpn}" = "1" ] && [ "${vpn_action}" = "enable" ] && [ ! -f "${trm_vpnfile}" ]; } ||
 			{ [ "${vpn}" != "1" ] && [ "${vpn_action}" = "enable" ] && [ -f "${trm_vpnfile}" ]; }; then
@@ -211,13 +216,20 @@ f_mac() {
 			uci_set "wireless" "${section}" "macaddr" "${result}"
 		elif [ "${trm_randomize}" = "1" ]; then
 			result="$(hexdump -n6 -ve '/1 "%.02X "' /dev/random 2>/dev/null |
-				awk -v local="2,6,A,E" -v seed="$(date +%s)" 'BEGIN{srand(seed)}NR==1{split(local,b,",");seed=int(rand()*4+1);printf "%s%s:%s:%s:%s:%s:%s",substr($1,0,1),b[seed],$2,$3,$4,$5,$6}')"
+				awk -v local="2,6,A,E" -v seed="$(date +%s)" 'BEGIN{srand(seed)}NR==1{split(local,b,",");
+				seed=int(rand()*4+1);printf "%s%s:%s:%s:%s:%s:%s",substr($1,0,1),b[seed],$2,$3,$4,$5,$6}')"
 			uci_set "wireless" "${section}" "macaddr" "${result}"
 		else
-			result="$(uci_get "wireless" "${section}" "macaddr")"
+			uci_remove "wireless" "${section}" "macaddr" 2>/dev/null
+			ifname="$(ubus -S call network.wireless status 2>/dev/null | jsonfilter -q -l1 -e '@.*.interfaces[@.config.mode="sta"].ifname')"
+			result="$(${trm_iwinfo} "${ifname}" info 2>/dev/null | awk '/Access Point:/{printf "%s",$3}')"
 		fi
 	elif [ "${action}" = "get" ]; then
 		result="$(uci_get "wireless" "${section}" "macaddr")"
+		if [ -z "${result}" ]; then
+			ifname="$(ubus -S call network.wireless status 2>/dev/null | jsonfilter -q -l1 -e '@.*.interfaces[@.config.mode="sta"].ifname')"
+			result="$(${trm_iwinfo} "${ifname}" info 2>/dev/null | awk '/Access Point:/{printf "%s",$3}')"
+		fi
 	fi
 	printf "%s" "${result}"
 	f_log "debug" "f_mac    ::: action: ${action:-"-"}, section: ${section:-"-"}, macaddr: ${macaddr:-"-"}, result: ${result:-"-"}"
@@ -568,9 +580,17 @@ f_check() {
 										login_script_args="$(f_getval "script_args")"
 										"${login_script}" ${login_script_args} >/dev/null 2>&1
 										rc="${?}"
-										f_log "info" "captive portal login for '${cp_domain}' has been executed with rc '${rc}'"
-										if [ "${rc}" = "0" ]; then
-											result="$(f_net)"
+										if [ "${rc}" = "255" ]; then
+											f_log "info" "captive portal login script for '${cp_domain}' failed with rc '${rc}'"
+											unset trm_connection
+											trm_ifstatus="${status}"
+											f_jsnup
+											break
+										else
+											f_log "info" "captive portal login script for '${cp_domain}' has been finished  with rc '${rc}'"
+											if [ "${rc}" = "0" ]; then
+												result="$(f_net)"
+											fi
 										fi
 									fi
 								fi
