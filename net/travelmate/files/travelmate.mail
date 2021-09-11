@@ -8,15 +8,11 @@
 
 # Please note: you have to setup the package 'msmtp' before using this script
 
+. "/lib/functions.sh"
+
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 set -o pipefail
-
-# source function library if necessary
-#
-if [ -z "${_C}" ]; then
-	. "/lib/functions.sh"
-fi
 
 trm_debug="$(uci_get travelmate global trm_debug "0")"
 trm_mailreceiver="$(uci_get travelmate global trm_mailreceiver)"
