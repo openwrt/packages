@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=autoconf
 PKG_VERSION:=2.70
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=@GNU/autoconf
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
@@ -39,9 +39,12 @@ endef
 
 CONFIGURE_VARS += M4=m4 EMACS=no
 
+FIX_PATHS = $(SED) '1c \#!/usr/bin/perl' -e 's| /[^ ]*/bin/perl| /usr/bin/perl|g'
+
 define Package/autoconf/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
+	grep -rEl "#\!.*perl" $(1)/usr/bin/ | xargs $(FIX_PATHS)
 	$(INSTALL_DIR) $(1)/usr/share/autoconf
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/autoconf/INSTALL \
 	$(1)/usr/share/autoconf/
