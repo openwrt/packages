@@ -314,14 +314,3 @@ define GoSrcPackage
     Package/$(1)/install=$$(call GoPackage/Package/Install/Src,$$(1))
   endif
 endef
-
-
-# Deprecated variables - these will be removed after the next OpenWrt release
-GO_PKG_PATH=$(GO_PKG_BUILD_DEPENDS_PATH)
-GO_PKG_WORK_DIR=$(PKG_BUILD_DIR)/$(GO_PKG_WORK_DIR_NAME)
-GO_PKG_CACHE_DIR=$(GO_BUILD_CACHE_DIR)
-GO_PKG_DEFAULT_VARS=$(GO_PKG_VARS)
-GoPackage/Environment=$(GO_PKG_VARS)
-GoPackage/is_dir_not_empty=$$$$($(FIND) "$(1)" -maxdepth 0 -type d \! -empty 2>/dev/null)
-GoPackage/has_binaries=$(call GoPackage/is_dir_not_empty,$(GO_PKG_BUILD_BIN_DIR))
-# End of deprecated variables
