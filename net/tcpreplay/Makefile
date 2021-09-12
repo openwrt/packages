@@ -8,18 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tcpreplay
-PKG_VERSION:=4.3.2
+PKG_VERSION:=4.3.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/appneta/tcpreplay/releases/download/v$(PKG_VERSION)
-PKG_HASH:=955aed6a40f49a5b8c1234fd0a928edc5c665d94b7755ab5769c30938e33f380
+PKG_HASH:=42c055106e55852c29d94bb6e1b9e001a0723349f2985eb893a47d384c85002b
 
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=docs/LICENSE
 PKG_CPE_ID:=cpe:/a:appneta:tcpreplay
 
-PKG_FIXUP:=libtool
+PKG_FIXUP:=autoreconf
+PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -34,7 +35,7 @@ define Package/tcpreplay/default
   CATEGORY:=Network
   URL:=http://tcpreplay.appneta.com/
   MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
-  DEPENDS:=+librt +libpcap
+  DEPENDS:=+librt +libpcap +libdnet
 endef
 
 define Package/tcpbridge
@@ -130,13 +131,13 @@ CONFIGURE_VARS += \
 	ac_cv_lib_nl_nl_cache_alloc=no \
 	ac_cv_lib_nl_genl_3_genl_connect=no \
 	ac_cv_lib_nl_3_nl_cache_alloc=no \
-	ac_cv_lib_dbus_1_dbus_malloc=no
+	ac_cv_lib_dbus_1_dbus_malloc=no \
+	ac_cv_path_pcncfg=no
 
 CONFIGURE_ARGS += \
 	--enable-force-pf \
 	--enable-dynamic-link \
-	--prefix="$(PKG_INSTALL_DIR)/usr" \
-	--exec-prefix="$(PKG_INSTALL_DIR)/usr" \
+	--with-libdnet="$(STAGING_DIR)/usr" \
 	--with-libpcap="$(STAGING_DIR)/usr"
 
 define tcpreplayTemplate

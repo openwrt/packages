@@ -8,16 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=file
-PKG_VERSION:=5.37
+PKG_VERSION:=5.38
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://src.fedoraproject.org/lookaside/pkgs/file/ \
-	http://download.openpkg.org/components/cache/file/ \
+PKG_SOURCE_URL:=http://download.openpkg.org/components/cache/file/ \
 	ftp://ftp.astron.com/pub/file/
-PKG_HASH:=e9c13967f7dd339a3c241b7710ba093560b9a33013491318e88e6b8b57bae07f
+PKG_HASH:=593c2ffc2ab349c5aea0f55fedfe4d681737b6b62376a9b3ad1e77b2cc19fa34
 
-PKG_LICENSE:=BSD-2c
+PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=COPYING
 
 PKG_INSTALL:=1
@@ -44,7 +43,7 @@ $(call Package/file/Default)
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE+= library
-  DEPENDS:=+zlib
+  DEPENDS:=+zlib +liblzma +libbz2
 endef
 
 TARGET_CFLAGS += $(FPIC)
@@ -53,6 +52,9 @@ TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
+	--enable-bzlib \
+	--enable-xzlib \
+	--enable-zlib \
 	--disable-libseccomp \
 	--disable-rpath \
 	--disable-warnings \

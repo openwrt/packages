@@ -1,6 +1,6 @@
--- a/src/subshell/common.c
+--- a/src/subshell/common.c
 +++ b/src/subshell/common.c
-@@ -836,7 +836,7 @@ init_subshell_precmd (char *precmd, size
+@@ -1140,7 +1140,7 @@ init_subshell_precmd (char *precmd, size
                      "else "
                      "[ \"${PWD##$HOME/}\" = \"$PWD\" ] && MC_PWD=\"$PWD\" || MC_PWD=\"~/${PWD##$HOME/}\"; "
                      "fi; "

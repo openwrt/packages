@@ -24,6 +24,7 @@ PKG_FIXUP:=autoreconf
 PKG_MACRO_PATHS:=config
 PKG_BUILD_DEPENDS:=postgresql/host
 PKG_INSTALL:=1
+PKG_ASLR_PIE:=0
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
