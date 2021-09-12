@@ -9,7 +9,7 @@
  #include <errno.h>
  
  #include "defs.h"
-@@ -192,7 +192,8 @@ static bool send_chunks(const char *wher
+@@ -192,7 +192,8 @@ static bool send_shunks(const char *wher
  	 */
  	if (impair.jacob_two_two) {
  		/* sleep for half a second, and second another packet */
