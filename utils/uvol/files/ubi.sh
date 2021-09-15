@@ -194,7 +194,12 @@ updatevol() {
 }
 
 listvols() {
-	local volname volmode volsize
+	local volname volmode volsize json_output json_notfirst
+	if [ "$1" = "-j" ]; then
+		json_output=1
+		shift
+		echo "["
+	fi
 	for voldir in "/sys/devices/virtual/ubi/${ubidev}/${ubidev}_"*; do
 		read -r volname < "$voldir/name"
 		case "$volname" in
@@ -207,8 +212,23 @@ listvols() {
 		esac
 		volmode="${volname:5:2}"
 		volname="${volname:8}"
-		echo "$volname $volmode $volsize"
+		if [ "$json_output" = "1" ]; then
+			[ "$json_notfirst" = "1" ] && echo ","
+				echo -e "\t{"
+				echo -e "\t\t\"name\": \"$volname\","
+				echo -e "\t\t\"mode\": \"$volmode\","
+				echo -e "\t\t\"size\": $volsize"
+				echo -n -e "\t}"
+				json_notfirst=1
+		else
+			echo "$volname $volmode $volsize"
+		fi
 	done
+
+	if [ "$json_output" = "1" ]; then
+		[ "$json_notfirst" = "1" ] && echo
+		echo "]"
+	fi
 }
 
 bootvols() {

@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=uvol
-PKG_VERSION:=0.4
+PKG_VERSION:=0.5
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>

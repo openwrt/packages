@@ -295,7 +295,12 @@ updatevol() {
 }
 
 listvols() {
-	local reports rep lv lvs lv_name lv_size lv_mode volname
+	local reports rep lv lvs lv_name lv_size lv_mode volname json_output json_notfirst
+	if [ "$1" = "-j" ]; then
+		json_output=1
+		echo "["
+		shift
+	fi
 	volname=${1:-.*}
 	json_init
 	json_load "$(lvs -o lv_name,lv_size -S "lv_name=~^[rw][owp]_$volname\$ && vg_name=$vg_name")"
@@ -311,14 +316,28 @@ listvols() {
 			lv_mode="${lv_name:0:2}"
 			lv_name="${lv_name:3}"
 			lv_size=${lv_size%B}
-			echo "$lv_name $lv_mode $lv_size"
+			if [ "$json_output" = "1" ]; then
+				[ "$json_notfirst" = "1" ] && echo ","
+				echo -e "\t{"
+				echo -e "\t\t\"name\": \"$lv_name\","
+				echo -e "\t\t\"mode\": \"$lv_mode\","
+				echo -e "\t\t\"size\": $lv_size"
+				echo -n -e "\t}"
+				json_notfirst=1
+			else
+				echo "$lv_name $lv_mode $lv_size"
+			fi
 			json_select ..
 		done
 		json_select ..
 		break
 	done
-}
 
+	if [ "$json_output" = "1" ]; then
+		[ "$json_notfirst" = "1" ] && echo
+		echo "]"
+	fi
+}
 
 detect() {
 	local reports rep lv lvs lv_name lv_full_name lv_mode volname devname lv_skip_activation
