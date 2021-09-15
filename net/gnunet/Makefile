@@ -2,11 +2,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
 
-PKG_VERSION:=0.14.1
+PKG_VERSION:=0.15.3
 PKG_RELEASE:=$(AUTORELEASE)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/gnunet
-PKG_HASH:=4a3205c570c30756f1a8b1ad0f1a63d078a92f0fac8e543471d54f4552da18c2
+PKG_HASH:=d62669a8f41e078eaa220ce77a32f4f3f801e3099357ae8c705498fe73884ec5
 
 PKG_LICENSE:=AGPL-3.0
 PKG_LICENSE_FILES:=COPYING
@@ -260,7 +260,7 @@ LIBEXEC_gns:=dns2gns helper-dns service-dns service-gns service-namecache servic
 CONF_gns:=dns gns namecache namestore resolver zonemaster
 FILE_MODES_gns:=/usr/lib/gnunet/libexec/gnunet-helper-dns:root:gnunetdns:4750 /usr/lib/gnunet/libexec/gnunet-service-dns:gnunet:gnunetdns:2750
 
-DEPENDS_namestore-fcfsd:=+gnunet-gns +libmicrohttpd-ssl
+DEPENDS_namestore-fcfsd:=+gnunet-rest +libmicrohttpd-ssl
 LIBEXEC_namestore-fcfsd:=namestore-fcfsd
 
 DEPENDS_gns-proxy:=+gnunet-gns +gnunet-curl +libmicrohttpd-ssl +PACKAGE_libgnutls-dane:libgnutls-dane
