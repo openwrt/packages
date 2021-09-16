@@ -189,6 +189,7 @@ prepare_net() {
 		Ed25519PrivateKeyFile \
 		ECDSAPublicKey \
 		Forwarding \
+		GraphDumpFile \
 		Interface \
 		ListenAddress \
 		LocalDiscoveryAddress \
