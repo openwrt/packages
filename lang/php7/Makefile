@@ -6,8 +6,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
-PKG_VERSION:=7.4.22
-PKG_RELEASE:=1
+PKG_VERSION:=7.4.23
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 PKG_LICENSE:=PHP-3.01
@@ -16,7 +16,7 @@ PKG_CPE_ID:=cpe:/a:php:php
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.php.net/distributions/
-PKG_HASH:=8e078cd7d2f49ac3fcff902490a5bb1addc885e7e3b0d8dd068f42c68297bde8
+PKG_HASH:=cea52313fcffe56343bcd3c66dbb23cd5507dc559cc2e3547cf8f5452e88a05d
 
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
@@ -526,6 +526,26 @@ define Package/php7-fpm/conffiles
 /etc/php7-fpm.conf
 /etc/php7-fpm.d/
 /etc/config/php7-fpm
+endef
+
+define Package/php7-mod-openssl/postinst
+#!/bin/sh
+[ -n "$$IPKG_INSTROOT" ] || {
+	if [ -e "/etc/php7/20_openssl.ini" ] && [ -e "/etc/php7/15_openssl.ini" ]; then
+		echo "Renaming PHP ini file '/etc/php7/20_openssl.ini' -> '/etc/php7/15_openssl.ini'"
+		mv /etc/php7/20_openssl.ini /etc/php7/15_openssl.ini
+	fi
+}
+endef
+
+define Package/php7-mod-mysqli/postinst
+#!/bin/sh
+[ -n "$$IPKG_INSTROOT" ] || {
+	if [ -e "/etc/php7/20_mysqli.ini" ] && [ -e "/etc/php7/30_mysqli.ini" ]; then
+		echo "Renaming PHP ini file '/etc/php7/20_mysqli.ini' -> '/etc/php7/30_mysqli.ini'"
+		mv /etc/php7/20_mysqli.ini /etc/php7/30_mysqli.ini
+	fi
+}
 endef
 
 define Build/Prepare
