@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=acpica-unix
 PKG_VERSION:=20210730
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://acpica.org/sites/$(patsubst %-unix,%,$(PKG_NAME))/files/$(PKG_SOURCE_URL)
@@ -48,7 +48,9 @@ MAKE_PATH:=generate/unix
 
 define Package/acpica-unix/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/generate/unix/acpidump/obj/acpidump $(1)/usr/bin/
+
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/generate/unix/bin/* \
+		$(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,acpica-unix))
