@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=snort3
 PKG_VERSION:=3.1.0.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.snort.org/downloads/snortplus/
@@ -61,12 +61,17 @@ TARGET_LDFLAGS += -L$(STAGING_DIR)/usr/lib/daq3 -ltirpc
 
 define Package/snort3/conffiles
 /etc/config/snort
+/etc/snort/
 endef
 
 define Package/snort3/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) \
 		$(PKG_INSTALL_DIR)/usr/bin/snort  \
+		$(1)/usr/bin/
+
+	$(INSTALL_BIN) \
+		$(PKG_INSTALL_DIR)/usr/bin/snort2lua  \
 		$(1)/usr/bin/
 
 	$(INSTALL_BIN) \
@@ -88,6 +93,9 @@ define Package/snort3/install
 		$(1)/usr/share/lua/
 
 	$(INSTALL_DIR) $(1)/etc/snort
+	$(INSTALL_CONF) \
+		$(PKG_INSTALL_DIR)/usr/etc/snort/*.lua \
+		$(1)/etc/snort
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) \
