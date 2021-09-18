@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mtools
-PKG_VERSION:=4.0.26
+PKG_VERSION:=4.0.35
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@GNU/mtools
-PKG_HASH:=539f1c8b476a16e198d8bcb10a5799e22e69de49d854f7dbd85b64c2a45dea1a
+PKG_HASH:=34769e173751d2f0d891a08c76c80427e929b8ee43438019b8666cc3d7a44749
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -29,6 +29,8 @@ endef
 define Package/mtools/description
   Mtools is a collection of utilities to access MS-DOS disks from GNU and Unix without mounting them.
 endef
+
+CONFIGURE_VARS += ac_cv_have_x="have_x=no"
 
 define Package/mtools/install
 	$(INSTALL_DIR) $(1)/usr/bin
