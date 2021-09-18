@@ -18,11 +18,9 @@ PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 
 PKG_INSTALL:=1
-PKG_BUILD_DEPENDS:=meson/host
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/meson/meson.mk
-
+include $(INCLUDE_DIR)/meson.mk
 
 define Package/spice-protocol
   SECTION:=libs

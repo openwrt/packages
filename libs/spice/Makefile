@@ -24,7 +24,7 @@ PKG_BUILD_DEPENDS:=spice-protocol
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
-include ../../devel/meson/meson.mk
+include $(INCLUDE_DIR)/meson.mk
 
 define Package/libspice-server
   SECTION:=libs

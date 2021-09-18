@@ -21,13 +21,13 @@ PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Sebastian Kemper <sebastian_ml@gmx.net>
 
-PKG_BUILD_DEPENDS:=glib2/host meson/host
+PKG_BUILD_DEPENDS:=glib2/host
 
 OPENWRT_VERBOSE:=c
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
-include ../../devel/meson/meson.mk
+include $(INCLUDE_DIR)/meson.mk
 
 define Package/json-glib
   SECTION:=libs

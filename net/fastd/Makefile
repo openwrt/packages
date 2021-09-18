@@ -43,11 +43,10 @@ PKG_CONFIG_DEPENDS:=\
 	CONFIG_FASTD_WITH_OFFLOAD_L2TP
 
 
-PKG_BUILD_DEPENDS:=meson/host nacl
-PKG_BUILD_PARALLEL:=1
+PKG_BUILD_DEPENDS:=nacl
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/meson/meson.mk
+include $(INCLUDE_DIR)/meson.mk
 
 define Package/fastd
   SECTION:=net

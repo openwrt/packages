@@ -11,8 +11,6 @@ is not supported.
  src/config.y | 8 +++++---
  1 file changed, 5 insertions(+), 3 deletions(-)
 
-diff --git a/src/config.y b/src/config.y
-index a107d7b9fda7..7a3ec6a32649 100644
 --- a/src/config.y
 +++ b/src/config.y
 @@ -282,12 +282,14 @@ offload:	TOK_L2TP boolean {
@@ -33,6 +31,3 @@ index a107d7b9fda7..7a3ec6a32649 100644
  #endif
  		}
  	;
--- 
-2.32.0
-

@@ -20,10 +20,8 @@ PKG_LICENSE:=FTL GPL-2.0-only MIT ZLIB GPL-3.0-or-later
 PKG_LICENSE_FILES:=docs/LICENSE.TXT docs/FTL.TXT docs/GPLv2.TXT src/bdf/README src/pcf/README src/gzip/zlib.h builds/unix/config.sub builds/unix/config.guess builds/unix/libtool 
 PKG_CPE_ID:=cpe:/a:freetype:freetype2
 
-PKG_BUILD_DEPENDS:=meson/host
-
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/meson/meson.mk
+include $(INCLUDE_DIR)/meson.mk
 
 define Package/libfreetype
   SECTION:=libs

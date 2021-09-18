@@ -24,7 +24,7 @@ PKG_INSTALL:=1
 PKG_BUILD_DEPENDS:=gperf/host
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/meson/meson.mk
+include $(INCLUDE_DIR)/meson.mk
 
 define Package/fontconfig
   SECTION:=xorg-util
