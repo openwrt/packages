@@ -35,11 +35,9 @@ stop_container() {
 	fi
 
 	if [ -n "$name" ]; then
-		if [ "$timeout" = "0" ]; then
-			/usr/bin/lxc-stop -n "$name" &
-		else
-			/usr/bin/lxc-stop -n "$name" -t $timeout &
-		fi
+		[ "$timeout" = "0" ] && postargs=" -t $max_timeout"
+		/usr/bin/lxc-stop -n "$name" "$postargs" &
+		export STOPPID=$!
 	fi
 }
 
@@ -54,7 +52,13 @@ stop() {
 	# ensure e.g. shutdown doesn't occur before maximum timeout on
 	# containers that are shutting down
 	if [ $max_timeout -gt 0 ]; then
-		sleep $max_timeout
+		for i in $(seq 1 $max_timeout); do
+			if [ -d /proc/"$STOPPID" ]; then
+				sleep 1s
+			else
+				return 0
+			fi
+		done
 	fi
 }
 
