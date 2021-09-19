@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libfstrm
-PKG_VERSION:=0.6.0
+PKG_VERSION:=0.6.1
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=fstrm-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://dl.farsightsecurity.com/dist/fstrm/
-PKG_HASH:=a7049089eb0861ecaa21150a05613caa6dee4e8545b91191eff2269caa923910
+PKG_HASH:=bca4ac1e982a2d923ccd24cce2c98f4ceeed5009694430f73fc0dcebca8f098f
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/fstrm-$(PKG_VERSION)
 
