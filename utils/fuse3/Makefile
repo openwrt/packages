@@ -9,12 +9,12 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=fuse3
-PKG_VERSION:=3.10.4
+PKG_VERSION:=3.10.5
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=fuse-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/libfuse/libfuse/releases/download/fuse-$(PKG_VERSION)
-PKG_HASH:=9365b74fd8471caecdb3cc5adf25a821f70a931317ee9103d15bd39089e3590d
+PKG_HASH:=b2e283485d47404ac896dd0bb7f7ba81e1470838e677e45f659804c3a3b69666
 PKG_BUILD_DIR:=$(BUILD_DIR)/fuse-$(PKG_VERSION)
 
 PKG_MAINTAINER:=
