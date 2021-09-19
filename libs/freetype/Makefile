@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=freetype
-PKG_VERSION:=2.10.4
-PKG_RELEASE:=2
+PKG_VERSION:=2.11.0
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/freetype
-PKG_HASH:=86a854d8905b19698bbc8f23b860bc104246ce4854dcea8e3b0fb21284f75784
+PKG_HASH:=8bee39bd3968c4804b70614a0a3ad597299ad0e824bc8aad5ce8aaf48067bde7
 
 PKG_MAINTAINER:=Val Kulkov <val.kulkov@gmail.com>
 PKG_LICENSE:=FTL GPL-2.0-only MIT ZLIB GPL-3.0-or-later
@@ -39,7 +39,7 @@ define Package/libfreetype/description
 endef
 
 MESON_ARGS += \
-	-Dzlib=system \
+	-Dzlib=enabled \
 	-Dbzip2=disabled \
 	-Dpng=enabled \
 	-Dharfbuzz=disabled \
