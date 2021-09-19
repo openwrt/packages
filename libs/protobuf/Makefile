@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=protobuf
-PKG_VERSION:=3.17.2
+PKG_VERSION:=3.17.3
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-cpp-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/google/protobuf/releases/download/v$(PKG_VERSION)
-PKG_HASH:=13c5e07a8e2d6847794ac3f23947d9641cab7ded0c50854aad624d48f2821e60
+PKG_HASH:=51cec99f108b83422b7af1170afd7aeb2dd77d2bcbb7b6bad1f92509e9ccf8cb
 
 PKG_MAINTAINER:=Ken Keys <kkeys@caida.org>
 PKG_LICENSE:=BSD-3-Clause
