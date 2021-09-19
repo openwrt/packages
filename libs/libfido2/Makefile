@@ -8,21 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libfido2
-PKG_VERSION:=1.6.0
-PKG_RELEASE:=1
+PKG_VERSION:=1.8.0
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/Yubico/libfido2/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=6aed47aafd22be49c38f9281fb88ccd08c98678d9b8c39cdc87d1bb3ea2c63e4
-
-PKG_FORTIFY_SOURCE:=0
-CMAKE_INSTALL:=1
-
-TARGET_CFLAGS += -Wno-error=overflow -Wno-error=sign-conversion
+PKG_HASH:=554291188f24ab595cb947f9d2b6ec40ce5afe39d9257c1e2cd0bdef8bf7fd1d
 
 PKG_MAINTAINER:=Linos Giannopoulos <linosgian00+openwrt@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
+
+PKG_FORTIFY_SOURCE:=0
+CMAKE_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -33,7 +31,7 @@ define Package/libfido2
   TITLE:=FIDO2 Library
   URL:=https://github.com/Yubico/libfido2
   ABI_VERSION:=1
-  DEPENDS += +libcbor +libopenssl +libudev
+  DEPENDS += +libcbor +libopenssl +libudev +zlib
 endef
 
 define Package/libfido2/description
