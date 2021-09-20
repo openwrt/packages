@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=modemmanager
-PKG_VERSION:=1.16.10
+PKG_VERSION:=1.18.2
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=ModemManager-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.freedesktop.org/software/ModemManager
-PKG_HASH:=2ccf1f716c2d121e8e6709bcf8af29ee86971a90adacca2e8d6288b30278862e
+PKG_HASH:=374be158ae1c1fb38a29eef1cc3cdf89ff3536b48ff1320d208ab204ea6c5f8a
 PKG_BUILD_DIR:=$(BUILD_DIR)/ModemManager-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Nicholas Smith <nicholas@nbembedded.com>
