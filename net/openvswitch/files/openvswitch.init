@@ -198,6 +198,20 @@ ovs_bridge_validate_datapath_desc() {
 	fi
 }
 
+ovs_bridge_validate_fail_mode() {
+	local fail_mode="$1"
+
+	case "$fail_mode" in
+		secure|standalone)
+			return 0
+			;;
+		*)
+			logger -t openvswitch "invalid fail_mode: $fail_mode"
+			return 1
+			;;
+	esac
+}
+
 ovs_bridge_init() {
 	local cfg="$1"
 
@@ -224,6 +238,17 @@ ovs_bridge_init() {
 		ovs_bridge_validate_datapath_desc "$datapath_desc" && {
 			ovs-vsctl --if-exists set bridge "$name" other-config:dp-desc="$datapath_desc"
 		}
+	}
+
+	config_get fail_mode "$cfg" fail_mode
+	[ -n "$fail_mode" ] && {
+		ovs_bridge_validate_fail_mode "$fail_mode" && {
+			ovs-vsctl set-fail-mode "$name" "$fail_mode" 2> /dev/null
+		} || {
+			ovs-vsctl del-fail-mode "$name" 2> /dev/null
+		}
+	} || {
+		ovs-vsctl del-fail-mode "$name" 2> /dev/null
 	}
 
 	config_list_foreach "$cfg" "ports" ovs_bridge_port_add
