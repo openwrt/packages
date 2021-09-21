@@ -92,6 +92,7 @@ for initialising a virtual bridge with an OpenFlow controller.
 | controller    | string  | no       | (none)                         | The endpoint of an OpenFlow controller for this bridge     |
 | datapath_id   | string  | no       | (none)                         | The OpenFlow datapath ID for this bridge                   |
 | datapath_desc | string  | no       | (none)                         | The OpenFlow datapath description for this bridge          |
+| fail_mode     | string  | no       | standalone                     | The bridge failure mode                                    |
 
 The ovs_port section can be used to add ports to a bridge. It supports the options below.
 
