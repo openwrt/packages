@@ -352,6 +352,8 @@ define Package/collectd/conffiles
 endef
 
 define Package/collectd/install
+	$(INSTALL_DIR) $(1)/etc/collectd/conf.d
+
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/collectd $(1)/usr/sbin/
 
