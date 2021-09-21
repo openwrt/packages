@@ -30,3 +30,10 @@
 		help
 			If you have a UPS connected via serial cable, select this.
 		default y
+
+        config NUT_DRIVER_NEON
+                depends on PACKAGE_nut
+                bool "Build with suport for netxml drivers"
+                help
+                        If you have a UPS connected via netxml, select this.
+                default y

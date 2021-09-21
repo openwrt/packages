@@ -176,6 +176,11 @@ build_driver_config() {
 	get_write_driver_config "$cfg" vendor
 	get_write_driver_config "$cfg" vendorid
 
+	# Params specific to NetXML driver
+        get_write_driver_config "$cfg" login
+        get_write_driver_config "$cfg" password
+        get_write_driver_config "$cfg" subscribe 0 1
+
 	defoverride() {
 		local overvar="$1"
 		local defover="$2"
