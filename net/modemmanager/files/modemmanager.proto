@@ -100,12 +100,12 @@ modemmanager_cleanup_connection() {
 	# do nothing if no bearers reported
 	[ -n "${bearercount}" ] && [ "$bearercount" -ge 1 ] && {
 		# explicitly disconnect just in case
-		mmcli --modem="${device}" --simple-disconnect >/dev/null 2>&1
+		mmcli --modem="${ctl_device}" --simple-disconnect >/dev/null 2>&1
 		# and remove all bearer objects, if any found
 		idx=1
 		while [ $idx -le "$bearercount" ]; do
 			bearerpath=$(modemmanager_get_field "${modemstatus}" "modem.generic.bearers.value\[$idx\]")
-			mmcli --modem "${device}" --delete-bearer="${bearerpath}" >/dev/null 2>&1
+			mmcli --modem "${ctl_device}" --delete-bearer="${bearerpath}" >/dev/null 2>&1
 			idx=$((idx + 1))
 		done
 	}
@@ -336,7 +336,7 @@ modemmanager_disconnected_method_common() {
 proto_modemmanager_init_config() {
 	available=1
 	no_device=1
-	proto_config_add_string	 device
+	proto_config_add_string	 ctl_device
 	proto_config_add_string	 apn
 	proto_config_add_string	 'allowedauth:list(string)'
 	proto_config_add_string	 username
@@ -359,23 +359,23 @@ proto_modemmanager_setup() {
 
 	local address prefix gateway mtu dns1 dns2
 
-	json_get_vars device apn allowedauth username password pincode iptype metric signalrate
+	json_get_vars ctl_device apn allowedauth username password pincode iptype metric signalrate
 
 	# validate sysfs path given in config
-	[ -n "${device}" ] || {
+	[ -n "${ctl_device}" ] || {
 		echo "No device specified"
 		proto_notify_error "${interface}" NO_DEVICE
 		proto_set_available "${interface}" 0
 		return 1
 	}
-	[ -e "${device}" ] || {
+	[ -e "${ctl_device}" ] || {
 		echo "Device not found in sysfs"
 		proto_set_available "${interface}" 0
 		return 1
 	}
 
 	# validate that ModemManager is handling the modem at the sysfs path
-	modemstatus=$(mmcli --modem="${device}" --output-keyvalue)
+	modemstatus=$(mmcli --modem="${ctl_device}" --output-keyvalue)
 	modempath=$(modemmanager_get_field "${modemstatus}" "modem.dbus-path")
 	[ -n "${modempath}" ] || {
 		echo "Device not managed by ModemManager"
@@ -398,7 +398,7 @@ proto_modemmanager_setup() {
 	proto_notify_error "${interface}" MM_CONNECT_IN_PROGRESS
 
 	connectargs="apn=${apn}${iptype:+,ip-type=${iptype}}${cliauth:+,allowed-auth=${cliauth}}${username:+,user=${username}}${password:+,password=${password}}${pincode:+,pin=${pincode}}"
-	mmcli --modem="${device}" --timeout 120 --simple-connect="${connectargs}" || {
+	mmcli --modem="${ctl_device}" --timeout 120 --simple-connect="${connectargs}" || {
 		proto_notify_error "${interface}" MM_CONNECT_FAILED
 		proto_block_restart "${interface}"
 		return 1
@@ -407,13 +407,13 @@ proto_modemmanager_setup() {
 	# check if Signal refresh rate is set
 	if [ -n "${signalrate}" ] && [ "${signalrate}" -eq "${signalrate}" ] 2>/dev/null; then
 		echo "setting signal refresh rate to ${signalrate} seconds"
-		mmcli --modem="${device}" --signal-setup="${signalrate}"
+		mmcli --modem="${ctl_device}" --signal-setup="${signalrate}"
 	else
 		echo "signal refresh rate is not set"
 	fi
 
 	# log additional useful information
-	modemstatus=$(mmcli --modem="${device}" --output-keyvalue)
+	modemstatus=$(mmcli --modem="${ctl_device}" --output-keyvalue)
 	operatorname=$(modemmanager_get_field "${modemstatus}" "modem.3gpp.operator-name")
 	[ -n "${operatorname}" ] && echo "network operator name: ${operatorname}"
 	operatorid=$(modemmanager_get_field "${modemstatus}" "modem.3gpp.operator-code")
@@ -505,14 +505,14 @@ proto_modemmanager_teardown() {
 	local modemstatus bearerpath errorstring
 	local bearermethod_ipv4 bearermethod_ipv6
 
-	local device lowpower iptype
-	json_get_vars device lowpower iptype
+	local ctl_device lowpower iptype
+	json_get_vars ctl_device lowpower iptype
 
 	echo "stopping network"
 	proto_notify_error "${interface}" MM_TEARDOWN_IN_PROGRESS
 
 	# load connected bearer information, just the first one should be ok
-	modemstatus=$(mmcli --modem="${device}" --output-keyvalue)
+	modemstatus=$(mmcli --modem="${ctl_device}" --output-keyvalue)
 	bearerpath=$(modemmanager_get_field "${modemstatus}" "modem.generic.bearers.value\[1\]")
 	[ -n "${bearerpath}" ] || {
 		echo "couldn't load bearer path"
@@ -533,16 +533,16 @@ proto_modemmanager_teardown() {
 	modemmanager_disconnected_method_common "${interface}"
 
 	# disconnect
-	mmcli --modem="${device}" --simple-disconnect ||
+	mmcli --modem="${ctl_device}" --simple-disconnect ||
 		proto_notify_error "${interface}" DISCONNECT_FAILED
 
 	# disable
-	mmcli --modem="${device}" --disable
+	mmcli --modem="${ctl_device}" --disable
 	proto_notify_error "${interface}" MM_MODEM_DISABLED
 
 	# low power, only if requested
 	[ "${lowpower:-0}" -lt 1 ] ||
-		mmcli --modem="${device}" --set-power-state-low
+		mmcli --modem="${ctl_device}" --set-power-state-low
 }
 
 [ -n "$INCLUDE_ONLY" ] || {
