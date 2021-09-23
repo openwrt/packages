@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dnsdist
-PKG_VERSION:=1.6.1
+PKG_VERSION:=1.7.0
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://downloads.powerdns.com/releases/
-PKG_HASH:=29040a43982ae1ad5b7313f081e26519ab3a58af6bced438311da3a65370a3a5
+PKG_HASH:=78cc72cb0ccf7fb5f3f2fae09c79eda65a5256374da09bb541b735ea6868fc64
 
 PKG_MAINTAINER:=Peter van Dijk <peter.van.dijk@powerdns.com>
 PKG_LICENSE:=GPL-2.0-only
@@ -56,6 +56,13 @@ menu "Configuration"
 			"Enables DNS over HTTPS Support for dnsdist"
 		default y
 
+	config DNSDIST_DNS_OVER_HTTPS_OUTGOING
+	depends on !DNSDIST_NOSSL
+		bool "Outgoing DNS over HTTPS Support"
+		help
+			"Enables Outgoing DNS over HTTPS Support for dnsdist"
+		default y
+
 	config DNSDIST_DNS_OVER_TLS
 	depends on !DNSDIST_NOSSL
 		bool "DNS over TLS Support"
@@ -96,6 +103,7 @@ define Package/dnsdist
   TITLE:=dnsdist DNS-, DOS- and abuse-aware loadbalancer
   DEPENDS:= \
 	  +DNSDIST_DNS_OVER_HTTPS:libh2o-evloop \
+	  +DNSDIST_DNS_OVER_HTTPS_OUTGOING:libnghttp2 \
 	  +DNSDIST_GNUTLS:libgnutls \
 	  +DNSDIST_OPENSSL:libopenssl \
 	  +DNSDIST_NET_SNMP:libnetsnmp \
@@ -144,7 +152,8 @@ CONFIGURE_ARGS+= \
 	$(if $(CONFIG_DNSDIST_GNUTLS),--with,--without)-gnutls \
 	$(if $(CONFIG_DNSDIST_OPENSSL),--with,--without)-libssl \
 	$(if $(CONFIG_DNSDIST_DNS_OVER_TLS),--enable-dns-over-tls,) \
-	$(if $(CONFIG_DNSDIST_DNS_OVER_HTTPS),--enable-dns-over-https,)
+	$(if $(CONFIG_DNSDIST_DNS_OVER_HTTPS),--enable-dns-over-https,) \
+	$(if $(CONFIG_DNSDIST_DNS_OVER_HTTPS_OUTGOING),--with,--without)-nghttp2
 
 define Package/dnsdist/install
 	$(INSTALL_DIR) $(1)/etc
