@@ -208,9 +208,11 @@ define Package/keepalived/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/keepalived \
 		$(1)/usr/sbin/
 
+ifeq ($(CONFIG_KEEPALIVED_LVS),y)
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/genhash \
 		$(1)/usr/bin/
+endif
 
 	$(INSTALL_DIR) $(1)/etc/keepalived
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/keepalived/keepalived.conf \
