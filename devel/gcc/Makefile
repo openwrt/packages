@@ -24,7 +24,7 @@ endef
 PKG_NAME:=gcc
 # PKG_VERSION=7.3.0
 PKG_VERSION=7.4.0
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 PKG_SOURCE_URL:=@GNU/gcc/gcc-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_INSTALL:=1
@@ -168,8 +168,10 @@ define Build/Configure
 endef
 
 define Build/Compile
-	export SHELL="$(BASH)"; $(MAKE_VARS) $(MAKE) -C $(PKG_BUILD_DIR) \
-			DESTDIR="$(PKG_INSTALL_DIR)" $(MAKE_ARGS) all install
+	export SHELL="$(BASH)"; $(MAKE_VARS) $(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) \
+			DESTDIR="$(PKG_INSTALL_DIR)" $(MAKE_ARGS) all
+	export SHELL="$(BASH)"; $(MAKE_VARS) $(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) \
+			DESTDIR="$(PKG_INSTALL_DIR)" $(MAKE_ARGS) install
 endef
 
 ENVCFLAGS:="$(TARGET_OPTIMIZATION) $(EXTRA_OPTIMIZATION)
