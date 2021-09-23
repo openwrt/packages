@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dovecot-pigeonhole
-PKG_VERSION_PLUGIN:=0.5.14
+PKG_VERSION_PLUGIN:=0.5.16
 PKG_VERSION_DOVECOT:=$(shell make --no-print-directory -C ../dovecot/ val.PKG_VERSION V=s)
 PKG_VERSION:=$(PKG_VERSION_DOVECOT)-$(PKG_VERSION_PLUGIN)
 PKG_RELEASE:=$(AUTORELEASE)
@@ -17,7 +17,7 @@ DOVECOT_VERSION:=2.3
 
 PKG_SOURCE:=dovecot-$(DOVECOT_VERSION)-pigeonhole-$(PKG_VERSION_PLUGIN).tar.gz
 PKG_SOURCE_URL:=https://pigeonhole.dovecot.org/releases/$(DOVECOT_VERSION)
-PKG_HASH:=68ca0f78a3caa6b090a469f45c395c44cf16da8fcb3345755b1ca436c9ffb2d2
+PKG_HASH:=5ca36780e23b99e6206440f1b3fe3c6598eda5b699b99cebb15d418ba3c6e938
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -36,7 +36,7 @@ define Package/dovecot-pigeonhole
   DEPENDS:=+dovecot
   EXTRA_DEPENDS:=dovecot (>= $(PKG_VERSION_DOVECOT))
   TITLE:=Mail filtering facilities for Dovecot
-  URL:=https://wiki2.dovecot.org/Pigeonhole
+  URL:=https://pigeonhole.dovecot.org/
 endef
 
 define Package/dovecot-pigeonhole/description
