@@ -20,7 +20,7 @@ HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=setuptools-scm
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
-include ../../../packages/lang/python/python3-package.mk
+include ../../lang/python/python3-package.mk
 
 define Package/apparmor/Default
   SECTION:=utils
