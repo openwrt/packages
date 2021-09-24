@@ -1,0 +1,171 @@
+--- a/src/rrd_tool.h
++++ b/src/rrd_tool.h
+@@ -40,6 +40,7 @@ extern "C" {
+ #include <string.h>
+ #include <time.h>
+ #include <ctype.h>
++#include <inttypes.h>
+ 
+ #if HAVE_SYS_PARAM_H
+ #  include <sys/param.h>
+--- a/src/rrd_dump.c
++++ b/src/rrd_dump.c
+@@ -39,7 +39,7 @@ rrd_dump(int argc, char **argv)
+ #else
+ # error "Need strftime"
+ #endif
+-    printf("\t<lastupdate> %ld </lastupdate> <!-- %s -->\n\n",
++    printf("\t<lastupdate> %" PRId64 " </lastupdate> <!-- %s -->\n\n",
+ 	   rrd.live_head->last_up,somestring);
+     for(i=0;i<rrd.stat_head->ds_cnt;i++){
+ 	printf("\t<ds>\n");
+--- a/src/rrd_fetch.c
++++ b/src/rrd_fetch.c
+@@ -88,7 +88,7 @@ rrd_fetch(int argc,
+     }
+     
+     if (end_tmp < start_tmp) {
+-	rrd_set_error("start (%ld) should be less than end (%ld)", start_tmp, end_tmp);
++	rrd_set_error("start (%" PRId64 ") should be less than end (%" PRId64 ")", start_tmp, end_tmp);
+ 	return(-1);
+     }
+     
+@@ -265,7 +265,7 @@ rrd_fetch_fn(
+     start_offset = (long)(*start - rra_start_time) / (long)*step;
+     end_offset = (long)(rra_end_time - *end ) / (long)*step; 
+ #ifdef DEBUG
+-    fprintf(stderr,"rra_start %lu, rra_end %lu, start_off %li, end_off %li\n",
++    fprintf(stderr,"rra_start %" PRIu64 ", rra_end %" PRIu64 ", start_off %li, end_off %li\n",
+ 	    rra_start_time,rra_end_time,start_offset,end_offset);
+ #endif
+ 
+--- a/src/rrd_graph.c
++++ b/src/rrd_graph.c
+@@ -3203,12 +3203,12 @@ im.unit = 0; /* do not display unit if n
+     }  
+     
+     if (start_tmp < 3600*24*365*10){
+-	rrd_set_error("the first entry to fetch should be after 1980 (%ld)",start_tmp);
++	rrd_set_error("the first entry to fetch should be after 1980 (%" PRId64 ")",start_tmp);
+ 	return -1;
+     }
+     
+     if (end_tmp < start_tmp) {
+-	rrd_set_error("start (%ld) should be less than end (%ld)", 
++	rrd_set_error("start (%" PRId64 ") should be less than end (%" PRId64 ")",
+ 	       start_tmp, end_tmp);
+ 	return -1;
+     }
+@@ -3300,7 +3300,7 @@ im.unit = 0; /* do not display unit if n
+ 	case GF_VRULE:
+ 	    if(sscanf(
+ 		&argv[i][argstart],
+-		"%lu#%2x%2x%2x:%n",
++		"%" PRId64 "#%2x%2x%2x:%n",
+ 		&im.gdes[im.gdes_c-1].xrule,
+ 		&col_red,
+ 		&col_green,
+--- a/src/rrd_restore.c
++++ b/src/rrd_restore.c
+@@ -126,7 +126,7 @@ int xml2rrd(char* buf, rrd_t* rrd, char
+     rrd_set_error("allocating rrd.live_head");
+     return -1;    
+   }
+-  read_tag(&ptr,"lastupdate","%lu",&(rrd->live_head->last_up));
++  read_tag(&ptr,"lastupdate","%" PRIu64 "",&(rrd->live_head->last_up));
+ 
+   /* Data Source Definition Part */
+   ptr2 = ptr;
+--- a/src/rrd_tool.c
++++ b/src/rrd_tool.c
+@@ -337,9 +337,9 @@ int HandleInputLine(int argc, char **arg
+     else if (strcmp("resize", argv[1]) == 0)
+ 	rrd_resize(argc-1, &argv[1]);
+     else if (strcmp("last", argv[1]) == 0)
+-        printf("%ld\n",rrd_last(argc-1, &argv[1]));
++        printf("%" PRId64 "\n",rrd_last(argc-1, &argv[1]));
+     else if (strcmp("first", argv[1]) == 0)
+-        printf("%ld\n",rrd_first(argc-1, &argv[1]));
++        printf("%" PRId64 "\n",rrd_first(argc-1, &argv[1]));
+     else if (strcmp("update", argv[1]) == 0)
+ 	rrd_update(argc-1, &argv[1]);
+     else if (strcmp("fetch", argv[1]) == 0) {
+@@ -377,9 +377,9 @@ int HandleInputLine(int argc, char **arg
+ 	  printf("<?xml version=\"1.0\" encoding=\"%s\"?>\n\n", XML_ENCODING);
+ 	  printf("<%s>\n", ROOT_TAG);
+ 	  printf("  <%s>\n", META_TAG);
+-	  printf("    <%s>%lu</%s>\n", META_START_TAG, start, META_START_TAG);
++	  printf("    <%s>%" PRIu64 "</%s>\n", META_START_TAG, start, META_START_TAG);
+ 	  printf("    <%s>%lu</%s>\n", META_STEP_TAG, step, META_STEP_TAG);
+-	  printf("    <%s>%lu</%s>\n", META_END_TAG, end, META_END_TAG);
++	  printf("    <%s>%" PRIu64 "</%s>\n", META_END_TAG, end, META_END_TAG);
+ 	  printf("    <%s>%lu</%s>\n", META_ROWS_TAG, row_cnt, META_ROWS_TAG);
+ 	  printf("    <%s>%lu</%s>\n", META_COLS_TAG, col_cnt, META_COLS_TAG);
+ 	  printf("    <%s>\n", LEGEND_TAG);
+@@ -395,7 +395,7 @@ int HandleInputLine(int argc, char **arg
+ 	  printf("  <%s>\n", DATA_TAG);
+ 	  for (i = start; i <= end; i += step) {
+ 	    printf ("    <%s>", DATA_ROW_TAG);
+-	    printf ("<%s>%lu</%s>", COL_TIME_TAG, i, COL_TIME_TAG);
++	    printf ("<%s>%" PRIu64 "</%s>", COL_TIME_TAG, i, COL_TIME_TAG);
+ 	    for (j = 0; j < col_cnt; j++) {
+ 	      rrd_value_t newval = DNAN;
+ 	      newval = *(ptr++);
+--- a/src/rrd_update.c
++++ b/src/rrd_update.c
+@@ -290,8 +290,8 @@ rrd_update(int argc, char **argv)
+ 	}
+ 	
+ 	if(current_time <= rrd.live_head->last_up){
+-	    rrd_set_error("illegal attempt to update using time %ld when "
+-			  "last update time is %ld (minimum one second step)",
++	    rrd_set_error("illegal attempt to update using time %" PRId64 " when "
++			  "last update time is %" PRId64 " (minimum one second step)",
+ 			  current_time, rrd.live_head->last_up);
+ 	    free(step_start);
+ 	    break;
+--- a/src/rrd_xport.c
++++ b/src/rrd_xport.c
+@@ -143,12 +143,12 @@ rrd_xport(int argc, char **argv, int *xs
+     }  
+     
+     if (start_tmp < 3600*24*365*10){
+-	rrd_set_error("the first entry to fetch should be after 1980 (%ld)",start_tmp);
++	rrd_set_error("the first entry to fetch should be after 1980 (%" PRId64 ")",start_tmp);
+ 	return -1;
+     }
+     
+     if (end_tmp < start_tmp) {
+-	rrd_set_error("start (%ld) should be less than end (%ld)", 
++	rrd_set_error("start (%" PRId64 ") should be less than end (%" PRId64 ")",
+ 	       start_tmp, end_tmp);
+ 	return -1;
+     }
+--- a/contrib/trytime/trytime.c
++++ b/contrib/trytime/trytime.c
+@@ -83,21 +83,21 @@ int main ( int ac, char **av )
+   strftime(tim_b,100,"%c %Z",localtime(&start_tmp));
+   if( *soption )
+       printf( "Start time was specified as: '%s',\n"
+-	      "for me this means: %s (or %ld sec since epoch)\n\n", 
++	      "for me this means: %s (or " PRId64 " sec since epoch)\n\n",
+               soption, tim_b, start_tmp );
+     else
+       printf( "Start time was not specified, default value will be used (end-24h)\n"
+-	      "for me this means: %s (or %ld sec since epoch)\n\n",
++	      "for me this means: %s (or " PRId64 " sec since epoch)\n\n",
+ 	      tim_b, start_tmp );
+     
+   strftime(tim_b,100,"%c %Z",localtime(&end_tmp));
+   if( *eoption )
+       printf( "End time was specified as: '%s',\n"
+-	      "for me this means: %s (or %ld sec since epoch)\n", 
++	      "for me this means: %s (or " PRId64 " sec since epoch)\n",
+               eoption, tim_b, end_tmp );
+   else
+       printf( "End time was not specified, default value will be used (now)\n"
+-	      "for me this means: %s (or %ld sec since epoch)\n\n",
++	      "for me this means: %s (or " PRId64 " sec since epoch)\n\n",
+ 	      tim_b, end_tmp );
+   exit(0);
+ }
