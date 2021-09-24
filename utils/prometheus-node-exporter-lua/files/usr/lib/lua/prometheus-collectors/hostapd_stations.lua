@@ -19,7 +19,7 @@ local function get_wifi_interface_labels()
       local bss_idx = -1
       for line in hostapd_status:gmatch("[^\r\n]+") do
         local name, value = string.match(line, "(.+)=(.+)")
-        elseif name == "freq" then
+        if name == "freq" then
           hostapd["freq"] = value
         elseif name == "channel" then
           hostapd["channel"] = value
