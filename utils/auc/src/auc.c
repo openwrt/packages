@@ -46,6 +46,7 @@
 #define API_BRANCHES "branches"
 #define API_INDEX "index"
 #define API_JSON "json"
+#define API_JSON_VERSION "v1"
 #define API_JSON_EXT "." API_JSON
 #define API_PACKAGES "packages"
 #define API_REQUEST "api/v1/build"
@@ -1198,8 +1199,8 @@ static void process_branch(struct blob_attr *branch, bool only_active)
 			continue;
 		}
 
-		asprintf(&board_json_file, "%s/%s/%s/%s/%s/%s%s", serverurl, API_JSON,
-			br->path, API_TARGETS, target, board_name, API_JSON_EXT);
+		asprintf(&board_json_file, "%s/%s/%s/%s/%s/%s/%s%s", serverurl, API_JSON,
+			API_JSON_VERSION, br->path, API_TARGETS, target, board_name, API_JSON_EXT);
 		tmp = board_json_file;
 		while ((tmp = strchr(tmp, ',')))
 			*tmp = '_';
@@ -1225,8 +1226,8 @@ static int request_branches(bool only_active)
 	struct blob_attr *data;
 
 	blobmsg_buf_init(&brbuf);
-	snprintf(url, sizeof(url), "%s/%s/%s%s", serverurl, API_JSON,
-		API_BRANCHES, API_JSON_EXT);
+	snprintf(url, sizeof(url), "%s/%s/%s/%s%s", serverurl, API_JSON,
+		API_JSON_VERSION, API_BRANCHES, API_JSON_EXT);
 
 	if ((rc = server_request(url, NULL, &brbuf))) {
 		blob_buf_free(&brbuf);
@@ -1366,8 +1367,8 @@ static int request_packages(struct branch *branch)
 	fprintf(stderr, "Requesting package lists...\n");
 
 	blobmsg_buf_init(&archpkgbuf);
-	snprintf(url, sizeof(url), "%s/%s/%s/%s/%s/%s%s", serverurl, API_JSON,
-		branch->path, API_TARGETS, target, API_INDEX, API_JSON_EXT);
+	snprintf(url, sizeof(url), "%s/%s/%s/%s/%s/%s/%s%s", serverurl, API_JSON,
+		API_JSON_VERSION, branch->path, API_TARGETS, target, API_INDEX, API_JSON_EXT);
 	if ((rc = server_request(url, NULL, &archpkgbuf))) {
 		blob_buf_free(&archpkgbuf);
 		return rc;
@@ -1380,8 +1381,9 @@ static int request_packages(struct branch *branch)
 		return ret;
 
 	blobmsg_buf_init(&pkgbuf);
-	snprintf(url, sizeof(url), "%s/%s/%s/%s/%s-%s%s", serverurl, API_JSON,
-		branch->path, API_PACKAGES, branch->arch_packages, API_INDEX, API_JSON_EXT);
+	snprintf(url, sizeof(url), "%s/%s/%s/%s/%s/%s-%s%s", serverurl, API_JSON,
+		API_JSON_VERSION, branch->path, API_PACKAGES, branch->arch_packages,
+		API_INDEX, API_JSON_EXT);
 	if ((rc = server_request(url, NULL, &pkgbuf))) {
 		blob_buf_free(&archpkgbuf);
 		blob_buf_free(&pkgbuf);
