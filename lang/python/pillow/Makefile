@@ -28,7 +28,7 @@ define Package/python3-pillow
   CATEGORY:=Languages
   TITLE:=The friendly PIL fork
   URL:=https://python-pillow.org/
-  DEPENDS:=+libfreetype +libjpeg +libtiff +zlib +libwep +python3
+  DEPENDS:=+libfreetype +libjpeg +libtiff +zlib +libwebp +python3
 endef
 
 define Package/python3-pillow/description
