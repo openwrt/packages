@@ -40,8 +40,8 @@ PYTHON3_PKG_SETUP_GLOBAL_ARGS += build_ext \
 	--enable-jpeg \
 	--enable-tiff \
 	--enable-freetype \
+	--enable-webp \
 	--disable-lcms \
-	--disable-webp \
 	--disable-webpmux \
 	--disable-jpeg2000 \
 	--disable-imagequant \
