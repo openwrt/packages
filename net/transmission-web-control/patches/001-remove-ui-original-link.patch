@@ -12,6 +12,13 @@
  						<!-- 关于 -->
  						<a id="toolbar_about" href="javascript:void(0);"
  							onclick="javascript:system.openDialogFromTemplate({id: 'dialog-about',options: {title: system.lang.toolbar['about'],width: 420,height: 370}});"
+@@ -219,4 +214,4 @@
+ 	<textarea id="clipboard-source"></textarea>
+ </body>
+ 
+-</html>
+\ No newline at end of file
++</html>
 --- a/src/index.mobile.html
 +++ b/src/index.mobile.html
 @@ -69,7 +69,6 @@
