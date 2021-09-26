@@ -1,0 +1,81 @@
+From: Philip Prindeville <philipp@redfish-solutions.com>
+Date: Sun, 26 Sep 2021 13:01:44 -0600
+Subject: [PATCH v2 1/1] xt_ECHO, xt_TARPIT: make properly conditional on IPv6
+To: netfilter-devel@vger.kernel.org
+
+Not all modules compile equally well when CONFIG_IPv6 is disabled.
+
+Signed-off-by: Philip Prindeville <philipp@redfish-solutions.com>
+---
+ extensions/xt_ECHO.c   | 19 ++++++++++++++-----
+ extensions/xt_TARPIT.c |  2 ++
+ 2 files changed, 16 insertions(+), 5 deletions(-)
+
+--- a/extensions/xt_ECHO.c
++++ b/extensions/xt_ECHO.c
+@@ -22,7 +22,11 @@
+ #include <net/ip6_route.h>
+ #include <net/route.h>
+ #include "compat_xtables.h"
++#if defined(CONFIG_IP6_NF_IPTABLES) || defined(CONFIG_IP6_NF_IPTABLES_MODULE)
++#	define WITH_IPV6 1
++#endif
+ 
++#ifdef WITH_IPV6
+ static unsigned int
+ echo_tg6(struct sk_buff *oldskb, const struct xt_action_param *par)
+ {
+@@ -120,6 +124,7 @@ echo_tg6(struct sk_buff *oldskb, const s
+ 	kfree_skb(newskb);
+ 	return NF_DROP;
+ }
++#endif
+ 
+ static unsigned int
+ echo_tg4(struct sk_buff *oldskb, const struct xt_action_param *par)
+@@ -214,21 +219,23 @@ static struct xt_target echo_tg_reg[] __
+ 	{
+ 		.name       = "ECHO",
+ 		.revision   = 0,
+-		.family     = NFPROTO_IPV6,
++		.family     = NFPROTO_IPV4,
+ 		.proto      = IPPROTO_UDP,
+ 		.table      = "filter",
+-		.target     = echo_tg6,
++		.target     = echo_tg4,
+ 		.me         = THIS_MODULE,
+ 	},
++#ifdef WITH_IPV6
+ 	{
+ 		.name       = "ECHO",
+ 		.revision   = 0,
+-		.family     = NFPROTO_IPV4,
++		.family     = NFPROTO_IPV6,
+ 		.proto      = IPPROTO_UDP,
+ 		.table      = "filter",
+-		.target     = echo_tg4,
++		.target     = echo_tg6,
+ 		.me         = THIS_MODULE,
+ 	},
++#endif
+ };
+ 
+ static int __init echo_tg_init(void)
+@@ -246,5 +253,7 @@ module_exit(echo_tg_exit);
+ MODULE_AUTHOR("Jan Engelhardt ");
+ MODULE_DESCRIPTION("Xtables: ECHO diagnosis target");
+ MODULE_LICENSE("GPL");
+-MODULE_ALIAS("ip6t_ECHO");
+ MODULE_ALIAS("ipt_ECHO");
++#ifdef WITH_IPV6
++MODULE_ALIAS("ip6t_ECHO");
++#endif
+--- a/extensions/xt_TARPIT.c
++++ b/extensions/xt_TARPIT.c
+@@ -530,4 +530,6 @@ MODULE_DESCRIPTION("Xtables: \"TARPIT\",
+ MODULE_AUTHOR("Jan Engelhardt ");
+ MODULE_LICENSE("GPL");
+ MODULE_ALIAS("ipt_TARPIT");
++#ifdef WITH_IPV6
+ MODULE_ALIAS("ip6t_TARPIT");
++#endif
