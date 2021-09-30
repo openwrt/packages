@@ -30,7 +30,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/mutt
   SECTION:=mail
   CATEGORY:=Mail
-  DEPENDS:=+libopenssl +libncursesw +terminfo +zlib
+  DEPENDS:=+MUTT_GNUTLS:libgnutls +MUTT_OPENSSL:libopenssl +libncursesw +MUTT_SASL:libsasl2 +terminfo +zlib
   TITLE:=Console mail client
   URL:=http://www.mutt.org/
 endef
@@ -43,16 +43,54 @@ endef
 CONFIGURE_ARGS += \
 	--includedir=$(PKG_BUILD_DIR)/. \
 	--oldincludedir=$(PKG_BUILD_DIR)/. \
-	--enable-pop \
-	--enable-imap \
+	$(if $(CONFIG_MUTT_POP),--enable-pop) \
+	$(if $(CONFIG_MUTT_IMAP),--enable-imap) \
+	$(if $(CONFIG_MUTT_SMTP),--enable-smtp) \
+	$(if $(CONFIG_MUTT_SASL),--with-sasl) \
 	--with-mailpath=/var/mail \
-	--with-ssl \
+	$(if $(CONFIG_MUTT_GNUTLS),--with-gnutls) \
+	$(if $(CONFIG_MUTT_OPENSSL),--with-ssl) \
 	--without-idn \
 	--disable-doc
 
 define Package/mutt/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mutt $(1)/usr/bin/
+endef
+
+define Package/mutt/config
+	menu "Select mutt build options"
+		config MUTT_POP
+			bool "POP support"
+			default y
+			help
+			  Enables POP support in mutt.
+		config MUTT_IMAP
+			bool "IMAP support"
+			default y
+			help
+			  Enables IMAP support in mutt
+		config MUTT_SMTP
+			bool "SMTP support"
+			default n
+			help
+			  Enables SMTP support in mutt.
+		config MUTT_SASL
+			bool "SASL support"
+			default n
+			help
+			  Enables SASL support in mutt (libsasl2).
+		config MUTT_GNUTLS
+			bool "GnuTLS support"
+			default n
+			help
+			  Enables GnuTLS support in mutt (libgnutls).
+		config MUTT_OPENSSL
+			bool "OpenSSL support"
+			default y
+			help
+			  Enables OpenSSL support in mutt (libopenssl).
+	endmenu
 endef
 
 $(eval $(call BuildPackage,mutt))
