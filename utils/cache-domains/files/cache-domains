@@ -6,16 +6,40 @@ set -e
 
 CACHE_DOMAINS_SRC="https://api.github.com/repos/uklans/cache-domains/tarball/master"
 CACHE_DOMAINS_DIR="/var/cache-domains"
-CACHE_DOMAINS_OUTPUT="${CACHE_DOMAINS_DIR}/scripts/output/dnsmasq"
-CACHE_DOMAINS_HOSTS_DIR="${CACHE_DOMAINS_OUTPUT}/hosts"
-CACHE_DOMAINS_CONF_FILE="${CACHE_DOMAINS_OUTPUT}/lancache.conf"
+CACHE_DOMAINS_CONF_FILE="${CACHE_DOMAINS_DIR}/lancache.conf"
 CONFIG_FILE="/etc/cache-domains.json"
+
+dnsmasq_conf() {
+	local I=0
+	local DNSMASQ_CONF_DIR
+	local DNSMASQ_CONF_FILE
+
+	while uci_get "dhcp" "@dnsmasq[${I}]" > /dev/null; do
+		DNSMASQ_CONF_DIR="$(uci_get "dhcp" "@dnsmasq[${I}]" "confdir" "/tmp/dnsmasq.d" || :)"
+		DNSMASQ_CONF_FILE="${DNSMASQ_CONF_DIR}/$(basename "${CACHE_DOMAINS_CONF_FILE}")"
+
+		case ${1} in
+			add)
+				ln -sf "${CACHE_DOMAINS_CONF_FILE}" "${DNSMASQ_CONF_FILE}"
+				;;
+			remove)
+				rm -f "${DNSMASQ_CONF_FILE}"
+				;;
+			*)
+				echo "ERROR: Invalid action '${1}' for dnsmasq_conf()"
+				return 1
+				;;
+		esac
+
+		I=$((${I} + 1))
+	done
+
+	/etc/init.d/dnsmasq "restart"
+}
 
 configure() {
 	local INITIAL_DIR
-	local I=0
-	local DNSMASQ_CONF_DIR
-
+	local SOURCE_DIR
 	mkdir -p "${CACHE_DOMAINS_DIR}"
 	rm -fr "${CACHE_DOMAINS_DIR:?}/"*
 
@@ -24,47 +48,26 @@ configure() {
 		echo "ERROR: Could not retrieve ${CACHE_DOMAINS_SRC}"
 		exit 1
 	fi
-
-	# move files out of versioned directory
-	mv "${CACHE_DOMAINS_DIR}/"*"/"* "${CACHE_DOMAINS_DIR}/"
+	SOURCE_DIR="${CACHE_DOMAINS_DIR}/$(ls "${CACHE_DOMAINS_DIR}")"
 
 	if [ ! -f "${CONFIG_FILE}" ]; then
-		cp "${CACHE_DOMAINS_DIR}/scripts/config.example.json" "${CONFIG_FILE}"
+		cp "${SOURCE_DIR}/scripts/config.example.json" "${CONFIG_FILE}"
 		echo "Using example config file ${CONFIG_FILE}"
 	fi
 
 	INITIAL_DIR="$(pwd)"
-	cd "${CACHE_DOMAINS_DIR}/scripts/"
+	cd "${SOURCE_DIR}/scripts/"
 	cp "${CONFIG_FILE}" "config.json"
 	./create-dnsmasq.sh > /dev/null
-	rm "config.json"
+	cat "./output/dnsmasq/"*".conf" > "${CACHE_DOMAINS_CONF_FILE}"
 	cd "${INITIAL_DIR}"
+	rm -fr "${SOURCE_DIR}"
 
-	# just change addn-hosts path instead of copying the files around
-	sed -i -r "s|/etc/dnsmasq/hosts|${CACHE_DOMAINS_HOSTS_DIR}|" "${CACHE_DOMAINS_CONF_FILE}"
-
-	while uci_get "dhcp" "@dnsmasq[${I}]" > /dev/null; do
-		DNSMASQ_CONF_DIR="$(uci_get "dhcp" "@dnsmasq[${I}]" "confdir" "/tmp/dnsmasq.d"  || :)"
-		cp -u "${CACHE_DOMAINS_CONF_FILE}" "${DNSMASQ_CONF_DIR}/"
-
-		I=$((${I} + 1))
-	done
-
-	/etc/init.d/dnsmasq "restart"
+	dnsmasq_conf add
 }
 
 cleanup() {
-	local I=0
-	local DNSMASQ_CONF_DIR
-
-	while uci_get "dhcp" "@dnsmasq[${I}]" > /dev/null; do
-		DNSMASQ_CONF_DIR="$(uci_get "dhcp" "@dnsmasq[${I}]" "confdir" "/tmp/dnsmasq.d" || :)"
-		rm -f "${DNSMASQ_CONF_DIR}/$(basename "${CACHE_DOMAINS_CONF_FILE}")"
-
-		I=$((${I} + 1))
-	done
-
-	/etc/init.d/dnsmasq "restart"
+	dnsmasq_conf remove
 }
 
 case ${1} in
