@@ -55,6 +55,7 @@ if [ -z "$${IPKG_INSTROOT}" ]; then
 	KEYS=$(find /usr/share/tang/db/ -name "*.jw*" -maxdepth 1 | wc -l)
 	if [ "${KEYS}" = "0" ]; then # if db is empty generate new key pair
 		/usr/libexec/tangd-keygen /usr/share/tang/db/
+	fi
 	(cat /etc/services | grep -E "tangd.*8888\/tcp") > /dev/null \
 		|| echo -e "tangd\t\t8888/tcp" >> /etc/services
 fi
