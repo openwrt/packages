@@ -46,6 +46,7 @@ endif
 
 MAKE_FLAGS += \
 	DEFS="" \
+	OSTYPE="Linux" \
 
 define Build/Compile
 	$(call Build/Compile/Default,one)
