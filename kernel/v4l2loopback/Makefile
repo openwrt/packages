@@ -1,9 +1,6 @@
-#
-# Copyright (C) 2008-2012 OpenWrt.org
-#
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
-#
+# This software is in the public domain, furnished "as is", without technical
+# support, and with no warranty, express or implied, as to its usefulness for
+# any purpose.
 
 include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
@@ -30,11 +27,11 @@ define KernelPackage/v4l2loopback
 endef
 
 define KernelPackage/v4l2loopback/description
-	This module allows you to create "virtual video devices".
-	Normal (v4l2) applications will read these devices as if
-	they were ordinary video devices, but the video will not be
-	read from e.g. a capture card but instead it is generated
-	by another application. 
+  This module allows you to create "virtual video devices".
+  Normal (v4l2) applications will read these devices as if
+  they were ordinary video devices, but the video will not be
+  read from e.g. a capture card but instead it is generated
+  by another application. 
 endef
 
 MAKE_OPTS:= \
