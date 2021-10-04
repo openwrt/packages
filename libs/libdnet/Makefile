@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libdnet
 PKG_VERSION:=1.14
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ofalk/libdnet/tar.gz/$(PKG_NAME)-$(PKG_VERSION)?
@@ -41,6 +41,10 @@ CONFIGURE_ARGS += \
 	--without-check \
 	--without-python \
 	--without-wpdpack
+
+CONFIGURE_VARS += \
+	ac_cv_dnet_bsd_bpf=no \
+	ac_cv_dnet_linux_pf_packet=yes
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/bin
