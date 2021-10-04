@@ -56,9 +56,10 @@ define Package/htop/config
 endef
 
 CONFIGURE_ARGS += \
-	$(if $(CONFIG_HTOP_LMSENSORS),--enable-sensors,) \
+	--$(if $(CONFIG_HTOP_LMSENSORS),en,dis)able-sensors \
 	--enable-affinity \
-	--enable-capabilities=no \
+	--disable-capabilities \
+	--disable-delayacct \
 	--disable-unicode \
 	--disable-hwloc
 
