@@ -491,7 +491,7 @@ f_net() {
 				result="net cp '${json_cp}'"
 			else
 				if [ "${json_rc}" = "200" ] || [ "${json_rc}" = "204" ]; then
-					html_cp="$(printf "%s" "${html_raw}" | awk 'match(tolower($0),/^.*<meta[ \t]+http-equiv=["]*refresh.*[ \t;]url=/){print substr(tolower($0),RLENGTH+1)}' | awk 'BEGIN{FS="[:/]"}{printf "%s",$4;exit}')"
+					html_cp="$(printf "%s" "${html_raw}" | awk 'match(tolower($0),/^.*<meta[ \t]+http-equiv=['\''"]*refresh.*[ \t;]url=/){print substr(tolower($0),RLENGTH+1)}' | awk 'BEGIN{FS="[:/]"}{printf "%s",$4;exit}')"
 					if [ -n "${html_cp}" ]; then
 						result="net cp '${html_cp}'"
 					else
