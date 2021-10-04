@@ -131,6 +131,9 @@ define Package/modemmanager/install
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/tty
 	$(INSTALL_DATA) ./files/25-modemmanager-tty $(1)/etc/hotplug.d/tty
 
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/wwan
+	$(INSTALL_DATA) ./files/25-modemmanager-wwan $(1)/etc/hotplug.d/wwan
+
 	$(INSTALL_DIR) $(1)/lib/netifd/proto
 	$(INSTALL_BIN) ./files/modemmanager.proto $(1)/lib/netifd/proto/modemmanager.sh
 endef
