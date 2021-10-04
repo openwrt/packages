@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=beanstalkd
 PKG_VERSION:=1.9
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 # for now, build from latest commit since releases are infrequent and
 # useful fixes trickle in...
@@ -37,7 +37,7 @@ define Build/Configure
 endef
 
 define Build/Compile
-	cd $(PKG_BUILD_DIR) && make CC="$(TARGET_CC)" CFLAGS="$(TARGET_CFLAGS)" LDFLAGS="$(TARGET_LDFLAGS)" PREFIX=/usr
+	cd $(PKG_BUILD_DIR) && make CC="$(TARGET_CC)" CFLAGS="$(TARGET_CFLAGS)" LDFLAGS="$(TARGET_LDFLAGS)" PREFIX=/usr OS=linux
 endef
 
 define Package/beanstalkd/install
