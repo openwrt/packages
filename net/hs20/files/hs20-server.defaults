@@ -1,7 +1,7 @@
 #!/bin/sh
 
 uci -q get uhttpd.main.interpreter | grep -q "^\.php" || uci -q batch <<-EOF >/dev/null
-add_list uhttpd.main.interpreter='.php=/usr/bin/php-cgi'
+add_list uhttpd.main.interpreter='.php=/usr/bin/php8-cgi'
 commit uhttpd
 EOF
 
