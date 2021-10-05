@@ -15,6 +15,7 @@ proto_l2tp_init_config() {
 	proto_config_add_string "pppd_options"
 	proto_config_add_boolean "ipv6"
 	proto_config_add_boolean "persist"
+	proto_config_add_int "maxfail"
 	proto_config_add_int "mtu"
 	proto_config_add_int "checkup_interval"
 	proto_config_add_string "server"
@@ -58,8 +59,8 @@ proto_l2tp_setup() {
 		done
 	fi
 
-	local ipv6 keepalive username password pppd_options mtu persist
-	json_get_vars ipv6 keepalive username password pppd_options mtu persist
+	local ipv6 keepalive username password pppd_options mtu persist maxfail
+	json_get_vars ipv6 keepalive username password pppd_options mtu persist maxfail
 	[ "$ipv6" = 1 ] || ipv6=""
 
 	local interval="${keepalive##*[, ]}"
@@ -72,6 +73,9 @@ proto_l2tp_setup() {
 
 	if [ -n "$persist" ]; then
 		[ "${persist}" -lt 1 ] && persist="nopersist" || persist="persist"
+	fi
+	if [ -n "$maxfail" ]; then
+		[ "${maxfail}" -ge 0 ] || maxfail=0
 	fi
 
 	mkdir -p /tmp/l2tp
@@ -92,6 +96,7 @@ $ipv6
 $mtu
 $pppd_options
 $persist
+maxfail "${maxfail:-10}"
 EOF
 
 	xl2tpd-control add-lac l2tp-${interface} pppoptfile=${optfile} lns=${server} || {
