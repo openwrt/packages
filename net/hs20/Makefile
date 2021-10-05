@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hs20
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE_URL:=http://w1.fi/hostap.git
 PKG_SOURCE_PROTO:=git
@@ -77,7 +77,7 @@ define Package/hs20-server
   SUBMENU:=WirelessAPD
   TITLE:=Hotspot 2.0 OSU server
   URL:=http://hostap.epitest.fi/
-  DEPENDS:=+hs20-common +libopenssl +libsqlite3 +libxml2 +php7 +php7-cgi +php7-mod-xml +php7-mod-pdo-sqlite +openssl-util +sqlite3-cli +uhttpd +xxd
+  DEPENDS:=+hs20-common +libopenssl +libsqlite3 +libxml2 +php8 +php8-cgi +php8-mod-xml +php8-mod-pdo-sqlite +openssl-util +sqlite3-cli +uhttpd +xxd
 endef
 
 define Package/hs20-server/description
