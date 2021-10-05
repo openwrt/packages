@@ -14,6 +14,7 @@ proto_l2tp_init_config() {
 	proto_config_add_string "keepalive"
 	proto_config_add_string "pppd_options"
 	proto_config_add_boolean "ipv6"
+	proto_config_add_boolean "persist"
 	proto_config_add_int "mtu"
 	proto_config_add_int "checkup_interval"
 	proto_config_add_string "server"
@@ -57,8 +58,8 @@ proto_l2tp_setup() {
 		done
 	fi
 
-	local ipv6 keepalive username password pppd_options mtu
-	json_get_vars ipv6 keepalive username password pppd_options mtu
+	local ipv6 keepalive username password pppd_options mtu persist
+	json_get_vars ipv6 keepalive username password pppd_options mtu persist
 	[ "$ipv6" = 1 ] || ipv6=""
 
 	local interval="${keepalive##*[, ]}"
@@ -68,6 +69,10 @@ proto_l2tp_setup() {
 	username="${username:+user \"$username\" password \"$password\"}"
 	ipv6="${ipv6:++ipv6}"
 	mtu="${mtu:+mtu $mtu mru $mtu}"
+
+	if [ -n "$persist" ]; then
+		[ "${persist}" -lt 1 ] && persist="nopersist" || persist="persist"
+	fi
 
 	mkdir -p /tmp/l2tp
 	cat <<EOF >"$optfile"
@@ -86,6 +91,7 @@ $username
 $ipv6
 $mtu
 $pppd_options
+$persist
 EOF
 
 	xl2tpd-control add-lac l2tp-${interface} pppoptfile=${optfile} lns=${server} || {
