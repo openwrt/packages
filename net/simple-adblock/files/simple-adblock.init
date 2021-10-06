@@ -120,7 +120,6 @@ dnsmasq_hup() { killall -q -s HUP dnsmasq; }
 dnsmasq_kill() { killall -q -s KILL dnsmasq; }
 dnsmasq_restart() { /etc/init.d/dnsmasq restart >/dev/null 2>&1; }
 unbound_restart() { /etc/init.d/unbound restart >/dev/null 2>&1; }
-is_force_dns_active() { iptables-save | grep -q -w -- '--dport 53'; }
 is_present() { command -v "$1" >/dev/null 2>&1; }
 
 output() {
