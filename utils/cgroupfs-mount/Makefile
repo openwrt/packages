@@ -25,6 +25,7 @@ define Package/cgroupfs-mount
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=cgroup mount scripts
+  CONFLICTS:=procd-ujail
   DEPENDS:=+mount-utils
   MENU:=1
 endef
