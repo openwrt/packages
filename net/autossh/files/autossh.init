@@ -18,8 +18,7 @@ start_instance() {
 	procd_open_instance
 	procd_set_param command /usr/sbin/autossh -M ${monitorport:-20000} ${ssh}
 	procd_set_param respawn ${respawn_threshold:-3600} ${respawn_timeout:-5} ${respawn_retry:-5}
-	procd_set_param env AUTOSSH_GATETIME="${gatetime:-30}"
-	procd_set_param env AUTOSSH_POLL="${poll:-600}"
+	procd_set_param env AUTOSSH_GATETIME="${gatetime:-30}" AUTOSSH_POLL="${poll:-600}"
 	procd_close_instance
 }
 
