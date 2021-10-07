@@ -16,7 +16,7 @@ PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/dyne/dnscrypt-proxy
 PKG_MIRROR_HASH:=c5c074f52732f14f026002bc48bdffcf0b212092de5798120209b2e6b65fc3e6
 
-PKG_MAINTAINER:=Damiano Renfer <damiano.renfer@gmail.com>
+PKG_MAINTAINER:=Damiano Renfer <x9w2n7xnu@relay.firefox.com>
 PKG_LICENSE:=ISC
 PKG_LICENSE_FILES:=COPYING
 
