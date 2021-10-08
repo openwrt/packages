@@ -359,10 +359,10 @@ while : ; do
 	get_uptime CURR_TIME		# get current uptime
 
 	# send update when current time > next time or local ip different from registered ip
-	if [ $CURR_TIME -ge $NEXT_TIME -o "$LOCAL_IP" != "$REGISTERED_IP" ]; then
+	if [ $CURR_TIME -ge $NEXT_TIME -o ${REGISTERED_IP/${LOCAL_IP}//} == "$REGISTERED_IP" ]; then
 		if [ $VERBOSE -gt 2 ]; then
 			write_log 7 "Verbose Mode: $VERBOSE - NO UPDATE send"
-		elif [ "$LOCAL_IP" != "$REGISTERED_IP" ]; then
+		elif [ ${REGISTERED_IP/${LOCAL_IP}//} == "$REGISTERED_IP" ]; then
 			write_log 7 "Update needed - L: '$LOCAL_IP' <> R: '$REGISTERED_IP'"
 		else
 			write_log 7 "Forced Update - L: '$LOCAL_IP' == R: '$REGISTERED_IP'"
@@ -384,7 +384,7 @@ while : ; do
 		if [ $ERR_LAST -eq 0 ]; then
 			get_uptime LAST_TIME		# we send update, so
 			echo $LAST_TIME > $UPDFILE	# save LASTTIME to file
-			[ "$LOCAL_IP" != "$REGISTERED_IP" ] \
+			[ ${REGISTERED_IP/${LOCAL_IP}//} == "$REGISTERED_IP" ] \
 				&& write_log 6 "Update successful - IP '$LOCAL_IP' send" \
 				|| write_log 6 "Forced update successful - IP: '$LOCAL_IP' send"
 		elif [ $ERR_LAST -eq 127 ]; then
@@ -409,7 +409,7 @@ while : ; do
 	[ $use_ipv6 -eq 1 ] && expand_ipv6 "$REGISTERED_IP" REGISTERED_IP	# on IPv6 we use expanded version
 
 	# IP's are still different
-	if [ "$LOCAL_IP" != "$REGISTERED_IP" ]; then
+	if [ ${REGISTERED_IP/${LOCAL_IP}//} == "$REGISTERED_IP" ]; then
 		if [ $VERBOSE -le 1 ]; then	# VERBOSE <=1 then retry
 			ERR_UPDATE=$(( $ERR_UPDATE + 1 ))
 			[ $retry_count -gt 0 -a $ERR_UPDATE -gt $retry_count ] && \
