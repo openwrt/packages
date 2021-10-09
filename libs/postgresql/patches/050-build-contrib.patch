@@ -7,5 +7,5 @@
 -$(call recurse,all install,src config)
 +$(call recurse,all install,src config contrib)
  
- all:
- 	+@echo "All of PostgreSQL successfully made. Ready to install."
+ docs:
+ 	$(MAKE) -C doc all

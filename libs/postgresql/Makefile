@@ -5,7 +5,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postgresql
-PKG_VERSION:=13.4
+PKG_VERSION:=14.0
 PKG_RELEASE:=$(AUTORELEASE)
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=PostgreSQL
@@ -17,7 +17,7 @@ PKG_SOURCE_URL:=\
 	http://ftp.postgresql.org/pub/source/v$(PKG_VERSION) \
 	ftp://ftp.postgresql.org/pub/source/v$(PKG_VERSION)
 
-PKG_HASH:=ea93e10390245f1ce461a54eb5f99a48d8cabd3a08ce4d652ec2169a357bc0cd
+PKG_HASH:=ee2ad79126a7375e9102c4db77c4acae6ae6ffe3e082403b88826d96d927a122
 
 PKG_USE_MIPS16:=0
 PKG_FIXUP:=autoreconf
@@ -82,18 +82,23 @@ PostgreSQL databases Server.
 endef
 
 PGSQL_SERVER_BIN := \
+	pg_amcheck \
 	pg_archivecleanup \
 	pg_basebackup \
+	pg_checksums \
 	pg_controldata \
 	pg_ctl \
 	pg_dump \
 	pg_dumpall \
 	pg_isready \
 	pg_recvlogical \
+	pg_receivewal \
 	pg_resetwal \
 	pg_restore \
-	pg_standby \
+	pg_rewind \
 	pg_upgrade \
+	pg_verifybackup \
+	pg_waldump \
 	postgres \
 	initdb
 
@@ -103,14 +108,17 @@ PGSQL_CLI_EXTRA_BIN := \
 	createuser	\
 	dropdb		\
 	dropuser	\
+	oid2name	\
 	pgbench		\
 	reindexdb	\
-	vacuumdb
+	vacuumdb	\
+	vacuumlo
 
 PGSQL_CONFIG_VARS:= \
 	pgac_cv_snprintf_long_long_int_format="%lld" \
 	pgac_cv_snprintf_size_t_support=yes \
 	USE_DEV_URANDOM=1 \
+	ac_cv_file__dev_urandom="/dev/urandom" \
 	ZIC=zic
 
 ifeq ($(CONFIG_USE_UCLIBC),y)
