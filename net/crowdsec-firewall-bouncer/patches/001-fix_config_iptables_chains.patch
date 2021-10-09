@@ -1,0 +1,9 @@
+--- a/config/crowdsec-firewall-bouncer.yaml
++++ b/config/crowdsec-firewall-bouncer.yaml
+@@ -15,5 +15,5 @@ deny_log: false
+ #if present, insert rule in those chains
+ iptables_chains:
+   - INPUT
+-#  - FORWARD
++  - FORWARD
+ #  - DOCKER-USER
