@@ -22,6 +22,10 @@ jobs:
           - arch: mips_24kc
             target: ath79-generic
             runtime_test: false
+          
+          - arch: mipsel_24kc
+            target: mt7621
+            runtime_test: false
 
           - arch: powerpc_464fp
             target: apm821xx-nand
