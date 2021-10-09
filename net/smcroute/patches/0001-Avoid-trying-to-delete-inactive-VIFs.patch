@@ -1,0 +1,50 @@
+From 8ce1d117a31e35d97fb955b82edf13514267eaab Mon Sep 17 00:00:00 2001
+From: Joachim Wiberg <troglobit@gmail.com>
+Date: Tue, 28 Sep 2021 11:09:47 +0200
+Subject: [PATCH] Avoid trying to delete inactive VIFs
+
+When probing interfaces at startup, there's a check for IFF_MULTICAST,
+if this flag is not set we try to delete its corresponding VIF/MIF.
+This is for hanlding .conf reload scenarios where an interface has had
+its MULTICAST flag dropped.
+
+However, when starting up on Linux systems, the loopback interface has
+no MULTICAST flag set.  This leads to the following bogus warning:
+
+   Failed deleting VIF for iface lo: Resource temporarily unavailable
+
+This patch makes sure to check if we have a registered kernel VIF/MIF
+for an interface before attempting to delete it.
+
+Signed-off-by: Joachim Wiberg <troglobit@gmail.com>
+---
+ src/mroute.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/src/mroute.c b/src/mroute.c
+index 291e9c4..6a80a47 100644
+--- a/src/mroute.c
++++ b/src/mroute.c
+@@ -298,6 +298,9 @@ static int mroute4_del_vif(struct iface *iface)
+ 	if (iface->mrdisc)
+ 		rc = mrdisc_deregister(iface->vif);
+ 
++	if (iface->vif == ALL_VIFS)
++		return 0;
++
+ 	if (kern_vif_del(iface)) {
+ 		switch (errno) {
+ 		case ENOENT:
+@@ -910,6 +913,9 @@ static int mroute6_del_mif(struct iface *iface)
+ {
+ 	int rc = 0;
+ 
++	if (iface->mif == ALL_VIFS)
++		return 0;
++
+ 	if (kern_mif_del(iface) && errno != ENOENT) {
+ 		switch (errno) {
+ 		case ENOENT:
+-- 
+2.33.0
+
