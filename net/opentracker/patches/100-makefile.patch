@@ -18,4 +18,4 @@
 +# LIBOWFAT_LIBRARY=$(PREFIX)/libowfat
  
  BINDIR?=$(PREFIX)/bin
- 
+ STRIP?=strip
