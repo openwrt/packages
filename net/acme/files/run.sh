@@ -279,11 +279,17 @@ issue_cert()
 	acme_args="$acme_args $(for d in $domains; do echo -n "-d $d "; done)"
 	acme_args="$acme_args --keylength $keylength"
 	[ -n "$ACCOUNT_EMAIL" ] && acme_args="$acme_args --accountemail $ACCOUNT_EMAIL"
-	[ "$use_staging" -eq "1" ] && acme_args="$acme_args --staging"
 
 	if [ -n "$acme_server" ]; then
 		log "Using custom ACME server URL"
 		acme_args="$acme_args --server $acme_server"
+	else
+		# default to letsencrypt because the upstream default may change
+		if [ "$use_staging" -eq "1" ]; then
+			acme_args="$acme_args --server letsencrypt_test"
+		else
+			acme_args="$acme_args --server letsencrypt"
+		fi
 	fi
 
 	if [ -n "$days" ]; then
