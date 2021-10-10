@@ -6,15 +6,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-defusedxml
-PKG_VERSION:=0.6.0
-PKG_RELEASE:=3
+PKG_VERSION:=0.7.1
+PKG_RELEASE:=1
 
-PKG_MAINTAINER:=Eneas U de Queiroz <cote2004-github@yahoo.com>
+PKG_MAINTAINER:=Eneas U de Queiroz <cotequeiroz@gmail.com>
 PKG_LICENSE:=Python-2.0
 PKG_LICENSE_FILES:=LICENSE
 
 PYPI_NAME:=defusedxml
-PKG_HASH:=f684034d135af4c6cbb949b8a4d2ed61634515257a67299e5f940fbaa34377f5
+PKG_HASH:=1bb3032db185915b62d7c6209c5a8792be6a32ab2fedacc84e01b52c51aa3e69
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
