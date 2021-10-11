@@ -18,8 +18,8 @@
  
  ## The port on which Tor will listen for local connections from Tor
  ## controller applications, as documented in control-spec.txt.
-@@ -238,3 +238,4 @@
- #%include /etc/torrc.d/
- #%include /etc/torrc.custom
+@@ -251,3 +251,4 @@
+ ## The %include option can be used recursively.
+ #%include /etc/torrc.d/*.conf
  
 +User tor
