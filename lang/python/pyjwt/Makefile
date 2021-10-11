@@ -6,15 +6,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pyjwt
-PKG_VERSION:=1.7.1
-PKG_RELEASE:=2
+PKG_VERSION:=2.2.0
+PKG_RELEASE:=1
 
-PKG_MAINTAINER:=Eneas U de Queiroz <cote2004-github@yahoo.com>
+PKG_MAINTAINER:=Eneas U de Queiroz <cotequeiroz@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
 PYPI_NAME:=PyJWT
-PKG_HASH:=8d59a976fb773f3e6a39c85636357c4f0e242707394cadadd9814f5cbaa20e96
+PKG_HASH:=a0b9a3b4e5ca5517cac9f1a6e9cd30bf1aa80be74fcdf4e28eded582ecfcfbae
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
