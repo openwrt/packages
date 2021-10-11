@@ -6,11 +6,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-qrcode
-PKG_VERSION:=6.1
-PKG_RELEASE:=3
+PKG_VERSION:=7.3.1
+PKG_RELEASE:=1
 
 PYPI_NAME:=qrcode
-PKG_HASH:=505253854f607f2abf4d16092c61d4e9d511a3b4392e60bff957a68592b04369
+PKG_HASH:=375a6ff240ca9bd41adc070428b5dfc1dcfbb0f2507f1ac848f6cded38956578
 
 PKG_MAINTAINER:=Eneas U de Queiroz <cotequeiroz@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
@@ -29,7 +29,6 @@ define Package/python3-qrcode
   DEPENDS:= \
 	+python3 \
 	+python3-setuptools \
-	+python3-six \
 	+python3-pillow
 endef
 
