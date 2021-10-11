@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-certifi
-PKG_VERSION:=2021.5.30
+PKG_VERSION:=2021.10.8
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Eneas U de Queiroz <cotequeiroz@gmail.com>
@@ -14,7 +14,7 @@ PKG_LICENSE:=MPL-2.0
 PKG_LICENSE_FILES:=LICENSE
 
 PYPI_NAME:=certifi
-PKG_HASH:=2bbf76fd432960138b3ef6dda3dde0544f27cbf8546c458e60baf371917ba9ee
+PKG_HASH:=78884e7c1d4b00ce3cea67b44566851c4343c120abd683433ce934a68ea58872
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
