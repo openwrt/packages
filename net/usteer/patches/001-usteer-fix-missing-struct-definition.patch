@@ -1,0 +1,24 @@
+From cacf1686db8adb4e7a35a85f0988c30ab5d96864 Mon Sep 17 00:00:00 2001
+From: David Bauer <mail@david-bauer.net>
+Date: Wed, 13 Oct 2021 00:13:48 +0200
+Subject: [PATCH] usteer: fix missing struct definition
+
+When compiling for targets using glibc, usteer compilation would fail
+due to undefined struct in6_pktinfo. In this case, use the struct
+definition provided by Linux UAPI.
+
+Signed-off-by: David Bauer <mail@david-bauer.net>
+---
+ remote.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+--- a/remote.c
++++ b/remote.c
+@@ -17,6 +17,7 @@
+  *   Copyright (C) 2020 John Crispin <john@phrozen.org> 
+  */
+ 
++#define _GNU_SOURCE
+ #include <sys/types.h>
+ #include <sys/socket.h>
+ #include <netinet/in.h>
