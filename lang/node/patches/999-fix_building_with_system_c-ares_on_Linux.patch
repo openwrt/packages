@@ -1,0 +1,42 @@
+From 8699aa501c4d4e1567ebe8901e5ec80cadaa9323 Mon Sep 17 00:00:00 2001
+From: Felix Yan <felixonmars@archlinux.org>
+Date: Thu, 12 Aug 2021 02:44:43 +0800
+Subject: [PATCH] deps: fix building with system c-ares on Linux
+
+The change in #39724 breaks building with system c-ares
+(`--shared-cares`):
+```
+In file included from ../src/cares_wrap.cc:25:
+../src/cares_wrap.h:25:11: fatal error: ares_nameser.h: No such file or
+directory
+   25 | # include <ares_nameser.h>
+      |           ^~~~~~~~~~~~~~~~
+```
+
+Since `ares_nameser.h` isn't available with a default system c-ares
+installation, let's add back the include check and use the old
+`arpa/nameser.h` routine instead.
+
+Tested to build fine on Arch Linux with shared c-ares.
+---
+ src/cares_wrap.h | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+--- a/src/cares_wrap.h
++++ b/src/cares_wrap.h
+@@ -22,7 +22,15 @@
+ # include <netdb.h>
+ #endif  // __POSIX__
+ 
++#if defined(__ANDROID__) || \
++    defined(__MINGW32__) || \
++    defined(__OpenBSD__) || \
++    defined(_MSC_VER)
++
+ # include <ares_nameser.h>
++#else
++# include <arpa/nameser.h>
++#endif
+ 
+ namespace node {
+ namespace cares_wrap {
