@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
 PKG_VERSION:=5.0.7
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.zabbix.com/zabbix/sources/stable/5.0/
@@ -119,9 +119,9 @@ endef
 define Package/zabbix-server-frontend
   $(call Package/zabbix/Default)
   TITLE+= server-frontend
-  DEPENDS += +php7 +php7-cgi +ZABBIX_POSTGRESQL:php7-mod-pgsql +ZABBIX_MYSQL:php7-mod-mysqli \
-  +php7-mod-gd +php7-mod-bcmath +php7-mod-ctype +php7-mod-xmlreader +php7-mod-xmlwriter \
-  +php7-mod-session +php7-mod-sockets +php7-mod-mbstring +php7-mod-gettext
+  DEPENDS += +php8 +php8-cgi +ZABBIX_POSTGRESQL:php8-mod-pgsql +ZABBIX_MYSQL:php8-mod-mysqli \
+  +php8-mod-gd +php8-mod-bcmath +php8-mod-ctype +php8-mod-xmlreader +php8-mod-xmlwriter \
+  +php8-mod-session +php8-mod-sockets +php8-mod-mbstring +php8-mod-gettext
 endef
 
 define Package/zabbix-proxy
