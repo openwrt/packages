@@ -85,9 +85,19 @@
 				"uname",
 				"unlink",
 				"statfs64",
-				"umask",
 				"write",
-				"writev"
+				"writev",
+				"newfstatat",
+				"ppoll",
+				"openat",
+				"pselect6",
+				"readlinkat",
+				"renameat",
+				"mkdirat",
+				"statfs",
+				"faccessat",
+				"unlinkat",
+				"getenv"
 			],
 			"action": "SCMP_ACT_ALLOW"
 		}
