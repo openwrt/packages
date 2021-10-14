@@ -132,6 +132,10 @@ proto_openfortivpn_setup() {
 	        mkdir -p '/var/etc/openfortivpn/peers'
 	}
 
+	[ -f /etc/openfortivpn/user-cert-$config.pem ] && append_args "--user-cert=/etc/openfortivpn/user-cert-$config.pem"
+	[ -f /etc/openfortivpn/user-key-$config.pem ] && append_args "--user-key=/etc/openfortivpn/user-key-$config.pem"
+	[ -f /etc/openfortivpn/ca-$config.pem ] && append_args "--ca-file=/etc/openfortivpn/ca-$config.pem"
+
 	callfile="/var/etc/openfortivpn/peers/$config"
 	echo "115200
 :$local_ip
