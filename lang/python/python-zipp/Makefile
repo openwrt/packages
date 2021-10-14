@@ -25,7 +25,7 @@ define Package/python3-zipp
   VARIANT:=python3
 endef
 
-HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=setuptools-scm
+HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:="setuptools-scm==5.0.2"
 
 define Package/python3-zipp/description
   Backport of pathlib-compatible object wrapper for zip files
