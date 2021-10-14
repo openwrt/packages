@@ -54,12 +54,15 @@ define Package/openfortivpn/install
 	$(INSTALL_DIR) \
 	  $(1)/usr/sbin \
           $(1)/lib/netifd/proto \
-	  $(1)/etc/hotplug.d/iface
+	  $(1)/etc/hotplug.d/iface \
+	  $(1)/etc/openfortivpn \
+	  $(1)/lib/upgrade/keep.d
 
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/openfortivpn $(1)/usr/sbin/
 	$(INSTALL_BIN) ./files/openfortivpn-wrapper $(1)/usr/sbin/
 	$(INSTALL_BIN) ./files/openfortivpn.sh $(1)/lib/netifd/proto/
 	$(INSTALL_BIN) ./files/openfortivpn-ppp-up $(1)/lib/netifd/openfortivpn-ppp-up
+	$(INSTALL_DATA) ./files/openfortivpn.upgrade $(1)/lib/upgrade/keep.d/openfortivpn
 endef
 
 $(eval $(call BuildPackage,openfortivpn))
