@@ -1,0 +1,20 @@
+--- a/wsd.c
++++ b/wsd.c
+@@ -532,7 +532,7 @@ static int wsd_send_soap_msg(int fd, str
+ 	"<wsa:To>%s</wsa:To>"
+ 	"<wsa:Action>%s</wsa:Action>"
+ 	"<wsa:MessageID>urn:uuid:%s</wsa:MessageID>"
+-	"<wsd:AppSequence InstanceId=\"%lu\" SequenceId=\"urn:uuid:%s\" "
++	"<wsd:AppSequence InstanceId=\"%lld\" SequenceId=\"urn:uuid:%s\" "
+ 	"MessageNumber=\"%u\" />"
+ 	"%s"
+ 	"</soap:Header>"
+@@ -559,7 +559,7 @@ static int wsd_send_soap_msg(int fd, str
+ 	}
+ 
+ 	ssize_t msglen = asprintf(&msg, soap_msg_templ, to, action, msg_id,
+-				wsd_instance, wsd_sequence,
++				(long long)wsd_instance, wsd_sequence,
+ 				++msg_no, soap_relates,
+ 				body);
+ 	free(soap_relates);
