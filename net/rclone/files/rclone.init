@@ -21,8 +21,8 @@ start_service() {
 	config_load "${CONFIGURATION}"
 
 	local enabled
-	config_get enabled global enabled
-	if [ "$enabled" = "1" ]; then
+	config_get_bool enabled global enabled
+	if [ "$enabled" -ne "1" ]; then
 		_info 'Instance "rclone" is disabled.'
 		return 1
 	else
@@ -43,7 +43,7 @@ start_service() {
 	config_get username config username
 	config_get password config password
 
-	config_get proxy_enable proxy enabled
+	config_get_bool proxy_enable proxy enabled
 	config_get proxy_addr proxy proxy_addr
 
 	if [ "${addr_type}" = "local" ]; then
@@ -56,12 +56,15 @@ start_service() {
 
 	local config_dir="${config_path%/*}"
 	[ -d "$config_dir" ] || mkdir -p "$config_dir"
+	touch "${config_path}"
+	chown rclone "${config_path}"
 
 	[ -d "/lib/upgrade/keep.d" ] || mkdir -p "/lib/upgrade/keep.d/"
 	echo "$config_path" > "/lib/upgrade/keep.d/luci-app-rclone"
 
 	local log_dir="${log_path%/*}"
 	[ -d "$log_dir" ] || mkdir -p "$log_dir"
+	chown -R rclone:rclone "$log_dir"
 
 	procd_open_instance
 
@@ -71,7 +74,7 @@ start_service() {
 	procd_append_param command "--config=$config_path"
 	procd_append_param command "--rc-allow-origin=*"
 	procd_append_param command "--log-file=${log_path}"
-	if [ "${proxy_enable}" = "1" ]; then
+	if [ "${proxy_enable}" -eq "1" ]; then
 		procd_set_param    env all_proxy="$proxy_addr" https_proxy="$proxy_addr" http_proxy="$proxy_addr"
 		procd_append_param env ALL_PROXY="$proxy_addr" HTTPS_PROXY="$proxy_addr" HTTP_PROXY="$proxy_addr"
 	fi
