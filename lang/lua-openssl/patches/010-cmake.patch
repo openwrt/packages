@@ -1,11 +1,66 @@
+From a88d7f4348e54abba47a96f9ec4ffe7c60ba9400 Mon Sep 17 00:00:00 2001
+From: O <codetypes@gmail.com>
+Date: Fri, 30 Jul 2021 17:17:45 +0800
+Subject: [PATCH] build so file on mac
+
+---
+ CMakeLists.txt | 18 +++++++++++++-----
+ 1 file changed, 13 insertions(+), 5 deletions(-)
+
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -21,8 +21,6 @@ add_definitions(-DPTHREADS)
+@@ -20,7 +20,7 @@ find_package(Threads REQUIRED)
+ add_definitions(-DPTHREADS)
  
  if(BUILD_SHARED_LUA_OPENSSL)
-     set(LUA_OPENSSL_LIBTYPE SHARED)
--    add_definitions(-DLUA_BUILD_AS_DLL -DLUA_LIB)
--    set(EXTRA_LIBS "ws2_32.lib" "crypt32.lib")
- else()
-     set(LUA_OPENSSL_LIBTYPE STATIC)
- endif()
+-    set(LUA_OPENSSL_LIBTYPE SHARED)
++    set(LUA_OPENSSL_LIBTYPE MODULE)
+     if(WIN32)
+         add_definitions(-DLUA_BUILD_AS_DLL)
+         set(EXTRA_LIBS "ws2_32.lib" "crypt32.lib")
+@@ -45,7 +45,7 @@ add_library(lua-openssl ${LUA_OPENSSL_LI
+     src/dsa.c
+     src/ec.c
+     src/engine.c
+-    src/mac.c
++    src/hmac.c
+     src/lbn.c
+     src/lhash.c
+     src/misc.c
+@@ -73,7 +73,7 @@ add_library(lua-openssl ${LUA_OPENSSL_LI
+ 
+ target_include_directories(lua-openssl PUBLIC
+     ${OPENSSL_INCLUDE_DIR}
+-    ${LUA_INCLUDE_DIRS}
++    ${LUA_INCLUDE_DIR}
+     deps
+     deps/lua-compat/c-api
+     deps/auxiliar
+@@ -81,17 +81,25 @@ target_include_directories(lua-openssl P
+ 
+ target_link_libraries(lua-openssl PUBLIC
+     ${OPENSSL_LIBRARIES}
+-    ${LUA_LIBRARIES}
+     ${EXTRA_LIBS}
+     Threads::Threads
+ )
+ 
++if(WIN32)
++    target_link_libraries(lua-openssl PUBLIC
++        ${LUA_LIBRARIES}
++    )
++endif()
++
++if(APPLE)
++    target_link_options(lua-openssl PUBLIC -bundle -undefined dynamic_lookup)
++endif()
++
+ target_compile_options(lua-openssl PRIVATE -DLUA_LIB)
+ 
+ set_target_properties(lua-openssl PROPERTIES
+     PREFIX ""
+     OUTPUT_NAME "openssl"
+-    VERSION 0.8.0.0 SOVERSION 0
+ )
+ 
+ install(TARGETS lua-openssl
