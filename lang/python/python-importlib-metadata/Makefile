@@ -16,7 +16,7 @@ include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
-HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=setuptools-scm
+HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:="setuptools-scm==5.0.2"
 
 define Package/python3-importlib-metadata
   SECTION:=lang
