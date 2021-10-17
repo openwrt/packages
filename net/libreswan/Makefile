@@ -86,6 +86,7 @@ MAKE_FLAGS+= \
     INC_USRLOCAL="/usr" \
     FINALRUNDIR="/var/run/pluto" \
     MODPROBEARGS="-q" \
+    USE_DNSSEC=false \
     ARCH="$(LINUX_KARCH)" \
 
 define Build/Prepare
