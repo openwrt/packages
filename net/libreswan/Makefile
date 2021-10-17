@@ -85,6 +85,7 @@ MAKE_FLAGS+= \
     FINALRUNDIR="/var/run/pluto" \
     FINALNSSDIR="/etc/ipsec.d" \
     MODPROBEARGS="-q" \
+    USE_DNSSEC=false \
     ARCH="$(LINUX_KARCH)" \
 
 define Build/Prepare
