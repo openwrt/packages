@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libffi
 PKG_VERSION:=3.4.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/libffi/libffi/tar.gz/v$(PKG_VERSION)?
@@ -48,11 +48,13 @@ between the two languages.
 endef
 
 HOST_CONFIGURE_ARGS += \
+	--disable-shared \
 	--disable-debug \
 	--disable-docs \
 	--disable-multi-os-directory \
 	--disable-raw-api \
-	--disable-structs
+	--disable-structs \
+	--with-pic
 
 CONFIGURE_ARGS += \
 	--disable-debug \
