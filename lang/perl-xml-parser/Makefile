@@ -21,7 +21,7 @@ PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/XML-Parser-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/perl/XML-Parser-$(PKG_VERSION)
 
-HOST_BUILD_DEPENDS:=perl/host expat/host
+HOST_BUILD_DEPENDS:=perl/host
 
 EXPAT_LIBPATH:=$(STAGING_DIR)/usr/lib
 EXPAT_INCPATH:=$(STAGING_DIR)/usr/include

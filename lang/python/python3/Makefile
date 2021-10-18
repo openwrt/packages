@@ -44,7 +44,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_python3-setuptools CONFIG_PACKAGE_python3-pip
 
 PKG_BUILD_DEPENDS:=bluez python3/host
-HOST_BUILD_DEPENDS:=bzip2/host expat/host libffi/host
+HOST_BUILD_DEPENDS:=bzip2/host libffi/host
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
