@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=glib2
-PKG_VERSION:=2.68.4
+PKG_VERSION:=2.70.0
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=glib-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=@GNOME/glib/2.68
-PKG_HASH:=62fd061d08a75492617e625a73e2c05e259f831acbb8e1f8b9c81f23f7993a3b
+PKG_SOURCE_URL:=@GNOME/glib/2.70
+PKG_HASH:=200d7df811c5ba634afbf109f14bb40ba7fde670e89389885da14e27c0840742
 
 PKG_MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -22,8 +22,8 @@ PKG_CPE_ID:=cpe:/a:gnome:glib
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/glib-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/glib-$(PKG_VERSION)
-PKG_BUILD_DEPENDS:=gettext-full libiconv/host
-HOST_BUILD_DEPENDS:=gettext-full/host libiconv/host libffi/host
+PKG_BUILD_DEPENDS:=libiconv/host
+HOST_BUILD_DEPENDS:=libiconv/host libffi/host pcre/host
 PKG_CONFIG_DEPENDS:=CONFIG_BUILD_NLS
 PKG_INSTALL:=1
 
@@ -35,7 +35,7 @@ include $(INCLUDE_DIR)/meson.mk
 define Package/glib2
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=$(ICONV_DEPENDS) $(INTL_DEPENDS) +zlib +libpthread +libffi +libattr
+  DEPENDS:=$(ICONV_DEPENDS) $(INTL_DEPENDS) +zlib +libpthread +libffi +libattr +libpcre
   TITLE:=glib 2.0
   URL:=http://www.gtk.org/
 endef
@@ -44,16 +44,14 @@ define Package/glib2/description
   The GLib library of C routines
 endef
 
-HOST_LDFLAGS += -liconv -Wl,-rpath,$(STAGING_DIR_HOSTPKG)/lib
+HOST_LDFLAGS += -Wl,-rpath,$(STAGING_DIR_HOSTPKG)/lib
 TARGET_CFLAGS += -ffunction-sections -fdata-sections
 TARGET_LDFLAGS += -Wl,--gc-sections $(if $(INTL_FULL),-lintl)
 
 COMP_ARGS= \
-	-Ddefault_library=both \
 	-Diconv=external \
 	-Dselinux=disabled \
 	-Dlibmount=disabled \
-	-Dinternal_pcre=true \
 	-Dman=false \
 	-Ddtrace=false \
 	-Dsystemtap=false \
@@ -64,15 +62,14 @@ COMP_ARGS= \
 	-Dfam=false \
 	-Dtests=false \
 	-Dinstalled_tests=false \
-	-Dnls=$(if $(CONFIG_BUILD_NLS),en,dis)abled \
 	-Doss_fuzz=disabled \
 	-Dglib_debug=disabled \
 	-Dglib_assert=false \
 	-Dglib_checks=false \
 	-Dlibelf=disabled
 
-MESON_HOST_ARGS += $(COMP_ARGS) -Dxattr=false
-MESON_ARGS += $(COMP_ARGS) -Dxattr=true -Db_lto=true
+MESON_HOST_ARGS += $(COMP_ARGS) -Dxattr=false -Ddefault_library=static -Dnls=disabled
+MESON_ARGS += $(COMP_ARGS) -Dxattr=true -Db_lto=true -Ddefault_library=both -Dnls=$(if $(CONFIG_BUILD_NLS),en,dis)abled
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/bin
