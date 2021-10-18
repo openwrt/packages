@@ -7,11 +7,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pillow
-PKG_VERSION:=8.3.2
+PKG_VERSION:=8.4.0
 PKG_RELEASE:=$(AUTORELEASE)
 
 PYPI_NAME:=Pillow
-PKG_HASH:=dde3f3ed8d00c72631bc19cbfff8ad3b6215062a5eed402381ad365f82f0c18c
+PKG_HASH:=b8e2f83c56e141920c39464b852de3719dfbfb6e3c99a2d8da0edf4fb33176ed
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=HPND
