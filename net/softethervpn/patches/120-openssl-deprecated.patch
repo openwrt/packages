@@ -99,7 +99,7 @@
  	if (!UINT64ToAsn1Time(t1, notBefore))
  	{
  		FreeX509(x509);
-@@ -2697,6 +2707,43 @@ bool RsaCheckEx()
+@@ -2698,6 +2708,43 @@ bool RsaCheckEx()
  
  	return false;
  }
@@ -143,7 +143,7 @@
  bool RsaCheck()
  {
  	RSA *rsa;
-@@ -2710,12 +2757,11 @@ bool RsaCheck()
+@@ -2711,12 +2758,11 @@ bool RsaCheck()
  	// Key generation
  	Lock(openssl_lock);
  	{
@@ -157,7 +157,7 @@
  		return false;
  	}
  
-@@ -2780,12 +2826,11 @@ bool RsaGen(K **priv, K **pub, UINT bit)
+@@ -2781,12 +2827,11 @@ bool RsaGen(K **priv, K **pub, UINT bit)
  	// Key generation
  	Lock(openssl_lock);
  	{
@@ -171,7 +171,7 @@
  		return false;
  	}
  
-@@ -3895,7 +3940,7 @@ X *X509ToX(X509 *x509)
+@@ -3896,7 +3941,7 @@ X *X509ToX(X509 *x509)
  				{
  					if (OBJ_obj2nid(ad->method) == NID_ad_ca_issuers && ad->location->type == GEN_URI)
  					{
@@ -180,7 +180,7 @@
  
  						if (IsEmptyStr(uri) == false)
  						{
-@@ -4108,7 +4153,9 @@ void Rand(void *buf, UINT size)
+@@ -4109,7 +4154,9 @@ void Rand(void *buf, UINT size)
  // Delete a thread-specific information that OpenSSL has holded
  void FreeOpenSSLThreadState()
  {
@@ -190,7 +190,7 @@
  }
  
  // Release the Crypt library
-@@ -4130,12 +4177,14 @@ void InitCryptLibrary()
+@@ -4131,12 +4178,14 @@ void InitCryptLibrary()
  	CheckIfIntelAesNiSupportedInit();
  //	RAND_Init_For_SoftEther()
  	openssl_lock = NewLock();
