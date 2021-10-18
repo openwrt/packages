@@ -22,18 +22,15 @@ endif
 
 PKG_SOURCE:=$(PKG_NAME)-$(_PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://pocoproject.org/releases/$(PKG_NAME)-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(_PKG_VERSION)
 
 PKG_MAINTAINER:=Jean-Michel Julien <jean-michel.julien@trilliantinc.com>
 PKG_LICENSE:=BSL-1.0
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:pocoproject:poco
 
-PKG_BUILD_DEPENDS:=postgresql
-PKG_BUILD_PARALLEL:=1
-PKG_INSTALL:=1
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(_PKG_VERSION)
-
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/poco
   SECTION:=libs
@@ -55,7 +52,7 @@ define Package/poco-all
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE+=(Complete Edition)
-  DEPENDS+=+libopenssl
+  DEPENDS+=+libopenssl +libmariadb +libpq +unixodbc
   VARIANT:=all
 endef
 
@@ -66,34 +63,14 @@ define Package/poco-all/description
   all libraries.
 endef
 
-CONFIGURE_ARGS += \
-	--config=Linux \
-	--no-tests \
-	--no-samples \
-	--no-fpenvironment \
-	--no-sharedmemory \
-	--no-wstring \
-	--shared
-
-ifeq ($(BUILD_VARIANT),all)
-	CONFIGURE_ARGS += \
-		--typical
-	POCO_LIBS={Foundation,XML,JSON,Net,Util,Crypto,NetSSL,Encodings}
-else
-	CONFIGURE_ARGS += \
-		--poquito \
-		--minimal
-	POCO_LIBS={Foundation,XML,JSON,Net,Util}
-endif
-
 define Package/poco/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libPoco$(POCO_LIBS).so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libPoco*.so* $(1)/usr/lib/
 endef
 
 define Package/poco-all/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libPoco$(POCO_LIBS).so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libPoco*.so* $(1)/usr/lib/
 endef
 
 define Build/InstallDev
@@ -101,7 +78,7 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/Poco $(1)/usr/include/
 
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libPoco$(POCO_LIBS).so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libPoco*.so* $(1)/usr/lib/
 endef
 
 
