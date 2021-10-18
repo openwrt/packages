@@ -1,6 +1,6 @@
 --- a/src/Mayaqua/Mayaqua.h
 +++ b/src/Mayaqua/Mayaqua.h
-@@ -283,7 +283,7 @@ int PASCAL WinMain(HINSTANCE hInst, HINS
+@@ -284,7 +284,7 @@ int PASCAL WinMain(HINSTANCE hInst, HINS
  #include <ifaddrs.h>
  #endif	// MAYAQUA_SUPPORTS_GETIFADDRS
  
