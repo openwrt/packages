@@ -21,7 +21,7 @@ if type extra_command 1>/dev/null 2>&1; then
 	extra_command 'reload_interface' 'Reload specific interface only'
 else
 # shellcheck disable=SC2034
-	EXTRA_COMMANDS='reload_interface support version'
+	EXTRA_COMMANDS='support version'
 # shellcheck disable=SC2034
 	EXTRA_HELP="	support	Generates output required to troubleshoot routing issues
 		Use '-d' option for more detailed output
@@ -51,7 +51,7 @@ wanIface4=''; wanIface6=''; ifaceMark=''; ifaceTableID='';
 ifAll=''; ifSupported=''; ignoredIfaces=''; supportedIfaces=''; icmpIface='';
 wanGW4=''; wanGW6=''; bootTimeout=''; insertOption='';
 webuiChainColumn=''; webuiShowIgnore=''; dnsmasqIpsetSupported='';
-procdReloadDelay=''; mainTableListing='';
+procdReloadDelay='';
 usedChainsList='PREROUTING'
 ipsetSupported='true'
 configLoaded='false'
@@ -73,7 +73,7 @@ output() {
 # Can take a single parameter (text) to be output at any verbosity
 # Or target verbosity level and text to be output at specifc verbosity
 	local msg memmsg logmsg
-	if [ "$#" -ne 1 ]; then
+	if [ $# -ne 1 ]; then
 		if [ $((verbosity & $1)) -gt 0 ] || [ "$verbosity" = "$1" ]; then shift; else return 0; fi
 	fi
 	[ -t 1 ] && printf "%b" "$1"
@@ -154,11 +154,10 @@ is_domain() { str_contains "$1" '[a-zA-Z]'; }
 is_phys_dev() { [ "${1:0:1}" = "@" ] && ip l show | grep -E -q "^\\d+\\W+${1:1}"; }
 is_turris() { /bin/ubus -S call system board | /bin/grep 'Turris' | /bin/grep -q '15.05'; }
 is_chaos_calmer() { ubus -S call system board | grep -q 'Chaos Calmer'; }
-dnsmasq_kill() { killall -q -s HUP dnsmasq; }
+dnsmasq_kill() { killall -q -HUP dnsmasq; }
 dnsmasq_restart() { output 3 'Restarting DNSMASQ '; if /etc/init.d/dnsmasq restart >/dev/null 2>&1; then output_okn; else output_failn; fi; }
 is_default_dev() { [ "$1" = "$(ip -4 r | grep -m1 'dev' | grep -Eso 'dev [^ ]*' | awk '{print $2}')" ]; }
 is_supported_iface_dev() {
-	local n
 	for n in $ifSupported; do 
 		if [ "$1" = "$(uci -q get "network.${n}.ifname" || echo "$n")" ] || \
 			[ "$1" = "$(uci -q get "network.${n}.device" || echo "$n")" ] || \
@@ -166,7 +165,7 @@ is_supported_iface_dev() {
 	done
 	return 1
 }
-is_supported_protocol() { grep -o '^[^#]*' /etc/protocols | grep -w -v '0' | grep . | awk '{print $1}' | grep -q "$1"; }
+is_supported_protocol () { grep -o '^[^#]*' /etc/protocols | grep -w -v '0' | grep . | awk '{print $1}' | grep -q "$1"; }
 append_chains_targets() {
 	local chain iface name
 	config_get name "$1" 'name' 'blank'
@@ -195,7 +194,6 @@ load_package_config() {
 	config_get_bool ipv6Enabled         'config' 'ipv6_enabled' 0
 	config_get_bool srcIpset            'config' 'src_ipset' 0
 	config_get_bool destIpset           'config' 'dest_ipset' 0
-	config_get_bool mainTableListing    'config' 'quick_table_create' 0
 	config_get resolverIpset            'config' 'resolver_ipset' 'dnsmasq.ipset'
 	config_get verbosity                'config' 'verbosity' '2'
 	config_get wanTableID               'config' 'wan_tid' '201'
@@ -220,12 +218,6 @@ load_package_config() {
 	mkdir -p "${PIDFile%/*}"
 	mkdir -p "${jsonFile%/*}"
 	mkdir -p "${dnsmasqFile%/*}"
-
-	if [ "$mainTableListing" -ne 0 ]; then
-		mainTableListing='default'
-	else
-		mainTableListing=''
-	fi
 
 	if [ -n "$icmpIface" ] && ! str_contains_word "$usedChainsList" 'OUTPUT'; then
 		usedChainsList="$usedChainsList OUTPUT"
@@ -489,7 +481,7 @@ insert_policy() {
 	return 0
 }
 
-r_process_policy() {
+r_process_policy(){
 	local comment="$1" iface="$2" laddr="$3" lport="$4" raddr="$5" rport="$6" proto="$7" chain="$8" resolved_laddr resolved_raddr i ipsFailFlag
 	if str_contains "$laddr" '[ ;\{\}]'; then
 		for i in $(str_extras_to_space "$laddr"); do [ -n "$i" ] && r_process_policy "$comment" "$iface" "$i" "$lport" "$raddr" "$rport" "$proto" "$chain"; done
@@ -553,7 +545,7 @@ r_process_policy() {
 	fi
 }
 
-process_policy() {
+process_policy(){
 	local name comment iface laddr lport raddr rport param mark processPolicyError processPolicyWarning proto chain enabled
 	config_get comment "$1" 'comment'
 	config_get name    "$1" 'name' 'blank'
@@ -604,18 +596,22 @@ process_policy() {
 	fi
 }
 
-table_destroy() {
+table_destroy(){
 	local tid="$1" iface="$2" mark="$3"
 	if [ -n "$tid" ] && [ -n "$iface" ] && [ -n "$mark" ]; then
 		ipt -t mangle -F "VPR_MARK${mark}"
 		ipt -t mangle -X "VPR_MARK${mark}"
-		ip rule del fwmark "$mark" table "$tid" >/dev/null 2>&1
-	 	ip rule del table "$tid" >/dev/null 2>&1
-		ip route flush table "$tid" >/dev/null 2>&1
+		ip -4 rule del fwmark "$mark" table "$tid" >/dev/null 2>&1
+		ip -6 rule del fwmark "$mark" table "$tid" >/dev/null 2>&1
+	 	ip -4 rule del table "$tid" >/dev/null 2>&1
+		ip -6 rule del table "$tid" >/dev/null 2>&1
+		ip -4 route flush table "$tid" >/dev/null 2>&1
+		ip -6 route flush table "$tid" >/dev/null 2>&1
 		ips 'flush' "${iface}"; ips 'destroy' "${iface}";
 		ips 'flush' "${iface}_ip"; ips 'destroy' "${iface}_ip";
 		ips 'flush' "${iface}_mac"; ips 'destroy' "${iface}_mac";
-		ip route flush cache
+		ip -4 route flush cache
+		ip -6 route flush cache
 		sed -i "/$iface/d" /etc/iproute2/rt_tables
 		return 0
 	else
@@ -624,33 +620,31 @@ table_destroy() {
 }
 
 # shellcheck disable=SC2086
-table_create() {
+table_create(){
 	local tid="$1" mark="$2" iface="$3" gw4="$4" dev="$5" gw6="$6" dev6="$7" match="$8" dscp s=0 i ipv4_error=0 ipv6_error=1
 
 	if [ -z "$tid" ] || [ -z "$mark" ] || [ -z "$iface" ]; then
 		return 1
 	fi
 
-	sed -i "/$iface/d" /etc/iproute2/rt_tables
-	ip route flush table "$tid" >/dev/null 2>&1
+	table_destroy "$tid" "$iface" "$mark"
 
 	if [ -n "$gw4" ] || [ "$strictMode" -ne 0 ]; then
-		echo "$tid $iface" >> /etc/iproute2/rt_tables
+		echo "$tid" "$iface" >> /etc/iproute2/rt_tables
 		if [ -z "$gw4" ]; then
 			ip -4 route add unreachable default table "$tid" >/dev/null 2>&1 || ipv4_error=1
 		else
 			ip -4 route add default via "$gw4" dev "$dev" table "$tid" >/dev/null 2>&1 || ipv4_error=1
 		fi
-		while read -r i; do
+#		ip -4 route list table main | grep -v 'br-lan' | while read -r i; do
+		ip -4 route list table main | while read -r i; do
 			idev="$(echo "$i" | grep -Eso 'dev [^ ]*' | awk '{print $2}')"
 			if ! is_supported_iface_dev "$idev"; then
 				ip -4 route add $i table "$tid" >/dev/null 2>&1 || ipv4_error=1
 			fi
-		done << EOF
-$(ip -4 route list $mainTableListing table main)
-EOF
-		[ -n "$(ip rule list fwmark "${mark}/${fwMask}" table "$tid")" ] || \
-			ip rule add fwmark "${mark}/${fwMask}" table "$tid" || ipv4_error=1
+		done
+		ip -4 route flush cache || ipv4_error=1
+		ip -4 rule add fwmark "${mark}/${fwMask}" table "$tid" || ipv4_error=1
 		ipt -t mangle -N "VPR_MARK${mark}" || ipv4_error=1
 		ipt -t mangle -A "VPR_MARK${mark}" -j MARK --set-xmark "${mark}/${fwMask}" || ipv4_error=1
 		ipt -t mangle -A "VPR_MARK${mark}" -j RETURN || ipv4_error=1
@@ -662,16 +656,16 @@ EOF
 			if [ -z "$gw6" ] || [ "$gw6" = "::/0" ]; then
 				ip -6 route add unreachable default table "$tid" || ipv6_error=1
 			else
-				while read -r i; do
+				ip -6 route list table main | grep " dev $dev6 " | while read -r i; do
 					ip -6 route add $i table "$tid" >/dev/null 2>&1 || ipv6_error=1
-				done << EOF
-$(ip -6 route list $mainTableListing table main | grep " dev $dev6 ")
-EOF
+				done
 			fi
+			ip -6 route flush cache || ipv6_error=1
+			ip -6 rule add fwmark "${mark}/${fwMask}" table "$tid" || ipv6_error=1
 		fi
 	fi
 
-	if [ "$ipv4_error" -eq 0 ] || [ "$ipv6_error" -eq 0 ]; then
+	if [ $ipv4_error -eq 0 ] || [ $ipv6_error -eq 0 ]; then
 		dscp="$(uci -q get "${packageName}".config."${iface}"_dscp)"
 		if [ "${dscp:-0}" -ge 1 ] && [ "${dscp:-0}" -le 63 ]; then
 			ipt -t mangle -I VPR_PREROUTING -m dscp --dscp "${dscp}" -g "VPR_MARK${mark}" || s=1
@@ -745,7 +739,7 @@ table_reload() {
 		fi
 	fi
 
-	if [ "$ipv4_error" -eq 0 ] || [ "$ipv6_error" -eq 0 ]; then
+	if [ $ipv4_error -eq 0 ] || [ $ipv6_error -eq 0 ]; then
 		dscp="$(uci -q get "${packageName}".config."${iface}"_dscp)"
 		if [ "${dscp:-0}" -ge 1 ] && [ "${dscp:-0}" -le 63 ]; then
 			ipt -t mangle -I VPR_PREROUTING -m dscp --dscp "${dscp}" -g "VPR_MARK${mark}" || s=1
@@ -760,7 +754,7 @@ table_reload() {
 	return $s
 }
 
-process_interface() {
+process_interface(){
 	local gw4 gw6 dev dev6 s=0 dscp iface="$1" action="$2" match="$3" displayText
 
 	is_supported_interface "$iface" || return 0
@@ -787,6 +781,9 @@ process_interface() {
 		create)
 			eval "mark_${iface//-/_}"='$ifaceMark'
 			eval "tid_${iface//-/_}"='$ifaceTableID'
+			if [ -z "$match" ]; then
+				table_destroy "$ifaceTableID" "$iface"
+			fi
 			vpr_get_gateway gw4 "$iface" "$dev"
 			vpr_get_gateway6 gw6 "$iface" "$dev6"
 			if [ "$iface" = "$dev" ]; then
@@ -825,7 +822,7 @@ process_interface() {
 	return $s
 }
 
-process_tor_interface() {
+process_tor_interface(){
 	local s=0 iface="$1" action="$2" displayText
 	case "$action" in
 		destroy)
@@ -855,7 +852,7 @@ process_tor_interface() {
 				s=1
 			fi
 			displayText="${iface}/53->${dnsPort}/80,443->${transPort}"
-			if [ "$s" -eq 0 ]; then
+			if [ "$s" -eq "0" ]; then
 				gatewaySummary="${gatewaySummary}${displayText}\\n"
 				output_ok
 			else
@@ -867,7 +864,7 @@ process_tor_interface() {
 	return $s
 }
 
-convert_config() {
+convert_config(){
 	local i src_ipset dest_ipset resolver_ipset
 	[ -s "/etc/config/${packageName}" ] || return 0
 	grep -q "ignored_interfaces" "/etc/config/${packageName}" && sed -i 's/ignored_interfaces/ignored_interface/g' "/etc/config/${packageName}"
@@ -925,8 +922,8 @@ convert_config() {
 	done
 }
 
-check_config() { local en; config_get_bool en "$1" 'enabled' 1; [ "$en" -gt 0 ] && _cfg_enabled=0; }
-is_config_enabled() {
+check_config(){ local en; config_get_bool en "$1" 'enabled' 1; [ "$en" -gt 0 ] && _cfg_enabled=0; }
+is_config_enabled(){
 	local cfg="$1" _cfg_enabled=1
 	[ -n "$1" ] || return 1
 	config_load "$packageName"
@@ -934,7 +931,7 @@ is_config_enabled() {
 	return "$_cfg_enabled"
 }
 
-process_user_file() {
+process_user_file(){
 	local path enabled shellBin="${SHELL:-/bin/ash}"
 	config_get_bool enabled "$1" 'enabled' 1
 	config_get      path    "$1" 'path'
@@ -1000,7 +997,6 @@ start_service() {
 		output 1 'Processing Interfaces '
 		config_load 'network'; config_foreach process_interface 'interface' 'create';
 		process_tor_interface 'tor' 'destroy'; is_tor_running && process_tor_interface 'tor' 'create';
-		ip route flush cache
 		output 1 '\n'
 		if is_config_enabled 'policy'; then
 			output 1 'Processing Policies '
