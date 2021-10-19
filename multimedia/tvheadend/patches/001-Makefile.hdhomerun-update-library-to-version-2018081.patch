@@ -1,0 +1,29 @@
+From 7d657f0a87be1f135f7e5146b06e26121691c33a Mon Sep 17 00:00:00 2001
+From: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Date: Mon, 18 Oct 2021 22:54:02 +0200
+Subject: [PATCH] Makefile.hdhomerun: update library to version 20180817
+
+The previous tarball is not available and because of that, the
+compilation of tvheadend does not proceed.
+
+The latest version can not be used somehow as the compilation fails.
+---
+ Makefile.hdhomerun | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+--- a/Makefile.hdhomerun
++++ b/Makefile.hdhomerun
+@@ -32,10 +32,10 @@ endif
+ # Upstream Packages
+ # ###########################################################################
+ 
+-LIBHDHR         = libhdhomerun_20171221
++LIBHDHR         = libhdhomerun_20180817
+ LIBHDHR_TB      = $(LIBHDHR).tgz
+-LIBHDHR_URL     = http://download.silicondust.com/hdhomerun/$(LIBHDHR_TB)
+-LIBHDHR_SHA1    = 6b019728eadea3af7a5686ed5ba44e970bca7365
++LIBHDHR_URL     = https://download.silicondust.com/hdhomerun/$(LIBHDHR_TB)
++LIBHDHR_SHA1    = 052868bde3a5713c55b4d060b77e0bc3a0d891d6
+ 
+ # ###########################################################################
+ # Library Config
