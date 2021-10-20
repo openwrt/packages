@@ -52,6 +52,9 @@ start_service()
 	echo "Starting Service..."
 	procd_open_instance
 	procd_set_param command $PROG
+
+	procd_set_param respawn 3600 15 0
+
 	procd_set_param stdout 0 # here it is possible to remove the debug output...
 	procd_set_param stderr 1
 	if [ ${_network_option} -eq 2 ]; then
