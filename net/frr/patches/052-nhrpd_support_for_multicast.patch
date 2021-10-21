@@ -753,7 +753,7 @@ Signed-off-by: Reuben Dowle <reuben.dowle@4rf.com>
  		   N.B. Options 1 & 2 share basically the same logic. */
 --- a/ospfd/ospf_vty.c
 +++ b/ospfd/ospf_vty.c
-@@ -7560,20 +7560,21 @@ DEFUN_HIDDEN (no_ospf_hello_interval,
+@@ -7562,20 +7562,21 @@ DEFUN_HIDDEN (no_ospf_hello_interval,
  	return no_ip_ospf_hello_interval(self, vty, argc, argv);
  }
  
@@ -785,7 +785,7 @@ Signed-off-by: Reuben Dowle <reuben.dowle@4rf.com>
  	struct route_node *rn;
  
  	if (old_type == OSPF_IFTYPE_LOOPBACK) {
-@@ -7582,16 +7583,22 @@ DEFUN (ip_ospf_network,
+@@ -7584,16 +7585,22 @@ DEFUN (ip_ospf_network,
  		return CMD_WARNING_CONFIG_FAILED;
  	}
  
@@ -810,7 +810,7 @@ Signed-off-by: Reuben Dowle <reuben.dowle@4rf.com>
  		return CMD_SUCCESS;
  
  	SET_IF_PARAM(IF_DEF_PARAMS(ifp), type);
-@@ -7603,6 +7610,7 @@ DEFUN (ip_ospf_network,
+@@ -7605,6 +7612,7 @@ DEFUN (ip_ospf_network,
  			continue;
  
  		oi->type = IF_DEF_PARAMS(ifp)->type;
@@ -818,7 +818,7 @@ Signed-off-by: Reuben Dowle <reuben.dowle@4rf.com>
  
  		if (oi->state > ISM_Down) {
  			OSPF_ISM_EVENT_EXECUTE(oi, ISM_InterfaceDown);
-@@ -7643,6 +7651,7 @@ DEFUN (no_ip_ospf_network,
+@@ -7645,6 +7653,7 @@ DEFUN (no_ip_ospf_network,
  	struct route_node *rn;
  
  	IF_DEF_PARAMS(ifp)->type = ospf_default_iftype(ifp);
@@ -839,7 +839,7 @@ Signed-off-by: Reuben Dowle <reuben.dowle@4rf.com>
  							inet_ntoa(
 --- a/ospfd/ospfd.c
 +++ b/ospfd/ospfd.c
-@@ -1017,6 +1017,7 @@ static void add_ospf_interface(struct co
+@@ -1004,6 +1004,7 @@ static void add_ospf_interface(struct co
  	/* If network type is specified previously,
  	   skip network type setting. */
  	oi->type = IF_DEF_PARAMS(co->ifp)->type;

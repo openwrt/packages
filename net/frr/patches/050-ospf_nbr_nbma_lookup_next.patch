@@ -56,7 +56,7 @@ Signed-off-by: Donald Sharp <sharpd@nvidia.com>
  
 --- a/ospfd/ospfd.c
 +++ b/ospfd/ospfd.c
-@@ -1932,35 +1932,6 @@ struct ospf_nbr_nbma *ospf_nbr_nbma_look
+@@ -1919,35 +1919,6 @@ struct ospf_nbr_nbma *ospf_nbr_nbma_look
  	return NULL;
  }
  
@@ -94,7 +94,7 @@ Signed-off-by: Donald Sharp <sharpd@nvidia.com>
  	struct ospf_nbr_nbma *nbr_nbma;
 --- a/ospfd/ospfd.h
 +++ b/ospfd/ospfd.h
-@@ -567,8 +567,6 @@ extern void ospf_terminate(void);
+@@ -563,8 +563,6 @@ extern void ospf_terminate(void);
  extern void ospf_nbr_nbma_if_update(struct ospf *, struct ospf_interface *);
  extern struct ospf_nbr_nbma *ospf_nbr_nbma_lookup(struct ospf *,
  						  struct in_addr);
