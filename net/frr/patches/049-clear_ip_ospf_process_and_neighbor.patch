@@ -327,7 +327,7 @@ Signed-off-by: Mobashshera Rasool <mrasool@vmware.com>
  }
  
  /* For OSPF area sort by area id. */
-@@ -839,14 +890,11 @@ static struct ospf_area *ospf_area_new(s
+@@ -826,14 +877,11 @@ static struct ospf_area *ospf_area_new(s
  	return new;
  }
  
@@ -343,7 +343,7 @@ Signed-off-by: Mobashshera Rasool <mrasool@vmware.com>
  	LSDB_LOOP (ROUTER_LSDB(area), rn, lsa)
  		ospf_discard_from_db(area->ospf, area->lsdb, lsa);
  	LSDB_LOOP (NETWORK_LSDB(area), rn, lsa)
-@@ -864,6 +912,15 @@ static void ospf_area_free(struct ospf_a
+@@ -851,6 +899,15 @@ static void ospf_area_free(struct ospf_a
  		ospf_discard_from_db(area->ospf, area->lsdb, lsa);
  
  	ospf_lsdb_delete_all(area->lsdb);
@@ -361,9 +361,9 @@ Signed-off-by: Mobashshera Rasool <mrasool@vmware.com>
  	ospf_lsa_unlock(&area->router_lsa_self);
 --- a/ospfd/ospfd.h
 +++ b/ospfd/ospfd.h
-@@ -523,7 +523,11 @@ extern struct ospf *ospf_lookup_by_inst_
- 					     const char *name);
+@@ -519,7 +519,11 @@ extern struct ospf *ospf_lookup_by_inst_
  extern struct ospf *ospf_lookup_by_vrf_id(vrf_id_t vrf_id);
+ extern uint32_t ospf_count_area_params(struct ospf *ospf);
  extern void ospf_finish(struct ospf *);
 +extern void ospf_process_refresh_data(struct ospf *ospf, bool reset);
  extern void ospf_router_id_update(struct ospf *ospf);
@@ -373,7 +373,7 @@ Signed-off-by: Mobashshera Rasool <mrasool@vmware.com>
  extern int ospf_network_set(struct ospf *, struct prefix_ipv4 *, struct in_addr,
  			    int);
  extern int ospf_network_unset(struct ospf *, struct prefix_ipv4 *,
-@@ -548,6 +552,7 @@ extern int ospf_area_shortcut_set(struct
+@@ -544,6 +548,7 @@ extern int ospf_area_shortcut_set(struct
  extern int ospf_area_shortcut_unset(struct ospf *, struct ospf_area *);
  extern int ospf_timers_refresh_set(struct ospf *, int);
  extern int ospf_timers_refresh_unset(struct ospf *);

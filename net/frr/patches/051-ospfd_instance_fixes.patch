@@ -432,7 +432,7 @@ Signed-off-by: Igor Ryzhov <iryzhov@nfware.com>
  }
  
  
-@@ -3324,11 +3330,11 @@ DEFUN (show_ip_ospf_instance,
+@@ -3326,11 +3332,11 @@ DEFUN (show_ip_ospf_instance,
  	json_object *json = NULL;
  
  	instance = strtoul(argv[idx_number]->arg, NULL, 10);
@@ -447,7 +447,7 @@ Signed-off-by: Igor Ryzhov <iryzhov@nfware.com>
  		return CMD_SUCCESS;
  
  	if (uj)
-@@ -4014,11 +4020,11 @@ DEFUN (show_ip_ospf_instance_interface,
+@@ -4016,11 +4022,11 @@ DEFUN (show_ip_ospf_instance_interface,
  	json_object *json = NULL;
  
  	instance = strtoul(argv[idx_number]->arg, NULL, 10);
@@ -462,7 +462,7 @@ Signed-off-by: Igor Ryzhov <iryzhov@nfware.com>
  		return CMD_SUCCESS;
  
  	if (uj)
-@@ -4407,11 +4413,11 @@ DEFUN (show_ip_ospf_instance_neighbor,
+@@ -4409,11 +4415,11 @@ DEFUN (show_ip_ospf_instance_neighbor,
  	int ret = CMD_SUCCESS;
  
  	instance = strtoul(argv[idx_number]->arg, NULL, 10);
@@ -477,7 +477,7 @@ Signed-off-by: Igor Ryzhov <iryzhov@nfware.com>
  		return CMD_SUCCESS;
  
  	if (uj)
-@@ -4619,11 +4625,11 @@ DEFUN (show_ip_ospf_instance_neighbor_al
+@@ -4621,11 +4627,11 @@ DEFUN (show_ip_ospf_instance_neighbor_al
  	int ret = CMD_SUCCESS;
  
  	instance = strtoul(argv[idx_number]->arg, NULL, 10);
@@ -492,7 +492,7 @@ Signed-off-by: Igor Ryzhov <iryzhov@nfware.com>
  		return CMD_SUCCESS;
  	if (uj)
  		json = json_object_new_object();
-@@ -4759,11 +4765,11 @@ DEFUN (show_ip_ospf_instance_neighbor_in
+@@ -4761,11 +4767,11 @@ DEFUN (show_ip_ospf_instance_neighbor_in
  		show_ip_ospf_neighbour_header(vty);
  
  	instance = strtoul(argv[idx_number]->arg, NULL, 10);
@@ -507,7 +507,7 @@ Signed-off-by: Igor Ryzhov <iryzhov@nfware.com>
  		return CMD_SUCCESS;
  
  	if (!uj)
-@@ -5168,11 +5174,11 @@ DEFPY (show_ip_ospf_instance_neighbor_id
+@@ -5170,11 +5176,11 @@ DEFPY (show_ip_ospf_instance_neighbor_id
  {
  	struct ospf *ospf;
  
@@ -522,7 +522,7 @@ Signed-off-by: Igor Ryzhov <iryzhov@nfware.com>
  		return CMD_SUCCESS;
  
  	return show_ip_ospf_neighbor_id_common(vty, ospf, &router_id, !!json,
-@@ -5341,11 +5347,11 @@ DEFUN (show_ip_ospf_instance_neighbor_de
+@@ -5343,11 +5349,11 @@ DEFUN (show_ip_ospf_instance_neighbor_de
  	int ret = CMD_SUCCESS;
  
  	instance = strtoul(argv[idx_number]->arg, NULL, 10);
@@ -537,7 +537,7 @@ Signed-off-by: Igor Ryzhov <iryzhov@nfware.com>
  		return CMD_SUCCESS;
  
  	if (uj)
-@@ -5536,11 +5542,11 @@ DEFUN (show_ip_ospf_instance_neighbor_de
+@@ -5538,11 +5544,11 @@ DEFUN (show_ip_ospf_instance_neighbor_de
  	int ret = CMD_SUCCESS;
  
  	instance = strtoul(argv[idx_number]->arg, NULL, 10);
@@ -552,7 +552,7 @@ Signed-off-by: Igor Ryzhov <iryzhov@nfware.com>
  		return CMD_SUCCESS;
  
  	if (uj)
-@@ -5668,11 +5674,11 @@ DEFUN (show_ip_ospf_instance_neighbor_in
+@@ -5670,11 +5676,11 @@ DEFUN (show_ip_ospf_instance_neighbor_in
  	bool uj = use_json(argc, argv);
  
  	instance = strtoul(argv[idx_number]->arg, NULL, 10);
@@ -567,7 +567,7 @@ Signed-off-by: Igor Ryzhov <iryzhov@nfware.com>
  		return CMD_SUCCESS;
  
  	return show_ip_ospf_neighbor_int_detail_common(vty, ospf, idx_ifname,
-@@ -6418,10 +6424,11 @@ DEFUN (show_ip_ospf_instance_database,
+@@ -6420,10 +6426,11 @@ DEFUN (show_ip_ospf_instance_database,
  
  	if (argv_find(argv, argc, "(1-65535)", &idx)) {
  		instance = strtoul(argv[idx]->arg, NULL, 10);
@@ -582,7 +582,7 @@ Signed-off-by: Igor Ryzhov <iryzhov@nfware.com>
  			return CMD_SUCCESS;
  
  		return (show_ip_ospf_database_common(vty, ospf, idx ? 1 : 0,
-@@ -6482,15 +6489,12 @@ DEFUN (show_ip_ospf_instance_database_ma
+@@ -6484,15 +6491,12 @@ DEFUN (show_ip_ospf_instance_database_ma
  	unsigned short instance = 0;
  
  	instance = strtoul(argv[idx_number]->arg, NULL, 10);
@@ -601,7 +601,7 @@ Signed-off-by: Igor Ryzhov <iryzhov@nfware.com>
  
  	return show_ip_ospf_database_common(vty, ospf, 1, argc, argv, 0);
  }
-@@ -6576,13 +6580,12 @@ DEFUN (show_ip_ospf_instance_database_ty
+@@ -6578,13 +6582,12 @@ DEFUN (show_ip_ospf_instance_database_ty
  
  	if (argv_find(argv, argc, "(1-65535)", &idx)) {
  		instance = strtoul(argv[idx]->arg, NULL, 10);
@@ -619,7 +619,7 @@ Signed-off-by: Igor Ryzhov <iryzhov@nfware.com>
  
  		return (show_ip_ospf_database_type_adv_router_common(
  			vty, ospf, idx ? 1 : 0, argc, argv, use_vrf));
-@@ -8033,7 +8036,7 @@ DEFUN (ip_ospf_area,
+@@ -8035,7 +8038,7 @@ DEFUN (ip_ospf_area,
  	else
  		ospf = ospf_lookup_instance(instance);
  
@@ -628,7 +628,7 @@ Signed-off-by: Igor Ryzhov <iryzhov@nfware.com>
  		/*
  		 * At this point we know we have received
  		 * an instance and there is no ospf instance
-@@ -8158,7 +8161,7 @@ DEFUN (no_ip_ospf_area,
+@@ -8159,7 +8162,7 @@ DEFUN (no_ip_ospf_area,
  	else
  		ospf = ospf_lookup_instance(instance);
  
@@ -718,7 +718,7 @@ Signed-off-by: Igor Ryzhov <iryzhov@nfware.com>
  extern struct zclient *zclient;
  
  
-@@ -468,36 +470,28 @@ static void ospf_init(struct ospf *ospf)
+@@ -438,36 +440,28 @@ static void ospf_init(struct ospf *ospf)
  	ospf_router_id_update(ospf);
  }
  
@@ -765,7 +765,7 @@ Signed-off-by: Igor Ryzhov <iryzhov@nfware.com>
  		ospf_init(ospf);
 --- a/ospfd/ospfd.h
 +++ b/ospfd/ospfd.h
-@@ -507,6 +507,7 @@ struct ospf_nbr_nbma {
+@@ -502,6 +502,7 @@ struct ospf_nbr_nbma {
  
  /* Extern variables. */
  extern struct ospf_master *om;
@@ -773,7 +773,7 @@ Signed-off-by: Igor Ryzhov <iryzhov@nfware.com>
  extern const int ospf_redistributed_proto_max;
  extern struct zclient *zclient;
  extern struct thread_master *master;
-@@ -516,9 +517,9 @@ extern struct zebra_privs_t ospfd_privs;
+@@ -511,9 +512,9 @@ extern struct zebra_privs_t ospfd_privs;
  /* Prototypes. */
  extern const char *ospf_redist_string(unsigned int route_type);
  extern struct ospf *ospf_lookup_instance(unsigned short);

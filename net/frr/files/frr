@@ -28,14 +28,30 @@ start() {
 	daemon_start watchfrr
 }
 stop() {
+	all_daemon_list all_daemons
+	# Kill any currently monitored daemons that are no longer enabled.
+	# Traverse command line args in reverse order, bailing out when we hit
+	# an argument that is not a daemon. Otherwise, if it's not in the
+	# new daemon list, stop it.
+	watchfrr_pid=`pidof watchfrr`
+	for i in `tr '\0' '\n' < /proc/$watchfrr_pid/cmdline | sed -n '1!G;h;$p'`; do
+	in_list $i $all_daemons || break
+	in_list $i $daemons || daemon_stop $i
+	done
 	daemon_stop watchfrr
-	all_stop --reallyall
+#	all_stop --reallyall
 	exit ${still_running:-0}
 }
 
 restart() {
+	all_daemon_list all_daemons
+	watchfrr_pid=`pidof watchfrr`
+	for i in `tr '\0' '\n' < /proc/$watchfrr_pid/cmdline | sed -n '1!G;h;$p'`; do
+	in_list $i $all_daemons || break
+	in_list $i $daemons || daemon_stop $i
+	done
 	daemon_stop watchfrr
-	all_stop --reallyall
+#	all_stop --reallyall
 
 	daemon_list daemons
 	watchfrr_options="$watchfrr_options $daemons"
@@ -50,6 +66,7 @@ status() {
 }
 
 reload() {
+	RELOAD_SCRIPT="/usr/sbin/frr-reload"
 	if [ ! -x "$RELOAD_SCRIPT" ]; then
 		log_failure_msg "The frr-pythontools package is required for reload functionality."
 		exit 1

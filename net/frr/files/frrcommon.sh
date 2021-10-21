@@ -125,6 +125,41 @@ daemon_list() {
 	[ -n "$dvar" ] && eval $dvar="\"$disabled\""
 }
 
+all_daemon_list() {
+	# note $1 specifies the name of a global variable to be set
+	local enabled evar daemon inst oldifs i
+	enabled=""
+	evar="$1"
+
+	for daemon in $DAEMONS; do
+		eval inst=\$${daemon}_instances
+		if [ -n "$inst" ]; then
+			oldifs="${IFS}"
+			IFS="${IFS},"
+			for i in $inst; do
+				enabled="$enabled $daemon-$i"
+			done
+			IFS="${oldifs}"
+		else
+		    enabled="$enabled $daemon"
+		fi
+	done
+
+	enabled="${enabled# }"
+	[ -z "$evar" ] && echo "$enabled"
+	[ -n "$evar" ] && eval $evar="\"$enabled\""
+}
+
+in_list() {
+	local item i
+	item="$1"
+	shift 1
+	for i in "$@"; do
+		[ "$item" = "$i" ] && return 0
+	done
+	return 1
+}
+
 #
 # individual daemon management
 #
