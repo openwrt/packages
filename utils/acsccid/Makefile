@@ -9,17 +9,19 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=acsccid
 PKG_VERSION:=1.1.8
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
-PKG_SOURCE:=v$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/acshk/acsccid/archive/
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/acshk/acsccid/tar.gz/v$(PKG_VERSION)?
 PKG_HASH:=68d15eb20e7f52153509f1dc300cf0c68b388c59d7d124ba494fd96c61a6e7c6
+
 PKG_MAINTAINER:=Vincent JARDIN <vjardin@free.fr>
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
 
 PKG_FIXUP:=libtool
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
