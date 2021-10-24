@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rosy-file-server
 PKG_VERSION:=1.0.0
-PKG_RELEASE:=1
+PKG_RELEASE:=$(AUTORELEASE)
 PKG_LICENSE:=GPL-2.0
 
 PKG_MAINTAINER:=Rosy Song <rosysong@rosinson.com>
@@ -31,7 +31,7 @@ define Package/rosy-file-server/description
 endef
 
 define Package/rosy-file-server/conffiles
-/etc/config/rosy-file-server
+/etc/config/rosyfs
 endef
 
 define Build/Prepare
