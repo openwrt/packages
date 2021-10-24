@@ -69,11 +69,11 @@ define Package/podman-selinux/description
 endef
 
 define Package/podman/conffiles
-  /etc/containers/policy.json
-  /etc/containers/storage.conf
-  /etc/containers/registries.conf
-  /etc/containers/containers.conf
-  /etc/cni/net.d/87-podman-bridge.conflist
+/etc/containers/policy.json
+/etc/containers/storage.conf
+/etc/containers/registries.conf
+/etc/containers/containers.conf
+/etc/cni/net.d/87-podman-bridge.conflist
 endef
 
 Package/podman-selinux/conffiles = $(Package/podman/conffiles)
