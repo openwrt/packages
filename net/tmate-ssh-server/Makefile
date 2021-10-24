@@ -48,4 +48,8 @@ define Package/tmate-ssh-server/install
 	$(INSTALL_DATA) ./files/tmate-ssh-server.config $(1)/etc/config/tmate-ssh-server
 endef
 
+define Package/tmate-ssh-server/conffiles
+/etc/config/tmate-ssh-server
+endef
+
 $(eval $(call BuildPackage,tmate-ssh-server))

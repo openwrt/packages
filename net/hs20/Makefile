@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hs20
-PKG_RELEASE:=5
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE_URL:=http://w1.fi/hostap.git
 PKG_SOURCE_PROTO:=git
@@ -138,6 +138,10 @@ define Package/hs20-server/install
 	$(INSTALL_BIN) ./files/hs20-server.defaults $(1)/etc/uci-defaults/hs20-server
 	$(INSTALL_CONF) ./files/hs20.config $(1)/etc/config/hs20
 	$(INSTALL_BIN) ./files/hs20.init $(1)/etc/init.d/hs20
+endef
+
+define Package/hs20-server/conffiles
+/etc/config/hs20
 endef
 
 $(eval $(call BuildPackage,hs20-common))
