@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=uradvd
-PKG_RELEASE:=1
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=https://github.com/freifunk-gluon/uradvd.git
@@ -27,11 +27,15 @@ endef
 
 define Package/uradvd/install
 	$(INSTALL_DIR) $(1)/etc/config/
-	$(INSTALL_DATA) ./files/uradvd.config $(1)/etc/config/
+	$(INSTALL_DATA) ./files/uradvd.config $(1)/etc/config/uradvd
 	$(INSTALL_DIR) $(1)/etc/init.d/
-	$(INSTALL_BIN) ./files/uradvd.init $(1)/etc/init.d/
+	$(INSTALL_BIN) ./files/uradvd.init $(1)/etc/init.d/uradvd
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/uradvd $(1)/usr/sbin/
+endef
+
+define Package/uradvd/conffiles
+/etc/config/uradvd
 endef
 
 $(eval $(call BuildPackage,uradvd))
