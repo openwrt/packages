@@ -56,10 +56,14 @@ define Package/atftpd/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/atftpd.init $(1)/etc/init.d/atftpd
 	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_BIN) ./files/atftpd.conf $(1)/etc/config/atftpd
+	$(INSTALL_CONF) ./files/atftpd.conf $(1)/etc/config/atftpd
 	$(INSTALL_DIR) $(1)/srv/tftp
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)//usr/sbin/atftpd $(1)/usr/sbin/
+endef
+
+define Package/atftpd/conffiles
+/etc/config/atftpd
 endef
 
 $(eval $(call BuildPackage,atftp))
