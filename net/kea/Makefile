@@ -313,6 +313,10 @@ define Package/kea-uci/install
 	$(INSTALL_BIN) ./files/kea.init $(1)/etc/init.d/kea
 endef
 
+define Package/kea-uci/conffiles
+/etc/config/kea
+endef
+
 $(eval $(call HostBuild))
 $(eval $(call BuildPackage,kea-libs))
 $(eval $(call BuildPackage,kea-ctrl))

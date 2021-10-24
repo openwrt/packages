@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=udhcpsnoop
-PKG_RELEASE:=1
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_MAINTAINER:=John Crispin <john@phrozen.org>
@@ -26,6 +26,10 @@ define Package/udhcpsnoop/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/udhcpsnoop $(1)/usr/sbin/
 	$(CP) ./files/* $(1)
+endef
+
+define Package/udhcpsnoop/conffiles
+/etc/config/dhcpsnoop
 endef
 
 $(eval $(call BuildPackage,udhcpsnoop))

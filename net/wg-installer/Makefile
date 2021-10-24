@@ -41,6 +41,10 @@ define Package/wg-installer-server/install
 	$(INSTALL_CONF) ./wg-server/config/wgserver.conf $(1)/etc/config/wgserver
 endef
 
+define Package/wg-installer-server/conffiles
+/etc/config/wgserver
+endef
+
 define Package/wg-installer-server/postinst
 	#!/bin/sh
 	if [ -z $${IPKG_INSTROOT} ] ; then
@@ -74,6 +78,10 @@ define Package/wg-installer-client/install
 
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./wg-client/config/wgclient.conf $(1)/etc/config/wgclient
+endef
+
+define Package/wg-installer-client/conffiles
+/etc/config/wgclient
 endef
 
 $(eval $(call BuildPackage,wg-installer-server))

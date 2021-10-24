@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=UDPspeeder
 PKG_VERSION:=20210116.0
-PKG_RELEASE:=2
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/wangyu-/$(PKG_NAME)/tar.gz/$(PKG_VERSION)?
@@ -54,6 +54,10 @@ define Package/UDPspeeder/install
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/udpspeeder-init $(1)/etc/init.d/udpspeeder
+endef
+
+define Package/UDPspeeder/conffiles
+/etc/config/udpspeeder
 endef
 
 $(eval $(call BuildPackage,UDPspeeder))
