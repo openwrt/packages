@@ -87,7 +87,7 @@ This package provides the Dante sockd daemon.
 endef
 
 define Package/sockd/conffiles
-	/etc/sockd.conf
+/etc/sockd.conf
 endef
 
 define Package/sockd/install
@@ -116,7 +116,7 @@ This package provides the Dante socksify client.
 endef
 
 define Package/socksify/conffiles
-	/etc/socks.conf
+/etc/socks.conf
 endef
 
 define Package/socksify/install
