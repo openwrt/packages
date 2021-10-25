@@ -1,3 +1,7 @@
 #!/bin/sh
 
-rclone version | grep "$2"
+case "$1" in
+	"rclone")
+		rclone version | grep "$2"
+		;;
+esac
