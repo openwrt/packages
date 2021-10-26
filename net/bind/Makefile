@@ -69,6 +69,7 @@ endef
 define Package/bind-server
   $(call Package/bind/Default)
   TITLE+= DNS server
+  DEPENDS+= libcap
 endef
 
 define Package/bind-server/config
@@ -135,7 +136,6 @@ export BUILD_CC="$(TARGET_CC)"
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 
 CONFIGURE_ARGS += \
-	--disable-linux-caps \
 	--with-openssl="$(STAGING_DIR)/usr" \
 	--with-libtool \
 	--without-lmdb \
