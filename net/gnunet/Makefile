@@ -17,16 +17,20 @@ PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=gettext-version
 PKG_INSTALL:=1
 
+# despite configure fails if sqlite3 isn't detected
+PKG_BUILD_DEPENDS:=sqlite3
+
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
+# always pass --with-sqlite as configure fails when trying --without-sqlite
 CONFIGURE_ARGS+= \
 	--with-libiconv-prefix="$(ICONV_PREFIX)" \
 	--with-libintl-prefix="$(INTL_PREFIX)" \
 	--with-ltdl \
 	$(if $(CONFIG_PACKAGE_$(PKG_NAME)-mysql),--with-mysql="$(STAGING_DIR)/usr",--without-mysql) \
 	$(if $(CONFIG_PACKAGE_$(PKG_NAME)-pgsql),--with-postgresql="$(STAGING_DIR)/usr/bin/pg_config",--without-postgresql) \
-	$(if $(CONFIG_PACKAGE_libsqlite3),--with-sqlite="$(STAGING_DIR)/usr",--without-sqlite) \
+	--with-sqlite="$(STAGING_DIR)/usr" \
 	--enable-testing \
 	--disable-testruns \
 	--disable-documentation \
@@ -315,8 +319,9 @@ DEPENDS_fs-mysql:=+gnunet-mysql +gnunet-datastore
 PLUGIN_fs-mysql:=datastore_mysql
 CONFLICTS_fs-mysql:=gnunet-fs-pgsql gnunet-fs-sqlite
 
-DEPENDS_pgsql:=+libpq
+DEPENDS_pgsql:=+libpq +pgsql-server
 LIB_pgsql:=pq
+USERID_pgsql:=gnunet=958::postgres=5432
 
 DEPENDS_dhtcache-pgsql:=+gnunet-pgsql
 PLUGIN_dhtcache-pgsql:=datacache_postgres
