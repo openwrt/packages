@@ -17,8 +17,6 @@ Signed-off-by: Martin Storsjö <martin@martin.st>
  libavcodec/libfdk-aacenc.c | 34 +++++++++++++++++++++++++---------
  1 file changed, 25 insertions(+), 9 deletions(-)
 
-diff --git a/libavcodec/libfdk-aacenc.c b/libavcodec/libfdk-aacenc.c
-index c340a1e3e0c..2ad768ed44e 100644
 --- a/libavcodec/libfdk-aacenc.c
 +++ b/libavcodec/libfdk-aacenc.c
 @@ -26,6 +26,11 @@
@@ -33,7 +31,7 @@ index c340a1e3e0c..2ad768ed44e 100644
  typedef struct AACContext {
      const AVClass *class;
      HANDLE_AACENCODER handle;
-@@ -286,7 +291,11 @@ static av_cold int aac_encode_init(AVCodecContext *avctx)
+@@ -286,7 +291,11 @@ static av_cold int aac_encode_init(AVCod
      }
  
      avctx->frame_size = info.frameLength;
@@ -45,7 +43,7 @@ index c340a1e3e0c..2ad768ed44e 100644
      ff_af_queue_init(avctx, &s->afq);
  
      if (avctx->flags & AV_CODEC_FLAG_GLOBAL_HEADER) {
-@@ -319,28 +328,35 @@ static int aac_encode_frame(AVCodecContext *avctx, AVPacket *avpkt,
+@@ -319,28 +328,35 @@ static int aac_encode_frame(AVCodecConte
      int out_buffer_size, out_buffer_element_size;
      void *in_ptr, *out_ptr;
      int ret;
@@ -64,15 +62,16 @@ index c340a1e3e0c..2ad768ed44e 100644
 -        in_ptr                   = frame->data[0];
 -        in_buffer_size           = 2 * avctx->channels * frame->nb_samples;
 -        in_buffer_element_size   = 2;
-+        in_ptr               = frame->data[0];
-+        in_buffer_size       = 2 * avctx->channels * frame->nb_samples;
- 
+-
 -        in_args.numInSamples     = avctx->channels * frame->nb_samples;
 -        in_buf.numBufs           = 1;
 -        in_buf.bufs              = &in_ptr;
 -        in_buf.bufferIdentifiers = &in_buffer_identifier;
 -        in_buf.bufSizes          = &in_buffer_size;
 -        in_buf.bufElSizes        = &in_buffer_element_size;
++        in_ptr               = frame->data[0];
++        in_buffer_size       = 2 * avctx->channels * frame->nb_samples;
++
 +        in_args.numInSamples = avctx->channels * frame->nb_samples;
  
          /* add current frame to the queue */
