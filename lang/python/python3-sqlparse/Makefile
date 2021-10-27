@@ -1,11 +1,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sqlparse
-PKG_VERSION:=0.4.1
-PKG_RELEASE:=1
+PKG_VERSION:=0.4.2
+PKG_RELEASE:=$(AUTORELEASE)
 
 PYPI_NAME:=sqlparse
-PKG_HASH:=0f91fd2e829c44362cbcfab3e9ae12e22badaa8a29ad5ff599f9ec109f0454e8
+PKG_HASH:=0c00730c74263a94e5a9919ade150dfc3b19c574389985446148402998287dae
 
 PKG_MAINTAINER:=Peter Stadler <peter.stadler@student.uibk.ac.at>
 PKG_LICENSE:=BSD-3-Clause
