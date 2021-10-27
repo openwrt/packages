@@ -13,8 +13,6 @@ Signed-off-by: Martin Storsjö <martin@martin.st>
  libavcodec/libfdk-aacenc.c | 27 ++++++++++++++++++++++++++-
  1 file changed, 26 insertions(+), 1 deletion(-)
 
-diff --git a/libavcodec/libfdk-aacenc.c b/libavcodec/libfdk-aacenc.c
-index 92ad1762aea..f71a276403e 100644
 --- a/libavcodec/libfdk-aacenc.c
 +++ b/libavcodec/libfdk-aacenc.c
 @@ -36,6 +36,7 @@ typedef struct AACContext {
@@ -35,7 +33,7 @@ index 92ad1762aea..f71a276403e 100644
      { "signaling", "SBR/PS signaling style", offsetof(AACContext, signaling), AV_OPT_TYPE_INT, { .i64 = -1 }, -1, 2, AV_OPT_FLAG_AUDIO_PARAM | AV_OPT_FLAG_ENCODING_PARAM, "signaling" },
      { "default", "Choose signaling implicitly (explicit hierarchical by default, implicit if global header is disabled)", 0, AV_OPT_TYPE_CONST, { .i64 = -1 }, 0, 0, AV_OPT_FLAG_AUDIO_PARAM | AV_OPT_FLAG_ENCODING_PARAM, "signaling" },
      { "implicit", "Implicit backwards compatible signaling", 0, AV_OPT_TYPE_CONST, { .i64 = 0 }, 0, 0, AV_OPT_FLAG_AUDIO_PARAM | AV_OPT_FLAG_ENCODING_PARAM, "signaling" },
-@@ -149,7 +153,28 @@ static av_cold int aac_encode_init(AVCodecContext *avctx)
+@@ -149,7 +153,28 @@ static av_cold int aac_encode_init(AVCod
  
      switch (avctx->channels) {
      case 1: mode = MODE_1;       sce = 1; cpe = 0; break;

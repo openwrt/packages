@@ -19,8 +19,6 @@ Signed-off-by: Martin Storsjö <martin@martin.st>
  libavcodec/libfdk-aacenc.c |  6 +++---
  2 files changed, 11 insertions(+), 8 deletions(-)
 
-diff --git a/libavcodec/libfdk-aacdec.c b/libavcodec/libfdk-aacdec.c
-index 3be65155b5f..c3d3b70fc93 100644
 --- a/libavcodec/libfdk-aacdec.c
 +++ b/libavcodec/libfdk-aacdec.c
 @@ -25,9 +25,12 @@
@@ -39,7 +37,7 @@ index 3be65155b5f..c3d3b70fc93 100644
  #define AAC_PCM_MAX_OUTPUT_CHANNELS AAC_PCM_OUTPUT_CHANNELS
  #endif
  
-@@ -72,7 +75,7 @@ static const AVOption fdk_aac_dec_options[] = {
+@@ -72,7 +75,7 @@ static const AVOption fdk_aac_dec_option
                       OFFSET(drc_level),      AV_OPT_TYPE_INT,   { .i64 = -1},  -1, 127, AD, NULL    },
      { "drc_heavy", "Dynamic Range Control: heavy compression, where [1] is on (RF mode) and [0] is off",
                       OFFSET(drc_heavy),      AV_OPT_TYPE_INT,   { .i64 = -1},  -1, 1,   AD, NULL    },
@@ -48,7 +46,7 @@ index 3be65155b5f..c3d3b70fc93 100644
      { "level_limit", "Signal level limiting", OFFSET(level_limit), AV_OPT_TYPE_INT, { .i64 = 0 }, -1, 1, AD },
  #endif
      { NULL }
-@@ -293,7 +296,7 @@ static av_cold int fdk_aac_decode_init(AVCodecContext *avctx)
+@@ -293,7 +296,7 @@ static av_cold int fdk_aac_decode_init(A
          }
      }
  
@@ -57,11 +55,9 @@ index 3be65155b5f..c3d3b70fc93 100644
      if (aacDecoder_SetParam(s->handle, AAC_PCM_LIMITER_ENABLE, s->level_limit) != AAC_DEC_OK) {
          av_log(avctx, AV_LOG_ERROR, "Unable to set in signal level limiting in the decoder\n");
          return AVERROR_UNKNOWN;
-diff --git a/libavcodec/libfdk-aacenc.c b/libavcodec/libfdk-aacenc.c
-index 2ad768ed44e..92ad1762aea 100644
 --- a/libavcodec/libfdk-aacenc.c
 +++ b/libavcodec/libfdk-aacenc.c
-@@ -156,7 +156,7 @@ static av_cold int aac_encode_init(AVCodecContext *avctx)
+@@ -156,7 +156,7 @@ static av_cold int aac_encode_init(AVCod
      case 6: mode = MODE_1_2_2_1; sce = 2; cpe = 2; break;
  /* The version macro is introduced the same time as the 7.1 support, so this
     should suffice. */
@@ -70,7 +66,7 @@ index 2ad768ed44e..92ad1762aea 100644
      case 8:
          sce = 2;
          cpe = 3;
-@@ -291,7 +291,7 @@ static av_cold int aac_encode_init(AVCodecContext *avctx)
+@@ -291,7 +291,7 @@ static av_cold int aac_encode_init(AVCod
      }
  
      avctx->frame_size = info.frameLength;
@@ -79,7 +75,7 @@ index 2ad768ed44e..92ad1762aea 100644
      avctx->initial_padding = info.nDelay;
  #else
      avctx->initial_padding = info.encoderDelay;
-@@ -412,7 +412,7 @@ static const uint64_t aac_channel_layout[] = {
+@@ -412,7 +412,7 @@ static const uint64_t aac_channel_layout
      AV_CH_LAYOUT_4POINT0,
      AV_CH_LAYOUT_5POINT0_BACK,
      AV_CH_LAYOUT_5POINT1_BACK,
