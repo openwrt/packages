@@ -77,6 +77,8 @@ define Package/vnstat2/install
 	$(INSTALL_CONF) ./files/vnstat.config $(1)/etc/config/vnstat
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/vnstat.init $(1)/etc/init.d/vnstat
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
+	$(INSTALL_DATA) ./files/vnstat.hotplug $(1)/etc/hotplug.d/iface/50-vnstat
 endef
 
 define Package/vnstati2/install
