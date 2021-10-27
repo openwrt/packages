@@ -1,0 +1,23 @@
+/etc/init.d/vnstat running || exit 0
+[ "$ACTION" = "ifup" ] || exit 0
+
+. /lib/functions.sh
+
+check_iface() {
+	local iface="$1"
+
+	[ "$iface" = "$DEVICE" ] || return
+
+	/usr/bin/vnstat --add -i "$iface" >/dev/null
+
+	exit 0
+}
+
+check_ifaces() {
+	local cfg="$1"
+
+	config_list_foreach "$cfg" interface check_iface
+}
+
+config_load vnstat
+config_foreach check_ifaces vnstat
