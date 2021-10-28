@@ -78,24 +78,24 @@ define Package/xray-core/conffiles
 /etc/config/xray
 endef
 
-GEOIP_VER:=202109060310
+GEOIP_VER:=202110210032
 GEOIP_FILE:=geoip.dat.$(GEOIP_VER)
 
 define Download/geoip
   URL:=https://github.com/v2fly/geoip/releases/download/$(GEOIP_VER)/
   URL_FILE:=geoip.dat
   FILE:=$(GEOIP_FILE)
-  HASH:=ed94122961f358abede9f1954722039d5a0300b614c77cc27d92618c08b97bb8
+  HASH:=932cd484471f8066c040ab84a04fdd70df6c5cee99545de610e1f337bb696220
 endef
 
-GEOSITE_VER:=20210906031055
+GEOSITE_VER:=20211018134657
 GEOSITE_FILE:=dlc.dat.$(GEOSITE_VER)
 
 define Download/geosite
   URL:=https://github.com/v2fly/domain-list-community/releases/download/$(GEOSITE_VER)/
   URL_FILE:=dlc.dat
   FILE:=$(GEOSITE_FILE)
-  HASH:=7618b876fd5a1066d0b44c1c8ce04608495ae991806890f8b1cbfafe79caf6c1
+  HASH:=60b2388b11f1f9b6e14794fbacdf3bf693e3101e3ec651ce5423d8caceda5497
 endef
 
 define Build/Prepare
@@ -118,9 +118,6 @@ define Package/xray-core/install
 	$(INSTALL_CONF) $(CURDIR)/files/xray.conf $(1)/etc/config/xray
 	$(INSTALL_DIR) $(1)/etc/init.d/
 	$(INSTALL_BIN) $(CURDIR)/files/xray.init $(1)/etc/init.d/xray
-
-	$(INSTALL_DIR) $(1)/etc/capabilities/
-	$(INSTALL_DATA) $(CURDIR)/files/xray.capabilities $(1)/etc/capabilities/xray.json
 endef
 
 define Package/xray-example/install
