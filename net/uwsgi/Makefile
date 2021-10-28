@@ -1,11 +1,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=uwsgi
-PKG_VERSION:=2.0.19.1
+PKG_VERSION:=2.0.20
 PKG_RELEASE:=1
 
-PYPI_NAME:=uWSGI
-PKG_HASH:=faa85e053c0b1be4d5585b0858d3a511d2cd10201802e8676060fd0a109e5869
+PYPI_NAME:=uwsgi
+PKG_HASH:=88ab9867d8973d8ae84719cf233b7dafc54326fcaec89683c3f9f77c002cdff9
 PKG_BUILD_DEPENDS:=python3/host
 PYTHON3_PKG_BUILD:=0
 
@@ -18,9 +18,6 @@ include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python3-package.mk
 #for LINUX_UNAME_VERSION:
 include $(INCLUDE_DIR)/kernel.mk
-
-#the .tar.gz does not wrap it into a uWSGI dir; do not use "$(1)/..":
-TAR_CMD=$(HOST_TAR) -C $(1) $(TAR_OPTIONS)
 
 define Package/uwsgi
   SECTION:=net
