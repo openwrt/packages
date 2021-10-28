@@ -1,6 +1,6 @@
 --- a/uwsgiconfig.py
 +++ b/uwsgiconfig.py
-@@ -685,7 +685,7 @@ class uConf(object):
+@@ -688,7 +688,7 @@ class uConf(object):
              self.include_path += os.environ['UWSGI_INCLUDES'].split(',')
  
  
