@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ntfs-3g
 PKG_VERSION:=2021.8.22
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)_ntfsprogs-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=https://www.tuxera.com/opensource/
@@ -61,7 +61,7 @@ define Package/ntfs-3g/config
 config PACKAGE_NTFS-3G_USE_LIBFUSE
 	bool "use external FUSE library, selects package libfuse"
 	depends on PACKAGE_ntfs-3g
-	---help---
+	help
 	Ntfs-3g by default uses a minimalized lite version of FUSE.
 	If libfuse is part of your filesystem anyway (because of sshfs, owfs
 	etc.) it makes sense to activate this option and save some kilobytes
