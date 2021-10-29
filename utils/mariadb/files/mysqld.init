@@ -9,8 +9,6 @@ STOP=10
 USE_PROCD=1
 
 NAME=mysqld
-my_user="mariadb"
-my_group="mariadb"
 
 LOGGER="/usr/bin/logger -p user.err -s -t $NAME --"
 [ -x "$LOGGER" ] || LOGGER="echo"
@@ -70,11 +68,16 @@ start_service() {
 	conf=/etc/mysql/my.cnf
 	logdir=/var/log/mysql
 	rundir=/var/run/mysqld
+	version="$(mysqld --version | sed -n 's|.*Ver[[:blank:]]*\([0-9.]*\)-.*|\1|p')"
 
-	hint="please fix your server configuration in /etc/mysql/"
- 
+	# Few basic checks
 	if [ ! -x "$MYSQLD" ]; then
 		$LOGGER "$MYSQLD is missing"
+		exit 1
+	fi
+
+	if [ -z "$version" ]; then
+		$LOGGER "Can't get MariaDB version, something is seriously wrong"
 		exit 1
 	fi
 
@@ -88,34 +91,50 @@ start_service() {
 		exit 0
 	fi
 
+	# Get various config options
 	config_load "$NAME"
-
+	config_get my_user general user "mariadb"
+	config_get my_group general group "mariadb"
 	config_get_bool enabled general enabled 0
+	config_get_bool init_db general init 1
+	config_get_bool autoupgrade general upgrade 1
+	config_get options general options
+
 	# shellcheck disable=SC2154
 	if [ "$enabled" -eq 0 ]; then
 		$LOGGER "service not enabled in /etc/config/$NAME"
 		exit 1
 	fi
 
-	config_get options general options
-
 	datadir="$(mysqld_get_param datadir)"
 	tmpdir="$(mysqld_get_param tmpdir)"
+	sockdir="$(dirname "$(mysqld_get_param socket)")"
 
+	# Make sure we have a working database in datadir
 	if [ ! -f "$datadir/mysql/tables_priv.MAD" ]; then
 		args="--force"
 		basedir="$(mysqld_get_param basedir)"
 		[ -n "$basedir" ] && args="$args --basedir=$basedir"
 
-		$LOGGER "Cannot detect privileges table. You might need to run"
-		$LOGGER "'mysql_install_db \"$args\"'"
-		$LOGGER "to initialize the system tables."
-		$LOGGER "Then hand it ower to MariaDB user"
-		$LOGGER "'chown -Rh \"$my_user:$my_group\" \"$datadir\"'"
+		# shellcheck disable=SC2154
+		if [ "$init_db" -gt 0 ]; then
+			# shellcheck disable=SC2154
+			mysql_install_db $args --skip-name-resolve --skip-test-db --datadir="$datadir" || exit 1
+			echo "$version" > "$datadir"/.version
+			chown -Rh "$my_user:$my_group" "$datadir"
+		else
+			$LOGGER "Cannot detect privileges table. You might need to run"
+			$LOGGER "'mysql_install_db \"$args\"'"
+			$LOGGER "to initialize the system tables."
+			$LOGGER "Then hand it ower to MariaDB user"
+			# shellcheck disable=SC2154
+			$LOGGER "'chown -Rh \"$my_user:$my_group\" \"$datadir\"'"
 		exit 1
+		fi
 	fi
 
-	for i in "$logdir" "$rundir" "$tmpdir" "$datadir"; do
+	# Make sure all required directories exists and have correct rights
+	for i in "$logdir" "$rundir" "$sockdir"; do
 		opts="-m 0750"
 		if ! [ -e "$i" ]; then
 			# $rundir needs to be accessible for
@@ -125,9 +144,43 @@ start_service() {
 			fi
 			# shellcheck disable=SC2086
 			mkdir -p $opts "$i"
-			[ -d "$i" ] && chown -Rh "$my_user:$my_group" "$i"
 		fi
+		# shellcheck disable=SC2154
+		[ -d "$i" ] && chown -Rh "$my_user:$my_group" "$i"
 	done
+
+	# Migration from old versions
+	# shellcheck disable=SC2154
+ 	if [ "$(cat "$datadir"/.version 2> /dev/null)" \!= "$version" ] && [ "$autoupgrade" -gt 0 ]; then
+		# Start upgrade instance without credentials
+ 		sudo -u "$my_user" mysqld --skip-networking --skip-grant-tables --socket=/tmp/mysql_upgrade.sock &
+		PID="$!"
+ 		i=0
+		# Wait for upgrade instance of db to start
+ 		while [ "$i" -lt 15 ] && test \! -S /tmp/mysql_upgrade.sock; do
+ 			sleep 1
+ 			i="$((i + 1))"
+ 		done
+ 		[ -S /tmp/mysql_upgrade.sock ] || {
+			$LOGGER "Failed to start upgrading instance of MariaDB."
+			exit 1
+		}
+		# Upgrade the database
+ 		mysql_upgrade --upgrade-system-tables --socket=/tmp/mysql_upgrade.sock
+ 		echo "$version" > "$datadir"/.version
+		# Stop the upgrade instance
+ 		kill "$PID"
+ 		i=0
+ 		while [ "$i" -lt 60 ] && grep -q mysql "/proc/$PID/cmdline"; do
+ 			sleep 1
+ 			[ "$i" -lt 30 ] || kill "$PID"
+ 			i="$((i + 1))"
+ 		done
+		# Use force
+ 		if grep -q mysql "/proc/$PID/cmdline"; then
+ 			kill -9 "$PID"
+ 		fi
+ 	fi
 
 	# Start daemon
 	procd_open_instance
