@@ -121,6 +121,7 @@ ovs_bridge_port_add() {
 	}
 
 	ovs-vsctl --may-exist add-port "$name" "$port" ${type:+ -- set interface "$port" type="$type"}
+	ovs_bridge_port_up "$port"
 	__port_list="$__port_list ${port} "
 }
 
@@ -162,6 +163,7 @@ ovs_bridge_port_add_complex() {
 	ovs-vsctl --may-exist add-port "$bridge" "$port" ${tag:+tag="$tag"} \
 		${ofport:+ -- set interface "$port" ofport_request="$ofport"} \
 		${type:+ -- set interface "$port" type="$type"}
+	ovs_bridge_port_up "$port"
 	__port_list="$__port_list ${port} "
 }
 
@@ -172,6 +174,12 @@ ovs_bridge_port_cleanup() {
 			*) ovs-vsctl del-port "$port";;
 		esac
 	done
+}
+
+ovs_bridge_port_up() {
+	local port="$1"
+
+	ip link set dev "$port" up
 }
 
 ovs_bridge_validate_datapath_id() {
