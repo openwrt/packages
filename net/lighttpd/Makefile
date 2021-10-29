@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lighttpd
-PKG_VERSION:=1.4.60
+PKG_VERSION:=1.4.61
 PKG_RELEASE:=1
 # release candidate ~rcX testing; remove for release
-#PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-1.4.60
+#PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-1.4.61
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://download.lighttpd.net/lighttpd/releases-1.4.x
-PKG_HASH:=4bb1dd859e541a3131e5be101557d2e1195b4129d3a849a3a6fbd21fe1c946f0
+PKG_HASH:=43f0d63d04a1b7c5b8aab07e0612e44ccad0afc0614bab784c5b019872363432
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=BSD-3-Clause
