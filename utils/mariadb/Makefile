@@ -1,5 +1,6 @@
 #
 # Copyright (C) 2018 Sebastian Kemper <sebastian_ml@gmx.net>
+# Copyright (C) 2021 Michal Hrusecky <michal@hrusecky.net>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,19 +9,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
-PKG_VERSION:=10.4.18
+PKG_VERSION:=10.6.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL := \
-	https://mirror.netcologne.de/mariadb/$(PKG_NAME)-$(PKG_VERSION)/source \
-	https://mirror.lstn.net/mariadb/$(PKG_NAME)-$(PKG_VERSION)/source \
-	https://ftp.yz.yamagata-u.ac.jp/pub/dbms/mariadb/$(PKG_NAME)-$(PKG_VERSION)/source \
-	https://downloads.mariadb.org/interstitial/$(PKG_NAME)-$(PKG_VERSION)/source
+PKG_SOURCE_URL := https://archive.mariadb.org/$(PKG_NAME)-$(PKG_VERSION)/source
 
-PKG_HASH:=330d9e8273002fc92f0f3f3f9b08157a3cab1265a0f114adeb6235e4283a0d3e
+PKG_HASH:=75bf9b147a95d38160d01a73b098d50a1960563b46d16a235971fff64d99643c
 PKG_MAINTAINER:=Michal Hrusecky <Michal@Hrusecky.net>
-PKG_LICENSE:=GPL-2.0
+PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING THIRDPARTY
 
 PKG_CPE_ID:=cpe:/a:mariadb:mariadb
@@ -288,7 +285,7 @@ define Package/mariadb-server-base
 	  $(MARIADB_COMMON_DEPENDS) \
 	  +libaio \
 	  +liblzma \
-	  +libpcre \
+	  +libpcre2 \
 	  +resolveip
   TITLE:=MariaDB database server base
   USERID:=mariadb=376:mariadb=376
@@ -560,11 +557,6 @@ ifeq ($(1),auth_pam)
 	  $(INSTALL_DATA) \
 		  $(PKG_INSTALL_DIR)/lib/security/pam_user_map.so \
 					  $$(1)/lib/security
-endif
-ifeq ($(1),ha_spider)
-	  $(INSTALL_DIR) $$(1)$(SHARE_DIR)
-	  $(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/install_spider.sql \
-		  $$(1)$(SHARE_DIR)
 endif
   endef
   $$(eval $$(call BuildPackage,mariadb-server-plugin-$(subst _,-,$(1))))
