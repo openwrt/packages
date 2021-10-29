@@ -32,7 +32,7 @@ CONF_DIR:=/etc/mysql
 PLUGIN_DIR:=/usr/lib/mariadb/plugin
 SHARE_DIR:=/usr/share/mariadb
 
-MARIADB_SOCKET=/var/run/mysqld/mysqld.sock
+MARIADB_SOCKET=/var/run/mysql/mysql.sock
 
 MARIADB_DISABLE_ENGINES := \
 	cassandra \
@@ -213,7 +213,8 @@ define Package/mariadb-client
   $(call Package/mariadb/Default)
   TITLE:=MariaDB database client
   MENU:=1
-  DEPENDS:=mariadb-client-base
+  DEPENDS:=$(MARIADB_COMMON_DEPENDS) \
+	  +libedit
 endef
 
 define Package/mariadb-client/description
@@ -222,26 +223,6 @@ $(call Package/mariadb/description/Default)
 This package includes the following core client binaries:
 
 $(subst $(space),$(newline),$(MARIADB_CLIENT))
-
-endef
-
-define Package/mariadb-client-base
-  $(call Package/mariadb/Default)
-  TITLE:=MariaDB database client base
-  DEPENDS:=mariadb-common \
-	  $(MARIADB_COMMON_DEPENDS) \
-	  +libedit
-endef
-
-define Package/mariadb-client-base/conffiles
-$(CONF_DIR)/conf.d/50-mysql-clients.cnf
-endef
-
-define Package/mariadb-client-base/description
-$(call Package/mariadb/description/Default)
-
-This package provides the foundation for mariadb-client. It installs the
-configuration and the dependencies.
 
 endef
 
@@ -268,10 +249,6 @@ define Package/mariadb-server
   PROVIDES:=mysql-server
 endef
 
-define Package/mariadb-server/conffiles
-/usr/bin/mysqld_safe
-endef
-
 define Package/mariadb-server/description
 $(call Package/mariadb/description/Default)
 
@@ -283,7 +260,7 @@ endef
 
 define Package/mariadb-server-base
   $(call Package/mariadb/Default)
-  DEPENDS:=mariadb-common \
+  DEPENDS:= \
 	  $(MARIADB_COMMON_DEPENDS) \
 	  +!KERNEL_IO_URING:libaio \
 	  +KERNEL_IO_URING:liburing \
@@ -295,6 +272,7 @@ define Package/mariadb-server-base
 endef
 
 define Package/mariadb-server-base/conffiles
+$(CONF_DIR)/my.cnf
 $(CONF_DIR)/conf.d/50-server.cnf
 $(CONF_DIR)/conf.d/60-galera.cnf
 /etc/config/mysqld
@@ -359,6 +337,8 @@ CMAKE_OPTIONS += \
 	-DCONNECT_WITH_MONGO=NO \
 	-DCONNECT_WITH_ODBC=NO \
 	-DDISABLE_SHARED=NO \
+	-DDEFAULT_CHARSET=utf8mb4 \
+	-DDEFAULT_COLLATION=utf8mb4_general_ci \
 	-DENABLED_PROFILING=OFF \
 	-DENABLE_STATIC_LIBS=OFF \
 	-DINSTALL_DOCDIR=share/doc/mariadb \
@@ -370,6 +350,7 @@ CMAKE_OPTIONS += \
 	-DINSTALL_PAMDATADIR="/etc/security" \
 	-DINSTALL_PAMDIR="/lib/security" \
 	-DINSTALL_PLUGINDIR=lib/mariadb/plugin \
+	-DINSTALL_PREFIX="/usr" \
 	-DINSTALL_SBINDIR=bin \
 	-DINSTALL_SCRIPTDIR=bin \
 	-DINSTALL_SQLBENCHDIR="" \
@@ -482,11 +463,6 @@ define Package/mariadb-client/install
 	cd $(1)/usr/bin; $(LN) mysqlcheck mysqloptimize
 endef
 
-define Package/mariadb-client-base/install
-	$(INSTALL_DIR) $(1)$(CONF_DIR)/conf.d
-	$(INSTALL_DATA) conf/50-mysql-clients.cnf $(1)$(CONF_DIR)/conf.d
-endef
-
 define Package/mariadb-client-extra/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(foreach b,$(MARIADB_CLIENT_EXTRA),$(call Package/mariadb/install/bin,$(1),$(b));)
@@ -507,6 +483,7 @@ define Package/mariadb-server-base/install
 	$(SED) '/^[a-z]/s/^/#/' $(PKG_INSTALL_DIR)$(SHARE_DIR)/wsrep.cnf
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/wsrep.cnf $(1)$(CONF_DIR)/conf.d/60-galera.cnf
 	$(INSTALL_DATA) conf/50-server.cnf $(1)$(CONF_DIR)/conf.d
+	$(INSTALL_DATA) conf/my.cnf $(1)$(CONF_DIR)
 	$(INSTALL_CONF) files/mysqld.config $(1)/etc/config/mysqld
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/charsets/* $(1)$(SHARE_DIR)/charsets
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)$(SHARE_DIR)/english/errmsg.sys $(1)$(SHARE_DIR)/english
@@ -567,7 +544,6 @@ endef
 
 $(eval $(call HostBuild))
 $(eval $(call BuildPackage,mariadb-client))
-$(eval $(call BuildPackage,mariadb-client-base))
 $(eval $(call BuildPackage,mariadb-client-extra))
 $(eval $(call BuildPackage,mariadb-server))
 $(eval $(call BuildPackage,mariadb-server-base))
