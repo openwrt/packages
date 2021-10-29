@@ -41,7 +41,6 @@ endef
 CMAKE_OPTIONS += \
 	-DBUILD_TESTING=OFF \
 	-DCMAKECONFIG_INSTALL_DIR=lib/cmake/czmq \
-	-DCMAKE_SKIP_INSTALL_RPATH=ON \
 	-DENABLE_DRAFTS=OFF
 
 define Package/czmq/install
