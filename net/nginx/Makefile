@@ -8,12 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
-PKG_VERSION:=1.21.3
+PKG_VERSION:=quic
 PKG_RELEASE:=1
 
-PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://nginx.org/download/
-PKG_HASH:=14774aae0d151da350417efc4afda5cce5035056e71894836797e1f6e2d1175a
+#PKG_SOURCE_PROTO:=hg
+#PKG_SOURCE_URL:=https://hg.nginx.org/nginx-quic
+PKG_SOURCE_VERSION:=80d396fd8ee8
+PKG_SOURCE:=$(PKG_SOURCE_VERSION).tar.gz
+PKG_SOURCE_URL:=https://hg.nginx.org/nginx-quic/archive
+PKG_SOURCE_DATE:=2021-06-10
+PKG_HASH:=ea91ba3ecc03d6e8eadf64f8868eae7256206a057b8d782066f090787b489146
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de> \
 				Ansuel Smith <ansuelsmth@gmail.com>
@@ -82,7 +86,7 @@ define Package/nginx/default
   SUBMENU:=Web Servers/Proxies
   TITLE:=Nginx web server
   URL:=http://nginx.org/
-  DEPENDS:=+libopenssl +libpthread
+  DEPENDS:=+boringssl +libpthread
   # TODO: add PROVIDES when removing nginx
   # PROVIDES:=nginx
 endef
@@ -347,9 +351,10 @@ CONFIGURE_ARGS += \
 			--http-proxy-temp-path=/var/lib/nginx/proxy \
 			--http-fastcgi-temp-path=/var/lib/nginx/fastcgi \
 			--with-cc="$(TARGET_CC)" \
-			--with-cc-opt="$(TARGET_CPPFLAGS) $(TARGET_CFLAGS)" \
-			--with-ld-opt="$(TARGET_LDFLAGS)" \
-			--without-http_upstream_zone_module
+			--with-cc-opt="$(TARGET_CPPFLAGS) $(TARGET_CFLAGS) -I$(STAGING_DIR)/usr/include/boringssl" \
+                        --with-ld-opt="$(TARGET_LDFLAGS) -L$(STAGING_DIR)/usr/lib/boringssl" \
+			--without-http_upstream_zone_module \
+                        --with-http_v3_module
 
 define Package/nginx-mod-luci/install
 	$(INSTALL_DIR) $(1)/etc/nginx/conf.d
@@ -396,6 +401,10 @@ define Download/nginx-headers-more
   URL:=https://github.com/openresty/headers-more-nginx-module.git
   MIRROR_HASH:=ce0b9996ecb2cff790831644d6ab1adc087aa2771d77d3931c06246d11bc59fd
   PROTO:=git
+endef
+
+define Build/Configure
+        cd $(PKG_BUILD_DIR) && ln -s ./auto/configure ./configure && ./configure ${CONFIGURE_ARGS}
 endef
 
 define Prepare/nginx-headers-more

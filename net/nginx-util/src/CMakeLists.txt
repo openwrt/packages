@@ -5,7 +5,7 @@ SET(CMAKE_CXX_STANDARD 17)
 
 INCLUDE(CheckFunctionExists)
 
-ADD_DEFINITIONS(-Os -Wall -Werror -Wextra -g3)
+ADD_DEFINITIONS(-Os -Wall -Wextra -g3)
 ADD_DEFINITIONS(-Wno-unused-parameter -Wmissing-declarations -Wshadow)
 
 SET(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")

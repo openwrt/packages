@@ -1,0 +1,20 @@
+--- a/lua-nginx/config
++++ b/lua-nginx/config
+@@ -490,7 +490,7 @@ static void foo(void)
+ "
+ ngx_feature_test="exit(a);"
+ SAVED_CC_TEST_FLAGS="$CC_TEST_FLAGS"
+-CC_TEST_FLAGS="-Werror -Wall $CC_TEST_FLAGS"
++CC_TEST_FLAGS="-Wall $CC_TEST_FLAGS"
+ 
+ . auto/feature
+ 
+@@ -506,7 +506,7 @@ ngx_feature_incs="#include <malloc.h>
+ #include <stdio.h>"
+ ngx_feature_test="int rc = malloc_trim((size_t) 0); printf(\"%d\", rc);"
+ SAVED_CC_TEST_FLAGS="$CC_TEST_FLAGS"
+-CC_TEST_FLAGS="-Werror -Wall $CC_TEST_FLAGS"
++CC_TEST_FLAGS="-Wall $CC_TEST_FLAGS"
+ 
+ . auto/feature
+ 
