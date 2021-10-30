@@ -383,6 +383,7 @@ CONFIGURE_ARGS +=			\
 	--disable-debug-mutex		\
 	--disable-debug-tcg		\
 	--disable-docs			\
+	--disable-fuse			\
 	--disable-gcrypt		\
 	--with-git-submodules=ignore	\
 	--disable-glusterfs		\
