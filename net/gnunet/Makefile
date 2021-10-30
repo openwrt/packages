@@ -321,7 +321,7 @@ CONFLICTS_fs-mysql:=gnunet-fs-pgsql gnunet-fs-sqlite
 
 DEPENDS_pgsql:=+libpq +pgsql-server
 LIB_pgsql:=pq
-USERID_pgsql:=gnunet=958::postgres=5432
+USERID_pgsql:=gnunet=958:postgres=5432
 
 DEPENDS_dhtcache-pgsql:=+gnunet-pgsql
 PLUGIN_dhtcache-pgsql:=datacache_postgres
