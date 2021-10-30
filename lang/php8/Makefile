@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
 PKG_VERSION:=8.0.12
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 PKG_LICENSE:=PHP-3.01
@@ -40,7 +40,7 @@ PHP8_MODULES= \
 
 PKG_CONFIG_DEPENDS:= \
 	$(patsubst %,CONFIG_PACKAGE_php8-mod-%,$(PHP8_MODULES)) \
-	CONFIG_PHP8_LIBXML CONFIG_PHP8_SYSTEMTZDATA
+	CONFIG_PHP8_LIBXML CONFIG_PHP8_SYSTEMTZDATA CONFIG_PACKAGE_apache-mod-php8
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -66,7 +66,7 @@ define Package/php8/config
 
 	config PHP8_SYSTEMTZDATA
 		bool "Use system timezone data instead of php's built-in database"
-		depends on PACKAGE_php8-cli || PACKAGE_php8-cgi
+		depends on PACKAGE_php8-cli || PACKAGE_php8-cgi || PACKAGE_apache-mod-php8
 		default y
 		help
 			Enabling this feature automatically selects the zoneinfo-core package
@@ -150,6 +150,22 @@ define Package/php8-mod-intl/description
   However, the data is required to make the ICU library useful - and thus
   directly affects PHPs ICU extension, too - so consider to also
   select/install package 'icu-full-data'.
+endef
+
+define Package/apache-mod-php8
+  $(call Package/php8/Default)
+  SUBMENU:=Web Servers/Proxies
+  SECTION:=net
+  CATEGORY:=Network
+  DEPENDS+=PACKAGE_apache-mod-php8:apache \
+	   +PACKAGE_php8-mod-intl:libstdcpp \
+	   +libpcre2 +zlib
+  TITLE:=PHP8 module for Apache Web Server
+endef
+
+define Package/apache-mod-php8/description
+  $(call Package/php8/Default/description)
+  This package contains the PHP module for the Apache Web Server.
 endef
 
 # not everything groks --disable-nls
@@ -462,6 +478,10 @@ else
   CONFIGURE_ARGS+= --without-system-tzdata
 endif
 
+ifneq ($(CONFIG_PACKAGE_apache-mod-php8),)
+  CONFIGURE_ARGS+= --with-apxs2=$(STAGING_DIR)/usr/bin/apxs
+endif
+
 CONFIGURE_VARS+= \
 	ac_cv_c_bigendian_php=$(if $(CONFIG_BIG_ENDIAN),yes,no) \
 	php_cv_cc_rpath="no" \
@@ -531,6 +551,11 @@ define Package/php8-fpm/conffiles
 /etc/config/php8-fpm
 endef
 
+define Package/apache-mod-php8/install
+	$(INSTALL_DIR) $(1)/usr/lib/apache2
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/libs/libphp.so $(1)/usr/lib/apache2
+endef
+
 define Build/Prepare
 	$(call Build/Prepare/Default)
 	$(if $(QUILT),,( cd $(PKG_BUILD_DIR); touch configure.ac; ./buildconf --force ))
@@ -594,6 +619,7 @@ $(eval $(call BuildPackage,php8-cgi))
 $(eval $(call BuildPackage,php8-cli))
 $(eval $(call BuildPackage,php8-fastcgi))
 $(eval $(call BuildPackage,php8-fpm))
+$(eval $(call BuildPackage,apache-mod-php8))
 
 #$(eval $(call BuildModule,NAME,TITLE[,PKG DEPENDS]))
 $(eval $(call BuildModule,bcmath,Bcmath))
