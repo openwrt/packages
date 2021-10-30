@@ -14,18 +14,11 @@
 #
 # * Basic Settings
 #
-user		= mariadb
-pid-file	= /var/run/mysqld/mysqld.pid
-socket		= /var/run/mysqld/mysqld.sock
 port		= 3306
-basedir		= /usr
 # Don't put this on flash memory
-# Figure out where you are going to put the databases and run
-# mysql_install_db --force
-datadir		= /mnt/data/mysql
-# tmpdir should also not go on flash memory
-tmpdir		= /tmp
-lc-messages-dir	= /usr/share/mariadb
+# datadir		= /srv/mysql
+# tmpdir should also not go on flash memory, but needs to exist and have correct rights
+# tmpdir		= /tmp
 
 skip-external-locking
 
@@ -51,6 +44,7 @@ myisam_recover_options	= BACKUP
 # * Query Cache Configuration
 #
 query_cache_limit	= 1M
+query_cache_min_res_unit = 1k
 query_cache_size	= 16M
 
 #
@@ -88,6 +82,19 @@ max_binlog_size		= 100M
 #
 # InnoDB is enabled by default with a 10MB datafile in /var/lib/mysql/.
 # Read the manual for more InnoDB related options. There are many!
+innodb_file_per_table=1
+innodb_buffer_pool_size=64M
+innodb_flush_log_at_trx_commit=2
+innodb_log_buffer_size=32M
+innodb_max_dirty_pages_pct=90
+# You can set .._buffer_pool_size up to 50 - 80 %
+# of RAM but beware of setting memory usage too high
+#innodb_buffer_pool_size = 16M
+# Set .._log_file_size to 25 % of buffer pool size
+#innodb_log_file_size = 5M
+#innodb_log_buffer_size = 8M
+#innodb_flush_log_at_trx_commit = 1
+#innodb_lock_wait_timeout = 50
 
 #
 # * Security Features
@@ -104,25 +111,6 @@ max_binlog_size		= 100M
 # Accept only connections using the latest and most secure TLS protocol version.
 # ..when MariaDB is compiled with OpenSSL:
 # ssl-cipher=TLSv1.2
-
-#
-# * Character sets
-#
-# MySQL/MariaDB default is Latin1, but in OpenWrt we rather default to the full
-# utf8 4-byte character set. See also client.cnf
-#
-# Note: In OpenWrt until mariadb 10.2.19-2 the baked-in defaults were
-# "DEFAULT_CHARSET=utf8" and "DEFAULT_COLLATION=utf8_general_ci". As MariaDB's
-# utf8 (supports three bytes per character) is not really UTF-8 (which needs up
-# to four bytes per character) this was changed. Now the baked in-defaults are
-# the upstream defaults (Latin1), but in the default configuration (like in the
-# file you are currently reading) utf8mb4 is set, which is real UTF-8.
-#
-# Of course you are free to change this, either here or in a configuration file
-# of your own which is read after this .cnf file, see my.cnf in parent folder
-# (files are read in alphabetical order).
-character-set-server  = utf8mb4
-collation-server      = utf8mb4_general_ci
 
 #
 # * Unix socket authentication plugin is built-in
