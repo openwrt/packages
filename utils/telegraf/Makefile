@@ -59,6 +59,12 @@ define Package/telegraf-full/description
 	(Full build. including all plugins)
 endef
 
+define Package/telegraf/conffiles
+/etc/telegraf.conf
+endef
+
+Package/telegraf-full/conffiles = $(Package/telegraf/conffiles)
+
 define Build/Prepare
 	$(call Build/Prepare/Default)
 ifeq ($(BUILD_VARIANT),small)
@@ -70,7 +76,7 @@ define Package/telegraf/install
 	$(call GoPackage/Package/Install/Bin,$(1))
 	$(INSTALL_DIR) $(1)/etc/init.d $(1)/etc/config
 	$(INSTALL_BIN) ./files/etc/init.d/telegraf $(1)/etc/init.d/telegraf
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/etc/telegraf.conf $(1)/etc/config/telegraf.conf
+	$(INSTALL_CONF) $(PKG_BUILD_DIR)/etc/telegraf.conf $(1)/etc/telegraf.conf
 endef
 
 define Package/telegraf-full/install
