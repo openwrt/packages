@@ -1,0 +1,11 @@
+--- a/live/liveMedia/ServerMediaSession.cpp
++++ b/live/liveMedia/ServerMediaSession.cpp
+@@ -271,7 +271,7 @@ char* ServerMediaSession::generateSDPDes
+ 
+     char const* const sdpPrefixFmt =
+       "v=0\r\n"
+-      "o=- %ld%06ld %d IN %s %s\r\n"
++      "o=- %lld%06lld %d IN %s %s\r\n"
+       "s=%s\r\n"
+       "i=%s\r\n"
+       "t=0 0\r\n"
