@@ -1,3 +1,8 @@
+From: Michel Promonet <michel.promonet@free.fr>
+Subject: [PATCH] Fix crash formating time_t as long (it is a long long)
+Signed-off-by: Michel Promonet <michel.promonet@free.fr>
+
+---
 --- a/live/liveMedia/ServerMediaSession.cpp
 +++ b/live/liveMedia/ServerMediaSession.cpp
 @@ -271,7 +271,7 @@ char* ServerMediaSession::generateSDPDes
