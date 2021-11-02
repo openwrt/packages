@@ -1,0 +1,53 @@
+From cd1447a6962496fca60a2f5e5d9cf4448575cc24 Mon Sep 17 00:00:00 2001
+From: Ben Ramsey <ramsey@php.net>
+Date: Tue, 19 Oct 2021 23:59:11 -0500
+Subject: [PATCH 1/4] Change UBool to bool for equality operators in ICU >=
+ 70.1
+
+Refer to:
+- https://github.com/unicode-org/icu/commit/633438f8da99fee815e2c61626ea779a84567a3d
+- https://github.com/unicode-org/icu/commit/f6325d49ba57ec26f320b2865ce09ca47db458d9
+---
+ ext/intl/breakiterator/codepointiterator_internal.cpp | 4 ++++
+ ext/intl/breakiterator/codepointiterator_internal.h   | 4 ++++
+ 2 files changed, 8 insertions(+)
+
+--- a/ext/intl/breakiterator/codepointiterator_internal.cpp
++++ b/ext/intl/breakiterator/codepointiterator_internal.cpp
+@@ -73,7 +73,11 @@ CodePointBreakIterator::~CodePointBreakI
+ 	clearCurrentCharIter();
+ }
+ 
++#if U_ICU_VERSION_MAJOR_NUM >= 70
++bool CodePointBreakIterator::operator==(const BreakIterator& that) const
++#else
+ UBool CodePointBreakIterator::operator==(const BreakIterator& that) const
++#endif
+ {
+ 	if (typeid(*this) != typeid(that)) {
+ 		return false;
+--- a/ext/intl/breakiterator/codepointiterator_internal.h
++++ b/ext/intl/breakiterator/codepointiterator_internal.h
+@@ -37,7 +37,11 @@ namespace PHP {
+ 
+ 		virtual ~CodePointBreakIterator();
+ 
++#if U_ICU_VERSION_MAJOR_NUM >= 70
++		virtual bool operator==(const BreakIterator& that) const;
++#else
+ 		virtual UBool operator==(const BreakIterator& that) const;
++#endif
+ 
+ 		virtual CodePointBreakIterator* clone(void) const;
+ 
+--- a/ext/intl/locale/locale_methods.c
++++ b/ext/intl/locale/locale_methods.c
+@@ -1239,7 +1239,7 @@ PHP_FUNCTION(locale_filter_matches)
+ 		if( token && (token==cur_lang_tag) ){
+ 			/* check if the char. after match is SEPARATOR */
+ 			chrcheck = token + (strlen(cur_loc_range));
+-			if( isIDSeparator(*chrcheck) || isEndOfTag(*chrcheck) ){
++			if( isIDSeparator(*chrcheck) || isKeywordSeparator(*chrcheck) || isEndOfTag(*chrcheck) ){
+ 				efree( cur_lang_tag );
+ 				efree( cur_loc_range );
+ 				if( can_lang_tag){
