@@ -122,7 +122,7 @@ endef
 define Package/openssh-server-pam/conffiles
 /etc/pam.d/sshd
 /etc/security/access-sshd-local.conf
-/etc/ssh/sshd_config
+$(Package/openssh-server/conffiles)
 endef
 
 define Package/openssh-sftp-client
