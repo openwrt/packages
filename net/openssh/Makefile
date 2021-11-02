@@ -197,13 +197,12 @@ define Build/Compile
 endef
 
 define Package/openssh-moduli/install
-	$(INSTALL_DIR) $(1)/etc/ssh
+	install -d -m0700 $(1)/etc/ssh
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/ssh/moduli $(1)/etc/ssh/
 endef
 
 define Package/openssh-client/install
-	$(INSTALL_DIR) $(1)/etc/ssh
-	chmod 0700 $(1)/etc/ssh
+	install -d -m0700 $(1)/etc/ssh
 	$(CP) $(PKG_INSTALL_DIR)/etc/ssh/ssh_config $(1)/etc/ssh/
 	$(INSTALL_DIR) $(1)/usr/libexec
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ssh $(1)/usr/libexec/ssh-openssh
@@ -221,8 +220,7 @@ define Package/openssh-keygen/install
 endef
 
 define Package/openssh-server/install
-	$(INSTALL_DIR) $(1)/etc/ssh
-	chmod 0700 $(1)/etc/ssh
+	install -d -m0700 $(1)/etc/ssh
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/ssh/sshd_config $(1)/etc/ssh/
 	sed -r -i 's,^#(HostKey /etc/ssh/ssh_host_(rsa|ed25519)_key)$$$$,\1,' $(1)/etc/ssh/sshd_config
 	$(INSTALL_DIR) $(1)/etc/init.d
