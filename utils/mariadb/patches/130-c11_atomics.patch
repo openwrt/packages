@@ -9,7 +9,7 @@ Date:   Fri Dec 21 19:14:04 2018 +0200
 
 --- a/configure.cmake
 +++ b/configure.cmake
-@@ -863,7 +863,25 @@ int main()
+@@ -866,7 +866,25 @@ int main()
    long long int *ptr= &var;
    return (int)__atomic_load_n(ptr, __ATOMIC_SEQ_CST);
  }"
