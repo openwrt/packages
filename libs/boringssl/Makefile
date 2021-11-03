@@ -28,7 +28,7 @@ define Package/boringssl
 	CATEGORY:=Libraries
 	TITLE:=An implementation of the TLS protocol
 	URL:=https://boringssl.googlesource.com/boringssl/
-	DEPENDS:=+libstdcpp $(GO_ARCH_DEPENDS) @!(mips||mips64)
+	DEPENDS:=+libstdcpp @!(mips||mips64||powerpc||powerpc64||arc)
 endef
 
 define Package/boringssl/description
