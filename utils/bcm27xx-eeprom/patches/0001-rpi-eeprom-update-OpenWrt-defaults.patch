@@ -14,7 +14,7 @@ Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
 
 --- a/rpi-eeprom-update
 +++ b/rpi-eeprom-update
-@@ -24,13 +24,13 @@ else
+@@ -24,9 +24,9 @@ else
  fi
  
  # Selects the release sub-directory
@@ -26,14 +26,9 @@ Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
  ENABLE_VL805_UPDATES=${ENABLE_VL805_UPDATES:-1}
  RECOVERY_BIN=${RECOVERY_BIN:-${FIRMWARE_ROOT}/${FIRMWARE_RELEASE_STATUS}/recovery.bin}
  BOOTFS=${BOOTFS:-/boot}
--VCMAILBOX=${VCMAILBOX:-/opt/vc/bin/vcmailbox}
-+VCMAILBOX=${VCMAILBOX:-/usr/bin/vcmailbox}
- CM4_ENABLE_RPI_EEPROM_UPDATE=${CM4_ENABLE_RPI_EEPROM_UPDATE:-0}
- RPI_EEPROM_UPDATE_CONFIG_TOOL="${RPI_EEPROM_UPDATE_CONFIG_TOOL:-raspi-config}"
- 
 --- a/rpi-eeprom-update-default
 +++ b/rpi-eeprom-update-default
-@@ -1,8 +1,9 @@
+@@ -1,8 +1,8 @@
  
  FIRMWARE_ROOT=/lib/firmware/raspberrypi/bootloader
 -FIRMWARE_RELEASE_STATUS="critical"
@@ -44,4 +39,3 @@ Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
  BOOTFS=/boot
  USE_FLASHROM=0
  EEPROM_CONFIG_HOOK=
-+VCMAILBOX=/usr/bin/vcmailbo
