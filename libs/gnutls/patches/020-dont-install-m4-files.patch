@@ -1,0 +1,25 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Eneas U de Queiroz <cote2004-github@yahoo.com>
+Date: Mon, 25 Oct 2021 08:49:21 -0300
+Subject: Do not install m4 files
+
+Do not use --install when calling aclocal.  That flag instructs aclocal to
+copy third-party files to the first -I directory.  The intention here is to
+copy files to the package build dir (m4).  However, our toolchain prepends
+the build-system's m4 dir to the list, causing the --install flag to
+install an older version to the buildsystem m4 dir, causing failures in
+other packages.
+
+Signed-off-by: Eneas U de Queiroz <cotequeiroz@gmail.com>
+
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -57,7 +57,7 @@ if ENABLE_DOC
+ SUBDIRS += doc
+ endif
+ 
+-ACLOCAL_AMFLAGS = -I m4 -I src/libopts/m4 -I src/gl/m4 -I lib/unistring/m4 --install
++ACLOCAL_AMFLAGS = -I m4 -I src/libopts/m4 -I src/gl/m4 -I lib/unistring/m4
+ 
+ EXTRA_DIST = cfg.mk maint.mk CONTRIBUTING.md README.md LICENSE AUTHORS NEWS \
+ 	ChangeLog THANKS INSTALL.md RELEASES.md
