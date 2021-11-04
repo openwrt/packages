@@ -1,0 +1,19 @@
+--- a/meson.build
++++ b/meson.build
+@@ -34,7 +34,6 @@ add_project_arguments('-Os', '-Wall', '-
+                       language : 'c')
+ 
+ glib = dependency('glib-2.0')
+-libdl = cc.find_library('dl')
+ 
+ executable('conmon',
+            ['src/conmon.c',
+@@ -71,7 +70,7 @@ executable('conmon',
+             'src/utils.h',
+             'src/seccomp_notify.c',
+             'src/seccomp_notify.h'],
+-           dependencies : [glib, libdl],
++           dependencies : [glib],
+            install : true,
+            install_dir : join_paths(get_option('libexecdir'), 'podman'),
+ )
