@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
 PKG_VERSION:=10.6.4
-PKG_RELEASE:=1
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL := https://archive.mariadb.org/$(PKG_NAME)-$(PKG_VERSION)/source
@@ -36,6 +36,7 @@ MARIADB_SOCKET=/var/run/mysqld/mysqld.sock
 
 MARIADB_DISABLE_ENGINES := \
 	cassandra \
+	columnstore \
 	example \
 	mroonga \
 	oqgraph \
