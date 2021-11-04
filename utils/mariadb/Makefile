@@ -82,6 +82,7 @@ MARIADB_SERVER_PLUGINS := \
 
 PKG_CONFIG_DEPENDS := \
 	$(patsubst %,CONFIG_PACKAGE_$(PKG_NAME)-server-plugin-%,$(subst _,-,$(MARIADB_SERVER_PLUGINS))) \
+	CONFIG_KERNEL_IO_URING \
 	CONFIG_PACKAGE_mariadb-server
 
 plugin-auth_ed25519             := PLUGIN_AUTH_ED25519
@@ -284,7 +285,8 @@ define Package/mariadb-server-base
   $(call Package/mariadb/Default)
   DEPENDS:=mariadb-common \
 	  $(MARIADB_COMMON_DEPENDS) \
-	  +libaio \
+	  +!KERNEL_IO_URING:libaio \
+	  +KERNEL_IO_URING:liburing \
 	  +liblzma \
 	  +libpcre2 \
 	  +resolveip
