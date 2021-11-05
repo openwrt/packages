@@ -26,7 +26,7 @@ define Package/v4l2tools
 	SECTION:=multimedia
 	CATEGORY:=Multimedia
 	TITLE:=v4l2tools
-	DEPENDS:=+libstdcpp +libjpeg
+	DEPENDS:=+libstdcpp +libjpeg +libvpx
 	URL:=https://github.com/mpromonet/v4l2tools
 endef
 
