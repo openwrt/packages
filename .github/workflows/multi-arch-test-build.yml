@@ -102,7 +102,7 @@ jobs:
           done
           echo >> PKG-INFO
           echo Full file listing: >> PKG-INFO
-          ls -al *.ipk >> PKG-INFO
+          ls -al *.ipk >> PKG-INFO || true
           cat PKG-INFO
 
       - name: Store packages
