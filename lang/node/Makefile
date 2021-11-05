@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=node
 PKG_VERSION:=v14.18.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://nodejs.org/dist/$(PKG_VERSION)
@@ -38,7 +38,7 @@ define Package/node
   SUBMENU:=Node.js
   TITLE:=Node.js is a platform built on Chrome's JavaScript runtime
   URL:=https://nodejs.org/
-  DEPENDS:=@HAS_FPU @(i386||x86_64||arm||aarch64||mipsel) \
+  DEPENDS:=@(i386||x86_64||arm||armeb||aarch64||(powerpc&&HAS_FPU)||mips||mipsel||mips64) \
 	   +libstdcpp +libopenssl +zlib +libnghttp2 +libuv \
 	   +libcares +libatomic +NODEJS_ICU_SYSTEM:icu +NODEJS_ICU_SYSTEM:icu-full-data
 endef
@@ -53,6 +53,12 @@ define Package/node/description
       3. Requires libatomic package. (If necessary, install the 32-bit library at the same time.)
      ex) sudo apt-get install gcc-multilib g++-multilib
 endef
+
+ifeq ($(HOST_ARCH),$(filter $(HOST_ARCH), x86_64 mips64))
+  ifeq ($(CONFIG_ARCH_64BIT),)
+    HOST_BITS := -m32
+  endif
+endif
 
 define Package/node-npm
   SECTION:=lang
