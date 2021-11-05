@@ -69,17 +69,57 @@ jobs:
       - name: Move created packages to project dir
         run: cp bin/packages/${{ matrix.arch }}/packages_ci/*.ipk . || true
 
+      - name: Collect metadata
+        run: |
+          MERGE_ID=$(git rev-parse --short HEAD)
+          echo "MERGE_ID=$MERGE_ID" >> $GITHUB_ENV
+          echo "BASE_ID=$(git rev-parse --short HEAD^1)" >> $GITHUB_ENV
+          echo "HEAD_ID=$(git rev-parse --short HEAD^2)" >> $GITHUB_ENV
+          PRNUMBER=${GITHUB_REF_NAME%/merge}
+          echo "PRNUMBER=$PRNUMBER" >> $GITHUB_ENV
+          echo "ARCHIVE_NAME=${{matrix.arch}}-PR$PRNUMBER-$MERGE_ID" >> $GITHUB_ENV
+
+      - name: Generate metadata
+        run: |
+          cat << _EOF_ > PKG-INFO
+          Metadata-Version: 2.1
+          Name: ${{env.ARCHIVE_NAME}}
+          Version: $BRANCH
+          Author: $GITHUB_ACTOR
+          Home-page: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/pull/$PRNUMBER
+          Download-URL: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+          Summary: $PACKAGES
+          Platform: ${{ matrix.arch }}
+
+          Packages for OpenWrt $BRANCH running on ${{matrix.arch}}, built from PR $PRNUMBER
+          at commit $HEAD_ID, against $BRANCH at commit $BASE_ID, with merge SHA $MERGE_ID.
+
+          Modified packages:
+          _EOF_
+          for p in $PACKAGES
+          do
+            echo "  "$p >> PKG-INFO
+          done
+          echo >> PKG-INFO
+          echo Full file listing: >> PKG-INFO
+          ls -al *.ipk >> PKG-INFO
+          cat PKG-INFO
+
       - name: Store packages
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ matrix.arch}}-${{ github.sha}}-packages
-          path: "*.ipk"
+          name: ${{env.ARCHIVE_NAME}}-packages
+          path: |
+            *.ipk
+            PKG-INFO
 
       - name: Store logs
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ matrix.arch}}-${{ github.sha}}-logs
-          path: logs/
+          name: ${{env.ARCHIVE_NAME}}-logs
+          path: |
+            logs/
+            PKG-INFO
 
       - name: Remove logs
         run: sudo rm -rf logs/ || true
