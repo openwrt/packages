@@ -1,0 +1,18 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -39,7 +39,6 @@ target_link_libraries (${PROJECT_NAME} y
+ find_package(PkgConfig)
+ 
+ # x264
+-pkg_check_modules(X264 x264)
+ if (X264_FOUND) 
+   include_directories(${X264_INCLUDE_DIR})
+   target_link_libraries(${PROJECT_NAME} ${X264_LIBRARIES})
+@@ -55,7 +54,6 @@ if (X265_FOUND)
+ endif()
+ 
+ # vpx
+-pkg_check_modules(VPX vpx)
+ if (VPX_FOUND) 
+   include_directories(${VPX_INCLUDE_DIR})
+   target_link_libraries(${PROJECT_NAME} ${VPX_LIBRARIES})
