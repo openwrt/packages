@@ -45,6 +45,7 @@ define Package/postfix
   	postdrop=26:postdrop=26
   URL:=http://www.postfix.org/
   DEPENDS:=+POSTFIX_CDB:tinycdb +POSTFIX_TLS:libopenssl +POSTFIX_SASL:libsasl2 +POSTFIX_LDAP:libopenldap +POSTFIX_DB:libdb47 +POSTFIX_SQLITE:libsqlite3 +POSTFIX_MYSQL:libmysqlclient +POSTFIX_PGSQL:libpq +POSTFIX_EAI:icu +POSTFIX_PCRE:libpcre
+  MENU:=1
 endef
 
 define Package/postfix/description
@@ -52,63 +53,71 @@ define Package/postfix/description
 endef
 
 define Package/postfix/config
-	menu "Select postfix build options"
-		config POSTFIX_TLS
-			bool "TLS support"
-			default y
-			help
-			  Implements TLS support in postfix (using OpenSSL).
-		config POSTFIX_SASL
-			bool "SASL support"
-			default y
-			help
-			  Implements SASL support in postfix (using Cyrus SASL).
-		config POSTFIX_LDAP
-			bool "LDAP support"
-			default y
-			help
-			  Implements LDAP support in postfix (using OpenLDAP).
-		config POSTFIX_DB
-			bool "BerkeleyDB support"
-			default n
-			help
-			  Implements support for btree and hash files using Berkeley DB.
-		config POSTFIX_CDB
-			bool "CDB support"
-			default y
-			help
-			  Implements support for cdb files using tinycdb
-		config POSTFIX_SQLITE
-			bool "SQLITE support"
-			default y
-			help
-			  Implements support for SQLite3 DB
-		config POSTFIX_MYSQL
-			bool "MYSQL support"
-			default n
-			help
-			  Implements support for MySQL
-		config POSTFIX_PGSQL
-			bool "PostgreSQL support"
-			default n
-			help
-			  Implement support for PostgreSQL
-		config POSTFIX_PCRE
-			bool "PCRE support"
-			default y
-			help
-			  Implement support for Perl Compatible Regular Expressions
-		config POSTFIX_EAI
-			bool "SMTPUTF8 support"
-			default n
-			help
-			  Enable Postfix support for Email Address Internationalization
-			  (EAI) as defined in RFC 6531 (SMTPUTF8 extension), RFC 6532
-			  (Internationalized email headers) and RFC 6533
-			  (Internationalized delivery status notifications).
-			  Since version 3.0, Postfix fully supports UTF-8 email
-			  addresses and UTF-8 message header values.
-	endmenu
+	config POSTFIX_TLS
+		depends on PACKAGE_postfix
+		bool "TLS support"
+		default y
+		help
+			Implements TLS support in postfix (using OpenSSL).
+	config POSTFIX_SASL
+		depends on PACKAGE_postfix
+		bool "SASL support"
+		default y
+		help
+			Implements SASL support in postfix (using Cyrus SASL).
+	config POSTFIX_LDAP
+		depends on PACKAGE_postfix
+		bool "LDAP support"
+		default y
+		help
+			Implements LDAP support in postfix (using OpenLDAP).
+	config POSTFIX_DB
+		depends on PACKAGE_postfix
+		bool "BerkeleyDB support"
+		default n
+		help
+			Implements support for btree and hash files using Berkeley DB.
+	config POSTFIX_CDB
+		depends on PACKAGE_postfix
+		bool "CDB support"
+		default y
+		help
+			Implements support for cdb files using tinycdb
+	config POSTFIX_SQLITE
+		depends on PACKAGE_postfix
+		bool "SQLITE support"
+		default y
+		help
+			Implements support for SQLite3 DB
+	config POSTFIX_MYSQL
+		depends on PACKAGE_postfix
+		bool "MYSQL support"
+		default n
+		help
+			Implements support for MySQL
+	config POSTFIX_PGSQL
+		depends on PACKAGE_postfix
+		bool "PostgreSQL support"
+		default n
+		help
+			Implement support for PostgreSQL
+	config POSTFIX_PCRE
+		depends on PACKAGE_postfix
+		bool "PCRE support"
+		default y
+		help
+			Implement support for Perl Compatible Regular Expressions
+	config POSTFIX_EAI
+		depends on PACKAGE_postfix
+		bool "SMTPUTF8 support"
+		default n
+		help
+			Enable Postfix support for Email Address Internationalization
+			(EAI) as defined in RFC 6531 (SMTPUTF8 extension), RFC 6532
+			(Internationalized email headers) and RFC 6533
+			(Internationalized delivery status notifications).
+			Since version 3.0, Postfix fully supports UTF-8 email
+			addresses and UTF-8 message header values.
 endef
 
 CCARGS=-DNO_NIS -fcommon
