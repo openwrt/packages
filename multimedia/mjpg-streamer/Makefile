@@ -175,6 +175,8 @@ $(call Package/mjpg-streamer/Default/description)
 This package provides simple version of the web content.
 endef
 
+CMAKE_OPTIONS += -DCMAKE_SKIP_RPATH=FALSE
+
 CAMBOZOLA:=cambozola-0.936.tar.gz
 
 # Distribution URL doesn't always have the correct version
