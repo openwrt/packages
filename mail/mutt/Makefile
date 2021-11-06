@@ -33,6 +33,7 @@ define Package/mutt
   DEPENDS:=+MUTT_GNUTLS:libgnutls +MUTT_OPENSSL:libopenssl +libncursesw +MUTT_SASL:libsasl2 +terminfo +zlib
   TITLE:=Console mail client
   URL:=http://www.mutt.org/
+  MENU:=1
 endef
 
 define Package/mutt/description
@@ -59,38 +60,42 @@ define Package/mutt/install
 endef
 
 define Package/mutt/config
-	menu "Select mutt build options"
-		config MUTT_POP
-			bool "POP support"
-			default y
-			help
-			  Enables POP support in mutt.
-		config MUTT_IMAP
-			bool "IMAP support"
-			default y
-			help
-			  Enables IMAP support in mutt
-		config MUTT_SMTP
-			bool "SMTP support"
-			default n
-			help
-			  Enables SMTP support in mutt.
-		config MUTT_SASL
-			bool "SASL support"
-			default n
-			help
-			  Enables SASL support in mutt (libsasl2).
-		config MUTT_GNUTLS
-			bool "GnuTLS support"
-			default n
-			help
-			  Enables GnuTLS support in mutt (libgnutls).
-		config MUTT_OPENSSL
-			bool "OpenSSL support"
-			default y
-			help
-			  Enables OpenSSL support in mutt (libopenssl).
-	endmenu
+	config MUTT_POP
+		depends on PACKAGE_mutt
+		bool "POP support"
+		default y
+		help
+			Enables POP support in mutt.
+	config MUTT_IMAP
+		depends on PACKAGE_mutt
+		bool "IMAP support"
+		default y
+		help
+			Enables IMAP support in mutt
+	config MUTT_SMTP
+		depends on PACKAGE_mutt
+		bool "SMTP support"
+		default n
+		help
+			Enables SMTP support in mutt.
+	config MUTT_SASL
+		depends on PACKAGE_mutt
+		bool "SASL support"
+		default n
+		help
+			Enables SASL support in mutt (libsasl2).
+	config MUTT_GNUTLS
+		depends on PACKAGE_mutt
+		bool "GnuTLS support"
+		default n
+		help
+			Enables GnuTLS support in mutt (libgnutls).
+	config MUTT_OPENSSL
+		depends on PACKAGE_mutt
+		bool "OpenSSL support"
+		default y
+		help
+			Enables OpenSSL support in mutt (libopenssl).
 endef
 
 $(eval $(call BuildPackage,mutt))
