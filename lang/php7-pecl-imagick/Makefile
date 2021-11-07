@@ -8,9 +8,9 @@ include $(TOPDIR)/rules.mk
 PECL_NAME:=imagick
 PECL_LONGNAME:=Image Processing (ImageMagick binding)
 
-PKG_VERSION:=3.4.4
-PKG_RELEASE:=2
-PKG_HASH:=8dd5aa16465c218651fc8993e1faecd982e6a597870fd4b937e9ece02d567077
+PKG_VERSION:=3.5.1
+PKG_RELEASE:=1
+PKG_HASH:=243ff2094edcacb2ae46ee3a4d9f38a60a4f26a6a71f59023b6198cbed0f7f81
 
 PKG_NAME:=php7-pecl-imagick
 PKG_SOURCE:=$(PECL_NAME)-$(PKG_VERSION).tgz
