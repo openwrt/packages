@@ -58,13 +58,9 @@ ifeq ($(ARCH),aarch64)
 else ifeq ($(ARCH),arm)
   OPENBLAS_TARGET:=ARMV5
 else ifeq ($(ARCH),mips)
-  ifneq ($(filter 24k% 74k%,$(CPU_TYPE)),)
-    OPENBLAS_TARGET:=MIPS24K
-  endif # CPU_TYPE == 24k* or 74k*
+  OPENBLAS_TARGET:=MIPS24K
 else ifeq ($(ARCH),mipsel)
-  ifneq ($(filter 24k% 74k%,$(CPU_TYPE)),)
-    OPENBLAS_TARGET:=MIPS24K
-  endif # CPU_TYPE == 24k* or 74k*
+  OPENBLAS_TARGET:=MIPS24K
 else ifeq ($(ARCH),powerpc)
   OPENBLAS_TARGET:=PPC440
 endif
