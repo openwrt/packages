@@ -18,10 +18,7 @@ PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
 
-HOST_BUILD_DEPENDS:=python3/host
-
 include ../pypi.mk
-include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
@@ -40,14 +37,6 @@ for smoothing over the differences between the Python versions with the goal of
 writing Python code that is compatible on both Python versions.  See the
 documentation for more information on what is provided.
 endef
-
-define Host/Compile
-	$(call HostPython3/ModSetup,,install --prefix="" --root="$(STAGING_DIR_HOSTPKG)")
-endef
-
-Host/Install:=
-
-$(eval $(call HostBuild))
 
 $(eval $(call Py3Package,python3-six))
 $(eval $(call BuildPackage,python3-six))
