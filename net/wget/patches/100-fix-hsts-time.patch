@@ -1,0 +1,54 @@
+From: Huangbin Zhan <zhanhb88@gmail.com>
+Date: Tue, 9 Nov 2021 23:05:55 +0800
+Subject: [PATCH] hsts.c: fix timestamp reading and writing.
+
+Always get zero time on big endian 32bit OS with 64bit time_t such as mips_24kc_musl.
+---
+ src/hsts.c | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
+
+--- a/src/hsts.c
++++ b/src/hsts.c
+@@ -280,7 +280,7 @@ hsts_read_database (hsts_store_t store,
+ 
+   char host[256];
+   int port;
+-  time_t created, max_age;
++  uintmax_t created, max_age;
+   int include_subdomains;
+ 
+   func = (merge_with_existing_entries ? hsts_store_merge : hsts_new_entry);
+@@ -293,15 +293,15 @@ hsts_read_database (hsts_store_t store,
+       if (*p == '#')
+         continue;
+ 
+-      items_read = sscanf (p, "%255s %d %d %lu %lu",
++      items_read = sscanf (p, "%255s %d %d %"SCNuMAX" %"SCNuMAX,
+                            host,
+                            &port,
+                            &include_subdomains,
+-                           (unsigned long *) &created,
+-                           (unsigned long *) &max_age);
++                           &created,
++                           &max_age);
+ 
+       if (items_read == 5)
+-        func (store, host, port, created, max_age, !!include_subdomains);
++        func (store, host, port, (time_t) created, (time_t) max_age, !!include_subdomains);
+     }
+ 
+   xfree (line);
+@@ -326,10 +326,10 @@ hsts_store_dump (hsts_store_t store, FIL
+       struct hsts_kh *kh = (struct hsts_kh *) it.key;
+       struct hsts_kh_info *khi = (struct hsts_kh_info *) it.value;
+ 
+-      if (fprintf (fp, "%s\t%d\t%d\t%lu\t%lu\n",
++      if (fprintf (fp, "%s\t%d\t%d\t%"PRIuMAX"\t%"PRIuMAX"\n",
+                    kh->host, kh->explicit_port, khi->include_subdomains,
+-                   (unsigned long) khi->created,
+-                   (unsigned long) khi->max_age) < 0)
++                   (uintmax_t) khi->created,
++                   (uintmax_t) khi->max_age) < 0)
+         {
+           logprintf (LOG_ALWAYS, "Could not write the HSTS database correctly.\n");
+           break;
