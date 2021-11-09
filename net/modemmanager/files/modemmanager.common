@@ -39,8 +39,17 @@ mm_find_physdev_sysfs_path() {
 		# avoid infinite loops iterating
 		[ -z "${tmp_path}" ] || [ "${tmp_path}" = "/" ] && return
 
-		# the physical device will be that with a idVendor and idProduct pair of files
+		# For USB devices, the physical device will be that with a idVendor
+		# and idProduct pair of files
 		[ -f "${tmp_path}"/idVendor ] && [ -f "${tmp_path}"/idProduct ] && {
+			tmp_path=$(readlink -f "$tmp_path")
+			echo "${tmp_path}"
+			return
+		}
+
+		# For PCI devices, the physical device will be that with a vendor
+		# and device pair of files
+		[ -f "${tmp_path}"/vendor ] && [ -f "${tmp_path}"/device ] && {
 			tmp_path=$(readlink -f "$tmp_path")
 			echo "${tmp_path}"
 			return
