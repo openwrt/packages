@@ -43,6 +43,7 @@ endef
 define Package/bash/conffiles
 /etc/bash.bashrc
 /etc/bash.bash_logout
+/etc/profile.d/sys_bashrc.sh
 endef
 
 # Bash detects and enables certain features by runtest simple piece of code
