@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=curl
-PKG_VERSION:=7.79.1
+PKG_VERSION:=7.80.0
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://dl.uxnr.de/mirror/curl/ \
 	https://curl.askapache.com/download/ \
 	https://curl.se/download/
-PKG_HASH:=0606f74b1182ab732a17c11613cbbaf7084f2e6cca432642d0e3ad7c224c3689
+PKG_HASH:=a132bd93188b938771135ac7c1f3ac1d3ce507c1fcbef8c471397639214ae2ab
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
@@ -77,7 +77,7 @@ define Package/curl/Default
   SECTION:=net
   CATEGORY:=Network
   URL:=http://curl.se/
-  MAINTAINER:=Stan Grishin <stangri@melmac.net>
+  MAINTAINER:=Stan Grishin <stangri@melmac.ca>
 endef
 
 define Package/curl
