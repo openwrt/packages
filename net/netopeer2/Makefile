@@ -10,12 +10,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netopeer2
-PKG_VERSION:=1.1.70
+PKG_VERSION:=2.0.35
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/CESNET/Netopeer2/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=7fc1a3520ee4bb488112f502e34cea465464dc933d2a5742a72eb32a6dfe3b3f
+PKG_HASH:=dedae40419cfddd09c1be7bb536b3a762ec8dcd568c2bfe803c0f6789a5ca834
 
 PKG_MAINTAINER:=Jakov Smolic <jakov.smolic@sartura.hr>
 PKG_LICENSE:=BSD-3-Clause
