@@ -1,6 +1,6 @@
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -180,7 +180,7 @@ endif()
+@@ -235,7 +235,7 @@ endif()
  # dependencies - libssh
  if(ENABLE_SSH)
      find_package(LibSSH 0.7.1 REQUIRED)
