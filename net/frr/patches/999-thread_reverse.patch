@@ -1,6 +1,6 @@
 --- a/lib/thread.c
 +++ b/lib/thread.c
-@@ -723,13 +723,9 @@ static void thread_free(struct thread_ma
+@@ -824,13 +824,9 @@ static void thread_free(struct thread_ma
  	XFREE(MTYPE_THREAD, thread);
  }
  
@@ -16,7 +16,7 @@
  	/*
  	 * If timer_wait is null here, that means poll() should block
  	 * indefinitely, unless the thread_master has overridden it by setting
-@@ -760,58 +756,15 @@ static int fd_poll(struct thread_master
+@@ -861,58 +857,15 @@ static int fd_poll(struct thread_master
  	rcu_assert_read_unlocked();
  
  	/* add poll pipe poker */
@@ -47,10 +47,15 @@
 -		/* Don't make any changes for the non-main pthreads */
 -		pthread_sigmask(SIG_SETMASK, NULL, &origsigs);
 -	}
--
++	assert(count + 1 < pfdsize);
++	pfds[count].fd = m->io_pipe[0];
++	pfds[count].events = POLLIN;
++	pfds[count].revents = 0x00;
+ 
 -#if defined(HAVE_PPOLL)
 -	struct timespec ts, *tsp;
--
++	num = poll(pfds, count + 1, timeout);
+ 
 -	if (timeout >= 0) {
 -		ts.tv_sec = timeout / 1000;
 -		ts.tv_nsec = (timeout % 1000) * 1000000;
@@ -67,22 +72,17 @@
 -#endif
 -
 -done:
-+	assert(count + 1 < pfdsize);
-+	pfds[count].fd = m->io_pipe[0];
-+	pfds[count].events = POLLIN;
-+	pfds[count].revents = 0x00;
- 
+-
 -	if (num < 0 && errno == EINTR)
 -		*eintr_p = true;
-+	num = poll(pfds, count + 1, timeout);
- 
+-
 -	if (num > 0 && m->handler.copy[count].revents != 0 && num--)
 +	unsigned char trash[64];
 +	if (num > 0 && pfds[count].revents != 0 && num--)
  		while (read(m->io_pipe[0], &trash, sizeof(trash)) > 0)
  			;
  
-@@ -1438,7 +1391,7 @@ struct thread *thread_fetch(struct threa
+@@ -1700,7 +1653,7 @@ struct thread *thread_fetch(struct threa
  	struct timeval zerotime = {0, 0};
  	struct timeval tv;
  	struct timeval *tw = NULL;
@@ -91,7 +91,7 @@
  	int num = 0;
  
  	do {
-@@ -1510,14 +1463,14 @@ struct thread *thread_fetch(struct threa
+@@ -1776,14 +1729,14 @@ struct thread *thread_fetch(struct threa
  
  		pthread_mutex_unlock(&m->mtx);
  		{
