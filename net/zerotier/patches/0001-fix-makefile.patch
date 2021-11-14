@@ -35,7 +35,7 @@
  endif
  
  ifeq ($(ZT_QNAP), 1)
-@@ -270,7 +270,7 @@ ifeq ($(ZT_CONTROLLER),1)
+@@ -280,7 +280,7 @@ ifeq ($(ZT_CONTROLLER),1)
  endif
  
  # ARM32 hell -- use conservative CFLAGS
