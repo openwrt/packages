@@ -95,14 +95,7 @@ proto_sstp_setup() {
 		ip-down-script /lib/netifd/ppp-down \
 		ipv6-down-script /lib/netifd/ppp-down \
 		${mtu:+mtu $mtu mru $mtu} \
-		$pppd_options
-		
-	# WORKAROUND: Workaround to properly register the sstp interface (As seeen in: https://forum.archive.openwrt.org/viewtopic.php?id=58007)
-	# WORKAROUND: Start
-	sleep 10
-	proto_init_update "$ifname" 1
-	proto_send_update "$config"
-	# WORKAROUND: End
+		$pppd_options ipparam $config
 	
 	# if use pppoe and sstp at same time , firewall need reload .
 	# but don't konw why
