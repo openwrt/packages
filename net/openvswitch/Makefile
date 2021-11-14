@@ -17,7 +17,7 @@ include ./openvswitch.mk
 #
 PKG_NAME:=openvswitch
 PKG_VERSION:=$(ovs_version)
-PKG_RELEASE:=9
+PKG_RELEASE:=10
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.openvswitch.org/releases/
 PKG_HASH:=7d5797f2bf2449c6a266149e88f72123540f7fe7f31ad52902057ae8d8f88c38
@@ -27,7 +27,7 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:openvswitch:openvswitch
 
 PKG_BUILD_DIR:=$(ovs_builddir)
-PKG_BUILD_DEPENDS+=python3/host python-six/host
+PKG_BUILD_DEPENDS+=python3/host
 PKG_USE_MIPS16:=0
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
@@ -234,7 +234,7 @@ $(eval $(call OvsPackageTemplate,openvswitch))
 
 ovs_python3_title:=Open vSwitch (Python3 library)
 ovs_python3_hidden:=
-ovs_python3_depends:=+PACKAGE_openvswitch-python3:python3 +PACKAGE_openvswitch-python3:python3-six
+ovs_python3_depends:=+PACKAGE_openvswitch-python3:python3
 define ovs_python3_install
 	$$(INSTALL_DIR) $$(1)$$(PYTHON3_PKG_DIR)
 	$$(CP) $$(PKG_INSTALL_DIR)/usr/share/openvswitch/python/ovs $$(1)$$(PYTHON3_PKG_DIR)
