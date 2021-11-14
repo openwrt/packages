@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ddns-scripts
 PKG_VERSION:=2.8.2
-PKG_RELEASE:=18
+PKG_RELEASE:=19
 
 PKG_LICENSE:=GPL-2.0
 
@@ -207,6 +207,24 @@ define Package/ddns-scripts-pdns/description
 endef
 
 
+define Package/ddns-scripts-transip
+  $(call Package/ddns-scripts/Default)
+  TITLE:=Extension for TransIP API
+  DEPENDS:=ddns-scripts +curl +openssl-util +!BUSYBOX_CONFIG_MKTEMP:coreutils-mktemp
+endef
+
+define Package/ddns-scripts-transip/description
+  Dynamic DNS Client scripts extension for "transip.nl".
+  Note: You must also install ca-certificate or ca-bundle.
+  It requires:
+  "option username" to be a valid username for transip.nl
+  "option password" to be a valid matching private key
+  "option domain" to contain the base domain
+  "option param_enc" to contain the name of the DNS record to update
+  "option param_opt" to contain the TTL of the DNS record to update
+endef
+
+
 define Build/Configure
 endef
 
@@ -279,6 +297,7 @@ define Package/ddns-scripts-services/install
 	rm $(1)/usr/share/ddns/default/cnkuai.cn.json
 	rm $(1)/usr/share/ddns/default/gandi.net.json
 	rm $(1)/usr/share/ddns/default/pdns.json
+	rm $(1)/usr/share/ddns/default/transip.nl.json
 endef
 
 
@@ -491,6 +510,25 @@ exit 0
 endef
 
 
+define Package/ddns-scripts-transip/install
+	$(INSTALL_DIR) $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_transip_nl.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/transip.nl.json \
+		$(1)/usr/share/ddns/default
+endef
+
+define Package/ddns-scripts-transip/prerm
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
+endef
+
+
 $(eval $(call BuildPackage,ddns-scripts))
 $(eval $(call BuildPackage,ddns-scripts-services))
 $(eval $(call BuildPackage,ddns-scripts-cloudflare))
@@ -504,3 +542,4 @@ $(eval $(call BuildPackage,ddns-scripts-route53))
 $(eval $(call BuildPackage,ddns-scripts-cnkuai))
 $(eval $(call BuildPackage,ddns-scripts-gandi))
 $(eval $(call BuildPackage,ddns-scripts-pdns))
+$(eval $(call BuildPackage,ddns-scripts-transip))
