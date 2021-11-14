@@ -19,6 +19,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(BUILD_VARIANT)-dateutil-$(PKG_VERSION)
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
 HOST_PYTHON_PACKAGE_BUILD_DEPENDS:="setuptools-scm==5.0.2"
+HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:="setuptools-scm==5.0.2"
 
 include $(INCLUDE_DIR)/package.mk
 

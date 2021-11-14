@@ -15,14 +15,39 @@ else
 	EXTRA_COMMANDS='version'
 fi
 
+readonly packageName='https-dns-proxy'
+readonly serviceName="$packageName $PKG_VERSION"
+readonly sharedMemoryOutput="/dev/shm/$packageName-output"
 readonly PROG=/usr/sbin/https-dns-proxy
 readonly DEFAULT_BOOTSTRAP='1.1.1.1,1.0.0.1,2606:4700:4700::1111,2606:4700:4700::1001,8.8.8.8,8.8.4.4,2001:4860:4860::8888,2001:4860:4860::8844'
+readonly _OK_='\033[0;32m\xe2\x9c\x93\033[0m'
+readonly _FAIL_='\033[0;31m\xe2\x9c\x97\033[0m'
 dnsmasqConfig=''; forceDNS=''; forceDNSPorts='';
 
-str_contains() { [ -n "$2" ] && [ "${1//$2}" != "$1" ]; }
+str_contains() { [ -n "$1" ] &&[ -n "$2" ] && [ "${1//$2}" != "$1" ]; }
 is_mac_address() { expr "$1" : '[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]$' >/dev/null; }
 is_ipv4() { expr "$1" : '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >/dev/null; }
 is_ipv6() { ! is_mac_address "$1" && str_contains "$1" ":"; }
+output() {
+	local msg memmsg logmsg
+	[ -t 1 ] && printf "%b" "$@"
+	msg="${1//$serviceName /service }";
+	if [ "$(printf "%b" "$msg" | wc -l)" -gt 0 ]; then
+		[ -s "$sharedMemoryOutput" ] && memmsg="$(cat "$sharedMemoryOutput")"
+		logmsg="$(printf "%b" "${memmsg}${msg}" | sed 's/\x1b\[[0-9;]*m//g')"
+		logger -t "$packageName" "$(printf "%b" "$logmsg")"
+		rm -f "$sharedMemoryOutput"
+	else
+		printf "%b" "$msg" >> "$sharedMemoryOutput"
+	fi
+}
+output_ok() { output "$_OK_"; }
+output_okn() { output "${_OK_}\\n"; }
+output_fail() { output "$_FAIL_"; }
+output_failn() { output "${_FAIL_}\\n"; }
+uci_ali() { [ -n "$1" ] && [ -n "$2" ] && ! str_contains "$(uci -q get "$1")" "$2" && uci -q add_list "${1}=${2}"; }
+
+dnsmasq_restart() { [ -x /etc/init.d/dnsmasq ] || return 0; /etc/init.d/dnsmasq restart >/dev/null 2>&1; }
 
 version() { echo "$PKG_VERSION"; }
 
@@ -83,12 +108,12 @@ append_bootstrap() {
 }
 
 start_instance() {
-	local cfg="$1" param listen_addr listen_port i ipv6_resolvers_only
+	local cfg="$1" param listen_addr listen_port ipv6_resolvers_only p
 	config_get_bool ipv6_resolvers_only "$cfg" 'use_ipv6_resolvers_only' '0'
 	append_parm "$cfg" 'resolver_url' '-r'
 	append_parm "$cfg" 'polling_interval' '-i'
 	append_parm "$cfg" 'listen_addr' '-a' '127.0.0.1'
-	append_parm "$cfg" 'listen_port' '-p' "$p"
+	append_parm "$cfg" 'listen_port' '-p' "$port"
 	append_parm "$cfg" 'dscp_codepoint' '-c'
 	append_bootstrap "$cfg" 'bootstrap_dns' '-b' "$DEFAULT_BOOTSTRAP"
 	append_parm "$cfg" 'user' '-u' 'nobody'
@@ -107,79 +132,88 @@ start_instance() {
 	if [ "$forceDNS" -ne 0 ]; then
 		procd_open_data
 		json_add_array firewall
-		for c in $forceDNSPorts; do
-			if netstat -tuln | grep 'LISTEN' | grep ":${c}" >/dev/null 2>&1 || [ "$c" = "53" ]; then
-				json_add_object ""
+		for p in $forceDNSPorts; do
+			if netstat -tuln | grep 'LISTEN' | grep ":${p}" >/dev/null 2>&1 || [ "$p" = '53' ]; then
+				json_add_object ''
 				json_add_string type redirect
 				json_add_string target DNAT
 				json_add_string src lan
-				json_add_string proto "tcp udp"
-				json_add_string src_dport "$c"
-				json_add_string dest_port "$c"
+				json_add_string proto 'tcp udp'
+				json_add_string src_dport "$p"
+				json_add_string dest_port "$p"
 				json_add_boolean reflection 0
 				json_close_object
 			else
-				json_add_object ""
+				json_add_object ''
 				json_add_string type rule
 				json_add_string src lan
-				json_add_string dest "*"
-				json_add_string proto "tcp udp"
-				json_add_string dest_port "$c"
+				json_add_string dest '*'
+				json_add_string proto 'tcp udp'
+				json_add_string dest_port "$p"
 				json_add_string target REJECT
 				json_close_object
 			fi
 		done
 		json_close_array
 		procd_close_data
-		forceDNS='0'
 	fi
 	procd_close_instance
 
-	config_get listen_addr "$cfg" 'listen_addr' '127.0.0.1'
-	config_get listen_port "$cfg" 'listen_port' "$p"
-
-	if [ "$dnsmasqConfig" = "*" ]; then
-		config_load 'dhcp'
-		config_foreach dnsmasq_add_doh_server 'dnsmasq' "${listen_addr}" "${listen_port}"
-	elif [ -n "$dnsmasqConfig" ]; then
-		for i in $dnsmasqConfig; do
-			dnsmasq_add_doh_server "@dnsmasq[${i}]" "${listen_addr}" "${listen_port}"
-		done
+	if [ "$?" ]; then
+		forceDNS=0
+		config_get listen_addr "$cfg" 'listen_addr' '127.0.0.1'
+		config_get listen_port "$cfg" 'listen_port' "$port"
+		if [ "$dnsmasqConfig" = '*' ]; then
+			config_load 'dhcp'
+			config_foreach dnsmasq_add_doh_server 'dnsmasq' "${listen_addr}" "${listen_port}"
+		elif [ -n "$dnsmasqConfig" ]; then
+			for i in $dnsmasqConfig; do
+				if [ -n "$(uci -q get "dhcp.@dnsmasq[$i]")" ]; then
+					dnsmasq_add_doh_server "@dnsmasq[$i]" "${listen_addr}" "${listen_port}"
+				elif [ -n "$(uci -q get "dhcp.${i}")" ]; then
+					dnsmasq_add_doh_server "${i}" "${listen_addr}" "${listen_port}"
+				fi
+			done
+		fi
+		output_ok
+		port="$((port+1))"
+	else
+		output_fail
 	fi
-	p="$((p+1))"
 }
 
-is_force_dns_active() { iptables-save | grep -q -w -- '--dport 53'; }
-
 start_service() {
-	local p=5053 c
-	config_load 'https-dns-proxy'
+	local port=5053
+	output "Starting $serviceName "
+	config_load "$packageName"
 	config_get dnsmasqConfig	'config' 'update_dnsmasq_config' '*'
 	config_get_bool forceDNS	'config' 'force_dns' '1'
 	config_get forceDNSPorts	'config' 'force_dns_port' '53 853'
 	dhcp_backup 'create'
-	config_load 'https-dns-proxy'
-	config_foreach start_instance 'https-dns-proxy'
+	config_load "$packageName"
+	config_foreach start_instance "$packageName"
 	if [ -n "$(uci -q changes dhcp)" ]; then
 		uci -q commit dhcp
-		[ -x /etc/init.d/dnsmasq ] && /etc/init.d/dnsmasq restart >/dev/null 2>&1
+		dnsmasq_restart
 	fi
+	output "\\n"
 }
 
 stop_service() {
-	config_load 'https-dns-proxy'
+	local s=0
+	output "Stopping $serviceName "
+	config_load "$packageName"
 	config_get dnsmasqConfig 'config' 'update_dnsmasq_config' '*'
 	dhcp_backup 'restore'
 	if [ -n "$(uci -q changes dhcp)" ]; then
 		uci -q commit dhcp
-		[ -x /etc/init.d/dnsmasq ] && /etc/init.d/dnsmasq restart >/dev/null 2>&1
+		dnsmasq_restart || s=1
 	fi
+# shellcheck disable=SC2015
+	[ "$s" -eq 0 ] && output_okn || output_failn
 }
 
-service_triggers() {
-	procd_add_config_trigger "config.change" "https-dns-proxy" /etc/init.d/https-dns-proxy reload
-}
-
+service_triggers() { procd_add_config_trigger "config.change" "$packageName" "/etc/init.d/${packageName}" restart; }
 service_started() { procd_set_config_changed firewall; }
 service_stopped() { procd_set_config_changed firewall; }
 
@@ -189,13 +223,11 @@ dnsmasq_add_doh_server() {
 		0.0.0.0|::ffff:0.0.0.0) address='127.0.0.1';;
 		::) address='::1';;
 	esac
-	uci -q del_list "dhcp.${cfg}.server=${address}#${port}"
-	uci -q add_list "dhcp.${cfg}.server=${address}#${port}"
+	uci_ali "dhcp.${cfg}.server" "${address}#${port}"
 }
 
 dnsmasq_create_server_backup() {
-	local cfg="$1"
-	local i
+	local cfg="$1" i
 	uci -q get "dhcp.${cfg}" >/dev/null || return 1
 	if ! uci -q get "dhcp.${cfg}.doh_backup_noresolv" >/dev/null; then
 		if [ -z "$(uci -q get "dhcp.${cfg}.noresolv")" ]; then
@@ -221,8 +253,7 @@ dnsmasq_create_server_backup() {
 }
 
 dnsmasq_restore_server_backup() {
-	local cfg="$1"
-	local i
+	local cfg="$1" i
 	uci -q get "dhcp.${cfg}" >/dev/null || return 0
 	if uci -q get "dhcp.${cfg}.doh_backup_noresolv" >/dev/null; then
 		if [ "$(uci -q get "dhcp.${cfg}.doh_backup_noresolv")" = "0" ]; then
@@ -250,8 +281,11 @@ dhcp_backup() {
 				config_foreach dnsmasq_create_server_backup 'dnsmasq'
 			elif [ -n "$dnsmasqConfig" ]; then
 				for i in $dnsmasqConfig; do
-					dnsmasq_create_server_backup "@dnsmasq[${i}]" || \
+					if [ -n "$(uci -q get "dhcp.@dnsmasq[$i]")" ]; then
+						dnsmasq_create_server_backup "@dnsmasq[$i]"
+					elif [ -n "$(uci -q get "dhcp.${i}")" ]; then
 						dnsmasq_create_server_backup "$i"
+					fi
 				done
 			fi
 			;;

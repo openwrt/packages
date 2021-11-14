@@ -19,8 +19,6 @@ Signed-off-by: Martin Storsjö <martin@martin.st>
  libavcodec/libfdk-aacenc.c | 9 ++++++---
  2 files changed, 12 insertions(+), 6 deletions(-)
 
-diff --git a/libavcodec/libfdk-aacdec.c b/libavcodec/libfdk-aacdec.c
-index ca70a49ad46..63856232d9e 100644
 --- a/libavcodec/libfdk-aacdec.c
 +++ b/libavcodec/libfdk-aacdec.c
 @@ -25,10 +25,13 @@
@@ -40,8 +38,6 @@ index ca70a49ad46..63856232d9e 100644
  
  #if !FDKDEC_VER_AT_LEAST(2, 5) // < 2.5.10
  #define AAC_PCM_MAX_OUTPUT_CHANNELS AAC_PCM_OUTPUT_CHANNELS
-diff --git a/libavcodec/libfdk-aacenc.c b/libavcodec/libfdk-aacenc.c
-index f71a276403e..3b492ef8f48 100644
 --- a/libavcodec/libfdk-aacenc.c
 +++ b/libavcodec/libfdk-aacenc.c
 @@ -26,10 +26,13 @@

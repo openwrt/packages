@@ -1,0 +1,35 @@
+From fa245accd43adfbafbd60aea74fb1fc87b551b1a Mon Sep 17 00:00:00 2001
+From: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Date: Wed, 27 Oct 2021 13:46:14 +0200
+Subject: [PATCH] libhdhomerun: upgrade to 20180817
+
+This version of libhdhomerun was tested in tvheadend master and works
+with version 4.2 (there was submitted PR by me, but still not accepted)
+
+I dont have any plans to submit this against ancient version of
+tvheadend (4.0), feel free to send this to upstream.
+---
+ Makefile.hdhomerun | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/Makefile.hdhomerun b/Makefile.hdhomerun
+index 943ffec24..c5d9dd41f 100644
+--- a/Makefile.hdhomerun
++++ b/Makefile.hdhomerun
+@@ -49,10 +49,10 @@ LIBHDHRDIR = $(ROOTDIR)/libhdhomerun_static
+ 
+ export PATH := $(LIBHDHRDIR)/build/bin:$(PATH)
+ 
+-LIBHDHR         = libhdhomerun_20150826
++LIBHDHR         = libhdhomerun_20180817
+ LIBHDHR_TB      = $(LIBHDHR).tgz
+-LIBHDHR_URL     = http://download.silicondust.com/hdhomerun/$(LIBHDHR_TB)
+-LIBHDHR_SHA1    = 24ce6003b1e815ec4c642d180b621c1d524ca1cf
++LIBHDHR_URL     = https://download.silicondust.com/hdhomerun/$(LIBHDHR_TB)
++LIBHDHR_SHA1    = 052868bde3a5713c55b4d060b77e0bc3a0d891d6
+ 
+ .PHONY: build
+ build: $(LIBHDHRDIR)/$(LIBHDHR)/.tvh_build
+-- 
+2.30.2
+
