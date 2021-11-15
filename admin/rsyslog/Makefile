@@ -28,8 +28,8 @@ PKG_BUILD_PARALLEL:=1
 include $(INCLUDE_DIR)/package.mk
 
 define Package/rsyslog
-  SECTION:=net
-  CATEGORY:=Network
+  SECTION:=admin
+  CATEGORY:=Administration
   TITLE:=Enhanced system logging and kernel message trapping daemons
   URL:=https://www.rsyslog.com/
   DEPENDS:=+libestr +libfastjson +libuuid +zlib
