@@ -4,7 +4,7 @@
 # 2017 Max Berger <max at berger dot name>
 
 [ -z "${CURL_SSL}" ] && write_log 14 "Amazon AWS Route53 communication require cURL with SSL support. Please install"
-[ -z "{$username}" ] && write_log 14 "Service section not configured correctly! Missing key as 'username'"
+[ -z "${username}" ] && write_log 14 "Service section not configured correctly! Missing key as 'username'"
 [ -z "${password}" ] && write_log 14 "Service section not configured correctly! Missing secret as 'password'"
 [ -z "${domain}" ] && write_log 14 "Service section not configured correctly! Missing zone id as 'domain'"
 
