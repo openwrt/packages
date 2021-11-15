@@ -1,0 +1,6 @@
+import os
+import setuptools
+
+# FIXME: see about getting rid of PY_PKG_VERSION asap when setuptools handles this correctly
+if __name__ == "__main__":
+    setuptools.setup(version=os.environ['PY_PKG_VERSION'])
