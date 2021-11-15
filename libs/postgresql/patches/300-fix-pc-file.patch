@@ -1,6 +1,6 @@
 --- a/src/Makefile.shlib
 +++ b/src/Makefile.shlib
-@@ -387,14 +387,27 @@ endif # PORTNAME == cygwin || PORTNAME =
+@@ -391,14 +391,27 @@ endif # PORTNAME == cygwin || PORTNAME =
  
  
  %.pc: $(MAKEFILE_LIST)
