@@ -79,7 +79,7 @@ start_service() {
 	ensure_config_exists
 	procd_open_instance
 	procd_set_param file /etc/config/tvheadend
-	chown -R root:$TVH_GROUP /dev/dvb/*/*
+	chown -R root:$TVH_GROUP /dev/dvb/*
 	procd_set_param command "$PROG" -B -u $TVH_USER -g $TVH_GROUP
 	load_uci_config
 	procd_close_instance
