@@ -1,23 +1,19 @@
-#
-# Copyright (C) 2015 OpenWrt.org
-#
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
-#
-
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tvheadend
-PKG_VERSION:=4.2.8
+PKG_VERSION:=2021-11-16
 PKG_RELEASE:=$(AUTORELEASE)
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/tvheadend/tvheadend/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=1aef889373d5fad2a7bd2f139156d4d5e34a64b6d38b87b868a2df415f01f7ad
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/tvheadend/tvheadend.git
+PKG_MIRROR_HASH:=1645e90b6b8f104f2749fb0911493010f7ae3176253f2a96a4d6094536207c03
+PKG_SOURCE_VERSION:=2efe90cdcf74fdc4179692d283cf46c85e1cf681
+PKG_SOURCE_DATE:=2021-11-16
 
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=LICENSE.md
 
+PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
 
 PKG_USE_MIPS16:=0
@@ -28,92 +24,172 @@ include $(INCLUDE_DIR)/nls.mk
 define Package/tvheadend
   SECTION:=multimedia
   CATEGORY:=Multimedia
-  TITLE:=Tvheadend is a TV streaming server for Linux
-  DEPENDS:=+libopenssl +librt +zlib +libffi +TVHEADEND_AVAHI_SUPPORT:libavahi-client $(ICONV_DEPENDS)
+  TITLE:=TV streaming server
+  MENU:=1
   USERID:=tvheadend:dvb
   URL:=https://tvheadend.org
   MAINTAINER:=Marius Dinu <m95d+git@psihoexpert.ro>
+  DEPENDS:= \
+	+librt \
+	+libffi \
+	+libopenssl \
+	$(ICONV_DEPENDS) \
+	+zlib \
+	+TVHEADEND_AVAHI_SUPPORT:libavahi-client \
+	+TVHEADEND_REGEX_PCRE:libpcre \
+	+TVHEADEND_REGEX_PCRE2:libpcre2 \
+	+BUILD_PATENTED&&TVHEADEND_CSA:libdvbcsa
+
+## Transcoding | Add these to DEPENDS.
+##	+TVHEADEND_LIBFFMPEG:libffmpeg-full \
+##	+TVHEADEND_LIBVPX:libvpx \
+##	+TVHEADEND_LIBTHEORA:libtheora \
+##	+TVHEADEND_LIBVORBIS:libvorbis \
+##	+TVHEADEND_LIBOPUS:libopusenc \
+##	+TVHEADEND_LIBFDKAAC:fdk-aac \
+##	+BUILD_PATENTED&&TVHEADEND_LIBX264:libx264 \
+
 endef
 
 define Package/tvheadend/description
   Tvheadend is a TV streaming server and recorder for Linux, FreeBSD and Android
   supporting DVB-S, DVB-S2, DVB-C, DVB-T, ATSC, IPTV, SAT>IP and HDHomeRun as input sources.
-
   Tvheadend offers the HTTP (VLC, MPlayer), HTSP (Kodi, Movian) and SAT>IP streaming.
 endef
 
 define Package/tvheadend/config
-  menu "Configuration"
-  depends on PACKAGE_tvheadend
   source "$(SOURCE)/Config.in"
-  endmenu
 endef
 
-# Generic build options
+## Generic OpenWrt options
 ifneq ($(CONFIG_PKG_ASLR_PIE_NONE),)
-  CONFIGURE_ARGS += --disable-pie
+	CONFIGURE_ARGS += --disable-pie
 endif
 
-# TV sources
-ifeq ($(CONFIG_TVHEADEND_LINUXDVB_SUPPORT),)
-  CONFIGURE_ARGS += --disable-linuxdvb
-endif
-
-ifeq ($(CONFIG_TVHEADEND_DVBSCAN_SUPPORT),)
-  CONFIGURE_ARGS += --disable-dvbscan
-endif
-
-ifeq ($(CONFIG_TVHEADEND_IPTV),)
-  CONFIGURE_ARGS += --disable-iptv
-endif
-
-ifeq ($(CONFIG_TVHEADEND_SATIP_SERVER),)
-  CONFIGURE_ARGS += --disable-satip_server
-endif
-
-ifeq ($(CONFIG_TVHEADEND_SATIP_CLIENT),)
-  CONFIGURE_ARGS += --disable-satip_client
-endif
-
-ifeq ($(CONFIG_TVHEADEND_HDHOMERUN_CLIENT),)
-  CONFIGURE_ARGS += --disable-hdhomerun_static
-else
-  CONFIGURE_ARGS += --enable-hdhomerun_client
-endif
-
-# Descrambling
-ifeq ($(CONFIG_TVHEADEND_CWC_SUPPORT),)
-  CONFIGURE_ARGS += --disable-cwc
-endif
-
-ifeq ($(CONFIG_TVHEADEND_CAPMT_SUPPORT),)
-  CONFIGURE_ARGS += --disable-capmt
-endif
-
-ifeq ($(CONFIG_TVHEADEND_CCW_SUPPORT),)
-  CONFIGURE_ARGS += --disable-constcw
-endif
-
-# Other options
-ifeq ($(CONFIG_TVHEADEND_AVAHI_SUPPORT),)
-  CONFIGURE_ARGS += --disable-avahi
-else
-  CONFIGURE_ARGS += --enable-avahi
-endif
-
-ifeq ($(CONFIG_TVHEADEND_IMAGECACHE),)
-  CONFIGURE_ARGS += --disable-imagecache
-else
-  CONFIGURE_ARGS += --enable-imagecache
+## Generic tvheadend options
+ifneq ($(CONFIG_TVHEADEND_OPTIMIZE_SPEED),)
+	TARGET_CFLAGS := $(filter-out -O%,$(TARGET_CFLAGS)) -O3 -flto
+	TARGET_CXXFLAGS := $(filter-out -O%,$(TARGET_CXXFLAGS)) -O3 -flto
+	TARGET_LDFLAGS += -flto
 endif
 
 ifeq ($(CONFIG_TVHEADEND_TRACE),)
-  CONFIGURE_ARGS += --disable-trace
+	CONFIGURE_ARGS += --disable-trace
 endif
 
-# libav and ffmpeg are broken, so remove codecs too.
+ifneq ($(CONFIG_TVHEADEND_REGEX_PCRE2),)
+	CONFIGURE_ARGS += --disable-pcre --enable-pcre2
+else
+ifneq ($(CONFIG_TVHEADEND_REGEX_PCRE),)
+	CONFIGURE_ARGS += --enable-pcre --disable-pcre2
+else
+ifneq ($(CONFIG_TVHEADEND_REGEX_POSIX),)
+	CONFIGURE_ARGS += --disable-pcre --disable-pcre2
+endif
+endif
+endif
+
+ifeq ($(CONFIG_TVHEADEND_AVAHI_SUPPORT),)
+	CONFIGURE_ARGS += --disable-avahi
+else
+	CONFIGURE_ARGS += --enable-avahi
+endif
+
+ifeq ($(CONFIG_TVHEADEND_IMAGECACHE),)
+	CONFIGURE_ARGS += --disable-imagecache
+else
+	CONFIGURE_ARGS += --enable-imagecache
+endif
+
+## TV sources
+ifeq ($(CONFIG_TVHEADEND_LINUXDVB_SUPPORT),)
+	CONFIGURE_ARGS += --disable-linuxdvb
+endif
+
+ifeq ($(CONFIG_TVHEADEND_DVBSCAN_SUPPORT),)
+	CONFIGURE_ARGS += --disable-dvbscan
+endif
+
+ifeq ($(CONFIG_TVHEADEND_IPTV),)
+	CONFIGURE_ARGS += --disable-iptv
+endif
+
+ifeq ($(CONFIG_TVHEADEND_SATIP_SERVER),)
+	CONFIGURE_ARGS += --disable-satip_server
+endif
+
+ifeq ($(CONFIG_TVHEADEND_SATIP_CLIENT),)
+	CONFIGURE_ARGS += --disable-satip_client
+endif
+
+ifeq ($(CONFIG_TVHEADEND_HDHOMERUN_CLIENT),)
+	CONFIGURE_ARGS += --disable-hdhomerun_static
+else
+	CONFIGURE_ARGS += --enable-hdhomerun_client
+endif
+
+## Descrambling
+ifeq ($(CONFIG_BUILD_PATENTED),)
+	CONFIGURE_ARGS += --disable-tvhcsa --disable-dvbcsa --disable-constcw --disable-cwc --disable-capmt --disable-cccam
+else
+ifeq ($(CONFIG_TVHEADEND_CSA),)
+	CONFIGURE_ARGS += --disable-tvhcsa --disable-dvbcsa --disable-constcw --disable-cwc --disable-capmt --disable-cccam
+else
+	CONFIGURE_ARGS += --enable-tvhcsa --enable-dvbcsa
+ifeq ($(CONFIG_TVHEADEND_CONSTCW),)
+	CONFIGURE_ARGS += --disable-constcw
+endif
+ifeq ($(CONFIG_TVHEADEND_NEWCAMD),)
+	CONFIGURE_ARGS += --disable-cwc
+endif
+ifeq ($(CONFIG_TVHEADEND_CAPMT),)
+	CONFIGURE_ARGS += --disable-capmt
+endif
+ifeq ($(CONFIG_TVHEADEND_CCCAM),)
+	CONFIGURE_ARGS += --disable-cccam
+endif
+endif
+endif
+
+## Transcoding | Uncomment these.
+##ifeq ($(CONFIG_BUILD_PATENTED),)
+##	CONFIGURE_ARGS += --disable-libav --disable-libx264 --disable-libx265 --disable-libx265_static
+##else
+##ifeq ($(CONFIG_TVHEADEND_LIBFFMPEG),)
+##	CONFIGURE_ARGS += --disable-libav
+##else
+##	CONFIGURE_ARGS += --enable-libav
+##endif
+##ifeq ($(CONFIG_TVHEADEND_LIBX264),)
+##	CONFIGURE_ARGS += --disable-libx264
+##endif
+##ifeq ($(CONFIG_TVHEADEND_LIBX265),)
+##	CONFIGURE_ARGS += --disable-libx265 --disable-libx265_static
+##endif
+##ifneq ($(CONFIG_TVHEADEND_LIBFDKAAC),)
+##	CONFIGURE_ARGS += --enable-libfdkaac
+##endif
+##endif
+##
+##ifeq ($(CONFIG_TVHEADEND_LIBVPX),)
+##	CONFIGURE_ARGS += --disable-libvpx
+##endif
+##
+##ifeq ($(CONFIG_TVHEADEND_LIBlibtheora),)
+##	CONFIGURE_ARGS += --disable-libtheora
+##endif
+##
+##ifeq ($(CONFIG_TVHEADEND_LIBVORBIS),)
+##	CONFIGURE_ARGS += --disable-libvorbis
+##endif
+##
+##ifeq ($(CONFIG_TVHEADEND_LIBOPUS),)
+##	CONFIGURE_ARGS += --disable-libopus
+##endif
+
 CONFIGURE_ARGS += \
 	--arch=$(ARCH) \
+	--disable-libsystemd_daemon \
 	--disable-dbus_1 \
 	--disable-libav \
 	--disable-ffmpeg_static \
@@ -127,10 +203,25 @@ CONFIGURE_ARGS += \
 	--disable-libtheora_static \
 	--disable-libvorbis \
 	--disable-libvorbis_static \
+	--disable-libopus \
+	--disable-libopus_static \
 	--disable-libfdkaac \
 	--disable-libfdkaac_static \
+	--disable-pcloud_cache \
 	--enable-bundle \
 	--nowerror=unused-variable
+
+## Transcoding | Remove these from CONFIGURE_ARGS.
+##	--disable-libav \
+##	--disable-libx265 \
+##	--disable-libx265_static \
+##	--disable-libx264_static \
+##	--disable-libvpx_static \
+##	--disable-libtheora_static \
+##	--disable-libvorbis_static \
+##	--disable-libopus_static \
+##	--disable-libfdkaac_static \
+##	--disable-pcloud_cache \
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
@@ -149,7 +240,6 @@ define Package/tvheadend/install
 	$(INSTALL_CONF) ./files/tvheadend.config $(1)/etc/config/tvheadend
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/usb
 	$(INSTALL_BIN) ./files/dvb.hotplug $(1)/etc/hotplug.d/usb/50-dvb
-
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/build.linux/tvheadend $(1)/usr/bin/
 endef
