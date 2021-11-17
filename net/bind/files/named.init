@@ -21,7 +21,6 @@ dyndir=/tmp/bind
 
 conf_local_file=$dyndir/named.conf.local
 
-
 fix_perms() {
     for dir in $libdir $logdir $cachedir $dyndir; do
 	test -e "$dir" || {
@@ -40,6 +39,13 @@ start_service() {
     user_exists bind 57 || user_add bind 57
     group_exists bind 57 || group_add bind 57
     fix_perms
+
+    local runnamed=$(dirname $pid_file)
+    # with dropped privileges, we need this created for us
+    [ -d $runnamed ] || {
+	mkdir -m 0755 $runnamed
+	chown bind.bind $runnamed
+    }
 
     rndc-confgen > $rndc_temp
 
