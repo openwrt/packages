@@ -108,12 +108,19 @@ end
 
 -- Main program
 
+family="any"
 for k,v in ipairs(arg) do
   if (v == "-p") or (v == "--port") then
     port = arg[k+1]
   end
   if (v == "-b") or (v == "--bind") then
     bind = arg[k+1]
+  end
+  if (v == "-4") then
+    family="ipv4"
+  end
+  if (v == "-6") then
+    family="ipv6"
   end
 end
 
@@ -128,7 +135,37 @@ end
 ls_fd:close()
 
 if port then
-  server = assert(socket.bind(bind, port))
+
+  if not bind then
+    if family == "ipv4" then
+      bind="0.0.0.0"
+    else
+      bind="::"
+    end
+  else
+    if family == "any" then
+      addrinfo, err = socket.dns.getaddrinfo(bind)
+      for i, alt in ipairs(addrinfo) do
+        if alt.family == "inet" then
+	  -- socket.tcp does not respect ipv6-v6only==false and
+          -- socket.tcp6 does not bind to ipv4 addresses
+          family="ipv4"
+	  break
+        end
+      end
+    end
+  end
+
+  if family == "ipv4" then
+    server = assert(socket.tcp4())
+  else
+    server = assert(socket.tcp6())
+    server:setoption("ipv6-v6only", family == "ipv6")
+  end
+  server:setoption("reuseaddr", true)
+
+  assert(server:bind(bind, port))
+  assert(server:listen())
 
   while 1 do
     client = server:accept()

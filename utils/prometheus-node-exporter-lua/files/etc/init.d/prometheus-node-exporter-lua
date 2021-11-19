@@ -11,39 +11,58 @@ _log() {
 start_service() {
 	. /lib/functions/network.sh
 
-	local interface ipv6 port bind
+	local interface family ipv6 port bind bind6 bind4
 
 	config_load prometheus-node-exporter-lua.main
 	config_get interface "main" listen_interface "loopback"
-	config_get_bool ipv6 "main" listen_ipv6 0
+	# Compatibility with old conf
+	config_get_bool ipv6 "main" listen_ipv6
+	config_get family "main" listen_family "any"
 	config_get port "main" listen_port 9100
 
-	if [ "$interface" = "*" ]; then
-		[ "$ipv6" = 1 ] && bind="::" || bind="0.0.0.0"
-	else
-		if [ "$ipv6" = 1 ]; then
-			network_get_ipaddr6 bind "$interface"
-		else
-			network_get_ipaddr bind "$interface"
-		fi
+	# Migration from ipv6 to family
+	if [ "$ipv6" ]; then
+		_log "please migrate from ipv6 to family"
+		case "$ipv6" in
+			0) family="ipv4";;
+			1) family="ipv6";;
+		esac
+		unset ipv6
+	fi
 
-		network_is_up "$interface" && [ -n "$bind" ] || {
+	if [ "$interface" != "*" ]; then
+		if [ "$family" = "any" ] || [ "$family" = "ipv4" ]; then
+			network_get_ipaddrs bind4 "$interface"
+		fi
+		if [ "$family" = "any" ] || [ "$family" = "ipv6" ]; then
+			network_get_ipaddrs6 bind6 "$interface"
+		fi
+		network_is_up "$interface" && ([ -n "$bind6" ] || [ -n "$bind4" ]) || {
 			_log "defering start until listen interface $interface becomes ready"
 			return 0
 		}
+		set -- $bind4 $bind6
+	else
+		set -- ::
 	fi
 
-	procd_open_instance
+	for bind; do
+		procd_open_instance "$bind"
 
-	procd_set_param command /usr/bin/prometheus-node-exporter-lua
-	procd_append_param command --bind ${bind}
-	procd_append_param command --port ${port}
+		procd_set_param command /usr/bin/prometheus-node-exporter-lua
+		procd_append_param command --bind ${bind}
+		procd_append_param command --port ${port}
+		case "$family" in
+			"ipv4") procd_append_param command -4;;
+			"ipv6") procd_append_param command -6;;
+		esac
 
-	procd_set_param stdout 1
-	procd_set_param stderr 1
-	procd_set_param respawn
+		procd_set_param stdout 1
+		procd_set_param stderr 1
+		procd_set_param respawn
 
-	procd_close_instance
+		procd_close_instance
+	done
 }
 
 service_triggers()
