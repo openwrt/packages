@@ -1,25 +1,30 @@
-# Copyright 2021 Stan Grishin (stangri@melmac.net)
+# Copyright 2021 Stan Grishin (stangri@melmac.ca)
 # This is free software, licensed under the MIT License.
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nebula
-PKG_VERSION:=1.3.0
+PKG_VERSION:=1.5.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/slackhq/nebula/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=b94fba0251a4a436e25b127d0b9bc0181b991631f1dc8e344b1c8e895b55375d
+PKG_HASH:=f67684a8eba6da91de3601afc97567fddd0e198973bba950fcf15cded92cdc50
 
-PKG_MAINTAINER:=Stan Grishin <stangri@melmac.net>
+PKG_MAINTAINER:=Stan Grishin <stangri@melmac.ca>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
+
 GO_PKG:=github.com/slackhq/nebula
-GO_PKG_LDFLAGS_X:=main.Build=$(PKG_VERSION)
+GO_PKG_BUILD_PKG:= \
+	github.com/slackhq/nebula/cmd/nebula \
+	github.com/slackhq/nebula/cmd/nebula-cert
+GO_PKG_LDFLAGS_X:=\
+	main.Build=$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
