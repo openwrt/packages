@@ -11,13 +11,13 @@ include $(TOPDIR)/rules.mk
 include ../python3-version.mk
 
 PKG_NAME:=python3
-PKG_RELEASE:=2
+PKG_RELEASE:=1
 PKG_VERSION:=$(PYTHON3_VERSION).$(PYTHON3_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
 # FIXME: if updating, get rid of [1] & [2] asap
-PKG_HASH:=f8145616e68c00041d1a6399b76387390388f8359581abc24432bb969b5e3c57
+PKG_HASH:=5a99f8e7a6a11a7b98b4e75e0d1303d3832cada5534068f69c7b6222a7b1b002
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>, Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=Python/2.0
@@ -91,7 +91,7 @@ endef
 define Package/python3-light
 $(call Package/python3/Default)
   TITLE:=Python $(PYTHON3_VERSION) light installation
-  DEPENDS:=+python3-base +libffi +libbz2 +libuuid
+  DEPENDS:=+python3-base +libffi +libbz2
 endef
 
 define Package/python3-light/config
@@ -136,17 +136,12 @@ define Package/python3/description
   It's python3-light + all other packages.
 endef
 
-TARGET_CONFIGURE_OPTS+= \
-	READELF="$(TARGET_CROSS)readelf"
-
-MAKE_FLAGS+=\
-	LD="$(TARGET_CC)"
-
-EXTRA_CFLAGS+= \
-	-DNDEBUG -fno-inline
 EXTRA_LDFLAGS+= \
 	-L$(PKG_BUILD_DIR) \
 	-L$(STAGING_DIR)/usr/lib -L$(STAGING_DIR)/lib
+
+MAKE_VARS += \
+	PYTHONSTRICTEXTENSIONBUILD=1
 
 CONFIGURE_ARGS+= \
 	--enable-optimizations \
@@ -155,6 +150,7 @@ CONFIGURE_ARGS+= \
 	--without-cxx-main \
 	--without-ensurepip \
 	--without-pymalloc \
+	--disable-test-modules \
 	$(if $(CONFIG_IPV6),--enable-ipv6) \
 	$(if $(findstring mips,$(CONFIG_ARCH)),,--with-lto) \
 	CONFIG_SITE="$(PKG_BUILD_DIR)/config.site" \
@@ -320,6 +316,10 @@ HOST_LDFLAGS += \
 	-Wl,--no-as-needed -lrt
 endif
 
+# Would be nice to be able to do this, but hosts are very fiddly
+# HOST_MAKE_VARS += \
+# 	PYTHONSTRICTEXTENSIONBUILD=1
+
 ifeq ($(HOST_OS),Darwin)
 HOST_CONFIGURE_VARS += \
 	ac_cv_header_libintl_h=no
@@ -327,12 +327,18 @@ HOST_MAKE_VARS += \
 	USE_PYTHON_CONFIG_PY=1
 endif
 
+# FIXME: remove when removing patch '028-host-python-support-ssl-with-libressl.patch'
+HOST_CFLAGS += \
+	-DOPENWRT_HOST_BUILD
+
 HOST_CONFIGURE_ARGS+= \
 	--enable-optimizations \
 	--with-ensurepip=upgrade \
 	--with-system-expat=$(STAGING_DIR_HOSTPKG) \
+	--with-ssl-default-suites=openssl \
 	--without-cxx-main \
 	--without-pymalloc \
+	--disable-test-modules \
 	CONFIG_SITE=
 
 define Host/Configure

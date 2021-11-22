@@ -1,0 +1,117 @@
+--- a/Modules/_ssl.c
++++ b/Modules/_ssl.c
+@@ -67,7 +67,18 @@
+ #  error "OPENSSL_THREADS is not defined, Python requires thread-safe OpenSSL"
+ #endif
+ 
++#ifdef OPENWRT_HOST_BUILD
++#undef TLS1_3_VERSION
++static STACK_OF(X509) *SSL_get0_verified_chain(const SSL *s)
++{
++    return NULL;
++}
+ 
++static int SSL_CTX_get_security_level(const SSL_CTX *ctx)
++{
++    return 0;
++}
++#endif
+ 
+ struct py_ssl_error_code {
+     const char *mnemonic;
+@@ -291,8 +302,10 @@ typedef struct {
+     int post_handshake_auth;
+ #endif
+     PyObject *msg_cb;
++#ifndef OPENWRT_HOST_BUILD
+     PyObject *keylog_filename;
+     BIO *keylog_bio;
++#endif
+     /* Cached module state, also used in SSLSocket and SSLSession code. */
+     _sslmodulestate *state;
+ } PySSLContext;
+@@ -2346,8 +2359,14 @@ _ssl__SSLSocket_write_impl(PySSLSocket *
+ 
+     do {
+         PySSL_BEGIN_ALLOW_THREADS
++#ifdef OPENWRT_HOST_BUILD
++        retval = SSL_write(self->ssl, b->buf, (int)b->len);
++        if (retval > 0) count = retval;
++        err = _PySSL_errno(retval <= 0, self->ssl, retval);
++#else
+         retval = SSL_write_ex(self->ssl, b->buf, (size_t)b->len, &count);
+         err = _PySSL_errno(retval == 0, self->ssl, retval);
++#endif
+         PySSL_END_ALLOW_THREADS
+         self->err = err;
+ 
+@@ -2498,8 +2517,14 @@ _ssl__SSLSocket_read_impl(PySSLSocket *s
+ 
+     do {
+         PySSL_BEGIN_ALLOW_THREADS
++#ifdef OPENWRT_HOST_BUILD
++        retval = SSL_read(self->ssl, mem, len);
++        if (retval > 0) count = retval;
++        err = _PySSL_errno(retval <= 0, self->ssl, retval);
++#else
+         retval = SSL_read_ex(self->ssl, mem, (size_t)len, &count);
+         err = _PySSL_errno(retval == 0, self->ssl, retval);
++#endif
+         PySSL_END_ALLOW_THREADS
+         self->err = err;
+ 
+@@ -3062,8 +3087,10 @@ _ssl__SSLContext_impl(PyTypeObject *type
+     self->hostflags = X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS;
+     self->protocol = proto_version;
+     self->msg_cb = NULL;
++#ifndef OPENWRT_HOST_BUILD
+     self->keylog_filename = NULL;
+     self->keylog_bio = NULL;
++#endif
+     self->alpn_protocols = NULL;
+     self->set_sni_cb = NULL;
+     self->state = get_ssl_state(module);
+@@ -3187,6 +3214,7 @@ context_clear(PySSLContext *self)
+ {
+     Py_CLEAR(self->set_sni_cb);
+     Py_CLEAR(self->msg_cb);
++#ifndef OPENWRT_HOST_BUILD
+     Py_CLEAR(self->keylog_filename);
+     if (self->keylog_bio != NULL) {
+         PySSL_BEGIN_ALLOW_THREADS
+@@ -3194,6 +3222,7 @@ context_clear(PySSLContext *self)
+         PySSL_END_ALLOW_THREADS
+         self->keylog_bio = NULL;
+     }
++#endif
+     return 0;
+ }
+ 
+@@ -4603,8 +4632,10 @@ static PyGetSetDef context_getsetlist[]
+                         (setter) set_minimum_version, NULL},
+     {"maximum_version", (getter) get_maximum_version,
+                         (setter) set_maximum_version, NULL},
++#ifndef OPENWRT_HOST_BUILD
+     {"keylog_filename", (getter) _PySSLContext_get_keylog_filename,
+                         (setter) _PySSLContext_set_keylog_filename, NULL},
++#endif
+     {"_msg_callback", (getter) _PySSLContext_get_msg_callback,
+                       (setter) _PySSLContext_set_msg_callback, NULL},
+     {"sni_callback", (getter) get_sni_callback,
+--- a/Modules/_ssl/debughelpers.c
++++ b/Modules/_ssl/debughelpers.c
+@@ -114,6 +114,8 @@ _PySSLContext_set_msg_callback(PySSLCont
+     return 0;
+ }
+ 
++#ifndef OPENWRT_HOST_BUILD
++
+ static void
+ _PySSL_keylog_callback(const SSL *ssl, const char *line)
+ {
+@@ -217,3 +219,5 @@ _PySSLContext_set_keylog_filename(PySSLC
+     SSL_CTX_set_keylog_callback(self->ctx, _PySSL_keylog_callback);
+     return 0;
+ }
++
++#endif

@@ -1,26 +1,16 @@
---- a/Lib/distutils/sysconfig.py
-+++ b/Lib/distutils/sysconfig.py
-@@ -451,6 +451,7 @@ def _init_posix():
-         platform=sys.platform,
-         multiarch=getattr(sys.implementation, '_multiarch', ''),
-     ))
-+    name = '_sysconfigdata'
-     _temp = __import__(name, globals(), locals(), ['build_time_vars'], 0)
-     build_time_vars = _temp.build_time_vars
-     global _config_vars
 --- a/Lib/sysconfig.py
 +++ b/Lib/sysconfig.py
-@@ -352,6 +352,7 @@ def get_makefile_filename():
+@@ -407,6 +407,7 @@ def get_makefile_filename():
  
  
  def _get_sysconfigdata_name():
 +    return '_sysconfigdata'
-     return os.environ.get('_PYTHON_SYSCONFIGDATA_NAME',
-         '_sysconfigdata_{abi}_{platform}_{multiarch}'.format(
-         abi=sys.abiflags,
+     multiarch = getattr(sys.implementation, '_multiarch', '')
+     return os.environ.get(
+         '_PYTHON_SYSCONFIGDATA_NAME',
 --- a/Makefile.pre.in
 +++ b/Makefile.pre.in
-@@ -1555,7 +1555,7 @@ libinstall:	build_all $(srcdir)/Modules/
+@@ -1594,7 +1594,7 @@ libinstall:	build_all $(srcdir)/Modules/
  			esac; \
  		done; \
  	done
@@ -28,8 +18,8 @@
 +	$(INSTALL_DATA) `cat pybuilddir.txt`/_sysconfigdata*.py \
  		$(DESTDIR)$(LIBDEST); \
  	$(INSTALL_DATA) $(srcdir)/LICENSE $(DESTDIR)$(LIBDEST)/LICENSE.txt
- ifeq (@COMPILE_ALL_TESTS@,yes)
-@@ -1713,7 +1713,7 @@ sharedinstall: sharedmods
+ 	if test -d $(DESTDIR)$(LIBDEST)/distutils/tests; then \
+@@ -1752,7 +1752,7 @@ sharedinstall: sharedmods
  		--install-scripts=$(BINDIR) \
  		--install-platlib=$(DESTSHARED) \
  		--root=$(DESTDIR)/
@@ -40,7 +30,7 @@
  # Here are a couple of targets for MacOSX again, to install a full
 --- a/configure
 +++ b/configure
-@@ -2979,7 +2979,7 @@ $as_echo_n "checking for python interpre
+@@ -3009,7 +3009,7 @@ $as_echo_n "checking for python interpre
  	fi
          { $as_echo "$as_me:${as_lineno-$LINENO}: result: $interp" >&5
  $as_echo "$interp" >&6; }
@@ -49,7 +39,7 @@
      fi
  elif test "$cross_compiling" = maybe; then
      as_fn_error $? "Cross compiling required --host=HOST-TUPLE and --build=ARCH" "$LINENO" 5
-@@ -15460,7 +15460,7 @@ fi
+@@ -15477,7 +15477,7 @@ fi
  
  
  
@@ -69,7 +59,7 @@
      fi
  elif test "$cross_compiling" = maybe; then
      AC_MSG_ERROR([Cross compiling required --host=HOST-TUPLE and --build=ARCH])
-@@ -4858,7 +4858,7 @@ fi],
+@@ -4856,7 +4856,7 @@ fi],
  
  dnl define LIBPL after ABIFLAGS and LDVERSION is defined.
  AC_SUBST(PY_ENABLE_SHARED)
