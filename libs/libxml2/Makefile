@@ -70,6 +70,7 @@ define Package/libxml2-utils/description
 endef
 
 TARGET_CFLAGS += $(FPIC)
+HOST_CFLAGS += -fPIC
 
 CONFIGURE_ARGS += \
 	--enable-shared \
