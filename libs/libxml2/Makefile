@@ -105,6 +105,7 @@ CONFIGURE_ARGS += \
 HOST_CONFIGURE_ARGS += \
 	--disable-shared \
 	--enable-static \
+	--with-pic \
 	--with-c14n \
 	--without-catalog \
 	--with-debug \
