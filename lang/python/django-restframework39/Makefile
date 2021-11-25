@@ -29,6 +29,7 @@ define Package/python3-django-restframework39
   TITLE:=Web APIs for Django, made easy.
   URL:=https://www.django-rest-framework.org
   DEPENDS:= \
+	@BROKEN \
 	+python3 \
 	+python3-django1
   CONFLICTS:=python3-django-restframework

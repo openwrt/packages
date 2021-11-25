@@ -29,6 +29,7 @@ define Package/python3-django-appconf
   TITLE:=Helper class for handling config defaults
   URL:=https://django-appconf.readthedocs.io
   DEPENDS:= \
+	@BROKEN \
 	+python3 \
 	+python3-django1 \
 	+python3-six

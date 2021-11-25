@@ -30,6 +30,7 @@ define Package/python3-django-simple-captcha
   TITLE:=Simple Django captcha application
   URL:=https://github.com/mbi/django-simple-captcha
   DEPENDS:= \
+	@BROKEN \
 	+python3 \
 	+python3-six \
 	+python3-django1 \

@@ -27,6 +27,7 @@ define Package/python3-django-webpack-loader
   TITLE:=Transparently use webpack in django
   URL:=https://github.com/owais/django-webpack-loader
   DEPENDS:= \
+	@BROKEN \
 	+python3 \
 	+python3-django1
 endef

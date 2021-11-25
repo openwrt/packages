@@ -35,6 +35,7 @@ define Package/seafile-seahub
   TITLE:=Seafile server - seahub component
   URL:=https://seafile.com/
   DEPENDS:= \
+    @BROKEN \
     +gunicorn3 \
     +python3 \
     +python3-chardet \

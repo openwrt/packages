@@ -27,6 +27,7 @@ define Package/python3-django-ranged-response
   TITLE:=Add Content-Range: to FileResponse
   URL:=https://github.com/i3thuan5/django-ranged-response
   DEPENDS:= \
+	@BROKEN \
 	+python3 \
 	+python3-django1
 endef

@@ -31,6 +31,7 @@ define Package/python3-django-postoffice
   TITLE:=A Django app to monitor and send mail asynchronously
   URL:=https://github.com/ui/django-post_office
   DEPENDS:= \
+	@BROKEN \
 	+python3 \
 	+python3-django1 \
 	+python3-django-jsonfield2
