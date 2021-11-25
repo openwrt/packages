@@ -192,13 +192,13 @@ define Package/apparmor-utils/install
 	$(INSTALL_DIR) $(1)/usr/share/apparmor/easyprof/templates $(1)/usr/share/apparmor/easyprof/policygroups
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)-utils/usr/share/apparmor/easyprof/templates/* $(1)/usr/share/apparmor/easyprof/templates/
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)-utils/usr/share/apparmor/easyprof/policygroups/* $(1)/usr/share/apparmor/easyprof/policygroups/
-	$(INSTALL_DIR) $(1)/usr/lib/python3.9/site-packages $(1)/usr/lib/python3.9/site-packages/apparmor $(1)/usr/lib/python3.9/site-packages/apparmor/rule
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)-utils/usr/lib/python3.9/site-packages/*.egg-info \
-		$(1)/usr/lib/python3.9/site-packages/
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)-utils/usr/lib/python3.9/site-packages/apparmor/*.py \
-		$(1)/usr/lib/python3.9/site-packages/apparmor/
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)-utils/usr/lib/python3.9/site-packages/apparmor/rule/*.py \
-		$(1)/usr/lib/python3.9/site-packages/apparmor/rule
+	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages $(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages/apparmor $(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages/apparmor/rule
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)-utils/usr/lib/python$(PYTHON3_VERSION)/site-packages/*.egg-info \
+		$(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)-utils/usr/lib/python$(PYTHON3_VERSION)/site-packages/apparmor/*.py \
+		$(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages/apparmor/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)-utils/usr/lib/python$(PYTHON3_VERSION)/site-packages/apparmor/rule/*.py \
+		$(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages/apparmor/rule
 	$(INSTALL_DIR) $(1)/etc/init.d $(1)/lib/functions
 	$(INSTALL_BIN) ./files/apparmor.sh $(1)/lib/functions/
 	$(INSTALL_BIN) ./files/apparmor.init $(1)/etc/init.d/apparmor
