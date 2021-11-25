@@ -22,6 +22,7 @@ define Package/liburing
   CATEGORY:=Libraries
   TITLE:=io_uring library
   URL:=https://git.kernel.dk/cgit/liburing
+  DEPENDS:=@KERNEL_IO_URING
 endef
 
 define Package/liburing/description

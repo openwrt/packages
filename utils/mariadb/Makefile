@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
 PKG_VERSION:=10.6.4
-PKG_RELEASE:=1
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL := https://archive.mariadb.org/$(PKG_NAME)-$(PKG_VERSION)/source
@@ -36,6 +36,7 @@ MARIADB_SOCKET=/var/run/mysqld/mysqld.sock
 
 MARIADB_DISABLE_ENGINES := \
 	cassandra \
+	columnstore \
 	example \
 	mroonga \
 	oqgraph \
@@ -81,6 +82,7 @@ MARIADB_SERVER_PLUGINS := \
 
 PKG_CONFIG_DEPENDS := \
 	$(patsubst %,CONFIG_PACKAGE_$(PKG_NAME)-server-plugin-%,$(subst _,-,$(MARIADB_SERVER_PLUGINS))) \
+	CONFIG_KERNEL_IO_URING \
 	CONFIG_PACKAGE_mariadb-server
 
 plugin-auth_ed25519             := PLUGIN_AUTH_ED25519
@@ -283,7 +285,8 @@ define Package/mariadb-server-base
   $(call Package/mariadb/Default)
   DEPENDS:=mariadb-common \
 	  $(MARIADB_COMMON_DEPENDS) \
-	  +libaio \
+	  +!KERNEL_IO_URING:libaio \
+	  +KERNEL_IO_URING:liburing \
 	  +liblzma \
 	  +libpcre2 \
 	  +resolveip
