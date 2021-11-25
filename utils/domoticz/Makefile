@@ -75,7 +75,6 @@ CMAKE_OPTIONS += \
 
 TARGET_CFLAGS += -flto
 TARGET_CXXFLAGS += -DWITH_GPIO -flto
-TARGET_LDFLAGS += -lpython3.9
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
