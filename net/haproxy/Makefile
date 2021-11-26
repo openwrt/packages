@@ -10,12 +10,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=haproxy
-PKG_VERSION:=2.4.7
+PKG_VERSION:=2.4.9
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.haproxy.org/download/2.4/src
-PKG_HASH:=52af97f72f22ffd8a7a995fafc696291d37818feda50a23caef7dc0622421845
+PKG_HASH:=d56c7fe3c5afedd1b9a19e1b7f8f954feaf50a9c2f205f99891043858b72a763
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>, \
 		Christian Lachner <gladiac@gmail.com>
@@ -102,13 +102,13 @@ define Build/Compile
 		PCREDIR="$(STAGING_DIR)/usr/" \
 		USE_LUA=1 LUA_LIB_NAME="lua5.3" LUA_INC="$(STAGING_DIR)/usr/include/lua5.3" LUA_LIB="$(STAGING_DIR)/usr/lib" \
 		SMALL_OPTS="-DBUFSIZE=16384 -DMAXREWRITE=1030 -DSYSTEM_MAXCONN=165530" \
-		USE_ZLIB=1 USE_PCRE=1 USE_PCRE_JIT=1 USE_PTHREAD_PSHARED=1 USE_PROMEX=1 \
+		USE_ZLIB=1 USE_PCRE=1 USE_PCRE_JIT=1 USE_PTHREAD_PSHARED=1 USE_LIBATOMIC=1 USE_PROMEX=1 \
 		VERSION="$(PKG_VERSION)" SUBVERS="-$(PKG_RELEASE)" \
 		VERDATE="$(shell date -d @$(SOURCE_DATE_EPOCH) '+%Y/%m/%d')" IGNOREGIT=1 \
 		$(ADDON) \
 		CFLAGS="$(TARGET_CFLAGS) -fno-strict-aliasing -Wdeclaration-after-statement -Wno-unused-label -Wno-sign-compare -Wno-unused-parameter -Wno-clobbered -Wno-missing-field-initializers -Wno-cast-function-type -Wno-address-of-packed-member -Wtype-limits -Wshift-negative-value -Wshift-overflow=2 -Wduplicated-cond -Wnull-dereference -fwrapv -fasynchronous-unwind-tables -Wno-null-dereference" \
 		LD="$(TARGET_CC)" \
-		LDFLAGS="$(TARGET_LDFLAGS) -latomic"
+		LDFLAGS="$(TARGET_LDFLAGS)"
 
 	$(MAKE_VARS) $(MAKE) -C $(PKG_BUILD_DIR) \
 		DESTDIR="$(PKG_INSTALL_DIR)" \
