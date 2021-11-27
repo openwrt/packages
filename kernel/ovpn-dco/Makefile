@@ -37,6 +37,7 @@ define KernelPackage/ovpn-dco/description
 endef
 
 NOSTDINC_FLAGS += \
+	$(KERNEL_NOSTDINC_FLAGS) \
 	-I$(PKG_BUILD_DIR)/include \
 	-include $(PKG_BUILD_DIR)/linux-compat.h
 
