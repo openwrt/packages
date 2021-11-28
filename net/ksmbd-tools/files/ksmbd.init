@@ -150,7 +150,7 @@ start_service()
 	fi
 	
 	# NOTE: We don't do a soft-reload via signal, since [global] smb.conf setting changes will be ignored, so always reset hard.
-	kill_server
+	[ -e /sys/module/ksmbd ] && stop_service
 	
 	[ ! -e /sys/module/ksmbd ] && modprobe ksmbd 2> /dev/null
 	if [ ! -e /sys/module/ksmbd ]; then
