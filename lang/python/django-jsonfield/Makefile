@@ -29,6 +29,7 @@ define Package/python3-django-jsonfield
   TITLE:=A reusable Django field to store validated JSON in models
   URL:=https://github.com/rpkilby/jsonfield
   DEPENDS:= \
+	@BROKEN \
 	+python3 \
 	+python3-django1 \
 	+python3-six

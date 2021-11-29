@@ -27,6 +27,7 @@ define Package/python3-django-formtools
   TITLE:=High-level abstractions for Django forms
   URL:=https://django-formtools.readthedocs.io
   DEPENDS:= \
+	@BROKEN \
 	+python3 \
 	+python3-django1
 endef

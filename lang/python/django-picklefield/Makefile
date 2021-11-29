@@ -32,6 +32,7 @@ define Package/python3-django-picklefield
   TITLE:=Pickled object field for Django
   URL:=https://github.com/gintas/django-picklefield/
   DEPENDS:= \
+	@BROKEN \
 	+python3 \
 	+python3-django1
 endef
