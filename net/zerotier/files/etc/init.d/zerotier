@@ -115,3 +115,12 @@ stop_service() {
 	config_foreach stop_instance 'zerotier'
 	rm -f ${CONFIG_PATH}
 }
+
+reload_service() {
+	stop
+	start
+}
+
+service_triggers() {
+	procd_add_reload_trigger 'zerotier'
+}
