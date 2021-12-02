@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=c-ares
 PKG_VERSION:=1.15.0
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 PKG_LICENSE:=MIT
 PKG_CPE_ID:=cpe:/a:c-ares_project:c-ares
 
