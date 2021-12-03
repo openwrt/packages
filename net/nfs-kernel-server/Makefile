@@ -157,6 +157,13 @@ HOST_CONFIGURE_VARS += \
 	CONFIG_SQLITE3_TRUE="\#" \
 	CONFIG_NFSDCLD_TRUE="\#"
 
+define Host/Patch
+	$(if $(HOST_QUILT),rm -rf $(HOST_BUILD_DIR)/patches; mkdir -p $(HOST_BUILD_DIR)/patches)
+	$(call HostPatchDir,$(HOST_BUILD_DIR),$(HOST_PATCH_DIR),)
+	$(call HostPatchDir,$(HOST_BUILD_DIR),$(HOST_PATCH_DIR)/host,host/)
+	$(if $(HOST_QUILT),touch $(HOST_BUILD_DIR)/.quilt_used)
+endef
+
 define Host/Compile
 	$(MAKE) -C $(HOST_BUILD_DIR)/tools/rpcgen all
 endef

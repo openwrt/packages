@@ -1,0 +1,55 @@
+diff --git a/configure b/configure
+index 53b8cef..a30c839 100755
+--- a/configure
++++ b/configure
+@@ -5880,13 +5880,6 @@ fi
+ 
+ 
+ 
+-    ac_fn_c_check_func "$LINENO" "prctl" "ac_cv_func_prctl"
+-if test "x$ac_cv_func_prctl" = xyes; then :
+-
+-else
+-  as_fn_error $? "prctl syscall is not available" "$LINENO" 5
+-fi
+-
+ 
+   # Check whether --enable-caps was given.
+ if test "${enable_caps+set}" = set; then :
+diff --git a/tools/rpcgen/rpc_main.c b/tools/rpcgen/rpc_main.c
+index e97940b..fd7dea9 100644
+--- a/tools/rpcgen/rpc_main.c
++++ b/tools/rpcgen/rpc_main.c
+@@ -331,9 +331,9 @@ clear_args (void)
+ static void
+ find_cpp (void)
+ {
+-  struct stat64 buf;
++  struct stat buf;
+ 
+-  if (stat64 (CPP, &buf) == 0)
++  if (stat (CPP, &buf) == 0)
+     return;
+ 
+   if (cppDefined) /* user specified cpp but it does not exist */
+@@ -1119,17 +1119,17 @@ putarg (int whereto, const char *cp)
+ static void
+ checkfiles (const char *infile, const char *outfile)
+ {
+-  struct stat64 buf;
++  struct stat buf;
+ 
+   if (infile)			/* infile ! = NULL */
+-    if (stat64 (infile, &buf) < 0)
++    if (stat (infile, &buf) < 0)
+       {
+ 	perror (infile);
+ 	crash ();
+       }
+   if (outfile)
+     {
+-      if (stat64 (outfile, &buf) < 0)
++      if (stat (outfile, &buf) < 0)
+ 	return;			/* file does not exist */
+       else
+ 	{
