@@ -1,6 +1,6 @@
 --- a/src/port/Makefile
 +++ b/src/port/Makefile
-@@ -53,6 +53,7 @@ uninstall:
+@@ -57,6 +57,7 @@ uninstall:
  libpgport.a: $(OBJS)
  	rm -f $@
  	$(AR) $(AROPT) $@ $^
