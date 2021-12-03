@@ -813,7 +813,7 @@ f_bgsrv() {
 			ban_search="${ban_search}luci: failed login|"
 		fi
 		if printf "%s\n" "${ban_logterms}" | grep -q "nginx"; then
-			ban_search="${ban_search}nginx\[[0-9]+\]:.*\[error\].*open().*client: [[:alnum:].:]+|"
+			ban_search="${ban_search}nginx(\[[0-9]+\])?:.*\[error\].*open().*client: [[:alnum:].:]+|"
 		fi
 		(
 			"${ban_logservice}" "${ban_search%?}" &
