@@ -17,7 +17,8 @@ PKG_SOURCE_URL:=https://codeload.github.com/eembc/coremark/tar.gz/$(PKG_SOURCE_V
 PKG_HASH:=3c74d1789ed8e7a9cf2c6ad6ad68b33ed5bc87abe405af04088ab418e240ffe1
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_SOURCE_VERSION)
 
-PKG_MAINTAINER:=Lim Guo Wei <limguowei@gmail.com>
+PKG_MAINTAINER:=Lim Guo Wei <limguowei@gmail.com> \
+		Aleksander Jan Bajkowski <olek2@wp.pl>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE.md
 
