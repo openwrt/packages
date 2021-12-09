@@ -8,11 +8,11 @@ include $(TOPDIR)/rules.mk
 PECL_NAME:=pecl_http
 PECL_LONGNAME:=Extended HTTP Support
 
-PKG_VERSION:=3.2.4
+PKG_VERSION:=4.2.1
 PKG_RELEASE:=1
-PKG_HASH:=37354ff7680b9b9839da8b908fff88227af7f6746c2611c873493af41d54f033
+PKG_HASH:=ab07d55ccdfa897c897c26f1c0851b557b363431766c9ea4c799ea61443bdcdc
 
-PKG_NAME:=php7-pecl-http
+PKG_NAME:=php8-pecl-http
 PKG_SOURCE:=$(PECL_NAME)-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=http://pecl.php.net/get/
 
@@ -21,16 +21,15 @@ PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_DEPENDS:=php7 php7-pecl-propro php7-pecl-raphf
-PKG_BUILD_DIR:=$(BUILD_DIR)/pecl-php7/$(PECL_NAME)-$(PKG_VERSION)
+PKG_BUILD_DEPENDS:=php8 php8-pecl-raphf
+PKG_BUILD_DIR:=$(BUILD_DIR)/pecl-php8/$(PECL_NAME)-$(PKG_VERSION)
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
-include ../php7/pecl.mk
+include ../php8/pecl.mk
 
 CONFIGURE_VARS+= \
-	PECL_cv_HAVE_EXT_propro=yes \
 	PECL_cv_HAVE_EXT_raphf=yes \
 	PECL_cv_HAVE_LIBCURL_ARES=no \
 	PECL_cv_HAVE_LIBCURL_OpenSSL=$(if $(CONFIG_LIBCURL_OPENSSL),yes,no) \
@@ -43,6 +42,7 @@ CONFIGURE_VARS+= \
 	PECL_cv_HAVE_LIBCURL_mbedTLS=$(if $(CONFIG_LIBCURL_MBEDTLS),yes,no) \
 	PECL_cv_HAVE_LIBCURL_axTLS=no \
 	PECL_cv_LIBCURL_TLSAUTH_SRP=$(if $(CONFIG_LIBCURL_TLS_SRP),yes,no) \
+	PECL_cv_LIBCURL_SHARE_SSL=yes \
 
 CONFIGURE_ARGS+= \
 	--with-http \
@@ -54,5 +54,5 @@ CONFIGURE_ARGS+= \
 	--with-http-libidnkit-dir=no \
 	--with-http-libidnkit2-dir=no
 
-$(eval $(call PHP7PECLPackage,http,$(PECL_LONGNAME),+icu +libcurl +librt +libevent2 +PACKAGE_libidn:libidn +libidn2 +php7-mod-iconv +php7-mod-session +php7-pecl-raphf +php7-pecl-propro,30))
+$(eval $(call PHP8PECLPackage,http,$(PECL_LONGNAME),+icu +libcurl +librt +libevent2 +PACKAGE_libidn:libidn +libidn2 +php8-mod-iconv +php8-mod-session +php8-pecl-raphf,30))
 $(eval $(call BuildPackage,$(PKG_NAME)))
