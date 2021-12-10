@@ -74,7 +74,6 @@ endef
 CMAKE_OPTIONS += \
 	-DDBUS_SYSTEM_SOCKET=/var/run/dbus/system_bus_socket \
 	-DDBUS_SESSION_SOCKET_DIR=/tmp \
-	-DDBUS_SYSTEM_PID_FILE=/var/run/dbus.pid \
 	-DDBUS_BUILD_TESTS=OFF \
 	-DDBUS_LINUX=ON \
 	-DDBUS_DISABLE_ASSERT=ON \
