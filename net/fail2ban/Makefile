@@ -20,6 +20,8 @@ PKG_LICENSE_FILES:=COPYING
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python3-package.mk
 
+HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=./lib2to3.txt
+
 define Package/fail2ban
   SECTION:=net
   CATEGORY:=Network
@@ -27,7 +29,7 @@ define Package/fail2ban
   URL:=https://www.fail2ban.org/
   DEPENDS:= \
   +iptables \
-  +python3-light \
+  +python3 \
   +python3-ctypes \
   +python3-distutils \
   +python3-email \
@@ -73,6 +75,15 @@ define Py3Package/fail2ban/install
 
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/fail2ban.defaults $(1)/etc/uci-defaults/99_fail2ban
+endef
+
+define Build/Compile/fail2ban
+	$(SHELL) -c "cd $(PKG_BUILD_DIR)/$(PYTHON3_PKG_SETUP_DIR) && ./fail2ban-2to3";
+endef
+
+define Py3Build/Compile
+	$(call Build/Compile/fail2ban)
+	$(call Py3Build/Compile/Default)
 endef
 
 $(eval $(call Py3Package,fail2ban))
