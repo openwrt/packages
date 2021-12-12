@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fail2ban
-PKG_VERSION:=0.11.2
+PKG_VERSION:=0.11
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/fail2ban/fail2ban/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=383108e5f8644cefb288537950923b7520f642e7e114efb843f6e7ea9268b1e0
+PKG_SOURCE_URL:=https://codeload.github.com/fail2ban/fail2ban/tar.gz/refs/heads/$(PKG_VERSION)?
+PKG_HASH:=daa6cba83972cc3dcc46b007989b3d4b7ecfbf59533e3a3dedfeeec3cc12d03b
 
 PKG_MAINTAINER:=Gerald Kerma <gandalf@gk2.net>
 PKG_LICENSE:=GPL-2.0-or-later
