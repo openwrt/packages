@@ -1,6 +1,6 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
 #
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
+# Copyright (C) 2021-2022 Gerald Kerma
 #
 
 include $(TOPDIR)/rules.mk
@@ -19,6 +19,8 @@ PKG_LICENSE_FILES:=COPYING
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python3-package.mk
+
+HOST_BUILD_DEPENDS:=2to3/host
 
 define Package/fail2ban
   SECTION:=net
@@ -73,6 +75,11 @@ define Py3Package/fail2ban/install
 
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/fail2ban.defaults $(1)/etc/uci-defaults/99_fail2ban
+endef
+
+define Py3Build/Compile
+	cd $(PKG_BUILD_DIR) && ./fail2ban-2to3
+	$(call Py3Build/Compile/Default)
 endef
 
 $(eval $(call Py3Package,fail2ban))
