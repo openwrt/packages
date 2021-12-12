@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mandoc
-PKG_VERSION:=1.14.5
+PKG_VERSION:=1.14.6
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://mandoc.bsd.lv/snapshots/
-PKG_HASH:=8219b42cb56fc07b2aa660574e6211ac38eefdbf21f41b698d3348793ba5d8f7
+PKG_HASH:=8bf0d570f01e70a6e124884088870cbed7537f36328d512909eb10cd53179d9c
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=BSD-3-Clause BSD-2-Clause
