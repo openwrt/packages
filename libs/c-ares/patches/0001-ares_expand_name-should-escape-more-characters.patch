@@ -1,0 +1,88 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: bradh352 <brad@brad-house.com>
+Date: Fri, 11 Jun 2021 11:27:45 -0400
+Subject: [PATCH] ares_expand_name() should escape more characters
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RFC1035 5.1 specifies some reserved characters and escaping sequences
+that are allowed to be specified.  Expand the list of reserved characters
+and also escape non-printable characters using the \DDD format as
+specified in the RFC.
+
+Bug Reported By: philipp.jeitner@sit.fraunhofer.de
+Fix By: Brad House (@bradh352)
+[rebased onto 1.15.0]
+Signed-off-by: Petr Štetiar <ynezz@true.cz>
+---
+ ares_expand_name.c | 41 ++++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 38 insertions(+), 3 deletions(-)
+
+diff --git a/ares_expand_name.c b/ares_expand_name.c
+index 3a38e6737e93..8604543fc39d 100644
+--- a/ares_expand_name.c
++++ b/ares_expand_name.c
+@@ -38,6 +38,26 @@
+ static int name_length(const unsigned char *encoded, const unsigned char *abuf,
+                        int alen);
+ 
++/* Reserved characters for names that need to be escaped */
++static int is_reservedch(int ch)
++{
++  switch (ch) {
++    case '"':
++    case '.':
++    case ';':
++    case '\\':
++    case '(':
++    case ')':
++    case '@':
++    case '$':
++      return 1;
++    default:
++      break;
++  }
++
++  return 0;
++}
++
+ /* Expand an RFC1035-encoded domain name given by encoded.  The
+  * containing message is given by abuf and alen.  The result given by
+  * *s, which is set to a NUL-terminated allocated buffer.  *enclen is
+@@ -117,9 +137,18 @@ int ares_expand_name(const unsigned char *encoded, const unsigned char *abuf,
+           p++;
+           while (len--)
+             {
+-              if (*p == '.' || *p == '\\')
++              if (!isprint(*p)) {
++                /* Output as \DDD for consistency with RFC1035 5.1 */
++                *q++ = '\\';
++                *q++ = '0' + *p / 100;
++                *q++ = '0' + (*p % 100) / 10;
++                *q++ = '0' + (*p % 10);
++              } else if (is_reservedch(*p)) {
+                 *q++ = '\\';
+-              *q++ = *p;
++                *q++ = *p;
++              } else {
++                *q++ = *p;
++              }
+               p++;
+             }
+           *q++ = '.';
+@@ -177,7 +206,13 @@ static int name_length(const unsigned char *encoded, const unsigned char *abuf,
+           encoded++;
+           while (offset--)
+             {
+-              n += (*encoded == '.' || *encoded == '\\') ? 2 : 1;
++              if (!isprint(*encoded)) {
++                n += 4;
++              } else if (is_reservedch(*encoded)) {
++                n += 2;
++              } else {
++                n += 1;
++              }
+               encoded++;
+             }
+           n++;
