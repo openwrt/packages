@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=open-plc-utils
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/qca/open-plc-utils.git
-PKG_SOURCE_VERSION:=bb50f635ef6cec8b52898051e0d18f4ac3fdd331
-PKG_MIRROR_HASH:=1fc202ee33fd768d631e5834ac62461e7b544251914d797d868b0de7f33b785b
+PKG_SOURCE_VERSION:=358dfcf78bdaf7b0b13dcdf91cb1aae1789f2770
+PKG_MIRROR_HASH:=3b24033f3d2d9ac33778fb772837bc5e0a8891ac708bbe1f35336ff792baf9f8
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
