@@ -19,6 +19,9 @@ PKG_MAINTAINER:=
 PKG_LICENSE:=AFL-2.1
 PKG_CPE_ID:=cpe:/a:freedesktop:dbus
 
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_DBUS_VERBOSE
+
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
@@ -71,10 +74,13 @@ $(call Package/dbus/Default/description)
  This package contains D-Bus utilities.
 endef
 
+define Package/dbus/config
+  source "$(SOURCE)/Config.in"
+endef
+
 CMAKE_OPTIONS += \
 	-DDBUS_SYSTEM_SOCKET=/var/run/dbus/system_bus_socket \
 	-DDBUS_SESSION_SOCKET_DIR=/tmp \
-	-DDBUS_SYSTEM_PID_FILE=/var/run/dbus.pid \
 	-DDBUS_BUILD_TESTS=OFF \
 	-DDBUS_LINUX=ON \
 	-DDBUS_DISABLE_ASSERT=ON \
@@ -88,7 +94,12 @@ CMAKE_OPTIONS += \
 	-DDBUS_DISABLE_CHECKS=ON \
 	-DDBUS_BUILD_X11=OFF \
 	-DDBUS_ENABLE_DOXYGEN_DOCS=OFF \
-	-DENABLE_QT_HELP=OFF
+	-DDBUS_ENABLE_QTHELP_DOCS=OFF \
+	-DDBUS_ENABLE_XML_DOCS=OFF
+
+ifeq ($(CONFIG_DBUS_VERBOSE),y)
+  CMAKE_OPTIONS += -DDBUS_ENABLE_VERBOSE_MODE=ON
+endif
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
@@ -128,7 +139,9 @@ endef
 
 define Package/dbus-utils/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) 	$(PKG_INSTALL_DIR)/usr/bin/dbus-{monitor,send,update-activation-environment} $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dbus-monitor $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dbus-send $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dbus-test-tool $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,libdbus))
