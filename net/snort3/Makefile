@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=snort3
-PKG_VERSION:=3.1.4.0
+PKG_VERSION:=3.1.18.0
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/snort3/snort3/archive/refs/tags/
-PKG_HASH:=a68af8ea46a038dfb0ad489e8d11dee62a3e63cb4a639f6bb4fac4ded955fe11
+PKG_HASH:=6e45c16b1815d832b5d6edcd2b705e7838e25c76bfd54b3e86c55ecba6de420a
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=GPL-2.0-only
@@ -25,7 +25,7 @@ define Package/snort3
   SUBMENU:=Firewall
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libstdcpp +libdaq3 +libdnet +libopenssl +libpcap +libpcre +libpthread +libuuid +zlib +libhwloc +libtirpc +luajit
+  DEPENDS:=+libstdcpp +libdaq3 +libdnet +libopenssl +libpcap +libpcre +libpthread +libuuid +zlib +libhwloc +libtirpc +luajit +libatomic
   TITLE:=Lightweight Network Intrusion Detection System
   URL:=http://www.snort.org/
   MENU:=1
@@ -78,11 +78,11 @@ define Package/snort3/install
 
 	$(INSTALL_DIR) $(1)/usr/lib/snort
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/snort/daqs/daq_hext.so \
+		$(PKG_INSTALL_DIR)/usr/lib/snort/daq/daq_hext.so \
 		$(1)/usr/lib/snort/
 
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/snort/daqs/daq_file.so \
+		$(PKG_INSTALL_DIR)/usr/lib/snort/daq/daq_file.so \
 		$(1)/usr/lib/snort/
 
 	$(INSTALL_DIR) $(1)/usr/share/lua
