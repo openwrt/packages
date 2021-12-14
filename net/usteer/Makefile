@@ -3,13 +3,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=usteer
-PKG_SOURCE_DATE:=2021-10-09
+PKG_SOURCE_DATE:=2021-12-09
 PKG_SOURCE_VERSION:=8e7b1ffc26117c4b0338a69f5a6fb396c18448bf
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=https://git.openwrt.org/project/usteer.git
-PKG_MIRROR_HASH:=cb40e6d61e6bcd33ff6693d9b599a3d89d825e79e7f80aab110ee026ec6e7ed9
+PKG_MIRROR_HASH:=3c030b2f1f9bf3b7497b288930d09dd8320fffdd9e3cdbd49ff53be0c8bb0f31
 
 PKG_MAINTAINER:=David Bauer <mail@david-bauer.net>
 PKG_LICENSE:=GPL-2.0-only
