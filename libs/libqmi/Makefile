@@ -66,11 +66,21 @@ CONFIGURE_ARGS += \
 	--disable-gtk-doc-pdf \
 	--disable-silent-rules \
 	--enable-firmware-update \
-	--$(if $(LIBQMI_WITH_MBIM_QMUX),en,dis)able-mbim-qmux \
-	--$(if $(LIBQMI_WITH_QRTR_GLIB),en,dis)able-qrtr \
 	--enable-more-warnings=yes \
 	--without-udev \
 	--without-udev-base-dir
+
+ifeq ($(CONFIG_LIBQMI_WITH_MBIM_QMUX),y)
+	CONFIGURE_ARGS += --enable-mbim-qmux
+else
+	CONFIGURE_ARGS += --disable-mbim-qmux
+endif
+
+ifeq ($(CONFIG_LIBQMI_WITH_QRTR_GLIB),y)
+	CONFIGURE_ARGS += --enable-qrtr
+else
+	CONFIGURE_ARGS += --disable-qrtr
+endif
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
