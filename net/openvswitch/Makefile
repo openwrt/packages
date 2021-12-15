@@ -163,14 +163,14 @@ $(eval $(call OvsPackageTemplate,libopenvswitch))
 
 ovs_libofproto_title:=Open vSwitch (libofproto.so libsflow.so)
 ovs_libofproto_hidden:=1
-ovs_libofproto_depends+=+libatomic
+ovs_libofproto_depends:= +libatomic
 ovs_libofproto_files:=usr/lib/libofproto*.so* usr/lib/libsflow*.so*
 $(eval $(call OvsPackageTemplate,libofproto))
 
 
 ovs_libovsdb_title:=Open vSwitch (libovsdb.so)
 ovs_libovsdb_hidden:=1
-ovs_libovsdb_depends+=+libatomic
+ovs_libovsdb_depends:= +libatomic
 ovs_libovsdb_files:=usr/lib/libovsdb*.so*
 $(eval $(call OvsPackageTemplate,libovsdb))
 
