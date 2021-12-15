@@ -153,8 +153,7 @@ $(eval $(call OvsKmodPackageTemplate,openvswitch-lisp-intree))
 #
 ovs_libopenvswitch_title:=Open vSwitch (libopenvswitch.so)
 ovs_libopenvswitch_hidden:=1
-ovs_libopenvswitch_depends:=+libopenssl +!(arc||arceb):libunwind
-ovs_libopenvswitch_depends+=+libatomic
+ovs_libopenvswitch_depends:= +libatomic +libopenssl +!(arc||arceb):libunwind
 ifeq ($(CONFIG_OPENVSWITCH_WITH_LIBUNBOUND),y)
 ovs_libopenvswitch_depends+=+libunbound
 endif
@@ -178,24 +177,25 @@ $(eval $(call OvsPackageTemplate,libovsdb))
 
 ovs_vswitchd_title:=Open vSwitch (ovs-vswitchd)
 ovs_vswitchd_hidden:=1
-ovs_vswitchd_depends:=+openvswitch-libopenvswitch +openvswitch-libofproto
-ovs_vswitchd_depends+=+libatomic
+ovs_vswitchd_depends:= \
+	+libatomic +openvswitch-libofproto +openvswitch-libopenvswitch
 ovs_vswitchd_files:=usr/sbin/ovs-vswitchd
 $(eval $(call OvsPackageTemplate,vswitchd))
 
 
 ovs_ovsdb_title:=Open vSwitch (ovsdb-server)
 ovs_ovsdb_hidden:=1
-ovs_ovsdb_depends:=+openvswitch-libopenvswitch +openvswitch-libovsdb
-ovs_ovsdb_depends+=+libatomic
+ovs_ovsdb_depends:= \
+	+libatomic +openvswitch-libopenvswitch +openvswitch-libovsdb
 ovs_ovsdb_files:=usr/sbin/ovsdb-server
 $(eval $(call OvsPackageTemplate,ovsdb))
 
 
 ovs_common_title:=Open vSwitch (common files)
 ovs_common_hidden:=1
-ovs_common_depends:=+openvswitch-libopenvswitch +openvswitch-libofproto +openvswitch-libovsdb
-ovs_common_depends+=+libatomic
+ovs_common_depends:= \
+	+libatomic +openvswitch-libofproto +openvswitch-libopenvswitch \
+	+openvswitch-libovsdb
 ovs_common_files:= \
 	usr/share/openvswitch/scripts/ovs-lib \
 	usr/share/openvswitch/scripts/ovs-ctl \
@@ -225,9 +225,9 @@ $(eval $(call OvsPackageTemplate,common))
 # uuidgen is required for generating system-id
 ovs_openvswitch_title:=Open vSwitch
 ovs_openvswitch_hidden:=
-ovs_openvswitch_depends:=+coreutils +coreutils-sleep +uuidgen \
-	+openvswitch-common +openvswitch-vswitchd +openvswitch-ovsdb +kmod-openvswitch
-ovs_openvswitch_depends+=+libatomic
+ovs_openvswitch_depends:= \
+	+coreutils +coreutils-sleep +kmod-openvswitch +libatomic +openvswitch-common \
+	+openvswitch-ovsdb +openvswitch-vswitchd +uuidgen
 ovs_openvswitch_files:= usr/share/openvswitch/vswitch.ovsschema
 $(eval $(call OvsPackageTemplate,openvswitch))
 
