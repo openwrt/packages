@@ -153,10 +153,9 @@ $(eval $(call OvsKmodPackageTemplate,openvswitch-lisp-intree))
 #
 ovs_libopenvswitch_title:=Open vSwitch (libopenvswitch.so)
 ovs_libopenvswitch_hidden:=1
-ovs_libopenvswitch_depends:= +libatomic +libopenssl +!(arc||arceb):libunwind
-ifeq ($(CONFIG_OPENVSWITCH_WITH_LIBUNBOUND),y)
-ovs_libopenvswitch_depends+=+libunbound
-endif
+ovs_libopenvswitch_depends:= \
+	+libatomic +libopenssl +OPENVSWITCH_WITH_LIBUNBOUND:libunbound \
+	+!(arc||arceb):libunwind
 ovs_libopenvswitch_files:=usr/lib/libopenvswitch*.so*
 $(eval $(call OvsPackageTemplate,libopenvswitch))
 
