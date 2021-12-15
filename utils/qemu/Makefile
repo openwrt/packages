@@ -197,7 +197,7 @@ define qemu-target
 	+QEMU_UI_VNC_SASL:libsasl2 \
 	+QEMU_UI_SPICE:libspice-server \
 	+QEMU_DEV_USB:libusb-1.0 \
-	$(if $(filter %-softmmu,$(1)),+libncurses +libfdt +pixman +qemu-firmware-efi $(ICONV_DEPENDS))
+	$(if $(filter %-softmmu,$(1)),+libncurses +libfdt +libslirp +pixman +qemu-firmware-efi $(ICONV_DEPENDS))
   endef
 
   define Package/qemu-$(1)/description
@@ -325,6 +325,7 @@ CONFIGURE_ARGS +=			\
 	--disable-bsd-user		\
 	--disable-linux-user		\
 	--enable-system			\
+	--enable-slirp=system		\
 
 # accel
 CONFIGURE_ARGS +=			\
