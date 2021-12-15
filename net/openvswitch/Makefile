@@ -17,7 +17,7 @@ include ./openvswitch.mk
 #
 PKG_NAME:=openvswitch
 PKG_VERSION:=$(ovs_version)
-PKG_RELEASE:=10
+PKG_RELEASE:=11
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.openvswitch.org/releases/
 PKG_HASH:=7d5797f2bf2449c6a266149e88f72123540f7fe7f31ad52902057ae8d8f88c38
@@ -76,6 +76,7 @@ ovs_kmod_openvswitch_title:=Open vSwitch kernel datapath (upstream)
 ovs_kmod_openvswitch_kconfig:=CONFIG_OPENVSWITCH
 ovs_kmod_openvswitch_depends:=\
 	  +kmod-lib-crc32c \
+	  +kmod-mpls \
 	  +kmod-nf-nat \
 	  +IPV6:kmod-nf-nat6 \
 	  +kmod-nf-conntrack \
