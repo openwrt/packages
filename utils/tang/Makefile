@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tang
-PKG_VERSION:=10
+PKG_VERSION:=11
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/latchset/$(PKG_NAME)/releases/download/v$(PKG_VERSION)/
-PKG_HASH:=082f17e031708ab5e2f88c9b767d228bcf92a0d089fdb164d4ae93845cbd2a48
+PKG_HASH:=ef5d3ae56030f20c290594b9be89ad9ec469dd385676595e1c7a2bfdc3f45d8f
 
 PKG_MAINTAINER:=Tibor Dudlák <tibor.dudlak@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -41,11 +41,13 @@ define Package/tang/conffiles
 endef
 
 define Package/tang/install
+	$(INSTALL_DIR)	$(1)/usr/bin
 	$(INSTALL_DIR)	$(1)/usr/libexec
 	$(INSTALL_DIR)	$(1)/etc/xinetd.d/
-	$(INSTALL_BIN)	$(PKG_INSTALL_DIR)/usr/libexec/tangd*	$(1)/usr/libexec/
-	$(INSTALL_BIN)	./files/tangdw				$(1)/usr/libexec/
-	$(CP)		./files/tangdx				$(1)/etc/xinetd.d/
+	$(INSTALL_BIN)	$(PKG_INSTALL_DIR)/usr/bin/tang-show-keys	$(1)/usr/bin/
+	$(INSTALL_BIN)	$(PKG_INSTALL_DIR)/usr/libexec/tangd*		$(1)/usr/libexec/
+	$(INSTALL_BIN)	./files/tangdw					$(1)/usr/libexec/
+	$(CP)		./files/tangdx					$(1)/etc/xinetd.d/
 endef
 
 define Package/tang/postinst
