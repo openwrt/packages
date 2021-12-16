@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libnetfilter_log
-PKG_VERSION:=1.0.1
-PKG_RELEASE:=3
+PKG_VERSION:=1.0.2
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:= \
 	http://www.netfilter.org/projects/libnetfilter_log/files/ \
 	ftp://ftp.netfilter.org/pub/libnetfilter_log/
-PKG_HASH:=74e0fe75753dba3ac114531b5e73240452c789a3f3adccf5c51217da1d933b21
+PKG_HASH:=e3f408575614d849e4726b45e90c7ebb0e6744b04859555a9ce6ec40744ffeea
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 
 PKG_FIXUP:=autoreconf
