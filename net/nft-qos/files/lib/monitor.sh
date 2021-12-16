@@ -6,7 +6,7 @@
 . /lib/nft-qos/core.sh
 
 qosdef_monitor_get_ip_handle() { # <family> <chain> <ip>
-	echo $(nft list chain $1 nft-qos-monitor $2 -a 2>/dev/null | grep $3 | awk '{print $11}')
+	echo $(nft -a list chain $1 nft-qos-monitor $2 2>/dev/null | grep $3 | awk '{print $11}')
 }
 
 qosdef_monitor_add() { # <mac> <ip> <hostname>
