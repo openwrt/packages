@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=logrotate
 PKG_VERSION:=3.17.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/logrotate/logrotate/releases/download/$(PKG_VERSION)
@@ -49,6 +49,7 @@ endef
 
 define Package/logrotate/conffiles
 /etc/logrotate.conf
+/etc/logrotate.d
 endef
 
 CONFIGURE_ARGS += \
