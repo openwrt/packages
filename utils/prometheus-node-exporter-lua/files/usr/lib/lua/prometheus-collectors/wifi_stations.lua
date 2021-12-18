@@ -34,7 +34,7 @@ local function scrape()
         for mac, station in pairs(assoclist) do
           local labels = {
             ifname = ifname,
-            mac = mac,
+            mac = mac:lower(),
           }
           if station.signal and station.signal ~= 0 then
             metric_wifi_station_signal(labels, station.signal)
