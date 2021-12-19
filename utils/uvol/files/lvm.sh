@@ -62,8 +62,12 @@ existvol() {
 
 vg_name=
 exportpv() {
-	local reports rep pv pvs
 	vg_name=
+	config_load fstab
+	local uvolsect="$(config_foreach echo uvol)"
+	[ -n "$uvolsect" ] && config_get vg_name "$uvolsect" vg_name
+	[ -n "$vg_name" ] && return
+	local reports rep pv pvs
 	json_init
 	json_load "$(pvs -o vg_name -S "pv_name=~^/dev/$rootdev.*\$")"
 	json_select report
@@ -152,7 +156,7 @@ getdev() {
 	for dms in /sys/devices/virtual/block/dm-* ; do
 		[ "$dms" = "/sys/devices/virtual/block/dm-*" ] && break
 		read -r dm_name < "$dms/dm/name"
-		[ $(basename "$lv_dm_path") = "$dm_name" ] && echo "$(basename "$dms")"
+		[ "$(basename "$lv_dm_path")" = "$dm_name" ] && basename "$dms"
 	done
 }
 
@@ -316,6 +320,7 @@ listvols() {
 			lv_mode="${lv_name:0:2}"
 			lv_name="${lv_name:3}"
 			lv_size=${lv_size%B}
+			[ "${lv_name:0:1}" = "." ] && continue
 			if [ "$json_output" = "1" ]; then
 				[ "$json_notfirst" = "1" ] && echo ","
 				echo -e "\t{"
@@ -340,7 +345,7 @@ listvols() {
 }
 
 detect() {
-	local reports rep lv lvs lv_name lv_full_name lv_mode volname devname lv_skip_activation
+	local reports rep lv lvs lv_name lv_full_name lv_mode volname devname
 	local temp_up=""
 
 	json_init

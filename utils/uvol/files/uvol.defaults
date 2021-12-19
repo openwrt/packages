@@ -1,3 +1,17 @@
 #!/bin/sh
 
-uci -q get fstab.@uvol[0].initialized >/dev/null || uvol detect || true
+uvol_init() {
+	local metasz freesz totalsz
+	uvol detect
+	metasz="$(uvol size .meta 2>/dev/null)"
+	[ "$((metasz))" -gt 0 ] && return
+	totalsz="$(uvol total)"
+	freesz="$(uvol free)"
+	metasz="$((totalsz / 10240))"
+	[ "$metasz" -lt 4194304 ] && metasz=4194304
+	[ "$metasz" -gt "$freesz" ] && return
+	uvol create .meta "$metasz" rw
+	uvol up .meta
+}
+
+uci -q get fstab.@uvol[0].initialized >/dev/null || uvol_init

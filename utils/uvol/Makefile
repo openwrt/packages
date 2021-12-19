@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=uvol
-PKG_VERSION:=0.5
+PKG_VERSION:=0.6
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
@@ -70,7 +70,7 @@ define Package/uvol/install
 	$(INSTALL_BIN) ./files/ubi.sh $(1)/usr/libexec/uvol/20-ubi.sh
 	$(INSTALL_BIN) ./files/lvm.sh $(1)/usr/libexec/uvol/50-lvm.sh
 	$(INSTALL_BIN) ./files/uvol $(1)/usr/sbin
-	$(INSTALL_BIN) ./files/uvol.defaults $(1)/etc/uci-defaults/90-uvol-restore-uci
+	$(INSTALL_BIN) ./files/uvol.defaults $(1)/etc/uci-defaults/90-uvol-init
 endef
 
 $(eval $(call BuildPackage,autopart))

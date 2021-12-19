@@ -212,6 +212,7 @@ listvols() {
 		esac
 		volmode="${volname:5:2}"
 		volname="${volname:8}"
+		[ "${volname:0:1}" = "." ] && continue
 		if [ "$json_output" = "1" ]; then
 			[ "$json_notfirst" = "1" ] && echo ","
 				echo -e "\t{"
