@@ -4,7 +4,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=prometheus-node-exporter-lua
-PKG_VERSION:=2021.10.31
+PKG_VERSION:=2021.12.21
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
@@ -36,6 +36,7 @@ define Package/prometheus-node-exporter-lua/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
 	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/cpu.lua         $(1)/usr/lib/lua/prometheus-collectors/
 	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/conntrack.lua   $(1)/usr/lib/lua/prometheus-collectors/
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/entropy.lua     $(1)/usr/lib/lua/prometheus-collectors/
 	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/filefd.lua      $(1)/usr/lib/lua/prometheus-collectors/
 	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/loadavg.lua     $(1)/usr/lib/lua/prometheus-collectors/
 	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/meminfo.lua     $(1)/usr/lib/lua/prometheus-collectors/
