@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=jsoncpp
-PKG_VERSION:=1.9.4
-PKG_RELEASE:=3
+PKG_VERSION:=1.9.5
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/open-source-parsers/jsoncpp/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=e34a628a8142643b976c7233ef381457efad79468c67cb1ae0b83a33d7493999
+PKG_HASH:=f409856e5920c18d0c2fb85276e24ee607d2a09b5e7d5f0a371368903c275da2
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=MIT
