@@ -405,7 +405,10 @@ f_dns()
 			sleep 1
 			cnt=$((cnt+1))
 		done
+	fi
 
+	if [ "${adb_action}" != "stop" ]
+	then
 		if [ -n "${adb_dnsdir}" ] && [ ! -d "${adb_dnsdir}" ]
 		then
 			mkdir -p "${adb_dnsdir}"
@@ -416,7 +419,7 @@ f_dns()
 				f_log "err" "dns backend directory '${adb_dnsdir}' could not be created"
 			fi
 		fi
-
+		
 		if [ ! -f "${adb_dnsdir}/${adb_dnsfile}" ]
 		then
 			printf "${adb_dnsheader}" > "${adb_dnsdir}/${adb_dnsfile}"
