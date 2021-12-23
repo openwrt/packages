@@ -157,7 +157,7 @@ generate_config()
             upstream_recursive_servers_section=1
         fi
         config_get address "$config" address
-        echo "  - address_data: $address"
+        echo "  - address_data: \"$address\""
 
         config_get tls_auth_name "$config" tls_auth_name
         echo "    tls_auth_name: \"$tls_auth_name\""
