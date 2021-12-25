@@ -1,0 +1,82 @@
+commit 47c0411744f100fe0c6c1a576aefe8a53a97ba55
+Author: Sergey V. Lobanov <sergey@lobanov.in>
+Date:   Sun Dec 26 00:17:25 2021 +0300
+
+    fix build on macos (stat64 and libintl/gettext issues)
+
+--- /dev/null
++++ b/rpcgen/nls.h
+@@ -0,0 +1,27 @@
++/* 
++ * 2006-06-08 Amit Gud <agud@redhat.com>
++ * - Copied to nfs-utils/support/include from util-linux/mount
++ */
++
++#ifndef LOCALEDIR
++#define LOCALEDIR "/usr/share/locale"
++#endif
++
++#ifdef ENABLE_NLS
++# include <libintl.h>
++# define _(Text) gettext (Text)
++# ifdef gettext_noop
++#  define N_(String) gettext_noop (String)
++# else
++#  define N_(String) (String)
++# endif
++#else
++# undef bindtextdomain
++# define bindtextdomain(Domain, Directory) /* empty */
++# undef textdomain
++# define textdomain(Domain) /* empty */
++# define _(Text) (Text)
++# define N_(Text) (Text)
++#endif
++
++
+--- a/rpcgen/rpc_main.c
++++ b/rpcgen/rpc_main.c
+@@ -42,7 +42,6 @@
+ #include <stdio.h>
+ #include <string.h>
+ #include <unistd.h>
+-#include <libintl.h>
+ #include <locale.h>
+ #include <ctype.h>
+ #include <sys/types.h>
+@@ -54,6 +53,7 @@
+ #include "rpc_util.h"
+ #include "rpc_scan.h"
+ #include "proto.h"
++#include "nls.h"
+ 
+ #ifndef _
+ #define _(String) gettext (String)
+@@ -62,6 +62,12 @@
+ #define EXTEND	1		/* alias for TRUE */
+ #define DONT_EXTEND	0	/* alias for FALSE */
+ 
++#ifdef __APPLE__
++# if __DARWIN_ONLY_64_BIT_INO_T
++#  define stat64 stat
++# endif
++#endif
++
+ struct commandline
+   {
+     int cflag;			/* xdr C routines */
+--- a/rpcgen/rpc_scan.c
++++ b/rpcgen/rpc_scan.c
+@@ -37,11 +37,11 @@
+ #include <stdio.h>
+ #include <ctype.h>
+ #include <string.h>
+-#include <libintl.h>
+ #include "rpc_scan.h"
+ #include "rpc_parse.h"
+ #include "rpc_util.h"
+ #include "proto.h"
++#include "nls.h"
+ 
+ #ifndef _
+ #define _(String) gettext (String)
