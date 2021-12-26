@@ -1,5 +1,6 @@
 #!/bin/sh /etc/rc.common
 # Copyright (C) 2017 OpenWrt.org
+# Copyright (C) 2021-2022 PurpleI2P team
 
 USE_PROCD=1
 
@@ -14,42 +15,54 @@ PIDFILE=/var/run/i2pd.pid
 DATADIR=/var/lib/i2pd
 CONFFILE=/etc/i2pd/i2pd.conf
 
-
-
-i2pd_start() {
-	local cfg="$1"
-	local data_dir
-	local addressbook_dir
+start_instance() {
+	local data_dir netdb_dir addressbook_dir cfg="$1"
 
 	config_get data_dir "$cfg" data_dir "$DATADIR"
+	config_get netdb_dir "$cfg" netdb_dir
 	config_get addressbook_dir "$cfg" addressbook_dir
 
 	## Setting up data dir
-	if [ ! -d "$data_dir" ] ; then
+	if [ ! -d "$data_dir" ]; then
 		mkdir -p "$data_dir"
-		chown "$USER:$GROUP" "$data_dir"
 		ln -s /usr/share/i2pd/certificates "$data_dir/certificates"
-		if [ -n "$addressbook_dir" ] ; then
-			if [ ! -d "$addressbook_dir" ] ; then
-				mkdir -p "$addressbook_dir"
-				chown "$USER:$GROUP" "$addressbook_dir"
-			fi
-			ln -s "$addressbook_dir" "$data_dir/addressbook"
-		fi
+		ln -s /etc/i2pd/i2pd.conf "$data_dir/i2pd.conf"
+		ln -s /etc/i2pd/tunnels.conf "$data_dir/tunnels.conf"
+		ln -s /etc/i2pd/tunnels.d "$data_dir/tunnels.d"
 	fi
-	[ -d "$DATADIR" ] || ln -s "$data_dir" "$DATADIR"
+
+	if [ -n "$netdb_dir" ]; then
+		if [ ! -d "$netdb_dir" ]; then
+			mkdir -p "$netdb_dir"
+		fi
+		ln -s "$netdb_dir" "$data_dir/netDb"
+	fi
+
+	if [ -n "$addressbook_dir" ]; then
+		if [ ! -d "$addressbook_dir" ]; then
+			mkdir -p "$addressbook_dir"
+		fi
+		ln -s "$addressbook_dir" "$data_dir/addressbook"
+	fi
 
 	## We need permissions
+	chown "$USER:$GROUP" "$data_dir"
+
+	if [ -n "$netdb_dir" ]; then
+		chown "$USER:$GROUP" "$netdb_dir"
+	fi
+
+	if [ -n "$addressbook_dir" ]; then
+		chown "$USER:$GROUP" "$addressbook_dir"
+	fi
+
 	touch "$PIDFILE"
 	chown "$USER:adm" "$PIDFILE"
-	chown "$USER:adm" "$CONFFILE"
 
 	procd_open_instance
-	procd_set_param command "$PROG" --service --conf="$CONFFILE" --pidfile "$PIDFILE"
-	procd_set_param env "HOME=$DATADIR"
-	## For debugging, provide about 512 MB on external storage for coredump and adjust /proc/sys/kernel/core_pattern
-	# echo "/tmp/coredumps/core.%e.%p.%s.%t" > /proc/sys/kernel/core_pattern
-	# procd_set_param limits core="unlimited unlimited"
+	procd_set_param command "$PROG" --datadir="$data_dir" --conf="$CONFFILE" --pidfile "$PIDFILE"
+	## Don't know about i2pd user's HOME
+	procd_set_param env "HOME=$data_dir"
 	procd_set_param limits nofile=4096
 	procd_set_param stdout 1
 	procd_set_param stderr 1
@@ -58,23 +71,7 @@ i2pd_start() {
 	procd_close_instance
 }
 
-
 start_service() {
-	local instance="$1"
-	local instance_found=0
-
-	config_cb() {
-		local type="$1"
-		local name="$2"
-		[ "$type" = "i2pd" -a -n "$instance" -a "$instance" = "$name" ] && instance_found=1
-	}
-
-	config_load i2pd
-
-	if [ -n "$instance" ]; then
-		[ "$instance_found" = 0 ] && return
-		i2pd_start "$instance"
-	else
-		config_foreach i2pd_start i2pd
-	fi
+	config_load "i2pd"
+	config_foreach start_instance "i2pd"
 }
