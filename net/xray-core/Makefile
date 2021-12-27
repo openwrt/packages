@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xray-core
-PKG_VERSION:=1.4.5
+PKG_VERSION:=1.5.2
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/XTLS/Xray-core/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=54c6a687dd463b25afe8d8eb44d37e18b8177f58308207cd1d74f6cd04619854
+PKG_HASH:=b687a8fd1325bee0f6352c8dc3bfb70a7ee07cd74aacaece4e36c93cf7cda417
 
 PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
 PKG_LICENSE:=MPL-2.0
@@ -78,24 +78,24 @@ define Package/xray-core/conffiles
 /etc/config/xray
 endef
 
-GEOIP_VER:=202110210032
+GEOIP_VER:=202112090029
 GEOIP_FILE:=geoip.dat.$(GEOIP_VER)
 
 define Download/geoip
   URL:=https://github.com/v2fly/geoip/releases/download/$(GEOIP_VER)/
   URL_FILE:=geoip.dat
   FILE:=$(GEOIP_FILE)
-  HASH:=932cd484471f8066c040ab84a04fdd70df6c5cee99545de610e1f337bb696220
+  HASH:=704c53a30531b74a2c4c51b5ee958340717fc81906335c4342fb7d6ef4243ba9
 endef
 
-GEOSITE_VER:=20211018134657
+GEOSITE_VER:=20211209100918
 GEOSITE_FILE:=dlc.dat.$(GEOSITE_VER)
 
 define Download/geosite
   URL:=https://github.com/v2fly/domain-list-community/releases/download/$(GEOSITE_VER)/
   URL_FILE:=dlc.dat
   FILE:=$(GEOSITE_FILE)
-  HASH:=60b2388b11f1f9b6e14794fbacdf3bf693e3101e3ec651ce5423d8caceda5497
+  HASH:=a39901df0d0f7477d874cda50b045057610837dd0d80f7ff4c51b7ab87d88b18
 endef
 
 define Build/Prepare

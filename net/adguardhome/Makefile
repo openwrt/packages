@@ -6,19 +6,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adguardhome
-PKG_VERSION:=0.106.3
+PKG_VERSION:=0.107.0
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 PKG_SOURCE_URL:=https://github.com/AdguardTeam/AdGuardHome
-PKG_MIRROR_HASH:=bdf5ad833df90969cd82b9fb6a91846338c738ed01671fc768d867b592102f7c
+PKG_MIRROR_HASH:=7bb70a3cdbde0d4c451454369317e6265832bcf6743c44fae7df7e3f8a37a108
 
 PKG_LICENSE:=GPL-3.0-only
 PKG_LICENSE_FILES:=LICENSE.txt
 PKG_MAINTAINER:=Dobroslaw Kijowski <dobo90@gmail.com>
 
-PKG_BUILD_DEPENDS:=golang/host node/host node-yarn/host packr/host
+PKG_BUILD_DEPENDS:=golang/host node/host node-yarn/host
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
@@ -46,6 +46,7 @@ endef
 
 define Package/adguardhome/conffiles
 /etc/adguardhome.yaml
+/etc/config/adguardhome
 endef
 
 define Package/adguardhome/description
@@ -56,7 +57,6 @@ define Build/Compile
 	( \
 		pushd $(PKG_BUILD_DIR) ; \
 		make js-deps js-build ; \
-		packr -z -v -i internal ; \
 		popd ; \
 		$(call GoPackage/Build/Compile) ; \
 	)
@@ -66,6 +66,9 @@ define Package/adguardhome/install
 	$(call GoPackage/Package/Install/Bin,$(1))
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/adguardhome.init $(1)/etc/init.d/adguardhome
+
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_DATA) ./files/adguardhome.config $(1)/etc/config/adguardhome
 endef
 
 $(eval $(call GoBinPackage,adguardhome))

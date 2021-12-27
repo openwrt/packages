@@ -16,7 +16,7 @@ PKG_HASH:=aef77c9fb94a3ac588e87841208bdec464471d9871bd5050a287cc9a475cd0ba
 
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=LICENSE.txt
-PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
+PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

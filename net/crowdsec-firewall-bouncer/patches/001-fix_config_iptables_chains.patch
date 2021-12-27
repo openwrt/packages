@@ -1,6 +1,6 @@
 --- a/config/crowdsec-firewall-bouncer.yaml
 +++ b/config/crowdsec-firewall-bouncer.yaml
-@@ -15,5 +15,5 @@ deny_log: false
+@@ -20,5 +20,5 @@ supported_decisions_types:
  #if present, insert rule in those chains
  iptables_chains:
    - INPUT
