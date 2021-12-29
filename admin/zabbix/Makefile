@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
-PKG_VERSION:=4.0.16
-PKG_RELEASE:=3
+PKG_VERSION:=4.0.37
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=@SF/zabbix
-PKG_HASH:=a8d7e18230e62a7bd3fd9af5830a2b1b22818468b5da3deb673865ce40dc4d42
+PKG_SOURCE_URL:=https://cdn.zabbix.com/zabbix/sources/stable/4.0/
+PKG_HASH:=5ae7b197c236cc0eb78f24d10def1b3123fefa29b048ec5ce0b11d5271fc8e9b
 
 PKG_MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
 PKG_LICENSE:=GPL-2.0
