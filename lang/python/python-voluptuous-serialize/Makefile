@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2020 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
+# Copyright (C) 2019-2021 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=voluptuous-serialize
-PKG_VERSION:=2.4.0
+PKG_VERSION:=2.5.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=c6ba17cb0301c18e8b955d89b85fa4aa05c05c80ab1e4873810900f757dceae4
+PKG_HASH:=5359f2e0a4f972ae03066e0777b4f0755c9226b2af099ca4fc55432efd1a447b
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 PKG_LICENSE:=Apache-2.0
