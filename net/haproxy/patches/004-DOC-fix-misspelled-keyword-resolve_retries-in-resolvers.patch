@@ -1,0 +1,24 @@
+commit fc13f79e8f8090018109e5c91e4e4e55a7105146
+Author: Thierry Fournier <thierry.fournier@ozon.io>
+Date:   Wed Dec 15 19:03:52 2021 +0100
+
+    DOC: fix misspelled keyword "resolve_retries" in resolvers
+    
+    "resolve_retries" was spelled "resolve_retires".
+    
+    (cherry picked from commit 55c40ea17778b1afa3cf8f0f0a2cc42717c9364a)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+    (cherry picked from commit 8bb445d66b1bfddd77e3cf25973a642212d90880)
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+--- a/doc/configuration.txt
++++ b/doc/configuration.txt
+@@ -15145,7 +15145,7 @@ used by HAProxy. The following processin
+   2. When the fallback on the query type was done (or not applicable), HAProxy
+      retries the original DNS query, with the preferred query type.
+ 
+-  3. HAProxy retries previous steps <resolve_retires> times. If no valid
++  3. HAProxy retries previous steps <resolve_retries> times. If no valid
+      response is received after that, it stops the DNS resolution and reports
+      the error.
+ 
