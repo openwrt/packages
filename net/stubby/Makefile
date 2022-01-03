@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=stubby
 PKG_VERSION:=0.4.0
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/getdnsapi/$(PKG_NAME)
@@ -44,6 +44,9 @@ define Package/stubby/conffiles
 /etc/stubby/stubby.yml
 /etc/config/stubby
 endef
+
+# Disable static linking
+CMAKE_OPTIONS += -DENABLE_GETDNS_STATIC_LINK=OFF
 
 define Package/stubby/install
 	$(INSTALL_DIR) $(1)/usr/sbin
