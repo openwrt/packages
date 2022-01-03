@@ -27,7 +27,8 @@ define Package/mwan3
      +iptables \
      +iptables-mod-conntrack-extra \
      +iptables-mod-ipopt \
-     +jshn
+     +jshn \
+     +ip-full
    TITLE:=Multiwan hotplug script with connection tracking support
    MAINTAINER:=Florian Eckert <fe@dev.tdt.de>
    PKGARCH:=all
