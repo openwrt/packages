@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=OpenBLAS
-PKG_VERSION:=0.3.18
+PKG_VERSION:=0.3.19
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=OpenBLAS-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/xianyi/OpenBLAS/releases/download/v$(PKG_VERSION)/
-PKG_HASH:=1632c1e8cca62d8bed064b37747e331a1796fc46f688626337362bf0d16aeadb
+PKG_HASH:=947f51bfe50c2a0749304fbe373e00e7637600b0a47b78a51382aeb30ca08562
 PKG_LICENSE:=BSD 3-Clause
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
