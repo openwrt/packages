@@ -30,7 +30,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/mutt
   SECTION:=mail
   CATEGORY:=Mail
-  DEPENDS:=+MUTT_GNUTLS:libgnutls +MUTT_OPENSSL:libopenssl +libncursesw +MUTT_SASL:libsasl2 +terminfo +zlib
+  DEPENDS:=+MUTT_HCACHE:libgdbm +MUTT_GNUTLS:libgnutls +MUTT_OPENSSL:libopenssl +libncursesw +MUTT_SASL:libsasl2 +terminfo +zlib
   TITLE:=Console mail client
   URL:=http://www.mutt.org/
   MENU:=1
@@ -47,6 +47,7 @@ CONFIGURE_ARGS += \
 	$(if $(CONFIG_MUTT_POP),--enable-pop) \
 	$(if $(CONFIG_MUTT_IMAP),--enable-imap) \
 	$(if $(CONFIG_MUTT_SMTP),--enable-smtp) \
+	$(if $(CONFIG_MUTT_HCACHE),--enable-hcache) \
 	$(if $(CONFIG_MUTT_SASL),--with-sasl) \
 	--with-mailpath=/var/mail \
 	$(if $(CONFIG_MUTT_GNUTLS),--with-gnutls) \
