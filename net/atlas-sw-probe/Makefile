@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2021 CZ.NIC z.s.p.o. (https://www.nic.cz/)
+# Copyright (C) 2019-2022 CZ.NIC z.s.p.o. (https://www.nic.cz/)
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -7,15 +7,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=atlas-sw-probe
-PKG_VERSION:=5020
-PKG_RELEASE:=4
+PKG_VERSION:=5040
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/RIPE-NCC/ripe-atlas-software-probe.git
 PKG_SOURCE:=ripe-atlas-software-probe-$(PKG_VERSION).tar.gz
 
-PKG_MIRROR_HASH:=846aa20ff4bc938c07526a9893dcae4ac7dfa41982a5b2bcfe2dd53c974ecdc9
-PKG_SOURCE_VERSION:=edee49c942b726a1d8865d91c8d7f32843bc8ad1
+PKG_MIRROR_HASH:=fed1d6fa1f513e72d7266098dd74232741e2d70aea583f23e7e85521c971c6fc
+PKG_SOURCE_VERSION:=193daa18cc305c0194045e2d24d004b5116f041a
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=GPL-3.0-or-later
