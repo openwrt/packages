@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zsh
 PKG_VERSION:=5.6.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/zsh
@@ -91,10 +91,10 @@ define Package/zsh/postinst
 grep zsh $${IPKG_INSTROOT}/etc/shells || \
 	echo "/usr/bin/zsh" >> $${IPKG_INSTROOT}/etc/shells
 
-	# Backwards compatibility
-	if [[ -e /bin/zsh ]] && ([[ ! -L /bin/zsh ]] || [[ "$(readlink -fn $${IPKG_INSTROOT}/bin/zsh)" != "../$(CONFIGURE_PREFIX)/bin/zsh" ]]); then
-		ln -fs "../$(CONFIGURE_PREFIX)/bin/zsh" "$${IPKG_INSTROOT}/bin/zsh"
-	fi
+# Backwards compatibility
+if [ -e /bin/zsh ] && { [ ! -L /bin/zsh ] || [ "$(readlink -fn $${IPKG_INSTROOT}/bin/zsh)" != "../$(CONFIGURE_PREFIX)/bin/zsh" ]; }; then
+	ln -fs "../$(CONFIGURE_PREFIX)/bin/zsh" "$${IPKG_INSTROOT}/bin/zsh"
+fi
 endef
 
 define Package/zsh/install
@@ -107,7 +107,8 @@ define Package/zsh/install
 endef
 
 define Package/zsh/postrm
-	rm -rf "$${IPKG_INSTROOT}/$(CONFIGURE_PREFIX)/share/zsh/$(PKG_VERSION)"
+#!/bin/sh
+rm -rf "$${IPKG_INSTROOT}/$(CONFIGURE_PREFIX)/share/zsh/$(PKG_VERSION)"
 endef
 
 $(eval $(call BuildPackage,zsh))

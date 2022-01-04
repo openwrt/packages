@@ -1,0 +1,113 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: bradh352 <brad@brad-house.com>
+Date: Fri, 11 Jun 2021 12:39:24 -0400
+Subject: [PATCH] ares_expand_name(): fix formatting and handling of root name
+ response
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Fixes issue introduced in prior commit with formatting and handling
+of parsing a root name response which should not be escaped.
+
+Fix By: Brad House
+[rebased onto 1.15.0]
+Signed-off-by: Petr Štetiar <ynezz@true.cz>
+---
+ ares_expand_name.c | 62 ++++++++++++++++++++++++++++++----------------
+ 1 file changed, 40 insertions(+), 22 deletions(-)
+
+diff --git a/ares_expand_name.c b/ares_expand_name.c
+index 8604543fc39d..f89ee3f7a602 100644
+--- a/ares_expand_name.c
++++ b/ares_expand_name.c
+@@ -133,27 +133,37 @@ int ares_expand_name(const unsigned char *encoded, const unsigned char *abuf,
+         }
+       else
+         {
+-          len = *p;
++          int name_len = *p;
++          len = name_len;
+           p++;
++
+           while (len--)
+             {
+-              if (!isprint(*p)) {
+-                /* Output as \DDD for consistency with RFC1035 5.1 */
+-                *q++ = '\\';
+-                *q++ = '0' + *p / 100;
+-                *q++ = '0' + (*p % 100) / 10;
+-                *q++ = '0' + (*p % 10);
+-              } else if (is_reservedch(*p)) {
+-                *q++ = '\\';
+-                *q++ = *p;
+-              } else {
+-                *q++ = *p;
+-              }
++              /* Output as \DDD for consistency with RFC1035 5.1, except
++               * for the special case of a root name response  */
++              if (!isprint(*p) && !(name_len == 1 && *p == 0))
++                {
++
++                  *q++ = '\\';
++                  *q++ = '0' + *p / 100;
++                  *q++ = '0' + (*p % 100) / 10;
++                  *q++ = '0' + (*p % 10);
++                }
++              else if (is_reservedch(*p))
++                {
++                  *q++ = '\\';
++                  *q++ = *p;
++                }
++              else
++                {
++                  *q++ = *p;
++                }
+               p++;
+             }
+           *q++ = '.';
+         }
+-    }
++     }
++
+   if (!indir)
+     *enclen = aresx_uztosl(p + 1U - encoded);
+ 
+@@ -200,21 +210,29 @@ static int name_length(const unsigned char *encoded, const unsigned char *abuf,
+         }
+       else if (top == 0x00)
+         {
+-          offset = *encoded;
++          int name_len = *encoded;
++          offset = name_len;
+           if (encoded + offset + 1 >= abuf + alen)
+             return -1;
+           encoded++;
++
+           while (offset--)
+             {
+-              if (!isprint(*encoded)) {
+-                n += 4;
+-              } else if (is_reservedch(*encoded)) {
+-                n += 2;
+-              } else {
+-                n += 1;
+-              }
++              if (!isprint(*encoded) && !(name_len == 1 && *encoded == 0))
++                {
++                  n += 4;
++                }
++              else if (is_reservedch(*encoded))
++                {
++                  n += 2;
++                }
++              else
++                {
++                  n += 1;
++                }
+               encoded++;
+             }
++
+           n++;
+         }
+       else

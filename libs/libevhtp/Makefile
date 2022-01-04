@@ -36,6 +36,7 @@ define Package/libevhtp
     TITLE:=A more flexible replacement for libevent's httpd API
     URL:=https://github.com/criticalstack/libevhtp
     DEPENDS:=+libevent2 +libevent2-openssl +libevent2-pthreads +oniguruma
+    BUILDONLY:=1
 endef
 
 define Package/libevhtp/description

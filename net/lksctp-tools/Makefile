@@ -46,6 +46,7 @@ $(call Package/lksctp-tools/Default)
   TITLE+= (meta)
   URL:=http://lksctp.sourceforge.net
   DEPENDS:=+libsctp +sctp-tools
+  BUILDONLY:=1
 endef
 
 define Package/sctp-tools
