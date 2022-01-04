@@ -19,11 +19,11 @@ Signed-off-by: Eneas U de Queiroz <cotequeiroz@gmail.com>
  endif
  
  # glibc versions before 2.17 need to link with -rt to use clock_gettime
--RT_NEEDED := $(shell echo -e '#include <time.h>\nint main(void){struct timespec tp; return clock_gettime(CLOCK_MONOTONIC, &tp);}' >rttest.c; $(CC) $(CFLAGS) -o /dev/null rttest.c >/dev/null 2>&1 || echo "y"; rm rttest.c)
+-RT_NEEDED := $(shell echo 'int main(void){struct timespec tp; return clock_gettime(CLOCK_MONOTONIC, &tp);}' >rttest.c; $(CC) $(CFLAGS) -include time.h -o /dev/null rttest.c >/dev/null 2>&1 || echo "y"; rm rttest.c)
 -ifeq ($(RT_NEEDED),y)
 -LDLIBS += rt
 -endif
-+#RT_NEEDED := $(shell echo -e '#include <time.h>\nint main(void){struct timespec tp; return clock_gettime(CLOCK_MONOTONIC, &tp);}' >rttest.c; $(CC) $(CFLAGS) -o /dev/null rttest.c >/dev/null 2>&1 || echo "y"; rm rttest.c)
++#RT_NEEDED := $(shell echo 'int main(void){struct timespec tp; return clock_gettime(CLOCK_MONOTONIC, &tp);}' >rttest.c; $(CC) $(CFLAGS) -include time.h -o /dev/null rttest.c >/dev/null 2>&1 || echo "y"; rm rttest.c)
 +#ifeq ($(RT_NEEDED),y)
 +#LDLIBS += rt
 +#endif
