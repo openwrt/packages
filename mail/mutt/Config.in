@@ -14,6 +14,11 @@ if PACKAGE_mutt
 		default n
 		help
 		  Enables SMTP support in mutt.
+	config MUTT_HCACHE
+		bool "Header caching support"
+		default n
+		help
+		  Enables header caching support in mutt (using libgdbm).
 	config MUTT_SASL
 		bool "SASL support"
 		default n
