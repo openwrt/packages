@@ -3,7 +3,7 @@
 #	option minsupplies 1
 #	option shutdowncmd '/usr/sbin/nutshutdown'
 #	option notifycmd /path/to/cmd
-#	list defaultnotify SYSLOG
+#	list defaultnotify SYSLOG # can be SYSLOG or EXEC or IGNORE
 #	option pollfreq 5
 #	option pollfreqalert 5
 # 	option hostsync 15
@@ -18,16 +18,16 @@
 #	option replbattmsg "replace battery message"
 #	option nocommmsg "no communications message"
 #	option noparentmsg "no parent message"
-#	option onlinenotify "online notify flag 1|0"
-#	option onbattnotify "on battery notify flag 1|0"
-#	option lowbattnotify "low battery notify flag 1|0"
-#	option fsdnotify "forced shutdown notify flag 1|0"
-#	option comoknotify "communications restored notify flag 1|0"
-#	option combadnotify "communications bad notify flag 1|0"
-#	option shutdownotify "shutdown notify flag 1|0"
-#	option replbattnotify "replace battery notify flag 1|0"
-#	option nocommnotify "no communications notify flag 1|0"
-#	option noparentnotify "no parent notify flag 1|0"
+#	list onlinenotify SYSLOG # can be SYSLOG or EXEC or IGNORE
+#	list onbattnotify SYSLOG # can be SYSLOG or EXEC or IGNORE
+#	list lowbattnotify SYSLOG # can be SYSLOG or EXEC or IGNORE
+#	list fsdnotify SYSLOG # can be SYSLOG or EXEC or IGNORE
+#	list comoknotify SYSLOG # can be SYSLOG or EXEC or IGNORE
+#	list combadnotify SYSLOG # can be SYSLOG or EXEC or IGNORE
+#	list shutdownotify SYSLOG # can be SYSLOG or EXEC or IGNORE
+#	list replbattnotify SYSLOG # can be SYSLOG or EXEC or IGNORE
+#	list nocommnotify SYSLOG # can be SYSLOG or EXEC or IGNORE
+#	list noparentnotify SYSLOG # can be SYSLOG or EXEC or IGNORE
 #	option rbwarntime 4200 # replace battery warn time
 #	option nocommwarntime 300 # no communications warn time
 #	option finaldelay 5 # final delay
