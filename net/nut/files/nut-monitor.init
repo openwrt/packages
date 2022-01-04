@@ -95,7 +95,7 @@ nut_upsmon_conf() {
 		echo "NOTIFYFLAG COMMOK $(setnotify "$cfg" commoknotify)" ; \
 		echo "NOTIFYFLAG COMMBAD $(setnotify "$cfg" commbadnotify)" ; \
 		echo "NOTIFYFLAG SHUTDOWN $(setnotify "$cfg" shutdownnotify)" ; \
-		echo "NOTIFYFLAG REPLBATT $(setnotify "$cfg" repolbattnotify)" ; \
+		echo "NOTIFYFLAG REPLBATT $(setnotify "$cfg" replbattnotify)" ; \
 		echo "NOTIFYFLAG NOCOMM $(setnotify "$cfg" nocommnotify)" ; \
 		echo "NOTIFYFLAG NOPARENT $(setnotify "$cfg" noparentnotify)" ; \
 	} >> "$UPSMON_C"
