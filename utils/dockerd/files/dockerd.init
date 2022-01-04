@@ -175,6 +175,7 @@ process_config() {
 
 	# Don't add these options by default
 	# omission == docker defaults
+	config_get log_driver globals log_driver ""
 	config_get bip globals bip ""
 	config_get registry_mirrors globals registry_mirrors ""
 	config_get hosts globals hosts ""
@@ -189,6 +190,7 @@ process_config() {
 	json_add_string "data-root" "${data_root}"
 	json_add_string "log-level" "${log_level}"
 	json_add_boolean "iptables" "${iptables}"
+	[ -z "${log_driver}" ] || json_add_string "log-driver" "${log_driver}"
 	[ -z "${bip}" ] || json_add_string "bip" "${bip}"
 	[ -z "${registry_mirrors}" ] || json_add_array "registry-mirrors"
 	[ -z "${registry_mirrors}" ] || config_list_foreach globals registry_mirrors json_add_array_string
