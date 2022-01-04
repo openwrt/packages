@@ -60,42 +60,7 @@ define Package/mutt/install
 endef
 
 define Package/mutt/config
-	config MUTT_POP
-		depends on PACKAGE_mutt
-		bool "POP support"
-		default y
-		help
-			Enables POP support in mutt.
-	config MUTT_IMAP
-		depends on PACKAGE_mutt
-		bool "IMAP support"
-		default y
-		help
-			Enables IMAP support in mutt
-	config MUTT_SMTP
-		depends on PACKAGE_mutt
-		bool "SMTP support"
-		default n
-		help
-			Enables SMTP support in mutt.
-	config MUTT_SASL
-		depends on PACKAGE_mutt
-		bool "SASL support"
-		default n
-		help
-			Enables SASL support in mutt (libsasl2).
-	config MUTT_GNUTLS
-		depends on PACKAGE_mutt
-		bool "GnuTLS support"
-		default n
-		help
-			Enables GnuTLS support in mutt (libgnutls).
-	config MUTT_OPENSSL
-		depends on PACKAGE_mutt
-		bool "OpenSSL support"
-		default y
-		help
-			Enables OpenSSL support in mutt (libopenssl).
+  source "$(SOURCE)/Config.in"
 endef
 
 $(eval $(call BuildPackage,mutt))
