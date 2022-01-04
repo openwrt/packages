@@ -1,7 +1,7 @@
-From b83524b19ca6e5e58dded77fad37f17a177766ff Mon Sep 17 00:00:00 2001
+From 46da4c4e090e0412cee0777f1e8b219964781da7 Mon Sep 17 00:00:00 2001
 From: Eneas U de Queiroz <cotequeiroz@gmail.com>
 Date: Fri, 8 Oct 2021 14:39:52 -0300
-Subject: [PATCH 1/2] Avoid problems with 64-bit time_t
+Subject: [PATCH] Avoid problems with 64-bit time_t
 
 The clock_gettime() calls are being handled by calling
 syscall(__NR_clock_gettime, ...), which is not portable between systems
@@ -12,6 +12,11 @@ So, use the standard function, and add a test to see if we can compile
 a test without the library, including it otherwise.
 
 Signed-off-by: Eneas U de Queiroz <cotequeiroz@gmail.com>
+---
+ Makefile.flags   | 6 ++++++
+ coreutils/date.c | 6 ++----
+ libbb/time.c     | 2 +-
+ 3 files changed, 9 insertions(+), 5 deletions(-)
 
 --- a/Makefile.flags
 +++ b/Makefile.flags
@@ -20,7 +25,7 @@ Signed-off-by: Eneas U de Queiroz <cotequeiroz@gmail.com>
  endif
  
 +# glibc versions before 2.17 need to link with -rt to use clock_gettime
-+RT_NEEDED := $(shell echo -e '#include <time.h>\nint main(void){struct timespec tp; return clock_gettime(CLOCK_MONOTONIC, &tp);}' >rttest.c; $(CC) $(CFLAGS) -o /dev/null rttest.c >/dev/null 2>&1 || echo "y"; rm rttest.c)
++RT_NEEDED := $(shell echo 'int main(void){struct timespec tp; return clock_gettime(CLOCK_MONOTONIC, &tp);}' >rttest.c; $(CC) $(CFLAGS) -include time.h -o /dev/null rttest.c >/dev/null 2>&1 || echo "y"; rm rttest.c)
 +ifeq ($(RT_NEEDED),y)
 +LDLIBS += rt
 +endif
@@ -61,14 +66,3 @@ Signed-off-by: Eneas U de Queiroz <cotequeiroz@gmail.com>
  		bb_error_msg_and_die("clock_gettime(MONOTONIC) failed");
  }
  unsigned long long FAST_FUNC monotonic_ns(void)
---- a/runit/runsv.c
-+++ b/runit/runsv.c
-@@ -55,7 +55,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAG
-  * typically requiring -lrt. We just skip all this mess */
- static void gettimeofday_ns(struct timespec *ts)
- {
--	syscall(__NR_clock_gettime, CLOCK_REALTIME, ts);
-+	clock_gettime(CLOCK_REALTIME, ts);
- }
- #else
- static void gettimeofday_ns(struct timespec *ts)
