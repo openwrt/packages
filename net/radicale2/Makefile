@@ -4,15 +4,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=radicale2
-PKG_VERSION:=2.1.11
-PKG_RELEASE:=3
+PKG_VERSION:=2.1.12
+PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:radicale:radicale
 
 PYPI_NAME:=Radicale
-PKG_HASH:=02273fcc6ae10e0f74aa12652e24d0001eec8dbf467d54ddb4dfcc2af7d7a5db
+PKG_HASH:=8fd07806e3e4f873b63838dfee69bf0283216943df6051cf80a22f11d7a7eda4
 
 include ../../lang/python/pypi.mk
 include $(INCLUDE_DIR)/package.mk
