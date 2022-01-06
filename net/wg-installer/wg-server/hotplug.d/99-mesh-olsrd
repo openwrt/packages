@@ -1,0 +1,33 @@
+#!/bin/sh
+
+# check if wireguard
+if [ "${DEVTYPE}" != "wireguard" ]; then
+	exit 0
+fi
+
+# check if correct naming
+slicedint=$(echo $INTERFACE | cut -c1-3)
+if [ "${slicedint}" != "wg_" ]; then
+	exit 0
+fi
+
+if [ "${ACTION}" == "add" ]; then
+	uci add olsrd Interface
+	uci set olsrd.@Interface[-1].ignore=0
+	uci set olsrd.@Interface[-1].interface="${INTERFACE}"
+	uci set olsrd.@Interface[-1].Mode="ether"
+	uci commit
+	/etc/init.d/olsrd reload
+fi
+
+if [ "${ACTION}" == "remove" ]; then
+	i=0
+	while uci get olsrd.@Interface[$i] &> /dev/null ; do
+		if [ "$(uci get olsrd.@Interface[$i].interface)" == "${INTERFACE}" ]; then
+			uci delete olsrd.@Interface[$i]
+		fi
+		i=$((i+1));
+	done
+	uci commit
+	/etc/init.d/olsrd reload
+fi
