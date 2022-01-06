@@ -60,6 +60,14 @@ wg_register () {
 	wg set $ifname listen-port $port private-key $gw_key peer $public_key allowed-ips ::0/0
 	ip -6 a a $gw_ip_assign dev $ifname
 	ip -6 a a fe80::1/64 dev $ifname
+
+	v4prefix=$(uci get wgserver.@server[0].base_v4prefix)
+	if [ $? -eq 0 ]; then
+		gw_ipv4=$(owipcalc $v4prefix add $offset next 32) # gateway ip
+		gw_ipv4_assign="${gw_ipv4}/32"
+		ip a a $gw_ipv4_assign dev $ifname
+	fi
+
 	ip link set up dev $ifname
 	ip link set mtu $mtu dev $ifname
 
@@ -67,6 +75,9 @@ wg_register () {
 	json_init
 	json_add_string "pubkey" $wg_server_pubkey
 	json_add_string "gw_ip" $gw_ip_assign
+	if test -n "${gw_ipv4_assign-}"; then
+		json_add_string "gw_ipv4" $gw_ipv4_assign
+	fi
 	json_add_int "port" $port
 
 	echo $(json_dump)
