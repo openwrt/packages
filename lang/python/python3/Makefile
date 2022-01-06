@@ -17,10 +17,10 @@ PKG_VERSION:=$(PYTHON3_VERSION).$(PYTHON3_VERSION_MICRO)
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
 # FIXME: if updating, get rid of [1] & [2] asap
-PKG_HASH:=5a99f8e7a6a11a7b98b4e75e0d1303d3832cada5534068f69c7b6222a7b1b002
+PKG_HASH:=a7f1265b6e1a5de1ec5c3ec7019ab53413469934758311e9d240c46e5ae6e177
 
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
-PKG_LICENSE:=Python/2.0
+PKG_LICENSE:=PSF-2.0
 PKG_LICENSE_FILES:=LICENSE Doc/copyright.rst Doc/license.rst Modules/_ctypes/darwin/LICENSE Modules/_ctypes/libffi_osx/LICENSE Modules/expat/COPYING
 PKG_CPE_ID:=cpe:/a:python:python
 
@@ -139,6 +139,15 @@ endef
 EXTRA_LDFLAGS+= \
 	-L$(PKG_BUILD_DIR) \
 	-L$(STAGING_DIR)/usr/lib -L$(STAGING_DIR)/lib
+
+# Workaround for hardfloat mips
+# https://bugs.python.org/issue46265
+ifneq ($(findstring mips,$(CONFIG_ARCH)),)
+ifeq ($(CONFIG_HAS_FPU),y)
+CONFIGURE_VARS += \
+	ax_cv_check_cflags___fno_semantic_interposition=no
+endif
+endif
 
 MAKE_VARS += \
 	PYTHONSTRICTEXTENSIONBUILD=1
