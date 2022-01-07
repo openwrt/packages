@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luaossl
 PKG_VERSION:=20200709
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Siger Yang <sigeryeung@gmail.com>
 
 PKG_MIRROR_HASH:=6dbca3cdc50ed7e3b0821783da2407accfb6d25addc3edf1d8e17b00530f5a25
