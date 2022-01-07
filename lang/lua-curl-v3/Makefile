@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua-curl-v3
 PKG_VERSION:=0.3.13-snapshot
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
@@ -28,6 +28,9 @@ define Package/lua-curl-v3
     DEPENDS:=+libcurl +lua
     MAINTAINER:=Rainer Poisel <rainer.poisel@gmail.com>
 endef
+
+MAKE_FLAGS += \
+	UNAME="Linux"
 
 define Package/lua-curl-v3/description
 	Lua bindings to libcurl (Lua-cURLv3)
