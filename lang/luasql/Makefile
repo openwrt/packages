@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luasql
 PKG_VERSION:=2.4.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/keplerproject/luasql/tar.gz/v$(PKG_VERSION)?
@@ -94,6 +94,7 @@ ifeq ($(BUILD_VARIANT),sqlite3)
 endif
 
 MAKE_FLAGS += \
+	LIB_OPTION="-shared" \
 	CFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS)" \
 	$(BUILD_VARIANT)
 
