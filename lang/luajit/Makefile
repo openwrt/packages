@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luajit
 PKG_VERSION:=2.1.0-beta3
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=LuaJIT-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://luajit.org/download
