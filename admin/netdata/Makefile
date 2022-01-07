@@ -61,8 +61,7 @@ CONFIGURE_ARGS += \
 	--disable-plugin-cups \
 	--disable-plugin-xenstat \
 	--disable-backend-prometheus-remote-write \
-	--disable-unit-tests \
-	--disable-cloud
+	--disable-unit-tests
 
 define Package/netdata/conffiles
 /etc/netdata/
