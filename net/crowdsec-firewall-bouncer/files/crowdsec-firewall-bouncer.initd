@@ -4,7 +4,7 @@
 START=99
 USE_PROCD=1
 NAME=crowdsec-firewall-bouncer
-PROG=/usr/bin/cs-firewall-bouncer
+PROG=/usr/bin/crowdsec-firewall-bouncer
 CONFIG=/etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
 BACKEND=iptables
 VARCONFIGDIR=/var/etc/crowdsec/bouncers
