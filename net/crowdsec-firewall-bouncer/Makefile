@@ -1,19 +1,17 @@
 # SPDX-License-Identifier: MIT
 #
-# Copyright (C) 2021 Gerald Kerma
+# Copyright (C) 2021-2022 Gerald Kerma
 #
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=crowdsec-firewall-bouncer
-PKG_VERSION:=0.0.18
+PKG_VERSION:=0.0.21
 PKG_RELEASE:=$(AUTORELEASE)
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/crowdsecurity/cs-firewall-bouncer
-PKG_MIRROR_HASH:=2fb7ddb226f6a99c46826706da25f7cdbcd7615468129e7b07f8ac4edf0366f9
-PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_SOURCE_DATE:=20211210
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/crowdsecurity/cs-firewall-bouncer/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=c92e02085c4c8481009a46ba80374329d102a45933fd0fd2164901954331923e
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
@@ -22,22 +20,20 @@ PKG_MAINTAINER:=Gerald Kerma <gandalf@gk2.net>
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
+PKG_BUILD_DIR:=$(BUILD_DIR)/cs-firewall-bouncer-$(PKG_VERSION)
 
-CSFB_BUILD_VERSION?=$(PKG_SOURCE_VERSION)
-CSFB_BUILD_GOVERSION=$(shell go version | cut -d " " -f3 | sed -r 's/[go]+//g')
-CWD_BUILD_TIMESTAMP:=$(SOURCE_DATE_EPOCH)
-CSFB_BUILD_TAG=openwrt
-
+CSFB_BUILD_VERSION?=v$(PKG_VERSION)
+CSFB_BUILD_GOVERSION:=$(shell go version | cut -d " " -f3 | sed -E 's/[go]+//g')
+CWD_BUILD_TIMESTAMP:=$(shell date +%F"_"%T)
+CSFB_BUILD_TAG:=openwrt-$(PKG_VERSION)-$(PKG_RELEASE)
 CSFB_VERSION_PKG:=github.com/crowdsecurity/cs-firewall-bouncer/pkg/version
 
 GO_PKG:=github.com/crowdsecurity/cs-firewall-bouncer
-
+GO_PKG_INSTALL_ALL:=1
 GO_PKG_LDFLAGS_X:=$(CSFB_VERSION_PKG).Version=$(CSFB_BUILD_VERSION) \
 	$(CSFB_VERSION_PKG).BuildDate=$(CSFB_BUILD_TIMESTAMP) \
 	$(CSFB_VERSION_PKG).Tag=$(CSFB_BUILD_TAG) \
 	$(CSFB_VERSION_PKG).GoVersion=$(CSFB_BUILD_GOVERSION)
-
-GO_PKG_INSTALL_ALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
@@ -46,7 +42,7 @@ define Package/crowdsec-firewall-bouncer/Default
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Firewall bouncer for Crowdsec
-  URL:=https://github.com/crowdsecurity/cs-firewall-bouncer/
+  URL:=https://github.com/crowdsecurity/crowdsec-firewall-bouncer/
 endef
 
 define Package/crowdsec-firewall-bouncer
