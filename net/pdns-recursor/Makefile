@@ -14,7 +14,7 @@ PKG_LICENCE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:powerdns:recursor
 
 PKG_FIXUP:=autoreconf
-PKG_INSTALL:=1
+PKG_INSTALL:=2
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
