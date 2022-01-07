@@ -1,13 +1,13 @@
 #!/bin/sh
-API_KEY=""
+
 CONFIG=/etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
 ## Gen&ConfigApiKey
-if grep -q "${API_KEY}" "$CONFIG"; then
-	echo API key already registered...
-else
+if grep -q "{API_KEY}" "$CONFIG"; then
 	SUFFIX=`tr -dc A-Za-z0-9 </dev/urandom | head -c 8`
-	API_KEY=`/usr/bin/cscli bouncers add cs-firewall-bouncer-${SUFFIX} -o raw`
+	API_KEY=`/usr/bin/cscli bouncers add crowdsec-firewall-bouncer-${SUFFIX} -o raw`
 	sed -i "s,^\(\s*api_key\s*:\s*\).*\$,\1$API_KEY," $CONFIG
+else
+	echo API key already registered...
 fi
 
 # unfortunately, UCI doesn't provide a nice way to add an anonymous section only if it doesn't already exist
