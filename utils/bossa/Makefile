@@ -33,6 +33,7 @@ endef
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) bin/bossac \
+    OS="Linux" \
     CC="$(TARGET_CC_NOCACHE)" \
     CXX="$(TARGET_CXX_NOCACHE)" \
     CFLAGS="$(TARGET_CFLAGS) $(EXTRA_CFLAGS)" \
