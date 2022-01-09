@@ -25,6 +25,7 @@ HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/glib-$(PKG_VERSION)
 PKG_BUILD_DEPENDS:=libiconv/host
 HOST_BUILD_DEPENDS:=libiconv/host libffi/host pcre/host
 PKG_CONFIG_DEPENDS:=CONFIG_BUILD_NLS
+PKG_FORTIFY_SOURCE:=0
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/host-build.mk
