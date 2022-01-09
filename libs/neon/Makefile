@@ -47,6 +47,9 @@ define Package/libneon/description
   - WebDAV metadata support; wrappers for PROPFIND and PROPPATCH to simplify property manipulation.
 endef
 
+CONFIGURE_VARS += \
+	ne_cv_os_uname="Linux"
+
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
