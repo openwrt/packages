@@ -1,24 +1,6 @@
---- a/lib/crypto/c_src/crypto_callback.c
-+++ b/lib/crypto/c_src/crypto_callback.c
-@@ -112,6 +112,7 @@ static ErlNifRWLock** lock_vec = NULL; /
- 
- #include <openssl/crypto.h>
- 
-+#if OPENSSL_VERSION_NUMBER < PACKED_OPENSSL_VERSION_PLAIN(1,1,0)
- static INLINE void locking(int mode, ErlNifRWLock* lock)
- {
-     switch (mode) {
-@@ -132,7 +133,6 @@ static INLINE void locking(int mode, Erl
-     }
- }
- 
--#if OPENSSL_VERSION_NUMBER < PACKED_OPENSSL_VERSION_PLAIN(1,1,0)
- static void locking_function(int mode, int n, const char *file, int line)
- {
-     locking(mode, lock_vec[n]);
 --- a/lib/crypto/c_src/engine.c
 +++ b/lib/crypto/c_src/engine.c
-@@ -244,7 +244,7 @@ ERL_NIF_TERM engine_load_dynamic_nif(Erl
+@@ -239,7 +239,7 @@ ERL_NIF_TERM engine_load_dynamic_nif(Erl
  #ifdef HAS_ENGINE_SUPPORT
      ASSERT(argc == 0);
  
@@ -29,9 +11,9 @@
      return atom_notsup;
 --- a/lib/crypto/c_src/info.c
 +++ b/lib/crypto/c_src/info.c
-@@ -20,6 +20,11 @@
+@@ -46,6 +46,11 @@
+ #endif
  
- #include "info.h"
  
 +#if OPENSSL_VERSION_NUMBER < PACKED_OPENSSL_VERSION_PLAIN(1,1,0)
 +#define OPENSSL_VERSION	SSLEAY_VERSION
@@ -40,8 +22,8 @@
 +
  #ifdef HAVE_DYNAMIC_CRYPTO_LIB
  
- # if defined(DEBUG)
-@@ -77,7 +82,7 @@ ERL_NIF_TERM info_lib(ErlNifEnv *env, in
+ char *crypto_callback_name = CB_NAME;
+@@ -132,7 +137,7 @@ ERL_NIF_TERM info_lib(ErlNifEnv *env, in
      ASSERT(argc == 0);
  
      name_sz = strlen(libname);
@@ -52,7 +34,7 @@
  
 --- a/lib/crypto/c_src/otp_test_engine.c
 +++ b/lib/crypto/c_src/otp_test_engine.c
-@@ -100,9 +100,11 @@ static int test_init(ENGINE *e) {
+@@ -101,9 +101,11 @@ static int test_init(ENGINE *e) {
          goto err;
  #endif /* if defined(FAKE_RSA_IMPL) */
  
