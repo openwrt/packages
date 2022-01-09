@@ -32,7 +32,7 @@ check_wg_neighbors() {
         delete=1
         for ip in $ips; do
             if [ $ip != $linklocal ] && [ $(owipcalc $ip linklocal) -eq 1 ]; then
-                delte=0
+                delete=0
                 break
             fi
         done
