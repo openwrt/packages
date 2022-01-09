@@ -1,0 +1,27 @@
+--- a/obexd/client/sync.c
++++ b/obexd/client/sync.c
+@@ -209,7 +209,7 @@ static void sync_remove(struct obc_sessi
+ 	g_dbus_unregister_interface(conn, path, SYNC_INTERFACE);
+ }
+ 
+-static struct obc_driver sync = {
++static struct obc_driver sync2 = {
+ 	.service = "SYNC",
+ 	.uuid = SYNC_UUID,
+ 	.target = OBEX_SYNC_UUID,
+@@ -228,7 +228,7 @@ int sync_init(void)
+ 	if (!conn)
+ 		return -EIO;
+ 
+-	err = obc_driver_register(&sync);
++	err = obc_driver_register(&sync2);
+ 	if (err < 0) {
+ 		dbus_connection_unref(conn);
+ 		conn = NULL;
+@@ -245,5 +245,5 @@ void sync_exit(void)
+ 	dbus_connection_unref(conn);
+ 	conn = NULL;
+ 
+-	obc_driver_unregister(&sync);
++	obc_driver_unregister(&sync2);
+ }
