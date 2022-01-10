@@ -14,7 +14,7 @@ fi
 if [ "${ACTION}" == "add" ]; then
 	uci add babeld interface
 	uci set babeld.@interface[-1].ifname="${INTERFACE}"
-	uci commit
+	uci -c "$(dirname $(realpath /etc/config/babeld))" commit babeld
 	/etc/init.d/babeld reload
 fi
 
@@ -26,6 +26,6 @@ if [ "${ACTION}" == "remove" ]; then
 		fi
 		i=$((i+1));
 	done
-	uci commit
+	uci -c "$(dirname $(realpath /etc/config/babeld))" commit babeld
 	/etc/init.d/babeld reload
 fi
