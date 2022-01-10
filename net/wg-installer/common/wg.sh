@@ -15,7 +15,7 @@ next_port () {
 }
 
 cleanup_wginterfaces() {
-    neighbors_available
+    check_wg_neighbors
 }
 
 delete_wg_interface() {
