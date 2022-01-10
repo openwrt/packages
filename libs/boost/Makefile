@@ -11,13 +11,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=boost
-PKG_VERSION:=1.76.0
-PKG_SOURCE_VERSION:=1_76_0
+PKG_VERSION:=1.78.0
+PKG_SOURCE_VERSION:=1_78_0
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_SOURCE_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)/$(PKG_NAME)/$(PKG_VERSION) https://dl.bintray.com/boostorg/release/$(PKG_VERSION)/source/
-PKG_HASH:=f0397ba6e982c4450f27bf32a2a83292aba035b827a5623a14636ea583318c41
+PKG_HASH:=8681f175d4bdb26c52222665793eef08490d7758529330f98d3b29dd0735bccc
 
 PKG_MAINTAINER:=Carlos M. Ferreira <carlosmf.pt@gmail.com>
 PKG_LICENSE:=BSL-1.0
@@ -42,7 +42,7 @@ define Package/boost/Default
 endef
 
 define Package/boost/description
-This package provides the Boost v1.76.0 libraries.
+This package provides the Boost v1.78.0 libraries.
 Boost is a set of free, peer-reviewed, portable C++ source libraries.
 
 This package provides the following run-time libraries:
@@ -77,7 +77,7 @@ This package provides the following run-time libraries:
  - wave
 
 There are many more header-only libraries supported by Boost.
-See more at http://www.boost.org/doc/libs/1_76_0/
+See more at http://www.boost.org/doc/libs/1_78_0/
 endef
 
 PKG_BUILD_DEPENDS:=boost/host
@@ -342,7 +342,7 @@ $(eval $(call DefineBoostLibrary,coroutine,system chrono context thread,,!boost-
 $(eval $(call DefineBoostLibrary,date_time))
 #$(eval $(call DefineBoostLibrary,exception,,))
 $(eval $(call DefineBoostLibrary,fiber,coroutine filesystem,,!boost-fiber-exclude))
-$(eval $(call DefineBoostLibrary,filesystem,system))
+$(eval $(call DefineBoostLibrary,filesystem,system atomic))
 $(eval $(call DefineBoostLibrary,graph,regex))
 $(eval $(call DefineBoostLibrary,iostreams,,,,zlib liblzma libbz2 libzstd))
 $(eval $(call DefineBoostLibrary,json,container))

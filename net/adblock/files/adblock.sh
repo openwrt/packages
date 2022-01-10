@@ -54,6 +54,7 @@ adb_repiface=""
 adb_replisten="53"
 adb_repchunkcnt="5"
 adb_repchunksize="1"
+adb_represolve="0"
 adb_lookupdomain="example.com"
 adb_action="${1:-"start"}"
 adb_packages=""
@@ -404,7 +405,10 @@ f_dns()
 			sleep 1
 			cnt=$((cnt+1))
 		done
+	fi
 
+	if [ "${adb_action}" != "stop" ]
+	then
 		if [ -n "${adb_dnsdir}" ] && [ ! -d "${adb_dnsdir}" ]
 		then
 			mkdir -p "${adb_dnsdir}"
@@ -415,7 +419,7 @@ f_dns()
 				f_log "err" "dns backend directory '${adb_dnsdir}' could not be created"
 			fi
 		fi
-
+		
 		if [ ! -f "${adb_dnsdir}/${adb_dnsfile}" ]
 		then
 			printf "${adb_dnsheader}" > "${adb_dnsdir}/${adb_dnsfile}"
@@ -915,7 +919,7 @@ f_list()
 		"safesearch")
 			case "${src_name}" in
 				"google")
-					rset="/^(\\.[[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{printf \"%s\n%s\n\",tolower(\"www\"\$1),tolower(substr(\$1,2,length(\$1)))}"
+					rset="/^\\.([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{printf \"%s\n%s\n\",tolower(\"www\"\$1),tolower(substr(\$1,2,length(\$1)))}"
 					safe_url="https://www.google.com/supported_domains"
 					safe_cname="forcesafesearch.google.com"
 					safe_domains="${adb_tmpdir}/tmp.load.safesearch.${src_name}"
@@ -1653,7 +1657,7 @@ f_main()
 #
 f_report()
 {
-	local report_raw report_json report_txt content status total start end blocked percent top_list top array item index hold ports value key key_list cnt=0 action="${1}" count="${2:-"50"}" search="${3:-"+"}"
+	local report_raw report_json report_txt content status total start end blocked percent top_list top array item index hold ports value key key_list cnt=0 resolve="-nn" action="${1}" count="${2:-"50"}" search="${3:-"+"}"
 
 	report_raw="${adb_reportdir}/adb_report.raw"
 	report_srt="${adb_reportdir}/adb_report.srt"
@@ -1668,10 +1672,14 @@ f_report()
 		> "${report_srt}"
 		> "${report_txt}"
 		> "${report_jsn}"
+		if [ "${adb_represolve}" = "1" ]
+		then
+			resolve=""
+		fi
 		for file in "${adb_reportdir}/adb_report.pcap"*
 		do
 			(
-				"${adb_dumpcmd}" -nn -tttt -r "${file}" 2>/dev/null | \
+				"${adb_dumpcmd}" "${resolve}" -tttt -r "${file}" 2>/dev/null | \
 					"${adb_awk}" -v cnt="${cnt}" '!/\.lan\. |PTR\? | SOA\? /&&/ A[\? ]+|NXDomain|0\.0\.0\.0/{a=$1;b=substr($2,0,8);c=$4;sub(/\.[0-9]+$/,"",c);gsub(/[^[:alnum:]\.:-]/,"",c);d=cnt $7;sub(/\*$/,"",d);
 					e=$(NF-1);sub(/[0-9]\/[0-9]\/[0-9]|0\.0\.0\.0/,"NX",e);sub(/\.$/,"",e);sub(/([0-9]{1,3}\.){3}[0-9]{1,3}/,"OK",e);gsub(/[^[:alnum:]\.-]/,"",e);if(e==""){e="err"};printf "%s\t%s\t%s\t%s\t%s\n",d,e,a,b,c}' >> "${report_raw}"
 			)&
@@ -1810,7 +1818,7 @@ f_report()
 		( "${adb_mailservice}" "${adb_ver}" "${content}" >/dev/null 2>&1 )&
 		bg_pid="${!}"
 	fi
-	f_log "debug" "f_report ::: action: ${action}, count: ${count}, search: ${search}, dump_util: ${adb_dumpcmd}, rep_dir: ${adb_reportdir}, rep_iface: ${adb_repiface:-"-"}, rep_listen: ${adb_replisten}, rep_chunksize: ${adb_repchunksize}, rep_chunkcnt: ${adb_repchunkcnt}"
+	f_log "debug" "f_report ::: action: ${action}, count: ${count}, search: ${search}, dump_util: ${adb_dumpcmd}, rep_dir: ${adb_reportdir}, rep_iface: ${adb_repiface:-"-"}, rep_listen: ${adb_replisten}, rep_chunksize: ${adb_repchunksize}, rep_chunkcnt: ${adb_repchunkcnt}, rep_resolve: ${adb_represolve}"
 }
 
 # source required system libraries

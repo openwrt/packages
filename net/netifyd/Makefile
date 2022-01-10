@@ -1,12 +1,12 @@
 #
-# Copyright (C) 2016-2020 eGloo, Incorporated
+# Copyright (C) 2016-2021 eGloo, Incorporated
 #
 # This is free software, licensed under the GNU General Public License v2.
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netifyd
-PKG_RELEASE:=2
+PKG_RELEASE:=1
 PKG_MAINTAINER:=Darryl Sokoloski <darryl@egloo.ca>
 PKG_LICENSE:=GPL-3.0-or-later
 
@@ -16,10 +16,10 @@ PKG_INSTALL:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://gitlab.com/netify.ai/public/netify-agent.git
-PKG_SOURCE_DATE:=2021-05-19
-PKG_SOURCE_VERSION:=v3.07
-#PKG_SOURCE_VERSION:=a22c66b9d916347b34f6d26de2a95c94f446401b
-PKG_MIRROR_HASH:=de6c4ce7bb00ec72478a7eeaa44b1a30d2ef64202f8524a000bce6015441a5ca
+PKG_SOURCE_DATE:=2021-11-17
+PKG_SOURCE_VERSION:=v3.09
+#PKG_SOURCE_VERSION:=358ec2b0ac321e0608e78c75f6b7434ed1aec326
+PKG_MIRROR_HASH:=660079a75a17a07c638b25dab0ecc972c02fec2124930068bfcf15d28abf4121
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -74,7 +74,7 @@ endif
 
 define Build/Configure
 	(cd $(PKG_BUILD_DIR); ./autogen.sh)
-	$(call Build/Configure/Default,$(CONFIGURE_ARGS))
+	$(call Build/Configure/Default)
 endef
 
 define Build/InstallDev

@@ -1,0 +1,11 @@
+--- a/sapi/apache2handler/config.m4
++++ b/sapi/apache2handler/config.m4
+@@ -74,7 +74,7 @@ if test "$PHP_APXS2" != "no"; then
+                 \$(mkinstalldirs) '$APXS_SYSCONFDIR' && \
+                  $APXS -S LIBEXECDIR='$APXS_LIBEXECDIR' \
+                        -S SYSCONFDIR='$APXS_SYSCONFDIR' \
+-                       -i -a -n php"
++                       -i -n php"
+   fi
+ 
+   LIBPHP_CFLAGS="-shared"

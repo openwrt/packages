@@ -5,7 +5,7 @@
 		"answer": "good|nochg"
 	},
 	"ipv6": {
-		"url": "http://[USERNAME]:[PASSWORD]@domains.google.com/nic/update?hostname=[DOMAIN]&myip=[IP]",
+		"url": "https://[USERNAME]:[PASSWORD]@domains.google.com/nic/update?hostname=[DOMAIN]&myip=[IP]",
 		"answer": "good|nochg"
 	}
 }

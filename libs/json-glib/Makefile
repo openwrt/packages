@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=json-glib
-PKG_VERSION:=1.6.2
+PKG_VERSION:=1.6.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNOME/json-glib/1.6
-PKG_HASH:=a33d66c6d038bda46b910c6c6d59c4e15db014e363dc997a0414c2e07d134f24
+PKG_HASH:=96ec98be7a91f6dde33636720e3da2ff6ecbb90e76ccaa49497f31a6855a490e
 
 PKG_INSTALL:=1
 
@@ -21,13 +21,13 @@ PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Sebastian Kemper <sebastian_ml@gmx.net>
 
-PKG_BUILD_DEPENDS:=glib2/host meson/host
+PKG_BUILD_DEPENDS:=glib2/host
 
 OPENWRT_VERBOSE:=c
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
-include ../../devel/meson/meson.mk
+include $(INCLUDE_DIR)/meson.mk
 
 define Package/json-glib
   SECTION:=libs

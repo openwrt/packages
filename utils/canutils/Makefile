@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=canutils
-PKG_VERSION:=2020.12.0
-PKG_RELEASE:=1
+PKG_VERSION:=2021.08.0
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/linux-can/can-utils/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=c5c22a00ce2ea7578d7617ac0affef8f47a349be58e708780d703b979f324a2b
+PKG_HASH:=c9b8f29515ad34af7f78450ec55c983abc5393e86b1f128a92ac0dfd141baaf7
 PKG_BUILD_DIR:=$(BUILD_DIR)/can-utils-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Anton Glukhov <anton.a.glukhov@gmail.com>

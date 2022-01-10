@@ -3,25 +3,24 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apparmor
-PKG_VERSION:=3.0.1
+PKG_VERSION:=3.0.3
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://gitlab.com/apparmor/apparmor.git
 PKG_SOURCE_VERSION:=0325ba06da6eeb5acf3e568063a08136fd0913e0
-PKG_MIRROR_HASH:=303ceca041ad8023fa44cdda366448d60b6299790266834b4078d30b70ad27f9
+PKG_MIRROR_HASH:=2c8f4607b9936f401a3fcb92cbc3627dc5b551fbde089162172e1801faba68bc
 
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
-BUILDONLY:=1
 
 PKG_BUILD_DEPENDS:=swig/host
 HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=setuptools-scm
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
-include ../../../packages/lang/python/python3-package.mk
+include ../../lang/python/python3-package.mk
 
 define Package/apparmor/Default
   SECTION:=utils
@@ -184,6 +183,7 @@ define Package/apparmor-utils/install
 	$(INSTALL_DIR) $(1)/etc/apparmor $(1)/usr/sbin $(1)/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)-utils/sbin/apparmor_parser $(1)/sbin/
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)-utils/etc/apparmor/*.conf $(1)/etc/apparmor/
+	$(INSTALL_CONF) $(PKG_BUILD_DIR)/parser/parser.conf $(1)/etc/apparmor/
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)-utils/etc/apparmor/severity.db $(1)/etc/apparmor/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)-utils/sbin/apparmor_parser $(1)/sbin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)-utils/usr/bin/{aa-exec,aa-easyprof,aa-enabled,aa-features-abi} $(1)/usr/sbin/
@@ -192,13 +192,13 @@ define Package/apparmor-utils/install
 	$(INSTALL_DIR) $(1)/usr/share/apparmor/easyprof/templates $(1)/usr/share/apparmor/easyprof/policygroups
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)-utils/usr/share/apparmor/easyprof/templates/* $(1)/usr/share/apparmor/easyprof/templates/
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)-utils/usr/share/apparmor/easyprof/policygroups/* $(1)/usr/share/apparmor/easyprof/policygroups/
-	$(INSTALL_DIR) $(1)/usr/lib/python3.9/site-packages $(1)/usr/lib/python3.9/site-packages/apparmor $(1)/usr/lib/python3.9/site-packages/apparmor/rule
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)-utils/usr/lib/python3.9/site-packages/*.egg-info \
-		$(1)/usr/lib/python3.9/site-packages/
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)-utils/usr/lib/python3.9/site-packages/apparmor/*.py \
-		$(1)/usr/lib/python3.9/site-packages/apparmor/
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)-utils/usr/lib/python3.9/site-packages/apparmor/rule/*.py \
-		$(1)/usr/lib/python3.9/site-packages/apparmor/rule
+	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages $(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages/apparmor $(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages/apparmor/rule
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)-utils/usr/lib/python$(PYTHON3_VERSION)/site-packages/*.egg-info \
+		$(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)-utils/usr/lib/python$(PYTHON3_VERSION)/site-packages/apparmor/*.py \
+		$(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages/apparmor/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)-utils/usr/lib/python$(PYTHON3_VERSION)/site-packages/apparmor/rule/*.py \
+		$(1)/usr/lib/python$(PYTHON3_VERSION)/site-packages/apparmor/rule
 	$(INSTALL_DIR) $(1)/etc/init.d $(1)/lib/functions
 	$(INSTALL_BIN) ./files/apparmor.sh $(1)/lib/functions/
 	$(INSTALL_BIN) ./files/apparmor.init $(1)/etc/init.d/apparmor

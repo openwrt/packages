@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libcoap
-PKG_VERSION:=4.2.1
-PKG_RELEASE:=1
+PKG_VERSION:=4.3.0
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/obgm/libcoap/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=29a0394a265d3febee41e5e2dc03d34292a0aede37f5f80334e529ac0dab2321
+PKG_HASH:=1a195adacd6188d3b71c476e7b21706fef7f3663ab1fb138652e8da49a9ec556
 
 PKG_MAINTAINER:=Anton Glukhov <anton.a.glukhov@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later BSD-2-Clause
@@ -30,7 +30,7 @@ define Package/libcoap
   CATEGORY:=Libraries
   TITLE:=CoAP (RFC 7252) library
   URL:=https://libcoap.net/
-  ABI_VERSION:=2
+  ABI_VERSION:=3
 endef
 
 define Package/libcoap/description

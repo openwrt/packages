@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=strongswan
-PKG_VERSION:=5.9.2
-PKG_RELEASE:=8
+PKG_VERSION:=5.9.4
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://download.strongswan.org/ https://download2.strongswan.org/
-PKG_HASH:=61c72f741edb2c1295a7b7ccce0317a104b3f9d39efd04c52cd05b01b55ab063
+PKG_HASH:=45fdf1a4c2af086d8ff5b76fd7b21d3b6f0890f365f83bf4c9a75dda26887518
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_MAINTAINER:=Philip Prindeville <philipp@redfish-solutions.com>, Noel Kuntze <noel.kuntze@thermi.consulting>
 PKG_CPE_ID:=cpe:/a:strongswan:strongswan
@@ -572,6 +572,7 @@ define Package/strongswan-scepclient/install
 endef
 
 define Package/strongswan-swanctl/conffiles
+/etc/config/ipsec
 /etc/swanctl/
 endef
 
@@ -614,14 +615,7 @@ define Plugin/attr-sql/install
 endef
 
 define Plugin/stroke/install
-	$(INSTALL_DIR) $(1)/etc/ipsec.d/aacerts
-	$(INSTALL_DIR) $(1)/etc/ipsec.d/acerts
-	$(INSTALL_DIR) $(1)/etc/ipsec.d/cacerts
-	$(INSTALL_DIR) $(1)/etc/ipsec.d/certs
-	$(INSTALL_DIR) $(1)/etc/ipsec.d/crls
-	$(INSTALL_DIR) $(1)/etc/ipsec.d/ocspcerts
-	$(INSTALL_DIR) $(1)/etc/ipsec.d/private
-	$(INSTALL_DIR) $(1)/etc/ipsec.d/reqs
+	$(INSTALL_DIR) $(1)/etc/ipsec.d/{aacerts,acerts,cacerts,certs,crls,ocspcerts,private,reqs}
 
 	$(INSTALL_DIR) $(1)/usr/lib/ipsec/plugins
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/ipsec/{starter,stroke} $(1)/usr/lib/ipsec/

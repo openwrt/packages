@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libqmi
-PKG_VERSION:=1.28.6
-PKG_RELEASE:=1
+PKG_VERSION:=1.30.2
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.freedesktop.org/software/libqmi
-PKG_HASH:=cbb890893de1dee06ea5ebdac2d22f0469314a6f93f15f61f2f1206a1c9ae5fd
+PKG_HASH:=be01ece0ea2c2194cbea5744bf5aaf06c04ba5fb7ec7887a13116c76d114fedd
 
-PKG_MAINTAINER:=Nicholas Smith <nicholas.smith@telcoantennas.com.au>
+PKG_MAINTAINER:=Nicholas Smith <nicholas@nbembedded.com>
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
@@ -66,11 +66,21 @@ CONFIGURE_ARGS += \
 	--disable-gtk-doc-pdf \
 	--disable-silent-rules \
 	--enable-firmware-update \
-	--$(if $(LIBQMI_WITH_MBIM_QMUX),en,dis)able-mbim-qmux \
-	--$(if $(LIBQMI_WITH_QRTR_GLIB),en,dis)able-qrtr \
 	--enable-more-warnings=yes \
 	--without-udev \
 	--without-udev-base-dir
+
+ifeq ($(CONFIG_LIBQMI_WITH_MBIM_QMUX),y)
+	CONFIGURE_ARGS += --enable-mbim-qmux
+else
+	CONFIGURE_ARGS += --disable-mbim-qmux
+endif
+
+ifeq ($(CONFIG_LIBQMI_WITH_QRTR_GLIB),y)
+	CONFIGURE_ARGS += --enable-qrtr
+else
+	CONFIGURE_ARGS += --disable-qrtr
+endif
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include

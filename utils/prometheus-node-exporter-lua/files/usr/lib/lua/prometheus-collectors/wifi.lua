@@ -18,7 +18,7 @@ local function scrape()
         local labels = {
           channel = iw.channel(ifname),
           ssid = iw.ssid(ifname),
-          bssid = iw.bssid(ifname),
+          bssid = string.lower(iw.bssid(ifname)),
           mode = iw.mode(ifname),
           ifname = ifname,
           country = iw.country(ifname),

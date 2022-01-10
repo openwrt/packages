@@ -3,20 +3,22 @@ menu "Select libdrm build options"
 
 config LIBDRM_INTEL
 	bool "Intel support"
-	default n
+	default y
 	depends on x86_64 || i386
 	help
 		Installs the Intel driver.
 
 config LIBDRM_NOUVEAU
 	bool "Nouveau support"
-	default n
+	default y
+	depends on x86_64 || i386 || TARGET_tegra
 	help
 		Installs the Nouveau driver.
 
 config LIBDRM_RADEON
 	bool "Radeon support"
-	default n
+	default y
+	depends on x86_64 || i386
 	help
 		Installs the Radeon driver.
 

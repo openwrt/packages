@@ -1,0 +1,46 @@
+--- a/make-linux.mk
++++ b/make-linux.mk
+@@ -25,8 +25,8 @@ TIMESTAMP=$(shell date +"%Y%m%d%H%M")
+ # otherwise build into binary as done on Mac and Windows.
+ ONE_OBJS+=osdep/PortMapper.o
+ override DEFS+=-DZT_USE_MINIUPNPC
+-MINIUPNPC_IS_NEW_ENOUGH=$(shell grep -sqr '.*define.*MINIUPNPC_VERSION.*"2..*"' /usr/include/miniupnpc/miniupnpc.h && echo 1)
+-#MINIUPNPC_IS_NEW_ENOUGH=$(shell grep -sqr '.*define.*MINIUPNPC_VERSION.*"2.."' /usr/include/miniupnpc/miniupnpc.h && echo 1)
++MINIUPNPC_IS_NEW_ENOUGH=$(shell grep -sqr '.*define.*MINIUPNPC_VERSION.*"2..*"' $(STAGING_DIR)/usr/include/miniupnpc/miniupnpc.h && echo 1)
++#MINIUPNPC_IS_NEW_ENOUGH=$(shell grep -sqr '.*define.*MINIUPNPC_VERSION.*"2.."' $(STAGING_DIR)/usr/include/miniupnpc/miniupnpc.h && echo 1)
+ ifeq ($(MINIUPNPC_IS_NEW_ENOUGH),1)
+ 	override DEFS+=-DZT_USE_SYSTEM_MINIUPNPC
+ 	LDLIBS+=-lminiupnpc
+@@ -34,7 +34,7 @@ else
+ 	override DEFS+=-DMINIUPNP_STATICLIB -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -DOS_STRING=\"Linux\" -DMINIUPNPC_VERSION_STRING=\"2.0\" -DUPNP_VERSION_STRING=\"UPnP/1.1\" -DENABLE_STRNATPMPERR
+ 	ONE_OBJS+=ext/miniupnpc/connecthostport.o ext/miniupnpc/igd_desc_parse.o ext/miniupnpc/minisoap.o ext/miniupnpc/minissdpc.o ext/miniupnpc/miniupnpc.o ext/miniupnpc/miniwget.o ext/miniupnpc/minixml.o ext/miniupnpc/portlistingparse.o ext/miniupnpc/receivedata.o ext/miniupnpc/upnpcommands.o ext/miniupnpc/upnpdev.o ext/miniupnpc/upnperrors.o ext/miniupnpc/upnpreplyparse.o
+ endif
+-ifeq ($(wildcard /usr/include/natpmp.h),)
++ifeq ($(wildcard $(STAGING_DIR)/usr/include/natpmp.h),)
+ 	ONE_OBJS+=ext/libnatpmp/natpmp.o ext/libnatpmp/getgateway.o
+ else
+ 	LDLIBS+=-lnatpmp
+@@ -68,11 +68,11 @@ ifeq ($(ZT_DEBUG),1)
+ 	# C25519 in particular is almost UNUSABLE in -O0 even on a 3ghz box!
+ node/Salsa20.o node/SHA512.o node/C25519.o node/Poly1305.o: CXXFLAGS=-Wall -O2 -g -pthread $(INCLUDES) $(DEFS)
+ else
+-	CFLAGS?=-O3 -fstack-protector -fPIE
++	CFLAGS?=-O3 -fstack-protector
+ 	override CFLAGS+=-Wall -Wno-deprecated -pthread $(INCLUDES) -DNDEBUG $(DEFS)
+-	CXXFLAGS?=-O3 -fstack-protector -fPIE
++	CXXFLAGS?=-O3 -fstack-protector
+ 	override CXXFLAGS+=-Wall -Wno-deprecated -std=c++11 -pthread $(INCLUDES) -DNDEBUG $(DEFS)
+-	LDFLAGS=-pie -Wl,-z,relro,-z,now
++	LDFLAGS+=-Wl,-z,relro,-z,now
+ endif
+ 
+ ifeq ($(ZT_QNAP), 1)
+@@ -280,7 +280,7 @@ ifeq ($(ZT_CONTROLLER),1)
+ endif
+ 
+ # ARM32 hell -- use conservative CFLAGS
+-ifeq ($(ZT_ARCHITECTURE),3)
++ifeq (0,3)
+ 	ifeq ($(shell if [ -e /usr/bin/dpkg ]; then dpkg --print-architecture; fi),armel)
+ 		override CFLAGS+=-march=armv5t -mfloat-abi=soft -msoft-float -mno-unaligned-access -marm
+ 		override CXXFLAGS+=-march=armv5t -mfloat-abi=soft -msoft-float -mno-unaligned-access -marm

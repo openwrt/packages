@@ -67,6 +67,9 @@ transmission() {
 	config_get nice "$cfg" nice 0
 	local web_home
 	config_get web_home "$cfg" 'web_home'
+	local ca_bundle
+	config_get_bool ca_bundle "$cfg" ca_bundle 1
+	[ "$ca_bundle" -gt 0 ] && ca_bundle_file="/etc/ssl/certs/ca-certificates.crt"
 	local seccomp_path
 
 	local MEM
@@ -152,6 +155,7 @@ transmission() {
 	fi
 
 	[ -d "$web_home" ] && procd_set_param env TRANSMISSION_WEB_HOME="$web_home"
+	[ "$ca_bundle" -gt 0 ] && procd_set_param env CURL_CA_BUNDLE="$ca_bundle_file"
 
 	procd_add_jail transmission log
 	procd_add_jail_mount "$config_file"
@@ -160,7 +164,9 @@ transmission() {
 	procd_add_jail_mount_rw "$config_dir/blocklists"
 	procd_add_jail_mount_rw "$config_dir/stats.json"
 	procd_add_jail_mount_rw "$download_dir"
-	[ -d "$web_home" ] && procd_add_jail_mount_rw "$web_home"
+	web_home="${web_home:-/usr/share/transmission/web}"
+	[ -d "$web_home" ] && procd_add_jail_mount "$web_home"
+	[ -f "$ca_bundle_file" ] && procd_add_jail_mount "$ca_bundle_file"
 	procd_close_instance
 }
 
@@ -173,6 +179,32 @@ reload_service() {
 	procd_send_signal "$PROG"
 }
 
+transmission_mount_triggers() {
+	local cfg="$1"
+
+	local enabled
+	config_get_bool enabled "$cfg" enabled 0
+	[ "$enabled" -gt 0 ] || return 0
+
+	local config_dir download_dir incomplete_dir incomplete_dir_enabled \
+		watch_dir watch_dir_enabled web_home service_dirs
+	config_get config_dir "$cfg" 'config_dir' '/var/etc/transmission'
+	config_get download_dir "$cfg" 'download_dir' '/var/etc/transmission'
+	config_get incomplete_dir_enabled "$cfg" 'incomplete_dir_enabled' 0
+	config_get incomplete_dir "$cfg" 'incomplete_dir' '/var/etc/transmission'
+	config_get watch_dir_enabled "$cfg" 'watch_dir_enabled' 0
+	config_get watch_dir "$cfg" 'watch_dir' '/var/etc/transmission'
+	config_get web_home "$cfg" 'web_home'
+
+	service_dirs="$config_dir $download_dir $web_home"
+	[ "$incomplete_dir_enabled" = "0" ] || service_dirs="$service_dirs $incomplete_dir"
+	[ "$watch_dir_enabled" = "0" ] || service_dirs="$service_dirs $watch_dir"
+
+	procd_add_restart_mount_trigger $service_dirs
+}
+
 service_triggers() {
-	procd_add_reload_trigger "transmission"
+	procd_add_reload_trigger 'transmission'
+	config_load 'transmission'
+	config_foreach transmission_mount_triggers 'transmission'
 }

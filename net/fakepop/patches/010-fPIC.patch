@@ -1,0 +1,13 @@
+--- a/Makefile
++++ b/Makefile
+@@ -2,8 +2,8 @@
+ 
+ GLIB_CFLAGS  = $(shell pkg-config --cflags glib-2.0)
+ GLIB_LDFLAGS = $(shell pkg-config --libs glib-2.0)
+-CFLAGS       = -D_GNU_SOURCE -Wall -O2 $(GLIB_CFLAGS)
+-LDLIBS       = $(GLIB_LDFLAGS)
++CFLAGS       += $(GLIB_CFLAGS)
++LDLIBS       += $(GLIB_LDFLAGS)
+ 
+ all: fakepop
+ 

@@ -1,5 +1,5 @@
 From: Debian PHP Maintainers <team+pkg-php@tracker.debian.org>
-Date: Wed, 7 Oct 2020 10:58:24 +0200
+Date: Wed, 25 Aug 2021 16:47:17 +0200
 Subject: Add-support-for-use-of-the-system-timezone-database
 
 # License: MIT
@@ -12,6 +12,8 @@ Add support for use of the system timezone database, rather
 than embedding a copy.  Discussed upstream but was not desired.
 
 History:
+r21: adapt for timelib 2021.03 (in 8.1.0)
+r20: adapt for timelib 2020.03 (in 8.0.10RC1)
 r19: adapt for timelib 2020.02 (in 8.0.0beta2)
 r18: adapt for autotool change in 7.3.3RC1
 r17: adapt for timelib 2018.01 (in 7.3.2RC1)
@@ -60,12 +62,12 @@ r1: initial revision
 +   fi
 +fi
 +
- PHP_DATE_CFLAGS="-I@ext_builddir@/lib -DZEND_ENABLE_STATIC_TSRMLS_CACHE=1 -DHAVE_TIMELIB_CONFIG_H=1"
- timelib_sources="lib/astro.c lib/dow.c lib/parse_date.c lib/parse_tz.c
+ PHP_DATE_CFLAGS="-Wno-implicit-fallthrough -I@ext_builddir@/lib -DZEND_ENABLE_STATIC_TSRMLS_CACHE=1 -DHAVE_TIMELIB_CONFIG_H=1"
+ timelib_sources="lib/astro.c lib/dow.c lib/parse_date.c lib/parse_tz.c lib/parse_posix.c
                   lib/timelib.c lib/tm2unixtime.c lib/unixtime2tm.c lib/parse_iso_intervals.c lib/interval.c"
 --- a/ext/date/lib/parse_tz.c
 +++ b/ext/date/lib/parse_tz.c
-@@ -26,8 +26,21 @@
+@@ -26,9 +26,22 @@
  #include "timelib.h"
  #include "timelib_private.h"
  
@@ -80,6 +82,7 @@ r1: initial revision
 +
 +#else
  #define TIMELIB_SUPPORTS_V2DATA
+ #define TIMELIB_SUPPORT_SLIM_FILE
  #include "timezonedb.h"
 +#endif
 +
@@ -87,7 +90,7 @@ r1: initial revision
  
  #if (defined(__APPLE__) || defined(__APPLE_CC__)) && (defined(__BIG_ENDIAN__) || defined(__LITTLE_ENDIAN__))
  # if defined(__LITTLE_ENDIAN__)
-@@ -94,6 +107,11 @@ static int read_php_preamble(const unsig
+@@ -95,6 +108,11 @@ static int read_php_preamble(const unsig
  {
  	uint32_t version;
  
@@ -99,7 +102,7 @@ r1: initial revision
  	/* read ID */
  	version = (*tzf)[3] - '0';
  	*tzf += 4;
-@@ -418,7 +436,429 @@ void timelib_dump_tzinfo(timelib_tzinfo
+@@ -577,7 +595,429 @@ void timelib_dump_tzinfo(timelib_tzinfo
  	}
  }
  
@@ -530,7 +533,7 @@ r1: initial revision
  {
  	int left = 0, right = tzdb->index_size - 1;
  
-@@ -444,9 +884,48 @@ static int seek_to_tz_position(const uns
+@@ -603,9 +1043,48 @@ static int seek_to_tz_position(const uns
  	return 0;
  }
  
@@ -579,7 +582,7 @@ r1: initial revision
  }
  
  const timelib_tzdb_index_entry *timelib_timezone_identifiers_list(const timelib_tzdb *tzdb, int *count)
-@@ -458,7 +937,30 @@ const timelib_tzdb_index_entry *timelib_
+@@ -617,7 +1096,30 @@ const timelib_tzdb_index_entry *timelib_
  int timelib_timezone_id_is_valid(const char *timezone, const timelib_tzdb *tzdb)
  {
  	const unsigned char *tzf;
@@ -611,7 +614,7 @@ r1: initial revision
  }
  
  static int skip_64bit_preamble(const unsigned char **tzf, timelib_tzinfo *tz)
-@@ -500,12 +1002,14 @@ static timelib_tzinfo* timelib_tzinfo_ct
+@@ -662,6 +1164,8 @@ static timelib_tzinfo* timelib_tzinfo_ct
  timelib_tzinfo *timelib_parse_tzfile(const char *timezone, const timelib_tzdb *tzdb, int *error_code)
  {
  	const unsigned char *tzf;
@@ -620,16 +623,18 @@ r1: initial revision
  	timelib_tzinfo *tmp;
  	int version;
  	int transitions_result, types_result;
- 	unsigned int type; /* TIMELIB_TZINFO_PHP or TIMELIB_TZINFO_ZONEINFO */
+@@ -669,7 +1173,7 @@ timelib_tzinfo *timelib_parse_tzfile(con
+ 
+ 	*error_code = TIMELIB_ERROR_NO_ERROR;
  
 -	if (seek_to_tz_position(&tzf, timezone, tzdb)) {
 +	if (seek_to_tz_position(&tzf, timezone, &memmap, &maplen, tzdb)) {
  		tmp = timelib_tzinfo_ctor(timezone);
  
  		version = read_preamble(&tzf, tmp, &type);
-@@ -540,11 +1044,36 @@ timelib_tzinfo *timelib_parse_tzfile(con
+@@ -712,11 +1216,36 @@ timelib_tzinfo *timelib_parse_tzfile(con
+ 			return NULL;
  		}
- 		skip_posix_string(&tzf, tmp);
  
 +#ifdef HAVE_SYSTEM_TZDATA
 +		if (memmap) {

@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=htop
-PKG_VERSION:=3.0.5
-PKG_RELEASE:=1
+PKG_VERSION:=3.1.2
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/htop-dev/htop/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=4c2629bd50895bd24082ba2f81f8c972348aa2298cc6edc6a21a7fa18b73990c
+PKG_HASH:=fe9559637c8f21f5fd531a4c072048a404173806acbdad1359c6b82fd87aa001
 
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
@@ -23,6 +23,9 @@ PKG_CPE_ID:=cpe:/a:htop:htop
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+
+PKG_CONFIG_DEPENDS:= CONFIG_HTOP_LMSENSORS
+PKG_BUILD_DEPENDS:= HTOP_LMSENSORS:lm-sensors
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -41,8 +44,24 @@ define Package/htop/description
  see all processes and their full command lines.
 endef
 
+define Package/htop/config
+	config HTOP_LMSENSORS
+		bool "Compile Htop with lm-sensors support"
+		depends on PACKAGE_htop
+		default y if TARGET_x86
+		help
+			Build htop with lm-sensors support.
+			This doesn't add lm-sensors as dependency,
+			if present it'll loaded using dlopen().
+endef
+
 CONFIGURE_ARGS += \
+	--$(if $(CONFIG_HTOP_LMSENSORS),en,dis)able-sensors \
+	--enable-affinity \
+	--disable-capabilities \
+	--disable-delayacct \
 	--disable-unicode \
+	--disable-unwind \
 	--disable-hwloc
 
 CONFIGURE_VARS += \

@@ -21,7 +21,7 @@ PKG_LICENSE_FILES:=LICENSE.txt
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/seahub-$(PKG_VERSION)-server
 
-HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=Django-1.11
+HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=./Django-1.11.txt
 
 PKG_BUILD_PARALLEL:=1
 PYTHON3_PKG_BUILD:=0
@@ -35,6 +35,7 @@ define Package/seafile-seahub
   TITLE:=Seafile server - seahub component
   URL:=https://seafile.com/
   DEPENDS:= \
+    @BROKEN \
     +gunicorn3 \
     +python3 \
     +python3-chardet \

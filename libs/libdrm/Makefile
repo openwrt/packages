@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libdrm
-PKG_VERSION:=2.4.104
-PKG_RELEASE:=2
+PKG_VERSION:=2.4.107
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://dri.freedesktop.org/libdrm
-PKG_HASH:=d66ad8b5c2441015ac1333e40137bb803c3bde3612ff040286fcc12158ea1bcb
+PKG_HASH:=c554cef03b033636a975543eab363cc19081cb464595d3da1ec129f87370f888
 
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
@@ -22,10 +22,9 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_LIBDRM_RADEON
 
 PKG_INSTALL:=1
-PKG_BUILD_DEPENDS:=meson/host
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/meson/meson.mk
+include $(INCLUDE_DIR)/meson.mk
 
 define Package/libdrm
   SECTION:=libs

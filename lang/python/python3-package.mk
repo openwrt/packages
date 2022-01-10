@@ -201,8 +201,19 @@ PYTHON3_PKG_HOST_PIP_INSTALL_ARGS = \
 	)
 
 define Py3Build/FindStdlibDepends
-	$(SHELL) $(python3_mk_path)python3-find-stdlib-depends.sh -n "$(PKG_NAME)" "$(PKG_BUILD_DIR)"
+	$(SHELL) $(python3_mk_path)python3-find-stdlib-depends.sh -n "$(PKG_NAME)" "$(PKG_BUILD_DIR)";
 endef
+
+ifneq ($(strip $(PYPI_NAME)),)
+define Py3Build/CheckHostPipVersionMatch
+	if grep -q "$(PYPI_NAME)==" $(python3_mk_path)host-pip-requirements/*.txt ; then \
+		if ! grep -q "$(PYPI_NAME)==$(PKG_VERSION)" $(python3_mk_path)host-pip-requirements/*.txt ; then \
+			printf "\nPlease update version of $(PYPI_NAME) to $(PKG_VERSION) in 'host-pip-requirements'/\n\n" ; \
+			exit 1 ; \
+		fi \
+	fi
+endef
+endif
 
 define Py3Build/Compile/Default
 	$(if $(PYTHON3_PKG_HOST_PIP_INSTALL_ARGS), \
@@ -226,5 +237,6 @@ ifeq ($(strip $(PYTHON3_PKG_BUILD)),1)
   ifeq ($(PY3),stdlib)
     Hooks/Configure/Post+=Py3Build/FindStdlibDepends
   endif
+  Hooks/Configure/Post+=Py3Build/CheckHostPipVersionMatch
   Build/Compile=$(Py3Build/Compile)
 endif

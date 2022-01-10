@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2014-2019 CZ.NIC, z.s.p.o. <knot-dns@labs.nic.cz>
+# Copyright (C) 2014-2021 CZ.NIC, z.s.p.o. <knot-dns@labs.nic.cz>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=knot
-PKG_VERSION:=3.0.6
+PKG_VERSION:=3.1.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://secure.nic.cz/files/knot-dns/
-PKG_HASH:=63756ac5a00c3e4a066ed231a287faef5963a9183d77326e30bf0644cdf74f86
+PKG_HASH:=2da6e50b0662297d55f80e349568224e07fe88cad20bee1d2e22f54bb32da064
 
 PKG_MAINTAINER:=Daniel Salzman <daniel.salzman@nic.cz>
 PKG_LICENSE:=GPL-3.0 LGPL-2.0 0BSD BSD-3-Clause OLDAP-2.8

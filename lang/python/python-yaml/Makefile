@@ -8,16 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-yaml
-PKG_VERSION:=5.3.1
-PKG_RELEASE:=2
+PKG_VERSION:=6.0
+PKG_RELEASE:=$(AUTORELEASE)
 
 PYPI_NAME:=PyYAML
-PKG_HASH:=b8eac752c5e14d3eca0e6dd9199cd627518cb5ec06add0de9d32baeee6fe645d
+PKG_HASH:=68fb519c14306fec9720a2a5b45bc9f0c8d1b9c72adf45c37baedfcd949c35a2
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:pyyaml_project:pyyaml
+
+HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=Cython
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

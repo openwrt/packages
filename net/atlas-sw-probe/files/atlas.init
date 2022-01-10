@@ -100,7 +100,7 @@ create_key() {
 
 	#Link priv/pub key
 	[ -f $PRIV_KEY_FILE ] || ln -s $probe_key $PRIV_KEY_FILE
-	[ -f $PRIV_KEY_FILE ] || ln -s $probe_pub_key $PUB_KEY_FILE
+	[ -f $PUB_KEY_FILE ] || ln -s $probe_pub_key $PUB_KEY_FILE
 
 	#Fix permission
 	chown atlas $probe_key $probe_pub_key
@@ -177,6 +177,9 @@ stop_service() {
 			kill "$tunnel_pid"
 		fi
 	fi
+
+	# Clean run dir
+	rm -r $TMP_BASE_DIR
 }
 
 safe_mkdir() {

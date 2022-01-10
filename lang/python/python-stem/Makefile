@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-stem
 PKG_VERSION:=1.8.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PYPI_NAME:=stem
 PKG_HASH:=a0b48ea6224e95f22aa34c0bc3415f0eb4667ddeae3dfb5e32a6920c185568c2

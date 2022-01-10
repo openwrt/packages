@@ -26,7 +26,6 @@ mwan3_init
 /etc/init.d/mwan3 running || {
 	[ "$MWAN3_STARTUP" = "init" ] || procd_lock
 	LOG notice "mwan3 hotplug $ACTION on $INTERFACE not called because globally disabled"
-	mwan3_flush_conntrack "$INTERFACE" "$ACTION"
 	exit 0
 }
 
@@ -85,4 +84,7 @@ case "$ACTION" in
 		mwan3_set_policies_iptables
 	;;
 esac
+
+mwan3_flush_conntrack "$INTERFACE" "$ACTION"
+
 exit 0

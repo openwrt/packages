@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -923,6 +923,7 @@ AC_CHECK_FUNCS(
+@@ -940,6 +940,7 @@ AC_CHECK_FUNCS(
  
  AC_CHECK_FUNCS([ecvt])
  AC_CHECK_FUNCS([fcvt])
@@ -8,7 +8,7 @@
  
  AC_CHECK_FUNC([mkdtemp], [have_mkdtemp=yes])
  
-@@ -1132,10 +1133,13 @@ fi
+@@ -1149,10 +1150,13 @@ fi
  ###
  
  AC_CHECK_HEADERS([crypt.h])

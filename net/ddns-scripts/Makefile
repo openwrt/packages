@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ddns-scripts
 PKG_VERSION:=2.8.2
-PKG_RELEASE:=9
+PKG_RELEASE:=20
 
 PKG_LICENSE:=GPL-2.0
 
@@ -108,6 +108,17 @@ define Package/ddns-scripts-digitalocean/description
 endef
 
 
+define Package/ddns-scripts-dnspod
+  $(call Package/ddns-scripts/Default)
+  TITLE:=Extension for dnspod.cn API
+  DEPENDS:=ddns-scripts +curl
+endef
+
+define Package/ddns-scripts-dnspod/description
+  Dynamic DNS Client scripts extension for dnspod.cn API (require curl)
+endef
+
+
 define Package/ddns-scripts-noip
   $(call Package/ddns-scripts/Default)
   TITLE:=Extension for no-ip.com
@@ -116,6 +127,19 @@ endef
 
 define Package/ddns-scripts-noip/description
   Dynamic DNS Client scripts extension for "no-ip.com".
+endef
+
+define Package/ddns-scripts-ns1
+  $(call Package/ddns-scripts/Default)
+  TITLE:=NS1 API
+  DEPENDS:=ddns-scripts +curl
+endef
+
+define Package/ddns-scripts-ns1/description
+  Dynamic DNS Client scripts extension for "ns1.com".
+  It requires:
+  "option username" to be a valid zone for ns1.com
+  "option password" to be a valid API key for ns1.com
 endef
 
 
@@ -178,6 +202,39 @@ define Package/ddns-scripts-gandi/description
   It requires:
   "option username" to be a valid subdomain for gandi.net
   "option password" to be a valid API key for ganid.net
+endef
+
+
+define Package/ddns-scripts-pdns
+  $(call Package/ddns-scripts/Default)
+  TITLE:=PowerDNS API
+  DEPENDS:=ddns-scripts +curl
+endef
+
+define Package/ddns-scripts-pdns/description
+  Dynamic DNS Client scripts extension for "PowerDNS" via API.
+  It requires:
+  "option param_opt(Optional Parameter)" to be a valid root URL for the PowerDNS webserver
+  "option username" to be a valid subdomain for the PowerDNS domain
+  "option password" to be a valid API key for the PowerDNS webserver
+endef
+
+
+define Package/ddns-scripts-transip
+  $(call Package/ddns-scripts/Default)
+  TITLE:=Extension for TransIP API
+  DEPENDS:=ddns-scripts +curl +openssl-util +!BUSYBOX_CONFIG_MKTEMP:coreutils-mktemp
+endef
+
+define Package/ddns-scripts-transip/description
+  Dynamic DNS Client scripts extension for "transip.nl".
+  Note: You must also install ca-certificate or ca-bundle.
+  It requires:
+  "option username" to be a valid username for transip.nl
+  "option password" to be a valid matching private key
+  "option domain" to contain the base domain
+  "option param_enc" to contain the name of the DNS record to update
+  "option param_opt" to contain the TTL of the DNS record to update
 endef
 
 
@@ -246,11 +303,15 @@ define Package/ddns-scripts-services/install
 	rm $(1)/usr/share/ddns/default/freedns.42.pl.json
 	rm $(1)/usr/share/ddns/default/godaddy.com-v1.json
 	rm $(1)/usr/share/ddns/default/digitalocean.com-v2.json
+	rm $(1)/usr/share/ddns/default/dnspod.cn.json
 	rm $(1)/usr/share/ddns/default/no-ip.com.json
 	rm $(1)/usr/share/ddns/default/bind-nsupdate.json
 	rm $(1)/usr/share/ddns/default/route53-v1.json
 	rm $(1)/usr/share/ddns/default/cnkuai.cn.json
 	rm $(1)/usr/share/ddns/default/gandi.net.json
+	rm $(1)/usr/share/ddns/default/pdns.json
+	rm $(1)/usr/share/ddns/default/transip.nl.json
+	rm $(1)/usr/share/ddns/default/ns1.com.json
 endef
 
 
@@ -330,6 +391,25 @@ exit 0
 endef
 
 
+define Package/ddns-scripts-dnspod/install
+	$(INSTALL_DIR) $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_dnspod_cn.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/dnspod.cn.json \
+		$(1)/usr/share/ddns/default/
+endef
+
+define Package/ddns-scripts-dnspod/prerm
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
+endef
+
+
 define Package/ddns-scripts-noip/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_no-ip_com.sh \
@@ -341,6 +421,25 @@ define Package/ddns-scripts-noip/install
 endef
 
 define Package/ddns-scripts-noip/prerm
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
+endef
+
+
+define Package/ddns-scripts-ns1/install
+	$(INSTALL_DIR) $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_ns1_com.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/ns1.com.json \
+		$(1)/usr/share/ddns/default
+endef
+
+define Package/ddns-scripts-ns1/prerm
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
 	/etc/init.d/ddns stop
@@ -425,14 +524,56 @@ exit 0
 endef
 
 
+define Package/ddns-scripts-pdns/install
+	$(INSTALL_DIR) $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_pdns.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/pdns.json \
+		$(1)/usr/share/ddns/default
+endef
+
+define Package/ddns-scripts-pdns/prerm
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
+endef
+
+
+define Package/ddns-scripts-transip/install
+	$(INSTALL_DIR) $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_transip_nl.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/transip.nl.json \
+		$(1)/usr/share/ddns/default
+endef
+
+define Package/ddns-scripts-transip/prerm
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
+endef
+
+
 $(eval $(call BuildPackage,ddns-scripts))
 $(eval $(call BuildPackage,ddns-scripts-services))
 $(eval $(call BuildPackage,ddns-scripts-cloudflare))
 $(eval $(call BuildPackage,ddns-scripts-freedns))
 $(eval $(call BuildPackage,ddns-scripts-godaddy))
 $(eval $(call BuildPackage,ddns-scripts-digitalocean))
+$(eval $(call BuildPackage,ddns-scripts-dnspod))
 $(eval $(call BuildPackage,ddns-scripts-noip))
 $(eval $(call BuildPackage,ddns-scripts-nsupdate))
 $(eval $(call BuildPackage,ddns-scripts-route53))
 $(eval $(call BuildPackage,ddns-scripts-cnkuai))
 $(eval $(call BuildPackage,ddns-scripts-gandi))
+$(eval $(call BuildPackage,ddns-scripts-pdns))
+$(eval $(call BuildPackage,ddns-scripts-transip))
+$(eval $(call BuildPackage,ddns-scripts-ns1))

@@ -1,0 +1,23 @@
+#!/bin/sh
+
+CONFIG=/etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
+## Gen&ConfigApiKey
+if grep -q "{API_KEY}" "$CONFIG"; then
+	SUFFIX=`tr -dc A-Za-z0-9 </dev/urandom | head -c 8`
+	API_KEY=`/usr/bin/cscli bouncers add crowdsec-firewall-bouncer-${SUFFIX} -o raw`
+	sed -i "s,^\(\s*api_key\s*:\s*\).*\$,\1$API_KEY," $CONFIG
+else
+	echo API key already registered...
+fi
+
+# unfortunately, UCI doesn't provide a nice way to add an anonymous section only if it doesn't already exist
+if ! uci show firewall | grep -q firewall.cs; then
+  name="$(uci add firewall include)"
+  uci set "firewall.${name}.path=/etc/firewall.cs"
+  uci set "firewall.${name}.enabled=1"
+  uci set "firewall.${name}.reload=1"
+  echo -e "Adding the following UCI config:\n $(uci changes)"
+  uci commit
+fi
+
+exit 0

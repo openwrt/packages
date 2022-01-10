@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lighttpd
-PKG_VERSION:=1.4.59
-PKG_RELEASE:=2
+PKG_VERSION:=1.4.63
+PKG_RELEASE:=1
 # release candidate ~rcX testing; remove for release
-#PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-1.4.59
+#PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-1.4.63
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://download.lighttpd.net/lighttpd/releases-1.4.x
-PKG_HASH:=fb953db273daef08edb6e202556cae8a3d07eed6081c96bd9903db957d1084d5
+PKG_HASH:=2aef7f0102ebf54a1241a1c3ea8976892f8684bfb21697c9fffb8de0e2d6eab9
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=BSD-3-Clause
@@ -23,13 +23,12 @@ PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:lighttpd:lighttpd
 
 PKG_INSTALL:=1
-PKG_BUILD_DEPENDS:=meson/host
 PKG_CONFIG_DEPENDS:=CONFIG_LIGHTTPD_SSL $(patsubst %,CONFIG_PACKAGE_lighttpd-mod-%,$(REBUILD_MODULES))
 
 REBUILD_MODULES=authn_gssapi authn_ldap authn_mysql cml magnet mysql_vhost trigger_b4_dl webdav
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/meson/meson.mk
+include $(INCLUDE_DIR)/meson.mk
 
 define Package/lighttpd/Default
   SECTION:=net
@@ -41,7 +40,7 @@ endef
 define Package/lighttpd
   $(call Package/lighttpd/Default)
   MENU:=1
-  DEPENDS:=+libnettle +libpcre +libpthread +LIGHTTPD_LOGROTATE:logrotate
+  DEPENDS:=+libnettle +libpcre2 +libpthread +LIGHTTPD_LOGROTATE:logrotate
   TITLE:=A flexible and lightweight web server
 endef
 
@@ -97,7 +96,7 @@ MESON_ARGS += \
 	-Dwith_nss=$(if $(CONFIG_PACKAGE_lighttpd-mod-nss),true,false) \
 	-Dwith_openssl=$(if $(CONFIG_PACKAGE_lighttpd-mod-openssl),true,false) \
 	-Dwith_pam=$(if $(CONFIG_PACKAGE_lighttpd-mod-authn_pam),true,false) \
-	-Dwith_pcre=true \
+	-Dwith_pcre2=true \
 	-Dwith_pgsql=$(if $(CONFIG_PACKAGE_lighttpd-mod-vhostdb_pgsql),true,false) \
 	-Dwith_sasl=$(if $(CONFIG_PACKAGE_lighttpd-mod-authn_sasl),true,false) \
 	-Dwith_webdav_locks=$(if $(CONFIG_PACKAGE_lighttpd-mod-webdav),true,false) \
@@ -170,7 +169,7 @@ endef
 $(eval $(call BuildPackage,lighttpd))
 
 # First, permit redirect from HTTP to HTTPS.
-$(eval $(call BuildPlugin,redirect,URL redirection,+PACKAGE_lighttpd-mod-redirect:libpcre,10))
+$(eval $(call BuildPlugin,redirect,URL redirection,+PACKAGE_lighttpd-mod-redirect:libpcre2,10))
 
 # Next, permit authentication.
 $(eval $(call BuildPlugin,auth,Authentication,+PACKAGE_lighttpd-mod-auth:libnettle,20))
@@ -203,17 +202,17 @@ $(eval $(call BuildPlugin,mbedtls,TLS using mbedtls,@LIGHTTPD_SSL +PACKAGE_light
 $(eval $(call BuildPlugin,nss,TLS using nss,@LIGHTTPD_SSL +PACKAGE_lighttpd-mod-nss:libnss,30))
 $(eval $(call BuildPlugin,openssl,TLS using openssl,@LIGHTTPD_SSL +PACKAGE_lighttpd-mod-openssl:libopenssl,30))
 $(eval $(call BuildPlugin,proxy,Proxy,,30))
-$(eval $(call BuildPlugin,rewrite,URL rewriting,+PACKAGE_lighttpd-mod-rewrite:libpcre,30))
+$(eval $(call BuildPlugin,rewrite,URL rewriting,+PACKAGE_lighttpd-mod-rewrite:libpcre2,30))
 $(eval $(call BuildPlugin,rrdtool,RRDtool,,30))
 $(eval $(call BuildPlugin,scgi,SCGI,,30))
 $(eval $(call BuildPlugin,secdownload,Secure and fast download,+PACKAGE_lighttpd-mod-secdownload:libnettle,30))
 $(eval $(call BuildPlugin,setenv,Environment variable setting,,30))
 $(eval $(call BuildPlugin,simple_vhost,Simple virtual hosting,,30))
 $(eval $(call BuildPlugin,sockproxy,sockproxy,,30))
-$(eval $(call BuildPlugin,ssi,SSI,+PACKAGE_lighttpd-mod-ssi:libpcre,30))
+$(eval $(call BuildPlugin,ssi,SSI,,30))
 $(eval $(call BuildPlugin,staticfile,staticfile,,30))
 $(eval $(call BuildPlugin,status,Server status display,,30))
-$(eval $(call BuildPlugin,trigger_b4_dl,Trigger before download,+PACKAGE_lighttpd-mod-trigger_b4_dl:libpcre +PACKAGE_lighttpd-mod-trigger_b4_dl:libgdbm,30))
+$(eval $(call BuildPlugin,trigger_b4_dl,Trigger before download,+PACKAGE_lighttpd-mod-trigger_b4_dl:libpcre2 +PACKAGE_lighttpd-mod-trigger_b4_dl:libgdbm,30))
 $(eval $(call BuildPlugin,uploadprogress,Upload Progress,,30))
 $(eval $(call BuildPlugin,userdir,User directory,,30))
 $(eval $(call BuildPlugin,usertrack,User tracking,+PACKAGE_lighttpd-mod-usertrack:libnettle,30))

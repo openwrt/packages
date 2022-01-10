@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=atomicwrites
 PKG_HASH:=ae70396ad1a434f9c7046fd2dd196fc04b12f9e91ffb859164193be8b6168a7a
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
+PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 

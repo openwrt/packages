@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cyrus-sasl
 PKG_VERSION:=2.1.27
-PKG_RELEASE:=3
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -28,12 +28,23 @@ PKG_REMOVE_FILES:=aclocal.m4 saslauthd/aclocal.m4 config/libtool.m4
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/libsasl2
+define Package/libsasl2/Default
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=A general purpose authentication library
   URL:=http://asg.web.cmu.edu/sasl/
+endef
+
+define Package/libsasl2
+  $(call Package/libsasl2/Default)
   DEPENDS:=+libopenssl
+  TITLE+= (libraries)
+endef
+
+define Package/libsasl2-sasldb
+  $(call Package/libsasl2/Default)
+  DEPENDS:=+libsasl2 +libdb47
+  TITLE+= (sasldb libraries)
 endef
 
 TARGET_CFLAGS += $(FPIC)
@@ -47,7 +58,7 @@ CONFIGURE_ARGS += \
 	--disable-checkapop \
 	--enable-cram \
 	--enable-digest \
-	--without-auth-sasldb \
+	--enable-auth-sasldb \
 	--disable-otp \
 	--disable-srp \
 	--disable-srp-setpass \
@@ -60,7 +71,7 @@ CONFIGURE_ARGS += \
 	--disable-ntlm \
 	--disable-sql \
 	--disable-ldapdb \
-	--without-dblib \
+	--with-dblib=berkeley \
 	--without-gdbm \
 	--with-devrandom="/dev/urandom" \
 	--without-pam \
@@ -109,7 +120,17 @@ define Package/libsasl2/install
 	$(INSTALL_DIR) $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libsasl2.so.* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/sasl2
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/sasl2/lib*.so* $(1)/usr/lib/sasl2/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/sasl2/libanonymous.so* $(1)/usr/lib/sasl2/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/sasl2/libplain.so* $(1)/usr/lib/sasl2/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/sasl2/libcrammd5.so* $(1)/usr/lib/sasl2/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/sasl2/libdigestmd5.so* $(1)/usr/lib/sasl2/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/sasl2/libscram.so* $(1)/usr/lib/sasl2/
+endef
+
+define Package/libsasl2-sasldb/install
+	$(INSTALL_DIR) $(1)/usr/lib/sasl2
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/sasl2/libsasldb.so* $(1)/usr/lib/sasl2/
 endef
 
 $(eval $(call BuildPackage,libsasl2))
+$(eval $(call BuildPackage,libsasl2-sasldb))

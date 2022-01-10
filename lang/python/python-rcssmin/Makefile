@@ -6,15 +6,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-rcssmin
-PKG_VERSION:=1.0.6
-PKG_RELEASE:=2
+PKG_VERSION:=1.1.0
+PKG_RELEASE:=$(AUTORELEASE)
 
-PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>, Eneas U de Queiroz <cote2004-github@yahoo.com>
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>, Eneas U de Queiroz <cotequeiroz@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
 PYPI_NAME:=rcssmin
-PKG_HASH:=ca87b695d3d7864157773a61263e5abb96006e9ff0e021eff90cbe0e1ba18270
+PKG_HASH:=27fc400627fd3d328b7fe95af2a01f5d0af6b5af39731af5d071826a1f08e362
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

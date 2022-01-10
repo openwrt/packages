@@ -1,6 +1,6 @@
 #!/bin/sh /etc/rc.common
 # Copyright 2017-2020 Stan Grishin (stangri@melmac.net)
-# shellcheck disable=SC2039,SC1091,SC2016
+# shellcheck disable=SC2039,SC1091,SC2016,SC3043,SC3057,SC3060
 PKG_VERSION='dev-test'
 
 # shellcheck disable=SC2034
@@ -9,12 +9,20 @@ START=94
 USE_PROCD=1
 LC_ALL=C
 
-extra_command 'check' 'Checks if specified domain is found in current block-list'
-extra_command 'dl' 'Force-downloads all enabled block-list'
-extra_command 'killcache' 'Delete all cached files'
-extra_command 'sizes' 'Displays the file-sizes of enabled block-listo'
-extra_command 'show' 'Shows the service last-run status'
-extra_command 'version' 'Show version information'
+if type extra_command 1>/dev/null 2>&1; then
+	extra_command 'check' 'Checks if specified domain is found in current block-list'
+	extra_command 'dl' 'Force-downloads all enabled block-list'
+	extra_command 'killcache' 'Delete all cached files'
+	extra_command 'sizes' 'Displays the file-sizes of enabled block-lists'
+	extra_command 'version' 'Show version information'
+else
+# shellcheck disable=SC2034
+	EXTRA_COMMANDS='check dl killcache sizes status_service version'
+# shellcheck disable=SC2034
+	EXTRA_HELP='	check	Checks if specified domain is found in current block-list
+	dl	Force-downloads all enabled block-list
+	sizes	Displays the file-sizes of enabled block-lists'
+fi
 
 readonly packageName='simple-adblock'
 readonly serviceName="$packageName $PKG_VERSION"
@@ -108,11 +116,10 @@ compare_values() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"; }
 is_chaos_calmer() { ubus -S call system board | grep -q 'Chaos Calmer'; }
 led_on(){ if [ -n "${1}" ] && [ -e "${1}/trigger" ]; then echo 'default-on' > "${1}/trigger" 2>&1; fi; }
 led_off(){ if [ -n "${1}" ] &&  [ -e "${1}/trigger" ]; then echo 'none' > "${1}/trigger" 2>&1; fi; }
-dnsmasq_hup() { killall -q -HUP dnsmasq; }
-dnsmasq_kill() { killall -q -KILL dnsmasq; }
+dnsmasq_hup() { killall -q -s HUP dnsmasq; }
+dnsmasq_kill() { killall -q -s KILL dnsmasq; }
 dnsmasq_restart() { /etc/init.d/dnsmasq restart >/dev/null 2>&1; }
 unbound_restart() { /etc/init.d/unbound restart >/dev/null 2>&1; }
-is_force_dns_active() { iptables-save | grep -q -w -- '--dport 53'; }
 is_present() { command -v "$1" >/dev/null 2>&1; }
 
 output() {
@@ -574,7 +581,7 @@ process_url() {
 	else
 		type='Allowed'; D_TMP="$A_TMP";
 	fi
-	if [ "${1:0:5}" == "https" ] && [ -z "$isSSLSupported" ]; then
+	if [ "${1:0:5}" = "https" ] && [ -z "$isSSLSupported" ]; then
 		output 1 "$_FAIL_"
 		output 2 "[DL] $type $label $__FAIL__\\n"
 		echo "errorNoSSLSupport|${1}" >> "$sharedMemoryError"
@@ -867,7 +874,7 @@ start_service() {
 	elif [ "$action" = 'restart' ] || [ "$1" = 'restart' ]; then
 		action='restart'
 	elif [ -s "$outputFile" ] && [ "$status" = "statusSuccess" ] && [ -z "$error" ]; then
-		showstatus
+		status_service
 		exit 0
 	else
 		action='download'
@@ -986,12 +993,12 @@ start_service() {
 		jsonOps del message
 		jsonOps set status "statusSuccess"
 		jsonOps set stats "$serviceName is blocking $(wc -l < "$outputFile") domains (with ${targetDNS})"
-		showstatus
+		status_service
 	else
 		output 0 "$__FAIL__\\n";
 		jsonOps set status "statusFail"
 		jsonOps add error "errorOhSnap"
-		showstatus
+		status_service
 	fi
 }
 
@@ -1014,10 +1021,10 @@ killcache() {
 	return 0
 }
 
-show() { showstatus; }
-status_service() { showstatus; }
-showstatus() {
+status_service() {
 	local c url status message error stats
+	config_load "$packageName"
+	config_get verbosity 'config' 'verbosity' '2'
 	status="$(jsonOps get status)"
 	message="$(jsonOps get message)"
 	error="$(jsonOps get error)"
@@ -1041,7 +1048,7 @@ showstatus() {
 				*)
 					output "$_ERROR_: $(getErrorText "$c")!\\n";;
 			esac
-			let n=n+1
+			n=$((n+1))
 		done
 	fi
 }
@@ -1075,32 +1082,37 @@ service_triggers() {
 
 check() {
 	load_package_config
-	local c string="$1" 
+	local c string="$1"
 	c="$(grep -c "$string" "$outputFile")"
+	c="${c:-0}"
 	if [ ! -s "$outputFile" ]; then
 		echo "No block-list ('$outputFile') found."
 	elif [ -z "$string" ]; then
 		echo "Usage: /etc/init.d/${packageName} check string"
 	elif [ "$c" -gt 0 ]; then
-		if [ "$c" -gt 1 ]; then
+		if [ "$c" -eq 1 ]; then
+			echo "Found 1 match for '$string' in '$outputFile':"
+		elif [ "$c" -le 20 ]; then
 			echo "Found $c matches for '$string' in '$outputFile':"
 		else
-			echo "Found 1 match for '$string' in '$outputFile':"
+			echo "Found $c matches for '$string' in '$outputFile'."
 		fi
-		case "$targetDNS" in
-			dnsmasq.addnhosts)
-				grep "$string" "$outputFile" | sed 's|^127.0.0.1 ||;s|^:: ||;';;
-			dnsmasq.conf)
-				grep "$string" "$outputFile" | sed 's|local=/||;s|/$||;';;
-			dnsmasq.ipset)
-				grep "$string" "$outputFile" | sed 's|ipset=/||;s|/adb$||;';;
-			dnsmasq.servers)
-				grep "$string" "$outputFile" | sed 's|server=/||;s|/$||;';;
-			unbound.adb_list)
-				grep "$string" "$outputFile" | sed 's|^local-zone: "||;s|" static$||;';;
-		esac
+		if [ "$c" -le 20 ]; then
+			case "$targetDNS" in
+				dnsmasq.addnhosts)
+					grep "$string" "$outputFile" | sed 's|^127.0.0.1 ||;s|^:: ||;';;
+				dnsmasq.conf)
+					grep "$string" "$outputFile" | sed 's|local=/||;s|/$||;';;
+				dnsmasq.ipset)
+					grep "$string" "$outputFile" | sed 's|ipset=/||;s|/adb$||;';;
+				dnsmasq.servers)
+					grep "$string" "$outputFile" | sed 's|server=/||;s|/$||;';;
+				unbound.adb_list)
+					grep "$string" "$outputFile" | sed 's|^local-zone: "||;s|" static$||;';;
+			esac
+		fi
 	else
-		echo "The $string is not found in current block-list ('$outputFile')."
+		echo "The '$string' is not found in current block-list ('$outputFile')."
 	fi
 }
 

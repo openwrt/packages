@@ -29,6 +29,7 @@ define Package/python3-django-statici18n
   TITLE:=Helper for generating JavaScript catalog to static files
   URL:=https://django-statici18n.readthedocs.io
   DEPENDS:= \
+	@BROKEN \
 	+python3 \
 	+python3-django1 \
 	+python3-django-appconf \

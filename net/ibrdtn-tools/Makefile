@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ibrdtn-tools
 PKG_VERSION:=1.0.1
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/releases
@@ -35,6 +35,8 @@ endef
 
 CONFIGURE_ARGS += \
 	--without-libdaemon
+
+TARGET_CXXFLAGS += -std=c++11
 
 define Package/ibrdtn-tools/install
 	$(INSTALL_DIR) $(1)/usr/bin/

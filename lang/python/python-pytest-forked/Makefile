@@ -14,7 +14,7 @@ PKG_RELEASE:=2
 PYPI_NAME:=pytest-forked
 PKG_HASH:=6aa9ac7e00ad1a539c41bec6d21011332de671e938c7637378ec9710204e37ca
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
+PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 

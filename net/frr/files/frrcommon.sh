@@ -35,7 +35,7 @@ FRR_DEFAULT_PROFILE="traditional" # traditional / datacenter
 # - keep zebra first
 # - watchfrr does NOT belong in this list
 
-DAEMONS="zebra bgpd ripd ripngd ospfd ospf6d isisd babeld pimd ldpd nhrpd eigrpd sharpd pbrd staticd bfdd fabricd vrrpd"
+DAEMONS="zebra bgpd ripd ripngd ospfd ospf6d isisd babeld pathd pimd ldpd nhrpd eigrpd sharpd pbrd staticd bfdd fabricd vrrpd"
 RELOAD_SCRIPT="$D_PATH/frr-reload.py"
 
 #
@@ -123,6 +123,41 @@ daemon_list() {
 	[ -z "$evar" ] && echo "$enabled"
 	[ -n "$evar" ] && eval $evar="\"$enabled\""
 	[ -n "$dvar" ] && eval $dvar="\"$disabled\""
+}
+
+all_daemon_list() {
+	# note $1 specifies the name of a global variable to be set
+	local enabled evar daemon inst oldifs i
+	enabled=""
+	evar="$1"
+
+	for daemon in $DAEMONS; do
+		eval inst=\$${daemon}_instances
+		if [ -n "$inst" ]; then
+			oldifs="${IFS}"
+			IFS="${IFS},"
+			for i in $inst; do
+				enabled="$enabled $daemon-$i"
+			done
+			IFS="${oldifs}"
+		else
+		    enabled="$enabled $daemon"
+		fi
+	done
+
+	enabled="${enabled# }"
+	[ -z "$evar" ] && echo "$enabled"
+	[ -n "$evar" ] && eval $evar="\"$enabled\""
+}
+
+in_list() {
+	local item i
+	item="$1"
+	shift 1
+	for i in "$@"; do
+		[ "$item" = "$i" ] && return 0
+	done
+	return 1
 }
 
 #

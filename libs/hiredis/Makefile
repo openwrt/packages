@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hiredis
-PKG_VERSION:=1.0.0
+PKG_VERSION:=1.0.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/redis/hiredis/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=2a0b5fe5119ec973a0c1966bfc4bd7ed39dbce1cb6d749064af9121fe971936f
+PKG_HASH:=e0ab696e2f07deb4252dda45b703d09854e53b9703c7d52182ce5a22616c3819
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
@@ -35,7 +35,7 @@ define Package/libhiredis/description
 	Hiredis is a minimalistic C client library for the Redis database.
 endef
 
-MAKE_FLAGS += ARCH="" DEBUG="" PREFIX="/usr"
+MAKE_FLAGS += ARCH="" DEBUG="" PREFIX="/usr" uname_S="Linux"
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/hiredis/adapters

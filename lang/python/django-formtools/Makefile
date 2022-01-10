@@ -6,11 +6,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-formtools
-PKG_VERSION:=2.1
-PKG_RELEASE:=8
+PKG_VERSION:=2.2
+PKG_RELEASE:=1
 
 PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=7703793f1675aa6e871f9fed147e8563816d7a5b9affdc5e3459899596217f7c
+PKG_HASH:=c5272c03c1cd51b2375abf7397a199a3148a9fbbf2f100e186467a84025d13b2
 
 PKG_MAINTAINER:=Eneas U de Queiroz <cotequeiroz@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
@@ -27,6 +27,7 @@ define Package/python3-django-formtools
   TITLE:=High-level abstractions for Django forms
   URL:=https://django-formtools.readthedocs.io
   DEPENDS:= \
+	@BROKEN \
 	+python3 \
 	+python3-django1
 endef

@@ -39,9 +39,7 @@ endef
 CMAKE_OPTIONS += \
 	-DENABLE_SHARED=ON \
 	-DENABLE_STATIC=ON \
-	\
-	-DBUILD_TESTING=OFF \
-	-DCMAKE_SKIP_INSTALL_RPATH=ON
+	-DBUILD_TESTING=OFF
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include $(1)/usr/lib $(1)/usr/lib/pkgconfig

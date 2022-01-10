@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openssh
-PKG_VERSION:=8.6p1
-PKG_RELEASE:=1
+PKG_VERSION:=8.8p1
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/ \
 		https://ftp.spline.de/pub/OpenBSD/OpenSSH/portable/
-PKG_HASH:=c3e6e4da1621762c850d03b47eed1e48dff4cc9608ddeb547202a234df8ed7ae
+PKG_HASH:=4590890ea9bb9ace4f71ae331785a3a5823232435161960ed5fc86588f331fe9
 
 PKG_LICENSE:=BSD ISC
 PKG_LICENSE_FILES:=LICENCE
@@ -122,7 +122,7 @@ endef
 define Package/openssh-server-pam/conffiles
 /etc/pam.d/sshd
 /etc/security/access-sshd-local.conf
-/etc/ssh/sshd_config
+$(Package/openssh-server/conffiles)
 endef
 
 define Package/openssh-sftp-client
@@ -197,13 +197,12 @@ define Build/Compile
 endef
 
 define Package/openssh-moduli/install
-	$(INSTALL_DIR) $(1)/etc/ssh
+	install -d -m0700 $(1)/etc/ssh
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/ssh/moduli $(1)/etc/ssh/
 endef
 
 define Package/openssh-client/install
-	$(INSTALL_DIR) $(1)/etc/ssh
-	chmod 0700 $(1)/etc/ssh
+	install -d -m0700 $(1)/etc/ssh
 	$(CP) $(PKG_INSTALL_DIR)/etc/ssh/ssh_config $(1)/etc/ssh/
 	$(INSTALL_DIR) $(1)/usr/libexec
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ssh $(1)/usr/libexec/ssh-openssh
@@ -221,8 +220,7 @@ define Package/openssh-keygen/install
 endef
 
 define Package/openssh-server/install
-	$(INSTALL_DIR) $(1)/etc/ssh
-	chmod 0700 $(1)/etc/ssh
+	install -d -m0700 $(1)/etc/ssh
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/ssh/sshd_config $(1)/etc/ssh/
 	sed -r -i 's,^#(HostKey /etc/ssh/ssh_host_(rsa|ed25519)_key)$$$$,\1,' $(1)/etc/ssh/sshd_config
 	$(INSTALL_DIR) $(1)/etc/init.d

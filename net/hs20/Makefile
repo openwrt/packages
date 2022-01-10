@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hs20
-PKG_RELEASE:=4
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE_URL:=http://w1.fi/hostap.git
 PKG_SOURCE_PROTO:=git
@@ -12,6 +12,7 @@ PKG_SOURCE_NAME:=hostapd
 PKG_MIRROR_HASH:=1b2a4947034142587a3f81eac2ea27dd64650e77f8943d973623b47533be2393
 PKG_MIRROR_VERSION:=$(PKG_SOURCE_DATE)-$(call version_abbrev,$(PKG_SOURCE_VERSION))
 PKG_SOURCE:=$(PKG_SOURCE_NAME)-$(PKG_MIRROR_VERSION).tar.xz
+PKG_SOURCE_SUBDIR:=$(PKG_SOURCE_NAME)-$(PKG_MIRROR_VERSION)
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)/$(PKG_SOURCE_NAME)-$(PKG_MIRROR_VERSION)
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
@@ -76,7 +77,7 @@ define Package/hs20-server
   SUBMENU:=WirelessAPD
   TITLE:=Hotspot 2.0 OSU server
   URL:=http://hostap.epitest.fi/
-  DEPENDS:=+hs20-common +libopenssl +libsqlite3 +libxml2 +php7 +php7-cgi +php7-mod-xml +php7-mod-pdo-sqlite +openssl-util +sqlite3-cli +uhttpd +xxd
+  DEPENDS:=+hs20-common +libopenssl +libsqlite3 +libxml2 +php8 +php8-cgi +php8-mod-xml +php8-mod-pdo-sqlite +openssl-util +sqlite3-cli +uhttpd +xxd
 endef
 
 define Package/hs20-server/description
@@ -137,6 +138,10 @@ define Package/hs20-server/install
 	$(INSTALL_BIN) ./files/hs20-server.defaults $(1)/etc/uci-defaults/hs20-server
 	$(INSTALL_CONF) ./files/hs20.config $(1)/etc/config/hs20
 	$(INSTALL_BIN) ./files/hs20.init $(1)/etc/init.d/hs20
+endef
+
+define Package/hs20-server/conffiles
+/etc/config/hs20
 endef
 
 $(eval $(call BuildPackage,hs20-common))

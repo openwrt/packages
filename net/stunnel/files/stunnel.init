@@ -95,6 +95,7 @@ validate_service_options() {
 		'service:string' \
 		'sessionCacheSize:uinteger' \
 		'sessionCacheTimeout:uinteger' \
+		'sessionResume:bool' \
 		'sessiond_host:host' \
 		'sessiond_port:port' \
 		'sni:list(string)' \
@@ -282,6 +283,7 @@ print_service_options() {
 		retry \
 		verifyChain \
 		verifyPeer \
+		sessionResume \
 		;
 
 	print_lists_map \

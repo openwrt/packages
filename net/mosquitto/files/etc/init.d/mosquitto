@@ -64,6 +64,8 @@ convert_mosq_general() {
 	fi
 
 	append_if "$1" port
+	# per listener settings must be set before any potential security settings
+	append_optional_bool "$1" per_listener_settings
 	append_if "$1" acl_file
 	append_optional_bool "$1" allow_anonymous
 	append_optional_bool "$1" allow_duplicate_messages
@@ -85,12 +87,18 @@ convert_mosq_general() {
 	append_if "$1" pid_file
 	append_if "$1" psk_file
 	append_optional_bool "$1" queue_qos0_messages
+	append_optional_bool "$1" retain_available
 	append_optional_bool "$1" set_tcp_nodelay
 	append_if "$1" protocol
 	append_if "$1" sys_interval
-	append_if "$1" upgrade_outgoing_qos
+	append_optional_bool "$1" upgrade_outgoing_qos
 	append_if "$1" user
-	append_optional_bool "$1" per_listener_settings
+	append_if "$1" websockets_log_level
+	append_if "$1" websockets_headers_size
+	# can be general or per listener, see per_listener_settings
+	append_if "$1" auth_plugin
+	# Careful, this relies on internal behaviour of the cfg_load functions!
+	set | grep "CONFIG_$1_auth_opt_" | sed "s/^.*_\(auth_opt_.*\)='\(.*\)'/\1 \2/" >> $TCONF
 }
 
 convert_persistence() {
@@ -119,33 +127,40 @@ add_listener() {
         echo "Ignoring listener section without port"
         return
     fi
+    # "no_remote" is a non-standard shortcut option
+    local bind_address=""
     config_get_bool no_remote "$1" no_remote_access 0
-    if [ "$no_remote" -eq 1 ]; then
-        echo "listener $port 127.0.0.1" >> $TCONF
-    else
-        echo "listener $port" >> $TCONF
-    fi
+    [ "$no_remote" -eq 1 ] && bind_address="127.0.0.1"
+    config_get bind_address "$1" bind_address $bind_address
+    echo "listener $port $bind_address" >> $TCONF
 
     append_if "$1" http_dir
     append_if "$1" max_connections
+    append_if "$1" max_qos
+    append_if "$1" max_topic_alias
     append_if "$1" mount_point
     append_if "$1" protocol
+    append_if "$1" socket_domain
     append_optional_bool "$1" use_username_as_clientid
-    append_if "$1" websockets_log_level
 
     append_if "$1" cafile
     append_if "$1" capath
     append_if "$1" certfile
     append_if "$1" ciphers
+    append_if "$1" ciphers_tls1.3
     append_if "$1" crlfile
+    append_if "$1" dhparamfile
     append_if "$1" keyfile
     append_optional_bool "$1" require_certificate
+    append_if "$1" tls_engine
+    append_if "$1" tls_engine_kpass_sha1
+    append_if "$1" tls_keyform
     append_if "$1" tls_version
     append_optional_bool "$1" use_identity_as_username
     append_optional_bool "$1" use_subject_as_username
     append_if "$1" psk_hint
+    # can be general or per listener, see per_listener_settings
     append_if "$1" auth_plugin
-
     # Careful, this relies on internal behaviour of the cfg_load functions!
     set | grep "CONFIG_$1_auth_opt_" | sed "s/^.*_\(auth_opt_.*\)='\(.*\)'/\1 \2/" >> $TCONF
 }
@@ -174,8 +189,12 @@ add_bridge() {
     append_if "$1" address
 
     append_optional_bool "$1" attempt_unsubscribe bridge_attempt_unsubscribe
+    append_if "$1" bind_address bridge_bind_address
+    append_if "$1" max_packet_size bridge_max_packet_size
+    append_optional_bool "$1" outgoing_retain bridge_outgoing_retain
     append_if "$1" protocol_version bridge_protocol_version
     append_optional_bool "$1" cleansession
+    append_optional_bool "$1" local_cleansession
     append_if "$1" keepalive_interval
     append_if "$1" idle_timeout
     append_if "$1" local_clientid
@@ -200,6 +219,7 @@ add_bridge() {
     config_list_foreach "$1" topic add_topic
     append_optional_bool "$1" try_private
 
+    append_if "$1" alpn bridge_alpn
     append_if "$1" cafile bridge_cafile
     append_if "$1" capath bridge_capath
     append_if "$1" certfile bridge_certfile
@@ -207,6 +227,7 @@ add_bridge() {
     append_optional_bool "$1" insecure bridge_insecure
     append_if "$1" keyfile bridge_keyfile
     append_if "$1" psk bridge_psk
+    append_optional_bool "$1" require_ocsp bridge_require_ocsp
     append_if "$1" tls_version bridge_tls_version
 }
 
@@ -243,6 +264,7 @@ start_service_real() {
 	# Makes /etc/init.d/mosquitto reload work if you edit the final file.
 	procd_set_param file $CONF_WATCH
 	[ "$write_pid" -eq 1 ] && procd_set_param pidfile /var/run/mosquitto.pid
+	procd_set_param respawn
 	procd_close_instance
 }
 

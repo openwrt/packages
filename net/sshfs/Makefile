@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sshfs
-PKG_VERSION:=3.7.1
-PKG_RELEASE:=1
+PKG_VERSION:=3.7.2
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/libfuse/sshfs/releases/download/$(PKG_NAME)-$(PKG_VERSION)
-PKG_HASH:=fe5d3436d61b46974889e0c4515899c21a9d67851e3793c209989f72353d7750
+PKG_HASH:=1c596d42724d13aeba9f49ee127b8ef2fdeb813e25c6018f92d0c9ec4754fa2d
 
 PKG_MAINTAINER:=Zoltan HERPAI <wigyori@uid0.hu>
 PKG_LICENSE:=GPL-2.0-only
@@ -23,7 +23,7 @@ PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/meson/meson.mk
+include $(INCLUDE_DIR)/meson.mk
 
 define Package/sshfs
   TITLE:=SSHFS

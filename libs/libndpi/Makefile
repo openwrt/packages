@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libndpi
-PKG_VERSION:=3.4
-PKG_RELEASE:=2
+PKG_VERSION:=4.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ntop/nDPI/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=dc9b291c7fde94edb45fb0f222e0d93c93f8d6d37f4efba20ebd9c655bfcedf9
+PKG_HASH:=99e0aba6396fd633c3840f30e4942f6591a08066d037f560b65ba64e7310f4d6
 PKG_BUILD_DIR:=$(BUILD_DIR)/nDPI-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Banglang Huang <banglang.huang@foxmail.com>, Toni Uhlig <matzeton@googlemail.com>
@@ -31,12 +31,16 @@ ifeq ($(CONFIG_LIBNDPI_GCRYPT),)
 CONFIGURE_ARGS += --disable-gcrypt
 endif
 
+ifneq ($(CONFIG_LIBNDPI_MAXMINDDB),)
+CONFIGURE_ARGS += --with-maxminddb
+endif
+
 define Package/libndpi
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Library for deep-packet inspection
   URL:=https://github.com/ntop/nDPI
-  DEPENDS:=+LIBNDPI_GCRYPT:libgcrypt +libpcap +libjson-c
+  DEPENDS:=+LIBNDPI_GCRYPT:libgcrypt +LIBNDPI_MAXMINDDB:libmaxminddb +libpcap +libjson-c
 endef
 
 define Package/libndpi/description
@@ -51,6 +55,15 @@ config LIBNDPI_GCRYPT
 	default n
 	help
 	  This option enables QUIC client hello decryption.
+	  Disabled by default.
+
+config LIBNDPI_MAXMINDDB
+	bool "Maxmind GeoIP support"
+	depends on PACKAGE_libndpi
+	default n
+	help
+	  This options enables geographical information processing
+	  and serialization based on IP addresses.
 	  Disabled by default.
 endef
 

@@ -4,7 +4,7 @@
  #include <signal.h>
  #include <fcntl.h>
  
-+#if defined(__UCLIBC__) && !defined(__UCLIBC_HAS_OBSOLETE_BSD_SIGNAL__)
++#if 0
  /* Empty signal handler to ignore signal but don't use SIG_IGN. */
  static void sigignore(int signo)
  {

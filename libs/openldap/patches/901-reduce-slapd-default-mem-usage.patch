@@ -1,6 +1,6 @@
 --- a/servers/slapd/slapd.conf
 +++ b/servers/slapd/slapd.conf
-@@ -50,7 +50,7 @@ argsfile	%LOCALSTATEDIR%/run/slapd.args
+@@ -59,7 +59,7 @@ database config
  #######################################################################
  
  database	mdb

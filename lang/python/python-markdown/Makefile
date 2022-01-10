@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2O20 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
+# Copyright (C) 2019-2O21 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-markdown
-PKG_VERSION:=3.3.3
+PKG_VERSION:=3.3.6
 PKG_RELEASE:=1
 
 PYPI_NAME:=Markdown
-PKG_HASH:=5d9f2b5ca24bc4c7a390d22323ca4bad200368612b5aaa7796babf971d2b2f18
+PKG_HASH:=76df8ae32294ec39dcf89340382882dfa12975f87f45c3ed1ecdb1e8cefc7006
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 PKG_LICENSE:=BSD-3-Clause

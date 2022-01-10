@@ -13,16 +13,33 @@ PKG_HASH:=e1298022472da5589b7f2be1d5ee3c1b66ec3d96dfbad03dc642afd009da5342
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
+PKG_LICENSE:=GPL-3.0-or-later
+PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
 
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_PARTED_LVM2 \
+	CONFIG_PARTED_READLINE
+
 include $(INCLUDE_DIR)/package.mk
+
+define Package/libparted
+  SECTION:=libs
+  CATEGORY:=Libraries
+  TITLE:=GNU Parted library
+  DEPENDS:=+libblkid +libuuid +PARTED_LVM2:libdevmapper
+endef
+
+define Package/libparted/description
+  GNU Parted shared library
+endef
 
 define Package/parted
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=GNU Parted
   SUBMENU:=Disc
-  DEPENDS:=+libblkid +libuuid +PARTED_READLINE:libreadline +CONFIG_PARTED_READLINE:libncurses +PARTED_LVM2:libdevmapper
+  DEPENDS:=+libparted +PARTED_READLINE:libreadline +PARTED_READLINE:libncurses
 endef
 
 define Package/parted/description
@@ -35,19 +52,27 @@ define Package/parted/config
   source "$(SOURCE)/Config.in"
 endef
 
-ifneq ($(CONFIG_PARTED_READLINE),y)
-  CONFIGURE_ARGS += --without-readline
-endif
+CONFIGURE_ARGS += \
+	$(if $(CONFIG_PARTED_READLINE),--with-readline,--without-readline) \
+	$(if $(CONFIG_PARTED_LVM2),--enable-device-mapper,--disable-device-mapper)
 
-ifneq ($(CONFIG_PARTED_LVM2),y)
-  CONFIGURE_ARGS += --disable-device-mapper
-endif
+define Build/InstallDev
+	$(INSTALL_DIR) $(1)/usr/include/parted $(1)/usr/lib/ $(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so** $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/parted/*.h $(1)/usr/include/parted/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/*.pc $(1)/usr/lib/pkgconfig/
+endef
+
+define Package/libparted/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so** $(1)/usr/lib/
+endef
 
 define Package/parted/install
-	$(INSTALL_DIR) $(1)/usr/lib $(1)/sbin
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so** $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/parted $(1)/sbin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/partprobe $(1)/sbin/
 endef
 
+$(eval $(call BuildPackage,libparted))
 $(eval $(call BuildPackage,parted))

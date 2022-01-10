@@ -32,6 +32,7 @@ include ../../lang/python/python3-package.mk
 CMAKE_OPTIONS += \
 	-DENABLEEXAMPLES=0 \
 	-DBUILDSWIGNODE=OFF \
+	-DBUILDTESTS=OFF \
 	-DFIRMATA=ON
 
 define Package/libmraa/Default

@@ -131,7 +131,8 @@ CONFIGURE_VARS += \
 	ac_cv_lib_nl_nl_cache_alloc=no \
 	ac_cv_lib_nl_genl_3_genl_connect=no \
 	ac_cv_lib_nl_3_nl_cache_alloc=no \
-	ac_cv_lib_dbus_1_dbus_malloc=no
+	ac_cv_lib_dbus_1_dbus_malloc=no \
+	ac_cv_path_pcncfg=no
 
 CONFIGURE_ARGS += \
 	--enable-force-pf \

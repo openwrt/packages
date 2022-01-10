@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gstreamer1
-PKG_VERSION:=1.18.4
+PKG_VERSION:=1.18.5
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=gstreamer-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gstreamer
-PKG_HASH:=9aeec99b38e310817012aa2d1d76573b787af47f8a725a65b833880a094dfbc5
+PKG_HASH:=55862232a63459bbf56abebde3085ca9aec211b478e891dacea4d6df8cafe80a
 PKG_BUILD_DIR:=$(BUILD_DIR)/gstreamer-$(PKG_VERSION)
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
@@ -23,11 +23,11 @@ PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:gstreamer_project:gstreamer
 
 PKG_INSTALL:=1
-PKG_BUILD_DEPENDS:=meson/host glib2/host gettext-full/host
+PKG_BUILD_DEPENDS:=glib2/host gettext-full/host
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
-include ../../devel/meson/meson.mk
+include $(INCLUDE_DIR)/meson.mk
 
 define Package/gstreamer1/Default
   CATEGORY:=Multimedia

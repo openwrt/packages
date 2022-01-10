@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=snort
-PKG_VERSION:=2.9.17.1
+PKG_VERSION:=2.9.19
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_LICENSE:=GPL-2.0
@@ -18,7 +18,7 @@ PKG_CPE_ID:=cpe:/a:snort:snort
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.snort.org/downloads/archive/snort/ \
 	@SF/$(PKG_NAME)
-PKG_HASH:=303d3d5dc5affecfeaad3a331d3163f901d48d960fdd6598cb55c6d1591eed82
+PKG_HASH:=b12fc6db72afb58987a2bf1954b8f45bde02047c235513c7663857b9506369c7
 
 PKG_BUILD_DEPENDS:=libtirpc
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)/$(PKG_NAME)-$(PKG_VERSION)

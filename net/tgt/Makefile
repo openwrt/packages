@@ -4,12 +4,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tgt
-PKG_VERSION:=1.0.80
+PKG_VERSION:=1.0.81
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/fujita/tgt/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=e2255482f1a2797c115a6d545c37428b10a4ba6276a2af787da5378fa4e34e75
+PKG_HASH:=f8a285549456f13fecf628131a73934ffcbb701bacb7d5802acee7b515ab5452
 
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
@@ -23,7 +23,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/tgt
 	SECTION:=net
 	CATEGORY:=Network
-	URL:=http://stgt.sourceforge.net/
+	URL:=https://github.com/fujita/tgt
 	TITLE:=userspace iSCSI target
 	DEPENDS:=+libpthread +libaio
 endef

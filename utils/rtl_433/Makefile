@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtl_433
 PKG_VERSION:=20.11
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/merbanan/rtl_433/tar.gz/$(PKG_VERSION)?
@@ -32,6 +32,8 @@ endef
 define Package/rtl-sdr/description
   rtl_433 turns your Realtek RTL2832 based DVB dongle into a 433.92MHz generic data receiver.
 endef
+
+CMAKE_OPTIONS += -DENABLE_SOAPYSDR=NO
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include

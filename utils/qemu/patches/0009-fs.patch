@@ -1,0 +1,40 @@
+From 28031d5c7427aec6d6138920b92c59b999a349ed Mon Sep 17 00:00:00 2001
+From: Fabrice Fontaine <fontaine.fabrice@gmail.com>
+Date: Sat, 28 Aug 2021 00:03:01 +0200
+Subject: [PATCH] block/export/fuse.c: fix fuse-lseek on uclibc or musl
+
+Include linux/fs.h to avoid the following build failure on uclibc or
+musl raised since version 6.0.0:
+
+../block/export/fuse.c: In function 'fuse_lseek':
+../block/export/fuse.c:641:19: error: 'SEEK_HOLE' undeclared (first use in this function)
+  641 |     if (whence != SEEK_HOLE && whence != SEEK_DATA) {
+      |                   ^~~~~~~~~
+../block/export/fuse.c:641:19: note: each undeclared identifier is reported only once for each function it appears in
+../block/export/fuse.c:641:42: error: 'SEEK_DATA' undeclared (first use in this function); did you mean 'SEEK_SET'?
+  641 |     if (whence != SEEK_HOLE && whence != SEEK_DATA) {
+      |                                          ^~~~~~~~~
+      |                                          SEEK_SET
+
+Fixes:
+ - http://autobuild.buildroot.org/results/33c90ebf04997f4d3557cfa66abc9cf9a3076137
+
+Signed-off-by: Fabrice Fontaine <fontaine.fabrice@gmail.com>
+Message-Id: <20210827220301.272887-1-fontaine.fabrice@gmail.com>
+Signed-off-by: Hanna Reitz <hreitz@redhat.com>
+---
+ block/export/fuse.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+--- a/block/export/fuse.c
++++ b/block/export/fuse.c
+@@ -38,6 +38,9 @@
+ /* Prevent overly long bounce buffer allocations */
+ #define FUSE_MAX_BOUNCE_BYTES (MIN(BDRV_REQUEST_MAX_BYTES, 64 * 1024 * 1024))
+ 
++#ifdef __linux__
++#include <linux/fs.h>
++#endif
+ 
+ typedef struct FuseExport {
+     BlockExport common;

@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pdns
-PKG_VERSION:=4.4.1
+PKG_VERSION:=4.5.2
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://downloads.powerdns.com/releases/
-PKG_HASH:=03fa7c181c666a5fc44a49affe7666bd385d46c1fe15088caff175967e85ab6c
+PKG_HASH:=93d94a2500b1b3288dde0e76da7c40095382d93f0998d0f15449d1e6fc033641
 
 PKG_MAINTAINER:=Peter van Dijk <peter.van.dijk@powerdns.com>
 PKG_LICENCE:=GPL-2.0-only
@@ -170,6 +170,8 @@ define Package/pdns/conffiles
 /etc/powerdns/pdns.conf
 /etc/init.d/pdns
 endef
+
+TARGET_CXX+=-std=c++17
 
 CONFIGURE_ARGS+= \
 	--sysconfdir=/etc/powerdns \

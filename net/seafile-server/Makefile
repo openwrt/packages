@@ -46,6 +46,7 @@ define Package/seafile-server
   TITLE:=Seafile server
   URL:=https://seafile.com/
   DEPENDS:= \
+    @BROKEN \
     +bash \
     +glib2 \
     +jansson \
@@ -85,6 +86,7 @@ define Package/seafile-server-fuse
   TITLE:=Seafile server - FUSE extension
   URL:=https://seafile.com/
   DEPENDS:= \
+    @BROKEN \
     +bash \
     +glib2 \
     +jansson \
@@ -117,7 +119,7 @@ define Package/python3-seafile-server
   CATEGORY:=Languages
   SUBMENU:=Python
   TITLE:=Python bindings for Seafile server
-  DEPENDS:=+python3-light +python3-logging +python3-searpc +python3-seafile-ccnet
+  DEPENDS:=@BROKEN +python3-light +python3-logging +python3-searpc +python3-seafile-ccnet
 endef
 
 define Package/python3-seafile-server/description

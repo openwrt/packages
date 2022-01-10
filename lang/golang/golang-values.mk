@@ -13,10 +13,11 @@ endif
 # Unset environment variables
 # There are more magic variables to track down, but ain't nobody got time for that
 
-# From https://golang.org/cmd/go/#hdr-Environment_variables
+# From https://pkg.go.dev/cmd/go#hdr-Environment_variables
 
 # General-purpose environment variables:
 unexport \
+  GO111MODULE \
   GCCGO \
   GOARCH \
   GOBIN \
@@ -64,23 +65,20 @@ unexport \
 # Special-purpose environment variables:
 unexport \
   GCCGOTOOLDIR \
+  GOEXPERIMENT \
   GOROOT_FINAL \
   GO_EXTLINK_ENABLED
 # Unmodified:
 #   GIT_ALLOW_PROTOCOL
 
-# From https://golang.org/cmd/go/#hdr-Module_support
-unexport \
-  GO111MODULE
-
-# From https://golang.org/pkg/runtime/#hdr-Environment_Variables
+# From https://pkg.go.dev/runtime#hdr-Environment_Variables
 unexport \
   GOGC \
   GOMAXPROCS \
   GORACE \
   GOTRACEBACK
 
-# From https://golang.org/cmd/cgo/#hdr-Using_cgo_with_the_go_command
+# From https://pkg.go.dev/cmd/cgo#hdr-Using_cgo_with_the_go_command
 unexport \
   CC_FOR_TARGET \
   CXX_FOR_TARGET
@@ -111,10 +109,6 @@ unexport \
 unexport \
   BOOT_GO_GCFLAGS \
   BOOT_GO_LDFLAGS
-
-# From https://golang.org/src/cmd/dist/buildruntime.go
-unexport \
-  GOEXPERIMENT
 
 # From https://golang.org/src/cmd/dist/buildtool.go
 unexport \
@@ -199,6 +193,7 @@ GO_ARCH_DEPENDS:=@(aarch64||arm||i386||i686||mips||mips64||mips64el||mipsel||pow
 
 # ASLR/PIE
 
+# From https://golang.org/src/cmd/internal/sys/supported.go
 GO_PIE_SUPPORTED_OS_ARCH:= \
   android_386  android_amd64  android_arm  android_arm64 \
   linux_386    linux_amd64    linux_arm    linux_arm64 \
@@ -206,6 +201,7 @@ GO_PIE_SUPPORTED_OS_ARCH:= \
   windows_386  windows_amd64  windows_arm \
   \
   darwin_amd64 darwin_arm64 \
+  ios_amd64    ios_arm64 \
   \
   freebsd_amd64 \
   \
@@ -213,6 +209,7 @@ GO_PIE_SUPPORTED_OS_ARCH:= \
   \
   linux_ppc64le linux_riscv64 linux_s390x
 
+# From https://golang.org/src/cmd/go/internal/work/init.go
 go_pie_install_suffix=$(if $(filter $(1),aix_ppc64 windows_386 windows_amd64 windows_arm),,shared)
 
 ifneq ($(filter $(GO_HOST_OS_ARCH),$(GO_PIE_SUPPORTED_OS_ARCH)),)

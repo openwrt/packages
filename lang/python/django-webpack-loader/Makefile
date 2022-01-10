@@ -6,11 +6,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-webpack-loader
-PKG_VERSION:=0.6.0
-PKG_RELEASE:=8
+PKG_VERSION:=0.7.0
+PKG_RELEASE:=1
 
 PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=60bab6b9a037a5346fad12d2a70a6bc046afb33154cf75ed640b93d3ebd5f520
+PKG_HASH:=7a3c88201aa54481f9399465615cbe7b9aece8081496a6d0287b7cb8e232f447
 
 PKG_MAINTAINER:=Eneas U de Queiroz <cotequeiroz@gmail.com>
 PKG_LICENSE:=MIT
@@ -27,6 +27,7 @@ define Package/python3-django-webpack-loader
   TITLE:=Transparently use webpack in django
   URL:=https://github.com/owais/django-webpack-loader
   DEPENDS:= \
+	@BROKEN \
 	+python3 \
 	+python3-django1
 endef

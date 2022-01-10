@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
-PKG_VERSION:=5.0.7
+PKG_VERSION:=5.0.18
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.zabbix.com/zabbix/sources/stable/5.0/
-PKG_HASH:=d762f8a9aa9e8717d2e85d2a82d27316ea5c2b214eb00aff41b6e9b06107916a
+PKG_HASH:=7d15c4d683801edc2bdcda3fd94afdf6a7142a1a92aa71f4a9220af8e39d9e0e
 
 PKG_MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
 PKG_LICENSE:=GPL-2.0
@@ -119,9 +119,9 @@ endef
 define Package/zabbix-server-frontend
   $(call Package/zabbix/Default)
   TITLE+= server-frontend
-  DEPENDS += +php7 +php7-cgi +ZABBIX_POSTGRESQL:php7-mod-pgsql +ZABBIX_MYSQL:php7-mod-mysqli \
-  +php7-mod-gd +php7-mod-bcmath +php7-mod-ctype +php7-mod-xmlreader +php7-mod-xmlwriter \
-  +php7-mod-session +php7-mod-sockets +php7-mod-mbstring +php7-mod-gettext
+  DEPENDS += +php8 +php8-cgi +ZABBIX_POSTGRESQL:php8-mod-pgsql +ZABBIX_MYSQL:php8-mod-mysqli \
+  +php8-mod-gd +php8-mod-bcmath +php8-mod-ctype +php8-mod-xmlreader +php8-mod-xmlwriter \
+  +php8-mod-session +php8-mod-sockets +php8-mod-mbstring +php8-mod-gettext
 endef
 
 define Package/zabbix-proxy
@@ -266,7 +266,7 @@ endef
 define Package/zabbix-extra-network/postinst
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
-	killall -HUP ubusd
+	killall -s HUP ubusd
 fi
 endef
 
@@ -279,7 +279,7 @@ endef
 define Package/zabbix-extra-wifi/postinst
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
-	killall -HUP ubusd
+	killall -s HUP ubusd
 fi
 endef
 

@@ -1,6 +1,7 @@
 #!/bin/sh /etc/rc.common
 
 START=98
+STOP=05
 USE_PROCD=1
 
 SMBD_IFACE=""
@@ -27,7 +28,7 @@ smb_header()
 	)
 
 	# we dont use netbios anymore as default and wsd/avahi is dns based
-	hostname="$(cat /proc/sys/kernel/hostname | tr -d '{};%?=#\n')"
+	hostname="$(sed 's/\..*//' /proc/sys/kernel/hostname | tr -d '{};%?=#\n')"
 
 	config_get_sane workgroup "$1" workgroup "WORKGROUP"
 	config_get_sane description "$1" description "Ksmbd on OpenWrt"
@@ -150,7 +151,7 @@ start_service()
 	fi
 	
 	# NOTE: We don't do a soft-reload via signal, since [global] smb.conf setting changes will be ignored, so always reset hard.
-	kill_server
+	[ -e /sys/module/ksmbd ] && stop_service
 	
 	[ ! -e /sys/module/ksmbd ] && modprobe ksmbd 2> /dev/null
 	if [ ! -e /sys/module/ksmbd ]; then

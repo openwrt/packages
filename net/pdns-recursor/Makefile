@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pdns-recursor
-PKG_VERSION:=4.5.2
+PKG_VERSION:=4.5.7
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://downloads.powerdns.com/releases/
-PKG_HASH:=b1283d5354f1cbb3d15791f96af3ab3e08a13453431e94fe87b8dbe9f78f0184
+PKG_HASH:=ad4db2d4af4630757f786f3719225c2e37481257d676803a54194c7679d07bab
 
 PKG_MAINTAINER:=Peter van Dijk <peter.van.dijk@powerdns.com>
 PKG_LICENCE:=GPL-2.0-only
@@ -43,7 +43,6 @@ endef
 DISABLE_NLS:=
 
 CONFIGURE_ARGS += \
-	--enable-option-checking=fatal \
 	--sysconfdir=/etc/powerdns \
 	--with-lua=lua \
 	--without-libcap \

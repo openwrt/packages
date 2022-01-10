@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=acpica-unix
-PKG_VERSION:=20181213
-PKG_RELEASE:=1
+PKG_VERSION:=20211217
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://acpica.org/sites/$(patsubst %-unix,%,$(PKG_NAME))/files/$(PKG_SOURCE_URL)
-PKG_HASH:=fc90006775c635ba86c5bbf08590ac98ab10e1f9eff6d8951385f57dd3a6f8ed
+PKG_HASH:=2511f85828820d747fa3e2c3433d3a38c22db3d9c2fd900e1a84eb4173cb5992
 PKG_MAINTAINER:=Philip Prindeville <philipp@redfish-solutions.com>
 
 PKG_LICENSE:=GPL-2.0
@@ -48,7 +48,9 @@ MAKE_PATH:=generate/unix
 
 define Package/acpica-unix/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/generate/unix/acpidump/obj/acpidump $(1)/usr/bin/
+
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/generate/unix/bin/* \
+		$(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,acpica-unix))

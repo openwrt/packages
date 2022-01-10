@@ -8,22 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tang
-PKG_VERSION:=10
+PKG_VERSION:=11
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/latchset/$(PKG_NAME)/releases/download/v$(PKG_VERSION)/
-PKG_HASH:=082f17e031708ab5e2f88c9b767d228bcf92a0d089fdb164d4ae93845cbd2a48
+PKG_HASH:=ef5d3ae56030f20c290594b9be89ad9ec469dd385676595e1c7a2bfdc3f45d8f
 
 PKG_MAINTAINER:=Tibor Dudlák <tibor.dudlak@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
 PKG_INSTALL:=1
-PKG_BUILD_DEPENDS:=meson/host
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/meson/meson.mk
+include $(INCLUDE_DIR)/meson.mk
 
 define Package/tang
   SECTION:=utils
@@ -42,11 +41,13 @@ define Package/tang/conffiles
 endef
 
 define Package/tang/install
+	$(INSTALL_DIR)	$(1)/usr/bin
 	$(INSTALL_DIR)	$(1)/usr/libexec
 	$(INSTALL_DIR)	$(1)/etc/xinetd.d/
-	$(INSTALL_BIN)	$(PKG_INSTALL_DIR)/usr/libexec/tangd*	$(1)/usr/libexec/
-	$(INSTALL_BIN)	./files/tangdw				$(1)/usr/libexec/
-	$(CP)		./files/tangdx				$(1)/etc/xinetd.d/
+	$(INSTALL_BIN)	$(PKG_INSTALL_DIR)/usr/bin/tang-show-keys	$(1)/usr/bin/
+	$(INSTALL_BIN)	$(PKG_INSTALL_DIR)/usr/libexec/tangd*		$(1)/usr/libexec/
+	$(INSTALL_BIN)	./files/tangdw					$(1)/usr/libexec/
+	$(CP)		./files/tangdx					$(1)/etc/xinetd.d/
 endef
 
 define Package/tang/postinst
@@ -56,6 +57,7 @@ if [ -z "$${IPKG_INSTROOT}" ]; then
 	KEYS=$(find /usr/share/tang/db/ -name "*.jw*" -maxdepth 1 | wc -l)
 	if [ "${KEYS}" = "0" ]; then # if db is empty generate new key pair
 		/usr/libexec/tangd-keygen /usr/share/tang/db/
+	fi
 	(cat /etc/services | grep -E "tangd.*8888\/tcp") > /dev/null \
 		|| echo -e "tangd\t\t8888/tcp" >> /etc/services
 fi

@@ -6,5 +6,9 @@ uci -q get gnunet.namecache || uci set gnunet.namecache=gnunet-config
 uci -q batch <<EOF
 	set gnunet.namestore.DATABASE=postgres
 	set gnunet.namecache.DATABASE=postgres
+	set gnunet.namestore_postgres=gnunet-config
+	set gnunet.namestore_postgres.CONFIG=postgres://gnunet@%2Ftmp%2Frun%2Fpostgresql/gnunet
+	set gnunet.namecache_postgres=gnunet-config
+	set gnunet.namecache_postgres.CONFIG=postgres://gnunet@%2Ftmp%2Frun%2Fpostgresql/gnunet
 	commit gnunet
 EOF

@@ -4,6 +4,8 @@ config zerotier sample_config
 
 	# persistent configuration folder (for ZT controller mode)
 	#option config_path '/etc/zerotier'
+	# copy <config_path> to RAM to prevent writing to flash (for ZT controller mode)
+	#option copy_config_path '1'
 
 	#option port '9993'
 

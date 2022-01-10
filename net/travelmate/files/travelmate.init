@@ -1,31 +1,33 @@
 #!/bin/sh /etc/rc.common
+# Copyright (c) 2016-2021 Dirk Brenken (dev@brenken.org)
+# This is free software, licensed under the GNU General Public License v3.
 
 # set (s)hellcheck exceptions
-# shellcheck disable=1091,2016,2034,2039,2059,2086,2143,2181,2188
+# shellcheck disable=2034,2086,2154,3043,3060
 
 START=25
 USE_PROCD=1
 
-extra_command "scan" "<radio> Scan for available nearby uplinks"
+extra_command "scan" "[<radio>|<ifname>] Scan for available nearby uplinks"
+extra_command "assoc" "[<radio>|<ifname>] Get MAC adresses of associated wlan stations"
 extra_command "setup" "[<iface>] [<zone>] [<metric>] Setup the travelmate uplink interface, by default 'trm_wwan' with firewall zone 'wan' and metric '100'"
 
 trm_init="/etc/init.d/travelmate"
 trm_script="/usr/bin/travelmate.sh"
 trm_pidfile="/var/run/travelmate.pid"
 
-boot()
-{
-	if [ -s "${trm_pidfile}" ]
-	then
-		> "${trm_pidfile}"
+boot() {
+	if [ -s "${trm_pidfile}" ]; then
+		: >"${trm_pidfile}"
 	fi
 	rc_procd start_service
 }
 
-start_service()
-{
-	if [ "$("${trm_init}" enabled; printf "%u" ${?})" = "0" ]
-	then
+start_service() {
+	if "${trm_init}" enabled; then
+		if [ "${action}" = "boot" ]; then
+			return 0
+		fi
 		procd_open_instance "travelmate"
 		procd_set_param command "${trm_script}" "${@}"
 		procd_set_param pidfile "${trm_pidfile}"
@@ -36,44 +38,35 @@ start_service()
 	fi
 }
 
-reload_service()
-{
+reload_service() {
 	local ppid pid timeout
-	
+
 	timeout="$(uci_get travelmate global trm_timeout)"
 
-	if [ -s "${trm_pidfile}" ]
-	then
+	if [ -s "${trm_pidfile}" ]; then
 		ppid="$(cat "${trm_pidfile}" 2>/dev/null)"
-		if [ -n "${ppid}" ]
-		then
+		if [ -n "${ppid}" ]; then
 			pid="$(pgrep -xnf "sleep ${timeout:-60} 0" -P ${ppid} 2>/dev/null)"
-			if [ -n "${pid}" ]
-			then
+			if [ -n "${pid}" ]; then
 				kill -INT ${pid} 2>/dev/null
 			fi
 		fi
 	fi
 }
 
-stop_service()
-{
+stop_service() {
 	rc_procd "${trm_script}" stop
 }
 
-status_service()
-{
+status_service() {
 	local key keylist value rtfile
 
 	rtfile="$(uci_get travelmate global trm_rtfile "/tmp/trm_runtime.json")"
 	json_load_file "${rtfile}" >/dev/null 2>&1
-	json_select data >/dev/null 2>&1
-	if [ "${?}" = "0" ]
-	then
+	if json_select data >/dev/null 2>&1; then
 		printf "%s\n" "::: travelmate runtime information"
 		json_get_keys keylist
-		for key in ${keylist}
-		do
+		for key in ${keylist}; do
 			json_get_var value "${key}"
 			printf "  + %-18s : %s\n" "${key}" "${value}"
 		done
@@ -82,30 +75,29 @@ status_service()
 	fi
 }
 
-scan()
-{
-	local result scan_dev radio="${1:-"radio0"}"
+scan() {
+	local result scan_name radio="${1}"
 
-	scan_dev="$(ubus -S call network.wireless status 2>/dev/null | jsonfilter -l1 -e "@.${radio}.interfaces[0].ifname")"
-	result="$(iwinfo "${scan_dev:-${radio}}" scan 2>/dev/null | \
+	if [ -z "${radio}" ]; then
+		scan_name="$(ubus -S call network.wireless status 2>/dev/null | jsonfilter -q -l1 -e '@[@.up=true].interfaces[0].ifname')"
+	fi
+	result="$(iwinfo "${radio:-${scan_name}}" scan 2>/dev/null |
 		awk 'BEGIN{FS="[[:space:]]"}/Address:/{var1=$NF}/ESSID:/{var2="";
 		for(i=12;i<=NF;i++)if(var2==""){var2=$i}else{var2=var2" "$i}}/Channel:/{var3=$NF}/Quality:/{split($NF,var0,"/")}/Encryption:/{var4="";
-		for(j=12;j<=NF;j++)if(var4==""){var4=$j}else{var4=var4" "$j};printf "    %-11i%-10s%-35s%-20s%s\n",(var0[1]*100/var0[2]),var3,var2,var1,var4}' | \
+		for(j=12;j<=NF;j++)if(var4==""){var4=$j}else{var4=var4" "$j};printf "    %-11i%-10s%-35s%-20s%s\n",(var0[1]*100/var0[2]),var3,var2,var1,var4}' |
 		sort -rn)"
-	printf "%s\\n" "::: Available nearby uplinks on '${scan_dev:-${radio}}'"
-	printf "%s\\n" ":::"
-	if [ -n "${result}" ]
-	then
-		printf "%-15s%-10s%-35s%-20s%s\\n" "    Strength" "Channel" "ESSID" "BSSID" "Encryption"
-		printf "%s\\n" "    --------------------------------------------------------------------------------------"
-		printf "%s\\n" "${result}"
+	printf "%s\n" "::: Available nearby uplinks on '${radio:-${scan_name}}'"
+	printf "%s\n" ":::"
+	if [ -n "${result}" ]; then
+		printf "%-15s%-10s%-35s%-20s%s\n" "    Strength" "Channel" "ESSID" "BSSID" "Encryption"
+		printf "%s\n" "    --------------------------------------------------------------------------------------"
+		printf "%s\n" "${result}"
 	else
-		printf "%s\\n" "::: No scan results"
+		printf "%s\n" "::: Empty resultset"
 	fi
 }
 
-setup()
-{
+setup() {
 	local iface cnt=0 input="${1:-"trm_wwan"}" zone="${2:-"wan"}" metric="${3:-"100"}"
 
 	iface="$(uci_get travelmate global trm_iface)"
@@ -113,13 +105,10 @@ setup()
 	zone="${zone//[+*~%&\$@\"\' ]/}"
 	metric="${metric//[^0-9]/}"
 
-	if [ -n "${iface}" ] && [ "${iface}" = "${input}" ]
-	then
+	if [ -n "${iface}" ] && [ "${iface}" = "${input}" ]; then
 		printf "%s\n" "The uplink interface '${input}' has been already configured"
-	elif [ -n "${input}" ]
-	then
-		if [ -n "${iface}" ]
-		then
+	elif [ -n "${input}" ]; then
+		if [ -n "${iface}" ]; then
 			uci -q batch <<-EOC
 				del network."${iface}"
 				del network."${iface}6"
@@ -132,18 +121,15 @@ setup()
 			set network."${input}".proto="dhcp"
 			set network."${input}".metric="${metric}"
 			set network."${input}6"=interface
-			set network."${input}6".ifname="@${input}"
+			set network."${input}6".device="@${input}"
 			set network."${input}6".proto="dhcpv6"
 			commit travelmate
 			commit network
 		EOC
 
-		while [ -n "$(uci -q get firewall.@zone["${cnt}"].name)" ]
-		do
-			if [ "$(uci -q get firewall.@zone["${cnt}"].name)" = "${zone}" ]
-			then
-				if [ -n "${iface}" ]
-				then
+		while [ -n "$(uci -q get firewall.@zone["${cnt}"].name)" ]; do
+			if [ "$(uci -q get firewall.@zone["${cnt}"].name)" = "${zone}" ]; then
+				if [ -n "${iface}" ]; then
 					uci -q batch <<-EOC
 						del_list firewall.@zone["${cnt}"].network="${iface}"
 						del_list firewall.@zone["${cnt}"].network="${iface}6"
@@ -156,19 +142,16 @@ setup()
 				EOC
 				break
 			fi
-			cnt=$((cnt+1))
+			cnt=$((cnt + 1))
 		done
 
-		if [ -n "${iface}" ]
-		then
+		if [ -n "${iface}" ]; then
 			cnt=0
-			while [ -n "$(uci -q get wireless.@wifi-iface["${cnt}"].network)" ]
-			do
-				if [ "$(uci -q get wireless.@wifi-iface["${cnt}"].network)" = "${iface}" ]
-				then
+			while [ -n "$(uci -q get wireless.@wifi-iface["${cnt}"].network)" ]; do
+				if [ "$(uci -q get wireless.@wifi-iface["${cnt}"].network)" = "${iface}" ]; then
 					uci -q set wireless.@wifi-iface["${cnt}"].network="${input}"
 				fi
-				cnt=$((cnt+1))
+				cnt=$((cnt + 1))
 			done
 			uci -q commit wireless
 		fi
@@ -178,17 +161,34 @@ setup()
 	fi
 }
 
-service_triggers()
-{
+assoc() {
+	local result assoc_name radio="${1}"
+
+	if [ -z "${radio}" ]; then
+		assoc_name="$(ubus -S call network.wireless status 2>/dev/null | jsonfilter -q -l1 -e '@[@.*.*.config.mode="ap"].interfaces[0].ifname')"
+	fi
+	result="$(iwinfo "${radio:-${assoc_name}}" assoc 2>/dev/null | awk '/^[A-Z0-9:]+/{printf "    %s\n",$1}')"
+	printf "%s\n" "::: Associated wlan stations on '${radio:-${assoc_name}}'"
+	printf "%s\n" ":::"
+	if [ -n "${result}" ]; then
+		printf "%s\n" "    MAC addresses"
+		printf "%s\n" "    -----------------"
+		printf "%s\n" "${result}"
+	else
+		printf "%s\n" "::: Empty resultset"
+	fi
+}
+
+service_triggers() {
 	local iface delay
 
 	iface="$(uci_get travelmate global trm_iface)"
 	delay="$(uci_get travelmate global trm_triggerdelay "2")"
 	PROCD_RELOAD_DELAY=$((delay * 1000))
 
-	if [ -n "${iface}" ]
-	then
+	if [ -n "${iface}" ]; then
 		procd_add_interface_trigger "interface.*.down" "${iface}" "${trm_init}" reload
 	fi
+	procd_add_raw_trigger "interface.*.up" "${PROCD_RELOAD_DELAY}" "${trm_init}" start
 	procd_add_config_trigger "config.change" "travelmate" "${trm_init}" restart
 }

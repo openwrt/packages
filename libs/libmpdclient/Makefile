@@ -6,22 +6,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmpdclient
-PKG_VERSION:=2.19
-PKG_RELEASE:=1
+PKG_VERSION:=2.20
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.musicpd.org/download/libmpdclient/2
-PKG_HASH:=158aad4c2278ab08e76a3f2b0166c99b39fae00ee17231bd225c5a36e977a189
+PKG_HASH:=18793f68e939c3301e34d8fcadea1f7daa24143941263cecadb80126194e277d
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
 
-PKG_BUILD_DEPENDS:=meson/host
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/meson/meson.mk
+include $(INCLUDE_DIR)/meson.mk
 
 define Package/libmpdclient
     TITLE:=libmpdclient

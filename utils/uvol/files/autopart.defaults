@@ -6,27 +6,52 @@
 
 OWRT_VOLUMES=owrt-volumes
 
+load_partitions() {
+	local dev="$1"
+	json_init
+	json_load "$(sfdisk -J "$dev" 2>/dev/null)"
+	json_select "partitiontable" || return 1
+	return 0
+}
 
 get_partition_by_name_gpt() {
-	local dev="$1"
-	local part parts node name
-	json_load "$(sfdisk -J "/dev/$dev" 2>/dev/null)"
-	json_select "partitiontable" || return
+	local label part parts node name
+	json_get_vars label
+	[ "$label" = "gpt" ] || return
 	json_select "partitions" || return
 	json_get_keys parts
 	for part in $parts; do
 		json_select "$part"
 		json_get_vars node name
-		if [ "$2" = "$name" ]; then
+		if [ "$1" = "$name" ]; then
 			echo "$node"
 			break
 		fi
 		json_select ..
 	done
+	json_select ..
+}
+
+get_partition_by_type_mbr() {
+	local label part parts node type
+	json_get_vars label
+	[ "$label" = "dos" ] || return
+	json_select "partitions" || return
+	json_get_keys parts
+	for part in $parts; do
+		json_select "$part"
+		json_get_vars node type
+		if [ "$1" = "$type" ]; then
+			echo "$node"
+			break
+		fi
+		json_select ..
+	done
+	json_select ..
 }
 
 part_fixup() {
-	echo "write" | sfdisk --force -q -w never "$1"
+	echo "write" | sfdisk --force -q -w never "$1" 1>/dev/null 2>/dev/null
 }
 
 get_free_area() {
@@ -60,7 +85,7 @@ create_lvm_part() {
 
 	freepart="$(get_free_area "$disk")"
 	if [ "$freepart" ]; then
-		echo "$freepart, type=lvm, name=$OWRT_VOLUMES" | sfdisk --force -w never -a "$disk"
+		echo "$freepart, type=lvm, name=$OWRT_VOLUMES" | sfdisk --force -w never -a "$disk" || return 1
 		partx -a "$disk" 1>/dev/null 2>/dev/null || true
 		return 0
 	else
@@ -87,11 +112,14 @@ autopart_init() {
 	[ -e "/sys/class/block/$diskdev/device/cid" ] && diskserial="$diskserial$(cat "/sys/class/block/$diskdev/device/cid")"
 	[ "$diskserial" ] || diskserial="$(cat /proc/sys/kernel/random/uuid)"
 	diskhash="$(echo "$diskserial" | sha256sum | cut -d' ' -f1)"
+
 	part_fixup "/dev/$diskdev"
 	create_lvm_part "/dev/$diskdev" || return
-	lvmpart="$(get_partition_by_name_gpt "$diskdev" "$OWRT_VOLUMES")"
-
+	load_partitions "/dev/$diskdev" || return
+	lvmpart="$(get_partition_by_name_gpt "$OWRT_VOLUMES")"
+	[ "$lvmpart" ] || lvmpart="$(get_partition_by_type_mbr "8e")"
 	[ "$lvmpart" ] || return
+
 	lvm_init "$lvmpart" "${OWRT_VOLUMES}-${diskhash:0:16}"
 }
 

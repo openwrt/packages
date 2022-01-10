@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=transmission
 PKG_VERSION:=3.00
-PKG_RELEASE:=11
+PKG_RELEASE:=18
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GITHUB/transmission/transmission-releases/master
 PKG_HASH:=9144652fe742f7f7dd6657716e378da60b751aaeda8bef8344b3eefc4db255f2
 
-PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
+PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:transmissionbt:transmission
@@ -40,7 +40,7 @@ define Package/transmission/template
   CATEGORY:=Network
   TITLE:=BitTorrent client
   URL:=https://www.transmissionbt.com
-  DEPENDS:=+libcurl +libevent2 +libminiupnpc +libnatpmp +libpthread +librt +zlib +LIBCURL_NOSSL:libmbedtls +LIBCURL_GNUTLS:libmbedtls +LIBCURL_WOLFSSL:libmbedtls $(ICONV_DEPENDS)
+  DEPENDS:=+libcurl +libevent2 +libminiupnpc +libnatpmp +libpthread +librt +zlib +LIBCURL_NOSSL:libmbedtls +LIBCURL_GNUTLS:libmbedtls $(ICONV_DEPENDS)
 endef
 
 define Package/transmission-daemon
@@ -104,7 +104,7 @@ CONFIGURE_ARGS += \
 	$(if $(CONFIG_LIBCURL_GNUTLS),--with-crypto=polarssl) \
 	$(if $(CONFIG_LIBCURL_MBEDTLS),--with-crypto=polarssl) \
 	$(if $(CONFIG_LIBCURL_OPENSSL),--with-crypto=openssl) \
-	$(if $(CONFIG_LIBCURL_WOLFSSL),--with-crypto=polarssl)
+	$(if $(CONFIG_LIBCURL_WOLFSSL),--with-crypto=cyassl)
 
 define Package/transmission-daemon/install
 	$(INSTALL_DIR) $(1)/usr/bin

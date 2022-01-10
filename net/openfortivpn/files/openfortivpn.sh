@@ -19,6 +19,7 @@ proto_openfortivpn_init_config() {
 	proto_config_add_string "local_ip"
 	proto_config_add_string "username"
 	proto_config_add_string "password"
+	proto_config_add_int "persist_int"
 	proto_config_add_string "trusted_cert"
 	proto_config_add_string "remote_status_check"
 	no_device=1
@@ -30,10 +31,10 @@ proto_openfortivpn_setup() {
 
 	local msg ifname ip server_ips pwfile callfile
 
-	local peeraddr port tunlink local_ip username password trusted_cert \
-	      remote_status_check
-	json_get_vars host peeraddr port tunlink local_ip username password trusted_cert \
-		      remote_status_check
+	local peeraddr port tunlink local_ip username password persist_int \
+	      trusted_cert remote_status_check
+	json_get_vars host peeraddr port tunlink local_ip username password persist_int \
+		      trusted_cert remote_status_check
 
 	ifname="vpn-$config"
 
@@ -116,6 +117,7 @@ proto_openfortivpn_setup() {
 	        append_args "--ifname=$iface_device_name"
 	}
 
+	[ -n "$persist_int" ] && append_args "--persistent=$persist_int"
 	[ -n "$trusted_cert" ] && append_args "--trusted-cert=$trusted_cert"
 	[ -n "$username" ] && append_args -u "$username"
 	[ -n "$password" ] && {
@@ -131,6 +133,10 @@ proto_openfortivpn_setup() {
 	        ln -s -T '/var/etc/openfortivpn/peers' '/etc/ppp/peers/openfortivpn' 2> /dev/null
 	        mkdir -p '/var/etc/openfortivpn/peers'
 	}
+
+	[ -f /etc/openfortivpn/user-cert-$config.pem ] && append_args "--user-cert=/etc/openfortivpn/user-cert-$config.pem"
+	[ -f /etc/openfortivpn/user-key-$config.pem ] && append_args "--user-key=/etc/openfortivpn/user-key-$config.pem"
+	[ -f /etc/openfortivpn/ca-$config.pem ] && append_args "--ca-file=/etc/openfortivpn/ca-$config.pem"
 
 	callfile="/var/etc/openfortivpn/peers/$config"
 	echo "115200

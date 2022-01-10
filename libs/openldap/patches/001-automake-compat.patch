@@ -1,18 +1,14 @@
---- /dev/null
-+++ b/Makefile.am
-@@ -0,0 +1 @@
-+SUBDIRS = include libraries clients servers tests doc
---- a/libraries/Makefile.in
-+++ b/libraries/Makefile.in
+--- a/clients/tools/Makefile.in
++++ b/clients/tools/Makefile.in
 @@ -13,6 +13,8 @@
  ## top-level directory of the distribution or, alternatively, at
  ## <http://www.OpenLDAP.org/license.html>.
  
 +SHELL = @SHELL@
 +
- SUBDIRS= \
- 	liblutil \
- 	liblber \
+ SRCS	= ldapsearch.c ldapmodify.c ldapdelete.c ldapmodrdn.c \
+ 		ldappasswd.c ldapwhoami.c ldapvc.c ldapcompare.c \
+ 		ldapexop.c ldapurl.c common.c
 --- a/libraries/liblber/Makefile.in
 +++ b/libraries/liblber/Makefile.in
 @@ -13,6 +13,8 @@
@@ -34,18 +30,7 @@
 +
  LIBRARY = libldap.la
  
- PROGRAMS = apitest dntest ftest ltest urltest
---- a/libraries/libldap_r/Makefile.in
-+++ b/libraries/libldap_r/Makefile.in
-@@ -13,6 +13,8 @@
- ## top-level directory of the distribution or, alternatively, at
- ## <http://www.OpenLDAP.org/license.html>.
- 
-+SHELL = @SHELL@
-+
- LIBRARY = libldap_r.la
- 
- PROGRAMS = apitest ltest
+ PROGRAMS = apitest dntest ftest ltest urltest testavl
 --- a/libraries/liblunicode/Makefile.in
 +++ b/libraries/liblunicode/Makefile.in
 @@ -13,6 +13,8 @@
@@ -66,8 +51,8 @@
 +SHELL = @SHELL@
 +
  LIBRARY	= liblutil.a
- PROGRAM = testavl
  
+ LDAP_INCDIR= ../../include       
 --- a/libraries/librewrite/Makefile.in
 +++ b/libraries/librewrite/Makefile.in
 @@ -16,6 +16,8 @@
@@ -79,61 +64,38 @@
  SRCS = config.c context.c info.c ldapmap.c map.c params.c rule.c \
  	session.c subst.c var.c xmap.c \
  	parse.c rewrite.c
---- a/clients/tools/Makefile.in
-+++ b/clients/tools/Makefile.in
+--- a/libraries/Makefile.in
++++ b/libraries/Makefile.in
 @@ -13,6 +13,8 @@
  ## top-level directory of the distribution or, alternatively, at
  ## <http://www.OpenLDAP.org/license.html>.
  
 +SHELL = @SHELL@
 +
- SRCS	= ldapsearch.c ldapmodify.c ldapdelete.c ldapmodrdn.c \
- 		ldappasswd.c ldapwhoami.c ldapcompare.c \
- 		ldapexop.c ldapurl.c common.c
---- a/servers/slapd/Makefile.in
-+++ b/servers/slapd/Makefile.in
-@@ -13,6 +13,8 @@
+ SUBDIRS= \
+ 	liblutil \
+ 	liblber \
+--- a/servers/lloadd/Makefile.in
++++ b/servers/lloadd/Makefile.in
+@@ -13,6 +13,7 @@
  ## top-level directory of the distribution or, alternatively, at
  ## <http://www.OpenLDAP.org/license.html>.
  
 +SHELL = @SHELL@
-+
- SLAPTOOLS=slapadd slapcat slapdn slapindex slappasswd slaptest slapauth slapacl slapschema
- PROGRAMS=slapd $(SLAPTOOLS)
- XPROGRAMS=sslapd libbackends.a .backend liboverlays.a
---- a/servers/slapd/overlays/Makefile.in
-+++ b/servers/slapd/overlays/Makefile.in
-@@ -13,6 +13,8 @@
- ## top-level directory of the distribution or, alternatively, at
- ## <http://www.OpenLDAP.org/license.html>.
+ 
+ XSRCS	= version.c
+ 
+--- a/servers/slapd/back-asyncmeta/Makefile.in
++++ b/servers/slapd/back-asyncmeta/Makefile.in
+@@ -19,6 +19,8 @@
+ ## based on back-meta module for inclusion in OpenLDAP Software.
+ ## This work was sponsored by Ericsson
  
 +SHELL = @SHELL@
 +
- SRCS = overlays.c \
- 	accesslog.c \
- 	auditlog.c \
---- a/tests/progs/Makefile.in
-+++ b/tests/progs/Makefile.in
-@@ -13,6 +13,8 @@
- ## top-level directory of the distribution or, alternatively, at
- ## <http://www.OpenLDAP.org/license.html>.
- 
-+SHELL = @SHELL@
-+
- PROGRAMS = slapd-tester slapd-search slapd-read slapd-addel slapd-modrdn \
- 		slapd-modify slapd-bind slapd-mtread ldif-filter
- 
---- a/servers/slapd/back-bdb/Makefile.in
-+++ b/servers/slapd/back-bdb/Makefile.in
-@@ -13,6 +13,8 @@
- ## top-level directory of the distribution or, alternatively, at
- ## <http://www.OpenLDAP.org/license.html>.
- 
-+SHELL = @SHELL@
-+
- SRCS = init.c tools.c config.c \
- 	add.c bind.c compare.c delete.c modify.c modrdn.c search.c \
- 	extended.c referral.c operational.c \
+ SRCS	= init.c config.c search.c message_queue.c bind.c add.c compare.c \
+ 		delete.c modify.c modrdn.c map.c \
+ 		conn.c candidates.c dncache.c meta_result.c
 --- a/servers/slapd/back-dnssrv/Makefile.in
 +++ b/servers/slapd/back-dnssrv/Makefile.in
 @@ -18,6 +18,8 @@
@@ -145,17 +107,6 @@
  SRCS	= init.c bind.c search.c config.c referral.c
  OBJS	= init.lo bind.lo search.lo config.lo referral.lo
  
---- a/servers/slapd/back-hdb/Makefile.in
-+++ b/servers/slapd/back-hdb/Makefile.in
-@@ -15,6 +15,8 @@
- #
- ## Copyright 2003 Howard Chu @ Symas Corp. See master COPYRIGHT file for terms.
- 
-+SHELL = @SHELL@
-+
- XXDIR = $(srcdir)/../back-bdb
- 
- XXSRCS = init.c tools.c config.c \
 --- a/servers/slapd/back-ldap/Makefile.in
 +++ b/servers/slapd/back-ldap/Makefile.in
 @@ -13,6 +13,8 @@
@@ -211,17 +162,6 @@
  SRCS = init.c search.c compare.c modify.c bind.c \
  	operational.c \
  	cache.c entry.c \
---- a/servers/slapd/back-ndb/Makefile.in
-+++ b/servers/slapd/back-ndb/Makefile.in
-@@ -17,6 +17,8 @@
- ## This work was initially developed by Howard Chu for inclusion
- ## in OpenLDAP Software. This work was sponsored by MySQL.
- 
-+SHELL = @SHELL@
-+
- SRCS = init.cpp tools.cpp config.cpp ndbio.cpp \
- 	add.cpp bind.cpp compare.cpp delete.cpp modify.cpp modrdn.cpp search.cpp
- 
 --- a/servers/slapd/back-null/Makefile.in
 +++ b/servers/slapd/back-null/Makefile.in
 @@ -13,6 +13,8 @@
@@ -266,17 +206,6 @@
  SRCS	= init.c op.c
  OBJS	= init.lo op.lo
  
---- a/servers/slapd/back-shell/Makefile.in
-+++ b/servers/slapd/back-shell/Makefile.in
-@@ -13,6 +13,8 @@
- ## top-level directory of the distribution or, alternatively, at
- ## <http://www.OpenLDAP.org/license.html>.
- 
-+SHELL = @SHELL@
-+
- SRCS	= init.c config.c fork.c search.c bind.c unbind.c add.c \
- 		delete.c modify.c modrdn.c compare.c result.c
- OBJS	= init.lo config.lo fork.lo search.lo bind.lo unbind.lo add.lo \
 --- a/servers/slapd/back-sock/Makefile.in
 +++ b/servers/slapd/back-sock/Makefile.in
 @@ -17,6 +17,8 @@
@@ -299,17 +228,50 @@
  SRCS	= init.c config.c search.c bind.c compare.c operational.c \
  		entry-id.c schema-map.c sql-wrap.c modify.c util.c \
  		add.c delete.c modrdn.c api.c
---- a/servers/slapd/shell-backends/Makefile.in
-+++ b/servers/slapd/shell-backends/Makefile.in
+--- a/servers/slapd/back-wt/Makefile.in
++++ b/servers/slapd/back-wt/Makefile.in
 @@ -13,6 +13,8 @@
  ## top-level directory of the distribution or, alternatively, at
  ## <http://www.OpenLDAP.org/license.html>.
  
 +SHELL = @SHELL@
 +
- PROGRAMS = passwd-shell
+ SRCS = init.c tools.c config.c \
+        add.c bind.c compare.c delete.c modify.c modrdn.c search.c \
+        extended.c operational.c \
+--- a/servers/slapd/Makefile.in
++++ b/servers/slapd/Makefile.in
+@@ -13,6 +13,8 @@
+ ## top-level directory of the distribution or, alternatively, at
+ ## <http://www.OpenLDAP.org/license.html>.
  
- SRCS = passwd-shell.c shellutil.c
++SHELL = @SHELL@
++
+ SLAPTOOLS=slapadd slapcat slapdn slapindex slapmodify slappasswd slaptest slapauth slapacl slapschema
+ PROGRAMS=slapd $(SLAPTOOLS)
+ XPROGRAMS=sslapd libbackends.a .backend liboverlays.a
+--- a/servers/slapd/overlays/Makefile.in
++++ b/servers/slapd/overlays/Makefile.in
+@@ -13,6 +13,8 @@
+ ## top-level directory of the distribution or, alternatively, at
+ ## <http://www.OpenLDAP.org/license.html>.
+ 
++SHELL = @SHELL@
++
+ SRCS = overlays.c \
+ 	accesslog.c \
+ 	auditlog.c \
+--- a/servers/slapd/pwmods/Makefile.in
++++ b/servers/slapd/pwmods/Makefile.in
+@@ -13,6 +13,8 @@
+ ## top-level directory of the distribution or, alternatively, at
+ ## <http://www.OpenLDAP.org/license.html>.
+ 
++SHELL = @SHELL@
++
+ SRCS = argon2.c
+ 
+ LTONLY_MOD = $(LTONLY_mod)
 --- a/servers/slapd/slapi/Makefile.in
 +++ b/servers/slapd/slapi/Makefile.in
 @@ -14,6 +14,8 @@
@@ -321,3 +283,14 @@
  LIBRARY = libslapi.la
  
  #all-common: $(LIBRARY) $(PROGRAMS)
+--- a/tests/progs/Makefile.in
++++ b/tests/progs/Makefile.in
+@@ -13,6 +13,8 @@
+ ## top-level directory of the distribution or, alternatively, at
+ ## <http://www.OpenLDAP.org/license.html>.
+ 
++SHELL = @SHELL@
++
+ PROGRAMS = slapd-tester slapd-search slapd-read slapd-addel slapd-modrdn \
+ 		slapd-modify slapd-bind slapd-mtread ldif-filter slapd-watcher
+ 

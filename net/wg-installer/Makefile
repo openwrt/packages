@@ -15,14 +15,14 @@ define Package/wg-installer/Default
 	TITLE:=WireGuard Installer
 	URL:=https://github.com/Freifunk-Spalter/
 	PKGARCH:=all
-	DEPENDS:=+kmod-wireguard +owipcalc
+	DEPENDS:=+kmod-wireguard +wireguard-tools +owipcalc
 endef
 
 define Package/wg-installer-server
 	$(call Package/wg-installer/Default)
 	TITLE+= (server)
 	MENU:=1
-	DEPENDS:=+rpcd +uhttpd +uhttpd-mod-ubus +owipcalc
+	DEPENDS+=+rpcd +uhttpd +uhttpd-mod-ubus
 endef
 
 define Package/wg-installer-server/install
@@ -39,6 +39,10 @@ define Package/wg-installer-server/install
 
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./wg-server/config/wgserver.conf $(1)/etc/config/wgserver
+endef
+
+define Package/wg-installer-server/conffiles
+/etc/config/wgserver
 endef
 
 define Package/wg-installer-server/postinst
@@ -58,10 +62,20 @@ define Package/wg-installer-server-hotplug-babeld/install
 	$(INSTALL_BIN) ./wg-server/hotplug.d/99-mesh-babeld $(1)/etc/hotplug.d/net/99-mesh-babeld
 endef
 
+define Package/wg-installer-server-hotplug-olsrd
+	$(call Package/wg-installer-server)
+	DEPENDS:=wg-installer-server
+endef
+
+define Package/wg-installer-server-hotplug-olsrd/install
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/net/
+	$(INSTALL_BIN) ./wg-server/hotplug.d/99-mesh-olsrd $(1)/etc/hotplug.d/net/99-mesh-olsrd
+endef
+
 define Package/wg-installer-client
 	$(call Package/wg-installer/Default)
 	TITLE+= (client)
-	DEPENDS:=+curl +wireguard-tools
+	DEPENDS+=+curl
 endef
 
 define Package/wg-installer-client/install
@@ -76,6 +90,11 @@ define Package/wg-installer-client/install
 	$(INSTALL_CONF) ./wg-client/config/wgclient.conf $(1)/etc/config/wgclient
 endef
 
+define Package/wg-installer-client/conffiles
+/etc/config/wgclient
+endef
+
 $(eval $(call BuildPackage,wg-installer-server))
 $(eval $(call BuildPackage,wg-installer-server-hotplug-babeld))
+$(eval $(call BuildPackage,wg-installer-server-hotplug-olsrd))
 $(eval $(call BuildPackage,wg-installer-client))

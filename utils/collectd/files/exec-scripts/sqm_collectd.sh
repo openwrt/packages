@@ -99,7 +99,8 @@ process_qdisc() {
 	json_cleanup
 }
 
-while true ; do
+# while not orphaned
+while [ $(awk '$1 ~ "^PPid:" {print $2;exit}' /proc/$$/status) -ne 1 ] ; do
 	for ifc in "$@" ; do
 		process_qdisc "$ifc"
 	done

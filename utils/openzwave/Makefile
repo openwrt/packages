@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openzwave
 PKG_VERSION:=1.6.1149
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://old.openzwave.com/downloads
@@ -57,6 +57,7 @@ MAKE_FLAGS += \
 	LD="$(TARGET_CROSS)g++" \
 	LIBDIR="$(PKG_BUILD_DIR)" \
 	PREFIX=$(CONFIGURE_PREFIX) \
+	UNAME="Linux" \
 	USE_HID="no" \
 	ar_option="q" \
 	instlibdir=/usr/lib \

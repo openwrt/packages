@@ -23,10 +23,9 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:iputils_project:iputils
 
 PKG_INSTALL:=1
-PKG_BUILD_DEPENDS:=meson/host
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/meson/meson.mk
+include $(INCLUDE_DIR)/meson.mk
 
 MESON_ARGS += \
 	-DBUILD_MANS=false \

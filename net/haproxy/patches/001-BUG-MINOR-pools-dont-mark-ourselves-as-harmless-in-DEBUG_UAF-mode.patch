@@ -1,0 +1,95 @@
+commit 78bc9d39b0b31d647b35131ae45b21a145112192
+Author: Willy Tarreau <w@1wt.eu>
+Date:   Fri Nov 12 10:26:18 2021 +0100
+
+    BUG/MINOR: pools: don't mark ourselves as harmless in DEBUG_UAF mode
+    
+    When haproxy is built with DEBUG_UAF=1, some particularly slow
+    allocation functions are used for each pool, and it was not uncommon
+    to see the watchdog trigger during performance tests. For this reason
+    the allocation functions were surrounded by a pair of thread_harmless
+    calls to mention that the function was waiting in slow syscalls. The
+    problem is that this also releases functions blocked in thread_isolate()
+    which can then start their work.
+    
+    In order to protect against the accidental removal of a shared resource
+    in this situation, in 2.5-dev4 with commit ba3ab7907 ("MEDIUM: servers:
+    make the server deletion code run under full thread isolation") was added
+    thread_isolate_full() for functions which want to be totally protected
+    due to being manipulating some data.
+    
+    But this is not sufficient, because there are still places where we
+    can allocate/free (thus sleep) under a lock, such as in long call
+    chains involving the release of an idle connection. In this case, if
+    one thread asks for isolation, one thread might hang in
+    pool_alloc_area_uaf() with a lock held (for example the conns_lock
+    when coming from conn_backend_get()->h1_takeover()->task_new()), with
+    another thread blocked on a lock waiting for that one to release it,
+    both keeping their bit clear in the thread_harmless mask, preventing
+    the first thread from being released, thus causing a deadlock.
+    
+    In addition to this, it was already seen that the "show fd" CLI handler
+    could wake up during a pool_free_area_uaf() with an incompletely
+    released memory area while deleting a file descriptor, and be fooled
+    showing bad pointers, or during a pool_alloc() on another thread that
+    was in the process of registering a freshly allocated connection to a
+    new file descriptor.
+    
+    One solution could consist in replacing all thread_isolate() calls by
+    thread_isolate_full() but then that makes thread_isolate() useless
+    and only shifts the problem by one slot.
+    
+    A better approach could possibly consist in having a way to mark that
+    a thread is entering an extremely slow section. Such sections would
+    be timed so that this is not abused, and the bit would be used to
+    make the watchdog more patient. This would be acceptable as this would
+    only affect debugging.
+    
+    The approach used here for now consists in removing the harmless bits
+    around the UAF allocator, thus essentially undoing commit 85b2cae63
+    ("MINOR: pools: make the thread harmless during the mmap/munmap
+    syscalls").
+    
+    This is marked as minor because nobody is expected to be running with
+    DEBUG_UAF outside of development or serious debugging, so this issue
+    cannot affect regular users. It must be backported to stable branches
+    that have thread_harmless_now() around the mmap() call.
+    
+    (cherry picked from commit fdf53b4962229b6cfcc5bc11151356c3d92d7023)
+    [wt: applied to include/pool-os.h]
+    Signed-off-by: Willy Tarreau <w@1wt.eu>
+
+--- a/include/haproxy/pool-os.h
++++ b/include/haproxy/pool-os.h
+@@ -65,12 +65,8 @@ static inline void pool_free_area(void *
+ static inline void *pool_alloc_area(size_t size)
+ {
+ 	size_t pad = (4096 - size) & 0xFF0;
+-	int isolated;
+ 	void *ret;
+ 
+-	isolated = thread_isolated();
+-	if (!isolated)
+-		thread_harmless_now();
+ 	ret = mmap(NULL, (size + 4095) & -4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+ 	if (ret != MAP_FAILED) {
+ 		/* let's dereference the page before returning so that the real
+@@ -83,8 +79,6 @@ static inline void *pool_alloc_area(size
+ 	} else {
+ 		ret = NULL;
+ 	}
+-	if (!isolated)
+-		thread_harmless_end();
+ 	return ret;
+ }
+ 
+@@ -101,9 +95,7 @@ static inline void pool_free_area(void *
+ 	if (pad >= sizeof(void *) && *(void **)(area - sizeof(void *)) != area)
+ 		ABORT_NOW();
+ 
+-	thread_harmless_now();
+ 	munmap(area - pad, (size + 4095) & -4096);
+-	thread_harmless_end();
+ }
+ 
+ #endif /* DEBUG_UAF */

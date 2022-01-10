@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=podman
-PKG_VERSION:=3.2.0
+PKG_VERSION:=3.4.4
 PKG_RELEASE:=$(AUTORELEASE)
-PKG_HASH:=1206377b12c11d4065bc4789fa104ca139ba77bb5b33541f07e8e95ae4d2932a
 
-PKG_SOURCE_URL:=https://github.com/containers/podman/archive/v$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://github.com/containers/podman/archive/v$(PKG_VERSION)
+PKG_HASH:=718c9e1e734c2d374fcf3c59e4cc7c1755acb954fc7565093e1d636c04b72e3a
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
@@ -69,11 +69,11 @@ define Package/podman-selinux/description
 endef
 
 define Package/podman/conffiles
-  /etc/containers/policy.json
-  /etc/containers/storage.conf
-  /etc/containers/registries.conf
-  /etc/containers/containers.conf
-  /etc/cni/net.d/87-podman-bridge.conflist
+/etc/containers/policy.json
+/etc/containers/storage.conf
+/etc/containers/registries.conf
+/etc/containers/containers.conf
+/etc/cni/net.d/87-podman-bridge.conflist
 endef
 
 Package/podman-selinux/conffiles = $(Package/podman/conffiles)
@@ -100,7 +100,7 @@ define Package/podman/install
 	$(INSTALL_DIR) $(1)/etc/cni/net.d
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/cni/87-podman-bridge.conflist $(1)/etc/cni/net.d/
 	$(INSTALL_DIR) $(1)/usr/share/containers
-	$(INSTALL_CONF) $(PKG_BUILD_DIR)/vendor/github.com/containers/common/pkg/seccomp/seccomp.json $(1)/usr/share/containers/
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/vendor/github.com/containers/common/pkg/seccomp/seccomp.json $(1)/usr/share/containers/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/podman.init $(1)/etc/init.d/podman
 	$(SED) 's/driver = \"\"/driver = \"overlay\"/g' $(1)/etc/containers/storage.conf

@@ -1,13 +1,13 @@
 --- a/src/network_inspectors/appid/appid_inspector.cc
 +++ b/src/network_inspectors/appid/appid_inspector.cc
-@@ -64,7 +64,6 @@ static THREAD_LOCAL PacketTracer::Tracer
+@@ -66,7 +66,6 @@ static THREAD_LOCAL PacketTracer::Tracer
  //           should probably be done outside of appid
  static void openssl_cleanup()
  {
 -    CRYPTO_cleanup_all_ex_data();
  }
  
- static void populate_trace_data(Flow& flow, const OdpContext& odp_context)
+ static void add_appid_to_packet_trace(Flow& flow, const OdpContext& odp_context)
 --- a/src/utils/util.cc
 +++ b/src/utils/util.cc
 @@ -111,7 +111,7 @@ int DisplayBanner()

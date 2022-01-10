@@ -10,7 +10,7 @@ include ../openvswitch/openvswitch.mk
 
 PKG_NAME:=ovn
 PKG_VERSION:=20.12.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/ovn-org/ovn.git
@@ -22,7 +22,7 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:openvswitch:openvswitch
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
-PKG_BUILD_DEPENDS+=python3/host python-six/host
+PKG_BUILD_DEPENDS+=python3/host
 PKG_USE_MIPS16:=0
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf

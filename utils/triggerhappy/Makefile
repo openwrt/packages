@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=triggerhappy
 PKG_VERSION:=0.5.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/wertarbyte/$(PKG_NAME)/archive/release/$(PKG_VERSION)/
@@ -37,6 +37,7 @@ define Package/triggerhappy/description
 endef
 
 MAKE_FLAGS += \
+	thd th-cmd \
 	$(TARGET_CONFIGURE_OPTS) \
 	$(1)
 

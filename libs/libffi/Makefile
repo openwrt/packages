@@ -8,16 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libffi
-PKG_VERSION:=3.3
+PKG_VERSION:=3.4.2
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://sourceware.org/pub/libffi/
-PKG_HASH:=72fba7922703ddfa7a028d513ac15a85c8d54c8d67f55fa5a4802885dc652056
+PKG_SOURCE_URL:=https://codeload.github.com/libffi/libffi/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=0acbca9fd9c0eeed7e5d9460ae2ea945d3f1f3d48e13a4c54da12c7e0d23c313
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
+PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
@@ -47,11 +48,13 @@ between the two languages.
 endef
 
 HOST_CONFIGURE_ARGS += \
+	--disable-shared \
 	--disable-debug \
 	--disable-docs \
 	--disable-multi-os-directory \
 	--disable-raw-api \
-	--disable-structs
+	--disable-structs \
+	--with-pic
 
 CONFIGURE_ARGS += \
 	--disable-debug \

@@ -1,17 +1,16 @@
---- a/src/config.h.defaults
-+++ b/src/config.h.defaults
-@@ -33,6 +33,8 @@ Do not put spaces between # and the 'def
- 
- #define AUTH_VARS                     3
- 
-+#define DLOPEN_LOCAL_SCAN
-+
- #define BIN_DIRECTORY
- 
- #define CONFIGURE_FILE
+Description: Allow one to use and switch between different local_scan functions
+ without recompiling exim.
+ http://marc.merlins.org/linux/exim/files/sa-exim-current/ Original patch from
+ David Woodhouse, modified first by Derrick 'dman' Hudson and then by Marc
+ MERLIN for SA-Exim and minor/major API version tracking
+Author: David Woodhouse, Derrick 'dman' Hudson, Marc MERLIN
+Origin: other, http://marc.merlins.org/linux/exim/files/sa-exim-current/
+Forwarded: https://bugs.exim.org/show_bug.cgi?id=2671
+Last-Update: 2021-07-28
+
 --- a/src/EDITME
 +++ b/src/EDITME
-@@ -877,6 +877,24 @@ HEADERS_CHARSET="ISO-8859-1"
+@@ -883,6 +883,21 @@ HEADERS_CHARSET="ISO-8859-1"
  
  
  #------------------------------------------------------------------------------
@@ -20,54 +19,61 @@
 +# to be recompiled with the desired local_scan function. For a full
 +# description of the API to this function, see the Exim specification.
 +
-+#DLOPEN_LOCAL_SCAN=yes
++DLOPEN_LOCAL_SCAN=yes
 +
 +# If you set DLOPEN_LOCAL_SCAN, then you need to include -rdynamic in the
 +# linker flags.  Without it, the loaded .so won't be able to access any
 +# functions from exim.
 +
-+LFLAGS = -rdynamic
-+ifeq ($(OSTYPE),Linux)
-+LFLAGS += -ldl
-+endif
-+
++LDFLAGS += -rdynamic
++CFLAGS += -fvisibility=hidden
 +
 +#------------------------------------------------------------------------------
  # The default distribution of Exim contains only the plain text form of the
  # documentation. Other forms are available separately. If you want to install
  # the documentation in "info" format, first fetch the Texinfo documentation
+--- a/src/config.h.defaults
++++ b/src/config.h.defaults
+@@ -35,6 +35,8 @@ Do not put spaces between # and the 'def
+ 
+ #define AUTH_VARS                     4
+ 
++#define DLOPEN_LOCAL_SCAN
++
+ #define BIN_DIRECTORY
+ 
+ #define CONFIGURE_FILE
 --- a/src/globals.c
 +++ b/src/globals.c
-@@ -42,6 +42,10 @@ int     optionlist_auths_size = nelem(op
- 
- uschar *no_aliases             = NULL;
+@@ -121,6 +121,10 @@ int     dsn_ret                = 0;
+ const pcre  *regex_DSN         = NULL;
+ uschar *dsn_advertise_hosts    = NULL;
  
 +#ifdef DLOPEN_LOCAL_SCAN
 +uschar *local_scan_path        = NULL;
 +#endif
 +
- 
- /* For comments on these variables, see globals.h. I'm too idle to
- duplicate them here... */
+ #ifndef DISABLE_TLS
+ BOOL    gnutls_compat_mode     = FALSE;
+ BOOL    gnutls_allow_auto_pkcs11 = FALSE;
 --- a/src/globals.h
 +++ b/src/globals.h
-@@ -162,6 +162,9 @@ extern int (*receive_feof)(void);
- extern int (*receive_ferror)(void);
- extern BOOL (*receive_smtp_buffered)(void);
+@@ -156,6 +156,9 @@ extern int      dsn_ret;               /
+ extern const pcre  *regex_DSN;         /* For recognizing DSN settings */
+ extern uschar  *dsn_advertise_hosts;   /* host for which TLS is advertised */
  
 +#ifdef DLOPEN_LOCAL_SCAN
 +extern uschar *local_scan_path;        /* Path to local_scan() library */
 +#endif
+ /* Input-reading functions for messages, so we can use special ones for
+ incoming TCP/IP. */
  
- /* For clearing, saving, restoring address expansion variables. We have to have
- the size of this vector set explicitly, because it is referenced from more than
 --- a/src/local_scan.c
 +++ b/src/local_scan.c
-@@ -5,61 +5,133 @@
- /* Copyright (c) University of Cambridge 1995 - 2009 */
+@@ -6,58 +6,133 @@
  /* See the file NOTICE for conditions of use and distribution. */
  
--
+ 
 -/******************************************************************************
 -This file contains a template local_scan() function that just returns ACCEPT.
 -If you want to implement your own version, you should copy this file to, say
@@ -84,10 +90,10 @@
 -******************************************************************************/
 -
 -
--/* This is the only Exim header that you should include. The effect of
--including any other Exim header is not defined, and may change from release to
--release. Use only the documented interface! */
--
+ /* This is the only Exim header that you should include. The effect of
+ including any other Exim header is not defined, and may change from release to
+ release. Use only the documented interface! */
+ 
  #include "local_scan.h"
  
 -
@@ -116,19 +122,16 @@
 -                   is used in the rejection message.
 -*/
 +#ifdef DLOPEN_LOCAL_SCAN
-+#include <stdlib.h>
 +#include <dlfcn.h>
 +static int (*local_scan_fn)(int fd, uschar **return_text) = NULL;
 +static int load_local_scan_library(void);
-+extern uschar *local_scan_path;        /* Path to local_scan() library */
 +#endif
  
  int
  local_scan(int fd, uschar **return_text)
  {
- fd = fd;                      /* Keep picky compilers happy */
- return_text = return_text;
 -return LOCAL_SCAN_ACCEPT;
++
 +#ifdef DLOPEN_LOCAL_SCAN
 +/* local_scan_path is defined AND not the empty string */
 +if (local_scan_path && *local_scan_path)
@@ -159,8 +162,8 @@
 +else
 +#endif
 +  return LOCAL_SCAN_ACCEPT;
- }
- 
++}
++
 +#ifdef DLOPEN_LOCAL_SCAN
 +
 +static int load_local_scan_library(void)
@@ -237,22 +240,66 @@
 +    "local_scan() function - message temporarily rejected");
 +  return FALSE;
 +  }
-+
 +return TRUE;
-+}
-+
+ }
+ 
 +#endif /* DLOPEN_LOCAL_SCAN */
 +
  /* End of local_scan.c */
+--- a/src/local_scan.h
++++ b/src/local_scan.h
+@@ -27,6 +27,7 @@ settings, and the store functions. */
+ 
+ #include <stdarg.h>
+ #include <sys/types.h>
++#pragma GCC visibility push(default)
+ #include "config.h"
+ #include "mytypes.h"
+ #include "store.h"
+@@ -166,6 +167,9 @@ extern header_line *header_list;       /
+ extern BOOL    host_checking;          /* Set when checking a host */
+ extern uschar *interface_address;      /* Interface for incoming call */
+ extern int     interface_port;         /* Port number for incoming call */
++#ifdef DLOPEN_LOCAL_SCAN
++extern uschar *local_scan_path;
++#endif
+ extern uschar *message_id;             /* Internal id of message being handled */
+ extern uschar *received_protocol;      /* Name of incoming protocol */
+ extern int     recipients_count;       /* Number of recipients */
+@@ -235,4 +239,6 @@ extern pid_t    child_open_exim2_functio
+ extern pid_t    child_open_function(uschar **, uschar **, int, int *, int *, BOOL, const uschar *);
+ #endif
+ 
++#pragma GCC visibility pop
++
+ /* End of local_scan.h */
 --- a/src/readconf.c
 +++ b/src/readconf.c
-@@ -205,6 +205,9 @@ static optionlist optionlist_config[] =
+@@ -215,6 +215,9 @@ static optionlist optionlist_config[] =
    { "local_from_prefix",        opt_stringptr,   {&local_from_prefix} },
    { "local_from_suffix",        opt_stringptr,   {&local_from_suffix} },
    { "local_interfaces",         opt_stringptr,   {&local_interfaces} },
 +#ifdef DLOPEN_LOCAL_SCAN
-+  { "local_scan_path",          opt_stringptr,   {&local_scan_path} },
++  { "local_scan_path",          opt_stringptr,   &local_scan_path },
 +#endif
  #ifdef HAVE_LOCAL_SCAN
    { "local_scan_timeout",       opt_time,        {&local_scan_timeout} },
  #endif
+--- a/src/string.c
++++ b/src/string.c
+@@ -418,6 +418,7 @@ return ss;
+ 
+ #if (defined(HAVE_LOCAL_SCAN) || defined(EXPAND_DLFUNC)) \
+ 	&& !defined(MACRO_PREDEF) && !defined(COMPILE_UTILITY)
++#pragma GCC visibility push(default)
+ /*************************************************
+ *            Copy and save string                *
+ *************************************************/
+@@ -470,6 +471,7 @@ Ustrncpy(ss, s, n);
+ ss[n] = 0;
+ return ss;
+ }
++#pragma GCC visibility pop
+ #endif
+ 
+ 

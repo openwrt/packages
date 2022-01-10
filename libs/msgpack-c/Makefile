@@ -5,16 +5,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=msgpack-c
-PKG_VERSION:=3.3.0
+PKG_VERSION:=4.0.0
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/msgpack/msgpack-c/tar.gz/cpp-$(PKG_VERSION)?
-PKG_HASH:=754c3ace499a63e45b77ef4bcab4ee602c2c414f58403bce826b76ffc2f77d0b
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-cpp-$(PKG_VERSION)
+PKG_SOURCE_URL:=https://codeload.github.com/msgpack/msgpack-c/tar.gz/c-$(PKG_VERSION)?
+PKG_HASH:=656ebe4566845e7bda9c097b625ba59ac72ddfd45df6017172d46d9ac7365aa3
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-c-$(PKG_VERSION)
 
 PKG_LICENSE:=BSL-1.0
-PKG_LICENSE_FILES:=LICENSE
+PKG_LICENSE_FILES:=COPYING LICENSE_1_0.txt
 PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
 
 PKG_BUILD_PARALLEL:=1
@@ -23,12 +23,16 @@ CMAKE_INSTALL:=1
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
-CMAKE_OPTIONS+= -DMSGPACK_BUILD_EXAMPLES:BOOL=OFF
+CMAKE_OPTIONS+= \
+	-DBUILD_SHARED_LIBS=ON \
+	-DMSGPACK_BUILD_EXAMPLES=OFF \
+	-DMSGPACK_BUILD_TESTS=OFF \
+	-DMSGPACK_ENABLE_STATIC=OFF
 
 define Package/msgpack-c
   SECTION:=lib
   CATEGORY:=Libraries
-  TITLE:=MessagePack implementation for C and C++
+  TITLE:=MessagePack implementation for C
   URL:=https://github.com/msgpack/msgpack-c
 endef
 

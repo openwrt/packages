@@ -5,11 +5,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=click
-PKG_VERSION:=7.1.2
+PKG_VERSION:=8.0.3
 PKG_RELEASE:=1
 
 PYPI_NAME:=click
-PKG_HASH:=d2b5255c7c6349bc1bd1e59e08cd12acbbd63ce649f2588755783aa94dfb6b1a
+PKG_HASH:=410e932b050f5eed773c4cda94de75971c89cdb3155a72a0831139a79e5ecb5b
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=BSD-3-Clause

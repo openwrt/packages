@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libtasn1
 PKG_VERSION:=4.16.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/$(PKG_NAME)
@@ -42,6 +42,10 @@ endef
 HOST_CFLAGS += -std=gnu99
 TARGET_CFLAGS += -ffunction-sections -fdata-sections
 TARGET_LDFLAGS += -Wl,--gc-sections
+
+HOST_CONFIGURE_ARGS += \
+	--disable-shared \
+	--with-pic
 
 CONFIGURE_ARGS += \
 	--disable-doc \

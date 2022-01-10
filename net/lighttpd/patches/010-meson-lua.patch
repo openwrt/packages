@@ -14,7 +14,7 @@ Signed-off-by: Glenn Strauss <gstrauss@gluelogic.com>
 
 --- a/src/meson.build
 +++ b/src/meson.build
-@@ -377,7 +377,7 @@ endif
+@@ -390,7 +390,7 @@ endif
  liblua = []
  if get_option('with_lua')
  	found_lua = false

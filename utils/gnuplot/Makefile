@@ -1,14 +1,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnuplot
-PKG_VERSION:=5.4.1
-PKG_RELEASE:=1
+PKG_VERSION:=5.4.2
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Matteo Cicuttin <datafl4sh@toxicnet.eu>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/gnuplot-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/gnuplot
-PKG_HASH:=6b690485567eaeb938c26936e5e0681cf70c856d273cc2c45fabf64d8bc6590e
+PKG_HASH:=e57c75e1318133951d32a83bcdc4aff17fed28722c4e71f2305cfc2ae1cae7ba
 PKG_CAT:=zcat
 PKG_FIXUP:=autoreconf
 
@@ -28,6 +28,8 @@ CONFIGURE_ARGS += \
     --without-lua \
     --without-latex \
     --without-libcerf
+
+CONFIGURE_VARS += ac_cv_have_x="have_x=no"
 
 # Since Qt is disabled there is no C++ code, so CXX is forced
 # to CC in order to avoid dependency on libstdcpp. This is 

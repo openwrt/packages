@@ -1,17 +1,219 @@
-config TVHEADEND_CWC_SUPPORT
-	bool "NewCamd support"
-	default y
+comment "Generic options"
+  depends on PACKAGE_tvheadend
 
-config TVHEADEND_LINUXDVB_SUPPORT
-	bool "Linux DVB support"
-	default y
+config TVHEADEND_OPTIMIZE_SPEED
+  bool "Optimize for speed"
+  depends on PACKAGE_tvheadend
+  default n
+  help
+    Optimize tvheadend for speed instead of size. This option adds -O2 and LTO (Link Time Optimization).
+    Note: No benchmarks were performed when this option was added. Speed improvements (if any) are not known.
 
-config TVHEADEND_DVBSCAN_SUPPORT
-	bool "Fetch DVB-scan data"
-	depends on TVHEADEND_LINUXDVB_SUPPORT
-	default TVHEADEND_LINUXDVB_SUPPORT
+config TVHEADEND_TRACE
+  bool "Low level debug trace"
+  depends on PACKAGE_tvheadend
+  default n
+  help
+    Support low level debug trace for tvheadend subsystems.
+    For a list of available subsystems, run "tvheadend --subsystems" in OpenWRT console.
+    Note: Selecting this option does not automatically enable trace logging.
+    It only includes support for --trace command line option and GUI.
 
 config TVHEADEND_AVAHI_SUPPORT
-	bool "Avahi client support"
-	select PACKAGE_libavahi-client
-	default n
+  bool "Avahi client"
+  depends on PACKAGE_tvheadend
+  select PACKAGE_libavahi-client
+  default n
+  help
+    Enables the opensource implementation of Apple's zero configuration protocol.
+    Tvheadend will advertise itself on the network using this protocol.
+
+choice
+  prompt "Regular Expression"
+  depends on PACKAGE_tvheadend
+  config TVHEADEND_REGEX_POSIX
+    bool "POSIX (internal)"
+    help
+      Use internal POSIX Regular Expressions.
+      Note that not all EPG parsers will work with POSIX RegEx.
+  config TVHEADEND_REGEX_PCRE
+    bool "PCRE (libpcre)"
+    select PACKAGE_libpcre
+    help
+      Use more advanced Perl-Compatible Regular Expressions, provided by libpcre.
+  config TVHEADEND_REGEX_PCRE2
+    bool "PCRE2 (libpcre2)"
+    select PACKAGE_libpcre2
+    help
+      Use more advanced Perl-Compatible Regular Expressions, provided by libpcre2.
+endchoice
+
+config TVHEADEND_IMAGECACHE
+  bool "Image cache"
+  depends on PACKAGE_tvheadend
+  default n
+  help
+    Support caching TV station logos and other images on disk.
+    Note: Activating disk cache will increase fash memory wear.
+    Selecting this option does not automatically enable disk caching. It only includes support for it.
+
+comment "Input & output support"
+  depends on PACKAGE_tvheadend
+
+config TVHEADEND_LINUXDVB_SUPPORT
+  bool "DVB tuners"
+  depends on PACKAGE_tvheadend
+  default y
+  help
+    Include support for DVB tuners.
+    Note: Kernel driver(s) and firmware must also be installed.
+
+config TVHEADEND_DVBSCAN_SUPPORT
+  bool "Include DVB-scan tables"
+  depends on TVHEADEND_LINUXDVB_SUPPORT
+  default TVHEADEND_LINUXDVB_SUPPORT
+  help
+    Download and include DVB scan tables.
+
+config TVHEADEND_IPTV
+  bool "IPTV client"
+  depends on PACKAGE_tvheadend
+  default y
+  help
+    Include IP-TV client.
+
+config TVHEADEND_SATIP_CLIENT
+  bool "SAT>IP client"
+  depends on PACKAGE_tvheadend
+  default y
+  help
+    Include SAT>IP client. This allows tvheadend to receive streams from a SAT>IP server.
+    
+config TVHEADEND_SATIP_SERVER
+  bool "SAT>IP server"
+  depends on PACKAGE_tvheadend
+  default y
+  help
+    Include SAT>IP server. This allows tvheadend to stream to SAT>IP clients.
+    
+config TVHEADEND_HDHOMERUN_CLIENT
+  bool "HDHomeRun client"
+  depends on PACKAGE_tvheadend
+  default y
+  help
+    Include HDHomeRun client.
+    HDHomeRun is a network-attached, digital television tuner box.
+
+comment "SoftCAM (Software Conditional Access Module)"
+  depends on PACKAGE_tvheadend
+  depends on BUILD_PATENTED
+
+config TVHEADEND_CSA
+  bool "CSA decoding"
+  depends on PACKAGE_tvheadend
+  depends on BUILD_PATENTED
+  select PACKAGE_libdvbcsa
+  default n
+  help
+    Support decoding CSA (Common Scrambling Algorithm). Uses libdvbcsa package.
+
+config TVHEADEND_CONSTCW
+  bool "CCW"
+  depends on TVHEADEND_CSA
+  default TVHEADEND_CSA
+  help
+    Support Constant Control Word.
+
+config TVHEADEND_CAPMT
+  bool "CWC capmt client"
+  depends on TVHEADEND_CSA
+  default n
+  help
+    Support Control Word Client capmt (Linux Network DVBAPI) protocol.
+
+config TVHEADEND_NEWCAMD
+  bool "CWC newcamd client"
+  depends on TVHEADEND_CSA
+  default n
+  help
+    Support Control Word Client newcamd protocol.
+
+config TVHEADEND_CCCAM
+  bool "CCCam client"
+  depends on TVHEADEND_CSA
+  default n
+
+comment "DVB descrambling and some codecs are only available with BUILD_PATENTED."
+  depends on PACKAGE_tvheadend
+  depends on !BUILD_PATENTED
+
+## Transcoding | Uncomment these options.
+##comment "Transcoding and codecs"
+##  depends on PACKAGE_tvheadend
+##
+##config TVHEADEND_LIBFFMPEG
+##  bool "ffmpeg transcoding"
+##  depends on PACKAGE_tvheadend
+##  depends on BUILD_PATENTED
+##  select PACKAGE_libffmpeg-full
+##  default n
+##  help
+##    Use ffmpeg libraries for transcoding.
+##
+##config TVHEADEND_LIBX264
+##  bool "x264"
+##  depends on PACKAGE_tvheadend
+##  depends on BUILD_PATENTED
+##  select PACKAGE_libx264
+##  default n
+##  help
+##    Make x264 video codec available for transcoding. Uses libx264 package.
+##
+##config TVHEADEND_LIBX265
+##  bool "x265"
+##  depends on PACKAGE_tvheadend
+##  depends on BUILD_PATENTED
+##  default n
+##  help
+##    Make x265 video codec available for transcoding. Uses static (built-in) libx265.
+##
+##config TVHEADEND_LIBVPX
+##  bool "VP8, VP9"
+##  depends on PACKAGE_tvheadend
+##  select PACKAGE_libvpx
+##  default n
+##  help
+##    Make VP8 and VP9 video codecs available for transcoding. Uses libvpx package.
+##
+##config TVHEADEND_LIBTHEORA
+##  bool "Theora"
+##  depends on PACKAGE_tvheadend
+##  select PACKAGE_libtheora
+##  default n
+##  help
+##    Make Theora video codec available for transcoding. Uses libtheora package.
+##
+##config TVHEADEND_LIBFDKAAC
+##  bool "AAC"
+##  depends on PACKAGE_tvheadend
+##  depends on BUILD_PATENTED
+##  select PACKAGE_fdk-aac
+##  default n
+##  help
+##    Make AAC audio codec available for transcoding. Uses fdk-aac package.
+##
+##config TVHEADEND_LIBVORBIS
+##  bool "Vorbis"
+##  depends on PACKAGE_tvheadend
+##  select PACKAGE_libvorbis
+##  default n
+##  help
+##    Make Vorbis audio codec available for transcoding. Uses libvorbis package.
+##
+##config TVHEADEND_LIBOPUS
+##  bool "Opus"
+##  depends on PACKAGE_tvheadend
+##  select PACKAGE_libopusenc
+##  default n
+##  help
+##    Make Opus audio codec available for transcoding. Uses libopusenc package.

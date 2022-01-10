@@ -64,7 +64,7 @@ define Package/v4l-utils
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE+= utilities
-  DEPENDS:= +libv4l +libstdcpp $(ICONV_DEPENDS) $(INTL_DEPENDS)
+  DEPENDS:= +libudev-zero +libv4l +libstdcpp $(ICONV_DEPENDS) $(INTL_DEPENDS)
   LICENSE:=GPL-2.0-or-later
   LICENSE_FILES:=COPYING
 endef

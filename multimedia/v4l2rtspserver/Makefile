@@ -16,8 +16,8 @@ PKG_SOURCE_URL:=https://github.com/mpromonet/v4l2rtspserver
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 PKG_MIRROR_HASH:=f047fd24441a070b123252bf82c7d7e42bb0c3280b78ad2ddb01cf200acc3a32
 
-LIVE555_VERSION:=2021.02.11
-LIVE555_HASH:=834ad3fc199f1a6b0c09646976deb71a3a7803dc7b498ce92e920f6cb7b717ba
+LIVE555_VERSION:=2021.10.28
+LIVE555_HASH:=84dd36267940dcea848f54dc1f6d73171a949dee907750fac3a5a0b39e94dbd9
 LIVE555_FILE:=live.$(LIVE555_VERSION).tar.gz
 
 PKG_MAINTAINER:=Roger Dammit <rogerdammit@gmail.com>
@@ -57,12 +57,11 @@ CMAKE_OPTIONS += \
 	-DLIVE555CFLAGS=" -DSOCKLEN_T=socklen_t -D_LARGEFILE_SOURCE=1 -D_FILE_OFFSET_BITS=64 -DLOCALE_NOT_USED -DNO_SSTREAM=1 -DALLOW_RTSP_SERVER_PORT_REUSE=1 -DNO_OPENSSL"
 
 define Build/Prepare
-	$(Build/Prepare/Default)
-
 	# download live555
 	$(eval $(call Download,live555))
 	mkdir -p $(PKG_BUILD_DIR)/live
 	$(TAR) -xf $(DL_DIR)/$(LIVE555_FILE) --strip=1 -C $(PKG_BUILD_DIR)/live
+	$(Build/Prepare/Default)
 endef
 
 define Package/v4l2rtspserver/install

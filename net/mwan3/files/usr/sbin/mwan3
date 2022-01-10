@@ -6,26 +6,33 @@
 . /lib/mwan3/mwan3.sh
 . /lib/mwan3/common.sh
 
+command_help() {
+	local cmd="$1"
+	local help="$2"
+
+	echo "$(printf "%-25s%s" "${cmd}" "${help}")"
+}
+
 help()
 {
 	cat <<EOF
 Syntax: mwan3 [command]
 
 Available commands:
-	start               Load iptables rules, ip rules and ip routes
-	stop                Unload iptables rules, ip rules and ip routes
-	restart             Reload iptables rules, ip rules and ip routes
-	ifup <iface>        Load rules and routes for specific interface
-	ifdown <iface>      Unload rules and routes for specific interface
-	interfaces          Show interfaces status
-	policies            Show currently active policy
-	connected           Show directly connected networks
-	rules               Show active rules
-	status              Show all status
-	use <iface> <cmd>   Run a command bound to <iface> and avoid mwan3 rules
 EOF
+	command_help "start" "Load iptables rules, ip rules and ip routes"
+	command_help "stop" "Unload iptables rules, ip rules and ip routes"
+	command_help "restart" "Reload iptables rules, ip rules and ip routes"
+	command_help "ifup <iface>" "Load rules and routes for specific interface"
+	command_help "ifdown <iface>" "Unload rules and routes for specific interface"
+	command_help "interfaces" "Show interfaces status"
+	command_help "policies" "Show currently active policy"
+	command_help "connected" "Show directly connected networks"
+	command_help "rules" "Show active rules"
+	command_help "status" "Show all status"
+	command_help "internal <ipv4|ipv6>" "Show internal configuration <default: ipv4>"
+	command_help "use <iface> <cmd>" "Run a command bound to <iface> and avoid mwan3 rules"
 }
-
 
 ifdown() {
 	if [ -z "$1" ]; then
@@ -107,6 +114,92 @@ status()
 	rules
 }
 
+internal()
+{
+	local family="$1"
+	local dash="-------------------------------------------------"
+
+	if [ -f "/etc/openwrt_release" ]; then
+		. /etc/openwrt_release
+	fi
+
+	local ipt ip output
+
+	if [ "$family" = "ipv6" ]; then
+		ipt="$IPT6"
+		ip="$IP6"
+	else
+		ipt="$IPT4"
+		ip="$IP4"
+	fi
+
+	echo "Software-Version"
+	echo "$dash"
+
+	if [ "$DISTRIB_RELEASE" != "" ]; then
+		echo "OpenWrt - $DISTRIB_RELEASE"
+	else
+		echo "OpenWrt - unknown"
+	fi
+
+	echo ""
+	echo "Output of \"$ip a show\""
+	echo "$dash"
+	output="$($ip a show)"
+	if [ "$output" != "" ]; then
+		echo "$output"
+	else
+		echo "No data found"
+	fi
+
+	echo ""
+	echo "Output of \"$ip route show\""
+	echo "$dash"
+	output="$($ip route show)"
+	if [ "$output" != "" ]; then
+		echo "$output"
+	else
+		echo "No data found"
+	fi
+
+	echo ""
+	echo "Output of \"$ip rule show\""
+	echo "$dash"
+	output="$($ip rule show)"
+	if [ "$output" != "" ]; then
+		echo "$output"
+	else
+		echo "No data found"
+	fi
+
+	echo ""
+	echo "Output of \"$ip route list table 1-250\""
+	echo "$dash"
+	local dump=0
+	for i in $(seq 1 250); do
+		output=$($ip route list table $i 2>/dev/null)
+		if [ "$output" != "" ];then
+			dump=1
+			echo "Routing table $i:"
+			echo "$output"
+			echo ""
+		fi
+	done
+	if [ "$dump" = "0" ]; then
+		echo "No data found"
+		echo ""
+	fi
+
+	echo "Output of \"$ipt -L -v -n\""
+	echo "$dash"
+	output="$($ipt -L -v -n)"
+	if [ "$output" != "" ]; then
+		echo "$output"
+	else
+		echo "No data found"
+	fi
+}
+
 start() {
 	/etc/init.d/mwan3 enable
 	/etc/init.d/mwan3 start
@@ -148,7 +241,7 @@ use() {
 }
 
 case "$1" in
-	ifup|ifdown|interfaces|policies|connected|rules|status|start|stop|restart|use)
+	ifup|ifdown|interfaces|policies|connected|rules|status|start|stop|restart|use|internal)
 		mwan3_init
 		# shellcheck disable=SC2048
 		$*

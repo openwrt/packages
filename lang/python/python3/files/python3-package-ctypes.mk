@@ -14,5 +14,4 @@ endef
 $(eval $(call Py3BasePackage,python3-ctypes, \
 	/usr/lib/python$(PYTHON3_VERSION)/ctypes \
 	/usr/lib/python$(PYTHON3_VERSION)/lib-dynload/_ctypes.$(PYTHON3_SO_SUFFIX) \
-	/usr/lib/python$(PYTHON3_VERSION)/lib-dynload/_ctypes_test.$(PYTHON3_SO_SUFFIX) \
 ))

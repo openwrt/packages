@@ -10,7 +10,7 @@ Signed-off-by: Robert Marko <robert.marko@sartura.hr>
 
 --- a/configure.ac
 +++ b/configure.ac
-@@ -64,34 +64,6 @@ fi
+@@ -78,34 +78,6 @@ esac
  LT_INIT
  AC_SUBST([LIBTOOL_DEPS])
  

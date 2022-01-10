@@ -14,7 +14,7 @@ section_enabled() {
 
 start_instance() {
 	local cfg="$1"
-	local port secret config_path local_conf path
+	local port secret config_path local_conf copy_config_path path
 	local args=""
 
 	if ! section_enabled "$cfg"; then
@@ -26,23 +26,28 @@ start_instance() {
 	config_get port $cfg 'port'
 	config_get secret $cfg 'secret'
 	config_get local_conf $cfg 'local_conf'
+	config_get_bool copy_config_path $cfg 'copy_config_path' 0
 
 	path=${CONFIG_PATH}_$cfg
 
 	# Remove existing link or folder
 	rm -rf $path
 
-	# Create link from CONFIG_PATH to config_path
+	# Create link or copy files from CONFIG_PATH to config_path
 	if [ -n "$config_path" -a "$config_path" != "$path" ]; then
 		if [ ! -d "$config_path" ]; then
 			echo "ZeroTier config_path does not exist: $config_path" 1>&2
 			return
 		fi
 
-		# ensure that the symlink target exists
+		# ensure that the target exists
 		mkdir -p $(dirname $path)
 
-		ln -s $config_path $path
+		if [ "$copy_config_path" = "1" ]; then
+			cp -r $config_path $path
+		else
+			ln -s $config_path $path
+		fi
 	fi
 
 	mkdir -p $path/networks.d
@@ -89,6 +94,7 @@ start_instance() {
 	procd_open_instance
 	procd_set_param command $PROG $args $path
 	procd_set_param stderr 1
+	procd_set_param respawn
 	procd_close_instance
 }
 
@@ -108,4 +114,13 @@ stop_service() {
 	config_load 'zerotier'
 	config_foreach stop_instance 'zerotier'
 	rm -f ${CONFIG_PATH}
+}
+
+reload_service() {
+	stop
+	start
+}
+
+service_triggers() {
+	procd_add_reload_trigger 'zerotier'
 }

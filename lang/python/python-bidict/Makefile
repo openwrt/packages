@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=bidict
 PKG_HASH:=4fa46f7ff96dc244abfc437383d987404ae861df797e2fd5b190e233c302be09
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
+PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=MPL-2.0
 PKG_LICENSE_FILES:=LICENSE
 

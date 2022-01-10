@@ -30,6 +30,7 @@ define Package/python3-django1
   TITLE:=The web framework for perfectionists with deadlines.
   URL:=https://www.djangoproject.com/
   DEPENDS:= \
+	@BROKEN \
 	+python3 \
 	+python3-pytz
   PROVIDES:=django

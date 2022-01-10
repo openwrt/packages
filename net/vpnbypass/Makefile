@@ -4,8 +4,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vpnbypass
-PKG_VERSION:=1.3.1
-PKG_RELEASE:=10
+PKG_VERSION:=1.3.2
+PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.net>
 
@@ -15,6 +15,7 @@ define Package/vpnbypass
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=VPN Bypass Service
+	URL:=https://docs.openwrt.melmac.net/vpnbypass/
 	DEPENDS:=+ipset +iptables
 	PKGARCH:=all
 endef
@@ -31,12 +32,6 @@ define Package/vpnbypass/conffiles
 /etc/config/vpnbypass
 endef
 
-define Build/Prepare
-	mkdir -p $(PKG_BUILD_DIR)/files/
-	$(CP) ./files/vpnbypass.init $(PKG_BUILD_DIR)/files/vpnbypass.init
-	sed -i "s|^\(PKG_VERSION\).*|\1='$(PKG_VERSION)-$(PKG_RELEASE)'|" $(PKG_BUILD_DIR)/files/vpnbypass.init
-endef
-
 define Build/Configure
 endef
 
@@ -44,11 +39,10 @@ define Build/Compile
 endef
 
 define Package/vpnbypass/install
-	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/vpnbypass.init $(1)/etc/init.d/vpnbypass
-	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_CONF) ./files/vpnbypass.conf $(1)/etc/config/vpnbypass
-	$(INSTALL_DIR) $(1)/etc/hotplug.d/firewall
+	$(INSTALL_DIR) $(1)/etc/init.d $(1)/etc/config $(1)/etc/hotplug.d/firewall
+	$(INSTALL_BIN) ./files/vpnbypass.init $(1)/etc/init.d/vpnbypass
+	$(SED) "s|^\(PKG_VERSION\).*|\1='$(PKG_VERSION)-$(PKG_RELEASE)'|" $(1)/etc/init.d/vpnbypass
+	$(INSTALL_CONF) ./files/vpnbypass.config $(1)/etc/config/vpnbypass
 	$(INSTALL_DATA) ./files/vpnbypass.hotplug $(1)/etc/hotplug.d/firewall/94-vpnbypass
 endef
 

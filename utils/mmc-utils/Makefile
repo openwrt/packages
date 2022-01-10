@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mmc-utils
-PKG_RELEASE:=2
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://git.kernel.org/pub/scm/linux/kernel/git/cjb/mmc-utils.git
-PKG_SOURCE_DATE:=2019-10-10
-PKG_SOURCE_VERSION:=73d6c59af8d1bcedf5de4aa1f5d5b7f765f545f5
-PKG_MIRROR_HASH:=6ff0b32136c7bc64a099f1185a3ca063b5d644056476456a23029e9f6dfa789a
+PKG_SOURCE_URL:=https://git.kernel.org/pub/scm/utils/mmc/mmc-utils.git
+PKG_SOURCE_DATE:=2021-12-11
+PKG_SOURCE_VERSION:=a1b233c2a31baa5b77cb67c0c3be4767be86f727
+PKG_MIRROR_HASH:=3a1b75afd51f22054bc06d5dce79408c0c20b1f26b85251c8964bbc1e04a4b4b
 
-PKG_LICENSE:=GPL-2.0
+PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>

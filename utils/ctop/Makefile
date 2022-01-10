@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ctop
-PKG_VERSION:=0.7.5
+PKG_VERSION:=0.7.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/bcicen/ctop/archive
-PKG_HASH:=a9a3be0e5eab2fee6b44a5d063188a354f9c0dde3d96a169d1490981f7826e9a
+PKG_HASH:=8ef76a7d4d725f750a5d8a6ee330e81b3b845a91fbd50ae3e746cead74736391
 
 PKG_MAINTAINER:=Javier Marcet <javier@marcet.info>
 PKG_LICENSE:=MIT

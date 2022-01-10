@@ -1,51 +1,40 @@
-# Script for sending user defined updates using DO API
+# Script for sending user defined updates using the DigitalOcean API
 # 2015 Artem Yakimenko <code at temik dot me>
-#
-# activated inside /etc/config/ddns by setting
-#
-# option update_script '/usr/lib/ddns/update_do.sh'
-#
-# the script is parsed (not executed) inside send_update() function
-# of /usr/lib/ddns/dynamic_dns_functions.sh
-# so you can use all available functions and global variables inside this script
-# already defined in dynamic_dns_updater.sh and dynamic_dns_functions.sh
-#
-# It make sence to define the update url ONLY inside this script
-# because it's anyway unique to the update script
-# otherwise it should work with the default scripts
-#
-# Options are passed from /etc/config/ddns:
+# 2021 George Giannou <giannoug at gmail dot com>
 
-# Username - the record name DO Zone
-# Password - API Token
-# Domain - the domain managed by DO
-# Parm_opt - The Record ID in the DO API structure
+# Options passed from /etc/config/ddns:
+# Domain - the domain name managed by DigitalOcean (e.g. example.com)
+# Username - the hostname of the domain (e.g. myrouter)
+# Password - DigitalOcean personal access token (API key)
+# Optional Parameter - the API domain record ID of the hostname (e.g. 21694203)
 
-local __URL="https://api.digitalocean.com/v2/domains/[DOMAIN]/records/[RECORD_ID]"
-local __HEADER="Authorization: Bearer [PASSWORD]"
-local __HEADER_CONTENT="Content-Type: application/json"
-local __BODY='{"name":"[NAME]","data": "[IP]"}'
-# inside url we need username and password
+# Use the following command to find your API domain record ID (replace TOKEN and DOMAIN with your own):
+# curl -X GET -H 'Content-Type: application/json' \
+# 	-H "Authorization: Bearer TOKEN" \
+# 	"https://api.digitalocean.com/v2/domains/DOMAIN/records"
 
-[ -z "$domain" ] && write_log 14 "Service section not configured correctly! Missing 'domain'"
-[ -z "$username" ] && write_log 14 "Service section not configured correctly! Missing 'Zone name in Username'"
-[ -z "$password" ] && write_log 14 "Service section not configured correctly! Missing 'password'"
-[ -z "$param_opt" ] && write_log 14 "Service section not configured correctly! Missing 'Zone ID in Optional Parameter'"
+. /usr/share/libubox/jshn.sh
 
-# do replaces in URL, header and body:
-__URL=$(echo $__URL | sed -e "s#\[RECORD_ID\]#$param_opt#g"  \
-                               -e "s#\[DOMAIN\]#$domain#g")
-__HEADER=$(echo $__HEADER| sed -e "s#\[PASSWORD\]#$password#g")
-__HEADER_CONTENT=$(echo $__HEADER_CONTENT)
-__BODY=$(echo $__BODY | sed -e "s#\[NAME\]#$username#g" -e "s#\[IP\]#$__IP#g")
+[ -z "$domain" ] && write_log 14 "Service section not configured correctly! Missing domain name as 'Domain'"
+[ -z "$username" ] && write_log 14 "Service section not configured correctly! Missing hostname as 'Username'"
+[ -z "$password" ] && write_log 14 "Service section not configured correctly! Missing personal access token as 'Password'"
+[ -z "$param_opt" ] && write_log 14 "Service section not configured correctly! Missing API domain record ID as 'Optional Parameter'"
 
-#Send PUT request
+# Construct JSON payload
+json_init
+json_add_string name "$username"
+json_add_string data "$__IP"
 
-curl -X PUT -H "$__HEADER_CONTENT" -H "$__HEADER" -d "$__BODY" "$__URL"
+__STATUS=$(curl -Ss -X PUT "https://api.digitalocean.com/v2/domains/${domain}/records/${param_opt}" \
+	-H "Authorization: Bearer ${password}" \
+	-H "Content-Type: application/json" \
+	-d "$(json_dump)" \
+	-w "%{http_code}\n" -o $DATFILE 2>$ERRFILE)
 
-write_log 7 "DDNS Provider answered:\n$(cat $DATFILE)"
-
-# analyse provider answers
-# If IP is contained in the returned datastructure - API call was sucessful
-grep -E "$__IP" $DATFILE >/dev/null 2>&1
-return $?      # "0" if IP has been changed or no change is needed
+if [ $? -ne 0 ]; then
+	write_log 14 "Curl failed: $(cat $ERRFILE)"
+	return 1
+elif [ -z $__STATUS ] || [ $__STATUS != 200 ]; then
+	write_log 14 "Curl failed: $__STATUS \ndigitalocean.com answered: $(cat $DATFILE)"
+	return 1
+fi

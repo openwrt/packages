@@ -2,11 +2,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
 
-PKG_VERSION:=0.14.1
+PKG_VERSION:=0.15.3
 PKG_RELEASE:=$(AUTORELEASE)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/gnunet
-PKG_HASH:=4a3205c570c30756f1a8b1ad0f1a63d078a92f0fac8e543471d54f4552da18c2
+PKG_HASH:=d62669a8f41e078eaa220ce77a32f4f3f801e3099357ae8c705498fe73884ec5
 
 PKG_LICENSE:=AGPL-3.0
 PKG_LICENSE_FILES:=COPYING
@@ -17,16 +17,20 @@ PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=gettext-version
 PKG_INSTALL:=1
 
+# despite configure fails if sqlite3 isn't detected
+PKG_BUILD_DEPENDS:=sqlite3
+
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
+# always pass --with-sqlite as configure fails when trying --without-sqlite
 CONFIGURE_ARGS+= \
 	--with-libiconv-prefix="$(ICONV_PREFIX)" \
 	--with-libintl-prefix="$(INTL_PREFIX)" \
 	--with-ltdl \
 	$(if $(CONFIG_PACKAGE_$(PKG_NAME)-mysql),--with-mysql="$(STAGING_DIR)/usr",--without-mysql) \
 	$(if $(CONFIG_PACKAGE_$(PKG_NAME)-pgsql),--with-postgresql="$(STAGING_DIR)/usr/bin/pg_config",--without-postgresql) \
-	$(if $(CONFIG_PACKAGE_libsqlite3),--with-sqlite="$(STAGING_DIR)/usr",--without-sqlite) \
+	--with-sqlite="$(STAGING_DIR)/usr" \
 	--enable-testing \
 	--disable-testruns \
 	--disable-documentation \
@@ -260,7 +264,7 @@ LIBEXEC_gns:=dns2gns helper-dns service-dns service-gns service-namecache servic
 CONF_gns:=dns gns namecache namestore resolver zonemaster
 FILE_MODES_gns:=/usr/lib/gnunet/libexec/gnunet-helper-dns:root:gnunetdns:4750 /usr/lib/gnunet/libexec/gnunet-service-dns:gnunet:gnunetdns:2750
 
-DEPENDS_namestore-fcfsd:=+gnunet-gns +libmicrohttpd-ssl
+DEPENDS_namestore-fcfsd:=+gnunet-rest +libmicrohttpd-ssl
 LIBEXEC_namestore-fcfsd:=namestore-fcfsd
 
 DEPENDS_gns-proxy:=+gnunet-gns +gnunet-curl +libmicrohttpd-ssl +PACKAGE_libgnutls-dane:libgnutls-dane
@@ -315,8 +319,9 @@ DEPENDS_fs-mysql:=+gnunet-mysql +gnunet-datastore
 PLUGIN_fs-mysql:=datastore_mysql
 CONFLICTS_fs-mysql:=gnunet-fs-pgsql gnunet-fs-sqlite
 
-DEPENDS_pgsql:=+libpq
+DEPENDS_pgsql:=+libpq +pgsql-server
 LIB_pgsql:=pq
+USERID_pgsql:=gnunet=958::postgres=5432
 
 DEPENDS_dhtcache-pgsql:=+gnunet-pgsql
 PLUGIN_dhtcache-pgsql:=datacache_postgres

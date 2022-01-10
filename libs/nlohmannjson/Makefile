@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nlohmannjson
-PKG_VERSION:=3.9.1
-PKG_RELEASE:=1
+PKG_VERSION:=3.10.2
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).zip
 PKG_SOURCE_URL:=https://codeload.github.com/nlohmann/json/zip/v$(PKG_VERSION)?
-PKG_HASH:=a88449d68aab8d027c5beefe911ba217f5ffcc0686ae1793d37f3d20698b37c6
+PKG_HASH:=6e407a7a7a6fe2f20396270ed561afeda03cd238ccb32ad94b7f985b0aa113fe
 PKG_BUILD_DIR:=$(BUILD_DIR)/json-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Leonid Esman <leonid.esman@gmail.com>
@@ -18,10 +18,9 @@ PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.MIT
 
 PKG_INSTALL:=1
-PKG_BUILD_DEPENDS:=meson/host
 
 include $(INCLUDE_DIR)/package.mk
-include ../../devel/meson/meson.mk
+include $(INCLUDE_DIR)/meson.mk
 
 define Package/nlohmannjson
   SECTION:=libs

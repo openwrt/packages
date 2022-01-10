@@ -30,6 +30,7 @@ define Package/python3-django-compressor
   TITLE:=Compress CSS/JS into single cached files
   URL:=https://django-compressor.readthedocs.io
   DEPENDS:= \
+	@BROKEN \
 	+python3 \
 	+python3-django1 \
 	+python3-django-appconf \
