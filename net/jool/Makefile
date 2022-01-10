@@ -8,12 +8,12 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=jool
-PKG_VERSION:=4.1.5
-PKG_RELEASE:=1
+PKG_VERSION:=4.1.6
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/NICMx/Jool/releases/download/v$(PKG_VERSION)
-PKG_HASH:=ec130a3659acff5450e74924d5f9da52540539fc213b5842fb3a8fd7d919ccf9
+PKG_HASH:=dccfde88e3b97a7d1c44c53b6541b74873a04f50bb8cfd187eb399d5ae8d2c81
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0-only
@@ -50,6 +50,7 @@ define Build/Compile
 	$(call Build/Compile/Default)
 endef
 
+
 define Package/jool/Default
   SECTION:=net
   CATEGORY:=Network
@@ -60,16 +61,6 @@ define Package/jool/Default/description
   Jool is an Open Source SIIT and NAT64 for Linux.
 endef
 
-define Package/jool
-  $(call Package/jool/Default)
-  TITLE:=Jool meta-package
-  DEPENDS:=+kmod-jool +jool-tools
-  BUILDONLY:=1
-endef
-
-define Package/jool/description
-  $(call Package/jool/Default/description)
-endef
 
 define KernelPackage/jool
   SECTION:=kernel
@@ -86,6 +77,11 @@ define KernelPackage/jool
     $(PKG_BUILD_DIR)/src/mod/common/jool_common.$(LINUX_KMOD_SUFFIX) \
     $(PKG_BUILD_DIR)/src/mod/nat64/jool.$(LINUX_KMOD_SUFFIX) \
     $(PKG_BUILD_DIR)/src/mod/siit/jool_siit.$(LINUX_KMOD_SUFFIX)
+  JOOL_AUTOLOAD:= \
+    jool \
+    jool_siit
+  AUTOLOAD:=$(call AutoLoad,46,jool_common)
+  AUTOLOAD:=$(call AutoLoad,48,$(JOOL_AUTOLOAD))
 endef
 
 define KernelPackage/jool/description
@@ -94,10 +90,11 @@ define KernelPackage/jool/description
   This package provides the kernel module for Jool.
 endef
 
+
 define Package/jool-tools
   $(call Package/jool/Default)
   TITLE:=Jool userspace control programs
-  DEPENDS:=+libnl +libxtables
+  DEPENDS:=+kmod-jool +libnl +libxtables
 endef
 
 define Package/jool-tools/description
@@ -106,6 +103,7 @@ define Package/jool-tools/description
   This package provides the userspace control programs for Jool.
 endef
 
+
 CONFIGURE_ARGS += \
 	--disable-shared \
 	--without-bash-completion-dir
@@ -113,6 +111,11 @@ CONFIGURE_ARGS += \
 CONFIGURE_VARS += \
 	ac_cv_func_memset=yes \
 	ac_cv_func_strcasecmp=yes
+
+JOOL_AUTOLOAD:= \
+	jool_common \
+	jool \
+	jool_siit
 
 define Package/jool-tools/install
 	$(INSTALL_DIR) $(1)/usr/bin/
@@ -125,8 +128,18 @@ define Package/jool-tools/install
 		$(1)/usr/lib/iptables
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/iptables/libxt_JOOL.so \
 		$(1)/usr/lib/iptables
+
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/jool.config $(1)/etc/config/jool
+
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/jool.init $(1)/etc/init.d/jool
+
+	$(INSTALL_DIR) $(1)/etc/jool
+	$(INSTALL_DATA) ./files/jool-nat64.conf.json $(1)/etc/jool/jool-nat64.conf.json.default
+	$(INSTALL_DATA) ./files/jool-siit.conf.json $(1)/etc/jool/jool-siit.conf.json.default
+	$(INSTALL_DATA) ./files/readme.md $(1)/etc/jool/readme.md
 endef
 
-$(eval $(call BuildPackage,jool))
 $(eval $(call KernelPackage,jool))
 $(eval $(call BuildPackage,jool-tools))
