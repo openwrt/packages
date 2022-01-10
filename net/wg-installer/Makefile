@@ -50,7 +50,7 @@ endef
 
 define Package/wg-installer-server-hotplug-babeld
 	$(call Package/wg-installer-server)
-	DEPENDS:=wg-installer-server
+	DEPENDS:=wg-installer-server +coreutils-dirname +coreutils-realpath
 endef
 
 define Package/wg-installer-server-hotplug-babeld/install
@@ -60,7 +60,7 @@ endef
 
 define Package/wg-installer-server-hotplug-olsrd
 	$(call Package/wg-installer-server)
-	DEPENDS:=wg-installer-server
+	DEPENDS:=wg-installer-server +coreutils-dirname +coreutils-realpath
 endef
 
 define Package/wg-installer-server-hotplug-olsrd/install
