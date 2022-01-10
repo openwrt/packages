@@ -44,7 +44,7 @@ define Package/gerbera/conffiles
 endef
 
 CMAKE_OPTIONS += \
-	-DCMAKE_LINK_WHAT_YOU_USE=ON \
+	-DCMAKE_LINK_WHAT_YOU_USE=$(if $(CONFIG_HOST_OS_MACOS),OFF,ON) \
 	-DIconv_INCLUDE_DIR=$(ICONV_PREFIX)/include \
 	-DIconv_LIBRARY=$(ICONV_PREFIX)/lib/libiconv.a \
 	-DWITH_MAGIC=ON \
