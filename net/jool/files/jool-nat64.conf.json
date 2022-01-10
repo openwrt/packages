@@ -1,0 +1,75 @@
+{
+	"comment": "Sample full NAT64 configuration.",
+	"comment": "Configuration details at https://jool.mx/en/usr-flags-global.html",
+
+	"instance": "default",
+	"framework": "netfilter",
+
+	"global": {
+		"pool6": "64:ff9b::/96",
+
+		"manually-enabled": false,
+
+		"zeroize-traffic-class": false,
+		"override-tos": false,
+		"tos": 0,
+		"mtu-plateaus": [65535, 32000, 17914, 8166, 4352, 2002, 1492, 1006, 508, 296, 68],
+		"maximum-simultaneous-opens": 10,
+		"source-icmpv6-errors-better": true,
+		"handle-rst-during-fin-rcv": false,
+		"f-args": 11,
+
+		"logging-bib": false,
+		"logging-session": false,
+
+		"address-dependent-filtering": false,
+		"drop-icmpv6-info": false,
+		"drop-externally-initiated-tcp": false,
+
+		"udp-timeout": "5:00",
+		"tcp-est-timeout": "2:00:00",
+		"tcp-trans-timeout": "4:00",
+		"icmp-timeout": "1:00",
+
+		"ss-enabled": false,
+		"ss-flush-asap": true,
+		"ss-flush-deadline": 2000,
+		"ss-capacity": 512,
+		"ss-max-payload": 1452
+	},
+
+	"pool4": [
+		{
+			"mark": 1,
+			"protocol": "UDP",
+			"prefix": "192.0.2.1",
+			"port range": "61001-62000",
+			"max-iterations": 1500
+		}, {
+			"comment": "mark, port range and max-iterations are optional.",
+			"protocol": "TCP",
+			"prefix": "192.0.2.2/31"
+		}, {
+			"mark": 1,
+			"protocol": "ICMP",
+			"prefix": "192.0.2.1/32",
+			"port range": "1000-2000"
+		}
+	],
+
+	"bib": [
+		{
+			"protocol": "TCP",
+			"ipv6 address": "2001:db8::1#80",
+			"ipv4 address": "192.0.2.2#80"
+		}, {
+			"protocol": "UDP",
+			"ipv6 address": "2001:db8::2#10000",
+			"ipv4 address": "192.0.2.1#61500"
+		}, {
+			"protocol": "ICMP",
+			"ipv6 address": "2001:db8:AAAA::1#44",
+			"ipv4 address": "192.0.2.1#1044"
+		}
+	]
+}
