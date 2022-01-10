@@ -16,7 +16,7 @@ if [ "${ACTION}" == "add" ]; then
 	uci set olsrd.@Interface[-1].ignore=0
 	uci set olsrd.@Interface[-1].interface="${INTERFACE}"
 	uci set olsrd.@Interface[-1].Mode="ether"
-	uci commit
+	uci -c "$(dirname $(realpath /etc/config/olsrd))" commit olsrd
 	/etc/init.d/olsrd reload
 fi
 
@@ -28,6 +28,6 @@ if [ "${ACTION}" == "remove" ]; then
 		fi
 		i=$((i+1));
 	done
-	uci commit
+	uci -c "$(dirname $(realpath /etc/config/olsrd))" commit olsrd
 	/etc/init.d/olsrd reload
 fi
