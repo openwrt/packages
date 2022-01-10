@@ -843,6 +843,7 @@ do_transfer() {
 		write_log 13 "Neither 'Wget' nor 'cURL' nor 'uclient-fetch' installed or executable"
 	fi
 
+	local __WRITE_LOG_ENABLE="true"
 	while : ; do
 		write_log 7 "#> $__RUNPROG"
 		eval $__RUNPROG			# DO transfer
@@ -850,9 +851,10 @@ do_transfer() {
 		[ $__ERR -eq 0 ] && return 0	# no error leave
 		[ -n "$LUCI_HELPER" ] && return 1	# no retry if called by LuCI helper script
 
-		write_log 3 "$__PROG Error: '$__ERR'"
-		write_log 7 "$(cat $ERRFILE)"		# report error
-
+		[ "$__WRITE_LOG_ENABLE" == "true" ] && {
+ 		  write_log 3 "$__PROG Error: '$__ERR'"
+		  write_log 7 "$(cat $ERRFILE)"		# report error
+		}  
 		[ $VERBOSE -gt 1 ] && {
 			# VERBOSE > 1 then NO retry
 			write_log 4 "Transfer failed - Verbose Mode: $VERBOSE - NO retry on error"
@@ -864,7 +866,10 @@ do_transfer() {
 		[ $retry_count -gt 0 -a $__CNT -gt $retry_count ] && \
 			write_log 14 "Transfer failed after $retry_count retries"
 
-		write_log 4 "Transfer failed - retry $__CNT/$retry_count in $RETRY_SECONDS seconds"
+		[ "$__WRITE_LOG_ENABLE" == "true" ] && {
+		   write_log 4 "Transfer failed - retry $__CNT/$retry_count in $RETRY_SECONDS seconds"
+		}
+		[ $retry_count -eq 0 ] && __WRITE_LOG_ENABLE="false"
 		sleep $RETRY_SECONDS &
 		PID_SLEEP=$!
 		wait $PID_SLEEP	# enable trap-handler
