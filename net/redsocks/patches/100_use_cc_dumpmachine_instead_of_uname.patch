@@ -1,0 +1,34 @@
+From https://github.com/darkk/redsocks/pull/105
+
+commit d5cabecb6a8369fb2bd883b43205035dd87187a5
+Author: a7ypically <a7ypically@gmail.com>
+Date:   Sat Jun 3 21:33:20 2017 +0300
+
+    Update Makefile
+
+--- a/Makefile
++++ b/Makefile
+@@ -26,11 +26,11 @@ tags: *.c *.h
+ 	ctags -R
+ 
+ $(CONF):
+-	@case `uname` in \
+-	Linux*) \
++	@case `$(CC) -dumpmachine` in \
++	*linux*) \
+ 		echo "#define USE_IPTABLES" >$(CONF) \
+ 		;; \
+-	OpenBSD) \
++	*openbsd*) \
+ 		echo "#define USE_PF" >$(CONF) \
+ 		;; \
+ 	*) \
+@@ -66,7 +66,7 @@ gen/.build:
+ base.c: $(CONF)
+ 
+ $(DEPS): $(SRCS)
+-	gcc -MM $(SRCS) 2>/dev/null >$(DEPS) || \
++	$(CC) -MM $(SRCS) 2>/dev/null >$(DEPS) || \
+ 	( \
+ 		for I in $(wildcard *.h); do \
+ 			export $${I//[-.]/_}_DEPS="`sed '/^\#[ \t]*include \?"\(.*\)".*/!d;s//\1/' $$I`"; \
