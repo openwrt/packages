@@ -8,47 +8,95 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=micropython
-PKG_VERSION:=1.9.4
-PKG_RELEASE:=2
+PKG_VERSION:=1.17
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/micropython/micropython/releases/download/v$(PKG_VERSION)
-PKG_HASH:=0db042011bffcbd65362b67eb3cca87eaefa9f2a55b747fa75e922c706b8ce1a
+PKG_HASH:=e322f915cee784de0f8614779cdb88fce175956975b3864e2d1898a53638a2f7
 
-PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>
+PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_BUILD_PARALLEL:=1
 
+include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
 
-define Package/micropython
+define Package/micropython/default
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=Micro Python
+  TITLE:=MicroPython
   URL:=https://micropython.org
   DEPENDS:=+libffi
+  PROVIDES:=micropython
 endef
 
-define Package/micropython/description
- This package contains Micro Python, a lean and fast implementation of the Python 3.4 programming language
- that is optimised to run on a microcontroller (and low power computers).
+define Package/micropython-mbedtls
+$(call Package/micropython/default)
+  TITLE+= (mbedtls)
+  DEPENDS+= +libmbedtls
+  VARIANT:=mbedtls
+  DEFAULT_VARIANT:=1
 endef
 
+define Package/micropython-nossl
+$(call Package/micropython/default)
+  TITLE+= (nossl)
+  VARIANT:=nossl
+endef
 
-MAKE_FLAGS += -C $(PKG_BUILD_DIR)/ports/unix FROZEN_MPY_DIR=
+define Package/micropython/default/description
+  MicroPython is a lean and efficient implementation of the Python 3
+  programming language that includes a small subset of the Python
+  standard library and is optimised to run on microcontrollers and in
+  constrained environments.
+endef
+
+define Package/micropython-mbedtls/description
+$(call Package/micropython/default/description)
+
+  This version uses the Mbed TLS library.
+endef
+
+define Package/micropython-nossl/description
+$(call Package/micropython/default/description)
+
+  This version is built without TLS and upip.
+endef
+
+MAKE_FLAGS += BUILD_VERBOSE=1
+
+ifneq ($(CONFIG_DEBUG),)
+  MAKE_FLAGS += DEBUG=1
+endif
+
+ifeq ($(BUILD_VARIANT),mbedtls)
+  MAKE_FLAGS += MICROPY_SSL_AXTLS=0 MICROPY_SSL_MBEDTLS=1
+endif
+
+ifeq ($(BUILD_VARIANT),nossl)
+  MAKE_FLAGS += MICROPY_PY_USSL=0 FROZEN_MANIFEST=
+endif
+
+MAKE_PATH = ports/unix
 
 define Build/Compile
-	$(call Build/Compile/Default,axtls)
+	+$(HOST_MAKE_VARS) \
+	$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR)/mpy-cross \
+		$(HOST_MAKE_FLAGS) BUILD_VERBOSE=1
 	$(call Build/Compile/Default)
-
 endef
 
-define Package/micropython/install
+define Package/micropython/default/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ports/unix/micropython $(1)/usr/bin/micropython
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ports/unix/micropython $(1)/usr/bin/
 endef
 
-$(eval $(call BuildPackage,micropython))
+Package/micropython-mbedtls/install = $(Package/micropython/default/install)
+Package/micropython-nossl/install = $(Package/micropython/default/install)
+
+$(eval $(call BuildPackage,micropython-mbedtls))
+$(eval $(call BuildPackage,micropython-nossl))

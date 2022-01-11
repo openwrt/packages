@@ -1,11 +1,11 @@
 --- a/ports/unix/Makefile
 +++ b/ports/unix/Makefile
-@@ -21,7 +21,7 @@ INC +=  -I$(TOP)
+@@ -38,7 +38,7 @@ INC +=  -I$(TOP)
  INC += -I$(BUILD)
  
  # compiler settings
 -CWARN = -Wall -Werror
 +CWARN = -Wall
- CWARN += -Wpointer-arith -Wuninitialized
- CFLAGS = $(INC) $(CWARN) -std=gnu99 -DUNIX $(CFLAGS_MOD) $(COPT) $(CFLAGS_EXTRA)
+ CWARN += -Wextra -Wno-unused-parameter -Wpointer-arith -Wdouble-promotion -Wfloat-conversion
+ CFLAGS += $(INC) $(CWARN) -std=gnu99 -DUNIX $(CFLAGS_MOD) $(COPT) -I$(VARIANT_DIR) $(CFLAGS_EXTRA)
  
