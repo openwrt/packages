@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lynx
 PKG_VERSION:=2.8.9rel.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Leonid Esman <leonid.esman@gmail.com>
@@ -41,6 +41,10 @@ endef
 
 # customize as you need
 CONFIGURE_ARGS += --with-zlib --with-ssl \
+		  --with-build-cc="$(HOSTCC)" \
+		  --with-build-cflags="$(HOST_CFLAGS)" \
+		  --with-build-cppflags="$(HOST_CPPFLAGS)" \
+		  --with-build-ldflags="$(HOST_LDFLAGS)" \
 		  --enable-ipv6 \
 		  --with-screen=ncursesw \
 		  --enable-widec \
