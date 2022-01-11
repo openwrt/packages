@@ -29,6 +29,9 @@ define Package/mblaze/description
   and interacting with mail messages which are stored in maildir folders.
 endef
 
+MAKE_FLAGS += \
+	OS="Linux"
+
 define Package/mblaze/install
 	$(INSTALL_DIR) $(1)/usr
 	$(CP) $(PKG_INSTALL_DIR)/usr/local/bin $(1)/usr
