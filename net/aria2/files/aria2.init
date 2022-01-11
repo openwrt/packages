@@ -169,7 +169,7 @@ aria2_start() {
 	session_file="$config_dir/$NAME.session.$section"
 
 	# check directory existence before creating it
-	if [ ! -e "$config_dir" ]; then
+	if [ ! -d "$config_dir" ]; then
 		_make_dir "$config_dir" || {
 			_err "Can't create config dir: $config_dir"
 			return 1
@@ -182,7 +182,7 @@ aria2_start() {
 	}
 
 	# check session file existence before creating it
-	if [ ! -e "$session_file" ]; then
+	if [ ! -f "$session_file" ]; then
 	 	_create_file "$session_file"|| { _err "Can't create files: $session_file"; return 1; }
 	elif [ ! -r "$session_file" ] || [ ! -w "$session_file" ]; then
 		_change_file_mode 600 "$session_file"
