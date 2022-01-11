@@ -32,6 +32,10 @@ while true; do
 		WG_MTU=$2
 		shift 2
 		;;
+	--wg-key-file)
+		WG_KEY_FILE=$2
+		shift 2
+		;;
 	'')
 		break
 		;;
@@ -56,14 +60,13 @@ escape_ip () {
 }
 
 register_client_interface () {
-	local pubkey=$1
-	local gw_ip=$2
-	local gw_port=$3
-	local endpoint=$4
-	local mtu_client=$5
+	local privkey=$1
+	local pubkey=$2
+	local gw_ip=$3
+	local gw_port=$4
+	local endpoint=$5
+	local mtu_client=$6
 
-	gw_key=$(uci get wgclient.@client[0].wg_key)
-	interface_name="gw_$(escape_ip $endpoint)"
 	port_start=$(uci get wgclient.@client[0].port_start)
 	port_end=$(uci get wgclient.@client[0].port_end)
 	base_prefix=$(uci get wgclient.@client[0].base_prefix)
@@ -85,7 +88,7 @@ register_client_interface () {
 
 	ip -6 a a dev $ifname $client_ip
 	ip -6 a a dev $ifname fe80::2/64
-	wg set $ifname listen-port $port private-key $gw_key peer $pubkey allowed-ips 0.0.0.0/0,::0/0 endpoint "${endpoint}:${gw_port}"
+	wg set $ifname listen-port $port private-key $privkey peer $pubkey allowed-ips 0.0.0.0/0,::0/0 endpoint "${endpoint}:${gw_port}"
 	ip link set up dev $ifname
 	ip link set mtu $mtu_client dev $ifname # configure mtu here!
 }
@@ -103,9 +106,16 @@ case $CMD in
 	wg_rpcd_get_usage $token $IP
 	;;
 "register")
-	gw_pub=$(uci get wgclient.@client[0].wg_pub)
-	gw_pub_string=$(cat $gw_pub)
-	register_output=$(wg_rpcd_register $token $IP $BANDWIDTH $WG_MTU $gw_pub_string)
+
+	if [ ! -z "$WG_KEY_FILE" ]; then
+		wg_priv_key_file=$WG_KEY_FILE
+		wg_pub_key=$(wg pubkey < $WG_KEY_FILE)
+	else
+		wg_priv_key_file=$(uci get wgclient.@client[0].wg_key)
+		wg_pub_key=$(cat $(uci get wgclient.@client[0].wg_pub))
+	fi
+
+	register_output=$(wg_rpcd_register $token $IP $BANDWIDTH $WG_MTU $wg_pub_key)
 	if [ $? != 0 ]; then
 		echo "Failed to Register!"
 		exit 1
@@ -114,7 +124,7 @@ case $CMD in
 	ip_addr=$(echo $register_output | awk '{print $4}')
 	port=$(echo $register_output | awk '{print $6}')
 	client_ip=$(echo $register_output | awk '{print $8}')
-	register_client_interface $pubkey $ip_addr $port $IP $WG_MTU
+	register_client_interface $wg_priv_key_file $pubkey $ip_addr $port $IP $WG_MTU
 	;;
 *) echo "Usage: wg-client-installer [cmd] --ip [2001::1] --user wginstaller --password wginstaller" ;;
 esac
