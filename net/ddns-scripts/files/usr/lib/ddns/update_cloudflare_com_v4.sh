@@ -15,7 +15,7 @@
 # option password  - cloudflare api key, you can get it from cloudflare.com/my-account/
 # option domain    - "hostname@yourdomain.TLD"	# syntax changed to remove split_FQDN() function and tld_names.dat.gz
 #
-# The proxy status would not be changed by this script. Please change it in Cloudflare dashboard manually. 
+# The proxy status would not be changed by this script. Please change it in Cloudflare dashboard manually.
 #
 # variable __IP already defined with the ip-address to use for update
 #
@@ -134,15 +134,19 @@ else
 fi
 __PRGBASE="$__PRGBASE --header 'Content-Type: application/json' "
 
-# read zone id for registered domain.TLD
-__RUNPROG="$__PRGBASE --request GET '$__URLBASE/zones?name=$__DOMAIN'"
-cloudflare_transfer || return 1
-# extract zone id
-__ZONEID=$(grep -o '"id":\s*"[^"]*' $DATFILE | grep -o '[^"]*$' | head -1)
-[ -z "$__ZONEID" ] && {
-	write_log 4 "Could not detect 'zone id' for domain.tld: '$__DOMAIN'"
-	return 127
-}
+if [ -n "$zone_id"]; then
+	__ZONEID="$zone_id"
+else
+	# read zone id for registered domain.TLD
+	__RUNPROG="$__PRGBASE --request GET '$__URLBASE/zones?name=$__DOMAIN'"
+	cloudflare_transfer || return 1
+	# extract zone id
+	__ZONEID=$(grep -o '"id":\s*"[^"]*' $DATFILE | grep -o '[^"]*$' | head -1)
+	[ -z "$__ZONEID" ] && {
+		write_log 4 "Could not detect 'zone id' for domain.tld: '$__DOMAIN'"
+		return 127
+	}
+fi
 
 # read record id for A or AAAA record of host.domain.TLD
 __RUNPROG="$__PRGBASE --request GET '$__URLBASE/zones/$__ZONEID/dns_records?name=$__HOST&type=$__TYPE'"
