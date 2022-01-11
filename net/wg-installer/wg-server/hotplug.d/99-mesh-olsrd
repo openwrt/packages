@@ -16,6 +16,11 @@ if [ "${ACTION}" == "add" ]; then
 	uci set olsrd.@Interface[-1].ignore=0
 	uci set olsrd.@Interface[-1].interface="${INTERFACE}"
 	uci set olsrd.@Interface[-1].Mode="ether"
+	uci get wgserver.@olsrd_hotplug[0].LinkQualityMult
+	if [ $? ]; then
+		olsrd_LinkQualityMult="$(uci get wgserver.@olsrd_hotplug[0].LinkQualityMult)"
+		uci set olsrd.@Interface[-1].LinkQualityMult="$olsrd_LinkQualityMult"
+	fi
 	uci -c "$(dirname $(realpath /etc/config/olsrd))" commit olsrd
 	/etc/init.d/olsrd reload
 fi
