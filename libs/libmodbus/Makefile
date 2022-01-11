@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmodbus
-PKG_VERSION:=3.1.6
+PKG_VERSION:=3.1.7
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://libmodbus.org/releases
-PKG_HASH:=d7d9fa94a16edb094e5fdf5d87ae17a0dc3f3e3d687fead81835d9572cf87c16
+PKG_HASH:=7dfe958431d0570b271e1a5b329b76a658e89c614cf119eb5aadb725c87f8fbd
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
