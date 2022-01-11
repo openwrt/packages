@@ -14,6 +14,11 @@ fi
 if [ "${ACTION}" == "add" ]; then
 	uci add babeld interface
 	uci set babeld.@interface[-1].ifname="${INTERFACE}"
+	uci get wgserver.@babeld_hotplug[0].rxcost
+	if [ $? ]; then
+		babeld_rxcost="$(uci get wgserver.@babeld_hotplug[0].rxcost)"
+		uci set babeld.@interface[-1].rxcost="$babeld_rxcost"
+	fi
 	uci -c "$(dirname $(realpath /etc/config/babeld))" commit babeld
 	/etc/init.d/babeld reload
 fi
