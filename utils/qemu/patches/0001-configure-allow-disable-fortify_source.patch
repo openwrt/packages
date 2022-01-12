@@ -11,12 +11,12 @@ OpenWrt base build system decide flavor of fortify_source to use
 
 --- a/configure
 +++ b/configure
-@@ -1581,6 +1581,8 @@ for opt do
+@@ -1194,6 +1194,8 @@ for opt do
    ;;
-   --disable-slirp-smbd) slirp_smbd=no
+   --enable-jemalloc) meson_option_parse --enable-malloc=jemalloc jemalloc
    ;;
 +  --disable-fortify-source) fortify_source="no"
 +  ;;
-   *)
-       echo "ERROR: unknown option $opt"
-       echo "Try '$0 --help' for more information"
+   # everything else has the same name in configure and meson
+   --enable-* | --disable-*) meson_option_parse "$opt" "$optarg"
+   ;;
