@@ -41,7 +41,20 @@ define Build/Configure
 	$(call perlmod/Configure,,)
 endef
 
+MOD_CFLAGS_PERL += $(if $(CONFIG_HOST_OS_MACOS),-I$(PKG_BUILD_DIR)/macos_compat,)
+
 define Build/Compile
+
+ifeq ($(CONFIG_HOST_OS_MACOS),y)
+	#Zeroize macos specific system headers found by ./configure
+	mkdir -p $(PKG_BUILD_DIR)/macos_compat
+	mkdir -p $(PKG_BUILD_DIR)/macos_compat/sys
+	mkdir -p $(PKG_BUILD_DIR)/macos_compat/IOKit
+	mkdir -p $(PKG_BUILD_DIR)/macos_compat/IOKit/serial
+	echo '' > $(PKG_BUILD_DIR)/macos_compat/sys/ttycom.h
+	echo '' > $(PKG_BUILD_DIR)/macos_compat/IOKit/serial/ioss.h
+endif
+
 	$(call perlmod/Compile,,)
 endef
 
