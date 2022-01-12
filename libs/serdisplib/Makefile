@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=serdisplib
 PKG_VERSION:=2.02
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/serdisplib
@@ -50,6 +50,9 @@ define Package/serdisplib-tools/description
  * sdcmegtron_tool
  * touchscreen_tool
 endef
+
+CONFIGURE_VARS += \
+	ac_cv_build=$(GNU_TARGET_NAME)
 
 CONFIGURE_ARGS += \
 	--enable-dynloading \
