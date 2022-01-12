@@ -54,7 +54,7 @@ wg_register () {
 	gw_key=$(uci get wgserver.@server[0].wg_key)
 	gw_pub=$(uci get wgserver.@server[0].wg_pub)
 
-	if [ $(uci get wgserver.@server[0].wg_tmp_key) -eq 1]; then
+	if [ $(uci get wgserver.@server[0].wg_tmp_key) -eq 1 ]; then
 		[ -d "/tmp/run/wgserver" ] || mkdir -p /tmp/run/wgserver
 		gw_key="/tmp/run/wgserver/${ifname}.key"
 		gw_pub="/tmp/run/wgserver/${ifname}.pub"
