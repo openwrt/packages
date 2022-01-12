@@ -24,7 +24,7 @@ main() {
 
 	/usr/sbin/ModemManager "$@" 1>/dev/null 2>/dev/null &
 	CHILD="$!"
-	sleep 2
+
 	mm_report_events_from_cache
 
 	wait "$CHILD"
