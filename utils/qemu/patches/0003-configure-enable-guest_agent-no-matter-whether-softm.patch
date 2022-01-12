@@ -14,7 +14,7 @@ Fixes a512590 ("configure: qemu-ga is only needed with softmmu targets")
 
 --- a/configure
 +++ b/configure
-@@ -4375,7 +4375,7 @@ fi
+@@ -3331,7 +3331,7 @@ fi
  # Probe for guest agent support/options
  
  if [ "$guest_agent" != "no" ]; then

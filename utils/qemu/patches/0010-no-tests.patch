@@ -1,7 +1,7 @@
 --- a/meson.build
 +++ b/meson.build
-@@ -2297,10 +2297,6 @@ specific_ss.add_all(when: 'CONFIG_BSD_US
- linux_user_ss.add(files('gdbstub.c', 'thunk.c'))
+@@ -2619,10 +2619,6 @@ specific_ss.add_all(when: 'CONFIG_BSD_US
+ linux_user_ss.add(files('thunk.c'))
  specific_ss.add_all(when: 'CONFIG_LINUX_USER', if_true: linux_user_ss)
  
 -# needed for fuzzing binaries
@@ -11,7 +11,7 @@
  # accel modules
  tcg_real_module_ss = ss.source_set()
  tcg_real_module_ss.add_all(when: 'CONFIG_TCG_MODULAR', if_true: tcg_module_ss)
-@@ -2780,10 +2776,6 @@ subdir('scripts')
+@@ -3107,10 +3103,6 @@ subdir('scripts')
  subdir('tools')
  subdir('pc-bios')
  subdir('docs')
