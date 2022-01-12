@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lcdproc
 PKG_VERSION:=0.5.9
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/lcdproc/lcdproc/releases/download/v$(PKG_VERSION)/
@@ -108,6 +108,9 @@ $(call Package/lcdproc/Default-description)
 This package contains display drivers with external dependencies:
 $(LCDPROC_OTHER_DRIVERS_TEXT)
 endef
+
+CONFIGURE_VARS += \
+	ac_cv_mtab_file="/etc/mtab"
 
 CONFIGURE_ARGS += \
 	--disable-libX11 \
