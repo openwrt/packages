@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
 PKG_VERSION:=10.4.22
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL := https://archive.mariadb.org/$(PKG_NAME)-$(PKG_VERSION)/source
@@ -264,7 +264,8 @@ define Package/mariadb-server-base
 	  +libaio \
 	  +liblzma \
 	  +libpcre \
-	  +resolveip
+	  +resolveip \
+	  +sudo
   TITLE:=MariaDB database server base
   USERID:=mariadb=376:mariadb=376
 endef
