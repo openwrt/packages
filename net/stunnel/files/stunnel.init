@@ -76,7 +76,7 @@ validate_service_options() {
 		'OCSPflag:list(or("NOCASIGN","NOCERTS","NOCHAIN","NOCHECKS","NODELEGATED","NOEXPLICIT","NOINTERN","NOSIGS","NOTIME","NOVERIFY","RESPID_KEY","TRUSTOTHER"))' \
 		'OCSPnonce:bool' \
 		'options:list(string)	' \
-		'protocol:or("cifs","connect","imap","nntp","pgsql","pop3","proxy","smtp","socks")' \
+		'protocol:or("cifs","capwin","capwinctrl","connect","imap","nntp","pgsql","pop3","proxy","smtp","socks")' \
 		'protocolAuthentication:or("basic","login","ntlm","plain")' \
 		'protocolDomain:hostname' \
 		'protocolHost_host:host' \
