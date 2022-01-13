@@ -197,6 +197,7 @@ define qemu-target
 	+QEMU_UI_VNC_SASL:libsasl2 \
 	+QEMU_UI_SPICE:libspice-server \
 	+QEMU_DEV_USB:libusb-1.0 \
+	+QEMU_SECCOMP:libseccomp \
 	$(if $(filter %-softmmu,$(1)),+libncurses +libfdt +libslirp +libudev +pixman +qemu-firmware-efi $(ICONV_DEPENDS))
   endef
 
@@ -261,6 +262,13 @@ config QEMU_UI_SPICE
 config QEMU_DEV_USB
 	bool "QEMU USB passthrough support"
 
+config QEMU_SECCOMP
+	bool "Enable support for seccomp in QEMU"
+	default KERNEL_SECCOMP
+	help
+	  Build QEMU with support for seccomp filters.
+	  Select libseccomp which also pulls-in the needed kernel features.
+
 endif
 endef
 
@@ -271,6 +279,7 @@ PKG_CONFIG_DEPENDS += \
 	CONFIG_QEMU_UI_VNC_SASL \
 	CONFIG_QEMU_UI_SPICE \
 	CONFIG_QEMU_DEV_USB \
+	CONFIG_QEMU_SECCOMP \
 
 
 # QEMU configure script does not recognize these options
@@ -413,7 +422,7 @@ CONFIGURE_ARGS +=			\
 	--disable-rbd			\
 	--disable-rdma			\
 	--disable-sanitizers		\
-	--disable-seccomp		\
+	--$(if $(CONFIG_QEMU_SECCOMP),enable,disable)-seccomp		\
 	--disable-smartcard		\
 	--disable-snappy		\
 	--disable-sparse		\
