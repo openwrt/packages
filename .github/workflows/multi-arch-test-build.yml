@@ -94,7 +94,7 @@ jobs:
         run: |
           docker build -t test-container --build-arg ARCH .github/workflows/
         env:
-          ARCH: ${{ matrix.arch }}
+          ARCH: ${{ matrix.arch }}-${{ env.BRANCH }}
 
       - name: Test via Docker container
         if: ${{ matrix.runtime_test }}
