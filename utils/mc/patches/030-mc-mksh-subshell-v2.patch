@@ -1,0 +1,67 @@
+--- a/lib/shell.c
++++ b/lib/shell.c
+@@ -68,6 +68,8 @@ mc_shell_get_installed_in_system (void)
+         mc_shell->path = g_strdup ("/bin/bash");
+     else if (access ("/bin/ash", X_OK) == 0)
+         mc_shell->path = g_strdup ("/bin/ash");
++    else if (access ("/bin/mksh", X_OK) == 0)
++        mc_shell->path = g_strdup ("/bin/mksh");
+     else if (access ("/bin/dash", X_OK) == 0)
+         mc_shell->path = g_strdup ("/bin/dash");
+     else if (access ("/bin/busybox", X_OK) == 0)
+@@ -149,6 +151,12 @@ mc_shell_recognize_real_path (mc_shell_t
+         mc_shell->type = SHELL_ZSH;
+         mc_shell->name = "zsh";
+     }
++    else if (strstr (mc_shell->path, "/mksh") != NULL
++             || strstr (mc_shell->real_path, "/mksh") != NULL)
++    {
++        mc_shell->type = SHELL_MKSH;
++        mc_shell->name = "mksh";
++    }
+     else if (strstr (mc_shell->path, "/tcsh") != NULL
+              || strstr (mc_shell->real_path, "/tcsh") != NULL)
+     {
+--- a/lib/shell.h
++++ b/lib/shell.h
+@@ -16,6 +16,7 @@ typedef enum
+     SHELL_BASH,
+     SHELL_ASH_BUSYBOX,          /* BusyBox default shell (ash) */
+     SHELL_DASH,                 /* Debian variant of ash */
++    SHELL_MKSH,
+     SHELL_TCSH,
+     SHELL_ZSH,
+     SHELL_FISH
+--- a/src/subshell/common.c
++++ b/src/subshell/common.c
+@@ -378,6 +378,11 @@ init_subshell_child (const char *pty_nam
+         }
+         break;
+ 
++    case SHELL_MKSH:
++        init_file = g_strdup (".shrc");
++        g_setenv ("ENV", init_file, TRUE);
++        break;
++
+         /* TODO: Find a way to pass initfile to TCSH and FISH */
+     case SHELL_TCSH:
+     case SHELL_FISH:
+@@ -427,6 +432,7 @@ init_subshell_child (const char *pty_nam
+ 
+     case SHELL_ASH_BUSYBOX:
+     case SHELL_DASH:
++    case SHELL_MKSH:
+     case SHELL_TCSH:
+     case SHELL_FISH:
+         execl (mc_global.shell->path, mc_global.shell->path, (char *) NULL);
+@@ -1091,6 +1097,10 @@ init_subshell_precmd (char *precmd, size
+                     "PS1='\\u@\\h:\\w\\$ '\n", command_buffer_pipe[WRITE],
+                     command_buffer_pipe[WRITE], subshell_pipe[WRITE]);
+         break;
++    case SHELL_MKSH:
++        g_snprintf (precmd, buff_size,
++                "PS1='$(pwd>&%d; kill -STOP $$)'\"$((( USER_ID )) && print '$ ' || print '# ')\"\n", subshell_pipe[WRITE]);
++        break;
+ 
+     case SHELL_ASH_BUSYBOX:
+         /* BusyBox ash needs a somewhat complicated precmd emulation via PS1, and it is vital
