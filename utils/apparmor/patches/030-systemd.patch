@@ -9,7 +9,7 @@
  	install -m 755 -d $(SBINDIR)
  	ln -sf service $(SBINDIR)/rcapparmor
  
-@@ -413,14 +413,6 @@ install-indep: indep
+@@ -414,14 +414,6 @@ install-indep: indep
  	$(MAKE) -C po install NAME=${NAME} DESTDIR=${DESTDIR}
  	$(MAKE) install_manpages DESTDIR=${DESTDIR}
  
