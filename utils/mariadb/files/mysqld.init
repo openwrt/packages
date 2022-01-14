@@ -152,6 +152,12 @@ start_service() {
 	# Migration from old versions
 	# shellcheck disable=SC2154
  	if [ "$(cat "$datadir"/.version 2> /dev/null)" \!= "$version" ] && [ "$autoupgrade" -gt 0 ]; then
+		# Check for correct owner
+		local owner="$(stat --format %U:%G "$datadir" 2> /dev/null)"
+		if [ -n "$owner" ] && [ "$owner" != "$my_user:$my_group" ]; then
+			chown -Rh "$my_user:$my_group" "$datadir"
+		fi
+
 		# Start upgrade instance without credentials
  		sudo -u "$my_user" mysqld --skip-networking --skip-grant-tables --socket=/tmp/mysql_upgrade.sock &
 		PID="$!"

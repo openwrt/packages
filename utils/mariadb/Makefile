@@ -265,7 +265,8 @@ define Package/mariadb-server-base
 	  +KERNEL_IO_URING:liburing \
 	  +liblzma \
 	  +libpcre2 \
-	  +resolveip
+	  +resolveip \
+	  +sudo
   TITLE:=MariaDB database server base
   USERID:=mariadb=376:mariadb=376
 endef
