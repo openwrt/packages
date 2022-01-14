@@ -1,6 +1,6 @@
 --- a/contrib/i2pd.conf
 +++ b/contrib/i2pd.conf
-@@ -8,12 +8,12 @@
+@@ -8,16 +8,16 @@
  
  ## Tunnels config file
  ## Default: ~/.i2pd/tunnels.conf or /var/lib/i2pd/tunnels.conf
@@ -13,71 +13,82 @@
 -# tunnelsdir = /var/lib/i2pd/tunnels.d
 +tunnelsdir = /etc/i2pd/tunnels.d
  
+ ## Path to certificates used for verifying .su3, families
+ ## Default: ~/.i2pd/certificates or /var/lib/i2pd/certificates
+-# certsdir = /var/lib/i2pd/certificates
++certsdir = /usr/share/i2pd/certificates
+ 
  ## Where to write pidfile (default: i2pd.pid, not used in Windows)
  # pidfile = /run/i2pd.pid
-@@ -26,12 +26,12 @@
- ##  * stdout - print log entries to stdout
- ##  * file - log entries to a file
- ##  * syslog - use syslog, see man 3 syslog
--# log = file
-+log = syslog
- ## Path to logfile (default - autodetect)
+@@ -35,7 +35,7 @@
  # logfile = /var/log/i2pd/i2pd.log
  ## Log messages above this level (debug, info, *warn, error, none)
  ## If you set it to none, logging will be disabled
 -# loglevel = warn
-+loglevel = error
++loglevel = none
  ## Write full CLF-formatted date and time to log (default: write only time)
  # logclftime = true
  
-@@ -84,7 +84,7 @@ ipv6 = false
- 
- ## Router will not accept transit tunnels, disabling transit traffic completely
- ## (default = false)
--# notransit = true
-+notransit = true
- 
- ## Router will be floodfill
- ## Note: that mode uses much more network connections and CPU!
-@@ -95,8 +95,10 @@ ipv6 = false
+@@ -99,9 +99,9 @@ ipv6 = false
+ [http]
+ ## Web Console settings
  ## Uncomment and set to 'false' to disable Web Console
- # enabled = true
+-# enabled = true
++enabled = true
  ## Address and port service will listen on
 -address = 127.0.0.1
 +address = 192.168.1.1
-+# address = ::
  port = 7070
-+# strictheaders = false
  ## Path to web console, default "/"
  # webroot = /
- ## Uncomment following lines to enable Web Console authentication
-@@ -108,7 +110,7 @@ port = 7070
+@@ -116,9 +116,9 @@ port = 7070
+ 
+ [httpproxy]
  ## Uncomment and set to 'false' to disable HTTP Proxy
- # enabled = true
+-# enabled = true
++enabled = true
  ## Address and port service will listen on
 -address = 127.0.0.1
 +address = 192.168.1.1
  port = 4444
  ## Optional keys file for proxy local destination
  # keys = http-proxy-keys.dat
-@@ -122,7 +124,7 @@ port = 4444
+@@ -130,9 +130,9 @@ port = 4444
+ 
+ [socksproxy]
  ## Uncomment and set to 'false' to disable SOCKS Proxy
- # enabled = true
+-# enabled = true
++enabled = true
  ## Address and port service will listen on
 -address = 127.0.0.1
 +address = 192.168.1.1
  port = 4447
  ## Optional keys file for proxy local destination
  # keys = socks-proxy-keys.dat
-@@ -237,9 +239,9 @@ verify = true
+@@ -146,7 +146,7 @@ port = 4447
  
- [persist]
- ## Save peer profiles on disk (default: true)
--# profiles = true
-+profiles = false
- ## Save full addresses on disk (default: true)
--# addressbook = true
-+addressbook = false
+ [sam]
+ ## Comment or set to 'false' to disable SAM Bridge
+-enabled = true
++enabled = false
+ ## Address and port service will listen on
+ # address = 127.0.0.1
+ # port = 7656
+@@ -181,7 +181,7 @@ enabled = true
  
- [cpuext]
- ## Use CPU AES-NI instructions set when work with cryptography when available (default: true)
+ [upnp]
+ ## Enable or disable UPnP: automatic port forwarding (enabled by default in WINDOWS, ANDROID)
+-# enabled = false
++enabled = false
+ ## Name i2pd appears in UPnP forwardings list (default = I2Pd)
+ # name = I2Pd
+ 
+@@ -222,7 +222,7 @@ verify = true
+ 
+ [limits]
+ ## Maximum active transit sessions (default:2500)
+-# transittunnels = 2500
++transittunnels = 500
+ ## Limit number of open file descriptors (0 - use system limit)
+ # openfiles = 0
+ ## Maximum size of corefile in Kb (0 - use system limit)
