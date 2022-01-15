@@ -745,6 +745,13 @@ do_transfer() {
 		# disable proxy if no set (there might be .wgetrc or .curlrc or wrong environment set)
 		[ -z "$proxy" ] && __PROG="$__PROG --no-proxy"
 
+		# user agent string if provided
+		if [ -n "$user_agent" ]; then
+			# replace single and double quotes
+			user_agent=$(echo $user_agent | sed "s/'/ /g" | sed 's/"/ /g')
+			__PROG="$__PROG --user-agent='$user_agent'"
+		fi
+
 		__RUNPROG="$__PROG '$__URL'"	# build final command
 		__PROG="GNU Wget"		# reuse for error logging
 

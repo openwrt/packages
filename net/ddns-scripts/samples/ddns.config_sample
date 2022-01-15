@@ -221,6 +221,11 @@ config service "myddns"
 #	option ip_source "script"
 #	option ip_script ""
 
+	# This option can be used in combination with ip_source "web" and ip_url.
+	# It adds a given user agent string to the request.
+	# Will only be used when wget or wget-ssl is installed.
+#	option user_agent "Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/95.0"
+
 	###########
 	# force_ipversion option will set the "-4" respectively "-6" parameter
 	# on command line of transfer and DNS lookup program.
