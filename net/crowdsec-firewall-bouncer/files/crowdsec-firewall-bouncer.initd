@@ -1,10 +1,10 @@
 #!/bin/sh /etc/rc.common
-# (C) 2021 Gerald Kerma
+# Copyright (C) 2021-2022 Gerald Kerma <gandalf@gk2.net>
 
 START=99
 USE_PROCD=1
 NAME=crowdsec-firewall-bouncer
-PROG=/usr/bin/crowdsec-firewall-bouncer
+PROG=/usr/bin/cs-firewall-bouncer
 CONFIG=/etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
 BACKEND=iptables
 VARCONFIGDIR=/var/etc/crowdsec/bouncers
