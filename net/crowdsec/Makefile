@@ -1,17 +1,17 @@
 # SPDX-License-Identifier: MIT
 #
-# Copyright (C) 2021-2022 Gerald Kerma
+# Copyright (C) 2021-2022 Gerald Kerma <gandalf@gk2.net>
 #
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=crowdsec
-PKG_VERSION:=1.2.2
+PKG_VERSION:=1.2.3
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/crowdsecurity/crowdsec/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=b815ac4fafa25f0e657b56baaba9a093ef64fbe7336e4bc29208eb47ed1af5e6
+PKG_HASH:=c94163ac2b90864149bd5ced3b77ecb5c9e9a68d3c7a938f23e05ef72da69938
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE

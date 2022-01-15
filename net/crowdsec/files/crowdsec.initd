@@ -1,5 +1,5 @@
 #!/bin/sh /etc/rc.common
-# (C) 2021 Gerald Kerma
+# Copyright (C) 2021-2022 Gerald Kerma <gandalf@gk2.net>
 
 START=99
 USE_PROCD=1
