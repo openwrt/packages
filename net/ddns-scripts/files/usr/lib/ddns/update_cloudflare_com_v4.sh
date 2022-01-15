@@ -134,7 +134,7 @@ else
 fi
 __PRGBASE="$__PRGBASE --header 'Content-Type: application/json' "
 
-if [ -n "$zone_id"]; then
+if [ -n "$zone_id" ]; then
 	__ZONEID="$zone_id"
 else
 	# read zone id for registered domain.TLD
