@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 #
-# Copyright (C) 2021-2022 Gerald Kerma
+# Copyright (C) 2021-2022 Gerald Kerma <gandalf@gk2.net>
 #
 
 include $(TOPDIR)/rules.mk
@@ -24,7 +24,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/cs-firewall-bouncer-$(PKG_VERSION)
 
 CSFB_BUILD_VERSION?=v$(PKG_VERSION)
 CSFB_BUILD_GOVERSION:=$(shell go version | cut -d " " -f3 | sed -E 's/[go]+//g')
-CWD_BUILD_TIMESTAMP:=$(shell date +%F"_"%T)
+CSFB_BUILD_TIMESTAMP:=$(shell date +%F"_"%T)
 CSFB_BUILD_TAG:=openwrt-$(PKG_VERSION)-$(PKG_RELEASE)
 CSFB_VERSION_PKG:=github.com/crowdsecurity/cs-firewall-bouncer/pkg/version
 
@@ -42,7 +42,7 @@ define Package/crowdsec-firewall-bouncer/Default
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Firewall bouncer for Crowdsec
-  URL:=https://github.com/crowdsecurity/crowdsec-firewall-bouncer/
+  URL:=https://github.com/crowdsecurity/cs-firewall-bouncer/
 endef
 
 define Package/crowdsec-firewall-bouncer
