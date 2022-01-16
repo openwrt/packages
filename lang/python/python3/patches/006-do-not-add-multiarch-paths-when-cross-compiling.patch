@@ -1,6 +1,6 @@
 --- a/setup.py
 +++ b/setup.py
-@@ -737,7 +737,8 @@ class PyBuildExt(build_ext):
+@@ -740,7 +740,8 @@ class PyBuildExt(build_ext):
          # only change this for cross builds for 3.3, issues on Mageia
          if CROSS_COMPILING:
              self.add_cross_compiling_paths()
