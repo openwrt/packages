@@ -95,6 +95,15 @@ wg_rpcd_get_usage () {
 	echo "num_interfaces: ${num_interfaces}"
 }
 
+wg_error_handling () {
+	local response_code=$1
+
+	case "$response_code" in
+		1)	logger -t "wginstaller" "Server rejected request since the public key is already used!" ;;
+		*)	logger -t "wginstaller" "Unknown Error Code!";;
+	esac
+}
+
 wg_rpcd_register () {
 	local token=$5
 	local ip=$6
@@ -123,6 +132,11 @@ wg_rpcd_register () {
 	json_get_vars result result
 	json_select result
 	json_select 2
+	json_get_var response_code response_code
+	if [ "$response_code" -ne 0 ]; then
+		wg_error_handling "$response_code"
+		return 1
+	fi
 	json_get_var gw_pubkey gw_pubkey
 	json_get_var gw_ipv4 gw_ipv4
 	json_get_var gw_ipv6 gw_ipv6
