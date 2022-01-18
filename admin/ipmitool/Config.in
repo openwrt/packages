@@ -1,0 +1,15 @@
+if PACKAGE_ipmitool
+
+config IPMITOOL_KERNEL_MODULES
+	bool "Select system interface kernel modules for ipmitool"
+	default n
+	select PACKAGE_kmod-ipmi-handler
+	select PACKAGE_kmod-ipmi-si
+	select PACKAGE_kmod-ipmi-device-interface
+	help
+	  If not set, no kernel modules get installed on ipmitool package
+	  installation. The package ipmitool needs this kernel modules to
+	  work properly with the system interface.
+	  If in doubt, say "Y".
+
+endif
