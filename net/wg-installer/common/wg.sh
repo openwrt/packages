@@ -29,7 +29,7 @@ check_wg_neighbors() {
 
     wg_interfaces=$(ip link | grep wg | awk '{print $2}' | sed 's/://')
     for phy in $wg_interfaces; do
-        linklocal=$(ip -6 a list dev $phy | grep "scope link" | awk '{print $2}' | sed 's/\/64//') 2>/dev/null
+        linklocal=$(ip -6 addr list dev $phy | grep "scope link" | awk '{print $2}' | sed 's/\/64//') 2>/dev/null
         ips=$(ping ff02::1%$phy -w5 -W5 -c10 | awk '/from/{print($4)}' | sed 's/.$//') 2>/dev/null
         delete=1
         for ip in $ips; do
