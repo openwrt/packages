@@ -3,6 +3,12 @@
 . /usr/share/libubox/jshn.sh
 . /usr/share/wginstaller/wg.sh
 
+wg_key_exists () {
+	local key=$1
+
+	wg show | grep -q "$key"
+}
+
 wg_timeout () {
 	local int=$1
 
@@ -41,6 +47,14 @@ wg_register () {
 	local uplink_bw=$1
 	local mtu=$2
 	local public_key=$3
+
+	if wg_key_exists $public_key; then
+		logger -t "wginstaller" "Rejecting request since the public key is already used!" "$public_key"
+		json_init
+		json_add_int "response_code" 1
+		json_dump
+		return 1
+	fi
 
 	base_prefix_ipv6=$(uci get wgserver.@server[0].base_prefix_ipv6)
 	port_start=$(uci get wgserver.@server[0].port_start)
@@ -82,6 +96,7 @@ wg_register () {
 
 	# craft return address
 	json_init
+	json_add_int "response_code" 0
 	json_add_string "gw_pubkey" "$wg_server_pubkey"
 	if test -n "${gw_ipv4_assign-}"; then
 		json_add_string "gw_ipv4" "$gw_ipv4_assign"
