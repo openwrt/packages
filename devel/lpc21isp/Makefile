@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lpc21isp
 PKG_VERSION:=197
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 PKG_LICENSE:=LGPL-3.0-or-later
 PKG_LICENSE_FILES:=README gpl.txt lgpl-3.0.txt
 
@@ -35,6 +35,9 @@ define Package/lpc21isp/description
 endef
 
 TARGET_CFLAGS += $(if $(CONFIG_USE_GLIBC),-lc -lgcc_eh)
+
+MAKE_FLAGS += \
+	OSTYPE="Linux"
 
 define Package/lpc21isp/install
 		$(INSTALL_DIR) $(1)/usr/sbin
