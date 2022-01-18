@@ -65,14 +65,14 @@ wg_register () {
 	# create wg tunnel
 	ip link add dev $ifname type wireguard
 	wg set $ifname listen-port $port private-key $gw_key peer $public_key allowed-ips 0.0.0.0/0,::0/0
-	ip -6 address add $gw_ip_assign dev $ifname
-	ip -6 address add fe80::1/64 dev $ifname
+	ip -6 addr add $gw_ip_assign dev $ifname
+	ip -6 addr add fe80::1/64 dev $ifname
 
 	v4prefix=$(uci get wgserver.@server[0].base_v4prefix)
 	if [ $? -eq 0 ]; then
 		gw_ipv4=$(owipcalc $v4prefix add $offset next 32) # gateway ip
 		gw_ipv4_assign="${gw_ipv4}/32"
-		ip address add $gw_ipv4_assign broadcast 255.255.255.255 dev $ifname
+		ip addr add $gw_ipv4_assign broadcast 255.255.255.255 dev $ifname
 	fi
 
 	ip link set up dev $ifname
