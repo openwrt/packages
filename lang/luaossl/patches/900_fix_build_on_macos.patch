@@ -1,0 +1,15 @@
+commit 8686cae32fc04045c1404c2febf84242c298bf0d
+Author: Sergey V. Lobanov <sergey@lobanov.in>
+Date:   Fri Jan 7 23:00:03 2022 +0300
+
+    fix build on macos
+    
+    OpenWrt is always Linux. Disable OS detection
+
+--- a/mk/vendor.os
++++ b/mk/vendor.os
+@@ -1,3 +1,3 @@
+ #!/bin/sh
+ 
+-uname -s
++echo Linux

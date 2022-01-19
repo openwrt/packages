@@ -9,10 +9,10 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qemu
-PKG_VERSION:=6.1.0
+PKG_VERSION:=6.2.0
 PKG_RELEASE:=$(AUTORELEASE)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=eebc089db3414bbeedf1e464beda0a7515aad30f73261abc246c9b27503a3c96
+PKG_HASH:=68e15d8e45ac56326e0b9a4afa8b49a3dfe8aba3488221d098c84698bca65b45
 PKG_SOURCE_URL:=http://download.qemu.org/
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=LICENSE tcg/LICENSE
@@ -53,7 +53,7 @@ define Package/qemu-ga
   SUBMENU:=Virtualization
   TITLE:=QEMU Guest Agent
   URL:=http://www.qemu.org
-  DEPENDS:= +glib2 +virtio-console-helper +libstdcpp $(QEMU_DEPS_IN_GUEST)
+  DEPENDS:= +glib2 +virtio-console-helper +libstdcpp +libudev $(QEMU_DEPS_IN_GUEST)
 endef
 
 define Package/qemu-ga/install
@@ -197,7 +197,8 @@ define qemu-target
 	+QEMU_UI_VNC_SASL:libsasl2 \
 	+QEMU_UI_SPICE:libspice-server \
 	+QEMU_DEV_USB:libusb-1.0 \
-	$(if $(filter %-softmmu,$(1)),+libncurses +libfdt +libslirp +pixman +qemu-firmware-efi $(ICONV_DEPENDS))
+	+QEMU_SECCOMP:libseccomp \
+	$(if $(filter %-softmmu,$(1)),+libncurses +libfdt +libslirp +libudev +pixman +qemu-firmware-efi $(ICONV_DEPENDS))
   endef
 
   define Package/qemu-$(1)/description
@@ -261,6 +262,13 @@ config QEMU_UI_SPICE
 config QEMU_DEV_USB
 	bool "QEMU USB passthrough support"
 
+config QEMU_SECCOMP
+	bool "Enable support for seccomp in QEMU"
+	default KERNEL_SECCOMP
+	help
+	  Build QEMU with support for seccomp filters.
+	  Select libseccomp which also pulls-in the needed kernel features.
+
 endif
 endef
 
@@ -271,6 +279,7 @@ PKG_CONFIG_DEPENDS += \
 	CONFIG_QEMU_UI_VNC_SASL \
 	CONFIG_QEMU_UI_SPICE \
 	CONFIG_QEMU_DEV_USB \
+	CONFIG_QEMU_SECCOMP \
 
 
 # QEMU configure script does not recognize these options
@@ -390,12 +399,10 @@ CONFIGURE_ARGS +=			\
 	--disable-glusterfs		\
 	--disable-gnutls		\
 	--disable-guest-agent-msi	\
-	--disable-jemalloc		\
 	--disable-libiscsi		\
 	--disable-libnfs		\
 	--disable-libpmem		\
 	--disable-libssh		\
-	--disable-libudev		\
 	--$(if $(CONFIG_QEMU_DEV_USB),enable,disable)-libusb		\
 	--disable-libxml2		\
 	--disable-linux-aio		\
@@ -415,13 +422,12 @@ CONFIGURE_ARGS +=			\
 	--disable-rbd			\
 	--disable-rdma			\
 	--disable-sanitizers		\
-	--disable-seccomp		\
+	--$(if $(CONFIG_QEMU_SECCOMP),enable,disable)-seccomp		\
 	--disable-smartcard		\
 	--disable-snappy		\
 	--disable-sparse		\
 	--disable-strip			\
 	--disable-tcg-interpreter	\
-	--disable-tcmalloc		\
 	--disable-tpm			\
 	--disable-usb-redir		\
 	--disable-vde			\
@@ -431,6 +437,10 @@ CONFIGURE_ARGS +=			\
 	--disable-xkbcommon		\
 	--disable-xfsctl		\
 	--disable-zstd			\
+	--disable-selinux		\
+	--disable-oss			\
+	--disable-alsa			\
+	--disable-pa			\
 
 CONFIGURE_ARGS += --target-list='$(foreach target,$(qemu-target-list),$(if $(CONFIG_PACKAGE_qemu-$(target)),$(target)))'
 CONFIGURE_ARGS += $(if $(CONFIG_PACKAGE_qemu-ga),--enable-guest-agent)

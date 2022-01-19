@@ -54,6 +54,7 @@ endef
 
 define Package/davfs2/conffiles
 /etc/davfs2/davfs2.conf
+/etc/davfs2/secrets
 endef
 
 CONFIGURE_ARGS += \

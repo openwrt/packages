@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hwinfo
 PKG_VERSION:=21.71
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/openSUSE/hwinfo/tar.gz/$(PKG_VERSION)?
@@ -17,9 +17,6 @@ PKG_BUILD_DEPENDS:= hwinfo/host
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
 
-# Execute in host build directory
-HOST_MAKE_FLAGS += -C $(HOST_BUILD_DIR)
-
 define Host/Configure
 	# copy uuid.h to another location in host build dir as that's where this package expects it
 	$(INSTALL_DIR) $(STAGING_DIR_HOST)/include/uuid/
@@ -29,7 +26,10 @@ endef
 define Host/Compile
 	# Build using host compiler and let it generate the files we need
 	# CFLAGS, CPPFLAGS & LDFLAGS need to be passed with CC because they are being ingored
-	CC="$(HOSTCC) $(HOST_CFLAGS) $(HOST_CPPFLAGS) $(HOST_LDFLAGS)" $(MAKE) $(HOST_MAKE_FLAGS)
+	CC="$(HOSTCC) $(HOST_CFLAGS) $(HOST_CPPFLAGS) $(HOST_LDFLAGS)" $(MAKE) \
+		-C $(HOST_BUILD_DIR)/src/isdn/cdb
+	CC="$(HOSTCC) $(HOST_CFLAGS) $(HOST_CPPFLAGS) $(HOST_LDFLAGS)" $(MAKE) \
+		-C $(HOST_BUILD_DIR)/src/ids
 endef
 
 define Host/Install
