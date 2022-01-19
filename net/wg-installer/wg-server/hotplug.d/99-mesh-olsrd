@@ -6,15 +6,15 @@ if [ "${DEVTYPE}" != "wireguard" ]; then
 fi
 
 # check if correct naming
-slicedint=$(echo $INTERFACE | cut -c1-3)
+slicedint=$(echo "$INTERFACE" | cut -c1-3)
 if [ "${slicedint}" != "wg_" ]; then
 	exit 0
 fi
 
-if [ "${ACTION}" == "add" ]; then
-	ubus call olsrd add_interface '{"ifname":'\"$INTERFACE\"'}'
+if [ "${ACTION}" = "add" ]; then
+	ubus call olsrd add_interface '{"ifname":'\""$INTERFACE"\"'}'
 fi
 
-if [ "${ACTION}" == "remove" ]; then
-	ubus call olsrd del_interface '{"ifname":'\"$INTERFACE\"'}'
+if [ "${ACTION}" = "remove" ]; then
+	ubus call olsrd del_interface '{"ifname":'\""$INTERFACE"\"'}'
 fi
