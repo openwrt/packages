@@ -21,7 +21,7 @@ emit() {
 validate_ntp_section() {
 	uci_load_validate system timeserver "$1" "$2" \
 		'server:list(host)' 'enabled:bool:1' 'enable_server:bool:0' \
-		'interface:list(string)'
+		'interface:list(string)' 'enable_gpsd:bool:0'
 }
 
 start_ntpd_instance() {
@@ -57,6 +57,12 @@ start_ntpd_instance() {
 	emit "\n# No limits for local monitoring"
 	emit "restrict 127.0.0.1"
 	emit "restrict -6 ::1\n"
+
+	if [ "$enable_gpsd" != 0 ]; then
+		emit "\n# GPS"
+		emit "server 127.127.28.0 minpoll 4 prefer"
+		emit "fudge 127.127.28.0 refid GPS\n"
+	fi
 
 	if [ -n "$interface" ]; then
 		local loopback=$(ubus call network.interface dump | jsonfilter -e "@.interface[@.interface='loopback']['device']")
