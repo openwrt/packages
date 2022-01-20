@@ -75,6 +75,9 @@ wg_register () {
 		gw_key="/tmp/run/wgserver/${ifname}.key"
 		gw_pub="/tmp/run/wgserver/${ifname}.pub"
 		wg genkey | tee "$gw_key" | wg pubkey > "$gw_pub"
+	else
+		[ -d "$(dirname $gw_key)" ] || mkdir -p "$(dirname $gw_key)"
+		[ -f "$gw_key" ] || wg genkey | tee "$gw_key" | wg pubkey > "$gw_pub"
 	fi
 	wg_server_pubkey=$(cat "$gw_pub")
 
