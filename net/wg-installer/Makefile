@@ -39,6 +39,9 @@ define Package/wg-installer-server/install
 
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./wg-server/config/wgserver.conf $(1)/etc/config/wgserver
+
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./wg-server/config/wgserver.init $(1)/etc/init.d/wgserver
 endef
 
 define Package/wg-installer-server/conffiles
