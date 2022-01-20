@@ -67,7 +67,7 @@ endef
 
 define Package/wg-installer-server-hotplug-olsrd
 	$(call Package/wg-installer-server)
-	DEPENDS:=wg-installer-server +coreutils-realpath
+	DEPENDS:=wg-installer-server
 endef
 
 define Package/wg-installer-server-hotplug-olsrd/install
