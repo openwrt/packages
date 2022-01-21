@@ -24,8 +24,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/sqm-scripts
   SECTION:=net
   CATEGORY:=Base system
-  DEPENDS:=+tc +kmod-sched-cake +kmod-ifb +iptables \
-	+iptables-mod-ipopt +iptables-mod-conntrack-extra
+  DEPENDS:=+tc +kmod-sched-cake +kmod-ifb +iptables-nft +iptables-mod-ipopt
   TITLE:=SQM Scripts (QoS)
   PKGARCH:=all
 endef
