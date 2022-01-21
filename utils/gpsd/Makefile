@@ -100,6 +100,7 @@ SCONS_VARS += \
 	LINKFLAGS="$(TARGET_LDFLAGS)"
 
 SCONS_OPTIONS += \
+	target_platform=linux \
 	dbus_export=no \
 	tsip=no \
 	fv18=no \
