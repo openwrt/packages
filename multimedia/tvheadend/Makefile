@@ -72,6 +72,7 @@ CONFIGURE_ARGS += \
 	--disable-libav \
 	--disable-ffmpeg_static \
 	--enable-bundle \
+	--disable-uripaser \
 	--nowerror=unused-variable
 
 define Build/Prepare
