@@ -156,11 +156,11 @@ trap "trap_handler 15" 15	# SIGTERM	Termination
 #
 # force_interval	force to send an update to your service if no change was detected
 # force_unit		'days' 'hours' 'minutes' !!! force_interval="0" disables all forced updates, unless run_once=""
-#                   Or run_once=-1. This is to maintain backwards compatibility for configurations where run_once is not set.
+#					Or run_once=-1. This is to maintain backwards compatibility for configurations where run_once is not set.
 #
-# run_once          Boolean (1/0). If set to 1, run_once and exit. force_interval is checked for non-sero value 
-#                   Only; if 0, the IP address is not updated if there is no change detected. If force_interval != 0,
-#                   Then an update is sent in any case.
+# run_once          Boolean (1/0). If set to 1, run_once and exit. force_interval is checked for non-sero value
+#					Only; if 0, the IP address is not updated if there is no change detected. If force_interval != 0,
+#					Then an update is sent in any case.
 #
 # retry_interval	if error was detected retry in
 # retry_unit		'days' 'hours' 'minutes' 'seconds'
@@ -203,12 +203,12 @@ ERR_LAST=$?	# save return code - equal 0 if SECTION_ID found
 
 ### backwards compatibility:
 if [ $run_once -lt 0 ] ; then
-    if [ force_interval -eq 0 ] ; then
-        run_once=1
-        force_interval=1
-    else
-        run_once=0
-    fi
+	if [ force_interval -eq 0 ] ; then
+		run_once=1
+		force_interval=1
+	else
+		run_once=0
+	fi
 fi
 
 # url encode username (might be email or something like this)
@@ -368,7 +368,7 @@ while : ; do
 
 	# prepare update
 	# never updated or run-once forced then NEXT_TIME = 0
-	[ $run_once -eq 1 -a $FORCE_SECONDS -ge 1 -o $LAST_TIME -eq 0 ] \
+	[ $FORCE_SECONDS -ge 1 -a ( $run_once -eq 1 -o $LAST_TIME -eq 0 ) ] \
 		&& NEXT_TIME=0 \
 		|| NEXT_TIME=$(( $LAST_TIME + $FORCE_SECONDS ))
 
@@ -380,7 +380,7 @@ while : ; do
 			write_log 7 "Verbose Mode: $VERBOSE - NO UPDATE send"
 		elif [ "$LOCAL_IP" != "$REGISTERED_IP" ]; then
 			write_log 7 "Update needed - L: '$LOCAL_IP' <> R: '$REGISTERED_IP'"
-        elif [ $FORCE_SECONDS -gt 0 ]; then
+		else
 			write_log 7 "Forced Update - L: '$LOCAL_IP' == R: '$REGISTERED_IP'"
 		fi
 

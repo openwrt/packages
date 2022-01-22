@@ -271,7 +271,7 @@ config service "myddns"
 	# a network to use for communication.
 	# should use option ip_source "web" (see above)
 	# Needs GNU Wget (with SSL support) or cURL to be installed.
-	# GNU Wget will use IP address and cURL the physical device 
+	# GNU Wget will use IP address and cURL the physical device
 	# of the given network
 	# default: none
 #	option bind_network "wan7"
@@ -295,26 +295,26 @@ config service "myddns"
 	# consult DDNS providers documentation if your DDNS entry might timeout.
 	# accepted unit entry’s: 'minutes' 'hours' 'days'
 	# minimum needs to be greater or equal check interval (see above)
-	# A setting of '0' means a forced update is never sent, if no IP address 
-    # change has been detected. However, always also set run_once (see the 
-    # corresponding setting). If run_once has not been set, force_interval=0 
-    # means a forced update (once) and exit! This is to maintain compatibility 
-    # with old configurations where run_once didn't exist. A configuration with
-    # missing run_once option is deprecated! 	
-    # default 3 days == 72 hours
+	# A setting of '0' means a forced update is never sent, if no IP address
+	# change has been detected. However, always also set run_once (see the
+	# corresponding setting). If run_once has not been set, force_interval=0
+	# means a forced update (once) and exit! This is to maintain compatibility
+	# with old configurations where run_once didn't exist. A configuration with
+	# missing run_once option is deprecated!
+	# default 3 days == 72 hours
 	option force_interval	'72'
 	option force_unit	'hours'
 
 	###########
-    # An option to tell the script to run once only. Also see force_interval;
-    # If force_interval=0, the script will not send any updates in case it detects
-    # the IP address has not been changed since last update. In case force_interval
-    # !=0, the update is forced, verified if the update was accepted by DNS
-	# (retry if not) and the script terminates. This is useful if you want to start 
-    # by your own (i.e. cron).
-    # NOTE: If this option is not set, old behaviour will be enabled to maintain 
-    # compatibility with old configurations.
-	# default: 0 
+	# An option to tell the script to run once only. Also see force_interval;
+	# If force_interval=0, the script will not send any updates in case it detects
+	# the IP address has not been changed since last update. In case force_interval
+	# !=0, the update is forced, verified if the update was accepted by DNS
+	# (retry if not) and the script terminates. This is useful if you want to start
+	# by your own (i.e. cron).
+	# NOTE: If this option is not set, old behaviour will be enabled to maintain
+	# compatibility with old configurations.
+	# default: 0
 	option run_once '0'
 
 	###########
