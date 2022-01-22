@@ -189,6 +189,7 @@ ERR_LAST=$?	# save return code - equal 0 if SECTION_ID found
 [ -z "$force_dnstcp" ]	  && force_dnstcp=0	# default UDP
 [ -z "$ip_source" ]	  && ip_source="network"
 [ -z "$is_glue" ]	  && is_glue=0		# default the ddns record is not a glue record
+[ -z "$run_once" ]    && run_once=-1    # default -1; needed for backwards compatibility with old configs. See issue #17641 in openwrt/packages github
 [ "$ip_source" = "network" -a -z "$ip_network" -a $use_ipv6 -eq 0 ] && ip_network="wan"  # IPv4: default wan
 [ "$ip_source" = "network" -a -z "$ip_network" -a $use_ipv6 -eq 1 ] && ip_network="wan6" # IPv6: default wan6
 [ "$ip_source" = "web" -a -z "$ip_url" -a $use_ipv6 -eq 0 ] && ip_url="http://checkip.dyndns.com"
