@@ -3,6 +3,8 @@
 . /usr/share/wginstaller/rpcd_ubus.sh
 . /usr/share/wginstaller/wg.sh
 
+DEFAULT_NAMESPACE=0
+
 CMD=$1
 shift
 
@@ -32,6 +34,10 @@ while true; do
 		WG_KEY_FILE=$2
 		shift 2
 		;;
+	--lookup-default-namespace)
+		DEFAULT_NAMESPACE=1
+		shift 1
+		;;
 	'')
 		break
 		;;
@@ -47,11 +53,18 @@ register_client_interface () {
 	local privkey=$4
 	local pubkey=$5
 	local gw_port=$6
+	local def_namespace=$7
 
 	port_start=$(uci get wgclient.@client[0].port_start)
 	port_end=$(uci get wgclient.@client[0].port_end)
 
-	port=$(next_port "$port_start" "$port_end")
+	if [ "$def_namespace" -eq "1" ]; then
+		[ -f /var/run/netns/default ] || ln -s /proc/1/ns/net /var/run/netns/default
+		port=$(ip netns exec default /usr/share/wginstaller/wg.sh next_port "$port_start" "$port_end")
+	else
+		port=$(next_port "$port_start" "$port_end")
+	fi
+
 	ifname="wg_$port"
 
 	ip link add dev "$ifname" type wireguard
@@ -88,7 +101,7 @@ case $CMD in
 		exit 1
 	fi
 
-	register_client_interface __interface "$ENDPOINT" "$WG_MTU" "$wg_priv_key_file" "$__gw_pubkey" "$__gw_port"
+	register_client_interface __interface "$ENDPOINT" "$WG_MTU" "$wg_priv_key_file" "$__gw_pubkey" "$__gw_port" "$DEFAULT_NAMESPACE"
 	logger -t "wg-client-installer" "Registered: $__interface"
 	echo $__interface
 	;;
