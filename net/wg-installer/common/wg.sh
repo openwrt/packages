@@ -43,6 +43,7 @@ check_wg_neighbors() {
 }
 
 case $1 in
+next_port|\
 cleanup_wginterfaces)
     "$@"
     exit
