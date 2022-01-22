@@ -203,7 +203,7 @@ ERR_LAST=$?	# save return code - equal 0 if SECTION_ID found
 
 ### backwards compatibility:
 if [ $run_once -lt 0 ] ; then
-	if [ force_interval -eq 0 ] ; then
+	if [ $force_interval -eq 0 ] ; then
 		run_once=1
 		force_interval=1
 	else
