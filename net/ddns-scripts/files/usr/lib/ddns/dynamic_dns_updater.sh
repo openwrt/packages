@@ -155,7 +155,12 @@ trap "trap_handler 15" 15	# SIGTERM	Termination
 # check_unit		'days' 'hours' 'minutes' !!! needs about 5-10 minutes to sync an IP-change for an DNS entry
 #
 # force_interval	force to send an update to your service if no change was detected
-# force_unit		'days' 'hours' 'minutes' !!! force_interval="0" runs this script once for use i.e. with cron
+# force_unit		'days' 'hours' 'minutes' !!! force_interval="0" disables all forced updates, unless run_once=""
+#                   Or run_once=-1. This is to maintain backwards compatibility for configurations where run_once is not set.
+#
+# run_once          Boolean (1/0). If set to 1, run_once and exit. force_interval is checked for non-sero value 
+#                   Only; if 0, the IP address is not updated if there is no change detected. If force_interval != 0,
+#                   Then an update is sent in any case.
 #
 # retry_interval	if error was detected retry in
 # retry_unit		'days' 'hours' 'minutes' 'seconds'
@@ -195,6 +200,16 @@ ERR_LAST=$?	# save return code - equal 0 if SECTION_ID found
 [ "$ip_source" = "web" -a -z "$ip_url" -a $use_ipv6 -eq 0 ] && ip_url="http://checkip.dyndns.com"
 [ "$ip_source" = "web" -a -z "$ip_url" -a $use_ipv6 -eq 1 ] && ip_url="http://checkipv6.dyndns.com"
 [ "$ip_source" = "interface" -a -z "$ip_interface" ] && ip_interface="eth1"
+
+### backwards compatibility:
+if [ $run_once -lt 0 ] ; then
+    if [ force_interval -eq 0 ] ; then
+        run_once=1
+        force_interval=1
+    else
+        run_once=0
+    fi
+fi
 
 # url encode username (might be email or something like this)
 # and password (might have special chars for security reason)
@@ -352,8 +367,8 @@ while : ; do
 	[ $use_ipv6 -eq 1 ] && expand_ipv6 "$LOCAL_IP" LOCAL_IP	# on IPv6 we use expanded version
 
 	# prepare update
-	# never updated or forced immediate then NEXT_TIME = 0
-	[ $FORCE_SECONDS -eq 0 -o $LAST_TIME -eq 0 ] \
+	# never updated or run-once forced then NEXT_TIME = 0
+	[ $run_once -eq 1 -a $FORCE_SECONDS -ge 1 -o $LAST_TIME -eq 0 ] \
 		&& NEXT_TIME=0 \
 		|| NEXT_TIME=$(( $LAST_TIME + $FORCE_SECONDS ))
 
@@ -365,7 +380,7 @@ while : ; do
 			write_log 7 "Verbose Mode: $VERBOSE - NO UPDATE send"
 		elif [ "$LOCAL_IP" != "$REGISTERED_IP" ]; then
 			write_log 7 "Update needed - L: '$LOCAL_IP' <> R: '$REGISTERED_IP'"
-		else
+        elif [ $FORCE_SECONDS -gt 0 ]; then
 			write_log 7 "Forced Update - L: '$LOCAL_IP' == R: '$REGISTERED_IP'"
 		fi
 
@@ -428,8 +443,8 @@ while : ; do
 
 	# force_update=0 or VERBOSE > 1 - leave here
 	[ $VERBOSE -gt 1 ]  && write_log 7 "Verbose Mode: $VERBOSE - NO reloop"
-	[ $FORCE_SECONDS -eq 0 ] && write_log 6 "Configured to run once"
-	[ $VERBOSE -gt 1 -o $FORCE_SECONDS -eq 0 ] && exit 0
+	[ $run_once -gt 0 ] && write_log 6 "Configured to run once"
+	[ $VERBOSE -gt 1 -o $run_once -eq 1 ] && exit 0
 
 	write_log 6 "Rerun IP check at $(eval $DATE_PROG)"
 done
