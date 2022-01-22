@@ -1,6 +1,5 @@
 {
 	"comment": "Sample full SIIT configuration.",
-	"comment": "Configuration details at https://jool.mx/en/usr-flags-global.html",
 
 	"instance": "instance name",
 	"framework": "netfilter",
@@ -8,14 +7,14 @@
 	"global": {
 		"comment": "pool6 and the RFC6791v4 pool belong here, ever since Jool 4.",
 		"pool6": "64:ff9b::/96",
-		"manually-enabled": true,
-		"zeroize-traffic-class": false,
+		"manually-enabled": false,
+		"zeroize-traffic-class": true,
 		"override-tos": false,
-		"tos": 0,
-		"mtu-plateaus": [65535, 32000, 17914, 8166, 4352, 2002, 1492, 1006, 508, 296, 68],
-		"amend-udp-checksum-zero": false,
-		"eam-hairpin-mode": "intrinsic",
-		"randomize-rfc6791-addresses": true,
+		"tos": 254,
+		"mtu-plateaus": [1, 2, 3, 4, 5, 6],
+		"amend-udp-checksum-zero": true,
+		"eam-hairpin-mode": "simple",
+		"randomize-rfc6791-addresses": false,
 		"rfc6791v6-prefix": null,
 		"rfc6791v4-prefix": null
 	},
@@ -39,8 +38,8 @@
 		}
 	],
 
-	"comment": "This comment is relevant to blacklist4 maybe.",
-	"blacklist4": [
+	"comment": "This comment is relevant to denylist4 maybe.",
+	"denylist4": [
 		"198.51.100.0",
 		"198.51.100.2/32",
 		"198.51.100.32/27"
