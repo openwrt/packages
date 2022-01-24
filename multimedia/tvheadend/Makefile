@@ -81,7 +81,7 @@ define Build/Prepare
 		> $(PKG_BUILD_DIR)/debian/changelog
 endef
 
-define Package/conffiles
+define Package/tvheadend/conffiles
 /etc/config/tvheadend
 endef
 
