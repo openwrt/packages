@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=keepalived
-PKG_VERSION:=2.2.4
+PKG_VERSION:=2.2.7
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.keepalived.org/software
-PKG_HASH:=0138d69087d44beaaa589527f0cfa6885958b320a837147d02b6b7df73ebc1df
+PKG_HASH:=c61940d874154a560a54627ecf7ef47adebdf832164368d10bf242a4d9b7d49d
 
 PKG_CPE_ID:=cpe:/a:keepalived:keepalived
 PKG_LICENSE:=GPL-2.0-or-later
@@ -61,6 +61,7 @@ define Package/keepalived
   DEPENDS:= \
     +libnl-genl \
     +libmagic \
+    +libkmod \
     +KEEPALIVED_VRRP:kmod-macvlan \
     +KEEPALIVED_VRRP:libnl-route \
     +KEEPALIVED_VRRP:libnfnetlink \
@@ -88,7 +89,7 @@ CONFIGURE_ARGS+= \
 	--with-init=SYSV \
 	--disable-nftables \
 	--disable-track-process \
-	--with-run-dir="/var/run"
+	--runstatedir="/var/run"
 
 ifeq ($(CONFIG_KEEPALIVED_VRRP),)
 CONFIGURE_ARGS += \
@@ -215,8 +216,8 @@ ifeq ($(CONFIG_KEEPALIVED_LVS),y)
 endif
 
 	$(INSTALL_DIR) $(1)/etc/keepalived
-	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/keepalived/keepalived.conf \
-		$(1)/etc/keepalived/
+	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/keepalived/keepalived.conf.sample \
+		$(1)/etc/keepalived/keepalived.conf
 
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/etc/uci-defaults/keepalived \
