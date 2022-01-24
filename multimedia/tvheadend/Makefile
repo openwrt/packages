@@ -209,7 +209,7 @@ CONFIGURE_ARGS += \
 	--disable-libfdkaac_static \
 	--disable-pcloud_cache \
 	--enable-bundle \
-	--disable-uripaser \
+	--disable-uriparser \
 	--nowerror=unused-variable
 
 ## Transcoding | Remove these from CONFIGURE_ARGS.
