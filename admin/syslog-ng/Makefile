@@ -16,11 +16,17 @@ PKG_HASH:=092bd17fd47002c988aebdf81d0ed3f3cfd0e82b388d2453bcaa5e67934f4dda
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
+PKG_BUILD_DEPENDS:= \
+	HOST_OS_MACOS:fakeuname/host \
+
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_IPV6 \
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
+ifeq ($(CONFIG_HOST_OS_MACOS),y)
+    include ../../utils/fakeuname/fakeuname.mk
+endif
 
 define Package/syslog-ng
   SECTION:=admin
@@ -97,6 +103,7 @@ CONFIGURE_ARGS +=  \
 	--with-mongoc=no
 
 CONFIGURE_VARS += \
+	$(if $(CONFIG_HOST_OS_MACOS),PATH=$(FAKEUNAME_PATH):$(PATH)) \
 	LIBDBI_CFLAGS="-I$(STAGING_DIR)/usr/include"
 
 define Package/syslog-ng/install
