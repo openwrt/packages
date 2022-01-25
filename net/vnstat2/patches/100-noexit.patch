@@ -41,7 +41,7 @@
  	uint64_t dbifcount;
 --- a/src/vnstatd.c
 +++ b/src/vnstatd.c
-@@ -248,6 +248,7 @@ void showhelp(void)
+@@ -249,6 +249,7 @@ void showhelp(void)
  	printf("      --config <config file>   select used config file\n");
  	printf("      --noadd                  prevent startup if database has no interfaces\n");
  	printf("      --alwaysadd [mode]       automatically start monitoring all new interfaces\n");
@@ -49,7 +49,7 @@
  	printf("      --initdb                 create empty database and exit\n\n");
  
  	printf("See also \"man vnstatd\".\n");
-@@ -319,6 +320,8 @@ void parseargs(DSTATE *s, int argc, char
+@@ -322,6 +323,8 @@ void parseargs(DSTATE *s, int argc, char
  			} else {
  				cfg.alwaysadd = 1;
  			}
