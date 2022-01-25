@@ -36,6 +36,9 @@ was designed to exercise various physical subsystems of a computer as well as
 the various operating system kernel interfaces.
 endef
 
+MAKE_FLAGS += \
+	KERNEL=Linux
+
 define Package/stress-ng/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/stress-ng $(1)/usr/bin/
