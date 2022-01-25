@@ -1,6 +1,6 @@
 --- a/pdns/Makefile.am
 +++ b/pdns/Makefile.am
-@@ -71,7 +71,6 @@ CLEANFILES = \
+@@ -72,7 +72,6 @@ CLEANFILES = \
  	backends/gsql/gsqlbackend.gcda \
  	backends/gsql/gsqlbackend.gcno \
  	backends/gsql/gsqlbackend.gcov \
@@ -8,7 +8,7 @@
  	apidocfiles.h
  
  if !HAVE_API_SWAGGER_JSON
-@@ -105,7 +104,6 @@ apidocfiles.h: api-swagger.yaml api-swag
+@@ -106,7 +105,6 @@ apidocfiles.h: api-swagger.yaml api-swag
  	./incfiles $^ > $@
  
  noinst_SCRIPTS = pdns.init
@@ -16,7 +16,7 @@
  
  sbin_PROGRAMS = pdns_server
  bin_PROGRAMS = \
-@@ -146,7 +144,7 @@ if IXFRDIST
+@@ -147,7 +145,7 @@ if IXFRDIST
  bin_PROGRAMS += \
  	ixfrdist
  
@@ -25,12 +25,12 @@
  	ixfrdist.example.yml
  endif
  
-@@ -1299,9 +1297,6 @@ dnspcap2protobuf_LDADD = \
+@@ -1313,9 +1311,6 @@ dnspcap2protobuf_LDADD = \
  	$(BOOST_PROGRAM_OPTIONS_LIBS) \
  	$(RT_LIBS)
  
 -pdns.conf-dist: pdns_server
--	$(AM_V_GEN)./pdns_server --config=default 2>/dev/null > $@
+-	$(AM_V_GEN)./pdns_server --config=default > $@
 -
  testrunner_SOURCES = \
  	arguments.cc \

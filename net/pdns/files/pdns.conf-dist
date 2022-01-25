@@ -236,6 +236,11 @@
 # domain-metadata-cache-ttl=
 
 #################################
+# edns-cookie-secret	When set, set a server cookie when responding to a query with a Client cookie (in hex)
+#
+# edns-cookie-secret=
+
+#################################
 # edns-subnet-processing	If we should act on EDNS Subnet options
 #
 # edns-subnet-processing=no
@@ -376,6 +381,11 @@
 # max-generate-steps=0
 
 #################################
+# max-include-depth	Maximum number of nested $INCLUDE directives while processing a zone file
+#
+# max-include-depth=20
+
+#################################
 # max-nsec3-iterations	Limit the number of NSEC3 hash iterations
 #
 # max-nsec3-iterations=100
@@ -459,6 +469,16 @@
 # primary	Act as a primary
 #
 # primary=no
+
+#################################
+# proxy-protocol-from	A Proxy Protocol header is only allowed from these subnets, and is mandatory then too.
+#
+# proxy-protocol-from=
+
+#################################
+# proxy-protocol-maximum-size	The maximum size of a proxy protocol payload, including the TLV values
+#
+# proxy-protocol-maximum-size=512
 
 #################################
 # query-cache-ttl	Seconds to store query results in the QueryCache
@@ -644,6 +664,11 @@
 # webserver-allow-from	Webserver/API access is only allowed from these subnets
 #
 # webserver-allow-from=127.0.0.1,::1
+
+#################################
+# webserver-hash-plaintext-credentials	Whether to hash passwords and api keys supplied in plaintext, to prevent keeping the plaintext version in memory at runtime
+#
+# webserver-hash-plaintext-credentials=no
 
 #################################
 # webserver-loglevel	Amount of logging in the webserver (none, normal, detailed)
