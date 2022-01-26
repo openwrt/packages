@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=isc-dhcp
 UPSTREAM_NAME:=dhcp
 PKG_VERSION:=4.4.1
-PKG_RELEASE:=18
+PKG_RELEASE:=19
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -194,6 +194,7 @@ CONFIGURE_ARGS += \
 	--enable-paranoia		\
 	--disable-dependency-tracking	\
 	--with-randomdev=/dev/urandom \
+	ac_cv_path_AR=$(TARGET_AR) \
 	ac_cv_file__dev_random=yes
 
 ifeq ($(BUILD_VARIANT),ipv4)
@@ -209,6 +210,8 @@ define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR)			\
 		BUILD_CC="$(HOSTCC_NOCACHE)"		\
 		CROSS_CC="$(TARGET_CC)"			\
+		TARGET_AR="$(TARGET_AR)"		\
+		TARGET_RANLIB="$(TARGET_RANLIB)"	\
 		host_alias="$(GNU_TARGET_NAME)"		\
 		target_alias="$(GNU_TARGET_NAME)"	\
 		build_alias="$(GNU_HOST_NAME)"		\
@@ -217,6 +220,8 @@ define Build/Compile
 		DESTDIR="$(PKG_INSTALL_DIR)"		\
 		BUILD_CC="$(HOSTCC_NOCACHE)"		\
 		CROSS_CC="$(TARGET_CC)"			\
+		TARGET_AR="$(TARGET_AR)"		\
+		TARGET_RANLIB="$(TARGET_RANLIB)"	\
 		host_alias="$(GNU_TARGET_NAME)"		\
 		target_alias="$(GNU_TARGET_NAME)"	\
 		build_alias="$(GNU_HOST_NAME)"		\

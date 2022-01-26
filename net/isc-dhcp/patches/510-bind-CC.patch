@@ -5,7 +5,7 @@
  		rm -rf ${cleandirs} ${cleanfiles} ;                     \
  		(cd ${bindsrcdir} &&                                    \
 -                 ./configure ${bindconfig} > ${binddir}/configure.log); \
-+		 export CC=${CROSS_CC} &&                               \
++		 export CC=${CROSS_CC} AR=${TARGET_AR} RANLIB=${TARGET_RANLIB} && \
 +                ./configure ${bindconfig} --disable-atomic             \
 +		 --disable-kqueue --disable-epoll --disable-kqueue      \
 +                --disable-epoll --disable-devpoll --without-openssl    \
