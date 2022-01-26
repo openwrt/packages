@@ -12,7 +12,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=open2300
 PKG_SOURCE_DATE:=2014-03-04
 PKG_SOURCE_VERSION:=1af8ae609da66f8e1b745533c19095c9758bfb0b
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/wezm/open2300
@@ -34,6 +34,9 @@ endef
 define Package/open2300/description
   This is an utility suite used to communicate with and collect data from a WS23XX wheather station.
 endef
+
+MAKE_FLAGS += \
+	UNAME=Linux
 
 define Package/open2300/install
 	$(INSTALL_DIR) $(1)/usr/bin
