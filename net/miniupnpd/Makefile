@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=miniupnpd
 PKG_VERSION:=2.2.3
-PKG_RELEASE:=2
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE_URL:=https://miniupnp.tuxfamily.org/files
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -41,7 +41,6 @@ endef
 
 define Package/miniupnpd-iptables
   $(call Package/miniupnpd/Default)
-  CONFLICTS:=miniupnpd-nftables
   DEPENDS+= \
 	+IPV6:ip6tables \
 	+IPV6:libip6tc \
@@ -58,6 +57,8 @@ define Package/miniupnpd-nftables
 	+libnftnl
   TITLE+= (nftables)
   VARIANT:=nftables
+  DEFAULT_VARIANT:=1
+  CONFLICTS:=miniupnpd-iptables
 endef
 
 define Package/miniupnpd/conffiles/Default
