@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=reptyr
 PKG_VERSION:=0.8.0
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/nelhage/reptyr/archive/
@@ -34,6 +34,7 @@ define Package/reptyr/description
 endef
 
 MAKE_FLAGS+= \
+	UNAME_S=Linux \
 	PREFIX=/usr
 
 define Package/reptyr/install
