@@ -6,6 +6,7 @@ USE_PROCD=1
 
 service_triggers() {
 	procd_add_reload_trigger "chilli"
+	procd_add_interface_trigger "interface.*.up" "wan" /etc/init.d/chilli restart
 }
 
 config_cb() {
