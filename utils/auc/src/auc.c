@@ -1430,6 +1430,7 @@ static void usage(const char *arg0)
 #endif
 	fprintf(stdout, " -f\t\tuse force\n");
 	fprintf(stdout, " -h\t\toutput help\n");
+	fprintf(stdout, " -n\t\tdry-run (don't download or upgrade)\n");
 	fprintf(stdout, " -r\t\tcheck only for release upgrades\n");
 	fprintf(stdout, " -F <fstype>\toverride filesystem type\n");
 	fprintf(stdout, " -y\t\tdon't wait for user confirmation\n");
@@ -1451,9 +1452,10 @@ int main(int args, char *argv[]) {
 	struct blob_attr *tbr[__REPLY_MAX];
 	struct blob_attr *tb[__TARGET_MAX] = {}; /* make sure tb is NULL initialized even if blobmsg_parse isn't called */
 	struct stat imgstat;
-	int check_only = 0;
-	int retry_delay = 0;
-	int upg_check = 0;
+	bool check_only = false;
+	bool retry_delay = false;
+	bool upg_check = false;
+	bool dry_run = false;
 	int revcmp;
 	int addargs;
 	unsigned char argc = 1;
@@ -1485,7 +1487,7 @@ int main(int args, char *argv[]) {
 		}
 
 		if (!strncmp(argv[argc], "-c", 3))
-			check_only = 1;
+			check_only = true;
 
 		if (!strncmp(argv[argc], "-f", 3))
 			force = true;
@@ -1494,6 +1496,9 @@ int main(int args, char *argv[]) {
 			target_fstype = argv[argc + 1];
 			addargs = 1;
 		}
+
+		if (!strncmp(argv[argc], "-n", 3))
+			dry_run = true;
 
 		if (!strncmp(argv[argc], "-r", 3))
 			release_only = true;
@@ -1686,7 +1691,6 @@ int main(int args, char *argv[]) {
 			}
 			use_get = true;
 		} else if (retry_delay) {
-			fputc('\n', stderr);
 			retry_delay = 0;
 		}
 
@@ -1720,7 +1724,13 @@ int main(int args, char *argv[]) {
 	         blobmsg_get_string(tb[TARGET_BINDIR]),
 	         image_name);
 
-	fprintf(stderr, "Downloading image from %s\n", url);
+	if (dry_run) {
+		fprintf(stderr, "\nImage available at %s\n", url);
+		rc = 0;
+		goto freebranches;
+	}
+
+	fprintf(stderr, "\nDownloading image from %s\n", url);
 	rc = server_request(url, NULL, NULL);
 	if (rc)
 		goto freebranches;
@@ -1792,7 +1802,6 @@ freebranches:
 		fputc('\n', stderr);
 	}
 
-	/* ToDo */
 freeboard:
 	if (rootfs_type)
 		free(rootfs_type);
