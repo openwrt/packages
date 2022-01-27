@@ -78,6 +78,9 @@ start_service() {
 }
 
 stop_service() {
+	for undofile in /var/run/chilli.tun*.sh; do
+		sh $undofile >& /dev/null
+	done
 	rm -f /var/run/chilli_*
 }
 
