@@ -1,0 +1,15 @@
+--- a/python/wscript
++++ b/python/wscript
+@@ -73,9 +73,9 @@ def configure(conf):
+         for module, package in selftest_pkgs.items():
+             find_third_party_module(conf, module, package)
+ 
+-    if not Options.options.without_ad_dc:
+-        for module, package in ad_dc_pkgs.items():
+-            find_third_party_module(conf, module, package)
++#    if not Options.options.without_ad_dc:
++#       for module, package in ad_dc_pkgs.items():
++#           find_third_party_module(conf, module, package)
+ 
+ 
+ def build(bld):
