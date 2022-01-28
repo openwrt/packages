@@ -1,0 +1,22 @@
+From 0f03ec698e67ea3c0f21ba021c922146d5ad07b2 Mon Sep 17 00:00:00 2001
+From: Carlos Velasco <carlos.velasco@nimastelecom.com>
+Date: Thu, 4 Nov 2021 09:11:06 +0100
+Subject: [PATCH] CMake: Fix FindCurses.cmake try packate ncursesw if ncurses
+ not found
+
+Change to pkg_search_module, first try to find ncurses pkg, if not found, then try with ncursesw pkg
+---
+ cmake/FindCURSES.cmake | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/cmake/FindCURSES.cmake
++++ b/cmake/FindCURSES.cmake
+@@ -43,7 +43,7 @@ The following cache variables may also b
+ 
+ find_package(PkgConfig QUIET)
+ # First try for NCurses
+-pkg_check_modules(PC_NCurses QUIET ncurses)
++pkg_search_module (PC_NCurses QUIET ncurses ncursesw)
+ 
+ find_path(NCURSES_INCLUDE_DIR
+   NAMES ncurses.h
