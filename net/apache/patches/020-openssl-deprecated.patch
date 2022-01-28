@@ -1,6 +1,6 @@
 --- a/modules/md/md_crypt.c
 +++ b/modules/md/md_crypt.c
-@@ -1095,23 +1095,23 @@ const char *md_cert_get_serial_number(co
+@@ -1139,23 +1139,23 @@ const char *md_cert_get_serial_number(co
  
  int md_cert_is_valid_now(const md_cert_t *cert)
  {
@@ -42,7 +42,7 @@
                       "a newer library (%s, version currently loaded is %s)"
 --- a/modules/ssl/ssl_engine_io.c
 +++ b/modules/ssl/ssl_engine_io.c
-@@ -1280,9 +1280,9 @@ static apr_status_t ssl_io_filter_handsh
+@@ -1316,9 +1316,9 @@ static apr_status_t ssl_io_filter_handsh
          if (dc->proxy->ssl_check_peer_expire != FALSE) {
              if (!cert
                  || (X509_cmp_current_time(
@@ -56,7 +56,7 @@
                                "SSL Proxy: Peer certificate is expired");
 --- a/modules/ssl/ssl_engine_log.c
 +++ b/modules/ssl/ssl_engine_log.c
-@@ -161,10 +161,10 @@ static void ssl_log_cert_error(const cha
+@@ -171,10 +171,10 @@ static void ssl_log_cert_error(const cha
                  BIO_puts(bio, "(ERROR)");
  
              BIO_puts(bio, " / notbefore: ");
@@ -90,7 +90,7 @@
      else if (*var && strcEQ(var+1, "_DN")) {
 --- a/modules/ssl/ssl_private.h
 +++ b/modules/ssl/ssl_private.h
-@@ -99,6 +99,9 @@
+@@ -102,6 +102,9 @@
  #include <openssl/x509v3.h>
  #include <openssl/x509_vfy.h>
  #include <openssl/ocsp.h>
