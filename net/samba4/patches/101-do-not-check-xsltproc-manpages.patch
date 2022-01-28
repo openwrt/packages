@@ -4,7 +4,7 @@ Signed-off-by: Bian Naimeng <biannm@cn.fujitsu.com>
 
 --- a/lib/ldb/wscript
 +++ b/lib/ldb/wscript
-@@ -143,7 +143,7 @@ def configure(conf):
+@@ -144,7 +144,7 @@ def configure(conf):
          conf.DEFINE('EXPECTED_SYSTEM_LDB_VERSION_RELEASE', int(v[2]))
  
      if conf.env.standalone_ldb:
