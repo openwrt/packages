@@ -35,6 +35,11 @@ config_cb() {
 	fi
 }
 
+service_triggers()
+{
+	procd_add_reload_trigger "$NAME"
+}
+
 start_service() {
 	local init_cfg=" "
 	local conf_file="/var/etc/$NAME.ini"
@@ -69,4 +74,9 @@ start_service() {
 	[ $respawn -eq 1 ] && procd_set_param respawn
 	[ -n "$env" ] && config_list_foreach "$init_cfg" env "procd_append_param env"
 	procd_close_instance
+}
+
+reload_service() {
+	stop
+	start
 }
