@@ -1,4 +1,4 @@
-FROM debian:9
+FROM debian:10
 
 
 # Configuration version history
@@ -8,6 +8,7 @@ FROM debian:9
 # v1.0.3 - Verify usign signatures
 # v1.0.4 - Add support for Python3
 # v1.0.5 - Add 19.07 public keys, verify keys
+# v1.0.6 - Add 21.02 public keys, update Debian image to version 10, add rsync
 
 RUN apt update && apt install -y \
 build-essential \
@@ -23,6 +24,7 @@ python \
 python3 \
 signify-openbsd \
 subversion \
+rsync \
 time \
 unzip \
 wget \
@@ -54,6 +56,11 @@ RUN curl 'https://git.openwrt.org/?p=keyring.git;a=blob_plain;f=gpg/2074BE7A.asc
  && gpg --fingerprint --with-colons '<pgpsign-19.07@openwrt.org>' | grep '^fpr:::::::::D9C6901F45C9B86858687DFF28A39BC32074BE7A:$' \
  && echo 'D9C6901F45C9B86858687DFF28A39BC32074BE7A:6:' | gpg --import-ownertrust
 
+# OpenWrt Build System (PGP key for 21.02 release builds)
+RUN curl 'https://git.openwrt.org/?p=keyring.git;a=blob_plain;f=gpg/88CA59E8.asc' | gpg --import \
+ && gpg --fingerprint --with-colons '<pgpsign-21.02@openwrt.org>' | grep '^fpr:::::::::667205E379BAF348863A5C6688CA59E88F681580:$' \
+ && echo '667205E379BAF348863A5C6688CA59E88F681580:6:' | gpg --import-ownertrust
+
 # untrusted comment: Public usign key for unattended snapshot builds
 RUN curl 'https://git.openwrt.org/?p=keyring.git;a=blob_plain;f=usign/b5043e70f9a75cde' --create-dirs -o /home/build/usign/b5043e70f9a75cde \
  && echo 'd7ac10f9ed1b38033855f3d27c9327d558444fca804c685b17d9dcfb0648228f */home/build/usign/b5043e70f9a75cde' | sha256sum --check
@@ -61,3 +68,6 @@ RUN curl 'https://git.openwrt.org/?p=keyring.git;a=blob_plain;f=usign/b5043e70f9
 # untrusted comment: Public usign key for 19.07 release builds
 RUN curl 'https://git.openwrt.org/?p=keyring.git;a=blob_plain;f=usign/f94b9dd6febac963' --create-dirs -o /home/build/usign/f94b9dd6febac963 \
  && echo 'b1d09457cfbc36fccfe18382d65c54a2ade3e7fd3902da490a53aa517b512755 */home/build/usign/f94b9dd6febac963' | sha256sum --check
+
+# untrusted comment: Public usign key for 21.02 release builds
+RUN curl 'https://git.openwrt.org/?p=keyring.git;a=blob_plain;f=usign/2f8b0b98e08306bf' --create-dirs -o /home/build/usign/2f8b0b98e08306bf  && echo 'd102bdd75421c62490b97f520f9db06aadb44ad408b244755d26e96ea5cd3b7f */home/build/usign/2f8b0b98e08306bf' | sha256sum --check
