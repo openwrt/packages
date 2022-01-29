@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lyaml
 PKG_VERSION:=6.2.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/gvvaughan/lyaml/tar.gz/v$(PKG_VERSION)?
@@ -12,9 +12,12 @@ PKG_MAINTAINER:=Mathew McBride <matt@traverse.com.au>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_DEPENDS:=lua/host luarocks/host
+PKG_BUILD_DEPENDS:=lua/host luarocks/host HOST_OS_MACOS:fakeuname/host
 
 include $(INCLUDE_DIR)/package.mk
+ifeq ($(CONFIG_HOST_OS_MACOS),y)
+    include ../../utils/fakeuname/fakeuname.mk
+endif
 
 define Package/lyaml
   SUBMENU:=Lua
@@ -43,6 +46,7 @@ define Build/Compile
 	CFLAGS="$(TARGET_CFLAGS) $(FPIC)" \
 	LDFLAGS="$(TARGET_LDFLAGS)" \
 	CC="$(TARGET_CC)" LD="$(TARGET_CC)" \
+	$(if $(CONFIG_HOST_OS_MACOS),PATH=$(FAKEUNAME_PATH):$(TARGET_PATH_PKG)) \
 	luarocks make --pack-binary-rock lyaml-$(PKG_VERSION)-1.rockspec \
 		LUA_LIBDIR=$(STAGING_DIR)/usr/lib/lua \
 		YAML_DIR=$(STAGING_DIR)/usr \
