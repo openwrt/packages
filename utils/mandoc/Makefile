@@ -34,10 +34,33 @@ based on the libmandoc validating compiler, to format output for UTF-8
 and ASCII UNIX terminals, HTML 5, PostScript, and PDF.
 endef
 
-CONFIGURE_VARS=\
-	CC=$(CC) \
-	HAVE_FTS=0 \
-	HAVE_REALLOCARRAY=0 \
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	{ \
+	    echo PREFIX=/usr; \
+	    echo HAVE_FTS=0; \
+	    echo HAVE_REALLOCARRAY=0; \
+	    echo "#Fix build on Darwin host (that values must be used for target build):"; \
+	    echo HAVE_DIRENT_NAMLEN=0; \
+	    echo HAVE_ENDIAN=1; \
+	    echo HAVE_SYS_ENDIAN=0; \
+	    echo HAVE_EFTYPE=0; \
+	    echo HAVE_PROGNAME=0; \
+	    echo HAVE_REWB_BSD=0; \
+	    echo HAVE_REWB_SYSV=1; \
+	    echo HAVE_STRCASESTR=1; \
+	    echo HAVE_STRINGLIST=0; \
+	    echo HAVE_STRLCAT=0; \
+	    echo HAVE_STRLCPY=0; \
+	    echo HAVE_STRPTIME=1; \
+	    echo HAVE_STRTONUM=0; \
+	    echo HAVE_VASPRINTF=1; \
+	    echo NEED_GNU_SOURCE=1; \
+	    echo HAVE_WCHAR=1; \
+	    echo UTF8_LOCALE=en_US.utf8; \
+	    echo STATIC=-static; \
+	} > $(PKG_BUILD_DIR)/configure.local
+endef
 
 define Package/mandoc/install
 	$(INSTALL_DIR) $(1)/usr/bin/
