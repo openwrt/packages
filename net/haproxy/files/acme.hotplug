@@ -1,0 +1,12 @@
+case $ACTION in
+issued|renewed)
+	cat \
+		"/etc/ssl/acme/$main_domain.fullchain.cer" \
+		"/etc/ssl/acme/$main_domain.key" \
+		>"/etc/ssl/acme/$main_domain.combined.cer"
+	;;
+esac
+
+if [ "$ACTION" = renewed ]; then
+	/etc/init.d/haproxy reload
+fi

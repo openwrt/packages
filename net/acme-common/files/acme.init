@@ -1,0 +1,9 @@
+#!/bin/sh /etc/rc.common
+
+START=80
+USE_PROCD=1
+
+service_triggers() {
+	procd_add_config_trigger config.change acme \
+		/usr/bin/acme get
+}
