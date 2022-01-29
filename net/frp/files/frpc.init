@@ -21,7 +21,9 @@ config_cb() {
 		option_cb() {
 			local option="$1"
 			local value="$2"
-			echo "$option = $value" >> "$conf_file"
+			[ "$option" = "name" ] && \
+			sed -i "s/$CONFIG_SECTION/$value/g" "$conf_file" || \
+			echo "$option = $value" >> "$conf_file";
 		}
 		list_cb() {
 			local name="$1"
