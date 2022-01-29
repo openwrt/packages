@@ -122,6 +122,8 @@ define Package/haproxy/install
 	$(INSTALL_CONF) ./files/haproxy.cfg $(1)/etc/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/haproxy.init $(1)/etc/init.d/haproxy
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/acme
+	$(INSTALL_DATA) ./files/acme.hotplug $(1)/etc/hotplug.d/acme/00-haproxy
 endef
 
 Package/haproxy-nossl/install = $(Package/haproxy/install)
