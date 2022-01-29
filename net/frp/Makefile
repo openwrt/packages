@@ -33,6 +33,11 @@ define Package/frp/install
 	$(INSTALL_CONF) ./files/$(2).config $(1)/etc/config/$(2)
 	$(INSTALL_DIR) $(1)/etc/init.d/
 	$(INSTALL_BIN) ./files/$(2).init $(1)/etc/init.d/$(2)
+
+	if [ -r ./files/$(2).uci-defaults ]; then \
+		$(INSTALL_DIR) $(1)/etc/uci-defaults; \
+		$(INSTALL_DATA) ./files/$(2).uci-defaults $(1)/etc/uci-defaults/$(2); \
+	fi
 endef
 
 define Package/frp/template
