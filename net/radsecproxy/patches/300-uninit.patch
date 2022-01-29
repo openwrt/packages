@@ -1,0 +1,11 @@
+--- a/gconfig.c
++++ b/gconfig.c
+@@ -119,7 +119,7 @@ FILE *pushgconfpaths(struct gconffile **
+     int i;
+     FILE *f = NULL;
+     glob_t globbuf;
+-    char *path, *curfile = NULL, *dir;
++    char *path = NULL, *curfile = NULL, *dir;
+ 
+     /* if cfgpath is relative, make it relative to current config */
+     if (*cfgpath == '/')
