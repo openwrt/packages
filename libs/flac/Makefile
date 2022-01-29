@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=flac
 PKG_VERSION:=1.3.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://downloads.xiph.org/releases/flac/
@@ -38,6 +38,7 @@ CONFIGURE_ARGS += \
 	--disable-cpplibs \
 	--disable-sse \
 	--disable-altivec \
+	--disable-vsx \
 	--disable-doxgen-docs \
 	--disable-local-xmms-plugin \
 	--disable-xmms-plugin \
