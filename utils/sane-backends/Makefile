@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sane-backends
 PKG_VERSION:=1.0.32
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://gitlab.com/sane-project/backends/uploads/104f09c07d35519cc8e72e604f11643f
@@ -238,7 +238,7 @@ define Package/sane-frontends/install
 endef
 
 define Package/sane-backends-all/install
-	/bin/true
+	true
 endef
 
 define Build/InstallDev
