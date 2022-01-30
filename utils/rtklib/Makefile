@@ -7,13 +7,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtklib
-PKG_VERSION:=2.4.3_b32
+PKG_VERSION:=2.4.3_b34
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/tomojitakasu/RTKLIB
-PKG_SOURCE_VERSION:=6e5ddadb737c54d4a43c43feeeb4e244c51b4286
-PKG_MIRROR_HASH:=b6ada49b6667a98e935055e718bf9a5712030cddc1694d1be7c0ab0e98bdc7b8
+PKG_SOURCE_VERSION:=180043ee24b6d2b168f98b64be15f69d50046b1a
+PKG_MIRROR_HASH:=e6485140152b623b4fd5e579ee14c2658dd173ed38070b32e49869aad202277c
 
 PKG_MAINTAINER:=Nuno Goncalves <nunojpg@gmail.com>
 PKG_LICENSE:=BSD-2-Clause
@@ -58,36 +58,36 @@ endef
 define Build/Compile
 	rm -rf $(PKG_INSTALL_DIR)
 	mkdir -p $(PKG_INSTALL_DIR)
-	$(MAKE) -C $(PKG_BUILD_DIR)/app/convbin/gcc CC="$(TARGET_CC) $(TARGET_CFLAGS)"
-	$(MAKE) -C $(PKG_BUILD_DIR)/app/pos2kml/gcc CC="$(TARGET_CC) $(TARGET_CFLAGS)"
-	$(MAKE) -C $(PKG_BUILD_DIR)/app/rnx2rtkp/gcc CC="$(TARGET_CC) $(TARGET_CFLAGS)"
-	$(MAKE) -C $(PKG_BUILD_DIR)/app/rtkrcv/gcc CC="$(TARGET_CC) $(TARGET_CFLAGS)"
-	$(MAKE) -C $(PKG_BUILD_DIR)/app/str2str/gcc CC="$(TARGET_CC) $(TARGET_CFLAGS)"
+	$(MAKE) -C $(PKG_BUILD_DIR)/app/consapp/convbin/gcc CC="$(TARGET_CC) $(TARGET_CFLAGS)"
+	$(MAKE) -C $(PKG_BUILD_DIR)/app/consapp/pos2kml/gcc CC="$(TARGET_CC) $(TARGET_CFLAGS)"
+	$(MAKE) -C $(PKG_BUILD_DIR)/app/consapp/rnx2rtkp/gcc CC="$(TARGET_CC) $(TARGET_CFLAGS)"
+	$(MAKE) -C $(PKG_BUILD_DIR)/app/consapp/rtkrcv/gcc CC="$(TARGET_CC) $(TARGET_CFLAGS)"
+	$(MAKE) -C $(PKG_BUILD_DIR)/app/consapp/str2str/gcc CC="$(TARGET_CC) $(TARGET_CFLAGS)"
 endef
 
 define Package/convbin/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/app/convbin/gcc/convbin $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/app/consapp/convbin/gcc/convbin $(1)/usr/bin/
 endef
 
 define Package/pos2kml/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/app/pos2kml/gcc/pos2kml $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/app/consapp/pos2kml/gcc/pos2kml $(1)/usr/bin/
 endef
 
 define Package/rnx2rtkp/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/app/rnx2rtkp/gcc/rnx2rtkp $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/app/consapp/rnx2rtkp/gcc/rnx2rtkp $(1)/usr/bin/
 endef
 
 define Package/rtkrcv/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/app/rtkrcv/gcc/rtkrcv $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/app/consapp/rtkrcv/gcc/rtkrcv $(1)/usr/bin/
 endef
 
 define Package/str2str/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/app/str2str/gcc/str2str $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/app/consapp/str2str/gcc/str2str $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,convbin))
