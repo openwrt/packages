@@ -1,6 +1,6 @@
 --- a/src/stream.c
 +++ b/src/stream.c
-@@ -81,6 +81,9 @@
+@@ -92,6 +92,9 @@
  #include <netinet/in.h>
  #include <netinet/tcp.h>
  #include <arpa/inet.h>
