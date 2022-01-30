@@ -1,0 +1,43 @@
+From b5159062f079d451f23d7f2a0e7d9e2f84934f94 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Sat, 29 Jan 2022 17:09:56 -0800
+Subject: [PATCH] btrfs-progs: fix 64-bit mips and powerpc types
+
+The kernel uses 'unsigned long' for u64 specifically for ppc64 and
+mips64.
+
+Remove asm/types.h include as it will get included properly later.
+
+Fixe -Wformat warnings.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+Signed-off-by: David Sterba <dsterba@suse.com>
+---
+ cmds/receive-dump.c | 1 -
+ kerncompat.h        | 5 +++++
+ 2 files changed, 5 insertions(+), 1 deletion(-)
+
+--- a/cmds/receive-dump.c
++++ b/cmds/receive-dump.c
+@@ -31,7 +31,6 @@
+ #include <stdlib.h>
+ #include <time.h>
+ #include <ctype.h>
+-#include <asm/types.h>
+ #include <uuid/uuid.h>
+ #include "common/utils.h"
+ #include "cmds/commands.h"
+--- a/kerncompat.h
++++ b/kerncompat.h
+@@ -19,6 +19,11 @@
+ #ifndef __KERNCOMPAT_H__
+ #define __KERNCOMPAT_H__
+ 
++#ifndef __SANE_USERSPACE_TYPES__
++/* For PPC64 to get LL64 types */
++#define __SANE_USERSPACE_TYPES__
++#endif
++
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <errno.h>
