@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=btrfs-progs
-PKG_VERSION:=5.11
-PKG_RELEASE:=1
+PKG_VERSION:=5.16.1
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/kernel/people/kdave/btrfs-progs
-PKG_HASH:=d41961b0a92160c80f894ad9a1882822889c2e1d084cbf3e08b8c214a5cf0137
+PKG_HASH:=3da4da5361cf86bddda80edb4c4f30ea076cb4ebec29904fa08afc930ef9e1a8
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-v$(PKG_VERSION)
 
 PKG_MAINTAINER:=Karel Kočí <karel.koci@nic.cz>
@@ -65,6 +65,7 @@ CONFIGURE_ARGS += \
 	--disable-backtrace \
 	--disable-convert \
 	--disable-documentation \
+	--disable-libudev \
 	--disable-python
 ifneq ($(CONFIG_BTRFS_PROGS_ZSTD),y)
 CONFIGURE_ARGS += --disable-zstd
