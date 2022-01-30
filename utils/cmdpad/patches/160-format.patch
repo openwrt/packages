@@ -1,0 +1,11 @@
+--- a/src/parse.c
++++ b/src/parse.c
+@@ -257,7 +257,7 @@ int ParseCommand( char * pchCommandLine)
+ 
+       pchValue = strtok( pchValue, ",") ; 
+       d2printf( "Value is '%s'\n", pchValue) ;
+-      if( (pchValue == NULL ) || ( sscanf( pchValue, "%d", &code) != 1) )
++      if( (pchValue == NULL ) || ( sscanf( pchValue, "%hu", &code) != 1) )
+ 	return -1 ;
+       
+       pchValue = strtok( NULL, ",") ;
