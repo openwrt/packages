@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=chaosvpn
 
 PKG_VERSION:=2.19
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ryd/chaosvpn/tar.gz/v$(PKG_VERSION)?
@@ -38,6 +38,7 @@ define Package/chaosvpn/conffiles
 endef
 
 MAKE_FLAGS += \
+		OS=Linux \
 		COPT="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS) $(TARGET_LDFLAGS)"
 
 define Package/chaosvpn/install
