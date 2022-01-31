@@ -52,7 +52,7 @@ Subject: [PATCH 904/904] gmpdh: Plugin that implements gmp DH functions in an
  	src/libstrongswan/plugins/aesni/Makefile
 --- a/src/libstrongswan/Makefile.am
 +++ b/src/libstrongswan/Makefile.am
-@@ -345,6 +345,13 @@ if MONOLITHIC
+@@ -348,6 +348,13 @@ if MONOLITHIC
  endif
  endif
  
