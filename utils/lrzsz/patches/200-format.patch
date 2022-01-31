@@ -1,0 +1,91 @@
+--- a/lib/long-options.c
++++ b/lib/long-options.c
+@@ -22,6 +22,7 @@
+ #endif
+ 
+ #include <stdio.h>
++#include <stdlib.h>
+ #include <getopt.h>
+ #include "long-options.h"
+ 
+--- a/src/lrz.c
++++ b/src/lrz.c
+@@ -2319,7 +2319,7 @@ exec2(const char *s)
+ 	if (*s == '!')
+ 		++s;
+ 	io_mode(0,0);
+-	execl("/bin/sh", "sh", "-c", s);
++	execl("/bin/sh", "sh", "-c", s, NULL);
+ 	zpfatal("execl");
+ 	exit(1);
+ }
+--- a/src/lsyslog.c
++++ b/src/lsyslog.c
+@@ -22,6 +22,7 @@
+ #ifdef ENABLE_SYSLOG
+ #include "zglobal.h"
+ #include <pwd.h>
++#include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+ #endif
+--- a/src/lsz.c
++++ b/src/lsz.c
+@@ -1997,7 +1997,7 @@ zsendfdata (struct zm_fileinfo *zi)
+ 		blklen = calc_blklen (total_sent);
+ 		total_sent += blklen + OVERHEAD;
+ 		if (Verbose > 2 && blklen != old)
+-			vstringf (_("blklen now %d\n"), blklen);
++			vstringf (_("blklen now %zu\n"), blklen);
+ #ifdef HAVE_MMAP
+ 		if (mm_addr) {
+ 			if (zi->bytes_sent + blklen < mm_size)
+--- a/src/tcp.c
++++ b/src/tcp.c
+@@ -56,7 +56,7 @@ tcp_server (char *buf)
+ 	struct sockaddr_in s;
+ 	struct sockaddr_in t;
+ 	int on=1;
+-	size_t len;
++	socklen_t len;
+ 
+ 	if ((sock = socket (AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
+ 		error(1,errno,"socket");
+@@ -91,7 +91,7 @@ tcp_accept (int d)
+ {
+ 	int so;
+ 	struct  sockaddr_in s;
+-	size_t namelen;
++	socklen_t namelen;
+ 	int num=0;
+ 
+ 	namelen = sizeof(s);
+--- a/src/zm.c
++++ b/src/zm.c
+@@ -451,7 +451,7 @@ zsda32(const char *buf, size_t length, i
+ 	int c;
+ 	unsigned long crc;
+ 	int i;
+-	VPRINTF(3,("zsdat32: %d %s", length, Zendnames[(frameend-ZCRCE)&3]));
++	VPRINTF(3,("zsdat32: %zu %s", length, Zendnames[(frameend-ZCRCE)&3]));
+ 
+ 	crc = 0xFFFFFFFFL;
+ 	zsendline_s(buf,length);
+--- a/src/zreadline.c
++++ b/src/zreadline.c
+@@ -68,13 +68,13 @@ readline_internal(unsigned int timeout)
+ 		else if (n==0)
+ 			n=1;
+ 		if (Verbose > 5)
+-			vstringf("Calling read: alarm=%d  Readnum=%d ",
++			vstringf("Calling read: alarm=%u  Readnum=%zu ",
+ 			  n, readline_readnum);
+ 		signal(SIGALRM, zreadline_alarm_handler); 
+ 		alarm(n);
+ 	}
+ 	else if (Verbose > 5)
+-		vstringf("Calling read: Readnum=%d ",
++		vstringf("Calling read: Readnum=%zu ",
+ 		  readline_readnum);
+ 
+ 	readline_ptr=readline_buffer;
