@@ -25,13 +25,25 @@ PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/nano
+define Package/nano/Default
   SUBMENU:=Editors
   SECTION:=utils
   CATEGORY:=Utilities
-  TITLE:=GNU nano - enhanced clone of the Pico text editor
   URL:=https://www.nano-editor.org/
   DEPENDS:=+libncurses
+endef
+
+define Package/nano
+  $(call Package/nano/Default)
+  TITLE:=GNU nano text editor (minimal features)
+  VARIANT:=tiny
+  DEFAULT_VARIANT:=1
+endef
+
+define Package/nano-plus
+  $(call Package/nano/Default)
+  TITLE:=GNU nano text editor (more features, Unicode)
+  VARIANT:=plus
 endef
 
 define Package/nano/description
@@ -44,11 +56,41 @@ define Package/nano/description
   Nano is an official GNU package.
 endef
 
-CONFIGURE_ARGS += \
-	--enable-tiny \
-	--disable-utf8 \
+define Package/nano-plus/description
+  nano-plus - Additional features enabled, larger size than default nano.
+  (multibuffer, Unicode/UTF-8, help, justify, nanorc, some key bindings)
+
+  $(call Package/nano/description)
+endef
+
+ifeq ($(BUILD_VARIANT),plus)
+# plus variant with more features included
+  CONFIGURE_ARGS += \
+	--enable-help \
+	--enable-justify \
+	--enable-linenumbers \
+	--enable-multibuffer \
+	--enable-nanorc \
+	--enable-utf8 \
+	--disable-browser \
 	--disable-color \
-	--enable-linenumbers
+	--disable-comment \
+	--disable-extra \
+	--disable-histories \
+	--disable-libmagic \
+	--disable-mouse \
+	--disable-operatingdir \
+	--disable-speller \
+	--disable-tabcomp \
+	--disable-wordcomp
+else
+# default tiny variant
+  CONFIGURE_ARGS += \
+	--enable-tiny \
+	--enable-linenumbers \
+	--disable-color \
+	--disable-utf8
+endif
 
 CONFIGURE_VARS += \
 	ac_cv_header_regex_h=no \
@@ -58,5 +100,10 @@ define Package/nano/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/$(PKG_NAME) $(1)/usr/bin/
 endef
 
+define Package/nano-plus/install
+	$(call Package/nano/install,$1)
+endef
+
 $(eval $(call BuildPackage,nano))
+$(eval $(call BuildPackage,nano-plus))
 
