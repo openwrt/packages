@@ -24,7 +24,7 @@ local __URL="http://[USERNAME]:[PASSWORD]@update.spdns.de/nic/update?hostname=[D
 [ -z "$password" ] && write_log 14 "Service section not configured correctly! Missing 'password'"
 
 # do replaces in URL
-__URL=$(echo $__URL |  | sed -e "s#\[USERNAME\]#$URL_USER#g" -e "s#\[PASSWORD\]#$URL_PASS#g" \
+__URL=$(echo $__URL | sed -e "s#\[USERNAME\]#$URL_USER#g" -e "s#\[PASSWORD\]#$URL_PASS#g" \
 			     -e "s#\[PARAMENC\]#$URL_PENC#g" -e "s#\[PARAMOPT\]#$param_opt#g" \
 			     -e "s#\[DOMAIN\]#$domain#g"     -e "s#\[IP\]#$__IP#g")
 [ $use_https -ne 0 ] && __URL=$(echo $__URL | sed -e 's#^http:#https:#')
