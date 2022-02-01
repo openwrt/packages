@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bluelog
 PKG_VERSION:=1.1.2
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=Bluelog-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/MS3FGX/Bluelog/tar.gz/$(PKG_VERSION)?
@@ -78,7 +78,7 @@ MAKE_FLAGS += \
 define Build/Prepare
 	$(eval $(call Download,oui.txt))
 	$(Build/Prepare/Default)
-	zcat $(DL_DIR)/$(OUI_SOURCE) > $(PKG_BUILD_DIR)/oui.tmp
+	gzip -dc $(DL_DIR)/$(OUI_SOURCE) > $(PKG_BUILD_DIR)/oui.tmp
 endef
 
 define Package/bluelog/install
