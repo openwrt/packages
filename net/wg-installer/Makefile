@@ -53,7 +53,7 @@ endef
 
 define Package/wg-installer-server-hotplug-babeld
 	$(call Package/wg-installer-server)
-	DEPENDS:=wg-installer-server +coreutils-realpath
+	DEPENDS:=wg-installer-server
 endef
 
 define Package/wg-installer-server-hotplug-babeld/install
