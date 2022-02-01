@@ -6,11 +6,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=numpy
-PKG_VERSION:=1.21.5
+PKG_VERSION:=1.23.3
 PKG_RELEASE:=$(AUTORELEASE)
 
 PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=6a5928bc6241264dce5ed509e66f33676fc97f464e7a919edc672fb5532221ee
+PKG_HASH:=51bf49c0cd1d52be0a240aa66f3458afc4b95d8993d2d04f0d91fa60c10af6cd
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
@@ -21,8 +21,6 @@ PKG_CPE_ID:=cpe:/a:numpy:numpy
 PKG_CONFIG_DEPENDS:= \
         CONFIG_NUMPY_OPENBLAS_SUPPORT
 
-# yes, zip... sigh
-PYPI_SOURCE_EXT:=zip
 HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=Cython
 
 include ../pypi.mk
