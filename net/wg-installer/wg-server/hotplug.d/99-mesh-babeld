@@ -12,25 +12,5 @@ if [ "${slicedint}" != "wg_" ]; then
 fi
 
 if [ "${ACTION}" = "add" ]; then
-	uci add babeld interface
-	uci set babeld.@interface[-1].ifname="${INTERFACE}"
-	uci get wgserver.@babeld_hotplug[0].rxcost
-	if [ $? -eq 0 ]; then
-		babeld_rxcost="$(uci get wgserver.@babeld_hotplug[0].rxcost)"
-		uci set babeld.@interface[-1].rxcost="$babeld_rxcost"
-	fi
-	uci -c "$(dirname "$(realpath /etc/config/babeld)")" commit babeld
-	/etc/init.d/babeld reload
-fi
-
-if [ "${ACTION}" = "remove" ]; then
-	i=0
-	while uci get babeld.@interface[$i] &> /dev/null ; do
-		if [ "$(uci get babeld.@interface[$i].ifname)" = "${INTERFACE}" ]; then
-			uci delete babeld.@interface[$i]
-		fi
-		i=$((i+1));
-	done
-	uci -c "$(dirname "$(realpath /etc/config/babeld)")" commit babeld
-	/etc/init.d/babeld reload
+	ubus call babeld add_interface '{"ifname":'\""$INTERFACE"\"'}'
 fi
