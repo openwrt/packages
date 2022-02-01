@@ -123,6 +123,17 @@ define Package/prometheus-node-exporter-lua-ltq-dsl/install
 	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/ltq-dsl.lua $(1)/usr/lib/lua/prometheus-collectors/
 endef
 
+define Package/prometheus-node-exporter-lua-sqm
+  $(call Package/prometheus-node-exporter-lua/Default)
+  TITLE+= (sqm collector)
+  DEPENDS:=prometheus-node-exporter-lua
+endef
+
+define Package/prometheus-node-exporter-lua-sqm/install
+	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/sqm.lua $(1)/usr/lib/lua/prometheus-collectors/
+endef
+
 define Package/prometheus-node-exporter-lua-nat_traffic
   $(call Package/prometheus-node-exporter-lua/Default)
   TITLE+= (nat_traffic collector)
@@ -226,3 +237,4 @@ $(eval $(call BuildPackage,prometheus-node-exporter-lua-uci_dhcp_host))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-wifi))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-wifi_stations))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-snmp6))
+$(eval $(call BuildPackage,prometheus-node-exporter-lua-sqm))
