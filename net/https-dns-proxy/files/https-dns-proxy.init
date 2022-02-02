@@ -1,6 +1,6 @@
 #!/bin/sh /etc/rc.common
-# Copyright 2019-2020 Stan Grishin (stangri@melmac.net)
-# shellcheck disable=SC2039,SC3043,SC3060
+# Copyright 2019-2020 Stan Grishin (stangri@melmac.ca)
+# shellcheck disable=SC1091,SC2039,SC3043,SC3060
 PKG_VERSION='dev-test'
 
 # shellcheck disable=SC2034
@@ -18,10 +18,10 @@ fi
 readonly packageName='https-dns-proxy'
 readonly serviceName="$packageName $PKG_VERSION"
 readonly sharedMemoryOutput="/dev/shm/$packageName-output"
-readonly PROG=/usr/sbin/https-dns-proxy
-readonly DEFAULT_BOOTSTRAP='1.1.1.1,1.0.0.1,2606:4700:4700::1111,2606:4700:4700::1001,8.8.8.8,8.8.4.4,2001:4860:4860::8888,2001:4860:4860::8844'
 readonly _OK_='\033[0;32m\xe2\x9c\x93\033[0m'
 readonly _FAIL_='\033[0;31m\xe2\x9c\x97\033[0m'
+readonly PROG=/usr/sbin/https-dns-proxy
+readonly DEFAULT_BOOTSTRAP='1.1.1.1,1.0.0.1,2606:4700:4700::1111,2606:4700:4700::1001,8.8.8.8,8.8.4.4,2001:4860:4860::8888,2001:4860:4860::8844'
 dnsmasqConfig=''; forceDNS=''; forceDNSPorts='';
 
 str_contains() { [ -n "$1" ] &&[ -n "$2" ] && [ "${1//$2}" != "$1" ]; }
@@ -45,7 +45,18 @@ output_ok() { output "$_OK_"; }
 output_okn() { output "${_OK_}\\n"; }
 output_fail() { output "$_FAIL_"; }
 output_failn() { output "${_FAIL_}\\n"; }
-uci_ali() { [ -n "$1" ] && [ -n "$2" ] && ! str_contains "$(uci -q get "$1")" "$2" && uci -q add_list "${1}=${2}"; }
+uci_add_list_if_new() {
+	local key="$1" value="$2" i
+	if [ -z "$value" ]; then
+		value="${key#*=}"
+		key="${key%=*}"
+	fi
+	[ -n "$key" ] && [ -n "$value" ] || return 1
+	for i in $(uci -q get "$key"); do
+		[ "$i" = "$value" ] && return 0
+	done
+	uci -q add_list "${key}=${value}"
+}
 
 dnsmasq_restart() { [ -x /etc/init.d/dnsmasq ] || return 0; /etc/init.d/dnsmasq restart >/dev/null 2>&1; }
 
@@ -213,7 +224,19 @@ stop_service() {
 	[ "$s" -eq 0 ] && output_okn || output_failn
 }
 
-service_triggers() { procd_add_config_trigger "config.change" "$packageName" "/etc/init.d/${packageName}" restart; }
+# shellcheck disable=SC1091
+service_triggers() { 
+	local iface
+	. /lib/functions/network.sh
+	network_flush_cache
+	network_find_wan iface
+	iface="${iface:-wan}"
+	if [ -n "$iface" ]; then
+		procd_add_interface_trigger "interface.*" "$iface" "/etc/init.d/${packageName}" restart
+	fi
+	procd_add_config_trigger "config.change" "$packageName" "/etc/init.d/${packageName}" restart
+}
+
 service_started() { procd_set_config_changed firewall; }
 service_stopped() { procd_set_config_changed firewall; }
 
@@ -223,7 +246,7 @@ dnsmasq_add_doh_server() {
 		0.0.0.0|::ffff:0.0.0.0) address='127.0.0.1';;
 		::) address='::1';;
 	esac
-	uci_ali "dhcp.${cfg}.server" "${address}#${port}"
+	uci_add_list_if_new "dhcp.${cfg}.server" "${address}#${port}"
 }
 
 dnsmasq_create_server_backup() {
@@ -252,21 +275,33 @@ dnsmasq_create_server_backup() {
 	return 0
 }
 
+_dnsmasq_delete_instance() {
+	local address port i="$2"
+	address="$(jsonfilter -s "$ubusJson" -e "@['$packageName'].instances['$i'].command[4]")"
+	port="$(jsonfilter -s "$ubusJson" -e "@['$packageName'].instances['$i'].command[6]")"
+	uci -q del_list "dhcp.${cfg}.server=${address}#${port}"
+}
+
 dnsmasq_restore_server_backup() {
-	local cfg="$1" i
+	local cfg="$1" i ubusJson
 	uci -q get "dhcp.${cfg}" >/dev/null || return 0
 	if uci -q get "dhcp.${cfg}.doh_backup_noresolv" >/dev/null; then
 		if [ "$(uci -q get "dhcp.${cfg}.doh_backup_noresolv")" = "0" ]; then
 			uci -q set "dhcp.${cfg}.noresolv=0"
-		else 
+		else
 			uci -q del "dhcp.${cfg}.noresolv"
 		fi
 		uci -q del "dhcp.${cfg}.doh_backup_noresolv"
 	fi
 	if uci -q get "dhcp.${cfg}.doh_backup_server" >/dev/null; then
-		uci -q del "dhcp.${cfg}.server"
+		. /usr/share/libubox/jshn.sh
+		ubusJson="$(ubus call service list "{ 'verbose': true, 'name': '$packageName' }")"
+		json_init
+		json_load "$ubusJson"
+		json_select "$packageName"
+		json_for_each_item _dnsmasq_delete_instance 'instances'
 		for i in $(uci -q get "dhcp.${cfg}.doh_backup_server"); do
-			uci -q add_list "dhcp.${cfg}.server=$i"
+			uci_add_list_if_new "dhcp.${cfg}.server" "$i"
 		done
 	uci -q del "dhcp.${cfg}.doh_backup_server"
 	fi
