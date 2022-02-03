@@ -20,3 +20,17 @@ config BIND_LIBXML2
 		format. Building with libjson support will require the
 		libxml2 package to be installed as well.
 endif
+
+if PACKAGE_bind-libs
+
+config BIND_ENABLE_DOH
+	bool
+	default y
+	prompt "Include DNS-over-HTTPS support in bind"
+	help
+		BIND 9 supports DNS-over-HTTPS and enables it by
+		default.  This requires linking against libnghttp2.
+		You can disable DoHTTPS if you do not need it or need
+		to avoid the additional library dependency.
+
+endif
