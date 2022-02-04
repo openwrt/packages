@@ -4,9 +4,9 @@ PROG=/usr/bin/AdGuardHome
 
 USE_PROCD=1
 
-# starts after network starts
-START=21
-# stops before networking stops
+# Starts after network and interfaces should be up
+START=50
+# Stops before networking stops
 STOP=89
 
 start_service() {
