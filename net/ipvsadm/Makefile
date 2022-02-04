@@ -13,7 +13,7 @@ PKG_VERSION:=1.31
 PKG_MAINTAINER:=Mauro Mozzarelli <mauro@ezplanet.org>, \
 		Florian Eckert <fe@dev.tdt.de>
 PKG_LICENSE:=GPL-2.0-or-later
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/utils/kernel/ipvsadm/
