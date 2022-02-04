@@ -38,6 +38,7 @@ start_service() {
 
 	procd_open_instance "$CONF"
 	procd_set_param command "$PROG"
+	procd_set_param env XDG_DATA_HOME="/usr/share"
 
 	append_env_arg "config" "address" "0.0.0.0:2017"
 	append_env_arg "config" "config" "/etc/v2raya"
