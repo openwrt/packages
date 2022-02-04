@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2016, 2018-2019 Jeffery To
+# Copyright (C) 2016, 2018-2019, 2021 Jeffery To
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=slide-switch
-PKG_VERSION:=0.9.5
+PKG_VERSION:=0.9.6
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/jefferyto/openwrt-slide-switch.git
-PKG_MIRROR_HASH:=ac61aea3ce620364285de5525635999aa8b463c4070da6bce134278ff92a433c
+PKG_MIRROR_HASH:=4a11db6954c5a8ff9eb253600de0d9b034e639f053604bae0c9a6802dd685be5
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
 
 PKG_BUILD_PARALLEL:=1
@@ -61,6 +61,14 @@ define Package/slide-switch/install
 		$(PKG_INSTALL_DIR)/usr/share/slide-switch/functions.sh \
 		$(PKG_INSTALL_DIR)/usr/share/slide-switch/switch-data.json \
 		$(1)/usr/share/slide-switch
+endef
+
+define Package/slide-switch/postinst
+[ -n "$$IPKG_INSTROOT" ] || /usr/sbin/slide-switch clean
+endef
+
+define Package/slide-switch/prerm
+[ -n "$$IPKG_INSTROOT" ] || /usr/sbin/slide-switch clean
 endef
 
 $(eval $(call BuildPackage,slide-switch))
