@@ -19,11 +19,13 @@ PKG_MAINTAINER:=
 PKG_LICENSE:=AFL-2.1
 PKG_CPE_ID:=cpe:/a:freedesktop:dbus
 
+PKG_BUILD_PARALLEL:=1
+PKG_INSTALL:=1
+
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_DBUS_VERBOSE
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/cmake.mk
 
 define Package/dbus/Default
   SECTION:=utils
@@ -78,27 +80,37 @@ define Package/dbus/config
   source "$(SOURCE)/Config.in"
 endef
 
-CMAKE_OPTIONS += \
-	-DDBUS_SYSTEM_SOCKET=/var/run/dbus/system_bus_socket \
-	-DDBUS_SESSION_SOCKET_DIR=/tmp \
-	-DDBUS_BUILD_TESTS=OFF \
-	-DDBUS_LINUX=ON \
-	-DDBUS_DISABLE_ASSERT=ON \
-	-DBUS_ENABLE_STATS=OFF \
-	-DDBUS_ENABLE_CONTAINERS=OFF \
-	-DENABLE_SYSTEMD=OFF \
-	-DDBUS_BUS_ENABLE_SYSTEMD=OFF \
-	-DHAVE_SYSTEMD=OFF \
-	-DDBUS_WITH_GLIB=OFF \
-	-DDBUS_ENABLE_VERBOSE_MODE=OFF \
-	-DDBUS_DISABLE_CHECKS=ON \
-	-DDBUS_BUILD_X11=OFF \
-	-DDBUS_ENABLE_DOXYGEN_DOCS=OFF \
-	-DDBUS_ENABLE_QTHELP_DOCS=OFF \
-	-DDBUS_ENABLE_XML_DOCS=OFF
+CONFIGURE_ARGS += \
+	--disable-maintainer-mode \
+	--disable-developer \
+	--enable-debug=no \
+	--enable-shared \
+	--disable-static \
+	--disable-verbose-mode \
+	--disable-asserts \
+	--disable-xml-docs \
+	--disable-doxygen-docs \
+	--disable-ducktype-docs \
+	--disable-selinux \
+	--disable-apparmor \
+	--disable-libaudit \
+	--enable-inotify \
+	--disable-kqueue \
+	--disable-console-owner-file \
+	--disable-systemd \
+	--disable-tests \
+	--disable-code-coverage \
+	--disable-x11-autolaunch \
+	--with-session-socket-dir=/tmp \
+	--with-system-socket=/var/run/dbus/system_bus_socket \
+	--with-system-pid-file=/var/run/dbus.pid \
+	--with-dbus-user=root \
+	--without-x \
+	--enable-qt-help=no \
+	--disable-xml-docs
 
 ifeq ($(CONFIG_DBUS_VERBOSE),y)
-  CMAKE_OPTIONS += -DDBUS_ENABLE_VERBOSE_MODE=ON
+  CONFIGURE_ARGS += --disable-verbose-mode
 endif
 
 define Build/InstallDev
@@ -130,7 +142,7 @@ define Package/dbus/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dbus-uuidgen $(1)/usr/bin/
 	$(INSTALL_BIN) ./files/dbus-launch $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/dbus-daemon-launch-helper $(1)/usr/lib/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/dbus-daemon-launch-helper $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/dbus.init $(1)/etc/init.d/dbus
 	$(INSTALL_DIR) $(1)/usr/share/dbus-1
