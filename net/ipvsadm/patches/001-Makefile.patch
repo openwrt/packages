@@ -43,10 +43,10 @@
  
 --- a/libipvs/Makefile
 +++ b/libipvs/Makefile
-@@ -1,7 +1,6 @@
+@@ -1,7 +1,7 @@
  # Makefile for libipvs
  
--CC		= gcc
+ CC		= gcc
 -CFLAGS		= -Wall -Wunused -Wstrict-prototypes -g -fPIC
 +CFLAGS		+= -Wall -Wunused -Wstrict-prototypes -g -fPIC
  ifneq (0,$(HAVE_NL))
