@@ -1,0 +1,271 @@
+From 35eea39db7736e03030d2fd351f40e30207d808f Mon Sep 17 00:00:00 2001
+From: mmetc <92726601+mmetc@users.noreply.github.com>
+Date: Tue, 1 Feb 2022 10:34:53 +0100
+Subject: [PATCH] allow Makefile to override /etc/crowdsec and
+ /var/lib/crowdsec/data (#1221)
+
+---
+ Makefile                     |  4 +++-
+ cmd/crowdsec-cli/config.go   | 12 +++++------
+ cmd/crowdsec-cli/machines.go |  3 ++-
+ cmd/crowdsec-cli/main.go     |  2 +-
+ cmd/crowdsec/main.go         |  2 +-
+ pkg/csconfig/api.go          |  2 +-
+ pkg/csconfig/api_test.go     |  2 +-
+ pkg/csconfig/config.go       | 41 +++++++++++++++++++++++++++---------
+ pkg/csconfig/console.go      |  9 ++++----
+ pkg/cstest/hubtest_item.go   |  4 ++--
+ 10 files changed, 53 insertions(+), 28 deletions(-)
+
+--- a/Makefile
++++ b/Makefile
+@@ -56,7 +56,9 @@ export LD_OPTS=-ldflags "-s -w -X github
+ -X github.com/crowdsecurity/crowdsec/pkg/cwversion.BuildDate=$(BUILD_TIMESTAMP) \
+ -X github.com/crowdsecurity/crowdsec/pkg/cwversion.Codename=$(BUILD_CODENAME)  \
+ -X github.com/crowdsecurity/crowdsec/pkg/cwversion.Tag=$(BUILD_TAG) \
+--X github.com/crowdsecurity/crowdsec/pkg/cwversion.GoVersion=$(BUILD_GOVERSION)"
++-X github.com/crowdsecurity/crowdsec/pkg/cwversion.GoVersion=$(BUILD_GOVERSION) \
++-X github.com/crowdsecurity/crowdsec/pkg/csconfig.defaultConfigDir=/etc/crowdsec \
++-X github.com/crowdsecurity/crowdsec/pkg/csconfig.defaultDataDir=/var/lib/crowdsec/data"
+ 
+ export LD_OPTS_STATIC=-ldflags "-s -w -X github.com/crowdsecurity/crowdsec/pkg/cwversion.Version=$(BUILD_VERSION) \
+ -X github.com/crowdsecurity/crowdsec/pkg/cwversion.BuildDate=$(BUILD_TIMESTAMP) \
+--- a/cmd/crowdsec-cli/config.go
++++ b/cmd/crowdsec-cli/config.go
+@@ -51,7 +51,7 @@ func backupConfigToDirectory(dirPath str
+ 	}
+ 
+ 	if csConfig.ConfigPaths.SimulationFilePath != "" {
+-		backupSimulation := fmt.Sprintf("%s/simulation.yaml", dirPath)
++		backupSimulation := filepath.Join(dirPath, "simulation.yaml")
+ 		if err = types.CopyFile(csConfig.ConfigPaths.SimulationFilePath, backupSimulation); err != nil {
+ 			return fmt.Errorf("failed copy %s to %s : %s", csConfig.ConfigPaths.SimulationFilePath, backupSimulation, err)
+ 		}
+@@ -63,13 +63,13 @@ func backupConfigToDirectory(dirPath str
+ 	   - backup the other files of acquisition directory
+ 	*/
+ 	if csConfig.Crowdsec != nil && csConfig.Crowdsec.AcquisitionFilePath != "" {
+-		backupAcquisition := fmt.Sprintf("%s/acquis.yaml", dirPath)
++		backupAcquisition := filepath.Join(dirPath, "acquis.yaml")
+ 		if err = types.CopyFile(csConfig.Crowdsec.AcquisitionFilePath, backupAcquisition); err != nil {
+ 			return fmt.Errorf("failed copy %s to %s : %s", csConfig.Crowdsec.AcquisitionFilePath, backupAcquisition, err)
+ 		}
+ 	}
+ 
+-	acquisBackupDir := dirPath + "/acquis/"
++	acquisBackupDir := filepath.Join(dirPath, "acquis")
+ 	if err = os.Mkdir(acquisBackupDir, 0700); err != nil {
+ 		return fmt.Errorf("error while creating %s : %s", acquisBackupDir, err)
+ 	}
+@@ -80,7 +80,7 @@ func backupConfigToDirectory(dirPath str
+ 			if csConfig.Crowdsec.AcquisitionFilePath == acquisFile {
+ 				continue
+ 			}
+-			targetFname, err := filepath.Abs(acquisBackupDir + filepath.Base(acquisFile))
++			targetFname, err := filepath.Abs(filepath.Join(acquisBackupDir, filepath.Base(acquisFile)))
+ 			if err != nil {
+ 				return errors.Wrapf(err, "while saving %s to %s", acquisFile, acquisBackupDir)
+ 			}
+@@ -233,7 +233,7 @@ func restoreConfigFromDirectory(dirPath
+ 	}
+ 
+ 	//if there is files in the acquis backup dir, restore them
+-	acquisBackupDir := dirPath + "/acquis/*.yaml"
++	acquisBackupDir := filepath.Join(dirPath, "acquis", "*.yaml")
+ 	if acquisFiles, err := filepath.Glob(acquisBackupDir); err == nil {
+ 		for _, acquisFile := range acquisFiles {
+ 			targetFname, err := filepath.Abs(csConfig.Crowdsec.AcquisitionDirPath + "/" + filepath.Base(acquisFile))
+@@ -255,7 +255,7 @@ func restoreConfigFromDirectory(dirPath
+ 				log.Infof("skip this one")
+ 				continue
+ 			}
+-			targetFname, err := filepath.Abs(acquisBackupDir + filepath.Base(acquisFile))
++			targetFname, err := filepath.Abs(filepath.Join(acquisBackupDir, filepath.Base(acquisFile)))
+ 			if err != nil {
+ 				return errors.Wrapf(err, "while saving %s to %s", acquisFile, acquisBackupDir)
+ 			}
+--- a/cmd/crowdsec-cli/machines.go
++++ b/cmd/crowdsec-cli/machines.go
+@@ -268,7 +268,8 @@ cscli machines add MyTestMachine --passw
+ 		},
+ 	}
+ 	cmdMachinesAdd.Flags().StringVarP(&machinePassword, "password", "p", "", "machine password to login to the API")
+-	cmdMachinesAdd.Flags().StringVarP(&outputFile, "file", "f", "", "output file destination (defaults to /etc/crowdsec/local_api_credentials.yaml)")
++	cmdMachinesAdd.Flags().StringVarP(&outputFile, "file", "f", "",
++		"output file destination (defaults to "+csconfig.DefaultConfigPath("local_api_credentials.yaml"))
+ 	cmdMachinesAdd.Flags().StringVarP(&apiURL, "url", "u", "", "URL of the local API")
+ 	cmdMachinesAdd.Flags().BoolVarP(&interactive, "interactive", "i", false, "interfactive mode to enter the password")
+ 	cmdMachinesAdd.Flags().BoolVarP(&autoAdd, "auto", "a", false, "automatically generate password (and username if not provided)")
+--- a/cmd/crowdsec-cli/main.go
++++ b/cmd/crowdsec-cli/main.go
+@@ -139,7 +139,7 @@ It is meant to allow you to manage bans,
+ 	}
+ 	rootCmd.AddCommand(cmdVersion)
+ 
+-	rootCmd.PersistentFlags().StringVarP(&ConfigFilePath, "config", "c", "/etc/crowdsec/config.yaml", "path to crowdsec config file")
++	rootCmd.PersistentFlags().StringVarP(&ConfigFilePath, "config", "c", csconfig.DefaultConfigPath("config.yaml"), "path to crowdsec config file")
+ 	rootCmd.PersistentFlags().StringVarP(&OutputFormat, "output", "o", "", "Output format : human, json, raw.")
+ 	rootCmd.PersistentFlags().BoolVar(&dbg_lvl, "debug", false, "Set logging to debug.")
+ 	rootCmd.PersistentFlags().BoolVar(&nfo_lvl, "info", false, "Set logging to info.")
+--- a/cmd/crowdsec/main.go
++++ b/cmd/crowdsec/main.go
+@@ -186,7 +186,7 @@ func (l labelsMap) Set(label string) err
+ 
+ func (f *Flags) Parse() {
+ 
+-	flag.StringVar(&f.ConfigFile, "c", "/etc/crowdsec/config.yaml", "configuration file")
++	flag.StringVar(&f.ConfigFile, "c", csconfig.DefaultConfigPath("config.yaml"), "configuration file")
+ 	flag.BoolVar(&f.TraceLevel, "trace", false, "VERY verbose")
+ 	flag.BoolVar(&f.DebugLevel, "debug", false, "print debug-level on stdout")
+ 	flag.BoolVar(&f.InfoLevel, "info", false, "print info-level on stdout")
+--- a/pkg/csconfig/api.go
++++ b/pkg/csconfig/api.go
+@@ -123,7 +123,7 @@ func (c *Config) LoadAPIServer() error {
+ 			return errors.Wrap(err, "while loading profiles for LAPI")
+ 		}
+ 		if c.API.Server.ConsoleConfigPath == "" {
+-			c.API.Server.ConsoleConfigPath = DefaultConsoleConfgFilePath
++			c.API.Server.ConsoleConfigPath = DefaultConsoleConfigFilePath
+ 		}
+ 		if err := c.API.Server.LoadConsoleConfig(); err != nil {
+ 			return errors.Wrap(err, "while loading console options")
+--- a/pkg/csconfig/api_test.go
++++ b/pkg/csconfig/api_test.go
+@@ -207,7 +207,7 @@ func TestLoadAPIServer(t *testing.T) {
+ 					DbPath: "./tests/test.db",
+ 					Type:   "sqlite",
+ 				},
+-				ConsoleConfigPath: "/etc/crowdsec/console.yaml",
++				ConsoleConfigPath: DefaultConfigPath("console.yaml"),
+ 				ConsoleConfig: &ConsoleConfig{
+ 					ShareManualDecisions:  types.BoolPtr(false),
+ 					ShareTaintedScenarios: types.BoolPtr(true),
+--- a/pkg/csconfig/config.go
++++ b/pkg/csconfig/config.go
+@@ -4,13 +4,20 @@ import (
+ 	"fmt"
+ 	"io/ioutil"
+ 	"os"
++	"path/filepath"
+ 
+ 	"github.com/pkg/errors"
+ 	log "github.com/sirupsen/logrus"
+ 	"gopkg.in/yaml.v2"
+ )
+ 
+-/*top-level config : defaults,overriden by cfg file,overriden by cli*/
++// defaultConfigDir is the base path to all configuration files, to be overridden in the Makefile */
++var defaultConfigDir = "/etc/crowdsec"
++
++// defaultDataDir is the base path to all data files, to be overridden in the Makefile */
++var defaultDataDir = "/var/lib/crowdsec/data/"
++
++// Config contains top-level defaults -> overridden by configuration file -> overridden by CLI flags
+ type Config struct {
+ 	//just a path to ourself :p
+ 	FilePath     *string             `yaml:"-"`
+@@ -71,14 +78,14 @@ func NewDefaultConfig() *Config {
+ 		Level:   "full",
+ 	}
+ 	configPaths := ConfigurationPaths{
+-		ConfigDir:          "/etc/crowdsec/",
+-		DataDir:            "/var/lib/crowdsec/data/",
+-		SimulationFilePath: "/etc/crowdsec/config/simulation.yaml",
+-		HubDir:             "/etc/crowdsec/hub",
+-		HubIndexFile:       "/etc/crowdsec/hub/.index.json",
++		ConfigDir:          DefaultConfigPath("."),
++		DataDir:            DefaultDataPath("."),
++		SimulationFilePath: DefaultConfigPath("simulation.yaml"),
++		HubDir:             DefaultConfigPath("hub"),
++		HubIndexFile:       DefaultConfigPath("hub", ".index.json"),
+ 	}
+ 	crowdsecCfg := CrowdsecServiceCfg{
+-		AcquisitionFilePath: "/etc/crowdsec/config/acquis.yaml",
++		AcquisitionFilePath: DefaultConfigPath("acquis.yaml"),
+ 		ParserRoutinesCount: 1,
+ 	}
+ 
+@@ -88,20 +95,20 @@ func NewDefaultConfig() *Config {
+ 
+ 	apiCfg := APICfg{
+ 		Client: &LocalApiClientCfg{
+-			CredentialsFilePath: "/etc/crowdsec/config/lapi-secrets.yaml",
++			CredentialsFilePath: DefaultConfigPath("lapi-secrets.yaml"),
+ 		},
+ 		Server: &LocalApiServerCfg{
+ 			ListenURI:              "127.0.0.1:8080",
+ 			UseForwardedForHeaders: false,
+ 			OnlineClient: &OnlineApiClientCfg{
+-				CredentialsFilePath: "/etc/crowdsec/config/online-api-secrets.yaml",
++				CredentialsFilePath: DefaultConfigPath("config", "online-api-secrets.yaml"),
+ 			},
+ 		},
+ 	}
+ 
+ 	dbConfig := DatabaseCfg{
+ 		Type:   "sqlite",
+-		DbPath: "/var/lib/crowdsec/data/crowdsec.db",
++		DbPath: DefaultDataPath("crowdsec.db"),
+ 	}
+ 
+ 	globalCfg := Config{
+@@ -116,3 +123,17 @@ func NewDefaultConfig() *Config {
+ 
+ 	return &globalCfg
+ }
++
++// DefaultConfigPath returns the default path for a configuration resource
++// "elem" parameters are path components relative to the default cfg directory.
++func DefaultConfigPath(elem ...string) string {
++	elem = append([]string{defaultConfigDir}, elem...)
++	return filepath.Join(elem...)
++}
++
++// DefaultDataPath returns the the default path for a data resource.
++// "elem" parameters are path components relative to the default data directory.
++func DefaultDataPath(elem ...string) string {
++	elem = append([]string{defaultDataDir}, elem...)
++	return filepath.Join(elem...)
++}
+--- a/pkg/csconfig/console.go
++++ b/pkg/csconfig/console.go
+@@ -17,10 +17,10 @@ const (
+ 	SEND_MANUAL_SCENARIOS  = "manual"
+ )
+ 
+-var DefaultConsoleConfgFilePath = "/etc/crowdsec/console.yaml"
+-
+ var CONSOLE_CONFIGS = []string{SEND_CUSTOM_SCENARIOS, SEND_MANUAL_SCENARIOS, SEND_TAINTED_SCENARIOS}
+ 
++var DefaultConsoleConfigFilePath = DefaultConfigPath("console.yaml")
++
+ type ConsoleConfig struct {
+ 	ShareManualDecisions  *bool `yaml:"share_manual_decisions"`
+ 	ShareTaintedScenarios *bool `yaml:"share_tainted"`
+@@ -71,8 +71,9 @@ func (c *LocalApiServerCfg) DumpConsoleC
+ 		return errors.Wrapf(err, "while marshaling ConsoleConfig (for %s)", c.ConsoleConfigPath)
+ 	}
+ 	if c.ConsoleConfigPath == "" {
+-		log.Debugf("Empty console_path, defaulting to %s", DefaultConsoleConfgFilePath)
+-		c.ConsoleConfigPath = DefaultConsoleConfgFilePath
++		c.ConsoleConfigPath = DefaultConsoleConfigFilePath
++		log.Debugf("Empty console_path, defaulting to %s", c.ConsoleConfigPath)
++
+ 	}
+ 
+ 	if err := os.WriteFile(c.ConsoleConfigPath, out, 0600); err != nil {
+--- a/pkg/cstest/hubtest_item.go
++++ b/pkg/cstest/hubtest_item.go
+@@ -77,10 +77,10 @@ const (
+ 	ScenarioResultFileName = "bucket-dump.yaml"
+ 
+ 	BucketPourResultFileName = "bucketpour-dump.yaml"
+-
+-	crowdsecPatternsFolder = "/etc/crowdsec/patterns/"
+ )
+ 
++var crowdsecPatternsFolder = csconfig.DefaultConfigPath("patterns")
++
+ func NewTest(name string, hubTest *HubTest) (*HubTestItem, error) {
+ 	testPath := filepath.Join(hubTest.HubTestPath, name)
+ 	runtimeFolder := filepath.Join(testPath, "runtime")

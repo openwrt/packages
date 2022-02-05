@@ -1,5 +1,8 @@
 #!/bin/sh /etc/rc.common
+# SPDX-License-Identifier: MIT
+#
 # Copyright (C) 2021-2022 Gerald Kerma <gandalf@gk2.net>
+#
 
 START=99
 USE_PROCD=1
@@ -10,12 +13,18 @@ RUNCONFDIR=/srv/crowdsec/data
 VARCONFIGDIR=/var/etc/crowdsec
 VARCONFIG=/var/etc/crowdsec/config.yaml
 
+. /usr/lib/crowdsec/scripts/cs_script.sh
+
 service_triggers() {
 	procd_add_reload_trigger crowdsec
 }
 
 init_config() {
-	config_load crowdsec
+    cs_prepare
+	cs_init
+    cs_register
+#   cs_hub
+    config_load crowdsec
 	config_get data_dir crowdsec data_dir "${RUNCONFDIR}"
 	config_get db_path crowdsec db_path "${RUNCONFDIR}/crowdsec.db"
 
