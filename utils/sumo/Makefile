@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sumo
-PKG_VERSION:=1.9.2
+PKG_VERSION:=1.12.0
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-src-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/sumo
-PKG_HASH:=193a8ab14bb305d3967625d76cd291f5c55bb906817465f2a12c2e69f4b80813
+PKG_HASH:=163dd6f7ed718e2a30630be3d2ac2ddfc4abce24750ed7f4efce879a3ae9447e
 
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
