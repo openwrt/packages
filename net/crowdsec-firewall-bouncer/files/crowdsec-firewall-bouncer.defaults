@@ -1,22 +1,48 @@
 #!/bin/sh
 
-CONFIG=/etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
+CSCLI=/usr/bin/cscli
+CFG_FILE=/etc/crowdsec/config.yaml
+CSFB_CUSTOMCONFIG=/etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
+CSFNAME=crowdsec-firewall-bouncer
+
 ## Gen&ConfigApiKey
-if grep -q "{API_KEY}" "$CONFIG"; then
-	SUFFIX=`tr -dc A-Za-z0-9 </dev/urandom | head -c 8`
-	API_KEY=`/usr/bin/cscli bouncers add crowdsec-firewall-bouncer-${SUFFIX} -o raw`
-	sed -i "s,^\(\s*api_key\s*:\s*\).*\$,\1$API_KEY," $CONFIG
+if grep -q "{API_KEY}" "${CSFB_CUSTOMCONFIG}"; then
+    API_KEY=$("${CSCLI}" -c "${CFG_FILE}" bouncers add "${CSFNAME}" -o raw)
+    if [ -n "${API_KEY}" ]; then
+        sed -i "s,^\(\s*api_key\s*:\s*\).*\$,\1${API_KEY}," "${CSFB_CUSTOMCONFIG}"
+    else
+	    echo "ERROR: NO API key registered…"
+    fi
 else
-	echo API key already registered...
+    FW_BOUNCER=$("${CSCLI}" -c "${CFG_FILE}" bouncers list | grep "${CSFNAME}")
+    if [ -n "${FW_BOUNCER}" ]; then
+        echo "INFO: API key already registered…"
+    else
+        API_KEY=$(sed -rn "s,^api_key\s*:\s*([^\n]+)$,\1,p" "${CSFB_CUSTOMCONFIG}")
+        if [ -n "${API_KEY}" ]; then
+            NEW_API_KEY=$("${CSCLI}" -c "${CFG_FILE}" bouncers add "${CSFNAME}" -k "${API_KEY}" -o raw)
+            if [ -n "${NEW_API_KEY}" ]; then
+                if [ "${NEW_API_KEY}" = "${API_KEY}" ]; then
+                    echo "INFO: API key already registered but bouncer re-registered with success…"
+                else
+                    echo "ERROR: API key already registered but bouncer re-register attempt error!"
+                fi
+            else
+                echo "ERROR: API key already registered but bouncer re-registered without success!"
+            fi
+        else
+            echo "ERROR: Unrecoverable API key registration error!"
+        fi
+    fi
 fi
 
 # unfortunately, UCI doesn't provide a nice way to add an anonymous section only if it doesn't already exist
 if ! uci show firewall | grep -q firewall.cs; then
-  name="$(uci add firewall include)"
-  uci set "firewall.${name}.path=/etc/firewall.cs"
-  uci set "firewall.${name}.enabled=1"
-  uci set "firewall.${name}.reload=1"
-  echo -e "Adding the following UCI config:\n $(uci changes)"
+  UCINAME="$(uci add firewall include)"
+  uci set "firewall.${UCINAME}.path=/etc/firewall.cs"
+  uci set "firewall.${UCINAME}.enabled=1"
+  uci set "firewall.${UCINAME}.reload=1"
+  printf "Adding the following UCI config:%s\n" "$(uci changes)"
   uci commit
 fi
 
