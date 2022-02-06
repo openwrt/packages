@@ -14,7 +14,7 @@ mbusd_instance() {
 	[ "$enabled" -gt 0 ] || return 1
 
 
-	[ "$parity" = 0 ] && parity=n || parity=y
+	[ "$parity" = 0 ] && parity=n
 	[ "$rts" = 0 ] && rts=
 
 
@@ -50,7 +50,7 @@ validate_section_mbusd() {
 		'device:string' \
 		'speed:uinteger' \
 		'databits:uinteger' \
-		'parity:bool' \
+		'parity:string' \
 		'stopbits:uinteger' \
 		'rts:bool:0' \
 		'rtu_retries:uinteger' \
