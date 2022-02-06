@@ -12,7 +12,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruby
 PKG_VERSION:=3.0.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 # First two numbes
 PKG_ABI_VERSION:=$(subst $(space),.,$(wordlist 1, 2, $(subst .,$(space),$(PKG_VERSION))))
@@ -77,6 +77,12 @@ endif
 CONFIGURE_ARGS += --disable-jit-support
 # Host JIT does work but it is not worth it
 HOST_CONFIGURE_ARGS += --disable-jit-support
+
+# Apple ld generates warning if LD_FLAGS var includes path to lib that is not 
+# exist (e.g. -L$(STAGING_DIR)/host/lib). configure script fails if ld generates 
+# any output
+HOST_LDFLAGS += \
+	$(if $(CONFIG_HOST_OS_MACOS),-Wl$(comma)-w)
 
 TARGET_LDFLAGS += -L$(PKG_BUILD_DIR)
 
@@ -221,7 +227,7 @@ endef
 
 # nothing to do
 define Package/ruby-stdlib/install
-	/bin/true
+	true
 endef
 
 define Package/ruby-abbrev/files
