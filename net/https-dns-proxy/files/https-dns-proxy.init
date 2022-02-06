@@ -1,5 +1,5 @@
 #!/bin/sh /etc/rc.common
-# Copyright 2019-2020 Stan Grishin (stangri@melmac.ca)
+# Copyright 2019-2022 Stan Grishin (stangri@melmac.ca)
 # shellcheck disable=SC1091,SC2039,SC3043,SC3060
 PKG_VERSION='dev-test'
 
@@ -176,13 +176,13 @@ start_instance() {
 		config_get listen_port "$cfg" 'listen_port' "$port"
 		if [ "$dnsmasqConfig" = '*' ]; then
 			config_load 'dhcp'
-			config_foreach dnsmasq_add_doh_server 'dnsmasq' "${listen_addr}" "${listen_port}"
+			config_foreach dnsmasq_doh_server 'dnsmasq' 'add' "${listen_addr}" "${listen_port}"
 		elif [ -n "$dnsmasqConfig" ]; then
 			for i in $dnsmasqConfig; do
 				if [ -n "$(uci -q get "dhcp.@dnsmasq[$i]")" ]; then
-					dnsmasq_add_doh_server "@dnsmasq[$i]" "${listen_addr}" "${listen_port}"
+					dnsmasq_doh_server "@dnsmasq[$i]" 'add' "${listen_addr}" "${listen_port}"
 				elif [ -n "$(uci -q get "dhcp.${i}")" ]; then
-					dnsmasq_add_doh_server "${i}" "${listen_addr}" "${listen_port}"
+					dnsmasq_doh_server "${i}" 'add' "${listen_addr}" "${listen_port}"
 				fi
 			done
 		fi
@@ -240,13 +240,23 @@ service_triggers() {
 service_started() { procd_set_config_changed firewall; }
 service_stopped() { procd_set_config_changed firewall; }
 
-dnsmasq_add_doh_server() {
-	local cfg="$1" address="$2" port="$3"
-	case $address in
-		0.0.0.0|::ffff:0.0.0.0) address='127.0.0.1';;
-		::) address='::1';;
+dnsmasq_doh_server() {
+	local cfg="$1" param="$2" address="${3:-127.0.0.1}" port="$4" i
+	case "$param" in
+		add)
+			case $address in
+				0.0.0.0|::ffff:0.0.0.0) address='127.0.0.1';;
+				::) address='::1';;
+			esac
+			uci_add_list_if_new "dhcp.${cfg}.server" "${address}#${port}"
+		;;
+		remove)
+			eval "$(ubus call service list "{ 'verbose': true, 'name': '$packageName' }" | jsonfilter -F '# ' -e 'TUPLES=@[*].instances[*].command[4,6]')"
+			for i in $TUPLES; do
+				uci -q del_list "dhcp.${cfg}.server=${i}"
+			done
+		;;
 	esac
-	uci_add_list_if_new "dhcp.${cfg}.server" "${address}#${port}"
 }
 
 dnsmasq_create_server_backup() {
@@ -275,15 +285,8 @@ dnsmasq_create_server_backup() {
 	return 0
 }
 
-_dnsmasq_delete_instance() {
-	local address port i="$2"
-	address="$(jsonfilter -s "$ubusJson" -e "@['$packageName'].instances['$i'].command[4]")"
-	port="$(jsonfilter -s "$ubusJson" -e "@['$packageName'].instances['$i'].command[6]")"
-	uci -q del_list "dhcp.${cfg}.server=${address}#${port}"
-}
-
 dnsmasq_restore_server_backup() {
-	local cfg="$1" i ubusJson
+	local cfg="$1" i
 	uci -q get "dhcp.${cfg}" >/dev/null || return 0
 	if uci -q get "dhcp.${cfg}.doh_backup_noresolv" >/dev/null; then
 		if [ "$(uci -q get "dhcp.${cfg}.doh_backup_noresolv")" = "0" ]; then
@@ -294,16 +297,11 @@ dnsmasq_restore_server_backup() {
 		uci -q del "dhcp.${cfg}.doh_backup_noresolv"
 	fi
 	if uci -q get "dhcp.${cfg}.doh_backup_server" >/dev/null; then
-		. /usr/share/libubox/jshn.sh
-		ubusJson="$(ubus call service list "{ 'verbose': true, 'name': '$packageName' }")"
-		json_init
-		json_load "$ubusJson"
-		json_select "$packageName"
-		json_for_each_item _dnsmasq_delete_instance 'instances'
+		dnsmasq_doh_server "$cfg" 'remove'
 		for i in $(uci -q get "dhcp.${cfg}.doh_backup_server"); do
 			uci_add_list_if_new "dhcp.${cfg}.server" "$i"
 		done
-	uci -q del "dhcp.${cfg}.doh_backup_server"
+		uci -q del "dhcp.${cfg}.doh_backup_server"
 	fi
 }
 
