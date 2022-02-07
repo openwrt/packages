@@ -75,3 +75,7 @@ start_service() {
 	config_load "i2pd"
 	config_foreach start_instance "i2pd"
 }
+
+reload_service() {
+         procd_send_signal i2pd
+}
