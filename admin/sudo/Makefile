@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sudo
-PKG_VERSION:=1.9.8p2
+PKG_VERSION:=1.9.9
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.sudo.ws/dist
-PKG_HASH:=9e3b8b8da7def43b6e60c257abe80467205670fd0f7c081de1423c414b680f2d
+PKG_HASH:=6d6ee863a3bc26c87661093a74ec63e10fd031ceba714642d21636dfe25e3e00
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
