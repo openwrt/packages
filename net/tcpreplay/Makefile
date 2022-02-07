@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tcpreplay
-PKG_VERSION:=4.3.4
-PKG_RELEASE:=1
+PKG_VERSION:=4.4.0
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/appneta/tcpreplay/releases/download/v$(PKG_VERSION)
-PKG_HASH:=42c055106e55852c29d94bb6e1b9e001a0723349f2985eb893a47d384c85002b
+PKG_HASH:=28f64bf57e60d9a0b71cdc355e118c00645ab8092f54fd8b38c74571be77c355
 
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=docs/LICENSE
@@ -35,7 +35,7 @@ define Package/tcpreplay/default
   CATEGORY:=Network
   URL:=http://tcpreplay.appneta.com/
   MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
-  DEPENDS:=+librt +libpcap +libdnet
+  DEPENDS:=+librt +libpcap +libdnet +USE_MUSL:musl-fts
 endef
 
 define Package/tcpbridge
@@ -126,6 +126,10 @@ define Package/tcpreplay-all/description
   Version 4.0.0 introduces features and performance enhancements
   to support switches, routers, and IP Flow/NetFlow appliances. 
 endef
+
+ifneq ($(CONFIG_USE_MUSL),)
+	TARGET_LDFLAGS+= -lfts
+endif
 
 CONFIGURE_VARS += \
 	ac_cv_lib_nl_nl_cache_alloc=no \
