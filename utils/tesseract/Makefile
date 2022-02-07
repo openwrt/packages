@@ -35,6 +35,7 @@ endef
 TARGET_CFLAGS:=$(filter-out -O%,$(TARGET_CFLAGS)) -O3
 
 CMAKE_OPTIONS += \
+	-DAUTO_OPTIMIZE=OFF \
 	-DBUILD_TRAINING_TOOLS=OFF
 
 define Build/InstallDev
