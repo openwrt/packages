@@ -110,7 +110,7 @@ CONFIGURE_ARGS += \
 	--disable-xml-docs
 
 ifeq ($(CONFIG_DBUS_VERBOSE),y)
-  CONFIGURE_ARGS += --disable-verbose-mode
+  CONFIGURE_ARGS += --enable-verbose-mode
 endif
 
 define Build/InstallDev
