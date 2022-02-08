@@ -183,7 +183,7 @@ CONFIGURE_ARGS += \
 	--without-pam
 endif
 
-CONFIGURE_VARS += LD="$(TARGET_CC)"
+CONFIGURE_VARS += LD="$(TARGET_CC)" PATH_PASSWD_PROG="/bin/passwd"
 
 ifeq ($(BUILD_VARIANT),with-pam)
 TARGET_LDFLAGS += -lpthread
