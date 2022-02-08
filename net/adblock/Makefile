@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adblock
 PKG_VERSION:=4.1.3
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
 
@@ -59,7 +59,7 @@ define Package/adblock/install
 	$(INSTALL_CONF) ./files/adblock.whitelist $(1)/etc/adblock
 	$(INSTALL_CONF) ./files/adblock.categories $(1)/etc/adblock
 	$(INSTALL_CONF) ./files/adblock.sources $(1)/etc/adblock
-	gzip -9 $(1)/etc/adblock/adblock.sources
+	gzip -9n $(1)/etc/adblock/adblock.sources
 endef
 
 $(eval $(call BuildPackage,adblock))
