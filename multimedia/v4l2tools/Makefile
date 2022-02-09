@@ -5,13 +5,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=v4l2tools
-PKG_VERSION:=0.1.7
+PKG_VERSION:=0.1.8
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/mpromonet/v4l2tools.git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_MIRROR_HASH:=ded23eef11efbba8467ba58c5e69071ab4b34c0d29ad1a4fdc96683cfe2aff3c
+PKG_MIRROR_HASH:=5d848ab811126e9ad11cc374e312e460cebe40fab99164d4368fe0e69dc07997
 
 PKG_MAINTAINER:=Michel Promonet<michel.promonet@free.fr>
 PKG_LICENSE:=Unlicense
