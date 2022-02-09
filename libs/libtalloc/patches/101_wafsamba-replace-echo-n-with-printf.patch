@@ -1,0 +1,25 @@
+From: https://gitlab.com/samba-team/samba/-/merge_requests/2374/diffs?commit_id=90bb371863d5a44845f47ebbceeb60842b46eda7
+
+From 79b2f38c27c8df918d8260fe838f55bcf6d3eb73 Mon Sep 17 00:00:00 2001
+From: "Sergey V. Lobanov" <sergey@lobanov.in>
+Date: Thu, 10 Feb 2022 00:02:17 +0300
+Subject: [PATCH] wafsamba: replace 'echo -n' with printf
+
+This patch makes samba_cross.py compatible with old bash (e.g. 3.2)
+
+Signed-off-by: Sergey V. Lobanov <sergey@lobanov.in>
+---
+ buildtools/wafsamba/samba_cross.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/buildtools/wafsamba/samba_cross.py
++++ b/buildtools/wafsamba/samba_cross.py
+@@ -134,7 +134,7 @@ class cross_Popen(Utils.subprocess.Popen
+                 cross_answers_incomplete = True
+                 add_answer(ca_file, msg, ans)
+             (retcode, retstring) = ans
+-            args = ['/bin/sh', '-c', "echo -n '%s'; exit %d" % (retstring, retcode)]
++            args = ['/bin/sh', '-c', "printf '%s'; exit %d" % (retstring, retcode)]
+         real_Popen.__init__(*(obj, args), **kw)
+ 
+ 
