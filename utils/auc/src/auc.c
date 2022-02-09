@@ -920,9 +920,12 @@ static int init_ustream_ssl(void) {
 
 static int ask_user(void)
 {
+	char user_input;
 	fprintf(stderr, "Are you sure you want to continue the upgrade process? [N/y] ");
-	if (getchar() != 'y')
+	user_input = getchar();
+	if ((user_input != 'y') && (user_input != 'Y'))
 		return -EINTR;
+
 	return 0;
 }
 
