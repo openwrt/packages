@@ -8,8 +8,6 @@ failsafe_sshd () {
 	sshd_tmpdir=/tmp/sshd
 	mkdir $sshd_tmpdir
 
-	sed -i 's/^root:.*/root::0:17000:::::/g' /etc/shadow
-
 	for type in ed25519; do
 		key=$sshd_tmpdir/ssh_host_${type}_key
 		ssh-keygen -N '' -t ${type} -f ${key}
