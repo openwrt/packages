@@ -1,32 +1,40 @@
 {
-	"comment": "Sample full SIIT configuration.",
+	"comment": {
+		"description": "Sample full SIIT configuration.",
+		"notes": [
+			"192.0.2/24, 198.51.100/24 and 2001:db8::/32 are",
+			"documentation blocks (RFC 5737 and RFC 3849), and you",
+			"WILL need to change or remove them for your setup."
+		],
+		"last update": "2022-02-09"
+	},
 
-	"instance": "instance name",
+	"instance": "sample-siit",
 	"framework": "netfilter",
 
 	"global": {
-		"comment": "pool6 and the RFC6791v4 pool belong here, ever since Jool 4.",
-		"pool6": "64:ff9b::/96",
-		"manually-enabled": false,
-		"zeroize-traffic-class": true,
+		"manually-enabled": true,
+		"pool6": "2001:db8:0::/96",
+		"lowest-ipv6-mtu": 1280,
+		"logging-debug": false,
+		"zeroize-traffic-class": false,
 		"override-tos": false,
-		"tos": 254,
-		"mtu-plateaus": [1, 2, 3, 4, 5, 6],
-		"amend-udp-checksum-zero": true,
-		"eam-hairpin-mode": "simple",
-		"randomize-rfc6791-addresses": false,
+		"tos": 0,
+		"mtu-plateaus": [
+			65535, 32000, 17914, 8166,
+			4352, 2002, 1492, 1006,
+			508, 296, 68
+		],
+		"amend-udp-checksum-zero": false,
+		"eam-hairpin-mode": "intrinsic",
+		"randomize-rfc6791-addresses": true,
 		"rfc6791v6-prefix": null,
 		"rfc6791v4-prefix": null
 	},
 
 	"eamt": [
 		{
-			"comment": {
-				"text": "Here's a compound comment.",
-				"more": "Its type is not checked, after all.",
-				"date": "2019-01-06",
-				"whatever": 1234
-			},
+			"comment": "Comments allowed here too.",
 			"ipv6 prefix": "2001:db8:1::/128",
 			"ipv4 prefix": "192.0.2.0"
 		}, {
