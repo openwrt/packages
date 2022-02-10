@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=banip
 PKG_VERSION:=0.7.10
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
 
@@ -63,7 +63,7 @@ define Package/banip/install
 	$(INSTALL_CONF) ./files/banip.whitelist $(1)/etc/banip
 	$(INSTALL_CONF) ./files/banip.countries $(1)/etc/banip
 	$(INSTALL_CONF) ./files/banip.sources $(1)/etc/banip
-	gzip -9 $(1)/etc/banip/banip.sources
+	gzip -9n $(1)/etc/banip/banip.sources
 
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/firewall
 	$(INSTALL_DATA) ./files/banip.hotplug $(1)/etc/hotplug.d/firewall/30-banip
