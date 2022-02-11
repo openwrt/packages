@@ -3,7 +3,7 @@ Fix cross compile errors by inserting an environment variable for the
 target. Use "uname" on host only if "UNAME" variable is empty.
 --- a/configure.ac
 +++ b/configure.ac
-@@ -777,7 +777,7 @@ if test x_$ub_test_python != x_no; then
+@@ -811,7 +811,7 @@ if test x_$ub_test_python != x_no; then
     fi
  fi
  
