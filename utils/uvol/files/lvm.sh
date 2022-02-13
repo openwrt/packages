@@ -202,7 +202,7 @@ disactivatevol() {
 		*)
 			[ "$lv_active" = "active" ] || return 0
 			devname="$(getdev "$1")"
-			[ "$devname" ] && /sbin/block umount "$devname"
+			[ "$devname" ] && umount "/dev/$devname"
 			lvm_cmd lvchange -a n "$lv_full_name"
 			lvm_cmd lvchange -k y "$lv_full_name" || return $?
 			return 0
