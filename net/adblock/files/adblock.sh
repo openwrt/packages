@@ -60,6 +60,7 @@ adb_action="${1:-"start"}"
 adb_packages=""
 adb_sources=""
 adb_cnt=""
+adb_sort="/usr/libexec/sort-coreutils"
 
 # load & check adblock environment
 #
@@ -1854,7 +1855,6 @@ fi
 
 # sort check
 #
-adb_sort="$(command -v sort)"
 if [ ! -x "${adb_sort}" ] || [ "$("${adb_sort}" --version 2>/dev/null | grep -c "coreutils")" = "0" ]
 then
 	f_log "err" "coreutils sort not found or not executable"
