@@ -2,7 +2,7 @@ This is https://github.com/golang/go/pull/49748 backported for Go 1.17.
 
 --- a/src/cmd/link/internal/ld/lib.go
 +++ b/src/cmd/link/internal/ld/lib.go
-@@ -1388,23 +1388,18 @@ func (ctxt *Link) hostlink() {
+@@ -1391,23 +1391,18 @@ func (ctxt *Link) hostlink() {
  		}
  
  		if ctxt.Arch.InFamily(sys.ARM, sys.ARM64) && buildcfg.GOOS == "linux" {
