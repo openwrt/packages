@@ -1363,6 +1363,10 @@ static int select_image(struct blob_attr *images, const char *target_fstype, cha
 		ret = get_image_by_type(images, combined_type, fstype, image_name, image_sha256);
 		if (!ret)
 			return 0;
+
+		ret = get_image_by_type(images, "sdcard", fstype, image_name, image_sha256);
+		if (!ret)
+			return 0;
 	}
 
 	/* fallback to squashfs unless fstype requested explicitly */
@@ -1372,6 +1376,10 @@ static int select_image(struct blob_attr *images, const char *target_fstype, cha
 			return 0;
 
 		ret = get_image_by_type(images, combined_type, "squashfs", image_name, image_sha256);
+		if (!ret)
+			return 0;
+
+		ret = get_image_by_type(images, "sdcard", fstype, image_name, image_sha256);
 	}
 
 	return ret;
