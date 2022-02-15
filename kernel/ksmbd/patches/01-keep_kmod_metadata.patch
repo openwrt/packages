@@ -7,5 +7,5 @@
 +#undef CONFIG_MODULE_STRIPPED
 +
  #include <linux/ctype.h>
- #include <linux/version.h>
  
+ #include "unicode.h"
