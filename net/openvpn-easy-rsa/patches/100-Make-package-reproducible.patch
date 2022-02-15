@@ -1,0 +1,30 @@
+From fd2351615540dee6c86466d6e1138340baeebde4 Mon Sep 17 00:00:00 2001
+From: Luiz Angelo Daros de Luca <luizluca@gmail.com>
+Date: Tue, 15 Feb 2022 01:37:06 -0300
+Subject: [PATCH] Make package reproducible
+
+Signed-off-by: Luiz Angelo Daros de Luca <luizluca@gmail.com>
+---
+ build/build-dist.sh | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/build/build-dist.sh
++++ b/build/build-dist.sh
+@@ -80,7 +80,7 @@ stage_unix() {
+ 	
+ 	# FreeBSD does not accept -i without argument in a way also acceptable by GNU sed
+ 	sed -i.tmp -e "s/~VER~/$VERSION/" \
+-		   -e "s/~DATE~/$(date)/" \
++		   -e "s/~DATE~/$(SOURCE_DATE_EPOCH)/" \
+ 		   -e "s/~HOST~/$(hostname -s)/" \
+ 		   -e "s/~GITHEAD~/$(git rev-parse HEAD)/" \
+ 		   "$DIST_ROOT/unix/$PV/easyrsa" || die "Cannot update easyrsa version data"
+@@ -122,7 +122,7 @@ stage_win() {
+ 		done
+ 	
+ 		sed -i.tmp -e "s/~VER~/$VERSION/" \
+-			   -e "s/~DATE~/$(date)/" \
++			   -e "s/~DATE~/$(SOURCE_DATE_EPOCH)/" \
+ 			   -e "s/~HOST~/$(hostname -s)/" \
+ 			   -e "s/~GITHEAD~/$(git rev-parse HEAD)/" \
+ 			   "$DIST_ROOT/$win/$PV/easyrsa" || die "Cannot update easyrsa version data"
