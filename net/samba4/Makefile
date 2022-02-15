@@ -351,6 +351,9 @@ ifeq ($(CONFIG_SAMBA4_SERVER_AD_DC),)
 	# unbundle iso8601
 	$(SED) '/"iso8601":/d' $(PKG_BUILD_DIR)/third_party/wscript
 endif
+ifeq ($(CONFIG_HOST_OS_MACOS),y)
+	$(SED) "/^VERSION=/i sys.platform='linux'" $(PKG_BUILD_DIR)/buildtools/bin/waf
+endif
 endef
 
 define Build/Configure
