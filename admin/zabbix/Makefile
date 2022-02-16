@@ -64,6 +64,9 @@ choice
         config ZABBIX_POSTGRESQL
                 bool "PostgreSQL"
 
+        config ZABBIX_SQLITE
+                bool "SQLite"
+
 endchoice
 endef
 
@@ -113,7 +116,7 @@ endef
 define Package/zabbix-server
   $(call Package/zabbix/Default)
   TITLE+= server
-  DEPENDS += +ZABBIX_POSTGRESQL:libpq +ZABBIX_MYSQL:libmariadbclient +libevent2
+  DEPENDS += @((ZABBIX_MYSQL||ZABBIX_POSTGRESQL)) +ZABBIX_POSTGRESQL:libpq +ZABBIX_MYSQL:libmariadbclient +libevent2
 endef
 
 define Package/zabbix-server-frontend
@@ -127,7 +130,7 @@ endef
 define Package/zabbix-proxy
   $(call Package/zabbix/Default)
   TITLE+= proxy
-  DEPENDS += +ZABBIX_POSTGRESQL:libpq +ZABBIX_MYSQL:libmariadbclient +libevent2
+  DEPENDS += +ZABBIX_POSTGRESQL:libpq +ZABBIX_MYSQL:libmariadbclient +ZABBIX_SQLITE:libsqlite3 +libevent2
 endef
 
 define Package/zabbix-extra-mac80211/description
@@ -150,12 +153,13 @@ endef
 
 CONFIGURE_ARGS+= \
 	--enable-agent \
-	--enable-server \
+	$(if $(CONFIG_PACKAGE_zabbix-server),--enable,--disable)-server \
 	--enable-proxy \
 	$(call autoconf_bool,CONFIG_IPV6,ipv6) \
 	--disable-java \
 	$(if $(CONFIG_ZABBIX_MYSQL),--with-mysql) \
 	$(if $(CONFIG_ZABBIX_POSTGRESQL),--with-postgresql) \
+	$(if $(CONFIG_ZABBIX_SQLITE),--with-sqlite3) \
 	--with-libevent=$(STAGING_DIR)/usr/include/libevent \
 	--with-libpcre=$(STAGING_DIR)/usr/include \
 	--with-zlib=$(STAGING_DIR)/usr/include \
