@@ -308,6 +308,7 @@ endef
 define Package/zabbix-proxy/install
 	$(call Package/zabbix/install/sbin,$(1),proxy)
 	$(call Package/zabbix/install/etc,$(1),proxy)
+	$(call Package/zabbix/install/init.d,$(1),proxy)
 endef
 
 $(eval $(call BuildPackage,zabbix-agentd))
