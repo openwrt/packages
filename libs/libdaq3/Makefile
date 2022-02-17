@@ -31,7 +31,7 @@ define Package/libdaq3
   CATEGORY:=Libraries
   TITLE:=DAQ library
   URL:=$(PKG_SOURCE_URL)
-  DEPENDS:=+libdnet +libpcap +libstdcpp
+  DEPENDS:=+libdnet +libpcap +libstdcpp +libmnl +libnetfilter-queue
 endef
 
 define Package/libdaq3/description
@@ -40,7 +40,7 @@ endef
 
 CONFIGURE_ARGS+= \
 	--disable-static \
-	--disable-nfq-module \
+	--enable-nfq-module \
 	--with-dnet-includes="$(STAGING_DIR)/usr/include" \
 	--with-dnet-libraries="$(STAGING_DIR)/usr/lib" \
 	--with-libpcap-includes="$(STAGING_DIR)/usr/include" \
