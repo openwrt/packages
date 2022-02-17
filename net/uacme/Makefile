@@ -28,15 +28,33 @@ PKG_CONFIG_DEPENDS:= \
   CONFIG_LIBCURL_MBEDTLS \
   CONFIG_LIBCURL_OPENSSL \
   CONFIG_LIBCURL_WOLFSSL \
-  CONFIG_LIBCURL_NOSSL
+  CONFIG_LIBCURL_NOSSL \
+  CONFIG_UACME_UALPN
 
 include $(INCLUDE_DIR)/package.mk
 
+
+define Package/uacme/Default
+  SECTION:=net
+  CATEGORY:=Network
+  DEPENDS:=+uacme
+  TITLE:=lightweight client for ACMEv2
+  URL:=https://github.com/ndilieto/uacme
+endef
+
 define Package/uacme
+  $(call Package/uacme/Default)
   SECTION:=net
   CATEGORY:=Network
   DEPENDS:=+libcurl +LIBCURL_WOLFSSL:libmbedtls
   TITLE:=lightweight client for ACMEv2
+  Menu:=1
+endef
+
+define Package/uacme-ualpn
+  $(call Package/uacme/Default)
+  DEPENDS:=+uacme
+  TITLE:=ualpn for uacme
   URL:=https://github.com/ndilieto/uacme
 endef
 
@@ -53,10 +71,16 @@ define Package/uacme/config
 if PACKAGE_uacme && LIBCURL_WOLFSSL
   comment "libcurl uses WolfSSL; uacme will install mbedtls"
   comment "Choose another SSL lib in libcurl to avoid this"
+  comment "ualpn will not be included, even selected"
 endif
 if PACKAGE_uacme && LIBCURL_NOSSL
   comment "libcurl is built without ssl; uacme needs ssl support"
   comment "Choose another SSL lib in libcurl to avoid this"
+  comment "ualpn will not be included, even selected"
+endif
+if PACKAGE_uacme && LIBCURL_MBEDTLS
+  comment "uacme will install mbedtls"
+  comment "ualpn will not be included, even selected"
 endif
 endef
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
@@ -64,11 +88,11 @@ TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 CONFIGURE_ARGS+= \
 	--disable-maintainer-mode \
 	--disable-docs \
-	--without-ualpn \
+	$(if $(CONFIG_PACKAGE_uacme-ualpn),--with-ualpn,--without-ualpn) \
 	$(if $(CONFIG_LIBCURL_GNUTLS),--with-gnutls --without-mbedtls --without-openssl,) \
-	$(if $(CONFIG_LIBCURL_MBEDTLS),--without-gnutls --with-mbedtls --without-openssl,) \
+	$(if $(CONFIG_LIBCURL_MBEDTLS),--without-gnutls --with-mbedtls --without-openssl --without-ualpn,) \
 	$(if $(CONFIG_LIBCURL_OPENSSL),--without-gnutls --without-mbedtls --with-openssl,) \
-	$(if $(CONFIG_LIBCURL_WOLFSSL),--without-gnutls --with-mbedtls --without-openssl,)
+	$(if $(CONFIG_LIBCURL_WOLFSSL),--without-gnutls --with-mbedtls --without-openssl --without-ualpn,)
 
 define Package/uacme/conffiles
 /etc/config/acme
@@ -85,11 +109,21 @@ define Package/uacme/install
 
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/uacme $(1)/usr/sbin/uacme
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/uacme/uacme.sh $(1)/usr/share/uacme/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ualpn.sh $(1)/usr/share/uacme/
 	$(SED) '/^CHALLENGE_PATH=/d' $(1)/usr/share/uacme/uacme.sh
 	$(INSTALL_CONF) ./files/acme.config $(1)/etc/config/acme
 	$(INSTALL_BIN) ./files/run.sh $(1)/usr/share/uacme/run-uacme
 	$(INSTALL_BIN) ./files/acme.init $(1)/etc/init.d/acme
+endef
+
+define Package/uacme-ualpn/install
+	$(INSTALL_DIR) \
+	 $(1)/usr/sbin \
+	 $(1)/usr/share/uacme
+
+	$(if $(CONFIG_LIBCURL_GNUTLS),$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ualpn $(1)/usr/sbin/ualpn; \
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ualpn.sh $(1)/usr/share/uacme/,)
+	$(if $(CONFIG_LIBCURL_OPENSSL),$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ualpn $(1)/usr/sbin/ualpn; \
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ualpn.sh $(1)/usr/share/uacme/,)
 endef
 
 define Package/uacme/prerm
@@ -98,3 +132,4 @@ sed -i '/\/etc\/init\.d\/acme start/d' /etc/crontabs/root
 endef
 
 $(eval $(call BuildPackage,uacme))
+$(eval $(call BuildPackage,uacme-ualpn))
