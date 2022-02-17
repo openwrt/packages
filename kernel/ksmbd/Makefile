@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ksmbd
-PKG_VERSION:=3.3.9
-PKG_RELEASE:=1
+PKG_VERSION:=3.4.4
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/cifsd-team/cifsd/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=c196d1773b9f89221133780fd189b550acbc56ac93c2e79260a70eab9853b3e1
+PKG_HASH:=694960bd0c01de8c4dba0087515343875e6b29bc11bb6b663b8499c66fe0f842
 
 PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -29,7 +29,6 @@ define KernelPackage/fs-ksmbd
 		+kmod-crypto-md4 \
 		+kmod-crypto-md5 \
 		+kmod-crypto-hmac \
-		+kmod-crypto-arc4 \
 		+kmod-crypto-ecb \
 		+kmod-crypto-des \
 		+kmod-crypto-sha256 \
@@ -38,8 +37,12 @@ define KernelPackage/fs-ksmbd
 		+kmod-crypto-aead \
 		+kmod-crypto-ccm \
 		+kmod-crypto-gcm \
-		+kmod-lib-crc32c
+		+kmod-fs-nfsd \
+		+kmod-nf-nathelper-extra
 endef
+
+# The last two DEPENDS are hacks in order to get CONFIG_ASN1 and CONFIG_OID_REGISTRY
+# which it seems can't be selected independently. Some bug in either base or upstream.
 
 define KernelPackage/fs-ksmbd/description
   Ksmbd is an In-kernel SMBv(1)2/3 fileserver.
