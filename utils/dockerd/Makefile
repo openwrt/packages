@@ -15,6 +15,8 @@ PKG_GIT_SHORT_COMMIT:=459d0df # SHA1 used within the docker executables
 
 PKG_MAINTAINER:=Gerard Ryan <G.M0N3Y.2503@gmail.com>
 
+TARGET_LDFLAGS += $(if $(CONFIG_USE_GLIBC),-lgcc_eh)
+
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
