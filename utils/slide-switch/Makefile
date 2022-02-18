@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2016, 2018-2019, 2021 Jeffery To
+# Copyright (C) 2016, 2018-2019, 2022 Jeffery To
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,19 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=slide-switch
-PKG_VERSION:=0.9.6
+PKG_VERSION:=0.9.7
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/jefferyto/openwrt-slide-switch.git
-PKG_MIRROR_HASH:=4a11db6954c5a8ff9eb253600de0d9b034e639f053604bae0c9a6802dd685be5
+PKG_MIRROR_HASH:=a0bba3e952179d96667be293a230b2ad26b3bfdd7b01962116f2c99428696bc5
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
 
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
-PKG_LICENSE:=GPL-2.0
+PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
