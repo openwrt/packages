@@ -12,6 +12,8 @@ uvol_init() {
 	[ "$metasz" -gt "$freesz" ] && return
 	uvol create .meta "$metasz" rw
 	uvol up .meta
+	grep -q "uvol/.meta" /proc/mounts || return
+	mkdir -p "/var/run/uvol/.meta/apk"
 }
 
 uci -q get fstab.@uvol[0].initialized >/dev/null || uvol_init

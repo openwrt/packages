@@ -12,7 +12,7 @@ uvol_uci_add() {
 	local devname="$2"
 	local mode="$3"
 	local autofs=0
-	local target="/var/run/uvol/$volname"
+	local target="/tmp/run/uvol/$volname"
 	local uuid uciname
 
 	[ "$mode" = "ro" ] && autofs=1
@@ -24,7 +24,7 @@ uvol_uci_add() {
 
 	case "$uciname" in
 		"_meta")
-			target="/var/run/uvol/.meta"
+			target="/tmp/run/uvol/.meta"
 			;;
 		"_"*)
 			return 1

@@ -13,8 +13,7 @@ start_service() {
 }
 
 boot() {
-	__BOOT_UVOL=1
-	start
+	__BOOT_UVOL=1 start
 }
 
 service_triggers() {
