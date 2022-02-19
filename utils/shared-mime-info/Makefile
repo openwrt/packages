@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shared-mime-info
 PKG_VERSION:=2.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -19,6 +19,7 @@ PKG_SOURCE_URL:=https://gitlab.freedesktop.org/xdg/$(PKG_NAME)/-/archive/$(PKG_V
 PKG_HASH:=37df6475da31a8b5fc63a54ba0770a3eefa0a708b778cb6366dccee96393cb60
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/meson.mk
 
 define Package/shared-mime-info
