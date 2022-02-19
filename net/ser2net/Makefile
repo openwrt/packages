@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ser2net
-PKG_VERSION:=3.5.1
-PKG_RELEASE:=5
+PKG_VERSION:=4.3.5
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/ser2net
-PKG_HASH:=02f5dd0abbef5a17b80836b0de1ef0588e257106fb5e269b86822bfd001dc862
+PKG_HASH:=848c4fe863806e506832f1ee85b8b68258f06eb19dad43dbeee16a2cfe5d9053
 
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
@@ -24,11 +24,16 @@ PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
+CONFIGURE_ARGS += \
+	--with-pthreads \
+	--with-sysfs-led-support
+
 define Package/ser2net
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Serial to Network Proxy
   URL:=https://sourceforge.net/projects/ser2net/
+  DEPENDS:=+libgensio +libyaml +libpthread
 endef
 
 define Package/ser2net/description
