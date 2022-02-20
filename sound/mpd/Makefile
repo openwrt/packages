@@ -49,7 +49,7 @@ define Package/mpd-full
 $(call Package/mpd/Default)
   TITLE+= (full)
   DEPENDS+= +AUDIO_SUPPORT:pulseaudio-daemon +libvorbis +libmms +libnpupnp +libshout +yajl \
-            +libffmpeg +lame-lib +!BUILD_PATENTED:libmad
+            +libffmpeg +lame-lib +libsoxr +!BUILD_PATENTED:libmad
   PROVIDES:=mpd
   VARIANT:=full
 endef
@@ -156,7 +156,6 @@ MESON_ARGS += \
 	-Dshine=disabled \
 	-Dwave_encoder=true \
 	-Dlibsamplerate=disabled \
-	-Dsoxr=disabled \
 	-Dalsa=$(if $(CONFIG_AUDIO_SUPPORT),en,dis)abled \
 	-Dao=disabled \
 	-Dhttpd=true \
@@ -193,7 +192,8 @@ ifeq ($(BUILD_VARIANT),full)
 	-Dshout=enabled \
 	-Dyajl=enabled \
 	-Dvorbisenc=enabled \
-	-Dlame=enabled
+	-Dlame=enabled \
+	-Dsoxr=enabled
 
 ifeq ($(CONFIG_AUDIO_SUPPORT),y)
 	TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib/pulseaudio
@@ -216,7 +216,8 @@ ifeq ($(BUILD_VARIANT),mini)
 	-Dpulse=disabled \
 	-Drecorder=false \
 	-Dshout=disabled \
-	-Dyajl=disabled
+	-Dyajl=disabled \
+	-Dsoxr=disabled
 endif
 
 define Package/mpd/install
