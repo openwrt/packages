@@ -6,7 +6,6 @@ PKG_VERSION:=0.5.0
 PKG_RELEASE:=2
 
 PKG_LICENSE:=BSD-3-Clause
-PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 
 PYPI_NAME:=pylibmodbus
 PKG_HASH:=80f837304ffa8476145ea643f6b98aa94b205013a96f1e5173d7bdc776426aee
