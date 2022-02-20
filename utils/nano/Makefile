@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nano
-PKG_VERSION:=6.0
+PKG_VERSION:=6.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/nano
-PKG_HASH:=93ac8cb68b4ad10e0aaeb80a2dd15c5bb89eb665a4844f7ad01c67efcb169ea2
+PKG_HASH:=3d57ec893fbfded12665b7f0d563d74431fc43abeaccacedea23b66af704db40
 
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
@@ -25,13 +25,25 @@ PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/nano
+define Package/nano/Default
   SUBMENU:=Editors
   SECTION:=utils
   CATEGORY:=Utilities
-  TITLE:=GNU nano - enhanced clone of the Pico text editor
   URL:=https://www.nano-editor.org/
   DEPENDS:=+libncurses
+endef
+
+define Package/nano
+  $(call Package/nano/Default)
+  TITLE:=GNU nano text editor (minimal features)
+  VARIANT:=tiny
+  DEFAULT_VARIANT:=1
+endef
+
+define Package/nano-plus
+  $(call Package/nano/Default)
+  TITLE:=GNU nano text editor (more features, Unicode)
+  VARIANT:=plus
 endef
 
 define Package/nano/description
@@ -44,11 +56,41 @@ define Package/nano/description
   Nano is an official GNU package.
 endef
 
-CONFIGURE_ARGS += \
-	--enable-tiny \
-	--disable-utf8 \
+define Package/nano-plus/description
+  nano-plus - Additional features enabled, larger size than default nano.
+  (multibuffer, Unicode/UTF-8, help, justify, nanorc, some key bindings)
+
+  $(call Package/nano/description)
+endef
+
+ifeq ($(BUILD_VARIANT),plus)
+# plus variant with more features included
+  CONFIGURE_ARGS += \
+	--enable-help \
+	--enable-justify \
+	--enable-linenumbers \
+	--enable-multibuffer \
+	--enable-nanorc \
+	--enable-utf8 \
+	--disable-browser \
 	--disable-color \
-	--enable-linenumbers
+	--disable-comment \
+	--disable-extra \
+	--disable-histories \
+	--disable-libmagic \
+	--disable-mouse \
+	--disable-operatingdir \
+	--disable-speller \
+	--disable-tabcomp \
+	--disable-wordcomp
+else
+# default tiny variant
+  CONFIGURE_ARGS += \
+	--enable-tiny \
+	--enable-linenumbers \
+	--disable-color \
+	--disable-utf8
+endif
 
 CONFIGURE_VARS += \
 	ac_cv_header_regex_h=no \
@@ -58,5 +100,10 @@ define Package/nano/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/$(PKG_NAME) $(1)/usr/bin/
 endef
 
+define Package/nano-plus/install
+	$(call Package/nano/install,$1)
+endef
+
 $(eval $(call BuildPackage,nano))
+$(eval $(call BuildPackage,nano-plus))
 

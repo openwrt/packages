@@ -8,19 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=prosody
-PKG_VERSION:=0.11.2
-PKG_RELEASE:=3
+PKG_VERSION:=0.11.13
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://prosody.im/downloads/source
-PKG_HASH:=8911f6dc29b9e0c4edf9e61dc23fa22d77bc42c4caf28b809ab843b2f08e4831
+PKG_HASH:=39c61b346a09b5125b604cb969e14206cbbcb86c81156ffc6ba2d62527cf0432
+
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=MIT/X11
-PKG_BUILD_DEPENDS:=lua/host
 PKG_CPE_ID:=cpe:/a:prosody:prosody
-HOST_BUILD_DEPENDS:=$(PKG_BUILD_DEPENDS)
 
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
+PKG_BUILD_DEPENDS:=lua/host
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -44,7 +45,7 @@ define Package/prosody/conffiles
 /etc/prosody/prosody.cfg.lua
 endef
 
-TARGET_CFLAGS += $(FPIC) -std=gnu99
+TARGET_CFLAGS += $(FPIC)
 TARGET_LDFLAGS += -shared
 
 MAKE_FLAGS += LD="$(TARGET_CC)"
@@ -67,8 +68,7 @@ define Package/prosody/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/prosody.init $(1)/etc/init.d/prosody
 	$(INSTALL_DIR) $(1)/etc/prosody
-	#$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/prosody/prosody.cfg.lua $(1)/etc/prosody/
-	$(INSTALL_CONF) ./files/prosody.cfg.lua $(1)/etc/prosody/
+	$(INSTALL_DATA) ./files/prosody.cfg.lua $(1)/etc/prosody/
 	$(INSTALL_DIR) $(1)/etc/prosody/certs
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/prosody/certs/localhost.{crt,key} $(1)/etc/prosody/certs/
 	$(INSTALL_DIR) $(1)/etc/prosody/data
