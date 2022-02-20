@@ -140,6 +140,8 @@ watchcat_monitor_network() {
 				watchcat_restart_all_network
 			fi
 			/etc/init.d/watchcat start
+			# Restart timer cycle.
+			time_lastcheck_withinternet="$time_now"
 		}
 
 	done
