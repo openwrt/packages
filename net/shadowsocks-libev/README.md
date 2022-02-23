@@ -71,9 +71,7 @@ We can have multiple instances of component and `server` sections.  The relation
 
 	local_default		[bypass], forward, checkdst
 
-Bool option `dst_forward_recentrst` requires iptables/netfilter `recent` match module (`opkg install iptables-mod-conntrack-extra`).  When enabled, `ss-rules` will setup iptables rules to forward through `ss-redir` those packets whose destination have recently sent to us multiple tcp-rst.
-
-ss-rules uses kernel ipset mechanism for storing addresses/networks.  Those ipsets are also part of the API and can be populated by other programs, e.g. dnsmasq with builtin ipset support.  For more details please read output of `ss-rules --help`
+ss-rules now uses nft set for storing addresses/networks.  Those set names are also part of the API and can be populated by other programs, e.g. dnsmasq with builtin nft set support
 
 Note also that `src_ips_xx` and `dst_ips_xx` actually also accepts cidr network representation.  Option names are retained in its current form for backward compatibility coniderations
 
@@ -81,6 +79,7 @@ Note also that `src_ips_xx` and `dst_ips_xx` actually also accepts cidr network 
 
 | Commit date | Commit ID | Subject | Comment |
 | ----------- | --------- | ------- | ------- |
+|             |           | shadowsocks-libev: ss-rules: convert to using nft | ss-rules now uses nftables. UCI option ipt_args and dst_forward_recentrst are now deprecated and removed |
 | 2020-08-03  | 7d7cbae75 | shadowsocks-libev: support ss-server option local_address_{v4,v6} | ss_server bind_address now deprecated, use local_address |
 | 2019-05-09  | afe7d3424 | shadowsocks-libev: move plugin options to server section | This is a revision against c19e949 committed 2019-05-06 |
 | 2017-07-02  | b61af9703 | shadowsocks-libev: rewrite | Packaging of shadowsocks-libev was rewritten from scratch |
@@ -162,7 +161,7 @@ Restart shadowsocks-libev components
 
 Check if things are in place
 
-	iptables-save | grep ss_rules
+	nft list ruleset | sed -r -n '/^\t[a-z]+ ss_rules[^ ]+ \{/,/^\t\}/p'
 	netstat -lntp | grep -E '8053|1100'
 	ps ww | grep ss-
 

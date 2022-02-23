@@ -12,6 +12,9 @@ START=99
 ss_confdir=/var/etc/shadowsocks-libev
 ss_bindir=/usr/bin
 
+ssrules_uc="/usr/share/ss-rules/ss-rules.uc"
+ssrules_nft="/etc/nftables.d/90-ss-rules.nft"
+
 ss_mkjson_server_conf() {
 	local cfgserver
 
@@ -111,14 +114,11 @@ ss_rules_cb() {
 
 ss_rules() {
 	local cfg="ss_rules"
-	local bin="$ss_bindir/ss-rules"
 	local cfgtype
 	local local_port_tcp local_port_udp
-	local args
+	local remote_servers
 
-	[ -x "$bin" ] || return 1
-	"$bin" -f
-	"$bin" -6 -f
+	[ -s "$ssrules_uc" ] || return 1
 
 	config_get cfgtype "$cfg" TYPE
 	[ "$cfgtype" = ss_rules ] || return 1
@@ -130,32 +130,41 @@ ss_rules() {
 	eval local_port_tcp="\$ss_rules_redir_tcp_$redir_tcp"
 	eval local_port_udp="\$ss_rules_redir_udp_$redir_udp"
 	[ -n "$local_port_tcp" -o -n "$local_port_udp" ] || return 1
-	ss_redir_servers="$(echo "$ss_redir_servers" | tr ' ' '\n' | sort -u)"
-	[ "$dst_forward_recentrst" = 0 ] || args="$args --dst-forward-recentrst"
+	remote_servers="$(echo $ss_redir_servers \
+		| tr ' ' '\n' \
+		| sort -u \
+		| xargs -n 1 resolveip \
+		| sort -u)"
 
-	ss_rules_call
-	ss_rules_call -6
-}
+	local tmp="/tmp/ssrules"
+	json_init
+	json_add_string o_remote_servers "$remote_servers"
+	json_add_int o_redir_tcp_port "$local_port_tcp"
+	json_add_int o_redir_udp_port "$local_port_udp"
+	json_add_string o_ifnames "$ifnames"
+	json_add_string o_local_default "$local_default"
+	json_add_string o_src_bypass "$src_ips_bypass"
+	json_add_string o_src_forward "$src_ips_forward"
+	json_add_string o_src_checkdst "$src_ips_checkdst"
+	json_add_string o_src_default "$src_default"
+	json_add_string o_dst_bypass "$dst_ips_bypass"
+	json_add_string o_dst_forward "$dst_ips_forward"
+	json_add_string o_dst_bypass_file "$dst_ips_bypass_file"
+	json_add_string o_dst_forward_file "$dst_ips_forward_file"
+	json_add_string o_dst_default "$dst_default"
+	json_dump -i >"$tmp.json"
 
-ss_rules_call() {
-	"$bin" "$@" \
-			-s "$ss_redir_servers" \
-			-l "$local_port_tcp" \
-			-L "$local_port_udp" \
-			--src-default "$src_default" \
-			--dst-default "$dst_default" \
-			--local-default "$local_default" \
-			--dst-bypass-file "$dst_ips_bypass_file" \
-			--dst-forward-file "$dst_ips_forward_file" \
-			--dst-bypass "$dst_ips_bypass" \
-			--dst-forward "$dst_ips_forward" \
-			--src-bypass "$src_ips_bypass" \
-			--src-forward "$src_ips_forward" \
-			--src-checkdst "$src_ips_checkdst" \
-			--ifnames "$ifnames" \
-			--ipt-extra "$ipt_args" \
-			$args \
-		|| "$bin" "$@" -f
+	if ucode -S -i "$ssrules_uc" -E "$tmp.json" >"$tmp.nft" \
+		&& ! cmp -s "$tmp.nft" "$ssrules_nft"; then
+		echo "table inet chk {include \"$tmp.nft\";}" >"$tmp.nft.chk"
+		if nft -f "$tmp.nft.chk" -c; then
+			mv "$tmp.nft" "$ssrules_nft"
+			fw4 reload
+		fi
+		rm -f "$tmp.nft.chk"
+	fi
+	rm -f "$tmp.json"
+	rm -f "$tmp.nft"
 }
 
 start_service() {
@@ -170,12 +179,10 @@ start_service() {
 }
 
 stop_service() {
-	local bin="$ss_bindir/ss-rules"
-
-	[ -x "$bin" ] && {
-		"$bin" -f
-		"$bin" -6 -f
-	}
+	if [ -f "$ssrules_nft" ]; then
+		rm -f "$ssrules_nft"
+		fw4 reload
+	fi
 	rm -rf "$ss_confdir"
 }
 
@@ -276,9 +283,7 @@ validate_ss_rules_section() {
 		'src_default:or("bypass", "forward", "checkdst"):checkdst' \
 		'dst_default:or("bypass", "forward"):bypass' \
 		'local_default:or("bypass", "forward", "checkdst"):bypass' \
-		'dst_forward_recentrst:bool:0' \
-		'ifnames:maxlength(15)' \
-		'ipt_args:string'
+		'ifnames:maxlength(15)'
 }
 
 validate_ss_server_section() {
