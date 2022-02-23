@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tinyionice
-PKG_VERSION:=1.0.0
+PKG_VERSION:=1.0.1
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/xyproto/tinyionice/tar.gz/v${PKG_VERSION}?
-PKG_HASH:=65d903b5d69ca1d121bc9ad1a635a49b49233a99121ce40730b3617048ff6a84
+PKG_HASH:=2b5d61cd1a153060ed96bb5e6585c16d1f7a0828a13ee7a9049b49fc09885440
 
 PKG_MAINTAINER:=Michal Vasilek <michal.vasilek@nic.cz>
 PKG_LICENSE:=GPL-2.0-only
