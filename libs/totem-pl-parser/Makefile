@@ -37,7 +37,8 @@ define Package/totem-pl-parser/decription
 endef
 
 MESON_ARGS += -Dintrospection=false \
-              -Denable-libarchive=no
+              -Denable-libarchive=no \
+              -Denable-libgcrypt=no
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/
