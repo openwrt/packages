@@ -36,7 +36,8 @@ define Package/totem-pl-parser/decription
   totem-pl-parser is a simple GObject-based library to parse a host of playlist formats
 endef
 
-MESON_ARGS += -Dintrospection=false
+MESON_ARGS += -Dintrospection=false \
+              -Denable-libarchive=no
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/
