@@ -1,0 +1,62 @@
+if PACKAGE_rsyslog
+	config RSYSLOG_gssapi_krb5
+		bool "Enable GSSAPI Kerberos 5 support"
+		default n
+		help
+		  Enable GSSAPI Kerberos 5 support in rsyslog
+	config RSYSLOG_mysql
+		bool "Enable MySQL support"
+		default n
+		help
+		  Enable MySQL support in rsyslog
+	config RSYSLOG_pgsql
+		bool "Enable PostgreSQL support"
+		default n
+		help
+		  Enable PostgreSQL support in rsyslog
+	config RSYSLOG_libdbi
+		bool "Enable libdbi support"
+		default n
+		help
+		  Enable libdbi support in rsyslog
+	config RSYSLOG_elasticsearch
+		bool "Enable ElasticSearch module support"
+		default n
+		help
+		  Enable ElasticSearch output module in rsyslog
+	config RSYSLOG_omhttp
+		bool "Enable HTTP output module support"
+		default n
+		help
+		  Enable HTTP output module in rsyslog
+	config RSYSLOG_openssl
+		bool "Enable OpenSSL support"
+		default n
+		help
+		  Enable OpenSSL support in rsyslog
+	config RSYSLOG_gnutls
+		bool "Enable GnuTLS support"
+		default n
+		help
+		  Enable GnuTLS support in rsyslog
+	config RSYSLOG_mail
+		bool "Enable Mail support"
+		default n
+		help
+		  Enable mail support in rsyslog
+	config RSYSLOG_mmjsonparse
+		bool "Enable JSON parsing module support"
+		default n
+		help
+		  Enable JSON parsing support in rsyslog
+	config RSYSLOG_mmdblookup
+		bool "Enable MaxMind DB lookup helper support"
+		default n
+		help
+		  Enable MaxMind DB lookup helper support in rsyslog
+	config RSYSLOG_imfile
+		bool "Enable file input module support"
+		default n
+		help
+		  Enable input file module in rsyslog
+endif

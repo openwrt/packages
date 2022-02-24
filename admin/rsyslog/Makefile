@@ -75,78 +75,7 @@ define Package/rsyslog/install
 endef
 
 define Package/rsyslog/config
-	config RSYSLOG_gssapi_krb5
-		depends on PACKAGE_rsyslog
-		bool "Enable GSSAPI Kerberos 5 support"
-		default n
-		help
-			Enable GSSAPI Kerberos 5 support in rsyslog
-	config RSYSLOG_mysql
-		depends on PACKAGE_rsyslog
-		bool "Enable MySQL support"
-		default n
-		help
-			Enable MySQL support in rsyslog
-	config RSYSLOG_pgsql
-		depends on PACKAGE_rsyslog
-		bool "Enable PostgreSQL support"
-		default n
-		help
-			Enable PostgreSQL support in rsyslog
-	config RSYSLOG_libdbi
-		depends on PACKAGE_rsyslog
-		bool "Enable libdbi support"
-		default n
-		help
-			Enable libdbi support in rsyslog
-	config RSYSLOG_elasticsearch
-		depends on PACKAGE_rsyslog
-		bool "Enable ElasticSearch module support"
-		default n
-		help
-			Enable ElasticSearch output module in rsyslog
-	config RSYSLOG_omhttp
-		depends on PACKAGE_rsyslog
-		bool "Enable HTTP output module support"
-		default n
-		help
-			Enable HTTP output module in rsyslog
-	config RSYSLOG_openssl
-		depends on PACKAGE_rsyslog
-		bool "Enable OpenSSL support"
-		default n
-		help
-			Enable OpenSSL support in rsyslog
-	config RSYSLOG_gnutls
-		depends on PACKAGE_rsyslog
-		bool "Enable GnuTLS support"
-		default n
-		help
-			Enable GnuTLS support in rsyslog
-	config RSYSLOG_mail
-		depends on PACKAGE_rsyslog
-		bool "Enable Mail support"
-		default n
-		help
-			Enable mail support in rsyslog
-	config RSYSLOG_mmjsonparse
-		depends on PACKAGE_rsyslog
-		bool "Enable JSON parsing module support"
-		default n
-		help
-			Enable JSON parsing support in rsyslog
-	config RSYSLOG_mmdblookup
-		depends on PACKAGE_rsyslog
-		bool "Enable MaxMind DB lookup helper support"
-		default n
-		help
-			Enable MaxMind DB lookup helper support in rsyslog
-	config RSYSLOG_imfile
-		depends on PACKAGE_rsyslog
-		bool "Enable file input module support"
-		default n
-		help
-			Enable input file module in rsyslog
+  source "$(SOURCE)/Config.in"
 endef
 
 $(eval $(call BuildPackage,rsyslog))
