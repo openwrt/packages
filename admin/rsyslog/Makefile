@@ -36,7 +36,8 @@ define Package/rsyslog
 	+RSYSLOG_gssapi_krb5:krb5-libs +RSYSLOG_elasticsearch:libcurl \
 	+RSYSLOG_libdbi:libdbi +libestr +libfastjson +RSYSLOG_gnutls:libgnutls \
 	+RSYSLOG_mmdblookup:libmaxminddb +RSYSLOG_mysql:libmysqlclient \
-	+RSYSLOG_openssl:libopenssl +RSYSLOG_pgsql:libpq +libuuid +zlib
+	+RSYSLOG_omhttp:libcurl +RSYSLOG_openssl:libopenssl \
+	+RSYSLOG_pgsql:libpq +libuuid +zlib
   MENU:=1
 endef
 
