@@ -242,6 +242,7 @@ endef
 
 define Package/tvheadend/conffiles
 /etc/config/tvheadend
+/etc/tvheadend
 endef
 
 define Package/tvheadend/install
