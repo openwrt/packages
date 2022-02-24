@@ -147,10 +147,12 @@ mwan3_set_custom_ipset()
 
 mwan3_set_connected_ipv4()
 {
-	local connected_network_v4 candidate_list cidr_list
-	$IPS -! create mwan3_connected_v4 hash:net
-	$IPS create mwan3_connected_v4_temp hash:net ||
-		LOG notice "failed to create ipset mwan3_connected_v4_temp"
+	local connected_network_v4 error
+	local candidate_list cidr_list
+	local update=""
+
+	mwan3_push_update -! create mwan3_connected_v4 hash:net
+	mwan3_push_update flush mwan3_connected_v4
 
 	candidate_list=""
 	cidr_list=""
@@ -168,22 +170,15 @@ mwan3_set_connected_ipv4()
 	done
 
 	for connected_network_v4 in $cidr_list; do
-		$IPS -! add mwan3_connected_v4_temp "$connected_network_v4"
+		mwan3_push_update -! add mwan3_connected_v4 "$connected_network_v4"
 	done
 	for connected_network_v4 in $candidate_list; do
-		ipset -q test mwan3_connected_v4_temp "$connected_network_v4" ||
-			$IPS -! add mwan3_connected_v4_temp "$connected_network_v4"
+		mwan3_push_update -! add mwan3_connected_v4 "$connected_network_v4"
 	done
 
-	$IPS add mwan3_connected_v4_temp 224.0.0.0/3 ||
-		LOG notice "failed to add 224.0.0.0/3 to mwan3_connected_v4_temp"
-
-	$IPS swap mwan3_connected_v4_temp mwan3_connected_v4 ||
-		LOG notice "failed to swap mwan3_connected_v4_temp and mwan3_connected_v4"
-	$IPS destroy mwan3_connected_v4_temp ||
-		LOG notice "failed to destroy ipset mwan3_connected_v4_temp"
-	$IPS -! add mwan3_connected mwan3_connected_v4
-
+	mwan3_push_update add mwan3_connected_v4 224.0.0.0/3
+	mwan3_push_update -! add mwan3_connected mwan3_connected_v4
+	error=$(echo "$update" | $IPS restore 2>&1) || LOG error "set_connected_ipv4: $error"
 }
 
 mwan3_set_connected_ipv6()
