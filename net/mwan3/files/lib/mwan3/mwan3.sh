@@ -140,7 +140,7 @@ mwan3_set_custom_ipset()
 
 	mwan3_push_update -! create mwan3_connected list:set
 	mwan3_push_update -! add mwan3_connected mwan3_custom_v4
-	mwan3_push_update -! add mwan3_connected mwan3_custom_v6
+	[ $NO_IPV6 -eq 0 ] && mwan3_push_update -! add mwan3_connected mwan3_custom_v6
 	error=$(echo "$update" | $IPS restore 2>&1) || LOG error "set_custom_ipset: $error"
 }
 
