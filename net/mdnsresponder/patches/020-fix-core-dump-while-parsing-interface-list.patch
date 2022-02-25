@@ -1,0 +1,18 @@
+From 1fb07b9524b4afed3a826c087db4dc48a7bfdb89 Mon Sep 17 00:00:00 2001
+From: Ted Lemon <elemon@apple.com>
+Date: Thu, 6 Jun 2019 13:35:43 -0400
+Subject: [PATCH] Fix core dump while parsing interface list on Posix
+
+---
+--- a/mDNSPosix/mDNSPosix.c
++++ b/mDNSPosix/mDNSPosix.c
+@@ -1320,7 +1320,8 @@ mDNSlocal int SetupInterfaceList(mDNS *c
+         struct ifaddrs *i = intfList;
+         while (i)
+         {
+-            if (     ((i->ifa_addr->sa_family == AF_INET)
++            if (     i->ifa_addr != NULL &&
++                     ((i->ifa_addr->sa_family == AF_INET)
+ #if HAVE_IPV6
+                       || (i->ifa_addr->sa_family == AF_INET6)
+ #endif
