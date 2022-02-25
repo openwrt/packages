@@ -707,6 +707,33 @@ mwan3_set_sticky_iptables()
 	done
 }
 
+mwan3_set_sticky_ipset()
+{
+	local rule="$1"
+	local mmx="$2"
+	local timeout="$3"
+
+	local error
+	local update=""
+
+	mwan3_push_update -! create "mwan3_sticky_v4_$rule" \
+		hash:ip,mark markmask "$mmx" \
+		timeout "$timeout"
+
+	[ $NO_IPV6 -eq 0 ] &&
+		mwan3_push_update -! create "mwan3_sticky_v6_$rule" \
+			hash:ip,mark markmask "$mmx" \
+			timeout "$timeout" family inet6
+
+	mwan3_push_update -! create "mwan3_sticky_$rule" list:set
+
+	mwan3_push_update -! add "mwan3_sticky_$rule" "mwan3_sticky_v4_$rule"
+	[ $NO_IPV6 -eq 0 ] &&
+		mwan3_push_update -! add "mwan3_sticky_$rule" "mwan3_sticky_v6_$rule"
+
+	error=$(echo "$update" | $IPS restore 2>&1) || LOG error "set_sticky_ipset_${rule}: $error"
+}
+
 mwan3_set_user_iptables_rule()
 {
 	local ipset family proto policy src_ip src_port src_iface src_dev
@@ -790,17 +817,7 @@ mwan3_set_user_iptables_rule()
 		rule_policy=1
 		policy="mwan3_policy_$use_policy"
 		if [ "$sticky" -eq 1 ]; then
-			$IPS -! create "mwan3_sticky_v4_$rule" \
-			     hash:ip,mark markmask "$MMX_MASK" \
-			     timeout "$timeout"
-			[ $NO_IPV6 -eq 0 ] &&
-				$IPS -! create "mwan3_sticky_v6_$rule" \
-				     hash:ip,mark markmask "$MMX_MASK" \
-				     timeout "$timeout" family inet6
-			$IPS -! create "mwan3_sticky_$rule" list:set
-			$IPS -! add "mwan3_sticky_$rule" "mwan3_sticky_v4_$rule"
-			[ $NO_IPV6 -eq 0 ] &&
-				$IPS -! add "mwan3_sticky_$rule" "mwan3_sticky_v6_$rule"
+			mwan3_set_sticky_ipset "$rule" "$MMX_MASK" "$timeout"
 		fi
 	fi
 
