@@ -380,7 +380,7 @@ mwan3_create_iface_iptables()
 
 mwan3_delete_iface_iptables()
 {
-	local IPT
+	local IPT update
 	config_get family "$1" family ipv4
 
 	if [ "$family" = "ipv4" ]; then
@@ -392,12 +392,18 @@ mwan3_delete_iface_iptables()
 		IPT="$IPT6"
 	fi
 
-	$IPT -D mwan3_ifaces_in \
-	     -m mark --mark 0x0/$MMX_MASK \
-	     -j "mwan3_iface_in_$1" &> /dev/null
-	$IPT -F "mwan3_iface_in_$1" &> /dev/null
-	$IPT -X "mwan3_iface_in_$1" &> /dev/null
+	update="*mangle"
 
+	mwan3_push_update -D mwan3_ifaces_in \
+		-m mark --mark 0x0/$MMX_MASK \
+		-j "mwan3_iface_in_$1" &> /dev/null
+	mwan3_push_update -F "mwan3_iface_in_$1" &> /dev/null
+	mwan3_push_update -X "mwan3_iface_in_$1" &> /dev/null
+
+	mwan3_push_update COMMIT
+	mwan3_push_update ""
+
+	error=$(echo "$update" | $IPTR 2>&1) || LOG error "delete_iface_iptables_${1}: $error"
 }
 
 mwan3_extra_tables_routes()
