@@ -135,8 +135,10 @@ mwan3_set_custom_ipset()
 	mwan3_push_update -! create mwan3_custom_v4 hash:net
 	config_list_foreach "globals" "rt_table_lookup" mwan3_set_custom_ipset_v4
 
-	mwan3_push_update -! create mwan3_custom_v6 hash:net family inet6
-	config_list_foreach "globals" "rt_table_lookup" mwan3_set_custom_ipset_v6
+	if [ $NO_IPV6 -eq 0 ]; then
+		mwan3_push_update -! create mwan3_custom_v6 hash:net family inet6
+		config_list_foreach "globals" "rt_table_lookup" mwan3_set_custom_ipset_v6
+	fi
 
 	mwan3_push_update -! create mwan3_connected list:set
 	mwan3_push_update -! add mwan3_connected mwan3_custom_v4
