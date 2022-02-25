@@ -250,7 +250,6 @@ mwan3_set_general_iptables()
 
 		if [ -n "${current##*-N mwan3_connected*}" ]; then
 			mwan3_push_update -N mwan3_connected
-			$IPS -! create mwan3_connected list:set
 			mwan3_push_update -A mwan3_connected \
 					  -m set --match-set mwan3_connected dst \
 					  -j MARK --set-xmark $MMX_DEFAULT/$MMX_MASK
