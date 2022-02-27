@@ -130,7 +130,7 @@ Available commands:
 	suspend         Suspend adblock processing
 	resume          Resume adblock processing
 	query           &lt;domain&gt; Query active blocklists and backups for a specific domain
-	report          [&lt;search&gt;] Print DNS statistics with an optional search parameter
+	report          [[&lt;cli&gt;|&lt;mail&gt;|&lt;gen&gt;|&lt;json&gt;] [&lt;count&gt;] [&lt;search&gt;]] Print DNS statistics with an optional search parameter
 	list            [&lt;add&gt;|&lt;add_sha&gt;|&lt;add_utc&gt;|&lt;add_eng&gt;|&lt;add_stb&gt;|&lt;remove&gt;|&lt;remove_sha&gt;|&lt;remove_utc&gt;|&lt;remove_eng&gt;|&lt;remove_stb&gt;] &lt;source(s)&gt; List/Edit available sources
 	timer           [&lt;add&gt; &lt;tasks&gt; &lt;hour&gt; [&lt;minute&gt;] [&lt;weekday&gt;]]|[&lt;remove&gt; &lt;line no.&gt;] List/Edit cron update intervals
 	version         Print version information
