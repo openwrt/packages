@@ -196,11 +196,13 @@ To preserve the DNS cache after adblock processing please install the additional
 Adblock deposits the final blocklist 'adb_list.overall' in '/var/lib/bind' by default.  
 To preserve the DNS cache after adblock processing please install the additional package 'bind-rdnc'.
 To use the blocklist please modify '/etc/bind/named.conf':
-<pre><code>
-in the 'options' namespace add:
-  response-policy { zone "rpz"; };
 
+in the 'options' namespace add:
+<pre><code>
+  response-policy { zone "rpz"; };
+</code></pre>
 and at the end of the file add:
+<pre><code>
   zone "rpz" {
     type master;
     file "/var/lib/bind/adb_list.overall";
