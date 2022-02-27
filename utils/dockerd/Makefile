@@ -51,6 +51,7 @@ endef
 GO_PKG_BUILD_VARS += GO111MODULE=auto
 TAR_OPTIONS:=--strip-components 1 $(TAR_OPTIONS)
 TAR_CMD=$(HOST_TAR) -C $(1) $(TAR_OPTIONS)
+TARGET_LDFLAGS += $(if $(CONFIG_USE_GLIBC),-lgcc_eh)
 
 # $(1) = path to dependent package 'Makefile'
 # $(2) = relevant dependency '.installer' file
