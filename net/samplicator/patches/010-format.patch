@@ -1,0 +1,11 @@
+--- a/samplicate.c
++++ b/samplicate.c
+@@ -560,7 +560,7 @@ samplicate (ctx)
+ 	}
+       if (len != sizeof remote_address)
+ 	{
+-	  fprintf (stderr, "recvfrom() return address length %d - expected %d\n",
++	  fprintf (stderr, "recvfrom() return address length %d - expected %zu\n",
+ 		   len, sizeof remote_address);
+ 	  exit (1);
+ 	}
