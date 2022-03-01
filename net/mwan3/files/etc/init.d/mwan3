@@ -31,6 +31,7 @@ start_service() {
 	config_foreach start_tracker interface
 
 	mwan3_update_iface_to_table
+	mwan3_set_dynamic_ipset
 	mwan3_set_connected_ipset
 	mwan3_set_custom_ipset
 	mwan3_set_general_rules
