@@ -79,7 +79,7 @@ Note also that `src_ips_xx` and `dst_ips_xx` actually also accepts cidr network 
 
 | Commit date | Commit ID | Subject | Comment |
 | ----------- | --------- | ------- | ------- |
-|             |           | shadowsocks-libev: ss-rules: convert to using nft | ss-rules now uses nftables. UCI option ipt_args and dst_forward_recentrst are now deprecated and removed |
+| 2022-03-01  | fdaf2de2a | shadowsocks-libev: ss-rules: convert to using nft | ss-rules now uses nftables. UCI option ipt_args and dst_forward_recentrst are now deprecated and removed |
 | 2020-08-03  | 7d7cbae75 | shadowsocks-libev: support ss-server option local_address_{v4,v6} | ss_server bind_address now deprecated, use local_address |
 | 2019-05-09  | afe7d3424 | shadowsocks-libev: move plugin options to server section | This is a revision against c19e949 committed 2019-05-06 |
 | 2017-07-02  | b61af9703 | shadowsocks-libev: rewrite | Packaging of shadowsocks-libev was rewritten from scratch |
