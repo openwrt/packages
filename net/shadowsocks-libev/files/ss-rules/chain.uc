@@ -97,7 +97,7 @@ chain ss_rules_dst_{{ proto }} {
 
 {%   if (proto == "tcp"): %}
 chain ss_rules_forward_{{ proto }} {
-	meta l4proto tcp redirect to :{{ redir_port }};
+	meta l4proto tcp {{ o_nft_tcp_extra }} redirect to :{{ redir_port }};
 }
 {%   let local_verdict = get_local_verdict(); if (local_verdict): %}
 chain ss_rules_local_out {
@@ -112,7 +112,7 @@ chain ss_rules_local_out {
 {%     endif %}
 {%   elif (proto == "udp"): %}
 chain ss_rules_forward_{{ proto }} {
-	meta l4proto udp meta mark set 1 tproxy to :{{ redir_port }};
+	meta l4proto udp {{ o_nft_udp_extra }} meta mark set 1 tproxy to :{{ redir_port }};
 }
 {%   endif %}
 {% endif %}

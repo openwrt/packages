@@ -71,6 +71,11 @@ We can have multiple instances of component and `server` sections.  The relation
 
 	local_default		[bypass], forward, checkdst
 
+	--- extra nftables statement added to the final tcp/udp forward rule
+
+	nft_tcp_extra		e.g. use 'tcp dport { 80, 443 }' to only forward connections with dport 80 or 443
+	nft_udp_extra		e.g. use 'udp dport { 53 }' to only forward connections with dport 53
+
 ss-rules now uses nft set for storing addresses/networks.  Those set names are also part of the API and can be populated by other programs, e.g. dnsmasq with builtin nft set support
 
 Note also that `src_ips_xx` and `dst_ips_xx` actually also accepts cidr network representation.  Option names are retained in its current form for backward compatibility coniderations
@@ -154,6 +159,8 @@ As for other options, change them only when you know the effect.
 		option src_default 'checkdst'
 		option dst_default 'forward'
 		option local_default 'forward'
+		# option nft_tcp_extra 'tcp dport { 80, 443 }' # tcp only forward connections with dport 80 or 443
+		# option nft_udp_extra 'udp dport { 53 }' # udp only forward connections with dport 53
 
 Restart shadowsocks-libev components
 
