@@ -152,6 +152,8 @@ ss_rules() {
 	json_add_string o_dst_bypass_file "$dst_ips_bypass_file"
 	json_add_string o_dst_forward_file "$dst_ips_forward_file"
 	json_add_string o_dst_default "$dst_default"
+	json_add_string o_nft_tcp_extra "$nft_tcp_extra"
+	json_add_string o_nft_udp_extra "$nft_udp_extra"
 	json_dump -i >"$tmp.json"
 
 	if ucode -S -i "$ssrules_uc" -E "$tmp.json" >"$tmp.nft" \
@@ -283,6 +285,8 @@ validate_ss_rules_section() {
 		'src_default:or("bypass", "forward", "checkdst"):checkdst' \
 		'dst_default:or("bypass", "forward"):bypass' \
 		'local_default:or("bypass", "forward", "checkdst"):bypass' \
+		'nft_tcp_extra:string' \
+		'nft_udp_extra:string' \
 		'ifnames:maxlength(15)'
 }
 

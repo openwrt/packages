@@ -75,6 +75,8 @@ ss-rules now uses nft set for storing addresses/networks.  Those set names are a
 
 Note also that `src_ips_xx` and `dst_ips_xx` actually also accepts cidr network representation.  Option names are retained in its current form for backward compatibility coniderations
 
+Extra nftables expressions can be specified with `nft_tcp_extra` and `nft_udp_extra` to apply ss_rules only to selected tcp/udp traffics.  E.g. `tcp dport { 80, 443 }`, `udp dport 53`, etc.
+
 # incompatible changes
 
 | Commit date | Commit ID | Subject | Comment |
