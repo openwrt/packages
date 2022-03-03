@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=podman
-PKG_VERSION:=3.4.4
+PKG_VERSION:=4.0.2
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/containers/podman/archive/v$(PKG_VERSION)
-PKG_HASH:=718c9e1e734c2d374fcf3c59e4cc7c1755acb954fc7565093e1d636c04b72e3a
+PKG_HASH:=cac4328b0a5e618f4f6567944e255d15fad3e1f7901df55603f1efdd7aaeda95
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
@@ -17,7 +17,7 @@ PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
 GO_PKG:=github.com/containers/podman/
-GO_PKG_BUILD_PKG:=github.com/containers/podman/v3/cmd/podman/
+GO_PKG_BUILD_PKG:=github.com/containers/podman/v4/cmd/podman/
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
@@ -45,7 +45,7 @@ endef
 
 define Package/podman
   $(call Package/podman/Default)
-  DEPENDS:=$(GO_ARCH_DEPENDS) +conmon +cni +cni-plugins +btrfs-progs +glib2 +gnupg2 +iptables +libgpg-error +libseccomp +libgpgme +nsenter +zoneinfo-simple +kmod-veth
+  DEPENDS:=$(GO_ARCH_DEPENDS) +conmon +cni +cni-plugins +btrfs-progs +glib2 +gnupg2 +uci-firewall +libgpg-error +libseccomp +libgpgme +nsenter +zoneinfo-simple +kmod-veth
   CONFLICTS:=podman-selinux
   VARIANT:=default
   PROVIDES:=podman
@@ -54,7 +54,7 @@ endef
 define Package/podman-selinux
   $(call Package/podman/Default)
   TITLE += with SELinux support
-  DEPENDS:=$(GO_ARCH_DEPENDS) +conmon +cni +cni-plugins +btrfs-progs +glib2 +gnupg2 +iptables +libgpg-error +libseccomp +libgpgme +nsenter +zoneinfo-simple +kmod-veth +libselinux
+  DEPENDS:=$(GO_ARCH_DEPENDS) +conmon +cni +cni-plugins +btrfs-progs +glib2 +gnupg2 +uci-firewall +libgpg-error +libseccomp +libgpgme +nsenter +zoneinfo-simple +kmod-veth +libselinux
   VARIANT:=selinux
   PROVIDES:=podman
 endef
