@@ -21,6 +21,5 @@ if [ -s /etc/crowdsec/online_api_credentials.yaml ]; then
 else
 	cscli -c /etc/crowdsec/config.yaml capi register -f /etc/crowdsec/online_api_credentials.yaml
 fi
-cscli hub update && cscli collections install crowdsecurity/linux && cscli parsers install crowdsecurity/whitelists && cscli hub upgrade
 
 exit 0
