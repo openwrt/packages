@@ -72,7 +72,7 @@ define Package/fixparts/description
   Master Boot Record (MBR) partition tables
 endef
 
-TARGET_CXXFLAGS += -std=c++11 -ffunction-sections -fdata-sections -fno-rtti -flto
+TARGET_CXXFLAGS += -std=c++11 -ffunction-sections -fdata-sections -fno-rtti -flto -Wno-format-security
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 
 define Package/gdisk/install
