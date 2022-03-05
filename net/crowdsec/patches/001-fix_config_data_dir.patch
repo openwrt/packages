@@ -15,6 +15,6 @@
    type: sqlite
 -  db_path: /var/lib/crowdsec/data/crowdsec.db
 +  db_path: /srv/crowdsec/data/crowdsec.db
+   #max_open_conns: 100
    #user: 
    #password:
-   #db_name:
