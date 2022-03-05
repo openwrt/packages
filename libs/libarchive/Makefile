@@ -53,6 +53,7 @@ endef
 define Package/bsdtar
   $(call Package/bsdtar/Default)
   DEPENDS:= +libarchive
+  CONFLICTS:=bsdtar-noopenssl
 endef
 
 define Package/bsdtar-noopenssl
