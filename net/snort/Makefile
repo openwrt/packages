@@ -34,6 +34,7 @@ define Package/snort
   DEPENDS:=+libdaq +libdnet +libnghttp2 +libopenssl +libpcap +libpcre +libpthread +libtirpc +libuuid +zlib +luajit +SNORT_LZMA:liblzma
   TITLE:=Lightweight Network Intrusion Detection System
   URL:=http://www.snort.org/
+  CONFLICTS:=snort3
   MENU:=1
 endef
 
