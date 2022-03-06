@@ -28,7 +28,7 @@ define Package/libtirpc
 endef
 
 CONFIGURE_ARGS += --disable-gssapi
-HOST_CONFIGURE_ARGS += --disable-gssapi
+HOST_CONFIGURE_ARGS += --disable-gssapi --disable-shared
 
 ifeq ($(HOST_OS),Darwin)
 HOST_CONFIGURE_ARGS += --disable-symvers
