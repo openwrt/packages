@@ -60,6 +60,7 @@ define Package/haproxy-nossl
   TITLE+=without SSL support
   VARIANT:=nossl
   DEPENDS+= +libpcre +libltdl +zlib +libpthread +liblua5.3 +libatomic
+  CONFLICTS:=haproxy
 endef
 
 define Package/haproxy-nossl/description
