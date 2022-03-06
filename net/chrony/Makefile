@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=chrony
 PKG_VERSION:=4.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.tuxfamily.org/chrony/
@@ -39,6 +39,7 @@ define Package/chrony
 $(call Package/chrony/Default)
   TITLE+= (without NTS)
   VARIANT:=normal
+  CONFLICTS:=chrony-nts
 endef
 
 define Package/chrony-nts
