@@ -132,9 +132,7 @@ endef
 
 define Build/Install
 	# Make sure we have python's setup tools installed
-	$(if $(PYTHON3_PKG_HOST_PIP_INSTALL_ARGS), \
-		$(call HostPython3/PipInstall,$(PYTHON3_PKG_HOST_PIP_INSTALL_ARGS)) \
-	)
+	$(call Py3Build/InstallBuildDepends)
 	$(INSTALL_DIR) $(PKG_INSTALL_DIR)-libapparmor $(PKG_INSTALL_DIR)-utils $(PKG_INSTALL_DIR)-profiles
 	# Installing libapparmor
 	+$(MAKE_VARS) PYTHON=$(HOST_PYTHON) VERSION=$(PYTHON3_VERSION) \
