@@ -53,6 +53,14 @@ $(call Package/crowdsec/Default)
   DEPENDS:=$(GO_ARCH_DEPENDS)
 endef
 
+define Package/crowdsec-cli
+  SECTION:=net
+  CATEGORY:=Network
+  TITLE:=Crowdsec detection engine (cscli command line only)
+  URL:=https://crowdsec.net/
+  DEPENDS:=$(GO_ARCH_DEPENDS)
+endef
+
 define Package/crowdsec/Default/description
   Crowdsec - An open-source, lightweight agent to detect
   and respond to bad behaviours.
@@ -66,7 +74,13 @@ $(call Package/crowdsec/Default/description)
   This package contains the main program.
 endef
 
-define Package/crowdsec/install
+define Package/crowdsec-cli/description
+$(call Package/crowdsec/Default/description)
+
+  This package provides only the cscli command line tool.
+endef
+
+define Package/crowdsec/Default/install
 
 # CONFIG DIRECTORIES
 	$(INSTALL_DIR) $(1)$(CWD_CONFIGPATH)
@@ -141,6 +155,12 @@ define Package/crowdsec/install
 # DATA
 	$(INSTALL_DIR) $(1)$(CWD_DATAPATH)
 
+endef
+
+define Package/crowdsec/install
+
+$(call Package/crowdsec/Default/install,$1)
+
 # INIT.D SERVICE
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) \
@@ -168,7 +188,23 @@ define Package/crowdsec/install
 
 endef
 
+define Package/crowdsec-cli/install
+
+$(call Package/crowdsec/Default/install,$1)
+
+# BINARIES
+	$(INSTALL_DIR) $(1)/usr/bin/
+	$(INSTALL_BIN) $(GO_PKG_BUILD_DIR)/src/$(GO_PKG)/cmd/crowdsec-cli/cscli \
+		$(1)/usr/bin/cscli
+
+endef
+
 define Package/crowdsec/conffiles
+/etc/crowdsec/
+/etc/config/crowdsec
+endef
+
+define Package/crowdsec-cli/conffiles
 /etc/crowdsec/
 /etc/config/crowdsec
 endef
@@ -180,3 +216,4 @@ MAKE_PATH:=$(GO_PKG_WORK_DIR_NAME)/build/src/$(GO_PKG)
 Build/Compile=$(call Build/Compile/Default)
 
 $(eval $(call BuildPackage,crowdsec))
+$(eval $(call BuildPackage,crowdsec-cli))
