@@ -215,10 +215,14 @@ define Py3Build/CheckHostPipVersionMatch
 endef
 endif
 
-define Py3Build/Compile/Default
+define Py3Build/InstallBuildDepends
 	$(if $(PYTHON3_PKG_HOST_PIP_INSTALL_ARGS), \
 		$(call HostPython3/PipInstall,$(PYTHON3_PKG_HOST_PIP_INSTALL_ARGS)) \
 	)
+endef
+
+define Py3Build/Compile/Default
+	$(call Py3Build/InstallBuildDepends)
 	$(call Python3/ModSetup, \
 		$(PYTHON3_PKG_SETUP_DIR), \
 		$(PYTHON3_PKG_SETUP_GLOBAL_ARGS) \
