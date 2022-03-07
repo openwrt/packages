@@ -1,6 +1,6 @@
 --- a/lib/xref.h
 +++ b/lib/xref.h
-@@ -122,7 +122,7 @@ extern struct xref_block *xref_blocks;
+@@ -135,7 +135,7 @@ extern struct xref_block *xref_blocks;
  extern void xref_block_add(struct xref_block *block);
  extern void xref_gcc_workaround(const struct xref *xref);
  
