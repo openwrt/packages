@@ -44,6 +44,7 @@ include ../../lang/golang/golang-package.mk
 define Package/crowdsec/Default
   SECTION:=net
   CATEGORY:=Network
+  PROVIDES:=crowdsec
   TITLE:=Crowdsec detection engine
   URL:=https://crowdsec.net/
 endef
@@ -51,6 +52,7 @@ endef
 define Package/crowdsec
 $(call Package/crowdsec/Default)
   DEPENDS:=$(GO_ARCH_DEPENDS)
+  VARIANT:=agent-full
 endef
 
 define Package/crowdsec-cli
@@ -59,6 +61,9 @@ define Package/crowdsec-cli
   TITLE:=Crowdsec detection engine (cscli command line only)
   URL:=https://crowdsec.net/
   DEPENDS:=$(GO_ARCH_DEPENDS)
+  VARIANT:=cli-only
+  DEFAULT_VARIANT:=1
+  CONFLICTS:=crowdsec-agent-full
 endef
 
 define Package/crowdsec/Default/description
