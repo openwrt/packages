@@ -68,7 +68,7 @@ endef
 define KernelPackage/ipt-coova
   URL:=http://www.coova.org/CoovaChilli
   SUBMENU:=Netfilter Extensions
-  DEPENDS:=coova-chilli +kmod-ipt-core +libxtables
+  DEPENDS:=+kmod-ipt-core +libxtables
   TITLE:=Coova netfilter module
   FILES:=$(PKG_BUILD_DIR)/src/linux/xt_*.$(LINUX_KMOD_SUFFIX)
   AUTOLOAD:=$(call AutoProbe,xt_coova)
@@ -76,8 +76,6 @@ endef
 
 define KernelPackage/ipt-coova/description
 	Netfilter kernel module for CoovaChilli
-	Includes:
-	- coova
 endef
 
 DISABLE_NLS=
