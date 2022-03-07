@@ -123,21 +123,6 @@ define Package/crowdsec/Default/install
 			$(GO_PKG_BUILD_DIR)/src/$(GO_PKG)/config/patterns/* \
 			$(1)$(CWD_CONFIGPATH)/patterns
 
-	# PLUGINS BINARIES
-		$(INSTALL_DIR) $(1)/usr/lib/crowdsec/plugins
-		$(INSTALL_BIN) \
-			$(GO_PKG_BUILD_DIR)/src/$(GO_PKG)/plugins/notifications/slack/notification-slack \
-			$(1)/usr/lib/crowdsec/plugins
-		$(INSTALL_BIN) \
-			$(GO_PKG_BUILD_DIR)/src/$(GO_PKG)/plugins/notifications/http/notification-http \
-			$(1)/usr/lib/crowdsec/plugins
-		$(INSTALL_BIN) \
-			$(GO_PKG_BUILD_DIR)/src/$(GO_PKG)/plugins/notifications/splunk/notification-splunk \
-			$(1)/usr/lib/crowdsec/plugins
-		$(INSTALL_BIN) \
-			$(GO_PKG_BUILD_DIR)/src/$(GO_PKG)/plugins/notifications/email/notification-email \
-			$(1)/usr/lib/crowdsec/plugins
-
 	# PLUGINS CONFIG
 		$(INSTALL_DATA) \
 			$(GO_PKG_BUILD_DIR)/src/$(GO_PKG)/plugins/notifications/slack/slack.yaml \
@@ -173,6 +158,21 @@ define Package/crowdsec/install
 			$(1)/usr/bin/crowdsec
 		$(INSTALL_BIN) $(GO_PKG_BUILD_DIR)/src/$(GO_PKG)/cmd/crowdsec-cli/cscli \
 			$(1)/usr/bin/cscli
+
+	# PLUGINS BINARIES
+		$(INSTALL_DIR) $(1)/usr/lib/crowdsec/plugins
+		$(INSTALL_BIN) \
+			$(GO_PKG_BUILD_DIR)/src/$(GO_PKG)/plugins/notifications/slack/notification-slack \
+			$(1)/usr/lib/crowdsec/plugins
+		$(INSTALL_BIN) \
+			$(GO_PKG_BUILD_DIR)/src/$(GO_PKG)/plugins/notifications/http/notification-http \
+			$(1)/usr/lib/crowdsec/plugins
+		$(INSTALL_BIN) \
+			$(GO_PKG_BUILD_DIR)/src/$(GO_PKG)/plugins/notifications/splunk/notification-splunk \
+			$(1)/usr/lib/crowdsec/plugins
+		$(INSTALL_BIN) \
+			$(GO_PKG_BUILD_DIR)/src/$(GO_PKG)/plugins/notifications/email/notification-email \
+			$(1)/usr/lib/crowdsec/plugins
 
 	# UCI-CONFIG (POSTUPGRADE/POSTINSTALL)
 		$(INSTALL_DIR) $(1)/etc/config
