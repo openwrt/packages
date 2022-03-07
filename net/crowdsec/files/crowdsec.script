@@ -1,0 +1,131 @@
+#!/bin/sh
+# SPDX-License-Identifier: MIT
+#
+# Copyright (C) 2021-2022 Gerald Kerma <gandalf@gk2.net>
+#
+
+CSCLI="/usr/bin/cscli"
+PLUGINSDIR="/usr/lib/crowdsec/plugins"
+
+# GET CONFIG DIR
+CONFIGDIR="$(uci -q get "crowdsec.crowdsec.configdir")"
+if [ -z "${CONFIGDIR}" ]; then
+	CONFIGDIR="/etc/crowdsec"
+	uci -q set "crowdsec.crowdsec.configdir"="${CONFIGDIR}"
+	uci -q commit
+fi
+
+# GET DATA DIR
+DATA_DIR="$(uci -q get "crowdsec.crowdsec.data_dir")"
+if [ -z "${DATA_DIR}" ]; then
+	DATA_DIR="/srv/crowdsec/data"
+	uci -q set "crowdsec.crowdsec.data_dir"="${DATA_DIR}"
+	uci -q commit
+fi
+
+# GET DATABASE PATH
+DB_PATH="$(uci -q get "crowdsec.crowdsec.db_path")"
+if [ -z "${DB_PATH}" ]; then
+	DB_PATH="/srv/crowdsec/data/crowdsec.db"
+	uci -q set "crowdsec.crowdsec.db_path"="${DB_PATH}"
+	uci -q commit
+fi
+
+# OTHERS DEFAULTS CONFIGS FILES & DIRECTORIES
+CFG_FILE="${CONFIGDIR}/config.yaml"
+LOCALAPI="${CONFIGDIR}/local_api_credentials.yaml"
+ONLINEAPI="${CONFIGDIR}/online_api_credentials.yaml"
+HUBDIR="${CONFIGDIR}/hub"
+
+# LOCAL API HOST
+LAPI_HOST=$(uci -q get "crowdsec.crowdsec.lapi_host")
+if [ -z "${LAPI_HOST}" ]; then
+	LAPI_HOST=127.0.0.1
+	uci -q set "crowdsec.crowdsec.lapi_host"=${LAPI_HOST}
+	uci -q commit
+fi
+
+# LOCAL API PORT
+LAPI_PORT=$(uci -q get "crowdsec.crowdsec.lapi_port")
+if [ -z "${LAPI_PORT}" ]; then
+	LAPI_PORT=8888
+	uci -q set "crowdsec.crowdsec.lapi_port"=${LAPI_PORT}
+	uci -q commit
+fi
+
+# LOCAL API URL
+LAPI_URL="http://${LAPI_HOST}:${LAPI_PORT}"
+
+# CROWDSEC PREPARE NECESSARY DIRECTORIES
+cs_prepare ()
+{
+	# Create data dir & permissions if needed
+	if [ ! -d "${DATA_DIR}" ]; then
+		mkdir -m 0755 -p "${DATA_DIR}"
+	fi;
+}
+
+# CROWDSEC INIT CONFIGURATIONS
+cs_init ()
+{
+	# Prepare the config file if needed
+	if [ -e "${CFG_FILE}" ]; then
+		echo "Modify initial config file: ${CFG_FILE}"
+
+		sed -i "s,^\(\s*config_dir\s*:\s*\).*\$,\1${CONFIGDIR}," "${CFG_FILE}"
+		sed -i "s,^\(\s*data_dir\s*:\s*\).*\$,\1${DATA_DIR}," "${CFG_FILE}"
+		sed -i "s,^\(\s*db_path\s*:\s*\).*\$,\1${DB_PATH}," "${CFG_FILE}"
+		sed -i "s,^\(\s*simulation_path\s*:\s*\).*\$,\1${CONFIGDIR}/simulation.yaml," "${CFG_FILE}"
+		sed -i "s,^\(\s*hub_dir\s*:\s*\).*\$,\1${HUBDIR}," "${CFG_FILE}"
+		sed -i "s,^\(\s*index_path\s*:\s*\).*\$,\1${HUBDIR}/.index.json," "${CFG_FILE}"
+		sed -i "s,^\(\s*notification_dir\s*:\s*\).*\$,\1${CONFIGDIR}/notifications/," "${CFG_FILE}"
+		sed -i "s,^\(\s*plugin_dir\s*:\s*\).*\$,\1${PLUGINSDIR}," "${CFG_FILE}"
+
+##FIXME: Take care of the acquis.d directory or acquis.yaml file!
+		sed -i "s,^\(\s*acquisition_path\s*:\s*\).*\$,\1${CONFIGDIR}/acquis.yaml," "${CFG_FILE}"
+#		sed -e "s,acquisition_path:,acquisition_dir:,g" -i "${CFG_FILE}"
+#		sed -i "s,^\(\s*acquisition_dir\s*:\s*\).*\$,\1${CONFIGDIR}/acquis.d/," "${CFG_FILE}"
+
+		sed -i "s,^\(\s*profiles_path\s*:\s*\).*\$,\1${CONFIGDIR}/profiles.yaml," "${CFG_FILE}"
+		sed -i "s,^\(\s*console_path\s*:\s*\).*\$,\1${CONFIGDIR}/console.yaml," "${CFG_FILE}"
+
+		sed -e "s|credentials_path: /etc/crowdsec/local_api_credentials.yaml|credentials_path: ${LOCALAPI}|g" -i "${CFG_FILE}"
+		sed -e "s|credentials_path: /etc/crowdsec/online_api_credentials.yaml|credentials_path: ${ONLINEAPI}|g" -i "${CFG_FILE}"
+
+		sed -i "s,^\(\s*listen_uri\s*:\s*\).*\$,\1${LAPI_HOST}:${LAPI_PORT}," "${CFG_FILE}"
+		sed -i "s,^\(\s*url\s*:\s*\).*\$,\1${LAPI_URL}," "${LOCALAPI}"
+	fi
+}
+
+# CROWDSEC REGISTER LOCAL & ONLINE API
+cs_register ()
+{
+	if grep -q "login:" "${LOCALAPI}"; then
+		echo "INFO: local API already registered…"
+	else
+		if [ -e "/etc/machine-id" ]; then
+			MACHINEID=$(cat "/etc/machine-id")
+		elif [ -e "/var/lib/dbus/machine-id" ]; then
+			MACHINEID=$(cat "/var/lib/dbus/machine-id")
+		else
+			MACHINEID=$(uci -q get "system.@system[0].hostname")
+		fi
+	# api register
+		"${CSCLI}" -c "${CFG_FILE}" machines add --force "${MACHINEID}" -a -f "${LOCALAPI}" || echo "ERROR: unable to add machine to the local API!"
+	fi
+
+	if grep -q "login:" ${ONLINEAPI}; then
+		echo "INFO: online API already registered…"
+	else
+		"${CSCLI}" -c "${CFG_FILE}" capi register -f "${ONLINEAPI}" || echo "ERROR: unable to register to the Central API!"
+	fi
+}
+
+# CROWDSEC UPDATE HUB & INSTALL DEFAULT SCENARIOS
+cs_hub ()
+{
+# FIXME: Do this only if hub is not already up to date!
+		"${CSCLI}" -c "${CFG_FILE}" hub update && \
+		"${CSCLI}" -c "${CFG_FILE}" parsers install crowdsecurity/whitelists && \
+		"${CSCLI}" -c "${CFG_FILE}" hub upgrade
+}

@@ -191,6 +191,12 @@ define Package/crowdsec/install
 			./files/crowdsec.defaults \
 			$(1)/etc/uci-defaults/99_crowdsec
 
+	# SCRIPT (TOOLS)
+		$(INSTALL_DIR) $(1)/usr/lib/crowdsec/scripts
+		$(INSTALL_BIN) \
+			./files/crowdsec.script \
+			$(1)/usr/lib/crowdsec/scripts/cs_script.sh
+
 endef
 
 define Package/crowdsec-cli/install
