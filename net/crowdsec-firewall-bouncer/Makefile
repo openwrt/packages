@@ -51,14 +51,6 @@ $(call Package/crowdsec-firewall-bouncer/Default)
 	$(GO_ARCH_DEPENDS)
 endef
 
-define Package/golang-crowdsec-firewall-bouncer-dev
-$(call Package/crowdsec-firewall-bouncer/Default)
-$(call GoPackage/GoSubMenu)
-  TITLE+= (source files)
-  DEPENDS:=$(GO_ARCH_DEPENDS)
-  PKGARCH:=all
-endef
-
 define Package/crowdsec-firewall-bouncer/Default/description
   Crowdsec bouncer written in golang for firewalls.
 
@@ -72,12 +64,6 @@ define Package/crowdsec-firewall-bouncer/description
 $(call Package/crowdsec-firewall-bouncer/Default/description)
 
   This package contains the main program.
-endef
-
-define Package/golang-crowdsec-firewall-bouncer-dev/description
-$(call Package/crowdsec-firewall-bouncer/Default/description)
-
-  This package provides the source files for the program.
 endef
 
 define Package/crowdsec-firewall-bouncer/install
