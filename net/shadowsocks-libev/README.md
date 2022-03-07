@@ -71,9 +71,7 @@ We can have multiple instances of component and `server` sections.  The relation
 
 	local_default		[bypass], forward, checkdst
 
-ss-rules now uses nft set for storing addresses/networks.  Those set names are also part of the API and can be populated by other programs, e.g. dnsmasq with builtin nft set support
-
-Note also that `src_ips_xx` and `dst_ips_xx` actually also accepts cidr network representation.  Option names are retained in its current form for backward compatibility coniderations
+ss-rules now uses nft set for storing addresses/networks.  Those set names are also part of the API and can be populated by other programs, e.g. dnsmasq with builtin nft set support.  Note that while nftables set supports storing cidr networks when `interval` flag is on, it rejects elements with overlaping intervals.
 
 Extra nftables expressions can be specified with `nft_tcp_extra` and `nft_udp_extra` to apply ss_rules only to selected tcp/udp traffics.  E.g. `tcp dport { 80, 443 }`, `udp dport 53`, etc.
 
