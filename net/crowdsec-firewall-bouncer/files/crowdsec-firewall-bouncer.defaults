@@ -1,4 +1,8 @@
 #!/bin/sh
+# SPDX-License-Identifier: MIT
+#
+# Copyright (C) 2021-2022 Gerald Kerma <gandalf@gk2.net>
+#
 
 CFG_FILE=/etc/crowdsec/config.yaml
 BOUNCER_CFG=/etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
