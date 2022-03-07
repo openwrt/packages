@@ -1,16 +1,39 @@
 #!/bin/sh
 
-CONFIG=/etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
-CSCLI=/usr/bin/cscli
+CFG_FILE=/etc/crowdsec/config.yaml
+BOUNCER_CFG=/etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
+BOUNCER_NAME=crowdsec-firewall-bouncer
 
-## Gen&ConfigApiKey
 if [ -e "${CSCLI}" ]; then
-  if grep -q "{API_KEY}" "$CONFIG"; then
-    SUFFIX=`tr -dc A-Za-z0-9 </dev/urandom | head -c 8`
-    API_KEY=`/usr/bin/cscli bouncers add crowdsec-firewall-bouncer-${SUFFIX} -o raw`
-    sed -i "s,^\(\s*api_key\s*:\s*\).*\$,\1$API_KEY," $CONFIG
+  ## Gen&ConfigApiKey
+  if grep -q "{API_KEY}" "${BOUNCER_CFG}"; then
+      API_KEY=$("${CSCLI}" -c "${CFG_FILE}" bouncers add "${BOUNCER_NAME}" -o raw)
+      if [ -n "${API_KEY}" ]; then
+          sed -i "s,^\(\s*api_key\s*:\s*\).*\$,\1${API_KEY}," "${BOUNCER_CFG}"
+      else
+        echo "ERROR: NO API key registered…"
+      fi
   else
-    echo API key already registered...
+      FW_BOUNCER=$("${CSCLI}" -c "${CFG_FILE}" bouncers list | grep "${BOUNCER_NAME}")
+      if [ -n "${FW_BOUNCER}" ]; then
+          echo "INFO: API key already registered…"
+      else
+          API_KEY=$(sed -rn "s,^api_key\s*:\s*([^\n]+)$,\1,p" "${BOUNCER_CFG}")
+          if [ -n "${API_KEY}" ]; then
+              NEW_API_KEY=$("${CSCLI}" -c "${CFG_FILE}" bouncers add "${BOUNCER_NAME}" -k "${API_KEY}" -o raw)
+              if [ -n "${NEW_API_KEY}" ]; then
+                  if [ "${NEW_API_KEY}" = "${API_KEY}" ]; then
+                      echo "INFO: API key already registered but bouncer re-registered with success…"
+                  else
+                      echo "ERROR: API key already registered but bouncer re-register attempt error!"
+                  fi
+              else
+                  echo "ERROR: API key already registered but bouncer re-registered without success!"
+              fi
+          else
+              echo "ERROR: Unrecoverable API key registration error!"
+          fi
+      fi
   fi
 else
   echo "WARNING: missing ${CSCLI} command!"
