@@ -1,4 +1,8 @@
 #!/bin/sh
+# SPDX-License-Identifier: MIT
+#
+# Copyright (C) 2021-2022 Gerald Kerma <gandalf@gk2.net>
+#
 
 . /usr/lib/crowdsec/scripts/cs_script.sh
 
