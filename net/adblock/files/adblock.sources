@@ -237,13 +237,6 @@
 		"focus": "reg_vietnam",
 		"descurl": "https://bigdargon.github.io/hostsVN"
 	},
-	"shallalist": {
-		"url": "https://www.shallalist.de/Downloads/shallalist.tar.gz",
-		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
-		"size": "VAR",
-		"focus": "general",
-		"descurl": "https://www.shallalist.de"
-	},
 	"smarttv_tracking": {
 		"url": "https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/SmartTV.txt",
 		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
@@ -257,13 +250,6 @@
 		"size": "S",
 		"focus": "general",
 		"descurl": "https://github.com/Dawsey21"
-	},
-	"stalkerware": {
-		"url": "https://raw.githubusercontent.com/astryzia/stalkerware-urls/main/stalkerware_urls.txt",
-		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
-		"size": "S",
-		"focus": "tracking",
-		"descurl": "https://github.com/astryzia/stalkerware-urls"
 	},
 	"stevenblack": {
 		"url": "https://raw.githubusercontent.com/StevenBlack/hosts/master/",

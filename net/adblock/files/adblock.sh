@@ -1,6 +1,6 @@
 #!/bin/sh
 # dns based ad/abuse domain blocking
-# Copyright (c) 2015-2021 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2015-2022 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # set (s)hellcheck exceptions
@@ -217,9 +217,6 @@ f_conf()
 			elif [ "${option}" = "adb_eng_sources" ]
 			then
 				eval "${option}=\"$(printf "%s" "${adb_eng_sources}") ${value}\""
-			elif [ "${option}" = "adb_sha_sources" ]
-			then
-				eval "${option}=\"$(printf "%s" "${adb_sha_sources}") ${value}\""
 			elif [ "${option}" = "adb_stb_sources" ]
 			then
 				eval "${option}=\"$(printf "%s" "${adb_stb_sources}") ${value}\""
@@ -1486,15 +1483,9 @@ f_main()
 		# download queue processing
 		#
 		unset src_cat src_entries
-		if [ "${src_name}" = "shallalist" ] || [ "${src_name}" = "utcapitole" ]
+		if [ "${src_name}" = "utcapitole" ] && [ -n "${adb_utc_sources}" ]
 		then
-			if [ "${src_name}" = "shallalist" ] && [ -n "${adb_sha_sources}" ]
-			then
-				src_cat="${adb_sha_sources}"
-			elif [ "${src_name}" = "utcapitole" ] && [ -n "${adb_utc_sources}" ]
-			then
-				src_cat="${adb_utc_sources}"
-			fi
+			src_cat="${adb_utc_sources}"
 			if [ -n "${src_cat}" ]
 			then
 				(
