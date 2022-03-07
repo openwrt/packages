@@ -53,14 +53,6 @@ $(call Package/crowdsec/Default)
   DEPENDS:=$(GO_ARCH_DEPENDS)
 endef
 
-define Package/golang-crowdsec-dev
-$(call Package/crowdsec/Default)
-$(call GoPackage/GoSubMenu)
-  TITLE+= (source files)
-  DEPENDS:=$(GO_ARCH_DEPENDS)
-  PKGARCH:=all
-endef
-
 define Package/crowdsec/Default/description
   Crowdsec - An open-source, lightweight agent to detect
   and respond to bad behaviours.
@@ -72,12 +64,6 @@ define Package/crowdsec/description
 $(call Package/crowdsec/Default/description)
 
   This package contains the main program.
-endef
-
-define Package/golang-crowdsec-dev/description
-$(call Package/crowdsec/Default/description)
-
-  This package provides the source files for the program.
 endef
 
 define Package/crowdsec/install
