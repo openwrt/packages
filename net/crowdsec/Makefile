@@ -205,13 +205,13 @@ define Package/crowdsec-cli/install
 endef
 
 define Package/crowdsec/conffiles
-/etc/crowdsec/
-/etc/config/crowdsec
+$(CWD_CONFIGPATH)
+$(CWD_DATAPATH)
 endef
 
 define Package/crowdsec-cli/conffiles
-/etc/crowdsec/
-/etc/config/crowdsec
+$(CWD_CONFIGPATH)
+$(CWD_DATAPATH)
 endef
 
 # Reset golang-package.mk overrides so we can use the Makefile
