@@ -1,12 +1,8 @@
 #!/bin/sh
 
 . "${IPKG_INSTROOT}/usr/share/libubox/jshn.sh"
+. "${IPKG_INSTROOT}/lib/mwan3/common.sh"
 
-IPS="ipset"
-IPT4="iptables -t mangle -w"
-IPT6="ip6tables -t mangle -w"
-IPT4R="iptables-restore -T mangle -w -n"
-IPT6R="ip6tables-restore -T mangle -w -n"
 CONNTRACK_FILE="/proc/net/nf_conntrack"
 IPv6_REGEX="([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|"
 IPv6_REGEX="${IPv6_REGEX}([0-9a-fA-F]{1,4}:){1,7}:|"

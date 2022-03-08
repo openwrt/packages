@@ -21,6 +21,12 @@ MAX_SLEEP=$(((1<<31)-1))
 command -v ip6tables > /dev/null
 NO_IPV6=$?
 
+IPS="ipset"
+IPT4="iptables -t mangle -w"
+IPT6="ip6tables -t mangle -w"
+IPT4R="iptables-restore -T mangle -w -n"
+IPT6R="ip6tables-restore -T mangle -w -n"
+
 LOG()
 {
 	local facility=$1; shift

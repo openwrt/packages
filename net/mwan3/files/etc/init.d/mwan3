@@ -1,6 +1,5 @@
 #!/bin/sh /etc/rc.common
 
-. "${IPKG_INSTROOT}/lib/mwan3/common.sh"
 . "${IPKG_INSTROOT}/lib/functions/network.sh"
 . "${IPKG_INSTROOT}/lib/mwan3/mwan3.sh"
 

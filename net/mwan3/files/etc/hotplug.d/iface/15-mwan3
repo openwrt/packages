@@ -3,7 +3,6 @@
 . /lib/functions.sh
 . /lib/functions/network.sh
 . /lib/mwan3/mwan3.sh
-. /lib/mwan3/common.sh
 
 initscript=/etc/init.d/mwan3
 . /lib/functions/procd.sh

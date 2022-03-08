@@ -3,7 +3,6 @@
 . /lib/functions.sh
 . /lib/functions/network.sh
 . /lib/mwan3/mwan3.sh
-. /lib/mwan3/common.sh
 
 trap_with_arg()
 {
