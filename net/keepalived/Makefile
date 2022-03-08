@@ -22,6 +22,7 @@ PKG_MAINTAINER:=Ben Kelly <ben@benjii.net> \
 		Florian Eckert <fe@dev.tdt.de>
 
 PKG_CONFIG_DEPENDS += \
+	KEEPALIVED_NFTABLES \
 	KEEPALIVED_VRRP \
 	KEEPALIVED_LVS \
 	KEEPALIVED_IPTABLES \
@@ -62,6 +63,7 @@ define Package/keepalived
     +libnl-genl \
     +libmagic \
     +libkmod \
+    +KEEPALIVED_NFTABLES:libnftnl \
     +KEEPALIVED_VRRP:kmod-macvlan \
     +KEEPALIVED_VRRP:libnl-route \
     +KEEPALIVED_VRRP:libnfnetlink \
@@ -87,7 +89,6 @@ endef
 
 CONFIGURE_ARGS+= \
 	--with-init=SYSV \
-	--disable-nftables \
 	--disable-track-process \
 	--runstatedir="/var/run"
 
@@ -113,6 +114,12 @@ endif
 
 
 ifeq ($(CONFIG_KEEPALIVED_VRRP),y)
+
+ifeq ($(CONFIG_KEEPALIVED_NFTABLES),)
+CONFIGURE_ARGS += \
+	--disable-nftables
+endif
+
 ifeq ($(CONFIG_KEEPALIVED_IPTABLES),)
 CONFIGURE_ARGS += \
 	--disable-iptables
