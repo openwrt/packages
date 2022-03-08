@@ -1,7 +1,7 @@
-From 7ac88ced6cdedf88ccebfc1de12d92b269d4a60a Mon Sep 17 00:00:00 2001
+From 8c24328d41a3a25db3b3d73baf86ed2c71160774 Mon Sep 17 00:00:00 2001
 From: Moritz Warning <moritzwarning@web.de>
 Date: Mon, 30 Nov 2020 12:25:42 +0100
-Subject: [PATCH 8/8] fix compilation for arm_cortex-a7+neon
+Subject: [PATCH 2/3] fix compilation for arm_cortex-a7+neon
 
 Fixes "error: 'vrbitq_u8' was not declared in this scope"
 
@@ -12,7 +12,7 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
 
 --- a/node/Constants.hpp
 +++ b/node/Constants.hpp
-@@ -109,7 +109,7 @@
+@@ -118,7 +118,7 @@
  #include <immintrin.h>
  #endif
  
