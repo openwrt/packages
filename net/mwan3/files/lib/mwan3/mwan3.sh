@@ -142,6 +142,7 @@ mwan3_set_custom_ipset()
 		config_list_foreach "globals" "rt_table_lookup" mwan3_set_custom_ipset_v6
 	fi
 
+	echo "$update" > "${MWAN3_STATUS_IPTABLES_LOG_DIR}/ipset-set_custom_ipset.dump"
 	error=$(echo "$update" | $IPS restore 2>&1) || LOG error "set_custom_ipset: $error"
 }
 
@@ -179,6 +180,7 @@ mwan3_set_connected_ipv4()
 
 	mwan3_push_update add mwan3_connected_ipv4 224.0.0.0/3
 
+	echo "$update" > "${MWAN3_STATUS_IPTABLES_LOG_DIR}/ipset-set_connected_ipv4.dump"
 	error=$(echo "$update" | $IPS restore 2>&1) || LOG error "set_connected_ipv4: $error"
 }
 
@@ -195,6 +197,7 @@ mwan3_set_connected_ipv6()
 		mwan3_push_update -! add mwan3_connected_ipv6 "$connected_network_v6"
 	done
 
+	echo "$update" > "${MWAN3_STATUS_IPTABLES_LOG_DIR}/ipset-set_connected_ipv6.dump"
 	error=$(echo "$update" | $IPS restore 2>&1) || LOG error "set_connected_ipv6: $error"
 }
 
@@ -211,6 +214,7 @@ mwan3_set_connected_ipset()
 		mwan3_push_update flush mwan3_connected_ipv6
 	fi
 
+	echo "$update" > "${MWAN3_STATUS_IPTABLES_LOG_DIR}/ipset-set_connected_ipset.dump"
 	error=$(echo "$update" | $IPS restore 2>&1) || LOG error "set_connected_ipset: $error"
 }
 
@@ -227,6 +231,7 @@ mwan3_set_dynamic_ipset()
 		mwan3_push_update flush mwan3_dynamic_ipv6
 	fi
 
+	echo "$update" > "${MWAN3_STATUS_IPTABLES_LOG_DIR}/ipset-set_dynamic_ipset.dump"
 	error=$(echo "$update" | $IPS restore 2>&1) || LOG error "set_dynamic_ipset: $error"
 }
 
@@ -341,6 +346,8 @@ mwan3_set_general_iptables()
 		fi
 		mwan3_push_update COMMIT
 		mwan3_push_update ""
+
+		echo "$update" > "${MWAN3_STATUS_IPTABLES_LOG_DIR}/iptables-set_general_iptables-${family}.dump"
 		if [ "$IPT" = "$IPT4" ]; then
 			error=$(echo "$update" | $IPT4R 2>&1) || LOG error "set_general_iptables (${family}): $error"
 		else
@@ -405,8 +412,9 @@ mwan3_create_iface_iptables()
 
 	mwan3_push_update COMMIT
 	mwan3_push_update ""
-	error=$(echo "$update" | $IPTR 2>&1) || LOG error "create_iface_iptables (${1}): $error"
 
+	echo "$update" > "${MWAN3_STATUS_IPTABLES_LOG_DIR}/iptables-create_iface_iptables-${1}.dump"
+	error=$(echo "$update" | $IPTR 2>&1) || LOG error "create_iface_iptables (${1}): $error"
 }
 
 mwan3_delete_iface_iptables()
@@ -434,6 +442,7 @@ mwan3_delete_iface_iptables()
 	mwan3_push_update COMMIT
 	mwan3_push_update ""
 
+	echo "$update" > "${MWAN3_STATUS_IPTABLES_LOG_DIR}/iptables-delete_iface_iptables-${1}.dump"
 	error=$(echo "$update" | $IPTR 2>&1) || LOG error "delete_iface_iptables (${1}): $error"
 }
 
@@ -652,8 +661,9 @@ mwan3_set_policy()
 	fi
 	mwan3_push_update COMMIT
 	mwan3_push_update ""
-	error=$(echo "$update" | $IPTR 2>&1) || LOG error "set_policy ($1): $error"
 
+	echo "$update" > "${MWAN3_STATUS_IPTABLES_LOG_DIR}/iptables-set_policy-${1}.dump"
+	error=$(echo "$update" | $IPTR 2>&1) || LOG error "set_policy ($1): $error"
 }
 
 mwan3_create_policies_iptables()
@@ -700,6 +710,8 @@ mwan3_create_policies_iptables()
 		esac
 		mwan3_push_update COMMIT
 		mwan3_push_update ""
+
+		echo "$update" > "${MWAN3_STATUS_IPTABLES_LOG_DIR}/iptables-create_policies_iptables-${1}.dump"
 		if [ "$IPT" = "$IPT4" ]; then
 			error=$(echo "$update" | $IPT4R 2>&1) || LOG error "create_policies_iptables ($1): $error"
 		else
@@ -766,6 +778,7 @@ mwan3_set_sticky_ipset()
 			hash:ip,mark markmask "$mmx" \
 			timeout "$timeout" family inet6
 
+	echo "$update" > "${MWAN3_STATUS_IPTABLES_LOG_DIR}/ipset-set_sticky_ipset-${rule}.dump"
 	error=$(echo "$update" | $IPS restore 2>&1) || LOG error "set_sticky_ipset (${rule}): $error"
 }
 
@@ -969,6 +982,8 @@ mwan3_set_user_rules()
 
 		mwan3_push_update COMMIT
 		mwan3_push_update ""
+
+		echo "$update" > "${MWAN3_STATUS_IPTABLES_LOG_DIR}/iptables-set_user_rules-${ipv}.dump"
 		error=$(echo "$update" | $IPTR 2>&1) || LOG error "set_user_rules (${ipv}): $error"
 	done
 
