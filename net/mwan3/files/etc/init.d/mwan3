@@ -95,10 +95,6 @@ stop_service() {
 		$IPS -q destroy $ipset
 	done
 
-	for ipset in $($IPS -n list | grep mwan3 | grep -E '_v4|_v6'); do
-		$IPS -q destroy $ipset
-	done
-
 	rm -rf $MWAN3_STATUS_DIR $MWAN3TRACK_STATUS_DIR
 
 }
