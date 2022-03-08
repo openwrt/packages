@@ -342,9 +342,9 @@ mwan3_set_general_iptables()
 		mwan3_push_update COMMIT
 		mwan3_push_update ""
 		if [ "$IPT" = "$IPT4" ]; then
-			error=$(echo "$update" | $IPT4R 2>&1) || LOG error "set_general_iptables: $error"
+			error=$(echo "$update" | $IPT4R 2>&1) || LOG error "set_general_iptables (${family}): $error"
 		else
-			error=$(echo "$update" | $IPT6R 2>&1) || LOG error "set_general_iptables: $error"
+			error=$(echo "$update" | $IPT6R 2>&1) || LOG error "set_general_iptables (${family}): $error"
 		fi
 	done
 }
@@ -405,7 +405,7 @@ mwan3_create_iface_iptables()
 
 	mwan3_push_update COMMIT
 	mwan3_push_update ""
-	error=$(echo "$update" | $IPTR 2>&1) || LOG error "create_iface_iptables: $error"
+	error=$(echo "$update" | $IPTR 2>&1) || LOG error "create_iface_iptables (${1}): $error"
 
 }
 
@@ -434,7 +434,7 @@ mwan3_delete_iface_iptables()
 	mwan3_push_update COMMIT
 	mwan3_push_update ""
 
-	error=$(echo "$update" | $IPTR 2>&1) || LOG error "delete_iface_iptables_${1}: $error"
+	error=$(echo "$update" | $IPTR 2>&1) || LOG error "delete_iface_iptables (${1}): $error"
 }
 
 mwan3_extra_tables_routes()
@@ -766,7 +766,7 @@ mwan3_set_sticky_ipset()
 			hash:ip,mark markmask "$mmx" \
 			timeout "$timeout" family inet6
 
-	error=$(echo "$update" | $IPS restore 2>&1) || LOG error "set_sticky_ipset_${rule}: $error"
+	error=$(echo "$update" | $IPS restore 2>&1) || LOG error "set_sticky_ipset (${rule}): $error"
 }
 
 mwan3_set_user_iptables_rule()
@@ -969,7 +969,7 @@ mwan3_set_user_rules()
 
 		mwan3_push_update COMMIT
 		mwan3_push_update ""
-		error=$(echo "$update" | $IPTR 2>&1) || LOG error "set_user_rules: $error"
+		error=$(echo "$update" | $IPTR 2>&1) || LOG error "set_user_rules (${ipv}): $error"
 	done
 
 
