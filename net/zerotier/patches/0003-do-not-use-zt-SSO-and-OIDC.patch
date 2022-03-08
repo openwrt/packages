@@ -1,0 +1,38 @@
+From 826718bdbbd42fcf56bdb45dd9e71af10299cfa3 Mon Sep 17 00:00:00 2001
+From: Oskari Rauta <oskari.rauta@gmail.com>
+Date: Sun, 13 Mar 2022 10:06:08 +0100
+Subject: [PATCH 3/3] do not use zt SSO and OIDC
+
+These features need Rust/Cargo support
+in the build system. OpenWrt does not
+have that yet.
+---
+ make-linux.mk      | 4 ++++
+ node/Constants.hpp | 3 +++
+ 2 files changed, 7 insertions(+)
+
+--- a/make-linux.mk
++++ b/make-linux.mk
+@@ -268,6 +268,10 @@ ifeq ($(ZT_IA32),1)
+ endif
+ 
+ ifeq ($(ZT_SSO_SUPPORTED), 1)
++	ZT_SSO_SUPPORTED=0
++endif
++
++ifeq ($(ZT_SSO_SUPPORTED), 1)
+ 	ifeq ($(ZT_DEBUG),1)
+ 		LDLIBS+=zeroidc/target/debug/libzeroidc.a -ldl -lssl -lcrypto
+ 	else
+--- a/node/Constants.hpp
++++ b/node/Constants.hpp
+@@ -72,6 +72,9 @@
+ #include <machine/endian.h>
+ #endif
+ 
++#undef OIDC_SUPPORTED
++#define OIDC_SUPPORTED 0
++
+ #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
+ #define OIDC_SUPPORTED 0
+ #ifndef __UNIX_LIKE__
