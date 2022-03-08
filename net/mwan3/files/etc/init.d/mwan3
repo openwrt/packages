@@ -91,6 +91,8 @@ stop_service() {
 		} | $IPTR
 	done
 
+	# Needed for the firewall backend to release the ipsets reference
+	sleep 2
 	for ipset in $($IPS -n list | grep mwan3_); do
 		$IPS -q destroy $ipset
 	done
