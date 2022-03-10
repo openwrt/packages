@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bandwidthd
 PKG_VERSION:=2.0.1-35
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/NethServer/bandwidthd/tar.gz/$(PKG_VERSION)?
@@ -139,7 +139,7 @@ CONFIGURE_ARGS += \
 endif
 
 EXTRA_CFLAGS+= $(TARGET_CPPFLAGS) -fgnu89-inline
-EXTRA_LDFLAGS+= $(TARGET_LDFLAGS) -Wl,-rpath-link,$(STAGING_DIR)/usr/lib
+EXTRA_LDFLAGS+= $(TARGET_LDFLAGS)
 
 define Package/bandwidthd/install
 	$(INSTALL_DIR) $(1)/usr/sbin

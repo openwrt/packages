@@ -478,8 +478,6 @@ CONFIGURE_ARGS+= \
 	) \
 	ac_cv_search___atomic_load=no
 
-EXTRA_LDFLAGS+= -Wl,-rpath-link,$(STAGING_DIR)/usr/lib
-
 define Package/strongswan/conffiles
 /etc/strongswan.conf
 /etc/strongswan.d/

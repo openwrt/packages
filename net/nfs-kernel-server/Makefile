@@ -100,8 +100,7 @@ TARGET_CFLAGS += -Wno-error=implicit-function-declaration \
 		 -Wno-error=undef \
 		 -Wno-error=missing-include-dirs
 
-TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib \
-		  -L$(STAGING_DIR)/usr/lib/libevent
+TARGET_LDFLAGS += -L$(STAGING_DIR)/usr/lib/libevent
 
 CONFIGURE_ARGS += \
 	--disable-caps \
