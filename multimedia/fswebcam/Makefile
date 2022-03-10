@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fswebcam
 PKG_VERSION:=20140113
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.firestorm.cx/fswebcam/files \
@@ -40,7 +40,7 @@ define Package/fswebcam/description
 endef
 
 EXTRA_CFLAGS+= $(TARGET_CPPFLAGS)
-EXTRA_LDFLAGS+= $(TARGET_LDFLAGS) -Wl,-rpath-link,$(STAGING_DIR)/usr/lib
+EXTRA_LDFLAGS+= $(TARGET_LDFLAGS)
 
 define Package/fswebcam/install
 	$(INSTALL_DIR) $(1)/usr/bin
