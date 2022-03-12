@@ -46,6 +46,12 @@ define Package/nano-plus
   VARIANT:=plus
 endef
 
+define Package/nano-full
+  $(call Package/nano/Default)
+  TITLE:=GNU nano text editor (most features, Unicode)
+  VARIANT:=full
+endef
+
 define Package/nano/description
   Nano is a small and simple text editor for use on the terminal.
 
@@ -63,7 +69,34 @@ define Package/nano-plus/description
   $(call Package/nano/description)
 endef
 
-ifeq ($(BUILD_VARIANT),plus)
+define Package/nano-full/description
+  nano-full - most features enabled, including syntax highlighting,
+  multibuffer, Unicode/UTF-8, help, justify, nanorc, some key bindings)
+
+  $(call Package/nano/description)
+endef
+
+ifeq ($(BUILD_VARIANT),full)
+# full variant with most features included
+  CONFIGURE_ARGS += \
+	--enable-help \
+	--enable-justify \
+	--enable-linenumbers \
+	--enable-multibuffer \
+	--enable-nanorc \
+	--enable-utf8 \
+	--enable-browser \
+	--enable-color \
+	--enable-comment \
+	--disable-extra \
+	--disable-histories \
+	--disable-libmagic \
+	--disable-mouse \
+	--disable-operatingdir \
+	--disable-speller \
+	--disable-tabcomp \
+	--disable-wordcomp
+else ifeq ($(BUILD_VARIANT),plus)
 # plus variant with more features included
   CONFIGURE_ARGS += \
 	--enable-help \
@@ -104,6 +137,13 @@ define Package/nano-plus/install
 	$(call Package/nano/install,$1)
 endef
 
+define Package/nano-full/install
+	$(call Package/nano/install,$1)
+	$(INSTALL_DIR) $(1)/etc $(1)/usr/share/nano
+	$(INSTALL_CONF) ./files/nanorc $(1)/etc/nanorc
+	$(CP) $(PKG_INSTALL_DIR)/usr/share/nano/*.nanorc $(1)/usr/share/nano/
+endef
+
 $(eval $(call BuildPackage,nano))
 $(eval $(call BuildPackage,nano-plus))
-
+$(eval $(call BuildPackage,nano-full))
