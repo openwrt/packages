@@ -307,6 +307,7 @@ static int load_config() {
 	struct uci_context *uci_ctx;
 	struct uci_package *uci_attendedsysupgrade;
 	struct uci_section *uci_s;
+	char *url;
 
 	uci_ctx = uci_alloc_context();
 	if (!uci_ctx)
@@ -319,13 +320,23 @@ static int load_config() {
 		fprintf(stderr, "Failed to load attendedsysupgrade config\n");
 		return -1;
 	}
-
 	uci_s = uci_lookup_section(uci_ctx, uci_attendedsysupgrade, "server");
 	if (!uci_s) {
+		fprintf(stderr, "Failed to read server config section\n");
+		return -1;
+	}
+	url = uci_lookup_option_string(uci_ctx, uci_s, "url");
+	if (!url) {
 		fprintf(stderr, "Failed to read server url from config\n");
 		return -1;
 	}
-	serverurl = strdup(uci_lookup_option_string(uci_ctx, uci_s, "url"));
+	if (strncmp(url, "https://", strlen("https://")) &&
+	    strncmp(url, "http://", strlen("http://"))) {
+		fprintf(stderr, "Server url invalid (needs to be http://... or https://...)\n");
+		return -1;
+	}
+
+	serverurl = strdup(url);
 
 	uci_s = uci_lookup_section(uci_ctx, uci_attendedsysupgrade, "client");
 	if (!uci_s) {
