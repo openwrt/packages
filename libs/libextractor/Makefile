@@ -23,7 +23,6 @@ PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_CONFIG_DEPENDS:= \
-	CONFIG_PACKAGE_libextractor-plugin-thumbnailffmpeg \
 	CONFIG_PACKAGE_libextractor-plugin-gstreamer
 
 PLUGINS:= \
@@ -47,7 +46,6 @@ PLUGINS:= \
 	riff \
 	s3m \
 	sid \
-	thumbnailffmpeg:+libffmpeg-full:+libmagic:@BUILD_PATENTED \
 	tiff:+libtiff \
 	wav \
 	xm \
@@ -58,7 +56,7 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
 CONFIGURE_ARGS += \
-	--$(if $(CONFIG_PACKAGE_libextractor-plugin-thumbnailffmpeg),en,dis)able-ffmpeg \
+	--disable-ffmpeg \
 	--disable-glibtest \
 	--disable-gsf \
 	--disable-rpath \
