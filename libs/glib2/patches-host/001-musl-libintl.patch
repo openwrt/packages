@@ -1,0 +1,20 @@
+--- a/meson.build
++++ b/meson.build
+@@ -2047,9 +2047,6 @@ endif
+ # FIXME: glib-gettext.m4 has much more checks to detect broken/uncompatible
+ # implementations. This could be extended if issues are found in some platforms.
+ libintl_deps = []
+-if cc.has_function('ngettext', args : osx_ldflags)
+-  have_bind_textdomain_codeset = cc.has_function('bind_textdomain_codeset')
+-else
+   # First just find the bare library.
+   libintl = cc.find_library('intl', required : false)
+   # The bare library probably won't link without help if it's static.
+@@ -2081,7 +2078,6 @@ else
+     have_bind_textdomain_codeset = cc.has_function('bind_textdomain_codeset', args : osx_ldflags,
+                                                    dependencies : libintl_deps)
+   endif
+-endif
+ 
+ glib_conf.set('HAVE_BIND_TEXTDOMAIN_CODESET', have_bind_textdomain_codeset)
+ 
