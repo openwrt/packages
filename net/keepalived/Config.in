@@ -71,6 +71,15 @@ config KEEPALIVED_IPTABLES
 		Builds support for using iptables/ipsets for filtering packets
 		to VIPs
 
+config KEEPALIVED_NFTABLES
+	depends on KEEPALIVED_VRRP
+	bool
+	default y
+	prompt "Enable nftables for VIP filtering"
+	help
+		Builds support for using nftables for filtering packets
+		to VIPs
+
 config KEEPALIVED_SNMP_VRRP
 	depends on KEEPALIVED_VRRP
 	bool
