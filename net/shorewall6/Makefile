@@ -14,7 +14,7 @@ PKG_BUGFIX_MAJOR_VERSION:=8
 PKG_BUGFIX_MINOR_VERSION:=
 PKG_VERSION:=$(PKG_MAJOR_MINOR_VERSION).$(PKG_BUGFIX_MAJOR_VERSION)$(PKG_BUGFIX_MINOR_VERSION)
 PKG_DIRECTORY:=$(PKG_MAJOR_MINOR_VERSION).$(PKG_BUGFIX_MAJOR_VERSION)
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_URL:=http://shorewall.org/pub/shorewall/$(PKG_MAJOR_MINOR_VERSION)/shorewall-$(PKG_DIRECTORY)/ \
 	http://slovakia.shorewall.net/pub/shorewall/$(PKG_MAJOR_MINOR_VERSION)/shorewall-$(PKG_DIRECTORY)/ \
@@ -37,7 +37,7 @@ endif
 define Package/shorewall6
     SECTION:=net
     CATEGORY:=Network
-    DEPENDS:=+ip +ip6tables +kmod-ipt-hashlimit +kmod-ipt-raw6 +iptables-mod-hashlimit +shorewall-core \
+    DEPENDS:=+ip @IPV6 +ip6tables +kmod-ipt-hashlimit +kmod-ipt-raw6 +iptables-mod-hashlimit +shorewall-core \
 		+perl +perlbase-autoloader +perlbase-autouse +perlbase-dynaloader +perlbase-digest \
 		+perlbase-findbin +perlbase-getopt +perlbase-hash
     TITLE:=Shorewall6 Central Administration System
