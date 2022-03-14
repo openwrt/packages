@@ -14,7 +14,7 @@ PKG_BUGFIX_MAJOR_VERSION:=8
 PKG_BUGFIX_MINOR_VERSION:=
 PKG_VERSION:=$(PKG_MAJOR_MINOR_VERSION).$(PKG_BUGFIX_MAJOR_VERSION)$(PKG_BUGFIX_MINOR_VERSION)
 PKG_DIRECTORY:=$(PKG_MAJOR_MINOR_VERSION).$(PKG_BUGFIX_MAJOR_VERSION)
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_URL:=http://shorewall.org/pub/shorewall/$(PKG_MAJOR_MINOR_VERSION)/shorewall-$(PKG_DIRECTORY)/ \
 	http://slovakia.shorewall.net/pub/shorewall/$(PKG_MAJOR_MINOR_VERSION)/shorewall-$(PKG_DIRECTORY)/ \
@@ -38,7 +38,7 @@ endif
 define Package/shorewall6-lite
     SECTION:=net
     CATEGORY:=Network
-    DEPENDS:=+ip +ip6tables +shorewall-core
+    DEPENDS:=+ip @IPV6 +ip6tables +shorewall-core
     TITLE:=Shorewall6 Lite
     URL:=http://www.shorewall.net/
     SUBMENU:=Firewall
