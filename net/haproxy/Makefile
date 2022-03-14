@@ -29,31 +29,25 @@ define Package/haproxy/Default
   SUBMENU:=Web Servers/Proxies
   SECTION:=net
   CATEGORY:=Network
-  TITLE:=The Reliable, High Performance TCP/HTTP Load Balancer
+  TITLE:=TCP/HTTP Load Balancer
   URL:=https://www.haproxy.org/
 endef
 
-define Build/Prepare
-	$(call Build/Prepare/Default)
-endef
-
-define Package/haproxy/Default/conffiles
+define Package/haproxy/conffiles
 /etc/haproxy.cfg
 endef
+
+Package/haproxy-nossl/conffiles = $(Package/haproxy/conffiles)
 
 define Package/haproxy/Default/description
  Open source Reliable, High Performance TCP/HTTP Load Balancer.
 endef
 
 define Package/haproxy
+  $(call Package/haproxy/Default)
+  TITLE+=with SSL support
   DEPENDS+= +libpcre +libltdl +zlib +libpthread +liblua5.3 +libopenssl +libncurses +libreadline +libatomic
-  TITLE+= (with SSL support)
   VARIANT:=ssl
-$(call Package/haproxy/Default)
-endef
-
-define Package/haproxy/conffiles
-$(call Package/haproxy/Default/conffiles)
 endef
 
 define Package/haproxy/description
@@ -62,19 +56,15 @@ $(call Package/haproxy/Default/description)
 endef
 
 define Package/haproxy-nossl
-  TITLE+= (without SSL support)
+  $(call Package/haproxy/Default)
+  TITLE+=without SSL support
   VARIANT:=nossl
   DEPENDS+= +libpcre +libltdl +zlib +libpthread +liblua5.3 +libatomic
-  TITLE+= (without SSL support)
-$(call Package/haproxy/Default)
-endef
-
-define Package/haproxy-nossl/conffiles
-$(call Package/haproxy/Default/conffiles)
+  CONFLICTS:=haproxy
 endef
 
 define Package/haproxy-nossl/description
-$(call Package/haproxy/Default/description)
+  $(call Package/haproxy/Default/description)
  This package is built without SSL support.
 endef
 
@@ -137,14 +127,13 @@ endef
 Package/haproxy-nossl/install = $(Package/haproxy/install)
 
 define Package/halog
-	MENU:=1
-	$(call Package/haproxy)
-	TITLE+= halog
-	DEPENDS:=haproxy
+  $(call Package/haproxy)
+  TITLE+=halog
+  DEPENDS:=haproxy
 endef
 
 define Package/halog/description
-	HAProxy Log Analyzer
+  HAProxy Log Analyzer
 endef
 
 define Package/halog/install
