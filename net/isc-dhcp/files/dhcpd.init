@@ -16,8 +16,6 @@ conf_local_file=$dyndir/named.conf.local
 session_key_name=local-ddns
 session_key_file=/var/run/named/session.key
 
-dyn_file=$(mktemp -u /tmp/dhcpd.XXXXXX)
-
 time2seconds() {
 	local timestring=$1
 	local multiplier number suffix
@@ -548,6 +546,8 @@ start_service() {
 	else
 		. /lib/functions/network.sh
 
+		local dyn_file=$(mktemp -u /tmp/dhcpd.XXXXXX)
+
 		config_load dhcp
 
 		local rfc1918_nets=""
@@ -584,9 +584,9 @@ EOF
 
 		if [ $dynamicdns -eq 1 ]; then
 			nsupdate -l -v $dyn_file
-
-			rm -f $dyn_file
 		fi
+
+		rm -f $dyn_file
 
 		[ -z "$dhcp_ifs" ] && return 0
 	fi
