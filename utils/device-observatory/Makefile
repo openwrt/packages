@@ -9,7 +9,6 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_HASH:=83b3f362f154a427abbd3af31b3c2dda9983cdc15f6b833d804727ef0fbdc72e
 
 PKG_LICENSE:=GPL-3.0-or-later
-PKG_BUILD_DEPENDS:=vim/host
 
 include $(INCLUDE_DIR)/package.mk
 

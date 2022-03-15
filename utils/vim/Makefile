@@ -21,10 +21,6 @@ PKG_CPE_ID:=cpe:/a:vim:vim
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)$(VIMVER)
 PKG_BUILD_PARALLEL:=1
 
-HOST_BUILD_DEPENDS:=libiconv/host
-HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)$(VIMVER)
-HOST_BUILD_PARALLEL:=1
-
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
 
@@ -110,15 +106,6 @@ define Package/xxd/description
  xxd creates a hex dump of a given file or standard input, it can also convert
  a hex dump back to its original binary form.
 endef
-
-HOST_CONFIGURE_ARGS += \
-	--disable-acl \
-	--disable-gpm \
-	--disable-nls \
-	--disable-selinux \
-	--enable-gui=no \
-	--with-features=normal \
-	--without-x
 
 CONFIGURE_ARGS += \
 	--disable-gui \
@@ -257,4 +244,3 @@ $(eval $(call BuildPackage,vim-fuller))
 $(eval $(call BuildPackage,vim-runtime))
 $(eval $(call BuildPackage,vim-help))
 $(eval $(call BuildPackage,xxd))
-$(eval $(call HostBuild))
