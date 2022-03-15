@@ -1,0 +1,57 @@
+From 505c61819b371a1802e054fe2601e64f2dc6d79e Mon Sep 17 00:00:00 2001
+From: Alyssa Ross <hi@alyssa.is>
+Date: Mon, 29 Nov 2021 22:38:45 +0000
+Subject: [PATCH 14/15] Makefile: support static-only builds
+
+One of the problems with udev is that systemd cannot be built
+statically[1].  With libudev-zero, on the other hand, no code changes
+are required to be able to do a static-only build, only Makefile
+changes.
+
+With this change, it's possible to "make install-static" to do a
+static-only build of libudev-zero.
+
+[1]: https://github.com/systemd/systemd/pull/20621#issuecomment-912014839
+---
+ Makefile | 24 ++++++++++++++++++------
+ 1 file changed, 18 insertions(+), 6 deletions(-)
+
+--- a/Makefile
++++ b/Makefile
+@@ -45,13 +45,24 @@ libudev.pc: libudev.pc.in
+ 		-e 's|@VERSION@|243|g' \
+ 		libudev.pc.in > libudev.pc
+ 
+-install: libudev.so.1 libudev.a libudev.pc
+-	mkdir -p         ${DESTDIR}${INCLUDEDIR} ${DESTDIR}${LIBDIR} ${DESTDIR}${PKGCONFIGDIR}
+-	cp -f udev.h  	 ${DESTDIR}${INCLUDEDIR}/libudev.h
+-	cp -f libudev.a  ${DESTDIR}${LIBDIR}/libudev.a
++install-headers: udev.h
++	mkdir -p ${DESTDIR}${INCLUDEDIR}
++	cp -f udev.h ${DESTDIR}${INCLUDEDIR}/libudev.h
++
++install-pkgconfig: libudev.pc
++	mkdir -p ${DESTDIR}${PKGCONFIGDIR}
++	cp -f libudev.pc ${DESTDIR}${PKGCONFIGDIR}/libudev.pc
++
++install-shared: libudev.so.1 install-headers install-pkgconfig
++	mkdir -p ${DESTDIR}${LIBDIR}
+ 	cp -f libudev.so.1 ${DESTDIR}${LIBDIR}/libudev.so.1
+ 	ln -fs libudev.so.1 ${DESTDIR}${LIBDIR}/libudev.so
+-	cp -f libudev.pc ${DESTDIR}${PKGCONFIGDIR}/libudev.pc
++
++install-static: libudev.a install-headers install-pkgconfig
++	mkdir -p ${DESTDIR}${LIBDIR}
++	cp -f libudev.a ${DESTDIR}${LIBDIR}/libudev.a
++
++install: install-shared install-static
+ 
+ uninstall:
+ 	rm -f ${DESTDIR}${LIBDIR}/libudev.a \
+@@ -63,4 +74,5 @@ uninstall:
+ clean:
+ 	rm -f libudev.so.1 libudev.a libudev.pc ${OBJ}
+ 
+-.PHONY: all clean install uninstall
++.PHONY: all clean install-headers install-pkgconfig install-shared \
++	install-static install uninstall

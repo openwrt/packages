@@ -1,0 +1,68 @@
+From af4dc2ff14b020840bf5d4ac3501d639314fb55d Mon Sep 17 00:00:00 2001
+From: illiliti <illiliti@protonmail.com>
+Date: Wed, 8 Sep 2021 21:26:18 +0300
+Subject: [PATCH 04/15] readme: rewrite why, add pros/cons
+
+---
+ README.md | 50 +++++++++++++++++++++++++++++++-------------------
+ 1 file changed, 31 insertions(+), 19 deletions(-)
+
+--- a/README.md
++++ b/README.md
+@@ -4,25 +4,37 @@ Drop-in replacement for `libudev` intend
+ 
+ ## Why?
+ 
+-Because `udev` sucks, it is bloated and overengineered. `udev` is just
+-like `systemd`, it locks you into using non-portable crap that you can't
+-avoid because multiple programs depend on it. Look, even FreeBSD was forced
+-to rewrite[0] this crappy library because `libinput` hard-depends on `udev`.
+-Without `libinput` you can't use `wayland` and many other cool stuff.
+-
+-Michael Forney (author of `cproc`, `samurai`, Oasis Linux, ...) decided to
+-fork[1] `libinput` and remove the hard dependency on `udev`. However, this
+-fork has a drawback that requires patching applications to use `libinput_netlink`
+-instead of the `libinput_udev` API in order to use the automatic detection of
+-input devices and hotplugging. Static configuration is also required for anything
+-other than input devices (e.g drm devices).
+-
+-Thankfully `udev` has stable API and hopefully no changes will be made to it
+-the future. On this basis I decided to create this clean-room implementation
+-of `libudev` which can be used with any or without a device manager.
+-
+-[0] https://github.com/FreeBSDDesktop/libudev-devd  
+-[1] https://github.com/oasislinux/libinput
++We all know that systemd is very hostile towards portability. Udev inherited
++the same problem by exposing a very badly designed library interface. This is
++dramatically reduces portability, user choice and basically creates vendor
++lock-in because library interface highly tied to udev daemon.
++
++Another udev problem is non-portable home-grown language called "udev rules".
++Udev authors definitely don't know(or care) why it's better to avoid reinventing
++the wheel. Strictly speaking, I think they did that on purpose to overcomplicate
++udev as much as possible. Why? So that only authors(RedHat/IBM) can rule and dictate
++the future of udev. The recent eudev death only proves that it's really hard to
++support such unmaintainable mess.
++
++Udev hwdb is yet another illustration of systemd-like approach. What the hell
++"userspace /dev" has to do with parsing hardware database(pci.ids, usb.ids)
++and setting/remapping buttons? Udev smells like systemd by trying to implement
++all possible functionality in the single daemon/code base. Standalone UNIX-way
++programs much better suited for such purposes.
++
++Keep in mind that libudev-zero isn't ideal. Here is some pros/cons:
++
++### Pros
++
++* Very portable. Doesn't depend on GNU features.
++* No lock-in. Any device manager can be used, even smdev and CONFIG_UEVENT_HELPER.
++* Source code is much cleaner than udev because of less abstractions and clever code.
++
++### Cons
++
++* Udev rules must be converted to shell script in order to work with any device manager.
++* Udev hwdb interface isn't implemented. pciutils and usbutils will not display any meaningful info.
++* Many functions and interfaces still aren't implemented, which may lead to breakage in some programs.
+ 
+ ## What doesn't work
+ 

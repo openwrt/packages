@@ -1,0 +1,44 @@
+From caaa021290a1b84c44d084865c2512f4adf98297 Mon Sep 17 00:00:00 2001
+From: illiliti <illiliti@protonmail.com>
+Date: Fri, 8 Oct 2021 08:36:20 +0300
+Subject: [PATCH 08/15] udev_device.c: ignore devices without subsystem
+
+Do not allocate udev_device if device doesn't have subsystem.
+
+Fixes: #43
+---
+ udev_device.c | 7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
+
+--- a/udev_device.c
++++ b/udev_device.c
+@@ -530,18 +530,18 @@ static void set_properties_from_props(st
+ 
+ struct udev_device *udev_device_new_from_syspath(struct udev *udev, const char *syspath)
+ {
+-    char path[PATH_MAX], file[PATH_MAX];
+     char *subsystem, *driver, *sysname;
+     struct udev_device *udev_device;
++    char path[PATH_MAX];
+     int i;
+ 
+     if (!udev || !syspath) {
+         return NULL;
+     }
+ 
+-    snprintf(file, sizeof(file), "%s/uevent", syspath);
++    subsystem = read_symlink(syspath, "subsystem");
+ 
+-    if (access(file, R_OK) == -1) {
++    if (!subsystem) {
+         return NULL;
+     }
+ 
+@@ -567,7 +567,6 @@ struct udev_device *udev_device_new_from
+ 
+     sysname = strrchr(path, '/') + 1;
+     driver = read_symlink(path, "driver");
+-    subsystem = read_symlink(path, "subsystem");
+ 
+     udev_list_entry_add(&udev_device->properties, "SUBSYSTEM", subsystem, 0);
+     udev_list_entry_add(&udev_device->properties, "SYSNAME", sysname, 0);

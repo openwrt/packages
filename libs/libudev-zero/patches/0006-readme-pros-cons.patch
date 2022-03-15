@@ -1,0 +1,20 @@
+From 858f0b107f90b08d4031d2e3ca25a5f2145b61c4 Mon Sep 17 00:00:00 2001
+From: illiliti <illiliti@protonmail.com>
+Date: Thu, 9 Sep 2021 03:01:12 +0300
+Subject: [PATCH 06/15] readme: pros/cons
+
+---
+ README.md | 2 ++
+ 1 file changed, 2 insertions(+)
+
+--- a/README.md
++++ b/README.md
+@@ -22,6 +22,8 @@ and setting/remapping buttons? Udev smel
+ all possible functionality in the single daemon/code base. Standalone UNIX-way
+ programs much better suited for such purposes.
+ 
++## Pros/Cons
++
+ Keep in mind that libudev-zero isn't ideal. Here is some pros/cons:
+ 
+ ### Pros

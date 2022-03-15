@@ -1,0 +1,52 @@
+From 4154cf252c17297f98a8ca33693ead003b4509da Mon Sep 17 00:00:00 2001
+From: illiliti <illiliti@protonmail.com>
+Date: Thu, 16 Dec 2021 07:09:16 +0300
+Subject: [PATCH 15/15] udev_enumerate.c: support NULL value in match/nomatch
+
+Fixes: #45
+---
+ udev_enumerate.c | 16 +++++-----------
+ 1 file changed, 5 insertions(+), 11 deletions(-)
+
+--- a/udev_enumerate.c
++++ b/udev_enumerate.c
+@@ -193,20 +193,17 @@ static int filter_property(struct udev_e
+ 
+ static int filter_sysattr(struct udev_enumerate *udev_enumerate, struct udev_device *udev_device)
+ {
++    const char *sysattr, *value, *value2;
+     struct udev_list_entry *list_entry;
+-    const char *sysattr, *value;
+ 
+     list_entry = udev_list_entry_get_next(&udev_enumerate->sysattr_nomatch);
+ 
+     while (list_entry) {
+         sysattr = udev_list_entry_get_name(list_entry);
++        value2 = udev_list_entry_get_value(list_entry);
+         value = udev_device_get_sysattr_value(udev_device, sysattr);
+ 
+-        if (!value) {
+-            return 1;
+-        }
+-
+-        if (fnmatch(udev_list_entry_get_value(list_entry), value, 0) == 0) {
++        if (value && value2 && fnmatch(value2, value, 0) == 0) {
+             return 0;
+         }
+ 
+@@ -218,13 +215,10 @@ static int filter_sysattr(struct udev_en
+     if (list_entry) {
+         while (list_entry) {
+             sysattr = udev_list_entry_get_name(list_entry);
++            value2 = udev_list_entry_get_value(list_entry);
+             value = udev_device_get_sysattr_value(udev_device, sysattr);
+ 
+-            if (!value) {
+-                return 0;
+-            }
+-
+-            if (fnmatch(udev_list_entry_get_value(list_entry), value, 0) == 0) {
++            if (value && value2 && fnmatch(value2, value, 0) == 0) {
+                 return 1;
+             }
+ 

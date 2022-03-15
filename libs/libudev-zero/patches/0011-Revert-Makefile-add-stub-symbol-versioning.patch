@@ -1,0 +1,28 @@
+From b8a0b953e6305dffeea57886fa379c5aca1b8397 Mon Sep 17 00:00:00 2001
+From: illiliti <illiliti@protonmail.com>
+Date: Tue, 16 Nov 2021 16:17:40 +0300
+Subject: [PATCH 11/15] Revert "Makefile: add stub symbol versioning"
+
+This reverts commit 000ff7bf2fa463ea99afaea8503c2ed9f8a1852c.
+---
+ Makefile    | 3 +--
+ libudev.sym | 1 -
+ 2 files changed, 1 insertion(+), 3 deletions(-)
+ delete mode 100644 libudev.sym
+
+--- a/Makefile
++++ b/Makefile
+@@ -8,8 +8,7 @@ PKGCONFIGDIR = ${LIBDIR}/pkgconfig
+ XCFLAGS = ${CPPFLAGS} ${CFLAGS} -std=c99 -fPIC -pthread -D_XOPEN_SOURCE=700 \
+ 		  -Wall -Wextra -Wpedantic -Wmissing-prototypes -Wstrict-prototypes \
+ 		  -Wno-unused-parameter
+-XLDFLAGS = ${LDFLAGS} -shared -Wl,-soname,libudev.so.1 \
+-		   -Wl,-version-script,libudev.sym
++XLDFLAGS = ${LDFLAGS} -shared -Wl,-soname,libudev.so.1
+ XARFLAGS = -rc
+ 
+ OBJ = \
+--- a/libudev.sym
++++ /dev/null
+@@ -1 +0,0 @@
+-LIBUDEV_183 {};

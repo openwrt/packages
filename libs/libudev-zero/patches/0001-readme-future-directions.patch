@@ -1,0 +1,24 @@
+From 3c2593376a7870c8ae6411ff3fc83c13da98f219 Mon Sep 17 00:00:00 2001
+From: illiliti <illiliti@protonmail.com>
+Date: Thu, 2 Sep 2021 21:39:59 +0300
+Subject: [PATCH 01/15] readme: future directions
+
+---
+ README.md | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+--- a/README.md
++++ b/README.md
+@@ -71,6 +71,12 @@ for example how it could be implemented
+ Don't hesitate to ask me everything you don't understand. I'm usually hanging
+ around in #kisslinux at libera.chat, but you can also email me or open an issue here.
+ 
++## Future directions
++
++1. Write a better cross-platform(*nix, maybe macos and windows) device enumeration library.
++2. Convince mainstream apps(libinput, wlroots, ...) to use new library instead of libudev.
++3. Declare libudev as obsolete library and archive this project.
++
+ ## Donate
+ 
+ You can send a donation to `BTC: 1BwrcsgtWZeLVvNeEQSg4A28a3yrGN3FpK`

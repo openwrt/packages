@@ -1,0 +1,28 @@
+From 6250984089514d7751985476a31d268c16b3d8f2 Mon Sep 17 00:00:00 2001
+From: illiliti <illiliti@protonmail.com>
+Date: Thu, 9 Sep 2021 23:53:51 +0300
+Subject: [PATCH 07/15] readme: add cups and workaround for pulseaudio
+
+---
+ README.md | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+--- a/README.md
++++ b/README.md
+@@ -41,7 +41,7 @@ Keep in mind that libudev-zero isn't ide
+ ## What doesn't work
+ 
+ * dosfstools - requires udev_enumerate_add_match_parent()
+-* PulseAudio - highly depends on udev internal properties
++* PulseAudio - highly depends on udev internal properties. [workaround](https://gist.github.com/capezotte/03ee5548218e819b06459819bb120b4b#pulseaudio)
+ * udisks2 - highly depends on udev internal properties
+ * android-tools - requires udev rules for non-root usage
+ * NetworkManager - needs investigation
+@@ -49,6 +49,7 @@ Keep in mind that libudev-zero isn't ide
+ * PipeWare - depends on udev internal properties
+ * ldm - depends on udev internal properties
+ * lvm2 - uses deprecated `udev_queue` API
++* cups - needs investigation
+ * ???
+ 
+ ## Dependencies
