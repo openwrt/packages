@@ -13,4 +13,4 @@
 +                --without-randomdev > ${binddir}/configure.log);       \
  	fi
  
- atf:
+ atf: bind1

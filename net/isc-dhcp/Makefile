@@ -9,8 +9,8 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=isc-dhcp
 UPSTREAM_NAME:=dhcp
-PKG_VERSION:=4.4.1
-PKG_RELEASE:=20
+PKG_VERSION:=4.4.3
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -21,7 +21,7 @@ PKG_SOURCE:=$(UPSTREAM_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=ftp://ftp.isc.org/isc/dhcp/$(PKG_VERSION) \
 		http://ftp.funet.fi/pub/mirrors/ftp.isc.org/isc/dhcp/$(PKG_VERSION) \
 		http://ftp.iij.ad.jp/pub/network/isc/dhcp/$(PKG_VERSION)
-PKG_HASH:=2a22508922ab367b4af4664a0472dc220cc9603482cf3c16d9aff14f3a76b608
+PKG_HASH:=0e3ec6b4c2a05ec0148874bcd999a66d05518378d77421f607fb0bc9d0135818
 
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
@@ -193,8 +193,9 @@ endef
 CONFIGURE_ARGS += \
 	--enable-paranoia		\
 	--disable-dependency-tracking	\
-	--with-randomdev=/dev/urandom \
-	ac_cv_path_AR=$(TARGET_AR) \
+	--with-randomdev=/dev/urandom	\
+	--disable-backtrace		\
+	ac_cv_path_AR=$(TARGET_AR)	\
 	ac_cv_file__dev_random=yes
 
 ifeq ($(BUILD_VARIANT),ipv4)
