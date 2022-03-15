@@ -12,7 +12,6 @@ config_dir=$(dirname $config_file)
 named_options_file=/etc/bind/named-rndc.conf
 rndc_conf_file=/etc/bind/rndc.conf
 pid_file=/var/run/named/named.pid
-rndc_temp=$(mktemp /tmp/rndc-confgen.XXXXXX)
 
 logdir=/var/log/named/
 cachedir=/var/cache/bind
@@ -46,6 +45,8 @@ start_service() {
 	mkdir -m 0755 $runnamed
 	chown bind.bind $runnamed
     }
+
+    local rndc_temp=$(mktemp /tmp/rndc-confgen.XXXXXX)
 
     rndc-confgen > $rndc_temp
 
