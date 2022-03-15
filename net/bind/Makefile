@@ -41,6 +41,8 @@ PKG_BUILD_DEPENDS += BIND_LIBXML2:libxml2 BIND_LIBJSON:libjson-c
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
+DISABLE_NLS:=
+
 define Package/bind/Default
   SECTION:=net
   CATEGORY:=Network
@@ -136,12 +138,10 @@ TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 
 CONFIGURE_ARGS += \
 	--with-openssl="$(STAGING_DIR)/usr" \
-	--with-libtool \
 	--without-lmdb \
 	--enable-epoll \
 	--without-gssapi \
 	--without-readline \
-	--without-python \
 	--sysconfdir=/etc/bind
 
 ifdef CONFIG_BIND_LIBJSON
