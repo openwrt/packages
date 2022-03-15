@@ -57,6 +57,7 @@ CONFIGURE_ARGS += \
 	--without-libcap \
 	--disable-https \
 	--disable-dbengine \
+	--disable-compression \
 	--disable-plugin-nfacct \
 	--disable-plugin-freeipmi \
 	--disable-plugin-cups \
