@@ -13,44 +13,41 @@ CONFIGFILE=$GNUNET_HOME/gnunet.conf
 extra_command "restart_transport" "Restart transport"
 
 prepare_config() {
-	local had_exit_service=0;
+	local had_exit_service=0
 
 	if [ ! -e "$GNUNET_HOME" ]; then
-		mkdir -p $GNUNET_HOME
-		chown gnunet:gnunet $GNUNET_HOME
-		chmod 0750 $GNUNET_HOME
+		mkdir -m 0750 -p "$GNUNET_HOME"
+		chown gnunet:gnunet "$GNUNET_HOME"
 	fi
-	touch $CONFIGFILE
-	chown gnunet:gnunet $CONFIGFILE
-	chmod 0640 $CONFIGFILE
-	gnunet-config -c $CONFIGFILE -s PATHS -o GNUNET_HOME -V $GNUNET_HOME
+	touch "$CONFIGFILE"
+	chown gnunet:gnunet "$CONFIGFILE"
+	chmod 0640 "$CONFIGFILE"
+	gnunet-config -c "$CONFIGFILE" -s PATHS -o GNUNET_HOME -V "$GNUNET_HOME"
 
 	# minimal persistency in /etc/gnunet
-	[ ! -d /etc/gnunet ] && {
-		mkdir -p /etc/gnunet
-		chown gnunet:gnunet /etc/gnunet
-	}
+	[ ! -d /etc/gnunet ] && mkdir -m 0750 -p /etc/gnunet
+	chown gnunet:gnunet /etc/gnunet
 
 	# defaults paths for persistent files
-	gnunet-config -c $CONFIGFILE -s PATHS -o GNUNET_CONFIG_HOME -V /etc/gnunet
-	gnunet-config -c $CONFIGFILE -s PEER -o PRIVATE_KEY -V /etc/gnunet/private_key.ecc
-	gnunet-config -c $CONFIGFILE -s identity -o EGODIR -V /etc/gnunet/identity/egos
-	gnunet-config -c $CONFIGFILE -s revocation -o DATABASE -V /etc/gnunet/revocation.dat
-	gnunet-config -c $CONFIGFILE -s nse -o PROOFFILE -V /etc/gnunet/proof.dat
+	gnunet-config -c "$CONFIGFILE" -s PATHS -o GNUNET_CONFIG_HOME -V /etc/gnunet
+	gnunet-config -c "$CONFIGFILE" -s PEER -o PRIVATE_KEY -V /etc/gnunet/private_key.ecc
+	gnunet-config -c "$CONFIGFILE" -s identity -o EGODIR -V /etc/gnunet/identity/egos
+	gnunet-config -c "$CONFIGFILE" -s revocation -o DATABASE -V /etc/gnunet/revocation.dat
+	gnunet-config -c "$CONFIGFILE" -s nse -o PROOFFILE -V /etc/gnunet/proof.dat
 
 	# enable all installed transport plugins
-	transport_plugins=$(gnunet-config -c $CONFIGFILE -s transport -o PLUGINS)
+	transport_plugins=$(gnunet-config -c "$CONFIGFILE" -s transport -o PLUGINS)
 	for transplug in /usr/lib/gnunet/libgnunet_plugin_transport_*.so; do
-		transplug=$( echo $transplug |
-			sed -ne 's!^.*_transport_\(.*\)\.so$!\1!p' )
-		[ -n "$( echo $transport_plugins | grep $transplug )" ] ||
+		transplug="$( echo "$transplug" |
+			sed -ne 's!^.*_transport_\(.*\)\.so$!\1!p' )"
+		echo "$transport_plugins" | grep -q "$transplug" ||
 			transport_plugins="$transport_plugins $transplug"
 	done
-	gnunet-config -c $CONFIGFILE -s transport -o PLUGINS -V "$transport_plugins"
+	gnunet-config -c "$CONFIGFILE" -s transport -o PLUGINS -V "$transport_plugins"
 
 	# do not touch sysctl, iptables and routing
-	gnunet-config -c $CONFIGFILE -s dns -o SKIP_ROUTING_SETUP -V YES
-	gnunet-config -c $CONFIGFILE -s exit -o EXIT_IFNAME -V ''
+	gnunet-config -c "$CONFIGFILE" -s dns -o SKIP_ROUTING_SETUP -V YES
+	gnunet-config -c "$CONFIGFILE" -s exit -o EXIT_IFNAME -V ''
 
 	# apply config from UCI
 	_gnunet_section=""
@@ -71,19 +68,19 @@ prepare_config() {
 		# $2    value
 		local __OPT="$1"
 		local __VAL="$2"
-		gnunet-config -c $CONFIGFILE -s ${_gnunet_section} -o ${__OPT} -V "${__VAL}"
+		gnunet-config -c "$CONFIGFILE" -s "${_gnunet_section}" -o "${__OPT}" -V "${__VAL}"
 	}
 
 	config_load gnunet
 
-	[ "$had_exit_service" -eq 1 ] && gnunet-config -c $CONFIGFILE -s exit -o FORCESTART -V YES
+	[ "$had_exit_service" -eq 1 ] && gnunet-config -c "$CONFIGFILE" -s exit -o FORCESTART -V YES
 
 	return 0
 }
 
 restart_transport() {
-	gnunet-arm -c $CONFIGFILE -k transport
-	gnunet-arm -c $CONFIGFILE -i transport
+	gnunet-arm -c "$CONFIGFILE" -k transport
+	gnunet-arm -c "$CONFIGFILE" -i transport
 }
 
 start_service() {
@@ -93,8 +90,8 @@ start_service() {
 	procd_set_param user gnunet
 #	procd_set_param env GNUNET_LOG="dht;;;;info"
 	procd_set_param stderr 1
-	procd_set_param command $PROG -c $CONFIGFILE
-	[ "$LOGFILE" ] && procd_append_param command -l $LOGFILE
+	procd_set_param command "$PROG" -c "$CONFIGFILE"
+	[ "$LOGFILE" ] && procd_append_param command -l "$LOGFILE"
 	procd_set_param respawn
 	procd_close_instance
 }
