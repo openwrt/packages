@@ -1,0 +1,20 @@
+From 6651ccc9d60637919f1c05a801f3edc3ba623cd7 Mon Sep 17 00:00:00 2001
+From: Firas Khalil Khana <firasuke@gmail.com>
+Date: Sun, 24 Oct 2021 19:59:06 +0300
+Subject: [PATCH 10/15] Fix typo
+
+---
+ README.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/README.md
++++ b/README.md
+@@ -46,7 +46,7 @@ Keep in mind that libudev-zero isn't ide
+ * android-tools - requires udev rules for non-root usage
+ * NetworkManager - needs investigation
+ * libgudev - needs investigation
+-* PipeWare - depends on udev internal properties
++* PipeWire - depends on udev internal properties
+ * ldm - depends on udev internal properties
+ * lvm2 - uses deprecated `udev_queue` API
+ * cups - needs investigation

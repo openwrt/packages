@@ -1,0 +1,28 @@
+From 000ff7bf2fa463ea99afaea8503c2ed9f8a1852c Mon Sep 17 00:00:00 2001
+From: illiliti <illiliti@protonmail.com>
+Date: Wed, 8 Sep 2021 21:44:45 +0300
+Subject: [PATCH 05/15] Makefile: add stub symbol versioning
+
+Fixes: #38
+---
+ Makefile    | 3 ++-
+ libudev.sym | 1 +
+ 2 files changed, 3 insertions(+), 1 deletion(-)
+ create mode 100644 libudev.sym
+
+--- a/Makefile
++++ b/Makefile
+@@ -8,7 +8,8 @@ PKGCONFIGDIR = ${LIBDIR}/pkgconfig
+ XCFLAGS = ${CPPFLAGS} ${CFLAGS} -std=c99 -fPIC -pthread -D_XOPEN_SOURCE=700 \
+ 		  -Wall -Wextra -Wpedantic -Wmissing-prototypes -Wstrict-prototypes \
+ 		  -Wno-unused-parameter
+-XLDFLAGS = ${LDFLAGS} -shared -Wl,-soname,libudev.so.1
++XLDFLAGS = ${LDFLAGS} -shared -Wl,-soname,libudev.so.1 \
++		   -Wl,-version-script,libudev.sym
+ XARFLAGS = -rc
+ 
+ OBJ = \
+--- /dev/null
++++ b/libudev.sym
+@@ -0,0 +1 @@
++LIBUDEV_183 {};

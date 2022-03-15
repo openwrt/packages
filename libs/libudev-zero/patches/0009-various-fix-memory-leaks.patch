@@ -1,0 +1,47 @@
+From 7265d305c27dee05436a25dc60481ad62e022756 Mon Sep 17 00:00:00 2001
+From: illiliti <illiliti@protonmail.com>
+Date: Fri, 8 Oct 2021 08:53:04 +0300
+Subject: [PATCH 09/15] various: fix memory leaks
+
+Closes: #41
+---
+ udev_device.c | 2 ++
+ udev_list.c   | 3 +++
+ 2 files changed, 5 insertions(+)
+
+--- a/udev_device.c
++++ b/udev_device.c
+@@ -546,12 +546,14 @@ struct udev_device *udev_device_new_from
+     }
+ 
+     if (!realpath(syspath, path)) {
++        free(subsystem);
+         return NULL;
+     }
+ 
+     udev_device = calloc(1, sizeof(*udev_device));
+ 
+     if (!udev_device) {
++        free(subsystem);
+         return NULL;
+     }
+ 
+--- a/udev_list.c
++++ b/udev_list.c
+@@ -78,6 +78,7 @@ struct udev_list_entry *udev_list_entry_
+     list_entry2->name = strdup(name);
+ 
+     if (!list_entry2->name) {
++        free(list_entry2);
+         return NULL;
+     }
+ 
+@@ -85,6 +86,8 @@ struct udev_list_entry *udev_list_entry_
+         list_entry2->value = strdup(value);
+ 
+         if (!list_entry2->value) {
++            free(list_entry2->name);
++            free(list_entry2);
+             return NULL;
+         }
+     }
