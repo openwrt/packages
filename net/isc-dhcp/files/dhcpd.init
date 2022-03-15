@@ -46,11 +46,29 @@ time2seconds() {
 	echo $(( number * multiplier ))
 }
 
-trim()
-{
+trim() {
 	local arg="$1"
 
 	echo "$arg" | sed -e 's/^ *//' -e 's/ *$//'
+}
+
+rfc1918_prefix() {
+	local octets="$(echo "${1%%/*}" | cut -d. -f1)"
+
+	[ "$octets" = "10" ] && { echo "$octets"; return; }
+
+	octets="$(echo "${1%%/*}" | cut -d. -f1-2)"
+
+	case "$octets" in
+	172.1[6789]|172.2[0-9]|172.3[01]|192.168)
+		echo "$octets"
+		;;
+	esac
+}
+
+no_ipv6() {
+	[ -n "$(named-checkconf -px \
+		| sed -r -ne '1N; N; /^\tlisten-on-v6  ?\{\n\t\t"none";\n\t\};$/{ p; q; }; D')" ]
 }
 
 # duplicated from dnsmasq init script
@@ -200,7 +218,8 @@ static_domain_add() {
 		revip="$(rev_str "$ip" ".")"
 
 		update "$name.$domain." IN A "$ip"
-		update "$revip.in-addr.arpa." IN PTR "$name.$domain."
+		[ -n "$(rfc1918_prefix "$ip")" ] && \
+			update "$revip.in-addr.arpa." IN PTR "$name.$domain."
 	done
 }
 
@@ -377,15 +396,10 @@ dhcpd_add() {
 
 	[ static = "$proto" ] || return 0
 
-	local pair="$(echo "${subnet%%/*}" | cut -d. -f1-2)"
-	case "$pair" in
-	10.*)
-		rfc1918_nets="$rfc1918_nets${rfc1918_nets:+ }10"
-		;;
-	172.1[6789]|172.2[0-9]|172.3[01]|192.168)
-		rfc1918_nets="$rfc1918_nets${rfc1918_nets:+ }$pair"
-		;;
-	esac
+	local octets="$(rfc1918_prefix "$subnet")"
+
+	[ -n "$octets" ] && rfc1918_nets="$rfc1918_nets${rfc1918_nets:+ }$octets"
+
 	[ $synthesize -eq 0 ] && return
 
 	config_get_bool dynamicdhcp "$cfg" "dynamicdhcp" 1
@@ -583,7 +597,12 @@ EOF
 		static_srvhosts >> $config_file
 
 		if [ $dynamicdns -eq 1 ]; then
-			nsupdate -l -v $dyn_file
+			local args=
+
+			no_ipv6 && args="-4"
+
+			nsupdate -l -v $args $dyn_file
+
 		fi
 
 		rm -f $dyn_file
