@@ -10,7 +10,7 @@ Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
 
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -479,11 +479,9 @@ dist-docs:
+@@ -483,11 +483,9 @@ dist-docs:
  
  
  include automake.mk

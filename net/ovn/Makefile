@@ -9,13 +9,13 @@ include $(INCLUDE_DIR)/kernel.mk
 include ../openvswitch/openvswitch.mk
 
 PKG_NAME:=ovn
-PKG_VERSION:=20.12.0
-PKG_RELEASE:=2
+PKG_VERSION:=22.03.0
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/ovn-org/ovn.git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_MIRROR_HASH:=6d1b5d907b4445e84653527ccf5977b05555c785f90587dee0fc1950d96727cc
+PKG_MIRROR_HASH:=eb494796a7a21e7c1ba5b3f60c037385eb5f0c33007ebc627437f36187f860fe
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
@@ -35,7 +35,7 @@ include ../../lang/python/python3-host.mk
 
 ovs_libovn_title:=Open vSwitch (libovn.so)
 ovs_libovn_hidden:=1
-ovs_libovn_depends+=+libatomic
+ovs_libovn_depends+=+libatomic +openvswitch-libopenvswitch
 ovs_libovn_files:=usr/lib/libovn*.so*
 $(eval $(call OvsPackageTemplate,libovn))
 
@@ -88,6 +88,11 @@ CONFIGURE_VARS += \
 
 
 TARGET_CFLAGS += -flto -std=gnu99
+# This is needed otherwise libtool --mode=install libovn.la will fail with
+# "cannot find -lopenvswitch" when doing libtool --mode=relink.  Likely this
+# was caused by libovn now depends on libopenvswitch.la (installed=no) since
+# upstream commit 1b587c4f ("controller: add datapath meter capability check")
+TARGET_LDFLAGS += -L$(ovs_builddir)/lib/.libs
 MAKE_VARS += PYTHONPATH="$(HOST_PYTHON3PATH)"
 
 $(foreach p,$(ovs_packages),\
