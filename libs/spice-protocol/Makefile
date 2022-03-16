@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=spice-protocol
-PKG_VERSION:=0.14.3
+PKG_VERSION:=0.14.4
 PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.spice-space.org/download/releases
-PKG_HASH:=f986e5bc2a1598532c4897f889afb0df9257ac21c160c083703ae7c8de99487a
+PKG_HASH:=04ffba610d9fd441cfc47dfaa135d70096e60b1046d2119d8db2f8ea0d17d912
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
