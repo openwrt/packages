@@ -24,7 +24,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/cs-firewall-bouncer-$(PKG_VERSION)
 
 CSFB_BUILD_VERSION?=v$(PKG_VERSION)
 CSFB_BUILD_GOVERSION:=$(shell go version | cut -d " " -f3 | sed -E 's/[go]+//g')
-CSFB_BUILD_TIMESTAMP:=$(shell date +%F"_"%T)
+CSFB_BUILD_TIMESTAMP:=$(SOURCE_DATE_EPOCH)
 CSFB_BUILD_TAG:=openwrt-$(PKG_VERSION)-$(PKG_RELEASE)
 CSFB_VERSION_PKG:=github.com/crowdsecurity/cs-firewall-bouncer/pkg/version
 
