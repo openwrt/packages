@@ -79,6 +79,9 @@ CONFIGURE_ARGS+= \
 
 CONFIGURE_VARS+=CPPFLAGS=-DNDEBUG
 
+TARGET_CFLAGS += -flto
+TARGET_LDFLAGS += -flto
+
 define Package/chrony/install
 	$(INSTALL_DIR) $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/usr/sbin/
