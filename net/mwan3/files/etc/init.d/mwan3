@@ -1,6 +1,5 @@
 #!/bin/sh /etc/rc.common
 
-. "${IPKG_INSTROOT}/lib/mwan3/common.sh"
 . "${IPKG_INSTROOT}/lib/functions/network.sh"
 . "${IPKG_INSTROOT}/lib/mwan3/mwan3.sh"
 
@@ -32,6 +31,7 @@ start_service() {
 	config_foreach start_tracker interface
 
 	mwan3_update_iface_to_table
+	mwan3_set_dynamic_ipset
 	mwan3_set_connected_ipset
 	mwan3_set_custom_ipset
 	mwan3_set_general_rules
@@ -91,11 +91,9 @@ stop_service() {
 		} | $IPTR
 	done
 
+	# Needed for the firewall backend to release the ipsets reference
+	sleep 2
 	for ipset in $($IPS -n list | grep mwan3_); do
-		$IPS -q destroy $ipset
-	done
-
-	for ipset in $($IPS -n list | grep mwan3 | grep -E '_v4|_v6'); do
 		$IPS -q destroy $ipset
 	done
 

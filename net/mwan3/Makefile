@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mwan3
-PKG_VERSION:=2.10.13
+PKG_VERSION:=2.11.0
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Florian Eckert <fe@dev.tdt.de>, \
 		Aaron Goodman <aaronjg@alumni.stanford.edu>
@@ -25,6 +25,7 @@ define Package/mwan3
      +ip \
      +ipset \
      +iptables \
+     +IPV6:ip6tables \
      +iptables-mod-conntrack-extra \
      +iptables-mod-ipopt \
      +jshn

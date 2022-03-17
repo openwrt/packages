@@ -5,10 +5,6 @@
 . /usr/share/libubox/jshn.sh
 . /lib/mwan3/common.sh
 
-IPS="ipset"
-IPT4="iptables -t mangle -w"
-IPT6="ip6tables -t mangle -w"
-
 report_connected_v4() {
 	local address
 

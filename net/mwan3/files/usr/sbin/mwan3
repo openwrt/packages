@@ -4,7 +4,6 @@
 . /usr/share/libubox/jshn.sh
 . /lib/functions/network.sh
 . /lib/mwan3/mwan3.sh
-. /lib/mwan3/common.sh
 
 command_help() {
 	local cmd="$1"
