@@ -28,8 +28,7 @@ CONFIGURE_ARGS += \
 	--disable-gtk-doc \
 	--disable-gtk-doc-html \
 	--disable-gtk-doc-pdf \
-	--disable-silent-rules \
-	--enable-more-warnings=yes
+	--disable-silent-rules
 
 define Package/libmbim
   SECTION:=libs
@@ -57,7 +56,6 @@ define Package/mbim-utils
 endef
 
 CONFIGURE_ARGS += \
-	--without-udev \
 	--without-udev-base-dir
 
 define Build/InstallDev
