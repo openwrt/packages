@@ -130,8 +130,7 @@ $(call Package/strongswan/Default)
   MENU:=1
   DEPENDS:= +libpthread +ip \
 	+kmod-crypto-authenc \
-	+kmod-ipsec +kmod-ipsec4 +IPV6:kmod-ipsec6 \
-	+kmod-ipt-ipsec +iptables-mod-ipsec
+	+kmod-ipsec +kmod-ipsec4 +IPV6:kmod-ipsec6
 endef
 
 define Package/strongswan/config
@@ -733,7 +732,7 @@ $(eval $(call BuildPlugin,stroke,Stroke,+strongswan-charon +strongswan-ipsec))
 $(eval $(call BuildPlugin,test-vectors,crypto test vectors,))
 $(eval $(call BuildPlugin,uci,UCI config interface,+PACKAGE_strongswan-mod-uci:libuci))
 $(eval $(call BuildPlugin,unity,Cisco Unity extension,))
-$(eval $(call BuildPlugin,updown,updown firewall,))
+$(eval $(call BuildPlugin,updown,updown firewall,+iptables-legacy +iptables-mod-ipsec +kmod-ipt-ipsec))
 $(eval $(call BuildPlugin,vici,Versatile IKE Configuration Interface,))
 $(eval $(call BuildPlugin,whitelist,peer identity whitelisting,))
 $(eval $(call BuildPlugin,x509,x509 certificate,))
