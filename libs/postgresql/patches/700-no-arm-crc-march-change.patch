@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -2091,9 +2091,9 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [
+@@ -2127,9 +2127,9 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [
  # flags. If not, check if adding -march=armv8-a+crc flag helps.
  # CFLAGS_ARMV8_CRC32C is set if the extra flag is required.
  PGAC_ARMV8_CRC32C_INTRINSICS([])
