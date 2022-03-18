@@ -795,10 +795,8 @@ mwan3_set_user_iptables_rule()
 	config_get timeout "$1" timeout 600
 	config_get ipset "$1" ipset
 	config_get proto "$1" proto all
-	config_get src_ip "$1" src_ip
 	config_get src_iface "$1" src_iface
 	config_get src_port "$1" src_port
-	config_get dest_ip "$1" dest_ip
 	config_get dest_port "$1" dest_port
 	config_get use_policy "$1" use_policy
 	config_get family "$1" family any
@@ -810,13 +808,51 @@ mwan3_set_user_iptables_rule()
 	[ "$family" = "ipv4" ] && [ "$ipv" = "ipv6" ] && return
 	[ "$family" = "ipv6" ] && [ "$ipv" = "ipv4" ] && return
 
-	for ipaddr in "$src_ip" "$dest_ip"; do
-		if [ -n "$ipaddr" ] && { { [ "$ipv" = "ipv4" ] && echo "$ipaddr" | grep -qE "$IPv6_REGEX"; } ||
-						 { [ "$ipv" = "ipv6" ] && echo "$ipaddr" | grep -qE $IPv4_REGEX; } }; then
-			LOG warn "invalid $ipv address $ipaddr specified for rule $rule"
-			return
+	local ip_valid=1
+	mwan3_valid_rule_ip() {
+		local ipaddr="$1"
+		local ipv="$2"
+		local rule="$3"
+		local direction="$4"
+
+		local result=0
+
+		case "$ipv" in
+			"ipv6")
+				echo "$ipaddr" | grep -Eq "$IPv6_REGEX"
+				result="$?"
+				if [ "$result" = "1" ]; then
+					LOG warn "Invalid '$ipv' address '$ipaddr' specified for rule '$rule'"
+					export ip_valid=0
+				fi
+				;;
+			"ipv4")
+				echo "$ipaddr" | grep -Eq "$IPv4_REGEX"
+				result="$?"
+				if [ "$result" = "1" ]; then
+					LOG warn "Invalid '$ipv' address '$ipaddr' specified for rule '$rule'"
+					export ip_valid=0
+				fi
+				;;
+		esac
+
+		if [ "${direction}" = "scp_ip" ]; then
+			export scp_ip="${src_ip}${ipaddr},"
+		else
+			export dest_ip="${dest_ip}${ipaddr},"
 		fi
-	done
+	}
+
+	config_list_foreach "$1" src_ip mwan3_valid_rule_ip "$ipv" "$rule" "src_ip"
+	config_list_foreach "$1" dest_ip mwan3_valid_rule_ip "$ipv" "$rule" "dest_ip"
+
+	if [ "$ip_valid" -eq 0 ]; then
+		return
+	fi
+
+	# Strip last comma from string
+	dest_ip="${dest_ip%,}"
+	src_ip="${src_ip%,}"
 
 	if [ -n "$src_iface" ]; then
 		network_get_device src_dev "$src_iface"
