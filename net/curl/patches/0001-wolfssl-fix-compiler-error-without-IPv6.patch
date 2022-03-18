@@ -1,0 +1,26 @@
+From 471d5f44c5189bd78f8839ce8ac1b4b14f4b7d61 Mon Sep 17 00:00:00 2001
+From: Daniel Stenberg <daniel@haxx.se>
+Date: Mon, 7 Mar 2022 08:40:47 +0100
+Subject: [PATCH] wolfssl: fix compiler error without IPv6
+
+Reported-by: Joseph Chen
+Fixes #8550
+Closes #8552
+---
+ lib/vtls/wolfssl.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/lib/vtls/wolfssl.c
++++ b/lib/vtls/wolfssl.c
+@@ -462,9 +462,9 @@ wolfssl_connect_step1(struct Curl_easy *
+     const char * const hostname = SSL_HOST_NAME();
+     size_t hostname_len = strlen(hostname);
+     if((hostname_len < USHRT_MAX) &&
+-       (0 == Curl_inet_pton(AF_INET, hostname, &addr4)) &&
++       !Curl_inet_pton(AF_INET, hostname, &addr4)
+ #ifdef ENABLE_IPV6
+-       (0 == Curl_inet_pton(AF_INET6, hostname, &addr6))
++       && !Curl_inet_pton(AF_INET6, hostname, &addr6)
+ #endif
+       ) {
+       size_t snilen;
