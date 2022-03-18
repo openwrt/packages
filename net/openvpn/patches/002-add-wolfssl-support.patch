@@ -70,7 +70,7 @@ Signed-off-by: Gert Doering <gert@greenie.muc.de>
  AC_ARG_VAR([PLUGINDIR], [Path of plug-in directory @<:@default=LIBDIR/openvpn/plugins@:>@])
  if test -n "${PLUGINDIR}"; then
  	plugindir="${PLUGINDIR}"
-@@ -1026,6 +1033,105 @@ elif test "${with_crypto_library}" = "mb
+@@ -1020,6 +1027,105 @@ elif test "${with_crypto_library}" = "mb
  	AC_DEFINE([ENABLE_CRYPTO_MBEDTLS], [1], [Use mbed TLS library])
  	CRYPTO_CFLAGS="${MBEDTLS_CFLAGS}"
  	CRYPTO_LIBS="${MBEDTLS_LIBS}"
