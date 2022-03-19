@@ -6,9 +6,9 @@
  	_ "github.com/rclone/rclone/fs/sync"       // import sync/*
 -	_ "github.com/rclone/rclone/lib/plugin"    // import plugins
 +	// _ "github.com/rclone/rclone/lib/plugin"    // import plugins
- )
- 
- // RcloneInitialize initializes rclone as a library
+ 	_ "github.com/rclone/rclone/cmd/mount"     // import mount
+ 	_ "github.com/rclone/rclone/cmd/mount2"    // import mount2
+ 	_ "github.com/rclone/rclone/cmd/cmount"    // import cmount
 --- a/rclone.go
 +++ b/rclone.go
 @@ -7,7 +7,7 @@ import (
