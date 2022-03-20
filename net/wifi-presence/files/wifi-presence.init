@@ -1,0 +1,66 @@
+#!/bin/sh /etc/rc.common
+
+USE_PROCD=1
+
+START=95
+# stops before networking stops
+STOP=89
+
+PROG=/usr/bin/wifi-presence
+CONF=wifi-presence
+
+start_service() {
+        # Load config.
+        config_load "${CONF}"
+
+        local apName
+        local debounce
+        local hassAutodiscovery
+        local hassPrefix
+        local hostapdSocks
+        local mqttAddr
+        local mqttID
+        local mqttUsername
+        local mqttPassword
+        local mqttPrefix
+        local sockDir
+        local verbose
+
+        config_get apName main apName
+        config_get debounce main debounce
+        config_get hassAutodiscovery main hassAutodiscovery
+        config_get hassPrefix main hassPrefix
+        config_get hostapdSocks main hostapdSocks
+        config_get mqttAddr main mqttAddr
+        config_get mqttID main mqttId
+        config_get mqttUsername main mqttUsername
+        config_get mqttPassword main mqttPassword
+        config_get mqttPrefix main mqttPrefix
+        config_get sockDir main sockDir
+        config_get_bool verbose main verbose
+
+        procd_open_instance
+
+        procd_set_param command ${PROG}
+        [ -n "${apName}" ] && procd_append_param command "-apName=${apName}"
+        [ -n "${debounce}" ] && procd_append_param command "-debounce=${debounce}"
+        [ -n "${hassAutodiscovery}" ] && procd_append_param command "-hass.autodiscovery=${hassAutodiscovery}"
+        [ -n "${hassPrefix}" ] && procd_append_param command "-hass.prefix=${hassPrefix}"
+        [ -n "${hostapdSocks}" ] && procd_append_param command "-hostapd.socks=${hostapdSocks}"
+        [ -n "${mqttAddr}" ] && procd_append_param command "-mqtt.addr=${mqttAddr}"
+        [ -n "${mqttID}" ] && procd_append_param command "-mqtt.id=${mqttID}"
+        [ -n "${mqttUsername}" ] && procd_append_param command "-mqtt.username=${mqttUsername}"
+        [ -n "${mqttPassword}" ] && procd_append_param command "-mqtt.password=${mqttPassword}"
+        [ -n "${mqttPrefix}" ] && procd_append_param command "-mqtt.prefix=${mqttPrefix}"
+        [ -n "${sockDir}" ] && procd_append_param command "-sockDir=${sockDir}"
+        [ -n "${verbose}" ] && procd_append_param command "-verbose=${verbose}"
+
+        procd_set_param file "/etc/config/${CONF}"
+        procd_set_param stdout 1
+        procd_set_param stderr 1
+
+        # Restart every 5 seconds, indefinitely.
+        procd_set_param respawn 0 5 0
+
+        procd_close_instance
+}
