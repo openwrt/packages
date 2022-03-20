@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=liboping
 PKG_VERSION:=1.10.0
-PKG_RELEASE:=2
+PKG_RELEASE:=$(AUTORELEASE)
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 PKG_LICENSE:=LGPL-2.1-or-later
 
