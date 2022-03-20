@@ -18,8 +18,8 @@ Signed-off-by: Eneas U de Queiroz <cotequeiroz@gmail.com>
  SUBDIRS += doc
  endif
  
--ACLOCAL_AMFLAGS = -I m4 -I src/libopts/m4 -I src/gl/m4 -I lib/unistring/m4 --install
-+ACLOCAL_AMFLAGS = -I m4 -I src/libopts/m4 -I src/gl/m4 -I lib/unistring/m4
+-ACLOCAL_AMFLAGS = -I m4 -I src/gl/m4 -I lib/unistring/m4 --install
++ACLOCAL_AMFLAGS = -I m4 -I src/gl/m4 -I lib/unistring/m4
  
  EXTRA_DIST = cfg.mk maint.mk CONTRIBUTING.md README.md LICENSE AUTHORS NEWS \
- 	ChangeLog THANKS INSTALL.md RELEASES.md
+ 	ChangeLog THANKS INSTALL.md RELEASES.md .mailmap
