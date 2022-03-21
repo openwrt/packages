@@ -1647,6 +1647,7 @@ int main(int args, char *argv[]) {
 	blobmsg_add_string(&reqbuf, "version", branch->version);
 	blobmsg_add_string(&reqbuf, "version_code", branch->version_code);
 	blobmsg_add_string(&reqbuf, "target", target);
+	blobmsg_add_string(&reqbuf, "filesystem", target_fstype?target_fstype:rootfs_type);
 
 	sanetized_board_name = strdup(board_name);
 	tmp = sanetized_board_name;
