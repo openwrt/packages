@@ -13,6 +13,7 @@ append_args() {
 proto_openconnect_init_config() {
 	proto_config_add_string "server"
 	proto_config_add_int "port"
+	proto_config_add_string "request"
 	proto_config_add_int "mtu"
 	proto_config_add_int "juniper"
 	proto_config_add_string "vpn_protocol"
@@ -54,6 +55,7 @@ proto_openconnect_setup() {
 		password \
 		password2 \
 		port \
+		request \
 		server \
 		serverhash \
 		token_mode \
@@ -75,7 +77,9 @@ proto_openconnect_setup() {
 
 	[ -n "$port" ] && port=":$port"
 
-	append_args "$server$port" -i "$ifname" --non-inter --syslog --script /lib/netifd/vpnc-script
+	[ -n "$request" ] && request="/$request"
+	
+	append_args "$server$port$request" -i "$ifname" --non-inter --syslog --script /lib/netifd/vpnc-script
 	[ "$no_dtls" = 1 ] && append_args --no-dtls
 	[ -n "$mtu" ] && append_args --mtu "$mtu"
 
