@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -978,33 +978,13 @@ AC_ARG_WITH([mysql],
+@@ -981,33 +981,13 @@ AC_ARG_WITH([mysql],
      AC_CHECK_LIB([mysqlclient], [mysql_init],
        [AC_CHECK_HEADERS([mysql/mysql.h],
           [MYSQL_LDFLAGS="-L$MYSQL_LIBDIR"
