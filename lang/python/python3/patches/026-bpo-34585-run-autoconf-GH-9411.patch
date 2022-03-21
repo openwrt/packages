@@ -20,7 +20,7 @@ Follow up to 2a9c3805ddedf282881ef7811a561c70b74f80b1 (bpo-34585).
  m4_include([m4/ax_check_openssl.m4])
 --- a/configure
 +++ b/configure
-@@ -14235,131 +14235,77 @@ fi
+@@ -14237,131 +14237,77 @@ fi
  # * Check for various properties of floating point *
  # **************************************************
  
