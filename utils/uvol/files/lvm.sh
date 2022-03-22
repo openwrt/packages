@@ -320,17 +320,18 @@ listvols() {
 			lv_mode="${lv_name:0:2}"
 			lv_name="${lv_name:3}"
 			lv_size=${lv_size%B}
-			[ "${lv_name:0:1}" = "." ] && continue
-			if [ "$json_output" = "1" ]; then
-				[ "$json_notfirst" = "1" ] && echo ","
-				echo -e "\t{"
-				echo -e "\t\t\"name\": \"$lv_name\","
-				echo -e "\t\t\"mode\": \"$lv_mode\","
-				echo -e "\t\t\"size\": $lv_size"
-				echo -n -e "\t}"
-				json_notfirst=1
-			else
-				echo "$lv_name $lv_mode $lv_size"
+			if [ "${lv_name:0:1}" != "." ]; then
+				if [ "$json_output" = "1" ]; then
+					[ "$json_notfirst" = "1" ] && echo ","
+					echo -e "\t{"
+					echo -e "\t\t\"name\": \"$lv_name\","
+					echo -e "\t\t\"mode\": \"$lv_mode\","
+					echo -e "\t\t\"size\": $lv_size"
+					echo -n -e "\t}"
+					json_notfirst=1
+				else
+					echo "$lv_name $lv_mode $lv_size"
+				fi
 			fi
 			json_select ..
 		done
