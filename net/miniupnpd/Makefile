@@ -8,12 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=miniupnpd
-PKG_VERSION:=2.2.3
+PKG_VERSION:=2.3.0
 PKG_RELEASE:=$(AUTORELEASE)
 
-PKG_SOURCE_URL:=https://miniupnp.tuxfamily.org/files
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=f89c310ce9575183af3fec61af65e548f85114133df8caaaa9e204c13b7a9da5
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/miniupnp/miniupnp.git
+PKG_SOURCE_DATE:=2022-03-20
+PKG_SOURCE_VERSION:=fda61180e07abd222623e54b9239557bbffbc21d
+PKG_MIRROR_HASH:=f81a5b920f1bddb5673a2455461d4dca20d17138f5488713c5a759f2a64e9f18
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)/miniupnpd
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=BSD-3-Clause
@@ -25,6 +28,9 @@ PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/version.mk
+
+TAR_OPTIONS+= --strip-components 1
+TAR_CMD=$(HOST_TAR) -C $(1)/.. $(TAR_OPTIONS)
 
 define Package/miniupnpd/Default
   SECTION:=net
@@ -109,6 +115,10 @@ endef
 
 define Package/miniupnpd-nftables/install
 	$(call Package/miniupnpd/install/Default,$1)
+	$(INSTALL_DIR) $(1)/usr/share/miniupnpd
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/etc/miniupnpd/miniupnpd_functions.sh $(1)/usr/share/miniupnpd/miniupnpd_functions.sh
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/etc/miniupnpd/nft_init.sh $(1)/usr/share/miniupnpd/nft_init.sh
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/etc/miniupnpd/nft_removeall.sh $(1)/usr/share/miniupnpd/nft_removeall.sh
 endef
 
 $(eval $(call BuildPackage,miniupnpd-iptables))
