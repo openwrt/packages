@@ -5,6 +5,8 @@ START=94
 STOP=15
 USE_PROCD=1
 PROG=/usr/sbin/miniupnpd
+NFT_SCRIPTS_DIR=/usr/share/miniupnpd
+[ -x "$(command -v nft)" ] && FW="fw4" || FW="fw3"
 
 upnpd_get_port_range() {
 	local var="$1"; shift
@@ -98,7 +100,7 @@ upnpd() {
 		network_get_device ifname "$external_iface"
 	else
 		if [ -n "$external_zone" ] ; then
-			ifname=$(fw3 -q zone "$external_zone" 2>/dev/null | head -1)
+			ifname=$($FW -q zone "$external_zone" 2>/dev/null | head -1)
 		else
 			network_find_wan external_iface && \
 				network_get_device ifname "$external_iface"
@@ -108,7 +110,7 @@ upnpd() {
 		network_get_device ifname6 "$external_iface6"
 	else
 		if [ -n "$external_zone" ] ; then
-			ifname6=$(fw3 -q zone "$external_zone" 2>/dev/null | head -1)
+			ifname6=$($FW -q zone "$external_zone" 2>/dev/null | head -1)
 		else
 			network_find_wan6 external_iface6 && \
 				network_get_device ifname6 "$external_iface6"
@@ -176,7 +178,12 @@ upnpd() {
 
 	if [ -n "$ifname" ]; then
 		# start firewall
-		iptables -L MINIUPNPD >/dev/null 2>&1 || fw3 reload
+		if [ "Z$FW" = "Zfw4" ]; then
+			$NFT_SCRIPTS_DIR/nft_init.sh 2>/dev/null
+			fw4 reload
+		else
+			iptables -L MINIUPNPD >/dev/null 2>&1 || fw3 reload
+		fi
 	else
 		logger -t "upnp daemon" "external interface not found, not starting"
 	fi
@@ -189,11 +196,16 @@ upnpd() {
 }
 
 stop_service() {
-	iptables -t nat -F MINIUPNPD 2>/dev/null
-	iptables -t nat -F MINIUPNPD-POSTROUTING 2>/dev/null
-	iptables -t filter -F MINIUPNPD 2>/dev/null
+	if [ "Z$FW" = "Zfw4" ]; then
+		$NFT_SCRIPTS_DIR/nft_removeall.sh 2>/dev/null
+		fw4 reload
+	else
+		iptables -t nat -F MINIUPNPD 2>/dev/null
+		iptables -t nat -F MINIUPNPD-POSTROUTING 2>/dev/null
+		iptables -t filter -F MINIUPNPD 2>/dev/null
 
-	[ -x /usr/sbin/ip6tables ] && ip6tables -t filter -F MINIUPNPD 2>/dev/null
+		[ -x /usr/sbin/ip6tables ] && ip6tables -t filter -F MINIUPNPD 2>/dev/null
+	fi
 }
 
 start_service() {

@@ -1,0 +1,13 @@
+--- a/netfilter_nft/scripts/nft_init.sh
++++ b/netfilter_nft/scripts/nft_init.sh
+@@ -19,8 +19,8 @@ echo "Creating nftables structure"
+ cat > /tmp/miniupnpd.nft <<EOF
+ table inet $TABLE {
+     chain forward {
+-        type filter hook forward priority 0;
+-        policy drop;
++        type filter hook forward priority -25;
++        policy accept;
+ 
+         # miniupnpd
+         jump $CHAIN
