@@ -25,7 +25,7 @@ RFC because this doesn't yet handle the weird ancient ARMv4 OABI 'mixed-endian' 
 +builds.
 --- a/configure.ac
 +++ b/configure.ac
-@@ -4365,74 +4365,24 @@ fi
+@@ -4367,74 +4367,24 @@ fi
  # * Check for various properties of floating point *
  # **************************************************
  
