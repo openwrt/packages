@@ -32,7 +32,7 @@ Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
  Cflags: -I${includedir}/openvswitch
 --- a/m4/openvswitch.m4
 +++ b/m4/openvswitch.m4
-@@ -646,7 +646,8 @@ AC_DEFUN([OVS_CHECK_UNBOUND],
+@@ -677,7 +677,8 @@ AC_DEFUN([OVS_CHECK_UNBOUND],
    [AC_CHECK_LIB(unbound, ub_ctx_create, [HAVE_UNBOUND=yes], [HAVE_UNBOUND=no])
     if test "$HAVE_UNBOUND" = yes; then
       AC_DEFINE([HAVE_UNBOUND], [1], [Define to 1 if unbound is detected.])
@@ -42,7 +42,7 @@ Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
     fi
     AM_CONDITIONAL([HAVE_UNBOUND], [test "$HAVE_UNBOUND" = yes])
     AC_SUBST([HAVE_UNBOUND])])
-@@ -658,7 +659,8 @@ AC_DEFUN([OVS_CHECK_UNWIND],
+@@ -689,7 +690,8 @@ AC_DEFUN([OVS_CHECK_UNWIND],
     [HAVE_UNWIND=no])
     if test "$HAVE_UNWIND" = yes; then
       AC_DEFINE([HAVE_UNWIND], [1], [Define to 1 if unwind is detected.])

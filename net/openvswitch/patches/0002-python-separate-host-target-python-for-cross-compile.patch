@@ -22,7 +22,7 @@ Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
  BUILT_SOURCES =
 --- a/m4/openvswitch.m4
 +++ b/m4/openvswitch.m4
-@@ -372,6 +372,8 @@ else:
+@@ -400,6 +400,8 @@ else:
       AC_MSG_ERROR([Python 3.4 or later is required but not found in $PATH, please install it or set $PYTHON3 to point to it])
     fi
     AC_ARG_VAR([PYTHON3])
