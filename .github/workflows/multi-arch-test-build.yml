@@ -22,7 +22,7 @@ jobs:
           - arch: mips_24kc
             target: ath79-generic
             runtime_test: false
-          
+
           - arch: mipsel_24kc
             target: mt7621
             runtime_test: false
@@ -87,7 +87,7 @@ jobs:
           echo "PACKAGES=$PACKAGES" >> $GITHUB_ENV
 
       - name: Build
-        uses: openwrt/gh-action-sdk@v3
+        uses: openwrt/gh-action-sdk@v4
         env:
           ARCH: ${{ matrix.arch }}-${{ env.BRANCH }}
           FEEDNAME: packages_ci
