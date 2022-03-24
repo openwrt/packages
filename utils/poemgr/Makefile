@@ -5,7 +5,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=poemgr
 PKG_SOURCE_DATE:=2022-03-19
 PKG_SOURCE_VERSION:=77395242f9b3cb6ef003c5ed74f9b5be78404450
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=https://github.com/blocktrron/poemgr.git
