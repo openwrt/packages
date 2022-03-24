@@ -97,7 +97,8 @@ define Package/bind-tools
 	+bind-nslookup \
 	+bind-dnssec \
 	+bind-host \
-	+bind-rndc
+	+bind-rndc \
+	+bind-ddns-confgen
 endef
 
 define Package/bind-rndc
@@ -130,6 +131,11 @@ define Package/bind-nslookup
   TITLE+= nslookup utility
   ALTERNATIVES:= \
 	  200:/usr/bin/nslookup:/usr/libexec/nslookup-bind
+endef
+
+define Package/bind-ddns-confgen
+  $(call Package/bind/Default)
+  TITLE+= administration tools (ddns-confgen and tsig-keygen only)
 endef
 
 export BUILD_CC="$(TARGET_CC)"
@@ -266,6 +272,12 @@ define Package/bind-nslookup/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/nslookup $(1)/usr/libexec/nslookup-bind
 endef
 
+define Package/bind-ddns-confgen/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/ddns-confgen $(1)/usr/sbin/ddns-confgen
+	$(LN) -s ddns-confgen $(1)/usr/sbin/tsig-keygen
+endef
+
 $(eval $(call BuildPackage,bind-libs))
 $(eval $(call BuildPackage,bind-server))
 $(eval $(call BuildPackage,bind-server-filter-aaaa))
@@ -277,3 +289,4 @@ $(eval $(call BuildPackage,bind-dnssec))
 $(eval $(call BuildPackage,bind-host))
 $(eval $(call BuildPackage,bind-dig))
 $(eval $(call BuildPackage,bind-nslookup))
+$(eval $(call BuildPackage,bind-ddns-confgen))
