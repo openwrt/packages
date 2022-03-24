@@ -83,13 +83,6 @@
 		"focus": "tracking",
 		"descurl": "https://www.gameindustry.eu"
 	},
-	"gaming": {
-		"url": "https://raw.githubusercontent.com/stopgaming/pihole-blocklist/master/game.txt",
-		"rule": "/^0\\.0\\.0\\.0[[:space:]]+([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
-		"size": "S",
-		"focus": "gaming",
-		"descurl": "https://github.com/abyssin/pihole-blocklist"
-	},
 	"notracking": {
 		"url": "https://raw.githubusercontent.com/notracking/hosts-blocklists/master/dnscrypt-proxy/dnscrypt-proxy.blacklist.txt",
 		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
@@ -182,7 +175,7 @@
 		"descurl": "https://easylist.to"
 	},
 	"reg_kr": {
-		"url": "https://raw.githubusercontent.com/List-KR/List-KR/master/filter.txt",
+		"url": "https://raw.githubusercontent.com/List-KR/List-KR/master/filters-share/adserver.txt",
 		"rule": "BEGIN{FS=\"[|^]\"}/^\\|\\|([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+\\^(\\$third-party)?$/{print tolower($3)}",
 		"size": "S",
 		"focus": "reg_korea",
