@@ -32,7 +32,7 @@ include $(GO_INCLUDE_DIR)/golang-values.mk
 #
 #   * Files in any 'testdata' directory
 #
-#   * go.mod and go.sum, in any directory
+#   * go.mod, go.sum and go.work, in any directory
 #
 #   e.g. GO_PKG_INSTALL_EXTRA:=example.toml marshal_test.toml
 #
@@ -198,9 +198,11 @@ GO_PKG_TARGET_VARS= \
 	GOOS="$(GO_OS)" \
 	GOARCH="$(GO_ARCH)" \
 	GO386="$(GO_386)" \
+	GOAMD64="$(GO_AMD64)" \
 	GOARM="$(GO_ARM)" \
 	GOMIPS="$(GO_MIPS)" \
 	GOMIPS64="$(GO_MIPS64)" \
+	GOPPC64="$(GO_PPC64)" \
 	CGO_ENABLED=1 \
 	CC="$(TARGET_CC)" \
 	CXX="$(TARGET_CXX)" \
