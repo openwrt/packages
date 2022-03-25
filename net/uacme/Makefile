@@ -22,6 +22,7 @@ PKG_LICENSE_FILES:=COPYING
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-upstream-$(PKG_VERSION)
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+PKG_USE_MIPS16:=0
 
 PKG_CONFIG_DEPENDS:= \
   CONFIG_LIBCURL_GNUTLS \
@@ -71,16 +72,13 @@ define Package/uacme/config
 if PACKAGE_uacme && LIBCURL_WOLFSSL
   comment "libcurl uses WolfSSL; uacme will install mbedtls"
   comment "Choose another SSL lib in libcurl to avoid this"
-  comment "ualpn will not be included, even selected"
 endif
 if PACKAGE_uacme && LIBCURL_NOSSL
   comment "libcurl is built without ssl; uacme needs ssl support"
   comment "Choose another SSL lib in libcurl to avoid this"
-  comment "ualpn will not be included, even selected"
 endif
 if PACKAGE_uacme && LIBCURL_MBEDTLS
   comment "uacme will install mbedtls"
-  comment "ualpn will not be included, even selected"
 endif
 endef
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
@@ -90,9 +88,9 @@ CONFIGURE_ARGS+= \
 	--disable-docs \
 	$(if $(CONFIG_PACKAGE_uacme-ualpn),--with-ualpn,--without-ualpn) \
 	$(if $(CONFIG_LIBCURL_GNUTLS),--with-gnutls --without-mbedtls --without-openssl,) \
-	$(if $(CONFIG_LIBCURL_MBEDTLS),--without-gnutls --with-mbedtls --without-openssl --without-ualpn,) \
+	$(if $(CONFIG_LIBCURL_MBEDTLS),--without-gnutls --with-mbedtls --without-openssl,) \
 	$(if $(CONFIG_LIBCURL_OPENSSL),--without-gnutls --without-mbedtls --with-openssl,) \
-	$(if $(CONFIG_LIBCURL_WOLFSSL),--without-gnutls --with-mbedtls --without-openssl --without-ualpn,)
+	$(if $(CONFIG_LIBCURL_WOLFSSL),--without-gnutls --with-mbedtls --without-openssl,)
 
 define Package/uacme/conffiles
 /etc/config/acme
@@ -120,10 +118,8 @@ define Package/uacme-ualpn/install
 	 $(1)/usr/sbin \
 	 $(1)/usr/share/uacme
 
-	$(if $(CONFIG_LIBCURL_GNUTLS),$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ualpn $(1)/usr/sbin/ualpn; \
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ualpn.sh $(1)/usr/share/uacme/,)
-	$(if $(CONFIG_LIBCURL_OPENSSL),$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ualpn $(1)/usr/sbin/ualpn; \
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ualpn.sh $(1)/usr/share/uacme/,)
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ualpn $(1)/usr/sbin/ualpn
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ualpn.sh $(1)/usr/share/uacme/
 endef
 
 define Package/uacme/prerm
