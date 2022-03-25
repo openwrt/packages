@@ -21,6 +21,7 @@ PKG_LICENSE:=LGPL-2.1-or-later
 PKG_CPE_ID:=cpe:/a:gnu:gnutls
 
 PKG_INSTALL:=1
+PKG_BUILD_DEPENDS:=gettext-full/host
 PKG_BUILD_PARALLEL:=1
 PKG_LIBTOOL_PATHS:=. lib
 
