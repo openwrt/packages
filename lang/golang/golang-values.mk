@@ -29,7 +29,8 @@ unexport \
   GOOS \
   GOPATH \
   GOROOT \
-  GOTMPDIR
+  GOTMPDIR \
+  GOWORK
 # Unmodified:
 #   GOINSECURE
 #   GOPRIVATE
@@ -58,8 +59,10 @@ unexport \
 unexport \
   GOARM \
   GO386 \
+  GOAMD64 \
   GOMIPS \
   GOMIPS64 \
+  GOPPC64 \
   GOWASM
 
 # Special-purpose environment variables:
@@ -86,13 +89,12 @@ unexport \
 #   CC_FOR_${GOOS}_${GOARCH}
 #   CXX_FOR_${GOOS}_${GOARCH}
 
-# From https://golang.org/doc/install/source#environment
+# From https://go.dev/doc/install/source#environment
 unexport \
   GOHOSTOS \
-  GOHOSTARCH \
-  GOPPC64
+  GOHOSTARCH
 
-# From https://golang.org/src/make.bash
+# From https://go.dev/src/make.bash
 unexport \
   GO_GCFLAGS \
   GO_LDFLAGS \
@@ -101,16 +103,16 @@ unexport \
   GOBUILDTIMELOGFILE \
   GOROOT_BOOTSTRAP
 
-# From https://golang.org/doc/go1.9#parallel-compile
+# From https://go.dev/doc/go1.9#parallel-compile
 unexport \
   GO19CONCURRENTCOMPILATION
 
-# From https://golang.org/src/cmd/dist/build.go
+# From https://go.dev/src/cmd/dist/build.go
 unexport \
   BOOT_GO_GCFLAGS \
   BOOT_GO_LDFLAGS
 
-# From https://golang.org/src/cmd/dist/buildtool.go
+# From https://go.dev/src/cmd/dist/buildtool.go
 unexport \
   GOBOOTSTRAP_TOOLEXEC
 
@@ -152,6 +154,9 @@ ifeq ($(GO_ARCH),386)
   # -fno-plt: causes "unexpected GOT reloc for non-dynamic symbol" errors
   GO_CFLAGS_TO_REMOVE:=-fno-plt
 
+else ifeq ($(GO_ARCH),amd64)
+  GO_AMD64:=v1
+
 else ifeq ($(GO_ARCH),arm)
   GO_TARGET_FPU:=$(word 2,$(subst +,$(space),$(call qstrip,$(CONFIG_CPU_TYPE))))
 
@@ -183,6 +188,9 @@ else ifneq ($(filter $(GO_ARCH),mips64 mips64le),)
     GO_MIPS64:=softfloat
   endif
 
+else ifeq ($(GO_ARCH),ppc64)
+  GO_PPC64:=power8
+
 endif
 
 
@@ -193,7 +201,7 @@ GO_ARCH_DEPENDS:=@(aarch64||arm||i386||i686||mips||mips64||mips64el||mipsel||pow
 
 # ASLR/PIE
 
-# From https://golang.org/src/cmd/internal/sys/supported.go
+# From https://go.dev/src/cmd/internal/sys/supported.go
 GO_PIE_SUPPORTED_OS_ARCH:= \
   android_386  android_amd64  android_arm  android_arm64 \
   linux_386    linux_amd64    linux_arm    linux_arm64 \
@@ -209,7 +217,7 @@ GO_PIE_SUPPORTED_OS_ARCH:= \
   \
   linux_ppc64le linux_riscv64 linux_s390x
 
-# From https://golang.org/src/cmd/go/internal/work/init.go
+# From https://go.dev/src/cmd/go/internal/work/init.go
 go_pie_install_suffix=$(if $(filter $(1),aix_ppc64 windows_386 windows_amd64 windows_arm),,shared)
 
 ifneq ($(filter $(GO_HOST_OS_ARCH),$(GO_PIE_SUPPORTED_OS_ARCH)),)
