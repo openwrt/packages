@@ -19,11 +19,13 @@ PKG_MIRROR_HASH:=ffb918edf96581d4ba310bd1e975297e9a7006a7e26f37934afde462585125f
 PKG_MAINTAINER:=Nicholas Smith <nicholas.smith@telcoantennas.com.au>
 
 PKG_INSTALL:=1
-PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/meson.mk
+
+TARGET_CFLAGS += -ffunction-sections -fdata-sections -fno-merge-all-constants -fmerge-constants
+TARGET_LDFLAGS += -Wl,--gc-sections
 
 define Package/libqrtr-glib
   SECTION:=libs
@@ -41,7 +43,8 @@ endef
 
 MESON_ARGS += \
 	-Dintrospection=false \
-	-Dgtk_doc=false
+	-Dgtk_doc=false \
+	-Db_lto=true
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
