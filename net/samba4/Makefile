@@ -2,7 +2,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=samba
-PKG_VERSION:=4.14.7
+PKG_VERSION:=4.14.12
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -13,7 +13,7 @@ PKG_SOURCE_URL:= \
 		http://www.nic.funet.fi/index/samba/pub/samba/stable/ \
 		http://samba.mirror.bit.nl/samba/ftp/stable/ \
 		https://download.samba.org/pub/samba/stable/
-PKG_HASH:=6f50353f9602aa20245eb18ceb00e7e5ec793df0974aebd5254c38f16d8f1906
+PKG_HASH:=155d9c2dfb06a18104422987590858bfe5e9783ebebe63882e7e7f07eaaa512d
 
 PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
 PKG_LICENSE:=GPL-3.0-only
@@ -259,7 +259,7 @@ ifdef CONFIG_KERNEL_IO_URING
 	SAMBA4_VFS_MODULES_SHARED :=$(SAMBA4_VFS_MODULES_SHARED)vfs_io_uring,
 endif
 ifeq ($(CONFIG_SAMBA4_SERVER_VFS),y)
-	SAMBA4_VFS_MODULES_SHARED :=$(SAMBA4_VFS_MODULES_SHARED)vfs_fruit,vfs_shadow_copy2,vfs_recycle,vfs_fake_perms,vfs_readonly,vfs_cap,vfs_offline,vfs_crossrename,vfs_catia,vfs_streams_xattr,vfs_xattr_tdb,vfs_default_quota,
+	SAMBA4_VFS_MODULES_SHARED :=$(SAMBA4_VFS_MODULES_SHARED)vfs_fruit,vfs_shadow_copy2,vfs_recycle,vfs_fake_perms,vfs_readonly,vfs_cap,vfs_offline,vfs_crossrename,vfs_catia,vfs_streams_xattr,vfs_xattr_tdb,vfs_default_quota,vfs_widelinks,
 ifdef CONFIG_PACKAGE_kmod-fs-btrfs
 	SAMBA4_VFS_MODULES_SHARED :=$(SAMBA4_VFS_MODULES_SHARED)vfs_btrfs,
 endif
