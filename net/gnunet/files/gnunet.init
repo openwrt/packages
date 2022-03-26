@@ -26,7 +26,7 @@ prepare_config() {
 
 	# minimal persistency in /etc/gnunet
 	[ ! -d /etc/gnunet ] && mkdir -m 0750 -p /etc/gnunet
-	chown gnunet:gnunet /etc/gnunet
+	chown -R gnunet:gnunet /etc/gnunet
 
 	# defaults paths for persistent files
 	gnunet-config -c "$CONFIGFILE" -s PATHS -o GNUNET_CONFIG_HOME -V /etc/gnunet
