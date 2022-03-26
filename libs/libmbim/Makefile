@@ -8,28 +8,29 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmbim
-PKG_VERSION:=1.24.8
-PKG_RELEASE:=1
+PKG_VERSION:=1.26.2
+PKG_RELEASE:=$(AUTORELEASE)
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://www.freedesktop.org/software/libmbim
-PKG_HASH:=02590736163fff10e5732191fccc1b9920969616ddc59613a003052a116a3c25
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE_URL:=https://gitlab.freedesktop.org/mobile-broadband/$(PKG_NAME)/-/archive/$(PKG_VERSION)
+PKG_HASH:=05e6d3d5a477ed72811c46e2d9a9eb45bd43caa43792fb0b0e410f98d135eb66
 
 PKG_MAINTAINER:=Nicholas Smith <nicholas.smith@telcoantennas.com.au>
 
 PKG_INSTALL:=1
-PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
+include $(INCLUDE_DIR)/meson.mk
 
-CONFIGURE_ARGS += \
-	--disable-static \
-	--disable-gtk-doc \
-	--disable-gtk-doc-html \
-	--disable-gtk-doc-pdf \
-	--disable-silent-rules \
-	--enable-more-warnings=yes
+TARGET_CFLAGS += -ffunction-sections -fdata-sections -fno-merge-all-constants -fmerge-constants
+TARGET_LDFLAGS += -Wl,--gc-sections
+
+MESON_ARGS += \
+	-Dintrospection=false \
+	-Dman=false \
+	-Dbash_completion=false \
+	-Db_lto=true
 
 define Package/libmbim
   SECTION:=libs
@@ -56,10 +57,6 @@ define Package/mbim-utils
   LICENSE_FILES:=COPYING
 endef
 
-CONFIGURE_ARGS += \
-	--without-udev \
-	--without-udev-base-dir
-
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) \
@@ -78,11 +75,15 @@ define Build/InstallDev
 endef
 
 define Package/libmbim/install
-	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_DIR) \
+		$(1)/usr/lib \
+		$(1)/usr/libexec
+
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/libmbim*.so.* \
 		$(1)/usr/lib/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/mbim-proxy $(1)/usr/lib/
+
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/libexec/mbim-proxy $(1)/usr/libexec/
 endef
 
 define Package/mbim-utils/install
