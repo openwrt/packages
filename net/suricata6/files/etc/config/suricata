@@ -1,0 +1,12 @@
+
+config suricata 'service'
+	option config_file '/etc/suricata/suricata.yaml'
+	option logdir '/var/log/suricata'
+	option pidfile '/var/log/suricata.pid'
+	option rules_file '/var/lib/suricata/rules/suricata.rules'
+	list queue '2'
+	list queue '9'
+	option verbose '0'
+	option scan_mode 'af-packet'
+	option interface 'eth0'
+

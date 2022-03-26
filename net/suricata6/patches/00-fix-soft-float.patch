@@ -1,0 +1,11 @@
+--- a/rust/Cargo.toml.in
++++ b/rust/Cargo.toml.in
+@@ -4,7 +4,7 @@
+ edition = "2018"
+
+ [lib]
+-crate-type = ["staticlib", "rlib"]
++crate-type = ["staticlib", "rlib", "cdylib"]
+ path = "@e_rustdir@/src/lib.rs"
+
+ [profile.release]

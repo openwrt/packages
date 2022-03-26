@@ -1,0 +1,52 @@
+# Suricata 6 configuration
+menu "Suricata 6 Options"
+	menu "Engine Options"
+		config SURICATA_ENABLE_LUAJIT
+			bool "Enable Lua/LuaJIT Support"
+			default n
+
+		config SURICATA_ENABLE_PYTON
+			bool "Enable Python Support"
+			default n
+
+		config SURICATA_ENABLE_GCCPROTECT
+			bool "Enable GCC Hardening Options"
+			default n
+
+		config SURICATA_ENABLE_GCCPROFILE
+			bool "Enable GCC Profile Info (-pg flag set)"
+			default n
+	endmenu
+
+	config SURICATA_ENABLE_PROFILING
+		bool "Enable Performance Profiling"
+		default n
+
+	config SURICATA_ENABLE_NFQUEUE
+		bool "Enable NFQueue Support"
+		default n
+
+        config SURICATA_ENABLE_NFLOG
+                bool "Enable NFLog Support"
+                default n
+
+	config SURICATA_ENABLE_GEOIP
+		bool "Enable GeoIP2 Support"
+		default n
+
+	config SURICATA_ENABLE_LIBMAGIC
+		bool "Enable LibMagic Support"
+		default y
+
+	config SURICATA_ENABLE_DEBUG
+		bool "Enable Debug Output"
+		default n
+
+	config SURICATA_ENABLE_HIREDIS
+		bool "Enable Hiredis Support"
+		default y
+
+	config SURICATA_ENABLE_EBPF
+		bool "Enable eBPF Support"
+		default n
+endmenu
