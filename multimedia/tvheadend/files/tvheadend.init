@@ -74,6 +74,8 @@ load_uci_config() {
 	[ -n "$htsp_port2" ] && procd_append_param command --htsp_port "$htsp_port2"
 	config_get xspf server xspf 0
 	[ "$xspf" -eq 1 ] && procd_append_param command --xspf
+	config_get noacl server noacl 0
+	[ "$noacl" -eq 1 ] && procd_append_param command --noacl
 }
 
 start_service() {
