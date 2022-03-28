@@ -43,6 +43,7 @@ define Package/prometheus-node-exporter-lua/install
 	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/netdev.lua      $(1)/usr/lib/lua/prometheus-collectors/
 	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/time.lua        $(1)/usr/lib/lua/prometheus-collectors/
 	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/uname.lua       $(1)/usr/lib/lua/prometheus-collectors/
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/netclass.lua    $(1)/usr/lib/lua/prometheus-collectors/
 endef
 
 define Package/prometheus-node-exporter-lua/conffiles
