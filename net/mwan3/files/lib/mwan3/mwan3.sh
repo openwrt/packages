@@ -562,7 +562,7 @@ mwan3_delete_iface_ipset_entries()
 
 	[ -n "$id" ] || return 0
 
-	for setname in $(ipset -n list | grep ^mwan3_sticky_); do
+	for setname in $(ipset -n list | grep ^mwan3_rule_); do
 		for entry in $(ipset list "$setname" | grep "$(mwan3_id2mask id MMX_MASK | awk '{ printf "0x%08x", $1; }')" | cut -d ' ' -f 1); do
 			$IPS del "$setname" $entry ||
 				LOG notice "failed to delete $entry from $setname"
@@ -750,7 +750,7 @@ mwan3_set_sticky_iptables()
 			if [ -z "${current##*-N mwan3_iface_in_${iface}$'\n'*}" ]; then
 				mwan3_push_update -I "mwan3_rule_$rule" \
 						  -m mark --mark "$(mwan3_id2mask id MMX_MASK)/$MMX_MASK" \
-						  -m set ! --match-set "mwan3_sticky_${ipv}_${rule}" src,src \
+						  -m set ! --match-set "mwan3_rule_${ipv}_${rule}" src,src \
 						  -j MARK --set-xmark "0x0/$MMX_MASK"
 				mwan3_push_update -I "mwan3_rule_$rule" \
 						  -m mark --mark "0/$MMX_MASK" \
@@ -769,12 +769,12 @@ mwan3_set_sticky_ipset()
 	local error
 	local update=""
 
-	mwan3_push_update -! create "mwan3_sticky_ipv4_$rule" \
+	mwan3_push_update -! create "mwan3_rule_ipv4_$rule" \
 		hash:ip,mark markmask "$mmx" \
 		timeout "$timeout"
 
 	[ $NO_IPV6 -eq 0 ] &&
-		mwan3_push_update -! create "mwan3_sticky_ipv6_$rule" \
+		mwan3_push_update -! create "mwan3_rule_ipv6_$rule" \
 			hash:ip,mark markmask "$mmx" \
 			timeout "$timeout" family inet6
 
@@ -887,10 +887,10 @@ mwan3_set_user_iptables_rule()
 				  -j "$policy"
 		mwan3_push_update -A "mwan3_rule_$1" \
 				  -m mark ! --mark 0xfc00/0xfc00 \
-				  -j SET --del-set "mwan3_sticky_${ipv}_${rule}" src,src
+				  -j SET --del-set "mwan3_rule_${ipv}_${rule}" src,src
 		mwan3_push_update -A "mwan3_rule_$1" \
 				  -m mark ! --mark 0xfc00/0xfc00 \
-				  -j SET --add-set "mwan3_sticky_${ipv}_${rule}" src,src
+				  -j SET --add-set "mwan3_rule_${ipv}_${rule}" src,src
 		policy="mwan3_rule_$1"
 	fi
 	if [ "$global_logging" = "1" ] && [ "$rule_logging" = "1" ]; then
