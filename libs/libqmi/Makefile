@@ -8,18 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libqmi
-PKG_VERSION:=1.30.4
+PKG_SOURCE_VERSION:=1.30.4
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://gitlab.freedesktop.org/mobile-broadband/libqmi.git
-PKG_SOURCE_VERSION:=$(PKG_VERSION)
 PKG_MIRROR_HASH:=537eae29c36aba9757afd86e48b91c37c3fe3232037ad11fdd426297f6040a6b
 
 PKG_MAINTAINER:=Nicholas Smith <nicholas@nbembedded.com>
 
 PKG_INSTALL:=1
-PKG_BUILD_DEPENDS:=python3/host
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -69,27 +67,11 @@ MESON_ARGS += \
 	-Dintrospection=false \
 	-Dman=false \
 	-Dbash_completion=false \
-	-Db_lto=true
-
-ifeq ($(CONFIG_LIBQMI_WITH_MBIM_QMUX),y)
-	MESON_ARGS += -Dmbim_qmux=true
-else
-	MESON_ARGS += -Dmbim_qmux=false
-endif
-
-ifeq ($(CONFIG_LIBQMI_WITH_QRTR_GLIB),y)
-	MESON_ARGS += -Dqrtr=true
-else
-	MESON_ARGS += -Dqrtr=false
-endif
-
-ifeq ($(CONFIG_LIBQMI_COLLECTION_MINIMAL),y)
-	MESON_ARGS += -Dcollection=minimal
-else ifeq ($(CONFIG_LIBQMI_COLLECTION_BASIC),y)
-	MESON_ARGS += -Dcollection=basic
-else
-	MESON_ARGS += -Dcollection=full
-endif
+	-Db_lto=true \
+	-Dmbim_qmux=$(if $(CONFIG_LIBQMI_WITH_MBIM_QMUX),true,false) \
+	-Dqrtr=$(if $(CONFIG_LIBQMI_WITH_QRTR_GLIB),true,false) \
+	-Dcollection=$(if $(CONFIG_LIBQMI_COLLECTION_MINIMAL),minimal\
+		    ,$(if $(CONFIG_LIBQMI_COLLECTION_BASIC),basic,full))
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
