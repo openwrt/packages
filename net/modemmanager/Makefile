@@ -110,6 +110,9 @@ define Package/modemmanager/install
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/ModemManager/*.conf $(1)/usr/share/ModemManager
 	$(INSTALL_DATA) ./files/modemmanager.common $(1)/usr/share/ModemManager
 
+	$(INSTALL_DIR) $(1)/usr/share/ModemManager/fcc-unlock.available.d
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/ModemManager/fcc-unlock.available.d/* $(1)/usr/share/ModemManager/fcc-unlock.available.d
+
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/modemmanager.init $(1)/etc/init.d/modemmanager
 
