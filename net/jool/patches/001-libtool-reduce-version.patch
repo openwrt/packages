@@ -11,7 +11,7 @@ Signed-off-by: Tiago Gaspar <tiagogaspar8@gmail.com>
 --- a/configure.ac
 +++ b/configure.ac
 @@ -5,7 +5,7 @@ AC_PREREQ([2.68])
- AC_INIT([Jool], [4.1.6], [jool@nic.mx])
+ AC_INIT([Jool], [4.1.8], [jool@nic.mx])
  AC_CONFIG_SRCDIR([src/common/xlat.h])
  AM_INIT_AUTOMAKE([subdir-objects])
 -LT_PREREQ([2.4.6])
