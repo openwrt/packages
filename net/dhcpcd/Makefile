@@ -20,8 +20,6 @@ PKG_LICENSE:=BSD-2c
 PKG_LICENSE_FILES:=
 PKG_CPE_ID:=cpe:/a:roy_marples:dhcpcd
 
-PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
-
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 

@@ -16,7 +16,6 @@ PKG_SOURCE_URL:=http://www2.pl.squid-cache.org/Versions/v4/ \
 	http://www.squid-cache.org/Versions/v4/
 PKG_HASH:=7e00e891757c1c02dae546c9898f440c6031b684d8c243d6edab529076e3ba63
 
-PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_CPE_ID:=cpe:/a:squid-cache:squid
 

@@ -15,7 +15,6 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://pagesperso-orange.fr/sebastien.godard/
 PKG_HASH:=ae432431f45aacbcabacfbbe129e2505e215cafa9ce996d7550c6091a46f0bfd
 
-PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:sysstat_project:sysstat

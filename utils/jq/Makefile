@@ -36,7 +36,6 @@ define Package/jq
   CATEGORY:=Utilities
   TITLE:=Lightweight and flexible command-line JSON processor.
   URL:=https://stedolan.github.io/jq/
-  MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 endef
 
 define Package/jq/description

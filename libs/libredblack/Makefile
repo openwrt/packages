@@ -15,7 +15,6 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/libredblack
 PKG_HASH:=a0ecc59b0aae2df01558a6950532c711a782a099277b439a51d270003092f44f
 
-PKG_MAINTAINER:=Mislav Novakovic <mislav.novakovic@sartura.hr>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
