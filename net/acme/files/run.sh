@@ -21,6 +21,7 @@ NGINX_WEBSERVER=0
 UPDATE_NGINX=0
 UPDATE_UHTTPD=0
 UPDATE_HAPROXY=0
+NFT_HANDLE=
 USER_CLEANUP=
 
 . /lib/functions.sh
@@ -126,19 +127,17 @@ pre_checks() {
 		esac
 	done
 
-	iptables -I input_rule -p tcp --dport 80 -j ACCEPT -m comment --comment "ACME" || return 1
-	ip6tables -I input_rule -p tcp --dport 80 -j ACCEPT -m comment --comment "ACME" || return 1
-	debug "v4 input_rule: $(iptables -nvL input_rule)"
-	debug "v6 input_rule: $(ip6tables -nvL input_rule)"
+	NFT_HANDLE=$(nft -a -e insert rule inet fw4 input tcp dport 80 counter accept comment ACME | grep -o 'handle [0-9]\+')
+	ret=$?
+	[ "$ret" -eq "0" ] || return 1
+	debug "added nft rule: $NFT_HANDLE"
 	return 0
 }
 
 post_checks() {
 	log "Running post checks (cleanup)."
-	# The comment ensures we only touch our own rules. If no rules exist, that
-	# is fine, so hide any errors
-	iptables -D input_rule -p tcp --dport 80 -j ACCEPT -m comment --comment "ACME" 2> /dev/null
-	ip6tables -D input_rule -p tcp --dport 80 -j ACCEPT -m comment --comment "ACME" 2> /dev/null
+	# $NFT_HANDLE contains the string 'handle XX' so pass it unquoted to nft
+	[ -n "$NFT_HANDLE" ] && nft delete rule inet fw4 input $NFT_HANDLE
 
 	if [ -e /etc/init.d/uhttpd ] && { [ -n "$UHTTPD_LISTEN_HTTP" ] || [ "$UPDATE_UHTTPD" -eq 1 ]; }; then
 		if [ -n "$UHTTPD_LISTEN_HTTP" ]; then
