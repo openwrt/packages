@@ -93,7 +93,7 @@ $(call Package/gensio/Default)
   CATEGORY:=Libraries
   ABI_VERSION:=0
   MENU:=1
-  DEPENDS:=+GENSIO_SSL:libopenssl +GENSIO_WRAP:libwrap +GENSIO_SCTP:libsctp +GENSIO_PTHREADS:libpthread +GENSIO_AVAHI:libavahi-client +GENSIO_TCL:tcl +GENSIO_GLIB:glib2 +GENSIO_SSHD:libpam
+  DEPENDS:=+GENSIO_SSL:libopenssl +GENSIO_WRAP:libwrap +(IPV6&&GENSIO_SCTP):libsctp +GENSIO_PTHREADS:libpthread +GENSIO_AVAHI:libavahi-client +GENSIO_TCL:tcl +GENSIO_GLIB:glib2 +GENSIO_SSHD:libpam
 endef
 
 define Package/libgensio/description
