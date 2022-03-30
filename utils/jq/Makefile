@@ -15,6 +15,7 @@ PKG_LICENSE:=BSD
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/stedolan/jq/releases/download/jq-$(PKG_VERSION)/
 PKG_HASH:=9625784cf2e4fd9842f1d407681ce4878b5b0dcddbcd31c6135114a30c71e6a8
+PKG_MAINTAINER:=Marko Ratkaj <markoratkaj@gmail.com>
 
 PKG_INSTALL:=1
 
@@ -36,7 +37,6 @@ define Package/jq
   CATEGORY:=Utilities
   TITLE:=Lightweight and flexible command-line JSON processor.
   URL:=https://stedolan.github.io/jq/
-  MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 endef
 
 define Package/jq/description
