@@ -16,7 +16,7 @@ PKG_SOURCE_URL:=http://download.openpkg.org/components/cache/file/ \
 	ftp://ftp.astron.com/pub/file/
 PKG_HASH:=13e532c7b364f7d57e23dfeea3147103150cb90593a57af86c10e4f6e411603f
 
-PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
+PKG_MAINTAINER:=Marko Ratkaj <markoratkaj@gmail.com>
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=COPYING
 
