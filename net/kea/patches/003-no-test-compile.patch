@@ -76,8 +76,8 @@
 -SUBDIRS = . tests
 +SUBDIRS = .
  
- pkgpython_PYTHON = kea_conn.py kea_connector2.py kea_connector3.py
- 
+ PYTHON_PREFIX=@prefix@
+ PYTHON_EXEC_PREFIX=@prefix@
 --- a/src/hooks/dhcp/high_availability/Makefile.am
 +++ b/src/hooks/dhcp/high_availability/Makefile.am
 @@ -1,4 +1,4 @@
@@ -85,7 +85,7 @@
 +SUBDIRS = . libloadtests
  
  AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
- AM_CPPFLAGS += $(BOOST_INCLUDES)
+ AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 --- a/src/hooks/dhcp/lease_cmds/Makefile.am
 +++ b/src/hooks/dhcp/lease_cmds/Makefile.am
 @@ -1,4 +1,4 @@
@@ -125,7 +125,7 @@
 +SUBDIRS = .
  
  AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
- AM_CPPFLAGS += $(BOOST_INCLUDES)
+ AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 --- a/src/lib/cc/Makefile.am
 +++ b/src/lib/cc/Makefile.am
 @@ -1,4 +1,4 @@
@@ -149,7 +149,7 @@
 +SUBDIRS = .
  
  AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
- AM_CPPFLAGS += $(BOOST_INCLUDES)
+ AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 --- a/src/lib/config_backend/Makefile.am
 +++ b/src/lib/config_backend/Makefile.am
 @@ -1,4 +1,4 @@
@@ -249,7 +249,7 @@
 +SUBDIRS = .
  
  AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
- AM_CPPFLAGS += $(BOOST_INCLUDES)
+ AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 --- a/src/lib/log/Makefile.am
 +++ b/src/lib/log/Makefile.am
 @@ -1,4 +1,4 @@
@@ -293,7 +293,7 @@
 --- a/src/lib/stats/Makefile.am
 +++ b/src/lib/stats/Makefile.am
 @@ -1,4 +1,4 @@
--SUBDIRS = . tests
+-SUBDIRS = . tests testutils
 +SUBDIRS = .
  
  AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
@@ -315,4 +315,4 @@
 +SUBDIRS = .
  
  AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
- AM_CPPFLAGS += $(BOOST_INCLUDES) $(SYSREPO_CPPFLAGS)
+ AM_CPPFLAGS += $(BOOST_INCLUDES)
