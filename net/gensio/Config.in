@@ -9,7 +9,7 @@
 		default n
 
 	config GENSIO_SCTP
-		depends on PACKAGE_libgensio
+		depends on PACKAGE_libgensio && IPV6
 		bool "Enable SCTP-support via libsctp"
 		default n
 
