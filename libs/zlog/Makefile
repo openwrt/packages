@@ -19,6 +19,8 @@ define Package/zlog
   CATEGORY:=Libraries
   TITLE:=Pure C logging library
   URL:=http://hardysimpson.github.io/zlog/
+  LICENSE:=LGPL-2.1-or-later
+  LICENSE_FILES:=COPYING
 endef
 
 MAKE_FLAGS+= \
