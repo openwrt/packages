@@ -67,7 +67,7 @@ define Package/autopart/install
 endef
 
 define Package/uvol/install
-	$(INSTALL_DIR) $(1)/etc/init.d $(1)/usr/uvol/backends $(1)/usr/sbin $(1)/etc/uci-defaults
+	$(INSTALL_DIR) $(1)/etc/init.d $(1)/usr/lib/uvol/backends $(1)/usr/sbin $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/uvol.init $(1)/etc/init.d/uvol
 	$(INSTALL_DATA) ./files/blockdev_common.uc $(1)/usr/lib/uvol/
 	$(INSTALL_DATA) ./files/uci.uc $(1)/usr/lib/uvol/
