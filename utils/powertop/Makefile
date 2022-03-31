@@ -20,7 +20,7 @@ PKG_MAINTAINER:=Lucian Cristain <lucian.cristian@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING
 
-PKG_FIXUP:=autoreconf
+PKG_FIXUP:=autoreconf gettext-version
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=gettext-full/host
