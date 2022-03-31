@@ -1,4 +1,3 @@
-{%
 // SPDX-License-Identifier: GPL-2.0-or-later
 // UCI tools for uvol
 //  (c) 2022 Daniel Golle <daniel@makrotopia.org>
@@ -136,4 +135,3 @@ uvol_uci = {
 		return 0;
 	}
 };
-%}
