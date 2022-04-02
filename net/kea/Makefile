@@ -20,16 +20,12 @@ PKG_MAINTAINER:=BangLang Huang<banglang.huang@foxmail.com>, Rosy Song<rosysong@r
 PKG_LICENSE:=MPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
-HOST_BUILD_DEPENDS:=boost/host log4cplus/host
-PKG_BUILD_DEPENDS:=kea/host
-HOST_BUILD_PARALLEL:=1
 PKG_BUILD_PARALLEL:=1
 
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/host-build.mk
 
 define Package/kea/Default
   SECTION:=net
@@ -194,14 +190,6 @@ define Package/kea-uci/description
 endef
 
 ###### *************************************************************************
-HOST_CONFIGURE_ARGS += \
-	--with-boost-include="$(STAGING_DIR_HOSTPKG)" \
-	--with-log4cplus="$(STAGING_DIR_HOSTPKG)" \
-	--with-openssl="$(STAGING_DIR_HOST)" \
-	--enable-generate-messages
-
-HOST_LDFLAGS += \
-	 -Wl,--gc-sections,--as-needed
 
 CONFIGURE_ARGS += \
 	--with-boost-include="$(STAGING_DIR)/usr" \
@@ -222,29 +210,6 @@ TARGET_CXXFLAGS += \
 
 TARGET_LDFLAGS += \
 	-Wl,--gc-sections,--as-needed
-
-# Only compile the kea-msg-compiler which we need for
-# package compilation
-define Host/Compile
-	+$(HOST_MAKE_VARS) \
-	$(MAKE) $(HOST_JOBS) -C $(HOST_BUILD_DIR)/src/lib/exceptions $(HOST_MAKE_FLAGS)
-	+$(HOST_MAKE_VARS) \
-	$(MAKE) $(HOST_JOBS) -C $(HOST_BUILD_DIR)/src/lib/util $(HOST_MAKE_FLAGS)
-	+$(HOST_MAKE_VARS) \
-	$(MAKE) $(HOST_JOBS) -C $(HOST_BUILD_DIR)/src/lib/log $(HOST_MAKE_FLAGS)
-endef
-
-define Host/Install
-	$(INSTALL_BIN) $(HOST_BUILD_DIR)/src/lib/log/compiler/kea-msg-compiler \
-		$(STAGING_DIR_HOSTPKG)/bin/
-endef
-
-define Build/Compile
-	$(INSTALL_DIR) $(PKG_BUILD_DIR)/src/lib/log/compiler
-	$(INSTALL_BIN) $(STAGING_DIR_HOSTPKG)/bin/kea-msg-compiler \
-		$(PKG_BUILD_DIR)/src/lib/log/compiler/
-	$(call Build/Compile/Default)
-endef
 
 define Package/kea-libs/install
 	$(INSTALL_DIR) $(1)/usr/lib
