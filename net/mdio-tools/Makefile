@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mdio-tools
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=https://github.com/wkz/mdio-tools
 PKG_SOURCE_PROTO:=git
@@ -22,7 +22,7 @@ define Package/mdio-tools
   CATEGORY:=Utilities
   TITLE:=mdio-tools Linux MDIO register access
   URL:=https://github.com/wkz/mdio-tools.git
-  DEPENDS:=+libmnl
+  DEPENDS:=+kmod-mdio-netlink +libmnl
 endef
 
 define Package/mdio-tools/description
