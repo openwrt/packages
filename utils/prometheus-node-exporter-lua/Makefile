@@ -167,6 +167,17 @@ define Package/prometheus-node-exporter-lua-textfile/install
 	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/textfile.lua $(1)/usr/lib/lua/prometheus-collectors/
 endef
 
+define Package/prometheus-node-exporter-lua-ubnt-manager
+  $(call Package/prometheus-node-exporter-lua/Default)
+  TITLE+= (ubnt-manager collector)
+  DEPENDS:=prometheus-node-exporter-lua +ubnt-manager +lua-cjson
+endef
+
+define Package/prometheus-node-exporter-lua-ubnt-manager/install
+	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/ubnt-manager.lua $(1)/usr/lib/lua/prometheus-collectors/
+endef
+
 define Package/prometheus-node-exporter-lua-uci_dhcp_host
   $(call Package/prometheus-node-exporter-lua/Default)
   TITLE+= (uci_dhcp_host collector)
