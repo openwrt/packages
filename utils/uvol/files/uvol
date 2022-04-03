@@ -1,4 +1,4 @@
-#!/usr/bin/ucode
+#!/usr/bin/ucode -R
 // SPDX-License-Identifier: GPL-2.0-or-later
 // uvol - storage volume manager for OpenWrt
 //  (c) 2022 Daniel Golle <daniel@makrotopia.org>
@@ -25,11 +25,7 @@ commands:
                  1 - volume is not ready for use
                  2 - volume doesn'y exist
   write volname size		write to volume from stdin, size in bytes
-"
-
-function help() {
-	printf("%s", help_output);
-);
+";
 
 let fs = require("fs");
 let uci = require("uci");
@@ -71,7 +67,7 @@ if (!backend) {
 let cmd = shift(ARGV);
 
 if (!cmd || cmd == "-h" || cmd == "help") {
-	help();
+	printf("%s", help_output);
 	return cmd?0:22;
 }
 

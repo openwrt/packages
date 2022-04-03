@@ -108,6 +108,9 @@ let get_bootdev = function(void) {
 
 // adapted from /lib/upgrade/common.sh
 let get_partition = function(dev, num) {
+	if (!dev)
+		return null;
+
 	for (let bd in get_blockdevs()) {
 		let r = get_uevent_major_minor(sprintf("/sys/class/block/%s/uevent", bd));
 		if (r.major == dev.major && r.minor == dev.minor + num) {
