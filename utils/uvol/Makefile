@@ -32,7 +32,7 @@ define Package/uvol
 endef
 
 define Package/uvol/description
-  'uvol' is tool to automate storage volume handling on embedded
+  'uvol' is a tool to automate storage volume handling on embedded
   devices in a generic way.
   Depending on what is available, 'uvol' will use either UBI or LVM2
   as storage backends and transparently offer identical operations on
