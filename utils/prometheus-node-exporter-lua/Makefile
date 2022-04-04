@@ -4,7 +4,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=prometheus-node-exporter-lua
-PKG_VERSION:=2022.03.28
+PKG_VERSION:=2022.04.03
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
@@ -234,6 +234,7 @@ $(eval $(call BuildPackage,prometheus-node-exporter-lua-nat_traffic))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-netstat))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-openwrt))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-textfile))
+$(eval $(call BuildPackage,prometheus-node-exporter-lua-ubnt-manager))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-uci_dhcp_host))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-wifi))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-wifi_stations))
