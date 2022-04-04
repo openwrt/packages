@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=node
-PKG_VERSION:=v14.18.3
+PKG_VERSION:=v16.14.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://nodejs.org/dist/$(PKG_VERSION)
-PKG_HASH:=783ac443cd343dd6c68d2abcf7e59e7b978a6a428f6a6025f9b84918b769d608
+PKG_HASH:=e922e215cc68eb5f94d33e8a0b61e2c863b7731cc8600ab955d3822da90ff8d1
 
 PKG_MAINTAINER:=Hirokazu MORIKAWA <morikw2@gmail.com>, Adrian Panella <ianchi74@outlook.com>
 PKG_LICENSE:=MIT
@@ -48,7 +48,7 @@ define Package/node/description
   an event-driven, non-blocking I/O model that makes it lightweight and efficient. Node.js'
    package ecosystem, npm, is the largest ecosystem of open source libraries in the world.
   *** The following preparations must be made on the host side. ***
-      1. gcc 6.3 or higher is required.
+      1. gcc 8.3 or higher is required.
       2. To build a 32-bit target, gcc-multilib, g++-multilib are required.
       3. Requires libatomic package. (If necessary, install the 32-bit library at the same time.)
      ex) sudo apt-get install gcc-multilib g++-multilib
@@ -141,10 +141,11 @@ define Package/node/install
 endef
 
 define Package/node-npm/install
+	$(RM) $(1)/usr/lib/node_modules/npm
 	$(INSTALL_DIR) $(1)/usr/lib/node_modules/npm
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/npm/{package.json,LICENSE} \
 		$(1)/usr/lib/node_modules/npm/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/npm/{AUTHORS,*.md} \
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/npm/README.md \
 		$(1)/usr/lib/node_modules/npm/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/npm/{node_modules,bin,lib} \
 		$(1)/usr/lib/node_modules/npm/
