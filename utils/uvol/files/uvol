@@ -1,14 +1,9 @@
-#!/bin/sh
+#!/usr/bin/ucode
+// SPDX-License-Identifier: GPL-2.0-or-later
+// uvol - storage volume manager for OpenWrt
+//  (c) 2022 Daniel Golle <daniel@makrotopia.org>
 
-# uvol prototype
-# future development roadmap (aka. to-do):
-# * re-implement in C (use libubox, execve lvm/ubi*)
-# * hash to validate volume while writing
-# * add atomic batch processing for use by container/package manager
-
-if [ -z "$1" ]; then cat <<EOF
-uvol storage volume manager
-
+let help_output = "uvol storage volume manager
 syntax: uvol command ...
 
 commands:
@@ -30,23 +25,101 @@ commands:
                  1 - volume is not ready for use
                  2 - volume doesn'y exist
   write volname size		write to volume from stdin, size in bytes
-EOF
-	return 22
-fi
+"
 
-uvol_backend=
-backends_tried=
+function help() {
+	printf("%s", help_output);
+);
 
-for backend in /usr/libexec/uvol/*.sh; do
-	total=$($backend total)
-	backends_tried="$backends_tried $($backend name)"
-	[ "$total" ] && uvol_backend=$backend
-done
+let fs = require("fs");
+let uci = require("uci");
+let cursor = uci ? uci.cursor() : null;
 
-if [ -z "$uvol_backend" ]; then
-	echo "No backend available. (tried:$backends_tried)"
-	echo "To setup devices with block storage install 'autopart'."
-	return 2
-fi
+let ctx = {};
+ctx.cursor = cursor;
+ctx.fs = fs;
+include("/usr/lib/uvol/uci.uc");
+ctx.uci_add = uvol_uci.uvol_uci_add;
+ctx.uci_remove = uvol_uci.uvol_uci_remove;
+ctx.uci_commit = uvol_uci.uvol_uci_commit;
+ctx.uci_init = uvol_uci.uvol_uci_init;
 
-flock -x /tmp/run/uvol.lock "$uvol_backend" "$@"
+let backend = null;
+let tried_backends = [];
+for (plugin in fs.glob("/usr/lib/uvol/backends/*.uc")) {
+	let current_backend = {};
+	include(plugin, { backend: current_backend });
+	push(tried_backends, current_backend.backend);
+	if (type(backend) == "object" &&
+	    type(backend.priority) == "int" &&
+	    type(current_backend.priority) == "int" &&
+	    backend.priority > current_backend.priority)
+		continue;
+	if (type(current_backend.init) == "function" &&
+	    current_backend.init(ctx)) {
+		backend = current_backend;
+		break;
+	}
+}
+
+if (!backend) {
+	printf("No backend available. (tried: %s)\n", join(" ", tried_backends));
+	printf("To setup devices with block storage install 'autopart'.\n");
+	exit(2);
+}
+
+let cmd = shift(ARGV);
+
+if (!cmd || cmd == "-h" || cmd == "help") {
+	help();
+	return cmd?0:22;
+}
+
+if (!(cmd in keys(backend))) {
+	printf("command %s not found\n", cmd);
+	return 22;
+}
+
+let json_output = false;
+if (ARGV[0] == "-j") {
+	json_output = true;
+	shift(ARGV);
+}
+
+let legacy_output = function(var) {
+	let out = "";
+	if (type(var) == "array") {
+		for (let line in var) {
+			out += join(" ", values(line));
+			out += "\n";
+		}
+	} else if (type(var) == "object") {
+		out += join(" ", values(line));
+		out += "\n";
+	}
+	return out;
+};
+
+if (type(backend[cmd]) == "string") {
+	printf("%s\n", backend[cmd]);
+} else if (type(backend[cmd]) == "function") {
+	let ret = backend[cmd](...ARGV);
+	if (type(ret) == "int")
+		exit(ret);
+
+	if (type(ret) == "string") {
+		printf("%s\n", ret);
+	} else {
+		if (json_output)
+			printf("%.J\n", ret);
+		else
+			printf("%s", legacy_output(ret));
+	}
+} else {
+	if (json_output)
+		printf("%.J\n", backend[cmd]);
+	else
+		printf("%s\n", legacy_output(backend[cmd]));
+}
+
+exit(0);
