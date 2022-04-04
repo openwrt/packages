@@ -64,7 +64,18 @@ if (!backend) {
 	exit(2);
 }
 
-let cmd = shift(ARGV);
+// The below code is needed as older versions of ucode pass the complete cmdline via ARGV
+// Once we can rely in more recent ucode the while loop can be replaced by simply
+// let cmd = shift(ARGV);
+let skip = null;
+let cmd = null;
+let skip_argv = ["/usr/bin/ucode", "-R", "/usr/sbin/uvol"];
+while (skip = shift(ARGV)) {
+	if (skip != shift(skip_argv)) {
+		cmd = skip;
+		break;
+	}
+}
 
 if (!cmd || cmd == "-h" || cmd == "help") {
 	printf("%s", help_output);
