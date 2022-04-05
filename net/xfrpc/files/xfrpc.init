@@ -1,0 +1,93 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2022 Dengfeng Liu <liu_df@qq.com>
+#
+# This is free software, licensed under the GNU General Public License v3.
+# See /LICENSE for more information.
+#
+
+START=99
+USE_PROCD=1
+
+NAME=xfrpc
+PROG=/usr/bin/$NAME
+
+
+handle_xfrpc() {
+	local name="$1"
+	local config="$2"
+
+	echo "[$name]" >> "$config"
+
+	handle_type() {
+		uci_validate_section xfrpc xfrpc "$name" \
+				'type:or("tcp", "udp", "ftp", "http", "https")' \
+				'local_ip:ipaddr:127.0.0.1' \
+				'local_port:uinteger'
+
+		echo "type = $type" >> "$config"
+		echo "local_ip = $local_ip" >> "$config"
+		echo "local_port = $local_port" >> "$config"
+		case "$type" in
+		"tcp"|"udp")
+			config_get remote_port "$name" remote_port
+			echo "remote_port = $remote_port" >> "$config"
+			;;
+		"ftp")
+			config_get remote_port "$name" remote_port
+			config_get remote_data_port "$name" remote_data_port
+			echo "remote_port = $remote_port" >> "$config"
+			echo "remote_data_port = $remote_data_port" >> "$config"
+			;;
+		esac
+	}
+
+	if [ "$name" = "common" ]; then
+		uci_validate_section xfrpc xfrpc "$name" \
+				'server_addr:ipaddr' \
+				'server_port:uinteger' \
+				'auth_token:string'
+
+		[ -z "$auth_token" ] && {
+			echo "no auth_token"
+			exit
+		}
+		echo "server_addr = $server_addr" >> "$config"
+		echo "server_port = $server_port" >> "$config"
+		echo "auth_token = $auth_token" >> "$config"
+	else
+		handle_type
+	fi
+}
+
+service_triggers() {
+	procd_add_reload_trigger "$NAME"
+}
+
+start_service() {
+	local conf_file="/var/etc/$NAME.ini"
+
+	> "$conf_file"
+	config_load "$NAME"
+
+	uci_validate_section xfrpc xfrpc init \
+			'disabled:bool:1' \
+			'loglevel:uinteger:0'
+
+	if [ $disabled = 1 ]; then
+		echo "xfrpc service disabled"
+		return
+	fi
+
+	config_foreach handle_xfrpc xfrpc "$conf_file"
+
+	procd_open_instance
+	procd_set_param command "$PROG" -c "$conf_file" -f -d $loglevel
+	procd_set_param file "$conf_file"
+	procd_set_param respawn
+	procd_close_instance
+}
+
+reload_service() {
+	stop
+	start
+}
