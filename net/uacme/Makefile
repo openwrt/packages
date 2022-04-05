@@ -22,7 +22,6 @@ PKG_LICENSE_FILES:=COPYING
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-upstream-$(PKG_VERSION)
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
-PKG_USE_MIPS16:=0
 
 PKG_CONFIG_DEPENDS:= \
   CONFIG_LIBCURL_GNUTLS \
@@ -54,7 +53,7 @@ endef
 
 define Package/uacme-ualpn
   $(call Package/uacme/Default)
-  DEPENDS:=+uacme
+  DEPENDS:=+uacme +PACKAGE_uacme-ualpn:libev
   TITLE:=ualpn for uacme
   URL:=https://github.com/ndilieto/uacme
 endef
