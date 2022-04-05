@@ -53,7 +53,7 @@ endef
 
 define Package/uacme-ualpn
   $(call Package/uacme/Default)
-  DEPENDS:=+uacme
+  DEPENDS:=+uacme +PACKAGE_uacme-ualpn:libev
   TITLE:=ualpn for uacme
   URL:=https://github.com/ndilieto/uacme
 endef
