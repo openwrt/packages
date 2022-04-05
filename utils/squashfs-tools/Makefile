@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=squashfs-tools
-PKG_VERSION:=4.5
+PKG_VERSION:=4.5.1
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_LICENSE:=GPL-2.0-only
@@ -18,7 +18,7 @@ PKG_CPE_ID:=cpe:/a:phillip_lougher:squashfs
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/plougher/squashfs-tools/tar.gz/${PKG_VERSION}?
-PKG_HASH:=b9e16188e6dc1857fe312633920f7d71cc36b0162eb50f3ecb1f0040f02edddd
+PKG_HASH:=277b6e7f75a4a57f72191295ae62766a10d627a4f5e5f19eadfbc861378deea7
 
 PKG_BUILD_PARALLEL:=1
 include $(INCLUDE_DIR)/package.mk
