@@ -66,9 +66,19 @@ config KEEPALIVED_IPTABLES
 	depends on KEEPALIVED_VRRP
 	bool
 	default y
+	select KEEPALIVED_IP6TABLES
 	prompt "Enable iptables for VIP filtering"
 	help
 		Builds support for using iptables/ipsets for filtering packets
+		to VIPs
+
+config KEEPALIVED_IP6TABLES
+	depends on KEEPALIVED_VRRP && KEEPALIVED_IPTABLES && IPV6
+	bool
+	default y
+	prompt "Enable ip6tables for VIP filtering"
+	help
+		Builds support for using ip6tables/ipsets for filtering packets
 		to VIPs
 
 config KEEPALIVED_SNMP_VRRP

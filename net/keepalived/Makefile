@@ -61,7 +61,7 @@ define Package/keepalived
     +KEEPALIVED_VRRP:libnfnetlink \
     +KEEPALIVED_SHA1:libopenssl \
     +KEEPALIVED_IPTABLES:libip4tc \
-    +(KEEPALIVED_IPTABLES&&IPV6):libip6tc \
+    +KEEPALIVED_IP6TABLES:libip6tc \
     +KEEPALIVED_IPTABLES:libxtables \
     +KEEPALIVED_IPTABLES:libipset \
     +(KEEPALIVED_SNMP_VRRP||KEEPALIVED_SNMP_CHECKER||KEEPALIVED_SNMP_RFC2||KEEPALIVED_SNMP_RFC3):libnetsnmp \
