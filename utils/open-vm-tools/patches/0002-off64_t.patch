@@ -1,0 +1,26 @@
+From 3d6dad8c9202f449bbdff90da5463c1994198883 Mon Sep 17 00:00:00 2001
+From: Natanael Copa <ncopa@alpinelinux.org>
+Date: Tue, 17 Nov 2015 10:39:01 +0000
+Subject: [PATCH] Do not assume that linux and gnu libc are the same thing
+
+Use __GLIBC__ when testing for GNU libc specific things instead of
+assuming that __linux__ is GNU libc.
+
+This is needed for building with musl libc.
+
+Signed-off-by: Natanael Copa <ncopa@alpinelinux.org>
+---
+ lib/file/fileIOPosix.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/lib/file/fileIOPosix.c
++++ b/lib/file/fileIOPosix.c
+@@ -198,7 +198,7 @@ static AlignedPool alignedPool;
+  * are not available in any header file.
+  */
+ 
+-#if defined(__linux__) && !defined(__ANDROID__)
++#if defined(__linux__) && defined(__GLIBC__)
+    #if defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64)
+       /*
+        * We want preadv/pwritev. But due to FOB=64, the symbols are -64.
