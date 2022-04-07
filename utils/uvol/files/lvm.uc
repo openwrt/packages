@@ -54,7 +54,7 @@ function pvs() {
 		return null;
 
 	let tmp = lvm("pvs", "-o", "vg_name", "-S", sprintf("\"pv_name=~^/dev/%s.*\$\"", rootdev));
-	if (tmp.report.pv)
+	if (tmp.report.pv[0])
 		return tmp.report.pv[0].vg_name;
 	else
 		return null;
@@ -115,8 +115,8 @@ function getdev(lv) {
 function lvm_init(ctx) {
 	cursor = ctx.cursor;
 	fs = ctx.fs;
-//	if (!fs.access(lvm_exec, "x"))
-//		return false;
+	if (type(fs.access) == "function" && !fs.access(lvm_exec, "x"))
+		return false;
 
 	vg_name = pvs();
 	if (!vg_name)
