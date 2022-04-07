@@ -23,7 +23,7 @@ commands:
   status volname		return status of volume
     return code: 0 - volume is ready for use
                  1 - volume is not ready for use
-                 2 - volume doesn'y exist
+                 2 - volume doesn't exist
   write volname size		write to volume from stdin, size in bytes
 ";
 
@@ -101,21 +101,19 @@ let legacy_output = function(var) {
 			out += "\n";
 		}
 	} else if (type(var) == "object") {
-		out += join(" ", values(line));
+		out += join(" ", values(var));
+		out += "\n";
+	} else if (type(var) == "string") {
+		out += var;
 		out += "\n";
 	}
 	return out;
 };
 
-if (type(backend[cmd]) == "string") {
-	printf("%s\n", backend[cmd]);
-} else if (type(backend[cmd]) == "function") {
+if (type(backend[cmd]) == "function") {
 	let ret = backend[cmd](...ARGV);
-	if (type(ret) == "int")
+	if (type(ret) == "int") {
 		exit(ret);
-
-	if (type(ret) == "string") {
-		printf("%s\n", ret);
 	} else {
 		if (json_output)
 			printf("%.J\n", ret);
