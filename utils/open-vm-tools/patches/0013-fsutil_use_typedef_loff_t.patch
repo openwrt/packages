@@ -1,12 +1,101 @@
+From cf21ccdef4fe5e749fc10403afc3d9340a6d10dd Mon Sep 17 00:00:00 2001
+From: Natanael Copa <ncopa@alpinelinux.org>
+Date: Mon, 2 Jan 2017 15:25:32 +0000
+Subject: [PATCH] use off64_t instead of loff_t
+
+---
+ vmhgfs-fuse/file.c   | 12 ++++++------
+ vmhgfs-fuse/fsutil.c |  2 +-
+ vmhgfs-fuse/fsutil.h |  8 ++------
+ 3 files changed, 9 insertions(+), 13 deletions(-)
+
+--- a/vmhgfs-fuse/file.c
++++ b/vmhgfs-fuse/file.c
+@@ -547,7 +547,7 @@ static int
+ HgfsDoRead(HgfsHandle handle,  // IN:  Handle for this file
+            char *buf,          // OUT: Buffer to copy data into
+            size_t count,       // IN:  Number of bytes to read
+-           loff_t offset)      // IN:  Offset at which to read
++           off64_t offset)      // IN:  Offset at which to read
+ {
+    HgfsReq *req;
+    HgfsOp opUsed;
+@@ -708,11 +708,11 @@ ssize_t
+ HgfsRead(struct fuse_file_info *fi,  // IN:  File info struct
+          char  *buf,                 // OUT: User buffer to copy data into
+          size_t count,               // IN:  Number of bytes to read
+-         loff_t offset)              // IN:  Offset at which to read
++         off64_t offset)              // IN:  Offset at which to read
+ {
+    int result = 0;
+    char *buffer = buf;
+-   loff_t curOffset = offset;
++   off64_t curOffset = offset;
+    size_t nextCount, remainingCount = count;
+    uint32 maxIOSize = HgfsMaxIOSize();
+ 
+@@ -769,7 +769,7 @@ static int
+ HgfsDoWrite(HgfsHandle handle,       // IN: Handle for the file
+             const char *buf,         // IN: Buffer containing data
+             size_t count,            // IN: Number of bytes to write
+-            loff_t offset)           // IN: Offset to begin writing at
++            off64_t offset)           // IN: Offset to begin writing at
+ {
+    HgfsReq *req;
+    int result = 0;
+@@ -893,11 +893,11 @@ ssize_t
+ HgfsWrite(struct fuse_file_info *fi,  // IN: File info structure
+          const char  *buf,            // OUT: User buffer to copy data into
+          size_t count,                // IN:  Number of bytes to read
+-         loff_t offset)               // IN:  Offset at which to read
++         off64_t offset)               // IN:  Offset at which to read
+ {
+    int result;
+    const char *buffer = buf;
+-   loff_t curOffset = offset;
++   off64_t curOffset = offset;
+    size_t nextCount, remainingCount = count;
+    ssize_t bytesWritten = 0;
+    uint32 maxIOSize = HgfsMaxIOSize();
+--- a/vmhgfs-fuse/fsutil.c
++++ b/vmhgfs-fuse/fsutil.c
+@@ -694,7 +694,7 @@ HgfsStatusConvertToLinux(HgfsStatus hgfs
+ unsigned long
+ HgfsCalcBlockSize(uint64 tsize)
+ {
+-   loff_t used = (tsize + 511) >> 9;
++   off64_t used = (tsize + 511) >> 9;
+    return (used > ULONG_MAX) ? ULONG_MAX : used;
+ }
+ 
 --- a/vmhgfs-fuse/fsutil.h
 +++ b/vmhgfs-fuse/fsutil.h
-@@ -29,6 +29,9 @@
- 
- #include "request.h"
- #include "vm_basic_types.h"
-+#ifndef _GNU_SOURCE
-+#define _GNU_SOURCE
-+#endif
+@@ -32,10 +32,6 @@
  #include "hgfsProto.h"
  #include <fuse.h>
  
+-#if defined(__FreeBSD__) || defined(__SOLARIS__) || defined(__APPLE__)
+-typedef long long loff_t;
+-#endif
+-
+ /*
+  * Struct used to pass around attributes.
+  * These aren't just the attributes seen in HgfsAttr[V2]; we add a filename
+@@ -73,7 +69,7 @@ ssize_t
+ HgfsWrite(struct fuse_file_info *fi,
+           const char  *buf,
+           size_t count,
+-          loff_t offset);
++          off64_t offset);
+ 
+ int
+ HgfsRename(const char* from, const char* to);
+@@ -93,7 +89,7 @@ ssize_t
+ HgfsRead(struct fuse_file_info *fi,
+          char  *buf,
+          size_t count,
+-         loff_t offset);
++         off64_t offset);
+ 
+ int
+ HgfsSetattr(const char* path,

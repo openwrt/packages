@@ -1,3 +1,21 @@
+From 5b45a812a5a3e9509021043f83529cccc13af26a Mon Sep 17 00:00:00 2001
+From: Natanael Copa <ncopa@alpinelinux.org>
+Date: Tue, 17 Nov 2015 10:57:31 +0000
+Subject: [PATCH] Rename poll.h to vm_poll.h
+
+musl libc's system headers pulls in open-vm-tools' poll.h. To avoid this
+we rename poll.h to vm_poll.h.
+
+Signed-off-by: Natanael Copa <ncopa@alpinelinux.org>
+---
+ lib/asyncsocket/asyncsocket.c     | 2 +-
+ lib/hgfsServer/hgfsServer.c       | 2 +-
+ lib/include/asyncsocket.h         | 2 +-
+ lib/include/pollImpl.h            | 2 +-
+ lib/include/{poll.h => vm_poll.h} | 0
+ lib/rpcIn/rpcin.c                 | 2 +-
+ 6 files changed, 5 insertions(+), 5 deletions(-)
+
 --- a/lib/asyncsocket/asyncsocket.c
 +++ b/lib/asyncsocket/asyncsocket.c
 @@ -87,7 +87,7 @@

@@ -1,0 +1,69 @@
+--- a/lib/err/errPosix.c
++++ b/lib/err/errPosix.c
+@@ -29,6 +29,7 @@
+ #endif
+ 
+ #include <errno.h>
++#include <stdio.h>
+ #include <string.h>
+ #include <locale.h>
+ 
+--- a/lib/file/fileIOPosix.c
++++ b/lib/file/fileIOPosix.c
+@@ -1741,7 +1741,7 @@ FileIOPreadvInternal(
+        * the library horizon this can go away.
+        */
+       /* coverity[func_conv] */
+-      if (preadv64 == NULL) {
++      if (0) {
+          fret = FileIOPreadvCoalesced(fd, entries, numEntries, offset,
+                                       totalSize, &bytesRead);
+          break;
+@@ -1882,7 +1882,7 @@ FileIOPwritevInternal(
+        * the library horizon this can go away.
+        */
+       /* coverity[func_conv] */
+-      if (pwritev64 == NULL) {
++      if (0) {
+          fret = FileIOPwritevCoalesced(fd, entries, numEntries, offset,
+                                        totalSize, &bytesWritten);
+          break;
+--- a/lib/hgfsServer/hgfsServerLinux.c
++++ b/lib/hgfsServer/hgfsServerLinux.c
+@@ -32,6 +32,7 @@
+ #define _DARWIN_USE_64_BIT_INODE
+ #endif
+ 
++#include <inttypes.h>
+ #include <stdlib.h>
+ #include <stdio.h>
+ #include <unistd.h>
+@@ -2573,7 +2574,7 @@ HgfsStatToFileAttr(struct stat *stats,
+ #      define FMTTIMET "l"
+ #   endif
+ #else
+-#   define FMTTIMET "l"
++#   define FMTTIMET PRId64
+ #endif
+    LOG(4, "access: %"FMTTIMET"d/%"FMT64"u \nwrite: %"FMTTIMET"d/%"FMT64"u \n"
+        "attr: %"FMTTIMET"d/%"FMT64"u\n",
+@@ -5301,7 +5302,7 @@ HgfsWriteCheckIORange(off_t offset,
+       goto exit;
+    }
+ 
+-   LOG(6, "%s: File Size limits: 0x%"FMT64"x 0x%"FMT64"x\n",
++   LOG(6, "%s: File Size limits: 0x%llx 0x%llx\n",
+        __FUNCTION__, fileSize.rlim_cur, fileSize.rlim_max);
+ 
+    /*
+--- a/services/plugins/gdp/gdpPlugin.c
++++ b/services/plugins/gdp/gdpPlugin.c
+@@ -32,7 +32,7 @@
+ #include <sys/types.h>
+ #include <sys/socket.h>
+ #include <sys/eventfd.h>
+-#include <sys/poll.h>
++#include <poll.h>
+ #include <unistd.h>
+ #endif
+ 

@@ -1,6 +1,33 @@
+From da7d7951c3b4f11485accf54e8e925c04709ed78 Mon Sep 17 00:00:00 2001
+From: Natanael Copa <ncopa@alpinelinux.org>
+Date: Wed, 18 Nov 2015 10:05:07 +0000
+Subject: [PATCH] Use configure to test for feature instead of platform
+
+Test for various functions instead of trying to keep track of what
+platform and what version of the given platform has support for what.
+
+This should make it easier to port to currently unknown platforms and
+will solve the issue if a platform add support for a missing feature in
+the future.
+
+The features we test for are:
+- getifaddrs
+- getauxval
+- issetugid
+- __secure_getenv
+
+This is needed for musl libc.
+
+Signed-off-by: Natanael Copa <ncopa@alpinelinux.org>
+---
+ configure.ac               |  4 ++++
+ lib/misc/idLinux.c         | 30 +++++++++++-------------
+ lib/nicInfo/nicInfoPosix.c | 11 +++++----
+ 3 files changed, 24 insertions(+), 21 deletions(-)
+
 --- a/configure.ac
 +++ b/configure.ac
-@@ -940,6 +940,7 @@ AC_CHECK_FUNCS(
+@@ -1169,6 +1169,7 @@ AC_CHECK_FUNCS(
  
  AC_CHECK_FUNCS([ecvt])
  AC_CHECK_FUNCS([fcvt])
@@ -8,7 +35,7 @@
  
  AC_CHECK_FUNC([mkdtemp], [have_mkdtemp=yes])
  
-@@ -1149,10 +1150,13 @@ fi
+@@ -1378,10 +1379,13 @@ fi
  ###
  
  AC_CHECK_HEADERS([crypt.h])
@@ -100,3 +127,15 @@
  # include <net/if.h>
  #endif
  #ifndef NO_DNET
+@@ -499,10 +503,7 @@ GuestInfoGetNicInfo(unsigned int maxIPv4
+  *
+  ******************************************************************************
+  */
+-#if defined(__FreeBSD__) || \
+-    defined(__APPLE__) || \
+-    defined(USERWORLD) || \
+-    (defined(__linux__) && defined(NO_DNET))
++#if defined(NO_DNET) && defined(HAVE_GETIFADDRS)
+ 
+ char *
+ GuestInfoGetPrimaryIP(void)
