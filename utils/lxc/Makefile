@@ -177,6 +177,10 @@ define Package/lxc-auto/install
 	$(INSTALL_BIN) ./files/lxc-auto.init $(1)/etc/init.d/lxc-auto
 endef
 
+define Package/lxc-auto/postinst
+[ "$${PKG_UPGRADE}" = "0" ] && /etc/init.d/lxc-auto boot
+endef
+
 define Package/lxc-common/conffiles
 /etc/lxc/default.conf
 /etc/lxc/lxc.conf
