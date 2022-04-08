@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lxc
 PKG_VERSION:=2.1.1
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_LICENSE:=LGPL-2.1-or-later BSD-2-Clause GPL-2.0
 PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
@@ -187,6 +187,10 @@ define Package/lxc-auto/install
 	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/init.d
 	$(INSTALL_CONF) ./files/lxc-auto.config $(1)/etc/config/lxc-auto
 	$(INSTALL_BIN) ./files/lxc-auto.init $(1)/etc/init.d/lxc-auto
+endef
+
+define Package/lxc-auto/postinst
+[ "$${PKG_UPGRADE}" = "0" ] && /etc/init.d/lxc-auto boot
 endef
 
 define Package/lxc-common/conffiles
