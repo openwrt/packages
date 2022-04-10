@@ -59,6 +59,10 @@ transmission() {
 	config_get incomplete_dir "$cfg" 'incomplete_dir' '/var/etc/transmission'
 	local incomplete_dir_enabled
 	config_get incomplete_dir_enabled "$cfg" 'incomplete_dir_enabled' 0
+	local watch_dir
+	config_get watch_dir "$cfg" 'watch_dir' '/var/etc/transmission'
+	local watch_dir_enabled
+	config_get watch_dir_enabled "$cfg" 'watch_dir_enabled' 0
 	local mem_percentage
 	config_get mem_percentage "$cfg" 'mem_percentage' '50'
 	local config_overwrite
@@ -164,6 +168,8 @@ transmission() {
 	procd_add_jail_mount_rw "$config_dir/blocklists"
 	procd_add_jail_mount_rw "$config_dir/stats.json"
 	procd_add_jail_mount_rw "$download_dir"
+	[ "$incomplete_dir_enabled" = "1" ] && procd_add_jail_mount_rw "$incomplete_dir"
+	[ "$watch_dir_enabled" = "1" ] && procd_add_jail_mount_rw "$watch_dir"
 	web_home="${web_home:-/usr/share/transmission/web}"
 	[ -d "$web_home" ] && procd_add_jail_mount "$web_home"
 	[ -f "$ca_bundle_file" ] && procd_add_jail_mount "$ca_bundle_file"
