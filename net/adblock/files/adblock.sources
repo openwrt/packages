@@ -40,7 +40,7 @@
 		"size": "L",
 		"focus": "compilation",
 		"descurl": "https://github.com/privacy-protection-tools/anti-AD/blob/master/README.md"
-	},	
+	},
 	"anudeep": {
 		"url": "https://raw.githubusercontent.com/anudeepND/blacklist/master/adservers.txt",
 		"rule": "/^0\\.0\\.0\\.0[[:space:]]+([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
@@ -82,6 +82,13 @@
 		"size": "S",
 		"focus": "tracking",
 		"descurl": "https://www.gameindustry.eu"
+	},
+	"hblock": {
+		"url": "https://hblock.molinero.dev/hosts_domains.txt",
+		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
+		"size": "XL",
+		"focus": "compilation",
+		"descurl": "https://hblock.molinero.dev"
 	},
 	"notracking": {
 		"url": "https://raw.githubusercontent.com/notracking/hosts-blocklists/master/dnscrypt-proxy/dnscrypt-proxy.blacklist.txt",
@@ -253,7 +260,7 @@
 	},
 	"stopforumspam": {
 		"url": "https://www.stopforumspam.com/downloads/toxic_domains_whole.txt",
-		"rule": "/^[[:space:]]*([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
+		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
 		"size": "S",
 		"focus": "spam",
 		"descurl": "https://www.stopforumspam.com"
