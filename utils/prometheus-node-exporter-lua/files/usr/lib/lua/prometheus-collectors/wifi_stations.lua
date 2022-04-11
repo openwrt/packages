@@ -14,6 +14,8 @@ local function scrape()
   local metric_wifi_station_rx_bitrate = metric('wifi_station_receive_kilobits_per_second', 'gauge')
 
   local metric_wifi_station_tx_packets = metric("wifi_station_transmit_packets_total","counter")
+  local metric_wifi_station_tx_retries = metric("wifi_station_transmit_retries_total","counter")
+  local metric_wifi_station_tx_failures = metric("wifi_station_transmit_failures_total","counter")
   local metric_wifi_station_rx_packets = metric("wifi_station_receive_packets_total","counter")
 
   local metric_wifi_station_tx_bytes = metric('wifi_station_transmit_bytes_total', 'counter')
@@ -52,6 +54,9 @@ local function scrape()
             metric_wifi_station_rx_bitrate(labels, station.rx_rate)
           end
           metric_wifi_station_tx_packets(labels, station.tx_packets)
+          metric_wifi_station_tx_retries_total(labels, station.tx_retries)
+          metric_wifi_station_tx_failures_total(labels, station.tx_failures)
+
           metric_wifi_station_rx_packets(labels, station.rx_packets)
           if station.tx_bytes then
             metric_wifi_station_tx_bytes(labels, station.tx_bytes)
