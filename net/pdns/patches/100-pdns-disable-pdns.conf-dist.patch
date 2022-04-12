@@ -25,7 +25,7 @@
  	ixfrdist.example.yml
  endif
  
-@@ -1313,9 +1311,6 @@ dnspcap2protobuf_LDADD = \
+@@ -1314,9 +1312,6 @@ dnspcap2protobuf_LDADD = \
  	$(BOOST_PROGRAM_OPTIONS_LIBS) \
  	$(RT_LIBS)
  
