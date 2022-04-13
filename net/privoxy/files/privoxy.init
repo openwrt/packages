@@ -169,7 +169,7 @@ stop() {
 	local _PID=$(cat $PIDFILE 2>/dev/null)
 	kill -15 $_PID 2>/dev/null
 	sleep 1			# give time to shutdown
-	local _tmp=$(pgrep privoxy | tr "\n" " ")
+	local _tmp=$(pgrep /usr/sbin/privoxy | tr "\n" " ")
 	if [ -z "$_tmp" ]; then
 		logger -p daemon.notice -t "privoxy[$_PID]" "Shutdown successfully"
 	else
