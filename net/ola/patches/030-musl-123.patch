@@ -1,0 +1,26 @@
+From 418b825ed98d84a5c781267df1e84c3819675d09 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Tue, 12 Apr 2022 20:34:55 -0700
+Subject: [PATCH] ola: fix compilation with musl 1.2.3
+
+musl 1.2.3 defines NULL as nullptr. Cannot use reinterpret_cast with nullptr.
+
+No idea why this is even here. NULL in C == 0.
+---
+ ola/AutoStart.cpp | 4 ----
+ 1 file changed, 4 deletions(-)
+
+--- a/ola/AutoStart.cpp
++++ b/ola/AutoStart.cpp
+@@ -110,11 +110,7 @@ TCPSocket *ConnectToServer(unsigned shor
+     // Try to start the server, we pass --daemon (fork into background) and
+     // --syslog (log to syslog).
+     execlp("olad", "olad", "--daemon", "--syslog",
+-#ifdef __FreeBSD__
+            reinterpret_cast<char*>(0));
+-#else
+-           reinterpret_cast<char*>(NULL));
+-#endif  // __FreeBSD__
+     OLA_WARN << "Failed to exec: " << strerror(errno);
+     _exit(1);
+   }
