@@ -1,3 +1,3 @@
 #!/bin/sh
 
-yq --version 2>&1 | grep "${2#*v}"
+yq --version 2>&1 | grep "$PKG_VERSION"
