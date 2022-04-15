@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=uvol
-PKG_VERSION:=0.7
+PKG_VERSION:=0.8
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
@@ -27,7 +27,7 @@ define Package/uvol
   CATEGORY:=Utilities
   SUBMENU:=Disc
   TITLE:=OpenWrt UBI/LVM volume abstraction
-  DEPENDS:=+blockd +ucode +ucode-mod-fs +ucode-mod-uci
+  DEPENDS:=+blockd +ucode +ucode-mod-fs +ucode-mod-math +ucode-mod-uci
   PKGARCH=all
 endef
 
