@@ -257,7 +257,7 @@ issue_cert()
 
 	handle_credentials() {
 		local credential="$1"
-		eval export $credential
+		eval export `$credential`
 	}
 	config_list_foreach "$section" credentials handle_credentials
 
