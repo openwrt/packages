@@ -238,6 +238,7 @@ GO_PKG_CUSTOM_LDFLAGS= \
 
 GO_PKG_INSTALL_ARGS= \
 	-v \
+	-buildvcs=false \
 	-trimpath \
 	-ldflags "all=$(GO_PKG_DEFAULT_LDFLAGS)" \
 	$(if $(GO_PKG_DEFAULT_GCFLAGS),-gcflags "all=$(GO_PKG_DEFAULT_GCFLAGS)") \
