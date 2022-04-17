@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=btrfs-progs
 PKG_VERSION:=6.11
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/kernel/people/kdave/btrfs-progs
@@ -67,6 +67,7 @@ CONFIGURE_ARGS += \
 	--disable-documentation \
 	--disable-libudev \
 	--disable-python
+
 ifneq ($(CONFIG_BTRFS_PROGS_ZSTD),y)
 CONFIGURE_ARGS += --disable-zstd
 endif
@@ -90,7 +91,8 @@ define Package/btrfs-progs/install
 	$(foreach prog,$(boxprogs),$(LN) btrfs $(1)/usr/bin/$(prog);)
 	$(foreach prog,$(progs),$(INSTALL_BIN) $(PKG_BUILD_DIR)/$(prog) $(1)/usr/bin/;)
 	$(INSTALL_DIR) $(1)/lib/preinit
-	$(INSTALL_BIN) ./files/btrfs-scan.init $(1)/lib/preinit/85_btrfs_scan
+	$(INSTALL_BIN) ./files/btrfs-scan.init $(1)/lib/preinit/85_btrfs_scan_post
+	$(LN) ./85_btrfs_scan_post $(1)/lib/preinit/78_btrfs_scan_pre
 endef
 
 $(eval $(call BuildPackage,btrfs-progs))
