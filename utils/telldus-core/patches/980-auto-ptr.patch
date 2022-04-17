@@ -1,0 +1,20 @@
+--- a/service/DeviceManager.cpp
++++ b/service/DeviceManager.cpp
+@@ -74,7 +74,7 @@ void DeviceManager::executeActionEvent()
+ 	}
+ 	Log::notice("Execute a TellStick Action for device %i", data->deviceId);
+ 
+-	std::auto_ptr<TelldusCore::MutexLocker> deviceLocker(0);
++	std::unique_ptr<TelldusCore::MutexLocker> deviceLocker;
+ 	{
+ 		// devicelist locked
+ 		TelldusCore::MutexLocker deviceListLocker(&d->lock);
+@@ -84,7 +84,7 @@ void DeviceManager::executeActionEvent()
+ 			return;
+ 		}
+ 		// device locked
+-		deviceLocker = std::auto_ptr<TelldusCore::MutexLocker>(new TelldusCore::MutexLocker(it->second));
++		deviceLocker = std::make_unique<TelldusCore::MutexLocker>(it->second);
+ 		device = it->second;
+ 	}  // devicelist unlocked
+ 
