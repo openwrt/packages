@@ -23,6 +23,18 @@ PKG_BUILD_DEPENDS:=argp-standalone
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
+define Download/argp-cmake
+	URL:=@GITHUB/alehaa/CMake-argp/e7e77e68d062708edf055f944d3094b0ce0b11b8/cmake
+	FILE:=Findargp.cmake
+	HASH:=b74e961260d17bc9af868be59053e50739dc94e06cbe73e3fced414a070a29fd
+endef
+
+define Build/Prepare
+	$(eval $(call Download,argp-cmake))
+	$(Build/Prepare/Default)
+	$(CP) $(DL_DIR)/Findargp.cmake $(PKG_BUILD_DIR)/cmake/
+endef
+
 define Package/telldus-core
 	SECTION:=utils
 	CATEGORY:=Utilities
