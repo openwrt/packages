@@ -8,9 +8,9 @@ local function get_devices()
     return devices
 end
 
-local function get_metric_airos6(device_data, label)
+local function get_metric_airos6(device_data, label, label_full)
     -- host
-    metric("ubnt_uptime", "counter", label, device_data['host']['uptime'])
+    metric("ubnt_uptime", "counter", label_full, device_data['host']['uptime'])
     metric("ubnt_totalram", "gauge", label, device_data['host']['totalram'])
     metric("ubnt_freeram", "gauge", label, device_data['host']['freeram'])
     metric("ubnt_cpuload", "gauge", label, device_data['host']['cpuload'])
@@ -40,9 +40,9 @@ local function get_metric_airos6(device_data, label)
     metric("ubnt_count", "gauge", label, device_data['wireless']['count'])
 end
 
-local function get_metric_airos8(device_data, label)
+local function get_metric_airos8(device_data, label, label_full)
     -- host
-    metric("ubnt_uptime", "counter", label, device_data['host']['uptime'])
+    metric("ubnt_uptime", "counter", label_full, device_data['host']['uptime'])
     metric("ubnt_loadavg", "gauge", label, device_data['host']['loadavg'])
     metric("ubnt_totalram", "gauge", label, device_data['host']['totalram'])
     metric("ubnt_freeram", "gauge", label, device_data['host']['freeram'])
@@ -118,19 +118,23 @@ local function get_metric(device)
     local fwversion = device_data['host']['fwversion']
     local essid = device_data['wireless']['essid']
 
-    local label = {
-        device = device,
-        hostname = hostname,
-        devmodel = devmodel,
-        fwversion = fwversion,
-        essid = essid
+    local label_short = {
+       device = device
     }
+
+    local label_full = {
+       device = device,
+       hostname = hostname,
+       devmodel = devmodel,
+       fwversion = fwversion,
+       essid = essid
+   }
 
     -- v6. vs v8.
     if fwversion:find("v8.", 1, true) then
-        get_metric_airos8(device_data, label)
+        get_metric_airos8(device_data, label_short, label_full)
     elseif fwversion:find("v6.", 1, true) then
-        get_metric_airos6(device_data, label)
+        get_metric_airos6(device_data, label_short, label_full)
     end
 end
 
