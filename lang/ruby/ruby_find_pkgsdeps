@@ -26,13 +26,45 @@ end
 
 require_regex=/^require ["']([^"']+)["'].*/
 require_regex_ignore=/^require ([a-zA-Z\$]|["']$|.*\/$)/
-require_ignore=%w{foo rubygems/defaults/operating_system win32console java Win32API
-                  builder/xchar json/pure simplecov win32/sspi rdoc/markdown/literals_1_8 enumerator win32/resolv rbtree
-                  xmlscan/parser xmlscan/scanner xmltreebuilder xml/parser xmlparser xml/encoding-ja xmlencoding-ja
-                  iconv uconv win32ole gettext/po_parser gettext/mo libxml psych.jar psych_jars jar-dependencies thread minitest/proveit
-		bundler pry bcrypt net/http/pipeline capistrano/version rubygems/builder rubygems/format diff/lcs graphviz
-		win32api racc/cparse-jruby.jar profile profiler sorted_set jruby coverage/helpers stackprof webrick/https webrick
-	}
+require_ignore=%w{
+        bundler
+        capistrano/version
+        coverage/helpers
+        dbm
+        diff/lcs
+        foo
+        gettext/mo
+        gettext/po_parser
+        graphviz
+        iconv
+        java
+        jruby
+        json/pure
+        minitest/proveit
+        open3/jruby_windows
+        profile
+        racc/cparse-jruby.jar
+        rubygems/defaults/operating_system
+        sorted_set
+        stackprof
+        thread
+        tracer
+        uconv
+        webrick
+        webrick/https
+        win32api
+        win32console
+        win32ole
+        win32/resolv
+        win32/sspi
+        xml/encoding-ja
+        xmlencoding-ja
+        xml/parser
+        xmlparser
+        xmlscan/scanner
+}
+
+matched_ignored={}
 
 builtin_enc=[
 	Encoding.find("ASCII-8BIT"),
@@ -97,7 +129,8 @@ packages.each do
 					require.gsub!(/\.(so|rb)$/,"")
 
 					if require_ignore.include?(require)
-						#puts "Ignoring #{line} at #{file}:#{lineno} (STR)..."
+						puts "Ignoring #{line} at #{file}:#{lineno} (STR)..."
+                                                matched_ignored[require]=1
 						next
 					end
 
@@ -118,6 +151,11 @@ packages.each do
 	end
 end
 exit(1) if failed
+
+missed_ignored = (require_ignore - matched_ignored.keys).sort.join(",")
+if not missed_ignored.empty?
+    puts "These 'require_ignore' didn't match anything: ",(require_ignore - matched_ignored.keys).sort.join(","),""
+end
 
 # From ruby source: grep -E 'rb_require' -R . | grep -E '\.c:.*rb_require.*'
 # Add dependencies of ruby files from ruby lib.so
@@ -140,22 +178,16 @@ package_files.each do |(pkg,files)|
 	end
 end
 
+# For optional require or for breaking cycle dependencies
 weak_dependency=Hash.new { |h,k| h[k]=[] }
 weak_dependency.merge!({
-"ruby-misc"=>["ruby-openssl","ruby-fiddle"],			#securerandom.rb
-"ruby-debuglib"=>["ruby-readline"],				#debug.rb
-"ruby-drb"=>["ruby-openssl"],				 	#drb/ssl.rb
-"ruby-irb"=>["ruby-rdoc", "ruby-readline"],		 	#irb/cmd/help.rb
-"ruby-gems"=>["ruby-openssl","ruby-io-console",  		#rubygems/commands/cert_command.rb rubygems/user_interaction.rb
-		"ruby-bundler", "ruby-erb", "ruby-rdoc"],	#rubygems.rb rubygems/server.rb
-"ruby-net"=>["ruby-openssl","ruby-io-console","ruby-zlib"], 	#net/*.rb
-"ruby-optparse"=>["ruby-uri","ruby-datetime"],			#optparse/date.rb optparse/uri.rb
-"ruby-racc"=>["ruby-gems"],					#/usr/bin/racc*
-"ruby-rake"=>["ruby-net","ruby-gems"],				#rake/contrib/ftptools.rb /usr/bin/rake
-"ruby-rdoc"=>["ruby-gems","ruby-readline",			#/usr/bin/rdoc and others
-	       "ruby-io-console"],				#rdoc/stats/normal.rb
-"ruby-testunit"=>["ruby-io-console"],			 	#gems/test-unit-3.1.5/lib/test/unit/ui/console/testrunner.rb
-"ruby-net-http"=>["ruby-open-uri"]				#net/http/status.rb
+"ruby-irb"      =>%w{ruby-rdoc ruby-readline},		  # irb/cmd/help.rb
+"ruby-gems"     =>%w{ruby-bundler ruby-rdoc},	          # rubygems.rb rubygems/server.rb
+"ruby-racc"     =>%w{ruby-gems},			  # /usr/bin/racc*
+"ruby-rake"     =>%w{ruby-gems},	                  # /usr/bin/rake
+"ruby-rdoc"     =>%w{ruby-readline},		          # rdoc/ri/driver.rb
+"ruby-testunit" =>%w{ruby-io-console},			  # gems/test-unit-3.1.5/lib/test/unit/ui/console/testrunner.rb
+"ruby-net-http" =>%w{ruby-open-uri}			  # net/http/status.rb
 })
 
 puts "Looking for package dependencies..."
@@ -179,7 +211,7 @@ package_requires_files.each do
 			package_provides[require] = found
 		end
 		if weak_dependency[pkg].include?(found)
-			puts "#{pkg}: #{found} provides #{require} (weak depedendency ignored)"
+                        puts "#{pkg}: #{found} provides #{require} (weak depedendency ignored) for #{files.collect {|file| file.sub("/usr/lib/ruby/","") }.join(",")}"
 		else
 			puts "#{pkg}: #{found} provides #{require} for #{files.collect {|file| file.sub("/usr/lib/ruby/","") }.join(",")}"
 			package_dependencies[pkg] += [found]
