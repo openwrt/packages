@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# bash feeds/packages/lang/ruby/ruby_missingfiles staging_dir/target-i386_i486_musl-1.1.11/ bin/x86/packages/packages/*ruby*_2.3.0*
+# bash feeds/packages/lang/ruby/ruby_missingfiles staging_dir/target-x86_64_musl/ bin/packages/x86_64/packages/*ruby*_3.1.2*
 #
 
 function list_staging_files {
@@ -41,5 +41,5 @@ if ! [ -e "$1" ]; then
 	exit 1
 fi
 printf '%-62s %-62s\n' "Installed in Staging" "From Packages Files"
-diff -d -y <(list_staging_files "$STAGING_DIR") <(list_ipkg_files "$@")
+diff -d -y <(list_staging_files "$STAGING_DIR") <(list_ipkg_files "$@") -W $COLUMNS
 
