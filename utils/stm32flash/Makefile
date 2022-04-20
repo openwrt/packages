@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=stm32flash
-PKG_VERSION:=0.6
+PKG_VERSION:=0.7
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)
-PKG_HASH:=ee9b40d4d3e5cd28b993e08ae2a2c3c559b6bea8730cd7e1d40727dedb1dda09
+PKG_HASH:=c4c9cd8bec79da63b111d15713ef5cc2cd947deca411d35d6e3065e227dc414a
 
 PKG_MAINTAINER:=Christian Pointner <equinox@spreadspace.org>
 PKG_LICENSE:=GPL-2.0-or-later
