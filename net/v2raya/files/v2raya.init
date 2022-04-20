@@ -44,7 +44,7 @@ start_service() {
 	append_env_arg "config" "config" "/etc/v2raya"
 	append_env_arg "config" "ipv6_support" "auto"
 	append_env_arg "config" "log_level" "info"
-	append_env_arg "config" "log_file" "/tmp/v2raya.log"
+	append_env_arg "config" "log_file" "/var/log/v2raya/v2raya.log"
 	append_env_arg "config" "log_max_days" "3"
 	append_env_arg "config" "v2ray_bin"
 	append_env_arg "config" "v2ray_confdir"
