@@ -218,6 +218,22 @@ print_track_elem_indent() {
 	printf '\n' >> "$KEEPALIVED_CONF"
 }
 
+print_track_bfd_indent() {
+	local section="$1"
+	local curr_track_elem="$2"
+	local indent="$3"
+	local name
+
+	config_get name "$section" name
+	[ "$name" != "$curr_track_elem" ] && return 0
+
+	config_get weight "$section" weight
+
+	printf '%b%s' "$indent" "$name" >> "$KEEPALIVED_CONF"
+	[ -n "$weight" ] && printf ' weight %s' "$weight" >> "$KEEPALIVED_CONF"
+	printf '\n' >> "$KEEPALIVED_CONF"
+}
+
 static_routes() {
 	local route
 	config_get route "$1" route
@@ -350,6 +366,18 @@ vrrp_instance() {
 		printf '%b}\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
 	done
 
+	# Handle track_bfd lists
+	for opt in track_bfd; do
+		config_get "$opt" "$1" "$opt"
+		eval optval=\$$opt
+		[ -z "$optval" ] && continue
+		printf '%b%s {\n' "${INDENT_1}" "$opt" >> "$KEEPALIVED_CONF"
+		for t in $optval; do
+			config_foreach print_track_bfd_indent bfd_instance "$t" "$INDENT_2"
+		done
+		printf '%b}\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
+	done
+
 	# Handle simple lists of strings (with no spaces in between)
 	for opt in unicast_peer; do
 		config_get "$opt" "$1" "$opt"
@@ -369,6 +397,19 @@ vrrp_script() {
 	config_section_open "vrrp_script" "$name"
 
 	print_elems_indent "$1" "$INDENT_1" script interval weight fall rise
+
+	config_section_close
+}
+
+
+bfd_instance() {
+	local name
+
+	config_get name "$1" name
+	[ -z "$name" ] && return 0
+	config_section_open "bfd_instance" "$name"
+
+	print_elems_indent "$1" "$INDENT_1" neighbor_ip source_ip min_rx min_tx idle_tx hoplimit max_hops
 
 	config_section_close
 }
@@ -517,6 +558,7 @@ process_config() {
 	config_section_close
 
 	config_foreach_wrapper vrrp_script
+	config_foreach_wrapper bfd_instance
 	config_foreach_wrapper vrrp_sync_group
 	config_foreach_wrapper vrrp_instance
 	config_foreach_wrapper virtual_server
