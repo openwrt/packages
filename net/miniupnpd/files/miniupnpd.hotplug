@@ -13,7 +13,6 @@ tmpconf="/var/etc/miniupnpd.conf"
 external_iface=$(uci -q get upnpd.config.external_iface)
 external_iface6=$(uci -q get upnpd.config.external_iface6)
 external_zone=$(uci -q get upnpd.config.external_zone)
-[ -x "$(command -v nft)" ] && FW="fw4" || FW="fw3"
 
 . /lib/functions/network.sh
 
@@ -21,7 +20,7 @@ if [ -n "$external_iface" ] ; then
 	network_get_device ifname "$external_iface"
 else
 	if [ -n "$external_zone" ] ; then
-		ifname=$($FW -q zone "$external_zone" 2>/dev/null | head -1)
+		ifname=$(fw3 -q zone "$external_zone" 2>/dev/null | head -1)
 	else
 		network_find_wan external_iface && \
 			network_get_device ifname "$external_iface"
@@ -31,7 +30,7 @@ if [ -n "$external_iface6" ] ; then
 	network_get_device ifname6 "$external_iface6"
 else
 	if [ -n "$external_zone" ] ; then
-		ifname6=$($FW -q zone "$external_zone" 2>/dev/null | head -1)
+		ifname6=$(fw3 -q zone "$external_zone" 2>/dev/null | head -1)
 	else
 		network_find_wan6 external_iface6 && \
 			network_get_device ifname6 "$external_iface6"
