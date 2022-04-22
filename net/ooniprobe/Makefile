@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ooniprobe
-PKG_VERSION:=3.5.1
+PKG_VERSION:=3.14.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=probe-cli-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ooni/probe-cli/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=8278f9318ef939c46169dc44e89bbc03915c660912e66be9c4b20d18d00816fe
+PKG_HASH:=a0b71089444c899ba99c7f63f9e05819cdbe964cfa17bb95ca5672343e6aec22
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=BSD-3-Clause
@@ -25,7 +25,6 @@ PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 
 GO_PKG:=github.com/ooni/probe-cli
-GO_PKG_TAGS:=PSIPHON_DISABLE_QUIC
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
