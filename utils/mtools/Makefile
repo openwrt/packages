@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mtools
-PKG_VERSION:=4.0.35
+PKG_VERSION:=4.0.39
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@GNU/mtools
-PKG_HASH:=34769e173751d2f0d891a08c76c80427e929b8ee43438019b8666cc3d7a44749
+PKG_HASH:=397f1e2b7b7a2a270eb7970fa363e445f956926ec51e8170c3869da85b0987bd
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -23,7 +23,6 @@ define Package/mtools
   SUBMENU:=Disc
   TITLE:=Collection of utilities to access MS-DOS disks
   URL:=https://www.gnu.org/software/mtools
-  DEPENDS:=+libbsd
 endef
 
 define Package/mtools/description
