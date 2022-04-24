@@ -22,6 +22,7 @@ readonly _OK_='\033[0;32m\xe2\x9c\x93\033[0m'
 readonly _FAIL_='\033[0;31m\xe2\x9c\x97\033[0m'
 readonly PROG=/usr/sbin/https-dns-proxy
 readonly DEFAULT_BOOTSTRAP='1.1.1.1,1.0.0.1,2606:4700:4700::1111,2606:4700:4700::1001,8.8.8.8,8.8.4.4,2001:4860:4860::8888,2001:4860:4860::8844'
+readonly canaryDomains='use-application-dns.net'
 dnsmasqConfig=''; forceDNS=''; forceDNSPorts='';
 
 str_contains() { [ -n "$1" ] &&[ -n "$2" ] && [ "${1//$2}" != "$1" ]; }
@@ -171,7 +172,6 @@ start_instance() {
 	procd_close_instance
 
 	if [ "$?" ]; then
-		forceDNS=0
 		config_get listen_addr "$cfg" 'listen_addr' '127.0.0.1'
 		config_get listen_port "$cfg" 'listen_port' "$port"
 		if [ "$dnsmasqConfig" = '*' ]; then
@@ -188,6 +188,7 @@ start_instance() {
 		fi
 		output_ok
 		port="$((port+1))"
+		forceDNS=0
 	else
 		output_fail
 	fi
@@ -244,6 +245,11 @@ dnsmasq_doh_server() {
 	local cfg="$1" param="$2" address="${3:-127.0.0.1}" port="$4" i
 	case "$param" in
 		add)
+			if [ "$forceDNS" -ne 0 ]; then
+				for i in $canaryDomains; do
+					uci_add_list_if_new "dhcp.${cfg}.server" "/${i}/"
+				done
+			fi
 			case $address in
 				0.0.0.0|::ffff:0.0.0.0) address='127.0.0.1';;
 				::) address='::1';;
