@@ -12,9 +12,9 @@ local labels = {
     target = b.release.target
 }
 
-b = nil
-u = nil
-ubus = nil
+local b = nil
+local u = nil
+local ubus = nil
 
 local function scrape()
     metric("node_openwrt_info", "gauge", labels, 1)
