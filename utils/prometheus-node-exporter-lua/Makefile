@@ -4,7 +4,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=prometheus-node-exporter-lua
-PKG_VERSION:=2022.04.18
+PKG_VERSION:=2022.04.23
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
@@ -23,7 +23,7 @@ endef
 
 define Package/prometheus-node-exporter-lua
   $(call Package/prometheus-node-exporter-lua/Default)
-  DEPENDS:=+luasocket +lua
+  DEPENDS:=+luasocket +lua +uhttpd +uhttpd-mod-lua
 endef
 
 define Package/prometheus-node-exporter-lua/install
