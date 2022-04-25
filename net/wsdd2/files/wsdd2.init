@@ -59,12 +59,12 @@ start_service() {
 	local board_sku
 
 	[ -e /tmp/sysinfo/board_name ] && {
-		board_vendor="$(awk -F',' '{print $1}' /tmp/sysinfo/board_name | tr ' ' '_' | tr -d ' \n')"
-		board_sku="$(awk -F',' '{print $2}' /tmp/sysinfo/board_name | tr ' ' '_' | tr -d ' \n')"
+		board_vendor="$(awk -F',' '{print $1}' /tmp/sysinfo/board_name | tr ' ' '_' | tr ',' '-' | tr -d ' \n')"
+		board_sku="$(awk -F',' '{print $2}' /tmp/sysinfo/board_name | tr ' ' '_' | tr ',' '-' |  tr -d ' \n')"
 	}
 
 	[ -e /tmp/sysinfo/model ] && {
-		board_model="$(awk -F':' '{print $1}' /tmp/sysinfo/model | tr ' ' '_' | tr -d ' \n')"
+		board_model="$(awk -F':' '{print $1}' /tmp/sysinfo/model | tr ' ' '_' | tr ',' '-' |  tr -d ' \n')"
 	}
 
 	[ -n "$board_vendor" ] && [ -n "$board_model" ] && {
