@@ -1,0 +1,47 @@
+--- a/boost/json/impl/array.ipp
++++ b/boost/json/impl/array.ipp
+@@ -491,8 +491,11 @@ erase(
+     auto const p = &(*t_)[0] +
+         (pos - &(*t_)[0]);
+     destroy(p, p + 1);
+-    relocate(p, p + 1, 1);
+     --t_->size;
++    if(t_->size > 0)
++        relocate(p, p + 1,
++            t_->size - (p -
++                &(*t_)[0]));
+     return p;
+ }
+ 
+--- a/libs/json/test/array.cpp
++++ b/libs/json/test/array.cpp
+@@ -1270,6 +1270,21 @@ public:
+     }
+ 
+     void
++    testIssue692()
++    {
++	    array a;
++	    object obj;
++	    obj["test1"] = "hello";
++	    a.push_back(obj);
++	    a.push_back(obj);
++	    a.push_back(obj);
++	    a.push_back(obj);
++	    a.push_back(obj);
++	    while(a.size())
++		    a.erase(a.begin());
++    }
++
++    void
+     run()
+     {
+         testDestroy();
+@@ -1283,6 +1298,7 @@ public:
+         testExceptions();
+         testEquality();
+         testHash();
++        testIssue692();
+     }
+ };
+ 
