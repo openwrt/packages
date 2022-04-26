@@ -11,13 +11,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=boost
-PKG_VERSION:=1.78.0
-PKG_SOURCE_VERSION:=1_78_0
+PKG_VERSION:=1.79.0
+PKG_SOURCE_VERSION:=1_79_0
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_SOURCE_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)/$(PKG_NAME)/$(PKG_VERSION) https://dl.bintray.com/boostorg/release/$(PKG_VERSION)/source/
-PKG_HASH:=8681f175d4bdb26c52222665793eef08490d7758529330f98d3b29dd0735bccc
+PKG_HASH:=475d589d51a7f8b3ba2ba4eda022b170e562ca3b760ee922c146b6c65856ef39
 
 PKG_MAINTAINER:=Carlos M. Ferreira <carlosmf.pt@gmail.com>
 PKG_LICENSE:=BSL-1.0
@@ -42,7 +42,7 @@ define Package/boost/Default
 endef
 
 define Package/boost/description
-This package provides the Boost v1.78.0 libraries.
+This package provides the Boost v1.79.0 libraries.
 Boost is a set of free, peer-reviewed, portable C++ source libraries.
 
 This package provides the following run-time libraries:
