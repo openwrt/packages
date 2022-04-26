@@ -13,14 +13,13 @@ rexec() {
     local username="$2"
     local password="$3"
     local cmd="$4"
-    raw=$(DROPBEAR_PASSWORD="$password" ssh -y $username@$target "$cmd" 2>/dev/null)
-    ssh_result=$?
+    raw=$(DROPBEAR_PASSWORD="$password" ssh -y "$username@$target" "$cmd" 2>/dev/null)
 }
 
 get_json_dump() {
     local cmd="/usr/www/status.cgi"
-    rexec $* "$cmd"
-    echo $raw
+    rexec "$@" "$cmd"
+    echo "$raw"
 }
 
 handle_device() {
@@ -29,7 +28,6 @@ handle_device() {
     config_get target "$device" target
     config_get username "$device" username
     config_get password "$device" password
-    ssh_result=0
 }
 
 add_device_to_list() {
@@ -41,7 +39,7 @@ list_devices() {
     device_list=""
     config_load ubnt-manager
     config_foreach add_device_to_list device device_list
-    echo $device_list
+    echo "$device_list"
 }
 
 usage() {
@@ -59,7 +57,7 @@ while [ "$1" != "" ]; do
     -t | --target)
         shift
         target=$1
-        handle_device $target
+        handle_device "$target"
         ;;
     -j | --json)
         json=1
@@ -74,6 +72,6 @@ while [ "$1" != "" ]; do
     shift
 done
 
-if [ ! -z $json ]; then
-    get_json_dump $target $username $password | sed 's/Content-Type:\ application\/json//'
+if [ -n "$json" ]; then
+    get_json_dump "$target" "$username" "$password" | sed 's/Content-Type:\ application\/json//'
 fi
