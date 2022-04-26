@@ -41,9 +41,9 @@ endef
 
 define Package/tang/install
 	$(INSTALL_DIR)	$(1)/usr/bin
-	$(INSTALL_DIR)	$(1)/usr/libexec
+	$(INSTALL_DIR)	$(1)/usr/sbin
 	$(INSTALL_BIN)	$(PKG_INSTALL_DIR)/usr/bin/tang-show-keys	$(1)/usr/bin/
-	$(INSTALL_BIN)	$(PKG_INSTALL_DIR)/usr/libexec/tangd*		$(1)/usr/libexec/
+	$(INSTALL_BIN)  $(PKG_INSTALL_DIR)/usr/libexec/tangd*		$(1)/usr/sbin/
 	$(INSTALL_DIR)  $(1)/etc/init.d
 	$(INSTALL_BIN)  ./files/tang.init $(1)/etc/init.d/tang
 	$(INSTALL_DIR)  $(1)/etc/config
