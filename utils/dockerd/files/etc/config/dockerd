@@ -21,8 +21,15 @@ config globals 'globals'
 #	list registry_mirrors 'https://<my-docker-mirror-host>'
 #	list registry_mirrors 'https://hub.docker.com'
 
-# Docker ignores fw3 rules and by default all external source IPs are allowed to connect to the Docker host.
+# Docker doesn't work well out of the box with fw4. This is because Docker relies on a compatibility layer that
+# naively translates iptables rules. For the best compatibility replace the following dependencies:
+# `firewall4` -> `firewall`
+# `iptables-nft` -> `iptables-legacy`
+# `ip6tables-nft` -> `ip6tables-legacy`
+
+# Docker undermines the fw3 rules. By default all external source IPs are allowed to connect to the Docker host.
 # See https://docs.docker.com/network/iptables/ for more details.
+
 # firewall config changes are only additive i.e firewall will need to be restarted first to clear old changes,
 # then docker restarted to load in new changes.
 config firewall 'firewall'

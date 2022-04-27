@@ -1,3 +1,10 @@
+config DOCKER_CHECK_CONFIG
+	bool "Installs check-config.sh with dependencies"
+	default n
+	depends on PACKAGE_dockerd
+	select PACKAGE_bash
+	select PACKAGE_kmod-ikconfig
+
 # These options are mostly specified by https://github.com/moby/moby/blob/master/contrib/check-config.sh
 
 config DOCKER_CGROUP_OPTIONS
@@ -61,6 +68,11 @@ endmenu
 menu "Storage"
 	depends on PACKAGE_dockerd
 
+	config DOCKER_STO_DEVMAPPER
+	bool "Enables support for devmapper snapshotting"
+		default n
+		select PACKAGE_libdevmapper
+
 	config DOCKER_STO_EXT4
 		bool "Enables support for ext3 or ext4 as the backing filesystem"
 		default n
@@ -71,4 +83,5 @@ menu "Storage"
 		bool "Enables support for btrfs as the backing filesystem"
 		default n
 		select KERNEL_BTRFS_FS_POSIX_ACL
+		select PACKAGE_btrfs-progs
 endmenu
