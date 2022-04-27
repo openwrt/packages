@@ -34,22 +34,20 @@ define Package/dockerd
   TITLE:=Docker Community Edition Daemon
   URL:=https://www.docker.com/
   DEPENDS:=$(GO_ARCH_DEPENDS) \
-    +btrfs-progs \
     +ca-certificates \
     +containerd \
-    +iptables-legacy \
+    +iptables \
     +iptables-mod-extra \
-    +iptables-mod-nat-extra \
+    +IPV6:ip6tables \
+    +IPV6:kmod-ipt-nat6 \
     +KERNEL_SECCOMP:libseccomp \
-    +kmod-br-netfilter \
-    +kmod-ikconfig \
-    +kmod-nf-conntrack-netlink \
+    +kmod-ipt-nat \
+    +kmod-ipt-physdev \
     +kmod-nf-ipvs \
-    +kmod-nf-nat \
     +kmod-veth \
-    +libdevmapper \
     +libnetwork \
-    +tini
+    +tini \
+    +uci-firewall
   USERID:=docker:docker
   MENU:=1
 endef
@@ -146,8 +144,11 @@ define Package/dockerd/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bundles/binary-daemon/dockerd $(1)/usr/bin/
 
 	$(INSTALL_DIR) $(1)/opt/docker/
+
+  ifeq ($(CONFIG_DOCKER_CHECK_CONFIG),y)
 	$(INSTALL_DIR) $(1)/usr/share/docker/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/contrib/check-config.sh $(1)/usr/share/docker/
+  endif
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/dockerd.init $(1)/etc/init.d/dockerd
