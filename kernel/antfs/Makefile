@@ -20,7 +20,7 @@ define KernelPackage/fs-antfs
 	TITLE:=AVM NTFS Read/Write Driver
 	FILES:=$(PKG_BUILD_DIR)/antfs.ko
 	AUTOLOAD:=$(call AutoLoad,30,antfs,1)
-	DEPENDS:=+kmod-nls-base
+	DEPENDS:=+kmod-nls-base @LINUX_5_10
 endef
 
 define KernelPackage/fs-antfs/description
