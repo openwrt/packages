@@ -11,7 +11,7 @@ PKG_RELEASE:=$(AUTORELEASE)
 PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=7b2fb8e934ddd50731893bdcdb00fc8c0315916f9fcd50d22c7cc1a95ab634e2
 
-PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
+PKG_MAINTAINER:=Šimon Bořek <simon.borek@nic.cz>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.rst
 PKG_CPE_ID:=cpe:/a:palletsprojects:flask
