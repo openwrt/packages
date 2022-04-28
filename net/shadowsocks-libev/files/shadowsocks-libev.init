@@ -156,7 +156,7 @@ ss_rules() {
 	json_add_string o_nft_udp_extra "$nft_udp_extra"
 	json_dump -i >"$tmp.json"
 
-	if ucode -S -i "$ssrules_uc" -E "$tmp.json" >"$tmp.nft" \
+	if utpl -S -F "$tmp.json" "$ssrules_uc" >"$tmp.nft" \
 		&& ! cmp -s "$tmp.nft" "$ssrules_nft"; then
 		echo "table inet chk {include \"$tmp.nft\";}" >"$tmp.nft.chk"
 		if nft -f "$tmp.nft.chk" -c; then
