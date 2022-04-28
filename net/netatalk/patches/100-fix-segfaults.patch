@@ -1,0 +1,795 @@
+From 687106e4269c2e926e0452a88c2d72ac95779a95 Mon Sep 17 00:00:00 2001
+From: Andrew Walker <awalker@ixsystems.com>
+Date: Mon, 11 Apr 2022 09:13:09 -0400
+Subject: [PATCH 1/4] add handling for cases where ad_entry() returns NULL
+
+With recent CVE fixes, ad_enty() may now return NULL. This
+commit adds basic error handling for these cases and asserting
+where such a return is totally unexpected. In case of
+ad_getid() and ad_forcegetid(), return CNID_INVALID rather
+than 0 to clarify for future people investigating this that
+a 0 here is an indication of error.
+
+In case of new_ad_header(), the valid_data_len of the
+adouble data may still be zero. This causes subsequent
+ad_entry() calls within new_ad_header() to fail. As such,
+overwrite valid_data-Len with AD_DATASZ2 or AD_DATASZ_EA
+depending on how adouble data is stored on disk.
+
+Another side-effect of the fix is that ad_entry() for
+ADEID_DID on ea-backed adouble data will return NULL. In
+this case, add explicit check for the backend before
+attempting to get the DID.
+
+Signed-off-by: Andrew Walker <awalker@ixsystems.com>
+---
+ etc/afpd/directory.c           |  15 +++-
+ etc/afpd/file.c                |  25 +++++--
+ etc/afpd/volume.c              |   7 +-
+ etc/cnid_dbd/cmd_dbd_scanvol.c |   9 ++-
+ libatalk/adouble/ad_attr.c     | 130 +++++++++++++++++++++++++++------
+ libatalk/adouble/ad_conv.c     |   4 +-
+ libatalk/adouble/ad_date.c     |  17 ++++-
+ libatalk/adouble/ad_flush.c    |  27 ++++++-
+ libatalk/adouble/ad_open.c     |  39 ++++++----
+ 9 files changed, 215 insertions(+), 58 deletions(-)
+
+--- a/etc/afpd/directory.c
++++ b/etc/afpd/directory.c
+@@ -1426,6 +1426,7 @@ int getdirparams(const AFPObj *obj,
+     struct maccess  ma;
+     struct adouble  ad;
+     char        *data, *l_nameoff = NULL, *utf_nameoff = NULL;
++    char        *ade = NULL;
+     int         bit = 0, isad = 0;
+     uint32_t           aint;
+     uint16_t       ashort;
+@@ -1520,7 +1521,10 @@ int getdirparams(const AFPObj *obj,
+ 
+         case DIRPBIT_FINFO :
+             if ( isad ) {
+-                memcpy( data, ad_entry( &ad, ADEID_FINDERI ), 32 );
++                ade = ad_entry(&ad, ADEID_FINDERI);
++                AFP_ASSERT(ade != NULL);
++
++                memcpy( data, ade, 32 );
+             } else { /* no appledouble */
+                 memset( data, 0, 32 );
+                 /* dot files are by default visible */
+@@ -1744,6 +1748,7 @@ int setdirparams(struct vol *vol, struct
+     struct timeval      tv;
+ 
+     char                *upath;
++    char                *ade = NULL;
+     struct dir          *dir;
+     int         bit, isad = 0;
+     int                 cdate, bdate;
+@@ -1905,6 +1910,8 @@ int setdirparams(struct vol *vol, struct
+                 fflags &= htons(~FINDERINFO_ISHARED);
+                 memcpy(finder_buf + FINDERINFO_FRFLAGOFF, &fflags, sizeof(uint16_t));
+                 /* #2802236 end */
++                ade = ad_entry(&ad, ADEID_FINDERI);
++                AFP_ASSERT(ade != NULL);
+ 
+                 if (  dir->d_did == DIRDID_ROOT ) {
+                     /*
+@@ -1915,10 +1922,10 @@ int setdirparams(struct vol *vol, struct
+                      * behavior one sees when mounting above another mount
+                      * point.
+                      */
+-                    memcpy( ad_entry( &ad, ADEID_FINDERI ), finder_buf, 10 );
+-                    memcpy( ad_entry( &ad, ADEID_FINDERI ) + 14, finder_buf + 14, 18 );
++                    memcpy( ade, finder_buf, 10 );
++                    memcpy( ade + 14, finder_buf + 14, 18 );
+                 } else {
+-                    memcpy( ad_entry( &ad, ADEID_FINDERI ), finder_buf, 32 );
++                    memcpy( ade, finder_buf, 32 );
+                 }
+             }
+             break;
+--- a/etc/afpd/file.c
++++ b/etc/afpd/file.c
+@@ -296,6 +296,7 @@ int getmetadata(const AFPObj *obj,
+ {
+     char		*data, *l_nameoff = NULL, *upath;
+     char                *utf_nameoff = NULL;
++    char		*ade = NULL;
+     int			bit = 0;
+     uint32_t		aint;
+     cnid_t              id = 0;
+@@ -497,7 +498,10 @@ int getmetadata(const AFPObj *obj,
+             }
+             else {
+                 if ( adp ) {
+-                    memcpy(fdType, ad_entry( adp, ADEID_FINDERI ), 4 );
++                    ade = ad_entry(adp, ADEID_FINDERI);
++                    AFP_ASSERT(ade != NULL);
++
++                    memcpy(fdType, ade, 4);
+ 
+                     if ( memcmp( fdType, "TEXT", 4 ) == 0 ) {
+                         achar = '\x04';
+@@ -576,8 +580,19 @@ int getmetadata(const AFPObj *obj,
+                10.3 clients freak out. */
+ 
+     	    aint = st->st_mode;
+- 	    if (adp) {
+-	        memcpy(fdType, ad_entry( adp, ADEID_FINDERI ), 4 );
++            /*
++             * ad_open() does not initialize adouble header
++             * for symlinks. Hence this should be skipped to
++             * avoid AFP_ASSERT here. Decision was made to
++             * not alter ad_open() behavior so that
++             * improper ops on symlink adoubles will be
++             * more visible (assert).
++             */
++            if (adp && (ad_meta_fileno(adp) != AD_SYMLINK)) {
++                ade = ad_entry(adp, ADEID_FINDERI);
++                AFP_ASSERT(ade != NULL);
++
++	        memcpy(fdType, ade, 4);
+                 if ( memcmp( fdType, "slnk", 4 ) == 0 ) {
+ 	 	    aint |= S_IFLNK;
+             	}
+@@ -839,6 +854,7 @@ int setfilparams(const AFPObj *obj, stru
+     struct extmap	*em;
+     int			bit, isad = 1, err = AFP_OK;
+     char                *upath;
++    char		*ade = NULL;
+     u_char              achar, *fdType, xyy[4]; /* uninitialized, OK 310105 */
+     uint16_t		ashort, bshort, oshort;
+     uint32_t		aint;
+@@ -989,7 +1005,7 @@ int setfilparams(const AFPObj *obj, stru
+     /* second try with adouble open 
+     */
+     if (ad_open(adp, upath, ADFLAGS_HF | ADFLAGS_RDWR | ADFLAGS_CREATE, 0666) < 0) {
+-        LOG(log_debug, logtype_afpd, "setfilparams: ad_open_metadata error");
++        LOG(log_debug, logtype_afpd, "setfilparams: ad_open_metadata error: %s", strerror(errno));
+         /*
+          * For some things, we don't need an adouble header:
+          * - change of modification date
+@@ -1021,6 +1037,9 @@ int setfilparams(const AFPObj *obj, stru
+ 
+         switch(  bit ) {
+         case FILPBIT_ATTR :
++            if (isad == 0) {
++                break;
++            }
+             ad_getattr(adp, &bshort);
+             oshort = bshort;
+             if ( ntohs( ashort ) & ATTRBIT_SETCLR ) {
+@@ -1034,15 +1053,26 @@ int setfilparams(const AFPObj *obj, stru
+             ad_setattr(adp, bshort);
+             break;
+         case FILPBIT_CDATE :
++            if (isad == 0) {
++                break;
++            }
+             ad_setdate(adp, AD_DATE_CREATE, cdate);
+             break;
+         case FILPBIT_MDATE :
+             break;
+         case FILPBIT_BDATE :
++            if (isad == 0) {
++                break;
++            }
+             ad_setdate(adp, AD_DATE_BACKUP, bdate);
+             break;
+         case FILPBIT_FINFO :
+-            if (default_type( ad_entry( adp, ADEID_FINDERI ))
++            if (isad == 0) {
++                break;
++            }
++            ade = ad_entry(adp, ADEID_FINDERI);
++            AFP_ASSERT(ade != NULL);
++            if (default_type(ade)
+                     && ( 
+                      ((em = getextmap( path->m_name )) &&
+                       !memcmp(finder_buf, em->em_type, sizeof( em->em_type )) &&
+@@ -1053,7 +1083,7 @@ int setfilparams(const AFPObj *obj, stru
+             )) {
+                 memcpy(finder_buf, ufinderi, 8 );
+             }
+-            memcpy(ad_entry( adp, ADEID_FINDERI ), finder_buf, 32 );
++            memcpy(ade, finder_buf, 32 );
+             break;
+         case FILPBIT_UNIXPR :
+             if (upriv_bit) {
+@@ -1061,9 +1091,15 @@ int setfilparams(const AFPObj *obj, stru
+             }
+             break;
+         case FILPBIT_PDINFO :
++            if (isad == 0) {
++                break;
++            }
++            ade = ad_entry(adp, ADEID_FINDERI);
++            AFP_ASSERT(ade != NULL);
++
+             if (obj->afp_version < 30) { /* else it's UTF8 name */
+-                memcpy(ad_entry( adp, ADEID_FINDERI ), fdType, 4 );
+-                memcpy(ad_entry( adp, ADEID_FINDERI ) + 4, "pdos", 4 );
++                memcpy(ade, fdType, 4 );
++                memcpy(ade + 4, "pdos", 4 );
+                 break;
+             }
+             /* fallthrough */
+--- a/etc/afpd/volume.c
++++ b/etc/afpd/volume.c
+@@ -305,6 +305,7 @@ static int getvolparams(const AFPObj *ob
+     VolSpace            xbfree, xbtotal; /* extended bytes */
+     char        *data, *nameoff = NULL;
+     char                *slash;
++    char        *ade = NULL;
+ 
+     LOG(log_debug, logtype_afpd, "getvolparams: Volume '%s'", vol->v_localname);
+ 
+@@ -328,8 +329,10 @@ static int getvolparams(const AFPObj *ob
+             slash = vol->v_path;
+         if (ad_getentryoff(&ad, ADEID_NAME)) {
+             ad_setentrylen( &ad, ADEID_NAME, strlen( slash ));
+-            memcpy(ad_entry( &ad, ADEID_NAME ), slash,
+-                   ad_getentrylen( &ad, ADEID_NAME ));
++            ade = ad_entry(&ad, ADEID_NAME);
++            AFP_ASSERT(ade != NULL);
++
++            memcpy(ade, slash, ad_getentrylen( &ad, ADEID_NAME ));
+         }
+         vol_setdate(vol->v_vid, &ad, st->st_mtime);
+         ad_flush(&ad);
+--- a/etc/cnid_dbd/cmd_dbd_scanvol.c
++++ b/etc/cnid_dbd/cmd_dbd_scanvol.c
+@@ -560,6 +560,7 @@ static int read_addir(void)
+ static cnid_t check_cnid(const char *name, cnid_t did, struct stat *st, int adfile_ok)
+ {
+     int adflags = ADFLAGS_HF;
++    int err;
+     cnid_t db_cnid, ad_cnid;
+     struct adouble ad;
+ 
+@@ -602,7 +603,13 @@ static cnid_t check_cnid(const char *nam
+                     cwdbuf, name, strerror(errno));
+             return CNID_INVALID;
+         }
+-        ad_setid( &ad, st->st_dev, st->st_ino, db_cnid, did, stamp);
++        err = ad_setid( &ad, st->st_dev, st->st_ino, db_cnid, did, stamp);
++        if (err == -1) {
++            dbd_log(LOGSTD, "Error setting new CNID, malformed adouble: '%s/%s'",
++                    cwdbuf, name);
++            ad_close(&ad, ADFLAGS_HF);
++            return CNID_INVALID;
++        }
+         ad_flush(&ad);
+         ad_close(&ad, ADFLAGS_HF);
+     }
+--- a/libatalk/adouble/ad_attr.c
++++ b/libatalk/adouble/ad_attr.c
+@@ -2,8 +2,10 @@
+ #include "config.h"
+ #endif /* HAVE_CONFIG_H */
+ 
++#include <stdlib.h>
+ #include <string.h>
+ #include <arpa/inet.h>
++#include <atalk/util.h>
+ #include <atalk/adouble.h>
+ #include <atalk/logger.h>
+ 
+@@ -22,10 +24,17 @@ int ad_getattr(const struct adouble *ad,
+     *attr = 0;
+ 
+     if (ad_getentryoff(ad, ADEID_AFPFILEI)) {
+-        memcpy(attr, ad_entry(ad, ADEID_AFPFILEI) + AFPFILEIOFF_ATTR, 2);
++        char *adp = NULL;
++
++        adp = ad_entry(ad, ADEID_AFPFILEI);
++        AFP_ASSERT(adp != NULL);
++        memcpy(attr, adp + AFPFILEIOFF_ATTR, 2);
+ 
+         /* Now get opaque flags from FinderInfo */
+-        memcpy(&fflags, ad_entry(ad, ADEID_FINDERI) + FINDERINFO_FRFLAGOFF, 2);
++        adp = ad_entry(ad, ADEID_FINDERI);
++        AFP_ASSERT(adp != NULL);
++        memcpy(&fflags, adp + FINDERINFO_FRFLAGOFF, 2);
++
+         if (fflags & htons(FINDERINFO_INVISIBLE))
+             *attr |= htons(ATTRBIT_INVISIBLE);
+         else
+@@ -61,10 +70,15 @@ int ad_setattr(const struct adouble *ad,
+         attr &= ~(ATTRBIT_MULTIUSER | ATTRBIT_NOWRITE | ATTRBIT_NOCOPY);
+ 
+     if (ad_getentryoff(ad, ADEID_AFPFILEI) && ad_getentryoff(ad, ADEID_FINDERI)) {
+-        memcpy(ad_entry(ad, ADEID_AFPFILEI) + AFPFILEIOFF_ATTR, &attr, sizeof(attr));
++        char *adp = NULL;
++
++        adp = ad_entry(ad, ADEID_FINDERI);
++        AFP_ASSERT(adp != NULL);
++
++        memcpy(adp + AFPFILEIOFF_ATTR, &attr, sizeof(attr));
+             
+         /* Now set opaque flags in FinderInfo too */
+-        memcpy(&fflags, ad_entry(ad, ADEID_FINDERI) + FINDERINFO_FRFLAGOFF, 2);
++        memcpy(&fflags, adp + FINDERINFO_FRFLAGOFF, 2);
+         if (attr & htons(ATTRBIT_INVISIBLE))
+             fflags |= htons(FINDERINFO_INVISIBLE);
+         else
+@@ -77,7 +91,7 @@ int ad_setattr(const struct adouble *ad,
+         } else
+             fflags &= htons(~FINDERINFO_ISHARED);
+ 
+-        memcpy(ad_entry(ad, ADEID_FINDERI) + FINDERINFO_FRFLAGOFF, &fflags, 2);
++        memcpy(adp + FINDERINFO_FRFLAGOFF, &fflags, 2);
+     }
+ 
+     return 0;
+@@ -86,54 +100,114 @@ int ad_setattr(const struct adouble *ad,
+ /* --------------
+  * save file/folder ID in AppleDoubleV2 netatalk private parameters
+  * return 1 if resource fork has been modified
++ * return -1 on error.
+  */
+ int ad_setid (struct adouble *adp, const dev_t dev, const ino_t ino , const uint32_t id, const cnid_t did, const void *stamp)
+ {
+     uint32_t tmp;
++    char *ade = NULL;
+ 
+     ad_setentrylen( adp, ADEID_PRIVID, sizeof(id));
+     tmp = id;
+     if (adp->ad_vers == AD_VERSION_EA)
+         tmp = htonl(tmp);
+-    memcpy(ad_entry( adp, ADEID_PRIVID ), &tmp, sizeof(tmp));
++
++    ade = ad_entry(adp, ADEID_PRIVID);
++    if (ade == NULL) {
++        LOG(log_warning, logtype_ad, "ad_setid: failed to set ADEID_PRIVID\n");
++        return -1;
++    }
++    memcpy(ade, &tmp, sizeof(tmp));
+ 
+     ad_setentrylen( adp, ADEID_PRIVDEV, sizeof(dev_t));
++    ade = ad_entry(adp, ADEID_PRIVDEV);
++    if (ade == NULL) {
++        LOG(log_warning, logtype_ad, "ad_setid: failed to set ADEID_PRIVDEV\n");
++        return -1;
++    }
++
+     if ((adp->ad_options & ADVOL_NODEV)) {
+-        memset(ad_entry( adp, ADEID_PRIVDEV ), 0, sizeof(dev_t));
++        memset(ade, 0, sizeof(dev_t));
+     } else {
+-        memcpy(ad_entry( adp, ADEID_PRIVDEV ), &dev, sizeof(dev_t));
++        memcpy(ade, &dev, sizeof(dev_t));
+     }
+ 
+     ad_setentrylen( adp, ADEID_PRIVINO, sizeof(ino_t));
+-    memcpy(ad_entry( adp, ADEID_PRIVINO ), &ino, sizeof(ino_t));
+ 
+-    ad_setentrylen( adp, ADEID_DID, sizeof(did));
+-    memcpy(ad_entry( adp, ADEID_DID ), &did, sizeof(did));
++    ade = ad_entry(adp, ADEID_PRIVINO);
++    if (ade == NULL) {
++        LOG(log_warning, logtype_ad, "ad_setid: failed to set ADEID_PRIVINO\n");
++        return -1;
++    }
++    memcpy(ade, &ino, sizeof(ino_t));
++
++    if (adp->ad_vers != AD_VERSION_EA) {
++        ad_setentrylen( adp, ADEID_DID, sizeof(did));
++
++        ade = ad_entry(adp, ADEID_DID);
++        if (ade == NULL) {
++            LOG(log_warning, logtype_ad, "ad_setid: failed to set ADEID_DID\n");
++            return -1;
++        }
++        memcpy(ade, &did, sizeof(did));
++    }
+ 
+     ad_setentrylen( adp, ADEID_PRIVSYN, ADEDLEN_PRIVSYN);
+-    memcpy(ad_entry( adp, ADEID_PRIVSYN ), stamp, ADEDLEN_PRIVSYN);
++    ade = ad_entry(adp, ADEID_PRIVSYN);
++    if (ade == NULL) {
++        LOG(log_warning, logtype_ad, "ad_setid: failed to set ADEID_PRIVSYN\n");
++        return -1;
++    }
++    memcpy(ade, stamp, ADEDLEN_PRIVSYN);
+ 
+     return 1;
+ }
+ 
+-/* ----------------------------- */
++/*
++ * Retrieve stored file / folder. Callers should treat a return of CNID_INVALID (0) as an invalid value.
++ */
+ uint32_t ad_getid (struct adouble *adp, const dev_t st_dev, const ino_t st_ino , const cnid_t did, const void *stamp _U_)
+ {
+     uint32_t aint = 0;
+     dev_t  dev;
+     ino_t  ino;
+-    cnid_t a_did;
++    cnid_t a_did = 0;
+ 
+     if (adp) {
+         if (sizeof(dev_t) == ad_getentrylen(adp, ADEID_PRIVDEV)) {
+-            memcpy(&dev, ad_entry(adp, ADEID_PRIVDEV), sizeof(dev_t));
+-            memcpy(&ino, ad_entry(adp, ADEID_PRIVINO), sizeof(ino_t));
+-            memcpy(&a_did, ad_entry(adp, ADEID_DID), sizeof(cnid_t));
++            char *ade = NULL;
++            ade = ad_entry(adp, ADEID_PRIVDEV);
++            if (ade == NULL) {
++                LOG(log_warning, logtype_ad, "ad_getid: failed to retrieve ADEID_PRIVDEV\n");
++                return CNID_INVALID;
++            }
++            memcpy(&dev, ade, sizeof(dev_t));
++            ade = ad_entry(adp, ADEID_PRIVINO);
++            if (ade == NULL) {
++                LOG(log_warning, logtype_ad, "ad_getid: failed to retrieve ADEID_PRIVINO\n");
++                return CNID_INVALID;
++            }
++            memcpy(&ino, ade, sizeof(ino_t));
++
++            if (adp->ad_vers != AD_VERSION_EA) {
++                /* ADEID_DID is not stored for AD_VERSION_EA */
++                ade = ad_entry(adp, ADEID_DID);
++                if (ade == NULL) {
++                    LOG(log_warning, logtype_ad, "ad_getid: failed to retrieve ADEID_DID\n");
++                    return CNID_INVALID;
++                }
++                memcpy(&a_did, ade, sizeof(cnid_t));
++            }
+ 
+             if (((adp->ad_options & ADVOL_NODEV) || (dev == st_dev))
+                 && ino == st_ino
+-                && (!did || a_did == did) ) {
+-                memcpy(&aint, ad_entry(adp, ADEID_PRIVID), sizeof(aint));
++                && (!did || a_did == 0 || a_did == did) ) {
++                ade = ad_entry(adp, ADEID_PRIVID);
++                if (ade == NULL) {
++                    LOG(log_warning, logtype_ad, "ad_getid: failed to retrieve ADEID_PRIVID\n");
++                    return CNID_INVALID;
++                }
++                memcpy(&aint, ade, sizeof(aint));
+                 if (adp->ad_vers == AD_VERSION2)
+                     return aint;
+                 else
+@@ -141,7 +215,7 @@ uint32_t ad_getid (struct adouble *adp,
+             }
+         }
+     }
+-    return 0;
++    return CNID_INVALID;
+ }
+ 
+ /* ----------------------------- */
+@@ -150,13 +224,18 @@ uint32_t ad_forcegetid (struct adouble *
+     uint32_t aint = 0;
+ 
+     if (adp) {
+-        memcpy(&aint, ad_entry(adp, ADEID_PRIVID), sizeof(aint));
++        char *ade = NULL;
++        ade = ad_entry(adp, ADEID_PRIVID);
++        if (ade == NULL) {
++            return CNID_INVALID;
++        }
++        memcpy(&aint, ade, sizeof(aint));
+         if (adp->ad_vers == AD_VERSION2)
+             return aint;
+         else
+             return ntohl(aint);
+     }
+-    return 0;
++    return CNID_INVALID;
+ }
+ 
+ /* -----------------
+@@ -168,8 +247,13 @@ int ad_setname(struct adouble *ad, const
+     if ((len = strlen(path)) > ADEDLEN_NAME)
+         len = ADEDLEN_NAME;
+     if (path && ad_getentryoff(ad, ADEID_NAME)) {
++        char *ade = NULL;
+         ad_setentrylen( ad, ADEID_NAME, len);
+-        memcpy(ad_entry( ad, ADEID_NAME ), path, len);
++        ade = ad_entry(ad, ADEID_NAME);
++        if (ade == NULL) {
++            return -1;
++        }
++        memcpy(ade, path, len);
+         return 1;
+     }
+     return 0;
+--- a/libatalk/adouble/ad_conv.c
++++ b/libatalk/adouble/ad_conv.c
+@@ -93,6 +93,7 @@ static int ad_conv_v22ea_hf(const char *
+         goto copy;
+     if (ad_getentryoff(&adv2, ADEID_FINDERI)
+         && (ad_getentrylen(&adv2, ADEID_FINDERI) == ADEDLEN_FINDERI)
++        && (ad_entry(&adv2, ADEID_FINDERI) != NULL)
+         && (memcmp(ad_entry(&adv2, ADEID_FINDERI), emptyad, ADEDLEN_FINDERI) != 0))
+         goto copy;
+     if (ad_getentryoff(&adv2, ADEID_FILEDATESI)) {
+@@ -101,7 +102,7 @@ static int ad_conv_v22ea_hf(const char *
+         if ((ctime != mtime) || (mtime != sp->st_mtime))
+             goto copy;
+     }
+-    if (ad_getentryoff(&adv2, ADEID_AFPFILEI)) {
++    if (ad_getentryoff(&adv2, ADEID_AFPFILEI) && (ad_entry(&adv2, ADEID_AFPFILEI) != NULL)) {
+         if (memcmp(ad_entry(&adv2, ADEID_AFPFILEI), &afpinfo, ADEDLEN_AFPFILEI) != 0)
+             goto copy;
+     }
+@@ -115,6 +116,7 @@ copy:
+     EC_ZERO_LOGSTR( ad_open(&adea, path, adflags | ADFLAGS_HF | ADFLAGS_RDWR | ADFLAGS_CREATE),
+                     "ad_conv_v22ea_hf(\"%s\"): error creating metadata EA: %s",
+                     fullpathname(path), strerror(errno));
++    AFP_ASSERT(ad_refresh(path, &adea) == 0);
+     EC_ZERO_LOG( ad_copy_header(&adea, &adv2) );
+     ad_flush(&adea);
+ 
+--- a/libatalk/adouble/ad_date.c
++++ b/libatalk/adouble/ad_date.c
+@@ -10,6 +10,7 @@ int ad_setdate(struct adouble *ad,
+                unsigned int dateoff, uint32_t date)
+ {
+     int xlate = (dateoff & AD_DATE_UNIX);
++    char *ade = NULL;
+ 
+     dateoff &= AD_DATE_MASK;
+     if (xlate)
+@@ -20,7 +21,12 @@ int ad_setdate(struct adouble *ad,
+ 
+     if (dateoff > AD_DATE_ACCESS)
+         return -1;
+-    memcpy(ad_entry(ad, ADEID_FILEDATESI) + dateoff, &date, sizeof(date));
++
++    ade = ad_entry(ad, ADEID_FILEDATESI);
++    if (ade == NULL) {
++        return -1;
++    }
++    memcpy(ade + dateoff, &date, sizeof(date));
+ 
+     return 0;
+ }
+@@ -29,6 +35,7 @@ int ad_getdate(const struct adouble *ad,
+                unsigned int dateoff, uint32_t *date)
+ {
+     int xlate = (dateoff & AD_DATE_UNIX);
++    char *ade = NULL;
+ 
+     dateoff &= AD_DATE_MASK;
+     if (!ad_getentryoff(ad, ADEID_FILEDATESI))
+@@ -36,7 +43,13 @@ int ad_getdate(const struct adouble *ad,
+ 
+     if (dateoff > AD_DATE_ACCESS)
+         return -1;
+-    memcpy(date, ad_entry(ad, ADEID_FILEDATESI) + dateoff, sizeof(uint32_t));
++
++
++    ade = ad_entry(ad, ADEID_FILEDATESI);
++    if (ade == NULL) {
++        return -1;
++    }
++    memcpy(date, ade + dateoff, sizeof(uint32_t));
+ 
+     if (xlate)
+         *date = AD_DATE_TO_UNIX(*date);
+--- a/libatalk/adouble/ad_flush.c
++++ b/libatalk/adouble/ad_flush.c
+@@ -151,6 +151,7 @@ int ad_rebuild_adouble_header_osx(struct
+     uint32_t       temp;
+     uint16_t       nent;
+     char           *buf;
++    char           *ade = NULL;
+ 
+     LOG(log_debug, logtype_ad, "ad_rebuild_adouble_header_osx");
+ 
+@@ -184,7 +185,10 @@ int ad_rebuild_adouble_header_osx(struct
+     memcpy(buf, &temp, sizeof( temp ));
+     buf += sizeof( temp );
+ 
+-    memcpy(adbuf + ADEDOFF_FINDERI_OSX, ad_entry(ad, ADEID_FINDERI), ADEDLEN_FINDERI);
++    ade = ad_entry(ad, ADEID_FINDERI);
++    AFP_ASSERT(ade != NULL);
++
++    memcpy(adbuf + ADEDOFF_FINDERI_OSX, ade, ADEDLEN_FINDERI);
+ 
+     /* rfork */
+     temp = htonl( EID_DISK(ADEID_RFORK) );
+@@ -211,8 +215,12 @@ int ad_copy_header(struct adouble *add,
+ {
+     uint32_t       eid;
+     uint32_t       len;
++    char *src = NULL;
++    char *dst = NULL;
+ 
+     for ( eid = 0; eid < ADEID_MAX; eid++ ) {
++        src = dst = NULL;
++
+         if ( ads->ad_eid[ eid ].ade_off == 0 || add->ad_eid[ eid ].ade_off == 0 )
+             continue;
+ 
+@@ -226,17 +234,28 @@ int ad_copy_header(struct adouble *add,
+             continue;
+         default:
+             ad_setentrylen( add, eid, len );
+-            memcpy( ad_entry( add, eid ), ad_entry( ads, eid ), len );
++            dst = ad_entry(add, eid);
++            AFP_ASSERT(dst != NULL);
++
++            src = ad_entry(ads, eid);
++            AFP_ASSERT(src != NULL);
++
++            memcpy( dst, src, len );
+         }
+     }
+     add->ad_rlen = ads->ad_rlen;
+ 
+     if (((ads->ad_vers == AD_VERSION2) && (add->ad_vers == AD_VERSION_EA))
+         || ((ads->ad_vers == AD_VERSION_EA) && (add->ad_vers == AD_VERSION2))) {
++        src = dst = NULL;
+         cnid_t id;
+-        memcpy(&id, ad_entry(add, ADEID_PRIVID), sizeof(cnid_t));
++
++        dst = ad_entry(add, ADEID_PRIVID);
++        AFP_ASSERT(dst != NULL);
++
++        memcpy(&id, dst, sizeof(cnid_t));
+         id = htonl(id);
+-        memcpy(ad_entry(add, ADEID_PRIVID), &id, sizeof(cnid_t));
++        memcpy(dst, &id, sizeof(cnid_t));
+     }
+     return 0;
+ }
+--- a/libatalk/adouble/ad_open.c
++++ b/libatalk/adouble/ad_open.c
+@@ -140,17 +140,17 @@ static struct adouble_fops ad_adouble_ea
+ 
+ static const struct entry entry_order2[ADEID_NUM_V2 + 1] = {
+     {ADEID_NAME,        ADEDOFF_NAME_V2,     ADEDLEN_INIT},
+-    {ADEID_COMMENT,     ADEDOFF_COMMENT_V2,  ADEDLEN_INIT},
++    {ADEID_COMMENT,     ADEDOFF_COMMENT_V2,  ADEDLEN_COMMENT},
+     {ADEID_FILEDATESI,  ADEDOFF_FILEDATESI,  ADEDLEN_FILEDATESI},
+     {ADEID_FINDERI,     ADEDOFF_FINDERI_V2,  ADEDLEN_FINDERI},
+     {ADEID_DID,         ADEDOFF_DID,         ADEDLEN_DID},
+     {ADEID_AFPFILEI,    ADEDOFF_AFPFILEI,    ADEDLEN_AFPFILEI},
+     {ADEID_SHORTNAME,   ADEDOFF_SHORTNAME,   ADEDLEN_INIT},
+     {ADEID_PRODOSFILEI, ADEDOFF_PRODOSFILEI, ADEDLEN_PRODOSFILEI},
+-    {ADEID_PRIVDEV,     ADEDOFF_PRIVDEV,     ADEDLEN_INIT},
+-    {ADEID_PRIVINO,     ADEDOFF_PRIVINO,     ADEDLEN_INIT},
+-    {ADEID_PRIVSYN,     ADEDOFF_PRIVSYN,     ADEDLEN_INIT},
+-    {ADEID_PRIVID,      ADEDOFF_PRIVID,      ADEDLEN_INIT},
++    {ADEID_PRIVDEV,     ADEDOFF_PRIVDEV,     ADEDLEN_PRIVDEV},
++    {ADEID_PRIVINO,     ADEDOFF_PRIVINO,     ADEDLEN_PRIVINO},
++    {ADEID_PRIVSYN,     ADEDOFF_PRIVSYN,     ADEDLEN_PRIVSYN},
++    {ADEID_PRIVID,      ADEDOFF_PRIVID,      ADEDLEN_PRIVID},
+     {ADEID_RFORK,       ADEDOFF_RFORK_V2,    ADEDLEN_INIT},
+     {0, 0, 0}
+ };
+@@ -158,13 +158,13 @@ static const struct entry entry_order2[A
+ /* Using Extended Attributes */
+ static const struct entry entry_order_ea[ADEID_NUM_EA + 1] = {
+     {ADEID_FINDERI,    ADEDOFF_FINDERI_EA,    ADEDLEN_FINDERI},
+-    {ADEID_COMMENT,    ADEDOFF_COMMENT_EA,    ADEDLEN_INIT},
++    {ADEID_COMMENT,    ADEDOFF_COMMENT_EA,    ADEDLEN_COMMENT},
+     {ADEID_FILEDATESI, ADEDOFF_FILEDATESI_EA, ADEDLEN_FILEDATESI},
+     {ADEID_AFPFILEI,   ADEDOFF_AFPFILEI_EA,   ADEDLEN_AFPFILEI},
+-    {ADEID_PRIVDEV,    ADEDOFF_PRIVDEV_EA,    ADEDLEN_INIT},
+-    {ADEID_PRIVINO,    ADEDOFF_PRIVINO_EA,    ADEDLEN_INIT},
+-    {ADEID_PRIVSYN,    ADEDOFF_PRIVSYN_EA,    ADEDLEN_INIT},
+-    {ADEID_PRIVID,     ADEDOFF_PRIVID_EA,     ADEDLEN_INIT},
++    {ADEID_PRIVDEV,    ADEDOFF_PRIVDEV_EA,    ADEDLEN_PRIVDEV},
++    {ADEID_PRIVINO,    ADEDOFF_PRIVINO_EA,    ADEDLEN_PRIVINO},
++    {ADEID_PRIVSYN,    ADEDOFF_PRIVSYN_EA,    ADEDLEN_PRIVSYN},
++    {ADEID_PRIVID,     ADEDOFF_PRIVID_EA,     ADEDLEN_PRIVID},
+     {0, 0, 0}
+ };
+ 
+@@ -360,15 +360,22 @@ static int new_ad_header(struct adouble
+     const struct entry  *eid;
+     uint16_t            ashort;
+     struct stat         st;
++    char                *adp = NULL;
+ 
+     LOG(log_debug, logtype_ad, "new_ad_header(\"%s\")", path);
+ 
+     if (ad_init_offsets(ad) != 0)
+         return -1;
+ 
++    if (ad->valid_data_len == 0) {
++        ad->valid_data_len = ad->ad_vers == AD_VERSION_EA ? AD_DATASZ_EA : AD_DATASZ2;
++    }
++    adp = ad_entry(ad, ADEID_FINDERI);
++    AFP_ASSERT(adp != NULL);
++
+     /* set default creator/type fields */
+-    memcpy(ad_entry(ad, ADEID_FINDERI) + FINDERINFO_FRTYPEOFF,"\0\0\0\0", 4);
+-    memcpy(ad_entry(ad, ADEID_FINDERI) + FINDERINFO_FRCREATOFF,"\0\0\0\0", 4);
++    memcpy(adp + FINDERINFO_FRTYPEOFF,"\0\0\0\0", 4);
++    memcpy(adp + FINDERINFO_FRCREATOFF,"\0\0\0\0", 4);
+ 
+     /* make things invisible */
+     if ((ad->ad_options & ADVOL_INVDOTS)
+@@ -378,14 +385,16 @@ static int new_ad_header(struct adouble
+         ashort = htons(ATTRBIT_INVISIBLE);
+         ad_setattr(ad, ashort);
+         ashort = htons(FINDERINFO_INVISIBLE);
+-        memcpy(ad_entry(ad, ADEID_FINDERI) + FINDERINFO_FRFLAGOFF, &ashort, sizeof(ashort));
++        memcpy(adp + FINDERINFO_FRFLAGOFF, &ashort, sizeof(ashort));
+     }
+ 
+     /* put something sane in the date fields */
+     if (stp == NULL) {
+         stp = &st;
+-        if (lstat(path, &st) != 0)
++        if (lstat(path, &st) != 0) {
++            ad->valid_data_len = 0;
+             return -1;
++        }
+     }
+     ad_setdate(ad, AD_DATE_CREATE | AD_DATE_UNIX, stp->st_mtime);
+     ad_setdate(ad, AD_DATE_MODIFY | AD_DATE_UNIX, stp->st_mtime);
+@@ -417,7 +426,7 @@ static int parse_entries(struct adouble
+ 
+         if (!eid
+             || eid > ADEID_MAX
+-            || off >= valid_data_len
++            || ((eid != ADEID_RFORK) && (off >= valid_data_len))
+             || ((eid != ADEID_RFORK) && (off + len >  valid_data_len)))
+         {
+             LOG(log_warning, logtype_ad, "parse_entries: bogus eid: %u, off: %u, len: %u",
+@@ -782,16 +791,41 @@ static int ad_header_read_ea(const char
+         EC_FAIL;
+     }
+ 
++    /*
++     * It is possible for AFP metadata to contain a zero-length
++     * comment. This will cause ad_entry(ad, ADEID_COMMENT) to return NULL
++     * but should not be treated as an error condition.
++     * Since recent CVE fixes have introduced new behavior regarding
++     * ad_entry() output. For now, we will AFP_ASSERT() in EC_CLEANUP to prevent
++     * altering on-disk info. This does introduce an avenue to DOS
++     * the netatalk server by locally writing garbage to the EA. At this
++     * point, the outcome is an acceptable risk to prevent unintended
++     * changes to metadata.
++     */
+     if (nentries != ADEID_NUM_EA
+         || !ad_entry(ad, ADEID_FINDERI)
++#if 0
+         || !ad_entry(ad, ADEID_COMMENT)
++#endif
+         || !ad_entry(ad, ADEID_FILEDATESI)
+         || !ad_entry(ad, ADEID_AFPFILEI)
+         || !ad_entry(ad, ADEID_PRIVDEV)
+         || !ad_entry(ad, ADEID_PRIVINO)
+         || !ad_entry(ad, ADEID_PRIVSYN)
+         || !ad_entry(ad, ADEID_PRIVID)) {
+-        LOG(log_error, logtype_ad, "ad_header_read_ea(\"%s\"): invalid metadata EA", fullpathname(path));
++        LOG(log_error, logtype_ad,
++            "ad_header_read_ea(\"%s\"): invalid metadata EA "
++            "this is now being treated as a fatal error. "
++            "if you see this log entry, please file a bug ticket "
++            "with your upstream vendor and attach the generated "
++            "core file.", path ? fullpathname(path) : "UNKNOWN");
++
++        errno = EINVAL;
++        EC_FAIL;
++    }
++
++    if (!ad_entry(ad, ADEID_COMMENT) &&
++        (ad->ad_eid[ADEID_COMMENT].ade_len != 0)) {
+         errno = EINVAL;
+         EC_FAIL;
+     }
+@@ -805,6 +839,8 @@ static int ad_header_read_ea(const char
+ #endif
+ 
+ EC_CLEANUP:
++    AFP_ASSERT(!(ret != 0 && errno == EINVAL));
++#if 0
+     if (ret != 0 && errno == EINVAL) {
+         become_root();
+         (void)sys_removexattr(path, AD_EA_META);
+@@ -812,6 +848,7 @@ EC_CLEANUP:
+         LOG(log_error, logtype_ad, "ad_header_read_ea(\"%s\"): deleted invalid metadata EA", fullpathname(path), nentries);
+         errno = ENOENT;
+     }
++#endif
+     EC_EXIT;
+ }
+ 
