@@ -1,0 +1,43 @@
+--- a/fsck_hfs.tproj/cache.h
++++ b/fsck_hfs.tproj/cache.h
+@@ -29,6 +29,7 @@
+ #ifndef _CACHE_H_
+ #define _CACHE_H_
+ #include <stdint.h>
++#include <sys/types.h>
+ 
+ /* Different values for initializing cache */
+ enum {
+--- a/fsck_hfs.tproj/dfalib/Scavenger.h
++++ b/fsck_hfs.tproj/dfalib/Scavenger.h
+@@ -46,7 +46,7 @@
+ #include <sys/kauth.h>
+ #include <sys/syslimits.h>
+ #endif
+-#include <sys/errno.h>
++#include <errno.h>
+ #include <sys/param.h>
+ #include <linux/sysctl.h>
+ #include <sys/mount.h>
+--- a/fsck_hfs.tproj/utilities.c
++++ b/fsck_hfs.tproj/utilities.c
+@@ -55,7 +55,7 @@
+ #include <stddef.h>
+ #include <sys/types.h>
+ #include <sys/stat.h>
+-#include <sys/errno.h>
++#include <errno.h>
+ #if LINUX
+ #include <limits.h>
+ #include <signal.h>
+--- a/newfs_hfs.tproj/makehfs.c
++++ b/newfs_hfs.tproj/makehfs.c
+@@ -36,7 +36,7 @@
+ #include <time.h>
+ #include "missing.h"
+ #endif
+-#include <sys/errno.h>
++#include <errno.h>
+ #include <sys/stat.h>
+ #include <linux/sysctl.h>
+ #if !LINUX
