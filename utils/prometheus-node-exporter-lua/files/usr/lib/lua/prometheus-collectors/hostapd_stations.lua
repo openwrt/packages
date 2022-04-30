@@ -1,52 +1,78 @@
 local ubus = require "ubus"
 local bit32 = require "bit32"
 
+local function get_wifi_interfaces()
+  local conn = ubus.connect()
+  local ubuslist = conn:objects()
+  local interfaces = {}
+
+  for _,net in ipairs(ubuslist) do
+    if net.find(net,"hostapd.") then
+      local ifname = net:gsub("hostapd.", "")
+      table.insert(interfaces, ifname);
+    end
+  end
+  conn:close()
+  return interfaces;
+end
+
+local function is_ubus_interface(ubus_interfaces, interface)
+  for i=1,#ubus_interfaces do
+    if ubus_interfaces[i] == interface then return true end
+  end
+  return false
+end
+
 local function get_wifi_interface_labels()
   local u = ubus.connect()
   local status = u:call("network.wireless", "status", {})
   local interfaces = {}
+  local ubus_interfaces = get_wifi_interfaces()
 
   for _, dev_table in pairs(status) do
     for _, intf in ipairs(dev_table['interfaces']) do
       local cfg = intf['config']
 
-      -- Migrate this to ubus interface once it exposes all interesting labels
-      local handle = io.popen("hostapd_cli -i " .. cfg['ifname'] .." status")
-      local hostapd_status = handle:read("*a")
-      handle:close()
+      if is_ubus_interface(ubus_interfaces, cfg['ifname']) then
 
-      local hostapd = {}
-      local bss_idx = -1
-      for line in hostapd_status:gmatch("[^\r\n]+") do
-        local name, value = string.match(line, "(.+)=(.+)")
-        if name == "freq" then
-          hostapd["freq"] = value
-        elseif name == "channel" then
-          hostapd["channel"] = value
-        -- hostapd gives us all bss on the relevant phy, find the one we're interested in
-        elseif string.match(name, "bss%[%d%]") then
-          if value == cfg['ifname'] then
-            bss_idx = tonumber(string.match(name, "bss%[(%d)%]"))
-          end
-        elseif bss_idx >= 0 then
-          if name == "bssid[" .. bss_idx .. "]" then
-            hostapd["bssid"] = value
-          elseif name == "ssid[" .. bss_idx .. "]" then
-            hostapd["ssid"] = value
+        -- Migrate this to ubus interface once it exposes all interesting labels
+        local handle = io.popen("hostapd_cli -i " .. cfg['ifname'] .." status")
+        local hostapd_status = handle:read("*a")
+        handle:close()
+
+        local hostapd = {}
+        local bss_idx = -1
+        for line in hostapd_status:gmatch("[^\r\n]+") do
+          local name, value = string.match(line, "(.+)=(.+)")
+          if name == "freq" then
+            hostapd["freq"] = value
+          elseif name == "channel" then
+            hostapd["channel"] = value
+          -- hostapd gives us all bss on the relevant phy, find the one we're interested in
+          elseif string.match(name, "bss%[%d%]") then
+            if value == cfg['ifname'] then
+              bss_idx = tonumber(string.match(name, "bss%[(%d)%]"))
+            end
+          elseif bss_idx >= 0 then
+            if name == "bssid[" .. bss_idx .. "]" then
+              hostapd["bssid"] = value
+            elseif name == "ssid[" .. bss_idx .. "]" then
+              hostapd["ssid"] = value
+            end
           end
         end
+
+        local labels = {
+          vif = cfg['ifname'],
+          ssid = hostapd['ssid'],
+          bssid = hostapd['bssid'],
+          encryption = cfg['encryption'], -- In a mixed scenario it would be good to know if A or B was used
+          frequency = hostapd['freq'],
+          channel = hostapd['channel'],
+        }
+
+        table.insert(interfaces, labels)
       end
-
-      local labels = {
-        vif = cfg['ifname'],
-        ssid = hostapd['ssid'],
-        bssid = hostapd['bssid'],
-        encryption = cfg['encryption'], -- In a mixed scenario it would be good to know if A or B was used
-        frequency = hostapd['freq'],
-        channel = hostapd['channel'],
-      }
-
-      table.insert(interfaces, labels)
     end
   end
 
