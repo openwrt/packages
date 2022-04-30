@@ -1,4 +1,4 @@
-From 8c24328d41a3a25db3b3d73baf86ed2c71160774 Mon Sep 17 00:00:00 2001
+From 1f03e3ddf714063da645cf62d9df08cbcb3ddfb3 Mon Sep 17 00:00:00 2001
 From: Moritz Warning <moritzwarning@web.de>
 Date: Mon, 30 Nov 2020 12:25:42 +0100
 Subject: [PATCH 2/3] fix compilation for arm_cortex-a7+neon
@@ -12,7 +12,7 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
 
 --- a/node/Constants.hpp
 +++ b/node/Constants.hpp
-@@ -118,7 +118,7 @@
+@@ -123,7 +123,7 @@
  #include <immintrin.h>
  #endif
  
