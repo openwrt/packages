@@ -47,17 +47,3 @@
  obj power    : power.cpp ;
  obj riscv    : riscv.cpp ;
  obj sparc    : sparc.cpp ;
---- a/libs/log/build/log-arch-config.jam
-+++ b/libs/log/build/log-arch-config.jam
-@@ -56,9 +56,9 @@ rule deduce-architecture ( properties *
-         {
-             return arm ;
-         }
--        else if [ configure.builds /boost/architecture//mips1 : $(properties) : mips1 ]
-+        else if [ configure.builds /boost/architecture//mips : $(properties) : mips ]
-         {
--            return mips1 ;
-+            return mips ;
-         }
-         else if [ configure.builds /boost/architecture//power : $(properties) : power ]
-         {
