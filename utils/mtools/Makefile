@@ -29,7 +29,9 @@ define Package/mtools/description
   Mtools is a collection of utilities to access MS-DOS disks from GNU and Unix without mounting them.
 endef
 
-CONFIGURE_VARS += ac_cv_have_x="have_x=no"
+CONFIGURE_VARS += \
+	ac_cv_have_x="have_x=no" \
+	ac_cv_lib_bsd_main=no
 
 define Package/mtools/install
 	$(INSTALL_DIR) $(1)/usr/bin
