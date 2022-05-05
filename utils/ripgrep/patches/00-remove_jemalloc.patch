@@ -1,0 +1,24 @@
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -56,9 +56,6 @@ version = "2.33.0"
+ default-features = false
+ features = ["suggestions"]
+ 
+-[target.'cfg(all(target_env = "musl", target_pointer_width = "64"))'.dependencies.jemallocator]
+-version = "0.3.0"
+-
+ [build-dependencies]
+ lazy_static = "1.1.0"
+ 
+--- a/crates/core/main.rs
++++ b/crates/core/main.rs
+@@ -39,9 +39,6 @@ mod subject;
+ //
+ // Moreover, we only do this on 64-bit systems since jemalloc doesn't support
+ // i686.
+-#[cfg(all(target_env = "musl", target_pointer_width = "64"))]
+-#[global_allocator]
+-static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
+ 
+ type Result<T> = ::std::result::Result<T, Box<dyn error::Error>>;
+ 
