@@ -1,7 +1,7 @@
 menu "Configuration"
 	config PACKAGE_knot-resolver_dnstap
 		bool "Build with dnstap support"
-		default n
+		default y
 		help
 			knot-resolver dnstap module supports logging DNS responses
 			to a unix socket in dnstap format using fstrm framing library.
