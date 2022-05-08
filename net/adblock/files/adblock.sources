@@ -182,7 +182,7 @@
 		"descurl": "https://easylist.to"
 	},
 	"reg_kr": {
-		"url": "https://raw.githubusercontent.com/List-KR/List-KR/master/filters-share/adserver.txt",
+		"url": "https://raw.githubusercontent.com/List-KR/List-KR/master/filters-share/adservice.txt",
 		"rule": "BEGIN{FS=\"[|^]\"}/^\\|\\|([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+\\^(\\$third-party)?$/{print tolower($3)}",
 		"size": "S",
 		"focus": "reg_korea",
