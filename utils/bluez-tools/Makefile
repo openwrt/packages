@@ -26,6 +26,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/bluez-tools-$(PKG_VERSION)
 PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/bluez-tools
   SECTION:=Utilities
