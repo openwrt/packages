@@ -1,6 +1,6 @@
 --- a/src/network_inspectors/appid/appid_inspector.cc
 +++ b/src/network_inspectors/appid/appid_inspector.cc
-@@ -66,7 +66,6 @@ static THREAD_LOCAL PacketTracer::Tracer
+@@ -68,7 +68,6 @@ static THREAD_LOCAL PacketTracer::Tracer
  //           should probably be done outside of appid
  static void openssl_cleanup()
  {
