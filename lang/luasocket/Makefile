@@ -8,13 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luasocket
-PKG_SOURCE_DATE:=2019-04-21
-PKG_SOURCE_VERSION:=733af884f1aa18ff469bf3c4d18810e815853211
-PKG_RELEASE:=1
+PKG_VERSION:=3.0.0
+PKG_RELEASE:=$(AUTORELEASE)
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/diegonehab/luasocket
-PKG_MIRROR_HASH:=60aef7544426cae3e6c7560a6e4ad556a04b879ca0ad0311645b2c513c872128
+PKG_SOURCE:=v$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://github.com/lunarmodules/luasocket/archive/refs/tags
+PKG_HASH:=04d98e40edcee7c7c5f83f0e8ba5503d14b56280e20daceee9e34ed7cf8f1b15
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=MIT
