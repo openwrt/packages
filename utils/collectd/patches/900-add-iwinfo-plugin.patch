@@ -98,7 +98,7 @@
 
  The I<Java> plugin makes it possible to write extensions for collectd in Java.
 --- /dev/null
-+++ b/iwinfo.c
++++ b/src/iwinfo.c
 @@ -0,0 +1,187 @@
 +/**
 + * collectd - src/iwinfo.c
