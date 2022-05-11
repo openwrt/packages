@@ -23,7 +23,6 @@ PKG_FIXUP:=autoreconf
 PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/host-build.mk
 
 define Package/audit/Default
   TITLE:=Audit Daemon
@@ -138,7 +137,6 @@ define Package/audit/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/auditd $(1)/usr/sbin/
 endef
 
-$(eval $(call HostBuild))
 $(eval $(call BuildPackage,libauparse))
 $(eval $(call BuildPackage,audit-utils))
 $(eval $(call BuildPackage,audit))
