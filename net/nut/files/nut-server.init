@@ -147,6 +147,7 @@ build_driver_config() {
 	echo "[$cfg]" >>"$UPS_C"
 
 	get_write_driver_config "$cfg" bus
+	get_write_driver_config "$cfg" cable
 	get_write_driver_config "$cfg" community
 	get_write_driver_config "$cfg" desc
 	get_write_driver_config "$cfg" driver "usbhid-ups"
