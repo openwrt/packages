@@ -1,8 +1,8 @@
 --- a/meson.build
 +++ b/meson.build
-@@ -431,7 +431,7 @@ if get_option('default_library') == 'sha
-   plugins_pkgconfig_install_dir = disabler()
- endif
+@@ -457,7 +457,7 @@ pkgconfig_subdirs = ['gstreamer-1.0']
+ 
+ meson_pkg_config_file_fixup_script = find_program('scripts/meson-pkg-config-file-fixup.py')
  
 -python3 = import('python').find_installation()
 +python3 = 'python3'
