@@ -1,7 +1,5 @@
-Index: collectd-5.12.0/configure.ac
-===================================================================
---- collectd-5.12.0.orig/configure.ac
-+++ collectd-5.12.0/configure.ac
+--- a/configure.ac
++++ b/configure.ac
 @@ -713,6 +713,11 @@ AC_CACHE_CHECK([whether clock_boottime a
    ]
  )
@@ -46,10 +44,8 @@ Index: collectd-5.12.0/configure.ac
  AC_MSG_RESULT([    java  . . . . . . . . $enable_java])
  AC_MSG_RESULT([    load  . . . . . . . . $enable_load])
  AC_MSG_RESULT([    logfile . . . . . . . $enable_logfile])
-Index: collectd-5.12.0/src/collectd.conf.in
-===================================================================
---- collectd-5.12.0.orig/src/collectd.conf.in
-+++ collectd-5.12.0/src/collectd.conf.in
+--- a/src/collectd.conf.in
++++ b/src/collectd.conf.in
 @@ -147,6 +147,7 @@
  #@BUILD_PLUGIN_IPTABLES_TRUE@LoadPlugin iptables
  #@BUILD_PLUGIN_IPVS_TRUE@LoadPlugin ipvs
@@ -71,10 +67,8 @@ Index: collectd-5.12.0/src/collectd.conf.in
  #<Plugin java>
  #      JVMArg "-verbose:jni"
  #      JVMArg "-Djava.class.path=@prefix@/share/collectd/java/collectd-api.jar"
-Index: collectd-5.12.0/src/collectd.conf.pod
-===================================================================
---- collectd-5.12.0.orig/src/collectd.conf.pod
-+++ collectd-5.12.0/src/collectd.conf.pod
+--- a/src/collectd.conf.pod
++++ b/src/collectd.conf.pod
 @@ -4343,6 +4343,27 @@ and all other interrupts are collected.
 
  =back
@@ -103,10 +97,8 @@ Index: collectd-5.12.0/src/collectd.conf.pod
  =head2 Plugin C<java>
 
  The I<Java> plugin makes it possible to write extensions for collectd in Java.
-Index: collectd-5.12.0/src/iwinfo.c
-===================================================================
 --- /dev/null
-+++ collectd-5.12.0/src/iwinfo.c
++++ b/iwinfo.c
 @@ -0,0 +1,187 @@
 +/**
 + * collectd - src/iwinfo.c
@@ -295,10 +287,8 @@ Index: collectd-5.12.0/src/iwinfo.c
 +       plugin_register_config("iwinfo", iwinfo_config, config_keys, config_keys_num);
 +       plugin_register_read("iwinfo", iwinfo_read);
 +}
-Index: collectd-5.12.0/src/types.db
-===================================================================
---- collectd-5.12.0.orig/src/types.db
-+++ collectd-5.12.0/src/types.db
+--- a/src/types.db
++++ b/src/types.db
 @@ -253,6 +253,10 @@ serial_octets           rx:DERIVE:0:U, t
  signal_noise            value:GAUGE:U:0
  signal_power            value:GAUGE:U:0
@@ -318,10 +308,8 @@ Index: collectd-5.12.0/src/types.db
  swap                    value:GAUGE:0:1099511627776
  swap_io                 value:DERIVE:0:U
  sysevent                value:GAUGE:0:1
-Index: collectd-5.12.0/Makefile.am
-===================================================================
---- collectd-5.12.0.orig/Makefile.am
-+++ collectd-5.12.0/Makefile.am
+--- a/Makefile.am
++++ b/Makefile.am
 @@ -1246,6 +1246,14 @@ irq_la_LDFLAGS = $(PLUGIN_LDFLAGS)
  irq_la_LIBADD = libignorelist.la
  endif
