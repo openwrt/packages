@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-bad
-PKG_VERSION:=1.18.5
+PKG_VERSION:=1.20.2
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=gst-plugins-bad-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gst-plugins-bad/
-PKG_HASH:=a164923b94f0d08578a6fcaeaac6e0c05da788a46903a1086870e9ca45ad678e
+PKG_HASH:=4adc4c05f41051f8136b80cda99b0d049a34e777832f9fea7c5a70347658745b
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-bad-$(PKG_VERSION)
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
@@ -194,6 +194,7 @@ MESON_ARGS += \
 	-Dfluidsynth=disabled \
 	-Dgl=disabled \
 	-Dgme=disabled \
+	-Dgpl=enabled \
 	-Dgsm=disabled \
 	-Dipcpipeline=disabled \
 	-Diqa=disabled \
@@ -201,7 +202,6 @@ MESON_ARGS += \
 	-Dkms=disabled \
 	-Dladspa=disabled \
 	-Dlibde265=disabled \
-	-Dlibmms=disabled \
 	-Dlv2=disabled \
 	-Dmediafoundation=disabled \
 	-Dmicrodns=disabled \
@@ -212,7 +212,6 @@ MESON_ARGS += \
 	-Dmusepack=disabled \
 	-Dneon=disabled \
 	-Dnvcodec=disabled \
-	-Dofa=disabled \
 	-Dopenal=disabled \
 	-Dopenexr=disabled \
 	-Dopenh264=disabled \
