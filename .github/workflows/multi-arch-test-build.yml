@@ -42,7 +42,7 @@ jobs:
         run: |
           # only detect packages with changes
           PKG_ROOTS=$(find . -name Makefile | grep -v ".*/src/Makefile" | sed -e 's@./\(.*\)/Makefile@\1/@')
-          CHANGES=$(git diff --diff-filter=d --name-only origin/$BRANCH)
+          CHANGES=$(git diff --diff-filter=d --name-only origin/$BRANCH...)
 
           for ROOT in $PKG_ROOTS; do
             for CHANGE in $CHANGES; do
