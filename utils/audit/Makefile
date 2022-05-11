@@ -19,6 +19,7 @@ PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:linux_audit_project:linux_audit
 
 PKG_FIXUP:=autoreconf
+PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)-packages/$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_USE_MIPS16:=0
 
