@@ -13,8 +13,8 @@ PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/rd235/nsutils.git
-PKG_SOURCE_DATE:=2022-02-27
-PKG_SOURCE_VERSION:=d70867d11d455c19aece0c75791dae5c40b88ca6
+PKG_SOURCE_DATE:=2022-05-09
+PKG_SOURCE_VERSION:=905c12d46f676984f9a0f63981757f0928c2d22e
 PKG_MIRROR_HASH:=94b33cde9240bad9803e2c796437d59c57405e3da95cdb762c9ba8fe041e9643
 
 PKG_FIXUP:=autoreconf
@@ -29,6 +29,7 @@ define Package/nsutils
   CATEGORY:=Utilities
   TITLE:=Linux namespace utilities
   DEPENDS:=+libbsd +libcap
+  URL:=https://github.com/rd235/nsutils
 endef
 
 define Package/nsutils/description
