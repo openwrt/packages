@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2016 Rafał Miłecki <rafal@milecki.pl>
+# Copyright (C) 2022 Oskari Rauta <oskari.rauta@gmail.com>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,27 +8,29 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nsutils
-PKG_VERSION:=0.2
+BASE_VERSION:=0.2
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/rd235/nsutils.git
-PKG_SOURCE_DATE:=2022-05-09
-PKG_SOURCE_VERSION:=905c12d46f676984f9a0f63981757f0928c2d22e
-PKG_MIRROR_HASH:=94b33cde9240bad9803e2c796437d59c57405e3da95cdb762c9ba8fe041e9643
+PKG_SOURCE_DATE:=2022-05-13
+PKG_SOURCE_VERSION:=d6570bdec8435dfc781b95f6b404dedf965294dd
+PKG_MIRROR_HASH:=3f058b7bf0c1b941f0039a7951ffa053f6f0ecf89abdc3d6cbceb4824d52b0de
 
-PKG_FIXUP:=autoreconf
+PKG_VERSION:=$(BASE_VERSION)-$(PKG_SOURCE_DATE)-$(call version_abbrev,$(PKG_SOURCE_VERSION))
+
 PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/nsutils
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Linux namespace utilities
-  DEPENDS:=+libbsd +libcap
+  DEPENDS:=+libcap
   URL:=https://github.com/rd235/nsutils
 endef
 
