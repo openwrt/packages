@@ -16,7 +16,7 @@ emailrelay_instance()
 	config_get mode "$1" mode
 	config_get port "$1" port
 	config_get_bool remote_clients "$1" remote_clients
-	config_get server_tls "$1" server_tls
+	config_get_bool server_tls "$1" server_tls
 	config_get server_auth "$1" server_auth
 	config_get extra_cmdline "$1" extra_cmdline
 	config_get smarthost "$1" smarthost
@@ -36,7 +36,7 @@ emailrelay_instance()
 			[ -n "$smarthost" ] && procd_append_param command "$smarthost"
 			[ -n "$port" ] && procd_append_param command --port "$port"
 			[ "$remote_clients" = 1 ] && procd_append_param command --remote-clients
-			[ -n "$server_tls" ] && procd_append_param command --server-tls "$server_tls"
+			[ "$server_tls" = 1 ] && procd_append_param command --server-tls
 			[ -n "$server_auth" ] && procd_append_param command --server-auth "$server_auth"
 			[ "$client_tls" = 1 ] && procd_append_param command --client-tls
 			[ -n "$client_auth" ] && procd_append_param command --client-auth "$client_auth"
