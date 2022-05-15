@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ecdsautils
-PKG_VERSION:=0.3.2.20160630
+PKG_VERSION:=0.4.1
 PKG_RELEASE:=1
-PKG_REV:=07538893fb6c2a9539678c45f9dbbf1e4f222b46
+PKG_REV:=39b6d0a77414fd41614953a0e185c4eefa2f88ad
 PKG_MAINTAINER:=Matthias Schiffer <mschiffer@universe-factory.net>
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_MIRROR_HASH:=397395a471c0b5af1a173666ba21a5bedb4c3423a6e37c545c3627bed73dcb76
+PKG_MIRROR_HASH:=b6022455af1e126c3893b19b65d5efbda6c1e5105745891481e0b9bf8e1aeb53
 PKG_SOURCE_URL:=git://github.com/tcatm/$(PKG_NAME).git
 PKG_SOURCE_VERSION:=$(PKG_REV)
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
@@ -27,7 +27,7 @@ define Package/libecdsautil
   CATEGORY:=Libraries
   DEPENDS:=+libuecc
   TITLE:=ECDSA library
-  URL:=https://github.com/tcatm/ecdsautils
+  URL:=https://github.com/freifunk-gluon/ecdsautils
 endef
 
 define Package/ecdsautils
@@ -35,7 +35,7 @@ define Package/ecdsautils
   CATEGORY:=Utilities
   DEPENDS:=+libecdsautil +libuecc
   TITLE:=ECDSA Utilities
-  URL:=https://github.com/tcatm/ecdsautils
+  URL:=https://github.com/freifunk-gluon/ecdsautils
 endef
 
 CMAKE_OPTIONS += \

@@ -19,10 +19,6 @@ config COOVACHILLI_USERAGENT
 	bool "Enable recording user-agent"
 	default n
 
-config COOVACHILLI_DNSLOG
-	bool "Enable support to log DNS name queries"
-	default n
-
 config COOVACHILLI_UAMDOMAINFILE
 	bool "Enable loading of mass uamdomains from file"
 	default n
