@@ -12,6 +12,7 @@ emailrelay_instance()
 	local enabled mode port remote_clients server_tls server_auth extra_cmdline smarthost client_tls client_auth address_verifier domain anonymous
 
 	config_get_bool enabled "$1" enabled
+	[ "$enabled" = 0 ] && return 1
 	config_get mode "$1" mode
 	config_get port "$1" port
 	config_get_bool remote_clients "$1" remote_clients
@@ -24,8 +25,6 @@ emailrelay_instance()
 	config_get address_verifier "$1" address_verifier
 	config_get domain "$1" domain
 	config_get_bool anonymous "$1" anonymous
-
-	[ "$enabled" = 0 ] && return 1
 
 	procd_open_instance
 	procd_set_param command "$PROG" --no-daemon
