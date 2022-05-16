@@ -79,7 +79,7 @@ endef
 
 define Package/libcoap/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libcoap-$(ABI_VERSION).so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libcoap-$(ABI_VERSION)*.so* $(1)/usr/lib/
 endef
 
 define Package/coap-client/install
