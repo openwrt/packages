@@ -12,7 +12,6 @@ config OPENCONNECT_GNUTLS
 
 config OPENCONNECT_OPENSSL
 	bool "OpenSSL"
-	select OPENSSL_WITH_DEPRECATED
 
 endchoice
 
