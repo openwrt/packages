@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=glib2
-PKG_VERSION:=2.70.4
+PKG_VERSION:=2.70.5
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=glib-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNOME/glib/2.70
-PKG_HASH:=ab3d176f3115dcc4e5d02db795984e04e4f4b48d836252e23e8c468e9d423c33
+PKG_HASH:=f70bf76ebcc84e0705722f038be8e2f9a58d17e1a700810c635fcc18b8974b7e
 
 PKG_MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -65,7 +65,7 @@ COMP_ARGS= \
 	-Doss_fuzz=disabled \
 	-Dglib_debug=disabled \
 	-Dglib_assert=false \
-	-Dglib_checks=false \
+	-Dglib_checks=true \
 	-Dlibelf=disabled
 
 MESON_HOST_ARGS += $(COMP_ARGS) -Dxattr=false -Ddefault_library=static -Dnls=disabled
