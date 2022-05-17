@@ -1,6 +1,6 @@
 --- a/rpi-eeprom-config
 +++ b/rpi-eeprom-config
-@@ -129,8 +129,8 @@ def edit_config(eeprom=None):
+@@ -166,8 +166,8 @@ def edit_config(eeprom=None):
      """
      Implements something like 'git commit' for editing EEPROM configs.
      """
@@ -11,7 +11,7 @@
      if 'EDITOR' in os.environ:
          editor = os.environ['EDITOR']
  
-@@ -317,7 +317,7 @@ Operating modes:
+@@ -428,7 +428,7 @@ Operating modes:
  
     To cancel the pending update run 'sudo rpi-eeprom-update -r'
  
@@ -19,4 +19,4 @@
 +   The default text editor is vi and may be overridden by setting the 'EDITOR'
     environment variable and passing '-E' to 'sudo' to preserve the environment.
  
- See 'rpi-eeprom-update -h' for more information about the available EEPROM
+ 6. Signing the bootloader config file.

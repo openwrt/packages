@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bcm27xx-eeprom
-PKG_VERSION:=47976e4409c6999a8e211976c75c60a97c90275c
-PKG_RELEASE:=1
+PKG_VERSION:=v2022.04.26-138a1
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/raspberrypi/rpi-eeprom/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=fe67e174d897c6e29549129522c2fbce2404142e098c3c809c2a3b26b5708055
+PKG_HASH:=7c54839e68f226c5853fb63c8a1539b729d84b2e6bac311a51766c601d10a413
 
 PKG_LICENSE:=BSD-3-Clause Custom
 PKG_LICENSE_FILES:=LICENSE
@@ -43,6 +43,7 @@ define Package/bcm27xx-eeprom/install
 
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/rpi-eeprom-config $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/rpi-eeprom-digest $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/rpi-eeprom-update $(1)/usr/bin
 
 	$(INSTALL_DIR) $(1)/lib/firmware/raspberrypi/bootloader

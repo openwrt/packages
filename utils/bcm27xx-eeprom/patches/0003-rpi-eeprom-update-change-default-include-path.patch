@@ -24,7 +24,7 @@ Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
  fi
  
  LOCAL_MODE=0
-@@ -400,7 +400,7 @@ The system should then boot normally.
+@@ -380,7 +380,7 @@ The system should then boot normally.
  
  If /boot does not correspond to the boot partition and this
  is not a NOOBS system, then the mount point for BOOTFS should be defined
@@ -33,7 +33,7 @@ Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
  
  A backup of the current EEPROM config file is written to ${FIRMWARE_BACKUP_DIR}
  before applying the update.
-@@ -433,7 +433,7 @@ Options:
+@@ -413,7 +413,7 @@ Options:
     -u Install the specified VL805 (USB EEPROM) image file.
  
  Environment:
