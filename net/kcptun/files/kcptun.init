@@ -64,6 +64,7 @@ kcptun() {
 	[ -z "$keepalive" ] || json_add_int keepalive "$keepalive"
 	[ -z "$snmplog" ] || json_add_string snmplog "$snmplog"
 	[ -z "$snmpperiod" ] || json_add_int snmpperiod "$snmpperiod"
+	json_add_boolean tcp "$tcp"
 	json_add_boolean quiet "$quiet"
 	json_dump -i > "$confjson"
 
@@ -140,6 +141,7 @@ validate_common_options() {
 		'keepalive:uinteger' \
 		'snmplog:string' \
 		'snmpperiod:uinteger' \
+		'tcp:bool' \
 		'quiet:bool' \
 		'gogc:uinteger' \
 		'syslog:bool:1' \
