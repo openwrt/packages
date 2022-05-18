@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vpnc
-PKG_SOURCE_DATE:=2021-01-31
-PKG_SOURCE_VERSION:=43780cecd7a61668002f73b6f8b9f9ba61af74ad
+PKG_SOURCE_DATE:=2022-05-17
+PKG_SOURCE_VERSION:=5c0ea6a3ba77f889063abfc43ac3b688ad8d6f86
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/streambinder/vpnc
-PKG_MIRROR_HASH:=df833bbe369bb96cb915da9b63e4dded0f676f06bcdada4ef94e56b8d87b187e
+PKG_MIRROR_HASH:=9626828c6dec6b579a71571c884b02518c2977288bcb3c729135143bb7798d90
 
 PKG_MAINTAINER:=Daniel Gimpelevich <daniel@gimpelevich.san-francisco.ca.us>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -53,7 +53,7 @@ define Package/vpnc/description
 
 	Supports IPSec (ESP) with Mode Configuration and Xauth.  Supports only
 	shared-secret IPSec authentication with Xauth, AES (256, 192, 128),
-	3DES, 1DES, MD5, SHA1, DH1/2/5 and IP tunneling.
+	3DES, 1DES, MD5, SHA1, DH1/2/5/14/15/16/17/18 and IP tunneling.
 endef
 
 define Package/vpnc/conffiles
