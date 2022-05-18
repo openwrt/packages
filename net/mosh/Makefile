@@ -49,19 +49,19 @@ $(call Package/mosh/Default)
  DEPENDS:= \
     +mosh-client \
     +mosh-server \
-    +perlbase-essential \
-    +perlbase-socket \
-    +perlbase-xsloader \
-    +perlbase-getopt \
-    +perlbase-errno \
-    +perlbase-config \
-    +perlbase-io \
-    +perlbase-symbol \
-    +perlbase-selectsaver \
-    +perlbase-posix \
     +perlbase-autoloader \
+    +perlbase-config \
+    +perlbase-errno \
+    +perlbase-essential \
     +perlbase-fcntl \
-    +perlbase-tie
+    +perlbase-getopt \
+    +perlbase-io \
+    +perlbase-posix \
+    +perlbase-selectsaver \
+    +perlbase-socket \
+    +perlbase-symbol \
+    +perlbase-tie \
+    +perlbase-xsloader
 endef
 
 
