@@ -16,7 +16,7 @@ define Package/gcc
   SECTION:=devel
   CATEGORY:=Development
   TITLE:=gcc
-  MAINTAINER:=Noble Pepper <gccmaintain@noblepepper.com>
+  MAINTAINER:=W. Michael Petullo <mike@flyn.org>
   DEPENDS:= +binutils +libstdcpp @!arc
   MENU:=1
 endef
