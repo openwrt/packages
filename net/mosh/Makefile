@@ -60,6 +60,7 @@ $(call Package/mosh/Default)
     +perlbase-selectsaver \
     +perlbase-socket \
     +perlbase-symbol \
+    +perlbase-text \
     +perlbase-tie \
     +perlbase-xsloader
 endef
