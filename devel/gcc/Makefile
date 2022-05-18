@@ -1,16 +1,54 @@
 #
-# Copyright (C) 2008 OpenWrt.org
+# Copyright (C) 2002-2003 Erik Andersen <andersen@uclibc.org>
+# Copyright (C) 2004 Manuel Novoa III <mjn3@uclibc.org>
+# Copyright (C) 2005-2006 Felix Fietkau <nbd@nbd.name>
+# Copyright (C) 2006-2014 OpenWrt.org
 #
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
 #
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 include $(TOPDIR)/rules.mk
-define Package/gcc/description
-	Build a native toolchain for compiling on target
-	device.
-endef
 
+PKG_NAME:=gcc
+GCC_VERSION:=$(call qstrip,$(CONFIG_GCC_VERSION))
+PKG_VERSION:=$(firstword $(subst +, ,$(GCC_VERSION)))
+PKG_RELEASE:=$(AUTORELEASE)
+GCC_DIR:=$(PKG_NAME)-$(PKG_VERSION)
+
+PKG_SOURCE_URL:=@GNU/gcc/gcc-$(PKG_VERSION)
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_INSTALL:=1
+PKG_FIXUP:=libtool
+PKG_BUILD_PARALLEL:=1
+
+PKG_CPE_ID:=cpe:/a:gnu:gcc
+
+ifeq ($(PKG_VERSION),8.4.0)
+	PKG_HASH:=e30a6e52d10e1f27ed55104ad233c30bd1e99cfb5ff98ab022dc941edd1b2dd4
+endif
+
+ifeq ($(PKG_VERSION),9.3.0)
+	PKG_HASH:=71e197867611f6054aa1119b13a0c0abac12834765fe2d81f35ac57f84f742d1
+endif
+
+ifeq ($(PKG_VERSION),10.2.0)
+	PKG_HASH:=b8dd4368bb9c7f0b98188317ee0254dd8cc99d1e3a18d0ff146c855fe16c1d8c
+endif
+
+PATCH_DIR=./patches/$(GCC_VERSION)
+
+include $(INCLUDE_DIR)/package.mk
 
 define Package/gcc
   SECTION:=devel
@@ -20,26 +58,6 @@ define Package/gcc
   DEPENDS:= +binutils +libstdcpp @!arc
   MENU:=1
 endef
-
-PKG_NAME:=gcc
-# PKG_VERSION=7.3.0
-PKG_VERSION=7.4.0
-PKG_RELEASE:=7
-PKG_SOURCE_URL:=@GNU/gcc/gcc-$(PKG_VERSION)
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_INSTALL:=1
-PKG_FIXUP:=libtool
-PKG_BUILD_PARALLEL:=1
-
-PKG_CPE_ID:=cpe:/a:gnu:gcc
-
-ifeq ($(PKG_VERSION),7.3.0)
-	PKG_HASH:=832ca6ae04636adbb430e865a1451adf6979ab44ca1c8374f61fba65645ce15c
-endif
-ifeq ($(PKG_VERSION),7.4.0)
-	PKG_HASH:=eddde28d04f334aec1604456e536416549e9b1aa137fc69204e65eb0c009fe51
-endif
-
 
 define Package/gcc/config
   source "$(SOURCE)/Config.in"
@@ -62,13 +80,12 @@ ifeq ($(CONFIG_INCLUDE_STATIC_LINK_SPEC),y)
 	REMOVE_STATIC_SPEC=rm /usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)/specs
 endif
 
-include $(INCLUDE_DIR)/package.mk
 TARGET_LANGUAGES:="c,c++"
 BUGURL=https://dev.openwrt.org/
 PKGVERSION=OpenWrt GCC $(PKG_VERSION)
 TARGET_CPPFLAGS += -D_GLIBCXX_INCLUDE_NEXT_C_HEADERS
 
-# not using sstrip here as this fucks up the .so's somehow
+# not using sstrip here as this messes up the .so's somehow
 STRIP:=$(TOOLCHAIN_DIR)/bin/$(TARGET_CROSS)strip
 RSTRIP:= \
 	NM="$(TOOLCHAIN_DIR)/bin/$(TARGET_CROSS)nm" \
@@ -81,6 +98,7 @@ ifneq ($(CONFIG_SOFT_FLOAT),y)
 		ARM_FLOAT_OPTION:= --with-float=hard
 	endif
 endif
+
 GMPSRC=gmp-6.1.0
 
 define Download/gmp
@@ -110,7 +128,7 @@ $(eval $(call Download,mpfr))
 
 define Build/Prepare
 	$(PKG_UNPACK)
-# 	we have to download and unpack additional stuff before patching
+#	we have to download and unpack additional stuff before patching
 	tar -C $(PKG_BUILD_DIR) -xvjf $(DL_DIR)/$(GMPSRC).tar.bz2
 	ln -sf $(PKG_BUILD_DIR)/$(GMPSRC) $(PKG_BUILD_DIR)/gmp
 	tar -C $(PKG_BUILD_DIR) -xvzf $(DL_DIR)/$(MPCSRC).tar.gz
@@ -125,7 +143,7 @@ define Build/Prepare
 	cp $(PKG_BUILD_DIR)/config.sub $(PKG_BUILD_DIR)/mpc/
 endef
 
-CONFIGURE_ARGS +=  CXXFLAGS_FOR_TARGET="-g -O2 -D_GLIBCXX_INCLUDE_NEXT_C_HEADERS"
+CONFIGURE_ARGS += CXXFLAGS_FOR_TARGET="-g -O2 -D_GLIBCXX_INCLUDE_NEXT_C_HEADERS"
 
 define Build/Configure
 	(cd $(PKG_BUILD_DIR); rm -f config.cache; \
