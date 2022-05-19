@@ -62,7 +62,6 @@ proto_openconnect_setup() {
 		usergroup \
 		username \
 
-	grep -q tun /proc/modules || insmod tun
 	ifname="vpn-$config"
 
 	logger -t openconnect "initializing..."
