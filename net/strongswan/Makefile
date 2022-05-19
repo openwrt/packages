@@ -418,6 +418,22 @@ $(call Package/strongswan/description/Default)
  eap-peap, tnc-tnccs
 endef
 
+define Package/strongswan-updown-iptables
+  $(call Package/strongswan/Default)
+  TITLE+= updown iptables
+  DEPENDS:=strongswan \
+    +strongswan-mod-updown \
+    +iptables \
+    +IPV6:ip6tables \
+    +iptables-mod-ipsec \
+    +kmod-ipt-ipsec
+endef
+
+define Package/strongswan-updown-iptables/description
+  $(call Package/strongswan/description/Default)
+  This package contains the hotplug script for updown to add iptables rules.
+endef
+
 define BuildPlugin
   define Package/strongswan-mod-$(1)
     $$(call Package/strongswan/Default)
@@ -583,6 +599,12 @@ define Package/strongswan-libtls/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/libtls.so.* $(1)/usr/lib/ipsec/
 endef
 
+define Package/strongswan-updown-iptables/install
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/ipsec
+	$(CP) ./files/etc/hotplug.d/ipsec/02-iptables \
+		$(1)/etc/hotplug.d/ipsec/02-iptables
+endef
+
 define Plugin/duplicheck/install
 	$(INSTALL_DIR) $(1)/usr/lib/ipsec/plugins
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/duplicheck $(1)/usr/lib/ipsec/
@@ -649,6 +671,7 @@ $(eval $(call BuildPackage,strongswan-pki))
 $(eval $(call BuildPackage,strongswan-swanctl))
 $(eval $(call BuildPackage,strongswan-gencerts))
 $(eval $(call BuildPackage,strongswan-libtls))
+$(eval $(call BuildPackage,strongswan-updown-iptables))
 $(eval $(call BuildPlugin,addrblock,RFC 3779 address block constraint support,))
 $(eval $(call BuildPlugin,aes,AES crypto,))
 $(eval $(call BuildPlugin,agent,SSH agent signing,))
