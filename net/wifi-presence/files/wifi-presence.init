@@ -26,6 +26,9 @@ start_service() {
         local sockDir
         local verbose
 
+        local runAsUser
+        local runAsGroup
+
         config_get apName main apName
         config_get debounce main debounce
         config_get hassAutodiscovery main hassAutodiscovery
@@ -38,6 +41,9 @@ start_service() {
         config_get mqttPrefix main mqttPrefix
         config_get sockDir main sockDir
         config_get_bool verbose main verbose
+
+        config_get runAsUser main runAsUser
+        config_get runAsGroup main runAsGroup
 
         procd_open_instance
 
@@ -54,6 +60,22 @@ start_service() {
         [ -n "${mqttPrefix}" ] && procd_append_param command "-mqtt.prefix=${mqttPrefix}"
         [ -n "${sockDir}" ] && procd_append_param command "-sockDir=${sockDir}"
         [ -n "${verbose}" ] && procd_append_param command "-verbose=${verbose}"
+
+        if [ -z "${runAsUser}" ] && [ -z "${runAsGroup}" ]; then
+          # If both runAsUser and runAsGroup are unspecified, then
+          # determine their values by looking at the owner of the hostapd sockets.
+          #
+          # It would be preferable to use 'stat' to determine the owner of the socket,
+          # but it may not be present on all systems, so instead we revert to parsing ls output.
+          local sockOwner=$(find /var/run/hostapd/ -type s -maxdepth 1 -exec ls -ld {} \; | head -n 1 | awk '{ print $3 }')
+          if [ -n "${sockOwner}" ]; then
+            runAsUser="${sockOwner}"
+            runAsGroup="${sockOwner}"
+          fi
+        fi
+
+        [ -n "${runAsUser}" ] && procd_set_param user "${runAsUser}"
+        [ -n "${runAsGroup}" ] && procd_set_param group "${runAsGroup}"
 
         procd_set_param file "/etc/config/${CONF}"
         procd_set_param stdout 1
