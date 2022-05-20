@@ -13,8 +13,7 @@ PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=https://gpl.savoirfairelinux.net/pub/mirrors/openldap/openldap-release/ \
-	http://mirror.eu.oneandone.net/software/openldap/openldap-release/ \
-	http://mirror.switch.ch/ftp/software/mirror/OpenLDAP/openldap-release/ \
+	https://mirror.eu.oneandone.net/software/openldap/openldap-release/ \
 	https://www.openldap.org/software/download/OpenLDAP/openldap-release/
 PKG_HASH:=81d09345232eb62486ecf5acacd2c56c0c45b4a6c8c066612e7f421a23a1cf87
 PKG_LICENSE:=OLDAP-2.8
@@ -44,7 +43,7 @@ define Package/libopenldap/Default
   CATEGORY:=Network
   SUBMENU:=OpenLDAP
   TITLE:=LDAP directory suite
-  URL:=http://www.openldap.org/
+  URL:=https://www.openldap.org/
   MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 endef
 
