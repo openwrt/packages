@@ -27,7 +27,10 @@ define GoCompiler/Default/Make
 		cd "$(1)/src" ; \
 		$(if $(2),GOROOT_FINAL="$(2)/lib/go-$(3)") \
 		$(4) \
-		$(BASH) make.bash --no-banner ; \
+		$(BASH) make.bash \
+		$(if $(findstring s,$(OPENWRT_VERBOSE)),-v) \
+		--no-banner \
+		; \
 	)
 endef
 
