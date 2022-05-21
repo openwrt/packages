@@ -303,7 +303,7 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-pubkey \
 	+strongswan-mod-random \
 	+strongswan-mod-sha1 \
-	++@(PACKAGE_strongswan-mod-socket-default||PACKAGE_strongswan-mod-socket-dynamic) \
+	+@(PACKAGE_strongswan-mod-socket-default||PACKAGE_strongswan-mod-socket-dynamic) \
 	+strongswan-mod-stroke \
 	+strongswan-mod-uci \
 	+strongswan-mod-updown
@@ -330,7 +330,7 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-pubkey \
 	+strongswan-mod-random \
 	+strongswan-mod-sha1 \
-	++@(PACKAGE_strongswan-mod-socket-default||PACKAGE_strongswan-mod-socket-dynamic) \
+	+@(PACKAGE_strongswan-mod-socket-default||PACKAGE_strongswan-mod-socket-dynamic) \
 	+strongswan-mod-stroke \
 	+strongswan-mod-updown \
 	+strongswan-mod-x509 \
@@ -345,7 +345,7 @@ endef
 define Package/strongswan-charon
 $(call Package/strongswan/Default)
   TITLE+= IKEv1/IKEv2 keying daemon
-  DEPENDS:= strongswan +@(PACKAGE_strongswan-mod-socket-default||PACKAGE_strongswan-mod-socket-dynamic)
+  DEPENDS:= strongswan @(PACKAGE_strongswan-mod-socket-default||PACKAGE_strongswan-mod-socket-dynamic)
 endef
 
 define Package/strongswan-charon/description
