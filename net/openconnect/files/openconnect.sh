@@ -1,7 +1,10 @@
 #!/bin/sh
-. /lib/functions.sh
-. ../netifd-proto.sh
-init_proto "$@"
+
+[ -n "$INCLUDE_ONLY" ] || {
+	. /lib/functions.sh
+	. ../netifd-proto.sh
+	init_proto "$@"
+}
 
 append_args() {
 	while [ $# -gt 0 ]; do
@@ -149,4 +152,6 @@ proto_openconnect_teardown() {
 	proto_kill_command "$config" 2
 }
 
-add_protocol openconnect
+[ -n "$INCLUDE_ONLY" ] || {
+	add_protocol openconnect
+}
