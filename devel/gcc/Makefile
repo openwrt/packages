@@ -55,7 +55,7 @@ define Package/gcc
   CATEGORY:=Development
   TITLE:=gcc
   MAINTAINER:=W. Michael Petullo <mike@flyn.org>
-  DEPENDS:= +binutils +libstdcpp @!arc
+  DEPENDS:= +binutils +libstdcpp +libzstd @!arc
   MENU:=1
 endef
 
