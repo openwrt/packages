@@ -77,5 +77,5 @@ start_service() {
 }
 
 reload_service() {
-         procd_send_signal i2pd
+	procd_send_signal i2pd
 }
