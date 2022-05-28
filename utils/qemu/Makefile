@@ -9,10 +9,10 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qemu
-PKG_VERSION:=6.2.0
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=7.2.0
+PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=68e15d8e45ac56326e0b9a4afa8b49a3dfe8aba3488221d098c84698bca65b45
+PKG_HASH:=5b49ce2687744dad494ae90a898c52204a3406e84d072482a1e1be854eeb2157
 PKG_SOURCE_URL:=http://download.qemu.org/
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=LICENSE tcg/LICENSE
@@ -405,7 +405,6 @@ CONFIGURE_ARGS +=			\
 	--disable-libpmem		\
 	--disable-libssh		\
 	--$(if $(CONFIG_QEMU_DEV_USB),enable,disable)-libusb		\
-	--disable-libxml2		\
 	--disable-linux-aio		\
 	--disable-linux-io-uring	\
 	--disable-lzfse			\
@@ -436,12 +435,12 @@ CONFIGURE_ARGS +=			\
 	--disable-werror		\
 	--disable-xen-pci-passthrough	\
 	--disable-xkbcommon		\
-	--disable-xfsctl		\
 	--disable-zstd			\
 	--disable-selinux		\
 	--disable-oss			\
 	--disable-alsa			\
 	--disable-pa			\
+
 
 CONFIGURE_ARGS += --target-list='$(foreach target,$(qemu-target-list),$(if $(CONFIG_PACKAGE_qemu-$(target)),$(target)))'
 CONFIGURE_ARGS += $(if $(CONFIG_PACKAGE_qemu-ga),--enable-guest-agent)
