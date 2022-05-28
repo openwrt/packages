@@ -16,6 +16,9 @@ config interface 'MYVPN'
 	# usergroup option, if required by some servers
 	# option usergroup 'USERGROUP'
 
+	# Reconnect after a temporary network down time (in seconds)
+	#option reconnect_timeout '30'
+
 	# For second factor auth:
 
 	# when a fixed 2FA password can be used
