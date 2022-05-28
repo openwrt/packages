@@ -32,6 +32,7 @@ proto_openconnect_init_config() {
 	proto_config_add_string "token_script"
 	proto_config_add_string "os"
 	proto_config_add_string "csd_wrapper"
+	proto_config_add_string "proxy"
 	proto_config_add_array 'form_entry:regex("[^:]+:[^=]+=.*")'
 	no_device=1
 	available=1
@@ -57,6 +58,7 @@ proto_openconnect_setup() {
 		password \
 		password2 \
 		port \
+		proxy \
 		server \
 		serverhash \
 		token_mode \
@@ -131,6 +133,7 @@ proto_openconnect_setup() {
 	[ -n "$token_secret" ] && append_args "--token-secret=$token_secret"
 	[ -n "$os" ] && append_args "--os=$os"
 	[ -n "$csd_wrapper" ] && [ -x "$csd_wrapper" ] && append_args "--csd-wrapper=$csd_wrapper"
+	[ -n "$proxy" ] && append_args "--proxy=$proxy"
 
 	json_for_each_item proto_openconnect_add_form_entry form_entry
 
