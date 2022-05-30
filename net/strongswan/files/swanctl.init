@@ -233,6 +233,10 @@ config_child() {
 	local startaction
 	local if_id
 	local rekeytime
+	local rekeybytes
+	local lifebytes
+	local rekeypackets
+	local lifepackets
 
 	config_get startaction "$1" startaction "route"
 	config_get local_nat "$1" local_nat ""
@@ -247,6 +251,10 @@ config_child() {
 	config_get interface "$1" interface ""
 	config_get hw_offload "$1" hw_offload ""
 	config_get priority "$1" priority ""
+	config_get rekeybytes "$1" rekeybytes ""
+	config_get lifebytes "$1" lifebytes ""
+	config_get rekeypackets "$1" rekeypackets ""
+	config_get lifepackets "$1" lifepackets ""
 
 	config_list_foreach "$1" local_subnet append_var local_subnet ","
 	config_list_foreach "$1" remote_subnet append_var remote_subnet ","
@@ -339,6 +347,18 @@ config_child() {
 		swanctl_xappend4 "life_time = $(seconds2time $(((110 * $(time2seconds $rekeytime)) / 100)))"
 	fi
 	[ -n "$rekeytime" ] && swanctl_xappend4 "rekey_time = $rekeytime"
+	if [ -n "$lifebytes" ]; then
+		swanctl_xappend4 "life_bytes = $lifebytes"
+	elif [ -n "$rekeybytes" ]; then
+		swanctl_xappend4 "life_bytes = $(((110 * rekeybytes) / 100))"
+	fi
+	[ -n "$rekeybytes" ] && swanctl_xappend4 "rekey_bytes = $rekeybytes"
+	if [ -n "$lifepackets" ]; then
+		swanctl_xappend4 "life_packets = $lifepackets"
+	elif [ -n "$rekeypackets" ]; then
+		swanctl_xappend4 "life_packets = $(((110 * rekeypackets) / 100))"
+	fi
+	[ -n "$rekeypackets" ] && swanctl_xappend4 "rekey_packets = $rekeypackets"
 	[ -n "$inactivity" ] && swanctl_xappend4 "inactivity = $inactivity"
 
 	[ -n "$updown" ] && swanctl_xappend4 "updown = $updown"
