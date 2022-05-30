@@ -33,7 +33,7 @@
  ifeq (,$(filter-out WIN%,$(OS_TARGET)))
 --- a/nss/coreconf/Linux.mk
 +++ b/nss/coreconf/Linux.mk
-@@ -113,11 +113,6 @@ LIBC_TAG		= _glibc
+@@ -114,11 +114,6 @@ LIBC_TAG		= _glibc
  endif
  
  ifdef BUILD_OPT
@@ -45,7 +45,7 @@
  ifdef MOZ_DEBUG_SYMBOLS
  	ifdef MOZ_DEBUG_FLAGS
  		OPTIMIZER += $(MOZ_DEBUG_FLAGS)
-@@ -149,7 +144,8 @@ ifdef USE_PTHREADS
+@@ -150,7 +145,8 @@ ifdef USE_PTHREADS
  	DEFINES		+= -D_REENTRANT
  endif
  
@@ -55,15 +55,15 @@
  DSO_LDOPTS		= -shared $(ARCHFLAG) -Wl,--gc-sections
  # The linker on Red Hat Linux 7.2 and RHEL 2.1 (GNU ld version 2.11.90.0.8)
  # incorrectly reports undefined references in the libraries we link with, so
-@@ -159,6 +155,7 @@ DSO_LDOPTS		= -shared $(ARCHFLAG) -Wl,--
- ZDEFS_FLAG		= -Wl,-z,defs
- DSO_LDOPTS		+= $(if $(findstring 2.11.90.0.8,$(shell ld -v)),,$(ZDEFS_FLAG))
- LDFLAGS			+= $(ARCHFLAG) -z noexecstack
+@@ -166,6 +162,7 @@ LDFLAGS		   += $(ARCHFLAG) -z noexecstac
+ ifdef _SBOX_DIR
+ LDFLAGS			+= -Wl,-rpath-link,/usr/lib:/lib
+ endif
 +endif
  
- # On Maemo, we need to use the -rpath-link flag for even the standard system
- # library directories.
-@@ -200,7 +197,7 @@ RPATH = -Wl,-rpath,'$$ORIGIN:/opt/sun/pr
+ G++INCLUDES		= -I/usr/include/g++
+ 
+@@ -201,7 +198,7 @@ RPATH = -Wl,-rpath,'$$ORIGIN:/opt/sun/pr
  endif
  endif
  
