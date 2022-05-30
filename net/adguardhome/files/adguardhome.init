@@ -4,8 +4,8 @@ PROG=/usr/bin/AdGuardHome
 
 USE_PROCD=1
 
-# starts after network starts
-START=21
+# starts just after network starts to avoid some network race conditions
+START=25
 # stops before networking stops
 STOP=89
 
