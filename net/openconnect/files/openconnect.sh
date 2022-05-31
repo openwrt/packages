@@ -67,7 +67,7 @@ proto_openconnect_setup() {
 	logger -t openconnect "initializing..."
 
 	logger -t "openconnect" "adding host dependency for $server at $config"
-	for ip in $(nslookup "$server" | awk '/^Name:/ {getline; print $2;}'); do
+	for ip in $(resolveip -t 10 "$server"); do
 		logger -t "openconnect" "adding host dependency for $ip at $config"
 		proto_add_host_dependency "$config" "$ip" "$interface"
 	done
