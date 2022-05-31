@@ -93,9 +93,9 @@ proto_openconnect_setup() {
 		append_args --no-system-trust
 	}
 
-	if [ "${juniper:-0}" -gt 0 ]; then
-		append_args --juniper
-	fi
+	[ "${juniper:-0}" -gt 0 ] && [ -z "$vpn_protocol" ] && {
+		vpn_protocol="nc"
+	}
 
 	[ -n "$vpn_protocol" ] && {
 		append_args --protocol "$vpn_protocol"
