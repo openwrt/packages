@@ -1,0 +1,24 @@
+--- a/Makefile
++++ b/Makefile
+@@ -476,7 +476,7 @@ endif
+ # Disable all drivers needing raw access (memory, PCI, port I/O) on
+ # architectures with unknown raw access properties.
+ # Right now those architectures are alpha hppa m68k sh s390
+-ifneq ($(ARCH),$(filter $(ARCH),x86 mips ppc arm sparc arc))
++ifneq ($(ARCH),$(filter $(ARCH),x86 mips ppc arm sparc arc riscv))
+ ifeq ($(CONFIG_RAYER_SPI), yes)
+ UNSUPPORTED_FEATURES += CONFIG_RAYER_SPI=yes
+ else
+--- a/hwaccess.h
++++ b/hwaccess.h
+@@ -295,6 +295,10 @@ int libpayload_wrmsr(int addr, msr_t msr
+ 
+ /* Non memory mapped I/O is not supported on ARC. */
+ 
++#elif IS_RISCV
++
++/* Non memory mapped I/O is not supported on RISCV. */
++
+ #else
+ 
+ #error Unknown architecture, please check if it supports PCI port IO.
