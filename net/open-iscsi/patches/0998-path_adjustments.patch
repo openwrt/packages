@@ -1,0 +1,79 @@
+--- a/include/iscsi_if.h
++++ b/include/iscsi_if.h
+@@ -36,6 +36,10 @@
+  * to be in sync.
+  */
+ 
++#ifndef ISCSI_DB_ROOT
++#define ISCSI_DB_ROOT "/etc/iscsi"
++#endif
++
+ #define ISCSI_NL_GRP_ISCSID	1
+ #define ISCSI_NL_GRP_UIP	2
+ 
+--- a/etc/Makefile
++++ b/etc/Makefile
+@@ -11,7 +11,7 @@ prefix = /usr
+ DESTDIR ?=
+ SBINDIR ?= /sbin
+ 
+-ISCSI_INAME ?= $(TOPDIR)/utils/iscsi-iname
++ISCSI_INAME ?= ../utils/iscsi-iname
+ 
+ systemddir ?= $(prefix)/lib/systemd
+ etcdir = /etc
+@@ -19,7 +19,7 @@ initddir ?= $(etcdir)/init.d
+ 
+ HOMEDIR ?= $(etcdir)/iscsi
+ 
+-SED = /usr/bin/sed
++SED ?= $(STAGING_DIR_HOST)/bin/sed
+ INSTALL = install
+ 
+ SYSTEMD_SOURCE_FILES	= iscsid.socket iscsiuio.socket
+--- a/usr/Makefile
++++ b/usr/Makefile
+@@ -46,10 +46,10 @@ PKG_CONFIG ?= /usr/bin/pkg-config
+ CFLAGS ?= -O2 -g
+ WARNFLAGS ?= -Wall -Wextra -Werror -Wstrict-prototypes -fno-common
+ CFLAGS += $(WARNFLAGS) -I../include -I. -D_GNU_SOURCE \
+-	  -I$(TOPDIR)/libopeniscsiusr
++	  -I../libopeniscsiusr
+ CFLAGS += $(shell $(PKG_CONFIG) --cflags libkmod)
+ CFLAGS += $(shell $(PKG_CONFIG) --cflags libsystemd)
+-ISCSI_LIB = -L$(TOPDIR)/libopeniscsiusr -lopeniscsiusr
++ISCSI_LIB = -L../libopeniscsiusr -lopeniscsiusr
+ LDFLAGS += $(shell $(PKG_CONFIG) --libs libkmod)
+ ifeq ($(NO_SYSTEMD),)
+ LDFLAGS += $(shell $(PKG_CONFIG) --libs libsystemd)
+@@ -67,7 +67,7 @@ ISCSIADM_OBJS	= iscsiadm.o session_mgmt.
+ ISCSISTART_OBJS	= iscsistart.o statics.o
+ 
+ # libc compat files
+-SYSDEPS_DIR = $(TOPDIR)/utils/sysdeps
++SYSDEPS_DIR = ../utils/sysdeps
+ SYSDEPS_OBJS = $(SYSDEPS_DIR)/sysdeps.o
+ # sources shared between iscsid, iscsiadm and iscsistart
+ ISCSI_LIB_OBJS = iscsi_util.o io.o auth.o iscsi_timer.o login.o log.o \
+--- a/utils/Makefile
++++ b/utils/Makefile
+@@ -7,7 +7,7 @@
+ # from the top-level make file.
+ #
+ 
+-SED = /usr/bin/sed
++SED ?= $(STAGING_DIR_HOST)/bin/sed
+ INSTALL = install
+ CHMOD = chmod
+ 
+--- a/doc/Makefile
++++ b/doc/Makefile
+@@ -7,7 +7,7 @@ ifeq ($(TOPDIR),)
+ 	TOPDIR = ..
+ endif
+ 
+-SED = /usr/bin/sed
++SED = $(STAGING_DIR_HOST)/bin/sed
+ INSTALL = install
+ 
+ DESTDIR ?=
