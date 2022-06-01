@@ -22,11 +22,6 @@ start_service()
 	procd_close_instance
 }
 
-stop_service()
-{
-	killall yggdrasil
-}
-
 reload_service()
 {
 	restart
