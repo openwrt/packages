@@ -17,6 +17,7 @@ validate_udpspeeder_section() {
 		'timeout:integer:8'		\
 		'local:string'			\
 		'remote:string'			\
+		'key:string'			\
 		'report:integer:10'		\
 		'disable_obscure:bool:0'	\
 		'interval:integer:0'		\
@@ -33,8 +34,8 @@ start_instance() {
 
 	local section="$1"
 
-	local server mode mtu timeout local remote report disable_obscure fifo interval fec disable_fec sock_buf queue_len \
-		decode_buf sock_buf log_level enabled
+	local server mode mtu timeout local remote key report disable_obscure fifo interval \
+		fec disable_fec sock_buf queue_len decode_buf sock_buf log_level enabled
 
 	fifo="/tmp/udpspeeder-${section}.fifo"
 
@@ -78,6 +79,8 @@ start_instance() {
 	then
 		procd_append_param command --disable-obscure
 	fi
+
+	[ -z "${key}" ]  || procd_append_param command --key "${key}"
 
 	procd_append_param command -l "${local}"
 	procd_append_param command -r "${remote}"
