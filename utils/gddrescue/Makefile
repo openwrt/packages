@@ -5,12 +5,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gddrescue
-PKG_VERSION:=1.23
-PKG_RELEASE:=4
+PKG_VERSION:=1.26
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).orig.tar.xz
-PKG_SOURCE_URL:=http://http.debian.net/debian/pool/main/g/$(PKG_NAME)
-PKG_HASH:=5831d7e24070bc700d8f22deaeec56af1149392ce30ae67254096eaf8c9169ab
+PKG_SOURCE_URL:=http://archive.ubuntu.com/ubuntu/pool/universe/g/$(PKG_NAME)
+PKG_HASH:=4b50d3af7e14c1be37b732e4f7afc277ebe0d1d0519f26673c1fd5f1a6dcb0db
+PKG_BUILD_DIR:=$(BUILD_DIR)/ddrescue-$(PKG_VERSION)
+
 
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
