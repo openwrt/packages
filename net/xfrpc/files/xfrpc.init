@@ -63,7 +63,7 @@ start_service() {
 	> "$conf_file"
 	config_load "$NAME"
 
-	uci_validate_section xfrpc xfrpc init \
+	uci_validate_section xfrpc xfrp init \
 			'disabled:bool:1' \
 			'loglevel:uinteger:0'
 
