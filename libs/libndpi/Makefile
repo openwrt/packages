@@ -44,7 +44,7 @@ define Package/libndpi
   CATEGORY:=Libraries
   TITLE:=Library for deep-packet inspection
   URL:=https://github.com/ntop/nDPI
-  DEPENDS:=+LIBNDPI_GCRYPT:libgcrypt +LIBNDPI_PCRE2:pcre2 +LIBNDPI_MAXMINDDB:libmaxminddb +libpcap +libjson-c
+  DEPENDS:=+LIBNDPI_GCRYPT:libgcrypt +LIBNDPI_PCRE2:libpcre2 +LIBNDPI_MAXMINDDB:libmaxminddb +libpcap +libjson-c
 endef
 
 define Package/libndpi/description
