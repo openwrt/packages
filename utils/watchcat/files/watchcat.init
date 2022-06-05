@@ -9,7 +9,7 @@ append_string() {
 	varname="$1"
 	add="$2"
 	separator="${3:- }"
-	actual
+	local actual
 	eval "actual=\$$varname"
 
 	new="${actual:+$actual$separator}$add"
@@ -41,6 +41,7 @@ config_watchcat() {
 	config_get interface "$1" interface
 	config_get mmifacename "$1" mmifacename
 	config_get_bool unlockbands "$1" unlockbands "0"
+	config_get addressfamily "$1" addressfamily "any"
 
 	# Fix potential typo in mode and provide backward compatibility.
 	[ "$mode" = "allways" ] && mode="periodic_reboot"
@@ -93,19 +94,19 @@ config_watchcat() {
 	periodic_reboot)
 		procd_open_instance "watchcat_${1}"
 		procd_set_param command /usr/bin/watchcat.sh "periodic_reboot" "$period" "$forcedelay"
-		procd_set_param respawn ${respawn_threshold:-3600} ${respawn_timeout:-5} ${respawn_retry:-5}
+		procd_set_param respawn "${respawn_threshold:-3600}" "${respawn_timeout:-5}" "${respawn_retry:-5}"
 		procd_close_instance
 		;;
 	ping_reboot)
 		procd_open_instance "watchcat_${1}"
-		procd_set_param command /usr/bin/watchcat.sh "ping_reboot" "$period" "$forcedelay" "$pinghosts" "$pingperiod" "$pingsize"
-		procd_set_param respawn ${respawn_threshold:-3600} ${respawn_timeout:-5} ${respawn_retry:-5}
+		procd_set_param command /usr/bin/watchcat.sh "ping_reboot" "$period" "$forcedelay" "$pinghosts" "$pingperiod" "$pingsize" "$addressfamily"
+		procd_set_param respawn "${respawn_threshold:-3600}" "${respawn_timeout:-5}" "${respawn_retry:-5}"
 		procd_close_instance
 		;;
 	restart_iface)
 		procd_open_instance "watchcat_${1}"
-		procd_set_param command /usr/bin/watchcat.sh "restart_iface" "$period" "$pinghosts" "$pingperiod" "$pingsize" "$interface" "$mmifacename"
-		procd_set_param respawn ${respawn_threshold:-3600} ${respawn_timeout:-5} ${respawn_retry:-5}
+		procd_set_param command /usr/bin/watchcat.sh "restart_iface" "$period" "$pinghosts" "$pingperiod" "$pingsize" "$interface" "$mmifacename" "$unlockbands" "$addressfamily"
+		procd_set_param respawn "${respawn_threshold:-3600}" "${respawn_timeout:-5}" "${respawn_retry:-5}"
 		procd_close_instance
 		;;
 	*)
