@@ -28,11 +28,30 @@ get_ping_size() {
 		ps="9000"
 		;;
 	*)
-		echo "Error: invalid ping_size. ping_size should be either: small, windows, standard, big, huge or jumbo"
-		echo "Cooresponding ping packet sizes (bytes): small=1, windows=32, standard=56, big=248, huge=1492, jumbo=9000"
+		echo "Error: invalid ping_size. ping_size should be either: small, windows, standard, big, huge or jumbo" 1>&2
+		echo "Corresponding ping packet sizes (bytes): small=1, windows=32, standard=56, big=248, huge=1492, jumbo=9000" 1>&2
 		;;
 	esac
 	echo $ps
+}
+
+get_ping_family_flag() {
+	family=$1
+	case "$family" in
+	any)
+		family=""
+		;;
+	ipv4)
+		family="-4"
+		;;
+	ipv6)
+		family="-6"
+		;;
+	*)
+		echo "Error: invalid address_family \"$family\". address_family should be one of: any, ipv4, ipv6" 1>&2
+		;;
+	esac
+	echo $family
 }
 
 reboot_now() {
@@ -54,22 +73,22 @@ watchcat_periodic() {
 
 watchcat_restart_modemmanager_iface() {
 	[ "$2" -gt 0 ] && {
-		logger -t INFO "Resetting current-bands to 'any' on modem: \"$1\" now."
+		logger -p daemon.info -t "watchcat[$$]" "Resetting current-bands to 'any' on modem: \"$1\" now."
 		/usr/bin/mmcli -m any --set-current-bands=any
 	}
-	logger -t INFO "Reconnecting modem: \"$1\" now."
+	logger -p daemon.info -t "watchcat[$$]" "Reconnecting modem: \"$1\" now."
 	/etc/init.d/modemmanager restart
 	ifup "$1"
 }
 
 watchcat_restart_network_iface() {
-	logger -t INFO "Restarting network interface: \"$1\"."
+	logger -p daemon.info -t "watchcat[$$]" "Restarting network interface: \"$1\"."
 	ip link set "$1" down
 	ip link set "$1" up
 }
 
 watchcat_restart_all_network() {
-	logger -t INFO "Restarting networking now by running: /etc/init.d/network restart"
+	logger -p daemon.info -t "watchcat[$$]" "Restarting networking now by running: /etc/init.d/network restart"
 	/etc/init.d/network restart
 }
 
@@ -81,6 +100,7 @@ watchcat_monitor_network() {
 	iface="$5"
 	mm_iface_name="$6"
 	mm_iface_unlock_bands="$7"
+	address_family="$8"
 
 	time_now="$(cat /proc/uptime)"
 	time_now="${time_now%%.*}"
@@ -93,6 +113,8 @@ watchcat_monitor_network() {
 	time_lastcheck_withinternet="$time_now"
 
 	ping_size="$(get_ping_size "$ping_size")"
+
+	ping_family="$(get_ping_family_flag "$address_family")"
 
 	while true; do
 		# account for the time ping took to return. With a ping time of 5s, ping might take more than that, so it is important to avoid even more delay.
@@ -109,12 +131,12 @@ watchcat_monitor_network() {
 		for host in $ping_hosts; do
 			if [ "$iface" != "" ]; then
 				ping_result="$(
-					ping -I "$iface" -s "$ping_size" -c 1 "$host" &> /dev/null
+					ping "$ping_family" -I "$iface" -s "$ping_size" -c 1 "$host" &> /dev/null
 					echo $?
 				)"
 			else
 				ping_result="$(
-					ping -s "$ping_size" -c 1 "$host" &> /dev/null
+					ping "$ping_family" -s "$ping_size" -c 1 "$host" &> /dev/null
 					echo $?
 				)"
 			fi
@@ -153,6 +175,7 @@ watchcat_ping() {
 	ping_hosts="$3"
 	ping_frequency_interval="$4"
 	ping_size="$5"
+	address_family="$6"
 
 	time_now="$(cat /proc/uptime)"
 	time_now="${time_now%%.*}"
@@ -165,6 +188,8 @@ watchcat_ping() {
 	time_lastcheck_withinternet="$time_now"
 
 	ping_size="$(get_ping_size "$ping_size")"
+
+	ping_family="$(get_ping_family_flag "$address_family")"
 
 	while true; do
 		# account for the time ping took to return. With a ping time of 5s, ping might take more than that, so it is important to avoid even more delay.
@@ -181,12 +206,12 @@ watchcat_ping() {
 		for host in $ping_hosts; do
 			if [ "$iface" != "" ]; then
 				ping_result="$(
-					ping -I "$iface" -s "$ping_size" -c 1 "$host" &> /dev/null
+					ping "$ping_family" -I "$iface" -s "$ping_size" -c 1 "$host" &> /dev/null
 					echo $?
 				)"
 			else
 				ping_result="$(
-					ping -s "$ping_size" -c 1 "$host" &> /dev/null
+					ping "$ping_family" -s "$ping_size" -c 1 "$host" &> /dev/null
 					echo $?
 				)"
 			fi
@@ -211,13 +236,16 @@ mode="$1"
 
 case "$mode" in
 periodic_reboot)
+	# args from init script: period forcedelay
 	watchcat_periodic "$2" "$3"
 	;;
 ping_reboot)
-	watchcat_ping "$2" "$3" "$4" "$5" "$6"
+	# args from init script: period forcedelay pinghosts pingperiod pingsize addressfamily
+	watchcat_ping "$2" "$3" "$4" "$5" "$6" "$7"
 	;;
 restart_iface)
-	watchcat_monitor_network "$2" "$3" "$4" "$5" "$6" "$7"
+	# args from init script: period pinghosts pingperiod pingsize interface mmifacename unlockbands addressfamily
+	watchcat_monitor_network "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
 	;;
 *)
 	echo "Error: invalid mode selected: $mode"
