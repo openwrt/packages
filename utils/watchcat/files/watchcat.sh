@@ -87,6 +87,11 @@ watchcat_restart_network_iface() {
 	ip link set "$1" up
 }
 
+watchcat_run_script() {
+	logger -p daemon.info -t "watchcat[$$]" "Running script \"$1\" for network interface: \"$2\"."
+	"$1" "$2"
+}
+
 watchcat_restart_all_network() {
 	logger -p daemon.info -t "watchcat[$$]" "Restarting networking now by running: /etc/init.d/network restart"
 	/etc/init.d/network restart
@@ -101,6 +106,7 @@ watchcat_monitor_network() {
 	mm_iface_name="$6"
 	mm_iface_unlock_bands="$7"
 	address_family="$8"
+	script="$9"
 
 	time_now="$(cat /proc/uptime)"
 	time_now="${time_now%%.*}"
@@ -144,7 +150,9 @@ watchcat_monitor_network() {
 			if [ "$ping_result" -eq 0 ]; then
 				time_lastcheck_withinternet="$time_now"
 			else
-				if [ "$iface" != "" ]; then
+				if [ "$script" != "" ]; then
+					logger -p daemon.info -t "watchcat[$$]" "Could not reach $host via \"$iface\" for \"$((time_now - time_lastcheck_withinternet))\" seconds. Running script after reaching \"$failure_period\" seconds"
+				elif [ "$iface" != "" ]; then
 					logger -p daemon.info -t "watchcat[$$]" "Could not reach $host via \"$iface\" for \"$((time_now - time_lastcheck_withinternet))\" seconds. Restarting \"$iface\" after reaching \"$failure_period\" seconds"
 				else
 					logger -p daemon.info -t "watchcat[$$]" "Could not reach $host for \"$((time_now - time_lastcheck_withinternet))\" seconds. Restarting networking after reaching \"$failure_period\" seconds"
@@ -153,13 +161,17 @@ watchcat_monitor_network() {
 		done
 
 		[ "$((time_now - time_lastcheck_withinternet))" -ge "$failure_period" ] && {
-			if [ "$mm_iface_name" != "" ]; then
-				watchcat_restart_modemmanager_iface "$mm_iface_name" "$mm_iface_unlock_bands"
-			fi
-			if [ "$iface" != "" ]; then
-				watchcat_restart_network_iface "$iface"
+			if [ "$script" != "" ]; then
+				watchcat_run_script "$script" "$iface"
 			else
-				watchcat_restart_all_network
+				if [ "$mm_iface_name" != "" ]; then
+					watchcat_restart_modemmanager_iface "$mm_iface_name" "$mm_iface_unlock_bands"
+				fi
+				if [ "$iface" != "" ]; then
+					watchcat_restart_network_iface "$iface"
+				else
+					watchcat_restart_all_network
+				fi
 			fi
 			/etc/init.d/watchcat start
 			# Restart timer cycle.
@@ -245,7 +257,11 @@ ping_reboot)
 	;;
 restart_iface)
 	# args from init script: period pinghosts pingperiod pingsize interface mmifacename unlockbands addressfamily
-	watchcat_monitor_network "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
+	watchcat_monitor_network "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" ""
+	;;
+run_script)
+	# args from init script: period pinghosts pingperiod pingsize interface addressfamily script
+	watchcat_monitor_network "$2" "$3" "$4" "$5" "$6" "" "" "$7" "$8"
 	;;
 *)
 	echo "Error: invalid mode selected: $mode"
