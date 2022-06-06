@@ -98,10 +98,6 @@ define Build/InstallDev
 		$(1)/usr/lib/
 
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-ifneq ($(INTL_FULL),)
-	$(SED) '/^Libs:/s/$$$$/ -lintl/' \
-		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/glib-2.0.pc
-endif
 	$(INSTALL_DATA) \
 		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/*.pc \
 		$(1)/usr/lib/pkgconfig
