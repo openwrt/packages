@@ -67,10 +67,10 @@ Signed-off-by: Gert Doering <gert@greenie.muc.de>
 +	[enable_wolfssl_options_h="yes"]
 +)
 +
- AC_ARG_VAR([PLUGINDIR], [Path of plug-in directory @<:@default=LIBDIR/openvpn/plugins@:>@])
- if test -n "${PLUGINDIR}"; then
- 	plugindir="${PLUGINDIR}"
-@@ -1020,6 +1027,105 @@ elif test "${with_crypto_library}" = "mb
+ AC_ARG_WITH(
+ 	[openssl-engine],
+ 	[AS_HELP_STRING([--with-openssl-engine], [enable engine support with OpenSSL. Default enabled for OpenSSL < 3.0, auto,yes,no @<:@default=auto@:>@])],
+@@ -1054,6 +1061,105 @@ elif test "${with_crypto_library}" = "mb
  	AC_DEFINE([ENABLE_CRYPTO_MBEDTLS], [1], [Use mbed TLS library])
  	CRYPTO_CFLAGS="${MBEDTLS_CFLAGS}"
  	CRYPTO_LIBS="${MBEDTLS_LIBS}"
