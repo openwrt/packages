@@ -4,12 +4,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=open-iscsi
-PKG_VERSION:=2.1.3
+PKG_VERSION:=2.1.7
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/open-iscsi/open-iscsi/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=5410474b23552016220d04aa181903cb50ae988f29e99cb03f3e2de86a109be4
+PKG_HASH:=d96761e47a69f8214c5fbd251d844f37961b14c3e437b63a15cc64f5b8cba2f0
 
 PKG_MAINTAINER:=Lucian CRISTIAN <lucian.cristian@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -90,7 +90,8 @@ define Package/open-iscsi/install
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/iscsi/iscsid.conf $(1)/etc/iscsi/
 	$(INSTALL_BIN) ./files/iscsi* $(1)/usr/sbin/
 	$(INSTALL_BIN) ./files/open-iscsi $(1)/etc/init.d/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/sbin/iscsi{adm,d,-iname,uio} $(1)/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/sbin/iscsi{adm,d,-iname} $(1)/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/iscsiuio $(1)/usr/sbin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libopeniscsiusr.so* $(1)/usr/lib/
 endef
 

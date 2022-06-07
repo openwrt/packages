@@ -16,8 +16,6 @@ start_service() {
 	config_get_bool enabled irqbalance enabled 0
 	[ "$enabled" -gt 0 ] || return 0
 
-	mkdir -p /var/run/irqbalance
-
 	# 10 is the default
 	config_get interval irqbalance interval 10
 

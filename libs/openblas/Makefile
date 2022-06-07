@@ -63,6 +63,8 @@ else ifeq ($(ARCH),mipsel)
   OPENBLAS_TARGET:=MIPS24K
 else ifeq ($(ARCH),powerpc)
   OPENBLAS_TARGET:=PPC440
+else ifeq ($(ARCH),riscv64)
+  OPENBLAS_TARGET:=RISCV64_GENERIC
 endif
 endif # ifeq ($(OPENBLAS_TARGET),)
 

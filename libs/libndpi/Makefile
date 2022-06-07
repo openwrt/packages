@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libndpi
-PKG_VERSION:=4.0
+PKG_VERSION:=4.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ntop/nDPI/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=99e0aba6396fd633c3840f30e4942f6591a08066d037f560b65ba64e7310f4d6
+PKG_HASH:=e54ce8fe13adc5d747be7553513657fae78f796e0bd459e122c280cc06ce4daf
 PKG_BUILD_DIR:=$(BUILD_DIR)/nDPI-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Banglang Huang <banglang.huang@foxmail.com>, Toni Uhlig <matzeton@googlemail.com>
@@ -27,8 +27,12 @@ PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
-ifeq ($(CONFIG_LIBNDPI_GCRYPT),)
-CONFIGURE_ARGS += --disable-gcrypt
+ifneq ($(CONFIG_LIBNDPI_GCRYPT),)
+CONFIGURE_ARGS += --with-local-libgcrypt
+endif
+
+ifneq ($(CONFIG_LIBNDPI_PCRE2),)
+CONFIGURE_ARGS += --with-pcre
 endif
 
 ifneq ($(CONFIG_LIBNDPI_MAXMINDDB),)
@@ -40,7 +44,7 @@ define Package/libndpi
   CATEGORY:=Libraries
   TITLE:=Library for deep-packet inspection
   URL:=https://github.com/ntop/nDPI
-  DEPENDS:=+LIBNDPI_GCRYPT:libgcrypt +LIBNDPI_MAXMINDDB:libmaxminddb +libpcap +libjson-c
+  DEPENDS:=+LIBNDPI_GCRYPT:libgcrypt +LIBNDPI_PCRE2:libpcre2 +LIBNDPI_MAXMINDDB:libmaxminddb +libpcap +libjson-c
 endef
 
 define Package/libndpi/description
@@ -57,6 +61,15 @@ config LIBNDPI_GCRYPT
 	  This option enables QUIC client hello decryption.
 	  Disabled by default.
 
+config LIBNDPI_PCRE2
+	bool "pcre2 support"
+	depends on PACKAGE_libndpi
+	default n
+	help
+	  This option enables the use of regular expressions.
+	  Used by nDPI to detect RCE injection.
+	  Disabled by default.
+
 config LIBNDPI_MAXMINDDB
 	bool "Maxmind GeoIP support"
 	depends on PACKAGE_libndpi
@@ -65,18 +78,6 @@ config LIBNDPI_MAXMINDDB
 	  This options enables geographical information processing
 	  and serialization based on IP addresses.
 	  Disabled by default.
-endef
-
-define Build/Prepare
-	$(PKG_UNPACK)
-	$(Build/Patch)
-	mv $(PKG_BUILD_DIR)/configure.seed $(PKG_BUILD_DIR)/configure.ac
-	$(SED) "s/@NDPI_MAJOR@/3/g" \
-		-e "s/@NDPI_MINOR@/4/g" \
-		-e "s/@NDPI_PATCH@/0/g" \
-		-e "s/@NDPI_VERSION_SHORT@/3.4.0/g" \
-		-e "s/@FUZZY@/dnl> /g" \
-		$(PKG_BUILD_DIR)/configure.ac
 endef
 
 define Build/InstallDev

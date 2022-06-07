@@ -40,12 +40,14 @@ handle_xfrpc() {
 	}
 
 	if [ "$name" = "common" ]; then
-		uci_validate_section xfrpc xfrpc "$name" \
+		uci_validate_section xfrpc xfrp "$name" \
 				'server_addr:ipaddr' \
-				'server_port:uinteger' 
+				'server_port:uinteger' \
+				'token:string:'	
 
 		echo "server_addr = $server_addr" >> "$config"
 		echo "server_port = $server_port" >> "$config"
+		[ -z "$token" ] || echo "token = $token" >> "$config"
 	else
 		handle_type
 	fi
@@ -61,7 +63,7 @@ start_service() {
 	> "$conf_file"
 	config_load "$NAME"
 
-	uci_validate_section xfrpc xfrpc init \
+	uci_validate_section xfrpc xfrp init \
 			'disabled:bool:1' \
 			'loglevel:uinteger:0'
 
