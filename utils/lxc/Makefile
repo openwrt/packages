@@ -61,6 +61,10 @@ define Package/lxc-auto
   DEPENDS+=+lxc-start +lxc-stop
 endef
 
+define Package/lxc-auto/postinst
+[ -n "$${IPKG_INSTROOT}" ] || [ "$${PKG_UPGRADE}" = 1 ] || /etc/init.d/lxc-auto boot
+endef
+
 define Package/lxc-auto/description
  LXC is the userspace control package for Linux Containers, a lightweight
  virtual system mechanism sometimes described as "chroot on steroids".
