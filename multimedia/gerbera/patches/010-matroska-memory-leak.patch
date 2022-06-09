@@ -12,7 +12,7 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
 +++ b/src/metadata/matroska_handler.cc
 @@ -137,8 +137,6 @@ void MatroskaHandler::parseMKV(const std
  
-             delete (elL1->SkipData(ebmlStream, elL1->Generic().Context));
+             delete (elL1->SkipData(ebmlStream, EBML_CONTEXT(elL1)));
              delete elL1;
 -            if (activeFlag == 0) // terminate search
 -                break;
