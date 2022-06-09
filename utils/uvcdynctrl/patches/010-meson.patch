@@ -1,0 +1,47 @@
+--- /dev/null
++++ b/libwebcam/meson.build
+@@ -0,0 +1,9 @@
++iconv_dep = dependency('iconv')
++
++libwebcam = static_library('webcam',
++  'test.c',
++  'libwebcam.c',
++  'dynctrl.c',
++  dependencies: [ iconv_dep, xml_dep ],
++  include_directories: incdirs,
++)
+--- /dev/null
++++ b/meson.build
+@@ -0,0 +1,9 @@
++project('libwebcam', 'c', version: '0.25', meson_version: '>=0.60')
++
++incdirs = include_directories('common/include')
++xml_dep = dependency('libxml-2.0')
++
++add_project_arguments('-DHAVE_CONFIG_H', language: 'c')
++
++subdir('libwebcam')
++subdir('uvcdynctrl')
+--- /dev/null
++++ b/uvcdynctrl/meson.build
+@@ -0,0 +1,20 @@
++cdata = configuration_data()
++cdata.set_quoted('UVCDYNCTRL_DATA_DIR', get_option('prefix') / 'share' / 'uvcdynctrl')
++cdata.set_quoted('UVCDYNCTRL_VERSION', meson.project_version())
++cfile = configure_file(
++  input: 'config.h.cmake',
++  output: 'config.h',
++  format: 'cmake',
++  configuration: cdata,
++)
++
++uvc = executable('uvcdynctrl',
++  'cmdline.c',
++  'controls.c',
++  'main.c',
++  include_directories: incdirs,
++  install : true,
++  link_with: libwebcam,
++)
++
++install_subdir('data', install_dir: 'share/uvcdynctrl')
