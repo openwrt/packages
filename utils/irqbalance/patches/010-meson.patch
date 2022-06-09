@@ -1,0 +1,73 @@
+From 35072fc06b9efe923f6ac1bd73b67c33d3ae619b Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Fri, 10 Jun 2022 23:14:27 -0700
+Subject: [PATCH] add meson
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ meson.build       | 43 +++++++++++++++++++++++++++++++++++++++++++
+ meson_options.txt | 11 +++++++++++
+ 2 files changed, 54 insertions(+)
+ create mode 100644 meson.build
+ create mode 100644 meson_options.txt
+
+--- /dev/null
++++ b/meson.build
+@@ -0,0 +1,43 @@
++project('irqbalance', 'c',
++  version : '1.9.0',
++  default_options : ['warning_level=1']
++)
++
++cc = meson.get_compiler('c')
++
++glib_dep = dependency('glib-2.0', static: true)
++m_dep = cc.find_library('m', required: false)
++capng_dep = dependency('libcap-ng', required: get_option('capng'))
++ncurses_dep = dependency('curses', required: get_option('ui'))
++systemd_dep = dependency('libsystemd', required: get_option('systemd'))
++
++cdata = configuration_data()
++cdata.set('HAVE_GETOPT_LONG', cc.has_function('getopt_long'))
++cdata.set('HAVE_IRQBALANCEUI', ncurses_dep.found())
++cdata.set('HAVE_NUMA_H', cc.has_header('numa.h'))
++cdata.set('HAVE_LIBCAP_NG', capng_dep.found())
++cdata.set('HAVE_LIBSYSTEMD', systemd_dep.found())
++cdata.set_quoted('VERSION', meson.project_version())
++cfile = configure_file(
++  output: 'config.h',
++  configuration: cdata
++)
++
++if cdata.get('HAVE_IRQBALANCEUI')
++  add_project_arguments('-D_GNU_SOURCE', language: 'c')
++endif
++
++
++executable('irqbalance',
++  'activate.c',
++  'bitmap.c',
++  'classify.c',
++  'cputree.c',
++  'irqbalance.c',
++  'irqlist.c',
++  'numa.c',
++  'placement.c',
++  'procinterrupts.c',
++  dependencies: [ glib_dep, m_dep, capng_dep, ncurses_dep, systemd_dep ],
++  install : true
++)
+--- /dev/null
++++ b/meson_options.txt
+@@ -0,0 +1,11 @@
++option('capng', type : 'feature',
++  description : 'Build with libcap-ng support',
++)
++
++option('systemd', type : 'feature',
++  description : 'Build with systemd support',
++)
++
++option('ui', type : 'feature',
++  description : 'Build the UI component',
++)
