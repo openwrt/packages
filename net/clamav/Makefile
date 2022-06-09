@@ -70,8 +70,6 @@ CMAKE_OPTIONS += \
 	-DENABLE_EXAMPLES=OFF \
 	-DENABLE_UNRAR=OFF \
 	-DENABLE_SYSTEMD=OFF \
-	-DIconv_INCLUDE_DIR=$(ICONV_PREFIX)/include \
-	-DIconv_LIBRARY=$(ICONV_PREFIX)/lib/libiconv.$(if $(ICONV_FULL),so,a) \
 	-DHAVE_SYSTEM_LFS_FTS=O$(if $(CONFIG_USE_GLIBC),N,FF)
 
 TARGET_CXXFLAGS += -ffunction-sections -fdata-sections -fno-rtti -flto
