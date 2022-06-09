@@ -15,7 +15,7 @@ PKG_NAME:=elektra
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.md
 PKG_VERSION:=0.9.7
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 # Use this for official releasees
 PKG_HASH:=12b7b046004db29317b7b937dc794abf719c400ba3115af8d41849127b562681
@@ -311,8 +311,6 @@ CMAKE_OPTIONS += \
 	-DKDB_DEFAULT_STORAGE=toml \
 	-DENABLE_OPTIMIZATIONS=OFF \
 	-DPLUGINS="ALL;-gpgme;-multifile;-simpleini" \
-	-DIconv_INCLUDE_DIR="$(ICONV_PREFIX)/include" \
-	-DIconv_LIBRARY="$(ICONV_PREFIX)/lib/libiconv.$(if $(CONFIG_BUILD_NLS),so,a)" \
 	-DBINDINGS="MAINTAINED;-intercept_env;-intercept_fs;-io_glib"
 
 define Package/libelektra-core/install
