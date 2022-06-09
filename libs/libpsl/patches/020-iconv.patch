@@ -1,0 +1,29 @@
+--- a/meson.build
++++ b/meson.build
+@@ -20,6 +20,7 @@ libicu_dep = notfound
+ libidn_dep = notfound
+ libunistring = notfound
+ networking_deps = notfound
++libiconv_dep = notfound
+ 
+ # FIXME: Cleanup this when Meson gets 'feature-combo':
+ # https://github.com/mesonbuild/meson/issues/4566
+@@ -86,6 +87,7 @@ endif
+ if libidn2_dep.found() or libidn_dep.found()
+   # Check for libunistring, we need it for psl_str_to_utf8lower()
+   libunistring = cc.find_library('unistring')
++  libiconv_dep = dependency('iconv')
+ endif
+ 
+ if host_machine.system() == 'windows'
+--- a/src/meson.build
++++ b/src/meson.build
+@@ -19,7 +19,7 @@ cargs = [
+ libpsl = library('psl', sources, suffixes_dafsa_h,
+   include_directories : [configinc, includedir],
+   c_args : cargs,
+-  dependencies : [libidn2_dep, libidn_dep, libicu_dep, libunistring, networking_deps],
++  dependencies : [libidn2_dep, libidn_dep, libicu_dep, libunistring, networking_deps, libiconv_dep],
+   version: lt_version,
+   install: true,
+ )
