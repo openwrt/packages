@@ -1,0 +1,21 @@
+From 6352fee2194a41179a808e9e2b805e0f5c86f8cf Mon Sep 17 00:00:00 2001
+From: Andy Green <andy@warmcat.com>
+Date: Sun, 16 Jan 2022 06:49:38 +0000
+Subject: [PATCH] sort-dns: fix scope comparison
+
+https://github.com/warmcat/libwebsockets/issues/2537
+---
+ lib/core-net/client/sort-dns.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/lib/core-net/client/sort-dns.c
++++ b/lib/core-net/client/sort-dns.c
+@@ -406,7 +406,7 @@ lws_sort_dns_dcomp(const lws_dns_sort_t
+ 	 */
+ 
+ 	scopea = lws_ipv6_unicast_scope(to_v6_sa(&da->dest));
+-	scopeb = lws_ipv6_unicast_scope(to_v6_sa(&db));
++	scopeb = lws_ipv6_unicast_scope(to_v6_sa(&db->dest));
+ 	scope_srca = lws_ipv6_unicast_scope(to_v6_sa(&da->source));
+ 	scope_srcb = lws_ipv6_unicast_scope(to_v6_sa(&db->source));
+ 
