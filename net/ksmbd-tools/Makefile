@@ -12,15 +12,13 @@ PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
-PKG_FIXUP:=autoreconf
-PKG_REMOVE_FILES:=autogen.sh
 PKG_INSTALL:=1
-PKG_BUILD_PARALLEL:=1
 
 PKG_BUILD_DEPENDS:=glib2
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
+include $(INCLUDE_DIR)/meson.mk
 
 TAR_OPTIONS+= --strip-components 1
 TAR_CMD=$(HOST_TAR) -C $(1) $(TAR_OPTIONS)
@@ -30,7 +28,7 @@ define Package/ksmbd-tools/Default
   CATEGORY:=Network
   SUBMENU:=Filesystem
   TITLE:=Kernel SMB
-  URL:=https://github.com/cifsd-team/cifsd-tools
+  URL:=https://github.com/cifsd-team/ksmbd-tools
   DEPENDS:= $(ICONV_DEPENDS) $(INTL_DEPENDS)
 endef
 
@@ -89,18 +87,16 @@ define Package/ksmbd-avahi-service/description
   Ksmbd (smb/445) Daemon service via mDNS/DNS-SD.
 endef
 
-CONFIGURE_ARGS += \
-	--disable-shared \
-	--enable-static
+MESON_ARGS += \
+	-Db_lto=true \
+	-Dkrb5=disabled
 
-CONFIGURE_VARS += GLIB_LIBS="$(STAGING_DIR)/usr/lib/libglib-2.0.a"
-
-TARGET_CFLAGS += -ffunction-sections -fdata-sections -flto
-TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed -liconv $(if $(INTL_FULL),-lintl) $(if $(CONFIG_USE_GLIBC),-lpthread)
+TARGET_CFLAGS += -ffunction-sections -fdata-sections
+TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 
 define Package/ksmbd-server/install
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/ksmbd.mountd $(1)/usr/sbin/
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ksmbd.mountd $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/ksmbd $(1)/etc/init.d
 	$(INSTALL_CONF) ./files/ksmbd.config $(1)/etc/config/ksmbd
 	$(INSTALL_DATA) ./files/smb.conf.template $(1)/etc/ksmbd/
@@ -111,10 +107,10 @@ define Package/ksmbd-server/install
 endef
 
 define Package/ksmbd-utils/install
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/ksmbd.adduser $(1)/usr/sbin/
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ksmbd.adduser $(1)/usr/bin/
 ifeq ($(CONFIG_KSMBD_UTILS_SHAREADD),y)
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/ksmbd.addshare $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ksmbd.addshare $(1)/usr/bin/
 endif
 endef
 
