@@ -7,6 +7,7 @@ USE_PROCD=1
 
 UCI_CONF="rsyslog"
 CONFIG_FILE="/var/etc/rsyslog.conf"
+BASE_CONFIG_FILE="/etc/rsyslog.conf"
 
 modules=""
 selectors=""
@@ -74,7 +75,9 @@ expand_config() {
     config_foreach handle_selector selector
     config_foreach handle_forwarder forwarder
 
+    mkdir -p $(dirname ${CONFIG_FILE})
     > ${CONFIG_FILE}
+    echo "include(file=\"${BASE_CONFIG_FILE}\" mode=\"optional\")" >> ${CONFIG_FILE}
     for m in ${modules}; do
         echo "module(load=\"${m}\")" >> ${CONFIG_FILE}
     done
