@@ -72,8 +72,8 @@ define Package/rsyslog/install
 	$(INSTALL_CONF) ./files/rsyslog.conf $(1)/etc
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/rsyslog.init $(1)/etc/init.d/rsyslog
-	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_CONF) ./files/rsyslog $(1)/etc/config
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_CONF) ./files/20_rsyslog $(1)/etc/uci-defaults
 endef
 
 define Package/rsyslog/config
