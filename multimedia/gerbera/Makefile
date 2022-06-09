@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gerbera
-PKG_VERSION:=1.10.0
+PKG_VERSION:=1.11.0
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/gerbera/gerbera/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=bd6c7b2c6380e2e265a998bbc0df9eec14b9c6a65bc91e7f2c0ae0b67fd0c9cf
+PKG_HASH:=0c13049792a28ec0e3086ba61c7f9675626a1dbadb043650a452192727418be7
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0-or-later
@@ -24,7 +24,7 @@ PKG_CONFIG_DEPENDS:=CONFIG_BUILD_PATENTED
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
-include $(INCLUDE_DIR)/cmake.mk
+include $(INCLUDE_DIR)/meson.mk
 
 define Package/gerbera
   SECTION:=multimedia
@@ -43,31 +43,28 @@ define Package/gerbera/conffiles
 /etc/config/gerbera
 endef
 
-CMAKE_OPTIONS += \
-	-DCMAKE_LINK_WHAT_YOU_USE=$(if $(CONFIG_HOST_OS_MACOS),OFF,ON) \
-	-DIconv_INCLUDE_DIR=$(ICONV_PREFIX)/include \
-	-DIconv_LIBRARY=$(ICONV_PREFIX)/lib/libiconv.a \
-	-DWITH_MAGIC=ON \
-	-DWITH_MYSQL=OFF \
-	-DWITH_CURL=ON \
-	-DWITH_INOTIFY=ON \
-	-DWITH_JS=OFF \
-	-DWITH_TAGLIB=ON \
-	-DWITH_AVCODEC=$(if $(CONFIG_BUILD_PATENTED),ON,OFF) \
-	-DWITH_FFMPEGTHUMBNAILER=OFF \
-	-DWITH_EXIF=ON \
-	-DWITH_EXIV2=OFF \
-	-DWITH_MATROSKA=ON \
-	-DWITH_SYSTEMD=OFF \
-	-DWITH_LASTFM=OFF \
-	-DWITH_DEBUG=OFF \
-	-DWITH_TESTS=OFF \
-	-DWITH_NPUPNP=ON
+MESON_ARGS += \
+	-Db_lto=true \
+	-Davcodec=$(if $(CONFIG_BUILD_PATENTED),en,dis)abled \
+	-Dcurl=enabled \
+	-Dexif=enabled \
+	-Dexiv2=disabled \
+	-Dffmpegthumbnailer=disabled \
+	-Dinotify=enabled \
+	-Djs=disabled \
+	-Dlastfm=disabled \
+	-Dmagic=enabled \
+	-Dmatroska=enabled \
+	-Dmysql=disabled \
+	-Dnpupnp=enabled \
+	-Dsystemd=disabled \
+	-Dtaglib=enabled \
+	-Dtests=disabled \
+	-Dwavpack=disabled
 
 TARGET_CFLAGS += \
 	-ffunction-sections \
-	-fdata-sections \
-	-flto
+	-fdata-sections
 
 TARGET_LDFLAGS += -Wl,--gc-sections
 
