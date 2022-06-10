@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ser2net
-PKG_VERSION:=4.3.5
+PKG_VERSION:=4.3.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/ser2net
-PKG_HASH:=848c4fe863806e506832f1ee85b8b68258f06eb19dad43dbeee16a2cfe5d9053
+PKG_HASH:=65515c7e9a5289167ae64c4032450904449a87ce20653241022af4f5db2e9510
 
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
@@ -25,6 +25,7 @@ PKG_INSTALL:=1
 include $(INCLUDE_DIR)/package.mk
 
 CONFIGURE_ARGS += \
+	--with-pam=no \
 	--with-pthreads \
 	--with-sysfs-led-support
 
