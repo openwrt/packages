@@ -1,0 +1,11 @@
+#!/bin/sh
+
+[ -e /etc/config/ttymidi ] || {
+	touch /etc/config/ttymidi
+	uci add ttymidi ttymidi
+	uci set ttymidi.@ttymidi[0].enabled=0
+	uci set ttymidi.@ttymidi[0].name=ttymidi
+	uci set ttymidi.@ttymidi[0].baudrate=115200
+	uci set ttymidi.@ttymidi[0].device=/dev/ttyUSB0
+	uci commit
+}
