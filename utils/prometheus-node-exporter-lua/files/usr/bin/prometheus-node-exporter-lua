@@ -59,7 +59,7 @@ function timed_scrape(collector)
   local status, err = pcall(collector.scrape)
   if not status then
     success = 0
-    print(err)
+    io.stderr:write(err)
   end
   return (socket.gettime() - start_time), success
 end
@@ -79,22 +79,18 @@ end
 
 -- Web server-specific functions
 
-function http_ok_header()
-  output("HTTP/1.0 200 OK\r\nServer: lua-metrics\r\nContent-Type: text/plain; version=0.0.4\r\n\r")
-end
-
-function http_not_found()
-  output("HTTP/1.0 404 Not Found\r\nServer: lua-metrics\r\nContent-Type: text/plain\r\n\r\nERROR: File Not Found.")
-end
-
-function serve(request)
-  local q = request:match("^GET /metrics%??([^ ]*) HTTP/1%.[01]$")
-  if q == nil then
-    http_not_found()
+function handle_request(env)
+  if env.PATH_INFO ~= '/metrics' then
+    uhttpd.send("Status: 404 Not Found\r\n")
+    uhttpd.send("Server: lua-metrics\r\n")
+    uhttpd.send("Content-Type: text/plain\r\n\r\n")
+    uhttpd.send("ERROR: File Not Found.")
   else
-    http_ok_header()
+    uhttpd.send("Status: 200 OK\r\n")
+    uhttpd.send("Server: lua-metrics\r\n")
+    uhttpd.send("Content-Type: text/plain; version=0.0.4\r\n\r\n")
     local cols = {}
-    for c in q:gmatch("collect[^=]*=([^&]+)") do
+    for c in env.QUERY_STRING:gmatch("collect[^=]*=([^&]+)") do
       cols[#cols+1] = c
     end
     if #cols == 0 then
@@ -102,20 +98,9 @@ function serve(request)
     end
     run_all_collectors(cols)
   end
-  client:close()
-  return true
 end
 
 -- Main program
-
-for k,v in ipairs(arg) do
-  if (v == "-p") or (v == "--port") then
-    port = arg[k+1]
-  end
-  if (v == "-b") or (v == "--bind") then
-    bind = arg[k+1]
-  end
-end
 
 col_mods = {}
 col_names = {}
@@ -127,22 +112,9 @@ for c in ls_fd:lines() do
 end
 ls_fd:close()
 
-if port then
-  server = assert(socket.bind(bind, port))
+output = function (str) uhttpd.send(str.."\n") end
 
-  while 1 do
-    client = server:accept()
-    client:settimeout(60)
-    local request, err = client:receive()
-
-    if not err then
-      output = function (str) client:send(str.."\n") end
-      if not serve(request) then
-        break
-      end
-    end
-  end
-else
+if arg ~= nil then
   output = print
   run_all_collectors(col_names)
 end
