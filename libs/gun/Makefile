@@ -30,7 +30,6 @@ define Package/gun
   TITLE:=GunDB
   URL:=https://gun.eco
   DEPENDS:=+node +node-npm
-  BUILDONLY:=1
 endef
  
 define Package/gun/description
