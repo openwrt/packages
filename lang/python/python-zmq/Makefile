@@ -18,11 +18,9 @@ PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec@nic.cz>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING.BSD
 
-#include ../pypi.mk
-#include ../python3-package.mk
-include $(TOPDIR)/feeds/packages/lang/python/pypi.mk
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-include $(TOPDIR)/feeds/packages/lang/python/python3-package.mk
+include ../python3-package.mk
 
 define Package/python3-zmq
   SUBMENU:=Python
@@ -48,7 +46,7 @@ define prepare_pyzmq_setup
 	$(CP) ./files/setup.cfg $(PKG_BUILD_DIR)/setup.cfg
 endef
 
-Hooks/Compile/Pre += prepare_pyzmq_setup
+Hooks/Configure/Post += prepare_pyzmq_setup
 
 PYTHON3_PKG_SETUP_ARGS:= --zmq=$(PKG_BUILD_DIR)/zmq
 
