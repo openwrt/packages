@@ -20,8 +20,6 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/fuse-$(PKG_VERSION)
 PKG_MAINTAINER:=
 PKG_CPE_ID:=cpe:/a:fuse_project:fuse
 
-PKG_INSTALL:=1
-
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/meson.mk
 

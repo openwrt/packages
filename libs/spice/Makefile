@@ -19,7 +19,6 @@ PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 PKG_LICENSE:=LGPL-2.1-only
 PKG_LICENSE_FILES:=COPYING
 
-PKG_INSTALL:=1
 PKG_BUILD_DEPENDS:=spice-protocol
 
 include $(INCLUDE_DIR)/package.mk

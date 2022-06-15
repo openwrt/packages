@@ -22,7 +22,6 @@ PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:gstreamer_project:gstreamer
 
-PKG_INSTALL:=1
 PKG_BUILD_DEPENDS:=glib2/host gettext-full/host
 
 include $(INCLUDE_DIR)/package.mk

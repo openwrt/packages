@@ -12,8 +12,6 @@ PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
-PKG_INSTALL:=1
-
 PKG_BUILD_DEPENDS:=glib2
 
 include $(INCLUDE_DIR)/package.mk

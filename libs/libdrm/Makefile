@@ -21,8 +21,6 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_LIBDRM_NOUVEAU \
 	CONFIG_LIBDRM_RADEON
 
-PKG_INSTALL:=1
-
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/meson.mk
 

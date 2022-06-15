@@ -17,7 +17,6 @@ PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=LGPL-2-or-later
 PKG_LICENSE_FILES:=COPYING.LIB
 
-PKG_INSTALL:=1
 PKG_BUILD_DEPENDS:=glib2/host
 
 include $(INCLUDE_DIR)/package.mk

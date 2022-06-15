@@ -18,8 +18,6 @@ PKG_MIRROR_HASH:=ffb918edf96581d4ba310bd1e975297e9a7006a7e26f37934afde462585125f
 
 PKG_MAINTAINER:=Nicholas Smith <nicholas.smith@telcoantennas.com.au>
 
-PKG_INSTALL:=1
-
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/meson.mk

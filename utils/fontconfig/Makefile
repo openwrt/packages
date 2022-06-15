@@ -20,7 +20,6 @@ PKG_LICENSE:=
 PKG_LICENSE_FILES:=
 PKG_CPE_ID:=cpe:/a:fontconfig_project:fontconfig
 
-PKG_INSTALL:=1
 PKG_BUILD_DEPENDS:=gperf/host
 
 include $(INCLUDE_DIR)/package.mk
