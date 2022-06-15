@@ -19,7 +19,6 @@ PKG_MAINTAINER:=Nicholas Smith <nicholas@nbembedded.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
-PKG_INSTALL:=1
 PKG_BUILD_DEPENDS:=glib2/host libxslt/host
 
 include $(INCLUDE_DIR)/package.mk

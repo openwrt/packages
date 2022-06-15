@@ -17,8 +17,6 @@ PKG_MIRROR_HASH:=034dc3b9e5ddb1acd9bb8c2a07f3f8a576d47b7f70942b61b82c4dfc8f80518
 
 PKG_MAINTAINER:=Nicholas Smith <nicholas@nbembedded.com>
 
-PKG_INSTALL:=1
-
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/meson.mk
