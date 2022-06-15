@@ -1,0 +1,23 @@
+From 522883505d3b02e3294f045f49007b61c00e2c31 Mon Sep 17 00:00:00 2001
+From: Chao Liu <liuchao173@huawei.com>
+Date: Wed, 8 Jun 2022 10:04:02 +0800
+Subject: [PATCH] check whether savedptr is NULL before invoking strlen
+
+savedptr can be null in musl libc, so the strlen(NULL) will segfault
+
+Signed-off-by: Chao Liu <liuchao173@huawei.com>
+---
+ procinterrupts.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/procinterrupts.c
++++ b/procinterrupts.c
+@@ -178,7 +178,7 @@ void init_irq_class_and_type(char *saved
+ 	}
+ 
+ #ifdef AARCH64
+-	if (strlen(savedptr) > 0) {
++	if (savedptr && strlen(savedptr) > 0) {
+ 		snprintf(irq_fullname, PATH_MAX, "%s %s", last_token, savedptr);
+ 		tmp = strchr(irq_fullname, '\n');
+ 		if (tmp)
