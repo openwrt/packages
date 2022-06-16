@@ -91,6 +91,14 @@ else
 	CONFIGURE_ARGS += --with-openssl
 endif
 
+EXTRA_CFLAGS += "-I$(PKG_BUILD_DIR)/extra-includes"
+
+define Build/Configure
+	$(INSTALL_DIR) $(PKG_BUILD_DIR)/extra-includes/
+	$(CP) -R $(STAGING_DIR_HOST)/include/ext2fs $(PKG_BUILD_DIR)/extra-includes/
+	$(Build/Configure/Default)
+endef
+
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/* $(1)/usr/include/
