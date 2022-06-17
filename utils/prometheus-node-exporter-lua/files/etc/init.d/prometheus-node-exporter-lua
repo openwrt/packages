@@ -11,12 +11,21 @@ _log() {
 start_service() {
 	. /lib/functions/network.sh
 
-	local interface port bind
+	local interface port bind4 bind6
 
 	config_load prometheus-node-exporter-lua.main
 	config_get keepalive "main" http_keepalive 70
 	config_get interface "main" listen_interface "loopback"
 	config_get port "main" listen_port 9100
+
+	[ "$interface" = "*" ] || {
+		network_get_ipaddr  bind4 "$interface"
+		network_get_ipaddr6 bind6 "$interface"
+		[ -n "$bind4$bind6" ] || {
+			_log "defering start until listen interface $interface becomes ready"
+			return 0
+		}
+    }
 
 	procd_open_instance
 
@@ -26,14 +35,8 @@ start_service() {
 	if [ "$interface" = "*" ]; then
 		procd_append_param command -p $port
 	else
-		network_is_up "$interface" || {
-			_log "defering start until listen interface $interface becomes ready"
-			return 0
-		}
-		network_get_ipaddr6 bind "$interface"
-		[ -n "$bind" ] && procd_append_param command -p [$bind]:$port
-		network_get_ipaddr bind "$interface"
-		[ -n "$bind" ] && procd_append_param command -p $bind:$port
+		[ -n "$bind4" ] && procd_append_param command -p $bind4:$port
+		[ -n "$bind6" ] && procd_append_param command -p [$bind6]:$port
 	fi
 
 	procd_set_param stdout 1
