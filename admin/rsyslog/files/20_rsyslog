@@ -1,4 +1,6 @@
-[ "$(sed -e '/^#/d' -e '/^\s*$/d' /etc/rsyslog.conf)" != "" ] && exit 0
+#!/bin/sh
+
+grep -qv -e '^\s*#' -e '^\s*$' /etc/rsyslog.conf 2>/dev/null && exit 0
 [ "$(uci -q get rsyslog.syslog)" == "syslog" ] && exit 0
 
 uci -q import rsyslog << EOI
