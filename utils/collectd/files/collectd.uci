@@ -213,3 +213,10 @@ config globals 'globals'
 #config plugin 'vmem'
 #	option enable '0'
 #	option Verbose '0'
+#
+#config plugin 'write_http'
+#	option enable '0'
+#
+#config write_http_node
+#	option name 'foo'
+#	option URL 'http://example.org/post-collectd'

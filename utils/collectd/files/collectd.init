@@ -78,6 +78,52 @@ process_curl_page() {
 	printf "\\t</Page>\n" >> "$COLLECTD_CONF"
 }
 
+process_write_http() {
+	printf "<Plugin write_http>\n" >> "$COLLECTD_CONF"
+	config_foreach process_write_http_node write_http_node
+	printf "</Plugin>\n\n" >> "$COLLECTD_CONF"
+}
+
+process_write_http_node() {
+	local cfg="$1"
+
+	local name URL Format User Password Timeout BufferSize
+
+	config_get name "$cfg" name
+	[ -z "$name" ] && {
+		$LOG notice "No name option in config $cfg defined"
+		return 0
+	}
+	config_get URL "$cfg" URL
+	[ -z "$URL" ] && {
+		$LOG notice "No URL option in config $cfg defined"
+		return 0
+	}
+	config_get Format "$cfg" Format
+	config_get User "$cfg" User
+	config_get Password "$cfg" Password
+	config_get Timeout "$cfg" Timeout
+	config_get BufferSize "$cfg" BufferSize
+	printf "\\t<Node \"%s\">\n" "${name}" >> "$COLLECTD_CONF"
+	printf "\\t\\tURL \"%s\"\n" "${URL}" >> "$COLLECTD_CONF"
+	[ -z "$Format" ] || {
+	       	printf "\\t\\tFormat \"%s\"\n" "${Format}" >> "$COLLECTD_CONF"
+	}
+	[ -z "$User" ] || {
+	       	printf "\\t\\tUser \"%s\"\n" "${User}" >> "$COLLECTD_CONF"
+	}
+	[ -z "$Password" ] || {
+	       	printf "\\t\\tPassword \"%s\"\n" "${Password}" >> "$COLLECTD_CONF"
+	}
+	[ -z "$Timeout" ] || {
+	       	printf "\\t\\tTimeout \%s\n" "${Timeout}" >> "$COLLECTD_CONF"
+	}
+	[ -z "$BufferSize" ] || {
+	       	printf "\\t\\tBufferSize \%s\n" "${BufferSize}" >> "$COLLECTD_CONF"
+	}
+	printf "\\t</Node>\n" >> "$COLLECTD_CONF"
+}
+
 process_network() {
 	local cfg="$1"
 
@@ -276,6 +322,10 @@ process_plugins() {
 		iptables)
 			CONFIG_STRING=""
 			process_iptables
+			;;
+		write_http)
+			CONFIG_STRING=""
+			process_write_http
 			;;
 		*)
 			CONFIG_STRING=""
