@@ -1,4 +1,4 @@
-From a8ed6b5a752bd7e50940c9e198af3edc3af0d5f7 Mon Sep 17 00:00:00 2001
+From dc80281ba0d325e71ff6cd2c1d7d525c889b3996 Mon Sep 17 00:00:00 2001
 From: Rosen Penev <rosenp@gmail.com>
 Date: Sat, 2 Jan 2021 21:05:53 -0800
 Subject: [PATCH] add meson build
@@ -7,14 +7,14 @@ meson compiles faster and is simpler than autotools.
 
 Signed-off-by: Rosen Penev <rosenp@gmail.com>
 ---
- addshare/meson.build | 10 ++++++++++
- adduser/meson.build  | 12 ++++++++++++
- control/meson.build  |  8 ++++++++
+ addshare/meson.build | 11 +++++++++++
+ adduser/meson.build  | 13 +++++++++++++
+ control/meson.build  |  9 +++++++++
  lib/meson.build      | 18 ++++++++++++++++++
- meson.build          | 29 +++++++++++++++++++++++++++++
- meson_options.txt    |  3 +++
- mountd/meson.build   | 16 ++++++++++++++++
- 7 files changed, 96 insertions(+)
+ meson.build          | 33 +++++++++++++++++++++++++++++++++
+ meson_options.txt    |  4 ++++
+ mountd/meson.build   | 17 +++++++++++++++++
+ 7 files changed, 105 insertions(+)
  create mode 100644 addshare/meson.build
  create mode 100644 adduser/meson.build
  create mode 100644 control/meson.build
@@ -25,7 +25,7 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
 
 --- /dev/null
 +++ b/addshare/meson.build
-@@ -0,0 +1,10 @@
+@@ -0,0 +1,11 @@
 +addshare = executable(
 +  'ksmbd.addshare',
 +  'share_admin.c',
@@ -35,10 +35,11 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
 +  include_directories: tools_incdir,
 +  link_with: libksmbdtools,
 +  install: true,
++  install_dir: get_option('sbindir'),
 +)
 --- /dev/null
 +++ b/adduser/meson.build
-@@ -0,0 +1,12 @@
+@@ -0,0 +1,13 @@
 +adduser = executable(
 +  'ksmbd.adduser',
 +  'md4_hash.c',
@@ -50,10 +51,11 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
 +  include_directories: tools_incdir,
 +  link_with: libksmbdtools,
 +  install: true,
++  install_dir: get_option('sbindir'),
 +)
 --- /dev/null
 +++ b/control/meson.build
-@@ -0,0 +1,8 @@
+@@ -0,0 +1,9 @@
 +control = executable(
 +  'ksmbd.control',
 +  'control.c',
@@ -61,6 +63,7 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
 +  include_directories: tools_incdir,
 +  link_with: libksmbdtools,
 +  install: true,
++  install_dir: get_option('sbindir'),
 +)
 --- /dev/null
 +++ b/lib/meson.build
@@ -85,8 +88,11 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
 +libksmbdtools = static_library('ksmbdtools', core_files, include_directories: tools_incdir, dependencies: [glib_dep, krb5_dep])
 --- /dev/null
 +++ b/meson.build
-@@ -0,0 +1,29 @@
-+project('ksmbsd-tools', 'c', version: '3.3.2', default_options: 'c_std=gnu99')
+@@ -0,0 +1,33 @@
++project('ksmbsd-tools', 'c',
++  version: run_command(find_program('awk'), '''/define KSMBD_TOOLS_VERSION / \
++    { gsub(/"/,"",$3); printf "%s", $3 }''', 'include/version.h', check: true).stdout(),
++  default_options: 'c_std=gnu99')
 +
 +tools_incdir = include_directories(['include', '.'])
 +
@@ -102,8 +108,9 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
 +  cdata.set('CONFIG_KRB5', krb5_dep.found())
 +  cdata.set('HAVE_KRB5_KEYBLOCK_KEYVALUE', cc.has_member('krb5_keyblock', 'keyvalue', prefix: '#include <krb5.h>'))
 +  cdata.set('HAVE_KRB5_AUTHENTICATOR_CLIENT', cc.has_member('krb5_authenticator', 'client', prefix: '#include <krb5.h>'))
-+  cdata.set('HAVE_KRB5_AUTH_CON_GETRECVSUBKEY', cc.has_header_symbol('krb5.h', 'krb5_auth_con_getrecvsubkey'))
-+  cdata.set('HAVE_KRB5_AUTH_CON_GETAUTHENTICATOR_DOUBLE_POINTER', true)
++  cdata.set('HAVE_KRB5_AUTH_CON_GETRECVSUBKEY', cc.has_function('krb5_auth_con_getrecvsubkey', dependencies: krb5_dep))
++  cdata.set('HAVE_KRB5_AUTH_CON_GETAUTHENTICATOR_DOUBLE_POINTER', cc.compiles('''#include <krb5.h>
++    krb5_error_code krb5_auth_con_getauthenticator(krb5_context, krb5_auth_context, krb5_authenticator**);''', dependencies: krb5_dep))
 +endif
 +cfile = configure_file(
 +  output: 'config.h',
@@ -117,13 +124,14 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
 +subdir('mountd')
 --- /dev/null
 +++ b/meson_options.txt
-@@ -0,0 +1,3 @@
+@@ -0,0 +1,4 @@
 +option('krb5', type : 'feature',
 +  description : 'Build with Kerberos support',
++  value : 'disabled',
 +)
 --- /dev/null
 +++ b/mountd/meson.build
-@@ -0,0 +1,16 @@
+@@ -0,0 +1,17 @@
 +mountd = executable(
 +  'ksmbd.mountd',
 +  'worker.c',
@@ -139,4 +147,5 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
 +  include_directories: tools_incdir,
 +  link_with: libksmbdtools,
 +  install: true,
++  install_dir: get_option('sbindir'),
 +)

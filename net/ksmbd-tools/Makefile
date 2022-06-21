@@ -93,8 +93,8 @@ TARGET_CFLAGS += -ffunction-sections -fdata-sections
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 
 define Package/ksmbd-server/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ksmbd.mountd $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/ksmbd.mountd $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/ksmbd $(1)/etc/init.d
 	$(INSTALL_CONF) ./files/ksmbd.config $(1)/etc/config/ksmbd
 	$(INSTALL_DATA) ./files/smb.conf.template $(1)/etc/ksmbd/
@@ -105,10 +105,10 @@ define Package/ksmbd-server/install
 endef
 
 define Package/ksmbd-utils/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ksmbd.adduser $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/ksmbd.adduser $(1)/usr/sbin/
 ifeq ($(CONFIG_KSMBD_UTILS_SHAREADD),y)
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ksmbd.addshare $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/ksmbd.addshare $(1)/usr/sbin/
 endif
 endef
 
