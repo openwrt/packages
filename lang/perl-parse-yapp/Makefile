@@ -16,7 +16,6 @@ PKG_SOURCE:=Parse-Yapp-$(PKG_VERSION).tar.gz
 PKG_HASH:=3810e998308fba2e0f4f26043035032b027ce51ce5c8a52a8b8e340ca65f13e5
 
 PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
-PKG_MAINTAINER:=Andy Walsh <andy.walsh44+github@gmail.com>
 
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/perl/Parse-Yapp-$(PKG_VERSION)
 HOST_BUILD_DEPENDS:=perl/host
