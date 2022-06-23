@@ -1,6 +1,6 @@
 #!/bin/sh
 # travelmate, a wlan connection manager for travel router
-# Copyright (c) 2016-2021 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2016-2022 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # set (s)hellcheck exceptions
@@ -10,7 +10,7 @@ export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 set -o pipefail
 
-trm_ver="2.0.7"
+trm_ver="2.0.8"
 trm_enabled="0"
 trm_debug="0"
 trm_iface=""
@@ -564,15 +564,20 @@ f_check() {
 						if [ "${trm_ifstatus}" = "true" ]; then
 							result="$(f_net)"
 							if [ "${trm_captive}" = "1" ]; then
-								cp_domain="$(printf "%s" "${result}" | awk -F '['\''| ]' '/^net cp/{printf "%s",$4}')"
-								if [ -x "/etc/init.d/dnsmasq" ] && [ -f "/etc/config/dhcp" ] &&
-									[ -n "${cp_domain}" ] && ! uci_get "dhcp" "@dnsmasq[0]" "rebind_domain" | grep -q "${cp_domain}"; then
-									uci_add_list "dhcp" "@dnsmasq[0]" "rebind_domain" "${cp_domain}"
-									uci_commit "dhcp"
-									/etc/init.d/dnsmasq reload
-									f_log "info" "captive portal domain '${cp_domain}' added to to dhcp rebind whitelist"
-								fi
-								if [ -n "${cp_domain}" ] && [ "${trm_captive}" = "1" ]; then
+								while true; do
+									cp_domain="$(printf "%s" "${result}" | awk -F '['\''| ]' '/^net cp/{printf "%s",$4}')"
+									if [ -x "/etc/init.d/dnsmasq" ] && [ -f "/etc/config/dhcp" ] &&
+										[ -n "${cp_domain}" ] && ! uci_get "dhcp" "@dnsmasq[0]" "rebind_domain" | grep -q "${cp_domain}"; then
+										uci_add_list "dhcp" "@dnsmasq[0]" "rebind_domain" "${cp_domain}"
+										uci_commit "dhcp"
+										/etc/init.d/dnsmasq reload
+										f_log "info" "captive portal domain '${cp_domain}' added to to dhcp rebind whitelist"
+									else 
+										break
+									fi
+									result="$(f_net)"
+								done
+								if [ -n "${cp_domain}" ]; then
 									trm_connection="${result:-"-"}/${trm_ifquality}"
 									f_jsnup
 									login_script="$(f_getval "script")"
