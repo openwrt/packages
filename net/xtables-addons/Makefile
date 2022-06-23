@@ -7,9 +7,9 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=xtables-addons
-PKG_VERSION:=3.20
+PKG_VERSION:=3.21
 PKG_RELEASE:=$(AUTORELEASE)
-PKG_HASH:=359d625658ecc2190b9f164e067d83070a949ac64f81fcddd484be5d14fa116e
+PKG_HASH:=2e09ac129a14f5e9c23b115ebcdfff4aa84e2aeba1268dbdf39b2d752bd71e19
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://inai.de/files/xtables-addons/
