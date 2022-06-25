@@ -1,6 +1,6 @@
 #!/bin/sh
 # vpn handler called by travelmate
-# Copyright (c) 2020-2021 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2020-2022 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # set (s)hellcheck exceptions
@@ -37,20 +37,18 @@ f_net() {
 vpn_status="$(ubus -S call network.interface."${vpn_iface}" status 2>/dev/null | jsonfilter -q -l1 -e '@.up')"
 case "${vpn_service}" in
 	"wireguard")
-		if [ "${vpn_action}" = "enable" ] && [ "${vpn_status:-"false"}" != "true" ]; then
+		if [ "${vpn}" = "1" ] && [ "${vpn_action}" = "enable" ] && [ "${vpn_status:-"false"}" != "true" ]; then
 			ubus call network.interface."${vpn_iface}" up
-		fi
-		if { [ "${vpn}" = "0" ] && [ "${vpn_action}" = "enable" ]; } || { [ "${vpn_action}" = "disable" ] && [ "${vpn_status}" = "true" ]; }; then
+		elif { [ "${vpn}" = "0" ] && [ "${vpn_action}" = "enable" ]; } || [ "${vpn_action}" = "disable" ]; then
 			ubus call network.interface."${vpn_iface}" down
 			"${trm_logger}" -p "info" -t "trm-vpn  [${$}]" "${vpn_service} client connection disabled" 2>/dev/null
 		fi
 		;;
 	"openvpn")
-		if [ "${vpn_action}" = "enable" ] && [ "${vpn_status:-"false"}" != "true" ]; then
+		if [ "${vpn}" = "1" ] && [ "${vpn_action}" = "enable" ] && [ "${vpn_status:-"false"}" != "true" ]; then
 			ubus call network.interface."${vpn_iface}" up
 			/etc/init.d/openvpn restart >/dev/null 2>&1
-		fi
-		if { [ "${vpn}" = "0" ] && [ "${vpn_action}" = "enable" ]; } || { [ "${vpn_action}" = "disable" ] && [ "${vpn_status}" = "true" ]; }; then
+		elif { [ "${vpn}" = "0" ] && [ "${vpn_action}" = "enable" ]; } || [ "${vpn_action}" = "disable" ]; then
 			ubus call network.interface."${vpn_iface}" down
 			/etc/init.d/openvpn stop >/dev/null 2>&1
 			"${trm_logger}" -p "info" -t "trm-vpn  [${$}]" "${vpn_service} client connection disabled" 2>/dev/null
@@ -78,7 +76,7 @@ if [ "${vpn}" = "1" ] && [ "${vpn_action}" = "enable" ] && [ "${vpn_status:-"fal
 		cnt="$((cnt + 1))"
 	done
 fi
-if [ "${vpn_action}" = "enable" ] && [ "${vpn_status}" = "true" ]; then
+if [ "${vpn}" = "1" ] && [ "${vpn_action}" = "enable" ] && [ "${vpn_status}" = "true" ]; then
 	if [ -f "/etc/init.d/sysntpd" ]; then
 		/etc/init.d/sysntpd restart >/dev/null 2>&1
 	fi

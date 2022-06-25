@@ -185,9 +185,8 @@ f_vpn() {
 	vpn="$(f_getval "vpn")"
 	vpn_service="$(f_getval "vpnservice")"
 	vpn_iface="$(f_getval "vpniface")"
-	[ -z "${vpn_action}" ] && { [ "${vpn}" = "1" ] && vpn_action="enable" || vpn_action="disable"; }
 
-	if [ -x "${trm_vpnpgm}" ] && [ -n "${vpn_service}" ] && [ -n "${vpn_iface}" ] && [ -f "${trm_ntpfile}" ]; then
+	if [ -x "${trm_vpnpgm}" ] && [ -n "${vpn}" ] && [ -n "${vpn_service}" ] && [ -n "${vpn_iface}" ] && [ -f "${trm_ntpfile}" ]; then
 		if { [ "${vpn_action}" = "disable" ] && [ -f "${trm_vpnfile}" ]; } ||
 			{ [ "${vpn}" = "1" ] && [ "${vpn_action}" = "enable" ] && [ ! -f "${trm_vpnfile}" ]; } ||
 			{ [ "${vpn}" != "1" ] && [ "${vpn_action}" = "enable" ] && [ -f "${trm_vpnfile}" ]; }; then
@@ -792,7 +791,7 @@ f_main() {
 						[ "${sta_essid}" = "${config_essid}" ] && [ "${sta_bssid}" = "${config_bssid}" ]; then
 						f_ctrack "refresh"
 						f_log "info" "uplink still in range '${config_radio}/${config_essid}/${config_bssid:-"-"}' with mac '${sta_mac:-"-"}'"
-						f_vpn
+						f_vpn "enable"
 						return 0
 					fi
 					f_log "debug" "f_main-4 ::: sta_radio: ${sta_radio}, sta_essid: \"${sta_essid}\", sta_bssid: ${sta_bssid:-"-"}"
