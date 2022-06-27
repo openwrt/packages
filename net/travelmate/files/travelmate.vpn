@@ -67,7 +67,7 @@ if [ "${vpn}" = "1" ] && [ "${vpn_action}" = "enable" ] && [ "${vpn_status:-"fal
 				break
 			fi
 		fi
-		if [ "${cnt}" -ge "$((trm_maxwait / 6))" ]; then
+		if [ "${cnt}" -ge "$((trm_maxwait / 3))" ]; then
 			"${trm_logger}" -p "info" -t "trm-vpn  [${$}]" "${vpn_service} client connection can't be established" 2>/dev/null
 			ubus call network.interface."${vpn_iface}" down
 			exit 1
