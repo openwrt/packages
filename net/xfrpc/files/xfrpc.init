@@ -64,7 +64,7 @@ start_service() {
 	config_load "$NAME"
 
 	uci_validate_section xfrpc xfrp init \
-			'disabled:bool:1' \
+			'disabled:bool:0' \
 			'loglevel:uinteger:0'
 
 	if [ $disabled = 1 ]; then
