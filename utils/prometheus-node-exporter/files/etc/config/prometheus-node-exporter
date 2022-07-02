@@ -1,0 +1,4 @@
+config prometheus-node-exporter 'main'
+	# Add arguments for node_exporter using the args list option
+	#list args '--arg0=value'
+	#list args '--arg1=value'
