@@ -1,8 +1,6 @@
+# SPDX-Identifier-License: GPL-2.0-only
 #
 # Copyright (C) 2005-2016 OpenWrt.org
-#
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
 #
 
 include $(TOPDIR)/rules.mk
@@ -15,14 +13,16 @@ PKG_USE_MIPS16:=0
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.gnupg.org/ftp/gcrypt/gnutls/v3.7
 PKG_HASH:=e6adbebcfbc95867de01060d93c789938cf89cc1d1f6ef9ef661890f6217451f
-PKG_FIXUP:=autoreconf gettext-version
+
 PKG_MAINTAINER:=Nikos Mavrogiannopoulos <nmav@gnutls.org>
 PKG_LICENSE:=LGPL-2.1-or-later
+PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:gnu:gnutls
 
-PKG_INSTALL:=1
 PKG_BUILD_DEPENDS:=gettext-full/host
 PKG_BUILD_PARALLEL:=1
+PKG_FIXUP:=autoreconf gettext-version
+PKG_INSTALL:=1
 PKG_LIBTOOL_PATHS:=. lib
 
 PKG_CONFIG_DEPENDS:= \
