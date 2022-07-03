@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=radsecproxy
-PKG_VERSION:=1.9.0
-PKG_RELEASE:=3
+PKG_VERSION:=1.9.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/radsecproxy/radsecproxy/releases/download/$(PKG_VERSION)/
-PKG_HASH:=440624c53ae67c8e245b9b60ad4d29525471e957d923d94cf72945efc40f4a28
+PKG_HASH:=e08e4e04d188deafd0b55b2f66b1e7fff9bdb553fb170846590317d02c9dc5db
 
 PKG_MAINTAINER:=Toke Høiland-Jørgensen <toke@toke.dk>
 PKG_LICENSE:=BSD-3-CLAUSE
