@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gsocket
-PKG_VERSION:=1.4.37
+PKG_VERSION:=1.4.39
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/hackerschoice/gsocket/releases/download/v$(PKG_VERSION)/
-PKG_HASH:=4f64f71a7d6b8be79754e7bf2109675ffc8a3e37a4a55b08c95a1b1d25e458e5
+PKG_HASH:=2042b3773e03285939fe7f0d0597a77c8d4958644b1d8a366cc71d384f1e5c30
 
 PKG_MAINTAINER:=Ralf Kaiser <skyper@thc.org>
 PKG_LICENSE:=BSD-2-Clause
@@ -71,3 +71,4 @@ define Package/gsocket/install
 endef
 
 $(eval $(call BuildPackage,gsocket))
+
