@@ -12,9 +12,7 @@ PKG_VERSION:=7.83.1
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://dl.uxnr.de/mirror/curl/ \
-	https://curl.askapache.com/download/ \
-	https://curl.se/download/
+PKG_SOURCE_URL:=https://curl.se/download/
 PKG_HASH:=2cb9c2356e7263a1272fd1435ef7cdebf2cd21400ec287b068396deb705c22c4
 
 PKG_LICENSE:=MIT
