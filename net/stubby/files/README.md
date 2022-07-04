@@ -22,7 +22,7 @@ Stubby](https://dnsprivacy.org/wiki/display/DP/About+Stubby) page.
 ## Installation
 
 Installation of this package can be achieved at the command line using `opkg
-install stubby`, or via the LUCI Web Interface. Installing the stubby package
+install stubby`, or via the LuCI Web Interface. Installing the stubby package
 will also install the required dependency packages, including the
 `ca-bundle` package.
 
@@ -32,11 +32,10 @@ The default configuration of the package has been chosen to ensure that stubby
 should work after installation.
 
 By default, configuration of stubby is integrated with the OpenWRT UCI system
-using the file `/etc/config/stubby`. The configuration options available are
-also documented in that file. If for some reason you wish to configure stubby
-using the `/etc/stubby/stubby.yml` file, then you simply need to set `option
-manual '1'` in `/etc/config/stubby` and all other settings in
-`/etc/config/stubby` will be ignored.
+using the file `/etc/config/stubby`. If for some reason you wish to configure
+stubby using a custom config file, then you simply need to set `manual` and
+`config_file` options in `/etc/config/stubby` and all other settings for this
+instance in `/etc/config/stubby` will be ignored.
 
 ### Stubby port and addresses
 
@@ -51,7 +50,7 @@ server forward to stubby.
 ### Upstream resolvers
 
 The default package configuration uses the CloudFlare resolvers, configured for
-both IPv4 and IPv6. 
+both IPv4 and IPv6.
 
 CloudFlare have not published SPKI pinsets, and even though they are available,
 they have made no commitment to maintaining them. Using the currently known SPKI
@@ -104,7 +103,7 @@ the OpenWRT device is first brought up, there is a possibility that DNS queries
 can go to ISP provided DNS servers ahead of dnsmasq and stubby being active. In
 order to mitigate this leakage, it's necessary to ensure that upstream resolvers
 aren't available, and the only DNS resolver used by the system is
-dnsmasq+stubby. 
+dnsmasq+stubby.
 
 This requires setting the option `peerdns` to `0` and the option `dns` to the
 loopback address for both the `wan` and `wan6` interfaces in the
@@ -126,7 +125,7 @@ The same outcome can also be achieved using the LUCI web interface as follows:
 5. Enter `127.0.0.1` in the "Use custom DNS servers" dialogue box.
 6. Repeat the above steps for the WAN6 interface, but use the address `0::1`
    instead of `127.0.0.1`.
-   
+
 ### Enabling DNSSEC
 
 The configuration described above ensures that DNS queries are executed over TLS
@@ -153,12 +152,12 @@ require that the `dnsmasq` package on the OpenWRT device is replaced with the
 #### DNSSEC by stubby
 
 Configuring stubby to perform DNSSEC validation requires setting the stubby
-configuration option `dnssec_return_status` to `'1'` in `/etc/config/stubby`,
-which can be done by editing the file directly or by executing the commands:
+configuration option `dnssec` to `'1'` in `/etc/config/stubby`, which can be
+done by editing the file directly or by executing the commands:
 
-    uci set stubby.global.dnssec_return_status=1
+    uci set stubby.@stubby[-1].dnssec_return_status=1
     uci commit && reload_config
-    
+
 With stubby performing DNSSEC validation, dnsmasq needs to be configured to
 proxy the DNSSEC data to clients. This requires setting the option `proxydnssec`
 to 1 in the dnsmasq configuration in `/etc/config/dhcp`. That can be achieved by
@@ -191,7 +190,7 @@ Having configured DNSSEC validation using one of the two approaches above, it's
 important to check it's actually working. The following command can be used:
 
     dig dnssectest.sidn.nl +dnssec +multi @192.168.1.1
-    
+
 This command should return output like the following:
 
     ; <<>> DiG 9.11.4-P1-RedHat-9.11.4-5.P1.fc28 <<>> dnssectest.sidn.nl +dnssec +multi @192.168.1.1
@@ -226,35 +225,58 @@ not working.
 ## Appendix: stubby configuration options
 
 This section details the options available for use in the `/etc/config/stubby`
-file. The `global` configuration section specifies the configuration parameters
-for the stubby daemon. One or more `resolver` sections are used to configure
-upstream resolvers for the stubby daemon to use.
+file. One or more `stubby` configuration sections in the file can be used to start
+multiple instances for the stubby daemon. One or more `resolver` sections are used
+to configure upstream resolvers for the stubby daemon to use.
 
-### `global` section options
+**Note:** Due to configuration limitations in stubby, if an IPv6 address is being
+specified in any of the below options, it cannot start or end with the character `:`;
+It can be specifed by adding a `0`, so that the terminal part becomes `0:` or `:0`.
+
+### `stubby` section options
 
 #### `option manual`
 
-Specify whether to use this file to configure the stubby service. If this is set
-to `'1'` stubby will be configured using the file `/etc/stubby/stubby.yml`. If this
-is set to `'0'`, configuration options will be taken from this file, and the service
-will be managed through UCI.
+Specify whether to use this UCI config file to configure the stubby instance. If this
+is set to `1` stubby will be configured using a custom config file and UCI config will
+be ignored. If this is set to `0`, configuration options will be taken from this file,
+and the service will be managed through UCI.
 
-#### `option trigger`
+#### `option config_file`
 
-This specifies an interface to trigger stubby start up on; stubby startup will
-be triggered by a procd signal associated with this interface being ready. If
-this interface is restarted, stubby will also be restarted. 
+This specifies the path to the custom configuration file to be used if the `manual`
+option is set to `1`. If this is not specified, the path `/etc/stubby/stubby.yml`
+will be assumed for the config file. (Be careful when specifying multiple `manual`
+configuration instances)
 
-This option can also be set to `'timed'`, in which case a time, specified by the
-option `triggerdelay`, will be waited before starting stubby.
+#### `option disable`
 
+Whether to disable this stubby instance (it cannot be started). This option defaults
+to `0` (not disabled) if not specified. An instance can be disabled even if the
+`manual` option is set to `1`.
+
+#### `list trigger`
+
+This specifies a list of interfaces to trigger stubby to start up on; the startup
+will be triggered by a procd signal associated with this interface being ready. If
+this interface is restarted, this stubby instance will also be restarted.
+
+This option can also be set to `'timed'`, in which case ~~a time, specified by the
+option `triggerdelay`, will be waited before starting stubby~~ this instance will
+start automatically on device boot.
+
+If this option is not specified, a default `'timed'` trigger will be assumed.
+
+**Note:** This option was previously specified as a space-separated list of triggers
+(`option list 't1 t2 ...'`). This is now deprecated and if specified so, it will be
+treated in the same way as a single `timed` trigger.
 
 #### `option triggerdelay`
 
-If the `trigger` option specifies an interface, this option sets the time that
-is waited after the procd signal is received before starting stubby. 
+If the `trigger` option specifies interfaces, this option sets the time that
+is waited after the procd signal is received before starting the instance.
 
-If `trigger` is set to `'timed'` then this is the delay before starting stubby.
+~~If `trigger` is set to `'timed'` then this is the delay before starting stubby.~~
 This option is specified in seconds and defaults to the value `'2'`.
 
 #### `list dns_transport`
@@ -290,13 +312,23 @@ This option specifies the maximum time in seconds Stubby will back-off from
 using an individual upstream after failures. You shouldn't need to change this
 from the default value of `'3600'`.
 
+#### `option tls_ca_path`
+
+This is used to specify the location where CA certificates used for verification
+purposes are located - if specified, this overrides the OS specific default path.
+
+#### `option limit_outstanding_queries`
+
+This is used to limit the total number of outstanding queries permitted on one
+TCP/TLS connection (default is `0`, no limit)
+
 #### `option timeout`
 
 This option specifies the timeout on getting a response to an individual
 request. This is specified in milliseconds. You shouldn't need to change this
 from the default value of ` '5000'`.
 
-#### `option dnssec_return_status`
+#### `option dnssec` (preferred) / `option dnssec_return_status`
 
 This option specifies whether stubby should require DNSSEC validation. Specify
 to `'1'` to turn on validation, and `'0'` to turn it off. By default it is off.
@@ -305,7 +337,8 @@ to `'1'` to turn on validation, and `'0'` to turn it off. By default it is off.
 
 This option specifies the location for storing stubby runtime data. In
 particular, if DNSSEC is turned on, stubby will store its automatically
-retrieved trust anchor data here. The default value is `'/var/lib/stubby'`.
+retrieved trust anchor data here. To prevent writing to persistent storage
+in OpenWrt, the default value is set to `'/var/lib/stubby'`.
 
 #### `option trust_anchors_backoff_time`
 
@@ -314,9 +347,9 @@ failure to write to the appdata directory, stubby will backoff trying to refetch
 the DNSSEC trust-anchor for a specified amount of time expressed in milliseconds
 (which defaults to two and a half seconds).
 
-#### `option dnssec_trust_anchors`
+#### `list dnssec_trust_anchors`
 
-This option sets the location of the file containing the trust anchor data used
+This list sets the location of the file(s) containing the trust anchor data used
 for DNSSEC validation. If this is not specified, stubby will automatically
 retrieve a trust anchor at startup. It's unlikely you'll want to manage the
 trust anchor data manually, so in most cases this is not needed. By default,
@@ -349,8 +382,16 @@ until it becomes unavailable, then use the next one.
 #### `list listen_address`
 
 This list sets the addresses and ports for the stubby daemon to listen for
-requests on. the default configuration configures stubby to listen on port 5453
+requests on. This option **must be specified**, else stubby will not start.
+The example configuration configures stubby to listen on port 5453
 on the loopback interface for both IPv4 and IPv6.
+
+#### `list resolver`
+
+This list contains the names of the resolver sections that are to be assigned to
+this stubby instance. If this list is not specified or doesn't contain any valid
+resolver section name, all the resolver sections in the configuration will be
+assigned to this stubby instance.
 
 #### `option log_level`
 
@@ -367,11 +408,6 @@ The possible levels are:
     '5': NOTICE - Normal, but significant, condition
     '6': INFO   - Informational message
     '7': DEBUG  - Debug-level message
-
-#### `option command_line_arguments`
-
-This option specifies additional command line arguments for
-stubby daemon. By default, this is an empty string.
 
 #### `option tls_cipher_list`
 
@@ -410,6 +446,10 @@ IPv6 address.
 
 This option specifies the upstream domain name used for TLS authentication with
 the supplied server certificate
+
+#### `option port`
+
+This option specifies the port to be used for queries using unencrypted TCP/UDP.
 
 #### `option tls_port`
 
