@@ -42,12 +42,19 @@ config EMAILRELAY_SUPPORT_VERBOSE_DBG
 	  Enables support for extended logging (must also be explicitely enabled by using command line switch --debug when starting emailrelay)
 
 config EMAILRELAY_SSL
-	bool "Enable support for OpenSSL"
+	bool "Enable support TLS/STARTTLS with OpenSSL"
 	depends on PACKAGE_emailrelay
 	default y
 	select PACKAGE_libopenssl
 	help
  	  Builds the package with OpenSSL support (SSMTP is supported).
+config EMAILRELAY_MBEDTLS
+	bool "Enable support TLS/STARTTLS with MbedTLS"
+	depends on PACKAGE_emailrelay
+	default n
+	select PACKAGE_libmbedtls
+	help
+	  Builds the package with MbedTLS support (SSMTP is supported).
 endef
 
 
@@ -73,7 +80,6 @@ endef
 CONFIGURE_ARGS += \
 	--without-doxygen \
 	--without-man2html \
-	--without-mbedtls \
 	--without-pam \
 	--disable-bsd \
 	--disable-gui \
@@ -87,6 +93,14 @@ ifeq ($(CONFIG_EMAILRELAY_SSL),y)
 else
 	CONFIGURE_ARGS += \
 		--without-openssl
+endif
+
+ifeq ($(CONFIG_EMAILRELAY_MBEDTLS),y)
+	CONFIGURE_ARGS += \
+		--with-mbedtls
+else
+	CONFIGURE_ARGS += \
+		--without-mbedtls
 endif
 
 ifeq ($(CONFIG_EMAILRELAY_SUPPORT_VERBOSE_DBG),y)
