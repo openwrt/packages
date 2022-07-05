@@ -135,6 +135,7 @@ CONFIGURE_ARGS+= \
 	--with-librt-prefix="$(LIBRT_ROOT_DIR)/" \
 	--with-pic \
 	--with-system-priority-file="" \
+	--without-brotli \
 	--without-zlib \
 	--without-zstd
 
