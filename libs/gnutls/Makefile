@@ -135,8 +135,9 @@ CONFIGURE_ARGS+= \
 	--with-librt-prefix="$(LIBRT_ROOT_DIR)/" \
 	--with-pic \
 	--with-system-priority-file="" \
-	--without-libzstd \
-	--without-zlib
+	--without-brotli \
+	--without-zlib \
+	--without-zstd
 
 ifneq ($(CONFIG_GNUTLS_EXT_LIBTASN1),y)
 CONFIGURE_ARGS += --with-included-libtasn1
