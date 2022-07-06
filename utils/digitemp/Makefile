@@ -1,8 +1,7 @@
+# SPDX-Identifier-License: GPL-2.0-only
 #
 # Copyright (C) 2009-2017 OpenWrt.org
 #
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
 #
 # Comment: This makefile is based on the oldpackage makefile by acinonyx / nbd
 # https://dev.openwrt.org/browser/packages/utils/digitemp/Makefile

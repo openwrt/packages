@@ -1,9 +1,8 @@
+# SPDX-Identifier-License: GPL-2.0-only
 #! /bin/sh
 #
 # Copyright (C) 2007-2014 OpenWrt.org
 #
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
 #
 
 ac_cv_file__dev_ptmx=yes

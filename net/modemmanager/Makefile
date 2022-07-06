@@ -1,8 +1,8 @@
+# SPDX-Identifier-License: GPL-2.0-only
 #
 # Copyright (C) 2016 Velocloud Inc.
 # Copyright (C) 2016 Aleksander Morgado <aleksander@aleksander.es>
 #
-# This is free software, licensed under the GNU General Public License v2.
 #
 
 include $(TOPDIR)/rules.mk

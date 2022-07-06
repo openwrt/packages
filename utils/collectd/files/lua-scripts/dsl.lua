@@ -1,6 +1,6 @@
+# SPDX-Identifier-License: GPL-2.0-only
 -- Copyright 2019 Florian Eckert <fe@dev.tdt.de>
 -- Copyright 2021 Jeroen Peelaerts <jeroen@steganos.dev>
--- Licensed to the public under the GNU General Public License v2.
 
 local ubus = require("ubus")
 

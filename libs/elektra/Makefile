@@ -1,8 +1,7 @@
+# SPDX-Identifier-License: GPL-2.0-only
 #
 # Copyright (C) 2006-2016 OpenWrt.org
 #
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
 #
 # No copyright by Harald Geyer as filling in a template doesn't constitute
 # an original work in the sense of copyright law.

@@ -1,8 +1,8 @@
+# SPDX-Identifier-License: GPL-2.0-only
 #!/bin/sh /etc/rc.common
 #
 # Copyright (C) 2014-2016 CZ.NIC, z.s.p.o. <knot-dns@labs.nic.cz>
 #
-# This is free software, licensed under the GNU General Public License v2.
 
 START=50
 USE_PROCD=1

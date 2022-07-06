@@ -1,6 +1,6 @@
+# SPDX-Identifier-License: GPL-2.0-only
 #
 # Copyright (c) 2018 Tony Ambardar
-# This is free software, licensed under the GNU General Public License v2.
 #
 
 include $(TOPDIR)/rules.mk

@@ -1,7 +1,7 @@
+# SPDX-Identifier-License: GPL-2.0-only
 #
 # Copyright (C) 2021 TDT AG <development@tdt.de>
 #
-# This is free software, licensed under the GNU General Public License v2.
 # See https://www.gnu.org/licenses/gpl-2.0.txt for more information.
 #
 

@@ -1,7 +1,7 @@
+# SPDX-Identifier-License: GPL-2.0-only
 #
 # Copyright (C) 2016-2022 eGloo Incorporated
 #
-# This is free software, licensed under the GNU General Public License v2.
 
 include $(TOPDIR)/rules.mk
 

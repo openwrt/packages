@@ -1,9 +1,9 @@
+# SPDX-Identifier-License: GPL-2.0-only
 #!/bin/sh
 #
 # Copyright (C) 2010 segal.di.ubi.pt
 # Copyright (C) 2020 nbembedded.com
 #
-# This is free software, licensed under the GNU General Public License v2.
 #
 
 get_ping_size() {

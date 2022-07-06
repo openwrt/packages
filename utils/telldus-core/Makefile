@@ -1,7 +1,7 @@
+# SPDX-Identifier-License: GPL-2.0-only
 #
 # Copyright (C) 2010 Telldus Technologies AB
 #
-# This is free software, licensed under the GNU General Public License v2.
 #
 include $(TOPDIR)/rules.mk
 

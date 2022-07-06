@@ -1,10 +1,9 @@
+# SPDX-Identifier-License: GPL-2.0-only
 #
 # Copyright (C) 2010-2016 OpenWrt.org
 # Copyright (C) 2009-2016 Thomas Heil <heil@terminal-consulting.de>
 # Copyright (C) 2018 Christian Lachner <gladiac@gmail.com>
 #
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
 #
 
 include $(TOPDIR)/rules.mk

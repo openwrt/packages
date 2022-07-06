@@ -1,10 +1,9 @@
+# SPDX-Identifier-License: GPL-2.0-only
 #
 # Copyright (C) 2006-2011 Openwrt.org
 # Copyright (C) 2011 SMBPhone Inc.
 # Copyright (C) 2019 Jeffery To
 #
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
 #
 
 include $(TOPDIR)/rules.mk

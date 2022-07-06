@@ -1,9 +1,8 @@
+# SPDX-Identifier-License: GPL-2.0-only
 #
 # Copyright (C) 2007-2011 OpenWrt.org
 # Copyright (c) 2009-2014 Thorsten Glaser <tg@mirbsd.org>
 #
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
 #
 
 include $(TOPDIR)/rules.mk

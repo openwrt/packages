@@ -1,8 +1,7 @@
+# SPDX-Identifier-License: GPL-2.0-only
 #!/bin/sh /etc/rc.common
 # Copyright (C) 2008-2013 OpenWrt.org
 # Copyright (C) 2008 Jo-Philipp Wich
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
 
 START=90
 STOP=10
