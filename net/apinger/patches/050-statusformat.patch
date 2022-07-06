@@ -1,0 +1,126 @@
+--- a/src/apinger.c
++++ b/src/apinger.c
+@@ -826,26 +826,49 @@ char *buf1,*buf2;
+ 		return;
+ 	}
+ 	tm=time(NULL);
+-	fprintf(f,"%s\n",ctime(&tm));
++	if(!config->status_format) fprintf(f,"%s\n",ctime(&tm));
+ 	for(t=targets;t;t=t->next){
+-		fprintf(f,"Target: %s\n",t->name);
+-		fprintf(f,"Source: %s\n",t->config->srcip);
+-		fprintf(f,"Description: %s\n",t->description);
+-		fprintf(f,"Last reply received: #%i %s",t->last_received,
+-			ctime(&t->last_received_tv.tv_sec));
+-		fprintf(f,"Average delay: %0.3fms\n",AVG_DELAY(t));
++		if(config->status_format){
++			fprintf(f,"%s|%s|%s|%i|%i|%u|",t->name, t->config->srcip, t->description, t->last_sent+1,
++				 t->received, t->last_received_tv.tv_sec);
++			fprintf(f,"%0.3fms|", AVG_DELAY(t));
++		}
++		else{
++			fprintf(f,"Target: %s\n",t->name);
++			fprintf(f,"Source: %s\n",t->config->srcip);
++			fprintf(f,"Description: %s\n",t->description);
++			fprintf(f,"Last reply received: #%i %s",t->last_received,
++				ctime(&t->last_received_tv.tv_sec));
++			fprintf(f,"Average delay: %0.3fms\n",AVG_DELAY(t));
++		}
+ 		if (AVG_LOSS_KNOWN(t)){
+-			fprintf(f,"Average packet loss: %0.1f%%\n",AVG_LOSS(t));
++			if(config->status_format){
++				fprintf(f,"%0.1f%%",AVG_LOSS(t));
++			}
++			else{
++				fprintf(f,"Average packet loss: %0.1f%%\n",AVG_LOSS(t));
++			}
++		}
++		if(config->status_format){
++			fprintf(f, "|");
++		}
++		else{
++			fprintf(f,"Active alarms: ");
+ 		}
+-		fprintf(f,"Active alarms:");
+ 		if (t->active_alarms){
+ 			for(al=t->active_alarms;al;al=al->next){
+ 				a=al->alarm;
+-				fprintf(f," \"%s\"",a->name);
++				if(config->status_format){
++					fprintf(f,"%s",a->name);
++				}
++				else{
++					fprintf(f," \"%s\"",a->name);
++				}
+ 			}
+-			fprintf(f,"\n");
++			if(!config->status_format) fprintf(f,"\n");
+ 		}
+-		else fprintf(f," None\n");
++		else fprintf(f,"none");
++		if(!config->status_format) fprintf(f,"\n");
+ 
+ 		buf1=NEW(char,t->config->avg_loss_delay_samples+1);
+ 		buf2=NEW(char,t->config->avg_loss_samples+1);
+--- a/src/apinger.conf
++++ b/src/apinger.conf
+@@ -29,6 +29,10 @@ group "nogroup"
+ #	## Interval between file updates
+ #	## when 0 or not set, file is written only when SIGUSR1 is received
+ #	interval 5m
++#
++#	## Create status file in script parseable format (on) or human
++#	## readable format (off)
++#	scriptformat off
+ #}
+ 
+ ########################################
+--- a/src/cfgparser1.y
++++ b/src/cfgparser1.y
+@@ -104,6 +104,7 @@ struct target_cfg *cur_target;
+ %token AVG_LOSS_DELAY_SAMPLES
+ 
+ %token FILE_
++%token SCRIPTFORMAT
+ 
+ %token ERROR
+ 
+@@ -282,6 +283,8 @@ statuscfg: /* */
+ 		{ cur_config.status_interval=$2; }
+ 	| INTERVAL TIME
+ 		{ cur_config.status_interval=$2; }
++	| SCRIPTFORMAT boolean
++		{ cur_config.status_format=$2; }
+ 	| statuscfg separator statuscfg
+ ;
+ 
+--- a/src/cfgparser2.l
++++ b/src/cfgparser2.l
+@@ -85,6 +85,7 @@ srcip		{ LOC; LOCINC; return SRCIP; }
+ down		{ LOC; LOCINC; return DOWN; }
+ false		{ LOC; LOCINC; return FALSE; }
+ file		{ LOC; LOCINC; return FILE_; }
++scriptformat	{ LOC; LOCINC; return SCRIPTFORMAT; }
+ group		{ LOC; LOCINC; return GROUP; }
+ interval	{ LOC; LOCINC; return INTERVAL; }
+ loss		{ LOC; LOCINC; return LOSS; }
+--- a/src/conf.h
++++ b/src/conf.h
+@@ -97,6 +97,7 @@ struct config {
+ 	char *pid_file;
+ 	char *status_file;
+ 	int status_interval;
++	int status_format;
+ 	char *timestamp_format;
+ };
+ 
+--- a/src/main.c
++++ b/src/main.c
+@@ -88,6 +88,7 @@ struct config default_config={
+ 	"/var/run/apinger.pid", /* pid file */
+ 	NULL,			/* status file */
+ 	0,			/* status interval */
++	0,			/* status format */
+ 	"%b %d %H:%M:%S"	/* timestamp format */
+ };
+ 
