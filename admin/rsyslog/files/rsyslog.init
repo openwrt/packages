@@ -5,7 +5,6 @@
 # shellcheck disable=SC2034
 # shellcheck disable=SC3037
 # shellcheck disable=SC2154
-# shellcheck disable=SC3014
 # shellcheck disable=SC2129
 
 START=20
@@ -47,7 +46,7 @@ handle_forwarder() {
 	config_get port "${config}" port "514"
 	config_get rfc "${config}" rfc "3164"
 
-	if [ "$rfc" == "5424" ]; then
+	if [ "$rfc" = "5424" ]; then
 		opts='Template="RSYSLOG_SyslogProtocol23Format" TCP_Framing="octet-counted"'
 	fi
 
