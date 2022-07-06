@@ -35,28 +35,11 @@ f_net() {
 }
 
 vpn_status="$(ubus -S call network.interface."${vpn_iface}" status 2>/dev/null | jsonfilter -q -l1 -e '@.up')"
-case "${vpn_service}" in
-	"wireguard")
-		if [ "${vpn}" = "1" ] && [ "${vpn_action}" = "enable" ] && [ "${vpn_status:-"false"}" != "true" ]; then
-			ubus call network.interface."${vpn_iface}" up
-		elif { [ "${vpn}" = "0" ] && [ "${vpn_action}" = "enable" ]; } || [ "${vpn_action}" = "disable" ]; then
-			ubus call network.interface."${vpn_iface}" down
-			"${trm_logger}" -p "info" -t "trm-vpn  [${$}]" "${vpn_service} client connection disabled" 2>/dev/null
-		fi
-		;;
-	"openvpn")
-		if [ "${vpn}" = "1" ] && [ "${vpn_action}" = "enable" ] && [ "${vpn_status:-"false"}" != "true" ]; then
-			ubus call network.interface."${vpn_iface}" up
-			/etc/init.d/openvpn restart >/dev/null 2>&1
-		elif { [ "${vpn}" = "0" ] && [ "${vpn_action}" = "enable" ]; } || [ "${vpn_action}" = "disable" ]; then
-			ubus call network.interface."${vpn_iface}" down
-			/etc/init.d/openvpn stop >/dev/null 2>&1
-			"${trm_logger}" -p "info" -t "trm-vpn  [${$}]" "${vpn_service} client connection disabled" 2>/dev/null
-		fi
-		;;
-esac
-
-if [ "${vpn}" = "1" ] && [ "${vpn_action}" = "enable" ] && [ "${vpn_status:-"false"}" != "true" ]; then
+if [ "${vpn}" = "1" ] && [ "${vpn_action}" = "enable" ] && [ "${vpn_status}" != "true" ]; then
+	if [ "${vpn_service}" = "openvpn" ] && [ -x "/etc/init.d/openvpn" ]; then
+		/etc/init.d/openvpn start
+	fi
+	ifup "${vpn_iface}"
 	cnt=0
 	while true; do
 		vpn_status="$(ubus -S call network.interface."${vpn_iface}" status 2>/dev/null | jsonfilter -q -l1 -e '@.up')"
@@ -68,16 +51,20 @@ if [ "${vpn}" = "1" ] && [ "${vpn_action}" = "enable" ] && [ "${vpn_status:-"fal
 			fi
 		fi
 		if [ "${cnt}" -ge "$((trm_maxwait / 3))" ]; then
+			ifdown "${vpn_iface}"
+			if [ "${vpn_service}" = "openvpn" ] && [ -x "/etc/init.d/openvpn" ]; then
+				/etc/init.d/openvpn stop
+			fi
 			"${trm_logger}" -p "info" -t "trm-vpn  [${$}]" "${vpn_service} client connection can't be established" 2>/dev/null
-			ubus call network.interface."${vpn_iface}" down
 			exit 1
 		fi
 		sleep 1
 		cnt="$((cnt + 1))"
 	done
-fi
-if [ "${vpn}" = "1" ] && [ "${vpn_action}" = "enable" ] && [ "${vpn_status}" = "true" ]; then
-	if [ -f "/etc/init.d/sysntpd" ]; then
-		/etc/init.d/sysntpd restart >/dev/null 2>&1
+elif { [ "${vpn}" != "1" ] && [ "${vpn_action}" = "enable" ]; } || [ "${vpn_action}" = "disable" ]; then
+	ifdown "${vpn_iface}"
+	if [ "${vpn_service}" = "openvpn" ] && [ -x "/etc/init.d/openvpn" ]; then
+		/etc/init.d/openvpn stop
 	fi
+	"${trm_logger}" -p "info" -t "trm-vpn  [${$}]" "${vpn_service} client connection disabled" 2>/dev/null
 fi
