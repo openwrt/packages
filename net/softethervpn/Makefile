@@ -29,7 +29,6 @@ HOST_BUILD_DEPENDS:=readline/host libiconv/host
 PKG_ASLR_PIE:=0
 HAMCORE_SE2:=$(STAGING_DIR_HOST)/share/softethervpn/hamcore.se2
 
-include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
 
@@ -104,7 +103,7 @@ endef
 
 define Package/softethervpn-base
   $(Package/softethervpn/default)
-  DEPENDS:=+libpthread +librt +libreadline +libopenssl +libncurses +kmod-tun +zlib $(ICONV_DEPENDS)
+  DEPENDS:=+libpthread +librt +libreadline +libopenssl +libncurses +kmod-tun +zlib
   TITLE += (Base)
 endef
 
