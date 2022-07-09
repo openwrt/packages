@@ -25,6 +25,8 @@ PKG_CONFIG_DEPENDS:=\
 	CONFIG_PACKAGE_libpcre2-32 \
 	CONFIG_PCRE2_JIT_ENABLED
 
+PKG_BUILD_DEPENDS:=zlib
+
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
