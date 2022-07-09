@@ -1,18 +1,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libxcrypt
-PKG_VERSION:=4.4.17
-PKG_RELEASE:=1
+PKG_VERSION:=4.4.28
+PKG_RELEASE:=$(AUTORELEASE)
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/besser82/libxcrypt/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=7665168d0409574a03f7b484682e68334764c29c21ca5df438955a381384ca07
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=https://github.com/besser82/libxcrypt/releases/download/v$(PKG_VERSION)
+PKG_HASH:=9e936811f9fad11dbca33ca19bd97c55c52eb3ca15901f27ade046cc79e69e87
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING.LIB
 
-PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
@@ -41,7 +40,8 @@ CONFIGURE_ARGS += \
 	--disable-failure-tokens \
 	--disable-xcrypt-compat-files \
 	--disable-obsolete-api \
-	--enable-hashes=solaris
+	--enable-hashes=solaris \
+	--with-pic
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
