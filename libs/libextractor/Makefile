@@ -20,6 +20,7 @@ PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 
+PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_CONFIG_DEPENDS:= \
@@ -64,9 +65,6 @@ CONFIGURE_ARGS += \
 
 CONFIGURE_VARS += \
 	ac_cv_lib_jpeg_jpeg_mem_src=yes
-
-TARGET_LDFLAGS += \
-	-liconv
 
 define Package/libextractor
 	SECTION:=libs
