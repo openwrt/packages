@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=v4l-utils
 PKG_VERSION:=1.20.0
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://www.linuxtv.org/downloads/v4l-utils
@@ -64,7 +64,7 @@ define Package/v4l-utils
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE+= utilities
-  DEPENDS:= +libudev-zero +libv4l +libstdcpp $(ICONV_DEPENDS) $(INTL_DEPENDS)
+  DEPENDS:= +libudev +libv4l +libstdcpp $(ICONV_DEPENDS) $(INTL_DEPENDS)
   LICENSE:=GPL-2.0-or-later
   LICENSE_FILES:=COPYING
 endef
