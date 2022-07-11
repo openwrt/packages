@@ -3,12 +3,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=telegraf
-PKG_VERSION:=1.23.0
+PKG_VERSION:=1.23.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/influxdata/telegraf/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=097f0ae89332dd55c121dbb6b5f81b151a0f0418c11d26b430b33be31ca90d0b
+PKG_HASH:=7d0721908b3a2b3d36e922a1a77b782a955af4b9ee0dc0cb6b66b03594bc6efa
 
 PKG_MAINTAINER:=Jonathan Pagel <jonny_tischbein@systemli.org>
 PKG_LICENSE:=MIT
