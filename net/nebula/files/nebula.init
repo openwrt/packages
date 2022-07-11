@@ -1,6 +1,6 @@
 #!/bin/sh /etc/rc.common
-# Copyright 2021 Stan Grishin (stangri@melmac.net)
-# shellcheck disable=SC2039
+# Copyright 2021 Stan Grishin (stangri@melmac.ca)
+# shellcheck disable=SC2039,SC3043
 PKG_VERSION='dev-test'
 
 # shellcheck disable=SC2034
