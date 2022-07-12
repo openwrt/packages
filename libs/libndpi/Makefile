@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libndpi
-PKG_VERSION:=4.2
+PKG_VERSION:=4.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ntop/nDPI/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=e54ce8fe13adc5d747be7553513657fae78f796e0bd459e122c280cc06ce4daf
+PKG_HASH:=5df3a7bc251e3838079c403707334c1cd93f20c17b33e31e090f30a16adb3702
 PKG_BUILD_DIR:=$(BUILD_DIR)/nDPI-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Banglang Huang <banglang.huang@foxmail.com>, Toni Uhlig <matzeton@googlemail.com>
@@ -27,11 +27,15 @@ PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
+ifeq ($(LIBNDPI_NDPIREADER),)
+CONFIGURE_ARGS += --with-only-libndpi
+endif
+
 ifneq ($(CONFIG_LIBNDPI_GCRYPT),)
 CONFIGURE_ARGS += --with-local-libgcrypt
 endif
 
-ifneq ($(CONFIG_LIBNDPI_PCRE2),)
+ifneq ($(CONFIG_LIBNDPI_PCRE),)
 CONFIGURE_ARGS += --with-pcre
 endif
 
@@ -44,7 +48,7 @@ define Package/libndpi
   CATEGORY:=Libraries
   TITLE:=Library for deep-packet inspection
   URL:=https://github.com/ntop/nDPI
-  DEPENDS:=+LIBNDPI_GCRYPT:libgcrypt +LIBNDPI_PCRE2:libpcre2 +LIBNDPI_MAXMINDDB:libmaxminddb +libpcap +libjson-c
+  DEPENDS:=+LIBNDPI_GCRYPT:libgcrypt +LIBNDPI_PCRE:libpcre +LIBNDPI_MAXMINDDB:libmaxminddb +LIBNDPI_NDPIREADER:libpcap
 endef
 
 define Package/libndpi/description
@@ -53,16 +57,26 @@ define Package/libndpi/description
 endef
 
 define Package/libndpi/config
-config LIBNDPI_GCRYPT
-	bool "GCrypt support"
+config LIBNDPI_NDPIREADER
+	bool "Enable ndpiReader"
 	depends on PACKAGE_libndpi
 	default n
 	help
-	  This option enables QUIC client hello decryption.
+	  This option builds and installs ndpiReader,
+	  an example application that show some nDPI features.
+
+config LIBNDPI_GCRYPT
+	bool "Use host GCrypt"
+	depends on PACKAGE_libndpi
+	default n
+	help
+	  This option enables the use of libgcrypt to decrypt QUIC client hello's.
+	  If disabled, nDPI will use a builtin lightweight libgcrypt version to
+	  decrypt QUIC client hello's.
 	  Disabled by default.
 
-config LIBNDPI_PCRE2
-	bool "pcre2 support"
+config LIBNDPI_PCRE
+	bool "pcre support"
 	depends on PACKAGE_libndpi
 	default n
 	help
@@ -99,8 +113,10 @@ define Package/libndpi/install
 	$(CP) $(PKG_BUILD_DIR)/src/lib/libndpi.so* \
 		$(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/bin/
+ifneq ($(LIBNDPI_NDPIREADER),)
 	$(CP) $(PKG_BUILD_DIR)/example/ndpiReader \
 		$(1)/usr/bin/
+endif
 endef
 
 $(eval $(call BuildPackage,libndpi))
