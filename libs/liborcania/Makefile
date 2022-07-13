@@ -35,10 +35,4 @@ define Package/liborcania/description
   Potluck with different functions for different purposes that can be shared among C programs.
 endef
 
-define Package/liborcania/install
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/liborcania.so.* \
-		$(1)/usr/lib/
-endef
-
 $(eval $(call BuildPackage,liborcania))

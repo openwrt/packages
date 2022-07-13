@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libulfius
-PKG_VERSION:=2.7.3
+PKG_VERSION:=2.7.10
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/babelouest/ulfius/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=a20f575b3e81924c4ddb72c4ccdced134b5756a86b017f4a38b51608610628c5
+PKG_HASH:=616c5df99584071461a1285dd7155883f7d2b94abf0931038feeebd3da3a6def
 
 PKG_MAINTAINER:=Toni Uhlig <matzeton@googlemail.com>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -42,13 +42,8 @@ $(call Package/libulfius/default)
   PROVIDES:=libulfius
 endef
 
-define Package/libulfius-$(BUILD_VARIANT)/install
-	$(INSTALL_DIR) $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libulfius.so.* \
-		$(1)/usr/lib/
-endef
-
 CMAKE_OPTIONS += \
+	-D_GNU_SOURCE=ON \
 	-DDOWNLOAD_DEPENDENCIES=OFF \
 	-DBUILD_WEBSOCKET=OFF \
 	-DSEARCH_ORCANIA_U=ON \
