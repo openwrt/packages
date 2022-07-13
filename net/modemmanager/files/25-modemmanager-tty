@@ -12,5 +12,5 @@
 mkdir -m 0755 -p "${MODEMMANAGER_RUNDIR}"
 
 # Report TTY
-mm_log "${ACTION} serial interface ${DEVNAME}: event processed"
+mm_log "info" "${ACTION} serial interface ${DEVNAME}: event processed"
 mm_report_event "${ACTION}" "${DEVNAME}" "tty" "/sys${DEVPATH}"
