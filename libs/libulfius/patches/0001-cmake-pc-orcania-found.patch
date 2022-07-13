@@ -1,0 +1,11 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -257,7 +257,7 @@ if (SEARCH_ORCANIA_U)
+     set(Orcania_FIND_QUIETLY ON) # force to find Orcania quietly
+     include(FindOrcania)
+     find_package(Orcania ${ORCANIA_VERSION_REQUIRED} QUIET) # try to find orcania
+-    if (NOT ORCANIA_FOUND)
++    if (NOT ORCANIA_FOUND AND NOT PC_ORCANIA_FOUND)
+         if (DOWNLOAD_DEPENDENCIES)
+             include(DownloadProject)
+             download_project(PROJ orcania # ... otherwise, download archive
