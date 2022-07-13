@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=liborcania
-PKG_VERSION:=2.2.1
+PKG_VERSION:=2.3.0
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/babelouest/orcania/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=a9f16856aa311b8926cba2075d5245e94f30436f8a762a7e897ee7c8d335c59e
+PKG_HASH:=b1b5550523164eca0f59099e843177684c5017c6088284123880cffd4c6dbbde
 
 PKG_MAINTAINER:=Toni Uhlig <matzeton@googlemail.com>
 PKG_LICENSE:=LGPL-2.1-or-later
