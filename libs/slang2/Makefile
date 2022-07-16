@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=slang
 PKG_VERSION:=2.3.2
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://www.jedsoft.org/releases/slang \
@@ -23,6 +23,7 @@ PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
 PKG_BUILD_PARALLEL:=0
+PKG_CONFIG_DEPENDS:=CONFIG_BUILD_NLS
 
 SLANG_MODULES:= base64 chksum csv fcntl fork histogram iconv json onig pcre \
 	png rand select slsmg socket stats sysconf termios varray zlib
@@ -114,7 +115,7 @@ CONFIGURE_ARGS+= \
 	--enable-warnings \
 	--with-terminfo=default \
 	--with-readline=slang \
-	--with-iconv="$(ICONV_PREFIX)" \
+	$(if $(CONFIG_BUILD_NLS),--with-iconv=$(ICONV_PREFIX)) \
 	--with-onig="$(STAGING_DIR)/usr" \
 	--with-pcre="$(STAGING_DIR)/usr" \
 	--with-png="$(STAGING_DIR)/usr" \
