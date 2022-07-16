@@ -180,7 +180,7 @@ ifeq ($(BUILD_VARIANT),full)
 	-Dupnp=npupnp \
 	-Dmms=enabled \
 	-Dsoundcloud=enabled \
-	-Dffmpeg=$(if $(CONFIG_BUILD_PATENTED),en,dis)abled \
+	-Dffmpeg=enabled \
 	-Dmad=$(if $(CONFIG_BUILD_PATENTED),dis,en)abled \
 	-Dtremor=disabled \
 	-Dvorbis=enabled \
