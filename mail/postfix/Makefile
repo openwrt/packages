@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
-	https://cdn.postfix.johnriley.me/mirrors/postfix-release/official/ \
+	https://de.postfix.org/ftpmirror/official/ \
 	http://ftp.porcupine.org/mirrors/postfix-release/official/
 PKG_HASH:=22582628cf3edc18c5155c9ff44543dd95a9435fb68135d76a99f572cb07456f
 
