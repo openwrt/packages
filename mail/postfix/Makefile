@@ -11,7 +11,7 @@ PKG_NAME:=postfix
 PKG_RELEASE:=2
 PKG_VERSION:=3.4.4
 PKG_SOURCE_URL:= \
-	https://cdn.postfix.johnriley.me/mirrors/postfix-release/official/ \
+	https://de.postfix.org/ftpmirror/official/ \
 	http://ftp.porcupine.org/mirrors/postfix-release/official/
 
 PKG_HASH:=27f2ab631a966a40e002aedc6db9281e5970295fa5fd96b29066e457a4601e34
