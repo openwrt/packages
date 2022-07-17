@@ -23,6 +23,7 @@ trm_captiveurl="$(uci_get travelmate global trm_captiveurl "http://detectportal.
 trm_useragent="$(uci_get travelmate global trm_useragent "Mozilla/5.0 (Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0")"
 trm_logger="$(command -v logger)"
 trm_fetch="$(command -v curl)"
+trm_vpnfile="/var/state/travelmate.vpn"
 
 f_net() {
 	local json_rc result="net nok"
@@ -46,6 +47,7 @@ if [ "${vpn}" = "1" ] && [ "${vpn_action}" = "enable" ] && [ "${vpn_status}" != 
 		if [ "${vpn_status}" = "true" ]; then
 			net_status="$(f_net)"
 			if [ "${net_status}" = "net ok" ]; then
+				: >"${trm_vpnfile}"
 				"${trm_logger}" -p "info" -t "trm-vpn  [${$}]" "${vpn_service} client connection enabled" 2>/dev/null
 				break
 			fi
@@ -55,6 +57,7 @@ if [ "${vpn}" = "1" ] && [ "${vpn_action}" = "enable" ] && [ "${vpn_status}" != 
 			if [ "${vpn_service}" = "openvpn" ] && [ -x "/etc/init.d/openvpn" ]; then
 				/etc/init.d/openvpn stop
 			fi
+			rm -f "${trm_vpnfile}"
 			"${trm_logger}" -p "info" -t "trm-vpn  [${$}]" "${vpn_service} client connection can't be established" 2>/dev/null
 			exit 1
 		fi
@@ -66,5 +69,6 @@ elif { [ "${vpn}" != "1" ] && [ "${vpn_action}" = "enable" ]; } || [ "${vpn_acti
 	if [ "${vpn_service}" = "openvpn" ] && [ -x "/etc/init.d/openvpn" ]; then
 		/etc/init.d/openvpn stop
 	fi
+	rm -f "${trm_vpnfile}"
 	"${trm_logger}" -p "info" -t "trm-vpn  [${$}]" "${vpn_service} client connection disabled" 2>/dev/null
 fi

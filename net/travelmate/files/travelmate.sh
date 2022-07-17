@@ -213,21 +213,16 @@ f_vpn() {
 			fi
 		done
 	fi
-	if [ -x "${trm_vpnpgm}" ] && [ -n "${vpn_service}" ] && [ -n "${vpn_iface}" ] && [ -f "${trm_ntpfile}" ]; then
+	if [ -x "${trm_vpnpgm}" ] && [ -n "${vpn_service}" ] && [ -n "${vpn_iface}" ]; then
 		if { [ "${vpn_action}" = "disable" ] && [ -f "${trm_vpnfile}" ]; } ||
-			{ [ "${vpn}" = "1" ] && [ "${vpn_action%_*}" = "enable" ] && [ ! -f "${trm_vpnfile}" ]; } ||
-			{ [ "${vpn}" != "1" ] && [ "${vpn_action%_*}" = "enable" ] && [ -f "${trm_vpnfile}" ]; }; then
+			{ [ -f "${trm_ntpfile}" ] && {  [ "${vpn}" = "1" ] && [ "${vpn_action%_*}" = "enable" ] && [ ! -f "${trm_vpnfile}" ]; } ||
+			{ [ "${vpn}" != "1" ] && [ "${vpn_action%_*}" = "enable" ] && [ -f "${trm_vpnfile}" ]; }; }; then
 				result="$(f_net)"
 				if [ "${result}" = "net ok" ] || [ "${vpn_action}" = "disable" ]; then
 					f_log "info" "vpn call '${vpn:-"0"}/${vpn_action}/${vpn_service}/${vpn_iface}'"
 					"${trm_vpnpgm}" "${vpn:-"0"}" "${vpn_action%_*}" "${vpn_service}" "${vpn_iface}" >/dev/null 2>&1
 					rc="${?}"
 				fi
-		fi
-		if [ "${vpn}" = "1" ] && [ "${vpn_action%_*}" = "enable" ] && [ "${rc}" = "0" ]; then
-			: >"${trm_vpnfile}"
-		elif [ "${vpn}" != "1" ] || [ "${vpn_action}" = "disable" ]; then
-			rm -f "${trm_vpnfile}"
 		fi
 		[ -n "${rc}" ] && f_jsnup
 	fi
@@ -519,7 +514,7 @@ f_addsta() {
 # check net status
 #
 f_net() {
-	local err_msg raw html_raw html_cp json_raw json_ec json_rc json_cp json_ed result="net nok"
+	local err_msg raw json_raw html_raw html_cp js_cp json_ec json_rc json_cp json_ed result="net nok"
 
 	raw="$(${trm_fetch} --user-agent "${trm_useragent}" --referer "http://www.example.com" --header "Cache-Control: no-cache, no-store, must-revalidate, max-age=0" --write-out "%{json}" --silent --max-time $((trm_maxwait / 6)) "${trm_captiveurl}")"
 	json_raw="${raw#*\{}"
@@ -534,8 +529,11 @@ f_net() {
 			else
 				if [ "${json_rc}" = "200" ] || [ "${json_rc}" = "204" ]; then
 					html_cp="$(printf "%s" "${html_raw}" | awk 'match(tolower($0),/^.*<meta[ \t]+http-equiv=['\''"]*refresh.*[ \t;]url=/){print substr(tolower($0),RLENGTH+1)}' | awk 'BEGIN{FS="[:/]"}{printf "%s",$4;exit}')"
+					js_cp="$(printf "%s" "${html_raw}" | awk 'match(tolower($0),/^.*location\.href=['\''"]*/){print substr(tolower($0),RLENGTH+1)}' | awk 'BEGIN{FS="[:/]"}{printf "%s",$4;exit}')"
 					if [ -n "${html_cp}" ]; then
 						result="net cp '${html_cp}'"
+					elif [ -n "${js_cp}" ]; then
+						result="net cp '${js_cp}'"
 					else
 						result="net ok"
 					fi
@@ -556,7 +554,7 @@ f_net() {
 		fi
 	fi
 	printf "%s" "${result}"
-	f_log "debug" "f_net    ::: fetch: ${trm_fetch}, timeout: $((trm_maxwait / 6)), cp (json/html): ${json_cp:-"-"}/${html_cp:-"-"}, result: ${result}, error (rc/msg): ${json_ec}/${err_msg:-"-"}, url: ${trm_captiveurl}, user_agent: ${trm_useragent}"
+	f_log "debug" "f_net    ::: fetch: ${trm_fetch}, timeout: $((trm_maxwait / 6)), cp (json/html/js): ${json_cp:-"-"}/${html_cp:-"-"}/${js_cp:-"-"}, result: ${result}, error (rc/msg): ${json_ec}/${err_msg:-"-"}, url: ${trm_captiveurl}, user_agent: ${trm_useragent}"
 }
 
 # check interface status
@@ -642,12 +640,14 @@ f_check() {
 									fi
 								fi
 							fi
-							if [ "${trm_netcheck}" = "1" ] && [ "${result}" = "net nok" ]; then
-								f_log "info" "uplink has no internet"
+							if [ "${result}" = "net nok" ]; then
 								f_vpn "disable"
-								trm_ifstatus="${status}"
-								f_jsnup
-								break
+								if [ "${trm_netcheck}" = "1" ]; then
+									f_log "info" "uplink has no internet"
+									trm_ifstatus="${status}"
+									f_jsnup
+									break
+								fi
 							fi
 							trm_connection="${result:-"-"}/${trm_ifquality}"
 							f_jsnup
