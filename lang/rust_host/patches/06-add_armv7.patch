@@ -1,0 +1,38 @@
+--- /dev/null
++++ b/compiler/rustc_target/src/spec/armv7_openwrt_linux_muslgnueabi.rs
+@@ -0,0 +1,25 @@
++use crate::spec::{Target, TargetOptions};
++
++// This target is for musl Linux on ARMv7 without thumb-mode, NEON or
++// hardfloat.
++
++pub fn target() -> Target {
++    // Most of these settings are copied from the armv7_unknown_linux_gnueabi
++    // target.
++    Target {
++        // It's important we use "gnueabi" and not "musleabi" here. LLVM uses it
++        // to determine the calling convention and float ABI, and it doesn't
++        // support the "musleabi" value.
++        llvm_target: "armv7-unknown-linux-gnueabi".into(),
++        pointer_width: 32,
++        data_layout: "e-m:e-p:32:32-Fi8-i64:64-v128:64:128-a:0:32-n32-S64".into(),
++        arch: "arm".into(),
++
++        options: TargetOptions {
++            abi: "eabi".into(),
++            max_atomic_width: Some(64),
++            mcount: "\u{1}mcount".into(),
++            ..super::linux_musl_base::opts()
++        },
++    }
++}
+--- a/compiler/rustc_target/src/spec/mod.rs
++++ b/compiler/rustc_target/src/spec/mod.rs
+@@ -1017,6 +1017,7 @@
+     ("mips-openwrt-linux-musl", mips_openwrt_linux_musl),
+     ("mipsel-openwrt-linux-musl", mipsel_openwrt_linux_musl),
+     ("aarch64-openwrt-linux-musl", aarch64_openwrt_linux_musl),
++    ("armv7-openwrt-linux-muslgnueabi", armv7_openwrt_linux_muslgnueabi),
+ }
+
+ /// Warnings encountered when parsing the target `json`.

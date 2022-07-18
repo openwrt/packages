@@ -1,0 +1,36 @@
+--- /dev/null
++++ rust-1.60.0/compiler/rustc_target/src/spec/armv6k_openwrt_linux_muslgnueabi.rs
+@@ -0,0 +1,21 @@
++use crate::spec::{Target, TargetOptions};
++
++pub fn target() -> Target {
++    Target {
++        // It's important we use "gnueabi" and not "musleabi" here. LLVM uses it
++        // to determine the calling convention and float ABI, and it doesn't
++        // support the "musleabi" value.
++        llvm_target: "armv6k-unknown-linux-gnueabi".into(),
++        pointer_width: 32,
++        data_layout: "e-m:e-p:32:32-Fi8-i64:64-v128:64:128-a:0:32-n32-S64".into(),
++        arch: "arm".into(),
++        options: TargetOptions {
++            abi: "eabi".into(),
++            // Most of these settings are copied from the arm_unknown_linux_gnueabi
++            // target.
++            max_atomic_width: Some(64),
++            mcount: "\u{1}mcount".into(),
++            ..super::linux_musl_base::opts()
++        },
++    }
++}
+Index: rust-1.60.0/compiler/rustc_target/src/spec/mod.rs
+===================================================================
+--- rust-1.60.0.orig/compiler/rustc_target/src/spec/mod.rs
++++ rust-1.60.0/compiler/rustc_target/src/spec/mod.rs
+@@ -1033,6 +1033,7 @@ supported_targets! {
+     ("arm-openwrt-linux-muslgnueabi", arm_openwrt_linux_muslgnueabi),
+     ("arm-openwrt-linux-muslgnueabihf", arm_openwrt_linux_muslgnueabihf),
+     ("armv5tej-openwrt-linux-muslgnueabi", armv5tej_openwrt_linux_muslgnueabi),
++    ("armv6k-openwrt-linux-muslgnueabi", armv6k_openwrt_linux_muslgnueabi),
+ }
+ 
+ /// Warnings encountered when parsing the target `json`.
