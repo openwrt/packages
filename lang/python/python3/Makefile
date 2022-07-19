@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 include ../python3-version.mk
 
 PKG_NAME:=python3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_VERSION:=$(PYTHON3_VERSION).$(PYTHON3_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
@@ -326,10 +326,6 @@ HOST_CONFIGURE_VARS += \
 HOST_MAKE_VARS += \
 	USE_PYTHON_CONFIG_PY=1
 endif
-
-# FIXME: remove when removing patch '028-host-python-support-ssl-with-libressl.patch'
-HOST_CFLAGS += \
-	-DOPENWRT_HOST_BUILD
 
 HOST_CONFIGURE_ARGS+= \
 	--enable-optimizations \
