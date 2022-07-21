@@ -20,8 +20,15 @@ PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:gnu:tar
 
-PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_PACKAGE_TAR_POSIX_ACL \
+	CONFIG_PACKAGE_TAR_XATTR \
+	CONFIG_PACKAGE_TAR_BZIP2 \
+	CONFIG_PACKAGE_TAR_GZIP \
+	CONFIG_PACKAGE_TAR_XZ \
+	CONFIG_PACKAGE_TAR_ZSTD
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -53,7 +60,7 @@ define Package/tar/config
 			default y
 
 		config PACKAGE_TAR_GZIP
-			bool "tar: Enable seamless gzip support"
+			bool "tar: Enable seamless gzip support. Needed for sysupgrade."
 			default y
 
 		config PACKAGE_TAR_XZ
