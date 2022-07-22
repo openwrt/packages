@@ -39,7 +39,7 @@ get_ping_family_flag() {
 	family=$1
 	case "$family" in
 	any)
-		family=""
+		family="-4"
 		;;
 	ipv4)
 		family="-4"
