@@ -104,7 +104,7 @@ endef
 define Package/libgnutls-dane
 $(call Package/gnutls/Default)
   TITLE+= (libgnutls-dane library)
-  DEPENDS:= +libgnutls +libunbound
+  DEPENDS:= +libgnutls +PACKAGE_libgnutls-dane:libunbound
 endef
 
 define Package/libgnutls/description
