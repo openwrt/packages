@@ -39,7 +39,7 @@ get_ping_family_flag() {
 	family=$1
 	case "$family" in
 	any)
-		family="-4"
+		family=""
 		;;
 	ipv4)
 		family="-4"
@@ -137,12 +137,12 @@ watchcat_monitor_network() {
 		for host in $ping_hosts; do
 			if [ "$iface" != "" ]; then
 				ping_result="$(
-					ping "$ping_family" -I "$iface" -s "$ping_size" -c 1 "$host" &> /dev/null
+					ping $ping_family -I "$iface" -s "$ping_size" -c 1 "$host" &> /dev/null
 					echo $?
 				)"
 			else
 				ping_result="$(
-					ping "$ping_family" -s "$ping_size" -c 1 "$host" &> /dev/null
+					ping $ping_family -s "$ping_size" -c 1 "$host" &> /dev/null
 					echo $?
 				)"
 			fi
@@ -218,12 +218,12 @@ watchcat_ping() {
 		for host in $ping_hosts; do
 			if [ "$iface" != "" ]; then
 				ping_result="$(
-					ping "$ping_family" -I "$iface" -s "$ping_size" -c 1 "$host" &> /dev/null
+					ping $ping_family -I "$iface" -s "$ping_size" -c 1 "$host" &> /dev/null
 					echo $?
 				)"
 			else
 				ping_result="$(
-					ping "$ping_family" -s "$ping_size" -c 1 "$host" &> /dev/null
+					ping $ping_family -s "$ping_size" -c 1 "$host" &> /dev/null
 					echo $?
 				)"
 			fi
