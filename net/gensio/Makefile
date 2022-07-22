@@ -33,6 +33,8 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_GENSIO_TCL \
 	CONFIG_GENSIO_SSHD
 
+PKG_BUILD_DEPENDS:=PACKAGE_python3-gensio:swig
+
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python3-package.mk
 
@@ -130,8 +132,7 @@ $(call Package/gensio/Default)
   TITLE+= (Python3-bindings)
   SECTION:=lang
   CATEGORY:=Languages
-  BUILD_DEPENDS:=+swig +python3
-  DEPENDS:=+python3-light +libgensio
+  DEPENDS:=+PACKAGE_python3-gensio:python3-light +libgensio
 endef
 
 define Package/python3-gensio/description
@@ -146,7 +147,7 @@ $(call Package/gensio/Default)
   SECTION:=libs
   CATEGORY:=Libraries
   ABI_VERSION:=0
-  DEPENDS:=+libgensio +libstdcpp
+  DEPENDS:=+libgensio +PACKAGE_libgensiocpp:libstdcpp
 endef
 
 define Package/libgensiocpp/description
