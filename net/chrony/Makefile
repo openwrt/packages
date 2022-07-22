@@ -45,7 +45,7 @@ endef
 define Package/chrony-nts
 $(call Package/chrony/Default)
   TITLE+= (with NTS)
-  DEPENDS+= +libgnutls +ca-bundle
+  DEPENDS+= +PACKAGE_chrony-nts:libgnutls +PACKAGE_chrony-nts:ca-bundle
   VARIANT:=with-nts
 endef
 
