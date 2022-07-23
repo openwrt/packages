@@ -9,7 +9,11 @@ NAME=emailrelay
 
 emailrelay_instance()
 {
-	local enabled mode port remote_clients server_tls server_auth extra_cmdline smarthost client_tls client_auth address_verifier domain anonymous
+	local enabled mode port remote_clients  \
+		server_auth server_tls server_tls_required server_tls_certificate server_tls_verify \
+		client_auth client_tls client_tls_required client_tls_certificate client_tls_verify \
+		anonymous domain smarthost address_verifier \
+		extra_cmdline
 
 	config_get_bool enabled "$1" enabled
 	[ "$enabled" = 0 ] && return 1
@@ -17,10 +21,16 @@ emailrelay_instance()
 	config_get port "$1" port
 	config_get_bool remote_clients "$1" remote_clients
 	config_get_bool server_tls "$1" server_tls
+	config_get_bool server_tls_required "$1" server_tls_required
+	config_get server_tls_certificate "$1" server_tls_certificate
+	config_get server_tls_verify "$1" server_tls_verify
 	config_get server_auth "$1" server_auth
 	config_get extra_cmdline "$1" extra_cmdline
 	config_get smarthost "$1" smarthost
 	config_get_bool client_tls "$1" client_tls
+	config_get_bool client_tls_required "$1" client_tls_required
+	config_get client_tls_certificate "$1" client_tls_certificate
+	config_get client_tls_verify "$1" client_tls_verify
 	config_get client_auth "$1" client_auth
 	config_get address_verifier "$1" address_verifier
 	config_get domain "$1" domain
@@ -37,8 +47,14 @@ emailrelay_instance()
 			[ -n "$port" ] && procd_append_param command --port "$port"
 			[ "$remote_clients" = 1 ] && procd_append_param command --remote-clients
 			[ "$server_tls" = 1 ] && procd_append_param command --server-tls
+			[ "$server_tls_required" = 1 ] && procd_append_param command --server-tls-required
+			[ -n "$server_tls_certificate" ] && procd_append_param command --server-tls-certificate "$server_tls_certificate"
+			[ -n "$server_tls_verify" ] && procd_append_param command --server-tls-verify "$server_tls_verify"
 			[ -n "$server_auth" ] && procd_append_param command --server-auth "$server_auth"
 			[ "$client_tls" = 1 ] && procd_append_param command --client-tls
+			[ "$client_tls_required" = 1 ] && procd_append_param command --client-tls-required
+			[ -n "$client_tls_certificate" ] && procd_append_param command --client-tls-certificate "$client_tls_certificate"
+			[ -n "$client_tls_verify" ] && procd_append_param command --client-tls-verify "$client_tls_verify"
 			[ -n "$client_auth" ] && procd_append_param command --client-auth "$client_auth"
 			[ -n "$address_verifier" ] && procd_append_param command --address-verifier "$address_verifier"
 			[ -n "$domain" ] && procd_append_param command --domain "$domain"
