@@ -192,6 +192,7 @@ issue_cert() {
 	local update_uhttpd
 	local update_nginx
 	local update_haproxy
+	local reloadcmd
 	local keylength
 	local keylength_ecc=0
 	local domains
@@ -212,6 +213,7 @@ issue_cert() {
 	config_get_bool update_uhttpd "$section" update_uhttpd
 	config_get_bool update_nginx "$section" update_nginx
 	config_get_bool update_haproxy "$section" update_haproxy
+	config_get reloadcmd "$section" reloadcmd
 	config_get calias "$section" calias
 	config_get dalias "$section" dalias
 	config_get domains "$section" domains
@@ -234,6 +236,8 @@ issue_cert() {
 
 	set -- $domains
 	main_domain=$1
+
+	[ -n "$reloadcmd" ] && acme_args="$acme_args --reloadcmd \"$reloadcmd\""
 
 	if [ -n "$user_setup" ] && [ -f "$user_setup" ]; then
 		log "Running user-provided setup script from $user_setup."
