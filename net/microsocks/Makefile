@@ -16,7 +16,6 @@ define Package/microsocks
   SUBMENU:=Web Servers/Proxies
   CATEGORY:=Network
   TITLE:=SOCKS5 TCP/IP only proxy
-  DEPENDS:=+libc +libpthread
 endef
 
 define Package/microsocks/description
