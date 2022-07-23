@@ -14,13 +14,14 @@ include $(INCLUDE_DIR)/package.mk
 # Package definition; instructs on how and where our package will appear in the overall configuration menu ('make menuconfig')
 define Package/microsocks
   SECTION:=net
+  SUBMENU:=Web Servers/Proxies
   CATEGORY:=Network
   TITLE:=SOCKS5 TCP/IP only proxy
   DEPENDS:=+libc +libpthread
 endef
 
 define Package/microsocks/description
-  SOCKS5 only TCP/IP only proxy server
+SOCKS5 only and TCP/IP only proxy server
 endef
 
 
