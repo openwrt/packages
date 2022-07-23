@@ -11,7 +11,6 @@ PKG_MAINTAINER:=Mateusz Korniak <matkorgithubcom@ant.gliwice.pl>
 
 include $(INCLUDE_DIR)/package.mk
 
-# Package definition; instructs on how and where our package will appear in the overall configuration menu ('make menuconfig')
 define Package/microsocks
   SECTION:=net
   SUBMENU:=Web Servers/Proxies
@@ -33,6 +32,8 @@ endef
 # 	# $(MAKE) clean
 # 	$(MAKE) -C $(PKG_BUILD_DIR) CC="$(TARGET_CC)" CFLAGS="$(TARGET_CFLAGS)" LDFLAGS="$(TARGET_LDFLAGS)"	
 # endef
+TARGET_CFLAGS+= -flto
+TARGET_LDFLAGS+= -flto -Wl,--gc-sections,--as-needed
 
 define Package/microsocks/install
 	$(INSTALL_DIR) $(1)/etc/config
