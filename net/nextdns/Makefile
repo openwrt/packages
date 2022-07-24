@@ -50,13 +50,14 @@ define Package/nextdns/install
 
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/nextdns.config $(1)/etc/config/nextdns
+
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/nextdns.defaults $(1)/etc/uci-defaults/nextdns
 endef
 
 define Package/nextdns/postinst
 #!/bin/sh
-if [ -z "$${IPKG_INSTROOT}" ]; then
-  nextdns install
-fi
+[ -n "$${IPKG_INSTROOT}" ] || (. /etc/uci-defaults/nextdns) && rm -f /etc/uci-defaults/nextdns
 endef
 
 define Package/nextdns/prerm
