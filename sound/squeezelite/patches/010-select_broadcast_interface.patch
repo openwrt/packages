@@ -8,7 +8,7 @@
  		   "  -m <mac addr>\t\tSet mac address, format: ab:cd:ef:12:34:56\n"
  		   "  -M <modelname>\tSet the squeezelite player model name sent to the server (default: " MODEL_NAME_STRING ")\n"
  		   "  -n <name>\t\tSet the player name\n"
-@@ -285,6 +286,8 @@ int main(int argc, char **argv) {
+@@ -292,6 +293,8 @@ int main(int argc, char **argv) {
  	extern bool user_rates;
  	char *logfile = NULL;
  	u8_t mac[6];
@@ -17,7 +17,7 @@
  	unsigned stream_buf_size = STREAMBUF_SIZE;
  	unsigned output_buf_size = 0; // set later
  	unsigned rates[MAX_SUPPORTED_SAMPLERATES] = { 0 };
-@@ -325,6 +328,7 @@ int main(int argc, char **argv) {
+@@ -332,6 +335,7 @@ int main(int argc, char **argv) {
  
  	int maxSampleRate = 0;
  
@@ -25,7 +25,7 @@
  	char *optarg = NULL;
  	int optind = 1;
  	int i;
-@@ -332,8 +336,6 @@ int main(int argc, char **argv) {
+@@ -339,8 +343,6 @@ int main(int argc, char **argv) {
  #define MAXCMDLINE 512
  	char cmdline[MAXCMDLINE] = "";
  
@@ -34,12 +34,12 @@
  	for (i = 0; i < argc && (strlen(argv[i]) + strlen(cmdline) + 2 < MAXCMDLINE); i++) {
  		strcat(cmdline, argv[i]);
  		strcat(cmdline, " ");
-@@ -341,7 +343,7 @@ int main(int argc, char **argv) {
+@@ -348,7 +350,7 @@ int main(int argc, char **argv) {
  
  	while (optind < argc && strlen(argv[optind]) >= 2 && argv[optind][0] == '-') {
  		char *opt = argv[optind] + 1;
--		if (strstr("oabcCdefmMnNpPrs"
-+		if (strstr("oabcCdefImMnNpPrs"
+-		if (strstr("oabcCdefmMnNpPrsZ"
++		if (strstr("oabcCdefImMnNpPrsZ"
  #if ALSA
  				   "UVO"
  #endif
@@ -65,7 +65,7 @@
  	stream_init(log_stream, stream_buf_size);
  
  	if (!strcmp(output_device, "-")) {
-@@ -798,7 +808,7 @@ int main(int argc, char **argv) {
+@@ -801,7 +811,7 @@ int main(int argc, char **argv) {
  		exit(1);
  	}
  
@@ -76,16 +76,16 @@
  	stream_close();
 --- a/slimproto.c
 +++ b/slimproto.c
-@@ -113,7 +113,7 @@ void send_packet(u8_t *packet, size_t le
+@@ -119,7 +119,7 @@ void send_packet(u8_t *packet, size_t le
  	}
  }
  
 -static void sendHELO(bool reconnect, const char *fixed_cap, const char *var_cap, u8_t mac[6]) {
 +static void sendHELO(bool reconnect, const char *fixed_cap, const char *var_cap, u8_t *mac) {
- 	#define BASE_CAP "Model=squeezelite,AccuratePlayPoints=1,HasDigitalOut=1,HasPolarityInversion=1,Firmware=" VERSION
+ 	#define BASE_CAP "Model=squeezelite,AccuratePlayPoints=1,HasDigitalOut=1,HasPolarityInversion=1,Balance=1,Firmware=" VERSION
  	#define SSL_CAP "CanHTTPS=1"
  	const char *base_cap;
-@@ -761,7 +761,7 @@ void wake_controller(void) {
+@@ -768,7 +768,7 @@ void wake_controller(void) {
  	wake_signal(wake_e);
  }
  
@@ -94,7 +94,7 @@
  	struct sockaddr_in d;
  	struct sockaddr_in s;
  	char *buf;
-@@ -778,7 +778,7 @@ in_addr_t discover_server(char *default_
+@@ -785,7 +785,7 @@ in_addr_t discover_server(char *default_
  	memset(&d, 0, sizeof(d));
  	d.sin_family = AF_INET;
  	d.sin_port = htons(PORT);
@@ -103,7 +103,7 @@
  
  	pollinfo.fd = disc_sock;
  	pollinfo.events = POLLIN;
-@@ -813,7 +813,7 @@ in_addr_t discover_server(char *default_
+@@ -820,7 +820,7 @@ in_addr_t discover_server(char *default_
  #define FIXED_CAP_LEN 256
  #define VAR_CAP_LEN   128
  
@@ -112,7 +112,7 @@
  	struct sockaddr_in serv_addr;
  	static char fixed_cap[FIXED_CAP_LEN], var_cap[VAR_CAP_LEN] = "";
  	bool reconnect = false;
-@@ -834,7 +834,7 @@ void slimproto(log_level level, char *se
+@@ -841,7 +841,7 @@ void slimproto(log_level level, char *se
  	}
  
  	if (!slimproto_ip) {
@@ -121,7 +121,7 @@
  	}
  
  	if (!slimproto_port) {
-@@ -915,7 +915,7 @@ void slimproto(log_level level, char *se
+@@ -926,7 +926,7 @@ void slimproto(log_level level, char *se
  
  			// rediscover server if it was not set at startup
  			if (!server && ++failed_connect > 5) {
@@ -132,7 +132,7 @@
  		} else {
 --- a/squeezelite.h
 +++ b/squeezelite.h
-@@ -455,7 +455,7 @@ char* strcasestr(const char *haystack, c
+@@ -456,7 +456,7 @@ char* strcasestr(const char *haystack, c
  
  char *next_param(char *src, char c);
  u32_t gettime_ms(void);
@@ -141,7 +141,7 @@
  void set_nonblock(sockfd s);
  int connect_timeout(sockfd sock, const struct sockaddr *addr, socklen_t addrlen, int timeout);
  void server_addr(char *server, in_addr_t *ip_ptr, unsigned *port_ptr);
-@@ -511,7 +511,7 @@ void buf_init(struct buffer *buf, size_t
+@@ -513,7 +513,7 @@ void buf_init(struct buffer *buf, size_t
  void buf_destroy(struct buffer *buf);
  
  // slimproto.c
@@ -185,7 +185,7 @@
  // logging functions
  const char *logtime(void) {
  	static char buf[100];
-@@ -119,58 +115,94 @@ u32_t gettime_ms(void) {
+@@ -120,58 +116,94 @@ u32_t gettime_ms(void) {
  #endif
  }
  
@@ -316,7 +316,7 @@
  #if SUN
  void get_mac(u8_t mac[]) {
  	struct  arpreq          parpreq;
-@@ -237,30 +269,6 @@ void get_mac(u8_t mac[]) {
+@@ -238,30 +270,6 @@ void get_mac(u8_t mac[]) {
  }
  #endif
  
