@@ -1,117 +1,27 @@
 --- a/Modules/_ssl.c
 +++ b/Modules/_ssl.c
-@@ -67,7 +67,18 @@
+@@ -67,6 +67,12 @@
  #  error "OPENSSL_THREADS is not defined, Python requires thread-safe OpenSSL"
  #endif
  
-+#ifdef OPENWRT_HOST_BUILD
-+#undef TLS1_3_VERSION
-+static STACK_OF(X509) *SSL_get0_verified_chain(const SSL *s)
-+{
-+    return NULL;
-+}
- 
++#ifdef LIBRESSL_VERSION_NUMBER
 +static int SSL_CTX_get_security_level(const SSL_CTX *ctx)
 +{
-+    return 0;
++    return 1;
 +}
 +#endif
  
+ 
  struct py_ssl_error_code {
-     const char *mnemonic;
-@@ -291,8 +302,10 @@ typedef struct {
-     int post_handshake_auth;
- #endif
-     PyObject *msg_cb;
-+#ifndef OPENWRT_HOST_BUILD
-     PyObject *keylog_filename;
-     BIO *keylog_bio;
-+#endif
-     /* Cached module state, also used in SSLSocket and SSLSession code. */
-     _sslmodulestate *state;
- } PySSLContext;
-@@ -2358,8 +2371,14 @@ _ssl__SSLSocket_write_impl(PySSLSocket *
- 
-     do {
-         PySSL_BEGIN_ALLOW_THREADS
-+#ifdef OPENWRT_HOST_BUILD
-+        retval = SSL_write(self->ssl, b->buf, (int)b->len);
-+        if (retval > 0) count = retval;
-+        err = _PySSL_errno(retval <= 0, self->ssl, retval);
+@@ -169,7 +175,11 @@ extern const SSL_METHOD *TLSv1_2_method(
+  * Based on Hynek's excellent blog post (update 2021-02-11)
+  * https://hynek.me/articles/hardening-your-web-servers-ssl-ciphers/
+  */
++#ifndef LIBRESSL_VERSION_NUMBER
+   #define PY_SSL_DEFAULT_CIPHER_STRING "@SECLEVEL=2:ECDH+AESGCM:ECDH+CHACHA20:ECDH+AES:DHE+AES:!aNULL:!eNULL:!aDSS:!SHA1:!AESCCM"
 +#else
-         retval = SSL_write_ex(self->ssl, b->buf, (size_t)b->len, &count);
-         err = _PySSL_errno(retval == 0, self->ssl, retval);
++  #define PY_SSL_DEFAULT_CIPHER_STRING "ECDH+AESGCM:ECDH+CHACHA20:ECDH+AES:DHE+AES:!aNULL:!eNULL:!aDSS:!SHA1:!AESCCM"
 +#endif
-         PySSL_END_ALLOW_THREADS
-         self->err = err;
- 
-@@ -2510,8 +2529,14 @@ _ssl__SSLSocket_read_impl(PySSLSocket *s
- 
-     do {
-         PySSL_BEGIN_ALLOW_THREADS
-+#ifdef OPENWRT_HOST_BUILD
-+        retval = SSL_read(self->ssl, mem, len);
-+        if (retval > 0) count = retval;
-+        err = _PySSL_errno(retval <= 0, self->ssl, retval);
-+#else
-         retval = SSL_read_ex(self->ssl, mem, (size_t)len, &count);
-         err = _PySSL_errno(retval == 0, self->ssl, retval);
-+#endif
-         PySSL_END_ALLOW_THREADS
-         self->err = err;
- 
-@@ -3074,8 +3099,10 @@ _ssl__SSLContext_impl(PyTypeObject *type
-     self->hostflags = X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS;
-     self->protocol = proto_version;
-     self->msg_cb = NULL;
-+#ifndef OPENWRT_HOST_BUILD
-     self->keylog_filename = NULL;
-     self->keylog_bio = NULL;
-+#endif
-     self->alpn_protocols = NULL;
-     self->set_sni_cb = NULL;
-     self->state = get_ssl_state(module);
-@@ -3199,6 +3226,7 @@ context_clear(PySSLContext *self)
- {
-     Py_CLEAR(self->set_sni_cb);
-     Py_CLEAR(self->msg_cb);
-+#ifndef OPENWRT_HOST_BUILD
-     Py_CLEAR(self->keylog_filename);
-     if (self->keylog_bio != NULL) {
-         PySSL_BEGIN_ALLOW_THREADS
-@@ -3206,6 +3234,7 @@ context_clear(PySSLContext *self)
-         PySSL_END_ALLOW_THREADS
-         self->keylog_bio = NULL;
-     }
-+#endif
-     return 0;
- }
- 
-@@ -4615,8 +4644,10 @@ static PyGetSetDef context_getsetlist[]
-                         (setter) set_minimum_version, NULL},
-     {"maximum_version", (getter) get_maximum_version,
-                         (setter) set_maximum_version, NULL},
-+#ifndef OPENWRT_HOST_BUILD
-     {"keylog_filename", (getter) _PySSLContext_get_keylog_filename,
-                         (setter) _PySSLContext_set_keylog_filename, NULL},
-+#endif
-     {"_msg_callback", (getter) _PySSLContext_get_msg_callback,
-                       (setter) _PySSLContext_set_msg_callback, NULL},
-     {"sni_callback", (getter) get_sni_callback,
---- a/Modules/_ssl/debughelpers.c
-+++ b/Modules/_ssl/debughelpers.c
-@@ -114,6 +114,8 @@ _PySSLContext_set_msg_callback(PySSLCont
-     return 0;
- }
- 
-+#ifndef OPENWRT_HOST_BUILD
-+
- static void
- _PySSL_keylog_callback(const SSL *ssl, const char *line)
- {
-@@ -217,3 +219,5 @@ _PySSLContext_set_keylog_filename(PySSLC
-     SSL_CTX_set_keylog_callback(self->ctx, _PySSL_keylog_callback);
-     return 0;
- }
-+
-+#endif
+   #ifndef PY_SSL_MIN_PROTOCOL
+     #define PY_SSL_MIN_PROTOCOL TLS1_2_VERSION
+   #endif
