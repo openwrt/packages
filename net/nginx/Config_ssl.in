@@ -46,6 +46,11 @@ config NGINX_HTTP_GZIP
 	prompt "Enable HTTP gzip module"
 	default y
 
+config NGINX_HTTP_GZIP_STATIC
+	bool
+	prompt "Enable HTTP gzip static module"
+	default y
+
 config NGINX_HTTP_SSI
 	bool
 	prompt "Enable HTTP ssi module"
