@@ -1,0 +1,10 @@
+--- a/linux/LibSensors.c
++++ b/linux/LibSensors.c
+@@ -130,6 +130,7 @@ static int tempDriverPriority(const sens
+       { "cpu_thermal", 0 },
+       { "k10temp",     0 },
+       { "zenpower",    0 },
++      { "f10182b0.thermal",0},	// Marvell Armada XP
+       /* Low priority drivers */
+       { "acpitz",      1 },
+    };
