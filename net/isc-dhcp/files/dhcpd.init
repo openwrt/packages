@@ -465,10 +465,11 @@ general_config() {
 
 		cat <<EOF > $conf_local_file
 zone "$domain" {
-  type master;
-  file "$dyndir/db.$domain";
-  allow-update { key $session_key_name; };
-  allow-transfer { key $session_key_name; };
+	type master;
+	file "$dyndir/db.$domain";
+	update-policy {
+		grant $session_key_name zonesub any;
+	};
 };
 
 EOF
@@ -477,10 +478,11 @@ EOF
 			mynet="$(rev_str "$mynet" ".")"
 			cat <<EOF >> $conf_local_file
 zone "$mynet.in-addr.arpa" {
-  type master;
-  file "$dyndir/db.$mynet.in-addr.arpa";
-  allow-update { key $session_key_name; };
-  allow-transfer { key $session_key_name; };
+	type master;
+	file "$dyndir/db.$mynet.in-addr.arpa";
+	update-policy {
+		grant $session_key_name zonesub any;
+	};
 };
 
 EOF
@@ -504,7 +506,7 @@ include "$session_key_file";
 
 zone $domain. {
 	primary 127.0.0.1;
-	key local-ddns;
+	key $session_key_name;
 }
 
 EOF
@@ -514,7 +516,7 @@ EOF
 			cat <<EOF
 zone $mynet.in-addr.arpa. {
 	primary 127.0.0.1;
-	key local-ddns;
+	key $session_key_name;
 }
 
 EOF
