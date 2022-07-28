@@ -28,7 +28,7 @@ define Package/hfsprogs/Default
   SECTION:=utils
   CATEGORY:=Utilities
   SUBMENU:=Filesystem
-  DEPENDS:=+libopenssl +USE_GLIBC:libbsd
+  DEPENDS:=+libopenssl
 endef
 
 define Package/hfsfsck
@@ -60,7 +60,7 @@ define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
 		$(TARGET_CONFIGURE_OPTS) \
 		CFLAGS+="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS) -I$(PKG_BUILD_DIR)/include -DDEBUG_BUILD=0 -D_FILE_OFFSET_BITS=64 -D LINUX=1 -D BSD=1 -D VERSION=\\\"$(PKG_VERSION)\\\"" \
-		LDFLAGS+="$(TARGET_LDFLAGS) $(if $(CONFIG_USE_GLIBC),-lbsd)" \
+		LDFLAGS+="$(TARGET_LDFLAGS)" \
 		all
 endef
 
