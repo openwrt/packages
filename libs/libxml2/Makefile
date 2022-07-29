@@ -100,6 +100,7 @@ CONFIGURE_ARGS += \
 	--with-xpath \
 	--with-xptr \
 	--with-zlib=$(STAGING_DIR)/usr \
+	--with-iconv$(if $(ICONV_PREFIX),="$(ICONV_PREFIX)") \
 	--without-lzma
 
 HOST_CONFIGURE_ARGS += \
