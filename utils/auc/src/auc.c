@@ -1483,7 +1483,7 @@ int main(int args, char *argv[]) {
 	unsigned char argc = 1;
 	bool force = false, use_get = false, in_queue = false, dont_ask = false, release_only = false;
 
-	snprintf(user_agent, sizeof(user_agent), "%s (%s)", argv[0], AUC_VERSION);
+	snprintf(user_agent, sizeof(user_agent), "%s/%s", argv[0], AUC_VERSION);
 	fprintf(stdout, "%s\n", user_agent);
 
 	while (argc<args) {
@@ -1657,6 +1657,7 @@ int main(int args, char *argv[]) {
 		*tmp = '_';
 
 	blobmsg_add_string(&reqbuf, "profile", sanetized_board_name);
+	blobmsg_add_string(&reqbuf, "client", user_agent);
 	blobmsg_add_u8(&reqbuf, "diff_packages", 1);
 
 	req_add_selected_packages(&reqbuf);
