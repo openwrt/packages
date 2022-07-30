@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lcdproc
 PKG_VERSION:=0.5.9
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/lcdproc/lcdproc/releases/download/v$(PKG_VERSION)/
@@ -23,9 +23,12 @@ PKG_CPE_ID:=cpe:/a:lcdproc:lcdproc
 
 include $(INCLUDE_DIR)/package.mk
 
+DISABLE_NLS:=
+
 define Package/lcdproc/Default
   SECTION:=utils
   CATEGORY:=Utilities
+  DEPENDS:=@(TARGET_x86||TARGET_x86_64)
   URL:=http://lcdproc.org/
 endef
 
@@ -60,7 +63,7 @@ endef
 define Package/lcdproc-server
   $(call Package/lcdproc/Default)
   TITLE:=LCD Display server
-  DEPENDS:=+libpthread
+  DEPENDS+= +libpthread
 endef
 
 define LCDPROC_CORE_DRIVERS_TEXT
@@ -88,7 +91,7 @@ endef
 define Package/lcdproc-drivers
   $(call Package/lcdproc/Default)
   TITLE:=LCD Display extra drivers
-  DEPENDS:=+lcdproc-server +libncurses +libusb-1.0 +libusb-compat +libftdi1 \
+  DEPENDS+= +lcdproc-server +libncurses +libusb-1.0 +libusb-compat +libftdi1 \
 	+GPIO_SUPPORT:libugpio +serdisplib
 endef
 
@@ -110,7 +113,8 @@ $(LCDPROC_OTHER_DRIVERS_TEXT)
 endef
 
 CONFIGURE_VARS += \
-	ac_cv_mtab_file="/etc/mtab"
+	ac_cv_mtab_file="/etc/mtab" \
+	ac_cv_port_have_lpt="yes"
 
 CONFIGURE_ARGS += \
 	--disable-libX11 \
