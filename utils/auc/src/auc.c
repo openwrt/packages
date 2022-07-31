@@ -64,7 +64,7 @@
 #define DPRINTF(...)
 #endif
 
-static const char server_issues[]="https://github.com/aparcar/asu/issues";
+static const char server_issues[]="https://github.com/openwrt/asu/issues";
 
 static struct ubus_context *ctx;
 static struct uclient *ucl = NULL;
