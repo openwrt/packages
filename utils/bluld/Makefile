@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bluld
 PKG_VERSION:=1.1.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/ktgeek/$(PKG_NAME)/releases/download/v$(PKG_VERSION)
@@ -13,7 +13,9 @@ PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/nls.mk
+ifeq ($(CONFIG_BUILD_NLS),y)
+	include $(INCLUDE_DIR)/nls.mk
+endif
 include $(INCLUDE_DIR)/kernel.mk
 
 EXTRA_CXXFLAGS = -I$(LINUX_DIR)/include
