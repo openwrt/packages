@@ -52,12 +52,28 @@ define Package/tailscale
   DEPENDS+= +tailscaled
 endef
 
+define Package/tailscale-combined
+  $(call Package/tailscale/Default)
+  TITLE+= (combined)
+  DEPENDS+= +ca-bundle +kmod-tun
+  PROVIDES:= tailscale tailscaled
+  CONFLICTS:= tailscale tailscaled
+  GO_PKG_TAGS:=ts_include_ci
+endef
+
 define Package/tailscale/description
   It creates a secure network between your servers, computers,
   and cloud instances. Even when separated by firewalls or subnets.
 endef
 
 Package/tailscaled/description:=$(Package/tailscale/description)
+
+define Package/tailscale-combined/description
+  $(call Package/tailscale/description)
+  
+  This package combines both the tailscaled daemon and tailscale 
+  CLI utility in a single combined (multicall) executable.
+endef
 
 define Package/tailscale/install
 	$(INSTALL_DIR) $(1)/usr/sbin
@@ -68,9 +84,19 @@ define Package/tailscaled/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/tailscaled $(1)/usr/sbin
 	$(INSTALL_DIR) $(1)/etc/init.d/
-	$(INSTALL_BIN) ./files//tailscale.init $(1)/etc/init.d/tailscale
+	$(INSTALL_BIN) ./files/tailscale.init $(1)/etc/init.d/tailscale
 	$(INSTALL_DIR) $(1)/etc/config/
-	$(INSTALL_DATA) ./files//tailscale.conf $(1)/etc/config/tailscale
+	$(INSTALL_DATA) ./files/tailscale.conf $(1)/etc/config/tailscale
+endef
+
+define Package/tailscale-combined/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/tailscaled $(1)/usr/sbin
+	$(LN) $(1)/usr/sbin/tailscaled $(1)/usr/sbin/tailscale
+	$(INSTALL_DIR) $(1)/etc/init.d/
+	$(INSTALL_BIN) ./files/tailscale.init $(1)/etc/init.d/tailscale
+	$(INSTALL_DIR) $(1)/etc/config/
+	$(INSTALL_DATA) ./files/tailscale.conf $(1)/etc/config/tailscale
 endef
 
 define Package/tailscaled/conffiles
@@ -79,3 +105,4 @@ endef
 
 $(eval $(call BuildPackage,tailscale))
 $(eval $(call BuildPackage,tailscaled))
+$(eval $(call BuildPackage,tailscale-combined))
