@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unbound
-PKG_VERSION:=1.16.1
+PKG_VERSION:=1.16.2
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nlnetlabs.nl/downloads/unbound
-PKG_HASH:=2fe4762abccd564a0738d5d502f57ead273e681e92d50d7fba32d11103174e9a
+PKG_HASH:=2e32f283820c24c51ca1dd8afecfdb747c7385a137abe865c99db4b257403581
 
 PKG_MAINTAINER:=Eric Luehrsen <ericluehrsen@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
