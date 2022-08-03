@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
 PKG_VERSION:=5.0.18
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.zabbix.com/zabbix/sources/stable/5.0/
@@ -149,7 +149,10 @@ endef
 define Package/zabbix-server/Default
   $(call Package/zabbix/Default)
   TITLE+= server
-  DEPENDS += +ZABBIX_POSTGRESQL:libpq +ZABBIX_MYSQL:libmariadbclient +libevent2
+  DEPENDS += +ZABBIX_POSTGRESQL:libpq \
+    +ZABBIX_MYSQL:libmariadbclient \
+    +libevent2 \
+    +fping
 endef
 
 define Package/zabbix-server
@@ -186,7 +189,10 @@ endef
 define Package/zabbix-proxy/Default
   $(call Package/zabbix/Default)
   TITLE+= proxy
-  DEPENDS += +ZABBIX_POSTGRESQL:libpq +ZABBIX_MYSQL:libmariadbclient +libevent2
+  DEPENDS += +ZABBIX_POSTGRESQL:libpq \
+    +ZABBIX_MYSQL:libmariadbclient \
+    +libevent2 \
+    +fping
 endef
 
 define Package/zabbix-proxy
