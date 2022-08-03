@@ -1,0 +1,10 @@
+--- a/src/Cedar/Server.c
++++ a/src/Cedar/Server.c
+@@ -10901,6 +10901,7 @@
+ // 
+ bool SiIsEnterpriseFunctionsRestrictedOnOpenSource(CEDAR *c)
+ {
++	return false;
+ 	char region[128];
+ 	bool ret = false;
+ 	// Validate arguments
