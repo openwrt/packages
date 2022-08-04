@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lcdproc
 PKG_VERSION:=0.5.9
-PKG_RELEASE:=7
+PKG_RELEASE:=8
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/lcdproc/lcdproc/releases/download/v$(PKG_VERSION)/
@@ -28,7 +28,6 @@ DISABLE_NLS:=
 define Package/lcdproc/Default
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=@(TARGET_x86||TARGET_x86_64)
   URL:=http://lcdproc.org/
 endef
 
@@ -99,8 +98,10 @@ define LCDPROC_OTHER_DRIVERS_TEXT
 curses futaba glcd hd44780 IOWarrior i2500vfd lis picolcd shuttleVFD ula200
 endef
 
-ifeq ($(CONFIG_PACKAGE_kmod-lp),y)
+ifneq ($(CONFIG_TARGET_x86_64)$(CONFIG_TARGET_x86),)
+  ifeq ($(CONFIG_PACKAGE_kmod-lp),y)
 LCDPROC_OTHER_DRIVERS_TEXT+=sdeclcd sed1330 sed1520 stv5730 t6963
+  endif
 endif
 
 LCDPROC_OTHER_DRIVERS:=$(strip $(LCDPROC_OTHER_DRIVERS_TEXT))
@@ -113,8 +114,12 @@ $(LCDPROC_OTHER_DRIVERS_TEXT)
 endef
 
 CONFIGURE_VARS += \
-	ac_cv_mtab_file="/etc/mtab" \
+	ac_cv_mtab_file="/etc/mtab"
+
+ifneq ($(CONFIG_TARGET_x86_64)$(CONFIG_TARGET_x86),)
+CONFIGURE_VARGS += \
 	ac_cv_port_have_lpt="yes"
+endif
 
 CONFIGURE_ARGS += \
 	--disable-libX11 \
