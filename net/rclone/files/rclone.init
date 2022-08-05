@@ -47,12 +47,13 @@ start_service() {
 	config_get proxy_addr proxy proxy_addr
 
 	if [ "${addr_type}" = "local" ]; then
-		addr="$(uci get network.loopback.ipaddr)"
+		addr="$(uci get network.loopback.ipaddr | cut -d' ' -f1)"
 	elif [ "${addr_type}" = "lan" ]; then
-		addr="$(uci get network.lan.ipaddr)"
+		addr="$(uci get network.lan.ipaddr | cut -d' ' -f1)"
 	else
 		addr=""
 	fi
+	addr="${addr%/*}"
 
 	local config_dir="${config_path%/*}"
 	[ -d "$config_dir" ] || mkdir -p "$config_dir"
