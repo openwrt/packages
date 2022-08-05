@@ -25,7 +25,7 @@ define Package/python3-paho-mqtt
   SUBMENU:=Python
   TITLE:=MQTT version 5.0/3.1.1 client class
   URL:=http://eclipse.org/paho
-  DEPENDS:=+python3-light
+  DEPENDS:=+python3-light +python3-uuid
 endef
 
 define Package/python3-paho-mqtt/description
