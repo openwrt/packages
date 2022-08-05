@@ -20,4 +20,4 @@ config SQUASHFS_TOOLS_ZSTD_SUPPORT
 	depends on PACKAGE_squashfs-tools-mksquashfs || PACKAGE_squashfs-tools-unsquashfs
 	bool "Enable ZSTD support"
 	select PACKAGE_libzstd
-	default n
+	default y
