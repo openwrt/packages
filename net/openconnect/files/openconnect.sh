@@ -18,6 +18,7 @@ proto_openconnect_init_config() {
 	proto_config_add_int "port"
 	proto_config_add_int "mtu"
 	proto_config_add_int "juniper"
+	proto_config_add_int "reconnect_timeout"
 	proto_config_add_string "vpn_protocol"
 	proto_config_add_boolean "no_dtls"
 	proto_config_add_string "interface"
@@ -32,6 +33,7 @@ proto_openconnect_init_config() {
 	proto_config_add_string "token_script"
 	proto_config_add_string "os"
 	proto_config_add_string "csd_wrapper"
+	proto_config_add_string "proxy"
 	proto_config_add_array 'form_entry:regex("[^:]+:[^=]+=.*")'
 	no_device=1
 	available=1
@@ -57,6 +59,8 @@ proto_openconnect_setup() {
 		password \
 		password2 \
 		port \
+		proxy \
+		reconnect_timeout \
 		server \
 		serverhash \
 		token_mode \
@@ -131,6 +135,8 @@ proto_openconnect_setup() {
 	[ -n "$token_secret" ] && append_args "--token-secret=$token_secret"
 	[ -n "$os" ] && append_args "--os=$os"
 	[ -n "$csd_wrapper" ] && [ -x "$csd_wrapper" ] && append_args "--csd-wrapper=$csd_wrapper"
+	[ -n "$proxy" ] && append_args "--proxy=$proxy"
+	[ -n "$reconnect_timeout" ] && append_args "--reconnect-timeout=$reconnect_timeout"
 
 	json_for_each_item proto_openconnect_add_form_entry form_entry
 
