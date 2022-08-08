@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua-eco
 PKG_VERSION:=1.0.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL=https://github.com/zhaojh329/lua-eco/releases/download/v$(PKG_VERSION)
@@ -59,8 +59,10 @@ define Package/lua-eco-ssl/config
     config LUA_ECO_DEFAULT_WOLFSSL
 	bool
 	default y if PACKAGE_libopenssl != y && \
-		     PACKAGE_libwolfssl >= PACKAGE_libopenssl && \
-		     PACKAGE_libwolfssl >= PACKAGE_libmbedtls
+		     (PACKAGE_libwolfssl >= PACKAGE_libopenssl || \
+		      PACKAGE_libwolfsslcpu-crypto >= PACKAGE_libopenssl) && \
+		     (PACKAGE_libwolfssl >= PACKAGE_libmbedtls || \
+		      PACKAGE_libwolfsslcpu-crypto >= PACKAGE_libmbedtls)
 
     config LUA_ECO_DEFAULT_OPENSSL
 	bool
@@ -82,7 +84,7 @@ define Package/lua-eco-ssl/config
 		depends on PACKAGE_libopenssl
 	config LUA_ECO_WOLFSSL
 		bool "wolfSSL"
-		depends on PACKAGE_libwolfssl
+		depends on PACKAGE_libwolfssl || PACKAGE_libwolfsslcpu-crypto
 	config LUA_ECO_MBEDTLS
 		bool "mbedTLS"
 		depends on PACKAGE_libmbedtls
