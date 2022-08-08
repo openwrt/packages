@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua-eco
 PKG_VERSION:=1.0.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL=https://github.com/zhaojh329/lua-eco/releases/download/v$(PKG_VERSION)
@@ -11,6 +11,11 @@ PKG_HASH:=d9fd04acb4bd64f47a3a3e6a8d30ee1d0860221c5798ca528cf52260470b4155
 PKG_MAINTAINER:=Jianhui Zhao <zhaojh329@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
+
+PKG_CONFIG_DEPENDS:= \
+	LUA_ECO_OPENSSL \
+	LUA_ECO_WOLFSSL \
+	LUA_ECO_MBEDTLS
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -43,11 +48,46 @@ Package/lua-eco-dns=$(call Package/lua-eco/Module,DNS)
 Package/lua-eco-socket=$(call Package/lua-eco/Module,Socket)
 Package/lua-eco-ssl=$(call Package/lua-eco/Module,SSL,\
   @(PACKAGE_libopenssl||PACKAGE_libwolfssl||PACKAGE_libmbedtls) \
-  +PACKAGE_libopenssl:libopenssl +PACKAGE_libwolfssl:libwolfssl +PACKAGE_libmbedtls:libmbedtls +PACKAGE_libmbedtls:zlib)
+  LUA_ECO_OPENSSL:libopenssl LUA_ECO_WOLFSSL:libwolfssl \
+  LUA_ECO_MBEDTLS:libmbedtls +LUA_ECO_MBEDTLS:zlib)
 Package/lua-eco-iw=$(call Package/lua-eco/Module,IW utils,+libmnl)
 Package/lua-eco-ip=$(call Package/lua-eco/Module,IP utils,+libmnl)
 Package/lua-eco-file=$(call Package/lua-eco/Module,File utils)
 Package/lua-eco-ubus=$(call Package/lua-eco/Module,Ubus,+libubus)
+
+define Package/lua-eco-ssl/config
+    config LUA_ECO_DEFAULT_WOLFSSL
+	bool
+	default y if PACKAGE_libopenssl != y && \
+		     PACKAGE_libwolfssl >= PACKAGE_libopenssl && \
+		     PACKAGE_libwolfssl >= PACKAGE_libmbedtls
+
+    config LUA_ECO_DEFAULT_OPENSSL
+	bool
+	default y if !LUA_ECO_DEFAULT_WOLFSSL && \
+		     PACKAGE_libopenssl >= PACKAGE_libmbedtls
+
+    config LUA_ECO_DEFAULT_MBEDTLS
+	bool
+	default y if !LUA_ECO_DEFAULT_WOLFSSL && \
+		     !LUA_ECO_DEFAULT_OPENSSL
+
+    choice
+	prompt "SSL Library"
+	default LUA_ECO_OPENSSL if LUA_ECO_DEFAULT_OPENSSL
+	default LUA_ECO_WOLFSSL if LUA_ECO_DEFAULT_WOLFSSL
+	default LUA_ECO_MBEDTLS if LUA_ECO_DEFAULT_MBEDTLS
+	config LUA_ECO_OPENSSL
+		bool "OpenSSL"
+		depends on PACKAGE_libopenssl
+	config LUA_ECO_WOLFSSL
+		bool "wolfSSL"
+		depends on PACKAGE_libwolfssl
+	config LUA_ECO_MBEDTLS
+		bool "mbedTLS"
+		depends on PACKAGE_libmbedtls
+    endchoice
+endef
 
 CMAKE_OPTIONS += \
   -DECO_LOG_SUPPORT=O$(if $(CONFIG_PACKAGE_lua-eco-log),N,FF) \
@@ -61,16 +101,12 @@ CMAKE_OPTIONS += \
   -DECO_SSL_SUPPORT=O$(if $(CONFIG_PACKAGE_lua-eco-ssl),N,FF)
 
 ifneq ($(CONFIG_PACKAGE_lua-eco-ssl),)
-  ifneq ($(CONFIG_PACKAGE_libopenssl),)
+  ifneq ($(CONFIG_LUA_ECO_OPENSSL),)
     CMAKE_OPTIONS += -DUSE_OPENSSL=ON
-  else
-    ifneq ($(CONFIG_PACKAGE_libwolfssl),)
-      CMAKE_OPTIONS += -DUSE_WOLFSSL=ON
-    else
-      ifneq ($(CONFIG_PACKAGE_libmbedtls),)
-        CMAKE_OPTIONS += -DUSE_MBEDTLS=ON
-      endif
-    endif
+  else ifneq ($(CONFIG_LUA_ECO_WOLFSSL),)
+    CMAKE_OPTIONS += -DUSE_WOLFSSL=ON
+  else ifneq ($(CONFIG_LUA_ECO_MBEDTLS),)
+    CMAKE_OPTIONS += -DUSE_MBEDTLS=ON
   endif
 endif
 
