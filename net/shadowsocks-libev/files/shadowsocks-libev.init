@@ -112,7 +112,7 @@ ss_rules_cb() {
 	fi
 }
 
-ss_rules() {
+ss_rules_nft_gen() {
 	local cfg="ss_rules"
 	local cfgtype
 	local local_port_tcp local_port_udp
@@ -125,7 +125,7 @@ ss_rules() {
 
 	eval "$(validate_ss_rules_section "$cfg" ss_validate_mklocal)"
 	validate_ss_rules_section "$cfg" || return 1
-	[ "$disabled" = 0 ] || return 0
+	[ "$disabled" = 0 ] || return 2
 
 	eval local_port_tcp="\$ss_rules_redir_tcp_$redir_tcp"
 	eval local_port_udp="\$ss_rules_redir_udp_$redir_udp"
@@ -161,12 +161,25 @@ ss_rules() {
 		echo "table inet chk {include \"$tmp.nft\";}" >"$tmp.nft.chk"
 		if nft -f "$tmp.nft.chk" -c; then
 			mv "$tmp.nft" "$ssrules_nft"
-			fw4 reload
+			fw4 restart
 		fi
 		rm -f "$tmp.nft.chk"
 	fi
 	rm -f "$tmp.json"
 	rm -f "$tmp.nft"
+}
+
+ss_rules_nft_reset() {
+	if [ -f "$ssrules_nft" ]; then
+		rm -f "$ssrules_nft"
+		fw4 restart
+	fi
+}
+
+ss_rules() {
+	if ! ss_rules_nft_gen; then
+		ss_rules_nft_reset
+	fi
 }
 
 start_service() {
@@ -181,10 +194,7 @@ start_service() {
 }
 
 stop_service() {
-	if [ -f "$ssrules_nft" ]; then
-		rm -f "$ssrules_nft"
-		fw4 reload
-	fi
+	ss_rules_nft_reset
 	rm -rf "$ss_confdir"
 }
 
