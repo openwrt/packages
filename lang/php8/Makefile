@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
 PKG_VERSION:=8.1.10
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 PKG_LICENSE:=PHP-3.01
@@ -33,7 +33,7 @@ PHP8_MODULES= \
 	mbstring mysqli mysqlnd \
 	opcache openssl \
 	pcntl pdo pdo-mysql pdo-pgsql pdo-sqlite pgsql phar \
-	session shmop simplexml snmp soap sockets sqlite3 sysvmsg sysvsem sysvshm \
+	session shmop simplexml snmp soap sockets sodium sqlite3 sysvmsg sysvsem sysvshm \
 	tokenizer \
 	xml xmlreader xmlwriter \
 	zip
@@ -415,6 +415,12 @@ else
   CONFIGURE_ARGS+= --disable-sockets
 endif
 
+ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-sodium),)
+  CONFIGURE_ARGS+= --with-sodium=shared,"$(STAGING_DIR)/usr"
+else
+  CONFIGURE_ARGS+= --without-sodium
+endif
+
 ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-sqlite3),)
   CONFIGURE_ARGS+= --with-sqlite3=shared
 else
@@ -658,6 +664,7 @@ $(eval $(call BuildModule,simplexml,SimpleXML,+@PHP8_LIBXML +PACKAGE_php8-mod-si
 $(eval $(call BuildModule,snmp,SNMP,+PACKAGE_php8-mod-snmp:libnetsnmp +PACKAGE_php8-mod-snmp:libopenssl))
 $(eval $(call BuildModule,soap,SOAP,+@PHP8_LIBXML +PACKAGE_php8-mod-soap:libxml2))
 $(eval $(call BuildModule,sockets,Sockets))
+$(eval $(call BuildModule,sodium,Sodium,+PACKAGE_php8-mod-sodium:libsodium,30))
 $(eval $(call BuildModule,sqlite3,SQLite3,+PACKAGE_php8-mod-sqlite3:libsqlite3))
 $(eval $(call BuildModule,sysvmsg,System V messages))
 $(eval $(call BuildModule,sysvsem,System V shared memory))
