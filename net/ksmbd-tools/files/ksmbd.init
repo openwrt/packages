@@ -116,6 +116,7 @@ init_config()
 	mkdir -p /var/etc/ksmbd
 
 	config_load ksmbd
+	CONFIG_APPEND=1 UCI_CONFIG_DIR=/var/run/config config_load ksmbd
 	config_foreach smb_header globals
 	config_foreach smb_add_share share
 }
