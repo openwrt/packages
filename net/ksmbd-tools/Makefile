@@ -89,6 +89,12 @@ define Package/ksmbd-avahi-service/description
   Ksmbd (smb/445) Daemon service via mDNS/DNS-SD.
 endef
 
+define Package/ksmbd-hotplug
+  $(call Package/ksmbd-tools/Default)
+  TITLE+= hotplug script for auto sharing
+  DEPENDS:=+blockd
+endef
+
 CONFIGURE_ARGS += \
 	--disable-shared \
 	--enable-static
