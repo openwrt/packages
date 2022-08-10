@@ -52,10 +52,14 @@ if (proto == "tcp") {
 	redir_port = o_redir_udp_port;
 	if (system("
 		set -o errexit
-		while ip rule del fwmark 1 lookup 100 2>/dev/null; do true; done
-		      ip rule add fwmark 1 lookup 100
-		ip route flush table 100 2>/dev/null || true
-		ip route add local default dev lo table 100
+		iprr() {
+			while ip $1 rule del fwmark 1 lookup 100 2>/dev/null; do true; done
+			      ip $1 rule add fwmark 1 lookup 100
+			ip $1 route flush table 100 2>/dev/null || true
+			ip $1 route add local default dev lo table 100
+		}
+		iprr -4
+		iprr -6
 	") != 0) {
 		return ;
 	}
