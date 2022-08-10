@@ -84,6 +84,12 @@ define Package/ksmbd-avahi-service/description
   Ksmbd (smb/445) Daemon service via mDNS/DNS-SD.
 endef
 
+define Package/ksmbd-hotplug
+  $(call Package/ksmbd-tools/Default)
+  TITLE+= hotplug script for auto sharing
+  DEPENDS:=+blockd
+endef
+
 MESON_ARGS += \
 	-Db_lto=true \
 	-Dkrb5=disabled
@@ -116,6 +122,11 @@ define Package/ksmbd-avahi-service/install
 	$(INSTALL_DATA) ./files/smb.service $(1)/etc/avahi/services/
 endef
 
+define Package/ksmbd-hotplug/install
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/mount
+	$(INSTALL_CONF) ./files/ksmbd.hotplug $(1)/etc/hotplug.d/mount/60-ksmbd
+endef
+
 define Package/ksmbd-server/conffiles
 /etc/config/ksmbd
 /etc/ksmbd/smb.conf.template
@@ -130,3 +141,4 @@ endef
 $(eval $(call BuildPackage,ksmbd-server))
 $(eval $(call BuildPackage,ksmbd-utils))
 $(eval $(call BuildPackage,ksmbd-avahi-service))
+$(eval $(call BuildPackage,ksmbd-hotplug))
