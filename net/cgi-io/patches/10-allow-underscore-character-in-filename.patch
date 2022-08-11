@@ -1,0 +1,30 @@
+--- a/main.c
++++ b/main.c
+@@ -547,11 +547,11 @@ main_download(int argc, char **argv)
+ 		return failure(403, 0, "Requested path is not a regular file or block device");
+ 
+ 	for (p = fields[5]; p && *p; p++)
+-		if (!isalnum(*p) && !strchr(" ()<>@,;:[]?.=%-", *p))
++		if (!isalnum(*p) && !strchr(" ()<>@,;:[]?.=%-_", *p))
+ 			return failure(400, 0, "Invalid characters in filename");
+ 
+ 	for (p = fields[7]; p && *p; p++)
+-		if (!isalnum(*p) && !strchr(" .;=/-", *p))
++		if (!isalnum(*p) && !strchr(" .;=/-_", *p))
+ 			return failure(400, 0, "Invalid characters in mimetype");
+ 
+ 	rfd = open(fields[3], O_RDONLY);
+@@ -745,11 +745,11 @@ main_exec(int argc, char **argv)
+ 		return failure(403, 0, "Exec permission denied");
+ 
+ 	for (p = fields[5]; p && *p; p++)
+-		if (!isalnum(*p) && !strchr(" ()<>@,;:[]?.=%-", *p))
++		if (!isalnum(*p) && !strchr(" ()<>@,;:[]?.=%-_", *p))
+ 			return failure(400, 0, "Invalid characters in filename");
+ 
+ 	for (p = fields[7]; p && *p; p++)
+-		if (!isalnum(*p) && !strchr(" .;=/-", *p))
++		if (!isalnum(*p) && !strchr(" .;=/-_", *p))
+ 			return failure(400, 0, "Invalid characters in mimetype");
+ 
+ 	args = fields[3] ? parse_command(fields[3]) : NULL;
