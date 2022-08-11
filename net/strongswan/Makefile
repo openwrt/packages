@@ -260,6 +260,7 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-hmac \
 	+strongswan-mod-kernel-netlink \
 	+strongswan-mod-md5 \
+	+strongswan-mod-mgf1 \
 	+strongswan-mod-nonce \
 	+strongswan-mod-pem \
 	+strongswan-mod-pgp \
@@ -298,6 +299,7 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-hmac \
 	+strongswan-mod-kernel-netlink \
 	+strongswan-mod-md5 \
+	+strongswan-mod-mgf1 \
 	+strongswan-mod-nonce \
 	+strongswan-mod-pubkey \
 	+strongswan-mod-random \
@@ -325,6 +327,7 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-gmp \
 	+strongswan-mod-hmac \
 	+strongswan-mod-kernel-netlink \
+	+strongswan-mod-mgf1 \
 	+strongswan-mod-nonce \
 	+strongswan-mod-pubkey \
 	+strongswan-mod-random \
