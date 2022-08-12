@@ -2,11 +2,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mqttled
-PKG_VERSION:=0.1.0
+PKG_VERSION:=0.1.2
 PKG_RELEASE:=1
 
 PYPI_NAME:=mqttled
-PKG_HASH:=20f46b7114b6ddace6e0faaaa078640f609c3d495e4ccff8d8caeb77ac5418f7
+PKG_HASH:=eb94af853605f4f1ea3c34b66e2f84f3d9845d795529ae8429feb954e74876d7
 
 PKG_MAINTAINER:=Tom Grime <tom.grime@gmail.com>
 PKG_LICENSE:=MIT
