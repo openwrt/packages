@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2021 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
+# Copyright (C) 2018-2022 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-websockets
-PKG_VERSION:=10.0
+PKG_VERSION:=10.3
 PKG_RELEASE:=$(AUTORELEASE)
 
 PYPI_NAME:=websockets
-PKG_HASH:=c4fc9a1d242317892590abe5b61a9127f1a61740477bfb121743f290b8054002
+PKG_HASH:=fc06cc8073c8e87072138ba1e431300e2d408f054b27047d047b549455066ff4
 
 PKG_MAINTAINER:=Michal Vasilek <michal.vasilek@nic.cz>
 PKG_LICENSE:=BSD-3-Clause
