@@ -63,13 +63,13 @@ get_free_area() {
 			;;
 		[0-9]*)
 			case "$size" in
-				*"M")
-					[ "${size%%M}" -lt 100 ] && continue
-					;;
-				*"G" | *"T")
-					;;
 				*"k" | *"b")
 					continue
+					;;
+				*"M")
+					[ "${size%%.*M}" -lt 100 ] && continue
+					;;
+				*"G" | *"T")
 					;;
 			esac
 			[ "$found" ] || echo "start=$start, size=$((end - start))"
