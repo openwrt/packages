@@ -8,12 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=miniupnpd
-PKG_VERSION:=2.2.3
-PKG_RELEASE:=$(AUTORELEASE)
 
-PKG_SOURCE_URL:=https://miniupnp.tuxfamily.org/files
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=f89c310ce9575183af3fec61af65e548f85114133df8caaaa9e204c13b7a9da5
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/miniupnp/miniupnp.git
+PKG_SOURCE_DATE:=2022-08-06
+PKG_SOURCE_VERSION:=fa42d8f9316bf9c1ca14317e5a6e0d4a21365629
+PKG_MIRROR_HASH:=06662c7cf8f553f625cd968d12ea732db4193706510ed0db6e8bdd1c6b935c50
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)/miniupnpd
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=BSD-3-Clause
@@ -25,6 +26,9 @@ PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/version.mk
+
+TAR_OPTIONS+= --strip-components 1
+TAR_CMD=$(HOST_TAR) -C $(1)/.. $(TAR_OPTIONS)
 
 define Package/miniupnpd/Default
   SECTION:=net
