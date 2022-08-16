@@ -5,6 +5,7 @@ START=94
 STOP=15
 USE_PROCD=1
 PROG=/usr/sbin/miniupnpd
+[ -x "$(command -v nft)" ] && FW="fw4" || FW="fw3"
 
 upnpd_get_port_range() {
 	local var="$1"; shift
@@ -98,7 +99,7 @@ upnpd() {
 		network_get_device ifname "$external_iface"
 	else
 		if [ -n "$external_zone" ] ; then
-			ifname=$(fw3 -q zone "$external_zone" 2>/dev/null | head -1)
+			ifname=$($FW -q zone "$external_zone" 2>/dev/null | head -1)
 		else
 			network_find_wan external_iface && \
 				network_get_device ifname "$external_iface"
@@ -108,7 +109,7 @@ upnpd() {
 		network_get_device ifname6 "$external_iface6"
 	else
 		if [ -n "$external_zone" ] ; then
-			ifname6=$(fw3 -q zone "$external_zone" 2>/dev/null | head -1)
+			ifname6=$($FW -q zone "$external_zone" 2>/dev/null | head -1)
 		else
 			network_find_wan6 external_iface6 && \
 				network_get_device ifname6 "$external_iface6"
@@ -171,12 +172,29 @@ upnpd() {
 
 		config_foreach conf_rule_add perm_rule
 
+		if [ "Z$FW" = "Zfw4" ]; then
+			#When using nftables configure miniupnpd to use its own table and chains
+			echo "upnp_table_name=miniupnpd"
+			echo "upnp_nat_table_name=miniupnpd"
+			echo "upnp_forward_chain=forward"
+			echo "upnp_nat_chain=prerouting"
+			echo "upnp_nat_postrouting_chain=postrouting"
+		fi
+
 		} > "$tmpconf"
 	fi
 
 	if [ -n "$ifname" ]; then
 		# start firewall
-		iptables -L MINIUPNPD >/dev/null 2>&1 || fw3 reload
+		if [ "Z$FW" = "Zfw4" ]; then
+			#Add a miniupnpd table so that when fw4 reloads port-forwadings aren't lost, also give it priority so that port-forwards are considered before standard firewall rules
+			nft add table inet miniupnpd
+			nft add chain inet miniupnpd forward { type filter hook forward priority -20 \; policy accept \; comment \"Miniupnpd forwarding table\" \; }
+			nft add chain inet miniupnpd prerouting { type nat hook prerouting priority dstnat -20 \; policy accept \; comment \"Miniupnpd prerouting table\" \; }
+			nft add chain inet miniupnpd postrouting { type nat hook postrouting priority srcnat -20 \; policy accept \; comment \"Miniupnpd postrouting table\" \; }
+		else
+			iptables -L MINIUPNPD >/dev/null 2>&1 || fw3 reload			
+		fi
 	else
 		logger -t "upnp daemon" "external interface not found, not starting"
 	fi
@@ -189,11 +207,15 @@ upnpd() {
 }
 
 stop_service() {
-	iptables -t nat -F MINIUPNPD 2>/dev/null
-	iptables -t nat -F MINIUPNPD-POSTROUTING 2>/dev/null
-	iptables -t filter -F MINIUPNPD 2>/dev/null
-
-	[ -x /usr/sbin/ip6tables ] && ip6tables -t filter -F MINIUPNPD 2>/dev/null
+	if [ "Z$FW" = "Zfw3" ]; then
+		iptables -t nat -F MINIUPNPD 2>/dev/null
+		iptables -t nat -F MINIUPNPD-POSTROUTING 2>/dev/null
+		iptables -t filter -F MINIUPNPD 2>/dev/null
+		[ -x /usr/sbin/ip6tables ] && ip6tables -t filter -F MINIUPNPD 2>/dev/null
+	else
+		#delete the table removing port-forwardings when exiting
+		nft delete table inet miniupnpd
+	fi
 }
 
 start_service() {
