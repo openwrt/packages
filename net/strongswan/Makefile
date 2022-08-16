@@ -215,7 +215,7 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-sha2 \
 	+strongswan-mod-sha3 \
 	+strongswan-mod-smp \
-	+strongswan-mod-socket-default \
+	+strongswan-mod-socket \
 	+strongswan-mod-sql \
 	+strongswan-mod-sqlite \
 	+strongswan-mod-sshkey \
@@ -275,7 +275,7 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-revocation \
 	+strongswan-mod-sha1 \
 	+strongswan-mod-sha2 \
-	+strongswan-mod-socket-default \
+	+strongswan-mod-socket \
 	+strongswan-mod-sshkey \
 	+strongswan-mod-updown \
 	+strongswan-mod-x509 \
@@ -308,7 +308,7 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-pubkey \
 	+strongswan-mod-random \
 	+strongswan-mod-sha1 \
-	+strongswan-mod-socket-default \
+	+strongswan-mod-socket \
 	+strongswan-mod-stroke \
 	+strongswan-mod-uci \
 	+strongswan-mod-updown
@@ -337,7 +337,7 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-pubkey \
 	+strongswan-mod-random \
 	+strongswan-mod-sha1 \
-	+strongswan-mod-socket-default \
+	+strongswan-mod-socket \
 	+strongswan-mod-stroke \
 	+strongswan-mod-updown \
 	+strongswan-mod-x509 \
