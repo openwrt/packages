@@ -22,6 +22,7 @@ define Package/opendoas
   CATEGORY:=Utilities
   TITLE:=Portable OpenBSD doas to execute commands as another user
   URL:=https://github.com/Duncaen/OpenDoas
+  DEPENDS:=+BUSYBOX_CONFIG_PAM:libpam
 endef
 
 define Package/opendoas/description
