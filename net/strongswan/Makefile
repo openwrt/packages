@@ -352,7 +352,7 @@ endef
 define Package/strongswan-charon
 $(call Package/strongswan/Default)
   TITLE+= IKEv1/IKEv2 keying daemon
-  DEPENDS:= strongswan strongswan-mod-socket
+  DEPENDS:= strongswan
 endef
 
 define Package/strongswan-charon/description
@@ -454,9 +454,6 @@ define BuildPlugin
     $$(call Package/strongswan/Default)
     TITLE:= StrongSwan $(2) plugin
     DEPENDS:= strongswan $(3)
-ifneq ($(4),)
-    PROVIDES:=strongswan-mod-$(4)
-endif
   endef
 
   define Package/strongswan-mod-$(1)/install
@@ -470,13 +467,6 @@ endif
   endef
 
   $$(eval $$(call BuildPackage,strongswan-mod-$(1)))
-endef
-
-define BuildPluginProvides
-ifeq ($(4),)
-    $$(error BuildPluginProvides requires provider suffix)
-endif
-  $(call BuildPlugin,$1,$2,$3,$4)
 endef
 
 CONFIGURE_ARGS+= \
@@ -746,8 +736,8 @@ $(eval $(call BuildPlugin,sha1,SHA1 crypto,))
 $(eval $(call BuildPlugin,sha2,SHA2 crypto,))
 $(eval $(call BuildPlugin,sha3,SHA3 and SHAKE crypto,))
 $(eval $(call BuildPlugin,smp,SMP configuration and control interface,+PACKAGE_strongswan-mod-smp:libxml2))
-$(eval $(call BuildPluginProvides,socket-default,default socket implementation for charon,,socket))
-$(eval $(call BuildPluginProvides,socket-dynamic,dynamic socket implementation for charon,,socket))
+$(eval $(call BuildPlugin,socket-default,default socket implementation for charon,))
+$(eval $(call BuildPlugin,socket-dynamic,dynamic socket implementation for charon,))
 $(eval $(call BuildPlugin,sql,SQL database interface,))
 $(eval $(call BuildPlugin,sqlite,SQLite database interface,+strongswan-mod-sql +PACKAGE_strongswan-mod-sqlite:libsqlite3))
 $(eval $(call BuildPlugin,sshkey,SSH key decoding,))
