@@ -261,6 +261,7 @@ config QEMU_UI_SPICE
 
 config QEMU_DEV_USB
 	bool "QEMU USB passthrough support"
+	default y
 
 config QEMU_SECCOMP
 	bool "Enable support for seccomp in QEMU"
