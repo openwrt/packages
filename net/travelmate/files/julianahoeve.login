@@ -1,6 +1,6 @@
 #!/bin/sh
 # captive portal auto-login script for Julianahoeve beach resort (NL)
-# Copyright (c) 2021 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2021-2022 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # set (s)hellcheck exceptions
@@ -10,7 +10,6 @@
 
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-set -o pipefail
 
 trm_domain="n23.network-auth.com"
 trm_useragent="$(uci_get travelmate global trm_useragent "Mozilla/5.0 (Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0")"

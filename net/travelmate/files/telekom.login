@@ -1,6 +1,6 @@
 #!/bin/sh
 # captive portal auto-login script for telekom hotspots (DE)
-# Copyright (c) 2021 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2021-2022 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # set (s)hellcheck exceptions
@@ -12,28 +12,27 @@
 #
 urlencode()
 {
-    local chr str="${1}" len="${#1}" pos=0
+	local chr str="${1}" len="${#1}" pos=0
 
-    while [ "${pos}" -lt "${len}" ]; do
-        chr="${str:pos:1}"
-        case "${chr}" in
-            [a-zA-Z0-9.~_-])
-                printf "%s" "${chr}"
-                ;;
-            " ")
-                printf "%%20"
-                ;;
-            *)
-                printf "%%%02X" "'${chr}"
-                ;;
-        esac
-        pos=$((pos + 1))
-    done
+	while [ "${pos}" -lt "${len}" ]; do
+		chr="${str:pos:1}"
+		case "${chr}" in
+			[a-zA-Z0-9.~_-])
+				printf "%s" "${chr}"
+				;;
+			" ")
+				printf "%%20"
+				;;
+			*)
+				printf "%%%02X" "'${chr}"
+				;;
+		esac
+		pos=$((pos + 1))
+		done
 }
 
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-set -o pipefail
 
 username="$(urlencode "${1}")"
 password="$(urlencode "${2}")"
