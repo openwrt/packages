@@ -73,6 +73,10 @@ CONFIGURE_ARGS += \
 	--enable-sysfsgpio \
 	--enable-linuxgpiod
 
+ifeq ($(CONFIG_TARGET_bcm27xx),y)
+	CONFIGURE_ARGS += --enable-bcm2835gpio
+endif
+
 TARGET_CFLAGS += -DRELSTR=\\\"-$(PKG_VERSION)-$(PKG_RELEASE)-OpenWrt\\\"
 
 define Build/Compile
