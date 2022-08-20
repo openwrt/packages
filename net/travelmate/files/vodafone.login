@@ -1,6 +1,6 @@
 #!/bin/sh
 # captive portal auto-login script for vodafone hotspots (DE)
-# Copyright (c) 2021 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2021-2022 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # set (s)hellcheck exceptions
@@ -10,7 +10,6 @@
 
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-set -o pipefail
 
 username="${1}"
 password="${2}"

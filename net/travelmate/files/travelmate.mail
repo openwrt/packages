@@ -1,6 +1,6 @@
 #!/bin/sh
 # send mail script for travelmate notifications
-# Copyright (c) 2020-2021 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2020-2022 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # set (s)hellcheck exceptions
@@ -12,7 +12,6 @@
 
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-set -o pipefail
 
 trm_debug="$(uci_get travelmate global trm_debug "0")"
 trm_mailreceiver="$(uci_get travelmate global trm_mailreceiver)"
