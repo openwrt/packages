@@ -21,6 +21,7 @@ PKG_CPE_ID:=cpe:/a:libexpat:expat
 CMAKE_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libexpat
@@ -46,9 +47,22 @@ CMAKE_OPTIONS += \
 	-DEXPAT_NS=OFF \
 	-DEXPAT_DEV_URANDOM=OFF
 
+CMAKE_HOST_OPTIONS += \
+	-DDOCBOOK_TO_MAN=OFF \
+	-DEXPAT_BUILD_TOOLS=OFF \
+	-DEXPAT_BUILD_EXAMPLES=OFF \
+	-DEXPAT_BUILD_TESTS=OFF \
+	-DEXPAT_BUILD_DOCS=OFF \
+	-DEXPAT_WITH_LIBBSD=OFF \
+	-DEXPAT_ENABLE_INSTALL=ON \
+	-DEXPAT_DTD=OFF \
+	-DEXPAT_NS=OFF \
+	-DEXPAT_DEV_URANDOM=OFF
+
 define Package/libexpat/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libexpat.so.* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,libexpat))
+$(eval $(call HostBuild))

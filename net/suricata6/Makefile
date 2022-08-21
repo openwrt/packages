@@ -18,7 +18,7 @@ PKG_INSTALL := 1
 PKG_BUILD_DEPENDS := rust/host python3/host expat/host
 
 include $(INCLUDE_DIR)/package.mk
-include ../../lang/rust/rust_environment.mk
+include ../../lang/rust/rustc_environment.mk
 
 define Package/suricata6/config
     source "$(SOURCE)/Config.in"
@@ -26,8 +26,8 @@ endef
 
 CONFIGURE_VARS += \
   CARGO_HOME="$(CARGO_HOME)" \
-  ac_cv_path_CARGO="$(CARGO_HOME)/bin/cargo" \
-  ac_cv_path_RUSTC="$(CARGO_HOME)/bin/rustc" \
+  ac_cv_path_CARGO="$(STAGING_DIR_HOST)/bin/cargo" \
+  ac_cv_path_RUSTC="$(STAGING_DIR_HOST)/bin/rustc" \
 
 CONFIGURE_ARGS += \
   --target=$(RUSTC_TARGET_ARCH) \
@@ -36,11 +36,8 @@ CONFIGURE_ARGS += \
   --enable-shared \
   --disable-gccmarch-native \
   --with-gnu-ld \
-  --with-sysroot=$(STAGING_DIR_HOST)
-#	--enable-non-bundled-htp \
-#	--with-libhtp-includes=$(STAGING_DIR_HOSTPKG)/include \
-#	--with-libhtp-libraries=$(STAGING_DIR_HOSTPKG)/lib
-#	--with-sysroot=$(TOOLCHAIN_DIR)
+  --with-sysroot=$(STAGING_DIR_HOST) \
+  --enable-non-bundled-htp
 
 ifeq ($(CONFIG_SURICATA_ENABLE_PYTHON),y)
 CONFIGURE_ARGS += --enable-python
@@ -59,8 +56,10 @@ endif
 ifneq ($(CONFIG_TARGET_x86),y)
   ifeq ($(CONFIG_PKG_ASLR_PIE_ALL),y)
     CONFIGURE_ARGS += --enable-pie
-  else ($(CONFIG_PKG_ASLR_PIE_REGULAR),y)
-    CONFIGURE_ARGS += --enable-pie
+  else
+    ifeq ($(CONFIG_PKG_ASLR_PIE_REGULAR),y)
+      CONFIGURE_ARGS += --enable-pie
+    endif
   endif
 endif
 
@@ -96,9 +95,6 @@ endif
 define Build/Prepare
 	$(call Build/Prepare/Default)
 
-	cd $(PKG_BUILD_DIR) && \
-	  git clone https://github.com/OISF/libhtp.git
-
 	[ -f $(CARGO_HOME)/bin/cbindgen ] || \
 	  $(CONFIGURE_VARS) cargo install --root=$(CARGO_HOME) cbindgen
 
@@ -115,7 +111,7 @@ define Package/suricata6
     SECTION:=net
     CATEGORY:=Network
     DEPENDS:=@!SMALL_FLASH @!LOW_MEMORY_FOOTPRINT +libexpat +jansson +libpcre +libyaml +libpcap +libcap-ng \
-        +nspr +libnss +liblz4 +libatomic +libnet-1.2.x \
+        +nspr +libnss +liblz4 +libatomic +libnet-1.2.x +libhtp \
 	+SURICATA_ENABLE_NFLOG:libnetfilter-log \
   	+SURICATA_ENABLE_NFQUEUE:libnetfilter-queue +SURICATA_ENABLE_NFQUEUE:iptables-mod-nfqueue \
   	+SURICATA_ENABLE_HIREDIS:libhiredis +SURICATA_ENABLE_HIREDIS:libevent2 \
