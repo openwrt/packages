@@ -1,6 +1,6 @@
 #!/bin/sh
 set -u
-ACME=/usr/lib/acme/acme.sh
+ACME=/usr/lib/acme/client/acme.sh
 LOG_TAG=acme-acmesh
 # webroot option deprecated, use the hardcoded value directly in the next major version
 WEBROOT=${webroot:-/var/run/acme/challenge}
