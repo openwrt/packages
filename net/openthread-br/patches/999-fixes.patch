@@ -1,0 +1,105 @@
+--- a/src/openwrt/view/admin_thread/thread_add.htm
++++ b/src/openwrt/view/admin_thread/thread_add.htm
+@@ -64,7 +64,6 @@
+ </div>
+ </form>
+ 
+-<%+footer%>
+ <script type="text/javascript" src="/luci-static/resources/handle_error.js"></script>
+ <script type="text/javascript">//<![CDATA[
+ 	handle_error(GetURLParameter('error'));
+@@ -78,3 +77,4 @@
+ 		}
+ 	}
+ //]]></script>
++<%+footer%>
+--- a/src/openwrt/view/admin_thread/thread_join.htm
++++ b/src/openwrt/view/admin_thread/thread_join.htm
+@@ -42,7 +42,6 @@
+ </div>
+ </form>
+ 
+-<%+footer%>
+ <script type="text/javascript">//<![CDATA[
+ 	function validateForm()
+ 	{
+@@ -54,3 +53,4 @@
+ 		}
+ 	}
+ //]]></script>
++<%+footer%>
+--- a/src/openwrt/view/admin_thread/thread_overview.htm
++++ b/src/openwrt/view/admin_thread/thread_overview.htm
+@@ -76,7 +76,6 @@
+ 		<div class="td"><em><%:Collecting data...%></em></div>
+ 	</div>
+ </div>
+-<%+footer%>
+ 
+ <script type="text/javascript" src="/luci-static/resources/handle_error.js"></script>
+ <script type="text/javascript">//<![CDATA[
+@@ -202,3 +201,4 @@
+ 			}
+ 		});
+ //]]></script>
++<%+footer%>
+--- a/src/openwrt/view/admin_thread/thread_setting.htm
++++ b/src/openwrt/view/admin_thread/thread_setting.htm
+@@ -73,16 +73,16 @@
+ 					<span>
+ 					<strong>PAN ID: </strong>
+ 						<%=threadget("panid").PanId%>
+-					<br>
++					<br />
+ 					<strong>Extended PAN ID: </strong>
+ 						<%=threadget("extpanid").ExtPanId%>
+-					<br>
++					<br />
+ 					<strong>State:  </strong>
+ 						<%=state%>
+-					<br>
++					<br />
+ 					<strong>Channel: </strong>
+ 						<%=threadget("channel").Channel%>
+-					<span>
++					</span>
+ 				</span>
+ 			</div>
+ 		</div>
+@@ -103,7 +103,7 @@
+ 			<label class="cbi-value-title" style="margin-right:5%;">Protocol</label>
+ 			<div class="cbi-value-field">
+ 				<select style="width:30%;" id="protocol" name="protocol">
+-					<option value>unmanaged</option>
++					<option value="unmanaged">unmanaged</option>
+ 				</select>
+ 			</div>
+ 		</div>
+@@ -269,7 +269,6 @@
+ 
+ </form>
+ 
+-<%+footer%>
+ 
+ <script type="text/javascript" src="/luci-static/resources/handle_error.js"></script>
+ <script type="text/javascript">//<![CDATA[
+@@ -397,3 +396,4 @@
+ 		}
+ 	}
+ //]]></script>
++<%+footer%>
+--- a/src/openwrt/view/admin_thread/thread_view.htm
++++ b/src/openwrt/view/admin_thread/thread_view.htm
+@@ -114,7 +114,6 @@
+ 		<input class="cbi-button cbi-button-add" type="submit" value="<%:Add%>" />
+ 	</form>
+ </div>
+-<%+footer%>
+ 
+ <script src='http://d3js.org/d3.v4.min.js'></script>
+ <script type="text/javascript" src="/luci-static/resources/handle_error.js"></script>
+@@ -388,3 +387,4 @@
+ 		else return "Pending";
+ 	}
+ //]]></script>
++<%+footer%>
