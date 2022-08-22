@@ -27,7 +27,7 @@ define Package/stress-ng
   CATEGORY:=Utilities
   TITLE:=stress-ng is a stress test utility
   URL:=https://github.com/ColinIanKing/stress-ng
-  DEPENDS:=+zlib +libbsd +libaio +libsctp +libkmod +libatomic
+  DEPENDS:=+zlib +libbsd +libaio +libsctp +libkmod +libatomic +libjpeg
 endef
 
 define Package/stress-ng/description
