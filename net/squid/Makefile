@@ -37,6 +37,7 @@ define Package/squid
   $(call Package/squid/Default)
   MENU:=1
   DEPENDS:=+libpthread +librt +libltdl +libstdcpp +libatomic +USE_GLIBC:libbsd
+  DEPENDS+= +SQUID_auth-basic:libpam +SQUID_auth-basic:libsasl2
   DEPENDS+= +SQUID_use-gnutls:libgnutls +SQUID_use-openssl:libopenssl
   DEPENDS+= +SQUID_with-libcap:libcap
   DEPENDS+= +SQUID_with-nettle:libnettle
