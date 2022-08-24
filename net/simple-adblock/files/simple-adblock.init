@@ -1,5 +1,5 @@
 #!/bin/sh /etc/rc.common
-# Copyright 2017-2020 Stan Grishin (stangri@melmac.net)
+# Copyright 2017-2022 Stan Grishin (stangri@melmac.ca)
 # shellcheck disable=SC2039,SC1091,SC2016,SC3043,SC3057,SC3060
 PKG_VERSION='dev-test'
 
@@ -10,6 +10,7 @@ USE_PROCD=1
 LC_ALL=C
 
 if type extra_command 1>/dev/null 2>&1; then
+	extra_command 'allow' 'Allows domain(s) in current block-list and config'
 	extra_command 'check' 'Checks if specified domain is found in current block-list'
 	extra_command 'dl' 'Force-downloads all enabled block-list'
 	extra_command 'killcache' 'Delete all cached files'
@@ -17,39 +18,44 @@ if type extra_command 1>/dev/null 2>&1; then
 	extra_command 'version' 'Show version information'
 else
 # shellcheck disable=SC2034
-	EXTRA_COMMANDS='check dl killcache sizes status_service version'
+	EXTRA_COMMANDS='allow check dl killcache sizes status_service version'
 # shellcheck disable=SC2034
-	EXTRA_HELP='	check	Checks if specified domain is found in current block-list
+	EXTRA_HELP='	allow	Allows domain(s) in current block-list and config
+	check	Checks if specified domain is found in current block-list
 	dl	Force-downloads all enabled block-list
 	sizes	Displays the file-sizes of enabled block-lists'
 fi
 
 readonly packageName='simple-adblock'
 readonly serviceName="$packageName $PKG_VERSION"
-readonly addnhostsFile="/var/run/${packageName}.addnhosts"
-readonly addnhostsCache="/var/run/${packageName}.addnhosts.cache"
-readonly addnhostsGzip="/etc/${packageName}.addnhosts.gz"
-readonly addnhostsOutputFilter='s|^|127.0.0.1 |;s|$||'
-readonly addnhostsOutputFilterIPv6='s|^|:: |;s|$||'
-readonly dnsmasqFile="/var/dnsmasq.d/${packageName}"
-readonly dnsmasqCache="/var/run/${packageName}.dnsmasq.cache"
-readonly dnsmasqGzip="/etc/${packageName}.dnsmasq.gz"
-readonly dnsmasqOutputFilter='s|^|local=/|;s|$|/|'
-readonly ipsetFile="/var/dnsmasq.d/${packageName}.ipset"
-readonly ipsetCache="/var/run/${packageName}.ipset.cache"
-readonly ipsetGzip="/etc/${packageName}.ipset.gz"
-readonly ipsetOutputFilter='s|^|ipset=/|;s|$|/adb|'
-readonly serversFile="/var/run/${packageName}.servers"
-readonly serversCache="/var/run/${packageName}.servers.cache"
-readonly serversGzip="/etc/${packageName}.servers.gz"
-readonly serversOutputFilter='s|^|server=/|;s|$|/|'
+readonly dnsmasqAddnhostsFile="/var/run/${packageName}/dnsmasq.addnhosts"
+readonly dnsmasqAddnhostsCache="/var/run/${packageName}/dnsmasq.addnhosts.cache"
+readonly dnsmasqAddnhostsGzip="/etc/${packageName}.dnsmasq.addnhosts.gz"
+readonly dnsmasqAddnhostsFilter='s|^|127.0.0.1 |;s|$||'
+readonly dnsmasqAddnhostsFilterIPv6='s|^|:: |;s|$||'
+readonly dnsmasqConfFile="/tmp/dnsmasq.d/${packageName}"
+readonly dnsmasqConfCache="/var/run/${packageName}/dnsmasq.conf.cache"
+readonly dnsmasqConfGzip="/etc/${packageName}.dnsmasq.conf.gz"
+readonly dnsmasqConfFilter='s|^|local=/|;s|$|/|'
+readonly dnsmasqIpsetFile="/tmp/dnsmasq.d/${packageName}.ipset"
+readonly dnsmasqIpsetCache="/var/run/${packageName}/dnsmasq.ipset.cache"
+readonly dnsmasqIpsetGzip="/etc/${packageName}.dnsmasq.ipset.gz"
+readonly dnsmasqIpsetFilter='s|^|ipset=/|;s|$|/adb|'
+readonly dnsmasqNftsetFile="/tmp/dnsmasq.d/${packageName}.nftset"
+readonly dnsmasqNftsetCache="/var/run/${packageName}/dnsmasq.nftset.cache"
+readonly dnsmasqNftsetGzip="/etc/${packageName}.dnsmasq.nftset.gz"
+readonly dnsmasqNftsetFilter='s|^|nftset=/|;s|$|/adb|'
+readonly dnsmasqServersFile="/var/run/${packageName}/dnsmasq.servers"
+readonly dnsmasqServersCache="/var/run/${packageName}/dnsmasq.servers.cache"
+readonly dnsmasqServersGzip="/etc/${packageName}.dnsmasq.servers.gz"
+readonly dnsmasqServersFilter='s|^|server=/|;s|$|/|'
 readonly unboundFile="/var/lib/unbound/adb_list.${packageName}"
-readonly unboundCache="/var/run/${packageName}.unbound.cache"
+readonly unboundCache="/var/run/${packageName}/unbound.cache"
 readonly unboundGzip="/etc/${packageName}.unbound.gz"
-readonly unboundOutputFilter='s|^|local-zone: "|;s|$|" static|'
+readonly unboundFilter='s|^|local-zone: "|;s|$|" static|'
 readonly A_TMP="/var/${packageName}.hosts.a.tmp"
 readonly B_TMP="/var/${packageName}.hosts.b.tmp"
-readonly jsonFile="/var/run/${packageName}.json"
+readonly jsonFile="/var/run/${packageName}/${packageName}.json"
 readonly sharedMemoryError="/dev/shm/$packageName-error"
 readonly sharedMemoryOutput="/dev/shm/$packageName-output"
 readonly hostsFilter='/localhost/d;/^#/d;/^[^0-9]/d;s/^0\.0\.0\.0.//;s/^127\.0\.0\.1.//;s/[[:space:]]*#.*$//;s/[[:cntrl:]]$//;s/[[:space:]]//g;/[`~!@#\$%\^&\*()=+;:"'\'',<>?/\|[{}]/d;/]/d;/\./!d;/^$/d;/[^[:alnum:]_.-]/d;'
@@ -60,6 +66,57 @@ readonly __OK__='\033[0;32m[\xe2\x9c\x93]\033[0m'
 readonly __FAIL__='\033[0;31m[\xe2\x9c\x97]\033[0m'
 readonly _ERROR_='\033[0;31mERROR\033[0m'
 readonly _WARNING_='\033[0;33mWARNING\033[0m'
+
+serviceEnabled=
+forceDNS=
+forceDNSPorts=
+parallelDL=
+debug=
+compressedCache=
+ipv6Enabled=
+configUpdateEnabled=
+configUpdateURL=
+bootDelay=
+dlTimeout=
+curlRetry=
+verbosity=
+led=
+targetDNS=
+dnsInstance=
+allowed_domains=
+allowed_domains_urls=
+blocked_domains=
+blocked_domains_urls=
+blocked_hosts_urls=
+dl_command=
+dl_flag=
+isSSLSupported=
+allowIDN=
+outputFilter=
+outputFilterIPv6=
+outputFile=
+outputGzip=
+outputCache=
+awk='awk'
+
+uci_add_list_if_new() {
+	local PACKAGE="$1"
+	local CONFIG="$2"
+	local OPTION="$3"
+	local VALUE="$4"
+	local i
+	[ -n "$PACKAGE" ] && [ -n "$CONFIG" ] && [ -n "$OPTION" ] && [ -n "$VALUE" ] || return 1
+	for i in $(uci_get "$PACKAGE" "$CONFIG" "$OPTION"); do
+		[ "$i" = "$VALUE" ] && return 0
+	done
+	uci_add_list "$PACKAGE" "$CONFIG" "$OPTION" "$VALUE"
+}
+uci_changes() {
+	local PACKAGE="$1"
+	local CONFIG="$2"
+	local OPTION="$3"
+	/sbin/uci ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} changes "$PACKAGE${CONFIG:+.$CONFIG}${OPTION:+.$OPTION}"
+}
 
 version() { echo "$PKG_VERSION"; }
 
@@ -100,8 +157,10 @@ getErrorText() {
 		errorDNSReload) _ret="failed to reload/restart DNS resolver";;
 		errorDownloadingConfigUpdate) _ret="failed to download Config Update file";;
 		errorDownloadingList) _ret="failed to download";;
-		errorParsingList) _ret="failed to parse";;
 		errorParsingConfigUpdate) _ret="failed to parse Config Update file";;
+		errorParsingList) _ret="failed to parse";;
+		errorNoSSLSupport) _ret="no HTTPS/SSL support on device";;
+		errorCreatingDirectory) _ret="failed to create output/cache/gzip file directory";;
 	esac
 	printf "%b" "$_ret"
 }
@@ -112,7 +171,8 @@ output_fail() { output 1 "$_FAIL_"; output 2 "$__FAIL__\\n"; }
 output_failn() { output 1 "$_FAIL_\\n"; output 2 "$__FAIL__\\n"; }
 str_replace() { printf "%b" "$1" | sed -e "s/$(printf "%b" "$2")/$(printf "%b" "$3")/g"; }
 str_contains() { test "$1" != "$(str_replace "$1" "$2" '')"; }
-compare_values() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"; }
+is_greater() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"; }
+is_greater_or_equal() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" = "$2"; }
 is_chaos_calmer() { ubus -S call system board | grep -q 'Chaos Calmer'; }
 led_on(){ if [ -n "${1}" ] && [ -e "${1}/trigger" ]; then echo 'default-on' > "${1}/trigger" 2>&1; fi; }
 led_off(){ if [ -n "${1}" ] &&  [ -e "${1}/trigger" ]; then echo 'none' > "${1}/trigger" 2>&1; fi; }
@@ -141,17 +201,8 @@ output() {
 	fi
 }
 
-serviceEnabled=''; forceDNS=''; forceDNSPorts=''; parallelDL=''; debug='';
-compressedCache=''; ipv6Enabled=''; configUpdateEnabled=''; configUpdateURL='';
-bootDelay=''; dlTimeout=''; curlRetry=''; verbosity=''; led='';
-targetDNS=''; dnsInstance=''; 
-allowed_domains=''; allowed_domains_urls='';
-blocked_domains=''; blocked_domains_urls=''; blocked_hosts_urls='';
-dl_command=''; dl_flag=''; isSSLSupported=''; allowIDN='';
-outputFilter=''; outputFilterIPv6=''; outputFile=''; outputGzip=''; outputCache='';
-awk='awk';
-
 load_package_config() {
+	local i
 	config_load "$packageName"
 	config_get_bool serviceEnabled        'config' 'enabled' 1
 	config_get_bool forceDNS              'config' 'force_dns' 1
@@ -177,61 +228,77 @@ load_package_config() {
 
 	if [ "$targetDNS" != 'dnsmasq.addnhosts' ] && [ "$targetDNS" != 'dnsmasq.conf' ] && \
 		 [ "$targetDNS" != 'dnsmasq.servers' ] && [ "$targetDNS" != 'unbound.adb_list' ] && \
-		 [ "$targetDNS" != 'dnsmasq.ipset' ] ; then
+		 [ "$targetDNS" != 'dnsmasq.ipset' ] && [ "$targetDNS" != 'dnsmasq.nftset' ] ; then
 		targetDNS='dnsmasq.servers'
 	fi
 
 	case "$targetDNS" in
 		dnsmasq.addnhosts)
-			outputFilter="$addnhostsOutputFilter"
-			outputFile="$addnhostsFile"
-			outputCache="$addnhostsCache"
-			outputGzip="$addnhostsGzip"
-			[ "$ipv6Enabled" -gt 0 ] && outputFilterIPv6="$addnhostsOutputFilterIPv6"
-			rm -f "$dnsmasqFile" "$dnsmasqCache" "$dnsmasqGzip"
-			rm -f "$ipsetFile" "$ipsetCache" "$ipsetGzip"
-			rm -f "$serversFile" "$serversCache" "$serversGzip"
+			outputFilter="$dnsmasqAddnhostsFilter"
+			outputFile="$dnsmasqAddnhostsFile"
+			outputCache="$dnsmasqAddnhostsCache"
+			outputGzip="$dnsmasqAddnhostsGzip"
+			[ "$ipv6Enabled" -gt 0 ] && outputFilterIPv6="$dnsmasqAddnhostsFilterIPv6"
+			rm -f "$dnsmasqConfFile" "$dnsmasqConfCache" "$dnsmasqConfGzip"
+			rm -f "$dnsmasqIpsetFile" "$dnsmasqIpsetCache" "$dnsmasqIpsetGzip"
+			rm -f "$dnsmasqNftsetFile" "$dnsmasqNftsetCache" "$dnsmasqNftsetGzip"
+			rm -f "$dnsmasqServersFile" "$dnsmasqServersCache" "$dnsmasqServersGzip"
 			rm -f "$unboundFile" "$unboundCache" "$unboundGzip"
 			;;
 		dnsmasq.conf)
-			outputFilter="$dnsmasqOutputFilter"
-			outputFile="$dnsmasqFile"
-			outputCache="$dnsmasqCache"
-			outputGzip="$dnsmasqGzip"
-			rm -f "$addnhostsFile" "$addnhostsCache" "$addnhostsGzip"
-			rm -f "$ipsetFile" "$ipsetCache" "$ipsetGzip"
-			rm -f "$serversFile" "$serversCache" "$serversGzip"
+			outputFilter="$dnsmasqConfFilter"
+			outputFile="$dnsmasqConfFile"
+			outputCache="$dnsmasqConfCache"
+			outputGzip="$dnsmasqConfGzip"
+			rm -f "$dnsmasqAddnhostsFile" "$dnsmasqAddnhostsCache" "$dnsmasqAddnhostsGzip"
+			rm -f "$dnsmasqIpsetFile" "$dnsmasqIpsetCache" "$dnsmasqIpsetGzip"
+			rm -f "$dnsmasqNftsetFile" "$dnsmasqNftsetCache" "$dnsmasqNftsetGzip"
+			rm -f "$dnsmasqServersFile" "$dnsmasqServersCache" "$dnsmasqServersGzip"
 			rm -f "$unboundFile" "$unboundCache" "$unboundGzip"
 			;;
 		dnsmasq.ipset)
-			outputFilter="$ipsetOutputFilter"
-			outputFile="$ipsetFile"
-			outputCache="$ipsetCache"
-			outputGzip="$ipsetGzip"
-			rm -f "$dnsmasqFile" "$dnsmasqCache" "$dnsmasqGzip"
-			rm -f "$addnhostsFile" "$addnhostsCache" "$addnhostsGzip"
-			rm -f "$serversFile" "$serversCache" "$serversGzip"
+			outputFilter="$dnsmasqIpsetFilter"
+			outputFile="$dnsmasqIpsetFile"
+			outputCache="$dnsmasqIpsetCache"
+			outputGzip="$dnsmasqIpsetGzip"
+			rm -f "$dnsmasqAddnhostsFile" "$dnsmasqAddnhostsCache" "$dnsmasqAddnhostsGzip"
+			rm -f "$dnsmasqConfFile" "$dnsmasqConfCache" "$dnsmasqConfGzip"
+			rm -f "$dnsmasqNftsetFile" "$dnsmasqNftsetCache" "$dnsmasqNftsetGzip"
+			rm -f "$dnsmasqServersFile" "$dnsmasqServersCache" "$dnsmasqServersGzip"
+			rm -f "$unboundFile" "$unboundCache" "$unboundGzip"
+			;;
+		dnsmasq.nftset)
+			outputFilter="$dnsmasqNftsetFilter"
+			outputFile="$dnsmasqNftsetFile"
+			outputCache="$dnsmasqNftsetCache"
+			outputGzip="$dnsmasqNftsetGzip"
+			rm -f "$dnsmasqAddnhostsFile" "$dnsmasqAddnhostsCache" "$dnsmasqAddnhostsGzip"
+			rm -f "$dnsmasqConfFile" "$dnsmasqConfCache" "$dnsmasqConfGzip"
+			rm -f "$dnsmasqIpsetFile" "$dnsmasqIpsetCache" "$dnsmasqIpsetGzip"
+			rm -f "$dnsmasqServersFile" "$dnsmasqServersCache" "$dnsmasqServersGzip"
 			rm -f "$unboundFile" "$unboundCache" "$unboundGzip"
 			;;
 		dnsmasq.servers)
-			outputFilter="$serversOutputFilter"
-			outputFile="$serversFile"
-			outputCache="$serversCache"
-			outputGzip="$serversGzip"
-			rm -f "$dnsmasqFile" "$dnsmasqCache" "$dnsmasqGzip"
-			rm -f "$addnhostsFile" "$addnhostsCache" "$addnhostsGzip"
-			rm -f "$ipsetFile" "$ipsetCache" "$ipsetGzip"
+			outputFilter="$dnsmasqServersFilter"
+			outputFile="$dnsmasqServersFile"
+			outputCache="$dnsmasqServersCache"
+			outputGzip="$dnsmasqServersGzip"
+			rm -f "$dnsmasqAddnhostsFile" "$dnsmasqAddnhostsCache" "$dnsmasqAddnhostsGzip"
+			rm -f "$dnsmasqConfFile" "$dnsmasqConfCache" "$dnsmasqConfGzip"
+			rm -f "$dnsmasqIpsetFile" "$dnsmasqIpsetCache" "$dnsmasqIpsetGzip"
+			rm -f "$dnsmasqNftsetFile" "$dnsmasqNftsetCache" "$dnsmasqNftsetGzip"
 			rm -f "$unboundFile" "$unboundCache" "$unboundGzip"
 			;;
 		unbound.adb_list)
-			outputFilter="$unboundOutputFilter"
+			outputFilter="$unboundFilter"
 			outputFile="$unboundFile"
 			outputCache="$unboundCache"
 			outputGzip="$unboundGzip"
-			rm -f "$addnhostsFile" "$addnhostsCache" "$addnhostsGzip"
-			rm -f "$dnsmasqFile" "$dnsmasqCache" "$dnsmasqGzip"
-			rm -f "$ipsetFile" "$ipsetCache" "$ipsetGzip"
-			rm -f "$serversFile" "$serversCache" "$serversGzip"
+			rm -f "$dnsmasqAddnhostsFile" "$dnsmasqAddnhostsCache" "$dnsmasqAddnhostsGzip"
+			rm -f "$dnsmasqConfFile" "$dnsmasqConfCache" "$dnsmasqConfGzip"
+			rm -f "$dnsmasqIpsetFile" "$dnsmasqIpsetCache" "$dnsmasqIpsetGzip"
+			rm -f "$dnsmasqNftsetFile" "$dnsmasqNftsetCache" "$dnsmasqNftsetGzip"
+			rm -f "$dnsmasqServersFile" "$dnsmasqServersCache" "$dnsmasqServersGzip"
 			;;
 	esac
 	if [ -z "${verbosity##*[!0-9]*}" ] || [ "$verbosity" -lt 0 ] || [ "$verbosity" -gt 2 ]; then
@@ -277,7 +344,8 @@ load_package_config() {
 }
 
 is_enabled() {
-	wan_if=''; wan_gw='';
+	wan_if=
+	wan_gw=
 	load_package_config
 
 	if [ "$debug" -ne 0 ]; then
@@ -298,7 +366,7 @@ is_enabled() {
 	fi
 
 	case $targetDNS in
-		dnsmasq.addnhosts | dnsmasq.conf | dnsmasq.ipset | dnsmasq.servers)
+		dnsmasq.addnhosts|dnsmasq.conf|dnsmasq.ipset|dnsmasq.nftset|dnsmasq.servers)
 			if dnsmasq -v 2>/dev/null | grep -q 'no-IDN' || ! dnsmasq -v 2>/dev/null | grep -q -w 'IDN'; then
 				allowIDN=0
 			else
@@ -312,7 +380,7 @@ is_enabled() {
 	case $targetDNS in
 		dnsmasq.ipset)
 			if dnsmasq -v 2>/dev/null | grep -q 'no-ipset' || ! dnsmasq -v 2>/dev/null | grep -q -w 'ipset'; then
-				output "$_ERROR_: DNSMASQ ipset support is enabled in $packageName, but DNSMASQ is either not installed or installed DNSMASQ does not support ipsets!\\n"
+				output "$_ERROR_: DNSMASQ ipset support is enabled in $packageName, but DNSMASQ is either not installed or installed DNSMASQ does not support ipset!\\n"
 				targetDNS='dnsmasq.servers'
 			fi
 			if ! ipset help hash:net >/dev/null 2>&1; then
@@ -320,11 +388,25 @@ is_enabled() {
 				targetDNS='dnsmasq.servers'
 			fi
 			;;
+		dnsmasq.nftset)
+			if dnsmasq -v 2>/dev/null | grep -q 'no-nftset' || ! dnsmasq -v 2>/dev/null | grep -q -w 'nftset'; then
+				output "$_ERROR_: DNSMASQ nftset support is enabled in $packageName, but DNSMASQ is either not installed or installed DNSMASQ does not support nftset!\\n"
+				targetDNS='dnsmasq.servers'
+			fi
+			if [ -z "$(command -v nft)" ]; then
+				output "$_ERROR_: DNSMASQ nftset support is enabled in $packageName, but nft is not installed!\\n"
+				targetDNS='dnsmasq.servers'
+			fi
+			;;
 	esac
 
-	[ ! -d "${outputFile%/*}" ] && mkdir -p "${outputFile%/*}"
-	[ ! -d "${outputCache%/*}" ] && mkdir -p "${outputFile%/*}"
-	[ ! -d "${outputGzip%/*}" ] && mkdir -p "${outputFile%/*}"
+	for i in "$outputFile" "$outputCache" "$outputGzip"; do
+		if ! mkdir -p "$(dirname "$i")"; then
+			output "$_ERROR_: Unable to create directory for $i!\\n"
+			jsonOps add error "errorOutputFileCreate"
+		fi
+	done
+
 	cacheOps 'testGzip' && return 0
 	network_flush_cache; network_find_wan wan_if; network_get_gateway wan_gw "$wan_if";
 	[ -n "$wan_gw" ] && return 0
@@ -335,23 +417,21 @@ dnsmasqOps() {
 	local cfg="$1" param="$2"
 	case "$param" in
 		dnsmasq.addnhosts)
-			if [ "$(uci -q get dhcp."$cfg".serversfile)" = "$serversFile" ]; then
-				uci -q del dhcp."$cfg".serversfile
+			if [ "$(uci_get 'dhcp' "$cfg" 'serversfile')" = "$dnsmasqServersFile" ]; then
+				uci_remove 'dhcp' "$cfg" 'serversfile'
 			fi
-			if ! uci -q get dhcp."$cfg".addnhosts | grep -q "$addnhostsFile"; then
-				uci add_list dhcp."$cfg".addnhosts="$addnhostsFile"
-			fi
+			uci_add_list_if_new 'dhcp' "$cfg" 'addnhosts' "$dnsmasqAddnhostsFile"
 			;;
-		dnsmasq.conf|dnsmasq.ipset|unbound.adb_list|cleanup)
-			uci -q del_list dhcp."$cfg".addnhosts="$addnhostsFile"
-			if [ "$(uci -q get dhcp."$cfg".serversfile)" = "$serversFile" ]; then
-				uci -q del dhcp."$cfg".serversfile
+		dnsmasq.conf|dnsmasq.ipset|dnsmasq.nftset|unbound.adb_list|cleanup)
+			uci_remove_list 'dhcp' "$cfg" 'addnhosts' "$dnsmasqAddnhostsFile"
+			if [ "$(uci_get 'dhcp' "$cfg" 'serversfile')" = "$dnsmasqServersFile" ]; then
+				uci_remove 'dhcp' "$cfg" 'serversfile'
 			fi
 			;;
 		dnsmasq.servers)
-			uci -q del_list dhcp."$cfg".addnhosts="$addnhostsFile"
-			if [ "$(uci -q get dhcp."$cfg".serversfile)" != "$serversFile" ]; then
-				uci set dhcp."$cfg".serversfile="$serversFile"
+			uci_remove_list 'dhcp' "$cfg" 'addnhosts' "$dnsmasqAddnhostsFile"
+			if [ "$(uci_get 'dhcp' "$cfg" 'serversfile')" != "$dnsmasqServersFile" ]; then
+				uci_set 'dhcp' "$cfg" 'serversfile' "$dnsmasqServersFile"
 			fi
 			;;
 	esac
@@ -382,7 +462,7 @@ dnsOps() {
 					param=dnsmasq_hup
 					output_text='Reloading DNSMASQ'
 					;;
-				dnsmasq.conf|dnsmasq.ipset)
+				dnsmasq.conf|dnsmasq.ipset|dnsmasq.nftset)
 					param=dnsmasq_restart
 					output_text='Restarting DNSMASQ'
 					;;
@@ -392,8 +472,8 @@ dnsOps() {
 					;;
 			esac
 
-			if [ -n "$(uci changes dhcp)" ]; then
-				uci commit dhcp
+			if [ -n "$(uci_changes dhcp)" ]; then
+				uci_commit dhcp
 				if [ "$param" = 'unbound_restart' ]; then
 					param='dnsmasq_restart; unbound_restart;'
 					output_text='Restarting Unbound/DNSMASQ'
@@ -419,18 +499,18 @@ dnsOps() {
 			;;
 		on_stop)
 			case "$targetDNS" in
-				dnsmasq.addnhosts | dnsmasq.servers)
+				dnsmasq.addnhosts|dnsmasq.servers)
 					param=dnsmasq_hup
 					;;
-				dnsmasq.conf | dnsmasq.ipset)
+				dnsmasq.conf|dnsmasq.ipset|dnsmasq.nftset)
 					param=dnsmasq_restart
 					;;
 				unbound.adb_list)
 					param=unbound_restart
 					;;
 			esac
-			if [ -n "$(uci changes dhcp)" ]; then 
-				uci -q commit dhcp
+			if [ -n "$(uci_changes dhcp)" ]; then 
+				uci_commit dhcp
 				if [ "$param" = 'unbound_restart' ]; then
 					param='dnsmasq_restart; unbound_restart;'
 				else
@@ -442,7 +522,7 @@ dnsOps() {
 			;;
 		quiet)
 			case "$targetDNS" in
-				dnsmasq.addnhosts | dnsmasq.conf | dnsmasq.ipset | dnsmasq.servers)
+				dnsmasq.addnhosts|dnsmasq.conf|dnsmasq.ipset|dnsmasq.nftset|dnsmasq.servers)
 					param=dnsmasq_restart
 					;;
 				unbound.adb_list)
@@ -718,6 +798,7 @@ $(cat $A_TMP)"
 
 	if [ "$targetDNS" = 'dnsmasq.conf' ] || \
 		 [ "$targetDNS" = 'dnsmasq.ipset' ] || \
+		 [ "$targetDNS" = 'dnsmasq.nftset' ] || \
 		 [ "$targetDNS" = 'dnsmasq.servers' ] || \
 		 [ "$targetDNS" = 'unbound.adb_list' ]; then
 		# TLD optimization written by Dirk Brenken (dev@brenken.org)
@@ -801,6 +882,10 @@ $(cat $A_TMP)"
 		dnsmasq.ipset)
 			output 2 'Creating DNSMASQ ipset file '
 			jsonOps set message "$(getStatusText "statusProcessing"): creating DNSMASQ ipset file"
+			;;
+		dnsmasq.nftset)
+			output 2 'Creating DNSMASQ nftset file '
+			jsonOps set message "$(getStatusText "statusProcessing"): creating DNSMASQ nftset file"
 			;;
 		dnsmasq.servers)
 			output 2 'Creating DNSMASQ servers file '
@@ -1010,14 +1095,15 @@ reload_service() { rc_procd start_service 'restart'; }
 dl() { rc_procd start_service 'download'; }
 
 killcache() {
-	rm -f "$addnhostsCache" "$addnhostsGzip"
-	rm -f "$dnsmasqCache" "$dnsmasqGzip"
-	rm -f "$ipsetCache" "$ipsetGzip"
-	rm -f "$serversCache" "$serversGzip"
+	rm -f "$dnsmasqAddnhostsCache" "$dnsmasqAddnhostsGzip"
+	rm -f "$dnsmasqConfCache" "$dnsmasqConfGzip"
+	rm -f "$dnsmasqIpsetCache" "$dnsmasqIpsetGzip"
+	rm -f "$dnsmasqNftsetCache" "$dnsmasqNftsetGzip"
+	rm -f "$dnsmasqServersCache" "$dnsmasqServersGzip"
 	rm -f "$unboundCache" "$unboundGzip"
 	config_load 'dhcp'
 	config_foreach dnsmasqOps 'dnsmasq' 'cleanup'
-	uci -q commit 'dhcp'
+	uci_commit 'dhcp'
 	return 0
 }
 
@@ -1080,39 +1166,104 @@ service_triggers() {
 	procd_close_trigger
 }
 
+allow() {
+	load_package_config
+	local c string="$1"
+	if [ ! -s "$outputFile" ]; then
+		echo "No block-list ('$outputFile') found."
+	elif [ -z "$string" ]; then
+		echo "Usage: /etc/init.d/${packageName} allow domain(s)"
+	else
+		case "$targetDNS" in
+			dnsmasq.addnhosts|dnsmasq.conf|dnsmasq.ipset|dnsmasq.nftset|dnsmasq.servers)
+				output 1 "Allowing domain(s) and restarting DNSMASQ... "
+				output 2 "Allowing domain(s)... \\n"
+				for c in $string; do 
+					output 2 "  $c "
+					if sed -i "/${string}/d" "$outputFile" && \
+						uci_add_list "${packageName}" 'config' 'allowed_domain' "$string"; then
+							output_ok
+					else
+						output_fail
+					fi
+				done
+				output 2 "Committing changes to config... "
+				if [ -n "$(uci_changes "$packageName")" ] && uci_commit "$packageName"; then
+					allowed_domains="$(uci_get_list "$packageName" 'config' 'allowed_domain')"
+					jsonOps set triggers
+					jsonOps set stats "$serviceName is blocking $(wc -l < "$outputFile") domains (with ${targetDNS})"
+					output_ok; 
+					if [ "$targetDNS" = 'dnsmasq.ipset' ]; then
+						output 2 "Flushing adb ipset... "
+						if command -v ipset && ipset flush adb; then output_ok; else output_fail; fi
+					fi
+					output 2 "Restarting DNSMASQ... "
+					if dnsmasq_restart; then output_okn; else output_failn; fi
+				else 
+					output_fail; 
+				fi
+				;;
+			unbound.adb_list)
+				output 1 "Allowing domain(s) and restarting Unbound... "
+				output 2 "Allowing domain(s)... \\n"
+				for c in $string; do 
+					output 2 "  $c "
+					if sed -i "/${string}/d" "$outputFile" && \
+						uci_add_list "$packageName" 'config' 'allowed_domain' "$string"; then
+							output_ok
+					else
+						output_fail
+					fi
+				done
+				output 2 "Committing changes to config... "
+				if [ -n "$(uci_changes "$packageName")" ] && uci_commit "$packageName"; then
+					allowed_domains="$(uci_get_list "$packageName" 'config' 'allowed_domain')"
+					jsonOps set triggers
+					jsonOps set stats "$serviceName is blocking $(wc -l < "$outputFile") domains (with ${targetDNS})"
+					output_ok; 
+					output 2 "Restarting Unbound... "
+					if unbound_restart; then output_okn; else output_failn; fi
+				else 
+					output_fail; 
+				fi
+		esac
+	fi
+}
+
 check() {
 	load_package_config
 	local c string="$1"
-	c="$(grep -c "$string" "$outputFile")"
-	c="${c:-0}"
 	if [ ! -s "$outputFile" ]; then
 		echo "No block-list ('$outputFile') found."
 	elif [ -z "$string" ]; then
 		echo "Usage: /etc/init.d/${packageName} check string"
-	elif [ "$c" -gt 0 ]; then
-		if [ "$c" -eq 1 ]; then
-			echo "Found 1 match for '$string' in '$outputFile':"
-		elif [ "$c" -le 20 ]; then
-			echo "Found $c matches for '$string' in '$outputFile':"
-		else
-			echo "Found $c matches for '$string' in '$outputFile'."
-		fi
-		if [ "$c" -le 20 ]; then
-			case "$targetDNS" in
-				dnsmasq.addnhosts)
-					grep "$string" "$outputFile" | sed 's|^127.0.0.1 ||;s|^:: ||;';;
-				dnsmasq.conf)
-					grep "$string" "$outputFile" | sed 's|local=/||;s|/$||;';;
-				dnsmasq.ipset)
-					grep "$string" "$outputFile" | sed 's|ipset=/||;s|/adb$||;';;
-				dnsmasq.servers)
-					grep "$string" "$outputFile" | sed 's|server=/||;s|/$||;';;
-				unbound.adb_list)
-					grep "$string" "$outputFile" | sed 's|^local-zone: "||;s|" static$||;';;
-			esac
-		fi
 	else
-		echo "The '$string' is not found in current block-list ('$outputFile')."
+		c="$(grep -c "$string" "$outputFile")"
+		if [ "$c" -gt 0 ]; then
+			if [ "$c" -eq 1 ]; then
+				echo "Found 1 match for '$string' in '$outputFile':"
+			else
+				echo "Found $c matches for '$string' in '$outputFile'."
+			fi
+			if [ "$c" -le 20 ]; then
+				case "$targetDNS" in
+					dnsmasq.addnhosts)
+						grep "$string" "$outputFile" | sed 's|^127.0.0.1 ||;s|^:: ||;';;
+					dnsmasq.conf)
+						grep "$string" "$outputFile" | sed 's|local=/||;s|/$||;';;
+					dnsmasq.ipset)
+						grep "$string" "$outputFile" | sed 's|ipset=/||;s|/adb$||;';;
+					dnsmasq.nftset)
+						grep "$string" "$outputFile" | sed 's|nftset=/||;s|/adb$||;';;
+					dnsmasq.servers)
+						grep "$string" "$outputFile" | sed 's|server=/||;s|/$||;';;
+					unbound.adb_list)
+						grep "$string" "$outputFile" | sed 's|^local-zone: "||;s|" static$||;';;
+				esac
+			fi
+		else
+			echo "The '$string' is not found in current block-list ('$outputFile')."
+		fi
 	fi
 }
 
@@ -1125,9 +1276,9 @@ sizes() {
 		[ "${i//melmac}" != "$i" ] && continue
 		if $dl_command "$i" $dl_flag /tmp/sast 2>/dev/null && [ -s /tmp/sast ]; then
 			echo "# File size: $(du -sh /tmp/sast | $awk '{print $1}')"
-			if compare_values "$(du -sk /tmp/sast)" "500"; then
+			if is_greater "$(du -sk /tmp/sast)" "500"; then
 				echo "# block-list too big for most routers"
-			elif compare_values "$(du -sk /tmp/sast)" "100"; then
+			elif is_greater "$(du -sk /tmp/sast)" "100"; then
 				echo "# block-list may be too big for some routers"
 			fi
 			rm -rf /tmp/sast
@@ -1143,9 +1294,9 @@ sizes() {
 	for i in $blocked_hosts_urls; do
 		if $dl_command "$i" $dl_flag /tmp/sast 2>/dev/null && [ -s /tmp/sast ]; then
 			echo "# File size: $(du -sh /tmp/sast | $awk '{print $1}')"
-			if compare_values "$(du -sk /tmp/sast)" "500"; then
+			if is_greater "$(du -sk /tmp/sast)" "500"; then
 				echo "# block-list too big for most routers"
-			elif compare_values "$(du -sk /tmp/sast)" "100"; then
+			elif is_greater "$(du -sk /tmp/sast)" "100"; then
 				echo "# block-list may be too big for some routers"
 			fi
 			rm -rf /tmp/sast
