@@ -26,7 +26,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/nfdump
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:= +libbz2 +USE_MUSL:musl-fts
+  DEPENDS:= +flex +libbz2 +USE_MUSL:musl-fts
   TITLE:= nfdump
   URL:=https://github.com/phaag/nfdump/
 endef
