@@ -1,0 +1,34 @@
+From 8d8d04785bdc8d743d8a1fcfadd1285d86670b1e
+From: Justin Maggard <jmaggard@arlo.com>
+Date: Wed, 9 Feb 2022 18:32:19 -0800
+Subject: [PATCH] build: Fix configure error on some platforms
+
+Fixes libid3tag and libavformat detection errors.
+---
+ configure.ac | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+--- a/configure.ac
++++ b/configure.ac
+@@ -414,7 +414,10 @@ for dir in "" /usr/local $SEARCH_DIR; do
+     AC_CHECK_LIB([id3tag -lz], [id3_file_open], [LIBID3TAG_LIBS="-lid3tag -lz"], [unset ac_cv_lib_id3tag_id3_file_open; LDFLAGS="$LDFLAGS_SAVE"; continue])
+     break
+ done
+-test x"$ac_cv_lib_id3tag__lz___id3_file_open" = x"yes" || AC_MSG_ERROR([Could not find libid3tag])
++if test x"$ac_cv_lib_id3tag__lz___id3_file_open" != x"yes" &&
++   test x"$ac_cv_lib_id3tag__lz_id3_file_open" != x"yes"; then
++   AC_MSG_ERROR([Could not find libid3tag])
++fi
+ AC_SUBST(LIBID3TAG_LIBS)
+ 
+ LDFLAGS_SAVE="$LDFLAGS"
+@@ -441,7 +444,8 @@ for dir in "" /usr/local $SEARCH_DIR; do
+     break
+ done
+ if test x"$ac_cv_lib_avformat__lavcodec__lavutil__lz___av_open_input_file" != x"yes" &&
+-   test x"$ac_cv_lib_avformat__lavcodec__lavutil__lz___avformat_open_input" != x"yes"; then
++   test x"$ac_cv_lib_avformat__lavcodec__lavutil__lz___avformat_open_input" != x"yes" &&
++   test x"$ac_cv_lib_avformat__lavcodec__lavutil__lz_avformat_open_input" != x"yes"; then
+    AC_MSG_ERROR([Could not find libavformat - part of ffmpeg])
+ fi
+ AC_SUBST(LIBAVFORMAT_LIBS)
