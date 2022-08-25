@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=boinc
 PKG_VERSION:=7.16.16
 PKG_VERSION_SHORT:=$(shell echo $(PKG_VERSION)| cut -f1,2 -d.)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_DATE:=2020-02-25
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
