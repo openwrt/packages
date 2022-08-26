@@ -1189,7 +1189,7 @@ allow() {
 				done
 				output 2 "Committing changes to config... "
 				if [ -n "$(uci_changes "$packageName")" ] && uci_commit "$packageName"; then
-					allowed_domains="$(uci_get_list "$packageName" 'config' 'allowed_domain')"
+					allowed_domains="$(uci_get "$packageName" 'config' 'allowed_domain')"
 					jsonOps set triggers
 					jsonOps set stats "$serviceName is blocking $(wc -l < "$outputFile") domains (with ${targetDNS})"
 					output_ok; 
@@ -1217,7 +1217,7 @@ allow() {
 				done
 				output 2 "Committing changes to config... "
 				if [ -n "$(uci_changes "$packageName")" ] && uci_commit "$packageName"; then
-					allowed_domains="$(uci_get_list "$packageName" 'config' 'allowed_domain')"
+					allowed_domains="$(uci_get "$packageName" 'config' 'allowed_domain')"
 					jsonOps set triggers
 					jsonOps set stats "$serviceName is blocking $(wc -l < "$outputFile") domains (with ${targetDNS})"
 					output_ok; 
