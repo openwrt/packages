@@ -41,7 +41,7 @@ define Package/podman
   CATEGORY:=Utilities
   TITLE:=Podman
   URL:=https://podman.io
-  DEPENDS:=$(GO_ARCH_DEPENDS) +conmon +cni +cni-plugins +btrfs-progs +glib2 +gnupg2 +uci-firewall +libgpg-error +libseccomp +libgpgme +nsenter +zoneinfo-simple +kmod-veth +catatonit +PODMAN_SELINUX_SUPPORT:libselinux
+  DEPENDS:=$(GO_ARCH_DEPENDS) +conmon +cni +cni-plugins +btrfs-progs +glib2 +gnupg2 +uci-firewall +libgpg-error +libseccomp +libgpgme +nsenter +zoneinfo-simple +kmod-veth +catatonit +PODMAN_SELINUX_SUPPORT:libselinux +crun
 endef
 
 define Package/podman/description
