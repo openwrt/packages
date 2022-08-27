@@ -1,23 +1,25 @@
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=schroot
-PKG_VERSION:=1.6.10
-PKG_RELEASE:=3
+PKG_NAME:=reschroot
+PKG_VERSION:=1.6.13
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).orig.tar.xz
-PKG_SOURCE_URL:=http://deb.debian.org/debian/pool/main/s/schroot
-PKG_HASH:=3ce8dfd9cb97b099e4b6d4ccec421d6cc8c9ef84574681e928a12badb5643d0b
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeberg.org/shelter/reschroot/archive/release
+PKG_HASH:=c05d6a1bb0210d401e6522eee2c465e0b43c6c98f7101d671f9e9ef88b3accf5
 
 PKG_MAINTAINER:=Javier Marcet <javier@marcet.info>
 PKG_LICENSE:=GPL-3.0-only
 PKG_LICENSE_FILES:=COPYING
 
-PKG_INSTALL:=1
-PKG_BUILD_PARALLEL:=1
-PKG_FIXUP:=autoreconf
+CMAKE_INSTALL:=1
 
-include $(INCLUDE_DIR)/nls.mk
+CMAKE_BINARY_SUBDIR:=build
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/$(PKG_NAME)
+
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/cmake.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/schroot
   SECTION:=admin
@@ -30,7 +32,7 @@ define Package/schroot
 	+SCHROOT_LVM:lvm2 \
 	+SCHROOT_UUID:libuuid \
 	$(INTL_DEPENDS)
-  URL:=https://salsa.debian.org/debian/schroot
+  URL:=https://codeberg.org/shelter/reschroot
 endef
 
 define Package/schroot/description
@@ -51,20 +53,21 @@ PKG_CONFIG_DEPENDS := \
 	CONFIG_SCHROOT_LVM \
 	CONFIG_SCHROOT_UUID
 
-CONFIGURE_ARGS += \
-	$(if $(CONFIG_SCHROOT_BTRFS),--enable,--disable)-btrfs-snapshot \
-	$(if $(CONFIG_SCHROOT_LOOPBACK),--enable,--disable)-loopback \
-	$(if $(CONFIG_SCHROOT_LVM),--enable,--disable)-lvm-snapshot \
-	$(if $(CONFIG_SCHROOT_UUID),--enable,--disable)-uuid \
-	--enable-block-device \
-	--enable-union \
-	--disable-dchroot \
-	--disable-dchroot-dsa \
-	--disable-csbuild \
-	--disable-debug \
-	--disable-pam \
-	--disable-doxygen \
-	--disable-rpath
+CMAKE_OPTIONS += \
+	-Dbtrfs-snapshot=$(if $(CONFIG_SCHROOT_BTRFS),ON,OFF) \
+	-Dloopback=$(if $(CONFIG_SCHROOT_LOOPBACK),ON,OFF) \
+	-Dlvm-snapshot=$(if $(CONFIG_SCHROOT_LVM),ON,OFF) \
+	-Duuid=$(if $(CONFIG_SCHROOT_UUID),ON,OFF) \
+	-Dblock-device=ON \
+	-Dunion=ON \
+	-Ddhcroot=OFF \
+	-Ddchroot-dsa=OFF \
+	-Ddebug=OFF \
+	-Ddoxygen=OFF \
+	-Dpam=OFF \
+	-Dtest=OFF \
+	-Duuid=OFF \
+	-Dzfs-snapshot=OFF
 
 define Package/schroot/install
 	$(INSTALL_DIR) $(1)/usr/bin
@@ -73,7 +76,8 @@ define Package/schroot/install
 	$(CP) -R $(PKG_INSTALL_DIR)/etc/schroot/* $(1)/etc/schroot
 	$(INSTALL_DIR) $(1)/usr/lib/schroot
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/libsbuild.* $(1)/usr/lib/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/schroot/* $(1)/usr/lib/schroot/
+	$(INSTALL_DIR) $(1)/usr/libexec/schroot
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/libexec/schroot/schroot-* $(1)/usr/libexec/schroot/
 	$(INSTALL_DIR) $(1)/usr/share/schroot
 	$(CP) -R $(PKG_INSTALL_DIR)/usr/share/schroot/* $(1)/usr/share/schroot/
 	$(INSTALL_DIR) $(1)/etc/init.d
