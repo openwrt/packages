@@ -1,96 +1,50 @@
---- a/configure.ac
-+++ b/configure.ac
-@@ -284,22 +284,8 @@ if test -z "$DOXYGEN"; then
-   HAVE_DOXYGEN="no"
- fi
- HAVE_LVM="yes"
--AC_PATH_PROG([LVCREATE], [lvcreate], [], [$PATH:/sbin:/usr/sbin])
--AC_PATH_PROG([LVREMOVE], [lvremove], [], [$PATH:/sbin:/usr/sbin])
--if test -z "$LVCREATE" || test -z "$LVREMOVE"; then
--  HAVE_LVM="no"
--fi
- HAVE_BTRFS="yes"
--AC_PATH_PROG([BTRFS], [btrfs], [], [$PATH:/sbin:/usr/sbin])
--AC_PATH_PROG([BTRFSCTL], [btrfsctl], [], [$PATH:/sbin:/usr/sbin])
--if test -z "$BTRFS" || test -z "$BTRFSCTL"; then
--  HAVE_BTRFS="no"
--fi
- HAVE_LOOPBACK="yes"
--AC_PATH_PROG([LOSETUP], [losetup], [], [$PATH:/sbin:/usr/sbin])
--if test -z "$LOSETUP"; then
--  HAVE_LOOPBACK="no"
--fi
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -210,8 +210,8 @@ endif(BUILD_PAM)
+ set(BLOCKDEV_DEFAULT ON)
  
+ # LVM snapshot mount feature
+-find_program(LVCREATE_EXECUTABLE lvcreate PATHS /sbin /usr/sbin /usr/local/sbin)
+-find_program(LVREMOVE_EXECUTABLE lvremove PATHS /sbin /usr/sbin /usr/local/sbin)
++#find_program(LVCREATE_EXECUTABLE lvcreate PATHS /sbin /usr/sbin /usr/local/sbin)
++#find_program(LVREMOVE_EXECUTABLE lvremove PATHS /sbin /usr/sbin /usr/local/sbin)
+ set(LVMSNAP_DEFAULT OFF)
+ if (LVCREATE_EXECUTABLE AND LVREMOVE_EXECUTABLE)
+   set (LVMSNAP_DEFAULT ON)
+@@ -224,7 +224,7 @@ if (lvm-snapshot)
+ endif(lvm-snapshot)
  
- # Check for host platform
-@@ -336,7 +322,6 @@ PKG_CHECK_MODULES([UUID], [uuid],
-                   [HAVE_UUID=yes],
-                   [HAVE_UUID=no])
+ # ZFS snapshot mount feature
+-find_program(ZFS_EXECUTABLE zfs PATHS /sbin /usr/sbin /usr/local/sbin)
++#find_program(ZFS_EXECUTABLE zfs PATHS /sbin /usr/sbin /usr/local/sbin)
+ set(ZFSSNAP_DEFAULT OFF)
+ if (ZFS_EXECUTABLE)
+   set (ZFSSNAP_DEFAULT ON)
+@@ -237,7 +237,7 @@ if (zfs-snapshot)
+ endif(zfs-snapshot)
  
--AM_PATH_CPPUNIT([1.10.0], [HAVE_CPPUNIT=yes])
- AM_CONDITIONAL([USE_UNIT_TESTS], [test -n "$HAVE_CPPUNIT"])
+ # Btrfs snapshot mount feature
+-find_program(BTRFS_EXECUTABLE btrfs PATHS /sbin /usr/sbin /usr/local/sbin)
++#find_program(BTRFS_EXECUTABLE btrfs PATHS /sbin /usr/sbin /usr/local/sbin)
+ set(BTRFSSNAP_DEFAULT OFF)
+ if (BTRFS_EXECUTABLE)
+   set (BTRFSSNAP_DEFAULT ON)
+@@ -310,15 +310,9 @@ include_directories(${PROJECT_BINARY_DIR
+                     ${PROJECT_BINARY_DIR}
+                     ${PROJECT_SOURCE_DIR})
  
- SCHROOT_CFLAGS="$UUID_CFLAGS"
-@@ -688,42 +673,25 @@ if test "$BOOST_PROGRAM_OPTIONS_VALIDATI
- fi
+-enable_testing()
+-
+ add_subdirectory(sbuild)
+ add_subdirectory(bin)
+-add_subdirectory(test)
+-add_subdirectory(doc)
+ add_subdirectory(etc)
+-add_subdirectory(po)
+-add_subdirectory(man)
  
- dnl Note the use of quadrigraphs to quote [ and ] in regexes.
--AH_TEMPLATE(HAVE_REGEX_REGEX, [Set if the <regex> header file includes std::regex])
- AH_TEMPLATE(HAVE_BOOST_REGEX, [Set if the <boost/regex.hpp> header file includes boost::regex])
--AC_MSG_CHECKING([for std::regex])
--define([testprog], [AC_LANG_PROGRAM([#include <regex>],
--                                   [std::regex foo("^foo@<:@bar@:>@$");
--                                    std::regex bar("^foo@<:@bar@:>@$", std::regex::extended);
--                                    std::regex check("^@<:@^:/,.@:>@@<:@^:/,@:>@*$", std::regex::extended);])])
--AC_RUN_IFELSE(testprog,
--  [AC_MSG_RESULT([yes])
--   AC_DEFINE(HAVE_REGEX_REGEX, 1)],
--  [dnl Check if std::regex is present but broken.
--define([testprog], [AC_LANG_PROGRAM([#include <regex>],
--                                   [std::regex foo("^foo@<:@bar@:>@$");
--                                    std::regex bar("^foo@<:@bar@:>@$", std::regex::extended);])])
-+AC_MSG_CHECKING([for boost::regex in -lboost_regex])
-+saved_LIBS="${LIBS}"
-+LIBS="${saved_LIBS} -lboost_regex"
-+define([testprog], [AC_LANG_PROGRAM([#include <boost/regex.hpp>],
-+                                [boost::regex("^foo@<:@bar@:>@$");
-+                                 boost::regex bar("^foo@<:@bar@:>@$", boost::regex::extended);])])
- AC_LINK_IFELSE(testprog,
--  [AC_MSG_RESULT([broken])],
--  [AC_MSG_RESULT([no])])
--   AC_MSG_CHECKING([for boost::regex in -lboost_regex])
--   saved_LIBS="${LIBS}"
--   LIBS="${saved_LIBS} -lboost_regex"
--   define([testprog], [AC_LANG_PROGRAM([#include <boost/regex.hpp>],
--                                   [boost::regex("^foo@<:@bar@:>@$");
--                                    boost::regex bar("^foo@<:@bar@:>@$", boost::regex::extended);])])
--   AC_LINK_IFELSE(testprog,
--                  [AC_MSG_RESULT([yes])
--                   AC_DEFINE(HAVE_BOOST_REGEX, 1)
--                   BOOST_LIBS="${BOOST_LIBS} -lboost_regex"],
--                  [LIBS="${saved_LIBS} -lboost_regex-mt"
--                   AC_LINK_IFELSE(testprog,
--                          [AC_MSG_RESULT([yes])
--                           AC_DEFINE(HAVE_BOOST_REGEX, 1)
--                           BOOST_LIBS="${BOOST_LIBS} -lboost_regex-mt"],
--                          [AC_MSG_RESULT([no])
--                    AC_MSG_FAILURE([libboost_regex (Boost C++ Libraries) is not installed, but is required by schroot])])])
--   LIBS="${saved_LIBS}"
--])
-+               [AC_MSG_RESULT([yes])
-+                AC_DEFINE(HAVE_BOOST_REGEX, 1)
-+                BOOST_LIBS="${BOOST_LIBS} -lboost_regex"],
-+               [LIBS="${saved_LIBS} -lboost_regex-mt"
-+                AC_LINK_IFELSE(testprog,
-+                       [AC_MSG_RESULT([yes])
-+                        AC_DEFINE(HAVE_BOOST_REGEX, 1)
-+                        BOOST_LIBS="${BOOST_LIBS} -lboost_regex-mt"],
-+                       [AC_MSG_RESULT([no])
-+                 AC_MSG_FAILURE([libboost_regex (Boost C++ Libraries) is not installed, but is required by schroot])])])
-+LIBS="${saved_LIBS}"
- 
- AC_MSG_CHECKING([for boost::iostreams in -lboost_iostreams])
- saved_LIBS="${LIBS}"
+ add_custom_target(check-news
+   COMMAND if grep -q "Welcome to ${CMAKE_PROJECT_NAME} ${GIT_RELEASE_VERSION}" "${PROJECT_SOURCE_DIR}/NEWS" \; then echo "NEWS current version ${GIT_RELEASE_VERSION}" \; else echo "NEWS current version does not match release version ${GIT_RELEASE_VERSION}" \; exit 1 \; fi
 --- a/bin/schroot-base/schroot-base-run.h
 +++ b/bin/schroot-base/schroot-base-run.h
 @@ -61,8 +61,8 @@ namespace schroot_base
