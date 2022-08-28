@@ -1,0 +1,3 @@
+if [ "$ACTION" = renewed ]; then
+	/etc/init.d/nginx reload
+fi

@@ -16,9 +16,6 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/kernel.mk
 
-EXTRA_CXXFLAGS = -I$(LINUX_DIR)/include
-EXTRA_CFLAGS = -I$(LINUX_DIR)/include
-
 include $(INCLUDE_DIR)/cmake.mk
 
 define Package/bluld

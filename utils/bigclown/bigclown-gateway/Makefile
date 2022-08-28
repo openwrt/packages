@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bigclown-gateway
 PKG_VERSION:=1.16.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PYPI_NAME:=bcg
 PKG_HASH:=ce7f27f372551c0beb3f8929af2d779417d9dcd0feaa2fa2dc49e87b1416c536
@@ -33,7 +33,6 @@ define Package/bigclown-gateway
     +python3-paho-mqtt \
     +python3-pyserial \
     +python3-yaml \
-    +python3-simplejson \
     +python3-schema \
     +python3-appdirs
 endef

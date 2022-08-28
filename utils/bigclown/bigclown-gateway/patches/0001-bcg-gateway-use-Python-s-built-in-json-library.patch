@@ -1,0 +1,34 @@
+From 0d9251aa4b7f925c908c048ae2eab123acab32d6 Mon Sep 17 00:00:00 2001
+From: Alexandru Ardelean <ardeleanalex@gmail.com>
+Date: Wed, 16 Mar 2022 09:46:03 +0200
+Subject: [PATCH] bcg: gateway: use Python's built-in json library
+
+This reduces the dependency list by one, since Python has a built-in JSON
+library with the same API.
+
+Signed-off-by: Alexandru Ardelean <ardeleanalex@gmail.com>
+---
+ bcg/gateway.py   | 2 +-
+ requirements.txt | 1 -
+ 2 files changed, 1 insertion(+), 2 deletions(-)
+
+--- a/bcg/gateway.py
++++ b/bcg/gateway.py
+@@ -3,7 +3,7 @@
+ import os
+ import time
+ import logging
+-import simplejson as json
++import json
+ import platform
+ import socket
+ import decimal
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -3,6 +3,5 @@ click-log>=0.2.1
+ paho-mqtt>=1.0     # deb:python3-paho-mqtt>=1.0
+ pyserial>=3.0      # deb:python3-serial>=3.0
+ PyYAML>=3.11       # deb:python3-yaml>=3.11
+-simplejson>=3.6.0  # deb:python3-simplejson>=3.6.0
+ schema>=0.6
+ appdirs>=1.0

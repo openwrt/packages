@@ -1,0 +1,28 @@
+From b02815271fcc295cb8b07ef740684b88a10f2760 Mon Sep 17 00:00:00 2001
+From: Jeremy Evans <code@jeremyevans.net>
+Date: Fri, 25 Mar 2022 13:39:45 -0700
+Subject: [PATCH] Fix operator precedence in OSSL_OPENSSL_PREREQ and
+ OSSL_LIBRESSL_PREREQ
+
+---
+ ext/openssl/ossl.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/ext/openssl/ossl.h
++++ b/ext/openssl/ossl.h
+@@ -43,13 +43,13 @@
+ #ifndef LIBRESSL_VERSION_NUMBER
+ # define OSSL_IS_LIBRESSL 0
+ # define OSSL_OPENSSL_PREREQ(maj, min, pat) \
+-      (OPENSSL_VERSION_NUMBER >= (maj << 28) | (min << 20) | (pat << 12))
++      (OPENSSL_VERSION_NUMBER >= ((maj << 28) | (min << 20) | (pat << 12)))
+ # define OSSL_LIBRESSL_PREREQ(maj, min, pat) 0
+ #else
+ # define OSSL_IS_LIBRESSL 1
+ # define OSSL_OPENSSL_PREREQ(maj, min, pat) 0
+ # define OSSL_LIBRESSL_PREREQ(maj, min, pat) \
+-      (LIBRESSL_VERSION_NUMBER >= (maj << 28) | (min << 20) | (pat << 12))
++      (LIBRESSL_VERSION_NUMBER >= ((maj << 28) | (min << 20) | (pat << 12)))
+ #endif
+ 
+ #if !defined(OPENSSL_NO_ENGINE) && !OSSL_OPENSSL_PREREQ(3, 0, 0)

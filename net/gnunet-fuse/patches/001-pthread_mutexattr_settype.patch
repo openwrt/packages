@@ -1,0 +1,50 @@
+Always use pthread_mutexattr_settype() the 
+pthread_mutexattr_setkind_np() is not available in the glibc and musl 
+version used by OpenWrt.
+
+This patch was taken from:
+https://aur.archlinux.org/cgit/aur.git/plain/pthread_mutexattr_settype.patch?h=gnunet-fuse
+
+--- a/src/fuse/mutex.c
++++ b/src/fuse/mutex.c
+@@ -35,16 +35,6 @@
+ #endif
+ #endif
+ 
+-/**
+- * This prototype is somehow missing in various Linux pthread
+- * include files. But we need it and it seems to be available
+- * on all pthread-systems so far. Odd.
+- */
+-#ifndef _MSC_VER
+-extern int pthread_mutexattr_setkind_np (pthread_mutexattr_t * attr,
+-                                         int kind);
+-#endif
+-
+ 
+ /**
+  * @brief Structure for MUTual EXclusion (Mutex).
+@@ -67,23 +57,13 @@ GNUNET_mutex_create (int isRecursive)
+   pthread_mutexattr_init (&attr);
+   if (isRecursive)
+     {
+-#ifdef __linux__
+-      GNUNET_assert (0 == pthread_mutexattr_setkind_np
+-		     (&attr, PTHREAD_MUTEX_RECURSIVE_NP));
+-#elif BSD || SOLARIS || OSX || WINDOWS
+       GNUNET_assert (0 == pthread_mutexattr_settype
+ 		     (&attr, PTHREAD_MUTEX_RECURSIVE));
+-#endif
+     }
+   else
+     {
+-#ifdef __linux__
+-      GNUNET_assert (0 == pthread_mutexattr_setkind_np
+-		     (&attr, PTHREAD_MUTEX_ERRORCHECK_NP));
+-#else
+       GNUNET_assert (0 == pthread_mutexattr_settype
+ 		     (&attr, PTHREAD_MUTEX_ERRORCHECK));
+-#endif
+     }
+   mut = GNUNET_new (struct GNUNET_Mutex);
+   GNUNET_assert (0 == pthread_mutex_init (&mut->pt, &attr));

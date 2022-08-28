@@ -36,14 +36,3 @@
          }
          else if [ configure.builds /boost/architecture//power : $(properties) : "power" ]
          {
---- a/libs/config/checks/architecture/Jamfile.jam
-+++ b/libs/config/checks/architecture/Jamfile.jam
-@@ -18,7 +18,7 @@ obj 64 : 64.cpp ;
- 
- obj arm      : arm.cpp ;
- obj combined : combined.cpp ;
--obj mips1    : mips1.cpp ;
-+obj mips     : mips1.cpp ;
- obj power    : power.cpp ;
- obj riscv    : riscv.cpp ;
- obj sparc    : sparc.cpp ;

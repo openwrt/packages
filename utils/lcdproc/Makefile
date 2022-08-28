@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lcdproc
 PKG_VERSION:=0.5.9
-PKG_RELEASE:=6
+PKG_RELEASE:=8
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/lcdproc/lcdproc/releases/download/v$(PKG_VERSION)/
@@ -22,6 +22,8 @@ PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:lcdproc:lcdproc
 
 include $(INCLUDE_DIR)/package.mk
+
+DISABLE_NLS:=
 
 define Package/lcdproc/Default
   SECTION:=utils
@@ -60,7 +62,7 @@ endef
 define Package/lcdproc-server
   $(call Package/lcdproc/Default)
   TITLE:=LCD Display server
-  DEPENDS:=+libpthread
+  DEPENDS+= +libpthread
 endef
 
 define LCDPROC_CORE_DRIVERS_TEXT
@@ -88,7 +90,7 @@ endef
 define Package/lcdproc-drivers
   $(call Package/lcdproc/Default)
   TITLE:=LCD Display extra drivers
-  DEPENDS:=+lcdproc-server +libncurses +libusb-1.0 +libusb-compat +libftdi1 \
+  DEPENDS+= +lcdproc-server +libncurses +libusb-1.0 +libusb-compat +libftdi1 \
 	+GPIO_SUPPORT:libugpio +serdisplib
 endef
 
@@ -96,8 +98,10 @@ define LCDPROC_OTHER_DRIVERS_TEXT
 curses futaba glcd hd44780 IOWarrior i2500vfd lis picolcd shuttleVFD ula200
 endef
 
-ifeq ($(CONFIG_PACKAGE_kmod-lp),y)
+ifneq ($(CONFIG_TARGET_x86_64)$(CONFIG_TARGET_x86),)
+  ifeq ($(CONFIG_PACKAGE_kmod-lp),y)
 LCDPROC_OTHER_DRIVERS_TEXT+=sdeclcd sed1330 sed1520 stv5730 t6963
+  endif
 endif
 
 LCDPROC_OTHER_DRIVERS:=$(strip $(LCDPROC_OTHER_DRIVERS_TEXT))
@@ -111,6 +115,11 @@ endef
 
 CONFIGURE_VARS += \
 	ac_cv_mtab_file="/etc/mtab"
+
+ifneq ($(CONFIG_TARGET_x86_64)$(CONFIG_TARGET_x86),)
+CONFIGURE_VARGS += \
+	ac_cv_port_have_lpt="yes"
+endif
 
 CONFIGURE_ARGS += \
 	--disable-libX11 \

@@ -1,0 +1,11 @@
+--- a/configure
++++ b/configure
+@@ -67,7 +67,7 @@ for x; do
+ 	--uid-max) UID_MAX=$var ;;
+ 	--gid-max) UID_MAX=$var ;;
+ 	--help|-h) usage ;;
+-	*) die "Error: unknown option $opt" ;;
++	*) echo "Error: unknown option $opt" ;;
+ 	esac
+ done
+ 

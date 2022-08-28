@@ -1,0 +1,4 @@
+#!/bin/sh
+
+grep -q '/usr/bin/acme' /etc/crontabs/root 2>/dev/null && exit 0
+echo "0 0 * * * /usr/bin/acme get" >> /etc/crontabs/root

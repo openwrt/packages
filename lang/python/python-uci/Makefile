@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2020 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
+# Copyright (C) 2018-2022 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-uci
-PKG_VERSION:=0.8.1
+PKG_VERSION:=0.9.0
 PKG_RELEASE:=$(AUTORELEASE)
 
 PYPI_NAME:=pyuci
-PKG_HASH:=9287fe41b427dc5c167592d429be48c1e6cfe276225681b1bdefddfe90d7e941
+PKG_HASH:=865a45d48fb5d363f1230e94fa2c5b01ae6487f02f2180b0a6f78193a70166e2
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 PKG_LICENSE:=GPL-3.0-or-later

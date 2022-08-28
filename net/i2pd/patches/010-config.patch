@@ -29,7 +29,7 @@
  ## Write full CLF-formatted date and time to log (default: write only time)
  # logclftime = true
  
-@@ -99,9 +99,9 @@ ipv6 = false
+@@ -115,9 +115,9 @@ published = true
  [http]
  ## Web Console settings
  ## Uncomment and set to 'false' to disable Web Console
@@ -41,7 +41,7 @@
  port = 7070
  ## Path to web console, default "/"
  # webroot = /
-@@ -116,9 +116,9 @@ port = 7070
+@@ -132,9 +132,9 @@ port = 7070
  
  [httpproxy]
  ## Uncomment and set to 'false' to disable HTTP Proxy
@@ -53,7 +53,7 @@
  port = 4444
  ## Optional keys file for proxy local destination
  # keys = http-proxy-keys.dat
-@@ -130,9 +130,9 @@ port = 4444
+@@ -146,9 +146,9 @@ port = 4444
  
  [socksproxy]
  ## Uncomment and set to 'false' to disable SOCKS Proxy
@@ -65,7 +65,7 @@
  port = 4447
  ## Optional keys file for proxy local destination
  # keys = socks-proxy-keys.dat
-@@ -146,7 +146,7 @@ port = 4447
+@@ -162,7 +162,7 @@ port = 4447
  
  [sam]
  ## Comment or set to 'false' to disable SAM Bridge
@@ -74,7 +74,7 @@
  ## Address and port service will listen on
  # address = 127.0.0.1
  # port = 7656
-@@ -181,7 +181,7 @@ enabled = true
+@@ -197,7 +197,7 @@ enabled = true
  
  [upnp]
  ## Enable or disable UPnP: automatic port forwarding (enabled by default in WINDOWS, ANDROID)
@@ -83,7 +83,7 @@
  ## Name i2pd appears in UPnP forwardings list (default = I2Pd)
  # name = I2Pd
  
-@@ -222,7 +222,7 @@ verify = true
+@@ -238,7 +238,7 @@ verify = true
  
  [limits]
  ## Maximum active transit sessions (default:2500)

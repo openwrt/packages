@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ddns-scripts
 PKG_VERSION:=2.8.2
-PKG_RELEASE:=24
+PKG_RELEASE:=25
 
 PKG_LICENSE:=GPL-2.0
 
@@ -201,7 +201,7 @@ define Package/ddns-scripts-gandi/description
   Dynamic DNS Client scripts extension for "gandi.net".
   It requires:
   "option username" to be a valid subdomain for gandi.net
-  "option password" to be a valid API key for ganid.net
+  "option password" to be a valid API key for gandi.net
 endef
 
 
