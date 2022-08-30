@@ -61,7 +61,7 @@ append_conf_params() {
 		for v in $v; do
 			# Look up OpenWRT interface names
 			[ "$p" = "BindToInterface" ] && {
-				local ifname=$(uci -P /var/state get network.$v.ifname 2>&-)
+				local ifname=$(uci_get_state network "$v" ifname "")
 				[ -n "$ifname" ] && v="$ifname"
 			}
 
@@ -156,7 +156,7 @@ prepare_net() {
 	section_enabled "$s" || return 1
 
 	[ -d "$TMP_TINC/$s" ] && rm -rf "$TMP_TINC/$s/"
-	mkdir -p "$TMP_TINC/$s"
+	mkdir -p "$TMP_TINC/$s/hosts"
 	[ -d "/etc/tinc/$s" ] && cp -r "/etc/tinc/$s" "$TMP_TINC/"
 
 	# append flags
