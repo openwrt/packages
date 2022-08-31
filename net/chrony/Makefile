@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=chrony
-PKG_VERSION:=4.2
+PKG_VERSION:=4.3
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.tuxfamily.org/chrony/
-PKG_HASH:=273f9fd15c328ed6f3a5f6ba6baec35a421a34a73bb725605329b1712048db9a
+PKG_HASH:=9d0da889a865f089a5a21610ffb6713e3c9438ce303a63b49c2fb6eaff5b8804
 
 PKG_MAINTAINER:=Miroslav Lichvar <mlichvar0@gmail.com>
 PKG_LICENSE:=GPL-2.0
