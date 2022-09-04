@@ -6,14 +6,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=boinc
-PKG_VERSION:=7.16.16
+PKG_VERSION:=7.20.2
 PKG_VERSION_SHORT:=$(shell echo $(PKG_VERSION)| cut -f1,2 -d.)
 PKG_RELEASE:=1
 
-PKG_SOURCE_DATE:=2020-02-25
+PKG_SOURCE_DATE:=2022-09-04
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/BOINC/boinc/tar.gz/client_release/$(PKG_VERSION_SHORT)/$(PKG_VERSION)?
-PKG_HASH:=0d5656a9f8ed1048936a5764270848b892d63f27bdb863d0ace447f1eaae6002
+PKG_HASH:=e577072b06f590d3230c25c94b221dba528b0938681e645bbd870778f8958077
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-client_release-$(PKG_VERSION_SHORT)-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Christian Dreihsig <christian.dreihsig@t-online.de>, Steffen Moeller <moeller@debian.org>
@@ -44,7 +44,7 @@ define Package/boinc/description
   desktop computers. The developers' web site at the University of
   Berkeley serves as a common portal to the otherwise independently run
   projects.
- 
+
   This package provides the BOINC core client program that is
   required to participate in any project that uses BOINC to control what
   projects to join and to determine constraints for the computation
