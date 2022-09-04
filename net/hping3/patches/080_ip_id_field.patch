@@ -1,0 +1,69 @@
+Subject: Fix "-N" command line argument
+Author: Guillaume Delacour <gui@iroqwa.org>
+Bug-Debian: http://bugs.debian.org/482844
+Last-Update: 2009-05-13
+
+--- a/docs/hping2.8
++++ b/docs/hping2.8
+@@ -343,7 +343,7 @@ options. If in doubt try
+ .I -N --id
+ Set ip->id field. Default id is random but if fragmentation is turned on
+ and id isn't specified it will be
+-.BR "getpid() & 0xFF" ,
++.BR "getpid() & 0xFFFF" ,
+ to implement a better solution is in TODO list.
+ .TP
+ .I -H --ipproto
+@@ -714,4 +714,4 @@ On solaris hping does not work on the lo
+ a solaris problem, as stated in the tcpdump-workers mailing list,
+ so the libpcap can't do nothing to handle it properly.
+ .SH SEE ALSO
+-ping(8), traceroute(8), ifconfig(8), nmap(1)
+\ No newline at end of file
++ping(8), traceroute(8), ifconfig(8), nmap(1)
+--- a/docs/hping3.8
++++ b/docs/hping3.8
+@@ -352,7 +352,7 @@ options. If in doubt try
+ .I -N --id
+ Set ip->id field. Default id is random but if fragmentation is turned on
+ and id isn't specified it will be
+-.BR "getpid() & 0xFF" ,
++.BR "getpid() & 0xFFFF" ,
+ to implement a better solution is in TODO list.
+ .TP
+ .I -H --ipproto
+--- a/hping2.h
++++ b/hping2.h
+@@ -121,7 +121,7 @@
+ #define DEFAULT_ICMP_IP_IHL		(IPHDR_SIZE >> 2)
+ #define	DEFAULT_ICMP_IP_TOS		0
+ #define DEFAULT_ICMP_IP_TOT_LEN		0 /* computed by send_icmp_*() */
+-#define DEFAULT_ICMP_IP_ID		0 /* rand */
++#define DEFAULT_ICMP_IP_ID		-1 /* rand */
+ #define DEFAULT_ICMP_CKSUM		-1 /* -1 means compute the cksum */
+ #define DEFAULT_ICMP_IP_PROTOCOL	6 /* TCP */
+ #define DEFAULT_RAW_IP_PROTOCOL		6 /* TCP */
+--- a/parseoptions.c
++++ b/parseoptions.c
+@@ -468,6 +468,10 @@ int parse_options(int argc, char **argv)
+ 			break;
+ 		case OPT_ICMP_IPID:
+ 			icmp_ip_id = strtol(ago_optarg, NULL, 0);
++			if (icmp_ip_id < 0 || icmp_ip_id > 0xffff) {
++				fprintf(stderr, "Bad ICMP IP ID, resetting to random.\n");
++				icmp_ip_id = DEFAULT_ICMP_IP_ID;
++			}
+ 			break;
+ 		case OPT_ICMP_IPPROTO:
+ 			icmp_ip_protocol = strtol(ago_optarg, NULL, 0);
+--- a/sendicmp.c
++++ b/sendicmp.c
+@@ -83,7 +83,7 @@ void send_icmp_echo(void)
+ 	icmp->type = opt_icmptype;	/* echo replay or echo request */
+ 	icmp->code = opt_icmpcode;	/* should be indifferent */
+ 	icmp->checksum = 0;
+-	icmp->un.echo.id = getpid() & 0xffff;
++	icmp->un.echo.id = icmp_ip_id == DEFAULT_ICMP_IP_ID ? getpid() & 0xffff : icmp_ip_id;
+ 	icmp->un.echo.sequence = _icmp_seq;
+ 
+ 	/* data */

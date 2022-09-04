@@ -1,0 +1,22 @@
+Subject: Fix incorrect data size check for UDP.
+Author: Luca Bigliardi <shammash@artha.org>
+Bug-Debian; http://bugs.debian.org/546590
+Last-Update: 2009-09-19
+
+--- a/parseoptions.c
++++ b/parseoptions.c
+@@ -606,9 +606,12 @@ int parse_options(int argc, char **argv)
+ 	if (opt_numeric == TRUE) opt_gethost = FALSE;
+ 
+ 	/* some error condition */
+-	if (data_size+IPHDR_SIZE+TCPHDR_SIZE > 65535) {
++	if (data_size+IPHDR_SIZE+
++	    (opt_udpmode?UDPHDR_SIZE:TCPHDR_SIZE) > 65535) {
+ 		printf("Option error: sorry, data size must be <= %lu\n",
+-			(unsigned long)(65535-IPHDR_SIZE+TCPHDR_SIZE));
++			(unsigned long)(65535-(IPHDR_SIZE+
++					(opt_udpmode?UDPHDR_SIZE:TCPHDR_SIZE)))
++				       );
+ 		exit(1);
+ 	}
+ 	else if (count <= 0 && count != -1) {
