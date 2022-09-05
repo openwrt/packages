@@ -1,0 +1,8 @@
+#!/bin/sh
+
+/usr/sbin/nextdns install
+# opkg automatically enables each service, but not image builder,
+#   so enable it here to cover both cases
+/etc/init.d/nextdns enable
+
+exit 0

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nextdns
 PKG_VERSION:=1.37.11
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=nextdns-$(PKG_VERSION).tar.gz
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
@@ -50,13 +50,9 @@ define Package/nextdns/install
 
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/nextdns.config $(1)/etc/config/nextdns
-endef
 
-define Package/nextdns/postinst
-#!/bin/sh
-if [ -z "$${IPKG_INSTROOT}" ]; then
-  nextdns install
-fi
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/nextdns.defaults $(1)/etc/uci-defaults/nextdns
 endef
 
 define Package/nextdns/prerm
