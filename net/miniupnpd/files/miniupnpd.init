@@ -172,13 +172,13 @@ upnpd() {
 
 		config_foreach conf_rule_add perm_rule
 
-		if [ "Z$FW" = "Zfw4" ]; then
+		if [ "$FW" = "fw4" ]; then
 			#When using nftables configure miniupnpd to use its own table and chains
-			echo "upnp_table_name=miniupnpd"
-			echo "upnp_nat_table_name=miniupnpd"
-			echo "upnp_forward_chain=forward"
-			echo "upnp_nat_chain=prerouting"
-			echo "upnp_nat_postrouting_chain=postrouting"
+			echo "upnp_table_name=fw4"
+			echo "upnp_nat_table_name=fw4"
+			echo "upnp_forward_chain=upnp_forward"
+			echo "upnp_nat_chain=upnp_prerouting"
+			echo "upnp_nat_postrouting_chain=upnp_postrouting"
 		fi
 
 		} > "$tmpconf"
@@ -186,20 +186,17 @@ upnpd() {
 
 	if [ -n "$ifname" ]; then
 		# start firewall
-		if [ "Z$FW" = "Zfw4" ]; then
-			#Add a miniupnpd table so that when fw4 reloads port-forwadings aren't lost, also give it priority so that port-forwards are considered before standard firewall rules
-			nft add table inet miniupnpd
-			nft add chain inet miniupnpd forward { type filter hook forward priority -20 \; policy accept \; comment \"Miniupnpd forwarding table\" \; }
-			nft add chain inet miniupnpd prerouting { type nat hook prerouting priority dstnat -20 \; policy accept \; comment \"Miniupnpd prerouting table\" \; }
-			nft add chain inet miniupnpd postrouting { type nat hook postrouting priority srcnat -20 \; policy accept \; comment \"Miniupnpd postrouting table\" \; }
+		if [ "$FW" = "fw4" ]; then
+			nft -s -t -n list chain inet fw4 upnp_forward >/dev/null 2>&1 || fw4 reload
 		else
-			iptables -L MINIUPNPD >/dev/null 2>&1 || fw3 reload			
+			iptables -L MINIUPNPD >/dev/null 2>&1 || fw3 reload
 		fi
 	else
 		logger -t "upnp daemon" "external interface not found, not starting"
 	fi
 
 	procd_open_instance
+	procd_set_param file "$conf" "/etc/config/firewall"
 	procd_set_param command "$PROG"
 	procd_append_param command -f "$conf"
 	[ "$log_output" = "1" ] && procd_append_param command -d
@@ -207,14 +204,15 @@ upnpd() {
 }
 
 stop_service() {
-	if [ "Z$FW" = "Zfw3" ]; then
+	if [ "$FW" = "fw3" ]; then
 		iptables -t nat -F MINIUPNPD 2>/dev/null
 		iptables -t nat -F MINIUPNPD-POSTROUTING 2>/dev/null
 		iptables -t filter -F MINIUPNPD 2>/dev/null
 		[ -x /usr/sbin/ip6tables ] && ip6tables -t filter -F MINIUPNPD 2>/dev/null
 	else
-		#delete the table removing port-forwardings when exiting
-		nft delete table inet miniupnpd
+		nft flush chain inet fw4 upnp_forward 2>/dev/null
+		nft flush chain inet fw4 upnp_prerouting 2>/dev/null
+		nft flush chain inet fw4 upnp_postrouting 2>/dev/null
 	fi
 }
 
