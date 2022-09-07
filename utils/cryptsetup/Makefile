@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cryptsetup
-PKG_VERSION:=2.4.3
+PKG_VERSION:=2.5.0
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=@KERNEL/linux/utils/cryptsetup/v2.4
-PKG_HASH:=fc0df945188172264ec5bf1d0bda08264fadc8a3f856d47eba91f31fe354b507
+PKG_SOURCE_URL:=@KERNEL/linux/utils/cryptsetup/v2.5
+PKG_HASH:=9184a6ebbd9ce7eb211152e7f741a6c82f2d1cc0e24a84ec9c52939eee0f0542
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-2.0-or-later LGPL-2.1-or-later
@@ -56,6 +56,7 @@ define Package/cryptsetup-ssh/description
 endef
 
 CONFIGURE_ARGS += \
+	--disable-asciidoc \
 	--disable-cryptsetup-reencrypt \
 	--disable-integritysetup \
 	--disable-selinux \
