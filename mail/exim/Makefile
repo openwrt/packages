@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=exim
-PKG_VERSION:=4.95
+PKG_VERSION:=4.96
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ftp.exim.org/pub/exim/exim4/
-PKG_HASH:=cc9cb653fff2ea947c3702680b59c99ac0bd1bbf19976d37e22a463cd804f167
+PKG_HASH:=299a56927b2eb3477daafd3c5bda02bc67e5c4e5898a7aeaf2740875278cf1a3
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 
 PKG_LICENSE:=GPL-2.0-or-later
@@ -45,7 +45,7 @@ LOOKUPS:= \
 define Package/exim/Default
   SECTION:=mail
   CATEGORY:=Mail
-  DEPENDS:=+libdb47 +libpcre $(ICONV_DEPENDS) +BUILD_NLS:libidn2 +BUILD_NLS:libidn
+  DEPENDS:=+libdb47 +libpcre2 $(ICONV_DEPENDS) +BUILD_NLS:libidn2 +BUILD_NLS:libidn
   TITLE:=Exim message transfer agent
   URL:=http://www.exim.org/
   USERID:=exim=42:exim=42
