@@ -2,11 +2,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
 
-PKG_VERSION:=0.16.2
+PKG_VERSION:=0.17.5
 PKG_RELEASE:=$(AUTORELEASE)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/gnunet
-PKG_HASH:=b5858833836509b71d5c0d9bdc11fd1beeeaba5a75be4bbd93581a4d13e0f49a
+PKG_HASH:=8a744ff7a95d1e83215cce118050640f6c12261abe4c60a56bcf88e500f0023d
 
 PKG_LICENSE:=AGPL-3.0
 PKG_LICENSE_FILES:=COPYING
@@ -214,13 +214,13 @@ PLUGIN_conversation:=gnsrecord_conversation
 LIBEXEC_conversation:=helper-audio-playback helper-audio-record service-conversation
 CONF_conversation:=conversation
 
-BIN_dht-cli:=dht-get dht-put dht-monitor
+BIN_dht-cli:=dht-get dht-hello dht-put dht-monitor
 PLUGIN_dht-cli:=block_test
 
 DEPENDS_curl:=+libgnurl +jansson
 LIB_curl:=curl
 
-DEPENDS_hostlist:=+libmicrohttpd-ssl +gnunet-curl +ca-certificates
+DEPENDS_hostlist:=+libmicrohttpd-ssl +gnunet-curl +ca-bundle
 LIBEXEC_hostlist:=daemon-hostlist
 CONF_hostlist:=hostlist
 
@@ -232,7 +232,7 @@ PLUGIN_transport-bluetooth:=transport_bluetooth
 LIBEXEC_transport-bluetooth:=helper-transport-bluetooth
 FILE_MODES_transport-bluetooth:=/usr/lib/gnunet/libexec/gnunet-helper-transport-bluetooth:root:gnunet:4750
 
-DEPENDS_transport-http_client:=+gnunet-curl +ca-certificates
+DEPENDS_transport-http_client:=+gnunet-curl +ca-bundle
 PLUGIN_transport-http_client:=transport_http_client transport_https_client
 
 DEPENDS_transport-http_server:=+libmicrohttpd-ssl
@@ -288,7 +288,7 @@ PLUGIN_messenger:=gnsrecord_messenger
 
 DEPENDS_reclaim:=+gnunet-gns +gnunet-sqlite +libpbc +libgabe +jansson
 BIN_reclaim:=did reclaim
-LIB_reclaim:=consensus abe reclaim reclaimattribute secretsharing
+LIB_reclaim:=abe consensus did reclaim reclaimattribute secretsharing
 LIBEXEC_reclaim:=service-consensus service-reclaim service-secretsharing
 CONF_reclaim:=consensus reclaim secretsharing
 PLUGIN_reclaim:=block_consensus gnsrecord_reclaim reclaim_credential_jwt reclaim_attribute_basic
