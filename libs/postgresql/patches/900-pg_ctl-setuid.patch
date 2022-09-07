@@ -8,7 +8,7 @@
  static char *argv0 = NULL;
  static bool allow_core_files = false;
  static time_t start_time;
-@@ -2049,6 +2050,9 @@ do_help(void)
+@@ -2081,6 +2082,9 @@ do_help(void)
  #endif
  	printf(_("  -s, --silent           only print errors, no informational messages\n"));
  	printf(_("  -t, --timeout=SECS     seconds to wait when using -w option\n"));
@@ -18,7 +18,7 @@
  	printf(_("  -V, --version          output version information, then exit\n"));
  	printf(_("  -w, --wait             wait until operation completes (default)\n"));
  	printf(_("  -W, --no-wait          do not wait until operation completes\n"));
-@@ -2261,6 +2265,7 @@ main(int argc, char **argv)
+@@ -2293,6 +2297,7 @@ main(int argc, char **argv)
  		{"options", required_argument, NULL, 'o'},
  		{"silent", no_argument, NULL, 's'},
  		{"timeout", required_argument, NULL, 't'},
@@ -26,7 +26,7 @@
  		{"core-files", no_argument, NULL, 'c'},
  		{"wait", no_argument, NULL, 'w'},
  		{"no-wait", no_argument, NULL, 'W'},
-@@ -2301,20 +2306,6 @@ main(int argc, char **argv)
+@@ -2333,20 +2338,6 @@ main(int argc, char **argv)
  		}
  	}
  
@@ -47,7 +47,7 @@
  
  	env_wait = getenv("PGCTLTIMEOUT");
  	if (env_wait != NULL)
-@@ -2400,11 +2391,15 @@ main(int argc, char **argv)
+@@ -2432,11 +2423,15 @@ main(int argc, char **argv)
  					wait_seconds_arg = true;
  					break;
  				case 'U':
@@ -63,7 +63,7 @@
  					break;
  				case 'w':
  					do_wait = true;
-@@ -2486,6 +2481,41 @@ main(int argc, char **argv)
+@@ -2518,6 +2513,41 @@ main(int argc, char **argv)
  		exit(1);
  	}
  
