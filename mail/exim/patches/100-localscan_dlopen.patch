@@ -10,7 +10,7 @@ Last-Update: 2021-07-28
 
 --- a/src/EDITME
 +++ b/src/EDITME
-@@ -883,6 +883,21 @@ HEADERS_CHARSET="ISO-8859-1"
+@@ -873,6 +873,21 @@ HEADERS_CHARSET="ISO-8859-1"
  
  
  #------------------------------------------------------------------------------
@@ -34,7 +34,7 @@ Last-Update: 2021-07-28
  # the documentation in "info" format, first fetch the Texinfo documentation
 --- a/src/config.h.defaults
 +++ b/src/config.h.defaults
-@@ -35,6 +35,8 @@ Do not put spaces between # and the 'def
+@@ -33,6 +33,8 @@ Do not put spaces between # and the 'def
  
  #define AUTH_VARS                     4
  
@@ -45,8 +45,8 @@ Last-Update: 2021-07-28
  #define CONFIGURE_FILE
 --- a/src/globals.c
 +++ b/src/globals.c
-@@ -121,6 +121,10 @@ int     dsn_ret                = 0;
- const pcre  *regex_DSN         = NULL;
+@@ -117,6 +117,10 @@ int     dsn_ret                = 0;
+ const pcre2_code  *regex_DSN         = NULL;
  uschar *dsn_advertise_hosts    = NULL;
  
 +#ifdef DLOPEN_LOCAL_SCAN
@@ -58,8 +58,8 @@ Last-Update: 2021-07-28
  BOOL    gnutls_allow_auto_pkcs11 = FALSE;
 --- a/src/globals.h
 +++ b/src/globals.h
-@@ -156,6 +156,9 @@ extern int      dsn_ret;               /
- extern const pcre  *regex_DSN;         /* For recognizing DSN settings */
+@@ -155,6 +155,9 @@ extern int      dsn_ret;               /
+ extern const pcre2_code  *regex_DSN;         /* For recognizing DSN settings */
  extern uschar  *dsn_advertise_hosts;   /* host for which TLS is advertised */
  
 +#ifdef DLOPEN_LOCAL_SCAN
@@ -70,7 +70,7 @@ Last-Update: 2021-07-28
  
 --- a/src/local_scan.c
 +++ b/src/local_scan.c
-@@ -6,58 +6,133 @@
+@@ -7,58 +7,133 @@
  /* See the file NOTICE for conditions of use and distribution. */
  
  
@@ -266,7 +266,7 @@ Last-Update: 2021-07-28
  extern uschar *message_id;             /* Internal id of message being handled */
  extern uschar *received_protocol;      /* Name of incoming protocol */
  extern int     recipients_count;       /* Number of recipients */
-@@ -235,4 +239,6 @@ extern pid_t    child_open_exim2_functio
+@@ -236,4 +240,6 @@ extern pid_t    child_open_exim2_functio
  extern pid_t    child_open_function(uschar **, uschar **, int, int *, int *, BOOL, const uschar *);
  #endif
  
@@ -275,7 +275,7 @@ Last-Update: 2021-07-28
  /* End of local_scan.h */
 --- a/src/readconf.c
 +++ b/src/readconf.c
-@@ -215,6 +215,9 @@ static optionlist optionlist_config[] =
+@@ -212,6 +212,9 @@ static optionlist optionlist_config[] =
    { "local_from_prefix",        opt_stringptr,   {&local_from_prefix} },
    { "local_from_suffix",        opt_stringptr,   {&local_from_suffix} },
    { "local_interfaces",         opt_stringptr,   {&local_interfaces} },
@@ -295,9 +295,9 @@ Last-Update: 2021-07-28
  /*************************************************
  *            Copy and save string                *
  *************************************************/
-@@ -470,6 +471,7 @@ Ustrncpy(ss, s, n);
- ss[n] = 0;
- return ss;
+@@ -463,6 +464,7 @@ string_copyn_function(const uschar * s,
+ {
+ return string_copyn(s, n);
  }
 +#pragma GCC visibility pop
  #endif
