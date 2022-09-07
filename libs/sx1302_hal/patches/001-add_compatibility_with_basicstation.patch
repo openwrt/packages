@@ -1,0 +1,22 @@
+From a6ae15dc6709e32f0604b6eeb0f07cc50bde18b1 Mon Sep 17 00:00:00 2001
+From: Marcus Schref <mschref@web.de>
+Date: Mon, 22 Aug 2022 10:06:03 +0200
+Subject: [PATCH] sx1302_hal: add compatibility with basicstation
+
+Add LGW_LBT_ISSUE define used by Basicstation
+
+Signed-off-by: Marcus Schref <mschref@web.de>
+---
+ libloragw/inc/loragw_hal.h | 1 +
+ 1 file changed, 1 insertion(+)
+
+--- a/libloragw/inc/loragw_hal.h
++++ b/libloragw/inc/loragw_hal.h
+@@ -45,6 +45,7 @@ License: Revised BSD License, see LICENS
+ #define LGW_HAL_SUCCESS     0
+ #define LGW_HAL_ERROR       -1
+ #define LGW_LBT_NOT_ALLOWED 1
++#define LGW_LBT_ISSUE 1
+ 
+ /* radio-specific parameters */
+ #define LGW_XTAL_FREQU      32000000            /* frequency of the RF reference oscillator */
