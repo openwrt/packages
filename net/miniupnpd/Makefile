@@ -11,10 +11,12 @@ PKG_NAME:=miniupnpd
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/miniupnp/miniupnp.git
-PKG_SOURCE_DATE:=2022-08-06
-PKG_SOURCE_VERSION:=fa42d8f9316bf9c1ca14317e5a6e0d4a21365629
-PKG_MIRROR_HASH:=06662c7cf8f553f625cd968d12ea732db4193706510ed0db6e8bdd1c6b935c50
+PKG_SOURCE_DATE:=2022-08-31
+PKG_SOURCE_VERSION:=68c8ec508a421f4f4af67a63e3eb6f497d2531e1
+PKG_MIRROR_HASH:=68a3170ec73149c4cf4855b1ce6e031557cc12bff85a58421bb94785daaf225d
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)/miniupnpd
+
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=BSD-3-Clause
@@ -113,6 +115,12 @@ endef
 
 define Package/miniupnpd-nftables/install
 	$(call Package/miniupnpd/install/Default,$1)
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_DIR) $(1)/usr/share/miniupnpd
+	$(INSTALL_BIN) ./files/miniupnpd.defaults.nftables $(1)/etc/uci-defaults/99-miniupnpd
+	$(INSTALL_DATA) ./files/firewall4.include $(1)/usr/share/miniupnpd/firewall.include
+	$(INSTALL_DIR) $(1)/usr/share/nftables.d
+	$(CP) ./files/nftables.d/* $(1)/usr/share/nftables.d/
 endef
 
 $(eval $(call BuildPackage,miniupnpd-iptables))
