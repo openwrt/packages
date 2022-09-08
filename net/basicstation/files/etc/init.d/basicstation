@@ -1,0 +1,254 @@
+#!/bin/sh /etc/rc.common
+#
+# Copyright (C) 2022 TDT AG <development@tdt.de>
+#
+# This is free software, licensed under the GNU General Public License v2.
+# See https://www.gnu.org/licenses/gpl-2.0.txt for more information.
+
+START=85
+STOP=25
+
+USE_PROCD=1
+
+#radioconf
+DEFAULT_COMIF='usb'
+DEFAULT_DEVPATH='/dev/ttyACM0'
+DEFAULT_PPS=0
+DEFAULT_PUBLIC=1
+DEFAULT_CLKSRC=0
+DEFAULT_RADIO_0='rfconf0'
+DEFAULT_RADIO_1='rfconf1'
+
+#rfconf
+DEFAULT_TYPE='SX1250'
+DEFAULT_TX_ENABLE=0
+DEFAULT_FREQ=0
+DEFAULT_RSSI_OFFSET=0
+DEFAULT_ANTENNA_GAIN=0
+DEFAULT_RSSI_TCOMP='std'
+
+#rssi tcomp
+DEFAULT_RSSI_TCOMP_A=0
+DEFAULT_RSSI_TCOMP_B=0
+DEFAULT_RSSI_TCOMP_C=20.41
+DEFAULT_RSSI_TCOMP_D=2162.56
+DEFAULT_RSSI_TCOMP_E=0
+
+#tx gain lut
+DEFAULT_RF_POWER=0
+DEFAULT_PA_GAIN=0
+DEFAULT_PWR_IDX=0
+
+#station
+DEFAULT_RADIO_INIT=''
+DEFAULT_ID_GEN_IF='eth0'
+DEFAULT_ROUTER_ID='/sys/class/net/eth0/address'
+DEFAULT_LOG_FILE='/tmp/basicstation/log'
+DEFAULT_LOG_LEVEL='DEBUG'
+DEFAULT_LOG_SIZE=1
+DEFAULT_LOG_ROTATE=1
+
+#auth
+DEFAULT_CREDENTIALS='tc'
+DEFAULT_MODE='no'
+
+parse_txlut() {
+	local section="$1"
+	local buffer
+
+	config_get buffer "$section" usedBy
+
+	if [[ "$buffer" == *"$2"* ]]; then
+		json_add_object
+
+		config_get buffer "$section" rfPower "$DEFAULT_RF_POWER"
+		json_add_int 'rf_power' "$buffer"
+		config_get_bool buffer "$section" paGain "$DEFAULT_PA_GAIN"
+		json_add_int 'pa_gain' "$buffer"
+		config_get buffer "$section" pwrIdx "$DEFAULT_PWR_IDX"
+		json_add_int 'pwr_idx' "$buffer"
+
+		json_close_object
+	fi
+}
+
+parse_rssitcomp() {
+	local section="$1"
+	local buffer
+
+	if [ "$section" = "$2" ]; then
+		json_add_object 'rssi_tcomp'
+
+		config_get buffer "$section" coeff_a "$DEFAULT_RSSI_TCOMP_A"
+		json_add_double 'coeff_a' "$buffer"
+		config_get buffer "$section" coeff_b "$DEFAULT_RSSI_TCOMP_B"
+		json_add_double 'coeff_b' "$buffer"
+		config_get buffer "$section" coeff_c "$DEFAULT_RSSI_TCOMP_C"
+		json_add_double 'coeff_c' "$buffer"
+		config_get buffer "$section" coeff_d "$DEFAULT_RSSI_TCOMP_D"
+		json_add_double 'coeff_d' "$buffer"
+		config_get buffer "$section" coeff_e "$DEFAULT_RSSI_TCOMP_E"
+		json_add_double 'coeff_e' "$buffer"
+
+		json_close_object
+	fi
+}
+
+parse_rfconf() {
+	local section="$1"
+	local buffer
+
+	if [ "$section" = "$2" ]; then
+		json_add_object "radio_"$3""
+
+		config_get buffer "$section" type "$DEFAULT_TYPE"
+		json_add_string 'type' "$buffer"
+		config_get buffer "$section" freq "$DEFAULT_FREQ"
+		json_add_int 'freq' "$buffer"
+		config_get buffer "$section" antennaGain "$DEFAULT_ANTENNA_GAIN"
+		json_add_int 'antenna_gain' "$buffer"
+		config_get buffer "$section" rssiOffset "$DEFAULT_RSSI_OFFSET"
+		json_add_double 'rssi_offset' "$buffer"
+		config_get buffer "$section" useRssiTcomp "$DEFAULT_RSSI_TCOMP"
+		config_foreach parse_rssitcomp rssitcomp "$buffer"
+		config_get_bool buffer "$section" txEnable "$DEFAULT_TX_ENABLE"
+		json_add_boolean 'tx_enable' "$buffer"
+
+		if [ "$buffer" -eq 1 ]; then
+			json_add_array 'tx_gain_lut'
+			config_foreach parse_txlut txlut "$section"
+			json_close_array
+		fi
+
+		json_close_object
+	fi
+}
+
+parse_sx130x() {
+	local section="$1"
+	local comif
+	local devpath
+	local buffer
+
+	json_add_object 'radio_conf'
+
+	config_get comif "$section" comif "$DEFAULT_COMIF"
+	config_get devpath "$section" devpath "$DEFAULT_DEVPATH"
+	json_add_string 'device' ""$comif":"$devpath""
+	config_get_bool buffer "$section" pps "$DEFAULT_PPS"
+	json_add_boolean 'pps' "$buffer"
+	config_get_bool buffer "$section" public "$DEFAULT_PUBLIC"
+	json_add_boolean 'lorawan_public' "$buffer"
+	config_get buffer "$section" clksrc "$DEFAULT_CLKSRC"
+	json_add_int 'clksrc' "$buffer"
+	json_add_boolean 'full_duplex' 0
+	config_get buffer "$section" radio0 "$DEFAULT_RADIO_0"
+	config_foreach parse_rfconf rfconf "$buffer" 0
+	config_get buffer "$section" radio1 "$DEFAULT_RADIO_1"
+	config_foreach parse_rfconf rfconf "$buffer" 1
+
+	json_close_object
+}
+
+parse_station() {
+	local section="$1"
+	local buffer
+	local mac
+
+	config_get buffer "$section" idGenIf "$DEFAULT_ID_GEN_IF"
+	mac=$(head -n 1 /sys/class/net/"$buffer"/address)
+	uci_set basicstation "$section" stationid "${mac::8}:ff:fe:${mac:9:8}"
+	uci_commit basicstation
+
+	json_add_object 'station_conf'
+
+	config_get buffer "$section" routerid "$DEFAULT_ROUTER_ID"
+	json_add_string 'routerid' "$buffer"
+	config_get buffer "$section" radioInit "$DEFAULT_RADIO_INIT"
+	json_add_string 'radio_init' "$buffer"
+	config_get buffer "$section" logFile "$DEFAULT_LOG_FILE"
+	json_add_string 'log_file' "$buffer"
+	config_get buffer "$section" logLevel "$DEFAULT_LOG_LEVEL"
+	json_add_string 'log_level' "$buffer"
+	config_get buffer "$section" logSize "$DEFAULT_LOG_SIZE"
+	json_add_int 'log_size' $(( 1000000*buffer ))
+	config_get buffer "$section" logRotate "$DEFAULT_LOG_ROTATE"
+	json_add_int 'log_rotate' "$buffer"
+
+	json_close_object
+}
+
+parse_auth() {
+	local section="$1"
+	local cred
+	local mode
+	local addr
+	local port
+	local uri
+	local buffer
+
+	config_get cred "$section" cred "$DEFAULT_CREDENTIALS"
+	config_get mode "$section" mode "$DEFAULT_MODE"
+	config_get addr "$section" addr
+	config_get port "$section" port
+
+	if [ "$mode" != 'no' ]; then
+		config_get buffer "$section" trust
+		[ -f "$buffer" ] && cp "$buffer" /tmp/basicstation/"$cred".trust
+		if [ "$mode" = 'serverAndClient' ]; then
+			config_get buffer "$section" key
+			echo "$buffer" > /tmp/basicstation/"$cred".key
+			config_get buffer "$section" crt
+			[ -f "$buffer" ] && cp "$buffer" /tmp/basicstation/"$cred".crt
+		elif [ "$mode" = 'serverAndClientToken' ]; then
+			config_get buffer "$section" token
+			echo "$buffer" > /tmp/basicstation/"$cred".key
+		fi
+		if [ "$cred" = "tc" ]; then
+			uri="wss://${addr}:${port}"
+		else
+			uri="https://${addr}:${port}"
+		fi
+	else
+		if [ "$cred" = "tc" ]; then
+			uri="ws://${addr}:${port}"
+		else
+			uri="http://${addr}:${port}"
+		fi
+	fi
+
+	echo "$uri" > /tmp/basicstation/"$cred".uri
+}
+
+process_config() {
+	. /usr/share/libubox/jshn.sh
+	json_init
+
+	config_load basicstation
+	config_foreach parse_sx130x sx130x
+	config_foreach parse_station station
+	json_dump -i > /tmp/basicstation/station.conf
+	config_foreach parse_auth auth
+}
+
+service_triggers() {
+	procd_add_reload_trigger "basicstation"
+}
+
+start_service() {
+	rm -rf /tmp/basicstation/
+	mkdir -p /tmp/basicstation/
+
+	process_config
+
+	procd_open_instance
+	procd_set_param command /usr/bin/station
+	procd_append_param command --home /tmp/basicstation/
+	procd_append_param command --force
+	procd_set_param respawn
+	procd_close_instance
+}
+
+reload_service() {
+	restart "$@"
+}
