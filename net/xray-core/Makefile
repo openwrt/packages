@@ -78,32 +78,6 @@ define Package/xray-core/conffiles
 /etc/config/xray
 endef
 
-GEOIP_VER:=202208250104
-GEOIP_FILE:=geoip.dat.$(GEOIP_VER)
-define Download/geoip
-  URL:=https://github.com/v2fly/geoip/releases/download/$(GEOIP_VER)/
-  URL_FILE:=geoip.dat
-  FILE:=$(GEOIP_FILE)
-  HASH:=8fadefdcbb973c5294f81a2142ffcfb0d138e6f8285e643f929d2fe035096075
-endef
-
-GEOSITE_VER:=20220829045350
-GEOSITE_FILE:=dlc.dat.$(GEOSITE_VER)
-define Download/geosite
-  URL:=https://github.com/v2fly/domain-list-community/releases/download/$(GEOSITE_VER)/
-  URL_FILE:=dlc.dat
-  FILE:=$(GEOSITE_FILE)
-  HASH:=107a52601a94baf02fe0d877f0a0f469606c87b9a0df2b7569630004dcb8f86e
-endef
-
-define Build/Prepare
-	$(call Build/Prepare/Default)
-ifneq ($(CONFIG_PACKAGE_xray-geodata),)
-	$(call Download,geoip)
-	$(call Download,geosite)
-endif
-endef
-
 define Package/xray-core/install
 	$(call GoPackage/Package/Install/Bin,$(PKG_INSTALL_DIR))
 	$(INSTALL_DIR) $(1)/usr/bin/
@@ -124,12 +98,5 @@ define Package/xray-example/install
 	$(INSTALL_DATA) $(CURDIR)/files/vpoint_vmess_freedom.json $(1)/etc/xray/
 endef
 
-define Package/xray-geodata/install
-	$(INSTALL_DIR) $(1)/usr/share/xray/
-	$(INSTALL_DATA) $(DL_DIR)/$(GEOIP_FILE) $(1)/usr/share/xray/geoip.dat
-	$(INSTALL_DATA) $(DL_DIR)/$(GEOSITE_FILE) $(1)/usr/share/xray/geosite.dat
-endef
-
 $(eval $(call BuildPackage,xray-core))
 $(eval $(call BuildPackage,xray-example))
-$(eval $(call BuildPackage,xray-geodata))
