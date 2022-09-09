@@ -130,14 +130,6 @@ config KEEPALIVED_DBUS
 	help
 		Builds support for using DBus with VRRP
 
-config KEEPALIVED_JSON
-	depends on KEEPALIVED_VRRP
-	bool
-	default n
-	prompt "Enable JSON support with VRRP"
-	help
-		Builds support for using JSON output for VRRP
-
 config KEEPALIVED_VRRP_AUTH
 	depends on KEEPALIVED_VRRP
 	bool
