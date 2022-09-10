@@ -1,11 +1,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-jsonschema
-PKG_VERSION:=4.15.0
+PKG_VERSION:=4.16.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=jsonschema
-PKG_HASH:=21f4979391bdceb044e502fd8e79e738c0cdfbdc8773f9a49b5769461e82fe1e
+PKG_HASH:=165059f076eff6971bae5b742fc029a7b4ef3f9bcf04c14e4776a7605de14b23
 
 PKG_MAINTAINER:=Javier Marcet <javier@marcet.info>
 PKG_LICENSE:=MIT
