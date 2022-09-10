@@ -95,7 +95,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * Strong LuCI support, all relevant options are exposed to the web frontend
 
 ## Prerequisites
-* [OpenWrt](https://openwrt.org), tested with the stable release series (19.07.x) and with the latest rolling snapshot releases. On turris devices it has been successfully tested with TurrisOS 5.1.x  
+* [OpenWrt](https://openwrt.org), tested with the stable release series and with the latest rolling snapshot releases.  
   <b>Please note:</b> Older OpenWrt releases like 18.06.x or 17.01.x are _not_ supported!  
   <b>Please note:</b> Devices with less than 128 MByte RAM are _not_ supported!  
 * A usual setup with an enabled DNS backend at minimum - dump AP modes without a working DNS backend are _not_ supported
@@ -130,7 +130,7 @@ Available commands:
 	resume          Resume adblock processing
 	query           &lt;domain&gt; Query active blocklists and backups for a specific domain
 	report          [&lt;search&gt;] Print DNS statistics with an optional search parameter
-	list            [&lt;add&gt;|&lt;add_sha&gt;|&lt;add_utc&gt;|&lt;add_eng&gt;|&lt;add_stb&gt;|&lt;remove&gt;|&lt;remove_sha&gt;|&lt;remove_utc&gt;|&lt;remove_eng&gt;|&lt;remove_stb&gt;] &lt;source(s)&gt; List/Edit available sources
+	list            [&lt;add&gt;|&lt;add_utc&gt;|&lt;add_eng&gt;|&lt;add_stb&gt;|&lt;remove&gt;|&lt;remove_utc&gt;|&lt;remove_eng&gt;|&lt;remove_stb&gt;] &lt;source(s)&gt; List/Edit available sources
 	timer           [&lt;add&gt; &lt;tasks&gt; &lt;hour&gt; [&lt;minute&gt;] [&lt;weekday&gt;]]|[&lt;remove&gt; &lt;line no.&gt;] List/Edit cron update intervals
 	version         Print version information
 	running         Check if service is running
@@ -155,12 +155,10 @@ Available commands:
 | adb_debug          | 0, disabled                        | set to 1 to enable the debug output                                                            |
 | adb_nice           | 0, standard prio.                  | valid nice level range 0-19 of the adblock processes                                           |
 | adb_forcedns       | 0, disabled                        | set to 1 to force DNS requests to the local resolver                                           |
-| adb_maxqueue       | 4                                  | size of the download queue to handle downloads & list processing in parallel                   |
 | adb_dnsdir         | -, auto-detected                   | path for the generated blocklist file 'adb_list.overall'                                       |
 | adb_dnstimeout     | 10                                 | timeout in seconds to wait for a successful DNS backend restart                                |
 | adb_dnsinstance    | 0, first instance                  | set to the relevant dns backend instance used by adblock (dnsmasq only)                        |
 | adb_dnsflush       | 0, disabled                        | set to 1 to flush the DNS Cache before & after adblock processing                              |
-| adb_dnsinotify     | -, not set                         | set to 1 to prevent adblock triggered restarts for DNS backends with autoload functions        |
 | adb_dnsallow       | -, not set                         | set to 1 to disable selective DNS whitelisting (RPZ-PASSTHRU)                                  |
 | adb_lookupdomain   | example.com                        | external domain to check for a successful DNS backend restart or 'false' to disable this check |
 | adb_portlist       | 53 853 5353                        | space separated list of firewall ports which should be redirected locally                      |
@@ -247,21 +245,22 @@ Finally enable E-Mail support and add a valid E-Mail receiver address in LuCI.
 
 **Service status output:**  
 In LuCI you'll see the realtime status in the 'Runtime' section on the overview page.  
-To get the status in the CLI, just call _/etc/init.d/adblock status_ or _/etc/init.d/adblock status\_service_ (in 19.07 and TurrisOS):
+To get the status in the CLI, just call _/etc/init.d/adblock status_ or _/etc/init.d/adblock status\_service_:
 <pre><code>
-~# /etc/init.d/adblock status
+~#@blackhole:~# /etc/init.d/adblock status
 ::: adblock runtime information
   + adblock_status  : enabled
-  + adblock_version : 4.1.0
-  + blocked_domains : 32658
-  + active_sources  : android_tracking, disconnect, shallalist
-  + dns_backend     : dnsmasq, /tmp/dnsmasq.d
-  + run_utils       : /usr/bin/curl, /usr/bin/gawk
-  + run_ifaces      : trigger: trm_wwan, report: br-lan
-  + run_directories : base: /tmp, backup: /tmp/adblock-Backup, report: /tmp/adblock-Report, jail: /tmp
-  + run_flags       : backup: 1, flush: 0, force: 1, search: 1, report: 1, mail: 0, jail: 0
-  + last_run        : reload, 0m 25s, 252/177/167, 26.02.2021 18:31:41
-  + system          : GL.iNet GL-MT1300, OpenWrt SNAPSHOT r15875-1bf6d70e60
+  + adblock_version : 4.1.4
+  + blocked_domains : 268355
+  + active_sources  : adaway, adguard, adguard_tracking, android_tracking, bitcoin, disconnect, firetv_tracking, games_t
+                      racking, hblock, oisd_basic, phishing_army, smarttv_tracking, stopforumspam, wally3k, winspy, yoyo
+  + dns_backend     : unbound (unbound-control), /var/lib/unbound
+  + run_utils       : download: /usr/bin/curl, sort: /usr/libexec/sort-coreutils, awk: /bin/busybox
+  + run_ifaces      : trigger: wan, report: br-lan
+  + run_directories : base: /tmp, backup: /mnt/data/adblock-Backup, report: /mnt/data/adblock-Report, jail: /tmp
+  + run_flags       : backup: ✔, flush: ✘, force: ✔, search: ✘, report: ✔, mail: ✔, jail: ✘
+  + last_run        : restart, 3m 17s, 249/73/68, 2022-09-10T13:43:07+02:00
+  + system          : ASUS RT-AX53U, OpenWrt SNAPSHOT r20535-2ca5602864
 </code></pre>
 The 'last\_run' line includes the used start type, the run duration, the memory footprint after DNS backend loading (total/free/available) and the date/time of the last run.  
 
