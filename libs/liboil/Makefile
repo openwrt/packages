@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=liboil
 PKG_VERSION:=0.3.17
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://liboil.freedesktop.org/download/
@@ -20,9 +20,9 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/nls.mk
 
 define Package/liboil
   SECTION:=libs
@@ -30,7 +30,7 @@ define Package/liboil
   TITLE:=simple functions optimized for various CPUs
   URL:=http://liboil.freedesktop.org/wiki/
   MAINTAINER:=W. Michael Petullo <mike@flyn.org>
-  DEPENDS:=+librt $(ICONV_DEPENDS) $(INTL_DEPENDS)
+  DEPENDS:=+librt
 endef
 
 define Package/liboil/description
@@ -43,10 +43,10 @@ define Package/liboil/description
 endef
 
 CONFIGURE_ARGS += \
+	--with-pic \
 	--enable-shared \
 	--enable-static \
-
-TARGET_CFLAGS += $(FPIC) $(if $(ICONV_FULL),-liconv) $(if $(INTL_FULL),-lintl)
+	--disable-glib
 
 # XXX: VFP_CFLAGS is set to '-mfpu=vfp' on arm by configure, but that breaks 
 # final linking stages, so override it until we find why
