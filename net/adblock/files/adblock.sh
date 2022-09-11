@@ -70,7 +70,7 @@ f_load() {
 		"${adb_awk}" 'BEGIN{RS="";FS="\n"}{printf "%s, %s",$1,$2}')"
 	adb_memory="$("${adb_awk}" '/^MemTotal|^MemFree|^MemAvailable/{ORS="/"; print int($2/1000)}' "/proc/meminfo" 2>/dev/null |
 		"${adb_awk}" '{print substr($0,1,length($0)-1)}')"
-	
+
 	f_conf
 
 	cpu="$(grep -c '^processor' /proc/cpuinfo 2>/dev/null)"
@@ -78,7 +78,7 @@ f_load() {
 	[ "${cpu}" = "0" ] && cpu="1"
 	[ "${core}" = "0" ] && core="1"
 	adb_cores="$((cpu * core))"
-	
+
 	if [ "${adb_action}" != "report" ]; then
 		f_dns
 		f_fetch
@@ -104,7 +104,7 @@ f_load() {
 	if [ -x "${adb_dumpcmd}" ] && { [ "${adb_report}" = "0" ] || { [ -n "${bg_pid}" ] && { [ "${adb_action}" = "stop" ] || [ "${adb_action}" = "restart" ]; }; }; }; then
 		if [ -n "${bg_pid}" ]; then
 			kill -HUP "${bg_pid}" 2>/dev/null
-			while $(kill -0 "${bg_pid}" 2>/dev/null); do
+			while kill -0 "${bg_pid}" 2>/dev/null; do
 				sleep 1
 			done
 			unset bg_pid
@@ -270,10 +270,10 @@ f_dns() {
 				adb_dnsuser="${adb_dnsuser:-"unbound"}"
 				adb_dnsdir="${adb_dnsdir:-"/var/lib/unbound"}"
 				adb_dnsheader="${adb_dnsheader:-""}"
-				adb_dnsdeny="${adb_dnsdeny:-"${adb_awk} '{print \"local-zone: \\042\"\$0\"\\042 static\"}'"}"
-				adb_dnsallow="${adb_dnsallow:-"${adb_awk} '{print \"local-zone: \\042\"\$0\"\\042 transparent\"}'"}"
+				adb_dnsdeny="${adb_dnsdeny:-"${adb_awk} '{print \"local-zone: \\042\"\$0\"\\042 always_nxdomain\"}'"}"
+				adb_dnsallow="${adb_dnsallow:-"${adb_awk} '{print \"local-zone: \\042\"\$0\"\\042 always_transparent\"}'"}"
 				adb_dnssafesearch="${adb_dnssafesearch:-"${adb_awk} -v item=\"\$item\" '{type=\"AAAA\";if(match(item,/^([0-9]{1,3}\.){3}[0-9]{1,3}$/)){type=\"A\"}}{print \"local-data: \\042\"\$0\" \"type\" \"item\"\\042\"}'"}"
-				adb_dnsstop="${adb_dnsstop:-"local-zone: \".\" static"}"
+				adb_dnsstop="${adb_dnsstop:-"local-zone: \".\" always_nxdomain"}"
 				;;
 			"named")
 				adb_dnscachecmd="$(command -v rndc || printf "%s" "-")"
@@ -625,7 +625,7 @@ f_dnsup() {
 			dns_service="$(ubus -S call service list "{\"name\":\"${adb_dns}\"}")"
 			dns_up="$(printf "%s" "${dns_service}" | jsonfilter -l1 -e "@[\"${adb_dns}\"].instances.*.running")"
 			dns_pid="$(printf "%s" "${dns_service}" | jsonfilter -l1 -e "@[\"${adb_dns}\"].instances.*.pid")"
-			if [ "${dns_up}" = "true" ] && [ -n "${dns_pid}" ] && ! ls -l "/proc/${dns_pid}/fd" 2>/dev/null | grep -q "${adb_dnsdir}/${adb_dnsfile}"; then
+			if [ "${dns_up}" = "true" ] && [ -n "${dns_pid}" ] && ! ls "/proc/${dns_pid}/fd/${adb_dnsdir}/${adb_dnsfile}" >/dev/null 2>&1; then
 				if [ -x "${adb_lookupcmd}" ] && [ "${adb_lookupdomain}" != "false" ]; then
 					if "${adb_lookupcmd}" "${adb_lookupdomain}" >/dev/null 2>&1; then
 						out_rc="0"
@@ -1432,13 +1432,6 @@ if [ -r "/lib/functions.sh" ] && [ -r "/lib/functions/network.sh" ] && [ -r "/us
 	. "/usr/share/libubox/jshn.sh"
 else
 	f_log "err" "system libraries not found"
-fi
-
-# version information
-#
-if [ "${adb_action}" = "version" ]; then
-	printf "%s\n" "${adb_ver}"
-	exit 0
 fi
 
 # awk check
