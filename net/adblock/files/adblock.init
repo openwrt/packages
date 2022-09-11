@@ -15,7 +15,6 @@ if [ -n "$(type -t extra_command)" ]; then
 	extra_command "report" "[[<cli>|<mail>|<gen>|<json>] [<count>] [<search>]] Print DNS statistics with an optional search parameter"
 	extra_command "list" "[<add>|<add_sha>|<add_utc>|<add_eng>|<add_stb>|<remove>|<remove_sha>|<remove_utc>|<remove_eng>|<remove_stb>] <source(s)> List/Edit available sources"
 	extra_command "timer" "[<add> <tasks> <hour> [<minute>] [<weekday>]]|[<remove> <line no.>] List/Edit cron update intervals"
-	extra_command "version" "Print version information"
 else
 	EXTRA_COMMANDS="status suspend resume query report list timer version"
 	EXTRA_HELP="	status	Service status
@@ -24,8 +23,7 @@ else
 	query	<domain> Query active blocklists and backups for a specific domain
 	report	[[<cli>|<mail>|<gen>|<json>] [<count>] [<search>]] Print DNS statistics with an optional search parameter
 	list	[<add>|<add_sha>|<add_utc>|<add_eng>|<add_stb>|<remove>|<remove_sha>|<remove_utc>|<remove_eng>|<remove_stb>] <source(s)> List/Edit available sources
-	timer	[<add> <tasks> <hour> [<minute>] [<weekday>]]|[<remove> <line no.>] List/Edit cron update intervals
-	version	Print version information"
+	timer	[<add> <tasks> <hour> [<minute>] [<weekday>]]|[<remove> <line no.>] List/Edit cron update intervals"
 fi
 
 adb_init="/etc/init.d/adblock"
@@ -38,10 +36,6 @@ if [ -s "${adb_pidfile}" ] && { [ "${action}" = "start" ] || [ "${action}" = "st
 	{ [ "${action}" = "list" ] && [ -n "${1}" ]; }; }; then
 	exit 0
 fi
-
-version() {
-	rc_procd "${adb_script}" version
-}
 
 boot() {
 	[ -s "${adb_pidfile}" ] && : >"${adb_pidfile}"
