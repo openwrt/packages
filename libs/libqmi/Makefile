@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libqmi
-PKG_SOURCE_VERSION:=1.30.6
+PKG_SOURCE_VERSION:=1.30.8
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://gitlab.freedesktop.org/mobile-broadband/libqmi.git
-PKG_MIRROR_HASH:=034dc3b9e5ddb1acd9bb8c2a07f3f8a576d47b7f70942b61b82c4dfc8f805186
+PKG_MIRROR_HASH:=a0fa33a89011bdb593f66fd0b674f2a7c31f87e43ffd7f3e9a515b00864c4a91
 
 PKG_MAINTAINER:=Nicholas Smith <nicholas@nbembedded.com>
 
