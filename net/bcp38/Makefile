@@ -6,8 +6,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bcp38
-PKG_VERSION:=5
-PKG_RELEASE:=6
+PKG_VERSION:=6
+PKG_RELEASE:=7
 PKG_LICENCE:=GPL-3.0-or-later
 
 include $(INCLUDE_DIR)/package.mk
@@ -19,7 +19,6 @@ define Package/bcp38
   TITLE:=BCP38 compliance
   URL:=https://github.com/dtaht/ceropackages-3.10
   MAINTAINER:=Toke Høiland-Jørgensen <toke@toke.dk>
-  DEPENDS:=+ipset
   PKGARCH:=all
 endef
 
