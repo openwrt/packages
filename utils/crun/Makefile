@@ -10,7 +10,6 @@ PKG_SOURCE_DATE:=2022-05-09
 PKG_SOURCE_VERSION:=85649a8c561f7fbf018e5c5640a7e9370c80ce73
 PKG_MIRROR_HASH:=69b7db70fc13d16244609bbbd5240792519810a60d9f68ba6d5ed3def1b23fe9
 
-PKG_BUILD_DEPENDS:=argp-standalone
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -26,7 +25,7 @@ define Package/crun
   CATEGORY:=Utilities
   TITLE:=crun
   URL:=https://github.com/containers/crun
-  DEPENDS:=@!arc +libseccomp +libcap
+  DEPENDS:=@!arc +!USE_GLIBC:argp-standalone +libseccomp +libcap
 endef
 
 define Package/crun/description

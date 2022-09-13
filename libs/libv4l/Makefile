@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=v4l-utils
 PKG_VERSION:=1.20.0
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://www.linuxtv.org/downloads/v4l-utils
@@ -19,8 +19,6 @@ PKG_USE_MIPS16:=0
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
-
-PKG_BUILD_DEPENDS:=!USE_GLIBC:argp-standalone
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -50,7 +48,7 @@ define Package/libv4l
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE+= wrapper libraries
-  DEPENDS := +libpthread +librt $(ICONV_DEPENDS)
+  DEPENDS := +libpthread +librt $(ICONV_DEPENDS) +!USE_GLIBC:argp-standalone
   LICENSE:=LGPL-2.1-or-later
   LICENSE_FILES:=COPYING.libv4l
 endef

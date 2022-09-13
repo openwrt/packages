@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=addrwatch
 PKG_VERSION:=1.0.2
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/fln/addrwatch/releases/download/v$(PKG_VERSION)
@@ -21,7 +21,6 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
-PKG_BUILD_DEPENDS:=USE_MUSL:argp-standalone
 PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
@@ -42,7 +41,7 @@ endef
 
 define Package/addrwatch
 $(call Package/addrwatch/Default)
-  DEPENDS:=+libpcap +libevent2
+  DEPENDS:=+libpcap +libevent2 +!USE_GLIBC:argp-standalone
 endef
 
 define Package/addrwatch/description

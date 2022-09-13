@@ -23,8 +23,6 @@ PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
-PKG_BUILD_DEPENDS:=!USE_GLIBC:argp-standalone
-
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
@@ -34,7 +32,8 @@ define Package/cryptsetup
   SUBMENU:=Encryption
   TITLE:=Cryptsetup
   DEPENDS:=$(ICONV_DEPENDS) $(INTL_DEPENDS) +libblkid +libuuid +libpopt +lvm2 \
-           +libdevmapper +libjson-c +@KERNEL_DIRECT_IO +kmod-crypto-user
+           +libdevmapper +libjson-c +@KERNEL_DIRECT_IO +kmod-crypto-user \
+           +!USE_GLIBC:argp-standalone
   URL:=https://gitlab.com/cryptsetup/cryptsetup/
 endef
 

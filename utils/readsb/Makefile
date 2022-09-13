@@ -18,7 +18,6 @@ PKG_LICENSE_FILES:=COPYING LICENSE
 
 PKG_MAINTAINER:=Stijn Tintel <stijn@linux-ipv6.be>
 
-PKG_BUILD_DEPENDS:=!USE_GLIBC:argp-standalone
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -26,9 +25,9 @@ include $(INCLUDE_DIR)/package.mk
 define Package/readsb/default
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libncurses
+  DEPENDS:=+libncurses +!USE_GLIBC:argp-standalone
   TITLE:=Mode-S/ADSB/TIS decoder for various devices
-  URL:=https://github.com/Mictronic/readsb
+  URL:=https://github.com/Mictronics/readsb
 endef
 
 define Package/readsb

@@ -21,7 +21,6 @@ PKG_MIRROR_HASH:=6ef000459858a87e206c903828f428d469c18221789cb65fec91a8d822b0178
 
 PKG_BUILD_DIR=$(KERNEL_BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
 PKG_BUILD_PARALLEL:=1
-PKG_BUILD_DEPENDS:=!USE_GLIBC:argp-standalone
 
 PKG_FIXUP:=autoreconf
 
@@ -102,7 +101,7 @@ endef
 define Package/jool-tools-netfilter
   $(call Package/jool/Default)
   TITLE:=Jool userspace control programs
-  DEPENDS:=+libnl +kmod-jool-netfilter
+  DEPENDS:=+libnl +kmod-jool-netfilter +!USE_GLIBC:argp-standalone
 endef
 
 define Package/jool-tools-netfilter/description
