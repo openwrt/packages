@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=iperf
 PKG_VERSION:=3.11
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://downloads.es.net/pub/iperf
@@ -32,19 +32,19 @@ define Package/iperf3/default
   CATEGORY:=Network
   TITLE:=Internet Protocol bandwidth measuring tool
   URL:=https://github.com/esnet/iperf
-  DEPENDS:=+libiperf3
 endef
 
 define Package/iperf3
 $(call Package/iperf3/default)
   VARIANT:=nossl
+  DEPENDS:=+libiperf3
 endef
 
 define Package/iperf3-ssl
 $(call Package/iperf3/default)
   TITLE+= with iperf_auth support
   VARIANT:=ssl
-  DEPENDS+=+libopenssl
+  DEPENDS:=+libopenssl
 endef
 
 define Package/libiperf3
@@ -97,7 +97,7 @@ define Package/iperf3-ssl/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/iperf3 $(1)/usr/bin/
 endef
 
-define Package/iperf3/install
+define Package/libiperf3/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libiperf.so.* $(1)/usr/lib
 endef
