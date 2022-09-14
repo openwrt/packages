@@ -483,7 +483,7 @@ mwan3_create_iface_route()
 			# if 'connected' was called after 'ifup'
 			[ -n "$tbl" ] && [ -z "${tbl##*$route_line$'\n'*}" ] && continue
 			$IP route add table $id $route_line ||
-				LOG warn "failed to add $route_line to table $id"
+				LOG debug "Route '$route_line' already added to table $id"
 		fi
 
 	done
