@@ -1,6 +1,0 @@
-{
-	"name": "dyndnss.net",
-	"ipv4": {
-		"url": "http://www.dyndnss.net/?user=[USERNAME]&pass=[PASSWORD]&domain=[DOMAIN]&updater=other"
-	}
-}
