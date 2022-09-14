@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nut
-PKG_VERSION:=2.7.4
-PKG_RELEASE:=28
+PKG_VERSION:=2.8.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.networkupstools.org/source/2.7/
-PKG_HASH:=980e82918c52d364605c0703a5dcf01f74ad2ef06e3d365949e43b7d406d25a7
+PKG_SOURCE_URL:=http://www.networkupstools.org/source/2.8/
+PKG_HASH:=c3e5a708da797b7c70b653d37b1206a000fcb503b85519fe4cdf6353f792bfe5
 PKG_LICENSE:=GPL-2.0-or-later GPL-3.0-or-later GPL-1.0-or-later Artistic-1.0-Perl
 PKG_LICENSE_FILES:=LICENSE-GPL2 LICENSE-GPL3 COPYING
 PKG_FIXUP:=autoreconf
@@ -399,7 +399,7 @@ endef
 SERIAL_DRIVERLIST = al175 bcmxcp belkin belkinunv bestfcom	\
  bestfortress bestuferrups bestups dummy-ups etapro everups	 \
  gamatronic genericups isbmex liebert liebert-esp2 masterguard metasys	\
- oldmge-shut mge-utalk microdowell mge-shut oneac optiups powercom rhino	 \
+ mge-utalk microdowell mge-shut oneac optiups powercom rhino	 \
  safenet skel solis tripplite tripplitesu upscode2 victronups powerpanel \
  blazer_ser clone clone-outlet ivtscd apcsmart apcsmart-old apcupsd-ups riello_ser	\
  nutdrv_qx
@@ -459,8 +459,6 @@ $(eval $(call DriverDescription,serial,masterguard,\
 	Driver for Masterguard UPS equipment))
 $(eval $(call DriverDescription,serial,metasys,\
 	Driver for Meta System UPS equipment))
-$(eval $(call DriverDescription,serial,oldmge-shut,\
-	Driver for SHUT Protocol UPS equipment, deprecated, use mge-shut))
 $(eval $(call DriverDescription,serial,mge-utalk,\
 	Driver for MGE UPS SYSTEMS UTalk protocol equipment))
 $(eval $(call DriverDescription,serial,microdowell,\
