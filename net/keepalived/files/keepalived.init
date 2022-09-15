@@ -100,6 +100,7 @@ globals() {
 
 	printf '%bscript_user root\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
 	printf '%benable_script_security\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
+	printf '%bprocess_names\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
 
 	config_get notification_email "$1" notification_email
 	print_list_indent notification_email
@@ -126,6 +127,7 @@ print_ipaddress_indent() {
 	config_get address "$section" address
 	config_get device "$section" device
 	config_get scope "$section" scope
+	config_get label_suffix "$section" label_suffix vip
 
 	# Default indent
 	[ -z "$indent" ] && indent="$INDENT_1"
@@ -137,7 +139,7 @@ print_ipaddress_indent() {
 		printf '%b%s' "$indent" "$address" >> "$KEEPALIVED_CONF"
 	else
 		# Add IP address/netmask and device
-		printf '%b%s dev %s' "$indent" "$address" "$device">> "$KEEPALIVED_CONF"
+		printf '%b%s dev %s label %s' "$indent" "$address" "$device" "$device:$label_suffix" >> "$KEEPALIVED_CONF"
 		# Add scope
 		[ -n "$scope" ] && printf ' scope %s' "$scope" >> "$KEEPALIVED_CONF"
 	fi
@@ -196,7 +198,27 @@ print_route_indent() {
 	# Add table
 	[ -n "$table" ] && printf ' table %s' "$table" >> "$KEEPALIVED_CONF"
 	printf '\n' >> "$KEEPALIVED_CONF"
+}
 
+print_track_script_indent() {
+	local section="$1"
+	local curr_track_elem="$2"
+	local indent="$3"
+
+	local name value weight direction
+	config_get name "$section" name
+	[ "$name" != "$curr_track_elem" ] && return 0
+
+	config_get value "$section" value
+	config_get weight "$section" weight
+	config_get direction "$section" direction
+
+	[ -z "$value" ] && return 0
+	[ "$direction" != "reverse" ] && [ "$direction" != "noreverse" ] && unset direction
+
+	printf '%b%s' "$indent" "$value" >> "$KEEPALIVED_CONF"
+	[ -n "$weight" ] && printf ' weight %s' "$weight ${direction:+${direction}}" >> "$KEEPALIVED_CONF"
+	printf '\n' >> "$KEEPALIVED_CONF"
 }
 
 print_track_elem_indent() {
@@ -349,7 +371,7 @@ vrrp_instance() {
 		[ -z "$optval" ] && continue
 		printf '%b%s {\n' "${INDENT_1}" "$opt" >> "$KEEPALIVED_CONF"
 		for t in $optval; do
-			printf '%b%s\n' "${INDENT_2}" "$optval" >> "$KEEPALIVED_CONF"
+			config_foreach print_track_script_indent track_script "$t" "$INDENT_2"
 		done
 		printf '%b}\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
 	done
