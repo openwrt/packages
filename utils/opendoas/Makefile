@@ -33,6 +33,8 @@ define Package/opendoas/description
  of sudo with a fraction of the codebase.
 endef
 
+CONFIGURE_ARGS += $(if $(CONFIG_BUSYBOX_CONFIG_PAM),--with,--without)-pam
+
 define Package/opendoas/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/doas $(1)/usr/bin/
