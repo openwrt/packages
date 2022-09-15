@@ -39,7 +39,7 @@ detect_upstream_subnet()
 	subnets=$(ip route show dev "$interface"  | grep 'scope link' | awk '{print $1}')
 	for subnet in $subnets; do
 		#test for that; add as exception if there's a match
-		nft get element "$FAMILY" "$TABLE" "$NOMATCHSET" { $subnet } && add_bcp38_rule $subnet nomatch
+		nft get element "$FAMILY" "$TABLE" "$MATCHSET" { $subnet } >/dev/null 2>/dev/null && add_bcp38_rule $subnet nomatch
 	done
 }
 
