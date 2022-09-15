@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nut
 PKG_VERSION:=2.8.0
-PKG_RELEASE:=1
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.networkupstools.org/source/2.8/
@@ -541,6 +541,7 @@ CONFIGURE_ARGS += \
 	--with$(if $(CONFIG_PACKAGE_nut-web-cgi),,out)-cgi \
 	--without-ipmi \
 	--without-freeipmi \
+	--without-linux-i2c \
 	--$(if $(CONFIG_NUT_SSL),with,without)-ssl $(if $(CONFIG_NUT_SSL),--with-openssl) \
 	--without-libltdl \
 	--without-macosx_ups \
