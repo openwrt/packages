@@ -1,0 +1,10 @@
+--- a/m4/curl-wolfssl.m4
++++ b/m4/curl-wolfssl.m4
+@@ -93,6 +93,7 @@ if test "x$OPT_WOLFSSL" != xno; then
+    They are set up properly later if it is detected.  */
+ #undef SIZEOF_LONG
+ #undef SIZEOF_LONG_LONG
++#include <wolfssl/options.h>
+ #include <wolfssl/ssl.h>
+ 	]],[[
+ 	  return wolfSSL_Init();
