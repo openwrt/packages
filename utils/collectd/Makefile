@@ -494,7 +494,7 @@ $(eval $(call BuildPlugin,netlink,netlink input,netlink,+PACKAGE_collectd-mod-ne
 $(eval $(call BuildPlugin,network,network input/output,network,+PACKAGE_COLLECTD_ENCRYPTED_NETWORK:libgcrypt))
 $(eval $(call BuildPlugin,nginx,nginx status input,nginx,+PACKAGE_collectd-mod-nginx:libcurl))
 $(eval $(call BuildPlugin,ntpd,NTP daemon status input,ntpd,))
-$(eval $(call BuildPlugin,nut,UPS monitoring input,nut,+PACKAGE_collectd-mod-nut:nut-common))
+$(eval $(call BuildPlugin,nut,UPS monitoring input,nut,+PACKAGE_collectd-mod-nut:nut-common @BROKEN))
 $(eval $(call BuildPlugin,olsrd,OLSRd status input,olsrd,))
 $(eval $(call BuildPlugin,openvpn,OpenVPN traffic/compression input,openvpn,))
 $(eval $(call BuildPlugin,ping,ping status input,ping,+PACKAGE_collectd-mod-ping:liboping))
