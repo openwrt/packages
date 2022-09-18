@@ -1,0 +1,38 @@
+--- a/bandwidthd.c
++++ b/bandwidthd.c
+@@ -893,7 +893,7 @@ void StoreIPDataInCDF(struct IPData IncD
+ 		{
+ 		IPData = &IncData[counter];
+ 		HostIp2CharIp(IPData->ip, IPBuffer);
+-		fprintf(cdf, "%s,%lu,", IPBuffer, IPData->timestamp);
++		fprintf(cdf, "%s,%" PRId64 ",", IPBuffer, IPData->timestamp);
+ 		Stats = &(IPData->Send);
+ 		fprintf(cdf, "%llu,%llu,%llu,%llu,%llu,%llu,%llu,", Stats->total, Stats->icmp, Stats->udp, Stats->tcp, Stats->ftp, Stats->http, Stats->p2p); 
+ 		Stats = &(IPData->Receive);
+@@ -1089,7 +1089,7 @@ int RCDF_Test(char *filename)
+ 		if (fseek(cdf, -2, SEEK_CUR) == -1)
+ 			break;
+ 		}
+-	if(fscanf(cdf, " %15[0-9.],%lu,", ipaddrBuffer, &timestamp) != 2)
++	if(fscanf(cdf, " %15[0-9.],%" PRId64 ",", ipaddrBuffer, &timestamp) != 2)
+ 		{
+ 		syslog(LOG_ERR, "%s is corrupted, skipping", filename); 
+ 		return FALSE;
+@@ -1122,7 +1122,7 @@ void RCDF_PositionStream(FILE *cdf)
+ 			}
+ 		while (fgetc(cdf) != '\n' && !feof(cdf)); // Read to next line
+ 		ungetc('\n', cdf);  // Just so the fscanf mask stays identical
+-        if(fscanf(cdf, " %15[0-9.],%lu,", ipaddrBuffer, &timestamp) != 2)
++        if(fscanf(cdf, " %15[0-9.],%" PRId64 ",", ipaddrBuffer, &timestamp) != 2)
+ 			{
+ 			syslog(LOG_ERR, "Unknown error while scanning for beginning of data...\n");
+ 			return;	
+@@ -1144,7 +1144,7 @@ void RCDF_Load(FILE *cdf)
+ 
+     for(Counter = 0; !feof(cdf) && !ferror(cdf); Counter++)
+ 	    {
+-		if(fscanf(cdf, " %15[0-9.],%lu,", ipaddrBuffer, &timestamp) != 2) 
++		if(fscanf(cdf, " %15[0-9.],%" PRId64 ",", ipaddrBuffer, &timestamp) != 2)
+ 			goto End_RecoverDataFromCdf;
+ 
+ 		if (!timestamp) // First run through loop
