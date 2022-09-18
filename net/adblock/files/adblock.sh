@@ -934,7 +934,7 @@ f_query() {
 				;;
 			"unbound")
 				prefix=".*[\"\\.]"
-				suffix="(static)"
+				suffix="(always_nxdomain)"
 				field="3"
 				;;
 			"named")
