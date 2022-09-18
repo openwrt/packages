@@ -117,7 +117,7 @@ endef
 define Package/prometheus-node-exporter-lua-ltq-dsl
   $(call Package/prometheus-node-exporter-lua/Default)
   TITLE+= (lantiq dsl collector)
-  DEPENDS:=prometheus-node-exporter-lua @(PACKAGE_ltq-adsl-app||PACKAGE_ltq-vdsl-app)
+  DEPENDS:=prometheus-node-exporter-lua ltq-dsl-app
 endef
 
 define Package/prometheus-node-exporter-lua-ltq-dsl/install
