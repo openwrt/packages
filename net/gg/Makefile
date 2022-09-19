@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gg
-PKG_VERSION:=0.2.9
+PKG_VERSION:=0.2.11
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/mzz2017/gg/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=a500b148c5e0404672062f7c41fe8cd78dd3dc3cc0376e1b8983bca41dd155e8
+PKG_HASH:=8e15f2419570bbe8a9dd8cd524c2641e2c8dcb469dfed1702cb335c85162e34a
 
 PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
 PKG_LICENSE:=AGPL-3.0-only
