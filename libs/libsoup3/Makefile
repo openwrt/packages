@@ -14,13 +14,12 @@ PKG_SOURCE_URL:=@GNOME/libsoup/3.0
 PKG_HASH:=b45d59f840b9acf9bb45fd45854e3ef672f57e3ab957401c3ad8d7502ac23da6
 PKG_BUILD_DIR:=$(BUILD_DIR)/libsoup-$(PKG_VERSION)
 
-PKG_MAINTAINER:=
+PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:gnome:libsoup
 
 PKG_BUILD_DEPENDS:=glib2/host
-PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
