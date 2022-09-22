@@ -1,5 +1,5 @@
 This is just workaround. It should be removed after proper fixing in upstream.
-Patch fixes problem with lmdb pkg config. It also adds workaround for get_option
+Patch fixes problem with lmdb pkg confing. It also adds workaround for get_option
 which is now not propagated in OpenWrt meson host package.
 --- a/meson.build
 +++ b/meson.build
