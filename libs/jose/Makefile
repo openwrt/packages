@@ -19,13 +19,15 @@ PKG_MAINTAINER:=Tibor Dudlák <tibor.dudlak@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=COPYING
 
+PKG_BUILD_DEPENDS:=openssl
+
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/meson.mk
 
 define Package/jose
   SECTION:=utils
   TITLE:=Provides a full crypto stack including key generation, signing and encryption.
-  DEPENDS:=+jansson +libopenssl +zlib
+  DEPENDS:=+jansson
   URL:=https://github.com/latchset/jose
 endef
 
