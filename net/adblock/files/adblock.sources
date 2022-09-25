@@ -90,6 +90,13 @@
 		"focus": "compilation",
 		"descurl": "https://hblock.molinero.dev"
 	},
+	 "lightswitch05": {
+                "url": "https://www.github.developerdan.com/hosts/lists/ads-and-tracking-extended.txt",
+		"rule": "/^0\\.0\\.0\\.0[[:space:]]+([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
+                "size": "XL",
+                "focus": "compilation",
+                "descurl": "https://github.com/lightswitch05/hosts"
+        },
 	"notracking": {
 		"url": "https://raw.githubusercontent.com/notracking/hosts-blocklists/master/dnscrypt-proxy/dnscrypt-proxy.blacklist.txt",
 		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
