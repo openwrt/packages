@@ -585,7 +585,7 @@ f_extconf() {
 # restart dns backend
 #
 f_dnsup() {
-	local dns_service dns_up dns_pid restart_rc cnt="0" out_rc="4" in_rc="${1:-0}"
+	local rset dns_service dns_up dns_pid restart_rc cnt="0" out_rc="4" in_rc="${1:-0}"
 
 	if [ "${adb_dns}" = "raw" ]; then
 		out_rc="0"
@@ -621,12 +621,13 @@ f_dnsup() {
 		fi
 	fi
 	if [ "${restart_rc}" = "0" ]; then
+		rset="/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower(\$1)}"
 		while [ "${cnt}" -le "${adb_dnstimeout}" ]; do
 			dns_service="$(ubus -S call service list "{\"name\":\"${adb_dns}\"}")"
 			dns_up="$(printf "%s" "${dns_service}" | jsonfilter -l1 -e "@[\"${adb_dns}\"].instances.*.running")"
 			dns_pid="$(printf "%s" "${dns_service}" | jsonfilter -l1 -e "@[\"${adb_dns}\"].instances.*.pid")"
 			if [ "${dns_up}" = "true" ] && [ -n "${dns_pid}" ] && ! ls "/proc/${dns_pid}/fd/${adb_dnsdir}/${adb_dnsfile}" >/dev/null 2>&1; then
-				if [ -x "${adb_lookupcmd}" ] && [ "${adb_lookupdomain}" != "false" ]; then
+				if [ -x "${adb_lookupcmd}" ] && [ -n "$(printf "%s" "${adb_lookupdomain}" | "${adb_awk}" "${rset}")" ]; then
 					if "${adb_lookupcmd}" "${adb_lookupdomain}" >/dev/null 2>&1; then
 						out_rc="0"
 						break
@@ -692,7 +693,8 @@ f_list() {
 				rm -f "${adb_tmpdir}/tmp.raw.${src_name}"
 			elif [ "${src_name}" = "whitelist" ] && [ -f "${adb_whitelist}" ]; then
 				rset="/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower(\$1)}"
-				"${adb_awk}" "${rset}" "${adb_whitelist}" >"${adb_tmpdir}/tmp.raw.${src_name}"
+				printf "%s\n" "${adb_lookupdomain}" | "${adb_awk}" "${rset}" >"${adb_tmpdir}/tmp.raw.${src_name}"
+				"${adb_awk}" "${rset}" "${adb_whitelist}" >>"${adb_tmpdir}/tmp.raw.${src_name}"
 				out_rc="${?}"
 				if [ "${out_rc}" = "0" ]; then
 					rset="/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{gsub(\"\\\\.\",\"\\\\.\",\$1);print tolower(\"^(|.*\\\\.)\"\$1\"$\")}"
