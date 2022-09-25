@@ -62,6 +62,13 @@
 		"focus": "general",
 		"descurl": "https://disconnect.me"
 	},
+	"doh_blocklist": {
+		"url": "https://raw.githubusercontent.com/dibdot/DoH-IP-blocklists/master/doh-domains_overall.txt",
+		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
+		"size": "S",
+		"focus": "doh_server",
+		"descurl": "https://github.com/dibdot/DoH-IP-blocklists"
+	},
 	"energized": {
 		"url": "https://block.energized.pro/",
 		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
@@ -91,12 +98,12 @@
 		"descurl": "https://hblock.molinero.dev"
 	},
 	 "lightswitch05": {
-                "url": "https://www.github.developerdan.com/hosts/lists/ads-and-tracking-extended.txt",
+		"url": "https://www.github.developerdan.com/hosts/lists/ads-and-tracking-extended.txt",
 		"rule": "/^0\\.0\\.0\\.0[[:space:]]+([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
-                "size": "XL",
-                "focus": "compilation",
-                "descurl": "https://github.com/lightswitch05/hosts"
-        },
+		"size": "XL",
+		"focus": "compilation",
+		"descurl": "https://github.com/lightswitch05/hosts"
+	},
 	"notracking": {
 		"url": "https://raw.githubusercontent.com/notracking/hosts-blocklists/master/dnscrypt-proxy/dnscrypt-proxy.blacklist.txt",
 		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
