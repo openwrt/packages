@@ -1,11 +1,11 @@
 {
 	"name": "infomaniak.com",
 	"ipv4": {
-		"url": "https://[USERNAME]:[PASSWORD]@infomaniak.com/nic/update?hostname=[DOMAIN]&myip=[IP]",
+		"url": "https://infomaniak.com/nic/update?hostname=[DOMAIN]&myip=[IP]&username=[USERNAME]&password=[PASSWORD]",
 		"answer": "good|nochg"
 	},
 	"ipv6": {
-		"url": "https://[USERNAME]:[PASSWORD]@infomaniak.com/nic/update?hostname=[DOMAIN]&myip=[IP]",
+		"url": "https://infomaniak.com/nic/update?hostname=[DOMAIN]&myip=[IP]&username=[USERNAME]&password=[PASSWORD]",
 		"answer": "good|nochg"
 	}
 }
