@@ -21,7 +21,7 @@ PKG_LICENCE:=MPL-2.0
 PKG_LICENSE_FILES:=nss/COPYING
 PKG_CPE_ID:=cpe:/a:mozilla:network_security_services
 
-PKG_BUILD_PARALLEL:=1
+PKG_BUILD_PARALLEL:=0
 
 include $(INCLUDE_DIR)/package.mk
 
