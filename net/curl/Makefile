@@ -12,7 +12,7 @@ PKG_VERSION:=7.85.0
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://github.com/curl/curl/releases/download/curl-$(PKG_VERSION:.=_)/ \
+PKG_SOURCE_URL:=https://github.com/curl/curl/releases/download/curl-$(subst .,_,$(PKG_VERSION))/ \
 	https://dl.uxnr.de/mirror/curl/ \
 	https://curl.askapache.com/download/ \
 	https://curl.se/download/
