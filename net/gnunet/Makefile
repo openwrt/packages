@@ -44,7 +44,8 @@ CONFIGURE_ARGS+= \
 	--with-png=$(STAGING_DIR)/usr \
 	--with-pulse=$(STAGING_DIR)/usr \
 	--with-libunistring-prefix=$(STAGING_DIR)/usr \
-	--with-microhttpd=$(STAGING_DIR)/usr
+	--with-microhttpd=$(STAGING_DIR)/usr \
+	--without-libjose
 
 # upstream now provides --with-pulseaudio but doesn't detect rpath
 TARGET_LDFLAGS+= -Wl,-rpath-link=$(STAGING_DIR)/usr/lib/pulseaudio
