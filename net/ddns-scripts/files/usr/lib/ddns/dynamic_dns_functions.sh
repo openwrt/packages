@@ -627,11 +627,11 @@ verify_dns() {
 			return $__ERR
 		elif [ $__ERR -ne 0 ]; then
 			__CNT=$(( $__CNT + 1 ))	# increment error counter
-			# if error count > retry_count leave here
-			[ $retry_count -gt 0 -a $__CNT -gt $retry_count ] && \
-				write_log 14 "Verify DNS server '$1' failed after $retry_count retries"
+			# if error count > retry_max_count leave here
+			[ $retry_max_count -gt 0 -a $__CNT -gt $retry_max_count ] && \
+				write_log 14 "Verify DNS server '$1' failed after $retry_max_count retries"
 
-			write_log 4 "Verify DNS server '$1' failed - retry $__CNT/$retry_count in $RETRY_SECONDS seconds"
+			write_log 4 "Verify DNS server '$1' failed - retry $__CNT/$retry_max_count in $RETRY_SECONDS seconds"
 			sleep $RETRY_SECONDS &
 			PID_SLEEP=$!
 			wait $PID_SLEEP	# enable trap-handler
@@ -687,11 +687,11 @@ verify_proxy() {
 			return $__ERR
 		elif [ $__ERR -gt 0 ]; then
 			__CNT=$(( $__CNT + 1 ))	# increment error counter
-			# if error count > retry_count leave here
-			[ $retry_count -gt 0 -a $__CNT -gt $retry_count ] && \
-				write_log 14 "Verify Proxy server '$1' failed after $retry_count retries"
+			# if error count > retry_max_count leave here
+			[ $retry_max_count -gt 0 -a $__CNT -gt $retry_max_count ] && \
+				write_log 14 "Verify Proxy server '$1' failed after $retry_max_count retries"
 
-			write_log 4 "Verify Proxy server '$1' failed - retry $__CNT/$retry_count in $RETRY_SECONDS seconds"
+			write_log 4 "Verify Proxy server '$1' failed - retry $__CNT/$retry_max_count in $RETRY_SECONDS seconds"
 			sleep $RETRY_SECONDS &
 			PID_SLEEP=$!
 			wait $PID_SLEEP	# enable trap-handler
@@ -867,11 +867,11 @@ do_transfer() {
 		}
 
 		__CNT=$(( $__CNT + 1 ))	# increment error counter
-		# if error count > retry_count leave here
-		[ $retry_count -gt 0 -a $__CNT -gt $retry_count ] && \
-			write_log 14 "Transfer failed after $retry_count retries"
+		# if error count > retry_max_count leave here
+		[ $retry_max_count -gt 0 -a $__CNT -gt $retry_max_count ] && \
+			write_log 14 "Transfer failed after $retry_max_count retries"
 
-		write_log 4 "Transfer failed - retry $__CNT/$retry_count in $RETRY_SECONDS seconds"
+		write_log 4 "Transfer failed - retry $__CNT/$retry_max_count in $RETRY_SECONDS seconds"
 		sleep $RETRY_SECONDS &
 		PID_SLEEP=$!
 		wait $PID_SLEEP	# enable trap-handler
@@ -1058,10 +1058,10 @@ get_local_ip () {
 		}
 
 		__CNT=$(( $__CNT + 1 ))	# increment error counter
-		# if error count > retry_count leave here
-		[ $retry_count -gt 0 -a $__CNT -gt $retry_count ] && \
-			write_log 14 "Get local IP via '$ip_source' failed after $retry_count retries"
-		write_log 4 "Get local IP via '$ip_source' failed - retry $__CNT/$retry_count in $RETRY_SECONDS seconds"
+		# if error count > retry_max_count leave here
+		[ $retry_max_count -gt 0 -a $__CNT -gt $retry_max_count ] && \
+			write_log 14 "Get local IP via '$ip_source' failed after $retry_max_count retries"
+		write_log 4 "Get local IP via '$ip_source' failed - retry $__CNT/$retry_max_count in $RETRY_SECONDS seconds"
 		sleep $RETRY_SECONDS &
 		PID_SLEEP=$!
 		wait $PID_SLEEP	# enable trap-handler
@@ -1200,11 +1200,11 @@ get_registered_ip() {
 		}
 
 		__CNT=$(( $__CNT + 1 ))	# increment error counter
-		# if error count > retry_count leave here
-		[ $retry_count -gt 0 -a $__CNT -gt $retry_count ] && \
-			write_log 14 "Get registered/public IP for '$lookup_host' failed after $retry_count retries"
+		# if error count > retry_max_count leave here
+		[ $retry_max_count -gt 0 -a $__CNT -gt $retry_max_count ] && \
+			write_log 14 "Get registered/public IP for '$lookup_host' failed after $retry_max_count retries"
 
-		write_log 4 "Get registered/public IP for '$lookup_host' failed - retry $__CNT/$retry_count in $RETRY_SECONDS seconds"
+		write_log 4 "Get registered/public IP for '$lookup_host' failed - retry $__CNT/$retry_max_count in $RETRY_SECONDS seconds"
 		sleep $RETRY_SECONDS &
 		PID_SLEEP=$!
 		wait $PID_SLEEP	# enable trap-handler

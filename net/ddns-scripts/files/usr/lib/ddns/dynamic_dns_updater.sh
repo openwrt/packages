@@ -159,7 +159,7 @@ trap "trap_handler 15" 15	# SIGTERM	Termination
 #
 # retry_interval	if error was detected retry in
 # retry_unit		'days' 'hours' 'minutes' 'seconds'
-# retry_count 		number of retries before scripts stops
+# retry_max_count	number of retries before scripts stops
 #
 # use_ipv6		detecting/sending IPv6 address
 # force_ipversion	force usage of IPv4 or IPv6 for the whole detection and update communication
@@ -180,7 +180,7 @@ ERR_LAST=$?	# save return code - equal 0 if SECTION_ID found
 
 # set defaults if not defined
 [ -z "$enabled" ]	  && enabled=0
-[ -z "$retry_count" ]	  && retry_count=0	# endless retry
+[ -z "$retry_max_count" ] && retry_max_count=0	# endless retry
 [ -z "$use_syslog" ]      && use_syslog=2	# syslog "Notice"
 [ -z "$use_https" ]       && use_https=0	# not use https
 [ -z "$use_logfile" ]     && use_logfile=1	# use logfile by default
@@ -293,7 +293,7 @@ get_seconds RETRY_SECONDS ${retry_interval:-60} ${retry_unit:-"seconds"} # defau
 write_log 7 "check interval: $CHECK_SECONDS seconds"
 write_log 7 "force interval: $FORCE_SECONDS seconds"
 write_log 7 "retry interval: $RETRY_SECONDS seconds"
-write_log 7 "retry counter : $retry_count times"
+write_log 7 "retry max count : $retry_max_count times"
 
 # kill old process if it exists & set new pid file
 stop_section_processes "$SECTION_ID"
@@ -412,9 +412,9 @@ while : ; do
 	if [ "$LOCAL_IP" != "$REGISTERED_IP" ]; then
 		if [ $VERBOSE -le 1 ]; then	# VERBOSE <=1 then retry
 			ERR_UPDATE=$(( $ERR_UPDATE + 1 ))
-			[ $retry_count -gt 0 -a $ERR_UPDATE -gt $retry_count ] && \
-				write_log 14 "Updating IP at DDNS provider failed after $retry_count retries"
-			write_log 4 "Updating IP at DDNS provider failed - starting retry $ERR_UPDATE/$retry_count"
+			[ $retry_max_count -gt 0 -a $ERR_UPDATE -gt $retry_max_count ] && \
+				write_log 14 "Updating IP at DDNS provider failed after $retry_max_count retries"
+			write_log 4 "Updating IP at DDNS provider failed - starting retry $ERR_UPDATE/$retry_max_count"
 			continue # loop to beginning
 		else
 			write_log 4 "Updating IP at DDNS provider failed"
