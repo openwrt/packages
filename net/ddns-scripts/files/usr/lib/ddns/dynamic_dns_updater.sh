@@ -37,9 +37,7 @@ Parameters:
                         '1' output to console
                         '2' output to console AND logfile
                             + run once WITHOUT retry on error
-                        '3' output to console AND logfile
-                            + run once WITHOUT retry on error
-                            + NOT sending update to DDNS service
+ -d                  dry run (don't send any changes)
 
 EOF
 }
@@ -50,10 +48,11 @@ usage_err() {
 	exit 1
 }
 
-while getopts ":hv:n:S:V" OPT; do
+while getopts ":hv:dn:S:V" OPT; do
 	case "$OPT" in
 		h)	usage; exit 0;;
 		v)	VERBOSE=$OPTARG;;
+		d)	DRY_RUN=1;;
 		n)	NETWORK=$OPTARG;;
 		S)	SECTION_ID=$OPTARG;;
 		V)	printf %s\\n "ddns-scripts $VERSION"; exit 0;;
@@ -108,6 +107,8 @@ LOGFILE="$ddns_logdir/$SECTION_ID.log"	# log file
 # only with this data of this run for easier diagnostic
 # new one created by write_log function
 [ $VERBOSE -gt 1 -a -f $LOGFILE ] && rm -f $LOGFILE
+# Previously -v 3 could we used for dry run
+[ $VERBOSE -ge 3 ] && DRY_RUN=1
 
 # TRAP handler
 trap "trap_handler 0 \$?" 0	# handle script exit with exit status
@@ -222,9 +223,9 @@ case $VERBOSE in
 	0) write_log  7 "verbose mode  : 0 - run normal, NO console output";;
 	1) write_log  7 "verbose mode  : 1 - run normal, console mode";;
 	2) write_log  7 "verbose mode  : 2 - run once, NO retry on error";;
-	3) write_log  7 "verbose mode  : 3 - run once, NO retry on error, NOT sending update";;
 	*) write_log 14 "error detecting VERBOSE '$VERBOSE'";;
 esac
+[ $DRY_RUN -ge 1 ] && write_log  7 "Dry Run: NOT sending update"
 
 # check enabled state otherwise we don't need to continue
 [ $enabled -eq 0 ] && write_log 14 "Service section disabled!"
@@ -360,8 +361,8 @@ while : ; do
 
 	# send update when current time > next time or current ip different from registered ip
 	if [ $CURR_TIME -ge $NEXT_TIME -o "$CURRENT_IP" != "$REGISTERED_IP" ]; then
-		if [ $VERBOSE -gt 2 ]; then
-			write_log 7 "Verbose Mode: $VERBOSE - NO UPDATE send"
+		if [ $DRY_RUN -ge 1 ]; then
+			write_log 7 "Dry Run: NO UPDATE send"
 		elif [ "$CURRENT_IP" != "$REGISTERED_IP" ]; then
 			write_log 7 "Update needed - L: '$CURRENT_IP' <> R: '$REGISTERED_IP'"
 		else
@@ -369,8 +370,7 @@ while : ; do
 		fi
 
 		ERR_LAST=0
-		[ $VERBOSE -lt 3 ] && {
-			# only send if VERBOSE < 3
+		[ $DRY_RUN -eq 0 ] && {
 			send_update "$CURRENT_IP"
 			ERR_LAST=$?	# save return value
 		}
@@ -395,14 +395,13 @@ while : ; do
 	fi
 
 	# now we wait for check interval before testing if update was recognized
-	# only sleep if VERBOSE <= 2 because otherwise nothing was send
-	[ $VERBOSE -le 2 ] && {
+	[ $DRY_RUN -eq 0 ] && {
 		write_log 7 "Waiting $CHECK_SECONDS seconds (Check Interval)"
 		sleep $CHECK_SECONDS &
 		PID_SLEEP=$!
 		wait $PID_SLEEP	# enable trap-handler
 		PID_SLEEP=0
-	} || write_log 7 "Verbose Mode: $VERBOSE - NO Check Interval waiting"
+	} || write_log 7 "Dry Run: NO Check Interval waiting"
 
 	REGISTERED_IP=""		# clear variable
 	get_registered_ip REGISTERED_IP	# get registered/public IP

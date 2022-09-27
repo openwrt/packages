@@ -28,6 +28,7 @@ else
 fi
 SECTION_ID=""		# hold config's section name
 VERBOSE=0		# default mode is log to console, but easily changed with parameter
+DRY_RUN=0		# run without actually doing (sending) any changes
 MYPROG=$(basename $0)	# my program call name
 
 LOGFILE=""		# logfile - all files are set in dynamic_dns_updater.sh
