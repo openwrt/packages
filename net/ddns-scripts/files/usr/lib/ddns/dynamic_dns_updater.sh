@@ -145,10 +145,10 @@ trap "trap_handler 15" 15	# SIGTERM	Termination
 #
 # use_syslog	log activity to syslog
 #
-# ip_source	source to detect current local IP ('network' or 'web' or 'script' or 'interface')
+# ip_source	source to detect current IP ('network' or 'web' or 'script' or 'interface')
 # ip_network	local defined network to read IP from i.e. 'wan' or 'wan6'
-# ip_url	URL to read local address from i.e. http://checkip.dyndns.com/ or http://checkipv6.dyndns.com/
-# ip_script	full path and name of your script to detect local IP
+# ip_url	URL to read current IP from i.e. http://checkip.dyndns.com/ or http://checkipv6.dyndns.com/
+# ip_script	full path and name of your script to detect current IP
 # ip_interface	physical interface to use for detecting
 #
 # check_interval	check for changes every  !!! checks below 10 minutes make no sense because the Internet
@@ -165,7 +165,7 @@ trap "trap_handler 15" 15	# SIGTERM	Termination
 # force_ipversion	force usage of IPv4 or IPv6 for the whole detection and update communication
 # dns_server		using a non default dns server to get Registered IP from Internet
 # force_dnstcp		force communication with DNS server via TCP instead of default UDP
-# proxy			using a proxy for communication !!! ALSO used to detect local IP via web => return proxy's IP !!!
+# proxy			using a proxy for communication !!! ALSO used to detect current IP via web => return proxy's IP !!!
 # use_logfile		self-explanatory "/var/log/ddns/$SECTION_ID.log"
 # is_glue			the record that should be updated is a glue record
 #
@@ -280,8 +280,8 @@ esac
 # verify ip_source 'script' if script is configured and executable
 if [ "$ip_source" = "script" ]; then
 	set -- $ip_script	#handling script with parameters, we need a trick
-	[ -z "$1" ] && write_log 14 "No script defined to detect local IP!"
-	[ -x "$1" ] || write_log 14 "Script to detect local IP not executable!"
+	[ -z "$1" ] && write_log 14 "No script defined to detect current IP!"
+	[ -x "$1" ] || write_log 14 "Script to detect current IP not executable!"
 fi
 
 # compute update interval in seconds
@@ -347,8 +347,8 @@ ERR_LAST=$?
 write_log 6 "Starting main loop at $(eval $DATE_PROG)"
 while : ; do
 
-	get_local_ip LOCAL_IP		# read local IP
-	[ $use_ipv6 -eq 1 ] && expand_ipv6 "$LOCAL_IP" LOCAL_IP	# on IPv6 we use expanded version
+	get_current_ip CURRENT_IP		# read current IP
+	[ $use_ipv6 -eq 1 ] && expand_ipv6 "$CURRENT_IP" CURRENT_IP	# on IPv6 we use expanded version
 
 	# prepare update
 	# never updated or forced immediate then NEXT_TIME = 0
@@ -358,24 +358,24 @@ while : ; do
 
 	get_uptime CURR_TIME		# get current uptime
 
-	# send update when current time > next time or local ip different from registered ip
-	if [ $CURR_TIME -ge $NEXT_TIME -o "$LOCAL_IP" != "$REGISTERED_IP" ]; then
+	# send update when current time > next time or current ip different from registered ip
+	if [ $CURR_TIME -ge $NEXT_TIME -o "$CURRENT_IP" != "$REGISTERED_IP" ]; then
 		if [ $VERBOSE -gt 2 ]; then
 			write_log 7 "Verbose Mode: $VERBOSE - NO UPDATE send"
-		elif [ "$LOCAL_IP" != "$REGISTERED_IP" ]; then
-			write_log 7 "Update needed - L: '$LOCAL_IP' <> R: '$REGISTERED_IP'"
+		elif [ "$CURRENT_IP" != "$REGISTERED_IP" ]; then
+			write_log 7 "Update needed - L: '$CURRENT_IP' <> R: '$REGISTERED_IP'"
 		else
-			write_log 7 "Forced Update - L: '$LOCAL_IP' == R: '$REGISTERED_IP'"
+			write_log 7 "Forced Update - L: '$CURRENT_IP' == R: '$REGISTERED_IP'"
 		fi
 
 		ERR_LAST=0
 		[ $VERBOSE -lt 3 ] && {
 			# only send if VERBOSE < 3
-			send_update "$LOCAL_IP"
+			send_update "$CURRENT_IP"
 			ERR_LAST=$?	# save return value
 		}
 
-		# error sending local IP to provider
+		# error sending current IP to provider
 		# we have no communication error (handled inside send_update/do_transfer)
 		# but update was not recognized
 		# do NOT retry after RETRY_SECONDS, do retry after CHECK_SECONDS
@@ -384,9 +384,9 @@ while : ; do
 		if [ $ERR_LAST -eq 0 ]; then
 			get_uptime LAST_TIME		# we send update, so
 			echo $LAST_TIME > $UPDFILE	# save LASTTIME to file
-			[ "$LOCAL_IP" != "$REGISTERED_IP" ] \
-				&& write_log 6 "Update successful - IP '$LOCAL_IP' send" \
-				|| write_log 6 "Forced update successful - IP: '$LOCAL_IP' send"
+			[ "$CURRENT_IP" != "$REGISTERED_IP" ] \
+				&& write_log 6 "Update successful - IP '$CURRENT_IP' send" \
+				|| write_log 6 "Forced update successful - IP: '$CURRENT_IP' send"
 		elif [ $ERR_LAST -eq 127 ]; then
 			write_log 3 "No update send to DDNS Provider"
 		else
@@ -409,7 +409,7 @@ while : ; do
 	[ $use_ipv6 -eq 1 ] && expand_ipv6 "$REGISTERED_IP" REGISTERED_IP	# on IPv6 we use expanded version
 
 	# IP's are still different
-	if [ "$LOCAL_IP" != "$REGISTERED_IP" ]; then
+	if [ "$CURRENT_IP" != "$REGISTERED_IP" ]; then
 		if [ $VERBOSE -le 1 ]; then	# VERBOSE <=1 then retry
 			ERR_UPDATE=$(( $ERR_UPDATE + 1 ))
 			[ $retry_max_count -gt 0 -a $ERR_UPDATE -gt $retry_max_count ] && \
