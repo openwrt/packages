@@ -411,10 +411,10 @@ while : ; do
 	# IP's are still different
 	if [ "$CURRENT_IP" != "$REGISTERED_IP" ]; then
 		if [ $VERBOSE -le 1 ]; then	# VERBOSE <=1 then retry
-			ERR_UPDATE=$(( $ERR_UPDATE + 1 ))
-			[ $retry_max_count -gt 0 -a $ERR_UPDATE -gt $retry_max_count ] && \
+			RETRY_COUNT=$(( $RETRY_COUNT + 1 ))
+			[ $retry_max_count -gt 0 -a $RETRY_COUNT -gt $retry_max_count ] && \
 				write_log 14 "Updating IP at DDNS provider failed after $retry_max_count retries"
-			write_log 4 "Updating IP at DDNS provider failed - starting retry $ERR_UPDATE/$retry_max_count"
+			write_log 4 "Updating IP at DDNS provider failed - starting retry $RETRY_COUNT/$retry_max_count"
 			continue # loop to beginning
 		else
 			write_log 4 "Updating IP at DDNS provider failed"
@@ -422,7 +422,7 @@ while : ; do
 		fi
 	else
 		# we checked successful the last update
-		ERR_UPDATE=0			# reset error counter
+		RETRY_COUNT=0			# reset error counter
 	fi
 
 	# force_update=0 or VERBOSE > 1 - leave here

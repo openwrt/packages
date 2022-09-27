@@ -57,7 +57,7 @@ URL_PENC=""		# url encoded $param_enc from config file
 UPD_ANSWER=""		# Answer given by service on success
 
 ERR_LAST=0		# used to save $? return code of program and function calls
-ERR_UPDATE=0		# error counter on different current and registered IPs
+RETRY_COUNT=0		# error counter on different current and registered IPs
 
 PID_SLEEP=0		# ProcessID of current background "sleep"
 
