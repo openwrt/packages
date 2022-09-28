@@ -137,11 +137,11 @@ case "$1" in
 		if [ "$ip_source" = "web" -o  "$ip_source" = "script" ]; then
 			# we wait only 3 seconds for an
 			# answer from "web" or "script"
-			write_log 7 "-----> timeout 3 -- get_local_ip IP"
-			timeout 3 -- get_local_ip IP
+			write_log 7 "-----> timeout 3 -- get_current_ip IP"
+			timeout 3 -- get_current_ip IP
 		else
-			write_log 7 "-----> get_local_ip IP"
-			get_local_ip IP
+			write_log 7 "-----> get_current_ip IP"
+			get_current_ip IP
 		fi
 		__RET=$?
 		;;
