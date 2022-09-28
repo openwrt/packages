@@ -36,6 +36,7 @@ PIDFILE=""		# pid file
 UPDFILE=""		# store UPTIME of last update
 DATFILE=""		# save stdout data of WGet and other external programs called
 ERRFILE=""		# save stderr output of WGet and other external programs called
+CURR_IP_FILE=""
 IPFILE=""		# store registered IP for read by LuCI status
 TLDFILE=/usr/share/public_suffix_list.dat.gz	# TLD file used by split_FQDN
 
@@ -1043,6 +1044,7 @@ get_current_ip () {
 		fi
 		# valid data found return here
 		[ -n "$__DATA" ] && {
+			[ -n "$CURR_IP_FILE" ] && echo "$__DATA" > $CURR_IP_FILE
 			eval "$1=\"$__DATA\""
 			return 0
 		}

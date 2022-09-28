@@ -100,6 +100,7 @@ PIDFILE="$ddns_rundir/$SECTION_ID.pid"	# Process ID file
 UPDFILE="$ddns_rundir/$SECTION_ID.update"	# last update successful send (system uptime)
 DATFILE="$ddns_rundir/$SECTION_ID.dat"	# save stdout data of WGet and other extern programs called
 ERRFILE="$ddns_rundir/$SECTION_ID.err"	# save stderr output of WGet and other extern programs called
+CURR_IP_FILE="$ddns_rundir/$SECTION_ID.curr_ip"
 IPFILE="$ddns_rundir/$SECTION_ID.ip"	#
 LOGFILE="$ddns_logdir/$SECTION_ID.log"	# log file
 
