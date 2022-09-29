@@ -343,6 +343,7 @@ proto_modemmanager_init_config() {
 	proto_config_add_string	 password
 	proto_config_add_string	 pincode
 	proto_config_add_string	 iptype
+	proto_config_add_string	 rat
 	proto_config_add_int	 signalrate
 	proto_config_add_boolean lowpower
 	proto_config_add_defaults
@@ -355,11 +356,11 @@ proto_modemmanager_setup() {
 	local bearermethod_ipv4 bearermethod_ipv6 auth cliauth
 	local operatorname operatorid registration accesstech signalquality
 
-	local device apn allowedauth username password pincode iptype metric signalrate
+	local device apn allowedauth username password pincode iptype metric signalrate rat
 
 	local address prefix gateway mtu dns1 dns2
 
-	json_get_vars device apn allowedauth username password pincode iptype metric signalrate
+	json_get_vars device apn allowedauth username password pincode iptype metric signalrate rat
 
 	# validate sysfs path given in config
 	[ -n "${device}" ] || {
@@ -388,6 +389,7 @@ proto_modemmanager_setup() {
 	# always cleanup before attempting a new connection, just in case
 	modemmanager_cleanup_connection "${modemstatus}"
 
+
 	# if allowedauth list given, build option string
 	for auth in $allowedauth; do
 		cliauth="${cliauth}${cliauth:+|}$auth"
@@ -403,6 +405,33 @@ proto_modemmanager_setup() {
 		proto_block_restart "${interface}"
 		return 1
 	}
+
+	# set the RAT
+	if [ -n "${rat}" ]; then
+		if [ "${rat}" == "automatic" ]; then
+			echo "setting modem RAT to automatic mode"
+			if [ "$(mmcli --modem="${device}" | grep supported | grep 5gnr)" ]; then
+				mmcli --modem="${device}" --set-preferred-mode=5G --set-allowed-modes='3G|4G|5G'
+			elif [ "$(mmcli --modem="${device}" | grep supported | grep lte)" ]; then
+				mmcli --modem="${device}" --set-preferred-mode=4G --set-allowed-modes='3G|4G'
+			elif [ "$(mmcli --modem="${device}" | grep supported | grep gsm-umts)" ]; then
+				mmcli --modem="${device}" --set-allowed-modes='3G'
+			fi
+		elif [ "${rat}" == "5G" ]; then
+			mmcli --modem="${device}" --set-preferred-mode=5G --set-allowed-modes='4G|5G' ||
+				proto_notify_error "5G RAT mode not supported by modem"
+		elif [ "${rat}" == "4G" ]; then
+			mmcli --modem="${device}" --set-preferred-mode=none --set-allowed-modes=4G ||
+				proto_notify_error "4G RAT mode not supported by modem"
+		elif [ "${rat}" == "3G" ]; then
+			mmcli --modem="${device}" --set-preferred-mode=none --set-allowed-modes=3G ||
+				proto_notify_error "3G RAT mode not supported by modem"
+		else
+			echo "RAT mode not supported"
+		fi
+	else
+		echo "modem RAT not setting"
+	fi
 
 	# check if Signal refresh rate is set
 	if [ -n "${signalrate}" ] && [ "${signalrate}" -eq "${signalrate}" ] 2>/dev/null; then
