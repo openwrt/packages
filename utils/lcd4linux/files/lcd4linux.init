@@ -4,6 +4,7 @@
 START=98
 USE_PROCD=1
 
+DEBUG=1
 PROG="/usr/bin/lcd4linux"
 STATIC_CONFIG="/etc/lcd4linux.conf"
 DYNAMIC_CONFIG="/tmp/lcd4linux.conf"
@@ -24,6 +25,11 @@ start_service() {
 	procd_append_param command -q
 	procd_append_param command -o /tmp/lcd4linux.png
 	procd_append_param command -f "$CONFIGFILE"
+	[ "$DEBUG" = 1 ] && {
+		procd_append_param command -vv
+		procd_set_param stdout 1
+		procd_set_param stderr 1
+	}
 	procd_set_param file "$CONFIGFILE"
 	procd_close_instance
 }
