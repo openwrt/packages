@@ -36,3 +36,4 @@ Checking for the maximum value of the 'time_t' type: NO
 Checking whether the realpath function allows a NULL argument: OK
 Checking for ftruncate extend: OK
 getcwd takes a NULL argument: OK
+Checking for readlink breakage: OK
