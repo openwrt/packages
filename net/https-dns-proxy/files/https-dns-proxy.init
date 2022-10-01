@@ -22,8 +22,12 @@ readonly _OK_='\033[0;32m\xe2\x9c\x93\033[0m'
 readonly _FAIL_='\033[0;31m\xe2\x9c\x97\033[0m'
 readonly PROG=/usr/sbin/https-dns-proxy
 readonly DEFAULT_BOOTSTRAP='1.1.1.1,1.0.0.1,2606:4700:4700::1111,2606:4700:4700::1001,8.8.8.8,8.8.4.4,2001:4860:4860::8888,2001:4860:4860::8844'
-readonly canaryDomains='use-application-dns.net'
-dnsmasqConfig=''; forceDNS=''; forceDNSPorts='';
+readonly canaryDomainsMozilla='use-application-dns.net'
+readonly canaryDomainsiCloud='mask.icloud.com mask-h2.icloud.com'
+readonly canaryDomains="$canaryDomainsMozilla $canaryDomainsiCloud"
+dnsmasqConfig=
+forceDNS=
+forceDNSPorts=
 
 str_contains() { [ -n "$1" ] &&[ -n "$2" ] && [ "${1//$2}" != "$1" ]; }
 is_mac_address() { expr "$1" : '[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]$' >/dev/null; }
@@ -47,16 +51,22 @@ output_okn() { output "${_OK_}\\n"; }
 output_fail() { output "$_FAIL_"; }
 output_failn() { output "${_FAIL_}\\n"; }
 uci_add_list_if_new() {
-	local key="$1" value="$2" i
-	if [ -z "$value" ]; then
-		value="${key#*=}"
-		key="${key%=*}"
-	fi
-	[ -n "$key" ] && [ -n "$value" ] || return 1
-	for i in $(uci -q get "$key"); do
-		[ "$i" = "$value" ] && return 0
+	local PACKAGE="$1"
+	local CONFIG="$2"
+	local OPTION="$3"
+	local VALUE="$4"
+	local i
+	[ -n "$PACKAGE" ] && [ -n "$CONFIG" ] && [ -n "$OPTION" ] && [ -n "$VALUE" ] || return 1
+	for i in $(uci_get "$PACKAGE" "$CONFIG" "$OPTION"); do
+		[ "$i" = "$VALUE" ] && return 0
 	done
-	uci -q add_list "${key}=${value}"
+	uci_add_list "$PACKAGE" "$CONFIG" "$OPTION" "$VALUE"
+}
+uci_changes() {
+	local PACKAGE="$1"
+	local CONFIG="$2"
+	local OPTION="$3"
+	/sbin/uci ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} changes "$PACKAGE${CONFIG:+.$CONFIG}${OPTION:+.$OPTION}"
 }
 
 dnsmasq_restart() { [ -x /etc/init.d/dnsmasq ] || return 0; /etc/init.d/dnsmasq restart >/dev/null 2>&1; }
@@ -179,9 +189,9 @@ start_instance() {
 			config_foreach dnsmasq_doh_server 'dnsmasq' 'add' "${listen_addr}" "${listen_port}"
 		elif [ -n "$dnsmasqConfig" ]; then
 			for i in $dnsmasqConfig; do
-				if [ -n "$(uci -q get "dhcp.@dnsmasq[$i]")" ]; then
+				if [ -n "$(uci_get 'dhcp' "@dnsmasq[$i]")" ]; then
 					dnsmasq_doh_server "@dnsmasq[$i]" 'add' "${listen_addr}" "${listen_port}"
-				elif [ -n "$(uci -q get "dhcp.${i}")" ]; then
+				elif [ -n "$(uci_get 'dhcp' "$i")" ]; then
 					dnsmasq_doh_server "${i}" 'add' "${listen_addr}" "${listen_port}"
 				fi
 			done
@@ -204,8 +214,8 @@ start_service() {
 	dhcp_backup 'create'
 	config_load "$packageName"
 	config_foreach start_instance "$packageName"
-	if [ -n "$(uci -q changes dhcp)" ]; then
-		uci -q commit dhcp
+	if [ -n "$(uci_changes dhcp)" ]; then
+		uci_commit 'dhcp'
 		dnsmasq_restart
 	fi
 	output "\\n"
@@ -217,8 +227,8 @@ stop_service() {
 	config_load "$packageName"
 	config_get dnsmasqConfig 'config' 'update_dnsmasq_config' '*'
 	dhcp_backup 'restore'
-	if [ -n "$(uci -q changes dhcp)" ]; then
-		uci -q commit dhcp
+	if [ -n "$(uci_changes dhcp)" ]; then
+		uci_commit 'dhcp'
 		dnsmasq_restart || s=1
 	fi
 # shellcheck disable=SC2015
@@ -247,19 +257,22 @@ dnsmasq_doh_server() {
 		add)
 			if [ "$forceDNS" -ne 0 ]; then
 				for i in $canaryDomains; do
-					uci_add_list_if_new "dhcp.${cfg}.server" "/${i}/"
+					uci_add_list 'dhcp' "$cfg" 'server' "/${i}/"
 				done
 			fi
 			case $address in
 				0.0.0.0|::ffff:0.0.0.0) address='127.0.0.1';;
 				::) address='::1';;
 			esac
-			uci_add_list_if_new "dhcp.${cfg}.server" "${address}#${port}"
+			uci_add_list_if_new 'dhcp' "$cfg" 'server' "${address}#${port}"
 		;;
 		remove)
 			eval "$(ubus call service list "{ 'verbose': true, 'name': '$packageName' }" | jsonfilter -F '# ' -e 'TUPLES=@[*].instances[*].command[4,6]')"
 			for i in $TUPLES; do
-				uci -q del_list "dhcp.${cfg}.server=${i}"
+				uci_remove_list 'dhcp' "$cfg" 'server' "$i"
+			done
+			for i in $canaryDomains; do
+				uci_remove_list 'dhcp' "$cfg" 'server' "/${i}/"
 			done
 		;;
 	esac
@@ -267,24 +280,23 @@ dnsmasq_doh_server() {
 
 dnsmasq_create_server_backup() {
 	local cfg="$1" i
-	uci -q get "dhcp.${cfg}" >/dev/null || return 1
-	if ! uci -q get "dhcp.${cfg}.doh_backup_noresolv" >/dev/null; then
-		if [ -z "$(uci -q get "dhcp.${cfg}.noresolv")" ]; then
-			uci -q set "dhcp.${cfg}.noresolv=1"
-			uci -q set "dhcp.${cfg}.doh_backup_noresolv=-1"
-		elif [ "$(uci -q get "dhcp.${cfg}.noresolv")" != "1" ]; then
-			uci -q set "dhcp.${cfg}.noresolv=1"
-			uci -q set "dhcp.${cfg}.doh_backup_noresolv=0"
+	[ -n "$(uci_get 'dhcp' "$cfg")" ] || return 1
+	if [ -z "$(uci_get 'dhcp' "$cfg" 'doh_backup_noresolv')" ]; then
+		if [ -z "$(uci_get 'dhcp' "$cfg" 'noresolv')" ]; then
+			uci_set 'dhcp' "$cfg" 'doh_backup_noresolv' '-1'
+		else
+			uci_set 'dhcp' "$cfg" 'doh_backup_noresolv' "$(uci_get 'dhcp' "$cfg" noresolv)"
 		fi
+		uci_set 'dhcp' "$cfg" 'noresolv' 1
 	fi
-	if ! uci -q get "dhcp.${cfg}.doh_backup_server" >/dev/null; then
-		if [ -z "$(uci -q get "dhcp.${cfg}.server")" ]; then
-			uci -q add_list "dhcp.${cfg}.doh_backup_server="
+	if [ -z "$(uci_get 'dhcp' "$cfg" 'doh_backup_server')" ]; then
+		if [ -z "$(uci_get 'dhcp' "$cfg" 'server')" ]; then
+			uci_add_list 'dhcp' "$cfg" 'doh_backup_server' ""
 		fi
-		for i in $(uci -q get "dhcp.${cfg}.server"); do
-			uci -q add_list "dhcp.${cfg}.doh_backup_server=$i"
+		for i in $(uci_get 'dhcp' "$cfg" 'server'); do
+			uci_add_list 'dhcp' "$cfg" 'doh_backup_server' "$i"
 			if [ "$i" = "$(echo "$i" | tr -d /\#)" ]; then
-				uci -q del_list "dhcp.${cfg}.server=$i"
+				uci_remove_list 'dhcp' "$cfg" 'server' "$i"
 			fi
 		done
 	fi
@@ -293,21 +305,21 @@ dnsmasq_create_server_backup() {
 
 dnsmasq_restore_server_backup() {
 	local cfg="$1" i
-	uci -q get "dhcp.${cfg}" >/dev/null || return 0
-	if uci -q get "dhcp.${cfg}.doh_backup_noresolv" >/dev/null; then
-		if [ "$(uci -q get "dhcp.${cfg}.doh_backup_noresolv")" = "0" ]; then
-			uci -q set "dhcp.${cfg}.noresolv=0"
+	[ -n "$(uci_get 'dhcp' "$cfg")" ] || return 0
+	if [ -n "$(uci_get 'dhcp' "$cfg" 'doh_backup_noresolv')" ]; then
+		if [ "$(uci_get 'dhcp' "$cfg" 'doh_backup_noresolv')" = "-1" ]; then
+			uci_remove 'dhcp' "$cfg" 'noresolv'
 		else
-			uci -q del "dhcp.${cfg}.noresolv"
+			uci_set 'dhcp' "$cfg" 'noresolv' "$(uci_get 'dhcp' "$cfg" 'doh_backup_noresolv')"
 		fi
-		uci -q del "dhcp.${cfg}.doh_backup_noresolv"
+		uci_remove 'dhcp' "$cfg" 'doh_backup_noresolv'
 	fi
-	if uci -q get "dhcp.${cfg}.doh_backup_server" >/dev/null; then
+	if [ -n "$(uci_get 'dhcp' "$cfg" 'doh_backup_server')" ]; then
 		dnsmasq_doh_server "$cfg" 'remove'
-		for i in $(uci -q get "dhcp.${cfg}.doh_backup_server"); do
-			uci_add_list_if_new "dhcp.${cfg}.server" "$i"
+		for i in $(uci_get 'dhcp' "$cfg" 'doh_backup_server'); do
+			uci_add_list_if_new 'dhcp' "$cfg" 'server' "$i"
 		done
-		uci -q del "dhcp.${cfg}.doh_backup_server"
+		uci_remove 'dhcp' "$cfg" 'doh_backup_server'
 	fi
 }
 
@@ -320,9 +332,9 @@ dhcp_backup() {
 				config_foreach dnsmasq_create_server_backup 'dnsmasq'
 			elif [ -n "$dnsmasqConfig" ]; then
 				for i in $dnsmasqConfig; do
-					if [ -n "$(uci -q get "dhcp.@dnsmasq[$i]")" ]; then
+					if [ -n "$(uci_get 'dhcp' "@dnsmasq[$i]")" ]; then
 						dnsmasq_create_server_backup "@dnsmasq[$i]"
-					elif [ -n "$(uci -q get "dhcp.${i}")" ]; then
+					elif [ -n "$(uci_get 'dhcp' "$i")" ]; then
 						dnsmasq_create_server_backup "$i"
 					fi
 				done
