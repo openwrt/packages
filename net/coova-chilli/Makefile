@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=coova-chilli
 PKG_VERSION:=1.6
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=$(AUTORELEASE).1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/coova/coova-chilli/tar.gz/$(PKG_VERSION)?
