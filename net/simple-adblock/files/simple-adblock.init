@@ -72,6 +72,9 @@ readonly _WARNING_='\033[0;33mWARNING\033[0m'
 readonly ipset="$(command -v ipset)"
 # shellcheck disable=SC2155
 readonly nft="$(command -v nft)"
+readonly canaryDomainsMozilla='use-application-dns.net'
+readonly canaryDomainsiCloud='mask.icloud.com mask-h2.icloud.com'
+# readonly canaryDomains="$canaryDomainsMozilla $canaryDomainsiCloud"
 
 debug() { local i j; for i in "$@"; do eval "j=\$$i"; echo "${i}: ${j} "; done; }
 
@@ -688,10 +691,17 @@ download_lists() {
 		rm -f "$sharedMemoryError"
 	fi
 
-	for hf in ${blocked_domain}; do echo "$hf" | sed "$domainsFilter" >> $B_TMP; done
+	if [ "$canary_domains_icloud" -ne 0 ]; then
+		canaryDomains="${canaryDomains:+$canaryDomains }${canaryDomainsiCloud}"
+	fi
+	if [ "$canary_domains_mozilla" -ne 0 ]; then
+		canaryDomains="${canaryDomains:+$canaryDomains }${canaryDomainsMozilla}"
+	fi
+
+	for hf in $blocked_domain $canaryDomains; do echo "$hf" | sed "$domainsFilter" >> $B_TMP; done
 	allowed_domain="${allowed_domain}
 $(cat $A_TMP)"
-	for hf in ${allowed_domain}; do hf="$(echo "$hf" | sed 's/\./\\./g')"; w_filter="$w_filter/${hf}$/d;"; done
+	for hf in ${allowed_domain}; do hf="$(echo "$hf" | sed 's/\./\\./g')"; w_filter="$w_filter/^${hf}$/d;/\.${hf}$/d;"; done
 
 	[ ! -s "$B_TMP" ] && return 1
 
@@ -846,7 +856,7 @@ $(cat $A_TMP)"
 }
 
 adb_allow() {
-	local c string="$1"
+	local c hf string="$1"
 	local validation_result="$3"
 	load_environment "$validation_result"
 	if [ ! -s "$outputFile" ]; then
@@ -858,10 +868,11 @@ adb_allow() {
 			dnsmasq.addnhosts|dnsmasq.conf|dnsmasq.ipset|dnsmasq.nftset|dnsmasq.servers)
 				output 1 "Allowing domain(s) and restarting dnsmasq "
 				output 2 "Allowing domain(s) \\n"
-				for c in $string; do 
+				for c in $string; do
 					output 2 "  $c "
-					if sed -i "/${string}/d" "$outputFile" && \
-						uci_add_list_if_new "${packageName}" 'config' 'allowed_domain' "$string"; then
+					hf="$(echo "$c" | sed 's/\./\\./g')"
+					if sed -i "/^${hf}$/d;/\.${hf}$/d;" "$outputFile" && \
+						uci_add_list_if_new "${packageName}" 'config' 'allowed_domain' "$c"; then
 							output_ok
 					else
 						output_fail
@@ -1356,6 +1367,8 @@ load_validate_config() {
 	local compressed_cache
 	local ipv6_enabled
 	local allow_non_ascii
+	local canary_domains_icloud
+	local canary_domains_mozilla
 	local config_update_enabled
 	local config_update_url
 	local boot_delay
@@ -1379,6 +1392,8 @@ load_validate_config() {
 		'compressed_cache:bool:0' \
 		'ipv6_enabled:bool:0' \
 		'allow_non_ascii:bool:0' \
+		'canary_domains_icloud:bool:0' \
+		'canary_domains_mozilla:bool:0' \
 		'config_update_enabled:bool:0' \
 		'config_update_url:string:https://cdn.jsdelivr.net/gh/openwrt/packages/net/simple-adblock/files/simple-adblock.conf.update' \
 		'boot_delay:range(0,240):120' \
