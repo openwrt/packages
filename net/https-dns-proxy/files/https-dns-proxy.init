@@ -257,7 +257,7 @@ dnsmasq_doh_server() {
 		add)
 			if [ "$forceDNS" -ne 0 ]; then
 				for i in $canaryDomains; do
-					uci_add_list 'dhcp' "$cfg" 'server' "/${i}/"
+					uci_add_list_if_new 'dhcp' "$cfg" 'server' "/${i}/"
 				done
 			fi
 			case $address in
