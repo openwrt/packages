@@ -24,10 +24,12 @@ readonly PROG=/usr/sbin/https-dns-proxy
 readonly DEFAULT_BOOTSTRAP='1.1.1.1,1.0.0.1,2606:4700:4700::1111,2606:4700:4700::1001,8.8.8.8,8.8.4.4,2001:4860:4860::8888,2001:4860:4860::8844'
 readonly canaryDomainsMozilla='use-application-dns.net'
 readonly canaryDomainsiCloud='mask.icloud.com mask-h2.icloud.com'
-readonly canaryDomains="$canaryDomainsMozilla $canaryDomainsiCloud"
-dnsmasqConfig=
-forceDNS=
-forceDNSPorts=
+canaryDomains=
+canary_domains_icloud=
+canary_domains_mozilla=
+update_dnsmasq_config=
+force_dns=
+force_dns_port=
 
 str_contains() { [ -n "$1" ] &&[ -n "$2" ] && [ "${1//$2}" != "$1" ]; }
 is_mac_address() { expr "$1" : '[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]$' >/dev/null; }
@@ -151,10 +153,10 @@ start_instance() {
 	procd_set_param stderr 1
 	procd_set_param stdout 1
 	procd_set_param respawn
-	if [ "$forceDNS" -ne 0 ]; then
+	if [ "$force_dns" -ne 0 ]; then
 		procd_open_data
 		json_add_array firewall
-		for p in $forceDNSPorts; do
+		for p in $force_dns_port; do
 			if netstat -tuln | grep 'LISTEN' | grep ":${p}" >/dev/null 2>&1 || [ "$p" = '53' ]; then
 				json_add_object ''
 				json_add_string type redirect
@@ -184,11 +186,11 @@ start_instance() {
 	if [ "$?" ]; then
 		config_get listen_addr "$cfg" 'listen_addr' '127.0.0.1'
 		config_get listen_port "$cfg" 'listen_port' "$port"
-		if [ "$dnsmasqConfig" = '*' ]; then
+		if [ "$update_dnsmasq_config" = '*' ]; then
 			config_load 'dhcp'
 			config_foreach dnsmasq_doh_server 'dnsmasq' 'add' "${listen_addr}" "${listen_port}"
-		elif [ -n "$dnsmasqConfig" ]; then
-			for i in $dnsmasqConfig; do
+		elif [ -n "$update_dnsmasq_config" ]; then
+			for i in $update_dnsmasq_config; do
 				if [ -n "$(uci_get 'dhcp' "@dnsmasq[$i]")" ]; then
 					dnsmasq_doh_server "@dnsmasq[$i]" 'add' "${listen_addr}" "${listen_port}"
 				elif [ -n "$(uci_get 'dhcp' "$i")" ]; then
@@ -198,7 +200,7 @@ start_instance() {
 		fi
 		output_ok
 		port="$((port+1))"
-		forceDNS=0
+		force_dns=0
 	else
 		output_fail
 	fi
@@ -208,9 +210,17 @@ start_service() {
 	local port=5053
 	output "Starting $serviceName "
 	config_load "$packageName"
-	config_get dnsmasqConfig	'config' 'update_dnsmasq_config' '*'
-	config_get_bool forceDNS	'config' 'force_dns' '1'
-	config_get forceDNSPorts	'config' 'force_dns_port' '53 853'
+	config_get update_dnsmasq_config        'config' 'update_dnsmasq_config' '*'
+	config_get_bool canary_domains_icloud   'config' 'canary_domains_icloud' '1'
+	config_get_bool canary_domains_mozilla  'config' 'canary_domains_mozilla' '1'
+	config_get_bool force_dns	              'config' 'force_dns' '1'
+	config_get force_dns_port	              'config' 'force_dns_port' '53 853'
+	if [ "$canary_domains_icloud" -ne 0 ]; then
+		canaryDomains="${canaryDomains:+$canaryDomains }${canaryDomainsiCloud}"
+	fi
+	if [ "$canary_domains_mozilla" -ne 0 ]; then
+		canaryDomains="${canaryDomains:+$canaryDomains }${canaryDomainsMozilla}"
+	fi
 	dhcp_backup 'create'
 	config_load "$packageName"
 	config_foreach start_instance "$packageName"
@@ -225,7 +235,7 @@ stop_service() {
 	local s=0
 	output "Stopping $serviceName "
 	config_load "$packageName"
-	config_get dnsmasqConfig 'config' 'update_dnsmasq_config' '*'
+	config_get update_dnsmasq_config 'config' 'update_dnsmasq_config' '*'
 	dhcp_backup 'restore'
 	if [ -n "$(uci_changes dhcp)" ]; then
 		uci_commit 'dhcp'
@@ -255,7 +265,7 @@ dnsmasq_doh_server() {
 	local cfg="$1" param="$2" address="${3:-127.0.0.1}" port="$4" i
 	case "$param" in
 		add)
-			if [ "$forceDNS" -ne 0 ]; then
+			if [ "$force_dns" -ne 0 ]; then
 				for i in $canaryDomains; do
 					uci_add_list_if_new 'dhcp' "$cfg" 'server' "/${i}/"
 				done
@@ -328,10 +338,10 @@ dhcp_backup() {
 	config_load 'dhcp'
 	case "$1" in
 		create)
-			if [ "$dnsmasqConfig" = "*" ]; then
+			if [ "$update_dnsmasq_config" = "*" ]; then
 				config_foreach dnsmasq_create_server_backup 'dnsmasq'
-			elif [ -n "$dnsmasqConfig" ]; then
-				for i in $dnsmasqConfig; do
+			elif [ -n "$update_dnsmasq_config" ]; then
+				for i in $update_dnsmasq_config; do
 					if [ -n "$(uci_get 'dhcp' "@dnsmasq[$i]")" ]; then
 						dnsmasq_create_server_backup "@dnsmasq[$i]"
 					elif [ -n "$(uci_get 'dhcp' "$i")" ]; then
