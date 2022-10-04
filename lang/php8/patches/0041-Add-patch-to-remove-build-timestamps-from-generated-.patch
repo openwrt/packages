@@ -54,7 +54,7 @@ Subject: Add patch to remove build timestamps from generated binaries.
  							fcgi_shutdown();
 --- a/sapi/cli/php_cli.c
 +++ b/sapi/cli/php_cli.c
-@@ -635,8 +635,8 @@ static int do_cli(int argc, char **argv)
+@@ -633,8 +633,8 @@ static int do_cli(int argc, char **argv)
  				goto out;
  
  			case 'v': /* show php version & quit */
