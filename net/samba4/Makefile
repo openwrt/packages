@@ -2,7 +2,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=samba
-PKG_VERSION:=4.14.14
+PKG_VERSION:=4.15.10
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -13,7 +13,7 @@ PKG_SOURCE_URL:= \
 		http://www.nic.funet.fi/index/samba/pub/samba/stable/ \
 		http://samba.mirror.bit.nl/samba/ftp/stable/ \
 		https://download.samba.org/pub/samba/stable/
-PKG_HASH:=abd5e9e6aa45e55114b188ba189ebdfc8fd3d7718d43f749e477ce7f791e5519
+PKG_HASH:=19a0206cb9750f8204e51e8bf1b5e7808d997559b9cf9923b3ba6bf473846cf8
 
 PKG_LICENSE:=GPL-3.0-only
 PKG_LICENSE_FILES:=COPYING
@@ -177,7 +177,6 @@ CONFIGURE_ARGS += \
 		--without-automount \
 		--without-iconv \
 		--without-lttng \
-		--without-ntvfs-fileserver \
 		--without-pam \
 		--without-systemd \
 		--without-utmp \
@@ -202,7 +201,6 @@ HOST_CONFIGURE_ARGS += \
 		--without-automount \
 		--without-iconv \
 		--without-lttng \
-		--without-ntvfs-fileserver \
 		--without-pam \
 		--without-systemd \
 		--without-utmp \
@@ -214,7 +212,7 @@ HOST_CONFIGURE_ARGS += \
 
 HOST_CONFIGURE_ARGS += --disable-avahi --without-quotas --without-acl-support --without-winbind \
 	--without-ad-dc --without-json --without-libarchive --disable-python --nopyc --nopyo \
-	--without-dnsupdate --without-ads --without-ldap --without-ldb-lmdb
+	--without-ads --without-ldap --without-ldb-lmdb
 
 # Optional AES-NI support - https://lists.samba.org/archive/samba-technical/2017-September/122738.html
 # Support for Nettle wasn't comitted
@@ -246,7 +244,7 @@ ifeq ($(CONFIG_SAMBA4_SERVER_AD_DC),y)
 	CONFIGURE_ARGS += --without-winbind --without-ldb-lmdb --with-acl-support
 else
 	CONFIGURE_ARGS += --without-winbind --without-ads --without-ldap --without-ldb-lmdb --without-ad-dc \
-		--without-json --without-libarchive --disable-python --nopyc --nopyo --without-dnsupdate --without-acl-support
+		--without-json --without-libarchive --disable-python --nopyc --nopyo --without-acl-support
 endif
 
 SAMBA4_PDB_MODULES :=pdb_smbpasswd,pdb_tdbsam,
@@ -327,6 +325,9 @@ define Host/Prepare
 	$(call Host/Prepare/Default)
 	$(SED) 's,mandatory=True,mandatory=False,g' $(HOST_BUILD_DIR)/wscript_configure_system_gnutls
 	$(SED) 's,gnutls_version =.*,gnutls_version = gnutls_min_required_version,g' $(HOST_BUILD_DIR)/wscript_configure_system_gnutls
+	$(SED) 's,gnutls_version_str.*,gnutls_version_str = "3.7.7",g' $(HOST_BUILD_DIR)/wscript_configure_system_gnutls
+	$(SED) 's,(gnutls_version > .*,(parse_version(gnutls_version) > parse_version("3.6.10")):,g' $(HOST_BUILD_DIR)/wscript_configure_system_gnutls
+	$(SED) 's,(gnutls_version < .*,(parse_version(gnutls_version) < parse_version("3.5.2")):,g' $(HOST_BUILD_DIR)/wscript_configure_system_gnutls
 endef
 define Host/Compile
 	(cd $(HOST_BUILD_DIR); \

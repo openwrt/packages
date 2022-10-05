@@ -1,0 +1,10 @@
+--- a/lib/util/signal.h
++++ b/lib/util/signal.h
+@@ -21,6 +21,7 @@
+ #ifndef _SAMBA_UTIL_SIGNAL_H_
+ #define _SAMBA_UTIL_SIGNAL_H_
+ 
++#include <signal.h>
+ #include <stdbool.h>
+ 
+ /**

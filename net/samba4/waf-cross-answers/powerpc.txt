@@ -37,3 +37,4 @@ Checking whether the realpath function allows a NULL argument: OK
 Checking for ftruncate extend: OK
 getcwd takes a NULL argument: OK
 Checking for readlink breakage: OK
+Checking for gnutls fips mode support: NO
