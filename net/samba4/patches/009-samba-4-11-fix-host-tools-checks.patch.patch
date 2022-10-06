@@ -1,9 +1,9 @@
 --- a/wscript_configure_embedded_heimdal
 +++ b/wscript_configure_embedded_heimdal
-@@ -2,3 +2,14 @@ if not conf.env['FLEX']:
-     conf.fatal("Embedded Heimdal build requires flex but it was not found.  Install flex or use --with-system-mitkrb5 or --with-system-heimdalkrb5")
+@@ -6,3 +6,14 @@ if not conf.env['BISON']:
  
- conf.RECURSE('source4/heimdal_build')
+ conf.define('USING_EMBEDDED_HEIMDAL', 1)
+ conf.RECURSE('third_party/heimdal_build')
 +
 +def check_system_heimdal_binary(name):
 +    if conf.LIB_MAY_BE_BUNDLED(name):
@@ -32,11 +32,13 @@
  check_system_heimdal_lib("com_err", "com_right_r com_err", "com_err.h")
  
  if check_system_heimdal_lib("roken", "rk_socket_set_reuseaddr", "roken.h"):
-@@ -96,7 +88,4 @@ finally:
+@@ -86,9 +78,6 @@ finally:
  #if conf.CHECK_BUNDLED_SYSTEM('tommath', checkfunctions='mp_init', headers='tommath.h'):
  #    conf.define('USING_SYSTEM_TOMMATH', 1)
  
 -check_system_heimdal_binary("compile_et")
 -check_system_heimdal_binary("asn1_compile")
 -
+ conf.env.KRB5_VENDOR = 'heimdal'
  conf.define('USING_SYSTEM_KRB5', 1)
+ conf.define('USING_SYSTEM_HEIMDAL', 1)
