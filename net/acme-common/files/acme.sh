@@ -117,7 +117,6 @@ usage() {
 Usage: acme <command> [arguments]
 Commands:
 	get                issue or renew certificates
-	cert <domain>      show certificate matching domain
 EOF
 	exit 1
 }

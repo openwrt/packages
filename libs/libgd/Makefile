@@ -26,7 +26,7 @@ include $(INCLUDE_DIR)/cmake.mk
 define Package/libgd/default
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libjpeg +libpng +libwebp +LIBGD_TIFF:libtiff +LIBGD_FREETYPE:libfreetype
+  DEPENDS:=+libjpeg +libpng +libwebp
   TITLE:=The GD graphics library
   URL:=https://libgd.github.io/
 endef
@@ -36,6 +36,7 @@ define Package/libgd
   MENU:=1
   DEPENDS+=+LIBGD_TIFF:libtiff +LIBGD_FREETYPE:libfreetype
   VARIANT:=default
+  CONFLICTS:=libgd-full
 endef
 
 define Package/libgd-full
@@ -44,7 +45,6 @@ define Package/libgd-full
   TITLE+=(full)
   VARIANT:=full
   PROVIDES:=libgd
-  CONFLICTS:=libgd
 endef
 
 define Package/libgd/description/default
