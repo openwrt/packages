@@ -162,11 +162,10 @@ define Package/gnunet/install
 	done )
 
 	( for lex in communicator-unix daemon-topology helper-nat-client \
-	    helper-nat-server service-arm service-ats service-ats-new service-cadet \
-	    service-core service-dht service-identity service-nat service-nat-auto \
-	    service-nse service-peerinfo service-peerstore service-regex \
-	    service-revocation service-scalarproduct-alice \
-	    service-scalarproduct-bob service-scalarproduct-ecc-alice \
+	    helper-nat-server service-arm service-ats service-cadet service-core \
+	    service-dht service-identity service-nat service-nat-auto service-nse \
+	    service-peerinfo service-peerstore service-regex service-revocation \
+	    service-scalarproduct-alice service-scalarproduct-bob service-scalarproduct-ecc-alice \
 	    service-scalarproduct-ecc-bob service-set service-seti service-setu service-statistics \
 	    service-tng service-transport timeout; do \
 		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/gnunet/libexec/gnunet-$$$$lex $(1)/usr/lib/gnunet/libexec ; \
@@ -262,7 +261,7 @@ CONF_fs:=fs
 
 DEPENDS_gns:=+gnunet-vpn +iptables-mod-extra
 USERID_gns:=:gnunetdns=452
-BIN_gns:=gns gns-import.sh namecache namestore resolver zoneimport 
+BIN_gns:=gns namecache namestore resolver zoneimport
 LIB_gns:=gns gnsrecord namecache namestore
 PLUGIN_gns:=block_dns block_gns gnsrecord_conversation gnsrecord_dns gnsrecord_gns
 LIBEXEC_gns:=dns2gns helper-dns service-dns service-gns service-namecache service-namestore service-resolver service-zonemaster service-zonemaster-monitor
@@ -289,7 +288,7 @@ PLUGIN_messenger:=gnsrecord_messenger
 
 DEPENDS_reclaim:=+gnunet-gns +gnunet-sqlite +libpbc +libgabe +jansson
 BIN_reclaim:=did reclaim
-LIB_reclaim:=abe consensus did reclaim reclaimattribute secretsharing
+LIB_reclaim:=consensus did reclaim secretsharing
 LIBEXEC_reclaim:=service-consensus service-reclaim service-secretsharing
 CONF_reclaim:=consensus reclaim secretsharing
 PLUGIN_reclaim:=block_consensus gnsrecord_reclaim reclaim_credential_jwt reclaim_attribute_basic
@@ -364,7 +363,7 @@ BIN_utils:=gns-proxy-setup-ca transport-certificate-creation
 DEPENDS_vpn:=+kmod-tun +iptables +uci-firewall
 BIN_vpn:=vpn
 FILE_MODES_vpn:=/usr/lib/gnunet/libexec/gnunet-helper-exit:root:gnunet:4750 /usr/lib/gnunet/libexec/gnunet-helper-vpn:root:gnunet:4750
-LIB_vpn:=dnsstub tun vpn
+LIB_vpn:=vpn
 LIBEXEC_vpn:=daemon-exit daemon-pt helper-exit helper-vpn service-vpn
 CONF_vpn:=exit pt vpn
 
