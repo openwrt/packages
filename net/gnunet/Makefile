@@ -37,6 +37,7 @@ CONFIGURE_ARGS+= \
 	--with-extractor=$(STAGING_DIR)/usr \
 	--with-gnutls=$(STAGING_DIR)/usr \
 	$(if $(CONFIG_PACKAGE_$(PKG_NAME)-transport-bluetooth),--with-bluetooth="$(STAGING_DIR)/usr",--without-bluetooth) \
+	--with-jose=$(STAGING_DIR)/usr \
 	--with-libgnurl=$(STAGING_DIR)/usr \
 	--with-ogg=$(STAGING_DIR)/usr \
 	--with-opus=$(STAGING_DIR)/usr \
@@ -293,7 +294,7 @@ LIBEXEC_reclaim:=service-consensus service-reclaim service-secretsharing
 CONF_reclaim:=consensus reclaim secretsharing
 PLUGIN_reclaim:=block_consensus gnsrecord_reclaim reclaim_credential_jwt reclaim_attribute_basic
 
-DEPENDS_rest:=+gnunet-gns +gnunet-reclaim +libmicrohttpd-ssl +jansson
+DEPENDS_rest:=+gnunet-gns +gnunet-reclaim +libmicrohttpd-ssl +jansson +libjose
 LIB_rest:=rest json gnsrecordjson
 PLUGIN_rest:=rest_config rest_copying rest_gns rest_identity rest_namestore rest_peerinfo rest_openid_connect rest_reclaim
 LIBEXEC_rest:=rest-server
