@@ -1,6 +1,6 @@
 --- a/source3/lib/messages.c
 +++ b/source3/lib/messages.c
-@@ -507,7 +507,7 @@ static NTSTATUS messaging_init_internal(
+@@ -500,7 +500,7 @@ static NTSTATUS messaging_init_internal(
  		return NT_STATUS_ACCESS_DENIED;
  	}
  
@@ -9,7 +9,7 @@
  	if (priv_path == NULL) {
  		return NT_STATUS_NO_MEMORY;
  	}
-@@ -670,7 +670,7 @@ NTSTATUS messaging_reinit(struct messagi
+@@ -663,7 +663,7 @@ NTSTATUS messaging_reinit(struct messagi
  		msg_ctx->per_process_talloc_ctx,
  		msg_ctx->event_ctx,
  		&msg_ctx->id.unique_id,

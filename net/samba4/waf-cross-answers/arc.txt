@@ -40,3 +40,4 @@ Checking whether setreuid is available: NO
 Checking whether setresuid is available: NO
 Checking whether seteuid is available: NO
 Checking for readlink breakage: OK
+Checking for gnutls fips mode support: NO
