@@ -135,13 +135,14 @@ start_instance() {
 	local cfg="$1" param listen_addr listen_port ipv6_resolvers_only p
 	config_get_bool ipv6_resolvers_only "$cfg" 'use_ipv6_resolvers_only' '0'
 	append_parm "$cfg" 'resolver_url' '-r'
-	append_parm "$cfg" 'polling_interval' '-i'
 	append_parm "$cfg" 'listen_addr' '-a' '127.0.0.1'
 	append_parm "$cfg" 'listen_port' '-p' "$port"
 	append_parm "$cfg" 'dscp_codepoint' '-c'
 	append_bootstrap "$cfg" 'bootstrap_dns' '-b' "$DEFAULT_BOOTSTRAP"
 	append_parm "$cfg" 'user' '-u' 'nobody'
 	append_parm "$cfg" 'group' '-g' 'nogroup'
+	append_parm "$cfg" 'ca_certs_file' '-C'
+	append_parm "$cfg" 'polling_interval' '-i'
 	append_parm "$cfg" 'proxy_server' '-t'
 	append_parm "$cfg" 'logfile' '-l'
 	append_bool "$cfg" 'use_http1' '-x'
@@ -246,15 +247,16 @@ stop_service() {
 }
 
 # shellcheck disable=SC1091
-service_triggers() { 
-	local iface
+service_triggers() {
+	local wan wan6 i
 	. /lib/functions/network.sh
 	network_flush_cache
-	network_find_wan iface
-	iface="${iface:-wan}"
-	if [ -n "$iface" ]; then
-		procd_add_interface_trigger "interface.*" "$iface" "/etc/init.d/${packageName}" restart
-	fi
+	network_find_wan wan
+	network_find_wan6 wan6
+	wan="${wan:-wan}"
+	for i in "$wan" "$wan6"; do
+		procd_add_interface_trigger "interface.*" "$i" "/etc/init.d/${packageName}" restart
+	done
 	procd_add_config_trigger "config.change" "$packageName" "/etc/init.d/${packageName}" restart
 }
 
