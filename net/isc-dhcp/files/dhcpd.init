@@ -157,7 +157,7 @@ append_routes() {
 		octets=$((($prefix + 7) / 8))
 		compacted="$(echo "$network" | cut -d. -f1-$octets)"
 
-		string="${string:+, }$(explode "$prefix.$compacted.$router")"
+		string="${string:+, }$(explode "$prefix${compacted:+.$compacted}.$router")"
 	done
 
 	echo " option classless-ipv4-route $string;"
