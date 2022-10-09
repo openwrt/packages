@@ -1,16 +1,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=samplicator
-PKG_VERSION:=1.3.6
 PKG_RELEASE:=$(AUTORELEASE)
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/sleinen/samplicator/releases/download/v$(PKG_VERSION)
-PKG_HASH:=3c4358b4b0992a77251f2b9e2221d4ae945781160732c73504eb126e69d72d40
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/sleinen/samplicator.git
+PKG_SOURCE_DATE:=2021-10-11
+PKG_SOURCE_VERSION:=ceeb1d280188c155b71d819282490be86190f6f6
+PKG_MIRROR_HASH:=e96ac711313d3554d53ca8de5061b8fb18dfeb2823c4c0fe3404ba3b71e8b689
 
 PKG_MAINTAINER:=Nick Hainke <vincent@systemli.org>
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING
+
+PKG_FIXUP:=autoreconf
+PKG_REMOVE_FILES:=autogen.sh
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
