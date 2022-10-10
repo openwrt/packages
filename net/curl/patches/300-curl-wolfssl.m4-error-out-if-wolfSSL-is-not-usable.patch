@@ -1,0 +1,57 @@
+From 5c91ff8853cbe08fb30462f99d3261383de9b98e Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Petr=20=C5=A0tetiar?= <ynezz@true.cz>
+Date: Mon, 10 Oct 2022 07:36:56 +0200
+Subject: [PATCH] curl-wolfssl.m4: error out if wolfSSL is not usable
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+When I explicitly declare, that I would like to have curl built with
+wolfSSL support using `--with-wolfssl` configure option, then I would
+expect, that either I endup with curl having that support, for example
+in form of https support or it wouldn't be available at all.
+
+Downstream projects like for example OpenWrt build curl wolfSSL variant
+with `--with-wolfssl` already, but in certain corner cases it does fail:
+
+  configure:25299: checking for wolfSSL_Init in -lwolfssl
+  configure:25321: x86_64-openwrt-linux-musl-gcc -o conftest [snip]
+  In file included from target-x86_64_musl/usr/include/wolfssl/wolfcrypt/dsa.h:33,
+                   from target-x86_64_musl/usr/include/wolfssl/wolfcrypt/asn_public.h:35,
+                  from target-x86_64_musl/usr/include/wolfssl/ssl.h:35,
+                   from conftest.c:47:
+  target-x86_64_musl/usr/include/wolfssl/wolfcrypt/integer.h:37:14: fatal error: wolfssl/wolfcrypt/sp_int.h: No such file or directory
+       #include <wolfssl/wolfcrypt/sp_int.h>
+                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  compilation terminated.
+
+and in the end thus produces curl without https support:
+
+ curl: (1) Protocol "https" not supported or disabled in libcurl
+
+So fix it, by making the working wolfSSL mandatory and error out in
+configure step when that's not the case:
+
+ checking for wolfSSL_Init in -lwolfssl... no
+ configure: error: --with-wolfssl but wolfSSL was not found or doesn't work
+
+References: https://github.com/openwrt/packages/issues/19005
+References: https://github.com/openwrt/packages/issues/19547
+Upstream-Status: Accepted [https://github.com/curl/curl/pull/9682]
+Signed-off-by: Petr Štetiar <ynezz@true.cz>
+---
+ m4/curl-wolfssl.m4 | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+--- a/m4/curl-wolfssl.m4
++++ b/m4/curl-wolfssl.m4
+@@ -165,7 +165,8 @@ if test "x$OPT_WOLFSSL" != xno; then
+           AC_MSG_NOTICE([Added $wolfssllibpath to CURL_LIBRARY_PATH])
+         fi
+       fi
+-
++    else
++        AC_MSG_ERROR([--with-wolfssl but wolfSSL was not found or doesn't work])
+     fi
+ 
+   fi dnl wolfSSL not disabled
