@@ -20,7 +20,7 @@
          abi=sys.abiflags,
 --- a/Makefile.pre.in
 +++ b/Makefile.pre.in
-@@ -1554,7 +1554,7 @@ libinstall:	build_all $(srcdir)/Modules/
+@@ -1555,7 +1555,7 @@ libinstall:	build_all $(srcdir)/Modules/
  			esac; \
  		done; \
  	done
@@ -29,7 +29,7 @@
  		$(DESTDIR)$(LIBDEST); \
  	$(INSTALL_DATA) $(srcdir)/LICENSE $(DESTDIR)$(LIBDEST)/LICENSE.txt
  ifeq (@COMPILE_ALL_TESTS@,yes)
-@@ -1712,7 +1712,7 @@ sharedinstall: sharedmods
+@@ -1713,7 +1713,7 @@ sharedinstall: sharedmods
  		--install-scripts=$(BINDIR) \
  		--install-platlib=$(DESTSHARED) \
  		--root=$(DESTDIR)/
