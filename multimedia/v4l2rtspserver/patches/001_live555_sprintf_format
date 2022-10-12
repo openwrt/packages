@@ -5,7 +5,7 @@ Signed-off-by: Michel Promonet <michel.promonet@free.fr>
 ---
 --- a/live/liveMedia/ServerMediaSession.cpp
 +++ b/live/liveMedia/ServerMediaSession.cpp
-@@ -271,7 +271,7 @@ char* ServerMediaSession::generateSDPDes
+@@ -272,7 +272,7 @@ char* ServerMediaSession::generateSDPDes
  
      char const* const sdpPrefixFmt =
        "v=0\r\n"
@@ -14,7 +14,7 @@ Signed-off-by: Michel Promonet <michel.promonet@free.fr>
        "s=%s\r\n"
        "i=%s\r\n"
        "t=0 0\r\n"
-@@ -299,7 +299,7 @@ char* ServerMediaSession::generateSDPDes
+@@ -300,7 +300,7 @@ char* ServerMediaSession::generateSDPDes
  
      // Generate the SDP prefix (session-level lines):
      snprintf(sdp, sdpLength, sdpPrefixFmt,
