@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
 PKG_VERSION:=6.2.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.zabbix.com/zabbix/sources/stable/6.2/
@@ -25,12 +25,13 @@ PKG_BUILD_PARALLEL:=1
 
 PKG_CONFIG_DEPENDS:= \
   CONFIG_ZABBIX_MYSQL \
-  CONFIG_ZABBIX_POSTGRESQL
+  CONFIG_ZABBIX_POSTGRESQL \
+  CONFIG_ZABBIX_SQLITE
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
-define Package/zabbix-server/config
+define Package/zabbix-proxy/config
 comment "Database Software"
 
 choice
@@ -43,6 +44,8 @@ choice
         config ZABBIX_POSTGRESQL
                 bool "PostgreSQL"
 
+        config ZABBIX_SQLITE
+                bool "SQLite"
 endchoice
 endef
 
@@ -151,6 +154,7 @@ define Package/zabbix-server/Default
   TITLE+= server
   DEPENDS += +ZABBIX_POSTGRESQL:libpq \
     +ZABBIX_MYSQL:libmariadbclient \
+    @(!ZABBIX_SQLITE) \
     +libevent2 \
     +fping
 endef
@@ -181,9 +185,20 @@ endef
 define Package/zabbix-server-frontend
   $(call Package/zabbix/Default)
   TITLE+= server-frontend
-  DEPENDS += +php8 +php8-cgi +ZABBIX_POSTGRESQL:php8-mod-pgsql +ZABBIX_MYSQL:php8-mod-mysqli \
-  +php8-mod-gd +php8-mod-bcmath +php8-mod-ctype +php8-mod-xmlreader +php8-mod-xmlwriter \
-  +php8-mod-session +php8-mod-sockets +php8-mod-mbstring +php8-mod-gettext
+  DEPENDS += +php8 \
+    +php8-cgi \
+    +php8-mod-gd \
+    +php8-mod-bcmath \
+    +php8-mod-ctype \
+    +php8-mod-xmlreader \
+    +php8-mod-xmlwriter \
+    +php8-mod-session \
+    +php8-mod-sockets \
+    +php8-mod-mbstring \
+    +php8-mod-gettext \
+    +ZABBIX_POSTGRESQL:php8-mod-pgsql \
+    +ZABBIX_MYSQL:php8-mod-mysqli \
+    @(!ZABBIX_SQLITE)
 endef
 
 define Package/zabbix-proxy/Default
@@ -191,6 +206,7 @@ define Package/zabbix-proxy/Default
   TITLE+= proxy
   DEPENDS += +ZABBIX_POSTGRESQL:libpq \
     +ZABBIX_MYSQL:libmariadbclient \
+    +ZABBIX_SQLITE:libsqlite3 \
     +libevent2 \
     +fping
 endef
@@ -238,12 +254,13 @@ endef
 
 CONFIGURE_ARGS+= \
 	--enable-agent \
-	--enable-server \
+	$(if $(CONFIG_ZABBIX_SQLITE),--disable-server,--enable-server) \
 	--enable-proxy \
 	$(call autoconf_bool,CONFIG_IPV6,ipv6) \
 	--disable-java \
 	$(if $(CONFIG_ZABBIX_MYSQL),--with-mysql) \
 	$(if $(CONFIG_ZABBIX_POSTGRESQL),--with-postgresql) \
+	$(if $(CONFIG_ZABBIX_SQLITE),--with-sqlite3=$(STAGING_DIR)/usr) \
 	--with-libevent=$(STAGING_DIR)/usr/include/libevent \
 	--with-libpcre=$(STAGING_DIR)/usr/include \
 	--with-zlib=$(STAGING_DIR)/usr/include
