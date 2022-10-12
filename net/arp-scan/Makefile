@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=arp-scan
-PKG_VERSION:=1.9.7
+PKG_VERSION:=1.9.8
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/royhills/arp-scan/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=e03c36e4933c655bd0e4a841272554a347cd0136faf42c4a6564059e0761c039
+PKG_HASH:=b9b75ceaef6348f5951b06c773ec7a243a9e780e160eafebc369f9c27f6a7d3f
 
 PKG_MAINTAINER:=Sergey Urushkin <urusha.v1.0@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
