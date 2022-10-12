@@ -175,6 +175,20 @@ snmpd_pass_add() {
 	echo "$pass $priority $miboid $prog" >> $CONFIGFILE
 }
 
+snmpd_json_pass_add() {
+	. /usr/share/libubox/jshn.sh
+	[ -d /usr/share/snmp/pass/ ] || return
+	for file in /usr/share/snmp/pass/*.json; do
+		local pass='pass'
+		local miboid prog persist priority
+		json_load_file "${file}"
+		json_get_vars miboid prog persist priority
+		[ -z "$persist" ] || pass='pass_persist'
+		priority=${priority:+-p $priority}
+		echo "$pass $priority $miboid $prog" >> $CONFIGFILE
+	done
+}
+
 snmpd_exec_add() {
 	local cfg="$1"
 
@@ -305,6 +319,7 @@ start_service() {
 	config_foreach snmpd_access_HostName_add access_HostName
 	config_foreach snmpd_access_HostIP_add access_HostIP
 	config_foreach snmpd_pass_add pass
+	snmpd_json_pass_add
 	config_foreach snmpd_exec_add exec
 	config_foreach snmpd_extend_add extend
 	config_foreach snmpd_disk_add disk
