@@ -36,7 +36,8 @@ define Package/squeezelite-full
     $(call Package/squeezelite/default)
     TITLE+= (full)
     DEPENDS+= +libflac +libvorbis +libmpg123 +libfaad2 \
-              +SQUEEZELITE_WMA:libffmpeg-audio-dec
+              +SQUEEZELITE_WMA:libffmpeg-audio-dec \
+              +SQUEEZELITE_SSL:libopenssl
     VARIANT:=full
 endef
 
@@ -64,7 +65,13 @@ define Package/squeezelite/config/default
 	config SQUEEZELITE_DSD
 	    bool "DSD playback over PCM (DoP)"
 	    help
-		Include support for DSD over PCM for compatible DAC"
+		Include support for DSD over PCM for compatible DAC
+	    default n
+
+	config SQUEEZELITE_SSL
+	    bool "SSL/TLS support"
+	    help
+		Include SSL/TLS support for use with e.g. https media URLs
 	    default n
 endef
 
@@ -112,6 +119,10 @@ endif
 
 ifeq ($(CONFIG_SQUEEZELITE_RESAMPLE),y)
     opts+= -DRESAMPLE
+endif
+
+ifeq ($(CONFIG_SQUEEZELITE_SSL),y)
+    opts+= -DUSE_SSL
 endif
 
 ifeq ($(BUILD_VARIANT),full)
