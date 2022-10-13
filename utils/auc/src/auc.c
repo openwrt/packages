@@ -1449,10 +1449,8 @@ static struct branch_version *select_branch(char *name, char *select_version)
 						if (bver->snapshot)
 							continue;
 
-						if (!abver || (openwrt_release_verrevcmp(abver->version, bver->version) < 0)) {
+						if (!abver || (openwrt_release_verrevcmp(abver->version, bver->version) < 0))
 							abver = bver;
-							break;
-						}
 					}
 				}
 			}
