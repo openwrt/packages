@@ -34,14 +34,16 @@ handle_xfrpc() {
 			;;
 		http|https)
 			config_get custom_domains "$name" custom_domains
-			echo "custom_domains = $custom_domains" >> "$config"
+			[ -z "$custom_domains" ] || echo "custom_domains = $custom_domains" >> "$config"
+			config_get subdomain "$name" subdomain
+			[ -z "$subdomain" ] || echo "subdomain = $subdomain" >> "$config"
 			;;
 		esac
 	}
 
 	if [ "$name" = "common" ]; then
 		uci_validate_section xfrpc xfrp "$name" \
-				'server_addr:ipaddr' \
+				'server_addr:host' \
 				'server_port:uinteger' \
 				'token:string:'	
 
