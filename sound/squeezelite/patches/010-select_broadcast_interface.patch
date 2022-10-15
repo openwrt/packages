@@ -1,6 +1,6 @@
 --- a/main.c
 +++ b/main.c
-@@ -93,6 +93,7 @@ static void usage(const char *argv0) {
+@@ -99,6 +99,7 @@ static void usage(const char *argv0) {
  #if IR
  		   "  -i [<filename>]\tEnable lirc remote control support (lirc config file ~/.lircrc used if filename not specified)\n"
  #endif
@@ -8,7 +8,7 @@
  		   "  -m <mac addr>\t\tSet mac address, format: ab:cd:ef:12:34:56\n"
  		   "  -M <modelname>\tSet the squeezelite player model name sent to the server (default: " MODEL_NAME_STRING ")\n"
  		   "  -n <name>\t\tSet the player name\n"
-@@ -292,6 +293,8 @@ int main(int argc, char **argv) {
+@@ -304,6 +305,8 @@ int main(int argc, char **argv) {
  	extern bool user_rates;
  	char *logfile = NULL;
  	u8_t mac[6];
@@ -17,7 +17,7 @@
  	unsigned stream_buf_size = STREAMBUF_SIZE;
  	unsigned output_buf_size = 0; // set later
  	unsigned rates[MAX_SUPPORTED_SAMPLERATES] = { 0 };
-@@ -332,6 +335,7 @@ int main(int argc, char **argv) {
+@@ -344,6 +347,7 @@ int main(int argc, char **argv) {
  
  	int maxSampleRate = 0;
  
@@ -25,7 +25,7 @@
  	char *optarg = NULL;
  	int optind = 1;
  	int i;
-@@ -339,8 +343,6 @@ int main(int argc, char **argv) {
+@@ -351,8 +355,6 @@ int main(int argc, char **argv) {
  #define MAXCMDLINE 512
  	char cmdline[MAXCMDLINE] = "";
  
@@ -34,7 +34,7 @@
  	for (i = 0; i < argc && (strlen(argv[i]) + strlen(cmdline) + 2 < MAXCMDLINE); i++) {
  		strcat(cmdline, argv[i]);
  		strcat(cmdline, " ");
-@@ -348,7 +350,7 @@ int main(int argc, char **argv) {
+@@ -360,7 +362,7 @@ int main(int argc, char **argv) {
  
  	while (optind < argc && strlen(argv[optind]) >= 2 && argv[optind][0] == '-') {
  		char *opt = argv[optind] + 1;
@@ -43,7 +43,7 @@
  #if ALSA
  				   "UVO"
  #endif
-@@ -442,6 +444,9 @@ int main(int argc, char **argv) {
+@@ -454,6 +456,9 @@ int main(int argc, char **argv) {
  		case 'f':
  			logfile = optarg;
  			break;
@@ -53,7 +53,7 @@
  		case 'm':
  			{
  				int byte = 0;
-@@ -755,6 +760,11 @@ int main(int argc, char **argv) {
+@@ -767,6 +772,11 @@ int main(int argc, char **argv) {
  	winsock_init();
  #endif
  
@@ -65,7 +65,7 @@
  	stream_init(log_stream, stream_buf_size);
  
  	if (!strcmp(output_device, "-")) {
-@@ -801,7 +811,7 @@ int main(int argc, char **argv) {
+@@ -813,7 +823,7 @@ int main(int argc, char **argv) {
  		exit(1);
  	}
  
@@ -132,7 +132,7 @@
  		} else {
 --- a/squeezelite.h
 +++ b/squeezelite.h
-@@ -456,7 +456,7 @@ char* strcasestr(const char *haystack, c
+@@ -458,7 +458,7 @@ char* strcasestr(const char *haystack, c
  
  char *next_param(char *src, char c);
  u32_t gettime_ms(void);
@@ -141,7 +141,7 @@
  void set_nonblock(sockfd s);
  int connect_timeout(sockfd sock, const struct sockaddr *addr, socklen_t addrlen, int timeout);
  void server_addr(char *server, in_addr_t *ip_ptr, unsigned *port_ptr);
-@@ -513,7 +513,7 @@ void buf_init(struct buffer *buf, size_t
+@@ -515,7 +515,7 @@ void buf_init(struct buffer *buf, size_t
  void buf_destroy(struct buffer *buf);
  
  // slimproto.c
