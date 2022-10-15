@@ -6,13 +6,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=squeezelite
-PKG_VERSION:=1.9.9-1403
+PKG_VERSION:=1.9.9-1411
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/ralph-irving/squeezelite
-PKG_SOURCE_VERSION:=bc72c0de3fff771540a2a45aaafafed539387b3c
-PKG_MIRROR_HASH:=25f6c320e52b53c0340a337429b91d59783c87f1af3454dc0434c24b90ed3b94
+PKG_SOURCE_VERSION:=ca44fc6e258bb413d6281d927063b25940f42e5c
+PKG_MIRROR_HASH:=022084f24e6c116c2937d0dbdf8aab50a790406aa5ef727952bd363f4dbe180b
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -101,6 +101,8 @@ define Package/squeezelite-mini/description
 
     This package will dynamically load installed codecs.
 endef
+
+opts+= -DNO_MAD
 
 ifeq ($(CONFIG_SQUEEZELITE_WMA),y)
     opts+= -DFFMPEG
