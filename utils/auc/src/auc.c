@@ -64,7 +64,7 @@
 #define DPRINTF(...)
 #endif
 
-static const char server_issues[]="https://github.com/aparcar/asu/issues";
+static const char server_issues[]="https://github.com/openwrt/asu/issues";
 
 static struct ubus_context *ctx;
 static struct uclient *ucl = NULL;
@@ -87,21 +87,40 @@ static int uptodate;
 static char *filename = NULL;
 static void *dlh = NULL;
 static int rc;
+static bool dont_ask = false;
 
 struct branch {
-	struct list_head list;
+	struct avl_node avl;
 	char *name;
 	char *git_branch;
+	char *path_packages;
+	char *arch_packages;
+	char **repos;
+	struct avl_tree versions;
+	struct list_head package_changes;
+	bool snapshot;
+	unsigned int branch_off_rev;
+};
+static struct avl_tree branches = AVL_TREE_INIT(branches, avl_strcmp, false, NULL);
+
+struct branch_version {
+	struct avl_node avl;
+	struct branch *branch;
+	char *path;
 	char *version;
 	char *version_code;
 	char *version_number;
 	bool snapshot;
-	char *path;
-	char *path_packages;
-	char *arch_packages;
-	char **repos;
 };
-static LIST_HEAD(branches);
+
+struct package_changes {
+	struct list_head list;
+	unsigned int revision;
+	char *source;
+	char *target;
+	bool mandatory;
+};
+static LIST_HEAD(selected_package_changes);
 
 struct avl_pkg {
 	struct avl_node avl;
@@ -186,24 +205,47 @@ static const struct blobmsg_policy upgtest_policy[__UPGTEST_MAX] = {
 enum {
 	BRANCH_ENABLED,
 	BRANCH_GIT_BRANCH,
+	BRANCH_BRANCH_OFF_REV,
 	BRANCH_NAME,
 	BRANCH_PATH,
 	BRANCH_PATH_PACKAGES,
 	BRANCH_SNAPSHOT,
+	BRANCH_REPOS,
 	BRANCH_TARGETS,
+	BRANCH_UPDATES,
 	BRANCH_VERSIONS,
+	BRANCH_PACKAGE_CHANGES,
 	__BRANCH_MAX,
 };
 
 static const struct blobmsg_policy branches_policy[__BRANCH_MAX] = {
 	[BRANCH_ENABLED] = { .name = "enabled", .type = BLOBMSG_TYPE_BOOL },
 	[BRANCH_GIT_BRANCH] = { .name = "git_branch", .type = BLOBMSG_TYPE_STRING },
+	[BRANCH_BRANCH_OFF_REV] = { .name = "branch_off_rev", .type = BLOBMSG_TYPE_INT32 },
 	[BRANCH_NAME] = { .name = "name", .type = BLOBMSG_TYPE_STRING },
 	[BRANCH_PATH] = { .name = "path", .type = BLOBMSG_TYPE_STRING },
 	[BRANCH_PATH_PACKAGES] = { .name = "path_packages", .type = BLOBMSG_TYPE_STRING },
 	[BRANCH_SNAPSHOT] = { .name = "snapshot", .type = BLOBMSG_TYPE_BOOL },
+	[BRANCH_REPOS] = { .name = "repos", .type = BLOBMSG_TYPE_ARRAY },
 	[BRANCH_TARGETS] = { .name = "targets", .type = BLOBMSG_TYPE_TABLE },
+	[BRANCH_UPDATES] = { .name = "updates", .type = BLOBMSG_TYPE_STRING },
 	[BRANCH_VERSIONS] = { .name = "versions", .type = BLOBMSG_TYPE_ARRAY },
+	[BRANCH_PACKAGE_CHANGES] = { .name = "package_changes", .type = BLOBMSG_TYPE_ARRAY },
+};
+
+enum {
+	PACKAGE_CHANGES_SOURCE,
+	PACKAGE_CHANGES_TARGET,
+	PACKAGE_CHANGES_REVISION,
+	PACKAGE_CHANGES_MANDATORY,
+	__PACKAGE_CHANGES_MAX,
+};
+
+static const struct blobmsg_policy package_changes_policy[__PACKAGE_CHANGES_MAX] = {
+	[PACKAGE_CHANGES_SOURCE] = { .name = "source", .type = BLOBMSG_TYPE_STRING },
+	[PACKAGE_CHANGES_TARGET] = { .name = "target", .type = BLOBMSG_TYPE_STRING },
+	[PACKAGE_CHANGES_REVISION] = { .name = "revision", .type = BLOBMSG_TYPE_INT32 },
+	[PACKAGE_CHANGES_MANDATORY] = { .name = "mandatory", .type = BLOBMSG_TYPE_BOOL },
 };
 
 /*
@@ -402,6 +444,13 @@ static int verrevcmp(const char *val, const char *ref)
 	return 0;
 }
 
+static int avl_verrevcmp(const void *k1, const void *k2, void *ptr)
+{
+	const char *d1 = (const char *)k1, *d2 = (const char*)k2;
+
+	return verrevcmp(d1, d2);
+}
+
 /*
  * replace '-rc' by '~' in string
  */
@@ -436,6 +485,27 @@ static int openwrt_release_verrevcmp(const char *ver1, const char *ver2)
 	return verrevcmp(mver1, mver2);
 }
 
+/*
+ * Select package_changes from branch to global list
+ */
+static void grab_changes(struct branch *br, unsigned int rev)
+{
+	struct package_changes *c, *n;
+
+#ifdef AUC_DEBUG
+	if (debug)
+		fprintf(stderr, "grabbing changes for branch %s from revision %u\n", br->name, rev);
+#endif
+
+	list_for_each_entry(c, &br->package_changes, list) {
+		if (c->revision == 0 || c->revision > rev) {
+			n = malloc(sizeof(struct package_changes));
+			memcpy(n, c, sizeof(struct package_changes));
+			INIT_LIST_HEAD(&n->list);
+			list_add_tail(&n->list, &selected_package_changes);
+		}
+	}
+}
 
 /**
  * UBUS response callbacks
@@ -448,6 +518,7 @@ static int openwrt_release_verrevcmp(const char *ver1, const char *ver2)
 #define ANSI_COLOR_RESET ANSI_ESC "[0m"
 #define ANSI_COLOR_RED ANSI_ESC "[1;31m"
 #define ANSI_COLOR_GREEN ANSI_ESC "[1;32m"
+#define ANSI_COLOR_BLUE ANSI_ESC "[1;34m"
 #define ANSI_CURSOR_SAFE "[s"
 #define ANSI_CURSOR_RESTORE "[u"
 #define ANSI_ERASE_LINE "[K"
@@ -457,12 +528,61 @@ static int openwrt_release_verrevcmp(const char *ver1, const char *ver2)
 #define PKG_NOT_FOUND 0x4
 #define PKG_ERROR 0x8
 
+static bool ask_user(const char *message)
+{
+	char user_input;
+	fflush(stdin);
+	fprintf(stderr, "%s [N/y] ", message);
+	user_input = getchar();
+	fflush(stdin);
+	if ((user_input == 'y') || (user_input == 'Y'))
+		return true;
+
+	return false;
+}
+
 static inline bool is_builtin_pkg(const char *pkgname)
 {
 	return !strcmp(pkgname, "libc") ||
 		!strcmp(pkgname, "librt") ||
 		!strcmp(pkgname, "libpthread") ||
 		!strcmp(pkgname, "kernel");
+}
+
+static const char *apply_package_changes(const char *pkgname, bool interactive)
+{
+	struct package_changes *pkc;
+	const char *mpkgname = pkgname;
+
+	list_for_each_entry(pkc, &selected_package_changes, list) {
+		/* package_change additions are dealt with later */
+		if (!pkc->source)
+			continue;
+
+		if (strcmp(pkc->source, mpkgname))
+			continue;
+
+		if (!pkc->mandatory && interactive) {
+			if (pkc->target)
+				fprintf(stderr, "Package %s should be replaced by %s.\n", pkc->source, pkc->target);
+			else
+				fprintf(stderr, "Package %s should be removed.\n", pkc->source);
+
+			if (dont_ask)
+				pkc->mandatory = true;
+			else
+				pkc->mandatory = ask_user("Apply change");
+		}
+
+		if (!pkc->mandatory)
+			continue;
+
+		mpkgname = pkc->target;
+
+		if (!mpkgname)
+			break;
+	}
+	return mpkgname;
 }
 
 static void pkglist_check_cb(struct ubus_request *req, int type, struct blob_attr *msg)
@@ -472,6 +592,8 @@ static void pkglist_check_cb(struct ubus_request *req, int type, struct blob_att
 	struct avl_pkg *pkg;
 	int rem;
 	int cmpres;
+	const char *pkgname;
+	struct package_changes *pkc;
 
 	blobmsg_parse(packages_policy, __PACKAGES_MAX, tb, blobmsg_data(msg), blobmsg_len(msg));
 
@@ -479,14 +601,32 @@ static void pkglist_check_cb(struct ubus_request *req, int type, struct blob_att
 		return;
 
 	blobmsg_for_each_attr(cur, tb[PACKAGES_PACKAGES], rem) {
-		if (is_builtin_pkg(blobmsg_name(cur)))
+		pkgname = blobmsg_name(cur);
+		if (is_builtin_pkg(pkgname))
 			continue;
 
-		pkg = avl_find_element(&pkg_tree, blobmsg_name(cur), pkg, avl);
+		pkgname = apply_package_changes(pkgname, true);
+		if (!pkgname) {
+			fprintf(stderr, " %s: %s%s -> (not installed)%s\n",
+				blobmsg_name(cur), ANSI_COLOR_BLUE,
+				blobmsg_get_string(cur), ANSI_COLOR_RESET);
+			continue;
+		}
+
+		pkg = avl_find_element(&pkg_tree, pkgname, pkg, avl);
 		if (!pkg) {
 			fprintf(stderr, "installed package %s%s%s cannot be found in remote list!\n",
-				ANSI_COLOR_RED, blobmsg_name(cur), ANSI_COLOR_RESET);
+				ANSI_COLOR_RED, pkgname, ANSI_COLOR_RESET);
 			*status |= PKG_NOT_FOUND;
+			continue;
+		}
+
+		if (pkgname != blobmsg_name(cur)) {
+			fprintf(stderr, " %s%s: %s -> %s: %s%s\n", ANSI_COLOR_BLUE,
+				blobmsg_name(cur),
+				blobmsg_get_string(cur), pkgname, pkg->version,
+				ANSI_COLOR_RESET);
+			*status |= PKG_UPGRADE;
 			continue;
 		}
 
@@ -507,6 +647,22 @@ static void pkglist_check_cb(struct ubus_request *req, int type, struct blob_att
 				blobmsg_get_string(cur), pkg->version,
 				(cmpres)?ANSI_COLOR_RESET:"");
 	}
+
+	list_for_each_entry(pkc, &selected_package_changes, list) {
+		/* deal only with package_change additions now */
+		if (pkc->source)
+			continue;
+
+		pkg = avl_find_element(&pkg_tree, pkc->target, pkg, avl);
+		if (!pkg) {
+			fprintf(stderr, "new package %s%s%s cannot be found in remote list!\n",
+				ANSI_COLOR_RED, pkc->target, ANSI_COLOR_RESET);
+			*status |= PKG_NOT_FOUND;
+			continue;
+		}
+		fprintf(stderr, " %s: %s(not installed) -> %s%s\n", pkc->target, ANSI_COLOR_BLUE,
+			pkg->version, ANSI_COLOR_RESET);
+	}
 }
 
 /*
@@ -520,6 +676,8 @@ static void pkglist_req_cb(struct ubus_request *req, int type, struct blob_attr 
 	int rem;
 	struct avl_pkg *pkg;
 	void *table;
+	const char *pkgname;
+	struct package_changes *pkc;
 
 	blobmsg_parse(packages_policy, __PACKAGES_MAX, tb, blob_data(msg), blob_len(msg));
 
@@ -531,14 +689,28 @@ static void pkglist_req_cb(struct ubus_request *req, int type, struct blob_attr 
 	table = blobmsg_open_table(buf, "packages_versions");
 
 	blobmsg_for_each_attr(cur, tb[PACKAGES_PACKAGES], rem) {
-		if (is_builtin_pkg(blobmsg_name(cur)))
+		pkgname = blobmsg_name(cur);
+		if (is_builtin_pkg(pkgname))
 			continue;
 
-		pkg = avl_find_element(&pkg_tree, blobmsg_name(cur), pkg, avl);
+		pkgname = apply_package_changes(pkgname, false);
+		pkg = avl_find_element(&pkg_tree, pkgname, pkg, avl);
 		if (!pkg)
 			continue;
 
-		blobmsg_add_string(buf, blobmsg_name(cur), pkg->version);
+		blobmsg_add_string(buf, pkgname, pkg->version);
+	}
+
+	list_for_each_entry(pkc, &selected_package_changes, list) {
+		/* add new packages to request */
+		if (pkc->source)
+			continue;
+
+		pkg = avl_find_element(&pkg_tree, pkc->target, pkg, avl);
+		if (!pkg)
+			continue;
+
+		blobmsg_add_string(buf, pkc->target, pkg->version);
 	}
 	blobmsg_close_table(buf, table);
 };
@@ -929,17 +1101,6 @@ static int init_ustream_ssl(void) {
 	return 0;
 }
 
-static int ask_user(void)
-{
-	char user_input;
-	fprintf(stderr, "Are you sure you want to continue the upgrade process? [N/y] ");
-	user_input = getchar();
-	if ((user_input != 'y') && (user_input != 'Y'))
-		return -EINTR;
-
-	return 0;
-}
-
 static char* alloc_replace_var(char *in, const char *var, const char *replace)
 {
 	char *tmp = in;
@@ -965,7 +1126,7 @@ static char* alloc_replace_var(char *in, const char *var, const char *replace)
 	return res;
 }
 
-static int request_target(struct branch *br, char *url)
+static int request_target(struct branch_version *bver, char *url)
 {
 	static struct blob_buf boardbuf;
 	struct blob_attr *tbr[__REPLY_MAX], *tb[__TARGET_MAX];
@@ -1000,14 +1161,14 @@ static int request_target(struct branch *br, char *url)
 	if (strcmp(blobmsg_get_string(tb[TARGET_TARGET]), target))
 		return -EINVAL;
 
-	if (strcmp(blobmsg_get_string(tb[TARGET_ARCH_PACKAGES]), br->arch_packages))
+	if (strcmp(blobmsg_get_string(tb[TARGET_ARCH_PACKAGES]), bver->branch->arch_packages))
 		return -EINVAL;
 
 	if (tb[TARGET_VERSION_CODE])
-		br->version_code = strdup(blobmsg_get_string(tb[TARGET_VERSION_CODE]));
+		bver->version_code = strdup(blobmsg_get_string(tb[TARGET_VERSION_CODE]));
 
 	if (tb[TARGET_VERSION_NUMBER])
-		br->version_number = strdup(blobmsg_get_string(tb[TARGET_VERSION_NUMBER]));
+		bver->version_number = strdup(blobmsg_get_string(tb[TARGET_VERSION_NUMBER]));
 
 	blob_buf_free(&boardbuf);
 	return 0;
@@ -1027,11 +1188,12 @@ static char* validate_target(struct blob_attr *branch)
 
 static void process_branch(struct blob_attr *branch, bool only_active)
 {
-	struct blob_attr *tb[__BRANCH_MAX];
-	struct blob_attr *curver;
-	int remver;
+	struct blob_attr *tb[__BRANCH_MAX], *pkc[__PACKAGE_CHANGES_MAX];
+	struct blob_attr *curver, *curpkc;
+	int remver, rempkc;
 	struct branch *br;
-	char *tmp, *arch_packages, *board_json_file;
+	struct package_changes *pkce;
+	char *tmp, *board_json_file;
 	const char *brname;
 
 	blobmsg_parse(branches_policy, __BRANCH_MAX, tb, blobmsg_data(branch), blobmsg_len(branch));
@@ -1046,47 +1208,111 @@ static void process_branch(struct blob_attr *branch, bool only_active)
 	if (only_active && strncmp(brname, version, strlen(brname)))
 		return;
 
+	br = calloc(1, sizeof(struct branch));
+	avl_init(&br->versions, avl_verrevcmp, false, NULL);
+	INIT_LIST_HEAD(&br->package_changes);
+
 	/* check if target is offered in branch and get arch_packages */
-	arch_packages = validate_target(tb[BRANCH_TARGETS]);
-	if (!arch_packages)
+	br->arch_packages = validate_target(tb[BRANCH_TARGETS]);
+	if (!br->arch_packages) {
+		free(br);
 		return;
+	}
+
+	if (tb[BRANCH_GIT_BRANCH])
+		br->git_branch = strdup(blobmsg_get_string(tb[BRANCH_GIT_BRANCH]));
+
+	if (tb[BRANCH_BRANCH_OFF_REV])
+		br->branch_off_rev = blobmsg_get_u32(tb[BRANCH_BRANCH_OFF_REV]);
+	else
+		br->branch_off_rev = 0;
+
+	if (tb[BRANCH_SNAPSHOT])
+		br->snapshot = blobmsg_get_bool(tb[BRANCH_SNAPSHOT]);
+	else
+		br->snapshot = false;
+
+	br->name = strdup(blobmsg_get_string(tb[BRANCH_NAME]));
+	br->path_packages = alloc_replace_var(blobmsg_get_string(tb[BRANCH_PATH_PACKAGES]), "branch", br->name);
+	if (!br->path_packages) {
+		free(br->name);
+		free(br->arch_packages);
+		free(br);
+		return;
+	}
+
+	/* parse package changes */
+	blobmsg_for_each_attr(curpkc, tb[BRANCH_PACKAGE_CHANGES], rempkc) {
+		if (blobmsg_type(curpkc) != BLOBMSG_TYPE_TABLE)
+			continue;
+
+		blobmsg_parse(package_changes_policy, __PACKAGE_CHANGES_MAX, pkc, blobmsg_data(curpkc), blobmsg_len(curpkc));
+		if (!pkc[PACKAGE_CHANGES_REVISION] || (!pkc[PACKAGE_CHANGES_SOURCE] && !pkc[PACKAGE_CHANGES_TARGET]))
+			continue;
+
+		pkce = calloc(1, sizeof(struct package_changes));
+		if (!pkce)
+			break;
+
+		if (pkc[PACKAGE_CHANGES_SOURCE])
+			pkce->source = strdup(blobmsg_get_string(pkc[PACKAGE_CHANGES_SOURCE]));
+
+		if (pkc[PACKAGE_CHANGES_TARGET])
+			pkce->target = strdup(blobmsg_get_string(pkc[PACKAGE_CHANGES_TARGET]));
+
+		pkce->revision = blobmsg_get_u32(pkc[PACKAGE_CHANGES_REVISION]);
+
+		if (pkc[PACKAGE_CHANGES_MANDATORY])
+			pkce->mandatory = blobmsg_get_bool(pkc[PACKAGE_CHANGES_MANDATORY]);
+
+		list_add_tail(&pkce->list, &br->package_changes);
+	}
 
 	/* add each version of the branch */
 	blobmsg_for_each_attr(curver, tb[BRANCH_VERSIONS], remver) {
-		br = malloc(sizeof(struct branch));
+		if (blobmsg_type(curver) != BLOBMSG_TYPE_STRING)
+			continue;
 
-		if (tb[BRANCH_GIT_BRANCH])
-			br->git_branch = strdup(blobmsg_get_string(tb[BRANCH_GIT_BRANCH]));
-
-		br->name = strdup(blobmsg_get_string(tb[BRANCH_NAME]));
-		br->path = strdup(blobmsg_get_string(tb[BRANCH_PATH]));
-		br->path_packages = strdup(blobmsg_get_string(tb[BRANCH_PATH_PACKAGES]));
-
-		br->version = strdup(blobmsg_get_string(curver));
-		br->snapshot = !!strcasestr(blobmsg_get_string(curver), "snapshot");
-		br->path = alloc_replace_var(blobmsg_get_string(tb[BRANCH_PATH]), "version", br->version);
-		br->path_packages = alloc_replace_var(blobmsg_get_string(tb[BRANCH_PATH_PACKAGES]), "branch", br->name);
-		br->arch_packages = arch_packages;
-		if (!br->path || !br->path_packages) {
-			free(br);
+		struct branch_version *bver = calloc(1, sizeof(struct branch_version));
+		bver->snapshot = !!strcasestr(blobmsg_get_string(curver), "snapshot");
+		bver->path = alloc_replace_var(blobmsg_get_string(tb[BRANCH_PATH]), "version", blobmsg_get_string(curver));
+		if (!bver->path) {
+			free(bver);
 			continue;
 		}
-
-		asprintf(&board_json_file, "%s/%s/%s/%s/%s/%s/%s%s", serverurl, API_JSON,
-			API_JSON_VERSION, br->path, API_TARGETS, target, board_name, API_JSON_EXT);
+		bver->version = strdup(blobmsg_get_string(curver));
+		if (!bver->version) {
+			free(bver->path);
+			free(bver);
+			continue;
+		}
+		bver->branch = br;
+		if (asprintf(&board_json_file, "%s/%s/%s/%s/%s/%s/%s%s", serverurl, API_JSON,
+			     API_JSON_VERSION, bver->path, API_TARGETS, target, board_name,
+			     API_JSON_EXT) < 0) {
+			free(bver->version);
+			free(bver->path);
+			free(bver);
+			continue;
+		}
 		tmp = board_json_file;
 		while ((tmp = strchr(tmp, ',')))
 			*tmp = '_';
 
-		if (request_target(br, board_json_file)) {
+		if (request_target(bver, board_json_file)) {
 			free(board_json_file);
-			free(br);
+			free(bver->version);
+			free(bver->path);
+			free(bver);
 			continue;
 		}
-
 		free(board_json_file);
-		list_add_tail(&br->list, &branches);
+		bver->avl.key = bver->version;
+		avl_insert(&br->versions, &bver->avl);
 	}
+
+	br->avl.key = br->name;
+	avl_insert(&branches, &br->avl);
 }
 
 static int request_branches(bool only_active)
@@ -1126,42 +1352,114 @@ static int request_branches(bool only_active)
 	return 0;
 }
 
-static struct branch *select_branch(char *name, char *select_version)
+static void free_branches()
+{
+	struct branch *br, *tmp;
+	struct branch_version *bver, *tmp2;
+	struct package_changes *pkce, *tmp3;
+
+	avl_for_each_element_safe(&branches, br, avl, tmp) {
+		free(br->name);
+		free(br->path_packages);
+		free(br->arch_packages);
+
+		avl_for_each_element_safe(&br->versions, bver, avl, tmp2) {
+			avl_delete(&br->versions, &bver->avl);
+			free(bver->version);
+			free(bver->version_code);
+			free(bver->version_number);
+			free(bver->path);
+			free(bver);
+		}
+
+		list_for_each_entry_safe(pkce, tmp3, &br->package_changes, list) {
+			list_del(&pkce->list);
+			free(pkce->source);
+			free(pkce->target);
+			free(pkce);
+		}
+
+		avl_delete(&branches, &br->avl);
+	}
+}
+
+static struct branch *get_current_branch()
 {
 	struct branch *br, *abr = NULL;
 
-	if (!name)
-		name = version;
-
-	list_for_each_entry(br, &branches, list) {
+	avl_for_each_element(&branches, br, avl) {
 		/* if branch name doesn't match version *prefix*, skip */
-		if (strncasecmp(br->name, name, strlen(br->name)))
-			continue;
-
-		if (select_version) {
-			if (!strcasecmp(br->version, select_version)) {
-				abr = br;
-				break;
-			}
-		} else {
-			if (strcasestr(name, "snapshot")) {
-				/* if we are on the snapshot branch, stay there */
-				if (br->snapshot) {
-					abr = br;
-					break;
-				}
-			} else {
-				/* on release branch, skip snapshots and pick latest release */
-				if (br->snapshot)
-					continue;
-
-				if (!abr || (openwrt_release_verrevcmp(abr->version, br->version) < 0))
-					abr = br;
-			}
+		if (!strncasecmp(br->name, version, strlen(br->name))) {
+			abr = br;
+			break;
 		}
 	}
 
 	return abr;
+}
+
+static int revision_from_version_code(const char *version_code)
+{
+	int res;
+
+	if (sscanf(version_code, "r%d-", &res) == 1)
+		return res;
+
+	return -1;
+}
+
+static struct branch_version *select_branch(char *name, char *select_version)
+{
+	struct branch *br;
+	struct branch_version *bver, *abver = NULL;
+
+	if (!name)
+		name = version;
+
+	avl_for_each_element(&branches, br, avl) {
+		/* if branch name doesn't match version *prefix*, skip */
+		if (strncasecmp(br->name, name, strlen(br->name)))
+			continue;
+
+		avl_for_each_element(&br->versions, bver, avl) {
+			if (select_version) {
+				if (!strcasecmp(bver->version, select_version)) {
+					abver = bver;
+					break;
+				}
+			} else {
+				if (!strcasecmp(name, "snapshot")) {
+					/* we are on the main snapshot branch */
+					if (br->snapshot && bver->snapshot) {
+						abver = bver;
+						break;
+					}
+				} else {
+					/* skip main snapshot branch */
+					if (br->snapshot)
+						continue;
+
+					if (strcasestr(version, "snapshot")) {
+						/* we are on a stable snapshot branch or coming from main snapshot branch */
+						if (bver->snapshot) {
+							abver = bver;
+							break;
+						}
+					} else {
+						if (bver->snapshot)
+							continue;
+
+						if (!abver || (openwrt_release_verrevcmp(abver->version, bver->version) < 0))
+							abver = bver;
+					}
+				}
+			}
+		}
+		if (abver)
+			break;
+	}
+
+	return abver;
 }
 
 static int add_upg_packages(struct blob_attr *reply, char *arch)
@@ -1193,7 +1491,7 @@ static int add_upg_packages(struct blob_attr *reply, char *arch)
 	}
 
 	blobmsg_for_each_attr(cur, packages, rem) {
-		avpk = malloc(sizeof(struct avl_pkg));
+		avpk = calloc(1, sizeof(struct avl_pkg));
 		if (!avpk)
 			return -ENOMEM;
 
@@ -1231,7 +1529,7 @@ static int add_upg_packages(struct blob_attr *reply, char *arch)
 	return 0;
 }
 
-static int request_packages(struct branch *branch)
+static int request_packages(struct branch_version *bver)
 {
 	static struct blob_buf pkgbuf, archpkgbuf;
 	char url[256];
@@ -1241,13 +1539,13 @@ static int request_packages(struct branch *branch)
 
 	blobmsg_buf_init(&archpkgbuf);
 	snprintf(url, sizeof(url), "%s/%s/%s/%s/%s/%s/%s%s", serverurl, API_JSON,
-		API_JSON_VERSION, branch->path, API_TARGETS, target, API_INDEX, API_JSON_EXT);
+		API_JSON_VERSION, bver->path, API_TARGETS, target, API_INDEX, API_JSON_EXT);
 	if ((rc = server_request(url, NULL, &archpkgbuf))) {
 		blob_buf_free(&archpkgbuf);
 		return rc;
 	};
 
-	ret = add_upg_packages(archpkgbuf.head, branch->arch_packages);
+	ret = add_upg_packages(archpkgbuf.head, bver->branch->arch_packages);
 	blob_buf_free(&archpkgbuf);
 
 	if (ret)
@@ -1255,7 +1553,7 @@ static int request_packages(struct branch *branch)
 
 	blobmsg_buf_init(&pkgbuf);
 	snprintf(url, sizeof(url), "%s/%s/%s/%s/%s/%s-%s%s", serverurl, API_JSON,
-		API_JSON_VERSION, branch->path, API_PACKAGES, branch->arch_packages,
+		API_JSON_VERSION, bver->path, API_PACKAGES, bver->branch->arch_packages,
 		API_INDEX, API_JSON_EXT);
 	if ((rc = server_request(url, NULL, &pkgbuf))) {
 		blob_buf_free(&archpkgbuf);
@@ -1270,7 +1568,7 @@ static int request_packages(struct branch *branch)
 }
 
 
-static int check_installed_packages(struct blob_attr *pkgs)
+static int check_installed_packages(void)
 {
 	static struct blob_buf allpkg;
 	uint32_t id;
@@ -1465,12 +1763,14 @@ static void usage(const char *arg0)
 /* this main function is too big... todo: split */
 int main(int args, char *argv[]) {
 	static struct blob_buf checkbuf, infobuf, reqbuf, imgbuf, upgbuf;
-	struct branch *branch;
+	struct branch *current_branch, *running_branch;
+	struct branch_version *target_version;
+	int running_revision, covered_revision = 0;
 	uint32_t id;
 	int valid;
 	char url[256];
 	char *sanetized_board_name, *image_name, *image_sha256, *tmp;
-	char *target_branch = NULL, *target_version = NULL, *target_fstype = NULL;
+	char *cmd_target_branch = NULL, *cmd_target_version = NULL, *cmd_target_fstype = NULL;
 	struct blob_attr *tbr[__REPLY_MAX];
 	struct blob_attr *tb[__TARGET_MAX] = {}; /* make sure tb is NULL initialized even if blobmsg_parse isn't called */
 	struct stat imgstat;
@@ -1481,9 +1781,9 @@ int main(int args, char *argv[]) {
 	int revcmp;
 	int addargs;
 	unsigned char argc = 1;
-	bool force = false, use_get = false, in_queue = false, dont_ask = false, release_only = false;
+	bool force = false, use_get = false, in_queue = false, release_only = false;
 
-	snprintf(user_agent, sizeof(user_agent), "%s (%s)", argv[0], AUC_VERSION);
+	snprintf(user_agent, sizeof(user_agent), "%s/%s", argv[0], AUC_VERSION);
 	fprintf(stdout, "%s\n", user_agent);
 
 	while (argc<args) {
@@ -1499,12 +1799,12 @@ int main(int args, char *argv[]) {
 			debug = 1;
 #endif
 		if (!strncmp(argv[argc], "-b", 3)) {
-			target_branch = argv[argc + 1];
+			cmd_target_branch = argv[argc + 1];
 			addargs = 1;
 		}
 
 		if (!strncmp(argv[argc], "-B", 3)) {
-			target_version = argv[argc + 1];
+			cmd_target_version = argv[argc + 1];
 			addargs = 1;
 		}
 
@@ -1515,7 +1815,7 @@ int main(int args, char *argv[]) {
 			force = true;
 
 		if (!strncmp(argv[argc], "-F", 3)) {
-			target_fstype = argv[argc + 1];
+			cmd_target_fstype = argv[argc + 1];
 			addargs = 1;
 		}
 
@@ -1579,24 +1879,28 @@ int main(int args, char *argv[]) {
 
 	fprintf(stdout, "Server:    %s\n", serverurl);
 	fprintf(stdout, "Running:   %s %s on %s (%s)\n", version, revision, target, board_name);
-	if (target_fstype && rootfs_type && strcmp(rootfs_type, target_fstype))
+	if (cmd_target_fstype && rootfs_type && strcmp(rootfs_type, cmd_target_fstype))
 		fprintf(stderr, "WARNING: will change rootfs type from '%s' to '%s'\n",
-			rootfs_type, target_fstype);
+			rootfs_type, cmd_target_fstype);
 
-	if (request_branches(!(target_branch || target_version))) {
+	if (request_branches(!(cmd_target_branch || cmd_target_version))) {
 		rc=-ENODATA;
 		goto freeboard;
 	}
 
-	branch = select_branch(target_branch, target_version);
-	if (!branch) {
+	running_branch = get_current_branch();
+	if (!running_branch)
+		fprintf(stderr, "WARNING: cannot determing currently running branch.\n");
+
+	target_version = select_branch(cmd_target_branch, cmd_target_version);
+	if (!target_version) {
 		rc=-EINVAL;
 		goto freebranches;
 	}
 
-	fprintf(stdout, "Available: %s %s\n", branch->version_number, branch->version_code);
+	fprintf(stdout, "Available: %s %s\n", target_version->version_number, target_version->version_code);
 
-	revcmp = verrevcmp(revision, branch->version_code);
+	revcmp = verrevcmp(revision, target_version->version_code);
 	if (revcmp < 0)
 			upg_check |= PKG_UPGRADE;
 	else if (revcmp > 0)
@@ -1604,16 +1908,29 @@ int main(int args, char *argv[]) {
 
 	if (release_only && !(upg_check & PKG_UPGRADE)) {
 		fprintf(stderr, "Nothing to be updated. Use '-f' to force.\n");
-		rc=0;
+		rc = 0;
 		goto freebranches;
 	}
 
-	if ((rc = request_packages(branch)))
+	running_revision = revision_from_version_code(revision);
+	if (target_version->branch == running_branch)
+		grab_changes(running_branch, running_revision);
+	else avl_for_element_range(running_branch, target_version->branch, current_branch, avl) {
+		if (current_branch == running_branch)
+			grab_changes(running_branch, running_revision);
+		else
+			grab_changes(current_branch, covered_revision);
+
+		if (current_branch->branch_off_rev > 0)
+			covered_revision = current_branch->branch_off_rev;
+	}
+
+	if ((rc = request_packages(target_version)))
 		goto freebranches;
 
-	upg_check |= check_installed_packages(reqbuf.head);
+	upg_check |= check_installed_packages();
 	if (upg_check & PKG_ERROR) {
-		rc=-ENOPKG;
+		rc = -ENOPKG;
 		goto freebranches;
 	}
 
@@ -1625,13 +1942,13 @@ int main(int args, char *argv[]) {
 
 	if (!force && (upg_check & PKG_DOWNGRADE)) {
 		fprintf(stderr, "Refusing to downgrade. Use '-f' to force.\n");
-		rc=-ENOTRECOVERABLE;
+		rc = -ENOTRECOVERABLE;
 		goto freebranches;
 	};
 
 	if (!force && (upg_check & PKG_NOT_FOUND)) {
 		fprintf(stderr, "Not all installed packages found in remote lists. Use '-f' to force.\n");
-		rc=-ENOTRECOVERABLE;
+		rc = -ENOTRECOVERABLE;
 		goto freebranches;
 	};
 
@@ -1639,17 +1956,18 @@ int main(int args, char *argv[]) {
 		goto freebranches;
 
 	if (!dont_ask) {
-		rc = ask_user();
-		if (rc)
-		goto freebranches;
+		if (!ask_user("Are you sure you want to continue the upgrade process?")) {
+			rc = 0;
+			goto freebranches;
+		}
 	}
 
-	blobmsg_add_string(&reqbuf, "version", branch->version);
-	blobmsg_add_string(&reqbuf, "version_code", branch->version_code);
+	blobmsg_add_string(&reqbuf, "version", target_version->version);
+	blobmsg_add_string(&reqbuf, "version_code", target_version->version_code);
 	blobmsg_add_string(&reqbuf, "target", target);
 
-	if (target_fstype || rootfs_type)
-		blobmsg_add_string(&reqbuf, "filesystem", target_fstype?target_fstype:rootfs_type);
+	if (cmd_target_fstype || rootfs_type)
+		blobmsg_add_string(&reqbuf, "filesystem", cmd_target_fstype?cmd_target_fstype:rootfs_type);
 
 	sanetized_board_name = strdup(board_name);
 	tmp = sanetized_board_name;
@@ -1742,7 +2060,7 @@ int main(int args, char *argv[]) {
 		goto freebranches;
 	}
 
-	if ((rc = select_image(tb[TARGET_IMAGES], target_fstype, &image_name, &image_sha256)))
+	if ((rc = select_image(tb[TARGET_IMAGES], cmd_target_fstype, &image_name, &image_sha256)))
 		goto freebranches;
 
 	snprintf(url, sizeof(url), "%s/%s/%s/%s", serverurl, API_STORE,
@@ -1809,6 +2127,7 @@ int main(int args, char *argv[]) {
 	sleep(10);
 
 freebranches:
+	free_branches();
 	if (rc && tb[TARGET_STDOUT]
 #ifdef AUC_DEBUG
 	    && !debug

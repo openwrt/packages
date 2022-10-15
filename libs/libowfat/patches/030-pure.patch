@@ -1,0 +1,291 @@
+--- a/byte.h
++++ b/byte.h
+@@ -9,17 +9,24 @@
+ extern "C" {
+ #endif
+ 
+-#ifndef __pure__
+-#define __pure__
++#ifndef ATTR_PURE
++#  if defined __has_attribute
++#    if __has_attribute (pure)
++#      define ATTR_PURE __attribute__ ((pure))
++#    endif
++#  endif
++#endif
++#ifndef ATTR_PURE
++#  define ATTR_PURE
+ #endif
+ 
+ /* byte_chr returns the smallest integer i between 0 and len-1
+  * inclusive such that one[i] equals needle, or len if not found. */
+-size_t byte_chr(const void* haystack, size_t len, char needle) __pure__;
++size_t byte_chr(const void* haystack, size_t len, char needle) ATTR_PURE;
+ 
+ /* byte_rchr returns the largest integer i between 0 and len-1 inclusive
+  * such that one[i] equals needle, or len if not found. */
+-size_t byte_rchr(const void* haystack,size_t len,char needle) __pure__;
++size_t byte_rchr(const void* haystack,size_t len,char needle) ATTR_PURE;
+ 
+ /* byte_copy copies in[0] to out[0], in[1] to out[1], ... and in[len-1]
+  * to out[len-1]. */
+@@ -34,14 +41,14 @@ void byte_copyr(void* out, size_t len, c
+  * than, equal to, or greater than the string b[0], b[1], ...,
+  * b[len-1]. When the strings are different, byte_diff does not read
+  * bytes past the first difference. */
+-int byte_diff(const void* a, size_t len, const void* b) __pure__;
++int byte_diff(const void* a, size_t len, const void* b) ATTR_PURE;
+ 
+ /* byte_zero sets the bytes out[0], out[1], ..., out[len-1] to 0 */
+ void byte_zero(void* out, size_t len);
+ 
+ #define byte_equal(s,n,t) (!byte_diff((s),(n),(t)))
+ 
+-int byte_equal_notimingattack(const void* a, size_t len,const void* b) __pure__;
++int byte_equal_notimingattack(const void* a, size_t len,const void* b) ATTR_PURE;
+ 
+ #if defined(__i386__) || defined(__x86_64__)
+ #define UNALIGNED_ACCESS_OK
+--- a/critbit.h
++++ b/critbit.h
+@@ -5,18 +5,25 @@
+ extern "C" {
+ #endif
+ 
+-/* for __pure__ if we are compiling under dietlibc */
++/* for ATTR_PURE if we are compiling under dietlibc */
+ #include <stddef.h>
+ 
+-#ifndef __pure__
+-#define __pure__
++#ifndef ATTR_PURE
++#  if defined __has_attribute
++#    if __has_attribute (pure)
++#      define ATTR_PURE __attribute__ ((pure))
++#    endif
++#  endif
++#endif
++#ifndef ATTR_PURE
++#  define ATTR_PURE
+ #endif
+ 
+ typedef struct {
+   void *root;
+ } critbit0_tree;
+ 
+-int critbit0_contains(critbit0_tree *t, const char *u) __pure__;
++int critbit0_contains(critbit0_tree *t, const char *u) ATTR_PURE;
+ int critbit0_insert(critbit0_tree *t, const char *u);
+ int critbit0_delete(critbit0_tree *t, const char *u);
+ void critbit0_clear(critbit0_tree *t);
+--- a/scan.h
++++ b/scan.h
+@@ -15,8 +15,15 @@
+ extern "C" {
+ #endif
+ 
+-#ifndef __pure__
+-#define __pure__
++#ifndef ATTR_PURE
++#  if defined __has_attribute
++#    if __has_attribute (pure)
++#      define ATTR_PURE __attribute__ ((pure))
++#    endif
++#  endif
++#endif
++#ifndef ATTR_PURE
++#  define ATTR_PURE
+ #endif
+ 
+ /* This file declared functions used to decode / scan / unmarshal
+@@ -84,18 +91,18 @@ size_t scan_double(const char *in, doubl
+ size_t scan_plusminus(const char *src,signed int *dest);
+ 
+ /* return the highest integer n<=limit so that isspace(in[i]) for all 0<=i<=n */
+-size_t scan_whitenskip(const char *in,size_t limit) __pure__;
++size_t scan_whitenskip(const char *in,size_t limit) ATTR_PURE;
+ 
+ /* return the highest integer n<=limit so that !isspace(in[i]) for all 0<=i<=n */
+-size_t scan_nonwhitenskip(const char *in,size_t limit) __pure__;
++size_t scan_nonwhitenskip(const char *in,size_t limit) ATTR_PURE;
+ 
+ /* return the highest integer n<=limit so that in[i] is element of
+  * charset (ASCIIZ string) for all 0<=i<=n */
+-size_t scan_charsetnskip(const char *in,const char *charset,size_t limit) __pure__;
++size_t scan_charsetnskip(const char *in,const char *charset,size_t limit) ATTR_PURE;
+ 
+ /* return the highest integer n<=limit so that in[i] is not element of
+  * charset (ASCIIZ string) for all 0<=i<=n */
+-size_t scan_noncharsetnskip(const char *in,const char *charset,size_t limit) __pure__;
++size_t scan_noncharsetnskip(const char *in,const char *charset,size_t limit) ATTR_PURE;
+ 
+ /* try to parse ASCII GMT date; does not understand time zones. */
+ /* example dates:
+@@ -103,17 +110,17 @@ size_t scan_noncharsetnskip(const char *
+  *   "Sunday, 06-Nov-94 08:49:37 GMT"
+  *   "Sun Nov  6 08:49:37 1994"
+  */
+-size_t scan_httpdate(const char *in,time_t *t) __pure__;
++size_t scan_httpdate(const char *in,time_t *t) ATTR_PURE;
+ 
+ /* try to parse ASCII ISO-8601 date; does not understand time zones. */
+ /* example date: "2014-05-27T19:22:16Z" */
+-size_t scan_iso8601(const char* in,struct timespec* t) __pure__;
++size_t scan_iso8601(const char* in,struct timespec* t) ATTR_PURE;
+ 
+ /* some variable length encodings for integers */
+-size_t scan_utf8(const char* in,size_t len,uint32_t* n) __pure__;
+-size_t scan_utf8_sem(const char* in,size_t len,uint32_t* n) __pure__;
+-size_t scan_asn1derlength(const char* in,size_t len,unsigned long long* n) __pure__;
+-size_t scan_asn1dertag(const char* in,size_t len,unsigned long long* n) __pure__;
++size_t scan_utf8(const char* in,size_t len,uint32_t* n) ATTR_PURE;
++size_t scan_utf8_sem(const char* in,size_t len,uint32_t* n) ATTR_PURE;
++size_t scan_asn1derlength(const char* in,size_t len,unsigned long long* n) ATTR_PURE;
++size_t scan_asn1dertag(const char* in,size_t len,unsigned long long* n) ATTR_PURE;
+ 
+ /* Google protocol buffers */
+ /* A protocol buffer is a sequence of (tag,value).
+@@ -122,15 +129,15 @@ size_t scan_asn1dertag(const char* in,si
+  *   0, double type 1, strings type 2 and floats type 5. However, you
+  *   have to check this yourself.
+  */ 
+-size_t scan_varint(const char* in,size_t len, unsigned long long* n) __pure__;	/* internal */
+-size_t scan_pb_tag(const char* in,size_t len, size_t* fieldno,unsigned char* type) __pure__;
++size_t scan_varint(const char* in,size_t len, unsigned long long* n) ATTR_PURE;	/* internal */
++size_t scan_pb_tag(const char* in,size_t len, size_t* fieldno,unsigned char* type) ATTR_PURE;
+ 
+ /* Then, depending on the field number, validate the type and call the
+  * corresponding of these functions to parse the value */
+-size_t scan_pb_type0_int(const char* in,size_t len,unsigned long long* l) __pure__;
+-size_t scan_pb_type0_sint(const char* in,size_t len,signed long long* l) __pure__;
+-size_t scan_pb_type1_double(const char* in,size_t len,double* d) __pure__;
+-size_t scan_pb_type1_fixed64(const char* in,size_t len,uint64_t* b) __pure__;
++size_t scan_pb_type0_int(const char* in,size_t len,unsigned long long* l) ATTR_PURE;
++size_t scan_pb_type0_sint(const char* in,size_t len,signed long long* l) ATTR_PURE;
++size_t scan_pb_type1_double(const char* in,size_t len,double* d) ATTR_PURE;
++size_t scan_pb_type1_fixed64(const char* in,size_t len,uint64_t* b) ATTR_PURE;
+ /* NOTE: scan_pb_type2_stringlen only parses the length of the string,
+  * not the string itself. It will return the number of bytes parsed in
+  * the length, then set slen to the value of the length integer it just
+@@ -141,9 +148,9 @@ size_t scan_pb_type1_fixed64(const char*
+  * parsing early without having to read and allocate memory for the rest
+  * (potentially gigabytes) of the data announced by one unreasonable
+  * string length value. */
+-size_t scan_pb_type2_stringlen(const char* in,size_t len,const char** string, size_t* slen) __pure__;
+-size_t scan_pb_type5_float(const char* in,size_t len,float* f) __pure__;
+-size_t scan_pb_type5_fixed32(const char* in,size_t len,uint32_t* b) __pure__;
++size_t scan_pb_type2_stringlen(const char* in,size_t len,const char** string, size_t* slen) ATTR_PURE;
++size_t scan_pb_type5_float(const char* in,size_t len,float* f) ATTR_PURE;
++size_t scan_pb_type5_fixed32(const char* in,size_t len,uint32_t* b) ATTR_PURE;
+ 
+ /* parse a netstring, input buffer is in (len bytes).
+  * if parsing is successful:
+@@ -153,7 +160,7 @@ size_t scan_pb_type5_fixed32(const char*
+  *   return 0
+  * Note: *dest will point inside the input buffer!
+  */
+-size_t scan_netstring(const char* in,size_t len,char** dest,size_t* slen) __pure__;
++size_t scan_netstring(const char* in,size_t len,char** dest,size_t* slen) ATTR_PURE;
+ 
+ /* internal function that might be useful independently */
+ /* convert from hex ASCII, return 0 to 15 for success or -1 for failure */
+--- a/str.h
++++ b/str.h
+@@ -8,8 +8,15 @@
+ extern "C" {
+ #endif
+ 
+-#ifndef __pure__
+-#define __pure__
++#ifndef ATTR_PURE
++#  if defined __has_attribute
++#    if __has_attribute (pure)
++#      define ATTR_PURE __attribute__ ((pure))
++#    endif
++#  endif
++#endif
++#ifndef ATTR_PURE
++#  define ATTR_PURE
+ #endif
+ 
+ /* str_copy copies leading bytes from in to out until \0.
+@@ -21,7 +28,7 @@ size_t str_copy(char *out,const char *in
+  * equal to, or greater than the string b[0], b[1], ..., b[m-1]=='\0'.
+  * If the strings are different, str_diff does not read bytes past the
+  * first difference. */
+-int str_diff(const char *a,const char *b) __pure__;
++int str_diff(const char *a,const char *b) ATTR_PURE;
+ 
+ /* str_diffn returns negative, 0, or positive, depending on whether the
+  * string a[0], a[1], ..., a[n]=='\0' is lexicographically smaller than,
+@@ -29,24 +36,24 @@ int str_diff(const char *a,const char *b
+  * If the strings are different, str_diffn does not read bytes past the
+  * first difference. The strings will be considered equal if the first
+  * limit characters match. */
+-int str_diffn(const char *a,const char *b,size_t limit) __pure__;
++int str_diffn(const char *a,const char *b,size_t limit) ATTR_PURE;
+ 
+ #ifdef __dietlibc__
+ #include <string.h>
+ #define str_len(foo) strlen(foo)
+ #else
+ /* str_len returns the index of \0 in s */
+-size_t str_len(const char *s) __pure__;
++size_t str_len(const char *s) ATTR_PURE;
+ #endif
+ 
+ /* str_chr returns the index of the first occurance of needle or \0 in haystack */
+-size_t str_chr(const char *haystack,char needle) __pure__;
++size_t str_chr(const char *haystack,char needle) ATTR_PURE;
+ 
+ /* str_rchr returns the index of the last occurance of needle or \0 in haystack */
+-size_t str_rchr(const char *haystack,char needle) __pure__;
++size_t str_rchr(const char *haystack,char needle) ATTR_PURE;
+ 
+ /* str_start returns 1 if the b is a prefix of a, 0 otherwise */
+-int str_start(const char *a,const char *b) __pure__;
++int str_start(const char *a,const char *b) ATTR_PURE;
+ 
+ /* convenience shortcut to test for string equality */
+ #define str_equal(s,t) (!str_diff((s),(t)))
+--- a/stralloc.h
++++ b/stralloc.h
+@@ -8,8 +8,15 @@
+ extern "C" {
+ #endif
+ 
+-#ifndef __pure__
+-#define __pure__
++#ifndef ATTR_PURE
++#  if defined __has_attribute
++#    if __has_attribute (pure)
++#      define ATTR_PURE __attribute__ ((pure))
++#    endif
++#  endif
++#endif
++#ifndef ATTR_PURE
++#  define ATTR_PURE
+ #endif
+ 
+ /* stralloc is the internal data structure all functions are working on.
+@@ -101,17 +108,17 @@ static inline int stralloc_APPEND(strall
+ /* stralloc_starts returns 1 if the \0-terminated string in "in", without
+  * the terminating \0, is a prefix of the string stored in sa. Otherwise
+  * it returns 0. sa must already be allocated. */
+-int stralloc_starts(stralloc* sa,const char* in) __pure__;
++int stralloc_starts(stralloc* sa,const char* in) ATTR_PURE;
+ 
+ /* stralloc_diff returns negative, 0, or positive, depending on whether
+  * a is lexicographically smaller than, equal to, or greater than the
+  * string b. */
+-int stralloc_diff(const stralloc* a,const stralloc* b) __pure__;
++int stralloc_diff(const stralloc* a,const stralloc* b) ATTR_PURE;
+ 
+ /* stralloc_diffs returns negative, 0, or positive, depending on whether
+  * a is lexicographically smaller than, equal to, or greater than the
+  * string b[0], b[1], ..., b[n]=='\0'. */
+-int stralloc_diffs(const stralloc* a,const char* b) __pure__;
++int stralloc_diffs(const stralloc* a,const char* b) ATTR_PURE;
+ 
+ #define stralloc_equal(a,b) (!stralloc_diff((a),(b)))
+ #define stralloc_equals(a,b) (!stralloc_diffs((a),(b)))

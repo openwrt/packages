@@ -37,6 +37,7 @@ CONFIGURE_ARGS+= \
 	--with-extractor=$(STAGING_DIR)/usr \
 	--with-gnutls=$(STAGING_DIR)/usr \
 	$(if $(CONFIG_PACKAGE_$(PKG_NAME)-transport-bluetooth),--with-bluetooth="$(STAGING_DIR)/usr",--without-bluetooth) \
+	--with-jose=$(STAGING_DIR)/usr \
 	--with-libgnurl=$(STAGING_DIR)/usr \
 	--with-ogg=$(STAGING_DIR)/usr \
 	--with-opus=$(STAGING_DIR)/usr \
@@ -96,42 +97,42 @@ define BuildComponent
 
   define Package/gnunet-$(1)/install
 	( if [ "$(BIN_$(1))" ]; then \
-		$(INSTALL_DIR) $$(1)/usr/bin ; \
+		$(INSTALL_DIR) $$(1)/usr/bin && \
 		for bin in $(BIN_$(1)); do \
-			$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gnunet-$$$$$$$$bin $$(1)/usr/bin/ ; \
+			$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gnunet-$$$$$$$$bin $$(1)/usr/bin/ || exit 1; \
 		done \
 	fi )
 
 	( if [ "$(LIB_$(1))" ]; then \
-		$(INSTALL_DIR) $$(1)/usr/lib ; \
+		$(INSTALL_DIR) $$(1)/usr/lib && \
 		for lib in $(LIB_$(1)); do \
-			$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgnunet$$$$$$$$lib.so* $$(1)/usr/lib/ ; \
+			$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgnunet$$$$$$$$lib.so* $$(1)/usr/lib/ || exit 1; \
 		done \
 	fi )
 
 	( if [ "$(PLUGIN_$(1))" ]; then \
-		$(INSTALL_DIR) $$(1)/usr/lib/gnunet ; \
+		$(INSTALL_DIR) $$(1)/usr/lib/gnunet && \
 		for plug in $(PLUGIN_$(1)); do \
-			$(CP) $(PKG_INSTALL_DIR)/usr/lib/gnunet/libgnunet_plugin_$$$$$$$$plug*.so $$(1)/usr/lib/gnunet ; \
+			$(CP) $(PKG_INSTALL_DIR)/usr/lib/gnunet/libgnunet_plugin_$$$$$$$$plug*.so $$(1)/usr/lib/gnunet || exit 1; \
 		done \
 	fi )
 
 	( if [ "$(LIBEXEC_$(1))" ]; then \
-		$(INSTALL_DIR) $$(1)/usr/lib/gnunet/libexec ; \
+		$(INSTALL_DIR) $$(1)/usr/lib/gnunet/libexec && \
 		for lex in $(LIBEXEC_$(1)); do \
-			$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/gnunet/libexec/gnunet-$$$$$$$$lex $$(1)/usr/lib/gnunet/libexec ; \
+			$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/gnunet/libexec/gnunet-$$$$$$$$lex $$(1)/usr/lib/gnunet/libexec || exit 1; \
 		done \
 	fi )
 
 	( if [ "$(CONF_$(1))" ]; then \
-		$(INSTALL_DIR) $$(1)/usr/share/gnunet/config.d ; \
+		$(INSTALL_DIR) $$(1)/usr/share/gnunet/config.d && \
 		for conf in $(CONF_$(1)); do \
-		$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/gnunet/config.d/$$$$$$$$conf.conf $$(1)/usr/share/gnunet/config.d ; \
+		$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/gnunet/config.d/$$$$$$$$conf.conf $$(1)/usr/share/gnunet/config.d || exit 1; \
 		done \
 	fi )
 
 	( if [ -e ./files/gnunet-$(1).defaults ]; then \
-		$(INSTALL_DIR) $$(1)/etc/uci-defaults ; \
+		$(INSTALL_DIR) $$(1)/etc/uci-defaults && \
 		$(INSTALL_BIN) ./files/gnunet-$(1).defaults $$(1)/etc/uci-defaults/gnunet-$(1) ; \
 	fi )
   endef
@@ -145,7 +146,7 @@ define Package/gnunet/install
 
 	( for bin in arm ats cadet core config ecc identity nat nat-auto nat-server nse \
 	    peerinfo peerstore revocation scalarproduct scrypt statistics transport uri; do \
-		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gnunet-$$$$bin $(1)/usr/bin/ ; \
+		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gnunet-$$$$bin $(1)/usr/bin/ || exit 1; \
 	done )
 
 	( for lib in arm ats block blockgroup cadet \
@@ -153,28 +154,27 @@ define Package/gnunet/install
 	    identity natauto natnew nse nt peerinfo peerstore regexblock regex revocation \
 	    scalarproduct set seti setu statistics transport transportapplication \
 	    transportcommunicator transportcore transportmonitor util; do \
-		$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgnunet$$$$lib.so* $(1)/usr/lib/ ; \
+		$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgnunet$$$$lib.so* $(1)/usr/lib/ || exit 1; \
 	done )
 
 	( for plug in ats_proportional block_dht block_regex block_revocation dhtu_gnunet dhtu_ip transport_unix; do \
-		$(CP) $(PKG_INSTALL_DIR)/usr/lib/gnunet/libgnunet_plugin_$$$$plug*.so $(1)/usr/lib/gnunet ; \
+		$(CP) $(PKG_INSTALL_DIR)/usr/lib/gnunet/libgnunet_plugin_$$$$plug*.so $(1)/usr/lib/gnunet || exit 1; \
 	done )
 
 	( for lex in communicator-unix daemon-topology helper-nat-client \
-	    helper-nat-server service-arm service-ats service-ats-new service-cadet \
-	    service-core service-dht service-identity service-nat service-nat-auto \
-	    service-nse service-peerinfo service-peerstore service-regex \
-	    service-revocation service-scalarproduct-alice \
-	    service-scalarproduct-bob service-scalarproduct-ecc-alice \
+	    helper-nat-server service-arm service-ats service-cadet service-core \
+	    service-dht service-identity service-nat service-nat-auto service-nse \
+	    service-peerinfo service-peerstore service-regex service-revocation \
+	    service-scalarproduct-alice service-scalarproduct-bob service-scalarproduct-ecc-alice \
 	    service-scalarproduct-ecc-bob service-set service-seti service-setu service-statistics \
 	    service-tng service-transport timeout; do \
-		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/gnunet/libexec/gnunet-$$$$lex $(1)/usr/lib/gnunet/libexec ; \
+		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/gnunet/libexec/gnunet-$$$$lex $(1)/usr/lib/gnunet/libexec || exit 1; \
 	done )
 
 	( for conf in arm ats cadet communicator-unix core datacache dht dhtu identity \
 	    nat nat-auto nse peerinfo peerstore regex revocation \
 	    scalarproduct set seti setu statistics tlds topology transport util; do \
-		$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/gnunet/config.d/$$$$conf.conf $(1)/usr/share/gnunet/config.d ; \
+		$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/gnunet/config.d/$$$$conf.conf $(1)/usr/share/gnunet/config.d || exit 1; \
 	done )
 
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/gnunet/hellos/* $(1)/usr/share/gnunet/hellos
@@ -261,7 +261,7 @@ CONF_fs:=fs
 
 DEPENDS_gns:=+gnunet-vpn +iptables-mod-extra
 USERID_gns:=:gnunetdns=452
-BIN_gns:=gns gns-import.sh namecache namestore resolver zoneimport 
+BIN_gns:=gns namecache namestore resolver zoneimport
 LIB_gns:=gns gnsrecord namecache namestore
 PLUGIN_gns:=block_dns block_gns gnsrecord_conversation gnsrecord_dns gnsrecord_gns
 LIBEXEC_gns:=dns2gns helper-dns service-dns service-gns service-namecache service-namestore service-resolver service-zonemaster service-zonemaster-monitor
@@ -288,12 +288,12 @@ PLUGIN_messenger:=gnsrecord_messenger
 
 DEPENDS_reclaim:=+gnunet-gns +gnunet-sqlite +libpbc +libgabe +jansson
 BIN_reclaim:=did reclaim
-LIB_reclaim:=abe consensus did reclaim reclaimattribute secretsharing
+LIB_reclaim:=consensus did reclaim secretsharing
 LIBEXEC_reclaim:=service-consensus service-reclaim service-secretsharing
 CONF_reclaim:=consensus reclaim secretsharing
 PLUGIN_reclaim:=block_consensus gnsrecord_reclaim reclaim_credential_jwt reclaim_attribute_basic
 
-DEPENDS_rest:=+gnunet-gns +gnunet-reclaim +libmicrohttpd-ssl +jansson
+DEPENDS_rest:=+gnunet-gns +gnunet-reclaim +libmicrohttpd-ssl +jansson +libjose
 LIB_rest:=rest json gnsrecordjson
 PLUGIN_rest:=rest_config rest_copying rest_gns rest_identity rest_namestore rest_peerinfo rest_openid_connect rest_reclaim
 LIBEXEC_rest:=rest-server
@@ -363,7 +363,7 @@ BIN_utils:=gns-proxy-setup-ca transport-certificate-creation
 DEPENDS_vpn:=+kmod-tun +iptables +uci-firewall
 BIN_vpn:=vpn
 FILE_MODES_vpn:=/usr/lib/gnunet/libexec/gnunet-helper-exit:root:gnunet:4750 /usr/lib/gnunet/libexec/gnunet-helper-vpn:root:gnunet:4750
-LIB_vpn:=dnsstub tun vpn
+LIB_vpn:=vpn
 LIBEXEC_vpn:=daemon-exit daemon-pt helper-exit helper-vpn service-vpn
 CONF_vpn:=exit pt vpn
 

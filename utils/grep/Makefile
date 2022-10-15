@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=grep
-PKG_VERSION:=3.7
+PKG_VERSION:=3.8
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/grep
-PKG_HASH:=5c10da312460aec721984d5d83246d24520ec438dd48d7ab5a05dbc0d6d6823c
+PKG_HASH:=498d7cc1b4fb081904d87343febb73475cf771e424fb7e6141aff66013abc382
 
 PKG_MAINTAINER:=Julen Landa Alustiza <julen@zokormazo.info>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -31,7 +31,7 @@ define Package/grep
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=grep search utility - full version
-  DEPENDS:=+libpcre
+  DEPENDS:=+libpcre2
   URL:=https://www.gnu.org/software/grep/
   ALTERNATIVES:=\
     300:/bin/egrep:/usr/libexec/egrep-gnu \

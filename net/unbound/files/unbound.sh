@@ -295,18 +295,18 @@ unbound_mkdir() {
 
 
   if [ -x /usr/sbin/unbound-control-setup ] ; then
-    if [ ! -f $UB_CTLKEY_FILE ] || [ ! -f $UB_CTLPEM_FILE ] \
-    || [ ! -f $UB_SRVKEY_FILE ] || [ ! -f $UB_SRVPEM_FILE ] ; then
+    if [ ! -f $UB_ETCDIR/$UB_CTLKEY_FILE ] || [ ! -f $UB_ETCDIR/$UB_CTLPEM_FILE ] \
+    || [ ! -f $UB_ETCDIR/$UB_SRVKEY_FILE ] || [ ! -f $UB_ETCDIR/$UB_SRVPEM_FILE ] ; then
       case "$UB_D_CONTROL" in
         [2-3])
           # unbound-control-setup for encrypt opt. 2 and 3, but not 4 "static"
           /usr/sbin/unbound-control-setup -d $UB_ETCDIR
 
-          chown -R unbound:unbound  $UB_CTLKEY_FILE $UB_CTLPEM_FILE \
-                                    $UB_SRVKEY_FILE $UB_SRVPEM_FILE
+          chown -R unbound:unbound  $UB_ETCDIR/$UB_CTLKEY_FILE $UB_ETCDIR/$UB_CTLPEM_FILE \
+                                    $UB_ETCDIR/$UB_SRVKEY_FILE $UB_ETCDIR/$UB_SRVPEM_FILE
 
-          chmod 640 $UB_CTLKEY_FILE $UB_CTLPEM_FILE \
-                    $UB_SRVKEY_FILE $UB_SRVPEM_FILE
+          chmod 640 $UB_ETCDIR/$UB_CTLKEY_FILE $UB_ETCDIR/$UB_CTLPEM_FILE \
+                    $UB_ETCDIR/$UB_SRVKEY_FILE $UB_ETCDIR/$UB_SRVPEM_FILE
           ;;
       esac
     fi
@@ -338,11 +338,14 @@ unbound_control() {
 
 
   if [ $UB_D_CONTROL -gt 1 ] ; then
-    if [ ! -f $UB_CTLKEY_FILE ] || [ ! -f $UB_CTLPEM_FILE ] \
-    || [ ! -f $UB_SRVKEY_FILE ] || [ ! -f $UB_SRVPEM_FILE ] ; then
+    if [ ! -f $UB_ETCDIR/$UB_CTLKEY_FILE ] || [ ! -f $UB_ETCDIR/$UB_CTLPEM_FILE ] \
+    || [ ! -f $UB_ETCDIR/$UB_SRVKEY_FILE ] || [ ! -f $UB_ETCDIR/$UB_SRVPEM_FILE ] ; then
       # Key files need to be present; if unbound-control-setup was found, then
       # they might have been made during unbound_makedir() above.
       UB_D_CONTROL=0
+    else
+      cp -a $UB_ETCDIR/$UB_CTLKEY_FILE $UB_ETCDIR/$UB_CTLPEM_FILE \
+            $UB_ETCDIR/$UB_SRVKEY_FILE $UB_ETCDIR/$UB_SRVPEM_FILE $UB_VARDIR/
     fi
   fi
 

@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lighttpd
-PKG_VERSION:=1.4.66
-PKG_RELEASE:=1
+PKG_VERSION:=1.4.67
+PKG_RELEASE:=2
 # release candidate ~rcX testing; remove for release
-#PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-1.4.66
+#PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-1.4.67
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://download.lighttpd.net/lighttpd/releases-1.4.x
-PKG_HASH:=47ac6e60271aa0196e65472d02d019556dc7c6d09df3b65df2c1ab6866348e3b
+PKG_HASH:=7e04d767f51a8d824b32e2483ef2950982920d427d1272ef4667f49d6f89f358
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=BSD-3-Clause
@@ -184,7 +184,6 @@ $(eval $(call BuildPlugin,ajp13,AJP13 Tomcat connector,,30))
 $(eval $(call BuildPlugin,alias,Directory alias,,30))
 $(eval $(call BuildPlugin,cgi,CGI,,30))
 $(eval $(call BuildPlugin,deflate,Compress dynamic output,+PACKAGE_lighttpd-mod-deflate:zlib,30))
-$(eval $(call BuildPlugin,evasive,Evasive,,30))
 $(eval $(call BuildPlugin,evhost,Enhanced Virtual-Hosting,,30))
 $(eval $(call BuildPlugin,expire,Expire,,30))
 $(eval $(call BuildPlugin,extforward,Extract client,,30))
@@ -199,16 +198,13 @@ $(eval $(call BuildPlugin,proxy,Proxy,,30))
 $(eval $(call BuildPlugin,rewrite,URL rewriting,+PACKAGE_lighttpd-mod-rewrite:libpcre2,30))
 $(eval $(call BuildPlugin,rrdtool,RRDtool,,30))
 $(eval $(call BuildPlugin,scgi,SCGI,,30))
-$(eval $(call BuildPlugin,secdownload,Secure and fast download,+PACKAGE_lighttpd-mod-secdownload:libnettle,30))
 $(eval $(call BuildPlugin,setenv,Environment variable setting,,30))
 $(eval $(call BuildPlugin,simple_vhost,Simple virtual hosting,,30))
 $(eval $(call BuildPlugin,sockproxy,sockproxy,,30))
 $(eval $(call BuildPlugin,ssi,SSI,,30))
 $(eval $(call BuildPlugin,staticfile,staticfile,,30))
 $(eval $(call BuildPlugin,status,Server status display,,30))
-$(eval $(call BuildPlugin,uploadprogress,Upload Progress,,30))
 $(eval $(call BuildPlugin,userdir,User directory,,30))
-$(eval $(call BuildPlugin,usertrack,User tracking,+PACKAGE_lighttpd-mod-usertrack:libnettle,30))
 $(eval $(call BuildPlugin,vhostdb,Virtual Host Database,,30))
 $(eval $(call BuildPlugin,vhostdb_dbi,Virtual Host Database (DBI),lighttpd-mod-vhostdb +PACKAGE_lighttpd-mod-vhostdb_dbi:libdbi,30))
 $(eval $(call BuildPlugin,vhostdb_ldap,Virtual Host Database (LDAP),lighttpd-mod-vhostdb +PACKAGE_lighttpd-mod-vhostdb_ldap:libopenldap,30))

@@ -53,10 +53,10 @@ UB_TIME_FILE=$UB_VARDIR/hotplug.time
 UB_SKIP_FILE=$UB_VARDIR/skip.time
 
 # control app keys
-UB_CTLKEY_FILE=$UB_ETCDIR/unbound_control.key
-UB_CTLPEM_FILE=$UB_ETCDIR/unbound_control.pem
-UB_SRVKEY_FILE=$UB_ETCDIR/unbound_server.key
-UB_SRVPEM_FILE=$UB_ETCDIR/unbound_server.pem
+UB_CTLKEY_FILE=unbound_control.key
+UB_CTLPEM_FILE=unbound_control.pem
+UB_SRVKEY_FILE=unbound_server.key
+UB_SRVPEM_FILE=unbound_server.pem
 
 # similar default SOA / NS RR as Unbound uses for private ARPA zones
 UB_XSER=$(( $( date +%s ) / 60 ))

@@ -51,7 +51,7 @@ endef
 define Package/acme-acmesh-dnsapi
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+acme
+  DEPENDS:=+acme-acmesh
   TITLE:=DNS API integration for ACME (Letsencrypt) client
   PKGARCH:=all
 endef

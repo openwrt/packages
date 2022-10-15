@@ -28,6 +28,7 @@ else
 fi
 SECTION_ID=""		# hold config's section name
 VERBOSE=0		# default mode is log to console, but easily changed with parameter
+DRY_RUN=0		# run without actually doing (sending) any changes
 MYPROG=$(basename $0)	# my program call name
 
 LOGFILE=""		# logfile - all files are set in dynamic_dns_updater.sh
@@ -47,8 +48,8 @@ CURR_TIME=0		# holds the current uptime
 NEXT_TIME=0		# calculated time for next FORCED update
 EPOCH_TIME=0		# seconds since 1.1.1970 00:00:00
 
+CURRENT_IP=""		# holds the current IP read from the box
 REGISTERED_IP=""	# holds the IP read from DNS
-LOCAL_IP=""		# holds the local IP read from the box
 
 URL_USER=""		# url encoded $username from config file
 URL_PASS=""		# url encoded $password from config file
@@ -57,7 +58,7 @@ URL_PENC=""		# url encoded $param_enc from config file
 UPD_ANSWER=""		# Answer given by service on success
 
 ERR_LAST=0		# used to save $? return code of program and function calls
-ERR_UPDATE=0		# error counter on different local and registered ip
+RETRY_COUNT=0		# error counter on different current and registered IPs
 
 PID_SLEEP=0		# ProcessID of current background "sleep"
 
@@ -627,11 +628,11 @@ verify_dns() {
 			return $__ERR
 		elif [ $__ERR -ne 0 ]; then
 			__CNT=$(( $__CNT + 1 ))	# increment error counter
-			# if error count > retry_count leave here
-			[ $retry_count -gt 0 -a $__CNT -gt $retry_count ] && \
-				write_log 14 "Verify DNS server '$1' failed after $retry_count retries"
+			# if error count > retry_max_count leave here
+			[ $retry_max_count -gt 0 -a $__CNT -gt $retry_max_count ] && \
+				write_log 14 "Verify DNS server '$1' failed after $retry_max_count retries"
 
-			write_log 4 "Verify DNS server '$1' failed - retry $__CNT/$retry_count in $RETRY_SECONDS seconds"
+			write_log 4 "Verify DNS server '$1' failed - retry $__CNT/$retry_max_count in $RETRY_SECONDS seconds"
 			sleep $RETRY_SECONDS &
 			PID_SLEEP=$!
 			wait $PID_SLEEP	# enable trap-handler
@@ -687,11 +688,11 @@ verify_proxy() {
 			return $__ERR
 		elif [ $__ERR -gt 0 ]; then
 			__CNT=$(( $__CNT + 1 ))	# increment error counter
-			# if error count > retry_count leave here
-			[ $retry_count -gt 0 -a $__CNT -gt $retry_count ] && \
-				write_log 14 "Verify Proxy server '$1' failed after $retry_count retries"
+			# if error count > retry_max_count leave here
+			[ $retry_max_count -gt 0 -a $__CNT -gt $retry_max_count ] && \
+				write_log 14 "Verify Proxy server '$1' failed after $retry_max_count retries"
 
-			write_log 4 "Verify Proxy server '$1' failed - retry $__CNT/$retry_count in $RETRY_SECONDS seconds"
+			write_log 4 "Verify Proxy server '$1' failed - retry $__CNT/$retry_max_count in $RETRY_SECONDS seconds"
 			sleep $RETRY_SECONDS &
 			PID_SLEEP=$!
 			wait $PID_SLEEP	# enable trap-handler
@@ -722,7 +723,7 @@ do_transfer() {
 			# set correct program to detect IP
 			[ $use_ipv6 -eq 0 ] && __RUNPROG="network_get_ipaddr" || __RUNPROG="network_get_ipaddr6"
 			eval "$__RUNPROG __BINDIP $bind_network" || \
-				write_log 13 "Can not detect local IP using '$__RUNPROG $bind_network' - Error: '$?'"
+				write_log 13 "Can not detect current IP using '$__RUNPROG $bind_network' - Error: '$?'"
 			write_log 7 "Force communication via IP '$__BINDIP'"
 			__PROG="$__PROG --bind-address=$__BINDIP"
 		fi
@@ -867,11 +868,11 @@ do_transfer() {
 		}
 
 		__CNT=$(( $__CNT + 1 ))	# increment error counter
-		# if error count > retry_count leave here
-		[ $retry_count -gt 0 -a $__CNT -gt $retry_count ] && \
-			write_log 14 "Transfer failed after $retry_count retries"
+		# if error count > retry_max_count leave here
+		[ $retry_max_count -gt 0 -a $__CNT -gt $retry_max_count ] && \
+			write_log 14 "Transfer failed after $retry_max_count retries"
 
-		write_log 4 "Transfer failed - retry $__CNT/$retry_count in $RETRY_SECONDS seconds"
+		write_log 4 "Transfer failed - retry $__CNT/$retry_max_count in $RETRY_SECONDS seconds"
 		sleep $RETRY_SECONDS &
 		PID_SLEEP=$!
 		wait $PID_SLEEP	# enable trap-handler
@@ -923,13 +924,13 @@ send_update() {
 	fi
 }
 
-get_local_ip () {
-	# $1	Name of Variable to store local IP (LOCAL_IP)
+get_current_ip () {
+	# $1	Name of Variable to store current IP
 	local __CNT=0	# error counter
 	local __RUNPROG __DATA __URL __ERR
 
-	[ $# -ne 1 ] && write_log 12 "Error calling 'get_local_ip()' - wrong number of parameters"
-	write_log 7 "Detect local IP on '$ip_source'"
+	[ $# -ne 1 ] && write_log 12 "Error calling 'get_current_ip()' - wrong number of parameters"
+	write_log 7 "Detect current IP on '$ip_source'"
 
 	while : ; do
 		if [ -n "$ip_network" -a "$ip_source" = "network" ]; then
@@ -938,8 +939,8 @@ get_local_ip () {
 			[ $use_ipv6 -eq 0 ] && __RUNPROG="network_get_ipaddr" \
 					    || __RUNPROG="network_get_ipaddr6"
 			eval "$__RUNPROG __DATA $ip_network" || \
-				write_log 13 "Can not detect local IP using $__RUNPROG '$ip_network' - Error: '$?'"
-			[ -n "$__DATA" ] && write_log 7 "Local IP '$__DATA' detected on network '$ip_network'"
+				write_log 13 "Can not detect current IP using $__RUNPROG '$ip_network' - Error: '$?'"
+			[ -n "$__DATA" ] && write_log 7 "Current IP '$__DATA' detected on network '$ip_network'"
 		elif [ -n "$ip_interface" -a "$ip_source" = "interface" ]; then
 			local __DATA4=""; local __DATA6=""
 			if [ -n "$(command -v ip)" ]; then		# ip program installed
@@ -1018,14 +1019,14 @@ get_local_ip () {
 				fi
 			fi
 			[ $use_ipv6 -eq 0 ] && __DATA="$__DATA4" || __DATA="$__DATA6"
-			[ -n "$__DATA" ] && write_log 7 "Local IP '$__DATA' detected on interface '$ip_interface'"
+			[ -n "$__DATA" ] && write_log 7 "Current IP '$__DATA' detected on interface '$ip_interface'"
 		elif [ -n "$ip_script" -a "$ip_source" = "script" ]; then
 			write_log 7 "#> $ip_script >$DATFILE 2>$ERRFILE"
 			eval $ip_script >$DATFILE 2>$ERRFILE
 			__ERR=$?
 			if [ $__ERR -eq 0 ]; then
 				__DATA=$(cat $DATFILE)
-				[ -n "$__DATA" ] && write_log 7 "Local IP '$__DATA' detected via script '$ip_script'"
+				[ -n "$__DATA" ] && write_log 7 "Current IP '$__DATA' detected via script '$ip_script'"
 			else
 				write_log 3 "$ip_script Error: '$__ERR'"
 				write_log 7 "$(cat $ERRFILE)"		# report error
@@ -1036,9 +1037,9 @@ get_local_ip () {
 			[ $use_ipv6 -eq 0 ] \
 				&& __DATA=$(grep -m 1 -o "$IPV4_REGEX" $DATFILE) \
 				|| __DATA=$(grep -m 1 -o "$IPV6_REGEX" $DATFILE)
-			[ -n "$__DATA" ] && write_log 7 "Local IP '$__DATA' detected on web at '$ip_url'"
+			[ -n "$__DATA" ] && write_log 7 "Current IP '$__DATA' detected on web at '$ip_url'"
 		else
-			write_log 12 "Error in 'get_local_ip()' - unhandled ip_source '$ip_source'"
+			write_log 12 "Error in 'get_current_ip()' - unhandled ip_source '$ip_source'"
 		fi
 		# valid data found return here
 		[ -n "$__DATA" ] && {
@@ -1053,22 +1054,22 @@ get_local_ip () {
 
 		[ $VERBOSE -gt 1 ] && {
 			# VERBOSE > 1 then NO retry
-			write_log 4 "Get local IP via '$ip_source' failed - Verbose Mode: $VERBOSE - NO retry on error"
+			write_log 4 "Get current IP via '$ip_source' failed - Verbose Mode: $VERBOSE - NO retry on error"
 			return 1
 		}
 
 		__CNT=$(( $__CNT + 1 ))	# increment error counter
-		# if error count > retry_count leave here
-		[ $retry_count -gt 0 -a $__CNT -gt $retry_count ] && \
-			write_log 14 "Get local IP via '$ip_source' failed after $retry_count retries"
-		write_log 4 "Get local IP via '$ip_source' failed - retry $__CNT/$retry_count in $RETRY_SECONDS seconds"
+		# if error count > retry_max_count leave here
+		[ $retry_max_count -gt 0 -a $__CNT -gt $retry_max_count ] && \
+			write_log 14 "Get current IP via '$ip_source' failed after $retry_max_count retries"
+		write_log 4 "Get current IP via '$ip_source' failed - retry $__CNT/$retry_max_count in $RETRY_SECONDS seconds"
 		sleep $RETRY_SECONDS &
 		PID_SLEEP=$!
 		wait $PID_SLEEP	# enable trap-handler
 		PID_SLEEP=0
 	done
 	# we should never come here there must be a programming error
-	write_log 12 "Error in 'get_local_ip()' - program coding error"
+	write_log 12 "Error in 'get_current_ip()' - program coding error"
 }
 
 get_registered_ip() {
@@ -1200,11 +1201,11 @@ get_registered_ip() {
 		}
 
 		__CNT=$(( $__CNT + 1 ))	# increment error counter
-		# if error count > retry_count leave here
-		[ $retry_count -gt 0 -a $__CNT -gt $retry_count ] && \
-			write_log 14 "Get registered/public IP for '$lookup_host' failed after $retry_count retries"
+		# if error count > retry_max_count leave here
+		[ $retry_max_count -gt 0 -a $__CNT -gt $retry_max_count ] && \
+			write_log 14 "Get registered/public IP for '$lookup_host' failed after $retry_max_count retries"
 
-		write_log 4 "Get registered/public IP for '$lookup_host' failed - retry $__CNT/$retry_count in $RETRY_SECONDS seconds"
+		write_log 4 "Get registered/public IP for '$lookup_host' failed - retry $__CNT/$retry_max_count in $RETRY_SECONDS seconds"
 		sleep $RETRY_SECONDS &
 		PID_SLEEP=$!
 		wait $PID_SLEEP	# enable trap-handler

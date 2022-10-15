@@ -463,6 +463,12 @@ general_config() {
 			create_empty_zone "$mynet.in-addr.arpa"
 		done
 
+		local need_reload=
+
+		cp -p $conf_local_file ${conf_local_file}_
+		cmp -s $conf_local_file ${conf_local_file}_ || need_reload=1
+		rm -f ${conf_local_file}_
+
 		cat <<EOF > $conf_local_file
 zone "$domain" {
 	type master;
@@ -488,7 +494,7 @@ zone "$mynet.in-addr.arpa" {
 EOF
 		done
 
-		/etc/init.d/named reload
+		[ -n "$need_reload" ] && /etc/init.d/named reload
 		sleep 1
 
 		cat <<EOF
