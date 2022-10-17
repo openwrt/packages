@@ -256,6 +256,21 @@ print_track_bfd_indent() {
 	printf '\n' >> "$KEEPALIVED_CONF"
 }
 
+print_unicast_peer_indent() {
+	local section="$1"
+	local curr_track_elem="$2"
+	local indent="$3"
+	local name address
+
+	config_get name "$section" name
+	[ "$name" != "$curr_track_elem" ] && return 0
+
+	config_get address "$section" address
+	[ -z "$address" ] && return 0
+
+	printf '%b%s\n' "${indent}" "$address">> "$KEEPALIVED_CONF"
+}
+
 static_routes() {
 	local route
 	config_get route "$1" route
@@ -403,7 +418,13 @@ vrrp_instance() {
 	# Handle simple lists of strings (with no spaces in between)
 	for opt in unicast_peer; do
 		config_get "$opt" "$1" "$opt"
-		print_list_indent "$opt"
+		eval optval=\$$opt
+		[ -z "$optval" ] && continue
+		printf '%b%s {\n' "${INDENT_1}" "$opt" >> "$KEEPALIVED_CONF"
+		for t in $optval; do
+			config_foreach print_unicast_peer_indent peer "$t" "$INDENT_2"
+		done
+		printf '%b}\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
 	done
 	unset optval
 
