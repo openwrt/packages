@@ -34,7 +34,7 @@ append_env_bool() {
 start_service() {
 	config_load "$CONF"
 
-	is_enabled "config" "enabled" || exit 1
+	is_enabled "config" "enabled" || return 1
 
 	procd_open_instance "$CONF"
 	procd_set_param command "$PROG"
