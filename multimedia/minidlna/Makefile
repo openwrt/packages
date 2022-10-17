@@ -8,6 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=minidlna
+PKG_CPE_ID:=cpe:/a:minidlna_project:minidlna
 PKG_VERSION:=1.3.0
 PKG_RELEASE:=2
 

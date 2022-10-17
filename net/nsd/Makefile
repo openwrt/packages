@@ -8,6 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nsd
+PKG_CPE_ID:=cpe:/a:freebsd:name_server_daemon
 PKG_VERSION:=4.2.4
 PKG_RELEASE:=1
 

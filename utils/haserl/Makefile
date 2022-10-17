@@ -8,6 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=haserl
+PKG_CPE_ID:=cpe:/a:haserl_project:haserl
 PKG_VERSION:=0.9.36
 PKG_RELEASE:=$(AUTORELEASE)
 

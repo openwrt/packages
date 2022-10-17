@@ -8,6 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnupg
+PKG_CPE_ID:=cpe:/a:gnupg:gnupg
 PKG_VERSION:=2.2.23
 PKG_RELEASE:=2
 

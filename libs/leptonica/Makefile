@@ -8,6 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=leptonica
+PKG_CPE_ID:=cpe:/a:leptonica:leptonica
 PKG_VERSION:=1.80.0
 PKG_RELEASE:=$(AUTORELEASE)
 

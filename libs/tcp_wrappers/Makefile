@@ -8,6 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tcp_wrappers
+PKG_CPE_ID:=cpe:/a:libwrap_project:libwrap
 PKG_VERSION:=7.6
 PKG_RELEASE:=4
 

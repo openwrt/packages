@@ -1,6 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=setserial
+PKG_CPE_ID:=cpe:/a:setserial_project:setserial
 PKG_VERSION:=2.17
 PKG_RELEASE:=3
 

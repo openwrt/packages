@@ -6,6 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adguardhome
+PKG_CPE_ID:=cpe:/a:adguard:adguardhome
 PKG_VERSION:=0.107.12
 PKG_RELEASE:=1
 

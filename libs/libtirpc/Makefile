@@ -1,6 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libtirpc
+PKG_CPE_ID:=cpe:/a:libtirpc_project:libtirpc
 PKG_VERSION:=1.3.2
 PKG_RELEASE:=$(AUTORELEASE)
 

@@ -8,6 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=iperf
+PKG_CPE_ID:=cpe:/a:es:iperf3
 PKG_VERSION:=3.12
 PKG_RELEASE:=1
 

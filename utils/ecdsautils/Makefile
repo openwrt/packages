@@ -8,6 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ecdsautils
+PKG_CPE_ID:=cpe:/a:ecdsautils_project:ecdsautils
 PKG_VERSION:=0.4.1
 PKG_RELEASE:=1
 

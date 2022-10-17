@@ -8,6 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=procps-ng
+PKG_CPE_ID:=cpe:/a:procps-ng_project:procps-ng
 PKG_VERSION:=3.3.16
 PKG_RELEASE:=3
 

@@ -10,6 +10,7 @@ PKG_RELRO_FULL:=0
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=knot-resolver
+PKG_CPE_ID:=cpe:/a:knot-resolver:knot_resolver
 PKG_VERSION:=5.5.3
 PKG_RELEASE:=1
 

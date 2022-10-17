@@ -8,6 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmicrohttpd
+PKG_CPE_ID:=cpe:/a:gnu:libmicrohttpd
 PKG_VERSION:=0.9.75
 PKG_RELEASE:=$(AUTORELEASE)
 

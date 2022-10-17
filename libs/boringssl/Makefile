@@ -5,6 +5,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=boringssl
+PKG_CPE_ID:=cpe:/a:google:boringssl
 PKG_VERSION:=20210608
 PKG_RELEASE:=$(AUTORELEASE)
 

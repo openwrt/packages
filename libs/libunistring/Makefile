@@ -8,6 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libunistring
+PKG_CPE_ID:=cpe:/a:gnu:libunistring
 PKG_VERSION:=1.0
 PKG_RELEASE:=1
 PKG_HASH:=5bab55b49f75d77ed26b257997e919b693f29fd4a1bc22e0e6e024c246c72741

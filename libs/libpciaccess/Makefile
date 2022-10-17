@@ -6,6 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libpciaccess
+PKG_CPE_ID:=cpe:/a:x:libxfont
 PKG_VERSION:=0.16
 PKG_RELEASE:=1
 

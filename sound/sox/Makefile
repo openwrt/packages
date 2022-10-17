@@ -6,6 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sox
+PKG_CPE_ID:=cpe:/a:sound_exchange_project:sound_exchange
 PKG_VERSION:=14.4.2
 PKG_RELEASE:=4
 

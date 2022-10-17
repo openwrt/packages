@@ -8,6 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libidn
+PKG_CPE_ID:=cpe:/a:gnu:libidn
 PKG_VERSION:=1.36
 PKG_RELEASE:=1
 

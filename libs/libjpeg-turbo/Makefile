@@ -1,6 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libjpeg-turbo
+PKG_CPE_ID:=cpe:/a:d.r.commander:libjpeg-turbo
 PKG_VERSION:=2.1.2
 PKG_RELEASE:=$(AUTORELEASE)
 

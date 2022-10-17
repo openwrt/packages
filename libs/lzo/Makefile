@@ -8,6 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lzo
+PKG_CPE_ID:=cpe:/a:lzo_project:lzo
 PKG_VERSION:=2.10
 PKG_RELEASE:=4
 

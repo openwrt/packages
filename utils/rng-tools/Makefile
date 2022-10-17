@@ -8,6 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rng-tools
+PKG_CPE_ID:=cpe:/a:rng-tools_project:rng-tools
 PKG_VERSION:=6.15
 PKG_RELEASE:=2
 

@@ -8,6 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libdaemon
+PKG_CPE_ID:=cpe:/a:libdaemon_project:libdaemon
 PKG_VERSION:=0.14
 PKG_RELEASE:=5
 

@@ -1,6 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cgroupfs-mount
+PKG_CPE_ID:=cpe:/a:cgroupfs-mount_project:cgroupfs-mount
 PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git

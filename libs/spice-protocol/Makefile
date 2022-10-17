@@ -8,6 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=spice-protocol
+PKG_CPE_ID:=cpe:/a:redhat:spice
 PKG_VERSION:=0.14.4
 PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
