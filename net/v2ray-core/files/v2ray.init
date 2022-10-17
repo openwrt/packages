@@ -11,7 +11,7 @@ start_service() {
 
 	local enabled
 	config_get_bool enabled "enabled" "enabled" "0"
-	[ "$enabled" -eq "0" ] && exit 1
+	[ "$enabled" -eq "1" ] || return 1
 
 	local confdir
 	local conffiles

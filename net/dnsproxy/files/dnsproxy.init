@@ -88,7 +88,7 @@ load_config_param() {
 start_service() {
 	config_load "$CONF"
 
-	is_enabled "global" "enabled" || exit 1
+	is_enabled "global" "enabled" || return 1
 
 	procd_open_instance "$CONF"
 	procd_set_param command "$PROG"
