@@ -17,6 +17,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | android_tracking    |         | S    | tracking         | [Link](https://github.com/Perflyst/PiHoleBlocklist)                               |
 | andryou             |         | L    | compilation      | [Link](https://gitlab.com/andryou/block/-/blob/master/readme.md)                  |
 | anti_ad             |         | L    | compilation      | [Link](https://github.com/privacy-protection-tools/anti-AD/blob/master/README.md) |
+| anti_adblock        |         | XL   | anti_adblock     | [Link](https://reek.github.io/anti-adblock-killer)                                |
 | anudeep             |         | M    | compilation      | [Link](https://github.com/anudeepND/blacklist)                                    |
 | bitcoin             |         | S    | mining           | [Link](https://github.com/hoshsadiq/adblock-nocoin-list)                          |
 | cookies             |         | XXL  | cookies          | [Link](https://easylist.to)                                                       |
