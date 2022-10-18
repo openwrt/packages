@@ -6,6 +6,13 @@
 		"focus": "mobile",
 		"descurl": "https://github.com/AdAway/adaway.github.io"
 	},
+	"abp": {
+		"url": "https://easylist-downloads.adblockplus.org/abp-filters-anti-cv.txt",
+		"rule": "BEGIN{FS=\"[|^]\"}/^\\|\\|([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+\\^(\\$third-party)?$/{print tolower($3)}",
+		"size": "XXL",
+		"focus": "general",
+		"descurl": "https://github.com/abp-filters/abp-filters-anti-cv"
+	},
 	"adguard": {
 		"url": "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
 		"rule": "BEGIN{FS=\"[\/|^|\\r]\"}/^\\|\\|([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+[\\/\\^\\r]+$/{print tolower($3)}",
@@ -55,6 +62,20 @@
 		"focus": "mining",
 		"descurl": "https://github.com/hoshsadiq/adblock-nocoin-list"
 	},
+	"cookies": {
+		"url": "https://easylist-downloads.adblockplus.org/i_dont_care_about_cookies.txt",
+		"rule": "BEGIN{FS=\"[|^]\"}/^\\|\\|([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+\\^(\\$third-party)?$/{print tolower($3)}",
+		"size": "XXL",
+		"focus": "cookies",
+		"descurl": "https://easylist.to"
+	},
+	"cpbl": {
+		"url": "https://raw.githubusercontent.com/bongochong/CombinedPrivacyBlockLists/master/cpbl-abp-list.txt",
+		"rule": "BEGIN{FS=\"[|^]\"}/^\\|\\|([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+\\^(\\$third-party)?$/{print tolower($3)}",
+		"size": "XXL",
+		"focus": "compilation",
+		"descurl": "https://github.com/bongochong/CombinedPrivacyBlockLists"
+	},
 	"disconnect": {
 		"url": "https://s3.amazonaws.com/lists.disconnect.me/simple_malvertising.txt",
 		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
@@ -68,6 +89,20 @@
 		"size": "S",
 		"focus": "doh_server",
 		"descurl": "https://github.com/dibdot/DoH-IP-blocklists"
+	},
+	"easylist": {
+		"url": "https://easylist-downloads.adblockplus.org/easylist.txt",
+		"rule": "BEGIN{FS=\"[|^]\"}/^\\|\\|([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+\\^(\\$third-party)?$/{print tolower($3)}",
+		"size": "XXL",
+		"focus": "compilation",
+		"descurl": "https://easylist.to"
+	},
+	"easyprivacy": {
+		"url": "https://easylist-downloads.adblockplus.org/easyprivacy.txt",
+		"rule": "BEGIN{FS=\"[|^]\"}/^\\|\\|([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+\\^(\\$third-party)?$/{print tolower($3)}",
+		"size": "XXL",
+		"focus": "tracking",
+		"descurl": "https://easylist.to"
 	},
 	"energized": {
 		"url": "https://block.energized.pro/",
@@ -103,6 +138,13 @@
 		"size": "XL",
 		"focus": "compilation",
 		"descurl": "https://github.com/lightswitch05/hosts"
+	},
+	"notifications": {
+		"url": "https://easylist-downloads.adblockplus.org/fanboy-notifications.txt",
+		"rule": "BEGIN{FS=\"[|^]\"}/^\\|\\|([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+\\^(\\$third-party)?$/{print tolower($3)}",
+		"size": "M",
+		"focus": "notifications",
+		"descurl": "https://easylist.to"
 	},
 	"notracking": {
 		"url": "https://raw.githubusercontent.com/notracking/hosts-blocklists/master/dnscrypt-proxy/dnscrypt-proxy.blacklist.txt",
@@ -202,6 +244,20 @@
 		"focus": "reg_italy",
 		"descurl": "https://easylist.to"
 	},
+	"reg_jp1": {
+		"url": "https://raw.githubusercontent.com/k2jp/abp-japanese-filters/master/abpjf.txt",
+		"rule": "BEGIN{FS=\"[|^]\"}/^\\|\\|([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+\\^(\\$third-party)?$/{print tolower($3)}",
+		"size": "XXL",
+		"focus": "reg_japan",
+		"descurl": "https://github.com/k2jp/abp-japanese-filters"
+	},
+	"reg_jp2": {
+		"url": "https://raw.githubusercontent.com/tofukko/filter/master/Adblock_Plus_list.txt",
+		"rule": "BEGIN{FS=\"[|^]\"}/^\\|\\|([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+\\^(\\$third-party)?$/{print tolower($3)}",
+		"size": "XL",
+		"focus": "reg_japan",
+		"descurl": "https://tofukko.r.ribbon.to"
+	},
 	"reg_kr": {
 		"url": "https://raw.githubusercontent.com/List-KR/List-KR/master/filters-share/adservice.txt",
 		"rule": "BEGIN{FS=\"[|^]\"}/^\\|\\|([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+\\^(\\$third-party)?$/{print tolower($3)}",
@@ -264,6 +320,13 @@
 		"size": "S",
 		"focus": "tracking",
 		"descurl": "https://github.com/Perflyst/PiHoleBlocklist"
+	},
+	"social": {
+		"url": "https://easylist-downloads.adblockplus.org/fanboy-social.txt",
+		"rule": "BEGIN{FS=\"[|^]\"}/^\\|\\|([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+\\^(\\$third-party)?$/{print tolower($3)}",
+		"size": "XXL",
+		"focus": "social",
+		"descurl": "https://easylist.to"
 	},
 	"spam404": {
 		"url": "https://raw.githubusercontent.com/Dawsey21/Lists/master/main-blacklist.txt",
