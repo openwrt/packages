@@ -62,7 +62,7 @@ define Package/ddns-scripts-cloudflare
   $(call Package/ddns-scripts/Default)
   TITLE:=Extension for cloudflare.com API v4
   DEPENDS:=ddns-scripts +curl
-  PROVIDES:=ddns-scripts_digitalocean.com-v2
+  PROVIDES:=ddns-scripts_cloudflare.com-v4
 endef
 
 define Package/ddns-scripts-cloudflare/description
@@ -98,6 +98,7 @@ define Package/ddns-scripts-digitalocean
   $(call Package/ddns-scripts/Default)
   TITLE:=Extention for digitalocean.com API v2
   DEPENDS:=ddns-scripts +curl
+  PROVIDES:=ddns-scripts_digitalocean.com-v2
 endef
 
 define Package/ddns-scripts-digitalocean/description
