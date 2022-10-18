@@ -1,7 +1,6 @@
 #!/bin/sh /etc/rc.common
 # Copyright 2017-2022 Stan Grishin (stangri@melmac.ca)
-# shellcheck disable=SC2039,SC1091,SC2016,SC3043,SC3057,SC3060
-PKG_VERSION='dev-test'
+# shellcheck disable=SC1091,SC2016,SC3043,SC3057,SC3060
 
 # shellcheck disable=SC2034
 START=94
@@ -26,6 +25,7 @@ else
 	sizes	Displays the file-sizes of enabled block-lists'
 fi
 
+readonly PKG_VERSION='dev-test'
 readonly packageName='simple-adblock'
 readonly serviceName="$packageName $PKG_VERSION"
 readonly packageConfigFile="/etc/config/${packageName}"
@@ -189,7 +189,7 @@ load_environment() {
 	if [ "$validation_result" != '0' ]; then
 		output "${_ERROR_}: $packageName config validation failed!\\n"
 		output "Please check if the '$packageConfigFile' contains correct values for config options.\\n"
-		exit 1
+		return 1
 	fi
 
 	if [ "$enabled" -eq 0 ]; then
@@ -644,7 +644,7 @@ process_url() {
 }
 
 download_lists() {
-	local hf w_filter j=0 R_TMP
+	local hf allow_filter j=0 R_TMP
 
 	json set message "$(get_status_text "statusDownloading")..."
 	json set status "statusDownloading"
@@ -701,7 +701,7 @@ download_lists() {
 	for hf in $blocked_domain $canaryDomains; do echo "$hf" | sed "$domainsFilter" >> $B_TMP; done
 	allowed_domain="${allowed_domain}
 $(cat $A_TMP)"
-	for hf in ${allowed_domain}; do hf="$(echo "$hf" | sed 's/\./\\./g')"; w_filter="$w_filter/^${hf}$/d;/\.${hf}$/d;"; done
+	for hf in ${allowed_domain}; do hf="$(echo "$hf" | sed 's/\./\\./g')"; allow_filter="$allow_filter/^(.*\.)?${hf}$/d;"; done
 
 	[ ! -s "$B_TMP" ] && return 1
 
@@ -768,7 +768,7 @@ $(cat $A_TMP)"
 
 	output 2 'Allowing domains '
 	json set message "$(get_status_text "statusProcessing"): allowing domains"
-	if sed -i "$w_filter" "$B_TMP"; then
+	if sed -i -E "$allow_filter" "$B_TMP"; then
 		output_ok
 	else
 		output_failn
@@ -858,7 +858,7 @@ $(cat $A_TMP)"
 adb_allow() {
 	local c hf string="$1"
 	local validation_result="$3"
-	load_environment "$validation_result"
+	load_environment "$validation_result" || return 1
 	if [ ! -s "$outputFile" ]; then
 		output "No block-list ('$outputFile') found.\\n"
 	elif [ -z "$string" ]; then
@@ -946,7 +946,7 @@ adb_allow() {
 adb_check() {
 	local c param="$1"
 	local validation_result="$3"
-	load_environment "$validation_result"
+	load_environment "$validation_result" || return 1
 	if [ ! -s "$outputFile" ]; then
 		output "No block-list ('$outputFile') found.\\n"
 	elif [ -z "$param" ]; then
@@ -986,7 +986,7 @@ adb_check() {
 adb_config_update() {
 	local R_TMP label
 	local param="$1" validation_result="$3"
-	load_environment "$validation_result"
+	load_environment "$validation_result" || return 1
 	label="${config_update_url##*//}"
 	label="${label%%/*}";
 	[ "$config_update_enabled" -ne 0 ] || return 0
@@ -1020,7 +1020,7 @@ adb_config_update() {
 adb_sizes() {
 	local i
 	local validation_result="$3"
-	load_environment "$validation_result"
+	load_environment "$validation_result" || return 1
 
 	echo "# $(date)"
 	for i in $blocked_domains_url; do
@@ -1064,7 +1064,7 @@ adb_start() {
 	local action status error message stats c
 	local validation_result="$3"
 
-	load_environment "$validation_result"
+	load_environment "$validation_result" || return 1
 
 	status="$(json get status)"
 	error="$(json get error)"
@@ -1090,7 +1090,7 @@ adb_start() {
 		action='restart'
 	elif [ -s "$outputFile" ] && [ "$status" = "statusSuccess" ] && [ -z "$error" ]; then
 		status_service
-		exit 0
+		return 0
 	else
 		action='download'
 	fi
@@ -1254,7 +1254,7 @@ adb_start() {
 adb_status() {
 	local c url status message error stats
 	local validation_result="$3"
-	load_environment "$validation_result"
+	load_environment "$validation_result" || return 1
 	status="$(json get status)"
 	message="$(json get message)"
 	error="$(json get error)"
@@ -1285,7 +1285,7 @@ adb_status() {
 
 adb_stop() {
 	local validation_result="$3"
-	load_environment "$validation_result"
+	load_environment "$validation_result" || return 1
 	if [ -s "$outputFile" ]; then
 		output "Stopping $serviceName... "
 		cache 'create'
@@ -1307,13 +1307,6 @@ adb_stop() {
 	fi
 }
 
-boot() {
-	local boot_delay
-	config_load "$packageName"
-	config_get boot_delay 'config' 'boot_delay' '120'
-	sleep "$boot_delay" >/dev/null 2>&1
-	rc_procd start_service 'on_boot' && rc_procd service_triggers
-}
 service_started() { procd_set_config_changed firewall; }
 service_stopped() { procd_set_config_changed firewall; }
 restart_service() { rc_procd start_service 'restart'; }
