@@ -18,7 +18,11 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | anti_ad             |         | L    | compilation      | [Link](https://github.com/privacy-protection-tools/anti-AD/blob/master/README.md) |
 | anudeep             |         | M    | compilation      | [Link](https://github.com/anudeepND/blacklist)                                    |
 | bitcoin             |         | S    | mining           | [Link](https://github.com/hoshsadiq/adblock-nocoin-list)                          |
+| cpbl                |         | XL   | compilation      | [Link](https://github.com/bongochong/CombinedPrivacyBlockLists)                   |
 | disconnect          | x       | S    | general          | [Link](https://disconnect.me)                                                     |
+| doh_blocklist       |         | S    | doh_server       | [Link](https://github.com/dibdot/DoH-IP-blocklists)                               |
+| easylist            |         | M    | compilation      | [Link](https://easylist.to)                                                       |
+| easyprivacy         |         | M    | tracking         | [Link](https://easylist.to)                                                       |
 | energized           |         | VAR  | compilation      | [Link](https://energized.pro)                                                     |
 | firetv_tracking     |         | S    | tracking         | [Link](https://github.com/Perflyst/PiHoleBlocklist)                               |
 | games_tracking      |         | S    | tracking         | [Link](https://www.gameindustry.eu)                                               |
@@ -30,21 +34,21 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | oisd_full           |         | XXL  | general          | [Link](https://oisd.nl)                                                           |
 | openphish           |         | S    | phishing         | [Link](https://openphish.com)                                                     |
 | phishing_army       |         | S    | phishing         | [Link](https://phishing.army)                                                     |
-| reg_cn              |         | M    | reg_china        | [Link](https://easylist.to)                                                       |
-| reg_cz              |         | M    | reg_czech+slovak | [Link](https://easylist.to)                                                       |
-| reg_de              |         | M    | reg_germany      | [Link](https://easylist.to)                                                       |
-| reg_es              |         | M    | reg_espania      | [Link](https://easylist.to)                                                       |
+| reg_cn              |         | S    | reg_china        | [Link](https://easylist.to)                                                       |
+| reg_cz              |         | S    | reg_czech+slovak | [Link](https://easylist.to)                                                       |
+| reg_de              |         | S    | reg_germany      | [Link](https://easylist.to)                                                       |
+| reg_es              |         | S    | reg_espania      | [Link](https://easylist.to)                                                       |
 | reg_fi              |         | S    | reg_finland      | [Link](https://github.com/finnish-easylist-addition)                              |
-| reg_fr              |         | S    | reg_france       | [Link](https://forums.lanik.us/viewforum.php?f=91)                                |
-| reg_id              |         | M    | reg_indonesia    | [Link](https://easylist.to)                                                       |
-| reg_it              |         | M    | reg_italy        | [Link](https://easylist.to)                                                       |
+| reg_fr              |         | M    | reg_france       | [Link](https://forums.lanik.us/viewforum.php?f=91)                                |
+| reg_id              |         | S    | reg_indonesia    | [Link](https://easylist.to)                                                       |
+| reg_it              |         | S    | reg_italy        | [Link](https://easylist.to)                                                       |
+| reg_jp              |         | S    | reg_japan        | [Link](https://github.com/k2jp/abp-japanese-filters)                              |
 | reg_kr              |         | S    | reg_korea        | [Link](https://github.com/List-KR/List-KR)                                        |
-| reg_nl              |         | M    | reg_netherlands  | [Link](https://easylist.to)                                                       |
-| reg_pl1             |         | S    | reg_poland       | [Link](https://kadantiscam.netlify.com)                                           |
-| reg_pl2             |         | S    | reg_poland       | [Link](https://www.certyficate.it)                                                |
-| reg_ro              |         | M    | reg_romania      | [Link](https://easylist.to)                                                       |
-| reg_ru              |         | M    | reg_russia       | [Link](https://easylist.to)                                                       |
-| reg_se              |         | M    | reg_sweden       | [Link](https://github.com/lassekongo83/Frellwits-filter-lists)                    |
+| reg_nl              |         | S    | reg_netherlands  | [Link](https://easylist.to)                                                       |
+| reg_pl              |         | M    | reg_poland       | [Link](https://kadantiscam.netlify.com)                                           |
+| reg_ro              |         | S    | reg_romania      | [Link](https://easylist.to)                                                       |
+| reg_ru              |         | S    | reg_russia       | [Link](https://easylist.to)                                                       |
+| reg_se              |         | S    | reg_sweden       | [Link](https://github.com/lassekongo83/Frellwits-filter-lists)                    |
 | reg_vn              |         | S    | reg_vietnam      | [Link](https://bigdargon.github.io/hostsVN)                                       |
 | smarttv_tracking    |         | S    | tracking         | [Link](https://github.com/Perflyst/PiHoleBlocklist)                               |
 | spam404             |         | S    | general          | [Link](https://github.com/Dawsey21)                                               |
@@ -97,9 +101,8 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 
 ## Prerequisites
 * [OpenWrt](https://openwrt.org), tested with the stable release series and with the latest rolling snapshot releases.  
-  <b>Please note:</b> Older OpenWrt releases like 18.06.x or 17.01.x are _not_ supported!  
   <b>Please note:</b> Devices with less than 128 MByte RAM are _not_ supported!  
-* A usual setup with an enabled DNS backend at minimum - dump AP modes without a working DNS backend are _not_ supported
+* A usual setup with an enabled DNS backend at minimum - dumb AP modes without a working DNS backend are _not_ supported
 * A download utility with SSL support: 'wget', 'uclient-fetch' with one of the 'libustream-*' ssl libraries, 'aria2c' or 'curl' is required
 * A certificate store such as 'ca-bundle' or 'ca-certificates', as adblock checks the validity of the SSL certificates of all download sites by default
 * Optional E-Mail notification support: for E-Mail notifications you need to install the additional 'msmtp' package

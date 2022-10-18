@@ -12,7 +12,7 @@ if [ -n "$(type -t extra_command)" ]; then
 	extra_command "suspend" "Suspend adblock processing"
 	extra_command "resume" "Resume adblock processing"
 	extra_command "query" "<domain> Query active blocklists and backups for a specific domain"
-	extra_command "report" "[[<cli>|<mail>|<gen>|<json>] [<count>] [<search>]] Print DNS statistics with an optional search parameter"
+	extra_command "report" "[[<cli>|<mail>|<gen>|<json>] [<top_count>] [<res_count>] [<search>]] Print DNS statistics with an optional search parameter"
 	extra_command "list" "[<add>|<add_sha>|<add_utc>|<add_eng>|<add_stb>|<remove>|<remove_sha>|<remove_utc>|<remove_eng>|<remove_stb>] <source(s)> List/Edit available sources"
 	extra_command "timer" "[<add> <tasks> <hour> [<minute>] [<weekday>]]|[<remove> <line no.>] List/Edit cron update intervals"
 else
@@ -82,7 +82,7 @@ query() {
 }
 
 report() {
-	rc_procd "${adb_script}" report "${1:-"cli"}" "${2}" "${3}"
+	rc_procd "${adb_script}" report "${1:-"cli"}" "${2}" "${3}" "${4}"
 }
 
 list() {

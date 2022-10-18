@@ -11,7 +11,7 @@
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 
-adb_ver="4.1.4"
+adb_ver="4.1.5"
 adb_enabled="0"
 adb_debug="0"
 adb_forcedns="0"
@@ -1281,7 +1281,7 @@ f_main() {
 # trace dns queries via tcpdump and prepare a report
 #
 f_report() {
-	local report_raw report_txt content status total start end start_date start_time end_date end_time blocked percent top_list top array item index hold ports value key key_list cnt="0" resolve="-nn" action="${1}" count="${2:-"50"}" search="${3:-"+"}"
+	local report_raw report_txt content status total start end start_date start_time end_date end_time blocked percent top_list top array item index hold ports value key key_list cnt="0" resolve="-nn" action="${1}" top_count="${2:-"10"}" res_count="${3:-"50"}" search="${4:-"+"}"
 
 	report_raw="${adb_reportdir}/adb_report.raw"
 	report_srt="${adb_reportdir}/adb_report.srt"
@@ -1338,24 +1338,24 @@ f_report() {
 					"top_clients")
 						"${adb_awk}" '{print $3}' "${report_srt}" | "${adb_sort}" ${adb_srtopts} | uniq -c |
 							"${adb_sort}" ${adb_srtopts} -nr |
-							"${adb_awk}" '{ORS=" ";if(NR==1)printf "\n\t\t{\n\t\t\t\"count\": \"%s\",\n\t\t\t\"address\": \"%s\"\n\t\t}",$1,$2; else if(NR<10)printf ",\n\t\t{\n\t\t\t\"count\": \"%s\",\n\t\t\t\"address\": \"%s\"\n\t\t}",$1,$2}' >>"${report_jsn}"
+							"${adb_awk}" "{ORS=\" \";if(NR==1)printf \"\n\t\t{\n\t\t\t\\\"count\\\": \\\"%s\\\",\n\t\t\t\\\"address\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2; else if(NR<=${top_count})printf \",\n\t\t{\n\t\t\t\\\"count\\\": \\\"%s\\\",\n\t\t\t\\\"address\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2}" >>"${report_jsn}"
 						;;
 					"top_domains")
 						"${adb_awk}" '{if($5!="NX")print $4}' "${report_srt}" | "${adb_sort}" ${adb_srtopts} | uniq -c |
 							"${adb_sort}" ${adb_srtopts} -nr |
-							"${adb_awk}" '{ORS=" ";if(NR==1)printf "\n\t\t{\n\t\t\t\"count\": \"%s\",\n\t\t\t\"address\": \"%s\"\n\t\t}",$1,$2; else if(NR<10)printf ",\n\t\t{\n\t\t\t\"count\": \"%s\",\n\t\t\t\"address\": \"%s\"\n\t\t}",$1,$2}' >>"${report_jsn}"
+							"${adb_awk}" "{ORS=\" \";if(NR==1)printf \"\n\t\t{\n\t\t\t\\\"count\\\": \\\"%s\\\",\n\t\t\t\\\"address\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2; else if(NR<=${top_count})printf \",\n\t\t{\n\t\t\t\\\"count\\\": \\\"%s\\\",\n\t\t\t\\\"address\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2}" >>"${report_jsn}"
 						;;
 					"top_blocked")
 						"${adb_awk}" '{if($5=="NX")print $4}' "${report_srt}" |
 							"${adb_sort}" ${adb_srtopts} | uniq -c | "${adb_sort}" ${adb_srtopts} -nr |
-							"${adb_awk}" '{ORS=" ";if(NR==1)printf "\n\t\t{\n\t\t\t\"count\": \"%s\",\n\t\t\t\"address\": \"%s\"\n\t\t}",$1,$2; else if(NR<10)printf ",\n\t\t{\n\t\t\t\"count\": \"%s\",\n\t\t\t\"address\": \"%s\"\n\t\t}",$1,$2}' >>"${report_jsn}"
+							"${adb_awk}" "{ORS=\" \";if(NR==1)printf \"\n\t\t{\n\t\t\t\\\"count\\\": \\\"%s\\\",\n\t\t\t\\\"address\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2; else if(NR<=${top_count})printf \",\n\t\t{\n\t\t\t\\\"count\\\": \\\"%s\\\",\n\t\t\t\\\"address\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2}" >>"${report_jsn}"
 						;;
 				esac
 				printf "\n\t%s\n" "]," >>"${report_jsn}"
 			done
 			search="${search//./\\.}"
 			search="${search//[+*~%\$&\"\' ]/}"
-			"${adb_awk}" "BEGIN{i=0;printf \"\t\\\"requests\\\": [\n\"}/(${search})/{i++;if(i==1)printf \"\n\t\t{\n\t\t\t\\\"date\\\": \\\"%s\\\",\n\t\t\t\\\"time\\\": \\\"%s\\\",\n\t\t\t\\\"client\\\": \\\"%s\\\",\n\t\t\t\\\"domain\\\": \\\"%s\\\",\n\t\t\t\\\"rc\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2,\$3,\$4,\$5;else if(i<=${count})printf \",\n\t\t{\n\t\t\t\\\"date\\\": \\\"%s\\\",\n\t\t\t\\\"time\\\": \\\"%s\\\",\n\t\t\t\\\"client\\\": \\\"%s\\\",\n\t\t\t\\\"domain\\\": \\\"%s\\\",\n\t\t\t\\\"rc\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2,\$3,\$4,\$5}END{printf \"\n\t]\n}\n\"}" "${adb_reportdir}/adb_report.srt" >>"${report_jsn}"
+			"${adb_awk}" "BEGIN{i=0;printf \"\t\\\"requests\\\": [\n\"}/(${search})/{i++;if(i==1)printf \"\n\t\t{\n\t\t\t\\\"date\\\": \\\"%s\\\",\n\t\t\t\\\"time\\\": \\\"%s\\\",\n\t\t\t\\\"client\\\": \\\"%s\\\",\n\t\t\t\\\"domain\\\": \\\"%s\\\",\n\t\t\t\\\"rc\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2,\$3,\$4,\$5;else if(i<=${res_count})printf \",\n\t\t{\n\t\t\t\\\"date\\\": \\\"%s\\\",\n\t\t\t\\\"time\\\": \\\"%s\\\",\n\t\t\t\\\"client\\\": \\\"%s\\\",\n\t\t\t\\\"domain\\\": \\\"%s\\\",\n\t\t\t\\\"rc\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2,\$3,\$4,\$5}END{printf \"\n\t]\n}\n\"}" "${adb_reportdir}/adb_report.srt" >>"${report_jsn}"
 			rm -f "${report_srt}"
 		fi
 	fi
@@ -1377,13 +1377,13 @@ f_report() {
 		for top in ${top_list}; do
 			case "${top}" in
 				"top_clients")
-					item="::: Top 10 Clients"
+					item="::: Top Clients"
 					;;
 				"top_domains")
-					item="::: Top 10 Domains"
+					item="::: Top Domains"
 					;;
 				"top_blocked")
-					item="::: Top 10 Blocked Domains"
+					item="::: Top Blocked Domains"
 					;;
 			esac
 			if json_get_type status "${top}" && [ "${top}" != "requests" ] && [ "${status}" = "array" ]; then
@@ -1423,7 +1423,7 @@ f_report() {
 		("${adb_mailservice}" "${adb_ver}" "${content}" >/dev/null 2>&1) &
 		bg_pid="${!}"
 	fi
-	f_log "debug" "f_report ::: action: ${action}, count: ${count}, search: ${search}, dump_util: ${adb_dumpcmd}, rep_dir: ${adb_reportdir}, rep_iface: ${adb_repiface:-"-"}, rep_listen: ${adb_replisten}, rep_chunksize: ${adb_repchunksize}, rep_chunkcnt: ${adb_repchunkcnt}, rep_resolve: ${adb_represolve}"
+	f_log "debug" "f_report ::: action: ${action}, top_count: ${top_count}, res_count: ${res_count}, search: ${search}, dump_util: ${adb_dumpcmd}, rep_dir: ${adb_reportdir}, rep_iface: ${adb_repiface:-"-"}, rep_listen: ${adb_replisten}, rep_chunksize: ${adb_repchunksize}, rep_chunkcnt: ${adb_repchunkcnt}, rep_resolve: ${adb_represolve}"
 }
 
 # source required system libraries
