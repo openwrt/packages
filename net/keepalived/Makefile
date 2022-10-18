@@ -278,7 +278,7 @@ define Package/keepalived-sync
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Keepalived Master and Backup Synchronization
-  DEPENDS:= +keepalived +rsync +inotifywait +sudo +@BUSYBOX_CUSTOM +@BUSYBOX_CONFIG_TIMEOUT
+  DEPENDS:= +keepalived +rsync +inotifywait +sudo +coreutils-timeout
 endef
 
 define Package/keepalived-sync/description
