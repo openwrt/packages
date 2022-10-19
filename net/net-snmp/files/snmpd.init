@@ -360,6 +360,10 @@ service_stopped() {
 	procd_set_config_changed firewall
 }
 
+reload_service() {
+	restart
+}
+
 service_triggers(){
 	local script=$(readlink "$initscript")
 	local name=$(basename ${script:-$initscript})
