@@ -336,7 +336,7 @@ start_service() {
 	append_parm trapsess trapsess trapsess
 
 	procd_set_param command $PROG -Lf /dev/null -f -r -p "$pid_file"
-	procd_set_param file $CONFIGFILE
+	procd_append_param command -C -c $CONFIGFILE
 	procd_set_param respawn
 
 	for iface in $(ls /sys/class/net 2>/dev/null); do
