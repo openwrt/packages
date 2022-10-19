@@ -30,6 +30,7 @@ canary_domains_mozilla=
 update_dnsmasq_config=
 force_dns=
 force_dns_port=
+wan6_trigger=
 
 str_contains() { [ -n "$1" ] &&[ -n "$2" ] && [ "${1//$2}" != "$1" ]; }
 is_mac_address() { expr "$1" : '[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]$' >/dev/null; }
@@ -216,6 +217,7 @@ start_service() {
 	config_get_bool canary_domains_mozilla  'config' 'canary_domains_mozilla' '1'
 	config_get_bool force_dns	              'config' 'force_dns' '1'
 	config_get force_dns_port	              'config' 'force_dns_port' '53 853'
+	config_get_bool wan6_trigger            'config' 'wan6_trigger' '0'
 	if [ "$canary_domains_icloud" -ne 0 ]; then
 		canaryDomains="${canaryDomains:+$canaryDomains }${canaryDomainsiCloud}"
 	fi
@@ -252,13 +254,15 @@ service_triggers() {
 	. /lib/functions/network.sh
 	network_flush_cache
 	network_find_wan wan
-	network_find_wan6 wan6
 	wan="${wan:-wan}"
-	wan6="${wan6:-wan6}"
+	if [ "$wan6_trigger" -ne 0 ]; then
+		network_find_wan6 wan6
+		wan6="${wan6:-wan6}"
+	fi
 	for i in "$wan" "$wan6"; do
-		procd_add_interface_trigger "interface.*" "$i" "/etc/init.d/${packageName}" restart
+		procd_add_interface_trigger "interface.*" "$i" "/etc/init.d/${packageName}" start
 	done
-	procd_add_config_trigger "config.change" "$packageName" "/etc/init.d/${packageName}" restart
+	procd_add_config_trigger "config.change" "$packageName" "/etc/init.d/${packageName}" start
 }
 
 service_started() { procd_set_config_changed firewall; }
