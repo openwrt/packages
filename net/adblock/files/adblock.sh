@@ -400,7 +400,7 @@ f_fetch() {
 			;;
 		"curl")
 			[ "${adb_fetchinsecure}" = "1" ] && insecure="--insecure"
-			adb_fetchparm="${adb_fetchparm:-"${insecure} --connect-timeout 20 --silent --show-error --location -o"}"
+			adb_fetchparm="${adb_fetchparm:-"${insecure} --connect-timeout 20 --fail --silent --show-error --location -o"}"
 			;;
 		"uclient-fetch")
 			[ "${adb_fetchinsecure}" = "1" ] && insecure="--no-check-certificate"
