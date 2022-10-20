@@ -1,8 +1,8 @@
 --- a/nss/coreconf/nsinstall/nsinstall.c
 +++ b/nss/coreconf/nsinstall/nsinstall.c
-@@ -36,8 +36,8 @@ typedef unsigned int mode_t;
- #undef HAVE_FCHMOD
- #endif
+@@ -32,8 +32,8 @@ typedef unsigned int mode_t;
+ 
+ #define HAVE_FCHMOD
  
 -#ifdef LINUX
  #include <getopt.h>
