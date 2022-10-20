@@ -21,16 +21,11 @@ readonly sharedMemoryOutput="/dev/shm/$packageName-output"
 readonly _OK_='\033[0;32m\xe2\x9c\x93\033[0m'
 readonly _FAIL_='\033[0;31m\xe2\x9c\x97\033[0m'
 readonly PROG=/usr/sbin/https-dns-proxy
-readonly DEFAULT_BOOTSTRAP='1.1.1.1,1.0.0.1,2606:4700:4700::1111,2606:4700:4700::1001,8.8.8.8,8.8.4.4,2001:4860:4860::8888,2001:4860:4860::8844'
+readonly BOOTSTRAP_CF='1.1.1.1,1.0.0.1,2606:4700:4700::1111,2606:4700:4700::1001'
+readonly BOOTSTRAP_GOOGLE='8.8.8.8,8.8.4.4,2001:4860:4860::8888,2001:4860:4860::8844'
+readonly DEFAULT_BOOTSTRAP="${BOOTSTRAP_CF},${BOOTSTRAP_GOOGLE}"
 readonly canaryDomainsMozilla='use-application-dns.net'
 readonly canaryDomainsiCloud='mask.icloud.com mask-h2.icloud.com'
-canaryDomains=
-canary_domains_icloud=
-canary_domains_mozilla=
-update_dnsmasq_config=
-force_dns=
-force_dns_port=
-wan6_trigger=
 
 str_contains() { [ -n "$1" ] &&[ -n "$2" ] && [ "${1//$2}" != "$1" ]; }
 is_mac_address() { expr "$1" : '[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]$' >/dev/null; }
@@ -134,6 +129,7 @@ append_bootstrap() {
 
 start_instance() {
 	local cfg="$1" param listen_addr listen_port ipv6_resolvers_only p
+
 	config_get_bool ipv6_resolvers_only "$cfg" 'use_ipv6_resolvers_only' '0'
 	append_parm "$cfg" 'resolver_url' '-r'
 	append_parm "$cfg" 'listen_addr' '-a' '127.0.0.1'
@@ -209,6 +205,8 @@ start_instance() {
 }
 
 start_service() {
+	local canaryDomains canary_domains_icloud canary_domains_mozilla
+	local update_dnsmasq_config force_dns force_dns_port 
 	local port=5053
 	output "Starting $serviceName "
 	config_load "$packageName"
@@ -217,7 +215,6 @@ start_service() {
 	config_get_bool canary_domains_mozilla  'config' 'canary_domains_mozilla' '1'
 	config_get_bool force_dns	              'config' 'force_dns' '1'
 	config_get force_dns_port	              'config' 'force_dns_port' '53 853'
-	config_get_bool wan6_trigger            'config' 'wan6_trigger' '0'
 	if [ "$canary_domains_icloud" -ne 0 ]; then
 		canaryDomains="${canaryDomains:+$canaryDomains }${canaryDomainsiCloud}"
 	fi
@@ -235,10 +232,20 @@ start_service() {
 }
 
 stop_service() {
+	local canaryDomains canary_domains_icloud canary_domains_mozilla
+	local update_dnsmasq_config
 	local s=0
 	output "Stopping $serviceName "
 	config_load "$packageName"
-	config_get update_dnsmasq_config 'config' 'update_dnsmasq_config' '*'
+	config_get update_dnsmasq_config        'config' 'update_dnsmasq_config' '*'
+	config_get_bool canary_domains_icloud   'config' 'canary_domains_icloud' '1'
+	config_get_bool canary_domains_mozilla  'config' 'canary_domains_mozilla' '1'
+	if [ "$canary_domains_icloud" -ne 0 ]; then
+		canaryDomains="${canaryDomains:+$canaryDomains }${canaryDomainsiCloud}"
+	fi
+	if [ "$canary_domains_mozilla" -ne 0 ]; then
+		canaryDomains="${canaryDomains:+$canaryDomains }${canaryDomainsMozilla}"
+	fi
 	dhcp_backup 'restore'
 	if [ -n "$(uci_changes dhcp)" ]; then
 		uci_commit 'dhcp'
@@ -251,6 +258,9 @@ stop_service() {
 # shellcheck disable=SC1091
 service_triggers() {
 	local wan wan6 i
+	local wan6_trigger
+	config_load "$packageName"
+	config_get_bool wan6_trigger   'config' 'wan6_trigger' '0'
 	. /lib/functions/network.sh
 	network_flush_cache
 	network_find_wan wan
