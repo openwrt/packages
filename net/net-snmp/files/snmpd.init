@@ -6,6 +6,7 @@ USE_PROCD=1
 PROG="/usr/sbin/snmpd"
 
 CONFIGFILE="/var/run/snmpd.conf"
+SNMPD_FILE="/usr/lib/net-snmp/snmpd.conf"
 
 snmpd_agent_add() {
 	local cfg="$1"
@@ -104,6 +105,34 @@ snmpd_access_add() {
 	config_get notify "$cfg" notify
 	[ -n "$notify" ] || return 0
 	echo "access $group $context $version $level $prefix $read $write $notify" >> $CONFIGFILE
+}
+
+snmpd_user_add() {
+	local cfg="$1"
+	config_get enabled "$cfg" enabled
+	[ "$enabled" == "1" ] || return 0
+	config_get username "$cfg" username
+	[ -n "$username" ] || return 0
+	config_get perm "$cfg" perm
+	[ -n "$perm" ] || return 0
+	usercmd="rouser"
+	[ "$perm" == "rw" ] && usercmd="rwuser"
+	config_get authProto "$cfg" authProto
+	[ -n "$authProto" ] || return 0
+	config_get privProto "$cfg" privProto
+	[ -n "$privProto" ] || return 0
+	config_get authKey "$cfg" authKey
+	[ -n "$authKey" ] || return 0
+	config_get privKey "$cfg" privKey
+	[ "$privProto" != "NO" ] && [ -z "$privKey" ] && return 0
+	str="createUser $username $authProto \"$authKey\""
+	secLevel="authnopriv"
+	if [ "$privProto" != "NO" ]; then
+		secLevel="authpriv"
+		str="${str} $privProto \"$privKey\""
+	fi
+	echo "$usercmd $username $secLevel" >> $CONFIGFILE
+	echo "$str" >> $CONFIGFILE
 }
 
 snmpd_trap_hostname_add() {
@@ -283,6 +312,7 @@ snmpd_setup_fw_rules() {
 
 start_service() {
 	[ -f "$CONFIGFILE" ] && rm -f "$CONFIGFILE"
+	[ -f "$SNMPD_FILE" ] && sed -i '/usmUser/d' $SNMPD_FILE
 
 	config_load snmpd
 
@@ -304,6 +334,7 @@ start_service() {
 	config_foreach snmpd_access_default_add access_default
 	config_foreach snmpd_access_HostName_add access_HostName
 	config_foreach snmpd_access_HostIP_add access_HostIP
+	config_foreach snmpd_user_add user
 	config_foreach snmpd_pass_add pass
 	config_foreach snmpd_exec_add exec
 	config_foreach snmpd_extend_add extend
