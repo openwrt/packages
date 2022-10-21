@@ -191,7 +191,7 @@ CONFIGURE_ARGS += \
 	--enable-static \
 	--with-endianness=$(if $(CONFIG_BIG_ENDIAN),big,little) \
 	--with-logfile=/var/log/snmpd.log \
-	--with-persistent-directory=/usr/lib/snmp/ \
+	--with-persistent-directory=/usr/lib/net-snmp/ \
 	--with-default-snmp-version=1 \
 	--with-sys-contact=root@localhost \
 	--with-sys-location=Unknown \
