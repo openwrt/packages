@@ -269,7 +269,7 @@ service_triggers() {
 		network_find_wan6 wan6
 		wan6="${wan6:-wan6}"
 	fi
-	for i in "$wan" "$wan6"; do
+	for i in $wan $wan6; do
 		procd_add_interface_trigger "interface.*" "$i" "/etc/init.d/${packageName}" start
 	done
 	procd_add_config_trigger "config.change" "$packageName" "/etc/init.d/${packageName}" start
