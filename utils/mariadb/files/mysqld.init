@@ -67,7 +67,6 @@ mysqld_status() {
 start_service() {
 	conf=/etc/mysql/my.cnf
 	logdir=/var/log/mysql
-	rundir=/var/run/mysqld
 	version="$(mysqld --version | sed -n 's|.*Ver[[:blank:]]*\([0-9.]*\)-.*|\1|p')"
 
 	# Few basic checks
@@ -134,14 +133,11 @@ start_service() {
 	fi
 
 	# Make sure all required directories exists and have correct rights
-	for i in "$logdir" "$rundir" "$sockdir"; do
+	for i in "$logdir" "$sockdir"; do
 		opts="-m 0750"
 		if ! [ -e "$i" ]; then
-			# $rundir needs to be accessible for
-			# clients
-			if [ "$i" = "$rundir" ]; then
-				opts=
-			fi
+			# $sockdir needs to be accessible for clients
+			[ "$i" = "$sockdir" ] && opts="-m 0755"
 			# shellcheck disable=SC2086
 			mkdir -p $opts "$i"
 		fi
