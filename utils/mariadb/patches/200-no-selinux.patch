@@ -1,6 +1,6 @@
 --- a/support-files/CMakeLists.txt
 +++ b/support-files/CMakeLists.txt
-@@ -61,7 +61,7 @@ IF(UNIX)
+@@ -62,7 +62,7 @@ IF(UNIX)
      INSTALL(FILES magic DESTINATION ${inst_location} COMPONENT SupportFiles)
      INSTALL(DIRECTORY policy DESTINATION ${inst_location} COMPONENT SupportFiles)
      FIND_PROGRAM(CHECKMODULE checkmodule)
