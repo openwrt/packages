@@ -1320,7 +1320,6 @@ status_service() { load_validate_config 'config' adb_status "''"; }
 service_triggers() {
 	procd_open_trigger
 		procd_add_config_trigger 'config.change' "${packageName}" /etc/init.d/${packageName} reload
-		procd_add_reload_interface_trigger 'wan'
 		procd_add_interface_trigger 'interface.*.up' 'wan' /etc/init.d/${packageName} reload
 	procd_close_trigger
 }
