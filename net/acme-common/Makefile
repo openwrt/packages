@@ -41,10 +41,12 @@ define Package/acme-common/install
 	$(INSTALL_BIN) ./files/acme.sh $(1)/usr/bin/acme
 	$(INSTALL_DIR) $(1)/usr/lib/acme
 	$(INSTALL_DATA) ./files/functions.sh $(1)/usr/lib/acme
+	$(INSTALL_BIN) ./files/acme-notify.sh $(1)/usr/lib/acme/notify
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/acme.init $(1)/etc/init.d/acme
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_DATA) ./files/acme.uci-defaults $(1)/etc/uci-defaults/acme
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/acme
 endef
 
 define Package/acme/postinst
