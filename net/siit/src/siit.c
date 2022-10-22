@@ -1376,7 +1376,7 @@ static void
 siit_init(struct net_device *dev)
 {
 	ether_setup(dev);    /* assign some of the fields */
-	random_ether_addr(dev->dev_addr);
+	eth_hw_addr_random(dev);
 
 	/*
 	 * Assign device function.
