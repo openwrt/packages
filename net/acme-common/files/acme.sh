@@ -131,7 +131,6 @@ get)
 	config_load acme
 	config_foreach load_globals acme
 
-	mkdir -p /etc/ssl/acme
 	trap cleanup EXIT
 	config_foreach get_cert cert
 	;;

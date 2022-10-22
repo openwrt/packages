@@ -34,6 +34,7 @@ define Package/acme-common/conffiles
 endef
 
 define Package/acme-common/install
+	$(INSTALL_DIR) $(1)/etc/ssl/acme
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/acme.config $(1)/etc/config/acme
 	$(INSTALL_DIR) $(1)/usr/bin
