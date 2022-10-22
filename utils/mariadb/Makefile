@@ -9,13 +9,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
-PKG_VERSION:=10.6.4
+PKG_VERSION:=10.9.3
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL := https://archive.mariadb.org/$(PKG_NAME)-$(PKG_VERSION)/source
 
-PKG_HASH:=75bf9b147a95d38160d01a73b098d50a1960563b46d16a235971fff64d99643c
+PKG_HASH:=9a1e229972fcccc8270e633f68d3fb824da151dcf4f53da1df8d947aca876bee
 PKG_MAINTAINER:=Michal Hrusecky <Michal@Hrusecky.net>
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING THIRDPARTY
@@ -35,14 +35,12 @@ SHARE_DIR:=/usr/share/mariadb
 MARIADB_SOCKET=/var/run/mysql/mysql.sock
 
 MARIADB_DISABLE_ENGINES := \
-	cassandra \
 	columnstore \
 	example \
 	mroonga \
 	oqgraph \
 	rocksdb \
-	test_sql_discovery \
-	tokudb
+	test_sql_discovery
 
 MARIADB_DISABLE_PLUGINS := \
 	audit_null \
@@ -171,6 +169,7 @@ include $(INCLUDE_DIR)/cmake.mk
 MARIADB_COMMON_DEPENDS := \
 	$(ICONV_DEPENDS) \
 	+libatomic \
+	+libfmt \
 	+libopenssl \
 	+libstdcpp \
 	+zlib
@@ -368,6 +367,7 @@ CMAKE_OPTIONS += \
 	-DWITH_INNODB_SNAPPY=OFF \
 	-DWITH_JEMALLOC=OFF \
 	-DWITH_LIBARCHIVE=OFF \
+	-DWITH_LIBFMT=system \
 	-DWITH_LIBWRAP=OFF \
 	-DWITH_MARIABACKUP=ON \
 	-DWITH_NUMA=OFF \
