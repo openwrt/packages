@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2018 Sebastian Kemper <sebastian_ml@gmx.net>
-# Copyright (C) 2021 Michal Hrusecky <michal@hrusecky.net>
+# Copyright (C) 2021-2022 Michal Hrusecky <michal@hrusecky.net>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,13 +9,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
-PKG_VERSION:=10.6.4
+PKG_VERSION:=10.6.10
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL := https://archive.mariadb.org/$(PKG_NAME)-$(PKG_VERSION)/source
 
-PKG_HASH:=75bf9b147a95d38160d01a73b098d50a1960563b46d16a235971fff64d99643c
+PKG_HASH:=6ad9fa86f0c85c8eeafad2643549d5ff5dd2872002964e754752de91863aa3b7
 PKG_MAINTAINER:=Michal Hrusecky <Michal@Hrusecky.net>
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING THIRDPARTY
@@ -35,14 +35,12 @@ SHARE_DIR:=/usr/share/mariadb
 MARIADB_SOCKET=/var/run/mysql/mysql.sock
 
 MARIADB_DISABLE_ENGINES := \
-	cassandra \
 	columnstore \
 	example \
 	mroonga \
 	oqgraph \
 	rocksdb \
-	test_sql_discovery \
-	tokudb
+	test_sql_discovery
 
 MARIADB_DISABLE_PLUGINS := \
 	audit_null \
