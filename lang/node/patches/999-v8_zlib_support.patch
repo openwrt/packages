@@ -59,7 +59,7 @@
          'include_dirs': [
            '<(generate_bytecode_output_root)',
            '<(SHARED_INTERMEDIATE_DIR)',
-@@ -1345,6 +1351,7 @@
+@@ -1353,6 +1359,7 @@
          }],
        ],
        'direct_dependent_settings': {
@@ -67,7 +67,7 @@
          'include_dirs': [
            '<(V8_ROOT)/include',
          ],
-@@ -1693,6 +1700,7 @@
+@@ -1701,6 +1708,7 @@
           }],
        ],
        'direct_dependent_settings': {
@@ -75,7 +75,7 @@
          'include_dirs': [
            '<(V8_ROOT)/include',
          ],
-@@ -1873,15 +1881,19 @@
+@@ -1881,15 +1889,19 @@
          }],
        ],
        'direct_dependent_settings': {
