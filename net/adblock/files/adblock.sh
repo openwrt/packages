@@ -1470,7 +1470,7 @@ case "${adb_action}" in
 		[ "${adb_dns}" != "raw" ] && f_switch resume
 		;;
 	"report")
-		f_report "${2}" "${3}" "${4}"
+		f_report "${2}" "${3}" "${4}" "${5}"
 		;;
 	"query")
 		f_query "${2}"
