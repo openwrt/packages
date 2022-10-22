@@ -8,7 +8,7 @@
 #
 # Authors: Toke Høiland-Jørgensen <toke@toke.dk>
 
-export state_dir='/etc/acme'
+export state_dir=/etc/acme
 export account_email=
 export debug=0
 export challenge_dir='/var/run/acme/challenge'
