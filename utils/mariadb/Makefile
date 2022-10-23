@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2018 Sebastian Kemper <sebastian_ml@gmx.net>
-# Copyright (C) 2021 Michal Hrusecky <michal@hrusecky.net>
+# Copyright (C) 2021-2022 Michal Hrusecky <michal@hrusecky.net>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,13 +9,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
-PKG_VERSION:=10.4.22
-PKG_RELEASE:=3
+PKG_VERSION:=10.4.26
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL := https://archive.mariadb.org/$(PKG_NAME)-$(PKG_VERSION)/source
 
-PKG_HASH:=44bdc36eeb02888296e961718bae808f3faab268ed49160a785248db60500c00
+PKG_HASH:=715ac7e23afc3b8a559c6cc998cdb1973d90f621b2bdd7603e2c6e53860b2ddf
 PKG_MAINTAINER:=Michal Hrusecky <Michal@Hrusecky.net>
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING THIRDPARTY
