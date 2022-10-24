@@ -8,10 +8,10 @@
 #
 # Authors: Toke Høiland-Jørgensen <toke@toke.dk>
 
-export state_dir='/etc/acme'
+export state_dir=/etc/acme
 export account_email=
 export debug=0
-export challenge_dir='/var/run/acme/challenge'
+export run_dir=/var/run/acme
 NFT_HANDLE=
 HOOK=/usr/lib/acme/hook
 LOG_TAG=acme
@@ -23,6 +23,9 @@ LOG_TAG=acme
 
 cleanup() {
 	log debug "cleaning up"
+	if [ -e $run_dir/lock ]; then
+		rm $run_dir/lock
+	fi
 	if [ "$NFT_HANDLE" ]; then
 		# $NFT_HANDLE contains the string 'handle XX' so pass it unquoted to nft
 		nft delete rule inet fw4 input $NFT_HANDLE
@@ -33,7 +36,7 @@ load_options() {
 	section=$1
 
 	# compatibility for old option name
-	config_get_bool use_staging "$section" staging
+	config_get_bool staging "$section" use_staging
 	if [ -z "$staging" ]; then
 		config_get_bool staging "$section" staging 0
 	fi
@@ -56,11 +59,13 @@ load_options() {
 	export days
 	config_get standalone "$section" standalone 0
 	export standalone
+	config_get dns_wait "$section" dns_wait
+	export dns_wait
 
 	config_get webroot "$section" webroot
 	export webroot
 	if [ "$webroot" ]; then
-		log warn "Option \"webroot\" is deprecated, please remove it and change your web server's config so it serves ACME challenge requests from /var/run/acme/challenge."
+		log warn "Option \"webroot\" is deprecated, please remove it and change your web server's config so it serves ACME challenge requests from $run_dir/challenge."
 	fi
 }
 
@@ -112,6 +117,15 @@ load_globals() {
 	return 1
 }
 
+cmd_get() {
+	trap cleanup EXIT
+
+	config_load acme
+	config_foreach load_globals acme
+
+	config_foreach get_cert cert
+}
+
 usage() {
 	cat <<EOF
 Usage: acme <command> [arguments]
@@ -128,12 +142,14 @@ fi
 
 case $1 in
 get)
-	config_load acme
-	config_foreach load_globals acme
-
-	mkdir -p /etc/ssl/acme
-	trap cleanup EXIT
-	config_foreach get_cert cert
+	mkdir -p $run_dir
+	{
+		if ! flock -n 200; then
+			log err "Another ACME instance is already running."
+			exit 1
+		fi
+		cmd_get "$@"
+	} 200>$run_dir/lock
 	;;
 *)
 	usage

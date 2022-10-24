@@ -66,6 +66,11 @@ reload_service() {
 }
 
 
+service_triggers() {
+	procd_add_raw_trigger acme.renew 5000 /etc/init.d/nginx reload
+}
+
+
 extra_command "relog" "Reopen log files (without reloading)"
 relog() {
 	[ -d /var/log/nginx ] || mkdir -p /var/log/nginx
