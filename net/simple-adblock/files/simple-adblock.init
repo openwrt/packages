@@ -1318,10 +1318,22 @@ start_service() {
 stop_service() { load_validate_config 'config' adb_stop "'$*'"; }
 status_service() { load_validate_config 'config' adb_status "''"; }
 service_triggers() {
-	procd_open_trigger
-		procd_add_config_trigger 'config.change' "${packageName}" /etc/init.d/${packageName} reload
-		procd_add_interface_trigger 'interface.*.up' 'wan' /etc/init.d/${packageName} reload
-	procd_close_trigger
+	local wan wan6 i
+	local wan6_trigger
+	config_load "$packageName"
+	config_get_bool wan6_trigger 'config' 'wan6_trigger' '0'
+	. /lib/functions/network.sh
+	network_flush_cache
+	network_find_wan wan
+	wan="${wan:-wan}"
+	if [ "$wan6_trigger" -ne 0 ]; then
+		network_find_wan6 wan6
+		wan6="${wan6:-wan6}"
+	fi
+	for i in "$wan" "$wan6"; do
+		[ -n "$i" ] && procd_add_interface_trigger "interface.*" "$i" "/etc/init.d/${packageName}" start
+	done
+	procd_add_config_trigger "config.change" "$packageName" "/etc/init.d/${packageName}" reload
 }
 allow() { load_validate_config 'config' adb_allow "'$*'"; }
 check() { load_validate_config 'config' adb_check "'$*'"; }
@@ -1392,6 +1404,7 @@ load_validate_config() {
 		'download_timeout:range(1,40):20' \
 		'curl_retry:range(1,5):3' \
 		'verbosity:range(0,2):2' \
+		'wan6_trigger:bool:0' \
 		'led:or("", "none", file, device, string)' \
 		'dns:or("dnsmasq.addnhosts", "dnsmasq.conf", "dnsmasq.ipset", "dnsmasq.servers", "unbound.adb_list"):dnsmasq.servers' \
 		'dns_instance:or(list(integer, string)):0' \
