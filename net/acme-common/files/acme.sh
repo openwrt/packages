@@ -36,7 +36,7 @@ load_options() {
 	section=$1
 
 	# compatibility for old option name
-	config_get_bool use_staging "$section" staging
+	config_get_bool staging "$section" use_staging
 	if [ -z "$staging" ]; then
 		config_get_bool staging "$section" staging 0
 	fi
