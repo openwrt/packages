@@ -331,6 +331,7 @@ define Package/libffmpeg-audio-dec
 $(call Package/libffmpeg/Default)
  TITLE+= (audio)
  VARIANT:=audio-dec
+ CONFLICTS:=libffmpeg-full
 endef
 
 define Package/libffmpeg-audio-dec/description
@@ -349,6 +350,7 @@ $(call Package/libffmpeg/Default)
     +PACKAGE_libx264:libx264 \
     +!PACKAGE_libx264:fdk-aac
  VARIANT:=full
+ PROVIDES:=libffmpeg-mini libffmpeg-audio-dec
 endef
 
 
@@ -363,6 +365,7 @@ define Package/libffmpeg-mini
 $(call Package/libffmpeg/Default)
  TITLE+= (mini)
  VARIANT:=mini
+ CONFLICTS:=libffmpeg-full
 endef
 
 define Package/libffmpeg-mini/description
