@@ -134,21 +134,21 @@
 	},
 	"oisd_basic": {
 		"url": "https://raw.githubusercontent.com/sjhgvr/oisd/main/dblw_basic.txt",
-		"rule": "/^\\*\\.([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
+		"rule": "BEGIN{FS=\"\\\\*.\"}/^\\*\\.([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
 		"size": "L",
 		"focus": "general",
 		"descurl": "https://oisd.nl"
 	},
 	"oisd_nsfw": {
 		"url": "https://raw.githubusercontent.com/sjhgvr/oisd/main/dblw_nsfw.txt",
-		"rule": "/^\\*\\.([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
+		"rule": "BEGIN{FS=\"\\\\*.\"}/^\\*\\.([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
 		"size": "XL",
 		"focus": "general",
 		"descurl": "https://oisd.nl"
 	},
 	"oisd_full": {
 		"url": "https://raw.githubusercontent.com/sjhgvr/oisd/main/dblw_full.txt",
-		"rule": "/^\\*\\.([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
+		"rule": "BEGIN{FS=\"\\\\*.\"}/^\\*\\.([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
 		"size": "XXL",
 		"focus": "general",
 		"descurl": "https://oisd.nl"
