@@ -59,6 +59,8 @@ load_options() {
 	export days
 	config_get standalone "$section" standalone 0
 	export standalone
+	config_get dns_wait "$section" dns_wait
+	export dns_wait
 
 	config_get webroot "$section" webroot
 	export webroot

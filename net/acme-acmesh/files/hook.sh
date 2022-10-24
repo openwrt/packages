@@ -87,6 +87,9 @@ get)
 		elif [ "$calias" ]; then
 			set -- "$@" --challenge-alias "$calias"
 		fi
+		if [ "$dns_wait" ]; then
+			set -- "$@" --dnssleep "$dns_wait"
+		fi
 	elif [ "$standalone" = 1 ]; then
 		set -- "$@" --standalone --listen-v6
 	else
