@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=https-dns-proxy
 PKG_VERSION:=2022-10-15
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/aarond10/https_dns_proxy/
@@ -23,7 +23,7 @@ define Package/https-dns-proxy
 	CATEGORY:=Network
 	TITLE:=DNS Over HTTPS Proxy
 	URL:=https://docs.openwrt.melmac.net/https-dns-proxy/
-	DEPENDS:=+libcares +libcurl +libev +ca-bundle
+	DEPENDS:=+libcares +libcurl +libev +ca-bundle +jsonfilter
 	CONFLICTS:=https_dns_proxy
 endef
 
@@ -40,12 +40,14 @@ endef
 define Package/https-dns-proxy/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_DIR) ${1}/etc/config
+	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
+	$(INSTALL_DIR) $(1)/etc/uci-defaults/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/https_dns_proxy $(1)/usr/sbin/https-dns-proxy
 	$(INSTALL_BIN) ./files/https-dns-proxy.init $(1)/etc/init.d/https-dns-proxy
 	$(SED) "s|^\(readonly PKG_VERSION\).*|\1='$(PKG_VERSION)-$(PKG_RELEASE)'|" $(1)/etc/init.d/https-dns-proxy
 	$(INSTALL_CONF) ./files/https-dns-proxy.config $(1)/etc/config/https-dns-proxy
+	$(INSTALL_BIN) ./files/https-dns-proxy.defaults $(1)/etc/uci-defaults/50-https-dns-proxy-migrate-options.sh
 endef
 
 $(eval $(call BuildPackage,https-dns-proxy))
