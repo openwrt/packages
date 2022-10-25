@@ -52,7 +52,7 @@ jobs:
             runtime_test: true
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
@@ -132,7 +132,7 @@ jobs:
           cat PKG-INFO
 
       - name: Store packages
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ${{env.ARCHIVE_NAME}}-packages
           path: |
@@ -140,7 +140,7 @@ jobs:
             PKG-INFO
 
       - name: Store logs
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ${{env.ARCHIVE_NAME}}-logs
           path: |
