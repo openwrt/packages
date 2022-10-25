@@ -56,6 +56,7 @@ define Package/libwebsockets-openssl
 	TITLE += (OpenSSL)
 	DEPENDS += +libopenssl
 	VARIANT:=openssl
+	CONFLICTS:=libwebsockets-full
 endef
 
 define Package/libwebsockets-mbedtls
@@ -70,6 +71,7 @@ define Package/libwebsockets-full
 	TITLE += (Full - OpenSSL, libuv, plugins, CGI)
 	DEPENDS += +libopenssl +libuv
 	VARIANT:=full
+	PROVIDES:=libwebsockets-openssl
 endef
 
 ifeq ($(BUILD_VARIANT),openssl)
