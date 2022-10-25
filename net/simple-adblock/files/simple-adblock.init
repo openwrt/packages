@@ -1319,14 +1319,14 @@ stop_service() { load_validate_config 'config' adb_stop "'$*'"; }
 status_service() { load_validate_config 'config' adb_status "''"; }
 service_triggers() {
 	local wan wan6 i
-	local wan6_trigger
+	local procd_trigger_wan6
 	config_load "$packageName"
-	config_get_bool wan6_trigger 'config' 'wan6_trigger' '0'
+	config_get_bool procd_trigger_wan6 'config' 'procd_trigger_wan6' '0'
 	. /lib/functions/network.sh
 	network_flush_cache
 	network_find_wan wan
 	wan="${wan:-wan}"
-	if [ "$wan6_trigger" -ne 0 ]; then
+	if [ "$procd_trigger_wan6" -ne 0 ]; then
 		network_find_wan6 wan6
 		wan6="${wan6:-wan6}"
 	fi
@@ -1404,7 +1404,7 @@ load_validate_config() {
 		'download_timeout:range(1,40):20' \
 		'curl_retry:range(1,5):3' \
 		'verbosity:range(0,2):2' \
-		'wan6_trigger:bool:0' \
+		'procd_trigger_wan6:bool:0' \
 		'led:or("", "none", file, device, string)' \
 		'dns:or("dnsmasq.addnhosts", "dnsmasq.conf", "dnsmasq.ipset", "dnsmasq.servers", "unbound.adb_list"):dnsmasq.servers' \
 		'dns_instance:or(list(integer, string)):0' \
