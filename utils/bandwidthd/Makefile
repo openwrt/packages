@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2017 OpenWrt.org
+# Copyright (C) 2006-2020 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bandwidthd
 PKG_VERSION:=2.0.1-35
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/NethServer/bandwidthd/tar.gz/$(PKG_VERSION)?
