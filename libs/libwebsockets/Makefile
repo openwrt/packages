@@ -59,6 +59,7 @@ define Package/libwebsockets-mbedtls
 	TITLE += (mbedTLS)
 	DEPENDS += +libmbedtls
 	VARIANT:=mbedtls
+	CONFLICTS:=libwebsockets-openssl
 endef
 
 define Package/libwebsockets-full
