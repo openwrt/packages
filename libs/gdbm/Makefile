@@ -39,7 +39,8 @@ endef
 
 CONFIGURE_ARGS += \
 	--enable-libgdbm-compat \
-	--enable-shared
+	--enable-shared \
+	--without-readline
 
 define Build/Compile
 	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) \
