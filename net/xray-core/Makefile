@@ -45,13 +45,6 @@ define Package/xray-example
   PKGARCH:=all
 endef
 
-define Package/xray-geodata
-  $(call Package/xray/template)
-  TITLE+= (geodata files)
-  DEPENDS:=xray-core
-  PKGARCH:=all
-endef
-
 define Package/xray/description
   Xray, Penetrates Everything. It helps you to build your own computer network.
   It secures your network connections and thus protects your privacy.
@@ -65,12 +58,6 @@ define Package/xray-example/description
   $(call Package/xray/description)
 
   This includes example configuration files for xray-core.
-endef
-
-define Package/xray-geodata/description
-  $(call Package/xray/description)
-
-  This includes GEO datas used for xray-core.
 endef
 
 define Package/xray-core/conffiles
