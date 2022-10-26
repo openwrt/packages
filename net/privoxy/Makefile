@@ -157,8 +157,15 @@ endef
 
 define Package/privoxy/postinst
 	#!/bin/sh
-	grep -i privoxy $${IPKG_INSTROOT}/etc/services >/dev/null 2>&1 || \
-		echo -e "privoxy\t8118" >> $${IPKG_INSTROOT}/etc/services
+	# if exists, update previous version entry missing protocol
+	(grep -E "privoxy.*8118$" $${IPKG_INSTROOT}/etc/services) > /dev/null \
+		&& sed -i "s/privoxy.*8118/privoxy\t\t8118\/tcp/" $${IPKG_INSTROOT}/etc/services
+
+	# add missing tcp and udp entries
+	(grep -E "privoxy.*8118\/tcp" $${IPKG_INSTROOT}/etc/services) > /dev/null \
+		|| echo -e "privoxy\t\t8118/tcp" >> $${IPKG_INSTROOT}/etc/services
+	(grep -E "privoxy.*8118\/udp" $${IPKG_INSTROOT}/etc/services) > /dev/null \
+		|| echo -e "privoxy\t\t8118/udp" >> $${IPKG_INSTROOT}/etc/services
 endef
 
 $(eval $(call BuildPackage,privoxy))
