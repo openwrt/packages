@@ -1,0 +1,301 @@
+From 899efc5206d5985d0ae65500a1c0542ec2d58e58 Mon Sep 17 00:00:00 2001
+From: Christian Marangi <ansuelsmth@gmail.com>
+Date: Mon, 17 Oct 2022 18:44:30 +0200
+Subject: [PATCH 1/4] Fix SIGSEGV caused by time_t casted to long on 32bit
+ systems
+
+32bit systems have time_t set to long long int while 64bit system have
+time_t set to long int. This is problematic as in the busybox code this
+is not handled correctly and we have some casted to long and some not
+casted at all.
+
+Some arch (found this problem on a mt7621) may be restrictive about casting
+and crash with segmentation fault if time_t is cast to %ld instead of the
+correct %lld.
+
+This is the cause of https://github.com/RIPE-NCC/ripe-atlas-software-probe/issues/74
+
+Use the correct type and cast every time_t to (unsigned long long) so that
+eperd and condmv doesn't crash anymore and the measurement works correctly.
+
+Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
+---
+ coreutils/condmv.c    |  3 ++-
+ eperd/condmv.c        |  7 ++++---
+ eperd/evtdig.c        | 12 ++++++------
+ eperd/httpget.c       |  8 ++++----
+ eperd/ntp.c           |  4 ++--
+ eperd/sslgetcert.c    |  8 ++++----
+ eperd/traceroute.c    |  8 ++++----
+ miscutils/perd.c      |  4 ++--
+ networking/httppost.c | 30 +++++++++++++++---------------
+ networking/rptaddrs.c |  2 +-
+ 10 files changed, 44 insertions(+), 42 deletions(-)
+
+--- a/coreutils/condmv.c
++++ b/coreutils/condmv.c
+@@ -149,7 +149,8 @@ int condmv_main(int argc, char *argv[])
+ 				rebased_from, strerror(errno));
+ 			goto err;
+ 		}
+-		if (fprintf(file, "%s %lu %s\n", opt_add, mytime, from) < 0)
++		if (fprintf(file, "%s %llu %s\n", opt_add,
++			(unsigned long long)mytime, from) < 0)
+ 		{
+ 			fprintf(stderr,
+ 				"condmv: unable to append to '%s': %s\n",
+--- a/eperd/condmv.c
++++ b/eperd/condmv.c
+@@ -99,8 +99,8 @@ static void condmv_start(void *state)
+ 
+ 	len= strlen(condmvstate->to) + 20;
+ 	to= malloc(len);
+-	snprintf(to, len, "%s.%ld", condmvstate->to,
+-		(long)time(NULL)/condmvstate->interval);
++	snprintf(to, len, "%s.%llu", condmvstate->to,
++		(unsigned long long)time(NULL)/condmvstate->interval);
+ 
+ 	crondlog(LVL7 "condmv_start: destination '%s'\n", to);
+ 
+@@ -124,7 +124,8 @@ static void condmv_start(void *state)
+ 			free(to);
+ 			return;
+ 		}
+-		if (fprintf(file, "%s %lu %s\n", condmvstate->atlas, mytime,
++		if (fprintf(file, "%s %llu %s\n", condmvstate->atlas,
++			(unsigned long long)mytime,
+ 			condmvstate->from) < 0)
+ 		{
+ 			crondlog(LVL9 "condmv: unable to append to '%s': %s\n",
+--- a/eperd/evtdig.c
++++ b/eperd/evtdig.c
+@@ -1009,7 +1009,7 @@ static int mk_dns_buff(struct query_stat
+ 		lookup_prepend = xzalloc(DEFAULT_LINE_LENGTH +  sizeof(qry->lookupname));
+ 		snprintf(lookup_prepend, (sizeof(qry->lookupname) +
+ 			DEFAULT_LINE_LENGTH - 1),
+-			 "%d.%lu.%s", probe_id, qry->xmit_time,
++			 "%d.%llu.%s", probe_id, (unsigned long long)qry->xmit_time,
+ 			qry->lookupname);
+ 
+ 		qnamelen= ChangetoDnsNameFormat(qname, qnamelen,
+@@ -3081,7 +3081,7 @@ static void tdig_stats(int unusg_statsed
+ 	AS(atlas_get_version_json_str());
+ 	AS(", ");
+ 	gettimeofday(&now, NULL);
+-	JS1(time, %ld,  now.tv_sec);
++	JS1(time, %llu,  (unsigned long long)now.tv_sec);
+ 	JU(sok , base->sentok);
+ 	JU(rok , base->recvok);
+ 	JU(sent , base->sentbytes);
+@@ -3395,7 +3395,7 @@ void printErrorQuick (struct query_state
+ 	fprintf(fh, "RESULT { ");
+ 	fprintf(fh, "%s,", atlas_get_version_json_str());
+ 	fprintf(fh, "\"id\" : 9202 ,");
+-	fprintf(fh, "\"time\" : %ld ,",  atlas_time());
++	fprintf(fh, "\"time\" : %llu ,",  (unsigned long long)atlas_time());
+ 
+ 	fprintf(fh, "\"error\" : [{ ");
+ 	fprintf(fh, "\"query busy\": \"not starting a new one. previous one is not done yet\"}");
+@@ -3405,7 +3405,7 @@ void printErrorQuick (struct query_state
+ 		fprintf(fh, "\"id\" : \"%s\"",  qry->str_Atlas);
+ 		if (qry->str_bundle)
+ 			fprintf(fh, ",\"bundle\" : %s",  qry->str_bundle);
+-		fprintf(fh, ",\"start time\" : %ld",  qry->xmit_time);
++		fprintf(fh, ",\"start time\" : %llu",  (unsigned long long)qry->xmit_time);
+ 		if(qry->retry) {
+ 			fprintf(fh, ",\"retry\": %d",  qry->retry);
+ 			
+@@ -3456,7 +3456,7 @@ void printReply(struct query_state *qry,
+ 		AS(atlas_get_version_json_str());
+ 		AS(", ");
+ 		if (qry->opt_rset){
+-			JS1(time, %ld,  qry->xmit_time);
++			JS1(time, %llu,  (unsigned long long)qry->xmit_time);
+ 			JD(lts,lts);
+ 			AS("\"resultset\" : [ {");
+ 		}
+@@ -3466,7 +3466,7 @@ void printReply(struct query_state *qry,
+ 		AS (",{");
+ 	}
+ 
+-	JS1(time, %ld,  qry->xmit_time);
++	JS1(time, %llu,  (unsigned long long)qry->xmit_time);
+ 	JD(lts,lts);
+ 
+ 	if (qry->opt_do_tls && ssl_version != NULL)
+--- a/eperd/httpget.c
++++ b/eperd/httpget.c
+@@ -853,10 +853,10 @@ static void report(struct hgstate *state
+ 			fprintf(fh, DBQ(id) ":" DBQ(%s) ", "
+ 				"%s, "
+ 				DBQ(lts) ":%d, "
+-				DBQ(time) ":%ld, ",
++				DBQ(time) ":%llu, ",
+ 				state->atlas, atlas_get_version_json_str(),
+ 				get_timesync(),
+-				state->gstart);
++				(unsigned long long)state->gstart);
+ 			if (state->bundle)
+ 			{
+ 				fprintf(fh, DBQ(bundle) ":%s, ",
+@@ -876,8 +876,8 @@ static void report(struct hgstate *state
+ 	{
+ 		if (state->do_combine)
+ 		{
+-			snprintf(line, sizeof(line), DBQ(time) ":%ld, ",
+-				state->start.tv_sec);
++			snprintf(line, sizeof(line), DBQ(time) ":%llu, ",
++				(unsigned long long)state->start.tv_sec);
+ 		}
+ 		else
+ 		{
+--- a/eperd/ntp.c
++++ b/eperd/ntp.c
+@@ -366,10 +366,10 @@ static void report(struct ntpstate *stat
+ 		fprintf(fh, DBQ(id) ":" DBQ(%s)
+ 			", %s"
+ 			", " DBQ(lts) ":%d"
+-			", " DBQ(time) ":%ld, ",
++			", " DBQ(time) ":%llu, ",
+ 			state->atlas, atlas_get_version_json_str(),
+ 			get_timesync(),
+-			state->starttime);
++			(unsigned long long)state->starttime);
+ 		if (state->bundle)
+ 			fprintf(fh, DBQ(bundle) ":%s, ", state->bundle);
+ 	}
+--- a/eperd/sslgetcert.c
++++ b/eperd/sslgetcert.c
+@@ -1026,9 +1026,9 @@ static void report(struct state *state)
+ 		fprintf(fh, DBQ(id) ":" DBQ(%s) ", "
+ 			"%s, "
+ 			DBQ(lts) ":%d, "
+-			DBQ(time) ":%ld, ",
++			DBQ(time) ":%llu, ",
+ 			state->atlas, atlas_get_version_json_str(),
+-			get_timesync(), state->gstart);
++			get_timesync(), (unsigned long long)state->gstart);
+ 		if (state->bundle)
+ 			fprintf(fh, DBQ(bundle) ":%s, ", state->bundle);
+ 	}
+@@ -1185,8 +1185,8 @@ static FILE *report_head(struct state *s
+ 			fprintf(fh, DBQ(bundle) ":%s, ", state->bundle);
+ 	}
+ 
+-	fprintf(fh, "%s" DBQ(time) ":%ld",
+-		state->atlas ? ", " : "", atlas_time());
++	fprintf(fh, "%s" DBQ(time) ":%llu",
++		state->atlas ? ", " : "", (unsigned long long)atlas_time());
+ 	fprintf(fh, ", " DBQ(dst_name) ":" DBQ(%s) ", "
+ 		DBQ(dst_port) ":" DBQ(%s),
+ 		state->hostname, state->portname);
+--- a/eperd/traceroute.c
++++ b/eperd/traceroute.c
+@@ -362,12 +362,12 @@ static void report(struct trtstate *stat
+ 		fprintf(fh, DBQ(id) ":" DBQ(%s)
+ 			", %s"
+ 			", " DBQ(lts) ":%d"
+-			", " DBQ(time) ":%ld"
+-			", " DBQ(endtime) ":%ld, ",
++			", " DBQ(time) ":%llu"
++			", " DBQ(endtime) ":%llu, ",
+ 			state->atlas, atlas_get_version_json_str(),
+ 			get_timesync(),
+-			state->starttime,
+-			(long)atlas_time());
++			(unsigned long long)state->starttime,
++			(unsigned long long)atlas_time());
+ 		if (state->bundle_id)
+ 			fprintf(fh, DBQ(bundle) ":%s, ", state->bundle_id);
+ 	}
+--- a/miscutils/perd.c
++++ b/miscutils/perd.c
+@@ -1197,8 +1197,8 @@ error:
+ 		fprintf(fn, "RESULT { ");
+ 		if (atlas_id)
+ 			fprintf(fn, DBQ(id) ":" DBQ(%s) ", ", atlas_id);
+-		fprintf(fn, "%s, " DBQ(time) ":%d, ",
+-			atlas_get_version_json_str(), time(NULL));
++		fprintf(fn, "%s, " DBQ(time) ":%llu, ",
++			atlas_get_version_json_str(), (unsigned long long)time(NULL));
+ 		if (reason != NULL)
+ 			fprintf(fn, DBQ(reason) ":" DBQ(%s) ", ", reason);
+ 		fprintf(fn, DBQ(err) ":%d, " DBQ(cmd) ": \"", r);
+--- a/networking/httppost.c
++++ b/networking/httppost.c
+@@ -492,32 +492,32 @@ int httppost_main(int argc, char *argv[]
+ 		if (need_set_time && getenv("HTTPPOST_ALLOW_STIME"))
+ 		{
+ 			fprintf(stderr,
+-				"setting time, time difference is %ld\n",
+-				(long)server_time-now.tv_sec);
++				"setting time, time difference is %llu\n",
++				(unsigned long long)server_time-now.tv_sec);
+ 			ts.tv_sec= server_time;
+ 			ts.tv_nsec= 0;
+ 			clock_settime(CLOCK_REALTIME, &ts);
+ 			if (atlas_id)
+ 			{
+ 				printf(
+-	"RESULT %s ongoing %ld httppost setting time, local %ld, remote %ld\n",
+-					atlas_id, (long)time(NULL),
+-					(long)now.tv_sec,
+-					(long)server_time);
++	"RESULT %s ongoing %llu httppost setting time, local %llu, remote %llu\n",
++					atlas_id, (unsigned long long)time(NULL),
++					(unsigned long long)now.tv_sec,
++					(unsigned long long)server_time);
+ 			}
+ 		}
+ 		else if (need_set_time)
+ 		{
+ 			fprintf(stderr,
+-				"not setting time, time difference is %ld\n",
+-				(long)server_time-now.tv_sec);
++				"not setting time, time difference is %llu\n",
++				(unsigned long long)server_time-now.tv_sec);
+ 			if (atlas_id)
+ 			{
+ 				printf(
+-	"RESULT %s ongoing %ld httppost not in sync, local %ld, remote %ld\n",
+-					atlas_id, (long)time(NULL),
+-					(long)now.tv_sec,
+-					(long)server_time);
++	"RESULT %s ongoing %llu httppost not in sync, local %llu, remote %llu\n",
++					atlas_id, (unsigned long long)time(NULL),
++					(unsigned long long)now.tv_sec,
++					(unsigned long long)server_time);
+ 			}
+ 		}
+ 		else if (rtt <= 1)
+@@ -528,7 +528,7 @@ int httppost_main(int argc, char *argv[]
+ 			fh= fopen(fn_new, "wt");
+ 			if (fh)
+ 			{
+-				fprintf(fh, "%ld\n", (long)now.tv_sec);
++				fprintf(fh, "%llu\n", (unsigned long long)now.tv_sec);
+ 				fclose(fh);
+ 				rename(fn_new, fn);
+ 			}
+@@ -537,8 +537,8 @@ int httppost_main(int argc, char *argv[]
+ 		}
+ 		else if (atlas_id)
+ 		{
+-			printf("RESULT %s ongoing %ld httppost rtt %g ms\n",
+-				atlas_id, (long)time(NULL), rtt*1000);
++			printf("RESULT %s ongoing %llu httppost rtt %g ms\n",
++				atlas_id, (unsigned long long)time(NULL), rtt*1000);
+ 		}
+ 	}
+ 
+--- a/networking/rptaddrs.c
++++ b/networking/rptaddrs.c
+@@ -802,7 +802,7 @@ static int rpt_ipv6(char *cache_name, ch
+ 		JS(id,  opt_atlas);
+ 	}
+ 	gettimeofday(&now, NULL);
+-	JS1(time, %ld,  now.tv_sec);
++	JS1(time, %llu,  (unsigned long long)now.tv_sec);
+ 
+ 	/* Copy all lines */
+ 	while (fgets(buf, sizeof(buf), file) != NULL)
