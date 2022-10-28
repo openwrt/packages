@@ -1,0 +1,42 @@
+{
+  "en-US": {
+    "Username": "Username",
+    "Password": "Password",
+    "ACL group": "ACL group",
+    "delete-user-confirm": "Are you sure you want to delete the user '{ username }'?",
+    "OK": "OK",
+    "Cancel": "Cancel",
+    "Add user": "Add user",
+    "This field is required": "This field is required",
+    "username-exist": "The user '{ username }' already exist",
+    "Change": "Change",
+    "Delete": "Delete"
+  },
+  "zh-CN": {
+    "Username": "用户名",
+    "Password": "密码",
+    "ACL group": "权限组",
+    "delete-user-confirm": "你确定要删除用户 \"{ username }\" 吗?",
+    "OK": "确定",
+    "Cancel": "取消",
+    "Add user": "添加用户",
+    "This field is required": "必填",
+    "username-exist": "用户 \"{ username }\" 已经存在",
+    "Change": "修改",
+    "Delete": "删除"
+    
+  },
+  "zh-TW": {
+    "Username": "用戶名",
+    "Password": "密碼",
+    "ACL group": "許可權組",
+    "delete-user-confirm": "你確定要删除用戶 \"{ username }\" 嗎?",
+    "OK": "確定",
+    "Cancel": "取消",
+    "Add user": "添加用戶",
+    "This field is required": "必填",
+    "username-exist": "用戶 \"{ username }\" 已經存在",
+    "Change": "修改",
+    "Delete": "删除"
+  }
+}

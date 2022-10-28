@@ -1,0 +1,35 @@
+{
+  "en-US": {
+    "Upgrade": "Upgrade",
+    "Click or drag files to this area to upload": "Click or drag files to this area to upload",
+    "flash-confirm": "The flash image was uploaded. Below is the checksum and file size listed, compare them with the original file to ensure data integrity. Click '{ btn }' below to start the flash procedure.",
+    "Cancel": "Cancel",
+    "OK": "OK",
+    "Size": "Size",
+    "Firmware verification failed. Please upload the firmware again": "Firmware verification failed. Please upload the firmware again",
+    "Keep settings and retain the current configuration": "Keep settings and retain the current configuration",
+    "Upgrading": "Upgrading..."
+  },
+  "zh-CN": {
+    "Upgrade": "升级",
+    "Click or drag files to this area to upload": "点击或者拖动文件到该区域来上传",
+    "flash-confirm": "固件已上传。下面是列出的校验和及文件大小，将它们与原始文件进行比较以确保数据完整性。 单击下面的 \"{ btn }\" 开始刷写操作",
+    "Cancel": "算了",
+    "OK": "确认",
+    "Size": "大小",
+    "Firmware verification failed. Please upload the firmware again": "固件校验失败，请重新上传",
+    "Keep settings and retain the current configuration": "保持设置并保留当前配置",
+    "Upgrading": "正在升级..."
+  },
+  "zh-TW": {
+    "Upgrade": "升級",
+    "Click or drag files to this area to upload": "點擊或者拖動文件到該區域來上傳",
+    "flash-confirm": "固件已上傳。 下麵是列出的校驗和及文件大小，將它們與原始檔案進行比較以確保數據完整性。 按一下下麵的 \"{ btn }\" 開始刷寫操作",
+    "Cancel": "算了",
+    "OK": "確認",
+    "Size": "大小",
+    "Firmware verification failed. Please upload the firmware again": "固件校驗失敗，請重新上傳",
+    "Keep settings and retain the current configuration": "保留目前設定",
+    "Upgrading": "正在陞級..."
+  }
+}

@@ -1,0 +1,12 @@
+location = /oui-rpc {
+    content_by_lua_file /etc/nginx/lua/oui-rpc.lua;
+}
+
+location = /oui-upload {
+    client_max_body_size 500M;
+    content_by_lua_file /etc/nginx/lua/oui-upload.lua;
+}
+
+location = /oui-download {
+    content_by_lua_file /etc/nginx/lua/oui-download.lua;
+}

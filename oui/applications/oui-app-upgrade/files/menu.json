@@ -1,0 +1,12 @@
+{
+    "/system/upgrade": {
+        "title": "upgrade",
+        "view": "upgrade",
+        "index": 10,
+        "locales": {
+            "en-US": "Upgrade",
+            "zh-CN": "升级",
+            "zh-TW": "升級"
+        }
+    }
+}

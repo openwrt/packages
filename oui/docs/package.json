@@ -1,0 +1,15 @@
+{
+  "name": "docs",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vuepress dev src",
+    "build": "vuepress build src"
+  },
+  "devDependencies": {
+    "@vuepress/plugin-register-components": "^2.0.0-beta.51",
+    "@vuepress/plugin-search": "^2.0.0-beta.51",
+    "vuepress": "^2.0.0-beta.51"
+  }
+}

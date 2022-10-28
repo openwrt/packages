@@ -1,0 +1,23 @@
+{
+  "en-US": {
+    "Active DHCP Leases": "Active DHCP Leases",
+    "Hostname": "Hostname",
+    "IPv4 address": "IPv4 address",
+    "MAC address": "MAC address",
+    "Lease": "Lease time remaining"
+  },
+  "zh-CN": {
+    "Active DHCP Leases": "已分配的 DHCP 租约",
+    "Hostname": "主机名",
+    "IPv4 address": "IPv4 地址",
+    "MAC address": "MAC 地址",
+    "Lease": "剩余租期"
+  },
+  "zh-TW": {
+    "Active DHCP Leases": "已分配的 DHCP 租約",
+    "Hostname": "主機名",
+    "IPv4 address": "IPv4 地址",
+    "MAC address": "MAC 地址",
+    "Lease": "剩余租期"
+  }
+}

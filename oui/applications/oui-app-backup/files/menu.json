@@ -1,0 +1,12 @@
+{
+    "/system/backup": {
+        "title": "backup",
+        "view": "backup",
+        "index": 11,
+        "locales": {
+            "en-US": "Backup / Restore",
+            "zh-CN": "备份/恢复",
+            "zh-TW": "備份/恢復"
+        }
+    }
+}

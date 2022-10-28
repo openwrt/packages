@@ -1,0 +1,12 @@
+{
+    "/system/user": {
+        "title": "user",
+        "view": "user",
+        "index": 2,
+        "locales": {
+            "en-US": "User",
+            "zh-CN": "用户",
+            "zh-TW": "用戶"
+        }
+    }
+}

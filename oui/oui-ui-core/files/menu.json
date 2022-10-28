@@ -1,0 +1,35 @@
+{
+    "/status": {
+        "title": "Status",
+        "icon": "md-stats",
+        "index": 10,
+        "locales": {
+            "en-US": "Status",
+            "zh-CN": "状态",
+            "zh-TW": "狀態"
+        },
+        "svg":{"-xmlns":"http://www.w3.org/2000/svg","-xmlns:xlink":"http://www.w3.org/1999/xlink","-viewBox":"0 0 24 24","path":{"-d":"M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z","-fill":"currentColor"}}
+    },
+    "/system": {
+        "title": "System",
+        "icon": "md-settings",
+        "index": 20,
+        "locales": {
+            "en-US": "System",
+            "zh-CN": "系统",
+            "zh-TW": "系統"
+        },
+        "svg":{"-xmlns":"http://www.w3.org/2000/svg","-xmlns:xlink":"http://www.w3.org/1999/xlink","-viewBox":"0 0 24 24","g":{"-fill":"none","path":{"-d":"M4.946 5h14.108C20.678 5 22 6.304 22 7.92v8.16c0 1.616-1.322 2.92-2.946 2.92H4.946C3.322 19 2 17.696 2 16.08V7.92C2 6.304 3.322 5 4.946 5zm0 2A.933.933 0 0 0 4 7.92v8.16c0 .505.42.92.946.92h14.108a.933.933 0 0 0 .946-.92V7.92c0-.505-.42-.92-.946-.92H4.946z","-fill":"currentColor"}}}
+    },
+    "/network": {
+        "title": "Network",
+        "icon": "md-git-network",
+        "index": 30,
+        "locales": {
+            "en-US": "Network",
+            "zh-CN": "网络",
+            "zh-TW": "網絡"
+        },
+        "svg":{"-xmlns":"http://www.w3.org/2000/svg","-xmlns:xlink":"http://www.w3.org/1999/xlink","-viewBox":"0 0 640 512","path":{"-d":"M640 264v-16c0-8.84-7.16-16-16-16H344v-40h72c17.67 0 32-14.33 32-32V32c0-17.67-14.33-32-32-32H224c-17.67 0-32 14.33-32 32v128c0 17.67 14.33 32 32 32h72v40H16c-8.84 0-16 7.16-16 16v16c0 8.84 7.16 16 16 16h104v40H64c-17.67 0-32 14.33-32 32v128c0 17.67 14.33 32 32 32h160c17.67 0 32-14.33 32-32V352c0-17.67-14.33-32-32-32h-56v-40h304v40h-56c-17.67 0-32 14.33-32 32v128c0 17.67 14.33 32 32 32h160c17.67 0 32-14.33 32-32V352c0-17.67-14.33-32-32-32h-56v-40h104c8.84 0 16-7.16 16-16zM256 128V64h128v64H256zm-64 320H96v-64h96v64zm352 0h-96v-64h96v64z","-fill":"currentColor"}}
+    }
+}

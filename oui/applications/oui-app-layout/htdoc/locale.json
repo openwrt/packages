@@ -1,0 +1,42 @@
+{
+    "en-US": {
+        "Auto": "Auto",
+        "Light theme": "Light theme",
+        "Dark theme": "Dark theme",
+        "Logout": "Logout",
+        "Reboot": "Reboot",
+        "RebootConfirm": "Are you sure you want to restart the device?",
+        "OK": "OK",
+        "Rebooting": "Rebooting"
+    },
+    "zh-CN": {
+        "Auto": "自动",
+        "Light theme": "浅色主题",
+        "Dark theme": "深色主题",
+        "Logout": "退出",
+        "Reboot": "重启",
+        "RebootConfirm": "你确定要重启设备吗？",
+        "OK": "确定",
+        "Rebooting": "正在重启"
+    },
+    "zh-TW": {
+        "Auto": "自動",
+        "Light theme": "淺色主題",
+        "Dark theme": "深色主題",
+        "Logout": "退出",
+        "Reboot": "重啟",
+        "RebootConfirm": "你確定要重啓設備嗎？",
+        "OK": "確定",
+        "Rebooting": "正在重啓"
+    },
+    "ja-JP": {
+        "Auto": "自動",
+        "Light theme": "明るい色のテーマ",
+        "Dark theme": "暗いテーマ",
+        "Logout": "ログアウト",
+        "Reboot": "リブート",
+        "RebootConfirm": "あなたは、デバイスを再起動したいですか？",
+        "OK": "を選択して、",
+        "Rebooting": "再起動中"
+    }
+}

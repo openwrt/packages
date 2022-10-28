@@ -1,0 +1,12 @@
+{
+    "/status/dhcp-lease": {
+        "title": "DHCP lease",
+        "view": "dhcp-lease",
+        "index": 1,
+        "locales": {
+            "en-US": "DHCP lease",
+            "zh-CN": "DHCP 租约",
+            "zh-TW": "DHCP 租約"
+        }
+    }
+}

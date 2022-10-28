@@ -1,0 +1,11 @@
+{
+  "en-US": {
+    "hello": "hello world!"
+  },
+  "zh-CN": {
+    "hello": "你好世界！"
+  },
+  "zh-TW": {
+    "hello": "你好世界！"
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "en-US": {
+    "Backup": "Backup",
+    "Generate backup file": "Generate backup file",
+    "Restore from backup": "Restore from backup",
+    "Click or drag files to this area to upload": "Click or drag files to this area to upload",
+    "restore-confirm": "The uploaded backup archive appears to be valid and contains the files listed below. Press \"{0}\" to restore the backup and reboot, or \"{1}\" to abort the operation.",
+    "Apply backup": "Apply backup",
+    "Cancel": "Cancel",
+    "Continue": "Continue",
+    "The uploaded backup archive is not readable": "The uploaded backup archive is not readable",
+    "Reset to defaults": "Reset to defaults",
+    "Perform reset": "Perform reset",
+    "Rebooting": "Rebooting",
+    "ResettConfirm": "Do you really want to erase all settings"
+  },
+  "zh-CN": {
+    "Backup": "备份",
+    "Generate backup file": "生成备份文件",
+    "Restore from backup": "从备份恢复",
+    "Click or drag files to this area to upload": "点击或者拖动文件到该区域来上传",
+    "restore-confirm": "上传的备份归档有效，并且包含以下列出的文件。点击“{0}”恢复备份并重新启动，或点击“{1}”中止操作。",
+    "Apply backup": "应用备份",
+    "Cancel": "算了",
+    "Continue": "继续",
+    "The uploaded backup archive is not readable": "无法读取上传的备份归档",
+    "Reset to defaults": "恢复到出厂设置",
+    "Perform reset": "执行重置",
+    "Rebooting": "正在重启",
+    "ResettConfirm": "您确定要清除所有设置吗"
+  },
+  "zh-TW": {
+    "Backup": "備份",
+    "Generate backup file": "生成備份檔案",
+    "Restore from backup": "從備份恢復",
+    "Click or drag files to this area to upload": "點擊或者拖動文件到該區域來上傳",
+    "restore-confirm": "上傳的備份檔無效且包含下列檔案。按「{0}」來還原備份並重啟，或「{1}」以終止動作。",
+    "Apply backup": "是否套用備份",
+    "Cancel": "算了",
+    "Continue": "繼續",
+    "The uploaded backup archive is not readable": "上傳的復原檔案無法讀取",
+    "Reset to defaults": "回復預設值",
+    "Perform reset": "執行重置",
+    "Rebooting": "正在重啓",
+    "ResettConfirm": "您確定要清除所有設定"
+  }
+}

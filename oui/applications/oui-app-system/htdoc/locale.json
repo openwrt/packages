@@ -1,0 +1,29 @@
+{
+  "en-US": {
+    "This field is required": "This field is required",
+    "Invalid hostname": "Invalid hostname",
+    "Save & Apply": "Save & Apply",
+    "Reset": "Reset",
+    "Hostname": "Hostname",
+    "Timezone": "Timezone",
+    "Configuration has been applied": "Configuration has been applied"
+  },
+  "zh-CN": {
+    "This field is required": "必填",
+    "Invalid hostname": "无效的主机名",
+    "Save & Apply": "保存和应用",
+    "Reset": "重置",
+    "Hostname": "主机名",
+    "Timezone": "时区",
+    "Configuration has been applied": "配置已应用"
+  },
+  "zh-TW": {
+    "This field is required": "必填",
+    "Invalid hostname": "無效的主機名",
+    "Save & Apply": "保存和應用",
+    "Reset": "重置",
+    "Hostname": "主機名",
+    "Timezone": "時區",
+    "Configuration has been applied": "配置已應用"
+  }
+}

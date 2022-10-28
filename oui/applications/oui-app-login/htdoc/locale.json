@@ -1,0 +1,26 @@
+{
+    "en-US": {
+        "Login": "Login",
+        "Please enter username": "Please enter username",
+        "Please enter password": "Please enter password",
+        "wrong username or password": "wrong username or password"
+    },
+    "zh-CN": {
+        "Login": "登录",
+        "Please enter username": "请输入用户名",
+        "Please enter password": "请输入密码",
+        "wrong username or password": "用户名或密码错误"
+    },
+    "zh-TW": {
+        "Login": "登入",
+        "Please enter username": "請輸入用戶名",
+        "Please enter password": "請輸入密碼",
+        "wrong username or password": "用戶名或密碼錯誤"
+    },
+    "ja-JP": {
+        "Login": "ログイン",
+        "Please enter username": "ユーザー名を入力してください",
+        "Please enter password": "パスワードを入力してください",
+        "wrong username or password": "ユーザー名またはパスワードが間違っています"
+    }
+}

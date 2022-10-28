@@ -1,0 +1,28 @@
+{
+  "en-US": {
+    "OK": "OK",
+    "Class": "Class",
+    "Matchs": "Matchs",
+    "Negative": "Negative",
+    "Change Matchs": "Change Matchs",
+    "Add group": "Add group",
+    "Save & Apply": "Save & Apply"
+  },
+  "zh-CN": {
+    "OK": "确定",
+    "Class": "类型",
+    "Matchs": "匹配项",
+    "Negative": "反向匹配",
+    "Add group": "添加组",
+    "Save & Apply": "保存和应用"
+  },
+  "zh-TW": {
+    "OK": "確定",
+    "Class": "類型",
+    "Matchs": "匹配項",
+    "Negative": "反向匹配",
+    "Username": "用戶名",
+    "Add group": "添加組",
+    "Save & Apply": "保存和應用"
+  }
+}

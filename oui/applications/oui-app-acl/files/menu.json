@@ -1,0 +1,12 @@
+{
+    "/system/acl": {
+        "title": "acl",
+        "view": "acl",
+        "index": 4,
+        "locales": {
+            "en-US": "ACL",
+            "zh-CN": "权限管理",
+            "zh-TW": "權限管理"
+        }
+    }
+}

@@ -1,0 +1,23 @@
+{
+  "en-US": {
+    "Type": "Type",
+    "Network": "Network",
+    "MAC address": "MAC address",
+    "Signal / Noise": "Signal / Noise",
+    "RX Rate / TX Rate": "RX Rate / TX Rate"
+  },
+  "zh-CN": {
+    "Type": "类型",
+    "Network": "网络",
+    "MAC address": "MAC 地址",
+    "Signal / Noise": "信号/噪声",
+    "RX Rate / TX Rate": "接收速率/发送速率"
+  },
+  "zh-TW": {
+    "Type": "類型",
+    "Network": "網絡",
+    "MAC address": "MAC 地址",
+    "Signal / Noise": "信號 /雜訊比",
+    "RX Rate / TX Rate": "接收速率 / 發送速率"
+  }
+}
