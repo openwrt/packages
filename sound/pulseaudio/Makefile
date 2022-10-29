@@ -27,7 +27,7 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/meson.mk
 
-define Package/pulseaudio/Default
+define Package/pulseaudio-daemon/Default
   SECTION:=sound
   CATEGORY:=Sound
   DEPENDS:=+libsndfile +libltdl +libpthread +librt +alsa-lib \
@@ -39,27 +39,23 @@ define Package/pulseaudio/Default
 endef
 
 define Package/pulseaudio-daemon
-  $(call Package/pulseaudio/Default)
+  $(call Package/pulseaudio-daemon/Default)
   VARIANT:=noavahi
 endef
 
 define Package/pulseaudio-daemon-avahi
-  $(call Package/pulseaudio/Default)
+  $(call Package/pulseaudio-daemon/Default)
   DEPENDS+=+dbus +libavahi-client +sbc
   TITLE+= (avahi/bluez)
   VARIANT:=avahi
 endef
 
-define Package/pulseaudio/Default/description
+define Package/pulseaudio-daemon/description
   PulseAudio (formerly Polypaudio) is a cross-platform, networked sound server.
 endef
 
-define Package/pulseaudio-daemon/description
-  $(call Package/pulseaudio/Default/description)
-endef
-
 define Package/pulseaudio-daemon-avahi/description
-  $(call Package/pulseaudio/Default/description)
+  $(call Package/pulseaudio-daemon/description)
   This package enables avahi,bluez and is compiled against dbus, sbc, and avahi.
 endef
 
@@ -70,12 +66,7 @@ define Package/pulseaudio-daemon/conffiles
 /etc/pulse/system.pa
 endef
 
-define Package/pulseaudio-daemon-avahi/conffiles
-/etc/pulse/client.conf
-/etc/pulse/daemon.conf
-/etc/pulse/default.pa
-/etc/pulse/system.pa
-endef
+Package/pulseaudio-daemon/conffiles = $(Package/pulseaudio-daemon-avahi/conffiles)
 
 define Package/pulseaudio-tools
   SECTION:=sound
@@ -158,140 +149,62 @@ endif
 endef
 
 define Build/InstallDev
-	$(INSTALL_DIR) \
-		$(1)/usr/lib/pkgconfig \
-		$(1)/usr/include/pulse \
-		$(1)/usr/lib \
-		$(1)/usr/lib/pulseaudio
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/include/pulse/* \
-		$(1)/usr/include/pulse
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/*.pc \
-		$(1)/usr/lib/pkgconfig
-	$(SED) \
-		's,/usr/include,$$$${prefix}/include,g' \
-		$(1)/usr/lib/pkgconfig/libpulse.pc
-	$(SED) \
-		's,/usr/lib,$$$${exec_prefix}/lib,g' \
-		$(1)/usr/lib/pkgconfig/libpulse.pc
-	$(SED) \
-		's,/usr/include,$$$${prefix}/include,g' \
-		$(1)/usr/lib/pkgconfig/libpulse-simple.pc
-	$(SED) \
-		's,/usr/lib,$$$${exec_prefix}/lib,g' \
-		$(1)/usr/lib/pkgconfig/libpulse-simple.pc
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/*.so* \
-		$(1)/usr/lib/
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/pulseaudio/* \
-		$(1)/usr/lib/pulseaudio/
+	$(INSTALL_DIR) $(1)/usr/include/pulse
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/pulse/* $(1)/usr/include/pulse
+
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/*.pc $(1)/usr/lib/pkgconfig
+	$(SED) 's,/usr/include,$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/libpulse.pc
+	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/libpulse.pc
+	$(SED) 's,/usr/include,$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/libpulse-simple.pc
+	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/libpulse-simple.pc
+
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so* $(1)/usr/lib/
+
+	$(INSTALL_DIR) $(1)/usr/lib/pulseaudio
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pulseaudio/* $(1)/usr/lib/pulseaudio/
 endef
 
 define Package/pulseaudio-daemon/install
-	$(INSTALL_DIR) \
-		$(1)/etc/pulse \
-		$(1)/etc/init.d \
-		$(1)/usr/bin \
-		$(1)/usr/lib \
-		$(1)/usr/lib/pulseaudio \
-		$(1)/usr/lib/pulse-$(PKG_VERSION)/modules
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/pulseaudio $(1)/usr/bin/pulseaudio
 
-	$(INSTALL_BIN) \
-		$(PKG_INSTALL_DIR)/usr/bin/pulseaudio \
-		$(1)/usr/bin/pulseaudio
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/pulseaudio.init $(1)/etc/init.d/pulseaudio
 
-	$(INSTALL_BIN) \
-		./files/pulseaudio.init \
-		$(1)/etc/init.d/pulseaudio
+	$(INSTALL_DIR) $(1)/etc/pulse
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/pulse/* $(1)/etc/pulse
 
-	$(INSTALL_DATA) \
-		$(PKG_INSTALL_DIR)/etc/pulse/* \
-		$(1)/etc/pulse
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so* $(1)/usr/lib/
 
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/*.so* \
-		$(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib/pulseaudio
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pulseaudio/* $(1)/usr/lib/pulseaudio/
 
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/pulseaudio/* \
-		$(1)/usr/lib/pulseaudio/
-
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/pulse-$(PKG_VERSION)/modules/lib*.so \
-		$(1)/usr/lib/
-
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/pulse-$(PKG_VERSION)/modules/module*.so \
-		$(1)/usr/lib/pulse-$(PKG_VERSION)/modules/
-
+	$(INSTALL_DIR) $(1)/usr/lib/pulse-$(PKG_VERSION)/modules
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pulse-$(PKG_VERSION)/modules/lib*.so $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pulse-$(PKG_VERSION)/modules/module*.so $(1)/usr/lib/pulse-$(PKG_VERSION)/modules/
 endef
 
 define Package/pulseaudio-daemon-avahi/install
-	$(INSTALL_DIR) \
-		$(1)/etc/pulse \
-		$(1)/etc/init.d \
-		$(1)/usr/bin \
-		$(1)/usr/lib \
-		$(1)/usr/lib/pulseaudio \
-		$(1)/usr/lib/pulse-$(PKG_VERSION)/modules \
-		$(1)/etc/dbus-1/system.d
+	$(call Package/pulseaudio-daemon/install,$1)
 
-	$(INSTALL_BIN) \
-		$(PKG_INSTALL_DIR)/usr/bin/pulseaudio \
-		$(1)/usr/bin/pulseaudio
-
-	$(INSTALL_BIN) \
-		./files/pulseaudio.init \
-		$(1)/etc/init.d/pulseaudio
-
-	$(INSTALL_DATA) \
-		$(PKG_INSTALL_DIR)/etc/pulse/* \
-		$(1)/etc/pulse
-
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/*.so* \
-		$(1)/usr/lib/
-
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/pulseaudio/* \
-		$(1)/usr/lib/pulseaudio/
-
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/pulse-$(PKG_VERSION)/modules/lib*.so \
-		$(1)/usr/lib/
-
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/pulse-$(PKG_VERSION)/modules/module*.so \
-		$(1)/usr/lib/pulse-$(PKG_VERSION)/modules/
-
-	$(INSTALL_DATA) \
-		$(PKG_INSTALL_DIR)/etc/dbus-1/system.d/pulseaudio-system.conf \
-		$(1)/etc/dbus-1/system.d/pulseaudio-system.conf
+	$(INSTALL_DIR) $(1)/etc/dbus-1/system.d
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/dbus-1/system.d/pulseaudio-system.conf $(1)/etc/dbus-1/system.d/pulseaudio-system.conf
 endef
 
 define Package/pulseaudio-tools/install
-	$(INSTALL_DIR) \
-		$(1)/usr/bin
-
-	$(INSTALL_BIN) \
-		$(PKG_INSTALL_DIR)/usr/bin/pa* \
-		$(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/pa* $(1)/usr/bin/
 endef
 
 define Package/pulseaudio-profiles/install
-	$(INSTALL_DIR) \
-		$(1)/usr/share/pulseaudio/alsa-mixer/paths \
-		$(1)/usr/share/pulseaudio/alsa-mixer/profile-sets
+	$(INSTALL_DIR) $(1)/usr/share/pulseaudio/alsa-mixer/paths
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/pulseaudio/alsa-mixer/paths/* $(1)/usr/share/pulseaudio/alsa-mixer/paths
 
-	$(INSTALL_DATA) \
-		$(PKG_INSTALL_DIR)/usr/share/pulseaudio/alsa-mixer/paths/* \
-		$(1)/usr/share/pulseaudio/alsa-mixer/paths
-
-	$(INSTALL_DATA) \
-		$(PKG_INSTALL_DIR)/usr/share/pulseaudio/alsa-mixer/profile-sets/* \
-		$(1)/usr/share/pulseaudio/alsa-mixer/profile-sets
+	$(INSTALL_DIR) $(1)/usr/share/pulseaudio/alsa-mixer/profile-sets
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/pulseaudio/alsa-mixer/profile-sets/* $(1)/usr/share/pulseaudio/alsa-mixer/profile-sets
 endef
 
 $(eval $(call BuildPackage,pulseaudio-daemon))
