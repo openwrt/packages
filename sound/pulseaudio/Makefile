@@ -42,6 +42,7 @@ endef
 define Package/pulseaudio-daemon
   $(call Package/pulseaudio-daemon/Default)
   VARIANT:=noavahi
+  CONFLICTS:=pulseaudio-daemon-avahi
 endef
 
 define Package/pulseaudio-daemon-avahi
