@@ -1,0 +1,25 @@
+From be911ed522726d54fb7bdcfc76d9473ccc09dee8 Mon Sep 17 00:00:00 2001
+From: ZiMing Mo <msylgj@immortalwrt.org>
+Date: Sat, 29 Oct 2022 18:55:14 +0800
+Subject: [PATCH] btop: use utf-force by default
+
+Because of OpenWrt haven't LANG environment variable, use btop will
+return No UTF-8 locale detected!. This patch set utf_force to true by
+default.
+
+Signed-off-by: ZiMing Mo <msylgj@immortalwrt.org>
+---
+ src/btop.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/src/btop.cpp
++++ b/src/btop.cpp
+@@ -93,7 +93,7 @@ namespace Global {
+ 
+     bool debuginit{};   // defaults to false
+     bool debug{};       // defaults to false
+-    bool utf_force{};   // defaults to false
++    bool utf_force = true;   // defaults to true
+ 
+ 	uint64_t start_time;
+ 
