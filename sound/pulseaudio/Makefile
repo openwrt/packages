@@ -33,7 +33,7 @@ define Package/pulseaudio-daemon/Default
   DEPENDS:=+libsndfile +libltdl +libpthread +librt +alsa-lib \
 	+libopenssl +libcap $(ICONV_DEPENDS) $(INTL_DEPENDS)
   TITLE:=Network sound server
-  URL:=https://www.pulseaudio.org
+  URL:=https://www.freedesktop.org/wiki/Software/PulseAudio/
   PROVIDES:=pulseaudio
   USERID:=pulse=51:pulse=51
 endef
@@ -74,7 +74,7 @@ define Package/pulseaudio-tools
   CATEGORY:=Sound
   DEPENDS:=+libsndfile pulseaudio
   TITLE:=Tools for Pulseaudio
-  URL:=http://www.pulseaudio.org
+  URL:=https://www.freedesktop.org/wiki/Software/PulseAudio/
   VARIANT:=noavahi
 endef
 
@@ -83,7 +83,7 @@ define Package/pulseaudio-profiles
   CATEGORY:=Sound
   DEPENDS:=pulseaudio
   TITLE:=Profiles for Pulseaudio
-  URL:=http://www.pulseaudio.org
+  URL:=https://www.freedesktop.org/wiki/Software/PulseAudio/
 endef
 
 MESON_ARGS += \
