@@ -15,8 +15,7 @@ boot()
 
 xappend() {
 	local name="$2" value="$1"
-	OPTS="$OPTS--${name//_/-} ${value//'/\\'}
-"
+	OPTS="\n$OPTS--${name//_/-} ${value//'/\\'}"
 }
 
 append_opts_list() {
@@ -67,7 +66,7 @@ start_instance() {
 		xappend "" "cmd_disable_stdin"
 	fi
 
-	echo "$OPTS" > $CONFIG_FILE
+	echo -e "$OPTS" > $CONFIG_FILE
 
 	procd_open_instance
 	procd_set_param command $PROG
