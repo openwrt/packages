@@ -1,0 +1,49 @@
+#!/bin/sh
+# This file is heavily based on code from https://github.com/Xentrk/netflix-vpn-bypass/blob/master/IPSET_Netflix.sh
+# Credits to https://forum.openwrt.org/u/dscpl for api.hackertarget.com code.
+# Credits to https://github.com/kkeker and https://github.com/tophirsch for api.bgpview.io code.
+
+TARGET_SET='pbr_wan_4_dst_ip_user'
+TARGET_IPSET='pbr_wan_4_dst_net_user'
+TARGET_TABLE='inet fw4'
+TARGET_ASN='2906'
+TARGET_DL_FILE="/var/pbr_tmp_AS${TARGET_ASN}"
+TARGET_NFT_FILE="/var/pbr_tmp_AS${TARGET_ASN}.nft"
+#DB_SOURCE='ipinfo.io'
+#DB_SOURCE='api.hackertarget.com'
+DB_SOURCE='api.bgpview.io'
+[ -z "$nft" ] && nft="$(command -v nft)"
+_ret=1
+
+if [ ! -s "$TARGET_DL_FILE" ]; then
+	if [ "$DB_SOURCE" = "ipinfo.io" ]; then
+		TARGET_URL="https://ipinfo.io/AS${TARGET_ASN}"
+		uclient-fetch --no-check-certificate -qO- "$TARGET_URL" 2>/dev/null | grep -E "a href.*${TARGET_ASN}\/" | grep -v ":" | sed "s/^.*<a href=\"\/AS${TARGET_ASN}\///; s/\" >//" > "$TARGET_DL_FILE"
+	fi
+	if [ "$DB_SOURCE" = "api.hackertarget.com" ]; then
+		TARGET_URL="https://api.hackertarget.com/aslookup/?q=AS${TARGET_ASN}"
+		uclient-fetch --no-check-certificate -qO- "$TARGET_URL" 2>/dev/null | sed '1d' > "$TARGET_DL_FILE"
+	fi
+	if [ "$DB_SOURCE" = "api.bgpview.io" ]; then
+		TARGET_URL="https://api.bgpview.io/asn/${TARGET_ASN}/prefixes"
+		uclient-fetch --no-check-certificate -qO- "$TARGET_URL" 2>/dev/null | jsonfilter -e '@.data.ipv4_prefixes[*].prefix' > "$TARGET_DL_FILE"
+	fi
+fi
+
+if [ -s "$TARGET_DL_FILE" ]; then
+	if ipset -q list "$TARGET_IPSET" >/dev/null 2>&1; then
+			if awk -v ipset="$TARGET_IPSET" '{print "add " ipset " " $1}' "$TARGET_DL_FILE" | ipset restore -!; then
+				_ret=0
+			fi
+	elif [ -n "$nft" ] && [ -x "$nft" ] && "$nft" list set "$TARGET_TABLE" "$TARGET_SET" >/dev/null 2>&1; then
+		printf "add element %s %s { " "$TARGET_TABLE" "$TARGET_SET" > "$TARGET_NFT_FILE"
+		awk '{printf $1 ", "}' "$TARGET_DL_FILE" >> "$TARGET_NFT_FILE"
+		printf " } " >> "$TARGET_NFT_FILE"
+		if "$nft" -f "$TARGET_NFT_FILE"; then
+			rm -f "$TARGET_NFT_FILE"
+			_ret=0
+		fi
+	fi
+fi
+
+return $_ret
