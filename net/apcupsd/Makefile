@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apcupsd
 PKG_VERSION:=3.14.14
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_MAINTAINER:=Othmar Truniger <github@truniger.ch>
 PKG_LICENSE:=GPL-2.0
