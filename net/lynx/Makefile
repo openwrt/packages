@@ -28,7 +28,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)$(PKG_VERSION)
 include $(INCLUDE_DIR)/package.mk
 
 define Package/lynx
-	TITLE:=Lynx is the text web browser 
+	TITLE:=Lynx is the text web browser
 	SECTION:=net
 	CATEGORY:=Network
 	DEPENDS:=+libncursesw +zlib +libopenssl +ca-bundle
