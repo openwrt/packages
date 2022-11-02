@@ -9,7 +9,7 @@ PKG_VERSION:=0.2.1-post.1
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/forestvpn/cli/tar.gz/v$(PKG_VERSION)
+PKG_SOURCE_URL:=https://codeload.github.com/forestvpn/cli/tar.gz/v$(PKG_VERSION)?
 PKG_HASH:=34583aca56237484f6b820bd4ffb3ad82cdbc90af6e3dd0b577e25f6509ce8b1
 
 PKG_LICENSE:=MIT
