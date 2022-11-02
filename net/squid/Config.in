@@ -23,7 +23,7 @@ if PACKAGE_squid
 		default y
 
 	config SQUID_enable-ssl-crtd
-		bool "Enable dynamic SSL certificate generation "
+		bool "Enable dynamic SSL certificate generation"
 		depends on !SQUID_use-gnutls
 		default y
 
