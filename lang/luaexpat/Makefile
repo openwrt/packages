@@ -23,7 +23,7 @@ define Package/luaexpat
   SUBMENU:=Lua
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=LuaExpat 
+  TITLE:=LuaExpat
   URL:=http://matthewwild.co.uk/projects/luaexpat/
   MAINTAINER:=W. Michael Petullo <mike@flyn.org>
   DEPENDS:=+lua +libexpat
@@ -45,7 +45,7 @@ define Build/Compile
 	COMPAT_DIR="$(PKG_BUILD_DIR)/compat-5.1r5" \
 	LDFLAGS="-shared $(TARGET_LDFLAGS)" \
 	CC="$(TARGET_CC) $(TARGET_CFLAGS) $(FPIC) -std=c99" \
-	LD="$(TARGET_CROSS)ld -shared" 
+	LD="$(TARGET_CROSS)ld -shared"
 endef
 
 define Package/luaexpat/install
