@@ -30,9 +30,9 @@ define Package/announce
 	SECTION:=net
 	CATEGORY:=Network
 	SUBMENU:=IP Addresses and Names
-	TITLE:=Announce services on the network with Zeroconf/Bonjour 
+	TITLE:=Announce services on the network with Zeroconf/Bonjour
 	URL:=https://github.com/probonopd/announce
-	DEPENDS:= +libpthread 
+	DEPENDS:= +libpthread
 endef
 
 define Package/announce/description
