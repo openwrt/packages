@@ -28,14 +28,14 @@ include $(INCLUDE_DIR)/package.mk
 define Package/hub-ctrl
   SECTION:=utils
   CATEGORY:=Utilities
-  TITLE:=Control USB power on a port by port basis 
+  TITLE:=Control USB power on a port by port basis
   URL:=https://github.com/codazoda/hub-ctrl.c
   DEPENDS:=+libusb-compat
 endef
 
 define Package/hub-ctrl/description
   Control USB power on a port by port basis on some USB hubs.
-  This only works on USB hubs that have the hardware necessary 
+  This only works on USB hubs that have the hardware necessary
   to allow software controlled power switching.
   Most hubs DO NOT include the hardware.
 endef
