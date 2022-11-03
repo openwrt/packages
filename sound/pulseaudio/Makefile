@@ -68,7 +68,7 @@ define Package/pulseaudio-daemon/conffiles
 /etc/pulse/system.pa
 endef
 
-Package/pulseaudio-daemon/conffiles = $(Package/pulseaudio-daemon-avahi/conffiles)
+Package/pulseaudio-daemon-avahi/conffiles = $(Package/pulseaudio-daemon/conffiles)
 
 define Package/pulseaudio-tools
   SECTION:=sound
