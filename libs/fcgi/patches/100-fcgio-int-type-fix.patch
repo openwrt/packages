@@ -1,0 +1,35 @@
+--- a/include/fcgio.h
++++ b/include/fcgio.h
+@@ -77,10 +77,10 @@ protected:
+     virtual int sync();
+ 
+     // Remove and return the current character.
+-    virtual int uflow();
++    virtual int_type uflow();
+ 
+     // Fill the get area (if buffered) and return the current character.
+-    virtual int underflow();
++    virtual int_type underflow();
+ 
+     // Use a buffer.  The only reasons that a buffer would be useful is
+     // to support the use of the unget()/putback() or seek() methods.  Using
+--- a/libfcgi/fcgio.cpp
++++ b/libfcgi/fcgio.cpp
+@@ -86,7 +86,7 @@ int fcgi_streambuf::sync()
+ }
+ 
+ // uflow() removes the char, underflow() doesn't
+-int fcgi_streambuf::uflow() 
++std::basic_streambuf<char>::int_type fcgi_streambuf::uflow()
+ {
+     if (this->bufsize)
+     {
+@@ -100,7 +100,7 @@ int fcgi_streambuf::uflow()
+     }
+ }
+ 				
+-int fcgi_streambuf::underflow()
++std::basic_streambuf<char>::int_type fcgi_streambuf::underflow()
+ {
+     if (this->bufsize)
+     {
