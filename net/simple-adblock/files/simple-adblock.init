@@ -1098,11 +1098,82 @@ adb_start() {
 	json del all
 	json set triggers
 
+	if [ "$action" = 'restore' ]; then
+		output 0 "Starting $serviceName... "
+		output 3 "Starting $serviceName...\\n"
+		json set status "statusStarting"
+		if cache 'test_gzip' && ! cache 'test' && [ ! -s "$outputFile" ]; then
+			output 3 'Found compressed cache file, unpacking it '
+			json set message 'found compressed cache file, unpacking it.'
+			if cache 'unpack_gzip'; then
+				output_okn
+			else
+				output_failn
+				json add error "errorRestoreCompressedCache"
+				output "$_ERROR_: $(get_error_text 'errorRestoreCompressedCache')!\\n"
+				action='download'
+			fi
+		fi
+		if cache 'test' && [ ! -s "$outputFile" ]; then
+			output 3 'Found cache file, reusing it '
+			json set message 'found cache file, reusing it.'
+			if cache 'restore'; then 
+				output_okn
+				dns 'on_start'
+			else
+				output_failn
+				json add error "errorRestoreCache"
+				output "$_ERROR_: $(get_error_text 'errorRestoreCache')!\\n"
+				action='download'
+			fi
+		fi
+	fi
+	if [ "$action" = 'download' ]; then
+		if [ -s "$outputFile" ] || cache 'test' || cache 'test_gzip'; then
+			output 0 "Force-reloading $serviceName... "
+			output 3 "Force-reloading $serviceName...\\n"
+			json set status "statusForceReloading"
+		else
+			output 0 "Starting $serviceName... "
+			output 3 "Starting $serviceName...\\n"
+			json set status "statusStarting"
+		fi
+		download_lists
+		dns 'on_start'
+	fi
+	if [ "$action" = 'restart' ]; then
+		output 0 "Restarting $serviceName... "
+		output 3 "Restarting $serviceName...\\n"
+		json set status "statusRestarting"
+		dns 'on_start'
+	fi
+	if [ "$action" = 'start' ]; then
+		output 0 "Starting $serviceName... "
+		output 3 "Starting $serviceName...\\n"
+		json set status "statusStarting"
+		dns 'on_start'
+	fi
+	if [ -s "$outputFile" ] && [ "$(json get status)" != "statusFail" ]; then
+		output 0 "$__OK__\\n";
+		json del message
+		json set status "statusSuccess"
+		json set stats "$serviceName is blocking $(wc -l < "$outputFile") domains (with ${dns})"
+		status_service
+	else
+		output 0 "$__FAIL__\\n";
+		json set status "statusFail"
+		json add error "errorOhSnap"
+		status_service
+	fi
+
 	procd_open_instance 'main'
 	procd_set_param command /bin/true
 	procd_set_param stdout 1
 	procd_set_param stderr 1
 	procd_open_data
+	json_add_string 'status' "$(json get status)"
+	json_add_string 'errors' "$(json get errors)"
+	json_add_int 'entries' "$(wc -l < "$outputFile")"
 	json_add_array firewall
 	if [ "$force_dns" -ne 0 ]; then
 		for c in $force_dns_port; do
@@ -1181,74 +1252,6 @@ adb_start() {
 	json_close_array
 	procd_close_data
 	procd_close_instance
-
-	if [ "$action" = 'restore' ]; then
-		output 0 "Starting $serviceName... "
-		output 3 "Starting $serviceName...\\n"
-		json set status "statusStarting"
-		if cache 'test_gzip' && ! cache 'test' && [ ! -s "$outputFile" ]; then
-			output 3 'Found compressed cache file, unpacking it '
-			json set message 'found compressed cache file, unpacking it.'
-			if cache 'unpack_gzip'; then
-				output_okn
-			else
-				output_failn
-				json add error "errorRestoreCompressedCache"
-				output "$_ERROR_: $(get_error_text 'errorRestoreCompressedCache')!\\n"
-				action='download'
-			fi
-		fi
-		if cache 'test' && [ ! -s "$outputFile" ]; then
-			output 3 'Found cache file, reusing it '
-			json set message 'found cache file, reusing it.'
-			if cache 'restore'; then 
-				output_okn
-				dns 'on_start'
-			else
-				output_failn
-				json add error "errorRestoreCache"
-				output "$_ERROR_: $(get_error_text 'errorRestoreCache')!\\n"
-				action='download'
-			fi
-		fi
-	fi
-	if [ "$action" = 'download' ]; then
-		if [ -s "$outputFile" ] || cache 'test' || cache 'test_gzip'; then
-			output 0 "Force-reloading $serviceName... "
-			output 3 "Force-reloading $serviceName...\\n"
-			json set status "statusForceReloading"
-		else
-			output 0 "Starting $serviceName... "
-			output 3 "Starting $serviceName...\\n"
-			json set status "statusStarting"
-		fi
-		download_lists
-		dns 'on_start'
-	fi
-	if [ "$action" = 'restart' ]; then
-		output 0 "Restarting $serviceName... "
-		output 3 "Restarting $serviceName...\\n"
-		json set status "statusRestarting"
-		dns 'on_start'
-	fi
-	if [ "$action" = 'start' ]; then
-		output 0 "Starting $serviceName... "
-		output 3 "Starting $serviceName...\\n"
-		json set status "statusStarting"
-		dns 'on_start'
-	fi
-	if [ -s "$outputFile" ] && [ "$(json get status)" != "statusFail" ]; then
-		output 0 "$__OK__\\n";
-		json del message
-		json set status "statusSuccess"
-		json set stats "$serviceName is blocking $(wc -l < "$outputFile") domains (with ${dns})"
-		status_service
-	else
-		output 0 "$__FAIL__\\n";
-		json set status "statusFail"
-		json add error "errorOhSnap"
-		status_service
-	fi
 }
 
 adb_status() {
