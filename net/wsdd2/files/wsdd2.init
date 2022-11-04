@@ -16,8 +16,8 @@ start_service() {
 	# needs long delay, otherwise service may not register correctly on stratup/reboot (not sure what the issues is?)
 	sleep 5
 
-	if [ -e /etc/ksmbd/smb.conf ] && [ -e /etc/init.d/ksmbd ] && /etc/init.d/ksmbd running; then
-		SMB_CONF="/etc/ksmbd/smb.conf"
+	if [ -e /etc/ksmbd/ksmbd.conf ] && [ -e /etc/init.d/ksmbd ] && /etc/init.d/ksmbd running; then
+		SMB_CONF="/etc/ksmbd/ksmbd.conf"
 	fi
 
 	[ -e /etc/samba/smb.conf ] && {
