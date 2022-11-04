@@ -28,7 +28,7 @@ endef
 
 define Package/ksmbd-tools/Default/description
   Userspace tools to manage the SMB kernel fileserver (ksmbd.ko).
-  The config file location is /etc/ksmbd/smb.conf
+  The config file location is /etc/ksmbd/ksmbd.conf
 endef
 
 define Package/ksmbd-server
@@ -83,7 +83,7 @@ define Package/ksmbd-server/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/ksmbd.mountd $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/ksmbd $(1)/etc/init.d
 	$(INSTALL_CONF) ./files/ksmbd.config $(1)/etc/config/ksmbd
-	$(INSTALL_DATA) ./files/smb.conf.template $(1)/etc/ksmbd/
+	$(INSTALL_DATA) ./files/ksmbd.conf.template $(1)/etc/ksmbd/
 	$(INSTALL_BIN) ./files/ksmbd.init $(1)/etc/init.d/ksmbd
 	# copy examples until we have a wiki page
 	$(INSTALL_DATA) ./files/ksmbd.config.example $(1)/etc/ksmbd/
@@ -101,8 +101,8 @@ endef
 
 define Package/ksmbd-server/conffiles
 /etc/config/ksmbd
-/etc/ksmbd/smb.conf.template
-/etc/ksmbd/smb.conf
+/etc/ksmbd/ksmbd.conf.template
+/etc/ksmbd/ksmbd.conf
 /etc/ksmbd/ksmbdpwd.db
 endef
 

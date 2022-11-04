@@ -38,7 +38,7 @@ smb_header()
 	    -e "s#|WORKGROUP|#$workgroup#g" \
 	    -e "s#|DESCRIPTION|#$description#g" \
 	    -e "s#|INTERFACES|#$interfaces#g" \
-	    /etc/ksmbd/smb.conf.template > /var/etc/ksmbd/smb.conf
+	    /etc/ksmbd/ksmbd.conf.template > /var/etc/ksmbd/ksmbd.conf
 		
 	{
 		printf "\n######### Dynamic written config options #########\n"
@@ -48,12 +48,12 @@ smb_header()
 			printf "\tserver min protocol = NT1\n"
 			printf "\tserver signing = disabled\n"
 		fi
-	} >> /var/etc/ksmbd/smb.conf
+	} >> /var/etc/ksmbd/ksmbd.conf
 
-	[ -e /etc/ksmbd/smb.conf ] || ln -nsf /var/etc/ksmbd/smb.conf /etc/ksmbd/smb.conf
+	[ -e /etc/ksmbd/ksmbd.conf ] || ln -nsf /var/etc/ksmbd/ksmbd.conf /etc/ksmbd/ksmbd.conf
 
-	if [ ! -L /etc/ksmbd/smb.conf ]; then
-		logger -p daemon.warn -t 'ksmbd' "Local custom /etc/ksmbd/smb.conf file detected, all UCI/Luci config settings are ignored!"
+	if [ ! -L /etc/ksmbd/ksmbd.conf ]; then
+		logger -p daemon.warn -t 'ksmbd' "Local custom /etc/ksmbd/ksmbd.conf file detected, all UCI/Luci config settings are ignored!"
 	fi
 }
 
@@ -108,7 +108,7 @@ smb_add_share()
 
 		[ -n "$hide_dot_files" ] && printf "\thide dot files = %s\n" "$hide_dot_files"
 		[ -n "$veto_files" ] && printf "\tveto files = %s\n" "$veto_files"
-	} >> /var/etc/ksmbd/smb.conf
+	} >> /var/etc/ksmbd/ksmbd.conf
 }
 
 init_config()
@@ -146,12 +146,12 @@ start_service()
 {
 	init_config
 
-	if [ ! -e /etc/ksmbd/smb.conf ]; then
-		logger -p daemon.error -t 'ksmbd' "missing config /etc/ksmbd/smb.conf!"
+	if [ ! -e /etc/ksmbd/ksmbd.conf ]; then
+		logger -p daemon.error -t 'ksmbd' "missing config /etc/ksmbd/ksmbd.conf!"
 		exit 1
 	fi
 	
-	# NOTE: We don't do a soft-reload via signal, since [global] smb.conf setting changes will be ignored, so always reset hard.
+	# NOTE: We don't do a soft-reload via signal, since [global] ksmbd.conf setting changes will be ignored, so always reset hard.
 	[ -e /sys/module/ksmbd ] && stop_service
 	
 	[ ! -e /sys/module/ksmbd ] && modprobe ksmbd 2> /dev/null
@@ -164,7 +164,7 @@ start_service()
 	procd_open_instance
 	procd_add_mdns "smb" "tcp" "445" "daemon=ksmbd"
 	procd_set_param command /usr/sbin/ksmbd.mountd --n
-	procd_set_param file /etc/ksmbd/smb.conf
+	procd_set_param file /etc/ksmbd/ksmbd.conf
 	procd_set_param limits nofile=16384
 	procd_close_instance
 }
