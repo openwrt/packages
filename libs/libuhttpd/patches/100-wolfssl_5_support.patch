@@ -9,7 +9,7 @@ Date:   Mon Jan 3 19:25:45 2022 +0300
 
 --- a/src/ssl/openssl.c
 +++ b/src/ssl/openssl.c
-@@ -314,7 +314,9 @@ static bool handle_wolfssl_asn_error(voi
+@@ -336,7 +336,9 @@ static bool handle_wolfssl_asn_error(voi
      case ASN_SIG_HASH_E:
      case ASN_SIG_KEY_E:
      case ASN_DH_KEY_E:
