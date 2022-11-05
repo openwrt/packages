@@ -45,6 +45,7 @@ endef
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
+	--enable-install-gpg-error-config \
 	--disable-doc \
 	--disable-languages \
 	--disable-rpath \
@@ -53,12 +54,20 @@ CONFIGURE_ARGS += \
 define Build/InstallDev
 	$(INSTALL_DIR) $(2)/bin $(1)/usr/bin
 	$(INSTALL_BIN) \
+		$(PKG_INSTALL_DIR)/usr/bin/gpg-error-config \
+		$(2)/bin/
+	$(SED) \
+		's,^\(prefix\|exec_prefix\)=.*,\1=$(STAGING_DIR)/usr,g' \
+		$(2)/bin/gpg-error-config
+	$(LN) $(STAGING_DIR)/host/bin/gpg-error-config $(1)/usr/bin/gpg-error-config
+
+	$(INSTALL_BIN) \
 		$(PKG_INSTALL_DIR)/usr/bin/gpgrt-config \
 		$(2)/bin/
 	$(SED) \
 		's,^\(prefix\|exec_prefix\)=.*,\1=$(STAGING_DIR)/usr,g' \
 		$(2)/bin/gpgrt-config
-	ln -sf $(STAGING_DIR)/host/bin/gpgrt-config $(1)/usr/bin/gpgrt-config
+	$(LN) $(STAGING_DIR)/host/bin/gpgrt-config $(1)/usr/bin/gpgrt-config
 
 	$(INSTALL_DIR) $(1)/usr/include
 	$(INSTALL_DATA) \
