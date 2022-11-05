@@ -186,11 +186,11 @@ start_instance() {
 	if [ "$?" ]; then
 		config_get listen_addr "$cfg" 'listen_addr' '127.0.0.1'
 		config_get listen_port "$cfg" 'listen_port' "$port"
-		if [ "$update_dnsmasq_config" = '*' ]; then
+		if [ "$dnsmasq_config_update" = '*' ]; then
 			config_load 'dhcp'
 			config_foreach dnsmasq_doh_server 'dnsmasq' 'add' "${listen_addr}" "${listen_port}"
-		elif [ -n "$update_dnsmasq_config" ]; then
-			for i in $update_dnsmasq_config; do
+		elif [ -n "$dnsmasq_config_update" ]; then
+			for i in $dnsmasq_config_update; do
 				if [ -n "$(uci_get 'dhcp' "@dnsmasq[$i]")" ]; then
 					dnsmasq_doh_server "@dnsmasq[$i]" 'add' "${listen_addr}" "${listen_port}"
 				elif [ -n "$(uci_get 'dhcp' "$i")" ]; then
@@ -208,11 +208,11 @@ start_instance() {
 
 start_service() {
 	local canaryDomains canary_domains_icloud canary_domains_mozilla
-	local update_dnsmasq_config force_dns force_dns_port 
+	local dnsmasq_config_update force_dns force_dns_port 
 	local port=5053
 	output "Starting $serviceName "
 	config_load "$packageName"
-	config_get update_dnsmasq_config        'config' 'update_dnsmasq_config' '*'
+	config_get dnsmasq_config_update        'config' 'dnsmasq_config_update' '*'
 	config_get_bool canary_domains_icloud   'config' 'canary_domains_icloud' '1'
 	config_get_bool canary_domains_mozilla  'config' 'canary_domains_mozilla' '1'
 	config_get_bool force_dns	              'config' 'force_dns' '1'
@@ -235,11 +235,11 @@ start_service() {
 
 stop_service() {
 	local canaryDomains canary_domains_icloud canary_domains_mozilla
-	local update_dnsmasq_config
+	local dnsmasq_config_update
 	local s=0
 	output "Stopping $serviceName "
 	config_load "$packageName"
-	config_get update_dnsmasq_config        'config' 'update_dnsmasq_config' '*'
+	config_get dnsmasq_config_update        'config' 'dnsmasq_config_update' '*'
 	config_get_bool canary_domains_icloud   'config' 'canary_domains_icloud' '1'
 	config_get_bool canary_domains_mozilla  'config' 'canary_domains_mozilla' '1'
 	if [ "$canary_domains_icloud" -ne 0 ]; then
@@ -260,14 +260,14 @@ stop_service() {
 # shellcheck disable=SC1091
 service_triggers() {
 	local wan wan6 i
-	local wan6_trigger
+	local procd_trigger_wan6
 	config_load "$packageName"
-	config_get_bool wan6_trigger 'config' 'wan6_trigger' '0'
+	config_get_bool procd_trigger_wan6 'config' 'procd_trigger_wan6' '0'
 	. /lib/functions/network.sh
 	network_flush_cache
 	network_find_wan wan
 	wan="${wan:-wan}"
-	if [ "$wan6_trigger" -ne 0 ]; then
+	if [ "$procd_trigger_wan6" -ne 0 ]; then
 		network_find_wan6 wan6
 		wan6="${wan6:-wan6}"
 	fi
@@ -357,10 +357,10 @@ dhcp_backup() {
 	config_load 'dhcp'
 	case "$1" in
 		create)
-			if [ "$update_dnsmasq_config" = "*" ]; then
+			if [ "$dnsmasq_config_update" = "*" ]; then
 				config_foreach dnsmasq_create_server_backup 'dnsmasq'
-			elif [ -n "$update_dnsmasq_config" ]; then
-				for i in $update_dnsmasq_config; do
+			elif [ -n "$dnsmasq_config_update" ]; then
+				for i in $dnsmasq_config_update; do
 					if [ -n "$(uci_get 'dhcp' "@dnsmasq[$i]")" ]; then
 						dnsmasq_create_server_backup "@dnsmasq[$i]"
 					elif [ -n "$(uci_get 'dhcp' "$i")" ]; then
