@@ -1,6 +1,6 @@
 --- a/include/drm/drm.h
 +++ b/include/drm/drm.h
-@@ -38,6 +38,9 @@
+@@ -37,6 +37,9 @@
  
  #if   defined(__linux__)
  
