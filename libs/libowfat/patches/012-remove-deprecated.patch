@@ -1,0 +1,16 @@
+--- a/scan/scan_iso8601.c
++++ b/scan/scan_iso8601.c
+@@ -1,5 +1,4 @@
+ #define _GNU_SOURCE
+-#define __deprecated__
+ #include "scan.h"
+ #include "byte.h"
+ #include "case.h"
+--- a/scan/scan_httpdate.c
++++ b/scan/scan_httpdate.c
+@@ -1,5 +1,4 @@
+ #define _GNU_SOURCE
+-#define __deprecated__
+ #include "scan.h"
+ #include "byte.h"
+ #include "case.h"
