@@ -5,13 +5,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=irqbalance
-PKG_VERSION:=1.9.1
+PKG_VERSION:=1.9.2
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/Irqbalance/irqbalance.git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_MIRROR_HASH:=89aaf4ebd717f991396f22cd214bad83d62c8e615fcb3cc7b4d513c1c05ea0e6
+PKG_MIRROR_HASH:=e2c81725e7b6d711a47d68755a222236d7081726d567aca1c1295e6fe1caa865
 
 PKG_MAINTAINER:=Hannu Nyman <hannu.nyman@iki.fi>
 PKG_LICENSE:=GPL-2.0-or-later
