@@ -14,7 +14,7 @@ PKG_SOURCE_URL:=https://codeload.github.com/FastCGI-Archives/fcgi2/tar.gz/$(PKG_
 PKG_HASH:=1fe83501edfc3a7ec96bb1e69db3fd5ea1730135bd73ab152186fd0b437013bc
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)2-$(PKG_VERSION)
 
-PKG_MAINTAINER:=Jacob Siverskog <jacob@teenageengineering.com>
+PKG_MAINTAINER:=Petr Štetiar <ynezz@true.cz>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.TERMS
 
