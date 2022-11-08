@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tiff
 PKG_VERSION:=4.4.0
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.osgeo.org/libtiff
@@ -65,8 +65,6 @@ CMAKE_OPTIONS += \
 	-Dwebp=OFF \
 	-Djpeg12=OFF \
 	-Dcxx=OFF
-
-TARGET_CFLAGS += $(TARGET_CPPFLAGS)
 
 define Build/InstallDev
 	$(call Build/InstallDev/cmake,$(1))
