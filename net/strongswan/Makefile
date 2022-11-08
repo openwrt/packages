@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=strongswan
-PKG_VERSION:=5.9.7
+PKG_VERSION:=5.9.8
 PKG_RELEASE:=$(AUTORELEASE).1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://download.strongswan.org/ https://download2.strongswan.org/
-PKG_HASH:=9e64a2ba62efeac81abff1d962522404ebc6ed6c0d352a23ab7c0b2c639e3fcf
+PKG_HASH:=d3303a43c0bd7b75a12b64855e8edcb53696f06190364f26d1533bde1f2e453c
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_MAINTAINER:=Philip Prindeville <philipp@redfish-solutions.com>, Noel Kuntze <noel.kuntze@thermi.consulting>
 PKG_CPE_ID:=cpe:/a:strongswan:strongswan
@@ -232,7 +232,6 @@ $(call Package/strongswan/Default)
 	+strongswan-mod-xauth-generic \
 	+strongswan-mod-xcbc \
 	+strongswan-pki \
-	+strongswan-scepclient \
 	+strongswan-swanctl \
 	@DEVEL
 endef
@@ -396,23 +395,12 @@ endef
 define Package/strongswan-pki
 $(call Package/strongswan/Default)
   TITLE+= PKI tool
-  DEPENDS:= strongswan
+  DEPENDS:= strongswan strongswan-libtls
 endef
 
 define Package/strongswan-pki/description
 $(call Package/strongswan/description/Default)
  This package contains the pki tool.
-endef
-
-define Package/strongswan-scepclient
-$(call Package/strongswan/Default)
-  TITLE+= SCEP client
-  DEPENDS:= strongswan
-endef
-
-define Package/strongswan-scepclient/description
-$(call Package/strongswan/description/Default)
- This package contains the SCEP client.
 endef
 
 define Package/strongswan-swanctl
@@ -478,7 +466,6 @@ CONFIGURE_ARGS+= \
 	--with-systemdsystemunitdir=no \
 	$(if $(CONFIG_PACKAGE_strongswan-charon-cmd),--enable-cmd,--disable-cmd) \
 	$(if $(CONFIG_PACKAGE_strongswan-pki),--enable-pki,--disable-pki) \
-	$(if $(CONFIG_PACKAGE_strongswan-scepclient),--enable-scepclient,--disable-scepclient) \
 	--with-random-device=/dev/random \
 	--with-urandom-device=/dev/urandom \
 	--with-routing-table="$(call qstrip,$(CONFIG_STRONGSWAN_ROUTING_TABLE))" \
@@ -572,13 +559,6 @@ define Package/strongswan-pki/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/pki $(1)/usr/bin/
 endef
 
-define Package/strongswan-scepclient/install
-	$(INSTALL_DIR) $(1)/etc/strongswan.d
-	$(CP) $(PKG_INSTALL_DIR)/etc/strongswan.d/scepclient.conf $(1)/etc/strongswan.d/
-	$(INSTALL_DIR) $(1)/usr/lib/ipsec
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/ipsec/scepclient $(1)/usr/lib/ipsec/
-endef
-
 define Package/strongswan-swanctl/conffiles
 /etc/config/ipsec
 /etc/swanctl/
@@ -666,7 +646,6 @@ $(eval $(call BuildPackage,strongswan-charon-cmd))
 $(eval $(call BuildPackage,strongswan-ipsec))
 $(eval $(call BuildPackage,strongswan-libnttfft))
 $(eval $(call BuildPackage,strongswan-pki))
-$(eval $(call BuildPackage,strongswan-scepclient))
 $(eval $(call BuildPackage,strongswan-swanctl))
 $(eval $(call BuildPackage,strongswan-gencerts))
 $(eval $(call BuildPackage,strongswan-libtls))
