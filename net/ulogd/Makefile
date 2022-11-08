@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ulogd
-PKG_VERSION:=2.0.7
-PKG_RELEASE:=6
+PKG_VERSION:=2.0.8
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://netfilter.org/projects/ulogd/files/ \
 	ftp://ftp.netfilter.org/pub/ulogd/
-PKG_HASH:=990a05494d9c16029ba0a83f3b7294fc05c756546b8d60d1c1572dc25249a92b
+PKG_HASH:=4ead6c3970c3f57fa1e89fe2d7cc483ba6fe2bd1b08701521e0b3afd667df291
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
@@ -41,7 +41,7 @@ endef
 
 define Package/ulogd
   $(call Package/ulogd/Default)
-  DEPENDS:=+libmnl +libnfnetlink +libpthread
+  DEPENDS:=+libmnl +libnfnetlink +libpthread +libnetfilter-conntrack
   TITLE:=Netfilter userspace logging daemon
   MENU:=1
 endef
