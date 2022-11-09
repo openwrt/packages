@@ -544,12 +544,12 @@ config_connection() {
 		swanctl_xappend0 ""
 
 		swanctl_xappend0 "secrets {"
-		swanctl_xappend1 "ike {"
+		swanctl_xappend1 "ike-$config_name {"
 		swanctl_xappend2 "secret = $pre_shared_key"
-		if [ -n "$local_id" ]; then
-			swanctl_xappend2 "id1 = $local_id"
-			if [ -n "$remote_id" ]; then
-				swanctl_xappend2 "id2 = $remote_id"
+		if [ -n "$local_identifier" ]; then
+			swanctl_xappend2 "id1 = $local_identifier"
+			if [ -n "$remote_identifier" ]; then
+				swanctl_xappend2 "id2 = $remote_identifier"
 			fi
 		fi
 		swanctl_xappend1 "}"
