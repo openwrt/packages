@@ -342,6 +342,13 @@
 		"focus": "win_telemetry",
 		"descurl": "https://github.com/crazy-max/WindowsSpyBlocker"
 	},
+	"Youtube-Adblock": {
+		"url": "https://raw.githubusercontent.com/kboghdady/youTube_ads_4_pi-hole/master/youtubelist.txt",
+		"rule": "/^0\\.0\\.0\\.0[[:space:]]+([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
+		"size": "M",
+		"focus": "general",
+		"descurl": "https://github.com/kboghdady/youTube_ads_4_pi-hole"
+	},
 	"yoyo": {
 		"url": "https://pgl.yoyo.org/adservers/serverlist.php?hostformat=nohtml&showintro=0&mimetype=plaintext",
 		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
