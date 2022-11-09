@@ -350,7 +350,7 @@ $(call Package/libffmpeg/Default)
     +PACKAGE_libx264:libx264 \
     +!PACKAGE_libx264:fdk-aac
  VARIANT:=full
- PROVIDES:=libffmpeg-mini libffmpeg-audio-dec
+ PROVIDES+=libffmpeg-mini libffmpeg-audio-dec
 endef
 
 
