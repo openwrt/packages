@@ -502,6 +502,10 @@ real_server() {
 		printf '%breal_server %s %d {\n' "${INDENT_1}" "$ipaddr" "$port" >> "$KEEPALIVED_CONF"
 		printf '%bweight %d\n' "${INDENT_2}" "$weight" >> "$KEEPALIVED_CONF"
 		case "$check" in
+			PING_CHECK)
+				printf '%b%s {\n' "${INDENT_2}" "$check" >> "$KEEPALIVED_CONF"
+				printf '%b}\n' "${INDENT_2}" >> "$KEEPALIVED_CONF"
+				;;
 			TCP_CHECK)
 				printf '%b%s {\n' "${INDENT_2}" "$check" >> "$KEEPALIVED_CONF"
 				print_elems_indent "$1" "$INDENT_3" connect_timeout \
