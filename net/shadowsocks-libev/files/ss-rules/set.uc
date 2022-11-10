@@ -102,6 +102,7 @@ function set_elements(suf, af) {
 set {{ set_name(suf, af) }} {
 	type ipv{{af}}_addr;
 	flags interval;
+	auto-merge;
 {%   let elems = set_elements(suf, af); if (length(elems)): %}
 	elements = {
 {%     for (let i = 0; i < length(elems); i++): %}
