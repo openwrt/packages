@@ -98,10 +98,8 @@ define Package/nginx-ssl
   TITLE += with SSL support
   VARIANT:=ssl
   DEPENDS+= +NGINX_PCRE:libpcre \
-	+NGINX_PCRE:nginx-ssl-util +!NGINX_PCRE:nginx-ssl-util-nopcre \
 	+NGINX_HTTP_GZIP:zlib +NGINX_LUA:liblua +NGINX_DAV:libxml2 \
 	+NGINX_UBUS:libubus +NGINX_UBUS:libblobmsg-json +NGINX_UBUS:libjson-c
-  EXTRA_DEPENDS:=nginx-ssl-util$(if $(CONFIG_NGINX_PCRE),,-nopcre) (>=1.5-1) (<2)
   CONFLICTS:=nginx-all-module
 endef
 
@@ -112,9 +110,8 @@ Package/nginx-ssl/description = $(Package/nginx/description) \
 define Package/nginx-all-module
   $(Package/nginx/default)
   TITLE += with ALL module selected
-  DEPENDS+=+libpcre +nginx-ssl-util +zlib +liblua +libxml2 +libubus \
+  DEPENDS+=+libpcre +zlib +liblua +libxml2 +libubus \
 	+libblobmsg-json +libjson-c
-  EXTRA_DEPENDS:=nginx-ssl-util (>=1.5-1) (<2)
   VARIANT:=all-module
   PROVIDES += nginx-ssl
 endef
@@ -357,9 +354,8 @@ CONFIGURE_ARGS += \
 
 define Package/nginx-mod-luci/install
 	$(INSTALL_DIR) $(1)/etc/nginx/conf.d
-	$(INSTALL_CONF) ./files-luci-support/luci.locations $(1)/etc/nginx/conf.d/
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) ./files-luci-support/60_nginx-luci-support $(1)/etc/uci-defaults/60_nginx-luci-support
+	$(INSTALL_DATA) ./files/luci.conf $(1)/etc/nginx/
+	$(INSTALL_DATA) ./files/conf.d/luci.conf $(1)/etc/nginx/conf.d/
 endef
 
 define Package/nginx-ssl/install
@@ -367,6 +363,8 @@ define Package/nginx-ssl/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/nginx $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/nginx/conf.d
 	$(INSTALL_DATA) $(addprefix $(PKG_INSTALL_DIR)/etc/nginx/,$(config_files)) $(1)/etc/nginx/
+	$(INSTALL_DATA) ./files/*.conf $(1)/etc/nginx/
+	$(INSTALL_DATA) ./files/conf.d/*.conf $(1)/etc/nginx/conf.d/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/nginx.init $(1)/etc/init.d/nginx
 ifeq ($(CONFIG_NGINX_NAXSI),y)
@@ -379,19 +377,6 @@ endif
 endef
 
 Package/nginx-all-module/install = $(Package/nginx-ssl/install)
-
-define Package/nginx-ssl/prerm
-#!/bin/sh
-[ -z "$${IPKG_INSTROOT}" ] || exit 0
-[ "$${PKG_UPGRADE}" = "1" ] && exit 0
-eval $$(/usr/bin/nginx-util get_env)
-[ "$$(uci get "nginx.$${LAN_NAME}.$${MANAGE_SSL}")" = "self-signed" ] || exit 0
-rm -f "$$(uci get "nginx.$${LAN_NAME}.ssl_certificate")"
-rm -f "$$(uci get "nginx.$${LAN_NAME}.ssl_certificate_key")"
-exit 0
-endef
-
-Package/nginx-all-module/prerm = $(Package/nginx-ssl/prerm)
 
 define Download/nginx-headers-more
   VERSION:=a9f7c7e86cc7441d04e2f11f01c2e3a9c4b0301d
