@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
-PKG_VERSION:=1.21.3
-PKG_RELEASE:=3
+PKG_VERSION:=1.22.1
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nginx.org/download/
-PKG_HASH:=14774aae0d151da350417efc4afda5cce5035056e71894836797e1f6e2d1175a
+PKG_HASH:=9ebb333a9e82b952acd3e2b4aeb1d4ff6406f72491bab6cd9fe69f0dea737f31
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de> \
 				Ansuel Smith <ansuelsmth@gmail.com>
@@ -97,9 +97,10 @@ define Package/nginx-ssl
   $(Package/nginx/default)
   TITLE += with SSL support
   VARIANT:=ssl
-  DEPENDS+= +NGINX_PCRE:libpcre \
+  DEPENDS+= +NGINX_PCRE:libpcre2 \
 	+NGINX_PCRE:nginx-ssl-util +!NGINX_PCRE:nginx-ssl-util-nopcre \
-	+NGINX_HTTP_GZIP:zlib +NGINX_LUA:liblua +NGINX_DAV:libxml2 \
+	+NGINX_HTTP_GZIP:zlib +NGINX_LUA:liblua +NGINX_LUA:libpcre +NGINX_LUA:luajit +NGINX_DAV:libxml2 \
+	@NGINX_LUA:(i386||x86_64||arm||armeb||aarch64||powerpc||mips||mipsel||mips64) \
 	+NGINX_UBUS:libubus +NGINX_UBUS:libblobmsg-json +NGINX_UBUS:libjson-c
   EXTRA_DEPENDS:=nginx-ssl-util$(if $(CONFIG_NGINX_PCRE),,-nopcre) (>=1.5-1) (<2)
   CONFLICTS:=nginx-all-module
@@ -112,8 +113,8 @@ Package/nginx-ssl/description = $(Package/nginx/description) \
 define Package/nginx-all-module
   $(Package/nginx/default)
   TITLE += with ALL module selected
-  DEPENDS+=+libpcre +nginx-ssl-util +zlib +liblua +libxml2 +libubus \
-	+libblobmsg-json +libjson-c
+  DEPENDS+=+libpcre2 +nginx-ssl-util +zlib +liblua +libpcre +luajit +libxml2 +libubus \
+	+libblobmsg-json +libjson-c @(i386||x86_64||arm||armeb||aarch64||powerpc||mips||mipsel||mips64)
   EXTRA_DEPENDS:=nginx-ssl-util (>=1.5-1) (<2)
   VARIANT:=all-module
   PROVIDES += nginx-ssl
@@ -137,6 +138,7 @@ Package/nginx-all-module/conffiles = $(Package/nginx/conffiles)
 
 
 ADDITIONAL_MODULES:= --with-http_ssl_module
+EXTRA_LD_OPT:=
 
 ifneq ($(BUILD_VARIANT),all-module)
   ifneq ($(CONFIG_NGINX_HTTP_CACHE),y)
@@ -236,6 +238,7 @@ ifneq ($(BUILD_VARIANT),all-module)
   endif
   ifeq ($(CONFIG_NGINX_LUA),y)
     ADDITIONAL_MODULES += --add-module=$(PKG_BUILD_DIR)/lua-nginx
+    EXTRA_LD_OPT += -lpcre
   endif
   ifeq ($(CONFIG_IPV6),y)
     ADDITIONAL_MODULES += --with-ipv6
@@ -297,6 +300,7 @@ else
   CONFIG_NGINX_LUA:=y
   CONFIG_NGINX_DAV:=y
   CONFIG_NGINX_UBUS:=y
+  EXTRA_LD_OPT += -lpcre
   ADDITIONAL_MODULES += --with-ipv6 --with-http_stub_status_module --with-http_flv_module \
 	--with-http_dav_module \
 	--with-http_auth_request_module --with-http_v2_module --with-http_realip_module \
@@ -332,8 +336,8 @@ TARGET_CFLAGS += -fvisibility=hidden -ffunction-sections -fdata-sections -DNGX_L
 TARGET_LDFLAGS += -Wl,--gc-sections
 
 ifeq ($(CONFIG_NGINX_LUA),y)
-  CONFIGURE_VARS += LUA_INC=$(STAGING_DIR)/usr/include \
-					LUA_LIB=$(STAGING_DIR)/usr/lib
+  CONFIGURE_VARS += LUAJIT_INC=$(STAGING_DIR)/usr/include/luajit-2.1 \
+					LUAJIT_LIB=$(STAGING_DIR)/usr/lib
 endif
 
 CONFIGURE_VARS += CONFIG_BIG_ENDIAN=$(CONFIG_BIG_ENDIAN)
@@ -352,7 +356,7 @@ CONFIGURE_ARGS += \
 			--http-fastcgi-temp-path=/var/lib/nginx/fastcgi \
 			--with-cc="$(TARGET_CC)" \
 			--with-cc-opt="$(TARGET_CPPFLAGS) $(TARGET_CFLAGS)" \
-			--with-ld-opt="$(TARGET_LDFLAGS)" \
+			--with-ld-opt="$(TARGET_LDFLAGS) $(EXTRA_LD_OPT)" \
 			--without-http_upstream_zone_module
 
 define Package/nginx-mod-luci/install
@@ -408,11 +412,11 @@ define Prepare/nginx-headers-more
 endef
 
 define Download/nginx-brotli
-  VERSION:=e505dce68acc190cc5a1e780a3b0275e39f160ca
+  VERSION:=6e975bcb015f62e1f303054897783355e2a877dc
   SUBDIR:=nginx-brotli
   FILE:=ngx-brotli-module-$$(VERSION).tar.xz
   URL:=https://github.com/google/ngx_brotli.git
-  MIRROR_HASH:=04847f11ef808fed50f44b2af0ef3abf59ff0ffc06dfc7394d9ab51d53fef31f
+  MIRROR_HASH:=e4e262f87e48fe0ab6fdad395dba409182d05a3be88c9f2a892ca6f26158665e
   PROTO:=git
 endef
 
@@ -450,11 +454,11 @@ define Prepare/nginx-ts
 endef
 
 define Download/nginx-naxsi
-  VERSION:=951123ad456bdf5ac94e8d8819342fe3d49bc002
+  VERSION:=d714f1636ea49a9a9f4f06dba14aee003e970834
   SUBDIR:=nginx-naxsi
   FILE:=nginx-naxsi-module-$$(VERSION).tar.xz
   URL:=https://github.com/nbs-system/naxsi.git
-  MIRROR_HASH:=c734cae19a596affadd62a2df1b58d3df8d1364093a4e80a7cd1ab4555963535
+  MIRROR_HASH:=0c2ba8675a291a81b406994c376e1f5e6b602f4b7676d5d53029592d5d71c420
   PROTO:=git
 endef
 
@@ -464,11 +468,11 @@ define Prepare/nginx-naxsi
 endef
 
 define Download/lua-nginx
-  VERSION:=e94f2e5d64daa45ff396e262d8dab8e56f5f10e0
+  VERSION:=v0.10.22
   SUBDIR:=lua-nginx
   FILE:=lua-nginx-module-$$(VERSION).tar.xz
   URL:=https://github.com/openresty/lua-nginx-module.git
-  MIRROR_HASH:=27729921964f066d97e99c263da153b34622a2f4b811114e4c3ee61c6fc71395
+  MIRROR_HASH:=390eb316af72fe5aa49dcf43327de2ed5b028e4adde7d1a93272df31da078aed
   PROTO:=git
 endef
 
