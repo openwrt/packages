@@ -117,15 +117,6 @@ load_globals() {
 	return 1
 }
 
-cmd_get() {
-	trap cleanup EXIT
-
-	config_load acme
-	config_foreach load_globals acme
-
-	config_foreach get_cert cert
-}
-
 usage() {
 	cat <<EOF
 Usage: acme <command> [arguments]
@@ -143,13 +134,18 @@ fi
 case $1 in
 get)
 	mkdir -p $run_dir
-	{
-		if ! flock -n 200; then
-			log err "Another ACME instance is already running."
-			exit 1
-		fi
-		cmd_get "$@"
-	} 200>$run_dir/lock
+	exec 200>$run_dir/lock
+	if ! flock -n 200; then
+		log err "Another ACME instance is already running."
+		exit 1
+	fi
+
+	trap cleanup EXIT
+
+	config_load acme
+	config_foreach load_globals acme
+
+	config_foreach get_cert cert
 	;;
 *)
 	usage
