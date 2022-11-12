@@ -1,0 +1,9 @@
+# TODO: currently we make all executables run whenever an iface change event is
+# triggered. This can be optimized by recording which interfaces were changed,
+# and for what reason (e.g., ifup/ifupdate/ifdown) into a file. Executable can
+# then decide if it wants to skip generating all together if the interfaces it
+# is interested in were not changed.
+#
+# This can complicate the design a lot, not implement it until it's proven that
+# the current design can be unacceptablely slow
+ubus call service event '{"type":"iface","data":{}}'

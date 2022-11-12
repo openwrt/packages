@@ -1,0 +1,48 @@
+#!/bin/sh
+. /usr/lib/nginx/functions.sh
+
+network_find_wan wan
+# If wan is down, exit with 1 to have the generated conf file removed
+if [ -z "$wan" ]; then
+	exit 1
+fi
+
+cat <<EOF
+server {
+	$(ngx_listen "$wan" 443 ssl default_server)
+
+	# Standard paths used in ACME packages
+	ssl_certificate /etc/ssl/acme/example.com.fullchain.crt;
+	ssl_certificate_key /etc/ssl/acme/example.com.key;
+	ssl_trusted_certificate /etc/ssl/acme/example.com.chain.crt;
+
+	ssl_protocols TLSv1.3;
+	ssl_session_cache shared:SSL:32k;
+	ssl_session_timeout 64m;
+	ssl_session_tickets off;
+	ssl_stapling on;
+	ssl_stapling_verify on;
+	resolver 127.0.0.1;
+
+	root /path/to/site;
+
+	# Uncomment the following include directives to define location directives
+	# in individual files like:
+	#   /etc/nginx/conf.d/example.com/*.conf
+	#   /etc/nginx/dynconf.d/example.com/*.dynconf
+
+	# include /var/etc/nginx/conf.d/example.com/*.conf;
+	# include conf.d/example.com/*.conf;
+}
+
+server {
+	$(ngx_listen "$wan" 80 default_server)
+	location / {
+		return 302 https://\$host\$request_uri;
+	}
+
+	# Install an ACME package like acme-acmesh to
+	# be able to issue/renew certificate with Nginx
+	include acme.conf;
+}
+EOF

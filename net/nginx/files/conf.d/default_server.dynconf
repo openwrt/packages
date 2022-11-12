@@ -1,0 +1,17 @@
+#!/bin/sh
+. /usr/lib/nginx/functions.sh
+
+cat <<EOF
+server {
+	listen 443 ssl default_server;
+	listen [::]:443 ssl default_server;
+	access_log off;
+
+	$(ngx_ssl_cert)
+	ssl_session_cache shared:SSL:32k;
+	ssl_session_timeout 64m;
+
+	include /var/etc/nginx/conf.d/default_server/*.conf;
+	include conf.d/default_server/*.conf;
+}
+EOF

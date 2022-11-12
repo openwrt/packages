@@ -76,6 +76,7 @@ PKG_CONFIG_DEPENDS := \
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
+include $(INCLUDE_DIR)/version.mk
 
 define Package/nginx/default
   SECTION:=net
@@ -353,20 +354,27 @@ CONFIGURE_ARGS += \
 			--without-http_upstream_zone_module
 
 define Package/nginx-mod-luci/install
-	$(INSTALL_DIR) $(1)/etc/nginx/conf.d
-	$(INSTALL_DATA) ./files/luci.conf $(1)/etc/nginx/
-	$(INSTALL_DATA) ./files/conf.d/luci.conf $(1)/etc/nginx/conf.d/
+	$(INSTALL_DIR) $(1)/etc/nginx/conf.d/default_server
+	$(INSTALL_DATA) ./files/conf.d/default_server/luci.conf $(1)/etc/nginx/conf.d/default_server/
 endef
 
 define Package/nginx-ssl/install
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/nginx.init $(1)/etc/init.d/nginx
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/nginx.config $(1)/etc/config/nginx
+	$(VERSION_SED_SCRIPT) $(1)/etc/config/nginx
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/nginx $(1)/usr/sbin/
-	$(INSTALL_DIR) $(1)/etc/nginx/conf.d
+	$(INSTALL_DIR) $(1)/etc/nginx/conf.d/default_server
 	$(INSTALL_DATA) $(addprefix $(PKG_INSTALL_DIR)/etc/nginx/,$(config_files)) $(1)/etc/nginx/
 	$(INSTALL_DATA) ./files/*.conf $(1)/etc/nginx/
 	$(INSTALL_DATA) ./files/conf.d/*.conf $(1)/etc/nginx/conf.d/
-	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/nginx.init $(1)/etc/init.d/nginx
+	$(INSTALL_DATA) ./files/conf.d/*.dynconf $(1)/etc/nginx/conf.d/
+	$(INSTALL_DIR) $(1)/usr/lib/nginx
+	$(INSTALL_DATA) ./files/functions.sh $(1)/usr/lib/nginx/
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
+	$(INSTALL_DATA) ./files/procd.hotplug $(1)/etc/hotplug.d/iface/30-procd
 ifeq ($(CONFIG_NGINX_NAXSI),y)
 	$(INSTALL_DIR) $(1)/etc/nginx
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/nginx-naxsi/naxsi_config/naxsi_core.rules $(1)/etc/nginx
