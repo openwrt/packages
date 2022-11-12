@@ -9,6 +9,7 @@ local function scrape()
   local metric_wifi_network_bitrate = metric("wifi_network_bitrate","gauge")
   local metric_wifi_network_noise = metric("wifi_network_noise_dbm","gauge")
   local metric_wifi_network_signal = metric("wifi_network_signal_dbm","gauge")
+  local metric_wifi_network_stations_total = metric("wifi_network_stations_total","gauge")
 
   local u = ubus.connect()
   local status = u:call("network.wireless", "status", {})
@@ -50,11 +51,17 @@ local function scrape()
           quality = math.floor((100 / qm) * qc)
         end
 
+        local stations = 0
+        for _ in pairs(iw.assoclist(ifname)) do
+          stations = stations + 1
+        end
+
         metric_wifi_network_config(network_config_labels, 1)
         metric_wifi_network_quality(network_labels, quality)
         metric_wifi_network_noise(network_labels, iw.noise(ifname) or 0)
         metric_wifi_network_bitrate(network_labels, iw.bitrate(ifname) or 0)
         metric_wifi_network_signal(network_labels, iw.signal(ifname) or -255)
+        metric_wifi_network_stations_total(network_labels, stations)
       end
     end
   end
