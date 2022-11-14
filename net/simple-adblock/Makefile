@@ -5,8 +5,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=simple-adblock
-PKG_VERSION:=1.9.2
-PKG_RELEASE:=4
+PKG_VERSION:=1.9.3
+PKG_RELEASE:=1
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.ca>
 PKG_LICENSE:=GPL-3.0-or-later
 
