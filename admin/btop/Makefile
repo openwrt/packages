@@ -42,6 +42,9 @@ define Package/btop/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/local/bin/btop $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/usr/share
 	$(CP) $(PKG_INSTALL_DIR)/usr/local/share/btop $(1)/usr/share/
+
+	$(INSTALL_DIR) $(1)/etc/profile.d
+	$(CP) $(CURDIR)/files/btop.sh $(1)/etc/profile.d/
 endef
 
 $(eval $(call BuildPackage,btop))
