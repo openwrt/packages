@@ -8,7 +8,7 @@
  	s->initdb = 0;
  	s->iflisthash = 0;
  	s->cfgfile[0] = '\0';
-@@ -282,6 +283,9 @@ void preparedatabase(DSTATE *s)
+@@ -285,6 +286,9 @@ void preparedatabase(DSTATE *s)
  	}
  
  	if (s->noadd) {
@@ -18,7 +18,7 @@
  		printf("No interfaces found in database, exiting.\n");
  		exit(EXIT_FAILURE);
  	}
-@@ -300,6 +304,9 @@ void preparedatabase(DSTATE *s)
+@@ -303,6 +307,9 @@ void preparedatabase(DSTATE *s)
  	}
  
  	if (!addinterfaces(s) && s->dbifcount == 0) {

@@ -32,8 +32,8 @@
 +#define __SANE_USERSPACE_TYPES__	/* For PPC64, to get LL64 types */
 +#endif
  #include <linux/types.h>
+ #ifndef FSCONFIG_SET_FLAG
  #include <linux/fs.h>
- #include <linux/major.h>
 --- a/identify.c
 +++ b/identify.c
 @@ -4,6 +4,9 @@

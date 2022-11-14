@@ -18,4 +18,4 @@
 -# error "my_checksum() is defined in mysys/crc32/crc32_ppc64.c"
  #endif
  extern "C"
- unsigned int my_checksum(unsigned int crc, const void *data, size_t len)
+ uint32 my_checksum(uint32 crc, const void *data, size_t len)

@@ -49,10 +49,10 @@ endef
 
 define Package/attendedsysupgrade-common/install
 	$(INSTALL_DIR) $(1)/etc/uci-defaults/
-	$(INSTALL_BIN) ./files/attendedsysupgrade.defaults $(1)/etc/uci-defaults/attendedsysupgrade
+	$(INSTALL_DATA) ./files/attendedsysupgrade.defaults $(1)/etc/uci-defaults/attendedsysupgrade
 
 	$(INSTALL_DIR) $(1)/etc/opkg/keys/
-	$(INSTALL_BIN) ./files/86241a707a30cb7f $(1)/etc/opkg/keys/86241a707a30cb7f
+	$(INSTALL_DATA) ./files/8a11255d14aef6c8 $(1)/etc/opkg/keys/8a11255d14aef6c8
 endef
 
 $(eval $(call BuildPackage,attendedsysupgrade-common))

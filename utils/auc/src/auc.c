@@ -89,6 +89,8 @@ static void *dlh = NULL;
 static int rc;
 static bool dont_ask = false;
 
+static int avl_verrevcmp(const void *k1, const void *k2, void *ptr);
+
 struct branch {
 	struct avl_node avl;
 	char *name;
@@ -101,7 +103,7 @@ struct branch {
 	bool snapshot;
 	unsigned int branch_off_rev;
 };
-static struct avl_tree branches = AVL_TREE_INIT(branches, avl_strcmp, false, NULL);
+static struct avl_tree branches = AVL_TREE_INIT(branches, avl_verrevcmp, false, NULL);
 
 struct branch_version {
 	struct avl_node avl;
@@ -1778,7 +1780,7 @@ int main(int args, char *argv[]) {
 	bool retry_delay = false;
 	bool upg_check = false;
 	bool dry_run = false;
-	int revcmp;
+	int revcmp = 0;
 	int addargs;
 	unsigned char argc = 1;
 	bool force = false, use_get = false, in_queue = false, release_only = false;
@@ -1889,6 +1891,7 @@ int main(int args, char *argv[]) {
 	}
 
 	running_branch = get_current_branch();
+	running_revision = revision_from_version_code(revision);
 	if (!running_branch)
 		fprintf(stderr, "WARNING: cannot determing currently running branch.\n");
 
@@ -1900,7 +1903,13 @@ int main(int args, char *argv[]) {
 
 	fprintf(stdout, "Available: %s %s\n", target_version->version_number, target_version->version_code);
 
-	revcmp = verrevcmp(revision, target_version->version_code);
+	if (running_branch->snapshot && !target_version->branch->snapshot)
+		revcmp = (running_revision < target_version->branch->branch_off_rev)?-1:1;
+	else if (!running_branch->snapshot && target_version->branch->snapshot)
+		revcmp = -1;
+	else
+		revcmp = verrevcmp(version, target_version->version_number);
+
 	if (revcmp < 0)
 			upg_check |= PKG_UPGRADE;
 	else if (revcmp > 0)
@@ -1912,9 +1921,10 @@ int main(int args, char *argv[]) {
 		goto freebranches;
 	}
 
-	running_revision = revision_from_version_code(revision);
 	if (target_version->branch == running_branch)
 		grab_changes(running_branch, running_revision);
+	else if (revcmp > 0)
+		fprintf(stderr, "WARNING: Downgrade to older branch may not work as expected!\n");
 	else avl_for_element_range(running_branch, target_version->branch, current_branch, avl) {
 		if (current_branch == running_branch)
 			grab_changes(running_branch, running_revision);

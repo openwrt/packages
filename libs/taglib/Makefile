@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=taglib
-PKG_VERSION:=1.12
+PKG_VERSION:=1.13
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/taglib/taglib/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=b5a56f78a8bd962aaaec992b25a031f541b949b6eb30aa232bd6d5fa17cf8fa8
+PKG_HASH:=58f08b4db3dc31ed152c04896ee9172d22052bc7ef12888028c01d8b1d60ade0
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=LGPL-2.1-or-later

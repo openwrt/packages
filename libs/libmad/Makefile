@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmad
-PKG_VERSION:=0.16.2
+PKG_VERSION:=0.16.3
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/tenacityteam/libmad/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=6c14c2f4dcf7fd32e447eef99d6c53faded52e22f95e223e6f58844030851b99
+PKG_HASH:=83ca48db60f480ae22234bae08e6ad651adec2667a68ad2df6fd61e6a50a32c7
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=GPL-2.0-or-later

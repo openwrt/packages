@@ -6,7 +6,3 @@ issued|renewed)
 		>"/etc/ssl/acme/$main_domain.combined.cer"
 	;;
 esac
-
-if [ "$ACTION" = renewed ]; then
-	/etc/init.d/haproxy reload
-fi

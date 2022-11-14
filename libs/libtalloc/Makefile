@@ -6,13 +6,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=talloc
-PKG_VERSION:=2.3.1
+PKG_VERSION:=2.3.4
 MAJOR_VERSION:=2
-PKG_RELEASE:=4
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.samba.org/ftp/talloc
-PKG_HASH:=ef4822d2fdafd2be8e0cabc3ec3c806ae29b8268e932c5e9a4cd5585f37f9f77
+PKG_HASH:=179f9ebe265e67e4ab2c26cad2b7de4b6a77c6c212f966903382869f06be6505
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=LGPL-3.0-or-later
@@ -59,6 +59,7 @@ define Build/Configure
 			\nChecking uname version type: \"$(LINUX_UNAME_VERSION)\" \
 		\n" ; \
 		$(CONFIGURE_VARS) \
+		PYTHONHASHSEED=1 \
 		./buildtools/bin/waf configure \
 			--prefix=/usr \
 			--sysconfdir=/etc \

@@ -1,0 +1,137 @@
+From dba9e1b7707c9cc9f5804b7a5cbda32a08e9e18f Mon Sep 17 00:00:00 2001
+From: Christian Marangi <ansuelsmth@gmail.com>
+Date: Mon, 17 Oct 2022 20:00:24 +0200
+Subject: [PATCH] Cast sockaddr_in6 to sockaddr to mute compilation warning
+
+Cast sockaddr_in6 to sockaddr to mute compilation warning as
+documentation say for getsockname.
+
+Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
+---
+ eperd/evtdig.c      |  3 ++-
+ eperd/httpget.c     |  3 ++-
+ eperd/ntp.c         |  4 ++--
+ eperd/ping.c        | 12 ++++++++----
+ eperd/sslgetcert.c  |  3 ++-
+ eperd/traceroute.c  |  2 +-
+ networking/rptra6.c |  2 +-
+ 7 files changed, 18 insertions(+), 11 deletions(-)
+
+--- a/eperd/evtdig.c
++++ b/eperd/evtdig.c
+@@ -1612,7 +1612,8 @@ static void tcp_connected(struct tu_env
+ 	}
+ 	else
+ 	{
+-		getsockname(bufferevent_getfd(bev), &qry->loc_sin6, &qry->loc_socklen);
++		getsockname(bufferevent_getfd(bev),
++			(struct sockaddr *)&qry->loc_sin6, &qry->loc_socklen);
+ 		if (qry->response_out)
+ 		{
+ 			write_response(qry->resp_file, RESP_SOCKNAME,
+--- a/eperd/httpget.c
++++ b/eperd/httpget.c
+@@ -2103,7 +2103,8 @@ static void connected(struct tu_env *env
+ 	else
+ 	{
+ 		getsockname(bufferevent_getfd(bev),	
+-			&state->loc_sin6, &state->loc_socklen);
++			(struct sockaddr *)&state->loc_sin6,
++			&state->loc_socklen);
+ 		if (state->response_out)
+ 		{
+ 			write_response(state->resp_file, RESP_SOCKNAME,
+--- a/eperd/ntp.c
++++ b/eperd/ntp.c
+@@ -1218,13 +1218,13 @@ static int create_socket(struct ntpstate
+ 
+ 		len= sizeof(state->loc_sin6);
+ 		read_response(state->socket, RESP_SOCKNAME,
+-			&len, &state->loc_sin6);
++			&len, (struct sockaddr *)&state->loc_sin6);
+ 		state->loc_socklen= len;
+ 	}
+ 	else
+ 	{
+ 		if (getsockname(state->socket,
+-			&state->loc_sin6,
++			(struct sockaddr*)&state->loc_sin6,
+ 			&state->loc_socklen) == -1)
+ 		{
+ 			crondlog(DIE9 "getsockname failed");
+--- a/eperd/ping.c
++++ b/eperd/ping.c
+@@ -703,7 +703,8 @@ static void ping_xmit(struct pingstate *
+ 		}
+ 		else
+ 		{
+-			getsockname(host->socket, &host->loc_sin6,
++			getsockname(host->socket,
++				(struct sockaddr *)&host->loc_sin6,
+ 				&host->loc_socklen);
+ 			if (host->resp_file_out)
+ 			{
+@@ -735,7 +736,8 @@ static void ping_xmit(struct pingstate *
+ 			host->include_probe_id);
+ 
+ 		host->loc_socklen= sizeof(host->loc_sin6);
+-		getsockname(host->socket, &host->loc_sin6, &host->loc_socklen);
++		getsockname(host->socket, (struct sockaddr *)&host->loc_sin6,
++			&host->loc_socklen);
+ 
+ 		if (host->response_in)
+ 		{
+@@ -1567,7 +1569,8 @@ static void ping_start2(void *state)
+ 	}
+ 
+ 	if (!pingstate->response_in && 
+-		connect(pingstate->socket, &pingstate->sin6, 
++		connect(pingstate->socket,
++		(struct sockaddr *)&pingstate->sin6, 
+ 		pingstate->socklen) == -1)
+ 	{
+ 		snprintf(line, sizeof(line),
+@@ -1592,7 +1595,8 @@ static void ping_start2(void *state)
+ 	}
+ 	else
+ 	{
+-		getsockname(pingstate->socket, &pingstate->loc_sin6,
++		getsockname(pingstate->socket,
++			(struct sockaddr *)&pingstate->loc_sin6,
+ 			&pingstate->loc_socklen);
+ 		if (pingstate->resp_file_out)
+ 		{
+--- a/eperd/sslgetcert.c
++++ b/eperd/sslgetcert.c
+@@ -1801,7 +1801,8 @@ static void connected(struct tu_env *env
+ 	else
+ 	{
+ 		getsockname(bufferevent_getfd(bev),	
+-			&state->loc_sin6, &state->loc_socklen);
++			(struct sockaddr *)&state->loc_sin6,
++			&state->loc_socklen);
+ 		if (state->response_out)
+ 		{
+ 			write_response(state->resp_file, RESP_SOCKNAME,
+--- a/eperd/traceroute.c
++++ b/eperd/traceroute.c
+@@ -4631,7 +4631,7 @@ static int create_socket(struct trtstate
+ 	{
+ 		state->loc_socklen= sizeof(state->loc_sin6);
+ 		if (!state->response_in && getsockname(state->socket_icmp,
+-			&state->loc_sin6,
++			(struct sockaddr *)&state->loc_sin6,
+ 			&state->loc_socklen) == -1)
+ 		{
+ 			crondlog(DIE9 "getsockname failed");
+--- a/networking/rptra6.c
++++ b/networking/rptra6.c
+@@ -441,7 +441,7 @@ static int send_sol(int sock)
+ 	inet_pton(AF_INET6, "FF02::2", &sin6.sin6_addr);
+ 	sin6.sin6_family= AF_INET6;
+ 
+-	sendto(sock, &pkt, sizeof(pkt), 0, &sin6, sizeof(sin6));
++	sendto(sock, &pkt, sizeof(pkt), 0, (struct sockaddr*)&sin6, sizeof(sin6));
+ 
+ 	alarm(RTR_SOLICITATION_INTERVAL);
+ 

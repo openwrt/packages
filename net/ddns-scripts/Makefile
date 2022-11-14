@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ddns-scripts
 PKG_VERSION:=2.8.2
-PKG_RELEASE:=27
+PKG_RELEASE:=29
 
 PKG_LICENSE:=GPL-2.0
 
@@ -50,6 +50,7 @@ endef
 define Package/ddns-scripts-services
   $(call Package/ddns-scripts/Default)
   TITLE:=Common ddns providers
+  PROVIDES:=ddns-scripts_service
 endef
 
 define Package/ddns-scripts-services/description
@@ -61,6 +62,7 @@ define Package/ddns-scripts-cloudflare
   $(call Package/ddns-scripts/Default)
   TITLE:=Extension for cloudflare.com API v4
   DEPENDS:=ddns-scripts +curl
+  PROVIDES:=ddns-scripts_cloudflare.com-v4
 endef
 
 define Package/ddns-scripts-cloudflare/description
@@ -72,6 +74,7 @@ define Package/ddns-scripts-freedns
   $(call Package/ddns-scripts/Default)
   TITLE:=Extension for freedns.42.pl
   DEPENDS:=ddns-scripts +curl
+  PROVIDES:=ddns-scripts_freedns_42_pl
 endef
 
 define Package/ddns-scripts-freedns/description
@@ -83,6 +86,7 @@ define Package/ddns-scripts-godaddy
   $(call Package/ddns-scripts/Default)
   TITLE:=Extension for godaddy.com API v1
   DEPENDS:=ddns-scripts +curl
+  PROVIDES:=ddns-scripts_godaddy.com-v1
 endef
 
 define Package/ddns-scripts-godaddy/description
@@ -94,6 +98,7 @@ define Package/ddns-scripts-digitalocean
   $(call Package/ddns-scripts/Default)
   TITLE:=Extention for digitalocean.com API v2
   DEPENDS:=ddns-scripts +curl
+  PROVIDES:=ddns-scripts_digitalocean.com-v2
 endef
 
 define Package/ddns-scripts-digitalocean/description
@@ -123,6 +128,7 @@ define Package/ddns-scripts-noip
   $(call Package/ddns-scripts/Default)
   TITLE:=Extension for no-ip.com
   DEPENDS:=ddns-scripts
+  PROVIDES:=ddns-scripts_no-ip_com
 endef
 
 define Package/ddns-scripts-noip/description
@@ -147,6 +153,7 @@ define Package/ddns-scripts-nsupdate
   $(call Package/ddns-scripts/Default)
   TITLE:=Extension for using bind nsupdate.
   DEPENDS:=ddns-scripts +bind-client
+  PROVIDES:=ddns-scripts_nsupdate
 endef
 
 define Package/ddns-scripts-nsupdate/description
@@ -164,6 +171,7 @@ define Package/ddns-scripts-route53
   $(call Package/ddns-scripts/Default)
   TITLE:=Extension for route53 API v1
   DEPENDS:=ddns-scripts +curl +openssl-util
+  PROVIDES:=ddns-scripts_route53-v1
 endef
 
 define Package/ddns-scripts-route53/description
@@ -180,6 +188,7 @@ define Package/ddns-scripts-cnkuai
   $(call Package/ddns-scripts/Default)
   TITLE:=CnKuai API
   DEPENDS:=ddns-scripts +curl +giflib-utils
+  PROVIDES:=ddns-scripts_cnkuai_cn
 endef
 
 define Package/ddns-scripts-cnkuai/description

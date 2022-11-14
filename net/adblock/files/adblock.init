@@ -8,23 +8,12 @@
 START=30
 USE_PROCD=1
 
-if [ -n "$(type -t extra_command)" ]; then
-	extra_command "suspend" "Suspend adblock processing"
-	extra_command "resume" "Resume adblock processing"
-	extra_command "query" "<domain> Query active blocklists and backups for a specific domain"
-	extra_command "report" "[[<cli>|<mail>|<gen>|<json>] [<count>] [<search>]] Print DNS statistics with an optional search parameter"
-	extra_command "list" "[<add>|<add_sha>|<add_utc>|<add_eng>|<add_stb>|<remove>|<remove_sha>|<remove_utc>|<remove_eng>|<remove_stb>] <source(s)> List/Edit available sources"
-	extra_command "timer" "[<add> <tasks> <hour> [<minute>] [<weekday>]]|[<remove> <line no.>] List/Edit cron update intervals"
-else
-	EXTRA_COMMANDS="status suspend resume query report list timer version"
-	EXTRA_HELP="	status	Service status
-	suspend	Suspend adblock processing
-	resume	Resume adblock processing
-	query	<domain> Query active blocklists and backups for a specific domain
-	report	[[<cli>|<mail>|<gen>|<json>] [<count>] [<search>]] Print DNS statistics with an optional search parameter
-	list	[<add>|<add_sha>|<add_utc>|<add_eng>|<add_stb>|<remove>|<remove_sha>|<remove_utc>|<remove_eng>|<remove_stb>] <source(s)> List/Edit available sources
-	timer	[<add> <tasks> <hour> [<minute>] [<weekday>]]|[<remove> <line no.>] List/Edit cron update intervals"
-fi
+extra_command "suspend" "Suspend adblock processing"
+extra_command "resume" "Resume adblock processing"
+extra_command "query" "<domain> Query active blocklists and backups for a specific domain"
+extra_command "report" "[[<cli>|<mail>|<gen>|<json>] [<top_count>] [<res_count>] [<search>]] Print DNS statistics with an optional search parameter"
+extra_command "list" "[<add>|<add_utc>|<add_eng>|<add_stb>|<remove>|<remove_utc>|<remove_eng>|<remove_stb>] <source(s)> List/Edit available sources"
+extra_command "timer" "[<add> <tasks> <hour> [<minute>] [<weekday>]]|[<remove> <line no.>] List/Edit cron update intervals"
 
 adb_init="/etc/init.d/adblock"
 adb_script="/usr/bin/adblock.sh"
@@ -34,7 +23,7 @@ if [ -s "${adb_pidfile}" ] && { [ "${action}" = "start" ] || [ "${action}" = "st
 	[ "${action}" = "restart" ] || [ "${action}" = "reload" ] || [ "${action}" = "report" ] ||
 	[ "${action}" = "suspend" ] || [ "${action}" = "resume" ] || [ "${action}" = "query" ] ||
 	{ [ "${action}" = "list" ] && [ -n "${1}" ]; }; }; then
-	exit 0
+	return 0
 fi
 
 boot() {
@@ -82,7 +71,7 @@ query() {
 }
 
 report() {
-	rc_procd "${adb_script}" report "${1:-"cli"}" "${2}" "${3}"
+	rc_procd "${adb_script}" report "${1:-"cli"}" "${2}" "${3}" "${4}"
 }
 
 list() {

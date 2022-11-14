@@ -19,22 +19,22 @@ Subject: [PATCH 904/904] gmpdh: Plugin that implements gmp DH functions in an
 --- a/configure.ac
 +++ b/configure.ac
 @@ -147,6 +147,7 @@ ARG_DISBL_SET([fips-prf],       [disable
- ARG_ENABL_SET([gcm],            [enables the GCM AEAD wrapper crypto plugin.])
+ ARG_DISBL_SET([gcm],            [disable the GCM AEAD wrapper crypto plugin.])
  ARG_ENABL_SET([gcrypt],         [enables the libgcrypt plugin.])
  ARG_DISBL_SET([gmp],            [disable GNU MP (libgmp) based crypto implementation plugin.])
 +ARG_DISBL_SET([gmpdh],          [disable GNU MP (libgmp) based static-linked crypto DH minimal implementation plugin.])
  ARG_DISBL_SET([curve25519],     [disable Curve25519 Diffie-Hellman plugin.])
  ARG_DISBL_SET([hmac],           [disable HMAC crypto implementation plugin.])
  ARG_DISBL_SET([kdf],            [disable KDF (prf+) implementation plugin.])
-@@ -1542,6 +1543,7 @@ ADD_PLUGIN([pkcs8],                [s ch
- ADD_PLUGIN([af-alg],               [s charon scepclient pki scripts medsrv attest nm cmd aikgen])
+@@ -1566,6 +1567,7 @@ ADD_PLUGIN([pkcs8],                [s ch
+ ADD_PLUGIN([af-alg],               [s charon pki scripts medsrv attest nm cmd aikgen])
  ADD_PLUGIN([fips-prf],             [s charon nm cmd])
- ADD_PLUGIN([gmp],                  [s charon scepclient pki scripts manager medsrv attest nm cmd aikgen fuzz])
-+ADD_PLUGIN([gmpdh],                [s charon scepclient pki scripts manager medsrv attest nm cmd aikgen])
+ ADD_PLUGIN([gmp],                  [s charon pki scripts manager medsrv attest nm cmd aikgen fuzz])
++ADD_PLUGIN([gmpdh],                [s charon pki scripts manager medsrv attest nm cmd aikgen])
  ADD_PLUGIN([curve25519],           [s charon pki scripts nm cmd])
  ADD_PLUGIN([agent],                [s charon nm cmd])
  ADD_PLUGIN([keychain],             [s charon cmd])
-@@ -1685,6 +1687,7 @@ AM_CONDITIONAL(USE_SHA3, test x$sha3 = x
+@@ -1708,6 +1710,7 @@ AM_CONDITIONAL(USE_SHA3, test x$sha3 = x
  AM_CONDITIONAL(USE_MGF1, test x$mgf1 = xtrue)
  AM_CONDITIONAL(USE_FIPS_PRF, test x$fips_prf = xtrue)
  AM_CONDITIONAL(USE_GMP, test x$gmp = xtrue)
@@ -42,7 +42,7 @@ Subject: [PATCH 904/904] gmpdh: Plugin that implements gmp DH functions in an
  AM_CONDITIONAL(USE_CURVE25519, test x$curve25519 = xtrue)
  AM_CONDITIONAL(USE_RDRAND, test x$rdrand = xtrue)
  AM_CONDITIONAL(USE_AESNI, test x$aesni = xtrue)
-@@ -1964,6 +1967,7 @@ AC_CONFIG_FILES([
+@@ -1985,6 +1988,7 @@ AC_CONFIG_FILES([
  	src/libstrongswan/plugins/mgf1/Makefile
  	src/libstrongswan/plugins/fips_prf/Makefile
  	src/libstrongswan/plugins/gmp/Makefile

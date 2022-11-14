@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=iputils
 PKG_VERSION:=20211215
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/iputils/iputils/tar.gz/$(PKG_VERSION)?
@@ -51,6 +51,7 @@ define Package/iputils-ping
   $(call Package/iputils/Default)
   TITLE:=iputils-ping
   DEPENDS:=+kmod-crypto-md5
+  PROVIDES:=iputils-ping6
 endef
 
 define Package/iputils-ping/config

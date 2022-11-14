@@ -8,27 +8,24 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libxslt
-PKG_VERSION:=1.1.34
-PKG_RELEASE:=4
+PKG_VERSION:=1.1.37
+PKG_RELEASE:=$(AUTORELEASE)
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:= \
-	http://xmlsoft.org/sources/ \
-	ftp://fr.rpmfind.net/pub/libxml/
-PKG_HASH:=98b1bd46d6792925ad2dfe9a87452ea2adebf69dcb9919ffd55bf926a7f93f7f
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=@GNOME/libxslt/$(basename $(PKG_VERSION))
+PKG_HASH:=3a4b27dc8027ccd6146725950336f1ec520928f320f144eb5fa7990ae6123ab4
 
 PKG_MAINTAINER:=Jiri Slachta <jiri@slachta.eu>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:xmlsoft:libxslt
 
-PKG_FIXUP:=autoreconf
-PKG_INSTALL:=1
-PKG_BUILD_PARALLEL:=1
 HOST_BUILD_DEPENDS:=libxml2/host
+CMAKE_BINARY_SUBDIR:=openwrt-build
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
+include $(INCLUDE_DIR)/cmake.mk
 include $(INCLUDE_DIR)/nls.mk
 
 define Package/libxslt
@@ -67,36 +64,40 @@ define Package/xsltproc/description
  XSLT XML transformation utility.
 endef
 
-CONFIGURE_ARGS += \
-	--enable-shared \
-	--enable-static \
-	--without-python \
-	--without-crypto \
-	--without-debug \
-	--without-mem-debug \
-	--without-debugger \
-	--without-plugins
+CMAKE_HOST_OPTIONS += \
+	-DBUILD_SHARED_LIBS=OFF \
+	-DLIBXSLT_WITH_DEBUGGER=OFF \
+	-DLIBXSLT_WITH_CRYPTO=OFF \
+	-DLIBXSLT_WITH_MEM_DEBUG=OFF \
+	-DLIBXSLT_WITH_MODULES=OFF \
+	-DLIBXSLT_WITH_PROFILER=OFF \
+	-DLIBXSLT_WITH_PYTHON=OFF \
+	-DLIBXSLT_WITH_TESTS=OFF \
+	-DLIBXSLT_WITH_THREADS=ON \
+	-DLIBXSLT_WITH_XSLT_DEBUG=OFF
 
-HOST_CONFIGURE_ARGS += \
-	--with-libxml-prefix=$(STAGING_DIR_HOSTPKG) \
-	--without-python \
-	--without-crypto \
-	--without-debug \
-	--without-mem-debug \
-	--without-debugger \
-	--without-profiler \
-	--without-plugins
+CMAKE_OPTIONS += \
+	-DBUILD_SHARED_LIBS=ON \
+	-DLIBXSLT_WITH_DEBUGGER=OFF \
+	-DLIBXSLT_WITH_CRYPTO=OFF \
+	-DLIBXSLT_WITH_MEM_DEBUG=OFF \
+	-DLIBXSLT_WITH_MODULES=OFF \
+	-DLIBXSLT_WITH_PROFILER=ON \
+	-DLIBXSLT_WITH_PYTHON=OFF \
+	-DLIBXSLT_WITH_TESTS=OFF \
+	-DLIBXSLT_WITH_THREADS=ON \
+	-DLIBXSLT_WITH_XSLT_DEBUG=OFF
 
 define Build/InstallDev/Xslt
 	$(INSTALL_DIR) $(1)/usr/bin $(2)/bin $(1)/usr/include/libxslt \
 		$(1)/usr/include/libexslt $(1)/usr/lib \
-		$(1)/usr/lib/pkgconfig $(2)/share/aclocal
+		$(1)/usr/lib/pkgconfig
 
 	$(INSTALL_BIN) \
 		$(PKG_INSTALL_DIR)/usr/bin/xslt-config \
 		$(2)/bin/
 
-	ln -sf $(STAGING_DIR)/host/bin/xslt-config $(1)/usr/bin/xslt-config
+	$(LN) $(STAGING_DIR)/host/bin/xslt-config $(1)/usr/bin/xslt-config
 
 	$(SED) \
 		's,^\(prefix\|exec_prefix\)=.*,\1=$(STAGING_DIR)/usr,g' \
@@ -107,16 +108,12 @@ define Build/InstallDev/Xslt
 		$(1)/usr/include/libxslt/
 
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/libxslt.{la,a,so*} \
+		$(PKG_INSTALL_DIR)/usr/lib/libxslt.so* \
 		$(1)/usr/lib/
 
 	$(INSTALL_DATA) \
 		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libxslt.pc \
 		$(1)/usr/lib/pkgconfig/
-
-	$(INSTALL_DATA) \
-		$(PKG_INSTALL_DIR)/usr/share/aclocal/* \
-		$(2)/share/aclocal
 endef
 
 define Build/InstallDev/Exslt
@@ -126,7 +123,7 @@ define Build/InstallDev/Exslt
 		$(1)/usr/include/libexslt/
 
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/libexslt.{la,a,so*} \
+		$(PKG_INSTALL_DIR)/usr/lib/libexslt.so* \
 		$(1)/usr/lib/
 
 	$(INSTALL_DATA) \

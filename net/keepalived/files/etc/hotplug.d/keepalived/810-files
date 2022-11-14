@@ -1,0 +1,18 @@
+#!/bin/sh
+
+# shellcheck source=/dev/null
+. /lib/functions/keepalived/hotplug.sh
+
+add_sync_file /etc/group
+add_sync_file /etc/hosts
+add_sync_file /etc/inittab
+add_sync_file /etc/passwd
+add_sync_file /etc/rc.local
+add_sync_file /etc/profile
+add_sync_file /etc/shadow
+add_sync_file /etc/shell
+add_sync_file /etc/shinit
+add_sync_file /etc/sysctl.conf
+add_sync_file /tmp/dhcp.leases
+
+keepalived_hotplug

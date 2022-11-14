@@ -1,7 +1,6 @@
 #!/bin/sh /etc/rc.common
 # Copyright 2019-2022 Stan Grishin (stangri@melmac.ca)
-# shellcheck disable=SC1091,SC2039,SC3043,SC3060
-PKG_VERSION='dev-test'
+# shellcheck disable=SC1091,SC3043,SC3060
 
 # shellcheck disable=SC2034
 START=80
@@ -15,21 +14,18 @@ else
 	EXTRA_COMMANDS='version'
 fi
 
+readonly PKG_VERSION='dev-test'
 readonly packageName='https-dns-proxy'
 readonly serviceName="$packageName $PKG_VERSION"
 readonly sharedMemoryOutput="/dev/shm/$packageName-output"
 readonly _OK_='\033[0;32m\xe2\x9c\x93\033[0m'
 readonly _FAIL_='\033[0;31m\xe2\x9c\x97\033[0m'
 readonly PROG=/usr/sbin/https-dns-proxy
-readonly DEFAULT_BOOTSTRAP='1.1.1.1,1.0.0.1,2606:4700:4700::1111,2606:4700:4700::1001,8.8.8.8,8.8.4.4,2001:4860:4860::8888,2001:4860:4860::8844'
+readonly BOOTSTRAP_CF='1.1.1.1,1.0.0.1,2606:4700:4700::1111,2606:4700:4700::1001'
+readonly BOOTSTRAP_GOOGLE='8.8.8.8,8.8.4.4,2001:4860:4860::8888,2001:4860:4860::8844'
+readonly DEFAULT_BOOTSTRAP="${BOOTSTRAP_CF},${BOOTSTRAP_GOOGLE}"
 readonly canaryDomainsMozilla='use-application-dns.net'
 readonly canaryDomainsiCloud='mask.icloud.com mask-h2.icloud.com'
-canaryDomains=
-canary_domains_icloud=
-canary_domains_mozilla=
-update_dnsmasq_config=
-force_dns=
-force_dns_port=
 
 str_contains() { [ -n "$1" ] &&[ -n "$2" ] && [ "${1//$2}" != "$1" ]; }
 is_mac_address() { expr "$1" : '[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]$' >/dev/null; }
@@ -132,7 +128,9 @@ append_bootstrap() {
 }
 
 start_instance() {
-	local cfg="$1" param listen_addr listen_port ipv6_resolvers_only p
+	local cfg="$1" param listen_addr listen_port ipv6_resolvers_only p url
+
+	config_get url "$cfg" 'resolver_url'
 	config_get_bool ipv6_resolvers_only "$cfg" 'use_ipv6_resolvers_only' '0'
 	append_parm "$cfg" 'resolver_url' '-r'
 	append_parm "$cfg" 'listen_addr' '-a' '127.0.0.1'
@@ -154,8 +152,9 @@ start_instance() {
 	procd_set_param stderr 1
 	procd_set_param stdout 1
 	procd_set_param respawn
+	procd_open_data
+	json_add_string url "$url"
 	if [ "$force_dns" -ne 0 ]; then
-		procd_open_data
 		json_add_array firewall
 		for p in $force_dns_port; do
 			if netstat -tuln | grep 'LISTEN' | grep ":${p}" >/dev/null 2>&1 || [ "$p" = '53' ]; then
@@ -180,18 +179,18 @@ start_instance() {
 			fi
 		done
 		json_close_array
-		procd_close_data
 	fi
+	procd_close_data
 	procd_close_instance
 
 	if [ "$?" ]; then
 		config_get listen_addr "$cfg" 'listen_addr' '127.0.0.1'
 		config_get listen_port "$cfg" 'listen_port' "$port"
-		if [ "$update_dnsmasq_config" = '*' ]; then
+		if [ "$dnsmasq_config_update" = '*' ]; then
 			config_load 'dhcp'
 			config_foreach dnsmasq_doh_server 'dnsmasq' 'add' "${listen_addr}" "${listen_port}"
-		elif [ -n "$update_dnsmasq_config" ]; then
-			for i in $update_dnsmasq_config; do
+		elif [ -n "$dnsmasq_config_update" ]; then
+			for i in $dnsmasq_config_update; do
 				if [ -n "$(uci_get 'dhcp' "@dnsmasq[$i]")" ]; then
 					dnsmasq_doh_server "@dnsmasq[$i]" 'add' "${listen_addr}" "${listen_port}"
 				elif [ -n "$(uci_get 'dhcp' "$i")" ]; then
@@ -208,10 +207,12 @@ start_instance() {
 }
 
 start_service() {
+	local canaryDomains canary_domains_icloud canary_domains_mozilla
+	local dnsmasq_config_update force_dns force_dns_port 
 	local port=5053
 	output "Starting $serviceName "
 	config_load "$packageName"
-	config_get update_dnsmasq_config        'config' 'update_dnsmasq_config' '*'
+	config_get dnsmasq_config_update        'config' 'dnsmasq_config_update' '*'
 	config_get_bool canary_domains_icloud   'config' 'canary_domains_icloud' '1'
 	config_get_bool canary_domains_mozilla  'config' 'canary_domains_mozilla' '1'
 	config_get_bool force_dns	              'config' 'force_dns' '1'
@@ -233,10 +234,20 @@ start_service() {
 }
 
 stop_service() {
+	local canaryDomains canary_domains_icloud canary_domains_mozilla
+	local dnsmasq_config_update
 	local s=0
 	output "Stopping $serviceName "
 	config_load "$packageName"
-	config_get update_dnsmasq_config 'config' 'update_dnsmasq_config' '*'
+	config_get dnsmasq_config_update        'config' 'dnsmasq_config_update' '*'
+	config_get_bool canary_domains_icloud   'config' 'canary_domains_icloud' '1'
+	config_get_bool canary_domains_mozilla  'config' 'canary_domains_mozilla' '1'
+	if [ "$canary_domains_icloud" -ne 0 ]; then
+		canaryDomains="${canaryDomains:+$canaryDomains }${canaryDomainsiCloud}"
+	fi
+	if [ "$canary_domains_mozilla" -ne 0 ]; then
+		canaryDomains="${canaryDomains:+$canaryDomains }${canaryDomainsMozilla}"
+	fi
 	dhcp_backup 'restore'
 	if [ -n "$(uci_changes dhcp)" ]; then
 		uci_commit 'dhcp'
@@ -249,15 +260,21 @@ stop_service() {
 # shellcheck disable=SC1091
 service_triggers() {
 	local wan wan6 i
+	local procd_trigger_wan6
+	config_load "$packageName"
+	config_get_bool procd_trigger_wan6 'config' 'procd_trigger_wan6' '0'
 	. /lib/functions/network.sh
 	network_flush_cache
 	network_find_wan wan
-	network_find_wan6 wan6
 	wan="${wan:-wan}"
+	if [ "$procd_trigger_wan6" -ne 0 ]; then
+		network_find_wan6 wan6
+		wan6="${wan6:-wan6}"
+	fi
 	for i in "$wan" "$wan6"; do
-		procd_add_interface_trigger "interface.*" "$i" "/etc/init.d/${packageName}" restart
+		[ -n "$i" ] && procd_add_interface_trigger "interface.*" "$i" "/etc/init.d/${packageName}" restart
 	done
-	procd_add_config_trigger "config.change" "$packageName" "/etc/init.d/${packageName}" restart
+	procd_add_config_trigger "config.change" "$packageName" "/etc/init.d/${packageName}" reload
 }
 
 service_started() { procd_set_config_changed firewall; }
@@ -326,7 +343,7 @@ dnsmasq_restore_server_backup() {
 		fi
 		uci_remove 'dhcp' "$cfg" 'doh_backup_noresolv'
 	fi
-	if [ -n "$(uci_get 'dhcp' "$cfg" 'doh_backup_server')" ]; then
+	if uci_get 'dhcp' "$cfg" 'doh_backup_server' >/dev/null 2>&1; then
 		dnsmasq_doh_server "$cfg" 'remove'
 		for i in $(uci_get 'dhcp' "$cfg" 'doh_backup_server'); do
 			uci_add_list_if_new 'dhcp' "$cfg" 'server' "$i"
@@ -340,10 +357,10 @@ dhcp_backup() {
 	config_load 'dhcp'
 	case "$1" in
 		create)
-			if [ "$update_dnsmasq_config" = "*" ]; then
+			if [ "$dnsmasq_config_update" = "*" ]; then
 				config_foreach dnsmasq_create_server_backup 'dnsmasq'
-			elif [ -n "$update_dnsmasq_config" ]; then
-				for i in $update_dnsmasq_config; do
+			elif [ -n "$dnsmasq_config_update" ]; then
+				for i in $dnsmasq_config_update; do
 					if [ -n "$(uci_get 'dhcp' "@dnsmasq[$i]")" ]; then
 						dnsmasq_create_server_backup "@dnsmasq[$i]"
 					elif [ -n "$(uci_get 'dhcp' "$i")" ]; then

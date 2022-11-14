@@ -36,6 +36,8 @@ define Package/squeezelite-full
     $(call Package/squeezelite/default)
     TITLE+= (full)
     DEPENDS+= +libflac +libvorbis +libmpg123 +libfaad2 \
+              +SQUEEZELITE_OPUS:libopusfile \
+              +SQUEEZELITE_SSL:libopenssl \
               +SQUEEZELITE_WMA:libffmpeg-audio-dec
     VARIANT:=full
 endef
@@ -64,7 +66,19 @@ define Package/squeezelite/config/default
 	config SQUEEZELITE_DSD
 	    bool "DSD playback over PCM (DoP)"
 	    help
-		Include support for DSD over PCM for compatible DAC"
+		Include support for DSD over PCM for compatible DAC
+	    default n
+
+	config SQUEEZELITE_SSL
+	    bool "SSL/TLS support"
+	    help
+		Include SSL/TLS support for use with e.g. https media URLs
+	    default n
+
+	config SQUEEZELITE_OPUS
+	    bool "Opus codec support"
+	    help
+		Include Opus codec support
 	    default n
 endef
 
@@ -84,7 +98,7 @@ define Package/squeezelite/description/default
     Squeezelite is a small headless squeezebox emulator for linux using alsa audio output
     It is aimed at supporting high quality audio at multiple sample rates including
     44.1/48/88.2/96/176.4/192k/352.8/384kHz
-    Supported codecs: mp3, flac, ogg, aac, (wma and alac via ffmpeg)
+    Supported codecs: mp3, flac, ogg, aac, (wma and alac via ffmpeg), opus (optional)
     Native support for PCM builtin
     Optional support of DSD playback via PCM for DoP capable DAC
     Optional resampling to match sound device
@@ -112,6 +126,15 @@ endif
 
 ifeq ($(CONFIG_SQUEEZELITE_RESAMPLE),y)
     opts+= -DRESAMPLE
+endif
+
+ifeq ($(CONFIG_SQUEEZELITE_SSL),y)
+    opts+= -DUSE_SSL
+endif
+
+ifeq ($(CONFIG_SQUEEZELITE_OPUS),y)
+    opts+= -DOPUS
+    TARGET_CFLAGS+=-I$(STAGING_DIR)/usr/include/opus
 endif
 
 ifeq ($(BUILD_VARIANT),full)
