@@ -26,6 +26,17 @@ define Package/libassuan
   DEPENDS:=+libgpg-error
 endef
 
+define Build/Configure
+	# touch $(PKG_BUILD_DIR)/.built
+	$(SED) \
+	's,gpg_error_config_version=`\(.*\)`,gpg_error_config_version=`\1 | head -1 | cut -d " " -f3`,' \
+	"$(PKG_BUILD_DIR)/configure"
+
+	oldd=`pwd`;
+	cd $(PKG_BUILD_DIR) && ./configure --prefix=/usr;
+	cd ${oldd};
+endef
+
 define Package/libassuan/description
 Libassuan is a small library implementing the so-called Assuan
 protocol. This protocol is used for IPC between most newer GnuPG
