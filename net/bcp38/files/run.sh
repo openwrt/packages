@@ -9,8 +9,12 @@
 # Author: Toke Høiland-Jørgensen <toke@toke.dk>
 
 STOP=$1
-IPSET_NAME=bcp38-ipv4
-IPTABLES_CHAIN=BCP38
+
+TABLE=bcp38
+FAMILY=ip
+MATCHSET=bcp38-match
+NOMATCHSET=bcp38-nomatch
+CHAIN=bcp38
 
 . /lib/functions.sh
 
@@ -21,84 +25,88 @@ add_bcp38_rule()
 	local subnet="$1"
 	local action="$2"
 
-	if [ "$action" == "nomatch" ]; then
-		ipset add "$IPSET_NAME" "$subnet" nomatch
-	else
-		ipset add "$IPSET_NAME" "$subnet"
-	fi
+	setname="$MATCHSET"
+	[ "$action" == "nomatch" ] && setname="$NOMATCHSET"
+	nft add element "$FAMILY" "$TABLE" "$setname" { "$subnet" }
 }
 
-detect_upstream()
+detect_upstream_subnet()
 {
 	local interface="$1"
 
 	subnets=$(ip route show dev "$interface"  | grep 'scope link' | awk '{print $1}')
 	for subnet in $subnets; do
-		# ipset test doesn't work for subnets, so strip out the subnet part
-		# and test for that; add as exception if there's a match
-		addr=$(echo $subnet | sed 's|/[0-9]\+$||')
-		ipset test "$IPSET_NAME" $addr 2>/dev/null && add_bcp38_rule $subnet nomatch
+		#test for that; add as exception if there's a match
+		nft get element "$FAMILY" "$TABLE" "$MATCHSET" { $subnet } >/dev/null 2>/dev/null && add_bcp38_rule $subnet nomatch
 	done
 }
 
 run() {
-    	local section="$1"
-    	local enabled
+	local section="$1"
+	local enabled
 	local interface
+	local priority
 	local detect_upstream
 	config_get_bool enabled "$section" enabled 0
 	config_get interface "$section" interface
 	config_get detect_upstream "$section" detect_upstream
+	config_get priority "$section" priority "2"
 
 	if [ "$enabled" -eq "1" -a -n "$interface" -a -z "$STOP" ] ; then
-		setup_ipset
-		setup_iptables "$interface"
+		setup_table
+		setup_sets
+		setup_chains "$interface" "$priority"
 		config_list_foreach "$section" match add_bcp38_rule match
 		config_list_foreach "$section" nomatch add_bcp38_rule nomatch
-		[ "$detect_upstream" -eq "1" ] && detect_upstream "$interface"
+		[ "$detect_upstream" -eq "1" ] && detect_upstream_subnet "$interface"
 	fi
 	exit 0
 }
 
-setup_ipset()
+setup_table()
 {
-	ipset create "$IPSET_NAME" hash:net family ipv4
-	ipset flush "$IPSET_NAME"
+	nft add table "$FAMILY" "$TABLE"
 }
 
-setup_iptables()
+setup_sets()
+{
+	#create and flush sets
+	nft add set "$FAMILY" "$TABLE" "$MATCHSET" '{ type ipv4_addr; flags interval; }'
+	nft flush set "$FAMILY" "$TABLE" "$MATCHSET"
+	nft add set "$FAMILY" "$TABLE" "$NOMATCHSET" '{ type ipv4_addr; flags interval; }'
+	nft flush set "$FAMILY" "$TABLE" "$NOMATCHSET"
+}
+
+setup_chains()
 {
 	local interface="$1"
-	iptables -N "$IPTABLES_CHAIN" 2>/dev/null
-	iptables -F "$IPTABLES_CHAIN" 2>/dev/null
+	local priority="$2"
 
-	iptables -I output_rule -m conntrack --ctstate NEW -j "$IPTABLES_CHAIN"
-	iptables -I input_rule -m conntrack --ctstate NEW -j "$IPTABLES_CHAIN"
-	iptables -I forwarding_rule -m conntrack --ctstate NEW -j "$IPTABLES_CHAIN"
+	nft add chain "$FAMILY" "$TABLE" "$CHAIN" 2>/dev/null
+	nft flush chain "$FAMILY" "$TABLE" "$CHAIN" 2>/dev/null
 
-	# always accept DHCP traffic
-	iptables -A "$IPTABLES_CHAIN" -p udp --dport 67:68 --sport 67:68 -j RETURN
-	iptables -A "$IPTABLES_CHAIN" -o "$interface" -m set --match-set "$IPSET_NAME" dst -j REJECT --reject-with icmp-net-unreachable
-	iptables -A "$IPTABLES_CHAIN" -i "$interface" -m set --match-set "$IPSET_NAME" src -j DROP
+	nft add rule "$FAMILY" "$TABLE" "$CHAIN" udp dport {67,68} udp sport {67,68} counter return comment \"always accept DHCP traffic\"
+	nft add rule "$FAMILY" "$TABLE" "$CHAIN" oifname $interface ip daddr @"$MATCHSET" ip daddr != @"$NOMATCHSET" counter reject with icmp type host-unreachable
+	nft add rule "$FAMILY" "$TABLE" "$CHAIN" iifname $interface ip saddr @"$MATCHSET" ip saddr != @"$NOMATCHSET" counter drop
+
+	nft add chain "$FAMILY" "$TABLE" input "{ type filter hook input priority $priority; policy accept; comment \"bcp38 filter\"; }"
+	nft add chain "$FAMILY" "$TABLE" forward "{ type filter hook forward priority $priority; policy accept; comment \"bcp38 filter\"; }"
+	nft add chain "$FAMILY" "$TABLE" output "{ type filter hook output priority $priority; policy accept; comment \"bcp38 filter\"; }"
+
+	nft insert rule "$FAMILY" "$TABLE" input ct state new jump "$CHAIN"
+	nft insert rule "$FAMILY" "$TABLE" forward ct state new jump "$CHAIN"
+	nft insert rule "$FAMILY" "$TABLE" output ct state new jump "$CHAIN"
 }
 
-destroy_ipset()
+destroy_table()
 {
-	ipset flush "$IPSET_NAME" 2>/dev/null
-	ipset destroy "$IPSET_NAME" 2>/dev/null
+	if [ "$TABLE" != "fw4" ]; then
+		#as of kernel 3.18 we can delete a table without need to flush it
+		nft delete table "$FAMILY" "$TABLE" 2>/dev/null
+	fi
 }
 
-destroy_iptables()
-{
-	iptables -D output_rule -m conntrack --ctstate NEW -j "$IPTABLES_CHAIN" 2>/dev/null
-	iptables -D input_rule -m conntrack --ctstate NEW -j "$IPTABLES_CHAIN" 2>/dev/null
-	iptables -D forwarding_rule -m conntrack --ctstate NEW -j "$IPTABLES_CHAIN" 2>/dev/null
-	iptables -F "$IPTABLES_CHAIN" 2>/dev/null
-	iptables -X "$IPTABLES_CHAIN" 2>/dev/null
-}
-
-destroy_iptables
-destroy_ipset
+destroy_table
 config_foreach run bcp38
 
 exit 0
