@@ -19,6 +19,8 @@ PKG_SOURCE:=dovecot-$(DOVECOT_VERSION)-pigeonhole-$(PKG_VERSION_PLUGIN).tar.gz
 PKG_SOURCE_URL:=https://pigeonhole.dovecot.org/releases/$(DOVECOT_VERSION)
 PKG_HASH:=a6d828f8d6f2decba5105343ece5c7a65245bd94e46a8ae4432a6d97543108a5
 
+
+PKG=FOO
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING COPYING.LGPL
