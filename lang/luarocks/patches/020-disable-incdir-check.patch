@@ -1,0 +1,12 @@
+--- a/src/luarocks/deps.lua
++++ b/src/luarocks/deps.lua
+@@ -668,7 +668,8 @@ local function lua_h_exists(d, luaver)
+       return nil, "Lua header found at " .. d .. " does not match Lua version " .. luaver .. ". You may want to override this by configuring LUA_INCDIR.", "dependency", 2
+    end
+ 
+-   return nil, "Failed finding Lua header files. You may need to install them or configure LUA_INCDIR.", "dependency", 1
++   util.printout("Continuing without Lua header files (LUA_INCDIR was not set)")
++   return d
+ end
+ 
+ local function find_lua_incdir(prefix, luaver, luajitver)

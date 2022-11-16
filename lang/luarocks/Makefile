@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luarocks
-PKG_VERSION:=2.2.2
-PKG_RELEASE:=4
+PKG_VERSION:=3.9.2
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/keplerproject/luarocks
+PKG_SOURCE_URL:=https://github.com/luarocks/luarocks
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_MIRROR_HASH:=e4cf874c9bce34a5accd41daaf51a3213763b8b6f7f658ca4d13a70a7ddb1c0c
+PKG_MIRROR_HASH:=069f4f9efb0d90bc34c6bb40f4eca965d888a25ef39b11311db08092786d8e2c
 
 PKG_MAINTAINER:=Amr Hassan <amr.hassan@gmail.com>
 PKG_LICENSE:=MIT
@@ -74,8 +74,8 @@ endef
 
 define Package/luarocks/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/luarocks-5.1 $(1)/usr/bin/luarocks
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/luarocks-admin-5.1 $(1)/usr/bin/luarocks-admin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/luarocks $(1)/usr/bin/luarocks
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/luarocks-admin $(1)/usr/bin/luarocks-admin
 	$(CP) $(PKG_INSTALL_DIR)/usr/share $(1)/usr/share
 	$(CP) $(PKG_INSTALL_DIR)/etc $(1)/etc
 endef
