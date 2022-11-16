@@ -9,13 +9,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libgphoto2
-PKG_VERSION:=2.5.26
-PKG_RELEASE:=3
-PORT_VERSION:=0.12.0
+PKG_VERSION:=2.5.30
+PKG_RELEASE:=1
+PORT_VERSION:=0.12.1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/gphoto
-PKG_HASH:=7740fea3cbb78489071cdfec06c07fab528e69e27ac82734eae6a73eaeeabcd4
+PKG_HASH:=ee61a1dac6ad5cf711d114e06b90a6d431961a6e7ec59f4b757a7cd77b1c0fb4
 
 PKG_MAINTAINER:=Leonardo Medici <leonardo_medici@me.com>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -436,7 +436,7 @@ CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
 	--disable-rpath \
-	--with-camlibs="all,outdated" \
+	--with-camlibs="standard,outdated" \
 	--with-gdlib=no \
 	--with-libexif=no \
 	--with-libusb=no \
@@ -446,29 +446,9 @@ CONFIGURE_ARGS += \
 	--without-jpeg \
 	--without-libiconv-prefix \
 	--without-libintl-prefix \
+	--with-pic
 
-CONFIGURE_VARS += \
-	CPPFLAGS="$$$$CPPFLAGS $(ICONV_CFLAGS)" \
-	LDFLAGS="$$$$LDFLAGS $(ICONV_LDFLAGS)" \
-	LIBUSB_CFLAGS="$$$$CPPFLAGS" \
-	LIBUSB_LIBS="$$$$LDFLAGS -lusb" \
-	LIBS="-lltdl" \
-
-#	LIBEXIF_CFLAGS="$$$$CPPFLAGS" \
-#	LIBEXIF_LIBS="$$$$LDFLAGS -lexif" \
-
-# If OpenWrt is using the iconv stub, we disable iconv support
-# in libgphoto2 entirely since the stub lacks some essential
-# conversions like UCS-2 to UTF-8 which will let certain drivers
-# fail with "Failed to create iconv converter" .
-ifneq ($(ICONV_FULL),1)
-  CONFIGURE_VARS += am_cv_func_iconv=no am_cv_lib_iconv=no
-endif
-
-MAKE_FLAGS += \
-	LIBLTDL="" \
-
-TARGET_CFLAGS += $(FPIC)
+TARGET_LDFLAGS += $(if $(INTL_FULL),-lintl) -lltdl
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/bin
