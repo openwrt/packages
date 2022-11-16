@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libqmi
-PKG_VERSION:=1.28.8
-PKG_RELEASE:=1
+PKG_VERSION:=1.30.8
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.freedesktop.org/software/libqmi
-PKG_HASH:=6e3bbbd200bc1b64b23f6254fef9212f2699ec77cfb32075d2ba5079c73a9f78
+PKG_HASH:=862482ce9e3ad0bd65d264334ee311cdb94b9df2863b5b7136309b41b8ac1990
 
 PKG_MAINTAINER:=Nicholas Smith <nicholas@nbembedded.com>
 
@@ -66,7 +66,6 @@ CONFIGURE_ARGS += \
 	--disable-gtk-doc-pdf \
 	--disable-silent-rules \
 	--enable-firmware-update \
-	--enable-more-warnings=yes \
 	--without-udev \
 	--without-udev-base-dir
 

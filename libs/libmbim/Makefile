@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmbim
-PKG_VERSION:=1.24.8
-PKG_RELEASE:=1
+PKG_VERSION:=1.26.2
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.freedesktop.org/software/libmbim
-PKG_HASH:=02590736163fff10e5732191fccc1b9920969616ddc59613a003052a116a3c25
+PKG_HASH:=10c77bf5b5eb8c92ba80e9b519923ad9b898362bc8e1928e2bc9a17eeba649af
 
-PKG_MAINTAINER:=Nicholas Smith <nicholas.smith@telcoantennas.com.au>
+PKG_MAINTAINER:=Nicholas Smith <nicholas@nbembedded.com>
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
@@ -28,8 +28,7 @@ CONFIGURE_ARGS += \
 	--disable-gtk-doc \
 	--disable-gtk-doc-html \
 	--disable-gtk-doc-pdf \
-	--disable-silent-rules \
-	--enable-more-warnings=yes
+	--disable-silent-rules
 
 define Package/libmbim
   SECTION:=libs
@@ -57,7 +56,6 @@ define Package/mbim-utils
 endef
 
 CONFIGURE_ARGS += \
-	--without-udev \
 	--without-udev-base-dir
 
 define Build/InstallDev

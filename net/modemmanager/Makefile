@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=modemmanager
-PKG_VERSION:=1.16.6
-PKG_RELEASE:=1
+PKG_VERSION:=1.18.12
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=ModemManager-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.freedesktop.org/software/ModemManager
-PKG_HASH:=2a90b6260f66d3135609d62667ada73416694d717e7fd9b73223e3703a499617
+PKG_HASH:=b464e4925d955a6ca86dd08616e763b26ae46d7fd37dbe281678e34065b1e430
 PKG_BUILD_DIR:=$(BUILD_DIR)/ModemManager-$(PKG_VERSION)
 
-PKG_MAINTAINER:=Nicholas Smith <nicholas.smith@telcoantennas.com.au>
+PKG_MAINTAINER:=Nicholas Smith <nicholas@nbembedded.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
@@ -98,6 +98,7 @@ define Package/modemmanager/install
 
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/ModemManager $(1)/usr/sbin
+	$(INSTALL_BIN) ./files/usr/sbin/ModemManager-wrapper $(1)/usr/sbin
 
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mmcli $(1)/usr/bin
@@ -109,6 +110,9 @@ define Package/modemmanager/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ModemManager/libmm-shared-*.so* $(1)/usr/lib/ModemManager
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ModemManager/libmm-plugin-*.so* $(1)/usr/lib/ModemManager
 
+	$(INSTALL_DIR) $(1)/usr/lib/ModemManager/connection.d
+	$(INSTALL_BIN) ./files/10-report-down $(1)/usr/lib/ModemManager/connection.d
+
 	$(INSTALL_DIR) $(1)/etc/dbus-1/system.d
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/dbus-1/system.d/org.freedesktop.ModemManager1.conf $(1)/etc/dbus-1/system.d
 
@@ -118,6 +122,9 @@ define Package/modemmanager/install
 	$(INSTALL_DIR) $(1)/usr/share/ModemManager
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/ModemManager/*.conf $(1)/usr/share/ModemManager
 	$(INSTALL_DATA) ./files/modemmanager.common $(1)/usr/share/ModemManager
+
+	$(INSTALL_DIR) $(1)/usr/share/ModemManager/fcc-unlock.available.d
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/ModemManager/fcc-unlock.available.d/* $(1)/usr/share/ModemManager/fcc-unlock.available.d
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/modemmanager.init $(1)/etc/init.d/modemmanager
@@ -130,6 +137,9 @@ define Package/modemmanager/install
 
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/tty
 	$(INSTALL_DATA) ./files/25-modemmanager-tty $(1)/etc/hotplug.d/tty
+
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/wwan
+	$(INSTALL_DATA) ./files/25-modemmanager-wwan $(1)/etc/hotplug.d/wwan
 
 	$(INSTALL_DIR) $(1)/lib/netifd/proto
 	$(INSTALL_BIN) ./files/modemmanager.proto $(1)/lib/netifd/proto/modemmanager.sh
