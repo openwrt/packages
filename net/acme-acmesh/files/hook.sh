@@ -46,7 +46,8 @@ get)
 			case $status in
 			0)
 				$NOTIFY renewed
-				exit;;
+				exit
+				;;
 			2)
 				# renew skipped, ignore.
 				exit
@@ -109,10 +110,10 @@ get)
 
 	case $status in
 	0)
-		ln -s "$domain_dir/$main_domain.cer" /etc/ssl/acme
+		ln -s "$domain_dir/$main_domain.cer" "/etc/ssl/acme/$main_domain.crt"
 		ln -s "$domain_dir/$main_domain.key" /etc/ssl/acme
-		ln -s "$domain_dir/fullchain.cer" "/etc/ssl/acme/$main_domain.fullchain.cer"
-		ln -s "$domain_dir/ca.cer" "/etc/ssl/acme/$main_domain.chain.cer"
+		ln -s "$domain_dir/fullchain.cer" "/etc/ssl/acme/$main_domain.fullchain.crt"
+		ln -s "$domain_dir/ca.cer" "/etc/ssl/acme/$main_domain.chain.crt"
 		$NOTIFY issued
 		;;
 	*)
