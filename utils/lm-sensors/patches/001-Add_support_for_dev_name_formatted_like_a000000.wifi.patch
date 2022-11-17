@@ -1,0 +1,23 @@
+From 6da486d7415e426ec983baa5f8edafe0ff4c4171 Mon Sep 17 00:00:00 2001
+From: 7217043955 <85880133+7217043955@users.noreply.github.com>
+Date: Tue, 6 Sep 2022 15:48:11 +0800
+Subject: [PATCH] Add support for dev_name formatted like "a000000.wifi"
+
+---
+ lib/sysfs.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+--- a/lib/sysfs.c
++++ b/lib/sysfs.c
+@@ -663,8 +663,9 @@ static int classify_device(const char *d
+ 	if ((!subsys || !strcmp(subsys, "platform") ||
+ 			!strcmp(subsys, "of_platform"))) {
+ 		/* must be new ISA (platform driver) */
+-		if (sscanf(dev_name, "%*[a-z0-9_].%d", &entry->chip.addr) != 1)
+-			entry->chip.addr = 0;
++		if (sscanf(dev_name, "%*[a-zA-Z0-9_]%*1[.:]%d", &entry->chip.addr) == 1);
++		else if (sscanf(dev_name, "%x.%*s", &entry->chip.addr) == 1);
++		else entry->chip.addr = 0;
+ 		entry->chip.bus.type = SENSORS_BUS_TYPE_ISA;
+ 		entry->chip.bus.nr = 0;
+ 	} else if (subsys && !strcmp(subsys, "acpi")) {
