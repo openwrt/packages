@@ -90,6 +90,11 @@ define Build/InstallDev
 	$(INSTALL_DATA) \
 		$(PKG_INSTALL_DIR)/usr/share/aclocal/gpgrt.m4 \
 		$(1)/usr/share/aclocal/
+
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(CP) \
+		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/gpg-error.pc \
+		$(1)/usr/lib/pkgconfig
 endef
 
 define Package/libgpg-error/install
