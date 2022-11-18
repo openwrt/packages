@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vallumd
-PKG_VERSION:=0.2.1
+PKG_VERSION:=0.2.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeberg.org/stintel/vallumd/archive/$(PKG_VERSION).tar.gz?
-PKG_HASH:=eb48bf42295f1b33b2c0a5cf2ca18e8712ec42b95fc1e859e657b2bd56dec95e
+PKG_HASH:=f88cafce41cc118862869268b5e6c9b315a6f084aa8a498d4484e9dac49c575c
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 
 PKG_MAINTAINER:=Stijn Tintel <stijn@linux-ipv6.be>
