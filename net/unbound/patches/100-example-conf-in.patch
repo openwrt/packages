@@ -6,7 +6,7 @@ starting point for embedded routers if one is not going to use UCI.
 +++ b/doc/example.conf.in
 @@ -19,6 +19,76 @@ server:
  	# verbosity number, 0 is least verbose. 1 is default.
- 	verbosity: 1
+ 	# verbosity: 1
  
 +	############################################################################
 +	# MEMORY CONTROL EXAMPLE
