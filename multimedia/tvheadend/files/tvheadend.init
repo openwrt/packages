@@ -18,11 +18,12 @@ TVH_GROUP=dvb
 
 
 execute_first_run() {
+	# $1 is the config dir. Default: /etc/tvheadend
 	mkdir -p "$1"
 	chown -R $TVH_USER "$1"
 	# This should create a new configuration including an admin account with no name and no password,
 	# but it aborts (-A) without saving it:
-	#"$PROG" -c "$1" -B -C -A -u $TVH_USER -g $TVH_GROUP >/dev/null 2>&1
+	# "$PROG" -c "$1" -B -C -A -u $TVH_USER -g $TVH_GROUP >/dev/null 2>&1
 	# Instead, run it for 10s then kill it:
 	"$PROG" -c "$1" -B -C -u $TVH_USER -g $TVH_GROUP & TVH_PID=$! ; sleep 10 ; kill $TVH_PID ; sleep 2
 }
@@ -41,15 +42,15 @@ ensure_config_exists() {
 	fi
 
 	# if use_temp_epgdb is enabled (default), most of the config is put to config_path
-	# (or /etc/config), except for epgdb.v2, which grows quite large and is write-heavy,
+	# (or /etc/config), except for epgdb.v3, which grows quite large and is write-heavy,
 	# so it's put into volatile tmpfs
-	# epgdb.v2 is created and symlinked to main config dir upon each start (if it doesn't exist)
+	# epgdb.v3 is created and symlinked to main config dir upon each start (if it doesn't exist)
 	config_get_bool use_temp_epgdb service use_temp_epgdb 1
 	if [ "$use_temp_epgdb" == "1" ]; then
-		TEMP_EPG="${TEMP_CONFIG}/epgdb.v2"
-		[ ! -f "$TEMP_EPG" ] && mkdir -p "$TEMP_CONFIG" && touch "$TEMP_EPG" && chmod 700 "$TEMP_EPG"
+		TEMP_EPG="${TEMP_CONFIG}/epgdb.v3"
+		[ ! -f "$TEMP_EPG" ] && mkdir -p "$TEMP_CONFIG" && touch "$TEMP_EPG" && chmod 755 "$TEMP_CONFIG" && chmod 644 "$TEMP_EPG" && chown -R $TVH_USER "$TEMP_CONFIG"
 		[ -z "$config_path" ] && config_path="$PERSISTENT_CONFIG"
-		ln -sf "$TEMP_EPG" "${config_path}/epgdb.v2"
+		ln -sf "$TEMP_EPG" "${config_path}/epgdb.v3"
 	fi
 }
 
