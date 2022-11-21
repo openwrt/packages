@@ -88,6 +88,12 @@ CMAKE_OPTIONS += \
 	-DLIBXSLT_WITH_THREADS=ON \
 	-DLIBXSLT_WITH_XSLT_DEBUG=OFF
 
+ifeq ($(CONFIG_BUILD_NLS),y)
+	CMAKE_OPTIONS += \
+		-DIconv_INCLUDE_DIR=$(ICONV_PREFIX)/include \
+		-DIconv_LIBRARY=$(ICONV_PREFIX)/lib/libiconv.so
+endif
+
 define Build/InstallDev/Xslt
 	$(INSTALL_DIR) $(1)/usr/bin $(2)/bin $(1)/usr/include/libxslt \
 		$(1)/usr/include/libexslt $(1)/usr/lib \

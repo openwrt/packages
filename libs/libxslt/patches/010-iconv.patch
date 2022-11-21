@@ -1,0 +1,11 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -345,7 +345,7 @@ endif()
+ add_executable(xsltproc xsltproc/xsltproc.c)
+ add_executable(LibXslt::xsltproc ALIAS xsltproc)
+ target_include_directories(xsltproc PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
+-target_link_libraries(xsltproc LibExslt LibXslt)
++target_link_libraries(xsltproc LibExslt LibXslt ${Iconv_LIBRARY})
+ install(TARGETS xsltproc EXPORT LibXslt RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT programs)
+ 
+ if(LIBXSLT_WITH_TESTS)
