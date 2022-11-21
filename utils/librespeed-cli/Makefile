@@ -41,5 +41,11 @@ define Package/librespeed-cli/description
   LibreSpeed client for measuring internet speed from command line.
 endef
 
+define Package/librespeed-cli/install
+	$(call GoPackage/Package/Install/Bin,$(PKG_INSTALL_DIR))
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/speedtest-cli $(1)/usr/bin/librespeed-cli
+endef
+
 $(eval $(call GoBinPackage,librespeed-cli))
 $(eval $(call BuildPackage,librespeed-cli))
