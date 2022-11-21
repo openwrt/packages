@@ -158,7 +158,7 @@ endef
 define Package/privoxy/postinst
 	#!/bin/sh
 	# if exists, update previous version entry missing protocol
-	(grep -E "privoxy.*8118$" $${IPKG_INSTROOT}/etc/services) > /dev/null \
+	(grep -E "privoxy.*8118$$" $${IPKG_INSTROOT}/etc/services) > /dev/null \
 		&& sed -i "s/privoxy.*8118/privoxy\t\t8118\/tcp/" $${IPKG_INSTROOT}/etc/services
 
 	# add missing tcp and udp entries
