@@ -28,8 +28,8 @@ define Package/https-dns-proxy
 endef
 
 define Package/https-dns-proxy/description
-https-dns-proxy is a light-weight DNS<-->HTTPS, non-caching translation proxy for the RFC 8484 DoH standard.
-It receives regular (UDP) DNS requests and issues them via DoH.
+Light-weight DNS-over-HTTPS, non-caching translation proxy for the RFC 8484 DoH standard.
+It receives regular (UDP) DNS requests and resolves them via DoH resolver.
 Please see https://docs.openwrt.melmac.net/https-dns-proxy/ for more information.
 endef
 
