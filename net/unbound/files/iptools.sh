@@ -164,7 +164,7 @@ local_subnet() {
   # local subnet 2nd place is limited to one digit to improve the filter
   case "$1" in
     127"."[0-9]"."[0-9]*) echo "ok" ;;
-    ::1) echo "ok" ;;
+    ::1|::1@*|::1#*) echo "ok" ;;
     *) echo "not" ;;
   esac
 }
