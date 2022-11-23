@@ -118,13 +118,13 @@ define Package/privoxy/conffiles
 endef
 
 define Package/privoxy/preinst
-	#!/bin/sh
-	[ -n "$${IPKG_INSTROOT}" ] && exit 0	# if run within buildroot exit
+#!/bin/sh
+[ -n "$${IPKG_INSTROOT}" ] && exit 0	# if run within buildroot exit
 
-	# stop service if PKG_UPGRADE
-	[ "$${PKG_UPGRADE}" = "1" ] && /etc/init.d/privoxy stop >/dev/null 2>&1
-		
-	exit 0	# suppress errors from stop command
+# stop service if PKG_UPGRADE
+[ "$${PKG_UPGRADE}" = "1" ] && /etc/init.d/privoxy stop >/dev/null 2>&1
+	
+exit 0	# suppress errors from stop command
 endef
 
 define Package/privoxy/install
@@ -156,16 +156,16 @@ define Package/privoxy/install
 endef
 
 define Package/privoxy/postinst
-	#!/bin/sh
-	# if exists, update previous version entry missing protocol
-	(grep -E "privoxy.*8118$$" $${IPKG_INSTROOT}/etc/services) > /dev/null \
-		&& sed -i "s/privoxy.*8118/privoxy\t\t8118\/tcp/" $${IPKG_INSTROOT}/etc/services
+#!/bin/sh
+# if exists, update previous version entry missing protocol
+(grep -E "privoxy.*8118$$" $${IPKG_INSTROOT}/etc/services) > /dev/null \
+	&& sed -i "s/privoxy.*8118/privoxy\t\t8118\/tcp/" $${IPKG_INSTROOT}/etc/services
 
-	# add missing tcp and udp entries
-	(grep -E "privoxy.*8118\/tcp" $${IPKG_INSTROOT}/etc/services) > /dev/null \
-		|| echo -e "privoxy\t\t8118/tcp" >> $${IPKG_INSTROOT}/etc/services
-	(grep -E "privoxy.*8118\/udp" $${IPKG_INSTROOT}/etc/services) > /dev/null \
-		|| echo -e "privoxy\t\t8118/udp" >> $${IPKG_INSTROOT}/etc/services
+# add missing tcp and udp entries
+(grep -E "privoxy.*8118\/tcp" $${IPKG_INSTROOT}/etc/services) > /dev/null \
+	|| echo -e "privoxy\t\t8118/tcp" >> $${IPKG_INSTROOT}/etc/services
+(grep -E "privoxy.*8118\/udp" $${IPKG_INSTROOT}/etc/services) > /dev/null \
+	|| echo -e "privoxy\t\t8118/udp" >> $${IPKG_INSTROOT}/etc/services
 endef
 
 $(eval $(call BuildPackage,privoxy))
