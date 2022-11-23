@@ -1,10 +1,14 @@
 #!/bin/sh
 
+# not enabling `errtrace` and `pipefail` since those are bash specific
+set -o errexit # failing commands causes script to fail
+set -o nounset # undefined variables causes script to fail 
+
 mkdir -p /var/lock/
 
 opkg update
 
-[ -n "$CI_HELPER" ] || CI_HELPER="/ci/.github/workflows/ci_helpers.sh"
+[ -n "${CI_HELPER:=''}" ] || CI_HELPER="/ci/.github/workflows/ci_helpers.sh"
 
 for PKG in /ci/*.ipk; do
 	tar -xzOf "$PKG" ./control.tar.gz | tar xzf - ./control 
