@@ -8,8 +8,8 @@ USE_PROCD=1
 PROG=/usr/sbin/lighttpd
 
 validate_conf() {
-	$PROG -tt -f /etc/lighttpd/lighttpd.conf >/dev/null 2>&1 || {
-		echo "validation failed"
+	$PROG -tt -f /etc/lighttpd/lighttpd.conf >/dev/null || {
+		echo 1>&2 "lighttpd.conf validation failed"
 		return 1
 	}
 }
@@ -34,6 +34,7 @@ service_triggers() {
 }
 
 reload_service() {
+	validate_conf || exit 1
 	# lighttpd graceful restart (SIGUSR1)
 	procd_send_signal lighttpd '*' USR1
 }
