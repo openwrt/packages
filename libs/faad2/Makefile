@@ -6,13 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=faad2
-PKG_VERSION:=2.10.0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/knik0/faad2/tar.gz/2_10_0?
-PKG_HASH:=0c6d9636c96f95c7d736f097d418829ced8ec6dbd899cc6cc82b728480a84bfb
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-2_10_0
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_VERSION:=2.10.1
+PKG_SOURCE_URL:=https://github.com/knik0/faad2
+PKG_MIRROR_HASH:=8a42cbc5833bd3c076f92363f0cbbcf6f848231c59b2f17dbe5d151cb8684fe1
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=GPL-2.0-or-later
