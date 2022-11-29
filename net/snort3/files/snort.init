@@ -9,7 +9,6 @@ PROG=/usr/bin/snort
 validate_snort_section() {
 	uci_validate_section snort snort "${1}" \
 		'config_dir:string' \
-		'alert_module:string' \
 		'interface:string'
 }
 
@@ -22,7 +21,7 @@ start_service() {
 	}
 
 	procd_open_instance
-	procd_set_param command $PROG -q --daq-dir /usr/lib/daq/ -i "$interface" -c "$config_dir/snort.lua" -A "$alert_module"
+	procd_set_param command $PROG -q -i "$interface" -c "${config_dir%/}/snort.lua" --tweaks local
 	procd_set_param env SNORT_LUA_PATH="$config_dir"
 	procd_set_param file $CONFIGFILE
 	procd_set_param respawn
