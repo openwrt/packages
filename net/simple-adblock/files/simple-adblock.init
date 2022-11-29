@@ -100,49 +100,60 @@ uci_changes() {
 ipset() { "$ipset" "$@" >/dev/null 2>&1; }
 nft() { "$nft" "$@" >/dev/null 2>&1; }
 
-get_status_text() {
-	local _ret
+get_text() {
+	local r
 	case "$1" in
-		statusNoInstall) _ret="$serviceName is not installed or not found";;
-		statusStopped) _ret="Stopped";;
-		statusStarting) _ret="Starting";;
-		statusRestarting) _ret="Restarting";;
-		statusForceReloading) _ret="Force Reloading";;
-		statusDownloading) _ret="Downloading";;
-		statusProcessing) _ret="Processing";;
-		statusError) _ret="Error";;
-		statusWarning) _ret="Warning";;
-		statusFail) _ret="Fail";;
-		statusSuccess) _ret="Success";;
+		errorConfigValidationFail) r="$packageName config validation failed";;
+		errorServiceDisabled) r="$packageName is currently disabled";;
+		errorNoDnsmasqIpset) 
+			r="dnsmasq ipset support is enabled in $packageName, but dnsmasq is either not installed or installed dnsmasq does not support ipset";;
+		errorNoIpset) 
+			r="dnsmasq ipset support is enabled in $packageName, but ipset is either not installed or installed ipset does not support 'hash:net' type";;
+		errorNoDnsmasqNftset) 
+			r="dnsmasq nft set support is enabled in $packageName, but dnsmasq is either not installed or installed dnsmasq does not support nft set";;
+		errorNoNft) r="dnsmasq nft sets support is enabled in $packageName, but nft is not installed";;
+		errorMkdirFail) r="Unable to create directory for";;
+		errorNoWanGateway) r="The ${serviceName} service failed to discover WAN gateway!";;
+		errorOutputDirCreate) r="failed to create directory for %s file";;
+		errorOutputFileCreate) r="failed to create $outputFile file";;
+		errorFailDNSReload) r="failed to restart/reload DNS resolver";;
+		errorSharedMemory) r="failed to access shared memory";;
+		errorSorting) r="failed to sort data file";;
+		errorOptimization) r="failed to optimize data file";;
+		errorAllowListProcessing) r="failed to process allow-list";;
+		errorDataFileFormatting) r="failed to format data file";;
+		errorMovingDataFile) r="failed to move data file '${A_TMP}' to '${outputFile}'";;
+		errorCreatingCompressedCache) r="failed to create compressed cache";;
+		errorRemovingTempFiles) r="failed to remove temporary files";;
+		errorRestoreCompressedCache) r="failed to unpack compressed cache";;
+		errorRestoreCache) r="failed to move '$outputCache' to '$outputFile'";;
+		errorOhSnap) r="failed to create block-list or restart DNS resolver";;
+		errorStopping) r="failed to stop $serviceName";;
+		errorDNSReload) r="failed to reload/restart DNS resolver";;
+		errorDownloadingConfigUpdate) r="failed to download Config Update file";;
+		errorDownloadingList) r="failed to download";;
+		errorParsingConfigUpdate) r="failed to parse Config Update file";;
+		errorParsingList) r="failed to parse";;
+		errorNoSSLSupport) r="no HTTPS/SSL support on device";;
+		errorCreatingDirectory) r="failed to create output/cache/gzip file directory";;
+
+		statusNoInstall) r="$serviceName is not installed or not found";;
+		statusStopped) r="Stopped";;
+		statusStarting) r="Starting";;
+		statusRestarting) r="Restarting";;
+		statusForceReloading) r="Force Reloading";;
+		statusDownloading) r="Downloading";;
+		statusProcessing) r="Processing";;
+		statusError) r="Error";;
+		statusWarning) r="Warning";;
+		statusFail) r="Fail";;
+		statusSuccess) r="Success";;
+
+		warningExternalDnsmasqConfig)
+			r="use of external dnsmasq config file detected, please set 'dns' option to 'dnsmasq.conf'";;
+		warningMissingRecommendedPackages) r="Some recommended packages are missing";;
 	esac
-	printf "%b" "$_ret"
-}
-get_error_text() {
-	local _ret
-	case "$1" in
-		errorOutputFileCreate) _ret="failed to create $outputFile file";;
-		errorFailDNSReload) _ret="failed to restart/reload DNS resolver";;
-		errorSharedMemory) _ret="failed to access shared memory";;
-		errorSorting) _ret="failed to sort data file";;
-		errorOptimization) _ret="failed to optimize data file";;
-		errorAllowListProcessing) _ret="failed to process allow-list";;
-		errorDataFileFormatting) _ret="failed to format data file";;
-		errorMovingDataFile) _ret="failed to move data file '${A_TMP}' to '${outputFile}'";;
-		errorCreatingCompressedCache) _ret="failed to create compressed cache";;
-		errorRemovingTempFiles) _ret="failed to remove temporary files";;
-		errorRestoreCompressedCache) _ret="failed to unpack compressed cache";;
-		errorRestoreCache) _ret="failed to move '$outputCache' to '$outputFile'";;
-		errorOhSnap) _ret="failed to create block-list or restart DNS resolver";;
-		errorStopping) _ret="failed to stop $serviceName";;
-		errorDNSReload) _ret="failed to reload/restart DNS resolver";;
-		errorDownloadingConfigUpdate) _ret="failed to download Config Update file";;
-		errorDownloadingList) _ret="failed to download";;
-		errorParsingConfigUpdate) _ret="failed to parse Config Update file";;
-		errorParsingList) _ret="failed to parse";;
-		errorNoSSLSupport) _ret="no HTTPS/SSL support on device";;
-		errorCreatingDirectory) _ret="failed to create output/cache/gzip file directory";;
-	esac
-	printf "%b" "$_ret"
+	echo "$r"
 }
 
 output_ok() { output 1 "$_OK_"; output 2 "$__OK__\\n"; }
@@ -187,13 +198,15 @@ load_environment() {
 	local validation_result="$1" quiet="$2"
 
 	if [ "$validation_result" != '0' ]; then
-		output "${_ERROR_}: $packageName config validation failed!\\n"
+		json add error "errorConfigValidationFail"
+		output "${_ERROR_}: $(get_text 'errorConfigValidationFail')!\\n"
 		output "Please check if the '$packageConfigFile' contains correct values for config options.\\n"
 		return 1
 	fi
 
 	if [ "$enabled" -eq 0 ]; then
-		output "$packageName is currently disabled.\\n"
+		json add error "errorServiceDisabled"
+		output "${_ERROR_}: $(get_text 'errorServiceDisabled')!\\n"
 		output "Run the following commands before starting service again:\\n"
 		output "uci set ${packageName}.config.enabled='1'; uci commit $packageName;\\n"
 		return 1
@@ -210,7 +223,8 @@ load_environment() {
 			dnsmasq.conf) :;;
 			*)
 				if [ -z "$quiet" ]; then
-					output "$_WARNING_: use of external dnsmasq config file detected, please set 'dns' option to 'dnsmasq.conf'!\\n"
+					json add warning "warningExternalDnsmasqConfig"
+					output "${_WARNING_}: $(get_text 'warningExternalDnsmasqConfig')!\\n"
 				fi
 			;;
 		esac
@@ -230,13 +244,15 @@ load_environment() {
 		dnsmasq.ipset)
 			if dnsmasq -v 2>/dev/null | grep -q 'no-ipset' || ! dnsmasq -v 2>/dev/null | grep -q -w 'ipset'; then
 				if [ -z "$quiet" ]; then
-					output "$_ERROR_: dnsmasq ipset support is enabled in $packageName, but dnsmasq is either not installed or installed dnsmasq does not support ipset!\\n"
+					json add error "errorNoDnsmasqIpset"
+					output "${_ERROR_}: $(get_text 'errorNoDnsmasqIpset')!\\n"
 				fi
 				dns='dnsmasq.servers'
 			fi
 			if ! ipset help hash:net; then
 				if [ -z "$quiet" ]; then
-					output "$_ERROR_: dnsmasq ipset support is enabled in $packageName, but ipset is either not installed or installed ipset does not support 'hash:net' type!\\n"
+					json add error "errorNoIpset"
+					output "${_ERROR_}: $(get_text 'errorNoIpset')!\\n"
 				fi
 				dns='dnsmasq.servers'
 			fi
@@ -244,13 +260,15 @@ load_environment() {
 		dnsmasq.nftset)
 			if dnsmasq -v 2>/dev/null | grep -q 'no-nftset' || ! dnsmasq -v 2>/dev/null | grep -q -w 'nftset'; then
 				if [ -z "$quiet" ]; then
-					output "$_ERROR_: dnsmasq nft sets support is enabled in $packageName, but dnsmasq is either not installed or installed dnsmasq does not support nft sets!\\n"
+					json add error "errorNoDnsmasqNftset"
+					output "${_ERROR_}: $(get_text 'errorNoDnsmasqNftset')!\\n"
 				fi
 				dns='dnsmasq.servers'
 			fi
 			if [ -z "$nft" ]; then
 				if [ -z "$quiet" ]; then
-					output "$_ERROR_: dnsmasq nft sets support is enabled in $packageName, but nft is not installed!\\n"
+					json add error "errorNoNft"
+					output "${_ERROR_}: $(get_text 'errorNoNft')!\\n"
 				fi
 				dns='dnsmasq.servers'
 			fi
@@ -335,8 +353,8 @@ load_environment() {
 
 	for i in "$outputFile" "$outputCache" "$outputGzip"; do
 		if ! mkdir -p "$(dirname "$i")"; then
-			output "$_ERROR_: Unable to create directory for $i!\\n"
-			json add error "errorOutputFileCreate"
+			json add error "errorOutputDirCreate" "$i"
+			output "${_ERROR_}: $(get_text 'errorMkdirFail' "$i")!\\n"
 		fi
 	done
 
@@ -352,7 +370,8 @@ load_environment() {
 			is_present '/usr/libexec/sed-gnu' || s="$s sed"
 			is_present '/usr/libexec/sort-coreutils' || s="$s coreutils-sort"
 			if [ -z "$quiet" ]; then
-				output "$_WARNING_: Some recommended packages are missing, install them by running:\\n"
+				json add warning "errorOutputFileCreate" "${i}"
+				output "${_WARNING_}: $(get_text 'warningMissingRecommendedPackages'), install them by running:\\n"
 				output "$s;\\n"
 			fi
 	fi
@@ -390,7 +409,8 @@ load_environment() {
 	cache 'test_gzip' && return 0
 	network_flush_cache; network_find_wan wan_if; network_get_gateway wan_gw "$wan_if";
 	[ -n "$wan_gw" ] && return 0
-	output "$_ERROR_: $serviceName failed to discover WAN gateway.\\n"; return 1;
+	json add error "errorNoWanGateway"
+	output "${_ERROR_}: $(get_text 'errorNoWanGateway')!\\n"; return 1;
 }
 
 resolver() {
@@ -424,7 +444,7 @@ dns() {
 			if [ ! -s "$outputFile" ]; then
 				json set status "statusFail"
 				json add error "errorOutputFileCreate"
-				output "$_ERROR_: $(get_error_text 'errorOutputFileCreate')!\\n"
+				output "${_ERROR_}: $(get_text 'errorOutputFileCreate')!\\n"
 				return 1
 			fi
 
@@ -473,7 +493,7 @@ dns() {
 				output_fail
 				json set status "statusFail"
 				json add error "errorDNSReload"
-				output "$_ERROR_: $(get_error_text 'errorDNSReload')!\\n"
+				output "${_ERROR_}: $(get_text 'errorDNSReload')!\\n"
 				return 1
 			fi
 		;;
@@ -518,6 +538,9 @@ dns() {
 json() {
 # shellcheck disable=SC2034
 	local action="$1" param="$2" value="$3"
+	shift 3
+# shellcheck disable=SC2124
+	local extras="$@" line
 	local status message error stats
 	local reload restart curReload curRestart ret i
 	if [ -s "$jsonFile" ]; then
@@ -549,10 +572,8 @@ json() {
 			esac
 		;;
 		add)
-			if [ -n "$(eval echo "\$$param")" ]; then
-				value="$(eval echo "\$$param") ${value}"
-			fi
-				eval "$param"='${value}'
+			line="$(eval echo "\$$param")"
+			eval "$param"='${line:+$line }${value}${extras:+|$extras}'
 		;;
 		del)
 			case "$param" in
@@ -573,7 +594,7 @@ json() {
 					restart="$compressed_cache $force_dns $led $force_dns_port"
 				;;
 				*)
-					eval "$param"='$value';;
+					eval "$param"='${value}${extras:+|$extras}';;
 			esac
 		;;
 	esac
@@ -678,7 +699,7 @@ process_url() {
 download_dnsmasq_file() {
 	local hf allow_filter j=0 R_TMP
 
-	json set message "$(get_status_text "statusDownloading")..."
+	json set message "$(get_text "statusDownloading")..."
 	json set status "statusDownloading"
 
 	rm -f "$A_TMP" "$B_TMP" "$outputFile" "$outputCache" "$outputGzip"
@@ -714,7 +735,7 @@ download_dnsmasq_file() {
 download_lists() {
 	local hf allow_filter j=0 R_TMP
 
-	json set message "$(get_status_text "statusDownloading")..."
+	json set message "$(get_text "statusDownloading")..."
 	json set status "statusDownloading"
 
 	rm -f "$A_TMP" "$B_TMP" "$outputFile" "$outputCache" "$outputGzip"
@@ -775,7 +796,8 @@ $(cat $A_TMP)"
 
 	output 1 'Processing downloads '
 	output 2 'Sorting combined list '
-	json set message "$(get_status_text "statusProcessing"): sorting combined list"
+	json set status "statusProcessing"
+	json set message "$(get_text "statusProcessing"): sorting combined list"
 	if [ "$allow_non_ascii" -gt 0 ]; then
 		if sort -u "$B_TMP" > "$A_TMP"; then
 			output_ok
@@ -799,7 +821,7 @@ $(cat $A_TMP)"
 		 [ "$dns" = 'unbound.adb_list' ]; then
 		# TLD optimization written by Dirk Brenken (dev@brenken.org)
 		output 2 'Optimizing combined list '
-		json set message "$(get_status_text "statusProcessing"): optimizing combined list"
+		json set message "$(get_text "statusProcessing"): optimizing combined list"
 # 	sed -E 'G;:t;s/(.*)(\.)(.*)(\n)(.*)/\1\4\5\2\3/;tt;s/(.*)\n(\.)(.*)/\3\2\1/' is actually slower than command below
 		if $awk -F "." '{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' "$A_TMP" > "$B_TMP"; then
 			if sort "$B_TMP" > "$A_TMP"; then
@@ -835,7 +857,7 @@ $(cat $A_TMP)"
 	fi
 
 	output 2 'Allowing domains '
-	json set message "$(get_status_text "statusProcessing"): allowing domains"
+	json set message "$(get_text "statusProcessing"): allowing domains"
 	if sed -i -E "$allow_filter" "$B_TMP"; then
 		output_ok
 	else
@@ -844,7 +866,7 @@ $(cat $A_TMP)"
 	fi
 
 	output 2 'Formatting merged file '
-	json set message "$(get_status_text "statusProcessing"): formatting merged file"
+	json set message "$(get_text "statusProcessing"): formatting merged file"
 	if [ -z "$outputFilterIPv6" ]; then
 		if sed "$outputFilter" "$B_TMP" > "$A_TMP"; then
 			output_ok
@@ -869,27 +891,27 @@ $(cat $A_TMP)"
 	case "$dns" in
 		dnsmasq.addnhosts)
 			output 2 'Creating dnsmasq addnhosts file '
-			json set message "$(get_status_text "statusProcessing"): creating dnsmasq addnhosts file"
+			json set message "$(get_text "statusProcessing"): creating dnsmasq addnhosts file"
 		;;
 		dnsmasq.conf)
 			output 2 'Creating dnsmasq config file '
-			json set message "$(get_status_text "statusProcessing"): creating dnsmasq config file"
+			json set message "$(get_text "statusProcessing"): creating dnsmasq config file"
 		;;
 		dnsmasq.ipset)
 			output 2 'Creating dnsmasq ipset file '
-			json set message "$(get_status_text "statusProcessing"): creating dnsmasq ipset file"
+			json set message "$(get_text "statusProcessing"): creating dnsmasq ipset file"
 		;;
 		dnsmasq.nftset)
 			output 2 'Creating dnsmasq nft set file '
-			json set message "$(get_status_text "statusProcessing"): creating dnsmasq nft set file"
+			json set message "$(get_text "statusProcessing"): creating dnsmasq nft set file"
 		;;
 		dnsmasq.servers)
 			output 2 'Creating dnsmasq servers file '
-			json set message "$(get_status_text "statusProcessing"): creating dnsmasq servers file"
+			json set message "$(get_text "statusProcessing"): creating dnsmasq servers file"
 		;;
 		unbound.adb_list)
 			output 2 'Creating Unbound adb_list file '
-			json set message "$(get_status_text "statusProcessing"): creating Unbound adb_list file"
+			json set message "$(get_text "statusProcessing"): creating Unbound adb_list file"
 		;;
 	esac
 
@@ -901,7 +923,7 @@ $(cat $A_TMP)"
 	fi
 	if [ "$compressed_cache" -gt 0 ]; then
 		output 2 'Creating compressed cache '
-		json set message "$(get_status_text "statusProcessing"): creating compressed cache"
+		json set message "$(get_text "statusProcessing"): creating compressed cache"
 		if cache 'create_gzip'; then
 			output_ok
 		else
@@ -912,7 +934,7 @@ $(cat $A_TMP)"
 		rm -f "$outputGzip"
 	fi
 	output 2 'Removing temporary files '
-	json set message "$(get_status_text "statusProcessing"): removing temporary files"
+	json set message "$(get_text "statusProcessing"): removing temporary files"
 	rm -f "/tmp/${packageName}_tmp.*" "$A_TMP" "$B_TMP" "$outputCache" || j=1
 	if [ $j -eq 0 ]; then
 		output_ok
@@ -1183,7 +1205,7 @@ adb_start() {
 			else
 				output_failn
 				json add error "errorRestoreCompressedCache"
-				output "$_ERROR_: $(get_error_text 'errorRestoreCompressedCache')!\\n"
+				output "${_ERROR_}: $(get_text 'errorRestoreCompressedCache')!\\n"
 				action='download'
 			fi
 		fi
@@ -1196,7 +1218,7 @@ adb_start() {
 			else
 				output_failn
 				json add error "errorRestoreCache"
-				output "$_ERROR_: $(get_error_text 'errorRestoreCache')!\\n"
+				output "${_ERROR_}: $(get_text 'errorRestoreCache')!\\n"
 				action='download'
 			fi
 		fi
@@ -1342,7 +1364,7 @@ adb_status() {
 	if [ "$status" = "statusSuccess" ]; then
 		output "$stats "; output_okn;
 	else
-		[ -n "$status" ] && status="$(get_status_text "$status")"
+		[ -n "$status" ] && status="$(get_text "$status")"
 		if [ -n "$status" ] && [ -n "$message" ]; then 
 			status="${status}: $message"
 		fi
@@ -1354,9 +1376,9 @@ adb_status() {
 			c="${c%|*}"
 			case "$c" in
 				errorDownloadingList|errorParsingList)
-					output "$_ERROR_: $(get_error_text "$c") $url!\\n";;
+					output "${_ERROR_}: $(get_text "$c") $url!\\n";;
 				*)
-					output "$_ERROR_: $(get_error_text "$c")!\\n";;
+					output "${_ERROR_}: $(get_text "$c")!\\n";;
 			esac
 			n=$((n+1))
 		done
@@ -1382,7 +1404,7 @@ adb_stop() {
 			output 0 "$__FAIL__\\n"; output_fail;
 			json set status "statusFail"
 			json add error "errorStopping"
-			output "$_ERROR_: $(get_error_text 'errorStopping')!\\n"
+			output "${_ERROR_}: $(get_text 'errorStopping')!\\n"
 		fi
 	fi
 }
