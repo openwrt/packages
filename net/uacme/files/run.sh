@@ -37,6 +37,7 @@ NGINX_WEBSERVER=0
 UPDATE_NGINX=0
 UPDATE_UHTTPD=0
 UPDATE_HAPROXY=0
+FW_RULE=
 USER_CLEANUP=
 
 . /lib/functions.sh
@@ -135,24 +136,30 @@ pre_checks()
 	esac
     done
 
-    iptables -I input_rule -p tcp --dport 80 -j ACCEPT -m comment --comment "ACME" || return 1
-    debug "v4 input_rule: $(iptables -nvL input_rule)"
-    if [ -e "/usr/sbin/ip6tables" ]; then
-	ip6tables -I input_rule -p tcp --dport 80 -j ACCEPT -m comment --comment "ACME" || return 1
-	debug "v6 input_rule: $(ip6tables -nvL input_rule)"
-    fi
+    FW_RULE=$(uci add firewall rule) || return 1
+    uci set firewall."$FW_RULE".name='uacme: temporarily allow incoming http'
+    uci set firewall."$FW_RULE".enabled='1'
+    uci set firewall."$FW_RULE".target='ACCEPT'
+    uci set firewall."$FW_RULE".src='wan'
+    uci set firewall."$FW_RULE".proto='tcp'
+    uci set firewall."$FW_RULE".dest_port='80'
+    uci commit firewall
+    /etc/init.d/firewall reload
+
+    debug "added firewall rule: $FW_RULE"
     return 0
 }
 
 post_checks()
 {
     log "Running post checks (cleanup)."
-    # The comment ensures we only touch our own rules. If no rules exist, that
-    # is fine, so hide any errors
-    iptables -D input_rule -p tcp --dport 80 -j ACCEPT -m comment --comment "ACME" 2>/dev/null
-    if [ -e "/usr/sbin/ip6tables" ]; then
-	ip6tables -D input_rule -p tcp --dport 80 -j ACCEPT -m comment --comment "ACME" 2>/dev/null
+    # $FW_RULE contains the string to identify firewall rule created earlier
+    if [ -n "$FW_RULE" ]; then
+	uci delete firewall."$FW_RULE"
+	uci commit firewall
+	/etc/init.d/firewall reload
     fi
+
     if [ -e /etc/init.d/uhttpd ] && [ "$UPDATE_UHTTPD" -eq 1 ]; then
 	uci commit uhttpd
 	/etc/init.d/uhttpd reload
