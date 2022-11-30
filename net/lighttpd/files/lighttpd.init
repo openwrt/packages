@@ -16,10 +16,12 @@ validate_conf() {
 
 start_service() {
 	user_exists http || user_add http
-	[ -d /var/log/lighttpd ] || {
-		mkdir -m 0775 -p /var/log/lighttpd
-		chgrp www-data /var/log/lighttpd
-	}
+	for i in /var/log/lighttpd /var/lib/lighttpd /var/cache/lighttpd; do
+		[ -d "$i" ] || {
+			mkdir -m 0775 -p "$i"
+			chgrp www-data "$i"
+		}
+	done
 
 	validate_conf || exit 1
 
