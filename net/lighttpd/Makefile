@@ -267,7 +267,7 @@ $(eval $(call BuildPlugin,openssl,TLS using openssl,@LIGHTTPD_SSL +PACKAGE_light
 $(eval $(call BuildPlugin,proxy,Proxy,,30))
 $(eval $(call BuildPlugin,redirect,URL redirection,$(if $(CONFIG_LIGHTTPD_PCRE2),+PACKAGE_lighttpd-mod-redirect:libpcre2,),10))
 $(eval $(call BuildPlugin,rewrite,URL rewriting,$(if $(CONFIG_LIGHTTPD_PCRE2),+PACKAGE_lighttpd-mod-rewrite:libpcre2,),30))
-$(eval $(call BuildPlugin,rrdtool,RRDtool,,30))
+$(eval $(call BuildPlugin,rrdtool,RRDtool,rrdtool1,30))
 $(eval $(call BuildPlugin,scgi,SCGI,,30))
 $(eval $(call BuildPlugin,setenv,Environment variable setting,,30))
 $(eval $(call BuildPlugin,simple_vhost,Simple virtual hosting,,30))
