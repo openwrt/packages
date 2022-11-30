@@ -45,6 +45,20 @@ get)
 
 			case $status in
 			0)
+				mkdir -p /etc/ssl/acme
+				if [ ! -e "/etc/ssl/acme/$main_domain.crt" ]; then
+					ln -s "$domain_dir/$main_domain.cer" "/etc/ssl/acme/$main_domain.crt"
+				fi
+				if [ ! -e "/etc/ssl/acme/$main_domain.key" ]; then
+					ln -s "$domain_dir/$main_domain.key" "/etc/ssl/acme/$main_domain.key"
+				fi
+				if [ ! -e "/etc/ssl/acme/$main_domain.fullchain.crt" ]; then
+					ln -s "$domain_dir/fullchain.cer" "/etc/ssl/acme/$main_domain.fullchain.crt"
+				fi
+				if [ ! -e "/etc/ssl/acme/$main_domain.chain.crt" ]; then
+					ln -s "$domain_dir/ca.cer" "/etc/ssl/acme/$main_domain.chain.crt"
+				fi
+
 				$NOTIFY renewed
 				exit
 				;;
@@ -111,7 +125,7 @@ get)
 	case $status in
 	0)
 		ln -s "$domain_dir/$main_domain.cer" "/etc/ssl/acme/$main_domain.crt"
-		ln -s "$domain_dir/$main_domain.key" /etc/ssl/acme
+		ln -s "$domain_dir/$main_domain.key" "/etc/ssl/acme/$main_domain.key"
 		ln -s "$domain_dir/fullchain.cer" "/etc/ssl/acme/$main_domain.fullchain.crt"
 		ln -s "$domain_dir/ca.cer" "/etc/ssl/acme/$main_domain.chain.crt"
 		$NOTIFY issued

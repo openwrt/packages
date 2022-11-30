@@ -393,7 +393,7 @@ load_environment() {
 	output "$_ERROR_: $serviceName failed to discover WAN gateway.\\n"; return 1;
 }
 
-dnsmasq() {
+resolver() {
 	local cfg="$1" param="$2"
 	case "$param" in
 		dnsmasq.addnhosts)
@@ -430,10 +430,10 @@ dns() {
 
 			config_load 'dhcp'
 			if [ "$dns_instance" = "*" ]; then
-				config_foreach dnsmasq 'dnsmasq' "$dns"
+				config_foreach resolver 'dnsmasq' "$dns"
 			elif [ -n "$dns_instance" ]; then
 				for i in $dns_instance; do
-					dnsmasq "@dnsmasq[$i]" "$dns" || dnsmasq "$i" "$dns"
+					resolver "@dnsmasq[$i]" "$dns" || resolver "$i" "$dns"
 				done
 			fi
 
@@ -1426,7 +1426,7 @@ killcache() {
 	rm -f "$dnsmasqServersCache" "$dnsmasqServersGzip"
 	rm -f "$unboundCache" "$unboundGzip"
 	config_load 'dhcp'
-	config_foreach dnsmasq 'dnsmasq' 'cleanup'
+	config_foreach resolver 'dnsmasq' 'cleanup'
 	uci_commit 'dhcp'
 	return 0
 }

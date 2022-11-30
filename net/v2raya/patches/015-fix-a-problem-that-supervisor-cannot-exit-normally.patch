@@ -1,0 +1,100 @@
+From 3f78422f81f3abc2668fc3938b31d213bfe4dfff Mon Sep 17 00:00:00 2001
+From: mzz2017 <mzz@tuta.io>
+Date: Sun, 28 Aug 2022 17:54:36 +0800
+Subject: [PATCH] fix: a problem that supervisor cannot exit normally
+
+---
+ service/core/specialMode/infra/handle.go     | 11 ++++++----
+ service/core/specialMode/infra/supervisor.go | 22 ++++++++------------
+ 2 files changed, 16 insertions(+), 17 deletions(-)
+
+--- a/core/specialMode/infra/handle.go
++++ b/core/specialMode/infra/handle.go
+@@ -127,10 +127,13 @@ func (interfaceHandle *handle) handleRec
+ 	return results, msg
+ }
+ 
+-func packetFilter(portCache *portCache, pPacket *gopacket.Packet, whitelistDnsServers *v2router.GeoIPMatcher) (m *dnsmessage.Message, pSAddr, pSPort, pDAddr, pDPort *gopacket.Endpoint) {
+-	packet := *pPacket
+-	trans := packet.TransportLayer()
++func packetFilter(portCache *portCache, packet gopacket.Packet, whitelistDnsServers *v2router.GeoIPMatcher) (m *dnsmessage.Message, pSAddr, pSPort, pDAddr, pDPort *gopacket.Endpoint) {
++	//跳过非网络层的包
++	if packet.NetworkLayer() == nil {
++		return
++	}
+ 	//跳过非传输层的包
++	trans := packet.TransportLayer()
+ 	if trans == nil {
+ 		return
+ 	}
+@@ -180,7 +183,7 @@ func packetFilter(portCache *portCache,
+ }
+ 
+ func (interfaceHandle *handle) handlePacket(packet gopacket.Packet, ifname string, whitelistDnsServers *v2router.GeoIPMatcher, whitelistDomains *strmatcher.MatcherGroup) {
+-	m, sAddr, sPort, dAddr, dPort := packetFilter(interfaceHandle.portCache, &packet, whitelistDnsServers)
++	m, sAddr, sPort, dAddr, dPort := packetFilter(interfaceHandle.portCache, packet, whitelistDnsServers)
+ 	if m == nil {
+ 		return
+ 	}
+--- a/core/specialMode/infra/supervisor.go
++++ b/core/specialMode/infra/supervisor.go
+@@ -9,7 +9,6 @@ import (
+ 	v2router "github.com/v2rayA/v2ray-lib/router"
+ 	"github.com/v2rayA/v2rayA/pkg/util/log"
+ 	"sync"
+-	"time"
+ )
+ 
+ type DnsSupervisor struct {
+@@ -70,7 +69,7 @@ func (d *DnsSupervisor) DeleteHandles(if
+ 	}
+ 	close(d.handles[ifname].done)
+ 	delete(d.handles, ifname)
+-	log.Trace("DnsSupervisor:%v closed", ifname)
++	log.Trace("DnsSupervisor:%v deleted", ifname)
+ 	return
+ }
+ 
+@@ -81,28 +80,24 @@ func (d *DnsSupervisor) Run(ifname strin
+ 	d.inner.Lock()
+ 	handle, ok := d.handles[ifname]
+ 	if !ok {
++		d.inner.Unlock()
+ 		return fmt.Errorf("Run: %v not exsits", ifname)
+ 	}
+ 	if handle.running {
++		d.inner.Unlock()
+ 		return fmt.Errorf("Run: %v is running", ifname)
+ 	}
+ 	handle.running = true
+ 	log.Trace("[DnsSupervisor] " + ifname + ": running")
+-	pkgsrc := gopacket.NewPacketSource(handle, layers.LayerTypeEthernet)
++	// we only decode UDP packets
++	pkgsrc := gopacket.NewPacketSource(handle, layers.LayerTypeDNS)
+ 	pkgsrc.NoCopy = true
++	//pkgsrc.Lazy = true
+ 	d.inner.Unlock()
+ 	packets := pkgsrc.Packets()
+ 	go func() {
+-		for {
+-			//心跳包，防止内存泄漏
+-			packets <- gopacket.NewPacket(nil, layers.LinkTypeEthernet, gopacket.DecodeOptions{})
+-			select {
+-			case <-handle.done:
+-				return
+-			default:
+-				time.Sleep(2 * time.Second)
+-			}
+-		}
++		<-handle.done
++		packets <- gopacket.NewPacket(nil, layers.LinkTypeEthernet, pkgsrc.DecodeOptions)
+ 	}()
+ out:
+ 	for packet := range packets {
+@@ -113,5 +108,6 @@ out:
+ 		}
+ 		go handle.handlePacket(packet, ifname, whitelistDnsServers, whitelistDomains)
+ 	}
++	log.Trace("DnsSupervisor:%v closed", ifname)
+ 	return
+ }

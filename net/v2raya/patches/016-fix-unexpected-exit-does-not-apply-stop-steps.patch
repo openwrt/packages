@@ -1,0 +1,52 @@
+From 153b72ed623876ad73b731c2ec2344e9057d3c35 Mon Sep 17 00:00:00 2001
+From: mzz2017 <mzz@tuta.io>
+Date: Wed, 21 Sep 2022 16:50:24 +0800
+Subject: [PATCH] fix: unexpected exit does not apply stop steps
+
+---
+ service/core/v2ray/process.go        | 4 ++--
+ service/core/v2ray/processManager.go | 8 +++-----
+ 2 files changed, 5 insertions(+), 7 deletions(-)
+
+--- a/core/v2ray/process.go
++++ b/core/v2ray/process.go
+@@ -35,7 +35,7 @@ type Process struct {
+ 	tag2WhichIndex map[string]int
+ }
+ 
+-func NewProcess(tmpl *Template, prestart func() error, poststart func() error) (process *Process, err error) {
++func NewProcess(tmpl *Template, prestart func() error, poststart func() error, stopfunc func(p *Process)) (process *Process, err error) {
+ 	process = &Process{
+ 		template: tmpl,
+ 	}
+@@ -111,7 +111,7 @@ func NewProcess(tmpl *Template, prestart
+ 			// canceled by v2rayA
+ 			return
+ 		}
+-		defer ProcessManager.Stop(false)
++		defer stopfunc(process)
+ 		var t []string
+ 		if p != nil {
+ 			if p.Success() {
+--- a/core/v2ray/processManager.go
++++ b/core/v2ray/processManager.go
+@@ -245,16 +245,14 @@ func (m *CoreProcessManager) Start(t *Te
+ 		return m.beforeStart(t)
+ 	}, func() error {
+ 		return m.afterStart(t)
++	}, func(p *Process) {
++		m.p = p
++		ProcessManager.Stop(false)
+ 	})
+ 	if err != nil {
+ 		return err
+ 	}
+ 	m.p = process
+-	defer func() {
+-		if err != nil {
+-			m.stop(true)
+-		}
+-	}()
+ 
+ 	configure.SetRunning(true)
+ 	return nil

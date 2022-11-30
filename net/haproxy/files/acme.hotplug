@@ -1,8 +1,8 @@
 case $ACTION in
 issued|renewed)
 	cat \
-		"/etc/ssl/acme/$main_domain.fullchain.cer" \
+		"/etc/ssl/acme/$main_domain.fullchain.crt" \
 		"/etc/ssl/acme/$main_domain.key" \
-		>"/etc/ssl/acme/$main_domain.combined.cer"
+		>"/etc/ssl/acme/$main_domain.combined.crt"
 	;;
 esac
