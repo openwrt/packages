@@ -3,10 +3,10 @@ comment "Generic options"
 
 config TVHEADEND_OPTIMIZE_SPEED
   bool "Optimize for speed"
-  depends on PACKAGE_tvheadend
+  depends on PACKAGE_tvheadend && (arm || aarch64 || x86_64)
   default n
   help
-    Optimize tvheadend for speed instead of size. This option adds -O2 and LTO (Link Time Optimization).
+    Optimize tvheadend for speed instead of size. This option adds -O3 and LTO (Link Time Optimization).
     Note: No benchmarks were performed when this option was added. Speed improvements (if any) are not known.
 
 config TVHEADEND_TRACE
