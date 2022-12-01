@@ -28,6 +28,8 @@ jobs:
 
       - name: Determine changed packages
         run: |
+          RET=0
+
           # only detect packages with changes
           PKG_ROOTS=$(find . -name Makefile | \
             grep -v ".*/src/Makefile" | \
@@ -46,14 +48,13 @@ jobs:
           done
 
           if [ -n "$CONTAINS_AUTORELEASE" ]; then
+            RET=1
             cat > "$GITHUB_WORKSPACE/pr_comment.md" << EOF
           Please do no longer set *PKG_RELEASE* to *AUTORELEASE* as the
           feature is deprecated. Please use an integer instead. Below is a
           list of affected packages including correct *PKG_RELEASE*:
 
           EOF
-          else
-            echo "No usage of *AUTORELEASE* found in changes" > "$GITHUB_WORKSPACE/pr_comment.md"
           fi
 
           for ROOT in $CONTAINS_AUTORELEASE; do
@@ -70,8 +71,11 @@ jobs:
             echo >> "$GITHUB_WORKSPACE/pr_comment.md"
           done
 
+          exit $RET
+
       - name: Find Comment
         uses: peter-evans/find-comment@v2
+        if: ${{ failure() }}
         id: fc
         with:
           issue-number: ${{ github.event.pull_request.number }}
@@ -79,6 +83,7 @@ jobs:
 
       - name: Create or update comment
         uses: peter-evans/create-or-update-comment@v2
+        if: ${{ failure() }}
         with:
           comment-id: ${{ steps.fc.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
