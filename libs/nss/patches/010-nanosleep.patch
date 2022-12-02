@@ -1,6 +1,6 @@
 --- a/nss/lib/freebl/stubs.c
 +++ b/nss/lib/freebl/stubs.c
-@@ -503,7 +503,8 @@ extern PRStatus
+@@ -500,7 +500,8 @@ extern PRStatus
  PR_Sleep_stub(PRIntervalTime ticks)
  {
      STUB_SAFE_CALL1(PR_Sleep, ticks);
