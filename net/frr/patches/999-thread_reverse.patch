@@ -1,6 +1,6 @@
 --- a/lib/thread.c
 +++ b/lib/thread.c
-@@ -867,13 +867,9 @@ static void thread_free(struct thread_ma
+@@ -870,13 +870,9 @@ static void thread_free(struct thread_ma
  	XFREE(MTYPE_THREAD, thread);
  }
  
@@ -16,7 +16,7 @@
  	/*
  	 * If timer_wait is null here, that means poll() should block
  	 * indefinitely, unless the thread_master has overridden it by setting
-@@ -904,58 +900,15 @@ static int fd_poll(struct thread_master
+@@ -907,58 +903,15 @@ static int fd_poll(struct thread_master
  	rcu_assert_read_unlocked();
  
  	/* add poll pipe poker */
@@ -82,7 +82,7 @@
  		while (read(m->io_pipe[0], &trash, sizeof(trash)) > 0)
  			;
  
-@@ -1762,7 +1715,7 @@ struct thread *thread_fetch(struct threa
+@@ -1768,7 +1721,7 @@ struct thread *thread_fetch(struct threa
  	struct timeval zerotime = {0, 0};
  	struct timeval tv;
  	struct timeval *tw = NULL;
@@ -91,7 +91,7 @@
  	int num = 0;
  
  	do {
-@@ -1838,14 +1791,14 @@ struct thread *thread_fetch(struct threa
+@@ -1844,14 +1797,14 @@ struct thread *thread_fetch(struct threa
  
  		pthread_mutex_unlock(&m->mtx);
  		{
