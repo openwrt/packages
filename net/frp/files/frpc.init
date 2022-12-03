@@ -49,6 +49,10 @@ start_service() {
 	> "$conf_file"
 	config_load "$NAME"
 
+	local enabled
+		config_get_bool enabled "common" 'enabled' '0'
+		[ "$enabled" = "1" ] || return 1
+
 	local stdout stderr user group respawn env conf_inc
 	uci_validate_section "$NAME" init "$init_cfg" \
 		'stdout:bool:1' \
