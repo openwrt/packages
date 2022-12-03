@@ -1,0 +1,12 @@
+--- a/Makefile.config
++++ b/Makefile.config
+@@ -243,8 +243,7 @@ libraries: \
+ 	configdir \
+ 	LIB_AIO LIB_BSD LIB_CRYPT LIB_RT LIB_SCTP LIB_Z LIB_DL \
+ 	LIB_JPEG LIB_JUDY LIB_PTHREAD LIB_PTHREAD_SPINLOCK \
+-	LIB_IPSEC_MB LIB_KMOD LIB_XXHASH LIB_APPARMOR \
+-	LIB_EGL LIB_GBM LIB_GLES2
++	LIB_IPSEC_MB LIB_KMOD LIB_APPARMOR
+ 
+ LIB_AIO:
+ 	$(call check,test-libaio,HAVE_LIB_AIO,$(LIB_AIO),$(LIB_AIO))
