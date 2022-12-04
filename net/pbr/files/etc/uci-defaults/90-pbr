@@ -1,0 +1,34 @@
+#!/bin/sh
+# shellcheck disable=SC1091,SC3037,SC3043
+
+readonly __OK__='\033[0;32m[\xe2\x9c\x93]\033[0m'
+
+# Transition from vpn-policy-routing
+if [ -s '/etc/config/vpn-policy-routing' ] && [ ! -s '/etc/config/pbr-opkg' ]; then
+	echo "Migrating vpn-policy-routing config file."
+	mv '/etc/config/pbr' '/etc/config/pbr-opkg'
+	sed 's/vpn-policy-routing/pbr/g' /etc/config/vpn-policy-routing > /etc/config/pbr
+	uci set vpn-policy-routing.config.enabled=0; uci commit vpn-policy-routing;
+fi
+
+# Transition from older versions of pbr
+sed -i 's/resolver_ipset/resolver_set/g' /etc/config/pbr
+sed -i 's/iptables_rule_option/rule_create_option/g' /etc/config/pbr
+sed -i "s/'FORWARD'/'forward'/g" /etc/config/pbr
+sed -i "s/'INPUT'/'input'/g" /etc/config/pbr
+sed -i "s/'OUTPUT'/'output'/g" /etc/config/pbr
+sed -i "s/'PREROUTING'/'prerouting'/g" /etc/config/pbr
+sed -i "s/'POSTROUTING'/'postrouting'/g" /etc/config/pbr
+sed -i "s/option fw_mask '0x\(.*\)'/option fw_mask '\1'/g" /etc/config/pbr
+sed -i "s/option wan_mark '0x\(.*\)'/option wan_mark '\1'/g" /etc/config/pbr
+
+uci -q batch <<-EOT
+	delete firewall.pbr
+	set firewall.pbr='include'
+	set firewall.pbr.fw4_compatible='1'
+	set firewall.pbr.type='script'
+	set firewall.pbr.path='/usr/share/pbr/pbr.firewall.include'
+	commit firewall
+EOT
+
+exit 0
