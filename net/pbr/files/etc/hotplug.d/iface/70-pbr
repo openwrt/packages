@@ -1,0 +1,8 @@
+#!/bin/sh
+# shellcheck disable=SC1091,SC3060
+[ -s /etc/openwrt_release ] && . /etc/openwrt_release
+[ "${DISTRIB_RELEASE//19.07}" = "$DISTRIB_RELEASE" ] && exit 0
+if [ -x /etc/init.d/pbr ] && /etc/init.d/pbr enabled; then
+	logger -t pbr "Reloading pbr $INTERFACE due to $ACTION of $INTERFACE ($DEVICE)"
+	/etc/init.d/pbr reload_interface "$INTERFACE"
+fi
