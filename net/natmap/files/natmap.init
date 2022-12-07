@@ -18,8 +18,7 @@ load_interfaces() {
 validate_section_natmap() {
 	uci_load_validate "${NAME}" natmap "$1" "$2" \
 		'enable:bool:1' \
-		'ipv4:bool:0' \
-		'ipv6:bool:0' \
+		'family:string' \
 		'udp_mode:bool:0' \
 		'interface:string' \
 		'interval:uinteger' \
@@ -44,8 +43,8 @@ natmap_instance() {
 		${stun_server:+-s "$stun_server"} \
 		${http_server:+-h "$http_server"}
 
-	[ "${ipv4}" = 1 ] && procd_append_param command -4
-	[ "${ipv6}" = 1 ] && procd_append_param command -6
+	[ "${family}" = ipv4 ] && procd_append_param command -4
+	[ "${family}" = ipv6 ] && procd_append_param command -6
 	[ "${udp_mode}" = 1 ] && procd_append_param command -u
 
 	[ -n "$interface" ] && {
