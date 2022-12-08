@@ -1,6 +1,6 @@
-From e25fb0d0d86da5a9398ebdc9216b2ea89f80fa3d Mon Sep 17 00:00:00 2001
-From: Jeremy Evans <code@jeremyevans.net>
-Date: Fri, 25 Mar 2022 13:11:31 -0700
+From b1641baee099805a07c87a57b6d86f43002d8139 Mon Sep 17 00:00:00 2001
+From: Bradford Zhang <zyc@zyc.name>
+Date: Thu, 8 Dec 2022 10:56:30 +0800
 Subject: [PATCH] Fix build with LibreSSL 3.5
 
 ---
@@ -9,7 +9,7 @@ Subject: [PATCH] Fix build with LibreSSL 3.5
 
 --- a/ext/openssl/ossl_pkey.c
 +++ b/ext/openssl/ossl_pkey.c
-@@ -670,7 +670,7 @@ ossl_pkey_export_traditional(int argc, V
+@@ -710,7 +710,7 @@ ossl_pkey_export_traditional(int argc, VALUE *argv, VALUE self, int to_der)
  	}
      }
      else {
