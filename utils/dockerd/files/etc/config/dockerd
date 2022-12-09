@@ -34,5 +34,5 @@ config globals 'globals'
 # then docker restarted to load in new changes.
 config firewall 'firewall'
 	option device 'docker0'
-	list blocked_interfaces 'wan'
+#	list blocked_interfaces 'wan'
 #	option extra_iptables_args '--match conntrack ! --ctstate RELATED,ESTABLISHED' # allow outbound connections

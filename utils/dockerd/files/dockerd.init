@@ -91,6 +91,9 @@ uciadd() {
 		uci_quiet set firewall.@zone[-1].output="ACCEPT"
 		uci_quiet set firewall.@zone[-1].forward="ACCEPT"
 		uci_quiet set firewall.@zone[-1].name="${zone}"
+		uci_quiet add firewall forwarding
+		uci_quiet set firewall.@forwarding[-1].src="${zone}"
+		uci_quiet set firewall.@forwarding[-1].dest='wan'
 		uci_quiet commit firewall
 	fi
 
