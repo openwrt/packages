@@ -153,6 +153,7 @@ start_instance() {
 	procd_set_param stdout 1
 	procd_set_param respawn
 	procd_open_data
+	procd_add_mdns_service "$packageName" 'udp' "$port" "DNS over HTTPS proxy"
 	json_add_string url "$url"
 	if [ "$force_dns" -ne 0 ]; then
 		json_add_array firewall
