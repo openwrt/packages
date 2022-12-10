@@ -62,7 +62,7 @@ readonly sharedMemoryError="/dev/shm/$packageName-error"
 readonly sharedMemoryOutput="/dev/shm/$packageName-output"
 readonly hostsFilter='/localhost/d;/^#/d;/^[^0-9]/d;s/^0\.0\.0\.0.//;s/^127\.0\.0\.1.//;s/[[:space:]]*#.*$//;s/[[:cntrl:]]$//;s/[[:space:]]//g;/[`~!@#\$%\^&\*()=+;:"'\'',<>?/\|[{}]/d;/]/d;/\./!d;/^$/d;/[^[:alnum:]_.-]/d;'
 readonly domainsFilter='/^#/d;s/[[:space:]]*#.*$//;s/[[:space:]]*$//;s/[[:cntrl:]]$//;/[[:space:]]/d;/[`~!@#\$%\^&\*()=+;:"'\'',<>?/\|[{}]/d;/]/d;/\./!d;/^$/d;/[^[:alnum:]_.-]/d;'
-readonly dnsmasqAddressFilter='\|^address=/[[:alnum:]_.-].*/#|!d'
+readonly dnsmasqOISDFilter='\|^server=/[[:alnum:]_.-].*/|!d'
 readonly _OK_='\033[0;32m\xe2\x9c\x93\033[0m'
 readonly _FAIL_='\033[0;31m\xe2\x9c\x97\033[0m'
 readonly __OK__='\033[0;32m[\xe2\x9c\x93]\033[0m'
@@ -658,7 +658,7 @@ process_url() {
 	if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ]; then return 1; fi
 	label="${1##*//}"; label="${label%%/*}";
 	case "$2" in
-		dnsmasq) label="Dnsmasq: $label"; filter="$dnsmasqAddressFilter";;
+		dnsmasq) label="Dnsmasq: $label"; filter="$dnsmasqOISDFilter";;
 		domains) label="Domains: $label"; filter="$domainsFilter";;
 		hosts) label="Hosts:   $label"; filter="$hostsFilter";;
 	esac
