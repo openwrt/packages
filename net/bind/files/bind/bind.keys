@@ -19,7 +19,7 @@
 # replace this file with a current version.  The latest version of
 # bind.keys can always be obtained from ISC at https://www.isc.org/bind-keys.
 
-trust-anchors {
+managed-keys {
         # ISC DLV: See https://www.isc.org/solutions/dlv for details.
         #
         # NOTE: The ISC DLV zone is being phased out as of February 2017;
