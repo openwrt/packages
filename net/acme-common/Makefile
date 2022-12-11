@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=acme-common
-PKG_VERSION:=1.0.1
+PKG_VERSION:=1.0.2
 
 PKG_MAINTAINER:=Toke Høiland-Jørgensen <toke@toke.dk>
 PKG_LICENSE:=GPL-3.0-only
@@ -34,6 +34,7 @@ define Package/acme-common/conffiles
 endef
 
 define Package/acme-common/install
+	$(INSTALL_DIR) $(1)/etc/acme
 	$(INSTALL_DIR) $(1)/etc/ssl/acme
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/acme.config $(1)/etc/config/acme
