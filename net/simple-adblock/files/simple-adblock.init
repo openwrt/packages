@@ -1510,7 +1510,7 @@ load_validate_config() {
 		'verbosity:range(0,2):2' \
 		'procd_trigger_wan6:bool:0' \
 		'led:or("", "none", file, device, string)' \
-		'dns:or("dnsmasq.addnhosts", "dnsmasq.conf", "dnsmasq.ipset", "dnsmasq.servers", "unbound.adb_list"):dnsmasq.servers' \
+		'dns:or("dnsmasq.addnhosts", "dnsmasq.conf", "dnsmasq.ipset", "dnsmasq.nftset", "dnsmasq.servers", "unbound.adb_list"):dnsmasq.servers' \
 		'dns_instance:or(list(integer, string)):0' \
 		'allowed_domain:list(string)' \
 		'allowed_domains_url:list(string)' \
