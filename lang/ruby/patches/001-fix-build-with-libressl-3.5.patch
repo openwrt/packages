@@ -9,7 +9,7 @@ Subject: [PATCH] Fix build with LibreSSL 3.5
 
 --- a/ext/openssl/ossl_pkey.c
 +++ b/ext/openssl/ossl_pkey.c
-@@ -670,7 +670,7 @@ ossl_pkey_export_traditional(int argc, V
+@@ -710,7 +710,7 @@ ossl_pkey_export_traditional(int argc, V
  	}
      }
      else {
