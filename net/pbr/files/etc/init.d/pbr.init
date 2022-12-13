@@ -109,6 +109,7 @@ get_text() {
 	case "$1" in
 		errorConfigValidation) r="Config ($packageConfigFile) validation failure!";;
 		errorNoIpFull) r="ip-full binary cannot be found!";;
+		errorNoIptables) r="iptables binary cannot be found!";;
 		errorNoIpset) r="Resolver set support (${resolver_set}) requires ipset, but ipset binary cannot be found!";;
 		errorNoNft) r="Resolver set support (${resolver_set}) requires nftables, but nft binary cannot be found!";;
 		errorResolverNotSupported) r="Resolver set (${resolver_set}) is not supported on this system!";;
@@ -335,6 +336,12 @@ load_environment() {
 		if [ ! -x "$ip_full" ]; then
 			state add 'errorSummary' 'errorNoIpFull'
 			return 1
+		fi
+		if ! is_nft; then
+			if [ -z "$iptables" ] || [ ! -x "$iptables" ]; then
+				state add 'errorSummary' 'errorNoIptables'
+				return 1
+			fi
 		fi
 		resolver 'check_support'
 	fi
