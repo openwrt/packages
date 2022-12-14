@@ -20,6 +20,7 @@ link_certs()
     domain_dir="$1"
     main_domain="$2"
 
+    (umask 077; cat "$domain_dir/fullchain.cer" "$domain_dir/$main_domain.key" > "$domain_dir/combined.cer")
 
     if [ ! -e "$CERT_DIR/$main_domain.crt" ]; then
 		ln -s "$domain_dir/$main_domain.cer" "$CERT_DIR/$main_domain.crt"
@@ -29,6 +30,9 @@ link_certs()
     fi
     if [ ! -e "$CERT_DIR/$main_domain.fullchain.crt" ]; then
 		ln -s "$domain_dir/fullchain.cer" "$CERT_DIR/$main_domain.fullchain.crt"
+    fi
+    if [ ! -e "$CERT_DIR/$main_domain.combined.crt" ]; then
+		ln -s "$domain_dir/combined.cer" "$CERT_DIR/$main_domain.combined.crt"
     fi
     if [ ! -e "$CERT_DIR/$main_domain.chain.crt" ]; then
 		ln -s "$domain_dir/ca.cer" "$CERT_DIR/$main_domain.chain.crt"
