@@ -2,8 +2,8 @@
 set -u
 ACME=/usr/lib/acme/client/acme.sh
 LOG_TAG=acme-acmesh
-# webroot option deprecated, use the hardcoded value directly in the next major version
-WEBROOT=${webroot:-$challenge_dir}
+# webroot option deprecated, use the exported value directly in the next major version
+WEBROOT=${webroot:-$CHALLENGE_DIR}
 NOTIFY=/usr/lib/acme/notify
 
 # shellcheck source=net/acme/files/functions.sh
@@ -12,6 +12,32 @@ NOTIFY=/usr/lib/acme/notify
 # Needed by acme.sh
 export CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 export NO_TIMESTAMP=1
+
+link_certs()
+{
+    local main_domain
+    local domain_dir
+    domain_dir="$1"
+    main_domain="$2"
+
+    (umask 077; cat "$domain_dir/fullchain.cer" "$domain_dir/$main_domain.key" > "$domain_dir/combined.cer")
+
+    if [ ! -e "$CERT_DIR/$main_domain.crt" ]; then
+		ln -s "$domain_dir/$main_domain.cer" "$CERT_DIR/$main_domain.crt"
+    fi
+    if [ ! -e "$CERT_DIR/$main_domain.key" ]; then
+		ln -s "$domain_dir/$main_domain.key" "$CERT_DIR/$main_domain.key"
+    fi
+    if [ ! -e "$CERT_DIR/$main_domain.fullchain.crt" ]; then
+		ln -s "$domain_dir/fullchain.cer" "$CERT_DIR/$main_domain.fullchain.crt"
+    fi
+    if [ ! -e "$CERT_DIR/$main_domain.combined.crt" ]; then
+		ln -s "$domain_dir/combined.cer" "$CERT_DIR/$main_domain.combined.crt"
+    fi
+    if [ ! -e "$CERT_DIR/$main_domain.chain.crt" ]; then
+		ln -s "$domain_dir/ca.cer" "$CERT_DIR/$main_domain.chain.crt"
+    fi
+}
 
 case $1 in
 get)
@@ -45,20 +71,7 @@ get)
 
 			case $status in
 			0)
-				mkdir -p /etc/ssl/acme
-				if [ ! -e "/etc/ssl/acme/$main_domain.crt" ]; then
-					ln -s "$domain_dir/$main_domain.cer" "/etc/ssl/acme/$main_domain.crt"
-				fi
-				if [ ! -e "/etc/ssl/acme/$main_domain.key" ]; then
-					ln -s "$domain_dir/$main_domain.key" "/etc/ssl/acme/$main_domain.key"
-				fi
-				if [ ! -e "/etc/ssl/acme/$main_domain.fullchain.crt" ]; then
-					ln -s "$domain_dir/fullchain.cer" "/etc/ssl/acme/$main_domain.fullchain.crt"
-				fi
-				if [ ! -e "/etc/ssl/acme/$main_domain.chain.crt" ]; then
-					ln -s "$domain_dir/ca.cer" "/etc/ssl/acme/$main_domain.chain.crt"
-				fi
-
+                                link_certs "$domain_dir" "$main_domain"
 				$NOTIFY renewed
 				exit
 				;;
@@ -124,10 +137,7 @@ get)
 
 	case $status in
 	0)
-		ln -s "$domain_dir/$main_domain.cer" "/etc/ssl/acme/$main_domain.crt"
-		ln -s "$domain_dir/$main_domain.key" "/etc/ssl/acme/$main_domain.key"
-		ln -s "$domain_dir/fullchain.cer" "/etc/ssl/acme/$main_domain.fullchain.crt"
-		ln -s "$domain_dir/ca.cer" "/etc/ssl/acme/$main_domain.chain.crt"
+                link_certs "$domain_dir" "$main_domain"
 		$NOTIFY issued
 		;;
 	*)
