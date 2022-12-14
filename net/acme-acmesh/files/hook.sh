@@ -3,7 +3,7 @@ set -u
 ACME=/usr/lib/acme/client/acme.sh
 LOG_TAG=acme-acmesh
 # webroot option deprecated, use the hardcoded value directly in the next major version
-WEBROOT=${webroot:-/var/run/acme/challenge}
+WEBROOT=${webroot:-$challenge_dir}
 NOTIFY=/usr/lib/acme/notify
 
 # shellcheck source=net/acme/files/functions.sh
