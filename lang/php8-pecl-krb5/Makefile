@@ -9,7 +9,7 @@ PECL_NAME:=krb5
 PECL_LONGNAME:=Bindings for the Kerberos library
 
 PKG_VERSION:=1.1.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_HASH:=8aba35bb9f2892be9092e8717d3e13604a817cdfb478dbc3855a226abc6c5979
 
 PKG_NAME:=php8-pecl-krb5
