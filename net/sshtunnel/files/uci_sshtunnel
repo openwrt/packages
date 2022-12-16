@@ -21,7 +21,7 @@
 #	option StrictHostKeyChecking	accept-new
 #	option TCPKeepAlive		yes
 #	option VerifyHostKeyDNS		yes
-#	option ProxyCommand		'ncat --proxy-type http --proxy-auth user:pass --proxy ip:port server.disney.com 22'
+#	option ProxyCommand		'ncat --proxy-type http --proxy-auth user:pass --proxy ip:port %h %p'
 
 # tunnelR(emote) - when the connection will be initiated to the R(emote) endpoint at
 # remoteaddress:remoteport and then forwarded to localaddress:localport
