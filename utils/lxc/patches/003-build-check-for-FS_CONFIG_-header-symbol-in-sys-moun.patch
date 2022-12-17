@@ -1,0 +1,143 @@
+From cbabe8abf11e7e7fb49c123bae31efdd9bc8f1e8 Mon Sep 17 00:00:00 2001
+From: Christian Brauner <brauner@kernel.org>
+Date: Tue, 9 Aug 2022 17:19:40 +0200
+Subject: build: check for FS_CONFIG_* header symbol in sys/mount.h
+
+Fixes: #4176
+Signed-off-by: Christian Brauner (Microsoft) <christian.brauner@ubuntu.com>
+---
+ meson.build           | 59 +++++++++++++++++++++++++++++++++++++++++--
+ src/lxc/mount_utils.h | 16 ++++++++++++
+ 2 files changed, 73 insertions(+), 2 deletions(-)
+
+--- a/meson.build
++++ b/meson.build
+@@ -638,8 +638,7 @@ if cc.sizeof('struct mount_attr', prefix
+     found_types += 'struct mount_attr (sys/mount.h)'
+ else
+     srcconf.set10('HAVE_' + 'struct mount_attr'.underscorify().to_upper(), false)
+-    missing_types += 'struct mount_attr (sys/mount.h)'
+-endif
++    missing_types += 'struct mount_attr (sys/mount.h)' endif
+ 
+ ## Types.
+ decl_headers = '''
+@@ -655,6 +654,62 @@ else
+     missing_types += 'struct mount_attr (linux/mount.h)'
+ endif
+ 
++if cc.has_header_symbol('sys/mount.h', 'FSCONFIG_SET_FLAG')
++    srcconf.set10('HAVE_' + 'FSCONFIG_SET_FLAG'.underscorify().to_upper(), true)
++    found_types += 'FSCONFIG_SET_FLAG'
++else
++    srcconf.set10('HAVE_' + 'FSCONFIG_SET_FLAG'.underscorify().to_upper(), false)
++    missing_types += 'FSCONFIG_SET_FLAG'
++endif
++
++if cc.has_header_symbol('sys/mount.h', 'FS_CONFIG_SET_STRING')
++    srcconf.set10('HAVE_' + 'FS_CONFIG_SET_STRING'.underscorify().to_upper(), true)
++    found_types += 'FS_CONFIG_SET_STRING'
++else
++    srcconf.set10('HAVE_' + 'FS_CONFIG_SET_STRING'.underscorify().to_upper(), false)
++    missing_types += 'FS_CONFIG_SET_STRING'
++endif
++
++if cc.has_header_symbol('sys/mount.h', 'FS_CONFIG_SET_BINARY')
++    srcconf.set10('HAVE_' + 'FS_CONFIG_SET_BINARY'.underscorify().to_upper(), true)
++    found_types += 'FS_CONFIG_SET_BINARY'
++else
++    srcconf.set10('HAVE_' + 'FS_CONFIG_SET_BINARY'.underscorify().to_upper(), false)
++    missing_types += 'FS_CONFIG_SET_BINARY'
++endif
++
++if cc.has_header_symbol('sys/mount.h', 'FS_CONFIG_SET_PATH_EMPTY')
++    srcconf.set10('HAVE_' + 'FS_CONFIG_SET_PATH_EMPTY'.underscorify().to_upper(), true)
++    found_types += 'FS_CONFIG_SET_PATH_EMPTY'
++else
++    srcconf.set10('HAVE_' + 'FS_CONFIG_SET_PATH_EMPTY'.underscorify().to_upper(), false)
++    missing_types += 'FS_CONFIG_SET_PATH_EMPTY'
++endif
++
++if cc.has_header_symbol('sys/mount.h', 'FS_CONFIG_SET_PATH_FD')
++    srcconf.set10('HAVE_' + 'FS_CONFIG_SET_PATH_FD'.underscorify().to_upper(), true)
++    found_types += 'FS_CONFIG_SET_PATH_FD'
++else
++    srcconf.set10('HAVE_' + 'FS_CONFIG_SET_PATH_FD'.underscorify().to_upper(), false)
++    missing_types += 'FS_CONFIG_SET_PATH_FD'
++endif
++
++if cc.has_header_symbol('sys/mount.h', 'FS_CONFIG_SET_CMD_CREATE')
++    srcconf.set10('HAVE_' + 'FS_CONFIG_SET_CMD_CREATE'.underscorify().to_upper(), true)
++    found_types += 'FS_CONFIG_SET_CMD_CREATE'
++else
++    srcconf.set10('HAVE_' + 'FS_CONFIG_SET_CMD_CREATE'.underscorify().to_upper(), false)
++    missing_types += 'FS_CONFIG_SET_CMD_CREATE'
++endif
++
++if cc.has_header_symbol('sys/mount.h', 'FS_CONFIG_SET_CMD_RECONFIGURE')
++    srcconf.set10('HAVE_' + 'FS_CONFIG_SET_CMD_RECONFIGURE'.underscorify().to_upper(), true)
++    found_types += 'FS_CONFIG_SET_CMD_RECONFIGURE'
++else
++    srcconf.set10('HAVE_' + 'FS_CONFIG_SET_CMD_RECONFIGURE'.underscorify().to_upper(), false)
++    missing_types += 'FS_CONFIG_SET_CMD_RECONFIGURE'
++endif
++
+ ## Headers.
+ foreach ident: [
+     ['bpf',               '''#include <sys/syscall.h>
+--- a/src/lxc/mount_utils.h
++++ b/src/lxc/mount_utils.h
+@@ -82,37 +82,53 @@ struct lxc_rootfs;
+ #endif
+ 
+ /* fsconfig() commands */
++#if !HAVE_FSCONFIG_SET_FLAG
+ #ifndef FSCONFIG_SET_FLAG
+ #define FSCONFIG_SET_FLAG 0 /* Set parameter, supplying no value */
+ #endif
++#endif
+ 
++#if !HAVE_FSCONFIG_SET_STRING
+ #ifndef FSCONFIG_SET_STRING
+ #define FSCONFIG_SET_STRING 1 /* Set parameter, supplying a string value */
+ #endif
++#endif
+ 
++#if !HAVE_FSCONFIG_SET_BINARY
+ #ifndef FSCONFIG_SET_BINARY
+ #define FSCONFIG_SET_BINARY 2 /* Set parameter, supplying a binary blob value */
+ #endif
++#endif
+ 
++#if !HAVE_FSCONFIG_SET_PATH
+ #ifndef FSCONFIG_SET_PATH
+ #define FSCONFIG_SET_PATH 3 /* Set parameter, supplying an object by path */
+ #endif
++#endif
+ 
++#if !HAVE_FSCONFIG_SET_PATH_EMPTY
+ #ifndef FSCONFIG_SET_PATH_EMPTY
+ #define FSCONFIG_SET_PATH_EMPTY 4 /* Set parameter, supplying an object by (empty) path */
+ #endif
++#endif
+ 
++#if !HAVE_FSCONFIG_SET_FD
+ #ifndef FSCONFIG_SET_FD
+ #define FSCONFIG_SET_FD 5 /* Set parameter, supplying an object by fd */
+ #endif
++#endif
+ 
++#if !HAVE_FSCONFIG_CMD_CREATE
+ #ifndef FSCONFIG_CMD_CREATE
+ #define FSCONFIG_CMD_CREATE 6 /* Invoke superblock creation */
+ #endif
++#endif
+ 
++#if !FSCONFIG_CMD_RECONFIGURE
+ #ifndef FSCONFIG_CMD_RECONFIGURE
+ #define	FSCONFIG_CMD_RECONFIGURE 7	/* Invoke superblock reconfiguration */
+ #endif
++#endif
+ 
+ /* fsmount() flags */
+ #ifndef FSMOUNT_CLOEXEC

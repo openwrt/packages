@@ -1,0 +1,197 @@
+From 4771699fd97b1e9ee7dc4f7cfe01c8ddd698f682 Mon Sep 17 00:00:00 2001
+From: Christian Brauner <brauner@kernel.org>
+Date: Wed, 10 Aug 2022 11:42:52 +0200
+Subject: tree-wide: wipe direct or indirect linux/mount.h inclusion
+
+It is incompatible with sys/mount.h and causes massive headaches.
+
+Signed-off-by: Christian Brauner (Microsoft) <christian.brauner@ubuntu.com>
+---
+ meson.build                | 44 +++++++++++++-------------------------
+ src/lxc/macro.h            | 13 +++++++++++
+ src/lxc/mount_utils.h      |  2 +-
+ src/lxc/syscall_wrappers.h |  9 ++------
+ src/lxc/utils.c            |  2 --
+ 5 files changed, 31 insertions(+), 39 deletions(-)
+
+--- a/meson.build
++++ b/meson.build
+@@ -627,7 +627,6 @@ foreach tuple: [
+     endif
+ endforeach
+ 
+-## Types.
+ decl_headers = '''
+ #include <sys/mount.h>
+ '''
+@@ -640,74 +639,61 @@ else
+     srcconf.set10('HAVE_' + 'struct mount_attr'.underscorify().to_upper(), false)
+     missing_types += 'struct mount_attr (sys/mount.h)' endif
+ 
+-## Types.
+-decl_headers = '''
+-#include <linux/mount.h>
+-'''
+-
+-# We get -1 if the size cannot be determined
+-if cc.sizeof('struct mount_attr', prefix: decl_headers, args: '-D_GNU_SOURCE') > 0
+-    srcconf.set10('HAVE_UAPI_' + 'struct mount_attr'.underscorify().to_upper(), true)
+-    found_types += 'struct mount_attr (linux/mount.h)'
+-else
+-    srcconf.set10('HAVE_UAPI_' + 'struct mount_attr'.underscorify().to_upper(), false)
+-    missing_types += 'struct mount_attr (linux/mount.h)'
+-endif
+-
++## Check if sys/mount.h defines the fsconfig commands
+ if cc.has_header_symbol('sys/mount.h', 'FSCONFIG_SET_FLAG')
+     srcconf.set10('HAVE_' + 'FSCONFIG_SET_FLAG'.underscorify().to_upper(), true)
+-    found_types += 'FSCONFIG_SET_FLAG'
++    found_types += 'FSCONFIG_SET_FLAG (sys/mount.h)'
+ else
+     srcconf.set10('HAVE_' + 'FSCONFIG_SET_FLAG'.underscorify().to_upper(), false)
+-    missing_types += 'FSCONFIG_SET_FLAG'
++    missing_types += 'FSCONFIG_SET_FLAG (sys/mount.h)'
+ endif
+ 
+ if cc.has_header_symbol('sys/mount.h', 'FS_CONFIG_SET_STRING')
+     srcconf.set10('HAVE_' + 'FS_CONFIG_SET_STRING'.underscorify().to_upper(), true)
+-    found_types += 'FS_CONFIG_SET_STRING'
++    found_types += 'FS_CONFIG_SET_STRING (sys/mount.h)'
+ else
+     srcconf.set10('HAVE_' + 'FS_CONFIG_SET_STRING'.underscorify().to_upper(), false)
+-    missing_types += 'FS_CONFIG_SET_STRING'
++    missing_types += 'FS_CONFIG_SET_STRING (sys/mount.h)'
+ endif
+ 
+ if cc.has_header_symbol('sys/mount.h', 'FS_CONFIG_SET_BINARY')
+     srcconf.set10('HAVE_' + 'FS_CONFIG_SET_BINARY'.underscorify().to_upper(), true)
+-    found_types += 'FS_CONFIG_SET_BINARY'
++    found_types += 'FS_CONFIG_SET_BINARY (sys/mount.h)'
+ else
+     srcconf.set10('HAVE_' + 'FS_CONFIG_SET_BINARY'.underscorify().to_upper(), false)
+-    missing_types += 'FS_CONFIG_SET_BINARY'
++    missing_types += 'FS_CONFIG_SET_BINARY (sys/mount.h)'
+ endif
+ 
+ if cc.has_header_symbol('sys/mount.h', 'FS_CONFIG_SET_PATH_EMPTY')
+     srcconf.set10('HAVE_' + 'FS_CONFIG_SET_PATH_EMPTY'.underscorify().to_upper(), true)
+-    found_types += 'FS_CONFIG_SET_PATH_EMPTY'
++    found_types += 'FS_CONFIG_SET_PATH_EMPTY (sys/mount.h)'
+ else
+     srcconf.set10('HAVE_' + 'FS_CONFIG_SET_PATH_EMPTY'.underscorify().to_upper(), false)
+-    missing_types += 'FS_CONFIG_SET_PATH_EMPTY'
++    missing_types += 'FS_CONFIG_SET_PATH_EMPTY (sys/mount.h)'
+ endif
+ 
+ if cc.has_header_symbol('sys/mount.h', 'FS_CONFIG_SET_PATH_FD')
+     srcconf.set10('HAVE_' + 'FS_CONFIG_SET_PATH_FD'.underscorify().to_upper(), true)
+-    found_types += 'FS_CONFIG_SET_PATH_FD'
++    found_types += 'FS_CONFIG_SET_PATH_FD (sys/mount.h)'
+ else
+     srcconf.set10('HAVE_' + 'FS_CONFIG_SET_PATH_FD'.underscorify().to_upper(), false)
+-    missing_types += 'FS_CONFIG_SET_PATH_FD'
++    missing_types += 'FS_CONFIG_SET_PATH_FD (sys/mount.h)'
+ endif
+ 
+ if cc.has_header_symbol('sys/mount.h', 'FS_CONFIG_SET_CMD_CREATE')
+     srcconf.set10('HAVE_' + 'FS_CONFIG_SET_CMD_CREATE'.underscorify().to_upper(), true)
+-    found_types += 'FS_CONFIG_SET_CMD_CREATE'
++    found_types += 'FS_CONFIG_SET_CMD_CREAT (sys/mount.h)'
+ else
+     srcconf.set10('HAVE_' + 'FS_CONFIG_SET_CMD_CREATE'.underscorify().to_upper(), false)
+-    missing_types += 'FS_CONFIG_SET_CMD_CREATE'
++    missing_types += 'FS_CONFIG_SET_CMD_CREATE (sys/mount.h)'
+ endif
+ 
+ if cc.has_header_symbol('sys/mount.h', 'FS_CONFIG_SET_CMD_RECONFIGURE')
+     srcconf.set10('HAVE_' + 'FS_CONFIG_SET_CMD_RECONFIGURE'.underscorify().to_upper(), true)
+-    found_types += 'FS_CONFIG_SET_CMD_RECONFIGURE'
++    found_types += 'FS_CONFIG_SET_CMD_RECONFIGURE (sys/mount.h)'
+ else
+     srcconf.set10('HAVE_' + 'FS_CONFIG_SET_CMD_RECONFIGURE'.underscorify().to_upper(), false)
+-    missing_types += 'FS_CONFIG_SET_CMD_RECONFIGURE'
++    missing_types += 'FS_CONFIG_SET_CMD_RECONFIGURE (sys/mount.h)'
+ endif
+ 
+ ## Headers.
+--- a/src/lxc/macro.h
++++ b/src/lxc/macro.h
+@@ -8,6 +8,7 @@
+ #include <asm/types.h>
+ #include <limits.h>
+ #include <linux/if_link.h>
++#include <linux/ioctl.h>
+ #include <linux/loop.h>
+ #include <linux/netlink.h>
+ #include <linux/rtnetlink.h>
+@@ -812,4 +813,16 @@ static inline bool is_set(__u32 bit, __u
+ 
+ #define BIT(nr) (1UL << (nr))
+ 
++#ifndef FS_IOC_GETFLAGS
++#define FS_IOC_GETFLAGS _IOR('f', 1, long)
++#endif
++
++#ifndef FS_IOC_SETFLAGS
++#define FS_IOC_SETFLAGS _IOW('f', 2, long)
++#endif
++
++#ifndef FS_IMMUTABLE_FL
++#define FS_IMMUTABLE_FL 0x00000010 /* Immutable file */
++#endif
++
+ #endif /* __LXC_MACRO_H */
+--- a/src/lxc/mount_utils.h
++++ b/src/lxc/mount_utils.h
+@@ -124,7 +124,7 @@ struct lxc_rootfs;
+ #endif
+ #endif
+ 
+-#if !FSCONFIG_CMD_RECONFIGURE
++#if !HAVE_FSCONFIG_CMD_RECONFIGURE
+ #ifndef FSCONFIG_CMD_RECONFIGURE
+ #define	FSCONFIG_CMD_RECONFIGURE 7	/* Invoke superblock reconfiguration */
+ #endif
+--- a/src/lxc/syscall_wrappers.h
++++ b/src/lxc/syscall_wrappers.h
+@@ -10,6 +10,7 @@
+ #include <linux/keyctl.h>
+ #include <sched.h>
+ #include <stdint.h>
++#include <sys/mount.h>
+ #include <sys/prctl.h>
+ #include <sys/syscall.h>
+ #include <sys/types.h>
+@@ -18,12 +19,6 @@
+ #include "macro.h"
+ #include "syscall_numbers.h"
+ 
+-#if HAVE_STRUCT_MOUNT_ATTR
+-#include <sys/mount.h>
+-#elif HAVE_UAPI_STRUCT_MOUNT_ATTR
+-#include <linux/mount.h>
+-#endif
+-
+ #ifdef HAVE_LINUX_MEMFD_H
+ #include <linux/memfd.h>
+ #endif
+@@ -216,7 +211,7 @@ extern int fsmount(int fs_fd, unsigned i
+ /*
+  * mount_setattr()
+  */
+-#if !HAVE_STRUCT_MOUNT_ATTR && !HAVE_UAPI_STRUCT_MOUNT_ATTR
++#if !HAVE_STRUCT_MOUNT_ATTR
+ struct mount_attr {
+ 	__u64 attr_set;
+ 	__u64 attr_clr;
+--- a/src/lxc/utils.c
++++ b/src/lxc/utils.c
+@@ -19,8 +19,6 @@
+ #include <string.h>
+ #include <sys/mman.h>
+ #include <sys/mount.h>
+-/* Needs to be after sys/mount.h header */
+-#include <linux/fs.h>
+ #include <sys/param.h>
+ #include <sys/prctl.h>
+ #include <sys/stat.h>
