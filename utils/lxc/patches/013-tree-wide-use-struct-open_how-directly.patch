@@ -1,0 +1,112 @@
+From 133aa416ca2a5996090ec0e697e253646364d274 Mon Sep 17 00:00:00 2001
+From: Christian Brauner <brauner@kernel.org>
+Date: Wed, 10 Aug 2022 12:18:49 +0200
+Subject: tree-wide: use struct open_how directly
+
+Signed-off-by: Christian Brauner (Microsoft) <christian.brauner@ubuntu.com>
+---
+ meson.build                | 2 --
+ src/lxc/file_utils.c       | 2 +-
+ src/lxc/mount_utils.c      | 8 ++++----
+ src/lxc/syscall_wrappers.h | 6 ++++--
+ src/lxc/utils.c            | 2 +-
+ 5 files changed, 10 insertions(+), 10 deletions(-)
+
+--- a/meson.build
++++ b/meson.build
+@@ -579,9 +579,7 @@ decl_headers = '''
+ #include <uchar.h>
+ #include <sys/mount.h>
+ #include <sys/stat.h>
+-#include <linux/fs.h>
+ #include <linux/if_link.h>
+-#include <linux/openat2.h>
+ #include <linux/types.h>
+ '''
+ 
+--- a/src/lxc/file_utils.c
++++ b/src/lxc/file_utils.c
+@@ -652,7 +652,7 @@ int open_at(int dfd, const char *path, u
+ 	    unsigned int resolve_flags, mode_t mode)
+ {
+ 	__do_close int fd = -EBADF;
+-	struct lxc_open_how how = {
++	struct open_how how = {
+ 		.flags		= o_flags,
+ 		.mode		= mode,
+ 		.resolve	= resolve_flags,
+--- a/src/lxc/mount_utils.c
++++ b/src/lxc/mount_utils.c
+@@ -186,7 +186,7 @@ int fs_prepare(const char *fs_name,
+ 	int fd_from;
+ 
+ 	if (!is_empty_string(path_from)) {
+-		struct lxc_open_how how = {
++		struct open_how how = {
+ 			.flags		= o_flags_from,
+ 			.resolve	= resolve_flags_from,
+ 		};
+@@ -237,7 +237,7 @@ int fs_attach(int fd_fs,
+ 	int fd_to, ret;
+ 
+ 	if (!is_empty_string(path_to)) {
+-		struct lxc_open_how how = {
++		struct open_how how = {
+ 			.flags		= o_flags_to,
+ 			.resolve	= resolve_flags_to,
+ 		};
+@@ -308,7 +308,7 @@ int move_detached_mount(int dfd_from, in
+ 	int fd_to, ret;
+ 
+ 	if (!is_empty_string(path_to)) {
+-		struct lxc_open_how how = {
++		struct open_how how = {
+ 			.flags		= o_flags_to,
+ 			.resolve	= resolve_flags_to,
+ 		};
+@@ -348,7 +348,7 @@ int __fd_bind_mount(int dfd_from, const
+ 	set_atime(&attr);
+ 
+ 	if (!is_empty_string(path_from)) {
+-		struct lxc_open_how how = {
++		struct open_how how = {
+ 			.flags		= o_flags_from,
+ 			.resolve	= resolve_flags_from,
+ 		};
+--- a/src/lxc/syscall_wrappers.h
++++ b/src/lxc/syscall_wrappers.h
+@@ -240,11 +240,13 @@ static inline int mount_setattr(int dfd,
+  * @mode: O_CREAT/O_TMPFILE file mode.
+  * @resolve: RESOLVE_* flags.
+  */
+-struct lxc_open_how {
++#if !HAVE_STRUCT_OPEN_HOW
++struct open_how {
+ 	__u64 flags;
+ 	__u64 mode;
+ 	__u64 resolve;
+ };
++#endif
+ 
+ /* how->resolve flags for openat2(2). */
+ #ifndef RESOLVE_NO_XDEV
+@@ -296,7 +298,7 @@ struct lxc_open_how {
+ #define PROTECT_OPEN_RW (O_CLOEXEC | O_NOCTTY | O_RDWR | O_NOFOLLOW)
+ 
+ #if !HAVE_OPENAT2
+-static inline int openat2(int dfd, const char *filename, struct lxc_open_how *how, size_t size)
++static inline int openat2(int dfd, const char *filename, struct open_how *how, size_t size)
+ {
+ 	return syscall(__NR_openat2, dfd, filename, how, size);
+ }
+--- a/src/lxc/utils.c
++++ b/src/lxc/utils.c
+@@ -1095,7 +1095,7 @@ int __safe_mount_beneath_at(int beneath_
+ 			    unsigned int flags, const void *data)
+ {
+ 	__do_close int source_fd = -EBADF, target_fd = -EBADF;
+-	struct lxc_open_how how = {
++	struct open_how how = {
+ 		.flags		= PROTECT_OPATH_DIRECTORY,
+ 		.resolve	= PROTECT_LOOKUP_BENEATH_WITH_MAGICLINKS,
+ 	};

@@ -1,0 +1,47 @@
+From ef1e0607b82e27350c2d677d649c6a0a9693fd40 Mon Sep 17 00:00:00 2001
+From: Christian Brauner <brauner@kernel.org>
+Date: Tue, 9 Aug 2022 16:27:40 +0200
+Subject: build: detect sys/pidfd.h availability
+
+Fixes: #4176
+Signed-off-by: Christian Brauner (Microsoft) <christian.brauner@ubuntu.com>
+---
+ meson.build             | 1 +
+ src/lxc/process_utils.h | 6 ++++++
+ 2 files changed, 7 insertions(+)
+
+--- a/meson.build
++++ b/meson.build
+@@ -734,6 +734,7 @@ foreach tuple: [
+     ['sys/resource.h'],
+     ['sys/memfd.h'],
+     ['sys/personality.h'],
++    ['sys/pidfd.h'],
+     ['sys/signalfd.h'],
+     ['sys/timerfd.h'],
+     ['pty.h'],
+--- a/src/lxc/process_utils.h
++++ b/src/lxc/process_utils.h
+@@ -15,6 +15,10 @@
+ #include <sys/syscall.h>
+ #include <unistd.h>
+ 
++#if HAVE_SYS_PIDFD_H
++#include <sys/pidfd.h>
++#endif
++
+ #include "compiler.h"
+ #include "syscall_numbers.h"
+ 
+@@ -136,9 +140,11 @@
+ #endif
+ 
+ /* waitid */
++#if !HAVE_SYS_PIDFD_H
+ #ifndef P_PIDFD
+ #define P_PIDFD 3
+ #endif
++#endif
+ 
+ #ifndef CLONE_ARGS_SIZE_VER0
+ #define CLONE_ARGS_SIZE_VER0 64 /* sizeof first published struct */
