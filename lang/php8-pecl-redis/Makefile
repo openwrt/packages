@@ -9,7 +9,7 @@ PECL_NAME:=redis
 PECL_LONGNAME:=PHP extension for interfacing with Redis
 
 PKG_VERSION:=5.3.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_HASH:=b958166ccda4f40bd17c6998f9e2239021ae644467cd8ad5c15def420aad65b0
 
 PKG_NAME:=php8-pecl-redis
