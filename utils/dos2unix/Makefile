@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dos2unix
 PKG_VERSION:=7.4.3
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://waterlan.home.xs4all.nl/dos2unix/ \
@@ -22,7 +22,7 @@ PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
-MAKE_FLAGS+= D2U_OS=Linux
+MAKE_FLAGS+= D2U_OS=Linux ENABLE_NLS=
 
 define dos2unix/template
   define Package/$(1)
