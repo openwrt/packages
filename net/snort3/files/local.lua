@@ -2,7 +2,7 @@
 
 -- switch tap to inline in ips and uncomment the below to run snort in inline mode
 --snort = {}
---snort["-Q"] = ''
+--snort["-Q"] = true
 
 ips = {
   mode = tap,
@@ -50,3 +50,10 @@ file_policy = {
     }
   }
 }
+
+-- To use openappid with snort, install the openappid package and uncomment the below
+--appid = {
+--    app_detector_dir = '/usr/lib/openappid',
+--    log_stats = true,
+--    app_stats_period = 60,
+--}
