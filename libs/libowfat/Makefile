@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libowfat
-PKG_VERSION:=0.32
-PKG_RELEASE:=6
+PKG_VERSION:=0.33
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.fefe.de/libowfat
-PKG_HASH:=f4b9b3d9922dc25bc93adedf9e9ff8ddbebaf623f14c8e7a5f2301bfef7998c1
+PKG_HASH:=311ec8b3f4b72bb442e323fb013a98f956fa745547f2bc9456287b20d027cd7d
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
@@ -36,6 +36,7 @@ endef
 
 TARGET_CFLAGS += $(FPIC)
 LOWFAT_MAKEOPTS = $(TARGET_CONFIGURE_OPTS) \
+	AR="ar" \
 	CFLAGS="$(TARGET_CFLAGS) -I$(PKG_BUILD_DIR) -I$(STAGING_DIR)/usr/include" \
 	CCC="$(TARGET_CC)" \
 	CROSS="$(TARGET_CROSS)" \
@@ -49,16 +50,12 @@ LOWFAT_HOST_MAKEOPTS = $(HOST_CONFIGURE_OPTS) \
 	VERSION="$(PKG_VERSION)" \
 	OS="Linux"
 
-# work around a nasty gcc bug
-ifneq ($(CONFIG_GCC_VERSION_4_2_4),)
-  LOWFAT_MAKEOPTS += WOPTS=""
-endif
-
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) $(LOWFAT_MAKEOPTS)
 endef
 
 define Host/Compile
+	$(LN) . $(HOST_BUILD_DIR)/libowfat
 	$(MAKE) -C $(HOST_BUILD_DIR) $(LOWFAT_HOST_MAKEOPTS) ent
 endef
 
