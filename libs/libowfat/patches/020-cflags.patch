@@ -1,6 +1,6 @@
 --- a/Makefile
 +++ b/Makefile
-@@ -37,8 +37,8 @@ OPT_PLUS=-O3 $(NATIVE)
+@@ -42,8 +42,8 @@ OPT_PLUS=-O3 $(NATIVE)
  
  DEFINE=-D_REENTRANT
  
