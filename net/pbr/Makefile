@@ -4,8 +4,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pbr
-PKG_VERSION:=1.0.0
-PKG_RELEASE:=2
+PKG_VERSION:=1.0.1
+PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.ca>
 
@@ -20,7 +20,7 @@ define Package/pbr/default
   URL:=https://docs.openwrt.melmac.net/pbr/
   DEPENDS:=+ip-full +jshn +jsonfilter +resolveip
   CONFLICTS:=vpnbypass vpn-policy-routing
-  PROVIDES:=vpnbypass vpn-policy-routing
+  PROVIDES:=pbr vpnbypass vpn-policy-routing
   PKGARCH:=all
 endef
 
