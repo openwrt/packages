@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cryptsetup
-PKG_VERSION:=2.5.0
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=2.6.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=@KERNEL/linux/utils/cryptsetup/v2.5
-PKG_HASH:=9184a6ebbd9ce7eb211152e7f741a6c82f2d1cc0e24a84ec9c52939eee0f0542
+PKG_SOURCE_URL:=@KERNEL/linux/utils/cryptsetup/v2.6
+PKG_HASH:=44397ba76e75a9cde5b02177bc63cd7af428a785788e3a7067733e7761842735
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-2.0-or-later LGPL-2.1-or-later
