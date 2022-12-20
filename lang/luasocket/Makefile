@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luasocket
-PKG_VERSION:=3.0.0
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=3.1.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/lunarmodules/luasocket/archive/refs/tags
-PKG_HASH:=04d98e40edcee7c7c5f83f0e8ba5503d14b56280e20daceee9e34ed7cf8f1b15
+PKG_HASH:=bf033aeb9e62bcaa8d007df68c119c966418e8c9ef7e4f2d7e96bddeca9cca6e
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=MIT
@@ -76,13 +76,13 @@ define Package/luasocket/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/src/{ltn12,mime,socket}.lua $(1)/usr/lib/lua
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/mime-1.0.3.so $(1)/usr/lib/lua
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/socket-3.0-rc1.so $(1)/usr/lib/lua
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/socket-3.0.0.so $(1)/usr/lib/lua
 	$(INSTALL_DIR) $(1)/usr/lib/lua/mime
 	ln -sf ../mime-1.0.3.so $(1)/usr/lib/lua/mime/core.so
 	$(INSTALL_DIR) $(1)/usr/lib/lua/socket
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/src/{ftp,http,smtp,tp,url,headers}.lua $(1)/usr/lib/lua/socket
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/unix.so $(1)/usr/lib/lua/socket
-	ln -sf ../socket-3.0-rc1.so $(1)/usr/lib/lua/socket/core.so
+	ln -sf ../socket-3.0.0.so $(1)/usr/lib/lua/socket/core.so
 endef
 
 

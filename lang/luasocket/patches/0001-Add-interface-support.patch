@@ -213,7 +213,7 @@ Subject: [PATCH] Add interface resolving
  /*=========================================================================*\
  * Internal functions prototypes
  \*=========================================================================*/
-@@ -389,6 +392,12 @@ static int opt_ip6_setmembership(lua_Sta
+@@ -414,6 +417,12 @@ static int opt_ip6_setmembership(lua_Sta
      if (!lua_isnil(L, -1)) {
          if (lua_isnumber(L, -1)) {
              val.ipv6mr_interface = (unsigned int) lua_tonumber(L, -1);
