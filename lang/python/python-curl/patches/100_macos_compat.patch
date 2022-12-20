@@ -3,7 +3,7 @@ This patch should be deleted after resolving https://github.com/pycurl/pycurl/is
 ---
 --- a/setup.py
 +++ b/setup.py
-@@ -347,9 +347,6 @@ manually. For other SSL backends please
+@@ -341,9 +341,6 @@ ignore this message.''')
          if not self.libraries:
              self.libraries.append("curl")
  
