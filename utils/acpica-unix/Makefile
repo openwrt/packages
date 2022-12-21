@@ -22,6 +22,7 @@ PKG_LICENSE:=GPL-2.0
 PKG_FORTIFY_SOURCE:=0
 PKG_BUILD_PARALLEL:=1
 
+include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
 
 define Package/acpica-unix
@@ -43,6 +44,25 @@ endef
 define Build/Configure
 endef
 
+define Host/Install
+	$(INSTALL_DIR) $(STAGING_DIR_HOST)/usr/bin
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/generate/unix/bin/{acpibin,acpidump} \
+		$(STAGING_DIR_HOST)/usr/bin/
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/generate/unix/bin/{acpiexamples,acpiexec} \
+		$(STAGING_DIR_HOST)/usr/bin/
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/generate/unix/bin/{acpihelp,acpisrc} \
+		$(STAGING_DIR_HOST)/usr/bin/
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/generate/unix/bin/{acpixtract,iasl} \
+		$(STAGING_DIR_HOST)/usr/bin/
+endef
+
+define Host/Clean
+	$(RM) $(STAGING_DIR_HOST)/usr/bin/{acpibin,acpidump}
+	$(RM) $(STAGING_DIR_HOST)/usr/bin/{acpiexamples,acpiexec}
+	$(RM) $(STAGING_DIR_HOST)/usr/bin/{acpihelp,acpisrc}
+	$(RM) $(STAGING_DIR_HOST)/usr/bin/{acpixtract,iasl}
+endef
+
 MAKE_VARS += HOST=_LINUX
 
 MAKE_PATH:=generate/unix
@@ -55,3 +75,4 @@ define Package/acpica-unix/install
 endef
 
 $(eval $(call BuildPackage,acpica-unix))
+$(eval $(call HostBuild))
