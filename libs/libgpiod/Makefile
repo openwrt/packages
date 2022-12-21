@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libgpiod
 PKG_VERSION:=1.6.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/software/libs/libgpiod/
@@ -43,6 +43,9 @@ define Package/libgpiod
   CATEGORY:=Libraries
   URL:=https://git.kernel.org/pub/scm/libs/libgpiod/libgpiod.git
   TITLE:=Library for interacting with Linux's GPIO character device
+  KCONFIG:= \
+    CONFIG_GPIO_CDEV=y \
+    CONFIG_GPIO_CDEV_V1=y
   DEPENDS:=@GPIO_SUPPORT
 endef
 
