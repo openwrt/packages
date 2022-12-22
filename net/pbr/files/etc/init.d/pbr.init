@@ -264,8 +264,8 @@ is_service_running_nft() { [ -x "$nft" ] && [ -n "$(get_mark_nft_chains)" ]; }
 # is_service_running_nft() { [ -x "$nft" ] && [ -s "$nftPermFile" ]; }
 is_service_running() { if is_nft; then is_service_running_nft; else is_service_running_iptables; fi; }
 is_netifd_table() { local iface="$1"; [ "$(uci -q get "network.${iface}.ip4table")" = "${packageName}_${iface%6}" ]; }
-get_rt_tables_id() { grep "${packageName}_${iface}" /etc/iproute2/rt_tables | awk '{print $1;}'; }
-get_rt_tables_next_id() { echo "$(($(sort -r -n /etc/iproute2/rt_tables | grep -o -E -m 1 "^[0-9]+")+1))"; }
+get_rt_tables_id() { local iface="$1"; grep "${packageName}_${iface}" '/etc/iproute2/rt_tables' | awk '{print $1;}'; }
+get_rt_tables_next_id() { echo "$(($(sort -r -n '/etc/iproute2/rt_tables' | grep -o -E -m 1 "^[0-9]+")+1))"; }
 _check_config() { local en; config_get_bool en "$1" 'enabled' 1; [ "$en" -gt 0 ] && _cfg_enabled=0; }
 is_config_enabled() {
 	local cfg="$1" _cfg_enabled=1
@@ -1658,12 +1658,16 @@ interface_routing() {
 					$ip_full -6 rule add fwmark "${mark}/${fw_mask}" table "$tid" priority "$priority" || ipv6_error=1
 				fi
 			else
-				sed -i "/${ipTablePrefix}_${iface}/d" /etc/iproute2/rt_tables
+				if ! grep -q "$tid ${ipTablePrefix}_${iface}" '/etc/iproute2/rt_tables'; then
+					sed -i "/${ipTablePrefix}_${iface}/d" '/etc/iproute2/rt_tables'
+					sync
+					echo "$tid ${ipTablePrefix}_${iface}" >> '/etc/iproute2/rt_tables'
+					sync
+				fi
 				$ip_full -4 rule del fwmark "${mark}/${fw_mask}" table "$tid" >/dev/null 2>&1
 				$ip_full -4 route flush table "$tid" >/dev/null 2>&1
 				if [ -n "$gw4" ] || [ "$strict_enforcement" -ne 0 ]; then
 					ipv4_error=0
-					echo "$tid ${ipTablePrefix}_${iface}" >> /etc/iproute2/rt_tables
 					if [ -z "$gw4" ]; then
 						$ip_full -4 route add unreachable default table "$tid" >/dev/null 2>&1 || ipv4_error=1
 					else
@@ -1754,7 +1758,8 @@ EOF
 			$ip_full rule del fwmark "${mark}/${fw_mask}" table "$tid" >/dev/null 2>&1
 			if ! is_netifd_table "$iface"; then
 				$ip_full route flush table "$tid" >/dev/null 2>&1
-				sed -i "/${ipTablePrefix}_${iface}/d" /etc/iproute2/rt_tables
+				sed -i "/${ipTablePrefix}_${iface}/d" '/etc/iproute2/rt_tables'
+				sync
 			fi
 			return "$s"
 		;;
