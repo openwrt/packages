@@ -73,7 +73,7 @@ CONFIGURE_ARGS += \
 	--without-zstd \
 	--without-x
 
-TARGET_CFLAGS += $(if $(CONFIG_GCC_USE_VERSION_10),,-flto)
+TARGET_CFLAGS += $(if $(filter-out 5 6 7 8 9,$(word 1,$(subst ., ,$(call qstrip,$(CONFIG_GCC_VERSION))))),,-flto)
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
