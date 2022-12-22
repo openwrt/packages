@@ -104,7 +104,7 @@ CONFIGURE_ARGS += \
 	--disable-tests \
 	--disable-zip
 
-TARGET_CFLAGS += $(if $(CONFIG_GCC_USE_VERSION_10),-DEXTERN_UNLESS_MAIN_MODULE=static)
+TARGET_CFLAGS += $(if $(filter-out 5 6 7 8 9,$(word 1,$(subst ., ,$(call qstrip,$(CONFIG_GCC_VERSION))))),-DEXTERN_UNLESS_MAIN_MODULE=static)
 
 define Package/gnupg2/install
 	$(INSTALL_DIR) $(1)/usr/bin
