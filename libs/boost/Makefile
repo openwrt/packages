@@ -384,7 +384,13 @@ TARGET_LDFLAGS += -pthread -lrt -lstdc++ -Wl,--gc-sections,--as-needed,--print-g
 TARGET_CFLAGS += \
 	$(if $(CONFIG_SOFT_FLOAT),-DBOOST_NO_FENV_H) -fPIC -ffunction-sections -fdata-sections -flto
 
-EXTRA_CXXFLAGS += $(if $(CONFIG_GCC_USE_VERSION_10),-std=gnu++20,$(if $(CONFIG_GCC_USE_VERSION_5),-std=gnu++14,-std=gnu++17))
+ifeq ($(word 1,$(subst ., ,$(call qstrip,$(CONFIG_GCC_VERSION)))),5)
+    EXTRA_CXXFLAGS += -std=gnu++14
+else ifneq ($(filter-out 6 7 8 9,$(word 1,$(subst ., ,$(call qstrip,$(CONFIG_GCC_VERSION))))),)
+    EXTRA_CXXFLAGS += -std=gnu++17
+else
+    EXTRA_CXXFLAGS += -std=gnu++20
+endif
 
 ifneq ($(findstring mips,$(ARCH)),)
     BOOST_ABI = o32
