@@ -26,6 +26,7 @@ validate_section_natmap() {
 		'http_server:host' \
 		'port:port' \
 		'forward_target:host' \
+		'forward_port:port' \
 		'notify_script:file'
 }
 
@@ -39,15 +40,16 @@ natmap_instance() {
 
 	procd_open_instance "$1"
 	procd_set_param command "$PROG" \
-		${interval:+-k $interval} \
+		${interval:+-k "$interval"} \
 		${stun_server:+-s "$stun_server"} \
-		${http_server:+-h "$http_server"}
+		${http_server:+-h "$http_server"} \
+		${port:+-b "$port"} \
 
 	[ "${family}" = ipv4 ] && procd_append_param command -4
 	[ "${family}" = ipv6 ] && procd_append_param command -6
 	[ "${udp_mode}" = 1 ] && procd_append_param command -u
 
-	[ -n "$interface" ] && {
+	[ -n "${interface}" ] && {
 		local ifname
 
 		network_get_device ifname "$interface" || ifname="$interface"
@@ -55,11 +57,7 @@ natmap_instance() {
 		procd_append_param netdev "$ifname"
 	}
 
-	if [ -n "$forward_target" ]; then
-		procd_append_param command -t "$forward_target" -p $port
-	else
-		procd_append_param command -b $port
-	fi
+	[ -n "${forward_target}" ] && procd_append_param command -t "$forward_target" -p "$forward_port"
 
 	[ -n "${notify_script}" ] && procd_set_param env "NOTIFY_SCRIPT=${notify_script}"
 	procd_append_param command -e /usr/lib/natmap/update.sh
