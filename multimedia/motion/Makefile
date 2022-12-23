@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=motion
-PKG_VERSION:=4.3.2
+PKG_VERSION:=4.5.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-release-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/Motion-Project/motion/tar.gz/release-$(PKG_VERSION)?
-PKG_HASH:=dafa4264b2d8e4778f8be5871f09b6c0ec710d5a836182c583469c18db944d70
+PKG_HASH:=42320a1c7b54a3f0b5a49cecf34a5d752760b28383bc573b3ca1240581786fe5
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-release-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>
