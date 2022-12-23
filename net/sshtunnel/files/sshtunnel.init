@@ -52,7 +52,8 @@ validate_server_section() {
 		'ServerAliveInterval:min(0)' \
 		'StrictHostKeyChecking:or("yes", "no", "accept-new")' \
 		'TCPKeepAlive:or("yes", "no")' \
-		'VerifyHostKeyDNS:or("yes", "no")'
+		'VerifyHostKeyDNS:or("yes", "no")' \
+		'ProxyCommand:string(1)'
 }
 
 validate_tunnelR_section() {
@@ -177,6 +178,17 @@ load_server() {
 	append_params CheckHostIP Compression CompressionLevel IdentityFile \
 		LogLevel PKCS11Provider ServerAliveCountMax ServerAliveInterval \
 		StrictHostKeyChecking TCPKeepAlive VerifyHostKeyDNS
+
+	if [ -n "$ProxyCommand" ]; then
+		ProxyCommand=$(echo $ProxyCommand | sed "s/%h/"${hostname}"/g")
+		ProxyCommand=$(echo $ProxyCommand | sed "s/%p/"${port}"/g")
+
+		local proxy_option=/tmp/sshtunnel.proxycommand.$server.sh
+		echo "#!/bin/sh"             > $proxy_option
+		echo "exec ${ProxyCommand}" >> $proxy_option
+		chmod a+x $proxy_option
+		ARGS_options="$ARGS_options -o ProxyCommand=$proxy_option"
+	fi
 
 	ARGS="$ARGS_options -o ExitOnForwardFailure=yes -o BatchMode=yes -nN $ARGS_tunnels -p $port $user@$hostname"
 
