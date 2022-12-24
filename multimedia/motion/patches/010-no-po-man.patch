@@ -10,7 +10,7 @@
  sysconf_DATA = \
 --- a/configure.ac
 +++ b/configure.ac
-@@ -472,8 +472,6 @@ AC_SUBST(AM_LDFLAGS, "$TEMP_LDFLAGS")
+@@ -492,8 +492,6 @@ AC_SUBST(AM_LDFLAGS, "$TEMP_LDFLAGS")
  AC_CONFIG_FILES([
  	Makefile
  	src/Makefile
