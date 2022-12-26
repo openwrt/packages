@@ -26,6 +26,10 @@ endef
 
 MAKE_FLAGS += REV_ID="$(PKG_VERSION)"
 
+define Package/natmap/conffiles
+/etc/config/natmap
+endef
+
 define Package/natmap/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/natmap $(1)/usr/bin/
