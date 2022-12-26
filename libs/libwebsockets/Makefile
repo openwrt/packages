@@ -45,7 +45,7 @@ define Package/libwebsockets/Default
 	SECTION:=libs
 	CATEGORY:=Libraries
 	TITLE:=libwebsockets
-	DEPENDS:=+zlib +libcap
+	DEPENDS:=+zlib +libcap +libubox
 	URL:=https://libwebsockets.org
 	MAINTAINER:=Karl Palsson <karlp@etactica.com>
 endef
@@ -97,7 +97,7 @@ endif
 
 define Package/libwebsockets/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libwebsockets.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libwebsockets*.so* $(1)/usr/lib/
 endef
 
 Package/libwebsockets-mbedtls/install = $(Package/libwebsockets/install)
