@@ -9,14 +9,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sshuttle
 PKG_VERSION:=1.1.1
-PKG_RELEASE:=1
-PKG_LICENSE:=LGPL-2.1-only
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/sshuttle/sshuttle/archive/refs/tags/v$(PKG_VERSION).tar.gz
 PKG_HASH:=87b6343da4b7ea164cc1638a3ff25c41cf9dbc70bbc84bc4df8c41f963a4b0b9
 
 PKG_MAINTAINER:=Thomas Cujé <dev.cuje@freenet.de>
+PKG_LICENSE:=LGPL-2.1-only
 
 include $(INCLUDE_DIR)/package.mk
 
