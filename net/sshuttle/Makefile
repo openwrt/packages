@@ -11,22 +11,29 @@ PKG_NAME:=sshuttle
 PKG_VERSION:=1.1.1
 PKG_RELEASE:=$(AUTORELEASE)
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/sshuttle/sshuttle/archive/refs/tags/v$(PKG_VERSION).tar.gz
-PKG_HASH:=87b6343da4b7ea164cc1638a3ff25c41cf9dbc70bbc84bc4df8c41f963a4b0b9
+PYPI_NAME:=$(PKG_NAME)
+PKG_HASH:=f5a3ed1e5ab1213c7a6df860af41f1a903ab2cafbfef71f371acdcff21e69ee6
 
 PKG_MAINTAINER:=Thomas Cujé <dev.cuje@freenet.de>
 PKG_LICENSE:=LGPL-2.1-only
 
+include ../../lang/python/pypi.mk
 include $(INCLUDE_DIR)/package.mk
+include ../../lang/python/python3-package.mk
 
 define Package/sshuttle
   SUBMENU:=SSH
   SECTION:=net
   CATEGORY:=Network
   TITLE:=sshuttle: where transparent proxy meets VPN meets ssh
-  DEPENDS:=+python3 +python3-pip +iptables-mod-extra +iptables-mod-nat-extra +iptables-mod-ipopt
-  PKGARCH:=all
+  URL:=https://github.com/sshuttle/sshuttle
+  DEPENDS:= \
+  +python3-light \
+  +python3-ctypes \
+  +python3-urllib \
+  +iptables-mod-extra \
+  +iptables-mod-nat-extra \
+  +iptables-mod-ipopt
 endef
 
 define Package/sshuttle/description
@@ -37,9 +44,6 @@ define Package/sshuttle/conffiles
 /etc/config/sshuttle
 endef
 
-define Build/Compile
-endef
-
 define Package/sshuttle/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/sshuttle.init $(1)/etc/init.d/sshuttle
@@ -47,9 +51,6 @@ define Package/sshuttle/install
 	$(INSTALL_CONF) ./files/sshuttle.config $(1)/etc/config/sshuttle
 endef
 
-define Package/sshuttle/postinst
-#!/bin/sh
-/usr/bin/pip3 install sshuttle==$(PKG_VERSION)
-endef
-
+$(eval $(call Py3Package,sshuttle))
 $(eval $(call BuildPackage,sshuttle))
+$(eval $(call BuildPackage,sshuttle-src))
