@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sshuttle
 PKG_VERSION:=1.1.1
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=1
 
 PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=f5a3ed1e5ab1213c7a6df860af41f1a903ab2cafbfef71f371acdcff21e69ee6
