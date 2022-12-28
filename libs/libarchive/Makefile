@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libarchive
-PKG_VERSION:=3.5.2
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=3.5.3
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.libarchive.org/downloads
-PKG_HASH:=f0b19ff39c3c9a5898a219497ababbadab99d8178acc980155c7e1271089b5a0
+PKG_HASH:=5cac725dd4be31c4a10b65d30f29dc957ea29ef3d758df6e46e8ae90a996a19a
 
 PKG_MAINTAINER:=Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
 PKG_LICENSE:=BSD-2-Clause
@@ -34,6 +34,7 @@ endef
 define Package/libarchive
   $(call Package/libarchive/Default)
   DEPENDS += +libopenssl
+  CONFLICTS:=libarchive-noopenssl
 endef
 
 define Package/libarchive-noopenssl
