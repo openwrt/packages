@@ -37,18 +37,22 @@ define Package/sshuttle
 endef
 
 define Package/sshuttle/description
-  Transparent proxy server that works as a poor man's VPN. Forwards over ssh. Doesn't require admin. Works with Linux and MacOS. Supports DNS tunneling.
+Transparent proxy server that works as a poor man's VPN. Forwards over ssh. Doesn't require admin. Works with Linux and MacOS. Supports DNS tunneling.
 endef
 
 define Package/sshuttle/conffiles
 /etc/config/sshuttle
 endef
 
-define Package/sshuttle/install
-	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/sshuttle.init $(1)/etc/init.d/sshuttle
+define Py3Package/sshuttle/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/sshuttle $(1)/usr/bin/
+
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/sshuttle.config $(1)/etc/config/sshuttle
+
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/sshuttle.init $(1)/etc/init.d/sshuttle
 endef
 
 $(eval $(call Py3Package,sshuttle))
