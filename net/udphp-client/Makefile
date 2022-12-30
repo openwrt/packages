@@ -33,12 +33,6 @@ define Package/udphp-client/description
  UDP hole punching tool and client for signaling server udphp-server
 endef
 
-# define Build/Prepare
-# 	mkdir -p $(PKG_BUILD_DIR)
-# 	cp -r /home/almaz/projects/udphp/. $(PKG_BUILD_DIR)
-# 	$(Build/Patch)
-# endef
-
 MAKE_PATH = client
 MAKE_FLAGS += \
 	TARGETDIR=$(PKG_BUILD_DIR)
