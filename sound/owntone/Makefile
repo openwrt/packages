@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=owntone
-PKG_VERSION:=28.2
-PKG_RELEASE:=2
+PKG_VERSION:=28.4
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/owntone/owntone-server/releases/download/$(PKG_VERSION)/
-PKG_HASH:=7e5a0142d852569dc28a99a2e26568856717544e894904aa0e63950fdafa2666
+PKG_HASH:=6b3dcfe0c51aa6424a0a0c695b2f0350302dfde3351e19961224847076889c92
 
 PKG_FIXUP:=autoreconf
 PKG_USE_MIPS16:=0
@@ -32,7 +32,7 @@ CATEGORY:=Sound
 TITLE:=iTunes (DAAP) server for Apple Remote and AirPlay
 URL:=https://github.com/owntone/owntone-server
 DEPENDS:=+libgpg-error +libgcrypt +libgdbm +zlib +libexpat +libunistring \
-	+libevent2 +libdaemon +libantlr3c +confuse +alsa-lib +libffmpeg-full \
+	+libevent2 +libdaemon +confuse +alsa-lib +libffmpeg-full \
 	+mxml +libavahi-client +sqlite3-cli +libplist +libcurl +libjson-c \
 	+libprotobuf-c +libgnutls +libsodium +libwebsockets +libuuid $(ICONV_DEPENDS)
 endef
@@ -40,8 +40,8 @@ endef
 define Package/owntone/description
   OwnTone is a Linux/FreeBSD DAAP (iTunes), MPD (Music Player Daemon) and
   RSP (Roku) media server. It has support for AirPlay speakers, Chromecast,
-  Apple Remote (and compatibles), MPD clients, internet radio and LastFM. It
-  does not support AirPlay/Chromecast video.
+  Apple Remote (and compatibles), MPD clients, Spotify, internet radio and
+  LastFM. It does not support AirPlay/Chromecast video.
 endef
 
 define Package/owntone/conffiles
@@ -68,6 +68,8 @@ define Package/owntone/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/owntone/* $(1)/usr/lib/owntone/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/owntone.init $(1)/etc/init.d/owntone
+	$(INSTALL_DIR) $(1)/usr/share/owntone
+	$(CP) $(PKG_INSTALL_DIR)/usr/share/owntone/htdocs $(1)/usr/share/owntone
 endef
 
 $(eval $(call BuildPackage,owntone))
