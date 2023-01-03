@@ -1,0 +1,19 @@
+From d809433d6d900e899f796606b11bdc6a73413ac5 Mon Sep 17 00:00:00 2001
+From: Glenn Strauss <gstrauss@gluelogic.com>
+Date: Tue, 3 Jan 2023 17:50:16 -0500
+Subject: [PATCH] [meson] remove t/test_mod_evasive.c
+
+---
+ src/meson.build | 1 -
+ 1 file changed, 1 deletion(-)
+
+--- a/src/meson.build
++++ b/src/meson.build
+@@ -721,7 +721,6 @@ test('test_mod', executable('test_mod',
+ 		't/test_mod.c',
+ 		't/test_mod_access.c',
+ 		't/test_mod_alias.c',
+-		't/test_mod_evasive.c',
+ 		't/test_mod_evhost.c',
+ 		't/test_mod_indexfile.c',
+ 		't/test_mod_simple_vhost.c',
