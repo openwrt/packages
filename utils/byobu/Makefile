@@ -36,7 +36,7 @@ endef
 define Package/byobu
 $(call Package/byobu/Default)
   TITLE:=Text-based window manager and terminal multiplexer
-  DEPENDS:=+python3-light +python3-newt
+  DEPENDS:=+python3-light +python3-newt +!PACKAGE_screen:tmux
 endef
 
 define Package/byobu-utils
