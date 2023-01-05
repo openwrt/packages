@@ -219,7 +219,7 @@ CONFIGURE_ARGS += \
 	--disable-libfdkaac_static \
 	--disable-pcloud_cache \
 	--enable-bundle \
-	--disable-uriparser \
+	--enable-uriparser \
 	--disable-execinfo \
 	--nowerror=unused-variable
 
