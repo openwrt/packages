@@ -32,6 +32,7 @@ let o_dst_bypass6_ = "
 	fc00::/7
 ";
 let o_dst_bypass_ = o_dst_bypass4_ + " " + o_dst_bypass6_;
+let o_dst_bypass_str = o_dst_bypass + " " + o_remote_servers;
 
 let set_suffix = {
 	"src_bypass": {
@@ -44,7 +45,7 @@ let set_suffix = {
 		str: o_src_checkdst,
 	},
 	"dst_bypass": {
-		str: o_dst_bypass,
+		str: o_dst_bypass_str,
 		file: o_dst_bypass_file,
 	},
 	"dst_bypass_": {
