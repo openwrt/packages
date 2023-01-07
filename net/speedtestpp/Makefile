@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=speedtestpp
 PKG_VERSION:=1.14
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/taganaka/SpeedTest.git
@@ -25,7 +25,7 @@ define Package/speedtestpp
   SECTION:=net
   CATEGORY:=Network
   TITLE:=speedtest++
-  DEPENDS:=+libcurl +libxml2 +libopenssl +libstdcpp $(ICONV_DEPENDS)
+  DEPENDS:=+libcurl +libopenssl +libstdcpp $(ICONV_DEPENDS)
   CONFLICTS:=python3-speedtest-cli
   URL:=https://github.com/taganaka/SpeedTest
 endef
