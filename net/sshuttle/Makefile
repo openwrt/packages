@@ -16,6 +16,8 @@ PKG_HASH:=f5a3ed1e5ab1213c7a6df860af41f1a903ab2cafbfef71f371acdcff21e69ee6
 
 PKG_MAINTAINER:=Thomas Cujé <dev.cuje@freenet.de>
 PKG_LICENSE:=LGPL-2.1-only
+PKG_LICENSE_FILES:=LICENSE
+
 
 include ../../lang/python/pypi.mk
 include $(INCLUDE_DIR)/package.mk
