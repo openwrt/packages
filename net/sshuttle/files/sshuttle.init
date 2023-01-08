@@ -15,20 +15,26 @@ _log() {
   logger -p daemon.info -t sshuttle "$@"
 }
 
+_err() {
+	logger -p daemon.err -t sshuttle "$@"
+}
+
 append_params() {
   for p in "$@"; do
     eval "v=\$$p"
     for v in $v; do
       if [ -n "$v" ] && [ "$v" != "no" ]; then
-        if [ "$p" != "subnets" ]; then
+        if [ "$p" = "subnets" ]; then
+          args="$args $v"
+        elif [ "$p" = "method" ]; then
+          set -- "$@" "--method" "$v"
+        else
           p="--$( echo "$p" | sed -e 's|_|-|g' )"
           if [ "$v" = "yes" ]; then
             args="$args $p"
-          else
+          elif [ "$v" != "no" ]; then
             args="$args $p=$v"
           fi
-        else
-          args="$args $v"
         fi
       fi
     done
@@ -93,16 +99,4 @@ start_service() {
   _log "Starting sshuttle instances"
   config_load "sshuttle"
   config_foreach validate_gateway_section "gateway" load_gateway
-}
-
-stop_service() {
-  _log "Stopping sshuttle instances"
-  for pid_file in "/var/run/sshuttle."*.pid; do
-    [ -f "$pid_file" ] || continue
-    sshuttle_pid="$(cat "$pid_file")"
-    # test if process is still running
-    if kill -0 "$sshuttle_pid" 2>/dev/null; then
-      kill "$sshuttle_pid"
-    fi
-  done
 }
