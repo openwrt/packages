@@ -5,6 +5,7 @@
 local __TTL=600
 local __RRTYPE
 local __STATUS
+local __RNAME
 
 [ -z "$username" ] && write_log 14 "Service section not configured correctly! Missing subdomain as 'username'"
 [ -z "$password" ] && write_log 14 "Service section not configured correctly! Missing API Key as 'password'"
@@ -16,11 +17,21 @@ local __ENDPOINT="$param_opt/api/v1/servers/localhost/zones"
 
 [ $use_ipv6 -ne 0 ] && __RRTYPE="AAAA" || __RRTYPE="A"
 
+# Make sure domain is period terminated
+if [ ${domain: -1} != '.' ]; then
+	domain="${domain}."
+fi
+if [ $username == '@' ]; then
+	__RNAME="$domain"
+else
+	__RNAME="$username.$domain"
+fi
+
 # Build JSON payload
 json_init
 json_add_array rrsets
 json_add_object
-	json_add_string name "$username.$domain"
+	json_add_string name "$__RNAME"
 	json_add_string type "$__RRTYPE"
 	json_add_int ttl $__TTL
 	json_add_string changetype "REPLACE"
