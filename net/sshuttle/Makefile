@@ -18,7 +18,6 @@ PKG_MAINTAINER:=Thomas Cujé <dev.cuje@freenet.de>
 PKG_LICENSE:=LGPL-2.1-only
 PKG_LICENSE_FILES:=LICENSE
 
-
 include ../../lang/python/pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python3-package.mk
@@ -30,12 +29,9 @@ define Package/sshuttle
   TITLE:=sshuttle: where transparent proxy meets VPN meets ssh
   URL:=https://github.com/sshuttle/sshuttle
   DEPENDS:= \
-  +python3-light \
-  +python3-ctypes \
-  +python3-urllib \
-  +iptables-mod-extra \
-  +iptables-mod-nat-extra \
-  +iptables-mod-ipopt
+  	+python3-light \
+  	+python3-ctypes \
+  	+python3-urllib
 endef
 
 define Package/sshuttle/description
