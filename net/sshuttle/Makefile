@@ -32,6 +32,7 @@ define Package/sshuttle
   	+python3-light \
   	+python3-ctypes \
   	+python3-urllib
+  PKGARCH:=all
 endef
 
 define Package/sshuttle/description
