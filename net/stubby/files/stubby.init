@@ -270,7 +270,7 @@ service_triggers()
 
     for trigger_item in $trigger
     do
-        procd_add_interface_trigger "interface.*.up" "$trigger_item" "$stubby_init" start
+        procd_add_interface_trigger "interface.*" "$trigger_item" "$stubby_init" restart
     done
 
     procd_add_reload_trigger "stubby"
