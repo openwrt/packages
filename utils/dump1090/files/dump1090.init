@@ -71,7 +71,7 @@ start_instance() {
 	append_arg "$cfg" net_sbs_port "--net-sbs-port"
 	append_arg "$cfg" net_bi_port "--net-bi-port"
 	append_arg "$cfg" net_bo_port "--net-bo-port"
-    append_arg "$cfg" net_stratux_port "--net-stratux-port"
+	append_arg "$cfg" net_stratux_port "--net-stratux-port"
 	append_arg "$cfg" net_heartbeat "--net-heartbeat"
 	append_arg "$cfg" net_buffer "--net-buffer"
 	append_bool "$cfg" net_verbatim "--net-verbatim"
