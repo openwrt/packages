@@ -28,10 +28,10 @@ define Package/sshuttle
   CATEGORY:=Network
   TITLE:=sshuttle: where transparent proxy meets VPN meets ssh
   URL:=https://github.com/sshuttle/sshuttle
-  DEPENDS:= \
-  	+python3-light \
-  	+python3-ctypes \
-  	+python3-urllib
+  EXTRA_DEPENDS:= \
+  	python3-light \
+  	python3-ctypes \
+  	python3-urllib
   PKGARCH:=all
 endef
 
