@@ -25,22 +25,20 @@ append_params() {
     for v in $v; do
       if [ -n "$v" ] && [ "$v" != "no" ]; then
         if [ "$p" = "subnets" ]; then
-          args="$args $v"
+          ARGS="$ARGS $v"
         elif [ "$p" = "method" ]; then
           set -- "$@" "--method" "$v"
         else
           p="--$( echo "$p" | sed -e 's|_|-|g' )"
           if [ "$v" = "yes" ]; then
-            args="$args $p"
+            ARGS="$ARGS $p"
           elif [ "$v" != "no" ]; then
-            args="$args $p=$v"
+            ARGS="$ARGS $p=$v"
           fi
         fi
       fi
     done
   done
-
-  ARGS="${args# *}"
 }
 
 validate_gateway_section() {
@@ -72,11 +70,12 @@ load_gateway() {
 
   [ "$2" = 0 ] || { _err "gateway $gateway: validation failed"; return 1; }
 
+  ARGS="--remote=$1 --pidfile=/var/run/sshuttle.$1.pid"
+
   append_params listen subnets method auto_hosts auto_nets dns ns_hosts to_ns \
     python exclude_subnet exclude_file verbose ssh_cmd seed_hosts latency_control \
     latency_buffer_size subnets_file syslog disable_ipv6 mark
 
-  ARGS="--remote=$1 --pidfile=/var/run/sshuttle.$1.pid $ARGS"
   _log "Using sshuttle instance $gateway with args: $ARGS"
 
   procd_open_instance "$gateway"
