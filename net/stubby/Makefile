@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=stubby
 PKG_VERSION:=0.4.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/getdnsapi/$(PKG_NAME)
@@ -22,7 +22,7 @@ include $(INCLUDE_DIR)/cmake.mk
 
 define Package/stubby/Default
   TITLE:=stubby
-  URL:=https://dnsprivacy.org/wiki/display/DP/DNS+Privacy+Daemon+-+Stubby
+  URL:=https://dnsprivacy.org/dns_privacy_daemon_-_stubby/
 endef
 
 define Package/stubby
@@ -37,7 +37,7 @@ endef
 
 define Package/stubby/description
   This package contains the Stubby daemon (which utilizes the getdns library).
-  See https://github.com/openwrt/packages/blob/master/net/stubby/files/README.md for more details.
+  See https://github.com/openwrt/packages/blob/develop/net/stubby/files/README.md for more details.
 endef
 
 define Package/stubby/conffiles
