@@ -95,7 +95,17 @@ service_triggers() {
 }
 
 start_service() {
-  _log "Starting sshuttle instances"
+  _log "Starting all sshuttle instances"
   config_load "sshuttle"
   config_foreach validate_gateway_section "gateway" load_gateway
+}
+
+reload_service() {
+  _log "Reloading all sshuttle instances"
+  stop
+  start
+}
+
+stop_service() {
+  _log "Stopping all sshuttle instances"
 }
