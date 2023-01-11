@@ -66,7 +66,7 @@ transmission() {
 	local nice
 	config_get nice "$cfg" nice 0
 	local web_home
-	config_get web_home "$cfg" 'web_home'
+	config_get web_home "$cfg" 'web_home' '/usr/share/transmission/web'
 	local seccomp_path
 
 	local MEM
@@ -154,11 +154,10 @@ transmission() {
 	[ -d "$web_home" ] && procd_set_param env TRANSMISSION_WEB_HOME="$web_home"
 
 	procd_add_jail transmission log
-	procd_add_jail_mount "$config_file"
+	procd_add_jail_mount_rw "$config_dir"
 	procd_add_jail_mount_rw "$config_dir/resume"
 	procd_add_jail_mount_rw "$config_dir/torrents"
 	procd_add_jail_mount_rw "$config_dir/blocklists"
-	procd_add_jail_mount_rw "$config_dir/stats.json"
 	procd_add_jail_mount_rw "$download_dir"
 	[ -d "$web_home" ] && procd_add_jail_mount_rw "$web_home"
 	procd_close_instance
