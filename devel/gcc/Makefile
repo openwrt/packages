@@ -234,14 +234,18 @@ define Package/gcc/install
 	chmod +x $(1)/usr/bin/gcc_env.sh
 endef
 
+ifeq ($(CONFIG_INCLUDE_STATIC_LINK_SPEC),y)
 define Package/gcc/postinst
-	#!/bin/sh
-	$(INSTALL_STATIC_SPEC)
+#!/bin/sh
+
+$(INSTALL_STATIC_SPEC)
 endef
 
 define Package/gcc/postrm
-	#!/bin/sh
-	$(REMOVE_STATIC_SPEC)
+#!/bin/sh
+
+$(REMOVE_STATIC_SPEC)
 endef
+endif
 
 $(eval $(call BuildPackage,gcc))
