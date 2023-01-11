@@ -23,7 +23,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=gcc
 GCC_VERSION:=$(call qstrip,$(CONFIG_GCC_VERSION))
 PKG_VERSION:=$(firstword $(subst +, ,$(GCC_VERSION)))
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=5
 GCC_DIR:=$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_SOURCE_URL:=@GNU/gcc/gcc-$(PKG_VERSION)
@@ -44,6 +44,10 @@ endif
 
 ifeq ($(PKG_VERSION),11.3.0)
 	PKG_HASH:=b47cf2818691f5b1e21df2bb38c795fac2cfbd640ede2d0a5e1c89e338a3ac39
+endif
+
+ifeq ($(PKG_VERSION),12.2.0)
+	PKG_HASH:=e549cf9cf3594a00e27b6589d4322d70e0720cdd213f39beb4181e06926230ff
 endif
 
 PATCH_DIR=./patches/$(GCC_VERSION)
