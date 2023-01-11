@@ -62,7 +62,22 @@ config_cb() {
 			local option="$1"
 			local value="$2"
 
-			[ -n "$value" ] && [ "$option" != "name" ] && echo -e "\t$option = $value" >> $GENERATED_CONF_FILE
+			# for the redirect option we have to convert the '[ip address]:port' notation
+			# in config file to 'ip_address port' in the xinetd config file
+			if [ "$option" = "redirect" ] && [ -n "$value" ]; then
+				local redirect_ip=""
+				local redirect_port=""
+
+				redirect_ip="$(echo ${value%:*})"
+				redirect_ip="$(echo ${redirect_ip//\[/})"
+				redirect_ip="$(echo ${redirect_ip//\]/})"
+
+				redirect_port="$(echo ${value##*:})"
+
+				echo -e "\t$option = $redirect_ip $redirect_port" >> $GENERATED_CONF_FILE
+			else
+				[ -n "$value" ] && [ "$option" != "name" ] && echo -e "\t$option = $value" >> $GENERATED_CONF_FILE
+			fi
 		}
 
 		# redefined callback for lists when calling config_load
