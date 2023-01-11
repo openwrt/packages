@@ -1,26 +1,11 @@
 --- a/meson.build
 +++ b/meson.build
-@@ -35,14 +35,6 @@ add_project_arguments('-Os', '-Wall', '-
- 
- glib = dependency('glib-2.0')
- 
--cc = meson.get_compiler('c')
--null_dep = dependency('', required : false)
--if cc.has_function('dlopen')
--  libdl = null_dep
--else
--  libdl = cc.find_library('dl')
--endif
--
- executable('conmon',
-            ['src/conmon.c',
-             'src/config.h',
-@@ -78,7 +70,7 @@ executable('conmon',
+@@ -90,7 +90,7 @@ executable('conmon',
              'src/utils.h',
              'src/seccomp_notify.c',
              'src/seccomp_notify.h'],
--           dependencies : [glib, libdl],
-+           dependencies : [glib],
+-           dependencies : [glib, libdl, sd_journal, seccomp],
++           dependencies : [glib, sd_journal, seccomp],
             install : true,
             install_dir : join_paths(get_option('libexecdir'), 'podman'),
  )
