@@ -28,7 +28,7 @@ define Package/python3-requests
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=HTTP library for Python
-  URL:=https://2.python-requests.org/
+  URL:=https://requests.readthedocs.io
   DEPENDS:= \
 	  +python3-light  \
 	  +python3-chardet  \
