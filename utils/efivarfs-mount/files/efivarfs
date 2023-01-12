@@ -1,0 +1,21 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2014 OpenWrt.org
+
+START=99
+
+start() {
+	[ -d /sys/firmware/efi/efivars ] && {
+		findmnt -n --pseudo --mountpoint /sys/firmware/efi/efivars > /dev/null || {
+			echo Mounting efivarfs
+			mount -t efivarfs none /sys/firmware/efi/efivars
+		}
+	}
+}
+
+stop() {
+	[ -d /sys/firmware/efi/efivars ] && {
+		findmnt -n --pseudo --mountpoint /sys/firmware/efi/efivars > /dev/null && {
+			umount /sys/firmware/efi/efivars
+		}
+	}
+}
