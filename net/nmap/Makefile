@@ -14,7 +14,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nmap
 PKG_VERSION:=7.91
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=3
 PKG_MAINTAINER:=Nuno Goncalves <nunojpg@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
