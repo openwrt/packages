@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=miredo
 PKG_VERSION:=1.2.6
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=miredo-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.remlab.net/files/miredo/
@@ -34,6 +34,10 @@ define Package/miredo/description
  operating systems. It includes functional implementations of all components of
  the Teredo specification (client, relay and server). It is meant to provide
  IPv6 connectivity even from behind NAT devices.
+endef
+
+define Package/miredo/conffiles
+/etc/miredo/miredo.conf
 endef
 
 CONFIGURE_ARGS+= \
