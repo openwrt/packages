@@ -8,16 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lrzsz
-PKG_VERSION:=0.12.20
-PKG_RELEASE:=3
+PKG_VERSION:=0.12.21
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://ohse.de/uwe/releases/
-PKG_HASH:=c28b36b14bddb014d9e9c97c52459852f97bd405f89113f30bee45ed92728ff1
+PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).orig.tar.gz
+PKG_SOURCE_URL:=@DEBIAN/pool/main/l/lrzsz/
+PKG_HASH:=3262e5df47b108d33e184ff3bf5af14ddca1ac15118ac4ed9171a57c1593ae00
+PKG_BUILD_DIR=$(BUILD_DIR)/lrzsz-990823
 
 PKG_MAINTAINER:=Hsing-Wang Liao <kuoruan@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:lrzsz_project
 
 PKG_INSTALL:=1
 
@@ -26,15 +28,24 @@ include $(INCLUDE_DIR)/package.mk
 define Package/lrzsz
   SECTION:=utils
   CATEGORY:=Utilities
-  TITLE:=X, Y and Z-modem protocols
+  TITLE:=Tools for zmodem/xmodem/ymodem file transfer
   URL:=https://ohse.de/uwe/software/lrzsz.html
 endef
 
 define Package/lrzsz/description
-	Transfer files in your login sessions.
-	Very leightweight and straight forward.
-	You just need a terminal client that can do
-	either X, Y or Z-modem file transfers.
+  lrzsz is a cosmetically modified zmodem/ymodem/xmodem package built
+  from the public-domain version of Chuck Forsberg's rzsz package.
+
+  These programs use error correcting protocols ({z,x,y}modem) to send
+  (sz, sx, sb) and receive (rz, rx, rb) files over a dial-in serial port
+  from a variety of programs running under various operating systems.
+endef
+
+# to stop automake from running, the bundled autohell crap is too old
+define Build/Configure
+	touch $(PKG_BUILD_DIR)/*
+	touch $(PKG_BUILD_DIR)/*/*
+	$(call Build/Configure/Default)
 endef
 
 define Package/lrzsz/install
