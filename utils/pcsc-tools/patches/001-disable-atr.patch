@@ -3,12 +3,12 @@ as a dependency.
 
 --- a/pcsc_scan.c
 +++ b/pcsc_scan.c
-@@ -241,7 +241,7 @@ static void initialize_options(options_t
- #ifdef WIN32
+@@ -294,7 +294,7 @@ static void initialize_options(options_t
+ #if defined(WIN32) || defined(__APPLE__)
  	options->analyse_atr = False;
  #else
 -	options->analyse_atr = True;
 +	options->analyse_atr = False;
  #endif
  	options->stress_card = False;
- 	options->print_version = False;
+ 	options->maxtime = 0;
