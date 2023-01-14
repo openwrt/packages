@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=foolsm
-PKG_VERSION:=1.0.13
-PKG_RELEASE:=2
+PKG_VERSION:=1.0.21
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://lsm.foobar.fi/download
-PKG_HASH:=4eeda0e666e8ee93aab9b9c6709e9695e042dc391fb0999280874c8a73bce476
+PKG_SOURCE_URL:=https://lsm.foobar.fi/download
+PKG_HASH:=527d9c363aa62b9fc511b42c5a06f774a8767c4b5330db4d959c10b46b0dede7
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0-only
