@@ -368,7 +368,8 @@ proto_modemmanager_setup() {
 		proto_set_available "${interface}" 0
 		return 1
 	}
-	[ -e "${device}" ] || {
+	# "qcom-soc" is a special case on devices where modem is part of the SoC.
+	[ -e "${device}" ] || [ "${device}" = "qcom-soc" ] || {
 		echo "Device not found in sysfs"
 		proto_set_available "${interface}" 0
 		return 1
