@@ -9,11 +9,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xinetd
 PKG_VERSION:=2.3.15
-PKG_RELEASE:=14
+PKG_RELEASE:=15
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/xinetd-org/xinetd/archive
-PKG_HASH:=bf4e060411c75605e4dcbdf2ac57c6bd9e1904470a2f91e01ba31b50a80a5be3
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_VERSION:=$(PKG_NAME)-2-3-15
+PKG_SOURCE_URL:=https://github.com/xinetd-org/xinetd
+PKG_MIRROR_HASH:=ef2258416a278ec7aebaa1e3501c0b59f5ae5e0ea7f1f0220b20143eb208881f
 
 PKG_MAINTAINER:=Florian Eckert <fe@dev.tdt.de>
 PKG_LICENSE:=xinetd
