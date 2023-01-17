@@ -447,8 +447,8 @@ ips() {
 
 	case "$command" in
 		add)
-			ips4 -q -! add "$ipset4" comment "$comment" && ipv4_error=0
-			ips6 -q -! add "$ipset6" comment "$comment" && ipv6_error=0
+			ips4 -q -! add "$ipset4" ["$param"] comment "$comment" && ipv4_error=0
+			ips6 -q -! add "$ipset6" ["$param"] comment "$comment" && ipv6_error=0
 		;;
 		add_agh_element)
 			[ -n "$ipv6_enabled" ] || unset ipset6
@@ -1934,6 +1934,11 @@ user_file_process() {
 		output_ok
 		return 0
 	fi
+}
+
+boot() {
+	ubus -t 30 wait_for network.interface 2>/dev/null
+	rc_procd start_service 'on_boot'
 }
 
 on_firewall_reload() { 
