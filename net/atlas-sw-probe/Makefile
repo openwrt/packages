@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=atlas-sw-probe
 PKG_VERSION:=5080
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/RIPE-NCC/ripe-atlas-software-probe.git
@@ -90,7 +90,8 @@ define Package/atlas-sw-probe/install
 	echo "prod" > $(1)/$(SCRIPTS_DIR)/state/mode
 
 	# Copy scripts
-	$(CP) $(PKG_BUILD_DIR)/bin/{ATLAS,common-pre.sh,common.sh,reginit.sh,resolvconf} $(1)/$(SCRIPTS_DIR)/bin/
+	$(CP) $(PKG_BUILD_DIR)/bin/{ATLAS,resolvconf} $(1)/$(SCRIPTS_DIR)/bin/
+	$(CP) $(PKG_BUILD_DIR)/bin/*.sh $(1)/$(SCRIPTS_DIR)/bin/
 	$(CP) $(PKG_BUILD_DIR)/bin/arch/{linux,openwrt-sw-probe} $(1)/$(SCRIPTS_DIR)/bin/arch/
 
 	# Create config info
