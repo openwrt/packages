@@ -1,0 +1,37 @@
+From 6b7a78c41c04772a30923c8c0ba71770d55ac815 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Thomas=20Wei=C3=9Fschuh?= <thomas@t-8ch.de>
+Date: Sat, 21 May 2022 12:17:14 +0200
+Subject: [PATCH 2/3] Linux non-kernel: Use use uintptr_t for ACPI_UINTPTR_T
+
+---
+ source/include/platform/aclinux.h | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+--- a/source/include/platform/aclinux.h
++++ b/source/include/platform/aclinux.h
+@@ -168,6 +168,8 @@
+ #define ACPI_USE_DO_WHILE_0
+ #define ACPI_IGNORE_PACKAGE_RESOLUTION_ERRORS
+ 
++#define ACPI_UINTPTR_T uintptr_t
++
+ 
+ #ifdef __KERNEL__
+ 
+@@ -252,8 +254,6 @@
+ #define ACPI_SPINLOCK               spinlock_t *
+ #define ACPI_CPU_FLAGS              unsigned long
+ 
+-#define ACPI_UINTPTR_T              uintptr_t
+-
+ #define ACPI_TO_INTEGER(p)          ((uintptr_t)(p))
+ #define ACPI_OFFSET(d, f)           offsetof(d, f)
+ 
+@@ -311,6 +311,7 @@
+ 
+ #ifdef ACPI_USE_STANDARD_HEADERS
+ #include <unistd.h>
++#include <stdint.h>
+ #endif
+ 
+ /* Define/disable kernel-specific declarators */
