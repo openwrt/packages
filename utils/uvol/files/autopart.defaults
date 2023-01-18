@@ -56,23 +56,14 @@ part_fixup() {
 
 get_free_area() {
 	local found=
-	sfdisk -q -F "$1" 2>/dev/null | while read -r start end sectors size; do
+	sfdisk --bytes -q -F "$1" 2>/dev/null | while read -r start end sectors size; do
 		case $start in
 		*"Unpartitioned"* | *"Units:"* | *"Sector"* | *"Start"* )
 			continue
 			;;
 		[0-9]*)
-			case "$size" in
-				*"k" | *"b")
-					continue
-					;;
-				*"M")
-					[ "${size%%.*M}" -lt 100 ] && continue
-					;;
-				*"G" | *"T")
-					;;
-			esac
-			[ "$found" ] || echo "start=$start, size=$((end - start))"
+			[ $size" -lt $((100 * 1024 * 1024)) ] && continue
+			[ "$found" ] || echo "start=$start, size=$sectors"
 			found=1
 			;;
 		esac
