@@ -1,0 +1,13 @@
+--- a/source/components/utilities/utdebug.c
++++ b/source/components/utilities/utdebug.c
+@@ -185,7 +185,10 @@ AcpiUtInitStackPtrTrace (
+     ACPI_SIZE               CurrentSp;
+ 
+ 
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wdangling-pointer"
+     AcpiGbl_EntryStackPointer = &CurrentSp;
++#pragma GCC diagnostic pop
+ }
+ 
+ 
