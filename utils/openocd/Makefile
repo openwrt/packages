@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openocd
 PKG_SOURCE_VERSION:=v0.12.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://git.code.sf.net/p/openocd/code
@@ -38,7 +38,8 @@ define Package/openocd
   DEPENDS:=+libusb-1.0 \
 	+libftdi1 \
 	+hidapi \
-	+libgpiod
+	+libgpiod \
+	+libjaylink
 endef
 
 define Package/openocd/description
