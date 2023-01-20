@@ -49,7 +49,7 @@ define Package/chicken-scheme-interpreter/description
   For more information, please refer to the Chicken Scheme website at https://call-cc.org.
 endef
 
-MAKE_FLAGS += PLATFORM=linux C_COMPILER=$(TARGET_CC) LINKER=$(TARGET_CC) PREFIX=/usr C_COMPILER_OPTIMIZATION_OPTIONS="$(TARGET_CFLAGS)"
+MAKE_FLAGS += PLATFORM=linux C_COMPILER="$(TARGET_CC)" LINKER="$(TARGET_CC)" PREFIX=/usr C_COMPILER_OPTIMIZATION_OPTIONS="$(TARGET_CFLAGS)"
 
 # not installed:
 # - csc and chicken, the compiler
