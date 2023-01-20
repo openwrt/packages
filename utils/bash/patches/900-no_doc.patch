@@ -1,6 +1,6 @@
 --- a/Makefile.in
 +++ b/Makefile.in
-@@ -798,10 +798,8 @@ loadables:
+@@ -813,10 +813,8 @@ loadables:
  #	$(MAKE) -f $(srcdir)/Makefile $(MFLAGS) srcdir=$(srcdir)
  
  doc documentation:  force
