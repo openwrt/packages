@@ -1,0 +1,5 @@
+//updated for 0.3.0 and for routers using DSA (Distributed Switch Architecture)
+config goeap_proxy 'devices'
+	option wan 'wan'
+	option router 'lan4'
+	option ignore_logoff 0

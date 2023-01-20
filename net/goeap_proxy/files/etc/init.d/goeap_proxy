@@ -1,0 +1,45 @@
+#!/bin/sh /etc/rc.common
+#
+
+START=25
+USE_PROCD=1
+
+PROG="/usr/bin/goeap_proxy"
+
+boot()
+{
+    config_load goeap_proxy # load config files
+    config_get wan devices wan # create a variable var; letting it know it's a device and assigning the 'wan'
+    config_get lan devices lan
+    ubus -t 30 wait_for "network.${wan}.device" "network.${lan}.device" # updated for DSA (v22.02+)
+    rc_procd start_service
+}
+
+start_service()
+{
+    config_load goeap_proxy # load config files
+    config_get wan devices wan
+    config_get lan devices lan4 # change 'lan4' to your switch's port
+    config_get_bool ignore_logoff interface 'ignore_logoff' '0'
+
+    local if_wan=$(uci get "network.${wan}.device")
+    local if_router=$(uci get "network.@device[4].name") # my device has 4 ports and I use the 4th port
+
+    procd_open_instance
+    # attempt to restart every 30 seconds, the eap proxy for internet connectivity
+    procd_set_param respawn ${respawn_threshold:-3600} ${respawn_timeout:-30} ${respawn_retry:-0}
+    procd_set_param stdout 1
+    procd_set_param stderr 1
+    procd_set_param command $PROG
+    procd_append_param command "${if_wan}"
+    procd_append_param command "${if_router}"
+    if [ $ignore_logoff != "0" ]; then
+        procd_append_param command -ignore-logoff
+    fi
+    procd_close_instance
+}
+
+service_triggers()
+{
+    procd_add_reload_trigger "goeap_proxy" "network"
+}
