@@ -8,13 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtty
-PKG_VERSION:=7.3.2
-PKG_RELEASE:=2
+PKG_VERSION:=8.0.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL=https://github.com/zhaojh329/rtty/releases/download/v$(PKG_VERSION)
-PKG_HASH:=4c60eacd7a653988a1907284de2ecf360c74f55ef9e21c40b9ebd87af6570908
-CMAKE_INSTALL:=1
+PKG_HASH:=b1a21819c2256b3364b8c64dfcc56583b9647409ab8b39ff54e00e242e44028e
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
@@ -49,13 +48,13 @@ Package/rtty-mbedtls/conffiles = $(Package/rtty-openssl/conffiles)
 Package/rtty-nossl/conffiles = $(Package/rtty-openssl/conffiles)
 
 ifeq ($(BUILD_VARIANT),openssl)
-  CMAKE_OPTIONS += -DRTTY_USE_OPENSSL=ON
+  CMAKE_OPTIONS += -DUSE_OPENSSL=ON
 else ifeq ($(BUILD_VARIANT),wolfssl)
-  CMAKE_OPTIONS += -DRTTY_USE_WOLFSSL=ON
+  CMAKE_OPTIONS += -DUSE_WOLFSSL=ON
 else ifeq ($(BUILD_VARIANT),mbedtls)
-  CMAKE_OPTIONS += -DRTTY_USE_MBEDTLS=ON
+  CMAKE_OPTIONS += -DUSE_MBEDTLS=ON
 else
-  CMAKE_OPTIONS += -DRTTY_SSL_SUPPORT=OFF
+  CMAKE_OPTIONS += -DSSL_SUPPORT=OFF
 endif
 
 define Package/rtty-$(BUILD_VARIANT)/install
