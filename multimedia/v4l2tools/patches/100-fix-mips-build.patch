@@ -1,0 +1,17 @@
+Fix the build on MIPS with glibc.
+
+Without this patch I am getting these error messages:
+openwrt/tmp/ccvKKhvb.s: Assembler messages:
+openwrt/tmp/ccvKKhvb.s:59: Error: opcode not supported on this processor: mips1 (mips1) `pref 0,0($2)'
+....
+
+--- a/libyuv/source/row_mips.cc
++++ b/libyuv/source/row_mips.cc
+@@ -24,6 +24,7 @@ void CopyRow_MIPS(const uint8* src, uint
+   __asm__ __volatile__ (
+     ".set      noreorder                         \n"
+     ".set      noat                              \n"
++    ".set      mips32                            \n"
+     "slti      $at, %[count], 8                  \n"
+     "bne       $at ,$zero, $last8                \n"
+     "xor       $t8, %[src], %[dst]               \n"
