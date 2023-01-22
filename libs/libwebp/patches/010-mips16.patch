@@ -1,6 +1,6 @@
 --- a/src/dsp/cpu.h
 +++ b/src/dsp/cpu.h
-@@ -106,7 +106,7 @@
+@@ -108,7 +108,7 @@
  #define WEBP_HAVE_NEON
  #endif
  
