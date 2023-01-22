@@ -35,11 +35,3 @@ config policy
 	option interface 'wan'
 	option dest_addr 'plex.tv my.plexapp.com emby.media app.emby.media tv.emby.media'
 	option enabled '0'
-
-config policy
-	option name 'WireGuard Server'
-	option interface 'wan'
-	option src_port '51820'
-	option chain 'OUTPUT'
-	option proto 'udp'
-	option enabled '0'
