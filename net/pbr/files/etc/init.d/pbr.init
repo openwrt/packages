@@ -251,7 +251,7 @@ is_ipv6_global() { [ "${1:0:4}" = "2001" ]; }
 # is_ipv6_global() { is_ipv6 "$1" && ! is_ipv6_link_local "$1" && ! is_ipv6_link_local "$1"; }
 is_list() { str_contains "$1" "," || str_contains "$1" " "; }
 is_netmask() { local ip="${1%/*}"; [ "$ip" != "$1" ] && is_ipv4 "$ip"; }
-is_domain() { str_contains "$1" '[a-zA-Z]'; }
+is_domain() { ! is_ipv6 "$1" && str_contains "$1" '[a-zA-Z]'; }
 is_phys_dev() { [ "${1:0:1}" = "@" ] && ip l show | grep -E -q "^\\d+\\W+${1:1}"; }
 dnsmasq_kill() { killall -q -s HUP dnsmasq; }
 dnsmasq_restart() { output 3 'Restarting dnsmasq '; if /etc/init.d/dnsmasq restart >/dev/null 2>&1; then output_okn; else output_failn; fi; }
@@ -569,8 +569,12 @@ nftset() {
 				fi
 				[ -z "$param4" ] &&	param4="$(resolveip_to_nftset4 "$param")"
 				[ -z "$param6" ] &&	param6="$(resolveip_to_nftset6 "$param")"
-				nft4 add element inet "$nftTable" "$nftset4" "{ $param4 }" && ipv4_error=0
-				nft6 add element inet "$nftTable" "$nftset6" "{ $param6 }" && ipv6_error=0
+				if [ -z "$param4" ] && [ -z "$param6" ]; then
+					state add 'errorSummary' 'errorFailedToResolve' "$param"
+				else
+					nft4 add element inet "$nftTable" "$nftset4" "{ $param4 }" && ipv4_error=0
+					nft6 add element inet "$nftTable" "$nftset6" "{ $param6 }" && ipv6_error=0
+				fi
 			fi
 		;;
 		add_dnsmasq_element)
