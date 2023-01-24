@@ -1,6 +1,6 @@
 --- a/src/util.h
 +++ b/src/util.h
-@@ -36,18 +36,18 @@
+@@ -39,18 +39,18 @@ void die(const char *, ...);
    C(DEFAULT,     _,_,0  ,    _,      _,    0,    WHITE,  BLACK,0)\
    C(BOX_TITLE,   _,_,B  ,    BLUE,   _,    B,    BLUE,   BLACK,B)\
    C(HD,          _,_,R  ,    BLACK,  CYAN, 0,    BLACK,  CYAN, 0)    /* header & footer */\
