@@ -156,7 +156,6 @@ CONFIGURE_ARGS+= \
 	--enable-shared \
 	--with-system-ffi \
 	--without-cxx-main \
-	--without-ensurepip \
 	--without-pymalloc \
 	--disable-test-modules \
 	$(if $(CONFIG_IPV6),--enable-ipv6) \
