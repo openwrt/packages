@@ -24,6 +24,7 @@ define KernelPackage/fs-ksmbd
 	URL:=https://github.com/cifsd-team/cifsd
 	FILES:=$(PKG_BUILD_DIR)/ksmbd.ko
 	DEPENDS:= \
+		+kmod-asn1-decoder \
 		+kmod-nls-base \
 		+kmod-nls-utf8 \
 		+kmod-crypto-md4 \
@@ -37,11 +38,10 @@ define KernelPackage/fs-ksmbd
 		+kmod-crypto-aead \
 		+kmod-crypto-ccm \
 		+kmod-crypto-gcm \
-		+kmod-fs-nfsd \
-		+kmod-nf-nathelper-extra
+		+kmod-fs-nfsd
 endef
 
-# The last two DEPENDS are hacks in order to get CONFIG_ASN1 and CONFIG_OID_REGISTRY
+# The last DEPENDS entry is a hack in order to get CONFIG_OID_REGISTRY
 # which it seems can't be selected independently. Some bug in either base or upstream.
 
 define KernelPackage/fs-ksmbd/description
