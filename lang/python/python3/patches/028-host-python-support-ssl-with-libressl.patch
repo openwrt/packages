@@ -87,7 +87,7 @@
      return 0;
  }
  
-@@ -4615,8 +4644,10 @@ static PyGetSetDef context_getsetlist[]
+@@ -4619,8 +4648,10 @@ static PyGetSetDef context_getsetlist[]
                          (setter) set_minimum_version, NULL},
      {"maximum_version", (getter) get_maximum_version,
                          (setter) set_maximum_version, NULL},
