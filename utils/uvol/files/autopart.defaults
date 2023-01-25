@@ -62,7 +62,7 @@ get_free_area() {
 			continue
 			;;
 		[0-9]*)
-			[ $size" -lt $((100 * 1024 * 1024)) ] && continue
+			[ "$size" -lt $((100 * 1024 * 1024)) ] && continue
 			[ "$found" ] || echo "start=$start, size=$sectors"
 			found=1
 			;;
