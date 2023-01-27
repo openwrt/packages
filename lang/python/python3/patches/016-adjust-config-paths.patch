@@ -10,7 +10,7 @@
          '_PYTHON_SYSCONFIGDATA_NAME',
 --- a/Makefile.pre.in
 +++ b/Makefile.pre.in
-@@ -1593,7 +1593,7 @@ libinstall:	build_all $(srcdir)/Modules/
+@@ -1594,7 +1594,7 @@ libinstall:	build_all $(srcdir)/Modules/
  			esac; \
  		done; \
  	done
@@ -19,7 +19,7 @@
  		$(DESTDIR)$(LIBDEST); \
  	$(INSTALL_DATA) $(srcdir)/LICENSE $(DESTDIR)$(LIBDEST)/LICENSE.txt
  	if test -d $(DESTDIR)$(LIBDEST)/distutils/tests; then \
-@@ -1751,7 +1751,7 @@ sharedinstall: sharedmods
+@@ -1752,7 +1752,7 @@ sharedinstall: sharedmods
  		--install-scripts=$(BINDIR) \
  		--install-platlib=$(DESTSHARED) \
  		--root=$(DESTDIR)/
@@ -39,7 +39,7 @@
      fi
  elif test "$cross_compiling" = maybe; then
      as_fn_error $? "Cross compiling required --host=HOST-TUPLE and --build=ARCH" "$LINENO" 5
-@@ -15686,7 +15686,7 @@ fi
+@@ -15687,7 +15687,7 @@ fi
  
  
  
@@ -59,7 +59,7 @@
      fi
  elif test "$cross_compiling" = maybe; then
      AC_MSG_ERROR([Cross compiling required --host=HOST-TUPLE and --build=ARCH])
-@@ -4882,7 +4882,7 @@ fi],
+@@ -4883,7 +4883,7 @@ fi],
  
  dnl define LIBPL after ABIFLAGS and LDVERSION is defined.
  AC_SUBST(PY_ENABLE_SHARED)
