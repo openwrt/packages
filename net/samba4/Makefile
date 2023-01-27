@@ -3,7 +3,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=samba
 PKG_VERSION:=4.17.2
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
@@ -241,7 +241,7 @@ else
 endif
 
 ifeq ($(CONFIG_SAMBA4_SERVER_AD_DC),y)
-	CONFIGURE_ARGS += --without-winbind --without-ldb-lmdb --with-acl-support
+	CONFIGURE_ARGS += --without-ldb-lmdb --with-acl-support
 else
 	CONFIGURE_ARGS += --without-winbind --without-ads --without-ldap --without-ldb-lmdb --without-ad-dc \
 		--without-json --without-libarchive --disable-python --nopyc --nopyo --without-acl-support
@@ -430,6 +430,9 @@ ifeq ($(CONFIG_SAMBA4_SERVER_AD_DC),y)
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/{samba-tool,ntlm_auth,oLschema2ldif} $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/{sharesec,smbcacls} $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/{samba,samba-gpupdate,samba_dnsupdate,samba_kcc,samba_spnupdate,samba_upgradedns,samba_downgrade_db} $(1)/usr/sbin/
+ifeq ($(CONFIG_SAMBA4_SERVER_AD_DC),y)
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/winbindd $(1)/usr/sbin/
+endif
 endif
 	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/samba $(1)/etc/init.d
 	$(INSTALL_CONF) ./files/samba.config $(1)/etc/config/samba4
