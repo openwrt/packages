@@ -33,7 +33,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 | ssbl                | SSL botnet IP blacklist        | [Link](https://sslbl.abuse.ch)                                                    |
 | talos               | Cisco Talos IP Blacklist       | [Link](https://talosintelligence.com/reputation_center)                           |
 | threat              | Emerging Threats               | [Link](https://rules.emergingthreats.net)                                         |
-| tor                 | Tor exit nodes                 | [Link](https://fissionrelays.net/lists)                                           |
+| tor                 | Tor exit nodes                 | [Link](https://github.com/SecOps-Institute/Tor-IP-Addresses)                      |
 | uceprotect1         | Spam protection level 1        | [Link](http://www.uceprotect.net/en/index.php)                                    |
 | uceprotect2         | Spam protection level 2        | [Link](http://www.uceprotect.net/en/index.php)                                    |
 | voip                | VoIP fraud blocklist           | [Link](http://www.voipbl.org)                                                     |
@@ -85,7 +85,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 ## banIP CLI
 * All important banIP functions are accessible via CLI as well.  
 <pre><code>
-~# /etc/init.d/banip 
+~# /etc/init.d/banip
 Syntax: /etc/init.d/banip [command]
 
 Available commands:
@@ -164,7 +164,7 @@ Available commands:
 | ban_ssh_logcount        | option | 3                             | number of the failed ssh login repetitions of the same ip in the log before banning   |
 | ban_luci_logcount       | option | 3                             | number of the failed luci login repetitions of the same ip in the log before banning  |
 | ban_nginx_logcount      | option | 5                             | number of the failed nginx requests of the same ip in the log before banning          |
-  
+
 ## Examples
 **list/edit banIP sources:**  
 <pre><code>
@@ -196,7 +196,7 @@ Available commands:
   + sslbl                x         SSL botnet IP blacklist             https://sslbl.abuse.ch
   + talos                x         Cisco Talos IP Blacklist            https://talosintelligence.com/reputation_center
   + threat               x         Emerging Threats                    https://rules.emergingthreats.net
-  + tor                  x         Tor exit nodes                      https://fissionrelays.net/lists
+  + tor                  x         Tor exit nodes                      https://github.com/SecOps-Institute/Tor-IP-Addresses
   + uceprotect1          x         Spam protection level 1             http://www.uceprotect.net/en/index.php
   + uceprotect2                    Spam protection level 2             http://www.uceprotect.net/en/index.php
   + voip                 x         VoIP fraud blocklist                http://www.voipbl.org
@@ -205,7 +205,7 @@ Available commands:
   * Configured ASNs: -
   * Configured Countries: af, bd, br, cn, hk, hu, id, il, in, iq, ir, kp, kr, no, pk, pl, ro, ru, sa, th, tr, ua, gb
 </code></pre>
-  
+
 **receive banIP runtime information:**  
 <pre><code>
 ~# /etc/init.d/banip status
@@ -223,15 +223,15 @@ Available commands:
   + last_run        : restart, 0m 3s, 122/30/14, 21.04.2021 20:14:36
   + system          : TP-Link RE650 v1, OpenWrt SNAPSHOT r16574-f7e00d81bc
 </code></pre>
-  
+
 **black-/whitelist handling:**  
 banIP supports a local black & whitelist (IPv4, IPv6, CIDR notation or domain names), located by default in /etc/banip/banip.whitelist and /etc/banip/banip.blacklist.  
 Unsuccessful LuCI logins, suspicious nginx request or ssh login attempts via 'dropbear'/'sshd' could be tracked and automatically added to the local blacklist (see the 'ban_autoblacklist' option). Furthermore the uplink subnet could be automatically added to local whitelist (see 'ban_autowhitelist' option). The list behaviour could be further tweaked with different timeout and counter options (see the config options section above).  
 Last but not least, both lists also accept domain names as input to allow IP filtering based on these names. The corresponding IPs (IPv4 & IPv6) will be resolved in a detached background process and added to the IPsets. The detached name lookup takes place only during 'restart' or 'reload' action, 'start' and 'refresh' actions are using an auto-generated backup instead.
-  
+
 **whitelist-only mode:**  
 banIP supports a "whitelist only" mode. This option allows to restrict the internet access from/to a small number of secure websites/IPs, and block access from/to the rest of the internet. All IPs and Domains which are _not_ listed in the whitelist are blocked. Please note: suspend/resume does not work in this mode.
-  
+
 **Manually override the download options:**  
 By default banIP uses the following pre-configured download options:  
 * aria2c: <code>--timeout=20 --allow-overwrite=true --auto-file-renaming=false --log-level=warn --dir=/ -o</code>
@@ -240,7 +240,7 @@ By default banIP uses the following pre-configured download options:
 * wget: <code>--no-cache --no-cookies --max-redirect=0 --timeout=20 -O</code>
 
 To override the default set 'ban_fetchparm' manually to your needs.
-  
+
 **generate an IPSet report:**  
 <pre><code>
 ~# /etc/init.d/banip report
@@ -344,7 +344,7 @@ To override the default set 'ban_fetchparm' manually to your needs.
                                                                                         204.79.197.200           2
     --------------------------------------------------------------------------------------------------------------------
 </code></pre>
-  
+
 **Enable E-Mail notification via 'msmtp':**  
 To use the email notification you have to install & configure the package 'msmtp'.  
 Modify the file '/etc/msmtprc', e.g.:
@@ -365,9 +365,9 @@ user            &lt;gmail-user&gt;
 password        &lt;password&gt;
 </code></pre>
 Finally enable E-Mail support and add a valid E-Mail receiver address in LuCI.
-  
+
 **Edit, add new banIP sources:**  
-The banIP blocklist sources are stored in an external, compressed JSON file '/etc/banip/banip.sources.gz'. 
+The banIP blocklist sources are stored in an external, compressed JSON file '/etc/banip/banip.sources.gz'.
 This file is directly parsed in LuCI and accessible via CLI, just call _/etc/init.d/banip list_.
 
 To add new or edit existing sources extract the compressed JSON file _gunzip /etc/banip/banip.sources.gz_.  
@@ -375,18 +375,18 @@ A valid JSON source object contains the following required information, e.g.:
 <pre><code>
 	[...]
 	"tor": {
-		"url_4": "https://lists.fissionrelays.net/tor/exits-ipv4.txt",
-		"url_6": "https://lists.fissionrelays.net/tor/exits-ipv6.txt",
+		"url_4": "https://raw.githubusercontent.com/SecOps-Institute/Tor-IP-Addresses/master/tor-exit-nodes.lst",
+		"url_6": "https://raw.githubusercontent.com/SecOps-Institute/Tor-IP-Addresses/master/tor-exit-nodes.lst",
 		"rule_4": "/^(([0-9]{1,3}\\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\\/(1?[0-9]|2?[0-9]|3?[0-2]))?)([[:space:]]|$)/{print \"add tor_4 \"$1}",
 		"rule_6": "/^(([0-9A-f]{0,4}:){1,7}[0-9A-f]{0,4}:?(\\/(1?[0-2][0-8]|[0-9][0-9]))?)([[:space:]]|$)/{print \"add tor_6 \"$1}",
 		"focus": "Tor exit nodes",
-		"descurl": "https://fissionrelays.net/lists"
+		"descurl": "https://github.com/SecOps-Institute/Tor-IP-Addresses"
 	},
 	[...]
 </code></pre>
 Add an unique object name, make the required changes to 'url_4', 'rule_4' (and/or 'url_6', 'rule_6'), 'focus' and 'descurl' and finally compress the changed JSON file _gzip /etc/banip/banip.sources.gz_ to use the new source object in banIP.  
 <b>Please note:</b> if you're going to add new sources on your own, please make a copy of the default file and work with that copy further on, cause the default will be overwritten with every banIP update. To reference your copy set the option 'ban\_srcarc' which points by default to '/etc/banip/banip.sources.gz'  
-  
+
 ## Support
 Please join the banIP discussion in this [forum thread](https://forum.openwrt.org/t/banip-support-thread/16985) or contact me by mail <dev@brenken.org>  
 
