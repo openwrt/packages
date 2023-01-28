@@ -105,7 +105,9 @@ endef
 
 PYTHON3_LIB_FILES_DEL:=
 PYTHON3_PACKAGES:=
-PYTHON3_SO_SUFFIX:=cpython-$(PYTHON3_VERSION_MAJOR)$(PYTHON3_VERSION_MINOR).so
+# The python logic to decide the suffix is only in its configure and saved in the EXT_SUFFIX
+# entry, but we can also let sh figure out for us.
+PYTHON3_SO_SUFFIX:=cpython-$(PYTHON3_VERSION_MAJOR)$(PYTHON3_VERSION_MINOR)-*.so
 PYTHON3_PACKAGES_DEPENDS:=
 define Py3BasePackage
   PYTHON3_PACKAGES+=$(1)

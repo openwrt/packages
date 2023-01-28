@@ -10,7 +10,7 @@ process_filespec() {
 	while read fop fspec fperm; do
 		local fop=`echo "$fop" | tr -d ' \t\n'`
 		if [ "$fop" = "+" ]; then
-			if [ ! -e "${src_dir}${fspec}" ]; then
+			if [ ! -e ${src_dir}${fspec} ]; then
 				echo "File not found '${src_dir}${fspec}'"
 				exit 1
 			fi
