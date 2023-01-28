@@ -34,7 +34,8 @@ PKG_BUILD_PARALLEL:=1
 PKG_CONFIG_DEPENDS := \
 	CONFIG_BIND_LIBJSON \
 	CONFIG_BIND_LIBXML2 \
-	CONFIG_BIND_ENABLE_DOH
+	CONFIG_BIND_ENABLE_DOH \
+	CONFIG_BIND_ENABLE_GSSAPI
 
 PKG_BUILD_DEPENDS += BIND_LIBXML2:libxml2 BIND_LIBJSON:libjson-c
 
@@ -61,6 +62,8 @@ define Package/bind-libs
 	+libatomic \
 	+libuv \
 	+BIND_ENABLE_DOH:libnghttp2 \
+	+BIND_ENABLE_GSSAPI:krb5-libs \
+	+BIND_ENABLE_GSSAPI:libcomerr \
 	+BIND_LIBXML2:libxml2 \
 	+BIND_LIBJSON:libjson-c
   TITLE:=bind shared libraries
@@ -147,7 +150,6 @@ CONFIGURE_ARGS += \
 	--with-openssl="$(STAGING_DIR)/usr" \
 	--without-lmdb \
 	--enable-epoll \
-	--without-gssapi \
 	--without-readline \
 	--sysconfdir=/etc/bind
 
@@ -174,6 +176,14 @@ ifdef CONFIG_BIND_ENABLE_DOH
 else
 	CONFIGURE_ARGS += \
 		--disable-doh
+endif
+
+ifdef CONFIG_BIND_ENABLE_GSSAPI
+	CONFIGURE_ARGS += \
+		--with-gssapi
+else
+	CONFIGURE_ARGS += \
+		--without-gssapi
 endif
 
 CONFIGURE_VARS += \

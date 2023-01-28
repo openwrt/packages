@@ -33,4 +33,12 @@ config BIND_ENABLE_DOH
 		You can disable DoHTTPS if you do not need it or need
 		to avoid the additional library dependency.
 
+config BIND_ENABLE_GSSAPI
+	bool
+	default n
+	prompt "Include GSSPAI support in bind"
+	help
+		BIND 9 supports GSSAPI. This depends on libcomerr and krb5-libs.
+		Disable it by default as krb5-libs is rather large.
+
 endif
