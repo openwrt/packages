@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nghttp2
-PKG_VERSION:=1.44.0
+PKG_VERSION:=1.51.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/nghttp2/nghttp2/releases/download/v$(PKG_VERSION)
-PKG_HASH:=5699473b29941e8dafed10de5c8cb37a3581edf62ba7d04b911ca247d4de3c5d
+PKG_HASH:=66aa76d97c143f42295405a31413e5e7d157968dad9f957bb4b015b598882e6b
 
 PKG_MAINTAINER:=Hans Dedecker <dedeckeh@gmail.com>
 PKG_LICENSE:=MIT
