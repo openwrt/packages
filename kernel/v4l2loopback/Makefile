@@ -6,13 +6,12 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=v4l2loopback
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/umlaeute/v4l2loopback.git
-PKG_SOURCE_VERSION:=baf9de279afc7a7c7513e9c40a0c9ff88f456af4
-PKG_SOURCE_DATE:=2021-07-13
-PKG_MIRROR_HASH:=811a4b0bbefe14cf4a74dbb3d45f5ae147f50f1d67dbb6f0fe3e5a9888adf49a
+PKG_SOURCE_VERSION:=v0.12.7
+PKG_MIRROR_HASH:=e5e5d897bdaa7f2fb0b897e503cecaeee234fcdc7f2f138aae501ef742f5b2b2
 
 PKG_MAINTAINER:=Michel Promonet <michel.promonet@free.fr>
 
@@ -22,7 +21,7 @@ define KernelPackage/v4l2loopback
   SUBMENU:=Video Support
   TITLE:=v4l2loopback kernel module
   FILES:=$(PKG_BUILD_DIR)/v4l2loopback.ko
-  DEPENDS:=+kmod-video-core +kmod-video-videobuf2
+  DEPENDS:=+kmod-video-core 
   AUTOLOAD:=$(call AutoProbe,v4l2loopback)
 endef
 
