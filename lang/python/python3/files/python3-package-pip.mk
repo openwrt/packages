@@ -29,6 +29,7 @@ define Py3Package/python3-pip/install
 endef
 
 $(eval $(call Py3BasePackage,python3-pip, \
+	/usr/lib/python$(PYTHON3_VERSION)/ensurepip \
 	, \
 	DO_NOT_ADD_TO_PACKAGE_DEPENDS \
 ))
