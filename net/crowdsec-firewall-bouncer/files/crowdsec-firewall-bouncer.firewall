@@ -1,4 +1,0 @@
-#!/bin/sh
-/etc/init.d/crowdsec enabled && /etc/init.d/crowdsec restart
-/etc/init.d/crowdsec-firewall-bouncer enabled && /etc/init.d/crowdsec-firewall-bouncer restart
-exit 0
