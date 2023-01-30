@@ -34,6 +34,9 @@ PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 HOST_BUILD_PARALLEL:=1
+# LTO is handled here individually, see --with-lto below
+# "no-lto" prevents CONFIG_USE_LTO to add additional and interfering flags
+PKG_BUILD_FLAGS:=no-lto
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/Python-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/Python-$(PKG_VERSION)
