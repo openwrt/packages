@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pdns-recursor
-PKG_VERSION:=4.8.1
+PKG_VERSION:=4.8.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://downloads.powerdns.com/releases/
-PKG_HASH:=d7b03447009257e512f01fcc46cbdb9c859b672a1c9b23faf382e870765b0f0d
+PKG_HASH:=4382d3e84f13401685772779dfede6cbc8157ecf6763fa7fdb1dd33ee3f79ac7
 
 PKG_MAINTAINER:=Peter van Dijk <peter.van.dijk@powerdns.com>
 PKG_LICENCE:=GPL-2.0-only
