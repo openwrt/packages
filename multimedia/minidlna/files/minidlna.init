@@ -6,6 +6,7 @@ START=81
 PROG=/usr/sbin/minidlnad
 USE_PROCD=1
 
+. /lib/functions.sh
 MINIDLNA_CONFIG_FILE="/var/etc/minidlna.conf"
 
 minidlna_cfg_addbool() {
