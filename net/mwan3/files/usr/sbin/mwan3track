@@ -405,6 +405,7 @@ main() {
 		fi
 		if [ "${IFUP_EVENT}" -eq 1 ]; then
 			LOG debug "Register ifup event on interface ${INTERFACE} (${DEVICE})"
+			score=$((down+up))
 			firstconnect
 			IFUP_EVENT=0
 		fi
