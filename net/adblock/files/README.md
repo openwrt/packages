@@ -302,7 +302,7 @@ A valid JSON source object contains the following required information, e.g.:
 	},
 	[...]
 </code></pre>
-Add an unique object name, make the required changes to 'url', 'rule', 'size' and 'descurl' and finally compress the changed JSON file _gzip /etc/adblock/adblock.sources.gz_ to use the new source object in adblock.  
+Add an unique object name, make the required changes to 'url', 'rule', 'size' and 'descurl' and finally compress the changed JSON file _gzip /etc/adblock/adblock.sources_ to use the new source object in adblock.  
 <b>Please note:</b> if you're going to add new sources on your own, please make a copy of the default file and work with that copy further on, cause the default will be overwritten with every adblock update. To reference your copy set the option 'adb\_srcarc' which points by default to '/etc/adblock/adblock.sources.gz'  
 <b>Please note:</b> when adblock starts, it looks for the uncompressed 'adb\_srcfile', only if this file is not found the archive 'adb\_srcarc' is unpacked once and then the uncompressed file is used
 
