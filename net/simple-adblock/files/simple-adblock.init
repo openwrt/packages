@@ -1409,16 +1409,29 @@ adb_stop() {
 	fi
 }
 
+allow() { load_validate_config 'config' adb_allow "'$*'"; }
+boot() {
+	ubus -t 30 wait_for network.interface 2>/dev/null
+	rc_procd start_service 'on_boot'
+}
+check() { load_validate_config 'config' adb_check "'$*'"; }
+dl() { rc_procd start_service 'download'; }
+killcache() {
+	rm -f "$dnsmasqAddnhostsCache" "$dnsmasqAddnhostsGzip"
+	rm -f "$dnsmasqConfCache" "$dnsmasqConfGzip"
+	rm -f "$dnsmasqIpsetCache" "$dnsmasqIpsetGzip"
+	rm -f "$dnsmasqNftsetCache" "$dnsmasqNftsetGzip"
+	rm -f "$dnsmasqServersCache" "$dnsmasqServersGzip"
+	rm -f "$unboundCache" "$unboundGzip"
+	config_load 'dhcp'
+	config_foreach resolver 'dnsmasq' 'cleanup'
+	uci_commit 'dhcp'
+	return 0
+}
+reload_service() { rc_procd start_service 'restart'; }
+restart_service() { rc_procd start_service 'restart'; }
 service_started() { procd_set_config_changed firewall; }
 service_stopped() { procd_set_config_changed firewall; }
-restart_service() { rc_procd start_service 'restart'; }
-reload_service() { rc_procd start_service 'restart'; }
-start_service() { 
-	load_validate_config 'config' adb_config_update "'$*'"
-	load_validate_config 'config' adb_start "'$*'"
-}
-stop_service() { load_validate_config 'config' adb_stop "'$*'"; }
-status_service() { load_validate_config 'config' adb_status "''"; }
 service_triggers() {
 	local wan wan6 i
 	local procd_trigger_wan6
@@ -1437,22 +1450,13 @@ service_triggers() {
 	done
 	procd_add_config_trigger "config.change" "$packageName" "/etc/init.d/${packageName}" reload
 }
-allow() { load_validate_config 'config' adb_allow "'$*'"; }
-check() { load_validate_config 'config' adb_check "'$*'"; }
-dl() { rc_procd start_service 'download'; }
-killcache() {
-	rm -f "$dnsmasqAddnhostsCache" "$dnsmasqAddnhostsGzip"
-	rm -f "$dnsmasqConfCache" "$dnsmasqConfGzip"
-	rm -f "$dnsmasqIpsetCache" "$dnsmasqIpsetGzip"
-	rm -f "$dnsmasqNftsetCache" "$dnsmasqNftsetGzip"
-	rm -f "$dnsmasqServersCache" "$dnsmasqServersGzip"
-	rm -f "$unboundCache" "$unboundGzip"
-	config_load 'dhcp'
-	config_foreach resolver 'dnsmasq' 'cleanup'
-	uci_commit 'dhcp'
-	return 0
-}
 sizes() { load_validate_config 'config' adb_sizes "''"; }
+start_service() { 
+	load_validate_config 'config' adb_config_update "'$*'"
+	load_validate_config 'config' adb_start "'$*'"
+}
+status_service() { load_validate_config 'config' adb_status "''"; }
+stop_service() { load_validate_config 'config' adb_stop "'$*'"; }
 version() { echo "$PKG_VERSION"; }
 
 load_validate_config() {
