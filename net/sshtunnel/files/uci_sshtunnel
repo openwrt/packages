@@ -1,6 +1,6 @@
 #
-# password authentication is not possible, public key authentication must be used.
-# set "option IdentityFile" to he file from which the identity (private key) for RSA or DSA authentication is read.  
+# Password authentication is not possible, public key authentication must be used.
+# Set "option IdentityFile" to the file from which the identity (private key) for RSA or DSA authentication is read.
 # The default is ~/.ssh/identity for protocol version 1, and ~/.ssh/id_rsa and ~/.ssh/id_dsa for protocol version 2.
 # ssh will also try to load certificate information from the filename obtained by appending -cert.pub to identity filenames.
 #
@@ -33,7 +33,7 @@
 #	option localport	80
 
 # tunnelL(ocal) - when the connection will be initiated to the L(ocal) endpoint at
-# localaddress:localport and then forwarded to remoteaddress:remoteport 
+# localaddress:localport and then forwarded to remoteaddress:remoteport
 #
 #config tunnelL test
 #	option server		disney

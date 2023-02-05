@@ -20,13 +20,13 @@ define Package/sshtunnel
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=SSH
-  TITLE:=Manages Local and Remote openssh ssh(1) tunnels
+  TITLE:=Manages local and remote openssh ssh(1) tunnels
   DEPENDS:=+openssh-client
   PKGARCH:=all
 endef
 
 define Package/sshtunnel/description
-Creates openssh ssh(1) Local and Remote tunnels configured in UCI file. Can be used to allow remote connections, possibly over NATed connections or without public IP/DNS
+Creates openssh ssh(1) local and remote tunnels configured in UCI file. Can be used to allow remote connections, possibly over NATed connections or without public IP/DNS
 endef
 
 define Package/sshtunnel/conffiles
