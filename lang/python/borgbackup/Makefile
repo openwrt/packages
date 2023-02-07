@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022 Julien Malik <julien.malik@paraiso.me>
+# Copyright (C) 2023 Julien Malik <julien.malik@paraiso.me>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=borgbackup
 PKG_VERSION:=1.2.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=borgbackup
 PKG_HASH:=e32418f8633c96fa9681352a56eb63b98e294203472c114a5242709d36966785
@@ -22,6 +22,7 @@ include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
+# see #20462 and #12942: email and urllib shall come with python3-light
 define Package/borgbackup
   SECTION:=lang
   CATEGORY:=Languages
@@ -30,8 +31,17 @@ define Package/borgbackup
   URL:=https://github.com/borgbackup/borg
   DEPENDS:= \
       +python3-light \
+      +python3-codecs \
+      +python3-email \
+      +python3-logging \
+      +python3-lzma \
       +python3-msgpack \
+      +python3-packaging \
       +python3-pyfuse3 \
+      +python3-readline \
+      +python3-unittest \
+      +python3-urllib \
+      +python3-uuid \
       +libacl \
       +libopenssl \
       +liblz4 \
