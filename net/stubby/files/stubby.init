@@ -35,8 +35,6 @@ generate_config()
     local listen_addresses_section=0
     local dns_transport_list_section=0
     local upstream_recursive_servers_section=0
-    local command_line_arguments
-    local log_level
     local tls_cipher_list
     local tls_ciphersuites
     local tls_min_version
@@ -207,10 +205,19 @@ generate_config()
 } > "$config_file_tmp"
 
 start_service() {
+    local appdata_dir
     local config_file_tmp
     local manual
     local log_level
     local command_line_arguments
+    
+    config_get appdata_dir "global" appdata_dir "/var/lib/stubby"
+    
+    if [ ! -d "$appdata_dir" ]; then
+        mkdir -p "$appdata_dir"
+        chown stubby:stubby "$appdata_dir"
+        chmod 0700 "$appdata_dir"
+    fi
 
     mkdir -p "$stubby_config_dir"
 
@@ -254,6 +261,7 @@ start_service() {
         procd_set_param stderr 1
         procd_set_param pidfile "$stubby_pid_file"
         procd_set_param user stubby
+        procd_set_param no_new_privs 1
         procd_close_instance
     fi
 }
