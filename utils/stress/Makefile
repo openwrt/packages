@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=stress
+PKG_VERSION:=1.0.7
 PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=1.0.5
-PKG_SOURCE_URL:=https://github.com/resurrecting-open-source-projects/stress
-PKG_MIRROR_HASH:=711e42ead6fd220a98821aae0cf024930785e439d3d0d50663fed1b2cd021bd1
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE_URL:=https://github.com/resurrecting-open-source-projects/stress/releases/download/${PKG_VERSION}/
+PKG_HASH:=e63adb57597e617c14ecb0d841b5d990460796d9e9ec69bd56fe645ef02eb239
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
