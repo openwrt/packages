@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx-util
 PKG_VERSION:=1.6
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=15
 PKG_MAINTAINER:=Peter Stadler <peter.stadler@student.uibk.ac.at>
 
 include $(INCLUDE_DIR)/package.mk
@@ -11,6 +11,7 @@ include $(INCLUDE_DIR)/cmake.mk
 CMAKE_OPTIONS+= -DUBUS=y
 CMAKE_OPTIONS+= -DVERSION=$(PKG_VERSION)
 
+TARGET_CFLAGS+= -Wno-error=deprecated-declarations
 
 define Package/nginx-ssl-util/default
   SECTION:=net
