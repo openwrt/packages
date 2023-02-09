@@ -1,0 +1,53 @@
+From 53a042836063e965f8df9fc85bb32e8e46da8a05 Mon Sep 17 00:00:00 2001
+From: staylightblow8 <liudf0716@gmail.com>
+Date: Thu, 20 Oct 2022 10:47:59 +0800
+Subject: [PATCH] support openssl > 3.0
+
+---
+ cmake/Modules/FindOpenSSL.cmake | 27 +++++++++++++++++++++++----
+ 1 file changed, 23 insertions(+), 4 deletions(-)
+
+--- a/cmake/Modules/FindOpenSSL.cmake
++++ b/cmake/Modules/FindOpenSSL.cmake
+@@ -282,11 +282,11 @@ function(from_hex HEX DEC)
+   set(${DEC} ${_res} PARENT_SCOPE)
+ endfunction()
+ 
+-if (OPENSSL_INCLUDE_DIR)
+-  if(OPENSSL_INCLUDE_DIR AND EXISTS "${OPENSSL_INCLUDE_DIR}/openssl/opensslv.h")
+-    file(STRINGS "${OPENSSL_INCLUDE_DIR}/openssl/opensslv.h" openssl_version_str
+-         REGEX "^# *define[\t ]+OPENSSL_VERSION_NUMBER[\t ]+0x([0-9a-fA-F])+.*")
++if(OPENSSL_INCLUDE_DIR AND EXISTS "${OPENSSL_INCLUDE_DIR}/openssl/opensslv.h")
++  file(STRINGS "${OPENSSL_INCLUDE_DIR}/openssl/opensslv.h" openssl_version_str
++       REGEX "^#[\t ]*define[\t ]+OPENSSL_VERSION_NUMBER[\t ]+0x([0-9a-fA-F])+.*")
+ 
++  if(openssl_version_str)
+     # The version number is encoded as 0xMNNFFPPS: major minor fix patch status
+     # The status gives if this is a developer or prerelease and is ignored here.
+     # Major, minor, and fix directly translate into the version numbers shown in
+@@ -315,6 +315,25 @@ if (OPENSSL_INCLUDE_DIR)
+     endif ()
+ 
+     set(OPENSSL_VERSION "${OPENSSL_VERSION_MAJOR}.${OPENSSL_VERSION_MINOR}.${OPENSSL_VERSION_FIX}${OPENSSL_VERSION_PATCH_STRING}")
++  else ()
++    # Since OpenSSL 3.0.0, the new version format is MAJOR.MINOR.PATCH and
++    # a new OPENSSL_VERSION_STR macro contains exactly that
++    file(STRINGS "${OPENSSL_INCLUDE_DIR}/openssl/opensslv.h" OPENSSL_VERSION_STR
++         REGEX "^#[\t ]*define[\t ]+OPENSSL_VERSION_STR[\t ]+\"([0-9])+\\.([0-9])+\\.([0-9])+\".*")
++    string(REGEX REPLACE "^.*OPENSSL_VERSION_STR[\t ]+\"([0-9]+\\.[0-9]+\\.[0-9]+)\".*$"
++           "\\1" OPENSSL_VERSION_STR "${OPENSSL_VERSION_STR}")
++
++    set(OPENSSL_VERSION "${OPENSSL_VERSION_STR}")
++
++    # Setting OPENSSL_VERSION_MAJOR OPENSSL_VERSION_MINOR and OPENSSL_VERSION_FIX
++    string(REGEX MATCHALL "([0-9])+" OPENSSL_VERSION_NUMBER "${OPENSSL_VERSION}")
++    list(POP_FRONT OPENSSL_VERSION_NUMBER
++      OPENSSL_VERSION_MAJOR
++      OPENSSL_VERSION_MINOR
++      OPENSSL_VERSION_FIX)
++
++    unset(OPENSSL_VERSION_NUMBER)
++    unset(OPENSSL_VERSION_STR)
+   endif ()
+ endif ()
+ 
