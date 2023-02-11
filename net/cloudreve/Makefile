@@ -5,13 +5,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cloudreve
-PKG_VERSION:=3.6.2
+PKG_VERSION:=3.7.1
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/cloudreve/Cloudreve.git
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
-PKG_MIRROR_HASH:=134dc707f8befaa9a193a2b0ae2eb2eebd3c5c70c291b5104bed458c63eedbb7
+PKG_MIRROR_HASH:=b70601111e727d879a709884bc28237861216b99abac02b6f542f5984ddd8c0d
 
 PKG_LICENSE:=GPL-3.0-only
 PKG_LICENSE_FILES:=LICENSE
@@ -35,7 +35,7 @@ define Package/cloudreve
   SUBMENU:=Cloud Manager
   TITLE:=A project helps you build your own cloud in minutes
   URL:=https://cloudreve.org
-  DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle
+  DEPENDS:=@(aarch64||arm||i386||i686||x86_64) +ca-bundle
 endef
 
 define Package/cloudreve/description
