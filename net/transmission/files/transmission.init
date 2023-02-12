@@ -58,15 +58,15 @@ transmission() {
 	local incomplete_dir
 	config_get incomplete_dir "$cfg" 'incomplete_dir' '/var/etc/transmission'
 	local incomplete_dir_enabled
-	config_get incomplete_dir_enabled "$cfg" 'incomplete_dir_enabled' 0
+	config_get_bool incomplete_dir_enabled "$cfg" 'incomplete_dir_enabled' 0
 	local watch_dir
 	config_get watch_dir "$cfg" 'watch_dir' '/var/etc/transmission'
 	local watch_dir_enabled
-	config_get watch_dir_enabled "$cfg" 'watch_dir_enabled' 0
+	config_get_bool watch_dir_enabled "$cfg" 'watch_dir_enabled' 0
 	local mem_percentage
 	config_get mem_percentage "$cfg" 'mem_percentage' '50'
 	local config_overwrite
-	config_get config_overwrite "$cfg" config_overwrite 1
+	config_get_bool config_overwrite "$cfg" config_overwrite 1
 	local nice
 	config_get nice "$cfg" nice 0
 	local web_home
@@ -196,9 +196,9 @@ transmission_mount_triggers() {
 		watch_dir watch_dir_enabled web_home service_dirs
 	config_get config_dir "$cfg" 'config_dir' '/var/etc/transmission'
 	config_get download_dir "$cfg" 'download_dir' '/var/etc/transmission'
-	config_get incomplete_dir_enabled "$cfg" 'incomplete_dir_enabled' 0
+	config_get_bool incomplete_dir_enabled "$cfg" 'incomplete_dir_enabled' 0
 	config_get incomplete_dir "$cfg" 'incomplete_dir' '/var/etc/transmission'
-	config_get watch_dir_enabled "$cfg" 'watch_dir_enabled' 0
+	config_get_bool watch_dir_enabled "$cfg" 'watch_dir_enabled' 0
 	config_get watch_dir "$cfg" 'watch_dir' '/var/etc/transmission'
 	config_get web_home "$cfg" 'web_home'
 
