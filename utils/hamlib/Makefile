@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hamlib
 PKG_VERSION:=4.5.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/hamlib
@@ -41,6 +41,10 @@ define Package/hamlib
   SECTION:=utils
   CATEGORY:=Utilities
   DEPENDS:=+libhamlib
+endef
+
+define Package/hamlib/conffiles
+/etc/config/rigctld
 endef
 
 define Package/hamlib/description
@@ -90,6 +94,12 @@ CONFIGURE_VARS+= \
 define Package/hamlib/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/{rig,rot}* $(1)/usr/bin/
+
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/rigctld.init $(1)/etc/init.d/rigctld
+
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/rigctld.conf $(1)/etc/config/rigctld
 endef
 
 define Package/libhamlib/install
