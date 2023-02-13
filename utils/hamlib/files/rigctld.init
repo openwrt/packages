@@ -74,3 +74,4 @@ start_instance() {
 
 	procd_close_instance
 }
+
