@@ -1,6 +1,6 @@
 --- a/meson.build
 +++ b/meson.build
-@@ -527,7 +527,7 @@ if get_option('default_library') == 'sta
+@@ -537,7 +537,7 @@ if get_option('default_library') == 'sta
  endif
  
  # Used in gst/parse/meson.build and below
