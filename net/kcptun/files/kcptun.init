@@ -148,7 +148,7 @@ validate_common_options() {
 
 validate_server_options() {
 	validate_common_options server "$@" \
-		'listen:port' \
+		'listen:or(port,portrange):29900-30000' \
 		'target:host' \
 		'target_port:port' \
 		'pprof:bool'
@@ -159,7 +159,7 @@ validate_client_options() {
 		'bind_address:ipaddr' \
 		'local_port:port' \
 		'server:host' \
-		'server_port:port' \
+		'server_port:or(port,portrange):29900-30000' \
 		'conn:uinteger' \
 		'autoexpire:uinteger' \
 		'scavengettl:uinteger'
