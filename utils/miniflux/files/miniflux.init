@@ -24,6 +24,8 @@ start_service() {
 		procd_append_param env LISTEN_ADDR="$listen_address"
 		config_get run_migrations main run_migrations
 		[ "$run_migrations" = 1 ] && procd_append_param env RUN_MIGRATIONS=1
+		config_get base_url main base_url
+		[ -n "$base_url" ] && procd_append_param env BASE_URL="$base_url"
 
 		config_get database_url database url
 		if [ -z "$database_url" ]; then
