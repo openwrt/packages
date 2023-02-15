@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=miniflux
-PKG_VERSION:=2.0.41
+PKG_VERSION:=2.0.42
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/miniflux/v2/tar.gz/${PKG_VERSION}?
-PKG_HASH:=01e150ebfba12c8b5ca7c1d9d5a5976d018081cafc11228d6f77a48ac3333e1b
+PKG_HASH:=f050b2bc9839dd485047b9d7820dbb669668fd13135aa8b49dc0ad304e509fd5
 
 PKG_MAINTAINER:=Michal Vasilek <michal.vasilek@nic.cz>
 PKG_LICENSE:=Apache-2.0
