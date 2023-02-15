@@ -4,7 +4,9 @@ uvol_init() {
 	local metasz freesz totalsz
 	uvol detect
 	metasz="$(uvol size .meta 2>/dev/null)"
-	[ "$((metasz))" -gt 0 ] && return
+	if [ "$metasz" ]; then
+		[ "$((metasz))" -gt 0 ] && return
+	fi
 	totalsz="$(uvol total)"
 	freesz="$(uvol free)"
 	metasz="$((totalsz / 10240))"

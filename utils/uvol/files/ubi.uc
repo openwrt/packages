@@ -29,7 +29,7 @@ function mkdtemp() {
 
 function ubi_get_dev(vol_name) {
 	let wcstring = sprintf("uvol-[rw][owpd]-%s", vol_name);
-	for (vol_dir in fs.glob(sprintf("/sys/devices/virtual/ubi/%s/%s_*", ubidev, ubidev))) {
+	for (vol_dir in fs.glob(sprintf("/sys/class/ubi/%s_*", ubidev))) {
 		let vol_ubiname = read_file(sprintf("%s/name", vol_dir));
 		if (wildcard(vol_ubiname, wcstring))
 			return fs.basename(vol_dir);
@@ -38,7 +38,7 @@ function ubi_get_dev(vol_name) {
 }
 
 function vol_get_mode(vol_dev, mode) {
-	let vol_name = read_file(sprintf("/sys/devices/virtual/ubi/%s/%s/name", ubidev, vol_dev));
+	let vol_name = read_file(sprintf("/sys/class/ubi/%s/name", vol_dev));
 	return substr(vol_name, 5, 2);
 }
 
@@ -57,19 +57,23 @@ function block_hotplug(action, devname) {
 function ubi_init(ctx) {
 	cursor = ctx.cursor;
 	fs = ctx.fs;
+	ubidev = null;
 
 	let ubiver = read_file("/sys/class/ubi/version");
 	if (ubiver != 1)
 		return false;
 
-	let ubidevpath = null;
-	for (ubidevpath in fs.glob("/sys/devices/virtual/ubi/*"))
-		break;
+	for (ubidevpath in fs.glob("/sys/class/ubi/*")) {
+		if (!fs.stat(sprintf("%s/eraseblock_size", ubidevpath)))
+			continue;
 
-	if (!ubidevpath)
+		ubidev = fs.basename(ubidevpath);
+		break;
+	}
+
+	if (!ubidev)
 		return false;
 
-	ubidev = fs.basename(ubidevpath);
 	ebsize = read_file(sprintf("%s/eraseblock_size", ubidevpath));
 
 	uvol_uci_add = ctx.uci_add;
@@ -81,7 +85,7 @@ function ubi_init(ctx) {
 }
 
 function ubi_free() {
-	let availeb = read_file(sprintf("/sys/devices/virtual/ubi/%s/avail_eraseblocks", ubidev));
+	let availeb = read_file(sprintf("/sys/class/ubi/%s/avail_eraseblocks", ubidev));
 	return sprintf("%d", availeb * ebsize);
 }
 
@@ -90,7 +94,7 @@ function ubi_align() {
 }
 
 function ubi_total() {
-	let totaleb = read_file(sprintf("/sys/devices/virtual/ubi/%s/total_eraseblocks", ubidev));
+	let totaleb = read_file(sprintf("/sys/class/ubi/%s/total_eraseblocks", ubidev));
 	return sprintf("%d", totaleb * ebsize);
 }
 
@@ -114,7 +118,7 @@ function ubi_size(vol_name) {
 	if (!vol_dev)
 		return 2;
 
-	let vol_size = read_file(sprintf("/sys/devices/virtual/ubi/%s/%s/data_bytes", ubidev, vol_dev));
+	let vol_size = read_file(sprintf("/sys/class/ubi/%s/data_bytes", vol_dev));
 	return sprintf("%d", vol_size);
 }
 
@@ -255,7 +259,7 @@ function ubi_down(vol_name) {
 
 function ubi_list(search_name) {
 	let volumes = [];
-	for (vol_dir in fs.glob(sprintf("/sys/devices/virtual/ubi/%s/%s_*", ubidev, ubidev))) {
+	for (vol_dir in fs.glob(sprintf("/sys/class/ubi/%s_*", ubidev))) {
 		let vol = {};
 		let vol_ubiname = read_file(sprintf("%s/name", vol_dir));
 		if (!wildcard(vol_ubiname, "uvol-[rw][wod]-*"))
@@ -277,7 +281,7 @@ function ubi_list(search_name) {
 
 function ubi_detect() {
 	let tmpdev = [];
-	for (vol_dir in fs.glob(sprintf("/sys/devices/virtual/ubi/%s/%s_*", ubidev, ubidev))) {
+	for (vol_dir in fs.glob(sprintf("/sys/class/ubi/%s_*", ubidev))) {
 		let vol_ubiname = read_file(sprintf("%s/name", vol_dir));
 
 		if (!wildcard(vol_ubiname, "uvol-r[od]-*"))
@@ -297,7 +301,7 @@ function ubi_detect() {
 
 	uvol_uci_init();
 
-	for (vol_dir in fs.glob(sprintf("/sys/devices/virtual/ubi/%s/%s_*", ubidev, ubidev))) {
+	for (vol_dir in fs.glob(sprintf("/sys/class/ubi/%s_*", ubidev))) {
 		let vol_ubiname = read_file(sprintf("%s/name", vol_dir));
 		if (!wildcard(vol_ubiname, "uvol-[rw][wod]-*"))
 			continue;
@@ -321,7 +325,7 @@ function ubi_detect() {
 }
 
 function ubi_boot() {
-	for (vol_dir in fs.glob(sprintf("/sys/devices/virtual/ubi/%s/%s_*", ubidev, ubidev))) {
+	for (vol_dir in fs.glob(sprintf("/sys/class/ubi/%s_*", ubidev))) {
 		let vol_dev = fs.basename(vol_dir);
 		let vol_ubiname = read_file(sprintf("%s/name", vol_dir));
 
