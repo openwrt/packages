@@ -1,14 +1,3 @@
-eng;basic;basic/formats/domains.txt
-eng;blu;blu/formats/domains.txt
-eng;blugo;bluGo/formats/domains.txt
-eng;ext-extreme;extensions/xtreme/formats/domains.txt
-eng;ext-pornlite;extensions/porn-lite/formats/domains.txt
-eng;ext-regional;extensions/regional/formats/domains.txt
-eng;ext-social;extensions/social/formats/domains.txt
-eng;porn;porn/formats/domains.txt
-eng;spark;spark/formats/domains.txt
-eng;ultimate;ultimate/formats/domains.txt
-eng;unified;unified/formats/domains.txt
 stb;fakenews;alternates/fakenews/hosts
 stb;fakenews-gambling;alternates/fakenews-gambling/hosts
 stb;fakenews-gambling-porn;alternates/fakenews-gambling-porn/hosts
