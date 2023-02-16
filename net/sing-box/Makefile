@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sing-box
 PKG_VERSION:=1.1.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/SagerNet/sing-box/tar.gz/v$(PKG_VERSION)?
@@ -27,7 +27,7 @@ define Package/sing-box
   SECTION:=net
   CATEGORY:=Network
   URL:=https://sing-box.sagernet.org
-  DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle +kmod-tun
+  DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle
   USERID:=sing-box=5566:sing-box=5566
 endef
 
@@ -42,7 +42,6 @@ define Package/sing-box/config
 
 		config SINGBOX_WITH_ACME
 			bool "Build with ACME TLS certificate issuer support"
-			default n
 
 		config SINGBOX_WITH_CLASH_API
 			bool "Build with Clash API support"
@@ -50,15 +49,12 @@ define Package/sing-box/config
 
 		config SINGBOX_WITH_ECH
 			bool "Build with TLS ECH extension support for TLS outbound"
-			default n
 
 		config SINGBOX_WITH_EMBEDDED_TOR
 			bool "Build with embedded Tor support"
-			default n
 
 		config SINGBOX_WITH_GRPC
 			bool "Build with standard gRPC support"
-			default n
 
 		config SINGBOX_WITH_GVISOR
 			bool "Build with gVisor support"
@@ -66,7 +62,6 @@ define Package/sing-box/config
 
 		config SINGBOX_WITH_LWIP
 			bool "Build with LWIP Tun stack support"
-			default n
 
 		config SINGBOX_WITH_QUIC
 			bool "Build with QUIC support"
@@ -74,15 +69,12 @@ define Package/sing-box/config
 
 		config SINGBOX_WITH_SHADOWSOCKSR
 			bool "Build with ShadowsocksR support"
-			default n
 
 		config SINGBOX_WITH_UTLS
 			bool "Build with uTLS support for TLS outbound"
-			default y
 
 		config SINGBOX_WITH_V2RAY_API
 			bool "Build with V2Ray API support"
-			default n
 
 		config SINGBOX_WITH_WIREGUARD
 			bool "Build with WireGuard support"
