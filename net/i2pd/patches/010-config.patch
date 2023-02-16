@@ -29,7 +29,7 @@
  ## Write full CLF-formatted date and time to log (default: write only time)
  # logclftime = true
  
-@@ -115,9 +115,9 @@ published = true
+@@ -115,9 +115,9 @@ ssu = false
  [http]
  ## Web Console settings
  ## Uncomment and set to 'false' to disable Web Console
@@ -83,11 +83,11 @@
  ## Name i2pd appears in UPnP forwardings list (default = I2Pd)
  # name = I2Pd
  
-@@ -238,7 +238,7 @@ verify = true
- 
+@@ -239,7 +239,7 @@ verify = true
  [limits]
- ## Maximum active transit sessions (default:2500)
--# transittunnels = 2500
+ ## Maximum active transit sessions (default: 5000)
+ ## This value is doubled if floodfill mode is enabled!
+-# transittunnels = 5000
 +transittunnels = 500
  ## Limit number of open file descriptors (0 - use system limit)
  # openfiles = 0

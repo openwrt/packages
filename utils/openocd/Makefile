@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openocd
-PKG_SOURCE_VERSION:=v0.11.0
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_SOURCE_VERSION:=v0.12.0
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://git.code.sf.net/p/openocd/code
-PKG_MIRROR_HASH:=ec31ce908d951c6c7e173c7474269f3f105d7a7b3991afbe8f54f8d96646c725
+PKG_MIRROR_HASH:=19085e31904d9a04a77dc79e02c441372498e680361e77fe9ffdb482c2ddb19c
 
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING
@@ -36,10 +36,10 @@ define Package/openocd
   TITLE:=OpenOCD Utility
   URL:=http://openocd.sf.net/
   DEPENDS:=+libusb-1.0 \
-	+libusb-compat \
 	+libftdi1 \
 	+hidapi \
-	+libgpiod
+	+libgpiod \
+	+libjaylink
 endef
 
 define Package/openocd/description
@@ -63,6 +63,7 @@ endef
 define Build/Prepare
 	$(call Build/Prepare/Default)
 	-$(RM) $(PKG_BUILD_DIR)/guess-rev.sh
+	-$(RM) $(PKG_BUILD_DIR)/jimtcl/configure.ac
 endef
 
 CONFIGURE_ARGS += \

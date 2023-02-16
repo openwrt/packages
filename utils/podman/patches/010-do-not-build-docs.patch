@@ -1,0 +1,20 @@
+--- a/Makefile
++++ b/Makefile
+@@ -200,7 +200,7 @@ GV_SHA=e943b1806d94d387c4c38d96719432d50
+ default: all
+ 
+ .PHONY: all
+-all: binaries docs
++all: binaries
+ 
+ .PHONY: binaries
+ ifeq ($(shell uname -s),FreeBSD)
+@@ -744,7 +744,7 @@ package-install: package  ## Install rpm
+ 	/usr/bin/podman info  # will catch a broken conmon
+ 
+ .PHONY: install
+-install: install.bin install.remote install.man install.systemd  ## Install binaries to system locations
++install: install.bin install.remote install.systemd  ## Install binaries to system locations
+ 
+ .PHONY: install.catatonit
+ install.catatonit:

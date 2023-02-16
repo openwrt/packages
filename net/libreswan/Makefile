@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libreswan
 PKG_VERSION:=4.9
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.libreswan.org/
@@ -84,9 +84,11 @@ MAKE_FLAGS+= \
     PREFIX="/usr" \
     FINALRUNDIR="/var/run/pluto" \
     FINALNSSDIR="/etc/ipsec.d" \
+    DEFAULT_DNSSEC_ROOTKEY_FILE=/etc/unbound/root.key \
     MODPROBEARGS="-q" \
     OSDEP=linux \
     BUILDENV=linux \
+    LINUX_VARIANT="openwrt" \
     ARCH="$(LINUX_KARCH)" \
 
 define Build/Prepare

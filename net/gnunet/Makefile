@@ -2,11 +2,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
 
-PKG_VERSION:=0.17.5
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=0.19.2
+PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/gnunet
-PKG_HASH:=8a744ff7a95d1e83215cce118050640f6c12261abe4c60a56bcf88e500f0023d
+PKG_HASH:=86034d92ebf8f6623dad95f1031ded1466e064b96ffac9d3e9d47229ac2c22ff
 
 PKG_LICENSE:=AGPL-3.0
 PKG_LICENSE_FILES:=COPYING
@@ -38,7 +38,7 @@ CONFIGURE_ARGS+= \
 	--with-gnutls=$(STAGING_DIR)/usr \
 	$(if $(CONFIG_PACKAGE_$(PKG_NAME)-transport-bluetooth),--with-bluetooth="$(STAGING_DIR)/usr",--without-bluetooth) \
 	--with-jose=$(STAGING_DIR)/usr \
-	--with-libgnurl=$(STAGING_DIR)/usr \
+	--with-libcurl=$(STAGING_DIR)/usr \
 	--with-ogg=$(STAGING_DIR)/usr \
 	--with-opus=$(STAGING_DIR)/usr \
 	--with-pabc=$(STAGING_DIR)/usr \
@@ -131,6 +131,13 @@ define BuildComponent
 		done \
 	fi )
 
+	( if [ "$(SQL_$(1))" ]; then \
+		$(INSTALL_DIR) $$(1)/usr/share/gnunet/sql && \
+		for sql in $(SQL_$(1)); do \
+		$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/gnunet/sql/$$$$$$$$sql.sql $$(1)/usr/share/gnunet/sql || exit 1; \
+		done \
+	fi )
+
 	( if [ -e ./files/gnunet-$(1).defaults ]; then \
 		$(INSTALL_DIR) $$(1)/etc/uci-defaults && \
 		$(INSTALL_BIN) ./files/gnunet-$(1).defaults $$(1)/etc/uci-defaults/gnunet-$(1) ; \
@@ -145,7 +152,7 @@ define Package/gnunet/install
 	$(INSTALL_DIR) $(1)/usr/share/gnunet/config.d $(1)/usr/share/gnunet/hellos
 
 	( for bin in arm ats cadet core config ecc identity nat nat-auto nat-server nse \
-	    peerinfo peerstore revocation scalarproduct scrypt statistics transport uri; do \
+	    peerinfo revocation scalarproduct scrypt statistics transport uri; do \
 		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gnunet-$$$$bin $(1)/usr/bin/ || exit 1; \
 	done )
 
@@ -217,7 +224,7 @@ CONF_conversation:=conversation
 BIN_dht-cli:=dht-get dht-hello dht-put dht-monitor
 PLUGIN_dht-cli:=block_test
 
-DEPENDS_curl:=+libgnurl +jansson
+DEPENDS_curl:=+libcurl-gnutls +jansson
 LIB_curl:=curl
 
 DEPENDS_hostlist:=+libmicrohttpd-ssl +gnunet-curl +ca-bundle
@@ -264,7 +271,7 @@ USERID_gns:=:gnunetdns=452
 BIN_gns:=gns namecache namestore resolver zoneimport
 LIB_gns:=gns gnsrecord namecache namestore
 PLUGIN_gns:=block_dns block_gns gnsrecord_conversation gnsrecord_dns gnsrecord_gns
-LIBEXEC_gns:=dns2gns helper-dns service-dns service-gns service-namecache service-namestore service-resolver service-zonemaster service-zonemaster-monitor
+LIBEXEC_gns:=dns2gns helper-dns service-dns service-gns service-namecache service-namestore service-resolver service-zonemaster
 CONF_gns:=dns gns namecache namestore resolver zonemaster
 FILE_MODES_gns:=/usr/lib/gnunet/libexec/gnunet-helper-dns:root:gnunetdns:4750 /usr/lib/gnunet/libexec/gnunet-service-dns:gnunet:gnunetdns:2750
 
@@ -307,9 +314,6 @@ CONF_rps:=rps
 PLUGIN_dhtcache-heap:=datacache_heap
 CONFLICTS_dhtcache-heap:=gnunet-dhtcache-pgsql gnunet-dhtcache-sqlite
 
-DEPENDS_gns-flat:=+gnunet-gns
-PLUGIN_gns-flat:=namecache_flat namestore_flat
-
 PLUGIN_peerstore-flat:=peerstore_flat
 
 DEPENDS_fs-heap:=+gnunet-datastore
@@ -326,26 +330,29 @@ CONFLICTS_fs-mysql:=gnunet-fs-pgsql gnunet-fs-sqlite
 
 DEPENDS_pgsql:=+libpq +pgsql-server
 LIB_pgsql:=pq
+SQL_pgsql:=versioning
 USERID_pgsql:=gnunet=958::postgres=5432
 
 DEPENDS_dhtcache-pgsql:=+gnunet-pgsql
 PLUGIN_dhtcache-pgsql:=datacache_postgres
 CONFLICTS_dhtcache-pgsql:=gnunet-dhtcache-sqlite
+SQL_dhtcache-pgsql:=datacache-0001 datacache-drop
 
 DEPENDS_fs-pgsql:=+gnunet-pgsql +gnunet-datastore
 PLUGIN_fs-pgsql:=datastore_postgres
 CONFLICTS_fs-pgsql:=gnunet-fs-sqlite
+SQL_fs-pgsql:=datastore-0001 datastore-drop
 
 DEPENDS_gns-pgsql:=+gnunet-pgsql +gnunet-gns
 PLUGIN_gns-pgsql:=namecache_postgres namestore_postgres
-CONFLICTS_gns-pgsql:=gnunet-gns-sqlite gnunet-gns-flat
+CONFLICTS_gns-pgsql:=gnunet-gns-sqlite
+SQL_gns-pgsql:=namecache-0001 namecache-drop namestore-0001 namestore-drop
 
 DEPENDS_sqlite:=+libsqlite3
 LIB_sqlite:=sq
 
 DEPENDS_gns-sqlite:=+gnunet-gns +gnunet-sqlite
 PLUGIN_gns-sqlite:=namecache_sqlite namestore_sqlite
-CONFLICTS_gns-sqlite:=gnunet-gns-flat
 
 DEPENDS_peerstore-sqlite:=+gnunet-sqlite
 PLUGIN_peerstore-sqlite:=peerstore_sqlite
@@ -430,7 +437,6 @@ $(eval $(call BuildComponent,rps,RPS routing component,y))
 $(eval $(call BuildComponent,namestore-fcfsd,first-come-first-serve registration server,))
 $(eval $(call BuildComponent,dhtcache-heap,heap-based dhtcache plugin,y))
 $(eval $(call BuildComponent,fs-heap,heap-based filesharing plugin,))
-$(eval $(call BuildComponent,gns-flat,flat storage GNS plugins,y))
 $(eval $(call BuildComponent,peerstore-flat,flat storage peerstore plugin,))
 $(eval $(call BuildComponent,mysql,mySQL backend,))
 $(eval $(call BuildComponent,fs-mysql,mySQL filesharing plugins,))

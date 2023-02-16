@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pigz
-PKG_VERSION:=2.4
+PKG_VERSION:=2.7
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://zlib.net/pigz/
-PKG_HASH:=a4f816222a7b4269bd232680590b579ccc72591f1bb5adafcd7208ca77e14f73
+PKG_SOURCE_URL:=https://zlib.net/pigz
+PKG_HASH:=b4c9e60344a08d5db37ca7ad00a5b2c76ccb9556354b722d56d55ca7e8b1c707
 
 PKG_MAINTAINER:=Ken Wong <xinxijishuwyq@gmail.com>
 PKG_LICENSE:=CUSTOM

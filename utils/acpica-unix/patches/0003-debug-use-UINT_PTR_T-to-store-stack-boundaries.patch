@@ -1,0 +1,85 @@
+From 2185f7d5d7a5650dbcb6a05e9de41f340cd3b865 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Thomas=20Wei=C3=9Fschuh?= <thomas@t-8ch.de>
+Date: Sat, 21 May 2022 12:17:58 +0200
+Subject: [PATCH 3/3] debug: use UINT_PTR_T to store stack boundaries
+
+GCC12 complains about storing invalid pointers, store them as integers
+instead.
+
+obj/acpiexec ../../../source/components/utilities/utdebug.c
+../../../source/components/utilities/utdebug.c: In function 'AcpiUtInitStackPtrTrace':
+../../../source/components/utilities/utdebug.c:188:31: error: storing the address of local variable 'CurrentSp' in 'AcpiGbl_EntryStackPointer' [-Werror=dangling-pointer=]
+  188 |     AcpiGbl_EntryStackPointer = &CurrentSp;
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+../../../source/components/utilities/utdebug.c:185:29: note: 'CurrentSp' declared here
+  185 |     ACPI_SIZE               CurrentSp;
+      |                             ^~~~~~~~~
+
+Fixes #771
+---
+ source/components/debugger/dbstats.c  | 4 ++--
+ source/components/utilities/utdebug.c | 6 +++---
+ source/components/utilities/utinit.c  | 2 +-
+ source/include/acglobal.h             | 4 ++--
+ 4 files changed, 8 insertions(+), 8 deletions(-)
+
+--- a/source/components/debugger/dbstats.c
++++ b/source/components/debugger/dbstats.c
+@@ -647,8 +647,8 @@ AcpiDbDisplayStatistics (
+             AcpiGbl_EntryStackPointer, AcpiGbl_LowestStackPointer);
+ 
+         AcpiOsPrintf ("\nSubsystem Stack Usage:\n\n");
+-        AcpiOsPrintf ("Entry Stack Pointer          %p\n", AcpiGbl_EntryStackPointer);
+-        AcpiOsPrintf ("Lowest Stack Pointer         %p\n", AcpiGbl_LowestStackPointer);
++        AcpiOsPrintf ("Entry Stack Pointer          %p\n", ACPI_TO_POINTER(AcpiGbl_EntryStackPointer));
++        AcpiOsPrintf ("Lowest Stack Pointer         %p\n", ACPI_TO_POINTER(AcpiGbl_LowestStackPointer));
+         AcpiOsPrintf ("Stack Use                    %X (%u)\n", Temp, Temp);
+         AcpiOsPrintf ("Deepest Procedure Nesting    %u\n", AcpiGbl_DeepestNesting);
+ #endif
+--- a/source/components/utilities/utdebug.c
++++ b/source/components/utilities/utdebug.c
+@@ -185,7 +185,7 @@ AcpiUtInitStackPtrTrace (
+     ACPI_SIZE               CurrentSp;
+ 
+ 
+-    AcpiGbl_EntryStackPointer = &CurrentSp;
++    AcpiGbl_EntryStackPointer = ACPI_TO_INTEGER(&CurrentSp);
+ }
+ 
+ 
+@@ -208,9 +208,9 @@ AcpiUtTrackStackPtr (
+     ACPI_SIZE               CurrentSp;
+ 
+ 
+-    if (&CurrentSp < AcpiGbl_LowestStackPointer)
++    if (ACPI_TO_INTEGER(&CurrentSp) < AcpiGbl_LowestStackPointer)
+     {
+-        AcpiGbl_LowestStackPointer = &CurrentSp;
++        AcpiGbl_LowestStackPointer = ACPI_TO_INTEGER(&CurrentSp);
+     }
+ 
+     if (AcpiGbl_NestingLevel > AcpiGbl_DeepestNesting)
+--- a/source/components/utilities/utinit.c
++++ b/source/components/utilities/utinit.c
+@@ -359,7 +359,7 @@ AcpiUtInitGlobals (
+ #endif
+ 
+ #ifdef ACPI_DEBUG_OUTPUT
+-    AcpiGbl_LowestStackPointer          = ACPI_CAST_PTR (ACPI_SIZE, ACPI_SIZE_MAX);
++    AcpiGbl_LowestStackPointer          = ACPI_SIZE_MAX;
+ #endif
+ 
+ #ifdef ACPI_DBG_TRACK_ALLOCATIONS
+--- a/source/include/acglobal.h
++++ b/source/include/acglobal.h
+@@ -332,8 +332,8 @@ extern const ACPI_PREDEFINED_NAMES
+ ACPI_GLOBAL (UINT32,                    AcpiGbl_CurrentNodeCount);
+ ACPI_GLOBAL (UINT32,                    AcpiGbl_CurrentNodeSize);
+ ACPI_GLOBAL (UINT32,                    AcpiGbl_MaxConcurrentNodeCount);
+-ACPI_GLOBAL (ACPI_SIZE *,               AcpiGbl_EntryStackPointer);
+-ACPI_GLOBAL (ACPI_SIZE *,               AcpiGbl_LowestStackPointer);
++ACPI_GLOBAL (ACPI_UINTPTR_T,            AcpiGbl_EntryStackPointer);
++ACPI_GLOBAL (ACPI_UINTPTR_T,            AcpiGbl_LowestStackPointer);
+ ACPI_GLOBAL (UINT32,                    AcpiGbl_DeepestNesting);
+ ACPI_INIT_GLOBAL (UINT32,               AcpiGbl_NestingLevel, 0);
+ #endif

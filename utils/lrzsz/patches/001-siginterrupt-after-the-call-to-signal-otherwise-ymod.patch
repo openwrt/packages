@@ -1,0 +1,22 @@
+From 89fef6d8dc539ed6225b46b8e755e08bbf48d27b Mon Sep 17 00:00:00 2001
+From: Uwe Ohse <uwe@ohse.de>
+Date: Sun, 1 Mar 2020 22:34:24 +0000
+Subject: [PATCH] siginterrupt after the call to signal, otherwise ymodem
+ transfer hangs. WTF?
+
+---
+ src/zreadline.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+--- a/src/zreadline.c
++++ b/src/zreadline.c
+@@ -71,6 +71,9 @@ readline_internal(unsigned int timeout)
+ 			vstringf("Calling read: alarm=%d  Readnum=%d ",
+ 			  n, readline_readnum);
+ 		signal(SIGALRM, zreadline_alarm_handler); 
++#ifdef HAVE_SIGINTERRUPT
++		siginterrupt(SIGALRM,1);
++#endif  
+ 		alarm(n);
+ 	}
+ 	else if (Verbose > 5)

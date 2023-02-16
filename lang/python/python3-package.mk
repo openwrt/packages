@@ -62,10 +62,11 @@ endef
 # $(3) => additional variables
 define Python3/ModSetup
 	$(INSTALL_DIR) $(PKG_INSTALL_DIR)/$(PYTHON3_PKG_DIR)
+	$(call SetupPyShim,$(PKG_BUILD_DIR)/$(strip $(1)))
 	$(call Python3/Run, \
 		$(PKG_BUILD_DIR)/$(strip $(1)), \
 		setup.py $(2), \
-		$(3))
+		$(3) PY_PKG_VERSION=$(PKG_VERSION))
 endef
 
 define Python3/FixShebang

@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=crowdsec-firewall-bouncer
-PKG_VERSION:=0.0.21
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=0.0.25
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/crowdsecurity/cs-firewall-bouncer/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=c92e02085c4c8481009a46ba80374329d102a45933fd0fd2164901954331923e
+PKG_HASH:=15ffaa38644215a4cf5e5d5d3a6fc6f0800057bc55d4bd25778d8e952679506e
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
@@ -47,8 +47,7 @@ endef
 
 define Package/crowdsec-firewall-bouncer
 $(call Package/crowdsec-firewall-bouncer/Default)
-  DEPENDS:=@(PACKAGE_iptables||PACKAGE_nftables) \
-	$(GO_ARCH_DEPENDS)
+  DEPENDS:=$(GO_ARCH_DEPENDS)
 endef
 
 define Package/golang-crowdsec-firewall-bouncer-dev
@@ -65,7 +64,7 @@ define Package/crowdsec-firewall-bouncer/Default/description
   crowdsec-firewall-bouncer will fetch new and old decisions
   from a CrowdSec API to add them in a blocklist used by supported firewalls.
 
-  You must install iptables+ipset or nftables.
+  You must install nftables.
 endef
 
 define Package/crowdsec-firewall-bouncer/description
@@ -83,29 +82,15 @@ endef
 define Package/crowdsec-firewall-bouncer/install
 	$(call GoPackage/Package/Install/Bin,$(1))
 
-	$(INSTALL_DIR) $(1)/etc/crowdsec/bouncers
-	$(INSTALL_DATA) \
-		$(GO_PKG_BUILD_DIR)/src/$(GO_PKG)/config/crowdsec-firewall-bouncer.yaml \
-		$(1)/etc/crowdsec/bouncers
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/crowdsec.config $(1)/etc/config/crowdsec
 
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) \
-		./files/crowdsec-firewall-bouncer.initd \
-		$(1)/etc/init.d/crowdsec-firewall-bouncer
-
-	$(INSTALL_DIR) $(1)/etc
-	$(INSTALL_BIN) \
-		./files/crowdsec-firewall-bouncer.firewall \
-		$(1)/etc/firewall.cs
-
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) \
-		./files/crowdsec-firewall-bouncer.defaults \
-		$(1)/etc/uci-defaults/99_crowdsec-firewall-bouncer
+	$(INSTALL_BIN) ./files/crowdsec-firewall-bouncer.initd $(1)/etc/init.d/crowdsec-firewall-bouncer
 endef
 
 define Package/crowdsec-firewall-bouncer/conffiles
-/etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
+/etc/config/crowdsec
 endef
 
 $(eval $(call GoBinPackage,crowdsec-firewall-bouncer))

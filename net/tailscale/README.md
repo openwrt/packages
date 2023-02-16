@@ -25,4 +25,9 @@ Run command and finish device registration with the given URL.
 tailscale up
 ```
 
+If you are running with nftables, it is not supported by tailscale,
+so disable it and configure firewall by yourself and add argument
+--netfilter-mode off
+to tailscale up command to disable iptables use.
+
 After that, you should see your router in tailscale admin page.

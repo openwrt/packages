@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=podman
-PKG_VERSION:=4.1.0
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=4.3.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/containers/podman/archive/v$(PKG_VERSION)
-PKG_HASH:=f814e12a7311d486c1ccdc4eb021bc6dd24499569de7a572e436342876f70e95
+PKG_HASH:=455c29c4ee78cd6365e5d46e20dd31a5ce4e6e1752db6774253d76bd3ca78813
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
@@ -15,9 +15,7 @@ PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
 PKG_BUILD_DEPENDS:=golang/host protobuf/host
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
-
-GO_PKG:=github.com/containers/podman/
-GO_PKG_BUILD_PKG:=github.com/containers/podman/v4/cmd/podman/
+PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
@@ -41,7 +39,7 @@ define Package/podman
   CATEGORY:=Utilities
   TITLE:=Podman
   URL:=https://podman.io
-  DEPENDS:=$(GO_ARCH_DEPENDS) +conmon +cni +cni-plugins +btrfs-progs +glib2 +gnupg2 +uci-firewall +libgpg-error +libseccomp +libgpgme +nsenter +zoneinfo-simple +kmod-veth +catatonit +PODMAN_SELINUX_SUPPORT:libselinux
+  DEPENDS:=$(GO_ARCH_DEPENDS) +conmon +cni +cni-plugins +btrfs-progs +glib2 +gnupg2 +uci-firewall +libgpg-error +libseccomp +libgpgme +nsenter +zoneinfo-simple +kmod-veth +PODMAN_SELINUX_SUPPORT:libselinux
 endef
 
 define Package/podman/description
@@ -82,6 +80,37 @@ else
   CNIFILE:=87-podman-bridge.conflist
 endif
 
+MAKE_VARS += \
+	GO_INSTALL_BIN_PATH="$(strip $(GO_PKG_INSTALL_BIN_PATH))" \
+	BUILD_DIR="$(PKG_BUILD_DIR)" \
+	GO_BUILD_DIR="$(GO_PKG_BUILD_DIR)" \
+	GO_BUILD_BIN_DIR="$(GO_PKG_BUILD_BIN_DIR)" \
+	GO_BUILD_DEPENDS_PATH="$(GO_PKG_BUILD_DEPENDS_PATH)" \
+	GO_BUILD_DEPENDS_SRC="$(GO_PKG_BUILD_DEPENDS_SRC)" \
+	GOOS="$(GO_OS)" \
+	GOARCH="$(GO_ARCH)" \
+	CC="$(TARGET_CC)" \
+	CXX="$(TARGET_CXX)" \
+	CGO_CFLAGS="$(filter-out $(GO_CFLAGS_TO_REMOVE),$(TARGET_CFLAGS))" \
+	CGO_CPPFLAGS="$(TARGET_CPPFLAGS)" \
+	CGO_CXXFLAGS="$(filter-out $(GO_CFLAGS_TO_REMOVE),$(TARGET_CXXFLAGS))" \
+	CGO_LDFLAGS="$(TARGET_LDFLAGS)" \
+	GOPATH="$(GO_PKG_BUILD_DIR)" \
+	GOCACHE="$(GO_BUILD_CACHE_DIR)" \
+	GOMODCACHE="$(GO_MOD_CACHE_DIR)" \
+	GOFLAGS="$(GO_PKG_GCFLAGS)" \
+	GO_PKG_CFLAGS="$(GO_PKG_CFLAGS)" \
+	CGO_ENABLED=1 \
+	GOENV=off \
+	PREFIX=/usr \
+	LIBEXECDIR=/usr/lib \
+	LIBEXECPODMAN=/usr/lib/podman \
+	SHAREDIR_CONTAINERS=/usr/share/containers \
+	ETCDIR=/etc \
+	TMPFILESDIR=/var/run/podman \
+	BUILDTAGS="$(GO_PKG_TAGS)" \
+	EXTRA_LDFLAGS="$(GO_PKG_LDFLAGS)"
+
 define Build/Prepare
 	$(call Build/Prepare/Default)
 	$(eval $(call Download,default-registries))
@@ -89,7 +118,9 @@ define Build/Prepare
 endef
 
 define Package/podman/install
-	$(call GoPackage/Package/Install/Bin,$(1))
+	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/lib/podman
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/{podman,podman-remote} $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/podman/rootlessport $(1)/usr/lib/podman/
 	$(INSTALL_DIR) $(1)/etc/containers
 	$(INSTALL_DATA) $(DL_DIR)/default-policy.json-362f70b056 $(1)/etc/containers/policy.json
 	$(INSTALL_DATA) $(DL_DIR)/registries.fedora-da9a9c8778 $(1)/etc/containers/registries.conf
@@ -104,5 +135,4 @@ define Package/podman/install
 	$(SED) 's/driver = \"\"/driver = \"overlay\"/g' $(1)/etc/containers/storage.conf
 endef
 
-$(eval $(call GoBinPackage,podman))
 $(eval $(call BuildPackage,podman))

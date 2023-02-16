@@ -8,17 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=stress
-PKG_VERSION:=1.0.4
-PKG_RELEASE:=2
+PKG_VERSION:=1.0.7
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://fossies.org/linux/privat
-PKG_HASH:=369c997f65e8426ae8b318d4fdc8e6f07a311cfa77cc4b25dace465c582163c0
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE_URL:=https://github.com/resurrecting-open-source-projects/stress/releases/download/${PKG_VERSION}/
+PKG_HASH:=e63adb57597e617c14ecb0d841b5d990460796d9e9ec69bd56fe645ef02eb239
 
-PKG_LICENSE:=GPL-2.0
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
+PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING
 
+PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -27,19 +30,12 @@ define Package/stress
   CATEGORY:=Utilities
   TITLE:=stress is a simple stress utility
   URL:=
-  MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 endef
 
 define Package/stress/description
 stress is a simple tool that imposes certain types of compute \ stress on
 UNIX-like operating systems.
 endef
-
-CONFIGURE_ARGS += \
-	--prefix="/usr"
-
-MAKE_FLAGS += \
-	CFLAGS="$(TARGET_CFLAGS)"
 
 define Package/stress/install
 	$(INSTALL_DIR) $(1)/usr/bin
