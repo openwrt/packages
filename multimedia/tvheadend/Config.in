@@ -48,6 +48,12 @@ choice
       Use more advanced Perl-Compatible Regular Expressions, provided by libpcre2.
 endchoice
 
+config TVHEADEND_URIPARSER
+  bool "Use liburiparser"
+  depends on PACKAGE_tvheadend
+  select PACKAGE_liburiparser
+  default n
+
 config TVHEADEND_IMAGECACHE
   bool "Image cache"
   depends on PACKAGE_tvheadend
