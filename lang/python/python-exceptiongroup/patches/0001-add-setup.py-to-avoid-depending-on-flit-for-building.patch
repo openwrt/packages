@@ -17,7 +17,7 @@ Subject: [PATCH] add setup.py to avoid depending on flit for building
 +
 +setuptools.setup(
 +      name='exceptiongroup',
-+      version='1.1.0',
++      version='1.1.1',
 +      description='Backport of PEP 654 (exception groups)',
 +      author='Alex Grönholm',
 +      author_email='Alex Grönholm <alex.gronholm@nextday.fi>',
