@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=onionshare-cli
 PKG_VERSION:=2.3.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=onionshare-cli
 PYPI_SOURCE_NAME:=onionshare_cli
@@ -19,7 +19,7 @@ PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=LICENSE
 
-HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=setuptools-scm toml
+PKG_BUILD_DEPENDS:=python-setuptools-scm/host
 
 include ../../lang/python/pypi.mk
 include $(INCLUDE_DIR)/package.mk

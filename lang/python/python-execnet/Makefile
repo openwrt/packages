@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-execnet
 PKG_VERSION:=1.8.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=execnet
 PKG_HASH:=b73c5565e517f24b62dea8a5ceac178c661c4309d3aa0c3e420856c072c411b4
@@ -18,7 +18,7 @@ PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
-HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=setuptools-scm
+PKG_BUILD_DEPENDS:=python-setuptools-scm/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
