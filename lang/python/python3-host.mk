@@ -98,12 +98,6 @@ HOST_PYTHON3_PIP_VARS:= \
 	PIP_CONFIG_FILE=/dev/null \
 	PIP_DISABLE_PIP_VERSION_CHECK=1
 
-define SetupPyShim
-	if [ -f $(1)/pyproject.toml ] && [ ! -f $(1)/setup.py ] ; then \
-		$(CP) $(python3_mk_path)setup.py.shim $(1)setup.py ; \
-	fi
-endef
-
 # Multiple concurrent pip processes can lead to errors or unexpected results: https://github.com/pypa/pip/issues/2361
 # $(1) => packages to install
 define HostPython3/PipInstall
