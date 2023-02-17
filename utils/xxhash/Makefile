@@ -12,7 +12,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xxhash
 PKG_VERSION:=0.8.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/Cyan4973/xxHash/archive/v$(PKG_VERSION)
@@ -24,7 +24,11 @@ PKG_LICENSE:=BSD-2-Clause,GPL-2.0-or-later
 PKG_LICENSE_FILES:=LICENSE,cli/COPYING
 PKG_MAINTAINER:=Julien Malik <julien.malik@paraiso.me>
 
+PKG_INSTALL:=1
+
 include $(INCLUDE_DIR)/package.mk
+
+PKG_UNPACK:=$(HOST_TAR) -C "$(PKG_BUILD_DIR)" --strip-components=1 -xzf "$(DL_DIR)/$(PKG_SOURCE)"
 
 define Package/xxhash/Default
   TITLE:=Extremely fast hash algorithm
@@ -64,29 +68,25 @@ define Package/xxhash/description
   This package contains the executables.
 endef
 
-define Build/Prepare
-	rm -rf $(PKG_BUILD_DIR)/
-	mkdir -p $(PKG_BUILD_DIR)/
-	$(TAR) -xzf $(DL_DIR)/$(PKG_SOURCE) -C $(PKG_BUILD_DIR) --strip 1
-endef
+MAKE_FLAGS += PREFIX=/usr
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) $(PKG_BUILD_DIR)/*.h $(1)/usr/include
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/*.h $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_BUILD_DIR)/libxxhash.so* $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libxxhash.{a,so*} $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(CP) $(PKG_BUILD_DIR)/libxxhash.pc.in $(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libxxhash.pc $(1)/usr/lib/pkgconfig/
 endef
 
 define Package/libxxhash/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_BUILD_DIR)/libxxhash.so.* $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libxxhash.so.* $(1)/usr/lib/
 endef
 
 define Package/xxhash/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/xxh*sum $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/xxh*sum $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,libxxhash))
