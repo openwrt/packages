@@ -30,7 +30,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | lightswitch05       |         | XL   | compilation      | [Link](https://github.com/lightswitch05/hosts)                                    |
 | notracking          |         | XL   | tracking         | [Link](https://github.com/notracking/hosts-blocklists)                            |
 | oisd_big            |         | XXL  | general          | [Link](https://oisd.nl)                                                           |
-| oisd_nsfw           |         | XL   | general          | [Link](https://oisd.nl)                                                           |
+| oisd_nsfw           |         | XXL  | porn             | [Link](https://oisd.nl)                                                           |
 | oisd_small          |         | L    | general          | [Link](https://oisd.nl)                                                           |
 | openphish           |         | S    | phishing         | [Link](https://openphish.com)                                                     |
 | phishing_army       |         | S    | phishing         | [Link](https://phishing.army)                                                     |
