@@ -133,21 +133,21 @@
 		"descurl": "https://github.com/notracking/hosts-blocklists"
 	},
 	"oisd_big": {
-		"url": "https://raw.githubusercontent.com/sjhgvr/oisd/main/dblw_big.txt",
+		"url": "https://big.oisd.nl/domainswild",
 		"rule": "BEGIN{FS=\"\\\\*.\"}/^\\*\\.([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
 		"size": "XXL",
 		"focus": "general",
 		"descurl": "https://oisd.nl"
 	},
 	"oisd_nsfw": {
-		"url": "https://raw.githubusercontent.com/sjhgvr/oisd/main/dblw_nsfw.txt",
+		"url": "https://nsfw.oisd.nl/domainswild",
 		"rule": "BEGIN{FS=\"\\\\*.\"}/^\\*\\.([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
-		"size": "XL",
-		"focus": "general",
+		"size": "XXL",
+		"focus": "porn",
 		"descurl": "https://oisd.nl"
 	},
 	"oisd_small": {
-		"url": "https://raw.githubusercontent.com/sjhgvr/oisd/main/dblw_small.txt",
+		"url": "https://small.oisd.nl/domainswild",
 		"rule": "BEGIN{FS=\"\\\\*.\"}/^\\*\\.([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
 		"size": "L",
 		"focus": "general",
