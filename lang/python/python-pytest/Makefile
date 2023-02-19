@@ -38,7 +38,8 @@ define Package/python3-pytest
 	+python3-pluggy \
 	+python3-packaging \
 	+python3-toml \
-	+python3-iniconfig
+	+python3-iniconfig \
+	@BROKEN
 endef
 
 define Package/python3-pytest/description
