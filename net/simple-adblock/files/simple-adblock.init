@@ -210,17 +210,17 @@ output() {
 load_network() {
 	local param="$1"
 	local i j wan_if wan_gw wan_proto
-	local counter wan_if_timeout='20' wan_gw_timeout='5'
+	local counter wan_if_timeout="$procd_boot_wan_timeout" wan_gw_timeout='5'
 	counter=0
 	while [ -z "$wan_if" ]; do
 		network_flush_cache
 		network_find_wan wan_if
 		if [ -n "$wan_if" ]; then
-			output "WAN Interface found: '${wan_if}'.\\n"
+			output "WAN interface found: '${wan_if}'.\\n"
 			break
 		fi
 		if [ "$counter" -gt "$wan_if_timeout" ]; then
-			output "WAN Interface timeout, assuming 'wan'.\\n"
+			output "WAN interface timeout, assuming 'wan'.\\n"
 			wan_if='wan'
 			break
 		fi
@@ -238,11 +238,11 @@ load_network() {
 		network_flush_cache
 		network_get_gateway wan_gw "$wan_if"
 		if [ -n "$wan_gw" ]; then
-			output "WAN Gateway found: '${wan_gw}.'\\n"
+			output "WAN gateway found: '${wan_gw}.'\\n"
 			return 0
 		fi
 		counter=$((counter+1))
-		output "Waiting to discover $wan_if Gateway...\\n"
+		output "Waiting to discover $wan_if gateway...\\n"
 		sleep 1
 	done
 	json add error "errorNoWanGateway"
@@ -1573,11 +1573,12 @@ load_validate_config() {
 	local canary_domains_mozilla
 	local config_update_enabled
 	local config_update_url
-	local boot_delay
 	local download_timeout
 	local curl_max_file_size
 	local curl_retry
 	local verbosity
+	local procd_trigger_wan6
+	local procd_boot_wan_timeout
 	local led
 	local dns
 	local dns_instance
@@ -1606,6 +1607,7 @@ load_validate_config() {
 		'curl_retry:range(0,30):3' \
 		'verbosity:range(0,2):2' \
 		'procd_trigger_wan6:bool:0' \
+		'procd_boot_wan_timeout:integer:60' \
 		'led:or("", "none", file, device, string)' \
 		'dns:or("dnsmasq.addnhosts", "dnsmasq.conf", "dnsmasq.ipset", "dnsmasq.nftset", "dnsmasq.servers", "unbound.adb_list"):dnsmasq.servers' \
 		'dns_instance:or(list(integer, string)):0' \
