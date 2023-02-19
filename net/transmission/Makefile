@@ -8,20 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=transmission
-PKG_VERSION:=3.00
-PKG_RELEASE:=19
+PKG_VERSION:=4.0.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=@GITHUB/transmission/transmission-releases/master
-PKG_HASH:=9144652fe742f7f7dd6657716e378da60b751aaeda8bef8344b3eefc4db255f2
+PKG_SOURCE_URL:=https://github.com/transmission/transmission/releases/download/$(PKG_VERSION)/
+PKG_HASH:=8fc5aef23638c983406f6a3ee9918369e4cdc84e3228bd2fb3d01dd55cdad900
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:transmissionbt:transmission
 
-PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_BUILD_DEPENDS:=libb64 node/host
 PKG_BUILD_PARALLEL:=1
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_LIBCURL_GNUTLS \
@@ -31,6 +31,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_LIBCURL_NOSSL
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/cmake.mk
 include $(INCLUDE_DIR)/package-seccomp.mk
 
 define Package/transmission/template
@@ -39,7 +40,10 @@ define Package/transmission/template
   CATEGORY:=Network
   TITLE:=BitTorrent client
   URL:=https://www.transmissionbt.com
-  DEPENDS:=+libcurl +libevent2 +libminiupnpc +libnatpmp +libpthread +librt +zlib +LIBCURL_NOSSL:libmbedtls +LIBCURL_GNUTLS:libmbedtls
+  DEPENDS:=+libatomic +libcurl +libdeflate +libdht +libevent2 \
+	   +libevent2-pthreads +libminiupnpc +libnatpmp +libpthread +libpsl \
+	   +librt +libutp +zlib +LIBCURL_NOSSL:libmbedtls \
+	   +LIBCURL_GNUTLS:libmbedtls
 endef
 
 define Package/transmission-daemon
@@ -87,23 +91,40 @@ define Package/transmission-daemon/conffiles
 /etc/config/transmission
 endef
 
-TARGET_CFLAGS += -ffunction-sections -fdata-sections -flto
+TARGET_CFLAGS += -ffunction-sections -fdata-sections -flto -DHAVE_SIZE_T -latomic
 TARGET_LDFLAGS += -Wl,--gc-sections -Wl,--as-needed
 
-CONFIGURE_ARGS += \
-	--enable-cli \
-	--enable-daemon \
-	--enable-external-natpmp \
-	--enable-largefile \
-	--enable-lightweight \
-	--without-gtk \
-	--without-kqueue \
-	--without-systemd-daemon \
-	$(if $(CONFIG_LIBCURL_NOSSL),--with-crypto=polarssl) \
-	$(if $(CONFIG_LIBCURL_GNUTLS),--with-crypto=polarssl) \
-	$(if $(CONFIG_LIBCURL_MBEDTLS),--with-crypto=polarssl) \
-	$(if $(CONFIG_LIBCURL_OPENSSL),--with-crypto=openssl) \
-	$(if $(CONFIG_LIBCURL_WOLFSSL),--with-crypto=cyassl)
+CMAKE_OPTIONS += \
+	-DENABLE_CLI:BOOL=YES \
+	-DENABLE_GTK:BOOL=NO \
+	-DENABLE_QT:BOOL=NO \
+	-DENABLE_MAC:BOOL=NO \
+	-DENABLE_TESTS:BOOL=NO \
+	-DENABLE_NLS:BOOL=NO \
+	-DENABLE_UTP:BOOL=YES \
+	-DRUN_CLANG_TIDY:BOOL=NO \
+	-DUSE_SYSTEM_EVENT2:BOOL=YES \
+	-DUSE_SYSTEM_DEFLATE:BOOL=YES \
+	-DUSE_SYSTEM_DHT:BOOL=YES \
+	-DUSE_SYSTEM_MINIUPNPC:BOOL=YES \
+	-DUSE_SYSTEM_NATPMP:BOOL=YES \
+	-DUSE_SYSTEM_UTP:BOOL=YES \
+	-DUSE_SYSTEM_B64:BOOL=YES \
+	-DUSE_SYSTEM_PSL:BOOL=YES \
+	-DWITH_INOTIFY:BOOL=YES \
+	-DWITH_KQUEUE:BOOL=NO \
+	-DWITH_SYSTEMD:BOOL=NO \
+	-DB64_INCLUDE_DIR=$(STAGING_DIR)/usr/include \
+	-DB64_LIBRARY=$(STAGING_DIR)/usr/lib/libb64.a \
+	-DDHT_INCLUDE_DIR=$(STAGING_DIR)/usr/include \
+	-DDHT_LIBRARY=$(STAGING_DIR)/usr/lib/libdht.so \
+	-DUTP_INCLUDE_DIR=$(STAGING_DIR)/usr/include \
+	-DUTP_LIBRARY=$(STAGING_DIR)/usr/lib/libutp.so \
+	$(if $(CONFIG_LIBCURL_NOSSL),-DWITH_CRYPTO=mbedtls) \
+	$(if $(CONFIG_LIBCURL_GNUTLS),-DWITH_CRYPTO=mbedtls) \
+	$(if $(CONFIG_LIBCURL_MBEDTLS),-DWITH_CRYPTO=mbedtls) \
+	$(if $(CONFIG_LIBCURL_OPENSSL),-DWITH_CRYPTO=openssl) \
+	$(if $(CONFIG_LIBCURL_WOLFSSL),-DWITH_CRYPTO=wolfssl)
 
 define Package/transmission-daemon/install
 	$(INSTALL_DIR) $(1)/usr/bin
@@ -133,7 +154,7 @@ endef
 
 define Package/transmission-web/install
 	$(INSTALL_DIR) $(1)/usr/share/transmission
-	$(CP) $(PKG_INSTALL_DIR)/usr/share/transmission/web $(1)/usr/share/transmission/
+	$(CP) $(PKG_INSTALL_DIR)/usr/share/transmission/public_html $(1)/usr/share/transmission/
 endef
 
 $(eval $(call BuildPackage,transmission-daemon))

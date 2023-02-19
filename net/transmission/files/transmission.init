@@ -170,7 +170,7 @@ transmission() {
 	procd_add_jail_mount_rw "$download_dir"
 	[ "$incomplete_dir_enabled" = "1" ] && procd_add_jail_mount_rw "$incomplete_dir"
 	[ "$watch_dir_enabled" = "1" ] && procd_add_jail_mount_rw "$watch_dir"
-	web_home="${web_home:-/usr/share/transmission/web}"
+	web_home="${web_home:-/usr/share/transmission/public_html}"
 	[ -d "$web_home" ] && procd_add_jail_mount "$web_home"
 	[ -f "$ca_bundle_file" ] && procd_add_jail_mount "$ca_bundle_file"
 	procd_close_instance
