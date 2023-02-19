@@ -409,7 +409,7 @@ load_environment() {
 		;;
 	esac
 
-	for i in "$outputFile" "$outputCache" "$outputGzip"; do
+	for i in "$jsonFile" "$outputFile" "$outputCache" "$outputGzip"; do
 		if ! mkdir -p "$(dirname "$i")"; then
 			if [ "$param" != 'quiet' ]; then
 				json add error "errorOutputDirCreate" "$i"
@@ -668,6 +668,7 @@ json() {
 	json_add_string reload "$reload"
 	json_add_string restart "$restart"
 	json_close_object
+	mkdir -p "$(dirname "$jsonFile")"
 	json_dump > "$jsonFile"
 	sync
 }
