@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=uacme
-PKG_VERSION:=1.7.3
-PKG_RELEASE:=3
+PKG_VERSION:=1.7.4
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ndilieto/uacme/tar.gz/upstream/$(PKG_VERSION)?
-PKG_HASH:=0ec8e5bcb8ed2b532572ca4878d30b2a794f607b995348ebc176d566b64d73f9
+PKG_HASH:=a638fe0878dba8fdda62f89e7a284243edbcd31b92c11b5cfdc7d3efd9547bca
 
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
