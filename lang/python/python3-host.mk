@@ -93,6 +93,11 @@ HOST_PYTHON3_PIP:=$(STAGING_DIR_HOSTPKG)/bin/pip$(PYTHON3_VERSION)
 
 HOST_PYTHON3_PIP_CACHE_DIR:=$(DL_DIR)/pip-cache
 
+HOST_PYTHON3_PIP_VARS:= \
+	PIP_CACHE_DIR="$(HOST_PYTHON3_PIP_CACHE_DIR)" \
+	PIP_CONFIG_FILE=/dev/null \
+	PIP_DISABLE_PIP_VERSION_CHECK=1
+
 define SetupPyShim
 	if [ -f $(1)/pyproject.toml ] && [ ! -f $(1)/setup.py ] ; then \
 		$(CP) $(python3_mk_path)setup.py.shim $(1)setup.py ; \
@@ -104,11 +109,11 @@ endef
 define HostPython3/PipInstall
 	$(call locked, \
 		$(HOST_PYTHON3_VARS) \
+		$(HOST_PYTHON3_PIP_VARS) \
 		$(HOST_PYTHON3_PIP) \
-			--cache-dir "$(HOST_PYTHON3_PIP_CACHE_DIR)" \
-			--disable-pip-version-check \
 			install \
 			--no-binary :all: \
+			--progress-bar off \
 			--require-hashes \
 			$(1) \
 		$(if $(CONFIG_PYTHON3_HOST_PIP_CACHE_WORLD_READABLE), \
