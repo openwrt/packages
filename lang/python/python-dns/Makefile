@@ -8,15 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-dns
-PKG_VERSION:=2.2.0
+PKG_VERSION:=2.3.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=dnspython
-PKG_HASH:=e79351e032d0b606b98d38a4b0e6e2275b31a5b85c873e587cc11b73aca026d6
+PKG_HASH:=224e32b03eb46be70e12ef6d64e0be123a64e621ab4c0822ff6d450d52a540b9
 
 PKG_LICENSE:=ISC
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
+
+PKG_BUILD_DEPENDS:=python-poetry-core/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
