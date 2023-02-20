@@ -1,6 +1,6 @@
 --- a/setup.cfg
 +++ b/setup.cfg
-@@ -104,6 +104,9 @@ mypy =
+@@ -107,6 +107,9 @@ mypy =
  
  [options.packages.find]
  where = src
@@ -10,7 +10,7 @@
  
  [options.entry_points]
  console_scripts = 
-@@ -123,6 +126,7 @@ console_scripts =
+@@ -126,6 +129,7 @@ console_scripts =
  	*.pxi
  	*.pyx
  	build.bat
