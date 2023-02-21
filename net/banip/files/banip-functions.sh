@@ -426,8 +426,8 @@ f_down() {
 	tmp_flush="${ban_tmpfile}.${feed}.flush"
 	tmp_nft="${ban_tmpfile}.${feed}.nft"
 
-	[ "${ban_loginput}" = "1" ] && nft_loginput="limit rate 2/second log level ${ban_loglevel} prefix \"banIP_drp/${feed}: \""
-	[ "${ban_logforward}" = "1" ] && nft_logforward="limit rate 2/second log level ${ban_loglevel} prefix \"banIP_rej/${feed}: \""
+	[ "${ban_loginput}" = "1" ] && nft_loginput="log level ${ban_loglevel} prefix \"banIP_drp/${feed}: \""
+	[ "${ban_logforward}" = "1" ] && nft_logforward="log level ${ban_loglevel} prefix \"banIP_rej/${feed}: \""
 
 	# set source block direction
 	#
