@@ -90,7 +90,7 @@ programs access to mail messages as they are being processed in order to
 filter meta-information and content.
 endef
 
-TARGET_CFLAGS += $(FPIC)
+TARGET_CFLAGS += $(FPIC) -DNETINET6 -DNEEDSGETIPNODE
 
 define Build/Prepare
 	$(Build/Prepare/Default)
