@@ -153,6 +153,7 @@ if [ -x "${ban_logreadcmd}" ] && [ -n "${ban_logterm%%??}" ]; then
 	#
 	"${ban_logreadcmd}" -fe "${ban_logterm%%??}" 2>/dev/null |
 		while read -r line; do
+			proto=""
 			# IPv4 log parsing
 			#
 			ip="$(printf "%s" "${line}" | "${ban_awkcmd}" 'BEGIN{RS="(([0-9]{1,3}\\.){3}[0-9]{1,3})+"}{if(!seen[RT]++)printf "%s ",RT}')"
@@ -168,15 +169,15 @@ if [ -x "${ban_logreadcmd}" ] && [ -n "${ban_logterm%%??}" ]; then
 				[ -n "${ip}" ] && proto="v6"
 			fi
 			if [ -n "${proto}" ] && ! "${ban_nftcmd}" get element inet banIP blocklist"${proto}" "{ ${ip} }" >/dev/null 2>&1; then
-				f_log "info" "suspicious IP found '${ip}'"
+				f_log "info" "suspicious IP${proto} found '${ip}'"
 				log_raw="$("${ban_logreadcmd}" -l "${ban_loglimit}" 2>/dev/null)"
 				log_count="$(printf "%s\n" "${log_raw}" | grep -c "found '${ip}'")"
 				if [ "${log_count}" -ge "${ban_logcount}" ]; then
 					if "${ban_nftcmd}" add element inet banIP "blocklist${proto}" "{ ${ip} ${nft_expiry} }" >/dev/null 2>&1; then
-						f_log "info" "added IP '${ip}' (${nft_expiry:-"-"}) to blocklist${proto} set"
+						f_log "info" "added IP${proto} '${ip}' (${nft_expiry:-"-"}) to blocklist${proto} set"
 						if [ "${ban_autoblocklist}" = "1" ] && ! grep -q "^${ip}" "${ban_blocklist}"; then
 							printf "%-42s%s\n" "${ip}" "# added on $(date "+%Y-%m-%d %H:%M:%S")" >>"${ban_blocklist}"
-							f_log "info" "added IP '${ip}' to local blocklist"
+							f_log "info" "added IP${proto} '${ip}' to local blocklist"
 						fi
 					fi
 				fi
