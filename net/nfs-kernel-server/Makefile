@@ -7,9 +7,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nfs-kernel-server
-PKG_VERSION:=2.5.4
-PKG_RELEASE:=5
-PKG_HASH:=546ce4b51eeebc66e354b6cc6ca0ce509437efbdef0caaf99389534eef0e598b
+PKG_VERSION:=2.6.2
+PKG_RELEASE:=1
+PKG_HASH:=26d46448982252e9e2c8346d10cf13e1143e7089c866f53e25db3359f3e9493c
 
 PKG_SOURCE_URL:=@SF/nfs
 PKG_SOURCE:=nfs-utils-$(PKG_VERSION).tar.xz
@@ -150,6 +150,9 @@ HOST_CONFIGURE_VARS += \
 	ac_cv_header_blkid_blkid_h=yes \
 	ac_cv_lib_resolv___res_querydomain=yes \
 	ac_cv_func_prctl=yes \
+	ac_cv_sizeof_size_t=0 \
+	ac_cv_func_getrpcbynumber=yes \
+	ac_cv_func_getrpcbynumber_r=yes \
 	enable_ipv6=no \
 	GSSGLUE_CFLAGS=" " \
 	GSSGLUE_LIBS=" " \

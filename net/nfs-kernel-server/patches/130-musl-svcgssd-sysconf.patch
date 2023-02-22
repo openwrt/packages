@@ -1,0 +1,144 @@
+--- a/support/nfsidmap/libnfsidmap.c
++++ b/support/nfsidmap/libnfsidmap.c
+@@ -452,11 +452,17 @@ int nfs4_init_name_mapping(char *conffil
+ 
+ 	nobody_user = conf_get_str("Mapping", "Nobody-User");
+ 	if (nobody_user) {
+-		size_t buflen = sysconf(_SC_GETPW_R_SIZE_MAX);
++		long scbuflen = sysconf(_SC_GETPW_R_SIZE_MAX);
++		size_t buflen = 1024; /*value on my gentoo glibc system that has _SC_GETPW_R_SIZE_MAX*/
+ 		struct passwd *buf;
+ 		struct passwd *pw = NULL;
+ 		int err;
+ 
++		/*sysconf can return -1 when _SC_GETPW_R_SIZE_MAX is not defined, like on musl systems, if cast to size_t this will lead
++		  to an integer overflow, which leads to a buffer overflow and crashes svcgssd */
++		if (scbuflen > 0)
++			buflen = (size_t)scbuflen;
++
+ 		buf = malloc(sizeof(*buf) + buflen);
+ 		if (buf) {
+ 			err = getpwnam_r(nobody_user, buf, ((char *)buf) + sizeof(*buf), buflen, &pw);
+@@ -473,11 +479,17 @@ int nfs4_init_name_mapping(char *conffil
+ 
+ 	nobody_group = conf_get_str("Mapping", "Nobody-Group");
+ 	if (nobody_group) {
+-		size_t buflen = sysconf(_SC_GETGR_R_SIZE_MAX);
++		long scbuflen = sysconf(_SC_GETGR_R_SIZE_MAX);
++		size_t buflen = 1024; /*value on my gentoo glibc system that has _SC_GETGR_R_SIZE_MAX*/
+ 		struct group *buf;
+ 		struct group *gr = NULL;
+ 		int err;
+ 
++		/*sysconf can return -1 when _SC_GETGR_R_SIZE_MAX is not defined, like on musl systems, if cast to size_t this will lead
++		  to an integer overflow, which leads to a buffer overflow and crashes svcgssd */
++		if (scbuflen > 0)
++			buflen = (size_t)scbuflen;
++
+ 		buf = malloc(sizeof(*buf) + buflen);
+ 		if (buf) {
+ 			err = getgrnam_r(nobody_group, buf, ((char *)buf) + sizeof(*buf), buflen, &gr);
+--- a/support/nfsidmap/static.c
++++ b/support/nfsidmap/static.c
+@@ -98,10 +98,14 @@ static struct passwd *static_getpwnam(co
+ {
+ 	struct passwd *pw;
+ 	struct pwbuf *buf;
+-	size_t buflen = sysconf(_SC_GETPW_R_SIZE_MAX);
++	long scbuflen = sysconf(_SC_GETPW_R_SIZE_MAX);
++	size_t buflen = 1024;
+ 	char *localname;
+ 	int err;
+ 
++	if (scbuflen > 0)
++		buflen = (size_t)scbuflen;
++
+ 	buf = malloc(sizeof(*buf) + buflen);
+ 	if (!buf) {
+ 		err = ENOMEM;
+@@ -149,10 +153,14 @@ static struct group *static_getgrnam(con
+ {
+ 	struct group *gr;
+ 	struct grbuf *buf;
+-	size_t buflen = sysconf(_SC_GETGR_R_SIZE_MAX);
++	long scbuflen = sysconf(_SC_GETGR_R_SIZE_MAX);
++	size_t buflen = 1024;
+ 	char *localgroup;
+ 	int err;
+ 
++	if (scbuflen > 0)
++		buflen = (size_t)scbuflen;
++
+ 	buf = malloc(sizeof(*buf) + buflen);
+ 	if (!buf) {
+ 		err = ENOMEM;
+--- a/support/nfsidmap/nss.c
++++ b/support/nfsidmap/nss.c
+@@ -91,9 +91,13 @@ static int nss_uid_to_name(uid_t uid, ch
+ 	struct passwd *pw = NULL;
+ 	struct passwd pwbuf;
+ 	char *buf;
+-	size_t buflen = sysconf(_SC_GETPW_R_SIZE_MAX);
++	long scbuflen = sysconf(_SC_GETPW_R_SIZE_MAX);
++	size_t buflen = 1024;
+ 	int err = -ENOMEM;
+ 
++	if (scbuflen > 0)
++		buflen = (size_t)scbuflen;
++
+ 	buf = malloc(buflen);
+ 	if (!buf)
+ 		goto out;
+@@ -119,9 +123,13 @@ static int nss_gid_to_name(gid_t gid, ch
+ 	struct group *gr = NULL;
+ 	struct group grbuf;
+ 	char *buf;
+-	size_t buflen = sysconf(_SC_GETGR_R_SIZE_MAX);
++	long scbuflen = sysconf(_SC_GETGR_R_SIZE_MAX);
++	size_t buflen = 1024;
+ 	int err;
+ 
++	if (scbuflen > 0)
++		buflen = (size_t)scbuflen;
++
+ 	if (domain == NULL)
+ 		domain = get_default_domain();
+ 
+@@ -192,12 +200,13 @@ static struct passwd *nss_getpwnam(const
+ {
+ 	struct passwd *pw;
+ 	struct pwbuf *buf;
+-	size_t buflen = sysconf(_SC_GETPW_R_SIZE_MAX);
++	long scbuflen = sysconf(_SC_GETPW_R_SIZE_MAX);
++	size_t buflen = 1024;
+ 	char *localname;
+ 	int err = ENOMEM;
+ 
+-	if (buflen > UINT_MAX)
+-		goto err;
++	if (scbuflen > 0)
++		buflen = (size_t)scbuflen;
+ 
+ 	buf = malloc(sizeof(*buf) + buflen);
+ 	if (buf == NULL)
+@@ -301,7 +310,8 @@ static int _nss_name_to_gid(char *name,
+ 	struct group *gr = NULL;
+ 	struct group grbuf;
+ 	char *buf, *domain;
+-	size_t buflen = sysconf(_SC_GETGR_R_SIZE_MAX);
++	long scbuflen = sysconf(_SC_GETGR_R_SIZE_MAX);
++	size_t buflen = 1024;
+ 	int err = -EINVAL;
+ 	char *localname = NULL;
+ 	char *ref_name = NULL;
+@@ -327,8 +337,8 @@ static int _nss_name_to_gid(char *name,
+ 	}
+ 
+ 	err = -ENOMEM;
+-	if (buflen > UINT_MAX)
+-		goto out_name;
++	if (scbuflen > 0)
++		buflen = (size_t)scbuflen;
+ 
+ 	do {
+ 		buf = malloc(buflen);
