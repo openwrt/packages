@@ -127,6 +127,11 @@ append_bootstrap() {
 	[ "$ipv6_resolvers_only" -eq 0 ] && xappend '-4'
 }
 
+boot() {
+	ubus -t 30 wait_for network.interface 2>/dev/null
+	rc_procd start_service 'on_boot'
+}
+
 start_instance() {
 	local cfg="$1" param listen_addr listen_port ipv6_resolvers_only p url
 
