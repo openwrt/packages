@@ -1,18 +1,13 @@
 --- a/deps/zlib/zlib.gyp
 +++ b/deps/zlib/zlib.gyp
-@@ -43,10 +43,12 @@
-             'zutil.c',
-             'zutil.h',
-           ],
-+          'include_dirs!': [ '<!@(echo "$STAGING_DIR"/usr/include)' ],
-           'include_dirs': [
-             '.',
-           ],
-           'direct_dependent_settings': {
-+            'include_dirs!': [ '<!@(echo "$STAGING_DIR"/usr/include)' ],
-             'include_dirs': [
-               '.',
-             ],
+@@ -9,6 +9,7 @@
+     'arm_fpu%': '',
+     'llvm_version%': '0.0',
+   },
++  'include_dirs!': [ '<!@(echo "$STAGING_DIR"/usr/include)' ],
+   'conditions': [
+     ['use_system_zlib==0', {
+       'targets': [
 --- a/tools/v8_gypfiles/v8.gyp
 +++ b/tools/v8_gypfiles/v8.gyp
 @@ -60,6 +60,7 @@
@@ -51,7 +46,7 @@
        ],
        'sources': [
          '<!@pymod_do_main(GN-scraper "<(V8_ROOT)/BUILD.gn"  "\\"v8_initializers.*?sources = ")',
-@@ -754,6 +759,7 @@
+@@ -769,6 +774,7 @@
        ],
        'includes': ['inspector.gypi'],
        'direct_dependent_settings': {
@@ -59,7 +54,7 @@
          'include_dirs': [
            '<(generate_bytecode_output_root)',
            '<(SHARED_INTERMEDIATE_DIR)',
-@@ -1353,6 +1359,7 @@
+@@ -1377,6 +1383,7 @@
          }],
        ],
        'direct_dependent_settings': {
@@ -67,7 +62,7 @@
          'include_dirs': [
            '<(V8_ROOT)/include',
          ],
-@@ -1701,6 +1708,7 @@
+@@ -1729,6 +1736,7 @@
           }],
        ],
        'direct_dependent_settings': {
@@ -75,7 +70,7 @@
          'include_dirs': [
            '<(V8_ROOT)/include',
          ],
-@@ -1881,15 +1889,19 @@
+@@ -1909,15 +1917,19 @@
          }],
        ],
        'direct_dependent_settings': {
