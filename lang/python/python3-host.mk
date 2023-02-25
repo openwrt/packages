@@ -118,14 +118,3 @@ define HostPython3/PipInstall
 		pip \
 	)
 endef
-
-# $(1) => build subdir
-# $(2) => additional arguments to setup.py
-# $(3) => additional variables
-define HostPython3/ModSetup
-	$(call SetupPyShim,$(HOST_BUILD_DIR)/$(strip $(1)))
-	$(call HostPython3/Run, \
-		$(HOST_BUILD_DIR)/$(strip $(1)), \
-		setup.py $(2), \
-		$(3) PY_PKG_VERSION=$(PKG_VERSION))
-endef
