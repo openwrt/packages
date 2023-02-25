@@ -311,11 +311,9 @@ CONFIGURE_ARGS +=			\
 	--enable-vhost-crypto		\
 	--enable-vhost-kernel		\
 	--enable-vhost-net		\
-	--enable-vhost-scsi		\
 	--enable-vhost-user		\
-	--enable-vhost-user-fs		\
 	--enable-vhost-user-blk-server	\
-	--enable-vhost-vsock		\
+	--enable-vduse-blk-export	\
 	--enable-vhost-vdpa		\
 
 # Image formats support
