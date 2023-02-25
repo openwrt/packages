@@ -192,8 +192,8 @@ define qemu-target
     URL:=http://www.qemu.org
     DEPENDS:= +glib2 +libpthread +zlib +libbpf $(QEMU_DEPS_IN_HOST) $(qemu-target-$(1)-deps) \
 	+QEMU_UI_VNC:qemu-keymaps \
+	+QEMU_UI_VNC:libpng \
 	+QEMU_UI_VNC_JPEG:libjpeg \
-	+QEMU_UI_VNC_PNG:libpng \
 	+QEMU_UI_VNC_SASL:libsasl2 \
 	+QEMU_UI_SPICE:libspice-server \
 	+QEMU_DEV_USB:libusb-1.0 \
@@ -246,11 +246,6 @@ config QEMU_UI_VNC_JPEG
 	default n
 	depends on QEMU_UI_VNC
 
-config QEMU_UI_VNC_PNG
-	bool "QEMU VNC png tight encoding support"
-	default n
-	depends on QEMU_UI_VNC
-
 config QEMU_UI_VNC_SASL
 	bool "QEMU VNC SASL auth support"
 	default n
@@ -276,7 +271,6 @@ endef
 PKG_CONFIG_DEPENDS += \
 	CONFIG_QEMU_UI_VNC \
 	CONFIG_QEMU_UI_VNC_JPEG \
-	CONFIG_QEMU_UI_VNC_PNG \
 	CONFIG_QEMU_UI_VNC_SASL \
 	CONFIG_QEMU_UI_SPICE \
 	CONFIG_QEMU_DEV_USB \
@@ -333,7 +327,6 @@ CONFIGURE_ARGS +=			\
 	--disable-bsd-user		\
 	--disable-linux-user		\
 	--enable-system			\
-	--enable-slirp=system		\
 
 # accel
 CONFIGURE_ARGS +=			\
@@ -354,7 +347,6 @@ CONFIGURE_ARGS +=			\
 	--disable-virglrenderer		\
 	--$(if $(CONFIG_QEMU_UI_VNC),enable,disable)-vnc			\
 	--$(if $(CONFIG_QEMU_UI_VNC_JPEG),enable,disable)-vnc-jpeg		\
-	--$(if $(CONFIG_QEMU_UI_VNC_PNG),enable,disable)-vnc-png		\
 	--$(if $(CONFIG_QEMU_UI_VNC_SASL),enable,disable)-vnc-sasl		\
 	--disable-vte			\
 	--enable-curses			\
