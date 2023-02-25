@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pynacl
 PKG_VERSION:=1.5.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=PyNaCl
 PKG_HASH:=8ac7448f09ab85811607bdd21ec2464495ac8b7c66d146bf545b0f08fb9220ba
@@ -11,9 +11,7 @@ PKG_MAINTAINER:=Javier Marcet <javier@marcet.info>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_DEPENDS:=libffi/host
-
-HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=cffi  # cffi>=1.4.1
+PKG_BUILD_DEPENDS:=libffi/host python-cffi/host  # cffi>=1.4.1
 
 PYTHON3_PKG_SETUP_VARS:= SODIUM_INSTALL=system
 

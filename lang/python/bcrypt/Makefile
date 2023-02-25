@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bcrypt
 PKG_VERSION:=3.1.7
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=0b0069c752ec14172c5f78208f1863d7ad6755a6fae6fe76ec2c80d13be41e42
@@ -15,8 +15,7 @@ PKG_HASH:=0b0069c752ec14172c5f78208f1863d7ad6755a6fae6fe76ec2c80d13be41e42
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_DEPENDS:=libffi/host
-HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=cffi  # cffi>=1.1
+PKG_BUILD_DEPENDS:=libffi/host python-cffi/host  # cffi>=1.1
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
