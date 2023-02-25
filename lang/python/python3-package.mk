@@ -206,10 +206,13 @@ endef
 
 ifneq ($(strip $(PYPI_NAME)),)
 define Py3Build/CheckHostPipVersionMatch
-	if grep -q "$(PYPI_NAME)==" $(python3_mk_path)host-pip-requirements/*.txt ; then \
-		if ! grep -q "$(PYPI_NAME)==$(PKG_VERSION)" $(python3_mk_path)host-pip-requirements/*.txt ; then \
-			printf "\nPlease update version of $(PYPI_NAME) to $(PKG_VERSION) in 'host-pip-requirements'/\n\n" ; \
-			exit 1 ; \
+	if [ -d "$(python3_mk_path)host-pip-requirements" ] && \
+			[ -n "$$$$($(FIND) $(python3_mk_path)host-pip-requirements -maxdepth 1 -mindepth 1 -name '*.txt' -print -quit 2>/dev/null)" ]; then \
+		if grep -q "$(PYPI_NAME)==" $(python3_mk_path)host-pip-requirements/*.txt ; then \
+			if ! grep -q "$(PYPI_NAME)==$(PKG_VERSION)" $(python3_mk_path)host-pip-requirements/*.txt ; then \
+				printf "\nPlease update version of $(PYPI_NAME) to $(PKG_VERSION) in 'host-pip-requirements'/\n\n" ; \
+				exit 1 ; \
+			fi \
 		fi \
 	fi
 endef
