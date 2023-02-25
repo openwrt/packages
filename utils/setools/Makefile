@@ -7,14 +7,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=setools
 PKG_VERSION:=4.4.0
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://github.com/SELinuxProject/setools/releases/download/$(PKG_VERSION)
 PKG_HASH:=f3786677e40b7f16a226f48f233dcf835e700739614a7dbed2ff61cc9607814e
 PKG_BUILD_DIR:=$(BUILD_DIR)/setools
 
-HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=Cython # Cython>=0.27
+PKG_BUILD_DEPENDS:=python-cython/host # Cython>=0.27
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=GPL-2.0-or-later LGPL-2.1-or-later
