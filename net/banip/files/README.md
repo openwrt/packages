@@ -7,7 +7,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 
 ## Main Features
 * banIP supports the following fully pre-configured domain blocklist feeds (free for private usage, for commercial use please check their individual licenses).  
-  **Please note:** the columns "WAN-INP", "WAN-FWD" and "LAN_FWD" show for which chains the feeds are suitable in common scenarios, e.g. the first entry should be limited to the LAN forward chain - see the config options 'ban\_blockinput', 'ban\_blockforwardwan' and 'ban\_blockforwardlan' below.  
+  **Please note:** the columns "WAN-INP", "WAN-FWD" and "LAN-FWD" show for which chains the feeds are suitable in common scenarios, e.g. the first entry should be limited to the LAN forward chain - see the config options 'ban\_blockinput', 'ban\_blockforwardwan' and 'ban\_blockforwardlan' below.  
 
 | Feed                | Focus                          | WAN-INP | WAN-FWD | LAN-FWD | Information                                                   |
 | :------------------ | :----------------------------- | :-----: | :-----: | :-----: | :-----------------------------------------------------------  |
@@ -36,6 +36,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 | iblockspy           | Malicious spyware IPs          |    x    |    x    |    x    | [Link](https://www.iblocklist.com)                            |
 | myip                | real-time IP blocklist         |    x    |    x    |         | [Link](https://myip.ms)                                       |
 | nixspam             | iX spam protection             |    x    |    x    |         | [Link](http://www.nixspam.org)                                |
+| oisdbig             | OISD-big IPs                   |         |         |    x    | [Link](https://github.com/dibdot/banIP-IP-blocklists)         |
 | oisdnsfw            | OISD-nsfw IPs                  |         |         |    x    | [Link](https://github.com/dibdot/banIP-IP-blocklists)         |
 | oisdsmall           | OISD-small IPs                 |         |         |    x    | [Link](https://github.com/dibdot/banIP-IP-blocklists)         |
 | proxy               | open proxies                   |    x    |         |         | [Link](https://iplists.firehol.org/?ipset=proxylists)         |
@@ -64,10 +65,11 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * provides a small background log monitor to ban unsuccessful login attempts in real-time
 * auto-add unsuccessful LuCI, nginx, Asterisk or ssh login attempts to the local blocklist
 * fast feed processing as they are handled in parallel as background jobs
-* per feed it can be defined whether the input chain or the forward chain should be blocked (default: both chains)
+* per feed it can be defined whether the wan-input chain, the wan-forward chain or the lan-forward chain should be blocked (default: all chains)
 * automatic blocklist backup & restore, the backups will be used in case of download errors or during startup
 * automatically selects one of the following download utilities with ssl support: aria2c, curl, uclient-fetch or wget
-* supports a 'allowlist only' mode, this option restricts internet access from/to a small number of secure websites/IPs
+* supports an 'allowlist only' mode, this option restricts internet access from/to a small number of secure websites/IPs
+* deduplicate IPs accross all sets (single IPs only, no intervals)
 * provides comprehensive runtime information
 * provides a detailed set report
 * provides a set search engine for certain IPs
@@ -85,13 +87,12 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 
 **Please note the following:**
 * Devices with less than 256Mb of RAM are **_not_** supported
-* Any previous installation of banIP must be uninstalled, and the /etc/banip folder and the /etc/config/banip configuration file must be deleted (they are recreated when this version is installed)
-* There is no LuCI frontend at this time
+* Any previous installation of ancient banIP 0.7.x must be uninstalled, and the /etc/banip folder and the /etc/config/banip configuration file must be deleted (they are recreated when this version is installed)
 
 ## Installation & Usage
 * update your local opkg repository (_opkg update_)
 * install banIP (_opkg install banip_) - the banIP service is disabled by default
-* edit the config file '/etc/config/banip' and enable the service (set ban\_enabled to '1'), then add pre-configured feeds via 'ban\_feed' (see the config options below)
+* edit the config file '/etc/config/banip' and enable the service (set ban\_enabled to '1'), then add pre-configured feeds via 'ban\_feed' (see the feed list above) and add/change other options to your needs (see the options reference below)
 * start the service with '/etc/init.d/banip start' and check check everything is working by running '/etc/init.d/banip status'
 
 ## banIP CLI interface
@@ -162,7 +163,6 @@ Available commands:
 | ban_mailtopic           | option | banIP notification            | topic for banIP related notification E-Mails                                          |
 | ban_mailprofile         | option | ban_notify                    | mail profile used in 'msmtp' for banIP related notification E-Mails                   |
 | ban_resolver            | option | -                             | external resolver used for DNS lookups                                                |
-| ban_feedarchive         | option | /etc/banip/banip.feeds.gz     | full path to the compressed feed archive file used by banIP                           |
 
 ## Examples
 **banIP report information**  
@@ -217,7 +217,7 @@ Available commands:
 ~# /etc/init.d/banip status
 ::: banIP runtime information
   + status            : active
-  + version           : 0.8.1-1
+  + version           : 0.8.1-2
   + element_count     : 206644
   + active_feeds      : allowlistvMAC, allowlistv4, allowlistv6, torv4, torv6, countryv6, countryv4, dohv4, dohv6, firehol1v4, deblv4, deblv6,
                          adguardv6, adguardv4, adguardtrackersv6, adguardtrackersv4, adawayv6, adawayv4, oisdsmallv6, oisdsmallv4, stevenblack
@@ -225,8 +225,7 @@ Available commands:
   + active_devices    : eth2
   + active_interfaces : wan, wan6
   + active_subnets    : 91.61.199.218/24, 2a02:910c:0:80:e542:4b0c:846d:1d33/128
-  + run_info          : base_dir: /tmp, backup_dir: /mnt/data/banIP-backup, report_dir: /mnt/data/banIP-report, feed_archive: /etc/banip/banip
-                        .feeds.gz
+  + run_info          : base_dir: /tmp, backup_dir: /mnt/data/banIP-backup, report_dir: /mnt/data/banIP-report, feed_file: /etc/banip/banip.feeds
   + run_flags         : proto (4/6): ✔/✔, log (wan-inp/wan-fwd/lan-fwd): ✔/✔/✔, deduplicate: ✔, split: ✘, allowed only: ✘
   + last_run          : action: restart, duration: 1m 6s, date: 2023-02-25 08:55:55
   + system_info       : cores: 2, memory: 1826, device: Turris Omnia, OpenWrt SNAPSHOT r22125-52ddb38469
@@ -293,9 +292,8 @@ password        <password>
 ```
 Finally add a valid E-Mail receiver address.
 
-**add new banIP feeds**  
-The banIP blocklist feeds are stored in an external, compressed JSON file '/etc/banip/banip.feeds.gz'.  
-To add a new or edit an existing feed extract the compressed JSON file _gunzip /etc/banip/banip.feeds.gz_.
+**change existing banIP feeds or add a new one**  
+The banIP blocklist feeds are stored in an external JSON file '/etc/banip/banip.feeds'.  
 A valid JSON source object contains the following required information, e.g.:
 ```
 	[...]
@@ -309,15 +307,15 @@ A valid JSON source object contains the following required information, e.g.:
 	},
 	[...]
 ```
-Add an unique object name, make the required changes and compress the changed JSON file finally with _gzip /etc/banip/banip.feeds_ to use the new feed file in banIP.  
-**Please note:** if you're going to add new feeds, **always** work with a copy of the default file; this file is always overwritten with every banIP update. To reference your own file set the option 'ban\_feedarchive' accordingly
+Add an unique object name (no spaces, no special chars) and make the required changes: adapt at least the URL the regex to the new feed.  
+**Please note:** if you're going to add new feeds, **always** make a backup of your work, cause this file is always overwritten with the maintainers version on every banIP update.  
 
 ## Support
 Please join the banIP discussion in this [forum thread](https://forum.openwrt.org/t/banip-support-thread/16985) or contact me by mail <dev@brenken.org>
 
 ## Removal
 * stop all banIP related services with _/etc/init.d/banip stop_
-* optional: remove the banip package (_opkg remove banip_)
+* remove the banip package (_opkg remove banip_)
 
 Have fun!  
 Dirk

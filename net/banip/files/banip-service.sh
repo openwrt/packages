@@ -59,7 +59,7 @@ if [ "${ban_allowlistonly}" = "1" ]; then
 	ban_feed=""
 else
 	json_init
-	if ! json_load_file "${ban_basedir}/ban_feeds.json" >/dev/null 2>&1; then
+	if ! json_load_file "${ban_feedfile}" >/dev/null 2>&1; then
 		f_log "err" "banIP feed file can't be loaded"
 	fi
 	[ "${ban_deduplicate}" = "1" ] && printf "\n" >"${ban_tmpfile}.deduplicate"

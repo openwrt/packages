@@ -13,7 +13,7 @@ export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 ban_basedir="/tmp"
 ban_backupdir="${ban_basedir}/banIP-backup"
 ban_reportdir="${ban_basedir}/banIP-report"
-ban_feedarchive="/etc/banip/banip.feeds.gz"
+ban_feedfile="/etc/banip/banip.feeds"
 ban_pidfile="/var/run/banip.pid"
 ban_lock="/var/run/banip.lock"
 ban_blocklist="/etc/banip/banip.blocklist"
@@ -873,7 +873,7 @@ f_genstatus() {
 		done
 	fi
 	json_close_array
-	json_add_string "run_info" "base_dir: ${ban_basedir}, backup_dir: ${ban_backupdir}, report_dir: ${ban_reportdir}, feed_archive: ${ban_feedarchive}"
+	json_add_string "run_info" "base: ${ban_basedir}, backup: ${ban_backupdir}, report: ${ban_reportdir}, feed: ${ban_feedfile}"
 	json_add_string "run_flags" "protocol (4/6): $(f_char ${ban_protov4})/$(f_char ${ban_protov6}), log (wan-inp/wan-fwd/lan-fwd): $(f_char ${ban_loginput})/$(f_char ${ban_logforwardwan})/$(f_char ${ban_logforwardlan}), deduplicate: $(f_char ${ban_deduplicate}), split: $(f_char ${split}), allowed only: $(f_char ${ban_allowlistonly})"
 	json_add_string "last_run" "${runtime:-"-"}"
 	json_add_string "system_info" "cores: ${ban_cores}, memory: ${ban_memory}, device: ${ban_sysver}"
@@ -1203,7 +1203,7 @@ if [ "${ban_action}" != "stop" ]; then
 		f_log "err" "system libraries not found"
 	fi
 	[ ! -d "/etc/banip" ] && f_log "err" "banIP config directory not found, please re-install the package"
+	[ ! -r "/etc/banip/banip.feeds" ] && f_log "err" "banIP feed file not found, please re-install the package"
 	[ ! -r "/etc/config/banip" ] && f_log "err" "banIP config not found, please re-install the package"
-	[ ! -r "/etc/banip/banip.feeds.gz" ] || ! zcat "$(uci_get banip global ban_feedarchive "/etc/banip/banip.feeds.gz")" >"$(uci_get banip global ban_basedir "/tmp")/ban_feeds.json" && f_log "err" "banIP feed archive not found, please re-install the package"
 	[ "$(uci_get banip global ban_enabled)" = "0" ] && f_log "err" "banIP is currently disabled, please set the config option 'ban_enabled' to '1' to use this service"
 fi
