@@ -9,7 +9,7 @@
  
  .PHONY: binaries
  ifeq ($(shell uname -s),FreeBSD)
-@@ -792,7 +792,7 @@ package-install: package  ## Install rpm
+@@ -797,7 +797,7 @@ package-install: package  ## Install rpm
  	/usr/bin/podman info  # will catch a broken conmon
  
  .PHONY: install
