@@ -512,8 +512,8 @@ update-optimization off;
 include "$session_key_file";
 
 zone $domain. {
-	primary 127.0.0.1;
-	key $session_key_name;
+ primary 127.0.0.1;
+ key $session_key_name;
 }
 
 EOF
@@ -522,8 +522,8 @@ EOF
 			mynet="$(rev_str "$mynet" ".")"
 			cat <<EOF
 zone $mynet.in-addr.arpa. {
-	primary 127.0.0.1;
-	key $session_key_name;
+ primary 127.0.0.1;
+ key $session_key_name;
 }
 
 EOF
