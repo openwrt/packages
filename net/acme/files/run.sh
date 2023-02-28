@@ -266,7 +266,7 @@ issue_cert() {
 			log "Found previous cert config. Issuing renew."
 			[ "$keylength_ecc" -eq "1" ] && acme_args="$acme_args --ecc"
 			run_acme --home "$STATE_DIR" --renew -d "$main_domain" $acme_args && ret=0 || ret=1
-			if [ -e /etc/init.d/haproxy ] && [ -w /etc/haproxy.cfg ] && [ "$update_haproxy" -eq "1" ]; then
+			if [ "$ret" -eq 0 ] && [ -e "${domain_dir}/${main_domain}-haproxy.pem" ]; then
 				cat "${domain_dir}/${main_domain}.key" "${domain_dir}/fullchain.cer" > "${domain_dir}/${main_domain}-haproxy.pem"
 			fi
 			post_checks
