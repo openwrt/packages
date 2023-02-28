@@ -25,7 +25,7 @@ json_close_array
 json_close_object
 json_close_array
 
-__URL="$__ENDPOINT/zones/$username/$domain/$__RRTYPE"
+__URL="$__ENDPOINT/zones/$domain/$lookup_host/$__RRTYPE"
 
 __STATUS=$(curl -s -X POST "$__URL" \
 	-H "X-NSONE-Key: $password" \
