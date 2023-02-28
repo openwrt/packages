@@ -307,7 +307,6 @@ CONFIGURE_ARGS +=			\
 	--enable-vhost-net		\
 	--enable-vhost-user		\
 	--enable-vhost-user-blk-server	\
-	--enable-vduse-blk-export	\
 	--enable-vhost-vdpa		\
 
 # Image formats support
@@ -430,7 +429,7 @@ CONFIGURE_ARGS +=			\
 	--disable-oss			\
 	--disable-alsa			\
 	--disable-pa			\
-
+	--disable-vduse-blk-export	\
 
 CONFIGURE_ARGS += --target-list='$(foreach target,$(qemu-target-list),$(if $(CONFIG_PACKAGE_qemu-$(target)),$(target)))'
 CONFIGURE_ARGS += $(if $(CONFIG_PACKAGE_qemu-ga),--enable-guest-agent)
