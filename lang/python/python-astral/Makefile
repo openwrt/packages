@@ -31,8 +31,7 @@ define Package/python3-astral
   TITLE:=Calculations for the position of the sun and moon
   URL:=https://github.com/sffjunkie/astral
   DEPENDS+= \
-      +python3-light \
-      @BROKEN
+      +python3-light
 endef
 
 define Package/python3-astral/description
