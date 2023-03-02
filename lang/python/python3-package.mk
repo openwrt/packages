@@ -42,7 +42,6 @@ PYTHON3_VARS = \
 	__PYVENV_LAUNCHER__="/usr/bin/$(PYTHON3)" \
 	PYTHONPATH="$(PYTHON3PATH)" \
 	PYTHONDONTWRITEBYTECODE=1 \
-	PYTHONOPTIMIZE="" \
 	_python_sysroot="$(STAGING_DIR)" \
 	_python_prefix="/usr" \
 	_python_exec_prefix="/usr"
