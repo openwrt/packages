@@ -9,7 +9,7 @@ HOOK=/usr/lib/acme/hook
 LOG_TAG=acme
 
 # shellcheck source=net/acme/files/functions.sh
-. /usr/lib/acme/functions.sh
+. "$IPKG_INSTROOT/usr/lib/acme/functions.sh"
 
 cleanup() {
 	log debug "cleaning up"
