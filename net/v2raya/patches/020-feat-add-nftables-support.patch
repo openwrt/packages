@@ -1,0 +1,624 @@
+From d10cf52839e848870df0ea852d9a818ac03e7aa3 Mon Sep 17 00:00:00 2001
+From: cubercsl <2014cais01@gmail.com>
+Date: Thu, 19 Jan 2023 16:43:30 +0800
+Subject: [PATCH 1/5] feat: add nftables support
+
+fix: use iptables-nft if nftables-support is on
+fix: save nft to V2RAYA_CONFIG
+fix: tproxy for ipv6
+chore: small change in table format
+---
+ service/conf/environmentConfig.go     |   1 +
+ service/core/iptables/dropSpoofing.go |   4 +-
+ service/core/iptables/iptables.go     |   7 +-
+ service/core/iptables/redirect.go     | 142 +++++++++++++++++--
+ service/core/iptables/tproxy.go       | 195 +++++++++++++++++++++++++-
+ service/core/iptables/utils.go        |  23 ++-
+ service/core/iptables/watcher.go      |   1 +
+ service/core/v2ray/asset/asset.go     |  17 ++-
+ service/core/v2ray/transparent.go     |   9 +-
+ 9 files changed, 367 insertions(+), 32 deletions(-)
+
+--- a/conf/environmentConfig.go
++++ b/conf/environmentConfig.go
+@@ -24,6 +24,7 @@ type Params struct {
+ 	WebDir                  string   `id:"webdir" desc:"v2rayA web files directory. use embedded files if not specify."`
+ 	VlessGrpcInboundCertKey []string `id:"vless-grpc-inbound-cert-key" desc:"Specify the certification path instead of automatically generating a self-signed certificate. Example: /etc/v2raya/grpc_certificate.crt,/etc/v2raya/grpc_private.key"`
+ 	IPV6Support             string   `id:"ipv6-support" default:"auto" desc:"Optional values: auto, on, off. Make sure your IPv6 network works fine before you turn it on."`
++	NFTablesSupport         string   `id:"nftables-support" default:"off" desc:"Optional values: auto, on, off. Experimental feature. Make sure you have installed nftables."`
+ 	PassCheckRoot           bool     `desc:"Skip privilege checking. Use it only when you cannot start v2raya but confirm you have root privilege"`
+ 	ResetPassword           bool     `id:"reset-password"`
+ 	LogLevel                string   `id:"log-level" default:"info" desc:"Optional values: trace, debug, info, warn or error"`
+--- a/core/iptables/dropSpoofing.go
++++ b/core/iptables/dropSpoofing.go
+@@ -34,7 +34,7 @@ ip6tables -w 2 -I FORWARD -j DROP_SPOOFI
+ `
+ 	}
+ 	return Setter{
+-		Cmds:      commands,
++		Cmds: commands,
+ 	}
+ }
+ 
+@@ -54,6 +54,6 @@ ip6tables -w 2 -X DROP_SPOOFING
+ `
+ 	}
+ 	return Setter{
+-		Cmds:      commands,
++		Cmds: commands,
+ 	}
+ }
+--- a/core/iptables/iptables.go
++++ b/core/iptables/iptables.go
+@@ -1,11 +1,12 @@
+ package iptables
+ 
+ import (
+-	"github.com/v2rayA/v2rayA/common"
+-	"github.com/v2rayA/v2rayA/common/cmds"
+ 	"strings"
+ 	"sync"
+ 	"time"
++
++	"github.com/v2rayA/v2rayA/common"
++	"github.com/v2rayA/v2rayA/common/cmds"
+ )
+ 
+ // http://briteming.hatenablog.com/entry/2019/06/18/175518
+@@ -56,6 +57,10 @@ func (c Setter) Run(stopAtError bool) er
+ 	if common.IsDocker() {
+ 		commands = strings.ReplaceAll(commands, "iptables", "iptables-legacy")
+ 		commands = strings.ReplaceAll(commands, "ip6tables", "ip6tables-legacy")
++	} else if (!cmds.IsCommandValid("iptables") || IsNFTablesSupported()) &&
++		cmds.IsCommandValid("iptables-nft") {
++		commands = strings.ReplaceAll(commands, "iptables", "iptables-nft")
++		commands = strings.ReplaceAll(commands, "ip6tables", "ip6tables-nft")
+ 	}
+ 	var errs []error
+ 	if c.PreFunc != nil {
+--- a/core/iptables/redirect.go
++++ b/core/iptables/redirect.go
+@@ -2,15 +2,34 @@ package iptables
+ 
+ import (
+ 	"fmt"
+-	"github.com/v2rayA/v2rayA/common/cmds"
++	"os"
+ 	"strings"
++
++	"github.com/v2rayA/v2rayA/common/cmds"
++	"github.com/v2rayA/v2rayA/core/v2ray/asset"
+ )
+ 
+-type redirect struct{}
++type redirect interface {
++	AddIPWhitelist(cidr string)
++	RemoveIPWhitelist(cidr string)
++	GetSetupCommands() Setter
++	GetCleanCommands() Setter
++}
++
++type legacyRedirect struct{}
++type nftRedirect struct{}
+ 
+ var Redirect redirect
+ 
+-func (r *redirect) AddIPWhitelist(cidr string) {
++func init() {
++	if IsNFTablesSupported() {
++		Redirect = &nftRedirect{}
++	} else {
++		Redirect = &legacyRedirect{}
++	}
++}
++
++func (r *legacyRedirect) AddIPWhitelist(cidr string) {
+ 	// avoid duplication
+ 	r.RemoveIPWhitelist(cidr)
+ 	var commands string
+@@ -22,13 +41,13 @@ func (r *redirect) AddIPWhitelist(cidr s
+ 	cmds.ExecCommands(commands, false)
+ }
+ 
+-func (r *redirect) RemoveIPWhitelist(cidr string) {
++func (r *legacyRedirect) RemoveIPWhitelist(cidr string) {
+ 	var commands string
+ 	commands = fmt.Sprintf(`iptables -w 2 -t mangle -D TP_RULE -d %s -j RETURN`, cidr)
+ 	cmds.ExecCommands(commands, false)
+ }
+ 
+-func (r *redirect) GetSetupCommands() Setter {
++func (r *legacyRedirect) GetSetupCommands() Setter {
+ 	commands := `
+ iptables -w 2 -t nat -N TP_OUT
+ iptables -w 2 -t nat -N TP_PRE
+@@ -84,11 +103,11 @@ ip6tables -w 2 -t nat -A TP_OUT -j TP_RU
+ `
+ 	}
+ 	return Setter{
+-		Cmds:      commands,
++		Cmds: commands,
+ 	}
+ }
+ 
+-func (r *redirect) GetCleanCommands() Setter {
++func (r *legacyRedirect) GetCleanCommands() Setter {
+ 	commands := `
+ iptables -w 2 -t nat -F TP_OUT
+ iptables -w 2 -t nat -D OUTPUT -p tcp -j TP_OUT
+@@ -112,6 +131,113 @@ ip6tables -w 2 -t nat -X TP_RULE
+ `
+ 	}
+ 	return Setter{
+-		Cmds:      commands,
++		Cmds: commands,
++	}
++}
++
++func (t *nftRedirect) AddIPWhitelist(cidr string) {
++	command := fmt.Sprintf("nft add element inet v2raya interface { %s }", cidr)
++	if !strings.Contains(cidr, ".") {
++		command = strings.Replace(command, "interface", "interface6", 1)
++	}
++	cmds.ExecCommands(command, false)
++}
++
++func (t *nftRedirect) RemoveIPWhitelist(cidr string) {
++	command := fmt.Sprintf("nft delete element inet v2raya interface { %s }", cidr)
++	if !strings.Contains(cidr, ".") {
++		command = strings.Replace(command, "interface", "interface6", 1)
+ 	}
++	cmds.ExecCommands(command, false)
++}
++
++func (r *nftRedirect) GetSetupCommands() Setter {
++	// 198.18.0.0/15 and fc00::/7 are reserved for private use but used by fakedns
++	table := `
++table inet v2raya {
++    set whitelist {
++        type ipv4_addr
++        flags interval
++        auto-merge
++        elements = {
++            0.0.0.0/32,
++            10.0.0.0/8,
++            100.64.0.0/10,
++            127.0.0.0/8,
++            169.254.0.0/16,
++            172.16.0.0/12,
++            192.0.0.0/24,
++            192.0.2.0/24,
++            192.88.99.0/24,
++            192.168.0.0/16,
++            198.51.100.0/24,
++            203.0.113.0/24,
++            224.0.0.0/4,
++            240.0.0.0/4
++        }
++    }
++
++    set whitelist6 {
++        type ipv6_addr
++        flags interval
++        auto-merge
++        elements = {
++            ::/128,
++            ::1/128,
++            64:ff9b::/96,
++            100::/64,
++            2001::/32,
++            2001:20::/28,
++            fe80::/10,
++            ff00::/8
++        }
++    }
++
++    set interface {
++        type ipv4_addr
++        flags interval
++        auto-merge
++    }
++
++    set interface6 {
++        type ipv6_addr
++        flags interval
++        auto-merge
++    }
++
++    chain tp_rule {
++        ip daddr @whitelist return
++        ip daddr @interface return
++        ip6 daddr @whitelist6 return
++        ip6 daddr @interface6 return
++        meta mark & 0x80 == 0x80 return
++        meta l4proto tcp redirect to :32345
++    }
++
++    chain tp_pre {
++        type nat hook prerouting priority dstnat - 5
++        meta nfproto { ipv4, ipv6 } meta l4proto tcp jump tp_rule
++    }
++
++    chain tp_out {
++        type nat hook output priority -105
++        meta nfproto { ipv4, ipv6 } meta l4proto tcp jump tp_rule
++    }
++}
++`
++	if !IsIPv6Supported() {
++		table = strings.ReplaceAll(table, "meta nfproto { ipv4, ipv6 }", "meta nfproto ipv4")
++	}
++
++	nftablesConf := asset.GetNFTablesConfigPath()
++	os.WriteFile(nftablesConf, []byte(table), 0644)
++
++	command := `nft -f ` + nftablesConf
++
++	return Setter{Cmds: command}
++}
++
++func (r *nftRedirect) GetCleanCommands() Setter {
++	command := `nft delete table inet v2raya`
++	return Setter{Cmds: command}
+ }
+--- a/core/iptables/tproxy.go
++++ b/core/iptables/tproxy.go
+@@ -2,18 +2,36 @@ package iptables
+ 
+ import (
+ 	"fmt"
++	"os"
++	"strings"
++
+ 	"github.com/v2rayA/v2rayA/common/cmds"
++	"github.com/v2rayA/v2rayA/core/v2ray/asset"
+ 	"github.com/v2rayA/v2rayA/db/configure"
+-	"strings"
+ )
+ 
+-type tproxy struct {
+-	watcher *LocalIPWatcher
++type tproxy interface {
++	AddIPWhitelist(cidr string)
++	RemoveIPWhitelist(cidr string)
++	GetSetupCommands() Setter
++	GetCleanCommands() Setter
+ }
+ 
++type legacyTproxy struct{}
++
++type nftTproxy struct{}
++
+ var Tproxy tproxy
+ 
+-func (t *tproxy) AddIPWhitelist(cidr string) {
++func init() {
++	if IsNFTablesSupported() {
++		Tproxy = &nftTproxy{}
++	} else {
++		Tproxy = &legacyTproxy{}
++	}
++}
++
++func (t *legacyTproxy) AddIPWhitelist(cidr string) {
+ 	// avoid duplication
+ 	t.RemoveIPWhitelist(cidr)
+ 	pos := 7
+@@ -30,7 +48,7 @@ func (t *tproxy) AddIPWhitelist(cidr str
+ 	cmds.ExecCommands(commands, false)
+ }
+ 
+-func (t *tproxy) RemoveIPWhitelist(cidr string) {
++func (t *legacyTproxy) RemoveIPWhitelist(cidr string) {
+ 	var commands string
+ 	commands = fmt.Sprintf(`iptables -w 2 -t mangle -D TP_RULE -d %s -j RETURN`, cidr)
+ 	if !strings.Contains(cidr, ".") {
+@@ -40,7 +58,7 @@ func (t *tproxy) RemoveIPWhitelist(cidr
+ 	cmds.ExecCommands(commands, false)
+ }
+ 
+-func (t *tproxy) GetSetupCommands() Setter {
++func (t *legacyTproxy) GetSetupCommands() Setter {
+ 	commands := `
+ ip rule add fwmark 0x40/0xc0 table 100
+ ip route add local 0.0.0.0/0 dev lo table 100
+@@ -158,7 +176,7 @@ ip6tables -w 2 -t mangle -A TP_MARK -j C
+ 	}
+ }
+ 
+-func (t *tproxy) GetCleanCommands() Setter {
++func (t *legacyTproxy) GetCleanCommands() Setter {
+ 	commands := `
+ ip rule del fwmark 0x40/0xc0 table 100 
+ ip route del local 0.0.0.0/0 dev lo table 100
+@@ -195,3 +213,166 @@ ip6tables -w 2 -t mangle -X TP_MARK
+ 		Cmds:      commands,
+ 	}
+ }
++
++func (t *nftTproxy) AddIPWhitelist(cidr string) {
++	command := fmt.Sprintf("nft add element inet v2raya interface { %s }", cidr)
++	if !strings.Contains(cidr, ".") {
++		command = strings.Replace(command, "interface", "interface6", 1)
++	}
++	cmds.ExecCommands(command, false)
++}
++
++func (t *nftTproxy) RemoveIPWhitelist(cidr string) {
++	command := fmt.Sprintf("nft delete element inet v2raya interface { %s }", cidr)
++	if !strings.Contains(cidr, ".") {
++		command = strings.Replace(command, "interface", "interface6", 1)
++	}
++	cmds.ExecCommands(command, false)
++}
++
++func (t *nftTproxy) GetSetupCommands() Setter {
++	// 198.18.0.0/15 and fc00::/7 are reserved for private use but used by fakedns
++	table := `
++table inet v2raya {
++    set whitelist {
++        type ipv4_addr
++        flags interval
++        auto-merge
++        elements = {
++            0.0.0.0/32,
++            10.0.0.0/8,
++            100.64.0.0/10,
++            127.0.0.0/8,
++            169.254.0.0/16,
++            172.16.0.0/12,
++            192.0.0.0/24,
++            192.0.2.0/24,
++            192.88.99.0/24,
++            192.168.0.0/16,
++            198.51.100.0/24,
++            203.0.113.0/24,
++            224.0.0.0/4,
++            240.0.0.0/4
++        }
++    }
++
++    set whitelist6 {
++        type ipv6_addr
++        flags interval
++        auto-merge
++        elements = {
++            ::/128,
++            ::1/128,
++            64:ff9b::/96,
++            100::/64,
++            2001::/32,
++            2001:20::/28,
++            fe80::/10,
++            ff00::/8
++        }
++    }
++
++    set interface {
++        type ipv4_addr
++        flags interval
++        auto-merge
++    }
++
++    set interface6 {
++        type ipv6_addr
++        flags interval
++        auto-merge
++    }
++
++    chain tp_out {
++        meta mark & 0x80 == 0x80 return
++        meta l4proto { tcp, udp } fib saddr type local fib daddr type != local jump tp_rule
++    }
++
++    chain tp_pre {
++        iifname "lo" mark & 0xc0 != 0x40 return
++        meta l4proto { tcp, udp } fib saddr type != local fib daddr type != local jump tp_rule
++        meta l4proto { tcp, udp } mark & 0xc0 == 0x40 tproxy ip to 127.0.0.1:32345
++        meta l4proto { tcp, udp } mark & 0xc0 == 0x40 tproxy ip6 to [::1]:32345
++    }
++
++    chain output {
++        type route hook output priority mangle - 5; policy accept;
++        meta nfproto { ipv4, ipv6 } jump tp_out
++    }
++
++    chain prerouting {
++        type filter hook prerouting priority mangle - 5; policy accept;
++        meta nfproto { ipv4, ipv6 } jump tp_pre
++    }
++
++    chain tp_rule {
++        meta mark set ct mark
++        meta mark & 0xc0 == 0x40 return
++        iifname "docker*" return
++        iifname "veth*" return
++        iifname "wg*" return
++        iifname "ppp*" return
++        # anti-pollution
++        ip daddr @interface return
++        ip daddr @whitelist return
++        ip6 daddr @interface6 return
++        ip6 daddr @whitelist6 return
++        jump tp_mark
++    }
++
++    chain tp_mark {
++        tcp flags & (fin | syn | rst | ack) == syn meta mark set mark | 0x40
++        meta l4proto udp ct state new meta mark set mark | 0x40
++        ct mark set mark
++    }
++}
++`
++	if configure.GetSettingNotNil().AntiPollution != configure.AntipollutionClosed {
++		table = strings.ReplaceAll(table, "# anti-pollution", `
++        meta l4proto { tcp, udp } th dport 53 jump tp_mark
++        meta mark & 0xc0 == 0x40 return
++		`)
++	}
++
++	if !IsIPv6Supported() {
++		// drop ipv6 packets hooks
++		table = strings.ReplaceAll(table, "meta nfproto { ipv4, ipv6 }", "meta nfproto ipv4")
++	}
++
++	nftablesConf := asset.GetNFTablesConfigPath()
++	os.WriteFile(nftablesConf, []byte(table), 0644)
++
++	command := `
++ip rule add fwmark 0x40/0xc0 table 100
++ip route add local 0.0.0.0/0 dev lo table 100
++`
++	if IsIPv6Supported() {
++		command += `
++ip -6 rule add fwmark 0x40/0xc0 table 100
++ip -6 route add local ::/0 dev lo table 100
++`
++	}
++
++	command += `nft -f ` + nftablesConf
++	return Setter{Cmds: command}
++}
++
++func (t *nftTproxy) GetCleanCommands() Setter {
++	command := `
++ip rule del fwmark 0x40/0xc0 table 100
++ip route del local 0.0.0.0/0 dev lo table 100
++`
++	if IsIPv6Supported() {
++		command += `
++ip -6 rule del fwmark 0x40/0xc0 table 100
++ip -6 route del local ::/0 dev lo table 100
++		`
++	}
++
++	command += `nft delete table inet v2raya`
++	if !IsIPv6Supported() {
++		command = strings.Replace(command, "inet", "ip", 1)
++	}
++	return Setter{Cmds: command}
++}
+--- a/core/iptables/utils.go
++++ b/core/iptables/utils.go
+@@ -1,12 +1,13 @@
+ package iptables
+ 
+ import (
++	"net"
++	"strconv"
++
+ 	"github.com/v2rayA/v2rayA/common"
+ 	"github.com/v2rayA/v2rayA/common/cmds"
+ 	"github.com/v2rayA/v2rayA/conf"
+ 	"golang.org/x/net/nettest"
+-	"net"
+-	"strconv"
+ )
+ 
+ func IPNet2CIDR(ipnet *net.IPNet) string {
+@@ -44,3 +45,21 @@ func IsIPv6Supported() bool {
+ 	}
+ 	return cmds.IsCommandValid("ip6tables")
+ }
++
++func IsNFTablesSupported() bool {
++
++	switch conf.GetEnvironmentConfig().NFTablesSupport {
++	// Warning:
++	// This is an experimental feature for nftables support.
++	// The default value is "off" for now but may be changed to "auto" in the future
++	case "on":
++		return true
++	case "off":
++		return false
++	default:
++	}
++	if common.IsDocker() {
++		return false
++	}
++	return cmds.IsCommandValid("nft")
++}
+--- a/core/iptables/watcher.go
++++ b/core/iptables/watcher.go
+@@ -10,6 +10,7 @@ type LocalIPWatcher struct {
+ 	cidrPool    map[string]struct{}
+ 	AddedFunc   func(cidr string)
+ 	RemovedFunc func(cidr string)
++	UpdateFunc  func(cidrs []string)
+ }
+ 
+ func NewLocalIPWatcher(interval time.Duration, AddedFunc func(cidr string), RemovedFunc func(cidr string)) *LocalIPWatcher {
+--- a/core/v2ray/asset/asset.go
++++ b/core/v2ray/asset/asset.go
+@@ -3,12 +3,6 @@ package asset
+ import (
+ 	"errors"
+ 	"fmt"
+-	"github.com/adrg/xdg"
+-	"github.com/muhammadmuzzammil1998/jsonc"
+-	"github.com/v2rayA/v2rayA/common/files"
+-	"github.com/v2rayA/v2rayA/conf"
+-	"github.com/v2rayA/v2rayA/core/v2ray/where"
+-	"github.com/v2rayA/v2rayA/pkg/util/log"
+ 	"io"
+ 	"io/fs"
+ 	"net/http"
+@@ -17,6 +11,13 @@ import (
+ 	"path/filepath"
+ 	"runtime"
+ 	"time"
++
++	"github.com/adrg/xdg"
++	"github.com/muhammadmuzzammil1998/jsonc"
++	"github.com/v2rayA/v2rayA/common/files"
++	"github.com/v2rayA/v2rayA/conf"
++	"github.com/v2rayA/v2rayA/core/v2ray/where"
++	"github.com/v2rayA/v2rayA/pkg/util/log"
+ )
+ 
+ func GetV2rayLocationAssetOverride() string {
+@@ -140,6 +141,10 @@ func GetV2rayConfigDirPath() (p string)
+ 	return conf.GetEnvironmentConfig().V2rayConfigDirectory
+ }
+ 
++func GetNFTablesConfigPath() (p string) {
++	return path.Join(conf.GetEnvironmentConfig().Config, "v2raya.nft")
++}
++
+ func Download(url string, to string) (err error) {
+ 	log.Info("Downloading %v to %v", url, to)
+ 	c := http.Client{Timeout: 90 * time.Second}
+--- a/core/v2ray/transparent.go
++++ b/core/v2ray/transparent.go
+@@ -2,13 +2,14 @@ package v2ray
+ 
+ import (
+ 	"fmt"
++	"strings"
++	"time"
++
+ 	"github.com/v2rayA/v2rayA/conf"
+ 	"github.com/v2rayA/v2rayA/core/iptables"
+ 	"github.com/v2rayA/v2rayA/core/specialMode"
+ 	"github.com/v2rayA/v2rayA/db/configure"
+ 	"github.com/v2rayA/v2rayA/pkg/util/log"
+-	"strings"
+-	"time"
+ )
+ 
+ func deleteTransparentProxyRules() {
+@@ -45,12 +46,12 @@ func writeTransparentProxyRules() (err e
+ 			}
+ 			return fmt.Errorf("not support \"tproxy\" mode of transparent proxy: %w", err)
+ 		}
+-		iptables.SetWatcher(&iptables.Tproxy)
++		iptables.SetWatcher(iptables.Tproxy)
+ 	case configure.TransparentRedirect:
+ 		if err = iptables.Redirect.GetSetupCommands().Run(true); err != nil {
+ 			return fmt.Errorf("not support \"redirect\" mode of transparent proxy: %w", err)
+ 		}
+-		iptables.SetWatcher(&iptables.Redirect)
++		iptables.SetWatcher(iptables.Redirect)
+ 	case configure.TransparentSystemProxy:
+ 		if err = iptables.SystemProxy.GetSetupCommands().Run(true); err != nil {
+ 			return fmt.Errorf("not support \"system proxy\" mode of transparent proxy: %w", err)
