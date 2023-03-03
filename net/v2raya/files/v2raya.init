@@ -42,7 +42,8 @@ start_service() {
 
 	append_env_arg "config" "address" "0.0.0.0:2017"
 	append_env_arg "config" "config" "/etc/v2raya"
-	append_env_arg "config" "ipv6_support" "auto"
+	append_env_arg "config" "ipv6_support" "on"
+	append_env_arg "config" "nftables_support" "on"
 	append_env_arg "config" "log_level" "info"
 	append_env_arg "config" "log_file" "/var/log/v2raya/v2raya.log"
 	append_env_arg "config" "log_max_days" "3"
