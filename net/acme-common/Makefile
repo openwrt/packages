@@ -50,13 +50,17 @@ endef
 
 define Package/acme-common/postinst
 #!/bin/sh
-grep -q '/etc/init.d/acme' /etc/crontabs/root 2>/dev/null && exit 0
-echo "0 0 * * * /etc/init.d/acme start" >> /etc/crontabs/root
+if [ -z "$$IPKG_INSTROOT" ]; then
+	grep -q '/etc/init.d/acme' /etc/crontabs/root 2>/dev/null && exit 0
+	echo "0 0 * * * /etc/init.d/acme start" >> /etc/crontabs/root
+fi
 endef
 
 define Package/acme-common/prerm
 #!/bin/sh
-sed -i '\|/etc/init.d/acme|d' /etc/crontabs/root
+if [ -z "$$IPKG_INSTROOT" ]; then
+	sed -i '\|/etc/init.d/acme|d' /etc/crontabs/root
+fi
 endef
 
 define Build/Configure
