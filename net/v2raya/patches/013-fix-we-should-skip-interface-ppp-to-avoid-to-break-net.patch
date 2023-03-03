@@ -13,13 +13,13 @@ Subject: [PATCH] fix: we should skip interface ppp+ to avoid to break net
  func (t *tproxy) AddIPWhitelist(cidr string) {
  	// avoid duplication
  	t.RemoveIPWhitelist(cidr)
--	pos := 6
-+	pos := 8
+-	pos := 5
++	pos := 7
  	if configure.GetSettingNotNil().AntiPollution != configure.AntipollutionClosed {
  		pos += 3
  	}
-@@ -68,6 +68,8 @@ iptables -w 2 -t mangle -A TP_RULE -m ma
- iptables -w 2 -t mangle -A TP_RULE -i br-+ -j RETURN
+@@ -67,6 +67,8 @@ iptables -w 2 -t mangle -A TP_RULE -j CO
+ iptables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
  iptables -w 2 -t mangle -A TP_RULE -i docker+ -j RETURN
  iptables -w 2 -t mangle -A TP_RULE -i veth+ -j RETURN
 +iptables -w 2 -t mangle -A TP_RULE -i ppp+ -j RETURN
@@ -27,8 +27,8 @@ Subject: [PATCH] fix: we should skip interface ppp+ to avoid to break net
  `
  	if configure.GetSettingNotNil().AntiPollution != configure.AntipollutionClosed {
  		commands += `
-@@ -127,6 +129,8 @@ ip6tables -w 2 -t mangle -A TP_RULE -m m
- ip6tables -w 2 -t mangle -A TP_RULE -i br-+ -j RETURN
+@@ -125,6 +127,8 @@ ip6tables -w 2 -t mangle -A TP_RULE -j C
+ ip6tables -w 2 -t mangle -A TP_RULE -m mark --mark 0x40/0xc0 -j RETURN
  ip6tables -w 2 -t mangle -A TP_RULE -i docker+ -j RETURN
  ip6tables -w 2 -t mangle -A TP_RULE -i veth+ -j RETURN
 +ip6tables -w 2 -t mangle -A TP_RULE -i ppp+ -j RETURN
