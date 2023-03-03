@@ -16,10 +16,9 @@ PKG_INSTALL:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://gitlab.com/netify.ai/public/netify-agent.git
-PKG_SOURCE_DATE:=2022-11-03
-PKG_SOURCE_VERSION:=v4.2.2
-#PKG_SOURCE_VERSION:=e8d649e170ad3f85017115ea5414ade5f297e9c5
-PKG_MIRROR_HASH:=34a9f89aa88f666e6f9e6e8fcbfaa94b02cfc4ce6e76c521377af9492d12a90d
+PKG_SOURCE_DATE:=2023-03-03
+PKG_SOURCE_VERSION:=v4.4.1
+PKG_MIRROR_HASH:=aa3522b6d86e113943abacd50b235738e6452991a36864ec70f5db5b7bec6d13
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -49,11 +48,10 @@ define Package/netifyd/conffiles
 /etc/netify.d/agent.uuid
 /etc/netify.d/serial.uuid
 /etc/netify.d/site.uuid
-/etc/netify.d/netify-categories.json
 endef
 
 TARGET_CFLAGS+=-ffunction-sections -fdata-sections -Wno-psabi
-TARGET_CXXFLAGS+=-ffunction-sections -fdata-sections -Wno-psabi
+TARGET_CXXFLAGS+=-std=c++11 -ffunction-sections -fdata-sections -Wno-psabi
 TARGET_LDFLAGS+=-Wl,--gc-sections
 
 CONFIGURE_ARGS+= \
@@ -74,10 +72,6 @@ CONFIGURE_ARGS+= \
 	--without-libcurl-zlib
 endif
 
-define Build/Configure
-	(cd $(PKG_BUILD_DIR); ./autogen.sh)
-	$(call Build/Configure/Default)
-endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/netifyd
@@ -86,6 +80,8 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/netifyd/pcap-compat/*.h $(1)/usr/include/netifyd/pcap-compat
 	$(INSTALL_DIR) $(1)/usr/include/netifyd/nlohmann
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/netifyd/nlohmann/*.hpp $(1)/usr/include/netifyd/nlohmann
+	$(INSTALL_DIR) $(1)/usr/include/netifyd/radix
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/netifyd/radix/*.hpp $(1)/usr/include/netifyd/radix
 	$(INSTALL_DIR) $(1)/usr/include/ndpi
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/ndpi/*.h $(1)/usr/include/ndpi
 	$(INSTALL_DIR) $(1)/usr/lib
