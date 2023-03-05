@@ -364,7 +364,9 @@ gen_dhcp_subnet() {
 		echo " default-lease-time $leasetime;"
 		echo " max-lease-time $leasetime;"
 	fi
-	echo " option routers $gateway;"
+	if [ "$defaultroute" -eq 1 ] ; then
+		echo " option routers $gateway;"
+	fi
 	echo " option domain-name-servers $DNS;"
 	config_list_foreach "$cfg" "routes" append_routes
 	config_list_foreach "$cfg" "dhcp_option" append_dhcp_options
@@ -374,7 +376,7 @@ gen_dhcp_subnet() {
 dhcpd_add() {
 	local cfg="$1" synthesize="$2"
 	local dhcp6range="::"
-	local dynamicdhcp end gateway ifname ignore leasetime limit net netmask
+	local dynamicdhcp defaultroute end gateway ifname ignore leasetime limit net netmask
 	local proto networkid start subnet
 	local IP NETMASK BROADCAST NETWORK PREFIX DNS START END
 
@@ -403,6 +405,8 @@ dhcpd_add() {
 	[ $synthesize -eq 0 ] && return
 
 	config_get_bool dynamicdhcp "$cfg" "dynamicdhcp" 1
+
+	config_get_bool defaultroute "$cfg" "default_route" 1
 
 	dhcp_ifs="$dhcp_ifs $ifname"
 
@@ -512,8 +516,8 @@ update-optimization off;
 include "$session_key_file";
 
 zone $domain. {
-	primary 127.0.0.1;
-	key $session_key_name;
+ primary 127.0.0.1;
+ key $session_key_name;
 }
 
 EOF
@@ -522,8 +526,8 @@ EOF
 			mynet="$(rev_str "$mynet" ".")"
 			cat <<EOF
 zone $mynet.in-addr.arpa. {
-	primary 127.0.0.1;
-	key $session_key_name;
+ primary 127.0.0.1;
+ key $session_key_name;
 }
 
 EOF
