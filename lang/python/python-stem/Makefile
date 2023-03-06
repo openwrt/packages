@@ -11,8 +11,6 @@ PKG_MAINTAINER:=Javier Marcet <javier@marcet.info>
 PKG_LICENSE:=LGPL-3.0-only
 PKG_LICENSE_FILES:=LICENSE
 
-PYTHON3_PKG_SETUP_ARGS:=
-
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk

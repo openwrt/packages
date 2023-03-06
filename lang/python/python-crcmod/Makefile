@@ -5,15 +5,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-crcmod
 PKG_VERSION:=1.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=crcmod
 PKG_HASH:=dc7051a0db5f2bd48665a990d3ec1cc305a466a77358ca4492826f41f283601e
 
 PKG_LICENSE:=MIT
 PKG_MAINTAINER:=David Bauer <mail@david-bauer.net>
-
-PYTHON3_PKG_SETUP_ARGS:=
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

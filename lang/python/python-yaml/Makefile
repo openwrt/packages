@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-yaml
 PKG_VERSION:=6.0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PYPI_NAME:=PyYAML
 PKG_HASH:=68fb519c14306fec9720a2a5b45bc9f0c8d1b9c72adf45c37baedfcd949c35a2
@@ -39,7 +39,6 @@ define Package/python3-yaml/description
 endef
 
 PYTHON3_PKG_BUILD_VARS:=PYYAML_FORCE_LIBYAML=1
-PYTHON3_PKG_SETUP_ARGS:=
 
 $(eval $(call Py3Package,python3-yaml))
 $(eval $(call BuildPackage,python3-yaml))

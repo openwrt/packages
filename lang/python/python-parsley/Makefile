@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-parsley
 PKG_VERSION:=1.3
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PYPI_NAME:=Parsley
 PKG_HASH:=9444278d47161d5f2be76a767809a3cbe6db4db822f46a4fd7481d4057208d41
@@ -21,8 +21,6 @@ PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
-
-PYTHON3_PKG_SETUP_ARGS:=
 
 define Package/python3-parsley
   SECTION:=lang
