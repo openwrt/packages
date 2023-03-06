@@ -21,6 +21,8 @@ PKG_CPE_ID:=cpe:/a:pyyaml_project:pyyaml
 
 PKG_BUILD_DEPENDS:=python-cython/host
 
+PYTHON3_PKG_FORCE_DISTUTILS_SETUP:=1
+
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
