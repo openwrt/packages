@@ -15,6 +15,8 @@ PKG_MAINTAINER:=Waldemar Konik <informatyk74@interia.pl>
 PKG_LICENSE:=LGPL-2.1
 PKG_LICENSE_FILES:=COPYING-LGPL
 
+PYTHON3_PKG_FORCE_DISTUTILS_SETUP:=1
+
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk

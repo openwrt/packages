@@ -18,6 +18,8 @@ PKG_LICENSE:=HPND
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:python:pillow
 
+PYTHON3_PKG_FORCE_DISTUTILS_SETUP:=1
+
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
