@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-yaml
 PKG_VERSION:=6.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PYPI_NAME:=PyYAML
 PKG_HASH:=68fb519c14306fec9720a2a5b45bc9f0c8d1b9c72adf45c37baedfcd949c35a2
@@ -20,8 +20,6 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:pyyaml_project:pyyaml
 
 PKG_BUILD_DEPENDS:=python-cython/host
-
-PYTHON3_PKG_FORCE_DISTUTILS_SETUP:=1
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -40,7 +38,7 @@ define Package/python3-yaml/description
   PyYAML is a YAML parser and emitter for the Python programming language.
 endef
 
-PYTHON3_PKG_SETUP_GLOBAL_ARGS:=--with-libyaml
+PYTHON3_PKG_BUILD_VARS:=PYYAML_FORCE_LIBYAML=1
 PYTHON3_PKG_SETUP_ARGS:=
 
 $(eval $(call Py3Package,python3-yaml))
