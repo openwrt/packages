@@ -18,6 +18,8 @@ PKG_MAINTAINER:=Erik Larsson <who+openwrt@cnackers.org>
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=LICENSE
 
+PYTHON3_PKG_FORCE_DISTUTILS_SETUP:=1
+
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
