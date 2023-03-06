@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-ubus
 PKG_VERSION:=0.1.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=ubus
 PKG_HASH:=7e57bda989bc35b48c7075d03ec2818226e722bbf1bde138d7e7ea26d462682a
@@ -17,6 +17,8 @@ PKG_HASH:=7e57bda989bc35b48c7075d03ec2818226e722bbf1bde138d7e7ea26d462682a
 PKG_MAINTAINER:=Erik Larsson <who+openwrt@cnackers.org>
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=LICENSE
+
+PYTHON3_PKG_FORCE_DISTUTILS_SETUP:=1
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
