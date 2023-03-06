@@ -1,5 +1,5 @@
 #!/bin/sh
-# banIP main service script - ban incoming and outgoing ip adresses/subnets via sets in nftables
+# banIP main service script - ban incoming and outgoing ip addresses/subnets via sets in nftables
 # Copyright (c) 2018-2023 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 

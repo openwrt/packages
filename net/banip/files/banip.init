@@ -10,7 +10,8 @@ START=30
 USE_PROCD=1
 
 extra_command "report" "[text|json|mail] Print banIP related set statistics"
-extra_command "search" "[<IPv4 address>|<IPv6 address>] Check if an element exists in the banIP sets"
+extra_command "search" "[<IPv4 address>|<IPv6 address>] Check if an element exists in a banIP set"
+extra_command "survey" "[<set name>] List all elements of a given banIP set"
 
 ban_init="/etc/init.d/banip"
 ban_service="/usr/bin/banip-service.sh"
@@ -19,7 +20,7 @@ ban_pidfile="/var/run/banip.pid"
 ban_lock="/var/run/banip.lock"
 
 [ "${action}" = "stop" ] && ! /etc/init.d/banip running && exit 0
-[ ! -r "${ban_funlib}" ] && { [ "${action}" = "start" ] || [ "${action}" = "restart" ] || [ "${action}" = "reload" ] || [ "${action}" = "stop" ] || [ "${action}" = "report" ] || [ "${action}" = "search" ] || [ "${action}" = "status" ]; } && exit 1
+[ ! -r "${ban_funlib}" ] && { [ "${action}" = "start" ] || [ "${action}" = "restart" ] || [ "${action}" = "reload" ] || [ "${action}" = "stop" ] || [ "${action}" = "report" ] || [ "${action}" = "search" ] || [ "${action}" = "lookup" ] || [ "${action}" = "status" ]; } && exit 1
 [ -d "${ban_lock}" ] && { [ "${action}" = "start" ] || [ "${action}" = "restart" ] || [ "${action}" = "reload" ]; } && exit 1
 [ ! -d "${ban_lock}" ] && { [ "${action}" = "start" ] || [ "${action}" = "restart" ] || [ "${action}" = "reload" ]; } && mkdir -p "${ban_lock}"
 
@@ -71,8 +72,10 @@ status() {
 }
 
 status_service() {
+	local actual="${1}"
+
 	[ -z "$(command -v "f_system")" ] && . "${ban_funlib}"
-	f_getstatus
+	[ -n "${actual}" ] && f_actual || f_getstatus
 }
 
 report() {
@@ -83,6 +86,11 @@ report() {
 search() {
 	[ -z "$(command -v "f_system")" ] && . "${ban_funlib}"
 	f_search "${1}"
+}
+
+survey() {
+	[ -z "$(command -v "f_system")" ] && . "${ban_funlib}"
+	f_survey "${1}"
 }
 
 service_triggers() {

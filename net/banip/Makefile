@@ -1,5 +1,5 @@
 #
-# banIP - ban incoming and outgoing ip adresses/subnets via sets in nftables
+# banIP - ban incoming and outgoing ip addresses/subnets via sets in nftables
 # Copyright (c) 2018-2023 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 #
@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=banip
 PKG_VERSION:=0.8.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
 

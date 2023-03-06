@@ -55,48 +55,50 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 | voip                | VoIP fraud blocklist           |    x    |    x    |         | [Link](https://voipbl.org)                                    |
 | yoyo                | yoyo IPs                       |         |         |    x    | [Link](https://github.com/dibdot/banIP-IP-blocklists)         |
 
-* zero-conf like automatic installation & setup, usually no manual changes needed
-* all sets are handled in a separate nft table/namespace 'banIP'
-* full IPv4 and IPv6 support
-* supports nft atomic set loading
-* supports blocking by ASN numbers and by iso country codes
-* supports local allow- and blocklist (IPv4, IPv6, CIDR notation or domain names)
-* auto-add the uplink subnet to the local allowlist
-* provides a small background log monitor to ban unsuccessful login attempts in real-time
-* auto-add unsuccessful LuCI, nginx, Asterisk or ssh login attempts to the local blocklist
-* fast feed processing as they are handled in parallel as background jobs
-* per feed it can be defined whether the wan-input chain, the wan-forward chain or the lan-forward chain should be blocked (default: all chains)
-* automatic blocklist backup & restore, the backups will be used in case of download errors or during startup
-* automatically selects one of the following download utilities with ssl support: aria2c, curl, uclient-fetch or wget
-* supports an 'allowlist only' mode, this option restricts internet access from/to a small number of secure websites/IPs
-* deduplicate IPs accross all sets (single IPs only, no intervals)
-* provides comprehensive runtime information
-* provides a detailed set report
-* provides a set search engine for certain IPs
-* feed parsing by fast & flexible regex rulesets
-* minimal status & error logging to syslog, enable debug logging to receive more output
-* procd based init system support (start/stop/restart/reload/status/report/search)
-* procd network interface trigger support
-* ability to add new banIP feeds on your own
+* Zero-conf like automatic installation & setup, usually no manual changes needed
+* All sets are handled in a separate nft table/namespace 'banIP'
+* Full IPv4 and IPv6 support
+* Supports nft atomic set loading
+* Supports blocking by ASN numbers and by iso country codes
+* Supports local allow- and blocklist (IPv4, IPv6, CIDR notation or domain names)
+* Auto-add the uplink subnet to the local allowlist
+* Provides a small background log monitor to ban unsuccessful login attempts in real-time
+* Auto-add unsuccessful LuCI, nginx, Asterisk or ssh login attempts to the local blocklist
+* Fast feed processing as they are handled in parallel as background jobs
+* Per feed it can be defined whether the wan-input chain, the wan-forward chain or the lan-forward chain should be blocked (default: all chains)
+* Automatic blocklist backup & restore, the backups will be used in case of download errors or during startup
+* Automatically selects one of the following download utilities with ssl support: aria2c, curl, uclient-fetch or wget
+* Supports an 'allowlist only' mode, this option restricts internet access from/to a small number of secure websites/IPs
+* Deduplicate IPs accross all sets (single IPs only, no intervals)
+* Provides comprehensive runtime information
+* Provides a detailed set report
+* Provides a set search engine for certain IPs
+* Feed parsing by fast & flexible regex rulesets
+* Minimal status & error logging to syslog, enable debug logging to receive more output
+* Procd based init system support (start/stop/restart/reload/status/report/search/survey)
+* Procd network interface trigger support
+* Ability to add new banIP feeds on your own
 
 ## Prerequisites
-* **[OpenWrt](https://openwrt.org)**, latest stable release or a snapshot with nft/firewall 4 support  
-* a download utility with SSL support: 'wget', 'uclient-fetch' with one of the 'libustream-*' SSL libraries, 'aria2c' or 'curl' is required
-* a certificate store like 'ca-bundle', as banIP checks the validity of the SSL certificates of all download sites by default
-* for E-Mail notifications you need to install and setup the additional 'msmtp' package
+* **[OpenWrt](https://openwrt.org)**, latest stable release or a snapshot with nft/firewall 4 support
+* A download utility with SSL support: 'wget', 'uclient-fetch' with one of the 'libustream-*' SSL libraries, 'aria2c' or 'curl' is required
+* A certificate store like 'ca-bundle', as banIP checks the validity of the SSL certificates of all download sites by default
+* For E-Mail notifications you need to install and setup the additional 'msmtp' package
 
 **Please note the following:**
 * Devices with less than 256Mb of RAM are **_not_** supported
 * Any previous installation of ancient banIP 0.7.x must be uninstalled, and the /etc/banip folder and the /etc/config/banip configuration file must be deleted (they are recreated when this version is installed)
 
 ## Installation & Usage
-* update your local opkg repository (_opkg update_)
-* install banIP (_opkg install banip_) - the banIP service is disabled by default
-* edit the config file '/etc/config/banip' and enable the service (set ban\_enabled to '1'), then add pre-configured feeds via 'ban\_feed' (see the feed list above) and add/change other options to your needs (see the options reference below)
-* start the service with '/etc/init.d/banip start' and check check everything is working by running '/etc/init.d/banip status'
+* Update your local opkg repository (_opkg update_)
+* Install banIP (_opkg install banip_) - the banIP service is disabled by default
+* Install the LuCI companion package 'luci-app-banip' (opkg install luci-app-banip)
+* It's strongly recommended to use the LuCI frontend to easily configure all aspects of banIP, the application is located in LuCI under the 'Services' menu
+* If you're going to configure banIP via CLI, edit the config file '/etc/config/banip' and enable the service (set ban\_enabled to '1'), then add pre-configured feeds via 'ban\_feed' (see the feed list above) and add/change other options to your needs (see the options reference below)
+* Start the service with '/etc/init.d/banip start' and check check everything is working by running '/etc/init.d/banip status'
 
 ## banIP CLI interface
-* All important banIP functions are accessible via CLI. A LuCI frontend will be available in due course.
+* All important banIP functions are accessible via CLI.
 ```
 ~# /etc/init.d/banip
 Syntax: /etc/init.d/banip [command]
@@ -135,6 +137,7 @@ Available commands:
 | ban_autoallowlist       | option | 1                             | add wan IPs/subnets automatically to the local allowlist                              |
 | ban_autoblocklist       | option | 1                             | add suspicious attacker IPs automatically to the local blocklist                      |
 | ban_allowlistonly       | option | 0                             | restrict the internet access from/to a small number of secure websites/IPs            |
+| ban_basedir             | option | /tmp                          | base working directory while banIP processing                                         |
 | ban_reportdir           | option | /tmp/banIP-report             | directory where banIP stores the report files                                         |
 | ban_backupdir           | option | /tmp/banIP-backup             | directory where banIP stores the compressed backup files                              |
 | ban_protov4             | option | - / autodetect                | enable IPv4 support                                                                   |
@@ -216,19 +219,19 @@ Available commands:
 ```
 ~# /etc/init.d/banip status
 ::: banIP runtime information
-  + status            : active
-  + version           : 0.8.1-2
-  + element_count     : 206644
-  + active_feeds      : allowlistvMAC, allowlistv4, allowlistv6, torv4, torv6, countryv6, countryv4, dohv4, dohv6, firehol1v4, deblv4, deblv6,
-                         adguardv6, adguardv4, adguardtrackersv6, adguardtrackersv4, adawayv6, adawayv4, oisdsmallv6, oisdsmallv4, stevenblack
-                        v6, stevenblackv4, yoyov6, yoyov4, antipopadsv4, urlhausv4, antipopadsv6, blocklistvMAC, blocklistv4, blocklistv6
+  + status            : active (nft: ✔, monitor: ✔)
+  + version           : 0.8.1-3
+  + element_count     : 180596
+  + active_feeds      : allowlistvMAC, allowlistv4, allowlistv6, adawayv4, adawayv6, adguardv4, cinsscorev4, adguardv6, countryv6, countryv4, 
+                        deblv4, deblv6, dohv4, dohv6, firehol1v4, oisdsmallv6, oisdsmallv4, urlvirv4, webclientv4, blocklistvMAC, blocklistv4,
+                         blocklistv6
   + active_devices    : eth2
   + active_interfaces : wan, wan6
-  + active_subnets    : 91.61.199.218/24, 2a02:910c:0:80:e542:4b0c:846d:1d33/128
-  + run_info          : base_dir: /tmp, backup_dir: /mnt/data/banIP-backup, report_dir: /mnt/data/banIP-report, feed_file: /etc/banip/banip.feeds
-  + run_flags         : proto (4/6): ✔/✔, log (wan-inp/wan-fwd/lan-fwd): ✔/✔/✔, deduplicate: ✔, split: ✘, allowed only: ✘
-  + last_run          : action: restart, duration: 1m 6s, date: 2023-02-25 08:55:55
-  + system_info       : cores: 2, memory: 1826, device: Turris Omnia, OpenWrt SNAPSHOT r22125-52ddb38469
+  + active_subnets    : 91.64.168.218/24, 2a02:710c:0:80:e342:4b0c:725d:1d43/128
+  + run_info          : base: /tmp, backup: /mnt/data/banIP-backup, report: /mnt/data/banIP-report, feed: /etc/banip/banip.feeds
+  + run_flags         : auto: ✔, proto (4/6): ✔/✔, log (wan-inp/wan-fwd/lan-fwd): ✔/✔/✔, dedup: ✔, split: ✘, allowed only: ✘
+  + last_run          : action: restart, duration: 0m 58s, date: 2023-03-06 13:50:27
+  + system_info       : cores: 2, memory: 1831, device: Turris Omnia, OpenWrt SNAPSHOT r22151-1d82a47b49
 ```
 
 **banIP search information**  
@@ -240,6 +243,32 @@ Available commands:
     Looking for IP 221.228.105.173 on 2023-02-08 22:12:48
     ---
     IP found in set oisdbasicv4
+```
+
+**banIP survey information**  
+```
+~# /etc/init.d/banip survey cinsscorev4
+:::
+::: banIP Survey
+:::
+    List the elements of set cinsscorev4 on 2023-03-06 14:07:58
+    ---
+1.10.187.179
+1.10.203.30
+1.10.255.58
+1.11.67.53
+1.11.114.211
+1.11.208.29
+1.12.75.87
+1.12.231.227
+1.12.247.134
+1.12.251.141
+1.14.96.156
+1.14.250.37
+1.15.40.79
+1.15.71.140
+1.15.77.237
+[...]
 ```
 
 **allow-/blocklist handling**  
@@ -257,7 +286,7 @@ banIP only supports logfile scanning via logread, so to monitor attacks on Aster
 **tweaks for low memory systems**  
 nftables supports the atomic loading of rules/sets/members, which is cool but unfortunately is also very memory intensive. To reduce the memory pressure on low memory systems (i.e. those with 256-512Mb RAM), you should optimize your configuration with the following options:  
 
-    * point 'ban_reportdir' and 'ban_backupdir' to an external usb drive
+    * point 'ban_basedir', 'ban_reportdir' and 'ban_backupdir' to an external usb drive
     * set 'ban_cores' to '1' (only useful on a multicore system) to force sequential feed processing
     * set 'ban_splitsize' e.g. to '1000' to split the load of an external set after every 1000 lines/members
 
@@ -265,7 +294,7 @@ nftables supports the atomic loading of rules/sets/members, which is cool but un
 By default banIP uses the following pre-configured download options:
 ```
     * aria2c: --timeout=20 --allow-overwrite=true --auto-file-renaming=false --log-level=warn --dir=/ -o
-    * curl: --connect-timeout 20 --silent --show-error --location -o
+    * curl: --connect-timeout 20 --fail --silent --show-error --location -o
     * uclient-fetch: --timeout=20 -O
     * wget: --no-cache --no-cookies --max-redirect=0 --timeout=20 -O
 ```
