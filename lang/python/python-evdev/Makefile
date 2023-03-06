@@ -18,6 +18,8 @@ PKG_MAINTAINER:=Paulo Costa <me@paulo.costa.nom.br>, Alexandru Ardelean <ardelea
 PYPI_NAME:=evdev
 PKG_HASH:=8782740eb1a86b187334c07feb5127d3faa0b236e113206dfe3ae8f77fb1aaf1
 
+PYTHON3_PKG_FORCE_DISTUTILS_SETUP:=1
+
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
