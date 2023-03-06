@@ -48,6 +48,11 @@ define Package/fail2ban/conffiles
 /etc/config/fail2ban
 endef
 
+define Build/Compile
+	cd $(PKG_BUILD_DIR) && ./fail2ban-2to3
+	$(call Py3Build/Compile)
+endef
+
 define Py3Package/fail2ban/filespec
 +|$(PYTHON3_PKG_DIR)
 -|$(PYTHON3_PKG_DIR)/fail2ban/tests
@@ -75,11 +80,6 @@ define Py3Package/fail2ban/install
 
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/fail2ban.defaults $(1)/etc/uci-defaults/99_fail2ban
-endef
-
-define Py3Build/Compile
-	cd $(PKG_BUILD_DIR) && ./fail2ban-2to3
-	$(call Py3Build/Compile/Default)
 endef
 
 $(eval $(call Py3Package,fail2ban))
