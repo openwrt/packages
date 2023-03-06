@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-cached-property
 PKG_VERSION:=1.5.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=cached-property
 PKG_HASH:=9fa5755838eecbb2d234c3aa390bd80fbd3ac6b6869109bfc1b499f7bd89a130
@@ -14,8 +14,6 @@ PKG_LICENSE_FILES:=LICENSE
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
-
-PYTHON3_PKG_SETUP_ARGS:=
 
 define Package/python3-cached-property
   SECTION:=lang

@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pycurl
 PKG_VERSION:=7.45.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=5730590be0271364a5bddd9e245c9cc0fb710c4cbacbdd95264a3122d23224ca
@@ -31,8 +31,6 @@ endef
 define Package/python3-curl/description
 PycURL is a Python interface to libcurl, the multiprotocol file transfer library.
 endef
-
-PYTHON3_PKG_SETUP_ARGS:=
 
 ifdef CONFIG_LIBCURL_OPENSSL
   PYTHON3_PKG_BUILD_VARS:=PYCURL_SSL_LIBRARY=openssl
