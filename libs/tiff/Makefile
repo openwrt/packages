@@ -64,7 +64,8 @@ CMAKE_OPTIONS += \
 	-Dzstd=OFF \
 	-Dwebp=OFF \
 	-Djpeg12=OFF \
-	-Dcxx=OFF
+	-Dcxx=OFF \
+	-Dlibdeflate=OFF
 
 TARGET_CFLAGS += $(TARGET_CPPFLAGS)
 
