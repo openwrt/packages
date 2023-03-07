@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=i2c-tools
 PKG_VERSION:=4.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/software/utils/i2c-tools
@@ -69,6 +69,8 @@ endef
 
 PYTHON3_PKG_SETUP_ARGS:=
 PYTHON3_PKG_SETUP_DIR:=py-smbus
+PYTHON3_PKG_WHEEL_NAME:=smbus
+PYTHON3_PKG_WHEEL_VERSION:=1.1
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
@@ -84,6 +86,10 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include $(1)/usr/lib
 	$(CP) $(PKG_BUILD_DIR)/include/i2c $(1)/usr/include/
 	$(CP) $(PKG_BUILD_DIR)/lib/libi2c.{a,so*} $(1)/usr/lib/
+endef
+
+define Build/Install
+	$(call Py3Build/Install)
 endef
 
 define Package/libi2c/install
