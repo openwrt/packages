@@ -44,7 +44,7 @@ fi
 
 # init nft namespace
 #
-if [ "${ban_action}" != "reload" ] || ! "${ban_nftcmd}" -t list table inet banIP >/dev/null 2>&1; then
+if [ "${ban_action}" != "reload" ] || ! "${ban_nftcmd}" -t list set inet banIP allowlistvMAC >/dev/null 2>&1; then
 	if f_nftinit "${ban_tmpfile}".init.nft; then
 		f_log "info" "nft namespace initialized"
 	else
