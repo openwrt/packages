@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua-eco
-PKG_VERSION:=2.0.0
+PKG_VERSION:=2.1.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL=https://github.com/zhaojh329/lua-eco/releases/download/v$(PKG_VERSION)
-PKG_HASH:=df2bed363ac89ce5c776c02baa914fbf4b096e0b87cbf4347d1a48cb4d3b8428
+PKG_HASH:=0e6d1906f15f350a825a4325cd579251baf6eb4b7ce6ef88f57357de49c0e00e
 
 PKG_MAINTAINER:=Jianhui Zhao <zhaojh329@gmail.com>
 PKG_LICENSE:=MIT
@@ -30,10 +30,9 @@ define Package/lua-eco
 endef
 
 define Package/lua-eco/description
-  Lua-eco is a Lua interpreter with a built-in libev event loop. It makes all Lua code
-  running in Lua coroutines so code that does I/O can be suspended until data is ready.
-  This allows you write code as if you're using blocking I/O, while still allowing code
-  in other coroutines to run when you'd otherwise wait for I/O. It's kind of like Goroutines.
+  Lua-eco is a Lua interpreter with a built-in event loop for scheduling
+  lightweight coroutines automatically, enabling efficient concurrency in
+  Lua. Build high-performance, scalable applications.
 endef
 
 define Package/lua-eco/Module
@@ -56,15 +55,16 @@ Package/lua-eco-ssl=$(call Package/lua-eco/Module,ssl,\
   +LUA_ECO_OPENSSL:libopenssl +LUA_ECO_WOLFSSL:libwolfssl \
   +LUA_ECO_MBEDTLS:libmbedtls +LUA_ECO_MBEDTLS:zlib +lua-eco-socket)
 Package/lua-eco-ubus=$(call Package/lua-eco/Module,ubus,+libubus)
-Package/lua-eco-termios=$(call Package/lua-eco/Module,termios)
 Package/lua-eco-http=$(call Package/lua-eco/Module,http/https,+lua-eco-dns +lua-eco-ssl +lua-eco-log)
 Package/lua-eco-mqtt=$(call Package/lua-eco/Module,mqtt,+lua-eco-socket +lua-eco-dns +lua-mosquitto)
 Package/lua-eco-websocket=$(call Package/lua-eco/Module,websocket,+lua-eco-http +lua-eco-base64 +lua-eco-sha1)
+Package/lua-eco-termios=$(call Package/lua-eco/Module,termios)
+Package/lua-eco-network=$(call Package/lua-eco/Module,network)
 
 define Package/lua-eco-ssl/config
 	choice
 		prompt "SSL Library"
-		default LUA_ECO_WOLFSSL
+		default LUA_ECO_MBEDTLS
 
 		config LUA_ECO_OPENSSL
 			bool "OpenSSL"
@@ -170,6 +170,11 @@ define Package/lua-eco-termios/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/lua/eco/termios.so $(1)/usr/lib/lua/eco
 endef
 
+define Package/lua-eco-network/install
+	$(INSTALL_DIR) $(1)/usr/lib/lua/eco
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/lua/eco/network.so $(1)/usr/lib/lua/eco
+endef
+
 $(eval $(call BuildPackage,lua-eco))
 $(eval $(call BuildPackage,lua-eco-log))
 $(eval $(call BuildPackage,lua-eco-sys))
@@ -184,3 +189,4 @@ $(eval $(call BuildPackage,lua-eco-http))
 $(eval $(call BuildPackage,lua-eco-mqtt))
 $(eval $(call BuildPackage,lua-eco-websocket))
 $(eval $(call BuildPackage,lua-eco-termios))
+$(eval $(call BuildPackage,lua-eco-network))
