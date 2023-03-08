@@ -1,11 +1,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=yt-dlp
-PKG_VERSION:=2023.1.6
+PKG_VERSION:=2023.3.4
 PKG_RELEASE:=1
 
 PYPI_NAME:=yt-dlp
-PKG_HASH:=3a783a36751ced16368f40b3ba865ab39b30689ed8056f1ee2346aa3839a0b0f
+PKG_HASH:=265d5da97a76c15d7d9a4088a67b78acd5dcf6f8cfd8257c52f581ff996ff515
 
 PKG_MAINTAINER:=Michal Vasilek <michal.vasilek@nic.cz>
 PKG_LICENSE:=Unlicense
