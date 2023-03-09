@@ -36,12 +36,7 @@ define Package/maturin
 endef
 
 define Host/Compile
-	( \
-		cd $(HOST_BUILD_DIR) ; \
-		export PATH="$(CARGO_HOME)/bin:$(PATH)" ; \
-		CARGO_HOME=$(CARGO_HOME) \
-		cargo install --path . --root $(HOST_BUILD_DIR) ; \
-	)
+	$(call Host/Compile/Cargo)
 endef
 
 define Package/maturin/description
@@ -51,7 +46,7 @@ endef
 
 define Host/Install
 	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/bin
-	$(INSTALL_BIN) $(HOST_BUILD_DIR)/bin/maturin $(STAGING_DIR_HOSTPKG)/bin/maturin
+	$(INSTALL_BIN) $(HOST_INSTALL_DIR)/bin/maturin $(STAGING_DIR_HOSTPKG)/bin/maturin
 endef
 
 $(eval $(call HostBuild))
