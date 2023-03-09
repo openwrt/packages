@@ -26,6 +26,12 @@ PYTHON3_PKG_BUILD:=0
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python3-package.mk
 
+ifneq ($(CONFIG_PACKAGE_libgpiodcxx),)
+CONFIGURE_ARGS += --enable-bindings-cxx
+else
+CONFIGURE_ARGS += --disable-bindings-cxx
+endif
+
 ifneq ($(CONFIG_PACKAGE_gpiod-tools),)
 CONFIGURE_ARGS += --enable-tools
 endif
@@ -59,6 +65,18 @@ endef
 define Package/gpiod-tools/description
   Tools for interacting with the linux GPIO character device
   (gpiod stands for GPIO device).
+endef
+
+define Package/libgpiodcxx
+  SECTION:=libs
+  CATEGORY:=Libraries
+  URL:=https://git.kernel.org/pub/scm/libs/libgpiod/libgpiod.git
+  TITLE:=C++ binding for libgpiod
+  DEPENDS:=+libstdcpp +libgpiod
+endef
+
+define Package/libgpiodcxx/description
+  This package contains the C++ binding for libgpiod.
 endef
 
 define Package/python3-gpiod
@@ -98,6 +116,15 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libgpiod.pc $(1)/usr/lib/pkgconfig/
 
+    ifneq ($(CONFIG_PACKAGE_libgpiodcxx),)
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/gpiodcxx $(1)/usr/include/
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/gpiod.hpp $(1)/usr/include/
+
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgpiodcxx.{so*,a} $(1)/usr/lib/
+
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libgpiodcxx.pc $(1)/usr/lib/pkgconfig/
+    endif
+
     ifneq ($(CONFIG_PACKAGE_python3-gpiod),)
 	$(INSTALL_DIR) $(1)$(PYTHON3_PKG_DIR)
 	$(CP) $(PKG_INSTALL_DIR)$(PYTHON3_PKG_DIR)/* $(1)$(PYTHON3_PKG_DIR)
@@ -107,6 +134,11 @@ endef
 define Package/libgpiod/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgpiod.so.* $(1)/usr/lib/
+endef
+
+define Package/libgpiodcxx/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgpiodcxx.so.* $(1)/usr/lib/
 endef
 
 define Package/gpiod-tools/install
@@ -119,6 +151,7 @@ define Py3Package/python3-gpiod/install
 endef
 
 $(eval $(call BuildPackage,libgpiod))
+$(eval $(call BuildPackage,libgpiodcxx))
 $(eval $(call BuildPackage,gpiod-tools))
 $(eval $(call Py3Package,python3-gpiod))
 $(eval $(call BuildPackage,python3-gpiod))
