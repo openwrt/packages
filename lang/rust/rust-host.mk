@@ -3,7 +3,7 @@
 # Copyright (C) 2023 Luca Barbato and Donald Hoskins
 
 # Rust Environmental Vars
-CONFIG_HOST_SUFFIX:=$(shell cut -d"-" -f4 <<<"$(GNU_HOST_NAME)")
+CONFIG_HOST_SUFFIX:=$(word 4, $(subst -, ,$(GNU_HOST_NAME)))
 RUSTC_HOST_ARCH:=$(HOST_ARCH)-unknown-linux-$(CONFIG_HOST_SUFFIX)
 CARGO_HOME:=$(STAGING_DIR_HOST)/cargo
 
