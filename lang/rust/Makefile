@@ -8,23 +8,20 @@ PKG_NAME:=rust
 PKG_VERSION:=1.67.1
 PKG_RELEASE:=1
 
+PKG_SOURCE:=rustc-$(PKG_VERSION)-src.tar.gz
+PKG_SOURCE_URL:=https://static.rust-lang.org/dist/
+PKG_HASH:=46483d3e5de85a3bd46f8e7a3ae1837496391067dbe713a25d3cf051b3d9ff6e
+HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/rustc-$(PKG_VERSION)-src/
+
+PKG_MAINTAINER:=Luca Barbato <lu_zero@luminem.org>
 PKG_LICENSE:=Apache-2.0 MIT
 PKG_LICENSE_FILES:=LICENSE-APACHE LICENSE-MIT
 
-HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/rustc-$(PKG_VERSION)-src/
-PKG_SOURCE:=rustc-$(PKG_VERSION)-src.tar.gz
-PKG_SOURCE_URL:=https://static.rust-lang.org/dist/
-PKG_SOURCE_VERSION:=$(PKG_VERSION)
-PKG_HASH:=46483d3e5de85a3bd46f8e7a3ae1837496391067dbe713a25d3cf051b3d9ff6e
-PKG_MAINTAINER:=Luca Barbato <lu_zero@luminem.org>
-
+HOST_BUILD_DEPENDS:=python3/host
 PKG_HOST_ONLY:=1
 
-include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
-
-# Requires Python3 to build
-HOST_BUILD_DEPENDS:=python3/host
+include $(INCLUDE_DIR)/host-build.mk
 
 # rust environment variables
 include ./rust-host.mk
@@ -40,36 +37,36 @@ RUST_UNINSTALL:=$(CARGO_HOME)/lib/rustlib/uninstall.sh
 
 # Target Flags
 TARGET_CONFIGURE_ARGS = \
-  --set=target.$(RUSTC_TARGET_ARCH).ar=$(TARGET_AR) \
-  --set=target.$(RUSTC_TARGET_ARCH).cc=$(TARGET_CC_NOCACHE) \
-  --set=target.$(RUSTC_TARGET_ARCH).cxx=$(TARGET_CXX_NOCACHE) \
-  --set=target.$(RUSTC_TARGET_ARCH).linker=$(TARGET_CC_NOCACHE) \
-  --set=target.$(RUSTC_TARGET_ARCH).musl-root=$(TOOLCHAIN_DIR) \
-  --set=target.$(RUSTC_TARGET_ARCH).ranlib=$(TARGET_RANLIB)
+	--set=target.$(RUSTC_TARGET_ARCH).ar=$(TARGET_AR) \
+	--set=target.$(RUSTC_TARGET_ARCH).cc=$(TARGET_CC_NOCACHE) \
+	--set=target.$(RUSTC_TARGET_ARCH).cxx=$(TARGET_CXX_NOCACHE) \
+	--set=target.$(RUSTC_TARGET_ARCH).linker=$(TARGET_CC_NOCACHE) \
+	--set=target.$(RUSTC_TARGET_ARCH).musl-root=$(TOOLCHAIN_DIR) \
+	--set=target.$(RUSTC_TARGET_ARCH).ranlib=$(TARGET_RANLIB)
 
 # CARGO_HOME is an environmental
 HOST_CONFIGURE_OPTS += CARGO_HOME="$(CARGO_HOME)"
 
 # Rust Configuration Arguments
 HOST_CONFIGURE_ARGS = \
-  --build=$(RUSTC_HOST_ARCH) \
-  --target=$(RUSTC_TARGET_ARCH),$(RUSTC_HOST_ARCH) \
-  --host=$(RUSTC_HOST_ARCH) \
-  --prefix=$(CARGO_HOME) \
-  --bindir=$(CARGO_HOME)/bin \
-  --libdir=$(CARGO_HOME)/lib \
-  --sysconfdir=$(CARGO_HOME)/etc \
-  --datadir=$(CARGO_HOME)/share \
-  --mandir=$(CARGO_HOME)/man \
-  --dist-compression-formats=xz \
-  --enable-llvm-link-shared \
-  --enable-llvm-plugins \
-  --enable-missing-tools \
-  --enable-ninja \
-  --disable-sanitizers \
-  --release-channel=stable \
-  --enable-cargo-native-static \
-  ${TARGET_CONFIGURE_ARGS}
+	--build=$(RUSTC_HOST_ARCH) \
+	--target=$(RUSTC_TARGET_ARCH),$(RUSTC_HOST_ARCH) \
+	--host=$(RUSTC_HOST_ARCH) \
+	--prefix=$(CARGO_HOME) \
+	--bindir=$(CARGO_HOME)/bin \
+	--libdir=$(CARGO_HOME)/lib \
+	--sysconfdir=$(CARGO_HOME)/etc \
+	--datadir=$(CARGO_HOME)/share \
+	--mandir=$(CARGO_HOME)/man \
+	--dist-compression-formats=xz \
+	--enable-llvm-link-shared \
+	--enable-llvm-plugins \
+	--enable-missing-tools \
+	--enable-ninja \
+	--disable-sanitizers \
+	--release-channel=stable \
+	--enable-cargo-native-static \
+	$(TARGET_CONFIGURE_ARGS)
 
 define Host/Prepare
 	# Ensure rust temp directory
@@ -112,13 +109,13 @@ endef
 
 # Packages the Distribution Artifacts into HOST and TARGET bundles.
 define Host/PackageDist
-	cd $(HOST_BUILD_DIR)/build/dist && \
-	  $(TAR) -cJf $(DL_DIR)/$(RUST_INSTALL_TARGET_FILENAME) \
-	  rust-*-$(RUSTC_TARGET_ARCH).tar.xz
-
-	cd $(HOST_BUILD_DIR)/build/dist && \
-	  $(TAR) -cJf $(DL_DIR)/$(RUST_INSTALL_HOST_FILENAME) \
-	  --exclude rust-*-$(RUSTC_TARGET_ARCH).tar.xz *.xz
+	( \
+		cd $(HOST_BUILD_DIR)/build/dist ; \
+		$(TAR) -cJf $(DL_DIR)/$(RUST_INSTALL_TARGET_FILENAME) \
+			rust-*-$(RUSTC_TARGET_ARCH).tar.xz ; \
+		$(TAR) -cJf $(DL_DIR)/$(RUST_INSTALL_HOST_FILENAME) \
+			--exclude rust-*-$(RUSTC_TARGET_ARCH).tar.xz *.xz ; \
+	)
 endef
 
 define Package/rust
