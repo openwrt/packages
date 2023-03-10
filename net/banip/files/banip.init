@@ -97,7 +97,7 @@ service_triggers() {
 	local iface trigger delay
 
 	trigger="$(uci_get banip global ban_trigger)"
-	delay="$(uci_get banip global ban_triggerdelay "5")"
+	delay="$(uci_get banip global ban_triggerdelay "10")"
 	PROCD_RELOAD_DELAY=$((delay * 1000))
 
 	for iface in ${trigger}; do

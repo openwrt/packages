@@ -174,7 +174,7 @@ if [ -x "${ban_logreadcmd}" ] && [ -n "${ban_logterm%%??}" ]; then
 				log_count="$(printf "%s\n" "${log_raw}" | grep -c "found '${ip}'")"
 				if [ "${log_count}" -ge "${ban_logcount}" ]; then
 					if "${ban_nftcmd}" add element inet banIP "blocklist${proto}" "{ ${ip} ${nft_expiry} }" >/dev/null 2>&1; then
-						f_log "info" "added IP${proto} '${ip}' (${nft_expiry:-"-"}) to blocklist${proto} set"
+						f_log "info" "added IP${proto} '${ip}' (expiry: ${nft_expiry:-"-"}) to blocklist${proto} set"
 						if [ "${ban_autoblocklist}" = "1" ] && ! grep -q "^${ip}" "${ban_blocklist}"; then
 							printf "%-42s%s\n" "${ip}" "# added on $(date "+%Y-%m-%d %H:%M:%S")" >>"${ban_blocklist}"
 							f_log "info" "added IP${proto} '${ip}' to local blocklist"

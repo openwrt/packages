@@ -31,27 +31,27 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 | firehol2            | firehol level 2 compilation    |    x    |    x    |         | [Link](https://iplists.firehol.org/?ipset=firehol_level2)     |
 | firehol3            | firehol level 3 compilation    |    x    |    x    |         | [Link](https://iplists.firehol.org/?ipset=firehol_level3)     |
 | firehol4            | firehol level 4 compilation    |    x    |    x    |         | [Link](https://iplists.firehol.org/?ipset=firehol_level4)     |
-| greensnow           | suspicious server IPs          |    x    |    x    |    x    | [Link](https://greensnow.co)                                  |
+| greensnow           | suspicious server IPs          |    x    |    x    |         | [Link](https://greensnow.co)                                  |
 | iblockads           | Advertising IPs                |         |         |    x    | [Link](https://www.iblocklist.com)                            |
-| iblockspy           | Malicious spyware IPs          |    x    |    x    |    x    | [Link](https://www.iblocklist.com)                            |
+| iblockspy           | Malicious spyware IPs          |    x    |    x    |         | [Link](https://www.iblocklist.com)                            |
 | myip                | real-time IP blocklist         |    x    |    x    |         | [Link](https://myip.ms)                                       |
 | nixspam             | iX spam protection             |    x    |    x    |         | [Link](http://www.nixspam.org)                                |
 | oisdbig             | OISD-big IPs                   |         |         |    x    | [Link](https://github.com/dibdot/banIP-IP-blocklists)         |
 | oisdnsfw            | OISD-nsfw IPs                  |         |         |    x    | [Link](https://github.com/dibdot/banIP-IP-blocklists)         |
 | oisdsmall           | OISD-small IPs                 |         |         |    x    | [Link](https://github.com/dibdot/banIP-IP-blocklists)         |
 | proxy               | open proxies                   |    x    |         |         | [Link](https://iplists.firehol.org/?ipset=proxylists)         |
-| ssbl                | SSL botnet IPs                 |    x    |    x    |    x    | [Link](https://sslbl.abuse.ch)                                |
+| ssbl                | SSL botnet IPs                 |    x    |    x    |         | [Link](https://sslbl.abuse.ch)                                |
 | stevenblack         | stevenblack IPs                |         |         |    x    | [Link](https://github.com/dibdot/banIP-IP-blocklists)         |
 | talos               | talos IPs                      |    x    |    x    |         | [Link](https://talosintelligence.com/reputation_center)       |
-| threat              | emerging threats               |    x    |    x    |    x    | [Link](https://rules.emergingthreats.net)                     |
-| threatview          | malicious IPs                  |    x    |    x    |    x    | [Link](https://threatview.io)                                 |
-| tor                 | tor exit nodes                 |    x    |    x    |    x    | [Link](https://github.com/SecOps-Institute/Tor-IP-Addresses)  |
+| threat              | emerging threats               |    x    |    x    |         | [Link](https://rules.emergingthreats.net)                     |
+| threatview          | malicious IPs                  |    x    |    x    |         | [Link](https://threatview.io)                                 |
+| tor                 | tor exit nodes                 |    x    |    x    |         | [Link](https://github.com/SecOps-Institute/Tor-IP-Addresses)  |
 | uceprotect1         | spam protection level 1        |    x    |    x    |         | [Link](http://www.uceprotect.net/en/index.php)                |
 | uceprotect2         | spam protection level 2        |    x    |    x    |         | [Link](http://www.uceprotect.net/en/index.php)                |
 | uceprotect3         | spam protection level 3        |    x    |    x    |         | [Link](http://www.uceprotect.net/en/index.php)                |
 | urlhaus             | urlhaus IDS IPs                |    x    |    x    |         | [Link](https://urlhaus.abuse.ch)                              |
-| urlvir              | malware related IPs            |    x    |    x    |    x    | [Link](https://iplists.firehol.org/?ipset=urlvir)             |
-| webclient           | malware related IPs            |    x    |    x    |    x    | [Link](https://iplists.firehol.org/?ipset=firehol_webclient)  |
+| urlvir              | malware related IPs            |    x    |    x    |         | [Link](https://iplists.firehol.org/?ipset=urlvir)             |
+| webclient           | malware related IPs            |    x    |    x    |         | [Link](https://iplists.firehol.org/?ipset=firehol_webclient)  |
 | voip                | VoIP fraud blocklist           |    x    |    x    |         | [Link](https://voipbl.org)                                    |
 | yoyo                | yoyo IPs                       |         |         |    x    | [Link](https://github.com/dibdot/banIP-IP-blocklists)         |
 
@@ -151,8 +151,10 @@ Available commands:
 | ban_deduplicate         | option | 1                             | deduplicate IP addresses across all active sets                                       |
 | ban_splitsize           | option | 0                             | split ext. sets after every n lines/members (saves RAM)                               |
 | ban_cores               | option | - / autodetect                | limit the cpu cores used by banIP (saves RAM)                                         |
+| ban_nftloglevel         | option | warn                          | nft loglevel, values: emerg, alert, crit, err, warn, notice, info, debug, audit       |
+| ban_nftpriority         | option | -200                          | nft priority for the banIP table (default is the prerouting table priority)           |
+| ban_nftpolicy           | option | memory                        | nft policy for banIP-related sets, values: memory, performance                        |
 | ban_nftexpiry           | option | -                             | expiry time for auto added blocklist members, e.g. '5m', '2h' or '1d'                 |
-| ban_nftpriority         | option | -200                          | nft banIP table priority (default is the prerouting table priority)                   |
 | ban_feed                | list   | -                             | external download feeds, e.g. 'yoyo', 'doh', 'country' or 'talos' (see feed table)    |
 | ban_asn                 | list   | -                             | ASNs for the 'asn' feed, e.g.'32934'                                                  |
 | ban_country             | list   | -                             | country iso codes for the 'country' feed, e.g. 'ru'                                   |
@@ -222,18 +224,18 @@ Available commands:
 ~# /etc/init.d/banip status
 ::: banIP runtime information
   + status            : active (nft: ✔, monitor: ✔)
-  + version           : 0.8.2-1
-  + element_count     : 180596
-  + active_feeds      : allowlistvMAC, allowlistv4, allowlistv6, adawayv4, adawayv6, adguardv4, cinsscorev4, adguardv6, countryv6, countryv4, 
-                        deblv4, deblv6, dohv4, dohv6, firehol1v4, oisdsmallv6, oisdsmallv4, urlvirv4, webclientv4, blocklistvMAC, blocklistv4,
-                         blocklistv6
-  + active_devices    : eth2
-  + active_interfaces : wan, wan6
-  + active_subnets    : 91.64.168.218/24, 2a02:710c:0:80:e342:4b0c:725d:1d43/128
-  + run_info          : base: /tmp, backup: /mnt/data/banIP-backup, report: /mnt/data/banIP-report, feed: /etc/banip/banip.feeds
+  + version           : 0.8.2-2
+  + element_count     : 211397
+  + active_feeds      : allowlistvMAC, allowlistv4, allowlistv6, adawayv4, adawayv6, adguardv4, adguardtrackersv4, adguardv6, adguardtrackersv
+                        6, antipopadsv4, antipopadsv6, cinsscorev4, countryv6, countryv4, deblv4, deblv6, dohv4, dohv6, firehol1v4, oisdsmallv
+                        6, oisdsmallv4, stevenblackv6, stevenblackv4, webclientv4, blocklistvMAC, blocklistv4, blocklistv6
+  + active_devices    : eth2 ::: wan, wan6
+  + active_subnets    : 91.64.148.211/24, 2b02:710c:0:80:e442:4b0c:637d:1d33/128
+  + nft_info          : priority: -200, policy: memory, loglevel: warn, expiry: -
+  + run_info          : base: /mnt/data/banIP, backup: /mnt/data/banIP/backup, report: /mnt/data/banIP/report, feed: /etc/banip/banip.feeds
   + run_flags         : auto: ✔, proto (4/6): ✔/✔, log (wan-inp/wan-fwd/lan-fwd): ✔/✔/✔, dedup: ✔, split: ✘, allowed only: ✘
-  + last_run          : action: restart, duration: 0m 58s, date: 2023-03-06 13:50:27
-  + system_info       : cores: 2, memory: 1831, device: Turris Omnia, OpenWrt SNAPSHOT r22151-1d82a47b49
+  + last_run          : action: restart, duration: 0m 55s, date: 2023-03-10 19:33:08
+  + system_info       : cores: 2, memory: 1830, device: Turris Omnia, OpenWrt SNAPSHOT r22248-bf055fcdca
 ```
 
 **banIP search information**  
@@ -242,9 +244,9 @@ Available commands:
 :::
 ::: banIP Search
 :::
-    Looking for IP 221.228.105.173 on 2023-02-08 22:12:48
+    Looking for IP '221.228.105.173' on 2023-02-08 22:12:48
     ---
-    IP found in set oisdbasicv4
+    IP found in Set 'oisdbasicv4'
 ```
 
 **banIP survey information**  
@@ -253,7 +255,7 @@ Available commands:
 :::
 ::: banIP Survey
 :::
-    List the elements of set cinsscorev4 on 2023-03-06 14:07:58
+    List the elements of Set 'cinsscorev4' on 2023-03-06 14:07:58
     ---
 1.10.187.179
 1.10.203.30
@@ -272,7 +274,7 @@ Available commands:
 1.15.77.237
 [...]
 ```
-**default regex for logfile parsing**
+**default regex for logfile parsing**  
 ```
 list ban_logterm 'Exit before auth from'
 list ban_logterm 'luci: failed login'
@@ -299,6 +301,7 @@ nftables supports the atomic loading of rules/sets/members, which is cool but un
     * point 'ban_basedir', 'ban_reportdir' and 'ban_backupdir' to an external usb drive
     * set 'ban_cores' to '1' (only useful on a multicore system) to force sequential feed processing
     * set 'ban_splitsize' e.g. to '1000' to split the load of an external set after every 1000 lines/members
+    * set 'ban_reportelements' to '0' to disable the CPU intensive counting of set elements
 
 **tweak the download options**  
 By default banIP uses the following pre-configured download options:
