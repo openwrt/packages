@@ -88,9 +88,6 @@ outputCache=
 awk='awk'
 load_environment_flag=
 
-. /lib/functions/network.sh
-. /usr/share/libubox/jshn.sh
-
 debug() { local i j; for i in "$@"; do eval "j=\$$i"; echo "${i}: ${j} "; done; }
 
 uci_add_list_if_new() {
@@ -1562,6 +1559,8 @@ stop_service() { load_validate_config 'config' adb_stop "'$*'"; }
 version() { echo "$PKG_VERSION"; }
 
 load_validate_config() {
+	. /lib/functions/network.sh
+	. /usr/share/libubox/jshn.sh
 	local enabled
 	local force_dns
 	local force_dns_port
