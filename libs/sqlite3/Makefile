@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sqlite
-PKG_VERSION:=3400000
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=3410100
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-autoconf-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://www.sqlite.org/2022/
-PKG_HASH:=0333552076d2700c75352256e91c78bf5cd62491589ba0c69aed0a81868980e7
+PKG_SOURCE_URL:=https://www.sqlite.org/2023/
+PKG_HASH:=4dadfbeab9f8e16c695d4fbbc51c16b2f77fb97ff4c1c3d139919dfc038c9e33
 
 PKG_CPE_ID:=cpe:/a:sqlite:sqlite
 PKG_LICENSE:=PUBLICDOMAIN
@@ -32,7 +32,6 @@ PKG_CONFIG_DEPENDS := \
 	CONFIG_SQLITE3_FTS3 \
 	CONFIG_SQLITE3_FTS4 \
 	CONFIG_SQLITE3_FTS5 \
-	CONFIG_SQLITE3_JSON1 \
 	CONFIG_SQLITE3_LIBEDIT \
 	CONFIG_SQLITE3_READLINE \
 	CONFIG_SQLITE3_RTREE \
@@ -110,7 +109,6 @@ CONFIGURE_ARGS += \
 	$(if $(CONFIG_SQLITE3_FTS3),--enable-fts3,--disable-fts3) \
 	$(if $(CONFIG_SQLITE3_FTS4),--enable-fts4,--disable-fts4) \
 	$(if $(CONFIG_SQLITE3_FTS5),--enable-fts5,--disable-fts5) \
-	$(if $(CONFIG_SQLITE3_JSON1),--enable-json1,--disable-json1) \
 	$(if $(CONFIG_SQLITE3_RTREE),--enable-rtree,--disable-rtree) \
 	$(if $(CONFIG_SQLITE3_SESSION),--enable-session,--disable-session)
 
