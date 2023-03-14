@@ -129,9 +129,10 @@ endef
 
 define Package/python3-gensio
 $(call Package/gensio/Default)
-  TITLE+= (Python3-bindings)
+  TITLE+= (Python bindings)
   SECTION:=lang
   CATEGORY:=Languages
+  SUBMENU:=Python
   DEPENDS:=+PACKAGE_python3-gensio:python3-light +libgensiocpp
 endef
 
