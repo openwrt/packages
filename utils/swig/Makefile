@@ -20,6 +20,7 @@ PKG_LICENSE_FILES:=LICENSE
 
 PKG_HOST_ONLY:=1
 HOST_BUILD_PARALLEL:=1
+HOST_BUILD_DEPENDS:=pcre2/host
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
@@ -33,7 +34,7 @@ define Package/swig
 endef
 
 HOST_CONFIGURE_ARGS += \
-	--without-pcre
+	--with-pcre
 
 define Package/swig/description
   tool that generates bindings for various languages
