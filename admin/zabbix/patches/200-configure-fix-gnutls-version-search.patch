@@ -1,0 +1,41 @@
+--- a/configure
++++ b/configure
+@@ -11915,9 +11915,9 @@ $as_echo_n "checking for GnuTLS support.
+ 	minimal_gnutls_version_patch=18
+ 
+ 	# get version
+-	found_gnutls_version_major=`cat /usr/local/include/gnutls/gnutls.h | $EGREP \#define.*GNUTLS_VERSION_MAJOR | $AWK '{print $3;}'`
+-	found_gnutls_version_minor=`cat /usr/local/include/gnutls/gnutls.h | $EGREP \#define.*GNUTLS_VERSION_MINOR | $AWK '{print $3;}'`
+-	found_gnutls_version_patch=`cat /usr/local/include/gnutls/gnutls.h | $EGREP \#define.*GNUTLS_VERSION_PATCH | $AWK '{print $3;}'`
++	found_gnutls_version_major=`cat /usr/local/include/gnutls/gnutls.h | $EGREP 'define.*GNUTLS_VERSION_MAJOR' | $AWK '{print $4;}'`
++	found_gnutls_version_minor=`cat /usr/local/include/gnutls/gnutls.h | $EGREP 'define.*GNUTLS_VERSION_MINOR' | $AWK '{print $4;}'`
++	found_gnutls_version_patch=`cat /usr/local/include/gnutls/gnutls.h | $EGREP 'define.*GNUTLS_VERSION_PATCH' | $AWK '{print $4;}'`
+ 
+ 	if test $((found_gnutls_version_major)) -gt $((minimal_gnutls_version_major)); then
+ 		accept_gnutls_version="yes"
+@@ -11945,9 +11945,9 @@ $as_echo_n "checking for GnuTLS support.
+ 	minimal_gnutls_version_patch=18
+ 
+ 	# get version
+-	found_gnutls_version_major=`cat /usr/include/gnutls/gnutls.h | $EGREP \#define.*GNUTLS_VERSION_MAJOR | $AWK '{print $3;}'`
+-	found_gnutls_version_minor=`cat /usr/include/gnutls/gnutls.h | $EGREP \#define.*GNUTLS_VERSION_MINOR | $AWK '{print $3;}'`
+-	found_gnutls_version_patch=`cat /usr/include/gnutls/gnutls.h | $EGREP \#define.*GNUTLS_VERSION_PATCH | $AWK '{print $3;}'`
++	found_gnutls_version_major=`cat /usr/include/gnutls/gnutls.h | $EGREP 'define.*GNUTLS_VERSION_MAJOR' | $AWK '{print $4;}'`
++	found_gnutls_version_minor=`cat /usr/include/gnutls/gnutls.h | $EGREP 'define.*GNUTLS_VERSION_MINOR' | $AWK '{print $4;}'`
++	found_gnutls_version_patch=`cat /usr/include/gnutls/gnutls.h | $EGREP 'define.*GNUTLS_VERSION_PATCH' | $AWK '{print $4;}'`
+ 
+ 	if test $((found_gnutls_version_major)) -gt $((minimal_gnutls_version_major)); then
+ 		accept_gnutls_version="yes"
+@@ -11981,9 +11981,9 @@ $as_echo "no" >&6; }
+ 	minimal_gnutls_version_patch=18
+ 
+ 	# get version
+-	found_gnutls_version_major=`cat $_libgnutls_dir/include/gnutls/gnutls.h | $EGREP \#define.*GNUTLS_VERSION_MAJOR | $AWK '{print $3;}'`
+-	found_gnutls_version_minor=`cat $_libgnutls_dir/include/gnutls/gnutls.h | $EGREP \#define.*GNUTLS_VERSION_MINOR | $AWK '{print $3;}'`
+-	found_gnutls_version_patch=`cat $_libgnutls_dir/include/gnutls/gnutls.h | $EGREP \#define.*GNUTLS_VERSION_PATCH | $AWK '{print $3;}'`
++	found_gnutls_version_major=`cat $_libgnutls_dir/include/gnutls/gnutls.h | $EGREP 'define.*GNUTLS_VERSION_MAJOR' | $AWK '{print $4;}'`
++	found_gnutls_version_minor=`cat $_libgnutls_dir/include/gnutls/gnutls.h | $EGREP 'define.*GNUTLS_VERSION_MINOR' | $AWK '{print $4;}'`
++	found_gnutls_version_patch=`cat $_libgnutls_dir/include/gnutls/gnutls.h | $EGREP 'define.*GNUTLS_VERSION_PATCH' | $AWK '{print $4;}'`
+ 
+ 	if test $((found_gnutls_version_major)) -gt $((minimal_gnutls_version_major)); then
+ 		accept_gnutls_version="yes"
