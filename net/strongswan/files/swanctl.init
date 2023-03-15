@@ -378,6 +378,41 @@ config_transport() {
 	config_child "$1" "transport"
 }
 
+config_pool() {
+	local conf="$1"
+	local addrs
+	local dns
+	local nbns
+	local dhcp
+	local netmask
+	local server
+	local subnet
+	local split_include
+	local split_exclude
+
+	config_get addrs "$1" addrs
+	config_list_foreach "$1" dns append_var dns ","
+	config_list_foreach "$1" nbns append_var nbns ","
+	config_list_foreach "$1" dhcp append_var dhcp ","
+	config_list_foreach "$1" netmask append_var netmask ","
+	config_list_foreach "$1" server append_var server ","
+	config_list_foreach "$1" subnet append_var subnet ","
+	config_list_foreach "$1" split_include append_var split_include ","
+	config_list_foreach "$1" split_exclude append_var split_exclude ","
+
+	swanctl_xappend1 "$conf {"
+	[ -n "$addrs" ] && swanctl_xappend2 "addrs = $addrs"
+	[ -n "$dns" ] && swanctl_xappend2 "dns = $dns"
+	[ -n "$nbns" ] && swanctl_xappend2 "nbns = $nbns"
+	[ -n "$dhcp" ] && swanctl_xappend2 "dhcp = $dhcp"
+	[ -n "$netmask" ] && swanctl_xappend2 "netmask = $netmask"
+	[ -n "$server" ] && swanctl_xappend2 "server = $server"
+	[ -n "$subnet" ] && swanctl_xappend2 "subnet = $subnet"
+	[ -n "$split_include" ] && swanctl_xappend2 "split_include = $split_include"
+	[ -n "$split_exclude" ] && swanctl_xappend2 "split_exclude = $split_exclude"
+	swanctl_xappend1 "}"
+}
+
 config_connection() {
 	local config_name="$1"
 
@@ -399,6 +434,7 @@ config_connection() {
 	local local_key
 	local ca_cert
 	local rekeytime
+	local pools
 
 	config_get_bool enabled "$1" enabled 0
 	[ $enabled -eq 0 ] && return
@@ -422,6 +458,7 @@ config_connection() {
 	config_get overtime "$1" overtime
 
 	config_list_foreach "$1" local_sourceip append_var local_sourceip ","
+	config_list_foreach "$1" pools append_var pools ","
 
 	case "$fragmentation" in
 	0)
@@ -479,6 +516,7 @@ config_connection() {
 
 	[ -n "$local_sourceip" ] && swanctl_xappend2 "vips = $local_sourceip"
 	[ -n "$fragmentation" ] && swanctl_xappend2 "fragmentation = $fragmentation"
+	[ -n "$pools" ] && swanctl_xappend2 "pools = $pools"
 
 	swanctl_xappend2 "local {"
 	swanctl_xappend3 "auth = $auth_method"
@@ -560,6 +598,10 @@ config_connection() {
 	else
 		fatal "AuthenticationMode $auth_mode not supported"
 	fi
+
+	swanctl_xappend0 "pools {"
+	config_list_foreach "$1" pools config_pool
+	swanctl_xappend0 "}"
 
 	swanctl_xappend0 ""
 }
