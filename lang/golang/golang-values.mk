@@ -77,6 +77,7 @@ unexport \
 # From https://pkg.go.dev/runtime#hdr-Environment_Variables
 unexport \
   GOGC \
+  GOMEMLIMIT \
   GOMAXPROCS \
   GORACE \
   GOTRACEBACK
