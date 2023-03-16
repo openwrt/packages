@@ -1,6 +1,6 @@
 --- a/Python/pylifecycle.c
 +++ b/Python/pylifecycle.c
-@@ -120,7 +120,7 @@ int Py_NoSiteFlag = 0; /* Suppress 'impo
+@@ -121,7 +121,7 @@ int Py_NoSiteFlag = 0; /* Suppress 'impo
  int Py_BytesWarningFlag = 0; /* Warn on str(bytes) and str(buffer) */
  int Py_FrozenFlag = 0; /* Needed by getpath.c */
  int Py_IgnoreEnvironmentFlag = 0; /* e.g. PYTHONPATH, PYTHONHOME */
