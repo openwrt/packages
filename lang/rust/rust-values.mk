@@ -5,17 +5,7 @@
 # Rust Environmental Vars
 CONFIG_HOST_SUFFIX:=$(word 4, $(subst -, ,$(GNU_HOST_NAME)))
 RUSTC_HOST_ARCH:=$(HOST_ARCH)-unknown-linux-$(CONFIG_HOST_SUFFIX)
-CARGO_HOME:=$(STAGING_DIR_HOST)/cargo
-
-# Support only a subset for now.
-RUST_ARCH_DEPENDS:=@(aarch64||arm||i386||i686||mips||mipsel||mips64||mips64el||mipsel||powerpc64||x86_64)
-
-# Common Build Flags
-RUST_BUILD_FLAGS = \
-  CARGO_HOME="$(CARGO_HOME)"
-
-# This adds the rust environmental variables to Make calls
-MAKE_FLAGS += $(RUST_BUILD_FLAGS)
+CARGO_HOME:=$(STAGING_DIR_HOSTPKG)/cargo
 
 # Force linking of the SSP library
 ifdef CONFIG_PKG_CC_STACKPROTECTOR_REGULAR
