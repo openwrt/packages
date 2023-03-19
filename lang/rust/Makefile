@@ -30,8 +30,7 @@ define Package/rust
   SUBMENU:=Rust
   TITLE:=Rust Programming Language Compiler
   URL:=https://www.rust-lang.org/
-  DEPENDS:=$(RUST_ARCH_DEPENDS) \
-    +pkg-config +libunwind +libopenssl +liblzma +libc
+  DEPENDS:=$(RUST_ARCH_DEPENDS)
 endef
 
 define Package/rust/description
@@ -101,10 +100,6 @@ define Host/Install
 		    -e 's|@RUSTC_LDFLAGS@|$(RUSTC_LDFLAGS)|g' \
 			$(CURDIR)/files/cargo-config > $(CARGO_HOME)/config ; \
 	)
-endef
-
-define Package/rust/config
-	source "$(SOURCE)/Config.in"
 endef
 
 $(eval $(call HostBuild))
