@@ -66,13 +66,11 @@ HOST_CONFIGURE_ARGS = \
 	--datadir=$(CARGO_HOME)/share \
 	--mandir=$(CARGO_HOME)/man \
 	--dist-compression-formats=xz \
-	--enable-llvm-link-shared \
-	--enable-llvm-plugins \
 	--enable-missing-tools \
-	--enable-ninja \
 	--disable-sanitizers \
 	--release-channel=stable \
 	--enable-cargo-native-static \
+	--set=llvm.download-ci-llvm=true \
 	$(TARGET_CONFIGURE_ARGS)
 
 define Host/Uninstall
