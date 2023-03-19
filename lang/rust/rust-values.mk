@@ -7,7 +7,8 @@ CONFIG_HOST_SUFFIX:=$(word 4, $(subst -, ,$(GNU_HOST_NAME)))
 RUSTC_HOST_ARCH:=$(HOST_ARCH)-unknown-linux-$(CONFIG_HOST_SUFFIX)
 CARGO_HOME:=$(STAGING_DIR_HOSTPKG)/cargo
 
-# Force linking of the SSP library
+ifeq ($(CONFIG_USE_MUSL),y)
+# Force linking of the SSP library for musl
 ifdef CONFIG_PKG_CC_STACKPROTECTOR_REGULAR
   ifeq ($(strip $(PKG_SSP)),1)
     RUSTC_LDFLAGS += -lssp_nonshared
@@ -17,6 +18,7 @@ ifdef CONFIG_PKG_CC_STACKPROTECTOR_STRONG
   ifeq ($(strip $(PKG_SSP)),1)
     TARGET_CFLAGS += -lssp_nonshared
   endif
+endif
 endif
 
 # mips64 openwrt has a specific targed in rustc
