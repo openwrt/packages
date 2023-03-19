@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=maturin
-PKG_VERSION:=0.14.10
-PKG_RELEASE:=2
+PKG_VERSION:=0.14.15
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/PyO3/maturin/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=8fc9bcdcb7f1535d5e3e8bb500c348ca1bff5a6dce87b0ab7dbc5a49723da28a
+PKG_HASH:=60cbf8ff73a36333c3f5483ca679a52169839db381f06683d8e61a6c00c28cf7
 
 PKG_MAINTAINER:=Luca Barbato <lu_zero@luminem.org>
 PKG_LICENSE:=Apache-2.0 MIT
