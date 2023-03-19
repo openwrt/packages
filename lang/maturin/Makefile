@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=maturin
 PKG_VERSION:=0.14.10
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/PyO3/maturin/tar.gz/v$(PKG_VERSION)?
@@ -17,14 +17,11 @@ PKG_LICENSE:=Apache-2.0 MIT
 PKG_LICENSE_FILES:=license-apache license-mit
 
 HOST_BUILD_DEPENDS:=rust/host
-PKG_BUILD_DEPENDS:=rust/host
-
-PKG_BUILD_PARALLEL:=1
 PKG_HOST_ONLY:=1
 
-include ../rust-package.mk
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
+include ../rust/rust-host-build.mk
 
 define Package/maturin
   SECTION:=lang
@@ -35,19 +32,11 @@ define Package/maturin
   URL:=https://maturin.rs
 endef
 
-define Host/Compile
-	$(call Host/Compile/Cargo)
-endef
-
 define Package/maturin/description
   Build and publish crates with pyo3, rust-cpython, cffi and uniffi
   bindings as well as rust binaries as python packages.
 endef
 
-define Host/Install
-	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/bin
-	$(INSTALL_BIN) $(HOST_INSTALL_DIR)/bin/maturin $(STAGING_DIR_HOSTPKG)/bin/maturin
-endef
-
+$(eval $(call RustBinHostBuild))
 $(eval $(call HostBuild))
 $(eval $(call BuildPackage,maturin))
