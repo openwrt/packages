@@ -20,9 +20,9 @@ PKG_LICENSE_FILES:=LICENSE-APACHE LICENSE-MIT
 HOST_BUILD_DEPENDS:=python3/host
 PKG_HOST_ONLY:=1
 
-include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
-include ./rust-host.mk
+include $(INCLUDE_DIR)/package.mk
+include ./rust-values.mk
 
 define Package/rust
   SECTION:=lang
