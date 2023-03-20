@@ -51,7 +51,7 @@
        'dependencies': [
          'v8_base_without_compiler',
          'v8_compiler_for_mksnapshot',
-@@ -1442,6 +1445,7 @@
+@@ -1450,6 +1453,7 @@
      {
        'target_name': 'torque',
        'type': 'executable',
@@ -59,7 +59,7 @@
        'dependencies': [
          'torque_base',
          # "build/win:default_exe_manifest",
-@@ -1480,6 +1484,7 @@
+@@ -1488,6 +1492,7 @@
      {
        'target_name': 'torque-language-server',
        'type': 'executable',
@@ -67,7 +67,7 @@
        'conditions': [
          ['want_separate_host_toolset', {
            'toolsets': ['host'],
-@@ -1507,6 +1512,8 @@
+@@ -1515,6 +1520,8 @@
      {
        'target_name': 'gen-regexp-special-case',
        'type': 'executable',

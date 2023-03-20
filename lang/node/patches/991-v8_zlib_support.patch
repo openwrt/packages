@@ -62,7 +62,7 @@
          'include_dirs': [
            '<(V8_ROOT)/include',
          ],
-@@ -1729,6 +1736,7 @@
+@@ -1737,6 +1744,7 @@
           }],
        ],
        'direct_dependent_settings': {
@@ -70,7 +70,7 @@
          'include_dirs': [
            '<(V8_ROOT)/include',
          ],
-@@ -1909,15 +1917,19 @@
+@@ -1917,15 +1925,19 @@
          }],
        ],
        'direct_dependent_settings': {
