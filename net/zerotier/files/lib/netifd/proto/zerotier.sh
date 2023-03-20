@@ -126,8 +126,6 @@ proto_zerotier_setup() {
 				json_select ${i}
 				json_get_vars scope family local prefixlen broadcast
 
-				echo "${scope}"
-
 				if [ "${scope}" == "global" ]; then
 					case "${family}" in
 						inet)
@@ -151,7 +149,6 @@ proto_zerotier_setup() {
 	IP6ROUTES=
 
 	local routes="$(ip -json route list dev "$interface")"
-	echo $routes
 	json_init
 	json_load "{\"routes\":${routes}}"
 
