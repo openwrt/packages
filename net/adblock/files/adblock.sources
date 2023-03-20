@@ -63,7 +63,7 @@
 		"descurl": "https://github.com/hoshsadiq/adblock-nocoin-list"
 	},
 	"cpbl": {
-		"url": "https://raw.githubusercontent.com/bongochong/CombinedPrivacyBlockLists/master/NoFormatting/BlacklistedDomains.txt",
+		"url": "https://raw.githubusercontent.com/bongochong/CombinedPrivacyBlockLists/master/NoFormatting/cpbl-ctld.txt",
 		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
 		"size": "XL",
 		"focus": "compilation",
