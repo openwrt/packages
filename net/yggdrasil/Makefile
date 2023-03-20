@@ -33,7 +33,7 @@ define Package/yggdrasil
 	SUBMENU:=Routing and Redirection
 	TITLE:=Yggdrasil supports end-to-end encrypted IPv6 networks
 	URL:=https://yggdrasil-network.github.io/
-	DEPENDS:=$(GO_ARCH_DEPENDS) @IPV6 +kmod-tun +dkjson +libuci-lua
+	DEPENDS:=$(GO_ARCH_DEPENDS) @IPV6 +kmod-tun
 endef
 
 define Package/yggdrasil/description
@@ -46,14 +46,9 @@ define Package/yggdrasil/description
  interfaces simultaneously with much greater throughput.
 endef
 
-define Package/yggdrasil/conffiles
-/etc/config/yggdrasil
-endef
-
 define Package/yggdrasil/install
 	$(INSTALL_DIR) \
-		$(1)/etc/init.d \
-		$(1)/etc/uci-defaults \
+		$(1)/lib/netifd/proto \
 		$(1)/usr/sbin
 
 	$(INSTALL_BIN) \
@@ -65,16 +60,8 @@ define Package/yggdrasil/install
 		$(1)/usr/sbin
 
 	$(INSTALL_BIN) \
-		./files/ygguci \
-		$(1)/usr/sbin
-
-	$(INSTALL_BIN) \
-		./files/yggdrasil.defaults \
-		$(1)/etc/uci-defaults/yggdrasil
-
-	$(INSTALL_BIN) \
-		./files/yggdrasil.init \
-		$(1)/etc/init.d/yggdrasil
+		./files/yggdrasil.sh \
+		$(1)/lib/netifd/proto
 endef
 
 $(eval $(call GoBinPackage,yggdrasil))
