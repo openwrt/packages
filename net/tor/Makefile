@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tor
 PKG_VERSION:=0.4.7.13
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://dist.torproject.org/ \
@@ -61,6 +61,7 @@ endef
 define Package/tor-basic
 $(call Package/tor/Default)
   TITLE+= (no bridge/relay support)
+  CONFLICTS:=tor
   VARIANT:=basic
 endef
 
