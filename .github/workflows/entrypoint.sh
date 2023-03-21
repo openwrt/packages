@@ -39,5 +39,5 @@ for PKG in /ci/*.ipk; do
 		echo "No test.sh script available"
 	fi
 
-	opkg remove "$PKG_NAME" --force-removal-of-dependent-packages --force-remove
+	opkg remove "$PKG_NAME" --force-removal-of-dependent-packages --force-remove --autoremove || true
 done
