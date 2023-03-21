@@ -9,19 +9,6 @@ if PACKAGE_libopenssl-afalg_sync
 	    This increases memory usage, and has problems when process fork
 	    with open digest contexts (openssh will not work because of it).
 
-    config AFALG_FALLBACK
-	bool "Enable software fallback feature"
-	default y
-	help
-	    Use software to fulfill small requests.  Using AF_ALG adds latency,
-	    which makes it slow to perform small requests.  Enabling this
-	    option overcomes this problem, at the cost of increased memory
-	    and CPU usage.  This is a new, experimental feature; if you
-	    encounter any problem, this is the first option to disable.
-	    The fallback will fail if you enable this engine alongside
-	    devcrypto, so you'll not be able to install both at the same
-	    time if this option is enabled.
-
     config AFALG_UPDATE_CTR_IV
 	bool "Don't rely on kernel to update CTR IV"
 	default y
