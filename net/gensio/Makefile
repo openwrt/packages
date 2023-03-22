@@ -33,7 +33,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_GENSIO_TCL \
 	CONFIG_GENSIO_SSHD
 
-PKG_BUILD_DEPENDS:=PACKAGE_python3-gensio:swig
+PKG_BUILD_DEPENDS:=PACKAGE_python3-gensio:swig/host
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python3-package.mk
@@ -129,10 +129,11 @@ endef
 
 define Package/python3-gensio
 $(call Package/gensio/Default)
-  TITLE+= (Python3-bindings)
+  TITLE+= (Python bindings)
   SECTION:=lang
   CATEGORY:=Languages
-  DEPENDS:=+PACKAGE_python3-gensio:python3-light +libgensio
+  SUBMENU:=Python
+  DEPENDS:=+PACKAGE_python3-gensio:python3-light +libgensiocpp
 endef
 
 define Package/python3-gensio/description

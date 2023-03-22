@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pcre2
 PKG_VERSION:=10.37
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/pcre/$(PKG_NAME)/$(PKG_VERSION)
@@ -28,6 +28,7 @@ PKG_CONFIG_DEPENDS:=\
 PKG_BUILD_DEPENDS:=zlib
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libpcre2/default
@@ -54,6 +55,18 @@ define Package/libpcre2-32
   $(call Package/libpcre2/default)
   TITLE:=A Perl Compatible Regular Expression library (32bit support)
 endef
+
+CMAKE_HOST_OPTIONS += \
+	-DBUILD_SHARED_LIBS=ON \
+	-DPCRE2_BUILD_PCRE2_8=ON \
+	-DPCRE2_BUILD_PCRE2_16=ON \
+	-DPCRE2_BUILD_PCRE2_32=ON \
+	-DPCRE2_DEBUG=OFF \
+	-DPCRE2_DISABLE_PERCENT_ZT=ON \
+	-DPCRE2_SUPPORT_JIT=OFF \
+	-DPCRE2_SHOW_REPORT=OFF \
+	-DPCRE2_BUILD_PCRE2GREP=OFF \
+	-DPCRE2_BUILD_TESTS=OFF
 
 CMAKE_OPTIONS += \
 	-DBUILD_SHARED_LIBS=ON \
@@ -92,3 +105,4 @@ endef
 $(eval $(call BuildPackage,libpcre2))
 $(eval $(call BuildPackage,libpcre2-16))
 $(eval $(call BuildPackage,libpcre2-32))
+$(eval $(call HostBuild))
