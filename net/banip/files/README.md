@@ -148,6 +148,7 @@ Available commands:
 | ban_dev                 | list   | - / autodetect                | wan device(s), e.g. 'eth2'                                                            |
 | ban_trigger             | list   | -                             | logical startup trigger interface(s), e.g. 'wan'                                      |
 | ban_triggerdelay        | option | 10                            | trigger timeout before banIP processing begins                                        |
+| ban_triggeraction       | option | start                         | trigger action on ifup events, e.g. start, restart or reload                          |
 | ban_deduplicate         | option | 1                             | deduplicate IP addresses across all active sets                                       |
 | ban_splitsize           | option | 0                             | split ext. sets after every n lines/members (saves RAM)                               |
 | ban_cores               | option | - / autodetect                | limit the cpu cores used by banIP (saves RAM)                                         |
@@ -168,6 +169,7 @@ Available commands:
 | ban_mailsender          | option | no-reply@banIP                | sender address for banIP related notification E-Mails                                 |
 | ban_mailtopic           | option | banIP notification            | topic for banIP related notification E-Mails                                          |
 | ban_mailprofile         | option | ban_notify                    | mail profile used in 'msmtp' for banIP related notification E-Mails                   |
+| ban_mailnotification    | option | 0                             | receive E-Mail notifications with every banIP run                                     |
 | ban_reportelements      | option | 1                             | list set elements in the report, disable this to speed up the report significantly    |
 | ban_resolver            | option | -                             | external resolver used for DNS lookups                                                |
 
