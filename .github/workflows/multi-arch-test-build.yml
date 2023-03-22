@@ -82,14 +82,25 @@ jobs:
           echo "Building $PACKAGES"
           echo "PACKAGES=$PACKAGES" >> $GITHUB_ENV
 
+      - name: Generate build keys
+        run: |
+          sudo apt-get install -y signify-openbsd
+          signify-openbsd -G -n -c 'DO NOT USE - OpenWrt packages feed CI' -p packages_ci.pub -s packages_ci.sec
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "KEY_BUILD<<$EOF" >> $GITHUB_ENV
+          cat packages_ci.sec >> $GITHUB_ENV
+          echo "$EOF" >> $GITHUB_ENV
+
       - name: Build
         uses: openwrt/gh-action-sdk@v5
         env:
           ARCH: ${{ matrix.arch }}-${{ env.BRANCH }}
           FEEDNAME: packages_ci
+          INDEX: 1
+          KEY_BUILD: ${{ env.KEY_BUILD }}
 
       - name: Move created packages to project dir
-        run: cp bin/packages/${{ matrix.arch }}/packages_ci/*.ipk . || true
+        run: cp bin/packages/${{ matrix.arch }}/packages_ci/* . || true
 
       - name: Collect metadata
         run: |
@@ -132,6 +143,8 @@ jobs:
         with:
           name: ${{env.ARCHIVE_NAME}}-packages
           path: |
+            Packages
+            Packages.*
             *.ipk
             PKG-INFO
 
