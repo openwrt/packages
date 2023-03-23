@@ -26,6 +26,7 @@ PKG_CPE_ID:=cpe:/a:haxx:libcurl
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+PKG_BUILD_FLAGS:=gc-sections
 
 PKG_CONFIG_DEPENDS:= \
   CONFIG_IPV6 \
@@ -105,9 +106,8 @@ define Package/libcurl/config
   source "$(SOURCE)/Config.in"
 endef
 
-TARGET_CFLAGS += $(FPIC) -ffunction-sections -fdata-sections
+TARGET_CFLAGS += $(FPIC)
 TARGET_CPPFLAGS += $(if $(CONFIG_LIBCURL_NTLM),,-DCURL_DISABLE_NTLM)
-TARGET_LDFLAGS += -Wl,--gc-sections
 
 CONFIGURE_ARGS += \
 	--disable-debug \

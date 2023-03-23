@@ -20,13 +20,13 @@ PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
 PKG_BUILD_DEPENDS:=glib2/host libxslt/host
+PKG_BUILD_FLAGS:=gc-sections
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/meson.mk
 
-TARGET_CFLAGS += -ffunction-sections -fdata-sections -fno-merge-all-constants -fmerge-constants
-TARGET_LDFLAGS += -Wl,--gc-sections
+TARGET_CFLAGS += -fno-merge-all-constants -fmerge-constants
 
 define Package/modemmanager/config
   source "$(SOURCE)/Config.in"

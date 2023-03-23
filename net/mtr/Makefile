@@ -23,6 +23,7 @@ PKG_CPE_ID:=cpe:/a:matt_kimball_and_roger_wolff:mtr
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
+PKG_BUILD_FLAGS:=gc-sections
 
 CONFIGURE_ARGS += \
 	--without-gtk \
@@ -68,8 +69,7 @@ define Package/mtr/description
 	running statistics about each machine.
 endef
 
-TARGET_CFLAGS += -ffunction-sections -fdata-sections
-TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
+TARGET_LDFLAGS += -Wl,--as-needed
 
 CONFIGURE_VARS += ac_cv_lib_cap_cap_set_proc=no
 

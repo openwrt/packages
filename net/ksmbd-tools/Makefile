@@ -12,6 +12,7 @@ PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
 PKG_BUILD_DEPENDS:=glib2
+PKG_BUILD_FLAGS:=gc-sections
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -70,8 +71,7 @@ MESON_ARGS += \
 	-Db_lto=true \
 	-Dkrb5=disabled
 
-TARGET_CFLAGS += -ffunction-sections -fdata-sections
-TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
+TARGET_LDFLAGS += -Wl,--as-needed
 
 define Package/ksmbd-server/install
 	$(INSTALL_DIR) $(1)/usr/libexec

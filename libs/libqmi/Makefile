@@ -15,14 +15,15 @@ PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://gitlab.freedesktop.org/mobile-broadband/libqmi.git
 PKG_MIRROR_HASH:=674f5848c56c11cdc2fbc82c52e5bc2a3a0fddb56315dc4220544688a7b0e17a
 
+PKG_BUILD_FLAGS:=gc-sections
+
 PKG_MAINTAINER:=Nicholas Smith <nicholas@nbembedded.com>
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/meson.mk
 
-TARGET_CFLAGS += -ffunction-sections -fdata-sections -fno-merge-all-constants -fmerge-constants
-TARGET_LDFLAGS += -Wl,--gc-sections
+TARGET_CFLAGS += -fno-merge-all-constants -fmerge-constants
 
 define Package/libqmi/config
   source "$(SOURCE)/Config.in"

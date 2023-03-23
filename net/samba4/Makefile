@@ -15,6 +15,8 @@ PKG_SOURCE_URL:= \
 		https://download.samba.org/pub/samba/stable/
 PKG_HASH:=70348656ef807be9c8be4465ca157cef4d99818e234253d2c684cc18b8408149
 
+PKG_BUILD_FLAGS:=gc-sections
+
 PKG_LICENSE:=GPL-3.0-only
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:samba:samba
@@ -125,8 +127,8 @@ define Package/samba4-utils/description
   Utilities collection
 endef
 
-TARGET_CFLAGS += $(FPIC) -ffunction-sections -fdata-sections
-TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
+TARGET_CFLAGS += $(FPIC)
+TARGET_LDFLAGS += -Wl,--as-needed
 # dont mess with sambas private rpath!
 RSTRIP:=:
 

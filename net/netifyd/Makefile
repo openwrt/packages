@@ -13,6 +13,7 @@ PKG_LICENSE:=GPL-3.0-or-later
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_BUILD_FLAGS:=gc-sections
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://gitlab.com/netify.ai/public/netify-agent.git
@@ -50,9 +51,8 @@ define Package/netifyd/conffiles
 /etc/netify.d/site.uuid
 endef
 
-TARGET_CFLAGS+=-ffunction-sections -fdata-sections -Wno-psabi
-TARGET_CXXFLAGS+=-std=c++11 -ffunction-sections -fdata-sections -Wno-psabi
-TARGET_LDFLAGS+=-Wl,--gc-sections
+TARGET_CFLAGS+=-Wno-psabi
+TARGET_CXXFLAGS+=-std=c++11 -Wno-psabi
 
 CONFIGURE_ARGS+= \
 	--sharedstatedir=/var/run \

@@ -15,14 +15,15 @@ PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://gitlab.freedesktop.org/mobile-broadband/libmbim.git
 PKG_MIRROR_HASH:=7ecc6d1e565392817311254045337907bbad015b46ec88542ea63594f47778be
 
+PKG_BUILD_FLAGS:=gc-sections
+
 PKG_MAINTAINER:=Nicholas Smith <nicholas@nbembedded.com>
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/meson.mk
 
-TARGET_CFLAGS += -ffunction-sections -fdata-sections -fno-merge-all-constants -fmerge-constants
-TARGET_LDFLAGS += -Wl,--gc-sections
+TARGET_CFLAGS += -fno-merge-all-constants -fmerge-constants
 
 MESON_ARGS += \
 	-Dintrospection=false \
