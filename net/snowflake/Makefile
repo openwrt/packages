@@ -15,7 +15,7 @@ PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>, Nick Hainke <vincent@syste
 
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16
 
 GO_PKG:=git.torproject.org/pluggable-transports/snowflake.git/v2
 

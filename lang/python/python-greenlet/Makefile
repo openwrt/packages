@@ -18,7 +18,7 @@ PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 # FIXME: remove when GCC10 is the oldest supported compiler, or the issue goes away
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -42,7 +42,7 @@ define Package/python3-greenlet/description
 endef
 
 # FIXME: remove when GCC10 is the oldest supported compiler, or the issue goes away
-# This is required in addition to PKG_USE_MIPS16:=0 because otherwise MIPS16
+# This is required in addition to PKG_BUILD_FLAGS:=no-mips16 because otherwise MIPS16
 # flags are inherited from the Python base package (via sysconfig module)
 ifdef CONFIG_USE_MIPS16
 TARGET_CFLAGS += -mno-mips16 -mno-interlink-mips16

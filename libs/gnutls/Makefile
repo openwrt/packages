@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=gnutls
 PKG_VERSION:=3.7.8
 PKG_RELEASE:=$(AUTORELEASE)
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.gnupg.org/ftp/gcrypt/gnutls/v3.7

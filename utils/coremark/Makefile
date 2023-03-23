@@ -22,7 +22,7 @@ PKG_MAINTAINER:=Lim Guo Wei <limguowei@gmail.com> \
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE.md
 
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16
 
 include $(INCLUDE_DIR)/package.mk
 
