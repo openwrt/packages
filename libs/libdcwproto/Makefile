@@ -21,7 +21,7 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
-PKG_BUILD_FLAGS:=gc-sections
+PKG_BUILD_FLAGS:=gc-sections lto
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -38,7 +38,6 @@ define Package/libdcwproto/description
   Platform-independent C library for marshaling and serializing DCW messages
 endef
 
-TARGET_CFLAGS += -flto
 TARGET_LDFLAGS += -Wl,--as-needed
 
 define Build/InstallDev

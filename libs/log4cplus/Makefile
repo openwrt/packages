@@ -21,6 +21,7 @@ PKG_LICENSE:=BSD-2-Clause Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
 CMAKE_INSTALL:=1
+PKG_BUILD_FLAGS:=lto
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
@@ -50,7 +51,6 @@ OPTIONS:= \
 CMAKE_HOST_OPTIONS += $(OPTIONS) -DBUILD_SHARED_LIBS=OFF
 CMAKE_OPTIONS += $(OPTIONS) -DBUILD_SHARED_LIBS=ON
 
-TARGET_CFLAGS += -flto
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 
 define Package/log4cplus/install

@@ -21,6 +21,7 @@ PKG_CPE_ID:=cpe:/a:libreswan:libreswan
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PKG_BUILD_FLAGS:=lto
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -65,7 +66,6 @@ define Package/libreswan/conffiles
 /etc/ipsec.secrets
 endef
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
-TARGET_CFLAGS += -flto
 
 MAKE_FLAGS+= \
     WERROR_CFLAGS=" " \

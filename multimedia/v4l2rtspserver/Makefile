@@ -16,7 +16,7 @@ PKG_SOURCE_URL:=https://github.com/mpromonet/v4l2rtspserver
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 PKG_MIRROR_HASH:=f2eca75c8af9933f4ceb67cab74af488e1e9ec8af9cbef2534fda5b701b1d63d
 
-PKG_BUILD_FLAGS:=gc-sections
+PKG_BUILD_FLAGS:=gc-sections lto
 
 LIVE555_VERSION:=2022.10.01
 LIVE555_HASH:=429de73061e3fc6901c4d2f0b7562ae3f6233060ca4b5e182fe555d065cbdd45
@@ -51,7 +51,6 @@ define Download/live555
 	HASH:=$(LIVE555_HASH)
 endef
 
-TARGET_CFLAGS += -flto
 TARGET_LDFLAGS += -Wl,--as-needed
 
 CMAKE_OPTIONS += \

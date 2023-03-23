@@ -23,7 +23,7 @@ PKG_CPE_ID:=cpe:/a:torproject:tor
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
-PKG_BUILD_FLAGS:=gc-sections
+PKG_BUILD_FLAGS:=gc-sections lto
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -141,10 +141,7 @@ ifeq ($(BUILD_VARIANT),basic)
 endif
 
 
-TARGET_CFLAGS += -flto \
-	$(if $(CONFIG_OPENSSL_ENGINE),,-DDISABLE_ENGINES)
-
-TARGET_LDFLAGS += -flto
+TARGET_CFLAGS += $(if $(CONFIG_OPENSSL_ENGINE),,-DDISABLE_ENGINES)
 
 CONFIGURE_VARS += \
 	CROSS_COMPILE="yes" \

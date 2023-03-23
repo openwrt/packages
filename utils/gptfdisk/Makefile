@@ -20,7 +20,7 @@ PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
 PKG_BUILD_PARALLEL:=1
-PKG_BUILD_FLAGS:=gc-sections
+PKG_BUILD_FLAGS:=gc-sections lto
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -73,7 +73,7 @@ define Package/fixparts/description
   Master Boot Record (MBR) partition tables
 endef
 
-TARGET_CXXFLAGS += -std=c++11 -fno-rtti -flto -Wno-format-security
+TARGET_CXXFLAGS += -std=c++11 -fno-rtti -Wno-format-security
 TARGET_LDFLAGS += -Wl,--as-needed
 
 define Package/gdisk/install

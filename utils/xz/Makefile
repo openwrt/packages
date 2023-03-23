@@ -23,6 +23,7 @@ PKG_CPE_ID:=cpe:/a:tukaani:xz
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PKG_BUILD_FLAGS:=lto
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -71,7 +72,7 @@ define BuildSubPackage
   $$(eval $$(call BuildPackage,$(1)))
 endef
 
-TARGET_LDFLAGS += -Wl,--gc-sections -flto
+TARGET_LDFLAGS += -Wl,--gc-sections
 
 CONFIGURE_ARGS += \
 	--enable-small \

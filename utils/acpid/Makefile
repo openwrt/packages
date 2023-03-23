@@ -22,7 +22,7 @@ PKG_CPE_ID:=cpe:/a:tedfelix:acpid
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
-PKG_BUILD_FLAGS:=gc-sections
+PKG_BUILD_FLAGS:=gc-sections lto
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -38,7 +38,6 @@ define Package/acpid/description
   The ACPI Daemon (acpid) With Netlink Support
 endef
 
-TARGET_CFLAGS += -flto
 TARGET_LDFLAGS += -Wl,--as-needed
 
 define Package/acpid/install

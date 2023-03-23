@@ -22,6 +22,7 @@ PKG_LICENSE_FILES:=License
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
+PKG_BUILD_FLAGS:=lto
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -54,7 +55,6 @@ define Package/libcap-ng-bin/description
 endef
 
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed $(FPIC)
-TARGET_CFLAGS += -flto
 
 CONFIGURE_VARS += \
     ac_cv_prog_swig_found=no

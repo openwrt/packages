@@ -22,7 +22,7 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
-PKG_BUILD_FLAGS:=gc-sections
+PKG_BUILD_FLAGS:=gc-sections lto
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -38,7 +38,7 @@ define Package/libdcwsocket/description
   User-land C library for sending and receiving DCW "EtherType"d messages
 endef
 
-TARGET_CFLAGS += -std=c89 -flto
+TARGET_CFLAGS += -std=c89
 TARGET_LDFLAGS += -Wl,--as-needed
 
 define Build/InstallDev

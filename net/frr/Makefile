@@ -15,7 +15,6 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
 PKG_SOURCE_VERSION:=410d78b7a4f2c8b4d4c3736c6d6cdb710287ca80
 PKG_SOURCE_URL:=https://codeload.github.com/FRRouting/frr/tar.gz/$(PKG_SOURCE_VERSION)?
 
-
 PKG_HASH:=1334b050ea3d4144efeb7bdfe9c6976ebc91744810c5d8a7381a53fac2877ea9
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 
@@ -58,6 +57,7 @@ PKG_CONFIG_DEPENDS:= \
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PKG_BUILD_FLAGS:=lto
 
 PKG_BUILD_DEPENDS:=frr/host
 HOST_BUILD_DEPENDS:=python3/host
@@ -166,7 +166,6 @@ define Package/frr-libfrr/conffiles
 endef
 
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed -latomic
-TARGET_CFLAGS += -flto
 
 define Host/Configure
 	$(Host/Configure/Default)
