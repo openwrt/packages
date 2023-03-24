@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sing-box
-PKG_VERSION:=1.1.6
+PKG_VERSION:=1.2.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/SagerNet/sing-box/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=2fdf93fd49c9375cd14b2fe2e2163cbad4b65d0cfa422c592855e7810036ef56
+PKG_HASH:=ec70c2eecf85788e82c29ec4ca129e25292d5fc66a510b4b713fe337650740a9
 
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=LICENSE
@@ -18,6 +18,8 @@ PKG_USE_MIPS16:=0
 
 GO_PKG:=github.com/sagernet/sing-box
 GO_PKG_BUILD_PKG:=$(GO_PKG)/cmd/sing-box
+
+GO_PKG_LDFLAGS_X:=$(GO_PKG)/constant.Version=$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
@@ -47,6 +49,9 @@ define Package/sing-box/config
 			bool "Build with Clash API support"
 			default y
 
+		config SINGBOX_WITH_DHCP
+			bool "Build with DHCP support, see DHCP DNS transport."
+
 		config SINGBOX_WITH_ECH
 			bool "Build with TLS ECH extension support for TLS outbound"
 
@@ -65,6 +70,10 @@ define Package/sing-box/config
 
 		config SINGBOX_WITH_QUIC
 			bool "Build with QUIC support"
+			default y
+
+		config SINGBOX_WITH_REALITY_SERVER
+			bool "Build with reality TLS server support, see TLS."
 			default y
 
 		config SINGBOX_WITH_SHADOWSOCKSR
@@ -86,12 +95,14 @@ endef
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_SINGBOX_WITH_ACME \
 	CONFIG_SINGBOX_WITH_CLASH_API \
+	CONFIG_SINGBOX_WITH_DHCP \
 	CONFIG_SINGBOX_WITH_ECH \
 	CONFIG_SINGBOX_WITH_EMBEDDED_TOR \
 	CONFIG_SINGBOX_WITH_GRPC \
 	CONFIG_SINGBOX_WITH_GVISOR \
 	CONFIG_SINGBOX_WITH_LWIP \
 	CONFIG_SINGBOX_WITH_QUIC \
+	CONFIG_SINGBOX_WITH_REALITY_SERVER \
 	CONFIG_SINGBOX_WITH_SHADOWSOCKSR \
 	CONFIG_SINGBOX_WITH_UTLS \
 	CONFIG_SINGBOX_WITH_V2RAY_API \
@@ -100,6 +111,7 @@ PKG_CONFIG_DEPENDS:= \
 GO_PKG_TAGS:=$(subst $(space),$(comma),$(strip \
 	$(if $(CONFIG_SINGBOX_WITH_ACME),with_acme) \
 	$(if $(CONFIG_SINGBOX_WITH_CLASH_API),with_clash_api) \
+	$(if $(CONFIG_SINGBOX_WITH_DHCP),with_dhcp) \
 	$(if $(CONFIG_SINGBOX_WITH_ECH),with_ech) \
 	$(if $(CONFIG_SINGBOX_WITH_EMBEDDED_TOR),with_embedded_tor) \
 	$(if $(CONFIG_SINGBOX_WITH_GRPC),with_grpc) \
@@ -107,6 +119,7 @@ GO_PKG_TAGS:=$(subst $(space),$(comma),$(strip \
 	$(if $(CONFIG_SINGBOX_WITH_LWIP),with_lwip) \
 	$(if $(CONFIG_SINGBOX_WITH_QUIC),with_quic) \
 	$(if $(CONFIG_SINGBOX_WITH_SHADOWSOCKSR),with_shadowsocksr) \
+	$(if $(CONFIG_SINGBOX_WITH_REALITY_SERVER),with_reality_server) \
 	$(if $(CONFIG_SINGBOX_WITH_UTLS),with_utls) \
 	$(if $(CONFIG_SINGBOX_WITH_V2RAY_API),with_v2ray_api) \
 	$(if $(CONFIG_SINGBOX_WITH_WIREGUARD),with_wireguard) \
