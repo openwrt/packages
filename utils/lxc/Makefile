@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lxc
-PKG_VERSION:=5.0.1
-PKG_RELEASE:=4
+PKG_VERSION:=5.0.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://linuxcontainers.org/downloads/lxc/
-PKG_HASH:=d8195423bb1e206f8521d24b6cde4789f043960c7cf065990a9cf741dcfd4222
+PKG_HASH:=bea08d2e49efcee34fa58acd2bc95c0adc64d291c07f4cfaf4ac1d8ac5a36f45
 
 PKG_MAINTAINER:=Marko Ratkaj <markoratkaj@gmail.com>
 PKG_LICENSE:=LGPL-2.1-or-later BSD-2-Clause GPL-2.0
