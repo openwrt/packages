@@ -136,6 +136,41 @@ define webskin
   ZNC_MODULES += znc-webskin-$(strip $(1))
 endef
 
+define playback
+  define Package/znc-mod-playback
+    $(Package/znc/default)
+    TITLE+= (playback plugin)
+    DEPENDS:=znc
+  endef
+
+  define Package/znc-mod-playback/description
+   Avoid repetitive playback buffers on re-connect with supported clients (e.g. mutter, colluquy)
+  endef
+
+  define Package/znc-mod-playback/install
+	$(INSTALL_DIR) $$(1)/usr/lib/znc/
+	$(INSTALL_BIN) $$(PKG_INSTALL_DIR)/usr/lib/znc/playback.so $$(1)/usr/lib/znc/
+  endef
+
+  ZNC_MODULES += znc-mod-playback
+  $(if $(CONFIG_PACKAGE_znc-mod-playback),ZNC_MODULE_TARGETS += playback.so)
+endef
+
+define Download/znc-playback
+  VERSION:=8dd128bfe2b24b2cc6a9ea2e2d28bfaa28d2a833
+  SUBDIR:=znc-mod-playback
+  FILE:=znc-playback-$$(VERSION).tar.xz
+  URL:=https://github.com/jpnurmi/znc-playback.git
+  MIRROR_HASH:=ac89d69048d62c5b15f39cc0d357a111ce4053816062e7bc1e553392b36fbd71
+  PROTO:=git
+endef
+
+define Prepare/znc-playback
+	$(eval $(Download/znc-playback))
+	xzcat $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
+	$(LN) $(PKG_BUILD_DIR)/znc-mod-playback/playback.cpp $(PKG_BUILD_DIR)/modules/playback.cpp
+endef
+
 , := ,
 
 $(eval $(call module,adminlog,Log user connects and disconnects and failed \
@@ -233,9 +268,6 @@ $(eval $(call module,notify-connect,Sends a notice to all admins when a user \
 
 $(eval $(call module,perform,Performs commands on connect.))
 
-$(eval $(call module,playback,Avoid repetitive playback buffers on re-connect \
-	with supported clients (e.g. mutter, colluquy)))
-
 $(eval $(call module,raw,View all of the raw traffic.))
 
 $(eval $(call module,route-replies,Routes back answers to the right client \
@@ -263,6 +295,8 @@ $(eval $(call module,stickychan,Keeps you sticked to specific channels.))
 $(eval $(call module,watch,Monitor activity for specific text patterns from \
 	specific users and have the text sent to a special query window.))
 
+$(eval $(call playback))
+
 $(eval $(call webadmin))
 
 $(eval $(call webskin,dark-clouds))
@@ -285,6 +319,15 @@ CMAKE_OPTIONS += \
 	-DWANT_SWIG=OFF \
 	-DWANT_TCL=OFF \
 	-DWANT_ZLIB=ON
+
+define Build/Prepare
+  $(call Build/Prepare/Default)
+
+ifneq ($(CONFIG_PACKAGE_znc-mod-playback),)
+  $(eval $(call Download,znc-playback))
+  $(Prepare/znc-playback)
+endif
+endef
 
 $(eval $(call BuildPackage,znc))
 $(foreach m,$(ZNC_MODULES),$(eval $(call BuildPackage,$(m))))
