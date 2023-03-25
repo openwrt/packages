@@ -20,7 +20,7 @@ dnsmasq_conf() {
 
 		case ${1} in
 			add)
-				ln -sf "${CACHE_DOMAINS_CONF_FILE}" "${DNSMASQ_CONF_FILE}"
+				ln -f "${CACHE_DOMAINS_CONF_FILE}" "${DNSMASQ_CONF_FILE}"
 				;;
 			remove)
 				rm -f "${DNSMASQ_CONF_FILE}"
