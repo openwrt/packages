@@ -434,6 +434,7 @@ config_connection() {
 	local local_key
 	local ca_cert
 	local rekeytime
+	local remote_ca_certs
 	local pools
 
 	config_get_bool enabled "$1" enabled 0
@@ -458,6 +459,7 @@ config_connection() {
 	config_get overtime "$1" overtime
 
 	config_list_foreach "$1" local_sourceip append_var local_sourceip ","
+	config_list_foreach "$1" remote_ca_certs append_var remote_ca_certs ","
 	config_list_foreach "$1" pools append_var pools ","
 
 	case "$fragmentation" in
@@ -529,6 +531,7 @@ config_connection() {
 	swanctl_xappend2 "remote {"
 	swanctl_xappend3 "auth = $auth_method"
 	[ -n "$remote_identifier" ] && swanctl_xappend3 "id = \"$remote_identifier\""
+	[ -n "$remote_ca_certs" ] && swanctl_xappend3 "cacerts = \"$remote_ca_certs\""
 	swanctl_xappend2 "}"
 
 	swanctl_xappend2 "children {"
