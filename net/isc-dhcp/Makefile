@@ -9,8 +9,8 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=isc-dhcp
 UPSTREAM_NAME:=dhcp
-PKG_VERSION:=4.4.3
-PKG_RELEASE:=8
+PKG_VERSION:=4.4.3-P1
+PKG_RELEASE:=1
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -21,7 +21,7 @@ PKG_SOURCE:=$(UPSTREAM_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=ftp://ftp.isc.org/isc/dhcp/$(PKG_VERSION) \
 		http://ftp.funet.fi/pub/mirrors/ftp.isc.org/isc/dhcp/$(PKG_VERSION) \
 		http://ftp.iij.ad.jp/pub/network/isc/dhcp/$(PKG_VERSION)
-PKG_HASH:=0e3ec6b4c2a05ec0148874bcd999a66d05518378d77421f607fb0bc9d0135818
+PKG_HASH:=0ac416bb55997ca8632174fd10737fd61cdb8dba2752160a335775bc21dc73c7
 
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
