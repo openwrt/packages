@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cni-plugins-nft
-PKG_VERSION:=1.0.11
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=1.0.12
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/greenpau/cni-plugins/archive/v$(PKG_VERSION)
-PKG_HASH:=f6c68268893c9d9967dd4d8f3684df0f4f989e7ebf373e72b20d1f290ff9e240
+PKG_HASH:=51c4b41c61f46c7dfc691d52dba301e7d8189589e1a625772f761ea3ae804fb3
 
 PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
 PKG_LICENSE:=Apache-2.0
