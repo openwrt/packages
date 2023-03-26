@@ -331,10 +331,10 @@ config_child() {
 	[ -n "$local_subnet" ] && swanctl_xappend4 "local_ts = $local_subnet"
 	[ -n "$remote_subnet" ] && swanctl_xappend4 "remote_ts = $remote_subnet"
 
-	[ -n "$hw_offload" ] && swanctl_append4 "hw_offload = $hw_offload"
+	[ -n "$hw_offload" ] && swanctl_xappend4 "hw_offload = $hw_offload"
 	[ $ipcomp -eq 1 ] && swanctl_xappend4 "ipcomp = 1"
-	[ -n "$interface" ] && swanctl_append4 "interface = $interface"
-	[ -n "$priority" ] && swanctl_append4 "priority = $priority"
+	[ -n "$interface" ] && swanctl_xappend4 "interface = $interface"
+	[ -n "$priority" ] && swanctl_xappend4 "priority = $priority"
 	[ -n "$if_id" ] && { swanctl_xappend4 "if_id_in = $if_id" ; swanctl_xappend4 "if_id_out = $if_id" ; }
 	[ -n "$startaction" -a "$startaction" != "none" ] && swanctl_xappend4 "start_action = $startaction"
 	[ -n "$closeaction" -a "$closeaction" != "none" ] && swanctl_xappend4 "close_action = $closeaction"
