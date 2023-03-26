@@ -168,9 +168,15 @@ f_log() {
 		fi
 	fi
 	if [ "${class}" = "err" ]; then
-		f_genstatus "error"
-		[ "${ban_mailnotification}" = "1" ] && [ -n "${ban_mailreceiver}" ] && [ -x "${ban_mailcmd}" ] && f_mail
+		"${ban_nftcmd}" delete table inet banIP >/dev/null 2>&1
+		if [ "${ban_enabled}" = "1" ]; then
+			f_genstatus "error"
+			[ "${ban_mailnotification}" = "1" ] && [ -n "${ban_mailreceiver}" ] && [ -x "${ban_mailcmd}" ] && f_mail
+		else
+			f_genstatus "disabled"
+		fi
 		f_rmdir "${ban_tmpdir}"
+		f_rmpid
 		rm -rf "${ban_lock}"
 		exit 1
 	fi
@@ -859,7 +865,6 @@ f_genstatus() {
 		fi
 		runtime="action: ${ban_action:-"-"}, duration: ${duration:-"-"}, date: $(date "+%Y-%m-%d %H:%M:%S")"
 	fi
-	f_system
 	[ ${ban_splitsize:-"0"} -gt "0" ] && split="1"
 
 	: >"${ban_rtfile}"
@@ -1034,7 +1039,6 @@ f_report() {
 	local detail set_details jsnval timestamp autoadd_allow autoadd_block sum_sets sum_setinput sum_setforwardwan sum_setforwardlan sum_setelements sum_cntinput sum_cntforwardwan sum_cntforwardlan
 
 	[ -z "${ban_dev}" ] && f_conf
-	f_system
 	f_mkdir "${ban_reportdir}"
 	report_jsn="${ban_reportdir}/ban_report.jsn"
 	report_txt="${ban_reportdir}/ban_report.txt"
@@ -1196,9 +1200,6 @@ f_report() {
 f_search() {
 	local table_sets ip proto run_search search="${1}"
 
-	f_system
-	run_search="/var/run/banIP.search"
-
 	if [ -n "${search}" ]; then
 		ip="$(printf "%s" "${search}" | "${ban_awkcmd}" 'BEGIN{RS="(([0-9]{1,3}\\.){3}[0-9]{1,3})+"}{printf "%s",RT}')"
 		[ -n "${ip}" ] && proto="v4"
@@ -1217,6 +1218,7 @@ f_search() {
 	printf "%s\n" "    Looking for IP '${ip}' on $(date "+%Y-%m-%d %H:%M:%S")"
 	printf "%s\n" "    ---"
 	cnt="1"
+	run_search="/var/run/banIP.search"
 	for set in ${table_sets}; do
 		(
 			if "${ban_nftcmd}" get element inet banIP "${set}" "{ ${ip} }" >/dev/null 2>&1; then
@@ -1241,7 +1243,6 @@ f_search() {
 f_survey() {
 	local set_elements set="${1}"
 
-	f_system
 	[ -n "${set}" ] && set_elements="$("${ban_nftcmd}" -j list set inet banIP "${set}" 2>/dev/null | jsonfilter -qe '@.nftables[*].set.elem[*]')"
 
 	if [ -z "${set}" ] || [ -z "${set_elements}" ]; then
@@ -1279,6 +1280,7 @@ f_mail() {
 
 # check banIP availability and initial sourcing
 #
+f_system
 if [ "${ban_action}" != "stop" ]; then
 	if [ -r "/lib/functions.sh" ] && [ -r "/lib/functions/network.sh" ] && [ -r "/usr/share/libubox/jshn.sh" ]; then
 		. "/lib/functions.sh"
