@@ -1,0 +1,5 @@
+# srt config
+config SRT_OPENSSL_SUPPORT
+	bool "Add openssl support"
+	depends on PACKAGE_srt
+	default n
