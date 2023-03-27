@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=isc-dhcp
 UPSTREAM_NAME:=dhcp
 PKG_VERSION:=4.4.3
-PKG_RELEASE:=7
+PKG_RELEASE:=8
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -132,33 +132,15 @@ $(call Package/isc-dhcp-server/description)
  This package is compiled with IPv4 and IPv6 support.
 endef
 
-define Package/isc-dhcp-dyndns-ipv4
+define Package/isc-dhcp-dyndns
   $(call Package/isc-dhcp/Default)
   TITLE+= server dynamic DNS dependencies (meta)
-  DEPENDS+=isc-dhcp-server-ipv4 +bind-server +bind-client
-  VARIANT:=ipv4
-endef
-
-define Package/isc-dhcp-dyndns-ipv6
-  $(call Package/isc-dhcp/Default)
-  TITLE+= server dynamic DNS dependencies (meta)
-  DEPENDS+=isc-dhcp-server-ipv6 +bind-server +bind-client
-  VARIANT:=ipv6
+  DEPENDS+=@(PACKAGE_isc-dhcp-server-ipv4||PACKAGE_isc-dhcp-server-ipv6) +bind-server +bind-client
 endef
 
 define Package/isc-dhcp-dyndns/description
  implements the Dynamic Host Configuration Protocol (DHCP) and the Internet
  Bootstrap Protocol (BOOTP).
-endef
-
-define Package/isc-dhcp-dyndns-ipv4/description
-$(call Package/isc-dhcp-dyndns/description)
- This package is compiled with IPv4 support only.
-endef
-
-define Package/isc-dhcp-dyndns-ipv6/description
-$(call Package/isc-dhcp-dyndns/description)
- This package is compiled with IPv4 and IPv6 support.
 endef
 
 define Package/isc-dhcp-omshell-ipv4
@@ -257,7 +239,7 @@ define Package/isc-dhcp-server-ipv6/conffiles
 /etc/dhcpd6.conf
 endef
 
-define Package/isc-dhcp-dyndns-$(BUILD_VARIANT)/install
+define Package/isc-dhcp-dyndns/install
 	:
 endef
 
@@ -285,11 +267,10 @@ endef
 
 $(eval $(call BuildPackage,isc-dhcp-relay-ipv4))
 $(eval $(call BuildPackage,isc-dhcp-server-ipv4))
-$(eval $(call BuildPackage,isc-dhcp-dyndns-ipv4))
+$(eval $(call BuildPackage,isc-dhcp-dyndns))
 $(eval $(call BuildPackage,isc-dhcp-client-ipv4))
 $(eval $(call BuildPackage,isc-dhcp-omshell-ipv4))
 $(eval $(call BuildPackage,isc-dhcp-relay-ipv6))
 $(eval $(call BuildPackage,isc-dhcp-server-ipv6))
-$(eval $(call BuildPackage,isc-dhcp-dyndns-ipv6))
 $(eval $(call BuildPackage,isc-dhcp-client-ipv6))
 $(eval $(call BuildPackage,isc-dhcp-omshell-ipv6))
