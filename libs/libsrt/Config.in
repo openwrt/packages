@@ -1,0 +1,5 @@
+# libsrt config
+config LIBSRT_OPENSSL_SUPPORT
+	bool "Add openssl support"
+	depends on PACKAGE_libsrt
+	default n
