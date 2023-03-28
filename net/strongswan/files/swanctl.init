@@ -63,9 +63,12 @@ file_reset() {
 
 xappend() {
 	local file="$1"
-	shift
+	local indent="$2"
+	shift 2
 
-	echo "$@" >> "$file"
+	for cmd in "$@"; do
+		echo "$indent$cmd" >> "$file"
+	done
 }
 
 swan_reset() {
@@ -77,23 +80,23 @@ swan_xappend() {
 }
 
 swan_xappend0() {
-	swan_xappend "$@"
+	swan_xappend "" "$@"
 }
 
 swan_xappend1() {
-	swan_xappend "  ""$@"
+	swan_xappend "  " "$@"
 }
 
 swan_xappend2() {
-	swan_xappend "    ""$@"
+	swan_xappend "    " "$@"
 }
 
 swan_xappend3() {
-	swan_xappend "      ""$@"
+	swan_xappend "      " "$@"
 }
 
 swan_xappend4() {
-	swan_xappend "        ""$@"
+	swan_xappend "        " "$@"
 }
 
 swanctl_reset() {
@@ -105,23 +108,23 @@ swanctl_xappend() {
 }
 
 swanctl_xappend0() {
-	swanctl_xappend "$@"
+	swanctl_xappend "" "$@"
 }
 
 swanctl_xappend1() {
-	swanctl_xappend "  ""$@"
+	swanctl_xappend "  " "$@"
 }
 
 swanctl_xappend2() {
-	swanctl_xappend "    ""$@"
+	swanctl_xappend "    " "$@"
 }
 
 swanctl_xappend3() {
-	swanctl_xappend "      ""$@"
+	swanctl_xappend "      " "$@"
 }
 
 swanctl_xappend4() {
-	swanctl_xappend "        ""$@"
+	swanctl_xappend "        " "$@"
 }
 
 warning() {
@@ -331,11 +334,11 @@ config_child() {
 	[ -n "$local_subnet" ] && swanctl_xappend4 "local_ts = $local_subnet"
 	[ -n "$remote_subnet" ] && swanctl_xappend4 "remote_ts = $remote_subnet"
 
-	[ -n "$hw_offload" ] && swanctl_append4 "hw_offload = $hw_offload"
+	[ -n "$hw_offload" ] && swanctl_xappend4 "hw_offload = $hw_offload"
 	[ $ipcomp -eq 1 ] && swanctl_xappend4 "ipcomp = 1"
-	[ -n "$interface" ] && swanctl_append4 "interface = $interface"
-	[ -n "$priority" ] && swanctl_append4 "priority = $priority"
-	[ -n "$if_id" ] && { swanctl_xappend4 "if_id_in = $if_id" ; swanctl_xappend4 "if_id_out = $if_id" ; }
+	[ -n "$interface" ] && swanctl_xappend4 "interface = $interface"
+	[ -n "$priority" ] && swanctl_xappend4 "priority = $priority"
+	[ -n "$if_id" ] && swanctl_xappend4 "if_id_in = $if_id" "if_id_out = $if_id"
 	[ -n "$startaction" -a "$startaction" != "none" ] && swanctl_xappend4 "start_action = $startaction"
 	[ -n "$closeaction" -a "$closeaction" != "none" ] && swanctl_xappend4 "close_action = $closeaction"
 	swanctl_xappend4 "esp_proposals = $esp_proposal"
