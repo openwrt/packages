@@ -185,9 +185,8 @@ EOF
 
 	proto_run_command "$config" /usr/sbin/yggdrasil -useconffile "${ygg_cfg}"
 	proto_init_update "$config" 1
-	proto_add_ipv6_address "$(yggdrasil -useconffile "${ygg_cfg}" -address)"
+	proto_add_ipv6_address "$(yggdrasil -useconffile "${ygg_cfg}" -address)" "7"
 	proto_add_ipv6_prefix "$(yggdrasil -useconffile "${ygg_cfg}" -subnet)"
-	proto_add_ipv6_route "200::" "7"
 	proto_send_update "$config"
 }
 
