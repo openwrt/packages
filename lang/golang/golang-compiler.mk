@@ -76,8 +76,10 @@ define GoCompiler/Default/Install/Bin
 	$(INSTALL_BIN) -p "$(1)/bin/$(4)"/* "$(2)/lib/go-$(3)/bin/"
   endif
 
-	$(INSTALL_DIR) "$(2)/lib/go-$(3)/pkg"
-	$(CP) "$(1)/pkg/$(4)$(if $(5),_$(5))" "$(2)/lib/go-$(3)/pkg/"
+	if [ -d "$(1)/pkg/$(4)$(if $(5),_$(5))" ]; then \
+		$(INSTALL_DIR) "$(2)/lib/go-$(3)/pkg" ; \
+		$(CP) "$(1)/pkg/$(4)$(if $(5),_$(5))" "$(2)/lib/go-$(3)/pkg/" ; \
+	fi
 
 	$(INSTALL_DIR) "$(2)/lib/go-$(3)/pkg/tool/$(4)"
 	$(INSTALL_BIN) -p "$(1)/pkg/tool/$(4)"/* "$(2)/lib/go-$(3)/pkg/tool/$(4)/"
