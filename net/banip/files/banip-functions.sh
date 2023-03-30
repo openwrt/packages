@@ -79,7 +79,7 @@ f_system() {
 	local cpu core
 
 	ban_memory="$("${ban_awkcmd}" '/^MemAvailable/{printf "%s",int($2/1000)}' "/proc/meminfo" 2>/dev/null)"
-	ban_ver="$(${ban_ubuscmd} -S call rpc-sys packagelist 2>/dev/null | jsonfilter -ql1 -e '@.packages.banip')"
+	ban_ver="$(${ban_ubuscmd} -S call rpc-sys packagelist '{ "all": true }' 2>/dev/null | jsonfilter -ql1 -e '@.packages.banip')"
 	ban_sysver="$(${ban_ubuscmd} -S call system board 2>/dev/null | jsonfilter -ql1 -e '@.model' -e '@.release.description' |
 		"${ban_awkcmd}" 'BEGIN{RS="";FS="\n"}{printf "%s, %s",$1,$2}')"
 	if [ -z "${ban_cores}" ]; then
@@ -928,7 +928,7 @@ f_genstatus() {
 # get status information
 #
 f_getstatus() {
-	local key keylist type value index_key1 index_key2 index_value1 index_value2 actual="${1}"
+	local key keylist type value index_key1 index_key2 index_value1 index_value2
 
 	[ -z "${ban_dev}" ] && f_conf
 	json_load_file "${ban_rtfile}" >/dev/null 2>&1
@@ -1262,7 +1262,11 @@ f_mail() {
 
 	# load mail template
 	#
-	[ -r "${ban_mailtemplate}" ] && . "${ban_mailtemplate}" || f_log "info" "the mail template is missing"
+	if [ -r "${ban_mailtemplate}" ]; then
+		. "${ban_mailtemplate}"
+	else
+		f_log "info" "the mail template is missing"
+	fi
 	[ -z "${mail_text}" ] && f_log "info" "the 'mail_text' template variable is empty"
 	[ "${ban_debug}" = "1" ] && msmtp_debug="--debug"
 

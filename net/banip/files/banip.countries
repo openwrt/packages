@@ -1,5 +1,5 @@
-tw;Taiwan
 af;Afghanistan
+ax;Åland Islands
 al;Albania
 dz;Algeria
 as;American Samoa
@@ -25,7 +25,6 @@ bj;Benin
 bm;Bermuda
 bt;Bhutan
 bo;Bolivia
-bq;Caribbean Netherlands
 ba;Bosnia
 bw;Botswana
 bv;Bouvet Island
@@ -36,32 +35,30 @@ bn;Brunei
 bg;Bulgaria
 bf;Burkina Faso
 bi;Burundi
-cv;Cape Verde
 kh;Cambodia
 cm;Cameroon
 ca;Canada
+cv;Cape Verde
+bq;Caribbean Netherlands
 ky;Cayman Islands
 cf;Central African Republic
 td;Chad
 cl;Chile
 cn;China
-hk;Hong Kong
-mo;Macau
 cx;Christmas Island
 cc;Cocos (Keeling) Islands
 co;Colombia
 km;Comoros
 cg;Congo - Brazzaville
+cd;Congo - Kinshasa
 ck;Cook Islands
 cr;Costa Rica
+ci;Côte d’Ivoire
 hr;Croatia
 cu;Cuba
 cw;Curaçao
 cy;Cyprus
 cz;Czechia
-ci;Côte d’Ivoire
-kp;North Korea
-cd;Congo - Kinshasa
 dk;Denmark
 dj;Djibouti
 dm;Dominica
@@ -100,8 +97,8 @@ gw;Guinea-Bissau
 gy;Guyana
 ht;Haiti
 hm;Heard & McDonald Islands
-va;Vatican City
 hn;Honduras
+hk;Hong Kong
 hu;Hungary
 is;Iceland
 in;India
@@ -130,6 +127,7 @@ ly;Libya
 li;Liechtenstein
 lt;Lithuania
 lu;Luxembourg
+mo;Macau
 mg;Madagascar
 mw;Malawi
 my;Malaysia
@@ -143,6 +141,7 @@ mu;Mauritius
 yt;Mayotte
 mx;Mexico
 fm;Micronesia
+md;Moldova
 mc;Monaco
 mn;Mongolia
 me;Montenegro
@@ -162,10 +161,13 @@ ng;Nigeria
 nu;Niue
 nf;Norfolk Island
 mp;Northern Mariana Islands
+kp;North Korea
+mk;North Macedonia
 no;Norway
 om;Oman
 pk;Pakistan
 pw;Palau
+ps;Palestine
 pa;Panama
 pg;Papua New Guinea
 py;Paraguay
@@ -176,19 +178,10 @@ pl;Poland
 pt;Portugal
 pr;Puerto Rico
 qa;Qatar
-kr;South Korea
-md;Moldova
+re;Réunion
 ro;Romania
 ru;Russia
 rw;Rwanda
-re;Réunion
-bl;St. Barthélemy
-sh;St. Helena
-kn;St. Kitts & Nevis
-lc;St. Lucia
-mf;St. Martin
-pm;St. Pierre & Miquelon
-vc;St. Vincent & Grenadines
 ws;Samoa
 sm;San Marino
 st;São Tomé & Príncipe
@@ -205,19 +198,27 @@ sb;Solomon Islands
 so;Somalia
 za;South Africa
 gs;South Georgia & South Sandwich Islands
+kr;South Korea
 ss;South Sudan
 es;Spain
 lk;Sri Lanka
-ps;Palestine
+bl;St. Barthélemy
+sh;St. Helena
+kn;St. Kitts & Nevis
+lc;St. Lucia
+mf;St. Martin
+pm;St. Pierre & Miquelon
+vc;St. Vincent & Grenadines
 sd;Sudan
 sr;Suriname
 sj;Svalbard & Jan Mayen
 se;Sweden
 ch;Switzerland
 sy;Syria
+tw;Taiwan
 tj;Tajikistan
+tz;Tanzania
 th;Thailand
-mk;North Macedonia
 tl;Timor-Leste
 tg;Togo
 tk;Tokelau
@@ -232,13 +233,13 @@ ug;Uganda
 ua;Ukraine
 ae;United Arab Emirates
 gb;United Kingdom
-tz;Tanzania
-um;U.S. Outlying Islands
-vi;U.S. Virgin Islands
 us;United States
 uy;Uruguay
+um;U.S. Outlying Islands
+vi;U.S. Virgin Islands
 uz;Uzbekistan
 vu;Vanuatu
+va;Vatican City
 ve;Venezuela
 vn;Vietnam
 wf;Wallis & Futuna
@@ -246,4 +247,3 @@ eh;Western Sahara
 ye;Yemen
 zm;Zambia
 zw;Zimbabwe
-ax;Åland Islands
