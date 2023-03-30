@@ -138,8 +138,13 @@ hold="$((cnt % ban_cores))"
 f_rmset
 f_rmdir "${ban_tmpdir}"
 f_genstatus "active"
-[ "${ban_mailnotification}" = "1" ] && [ -n "${ban_mailreceiver}" ] && [ -x "${ban_mailcmd}" ] && f_mail
 f_log "info" "finished banIP download processes"
+if [ "${ban_mailnotification}" = "1" ] && [ -n "${ban_mailreceiver}" ] && [ -x "${ban_mailcmd}" ]; then
+	(
+		sleep ${ban_triggerdelay}
+		f_mail
+	) &
+fi
 rm -rf "${ban_lock}"
 
 # start detached log service

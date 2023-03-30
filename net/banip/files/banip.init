@@ -19,6 +19,7 @@ ban_funlib="/usr/lib/banip-functions.sh"
 ban_pidfile="/var/run/banip.pid"
 ban_lock="/var/run/banip.lock"
 
+[ "${action}" = "boot" ] && /etc/init.d/banip running && exit 0
 [ "${action}" = "stop" ] && ! /etc/init.d/banip running && exit 0
 [ ! -r "${ban_funlib}" ] && { [ "${action}" = "start" ] || [ "${action}" = "restart" ] || [ "${action}" = "reload" ] || [ "${action}" = "stop" ] || [ "${action}" = "report" ] || [ "${action}" = "search" ] || [ "${action}" = "survey" ] || [ "${action}" = "status" ]; } && exit 1
 [ -d "${ban_lock}" ] && { [ "${action}" = "start" ] || [ "${action}" = "restart" ] || [ "${action}" = "reload" ]; } && exit 1
@@ -60,6 +61,7 @@ stop_service() {
 	"${ban_nftcmd}" delete table inet banIP >/dev/null 2>&1
 	f_genstatus "stopped"
 	f_rmpid
+	rm -rf "${ban_lock}"
 }
 
 restart() {
@@ -72,10 +74,8 @@ status() {
 }
 
 status_service() {
-	local actual="${1}"
-
 	[ -z "$(command -v "f_system")" ] && . "${ban_funlib}"
-	[ -n "${actual}" ] && f_actual || f_getstatus
+	f_getstatus
 }
 
 report() {
