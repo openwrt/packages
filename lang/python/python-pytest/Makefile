@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pytest
 PKG_VERSION:=6.2.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=pytest
 PKG_HASH:=671238a46e4df0f3498d1c3270e5deb9b32d25134c99b7d75370a68cfbe9b634
@@ -18,7 +18,7 @@ PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
-HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=setuptools-scm
+PKG_BUILD_DEPENDS:=python-setuptools-scm/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -38,7 +38,8 @@ define Package/python3-pytest
 	+python3-pluggy \
 	+python3-packaging \
 	+python3-toml \
-	+python3-iniconfig
+	+python3-iniconfig \
+	@BROKEN
 endef
 
 define Package/python3-pytest/description

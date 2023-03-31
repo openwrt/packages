@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-apipkg
 PKG_VERSION:=1.5
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PYPI_NAME:=apipkg
 PKG_HASH:=37228cda29411948b422fae072f57e31d3396d2ee1c9783775980ee9c9990af6
@@ -18,7 +18,7 @@ PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
-HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=setuptools-scm
+PKG_BUILD_DEPENDS:=python-setuptools-scm/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
