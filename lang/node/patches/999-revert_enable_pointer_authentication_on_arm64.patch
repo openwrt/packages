@@ -1,6 +1,6 @@
 --- a/configure.py
 +++ b/configure.py
-@@ -1241,10 +1241,6 @@ def configure_node(o):
+@@ -1259,10 +1259,6 @@ def configure_node(o):
  
    o['variables']['want_separate_host_toolset'] = int(cross_compiling)
  
