@@ -404,6 +404,8 @@ proto_modemmanager_setup() {
 		return 1
 	}
 
+	proto_run_command "$interface" mmcli --modem="${device}" --track-state
+
 	# check if Signal refresh rate is set
 	if [ -n "${signalrate}" ] && [ "${signalrate}" -eq "${signalrate}" ] 2>/dev/null; then
 		echo "setting signal refresh rate to ${signalrate} seconds"

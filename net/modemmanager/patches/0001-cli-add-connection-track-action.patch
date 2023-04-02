@@ -1,0 +1,133 @@
+From ac9f9f557704062e1fe7e5a39ae114bb4b45af14 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Sun, 2 Apr 2023 11:30:52 +0100
+Subject: [PATCH] cli: add connection track action
+
+Add --track-state action which will track an ongoing connection and
+exit if either the connection was closed in a way which allows to
+re-connect immediately or if network registration has been regained.
+
+This allows to use mmcli by OpenWrt's netifd in a similar way to
+the ppp process, and netifd will take care of restarting the interface
+once this process exits.
+---
+ cli/mmcli-modem.c | 73 ++++++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 72 insertions(+), 1 deletion(-)
+
+--- a/cli/mmcli-modem.c
++++ b/cli/mmcli-modem.c
+@@ -49,6 +49,7 @@ static Context *ctx;
+ /* Options */
+ static gboolean info_flag; /* set when no action found */
+ static gboolean monitor_state_flag;
++static gboolean track_state_flag;
+ static gboolean enable_flag;
+ static gboolean disable_flag;
+ static gboolean set_power_state_on_flag;
+@@ -72,6 +73,10 @@ static GOptionEntry entries[] = {
+       "Monitor state of a given modem",
+       NULL
+     },
++    { "track-state", 0, 0, G_OPTION_ARG_NONE, &track_state_flag,
++      "Track connection state of a given modem",
++      NULL
++    },
+     { "enable", 'e', 0, G_OPTION_ARG_NONE, &enable_flag,
+       "Enable a given modem",
+       NULL
+@@ -169,6 +174,7 @@ mmcli_modem_options_enabled (void)
+         return !!n_actions;
+ 
+     n_actions = (monitor_state_flag +
++                 track_state_flag +
+                  enable_flag +
+                  disable_flag +
+                  set_power_state_on_flag +
+@@ -206,7 +212,7 @@ mmcli_modem_options_enabled (void)
+         exit (EXIT_FAILURE);
+     }
+ 
+-    if (monitor_state_flag || inhibit_flag)
++    if (track_state_flag || monitor_state_flag || inhibit_flag)
+         mmcli_force_async_operation ();
+ 
+     if (info_flag)
+@@ -1002,6 +1008,42 @@ device_removed (MMManager *manager,
+ }
+ 
+ static void
++state_changed_track (MMModem                  *modem,
++                     MMModemState              old_state,
++                     MMModemState              new_state,
++                     MMModemStateChangeReason  reason)
++{
++    if (new_state != MM_MODEM_STATE_REGISTERED)
++        return;
++
++    if (old_state != MM_MODEM_STATE_ENABLED &&
++        old_state != MM_MODEM_STATE_SEARCHING &&
++        old_state != MM_MODEM_STATE_CONNECTED)
++        return;
++
++    g_print ("\t%s: State changed, '%s' --> '%s' (Reason: %s)\n",
++             mm_modem_get_path (modem),
++             mm_modem_state_get_string (old_state),
++             mm_modem_state_get_string (new_state),
++             mmcli_get_state_reason_string (reason));
++    fflush (stdout);
++    mmcli_async_operation_done ();
++}
++
++static void
++device_removed_track (MMManager *manager,
++                      MMObject  *object)
++{
++    if (object != ctx->object)
++        return;
++
++    g_print ("\t%s: Removed\n", mm_object_get_path (object));
++    fflush (stdout);
++
++    mmcli_async_operation_done ();
++}
++
++static void
+ get_modem_ready (GObject      *source,
+                  GAsyncResult *result,
+                  gpointer      none)
+@@ -1043,6 +1085,35 @@ get_modem_ready (GObject      *source,
+ 
+         /* If we get cancelled, operation done */
+         g_cancellable_connect (ctx->cancellable,
++                               G_CALLBACK (cancelled),
++                               NULL,
++                               NULL);
++        return;
++    }
++
++    if (track_state_flag) {
++        MMModemState current;
++
++        g_signal_connect (ctx->modem,
++                          "state-changed",
++                          G_CALLBACK (state_changed_track),
++                          NULL);
++
++        g_signal_connect (ctx->manager,
++                          "object-removed",
++                          G_CALLBACK (device_removed_track),
++                          NULL);
++
++        current = mm_modem_get_state (ctx->modem);
++        if (current != MM_MODEM_STATE_CONNECTED) {
++            g_print ("\t%s: Initial state, '%s'\n",
++                    mm_object_get_path (ctx->object),
++                    mm_modem_state_get_string (current));
++            cancelled(ctx->cancellable);
++        }
++
++        /* If we get cancelled, operation done */
++        g_cancellable_connect (ctx->cancellable,
+                                G_CALLBACK (cancelled),
+                                NULL,
+                                NULL);
