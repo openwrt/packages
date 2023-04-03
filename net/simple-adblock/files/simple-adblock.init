@@ -31,35 +31,34 @@ readonly serviceName="$packageName $PKG_VERSION"
 readonly packageConfigFile="/etc/config/${packageName}"
 readonly dnsmasqAddnhostsFile="/var/run/${packageName}/dnsmasq.addnhosts"
 readonly dnsmasqAddnhostsCache="/var/run/${packageName}/dnsmasq.addnhosts.cache"
-readonly dnsmasqAddnhostsGzip="/etc/${packageName}.dnsmasq.addnhosts.gz"
+readonly dnsmasqAddnhostsGzip="${packageName}.dnsmasq.addnhosts.gz"
 readonly dnsmasqAddnhostsFilter='s|^|127.0.0.1 |;s|$||'
 readonly dnsmasqAddnhostsFilterIPv6='s|^|:: |;s|$||'
 readonly dnsmasqConfFile="/tmp/dnsmasq.d/${packageName}"
 readonly dnsmasqConfCache="/var/run/${packageName}/dnsmasq.conf.cache"
-readonly dnsmasqConfGzip="/etc/${packageName}.dnsmasq.conf.gz"
+readonly dnsmasqConfGzip="${packageName}.dnsmasq.conf.gz"
 readonly dnsmasqConfFilter='s|^|local=/|;s|$|/|'
 readonly dnsmasqIpsetFile="/tmp/dnsmasq.d/${packageName}.ipset"
 readonly dnsmasqIpsetCache="/var/run/${packageName}/dnsmasq.ipset.cache"
-readonly dnsmasqIpsetGzip="/etc/${packageName}.dnsmasq.ipset.gz"
+readonly dnsmasqIpsetGzip="${packageName}.dnsmasq.ipset.gz"
 readonly dnsmasqIpsetFilter='s|^|ipset=/|;s|$|/adb|'
 readonly dnsmasqNftsetFile="/tmp/dnsmasq.d/${packageName}.nftset"
 readonly dnsmasqNftsetCache="/var/run/${packageName}/dnsmasq.nftset.cache"
-readonly dnsmasqNftsetGzip="/etc/${packageName}.dnsmasq.nftset.gz"
+readonly dnsmasqNftsetGzip="${packageName}.dnsmasq.nftset.gz"
 readonly dnsmasqNftsetFilter='s|^|nftset=/|;s|$|/4#inet#fw4#adb4|'
 readonly dnsmasqNftsetFilterIPv6='s|^|nftset=/|;s|$|/4#inet#fw4#adb4,6#inet#fw4#adb6|'
 readonly dnsmasqServersFile="/var/run/${packageName}/dnsmasq.servers"
 readonly dnsmasqServersCache="/var/run/${packageName}/dnsmasq.servers.cache"
-readonly dnsmasqServersGzip="/etc/${packageName}.dnsmasq.servers.gz"
+readonly dnsmasqServersGzip="${packageName}.dnsmasq.servers.gz"
 readonly dnsmasqServersFilter='s|^|server=/|;s|$|/|'
 readonly unboundFile="/var/lib/unbound/adb_list.${packageName}"
 readonly unboundCache="/var/run/${packageName}/unbound.cache"
-readonly unboundGzip="/etc/${packageName}.unbound.gz"
+readonly unboundGzip="${packageName}.unbound.gz"
 readonly unboundFilter='s|^|local-zone: "|;s|$|" static|'
 readonly A_TMP="/var/${packageName}.hosts.a.tmp"
 readonly B_TMP="/var/${packageName}.hosts.b.tmp"
 readonly jsonFile="/var/run/${packageName}/${packageName}.json"
 readonly sharedMemoryError="/dev/shm/$packageName-error"
-readonly sharedMemoryOutput="/dev/shm/$packageName-output"
 readonly hostsFilter='/localhost/d;/^#/d;/^[^0-9]/d;s/^0\.0\.0\.0.//;s/^127\.0\.0\.1.//;s/[[:space:]]*#.*$//;s/[[:cntrl:]]$//;s/[[:space:]]//g;/[`~!@#\$%\^&\*()=+;:"'\'',<>?/\|[{}]/d;/]/d;/\./!d;/^$/d;/[^[:alnum:]_.-]/d;'
 readonly domainsFilter='/^#/d;s/[[:space:]]*#.*$//;s/[[:space:]]*$//;s/[[:cntrl:]]$//;/[[:space:]]/d;/[`~!@#\$%\^&\*()=+;:"'\'',<>?/\|[{}]/d;/]/d;/\./!d;/^$/d;/[^[:alnum:]_.-]/d;'
 readonly adBlockPlusFilter='/^#/d;/^!/d;s/[[:space:]]*#.*$//;s/^||//;s/\^$//;s/[[:space:]]*$//;s/[[:cntrl:]]$//;/[[:space:]]/d;/[`~!@#\$%\^&\*()=+;:"'\'',<>?/\|[{}]/d;/]/d;/\./!d;/^$/d;/[^[:alnum:]_.-]/d;'
@@ -163,6 +162,7 @@ get_text() {
 		warningExternalDnsmasqConfig)
 			r="use of external dnsmasq config file detected, please set 'dns' option to 'dnsmasq.conf'";;
 		warningMissingRecommendedPackages) r="Some recommended packages are missing";;
+		warningInvalidCompressedCacheDir) r="invalid compressed cache directory '%s'";;
 	esac
 	echo "$r"
 }
@@ -183,11 +183,13 @@ dnsmasq_kill() { killall -q -s KILL dnsmasq; }
 dnsmasq_restart() { /etc/init.d/dnsmasq restart >/dev/null 2>&1; }
 unbound_restart() { /etc/init.d/unbound restart >/dev/null 2>&1; }
 is_present() { command -v "$1" >/dev/null 2>&1; }
+sanitize_dir() { [ -d "$(readlink -fn "$1")" ] && readlink -fn "$1"; }
 
 output() {
 # Can take a single parameter (text) to be output at any verbosity
 # Or target verbosity level and text to be output at specifc verbosity
 	local msg memmsg logmsg
+	local sharedMemoryOutput="/dev/shm/$packageName-output"
 	verbosity="${verbosity:-2}"
 	if [ $# -ne 1 ]; then
 		if [ $((verbosity & $1)) -gt 0 ] || [ "$verbosity" = "$1" ]; then shift; else return 0; fi
@@ -330,41 +332,50 @@ load_environment() {
 		;;
 	esac
 
+	if [ "$(sanitize_dir "$compressed_cache_dir")" = '/' ]; then
+		compressed_cache_dir=''
+	elif [ -n "$(sanitize_dir "$compressed_cache_dir")" ]; then
+		compressed_cache_dir="$(sanitize_dir "$compressed_cache_dir")"
+	else
+		json add warning 'warningInvalidCompressedCacheDir' "$compressed_cache_dir"
+		compressed_cache_dir="/etc"
+	fi
+
 	case "$dns" in
 		dnsmasq.addnhosts)
 			outputFilter="$dnsmasqAddnhostsFilter"
 			outputFile="$dnsmasqAddnhostsFile"
 			outputCache="$dnsmasqAddnhostsCache"
-			outputGzip="$dnsmasqAddnhostsGzip"
+			outputGzip="${compressed_cache_dir}/${dnsmasqAddnhostsGzip}"
 			if [ "$ipv6_enabled" -ne 0 ]; then
 				outputFilterIPv6="$dnsmasqAddnhostsFilterIPv6"
 			fi
-			rm -f "$dnsmasqConfFile" "$dnsmasqConfCache" "$dnsmasqConfGzip"
-			rm -f "$dnsmasqIpsetFile" "$dnsmasqIpsetCache" "$dnsmasqIpsetGzip"
-			rm -f "$dnsmasqNftsetFile" "$dnsmasqNftsetCache" "$dnsmasqNftsetGzip"
-			rm -f "$dnsmasqServersFile" "$dnsmasqServersCache" "$dnsmasqServersGzip"
+			rm -f "$dnsmasqConfFile" "$dnsmasqConfCache" "${compressed_cache_dir}/${dnsmasqConfGzip}"
+			rm -f "$dnsmasqIpsetFile" "$dnsmasqIpsetCache" "${compressed_cache_dir}/${dnsmasqIpsetGzip}"
+			rm -f "$dnsmasqNftsetFile" "$dnsmasqNftsetCache" "${compressed_cache_dir}/${dnsmasqNftsetGzip}"
+			rm -f "$dnsmasqServersFile" "$dnsmasqServersCache" "${compressed_cache_dir}/${dnsmasqServersGzip}"
 			rm -f "$unboundFile" "$unboundCache" "$unboundGzip"
 		;;
 		dnsmasq.conf)
 			outputFilter="$dnsmasqConfFilter"
 			outputFile="$dnsmasqConfFile"
 			outputCache="$dnsmasqConfCache"
-			outputGzip="$dnsmasqConfGzip"
-			rm -f "$dnsmasqAddnhostsFile" "$dnsmasqAddnhostsCache" "$dnsmasqAddnhostsGzip"
-			rm -f "$dnsmasqIpsetFile" "$dnsmasqIpsetCache" "$dnsmasqIpsetGzip"
-			rm -f "$dnsmasqNftsetFile" "$dnsmasqNftsetCache" "$dnsmasqNftsetGzip"
-			rm -f "$dnsmasqServersFile" "$dnsmasqServersCache" "$dnsmasqServersGzip"
+			outputGzip="${compressed_cache_dir}/${dnsmasqConfGzip}"
+			rm -f "$dnsmasqAddnhostsFile" "$dnsmasqAddnhostsCache" "${compressed_cache_dir}/${dnsmasqAddnhostsGzip}"
+			rm -f "$dnsmasqIpsetFile" "$dnsmasqIpsetCache" "${compressed_cache_dir}/${dnsmasqIpsetGzip}"
+			rm -f "$dnsmasqNftsetFile" "$dnsmasqNftsetCache" "${compressed_cache_dir}/${dnsmasqNftsetGzip}"
+			rm -f "$dnsmasqServersFile" "$dnsmasqServersCache" "${compressed_cache_dir}/${dnsmasqServersGzip}"
 			rm -f "$unboundFile" "$unboundCache" "$unboundGzip"
 		;;
 		dnsmasq.ipset)
 			outputFilter="$dnsmasqIpsetFilter"
 			outputFile="$dnsmasqIpsetFile"
 			outputCache="$dnsmasqIpsetCache"
-			outputGzip="$dnsmasqIpsetGzip"
-			rm -f "$dnsmasqAddnhostsFile" "$dnsmasqAddnhostsCache" "$dnsmasqAddnhostsGzip"
-			rm -f "$dnsmasqConfFile" "$dnsmasqConfCache" "$dnsmasqConfGzip"
-			rm -f "$dnsmasqNftsetFile" "$dnsmasqNftsetCache" "$dnsmasqNftsetGzip"
-			rm -f "$dnsmasqServersFile" "$dnsmasqServersCache" "$dnsmasqServersGzip"
+			outputGzip="${compressed_cache_dir}/${dnsmasqIpsetGzip}"
+			rm -f "$dnsmasqAddnhostsFile" "$dnsmasqAddnhostsCache" "${compressed_cache_dir}/${dnsmasqAddnhostsGzip}"
+			rm -f "$dnsmasqConfFile" "$dnsmasqConfCache" "${compressed_cache_dir}/${dnsmasqConfGzip}"
+			rm -f "$dnsmasqNftsetFile" "$dnsmasqNftsetCache" "${compressed_cache_dir}/${dnsmasqNftsetGzip}"
+			rm -f "$dnsmasqServersFile" "$dnsmasqServersCache" "${compressed_cache_dir}/${dnsmasqServersGzip}"
 			rm -f "$unboundFile" "$unboundCache" "$unboundGzip"
 		;;
 		dnsmasq.nftset)
@@ -375,22 +386,22 @@ load_environment() {
 			fi
 			outputFile="$dnsmasqNftsetFile"
 			outputCache="$dnsmasqNftsetCache"
-			outputGzip="$dnsmasqNftsetGzip"
-			rm -f "$dnsmasqAddnhostsFile" "$dnsmasqAddnhostsCache" "$dnsmasqAddnhostsGzip"
-			rm -f "$dnsmasqConfFile" "$dnsmasqConfCache" "$dnsmasqConfGzip"
-			rm -f "$dnsmasqIpsetFile" "$dnsmasqIpsetCache" "$dnsmasqIpsetGzip"
-			rm -f "$dnsmasqServersFile" "$dnsmasqServersCache" "$dnsmasqServersGzip"
+			outputGzip="${compressed_cache_dir}/${dnsmasqNftsetGzip}"
+			rm -f "$dnsmasqAddnhostsFile" "$dnsmasqAddnhostsCache" "${compressed_cache_dir}/${dnsmasqAddnhostsGzip}"
+			rm -f "$dnsmasqConfFile" "$dnsmasqConfCache" "${compressed_cache_dir}/${dnsmasqConfGzip}"
+			rm -f "$dnsmasqIpsetFile" "$dnsmasqIpsetCache" "${compressed_cache_dir}/${dnsmasqIpsetGzip}"
+			rm -f "$dnsmasqServersFile" "$dnsmasqServersCache" "${compressed_cache_dir}/${dnsmasqServersGzip}"
 			rm -f "$unboundFile" "$unboundCache" "$unboundGzip"
 		;;
 		dnsmasq.servers)
 			outputFilter="$dnsmasqServersFilter"
 			outputFile="$dnsmasqServersFile"
 			outputCache="$dnsmasqServersCache"
-			outputGzip="$dnsmasqServersGzip"
-			rm -f "$dnsmasqAddnhostsFile" "$dnsmasqAddnhostsCache" "$dnsmasqAddnhostsGzip"
-			rm -f "$dnsmasqConfFile" "$dnsmasqConfCache" "$dnsmasqConfGzip"
-			rm -f "$dnsmasqIpsetFile" "$dnsmasqIpsetCache" "$dnsmasqIpsetGzip"
-			rm -f "$dnsmasqNftsetFile" "$dnsmasqNftsetCache" "$dnsmasqNftsetGzip"
+			outputGzip="${compressed_cache_dir}/${dnsmasqServersGzip}"
+			rm -f "$dnsmasqAddnhostsFile" "$dnsmasqAddnhostsCache" "${compressed_cache_dir}/${dnsmasqAddnhostsGzip}"
+			rm -f "$dnsmasqConfFile" "$dnsmasqConfCache" "${compressed_cache_dir}/${dnsmasqConfGzip}"
+			rm -f "$dnsmasqIpsetFile" "$dnsmasqIpsetCache" "${compressed_cache_dir}/${dnsmasqIpsetGzip}"
+			rm -f "$dnsmasqNftsetFile" "$dnsmasqNftsetCache" "${compressed_cache_dir}/${dnsmasqNftsetGzip}"
 			rm -f "$unboundFile" "$unboundCache" "$unboundGzip"
 		;;
 		unbound.adb_list)
@@ -398,11 +409,11 @@ load_environment() {
 			outputFile="$unboundFile"
 			outputCache="$unboundCache"
 			outputGzip="$unboundGzip"
-			rm -f "$dnsmasqAddnhostsFile" "$dnsmasqAddnhostsCache" "$dnsmasqAddnhostsGzip"
-			rm -f "$dnsmasqConfFile" "$dnsmasqConfCache" "$dnsmasqConfGzip"
-			rm -f "$dnsmasqIpsetFile" "$dnsmasqIpsetCache" "$dnsmasqIpsetGzip"
-			rm -f "$dnsmasqNftsetFile" "$dnsmasqNftsetCache" "$dnsmasqNftsetGzip"
-			rm -f "$dnsmasqServersFile" "$dnsmasqServersCache" "$dnsmasqServersGzip"
+			rm -f "$dnsmasqAddnhostsFile" "$dnsmasqAddnhostsCache" "${compressed_cache_dir}/${dnsmasqAddnhostsGzip}"
+			rm -f "$dnsmasqConfFile" "$dnsmasqConfCache" "${compressed_cache_dir}/${dnsmasqConfGzip}"
+			rm -f "$dnsmasqIpsetFile" "$dnsmasqIpsetCache" "${compressed_cache_dir}/${dnsmasqIpsetGzip}"
+			rm -f "$dnsmasqNftsetFile" "$dnsmasqNftsetCache" "${compressed_cache_dir}/${dnsmasqNftsetGzip}"
+			rm -f "$dnsmasqServersFile" "$dnsmasqServersCache" "${compressed_cache_dir}/${dnsmasqServersGzip}"
 		;;
 	esac
 
@@ -432,6 +443,7 @@ load_environment() {
 	# Prefer curl because it supports the file:// scheme.
 	if is_present 'curl'; then
 		dl_command="curl --silent --insecure"
+		dl_command="${dl_command}${curl_additional_param:+ $curl_additional_param}"
 		dl_command="${dl_command}${curl_max_file_size:+ --max-filesize $curl_max_file_size}"
 		dl_command="${dl_command}${curl_retry:+ --retry $curl_retry}"
 		dl_command="${dl_command}${download_timeout:+ --connect-timeout $download_timeout}"
@@ -613,8 +625,8 @@ json() {
 				triggers)
 					curReload="$parallel_downloads $debug $download_timeout $allowed_domain $blocked_domain $allowed_domains_url \
 						$blocked_adblockplus_url $blocked_domains_url $blocked_hosts_url $dns $config_update_enabled $config_update_url \
-						$dnsmasq_config_file_url $curl_max_file_size $curl_retry"
-					curRestart="$compressed_cache $force_dns $led $force_dns_port"
+						$dnsmasq_config_file_url $curl_additional_param $curl_max_file_size $curl_retry"
+					curRestart="$compressed_cache $compressed_cache_dir $force_dns $led $force_dns_port"
 					if [ ! -s "$jsonFile" ]; then
 						ret='on_boot'
 					elif [ "$curReload" != "$reload" ]; then
@@ -647,8 +659,8 @@ json() {
 				triggers) 
 					reload="$parallel_downloads $debug $download_timeout $allowed_domain $blocked_domain $allowed_domains_url \
 						$blocked_adblockplus_url $blocked_domains_url $blocked_hosts_url $dns $config_update_enabled $config_update_url \
-						$dnsmasq_config_file_url $curl_max_file_size $curl_retry"
-					restart="$compressed_cache $force_dns $led $force_dns_port"
+						$dnsmasq_config_file_url $curl_additional_param $curl_max_file_size $curl_retry"
+					restart="$compressed_cache $compressed_cache_dir $force_dns $led $force_dns_port"
 				;;
 				*)
 					eval "$param"='${value}${extras:+|$extras}';;
@@ -1516,11 +1528,21 @@ boot() {
 check() { load_validate_config 'config' adb_check "'$*'"; }
 dl() { rc_procd start_service 'download'; }
 killcache() {
-	rm -f "$dnsmasqAddnhostsCache" "$dnsmasqAddnhostsGzip"
-	rm -f "$dnsmasqConfCache" "$dnsmasqConfGzip"
-	rm -f "$dnsmasqIpsetCache" "$dnsmasqIpsetGzip"
-	rm -f "$dnsmasqNftsetCache" "$dnsmasqNftsetGzip"
-	rm -f "$dnsmasqServersCache" "$dnsmasqServersGzip"
+	local compressed_cache_dir
+	config_load "$packageName"
+	config_get compressed_cache_dir 'config' 'compressed_cache_dir' '/etc'
+	if [ "$(sanitize_dir "$compressed_cache_dir")" = '/' ]; then
+		compressed_cache_dir=''
+	elif [ -n "$(sanitize_dir "$compressed_cache_dir")" ]; then
+		compressed_cache_dir="$(sanitize_dir "$compressed_cache_dir")"
+	else
+		compressed_cache_dir="/etc"
+	fi
+	rm -f "$dnsmasqAddnhostsCache" "${compressed_cache_dir}/${dnsmasqAddnhostsGzip}"
+	rm -f "$dnsmasqConfCache" "${compressed_cache_dir}/${dnsmasqConfGzip}"
+	rm -f "$dnsmasqIpsetCache" "${compressed_cache_dir}/${dnsmasqIpsetGzip}"
+	rm -f "$dnsmasqNftsetCache" "${compressed_cache_dir}/${dnsmasqNftsetGzip}"
+	rm -f "$dnsmasqServersCache" "${compressed_cache_dir}/${dnsmasqServersGzip}"
 	rm -f "$unboundCache" "$unboundGzip"
 	config_load 'dhcp'
 	config_foreach resolver 'dnsmasq' 'cleanup'
@@ -1567,6 +1589,7 @@ load_validate_config() {
 	local parallel_downloads
 	local debug
 	local compressed_cache
+	local compressed_cache_dir
 	local ipv6_enabled
 	local allow_non_ascii
 	local canary_domains_icloud
@@ -1574,6 +1597,7 @@ load_validate_config() {
 	local config_update_enabled
 	local config_update_url
 	local download_timeout
+	local curl_additional_param
 	local curl_max_file_size
 	local curl_retry
 	local verbosity
@@ -1596,6 +1620,7 @@ load_validate_config() {
 		'parallel_downloads:bool:1' \
 		'debug:bool:0' \
 		'compressed_cache:bool:0' \
+		'compressed_cache_dir:directory:/etc' \
 		'ipv6_enabled:bool:0' \
 		'allow_non_ascii:bool:0' \
 		'canary_domains_icloud:bool:0' \
@@ -1603,7 +1628,8 @@ load_validate_config() {
 		'config_update_enabled:bool:0' \
 		'config_update_url:string:https://cdn.jsdelivr.net/gh/openwrt/packages/net/simple-adblock/files/simple-adblock.conf.update' \
 		'download_timeout:range(1,60):20' \
-		'curl_max_file_size:uinteger' \
+		'curl_additional_param:or("", string)' \
+		'curl_max_file_size:or("", uinteger)' \
 		'curl_retry:range(0,30):3' \
 		'verbosity:range(0,2):2' \
 		'procd_trigger_wan6:bool:0' \
