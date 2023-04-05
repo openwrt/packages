@@ -141,6 +141,7 @@ define Package/nano-full/install
 	$(INSTALL_CONF) ./files/nanorc $(1)/etc/nanorc
 	$(INSTALL_DATA) ./files/uci.nanorc $(1)/usr/share/nano
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/nano/* $(1)/usr/share/nano
+	chmod 0644 $(1)/etc/nanorc
 endef
 
 $(eval $(call BuildPackage,nano))
