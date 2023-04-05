@@ -1,6 +1,6 @@
 --- a/Makefile.config
 +++ b/Makefile.config
-@@ -272,7 +272,7 @@ LD_GOLD:
+@@ -264,7 +264,7 @@ clean:
  libraries: \
  	configdir \
  	LIB_AIO LIB_APPARMOR LIB_BSD LIB_CRYPT LIB_DL \

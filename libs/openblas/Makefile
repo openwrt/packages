@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=OpenBLAS
-PKG_VERSION:=0.3.21
-PKG_RELEASE:=2
+PKG_VERSION:=0.3.23
+PKG_RELEASE:=1
 
 PKG_SOURCE:=OpenBLAS-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/xianyi/OpenBLAS/releases/download/v$(PKG_VERSION)/
-PKG_HASH:=f36ba3d7a60e7c8bcc54cd9aaa9b1223dd42eaf02c811791c37e8ca707c241ca
+PKG_HASH:=5d9491d07168a5d00116cdc068a40022c3455bf9293c7cb86a65b1054d7e5114
 PKG_LICENSE:=BSD 3-Clause
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
@@ -27,6 +27,7 @@ define Package/openblas
   DEPENDS:= \
        @!arc \
        @!powerpc \
+       @!SOFT_FLOAT \
        +INSTALL_GFORTRAN:libgfortran
 endef
 

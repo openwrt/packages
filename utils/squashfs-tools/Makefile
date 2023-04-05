@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=squashfs-tools
-PKG_VERSION:=4.5.1
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=4.6.1
+PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING
@@ -18,7 +18,7 @@ PKG_CPE_ID:=cpe:/a:phillip_lougher:squashfs
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/plougher/squashfs-tools/tar.gz/${PKG_VERSION}?
-PKG_HASH:=277b6e7f75a4a57f72191295ae62766a10d627a4f5e5f19eadfbc861378deea7
+PKG_HASH:=94201754b36121a9f022a190c75f718441df15402df32c2b520ca331a107511c
 
 PKG_BUILD_PARALLEL:=1
 include $(INCLUDE_DIR)/package.mk
@@ -51,9 +51,6 @@ define Package/squashfs-tools-unsquashfs/config
 endef
 
 Build/Configure:=
-
-MAKE_FLAGS += \
-	XATTR_SUPPORT=
 
 ifneq ($(CONFIG_SQUASHFS_TOOLS_XZ_SUPPORT),)
 MAKE_FLAGS += XZ_SUPPORT=1
