@@ -1,4 +1,4 @@
-[afalg]
+[afalg_sect]
 # Leave this alone and configure algorithms with CIPERS/DIGESTS below
 default_algorithms = ALL
 
