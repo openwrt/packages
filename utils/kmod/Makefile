@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kmod
-PKG_VERSION:=27
-PKG_RELEASE:=2
+PKG_VERSION:=30
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/utils/kernel/kmod
-PKG_HASH:=c1d3fbf16ca24b95f334c1de1b46f17bbe5a10b0e81e72668bdc922ebffbbc0c
+PKG_HASH:=f897dd72698dc6ac1ef03255cd0a5734ad932318e4adbaebc7338ef2f5202f9f
 
 PKG_MAINTAINER:=Jeff Waugh <jdub@bethesignal.org>
 PKG_LICENSE:=LGPL-2.1-or-later
