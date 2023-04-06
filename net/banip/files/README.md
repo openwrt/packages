@@ -75,7 +75,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * Provides a set search engine for certain IPs
 * Feed parsing by fast & flexible regex rulesets
 * Minimal status & error logging to syslog, enable debug logging to receive more output
-* Procd based init system support (start/stop/restart/reload/status/report/search/survey)
+* Procd based init system support (start/stop/restart/reload/status/report/search/survey/lookup)
 * Procd network interface trigger support
 * Ability to add new banIP feeds on your own
 
@@ -114,6 +114,7 @@ Available commands:
 	report          [text|json|mail] Print banIP related set statistics
 	search          [<IPv4 address>|<IPv6 address>] Check if an element exists in a banIP set
 	survey          [<set name>] List all elements of a given banIP set
+	lookup          Lookup the IPs of domain names in the local lists and update them
 	running         Check if service is running
 	status          Service status
 	trace           Start with syscall trace
@@ -226,18 +227,16 @@ Available commands:
 ~# /etc/init.d/banip status
 ::: banIP runtime information
   + status            : active (nft: ✔, monitor: ✔)
-  + version           : 0.8.2-2
-  + element_count     : 211397
-  + active_feeds      : allowlistvMAC, allowlistv4, allowlistv6, adawayv4, adawayv6, adguardv4, adguardtrackersv4, adguardv6, adguardtrackersv
-                        6, antipopadsv4, antipopadsv6, cinsscorev4, countryv6, countryv4, deblv4, deblv6, dohv4, dohv6, firehol1v4, oisdsmallv
-                        6, oisdsmallv4, stevenblackv6, stevenblackv4, webclientv4, blocklistvMAC, blocklistv4, blocklistv6
-  + active_devices    : eth2 ::: wan, wan6
-  + active_subnets    : 91.64.148.211/24, 2b02:710c:0:80:e442:4b0c:637d:1d33/128
+  + version           : 0.8.3-1
+  + element_count     : 281161
+  + active_feeds      : allowlistvMAC, allowlistv6, allowlistv4, adawayv4, adguardtrackersv4, adawayv6, adguardv6, adguardv4, adguardtrackersv6, antipopadsv6, antipopadsv4, cinsscorev4, deblv4, countryv6, countryv4, deblv6, dohv4, dohv6, iblockadsv4, firehol1v4, oisdbigv4, yoyov6, threatviewv4, yoyov4, oisdbigv6, blocklistvMAC, blocklistv4, blocklistv6
+  + active_devices    : br-wan ::: wan, wan6
+  + active_subnets    : 91.64.169.252/24, 2a02:710c:0:60:958b:3bd0:9e14:abb/128
   + nft_info          : priority: -200, policy: memory, loglevel: warn, expiry: -
   + run_info          : base: /mnt/data/banIP, backup: /mnt/data/banIP/backup, report: /mnt/data/banIP/report, feed: /etc/banip/banip.feeds
   + run_flags         : auto: ✔, proto (4/6): ✔/✔, log (wan-inp/wan-fwd/lan-fwd): ✔/✔/✔, dedup: ✔, split: ✘, allowed only: ✘
-  + last_run          : action: restart, duration: 0m 55s, date: 2023-03-10 19:33:08
-  + system_info       : cores: 2, memory: 1830, device: Turris Omnia, OpenWrt SNAPSHOT r22248-bf055fcdca
+  + last_run          : action: reload, duration: 1m 0s, date: 2023-04-06 12:34:10
+  + system_info       : cores: 4, memory: 1822, device: Bananapi BPI-R3, OpenWrt SNAPSHOT r22498-75f7e2d10b
 ```
 
 **banIP search information**  
@@ -288,14 +287,21 @@ list ban_logterm 'SecurityEvent=\"InvalidAccountID\".*RemoteAddress='
 **allow-/blocklist handling**  
 banIP supports local allow and block lists (IPv4, IPv6, CIDR notation or domain names), located in /etc/banip/banip.allowlist and /etc/banip/banip.blocklist.  
 Unsuccessful login attempts or suspicious requests will be tracked and added to the local blocklist (see the 'ban\_autoblocklist' option). The blocklist behaviour can be further tweaked with the 'ban\_nftexpiry' option.  
-Furthermore the uplink subnet will be added to local allowlist (see 'ban\_autowallowlist' option).  
-Both lists also accept domain names as input to allow IP filtering based on these names. The corresponding IPs (IPv4 & IPv6) will be extracted in a detached background process and added to the sets.
+Furthermore the uplink subnet will be added to local allowlist (see 'ban\_autoallowlist' option).  
+Both lists also accept domain names as input to allow IP filtering based on these names. The corresponding IPs (IPv4 & IPv6) will be extracted and added to the sets. You can also start the domain lookup separately via /etc/init.d/banip lookup at any time.
 
 **allowlist-only mode**  
 banIP supports an "allowlist only" mode. This option restricts the internet access from/to a small number of secure websites/IPs, and block access from/to the rest of the internet. All IPs and Domains which are _not_ listed in the allowlist are blocked.
 
-**redirect Asterisk security logs to lodg/logread**   
+**redirect Asterisk security logs to lodg/logread**  
 banIP only supports logfile scanning via logread, so to monitor attacks on Asterisk, its security log must be available via logread. To do this, edit '/etc/asterisk/logger.conf' and add the line 'syslog.local0 = security', then run 'asterisk -rx reload logger' to update the running Asterisk configuration.
+
+**send status E-Mails and update the banIP lists via cron job**  
+For a regular, automatic status mailing and update of the used lists on a daily basis set up a cron job, e.g.
+```
+55 03 * * * /etc/init.d/banip report mail
+00 04 * * * /etc/init.d/banip reload
+```
 
 **tweaks for low memory systems**  
 nftables supports the atomic loading of rules/sets/members, which is cool but unfortunately is also very memory intensive. To reduce the memory pressure on low memory systems (i.e. those with 256-512Mb RAM), you should optimize your configuration with the following options:  

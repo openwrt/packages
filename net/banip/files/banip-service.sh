@@ -124,21 +124,25 @@ for feed in allowlist ${ban_feed} blocklist; do
 	fi
 done
 wait
-
-# start background domain lookup
-#
-f_log "info" "start detached banIP domain lookup"
-(f_lookup "allowlist") &
-hold="$((cnt % ban_cores))"
-[ "${hold}" = "0" ] && wait
-(f_lookup "blocklist") &
-
-# end processing
-#
 f_rmset
 f_rmdir "${ban_tmpdir}"
 f_genstatus "active"
 f_log "info" "finished banIP download processes"
+
+# start domain lookup
+#
+f_log "info" "start banIP domain lookup"
+cnt="1"
+for list in allowlist blocklist; do
+	(f_lookup "${list}") &
+	hold="$((cnt % ban_cores))"
+	[ "${hold}" = "0" ] && wait
+	cnt="$((cnt + 1))"
+done
+wait
+
+# end processing
+#
 if [ "${ban_mailnotification}" = "1" ] && [ -n "${ban_mailreceiver}" ] && [ -x "${ban_mailcmd}" ]; then
 	(
 		sleep ${ban_triggerdelay}

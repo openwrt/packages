@@ -78,6 +78,7 @@ ban_debug="0"
 f_system() {
 	local cpu core
 
+	[ -z "${ban_dev}" ] && ban_cores="$(uci_get banip global ban_cores)"
 	ban_memory="$("${ban_awkcmd}" '/^MemAvailable/{printf "%s",int($2/1000)}' "/proc/meminfo" 2>/dev/null)"
 	ban_ver="$(${ban_ubuscmd} -S call rpc-sys packagelist '{ "all": true }' 2>/dev/null | jsonfilter -ql1 -e '@.packages.banip')"
 	ban_sysver="$(${ban_ubuscmd} -S call system board 2>/dev/null | jsonfilter -ql1 -e '@.model' -e '@.release.description' |
@@ -426,7 +427,7 @@ f_getsub() {
 f_getelements() {
 	local file="${1}"
 
-	[ -s "${file}" ] && printf "%s" "elements={ $(cat "${file}") };"
+	[ -s "${file}" ] && printf "%s" "elements={ $(cat "${file}" 2>/dev/null) };"
 }
 
 # build initial nft file with base table, chains and rules
@@ -975,8 +976,6 @@ f_getstatus() {
 				done
 				json_select ".."
 			fi
-			value="$(printf "%s" "${value}" |
-				awk '{NR=1;max=118;if(length($0)>max+1)while($0){if(NR==1){print substr($0,1,max)}else{printf"%-24s%s\n","",substr($0,1,max)}{$0=substr($0,max+1);NR=NR+1}}else print}')"
 			printf "  + %-17s : %s\n" "${key}" "${value:-"-"}"
 		done
 	else
@@ -987,7 +986,7 @@ f_getstatus() {
 # domain lookup
 #
 f_lookup() {
-	local cnt list domain lookup ip start_time end_time duration cnt_domain="0" cnt_ip="0" feed="${1}"
+	local cnt list domain lookup ip elementsv4 elementsv6 start_time end_time duration cnt_domain="0" cnt_ip="0" feed="${1}"
 
 	start_time="$(date "+%s")"
 	if [ "${feed}" = "allowlist" ]; then
@@ -1004,32 +1003,36 @@ f_lookup() {
 			else
 				if { [ "${feed}" = "allowlist" ] && ! "${ban_grepcmd}" -q "^${ip}" "${ban_allowlist}"; } ||
 					{ [ "${feed}" = "blocklist" ] && ! "${ban_grepcmd}" -q "^${ip}" "${ban_blocklist}"; }; then
-					cnt_ip="$((cnt_ip + 1))"
 					if [ "${ip##*:}" = "${ip}" ]; then
-						if ! "${ban_nftcmd}" add element inet banIP "${feed}v4" "{ ${ip} }" >/dev/null 2>&1; then
-							f_log "info" "failed to add IP '${ip}' (${domain}) to ${feed}v4 set"
-							continue
-						fi
+						elementsv4="${elementsv4} ${ip},"
 					else
-						if ! "${ban_nftcmd}" add element inet banIP "${feed}v6" "{ ${ip} }" >/dev/null 2>&1; then
-							f_log "info" "failed to add IP '${ip}' (${domain}) to ${feed}v6 set"
-							continue
-						fi
+						elementsv6="${elementsv6} ${ip},"
 					fi
 					if [ "${feed}" = "allowlist" ] && [ "${ban_autoallowlist}" = "1" ]; then
 						printf "%-42s%s\n" "${ip}" "# '${domain}' added on $(date "+%Y-%m-%d %H:%M:%S")" >>"${ban_allowlist}"
 					elif [ "${feed}" = "blocklist" ] && [ "${ban_autoblocklist}" = "1" ]; then
 						printf "%-42s%s\n" "${ip}" "# '${domain}' added on $(date "+%Y-%m-%d %H:%M:%S")" >>"${ban_blocklist}"
 					fi
+					cnt_ip="$((cnt_ip + 1))"
 				fi
 			fi
 		done
 		cnt_domain="$((cnt_domain + 1))"
 	done
+	if [ -n "${elementsv4}" ]; then
+		if ! "${ban_nftcmd}" add element inet banIP "${feed}v4" "{ ${elementsv4} }" >/dev/null 2>&1; then
+			f_log "info" "failed to add lookup file to ${feed}v4 set"
+		fi
+	fi
+	if [ -n "${elementsv6}" ]; then
+		if ! "${ban_nftcmd}" add element inet banIP "${feed}v6" "{ ${elementsv6} }" >/dev/null 2>&1; then
+			f_log "info" "failed to add lookup file to ${feed}v6 set"
+		fi
+	fi
 	end_time="$(date "+%s")"
 	duration="$(((end_time - start_time) / 60))m $(((end_time - start_time) % 60))s"
 
-	f_log "debug" "f_lookup  ::: name: ${feed}, cnt_domain: ${cnt_domain}, cnt_ip: ${cnt_ip}, duration: ${duration}"
+	f_log "info" "Lookup summary for the local ${feed}: Domains processed: ${cnt_domain}, IPs added: ${cnt_ip}, Duration: ${duration}"
 }
 
 # table statistics
@@ -1198,7 +1201,7 @@ f_report() {
 # set search
 #
 f_search() {
-	local table_sets ip proto run_search search="${1}"
+	local set table_sets ip proto run_search hold cnt search="${1}"
 
 	if [ -n "${search}" ]; then
 		ip="$(printf "%s" "${search}" | "${ban_awkcmd}" 'BEGIN{RS="(([0-9]{1,3}\\.){3}[0-9]{1,3})+"}{printf "%s",RT}')"
@@ -1215,14 +1218,15 @@ f_search() {
 		return
 	fi
 	printf "%s\n%s\n%s\n" ":::" "::: banIP Search" ":::"
-	printf "%s\n" "    Looking for IP '${ip}' on $(date "+%Y-%m-%d %H:%M:%S")"
-	printf "%s\n" "    ---"
+	printf "    %s\n" "Looking for IP '${ip}' on $(date "+%Y-%m-%d %H:%M:%S")"
+	printf "    %s\n" "---"
 	cnt="1"
 	run_search="/var/run/banIP.search"
 	for set in ${table_sets}; do
+		[ -f "${run_search}" ] && break
 		(
 			if "${ban_nftcmd}" get element inet banIP "${set}" "{ ${ip} }" >/dev/null 2>&1; then
-				printf "%s\n" "    IP found in Set '${set}'"
+				printf "    %s\n" "IP found in Set '${set}'"
 				: >"${run_search}"
 			fi
 		) &
@@ -1231,11 +1235,8 @@ f_search() {
 		cnt="$((cnt + 1))"
 	done
 	wait
-	if [ ! -f "${run_search}" ]; then
-		printf "%s\n" "    IP not found"
-	else
-		rm -f "${run_search}"
-	fi
+	[ ! -f "${run_search}" ] && printf "    %s\n" "IP not found"
+	rm -f "${run_search}"
 }
 
 # set survey
@@ -1243,16 +1244,15 @@ f_search() {
 f_survey() {
 	local set_elements set="${1}"
 
-	[ -n "${set}" ] && set_elements="$("${ban_nftcmd}" -j list set inet banIP "${set}" 2>/dev/null | jsonfilter -qe '@.nftables[*].set.elem[*]')"
-
-	if [ -z "${set}" ] || [ -z "${set_elements}" ]; then
+	if [ -z "${set}" ]; then
 		printf "%s\n%s\n%s\n" ":::" "::: no valid survey input" ":::"
 		return
 	fi
+	[ -n "${set}" ] && set_elements="$("${ban_nftcmd}" -j list set inet banIP "${set}" 2>/dev/null | jsonfilter -qe '@.nftables[*].set.elem[*]')"
 	printf "%s\n%s\n%s\n" ":::" "::: banIP Survey" ":::"
-	printf "%s\n" "    List the elements of Set '${set}' on $(date "+%Y-%m-%d %H:%M:%S")"
-	printf "%s\n" "    ---"
-	printf "%s\n" "${set_elements}"
+	printf "    %s\n" "List the elements of Set '${set}' on $(date "+%Y-%m-%d %H:%M:%S")"
+	printf "    %s\n" "---"
+	[ -n "${set_elements}" ] && printf "%s\n" "${set_elements}" || printf "    %s\n" "empty set"
 }
 
 # send status mails
