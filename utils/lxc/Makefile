@@ -33,7 +33,8 @@ MESON_ARGS += \
 	-Dselinux=false \
 	-Dseccomp=$(if $(CONFIG_LXC_SECCOMP),true,false) \
 	-Dexamples=false \
-	-Db_pie=true
+	-Db_pie=true \
+	-Druntime-path=/var/run
 
 LXC_APPLETS_BIN += \
 	attach autostart cgroup copy config console create destroy device \
