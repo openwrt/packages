@@ -144,7 +144,8 @@ CONFIGURE_ARGS += \
 	--disable-selinux \
 	--$(if $(CONFIG_LXC_SECCOMP),en,dis)able-seccomp \
 	--enable-capabilities \
-	--disable-examples
+	--disable-examples \
+	--with-runtime-path=/var/run
 
 ifdef CONFIG_USE_MIPS16
   TARGET_CFLAGS += -minterlink-mips16
