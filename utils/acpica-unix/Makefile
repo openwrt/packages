@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=acpica-unix
-PKG_VERSION:=20221020
-PKG_RELEASE:=2
+PKG_VERSION:=20230331
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar_0.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_CAT:=gzip -dc
 PKG_SOURCE_URL:=https://acpica.org/sites/$(patsubst %-unix,%,$(PKG_NAME))/files/
-PKG_HASH:=33a2e394aca0ca57d4018afe3da340dfad5eb45b1b9300e81dd595fda07cf1c5
+PKG_HASH:=0c5d695d605aaa61709f3c63f57a1a99b8902291723998446b0813b57ac310e2
 PKG_MAINTAINER:=Philip Prindeville <philipp@redfish-solutions.com>
 
 PKG_LICENSE:=GPL-2.0
