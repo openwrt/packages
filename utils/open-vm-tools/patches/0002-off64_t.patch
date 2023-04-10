@@ -15,7 +15,7 @@ Signed-off-by: Natanael Copa <ncopa@alpinelinux.org>
 
 --- a/lib/file/fileIOPosix.c
 +++ b/lib/file/fileIOPosix.c
-@@ -198,7 +198,7 @@ static AlignedPool alignedPool;
+@@ -203,7 +203,7 @@ static AlignedPool alignedPool;
   * are not available in any header file.
   */
  

@@ -21,7 +21,7 @@ PKG_MAINTAINER:=Arnaud Sautaux <arnaud.sautaux@infoteam.ch>
 PKG_CPE_ID:=cpe:/a:erlang:erlang
 
 PKG_BUILD_DEPENDS:=erlang/host openssl
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16
 PKG_ASLR_PIE:=0
 
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/otp_src_$(PKG_VERSION)

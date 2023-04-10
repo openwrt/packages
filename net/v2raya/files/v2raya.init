@@ -43,6 +43,7 @@ start_service() {
 	append_env_arg "config" "address" "0.0.0.0:2017"
 	append_env_arg "config" "config" "/etc/v2raya"
 	append_env_arg "config" "ipv6_support" "auto"
+	append_env_arg "config" "nftables_support" "auto"
 	append_env_arg "config" "log_level" "info"
 	append_env_arg "config" "log_file" "/var/log/v2raya/v2raya.log"
 	append_env_arg "config" "log_max_days" "3"
@@ -51,7 +52,6 @@ start_service() {
 	append_env_arg "config" "transparent_hook"
 	append_env_arg "config" "core_hook"
 	append_env_arg "config" "plugin_manager"
-	append_env_arg "config" "vless_grpc_inbound_cert_key"
 	append_env_bool "config" "log_disable_color"
 	append_env_bool "config" "log_disable_timestamp"
 

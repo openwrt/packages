@@ -8,21 +8,29 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pluggy
-PKG_VERSION:=0.13.1
-PKG_RELEASE:=4
+PKG_VERSION:=1.0.0
+PKG_RELEASE:=1
 
 PYPI_NAME:=pluggy
-PKG_HASH:=15b2acde666561e1298d71b523007ed7364de07029219b604cf808bfa1c765b0
+PKG_HASH:=4224373bacce55f955a878bf9cfa763c1e360858e330072059e10bad68531159
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
+PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>, Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
-HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=setuptools-scm
+PKG_BUILD_DEPENDS:=python-setuptools-scm/host
+HOST_BUILD_DEPENDS:= \
+	python3/host \
+	python-build/host \
+	python-installer/host \
+	python-wheel/host \
+	python-setuptools-scm/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 include ../python3-package.mk
+include ../python3-host-build.mk
 
 define Package/python3-pluggy
   SUBMENU:=Python
@@ -40,3 +48,4 @@ endef
 $(eval $(call Py3Package,python3-pluggy))
 $(eval $(call BuildPackage,python3-pluggy))
 $(eval $(call BuildPackage,python3-pluggy-src))
+$(eval $(call HostBuild))

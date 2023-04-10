@@ -1,8 +1,8 @@
 --- a/meson.build
 +++ b/meson.build
-@@ -2619,10 +2619,6 @@ specific_ss.add_all(when: 'CONFIG_BSD_US
- linux_user_ss.add(files('thunk.c'))
- specific_ss.add_all(when: 'CONFIG_LINUX_USER', if_true: linux_user_ss)
+@@ -3142,10 +3142,6 @@ subdir('common-user')
+ subdir('bsd-user')
+ subdir('linux-user')
  
 -# needed for fuzzing binaries
 -subdir('tests/qtest/libqos')
@@ -11,7 +11,7 @@
  # accel modules
  tcg_real_module_ss = ss.source_set()
  tcg_real_module_ss.add_all(when: 'CONFIG_TCG_MODULAR', if_true: tcg_module_ss)
-@@ -3107,10 +3103,6 @@ subdir('scripts')
+@@ -3633,10 +3629,6 @@ subdir('scripts')
  subdir('tools')
  subdir('pc-bios')
  subdir('docs')

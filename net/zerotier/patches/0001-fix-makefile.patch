@@ -38,7 +38,7 @@ Subject: [PATCH 1/2] fix makefile
  	RUSTFLAGS=--release
  endif
  
-@@ -308,7 +308,7 @@ ifeq ($(ZT_CONTROLLER),1)
+@@ -316,7 +316,7 @@ ifeq ($(ZT_CONTROLLER),1)
  endif
  
  # ARM32 hell -- use conservative CFLAGS
@@ -47,7 +47,7 @@ Subject: [PATCH 1/2] fix makefile
  	ifeq ($(shell if [ -e /usr/bin/dpkg ]; then dpkg --print-architecture; fi),armel)
  		override CFLAGS+=-march=armv5t -mfloat-abi=soft -msoft-float -mno-unaligned-access -marm
  		override CXXFLAGS+=-march=armv5t -mfloat-abi=soft -msoft-float -mno-unaligned-access -marm
-@@ -335,8 +335,8 @@ ifeq ($(ZT_USE_ARM32_NEON_ASM_CRYPTO),1)
+@@ -343,8 +343,8 @@ ifeq ($(ZT_USE_ARM32_NEON_ASM_CRYPTO),1)
  endif
  
  # Position Independence

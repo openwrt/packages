@@ -14,7 +14,7 @@ PKG_MAINTAINER:=Tom Stöveken <tom@naaa.de>
 
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16
 
 GO_PKG:=github.com/restic/restic/
 GO_PKG_BUILD_PKG:=github.com/restic/restic/cmd/restic/

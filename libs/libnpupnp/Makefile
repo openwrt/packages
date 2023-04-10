@@ -15,6 +15,7 @@ PKG_LICENSE_FILES:=COPYING
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=libmicrohttpd
+PKG_BUILD_FLAGS:=lto
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -31,9 +32,6 @@ npupnp (new pupnp or not pupnp ?) is an UPnP library derived from the
 venerable pupnp (https://github.com/pupnp/pupnp), based on its 1.6.x
 branch (around 1.6.25).
 endef
-
-TARGET_CFLAGS += -flto
-TARGET_LDFLAGS += -flto
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/npupnp

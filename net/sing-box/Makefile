@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sing-box
-PKG_VERSION:=1.1.5
+PKG_VERSION:=1.2.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/SagerNet/sing-box/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=a1e642362f41bd0e362cd9c8d2f0d29d2eca6a55a948677f6f03cfb81c4f0657
+PKG_HASH:=0f304b75c2e9f61e3f7808f23fe8fbe08161553475d9bec0dea4a5acf4452d2d
 
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=LICENSE
@@ -14,10 +14,12 @@ PKG_MAINTAINER:=Van Waholtz <brvphoenix@gmail.com>
 
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16
 
 GO_PKG:=github.com/sagernet/sing-box
 GO_PKG_BUILD_PKG:=$(GO_PKG)/cmd/sing-box
+
+GO_PKG_LDFLAGS_X:=$(GO_PKG)/constant.Version=$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
@@ -27,7 +29,7 @@ define Package/sing-box
   SECTION:=net
   CATEGORY:=Network
   URL:=https://sing-box.sagernet.org
-  DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle +kmod-tun
+  DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle +kmod-inet-diag +kmod-tun
   USERID:=sing-box=5566:sing-box=5566
 endef
 
@@ -42,23 +44,22 @@ define Package/sing-box/config
 
 		config SINGBOX_WITH_ACME
 			bool "Build with ACME TLS certificate issuer support"
-			default n
 
 		config SINGBOX_WITH_CLASH_API
 			bool "Build with Clash API support"
 			default y
 
+		config SINGBOX_WITH_DHCP
+			bool "Build with DHCP support, see DHCP DNS transport."
+
 		config SINGBOX_WITH_ECH
 			bool "Build with TLS ECH extension support for TLS outbound"
-			default n
 
 		config SINGBOX_WITH_EMBEDDED_TOR
 			bool "Build with embedded Tor support"
-			default n
 
 		config SINGBOX_WITH_GRPC
 			bool "Build with standard gRPC support"
-			default n
 
 		config SINGBOX_WITH_GVISOR
 			bool "Build with gVisor support"
@@ -66,15 +67,17 @@ define Package/sing-box/config
 
 		config SINGBOX_WITH_LWIP
 			bool "Build with LWIP Tun stack support"
-			default n
 
 		config SINGBOX_WITH_QUIC
 			bool "Build with QUIC support"
 			default y
 
+		config SINGBOX_WITH_REALITY_SERVER
+			bool "Build with reality TLS server support, see TLS."
+			default y
+
 		config SINGBOX_WITH_SHADOWSOCKSR
 			bool "Build with ShadowsocksR support"
-			default n
 
 		config SINGBOX_WITH_UTLS
 			bool "Build with uTLS support for TLS outbound"
@@ -82,7 +85,6 @@ define Package/sing-box/config
 
 		config SINGBOX_WITH_V2RAY_API
 			bool "Build with V2Ray API support"
-			default n
 
 		config SINGBOX_WITH_WIREGUARD
 			bool "Build with WireGuard support"
@@ -93,12 +95,14 @@ endef
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_SINGBOX_WITH_ACME \
 	CONFIG_SINGBOX_WITH_CLASH_API \
+	CONFIG_SINGBOX_WITH_DHCP \
 	CONFIG_SINGBOX_WITH_ECH \
 	CONFIG_SINGBOX_WITH_EMBEDDED_TOR \
 	CONFIG_SINGBOX_WITH_GRPC \
 	CONFIG_SINGBOX_WITH_GVISOR \
 	CONFIG_SINGBOX_WITH_LWIP \
 	CONFIG_SINGBOX_WITH_QUIC \
+	CONFIG_SINGBOX_WITH_REALITY_SERVER \
 	CONFIG_SINGBOX_WITH_SHADOWSOCKSR \
 	CONFIG_SINGBOX_WITH_UTLS \
 	CONFIG_SINGBOX_WITH_V2RAY_API \
@@ -107,6 +111,7 @@ PKG_CONFIG_DEPENDS:= \
 GO_PKG_TAGS:=$(subst $(space),$(comma),$(strip \
 	$(if $(CONFIG_SINGBOX_WITH_ACME),with_acme) \
 	$(if $(CONFIG_SINGBOX_WITH_CLASH_API),with_clash_api) \
+	$(if $(CONFIG_SINGBOX_WITH_DHCP),with_dhcp) \
 	$(if $(CONFIG_SINGBOX_WITH_ECH),with_ech) \
 	$(if $(CONFIG_SINGBOX_WITH_EMBEDDED_TOR),with_embedded_tor) \
 	$(if $(CONFIG_SINGBOX_WITH_GRPC),with_grpc) \
@@ -114,6 +119,7 @@ GO_PKG_TAGS:=$(subst $(space),$(comma),$(strip \
 	$(if $(CONFIG_SINGBOX_WITH_LWIP),with_lwip) \
 	$(if $(CONFIG_SINGBOX_WITH_QUIC),with_quic) \
 	$(if $(CONFIG_SINGBOX_WITH_SHADOWSOCKSR),with_shadowsocksr) \
+	$(if $(CONFIG_SINGBOX_WITH_REALITY_SERVER),with_reality_server) \
 	$(if $(CONFIG_SINGBOX_WITH_UTLS),with_utls) \
 	$(if $(CONFIG_SINGBOX_WITH_V2RAY_API),with_v2ray_api) \
 	$(if $(CONFIG_SINGBOX_WITH_WIREGUARD),with_wireguard) \

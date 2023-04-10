@@ -34,6 +34,9 @@ PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 HOST_BUILD_PARALLEL:=1
+# LTO is handled here individually, see --with-lto below
+# "no-lto" prevents CONFIG_USE_LTO to add additional and interfering flags
+PKG_BUILD_FLAGS:=no-lto
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/Python-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/Python-$(PKG_VERSION)
@@ -179,11 +182,11 @@ endif
 
 ifeq ($(PYTHON3_SETUPTOOLS_BUILD),1)
 define Build/Compile/python3-setuptools
+	$(HOST_PYTHON3_PIP_VARS) \
 	$(HOST_PYTHON3_PIP) \
-		--disable-pip-version-check \
-		--cache-dir "$(DL_DIR)/pip-cache" \
 		install \
 		--ignore-installed \
+		--progress-bar off \
 		--root=$(PKG_BUILD_DIR)/install-setuptools \
 		--prefix=/usr \
 		$(PKG_BUILD_DIR)/Lib/ensurepip/_bundled/setuptools-$(PYTHON3_SETUPTOOLS_VERSION)-py3-none-any.whl
@@ -197,11 +200,11 @@ endif # CONFIG_PACKAGE_python3-setuptools
 
 ifdef CONFIG_PACKAGE_python3-pip
 define Build/Compile/python3-pip
+	$(HOST_PYTHON3_PIP_VARS) \
 	$(HOST_PYTHON3_PIP) \
-		--disable-pip-version-check \
-		--cache-dir "$(DL_DIR)/pip-cache" \
 		install \
 		--ignore-installed \
+		--progress-bar off \
 		--root=$(PKG_BUILD_DIR)/install-pip \
 		--prefix=/usr \
 		$(PKG_BUILD_DIR)/Lib/ensurepip/_bundled/pip-$(PYTHON3_PIP_VERSION)-py3-none-any.whl

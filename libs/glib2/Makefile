@@ -24,6 +24,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/glib-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/glib-$(PKG_VERSION)
 PKG_CONFIG_DEPENDS:=CONFIG_BUILD_NLS
 PKG_FORTIFY_SOURCE:=0
+PKG_BUILD_FLAGS:=gc-sections
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
@@ -41,9 +42,6 @@ endef
 define Package/glib2/description
   The GLib library of C routines
 endef
-
-TARGET_CFLAGS += -ffunction-sections -fdata-sections
-TARGET_LDFLAGS += -Wl,--gc-sections
 
 COMP_ARGS= \
 	-Dselinux=disabled \

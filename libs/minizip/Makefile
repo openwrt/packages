@@ -18,6 +18,8 @@ PKG_MAINTAINER:=David Woodhouse <dwmw2@infradead.org>
 PKG_LICENSE:=Zlib
 PKG_LICENSE_FILES:=LICENSE
 
+PKG_BUILD_FLAGS:=lto
+
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
@@ -58,8 +60,6 @@ define Package/minizip/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libminizip.so.* $(1)/usr/lib/
 endef
-
-TARGET_CXXFLAGS += -flto
 
 define Build/InstallDev
 	$(call Build/InstallDev/cmake,$(1))

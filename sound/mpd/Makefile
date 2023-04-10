@@ -22,7 +22,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_BUILD_PATENTED \
 	CONFIG_IPV6 \
 
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16 no-lto
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk

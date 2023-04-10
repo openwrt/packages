@@ -22,6 +22,7 @@ PKG_CPE_ID:=cpe:/a:zsh_project:zsh
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PKG_BUILD_FLAGS:=gc-sections lto
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -82,8 +83,8 @@ define Build/Configure
 	$(MAKE) -C $(PKG_BUILD_DIR) DESTDIR="$(PKG_INSTALL_DIR)" prep
 endef
 
-TARGET_CFLAGS += $(FPIC) -ffunction-sections -fdata-sections -flto
-TARGET_LDFLAGS += $(FPIC) -Wl,--gc-sections -flto
+TARGET_CFLAGS += $(FPIC)
+TARGET_LDFLAGS += $(FPIC)
 
 define Package/zsh/postinst
 #!/bin/sh

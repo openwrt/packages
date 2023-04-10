@@ -20,6 +20,7 @@ PKG_MAINTAINER:=Stijn Tintel <stijn@linux-ipv6.be>
 
 PKG_BUILD_DEPENDS:=!USE_GLIBC:argp-standalone
 PKG_BUILD_PARALLEL:=1
+PKG_BUILD_FLAGS:=gc-sections lto
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -48,10 +49,9 @@ MAKE_FLAGS += \
 	RTLSDR=yes \
 	UNAME="Linux"
 
-TARGET_CFLAGS += -ffunction-sections -fdata-sections -flto
 TARGET_LDFLAGS += \
 	$(if $(CONFIG_USE_GLIBC),,-largp) \
-	-Wl,--gc-sections,--as-needed
+	-Wl,--as-needed
 
 define Package/readsb/conffiles
 /etc/config/readsb

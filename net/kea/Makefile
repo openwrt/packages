@@ -21,6 +21,7 @@ PKG_LICENSE:=MPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
 PKG_BUILD_PARALLEL:=1
+PKG_BUILD_FLAGS:=gc-sections
 
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
@@ -204,12 +205,10 @@ CONFIGURE_VARS += \
 
 TARGET_CXXFLAGS += \
 	$(FPIC) \
-	-fdata-sections \
-	-ffunction-sections \
 	-std=c++17
 
 TARGET_LDFLAGS += \
-	-Wl,--gc-sections,--as-needed
+	-Wl,--as-needed
 
 define Package/kea-libs/install
 	$(INSTALL_DIR) $(1)/usr/lib

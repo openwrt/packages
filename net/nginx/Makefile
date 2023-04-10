@@ -23,6 +23,7 @@ PKG_CPE_ID:=cpe:/a:nginx:nginx
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PKG_BUILD_FLAGS:=gc-sections
 
 PKG_CONFIG_DEPENDS := \
 	CONFIG_NGINX_DAV \
@@ -328,8 +329,7 @@ define Package/nginx-mod-luci/description
 endef
 
 
-TARGET_CFLAGS += -fvisibility=hidden -ffunction-sections -fdata-sections -DNGX_LUA_NO_BY_LUA_BLOCK
-TARGET_LDFLAGS += -Wl,--gc-sections
+TARGET_CFLAGS += -fvisibility=hidden -DNGX_LUA_NO_BY_LUA_BLOCK
 
 ifeq ($(CONFIG_NGINX_LUA),y)
   CONFIGURE_VARS += LUA_INC=$(STAGING_DIR)/usr/include \

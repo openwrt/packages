@@ -15,7 +15,7 @@ PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
 PKG_CPE_ID:=cpe:/a:zaal:tgt
 
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk

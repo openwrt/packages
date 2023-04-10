@@ -12,6 +12,7 @@ PKG_MIRROR_HASH:=8d6bb738a08a65c25fcc442777750abbee812a24a29236242032e2d76177454
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_BUILD_DEPENDS:=!USE_GLIBC:argp-standalone
+PKG_BUILD_FLAGS:=lto
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -30,7 +31,6 @@ ttymidi was to make Arduino boards talk to MIDI applications without
 the need to use (or build) any extra hardware. 
 endef
 
-TARGET_CFLAGS += -flto
 TARGET_LDFLAGS += -lasound -Wl,--gc-sections,--as-needed
 
 define Build/Configure

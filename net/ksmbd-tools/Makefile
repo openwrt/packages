@@ -1,17 +1,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ksmbd-tools
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/cifsd-team/ksmbd-tools
-PKG_SOURCE_VERSION:=3.4.6
-PKG_MIRROR_HASH:=c78dace3320cf8a273738b8f3e67bed24c812695f2fab2fbaeae06ec8a15cb77
+PKG_SOURCE_VERSION:=3.4.7
+PKG_MIRROR_HASH:=9128ecac1a2c463e689ed42fd71952a0eafe956f8bcd1b04af58c7bc66a8baee
 
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
 PKG_BUILD_DEPENDS:=glib2
+PKG_BUILD_FLAGS:=gc-sections
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -70,8 +71,7 @@ MESON_ARGS += \
 	-Db_lto=true \
 	-Dkrb5=disabled
 
-TARGET_CFLAGS += -ffunction-sections -fdata-sections
-TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
+TARGET_LDFLAGS += -Wl,--as-needed
 
 define Package/ksmbd-server/install
 	$(INSTALL_DIR) $(1)/usr/libexec

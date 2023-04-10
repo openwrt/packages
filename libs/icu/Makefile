@@ -11,7 +11,7 @@ PKG_NAME:=icu4c
 MAJOR_VERSION:=72
 MINOR_VERSION:=1
 PKG_VERSION:=$(MAJOR_VERSION).$(MINOR_VERSION)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(MAJOR_VERSION)_$(MINOR_VERSION)-src.tgz
 PKG_SOURCE_URL:=https://github.com/unicode-org/icu/releases/download/release-$(MAJOR_VERSION)-$(MINOR_VERSION)
@@ -79,8 +79,8 @@ endef
 CONFIGURE_CMD:= ./runConfigureICU
 CONFIGURE_ARGS:= \
 	Linux/gcc \
-	CC="$(TARGET_CC)" \
-	CXX="$(TARGET_CXX)" \
+	CC="$(TARGET_CC_NOCACHE)" \
+	CXX="$(TARGET_CXX_NOCACHE)" \
 	--target=$(GNU_TARGET_NAME) \
 	--host=$(GNU_TARGET_NAME) \
 	--build=$(GNU_HOST_NAME) \

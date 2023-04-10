@@ -13,6 +13,7 @@ PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
 
 CMAKE_INSTALL:=1
+PKG_BUILD_FLAGS:=lto
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -45,8 +46,6 @@ ifeq ($(findstring neon,$(CONFIG_CPU_TYPE)),)
 CMAKE_OPTIONS += -DWEBP_ENABLE_SIMD=OFF
 endif
 endif
-
-TARGET_CFLAGS += -flto
 
 define Package/libwebp/install
 	$(INSTALL_DIR) $(1)/usr/lib

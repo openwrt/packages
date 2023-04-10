@@ -64,7 +64,8 @@ CMAKE_OPTIONS += \
 	-Dzstd=OFF \
 	-Dwebp=OFF \
 	-Djpeg12=OFF \
-	-Dcxx=OFF
+	-Dcxx=OFF \
+	-Dlibdeflate=OFF
 
 define Build/InstallDev
 	$(call Build/InstallDev/cmake,$(1))

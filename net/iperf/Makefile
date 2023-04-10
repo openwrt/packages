@@ -19,6 +19,7 @@ PKG_MAINTAINER:=Felix Fietkau <nbd@nbd.name>
 PKG_LICENSE:=BSD-3-Clause
 
 PKG_BUILD_PARALLEL:=1
+PKG_BUILD_FLAGS:=lto
 
 PKG_CONFIG_DEPENDS:=CONFIG_IPERF_ENABLE_MULTICAST
 
@@ -49,8 +50,7 @@ CONFIGURE_ARGS += \
 	$(call autoconf_bool,CONFIG_IPERF_ENABLE_MULTICAST,multicast) \
 	$(call autoconf_bool,CONFIG_IPV6,ipv6)
 
-TARGET_CFLAGS += -flto
-TARGET_CXXFLAGS += -fno-rtti -static-libstdc++ -flto -std=c++11
+TARGET_CXXFLAGS += -fno-rtti -static-libstdc++ -std=c++11
 TARGET_LDFLAGS += $(if $(CONFIG_USE_GLIBC),-lpthread -lm)
 
 define Package/iperf/install

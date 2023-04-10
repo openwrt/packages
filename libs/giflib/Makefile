@@ -22,6 +22,7 @@ PKG_CPE_ID:=cpe:/a:giflib_project:giflib
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+PKG_BUILD_FLAGS:=gc-sections
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -49,8 +50,8 @@ define Package/giflib-utils/description
   These are the utilities that come with giflib.
 endef
 
-TARGET_CFLAGS += -ffunction-sections -fdata-sections $(FPIC)
-TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
+TARGET_CFLAGS += $(FPIC)
+TARGET_LDFLAGS += -Wl,--as-needed
 
 MAKE_FLAGS += \
 	CFLAGS="$(TARGET_CFLAGS)" \

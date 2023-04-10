@@ -22,6 +22,7 @@ PKG_MAINTAINER:=
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+PKG_BUILD_FLAGS:=lto
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -37,9 +38,6 @@ define Package/sbc/description
   Low Complexity Subband Coding for bluetooth audio profiles encoding and decoding.
   Needed for A2DP support.
 endef
-
-TARGET_CFLAGS += -flto
-TARGET_LDFLAGS += -flto
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/sbc

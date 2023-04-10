@@ -24,7 +24,7 @@ PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)-v$(PKG_VERSION)
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16 gc-sections
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -44,9 +44,7 @@ define Package/netdata/description
   python3-urllib3
 endef
 
-TARGET_CFLAGS := $(filter-out -O%,$(TARGET_CFLAGS))
-TARGET_CFLAGS += -ffunction-sections -fdata-sections -O3
-TARGET_LDFLAGS += -Wl,--gc-sections
+TARGET_CFLAGS := $(filter-out -O%,$(TARGET_CFLAGS)) -O3
 
 CONFIGURE_ARGS += \
 	--with-zlib \

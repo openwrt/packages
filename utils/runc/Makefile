@@ -15,7 +15,7 @@ PKG_MAINTAINER:=Gerard Ryan <G.M0N3Y.2503@gmail.com>
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16
 
 GO_PKG:=github.com/opencontainers/runc
 

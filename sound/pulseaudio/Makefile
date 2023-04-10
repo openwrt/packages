@@ -20,7 +20,7 @@ PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=GPL LICENSE
 PKG_CPE_ID:=cpe:/a:pulseaudio:pulseaudio
 
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk

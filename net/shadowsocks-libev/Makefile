@@ -27,7 +27,7 @@ PKG_LICENSE_FILES:=LICENSE
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16 lto
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=c-ares pcre
 
@@ -120,7 +120,6 @@ CONFIGURE_ARGS += \
 	--disable-assert \
 	--disable-ssp \
 
-TARGET_CFLAGS += -flto
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 
 $(eval $(call BuildPackage,shadowsocks-libev-config))

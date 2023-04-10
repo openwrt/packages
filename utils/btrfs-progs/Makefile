@@ -21,6 +21,7 @@ PKG_LICENSE_FILES:=COPYING
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=acl
+PKG_BUILD_FLAGS:=gc-sections
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -56,8 +57,7 @@ endef
 boxprogs = btrfsck mkfs.btrfs btrfs-image btrfstune btrfs-find-root
 progs = btrfs-map-logical btrfs-select-super
 
-TARGET_CFLAGS += -ffunction-sections -fdata-sections
-TARGET_LDFLAGS += -Wl,--gc-sections -Wl,--as-needed
+TARGET_LDFLAGS += -Wl,--as-needed
 
 EXTRA_CFLAGS=$(TARGET_CPPFLAGS)
 

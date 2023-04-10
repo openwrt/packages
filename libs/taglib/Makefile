@@ -18,6 +18,8 @@ PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING.LGPL
 PKG_CPE_ID:=cpe:/a:taglib:taglib
 
+PKG_BUILD_FLAGS:=lto
+
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
@@ -42,8 +44,6 @@ CMAKE_OPTIONS += \
 	-DBUILD_EXAMPLES=OFF \
 	-DBUILD_BINDINGS=OFF \
 	-DNO_ITUNES_HACKS=ON
-
-TARGET_CXXFLAGS += -flto
 
 define Build/InstallDev
 	$(call Build/InstallDev/cmake,$(1))

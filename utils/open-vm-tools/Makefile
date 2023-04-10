@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=open-vm-tools
-PKG_VERSION:=12.0.0
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=12.2.0
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-19345655.tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-21223074.tar.gz
 PKG_SOURCE_URL:=https://github.com/vmware/open-vm-tools/releases/download/stable-$(PKG_VERSION)
-PKG_HASH:=ea370217a213802f91b01231e28298bbe54134822351fb5cc70255d80ba0e775
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)-19345655
+PKG_HASH:=ddc797cb75c435ad03c197ee0753156add148d06aefb14587dd31bff7556479a
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)-21223074
 
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=LICENSE
@@ -22,7 +22,7 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
-PKG_BUILD_DEPENDS:=glib2/host
+PKG_BUILD_DEPENDS:=glib2/host rpcsvc-proto/host
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -80,7 +80,8 @@ CONFIGURE_ARGS+= \
 	--without-gtk2 \
 	--without-gtk3 \
 	--without-xerces \
-	--enable-resolutionkms=no
+	--enable-resolutionkms=no \
+	--disable-glibc-check
 
 TARGET_LDFLAGS+=$(if $(ICONV_FULL),-liconv)
 

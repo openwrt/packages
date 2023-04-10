@@ -39,12 +39,6 @@ config SQLITE3_FTS5
 	help
 	  Enable FTS5 support.
 
-config SQLITE3_JSON1
-	bool "JSON1 extension"
-	default y
-	help
-	  Include JSON1 support. This is the default.
-
 config SQLITE3_RTREE
 	bool "R-Tree support"
 	default y

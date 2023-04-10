@@ -21,7 +21,7 @@ PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:imagemagick:imagemagick
 
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16 lto
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -109,8 +109,6 @@ CONFIGURE_ARGS += \
 	--with-jpeg \
 	--with-png \
 	--with-tiff
-
-TARGET_CFLAGS += $(if $(filter-out 5 6 7 8 9,$(word 1,$(subst ., ,$(call qstrip,$(CONFIG_GCC_VERSION))))),,-flto)
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include

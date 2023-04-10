@@ -200,14 +200,14 @@ snmpd_extend_add() {
 }
 
 snmpd_disk_add() {
-        local cfg="$1"
-        local disk='disk'
+	local cfg="$1"
+	local disk='disk'
 
-        config_get partition "$cfg" partition
-        [ -n "$partition" ] || return 0
-        config_get size "$cfg" size
-        [ -n "$size" ] || return 0
-        echo "$disk $partition $size" >> $CONFIGFILE
+	config_get partition "$cfg" partition
+	[ -n "$partition" ] || return 0
+	config_get size "$cfg" size
+	[ -n "$size" ] || return 0
+	echo "$disk $partition $size" >> $CONFIGFILE
 }
 
 snmpd_engineid_add() {
@@ -336,7 +336,7 @@ start_service() {
 	procd_close_instance
 }
 
-stop_service() {
+service_stopped() {
 	[ -f "$CONFIGFILE" ] || return
 	rm -f "$CONFIGFILE"
 	procd_set_config_changed firewall

@@ -18,6 +18,8 @@ PKG_MAINTAINER:=Russell Senior <russell@personaltelco.net>
 PKG_LICENSE:=GPL-3.0-or-later CC0-1.0
 PKG_LICENSE_FILES:=LICENSES/GPL-3.0-or-later.txt LICENSES/CC0-1.0.txt
 
+PKG_BUILD_FLAGS:=lto
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/ap51-flash
@@ -32,7 +34,6 @@ MAKE_FLAGS += \
 	REVISION="$(PKG_VERSION)" \
 	ap51-flash
 
-TARGET_CFLAGS += -flto
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 
 define Package/ap51-flash/install
