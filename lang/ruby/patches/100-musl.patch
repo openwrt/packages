@@ -3,7 +3,7 @@ which was originally based on this file.
 
 --- a/configure.ac
 +++ b/configure.ac
-@@ -2471,7 +2471,10 @@ AS_CASE([$rb_cv_coroutine], [yes|''], [
+@@ -2479,7 +2479,10 @@ AS_CASE([$rb_cv_coroutine], [yes|''], [
              rb_cv_coroutine=copy
          ],
          [
