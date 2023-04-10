@@ -3,6 +3,8 @@
 
 START=80
 USE_PROCD=1
+BIN=/usr/sbin/apinger
+APINGER_RRD=/apinger/rrd
 
 . /lib/functions/network.sh
 
@@ -36,7 +38,7 @@ append_target() {
 	local target=$1
 	local interface address probe_interval srcip
 	local avg_delay_samples avg_loss_samples avg_loss_delay_samples 
-	local alarm_down alarm_delay alarm_loss alarms
+	local alarm_down alarm_delay alarm_loss alarms rrd
 
 	config_get interface              "$target" interface wan
 	[ "$interface" != "$instance" ] && return 0
@@ -49,6 +51,7 @@ append_target() {
 	config_get alarm_down             "$target" alarm_down
 	config_get alarm_delay            "$target" alarm_delay
 	config_get alarm_loss             "$target" alarm_loss
+	config_get_bool rrd               "$target" rrd 0
 
 	[ -z "$address" ] && return 0
 
@@ -69,6 +72,7 @@ append_target() {
 	[ -n "$avg_loss_samples" ]        && append_config_line "avg_loss_samples ${avg_loss_samples}"
 	[ -n "$avg_loss_delay_samples" ]  && append_config_line "avg_loss_delay_samples ${avg_loss_delay_samples}"
 	[ -n "$alarms" ]                  && append_config_line "alarms override ${alarms}"
+	[ "$rrd" = "1" ]                  && append_config_line "rrd file \"$APINGER_RRD/apinger-target-$target.rrd\""
 
 	close_config_block
 	write_config_block
@@ -125,13 +129,14 @@ append_alarm_loss() {
 }
 
 init_apinger_config() {
-	local debug status_interval instance
+	local debug status_interval rrd_interval instance
 	instance=$1
 
 	config_get_bool debug             apinger debug 0
 	config_get      status_interval   apinger status_interval 1
+	config_get      rrd_interval      apinger rrd_interval 30
 
-	[ "$debug" == "1" ] && debug=on || debug=off
+	[ "$debug" = "1" ] && debug=on || debug=off
 
 	set_config_file
 	set_status_file
@@ -140,6 +145,8 @@ init_apinger_config() {
 user "root"
 group "root"
 debug ${debug}
+
+rrd interval ${rrd_interval}s
 
 status {
 	scriptformat on
@@ -185,9 +192,8 @@ start_instance() {
 	config_foreach append_target target
 
 	procd_open_instance "$instance"
-	procd_set_param command /usr/sbin/apinger -f -c $CONFIG_FILE
+	procd_set_param command $BIN -f -c $CONFIG_FILE
 	procd_set_param stderr 1
-	procd_set_param stdout 1
 	procd_close_instance
 }
 
@@ -195,6 +201,8 @@ start_service() {
 	local instance=$1
 
 	config_load apinger
+
+	[ ! -d "$APINGER_RRD" ] && mkdir -p "$APINGER_RRD"
 
 	if [ -n "$instance" ]; then
 		start_instance "$instance"

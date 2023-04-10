@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=apinger
 PKG_SOURCE_DATE:=2015-04-09
 PKG_SOURCE_VERSION:=78eb328721ba1a10571c19df95acddcb5f0c17c8
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/Jajcus/apinger
@@ -65,7 +65,27 @@ define Package/apinger/install
 	$(INSTALL_DATA) ./files/user.hotplug $(1)/etc/hotplug.d/apinger/01-user
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
 	$(INSTALL_DATA) ./files/iface.hotplug $(1)/etc/hotplug.d/iface/25-apinger
+	$(INSTALL_DIR) $(1)/usr/libexec/rpcd
+	$(INSTALL_BIN) ./files/apinger.rpc $(1)/usr/libexec/rpcd/apinger
+endef
+
+define Package/apinger-rrd
+  SECTION:=net
+  CATEGORY:=Network
+  DEPENDS:=+apinger +rrdtool1 +rrdcgi1
+  TITLE:=Apinger RRD Graphs
+  URL:=https://github.com/Jajcus/apinger
+endef
+
+define Package/apinger-rrd/description
+	Generate RRD Graphs from Apinger Data
+endef
+
+define Package/apinger-rrd/install
+	$(INSTALL_DIR) $(1)/usr/libexec/apinger/rpc
+	$(INSTALL_DATA) ./files/graphs.sh $(1)/usr/libexec/apinger/rpc
 endef
 
 $(eval $(call BuildPackage,apinger))
+$(eval $(call BuildPackage,apinger-rrd))
 

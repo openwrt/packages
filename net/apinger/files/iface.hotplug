@@ -6,7 +6,7 @@
 	[ "$(uci_get apinger $INTERFACE)" == "interface" ] || exit 0
 
 	[ "$ACTION" = "ifup" ] && {
-		/etc/init.d/apinger $INTERFACE restart
+		/etc/init.d/apinger restart $INTERFACE
 	}
 
 }
