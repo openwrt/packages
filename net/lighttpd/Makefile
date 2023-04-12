@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lighttpd
 PKG_VERSION:=1.4.69
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 # release candidate ~rcX testing; remove for release
 #PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
@@ -179,7 +179,7 @@ MESON_ARGS += \
 	-Dwith_zlib=$(if $(CONFIG_PACKAGE_lighttpd-mod-deflate),enabled,disabled) \
 	-Dwith_zstd=disabled
 
-BASE_MODULES:=dirlisting indexfile staticfile
+BASE_MODULES:=dirlisting
 
 define Package/lighttpd/conffiles
 /etc/lighttpd/lighttpd.conf
@@ -280,20 +280,58 @@ $(eval $(call BuildPlugin,webdav_min,WebDAV,,30))
 $(eval $(call BuildPlugin,wolfssl,TLS using wolfssl,@LIGHTTPD_SSL +PACKAGE_lighttpd-mod-wolfssl:libwolfssl,30))
 $(eval $(call BuildPlugin,wstunnel,Websocket tunneling,$(cryptolibdep),30))
 
-# included in BASE_MODULES:=dirlisting indexfile staticfile
+# (similar to BuildPlugin, but without associated .so)
+define BuiltinPlugin
+  define Package/lighttpd-mod-$(1)
+    $(call Package/lighttpd/Default)
+    DEPENDS:=lighttpd
+    ifneq ($(3),)
+      DEPENDS+= $(3)
+    endif
+    TITLE:=$(2) module
+  endef
+
+  define Package/lighttpd-mod-$(1)/conffiles
+/etc/lighttpd/conf.d/$(4)-$(1).conf
+  endef
+
+ ifneq ($(SDK)$(CONFIG_PACKAGE_lighttpd-mod-$(1)),)
+  define Package/lighttpd-mod-$(1)/install
+	$(INSTALL_DIR) $$(1)/etc/lighttpd/conf.d
+	if [ -f $(PKG_BUILD_DIR)/doc/config/conf.d/$(1).conf ]; then \
+		$(CP) $(PKG_BUILD_DIR)/doc/config/conf.d/$(1).conf $$(1)/etc/lighttpd/conf.d/$(4)-$(1).conf ; \
+		if ! grep -qF 'mod_$(1)' $$(1)/etc/lighttpd/conf.d/$(4)-$(1).conf; then \
+			sed -i "`sed '/^##/ !q' $$(1)/etc/lighttpd/conf.d/$(4)-$(1).conf | wc -l` i\
+server.modules += ( \"mod_$(1)\" )" $$(1)/etc/lighttpd/conf.d/$(4)-$(1).conf ; \
+		fi \
+	else \
+		echo 'server.modules += ( "mod_$(1)" )' > $$(1)/etc/lighttpd/conf.d/$(4)-$(1).conf ; \
+	fi
+  endef
+ endif
+
+  $$(eval $$(call BuildPackage,lighttpd-mod-$(1)))
+endef
+
+# included in BASE_MODULES:=dirlisting
 #$(eval $(call BuildPlugin,dirlisting,dirlisting,,30))
 
 # included in base lighttpd executable;
 # no longer loaded as separate dynamic modules
-#$(eval $(call BuildPlugin,indexfile,indexfile,,30))
-#$(eval $(call BuildPlugin,staticfile,staticfile,,30))
-$(eval $(call BuildPlugin,access,Access restrictions,,30))
-$(eval $(call BuildPlugin,alias,Directory alias,,30))
-$(eval $(call BuildPlugin,evhost,Enhanced Virtual-Hosting,,30))
-$(eval $(call BuildPlugin,expire,Expire,,30))
-$(eval $(call BuildPlugin,fastcgi,FastCGI,,30))
-$(eval $(call BuildPlugin,redirect,URL redirection,+LIGHTTPD_PCRE2:libpcre2,10))
-$(eval $(call BuildPlugin,rewrite,URL rewriting,+LIGHTTPD_PCRE2:libpcre2,30))
-$(eval $(call BuildPlugin,scgi,SCGI,,30))
-$(eval $(call BuildPlugin,setenv,Environment variable setting,,30))
-$(eval $(call BuildPlugin,simple_vhost,Simple virtual hosting,,30))
+# no longer in BASE_MODULES
+#$(eval $(call BuiltinPlugin,indexfile,indexfile,,30))
+#$(eval $(call BuiltinPlugin,staticfile,staticfile,,30))
+
+# included in base lighttpd executable;
+# no longer loaded as separate dynamic modules
+# though still need to be enabled in config
+$(eval $(call BuiltinPlugin,access,Access restrictions,,30))
+$(eval $(call BuiltinPlugin,alias,Directory alias,,30))
+$(eval $(call BuiltinPlugin,evhost,Enhanced Virtual-Hosting,,30))
+$(eval $(call BuiltinPlugin,expire,Expire,,30))
+$(eval $(call BuiltinPlugin,fastcgi,FastCGI,,30))
+$(eval $(call BuiltinPlugin,redirect,URL redirection,+LIGHTTPD_PCRE2:libpcre2,10))
+$(eval $(call BuiltinPlugin,rewrite,URL rewriting,+LIGHTTPD_PCRE2:libpcre2,30))
+$(eval $(call BuiltinPlugin,scgi,SCGI,,30))
+$(eval $(call BuiltinPlugin,setenv,Environment variable setting,,30))
+$(eval $(call BuiltinPlugin,simple_vhost,Simple virtual hosting,,30))
