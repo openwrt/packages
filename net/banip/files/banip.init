@@ -20,9 +20,8 @@ ban_funlib="/usr/lib/banip-functions.sh"
 ban_pidfile="/var/run/banip.pid"
 ban_lock="/var/run/banip.lock"
 
-[ "${action}" = "boot" ] && /etc/init.d/banip running && exit 0
-{ [ "${action}" = "stop" ] || [ "${action}" = "lookup" ]; } && ! /etc/init.d/banip running && exit 0
-[ ! -r "${ban_funlib}" ] && [ "${action}" != "boot" ] && exit 1
+[ "${action}" = "boot" ] && "${ban_init}" running && exit 0
+{ [ "${action}" = "stop" ] || [ "${action}" = "report" ] || [ "${action}" = "search" ] || [ "${action}" = "survey" ] || [ "${action}" = "lookup" ]; } && ! "${ban_init}" running && exit 0
 [ -d "${ban_lock}" ] && { [ "${action}" = "start" ] || [ "${action}" = "restart" ] || [ "${action}" = "reload" ] || [ "${action}" = "lookup" ]; } && exit 1
 [ ! -d "${ban_lock}" ] && { [ "${action}" = "start" ] || [ "${action}" = "restart" ] || [ "${action}" = "reload" ] || [ "${action}" = "lookup" ]; } && mkdir -p "${ban_lock}"
 
