@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=apinger
 PKG_SOURCE_DATE:=2015-04-09
 PKG_SOURCE_VERSION:=78eb328721ba1a10571c19df95acddcb5f0c17c8
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/Jajcus/apinger
@@ -46,7 +46,8 @@ define Package/apinger/description
 endef
 
 define Package/apinger/conffiles
-/etc/apinger.conf
+/etc/config/apinger
+/etc/apinger.user
 endef
 
 define Package/apinger/install
@@ -56,7 +57,35 @@ define Package/apinger/install
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/src/apinger.conf $(1)/etc/apinger.conf
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/apinger.init $(1)/etc/init.d/apinger
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_DATA) ./files/apinger.config $(1)/etc/config/apinger
+	$(INSTALL_DIR) $(1)/usr/libexec
+	$(INSTALL_BIN) ./files/apinger-hotplug $(1)/usr/libexec/apinger-hotplug
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/apinger
+	$(INSTALL_DATA) ./files/user.hotplug $(1)/etc/hotplug.d/apinger/01-user
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
+	$(INSTALL_DATA) ./files/iface.hotplug $(1)/etc/hotplug.d/iface/25-apinger
+	$(INSTALL_DIR) $(1)/usr/libexec/rpcd
+	$(INSTALL_BIN) ./files/apinger.rpc $(1)/usr/libexec/rpcd/apinger
+endef
+
+define Package/apinger-rrd
+  SECTION:=net
+  CATEGORY:=Network
+  DEPENDS:=+apinger +rrdtool1 +rrdcgi1
+  TITLE:=Apinger RRD Graphs
+  URL:=https://github.com/Jajcus/apinger
+endef
+
+define Package/apinger-rrd/description
+	Generate RRD Graphs from Apinger Data
+endef
+
+define Package/apinger-rrd/install
+	$(INSTALL_DIR) $(1)/usr/libexec/apinger/rpc
+	$(INSTALL_DATA) ./files/graphs.sh $(1)/usr/libexec/apinger/rpc
 endef
 
 $(eval $(call BuildPackage,apinger))
+$(eval $(call BuildPackage,apinger-rrd))
 

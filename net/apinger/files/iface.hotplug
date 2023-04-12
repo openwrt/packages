@@ -1,0 +1,12 @@
+#!/bin/sh
+
+. /lib/functions.sh
+
+/etc/init.d/apinger enabled && {
+	[ "$(uci_get apinger $INTERFACE)" == "interface" ] || exit 0
+
+	[ "$ACTION" = "ifup" ] && {
+		/etc/init.d/apinger restart $INTERFACE
+	}
+
+}
