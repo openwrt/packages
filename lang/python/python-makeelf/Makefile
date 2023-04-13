@@ -7,7 +7,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=makeelf
 PKG_HASH:=9d8b8cf16b00116ea72d96f9f9561c0f960bedc78e68743e2459f1f1d71e0572
 
-PKG_MAINTAINER:=Adam Jovanovic <<adamjovanovic97@gmail.com>>
+PKG_MAINTAINER:=Adam Jovanovic <<adamjovanovix@gmail.com>>
 PKG_LICENSE:=GPL-3.0-only
 PKG_LICENSE_FILES:=LICENSE
 
