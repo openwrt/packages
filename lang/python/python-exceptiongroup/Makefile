@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-exceptiongroup
 PKG_VERSION:=1.1.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=exceptiongroup
 PKG_HASH:=d484c3090ba2889ae2928419117447a14daf3c1231d5e30d0aae34f354f01785
