@@ -62,17 +62,17 @@ PKG_BUILD_DEPENDS:= \
 include $(INCLUDE_DIR)/package.mk
 include ../../devel/meson/meson.mk
 
-# choose crypto lib for lighttpd to use for crypto algorithms
+# choose crypto lib for lighttpd to use for crypto algorithms (default: nettle)
 # (separate from lighttpd TLS modules, which are each standalone)
-ifdef CONFIG_LIGHTTPD_CRYPTOLIB_NONE)
-  cryptolib=
-else ifdef CONFIG_LIGHTTPD_CRYPTOLIB_NETTLE
-  cryptolib=libnettle
-else ifdef CONFIG_LIGHTTPD_CRYPTOLIB_MBEDTLS
-  cryptolib=libmbedtls
+cryptolibdep= \
+  +LIGHTTPD_CRYPTOLIB_NETTLE:libnettle \
+  +LIGHTTPD_CRYPTOLIB_MBEDTLS:libmbedtls \
+  +LIGHTTPD_CRYPTOLIB_WOLFSSL:libwolfssl
+ifdef CONFIG_LIGHTTPD_CRYPTOLIB_MBEDTLS
   TARGET_CPPFLAGS += -DFORCE_MBEDTLS_CRYPTO
 else ifdef CONFIG_LIGHTTPD_CRYPTOLIB_WOLFSSL
-  cryptolib=libwolfssl
+  # (Note: if CONFIG_LIGHTTPD_CRYPTOLIB_WOLFSSL is set,
+  #  then lighttpd-mod-mbedtls should not be selected to also be built)
   TARGET_CPPFLAGS += -DFORCE_WOLFSSL_CRYPTO
 endif
 
@@ -88,9 +88,7 @@ define Package/lighttpd
   MENU:=1
   DEPENDS:=+libpthread +LIGHTTPD_LOGROTATE:logrotate \
            +LIGHTTPD_PCRE2:libpcre2 \
-           +LIGHTTPD_CRYPTOLIB_NETTLE:libnettle \
-           +LIGHTTPD_CRYPTOLIB_MBEDTLS:libmbedtls \
-           +LIGHTTPD_CRYPTOLIB_WOLFSSL:libwolfssl
+           $(cryptolibdep)
   TITLE:=A flexible and lightweight web server
 endef
 
@@ -167,7 +165,7 @@ MESON_ARGS += \
 	-Dwith_maxminddb=$(if $(CONFIG_PACKAGE_lighttpd-mod-maxminddb),enabled,disabled) \
 	-Dwith_mbedtls=$(if $(CONFIG_PACKAGE_lighttpd-mod-mbedtls),true,false) \
 	-Dwith_mysql=$(if $(CONFIG_PACKAGE_lighttpd-mod-vhostdb_mysql),enabled,disabled) \
-	-Dwith_nettle=$(if $(filter libnettle,$(cryptolib)),true,false) \
+	-Dwith_nettle=$(if $(CONFIG_LIGHTTPD_CRYPTOLIB_NETTLE),true,false) \
 	-Dwith_nss=$(if $(CONFIG_PACKAGE_lighttpd-mod-nss),true,false) \
 	-Dwith_openssl=$(if $(CONFIG_PACKAGE_lighttpd-mod-openssl),true,false) \
 	-Dwith_pam=$(if $(CONFIG_PACKAGE_lighttpd-mod-authn_pam),enabled,disabled) \
@@ -243,13 +241,13 @@ endef
 
 $(eval $(call BuildPackage,lighttpd))
 
-$(eval $(call BuildPlugin,auth,Authentication,$(if $(cryptolib),+PACKAGE_lighttpd-mod-auth:$(cryptolib),),20))
-$(eval $(call BuildPlugin,authn_dbi,DBI-based authentication,lighttpd-mod-auth $(if $(cryptolib),+PACKAGE_lighttpd-mod-authn_dbi:$(cryptolib),) +PACKAGE_lighttpd-mod-authn_dbi:libdbi,20))
-$(eval $(call BuildPlugin,authn_file,File-based authentication,lighttpd-mod-auth $(if $(cryptolib),+PACKAGE_lighttpd-mod-authn_file:$(cryptolib),),20))
-$(eval $(call BuildPlugin,authn_gssapi,Kerberos-based authentication,lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_gssapi:krb5-libs,20))
-$(eval $(call BuildPlugin,authn_ldap,LDAP-based authentication,lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_ldap:libopenldap,20))
-$(eval $(call BuildPlugin,authn_pam,PAM-based authentication,lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_pam:libpam,20))
-$(eval $(call BuildPlugin,authn_sasl,SASL-based authentication,lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_sasl:libsasl2,20))
+$(eval $(call BuildPlugin,auth,Authentication,$(cryptolibdep),20))
+$(eval $(call BuildPlugin,authn_dbi,DBI-based authentication,lighttpd-mod-auth libdbi $(cryptolibdep),20))
+$(eval $(call BuildPlugin,authn_file,File-based authentication,lighttpd-mod-auth $(cryptolibdep),20))
+$(eval $(call BuildPlugin,authn_gssapi,Kerberos-based authentication,lighttpd-mod-auth krb5-libs $(cryptolibdep),20))
+$(eval $(call BuildPlugin,authn_ldap,LDAP-based authentication,lighttpd-mod-auth libopenldap,20))
+$(eval $(call BuildPlugin,authn_pam,PAM-based authentication,lighttpd-mod-auth libpam,20))
+$(eval $(call BuildPlugin,authn_sasl,SASL-based authentication,lighttpd-mod-auth libsasl2,20))
 
 $(eval $(call BuildPlugin,accesslog,Access logging,,30))
 $(eval $(call BuildPlugin,ajp13,AJP13 Tomcat connector,,30))
@@ -280,7 +278,7 @@ $(eval $(call BuildPlugin,vhostdb_pgsql,Virtual Host Database (PostgreSQL),light
 $(eval $(call BuildPlugin,webdav,WebDAV,+PACKAGE_lighttpd-mod-webdav:libsqlite3 +PACKAGE_lighttpd-mod-webdav:libuuid +PACKAGE_lighttpd-mod-webdav:libxml2,30))
 $(eval $(call BuildPlugin,webdav_min,WebDAV,,30))
 $(eval $(call BuildPlugin,wolfssl,TLS using wolfssl,@LIGHTTPD_SSL +PACKAGE_lighttpd-mod-wolfssl:libwolfssl,30))
-$(eval $(call BuildPlugin,wstunnel,Websocket tunneling,$(if $(cryptolib),+PACKAGE_lighttpd-mod-wstunnel:$(cryptolib),),30))
+$(eval $(call BuildPlugin,wstunnel,Websocket tunneling,$(cryptolibdep),30))
 
 # included in BASE_MODULES:=dirlisting indexfile staticfile
 #$(eval $(call BuildPlugin,dirlisting,dirlisting,,30))
@@ -294,8 +292,8 @@ $(eval $(call BuildPlugin,alias,Directory alias,,30))
 $(eval $(call BuildPlugin,evhost,Enhanced Virtual-Hosting,,30))
 $(eval $(call BuildPlugin,expire,Expire,,30))
 $(eval $(call BuildPlugin,fastcgi,FastCGI,,30))
-$(eval $(call BuildPlugin,redirect,URL redirection,$(if $(CONFIG_LIGHTTPD_PCRE2),+PACKAGE_lighttpd-mod-redirect:libpcre2,),10))
-$(eval $(call BuildPlugin,rewrite,URL rewriting,$(if $(CONFIG_LIGHTTPD_PCRE2),+PACKAGE_lighttpd-mod-rewrite:libpcre2,),30))
+$(eval $(call BuildPlugin,redirect,URL redirection,+LIGHTTPD_PCRE2:libpcre2,10))
+$(eval $(call BuildPlugin,rewrite,URL rewriting,+LIGHTTPD_PCRE2:libpcre2,30))
 $(eval $(call BuildPlugin,scgi,SCGI,,30))
 $(eval $(call BuildPlugin,setenv,Environment variable setting,,30))
 $(eval $(call BuildPlugin,simple_vhost,Simple virtual hosting,,30))
