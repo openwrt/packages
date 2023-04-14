@@ -13,7 +13,7 @@ Fixes #22040.
 
 --- a/src/cmd/link/internal/ld/lib.go
 +++ b/src/cmd/link/internal/ld/lib.go
-@@ -1535,25 +1535,20 @@ func (ctxt *Link) hostlink() {
+@@ -1548,25 +1548,20 @@ func (ctxt *Link) hostlink() {
  		}
  
  		if ctxt.Arch.InFamily(sys.ARM, sys.ARM64) && buildcfg.GOOS == "linux" {
