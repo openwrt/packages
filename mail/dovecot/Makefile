@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dovecot
 PKG_VERSION:=2.3.18
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://dovecot.org/releases/2.3
@@ -36,6 +36,9 @@ include $(INCLUDE_DIR)/package.mk
 # iconv is needed when compiling with MySQL support. iconv will also be used by
 # dovecot itself.
 include $(INCLUDE_DIR)/nls.mk
+
+# need iconv.m4, otherwise error during autoreconf
+PKG_BUILD_DEPENDS:=gettext-full
 
 define Package/dovecot
   SECTION:=mail
