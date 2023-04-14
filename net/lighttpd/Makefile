@@ -87,8 +87,10 @@ define Package/lighttpd
   $(call Package/lighttpd/Default)
   MENU:=1
   DEPENDS:=+libpthread +LIGHTTPD_LOGROTATE:logrotate \
-           $(if $(CONFIG_LIGHTTPD_PCRE2),+libpcre2,) \
-           $(if $(cryptolib),+$(cryptolib),)
+           +LIGHTTPD_PCRE2:libpcre2 \
+           +LIGHTTPD_CRYPTOLIB_NETTLE:libnettle \
+           +LIGHTTPD_CRYPTOLIB_MBEDTLS:libmbedtls \
+           +LIGHTTPD_CRYPTOLIB_WOLFSSL:libwolfssl
   TITLE:=A flexible and lightweight web server
 endef
 
