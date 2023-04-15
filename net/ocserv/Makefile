@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ocserv
 PKG_VERSION:=1.1.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_USE_MIPS16:=0
 
 PKG_BUILD_DIR :=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
@@ -63,6 +63,7 @@ CONFIGURE_ARGS+= \
 	--with-libreadline-prefix="$(STAGING_DIR)/" \
 	--without-libnl \
 	--without-gssapi \
+	--without-maxmind \
 	--with-libcrypt-prefix="$(STAGING_DIR)/" \
 	--with-libev-prefix="$(STAGING_DIR)/" \
 	--without-lz4 \

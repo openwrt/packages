@@ -1,0 +1,1845 @@
+From 2bd3c1fe962812b4965bf64e9e1529541f9e96ff Mon Sep 17 00:00:00 2001
+From: Glenn Strauss <gstrauss@gluelogic.com>
+Date: Thu, 13 Apr 2023 16:14:48 -0400
+Subject: [PATCH] Revert "[multiple] remove deprecated modules"
+
+This reverts commit fcf0dc3e336a5d62c58036cdb8fc9f4c099b178e.
+---
+ src/CMakeLists.txt       |   8 +
+ src/Makefile.am          |  30 +++
+ src/SConscript           |   4 +
+ src/meson.build          |   4 +
+ src/mod_evasive.c        | 194 +++++++++++++++
+ src/mod_secdownload.c    | 502 +++++++++++++++++++++++++++++++++++++++
+ src/mod_uploadprogress.c | 334 ++++++++++++++++++++++++++
+ src/mod_usertrack.c      | 242 +++++++++++++++++++
+ src/t/test_mod.c         |   2 +
+ src/t/test_mod_evasive.c |  72 ++++++
+ tests/lighttpd.conf      |  27 +++
+ tests/request.t          | 192 ++++++++++++++-
+ 12 files changed, 1610 insertions(+), 1 deletion(-)
+ create mode 100644 src/mod_evasive.c
+ create mode 100644 src/mod_secdownload.c
+ create mode 100644 src/mod_uploadprogress.c
+ create mode 100644 src/mod_usertrack.c
+ create mode 100644 src/t/test_mod_evasive.c
+
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -914,6 +914,7 @@ if(NOT WIN32)
+ endif()
+ add_and_install_library(mod_deflate mod_deflate.c)
+ add_and_install_library(mod_dirlisting mod_dirlisting.c)
++add_and_install_library(mod_evasive mod_evasive.c)
+ add_and_install_library(mod_evhost mod_evhost.c)
+ add_and_install_library(mod_expire mod_expire.c)
+ add_and_install_library(mod_extforward mod_extforward.c)
+@@ -924,13 +925,16 @@ add_and_install_library(mod_redirect mod
+ add_and_install_library(mod_rewrite mod_rewrite.c)
+ add_and_install_library(mod_rrdtool mod_rrdtool.c)
+ add_and_install_library(mod_scgi mod_scgi.c)
++add_and_install_library(mod_secdownload "mod_secdownload.c;algo_hmac.c")
+ add_and_install_library(mod_setenv mod_setenv.c)
+ add_and_install_library(mod_simple_vhost mod_simple_vhost.c)
+ add_and_install_library(mod_sockproxy mod_sockproxy.c)
+ add_and_install_library(mod_ssi mod_ssi.c)
+ add_and_install_library(mod_staticfile mod_staticfile.c)
+ add_and_install_library(mod_status mod_status.c)
++add_and_install_library(mod_uploadprogress mod_uploadprogress.c)
+ add_and_install_library(mod_userdir mod_userdir.c)
++add_and_install_library(mod_usertrack mod_usertrack.c)
+ add_and_install_library(mod_vhostdb "mod_vhostdb.c;mod_vhostdb_api.c")
+ add_and_install_library(mod_webdav mod_webdav.c)
+ add_and_install_library(mod_wstunnel mod_wstunnel.c)
+@@ -954,6 +958,7 @@ add_executable(test_mod
+ 	t/test_mod.c
+ 	t/test_mod_access.c
+ 	t/test_mod_alias.c
++	t/test_mod_evasive.c
+ 	t/test_mod_evhost.c
+ 	t/test_mod_indexfile.c
+ 	t/test_mod_simple_vhost.c
+@@ -1155,6 +1160,8 @@ if(NOT ${CRYPTO_LIBRARY} EQUAL "")
+ 	target_link_libraries(mod_auth ${CRYPTO_LIBRARY})
+ 	set(L_MOD_AUTHN_FILE ${L_MOD_AUTHN_FILE} ${CRYPTO_LIBRARY})
+ 	target_link_libraries(mod_authn_file ${L_MOD_AUTHN_FILE})
++	target_link_libraries(mod_secdownload ${CRYPTO_LIBRARY})
++	target_link_libraries(mod_usertrack ${CRYPTO_LIBRARY})
+ 	target_link_libraries(mod_wstunnel ${CRYPTO_LIBRARY})
+ 	target_link_libraries(test_mod ${CRYPTO_LIBRARY})
+ endif()
+@@ -1179,6 +1186,7 @@ if(HAVE_LIBMBEDTLS AND HAVE_LIBMEDCRYPTO
+ 	add_and_install_library(mod_mbedtls "mod_mbedtls.c")
+ 	set(L_MOD_MBEDTLS ${L_MOD_MBEDTLS} mbedtls mbedcrypto mbedx509)
+ 	target_link_libraries(mod_mbedtls ${L_MOD_MBEDTLS})
++	# not doing "cross module" linkage yet (e.g. mod_authn, secdownload)
+ endif()
+ 
+ if(HAVE_LIBSSL3 AND HAVE_LIBSMIME3 AND HAVE_LIBNSS3 AND HAVE_LIBNSSUTIL3)
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -128,6 +128,11 @@ mod_maxminddb_la_LDFLAGS = $(common_modu
+ mod_maxminddb_la_LIBADD = $(common_libadd) $(MAXMINDDB_LIB)
+ endif
+ 
++lib_LTLIBRARIES += mod_evasive.la
++mod_evasive_la_SOURCES = mod_evasive.c
++mod_evasive_la_LDFLAGS = $(common_module_ldflags)
++mod_evasive_la_LIBADD = $(common_libadd)
++
+ lib_LTLIBRARIES += mod_webdav.la
+ mod_webdav_la_SOURCES = mod_webdav.c
+ mod_webdav_la_CFLAGS = $(AM_CFLAGS) $(XML_CFLAGS) $(SQLITE_CFLAGS) 
+@@ -226,6 +231,11 @@ mod_rrdtool_la_SOURCES = mod_rrdtool.c
+ mod_rrdtool_la_LDFLAGS = $(common_module_ldflags)
+ mod_rrdtool_la_LIBADD = $(common_libadd)
+ 
++lib_LTLIBRARIES += mod_usertrack.la
++mod_usertrack_la_SOURCES = mod_usertrack.c
++mod_usertrack_la_LDFLAGS = $(common_module_ldflags)
++mod_usertrack_la_LIBADD = $(common_libadd) $(CRYPTO_LIB)
++
+ lib_LTLIBRARIES += mod_proxy.la
+ mod_proxy_la_SOURCES = mod_proxy.c
+ mod_proxy_la_LDFLAGS = $(common_module_ldflags)
+@@ -241,6 +251,16 @@ mod_ssi_la_SOURCES = mod_ssi.c
+ mod_ssi_la_LDFLAGS = $(common_module_ldflags)
+ mod_ssi_la_LIBADD = $(common_libadd)
+ 
++lib_LTLIBRARIES += mod_secdownload.la
++mod_secdownload_la_SOURCES = mod_secdownload.c algo_hmac.c
++mod_secdownload_la_LDFLAGS = $(common_module_ldflags)
++mod_secdownload_la_LIBADD = $(common_libadd) $(CRYPTO_LIB)
++
++#lib_LTLIBRARIES += mod_httptls.la
++#mod_httptls_la_SOURCES = mod_httptls.c
++#mod_httptls_la_LDFLAGS = $(common_module_ldflags)
++#mod_httptls_la_LIBADD = $(common_libadd)
++
+ lib_LTLIBRARIES += mod_expire.la
+ mod_expire_la_SOURCES = mod_expire.c
+ mod_expire_la_LDFLAGS = $(common_module_ldflags)
+@@ -391,6 +411,11 @@ mod_accesslog_la_SOURCES = mod_accesslog
+ mod_accesslog_la_LDFLAGS = $(common_module_ldflags)
+ mod_accesslog_la_LIBADD = $(common_libadd)
+ 
++lib_LTLIBRARIES += mod_uploadprogress.la
++mod_uploadprogress_la_SOURCES = mod_uploadprogress.c
++mod_uploadprogress_la_LDFLAGS = $(common_module_ldflags)
++mod_uploadprogress_la_LIBADD = $(common_libadd)
++
+ lib_LTLIBRARIES += mod_wstunnel.la
+ mod_wstunnel_la_SOURCES = mod_wstunnel.c
+ mod_wstunnel_la_LDFLAGS = $(common_module_ldflags)
+@@ -448,6 +473,7 @@ lighttpd_SOURCES = \
+   mod_deflate.c \
+   mod_dirlisting.c \
+   mod_evhost.c \
++  mod_evasive.c \
+   mod_expire.c \
+   mod_extforward.c \
+   mod_fastcgi.c \
+@@ -457,13 +483,16 @@ lighttpd_SOURCES = \
+   mod_rewrite.c \
+   mod_rrdtool.c \
+   mod_scgi.c \
++  mod_secdownload.c algo_hmac.c \
+   mod_setenv.c \
+   mod_simple_vhost.c \
+   mod_sockproxy.c \
+   mod_ssi.c \
+   mod_staticfile.c \
+   mod_status.c \
++  mod_uploadprogress.c \
+   mod_userdir.c \
++  mod_usertrack.c \
+   mod_vhostdb.c \
+   mod_vhostdb_api.c \
+   mod_webdav.c
+@@ -573,6 +602,7 @@ t_test_configfile_LDADD = $(PCRE_LIB) $(
+ t_test_mod_SOURCES = $(common_src) t/test_mod.c \
+                      t/test_mod_access.c \
+                      t/test_mod_alias.c \
++                     t/test_mod_evasive.c \
+                      t/test_mod_evhost.c \
+                      t/test_mod_indexfile.c \
+                      t/test_mod_simple_vhost.c \
+--- a/src/SConscript
++++ b/src/SConscript
+@@ -119,6 +119,7 @@ modules = {
+ 	'mod_cgi' : { 'src' : [ 'mod_cgi.c' ] },
+ 	'mod_deflate' : { 'src' : [ 'mod_deflate.c' ], 'lib' : [ env['LIBZ'], env['LIBZSTD'], env['LIBBZ2'], env['LIBBROTLI'], env['LIBDEFLATE'], 'm' ] },
+ 	'mod_dirlisting' : { 'src' : [ 'mod_dirlisting.c' ] },
++	'mod_evasive' : { 'src' : [ 'mod_evasive.c' ] },
+ 	'mod_evhost' : { 'src' : [ 'mod_evhost.c' ] },
+ 	'mod_expire' : { 'src' : [ 'mod_expire.c' ] },
+ 	'mod_extforward' : { 'src' : [ 'mod_extforward.c' ] },
+@@ -129,13 +130,16 @@ modules = {
+ 	'mod_rewrite' : { 'src' : [ 'mod_rewrite.c' ] },
+ 	'mod_rrdtool' : { 'src' : [ 'mod_rrdtool.c' ] },
+ 	'mod_scgi' : { 'src' : [ 'mod_scgi.c' ] },
++	'mod_secdownload' : { 'src' : [ 'mod_secdownload.c', 'algo_hmac.c' ], 'lib' : [ env['LIBCRYPTO'] ] },
+ 	'mod_setenv' : { 'src' : [ 'mod_setenv.c' ] },
+ 	'mod_simple_vhost' : { 'src' : [ 'mod_simple_vhost.c' ] },
+ 	'mod_sockproxy' : { 'src' : [ 'mod_sockproxy.c' ] },
+ 	'mod_ssi' : { 'src' : [ 'mod_ssi.c' ] },
+ 	'mod_staticfile' : { 'src' : [ 'mod_staticfile.c' ] },
+ 	'mod_status' : { 'src' : [ 'mod_status.c' ] },
++	'mod_uploadprogress' : { 'src' : [ 'mod_uploadprogress.c' ] },
+ 	'mod_userdir' : { 'src' : [ 'mod_userdir.c' ] },
++	'mod_usertrack' : { 'src' : [ 'mod_usertrack.c' ], 'lib' : [ env['LIBCRYPTO'] ] },
+ 	'mod_vhostdb' : { 'src' : [ 'mod_vhostdb.c', 'mod_vhostdb_api.c' ] },
+ 	'mod_webdav' : { 'src' : [ 'mod_webdav.c' ], 'lib' : [ env['LIBXML2'], env['LIBSQLITE3'], env['LIBUUID'] ] },
+ 	'mod_wstunnel' : { 'src' : [ 'mod_wstunnel.c' ], 'lib' : [ env['LIBCRYPTO'] ] },
+--- a/src/meson.build
++++ b/src/meson.build
+@@ -751,6 +751,7 @@ modules = [
+ 	[ 'mod_authn_file', [ 'mod_authn_file.c' ], [ libcrypt, libcrypto ] ],
+ 	[ 'mod_deflate', [ 'mod_deflate.c' ], [ libbz2, libz, libzstd, libbrotli, libdeflate ] ],
+ 	[ 'mod_dirlisting', [ 'mod_dirlisting.c' ] ],
++	[ 'mod_evasive', [ 'mod_evasive.c' ] ],
+ 	[ 'mod_evhost', [ 'mod_evhost.c' ] ],
+ 	[ 'mod_expire', [ 'mod_expire.c' ] ],
+ 	[ 'mod_extforward', [ 'mod_extforward.c' ] ],
+@@ -761,13 +762,16 @@ modules = [
+ 	[ 'mod_rewrite', [ 'mod_rewrite.c' ] ],
+ 	[ 'mod_rrdtool', [ 'mod_rrdtool.c' ] ],
+ 	[ 'mod_scgi', [ 'mod_scgi.c' ], socket_libs ],
++	[ 'mod_secdownload', [ 'mod_secdownload.c', 'algo_hmac.c' ], libcrypto ],
+ 	[ 'mod_setenv', [ 'mod_setenv.c' ] ],
+ 	[ 'mod_simple_vhost', [ 'mod_simple_vhost.c' ] ],
+ 	[ 'mod_sockproxy', [ 'mod_sockproxy.c' ] ],
+ 	[ 'mod_ssi', [ 'mod_ssi.c' ], socket_libs ],
+ 	[ 'mod_staticfile', [ 'mod_staticfile.c' ] ],
+ 	[ 'mod_status', [ 'mod_status.c' ] ],
++	[ 'mod_uploadprogress', [ 'mod_uploadprogress.c' ] ],
+ 	[ 'mod_userdir', [ 'mod_userdir.c' ] ],
++	[ 'mod_usertrack', [ 'mod_usertrack.c' ], libcrypto ],
+ 	[ 'mod_vhostdb', [ 'mod_vhostdb.c', 'mod_vhostdb_api.c' ] ],
+ 	[ 'mod_webdav', [ 'mod_webdav.c' ], [ libsqlite3, libuuid, libxml2, libelftc ] ],
+ 	[ 'mod_wstunnel', [ 'mod_wstunnel.c' ], libcrypto ],
+--- /dev/null
++++ b/src/mod_evasive.c
+@@ -0,0 +1,194 @@
++#include "first.h"
++
++#include "base.h"
++#include "log.h"
++#include "buffer.h"
++#include "http_header.h"
++#include "sock_addr.h"
++
++#include "plugin.h"
++
++#include <stdlib.h>
++#include <string.h>
++
++/**
++ * mod_evasive
++ *
++ * A combination of lighttpd modules provides similar features
++ * to those in (old) Apache mod_evasive
++ *
++ * - limit of connections per IP
++ *     ==> mod_evasive
++ * - provide a list of block-listed ip/networks (no access)
++ *     ==> block at firewall
++ *     ==> block using lighttpd.conf conditionals and mod_access
++ *     ==> block using mod_magnet and an external (updatable) constant database
++ *         https://wiki.lighttpd.net/AbsoLUAtion#Fight-DDoS
++ * - provide a white-list of ips/network which is not affected by the limit
++ *     ==> allow using lighttpd.conf conditionals
++ *         and configure evasive.max-conns-per-ip = 0 for whitelist
++ * - provide a bandwidth limiter per IP
++ *     ==> set using lighttpd.conf conditionals
++ *         and configure connection.kbytes-per-second
++ * - enforce additional policy using mod_magnet and libmodsecurity
++ *     ==> https://wiki.lighttpd.net/AbsoLUAtion#Mod_Security
++ *
++ * started by:
++ * - w1zzard@techpowerup.com
++ */
++
++typedef struct {
++    unsigned short max_conns;
++    unsigned short silent;
++    const buffer *location;
++} plugin_config;
++
++typedef struct {
++    PLUGIN_DATA;
++    plugin_config defaults;
++    plugin_config conf;
++} plugin_data;
++
++INIT_FUNC(mod_evasive_init) {
++    return calloc(1, sizeof(plugin_data));
++}
++
++static void mod_evasive_merge_config_cpv(plugin_config * const pconf, const config_plugin_value_t * const cpv) {
++    switch (cpv->k_id) { /* index into static config_plugin_keys_t cpk[] */
++      case 0: /* evasive.max-conns-per-ip */
++        pconf->max_conns = cpv->v.shrt;
++        break;
++      case 1: /* evasive.silent */
++        pconf->silent = (0 != cpv->v.u);
++        break;
++      case 2: /* evasive.location */
++        pconf->location = cpv->v.b;
++        break;
++      default:/* should not happen */
++        return;
++    }
++}
++
++static void mod_evasive_merge_config(plugin_config * const pconf, const config_plugin_value_t *cpv) {
++    do {
++        mod_evasive_merge_config_cpv(pconf, cpv);
++    } while ((++cpv)->k_id != -1);
++}
++
++static void mod_evasive_patch_config(request_st * const r, plugin_data * const p) {
++    p->conf = p->defaults; /* copy small struct instead of memcpy() */
++    /*memcpy(&p->conf, &p->defaults, sizeof(plugin_config));*/
++    for (int i = 1, used = p->nconfig; i < used; ++i) {
++        if (config_check_cond(r, (uint32_t)p->cvlist[i].k_id))
++            mod_evasive_merge_config(&p->conf,p->cvlist + p->cvlist[i].v.u2[0]);
++    }
++}
++
++SETDEFAULTS_FUNC(mod_evasive_set_defaults) {
++    static const config_plugin_keys_t cpk[] = {
++      { CONST_STR_LEN("evasive.max-conns-per-ip"),
++        T_CONFIG_SHORT,
++        T_CONFIG_SCOPE_CONNECTION }
++     ,{ CONST_STR_LEN("evasive.silent"),
++        T_CONFIG_BOOL,
++        T_CONFIG_SCOPE_CONNECTION }
++     ,{ CONST_STR_LEN("evasive.location"),
++        T_CONFIG_STRING,
++        T_CONFIG_SCOPE_CONNECTION }
++     ,{ NULL, 0,
++        T_CONFIG_UNSET,
++        T_CONFIG_SCOPE_UNSET }
++    };
++
++    plugin_data * const p = p_d;
++    if (!config_plugin_values_init(srv, p, cpk, "mod_evasive"))
++        return HANDLER_ERROR;
++
++    /* process and validate config directives
++     * (init i to 0 if global context; to 1 to skip empty global context) */
++    for (int i = !p->cvlist[0].v.u2[1]; i < p->nconfig; ++i) {
++        config_plugin_value_t *cpv = p->cvlist + p->cvlist[i].v.u2[0];
++        for (; -1 != cpv->k_id; ++cpv) {
++            switch (cpv->k_id) {
++              case 0: /* evasive.max-conns-per-ip */
++              case 1: /* evasive.silent */
++                break;
++              case 2: /* evasive.location */
++                if (buffer_is_blank(cpv->v.b))
++                    cpv->v.b = NULL;
++                break;
++              default:/* should not happen */
++                break;
++            }
++        }
++    }
++
++    /* initialize p->defaults from global config context */
++    if (p->nconfig > 0 && p->cvlist->v.u2[1]) {
++        const config_plugin_value_t *cpv = p->cvlist + p->cvlist->v.u2[0];
++        if (-1 != cpv->k_id)
++            mod_evasive_merge_config(&p->defaults, cpv);
++    }
++
++    return HANDLER_GO_ON;
++}
++
++__attribute_cold__
++__attribute_noinline__
++static handler_t
++mod_evasive_reached_per_ip_limit (request_st * const r, const plugin_data * const p)
++{
++			if (!p->conf.silent) {
++				log_error(r->conf.errh, __FILE__, __LINE__,
++				  "%s turned away. Too many connections.",
++				  r->con->dst_addr_buf.ptr);
++			}
++
++			if (p->conf.location) {
++				http_header_response_set(r, HTTP_HEADER_LOCATION,
++				                         CONST_STR_LEN("Location"),
++				                         BUF_PTR_LEN(p->conf.location));
++				r->http_status = 302;
++				r->resp_body_finished = 1;
++			} else {
++				r->http_status = 403;
++			}
++			r->handler_module = NULL;
++			return HANDLER_FINISHED;
++}
++
++static handler_t
++mod_evasive_check_per_ip_limit (request_st * const r, const plugin_data * const p, const connection *c)
++{
++    const sock_addr * const dst_addr = &r->con->dst_addr;
++    for (uint_fast32_t conns_by_ip = 0; c; c = c->next) {
++        /* count connections already actively serving data for the same IP
++         * (only count connections already behind the 'read request' state) */
++        if (c->request.state > CON_STATE_REQUEST_END
++            && sock_addr_is_addr_eq(&c->dst_addr, dst_addr)
++            && ++conns_by_ip > p->conf.max_conns)
++            return mod_evasive_reached_per_ip_limit(r, p);/* HANDLER_FINISHED */
++    }
++    return HANDLER_GO_ON;
++}
++
++URIHANDLER_FUNC(mod_evasive_uri_handler) {
++    plugin_data * const p = p_d;
++    mod_evasive_patch_config(r, p);
++    return (p->conf.max_conns == 0) /* no limit set, nothing to block */
++      ? HANDLER_GO_ON
++      : mod_evasive_check_per_ip_limit(r, p, r->con->srv->conns);
++}
++
++
++int mod_evasive_plugin_init(plugin *p);
++int mod_evasive_plugin_init(plugin *p) {
++	p->version     = LIGHTTPD_VERSION_ID;
++	p->name        = "evasive";
++
++	p->init        = mod_evasive_init;
++	p->set_defaults = mod_evasive_set_defaults;
++	p->handle_uri_clean  = mod_evasive_uri_handler;
++
++	return 0;
++}
+--- /dev/null
++++ b/src/mod_secdownload.c
+@@ -0,0 +1,502 @@
++#include "first.h"
++
++#include "base.h"
++#include "log.h"
++#include "buffer.h"
++#include "base64.h"
++#include "ck.h"
++
++#include "plugin.h"
++
++#include <stdlib.h>
++#include <string.h>
++
++#include "sys-crypto-md.h"
++#include "algo_hmac.h"
++
++/*
++ * mod_secdownload verifies a checksum associated with a timestamp
++ * and a path.
++ *
++ * It takes an URL of the form:
++ *   securl := <uri-prefix> <mac> <protected-path>
++ *   uri-prefix := '/' any*         # whatever was configured: must start with a '/')
++ *   mac := [a-zA-Z0-9_-]{mac_len}  # mac length depends on selected algorithm
++ *   protected-path := '/' <timestamp> <rel-path>
++ *   timestamp := [a-f0-9]{1,16}    # timestamp when the checksum was calculated
++ *                                  # to prevent access after timeout (active requests
++ *                                  # will finish successfully even after the timeout)
++ *   rel-path := '/' any*           # the protected path; changing the path breaks the
++ *                                  # checksum
++ *
++ * The timestamp is the `epoch` timestamp in hex, i.e. time in seconds
++ * since 00:00:00 UTC on 1 January 1970.
++ *
++ * mod_secdownload supports various MAC algorithms:
++ *
++ * # md5
++ * mac_len := 32 (and hex only)
++ * mac := md5-hex(<secrect><rel-path><timestamp>)   # lowercase hex
++ * perl example:
++    use Digest::MD5 qw(md5_hex);
++    my $secret = "verysecret";
++    my $rel_path = "/index.html"
++    my $xtime = sprintf("%x", time);
++    my $url = '/'. md5_hex($secret . $rel_path . $xtime) . '/' . $xtime . $rel_path;
++ *
++ * # hmac-sha1
++ * mac_len := 27  (no base64 padding)
++ * mac := base64-url(hmac-sha1(<secret>, <protected-path>))
++ * perl example:
++    use Digest::SHA qw(hmac_sha1);
++    use MIME::Base64 qw(encode_base64url);
++    my $secret = "verysecret";
++    my $rel_path = "/index.html"
++    my $protected_path = '/' . sprintf("%x", time) . $rel_path;
++    my $url = '/'. encode_base64url(hmac_sha1($protected_path, $secret)) . $protected_path;
++ *
++ * # hmac-sha256
++ * mac_len := 43  (no base64 padding)
++ * mac := base64-url(hmac-sha256(<secret>, <protected-path>))
++    use Digest::SHA qw(hmac_sha256);
++    use MIME::Base64 qw(encode_base64url);
++    my $secret = "verysecret";
++    my $rel_path = "/index.html"
++    my $protected_path = '/' . sprintf("%x", time) . $rel_path;
++    my $url = '/'. encode_base64url(hmac_sha256($protected_path, $secret)) . $protected_path;
++ *
++ */
++
++/* plugin config for all request/connections */
++
++typedef enum {
++	SECDL_INVALID = 0,
++	SECDL_MD5 = 1,
++	SECDL_HMAC_SHA1 = 2,
++	SECDL_HMAC_SHA256 = 3,
++} secdl_algorithm;
++
++typedef struct {
++    const buffer *doc_root;
++    const buffer *secret;
++    const buffer *uri_prefix;
++    secdl_algorithm algorithm;
++
++    unsigned int timeout;
++    unsigned short path_segments;
++    unsigned short hash_querystr;
++} plugin_config;
++
++typedef struct {
++    PLUGIN_DATA;
++    plugin_config defaults;
++    plugin_config conf;
++} plugin_data;
++
++static const char* secdl_algorithm_names[] = {
++	"invalid",
++	"md5",
++	"hmac-sha1",
++	"hmac-sha256",
++};
++
++static secdl_algorithm algorithm_from_string(const buffer *name) {
++	size_t ndx;
++
++	if (buffer_is_blank(name)) return SECDL_INVALID;
++
++	for (ndx = 1; ndx < sizeof(secdl_algorithm_names)/sizeof(secdl_algorithm_names[0]); ++ndx) {
++		if (0 == strcmp(secdl_algorithm_names[ndx], name->ptr)) return (secdl_algorithm)ndx;
++	}
++
++	return SECDL_INVALID;
++}
++
++static size_t secdl_algorithm_mac_length(secdl_algorithm alg) {
++	switch (alg) {
++	case SECDL_INVALID:
++		break;
++	case SECDL_MD5:
++		return 32;
++	case SECDL_HMAC_SHA1:
++		return 27;
++	case SECDL_HMAC_SHA256:
++		return 43;
++	}
++	return 0;
++}
++
++static int secdl_verify_mac(plugin_config *config, const char* protected_path, const char* mac, size_t maclen, log_error_st *errh) {
++	UNUSED(errh);
++	if (0 == maclen || secdl_algorithm_mac_length(config->algorithm) != maclen) return 0;
++
++	switch (config->algorithm) {
++	case SECDL_INVALID:
++		break;
++	case SECDL_MD5:
++		{
++			const char *ts_str;
++			const char *rel_uri;
++			unsigned char HA1[MD5_DIGEST_LENGTH];
++			unsigned char md5bin[MD5_DIGEST_LENGTH];
++
++			if (0 != li_hex2bin(md5bin, sizeof(md5bin), mac, maclen)) return 0;
++
++			/* legacy message:
++			 *   protected_path := '/' <timestamp-hex> <rel-path>
++			 *   timestamp-hex := [0-9a-f]{1,16}
++			 *   rel-path := '/' any*
++			 *   (the protected path was already verified)
++			 * message = <secret><rel-path><timestamp-hex>
++			 */
++			ts_str = protected_path + 1;
++			rel_uri = ts_str;
++			do { ++rel_uri; } while (*rel_uri != '/');
++
++			struct const_iovec iov[] = {
++			  { BUF_PTR_LEN(config->secret) }
++			 ,{ rel_uri, strlen(rel_uri) }
++			 ,{ ts_str, (size_t)(rel_uri - ts_str) }
++			};
++			MD5_iov(HA1, iov, sizeof(iov)/sizeof(*iov));
++
++			return ck_memeq_const_time_fixed_len((char *)HA1,
++							     (char *)md5bin,sizeof(md5bin));
++		}
++     #ifdef USE_LIB_CRYPTO
++	case SECDL_HMAC_SHA1:
++		{
++			unsigned char digest[20];
++			char base64_digest[28];
++
++                        if (!li_hmac_sha1(digest, BUF_PTR_LEN(config->secret),
++			                  (const unsigned char *)protected_path,
++			                  strlen(protected_path))) {
++				log_error(errh, __FILE__, __LINE__,
++				  "hmac-sha1: HMAC() failed");
++				return 0;
++			}
++
++			li_to_base64_no_padding(base64_digest, 28, digest, 20, BASE64_URL);
++
++			return (27 == maclen)
++			    && ck_memeq_const_time_fixed_len(mac, base64_digest, 27);
++		}
++		break;
++	case SECDL_HMAC_SHA256:
++		{
++			unsigned char digest[32];
++			char base64_digest[44];
++
++                        if (!li_hmac_sha256(digest, BUF_PTR_LEN(config->secret),
++			                    (const unsigned char *)protected_path,
++			                    strlen(protected_path))) {
++				log_error(errh, __FILE__, __LINE__,
++				  "hmac-sha256: HMAC() failed");
++				return 0;
++			}
++
++			li_to_base64_no_padding(base64_digest, 44, digest, 32, BASE64_URL);
++
++			return (43 == maclen)
++			    && ck_memeq_const_time_fixed_len(mac, base64_digest, 43);
++		}
++		break;
++     #endif
++	default:
++		break;
++	}
++
++	return 0;
++}
++
++INIT_FUNC(mod_secdownload_init) {
++    return calloc(1, sizeof(plugin_data));
++}
++
++static int mod_secdownload_parse_algorithm(config_plugin_value_t * const cpv, log_error_st * const errh) {
++    secdl_algorithm algorithm = algorithm_from_string(cpv->v.b);
++    switch (algorithm) {
++      case SECDL_INVALID:
++        log_error(errh, __FILE__, __LINE__,
++          "invalid secdownload.algorithm: %s", cpv->v.b->ptr);
++        return 0;
++     #ifndef USE_LIB_CRYPTO
++      case SECDL_HMAC_SHA1:
++      case SECDL_HMAC_SHA256:
++        log_error(errh, __FILE__, __LINE__,
++          "unsupported secdownload.algorithm: %s", cpv->v.b->ptr);
++        /*return 0;*/
++        /* proceed to allow config to load for other tests */
++        /* (use of unsupported algorithm will result in failure at runtime) */
++        break;
++     #endif
++      default:
++        break;
++    }
++
++    cpv->vtype = T_CONFIG_INT;
++    cpv->v.u = algorithm;
++    return 1;
++}
++
++static void mod_secdownload_merge_config_cpv(plugin_config * const pconf, const config_plugin_value_t * const cpv) {
++    switch (cpv->k_id) { /* index into static config_plugin_keys_t cpk[] */
++      case 0: /* secdownload.secret */
++        pconf->secret = cpv->v.b;
++        break;
++      case 1: /* secdownload.document-root */
++        pconf->doc_root = cpv->v.b;
++        break;
++      case 2: /* secdownload.uri-prefix */
++        pconf->uri_prefix = cpv->v.b;
++        break;
++      case 3: /* secdownload.timeout */
++        pconf->timeout = cpv->v.u;
++        break;
++      case 4: /* secdownload.algorithm */
++        pconf->algorithm = cpv->v.u; /* mod_secdownload_parse_algorithm() */
++        break;
++      case 5: /* secdownload.path-segments */
++        pconf->path_segments = cpv->v.shrt;
++        break;
++      case 6: /* secdownload.hash-querystr */
++        pconf->hash_querystr = cpv->v.u;
++        break;
++      default:/* should not happen */
++        return;
++    }
++}
++
++static void mod_secdownload_merge_config(plugin_config * const pconf, const config_plugin_value_t *cpv) {
++    do {
++        mod_secdownload_merge_config_cpv(pconf, cpv);
++    } while ((++cpv)->k_id != -1);
++}
++
++static void mod_secdownload_patch_config(request_st * const r, plugin_data * const p) {
++    memcpy(&p->conf, &p->defaults, sizeof(plugin_config));
++    for (int i = 1, used = p->nconfig; i < used; ++i) {
++        if (config_check_cond(r, (uint32_t)p->cvlist[i].k_id))
++            mod_secdownload_merge_config(&p->conf, p->cvlist + p->cvlist[i].v.u2[0]);
++    }
++}
++
++SETDEFAULTS_FUNC(mod_secdownload_set_defaults) {
++    static const config_plugin_keys_t cpk[] = {
++      { CONST_STR_LEN("secdownload.secret"),
++        T_CONFIG_STRING,
++        T_CONFIG_SCOPE_CONNECTION }
++     ,{ CONST_STR_LEN("secdownload.document-root"),
++        T_CONFIG_STRING,
++        T_CONFIG_SCOPE_CONNECTION }
++     ,{ CONST_STR_LEN("secdownload.uri-prefix"),
++        T_CONFIG_STRING,
++        T_CONFIG_SCOPE_CONNECTION }
++     ,{ CONST_STR_LEN("secdownload.timeout"),
++        T_CONFIG_INT,
++        T_CONFIG_SCOPE_CONNECTION }
++     ,{ CONST_STR_LEN("secdownload.algorithm"),
++        T_CONFIG_STRING,
++        T_CONFIG_SCOPE_CONNECTION }
++     ,{ CONST_STR_LEN("secdownload.path-segments"),
++        T_CONFIG_SHORT,
++        T_CONFIG_SCOPE_CONNECTION }
++     ,{ CONST_STR_LEN("secdownload.hash-querystr"),
++        T_CONFIG_BOOL,
++        T_CONFIG_SCOPE_CONNECTION }
++     ,{ NULL, 0,
++        T_CONFIG_UNSET,
++        T_CONFIG_SCOPE_UNSET }
++    };
++
++    plugin_data * const p = p_d;
++    if (!config_plugin_values_init(srv, p, cpk, "mod_secdownload"))
++        return HANDLER_ERROR;
++
++    /* process and validate config directives
++     * (init i to 0 if global context; to 1 to skip empty global context) */
++    for (int i = !p->cvlist[0].v.u2[1]; i < p->nconfig; ++i) {
++        config_plugin_value_t *cpv = p->cvlist + p->cvlist[i].v.u2[0];
++        for (; -1 != cpv->k_id; ++cpv) {
++            switch (cpv->k_id) {
++              case 0: /* secdownload.secret */
++              case 1: /* secdownload.document-root */
++              case 2: /* secdownload.uri-prefix */
++                if (buffer_is_blank(cpv->v.b))
++                    cpv->v.b = NULL;
++                break;
++              case 3: /* secdownload.timeout */
++                break;
++              case 4: /* secdownload.algorithm */
++                if (!mod_secdownload_parse_algorithm(cpv, srv->errh))
++                    return HANDLER_ERROR;
++                break;
++              case 5: /* secdownload.path-segments */
++              case 6: /* secdownload.hash-querystr */
++                break;
++              default:/* should not happen */
++                break;
++            }
++        }
++    }
++
++    p->defaults.timeout = 60;
++
++    /* initialize p->defaults from global config context */
++    if (p->nconfig > 0 && p->cvlist->v.u2[1]) {
++        const config_plugin_value_t *cpv = p->cvlist + p->cvlist->v.u2[0];
++        if (-1 != cpv->k_id)
++            mod_secdownload_merge_config(&p->defaults, cpv);
++    }
++
++    return HANDLER_GO_ON;
++}
++
++/**
++ * checks if the supplied string is a base64 (modified URL) string
++ *
++ * @param str a possible base64 (modified URL) string
++ * @return if the supplied string is a valid base64 (modified URL) string 1 is returned otherwise 0
++ */
++
++static int is_base64_len(const char *str, size_t len) {
++	size_t i;
++
++	if (NULL == str) return 0;
++
++	for (i = 0; i < len && *str; i++, str++) {
++		/* illegal characters */
++		if (!(light_isalnum(*str) || *str == '-' || *str == '_'))
++			return 0;
++	}
++
++	return i == len;
++}
++
++URIHANDLER_FUNC(mod_secdownload_uri_handler) {
++	plugin_data *p = p_d;
++	const char *rel_uri, *ts_str, *mac_str, *protected_path;
++	size_t i, mac_len;
++
++	if (NULL != r->handler_module) return HANDLER_GO_ON;
++
++  #ifdef __COVERITY__
++	if (buffer_is_blank(&r->uri.path)) return HANDLER_GO_ON;
++  #endif
++
++	mod_secdownload_patch_config(r, p);
++
++	if (!p->conf.uri_prefix) return HANDLER_GO_ON;
++
++	if (!p->conf.secret) {
++		log_error(r->conf.errh, __FILE__, __LINE__,
++		  "secdownload.secret has to be set");
++		r->http_status = 500;
++		return HANDLER_FINISHED;
++	}
++
++	if (!p->conf.doc_root) {
++		log_error(r->conf.errh, __FILE__, __LINE__,
++		  "secdownload.document-root has to be set");
++		r->http_status = 500;
++		return HANDLER_FINISHED;
++	}
++
++	if (SECDL_INVALID == p->conf.algorithm) {
++		log_error(r->conf.errh, __FILE__, __LINE__,
++		  "secdownload.algorithm has to be set");
++		r->http_status = 500;
++		return HANDLER_FINISHED;
++	}
++
++	mac_len = secdl_algorithm_mac_length(p->conf.algorithm);
++
++	if (0 != strncmp(r->uri.path.ptr, p->conf.uri_prefix->ptr, buffer_clen(p->conf.uri_prefix))) return HANDLER_GO_ON;
++
++	mac_str = r->uri.path.ptr + buffer_clen(p->conf.uri_prefix);
++
++	if (!is_base64_len(mac_str, mac_len)) return HANDLER_GO_ON;
++
++	protected_path = mac_str + mac_len;
++	if (*protected_path != '/') return HANDLER_GO_ON;
++
++	ts_str = protected_path + 1;
++	uint64_t ts = 0;
++	for (i = 0; i < 16 && light_isxdigit(ts_str[i]); ++i) {
++		ts = (ts << 4) | hex2int(ts_str[i]);
++	}
++	rel_uri = ts_str + i;
++	if (i == 0 || *rel_uri != '/') return HANDLER_GO_ON;
++
++	/* timed-out */
++	const uint64_t cur_ts = (uint64_t)log_epoch_secs;
++	if ((cur_ts > ts ? cur_ts - ts : ts - cur_ts) > p->conf.timeout) {
++		/* "Gone" as the url will never be valid again instead of "408 - Timeout" where the request may be repeated */
++		r->http_status = 410;
++
++		return HANDLER_FINISHED;
++	}
++
++	buffer * const tb = r->tmp_buf;
++
++	if (p->conf.path_segments) {
++		const char *rel_uri_end = rel_uri;
++		unsigned int count = p->conf.path_segments;
++		do {
++			rel_uri_end = strchr(rel_uri_end+1, '/');
++		} while (rel_uri_end && --count);
++		if (rel_uri_end) {
++			buffer_copy_string_len(tb, protected_path,
++					       rel_uri_end - protected_path);
++			protected_path = tb->ptr;
++		}
++	}
++
++	if (p->conf.hash_querystr && !buffer_is_blank(&r->uri.query)) {
++		if (protected_path != tb->ptr) {
++			buffer_copy_string(tb, protected_path);
++		}
++		buffer_append_str2(tb, CONST_STR_LEN("?"),
++		                       BUF_PTR_LEN(&r->uri.query));
++		/* assign last in case tb->ptr is reallocated */
++		protected_path = tb->ptr;
++	}
++
++	if (!secdl_verify_mac(&p->conf, protected_path, mac_str, mac_len,
++	                      r->conf.errh)) {
++		r->http_status = 403;
++
++		if (r->conf.log_request_handling) {
++			log_error(r->conf.errh, __FILE__, __LINE__,
++			  "mac invalid: %s", r->uri.path.ptr);
++		}
++
++		return HANDLER_FINISHED;
++	}
++
++	/* starting with the last / we should have relative-path to the docroot
++	 */
++
++	buffer_copy_buffer(&r->physical.doc_root, p->conf.doc_root);
++	buffer_copy_buffer(&r->physical.basedir, p->conf.doc_root);
++	buffer_copy_string(&r->physical.rel_path, rel_uri);
++	buffer_copy_path_len2(&r->physical.path,
++	                      BUF_PTR_LEN(&r->physical.doc_root),
++	                      BUF_PTR_LEN(&r->physical.rel_path));
++
++	return HANDLER_GO_ON;
++}
++
++
++int mod_secdownload_plugin_init(plugin *p);
++int mod_secdownload_plugin_init(plugin *p) {
++	p->version     = LIGHTTPD_VERSION_ID;
++	p->name        = "secdownload";
++
++	p->init        = mod_secdownload_init;
++	p->handle_physical  = mod_secdownload_uri_handler;
++	p->set_defaults  = mod_secdownload_set_defaults;
++
++	return 0;
++}
+--- /dev/null
++++ b/src/mod_uploadprogress.c
+@@ -0,0 +1,334 @@
++#include "first.h"
++
++#include "algo_splaytree.h"
++#include "log.h"
++#include "buffer.h"
++#include "request.h"
++#include "http_header.h"
++
++#include "plugin.h"
++
++#include <stdlib.h>
++#include <string.h>
++
++/**
++ * this is a uploadprogress for a lighttpd plugin
++ *
++ */
++
++typedef struct {
++    buffer r_id;
++    request_st *r;
++    int ndx;
++} request_map_entry;
++
++typedef struct {
++    const buffer *progress_url;
++} plugin_config;
++
++typedef struct {
++    PLUGIN_DATA;
++    plugin_config defaults;
++    plugin_config conf;
++
++    splay_tree *request_map;
++} plugin_data;
++
++/**
++ *
++ * request maps
++ *
++ */
++
++static request_map_entry *
++request_map_entry_init (request_st * const r, const char *r_id, size_t idlen)
++{
++    request_map_entry * const rme = calloc(1, sizeof(request_map_entry));
++    force_assert(rme);
++    rme->r = r;
++    rme->ndx = splaytree_djbhash(r_id, idlen);
++    buffer_copy_string_len(&rme->r_id, r_id, idlen);
++    return rme;
++}
++
++static void
++request_map_entry_free (request_map_entry *rme)
++{
++    free(rme->r_id.ptr);
++    free(rme);
++}
++
++static void
++request_map_remove (plugin_data * const p, request_map_entry * const rme)
++{
++    splay_tree ** const sptree = &p->request_map;
++    *sptree = splaytree_splay(*sptree, rme->ndx);
++    if (NULL != *sptree && (*sptree)->key == rme->ndx) {
++        request_map_entry_free((*sptree)->data);
++        *sptree = splaytree_delete(*sptree, (*sptree)->key);
++    }
++}
++
++static request_map_entry *
++request_map_insert (plugin_data * const p, request_map_entry * const rme)
++{
++    splay_tree ** const sptree = &p->request_map;
++    *sptree = splaytree_splay(*sptree, rme->ndx);
++    if (NULL == *sptree || (*sptree)->key != rme->ndx) {
++        *sptree = splaytree_insert(*sptree, rme->ndx, rme);
++        return rme;
++    }
++    else { /* collision (not expected); leave old entry and forget new */
++        /*(old entry is referenced elsewhere, so new entry is freed here)*/
++        request_map_entry_free(rme);
++        return NULL;
++    }
++}
++
++__attribute_pure__
++static request_st *
++request_map_get_request (plugin_data * const p, const char * const r_id,  const size_t idlen)
++{
++    splay_tree ** const sptree = &p->request_map;
++    int ndx = splaytree_djbhash(r_id, idlen);
++    *sptree = splaytree_splay(*sptree, ndx);
++    if (NULL != *sptree && (*sptree)->key == ndx) {
++        request_map_entry * const rme = (*sptree)->data;
++        if (buffer_eq_slen(&rme->r_id, r_id, idlen))
++            return rme->r;
++    }
++    return NULL;
++}
++
++static void
++request_map_free (plugin_data * const p)
++{
++    splay_tree *sptree = p->request_map;
++    p->request_map = NULL;
++    while (sptree) {
++        request_map_entry_free(sptree->data);
++        sptree = splaytree_delete(sptree, sptree->key);
++    }
++}
++
++INIT_FUNC(mod_uploadprogress_init) {
++    return calloc(1, sizeof(plugin_data));
++}
++
++FREE_FUNC(mod_uploadprogress_free) {
++    request_map_free((plugin_data *)p_d);
++}
++
++static void mod_uploadprogress_merge_config_cpv(plugin_config * const pconf, const config_plugin_value_t * const cpv) {
++    switch (cpv->k_id) { /* index into static config_plugin_keys_t cpk[] */
++      case 0: /* upload-progress.progress-url */
++        pconf->progress_url = cpv->v.b;
++        break;
++      default:/* should not happen */
++        return;
++    }
++}
++
++static void mod_uploadprogress_merge_config(plugin_config * const pconf, const config_plugin_value_t *cpv) {
++    do {
++        mod_uploadprogress_merge_config_cpv(pconf, cpv);
++    } while ((++cpv)->k_id != -1);
++}
++
++static void mod_uploadprogress_patch_config(request_st * const r, plugin_data * const p) {
++    p->conf = p->defaults; /* copy small struct instead of memcpy() */
++    /*memcpy(&p->conf, &p->defaults, sizeof(plugin_config));*/
++    for (int i = 1, used = p->nconfig; i < used; ++i) {
++        if (config_check_cond(r, (uint32_t)p->cvlist[i].k_id))
++            mod_uploadprogress_merge_config(&p->conf,
++                                            p->cvlist + p->cvlist[i].v.u2[0]);
++    }
++}
++
++SETDEFAULTS_FUNC(mod_uploadprogress_set_defaults) {
++    static const config_plugin_keys_t cpk[] = {
++      { CONST_STR_LEN("upload-progress.progress-url"),
++        T_CONFIG_STRING,
++        T_CONFIG_SCOPE_CONNECTION }
++     ,{ NULL, 0,
++        T_CONFIG_UNSET,
++        T_CONFIG_SCOPE_UNSET }
++    };
++
++    plugin_data * const p = p_d;
++    if (!config_plugin_values_init(srv, p, cpk, "mod_uploadprogress"))
++        return HANDLER_ERROR;
++
++    /* process and validate config directives
++     * (init i to 0 if global context; to 1 to skip empty global context) */
++    for (int i = !p->cvlist[0].v.u2[1]; i < p->nconfig; ++i) {
++        config_plugin_value_t *cpv = p->cvlist + p->cvlist[i].v.u2[0];
++        for (; -1 != cpv->k_id; ++cpv) {
++            switch (cpv->k_id) {
++              case 0: /* upload-progress.progress-url */
++                if (buffer_is_blank(cpv->v.b))
++                    cpv->v.b = NULL;
++                break;
++              default:/* should not happen */
++                break;
++            }
++        }
++    }
++
++    /* initialize p->defaults from global config context */
++    if (p->nconfig > 0 && p->cvlist->v.u2[1]) {
++        const config_plugin_value_t *cpv = p->cvlist + p->cvlist->v.u2[0];
++        if (-1 != cpv->k_id)
++            mod_uploadprogress_merge_config(&p->defaults, cpv);
++    }
++
++    return HANDLER_GO_ON;
++}
++
++#define REQID_LEN 32
++
++static const char * mod_uploadprogress_get_reqid (request_st * const r) {
++    const char *idstr;
++    uint32_t len;
++    int pathinfo = 0;
++    const buffer *h = http_header_request_get(r, HTTP_HEADER_OTHER,
++                                              CONST_STR_LEN("X-Progress-ID"));
++    if (NULL != h)
++        idstr = h->ptr;
++    else if (!buffer_is_blank(&r->uri.query)
++             && (idstr = strstr(r->uri.query.ptr, "X-Progress-ID=")))
++        idstr += sizeof("X-Progress-ID=")-1;
++    else { /*(path-info is not known at this point in request)*/
++        idstr = r->uri.path.ptr;
++        len = buffer_clen(&r->uri.path);
++        if (len > REQID_LEN && idstr[len-REQID_LEN-1] == '/') {
++            pathinfo = 1;
++            idstr += len - REQID_LEN;
++        }
++        else
++            return NULL;
++    }
++
++    /* request must contain ID of REQID_LEN bytes */
++    for (len = 0; light_isxdigit(idstr[len]); ++len) ;
++    if (len != REQID_LEN) {
++        if (!pathinfo) { /*(reduce false positive noise in error log)*/
++            log_error(r->conf.errh, __FILE__, __LINE__,
++              "invalid progress-id; non-xdigit or len != %d: %s",
++              REQID_LEN, idstr);
++        }
++        return NULL;
++    }
++
++    return idstr;
++}
++
++/**
++ *
++ * the idea:
++ *
++ * for the first request we check if it is a post-request
++ *
++ * if no, move out, don't care about them
++ *
++ * if yes, take the connection structure and register it locally
++ * in the progress-struct together with an session-id (md5 ... )
++ *
++ * if the connections closes, cleanup the entry in the progress-struct
++ *
++ * a second request can now get the info about the size of the upload,
++ * the received bytes
++ *
++ */
++
++URIHANDLER_FUNC(mod_uploadprogress_uri_handler) {
++	plugin_data *p = p_d;
++
++	switch(r->http_method) {
++	case HTTP_METHOD_GET:
++	case HTTP_METHOD_POST: break;
++	default:               return HANDLER_GO_ON;
++	}
++
++	mod_uploadprogress_patch_config(r, p);
++	if (!p->conf.progress_url) return HANDLER_GO_ON;
++
++	if (r->http_method == HTTP_METHOD_GET
++	    && !buffer_is_equal(&r->uri.path, p->conf.progress_url))
++		return HANDLER_GO_ON;
++
++	const char * const idstr = mod_uploadprogress_get_reqid(r);
++	if (NULL == idstr) return HANDLER_GO_ON;
++
++	if (r->http_method == HTTP_METHOD_POST) {
++		r->plugin_ctx[p->id] =
++		  request_map_insert(p, request_map_entry_init(r, idstr, REQID_LEN));
++		return HANDLER_GO_ON;
++	} /* else r->http_method == HTTP_METHOD_GET */
++
++
++		r->resp_body_started = 1;
++		r->resp_body_finished = 1;
++
++		r->http_status = 200;
++		r->handler_module = NULL;
++
++		/* get the connection */
++		request_st * const post_r = request_map_get_request(p,idstr,REQID_LEN);
++		if (NULL == post_r) {
++			log_error(r->conf.errh, __FILE__, __LINE__, "ID not known: %.*s", REQID_LEN, idstr);
++			/* XXX: why is this not an XML response, too?
++			 * (At least Content-Type is not set to text/xml) */
++			chunkqueue_append_mem(&r->write_queue, CONST_STR_LEN("not in progress"));
++			return HANDLER_FINISHED;
++		}
++
++		http_header_response_set(r, HTTP_HEADER_CONTENT_TYPE, CONST_STR_LEN("Content-Type"), CONST_STR_LEN("text/xml"));
++
++		/* just an attempt the force the IE/proxies to NOT cache the request ... doesn't help :( */
++		http_header_response_set(r, HTTP_HEADER_PRAGMA, CONST_STR_LEN("Pragma"), CONST_STR_LEN("no-cache"));
++		http_header_response_set(r, HTTP_HEADER_EXPIRES, CONST_STR_LEN("Expires"), CONST_STR_LEN("Thu, 19 Nov 1981 08:52:00 GMT"));
++		http_header_response_set(r, HTTP_HEADER_CACHE_CONTROL, CONST_STR_LEN("Cache-Control"), CONST_STR_LEN("no-store, no-cache, must-revalidate, post-check=0, pre-check=0"));
++
++		/* prepare XML */
++		buffer * const b = chunkqueue_append_buffer_open(&r->write_queue);
++		buffer_copy_string_len(b, CONST_STR_LEN(
++			"<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>"
++			"<upload>"
++			"<size>"));
++		buffer_append_int(b, post_r->reqbody_length);
++		buffer_append_string_len(b, CONST_STR_LEN(
++			"</size>"
++			"<received>"));
++		buffer_append_int(b, post_r->reqbody_queue.bytes_in);
++		buffer_append_string_len(b, CONST_STR_LEN(
++			"</received>"
++			"</upload>"));
++		chunkqueue_append_buffer_commit(&r->write_queue);
++		return HANDLER_FINISHED;
++}
++
++REQUESTDONE_FUNC(mod_uploadprogress_request_done) {
++	plugin_data *p = p_d;
++	request_map_entry * const rme = r->plugin_ctx[p->id];
++	if (rme) {
++		r->plugin_ctx[p->id] = NULL;
++		request_map_remove(p, rme);
++	}
++	return HANDLER_GO_ON;
++}
++
++
++int mod_uploadprogress_plugin_init(plugin *p);
++int mod_uploadprogress_plugin_init(plugin *p) {
++	p->version     = LIGHTTPD_VERSION_ID;
++	p->name        = "uploadprogress";
++
++	p->init        = mod_uploadprogress_init;
++	p->handle_uri_clean  = mod_uploadprogress_uri_handler;
++	p->handle_request_reset = mod_uploadprogress_request_done;
++	p->set_defaults  = mod_uploadprogress_set_defaults;
++	p->cleanup     = mod_uploadprogress_free;
++
++	return 0;
++}
+--- /dev/null
++++ b/src/mod_usertrack.c
+@@ -0,0 +1,242 @@
++#include "first.h"
++
++#include "base.h"
++#include "log.h"
++#include "buffer.h"
++#include "rand.h"
++#include "http_header.h"
++
++#include "plugin.h"
++
++#include "sys-crypto-md.h"
++
++#include <stdlib.h>
++#include <string.h>
++
++typedef struct {
++	const buffer *cookie_name;
++	const buffer *cookie_attrs;
++	const buffer *cookie_domain;
++	unsigned int cookie_max_age;
++} plugin_config;
++
++typedef struct {
++    PLUGIN_DATA;
++    plugin_config defaults;
++    plugin_config conf;
++} plugin_data;
++
++INIT_FUNC(mod_usertrack_init) {
++    return calloc(1, sizeof(plugin_data));
++}
++
++static void mod_usertrack_merge_config_cpv(plugin_config * const pconf, const config_plugin_value_t * const cpv) {
++    switch (cpv->k_id) { /* index into static config_plugin_keys_t cpk[] */
++      case 0: /* usertrack.cookie-name */
++        pconf->cookie_name = cpv->v.b;
++        break;
++      case 1: /* usertrack.cookie-max-age */
++        pconf->cookie_max_age = cpv->v.u;
++        break;
++      case 2: /* usertrack.cookie-domain */
++        pconf->cookie_domain = cpv->v.b;
++        break;
++      case 3: /* usertrack.cookie-attrs */
++        pconf->cookie_attrs = cpv->v.b;
++        break;
++      default:/* should not happen */
++        return;
++    }
++}
++
++static void mod_usertrack_merge_config(plugin_config * const pconf, const config_plugin_value_t *cpv) {
++    do {
++        mod_usertrack_merge_config_cpv(pconf, cpv);
++    } while ((++cpv)->k_id != -1);
++}
++
++static void mod_usertrack_patch_config(request_st * const r, plugin_data * const p) {
++    p->conf = p->defaults; /* copy small struct instead of memcpy() */
++    /*memcpy(&p->conf, &p->defaults, sizeof(plugin_config));*/
++    for (int i = 1, used = p->nconfig; i < used; ++i) {
++        if (config_check_cond(r, (uint32_t)p->cvlist[i].k_id))
++            mod_usertrack_merge_config(&p->conf, p->cvlist + p->cvlist[i].v.u2[0]);
++    }
++}
++
++SETDEFAULTS_FUNC(mod_usertrack_set_defaults) {
++    static const config_plugin_keys_t cpk[] = {
++      { CONST_STR_LEN("usertrack.cookie-name"),
++        T_CONFIG_STRING,
++        T_CONFIG_SCOPE_CONNECTION }
++     ,{ CONST_STR_LEN("usertrack.cookie-max-age"),
++        T_CONFIG_INT,
++        T_CONFIG_SCOPE_CONNECTION }
++     ,{ CONST_STR_LEN("usertrack.cookie-domain"),
++        T_CONFIG_STRING,
++        T_CONFIG_SCOPE_CONNECTION }
++     ,{ CONST_STR_LEN("usertrack.cookie-attrs"),
++        T_CONFIG_STRING,
++        T_CONFIG_SCOPE_CONNECTION }
++     ,{ NULL, 0,
++        T_CONFIG_UNSET,
++        T_CONFIG_SCOPE_UNSET }
++    };
++
++    plugin_data * const p = p_d;
++    if (!config_plugin_values_init(srv, p, cpk, "mod_usertrack"))
++        return HANDLER_ERROR;
++
++    /* process and validate config directives
++     * (init i to 0 if global context; to 1 to skip empty global context) */
++    for (int i = !p->cvlist[0].v.u2[1]; i < p->nconfig; ++i) {
++        config_plugin_value_t *cpv = p->cvlist + p->cvlist[i].v.u2[0];
++        for (; -1 != cpv->k_id; ++cpv) {
++            switch (cpv->k_id) {
++              case 0: /* usertrack.cookie-name */
++                if (!buffer_is_blank(cpv->v.b)) {
++                    const char * const ptr = cpv->v.b->ptr;
++                    const size_t len = buffer_clen(cpv->v.b);
++                    for (size_t j = 0; j < len; ++j) {
++                        if (!light_isalpha(ptr[j])) {
++                            log_error(srv->errh, __FILE__, __LINE__,
++                              "invalid character in %s: %s",
++                               cpk[cpv->k_id].k, ptr);
++                            return HANDLER_ERROR;
++                        }
++                    }
++                }
++                else
++                    cpv->v.b = NULL;
++                break;
++              case 1: /* usertrack.cookie-max-age */
++                break;
++              case 2: /* usertrack.cookie-domain */
++                if (!buffer_is_blank(cpv->v.b)) {
++                    const char * const ptr = cpv->v.b->ptr;
++                    const size_t len = buffer_clen(cpv->v.b);
++                    for (size_t j = 0; j < len; ++j) {
++                        const char c = ptr[j];
++                        if (c <= 32 || c >= 127 || c == '"' || c == '\\') {
++                            log_error(srv->errh, __FILE__, __LINE__,
++                              "invalid character in %s: %s",
++                               cpk[cpv->k_id].k, ptr);
++                            return HANDLER_ERROR;
++                        }
++                    }
++                }
++                else
++                    cpv->v.b = NULL;
++                break;
++              case 3: /* usertrack.cookie-attrs */
++                if (buffer_is_blank(cpv->v.b))
++                    cpv->v.b = NULL;
++                break;
++              default:/* should not happen */
++                break;
++            }
++        }
++    }
++
++    /* initialize p->defaults from global config context */
++    if (p->nconfig > 0 && p->cvlist->v.u2[1]) {
++        const config_plugin_value_t *cpv = p->cvlist + p->cvlist->v.u2[0];
++        if (-1 != cpv->k_id)
++            mod_usertrack_merge_config(&p->defaults, cpv);
++    }
++    if (NULL == p->defaults.cookie_name) {
++        static const struct { const char *ptr; uint32_t used; uint32_t size; }
++          default_cookie_name = { "TRACKID", sizeof("TRACKID"), 0 };
++        *((const buffer **)&p->defaults.cookie_name) =
++          (const buffer *)&default_cookie_name;
++    }
++
++    return HANDLER_GO_ON;
++}
++
++__attribute_noinline__
++static handler_t mod_usertrack_set_cookie(request_st * const r, plugin_data * const p) {
++
++	/* generate shared-secret */
++	/* (reference mod_auth.c) */
++	int rnd = li_rand_pseudo();
++	struct const_iovec iov[] = {
++	  { BUF_PTR_LEN(&r->uri.path) }
++	 ,{ "+", 1 }
++	 ,{ &log_epoch_secs, sizeof(log_epoch_secs) }
++	 ,{ &rnd, sizeof(rnd) }
++	};
++	unsigned char h[MD5_DIGEST_LENGTH];
++	MD5_iov(h, iov, sizeof(iov)/sizeof(*iov));
++
++	/* set a cookie */
++	buffer * const cookie = r->tmp_buf;
++	buffer_clear(cookie);
++	buffer_append_str2(cookie, BUF_PTR_LEN(p->conf.cookie_name),
++                                   CONST_STR_LEN("="));
++	buffer_append_string_encoded_hex_lc(cookie, (char *)h, sizeof(h));
++
++	/* usertrack.cookie-attrs, if set, replaces all other attrs */
++	if (p->conf.cookie_attrs) {
++		buffer_append_string_buffer(cookie, p->conf.cookie_attrs);
++		http_header_response_insert(r, HTTP_HEADER_SET_COOKIE, CONST_STR_LEN("Set-Cookie"), BUF_PTR_LEN(cookie));
++		return HANDLER_GO_ON;
++	}
++
++	buffer_append_string_len(cookie, CONST_STR_LEN("; Path=/; Version=1"));
++
++	if (p->conf.cookie_domain) {
++		buffer_append_string_len(cookie, CONST_STR_LEN("; Domain="));
++		buffer_append_string_encoded(cookie, BUF_PTR_LEN(p->conf.cookie_domain), ENCODING_REL_URI);
++	}
++
++	if (p->conf.cookie_max_age) {
++		buffer_append_string_len(cookie, CONST_STR_LEN("; max-age="));
++		buffer_append_int(cookie, p->conf.cookie_max_age);
++	}
++
++	http_header_response_insert(r, HTTP_HEADER_SET_COOKIE, CONST_STR_LEN("Set-Cookie"), BUF_PTR_LEN(cookie));
++
++	return HANDLER_GO_ON;
++}
++
++URIHANDLER_FUNC(mod_usertrack_uri_handler) {
++    plugin_data * const p = p_d;
++
++    mod_usertrack_patch_config(r, p);
++    if (!p->conf.cookie_name) return HANDLER_GO_ON;
++
++    const buffer * const b =
++      http_header_request_get(r, HTTP_HEADER_COOKIE, CONST_STR_LEN("Cookie"));
++    if (NULL != b) {
++        /* parse the cookie (fuzzy; not precise using strstr() below)
++         * check for cookiename + (WS | '=')
++         */
++        const char * const g = strstr(b->ptr, p->conf.cookie_name->ptr);
++        if (NULL != g) {
++            const char *nc = g+buffer_clen(p->conf.cookie_name);
++            while (*nc == ' ' || *nc == '\t') ++nc; /* skip WS */
++            if (*nc == '=') { /* ok, found the key of our own cookie */
++                if (strlen(nc) > 32) {
++                    /* i'm lazy */
++                    return HANDLER_GO_ON;
++                }
++            }
++        }
++    }
++
++    return mod_usertrack_set_cookie(r, p);
++}
++
++
++int mod_usertrack_plugin_init(plugin *p);
++int mod_usertrack_plugin_init(plugin *p) {
++	p->version     = LIGHTTPD_VERSION_ID;
++	p->name        = "usertrack";
++
++	p->init        = mod_usertrack_init;
++	p->handle_uri_clean  = mod_usertrack_uri_handler;
++	p->set_defaults  = mod_usertrack_set_defaults;
++
++	return 0;
++}
+--- a/src/t/test_mod.c
++++ b/src/t/test_mod.c
+@@ -5,6 +5,7 @@
+ 
+ void test_mod_access (void);
+ void test_mod_alias (void);
++void test_mod_evasive (void);
+ void test_mod_evhost (void);
+ void test_mod_indexfile (void);
+ void test_mod_simple_vhost (void);
+@@ -15,6 +16,7 @@ void test_mod_userdir (void);
+ int main(void) {
+     test_mod_access();
+     test_mod_alias();
++    test_mod_evasive();
+     test_mod_evhost();
+     test_mod_indexfile();
+     test_mod_simple_vhost();
+--- /dev/null
++++ b/src/t/test_mod_evasive.c
+@@ -0,0 +1,72 @@
++#include "first.h"
++
++#undef NDEBUG
++#include <assert.h>
++#include <stdlib.h>
++
++#include "mod_evasive.c"
++
++static void test_mod_evasive_check(void) {
++    connection c[4];
++    memset(&c, 0, sizeof(c));
++    c[0].next = &c[1];
++    c[1].prev = &c[0];
++    c[1].next = &c[2];
++    c[2].prev = &c[1];
++    c[2].next = &c[3];
++    c[3].prev = &c[2];
++    sock_addr_inet_pton(&c[0].dst_addr, "10.0.0.1", AF_INET, 80);
++    buffer_copy_string_len(&c[0].dst_addr_buf, CONST_STR_LEN("10.0.0.1"));
++    sock_addr_inet_pton(&c[1].dst_addr, "10.0.0.2", AF_INET, 80);
++    buffer_copy_string_len(&c[1].dst_addr_buf, CONST_STR_LEN("10.0.0.2"));
++    sock_addr_inet_pton(&c[2].dst_addr, "10.0.0.3", AF_INET, 80);
++    buffer_copy_string_len(&c[2].dst_addr_buf, CONST_STR_LEN("10.0.0.3"));
++    sock_addr_inet_pton(&c[3].dst_addr, "10.0.0.4", AF_INET, 80);
++    buffer_copy_string_len(&c[3].dst_addr_buf, CONST_STR_LEN("10.0.0.4"));
++
++    c[0].request.state = CON_STATE_HANDLE_REQUEST;
++    c[1].request.state = CON_STATE_HANDLE_REQUEST;
++    c[2].request.state = CON_STATE_HANDLE_REQUEST;
++    c[3].request.state = CON_STATE_HANDLE_REQUEST;
++
++    request_st *r = &c[0].request;
++    r->con = &c[0];
++    r->tmp_buf                = buffer_init();
++    r->conf.errh              = fdlog_init(NULL, -1, FDLOG_FD);
++    r->conf.errh->fd          = -1; /* (disable) */
++
++    plugin_data p;
++    memset(&p, 0, sizeof(plugin_data));
++    p.conf.silent = 1;
++
++    p.conf.max_conns = 1;
++    assert(HANDLER_GO_ON == mod_evasive_check_per_ip_limit(r, &p, c));
++
++    p.conf.max_conns = 2;
++    assert(HANDLER_GO_ON == mod_evasive_check_per_ip_limit(r, &p, c));
++
++    sock_addr_inet_pton(&c[1].dst_addr, "10.0.0.1", AF_INET, 80);
++    buffer_copy_string_len(&c[1].dst_addr_buf, CONST_STR_LEN("10.0.0.1"));
++    assert(HANDLER_GO_ON == mod_evasive_check_per_ip_limit(r, &p, c));
++
++    c[2].request.state = CON_STATE_READ;
++    sock_addr_inet_pton(&c[1].dst_addr, "10.0.0.1", AF_INET, 80);
++    buffer_copy_string_len(&c[1].dst_addr_buf, CONST_STR_LEN("10.0.0.1"));
++    assert(HANDLER_GO_ON == mod_evasive_check_per_ip_limit(r, &p, c));
++
++    c[2].request.state = CON_STATE_HANDLE_REQUEST;
++    sock_addr_inet_pton(&c[2].dst_addr, "10.0.0.1", AF_INET, 80);
++    buffer_copy_string_len(&c[2].dst_addr_buf, CONST_STR_LEN("10.0.0.1"));
++    assert(HANDLER_FINISHED == mod_evasive_check_per_ip_limit(r, &p, c));
++
++    for (uint32_t i = 0; i < sizeof(c)/sizeof(*c); ++i)
++        buffer_free_ptr(&c[i].dst_addr_buf);
++    fdlog_free(r->conf.errh);
++    buffer_free(r->tmp_buf);
++}
++
++void test_mod_evasive (void);
++void test_mod_evasive (void)
++{
++    test_mod_evasive_check();
++}
+--- a/tests/lighttpd.conf
++++ b/tests/lighttpd.conf
+@@ -30,6 +30,7 @@ server.modules = (
+ 	"mod_simple_vhost",
+ 	"mod_cgi",
+ 	"mod_status",
++	"mod_secdownload",
+ 	"mod_deflate",
+ 	"mod_accesslog",
+ )
+@@ -252,3 +253,29 @@ $HTTP["host"] =~ "^auth-" {
+ 	status.status-url = "/server-status"
+ 	status.config-url = "/server-config"
+ }
++
++$HTTP["host"] == "vvv.example.org" {
++	server.document-root = env.SRCDIR + "/tmp/lighttpd/servers/www.example.org/pages/"
++	secdownload.secret          = "verysecret"
++	secdownload.document-root   = env.SRCDIR + "/tmp/lighttpd/servers/www.example.org/pages/"
++	secdownload.uri-prefix      = "/sec/"
++	secdownload.timeout         = 120
++	secdownload.algorithm       = "md5"
++}
++$HTTP["host"] == "vvv-sha1.example.org" {
++	server.document-root = env.SRCDIR + "/tmp/lighttpd/servers/www.example.org/pages/"
++	secdownload.secret          = "verysecret"
++	secdownload.document-root   = env.SRCDIR + "/tmp/lighttpd/servers/www.example.org/pages/"
++	secdownload.uri-prefix      = "/sec/"
++	secdownload.timeout         = 120
++	secdownload.algorithm       = "hmac-sha1"
++}
++$HTTP["host"] == "vvv-sha256.example.org" {
++	server.document-root = env.SRCDIR + "/tmp/lighttpd/servers/www.example.org/pages/"
++	secdownload.secret          = "verysecret"
++	secdownload.document-root   = env.SRCDIR + "/tmp/lighttpd/servers/www.example.org/pages/"
++	secdownload.uri-prefix      = "/sec/"
++	secdownload.timeout         = 120
++	secdownload.algorithm       = "hmac-sha256"
++	secdownload.hash-querystr   = "enable"
++}
+--- a/tests/request.t
++++ b/tests/request.t
+@@ -8,7 +8,7 @@ BEGIN {
+ 
+ use strict;
+ use IO::Socket;
+-use Test::More tests => 164;
++use Test::More tests => 178;
+ use LightyTest;
+ 
+ my $tf = LightyTest->new();
+@@ -1592,6 +1592,196 @@ ok($tf_proxy->stop_proc == 0, "Stopping
+ } while (0);
+ 
+ 
++## mod_secdownload
++
++use Digest::MD5 qw(md5_hex);
++use Digest::SHA qw(hmac_sha1 hmac_sha256);
++use MIME::Base64 qw(encode_base64url);
++
++my $secret = "verysecret";
++my ($f, $thex, $m);
++
++$t->{REQUEST}  = ( <<EOF
++GET /index.html HTTP/1.0
++Host: www.example.org
++EOF
++ );
++$t->{RESPONSE} = [ { 'HTTP-Protocol' => 'HTTP/1.0', 'HTTP-Status' => 200 } ];
++
++ok($tf->handle_http($t) == 0, 'skipping secdownload - direct access');
++
++## MD5
++$f = "/index.html";
++$thex = sprintf("%08x", time);
++$m = md5_hex($secret.$f.$thex);
++
++$t->{REQUEST}  = ( <<EOF
++GET /sec/$m/$thex$f HTTP/1.0
++Host: vvv.example.org
++EOF
++ );
++$t->{RESPONSE} = [ { 'HTTP-Protocol' => 'HTTP/1.0', 'HTTP-Status' => 200 } ];
++
++ok($tf->handle_http($t) == 0, 'secdownload (md5)');
++
++$thex = sprintf("%08x", time - 1800);
++$m = md5_hex($secret.$f.$thex);
++
++$t->{REQUEST}  = ( <<EOF
++GET /sec/$m/$thex$f HTTP/1.0
++Host: vvv.example.org
++EOF
++ );
++$t->{RESPONSE} = [ { 'HTTP-Protocol' => 'HTTP/1.0', 'HTTP-Status' => 410 } ];
++
++ok($tf->handle_http($t) == 0, 'secdownload - gone (timeout) (md5)');
++
++$t->{REQUEST}  = ( <<EOF
++GET /sec$f HTTP/1.0
++Host: vvv.example.org
++EOF
++ );
++$t->{RESPONSE} = [ { 'HTTP-Protocol' => 'HTTP/1.0', 'HTTP-Status' => 404 } ];
++
++ok($tf->handle_http($t) == 0, 'secdownload - direct access (md5)');
++
++$f = "/noexists";
++$thex = sprintf("%08x", time);
++$m = md5_hex($secret.$f.$thex);
++
++$t->{REQUEST}  = ( <<EOF
++GET /sec/$m/$thex$f HTTP/1.0
++Host: vvv.example.org
++EOF
++ );
++$t->{RESPONSE} = [ { 'HTTP-Protocol' => 'HTTP/1.0', 'HTTP-Status' => 404 } ];
++
++ok($tf->handle_http($t) == 0, 'secdownload - timeout (md5)');
++
++
++if (!$tf->has_crypto()) {
++
++    for (1..4) { ok(1, "secdownload (hmac-sha1) (skipped) - (missing SSL support)"); }
++    for (1..5) { ok(1, "secdownload (hmac-sha256) (skipped) - (missing SSL support)"); }
++
++}
++else {
++
++## HMAC-SHA1
++$f = "/index.html";
++$thex = sprintf("%08x", time);
++$m = encode_base64url(hmac_sha1("/$thex$f", $secret));
++
++$t->{REQUEST}  = ( <<EOF
++GET /sec/$m/$thex$f HTTP/1.0
++Host: vvv-sha1.example.org
++EOF
++ );
++$t->{RESPONSE} = [ { 'HTTP-Protocol' => 'HTTP/1.0', 'HTTP-Status' => 200 } ];
++
++ok($tf->handle_http($t) == 0, 'secdownload (hmac-sha1)');
++
++$thex = sprintf("%08x", time - 1800);
++$m = encode_base64url(hmac_sha1("/$thex$f", $secret));
++
++$t->{REQUEST}  = ( <<EOF
++GET /sec/$m/$thex$f HTTP/1.0
++Host: vvv-sha1.example.org
++EOF
++ );
++$t->{RESPONSE} = [ { 'HTTP-Protocol' => 'HTTP/1.0', 'HTTP-Status' => 410 } ];
++
++ok($tf->handle_http($t) == 0, 'secdownload - gone (timeout) (hmac-sha1)');
++
++$t->{REQUEST}  = ( <<EOF
++GET /sec$f HTTP/1.0
++Host: vvv-sha1.example.org
++EOF
++ );
++$t->{RESPONSE} = [ { 'HTTP-Protocol' => 'HTTP/1.0', 'HTTP-Status' => 404 } ];
++
++ok($tf->handle_http($t) == 0, 'secdownload - direct access (hmac-sha1)');
++
++
++$f = "/noexists";
++$thex = sprintf("%08x", time);
++$m = encode_base64url(hmac_sha1("/$thex$f", $secret));
++
++$t->{REQUEST}  = ( <<EOF
++GET /sec/$m/$thex$f HTTP/1.0
++Host: vvv-sha1.example.org
++EOF
++ );
++$t->{RESPONSE} = [ { 'HTTP-Protocol' => 'HTTP/1.0', 'HTTP-Status' => 404 } ];
++
++ok($tf->handle_http($t) == 0, 'secdownload - timeout (hmac-sha1)');
++
++## HMAC-SHA256
++$f = "/index.html";
++$thex = sprintf("%08x", time);
++$m = encode_base64url(hmac_sha256("/$thex$f", $secret));
++
++$t->{REQUEST}  = ( <<EOF
++GET /sec/$m/$thex$f HTTP/1.0
++Host: vvv-sha256.example.org
++EOF
++ );
++$t->{RESPONSE} = [ { 'HTTP-Protocol' => 'HTTP/1.0', 'HTTP-Status' => 200 } ];
++
++ok($tf->handle_http($t) == 0, 'secdownload (hmac-sha256)');
++
++## HMAC-SHA256
++$f = "/index.html?qs=1";
++$thex = sprintf("%08x", time);
++$m = encode_base64url(hmac_sha256("/$thex$f", $secret));
++
++$t->{REQUEST}  = ( <<EOF
++GET /sec/$m/$thex$f HTTP/1.0
++Host: vvv-sha256.example.org
++EOF
++ );
++$t->{RESPONSE} = [ { 'HTTP-Protocol' => 'HTTP/1.0', 'HTTP-Status' => 200 } ];
++
++ok($tf->handle_http($t) == 0, 'secdownload (hmac-sha256) with hash-querystr');
++
++$thex = sprintf("%08x", time - 1800);
++$m = encode_base64url(hmac_sha256("/$thex$f", $secret));
++
++$t->{REQUEST}  = ( <<EOF
++GET /sec/$m/$thex$f HTTP/1.0
++Host: vvv-sha256.example.org
++EOF
++ );
++$t->{RESPONSE} = [ { 'HTTP-Protocol' => 'HTTP/1.0', 'HTTP-Status' => 410 } ];
++
++ok($tf->handle_http($t) == 0, 'secdownload - gone (timeout) (hmac-sha256)');
++
++$t->{REQUEST}  = ( <<EOF
++GET /sec$f HTTP/1.0
++Host: vvv-sha256.example.org
++EOF
++ );
++$t->{RESPONSE} = [ { 'HTTP-Protocol' => 'HTTP/1.0', 'HTTP-Status' => 404 } ];
++
++ok($tf->handle_http($t) == 0, 'secdownload - direct access (hmac-sha256)');
++
++
++$f = "/noexists";
++$thex = sprintf("%08x", time);
++$m = encode_base64url(hmac_sha256("/$thex$f", $secret));
++
++$t->{REQUEST}  = ( <<EOF
++GET /sec/$m/$thex$f HTTP/1.0
++Host: vvv-sha256.example.org
++EOF
++ );
++$t->{RESPONSE} = [ { 'HTTP-Protocol' => 'HTTP/1.0', 'HTTP-Status' => 404 } ];
++
++ok($tf->handle_http($t) == 0, 'secdownload - timeout (hmac-sha256)');
++
++} # SKIP if lighttpd built without crypto algorithms (e.g. without openssl)
++
++
+ ## mod_setenv
+ 
+ $t->{REQUEST} = ( <<EOF
