@@ -1,7 +1,7 @@
 #
 # Copyright (C) 2006-2011 OpenWrt.org
 # Copyright (C) 2011 SMBPhone Inc.
-# Copyright (C) 2019 Jeffery To
+# Copyright (C) 2019-2020, 2023 Jeffery To
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -10,12 +10,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=newt
-PKG_VERSION:=0.52.21
-PKG_RELEASE:=4
+PKG_VERSION:=0.52.23
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://releases.pagure.org/newt
-PKG_HASH:=265eb46b55d7eaeb887fca7a1d51fe115658882dfe148164b6c49fccac5abb31
+PKG_HASH:=caa372907b14ececfe298f0d512a62f41d33b290610244a58aed07bbc5ada12a
 
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=LGPL-2.0-only
