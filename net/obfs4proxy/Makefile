@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018 Jeffery To
+# Copyright (C) 2018-2019, 2022-2023 Jeffery To
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=obfs4proxy
-PKG_VERSION:=0.0.13
+PKG_VERSION:=0.0.14
 PKG_RELEASE:=1
 
 PKG_SOURCE:=obfs4-$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://gitlab.com/yawning/obfs4/-/archive/$(PKG_NAME)-$(PKG_VERSION)/
-PKG_HASH:=6b16f1e71f1b3d21f32d2fbd683203a3021fcb44e789aded12f98d92dad83bc9
+PKG_HASH:=6ed94258433665a11a4631c6bbbb45b4452d65bdfbe4d30365a87b3d43a3a7ec
 PKG_BUILD_DIR:=$(BUILD_DIR)/obfs4-$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_LICENSE:=BSD-2-Clause GPL-3.0-or-later
