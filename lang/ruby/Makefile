@@ -12,7 +12,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruby
 PKG_VERSION:=3.2.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 # First two numbes
 PKG_ABI_VERSION:=$(subst $(space),.,$(wordlist 1, 2, $(subst .,$(space),$(PKG_VERSION))))
@@ -85,6 +85,10 @@ HOST_CONFIGURE_ARGS += --disable-jit-support
 # any output
 HOST_LDFLAGS += \
 	$(if $(CONFIG_HOST_OS_MACOS),-Wl$(comma)-w)
+
+# hostpkg ruby needs to find the hostpkg libyaml, otherwise it won't load if
+# host system doesn't provide an alternative
+HOST_LDFLAGS += -Wl,-rpath,$(STAGING_DIR_HOSTPKG)/lib
 
 TARGET_LDFLAGS += -L$(PKG_BUILD_DIR)
 
