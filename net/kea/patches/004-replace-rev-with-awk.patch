@@ -1,6 +1,6 @@
 --- a/src/bin/keactrl/keactrl.in
 +++ b/src/bin/keactrl/keactrl.in
-@@ -117,7 +117,7 @@ get_pid_from_file() {
+@@ -115,7 +115,7 @@ get_pid_from_file() {
      # Extract the name portion (from last slash to last dot) of the config file name
      # File name and extension are documented in src/lib/util/filename.h
      local conf_name
