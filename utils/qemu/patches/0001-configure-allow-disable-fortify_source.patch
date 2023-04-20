@@ -11,9 +11,9 @@ OpenWrt base build system decide flavor of fortify_source to use
 
 --- a/configure
 +++ b/configure
-@@ -896,6 +896,8 @@ for opt do
+@@ -895,6 +895,8 @@ for opt do
    ;;
-   --enable-jemalloc) meson_option_parse --enable-malloc=jemalloc jemalloc
+   --disable-vfio-user-server) vfio_user_server="disabled"
    ;;
 +  --disable-fortify-source) fortify_source="no"
 +  ;;

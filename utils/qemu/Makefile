@@ -9,10 +9,10 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qemu
-PKG_VERSION:=7.2.0
+PKG_VERSION:=8.0.0
 PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=5b49ce2687744dad494ae90a898c52204a3406e84d072482a1e1be854eeb2157
+PKG_HASH:=bb60f0341531181d6cc3969dd19a013d0427a87f918193970d9adb91131e56d0
 PKG_SOURCE_URL:=http://download.qemu.org/
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=LICENSE tcg/LICENSE
@@ -430,6 +430,7 @@ CONFIGURE_ARGS +=			\
 	--disable-alsa			\
 	--disable-pa			\
 	--disable-vduse-blk-export	\
+	--disable-libdw			\
 
 CONFIGURE_ARGS += --target-list='$(foreach target,$(qemu-target-list),$(if $(CONFIG_PACKAGE_qemu-$(target)),$(target)))'
 CONFIGURE_ARGS += $(if $(CONFIG_PACKAGE_qemu-ga),--enable-guest-agent)
