@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx-util
 PKG_VERSION:=1.6
-PKG_RELEASE:=15
+PKG_RELEASE:=16
 PKG_MAINTAINER:=Peter Stadler <peter.stadler@student.uibk.ac.at>
 
 include $(INCLUDE_DIR)/package.mk
@@ -66,6 +66,8 @@ define Package/nginx-ssl-util/install/default
 	$(LN) /var/lib/nginx/uci.conf $(1)/etc/nginx/uci.conf
 
 	$(INSTALL_CONF) ./files/restrict_locally $(1)/etc/nginx/
+
+	$(INSTALL_DIR) $(1)/etc/nginx/module.d/
 
 	$(INSTALL_DIR) $(1)/etc/config/
 	$(INSTALL_CONF) ./files/nginx.config $(1)/etc/config/nginx
