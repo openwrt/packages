@@ -192,11 +192,6 @@ config NGINX_NAXSI
 	prompt "Enable NAXSI module"
 	default y
 
-config NGINX_LUA
-	bool
-	prompt "Enable Lua module"
-	default n
-
 config NGINX_HTTP_REAL_IP
 	bool
 	prompt "Enable HTTP real ip module"

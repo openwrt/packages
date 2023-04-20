@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
-PKG_VERSION:=1.21.3
-PKG_RELEASE:=3
+PKG_VERSION:=1.24.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nginx.org/download/
-PKG_HASH:=14774aae0d151da350417efc4afda5cce5035056e71894836797e1f6e2d1175a
+PKG_HASH:=77a2541637b92a621e3ee76776c8b7b40cf6d707e69ba53a940283e30ff2f55d
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de> \
 				Ansuel Smith <ansuelsmth@gmail.com>
@@ -62,7 +62,6 @@ PKG_CONFIG_DEPENDS := \
 	CONFIG_NGINX_HTTP_V2 \
 	CONFIG_NGINX_PCRE \
 	CONFIG_NGINX_NAXSI \
-	CONFIG_NGINX_LUA \
 	CONFIG_NGINX_HTTP_REAL_IP \
 	CONFIG_NGINX_HTTP_SECURE_LINK \
 	CONFIG_NGINX_HTTP_BROTLI \
@@ -98,9 +97,9 @@ define Package/nginx-ssl
   $(Package/nginx/default)
   TITLE += with SSL support
   VARIANT:=ssl
-  DEPENDS+= +NGINX_PCRE:libpcre \
+  DEPENDS+= +NGINX_PCRE:libpcre2 \
 	+NGINX_PCRE:nginx-ssl-util +!NGINX_PCRE:nginx-ssl-util-nopcre \
-	+NGINX_HTTP_GZIP:zlib +NGINX_LUA:liblua +NGINX_DAV:libxml2 \
+	+NGINX_HTTP_GZIP:zlib +NGINX_DAV:libxml2 \
 	+NGINX_UBUS:libubus +NGINX_UBUS:libblobmsg-json +NGINX_UBUS:libjson-c
   EXTRA_DEPENDS:=nginx-ssl-util$(if $(CONFIG_NGINX_PCRE),,-nopcre) (>=1.5-1) (<2)
   CONFLICTS:=nginx-all-module
@@ -113,7 +112,7 @@ Package/nginx-ssl/description = $(Package/nginx/description) \
 define Package/nginx-all-module
   $(Package/nginx/default)
   TITLE += with ALL module selected
-  DEPENDS+=+libpcre +nginx-ssl-util +zlib +liblua +libxml2 +libubus \
+  DEPENDS+=+libpcre2 +nginx-ssl-util +zlib +libxml2 +libubus \
 	+libblobmsg-json +libjson-c
   EXTRA_DEPENDS:=nginx-ssl-util (>=1.5-1) (<2)
   VARIANT:=all-module
@@ -235,9 +234,6 @@ ifneq ($(BUILD_VARIANT),all-module)
   ifeq ($(CONFIG_NGINX_NAXSI),y)
     ADDITIONAL_MODULES += --add-module=$(PKG_BUILD_DIR)/nginx-naxsi/naxsi_src
   endif
-  ifeq ($(CONFIG_NGINX_LUA),y)
-    ADDITIONAL_MODULES += --add-module=$(PKG_BUILD_DIR)/lua-nginx
-  endif
   ifeq ($(CONFIG_IPV6),y)
     ADDITIONAL_MODULES += --with-ipv6
   endif
@@ -295,7 +291,6 @@ else
   CONFIG_NGINX_RTMP_MODULE:=y
   CONFIG_NGINX_TS_MODULE:=y
   CONFIG_NGINX_NAXSI:=y
-  CONFIG_NGINX_LUA:=y
   CONFIG_NGINX_DAV:=y
   CONFIG_NGINX_UBUS:=y
   ADDITIONAL_MODULES += --with-ipv6 --with-http_stub_status_module --with-http_flv_module \
@@ -305,7 +300,6 @@ else
 	--with-stream --with-stream_ssl_module --with-stream_ssl_preread_module \
 	--add-module=$(PKG_BUILD_DIR)/nginx-headers-more \
 	--add-module=$(PKG_BUILD_DIR)/nginx-naxsi/naxsi_src \
-	--add-module=$(PKG_BUILD_DIR)/lua-nginx \
 	--add-module=$(PKG_BUILD_DIR)/nginx-dav-ext-module \
 	--add-module=$(PKG_BUILD_DIR)/nginx-brotli --add-module=$(PKG_BUILD_DIR)/nginx-rtmp \
 	--add-module=$(PKG_BUILD_DIR)/nginx-ts --add-module=$(PKG_BUILD_DIR)/nginx-ubus-module
@@ -329,12 +323,7 @@ define Package/nginx-mod-luci/description
 endef
 
 
-TARGET_CFLAGS += -fvisibility=hidden -DNGX_LUA_NO_BY_LUA_BLOCK
-
-ifeq ($(CONFIG_NGINX_LUA),y)
-  CONFIGURE_VARS += LUA_INC=$(STAGING_DIR)/usr/include \
-					LUA_LIB=$(STAGING_DIR)/usr/lib
-endif
+TARGET_CFLAGS += -fvisibility=hidden
 
 CONFIGURE_VARS += CONFIG_BIG_ENDIAN=$(CONFIG_BIG_ENDIAN)
 
@@ -394,11 +383,11 @@ endef
 Package/nginx-all-module/prerm = $(Package/nginx-ssl/prerm)
 
 define Download/nginx-headers-more
-  VERSION:=a9f7c7e86cc7441d04e2f11f01c2e3a9c4b0301d
+  VERSION:=bea1be3bbf6af28f6aa8cf0c01c07ee1637e2bd0
   SUBDIR:=nginx-headers-more
   FILE:=headers-more-nginx-module-$$(VERSION).tar.xz
   URL:=https://github.com/openresty/headers-more-nginx-module.git
-  MIRROR_HASH:=ce0b9996ecb2cff790831644d6ab1adc087aa2771d77d3931c06246d11bc59fd
+  MIRROR_HASH:=0c0d2ced2ce895b3f45eb2b230cd90508ab2a773299f153de14a43e44c1209b3
   PROTO:=git
 endef
 
@@ -408,11 +397,11 @@ define Prepare/nginx-headers-more
 endef
 
 define Download/nginx-brotli
-  VERSION:=e505dce68acc190cc5a1e780a3b0275e39f160ca
+  VERSION:=6e975bcb015f62e1f303054897783355e2a877dc
   SUBDIR:=nginx-brotli
   FILE:=ngx-brotli-module-$$(VERSION).tar.xz
   URL:=https://github.com/google/ngx_brotli.git
-  MIRROR_HASH:=04847f11ef808fed50f44b2af0ef3abf59ff0ffc06dfc7394d9ab51d53fef31f
+  MIRROR_HASH:=e4e262f87e48fe0ab6fdad395dba409182d05a3be88c9f2a892ca6f26158665e
   PROTO:=git
 endef
 
@@ -450,30 +439,16 @@ define Prepare/nginx-ts
 endef
 
 define Download/nginx-naxsi
-  VERSION:=951123ad456bdf5ac94e8d8819342fe3d49bc002
+  VERSION:=d714f1636ea49a9a9f4f06dba14aee003e970834
   SUBDIR:=nginx-naxsi
   FILE:=nginx-naxsi-module-$$(VERSION).tar.xz
   URL:=https://github.com/nbs-system/naxsi.git
-  MIRROR_HASH:=c734cae19a596affadd62a2df1b58d3df8d1364093a4e80a7cd1ab4555963535
+  MIRROR_HASH:=0c2ba8675a291a81b406994c376e1f5e6b602f4b7676d5d53029592d5d71c420
   PROTO:=git
 endef
 
 define Prepare/nginx-naxsi
 	$(eval $(Download/nginx-naxsi))
-	xzcat $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
-endef
-
-define Download/lua-nginx
-  VERSION:=e94f2e5d64daa45ff396e262d8dab8e56f5f10e0
-  SUBDIR:=lua-nginx
-  FILE:=lua-nginx-module-$$(VERSION).tar.xz
-  URL:=https://github.com/openresty/lua-nginx-module.git
-  MIRROR_HASH:=27729921964f066d97e99c263da153b34622a2f4b811114e4c3ee61c6fc71395
-  PROTO:=git
-endef
-
-define Prepare/lua-nginx
-	$(eval $(Download/lua-nginx))
 	xzcat $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
 endef
 
@@ -511,9 +486,6 @@ define Build/Patch
 ifneq "$(or $(CONFIG_NGINX_DAV),$(QUILT))" ""
 	$(call PatchDir,$(PKG_BUILD_DIR),$(PATCH_DIR)/dav-nginx,dav-nginx/)
 endif
-ifneq "$(or $(CONFIG_NGINX_LUA),$(QUILT))" ""
-	$(call PatchDir,$(PKG_BUILD_DIR),$(PATCH_DIR)/lua-nginx,lua-nginx/)
-endif
 ifneq "$(or $(CONFIG_NGINX_RTMP_MODULE),$(QUILT))" ""
 	$(call PatchDir,$(PKG_BUILD_DIR),$(PATCH_DIR)/rtmp-nginx,rtmp-nginx/)
 endif
@@ -523,7 +495,6 @@ endef
 define Quilt/Refresh/Package
 	$(call Quilt/RefreshDir,$(PKG_BUILD_DIR),$(PATCH_DIR)/nginx,nginx/)
 	$(call Quilt/RefreshDir,$(PKG_BUILD_DIR),$(PATCH_DIR)/dav-nginx,dav-nginx/)
-	$(call Quilt/RefreshDir,$(PKG_BUILD_DIR),$(PATCH_DIR)/lua-nginx,lua-nginx/)
 	$(call Quilt/RefreshDir,$(PKG_BUILD_DIR),$(PATCH_DIR)/rtmp-nginx,rtmp-nginx/)
 endef
 
@@ -535,11 +506,6 @@ define Build/Prepare
 ifeq ($(CONFIG_NGINX_NAXSI),y)
   $(eval $(call Download,nginx-naxsi))
   $(Prepare/nginx-naxsi)
-endif
-
-ifneq "$(or $(CONFIG_NGINX_LUA),$(QUILT))" ""
-  $(eval $(call Download,lua-nginx))
-  $(Prepare/lua-nginx)
 endif
 
 ifeq ($(CONFIG_NGINX_HTTP_BROTLI),y)
