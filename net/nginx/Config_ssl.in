@@ -15,6 +15,14 @@ config NGINX_DAV
 		Enable the HTTP and WebDAV methods PUT, DELETE, MKCOL, COPY and MOVE.
 	default n
 
+config NGINX_DAV_EXT
+	bool
+	prompt "Enable WebDAV EXT module"
+	select NGINX_DAV
+	help
+		Enable the WebDAV methods PROPFIND, OPTIONS, LOCK, UNLOCK.
+	default n
+
 config NGINX_UBUS
 	bool
 	prompt "Enable UBUS module"
