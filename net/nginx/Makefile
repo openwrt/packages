@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
-PKG_VERSION:=1.21.3
-PKG_RELEASE:=4
+PKG_VERSION:=1.24.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nginx.org/download/
-PKG_HASH:=14774aae0d151da350417efc4afda5cce5035056e71894836797e1f6e2d1175a
+PKG_HASH:=77a2541637b92a621e3ee76776c8b7b40cf6d707e69ba53a940283e30ff2f55d
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de> \
 				Ansuel Smith <ansuelsmth@gmail.com>
@@ -452,11 +452,11 @@ endef
 Package/nginx-all-module/prerm = $(Package/nginx-ssl/prerm)
 
 define Download/nginx-headers-more
-  VERSION:=a9f7c7e86cc7441d04e2f11f01c2e3a9c4b0301d
+  VERSION:=bea1be3bbf6af28f6aa8cf0c01c07ee1637e2bd0
   SUBDIR:=nginx-headers-more
   FILE:=headers-more-nginx-module-$$(VERSION).tar.xz
   URL:=https://github.com/openresty/headers-more-nginx-module.git
-  MIRROR_HASH:=ce0b9996ecb2cff790831644d6ab1adc087aa2771d77d3931c06246d11bc59fd
+  MIRROR_HASH:=3617bbf7a935208a1d8d5f86a8f9b770f6987e4d2b5663a9ab1b777217e3066b
   PROTO:=git
 endef
 
