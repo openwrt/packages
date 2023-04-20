@@ -379,7 +379,7 @@ define naxsi
   NGINX_MODULES += nginx-mod-naxsi
 endef
 
-$(eval $(call module,lua, +liblua,ngx_http_lua, Enable Lua module))
+$(eval $(call module,lua, +luajit,ngx_http_lua, Enable Lua module))
 $(eval $(call module,stream, +@NGINX_STREAM_CORE_MODULE,ngx_stream, Add support for NGINX request streaming.))
 $(eval $(call module,ubus, +libubus +libjson-c +libblobmsg-json +@NGINX_UBUS,ngx_http_ubus, Enable UBUS api support directly from the server.))
 $(eval $(call module,dav-ext, +@NGINX_DAV,ngx_http_dav_ext, Enable the WebDAV methods PROPFIND OPTIONS LOCK UNLOCK.))
@@ -395,8 +395,8 @@ PKG_CONFIG_DEPENDS += $(patsubst %,CONFIG_PACKAGE_%,$(NGINX_MODULES))
 TARGET_CFLAGS += -DNGX_LUA_NO_BY_LUA_BLOCK
 
 ifneq ($(CONFIG_PACKAGE_nginx-mod-lua),)
-  CONFIGURE_VARS += LUA_INC=$(STAGING_DIR)/usr/include \
-					LUA_LIB=$(STAGING_DIR)/usr/lib
+  CONFIGURE_VARS += LUAJIT_INC=$(STAGING_DIR)/usr/include/luajit-* \
+					LUAJIT_LIB=$(STAGING_DIR)/usr/lib
 endif
 
 CONFIGURE_VARS += CONFIG_BIG_ENDIAN=$(CONFIG_BIG_ENDIAN)
@@ -522,11 +522,11 @@ define Prepare/nginx-naxsi
 endef
 
 define Download/lua-nginx
-  VERSION:=e94f2e5d64daa45ff396e262d8dab8e56f5f10e0
+  VERSION:=68acad14e4a8f42e31d4a4bb5ed44d6f5b55fc1c
   SUBDIR:=lua-nginx
   FILE:=lua-nginx-module-$$(VERSION).tar.xz
   URL:=https://github.com/openresty/lua-nginx-module.git
-  MIRROR_HASH:=27729921964f066d97e99c263da153b34622a2f4b811114e4c3ee61c6fc71395
+  MIRROR_HASH:=366f24e1ba6221e34f6ba20ab29146438438f88c89fd71f9500d169b3f5aedf0
   PROTO:=git
 endef
 
