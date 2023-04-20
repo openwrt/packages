@@ -95,14 +95,14 @@ define Package/nginx-ssl
 	+NGINX_PCRE:nginx-ssl-util +!NGINX_PCRE:nginx-ssl-util-nopcre \
 	+NGINX_HTTP_GZIP:zlib +NGINX_DAV:libxml2
   EXTRA_DEPENDS:=nginx-ssl-util$(if $(CONFIG_NGINX_PCRE),,-nopcre) (>=1.5-1) (<2)
-  CONFLICTS:=nginx-all-module
+  CONFLICTS:=nginx-full
 endef
 
 Package/nginx-ssl/description = $(Package/nginx/description) \
   This variant is compiled with SSL support enabled. To enable additional module \
   select them in the nginx default configuration menu.
 
-define Package/nginx-all-module
+define Package/nginx-full
   $(Package/nginx/default)
   TITLE += with ALL module selected
   DEPENDS+=+libpcre +nginx-ssl-util +zlib +libxml2 \
@@ -114,7 +114,7 @@ define Package/nginx-all-module
   PROVIDES += nginx-ssl
 endef
 
-Package/nginx-all-module/description = $(Package/nginx/description) \
+Package/nginx-full/description = $(Package/nginx/description) \
   This variant is compiled with ALL module selected.
 
 define Package/nginx-ssl/config
@@ -128,7 +128,7 @@ define Package/nginx/conffiles
 endef
 
 Package/nginx-ssl/conffiles = $(Package/nginx/conffiles)
-Package/nginx-all-module/conffiles = $(Package/nginx/conffiles)
+Package/nginx-full/conffiles = $(Package/nginx/conffiles)
 
 ADDITIONAL_MODULES:= --with-http_ssl_module
 
@@ -436,7 +436,7 @@ define Package/nginx-ssl/install
 	$(INSTALL_BIN) ./files/nginx.init $(1)/etc/init.d/nginx
 endef
 
-Package/nginx-all-module/install = $(Package/nginx-ssl/install)
+Package/nginx-full/install = $(Package/nginx-ssl/install)
 
 define Package/nginx-ssl/prerm
 #!/bin/sh
@@ -449,7 +449,7 @@ rm -f "$$(uci get "nginx.$${LAN_NAME}.ssl_certificate_key")"
 exit 0
 endef
 
-Package/nginx-all-module/prerm = $(Package/nginx-ssl/prerm)
+Package/nginx-full/prerm = $(Package/nginx-ssl/prerm)
 
 define Download/nginx-headers-more
   VERSION:=bea1be3bbf6af28f6aa8cf0c01c07ee1637e2bd0
@@ -634,7 +634,7 @@ endif
 endef
 
 $(eval $(call BuildPackage,nginx-ssl))
-$(eval $(call BuildPackage,nginx-all-module))
+$(eval $(call BuildPackage,nginx-full))
 $(eval $(call BuildPackage,nginx-mod-luci))
 
 $(foreach m,$(NGINX_MODULES),$(eval $(call BuildPackage,$(m))))
