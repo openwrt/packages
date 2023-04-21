@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-greenlet
 PKG_VERSION:=1.1.2
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=2
 
 PYPI_NAME:=greenlet
 PKG_HASH:=e30f5ea4ae2346e62cedde8794a56858a67b878dd79f7df76a0767e356b1744a

@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mksh
 PKG_VERSION:=59c
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=Thorsten Glaser <tg@mirbsd.org>
 PKG_LICENSE:=MirOS

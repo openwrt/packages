@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=v4l2rtspserver
 PKG_VERSION:=0.3.7
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=8
 
 #cannot use codeload as this uses submodules
 PKG_SOURCE_PROTO:=git

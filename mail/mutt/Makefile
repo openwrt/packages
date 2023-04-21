@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mutt
 PKG_VERSION:=2.1.5
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=https://bitbucket.org/mutt/mutt/downloads/ \
 		http://ftp.mutt.org/pub/mutt/

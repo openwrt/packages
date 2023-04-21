@@ -3,7 +3,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=realtek-poe
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=2
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Martin Kennedy <hurricos@gmail.com>
 
