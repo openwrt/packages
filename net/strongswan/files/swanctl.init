@@ -418,7 +418,6 @@ config_connection() {
 
 	local enabled
 	local gateway
-	local local_gateway
 	local local_sourceip
 	local local_ip
 	local remote_gateway
@@ -477,10 +476,6 @@ config_connection() {
 	esac
 
 	[ "$gateway" = "any" ] && remote_gateway="%any" || remote_gateway="$gateway"
-
-	local ipdest
-	[ "$remote_gateway" = "%any" ] && ipdest="1.1.1.1" || ipdest="$remote_gateway"
-	local_gateway=`ip -o route get $ipdest | awk '/ src / { gsub(/^.* src /,""); gsub(/ .*$/, ""); print $0}'`
 
 	if [ -n "$local_key" ]; then
 		[ "$(dirname "$local_key")" != "." ] && \
