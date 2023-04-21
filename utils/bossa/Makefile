@@ -4,7 +4,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bossa
 PKG_VERSION:=1.9.1
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/shumatech/BOSSA/tar.gz/$(PKG_VERSION)?

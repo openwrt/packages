@@ -8,7 +8,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=xtables-addons
 PKG_VERSION:=3.21
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=1
 PKG_HASH:=2e09ac129a14f5e9c23b115ebcdfff4aa84e2aeba1268dbdf39b2d752bd71e19
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz

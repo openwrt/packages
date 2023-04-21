@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hfsprogs
 PKG_VERSION:=540.1.linux3
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=2
 
 PKG_SOURCE:=diskdev_cmds-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://src.fedoraproject.org/repo/pkgs/hfsplus-tools/$(PKG_SOURCE)/0435afc389b919027b69616ad1b05709

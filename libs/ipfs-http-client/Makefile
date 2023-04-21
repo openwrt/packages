@@ -5,7 +5,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ipfs-http-client
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/vasild/cpp-ipfs-http-client.git

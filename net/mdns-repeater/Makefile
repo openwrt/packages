@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mdns-repeater
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=https://github.com/kennylevinsen/mdns-repeater.git
 PKG_SOURCE_PROTO=git

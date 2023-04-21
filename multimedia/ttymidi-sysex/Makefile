@@ -3,7 +3,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=ttymidi-sysex
 PKG_SOURCE_DATE:=2021-05-07
 PKG_SOURCE_VERSION:=e519a1167253e24ae35caed0371fed5bd4f26061
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/cchaussat/ttymidi-sysex

@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=sqm-scripts
 PKG_SOURCE_VERSION:=7ce734ea191240c85c86b83cbf18701655b0359c
 PKG_VERSION:=1.5.2
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/tohojo/sqm-scripts

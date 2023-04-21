@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=glib2
 PKG_VERSION:=2.74.0
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=3
 
 PKG_SOURCE:=glib-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNOME/glib/$(word 1,$(subst ., ,$(PKG_VERSION))).$(word 2,$(subst ., ,$(PKG_VERSION)))

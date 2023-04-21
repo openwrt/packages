@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fontconfig
 PKG_VERSION:=2.13.94
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://fontconfig.org/release/

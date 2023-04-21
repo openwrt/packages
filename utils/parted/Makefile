@@ -4,7 +4,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=parted
 PKG_VERSION:=3.4
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://ftp.gnu.org/gnu/parted/
