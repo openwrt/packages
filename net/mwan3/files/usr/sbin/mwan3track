@@ -184,6 +184,7 @@ firstconnect() {
 	if [ "$STATUS" = "offline" ]; then
 		disconnected 1
 	else
+		score=$((down+up))
 		connected 1
 	fi
 }
