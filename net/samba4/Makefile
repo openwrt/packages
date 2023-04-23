@@ -28,6 +28,7 @@ PKG_BUILD_DEPENDS:=samba4/host libtasn1/host perl/host
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_SAMBA4_SERVER_NETBIOS \
 	CONFIG_SAMBA4_SERVER_AVAHI \
+	CONFIG_SAMBA4_SERVER_QUOTAS \
 	CONFIG_SAMBA4_SERVER_VFS \
 	CONFIG_SAMBA4_SERVER_VFSX \
 	CONFIG_SAMBA4_SERVER_AD_DC \
@@ -122,7 +123,7 @@ define Package/samba4-utils
 endef
 
 define Package/samba4-utils/description
-  installs: smbstatus smbtree mvxattr smbtar smbcquotas
+  installs: smbstatus smbtree mvxattr smbtar (smbcquotas)
 
   Utilities collection
 endef
@@ -231,7 +232,7 @@ CONFIGURE_ARGS += \
 		--with-privatedir=/etc/samba
 
 # features
-ifeq ($(CONFIG_SAMBA4_SERVER_VFS),y)
+ifeq ($(CONFIG_SAMBA4_SERVER_QUOTAS),y)
 	CONFIGURE_ARGS += --with-quotas
 else
 	CONFIGURE_ARGS += --without-quotas
@@ -258,7 +259,10 @@ ifdef CONFIG_KERNEL_IO_URING
 	SAMBA4_VFS_MODULES_SHARED :=$(SAMBA4_VFS_MODULES_SHARED)vfs_io_uring,
 endif
 ifeq ($(CONFIG_SAMBA4_SERVER_VFS),y)
-	SAMBA4_VFS_MODULES_SHARED :=$(SAMBA4_VFS_MODULES_SHARED)vfs_fruit,vfs_shadow_copy2,vfs_recycle,vfs_fake_perms,vfs_readonly,vfs_cap,vfs_offline,vfs_crossrename,vfs_catia,vfs_streams_xattr,vfs_xattr_tdb,vfs_default_quota,vfs_widelinks,
+	SAMBA4_VFS_MODULES_SHARED :=$(SAMBA4_VFS_MODULES_SHARED)vfs_fruit,vfs_shadow_copy2,vfs_recycle,vfs_fake_perms,vfs_readonly,vfs_cap,vfs_offline,vfs_crossrename,vfs_catia,vfs_streams_xattr,vfs_xattr_tdb,vfs_widelinks,
+ifeq ($(CONFIG_SAMBA4_SERVER_QUOTAS),y)
+	SAMBA4_VFS_MODULES_SHARED :=$(SAMBA4_VFS_MODULES_SHARED)vfs_default_quota,
+endif
 ifdef CONFIG_PACKAGE_kmod-fs-btrfs
 	SAMBA4_VFS_MODULES_SHARED :=$(SAMBA4_VFS_MODULES_SHARED)vfs_btrfs,
 endif
@@ -407,7 +411,7 @@ endef
 define Package/samba4-utils/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/{smbstatus,smbtree,mvxattr,smbtar} $(1)/usr/bin/
-ifeq ($(CONFIG_SAMBA4_SERVER_VFS),y)
+ifeq ($(CONFIG_SAMBA4_SERVER_QUOTAS),y)
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/smbcquotas $(1)/usr/bin/
 endif
 endef
