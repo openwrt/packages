@@ -7,8 +7,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=banip
-PKG_VERSION:=0.8.3
-PKG_RELEASE:=2
+PKG_VERSION:=0.8.4
+PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
 
@@ -33,6 +33,7 @@ define Package/banip/conffiles
 /etc/config/banip
 /etc/banip/banip.allowlist
 /etc/banip/banip.blocklist
+/etc/banip/banip.custom.feeds
 endef
 
 define Build/Prepare
@@ -63,6 +64,7 @@ define Package/banip/install
 	$(INSTALL_CONF) ./files/banip.blocklist $(1)/etc/banip
 	$(INSTALL_CONF) ./files/banip.countries $(1)/etc/banip
 	$(INSTALL_CONF) ./files/banip.feeds $(1)/etc/banip
+	$(INSTALL_CONF) ./files/banip.custom.feeds $(1)/etc/banip
 endef
 
 $(eval $(call BuildPackage,banip))
