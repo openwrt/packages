@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=strongswan
 PKG_VERSION:=5.9.10
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://download.strongswan.org/ https://download2.strongswan.org/
@@ -39,6 +39,7 @@ PKG_MOD_AVAILABLE:= \
 	des \
 	dhcp \
 	dnskey \
+	drbg \
 	duplicheck \
 	eap-identity \
 	eap-md5 \
@@ -54,6 +55,7 @@ PKG_MOD_AVAILABLE:= \
 	gmpdh \
 	ha \
 	hmac \
+	kdf \
 	kernel-libipsec \
 	kernel-netlink \
 	ldap \
