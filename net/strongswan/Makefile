@@ -464,20 +464,22 @@ define BuildPlugin
 endef
 
 CONFIGURE_ARGS+= \
-	--disable-scripts \
-	--disable-static \
-	--disable-fast \
+	--disable-defaults \
+	--enable-ikev2 \
+	--enable-ikev1 \
+	--enable-load-warning \
 	--enable-nonce \
 	--enable-mediation \
-	--with-systemdsystemunitdir=no \
-	$(if $(CONFIG_PACKAGE_strongswan-charon-cmd),--enable-cmd,--disable-cmd) \
-	$(if $(CONFIG_PACKAGE_strongswan-pki),--enable-pki,--disable-pki) \
+	$(if $(CONFIG_PACKAGE_strongswan-charon),--enable-charon) \
+	$(if $(CONFIG_PACKAGE_strongswan-charon-cmd),--enable-cmd) \
+	$(if $(CONFIG_PACKAGE_strongswan-pki),--enable-pki) \
+	$(if $(CONFIG_PACKAGE_strongswan-swanctl),--enable-swanctl) \
 	--with-random-device=/dev/random \
 	--with-urandom-device=/dev/urandom \
 	--with-routing-table="$(call qstrip,$(CONFIG_STRONGSWAN_ROUTING_TABLE))" \
 	--with-routing-table-prio="$(call qstrip,$(CONFIG_STRONGSWAN_ROUTING_TABLE_PRIO))" \
 	$(foreach m,$(PKG_MOD_AVAILABLE), \
-	  $(if $(CONFIG_PACKAGE_strongswan-mod-$(m)),--enable-$(m),--disable-$(m)) \
+	  $(if $(CONFIG_PACKAGE_strongswan-mod-$(m)),--enable-$(m)) \
 	) \
 	ac_cv_search___atomic_load=no
 
