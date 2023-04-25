@@ -49,7 +49,7 @@ start_service() {
 	procd_set_param limits nofile="1000000 1000000"
 	procd_set_param respawn
 	procd_set_param stderr 1
-	procd_set_param user librespeed
+	procd_set_param user root
 
 	procd_add_jail "$CONF" log
 	procd_add_jail_mount "$TMPCONF"
