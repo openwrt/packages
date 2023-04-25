@@ -36,6 +36,8 @@ endef
 
 TARGET_CFLAGS += $(FPIC)
 
+HOST_CONFIGURE_ARGS += --disable-shared
+
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/yaml.h $(1)/usr/include/
