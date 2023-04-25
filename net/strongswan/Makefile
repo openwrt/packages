@@ -323,7 +323,7 @@ endef
 define Package/strongswan-isakmp/description
 $(call Package/strongswan/description/Default)
  This meta-package contains only dependencies to establish  ISAKMP /
- IKE PSK connections, dropping other capabilities in favor of small size 
+ IKE PSK connections, dropping other capabilities in favor of small size
  Can fit most routers even with 4Mb flash (after removing IPv6 support).
 endef
 
@@ -468,7 +468,6 @@ CONFIGURE_ARGS+= \
 	--disable-static \
 	--disable-fast \
 	--enable-nonce \
-	--enable-mgf1 \
 	--enable-mediation \
 	--with-systemdsystemunitdir=no \
 	$(if $(CONFIG_PACKAGE_strongswan-charon-cmd),--enable-cmd,--disable-cmd) \
