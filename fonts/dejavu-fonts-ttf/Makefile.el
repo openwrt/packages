@@ -7,8 +7,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dejavu-fonts-ttf
-PKG_VERSION:=2.37
-PKG_RELEASE:=1
+PKG_VERSION:=2.30
+PKG_RELEASE:=0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/dejavu
@@ -19,7 +19,7 @@ PKG_MAINTAINER:=Mirko Vogt <mirko-dev@nanl.de>
 
 include $(INCLUDE_DIR)/package.mk
 
-FILES:= \
+FILES:= \\
 	DejaVuSerif-Italic \
 	DejaVuSerifCondensed-Italic \
 	DejaVuSerifCondensed-BoldItalic \
@@ -43,7 +43,7 @@ FILES:= \
 	DejaVuSans \
 	DejaVuMathTeXGyre
 
-define PartGen
+define PartGenZ
 define Package/dejavu-fonts-ttf-$(1)
 $(call Package/dejavu-fonts-ttf/Default)
   TITLE:=$(1)
