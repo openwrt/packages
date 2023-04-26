@@ -480,8 +480,7 @@ CONFIGURE_ARGS+= \
 	--with-routing-table-prio="$(call qstrip,$(CONFIG_STRONGSWAN_ROUTING_TABLE_PRIO))" \
 	$(foreach m,$(PKG_MOD_AVAILABLE), \
 	  $(if $(CONFIG_PACKAGE_strongswan-mod-$(m)),--enable-$(m)) \
-	) \
-	ac_cv_search___atomic_load=no
+	)
 
 define Package/strongswan/conffiles
 /etc/strongswan.conf
