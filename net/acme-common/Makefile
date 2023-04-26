@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=acme-common
-PKG_VERSION:=1.0.2
+PKG_VERSION:=1.0.3
 
 PKG_MAINTAINER:=Toke Høiland-Jørgensen <toke@toke.dk>
 PKG_LICENSE:=GPL-3.0-only
@@ -48,19 +48,9 @@ define Package/acme-common/install
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/acme
 endef
 
-define Package/acme-common/postinst
-#!/bin/sh
-if [ -z "$$IPKG_INSTROOT" ]; then
-	grep -q '/etc/init.d/acme' /etc/crontabs/root 2>/dev/null && exit 0
-	echo "0 0 * * * /etc/init.d/acme start" >> /etc/crontabs/root
-fi
-endef
-
 define Package/acme-common/prerm
 #!/bin/sh
-if [ -z "$$IPKG_INSTROOT" ]; then
-	sed -i '\|/etc/init.d/acme|d' /etc/crontabs/root
-fi
+sed -i '\|/etc/init.d/acme|d' /etc/crontabs/root
 endef
 
 define Build/Configure
