@@ -8,6 +8,31 @@ CONF="librespeed-go"
 PROG="/usr/bin/librespeed-go"
 TMPCONF="/var/run/$CONF/settings.json"
 
+mount_jail_file() {
+	local cfg="$1"
+	local isdir="${2:-0}"
+	local rw="${3:-0}"
+
+	local value
+	config_get value "config" "$cfg"
+	[ -n "$value" ] || return 1
+
+	if [ "$isdir" = "1" ]; then
+		mkdir -p "$value"
+		chown -R librespeed "$value"
+	else
+		mkdir -p "${value%/*}"
+		touch "$value"
+		chown librespeed "$value"
+	fi
+
+	if [ "$rw" = "1" ]; then
+		procd_add_jail_mount_rw "$value"
+	else
+		procd_add_jail_mount "$value"
+	fi
+}
+
 start_service() {
 	config_load "$CONF"
 
@@ -32,14 +57,7 @@ start_service() {
 	}
 	config_load "$CONF"
 	json_dump > "$TMPCONF"
-
-	local database_file
-	config_get database_file "config" "database_file"
-	if [ -n "$database_file" ]; then
-		mkdir -p "${database_file%/*}"
-		touch "$database_file"
-		chown librespeed "$database_file"
-	fi
+	chown librespeed "$TMPCONF"
 
 	procd_open_instance "$CONF"
 	procd_set_param command "$PROG"
@@ -53,15 +71,11 @@ start_service() {
 
 	procd_add_jail "$CONF" log
 	procd_add_jail_mount "$TMPCONF"
-	[ -z "$database_file" ] || procd_add_jail_mount_rw "$database_file"
 
-	local assets_path tls_cert_file tls_key_file
-	config_get assets_path "config" "assets_path"
-	config_get tls_cert_file "config" "tls_cert_file"
-	config_get tls_key_file "config" "tls_key_file"
-	[ -z "$assets_path" ] || procd_add_jail_mount "$assets_path"
-	[ -z "$tls_cert_file" ] || procd_add_jail_mount "$tls_cert_file"
-	[ -z "$tls_key_file" ] || procd_add_jail_mount "$tls_key_file"
+	mount_jail_file "assets_path" "1"
+	mount_jail_file "database_file" "0" "1"
+	mount_jail_file "tls_cert_file"
+	mount_jail_file "tls_key_file"
 
 	procd_close_instance
 }
