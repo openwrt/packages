@@ -1,5 +1,5 @@
---- a/lua-nginx/src/ngx_http_lua_module.c
-+++ b/lua-nginx/src/ngx_http_lua_module.c
+--- a/nginx-mod-lua/src/ngx_http_lua_module.c
++++ b/nginx-mod-lua/src/ngx_http_lua_module.c
 @@ -207,12 +207,14 @@ static ngx_command_t ngx_http_lua_cmds[]
        offsetof(ngx_http_lua_loc_conf_t, log_socket_errors),
        NULL },
