@@ -6,6 +6,8 @@ worker_processes auto;
 
 user root;
 
+include module.d/*.module;
+
 events {}
 
 http {
