@@ -1018,6 +1018,7 @@ f_getstatus() {
 f_lookup() {
 	local cnt list domain lookup ip elementsv4 elementsv6 start_time end_time duration cnt_domain="0" cnt_ip="0" feed="${1}"
 
+	[ -z "${ban_dev}" ] && f_conf
 	start_time="$(date "+%s")"
 	if [ "${feed}" = "allowlist" ]; then
 		list="$("${ban_awkcmd}" '/^([[:alnum:]_-]{1,63}\.)+[[:alpha:]]+([[:space:]]|$)/{printf "%s ",tolower($1)}' "${ban_allowlist}" 2>/dev/null)"
