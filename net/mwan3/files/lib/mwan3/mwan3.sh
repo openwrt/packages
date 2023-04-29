@@ -264,6 +264,11 @@ mwan3_set_general_iptables()
 		if [ -n "${current##*-N mwan3_ifaces_in*}" ]; then
 			mwan3_push_update -N mwan3_ifaces_in
 		fi
+		if [ "$IPT" = "$IPT6" ]; then
+			if [ -n "${current##*-N mwan3_ifaces_pre*}" ]; then
+				mwan3_push_update -N mwan3_ifaces_pre
+			fi
+		fi
 
 		if [ "$IPT" = "$IPT6" ]; then
 			family="ipv6"
@@ -290,6 +295,9 @@ mwan3_set_general_iptables()
 			mwan3_push_update -N mwan3_hook
 			# do not mangle ipv6 ra service
 			if [ "$IPT" = "$IPT6" ]; then
+				mwan3_push_update -A mwan3_hook \
+						  -m mark ! --mark 0x0/$MMX_MASK \
+						  -j mwan3_ifaces_pre
 				mwan3_push_update -A mwan3_hook \
 						  -p ipv6-icmp \
 						  -m icmp6 --icmpv6-type 133 \
@@ -380,11 +388,23 @@ mwan3_create_iface_iptables()
 	if [ -n "${current##*-N mwan3_ifaces_in*}" ]; then
 		mwan3_push_update -N mwan3_ifaces_in
 	fi
+	if [ "$IPT" = "$IPT6" ]; then
+		if [ -n "${current##*-N mwan3_ifaces_pre*}" ]; then
+			mwan3_push_update -N mwan3_ifaces_pre
+		fi
+	fi
 
 	if [ -n "${current##*-N mwan3_iface_in_$1$'\n'*}" ]; then
 		mwan3_push_update -N "mwan3_iface_in_$1"
 	else
 		mwan3_push_update -F "mwan3_iface_in_$1"
+	fi
+	if [ "$IPT" = "$IPT6" ]; then
+		if [ -n "${current##*-N mwan3_iface_pre_$1$'\n'*}" ]; then
+			mwan3_push_update -N "mwan3_iface_pre_$1"
+		else
+			mwan3_push_update -F "mwan3_iface_pre_$1"
+		fi
 	fi
 
 	for chain in custom connected dynamic; do
@@ -400,6 +420,12 @@ mwan3_create_iface_iptables()
 			  -m mark --mark "0x0/$MMX_MASK" \
 			  -m comment --comment "$1" \
 			  -j MARK --set-xmark "$(mwan3_id2mask id MMX_MASK)/$MMX_MASK"
+	if [ "$IPT" = "$IPT6" ]; then
+		mwan3_push_update -A "mwan3_iface_pre_$1" \
+				  -i "$2" \
+				  -m mark ! --mark "0x0/$MMX_MASK" \
+				  -j MARK --set-xmark "0x0/$MMX_MASK"
+	fi
 
 	if [ -n "${current##*-A mwan3_ifaces_in -m mark --mark 0x0/$MMX_MASK -j mwan3_iface_in_${1}$'\n'*}" ]; then
 		mwan3_push_update -A mwan3_ifaces_in \
@@ -408,6 +434,16 @@ mwan3_create_iface_iptables()
 		LOG debug "create_iface_iptables: mwan3_iface_in_$1 not in iptables, adding"
 	else
 		LOG debug "create_iface_iptables: mwan3_iface_in_$1 already in iptables, skip"
+	fi
+	if [ "$IPT" = "$IPT6" ]; then
+		if [ -n "${current##*-A mwan3_ifaces_pre -m mark ! --mark 0x0/$MMX_MASK -j mwan3_iface_pre_${1}$'\n'*}" ]; then
+			mwan3_push_update -A mwan3_ifaces_pre \
+					  -m mark ! --mark 0x0/$MMX_MASK \
+					  -j "mwan3_iface_pre_$1"
+			LOG debug "create_iface_iptables: mwan3_iface_pre_$1 not in iptables, adding"
+		else
+			LOG debug "create_iface_iptables: mwan3_iface_pre_$1 already in iptables, skip"
+		fi
 	fi
 
 	mwan3_push_update COMMIT
