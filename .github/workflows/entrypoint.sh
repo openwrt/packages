@@ -26,9 +26,23 @@ for PKG in /ci/*.ipk; do
 
 	echo "Testing package $PKG_NAME in version $PKG_VERSION from $PKG_SOURCE"
 
-	opkg install "$PKG"
-
 	export PKG_NAME PKG_VERSION CI_HELPER
+
+	PRE_TEST_SCRIPT=$(find /ci/ -name "$PKG_SOURCE" -type d)/pre-test.sh
+
+	if [ -f "$PRE_TEST_SCRIPT" ]; then
+		echo "Use package specific pre-test.sh"
+		if sh "$PRE_TEST_SCRIPT" "$PKG_NAME" "$PKG_VERSION"; then
+			echo "Pre-test successful"
+		else
+			echo "Pre-test failed"
+			exit 1
+		fi
+	else
+		echo "No pre-test.sh script available"
+	fi
+
+	opkg install "$PKG"
 
 	TEST_SCRIPT=$(find /ci/ -name "$PKG_SOURCE" -type d)/test.sh
 
