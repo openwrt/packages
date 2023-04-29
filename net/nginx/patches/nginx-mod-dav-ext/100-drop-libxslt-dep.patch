@@ -1,5 +1,5 @@
---- a/nginx-dav-ext-module/config
-+++ b/nginx-dav-ext-module/config
+--- a/nginx-mod-dav-ext/config
++++ b/nginx-mod-dav-ext/config
 @@ -8,9 +8,8 @@ ngx_module_name=ngx_http_dav_ext_module
  # building nginx with the xslt module, in which case libxslt will
  # be linked anyway.  In other cases libxslt is just redundant.
