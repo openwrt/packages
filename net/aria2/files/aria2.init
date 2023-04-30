@@ -105,7 +105,7 @@ aria2_validate() {
 		'bt_seed_unverified:or("true","false")' \
 		'bt_stop_timeout:uinteger' \
 		'bt_tracker:list(string)' \
-		'ca_certificate:file' \
+		'ca_certificate:string:/etc/ssl/certs/ca-certificates.crt' \
 		'certificate:file' \
 		'check_certificate:or("true","false"):true' \
 		'check_integrity:or("true","false")' \
