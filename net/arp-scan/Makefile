@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=arp-scan
-PKG_VERSION:=1.9.8
+PKG_VERSION:=1.10.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/royhills/arp-scan/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=b9b75ceaef6348f5951b06c773ec7a243a9e780e160eafebc369f9c27f6a7d3f
+PKG_HASH:=204b13487158b8e46bf6dd207757a52621148fdd1d2467ebd104de17493bab25
 
 PKG_MAINTAINER:=Sergey Urushkin <urusha.v1.0@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -70,7 +70,6 @@ endef
 
 define Package/arp-scan-database/install
 	$(INSTALL_DIR) $(1)/usr/share/arp-scan
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/ieee-iab.txt $(1)/usr/share/arp-scan/
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/ieee-oui.txt $(1)/usr/share/arp-scan/
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/mac-vendor.txt $(1)/usr/share/arp-scan/
 endef
