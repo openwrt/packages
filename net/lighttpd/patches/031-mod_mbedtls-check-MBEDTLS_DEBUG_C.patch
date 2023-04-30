@@ -1,0 +1,23 @@
+From 37cbdacda78f9df4aba4c39e60472025d93bb7ba Mon Sep 17 00:00:00 2001
+From: Glenn Strauss <gstrauss@gluelogic.com>
+Date: Fri, 28 Apr 2023 03:17:16 -0400
+Subject: [PATCH] [mod_mbedtls] check MBEDTLS_DEBUG_C for debug func
+
+---
+ src/mod_mbedtls.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+--- a/src/mod_mbedtls.c
++++ b/src/mod_mbedtls.c
+@@ -2357,9 +2357,11 @@ CONNECTION_FUNC(mod_mbedtls_handle_con_a
+      * overlap, and so this debug setting is not reset upon connection close.
+      * Once enabled, debug hook will remain so for this mbedtls_ssl_config */
+     if (hctx->conf.ssl_log_noise) {/* volume level for debug message callback */
++      #ifdef MBEDTLS_DEBUG_C
+       #if MBEDTLS_VERSION_NUMBER >= 0x02000000 /* mbedtls 2.0.0 */
+         mbedtls_debug_set_threshold(hctx->conf.ssl_log_noise);
+       #endif
++      #endif
+         mbedtls_ssl_conf_dbg(hctx->ssl_ctx, mod_mbedtls_debug_cb,
+                              (void *)(intptr_t)hctx->conf.ssl_log_noise);
+     }
