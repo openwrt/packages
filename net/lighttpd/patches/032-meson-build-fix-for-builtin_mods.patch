@@ -1,0 +1,20 @@
+From 2fc157f37ea4644ba9ac776de1926b9e518ec42b Mon Sep 17 00:00:00 2001
+From: Glenn Strauss <gstrauss@gluelogic.com>
+Date: Sat, 29 Apr 2023 00:43:55 -0400
+Subject: [PATCH] [meson] build fix for builtin_mods
+
+---
+ src/meson.build | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+--- a/src/meson.build
++++ b/src/meson.build
+@@ -656,7 +656,7 @@ executable('lighttpd-angel',
+ )
+ 
+ executable('lighttpd', configparser,
+-	sources: common_src + main_src,
++	sources: common_src + main_src + builtin_mods,
+ 	dependencies: [ common_flags, lighttpd_flags
+ 		, libattr
+ 		, libcrypto
