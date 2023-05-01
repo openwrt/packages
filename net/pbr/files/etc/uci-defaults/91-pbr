@@ -4,6 +4,7 @@
 readonly packageName='pbr'
 readonly __OK__='\033[0;32m[\xe2\x9c\x93]\033[0m'
 
+# shellcheck disable=SC2317
 pbr_iface_setup() {
 	local iface="${1}"
 	local proto
