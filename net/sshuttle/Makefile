@@ -11,11 +11,11 @@ PKG_NAME:=sshuttle
 PKG_VERSION:=1.1.1
 PKG_RELEASE:=1
 
-PYPI_NAME:=$(PKG_NAME)
+PYPI_NAME:=sshuttle
 PKG_HASH:=f5a3ed1e5ab1213c7a6df860af41f1a903ab2cafbfef71f371acdcff21e69ee6
 
 PKG_MAINTAINER:=Thomas Cujé <dev.cuje@freenet.de>
-PKG_LICENSE:=LGPL-2.1-only
+PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=LICENSE
 
 include ../../lang/python/pypi.mk
@@ -26,7 +26,7 @@ define Package/sshuttle
   SUBMENU:=SSH
   SECTION:=net
   CATEGORY:=Network
-  TITLE:=sshuttle: where transparent proxy meets VPN meets ssh
+  TITLE:=Full-featured VPN over an SSH tunnel
   URL:=https://github.com/sshuttle/sshuttle
   EXTRA_DEPENDS:= \
   	python3-light \
@@ -36,7 +36,7 @@ define Package/sshuttle
 endef
 
 define Package/sshuttle/description
-Transparent proxy server that works as a poor man's VPN. Forwards over ssh. Doesn't require admin. Works with Linux and MacOS. Supports DNS tunneling.
+  Transparent proxy server that works as a poor man's VPN. Forwards over ssh. Doesn't require admin. Works with Linux and MacOS. Supports DNS tunneling.
 endef
 
 define Package/sshuttle/conffiles
