@@ -17,7 +17,7 @@ jobs:
 
           - arch: mips_24kc
             target: ath79-generic
-            runtime_test: false
+            runtime_test: true
 
           - arch: mipsel_24kc
             target: mt7621
@@ -162,7 +162,9 @@ jobs:
       - name: Register QEMU
         if: ${{ matrix.runtime_test }}
         run: |
-          sudo docker run --rm --privileged aptman/qus -s -- -p
+          sudo apt-get update
+          sudo apt-get install -y qemu-user-static binfmt-support
+          sudo update-binfmts --import
 
       - name: Build Docker container
         if: ${{ matrix.runtime_test }}
