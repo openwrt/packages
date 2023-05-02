@@ -83,6 +83,7 @@ stop_service() {
 		table="$($IPT -S)"
 		{
 			echo "*mangle";
+			[ -z "${table##*PREROUTING -j mwan3_pre*}" ] && echo "-D PREROUTING -j mwan3_pre"
 			[ -z "${table##*PREROUTING -j mwan3_hook*}" ] && echo "-D PREROUTING -j mwan3_hook"
 			[ -z "${table##*OUTPUT -j mwan3_hook*}" ] && echo "-D OUTPUT -j mwan3_hook"
 			echo "$table" | awk '{print "-F "$2}' | grep mwan3 | sort -u
