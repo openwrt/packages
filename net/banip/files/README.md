@@ -139,6 +139,7 @@ Available commands:
 | ban_logforwardlan       | option | 0                             | log rejects in the lan-forward chain                                                                         |
 | ban_autoallowlist       | option | 1                             | add wan IPs/subnets and resolved domains automatically to the local allowlist (not only to the Sets)         |
 | ban_autoblocklist       | option | 1                             | add suspicious attacker IPs and resolved domains automatically to the local blocklist (not only to the Sets) |
+| ban_autoallowuplink     | option | subnet                        | limit the uplink autoallow function to: 'subnet', 'ip' or 'disable' it at all                                |
 | ban_allowlistonly       | option | 0                             | restrict the internet access from/to a small number of secure websites/IPs                                   |
 | ban_basedir             | option | /tmp                          | base working directory while banIP processing                                                                |
 | ban_reportdir           | option | /tmp/banIP-report             | directory where banIP stores the report files                                                                |

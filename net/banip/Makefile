@@ -1,5 +1,5 @@
 #
-# banIP - ban incoming and outgoing ip addresses/subnets via sets in nftables
+# banIP - ban incoming and outgoing ip addresses/subnets via Sets in nftables
 # Copyright (c) 2018-2023 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 #
@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=banip
 PKG_VERSION:=0.8.4
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
 
@@ -23,7 +23,7 @@ define Package/banip
 endef
 
 define Package/banip/description
-banIP blocks IP addresses via named nftables sets.
+banIP blocks IP addresses via named nftables Sets.
 banIP supports many IP blocklist feeds and provides a log service to block suspicious IPs in realtime.
 Please see https://github.com/openwrt/packages/blob/master/net/banip/files/README.md for further information.
 

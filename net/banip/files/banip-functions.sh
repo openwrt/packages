@@ -51,6 +51,7 @@ ban_logforwardwan="1"
 ban_logforwardlan="0"
 ban_allowlistonly="0"
 ban_autoallowlist="1"
+ban_autoallowuplink="subnet"
 ban_autoblocklist="1"
 ban_deduplicate="1"
 ban_splitsize="0"
@@ -65,7 +66,7 @@ ban_protov6="0"
 ban_ifv4=""
 ban_ifv6=""
 ban_dev=""
-ban_sub=""
+ban_uplink=""
 ban_fetchinsecure=""
 ban_cores=""
 ban_memory=""
@@ -105,7 +106,7 @@ f_mkdir() {
 	if [ ! -d "${dir}" ]; then
 		rm -f "${dir}"
 		mkdir -p "${dir}"
-		f_log "debug" "f_mkdir   ::: created directory: ${dir}"
+		f_log "debug" "f_mkdir     ::: created directory: ${dir}"
 	fi
 }
 
@@ -116,7 +117,7 @@ f_mkfile() {
 
 	if [ ! -f "${file}" ]; then
 		: >"${file}"
-		f_log "debug" "f_mkfile  ::: created file: ${file}"
+		f_log "debug" "f_mkfile    ::: created file: ${file}"
 	fi
 }
 
@@ -127,7 +128,7 @@ f_tmp() {
 	ban_tmpdir="$(mktemp -p "${ban_basedir}" -d)"
 	ban_tmpfile="$(mktemp -p "${ban_tmpdir}" -tu)"
 
-	f_log "debug" "f_tmp     ::: base_dir: ${ban_basedir:-"-"}, tmp_dir: ${ban_tmpdir:-"-"}"
+	f_log "debug" "f_tmp       ::: base_dir: ${ban_basedir:-"-"}, tmp_dir: ${ban_tmpdir:-"-"}"
 }
 
 # remove directories
@@ -137,7 +138,7 @@ f_rmdir() {
 
 	if [ -d "${dir}" ]; then
 		rm -rf "${dir}"
-		f_log "debug" "f_rmdir   ::: deleted directory: ${dir}"
+		f_log "debug" "f_rmdir     ::: deleted directory: ${dir}"
 	fi
 }
 
@@ -286,7 +287,7 @@ f_fetch() {
 			;;
 	esac
 
-	f_log "debug" "f_fetch   ::: fetch_cmd: ${ban_fetchcmd:-"-"}, fetch_parm: ${ban_fetchparm:-"-"}"
+	f_log "debug" "f_fetch     ::: fetch_cmd: ${ban_fetchcmd:-"-"}, fetch_parm: ${ban_fetchparm:-"-"}"
 }
 
 # remove logservice
@@ -363,7 +364,7 @@ f_getif() {
 	fi
 	[ -z "${ban_ifv4}" ] && [ -z "${ban_ifv6}" ] && f_log "err" "wan interfaces not found, please check your configuration"
 
-	f_log "debug" "f_getif   ::: auto/update: ${ban_autodetect}/${update}, interfaces (4/6): ${ban_ifv4}/${ban_ifv6}, protocols (4/6): ${ban_protov4}/${ban_protov6}"
+	f_log "debug" "f_getif     ::: auto/update: ${ban_autodetect}/${update}, interfaces (4/6): ${ban_ifv4}/${ban_ifv6}, protocols (4/6): ${ban_protov4}/${ban_protov6}"
 }
 
 # get wan devices
@@ -398,37 +399,45 @@ f_getdev() {
 	ban_dev="${ban_dev%%?}"
 	[ -z "${ban_dev}" ] && f_log "err" "wan devices not found, please check your configuration"
 
-	f_log "debug" "f_getdev  ::: auto/update: ${ban_autodetect}/${update}, devices: ${ban_dev}, cnt: ${cnt}"
+	f_log "debug" "f_getdev    ::: auto/update: ${ban_autodetect}/${update}, devices: ${ban_dev}, cnt: ${cnt}"
 }
 
-# get local subnets
+# get local uplink
 #
-f_getsub() {
-	local sub iface ip update="0"
+f_getuplink() {
+	local uplink iface ip update="0"
 
-	if [ "${ban_autoallowlist}" = "1" ]; then
+	if [ "${ban_autoallowlist}" = "1" ] && [ "${ban_autoallowuplink}" != "disable" ]; then
 		for iface in ${ban_ifv4} ${ban_ifv6}; do
 			network_flush_cache
-			network_get_subnet sub "${iface}"
-			if [ -n "${sub}" ] && ! printf " %s " "${ban_sub}" | "${ban_grepcmd}" -q " ${sub} "; then
-				ban_sub="${ban_sub}${sub} "
+			if [ "${ban_autoallowuplink}" = "subnet" ]; then
+				network_get_subnet uplink "${iface}"
+			elif [ "${ban_autoallowuplink}" = "ip" ]; then
+				network_get_ipaddr uplink "${iface}"
 			fi
-			network_get_subnet6 sub "${iface}"
-			if [ -n "${sub}" ] && ! printf " %s " "${ban_sub}" | "${ban_grepcmd}" -q " ${sub} "; then
-				ban_sub="${ban_sub}${sub} "
+			if [ -n "${uplink}" ] && ! printf " %s " "${ban_uplink}" | "${ban_grepcmd}" -q " ${uplink} "; then
+				ban_uplink="${ban_uplink}${uplink} "
+			fi
+			if [ "${ban_autoallowuplink}" = "subnet" ]; then
+				network_get_subnet6 uplink "${iface}"
+			elif [ "${ban_autoallowuplink}" = "ip" ]; then
+				network_get_ipaddr6 uplink "${iface}"
+			fi
+			if [ -n "${uplink}" ] && ! printf " %s " "${ban_uplink}" | "${ban_grepcmd}" -q " ${uplink} "; then
+				ban_uplink="${ban_uplink}${uplink} "
 			fi
 		done
-		for ip in ${ban_sub}; do
+		for ip in ${ban_uplink}; do
 			if ! "${ban_grepcmd}" -q "${ip}" "${ban_allowlist}"; then
 				update="1"
-				printf "%-42s%s\n" "${ip}" "# subnet added on $(date "+%Y-%m-%d %H:%M:%S")" >>"${ban_allowlist}"
-				f_log "info" "added subnet '${ip}' to local allowlist"
+				printf "%-42s%s\n" "${ip}" "# uplink added on $(date "+%Y-%m-%d %H:%M:%S")" >>"${ban_allowlist}"
+				f_log "info" "added uplink '${ip}' to local allowlist"
 			fi
 		done
-		ban_sub="${ban_sub%%?}"
+		ban_uplink="${ban_uplink%%?}"
 	fi
 
-	f_log "debug" "f_getsub  ::: auto/update: ${ban_autoallowlist}/${update}, subnet(s): ${ban_sub:-"-"}"
+	f_log "debug" "f_getuplink ::: auto/update: ${ban_autoallowlist}/${update}, uplink: ${ban_uplink:-"-"}"
 }
 
 # get feed information
@@ -499,7 +508,7 @@ f_nftinit() {
 	feed_log="$("${ban_nftcmd}" -f "${file}" 2>&1)"
 	feed_rc="${?}"
 
-	f_log "debug" "f_nftinit ::: devices: ${ban_dev}, priority: ${ban_nftpriority}, policy: ${ban_nftpolicy}, loglevel: ${ban_nftloglevel}, rc: ${feed_rc:-"-"}, log: ${feed_log:-"-"}"
+	f_log "debug" "f_nftinit   ::: devices: ${ban_dev}, priority: ${ban_nftpriority}, policy: ${ban_nftpolicy}, loglevel: ${ban_nftloglevel}, rc: ${feed_rc:-"-"}, log: ${feed_log:-"-"}"
 	return ${feed_rc}
 }
 
@@ -824,7 +833,7 @@ f_down() {
 	rm -f "${tmp_split}" "${tmp_nft}"
 	end_ts="$(date +%s)"
 
-	f_log "debug" "f_down    ::: name: ${feed}, cnt_dl: ${cnt_dl:-"-"}, cnt_set: ${cnt_set:-"-"}, split_size: ${ban_splitsize:-"-"}, time: $((end_ts - start_ts)), rc: ${feed_rc:-"-"}, log: ${feed_log:-"-"}"
+	f_log "debug" "f_down      ::: name: ${feed}, cnt_dl: ${cnt_dl:-"-"}, cnt_set: ${cnt_set:-"-"}, split_size: ${ban_splitsize:-"-"}, time: $((end_ts - start_ts)), rc: ${feed_rc:-"-"}, log: ${feed_log:-"-"}"
 }
 
 # backup feeds
@@ -835,7 +844,7 @@ f_backup() {
 	gzip -cf "${feed_file}" >"${ban_backupdir}/banIP.${feed}.gz"
 	backup_rc="${?}"
 
-	f_log "debug" "f_backup  ::: name: ${feed}, source: ${feed_file##*/}, target: banIP.${feed}.gz, rc: ${backup_rc}"
+	f_log "debug" "f_backup    ::: name: ${feed}, source: ${feed_file##*/}, target: banIP.${feed}.gz, rc: ${backup_rc}"
 	return ${backup_rc}
 }
 
@@ -851,7 +860,7 @@ f_restore() {
 		restore_rc="${?}"
 	fi
 
-	f_log "debug" "f_restore ::: name: ${feed}, source: banIP.${tmp_feed}.gz, target: ${feed_file##*/}, in_rc: ${feed_rc}, rc: ${restore_rc}"
+	f_log "debug" "f_restore   ::: name: ${feed}, source: banIP.${tmp_feed}.gz, target: ${feed_file##*/}, in_rc: ${feed_rc}, rc: ${restore_rc}"
 	return ${restore_rc}
 }
 
@@ -891,7 +900,7 @@ f_rmset() {
 	fi
 	rm -f "${tmp_del}"
 
-	f_log "debug" "f_rmset   ::: sets: ${del_set:-"-"}, rc: ${feed_rc:-"-"}, log: ${feed_log:-"-"}"
+	f_log "debug" "f_rmset     ::: sets: ${del_set:-"-"}, rc: ${feed_rc:-"-"}, log: ${feed_log:-"-"}"
 }
 
 # generate status information
@@ -941,10 +950,10 @@ f_genstatus() {
 		json_close_object
 	done
 	json_close_array
-	json_add_array "active_subnets"
-	for object in ${ban_sub:-"-"}; do
+	json_add_array "active_uplink"
+	for object in ${ban_uplink:-"-"}; do
 		json_add_object
-		json_add_string "subnet" "${object}"
+		json_add_string "uplink" "${object}"
 		json_close_object
 	done
 	json_close_array
@@ -1063,7 +1072,7 @@ f_lookup() {
 	end_time="$(date "+%s")"
 	duration="$(((end_time - start_time) / 60))m $(((end_time - start_time) % 60))s"
 
-	f_log "debug" "feed: ${feed}, domains: ${cnt_domain}, IPs: ${cnt_ip}, duration: ${duration}"
+	f_log "debug" "f_lookup    ::: feed: ${feed}, domains: ${cnt_domain}, IPs: ${cnt_ip}, duration: ${duration}"
 }
 
 # table statistics
@@ -1310,7 +1319,7 @@ f_mail() {
 		f_log "info" "failed to send status mail (${?})"
 	fi
 
-	f_log "debug" "f_mail    ::: notification: ${ban_mailnotification}, template: ${ban_mailtemplate}, profile: ${ban_mailprofile}, receiver: ${ban_mailreceiver}, rc: ${?}"
+	f_log "debug" "f_mail      ::: notification: ${ban_mailnotification}, template: ${ban_mailtemplate}, profile: ${ban_mailprofile}, receiver: ${ban_mailreceiver}, rc: ${?}"
 }
 
 # initial sourcing
