@@ -2,7 +2,7 @@
 +++ b/go.mod
 @@ -2,6 +2,8 @@ module tailscale.com
  
- go 1.19
+ go 1.20
  
 +replace github.com/coreos/go-iptables => ./patched/go-iptables
 +
