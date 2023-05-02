@@ -18,7 +18,7 @@
  		}
  	}
  
-@@ -1635,11 +1635,6 @@ func checkIPv6(logf logger.Logf) error {
+@@ -1676,11 +1676,6 @@ func checkIPv6(logf logger.Logf) error {
  		return fmt.Errorf("kernel doesn't support IPv6 policy routing: %w", err)
  	}
  
