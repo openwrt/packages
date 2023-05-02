@@ -132,15 +132,33 @@ $(call Package/isc-dhcp-server/description)
  This package is compiled with IPv4 and IPv6 support.
 endef
 
-define Package/isc-dhcp-dyndns
+define Package/isc-dhcp-dyndns-ipv4
   $(call Package/isc-dhcp/Default)
   TITLE+= server dynamic DNS dependencies (meta)
-  DEPENDS+=@(PACKAGE_isc-dhcp-server-ipv4||PACKAGE_isc-dhcp-server-ipv6) +bind-server +bind-client
+  DEPENDS+=isc-dhcp-server-ipv4 +bind-server +bind-client
+  VARIANT:=ipv4
+endef
+
+define Package/isc-dhcp-dyndns-ipv6
+  $(call Package/isc-dhcp/Default)
+  TITLE+= server dynamic DNS dependencies (meta)
+  DEPENDS+=isc-dhcp-server-ipv6 +bind-server +bind-client
+  VARIANT:=ipv6
 endef
 
 define Package/isc-dhcp-dyndns/description
  implements the Dynamic Host Configuration Protocol (DHCP) and the Internet
  Bootstrap Protocol (BOOTP).
+endef
+
+define Package/isc-dhcp-dyndns-ipv4/description
+$(call Package/isc-dhcp-dyndns/description)
+ This package is compiled with IPv4 support only.
+endef
+
+define Package/isc-dhcp-dyndns-ipv6/description
+$(call Package/isc-dhcp-dyndns/description)
+ This package is compiled with IPv4 and IPv6 support.
 endef
 
 define Package/isc-dhcp-omshell-ipv4
@@ -222,10 +240,14 @@ endef
 
 define Package/isc-dhcp-server-$(BUILD_VARIANT)/install
 	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/init.d $(1)/etc/uci-defaults
+ifeq ($(BUILD_VARIANT),ipv4)
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/dhcpd $(1)/usr/sbin
 	$(INSTALL_BIN) ./files/dhcpd.init $(1)/etc/init.d/dhcpd
+	$(INSTALL_BIN) ./files/dhcpd.conf $(1)/etc
 	$(INSTALL_BIN) ./files/dhcpd.defaults $(1)/etc/uci-defaults
+endif
 ifeq ($(BUILD_VARIANT),ipv6)
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/dhcpd $(1)/usr/sbin/dhcpd6
 	$(INSTALL_BIN) ./files/dhcpd6.init $(1)/etc/init.d/dhcpd6
 	$(INSTALL_BIN) ./files/dhcpd6.conf $(1)/etc
 endif
@@ -239,7 +261,7 @@ define Package/isc-dhcp-server-ipv6/conffiles
 /etc/dhcpd6.conf
 endef
 
-define Package/isc-dhcp-dyndns/install
+define Package/isc-dhcp-dyndns-$(BUILD_VARIANT)/install
 	:
 endef
 
@@ -267,10 +289,11 @@ endef
 
 $(eval $(call BuildPackage,isc-dhcp-relay-ipv4))
 $(eval $(call BuildPackage,isc-dhcp-server-ipv4))
-$(eval $(call BuildPackage,isc-dhcp-dyndns))
+$(eval $(call BuildPackage,isc-dhcp-dyndns-ipv4))
 $(eval $(call BuildPackage,isc-dhcp-client-ipv4))
 $(eval $(call BuildPackage,isc-dhcp-omshell-ipv4))
 $(eval $(call BuildPackage,isc-dhcp-relay-ipv6))
 $(eval $(call BuildPackage,isc-dhcp-server-ipv6))
+$(eval $(call BuildPackage,isc-dhcp-dyndns-ipv6))
 $(eval $(call BuildPackage,isc-dhcp-client-ipv6))
 $(eval $(call BuildPackage,isc-dhcp-omshell-ipv6))
