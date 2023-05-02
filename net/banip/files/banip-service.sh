@@ -1,5 +1,5 @@
 #!/bin/sh
-# banIP main service script - ban incoming and outgoing ip addresses/subnets via sets in nftables
+# banIP main service script - ban incoming and outgoing ip addresses/subnets via Sets in nftables
 # Copyright (c) 2018-2023 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
@@ -15,13 +15,13 @@ ban_funlib="/usr/lib/banip-functions.sh"
 #
 f_conf
 f_log "info" "start banIP processing (${ban_action})"
-f_log "debug" "f_system  ::: system: ${ban_sysver:-"n/a"}, version: ${ban_ver:-"n/a"}, memory: ${ban_memory:-"0"}, cpu_cores: ${ban_cores}"
+f_log "debug" "f_system    ::: system: ${ban_sysver:-"n/a"}, version: ${ban_ver:-"n/a"}, memory: ${ban_memory:-"0"}, cpu_cores: ${ban_cores}"
 f_genstatus "processing"
 f_tmp
 f_fetch
 f_getif
 f_getdev
-f_getsub
+f_getuplink
 f_mkdir "${ban_backupdir}"
 f_mkfile "${ban_blocklist}"
 f_mkfile "${ban_allowlist}"
