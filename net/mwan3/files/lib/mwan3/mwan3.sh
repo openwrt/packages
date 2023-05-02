@@ -338,6 +338,16 @@ mwan3_set_general_iptables()
 			done
 		fi
 
+		if [ -n "${current##*-N mwan3_pre*}" ]; then
+			mwan3_push_update -N mwan3_pre
+			mwan3_push_update -A mwan3_pre \
+					  -m mark ! --mark "0x0/$MMX_MASK" \
+					  -j MARK --set-xmark "0x0/$MMX_MASK"
+		fi
+
+		if [ -n "${current##*-A PREROUTING -j mwan3_pre*}" ]; then
+			mwan3_push_update -A PREROUTING -j mwan3_pre
+		fi
 		if [ -n "${current##*-A PREROUTING -j mwan3_hook*}" ]; then
 			mwan3_push_update -A PREROUTING -j mwan3_hook
 		fi
