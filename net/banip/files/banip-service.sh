@@ -138,7 +138,7 @@ wait
 f_rmset
 f_rmdir "${ban_tmpdir}"
 f_genstatus "active"
-f_log "info" "finished banIP download processes"
+f_log "info" "finish banIP download processes"
 
 # start domain lookup
 #
