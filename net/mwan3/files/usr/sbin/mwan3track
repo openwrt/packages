@@ -128,6 +128,7 @@ connected() {
 	echo "online" > $MWAN3TRACK_STATUS_DIR/$INTERFACE/STATUS
 	echo "0" > $MWAN3TRACK_STATUS_DIR/$INTERFACE/OFFLINE
 	get_uptime > $MWAN3TRACK_STATUS_DIR/$INTERFACE/ONLINE
+	score=$((down+up))
 	host_up_count=0
 	lost=0
 	turn=0
