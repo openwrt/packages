@@ -29,6 +29,7 @@ ban_nftcmd="$(command -v nft)"
 ban_fw4cmd="$(command -v fw4)"
 ban_awkcmd="$(command -v awk)"
 ban_grepcmd="$(command -v grep)"
+ban_sedcmd="$(command -v sed)"
 ban_lookupcmd="$(command -v nslookup)"
 ban_mailcmd="$(command -v msmtp)"
 ban_mailsender="no-reply@banIP"
@@ -248,17 +249,17 @@ f_conf() {
 # prepare fetch utility
 #
 f_fetch() {
-	local ut utils packages insecure
+	local item utils packages insecure
 
 	if [ -z "${ban_fetchcmd}" ] || [ ! -x "${ban_fetchcmd}" ]; then
-		packages="$(${ban_ubuscmd} -S call rpc-sys packagelist 2>/dev/null)"
-		[ -z "${packages}" ] && f_log "err" "local opkg package repository is not available, please set the download utility 'ban_fetchcmd' manually"
+		packages="$(${ban_ubuscmd} -S call rpc-sys packagelist '{ "all": true }' 2>/dev/null)"
+		[ -z "${packages}" ] && f_log "err" "local package repository is not available, please set the download utility 'ban_fetchcmd' manually"
 		utils="aria2c curl wget uclient-fetch"
-		for ut in ${utils}; do
-			if { [ "${ut}" = "uclient-fetch" ] && printf "%s" "${packages}" | "${ban_grepcmd}" -q '"libustream-'; } ||
-				{ [ "${ut}" = "wget" ] && printf "%s" "${packages}" | "${ban_grepcmd}" -q '"wget-ssl'; } ||
-				[ "${ut}" = "curl" ] || [ "${ut}" = "aria2c" ]; then
-				ban_fetchcmd="$(command -v "${ut}")"
+		for item in ${utils}; do
+			if { [ "${item}" = "uclient-fetch" ] && printf "%s" "${packages}" | "${ban_grepcmd}" -q '"libustream-'; } ||
+				{ [ "${item}" = "wget" ] && printf "%s" "${packages}" | "${ban_grepcmd}" -q '"wget-ssl'; } ||
+				[ "${item}" = "curl" ] || [ "${item}" = "aria2c" ]; then
+				ban_fetchcmd="$(command -v "${item}")"
 				if [ -x "${ban_fetchcmd}" ]; then
 					uci_set banip global ban_fetchcmd "${ban_fetchcmd##*/}"
 					uci_commit "banip"
@@ -429,12 +430,18 @@ f_getuplink() {
 		done
 		for ip in ${ban_uplink}; do
 			if ! "${ban_grepcmd}" -q "${ip}" "${ban_allowlist}"; then
-				update="1"
+				if [ "${update}" = "0" ]; then
+					"${ban_sedcmd}" -i '/# uplink added on /d' "${ban_allowlist}"
+				fi
 				printf "%-42s%s\n" "${ip}" "# uplink added on $(date "+%Y-%m-%d %H:%M:%S")" >>"${ban_allowlist}"
 				f_log "info" "added uplink '${ip}' to local allowlist"
+				update="1"
 			fi
 		done
 		ban_uplink="${ban_uplink%%?}"
+	elif [ "${ban_autoallowlist}" = "1" ] && [ "${ban_autoallowuplink}" = "disable" ]; then
+		"${ban_sedcmd}" -i '/# uplink added on /d' "${ban_allowlist}"
+		update="1"
 	fi
 
 	f_log "debug" "f_getuplink ::: auto/update: ${ban_autoallowlist}/${update}, uplink: ${ban_uplink:-"-"}"
@@ -867,7 +874,7 @@ f_restore() {
 # remove disabled feeds
 #
 f_rmset() {
-	local feedlist tmp_del ruleset_raw table_sets handle set del_set feed_log feed_rc
+	local feedlist tmp_del ruleset_raw item table_sets handle del_set feed_log feed_rc
 
 	f_getfeed
 	json_get_keys feedlist
@@ -876,19 +883,19 @@ f_rmset() {
 	table_sets="$(printf "%s\n" "${ruleset_raw}" | jsonfilter -qe '@.nftables[@.set.table="banIP"].set.name')"
 	{
 		printf "%s\n\n" "#!/usr/sbin/nft -f"
-		for set in ${table_sets}; do
-			if ! printf "%s" "allowlist blocklist ${ban_feed}" | "${ban_grepcmd}" -q "${set%v*}" ||
-				! printf "%s" "allowlist blocklist ${feedlist}" | "${ban_grepcmd}" -q "${set%v*}"; then
-				del_set="${del_set}${set}, "
-				rm -f "${ban_backupdir}/banIP.${set}.gz"
-				printf "%s\n" "flush set inet banIP ${set}"
-				handle="$(printf "%s\n" "${ruleset_raw}" | jsonfilter -l1 -qe "@.nftables[@.rule.table=\"banIP\"&&@.rule.chain=\"wan-input\"][@.expr[0].match.right=\"@${set}\"].handle")"
+		for item in ${table_sets}; do
+			if ! printf "%s" "allowlist blocklist ${ban_feed}" | "${ban_grepcmd}" -q "${item%v*}" ||
+				! printf "%s" "allowlist blocklist ${feedlist}" | "${ban_grepcmd}" -q "${item%v*}"; then
+				del_set="${del_set}${item}, "
+				rm -f "${ban_backupdir}/banIP.${item}.gz"
+				printf "%s\n" "flush set inet banIP ${item}"
+				handle="$(printf "%s\n" "${ruleset_raw}" | jsonfilter -l1 -qe "@.nftables[@.rule.table=\"banIP\"&&@.rule.chain=\"wan-input\"][@.expr[0].match.right=\"@${item}\"].handle")"
 				[ -n "${handle}" ] && printf "%s\n" "delete rule inet banIP wan-input handle ${handle}"
-				handle="$(printf "%s\n" "${ruleset_raw}" | jsonfilter -l1 -qe "@.nftables[@.rule.table=\"banIP\"&&@.rule.chain=\"wan-forward\"][@.expr[0].match.right=\"@${set}\"].handle")"
+				handle="$(printf "%s\n" "${ruleset_raw}" | jsonfilter -l1 -qe "@.nftables[@.rule.table=\"banIP\"&&@.rule.chain=\"wan-forward\"][@.expr[0].match.right=\"@${item}\"].handle")"
 				[ -n "${handle}" ] && printf "%s\n" "delete rule inet banIP wan-forward handle ${handle}"
-				handle="$(printf "%s\n" "${ruleset_raw}" | jsonfilter -l1 -qe "@.nftables[@.rule.table=\"banIP\"&&@.rule.chain=\"lan-forward\"][@.expr[0].match.right=\"@${set}\"].handle")"
+				handle="$(printf "%s\n" "${ruleset_raw}" | jsonfilter -l1 -qe "@.nftables[@.rule.table=\"banIP\"&&@.rule.chain=\"lan-forward\"][@.expr[0].match.right=\"@${item}\"].handle")"
 				[ -n "${handle}" ] && printf "%s\n" "delete rule inet banIP lan-forward handle ${handle}"
-				printf "%s\n\n" "delete set inet banIP ${set}"
+				printf "%s\n\n" "delete set inet banIP ${item}"
 			fi
 		done
 	} >"${tmp_del}"
@@ -906,7 +913,7 @@ f_rmset() {
 # generate status information
 #
 f_genstatus() {
-	local object duration set table_sets cnt_elements="0" custom="0" split="0" status="${1}"
+	local object duration item table_sets cnt_elements="0" custom="0" split="0" status="${1}"
 
 	[ -z "${ban_dev}" ] && f_conf
 	if [ "${status}" = "active" ]; then
@@ -916,8 +923,8 @@ f_genstatus() {
 		fi
 		table_sets="$("${ban_nftcmd}" -tj list ruleset 2>/dev/null | jsonfilter -qe '@.nftables[@.set.table="banIP"].set.name')"
 		if [ "${ban_reportelements}" = "1" ]; then
-			for set in ${table_sets}; do
-				cnt_elements="$((cnt_elements + $("${ban_nftcmd}" -j list set inet banIP "${set}" 2>/dev/null | jsonfilter -qe '@.nftables[*].set.elem[*]' | wc -l 2>/dev/null)))"
+			for item in ${table_sets}; do
+				cnt_elements="$((cnt_elements + $("${ban_nftcmd}" -j list set inet banIP "${item}" 2>/dev/null | jsonfilter -qe '@.nftables[*].set.elem[*]' | wc -l 2>/dev/null)))"
 			done
 		fi
 		runtime="action: ${ban_action:-"-"}, duration: ${duration:-"-"}, date: $(date "+%Y-%m-%d %H:%M:%S")"
@@ -1078,7 +1085,7 @@ f_lookup() {
 # table statistics
 #
 f_report() {
-	local report_jsn report_txt set tmp_val ruleset_raw table_sets set_cnt set_input set_forwardwan set_forwardlan set_cntinput set_cntforwardwan set_cntforwardlan output="${1}"
+	local report_jsn report_txt tmp_val ruleset_raw item table_sets set_cnt set_input set_forwardwan set_forwardlan set_cntinput set_cntforwardwan set_cntforwardlan output="${1}"
 	local detail set_details jsnval timestamp autoadd_allow autoadd_block sum_sets sum_setinput sum_setforwardwan sum_setforwardlan sum_setelements sum_cntinput sum_cntforwardwan sum_cntforwardlan
 
 	[ -z "${ban_dev}" ] && f_conf
@@ -1102,13 +1109,13 @@ f_report() {
 	: >"${report_jsn}"
 	{
 		printf "%s\n" "{"
-		printf "\t%s\n" '"sets": {'
-		for set in ${table_sets}; do
-			set_cntinput="$(printf "%s" "${ruleset_raw}" | jsonfilter -l1 -qe "@.nftables[@.rule.table=\"banIP\"&&@.rule.chain=\"wan-input\"][@.expr[0].match.right=\"@${set}\"].expr[*].counter.packets")"
-			set_cntforwardwan="$(printf "%s" "${ruleset_raw}" | jsonfilter -l1 -qe "@.nftables[@.rule.table=\"banIP\"&&@.rule.chain=\"wan-forward\"][@.expr[0].match.right=\"@${set}\"].expr[*].counter.packets")"
-			set_cntforwardlan="$(printf "%s" "${ruleset_raw}" | jsonfilter -l1 -qe "@.nftables[@.rule.table=\"banIP\"&&@.rule.chain=\"lan-forward\"][@.expr[0].match.right=\"@${set}\"].expr[*].counter.packets")"
+		printf "\t%s\n" '"sets":{'
+		for item in ${table_sets}; do
+			set_cntinput="$(printf "%s" "${ruleset_raw}" | jsonfilter -l1 -qe "@.nftables[@.rule.table=\"banIP\"&&@.rule.chain=\"wan-input\"][@.expr[0].match.right=\"@${item}\"].expr[*].counter.packets")"
+			set_cntforwardwan="$(printf "%s" "${ruleset_raw}" | jsonfilter -l1 -qe "@.nftables[@.rule.table=\"banIP\"&&@.rule.chain=\"wan-forward\"][@.expr[0].match.right=\"@${item}\"].expr[*].counter.packets")"
+			set_cntforwardlan="$(printf "%s" "${ruleset_raw}" | jsonfilter -l1 -qe "@.nftables[@.rule.table=\"banIP\"&&@.rule.chain=\"lan-forward\"][@.expr[0].match.right=\"@${item}\"].expr[*].counter.packets")"
 			if [ "${ban_reportelements}" = "1" ]; then
-				set_cnt="$("${ban_nftcmd}" -j list set inet banIP "${set}" 2>/dev/null | jsonfilter -qe '@.nftables[*].set.elem[*]' | wc -l 2>/dev/null)"
+				set_cnt="$("${ban_nftcmd}" -j list set inet banIP "${item}" 2>/dev/null | jsonfilter -qe '@.nftables[*].set.elem[*]' | wc -l 2>/dev/null)"
 				sum_setelements="$((sum_setelements + set_cnt))"
 			else
 				set_cnt=""
@@ -1139,7 +1146,7 @@ f_report() {
 				set_cntforwardlan=""
 			fi
 			[ "${sum_sets}" -gt "0" ] && printf "%s\n" ","
-			printf "\t\t%s\n" "\"${set}\": {"
+			printf "\t\t%s\n" "\"${item}\":{"
 			printf "\t\t\t%s\n" "\"cnt_elements\": \"${set_cnt}\","
 			printf "\t\t\t%s\n" "\"cnt_input\": \"${set_cntinput}\","
 			printf "\t\t\t%s\n" "\"input\": \"${set_input}\","
@@ -1193,9 +1200,9 @@ f_report() {
 				if [ -n "${table_sets}" ]; then
 					printf "%-25s%-15s%-24s%-24s%s\n" "    Set" "| Elements" "| WAN-Input (packets)" "| WAN-Forward (packets)" "| LAN-Forward (packets)"
 					printf "%s\n" "    ---------------------+--------------+-----------------------+-----------------------+------------------------"
-					for set in ${table_sets}; do
-						printf "    %-21s" "${set}"
-						json_select "${set}"
+					for item in ${table_sets}; do
+						printf "    %-21s" "${item}"
+						json_select "${item}"
 						json_get_keys set_details
 						for detail in ${set_details}; do
 							json_get_var jsnval "${detail}" >/dev/null 2>&1
@@ -1241,13 +1248,13 @@ f_report() {
 # set search
 #
 f_search() {
-	local set table_sets ip proto run_search hold cnt search="${1}"
+	local item table_sets ip proto hold cnt result_flag="/var/run/banIP.search" input="${1}"
 
-	if [ -n "${search}" ]; then
-		ip="$(printf "%s" "${search}" | "${ban_awkcmd}" 'BEGIN{RS="(([0-9]{1,3}\\.){3}[0-9]{1,3})+"}{printf "%s",RT}')"
+	if [ -n "${input}" ]; then
+		ip="$(printf "%s" "${input}" | "${ban_awkcmd}" 'BEGIN{RS="(([0-9]{1,3}\\.){3}[0-9]{1,3})+"}{printf "%s",RT}')"
 		[ -n "${ip}" ] && proto="v4"
 		if [ -z "${proto}" ]; then
-			ip="$(printf "%s" "${search}" | "${ban_awkcmd}" 'BEGIN{RS="([A-Fa-f0-9]{1,4}::?){3,7}[A-Fa-f0-9]{1,4}"}{printf "%s",RT}')"
+			ip="$(printf "%s" "${input}" | "${ban_awkcmd}" 'BEGIN{RS="([A-Fa-f0-9]{1,4}::?){3,7}[A-Fa-f0-9]{1,4}"}{printf "%s",RT}')"
 			[ -n "${ip}" ] && proto="v6"
 		fi
 	fi
@@ -1261,13 +1268,15 @@ f_search() {
 	printf "    %s\n" "Looking for IP '${ip}' on $(date "+%Y-%m-%d %H:%M:%S")"
 	printf "    %s\n" "---"
 	cnt="1"
-	run_search="/var/run/banIP.search"
-	for set in ${table_sets}; do
-		[ -f "${run_search}" ] && break
+	for item in ${table_sets}; do
+		if [ -f "${result_flag}" ]; then
+			rm -f "${result_flag}"
+			return
+		fi
 		(
-			if "${ban_nftcmd}" get element inet banIP "${set}" "{ ${ip} }" >/dev/null 2>&1; then
-				printf "    %s\n" "IP found in Set '${set}'"
-				: >"${run_search}"
+			if "${ban_nftcmd}" get element inet banIP "${item}" "{ ${ip} }" >/dev/null 2>&1; then
+				printf "    %s\n" "IP found in Set '${item}'"
+				: >"${result_flag}"
 			fi
 		) &
 		hold="$((cnt % ban_cores))"
@@ -1275,22 +1284,21 @@ f_search() {
 		cnt="$((cnt + 1))"
 	done
 	wait
-	[ ! -f "${run_search}" ] && printf "    %s\n" "IP not found"
-	rm -f "${run_search}"
+	printf "    %s\n" "IP not found"
 }
 
 # set survey
 #
 f_survey() {
-	local set_elements set="${1}"
+	local set_elements input="${1}"
 
-	if [ -z "${set}" ]; then
+	if [ -z "${input}" ]; then
 		printf "%s\n%s\n%s\n" ":::" "::: no valid survey input" ":::"
 		return
 	fi
-	[ -n "${set}" ] && set_elements="$("${ban_nftcmd}" -j list set inet banIP "${set}" 2>/dev/null | jsonfilter -qe '@.nftables[*].set.elem[*]')"
+	set_elements="$("${ban_nftcmd}" -j list set inet banIP "${input}" 2>/dev/null | jsonfilter -qe '@.nftables[*].set.elem[*]')"
 	printf "%s\n%s\n%s\n" ":::" "::: banIP Survey" ":::"
-	printf "    %s\n" "List the elements of Set '${set}' on $(date "+%Y-%m-%d %H:%M:%S")"
+	printf "    %s\n" "List the elements of Set '${input}' on $(date "+%Y-%m-%d %H:%M:%S")"
 	printf "    %s\n" "---"
 	[ -n "${set_elements}" ] && printf "%s\n" "${set_elements}" || printf "    %s\n" "empty set"
 }
