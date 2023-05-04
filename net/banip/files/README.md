@@ -1,9 +1,9 @@
 <!-- markdownlint-disable -->
 
-# banIP - ban incoming and outgoing IP addresses/subnets via sets in nftables
+# banIP - ban incoming and outgoing IP addresses/subnets via Sets in nftables
 
 ## Description
-IP address blocking is commonly used to protect against brute force attacks, prevent disruptive or unauthorized address(es) from access or it can be used to restrict access to or from a particular geographic area — for example. Further more banIP scans the log file via logread and bans IP addresses that make too many password failures, e.g. via ssh.  
+IP address blocking is commonly used to protect against brute force attacks, prevent disruptive or unauthorized address(es) from access or it can be used to restrict access to or from a particular geographic area — for example. Further more banIP scans the log file via logread and bans IPs that make too many password failures, e.g. via ssh.  
 
 ## Main Features
 * banIP supports the following fully pre-configured domain blocklist feeds (free for private usage, for commercial use please check their individual licenses).  
@@ -57,9 +57,9 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 | yoyo                | yoyo IPs                       |         |         |    x    | [Link](https://github.com/dibdot/banIP-IP-blocklists)         |
 
 * Zero-conf like automatic installation & setup, usually no manual changes needed
-* All sets are handled in a separate nft table/namespace 'banIP'
+* All Sets are handled in a separate nft table/namespace 'banIP'
 * Full IPv4 and IPv6 support
-* Supports nft atomic set loading
+* Supports nft atomic Set loading
 * Supports blocking by ASN numbers and by iso country codes
 * Supports local allow- and blocklist (IPv4, IPv6, CIDR notation or domain names)
 * Auto-add the uplink subnet to the local allowlist
@@ -70,10 +70,10 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * Automatic blocklist backup & restore, the backups will be used in case of download errors or during startup
 * Automatically selects one of the following download utilities with ssl support: aria2c, curl, uclient-fetch or wget
 * Supports an 'allowlist only' mode, this option restricts internet access from/to a small number of secure websites/IPs
-* Deduplicate IPs accross all sets (single IPs only, no intervals)
+* Deduplicate IPs accross all Sets (single IPs only, no intervals)
 * Provides comprehensive runtime information
-* Provides a detailed set report
-* Provides a set search engine for certain IPs
+* Provides a detailed Set report
+* Provides a Set search engine for certain IPs
 * Feed parsing by fast & flexible regex rulesets
 * Minimal status & error logging to syslog, enable debug logging to receive more output
 * Procd based init system support (start/stop/restart/reload/status/report/search/survey/lookup)
@@ -112,9 +112,9 @@ Available commands:
 	enable          Enable service autostart
 	disable         Disable service autostart
 	enabled         Check if service is started on boot
-	report          [text|json|mail] Print banIP related set statistics
-	search          [<IPv4 address>|<IPv6 address>] Check if an element exists in a banIP set
-	survey          [<set name>] List all elements of a given banIP set
+	report          [text|json|mail] Print banIP related Set statistics
+	search          [<IPv4 address>|<IPv6 address>] Check if an element exists in a banIP Set
+	survey          [<Set name>] List all elements of a given banIP Set
 	lookup          Lookup the IPs of domain names in the local lists and update them
 	running         Check if service is running
 	status          Service status
@@ -129,7 +129,7 @@ Available commands:
 | ban_enabled             | option | 0                             | enable the banIP service                                                                                     |
 | ban_nicelimit           | option | 0                             | ulimit nice level of the banIP service (range 0-19)                                                          |
 | ban_filelimit           | option | 1024                          | ulimit max open/number of files (range 1024-4096)                                                            |
-| ban_loglimit            | option | 100                           | scan only the last n log entries permanently. Set it to '0' to disable the monitor                           |
+| ban_loglimit            | option | 100                           | scan only the last n log entries permanently. A value of '0' disables the monitor                            |
 | ban_logcount            | option | 1                             | how many times the IP must appear in the log to be considered as suspicious                                  |
 | ban_logterm             | list   | regex                         | various regex for logfile parsing (default: dropbear, sshd, luci, nginx, asterisk)                           |
 | ban_autodetect          | option | 1                             | auto-detect wan interfaces, devices and subnets                                                              |
@@ -152,12 +152,12 @@ Available commands:
 | ban_trigger             | list   | -                             | logical startup trigger interface(s), e.g. 'wan'                                                             |
 | ban_triggerdelay        | option | 10                            | trigger timeout before banIP processing begins                                                               |
 | ban_triggeraction       | option | start                         | trigger action on ifup events, e.g. start, restart or reload                                                 |
-| ban_deduplicate         | option | 1                             | deduplicate IP addresses across all active sets                                                              |
-| ban_splitsize           | option | 0                             | split ext. sets after every n lines/members (saves RAM)                                                      |
+| ban_deduplicate         | option | 1                             | deduplicate IP addresses across all active Sets                                                              |
+| ban_splitsize           | option | 0                             | split ext. Sets after every n lines/members (saves RAM)                                                      |
 | ban_cores               | option | - / autodetect                | limit the cpu cores used by banIP (saves RAM)                                                                |
 | ban_nftloglevel         | option | warn                          | nft loglevel, values: emerg, alert, crit, err, warn, notice, info, debug                                     |
 | ban_nftpriority         | option | -200                          | nft priority for the banIP table (default is the prerouting table priority)                                  |
-| ban_nftpolicy           | option | memory                        | nft policy for banIP-related sets, values: memory, performance                                               |
+| ban_nftpolicy           | option | memory                        | nft policy for banIP-related Sets, values: memory, performance                                               |
 | ban_nftexpiry           | option | -                             | expiry time for auto added blocklist members, e.g. '5m', '2h' or '1d'                                        |
 | ban_feed                | list   | -                             | external download feeds, e.g. 'yoyo', 'doh', 'country' or 'talos' (see feed table)                           |
 | ban_asn                 | list   | -                             | ASNs for the 'asn' feed, e.g.'32934'                                                                         |
@@ -174,7 +174,7 @@ Available commands:
 | ban_mailtopic           | option | banIP notification            | topic for banIP related notification E-Mails                                                                 |
 | ban_mailprofile         | option | ban_notify                    | mail profile used in 'msmtp' for banIP related notification E-Mails                                          |
 | ban_mailnotification    | option | 0                             | receive E-Mail notifications with every banIP run                                                            |
-| ban_reportelements      | option | 1                             | list set elements in the report, disable this to speed up the report significantly                           |
+| ban_reportelements      | option | 1                             | count Set elements in the report, disable this option to speed up the report significantly                   |
 | ban_resolver            | option | -                             | external resolver used for DNS lookups                                                                       |
 
 ## Examples
@@ -230,11 +230,11 @@ Available commands:
 ~# /etc/init.d/banip status
 ::: banIP runtime information
   + status            : active (nft: ✔, monitor: ✔)
-  + version           : 0.8.3-1
+  + version           : 0.8.5-1
   + element_count     : 281161
   + active_feeds      : allowlistvMAC, allowlistv6, allowlistv4, adawayv4, adguardtrackersv4, adawayv6, adguardv6, adguardv4, adguardtrackersv6, antipopadsv6, antipopadsv4, cinsscorev4, deblv4, countryv6, countryv4, deblv6, dohv4, dohv6, iblockadsv4, firehol1v4, oisdbigv4, yoyov6, threatviewv4, yoyov4, oisdbigv6, blocklistvMAC, blocklistv4, blocklistv6
   + active_devices    : br-wan ::: wan, wan6
-  + active_subnets    : 91.64.169.252/24, 2a02:710c:0:60:958b:3bd0:9e14:abb/128
+  + active_uplink     : 91.64.169.252/24, 2a02:710c:0:60:958b:3bd0:9e14:abb/128
   + nft_info          : priority: -200, policy: memory, loglevel: warn, expiry: -
   + run_info          : base: /mnt/data/banIP, backup: /mnt/data/banIP/backup, report: /mnt/data/banIP/report, feed: /etc/banip/banip.feeds
   + run_flags         : auto: ✔, proto (4/6): ✔/✔, log (wan-inp/wan-fwd/lan-fwd): ✔/✔/✔, dedup: ✔, split: ✘, allowed only: ✘
@@ -259,7 +259,7 @@ Available commands:
 :::
 ::: banIP Survey
 :::
-    List the elements of Set 'cinsscorev4' on 2023-03-06 14:07:58
+    List of elements in the Set 'cinsscorev4' on 2023-03-06 14:07:58
     ---
 1.10.187.179
 1.10.203.30
@@ -291,7 +291,7 @@ list ban_logterm 'SecurityEvent=\"InvalidAccountID\".*RemoteAddress='
 banIP supports local allow and block lists (IPv4, IPv6, CIDR notation or domain names), located in /etc/banip/banip.allowlist and /etc/banip/banip.blocklist.  
 Unsuccessful login attempts or suspicious requests will be tracked and added to the local blocklist (see the 'ban\_autoblocklist' option). The blocklist behaviour can be further tweaked with the 'ban\_nftexpiry' option.  
 Furthermore the uplink subnet will be added to local allowlist (see 'ban\_autoallowlist' option).  
-Both lists also accept domain names as input to allow IP filtering based on these names. The corresponding IPs (IPv4 & IPv6) will be extracted and added to the sets. You can also start the domain lookup separately via /etc/init.d/banip lookup at any time.
+Both lists also accept domain names as input to allow IP filtering based on these names. The corresponding IPs (IPv4 & IPv6) will be extracted and added to the Sets. You can also start the domain lookup separately via /etc/init.d/banip lookup at any time.
 
 **allowlist-only mode**  
 banIP supports an "allowlist only" mode. This option restricts the internet access from/to a small number of secure websites/IPs, and block access from/to the rest of the internet. All IPs and Domains which are _not_ listed in the allowlist are blocked.
@@ -307,12 +307,12 @@ For a regular, automatic status mailing and update of the used lists on a daily 
 ```
 
 **tweaks for low memory systems**  
-nftables supports the atomic loading of rules/sets/members, which is cool but unfortunately is also very memory intensive. To reduce the memory pressure on low memory systems (i.e. those with 256-512Mb RAM), you should optimize your configuration with the following options:  
+nftables supports the atomic loading of firewall rules (incl. elements), which is cool but unfortunately is also very memory intensive. To reduce the memory pressure on low memory systems (i.e. those with 256-512Mb RAM), you should optimize your configuration with the following options:  
 
     * point 'ban_basedir', 'ban_reportdir' and 'ban_backupdir' to an external usb drive
     * set 'ban_cores' to '1' (only useful on a multicore system) to force sequential feed processing
-    * set 'ban_splitsize' e.g. to '1000' to split the load of an external set after every 1000 lines/members
-    * set 'ban_reportelements' to '0' to disable the CPU intensive counting of set elements
+    * set 'ban_splitsize' e.g. to '1000' to split the load of an external Set after every 1000 lines/members
+    * set 'ban_reportelements' to '0' to disable the CPU intensive counting of Set elements
 
 **tweak the download options**  
 By default banIP uses the following pre-configured download options:
@@ -350,7 +350,7 @@ The banIP default blocklist feeds are stored in an external JSON file '/etc/bani
 A valid JSON source object contains the following information, e.g.:
 ```
 	[...]
-	"tor": {
+	"tor":{
 		"url_4": "https://raw.githubusercontent.com/SecOps-Institute/Tor-IP-Addresses/master/tor-exit-nodes.lst",
 		"url_6": "https://raw.githubusercontent.com/SecOps-Institute/Tor-IP-Addresses/master/tor-exit-nodes.lst",
 		"rule_4": "/^(([0-9]{1,3}\\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\\/(1?[0-9]|2?[0-9]|3?[0-2]))?)$/{printf \"%s,\\n\",$1}",

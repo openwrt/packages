@@ -1,5 +1,5 @@
-# banIP mail template/include
-# Copyright (c) 2020-2023 Dirk Brenken (dev@brenken.org)
+# banIP mail template/include - ban incoming and outgoing IPs via named nftables Sets
+# Copyright (c) 2018-2023 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # info preparation
