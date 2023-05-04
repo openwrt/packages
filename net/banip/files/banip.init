@@ -1,5 +1,5 @@
 #!/bin/sh /etc/rc.common
-# banIP init script - ban incoming and outgoing ip adresses/subnets via sets in nftables
+# banIP init script - ban incoming and outgoing IPs via named nftables Sets
 # Copyright (c) 2018-2023 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
@@ -9,9 +9,9 @@
 START=30
 USE_PROCD=1
 
-extra_command "report" "[text|json|mail] Print banIP related set statistics"
-extra_command "search" "[<IPv4 address>|<IPv6 address>] Check if an element exists in a banIP set"
-extra_command "survey" "[<set name>] List all elements of a given banIP set"
+extra_command "report" "[text|json|mail] Print banIP related Set statistics"
+extra_command "search" "[<IPv4 address>|<IPv6 address>] Check if an element exists in a banIP Set"
+extra_command "survey" "[<Set name>] List all elements of a given banIP Set"
 extra_command "lookup" "Lookup the IPs of domain names in the local lists and update them"
 
 ban_init="/etc/init.d/banip"
@@ -45,7 +45,7 @@ start_service() {
 		procd_close_instance
 	else
 		[ -z "$(command -v "f_system")" ] && . "${ban_funlib}"
-		f_log "err" "banIP service autostart is currently disabled, please enable the service autostart with '/etc/init.d/banip enable'"
+		f_log "err" "banIP service autostart is disabled"
 		rm -rf "${ban_lock}"
 	fi
 }

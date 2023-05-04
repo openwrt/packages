@@ -1,4 +1,4 @@
-# banIP shared function library/include
+# banIP shared function library/include - ban incoming and outgoing IPs via named nftables Sets
 # Copyright (c) 2018-2023 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
@@ -107,7 +107,7 @@ f_mkdir() {
 	if [ ! -d "${dir}" ]; then
 		rm -f "${dir}"
 		mkdir -p "${dir}"
-		f_log "debug" "f_mkdir     ::: created directory: ${dir}"
+		f_log "debug" "f_mkdir     ::: directory: ${dir}"
 	fi
 }
 
@@ -118,7 +118,7 @@ f_mkfile() {
 
 	if [ ! -f "${file}" ]; then
 		: >"${file}"
-		f_log "debug" "f_mkfile    ::: created file: ${file}"
+		f_log "debug" "f_mkfile    ::: file: ${file}"
 	fi
 }
 
@@ -139,7 +139,7 @@ f_rmdir() {
 
 	if [ -d "${dir}" ]; then
 		rm -rf "${dir}"
-		f_log "debug" "f_rmdir     ::: deleted directory: ${dir}"
+		f_log "debug" "f_rmdir     ::: directory: ${dir}"
 	fi
 }
 
@@ -253,7 +253,7 @@ f_fetch() {
 
 	if [ -z "${ban_fetchcmd}" ] || [ ! -x "${ban_fetchcmd}" ]; then
 		packages="$(${ban_ubuscmd} -S call rpc-sys packagelist '{ "all": true }' 2>/dev/null)"
-		[ -z "${packages}" ] && f_log "err" "local package repository is not available, please set the download utility 'ban_fetchcmd' manually"
+		[ -z "${packages}" ] && f_log "err" "no local package repository"
 		utils="aria2c curl wget uclient-fetch"
 		for item in ${utils}; do
 			if { [ "${item}" = "uclient-fetch" ] && printf "%s" "${packages}" | "${ban_grepcmd}" -q '"libustream-'; } ||
@@ -268,7 +268,7 @@ f_fetch() {
 			fi
 		done
 	fi
-	[ ! -x "${ban_fetchcmd}" ] && f_log "err" "download utility with SSL support not found"
+	[ ! -x "${ban_fetchcmd}" ] && f_log "err" "no download utility with SSL support"
 	case "${ban_fetchcmd##*/}" in
 		"aria2c")
 			[ "${ban_fetchinsecure}" = "1" ] && insecure="--check-certificate=false"
@@ -288,7 +288,7 @@ f_fetch() {
 			;;
 	esac
 
-	f_log "debug" "f_fetch     ::: fetch_cmd: ${ban_fetchcmd:-"-"}, fetch_parm: ${ban_fetchparm:-"-"}"
+	f_log "debug" "f_fetch     ::: cmd: ${ban_fetchcmd:-"-"}, parm: ${ban_fetchparm:-"-"}"
 }
 
 # remove logservice
@@ -336,7 +336,7 @@ f_getif() {
 				ban_ifv4="${iface}"
 				uci_set banip global ban_protov4 "1"
 				uci_add_list banip global ban_ifv4 "${iface}"
-				f_log "info" "added IPv4 interface '${iface}' to config"
+				f_log "info" "add IPv4 interface '${iface}' to config"
 			fi
 		fi
 		if [ -z "${ban_ifv6}" ]; then
@@ -347,7 +347,7 @@ f_getif() {
 				ban_ifv6="${iface}"
 				uci_set banip global ban_protov6 "1"
 				uci_add_list banip global ban_ifv6 "${iface}"
-				f_log "info" "added IPv6 interface '${iface}' to config"
+				f_log "info" "add IPv6 interface '${iface}' to config"
 			fi
 		fi
 	fi
@@ -359,11 +359,11 @@ f_getif() {
 		ban_ifv6="${ban_ifv6%%?}"
 		for iface in ${ban_ifv4} ${ban_ifv6}; do
 			if ! "${ban_ubuscmd}" -t 10 wait_for network.interface."${iface}" >/dev/null 2>&1; then
-				f_log "err" "wan interface '${iface}' is not available, please check your configuration"
+				f_log "err" "no wan interface '${iface}'"
 			fi
 		done
 	fi
-	[ -z "${ban_ifv4}" ] && [ -z "${ban_ifv6}" ] && f_log "err" "wan interfaces not found, please check your configuration"
+	[ -z "${ban_ifv4}" ] && [ -z "${ban_ifv6}" ] && f_log "err" "no wan interfaces"
 
 	f_log "debug" "f_getif     ::: auto/update: ${ban_autodetect}/${update}, interfaces (4/6): ${ban_ifv4}/${ban_ifv6}, protocols (4/6): ${ban_protov4}/${ban_protov6}"
 }
@@ -385,7 +385,7 @@ f_getdev() {
 					if ! printf " %s " "${ban_dev}" | "${ban_grepcmd}" -q " ${dev} "; then
 						ban_dev="${ban_dev}${dev} "
 						uci_add_list banip global ban_dev "${dev}"
-						f_log "info" "added device '${dev}' to config"
+						f_log "info" "add device '${dev}' to config"
 					fi
 				fi
 			done
@@ -398,7 +398,7 @@ f_getdev() {
 		uci_commit "banip"
 	fi
 	ban_dev="${ban_dev%%?}"
-	[ -z "${ban_dev}" ] && f_log "err" "wan devices not found, please check your configuration"
+	[ -z "${ban_dev}" ] && f_log "err" "no wan devices"
 
 	f_log "debug" "f_getdev    ::: auto/update: ${ban_autodetect}/${update}, devices: ${ban_dev}, cnt: ${cnt}"
 }
@@ -429,12 +429,12 @@ f_getuplink() {
 			fi
 		done
 		for ip in ${ban_uplink}; do
-			if ! "${ban_grepcmd}" -q "${ip}" "${ban_allowlist}"; then
+			if ! "${ban_grepcmd}" -q "${ip} " "${ban_allowlist}"; then
 				if [ "${update}" = "0" ]; then
 					"${ban_sedcmd}" -i '/# uplink added on /d' "${ban_allowlist}"
 				fi
 				printf "%-42s%s\n" "${ip}" "# uplink added on $(date "+%Y-%m-%d %H:%M:%S")" >>"${ban_allowlist}"
-				f_log "info" "added uplink '${ip}' to local allowlist"
+				f_log "info" "add uplink '${ip}' to local allowlist"
 				update="1"
 			fi
 		done
@@ -453,17 +453,17 @@ f_getfeed() {
 	json_init
 	if [ -s "${ban_customfeedfile}" ]; then
 		if ! json_load_file "${ban_customfeedfile}" >/dev/null 2>&1; then
-			f_log "info" "banIP custom feed file can't be loaded"
+			f_log "info" "can't load banIP custom feed file"
 			if ! json_load_file "${ban_feedfile}" >/dev/null 2>&1; then
-				f_log "err" "banIP feed file can't be loaded"
+				f_log "err" "can't load banIP feed file"
 			fi
 		fi
 	elif ! json_load_file "${ban_feedfile}" >/dev/null 2>&1; then
-		f_log "err" "banIP feed file can't be loaded"
+		f_log "err" "can't load banIP feed file"
 	fi
 }
 
-# get set elements
+# get Set elements
 #
 f_getelements() {
 	local file="${1}"
@@ -751,10 +751,10 @@ f_down() {
 		feed_rc="${?}"
 	fi
 
-	# build nft file with set and rules for regular downloads
+	# build nft file with Sets and rules for regular downloads
 	#
 	if [ "${feed_rc}" = "0" ] && [ ! -s "${tmp_nft}" ]; then
-		# deduplicate sets
+		# deduplicate Sets
 		#
 		if [ "${ban_deduplicate}" = "1" ] && [ "${feed_url}" != "local" ]; then
 			"${ban_awkcmd}" "${feed_rule}" "${tmp_load}" 2>/dev/null >"${tmp_raw}"
@@ -763,13 +763,13 @@ f_down() {
 			"${ban_awkcmd}" "${feed_rule}" "${tmp_load}" 2>/dev/null >"${tmp_split}"
 		fi
 		feed_rc="${?}"
-		# split sets
+		# split Sets
 		#
 		if [ "${feed_rc}" = "0" ]; then
 			if [ -n "${ban_splitsize//[![:digit]]/}" ] && [ "${ban_splitsize//[![:digit]]/}" -gt "0" ]; then
 				if ! "${ban_awkcmd}" "NR%${ban_splitsize//[![:digit]]/}==1{file=\"${tmp_file}.\"++i;}{ORS=\" \";print > file}" "${tmp_split}" 2>/dev/null; then
 					rm -f "${tmp_file}".*
-					f_log "info" "failed to split '${feed}' Set to size '${ban_splitsize//[![:digit]]/}'"
+					f_log "info" "can't split Set '${feed}' to size '${ban_splitsize//[![:digit]]/}'"
 				fi
 			else
 				"${ban_awkcmd}" '{ORS=" ";print}' "${tmp_split}" 2>/dev/null >"${tmp_file}.1"
@@ -779,7 +779,7 @@ f_down() {
 		rm -f "${tmp_raw}" "${tmp_load}"
 		if [ "${feed_rc}" = "0" ] && [ "${proto}" = "4" ]; then
 			{
-				# nft header (IPv4 set)
+				# nft header (IPv4 Set)
 				#
 				printf "%s\n\n" "#!/usr/sbin/nft -f"
 				[ -s "${tmp_flush}" ] && cat "${tmp_flush}"
@@ -793,7 +793,7 @@ f_down() {
 			} >"${tmp_nft}"
 		elif [ "${feed_rc}" = "0" ] && [ "${proto}" = "6" ]; then
 			{
-				# nft header (IPv6 set)
+				# nft header (IPv6 Set)
 				#
 				printf "%s\n\n" "#!/usr/sbin/nft -f"
 				[ -s "${tmp_flush}" ] && cat "${tmp_flush}"
@@ -815,6 +815,7 @@ f_down() {
 		if [ "${cnt_dl:-"0"}" -gt "0" ] || [ "${feed_url}" = "local" ] || [ "${feed%v*}" = "allowlist" ] || [ "${feed%v*}" = "blocklist" ]; then
 			feed_log="$("${ban_nftcmd}" -f "${tmp_nft}" 2>&1)"
 			feed_rc="${?}"
+
 			# load additional split files
 			#
 			if [ "${feed_rc}" = "0" ]; then
@@ -825,7 +826,7 @@ f_down() {
 						continue
 					fi
 					if ! "${ban_nftcmd}" add element inet banIP "${feed}" "{ $(cat "${split_file}") }" >/dev/null 2>&1; then
-						f_log "info" "failed to add split file '${split_file##*.}' to '${feed}' Set"
+						f_log "info" "can't add split file '${split_file##*.}' to Set '${feed}'"
 					fi
 					rm -f "${split_file}"
 				done
@@ -834,7 +835,7 @@ f_down() {
 				fi
 			fi
 		else
-			f_log "info" "empty feed '${feed}' will be skipped"
+			f_log "info" "skip empty feed '${feed}'"
 		fi
 	fi
 	rm -f "${tmp_split}" "${tmp_nft}"
@@ -871,7 +872,7 @@ f_restore() {
 	return ${restore_rc}
 }
 
-# remove disabled feeds
+# remove disabled Sets
 #
 f_rmset() {
 	local feedlist tmp_del ruleset_raw item table_sets handle del_set feed_log feed_rc
@@ -1068,12 +1069,12 @@ f_lookup() {
 	done
 	if [ -n "${elementsv4}" ]; then
 		if ! "${ban_nftcmd}" add element inet banIP "${feed}v4" "{ ${elementsv4} }" >/dev/null 2>&1; then
-			f_log "info" "failed to add lookup file to '${feed}v4' Set"
+			f_log "info" "can't add lookup file to Set '${feed}v4'"
 		fi
 	fi
 	if [ -n "${elementsv6}" ]; then
 		if ! "${ban_nftcmd}" add element inet banIP "${feed}v6" "{ ${elementsv6} }" >/dev/null 2>&1; then
-			f_log "info" "failed to add lookup file to '${feed}v6' Set"
+			f_log "info" "can't add lookup file to Set '${feed}v6'"
 		fi
 	fi
 	end_time="$(date "+%s")"
@@ -1245,7 +1246,7 @@ f_report() {
 	rm -f "${report_txt}"
 }
 
-# set search
+# Set search
 #
 f_search() {
 	local item table_sets ip proto hold cnt result_flag="/var/run/banIP.search" input="${1}"
@@ -1287,7 +1288,7 @@ f_search() {
 	printf "    %s\n" "IP not found"
 }
 
-# set survey
+# Set survey
 #
 f_survey() {
 	local set_elements input="${1}"
@@ -1298,12 +1299,12 @@ f_survey() {
 	fi
 	set_elements="$("${ban_nftcmd}" -j list set inet banIP "${input}" 2>/dev/null | jsonfilter -qe '@.nftables[*].set.elem[*]')"
 	printf "%s\n%s\n%s\n" ":::" "::: banIP Survey" ":::"
-	printf "    %s\n" "List the elements of Set '${input}' on $(date "+%Y-%m-%d %H:%M:%S")"
+	printf "    %s\n" "List of elements in the Set '${input}' on $(date "+%Y-%m-%d %H:%M:%S")"
 	printf "    %s\n" "---"
-	[ -n "${set_elements}" ] && printf "%s\n" "${set_elements}" || printf "    %s\n" "empty set"
+	[ -n "${set_elements}" ] && printf "%s\n" "${set_elements}" || printf "    %s\n" "empty Set"
 }
 
-# send status mails
+# send status mail
 #
 f_mail() {
 	local msmtp_debug
@@ -1313,19 +1314,16 @@ f_mail() {
 	if [ -r "${ban_mailtemplate}" ]; then
 		. "${ban_mailtemplate}"
 	else
-		f_log "info" "the mail template is missing"
+		f_log "info" "no mail template"
 	fi
-	[ -z "${mail_text}" ] && f_log "info" "the 'mail_text' template variable is empty"
+	[ -z "${mail_text}" ] && f_log "info" "no mail content"
 	[ "${ban_debug}" = "1" ] && msmtp_debug="--debug"
 
 	# send mail
 	#
 	ban_mailhead="From: ${ban_mailsender}\nTo: ${ban_mailreceiver}\nSubject: ${ban_mailtopic}\nReply-to: ${ban_mailsender}\nMime-Version: 1.0\nContent-Type: text/html;charset=utf-8\nContent-Disposition: inline\n\n"
-	if printf "%b" "${ban_mailhead}${mail_text}" | "${ban_mailcmd}" --timeout=10 ${msmtp_debug} -a "${ban_mailprofile}" "${ban_mailreceiver}" >/dev/null 2>&1; then
-		f_log "info" "status mail was sent successfully"
-	else
-		f_log "info" "failed to send status mail (${?})"
-	fi
+	printf "%b" "${ban_mailhead}${mail_text}" | "${ban_mailcmd}" --timeout=10 ${msmtp_debug} -a "${ban_mailprofile}" "${ban_mailreceiver}" >/dev/null 2>&1
+	f_log "info" "send status mail (${?})"
 
 	f_log "debug" "f_mail      ::: notification: ${ban_mailnotification}, template: ${ban_mailtemplate}, profile: ${ban_mailprofile}, receiver: ${ban_mailreceiver}, rc: ${?}"
 }
@@ -1345,8 +1343,7 @@ fi
 #
 f_system
 if [ "${ban_action}" != "stop" ]; then
-	[ ! -d "/etc/banip" ] && f_log "err" "banIP config directory not found, please re-install the package"
-	[ ! -r "/etc/banip/banip.feeds" ] && f_log "err" "banIP feed file not found, please re-install the package"
-	[ ! -r "/etc/config/banip" ] && f_log "err" "banIP config not found, please re-install the package"
-	[ "$(uci_get banip global ban_enabled)" = "0" ] && f_log "err" "banIP is currently disabled, please set the config option 'ban_enabled' to '1' to use this service"
+	[ ! -d "/etc/banip" ] && f_log "err" "no banIP config directory"
+	[ ! -r "/etc/config/banip" ] && f_log "err" "no banIP config"
+	[ "$(uci_get banip global ban_enabled)" = "0" ] && f_log "err" "banIP is disabled"
 fi

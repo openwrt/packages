@@ -1,5 +1,5 @@
 #!/bin/sh
-# banIP main service script - ban incoming and outgoing ip addresses/subnets via Sets in nftables
+# banIP main service script - ban incoming and outgoing IPs via named nftables Sets
 # Copyright (c) 2018-2023 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
@@ -36,10 +36,10 @@ if [ "${ban_action}" != "reload" ]; then
 			sleep 1
 		done
 		if ! /etc/init.d/firewall status >/dev/null 2>&1; then
-			f_log "err" "nft based firewall/fw4 not functional"
+			f_log "err" "error in nft based firewall/fw4"
 		fi
 	else
-		f_log "err" "nft based firewall/fw4 not found"
+		f_log "err" "no nft based firewall/fw4"
 	fi
 fi
 
@@ -47,9 +47,9 @@ fi
 #
 if [ "${ban_action}" != "reload" ] || ! "${ban_nftcmd}" -t list set inet banIP allowlistvMAC >/dev/null 2>&1; then
 	if f_nftinit "${ban_tmpfile}".init.nft; then
-		f_log "info" "nft namespace initialized"
+		f_log "info" "initialize nft namespace"
 	else
-		f_log "err" "nft namespace can't be initialized"
+		f_log "err" "can't initialize nft namespace"
 	fi
 fi
 
@@ -83,7 +83,7 @@ for feed in allowlist ${ban_feed} blocklist; do
 	# external feeds
 	#
 	if ! json_select "${feed}" >/dev/null 2>&1; then
-		f_log "info" "unknown feed '${feed}' will be removed"
+		f_log "info" "remove unknown feed '${feed}'"
 		uci_remove_list banip global ban_feed "${feed}"
 		uci_commit "banip"
 		continue
@@ -99,7 +99,7 @@ for feed in allowlist ${ban_feed} blocklist; do
 	if { { [ -n "${feed_url_4}" ] && [ -z "${feed_rule_4}" ]; } || { [ -z "${feed_url_4}" ] && [ -n "${feed_rule_4}" ]; }; } ||
 		{ { [ -n "${feed_url_6}" ] && [ -z "${feed_rule_6}" ]; } || { [ -z "${feed_url_6}" ] && [ -n "${feed_rule_6}" ]; }; } ||
 		{ [ -z "${feed_url_4}" ] && [ -z "${feed_rule_4}" ] && [ -z "${feed_url_6}" ] && [ -z "${feed_rule_6}" ]; }; then
-		f_log "info" "incomplete feed '${feed}' will be skipped"
+		f_log "info" "skip incomplete feed '${feed}'"
 		continue
 	fi
 
@@ -138,7 +138,6 @@ wait
 f_rmset
 f_rmdir "${ban_tmpdir}"
 f_genstatus "active"
-f_log "info" "finish banIP download processes"
 
 # start domain lookup
 #
@@ -191,15 +190,15 @@ if [ -x "${ban_logreadcmd}" ] && [ -n "${ban_logterm%%??}" ] && [ "${ban_loglimi
 				[ -n "${ip}" ] && proto="v6"
 			fi
 			if [ -n "${proto}" ] && ! "${ban_nftcmd}" get element inet banIP blocklist"${proto}" "{ ${ip} }" >/dev/null 2>&1; then
-				f_log "info" "suspicious IP${proto} found '${ip}'"
+				f_log "info" "suspicious IP${proto} '${ip}'"
 				log_raw="$("${ban_logreadcmd}" -l "${ban_loglimit}" 2>/dev/null)"
 				log_count="$(printf "%s\n" "${log_raw}" | grep -c "found '${ip}'")"
 				if [ "${log_count}" -ge "${ban_logcount}" ]; then
 					if "${ban_nftcmd}" add element inet banIP "blocklist${proto}" "{ ${ip} ${nft_expiry} }" >/dev/null 2>&1; then
-						f_log "info" "added IP${proto} '${ip}' (expiry: ${nft_expiry:-"-"}) to blocklist${proto} set"
+						f_log "info" "add IP${proto} '${ip}' (expiry: ${nft_expiry:-"-"}) to blocklist${proto} set"
 						if [ "${ban_autoblocklist}" = "1" ] && ! grep -q "^${ip}" "${ban_blocklist}"; then
 							printf "%-42s%s\n" "${ip}" "# added on $(date "+%Y-%m-%d %H:%M:%S")" >>"${ban_blocklist}"
-							f_log "info" "added IP${proto} '${ip}' to local blocklist"
+							f_log "info" "add IP${proto} '${ip}' to local blocklist"
 						fi
 					fi
 				fi
