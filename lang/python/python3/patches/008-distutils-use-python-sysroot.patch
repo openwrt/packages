@@ -36,7 +36,7 @@ Signed-off-by: Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
                  self.library_dirs.append('.')
 --- a/Lib/sysconfig.py
 +++ b/Lib/sysconfig.py
-@@ -123,10 +123,17 @@ _SCHEME_KEYS = ('stdlib', 'platstdlib',
+@@ -168,10 +168,17 @@ _SCHEME_KEYS = ('stdlib', 'platstdlib',
  _PY_VERSION = sys.version.split()[0]
  _PY_VERSION_SHORT = f'{sys.version_info[0]}.{sys.version_info[1]}'
  _PY_VERSION_SHORT_NO_DOT = f'{sys.version_info[0]}{sys.version_info[1]}'
