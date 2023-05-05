@@ -1,6 +1,6 @@
 --- a/setup.py
 +++ b/setup.py
-@@ -822,16 +822,9 @@ class PyBuildExt(build_ext):
+@@ -843,16 +843,9 @@ class PyBuildExt(build_ext):
                          add_dir_to_list(dir_list, directory)
  
      def configure_compiler(self):

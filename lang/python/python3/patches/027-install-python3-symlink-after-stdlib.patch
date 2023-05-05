@@ -1,6 +1,6 @@
 --- a/Makefile.pre.in
 +++ b/Makefile.pre.in
-@@ -1361,7 +1361,7 @@ altbininstall: $(BUILDPYTHON) @FRAMEWORK
+@@ -1839,7 +1839,7 @@ altbininstall: $(BUILDPYTHON) @FRAMEWORK
  			$(DESTDIR)$(BINDIR)/python$(VERSION)$(EXE); \
  	fi
  
