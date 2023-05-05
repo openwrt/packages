@@ -341,7 +341,6 @@ mwan3_set_general_iptables()
 		if [ -n "${current##*-N mwan3_pre*}" ]; then
 			mwan3_push_update -N mwan3_pre
 			mwan3_push_update -A mwan3_pre \
-					  -m mark ! --mark "0x0/$MMX_MASK" \
 					  -j MARK --set-xmark "0x0/$MMX_MASK"
 		fi
 
