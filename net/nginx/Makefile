@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
 PKG_VERSION:=1.24.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nginx.org/download/
@@ -62,9 +62,6 @@ PKG_CONFIG_DEPENDS := \
 	CONFIG_NGINX_PCRE \
 	CONFIG_NGINX_HTTP_REAL_IP \
 	CONFIG_NGINX_HTTP_SECURE_LINK \
-	CONFIG_NGINX_STREAM_CORE_MODULE \
-	CONFIG_NGINX_STREAM_SSL_MODULE \
-	CONFIG_NGINX_STREAM_SSL_PREREAD_MODULE \
 	CONFIG_OPENSSL_ENGINE \
 	CONFIG_OPENSSL_WITH_NPN
 
@@ -257,7 +254,6 @@ else
 	--with-http_dav_module \
 	--with-http_auth_request_module --with-http_v2_module --with-http_realip_module \
 	--with-http_secure_link_module --with-http_sub_module \
-	--with-stream_ssl_module --with-stream_ssl_preread_module \
   config_files += koi-utf koi-win win-utf fastcgi_params uwsgi_params
 endif
 
@@ -270,7 +266,7 @@ endif
 ifneq ($(CONFIG_PACKAGE_nginx-mod-dav-ext),)
   ADDITIONAL_MODULES += --add-dynamic-module=$(PKG_BUILD_DIR)/nginx-dav-ext-module
 endif
-ifneq ($(CONFIG_NGINX_STREAM_CORE_MODULE),)
+ifneq ($(CONFIG_PACKAGE_nginx-mod-stream),)
   ADDITIONAL_MODULES += --with-stream=dynamic --with-stream_ssl_module --with-stream_ssl_preread_module
 endif
 ifneq ($(CONFIG_PACKAGE_nginx-mod-ubus),)
@@ -382,7 +378,7 @@ endef
 $(eval $(call module,lua, +luajit,ngx_http_lua, Enable Lua module))
 $(eval $(call module,stream, +@NGINX_STREAM_CORE_MODULE,ngx_stream, Add support for NGINX request streaming.))
 $(eval $(call module,ubus, +libubus +libjson-c +libblobmsg-json +@NGINX_UBUS,ngx_http_ubus, Enable UBUS api support directly from the server.))
-$(eval $(call module,dav-ext, +@NGINX_DAV,ngx_http_dav_ext, Enable the WebDAV methods PROPFIND OPTIONS LOCK UNLOCK.))
+$(eval $(call module,dav-ext, +@NGINX_DAV +libxml2,ngx_http_dav_ext, Enable the WebDAV methods PROPFIND OPTIONS LOCK UNLOCK.))
 $(eval $(call module,headers-more,,ngx_http_headers_more_filter, Set and clear input and output headers...more than "add"!))
 $(eval $(call module,rtmp,,ngx_rtmp, Add support for NGINX-based Media Streaming Server module. \
 		DASH enhanced - https://github.com/ut0mt8/nginx-rtmp-module))
