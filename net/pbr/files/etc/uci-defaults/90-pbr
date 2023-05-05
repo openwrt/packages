@@ -22,6 +22,7 @@ sed -i "s/'POSTROUTING'/'postrouting'/g" /etc/config/pbr
 sed -i "s/option fw_mask '0x\(.*\)'/option fw_mask '\1'/g" /etc/config/pbr
 sed -i "s/option wan_mark '0x\(.*\)'/option wan_mark '\1'/g" /etc/config/pbr
 
+if [ -s '/usr/share/pbr/pbr.firewall.include' ]; then
 uci -q batch <<-EOT
 	delete firewall.pbr
 	set firewall.pbr='include'
@@ -30,5 +31,6 @@ uci -q batch <<-EOT
 	set firewall.pbr.path='/usr/share/pbr/pbr.firewall.include'
 	commit firewall
 EOT
+fi
 
 exit 0
