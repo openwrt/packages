@@ -30,6 +30,8 @@ ban_fw4cmd="$(command -v fw4)"
 ban_awkcmd="$(command -v awk)"
 ban_grepcmd="$(command -v grep)"
 ban_sedcmd="$(command -v sed)"
+ban_catcmd="$(command -v cat)"
+ban_zcatcmd="$(command -v zcat)"
 ban_lookupcmd="$(command -v nslookup)"
 ban_mailcmd="$(command -v msmtp)"
 ban_mailsender="no-reply@banIP"
@@ -50,6 +52,7 @@ ban_asn=""
 ban_loginput="1"
 ban_logforwardwan="1"
 ban_logforwardlan="0"
+ban_allowurl=""
 ban_allowlistonly="0"
 ban_autoallowlist="1"
 ban_autoallowuplink="subnet"
@@ -69,6 +72,7 @@ ban_ifv6=""
 ban_dev=""
 ban_uplink=""
 ban_fetchinsecure=""
+ban_fetchretry="5"
 ban_cores=""
 ban_memory=""
 ban_trigger=""
@@ -197,7 +201,7 @@ f_log() {
 # load config
 #
 f_conf() {
-	unset ban_dev ban_ifv4 ban_ifv6 ban_feed ban_blockinput ban_blockforwardwan ban_blockforwardlan ban_logterm ban_country ban_asn
+	unset ban_dev ban_ifv4 ban_ifv6 ban_feed ban_allowurl ban_blockinput ban_blockforwardwan ban_blockforwardlan ban_logterm ban_country ban_asn
 	config_cb() {
 		option_cb() {
 			local option="${1}"
@@ -219,6 +223,9 @@ f_conf() {
 					;;
 				"ban_feed")
 					eval "${option}=\"$(printf "%s" "${ban_feed}")${value} \""
+					;;
+				"ban_allowurl")
+					eval "${option}=\"$(printf "%s" "${ban_allowurl}")${value} \""
 					;;
 				"ban_blockinput")
 					eval "${option}=\"$(printf "%s" "${ban_blockinput}")${value} \""
@@ -251,7 +258,7 @@ f_conf() {
 f_fetch() {
 	local item utils packages insecure
 
-	if [ -z "${ban_fetchcmd}" ] || [ ! -x "${ban_fetchcmd}" ]; then
+	if [ -z "${ban_fetchcmd}" ] || [ ! -x "$(command -v "${ban_fetchcmd}")" ]; then
 		packages="$(${ban_ubuscmd} -S call rpc-sys packagelist '{ "all": true }' 2>/dev/null)"
 		[ -z "${packages}" ] && f_log "err" "no local package repository"
 		utils="aria2c curl wget uclient-fetch"
@@ -267,16 +274,18 @@ f_fetch() {
 				fi
 			fi
 		done
+	else
+		ban_fetchcmd="$(command -v "${ban_fetchcmd}")"
 	fi
 	[ ! -x "${ban_fetchcmd}" ] && f_log "err" "no download utility with SSL support"
 	case "${ban_fetchcmd##*/}" in
 		"aria2c")
 			[ "${ban_fetchinsecure}" = "1" ] && insecure="--check-certificate=false"
-			ban_fetchparm="${ban_fetchparm:-"${insecure} --timeout=20 --allow-overwrite=true --auto-file-renaming=false --log-level=warn --dir=/ -o"}"
+			ban_fetchparm="${ban_fetchparm:-"${insecure} --timeout=20 --retry-wait=10 --max-tries=${ban_fetchretry} --max-file-not-found=${ban_fetchretry} --allow-overwrite=true --auto-file-renaming=false --log-level=warn --dir=/ -o"}"
 			;;
 		"curl")
 			[ "${ban_fetchinsecure}" = "1" ] && insecure="--insecure"
-			ban_fetchparm="${ban_fetchparm:-"${insecure} --connect-timeout 20 --fail --silent --show-error --location -o"}"
+			ban_fetchparm="${ban_fetchparm:-"${insecure} --connect-timeout 20 --retry-delay 10 --retry ${ban_fetchretry} --retry-all-errors --fail --silent --show-error --location -o"}"
 			;;
 		"uclient-fetch")
 			[ "${ban_fetchinsecure}" = "1" ] && insecure="--no-check-certificate"
@@ -284,7 +293,7 @@ f_fetch() {
 			;;
 		"wget")
 			[ "${ban_fetchinsecure}" = "1" ] && insecure="--no-check-certificate"
-			ban_fetchparm="${ban_fetchparm:-"${insecure} --no-cache --no-cookies --max-redirect=0 --timeout=20 -O"}"
+			ban_fetchparm="${ban_fetchparm:-"${insecure} --no-cache --no-cookies --timeout=20 --waitretry=10 --tries=${ban_fetchretry} --retry-connrefused --max-redirect=0 -O"}"
 			;;
 	esac
 
@@ -296,7 +305,7 @@ f_fetch() {
 f_rmpid() {
 	local ppid pid pids
 
-	ppid="$(cat "${ban_pidfile}" 2>/dev/null)"
+	ppid="$("${ban_catcmd}" "${ban_pidfile}" 2>/dev/null)"
 	[ -n "${ppid}" ] && pids="$(pgrep -P "${ppid}" 2>/dev/null)" || return 0
 	for pid in ${pids}; do
 		kill -INT "${pid}" >/dev/null 2>&1
@@ -314,7 +323,7 @@ f_actual() {
 	else
 		nft="$(f_char "0")"
 	fi
-	if pgrep -f "logread" -P "$(cat "${ban_pidfile}" 2>/dev/null)" >/dev/null 2>&1; then
+	if pgrep -f "logread" -P "$("${ban_catcmd}" "${ban_pidfile}" 2>/dev/null)" >/dev/null 2>&1; then
 		monitor="$(f_char "1")"
 	else
 		monitor="$(f_char "0")"
@@ -468,7 +477,7 @@ f_getfeed() {
 f_getelements() {
 	local file="${1}"
 
-	[ -s "${file}" ] && printf "%s" "elements={ $(cat "${file}" 2>/dev/null) };"
+	[ -s "${file}" ] && printf "%s" "elements={ $("${ban_catcmd}" "${file}" 2>/dev/null) };"
 }
 
 # build initial nft file with base table, chains and rules
@@ -533,6 +542,7 @@ f_down() {
 	tmp_file="${ban_tmpfile}.${feed}.file"
 	tmp_flush="${ban_tmpfile}.${feed}.flush"
 	tmp_nft="${ban_tmpfile}.${feed}.nft"
+	tmp_allow="${ban_tmpfile}.${feed%v*}"
 
 	[ "${ban_loginput}" = "1" ] && log_input="log level ${ban_nftloglevel} prefix \"banIP/inp-wan/drp/${feed}: \""
 	[ "${ban_logforwardwan}" = "1" ] && log_forwardwan="log level ${ban_nftloglevel} prefix \"banIP/fwd-wan/drp/${feed}: \""
@@ -592,18 +602,33 @@ f_down() {
 		feed_rc="${restore_rc}"
 	fi
 
-	# handle local lists
+	# prepare local allowlist
+	#
+	if [ "${feed%v*}" = "allowlist" ] && [ ! -f "${tmp_allow}" ]; then
+		"${ban_catcmd}" "${ban_allowlist}" 2>/dev/null >"${tmp_allow}"
+		for feed_url in ${ban_allowurl}; do
+			feed_log="$("${ban_fetchcmd}" ${ban_fetchparm} "${tmp_load}" "${feed_url}" 2>&1)"
+			feed_rc="${?}"
+			if [ "${feed_rc}" = "0" ] && [ -s "${tmp_load}" ]; then
+				"${ban_catcmd}" "${tmp_load}" 2>/dev/null >>"${tmp_allow}"
+			else
+				f_log "info" "download for feed '${feed%v*}' failed (rc: ${feed_rc:-"-"}/log: ${feed_log})"
+			fi
+		done
+	fi
+
+	# handle local feeds
 	#
 	if [ "${feed%v*}" = "allowlist" ]; then
 		{
 			printf "%s\n\n" "#!/usr/sbin/nft -f"
-			[ -s "${tmp_flush}" ] && cat "${tmp_flush}"
+			[ -s "${tmp_flush}" ] && "${ban_catcmd}" "${tmp_flush}"
 			if [ "${proto}" = "MAC" ]; then
-				"${ban_awkcmd}" '/^([0-9A-f]{2}:){5}[0-9A-f]{2}([[:space:]]|$)/{printf "%s, ",tolower($1)}' "${ban_allowlist}" >"${tmp_file}"
+				"${ban_awkcmd}" '/^([0-9A-f]{2}:){5}[0-9A-f]{2}([[:space:]]|$)/{printf "%s, ",tolower($1)}' "${tmp_allow}" >"${tmp_file}"
 				printf "%s\n" "add set inet banIP ${feed} { type ether_addr; policy ${ban_nftpolicy}; $(f_getelements "${tmp_file}") }"
 				[ -z "${feed_direction##*forwardlan*}" ] && printf "%s\n" "add rule inet banIP lan-forward ether saddr @${feed} counter accept"
 			elif [ "${proto}" = "4" ]; then
-				"${ban_awkcmd}" '/^(([0-9]{1,3}\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\/(1?[0-9]|2?[0-9]|3?[0-2]))?)([[:space:]]|$)/{printf "%s, ",$1}' "${ban_allowlist}" >"${tmp_file}"
+				"${ban_awkcmd}" '/^(([0-9]{1,3}\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\/(1?[0-9]|2?[0-9]|3?[0-2]))?)([[:space:]]|$)/{printf "%s, ",$1}' "${tmp_allow}" >"${tmp_file}"
 				printf "%s\n" "add set inet banIP ${feed} { type ipv4_addr; flags interval; auto-merge; policy ${ban_nftpolicy}; $(f_getelements "${tmp_file}") }"
 				if [ -z "${feed_direction##*input*}" ]; then
 					if [ "${ban_allowlistonly}" = "1" ]; then
@@ -627,7 +652,7 @@ f_down() {
 					fi
 				fi
 			elif [ "${proto}" = "6" ]; then
-				"${ban_awkcmd}" '!/^([0-9A-f]{2}:){5}[0-9A-f]{2}([[:space:]]|$)/{printf "%s\n",$1}' "${ban_allowlist}" |
+				"${ban_awkcmd}" '!/^([0-9A-f]{2}:){5}[0-9A-f]{2}([[:space:]]|$)/{printf "%s\n",$1}' "${tmp_allow}" |
 					"${ban_awkcmd}" '/^(([0-9A-f]{0,4}:){1,7}[0-9A-f]{0,4}:?(\/(1?[0-2][0-8]|[0-9][0-9]))?)([[:space:]]|$)/{printf "%s, ",tolower($1)}' >"${tmp_file}"
 				printf "%s\n" "add set inet banIP ${feed} { type ipv6_addr; flags interval; auto-merge; policy ${ban_nftpolicy}; $(f_getelements "${tmp_file}") }"
 				if [ -z "${feed_direction##*input*}" ]; then
@@ -657,7 +682,7 @@ f_down() {
 	elif [ "${feed%v*}" = "blocklist" ]; then
 		{
 			printf "%s\n\n" "#!/usr/sbin/nft -f"
-			[ -s "${tmp_flush}" ] && cat "${tmp_flush}"
+			[ -s "${tmp_flush}" ] && "${ban_catcmd}" "${tmp_flush}"
 			if [ "${proto}" = "MAC" ]; then
 				"${ban_awkcmd}" '/^([0-9A-f]{2}:){5}[0-9A-f]{2}([[:space:]]|$)/{printf "%s, ",tolower($1)}' "${ban_blocklist}" >"${tmp_file}"
 				printf "%s\n" "add set inet banIP ${feed} { type ether_addr; policy ${ban_nftpolicy}; $(f_getelements "${tmp_file}") }"
@@ -667,7 +692,7 @@ f_down() {
 					"${ban_awkcmd}" '/^(([0-9]{1,3}\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\/(1?[0-9]|2?[0-9]|3?[0-2]))?)([[:space:]]|$)/{printf "%s,\n",$1}' "${ban_blocklist}" >"${tmp_raw}"
 					"${ban_awkcmd}" 'NR==FNR{member[$0];next}!($0 in member)' "${ban_tmpfile}.deduplicate" "${tmp_raw}" 2>/dev/null >"${tmp_split}"
 					"${ban_awkcmd}" 'BEGIN{FS="[ ,]"}NR==FNR{member[$1];next}!($1 in member)' "${ban_tmpfile}.deduplicate" "${ban_blocklist}" 2>/dev/null >"${tmp_raw}"
-					cat "${tmp_raw}" 2>/dev/null >"${ban_blocklist}"
+					"${ban_catcmd}" "${tmp_raw}" 2>/dev/null >"${ban_blocklist}"
 				else
 					"${ban_awkcmd}" '/^(([0-9]{1,3}\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\/(1?[0-9]|2?[0-9]|3?[0-2]))?)([[:space:]]|$)/{printf "%s,\n",$1}' "${ban_blocklist}" >"${tmp_split}"
 				fi
@@ -682,7 +707,7 @@ f_down() {
 						"${ban_awkcmd}" '/^(([0-9A-f]{0,4}:){1,7}[0-9A-f]{0,4}:?(\/(1?[0-2][0-8]|[0-9][0-9]))?)([[:space:]]|$)/{printf "%s,\n",tolower($1)}' >"${tmp_raw}"
 					"${ban_awkcmd}" 'NR==FNR{member[$0];next}!($0 in member)' "${ban_tmpfile}.deduplicate" "${tmp_raw}" 2>/dev/null >"${tmp_split}"
 					"${ban_awkcmd}" 'BEGIN{FS="[ ,]"}NR==FNR{member[$1];next}!($1 in member)' "${ban_tmpfile}.deduplicate" "${ban_blocklist}" 2>/dev/null >"${tmp_raw}"
-					cat "${tmp_raw}" 2>/dev/null >"${ban_blocklist}"
+					"${ban_catcmd}" "${tmp_raw}" 2>/dev/null >"${ban_blocklist}"
 				else
 					"${ban_awkcmd}" '!/^([0-9A-f]{2}:){5}[0-9A-f]{2}([[:space:]]|$)/{printf "%s\n",$1}' "${ban_blocklist}" |
 						"${ban_awkcmd}" '/^(([0-9A-f]{0,4}:){1,7}[0-9A-f]{0,4}:?(\/(1?[0-2][0-8]|[0-9][0-9]))?)([[:space:]]|$)/{printf "%s,\n",tolower($1)}' >"${tmp_split}"
@@ -695,7 +720,8 @@ f_down() {
 			fi
 		} >"${tmp_nft}"
 		feed_rc="0"
-	# handle external downloads
+
+	# handle external feeds
 	#
 	elif [ "${restore_rc}" != "0" ] && [ "${feed_url}" != "local" ]; then
 		# handle country downloads
@@ -704,7 +730,7 @@ f_down() {
 			for country in ${ban_country}; do
 				feed_log="$("${ban_fetchcmd}" ${ban_fetchparm} "${tmp_raw}" "${feed_url}${country}-aggregated.zone" 2>&1)"
 				feed_rc="${?}"
-				[ "${feed_rc}" = "0" ] && cat "${tmp_raw}" 2>/dev/null >>"${tmp_load}"
+				[ "${feed_rc}" = "0" ] && "${ban_catcmd}" "${tmp_raw}" 2>/dev/null >>"${tmp_load}"
 			done
 			rm -f "${tmp_raw}"
 
@@ -714,7 +740,7 @@ f_down() {
 			for asn in ${ban_asn}; do
 				feed_log="$("${ban_fetchcmd}" ${ban_fetchparm} "${tmp_raw}" "${feed_url}AS${asn}" 2>&1)"
 				feed_rc="${?}"
-				[ "${feed_rc}" = "0" ] && cat "${tmp_raw}" 2>/dev/null >>"${tmp_load}"
+				[ "${feed_rc}" = "0" ] && "${ban_catcmd}" "${tmp_raw}" 2>/dev/null >>"${tmp_load}"
 			done
 			rm -f "${tmp_raw}"
 
@@ -726,7 +752,7 @@ f_down() {
 					feed_log="$("${ban_fetchcmd}" ${ban_fetchparm} "${tmp_raw}" "${feed_url}" 2>&1)"
 					feed_rc="${?}"
 					if [ "${feed_rc}" = "0" ]; then
-						zcat "${tmp_raw}" 2>/dev/null >"${tmp_load}"
+						"${ban_zcatcmd}" "${tmp_raw}" 2>/dev/null >"${tmp_load}"
 						feed_rc="${?}"
 					fi
 					rm -f "${tmp_raw}"
@@ -740,6 +766,7 @@ f_down() {
 			feed_rc="${?}"
 		fi
 	fi
+	[ "${feed_rc}" != "0" ] && f_log "info" "download for feed '${feed}' failed (rc: ${feed_rc:-"-"}/log: ${feed_log})"
 
 	# backup/restore
 	#
@@ -782,7 +809,7 @@ f_down() {
 				# nft header (IPv4 Set)
 				#
 				printf "%s\n\n" "#!/usr/sbin/nft -f"
-				[ -s "${tmp_flush}" ] && cat "${tmp_flush}"
+				[ -s "${tmp_flush}" ] && "${ban_catcmd}" "${tmp_flush}"
 				printf "%s\n" "add set inet banIP ${feed} { type ipv4_addr; flags interval; auto-merge; policy ${ban_nftpolicy}; $(f_getelements "${tmp_file}.1") }"
 
 				# input and forward rules
@@ -796,7 +823,7 @@ f_down() {
 				# nft header (IPv6 Set)
 				#
 				printf "%s\n\n" "#!/usr/sbin/nft -f"
-				[ -s "${tmp_flush}" ] && cat "${tmp_flush}"
+				[ -s "${tmp_flush}" ] && "${ban_catcmd}" "${tmp_flush}"
 				printf "%s\n" "add set inet banIP ${feed} { type ipv6_addr; flags interval; auto-merge; policy ${ban_nftpolicy}; $(f_getelements "${tmp_file}.1") }"
 
 				# input and forward rules
@@ -825,7 +852,7 @@ f_down() {
 						rm -f "${split_file}"
 						continue
 					fi
-					if ! "${ban_nftcmd}" add element inet banIP "${feed}" "{ $(cat "${split_file}") }" >/dev/null 2>&1; then
+					if ! "${ban_nftcmd}" add element inet banIP "${feed}" "{ $("${ban_catcmd}" "${split_file}") }" >/dev/null 2>&1; then
 						f_log "info" "can't add split file '${split_file##*.}' to Set '${feed}'"
 					fi
 					rm -f "${split_file}"
@@ -864,7 +891,7 @@ f_restore() {
 	[ "${feed_rc}" != "0" ] && restore_rc="${feed_rc}"
 	[ "${feed_url}" = "local" ] && tmp_feed="${feed%v*}v4" || tmp_feed="${feed}"
 	if [ -f "${ban_backupdir}/banIP.${tmp_feed}.gz" ]; then
-		zcat "${ban_backupdir}/banIP.${tmp_feed}.gz" 2>/dev/null >"${feed_file}"
+		"${ban_zcatcmd}" "${ban_backupdir}/banIP.${tmp_feed}.gz" 2>/dev/null >"${feed_file}"
 		restore_rc="${?}"
 	fi
 
@@ -1234,10 +1261,10 @@ f_report() {
 	#
 	case "${output}" in
 		"text")
-			[ -s "${report_txt}" ] && cat "${report_txt}"
+			[ -s "${report_txt}" ] && "${ban_catcmd}" "${report_txt}"
 			;;
 		"json")
-			[ -s "${report_jsn}" ] && cat "${report_jsn}"
+			[ -s "${report_jsn}" ] && "${ban_catcmd}" "${report_jsn}"
 			;;
 		"mail")
 			[ -n "${ban_mailreceiver}" ] && [ -x "${ban_mailcmd}" ] && f_mail
