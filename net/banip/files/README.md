@@ -62,7 +62,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * Supports nft atomic Set loading
 * Supports blocking by ASN numbers and by iso country codes
 * Supports local allow- and blocklist (IPv4, IPv6, CIDR notation or domain names)
-* Auto-add the uplink subnet to the local allowlist
+* Auto-add the uplink subnet or uplink IP to the local allowlist
 * Provides a small background log monitor to ban unsuccessful login attempts in real-time
 * Auto-add unsuccessful LuCI, nginx, Asterisk or ssh login attempts to the local blocklist
 * Fast feed processing as they are handled in parallel as background jobs
@@ -79,6 +79,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * Procd based init system support (start/stop/restart/reload/status/report/search/survey/lookup)
 * Procd network interface trigger support
 * Add new or edit existing banIP feeds on your own with the integrated custom feed editor
+* Supports external allowlist URLs to reference additional IPv4/IPv6 feeds
 
 ## Prerequisites
 * **[OpenWrt](https://openwrt.org)**, latest stable release or a snapshot with nft/firewall 4 support
@@ -168,6 +169,7 @@ Available commands:
 | ban_blockforwardlan     | list   | -                             | limit a feed to the lan-forward chain, e.g. 'doh'                                                            |
 | ban_fetchcmd            | option | - / autodetect                | 'uclient-fetch', 'wget', 'curl' or 'aria2c'                                                                  |
 | ban_fetchparm           | option | - / autodetect                | set the config options for the selected download utility                                                     |
+| ban_fetchretry          | option | 5                             | number of download attempts in case of an error (not supported by uclient-fetch)                             |
 | ban_fetchinsecure       | option | 0                             | don't check SSL server certificates during download                                                          |
 | ban_mailreceiver        | option | -                             | receiver address for banIP related notification E-Mails                                                      |
 | ban_mailsender          | option | no-reply@banIP                | sender address for banIP related notification E-Mails                                                        |
@@ -289,9 +291,10 @@ list ban_logterm 'SecurityEvent=\"InvalidAccountID\".*RemoteAddress='
 
 **allow-/blocklist handling**  
 banIP supports local allow and block lists (IPv4, IPv6, CIDR notation or domain names), located in /etc/banip/banip.allowlist and /etc/banip/banip.blocklist.  
-Unsuccessful login attempts or suspicious requests will be tracked and added to the local blocklist (see the 'ban\_autoblocklist' option). The blocklist behaviour can be further tweaked with the 'ban\_nftexpiry' option.  
-Furthermore the uplink subnet will be added to local allowlist (see 'ban\_autoallowlist' option).  
-Both lists also accept domain names as input to allow IP filtering based on these names. The corresponding IPs (IPv4 & IPv6) will be extracted and added to the Sets. You can also start the domain lookup separately via /etc/init.d/banip lookup at any time.
+Unsuccessful login attempts or suspicious requests will be tracked and added to the local blocklist (see the 'ban_autoblocklist' option). The blocklist behaviour can be further tweaked with the 'ban_nftexpiry' option.  
+Depending on the options 'ban_autoallowlist' and 'ban_autoallowuplink' the uplink subnet or the uplink IP will be added automatically to local allowlist.  
+Furthermore, you can reference external Allowlist URLs with additional IPv4 and IPv6 feeds (see 'ban_allowurl').  
+Both local lists also accept domain names as input to allow IP filtering based on these names. The corresponding IPs (IPv4 & IPv6) will be extracted and added to the Sets. You can also start the domain lookup separately via /etc/init.d/banip lookup at any time.
 
 **allowlist-only mode**  
 banIP supports an "allowlist only" mode. This option restricts the internet access from/to a small number of secure websites/IPs, and block access from/to the rest of the internet. All IPs and Domains which are _not_ listed in the allowlist are blocked.
@@ -317,12 +320,12 @@ nftables supports the atomic loading of firewall rules (incl. elements), which i
 **tweak the download options**  
 By default banIP uses the following pre-configured download options:
 ```
-    * aria2c: --timeout=20 --allow-overwrite=true --auto-file-renaming=false --log-level=warn --dir=/ -o
-    * curl: --connect-timeout 20 --fail --silent --show-error --location -o
+    * aria2c: --timeout=20 --retry-wait=10 --max-tries=5 --max-file-not-found=5 --allow-overwrite=true --auto-file-renaming=false --log-level=warn --dir=/ -o
+    * curl: --connect-timeout 20 --retry-delay 10 --retry 5 --retry-all-errors --fail --silent --show-error --location -o
+    * wget: --no-cache --no-cookies --timeout=20 --waitretry=10 --tries=5 --retry-connrefused --max-redirect=0 -O
     * uclient-fetch: --timeout=20 -O
-    * wget: --no-cache --no-cookies --max-redirect=0 --timeout=20 -O
 ```
-To override the default set 'ban_fetchparm' manually to your needs.
+To override the default set 'ban_fetchretry', 'ban_fetchinsecure' or globally 'ban_fetchparm' to your needs.
 
 **send E-Mail notifications via 'msmtp'**  
 To use the email notification you must install & configure the package 'msmtp'.  
