@@ -50,15 +50,4 @@ define Package/tang/install
 	$(INSTALL_CONF) ./files/config $(1)/etc/config/tang
 endef
 
-define Package/tang/postinst
-#!/bin/sh
-if [ -z "$${IPKG_INSTROOT}" ]; then
-	mkdir -p /usr/share/tang/db
-	KEYS=$(find /usr/share/tang/db/ -name "*.jw*" -maxdepth 1 | wc -l)
-	if [ "${KEYS}" = "0" ]; then # if db is empty generate new key pair
-		/usr/libexec/tangd-keygen /usr/share/tang/db
-	fi
-fi
-endef
-
 $(eval $(call BuildPackage,tang))
