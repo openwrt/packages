@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 include ../python3-version.mk
 
 PKG_NAME:=python3
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 PKG_VERSION:=$(PYTHON3_VERSION).$(PYTHON3_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
@@ -160,7 +160,6 @@ CONFIGURE_ARGS+= \
 	--with-system-ffi \
 	--without-cxx-main \
 	--without-ensurepip \
-	--without-pymalloc \
 	--disable-test-modules \
 	$(if $(CONFIG_IPV6),--enable-ipv6) \
 	$(if $(findstring mips,$(CONFIG_ARCH)),,--with-lto) \
@@ -335,7 +334,6 @@ HOST_CONFIGURE_ARGS+= \
 	--with-system-expat=$(STAGING_DIR_HOST) \
 	--with-ssl-default-suites=openssl \
 	--without-cxx-main \
-	--without-pymalloc \
 	--disable-test-modules \
 	CONFIG_SITE=
 
