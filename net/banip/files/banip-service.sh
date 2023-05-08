@@ -192,7 +192,7 @@ if [ -x "${ban_logreadcmd}" ] && [ -n "${ban_logterm%%??}" ] && [ "${ban_loglimi
 			if [ -n "${proto}" ] && ! "${ban_nftcmd}" get element inet banIP blocklist"${proto}" "{ ${ip} }" >/dev/null 2>&1; then
 				f_log "info" "suspicious IP${proto} '${ip}'"
 				log_raw="$("${ban_logreadcmd}" -l "${ban_loglimit}" 2>/dev/null)"
-				log_count="$(printf "%s\n" "${log_raw}" | grep -c "found '${ip}'")"
+				log_count="$(printf "%s\n" "${log_raw}" | grep -c "suspicious IP${proto} '${ip}'")"
 				if [ "${log_count}" -ge "${ban_logcount}" ]; then
 					if "${ban_nftcmd}" add element inet banIP "blocklist${proto}" "{ ${ip} ${nft_expiry} }" >/dev/null 2>&1; then
 						f_log "info" "add IP${proto} '${ip}' (expiry: ${nft_expiry:-"-"}) to blocklist${proto} set"
