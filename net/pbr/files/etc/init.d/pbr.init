@@ -224,7 +224,7 @@ pbr_get_gateway6() {
 	local iface="$2" dev="$3" gw
 	network_get_gateway6 gw "$iface" true
 	if [ -z "$gw" ] || [ "$gw" = '::/0' ] || [ "$gw" = '::0/0' ] || [ "$gw" = '::' ]; then
-		gw="$($ip_bin -6 a list dev "$dev" 2>/dev/null | grep inet6 | awk '{print $2}')"
+		gw="$($ip_bin -6 a list dev "$dev" 2>/dev/null | grep inet6 | grep 'scope global' | awk '{print $2}')"
 	fi
 	eval "$1"='$gw'
 }
@@ -1771,7 +1771,7 @@ EOF
 					ipv6_error=0
 					if { [ -n "$gw6" ] && [ "$gw6" != "::/0" ]; } || [ "$strict_enforcement" -ne 0 ]; then
 						if [ -z "$gw6" ] || [ "$gw6" = "::/0" ]; then
-							$ip_bin -6 route add unreachable default table "$tid" || ipv6_error=1
+							$ip_bin -6 route add unreachable default table "$tid" >/dev/null 2>&1 || ipv6_error=1
 						elif $ip_bin -6 route list table main | grep -q " dev $dev6 "; then
 							while read -r i; do
 								i="$(echo "$i" | sed 's/ linkdown$//')"
@@ -1785,7 +1785,7 @@ EOF
 							$ip_bin -6 route add default dev "$dev6" table "$tid" >/dev/null 2>&1 || ipv6_error=1
 						fi
 					fi
-					$ip_bin -6 rule add fwmark "${mark}/${fw_mask}" table "$tid" priority "$priority" || ipv6_error=1
+					$ip_bin -6 rule add fwmark "${mark}/${fw_mask}" table "$tid" priority "$priority" >/dev/null 2>&1 || ipv6_error=1
 				fi
 			fi
 			if [ "$ipv4_error" -eq 0 ] || [ "$ipv6_error" -eq 0 ]; then
