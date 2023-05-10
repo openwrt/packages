@@ -84,6 +84,7 @@ jobs:
 
       - name: Generate build keys
         run: |
+          sudo apt-get update
           sudo apt-get install -y signify-openbsd
           signify-openbsd -G -n -c 'DO NOT USE - OpenWrt packages feed CI' -p packages_ci.pub -s packages_ci.sec
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
