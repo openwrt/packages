@@ -32,7 +32,7 @@ define Package/python3-packaging
   SUBMENU:=Python
   TITLE:=Core utilities for Python packages
   URL:=https://github.com/pypa/packaging
-  DEPENDS:=+python3-light +python3-logging +python3-urllib @BROKEN
+  DEPENDS:=+python3-light +python3-logging +python3-urllib
 endef
 
 define Package/python3-packaging/description

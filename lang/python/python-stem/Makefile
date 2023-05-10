@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-stem
 PKG_VERSION:=1.8.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=stem
 PKG_HASH:=81d43a7c668ba9d7bc1103b2e7a911e9d148294b373d27a59ae8da79ef7a3e2f
@@ -10,8 +10,6 @@ PKG_HASH:=81d43a7c668ba9d7bc1103b2e7a911e9d148294b373d27a59ae8da79ef7a3e2f
 PKG_MAINTAINER:=Javier Marcet <javier@marcet.info>
 PKG_LICENSE:=LGPL-3.0-only
 PKG_LICENSE_FILES:=LICENSE
-
-PYTHON3_PKG_SETUP_ARGS:=
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

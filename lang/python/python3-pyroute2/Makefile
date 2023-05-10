@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python3-pyroute2
 PKG_VERSION:=0.5.16
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=pyroute2
 PKG_HASH:=fe681a2d008cac815b9f287250d69a333fbfc2b2d89c37d58798104057149989
@@ -42,8 +42,6 @@ define Package/python3-pyroute2/description
   The library was started as an RTNL protocol implementation,
   but now it supports many netlink protocols.
 endef
-
-PYTHON3_PKG_SETUP_ARGS:=
 
 $(eval $(call Py3Package,python3-pyroute2))
 $(eval $(call BuildPackage,python3-pyroute2))

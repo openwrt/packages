@@ -1,6 +1,6 @@
 --- a/setup.cfg
 +++ b/setup.cfg
-@@ -112,7 +112,6 @@ console_scripts =
+@@ -115,7 +115,6 @@ console_scripts =
  	conch = twisted.conch.scripts.conch:run
  	mailmail = twisted.mail.scripts.mailmail:run
  	pyhtmlizer = twisted.scripts.htmlizer:run

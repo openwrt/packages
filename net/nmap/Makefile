@@ -14,7 +14,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nmap
 PKG_VERSION:=7.93
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Nuno Gonçalves <nunojpg@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -27,6 +27,7 @@ PKG_CPE_ID:=cpe:/a:nmap:nmap
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 PYTHON3_PKG_BUILD:=0
+PYTHON3_PKG_FORCE_DISTUTILS_SETUP:=1
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python3-package.mk
@@ -148,6 +149,11 @@ PYTHON3_PKG_SETUP_ARGS:=
 define Build/Compile
 	$(call Build/Compile/Default,)
 	$(call Py3Build/Compile)
+endef
+
+define Build/Install
+	$(call Build/Install/Default,)
+	$(call Py3Build/Install)
 endef
 
 define Package/nmap/install

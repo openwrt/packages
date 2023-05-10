@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-gmpy2
 PKG_VERSION:=2.0.8
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PYPI_NAME:=gmpy2
 PYPI_SOURCE_EXT:=zip
@@ -23,7 +23,7 @@ include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
-PYTHON3_PKG_SETUP_ARGS:=--nompfr
+PYTHON3_PKG_BUILD_CONFIG_SETTINGS:=--global-option=--nompfr
 
 define Package/python3-gmpy2
   SECTION:=lang
