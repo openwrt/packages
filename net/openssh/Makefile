@@ -12,8 +12,8 @@ PKG_VERSION:=9.3p1
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/ \
-		https://ftp.spline.de/pub/OpenBSD/OpenSSH/portable/
+PKG_SOURCE_URL:=https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/ \
+		https://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/
 PKG_HASH:=e9baba7701a76a51f3d85a62c383a3c9dcd97fa900b859bc7db114c1868af8a8
 
 PKG_LICENSE:=BSD ISC
@@ -34,7 +34,7 @@ define Package/openssh/Default
 	DEPENDS:=+libopenssl +zlib
 	TITLE:=OpenSSH
 	MAINTAINER:=Peter Wagner <tripolar@gmx.at>
-	URL:=http://www.openssh.com/
+	URL:=https://www.openssh.com/
 	SUBMENU:=SSH
 endef
 
