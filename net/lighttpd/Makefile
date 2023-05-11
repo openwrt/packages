@@ -123,7 +123,7 @@ config LIGHTTPD_PCRE2
 if PACKAGE_lighttpd
 	choice
 		prompt "crypto library"
-		default LIGHTTPD_CRYPTOLIB_NETTLE
+		default LIGHTTPD_CRYPTOLIB_WOLFSSL
 		help
 		  library to use for cryptographic algorithms
 
