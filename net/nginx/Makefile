@@ -402,6 +402,7 @@ CONFIGURE_ARGS += \
 			--prefix=/usr \
 			--conf-path=/etc/nginx/nginx.conf \
 			--modules-path=/usr/lib/nginx/modules \
+			--with-compat \
 			$(ADDITIONAL_MODULES) \
 			--error-log-path=stderr \
 			--pid-path=/var/run/nginx.pid \
