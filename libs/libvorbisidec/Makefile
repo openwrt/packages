@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=libvorbisidec
 PKG_REV:=20180319
 PKG_VERSION:=1.0.3-$(PKG_REV)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://gitlab.xiph.org/xiph/tremor.git
@@ -35,8 +35,7 @@ endef
 
 define Package/libvorbisidec/description
   libvorbisidec is "tremor", a fixed-point implementation of libvorbis.
-  It also has libogg built-in. It is suitable as a replacement for
-  libvorbis and libogg in tremor-aware applications.
+  It is suitable as a replacement for libvorbis in tremor-aware applications.
   Tremor is a decoder only.
 endef
 
