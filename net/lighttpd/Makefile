@@ -179,7 +179,7 @@ MESON_ARGS += \
 	-Dwith_zlib=$(if $(CONFIG_PACKAGE_lighttpd-mod-deflate),enabled,disabled) \
 	-Dwith_zstd=disabled
 
-BASE_MODULES:=dirlisting
+BASE_MODULES:=dirlisting h2
 
 define Package/lighttpd/conffiles
 /etc/lighttpd/lighttpd.conf
@@ -313,8 +313,9 @@ server.modules += ( \"mod_$(1)\" )" $$(1)/etc/lighttpd/conf.d/$(4)-$(1).conf ; \
   $$(eval $$(call BuildPackage,lighttpd-mod-$(1)))
 endef
 
-# included in BASE_MODULES:=dirlisting
+# included in BASE_MODULES:=dirlisting h2
 #$(eval $(call BuildPlugin,dirlisting,dirlisting,,30))
+#$(eval $(call BuildPlugin,h2,HTTP/2,,30))
 
 # included in base lighttpd executable;
 # no longer loaded as separate dynamic modules
