@@ -60,7 +60,7 @@ PKG_BUILD_DEPENDS:= \
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/meson.mk
 
-# choose crypto lib for lighttpd to use for crypto algorithms (default: nettle)
+# choose crypto lib for lighttpd to use for crypto algorithms
 # (separate from lighttpd TLS modules, which are each standalone)
 cryptolibdep= \
   +LIGHTTPD_CRYPTOLIB_NETTLE:libnettle \
@@ -69,8 +69,6 @@ cryptolibdep= \
 ifdef CONFIG_LIGHTTPD_CRYPTOLIB_MBEDTLS
   TARGET_CPPFLAGS += -DFORCE_MBEDTLS_CRYPTO
 else ifdef CONFIG_LIGHTTPD_CRYPTOLIB_WOLFSSL
-  # (Note: if CONFIG_LIGHTTPD_CRYPTOLIB_WOLFSSL is set,
-  #  then lighttpd-mod-mbedtls should not be selected to also be built)
   TARGET_CPPFLAGS += -DFORCE_WOLFSSL_CRYPTO
 endif
 
@@ -123,7 +121,7 @@ config LIGHTTPD_PCRE2
 if PACKAGE_lighttpd
 	choice
 		prompt "crypto library"
-		default LIGHTTPD_CRYPTOLIB_WOLFSSL
+		default LIGHTTPD_CRYPTOLIB_MBEDTLS
 		help
 		  library to use for cryptographic algorithms
 
