@@ -1,18 +1,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=podman
-PKG_VERSION:=4.4.2
+PKG_VERSION:=4.5.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/containers/podman/archive/v$(PKG_VERSION)
-PKG_HASH:=59cec158438efa8a3e651b19e150d9afd90f7e3f07c30605a997e18b8c54b67c
+PKG_HASH:=830a633630bf6e61f2b8d4ca00efdd9a173ef25cdd49d4a4364c293e088561df
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
 
-PKG_BUILD_DEPENDS:=golang/host protobuf/host
+PKG_BUILD_DEPENDS:=golang/host protobuf/host btrfs-progs
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=no-mips16
 PKG_INSTALL:=1
@@ -39,7 +39,7 @@ define Package/podman
   CATEGORY:=Utilities
   TITLE:=Podman
   URL:=https://podman.io
-  DEPENDS:=$(GO_ARCH_DEPENDS) +conmon +cni +cni-plugins +btrfs-progs +glib2 +gnupg2 +uci-firewall +libgpg-error +libseccomp +libgpgme +nsenter +zoneinfo-simple +kmod-veth +PODMAN_SELINUX_SUPPORT:libselinux
+  DEPENDS:=$(GO_ARCH_DEPENDS) +conmon +libgpgme +libseccomp +nsenter +zoneinfo-simple +kmod-veth +slirp4netns +netavark +aardvark-dns +PODMAN_SELINUX_SUPPORT:libselinux
 endef
 
 define Package/podman/description
@@ -53,10 +53,6 @@ define Package/podman/config
     bool "Enable SELinux support"
     default n
 
-    config PODMAN_IPTABLES_FW
-    bool "Add iptabels firewall options to default podman network"
-    default n
-
   endmenu
 endef
 
@@ -65,19 +61,13 @@ define Package/podman/conffiles
 /etc/containers/storage.conf
 /etc/containers/registries.conf
 /etc/containers/containers.conf
-/etc/cni/net.d/87-podman-bridge.conflist
+/etc/containers/networks/podman.json
 endef
 
 ifdef CONFIG_PODMAN_SELINUX_SUPPORT
   GO_PKG_TAGS=seccomp,exclude_graphdriver_devicemapper,selinux,apparmor
 else
   GO_PKG_TAGS=seccomp,exclude_graphdriver_devicemapper,apparmor
-endif
-
-ifdef CONFIG_PODMAN_IPTABLES_FW
-  CNIFILE:=87-podman-bridge-iptables.conflist
-else
-  CNIFILE:=87-podman-bridge.conflist
 endif
 
 MAKE_VARS += \
@@ -126,8 +116,8 @@ define Package/podman/install
 	$(INSTALL_DATA) $(DL_DIR)/registries.fedora-da9a9c8778 $(1)/etc/containers/registries.conf
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/vendor/github.com/containers/storage/storage.conf $(1)/etc/containers/storage.conf
 	$(INSTALL_DATA) ./files/containers.conf $(1)/etc/containers/containers.conf
-	$(INSTALL_DIR) $(1)/etc/cni/net.d
-	$(INSTALL_CONF) ./files/$(CNIFILE) $(1)/etc/cni/net.d/87-podman-bridge.conflist
+	$(INSTALL_DIR) $(1)/etc/containers/networks
+	$(INSTALL_CONF) ./files/podman.json $(1)/etc/containers/networks
 	$(INSTALL_DIR) $(1)/usr/share/containers
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/vendor/github.com/containers/common/pkg/seccomp/seccomp.json $(1)/usr/share/containers/
 	$(INSTALL_DIR) $(1)/etc/init.d
