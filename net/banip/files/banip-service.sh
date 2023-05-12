@@ -18,7 +18,7 @@ f_log "info" "start banIP processing (${ban_action})"
 f_log "debug" "f_system    ::: system: ${ban_sysver:-"n/a"}, version: ${ban_ver:-"n/a"}, memory: ${ban_memory:-"0"}, cpu_cores: ${ban_cores}"
 f_genstatus "processing"
 f_tmp
-f_fetch
+f_getfetch
 f_getif
 f_getdev
 f_getuplink
@@ -93,7 +93,7 @@ for feed in allowlist ${ban_feed} blocklist; do
 		eval json_get_var feed_"${object}" '${object}' >/dev/null 2>&1
 	done
 	json_select ..
-	
+
 	# skip incomplete feeds
 	#
 	if { { [ -n "${feed_url_4}" ] && [ -z "${feed_rule_4}" ]; } || { [ -z "${feed_url_4}" ] && [ -n "${feed_rule_4}" ]; }; } ||
@@ -162,54 +162,6 @@ fi
 json_cleanup
 rm -rf "${ban_lock}"
 
-# start detached log service
+# start detached log service (infinite loop)
 #
-if [ -x "${ban_logreadcmd}" ] && [ -n "${ban_logterm%%??}" ] && [ "${ban_loglimit}" != "0" ]; then
-	f_log "info" "start detached banIP log service"
-
-	nft_expiry="$(printf "%s" "${ban_nftexpiry}" | grep -oE "([0-9]+[h|m|s]$)")"
-	[ -n "${nft_expiry}" ] && nft_expiry="timeout ${nft_expiry}"
-
-	# read log continuously with given logterms
-	#
-	"${ban_logreadcmd}" -fe "${ban_logterm%%??}" 2>/dev/null |
-		while read -r line; do
-			proto=""
-			# IPv4 log parsing
-			#
-			ip="$(printf "%s" "${line}" | "${ban_awkcmd}" 'BEGIN{RS="(([0-9]{1,3}\\.){3}[0-9]{1,3})+"}{if(!seen[RT]++)printf "%s ",RT}')"
-			ip="$(f_trim "${ip}")"
-			ip="${ip##* }"
-			[ -n "${ip}" ] && proto="v4"
-			if [ -z "${proto}" ]; then
-				# IPv6 log parsing
-				#
-				ip="$(printf "%s" "${line}" | "${ban_awkcmd}" 'BEGIN{RS="([A-Fa-f0-9]{1,4}::?){3,7}[A-Fa-f0-9]{1,4}"}{if(!seen[RT]++)printf "%s ",RT}')"
-				ip="$(f_trim "${ip}")"
-				ip="${ip##* }"
-				[ -n "${ip}" ] && proto="v6"
-			fi
-			if [ -n "${proto}" ] && ! "${ban_nftcmd}" get element inet banIP blocklist"${proto}" "{ ${ip} }" >/dev/null 2>&1; then
-				f_log "info" "suspicious IP${proto} '${ip}'"
-				log_raw="$("${ban_logreadcmd}" -l "${ban_loglimit}" 2>/dev/null)"
-				log_count="$(printf "%s\n" "${log_raw}" | grep -c "suspicious IP${proto} '${ip}'")"
-				if [ "${log_count}" -ge "${ban_logcount}" ]; then
-					if "${ban_nftcmd}" add element inet banIP "blocklist${proto}" "{ ${ip} ${nft_expiry} }" >/dev/null 2>&1; then
-						f_log "info" "add IP${proto} '${ip}' (expiry: ${nft_expiry:-"-"}) to blocklist${proto} set"
-						if [ "${ban_autoblocklist}" = "1" ] && ! grep -q "^${ip}" "${ban_blocklist}"; then
-							printf "%-42s%s\n" "${ip}" "# added on $(date "+%Y-%m-%d %H:%M:%S")" >>"${ban_blocklist}"
-							f_log "info" "add IP${proto} '${ip}' to local blocklist"
-						fi
-					fi
-				fi
-			fi
-		done
-
-# start detached no-op service loop
-#
-else
-	f_log "info" "start detached no-op banIP service"
-	while :; do
-		sleep 1
-	done
-fi
+f_monitor

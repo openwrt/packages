@@ -75,6 +75,7 @@ ban_fetchinsecure=""
 ban_fetchretry="5"
 ban_cores=""
 ban_memory=""
+ban_packages=""
 ban_trigger=""
 ban_triggerdelay="10"
 ban_resolver=""
@@ -90,8 +91,9 @@ f_system() {
 		ban_debug="$(uci_get banip global ban_debug)"
 		ban_cores="$(uci_get banip global ban_cores)"
 	fi
+	ban_packages="$(${ban_ubuscmd} -S call rpc-sys packagelist '{ "all": true }' 2>/dev/null)"
 	ban_memory="$("${ban_awkcmd}" '/^MemAvailable/{printf "%s",int($2/1000)}' "/proc/meminfo" 2>/dev/null)"
-	ban_ver="$(${ban_ubuscmd} -S call rpc-sys packagelist '{ "all": true }' 2>/dev/null | jsonfilter -ql1 -e '@.packages.banip')"
+	ban_ver="$(printf "%s" "${ban_packages}" | jsonfilter -ql1 -e '@.packages.banip')"
 	ban_sysver="$(${ban_ubuscmd} -S call system board 2>/dev/null | jsonfilter -ql1 -e '@.model' -e '@.release.description' |
 		"${ban_awkcmd}" 'BEGIN{RS="";FS="\n"}{printf "%s, %s",$1,$2}')"
 	if [ -z "${ban_cores}" ]; then
@@ -169,6 +171,19 @@ f_trim() {
 	string="${string#"${string%%[![:space:]]*}"}"
 	string="${string%"${string##*[![:space:]]}"}"
 	printf "%s" "${string}"
+}
+
+# remove logservice
+#
+f_rmpid() {
+	local ppid pid pids
+
+	ppid="$("${ban_catcmd}" "${ban_pidfile}" 2>/dev/null)"
+	[ -n "${ppid}" ] && pids="$(pgrep -P "${ppid}" 2>/dev/null)" || return 0
+	for pid in ${pids}; do
+		kill -INT "${pid}" >/dev/null 2>&1
+	done
+	: >"${ban_pidfile}"
 }
 
 # write log messages
@@ -253,30 +268,54 @@ f_conf() {
 	[ "${ban_action}" = "boot" ] && [ -z "${ban_trigger}" ] && sleep ${ban_triggerdelay}
 }
 
-# prepare fetch utility
+# get nft/monitor actuals
 #
-f_fetch() {
-	local item utils packages insecure
+f_actual() {
+	local nft monitor
 
-	if [ -z "${ban_fetchcmd}" ] || [ ! -x "$(command -v "${ban_fetchcmd}")" ]; then
-		packages="$(${ban_ubuscmd} -S call rpc-sys packagelist '{ "all": true }' 2>/dev/null)"
-		[ -z "${packages}" ] && f_log "err" "no local package repository"
+	if "${ban_nftcmd}" -t list set inet banIP allowlistvMAC >/dev/null 2>&1; then
+		nft="$(f_char "1")"
+	else
+		nft="$(f_char "0")"
+	fi
+	if pgrep -f "logread" -P "$("${ban_catcmd}" "${ban_pidfile}" 2>/dev/null)" >/dev/null 2>&1; then
+		monitor="$(f_char "1")"
+	else
+		monitor="$(f_char "0")"
+	fi
+	printf "%s" "nft: ${nft}, monitor: ${monitor}"
+}
+
+# get fetch utility
+#
+f_getfetch() {
+	local item utils insecure update="0"
+
+	if { [ "${ban_fetchcmd}" = "uclient-fetch" ] && printf "%s" "${ban_packages}" | "${ban_grepcmd}" -q '"libustream-'; } ||
+		{ [ "${ban_fetchcmd}" = "wget" ] && printf "%s" "${ban_packages}" | "${ban_grepcmd}" -q '"wget-ssl'; } ||
+		[ "${ban_fetchcmd}" = "curl" ] || [ "${ban_fetchcmd}" = "aria2c" ]; then
+		ban_fetchcmd="$(command -v "${ban_fetchcmd}")"
+	else
+		ban_fetchcmd=""
+	fi
+
+	if [ "${ban_autodetect}" = "1" ] && [ ! -x "${ban_fetchcmd}" ]; then
 		utils="aria2c curl wget uclient-fetch"
 		for item in ${utils}; do
-			if { [ "${item}" = "uclient-fetch" ] && printf "%s" "${packages}" | "${ban_grepcmd}" -q '"libustream-'; } ||
-				{ [ "${item}" = "wget" ] && printf "%s" "${packages}" | "${ban_grepcmd}" -q '"wget-ssl'; } ||
+			if { [ "${item}" = "uclient-fetch" ] && printf "%s" "${ban_packages}" | "${ban_grepcmd}" -q '"libustream-'; } ||
+				{ [ "${item}" = "wget" ] && printf "%s" "${ban_packages}" | "${ban_grepcmd}" -q '"wget-ssl'; } ||
 				[ "${item}" = "curl" ] || [ "${item}" = "aria2c" ]; then
 				ban_fetchcmd="$(command -v "${item}")"
 				if [ -x "${ban_fetchcmd}" ]; then
-					uci_set banip global ban_fetchcmd "${ban_fetchcmd##*/}"
+					update="1"
+					uci_set banip global ban_fetchcmd "${item}"
 					uci_commit "banip"
 					break
 				fi
 			fi
 		done
-	else
-		ban_fetchcmd="$(command -v "${ban_fetchcmd}")"
 	fi
+
 	[ ! -x "${ban_fetchcmd}" ] && f_log "err" "no download utility with SSL support"
 	case "${ban_fetchcmd##*/}" in
 		"aria2c")
@@ -297,38 +336,7 @@ f_fetch() {
 			;;
 	esac
 
-	f_log "debug" "f_fetch     ::: cmd: ${ban_fetchcmd:-"-"}, parm: ${ban_fetchparm:-"-"}"
-}
-
-# remove logservice
-#
-f_rmpid() {
-	local ppid pid pids
-
-	ppid="$("${ban_catcmd}" "${ban_pidfile}" 2>/dev/null)"
-	[ -n "${ppid}" ] && pids="$(pgrep -P "${ppid}" 2>/dev/null)" || return 0
-	for pid in ${pids}; do
-		kill -INT "${pid}" >/dev/null 2>&1
-	done
-	: >"${ban_pidfile}"
-}
-
-# get nft/monitor actuals
-#
-f_actual() {
-	local nft monitor
-
-	if "${ban_nftcmd}" -t list set inet banIP allowlistvMAC >/dev/null 2>&1; then
-		nft="$(f_char "1")"
-	else
-		nft="$(f_char "0")"
-	fi
-	if pgrep -f "logread" -P "$("${ban_catcmd}" "${ban_pidfile}" 2>/dev/null)" >/dev/null 2>&1; then
-		monitor="$(f_char "1")"
-	else
-		monitor="$(f_char "0")"
-	fi
-	printf "%s" "nft: ${nft}, monitor: ${monitor}"
+	f_log "debug" "f_getfetch  ::: auto/update: ${ban_autodetect}/${update}, cmd: ${ban_fetchcmd:-"-"}, parm: ${ban_fetchparm:-"-"}"
 }
 
 # get wan interfaces
@@ -1353,6 +1361,59 @@ f_mail() {
 	f_log "info" "send status mail (${?})"
 
 	f_log "debug" "f_mail      ::: notification: ${ban_mailnotification}, template: ${ban_mailtemplate}, profile: ${ban_mailprofile}, receiver: ${ban_mailreceiver}, rc: ${?}"
+}
+
+# log monitor
+#
+f_monitor() {
+	local nft_expiry line proto ip log_raw log_count
+
+	if [ -x "${ban_logreadcmd}" ] && [ -n "${ban_logterm%%??}" ] && [ "${ban_loglimit}" != "0" ]; then
+		f_log "info" "start detached banIP log service"
+		[ -n "${ban_nftexpiry}" ] && nft_expiry="timeout $(printf "%s" "${ban_nftexpiry}" | "${ban_grepcmd}" -oE "([0-9]+[d|h|m|s])+$")"
+		# read log continuously with given logterms
+		#
+		"${ban_logreadcmd}" -fe "${ban_logterm%%??}" 2>/dev/null |
+			while read -r line; do
+				proto=""
+				# IPv4 log parsing
+				#
+				ip="$(printf "%s" "${line}" | "${ban_awkcmd}" 'BEGIN{RS="(([0-9]{1,3}\\.){3}[0-9]{1,3})+"}{if(!seen[RT]++)printf "%s ",RT}')"
+				ip="$(f_trim "${ip}")"
+				ip="${ip##* }"
+				[ -n "${ip}" ] && proto="v4"
+				if [ -z "${proto}" ]; then
+					# IPv6 log parsing
+					#
+					ip="$(printf "%s" "${line}" | "${ban_awkcmd}" 'BEGIN{RS="([A-Fa-f0-9]{1,4}::?){3,7}[A-Fa-f0-9]{1,4}"}{if(!seen[RT]++)printf "%s ",RT}')"
+					ip="$(f_trim "${ip}")"
+					ip="${ip##* }"
+					[ -n "${ip}" ] && proto="v6"
+				fi
+				if [ -n "${proto}" ] && ! "${ban_nftcmd}" get element inet banIP blocklist"${proto}" "{ ${ip} }" >/dev/null 2>&1; then
+					f_log "info" "suspicious IP${proto} '${ip}'"
+					log_raw="$("${ban_logreadcmd}" -l "${ban_loglimit}" 2>/dev/null)"
+					log_count="$(printf "%s\n" "${log_raw}" | "${ban_grepcmd}" -c "suspicious IP${proto} '${ip}'")"
+					if [ "${log_count}" -ge "${ban_logcount}" ]; then
+						if "${ban_nftcmd}" add element inet banIP "blocklist${proto}" "{ ${ip} ${nft_expiry} }" >/dev/null 2>&1; then
+							f_log "info" "add IP${proto} '${ip}' (expiry: ${ban_nftexpiry:-"-"}) to blocklist${proto} set"
+							if [ -z "${ban_nftexpiry}" ] && [ "${ban_autoblocklist}" = "1" ] && ! "${ban_grepcmd}" -q "^${ip}" "${ban_blocklist}"; then
+								printf "%-42s%s\n" "${ip}" "# added on $(date "+%Y-%m-%d %H:%M:%S")" >>"${ban_blocklist}"
+								f_log "info" "add IP${proto} '${ip}' to local blocklist"
+							fi
+						fi
+					fi
+				fi
+			done
+
+	# start detached no-op service loop
+	#
+	else
+		f_log "info" "start detached no-op banIP service"
+		while :; do
+			sleep 1
+		done
+	fi
 }
 
 # initial sourcing
