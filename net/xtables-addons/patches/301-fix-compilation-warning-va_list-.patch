@@ -1,0 +1,115 @@
+--- a/extensions/LUA/lua/lauxlib.c
++++ b/extensions/LUA/lua/lauxlib.c
+@@ -4,6 +4,10 @@
+ ** See Copyright Notice in lua.h
+ */
+ 
++#if defined(__KERNEL__)
++#define __need___va_list
++#endif
++
+ #include <stdarg.h>
+ 
+ #if !defined(__KERNEL__)
+--- a/extensions/LUA/lua/ldebug.c
++++ b/extensions/LUA/lua/ldebug.c
+@@ -4,6 +4,9 @@
+ ** See Copyright Notice in lua.h
+ */
+ 
++#if defined(__KERNEL__)
++#define __need___va_list
++#endif
+ 
+ #include <stdarg.h>
+ #include <stddef.h>
+--- a/extensions/LUA/lua/ldump.c
++++ b/extensions/LUA/lua/ldump.c
+@@ -4,6 +4,10 @@
+ ** See Copyright Notice in lua.h
+ */
+ 
++#if defined(__KERNEL__)
++#define __need___va_list
++#endif
++
+ #include <stddef.h>
+ 
+ #define ldump_c
+--- a/extensions/LUA/lua/lfunc.c
++++ b/extensions/LUA/lua/lfunc.c
+@@ -5,6 +5,10 @@
+ */
+ 
+ 
++#if defined(__KERNEL__)
++#define __need___va_list
++#endif
++
+ #include <stddef.h>
+ 
+ #define lfunc_c
+--- a/extensions/LUA/lua/llimits.h
++++ b/extensions/LUA/lua/llimits.h
+@@ -7,6 +7,10 @@
+ #ifndef llimits_h
+ #define llimits_h
+ 
++#if defined(__KERNEL__)
++#define __need___va_list
++#endif
++
+ #include <stddef.h>
+ 
+ #include "lua.h"
+--- a/extensions/LUA/lua/lmem.c
++++ b/extensions/LUA/lua/lmem.c
+@@ -4,6 +4,9 @@
+ ** See Copyright Notice in lua.h
+ */
+ 
++#if defined(__KERNEL__)
++#define __need___va_list
++#endif
+ 
+ #include <stddef.h>
+ 
+--- a/extensions/LUA/lua/lobject.c
++++ b/extensions/LUA/lua/lobject.c
+@@ -4,6 +4,10 @@
+ ** See Copyright Notice in lua.h
+ */
+ 
++#if defined(__KERNEL__)
++#define __need___va_list
++#endif
++
+ #include <stdarg.h>
+ 
+ #include <ctype.h>
+--- a/extensions/LUA/lua/lstate.c
++++ b/extensions/LUA/lua/lstate.c
+@@ -5,6 +5,10 @@
+ */
+ 
+ 
++#if defined(__KERNEL__)
++#define __need___va_list
++#endif
++
+ #include <stddef.h>
+ 
+ #define lstate_c
+--- a/extensions/LUA/lua/ltablib.c
++++ b/extensions/LUA/lua/ltablib.c
+@@ -5,6 +5,10 @@
+ */
+ 
+ 
++#if defined(__KERNEL__)
++#define __need___va_list
++#endif
++
+ #include <stddef.h>
+ 
+ #define ltablib_c

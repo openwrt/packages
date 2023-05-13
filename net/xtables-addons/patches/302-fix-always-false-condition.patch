@@ -1,0 +1,12 @@
+
+--- a/extensions/LUA/lua/ldump.c
++++ b/extensions/LUA/lua/ldump.c
+@@ -64,7 +64,7 @@ static void DumpVector(const void* b, in
+ 
+ static void DumpString(const TString* s, DumpState* D)
+ {
+- if (s==NULL || getstr(s)==NULL)
++ if (s==NULL)
+  {
+   size_t size=0;
+   DumpVar(size,D);
