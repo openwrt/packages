@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnutls
 PKG_VERSION:=3.8.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_BUILD_FLAGS:=no-mips16
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
@@ -132,6 +132,7 @@ CONFIGURE_ARGS+= \
 	--without-idn \
 	--with-default-trust-store-dir=/etc/ssl/certs/ \
 	--with-included-unistring \
+	--with-included-libunistring \
 	--with-librt-prefix="$(LIBRT_ROOT_DIR)/" \
 	--with-pic \
 	--with-system-priority-file="" \
