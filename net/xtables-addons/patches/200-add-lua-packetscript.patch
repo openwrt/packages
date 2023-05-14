@@ -1,6 +1,6 @@
 --- /dev/null
 +++ b/extensions/LUA/byte_array.c
-@@ -0,0 +1,145 @@
+@@ -0,0 +1,161 @@
 +/*
 + *	Copyright (C) 2010 University of Basel <http://cn.cs.unibas.ch/>
 + *	by Andre Graf <andre@dergraf.org>
@@ -110,11 +110,25 @@
 +static int32_t byte_array_to_string(lua_State *L)
 +{
 +	lua_packet_segment * array = checkbytearray(L, 1);
-+	uint8_t buf[(array->length * 3) + 255];
 +	uint8_t hexval[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
-+	char res[255 + (array->length * 3)]; /* make sure the buffer is big enough*/
++	uint8_t * buf;
++	char * res;
 +	int32_t i, n;
 +	uint8_t *ptr = array->start + array->offset;
++
++	buf = kcalloc((array->length * 3) + 255, sizeof(*buf), GFP_KERNEL);
++
++	if (!buf) {
++		return luaL_error(L, "byte_array_to_string, failed alloc buf buffer");
++	}
++
++	/* make sure the buffer is big enough*/
++	res = kcalloc((array->length * 3) + 255, sizeof(*res), GFP_KERNEL);
++
++	if (!res) {
++		kfree(buf);
++		return luaL_error(L, "byte_array_to_string, failed alloc res buffer");
++	}
 +
 +	for (i = 0; i < array->length; i++) {
 +		buf[i * 3] = hexval[(ptr[i] >> 4) & 0xF];
@@ -126,6 +140,8 @@
 +	n = sprintf(res, "byte_array: length: %d  value: %s", array->length, buf);
 +
 +	lua_pushlstring(L, res, n);
++	kfree(res);
++	kfree(buf);
 +
 +	return 1;
 +}
@@ -2453,14 +2469,12 @@
 +#endif
 --- /dev/null
 +++ b/extensions/LUA/lua/lauxlib.c
-@@ -0,0 +1,674 @@
+@@ -0,0 +1,672 @@
 +/*
 +** $Id: lauxlib.c,v 1.159.1.3 2008/01/21 13:20:51 roberto Exp $
 +** Auxiliary functions for building Lua libraries
 +** See Copyright Notice in lua.h
 +*/
-+
-+#include <stdarg.h>
 +
 +#if !defined(__KERNEL__)
 +#include <ctype.h>
@@ -4887,7 +4901,7 @@
 +#endif
 --- /dev/null
 +++ b/extensions/LUA/lua/ldebug.c
-@@ -0,0 +1,637 @@
+@@ -0,0 +1,636 @@
 +/*
 +** $Id: ldebug.c,v 2.29.1.6 2008/05/08 16:56:26 roberto Exp $
 +** Debug Interface
@@ -4895,7 +4909,6 @@
 +*/
 +
 +
-+#include <stdarg.h>
 +#include <stddef.h>
 +#include <string.h>
 +
@@ -6204,7 +6217,7 @@
 +
 +static void DumpString(const TString* s, DumpState* D)
 +{
-+ if (s==NULL || getstr(s)==NULL)
++ if (s==NULL)
 + {
 +  size_t size=0;
 +  DumpVar(size,D);
@@ -8165,14 +8178,12 @@
 +
 --- /dev/null
 +++ b/extensions/LUA/lua/lobject.c
-@@ -0,0 +1,215 @@
+@@ -0,0 +1,213 @@
 +/*
 +** $Id: lobject.c,v 2.22.1.1 2007/12/27 13:02:25 roberto Exp $
 +** Some generic functions over Lua objects
 +** See Copyright Notice in lua.h
 +*/
-+
-+#include <stdarg.h>
 +
 +#include <ctype.h>
 +#include <stdio.h>
@@ -13851,7 +13862,7 @@
 +
 --- /dev/null
 +++ b/extensions/LUA/lua/lua.h
-@@ -0,0 +1,387 @@
+@@ -0,0 +1,386 @@
 +/*
 +** $Id: lua.h,v 1.218.1.5 2008/08/06 13:30:12 roberto Exp $
 +** Lua - An Extensible Extension Language
@@ -13863,7 +13874,6 @@
 +#ifndef lua_h
 +#define lua_h
 +
-+#include <stdarg.h>
 +#include <stddef.h>
 +
 +#include "luaconf.h"
