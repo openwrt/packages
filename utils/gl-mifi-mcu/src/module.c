@@ -164,7 +164,7 @@ static enum hrtimer_restart handle_rx(struct hrtimer* timer)
   return result;
 }
 
-static int __init init(void)
+static int __init gl_mifi_mcu_init(void)
 {
   bool success = true;
 
@@ -193,7 +193,7 @@ static int __init init(void)
   return success;
 }
 
-static void __exit exit(void)
+static void __exit gl_mifi_mcu_exit(void)
 {
   disable_irq(gpio_to_irq(gpio_rx));
   hrtimer_cancel(&timer_tx);
@@ -205,6 +205,6 @@ static void __exit exit(void)
   remove_proc_entry("gl_mifi_mcu", NULL);
 }
 
-module_init(init);
-module_exit(exit);
+module_init(gl_mifi_mcu_init);
+module_exit(gl_mifi_mcu_exit);
 
