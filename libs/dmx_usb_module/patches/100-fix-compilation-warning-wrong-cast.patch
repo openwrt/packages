@@ -1,0 +1,11 @@
+--- a/dmx_usb.c
++++ b/dmx_usb.c
+@@ -406,7 +406,7 @@ static ssize_t dmx_usb_write (struct file *file, const char *buffer, size_t coun
+ 
+ 	dev = (struct dmx_usb_device *)file->private_data;
+ 
+-	dbg("%s - minor %d, count = %d", __FUNCTION__, dev->minor, count);
++	dbg("%s - minor %d, count = %zu", __FUNCTION__, dev->minor, count);
+ 
+ 	/* lock this object */
+ 	down (&dev->sem);
