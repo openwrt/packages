@@ -9,7 +9,7 @@ Subject: [PATCH] revert [meson] remove t/test_mod_evasive.c
 
 --- a/src/meson.build
 +++ b/src/meson.build
-@@ -721,6 +721,7 @@ test('test_mod', executable('test_mod',
+@@ -744,6 +744,7 @@ test('test_mod', executable('test_mod',
  		't/test_mod.c',
  		't/test_mod_access.c',
  		't/test_mod_alias.c',
