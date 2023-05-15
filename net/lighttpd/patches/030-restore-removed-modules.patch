@@ -1,4 +1,4 @@
-From 2bd3c1fe962812b4965bf64e9e1529541f9e96ff Mon Sep 17 00:00:00 2001
+From d3e4e8ad1493679392966f3adbbf7f7c7054cd0a Mon Sep 17 00:00:00 2001
 From: Glenn Strauss <gstrauss@gluelogic.com>
 Date: Thu, 13 Apr 2023 16:14:48 -0400
 Subject: [PATCH] Revert "[multiple] remove deprecated modules"
@@ -6,7 +6,7 @@ Subject: [PATCH] Revert "[multiple] remove deprecated modules"
 This reverts commit fcf0dc3e336a5d62c58036cdb8fc9f4c099b178e.
 ---
  src/CMakeLists.txt       |   8 +
- src/Makefile.am          |  30 +++
+ src/Makefile.am          |  25 ++
  src/SConscript           |   4 +
  src/meson.build          |   4 +
  src/mod_evasive.c        | 194 +++++++++++++++
@@ -17,7 +17,7 @@ This reverts commit fcf0dc3e336a5d62c58036cdb8fc9f4c099b178e.
  src/t/test_mod_evasive.c |  72 ++++++
  tests/lighttpd.conf      |  27 +++
  tests/request.t          | 192 ++++++++++++++-
- 12 files changed, 1610 insertions(+), 1 deletion(-)
+ 12 files changed, 1605 insertions(+), 1 deletion(-)
  create mode 100644 src/mod_evasive.c
  create mode 100644 src/mod_secdownload.c
  create mode 100644 src/mod_uploadprogress.c
@@ -26,32 +26,26 @@ This reverts commit fcf0dc3e336a5d62c58036cdb8fc9f4c099b178e.
 
 --- a/src/CMakeLists.txt
 +++ b/src/CMakeLists.txt
-@@ -914,6 +914,7 @@ if(NOT WIN32)
- endif()
+@@ -953,14 +953,18 @@ add_and_install_library(mod_authn_file "
+ add_and_install_library(mod_cgi mod_cgi.c)
  add_and_install_library(mod_deflate mod_deflate.c)
  add_and_install_library(mod_dirlisting mod_dirlisting.c)
 +add_and_install_library(mod_evasive mod_evasive.c)
- add_and_install_library(mod_evhost mod_evhost.c)
- add_and_install_library(mod_expire mod_expire.c)
  add_and_install_library(mod_extforward mod_extforward.c)
-@@ -924,13 +925,16 @@ add_and_install_library(mod_redirect mod
- add_and_install_library(mod_rewrite mod_rewrite.c)
+ add_and_install_library(mod_h2 "h2.c;ls-hpack/lshpack.c;algo_xxhash.c")
+ add_and_install_library(mod_proxy mod_proxy.c)
  add_and_install_library(mod_rrdtool mod_rrdtool.c)
- add_and_install_library(mod_scgi mod_scgi.c)
 +add_and_install_library(mod_secdownload "mod_secdownload.c;algo_hmac.c")
- add_and_install_library(mod_setenv mod_setenv.c)
- add_and_install_library(mod_simple_vhost mod_simple_vhost.c)
  add_and_install_library(mod_sockproxy mod_sockproxy.c)
  add_and_install_library(mod_ssi mod_ssi.c)
- add_and_install_library(mod_staticfile mod_staticfile.c)
  add_and_install_library(mod_status mod_status.c)
 +add_and_install_library(mod_uploadprogress mod_uploadprogress.c)
  add_and_install_library(mod_userdir mod_userdir.c)
 +add_and_install_library(mod_usertrack mod_usertrack.c)
- add_and_install_library(mod_vhostdb "mod_vhostdb.c;mod_vhostdb_api.c")
- add_and_install_library(mod_webdav mod_webdav.c)
- add_and_install_library(mod_wstunnel mod_wstunnel.c)
-@@ -954,6 +958,7 @@ add_executable(test_mod
+ if(WIN32 AND NOT BUILD_STATIC)
+ add_and_install_library(mod_vhostdb "mod_vhostdb.c")
+ else()
+@@ -988,6 +992,7 @@ add_executable(test_mod
  	t/test_mod.c
  	t/test_mod_access.c
  	t/test_mod_alias.c
@@ -59,7 +53,7 @@ This reverts commit fcf0dc3e336a5d62c58036cdb8fc9f4c099b178e.
  	t/test_mod_evhost.c
  	t/test_mod_indexfile.c
  	t/test_mod_simple_vhost.c
-@@ -1155,6 +1160,8 @@ if(NOT ${CRYPTO_LIBRARY} EQUAL "")
+@@ -1188,6 +1193,8 @@ if(NOT ${CRYPTO_LIBRARY} EQUAL "")
  	target_link_libraries(mod_auth ${CRYPTO_LIBRARY})
  	set(L_MOD_AUTHN_FILE ${L_MOD_AUTHN_FILE} ${CRYPTO_LIBRARY})
  	target_link_libraries(mod_authn_file ${L_MOD_AUTHN_FILE})
@@ -68,7 +62,7 @@ This reverts commit fcf0dc3e336a5d62c58036cdb8fc9f4c099b178e.
  	target_link_libraries(mod_wstunnel ${CRYPTO_LIBRARY})
  	target_link_libraries(test_mod ${CRYPTO_LIBRARY})
  endif()
-@@ -1179,6 +1186,7 @@ if(HAVE_LIBMBEDTLS AND HAVE_LIBMEDCRYPTO
+@@ -1212,6 +1219,7 @@ if(HAVE_LIBMBEDTLS AND HAVE_LIBMEDCRYPTO
  	add_and_install_library(mod_mbedtls "mod_mbedtls.c")
  	set(L_MOD_MBEDTLS ${L_MOD_MBEDTLS} mbedtls mbedcrypto mbedx509)
  	target_link_libraries(mod_mbedtls ${L_MOD_MBEDTLS})
@@ -78,7 +72,7 @@ This reverts commit fcf0dc3e336a5d62c58036cdb8fc9f4c099b178e.
  if(HAVE_LIBSSL3 AND HAVE_LIBSMIME3 AND HAVE_LIBNSS3 AND HAVE_LIBNSSUTIL3)
 --- a/src/Makefile.am
 +++ b/src/Makefile.am
-@@ -128,6 +128,11 @@ mod_maxminddb_la_LDFLAGS = $(common_modu
+@@ -134,6 +134,11 @@ mod_maxminddb_la_LDFLAGS = $(common_modu
  mod_maxminddb_la_LIBADD = $(common_libadd) $(MAXMINDDB_LIB)
  endif
  
@@ -90,7 +84,7 @@ This reverts commit fcf0dc3e336a5d62c58036cdb8fc9f4c099b178e.
  lib_LTLIBRARIES += mod_webdav.la
  mod_webdav_la_SOURCES = mod_webdav.c
  mod_webdav_la_CFLAGS = $(AM_CFLAGS) $(XML_CFLAGS) $(SQLITE_CFLAGS) 
-@@ -226,6 +231,11 @@ mod_rrdtool_la_SOURCES = mod_rrdtool.c
+@@ -207,6 +212,11 @@ mod_rrdtool_la_SOURCES = mod_rrdtool.c
  mod_rrdtool_la_LDFLAGS = $(common_module_ldflags)
  mod_rrdtool_la_LIBADD = $(common_libadd)
  
@@ -102,7 +96,7 @@ This reverts commit fcf0dc3e336a5d62c58036cdb8fc9f4c099b178e.
  lib_LTLIBRARIES += mod_proxy.la
  mod_proxy_la_SOURCES = mod_proxy.c
  mod_proxy_la_LDFLAGS = $(common_module_ldflags)
-@@ -241,6 +251,16 @@ mod_ssi_la_SOURCES = mod_ssi.c
+@@ -222,6 +232,11 @@ mod_ssi_la_SOURCES = mod_ssi.c
  mod_ssi_la_LDFLAGS = $(common_module_ldflags)
  mod_ssi_la_LIBADD = $(common_libadd)
  
@@ -111,15 +105,10 @@ This reverts commit fcf0dc3e336a5d62c58036cdb8fc9f4c099b178e.
 +mod_secdownload_la_LDFLAGS = $(common_module_ldflags)
 +mod_secdownload_la_LIBADD = $(common_libadd) $(CRYPTO_LIB)
 +
-+#lib_LTLIBRARIES += mod_httptls.la
-+#mod_httptls_la_SOURCES = mod_httptls.c
-+#mod_httptls_la_LDFLAGS = $(common_module_ldflags)
-+#mod_httptls_la_LIBADD = $(common_libadd)
-+
- lib_LTLIBRARIES += mod_expire.la
- mod_expire_la_SOURCES = mod_expire.c
- mod_expire_la_LDFLAGS = $(common_module_ldflags)
-@@ -391,6 +411,11 @@ mod_accesslog_la_SOURCES = mod_accesslog
+ lib_LTLIBRARIES += mod_ajp13.la
+ mod_ajp13_la_SOURCES = mod_ajp13.c
+ mod_ajp13_la_LDFLAGS = $(common_module_ldflags)
+@@ -336,6 +351,11 @@ mod_accesslog_la_SOURCES = mod_accesslog
  mod_accesslog_la_LDFLAGS = $(common_module_ldflags)
  mod_accesslog_la_LIBADD = $(common_libadd)
  
@@ -131,7 +120,7 @@ This reverts commit fcf0dc3e336a5d62c58036cdb8fc9f4c099b178e.
  lib_LTLIBRARIES += mod_wstunnel.la
  mod_wstunnel_la_SOURCES = mod_wstunnel.c
  mod_wstunnel_la_LDFLAGS = $(common_module_ldflags)
-@@ -448,6 +473,7 @@ lighttpd_SOURCES = \
+@@ -394,6 +414,7 @@ lighttpd_SOURCES = \
    mod_deflate.c \
    mod_dirlisting.c \
    mod_evhost.c \
@@ -139,7 +128,7 @@ This reverts commit fcf0dc3e336a5d62c58036cdb8fc9f4c099b178e.
    mod_expire.c \
    mod_extforward.c \
    mod_fastcgi.c \
-@@ -457,13 +483,16 @@ lighttpd_SOURCES = \
+@@ -403,13 +424,16 @@ lighttpd_SOURCES = \
    mod_rewrite.c \
    mod_rrdtool.c \
    mod_scgi.c \
@@ -156,7 +145,7 @@ This reverts commit fcf0dc3e336a5d62c58036cdb8fc9f4c099b178e.
    mod_vhostdb.c \
    mod_vhostdb_api.c \
    mod_webdav.c
-@@ -573,6 +602,7 @@ t_test_configfile_LDADD = $(PCRE_LIB) $(
+@@ -521,6 +545,7 @@ t_test_configfile_LDADD = $(PCRE_LIB) $(
  t_test_mod_SOURCES = $(common_src) t/test_mod.c \
                       t/test_mod_access.c \
                       t/test_mod_alias.c \
@@ -166,24 +155,18 @@ This reverts commit fcf0dc3e336a5d62c58036cdb8fc9f4c099b178e.
                       t/test_mod_simple_vhost.c \
 --- a/src/SConscript
 +++ b/src/SConscript
-@@ -119,6 +119,7 @@ modules = {
+@@ -116,14 +116,18 @@ modules = {
  	'mod_cgi' : { 'src' : [ 'mod_cgi.c' ] },
  	'mod_deflate' : { 'src' : [ 'mod_deflate.c' ], 'lib' : [ env['LIBZ'], env['LIBZSTD'], env['LIBBZ2'], env['LIBBROTLI'], env['LIBDEFLATE'], 'm' ] },
  	'mod_dirlisting' : { 'src' : [ 'mod_dirlisting.c' ] },
 +	'mod_evasive' : { 'src' : [ 'mod_evasive.c' ] },
- 	'mod_evhost' : { 'src' : [ 'mod_evhost.c' ] },
- 	'mod_expire' : { 'src' : [ 'mod_expire.c' ] },
  	'mod_extforward' : { 'src' : [ 'mod_extforward.c' ] },
-@@ -129,13 +130,16 @@ modules = {
- 	'mod_rewrite' : { 'src' : [ 'mod_rewrite.c' ] },
+ 	'mod_h2' : { 'src' : [ 'h2.c', 'ls-hpack/lshpack.c', 'algo_xxhash.c' ], 'lib' : [ env['LIBXXHASH'] ] },
+ 	'mod_proxy' : { 'src' : [ 'mod_proxy.c' ] },
  	'mod_rrdtool' : { 'src' : [ 'mod_rrdtool.c' ] },
- 	'mod_scgi' : { 'src' : [ 'mod_scgi.c' ] },
 +	'mod_secdownload' : { 'src' : [ 'mod_secdownload.c', 'algo_hmac.c' ], 'lib' : [ env['LIBCRYPTO'] ] },
- 	'mod_setenv' : { 'src' : [ 'mod_setenv.c' ] },
- 	'mod_simple_vhost' : { 'src' : [ 'mod_simple_vhost.c' ] },
  	'mod_sockproxy' : { 'src' : [ 'mod_sockproxy.c' ] },
  	'mod_ssi' : { 'src' : [ 'mod_ssi.c' ] },
- 	'mod_staticfile' : { 'src' : [ 'mod_staticfile.c' ] },
  	'mod_status' : { 'src' : [ 'mod_status.c' ] },
 +	'mod_uploadprogress' : { 'src' : [ 'mod_uploadprogress.c' ] },
  	'mod_userdir' : { 'src' : [ 'mod_userdir.c' ] },
@@ -193,24 +176,18 @@ This reverts commit fcf0dc3e336a5d62c58036cdb8fc9f4c099b178e.
  	'mod_wstunnel' : { 'src' : [ 'mod_wstunnel.c' ], 'lib' : [ env['LIBCRYPTO'] ] },
 --- a/src/meson.build
 +++ b/src/meson.build
-@@ -751,6 +751,7 @@ modules = [
- 	[ 'mod_authn_file', [ 'mod_authn_file.c' ], [ libcrypt, libcrypto ] ],
+@@ -776,14 +776,18 @@ modules = [
+ 	[ 'mod_cgi', [ 'mod_cgi.c' ] ],
  	[ 'mod_deflate', [ 'mod_deflate.c' ], [ libbz2, libz, libzstd, libbrotli, libdeflate ] ],
  	[ 'mod_dirlisting', [ 'mod_dirlisting.c' ] ],
 +	[ 'mod_evasive', [ 'mod_evasive.c' ] ],
- 	[ 'mod_evhost', [ 'mod_evhost.c' ] ],
- 	[ 'mod_expire', [ 'mod_expire.c' ] ],
  	[ 'mod_extforward', [ 'mod_extforward.c' ] ],
-@@ -761,13 +762,16 @@ modules = [
- 	[ 'mod_rewrite', [ 'mod_rewrite.c' ] ],
+ 	[ 'mod_h2', [ 'h2.c', 'ls-hpack/lshpack.c', 'algo_xxhash.c' ], [ libxxhash ] ],
+ 	[ 'mod_proxy', [ 'mod_proxy.c' ], socket_libs ],
  	[ 'mod_rrdtool', [ 'mod_rrdtool.c' ] ],
- 	[ 'mod_scgi', [ 'mod_scgi.c' ], socket_libs ],
 +	[ 'mod_secdownload', [ 'mod_secdownload.c', 'algo_hmac.c' ], libcrypto ],
- 	[ 'mod_setenv', [ 'mod_setenv.c' ] ],
- 	[ 'mod_simple_vhost', [ 'mod_simple_vhost.c' ] ],
  	[ 'mod_sockproxy', [ 'mod_sockproxy.c' ] ],
  	[ 'mod_ssi', [ 'mod_ssi.c' ], socket_libs ],
- 	[ 'mod_staticfile', [ 'mod_staticfile.c' ] ],
  	[ 'mod_status', [ 'mod_status.c' ] ],
 +	[ 'mod_uploadprogress', [ 'mod_uploadprogress.c' ] ],
  	[ 'mod_userdir', [ 'mod_userdir.c' ] ],
@@ -1597,7 +1574,7 @@ This reverts commit fcf0dc3e336a5d62c58036cdb8fc9f4c099b178e.
 +}
 --- a/tests/lighttpd.conf
 +++ b/tests/lighttpd.conf
-@@ -30,6 +30,7 @@ server.modules = (
+@@ -30,6 +30,7 @@ server.modules += (
  	"mod_simple_vhost",
  	"mod_cgi",
  	"mod_status",
@@ -1646,7 +1623,7 @@ This reverts commit fcf0dc3e336a5d62c58036cdb8fc9f4c099b178e.
  use LightyTest;
  
  my $tf = LightyTest->new();
-@@ -1592,6 +1592,196 @@ ok($tf_proxy->stop_proc == 0, "Stopping
+@@ -1593,6 +1593,196 @@ ok($tf_proxy->stop_proc == 0, "Stopping
  } while (0);
  
  
