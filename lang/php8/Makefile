@@ -194,6 +194,9 @@ CONFIGURE_ARGS+= \
 ifeq ($(CONFIG_LIBC_USE_GLIBC),y)
 TARGET_LDFLAGS += -ldl
 endif
+ifeq ($(CONFIG_USE_MUSL),y)
+TARGET_CFLAGS += -D_LARGEFILE64_SOURCE
+endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-bcmath),)
   CONFIGURE_ARGS+= --enable-bcmath=shared
