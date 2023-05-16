@@ -423,27 +423,31 @@ f_getdev() {
 # get local uplink
 #
 f_getuplink() {
-	local uplink iface ip update="0"
+	local uplink iface ip update="0" cnt="0" cnt_max="30"
 
 	if [ "${ban_autoallowlist}" = "1" ] && [ "${ban_autoallowuplink}" != "disable" ]; then
-		for iface in ${ban_ifv4} ${ban_ifv6}; do
-			network_flush_cache
-			if [ "${ban_autoallowuplink}" = "subnet" ]; then
-				network_get_subnet uplink "${iface}"
-			elif [ "${ban_autoallowuplink}" = "ip" ]; then
-				network_get_ipaddr uplink "${iface}"
-			fi
-			if [ -n "${uplink}" ] && ! printf " %s " "${ban_uplink}" | "${ban_grepcmd}" -q " ${uplink} "; then
-				ban_uplink="${ban_uplink}${uplink} "
-			fi
-			if [ "${ban_autoallowuplink}" = "subnet" ]; then
-				network_get_subnet6 uplink "${iface}"
-			elif [ "${ban_autoallowuplink}" = "ip" ]; then
-				network_get_ipaddr6 uplink "${iface}"
-			fi
-			if [ -n "${uplink}" ] && ! printf " %s " "${ban_uplink}" | "${ban_grepcmd}" -q " ${uplink} "; then
-				ban_uplink="${ban_uplink}${uplink} "
-			fi
+		while [ "${cnt}" -lt "${cnt_max}" ] && [ -z "${ban_uplink}" ]; do
+			for iface in ${ban_ifv4} ${ban_ifv6}; do
+				network_flush_cache
+				if [ "${ban_autoallowuplink}" = "subnet" ]; then
+					network_get_subnet uplink "${iface}"
+				elif [ "${ban_autoallowuplink}" = "ip" ]; then
+					network_get_ipaddr uplink "${iface}"
+				fi
+				if [ -n "${uplink}" ] && ! printf " %s " "${ban_uplink}" | "${ban_grepcmd}" -q " ${uplink} "; then
+					ban_uplink="${ban_uplink}${uplink} "
+				fi
+				if [ "${ban_autoallowuplink}" = "subnet" ]; then
+					network_get_subnet6 uplink "${iface}"
+				elif [ "${ban_autoallowuplink}" = "ip" ]; then
+					network_get_ipaddr6 uplink "${iface}"
+				fi
+				if [ -n "${uplink}" ] && ! printf " %s " "${ban_uplink}" | "${ban_grepcmd}" -q " ${uplink} "; then
+					ban_uplink="${ban_uplink}${uplink} "
+				fi
+			done
+			cnt="$((cnt + 1))"
+			sleep 1
 		done
 		for ip in ${ban_uplink}; do
 			if ! "${ban_grepcmd}" -q "${ip} " "${ban_allowlist}"; then
@@ -461,7 +465,7 @@ f_getuplink() {
 		update="1"
 	fi
 
-	f_log "debug" "f_getuplink ::: auto/update: ${ban_autoallowlist}/${update}, uplink: ${ban_uplink:-"-"}"
+	f_log "debug" "f_getuplink ::: auto/update: ${ban_autoallowlist}/${update}, uplink: ${ban_uplink:-"-"}, cnt: ${cnt}"
 }
 
 # get feed information

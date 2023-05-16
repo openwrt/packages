@@ -232,7 +232,7 @@ Available commands:
 ~# /etc/init.d/banip status
 ::: banIP runtime information
   + status            : active (nft: ✔, monitor: ✔)
-  + version           : 0.8.6-2
+  + version           : 0.8.6-3
   + element_count     : 172309
   + active_feeds      : allowlistvMAC, allowlistv6, allowlistv4, adawayv4, adguardtrackersv4, adawayv6, adguardv6, adguardv4, urlvirv4, adguardtrackersv6, oisdbigv6, oisdbigv4, blocklistvMAC, blocklistv4, blocklistv6
   + active_devices    : br-wan ::: wan, wan6
