@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=arp-scan
 PKG_VERSION:=1.10.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/royhills/arp-scan/tar.gz/$(PKG_VERSION)?
@@ -41,6 +41,9 @@ endef
 define Package/arp-scan/description
     ARP scanner
 endef
+
+CONFIGURE_ARGS += \
+	--without-libcap
 
 define Package/arp-scan/install
 	$(INSTALL_DIR) $(1)/usr/bin
