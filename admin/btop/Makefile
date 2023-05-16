@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=btop
 PKG_VERSION:=1.2.13
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL=https://codeload.github.com/aristocratos/btop/tar.gz/v$(PKG_VERSION)?
@@ -36,6 +36,10 @@ MAKE_FLAGS+= \
 	PLATFORM=Linux \
 	OPTFLAGS="$(TARGET_CXXFLAGS)" \
 	LDCXXFLAGS="$(TARGET_LDFLAGS) -pthread"
+
+ifneq ($(CONFIG_USE_MUSL),)
+  TARGET_CFLAGS += -D_LARGEFILE64_SOURCE
+endif
 
 define Package/btop/install
 	$(INSTALL_DIR) $(1)/usr/bin
