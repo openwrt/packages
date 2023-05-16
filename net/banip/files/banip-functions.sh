@@ -173,13 +173,13 @@ f_trim() {
 	printf "%s" "${string}"
 }
 
-# remove logservice
+# remove log monitor
 #
 f_rmpid() {
 	local ppid pid pids
 
 	ppid="$("${ban_catcmd}" "${ban_pidfile}" 2>/dev/null)"
-	[ -n "${ppid}" ] && pids="$(pgrep -P "${ppid}" 2>/dev/null)" || return 0
+	[ -n "${ppid}" ] && pids="$(pgrep -P "${ppid}" 2>/dev/null)"
 	for pid in ${pids}; do
 		kill -INT "${pid}" >/dev/null 2>&1
 	done
@@ -278,7 +278,7 @@ f_actual() {
 	else
 		nft="$(f_char "0")"
 	fi
-	if pgrep -f "logread" -P "$("${ban_catcmd}" "${ban_pidfile}" 2>/dev/null)" >/dev/null 2>&1; then
+	if pgrep -f "${ban_logreadcmd##*/}" -P "$("${ban_catcmd}" "${ban_pidfile}" 2>/dev/null)" >/dev/null 2>&1; then
 		monitor="$(f_char "1")"
 	else
 		monitor="$(f_char "0")"
@@ -949,7 +949,7 @@ f_rmset() {
 # generate status information
 #
 f_genstatus() {
-	local object duration item table_sets cnt_elements="0" custom="0" split="0" status="${1}"
+	local object duration item table_sets cnt_elements="0" custom_feed="0" split="0" status="${1}"
 
 	[ -z "${ban_dev}" ] && f_conf
 	if [ "${status}" = "active" ]; then
@@ -965,8 +965,8 @@ f_genstatus() {
 		fi
 		runtime="action: ${ban_action:-"-"}, duration: ${duration:-"-"}, date: $(date "+%Y-%m-%d %H:%M:%S")"
 	fi
-	[ -s ${ban_customfeedfile} ] && custom="1"
-	[ ${ban_splitsize:-"0"} -gt "0" ] && split="1"
+	[ -s "${ban_customfeedfile}" ] && custom_feed="1"
+	[ "${ban_splitsize:-"0"}" -gt "0" ] && split="1"
 
 	: >"${ban_rtfile}"
 	json_init
@@ -1001,7 +1001,7 @@ f_genstatus() {
 	done
 	json_close_array
 	json_add_string "nft_info" "priority: ${ban_nftpriority}, policy: ${ban_nftpolicy}, loglevel: ${ban_nftloglevel}, expiry: ${ban_nftexpiry:-"-"}"
-	json_add_string "run_info" "base: ${ban_basedir}, backup: ${ban_backupdir}, report: ${ban_reportdir}, feed/custom: ${ban_feedfile}/$(f_char ${custom})"
+	json_add_string "run_info" "base: ${ban_basedir}, backup: ${ban_backupdir}, report: ${ban_reportdir}, custom feed: $(f_char ${custom_feed})"
 	json_add_string "run_flags" "auto: $(f_char ${ban_autodetect}), proto (4/6): $(f_char ${ban_protov4})/$(f_char ${ban_protov6}), log (wan-inp/wan-fwd/lan-fwd): $(f_char ${ban_loginput})/$(f_char ${ban_logforwardwan})/$(f_char ${ban_logforwardlan}), dedup: $(f_char ${ban_deduplicate}), split: $(f_char ${split}), allowed only: $(f_char ${ban_allowlistonly})"
 	json_add_string "last_run" "${runtime:-"-"}"
 	json_add_string "system_info" "cores: ${ban_cores}, memory: ${ban_memory}, device: ${ban_sysver}"
@@ -1369,22 +1369,18 @@ f_monitor() {
 	local nft_expiry line proto ip log_raw log_count
 
 	if [ -x "${ban_logreadcmd}" ] && [ -n "${ban_logterm%%??}" ] && [ "${ban_loglimit}" != "0" ]; then
+
 		f_log "info" "start detached banIP log service"
 		[ -n "${ban_nftexpiry}" ] && nft_expiry="timeout $(printf "%s" "${ban_nftexpiry}" | "${ban_grepcmd}" -oE "([0-9]+[d|h|m|s])+$")"
-		# read log continuously with given logterms
-		#
+
 		"${ban_logreadcmd}" -fe "${ban_logterm%%??}" 2>/dev/null |
 			while read -r line; do
 				proto=""
-				# IPv4 log parsing
-				#
 				ip="$(printf "%s" "${line}" | "${ban_awkcmd}" 'BEGIN{RS="(([0-9]{1,3}\\.){3}[0-9]{1,3})+"}{if(!seen[RT]++)printf "%s ",RT}')"
 				ip="$(f_trim "${ip}")"
 				ip="${ip##* }"
 				[ -n "${ip}" ] && proto="v4"
 				if [ -z "${proto}" ]; then
-					# IPv6 log parsing
-					#
 					ip="$(printf "%s" "${line}" | "${ban_awkcmd}" 'BEGIN{RS="([A-Fa-f0-9]{1,4}::?){3,7}[A-Fa-f0-9]{1,4}"}{if(!seen[RT]++)printf "%s ",RT}')"
 					ip="$(f_trim "${ip}")"
 					ip="${ip##* }"
@@ -1405,14 +1401,9 @@ f_monitor() {
 					fi
 				fi
 			done
-
-	# start detached no-op service loop
-	#
 	else
 		f_log "info" "start detached no-op banIP service"
-		while :; do
-			sleep 1
-		done
+		sleep infinity
 	fi
 }
 

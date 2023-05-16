@@ -82,8 +82,8 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * Supports external allowlist URLs to reference additional IPv4/IPv6 feeds
 
 ## Prerequisites
-* **[OpenWrt](https://openwrt.org)**, latest stable release or a snapshot with nft/firewall 4 support
-* A download utility with SSL support: 'wget', 'uclient-fetch' with one of the 'libustream-*' SSL libraries, 'aria2c' or 'curl' is required
+* **[OpenWrt](https://openwrt.org)**, latest stable release or a snapshot with nft/firewall 4 and logd/logread support
+* A download utility with SSL support: 'aria2c', 'curl', full 'wget' or 'uclient-fetch' with one of the 'libustream-*' SSL libraries
 * A certificate store like 'ca-bundle', as banIP checks the validity of the SSL certificates of all download sites by default
 * For E-Mail notifications you need to install and setup the additional 'msmtp' package
 
@@ -232,16 +232,16 @@ Available commands:
 ~# /etc/init.d/banip status
 ::: banIP runtime information
   + status            : active (nft: ✔, monitor: ✔)
-  + version           : 0.8.5-1
-  + element_count     : 281161
-  + active_feeds      : allowlistvMAC, allowlistv6, allowlistv4, adawayv4, adguardtrackersv4, adawayv6, adguardv6, adguardv4, adguardtrackersv6, antipopadsv6, antipopadsv4, cinsscorev4, deblv4, countryv6, countryv4, deblv6, dohv4, dohv6, iblockadsv4, firehol1v4, oisdbigv4, yoyov6, threatviewv4, yoyov4, oisdbigv6, blocklistvMAC, blocklistv4, blocklistv6
+  + version           : 0.8.6-2
+  + element_count     : 172309
+  + active_feeds      : allowlistvMAC, allowlistv6, allowlistv4, adawayv4, adguardtrackersv4, adawayv6, adguardv6, adguardv4, urlvirv4, adguardtrackersv6, oisdbigv6, oisdbigv4, blocklistvMAC, blocklistv4, blocklistv6
   + active_devices    : br-wan ::: wan, wan6
-  + active_uplink     : 91.64.169.252/24, 2a02:710c:0:60:958b:3bd0:9e14:abb/128
-  + nft_info          : priority: -200, policy: memory, loglevel: warn, expiry: -
-  + run_info          : base: /mnt/data/banIP, backup: /mnt/data/banIP/backup, report: /mnt/data/banIP/report, feed: /etc/banip/banip.feeds
+  + active_uplink     : 91.64.173.145, 2a12:610c:0:80:848b:3ad0:4e05:abb
+  + nft_info          : priority: -200, policy: performance, loglevel: warn, expiry: -
+  + run_info          : base: /mnt/data/banIP, backup: /mnt/data/banIP/backup, report: /mnt/data/banIP/report, custom feed: ✘
   + run_flags         : auto: ✔, proto (4/6): ✔/✔, log (wan-inp/wan-fwd/lan-fwd): ✔/✔/✔, dedup: ✔, split: ✘, allowed only: ✘
-  + last_run          : action: reload, duration: 1m 0s, date: 2023-04-06 12:34:10
-  + system_info       : cores: 4, memory: 1822, device: Bananapi BPI-R3, OpenWrt SNAPSHOT r22498-75f7e2d10b
+  + last_run          : action: restart, duration: 0m 22s, date: 2023-05-15 22:39:15
+  + system_info       : cores: 4, memory: 1798, device: Bananapi BPI-R3, OpenWrt SNAPSHOT r22784-1645c34d56
 ```
 
 **banIP search information**  
