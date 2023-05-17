@@ -82,6 +82,10 @@ $(call Package/crowdsec/Default/description)
   This package provides the source files for the program.
 endef
 
+ifneq ($(CONFIG_USE_MUSL),)
+  TARGET_CFLAGS += -D_LARGEFILE64_SOURCE
+endif
+
 define Package/crowdsec/install
 	$(call GoPackage/Package/Install/Bin,$(1))
 

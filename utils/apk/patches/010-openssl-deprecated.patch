@@ -16,7 +16,7 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
 
 --- a/libfetch/common.c
 +++ b/libfetch/common.c
-@@ -531,15 +531,11 @@ static int fetch_ssl_setup_client_certif
+@@ -583,15 +583,11 @@ static int fetch_ssl_setup_client_certif
  int
  fetch_ssl(conn_t *conn, const struct url *URL, int verbose)
  {
@@ -50,7 +50,7 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
  #include <fetch.h>
  
  #include "apk_defines.h"
-@@ -378,25 +373,6 @@ static int parse_options(int argc, char
+@@ -423,25 +418,6 @@ static int parse_options(int argc, char
  	return 0;
  }
  
@@ -76,15 +76,15 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
  static void on_sigwinch(int s)
  {
  	apk_reset_screen_width();
-@@ -475,7 +451,7 @@ int main(int argc, char **argv)
+@@ -534,7 +510,7 @@ int main(int argc, char **argv)
  		apk_force |= applet->forced_force;
  	}
  
 -	init_openssl();
 +	apk_openssl_init();
  	setup_automatic_flags();
- 	fetchConnectionCacheInit(32, 4);
- 
+ 	fetchTimeout = 60;
+ 	fetchRedirectMethod = fetch_redirect;
 --- a/src/apk_openssl.h
 +++ b/src/apk_openssl.h
 @@ -11,7 +11,11 @@

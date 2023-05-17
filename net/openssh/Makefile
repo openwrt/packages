@@ -9,11 +9,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openssh
 PKG_VERSION:=9.3p1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/ \
-		https://ftp.spline.de/pub/OpenBSD/OpenSSH/portable/
+PKG_SOURCE_URL:=https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/ \
+		https://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/
 PKG_HASH:=e9baba7701a76a51f3d85a62c383a3c9dcd97fa900b859bc7db114c1868af8a8
 
 PKG_LICENSE:=BSD ISC
@@ -31,10 +31,10 @@ include $(INCLUDE_DIR)/package.mk
 define Package/openssh/Default
 	SECTION:=net
 	CATEGORY:=Network
-	DEPENDS:=+libopenssl +zlib
+	DEPENDS:=
 	TITLE:=OpenSSH
 	MAINTAINER:=Peter Wagner <tripolar@gmx.at>
-	URL:=http://www.openssh.com/
+	URL:=https://www.openssh.com/
 	SUBMENU:=SSH
 endef
 
@@ -50,6 +50,7 @@ endef
 
 define Package/openssh-client
 	$(call Package/openssh/Default)
+	DEPENDS+= +libopenssl +zlib
 	TITLE+= client
 	ALTERNATIVES:=\
 		200:/usr/bin/ssh:/usr/libexec/ssh-openssh \
@@ -66,7 +67,7 @@ endef
 
 define Package/openssh-client-utils
 	$(call Package/openssh/Default)
-	DEPENDS+= +openssh-client +openssh-keygen
+	DEPENDS+= +libopenssl +zlib +openssh-client +openssh-keygen
 	TITLE+= client utilities
 endef
 
@@ -76,6 +77,7 @@ endef
 
 define Package/openssh-keygen
 	$(call Package/openssh/Default)
+	DEPENDS+= +libopenssl +zlib
 	TITLE+= keygen
 endef
 
@@ -85,7 +87,7 @@ endef
 
 define Package/openssh-server
 	$(call Package/openssh/Default)
-	DEPENDS+= +openssh-keygen +OPENSSH_LIBFIDO2:libfido2
+	DEPENDS+= +libopenssl +zlib +openssh-keygen +OPENSSH_LIBFIDO2:libfido2
 	TITLE+= server
 	USERID:=sshd=22:sshd=22
 	VARIANT:=without-pam
@@ -110,7 +112,7 @@ endef
 
 define Package/openssh-server-pam
 	$(call Package/openssh/Default)
-	DEPENDS+= +libpthread +openssh-keygen +libpam
+	DEPENDS+= +libopenssl +zlib +libpthread +openssh-keygen +libpam
 	TITLE+= server (with PAM support)
 	VARIANT:=with-pam
 	USERID:=sshd=22:sshd=22
