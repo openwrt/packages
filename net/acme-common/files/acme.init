@@ -39,8 +39,17 @@ load_options() {
 	export domains
 	export main_domain
 	main_domain="$(first_arg $domains)"
-	config_get keylength "$section" keylength ec-256
-	export keylength
+	config_get keylength "$section" keylength
+	if [ "$keylength" ]; then
+		log warn "Option \"keylength\" is deprecated, please use key_type (e.g., ec256, rsa2048) instead."
+		case $keylength in
+		ec-*) key_type=${keylength/-/} ;;
+		*) key_type=rsa$keylength ;;
+		esac
+	else
+		config_get key_type "$section" key_type ec256
+	fi
+	export key_type
 	config_get dns "$section" dns
 	export dns
 	config_get acme_server "$section" acme_server
@@ -51,7 +60,6 @@ load_options() {
 	[ -n "$standalone" ] && log warn "Option \"standalone\" is deprecated."
 	config_get dns_wait "$section" dns_wait
 	export dns_wait
-
 	config_get webroot "$section" webroot
 	export webroot
 	if [ "$webroot" ]; then

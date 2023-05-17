@@ -44,12 +44,14 @@ get)
 	set --
 	[ "$debug" = 1 ] && set -- "$@" --debug
 
-	case $keylength in
-	ec-*)
+	case $key_type in
+	ec*)
+		keylength=${key_type/ec/ec-}
 		domain_dir="$state_dir/${main_domain}_ecc"
 		set -- "$@" --ecc
 		;;
-	*)
+	rsa*)
+		keylength=${key_type#rsa}
 		domain_dir="$state_dir/$main_domain"
 		;;
 	esac
