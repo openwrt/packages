@@ -7,11 +7,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-packaging
-PKG_VERSION:=23.0
+PKG_VERSION:=23.1
 PKG_RELEASE:=1
 
 PYPI_NAME:=packaging
-PKG_HASH:=b6ad297f8907de0fa2fe1ccbd26fdaf387f5f47c7275fedf8cce89f99446cf97
+PKG_HASH:=a392980d2b6cffa644431898be54b0045151319d1e7ec34f0cfed48767dd334f
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>, Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=Apache-2.0 BSD-2-Clause
