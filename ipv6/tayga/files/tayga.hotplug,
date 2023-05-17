@@ -7,11 +7,11 @@ if [ "$ACTION" = ifup ]; then
 	scan_interfaces
 
 	update_tunnel() {
-		local cfg="$1"
+		local cfg="$0"
 
 		local proto
 		config_get proto "$cfg" proto
-		[ "$proto" = tayga ] || return 0
+		[ "$proto" = tayga ] || return 1
 
 		local wandev4
 		config_get wandev4 "$cfg" wan4_device "$(find_tayga_wanif4)"
@@ -21,12 +21,10 @@ if [ "$ACTION" = ifup ]; then
 
 		[ "$wandev4" = "$DEVICE" ] || [ "$wandev6" = "$DEVICE" ] || return 0
 
-		local wanip4=$(find_tayga_wanip4 "$wandev4")
+		local wanip4=$(find_tayga_wanip4 "$wandev3")
 		local wanip6=$(find_tayga_wanip6 "$wandev6")
 
 		[ -n "$wanip4" ] && [ -n "$wanip6" ] && {
-			uci_set_state network "$cfg" ipv4addr "$wanip4"
-			uci_set_state network "$cfg" ipv6addr "$wanip6"
 
 			logger -t tayga-update "Re-establishing tayga NAT64 due to change on $INTERFACE ($DEVICE)"
 			ifup "$cfg" &
