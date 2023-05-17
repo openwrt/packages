@@ -53,9 +53,9 @@ load_options() {
 	export dns_wait
 
 	config_get webroot "$section" webroot
-	export webroot
 	if [ "$webroot" ]; then
 		log warn "Option \"webroot\" is deprecated, please remove it and change your web server's config so it serves ACME challenge requests from $CHALLENGE_DIR."
+		CHALLENGE_DIR=$webroot
 	fi
 }
 
