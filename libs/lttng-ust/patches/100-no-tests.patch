@@ -1,0 +1,10 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -7,7 +7,6 @@ SUBDIRS = \
+ 	src \
+ 	tools \
+ 	doc \
+-	tests \
+ 	extras
+ 
+ dist_doc_DATA = \
