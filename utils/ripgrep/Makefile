@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ripgrep
 PKG_VERSION:=13.0.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/BurntSushi/ripgrep/tar.gz/$(PKG_VERSION)?
@@ -35,6 +35,10 @@ define Package/ripgrep/description
   ripgrep (rg) recursively searches directories for a regex pattern
   while respecting your gitignore
 endef
+
+ifneq ($(CONFIG_USE_MUSL),)
+  TARGET_CFLAGS += -D_LARGEFILE64_SOURCE
+endif
 
 $(eval $(call RustBinPackage,ripgrep))
 $(eval $(call BuildPackage,ripgrep))
