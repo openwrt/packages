@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022 Thomas Cujé
+# Copyright (C) 2022-2023 Thomas Cujé
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -23,20 +23,20 @@ include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python3-package.mk
 
 define Package/sshuttle
-  SUBMENU:=SSH
-  SECTION:=net
-  CATEGORY:=Network
-  TITLE:=Full-featured VPN over an SSH tunnel
-  URL:=https://github.com/sshuttle/sshuttle
-  EXTRA_DEPENDS:= \
-  	python3-light \
-  	python3-ctypes \
-  	python3-urllib
-  PKGARCH:=all
+	SUBMENU:=SSH
+	SECTION:=net
+	CATEGORY:=Network
+	TITLE:=Full-featured VPN over an SSH tunnel
+	URL:=https://github.com/sshuttle/sshuttle
+	EXTRA_DEPENDS:= \
+		python3-light \
+		python3-ctypes \
+		python3-urllib
+	PKGARCH:=all
 endef
 
 define Package/sshuttle/description
-  Transparent proxy server that works as a poor man's VPN. Forwards over ssh. Doesn't require admin. Works with Linux and MacOS. Supports DNS tunneling.
+	Transparent proxy server that works as a poor man's VPN. Forwards over ssh. Doesn't require admin. Works with Linux and MacOS. Supports DNS tunneling.
 endef
 
 define Package/sshuttle/conffiles
