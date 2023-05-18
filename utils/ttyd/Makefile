@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ttyd
-PKG_VERSION:=1.6.3
-PKG_RELEASE:=3
+PKG_VERSION:=1.7.3
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/tsl0922/ttyd/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=1116419527edfe73717b71407fb6e06f46098fc8a8e6b0bb778c4c75dc9f64b9
+PKG_HASH:=c9cf5eece52d27c5d728000f11315d36cb400c6948d1964a34a7eae74b454099
 
 PKG_MAINTAINER:=Shuanglei Tao <tsl0922@gmail.com>
 PKG_LICENSE:=MIT
@@ -26,7 +26,7 @@ define Package/ttyd
 	SECTION:=utils
 	CATEGORY:=Utilities
 	TITLE:=Command-line tool for sharing terminal over the web
-	DEPENDS:=+libopenssl +libjson-c +libuv +zlib +libwebsockets-full
+	DEPENDS:=+libcap +libopenssl +libjson-c +libuv +zlib +libwebsockets-full
 	URL:=https://github.com/tsl0922/ttyd
 	SUBMENU:=Terminal
 endef
