@@ -78,6 +78,7 @@
 				"readlinkat",
 				"readv",
 				"recvfrom",
+				"recvmsg",
 				"rename",
 				"renameat",
 				"rmdir",
