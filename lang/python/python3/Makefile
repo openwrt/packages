@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 include ../python3-version.mk
 
 PKG_NAME:=python3
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 PKG_VERSION:=$(PYTHON3_VERSION).$(PYTHON3_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
@@ -137,6 +137,11 @@ define Package/python3/description
   This package contains the (almost) full Python install.
   It's python3-light + all other packages.
 endef
+
+# Set READELF here so that the exact same readelf program name can be
+# replaced in _sysconfigdata.py (in Py3Package/python3-base/install)
+TARGET_CONFIGURE_OPTS+= \
+	READELF="$(TARGET_CROSS)readelf"
 
 EXTRA_LDFLAGS+= \
 	-L$(PKG_BUILD_DIR) \
