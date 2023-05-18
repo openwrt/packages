@@ -43,7 +43,7 @@ HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/Python-$(PKG_VERSION)
 
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_python3-pkg-resources \
-	CONFIG_PACKAGE_python3-setuptools CONFIG_PACKAGE_python3-pip
+	CONFIG_PACKAGE_python3-setuptools
 
 PKG_BUILD_DEPENDS:=bluez python3/host python-build/host python-installer/host python-wheel/host
 HOST_BUILD_DEPENDS:=bzip2/host libffi/host
@@ -213,29 +213,10 @@ define Build/Compile/python3-setuptools
 endef
 endif # CONFIG_PACKAGE_python3-setuptools
 
-ifdef CONFIG_PACKAGE_python3-pip
-define Build/Compile/python3-pip
-	$(HOST_PYTHON3_PIP_VARS) \
-	$(HOST_PYTHON3_PIP) \
-		install \
-		--ignore-installed \
-		--progress-bar off \
-		--root=$(PKG_BUILD_DIR)/install-pip \
-		--prefix=/usr \
-		$(PKG_BUILD_DIR)/Lib/ensurepip/_bundled/pip-$(PYTHON3_PIP_VERSION)-py3-none-any.whl
-	$(call PatchDir,$(PKG_BUILD_DIR)/install-pip/usr/lib/python$(PYTHON3_VERSION)/site-packages,./patches-pip,)
-endef
-else
-define Build/Compile/python3-pip
-	ls $(PKG_BUILD_DIR)/Lib/ensurepip/_bundled/pip-$(PYTHON3_PIP_VERSION)-py3-none-any.whl
-endef
-endif # CONFIG_PACKAGE_python3-pip
-
 define Build/Compile
 	$(call Build/Compile/Default)
 	# Use host pip to install python-setuptools
 	$(call Build/Compile/python3-setuptools)
-	$(call Build/Compile/python3-pip)
 endef
 
 define Build/InstallDev
@@ -366,6 +347,7 @@ HOST_CONFIGURE_ARGS += \
 define Host/Configure
 	$(SED) 's/^ENABLE_USER_SITE = None$$$$/ENABLE_USER_SITE = False/' $(HOST_BUILD_DIR)/Lib/site.py
 	$(call Host/Configure/Default)
+	ls $(HOST_BUILD_DIR)/Lib/ensurepip/_bundled/pip-$(PYTHON3_PIP_VERSION)-py3-none-any.whl
 endef
 
 define Host/Install
@@ -390,7 +372,7 @@ define Host/Install
 		touch $(HOST_PYTHON3_PKG_DIR)/.setuptools_installed_$(PYTHON3_SETUPTOOLS_VERSION)-$(PYTHON3_SETUPTOOLS_PKG_RELEASE)
 	)
 	$(if $(wildcard $(HOST_PYTHON3_PKG_DIR)/.pip_installed_$(PYTHON3_PIP_VERSION)-$(PYTHON3_PIP_PKG_RELEASE)),,
-		$(call HostPatchDir,$(HOST_PYTHON3_PKG_DIR),./patches-pip,)
+		$(call HostPatchDir,$(HOST_PYTHON3_PKG_DIR),./patches-host-pip,)
 		touch $(HOST_PYTHON3_PKG_DIR)/.pip_installed_$(PYTHON3_PIP_VERSION)-$(PYTHON3_PIP_PKG_RELEASE)
 	)
 endef
