@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libsoup3
-PKG_VERSION:=3.2.2
+PKG_VERSION:=3.4.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=libsoup-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=@GNOME/libsoup/3.2
-PKG_HASH:=83673c685b910fb7d39f1f28eee5afbefb71c05798fc350ac3bf1b885e1efaa1
+PKG_SOURCE_URL:=@GNOME/libsoup/3.4
+PKG_HASH:=78c8fa37cb152d40ec8c4a148d6155e2f6947f3f1602a7cda3a31ad40f5ee2f3
 PKG_BUILD_DIR:=$(BUILD_DIR)/libsoup-$(PKG_VERSION)
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
