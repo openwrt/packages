@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=borgbackup
 PKG_VERSION:=1.2.4
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PYPI_NAME:=borgbackup
 PKG_HASH:=a4bd54e9469e81b7a30a6711423115abc818d9cd844ecb1ca0e6104bc5374da8
@@ -18,15 +18,14 @@ PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Julien Malik <julien.malik@paraiso.me>
 
-include ../pypi.mk
+include ../../lang/python/pypi.mk
 include $(INCLUDE_DIR)/package.mk
-include ../python3-package.mk
+include ../../lang/python/python3-package.mk
 
 # see #20462 and #12942: email and urllib shall come with python3-light
 define Package/borgbackup
-  SECTION:=lang
-  CATEGORY:=Languages
-  SUBMENU:=Python
+  SECTION:=utils
+  CATEGORY:=Utilities
   TITLE:=Deduplicated, encrypted, authenticated and compressed backups
   URL:=https://github.com/borgbackup/borg
   DEPENDS:= \
