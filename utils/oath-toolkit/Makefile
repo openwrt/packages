@@ -36,6 +36,14 @@ define Package/liboath
   URL:=http://www.nongnu.org/oath-toolkit/index.html
 endef
 
+define Package/oath-pam
+  SECTION:=libs
+  CATEGORY:=Libraries
+  TITLE:=The oath PAM module
+  URL:=http://www.nongnu.org/oath-toolkit/index.html
+  DEPENDS:= +libpam +liboath
+endef
+
 define Package/oath-toolkit
   SECTION:=utils
   CATEGORY:=Utilities
@@ -51,6 +59,8 @@ define Package/liboath/description
   HOTP algorithm (RFC4226) and the time-based TOTP algorithm (RFC6238).
 endef
 
+Package/oath-pam/description = $(Package/liboath/description)
+
 Package/oath-toolkit/description = $(Package/liboath/description)
 
 define Build/InstallDev
@@ -65,10 +75,16 @@ define Package/liboath/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/liboath.so* $(1)/usr/lib/
 endef
 
+define Package/oath-pam/install
+	$(INSTALL_DIR) $(1)/usr/lib/security
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/security/pam_oath.so* $(1)/usr/lib/security/
+endef
+
 define Package/oath-toolkit/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/oathtool $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,liboath))
+$(eval $(call BuildPackage,oath-pam))
 $(eval $(call BuildPackage,oath-toolkit))
