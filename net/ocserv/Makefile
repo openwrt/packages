@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ocserv
 PKG_VERSION:=1.1.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_BUILD_FLAGS:=no-mips16
 
 PKG_BUILD_DIR :=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
@@ -39,7 +39,7 @@ define Package/ocserv
   TITLE:=OpenConnect VPN server
   URL:=http://www.infradead.org/ocserv/
   MAINTAINER:=Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>
-  DEPENDS:= +OCSERV_RADIUS:libradcli +OCSERV_HTTP_PARSER:libhttp-parser +OCSERV_SECCOMP:libseccomp +libgnutls +certtool +libncurses +libreadline +OCSERV_PAM:libpam +OCSERV_PROTOBUF:libprotobuf-c +libev +kmod-tun
+  DEPENDS:= +OCSERV_RADIUS:libradcli +OCSERV_HTTP_PARSER:libhttp-parser +OCSERV_SECCOMP:libseccomp +libgnutls +certtool +libncurses +libreadline +OCSERV_PAM:libpam +OCSERV_PROTOBUF:libprotobuf-c +OCSERV_LIBOATH:liboath +libev +kmod-tun
   USERID:=ocserv=72:ocserv=72
 endef
 
@@ -87,6 +87,10 @@ endif
 
 ifneq ($(CONFIG_OCSERV_HTTP_PARSER),y)
 CONFIGURE_ARGS += --without-http-parser
+endif
+
+ifndef CONFIG_OCSERV_LIBOATH
+CONFIGURE_ARGS += --without-liboath
 endif
 
 define Package/ocserv/conffiles
