@@ -2,7 +2,12 @@
 
 # not enabling `errtrace` and `pipefail` since those are bash specific
 set -o errexit # failing commands causes script to fail
-set -o nounset # undefined variables causes script to fail 
+set -o nounset # undefined variables causes script to fail
+
+echo "src/gz packages_ci file:///ci" >> /etc/opkg/distfeeds.conf
+
+FINGERPRINT="$(usign -F -p /ci/packages_ci.pub)"
+cp /ci/packages_ci.pub "/etc/opkg/keys/$FINGERPRINT"
 
 mkdir -p /var/lock/
 
@@ -11,7 +16,7 @@ opkg update
 [ -n "${CI_HELPER:=''}" ] || CI_HELPER="/ci/.github/workflows/ci_helpers.sh"
 
 for PKG in /ci/*.ipk; do
-	tar -xzOf "$PKG" ./control.tar.gz | tar xzf - ./control 
+	tar -xzOf "$PKG" ./control.tar.gz | tar xzf - ./control
 	# package name including variant
 	PKG_NAME=$(sed -ne 's#^Package: \(.*\)$#\1#p' ./control)
 	# package version without release
@@ -21,9 +26,23 @@ for PKG in /ci/*.ipk; do
 
 	echo "Testing package $PKG_NAME in version $PKG_VERSION from $PKG_SOURCE"
 
-	opkg install "$PKG"
-
 	export PKG_NAME PKG_VERSION CI_HELPER
+
+	PRE_TEST_SCRIPT=$(find /ci/ -name "$PKG_SOURCE" -type d)/pre-test.sh
+
+	if [ -f "$PRE_TEST_SCRIPT" ]; then
+		echo "Use package specific pre-test.sh"
+		if sh "$PRE_TEST_SCRIPT" "$PKG_NAME" "$PKG_VERSION"; then
+			echo "Pre-test successful"
+		else
+			echo "Pre-test failed"
+			exit 1
+		fi
+	else
+		echo "No pre-test.sh script available"
+	fi
+
+	opkg install "$PKG"
 
 	TEST_SCRIPT=$(find /ci/ -name "$PKG_SOURCE" -type d)/test.sh
 

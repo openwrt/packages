@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=znc
 PKG_VERSION:=1.8.2
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://znc.in/releases \
@@ -136,6 +136,77 @@ define webskin
   ZNC_MODULES += znc-webskin-$(strip $(1))
 endef
 
+define playback
+  define Package/znc-mod-playback
+    $(Package/znc/default)
+    TITLE+= (playback plugin)
+    DEPENDS:=znc
+  endef
+
+  define Package/znc-mod-playback/description
+   Avoid repetitive playback buffers on re-connect with supported clients (e.g. mutter, colluquy)
+  endef
+
+  define Package/znc-mod-playback/install
+	$(INSTALL_DIR) $$(1)/usr/lib/znc/
+	$(INSTALL_BIN) $$(PKG_INSTALL_DIR)/usr/lib/znc/playback.so $$(1)/usr/lib/znc/
+  endef
+
+  ZNC_MODULES += znc-mod-playback
+  $(if $(CONFIG_PACKAGE_znc-mod-playback),ZNC_MODULE_TARGETS += playback.so)
+endef
+
+define Download/znc-playback
+  VERSION:=8dd128bfe2b24b2cc6a9ea2e2d28bfaa28d2a833
+  SUBDIR:=znc-mod-playback
+  FILE:=znc-playback-$$(VERSION).tar.xz
+  URL:=https://github.com/jpnurmi/znc-playback.git
+  MIRROR_HASH:=ac89d69048d62c5b15f39cc0d357a111ce4053816062e7bc1e553392b36fbd71
+  PROTO:=git
+endef
+
+define Prepare/znc-playback
+	$(eval $(Download/znc-playback))
+	xzcat $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
+	$(LN) $(PKG_BUILD_DIR)/znc-mod-playback/playback.cpp $(PKG_BUILD_DIR)/modules/playback.cpp
+endef
+
+define push
+  define Package/znc-mod-push
+    $(Package/znc/default)
+    TITLE+= (push plugin)
+    DEPENDS:=znc
+  endef
+
+  define Package/znc-mod-push/description
+   Send push notification to connected and configured devices. Refer to project Documentation
+   on how to setup.
+  endef
+
+  define Package/znc-mod-push/install
+	$(INSTALL_DIR) $$(1)/usr/lib/znc/
+	$(INSTALL_BIN) $$(PKG_INSTALL_DIR)/usr/lib/znc/push.so $$(1)/usr/lib/znc/
+  endef
+
+  ZNC_MODULES += znc-mod-push
+  $(if $(CONFIG_PACKAGE_znc-mod-push),ZNC_MODULE_TARGETS += push.so)
+endef
+
+define Download/znc-push
+  VERSION:=23d84678de2696e0b1f51aa5074764d29a98d37b
+  SUBDIR:=znc-mod-push
+  FILE:=znc-push-$$(VERSION).tar.xz
+  URL:=https://github.com/amyreese/znc-push.git
+  MIRROR_HASH:=b1ec076ee8a37b8ff8cb530852d7639fbfce3df4a963cae29375056382020394
+  PROTO:=git
+endef
+
+define Prepare/znc-push
+	$(eval $(Download/znc-push))
+	xzcat $(DL_DIR)/$(FILE) | tar -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
+	$(LN) $(PKG_BUILD_DIR)/znc-mod-push/push.cpp $(PKG_BUILD_DIR)/modules/push.cpp
+endef
+
 , := ,
 
 $(eval $(call module,adminlog,Log user connects and disconnects and failed \
@@ -233,9 +304,6 @@ $(eval $(call module,notify-connect,Sends a notice to all admins when a user \
 
 $(eval $(call module,perform,Performs commands on connect.))
 
-$(eval $(call module,playback,Avoid repetitive playback buffers on re-connect \
-	with supported clients (e.g. mutter, colluquy)))
-
 $(eval $(call module,raw,View all of the raw traffic.))
 
 $(eval $(call module,route-replies,Routes back answers to the right client \
@@ -263,6 +331,9 @@ $(eval $(call module,stickychan,Keeps you sticked to specific channels.))
 $(eval $(call module,watch,Monitor activity for specific text patterns from \
 	specific users and have the text sent to a special query window.))
 
+$(eval $(call playback))
+$(eval $(call push))
+
 $(eval $(call webadmin))
 
 $(eval $(call webskin,dark-clouds))
@@ -285,6 +356,20 @@ CMAKE_OPTIONS += \
 	-DWANT_SWIG=OFF \
 	-DWANT_TCL=OFF \
 	-DWANT_ZLIB=ON
+
+define Build/Prepare
+  $(call Build/Prepare/Default)
+
+ifneq ($(CONFIG_PACKAGE_znc-mod-playback),)
+  $(eval $(call Download,znc-playback))
+  $(Prepare/znc-playback)
+endif
+
+ifneq ($(CONFIG_PACKAGE_znc-mod-push),)
+  $(eval $(call Download,znc-push))
+  $(Prepare/znc-push)
+endif
+endef
 
 $(eval $(call BuildPackage,znc))
 $(foreach m,$(ZNC_MODULES),$(eval $(call BuildPackage,$(m))))

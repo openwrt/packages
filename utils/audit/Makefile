@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=audit
 PKG_VERSION:=2.8.5
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=7
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://people.redhat.com/sgrubb/audit

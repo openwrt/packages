@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-cryptodome
 PKG_VERSION:=3.9.7
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PYPI_NAME:=pycryptodome
 PKG_HASH:=f1add21b6d179179b3c177c33d18a2186a09cc0d3af41ff5ed3f377360b869f2
@@ -20,8 +20,7 @@ include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
-PYTHON3_PKG_SETUP_ARGS:=
-PYTHON3_PKG_SETUP_VARS:= \
+PYTHON3_PKG_BUILD_VARS:= \
   CONFIG_BIG_ENDIAN="$(CONFIG_BIG_ENDIAN)"
 
 define Package/python3-cryptodome

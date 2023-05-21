@@ -1,0 +1,39 @@
+From 833c86ce15cee2a84a37ae71015f236fd32615d9 Mon Sep 17 00:00:00 2001
+From: Khem Raj <raj.khem@gmail.com>
+Date: Fri, 11 Nov 2022 11:15:58 -0800
+Subject: [PATCH] linux_sysfs: Use pwrite/pread instead of 64bit versions
+
+pread64/pwrite64 are aliased to pread/pwrite when largefile support is
+enabled e.g. using _FILE_OFFSET_BITS=64 macro
+
+This helps it compile on latest musl C library based systems where these
+functions are put under _LARGEFILE64_SOURCE which is to be removed once
+all packages start using 64bit off_t, it works with glibc becuase
+_GNU_SOURCE feature macro also defines _LARGEFILE64_SOURCE, thats not
+the case with musl
+
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
+---
+ src/linux_sysfs.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/src/linux_sysfs.c
++++ b/src/linux_sysfs.c
+@@ -462,7 +462,7 @@ pci_device_linux_sysfs_read( struct pci_
+ 
+ 
+     while ( temp_size > 0 ) {
+-	const ssize_t bytes = pread64( fd, data_bytes, temp_size, offset );
++	const ssize_t bytes = pread( fd, data_bytes, temp_size, offset );
+ 
+ 	/* If zero bytes were read, then we assume it's the end of the
+ 	 * config file.
+@@ -522,7 +522,7 @@ pci_device_linux_sysfs_write( struct pci
+ 
+ 
+     while ( temp_size > 0 ) {
+-	const ssize_t bytes = pwrite64( fd, data_bytes, temp_size, offset );
++	const ssize_t bytes = pwrite( fd, data_bytes, temp_size, offset );
+ 
+ 	/* If zero bytes were written, then we assume it's the end of the
+ 	 * config file.

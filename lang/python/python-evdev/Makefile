@@ -10,7 +10,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=python-evdev
 PKG_VERSION:=1.6.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_MAINTAINER:=Paulo Costa <me@paulo.costa.nom.br>, Alexandru Ardelean <ardeleanalex@gmail.com>
@@ -39,10 +39,11 @@ endef
 
 LINUX_EVDEV_HEADERS="$(LINUX_DIR)/include/uapi/linux/input.h:$(LINUX_DIR)/include/uapi/linux/input-event-codes.h"
 
-PYTHON3_PKG_SETUP_GLOBAL_ARGS:= \
-	build build_ecodes \
-	--evdev-headers="$(LINUX_EVDEV_HEADERS)" \
-	build_ext
+PYTHON3_PKG_BUILD_CONFIG_SETTINGS:= \
+	--global-option=build \
+	--global-option=build_ecodes \
+	--global-option=--evdev-headers="$(LINUX_EVDEV_HEADERS)" \
+	--global-option=build_ext
 
 $(eval $(call Py3Package,python3-evdev))
 $(eval $(call BuildPackage,python3-evdev))

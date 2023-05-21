@@ -9,10 +9,10 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qemu
-PKG_VERSION:=7.2.0
+PKG_VERSION:=8.0.0
 PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=5b49ce2687744dad494ae90a898c52204a3406e84d072482a1e1be854eeb2157
+PKG_HASH:=bb60f0341531181d6cc3969dd19a013d0427a87f918193970d9adb91131e56d0
 PKG_SOURCE_URL:=http://download.qemu.org/
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=LICENSE tcg/LICENSE
@@ -91,7 +91,7 @@ define Package/qemu-img
  SUBMENU:=Virtualization
  TITLE:=QEMU Image utility
  URL:=http://www.qemu.org
- DEPENDS:=+glib2 $(QEMU_DEPS_IN_HOST)
+ DEPENDS:=+glib2 +QEMU_ZSTD:libzstd $(QEMU_DEPS_IN_HOST)
 endef
 
 define Package/qemu-img/install
@@ -106,7 +106,7 @@ define Package/qemu-nbd
  SUBMENU:=Virtualization
  TITLE:=QEMU Network Block Device Utility
  URL:=http://www.qemu.org
- DEPENDS:=+glib2 $(QEMU_DEPS_IN_HOST) +kmod-nbd
+ DEPENDS:=+glib2 +QEMU_ZSTD:libzstd $(QEMU_DEPS_IN_HOST) +kmod-nbd
 endef
 
 define Package/qemu-nbd/install
@@ -198,6 +198,7 @@ define qemu-target
 	+QEMU_UI_SPICE:libspice-server \
 	+QEMU_DEV_USB:libusb-1.0 \
 	+QEMU_SECCOMP:libseccomp \
+	+QEMU_ZSTD:libzstd \
 	$(if $(filter %-softmmu,$(1)),+libncurses +libfdt +libslirp +libudev +pixman +qemu-firmware-efi $(ICONV_DEPENDS))
   endef
 
@@ -265,6 +266,10 @@ config QEMU_SECCOMP
 	  Build QEMU with support for seccomp filters.
 	  Select libseccomp which also pulls-in the needed kernel features.
 
+config QEMU_ZSTD
+	bool "QEMU ZSTD compression support"
+	default n
+
 endif
 endef
 
@@ -275,6 +280,7 @@ PKG_CONFIG_DEPENDS += \
 	CONFIG_QEMU_UI_SPICE \
 	CONFIG_QEMU_DEV_USB \
 	CONFIG_QEMU_SECCOMP \
+	CONFIG_QEMU_ZSTD \
 
 
 # QEMU configure script does not recognize these options
@@ -424,12 +430,13 @@ CONFIGURE_ARGS +=			\
 	--disable-werror		\
 	--disable-xen-pci-passthrough	\
 	--disable-xkbcommon		\
-	--disable-zstd			\
+	--$(if $(CONFIG_QEMU_ZSTD),enable,disable)-zstd			\
 	--disable-selinux		\
 	--disable-oss			\
 	--disable-alsa			\
 	--disable-pa			\
 	--disable-vduse-blk-export	\
+	--disable-libdw			\
 
 CONFIGURE_ARGS += --target-list='$(foreach target,$(qemu-target-list),$(if $(CONFIG_PACKAGE_qemu-$(target)),$(target)))'
 CONFIGURE_ARGS += $(if $(CONFIG_PACKAGE_qemu-ga),--enable-guest-agent)

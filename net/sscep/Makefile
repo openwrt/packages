@@ -9,7 +9,7 @@ PKG_SOURCE_URL:=https://codeload.github.com/certnanny/sscep/tar.gz/v$(PKG_VERSIO
 PKG_HASH:=489cc8e093986776eb3f15082bf766778f707176f3cd604bf0ef1008da06b8e5
 
 PKG_MAINTAINER:=John Marrett <johnf@zioncluster.ca>
-PKG_LICENSE:=BSD-3-Clause OpenSSL
+PKG_LICENSE:=BSD-2-Clause OpenSSL VSL-1.0
 PKG_LICENSE_FILES:=COPYING
 
 include $(INCLUDE_DIR)/package.mk

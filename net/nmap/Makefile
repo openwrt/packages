@@ -13,20 +13,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nmap
-PKG_VERSION:=7.91
-PKG_RELEASE:=$(AUTORELEASE)
-PKG_MAINTAINER:=Nuno Goncalves <nunojpg@gmail.com>
+PKG_VERSION:=7.93
+PKG_RELEASE:=2
+PKG_MAINTAINER:=Nuno Gonçalves <nunojpg@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://nmap.org/dist/
-PKG_HASH:=18cc4b5070511c51eb243cdd2b0b30ff9b2c4dc4544c6312f75ce3a67a593300
-PKG_LICENSE:=GPL-2.0-only
-PKG_LICENSE_FILES:=COPYING
+PKG_HASH:=55bcfe4793e25acc96ba4274d8c4228db550b8e8efd72004b38ec55a2dd16651
+PKG_LICENSE:=NPSL-0.94-or-NPSL-0.95
+PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:nmap:nmap
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 PYTHON3_PKG_BUILD:=0
+PYTHON3_PKG_FORCE_DISTUTILS_SETUP:=1
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python3-package.mk
@@ -148,6 +149,11 @@ PYTHON3_PKG_SETUP_ARGS:=
 define Build/Compile
 	$(call Build/Compile/Default,)
 	$(call Py3Build/Compile)
+endef
+
+define Build/Install
+	$(call Build/Install/Default,)
+	$(call Py3Build/Install)
 endef
 
 define Package/nmap/install

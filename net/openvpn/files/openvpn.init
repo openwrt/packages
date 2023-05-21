@@ -153,6 +153,9 @@ openvpn_add_instance() {
 		--config "$conf" \
 		--up "/usr/libexec/openvpn-hotplug up $name" \
 		--down "/usr/libexec/openvpn-hotplug down $name" \
+		--route-up "/usr/libexec/openvpn-hotplug route-up $name" \
+		--route-pre-down "/usr/libexec/openvpn-hotplug route-pre-down $name" \
+		--ipchange "/usr/libexec/openvpn-hotplug ipchange $name" \
 		${up:+--setenv user_up "$up"} \
 		${down:+--setenv user_down "$down"} \
 		--script-security "${security:-2}" \

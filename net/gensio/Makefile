@@ -45,6 +45,7 @@ CONFIGURE_ARGS += \
 	--$(if $(CONFIG_GENSIO_PTHREADS),with,without)-pthreads \
 	--$(if $(CONFIG_GENSIO_GLIB),with,without)-glib \
 	--$(if $(CONFIG_GENSIO_TCL),with,without)-tcl \
+	--without-go \
 	--without-openipmi \
 	--with-cplusplus \
 	--disable-doc

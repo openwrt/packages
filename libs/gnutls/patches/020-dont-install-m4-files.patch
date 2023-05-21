@@ -14,7 +14,7 @@ Signed-off-by: Eneas U de Queiroz <cotequeiroz@gmail.com>
 
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -57,7 +57,7 @@ if ENABLE_DOC
+@@ -48,7 +48,7 @@ if ENABLE_DOC
  SUBDIRS += doc
  endif
  

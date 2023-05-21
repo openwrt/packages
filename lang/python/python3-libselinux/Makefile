@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 SRC_NAME:=libselinux
 PKG_NAME:=python3-$(SRC_NAME)
 PKG_VERSION:=3.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/python-libselinux/$(SRC_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(SRC_NAME)-$(PKG_VERSION).tar.gz
@@ -47,6 +47,10 @@ define Package/python3-libselinux/description
 
 	This package provides the Python bindings for libselinux.
 endef
+
+ifneq ($(CONFIG_USE_MUSL),)
+  TARGET_CFLAGS += -D_LARGEFILE64_SOURCE
+endif
 
 MAKE_FLAGS += \
 	FTS_LDLIBS=-lfts \

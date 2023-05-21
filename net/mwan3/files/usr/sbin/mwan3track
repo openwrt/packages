@@ -128,6 +128,7 @@ connected() {
 	echo "online" > $MWAN3TRACK_STATUS_DIR/$INTERFACE/STATUS
 	echo "0" > $MWAN3TRACK_STATUS_DIR/$INTERFACE/OFFLINE
 	get_uptime > $MWAN3TRACK_STATUS_DIR/$INTERFACE/ONLINE
+	score=$((down+up))
 	host_up_count=0
 	lost=0
 	turn=0
@@ -351,34 +352,32 @@ main() {
 			if [ $score -lt $up ]; then
 				score=0
 				[ ${keep_failure_interval} -eq 1 ] && sleep_time=$failure_interval
-			else
+			elif [ $score -eq $up ]; then
+				disconnecting
+				sleep_time=$failure_interval
+				disconnected
+			elif [ $score -gt $up ]; then
 				disconnecting
 				sleep_time=$failure_interval
 			fi
-
-			if [ $score -eq $up ]; then
-				disconnected
-				score=0
-			fi
 		else
 			if [ $score -lt $((down+up)) ] && [ $lost -gt 0 ]; then
-				connecting
 				LOG info "Lost $((lost*count)) ping(s) on interface $INTERFACE ($DEVICE). Current score: $score"
 			fi
 
 			let score++
 			lost=0
 
-			if [ $score -gt $up ]; then
-				echo "online" > $MWAN3TRACK_STATUS_DIR/$INTERFACE/STATUS
-				score=$((down+up))
-			elif [ $score -le $up ]; then
+			if [ $score -lt $up ]; then
 				connecting
 				sleep_time=$recovery_interval
-			fi
-
-			if [ $score -eq $up ]; then
+			elif [ $score -eq $up ]; then
+				connecting
+				sleep_time=$recovery_interval
 				connected
+			elif [ $score -gt $up ]; then
+				echo "online" > $MWAN3TRACK_STATUS_DIR/$INTERFACE/STATUS
+				score=$((down+up))
 			fi
 		fi
 

@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=crowdsec
-PKG_VERSION:=1.4.6
+PKG_VERSION:=1.5.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/crowdsecurity/crowdsec/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=acec1560593da78e37acbf44f2337a1e3026646ece00ab02eded78f71a2adda3
+PKG_HASH:=427f11b1a788a482b4fec8d23edd27ef589a58e1ebd0cb15182f105ad26f128b
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
@@ -81,6 +81,10 @@ $(call Package/crowdsec/Default/description)
 
   This package provides the source files for the program.
 endef
+
+ifneq ($(CONFIG_USE_MUSL),)
+  TARGET_CFLAGS += -D_LARGEFILE64_SOURCE
+endif
 
 define Package/crowdsec/install
 	$(call GoPackage/Package/Install/Bin,$(1))

@@ -8,15 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-exceptiongroup
-PKG_VERSION:=1.1.0
-PKG_RELEASE:=1
+PKG_VERSION:=1.1.1
+PKG_RELEASE:=2
 
 PYPI_NAME:=exceptiongroup
-PKG_HASH:=bcb67d800a4497e1b404c2dd44fca47d3b7a5e5433dbab67f96c1a685cdfdf23
+PKG_HASH:=d484c3090ba2889ae2928419117447a14daf3c1231d5e30d0aae34f354f01785
 
 PKG_LICENSE:=MIT,Python-2.0
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Julien Malik <julien.malik@paraiso.me>
+
+PKG_BUILD_DEPENDS:=python-flit-scm/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -28,9 +30,7 @@ define Package/python3-exceptiongroup
   SUBMENU:=Python
   TITLE:=Backport of PEP 654 (exception groups)
   URL:=https://github.com/agronholm/exceptiongroup
-  DEPENDS:= \
-    +python3-light \
-    +python3-attrs
+  DEPENDS:=+python3-light
 endef
 
 define Package/python3-exceptiongroup/description

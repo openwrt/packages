@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -835,7 +835,6 @@ fi
+@@ -839,7 +839,6 @@ fi
  #
  
  AS_IF([test "$host" = "$build"], [

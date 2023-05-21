@@ -1,7 +1,7 @@
 #
 # Copyright (C) 2006-2011 Openwrt.org
 # Copyright (C) 2011 SMBPhone Inc.
-# Copyright (C) 2019 Jeffery To
+# Copyright (C) 2019, 2023 Jeffery To
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -10,13 +10,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=slang
-PKG_VERSION:=2.3.2
-PKG_RELEASE:=5
+PKG_VERSION:=2.3.3
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://www.jedsoft.org/releases/slang \
 	https://www.jedsoft.org/releases/slang/old
-PKG_HASH:=fc9e3b0fc4f67c3c1f6d43c90c16a5c42d117b8e28457c5b46831b8b5d3ae31a
+PKG_HASH:=f9145054ae131973c61208ea82486d5dd10e3c5cdad23b7c4a0617743c8f5a18
 
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING

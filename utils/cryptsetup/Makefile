@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cryptsetup
 PKG_VERSION:=2.6.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/utils/cryptsetup/v2.6
@@ -75,6 +75,7 @@ CONFIGURE_VARS += \
 	LIBSSH_CFLAGS="-I$(STAGING_DIR)/usr/include" \
 	LIBSSH_LIBS="-L$(STAGING_DIR)/usr/lib -lssh"
 
+TARGET_CFLAGS += -D_LARGEFILE64_SOURCE
 TARGET_LDFLAGS += -Wl,--gc-sections $(if $(INTL_FULL),-lintl)
 
 define Build/InstallDev
