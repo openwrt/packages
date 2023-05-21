@@ -1,0 +1,19 @@
+From 5ce0e124f04d7b69f3257b57a71873d14a00c9e4 Mon Sep 17 00:00:00 2001
+Date: Tue, 23 May 2023 06:52:19 -0400
+Subject: [PATCH] CMakeLists.txt: dirty hack
+
+---
+ CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -172,7 +172,7 @@ if (CMAKE_COMPILER_IS_GNUCC AND NOT CROS
+ 
+     # arg1 might exist if using ccache
+     string (STRIP "${CMAKE_C_COMPILER_ARG1}" CC_ARG1)
+-    set (EXEC_ARGS ${CC_ARG1} -c -Q --help=target -${ARCH_FLAG}=native -${TUNE_FLAG}=native)
++    set (EXEC_ARGS ${CC_ARG1} -c -Q --help=target -${ARCH_FLAG}=armv8-a -${TUNE_FLAG}=cortex-a72)
+     execute_process(COMMAND ${CMAKE_C_COMPILER} ${EXEC_ARGS}
+         OUTPUT_VARIABLE _GCC_OUTPUT)
+     set(_GCC_OUTPUT_TUNE ${_GCC_OUTPUT})
