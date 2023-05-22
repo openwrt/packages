@@ -8,20 +8,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xfsprogs
-PKG_VERSION:=5.9.0
-PKG_RELEASE:=3
+PKG_VERSION:=6.2.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/utils/fs/xfs/xfsprogs
-PKG_HASH:=bc5c805596bc609a18dc1f1b4ed6a2821dba9f47408ec00e7799ceea1b2097f1
+PKG_HASH:=d67dcba5a28e0904b60886b6e5f752bc7c9c3a5c7096153855b5adca9db86c51
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=LICENSES/GPL-2.0
 PKG_CPE_ID:=cpe:/a:sgi:xfsprogs
 
-PKG_INSTALL:=1
+PKG_BUILD_DEPENDS:=inih
+PKG_BUILD_FLAGS:=no-mips16
 PKG_BUILD_PARALLEL:=1
+PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -29,7 +31,7 @@ define Package/xfsprogs/default
   SECTION:=utils
   CATEGORY:=Utilities
   SUBMENU:=Filesystem
-  DEPENDS:=+libuuid +libpthread
+  DEPENDS:=+liburcu +libuuid +libpthread
   URL:=https://xfs.org/
 endef
 
@@ -41,6 +43,7 @@ endef
 define Package/xfs-mkfs
 $(call Package/xfsprogs/default)
   TITLE:=Utility for creating XFS filesystems
+  DEPENDS+=+libinih
 endef
 
 define Package/xfs-fsck
@@ -67,7 +70,7 @@ CONFIGURE_ARGS += \
 	--disable-scrub \
 	--disable-libicu
 
-TARGET_CFLAGS += -DHAVE_MAP_SYNC $(if (CONFIG_USE_MUSL),-D_LARGEFILE64_SOURCE)
+TARGET_CFLAGS += -DHAVE_MAP_SYNC $(if $(CONFIG_USE_MUSL),-D_LARGEFILE64_SOURCE)
 TARGET_LDFLAGS += $(if $(CONFIG_USE_GLIBC),-lrt)
 
 define Package/xfs-admin/install
