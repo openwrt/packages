@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 include ../python3-version.mk
 
 PKG_NAME:=python3
-PKG_RELEASE:=8
+PKG_RELEASE:=9
 PKG_VERSION:=$(PYTHON3_VERSION).$(PYTHON3_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
@@ -313,6 +313,13 @@ Py3Package/python3/install:=:
 define Py3Package/python3/filespec
 -|$(PYTHON3_PKG_DIR)
 endef
+
+# libuuid is provided by e2fsprogs and uuid/uuid.h is moved into
+# $(STAGING_DIR_HOST)/include/e2fsprogs
+HOST_CFLAGS += \
+	-I$(STAGING_DIR_HOST)/include/e2fsprogs
+HOST_CPPFLAGS += \
+	-I$(STAGING_DIR_HOST)/include/e2fsprogs
 
 HOST_LDFLAGS += \
 	-Wl$(comma)-rpath$(comma)$(STAGING_DIR_HOSTPKG)/lib
