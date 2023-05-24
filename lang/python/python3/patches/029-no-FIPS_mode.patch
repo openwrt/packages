@@ -1,0 +1,11 @@
+--- a/Modules/_hashopenssl.c
++++ b/Modules/_hashopenssl.c
+@@ -1938,7 +1938,7 @@ _hashlib_get_fips_mode_impl(PyObject *mo
+     return EVP_default_properties_is_fips_enabled(NULL);
+ #else
+     ERR_clear_error();
+-    int result = FIPS_mode();
++    int result = 0;
+     if (result == 0) {
+         // "If the library was built without support of the FIPS Object Module,
+         // then the function will return 0 with an error code of
