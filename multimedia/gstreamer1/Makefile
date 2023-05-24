@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gstreamer1
-PKG_VERSION:=1.20.5
+PKG_VERSION:=1.22.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=gstreamer-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gstreamer
-PKG_HASH:=5a19083faaf361d21fc391124f78ba6d609be55845a82fa8f658230e5fa03dff
+PKG_HASH:=9ffeab95053f9f6995eb3b3da225e88f21c129cd60da002d3f795db70d6d5974
 PKG_BUILD_DIR:=$(BUILD_DIR)/gstreamer-$(PKG_VERSION)
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
