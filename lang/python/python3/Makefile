@@ -153,6 +153,11 @@ CONFIGURE_VARS += \
 	ac_cv_file__dev_ptc=no \
 	ac_cv_file__dev_ptmx=yes
 
+# Do not link with libbsd for flock
+# https://github.com/openwrt/packages/issues/21161
+CONFIGURE_VARS += \
+	ac_cv_lib_bsd_flock=no
+
 # Disable stdlib modules
 # Check for a better way in the future: https://github.com/python/cpython/issues/98558
 CONFIGURE_VARS += \
