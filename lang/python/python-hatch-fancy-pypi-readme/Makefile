@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-hatch-fancy-pypi-readme
 PKG_VERSION:=22.8.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=hatch-fancy-pypi-readme
 PYPI_SOURCE_NAME:=hatch_fancy_pypi_readme
@@ -20,12 +20,7 @@ PKG_LICENSE_FILES:=LICENSE.txt
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
 PKG_HOST_ONLY:=1
-HOST_BUILD_DEPENDS:= \
-	python3/host \
-	python-build/host \
-	python-installer/host \
-	python-hatchling/host \
-	python-tomli/host
+HOST_BUILD_DEPENDS:=python3/host python-build/host python-installer/host python-hatchling/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -39,7 +34,7 @@ define Package/python3-hatch-fancy-pypi-readme
   SUBMENU:=Python
   TITLE:=Fancy PyPI READMEs with Hatch
   URL:=https://github.com/hynek/hatch-fancy-pypi-readme
-  DEPENDS:=+python3-light +python3-hatchling +python3-tomli
+  DEPENDS:=+python3-light +python3-hatchling
   BUILDONLY:=1
 endef
 

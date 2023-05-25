@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-build
 PKG_VERSION:=0.10.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=build
 PKG_HASH:=d5b71264afdb5951d6704482aac78de887c80691c52b88a9ad195983ca2c9269
@@ -24,8 +24,7 @@ HOST_BUILD_DEPENDS:= \
 	python-installer/host \
 	python-flit-core/host \
 	python-packaging/host \
-	python-pyproject-hooks/host \
-	python-tomli/host
+	python-pyproject-hooks/host
 
 PYTHON3_HOST_BUILD_VARS:=PYTHONPATH=src
 
