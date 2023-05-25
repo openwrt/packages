@@ -1,0 +1,13 @@
+--- a/src/logging.c
++++ b/src/logging.c
+@@ -77,8 +77,8 @@ void _log(const char *file, int line, in
+ 
+   struct timeval tv;
+   gettimeofday(&tv, NULL);
+-  fprintf(logf, "%s %8ld.%06ld %s:%d ", SeverityStr[severity], tv.tv_sec,
+-          tv.tv_usec, file, line);
++  fprintf(logf, "%s %8lld.%06lld %s:%d ", SeverityStr[severity], (long long)tv.tv_sec,
++          (long long)tv.tv_usec, file, line);
+ 
+   va_list args;
+   va_start(args, fmt);
