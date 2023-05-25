@@ -11,12 +11,12 @@ include $(TOPDIR)/rules.mk
 include ../python3-version.mk
 
 PKG_NAME:=python3
-PKG_RELEASE:=4
+PKG_RELEASE:=1
 PKG_VERSION:=$(PYTHON3_VERSION).$(PYTHON3_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
-PKG_HASH:=6eed8415b7516fb2f260906db5d48dd4c06acc0cb24a7d6cc15296a604dcdc48
+PKG_HASH:=8a5db99c961a7ecf27c75956189c9602c968751f11dbeae2b900dbff1c085b5e
 
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=PSF-2.0
@@ -71,7 +71,7 @@ endef
 define Package/libpython3
 $(call Package/python3/Default)
   TITLE:=Python $(PYTHON3_VERSION) core library
-  DEPENDS:=+libpthread +zlib
+  DEPENDS:=+libpthread
   ABI_VERSION:=$(PYTHON3_VERSION)
 endef
 
@@ -82,7 +82,7 @@ endef
 define Package/python3-base
 $(call Package/python3/Default)
   TITLE:=Python $(PYTHON3_VERSION) interpreter
-  DEPENDS:=+libpthread +zlib +libpython3
+  DEPENDS:=+libpython3
 endef
 
 define Package/python3-base/description
@@ -93,7 +93,7 @@ endef
 define Package/python3-light
 $(call Package/python3/Default)
   TITLE:=Python $(PYTHON3_VERSION) light installation
-  DEPENDS:=+python3-base +libffi +libbz2
+  DEPENDS:=+python3-base +libbz2 +zlib
 endef
 
 define Package/python3-light/config
@@ -138,9 +138,26 @@ define Package/python3/description
   It's python3-light + all other packages.
 endef
 
+# Set READELF here so that the exact same readelf program name can be
+# replaced in _sysconfigdata.py (in Py3Package/python3-base/install)
+TARGET_CONFIGURE_OPTS+= \
+	READELF="$(TARGET_CROSS)readelf"
+
 EXTRA_LDFLAGS+= \
 	-L$(PKG_BUILD_DIR) \
 	-L$(STAGING_DIR)/usr/lib -L$(STAGING_DIR)/lib
+
+# Bypass configure tests for cross compilation
+CONFIGURE_VARS += \
+	ac_cv_buggy_getaddrinfo=no \
+	ac_cv_file__dev_ptc=no \
+	ac_cv_file__dev_ptmx=yes
+
+# Disable stdlib modules
+# Check for a better way in the future: https://github.com/python/cpython/issues/98558
+CONFIGURE_VARS += \
+	py_cv_module__tkinter=n/a \
+	py_cv_module_nis=n/a
 
 # Workaround for hardfloat mips
 # https://bugs.python.org/issue46265
@@ -154,23 +171,16 @@ endif
 MAKE_VARS += \
 	PYTHONSTRICTEXTENSIONBUILD=1
 
-CONFIGURE_ARGS+= \
+CONFIGURE_ARGS += \
 	--enable-optimizations \
 	--enable-shared \
+	--disable-test-modules \
+	--with-build-python \
 	--with-system-ffi \
 	--without-cxx-main \
 	--without-ensurepip \
-	--without-pymalloc \
-	--disable-test-modules \
 	$(if $(CONFIG_IPV6),--enable-ipv6) \
-	$(if $(findstring mips,$(CONFIG_ARCH)),,--with-lto) \
-	CONFIG_SITE="$(PKG_BUILD_DIR)/config.site" \
-	OPT="$(TARGET_CFLAGS)"
-
-define Build/Prepare
-	$(call Build/Prepare/Default)
-	$(CP) ./files/config.site $(PKG_BUILD_DIR)/config.site
-endef
+	$(if $(findstring mips,$(CONFIG_ARCH)),,--with-lto)
 
 ifdef CONFIG_PACKAGE_python3-setuptools
 PYTHON3_SETUPTOOLS_BUILD:=1
@@ -310,6 +320,13 @@ define Py3Package/python3/filespec
 -|$(PYTHON3_PKG_DIR)
 endef
 
+# libuuid is provided by e2fsprogs and uuid/uuid.h is moved into
+# $(STAGING_DIR_HOST)/include/e2fsprogs
+HOST_CFLAGS += \
+	-I$(STAGING_DIR_HOST)/include/e2fsprogs
+HOST_CPPFLAGS += \
+	-I$(STAGING_DIR_HOST)/include/e2fsprogs
+
 HOST_LDFLAGS += \
 	-Wl$(comma)-rpath$(comma)$(STAGING_DIR_HOSTPKG)/lib
 
@@ -322,6 +339,10 @@ endif
 # HOST_MAKE_VARS += \
 # 	PYTHONSTRICTEXTENSIONBUILD=1
 
+# Bypass configure test
+HOST_CONFIGURE_VARS += \
+	ac_cv_working_openssl_hashlib=yes
+
 ifeq ($(HOST_OS),Darwin)
 HOST_CONFIGURE_VARS += \
 	ac_cv_header_libintl_h=no
@@ -329,24 +350,17 @@ HOST_MAKE_VARS += \
 	USE_PYTHON_CONFIG_PY=1
 endif
 
-HOST_CONFIGURE_ARGS+= \
+HOST_CONFIGURE_ARGS += \
 	--enable-optimizations \
-	--with-ensurepip=upgrade \
-	--with-system-expat=$(STAGING_DIR_HOST) \
-	--with-ssl-default-suites=openssl \
-	--without-cxx-main \
-	--without-pymalloc \
 	--disable-test-modules \
-	CONFIG_SITE=
+	--with-ensurepip=upgrade \
+	--with-ssl-default-suites=openssl \
+	--with-system-expat \
+	--without-cxx-main
 
 define Host/Configure
 	$(SED) 's/^ENABLE_USER_SITE = None$$$$/ENABLE_USER_SITE = False/' $(HOST_BUILD_DIR)/Lib/site.py
 	$(call Host/Configure/Default)
-endef
-
-define Host/Compile
-	$(call Host/Compile/Default,python)
-	$(call Host/Compile/Default,sharedmods)
 endef
 
 define Host/Install
