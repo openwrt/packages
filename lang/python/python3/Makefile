@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 include ../python3-version.mk
 
 PKG_NAME:=python3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_VERSION:=$(PYTHON3_VERSION).$(PYTHON3_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
@@ -40,10 +40,6 @@ PKG_BUILD_FLAGS:=no-lto
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/Python-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/Python-$(PKG_VERSION)
-
-PKG_CONFIG_DEPENDS:= \
-	CONFIG_PACKAGE_python3-pkg-resources \
-	CONFIG_PACKAGE_python3-setuptools CONFIG_PACKAGE_python3-pip
 
 PKG_BUILD_DEPENDS:=bluez python3/host python-build/host python-installer/host python-wheel/host
 HOST_BUILD_DEPENDS:=bzip2/host libffi/host
@@ -187,57 +183,6 @@ CONFIGURE_ARGS += \
 	$(if $(CONFIG_IPV6),--enable-ipv6) \
 	$(if $(findstring mips,$(CONFIG_ARCH)),,--with-lto)
 
-ifdef CONFIG_PACKAGE_python3-setuptools
-PYTHON3_SETUPTOOLS_BUILD:=1
-endif
-
-ifdef CONFIG_PACKAGE_python3-pkg-resources
-PYTHON3_SETUPTOOLS_BUILD:=1
-endif
-
-ifeq ($(PYTHON3_SETUPTOOLS_BUILD),1)
-define Build/Compile/python3-setuptools
-	$(HOST_PYTHON3_PIP_VARS) \
-	$(HOST_PYTHON3_PIP) \
-		install \
-		--ignore-installed \
-		--progress-bar off \
-		--root=$(PKG_BUILD_DIR)/install-setuptools \
-		--prefix=/usr \
-		$(PKG_BUILD_DIR)/Lib/ensurepip/_bundled/setuptools-$(PYTHON3_SETUPTOOLS_VERSION)-py3-none-any.whl
-	$(call PatchDir,$(PKG_BUILD_DIR)/install-setuptools/usr/lib/python$(PYTHON3_VERSION)/site-packages,./patches-setuptools,)
-endef
-else
-define Build/Compile/python3-setuptools
-	ls $(PKG_BUILD_DIR)/Lib/ensurepip/_bundled/setuptools-$(PYTHON3_SETUPTOOLS_VERSION)-py3-none-any.whl
-endef
-endif # CONFIG_PACKAGE_python3-setuptools
-
-ifdef CONFIG_PACKAGE_python3-pip
-define Build/Compile/python3-pip
-	$(HOST_PYTHON3_PIP_VARS) \
-	$(HOST_PYTHON3_PIP) \
-		install \
-		--ignore-installed \
-		--progress-bar off \
-		--root=$(PKG_BUILD_DIR)/install-pip \
-		--prefix=/usr \
-		$(PKG_BUILD_DIR)/Lib/ensurepip/_bundled/pip-$(PYTHON3_PIP_VERSION)-py3-none-any.whl
-	$(call PatchDir,$(PKG_BUILD_DIR)/install-pip/usr/lib/python$(PYTHON3_VERSION)/site-packages,./patches-pip,)
-endef
-else
-define Build/Compile/python3-pip
-	ls $(PKG_BUILD_DIR)/Lib/ensurepip/_bundled/pip-$(PYTHON3_PIP_VERSION)-py3-none-any.whl
-endef
-endif # CONFIG_PACKAGE_python3-pip
-
-define Build/Compile
-	$(call Build/Compile/Default)
-	# Use host pip to install python-setuptools
-	$(call Build/Compile/python3-setuptools)
-	$(call Build/Compile/python3-pip)
-endef
-
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include $(1)/usr/lib $(1)/usr/lib/pkgconfig
 	$(INSTALL_DIR) $(2)/bin
@@ -366,6 +311,8 @@ HOST_CONFIGURE_ARGS += \
 define Host/Configure
 	$(SED) 's/^ENABLE_USER_SITE = None$$$$/ENABLE_USER_SITE = False/' $(HOST_BUILD_DIR)/Lib/site.py
 	$(call Host/Configure/Default)
+	ls $(HOST_BUILD_DIR)/Lib/ensurepip/_bundled/setuptools-$(PYTHON3_SETUPTOOLS_VERSION)-py3-none-any.whl
+	ls $(HOST_BUILD_DIR)/Lib/ensurepip/_bundled/pip-$(PYTHON3_PIP_VERSION)-py3-none-any.whl
 endef
 
 define Host/Install
@@ -386,11 +333,11 @@ define Host/Install
 	)
 	$(call Host/Install/Default)
 	$(if $(wildcard $(HOST_PYTHON3_PKG_DIR)/.setuptools_installed_$(PYTHON3_SETUPTOOLS_VERSION)-$(PYTHON3_SETUPTOOLS_PKG_RELEASE)),,
-		$(call HostPatchDir,$(HOST_PYTHON3_PKG_DIR),./patches-setuptools,)
+		$(call HostPatchDir,$(HOST_PYTHON3_PKG_DIR),./patches-host-setuptools,)
 		touch $(HOST_PYTHON3_PKG_DIR)/.setuptools_installed_$(PYTHON3_SETUPTOOLS_VERSION)-$(PYTHON3_SETUPTOOLS_PKG_RELEASE)
 	)
 	$(if $(wildcard $(HOST_PYTHON3_PKG_DIR)/.pip_installed_$(PYTHON3_PIP_VERSION)-$(PYTHON3_PIP_PKG_RELEASE)),,
-		$(call HostPatchDir,$(HOST_PYTHON3_PKG_DIR),./patches-pip,)
+		$(call HostPatchDir,$(HOST_PYTHON3_PKG_DIR),./patches-host-pip,)
 		touch $(HOST_PYTHON3_PKG_DIR)/.pip_installed_$(PYTHON3_PIP_VERSION)-$(PYTHON3_PIP_PKG_RELEASE)
 	)
 endef
