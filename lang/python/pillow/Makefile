@@ -37,17 +37,17 @@ define Package/python3-pillow/description
 endef
 
 PYTHON3_PKG_BUILD_CONFIG_SETTINGS += \
-	--global-option=build_ext \
-	--global-option=--enable-zlib \
-	--global-option=--enable-jpeg \
-	--global-option=--enable-webp \
-	--global-option=--enable-webpmux \
-	--global-option=--enable-tiff \
-	--global-option=--enable-freetype \
-	--global-option=--disable-lcms \
-	--global-option=--disable-jpeg2000 \
-	--global-option=--disable-imagequant \
-	--global-option=--disable-platform-guessing
+	--build-option=build_ext \
+	--build-option=--enable-zlib \
+	--build-option=--enable-jpeg \
+	--build-option=--enable-webp \
+	--build-option=--enable-webpmux \
+	--build-option=--enable-tiff \
+	--build-option=--enable-freetype \
+	--build-option=--disable-lcms \
+	--build-option=--disable-jpeg2000 \
+	--build-option=--disable-imagequant \
+	--build-option=--disable-platform-guessing
 
 $(eval $(call Py3Package,python3-pillow))
 $(eval $(call BuildPackage,python3-pillow))
