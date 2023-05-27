@@ -1,6 +1,6 @@
 --- a/lukefile
 +++ b/lukefile
-@@ -29,8 +29,6 @@ incdirs  = {
+@@ -35,8 +35,6 @@ incdirs  = {
     '$LUA_INCDIR',
  }
  
