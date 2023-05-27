@@ -145,7 +145,7 @@ This reverts commit fcf0dc3e336a5d62c58036cdb8fc9f4c099b178e.
    mod_vhostdb.c \
    mod_vhostdb_api.c \
    mod_webdav.c
-@@ -521,6 +545,7 @@ t_test_configfile_LDADD = $(PCRE_LIB) $(
+@@ -520,6 +544,7 @@ t_test_configfile_LDADD = $(PCRE_LIB) $(
  t_test_mod_SOURCES = $(common_src) t/test_mod.c \
                       t/test_mod_access.c \
                       t/test_mod_alias.c \
