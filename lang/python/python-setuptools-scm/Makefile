@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-setuptools-scm
 PKG_VERSION:=7.1.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=setuptools-scm
 PYPI_SOURCE_NAME:=setuptools_scm
@@ -26,7 +26,6 @@ HOST_BUILD_DEPENDS:= \
 	python-installer/host \
 	python-wheel/host \
 	python-packaging/host \
-	python-tomli/host \
 	python-typing-extensions/host
 
 include ../pypi.mk
@@ -46,7 +45,6 @@ define Package/python3-setuptools-scm
       +python3-logging \
       +python3-packaging \
       +python3-setuptools \
-      +python3-tomli \
       +python3-typing-extensions
   BUILDONLY:=1
 endef
