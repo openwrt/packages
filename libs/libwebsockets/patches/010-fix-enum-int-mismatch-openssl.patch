@@ -1,0 +1,26 @@
+From 722e44cb5b74cae206f47a6dc0d985eba8ed1b2e Mon Sep 17 00:00:00 2001
+From: Khem Raj <raj.khem@gmail.com>
+Date: Thu, 26 Jan 2023 17:17:49 -0800
+Subject: [PATCH] Fix -Werror=enum-int-mismatch in
+ lws_tls_server_abort_connection()
+
+GCC 13 is findinf this function signature mismatch.
+
+../git/lib/tls/openssl/openssl-server.c:713:1: error: conflicting types for 'lws_tls_server_abort_connection' due to enum/integer mismatch; have 'int(struct lws *)' [-Werror=enum-int-mismatch]
+
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
+---
+ lib/tls/openssl/openssl-server.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/lib/tls/openssl/openssl-server.c
++++ b/lib/tls/openssl/openssl-server.c
+@@ -709,7 +709,7 @@ lws_tls_server_new_nonblocking(struct lw
+ 	return 0;
+ }
+ 
+-int
++enum lws_ssl_capable_status
+ lws_tls_server_abort_connection(struct lws *wsi)
+ {
+ 	if (wsi->tls.use_ssl)
