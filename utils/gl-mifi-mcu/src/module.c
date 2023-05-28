@@ -54,13 +54,13 @@ static const struct file_operations hello_proc_ops = {
 };
 #endif
 
-static irq_handler_t handle_rx_start(unsigned int irq, void* device, struct pt_regs* registers)
+static irqreturn_t handle_rx_start(int irq, void* device)
 {
   if (rx_bit_index == -1)
   {
     hrtimer_start(&timer_rx, ktime_set(0, period / 2), HRTIMER_MODE_REL);
   }
-  return (irq_handler_t) IRQ_HANDLED;
+  return IRQ_HANDLED;
 }
 
 static enum hrtimer_restart handle_tx(struct hrtimer* timer)
@@ -178,7 +178,7 @@ static int __init gl_mifi_mcu_init(void)
 
   success &= request_irq(
     gpio_to_irq(gpio_rx),
-    (irq_handler_t) handle_rx_start,
+    handle_rx_start,
     IRQF_TRIGGER_FALLING,
     "gl_mifi_mcu_irq_handler",
     NULL) == 0;
