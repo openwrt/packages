@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=gl-mifi-mcu
-PKG_VERSION:=1
+PKG_VERSION:=2
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Nuno Goncalves <nunojpg@gmail.com>
