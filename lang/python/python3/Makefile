@@ -16,7 +16,7 @@ PKG_VERSION:=$(PYTHON3_VERSION).$(PYTHON3_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
-PKG_HASH:=5ae03e308260164baba39921fdb4dbf8e6d03d8235a939d4582b33f0b5e46a83
+PKG_HASH:=3c3bc3048303721c904a03eb8326b631e921f11cc3be2988456a42f115daf04c
 
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=PSF-2.0
@@ -135,6 +135,11 @@ define Package/python3/description
   It's python3-light + all other packages.
 endef
 
+# Set READELF here so that the exact same readelf program name can be
+# replaced in _sysconfigdata.py (in Py3Package/python3-base/install)
+TARGET_CONFIGURE_OPTS+= \
+	READELF="$(TARGET_CROSS)readelf"
+
 EXTRA_LDFLAGS+= \
 	-L$(PKG_BUILD_DIR) \
 	-L$(STAGING_DIR)/usr/lib -L$(STAGING_DIR)/lib
@@ -157,7 +162,6 @@ CONFIGURE_ARGS+= \
 	--with-system-ffi \
 	--without-cxx-main \
 	--without-ensurepip \
-	--without-pymalloc \
 	--disable-test-modules \
 	$(if $(CONFIG_IPV6),--enable-ipv6) \
 	$(if $(findstring mips,$(CONFIG_ARCH)),,--with-lto) \
@@ -308,6 +312,13 @@ define Py3Package/python3/filespec
 -|$(PYTHON3_PKG_DIR)
 endef
 
+# libuuid is provided by e2fsprogs and uuid/uuid.h is moved into
+# $(STAGING_DIR_HOST)/include/e2fsprogs
+HOST_CFLAGS += \
+	-I$(STAGING_DIR_HOST)/include/e2fsprogs
+HOST_CPPFLAGS += \
+	-I$(STAGING_DIR_HOST)/include/e2fsprogs
+
 HOST_LDFLAGS += \
 	-Wl$(comma)-rpath$(comma)$(STAGING_DIR_HOSTPKG)/lib
 
@@ -334,10 +345,9 @@ HOST_CFLAGS += \
 HOST_CONFIGURE_ARGS+= \
 	--enable-optimizations \
 	--with-ensurepip=upgrade \
-	--with-system-expat=$(STAGING_DIR_HOSTPKG) \
+	--with-system-expat=$(STAGING_DIR_HOST) \
 	--with-ssl-default-suites=openssl \
 	--without-cxx-main \
-	--without-pymalloc \
 	--disable-test-modules \
 	CONFIG_SITE=
 
