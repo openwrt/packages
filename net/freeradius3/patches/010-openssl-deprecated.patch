@@ -18,15 +18,15 @@
  }
 --- a/src/main/tls.c
 +++ b/src/main/tls.c
-@@ -55,6 +55,7 @@ USES_APPLE_DEPRECATED_API	/* OpenSSL API
+@@ -60,6 +60,7 @@ USES_APPLE_DEPRECATED_API	/* OpenSSL API
  #    include <openssl/evp.h>
  #  endif
  #  include <openssl/ssl.h>
 +#  include <openssl/dh.h>
  
- #define LOG_PREFIX "tls"
- 
-@@ -2133,7 +2134,7 @@ int cbtls_verify(int ok, X509_STORE_CTX
+ #if OPENSSL_VERSION_NUMBER >= 0x30000000L
+ #  include <openssl/provider.h>
+@@ -2954,7 +2955,7 @@ int cbtls_verify(int ok, X509_STORE_CTX
  	int		my_ok = ok;
  
  	ASN1_INTEGER	*sn = NULL;
@@ -35,7 +35,7 @@
  	VALUE_PAIR	**certs;
  	char **identity;
  #ifdef HAVE_OPENSSL_OCSP_H
-@@ -2207,7 +2208,7 @@ int cbtls_verify(int ok, X509_STORE_CTX
+@@ -3028,7 +3029,7 @@ int cbtls_verify(int ok, X509_STORE_CTX
  	 *	Get the Expiration Date
  	 */
  	buf[0] = '\0';
@@ -44,7 +44,7 @@
  	if (certs && (lookup <= 1) && asn_time &&
  	    (asn_time->length < (int) sizeof(buf))) {
  		memcpy(buf, (char*) asn_time->data, asn_time->length);
-@@ -2220,7 +2221,7 @@ int cbtls_verify(int ok, X509_STORE_CTX
+@@ -3041,7 +3042,7 @@ int cbtls_verify(int ok, X509_STORE_CTX
  	 *	Get the Valid Since Date
  	 */
  	buf[0] = '\0';
@@ -53,7 +53,7 @@
  	if (certs && (lookup <= 1) && asn_time &&
  	    (asn_time->length < (int) sizeof(buf))) {
  		memcpy(buf, (char*) asn_time->data, asn_time->length);
-@@ -2690,10 +2691,12 @@ static int set_ecdh_curve(SSL_CTX *ctx,
+@@ -3592,10 +3593,12 @@ static int set_ecdh_curve(SSL_CTX *ctx,
   */
  int tls_global_init(bool spawn_flag, bool check)
  {
@@ -66,7 +66,7 @@
  
  	/*
  	 *	Initialize the index for the certificates.
-@@ -2769,6 +2772,7 @@ int tls_global_version_check(char const
+@@ -3693,6 +3696,7 @@ int tls_global_version_check(char const
   */
  void tls_global_cleanup(void)
  {
@@ -74,7 +74,7 @@
  #if OPENSSL_VERSION_NUMBER < 0x10000000L
  	ERR_remove_state(0);
  #elif OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
-@@ -2781,6 +2785,7 @@ void tls_global_cleanup(void)
+@@ -3718,6 +3722,7 @@ void tls_global_cleanup(void)
  	ERR_free_strings();
  	EVP_cleanup();
  	CRYPTO_cleanup_all_ex_data();
