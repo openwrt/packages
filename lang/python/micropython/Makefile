@@ -8,23 +8,25 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=micropython
-PKG_VERSION:=1.18
+PKG_VERSION:=1.20.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/micropython/micropython/releases/download/v$(PKG_VERSION)
-PKG_HASH:=96fc71b42ed331c64e1adc5a830ec4f29f2975c23e8751109c03f32b80fa3eb4
+PKG_HASH:=098ef8e40abdc62551b5460d0ffe9489074240c0cb5589ca3c3a425551beb9bf
 
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
+PKG_BUILD_DEPENDS:=python3/host
+PKG_BUILD_FLAGS:=no-mips16
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
 
-define Package/micropython/default
+define Package/micropython/Default
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
@@ -35,36 +37,37 @@ define Package/micropython/default
 endef
 
 define Package/micropython-mbedtls
-$(call Package/micropython/default)
+$(call Package/micropython/Default)
   TITLE+= (mbedtls)
-  DEPENDS+= +libmbedtls
+  DEPENDS+= +PACKAGE_micropython-mbedtls:libmbedtls
+  CONFLICTS:=micropython-nossl
   VARIANT:=mbedtls
   DEFAULT_VARIANT:=1
 endef
 
 define Package/micropython-nossl
-$(call Package/micropython/default)
+$(call Package/micropython/Default)
   TITLE+= (nossl)
   VARIANT:=nossl
 endef
 
-define Package/micropython/default/description
-  MicroPython is a lean and efficient implementation of the Python 3
-  programming language that includes a small subset of the Python
-  standard library and is optimised to run on microcontrollers and in
-  constrained environments.
+define Package/micropython/Default/description
+MicroPython is a lean and efficient implementation of the Python 3
+programming language that includes a small subset of the Python standard
+library and is optimised to run on microcontrollers and in constrained
+environments.
 endef
 
 define Package/micropython-mbedtls/description
-$(call Package/micropython/default/description)
+$(call Package/micropython/Default/description)
 
-  This version uses the Mbed TLS library.
+This version uses the Mbed TLS library.
 endef
 
 define Package/micropython-nossl/description
-$(call Package/micropython/default/description)
+$(call Package/micropython/Default/description)
 
-  This version is built without TLS and upip.
+This version is built without TLS and mip.
 endef
 
 MAKE_FLAGS += BUILD_VERBOSE=1
@@ -73,30 +76,42 @@ ifneq ($(CONFIG_DEBUG),)
   MAKE_FLAGS += DEBUG=1
 endif
 
-ifeq ($(BUILD_VARIANT),mbedtls)
-  MAKE_FLAGS += MICROPY_SSL_AXTLS=0 MICROPY_SSL_MBEDTLS=1
-endif
-
 ifeq ($(BUILD_VARIANT),nossl)
-  MAKE_FLAGS += MICROPY_PY_USSL=0 FROZEN_MANIFEST=
+  MAKE_FLAGS += MICROPY_PY_USSL=0 FROZEN_MANIFEST=variants/standard/manifest-nossl.py
 endif
 
 MAKE_PATH = ports/unix
 
-define Build/Compile
+define Build/Configure
 	+$(HOST_MAKE_VARS) \
 	$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR)/mpy-cross \
 		$(HOST_MAKE_FLAGS) BUILD_VERBOSE=1
-	$(call Build/Compile/Default)
 endef
 
-define Package/micropython/default/install
+define Build/InstallDev
+	$(INSTALL_DIR) $(2)/lib/micropython-$(PKG_VERSION)/mpy-cross
+	$(CP) \
+		$(PKG_BUILD_DIR)/mpy-cross/mpy_cross \
+		$(2)/lib/micropython-$(PKG_VERSION)/mpy-cross/
+
+	$(INSTALL_DIR) $(2)/lib/micropython-$(PKG_VERSION)/mpy-cross/build
+	$(INSTALL_BIN) \
+		$(PKG_BUILD_DIR)/mpy-cross/build/mpy-cross \
+		$(2)/lib/micropython-$(PKG_VERSION)/mpy-cross/build/
+
+	$(INSTALL_DIR) $(2)/lib/micropython-$(PKG_VERSION)/tools
+	$(INSTALL_DATA) \
+		$(PKG_BUILD_DIR)/tools/manifestfile.py \
+		$(2)/lib/micropython-$(PKG_VERSION)/tools/
+endef
+
+define Package/micropython/Default/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ports/unix/micropython $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ports/unix/build-standard/micropython $(1)/usr/bin/
 endef
 
-Package/micropython-mbedtls/install = $(Package/micropython/default/install)
-Package/micropython-nossl/install = $(Package/micropython/default/install)
+Package/micropython-mbedtls/install = $(Package/micropython/Default/install)
+Package/micropython-nossl/install = $(Package/micropython/Default/install)
 
 $(eval $(call BuildPackage,micropython-mbedtls))
 $(eval $(call BuildPackage,micropython-nossl))

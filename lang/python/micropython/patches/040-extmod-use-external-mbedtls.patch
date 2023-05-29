@@ -9,13 +9,17 @@ Subject: [PATCH 06/10] extmod: Use system mbedtls
 
 --- a/extmod/extmod.mk
 +++ b/extmod/extmod.mk
-@@ -66,81 +66,8 @@ SRC_MOD += $(addprefix $(AXTLS_DIR)/,\
+@@ -131,84 +131,8 @@ SRC_THIRDPARTY_C += $(addprefix $(AXTLS_
  	crypto/sha1.c \
  	)
  else ifeq ($(MICROPY_SSL_MBEDTLS),1)
 -MBEDTLS_DIR = lib/mbedtls
--CFLAGS_MOD += -DMICROPY_SSL_MBEDTLS=1 -I$(TOP)/$(MBEDTLS_DIR)/include
--SRC_MOD += $(addprefix $(MBEDTLS_DIR)/library/,\
+-MBEDTLS_CONFIG_FILE ?= \"mbedtls/mbedtls_config.h\"
+-GIT_SUBMODULES += $(MBEDTLS_DIR)
+-CFLAGS_EXTMOD += -DMBEDTLS_CONFIG_FILE=$(MBEDTLS_CONFIG_FILE)
+-CFLAGS_EXTMOD += -DMICROPY_SSL_MBEDTLS=1 -I$(TOP)/$(MBEDTLS_DIR)/include
+-SRC_THIRDPARTY_C += lib/mbedtls_errors/mp_mbedtls_errors.c
+-SRC_THIRDPARTY_C += $(addprefix $(MBEDTLS_DIR)/library/,\
 -	aes.c \
 -	aesni.c \
 -	arc4.c \
@@ -43,7 +47,6 @@ Subject: [PATCH 06/10] extmod: Use system mbedtls
 -	ecp_curves.c \
 -	entropy.c \
 -	entropy_poll.c \
--	error.c \
 -	gcm.c \
 -	havege.c \
 -	hmac_drbg.c \
@@ -88,7 +91,7 @@ Subject: [PATCH 06/10] extmod: Use system mbedtls
 -	x509write_csr.c \
 -	xtea.c \
 -	)
-+CFLAGS_MOD += -DMICROPY_SSL_MBEDTLS=1
++CFLAGS_EXTMOD += -DMICROPY_SSL_MBEDTLS=1
 +LDFLAGS_MOD += -lmbedx509 -lmbedtls -lmbedcrypto
  endif
  endif
