@@ -4,12 +4,12 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=MarkupSafe
-PKG_VERSION:=2.1.1
+PKG_NAME:=python-markupsafe
+PKG_VERSION:=2.1.2
 PKG_RELEASE:=1
 
-PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=7f91197cc9e48f989d12e4e6fbc46495c446636dfc81b9ccf50bb0ec74b91d4b
+PYPI_NAME:=MarkupSafe
+PKG_HASH:=abcabc8c2b26036d62d4c746381a6f7cf60aafcc653198ad678306986b09450d
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=BSD-3-Clause
@@ -23,13 +23,17 @@ define Package/python3-markupsafe
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
-  TITLE:=MarkupSafe
+  TITLE:=Safely add untrusted strings to HTML/XML markup
   URL:=https://palletsprojects.com/p/markupsafe/
   DEPENDS:=+python3-light
 endef
 
 define Package/python3-markupsafe/description
-  MarkupSafe implements a text object that escapes characters so it is safe to use in HTML and XML.
+MarkupSafe implements a text object that escapes characters so it is
+safe to use in HTML and XML. Characters that have special meanings are
+replaced so that they display as the actual characters. This mitigates
+injection attacks, meaning untrusted user input can safely be displayed
+on a page.
 endef
 
 $(eval $(call Py3Package,python3-markupsafe))
