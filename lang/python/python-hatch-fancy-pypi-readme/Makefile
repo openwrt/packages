@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-hatch-fancy-pypi-readme
-PKG_VERSION:=22.8.0
-PKG_RELEASE:=2
+PKG_VERSION:=23.1.0
+PKG_RELEASE:=1
 
 PYPI_NAME:=hatch-fancy-pypi-readme
 PYPI_SOURCE_NAME:=hatch_fancy_pypi_readme
-PKG_HASH:=da91282ca09601c18aded8e378daf8b578c70214866f0971156ee9bb9ce6c26a
+PKG_HASH:=b1df44063094af1e8248ceacd47a92c9cf313d6b9823bf66af8a927c3960287d
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.txt
