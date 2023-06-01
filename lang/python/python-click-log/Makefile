@@ -4,16 +4,17 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=click-log
-PKG_VERSION:=0.3.2
-PKG_RELEASE:=2
+PKG_NAME:=python-click-log
+PKG_VERSION:=0.4.0
+PKG_RELEASE:=1
 PKG_MAINTAINER:=Karel Kočí <cynerd@email.cz>
 
-PKG_SOURCE_URL:=https://codeload.github.com/click-contrib/click-log/tar.gz/$(PKG_VERSION)?
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=16babb66a2ebf22c37c1cf38753a84e6027eb8991fcf9a8487971591b8ca9812
+PYPI_NAME:=click-log
+PKG_HASH:=3970f8570ac54491237bcdb3d8ab5e3eef6c057df29f8c3d1151a51a9c23b975
 PKG_LICENSE:=MIT
+PKG_LICENSE_FILES:=LICENSE
 
+include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
@@ -21,9 +22,9 @@ define Package/python3-click-log
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
-  URL:=http://github.com/mitsuhiko/click
-  TITLE:=python3-click-log
-  DEPENDS:=+python3-click
+  URL:=https://github.com/click-contrib/click-log
+  TITLE:=Logging integration for Click
+  DEPENDS:=+python3-light +python3-logging +python3-click
 endef
 
 define Package/python3-click-log/description
