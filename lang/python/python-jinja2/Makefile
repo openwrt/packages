@@ -4,16 +4,16 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=Jinja2
-PKG_VERSION:=3.0.3
-PKG_RELEASE:=2
+PKG_NAME:=python-jinja2
+PKG_VERSION:=3.1.2
+PKG_RELEASE:=1
 
-PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=611bb273cd68f3b993fabdc4064fc858c5b47a973cb5aa7999ec1ba405c87cd7
+PYPI_NAME:=Jinja2
+PKG_HASH:=31351a702a408a9e7595a8fc6150fc3f43bb6bf7e319770cbc0db9df9437e852
 
 PKG_MAINTAINER:=Michal Vasilek <michal.vasilek@nic.cz>
 PKG_LICENSE:=BSD-3-Clause
-PKG_LICENSE_FILES:=LICENSE
+PKG_LICENSE_FILES:=LICENSE.rst
 PKG_CPE_ID:=cpe:/a:pocoo:jinja2
 
 include ../pypi.mk
@@ -24,9 +24,14 @@ define Package/python3-jinja2
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
-  TITLE:=Jinja2
+  TITLE:=Very fast and expressive template engine
   URL:=https://palletsprojects.com/p/jinja/
-  DEPENDS:=+python3-light +python3-markupsafe
+  DEPENDS:= \
+      +python3-light \
+      +python3-asyncio \
+      +python3-logging \
+      +python3-urllib \
+      +python3-markupsafe
 endef
 
 define Package/python3-jinja2/description
