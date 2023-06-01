@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tang
 PKG_VERSION:=12
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/latchset/$(PKG_NAME)/releases/download/v$(PKG_VERSION)/
@@ -27,6 +27,7 @@ define Package/tang
   TITLE:=tang v$(PKG_VERSION) - daemon for binding data to the presence of a third party
   DEPENDS:=+libhttp-parser +jose +bash
   URL:=https://github.com/latchset/tang
+  USERID:=tang:tang
 endef
 
 define Package/tang/description
