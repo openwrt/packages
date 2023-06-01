@@ -12,7 +12,8 @@ PKG_VERSION:=6.2.3
 PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://cdn.zabbix.com/zabbix/sources/stable/6.2/
+PKG_SOURCE_URL:=https://cdn.zabbix.com/zabbix/sources/stable/$(basename $(PKG_VERSION))/ \
+	https://cdn.zabbix.com/zabbix/sources/oldstable/$(basename $(PKG_VERSION))/
 PKG_HASH:=2be7e57fb33a55fee71480598e317ffa6a8ee5a39639a7e1b42b2ea6872107b5
 
 PKG_MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
