@@ -29,6 +29,7 @@ define Package/tang
   TITLE:=tang v$(PKG_VERSION) - daemon for binding data to the presence of a third party
   DEPENDS:=+libhttp-parser +jose +bash
   URL:=https://github.com/latchset/tang
+  USERID:=tang:tang
 endef
 
 define Package/tang/description
