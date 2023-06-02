@@ -188,7 +188,8 @@ config globals 'globals'
 
 #config plugin 'tcpconns'
 #	option enable '0'
-#	list ListeningPort '0'
+#	option ListeningPorts '0'
+#	option AllPortsSummary '0'
 #	list LocalPort '22'
 #	list LocalPort '80'
 
