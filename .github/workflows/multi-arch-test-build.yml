@@ -15,9 +15,21 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - arch: aarch64_cortex-a53
+            target: mvebu-cortexa53
+            runtime_test: true
+
+          - arch: arm_cortex-a15_neon-vfpv4
+            target: armvirt-32
+            runtime_test: true
+
           - arch: arm_cortex-a9_vfpv3-d16
             target: mvebu-cortexa9
             runtime_test: false
+
+          - arch: i386_pentium-mmx
+            target: x86-geode
+            runtime_test: true
 
           - arch: mips_24kc
             target: ath79-generic
@@ -34,18 +46,6 @@ jobs:
           - arch: powerpc_8548
             target: mpc85xx-p1010
             runtime_test: false
-
-          - arch: aarch64_cortex-a53
-            target: mvebu-cortexa53
-            runtime_test: true
-
-          - arch: arm_cortex-a15_neon-vfpv4
-            target: armvirt-32
-            runtime_test: true
-
-          - arch: i386_pentium-mmx
-            target: x86-geode
-            runtime_test: true
 
           - arch: x86_64
             target: x86-64
