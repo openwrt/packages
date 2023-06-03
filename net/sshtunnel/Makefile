@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sshtunnel
-PKG_VERSION:=4
-PKG_RELEASE:=5
+PKG_VERSION:=5
+PKG_RELEASE:=1
 PKG_LICENSE:=GPL-2.0-or-later
 
 PKG_MAINTAINER:=Nuno Goncalves <nunojpg@gmail.com>
