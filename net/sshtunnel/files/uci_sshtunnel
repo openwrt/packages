@@ -3,9 +3,9 @@
 # By default the OpenSSH client checks for /root/.ssh/id_rsa, /root/.ssh/id_ed25519 and /root/.ssh/id_ecdsa
 # See https://openwrt.org/docs/guide-user/services/ssh/sshtunnel
 
-#config server disney
-#	option user			mourinho
-#	option hostname			server.disney.com
+#config server example
+#	option user			root
+#	option hostname			server.example.com
 #	option port			22
 #	option retrydelay		1
 #	option CheckHostIP		yes
@@ -24,7 +24,7 @@
 # remoteaddress:remoteport and then forwarded to localaddress:localport
 #
 #config tunnelR http
-#	option server		disney
+#	option server		example
 #	option remoteaddress	*
 #	option remoteport	9009
 #	option localaddress	192.168.1.13
@@ -34,17 +34,17 @@
 # localaddress:localport and then forwarded to remoteaddress:remoteport
 #
 #config tunnelL test
-#	option server		disney
+#	option server		example
 #	option localaddress	*
 #	option localport	1022
-#	option remoteaddress	secretserver.disney.com
+#	option remoteaddress	secretserver.example.com
 #	option remoteport	22
 
 # tunnelD(ynamic) - when the connection will be initiated with the SOCKS4 or SOCKS5 protocol
 # to the local endpoint at localaddress:localport and then forwarded over the remote host
 #
 #config tunnelD proxy
-#	option server		disney
+#	option server		example
 #	option localaddress	*
 #	option localport	4055
 
@@ -54,7 +54,7 @@
 #  ethernet = TAP
 #
 #config tunnelW proxy
-#	option server           disney
+#	option server           example
 #	option vpntype		point-to-point|ethernet
 #	option localdev		any|0|1|2|...
 #	option remotedev	any|0|1|2|...
