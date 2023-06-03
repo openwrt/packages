@@ -94,7 +94,7 @@ endef
 
 define Package/php8-cli
   $(call Package/php8/Default)
-  DEPENDS+= +PACKAGE_php8-mod-intl:libstdcpp
+  DEPENDS+= +PACKAGE_php8-mod-intl:libstdcpp +riscv64:libatomic
   TITLE+= (CLI)
 endef
 
@@ -105,7 +105,7 @@ endef
 
 define Package/php8-cgi
   $(call Package/php8/Default)
-  DEPENDS+= +PACKAGE_php8-mod-intl:libstdcpp
+  DEPENDS+= +PACKAGE_php8-mod-intl:libstdcpp +riscv64:libatomic
   TITLE+= (CGI & FastCGI)
 endef
 
@@ -127,7 +127,7 @@ endef
 
 define Package/php8-fpm
   $(call Package/php8/Default)
-  DEPENDS+= +PACKAGE_php8-mod-intl:libstdcpp
+  DEPENDS+= +PACKAGE_php8-mod-intl:libstdcpp +riscv64:libatomic
   TITLE+= (FPM)
 endef
 
@@ -159,6 +159,7 @@ define Package/apache-mod-php8
   CATEGORY:=Network
   DEPENDS+=PACKAGE_apache-mod-php8:apache \
 	   +PACKAGE_php8-mod-intl:libstdcpp \
+	   +riscv64:libatomic \
 	   +libpcre2 +zlib
   TITLE:=PHP8 module for Apache Web Server
 endef
@@ -196,6 +197,9 @@ TARGET_LDFLAGS += -ldl
 endif
 ifeq ($(CONFIG_USE_MUSL),y)
 TARGET_CFLAGS += -D_LARGEFILE64_SOURCE
+endif
+ifneq ($(findstring riscv64,$(CONFIG_ARCH)),)
+TARGET_LDFLAGS += -latomic
 endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-bcmath),)
@@ -602,6 +606,8 @@ define BuildModule
 
   define Package/php8-mod-$(1)
     $(call Package/php8/Default)
+
+    DEPENDS+=+riscv64:libatomic
 
     ifneq ($(3),)
       DEPENDS+=$(3)
