@@ -174,10 +174,12 @@ load_server() {
 	config_foreach validate_tunnelW_section "tunnelW" load_tunnelW
 	[ "$count" -eq 0 ] && { _err "tunnels to $server not started - no tunnels defined"; return 1; }
 
-	append_params CheckHostIP Compression CompressionLevel IdentityFile \
+	append_params CheckHostIP Compression CompressionLevel \
 		LogLevel PKCS11Provider ServerAliveCountMax ServerAliveInterval \
 		StrictHostKeyChecking TCPKeepAlive VerifyHostKeyDNS
 
+	# dropbear doesn't support -o IdentityFile so use -i instead
+	[ -n "$IdentityFile" ] && ARGS_options="$ARGS_options -i $IdentityFile"
 	ARGS="$ARGS_options -o ExitOnForwardFailure=yes -o BatchMode=yes -nN $ARGS_tunnels -p $port $user@$hostname"
 
 	procd_open_instance "$server"
