@@ -47,10 +47,10 @@ validate_server_section() {
 		'Compression:or("yes", "no")' \
 		'CompressionLevel:range(1,9)' \
 		'IdentityFile:file' \
-		'LogLevel:or("QUIET", "FATAL", "ERROR", "INFO", "VERBOSE", "DEBUG", "DEBUG1", "DEBUG2", "DEBUG3"):INFO' \
+		'LogLevel:or("QUIET", "FATAL", "ERROR", "INFO", "VERBOSE", "DEBUG", "DEBUG1", "DEBUG2", "DEBUG3")' \
 		'ServerAliveCountMax:min(1)' \
 		'ServerAliveInterval:min(0)' \
-		'StrictHostKeyChecking:or("yes", "no", "accept-new")' \
+		'StrictHostKeyChecking:or("yes", "no", "accept-new"):accept-new' \
 		'TCPKeepAlive:or("yes", "no")' \
 		'VerifyHostKeyDNS:or("yes", "no")'
 }
