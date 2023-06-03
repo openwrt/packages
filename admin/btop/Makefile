@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=btop
 PKG_VERSION:=1.2.13
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL=https://codeload.github.com/aristocratos/btop/tar.gz/v$(PKG_VERSION)?
@@ -22,7 +22,7 @@ define Package/btop
   CATEGORY:=Administration
   TITLE:=A monitor of resources
   URL:=https://github.com/aristocratos/btop
-  DEPENDS:=+libstdcpp
+  DEPENDS:=+libstdcpp +riscv64:libatomic
 endef
 
 define Package/btop/description
