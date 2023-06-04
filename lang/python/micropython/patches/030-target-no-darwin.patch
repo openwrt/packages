@@ -1,6 +1,6 @@
 --- a/ports/unix/Makefile
 +++ b/ports/unix/Makefile
-@@ -24,7 +24,7 @@ QSTR_DEFS = qstrdefsport.h
+@@ -31,7 +31,7 @@ QSTR_DEFS = qstrdefsport.h
  QSTR_GLOBAL_DEPENDENCIES = $(VARIANT_DIR)/mpconfigvariant.h
  
  # OS name, for simple autoconfig
