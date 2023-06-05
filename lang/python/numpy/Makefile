@@ -6,11 +6,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=numpy
-PKG_VERSION:=1.23.3
-PKG_RELEASE:=5
+PKG_VERSION:=1.24.3
+PKG_RELEASE:=1
 
 PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=51bf49c0cd1d52be0a240aa66f3458afc4b95d8993d2d04f0d91fa60c10af6cd
+PKG_HASH:=ab344f1bf21f140adab8e47fdbc7c35a477dc01408791f8ba00d018dd0bc5155
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
@@ -53,6 +53,12 @@ config NUMPY_OPENBLAS_SUPPORT
 
 endmenu
 endef
+
+ifeq ($(ARCH),x86_64)
+# FIXME: temporary fix for x86_64 with GCC 13 + musl;
+#        numpy does not detect this compiler extension, so we just enable it
+TARGET_CFLAGS += -mavx512f
+endif
 
 define Build/Prepare/numpy-sitecfg
 	echo "[DEFAULT]"                                 >  $(PKG_BUILD_DIR)/site.cfg
