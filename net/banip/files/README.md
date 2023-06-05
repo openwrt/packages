@@ -65,10 +65,11 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * Auto-add the uplink subnet or uplink IP to the local allowlist
 * Provides a small background log monitor to ban unsuccessful login attempts in real-time
 * Auto-add unsuccessful LuCI, nginx, Asterisk or ssh login attempts to the local blocklist
+* Auto-add entire subnets to the blocklist Sets based on an additional RDAP request with the monitored suspicious IP
 * Fast feed processing as they are handled in parallel as background jobs
 * Per feed it can be defined whether the wan-input chain, the wan-forward chain or the lan-forward chain should be blocked (default: all chains)
 * Automatic blocklist backup & restore, the backups will be used in case of download errors or during startup
-* Automatically selects one of the following download utilities with ssl support: aria2c, curl, uclient-fetch or wget
+* Automatically selects one of the following download utilities with ssl support: aria2c, curl, uclient-fetch or full wget
 * Supports an 'allowlist only' mode, this option restricts internet access from/to a small number of secure websites/IPs
 * Deduplicate IPs accross all Sets (single IPs only, no intervals)
 * Provides comprehensive runtime information
@@ -78,7 +79,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * Minimal status & error logging to syslog, enable debug logging to receive more output
 * Procd based init system support (start/stop/restart/reload/status/report/search/survey/lookup)
 * Procd network interface trigger support
-* Add new or edit existing banIP feeds on your own with the integrated custom feed editor
+* Add new or edit existing banIP feeds on your own with the LuCI integrated custom feed editor
 * Supports external allowlist URLs to reference additional IPv4/IPv6 feeds
 
 ## Prerequisites
@@ -97,7 +98,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * Install the LuCI companion package 'luci-app-banip' (opkg install luci-app-banip)
 * It's strongly recommended to use the LuCI frontend to easily configure all aspects of banIP, the application is located in LuCI under the 'Services' menu
 * If you're going to configure banIP via CLI, edit the config file '/etc/config/banip' and enable the service (set ban\_enabled to '1'), then add pre-configured feeds via 'ban\_feed' (see the feed list above) and add/change other options to your needs (see the options reference below)
-* Start the service with '/etc/init.d/banip start' and check check everything is working by running '/etc/init.d/banip status'
+* Start the service with '/etc/init.d/banip start' and check everything is working by running '/etc/init.d/banip status'
 
 ## banIP CLI interface
 * All important banIP functions are accessible via CLI.
@@ -140,6 +141,7 @@ Available commands:
 | ban_logforwardlan       | option | 0                             | log rejects in the lan-forward chain                                                                         |
 | ban_autoallowlist       | option | 1                             | add wan IPs/subnets and resolved domains automatically to the local allowlist (not only to the Sets)         |
 | ban_autoblocklist       | option | 1                             | add suspicious attacker IPs and resolved domains automatically to the local blocklist (not only to the Sets) |
+| ban_autoblocksubnet     | option | 0                             | add entire subnets to the blocklist Sets based on an additional RDAP request with the suspicious IP          |
 | ban_autoallowuplink     | option | subnet                        | limit the uplink autoallow function to: 'subnet', 'ip' or 'disable' it at all                                |
 | ban_allowlistonly       | option | 0                             | restrict the internet access from/to a small number of secure websites/IPs                                   |
 | ban_basedir             | option | /tmp                          | base working directory while banIP processing                                                                |
