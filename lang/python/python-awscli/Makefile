@@ -1,13 +1,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=awscli
-PKG_VERSION:=1.16.75
-PKG_RELEASE:=2
+PKG_VERSION:=1.27.146
+PKG_RELEASE:=1
 
 PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=8d96ec0de325ea8271cc6aa95b7392bbf548ec4aabd3ffbcdc0619b64edd4a45
 
-PKG_MAINTAINER:=Daniel Danzberger <daniel@dd-wrt.com>
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE:=aws-cli-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://github.com/aws/aws-cli.git
+PKG_SOURCE_DATE:=2023-06-02
+PKG_SOURCE_VERSION:=e5f2007f27b067d34fb882bd907e2ad50a60823d
+PKG_MIRROR_HASH:=24b2f233140376ebb6aec6fb2dd3a9734bc1934896069f90d00785c81d121ced
+
+PKG_MAINTAINER:=Daniel Danzberger <daniel@dd-wrt.com>  ExtraIoT <soporte@extraiot.com.mx>
 PKG_LICENSE:=MIT
 
 include ../pypi.mk

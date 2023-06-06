@@ -1,13 +1,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=botocore
-PKG_VERSION:=1.12.66
-PKG_RELEASE:=2
+PKG_VERSION:=1.29.146
+PKG_RELEASE:=1
 
 PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=25c39ecc71356287cf79d66981ec77deca374e28043b19b2f818d48aa34272a1
 
-PKG_MAINTAINER:=Daniel Danzberger <daniel@dd-wrt.com>
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE:=botocore-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://github.com/boto/botocore.git
+PKG_SOURCE_DATE:=2023-06-02
+PKG_SOURCE_VERSION:=6105816af4f29d5baa574b54ed83c056027c6606
+PKG_MIRROR_HASH:=2346e3a1b589f12da1f18fba49aadee04c170fc5c9529ab8734a1f98bb029c72
+
+PKG_MAINTAINER:=Daniel Danzberger <daniel@dd-wrt.com> ExtraIoT <soporte@extraiot.com.mx>
 PKG_LICENSE:=MIT
 
 include ../pypi.mk
