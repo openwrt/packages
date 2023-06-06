@@ -7,8 +7,8 @@ USE_PROCD=1
 PROG=/usr/bin/zerotier-one
 CONFIG_PATH=/var/lib/zerotier-one
 
-extra_command "natadd" "Add firewall rule for allow zerotier clients access your LAN network"
-extra_command "natdel" "Delete firewall rule for allow zerotier clients access your LAN network"
+extra_command "natadd" "Add firewall rule to allow zerotier clients access your LAN network"
+extra_command "natdel" "Delete firewall rule to reject zerotier clients access your LAN network"
 
 natadd() {
 	nat="$(uci -q get zerotier.sample_config.nat)"
