@@ -3,17 +3,18 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=passlib
-PKG_VERSION:=1.7.2
-PKG_RELEASE:=2
-PKG_LICENSE:=BSD-3-Clause
+PKG_NAME:=python-passlib
+PKG_VERSION:=1.7.4
+PKG_RELEASE:=1
 
-PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=8d666cef936198bc2ab47ee9b0410c94adf2ba798e5a84bf220be079ae7ab6a8
+PYPI_NAME:=passlib
+PKG_HASH:=defd50f72b65c5402ab2c573830a6978e5f202ad0d984793c8dde2c4152ebe04
+
+PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE_FILES:=LICENSE
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
-
 include ../python3-package.mk
 
 define Package/python3-passlib
@@ -21,8 +22,8 @@ define Package/python3-passlib
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Comprehensive password hashing framework
-  URL:=https://bitbucket.org/ecollins/passlib
-  DEPENDS:=+python3 +python3-dateutil
+  URL:=https://passlib.readthedocs.io/
+  DEPENDS:=+python3
 endef
 
 define Package/python3-passlib/description
@@ -35,6 +36,5 @@ multi-user applications.
 endef
 
 $(eval $(call Py3Package,python3-passlib))
-
 $(eval $(call BuildPackage,python3-passlib))
 $(eval $(call BuildPackage,python3-passlib-src))
