@@ -1,6 +1,6 @@
 --- a/hack/make.sh
 +++ b/hack/make.sh
-@@ -100,7 +100,7 @@ fi
+@@ -98,7 +98,7 @@ fi
  # functionality. We favour libdm_dlsym_deferred_remove over
  # libdm_no_deferred_remove in dynamic cases because the binary could be shipped
  # with a newer libdevmapper than the one it was built with.
