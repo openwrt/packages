@@ -7,6 +7,66 @@ USE_PROCD=1
 PROG=/usr/bin/zerotier-one
 CONFIG_PATH=/var/lib/zerotier-one
 
+extra_command "natadd" "Add firewall rule for allow zerotier clients access your LAN network"
+extra_command "natdel" "Delete firewall rule for allow zerotier clients access your LAN network"
+
+natadd() {
+	nat="$(uci -q get zerotier.sample_config.nat)"
+	if [ "$nat" -ne 1 ]; then
+		echo "NAT disabled in config"
+		return 0
+	fi
+
+	while [ "$(ifconfig | grep 'zt' | awk '{print $1}')" = "" ]
+	do
+		sleep 1
+	done
+
+	local zt0 FW
+
+	zt0="$(ifconfig | grep 'zt' | awk '{print $1}')"
+	[ -x "$(command -v nft)" ] && FW="fw4" || FW="fw3"
+	for i in ${zt0}
+	do
+		if [ "$FW" = "fw3" ]; then
+			iptables -I FORWARD -i "$i" -j ACCEPT
+			iptables -I FORWARD -o "$i" -j ACCEPT
+			iptables -t nat -I POSTROUTING -o "$i" -j MASQUERADE
+		else
+			nft insert rule inet fw4 forward iifname "$i" accept
+			nft insert rule inet fw4 forward oifname "$i" accept
+			nft insert rule inet fw4 srcnat oifname "$i" counter masquerade
+		fi
+		echo "Added nat rules for zt interface $i!"
+	done
+}
+
+natdel() {
+	local zt0 FW
+
+	zt0="$(ifconfig | grep 'zt' | awk '{print $1}')"
+	[ -z "${zt0}" ] && return 0
+
+	[ -x "$(command -v nft)" ] && FW="fw4" || FW="fw3"
+	for i in ${zt0}
+	do
+		if [ "$FW" = "fw3" ]; then
+			iptables -D FORWARD -i "$i" -j ACCEPT 2>/dev/null
+			iptables -D FORWARD -o "$i" -j ACCEPT 2>/dev/null
+			iptables -t nat -D POSTROUTING -o "$i" -j MASQUERADE 2>/dev/null
+		else
+			chains="forward srcnat"
+			for c in $chains; do
+				handles=$(nft -a list chain inet fw4 $c | grep -E "$i" | cut -d'#' -f2 | cut -d' ' -f3)
+				for h in $handles; do
+					nft delete rule inet fw4 $c handle $h
+				done
+			done
+		fi
+		echo "Removed nat rules for zt interface $i!"
+	done
+}
+
 section_enabled() {
 	config_get_bool enabled "$1" 'enabled' 0
 	[ $enabled -ne 0 ]
@@ -101,16 +161,24 @@ start_instance() {
 start_service() {
 	config_load 'zerotier'
 	config_foreach start_instance 'zerotier'
+
+	# Add NAT rules
+	# Run in background, let service start
+	natadd &
 }
 
 stop_instance() {
 	local cfg="$1"
 
 	# Remove existing link or folder
+	rm -f ${CONFIG_PATH}_${cfg}/networks.d/*.conf
 	rm -rf ${CONFIG_PATH}_${cfg}
 }
 
 stop_service() {
+	# Remove NAT rules
+	natdel
+
 	config_load 'zerotier'
 	config_foreach stop_instance 'zerotier'
 	rm -f ${CONFIG_PATH}
