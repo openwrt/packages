@@ -17,6 +17,12 @@ natadd() {
 		return 0
 	fi
 
+	# ensure that the service is running
+	if ! $initscript running; then
+		echo "Service status isn't running!"
+		return 1
+	fi
+
 	while [ "$(ifconfig | grep 'zt' | awk '{print $1}')" = "" ]
 	do
 		sleep 1
