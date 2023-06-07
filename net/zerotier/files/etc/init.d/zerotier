@@ -102,8 +102,8 @@ start_instance() {
 	# Create link or copy files from CONFIG_PATH to config_path
 	if [ -n "$config_path" -a "$config_path" != "$path" ]; then
 		if [ ! -d "$config_path" ]; then
-			echo "ZeroTier config_path does not exist: $config_path" 1>&2
-			return
+			echo "ZeroTier config_path does not exist: $config_path, create..."
+			mkdir -p $config_path
 		fi
 
 		# ensure that the target exists
@@ -126,7 +126,7 @@ start_instance() {
 		args="$args -p${port}"
 	fi
 
-	if [ -z "$secret" ]; then
+	if [ -z "$secret" -a ! -f $path/identity.secret ]; then
 		echo "Generate secret - please wait..."
 		local sf="/tmp/zt.$cfg.secret"
 
