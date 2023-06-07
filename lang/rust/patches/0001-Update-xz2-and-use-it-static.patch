@@ -9,8 +9,6 @@ Subject: [PATCH] Update xz2 and use it static
  src/bootstrap/Cargo.toml | 2 +-
  3 files changed, 9 insertions(+), 9 deletions(-)
 
-diff --git a/Cargo.lock b/Cargo.lock
-index 12be36ef861..2cbfdb2bc06 100644
 --- a/Cargo.lock
 +++ b/Cargo.lock
 @@ -3085,9 +3085,9 @@ dependencies = [
@@ -37,8 +35,6 @@ index 12be36ef861..2cbfdb2bc06 100644
  dependencies = [
   "lzma-sys",
  ]
-diff --git a/src/bootstrap/Cargo.lock b/src/bootstrap/Cargo.lock
-index a158d1f718e..9b0fb46f265 100644
 --- a/src/bootstrap/Cargo.lock
 +++ b/src/bootstrap/Cargo.lock
 @@ -389,9 +389,9 @@ dependencies = [
@@ -65,8 +61,6 @@ index a158d1f718e..9b0fb46f265 100644
  dependencies = [
   "lzma-sys",
  ]
-diff --git a/src/bootstrap/Cargo.toml b/src/bootstrap/Cargo.toml
-index eeda6d7c121..f2d740b7614 100644
 --- a/src/bootstrap/Cargo.toml
 +++ b/src/bootstrap/Cargo.toml
 @@ -51,7 +51,7 @@ toml = "0.5"
@@ -78,6 +72,3 @@ index eeda6d7c121..f2d740b7614 100644
  walkdir = "2"
  
  # Dependencies needed by the build-metrics feature
--- 
-2.40.0
-
