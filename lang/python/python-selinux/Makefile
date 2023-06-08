@@ -5,38 +5,38 @@
 
 include $(TOPDIR)/rules.mk
 
-SRC_NAME:=libselinux
-PKG_NAME:=python3-$(SRC_NAME)
-PKG_VERSION:=3.3
-PKG_RELEASE:=3
+PKG_NAME:=python-selinux
+PKG_VERSION:=3.5
+PKG_RELEASE:=1
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/python-libselinux/$(SRC_NAME)-$(PKG_VERSION)
+SRC_NAME:=libselinux
 PKG_SOURCE:=$(SRC_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/SELinuxProject/selinux/releases/download/$(PKG_VERSION)
-PKG_HASH:=acfdee27633d2496508c28727c3d41d3748076f66d42fccde2e6b9f3463a7057
-PKG_BUILD_DEPENDS:=swig/host
+PKG_HASH:=9a3a3705ac13a2ccca2de6d652b6356fead10f36fb33115c185c5ccdf29eec19
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)/$(SRC_NAME)-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Thomas Petazzoni <thomas.petazzoni@bootlin.com>
 PKG_LICENSE:=libselinux-1.0
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:selinuxproject:libselinux
+
+PKG_BUILD_DEPENDS:=swig/host
+PKG_BUILD_PARALLEL:=1
 PYTHON3_PKG_BUILD:=0
-PKG_INSTALL:=1
-MAKE_PATH:=src
 
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
-define Package/python3-libselinux
-  TITLE:=Python bindings for the runtime SELinux library
+define Package/python3-selinux
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
-  DEPENDS:=+libpcre +musl-fts +python3 +libselinux
+  TITLE:=SELinux runtime library bindings
+  DEPENDS:=+python3-light +libselinux
   URL:=http://selinuxproject.org/page/Main_Page
 endef
 
-define Package/python3-libselinux/description
+define Package/python3-selinux/description
 	libselinux is the runtime SELinux library that provides
 	interfaces (e.g. library functions for the SELinux kernel
 	APIs like getcon(), other support functions like
@@ -48,34 +48,27 @@ define Package/python3-libselinux/description
 	This package provides the Python bindings for libselinux.
 endef
 
+MAKE_VARS += \
+	$(PYTHON3_VARS) \
+	$(HOST_PYTHON3_PIP_VARS) \
+	PYTHON_SETUP_ARGS=--no-compile
+
+MAKE_FLAGS += \
+	SHLIBDIR=/usr/lib
+
 ifneq ($(CONFIG_USE_MUSL),)
+  MAKE_FLAGS += FTS_LDLIBS=-lfts
   TARGET_CFLAGS += -D_LARGEFILE64_SOURCE
 endif
 
-MAKE_FLAGS += \
-	FTS_LDLIBS=-lfts \
-	SHLIBDIR=/usr/lib \
-	PYTHON=$(PYTHON3) \
-	PYINC="-I $(PYTHON3_INC_DIR)" \
-	PYLIBS="-lpython$(PYTHON3_VERSION)" \
-	$(PYTHON3_VARS)
-
 define Build/Compile
-	$(call Build/Compile/Default,swigify pywrap)
+	$(call Build/Compile/Default,pywrap)
 endef
 
 define Build/Install
 	$(call Build/Install/Default,install-pywrap)
 endef
 
-define Build/InstallDev
-	$(INSTALL_DIR) $(1)$(PYTHON3_PKG_DIR)
-	$(CP) $(PKG_INSTALL_DIR)$(PYTHON3_PKG_DIR)/* $(1)$(PYTHON3_PKG_DIR)
-endef
-
-define Package/python3-libselinux/install
-	$(INSTALL_DIR) $(1)$(PYTHON3_PKG_DIR)
-	$(CP) $(PKG_INSTALL_DIR)$(PYTHON3_PKG_DIR)/* $(1)$(PYTHON3_PKG_DIR)
-endef
-
-$(eval $(call BuildPackage,python3-libselinux))
+$(eval $(call Py3Package,python3-selinux))
+$(eval $(call BuildPackage,python3-selinux))
+$(eval $(call BuildPackage,python3-selinux-src))
