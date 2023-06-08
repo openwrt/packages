@@ -1,0 +1,21 @@
+#!/bin/sh
+
+. /lib/functions/tunneldigger.sh
+
+TUNNEL_ID="$1"
+INTERFACE="$3"
+MTU="$4"
+
+# Get the bridge interface name for this MTU.
+tunneldigger_get_bridge bridge "${MTU}"
+if [ -z "$bridge" ]; then
+  echo "Unable to determine which bridge to use for MTU ${MTU}."
+  exit 1
+fi
+
+# Disable IPv6 on this interface as it will be bridged.
+echo 1 > /proc/sys/net/ipv6/conf/${INTERFACE}/disable_ipv6
+# Add the interface to the proper bridge and bring it up.
+ip link set dev ${INTERFACE} master ${bridge} mtu ${MTU} up
+# Ensure bridge MTU.
+ip link set dev ${bridge} mtu ${MTU}
