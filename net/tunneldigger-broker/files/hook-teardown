@@ -1,0 +1,8 @@
+#!/bin/sh
+
+TUNNEL_ID="$1"
+INTERFACE="$3"
+MTU="$4"
+
+# Remove interface from the bridge.
+ip link set dev ${INTERFACE} nomaster
