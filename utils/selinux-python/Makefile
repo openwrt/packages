@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=selinux-python
 PKG_VERSION:=3.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/SELinuxProject/selinux/releases/download/$(PKG_VERSION)
@@ -93,7 +93,7 @@ endef
 define Package/selinux-semanage
 $(call Package/selinux-python/Default)
   TITLE:=selinux-semanage
-  DEPENDS+=+python3-sepolicy +python3-libsemanage +setools
+  DEPENDS+=+python3-sepolicy +python3-semanage +setools
 endef
 
 define Package/selinux-semanage/description
