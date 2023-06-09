@@ -48,6 +48,52 @@ define Build/Compile
 endef
 
 #
+# python3-sepolgen
+#
+
+define Package/python3-sepolgen
+$(call Package/selinux-python/Default)
+  SUBMENU:=Python
+  SECTION:=lang
+  CATEGORY:=Languages
+  TITLE:=python3-sepolgen
+endef
+
+define Package/python3-sepolgen/description
+$(call Package/selinux-python/Default/description)
+  This package contains the sepolgen Python library.
+endef
+
+define Package/python3-sepolgen/install
+	$(MAKE_VARS) $(MAKE) -C $(PKG_BUILD_DIR)/sepolgen DESTDIR=$(1) install
+	$(INSTALL_DIR) $(1)/usr/share/sepolgen/
+	$(INSTALL_DATA) $(1)/var/lib/sepolgen/perm_map $(1)/usr/share/sepolgen/perm_map
+	$(RM) -rf $(1)/var
+endef
+
+#
+# python3-sepolicy
+#
+
+define Package/python3-sepolicy
+$(call Package/selinux-python/Default)
+  SUBMENU:=Python
+  SECTION:=lang
+  CATEGORY:=Languages
+  TITLE:=python3-sepolicy
+endef
+
+define Package/python3-sepolicy/description
+$(call Package/selinux-python/Default/description)
+  This package contains the sepolicy Python library.
+endef
+
+define Package/python3-sepolicy/install
+	$(MAKE_VARS) $(MAKE) -C $(PKG_BUILD_DIR)/sepolicy DESTDIR=$(1) install
+	rm -rf $(1)/usr/share
+endef
+
+#
 # selinux-audit2allow
 #
 
@@ -106,54 +152,8 @@ define Package/selinux-semanage/install
 	rm -rf $(1)/usr/share
 endef
 
-#
-# python3-sepolgen
-#
-
-define Package/python3-sepolgen
-$(call Package/selinux-python/Default)
-  SUBMENU:=Python
-  SECTION:=lang
-  CATEGORY:=Languages
-  TITLE:=python3-sepolgen
-endef
-
-define Package/python3-sepolgen/description
-$(call Package/selinux-python/Default/description)
-  This package contains the sepolgen Python library.
-endef
-
-define Package/python3-sepolgen/install
-	$(MAKE_VARS) $(MAKE) -C $(PKG_BUILD_DIR)/sepolgen DESTDIR=$(1) install
-	$(INSTALL_DIR) $(1)/usr/share/sepolgen/
-	$(INSTALL_DATA) $(1)/var/lib/sepolgen/perm_map $(1)/usr/share/sepolgen/perm_map
-	$(RM) -rf $(1)/var
-endef
-
-#
-# python3-sepolicy
-#
-
-define Package/python3-sepolicy
-$(call Package/selinux-python/Default)
-  SUBMENU:=Python
-  SECTION:=lang
-  CATEGORY:=Languages
-  TITLE:=python3-sepolicy
-endef
-
-define Package/python3-sepolicy/description
-$(call Package/selinux-python/Default/description)
-  This package contains the sepolicy Python library.
-endef
-
-define Package/python3-sepolicy/install
-	$(MAKE_VARS) $(MAKE) -C $(PKG_BUILD_DIR)/sepolicy DESTDIR=$(1) install
-	rm -rf $(1)/usr/share
-endef
-
+$(eval $(call BuildPackage,python3-sepolgen))
+$(eval $(call BuildPackage,python3-sepolicy))
 $(eval $(call BuildPackage,selinux-audit2allow))
 $(eval $(call BuildPackage,selinux-chcat))
 $(eval $(call BuildPackage,selinux-semanage))
-$(eval $(call BuildPackage,python3-sepolgen))
-$(eval $(call BuildPackage,python3-sepolicy))
