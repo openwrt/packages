@@ -1,0 +1,31 @@
+--- a/src/openvpn/crypto_openssl.c
++++ b/src/openvpn/crypto_openssl.c
+@@ -51,7 +51,7 @@
+ #include <openssl/rand.h>
+ #include <openssl/ssl.h>
+ 
+-#if (OPENSSL_VERSION_NUMBER >= 0x10100000L) && !defined(LIBRESSL_VERSION_NUMBER)
++#if (OPENSSL_VERSION_NUMBER >= 0x10100000L) && !defined(ENABLE_CRYPTO_WOLFSSL) && !defined(LIBRESSL_VERSION_NUMBER)
+ #include <openssl/kdf.h>
+ #endif
+ #if OPENSSL_VERSION_NUMBER >= 0x30000000L
+--- a/src/openvpn/ssl_openssl.c
++++ b/src/openvpn/ssl_openssl.c
+@@ -1351,7 +1351,7 @@ err:
+     return 0;
+ }
+ 
+-#if OPENSSL_VERSION_NUMBER > 0x10100000L && !defined(OPENSSL_NO_EC)
++#if OPENSSL_VERSION_NUMBER > 0x10100000L && !defined(ENABLE_CRYPTO_WOLFSSL) && !defined(OPENSSL_NO_EC)
+ 
+ /* called when EC_KEY is destroyed */
+ static void
+@@ -1512,7 +1512,7 @@ tls_ctx_use_management_external_key(stru
+             goto cleanup;
+         }
+     }
+-#if (OPENSSL_VERSION_NUMBER > 0x10100000L) && !defined(OPENSSL_NO_EC)
++#if (OPENSSL_VERSION_NUMBER > 0x10100000L) && !defined(ENABLE_CRYPTO_WOLFSSL) && !defined(OPENSSL_NO_EC)
+ #if OPENSSL_VERSION_NUMBER < 0x30000000L
+     else if (EVP_PKEY_id(pkey) == EVP_PKEY_EC)
+ #else /* OPENSSL_VERSION_NUMBER < 0x30000000L */
