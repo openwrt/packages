@@ -27,10 +27,22 @@ include ../../lang/python/python3-package.mk
 #
 
 define Package/selinux-python/Default
-  SECTION:=utils
-  DEPENDS:=+python3 +python3-selinux
-  CATEGORY:=Utilities
   URL:=http://selinuxproject.org/page/Main_Page
+  DEPENDS:=+python3
+endef
+
+define Package/selinux-python/Default/python
+$(call Package/selinux-python/Default)
+  SUBMENU:=Python
+  SECTION:=lang
+  CATEGORY:=Languages
+  DEPENDS:=
+endef
+
+define Package/selinux-python/Default/util
+$(call Package/selinux-python/Default)
+  SECTION:=utils
+  CATEGORY:=Utilities
 endef
 
 define Package/selinux-python/Default/description
@@ -52,10 +64,7 @@ endef
 #
 
 define Package/python3-sepolgen
-$(call Package/selinux-python/Default)
-  SUBMENU:=Python
-  SECTION:=lang
-  CATEGORY:=Languages
+$(call Package/selinux-python/Default/python)
   TITLE:=python3-sepolgen
 endef
 
@@ -76,10 +85,7 @@ endef
 #
 
 define Package/python3-sepolicy
-$(call Package/selinux-python/Default)
-  SUBMENU:=Python
-  SECTION:=lang
-  CATEGORY:=Languages
+$(call Package/selinux-python/Default/python)
   TITLE:=python3-sepolicy
 endef
 
@@ -98,9 +104,9 @@ endef
 #
 
 define Package/selinux-audit2allow
-$(call Package/selinux-python/Default)
+$(call Package/selinux-python/Default/util)
   TITLE:=selinux-audit2allow
-  DEPENDS+=+python3-sepolgen +libselinux +libsepol
+  DEPENDS+= +python3-selinux +python3-sepolgen +libselinux +libsepol
 endef
 
 define Package/selinux-audit2allow/description
@@ -118,8 +124,9 @@ endef
 #
 
 define Package/selinux-chcat
-$(call Package/selinux-python/Default)
+$(call Package/selinux-python/Default/util)
   TITLE:=selinux-chcat
+  DEPENDS+= +python3-selinux
 endef
 
 define Package/selinux-chcat/description
@@ -137,9 +144,9 @@ endef
 #
 
 define Package/selinux-semanage
-$(call Package/selinux-python/Default)
+$(call Package/selinux-python/Default/util)
   TITLE:=selinux-semanage
-  DEPENDS+=+python3-sepolicy +python3-semanage +setools
+  DEPENDS+= +python3-selinux +python3-sepolicy +python3-semanage +setools
 endef
 
 define Package/selinux-semanage/description
