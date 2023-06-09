@@ -50,7 +50,7 @@ endef
 define Package/knot-libzscanner
 	$(call Package/knot-lib/Default)
 	TITLE+= zone parser library
-	DEPENDS+=@!arc
+	DEPENDS+=+riscv64:libatomic @!arc
 endef
 
 define Package/knot
