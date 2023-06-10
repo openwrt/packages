@@ -158,8 +158,8 @@ transmission() {
 		logger -t transmission "Starting with $USE virt mem"
 	fi
 
-	[ -d "$web_home" ] && procd_set_param env TRANSMISSION_WEB_HOME="$web_home"
-	[ "$ca_bundle" -gt 0 ] && procd_set_param env CURL_CA_BUNDLE="$ca_bundle_file"
+	[ -d "$web_home" ] && procd_append_param env TRANSMISSION_WEB_HOME="$web_home"
+	[ "$ca_bundle" -gt 0 ] && procd_append_param env CURL_CA_BUNDLE="$ca_bundle_file"
 
 	procd_add_jail transmission log
 	procd_add_jail_mount "$config_file"
