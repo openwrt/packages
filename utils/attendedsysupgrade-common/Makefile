@@ -3,7 +3,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=attendedsysupgrade-common
-PKG_VERSION:=$(COMMITCOUNT)
+PKG_VERSION:=8
 PKG_LICENSE:=GPL-2.0
 
 include $(INCLUDE_DIR)/package.mk
