@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=podman
-PKG_VERSION:=4.5.0
-PKG_RELEASE:=2
+PKG_VERSION:=4.5.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/containers/podman/archive/v$(PKG_VERSION)
-PKG_HASH:=830a633630bf6e61f2b8d4ca00efdd9a173ef25cdd49d4a4364c293e088561df
+PKG_HASH:=ee2c8b02b7fe301057f0382637b995a9c6c74e8d530692d6918e4c509ade6e39
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
@@ -114,7 +114,7 @@ endif
 define Package/podman/install
 	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/lib/podman
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/{podman,podman-remote} $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/podman/rootlessport $(1)/usr/lib/podman/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/podman/{rootlessport,quadlet} $(1)/usr/lib/podman/
 	$(INSTALL_DIR) $(1)/etc/containers
 	$(INSTALL_DATA) $(DL_DIR)/default-policy.json-362f70b056 $(1)/etc/containers/policy.json
 	$(INSTALL_DATA) $(DL_DIR)/registries.fedora-da9a9c8778 $(1)/etc/containers/registries.conf
