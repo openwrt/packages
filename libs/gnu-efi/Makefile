@@ -6,14 +6,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnu-efi
-PKG_VERSION:=3.0.9
+PKG_VERSION:=3.0.17
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/vathpela/gnu-efi.git
-PKG_SOURCE_DATE:=2021-04-11
-PKG_SOURCE_VERSION:=3e4d5c79905afcd815b0beb3dcfe2dfae5b3e6dd
-PKG_MIRROR_HASH:=7660d2259c1d5208bcabee5a0ffb6dc61f41363a79ba9158f3dd413a8af8e238
+PKG_SOURCE_DATE:=2023-06-11
+PKG_SOURCE_VERSION:=64027ee9864d8a8685ae187eb91ddc519d18cedb
+PKG_MIRROR_HASH:=738addbaba775ca1fc8d31a4bb2cbea1b8a0ac9aa888434f36264b2b0ce1dc5b
 PKG_BUILD_PARALLEL:=1
 
 PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
@@ -30,9 +30,23 @@ define Package/gnu-efi
   DEPENDS:=@TARGET_x86_64
 endef
 
+define Package/gnu-efi-programs
+  SECTION:=boot
+  CATEGORY:=Boot Loaders
+  TITLE:=Various EFI programs
+  URL:=https://github.com/vathpela/gnu-efi
+  DEPENDS:=@TARGET_x86_64 +gnu-efi
+endef
+
 define Package/gnu-efi/description
   GNU's EFI library
 endef
+
+define Package/gnu-efi-programs/description
+  Various EFI programs from GNU's EFI library
+endef
+
+TARGET_CFLAGS += -Wno-error=incompatible-pointer-types
 
 define Build/Install
 	$(MAKE_VARS) \
@@ -44,13 +58,19 @@ endef
 
 define Package/gnu-efi/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/local/lib/** $(1)/usr/lib/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/local/lib/{crt0-efi-*.o,elf_*.lds,libefi.a,libgnuefi.a} $(1)/usr/lib/
+endef
+
+define gnu-efi-programs/install
+	$(INSTALL_DIR) $(1)/usr/share/gnuefi/apps
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/local/lib/gnuefi/apps/*.efi $(1)/usr/share/gnuefi/apps/
 endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/lib $(1)/usr/include/efi
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/local/lib/** $(1)/usr/lib/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/local/lib/{crt0-efi-*.o,elf_*.lds,libefi.a,libgnuefi.a} $(1)/usr/lib/
 	cp -aR $(PKG_INSTALL_DIR)/usr/local/include/efi/** $(1)/usr/include/efi/
 endef
 
 $(eval $(call BuildPackage,gnu-efi))
+$(eval $(call BuildPackage,gnu-efi-programs))
