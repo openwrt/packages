@@ -15,12 +15,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - arch: aarch64_cortex-a53
-            target: mvebu-cortexa53
+          - arch: aarch64_generic
+            target: armsr-armv8
             runtime_test: true
 
           - arch: arm_cortex-a15_neon-vfpv4
-            target: armvirt-32
+            target: armsr-armv7
             runtime_test: true
 
           - arch: arm_cortex-a9_vfpv3-d16
