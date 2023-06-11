@@ -12,7 +12,7 @@ PKG_VERSION:=2.74.0
 PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=glib-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=@GNOME/glib/$(word 1,$(subst ., ,$(PKG_VERSION))).$(word 2,$(subst ., ,$(PKG_VERSION)))
+PKG_SOURCE_URL:=@GNOME/glib/$(basename $(PKG_VERSION))
 PKG_HASH:=3652c7f072d7b031a6b5edd623f77ebc5dcd2ae698598abcc89ff39ca75add30
 
 PKG_MAINTAINER:=Peter Wagner <tripolar@gmx.at>
