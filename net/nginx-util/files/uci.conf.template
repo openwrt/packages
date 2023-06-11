@@ -1,7 +1,7 @@
 # Consider using UCI or creating files in /etc/nginx/conf.d/ for configuration.
 # Parsing UCI configuration is skipped if uci set nginx.global.uci_enable=false
 # For details see: https://openwrt.org/docs/guide-user/services/webserver/nginx
-# UCI_CONF_VERSION=1.1
+# UCI_CONF_VERSION=1.2
 
 worker_processes auto;
 
