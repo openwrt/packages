@@ -9,7 +9,7 @@ G_OPTS="daemon off;"
 
 NGINX_UTIL="/usr/bin/nginx-util"
 UCI_CONF_TEMPLATE="/etc/nginx/uci.conf.template"
-LATEST_UCI_CONF_VERSION="1.1"
+LATEST_UCI_CONF_VERSION="1.2"
 
 eval $("${NGINX_UTIL}" get_env)
 
@@ -23,10 +23,25 @@ nginx_check_luci_template() {
 		return
 	fi
 
+	# Fix wrong entry for the module.d include
+	if [ "$UCI_CONF_VERSION" = "1.1" ]; then
+		# Remove any entry
+		sed -i '/^include module\.d\/\*\.module;/d' $UCI_CONF_TEMPLATE
+		# Put the include before events {}
+		sed -i 's/events {/include module.d\/*.module;\n\nevents {/' $UCI_CONF_TEMPLATE
+	fi
+
+	if [ "$UCI_CONF_VERSION" != "$LATEST_UCI_CONF_VERSION" ]; then
+		sed -i "s/# UCI_CONF_VERSION=.*/# UCI_CONF_VERSION=$LATEST_UCI_CONF_VERSION/" $UCI_CONF_TEMPLATE
+	fi
+
 	if [ -z "$UCI_CONF_VERSION" ]; then
+		# Handle funny case with template with the include module but no version
+		if ! grep -q -e '^include module\.d/\*\.module;$' $UCI_CONF_TEMPLATE; then
+			sed -i 's/events {/include module.d\/*.module;\n\nevents {/' $UCI_CONF_TEMPLATE
+		fi
 		echo "" >> $UCI_CONF_TEMPLATE
-		echo "include module.d/*.module;" >> $UCI_CONF_TEMPLATE
-		echo "# UCI_CONF_VERSION=1.1" >> $UCI_CONF_TEMPLATE
+		echo "# UCI_CONF_VERSION=1.2"  >> $UCI_CONF_TEMPLATE
 	fi
 }
 
