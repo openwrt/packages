@@ -1,13 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netavark
+PKG_VERSION:=1.6.0
 PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/containers/netavark.git
-PKG_SOURCE_DATE:=2023-05-12
-PKG_SOURCE_VERSION:=07d63eadef1def977f2ece25b0f464f7e5d77be1
-PKG_MIRROR_HASH:=f7597d70528d039b984b2ecc6ef0e1f1c17aacfc7862907e5a79789ebe98aa89
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/containers/netavark/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=3bec9e9b0f3f8f857370900010fb2125ead462d43998ad8f43e4387a5b06f9d6
 
 PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
 PKG_LICENSE:=Apache-2.0
@@ -45,6 +44,7 @@ define Package/netavark/install
 	$(INSTALL_CONF) ./files/netavark-config $(1)/etc/config/netavark
 	$(INSTALL_BIN) ./files/netavark-wrapper $(1)/usr/lib/podman/netavark
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/netavark $(1)/usr/lib/podman/netavark-bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/netavark-dhcp-proxy-client $(1)/usr/lib/podman/
 endef
 
 $(eval $(call RustBinPackage,netavark))
