@@ -134,6 +134,7 @@ watchcat_monitor_network() {
 		time_now="${time_now%%.*}"
 		time_lastcheck="$time_now"
 
+		end_result=1
 		for host in $ping_hosts; do
 			if [ "$iface" != "" ]; then
 				ping_result="$(
@@ -149,16 +150,20 @@ watchcat_monitor_network() {
 
 			if [ "$ping_result" -eq 0 ]; then
 				time_lastcheck_withinternet="$time_now"
+				end_result=0
 			else
-				if [ "$script" != "" ]; then
-					logger -p daemon.info -t "watchcat[$$]" "Could not reach $host via \"$iface\" for \"$((time_now - time_lastcheck_withinternet))\" seconds. Running script after reaching \"$failure_period\" seconds"
-				elif [ "$iface" != "" ]; then
-					logger -p daemon.info -t "watchcat[$$]" "Could not reach $host via \"$iface\" for \"$((time_now - time_lastcheck_withinternet))\" seconds. Restarting \"$iface\" after reaching \"$failure_period\" seconds"
-				else
-					logger -p daemon.info -t "watchcat[$$]" "Could not reach $host for \"$((time_now - time_lastcheck_withinternet))\" seconds. Restarting networking after reaching \"$failure_period\" seconds"
-				fi
+				logger -p daemon.info -t "watchcat[$$]" "Could not reach $host for \"$((time_now - time_lastcheck_withinternet))\" seconds."
 			fi
 		done
+		if [ "$end_result" -ne 0 ]; then
+			if [ "$script" != "" ]; then
+				logger -p daemon.info -t "watchcat[$$]" "Could not reach any configured host via \"$iface\" for \"$((time_now - time_lastcheck_withinternet))\" seconds. Running script after reaching \"$failure_period\" seconds"
+			elif [ "$iface" != "" ]; then
+				logger -p daemon.info -t "watchcat[$$]" "Could not reach any configured host via \"$iface\" for \"$((time_now - time_lastcheck_withinternet))\" seconds. Restarting \"$iface\" after reaching \"$failure_period\" seconds"
+			else
+				logger -p daemon.info -t "watchcat[$$]" "Could not reach any configured host for \"$((time_now - time_lastcheck_withinternet))\" seconds. Restarting networking after reaching \"$failure_period\" seconds"
+			fi
+		fi
 
 		[ "$((time_now - time_lastcheck_withinternet))" -ge "$failure_period" ] && {
 			if [ "$script" != "" ]; then
