@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gpsd
-PKG_VERSION:=3.23.1
-PKG_RELEASE:=2
+PKG_VERSION:=3.25
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SAVANNAH/$(PKG_NAME)
-PKG_HASH:=ca2c466df783c57b8a07ad3f5c67943186d05befdc377de938ed111d1358a8c1
+PKG_HASH:=7e5e53e5ab157dce560a2f22e20322ef1136d3ebde99162def833a3306de01e5
 
 PKG_MAINTAINER:=Pushpal Sidhu <psidhu.devel@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
@@ -87,7 +87,7 @@ define Package/libgps
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=C service library for communicating with the GPS daemon
-  ABI_VERSION:=29
+  ABI_VERSION:=30
 endef
 
 define Package/libgps/description
