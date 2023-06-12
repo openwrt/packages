@@ -20,7 +20,7 @@ jobs:
             runtime_test: true
 
           - arch: arm_cortex-a15_neon-vfpv4
-            target: armvirt-32
+            target: armsr-armv7
             runtime_test: true
 
           - arch: arm_cortex-a9_vfpv3-d16
