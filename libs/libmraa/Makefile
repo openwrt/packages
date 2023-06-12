@@ -54,7 +54,7 @@ endef
 define Package/libmraa
   $(call Package/libmraa/Default)
   TITLE:=Eclipse MRAA lowlevel IO C/C++ library
-  DEPENDS:=+libstdcpp +libjson-c @!arc @!armeb @!powerpc
+  DEPENDS:=+libstdcpp +libjson-c @!arc @!armeb @!powerpc @!riscv64
 endef
 
 define Package/libmraa/description
