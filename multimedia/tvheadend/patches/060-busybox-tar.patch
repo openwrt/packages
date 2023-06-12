@@ -1,0 +1,11 @@
+--- a/src/config.c
++++ b/src/config.c
+@@ -1481,7 +1481,7 @@ dobackup(const char *oldver)
+ {
+   char outfile[PATH_MAX], cwd[PATH_MAX];
+   const char *argv[] = {
+-    "/usr/bin/tar", "cjf", outfile,
++    "/usr/bin/tar", "czf", outfile,
+     "--exclude", "backup",
+     "--exclude", "epggrab/*.sock",
+     "--exclude", "timeshift/buffer",
