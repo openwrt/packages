@@ -10,7 +10,7 @@
          '_PYTHON_SYSCONFIGDATA_NAME',
 --- a/Makefile.pre.in
 +++ b/Makefile.pre.in
-@@ -2077,7 +2077,7 @@ libinstall:	all $(srcdir)/Modules/xxmodu
+@@ -2111,7 +2111,7 @@ libinstall:	all $(srcdir)/Modules/xxmodu
  			esac; \
  		done; \
  	done
@@ -19,7 +19,7 @@
  		$(DESTDIR)$(LIBDEST); \
  	$(INSTALL_DATA) $(srcdir)/LICENSE $(DESTDIR)$(LIBDEST)/LICENSE.txt
  	if test -d $(DESTDIR)$(LIBDEST)/distutils/tests; then \
-@@ -2239,7 +2239,7 @@ sharedinstall: all
+@@ -2273,7 +2273,7 @@ sharedinstall: all
  		--install-scripts=$(BINDIR) \
  		--install-platlib=$(DESTSHARED) \
  		--root=$(DESTDIR)/
@@ -30,16 +30,16 @@
  # Here are a couple of targets for MacOSX again, to install a full
 --- a/configure
 +++ b/configure
-@@ -3262,7 +3262,7 @@ fi
+@@ -3630,7 +3630,7 @@ fi
      fi
          ac_cv_prog_PYTHON_FOR_REGEN=$with_build_python
      PYTHON_FOR_FREEZE="$with_build_python"
 -    PYTHON_FOR_BUILD='_PYTHON_PROJECT_BASE=$(abs_builddir) _PYTHON_HOST_PLATFORM=$(_PYTHON_HOST_PLATFORM) PYTHONPATH=$(shell test -f pybuilddir.txt && echo $(abs_builddir)/`cat pybuilddir.txt`:)$(srcdir)/Lib _PYTHON_SYSCONFIGDATA_NAME=_sysconfigdata_$(ABIFLAGS)_$(MACHDEP)_$(MULTIARCH) '$with_build_python
 +    PYTHON_FOR_BUILD='_PYTHON_PROJECT_BASE=$(abs_builddir) _PYTHON_HOST_PLATFORM=$(_PYTHON_HOST_PLATFORM) PYTHONPATH=$(shell test -f pybuilddir.txt && echo $(abs_builddir)/`cat pybuilddir.txt`:)$(srcdir)/Lib _PYTHON_SYSCONFIGDATA_NAME=_sysconfigdata '$with_build_python
-     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $with_build_python" >&5
- $as_echo "$with_build_python" >&6; }
+     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $with_build_python" >&5
+ printf "%s\n" "$with_build_python" >&6; }
  
-@@ -20782,7 +20782,7 @@ fi
+@@ -23421,7 +23421,7 @@ fi
  
  
  
@@ -59,7 +59,7 @@
      AC_MSG_RESULT([$with_build_python])
    ], [
      AS_VAR_IF([cross_compiling], [yes],
-@@ -5742,7 +5742,7 @@ fi],
+@@ -5741,7 +5741,7 @@ fi],
  
  dnl define LIBPL after ABIFLAGS and LDVERSION is defined.
  AC_SUBST(PY_ENABLE_SHARED)
