@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
 PKG_VERSION:=1.25.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nginx.org/download/
@@ -138,6 +138,7 @@ config_files := mime.types \
 define Package/nginx-ssl/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/nginx $(1)/usr/sbin/
+	$(INSTALL_DIR) $(1)/etc/nginx/module.d
 	$(INSTALL_DIR) $(1)/etc/nginx/conf.d
 	$(INSTALL_DATA) $(addprefix $(PKG_INSTALL_DIR)/etc/nginx/,$(config_files)) $(1)/etc/nginx/
 	$(INSTALL_DIR) $(1)/etc/init.d
