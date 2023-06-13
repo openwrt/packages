@@ -27,7 +27,7 @@ Signed-off-by: Šimon Bořek <simon.borek@nic.cz>
 
 --- a/configure
 +++ b/configure
-@@ -6186,7 +6186,7 @@ EOF
+@@ -6824,7 +6824,7 @@ EOF
  
  if $CPP $CPPFLAGS conftest.c >conftest.out 2>/dev/null; then
    PLATFORM_TRIPLET=`grep -v '^#' conftest.out | grep -v '^ *$' | tr -d ' 	'`
