@@ -1,17 +1,17 @@
 --- a/configure
 +++ b/configure
-@@ -20712,7 +20712,7 @@ $as_echo_n "checking ABIFLAGS... " >&6;
- $as_echo "$ABIFLAGS" >&6; }
- { $as_echo "$as_me:${as_lineno-$LINENO}: checking SOABI" >&5
- $as_echo_n "checking SOABI... " >&6; }
+@@ -23352,7 +23352,7 @@ printf %s "checking ABIFLAGS... " >&6; }
+ printf "%s\n" "$ABIFLAGS" >&6; }
+ { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking SOABI" >&5
+ printf %s "checking SOABI... " >&6; }
 -SOABI='cpython-'`echo $VERSION | tr -d .`${ABIFLAGS}${PLATFORM_TRIPLET:+-$PLATFORM_TRIPLET}
 +SOABI='cpython-'`echo $VERSION | tr -d .`
- { $as_echo "$as_me:${as_lineno-$LINENO}: result: $SOABI" >&5
- $as_echo "$SOABI" >&6; }
+ { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $SOABI" >&5
+ printf "%s\n" "$SOABI" >&6; }
  
 --- a/configure.ac
 +++ b/configure.ac
-@@ -5684,7 +5684,7 @@ AC_SUBST(SOABI)
+@@ -5683,7 +5683,7 @@ AC_SUBST(SOABI)
  AC_MSG_CHECKING(ABIFLAGS)
  AC_MSG_RESULT($ABIFLAGS)
  AC_MSG_CHECKING(SOABI)
