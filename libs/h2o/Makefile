@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=h2o
 PKG_VERSION:=2.2.6
-PKG_RELEASE:=13
+PKG_RELEASE:=14
 
 PKG_SOURCE_URL:=https://codeload.github.com/h2o/h2o/tar.gz/v${PKG_VERSION}?
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -26,7 +26,7 @@ define Package/libh2o-evloop
   CATEGORY:=Libraries
   TITLE:=H2O Library compiled with its own event loop
   URL:=https://h2o.examp1e.net/
-  DEPENDS:=+libopenssl +zlib +libyaml
+  DEPENDS:=+libopenssl +zlib
 endef
 
 define Package/libh2o
