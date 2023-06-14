@@ -35,6 +35,7 @@ define Package/tvheadend
 	+libopenssl \
 	$(ICONV_DEPENDS) \
 	+zlib \
+	+TVHEADEND_URIPARSER:liburiparser \
 	+TVHEADEND_AVAHI_SUPPORT:libavahi-client \
 	+TVHEADEND_REGEX_PCRE:libpcre \
 	+TVHEADEND_REGEX_PCRE2:libpcre2 \
@@ -87,6 +88,12 @@ ifneq ($(CONFIG_TVHEADEND_REGEX_POSIX),)
 	CONFIGURE_ARGS += --disable-pcre --disable-pcre2
 endif
 endif
+endif
+
+ifeq ($(CONFIG_TVHEADEND_URIPARSER),)
+        CONFIGURE_ARGS += --disable-uriparser
+else
+        CONFIGURE_ARGS += --enable-uriparser
 endif
 
 ifeq ($(CONFIG_TVHEADEND_AVAHI_SUPPORT),)
@@ -219,7 +226,6 @@ CONFIGURE_ARGS += \
 	--disable-libfdkaac_static \
 	--disable-pcloud_cache \
 	--enable-bundle \
-	--disable-uriparser \
 	--disable-execinfo \
 	--nowerror=unused-variable
 
