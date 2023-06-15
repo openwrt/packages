@@ -14,14 +14,20 @@ the `osflags` file.
 An upstream fix for musl libc has been submitted with
 http://www.openwall.com/lists/musl/2017/12/04/3
 
+The fix had since been merged, and 22 months later been removed again,
+noting that it should not be required anymore in the future:
+https://git.musl-libc.org/cgit/musl/commit/include/arpa/nameser.h?id=71d23fbeacdd1f0c5e33cffb0979250d576fcf9c
+
+So this patch can likely be removed. Testing is required, though.
+
 --- a/src/osflags
 +++ b/src/osflags
-@@ -27,7 +27,7 @@ cflags)
- 			echo '-Dsocklen_t=int';
+@@ -32,7 +32,7 @@ cflags)
+ 			echo '-D__APPLE_USE_RFC_3542';
  		;;
  		Linux)
 -			FLAGS="-D_GNU_SOURCE"
 +			FLAGS="-D_GNU_SOURCE -include endian.h"
  			echo $FLAGS;
  		;;
- 	esac
+ 		GNU/kFreeBSD|GNU)
