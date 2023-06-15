@@ -20,13 +20,13 @@ addnat() {
 
 	# Ensure that the service is enabled
 	enabled="$(uci -q get zerotier.@zerotier[0].enabled)"
-	if [ "$enabled" -ne 1 ] && ! $initscript enabled; then
+	if [ "$enabled" != "1" ] && ! $initscript enabled; then
 		log "Service is disabled."
 		return 0
 	fi
 
 	nat="$(uci -q get zerotier.@zerotier[0].nat)"
-	if [ "$nat" -ne 1 ]; then
+	if [ "$nat" != "1" ]; then
 		log "NAT disabled in config."
 		return 0
 	fi
