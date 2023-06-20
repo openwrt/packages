@@ -369,7 +369,9 @@ gen_dhcp_subnet() {
 	local cfg="$1"
 
 	echo "subnet $NETWORK netmask $NETMASK {"
-	echo " range $START $END;"
+	if [ -n "$START" ] && [ -n "$END" ]; then
+		echo " range $START $END;"
+	fi
 	echo " option subnet-mask $netmask;"
 	if [ "$BROADCAST" != "0.0.0.0" ] ; then
 		echo " option broadcast-address $BROADCAST;"
@@ -408,10 +410,13 @@ dhcpd_add() {
 	[ -n "$net" ] || return 0
 
 	config_get start "$cfg" "start"
-	[ -n "$start" ] || return 0
-
 	config_get limit "$cfg" "limit"
-	[ -n "$limit" ] || return 0
+
+	case "$start:$limit" in
+	":*"|"*:")
+		echo "dhcpd: start/limit must be used together in $cfg" >&2
+		return 0
+	esac
 
 	network_get_subnet subnet "$net" || return 0
 	network_get_device ifname "$net" || return 0
