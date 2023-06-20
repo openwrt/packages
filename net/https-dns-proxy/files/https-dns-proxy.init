@@ -133,7 +133,7 @@ boot() {
 }
 
 start_instance() {
-	local cfg="$1" param listen_addr listen_port ipv6_resolvers_only p url
+	local cfg="$1" param listen_addr listen_port ipv6_resolvers_only p url iface
 
 	config_get url "$cfg" 'resolver_url'
 	config_get_bool ipv6_resolvers_only "$cfg" 'use_ipv6_resolvers_only' '0'
@@ -158,32 +158,36 @@ start_instance() {
 	procd_set_param stdout 1
 	procd_set_param respawn
 	procd_open_data
-	procd_add_mdns_service "$packageName" 'udp' "$port" "DNS over HTTPS proxy"
+	json_add_object mdns
+		procd_add_mdns_service "$packageName" 'udp' "$port" "DNS over HTTPS proxy"
+	json_close_object
 	json_add_string url "$url"
 	if [ "$force_dns" -ne 0 ]; then
 		json_add_array firewall
-		for p in $force_dns_port; do
-			if netstat -tuln | grep 'LISTEN' | grep ":${p}" >/dev/null 2>&1 || [ "$p" = '53' ]; then
-				json_add_object ''
-				json_add_string type redirect
-				json_add_string target DNAT
-				json_add_string src lan
-				json_add_string proto 'tcp udp'
-				json_add_string src_dport "$p"
-				json_add_string dest_port "$p"
-				json_add_string family any
-				json_add_boolean reflection 0
-				json_close_object
-			else
-				json_add_object ''
-				json_add_string type rule
-				json_add_string src lan
-				json_add_string dest '*'
-				json_add_string proto 'tcp udp'
-				json_add_string dest_port "$p"
-				json_add_string target REJECT
-				json_close_object
-			fi
+		for iface in $procd_fw_src_interfaces; do
+			for p in $force_dns_port; do
+				if netstat -tuln | grep 'LISTEN' | grep ":${p}" >/dev/null 2>&1 || [ "$p" = '53' ]; then
+					json_add_object ''
+					json_add_string type redirect
+					json_add_string target DNAT
+					json_add_string src "$iface"
+					json_add_string proto 'tcp udp'
+					json_add_string src_dport "$p"
+					json_add_string dest_port "$p"
+					json_add_string family any
+					json_add_boolean reflection 0
+					json_close_object
+				else
+					json_add_object ''
+					json_add_string type rule
+					json_add_string src "$iface"
+					json_add_string dest '*'
+					json_add_string proto 'tcp udp'
+					json_add_string dest_port "$p"
+					json_add_string target REJECT
+					json_close_object
+				fi
+			done
 		done
 		json_close_array
 	fi
@@ -216,14 +220,17 @@ start_instance() {
 start_service() {
 	local canaryDomains canary_domains_icloud canary_domains_mozilla
 	local dnsmasq_config_update force_dns force_dns_port 
+	local procd_fw_src_interfaces
+
 	local port=5053
 	output "Starting $serviceName "
 	config_load "$packageName"
-	config_get dnsmasq_config_update        'config' 'dnsmasq_config_update' '*'
-	config_get_bool canary_domains_icloud   'config' 'canary_domains_icloud' '1'
-	config_get_bool canary_domains_mozilla  'config' 'canary_domains_mozilla' '1'
-	config_get_bool force_dns	              'config' 'force_dns' '1'
-	config_get force_dns_port	              'config' 'force_dns_port' '53 853'
+	config_get_bool canary_domains_icloud  'config' 'canary_domains_icloud' '1'
+	config_get_bool canary_domains_mozilla 'config' 'canary_domains_mozilla' '1'
+	config_get_bool force_dns          'config' 'force_dns' '1'
+	config_get dnsmasq_config_update   'config' 'dnsmasq_config_update' '*'
+	config_get force_dns_port          'config' 'force_dns_port' '53 853'
+	config_get procd_fw_src_interfaces 'config' 'procd_fw_src_interfaces' 'lan'
 	if [ "$canary_domains_icloud" -ne 0 ]; then
 		canaryDomains="${canaryDomains:+$canaryDomains }${canaryDomainsiCloud}"
 	fi
