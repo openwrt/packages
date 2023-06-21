@@ -191,7 +191,10 @@ load_server() {
 	# dbclient doesn't support StrictHostKeyChecking but it has the -y option that works same
 	[ "$StrictHostKeyChecking" = "accept-new" ] && ARGS_options="$ARGS_options -y"
 	[ "$StrictHostKeyChecking" = "no" ] && ARGS_options="$ARGS_options -yy"
-	ARGS="$ARGS_options -o ExitOnForwardFailure=yes -o BatchMode=yes -nN $ARGS_tunnels -p $port $user@$hostname"
+	ARGS="$ARGS_options -o ExitOnForwardFailure=yes -o BatchMode=yes -nN $ARGS_tunnels "
+	[ -n "$port" ] && ARGS="$ARGS -p $port "
+	[ -n "$user" ] && ARGS="$ARGS $user@"
+	ARGS="${ARGS}$hostname"
 
 	procd_open_instance "$server"
 	procd_set_param command "$PROG" $ARGS
