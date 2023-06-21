@@ -61,12 +61,14 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * Full IPv4 and IPv6 support
 * Supports nft atomic Set loading
 * Supports blocking by ASN numbers and by iso country codes
-* Supports local allow- and blocklist (IPv4, IPv6, CIDR notation or domain names)
+* Supports local allow- and blocklist with MAC/IPv4/IPv6 addresses or domain names
+* Supports concatenation of local MAC addresses with IPv4/IPv6 addresses, e.g. to enforce dhcp assignments
+* All local input types support ranges in CIDR notation
 * Auto-add the uplink subnet or uplink IP to the local allowlist
-* Provides a small background log monitor to ban unsuccessful login attempts in real-time
+* Provides a small background log monitor to ban unsuccessful login attempts in real-time (like fail2ban, crowdsec etc.)
 * Auto-add unsuccessful LuCI, nginx, Asterisk or ssh login attempts to the local blocklist
 * Auto-add entire subnets to the blocklist Sets based on an additional RDAP request with the monitored suspicious IP
-* Fast feed processing as they are handled in parallel as background jobs
+* Fast feed processing as they are handled in parallel as background jobs (on capable multi-core hardware)
 * Per feed it can be defined whether the wan-input chain, the wan-forward chain or the lan-forward chain should be blocked (default: all chains)
 * Automatic blocklist backup & restore, the backups will be used in case of download errors or during startup
 * Automatically selects one of the following download utilities with ssl support: aria2c, curl, uclient-fetch or full wget
@@ -188,62 +190,54 @@ Available commands:
 :::
 ::: banIP Set Statistics
 :::
-    Timestamp: 2023-02-25 08:35:37
+    Timestamp: 2023-06-21 07:03:23
     ------------------------------
-    auto-added to allowlist: 0
-    auto-added to blocklist: 4
+    auto-added to allowlist today: 0
+    auto-added to blocklist today: 0
 
     Set                  | Elements     | WAN-Input (packets)   | WAN-Forward (packets) | LAN-Forward (packets)
     ---------------------+--------------+-----------------------+-----------------------+------------------------
-    allowlistvMAC        | 0            | -                     | -                     | OK: 0                 
-    allowlistv4          | 15           | OK: 0                 | OK: 0                 | OK: 0                 
+    allowlistv4MAC       | 0            | -                     | -                     | OK: 0                 
+    allowlistv6MAC       | 0            | -                     | -                     | OK: 0                 
+    allowlistv4          | 1            | OK: 0                 | OK: 0                 | OK: 0                 
     allowlistv6          | 1            | OK: 0                 | OK: 0                 | OK: 0                 
-    torv4                | 800          | OK: 0                 | OK: 0                 | OK: 0                 
-    torv6                | 432          | OK: 0                 | OK: 0                 | OK: 0                 
-    countryv6            | 34282        | OK: 0                 | OK: 1                 | -                     
-    countryv4            | 35508        | OK: 1872              | OK: 0                 | -                     
-    dohv6                | 343          | -                     | -                     | OK: 0                 
-    dohv4                | 540          | -                     | -                     | OK: 3                 
-    firehol1v4           | 1670         | OK: 296               | OK: 0                 | OK: 16                
-    deblv4               | 12402        | OK: 4                 | OK: 0                 | OK: 0                 
-    deblv6               | 41           | OK: 0                 | OK: 0                 | OK: 0                 
-    adguardv6            | 12742        | -                     | -                     | OK: 161               
-    adguardv4            | 23183        | -                     | -                     | OK: 212               
-    adguardtrackersv6    | 169          | -                     | -                     | OK: 0                 
-    adguardtrackersv4    | 633          | -                     | -                     | OK: 0                 
-    adawayv6             | 2737         | -                     | -                     | OK: 15                
-    adawayv4             | 6542         | -                     | -                     | OK: 137               
-    oisdsmallv6          | 10569        | -                     | -                     | OK: 0                 
-    oisdsmallv4          | 18800        | -                     | -                     | OK: 74                
-    stevenblackv6        | 11901        | -                     | -                     | OK: 4                 
-    stevenblackv4        | 16776        | -                     | -                     | OK: 139               
-    yoyov6               | 215          | -                     | -                     | OK: 0                 
-    yoyov4               | 309          | -                     | -                     | OK: 0                 
-    antipopadsv4         | 1872         | -                     | -                     | OK: 0                 
-    urlhausv4            | 7431         | OK: 0                 | OK: 0                 | OK: 0                 
-    antipopadsv6         | 2081         | -                     | -                     | OK: 2                 
-    blocklistvMAC        | 0            | -                     | -                     | OK: 0                 
-    blocklistv4          | 1174         | OK: 1                 | OK: 0                 | OK: 0                 
-    blocklistv6          | 40           | OK: 0                 | OK: 0                 | OK: 0                 
+    cinsscorev4          | 13115        | OK: 142               | OK: 0                 | -                     
+    deblv4               | 8076         | OK: 5                 | OK: 0                 | OK: 0                 
+    countryv6            | 37313        | OK: 0                 | OK: 1                 | -                     
+    countryv4            | 36155        | OK: 33                | OK: 0                 | -                     
+    deblv6               | 15           | OK: 0                 | OK: 0                 | OK: 0                 
+    dropv6               | 35           | OK: 0                 | OK: 0                 | OK: 0                 
+    dropv4               | 620          | OK: 0                 | OK: 0                 | OK: 0                 
+    dohv6                | 598          | -                     | -                     | OK: 0                 
+    dohv4                | 902          | -                     | -                     | OK: 0                 
+    edropv4              | 247          | OK: 0                 | OK: 0                 | OK: 0                 
+    threatviewv4         | 571          | OK: 0                 | OK: 0                 | OK: 0                 
+    firehol1v4           | 877          | OK: 8                 | OK: 0                 | OK: 0                 
+    ipthreatv4           | 5751         | OK: 0                 | OK: 0                 | OK: 0                 
+    urlvirv4             | 169          | OK: 0                 | OK: 0                 | OK: 0                 
+    blocklistv4MAC       | 0            | -                     | -                     | OK: 0                 
+    blocklistv6MAC       | 0            | -                     | -                     | OK: 0                 
+    blocklistv4          | 3            | OK: 0                 | OK: 0                 | OK: 0                 
+    blocklistv6          | 0            | OK: 0                 | OK: 0                 | OK: 0                 
     ---------------------+--------------+-----------------------+-----------------------+------------------------
-    30                   | 203208       | 12 (2173)             | 12 (1)                | 28 (763)
+    22                   | 104449       | 16 (188)              | 16 (1)                | 19 (0)
 ```
 
 **banIP runtime information**  
 ```
-~# /etc/init.d/banip status
+root@blackhole:~# /etc/init.d/banip status
 ::: banIP runtime information
   + status            : active (nft: ✔, monitor: ✔)
-  + version           : 0.8.6-2
-  + element_count     : 172309
-  + active_feeds      : allowlistvMAC, allowlistv6, allowlistv4, adawayv4, adguardtrackersv4, adawayv6, adguardv6, adguardv4, urlvirv4, adguardtrackersv6, oisdbigv6, oisdbigv4, blocklistvMAC, blocklistv4, blocklistv6
+  + version           : 0.8.8-1
+  + element_count     : 104449
+  + active_feeds      : allowlistv4MAC, allowlistv6MAC, allowlistv4, allowlistv6, cinsscorev4, deblv4, countryv6, countryv4, deblv6, dropv6, dropv4, dohv6, dohv4, edropv4, threatviewv4, firehol1v4, ipthreatv4, urlvirv4, blocklistv4MAC, blocklistv6MAC, blocklistv4, blocklistv6
   + active_devices    : br-wan ::: wan, wan6
-  + active_uplink     : 91.64.173.145, 2a12:610c:0:80:848b:3ad0:4e05:abb
+  + active_uplink     : 91.63.198.120, 2a12:810c:0:80:a20d:52c3:5cf:f4f
   + nft_info          : priority: -200, policy: performance, loglevel: warn, expiry: -
   + run_info          : base: /mnt/data/banIP, backup: /mnt/data/banIP/backup, report: /mnt/data/banIP/report, custom feed: ✘
   + run_flags         : auto: ✔, proto (4/6): ✔/✔, log (wan-inp/wan-fwd/lan-fwd): ✔/✔/✔, dedup: ✔, split: ✘, allowed only: ✘
-  + last_run          : action: restart, duration: 0m 22s, date: 2023-05-15 22:39:15
-  + system_info       : cores: 4, memory: 1798, device: Bananapi BPI-R3, OpenWrt SNAPSHOT r22784-1645c34d56
+  + last_run          : action: restart, duration: 0m 19s, date: 2023-06-21 06:45:52
+  + system_info       : cores: 4, memory: 1634, device: Bananapi BPI-R3, OpenWrt SNAPSHOT r23398-c4be106f4d
 ```
 
 **banIP search information**  
@@ -292,14 +286,35 @@ list ban_logterm 'SecurityEvent=\"InvalidAccountID\".*RemoteAddress='
 ```
 
 **allow-/blocklist handling**  
-banIP supports local allow and block lists (IPv4, IPv6, CIDR notation or domain names), located in /etc/banip/banip.allowlist and /etc/banip/banip.blocklist.  
+banIP supports local allow and block lists, MAC/IPv4/IPv6 addresses (incl. ranges in CIDR notation) or domain names. These files are located in /etc/banip/banip.allowlist and /etc/banip/banip.blocklist.  
 Unsuccessful login attempts or suspicious requests will be tracked and added to the local blocklist (see the 'ban_autoblocklist' option). The blocklist behaviour can be further tweaked with the 'ban_nftexpiry' option.  
 Depending on the options 'ban_autoallowlist' and 'ban_autoallowuplink' the uplink subnet or the uplink IP will be added automatically to local allowlist.  
 Furthermore, you can reference external Allowlist URLs with additional IPv4 and IPv6 feeds (see 'ban_allowurl').  
 Both local lists also accept domain names as input to allow IP filtering based on these names. The corresponding IPs (IPv4 & IPv6) will be extracted and added to the Sets. You can also start the domain lookup separately via /etc/init.d/banip lookup at any time.
 
+**MAC/IP-binding**
+banIP supports concatenation of local MAC addresses with IPv4/IPv6 addresses, e.g. to enforce dhcp assignments. Following notations in the local allow and block lists are allowed:
+```
+MAC-address only:
+C8:C2:9B:F7:80:12                                  => this will be populated to the v4MAC- and v6MAC-Sets with the IP-wildcards 0.0.0.0/0 and ::/0
+
+MAC-address with IPv4 concatenation:
+C8:C2:9B:F7:80:12 192.168.1.10                     => this will be populated only to v4MAC-Set with the certain IP, no entry in the v6MAC-Set
+
+MAC-address with IPv6 concatenation:
+C8:C2:9B:F7:80:12 2a02:810c:0:80:a10e:62c3:5af:f3f => this will be populated only to v6MAC-Set with the certain IP, no entry in the v4MAC-Set
+
+MAC-address with IPv4 and IPv6 concatenation:
+C8:C2:9B:F7:80:12 192.168.1.10                     => this will be populated to v4MAC-Set with the certain IP
+C8:C2:9B:F7:80:12 2a02:810c:0:80:a10e:62c3:5af:f3f => this will be populated to v6MAC-Set with the certain IP
+
+MAC-address with IPv4 and IPv6 wildcard concatenation:
+C8:C2:9B:F7:80:12 192.168.1.10                     => this will be populated to v4MAC-Set with the certain IP
+C8:C2:9B:F7:80:12                                  => this will be populated to v6MAC-Set with the IP-wildcard ::/0
+```
+
 **allowlist-only mode**  
-banIP supports an "allowlist only" mode. This option restricts the internet access from/to a small number of secure websites/IPs, and block access from/to the rest of the internet. All IPs and Domains which are _not_ listed in the allowlist are blocked.
+banIP supports an "allowlist only" mode. This option restricts the internet access from/to a small number of secure MACs, IPs or domains, and block access from/to the rest of the internet. All IPs and Domains which are _not_ listed in the allowlist are blocked.
 
 **redirect Asterisk security logs to lodg/logread**  
 banIP only supports logfile scanning via logread, so to monitor attacks on Asterisk, its security log must be available via logread. To do this, edit '/etc/asterisk/logger.conf' and add the line 'syslog.local0 = security', then run 'asterisk -rx reload logger' to update the running Asterisk configuration.
