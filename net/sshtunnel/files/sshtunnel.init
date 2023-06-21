@@ -57,6 +57,7 @@ validate_server_section() {
 
 validate_tunnelR_section() {
 	uci_load_validate sshtunnel tunnelR "$1" "$2" \
+		'enabled:bool:1' \
 		'remoteaddress:or(host, "*")' \
 		'remoteport:port' \
 		'localaddress:host' \
@@ -65,6 +66,7 @@ validate_tunnelR_section() {
 
 validate_tunnelL_section() {
 	uci_load_validate sshtunnel tunnelL "$1" "$2" \
+		'enabled:bool:1' \
 		'remoteaddress:host' \
 		'remoteport:port' \
 		'localaddress:or(host, "*")' \
@@ -73,12 +75,14 @@ validate_tunnelL_section() {
 
 validate_tunnelD_section() {
 	uci_load_validate sshtunnel tunnelD "$1" "$2" \
+		'enabled:bool:1' \
 		'localaddress:or(host, "*")' \
 		'localport:port'
 }
 
 validate_tunnelW_section() {
 	uci_load_validate sshtunnel tunnelW "$1" "$2" \
+		'enabled:bool:1' \
 		'vpntype:or("ethernet", "point-to-point"):point-to-point' \
 		'localdev:or("any", min(0))' \
 		'remotedev:or("any", min(0))'
@@ -86,6 +90,7 @@ validate_tunnelW_section() {
 
 load_tunnelR() {
 	config_get section_server "$1" "server"
+	[ "$enabled" = 0 ] && return 0
 
 	# continue to read next section if this is not for the current server
 	[ "$server" = "$section_server" ] || return 0
@@ -104,6 +109,7 @@ load_tunnelR() {
 
 load_tunnelL() {
 	config_get section_server "$1" "server"
+	[ "$enabled" = 0 ] && return 0
 
 	# continue to read next section if this is not for the current server
 	[ "$server" = "$section_server" ] || return 0
@@ -122,6 +128,7 @@ load_tunnelL() {
 
 load_tunnelD() {
 	config_get section_server "$1" "server"
+	[ "$enabled" = 0 ] && return 0
 
 	# continue to read next section if this is not for the current server
 	[ "$server" = "$section_server" ] || return 0
@@ -140,6 +147,7 @@ load_tunnelD() {
 
 load_tunnelW() {
 	config_get section_server "$1" "server"
+	[ "$enabled" = 0 ] && return 0
 
 	# continue to read next section if this is not for the current server
 	[ "$server" = "$section_server" ] || return 0
