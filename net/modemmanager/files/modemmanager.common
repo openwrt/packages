@@ -273,6 +273,14 @@ mm_report_event() {
 	local subsystem="$3"
 	local sysfspath="$4"
 
+	# Do not save virtual devices
+	local virtual
+	virtual="$(echo "$sysfspath" | cut -d'/' -f4)"
+	[ "$virtual" = "virtual" ] && {
+		mm_log "debug" "sysfspath is a virtual device ($sysfspath)"
+		return
+	}
+
 	# Track/untrack events in cache
 	case "${action}" in
 		"add")
