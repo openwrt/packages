@@ -61,22 +61,17 @@ f_log "info" "start banIP download processes"
 
 cnt="1"
 for feed in allowlist ${ban_feed} blocklist; do
-	# local feeds
+	# local feeds (sequential processing)
 	#
 	if [ "${feed}" = "allowlist" ] || [ "${feed}" = "blocklist" ]; then
 		for proto in 4MAC 6MAC 4 6; do
 			[ "${feed}" = "blocklist" ] && wait
-			(f_down "${feed}" "${proto}") &
-			[ "${feed}" = "blocklist" ] || { [ "${feed}" = "allowlist" ] && { [ "${proto}" = "4MAC" ] || [ "${proto}" = "6MAC" ]; }; } && wait
-			hold="$((cnt % ban_cores))"
-			[ "${hold}" = "0" ] && wait
-			cnt="$((cnt + 1))"
+			f_down "${feed}" "${proto}"
 		done
-		wait
 		continue
 	fi
 
-	# external feeds
+	# external feeds (parallel processing on multicore hardware)
 	#
 	if ! json_select "${feed}" >/dev/null 2>&1; then
 		f_log "info" "remove unknown feed '${feed}'"
