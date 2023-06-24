@@ -1309,10 +1309,10 @@ f_search() {
 	local item table_sets ip proto hold cnt result_flag="/var/run/banIP.search" input="${1}"
 
 	if [ -n "${input}" ]; then
-		ip="$(printf "%s" "${input}" | "${ban_awkcmd}" 'BEGIN{RS="(([0-9]{1,3}\\.){3}[0-9]{1,3})+"}{printf "%s",RT}')"
+		ip="$(printf "%s" "${input}" | "${ban_awkcmd}" 'BEGIN{RS="(([0-9]{1,3}\\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\/(1?[0-9]|2?[0-9]|3?[0-2]))?[[:space:]]*$)"}{printf "%s",RT}')"
 		[ -n "${ip}" ] && proto="v4"
 		if [ -z "${proto}" ]; then
-			ip="$(printf "%s" "${input}" | "${ban_awkcmd}" 'BEGIN{RS="([A-Fa-f0-9]{1,4}::?){3,7}[A-Fa-f0-9]{1,4}"}{printf "%s",RT}')"
+			ip="$(printf "%s" "${input}" | "${ban_awkcmd}" 'BEGIN{RS="(([0-9A-f]{0,4}:){1,7}[0-9A-f]{0,4}:?(\/(1?[0-2][0-8]|[0-9][0-9]))?)([[:space:]].*|$)"}{printf "%s",RT}')"
 			[ -n "${ip}" ] && proto="v6"
 		fi
 	fi
@@ -1327,10 +1327,7 @@ f_search() {
 	printf "    %s\n" "---"
 	cnt="1"
 	for item in ${table_sets}; do
-		if [ -f "${result_flag}" ]; then
-			rm -f "${result_flag}"
-			return
-		fi
+		[ -f "${result_flag}" ] && break
 		(
 			if "${ban_nftcmd}" get element inet banIP "${item}" "{ ${ip} }" >/dev/null 2>&1; then
 				printf "    %s\n" "IP found in Set '${item}'"
@@ -1342,7 +1339,7 @@ f_search() {
 		cnt="$((cnt + 1))"
 	done
 	wait
-	printf "    %s\n" "IP not found"
+	[ -f "${result_flag}" ] && rm -f "${result_flag}" || printf "    %s\n" "IP not found"
 }
 
 # Set survey
