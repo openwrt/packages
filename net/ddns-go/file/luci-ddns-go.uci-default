@@ -1,0 +1,6 @@
+#!/bin/sh
+
+/etc/init.d/ddns-go enable
+/etc/init.d/ddns-go start
+rm -f /tmp/luci*
+exit 0
