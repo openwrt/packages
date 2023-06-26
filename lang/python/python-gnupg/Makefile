@@ -13,7 +13,7 @@ PKG_HASH:=2061f56b1942c29b92727bf9aecbd3cea3893acc9cccbdc7eb4604285efe4ac7
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.txt
-PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
+PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 PKG_CPE_ID:=cpe:/a:python:python-gnupg
 
 include ../pypi.mk
