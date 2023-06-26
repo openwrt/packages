@@ -11,7 +11,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=MarkupSafe
 PKG_HASH:=abcabc8c2b26036d62d4c746381a6f7cf60aafcc653198ad678306986b09450d
 
-PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
+PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.rst
 
