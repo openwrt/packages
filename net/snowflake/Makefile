@@ -1,13 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=snowflake
-PKG_VERSION:=2.5.1
+PKG_VERSION:=2.6.0
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL=https://git.torproject.org/pluggable-transports/snowflake.git
+PKG_SOURCE_URL=https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake.git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_MIRROR_HASH:=7f36f48ab07ac9a3944202613b024072f3ad0ad55b495fde611ee30223410fdf
+PKG_MIRROR_HASH:=a982f792c0184158e1842d8d191a7786f46030725bf3da1410c0d70b274cbd62
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -17,7 +17,7 @@ PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=no-mips16
 
-GO_PKG:=git.torproject.org/pluggable-transports/snowflake.git/v2
+GO_PKG:=gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/v2
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
