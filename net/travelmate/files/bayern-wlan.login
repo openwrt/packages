@@ -1,6 +1,6 @@
 #!/bin/sh
 # captive portal auto-login script for the Bayern WLAN (https://www.wlan-bayern.de/)
-# Copyright (c) 2021-2022 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2023 Christian Bieg
 # This is free software, licensed under the GNU General Public License v3.
 
 # set (s)hellcheck exceptions
