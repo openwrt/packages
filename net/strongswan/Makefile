@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=strongswan
-PKG_VERSION:=5.9.10
-PKG_RELEASE:=5
+PKG_VERSION:=5.9.11
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://download.strongswan.org/ https://download2.strongswan.org/
-PKG_HASH:=3b72789e243c9fa6f0a01ccaf4f83766eba96a5e5b1e071d36e997572cf34654
+PKG_HASH:=ddf53f1f26ad26979d5f55e8da95bd389552f5de3682e35593f9a70b2584ed2d
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_MAINTAINER:=Philip Prindeville <philipp@redfish-solutions.com>, Noel Kuntze <noel.kuntze@thermi.consulting>
 PKG_CPE_ID:=cpe:/a:strongswan:strongswan
