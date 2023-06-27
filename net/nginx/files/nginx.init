@@ -8,11 +8,42 @@ USE_PROCD=1
 G_OPTS="daemon off;"
 
 NGINX_UTIL="/usr/bin/nginx-util"
+UCI_CONF_TEMPLATE="/etc/nginx/uci.conf.template"
+LATEST_UCI_CONF_VERSION="1.2"
 
 eval $("${NGINX_UTIL}" get_env)
 
 CONF=""
 
+nginx_check_luci_template() {
+	UCI_CONF_VERSION="$(sed -nr 's/# UCI_CONF_VERSION=(.*)/\1/p' $UCI_CONF_TEMPLATE)"
+
+	# No need to migrate already latest version
+	if [ "$UCI_CONF_VERSION" = "$LATEST_UCI_CONF_VERSION" ]; then
+		return
+	fi
+
+	# Fix wrong entry for the module.d include
+	if [ "$UCI_CONF_VERSION" = "1.1" ]; then
+		# Remove any entry
+		sed -i '/^include module\.d\/\*\.module;/d' $UCI_CONF_TEMPLATE
+		# Put the include before events {}
+		sed -i 's/events {/include module.d\/*.module;\n\nevents {/' $UCI_CONF_TEMPLATE
+	fi
+
+	if [ "$UCI_CONF_VERSION" != "$LATEST_UCI_CONF_VERSION" ]; then
+		sed -i "s/# UCI_CONF_VERSION=.*/# UCI_CONF_VERSION=$LATEST_UCI_CONF_VERSION/" $UCI_CONF_TEMPLATE
+	fi
+
+	if [ -z "$UCI_CONF_VERSION" ]; then
+		# Handle funny case with template with the include module but no version
+		if ! grep -q -e '^include module\.d/\*\.module;$' $UCI_CONF_TEMPLATE; then
+			sed -i 's/events {/include module.d\/*.module;\n\nevents {/' $UCI_CONF_TEMPLATE
+		fi
+		echo "" >> $UCI_CONF_TEMPLATE
+		echo "# UCI_CONF_VERSION=1.2"  >> $UCI_CONF_TEMPLATE
+	fi
+}
 
 nginx_init() {
 	[ -z "${CONF}" ] || return # already called.
@@ -22,6 +53,10 @@ nginx_init() {
 
 	rm -f "$(readlink "${UCI_CONF}")"
 	${NGINX_UTIL} init_lan
+
+	if [ -f $UCI_CONF_TEMPLATE ]; then
+		nginx_check_luci_template
+	fi
 
 	if [ -e "${UCI_CONF}" ]
 	then CONF="${UCI_CONF}"

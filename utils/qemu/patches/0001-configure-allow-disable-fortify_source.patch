@@ -11,7 +11,7 @@ OpenWrt base build system decide flavor of fortify_source to use
 
 --- a/configure
 +++ b/configure
-@@ -895,6 +895,8 @@ for opt do
+@@ -896,6 +896,8 @@ for opt do
    ;;
    --disable-vfio-user-server) vfio_user_server="disabled"
    ;;

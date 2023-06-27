@@ -1,0 +1,202 @@
+menu "Configuration"
+	depends on PACKAGE_dnsdist
+
+	comment "SSL Support"
+	choice
+		prompt "Selected SSL library"
+		default DNSDIST_OPENSSL
+
+		config DNSDIST_GNUTLS
+			bool "GnuTLS"
+
+		config DNSDIST_OPENSSL
+			bool "OpenSSL"
+
+		config DNSDIST_NOSSL
+			bool "No SSL support"
+
+	endchoice
+
+	comment "DNS over HTTPS/TLS Support"
+	depends on !DNSDIST_NOSSL
+
+	config DNSDIST_DNS_OVER_HTTPS
+	depends on DNSDIST_OPENSSL
+	depends on !DNSDIST_NOSSL
+		bool "DNS over HTTPS Support"
+		help
+			"Enables DNS over HTTPS Support for dnsdist"
+		default y
+
+	config DNSDIST_DNS_OVER_HTTPS_OUTGOING
+	depends on DNSDIST_OPENSSL
+	depends on !DNSDIST_NOSSL
+		bool "Outgoing DNS over HTTPS Support"
+		help
+			"Enables Outgoing DNS over HTTPS Support for dnsdist"
+		default y
+
+	config DNSDIST_DNS_OVER_TLS
+	depends on !DNSDIST_NOSSL
+		bool "DNS over TLS Support"
+		help
+			"Enabled DNS over TLS Support for dnsdist"
+		default y
+
+	config DNSDIST_CARBON
+		bool "CARBON support"
+		help
+			"Enable Carbon (Graphite) support for dnsdist"
+		default n
+
+	config DNSDIST_LMDB
+		bool "LMDB support"
+		help
+			"Enable LMDB support for dnsdist"
+		default n
+
+	config DNSDIST_COMPLETION
+		bool "Console completion support"
+		help
+			"Enable console completion for dnsdist"
+		default n
+
+	config DNSDIST_DEBUG_SYMBOLS
+		bool "Debug symbols"
+		help
+			"Enable debug symbols in the dnsdist binary"
+		default n
+
+	config DNSDIST_DELAY_PIPE
+		bool "Delay action support"
+		help
+			"Enable delay action support for dnsdist"
+		default n
+
+	config DNSDIST_DYNBLOCKS
+		bool "Dynamic blocks support"
+		help
+			"Enable dynamic blocks support for dnsdist"
+		default n
+
+	config DNSDIST_DNSTAP
+		bool "DNSTAP support"
+		help
+			"Enable DNSTAP support for dnsdist"
+		default n
+
+	config DNSDIST_EBPF
+		bool "eBPF support"
+		help
+			"Enable eBPF support for dnsdist"
+		default n
+
+	config DNSDIST_ECS_ACTIONS
+		bool "ECS actions"
+		help
+			"Enable actions that control EDNS Client Subnet support for dnsdist"
+		default n
+
+	config DNSDIST_HASHED
+		bool "Hashed credentials"
+		help
+			"Enable credentials hashing support for dnsdist"
+		default n
+
+	config DNSDIST_IPCIPHER
+		bool "IP cipher support"
+		help
+			"Enable IP cipher support for dnsdist"
+		default n
+
+	config DNSDIST_LIBEDIT
+		bool "Build with libedit"
+		help
+			"Build with libedit - for completion, history and line editing"
+		default n
+
+	config DNSDIST_LMDB
+		bool "LMDB support"
+		help
+			"Enable LMDB support for dnsdist"
+		default n
+
+	config DNSDIST_LUA_ADVANCED
+		bool "Lua advanced bindings"
+		help
+			"Enable Lua bindings for queries and responses manipulation in dnsdist"
+		default n
+
+	config DNSDIST_MAC
+		bool "MAC address support"
+		help
+			"Enable MAC address in ring buffers support for dnsdist"
+		default y
+
+	config DNSDIST_NET_SNMP
+		bool "Net-SNMP support"
+		help
+			"Enable Net-SNMP support for dnsdist"
+		default n
+
+	config DNSDIST_OCSP_STAPLING
+		bool "OCSP Stapling support"
+		help
+			"Enable OCSP Stapling support for dnsdist"
+		default n
+
+	config DNSDIST_PIE
+		bool "Position Independent Executable"
+		help
+			"Build dnsdist as a Position-Independent executable. This is required to benefit from ASLR, but significantly increases the required disk space and memory usage"
+		default n
+
+	config DNSDIST_PROTOBUF
+		bool "Protobuf support"
+		help
+			"Enable exporting queries and responses over Protocol Buffer for dnsdist"
+		default n
+
+	config DNSDIST_PROMETHEUS
+		bool "Prometheus support"
+		help
+			"Enable Prometheus support for dnsdist"
+		default n
+
+	config DNSDIST_RE2
+		bool "RE2 support"
+		help
+			"Enable RE2 support for dnsdist"
+		default n
+
+	config DNSDIST_RULES_ALTER
+		bool "Rules altering queries"
+		help
+			"Enable rules altering queries for dnsdist"
+		default n
+
+	config DNSDIST_SECPOLL
+		bool "Security polling"
+		help
+			"Enable security polling support for dnsdist"
+		default n
+
+	config DNSDIST_SODIUM
+		bool "Build with libsodium"
+		help
+			"Build with libsodium - for encrypted console connections, and DNSCrypt"
+		default n
+
+	config DNSDIST_TOP_N
+		bool "Top N bindings"
+		help
+			"Enable bindings to get the top N queries and responses in dnsdist"
+		default n
+
+	config DNSDIST_WEB
+		bool "Internal web server"
+		help
+			"Enable support for the internal web server in dnsdist"
+		default n
+
+endmenu

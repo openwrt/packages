@@ -3,6 +3,10 @@ name: Test Build
 on:
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   build:
     name: Test ${{ matrix.arch }}
@@ -11,9 +15,21 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - arch: aarch64_generic
+            target: armsr-armv8
+            runtime_test: true
+
+          - arch: arm_cortex-a15_neon-vfpv4
+            target: armsr-armv7
+            runtime_test: true
+
           - arch: arm_cortex-a9_vfpv3-d16
             target: mvebu-cortexa9
             runtime_test: false
+
+          - arch: i386_pentium-mmx
+            target: x86-geode
+            runtime_test: true
 
           - arch: mips_24kc
             target: ath79-generic
@@ -31,17 +47,9 @@ jobs:
             target: mpc85xx-p1010
             runtime_test: false
 
-          - arch: aarch64_cortex-a53
-            target: mvebu-cortexa53
-            runtime_test: true
-
-          - arch: arm_cortex-a15_neon-vfpv4
-            target: armvirt-32
-            runtime_test: true
-
-          - arch: i386_pentium-mmx
-            target: x86-geode
-            runtime_test: true
+          - arch: riscv64_riscv64
+            target: sifiveu-generic
+            runtime_test: false
 
           - arch: x86_64
             target: x86-64

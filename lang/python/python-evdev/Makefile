@@ -40,10 +40,10 @@ endef
 LINUX_EVDEV_HEADERS="$(LINUX_DIR)/include/uapi/linux/input.h:$(LINUX_DIR)/include/uapi/linux/input-event-codes.h"
 
 PYTHON3_PKG_BUILD_CONFIG_SETTINGS:= \
-	--global-option=build \
-	--global-option=build_ecodes \
-	--global-option=--evdev-headers="$(LINUX_EVDEV_HEADERS)" \
-	--global-option=build_ext
+	--build-option=build \
+	--build-option=build_ecodes \
+	--build-option=--evdev-headers="$(LINUX_EVDEV_HEADERS)" \
+	--build-option=build_ext
 
 $(eval $(call Py3Package,python3-evdev))
 $(eval $(call BuildPackage,python3-evdev))

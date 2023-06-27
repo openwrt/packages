@@ -45,7 +45,7 @@ fi
 
 # init nft namespace
 #
-if [ "${ban_action}" != "reload" ] || ! "${ban_nftcmd}" -t list set inet banIP allowlistvMAC >/dev/null 2>&1; then
+if [ "${ban_action}" != "reload" ] || ! "${ban_nftcmd}" -t list set inet banIP allowlistv4MAC >/dev/null 2>&1; then
 	if f_nftinit "${ban_tmpfile}".init.nft; then
 		f_log "info" "initialize nft namespace"
 	else
@@ -56,31 +56,22 @@ fi
 # handle downloads
 #
 f_log "info" "start banIP download processes"
-if [ "${ban_allowlistonly}" = "1" ]; then
-	ban_feed=""
-else
-	f_getfeed
-	[ "${ban_deduplicate}" = "1" ] && printf "\n" >"${ban_tmpfile}.deduplicate"
-fi
+[ "${ban_allowlistonly}" = "1" ] && ban_feed="" || f_getfeed
+[ "${ban_deduplicate}" = "1" ] && printf "\n" >"${ban_tmpfile}.deduplicate"
 
 cnt="1"
 for feed in allowlist ${ban_feed} blocklist; do
-	# local feeds
+	# local feeds (sequential processing)
 	#
 	if [ "${feed}" = "allowlist" ] || [ "${feed}" = "blocklist" ]; then
-		for proto in MAC 4 6; do
+		for proto in 4MAC 6MAC 4 6; do
 			[ "${feed}" = "blocklist" ] && wait
-			(f_down "${feed}" "${proto}") &
-			[ "${feed}" = "blocklist" ] || { [ "${feed}" = "allowlist" ] && [ "${proto}" = "MAC" ]; } && wait
-			hold="$((cnt % ban_cores))"
-			[ "${hold}" = "0" ] && wait
-			cnt="$((cnt + 1))"
+			f_down "${feed}" "${proto}"
 		done
-		wait
 		continue
 	fi
 
-	# external feeds
+	# external feeds (parallel processing on multicore hardware)
 	#
 	if ! json_select "${feed}" >/dev/null 2>&1; then
 		f_log "info" "remove unknown feed '${feed}'"

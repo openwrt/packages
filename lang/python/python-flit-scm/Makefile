@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-flit-scm
 PKG_VERSION:=1.7.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=flit-scm
 PYPI_SOURCE_NAME:=flit_scm
@@ -25,8 +25,7 @@ HOST_BUILD_DEPENDS:= \
 	python-build/host \
 	python-installer/host \
 	python-flit-core/host \
-	python-setuptools-scm/host \
-	python-tomli/host
+	python-setuptools-scm/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -40,7 +39,7 @@ define Package/python3-flit-scm
   SUBMENU:=Python
   TITLE:=A PEP 518 build backend that uses setuptools_scm and flit
   URL:=https://gitlab.com/WillDaSilva/flit_scm
-  DEPENDS:=+python3-light +python3-flit-core +python3-setuptools-scm +python3-tomli
+  DEPENDS:=+python3-light +python3-flit-core +python3-setuptools-scm
   BUILDONLY:=1
 endef
 

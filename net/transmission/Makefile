@@ -34,6 +34,7 @@ PKG_CONFIG_DEPENDS:= \
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 include $(INCLUDE_DIR)/package-seccomp.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/transmission/template
   SUBMENU:=BitTorrent

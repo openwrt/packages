@@ -1,0 +1,16 @@
+--- a/setup.py
++++ b/setup.py
+@@ -139,10 +139,10 @@ setup(name='setools',
+       author_email='pebenito@ieee.org',
+       url='https://github.com/SELinuxProject/setools',
+       cmdclass={'build_qhc': QtHelpCommand, 'clean': CleanCommand},
+-      packages=['setools', 'setools.checker', 'setools.diff', 'setoolsgui', 'setoolsgui.apol'],
+-      scripts=['apol', 'sediff', 'seinfo', 'seinfoflow', 'sesearch', 'sedta', 'sechecker'],
++      packages=['setools', 'setools.checker', 'setools.diff'],
++      scripts=['sediff', 'seinfo', 'seinfoflow', 'sesearch', 'sedta', 'sechecker'],
+       data_files=installed_data,
+-      package_data={'': ['*.ui', '*.qhc', '*.qch'], 'setools': ['perm_map',
++      package_data={'setools': ['perm_map',
+                                                                 'policyrep.pyi',
+                                                                 'py.typed']},
+       ext_modules=cythonize(ext_py_mods, include_path=['setools/policyrep'],

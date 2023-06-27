@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pytest
 PKG_VERSION:=7.3.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=pytest
 PKG_HASH:=58ecc27ebf0ea643ebfdf7fb1249335da761a00c9f955bcd922349bcb68ee57d
@@ -34,7 +34,6 @@ define Package/python3-pytest
 	+python3 \
 	+python3-pluggy \
 	+python3-packaging \
-	+python3-tomli \
 	+python3-exceptiongroup \
 	+python3-iniconfig
 endef
