@@ -5,11 +5,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-gnupg
-PKG_VERSION:=0.4.7
+PKG_VERSION:=0.5.0
 PKG_RELEASE:=1
 
-PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=2061f56b1942c29b92727bf9aecbd3cea3893acc9cccbdc7eb4604285efe4ac7
+PYPI_NAME:=python-gnupg
+PKG_HASH:=70758e387fc0e0c4badbcb394f61acbe68b34970a8fed7e0f7c89469fe17912a
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.txt
@@ -25,8 +25,8 @@ define Package/python3-gnupg
   CATEGORY:=Languages
   SUBMENU:=Python
   TITLE:=A wrapper for GnuPG
-  URL:=https://docs.red-dove.com/python-gnupg/
-  DEPENDS:=+gnupg +python3-light +python3-logging
+  URL:=https://github.com/vsajip/python-gnupg
+  DEPENDS:=+python3-light +python3-logging
 endef
 
 define Package/python3-gnupg/description
