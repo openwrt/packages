@@ -36,6 +36,7 @@
 #include <syslog.h>
 #include <time.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 
 typedef struct job {
@@ -64,6 +65,9 @@ static const char *crondir;
 
 static job_t *jobs = NULL;
 
+/* used to determine if crontabs have been changed */
+static int num_checked_files = 0;
+static time_t last_refresh = 0;
 
 static void usage(void) {
 	fprintf(stderr, "Usage: micrond <crondir>\n");
@@ -151,7 +155,7 @@ static int handle_line(const char *line) {
 	int matches = sscanf(line, "%ms %ms %ms %ms %ms %n", &columns[0], &columns[1], &columns[2], &columns[3], &columns[4], &len);
 	if (matches != 5 && matches != 6) {
 		if (matches <= 0)
-			ret = 0;
+			ret = 0;		/* return we have no crontab entry */
 
 		goto end;
 	}
@@ -190,7 +194,7 @@ static int handle_line(const char *line) {
 	jobp->next = jobs;
 	jobs = jobp;
 
-	ret = 0;
+	ret = 1;		/* return that we have valid crontab */
 
   end:
 	for (i = 0; i < matches && i < 5; i++)
@@ -278,6 +282,52 @@ static void check_job(const job_t *job, const struct tm *tm) {
 	run_job(job);
 }
 
+static void refresh_jobs(time_t *refresh_time) {
+	jobs = NULL;
+	read_crondir();
+	*refresh_time = time(NULL);
+}
+
+static void check_for_updates(time_t *refresh_time) {
+	DIR *dir;
+	struct stat info;
+	int previous_seen = num_checked_files;
+	num_checked_files = 0;
+
+	/* ideally should not happen, but just in case someone deletes the dir */
+	if (chdir(crondir) || ((dir = opendir(".")) == NULL)) {
+		syslog(LOG_CRIT, sprintf("Unable to read crondir %s", crondir));
+		exit(1);
+	}
+
+	struct dirent *ent;
+	while ((ent = readdir(dir)) != NULL) {
+		if (ent->d_name[0] == '.')
+			continue;
+
+		if (stat(ent->d_name, &info) == -1) {
+			syslog(LOG_ERR, sprintf("Unable to stat file %s", ent->d_name));
+			continue;
+		}
+
+		num_checked_files++;
+
+		/* if any modification time is newer than the last time the
+		   crontabs were read, then dump the job table and re-read all
+		   the crontab files. */
+		if (info.st_mtime > *refresh_time) {
+			refresh_jobs(refresh_time);
+			break;
+		}
+	}
+
+	closedir(dir);
+
+	/* check to see if any files have been deleted */
+	if (previous_seen > num_checked_files) {
+		refresh_jobs(refresh_time);
+	}
+}
 
 int main(int argc, char *argv[]) {
 	if (argc != 2) {
@@ -291,6 +341,7 @@ int main(int argc, char *argv[]) {
 	signal(SIGCHLD, SIG_IGN);
 
 	read_crondir();
+	last_refresh = time(NULL);
 
 	time_t t = time(NULL);
 	struct tm *tm = localtime(&t);
@@ -312,5 +363,7 @@ int main(int argc, char *argv[]) {
 		job_t *job;
 		for (job = jobs; job; job = job->next)
 			check_job(job, tm);
+
+		check_for_updates(&last_refresh);
 	}
 }
