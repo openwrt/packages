@@ -5,38 +5,38 @@
 
 include $(TOPDIR)/rules.mk
 
-SRC_NAME:=libsemanage
-PKG_NAME:=python3-$(SRC_NAME)
-PKG_VERSION:=3.2
+PKG_NAME:=python-semanage
+PKG_VERSION:=3.5
 PKG_RELEASE:=1
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/python-libsemanage/$(SRC_NAME)-$(PKG_VERSION)
+SRC_NAME:=libsemanage
 PKG_SOURCE:=$(SRC_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/SELinuxProject/selinux/releases/download/$(PKG_VERSION)
-PKG_HASH:=d722a55ca4fe2d4e2b30527720db657e6238b28079e69e2e4affeb8e733ee511
-PKG_BUILD_DEPENDS:=swig/host
+PKG_HASH:=f53534e50247538280ed0d76c6ce81d8fb3939bd64cadb89da10dba42e40dd9c
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)/$(SRC_NAME)-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Thomas Petazzoni <thomas.petazzoni@bootlin.com>
 PKG_LICENSE:=LGPL-2.1-or-later
-PKG_LICENSE_FILES:=COPYING
+PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:selinuxproject:libsemanage
+
+PKG_BUILD_DEPENDS:=swig/host
+PKG_BUILD_PARALLEL:=1
 PYTHON3_PKG_BUILD:=0
-PKG_INSTALL:=1
-MAKE_PATH:=src
 
 include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
-define Package/python3-libsemanage
-  TITLE:=Python bindings for the SELinux policy management library
+define Package/python3-semanage
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
-  DEPENDS:=+python3 +libsemanage
+  TITLE:=SELinux policy management library bindings
+  DEPENDS:=+python3-light +libsemanage
   URL:=http://selinuxproject.org/page/Main_Page
 endef
 
-define Package/python3-libsemanage/description
+define Package/python3-semanage/description
 	libsemanage is the policy management library. It uses
 	libsepol for binary policy manipulation and libselinux for
 	interacting with the SELinux system. It also exec's helper
@@ -46,33 +46,19 @@ define Package/python3-libsemanage/description
 	change at least for the bootstrapping case (for rpm).
 
 	This package provides the Python bindings for libsemanage.
-endef #'
+endef
 
-MAKE_FLAGS += \
-	PYTHON=$(PYTHON3) \
-	PYINC="-I $(PYTHON3_INC_DIR)" \
-	PYLIBS="-lpython$(PYTHON3_VERSION)" \
+MAKE_VARS += \
 	$(PYTHON3_VARS)
 
 define Build/Compile
-	$(call Build/Compile/Default,swigify pywrap)
+	$(call Build/Compile/Default,pywrap)
 endef
 
 define Build/Install
 	$(call Build/Install/Default,install-pywrap)
 endef
 
-define Build/Configure
-endef
-
-define Build/InstallDev
-	$(INSTALL_DIR) $(1)$(PYTHON3_PKG_DIR)
-	$(CP) $(PKG_INSTALL_DIR)$(PYTHON3_PKG_DIR)/* $(1)$(PYTHON3_PKG_DIR)
-endef
-
-define Package/python3-libsemanage/install
-	$(INSTALL_DIR) $(1)$(PYTHON3_PKG_DIR)
-	$(CP) $(PKG_INSTALL_DIR)$(PYTHON3_PKG_DIR)/* $(1)$(PYTHON3_PKG_DIR)
-endef
-
-$(eval $(call BuildPackage,python3-libsemanage))
+$(eval $(call Py3Package,python3-semanage))
+$(eval $(call BuildPackage,python3-semanage))
+$(eval $(call BuildPackage,python3-semanage-src))
