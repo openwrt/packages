@@ -5,19 +5,23 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-markupsafe
-PKG_VERSION:=2.1.2
+PKG_VERSION:=2.1.3
 PKG_RELEASE:=1
 
 PYPI_NAME:=MarkupSafe
-PKG_HASH:=abcabc8c2b26036d62d4c746381a6f7cf60aafcc653198ad678306986b09450d
+PKG_HASH:=af598ed32d6ae86f1b747b82783958b1a4ab8f617b06fe68795c7f026abbdcad
 
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.rst
 
+HOST_BUILD_DEPENDS:=python3/host python-build/host python-installer/host python-wheel/host
+
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 include ../python3-package.mk
+include ../python3-host-build.mk
 
 define Package/python3-markupsafe
   SECTION:=lang
@@ -39,3 +43,4 @@ endef
 $(eval $(call Py3Package,python3-markupsafe))
 $(eval $(call BuildPackage,python3-markupsafe))
 $(eval $(call BuildPackage,python3-markupsafe-src))
+$(eval $(call HostBuild))
