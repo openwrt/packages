@@ -27,6 +27,10 @@ PKG_BUILD_FLAGS:=gc-sections
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/glib-$(PKG_VERSION)
 HOST_BUILD_DEPENDS:=pcre2/host libffi/host
 
+ifdef CONFIG_powerpc64
+PKG_FORTIFY_SOURCE:=0
+endif
+
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
