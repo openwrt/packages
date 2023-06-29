@@ -27,7 +27,7 @@ define Py3Package/python3-dev/install
 endef
 
 $(eval $(call Py3BasePackage,python3-dev, \
-    /usr/lib/python$(PYTHON3_VERSION)/config-$(PYTHON3_VERSION) \
+    /usr/lib/python$(PYTHON3_VERSION)/config-$(PYTHON3_VERSION)-* \
     /usr/include/python$(PYTHON3_VERSION) \
     /usr/lib/pkgconfig \
 	, \

@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 include ../python3-version.mk
 
 PKG_NAME:=python3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_VERSION:=$(PYTHON3_VERSION).$(PYTHON3_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
@@ -112,7 +112,7 @@ endef
 
 PYTHON3_LIB_FILES_DEL:=
 PYTHON3_PACKAGES:=
-PYTHON3_SO_SUFFIX:=cpython-$(PYTHON3_VERSION_MAJOR)$(PYTHON3_VERSION_MINOR).so
+PYTHON3_SO_SUFFIX:=cpython-$(PYTHON3_VERSION_MAJOR)$(PYTHON3_VERSION_MINOR)-*.so
 PYTHON3_PACKAGES_DEPENDS:=
 define Py3BasePackage
   PYTHON3_PACKAGES+=$(1)
@@ -148,7 +148,7 @@ installation.
 endef
 
 # Set READELF here so that the exact same readelf program name can be
-# replaced in _sysconfigdata.py (in Build/Install)
+# replaced in _sysconfigdata_*.py (in Build/Install)
 TARGET_CONFIGURE_OPTS+= \
 	READELF="$(TARGET_CROSS)readelf"
 
@@ -200,27 +200,34 @@ define Build/Install
 	$(call Build/Install/Default,)
 
 	$(SED) 's|$(TARGET_AR)|ar|g;s|$(TARGET_CROSS)readelf|readelf|g;s|$(TARGET_CC)|gcc|g;s|$(TARGET_CXX)|g++|g' \
-		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON3_VERSION)/_sysconfigdata.py \
-		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON3_VERSION)/config-$(PYTHON3_VERSION)/Makefile
+		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON3_VERSION)/_sysconfigdata_*.py \
+		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON3_VERSION)/config-$(PYTHON3_VERSION)-*/Makefile
 endef
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include $(1)/usr/lib $(1)/usr/lib/pkgconfig
-	$(INSTALL_DIR) $(2)/bin
+	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/include/python$(PYTHON3_VERSION) \
 		$(1)/usr/include/
+
+	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON3_VERSION) \
 		$(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON3_VERSION).so* \
 		$(1)/usr/lib/
-	grep \
-		'^_PYTHON_HOST_PLATFORM=' \
-		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON3_VERSION)/config-$(PYTHON3_VERSION)/Makefile > \
-		$(1)/usr/lib/python$(PYTHON3_VERSION)/config-$(PYTHON3_VERSION)/Makefile-vars
+
+	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON3_VERSION)/openwrt
+	grep -E \
+		'^(_PYTHON_HOST_PLATFORM|ABIFLAGS|MACHDEP|MULTIARCH)=' \
+		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON3_VERSION)/config-$(PYTHON3_VERSION)-*/Makefile > \
+		$(1)/usr/lib/python$(PYTHON3_VERSION)/openwrt/Makefile-vars
+
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/python*.pc \
 		$(1)/usr/lib/pkgconfig
+
+	$(INSTALL_DIR) $(2)/bin
 	$(INSTALL_BIN) \
 		$(PKG_INSTALL_DIR)/usr/bin/python$(PYTHON3_VERSION)-config \
 		$(2)/bin/
@@ -233,7 +240,7 @@ PYTHON3_BASE_LIB_FILES:= \
 	/usr/lib/python$(PYTHON3_VERSION)/encodings \
 	/usr/lib/python$(PYTHON3_VERSION)/_collections_abc.py \
 	/usr/lib/python$(PYTHON3_VERSION)/_sitebuiltins.py \
-	/usr/lib/python$(PYTHON3_VERSION)/_sysconfigdata.py \
+	/usr/lib/python$(PYTHON3_VERSION)/_sysconfigdata_*.py \
 	/usr/lib/python$(PYTHON3_VERSION)/_weakrefset.py \
 	/usr/lib/python$(PYTHON3_VERSION)/abc.py \
 	/usr/lib/python$(PYTHON3_VERSION)/codecs.py \
