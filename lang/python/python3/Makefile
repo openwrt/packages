@@ -121,13 +121,15 @@ define Py3BasePackage
     PYTHON3_PACKAGES_DEPENDS+=$(1)
   endif
   PYTHON3_LIB_FILES_DEL+=$(2)
-  define Py3Package/$(1)/filespec
-    ifneq ($(2),)
-      $(subst $(space),$(newline),$(foreach lib_file,$(2),+|$(lib_file)))
-      -|/usr/lib/python$(PYTHON3_VERSION)/*/test
-      -|/usr/lib/python$(PYTHON3_VERSION)/*/tests
-    endif
-  endef
+  ifeq ($(2),)
+    Py3Package/$(1)/filespec=
+  else
+    define Py3Package/$(1)/filespec
+      $(foreach lib_file,$(2),
+        +|$(lib_file)
+      )
+    endef
+  endif
   Py3Package/$(1)/install?=:
 endef
 
@@ -240,24 +242,22 @@ PYTHON3_LIB_FILES_DEL+=$(PYTHON3_BASE_LIB_FILES)
 
 define Py3Package/python3-base/filespec
 +|/usr/bin/python$(PYTHON3_VERSION)
-$(subst $(space),$(newline),$(foreach lib_file,$(PYTHON3_BASE_LIB_FILES),+|$(lib_file)))
+$(foreach lib_file,$(PYTHON3_BASE_LIB_FILES),
+  +|$(lib_file)
+)
 endef
 
 define Py3Package/python3-light/filespec
 +|/usr/lib/python$(PYTHON3_VERSION)
 -|/usr/lib/python$(PYTHON3_VERSION)/distutils/cygwinccompiler.py
--|/usr/lib/python$(PYTHON3_VERSION)/distutils/command/wininst*
 -|/usr/lib/python$(PYTHON3_VERSION)/idlelib
 -|/usr/lib/python$(PYTHON3_VERSION)/tkinter
 -|/usr/lib/python$(PYTHON3_VERSION)/turtledemo
--|/usr/lib/python$(PYTHON3_VERSION)/lib-dynload/_test*.so
--|/usr/lib/python$(PYTHON3_VERSION)/pdb.doc
--|/usr/lib/python$(PYTHON3_VERSION)/test
 -|/usr/lib/python$(PYTHON3_VERSION)/webbrowser.py
--|/usr/lib/python$(PYTHON3_VERSION)/*/test
--|/usr/lib/python$(PYTHON3_VERSION)/*/tests
 -|/usr/lib/python$(PYTHON3_VERSION)/_osx_support.py
-$(subst $(space),$(newline),$(foreach lib_file,$(PYTHON3_LIB_FILES_DEL),-|$(lib_file)))
+$(foreach lib_file,$(filter /usr/lib/python$(PYTHON3_VERSION)/%,$(PYTHON3_LIB_FILES_DEL)),
+  -|$(lib_file)
+)
 endef
 
 define Package/libpython3/install
