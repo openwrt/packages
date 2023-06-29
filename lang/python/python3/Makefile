@@ -31,7 +31,6 @@ PYTHON3_PKG_BUILD:=0
 include ../python3-package.mk
 
 PKG_FIXUP:=autoreconf
-PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 HOST_BUILD_PARALLEL:=1
 # LTO is handled here individually, see --with-lto below
@@ -149,7 +148,7 @@ installation.
 endef
 
 # Set READELF here so that the exact same readelf program name can be
-# replaced in _sysconfigdata.py (in Py3Package/python3-base/install)
+# replaced in _sysconfigdata.py (in Build/Install)
 TARGET_CONFIGURE_OPTS+= \
 	READELF="$(TARGET_CROSS)readelf"
 
@@ -196,6 +195,14 @@ CONFIGURE_ARGS += \
 	--without-ensurepip \
 	$(if $(CONFIG_IPV6),--enable-ipv6) \
 	$(if $(findstring mips,$(CONFIG_ARCH)),,--with-lto)
+
+define Build/Install
+	$(call Build/Install/Default,)
+
+	$(SED) 's|$(TARGET_AR)|ar|g;s|$(TARGET_CROSS)readelf|readelf|g;s|$(TARGET_CC)|gcc|g;s|$(TARGET_CXX)|g++|g' \
+		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON3_VERSION)/_sysconfigdata.py \
+		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON3_VERSION)/config-$(PYTHON3_VERSION)/Makefile
+endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include $(1)/usr/lib $(1)/usr/lib/pkgconfig
@@ -270,9 +277,6 @@ define Py3Package/python3-base/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(LN) python$(PYTHON3_VERSION) $(1)/usr/bin/python3
 	$(LN) python$(PYTHON3_VERSION) $(1)/usr/bin/python
-  # This depends on being called before filespec is processed
-	$(SED) 's|$(TARGET_AR)|ar|g;s|$(TARGET_CROSS)readelf|readelf|g;s|$(TARGET_CC)|gcc|g;s|$(TARGET_CXX)|g++|g' \
-		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON3_VERSION)/_sysconfigdata.py
 endef
 
 Py3Package/python3-light/install:=:
