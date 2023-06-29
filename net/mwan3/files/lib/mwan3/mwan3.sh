@@ -419,16 +419,18 @@ mwan3_create_iface_iptables()
 
 mwan3_delete_iface_iptables()
 {
-	local IPT update
+	local IPT IPTR update
 	config_get family "$1" family ipv4
 
 	if [ "$family" = "ipv4" ]; then
 		IPT="$IPT4"
+		IPTR="$IPT4R"
 	fi
 
 	if [ "$family" = "ipv6" ]; then
 		[ $NO_IPV6 -ne 0 ] && return
 		IPT="$IPT6"
+		IPTR="$IPT6R"
 	fi
 
 	update="*mangle"
