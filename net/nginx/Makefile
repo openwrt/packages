@@ -27,6 +27,7 @@ PKG_BUILD_FLAGS:=gc-sections
 
 # 3rd-party modules
 PKG_MOD_EXTRA := \
+	geoip2 \
 	lua \
 	rtmp \
 	dav-ext \
@@ -196,6 +197,13 @@ define Package/nginx-mod-luci/install
 	$(INSTALL_CONF) ./files-luci-support/luci.locations $(1)/etc/nginx/conf.d/
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files-luci-support/60_nginx-luci-support $(1)/etc/uci-defaults/60_nginx-luci-support
+endef
+
+define Download/nginx-mod-geoip2
+  VERSION:=1cabd8a1f68ea3998f94e9f3504431970f848fbf
+  URL:=https://github.com/leev/ngx_http_geoip2_module.git
+  MIRROR_HASH:=b4bd8517f6595f28e9cea5370045df476e0f7fa9ca3611d71ba85c518f1a7eda
+  PROTO:=git
 endef
 
 define Download/nginx-mod-headers-more
@@ -423,6 +431,8 @@ $(eval $(call BuildModule,brotli,,ngx_http_brotli_filter ngx_http_brotli_static,
 	Add support for brotli compression module.))
 $(eval $(call BuildModule,naxsi,,ngx_http_naxsi, \
 	Enable NAXSI module.))
+$(eval $(call BuildModule,geoip2,+@NGINX_STREAM_CORE_MODULE +libmaxminddb,ngx_http_geoip2 ngx_stream_geoip2, \
+	Enable MaxMind GeoIP2 module.))
 
 # TODO: remove after a transition period (together with pkg nginx-util):
 # It is for smoothly substituting nginx and nginx-mod-luci-ssl (by nginx-ssl
