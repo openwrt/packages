@@ -1,11 +1,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-websocket-client
-PKG_VERSION:=1.5.1
+PKG_VERSION:=1.6.1
 PKG_RELEASE:=1
 
 PYPI_NAME:=websocket-client
-PKG_HASH:=3f09e6d8230892547132177f575a4e3e73cfdf06526e20cc02aa1c3b47184d40
+PKG_HASH:=c951af98631d24f8df89ab1019fc365f2227c0892f12fd150e935607c79dd0dd
 
 PKG_MAINTAINER:=Javier Marcet <javier@marcet.info>
 PKG_LICENSE:=Apache-2.0
