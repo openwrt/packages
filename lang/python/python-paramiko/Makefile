@@ -1,11 +1,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-paramiko
-PKG_VERSION:=2.12.0
-PKG_RELEASE:=2
+PKG_VERSION:=3.2.0
+PKG_RELEASE:=1
 
 PYPI_NAME:=paramiko
-PKG_HASH:=376885c05c5d6aa6e1f4608aac2a6b5b0548b1add40274477324605903d9cd49
+PKG_HASH:=93cdce625a8a1dc12204439d45033f3261bdb2c201648cfcdc06f9fd0f94ec29
 
 PKG_MAINTAINER:=Javier Marcet <javier@marcet.info>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -27,10 +27,11 @@ define Package/python3-paramiko
 endef
 
 define Package/python3-paramiko/description
-  Paramiko is a Python (2.7, 3.4+) implementation of the SSHv2 protocol,
-  providing both client and server functionality. While it leverages a Python
-  C extension for low level cryptography (Cryptography), Paramiko itself is a
-  pure Python interface around SSH networking concepts.
+  Paramiko is a pure-Python (3.6+) implementation of the SSHv2 protocol,
+  providing both client and server functionality. It provides the foundation
+  for the high-level SSH library Fabric, which is what we recommend you use
+  for common client use-cases such as running remote shell commands or
+  transferring files.
 endef
 
 $(eval $(call Py3Package,python3-paramiko))
