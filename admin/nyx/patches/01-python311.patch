@@ -1,0 +1,32 @@
+From dcaddf2ab7f9d2ef8649f98bb6870995ebe0b893 Mon Sep 17 00:00:00 2001
+From: Juan Orti Alcaine <jortialc@redhat.com>
+Date: Mon, 27 Jun 2022 19:38:34 +0200
+Subject: [PATCH] Replace inspect.getargspec usage to support python 3.11
+
+---
+ nyx/panel/__init__.py | 2 +-
+ test/__init__.py      | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+--- a/nyx/panel/__init__.py
++++ b/nyx/panel/__init__.py
+@@ -78,7 +78,7 @@ class KeyHandler(collections.namedtuple(
+       is_match = self._key_func(key) if self._key_func else key.match(self.key)
+ 
+       if is_match:
+-        if inspect.getargspec(self._action).args == ['key']:
++        if inspect.getfullargspec(self._action).args == ['key']:
+           self._action(key)
+         else:
+           self._action()
+--- a/test/__init__.py
++++ b/test/__init__.py
+@@ -94,7 +94,7 @@ def render(func, *args, **kwargs):
+     nyx.curses.CURSES_SCREEN.erase()
+     start_time = time.time()
+ 
+-    func_args = inspect.getargspec(func).args
++    func_args = inspect.getfullargspec(func).args
+ 
+     if func_args[:1] == ['subwindow'] or func_args[:2] == ['self', 'subwindow']:
+       def _draw(subwindow):
