@@ -10,7 +10,7 @@ PKG_VERSION:=0.3.16
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=@GNOME/grilo-plugins/0.3/
+PKG_SOURCE_URL:=@GNOME/grilo-plugins/$(basename $(PKG_VERSION))
 PKG_HASH:=fe6f4dbe586c6b8ba2406394e202f22d009d642a96eb3a54f32f6a21d084cdcb
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
