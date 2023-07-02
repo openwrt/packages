@@ -283,6 +283,16 @@ static void check_job(const job_t *job, const struct tm *tm) {
 }
 
 static void refresh_jobs(time_t *refresh_time) {
+	/* Remove all the jobs and free up memory */
+	job_t *to_delete;
+	job_t *head = jobs;
+	while(head->next != NULL) {
+		to_delete = head;
+		head = head->next;
+		free(to_delete);
+	}
+
+	/* re-initialize the jobs structure */
 	jobs = NULL;
 	read_crondir();
 	*refresh_time = time(NULL);
