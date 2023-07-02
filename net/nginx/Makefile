@@ -76,6 +76,7 @@ PKG_CONFIG_DEPENDS := \
 	CONFIG_NGINX_HTTP_UPSTREAM_ZONE \
 	CONFIG_NGINX_HTTP_CACHE \
 	CONFIG_NGINX_HTTP_V2 \
+	CONFIG_NGINX_HTTP_QUIC \
 	CONFIG_NGINX_PCRE \
 	CONFIG_NGINX_HTTP_REAL_IP \
 	CONFIG_NGINX_HTTP_SECURE_LINK \
@@ -401,6 +402,7 @@ CONFIGURE_ARGS += \
 	$(if $(call IsEnabled,NGINX_FLV),--with-http_flv_module) \
 	$(if $(call IsEnabled,NGINX_DAV),--with-http_dav_module) \
 	$(if $(call IsEnabled,NGINX_HTTP_AUTH_REQUEST),--with-http_auth_request_module) \
+	$(if $(call IsEnabled,NGINX_HTTP_QUIC),--with-http_v3_module) \
 	$(if $(call IsEnabled,NGINX_HTTP_V2),--with-http_v2_module) \
 	$(if $(call IsEnabled,NGINX_HTTP_REAL_IP),--with-http_realip_module) \
 	$(if $(call IsEnabled,NGINX_HTTP_SECURE_LINK),--with-http_secure_link_module) \

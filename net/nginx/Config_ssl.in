@@ -175,6 +175,11 @@ config NGINX_HTTP_V2
 	prompt "Enable HTTP_V2 module"
 	default y
 
+config NGINX_HTTP_QUIC
+	bool
+	prompt "Enable QUIC support"
+	default n
+
 config NGINX_PCRE
 	bool
 	prompt "Enable PCRE library usage"
