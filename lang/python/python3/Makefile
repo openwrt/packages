@@ -264,11 +264,7 @@ define Py3Package/python3-base/install
 endef
 
 Py3Package/python3-light/install:=:
-Py3Package/python3/install:=:
-
-define Py3Package/python3/filespec
--|$(PYTHON3_PKG_DIR)
-endef
+Package/python3/install:=:
 
 # libuuid is provided by e2fsprogs and uuid/uuid.h is moved into
 # $(STAGING_DIR_HOST)/include/e2fsprogs
@@ -351,14 +347,13 @@ $(foreach package, $(PYTHON3_PACKAGES),  \
 )
 
 $(eval $(call BuildPackage,libpython3))
+$(eval $(call BuildPackage,python3))
 
 $(eval $(call Py3Package,python3-base))
 $(eval $(call Py3Package,python3-light))
-$(eval $(call Py3Package,python3))
 
 $(eval $(call BuildPackage,python3-base))
 $(eval $(call BuildPackage,python3-light))
-$(eval $(call BuildPackage,python3))
 
 $(eval $(call BuildPackage,python3-base-src))
 $(eval $(call BuildPackage,python3-light-src))
