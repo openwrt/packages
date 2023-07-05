@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-typing-extensions
-PKG_VERSION:=4.6.3
+PKG_VERSION:=4.7.1
 PKG_RELEASE:=1
 
 PYPI_NAME:=typing-extensions
 PYPI_SOURCE_NAME:=typing_extensions
-PKG_HASH:=d91d5919357fe7f681a9f2b5b4cb2a5f1ef0a1e9f59c4d8ff0d3491e05c0ffd5
+PKG_HASH:=b75ddc264f0ba5615db7ba217daeb99701ad295353c45f9e95963337ceeeffb2
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>, Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=Python-2.0.1 0BSD
