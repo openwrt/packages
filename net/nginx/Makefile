@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
 PKG_VERSION:=1.25.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nginx.org/download/
@@ -160,16 +160,15 @@ endef
 
 define Package/nginx-full
   $(Package/nginx/default)
-  TITLE += with ALL module selected
-  DEPENDS+=+libpcre +nginx-ssl-util +zlib +libxml2 \
-    $(foreach m,$(PKG_MOD_ALL),+nginx-mod-$(m))
+  TITLE += with ALL config selected
+  DEPENDS+=+libpcre +nginx-ssl-util +zlib +libxml2
   EXTRA_DEPENDS:=nginx-ssl-util (>=1.5-1) (<2)
   VARIANT:=full
   PROVIDES += nginx-ssl
 endef
 
 Package/nginx-full/description = $(Package/nginx/description) \
-  This variant is compiled with ALL module selected.
+  This variant is compiled with ALL config selected.
 
 Package/nginx-full/install = $(Package/nginx-ssl/install)
 
