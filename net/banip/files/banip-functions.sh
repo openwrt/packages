@@ -79,6 +79,7 @@ ban_fetchparm=""
 ban_fetchinsecure=""
 ban_fetchretry="5"
 ban_rdapparm=""
+ban_etagparm=""
 ban_cores=""
 ban_memory=""
 ban_packages=""
@@ -332,25 +333,28 @@ f_getfetch() {
 			[ "${ban_fetchinsecure}" = "1" ] && insecure="--check-certificate=false"
 			ban_fetchparm="${ban_fetchparm:-"${insecure} --timeout=20 --retry-wait=10 --max-tries=${ban_fetchretry} --max-file-not-found=${ban_fetchretry} --allow-overwrite=true --auto-file-renaming=false --log-level=warn --dir=/ -o"}"
 			ban_rdapparm="--timeout=5 --allow-overwrite=true --auto-file-renaming=false --dir=/ -o"
+			ban_etagparm="--timeout=5 --allow-overwrite=true --auto-file-renaming=false --dir=/ --dry-run --log -"
 			;;
 		"curl")
 			[ "${ban_fetchinsecure}" = "1" ] && insecure="--insecure"
-			ban_fetchparm="${ban_fetchparm:-"${insecure} --connect-timeout 20 --retry-delay 10 --retry ${ban_fetchretry} --retry-all-errors --fail --silent --show-error --location -o"}"
+			ban_fetchparm="${ban_fetchparm:-"${insecure} --connect-timeout 20 --retry-delay 10 --retry ${ban_fetchretry} --retry-max-time $((ban_fetchretry * 20)) --retry-all-errors --fail --silent --show-error --location -o"}"
 			ban_rdapparm="--connect-timeout 5 --silent --location -o"
+			ban_etagparm="--connect-timeout 5 --silent --location --head"
+			;;
+		"wget")
+			[ "${ban_fetchinsecure}" = "1" ] && insecure="--no-check-certificate"
+			ban_fetchparm="${ban_fetchparm:-"${insecure} --no-cache --no-cookies --timeout=20 --waitretry=10 --tries=${ban_fetchretry} --retry-connrefused -O"}"
+			ban_rdapparm="--timeout=5 -O"
+			ban_etagparm="--timeout=5 --spider --server-response"
 			;;
 		"uclient-fetch")
 			[ "${ban_fetchinsecure}" = "1" ] && insecure="--no-check-certificate"
 			ban_fetchparm="${ban_fetchparm:-"${insecure} --timeout=20 -O"}"
 			ban_rdapparm="--timeout=5 -O"
 			;;
-		"wget")
-			[ "${ban_fetchinsecure}" = "1" ] && insecure="--no-check-certificate"
-			ban_fetchparm="${ban_fetchparm:-"${insecure} --no-cache --no-cookies --timeout=20 --waitretry=10 --tries=${ban_fetchretry} --retry-connrefused -O"}"
-			ban_rdapparm="--timeout=5 -O"
-			;;
 	esac
 
-	f_log "debug" "f_getfetch  ::: auto/update: ${ban_autodetect}/${update}, cmd: ${ban_fetchcmd:-"-"}, fetch_parm: ${ban_fetchparm:-"-"}, rdap_parm: ${ban_rdapparm:-"-"}"
+	f_log "debug" "f_getfetch  ::: auto/update: ${ban_autodetect}/${update}, cmd: ${ban_fetchcmd:-"-"}, fetch_parm: ${ban_fetchparm:-"-"}, rdap_parm: ${ban_rdapparm:-"-"}, etag_parm: ${ban_etagparm:-"-"}"
 }
 
 # get wan interfaces
@@ -462,7 +466,7 @@ f_getuplink() {
 		for ip in ${ban_uplink}; do
 			if ! "${ban_grepcmd}" -q "${ip} " "${ban_allowlist}"; then
 				if [ "${update}" = "0" ]; then
-					"${ban_sedcmd}" -i '/# uplink added on /d' "${ban_allowlist}"
+					"${ban_sedcmd}" -i "/# uplink added on /d" "${ban_allowlist}"
 				fi
 				printf "%-42s%s\n" "${ip}" "# uplink added on $(date "+%Y-%m-%d %H:%M:%S")" >>"${ban_allowlist}"
 				f_log "info" "add uplink '${ip}' to local allowlist"
@@ -471,7 +475,7 @@ f_getuplink() {
 		done
 		ban_uplink="${ban_uplink%%?}"
 	elif [ "${ban_autoallowlist}" = "1" ] && [ "${ban_autoallowuplink}" = "disable" ]; then
-		"${ban_sedcmd}" -i '/# uplink added on /d' "${ban_allowlist}"
+		"${ban_sedcmd}" -i "/# uplink added on /d" "${ban_allowlist}"
 		update="1"
 	fi
 
@@ -500,6 +504,31 @@ f_getelements() {
 	local file="${1}"
 
 	[ -s "${file}" ] && printf "%s" "elements={ $("${ban_catcmd}" "${file}" 2>/dev/null) };"
+}
+
+# handle etag http header
+#
+f_etag() {
+	local http_head http_code etag_id etag_rc out_rc="4" feed="${1}" feed_url="${2}" feed_suffix="${3}"
+
+	if [ -n "${ban_etagparm}" ]; then
+		[ ! -f "${ban_backupdir}/banIP.etag" ] && : >"${ban_backupdir}/banIP.etag"
+		http_head="$("${ban_fetchcmd}" ${ban_etagparm} "${feed_url}" 2>&1)"
+		http_code="$(printf "%s" "${http_head}" | "${ban_awkcmd}" 'tolower($0)~/^http\/[0123\.]+ /{printf "%s",$2}')"
+		etag_id="$(printf "%s" "${http_head}" | "${ban_awkcmd}" '{FS="\""}tolower($0)~/^[[:space:]]*etag: /{printf "%s",$2}')"
+		etag_rc="${?}"
+
+		if [ "${http_code}" = "404" ] || { [ "${etag_rc}" = "0" ] && [ -n "${etag_id}" ] && "${ban_grepcmd}" -q "^${feed}${feed_suffix}.*${etag_id}\$" "${ban_backupdir}/banIP.etag"; }; then
+			out_rc="0"
+		elif [ "${etag_rc}" = "0" ] && [ -n "${etag_id}" ] && ! "${ban_grepcmd}" -q "^${feed}${feed_suffix}.*${etag_id}\$" "${ban_backupdir}/banIP.etag"; then
+			"${ban_sedcmd}" -i "/^${feed}${feed_suffix}/d" "${ban_backupdir}/banIP.etag"
+			printf "%-20s%s\n" "${feed}${feed_suffix}" "${etag_id}" >>"${ban_backupdir}/banIP.etag"
+			out_rc="2"
+		fi
+	fi
+
+	f_log "debug" "f_etag      ::: feed: ${feed}, suffix: ${feed_suffix:-"-"}, http_code: ${http_code:-"-"}, etag_id: ${etag_id:-"-"} , etag_rc: ${etag_rc:-"-"}, rc: ${out_rc}"
+	return "${out_rc}"
 }
 
 # build initial nft file with base table, chains and rules
@@ -547,13 +576,13 @@ f_nftinit() {
 	feed_rc="${?}"
 
 	f_log "debug" "f_nftinit   ::: devices: ${ban_dev}, priority: ${ban_nftpriority}, policy: ${ban_nftpolicy}, loglevel: ${ban_nftloglevel}, rc: ${feed_rc:-"-"}, log: ${feed_log:-"-"}"
-	return ${feed_rc}
+	return "${feed_rc}"
 }
 
 # handle downloads
 #
 f_down() {
-	local log_input log_forwardwan log_forwardlan start_ts end_ts tmp_raw tmp_load tmp_file split_file ruleset_raw handle
+	local log_input log_forwardwan log_forwardlan start_ts end_ts tmp_raw tmp_load tmp_file split_file ruleset_raw handle rc etag_rc="0"
 	local cnt_set cnt_dl restore_rc feed_direction feed_rc feed_log feed="${1}" proto="${2}" feed_url="${3}" feed_rule="${4}" feed_flag="${5}"
 
 	start_ts="$(date +%s)"
@@ -616,12 +645,34 @@ f_down() {
 		} >"${tmp_flush}"
 	fi
 
-	# restore local backups during init
+	# restore local backups
 	#
-	if { [ "${ban_action}" != "reload" ] || [ "${feed_url}" = "local" ]; } && [ "${feed%v*}" != "allowlist" ] && [ "${feed%v*}" != "blocklist" ]; then
-		f_restore "${feed}" "${feed_url}" "${tmp_load}"
-		restore_rc="${?}"
-		feed_rc="${restore_rc}"
+	if { [ "${ban_action}" != "reload" ] || [ "${feed_url}" = "local" ] || [ -n "${ban_etagparm}" ]; } && [ "${feed%v*}" != "allowlist" ] && [ "${feed%v*}" != "blocklist" ]; then
+		if [ -n "${ban_etagparm}" ] && [ "${feed_url}" != "local" ]; then
+			if [ "${feed%v*}" = "country" ]; then
+				for country in ${ban_country}; do
+					f_etag "${feed}" "${feed_url}${country}-aggregated.zone" ".${country}"
+					rc="${?}"
+					[ "${rc}" = "4" ] && break
+					etag_rc="$((etag_rc + rc))"
+				done
+			elif [ "${feed%v*}" = "asn" ]; then
+				for asn in ${ban_asn}; do
+					f_etag "${feed}" "${feed_url}AS${asn}" ".{asn}"
+					rc="${?}"
+					[ "${rc}" = "4" ] && break
+					etag_rc="$((etag_rc + rc))"
+				done
+			else
+				f_etag "${feed}" "${feed_url}"
+				etag_rc="${?}"
+			fi
+		fi
+		if [ "${etag_rc}" = "0" ] || [ "${ban_action}" != "reload" ] || [ "${feed_url}" = "local" ]; then
+			f_restore "${feed}" "${feed_url}" "${tmp_load}" "${etag_rc}"
+			restore_rc="${?}"
+			feed_rc="${restore_rc}"
+		fi
 	fi
 
 	# prepare local allowlist
@@ -781,10 +832,7 @@ f_down() {
 				"gz")
 					feed_log="$("${ban_fetchcmd}" ${ban_fetchparm} "${tmp_raw}" "${feed_url}" 2>&1)"
 					feed_rc="${?}"
-					if [ "${feed_rc}" = "0" ]; then
-						"${ban_zcatcmd}" "${tmp_raw}" 2>/dev/null >"${tmp_load}"
-						feed_rc="${?}"
-					fi
+					[ "${feed_rc}" = "0" ] && "${ban_zcatcmd}" "${tmp_raw}" 2>/dev/null >"${tmp_load}"
 					rm -f "${tmp_raw}"
 					;;
 			esac
@@ -898,7 +946,7 @@ f_down() {
 	rm -f "${tmp_split}" "${tmp_nft}"
 	end_ts="$(date +%s)"
 
-	f_log "debug" "f_down      ::: name: ${feed}, cnt_dl: ${cnt_dl:-"-"}, cnt_set: ${cnt_set:-"-"}, split_size: ${ban_splitsize:-"-"}, time: $((end_ts - start_ts)), rc: ${feed_rc:-"-"}, log: ${feed_log:-"-"}"
+	f_log "debug" "f_down      ::: feed: ${feed}, cnt_dl: ${cnt_dl:-"-"}, cnt_set: ${cnt_set:-"-"}, split_size: ${ban_splitsize:-"-"}, time: $((end_ts - start_ts)), rc: ${feed_rc:-"-"}, log: ${feed_log:-"-"}"
 }
 
 # backup feeds
@@ -909,24 +957,23 @@ f_backup() {
 	gzip -cf "${feed_file}" >"${ban_backupdir}/banIP.${feed}.gz"
 	backup_rc="${?}"
 
-	f_log "debug" "f_backup    ::: name: ${feed}, source: ${feed_file##*/}, target: banIP.${feed}.gz, rc: ${backup_rc}"
-	return ${backup_rc}
+	f_log "debug" "f_backup    ::: feed: ${feed}, file: banIP.${feed}.gz, rc: ${backup_rc}"
+	return "${backup_rc}"
 }
 
 # restore feeds
 #
 f_restore() {
-	local tmp_feed restore_rc="1" feed="${1}" feed_url="${2}" feed_file="${3}" feed_rc="${4:-"0"}"
+	local tmp_feed restore_rc="4" feed="${1}" feed_url="${2}" feed_file="${3}" in_rc="${4}"
 
-	[ "${feed_rc}" != "0" ] && restore_rc="${feed_rc}"
 	[ "${feed_url}" = "local" ] && tmp_feed="${feed%v*}v4" || tmp_feed="${feed}"
-	if [ -f "${ban_backupdir}/banIP.${tmp_feed}.gz" ]; then
+	if [ -s "${ban_backupdir}/banIP.${tmp_feed}.gz" ]; then
 		"${ban_zcatcmd}" "${ban_backupdir}/banIP.${tmp_feed}.gz" 2>/dev/null >"${feed_file}"
 		restore_rc="${?}"
 	fi
 
-	f_log "debug" "f_restore   ::: name: ${feed}, source: banIP.${tmp_feed}.gz, target: ${feed_file##*/}, in_rc: ${feed_rc}, rc: ${restore_rc}"
-	return ${restore_rc}
+	f_log "debug" "f_restore   ::: feed: ${feed}, file: banIP.${tmp_feed}.gz, in_rc: ${in_rc:-"-"}, rc: ${restore_rc}"
+	return "${restore_rc}"
 }
 
 # remove disabled Sets
