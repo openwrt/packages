@@ -952,10 +952,12 @@ f_down() {
 # backup feeds
 #
 f_backup() {
-	local backup_rc feed="${1}" feed_file="${2}"
+	local backup_rc="4" feed="${1}" feed_file="${2}"
 
-	gzip -cf "${feed_file}" >"${ban_backupdir}/banIP.${feed}.gz"
-	backup_rc="${?}"
+	if [ -s "${feed_file}" ]; then
+		gzip -cf "${feed_file}" >"${ban_backupdir}/banIP.${feed}.gz"
+		backup_rc="${?}"
+	fi
 
 	f_log "debug" "f_backup    ::: feed: ${feed}, file: banIP.${feed}.gz, rc: ${backup_rc}"
 	return "${backup_rc}"
