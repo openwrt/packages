@@ -17,7 +17,9 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 | antipopads          | antipopads IPs                 |         |         |    x    | [Link](https://github.com/dibdot/banIP-IP-blocklists)         |
 | asn                 | ASN IPs                        |         |         |    x    | [Link](https://asn.ipinfo.app)                                |
 | backscatterer       | backscatterer IPs              |    x    |    x    |         | [Link](https://www.uceprotect.net/en/index.php)               |
+| binarydefense       | binary defense banlist         |    x    |    x    |         | [Link](https://iplists.firehol.org/?ipset=bds_atif)           |
 | bogon               | bogon prefixes                 |    x    |    x    |         | [Link](https://team-cymru.com)                                |
+| bruteforceblock     | bruteforceblocker IPs          |    x    |    x    |         | [Link](https://danger.rulez.sk/index.php/bruteforceblocker/)  |
 | country             | country blocks                 |    x    |    x    |         | [Link](https://www.ipdeny.com/ipblocks)                       |
 | cinsscore           | suspicious attacker IPs        |    x    |    x    |         | [Link](https://cinsscore.com/#list)                           |
 | darklist            | blocks suspicious attacker IPs |    x    |    x    |         | [Link](https://darklist.de)                                   |
@@ -26,6 +28,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 | drop                | spamhaus drop compilation      |    x    |    x    |         | [Link](https://www.spamhaus.org)                              |
 | dshield             | dshield IP blocklist           |    x    |    x    |         | [Link](https://www.dshield.org)                               |
 | edrop               | spamhaus edrop compilation     |    x    |    x    |         | [Link](https://www.spamhaus.org)                              |
+| etcompromised       | ET compromised hosts           |    x    |    x    |         | [Link](https://iplists.firehol.org/?ipset=et_compromised)     |
 | feodo               | feodo tracker                  |    x    |    x    |    x    | [Link](https://feodotracker.abuse.ch)                         |
 | firehol1            | firehol level 1 compilation    |    x    |    x    |         | [Link](https://iplists.firehol.org/?ipset=firehol_level1)     |
 | firehol2            | firehol level 2 compilation    |    x    |    x    |         | [Link](https://iplists.firehol.org/?ipset=firehol_level2)     |
@@ -34,6 +37,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 | greensnow           | suspicious server IPs          |    x    |    x    |         | [Link](https://greensnow.co)                                  |
 | iblockads           | Advertising IPs                |         |         |    x    | [Link](https://www.iblocklist.com)                            |
 | iblockspy           | Malicious spyware IPs          |    x    |    x    |         | [Link](https://www.iblocklist.com)                            |
+| ipblackhole         | blackhole IPs                  |    x    |    x    |         | [Link](https://ip.blackhole.monster)                          |
 | ipthreat            | hacker and botnet TPs          |    x    |    x    |         | [Link](https://ipthreat.net)                                  |
 | myip                | real-time IP blocklist         |    x    |    x    |         | [Link](https://myip.ms)                                       |
 | nixspam             | iX spam protection             |    x    |    x    |         | [Link](http://www.nixspam.org)                                |
@@ -72,7 +76,8 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * Per feed it can be defined whether the wan-input chain, the wan-forward chain or the lan-forward chain should be blocked (default: all chains)
 * Automatic blocklist backup & restore, the backups will be used in case of download errors or during startup
 * Automatically selects one of the following download utilities with ssl support: aria2c, curl, uclient-fetch or full wget
-* Supports an 'allowlist only' mode, this option restricts internet access from/to a small number of secure websites/IPs
+* Provides HTTP ETag or entity tag support to download only ressources that have been updated on the server side, to save bandwith and speed up banIP reloads
+* Supports an 'allowlist only' mode, this option restricts internet access from/to a given number of secure websites/IPs
 * Deduplicate IPs accross all Sets (single IPs only, no intervals)
 * Provides comprehensive runtime information
 * Provides a detailed Set report
@@ -86,7 +91,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 
 ## Prerequisites
 * **[OpenWrt](https://openwrt.org)**, latest stable release or a snapshot with nft/firewall 4 and logd/logread support
-* A download utility with SSL support: 'aria2c', 'curl', full 'wget' or 'uclient-fetch' with one of the 'libustream-*' SSL libraries
+* A download utility with SSL support: 'aria2c', 'curl', full 'wget' or 'uclient-fetch' with one of the 'libustream-*' SSL libraries, the latter one doesn't provide support for ETag HTTP header
 * A certificate store like 'ca-bundle', as banIP checks the validity of the SSL certificates of all download sites by default
 * For E-Mail notifications you need to install and setup the additional 'msmtp' package
 
@@ -145,7 +150,7 @@ Available commands:
 | ban_autoblocklist       | option | 1                             | add suspicious attacker IPs and resolved domains automatically to the local blocklist (not only to the Sets) |
 | ban_autoblocksubnet     | option | 0                             | add entire subnets to the blocklist Sets based on an additional RDAP request with the suspicious IP          |
 | ban_autoallowuplink     | option | subnet                        | limit the uplink autoallow function to: 'subnet', 'ip' or 'disable' it at all                                |
-| ban_allowlistonly       | option | 0                             | restrict the internet access from/to a small number of secure websites/IPs                                   |
+| ban_allowlistonly       | option | 0                             | restrict the internet access from/to a given number of secure websites/IPs                                   |
 | ban_basedir             | option | /tmp                          | base working directory while banIP processing                                                                |
 | ban_reportdir           | option | /tmp/banIP-report             | directory where banIP stores the report files                                                                |
 | ban_backupdir           | option | /tmp/banIP-backup             | directory where banIP stores the compressed backup files                                                     |
@@ -292,6 +297,9 @@ Depending on the options 'ban_autoallowlist' and 'ban_autoallowuplink' the uplin
 Furthermore, you can reference external Allowlist URLs with additional IPv4 and IPv6 feeds (see 'ban_allowurl').  
 Both local lists also accept domain names as input to allow IP filtering based on these names. The corresponding IPs (IPv4 & IPv6) will be extracted and added to the Sets. You can also start the domain lookup separately via /etc/init.d/banip lookup at any time.
 
+**allowlist-only mode**  
+banIP supports an "allowlist only" mode. This option restricts the internet access from/to a small number of secure MACs, IPs or domains, and block access from/to the rest of the internet. All IPs and Domains which are _not_ listed in the allowlist (plus the external Allowlist URLs) are blocked.
+
 **MAC/IP-binding**
 banIP supports concatenation of local MAC addresses with IPv4/IPv6 addresses, e.g. to enforce dhcp assignments. Following notations in the local allow and block lists are allowed:
 ```
@@ -312,9 +320,6 @@ MAC-address with IPv4 and IPv6 wildcard concatenation:
 C8:C2:9B:F7:80:12 192.168.1.10                     => this will be populated to v4MAC-Set with the certain IP
 C8:C2:9B:F7:80:12                                  => this will be populated to v6MAC-Set with the IP-wildcard ::/0
 ```
-
-**allowlist-only mode**  
-banIP supports an "allowlist only" mode. This option restricts the internet access from/to a small number of secure MACs, IPs or domains, and block access from/to the rest of the internet. All IPs and Domains which are _not_ listed in the allowlist are blocked.
 
 **redirect Asterisk security logs to lodg/logread**  
 banIP only supports logfile scanning via logread, so to monitor attacks on Asterisk, its security log must be available via logread. To do this, edit '/etc/asterisk/logger.conf' and add the line 'syslog.local0 = security', then run 'asterisk -rx reload logger' to update the running Asterisk configuration.
