@@ -7,6 +7,9 @@ PKG_RELEASE:=1
 PKG_SOURCE:=v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/abumq/easyloggingpp/archive/refs/tags
 PKG_HASH:=9110638e21ef02428254af8688bf9e766483db8cc2624144aa3c59006907ce22
+PKG_MAINTAINER:=Volker Christian <me@vchrist.at>
+PKG_LICENSE:=MIT
+PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
