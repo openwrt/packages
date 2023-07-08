@@ -17,7 +17,7 @@ PKG_MAINTAINER:=Volker Christian <me@vchrist.at>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_DEPENDS:=libstdcpp
+PKG_BUILD_DEPENDS:=toolchain
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
