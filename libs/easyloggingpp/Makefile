@@ -4,26 +4,33 @@ PKG_NAME:=easyloggingpp
 PKG_VERSION:=9.97.0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=v$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/abumq/easyloggingpp/archive/refs/tags
-PKG_HASH:=9110638e21ef02428254af8688bf9e766483db8cc2624144aa3c59006907ce22
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/abumq/easyloggingpp.git
+PKG_SOURCE_VERSION:=v9.97.0
+PKG_SOURCE_DATE:=2020-12-25
+
+PKG_MIRROR_HASH:=9acdb77ca418b07feef4ffc4ae1858c0a11f9e44c44a0eff21d3e278844e4dc1
+
 PKG_MAINTAINER:=Volker Christian <me@vchrist.at>
+
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
+
+PKG_BUILD_DEPENDS:=libstdcpp
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
-# Package definition; instructs on how and where our package will appear in the overall configuration menu ('make menuconfig')
 define Package/easyloggingpp
   SECTION:=lib
   CATEGORY:=Libraries
-  TITLE:=Easylogging C++ Library
+  TITLE:=Easylogging - A single header C++ Logging Library
+  URL:=https://github.com/abumq/easyloggingpp
 endef
 
-# Package description; a more verbose description on what our package does
 define Package/easyloggingpp/description
-  Simplifies logging in C++ code
+  Easylogging++ is single header efficient logging library for C++ applications. It is extremely powerful, highly extendable and configurable to user's requirements.
 endef
 
 define Build/InstallDev
@@ -34,5 +41,4 @@ define Build/InstallDev
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/pkgconfig/easyloggingpp.pc $(1)/usr/lib/pkgconfig
 endef
 
-# This command is always the last, it uses the definitions and variables we give above in order to get the job done
 $(eval $(call BuildPackage,easyloggingpp))
