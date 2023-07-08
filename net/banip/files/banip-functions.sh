@@ -582,7 +582,7 @@ f_nftinit() {
 # handle downloads
 #
 f_down() {
-	local log_input log_forwardwan log_forwardlan start_ts end_ts tmp_raw tmp_load tmp_file split_file ruleset_raw handle rc etag_rc="0"
+	local log_input log_forwardwan log_forwardlan start_ts end_ts tmp_raw tmp_load tmp_file split_file ruleset_raw handle rc etag_rc
 	local cnt_set cnt_dl restore_rc feed_direction feed_rc feed_log feed="${1}" proto="${2}" feed_url="${3}" feed_rule="${4}" feed_flag="${5}"
 
 	start_ts="$(date +%s)"
@@ -648,7 +648,8 @@ f_down() {
 	# restore local backups
 	#
 	if { [ "${ban_action}" != "reload" ] || [ "${feed_url}" = "local" ] || [ -n "${ban_etagparm}" ]; } && [ "${feed%v*}" != "allowlist" ] && [ "${feed%v*}" != "blocklist" ]; then
-		if [ -n "${ban_etagparm}" ] && [ "${feed_url}" != "local" ]; then
+		if [ -n "${ban_etagparm}" ] && [ "${ban_action}" = "reload" ] && [ "${feed_url}" != "local" ]; then
+			etag_rc="0"
 			if [ "${feed%v*}" = "country" ]; then
 				for country in ${ban_country}; do
 					f_etag "${feed}" "${feed_url}${country}-aggregated.zone" ".${country}"
