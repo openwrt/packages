@@ -82,20 +82,22 @@ define Build/InstallDev
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/include/magic.h $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libmagic.{a,so*} $(1)/usr/lib/
+	${INSTALL_DIR} $(1)/usr/lib/pkgconfig
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/libmagic.pc $(1)/usr/lib/pkgconfig/
 endef
 
 define Package/file/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/file $(1)/usr/bin/
-	$(INSTALL_DIR) $(1)/usr/share/misc
-	$(SED) "/^#/d" $(PKG_INSTALL_DIR)/usr/share/file/magic
-	$(SED) "/^$$$$/d" $(PKG_INSTALL_DIR)/usr/share/file/magic
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/file/magic $(1)/usr/share/misc/
 endef
 
 define Package/libmagic/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libmagic.so.* $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/share/misc
+	$(SED) "/^#/d" $(PKG_INSTALL_DIR)/usr/share/file/magic
+	$(SED) "/^$$$$/d" $(PKG_INSTALL_DIR)/usr/share/file/magic
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/file/magic $(1)/usr/share/misc/
 endef
 
 $(eval $(call BuildPackage,file))
