@@ -515,7 +515,7 @@ f_etag() {
 		[ ! -f "${ban_backupdir}/banIP.etag" ] && : >"${ban_backupdir}/banIP.etag"
 		http_head="$("${ban_fetchcmd}" ${ban_etagparm} "${feed_url}" 2>&1)"
 		http_code="$(printf "%s" "${http_head}" | "${ban_awkcmd}" 'tolower($0)~/^http\/[0123\.]+ /{printf "%s",$2}')"
-		etag_id="$(printf "%s" "${http_head}" | "${ban_awkcmd}" '{FS="\""}tolower($0)~/^[[:space:]]*etag: /{printf "%s",$2}')"
+		etag_id="$(printf "%s" "${http_head}" | "${ban_awkcmd}" 'tolower($0)~/^[[:space:]]*etag: /{gsub("\"","");printf "%s",$2}')"
 		etag_rc="${?}"
 
 		if [ "${http_code}" = "404" ] || { [ "${etag_rc}" = "0" ] && [ -n "${etag_id}" ] && "${ban_grepcmd}" -q "^${feed}${feed_suffix}.*${etag_id}\$" "${ban_backupdir}/banIP.etag"; }; then
