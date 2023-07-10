@@ -1,0 +1,11 @@
+--- a/Makefile
++++ b/Makefile
+@@ -95,7 +95,7 @@ HOSTCC = gcc
+ MKDIR = mkdir
+ 
+ # 64bit library detection
+-include ../../scripts/Makefile.arch
++include ./scripts/Makefile.arch
+ 
+ ifeq ($(IS_64_BIT), 1)
+ libdir ?=	/usr/lib64
