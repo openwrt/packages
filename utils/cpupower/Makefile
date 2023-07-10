@@ -5,9 +5,6 @@ PKG_NAME:=cpupower
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-2.0-only
 
-# Since kernel 2.6.39.1 userspace tools are inside the kernel tree
-# Package Automatic match version in kernel
-# HASH is not useful kernel package already check it
 PKG_VERSION:=$(shell basename $(LINUX_DIR) | sed 's/linux-//')
 PKG_SOURCE:=
 PKG_SOURCE_URL:=
@@ -35,7 +32,7 @@ define Package/cpupower
 endef
 
 define Package/cpupower/description
-Linux kernel tool to examine and to tune power saving related features of the processor
+  Linux kernel tool to examine and to tune power saving related features of the processor
 endef
 
 define Build/Compile/cpupower
