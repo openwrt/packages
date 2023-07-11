@@ -18,7 +18,7 @@ config OPENVPN_openssl_ENABLE_X509_ALT_USERNAME
 
 config OPENVPN_openssl_ENABLE_MANAGEMENT
 	bool "Enable management server support"
-	default n
+	default y
 
 #config OPENVPN_openssl_ENABLE_PKCS11
 #	bool "Enable pkcs11 support"
