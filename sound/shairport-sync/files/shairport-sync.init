@@ -26,7 +26,7 @@ append_str() {
 
 	config_get val "$cfg" "$var"
 	if [ -n "$val" ] || [ -n "$def" ]; then
-		printf "\t%s = \"${val:-$def}\";\n" "$opt"
+		printf "\t%s = \"%s\";\n" "$opt" "${val:-$def}"
 	fi
 }
 
