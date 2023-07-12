@@ -103,6 +103,17 @@ define Package/prometheus-node-exporter-lua-hostapd_ubus_stations/install
 	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/hostapd_ubus_stations.lua $(1)/usr/lib/lua/prometheus-collectors/
 endef
 
+define Package/prometheus-node-exporter-lua-hwmon
+  $(call Package/prometheus-node-exporter-lua/Default)
+  TITLE+= (hwmon collector)
+  DEPENDS:=prometheus-node-exporter-lua +luci-lib-nixio
+endef
+
+define Package/prometheus-node-exporter-lua-hwmon/install
+	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/hwmon.lua $(1)/usr/lib/lua/prometheus-collectors/
+endef
+
 define Package/prometheus-node-exporter-lua-ltq-dsl
   $(call Package/prometheus-node-exporter-lua/Default)
   TITLE+= (lantiq dsl collector)
@@ -240,6 +251,7 @@ $(eval $(call BuildPackage,prometheus-node-exporter-lua-bmx7))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-dawn))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-hostapd_stations))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-hostapd_ubus_stations))
+$(eval $(call BuildPackage,prometheus-node-exporter-lua-hwmon))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-ltq-dsl))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-nat_traffic))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-netstat))
