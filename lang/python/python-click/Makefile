@@ -4,16 +4,16 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=click
-PKG_VERSION:=8.1.3
+PKG_NAME:=python-click
+PKG_VERSION:=8.1.4
 PKG_RELEASE:=1
 
 PYPI_NAME:=click
-PKG_HASH:=7682dc8afb30297001674575ea00d1814d808d6a36af415a82bd481d37ba7b8e
+PKG_HASH:=b97d0c74955da062a7d4ef92fadb583806a585b2ea81958a81bd72726cbb8e37
 
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
-PKG_LICENSE_FILES:=LICENSE
+PKG_LICENSE_FILES:=LICENSE.rst
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -23,13 +23,16 @@ define Package/python3-click
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
-  TITLE:=Click
+  TITLE:=Composable command line interface toolkit
   URL:=https://palletsprojects.com/p/click/
-  DEPENDS:=+python3-light
+  DEPENDS:=+python3-light +python3-urllib +python3-uuid
 endef
 
 define Package/python3-click/description
-  Composable command line interface toolkit
+Click is a Python package for creating beautiful command line interfaces
+in a composable way with as little code as necessary. It's the "Command
+Line Interface Creation Kit". It's highly configurable but comes with
+sensible defaults out of the box.
 endef
 
 $(eval $(call Py3Package,python3-click))
