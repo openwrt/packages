@@ -7,8 +7,14 @@
 
 define Package/python3-decimal
 $(call Package/python3/Default)
-  TITLE:=Python $(PYTHON3_VERSION) decimal module
+  TITLE+= decimal module
   DEPENDS:=+python3-light
+endef
+
+define Package/python3-decimal/description
+$(call Package/python3/Default/description)
+
+This package contains the decimal module.
 endef
 
 $(eval $(call Py3BasePackage,python3-decimal, \

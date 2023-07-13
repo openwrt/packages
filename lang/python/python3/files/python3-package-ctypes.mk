@@ -7,8 +7,14 @@
 
 define Package/python3-ctypes
 $(call Package/python3/Default)
-  TITLE:=Python $(PYTHON3_VERSION) ctypes module
+  TITLE+= ctypes module
   DEPENDS:=+python3-light +libffi
+endef
+
+define Package/python3-ctypes/description
+$(call Package/python3/Default/description)
+
+This package contains the ctypes module.
 endef
 
 $(eval $(call Py3BasePackage,python3-ctypes, \

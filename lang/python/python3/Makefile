@@ -51,44 +51,52 @@ define Package/python3/Default
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=Python $(PYTHON3_VERSION) programming language
+  TITLE:=Python $(PYTHON3_VERSION)
   URL:=https://www.python.org/
 endef
 
 define Package/python3/Default/description
- Python is a dynamic object-oriented programming language that can be used
- for many kinds of software development. It offers strong support for
- integration with other languages and tools, comes with extensive standard
- libraries, and can be learned in a few days. Many Python programmers
- report substantial productivity gains and feel the language encourages
- the development of higher quality, more maintainable code.
+Python is an interpreted, interactive, object-oriented programming
+language. It incorporates modules, exceptions, dynamic typing, very high
+level dynamic data types, and classes. It supports multiple programming
+paradigms beyond object-oriented programming, such as procedural and
+functional programming. Python combines remarkable power with very clear
+syntax. It has interfaces to many system calls and libraries, as well as
+to various window systems, and is extensible in C or C++. It is also
+usable as an extension language for applications that need a
+programmable interface. Finally, Python is portable: it runs on many
+Unix variants including Linux and macOS, and on Windows.
 endef
 
 define Package/libpython3
 $(call Package/python3/Default)
-  TITLE:=Python $(PYTHON3_VERSION) core library
+  TITLE+= core library
   DEPENDS:=+libpthread
   ABI_VERSION:=$(PYTHON3_VERSION)
 endef
 
 define Package/libpython3/description
-  This package contains only core Python library.
+$(call Package/python3/Default/description)
+
+This package contains only core Python library.
 endef
 
 define Package/python3-base
 $(call Package/python3/Default)
-  TITLE:=Python $(PYTHON3_VERSION) interpreter
+  TITLE+= base interpreter
   DEPENDS:=+libpython3
 endef
 
 define Package/python3-base/description
-  This package contains only the interpreter and the bare minimum
-  for the interpreter to start.
+$(call Package/python3/Default/description)
+
+This package contains only the interpreter and the bare minimum for the
+interpreter to start.
 endef
 
 define Package/python3-light
 $(call Package/python3/Default)
-  TITLE:=Python $(PYTHON3_VERSION) light installation
+  TITLE+= light installation
   DEPENDS:=+python3-base +libbz2 +zlib
 endef
 
@@ -97,9 +105,10 @@ define Package/python3-light/config
 endef
 
 define Package/python3-light/description
-  This package is essentially the python3-base package plus
-  a few of the rarely used (and big) libraries stripped out
-  into separate packages.
+$(call Package/python3/Default/description)
+
+This package installs the base interpreter package and contains the most
+commonly used parts of the standard library.
 endef
 
 PYTHON3_LIB_FILES_DEL:=
@@ -126,12 +135,15 @@ include ./files/python3-package-*.mk
 
 define Package/python3
 $(call Package/python3/Default)
+  TITLE+= programming language
   DEPENDS:=+python3-light $(foreach package,$(PYTHON3_PACKAGES_DEPENDS),+$(package))
 endef
 
 define Package/python3/description
-  This package contains the (almost) full Python install.
-  It's python3-light + all other packages.
+$(call Package/python3/Default/description)
+
+This package installs almost all parts of the standard Python
+installation.
 endef
 
 # Set READELF here so that the exact same readelf program name can be
