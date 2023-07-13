@@ -7,8 +7,15 @@
 
 define Package/python3-dev
 $(call Package/python3/Default)
-  TITLE:=Python $(PYTHON3_VERSION) development files
+  TITLE+= development files
   DEPENDS:=+python3 +python3-lib2to3
+endef
+
+define Package/python3-dev/description
+$(call Package/python3/Default/description)
+
+This package contains files for building Python modules, extending the
+Python interpreter, or embedded Python in applications.
 endef
 
 define Py3Package/python3-dev/install

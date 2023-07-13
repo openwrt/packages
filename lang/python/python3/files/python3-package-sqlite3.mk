@@ -7,8 +7,14 @@
 
 define Package/python3-sqlite3
 $(call Package/python3/Default)
-  TITLE:=Python $(PYTHON3_VERSION) sqlite3 module
+  TITLE+= sqlite3 module
   DEPENDS:=+python3-light +libsqlite3
+endef
+
+define Package/python3-sqlite3/description
+$(call Package/python3/Default/description)
+
+This package contains the sqlite3 module.
 endef
 
 $(eval $(call Py3BasePackage,python3-sqlite3, \
