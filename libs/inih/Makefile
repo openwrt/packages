@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=inih
-PKG_VERSION:=r56
+PKG_VERSION:=r57
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/benhoyt/inih/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=4f2ba6bd122d30281a8c7a4d5723b7af90b56aa828c0e88256d7fceda03a491a
+PKG_HASH:=f03f98ca35c3adb56b2358573c8d3eda319ccd5287243d691e724b7eafa970b3
 
 PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
 PKG_LICENSE:=BSD-3-Clause
