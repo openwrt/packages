@@ -42,7 +42,6 @@ handle_hs_ports_conf() {
 	local public_port local_port
 	local value="$1"
 	local ipv4="$2"
-	local name="$3"
 
 	public_port=$(echo "$value"|awk -F';' '{print $1}')
 	local_port=$(echo "$value"|awk -F';' '{print $2}')
@@ -67,7 +66,7 @@ parse_hs_conf() {
 		chmod 700 "$HS_DIR_PATH/$name/"
 
 		echo "HiddenServiceDir $HS_DIR_PATH/$name" >>$TORRC_FILE
-		config_list_foreach "$config" PublicLocalPort handle_hs_ports_conf "$ipv4" "$name"
+		config_list_foreach "$config" PublicLocalPort handle_hs_ports_conf "$ipv4"
 	fi
 }
 
