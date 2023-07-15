@@ -7,8 +7,8 @@
 +replace github.com/coreos/go-iptables => ./patched/go-iptables
 +
  require (
- 	filippo.io/mkcert v1.4.3
- 	github.com/Microsoft/go-winio v0.6.0
+ 	filippo.io/mkcert v1.4.4
+ 	github.com/Microsoft/go-winio v0.6.1
 --- a/patched/go-iptables/iptables/iptables.go
 +++ b/patched/go-iptables/iptables/iptables.go
 @@ -149,12 +149,39 @@ func New(opts ...option) (*IPTables, err
