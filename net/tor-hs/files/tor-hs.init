@@ -43,8 +43,8 @@ handle_hs_ports_conf() {
 	local value="$1"
 	local ipv4="$2"
 
-	public_port=$(echo "$value"|awk -F';' '{print $1}')
-	local_port=$(echo "$value"|awk -F';' '{print $2}')
+	public_port="${value#*;}"
+	local_port="${value%;*}"
 	echo "HiddenServicePort $public_port $ipv4:$local_port">>$TORRC_FILE
 }
 
