@@ -10,14 +10,14 @@ Subject: [PATCH] Bumped libc version
 
 --- a/Cargo.lock
 +++ b/Cargo.lock
-@@ -2933,9 +2933,9 @@ checksum = "830d08ce1d1d941e6b30645f1a0e
+@@ -1988,9 +1988,9 @@ checksum = "830d08ce1d1d941e6b30645f1a0e
  
  [[package]]
  name = "libc"
--version = "0.2.140"
+-version = "0.2.143"
 +version = "0.2.146"
  source = "registry+https://github.com/rust-lang/crates.io-index"
--checksum = "99227334921fae1a979cf0bfdfcc6b3e5ce376ef57e16fb6fb3ea2ed6095f80c"
+-checksum = "edc207893e85c5d6be840e969b496b53d94cec8be2d501b214f50daa97fa8024"
 +checksum = "f92be4933c13fd498862a9e02a3055f8a8d9c039ce33db97306fd5a6caa7f29b"
  dependencies = [
   "rustc-std-workspace-core",
@@ -28,8 +28,8 @@ Subject: [PATCH] Bumped libc version
  panic_unwind = { path = "../panic_unwind", optional = true }
  panic_abort = { path = "../panic_abort" }
  core = { path = "../core" }
--libc = { version = "0.2.140", default-features = false, features = ['rustc-dep-of-std'] }
+-libc = { version = "0.2.143", default-features = false, features = ['rustc-dep-of-std'] }
 +libc = { version = "0.2.146", default-features = false, features = ['rustc-dep-of-std'] }
- compiler_builtins = { version = "0.1.91" }
+ compiler_builtins = { version = "0.1.92" }
  profiler_builtins = { path = "../profiler_builtins", optional = true }
  unwind = { path = "../unwind" }
