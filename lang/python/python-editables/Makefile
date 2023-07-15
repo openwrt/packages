@@ -8,18 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-editables
-PKG_VERSION:=0.3
+PKG_VERSION:=0.4
 PKG_RELEASE:=1
 
 PYPI_NAME:=editables
-PKG_HASH:=167524e377358ed1f1374e61c268f0d7a4bf7dbd046c656f7b410cde16161b1a
+PKG_HASH:=dc322c42e7ccaf19600874035a4573898d88aadd07e177c239298135b75da772
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.txt
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
 PKG_HOST_ONLY:=1
-HOST_BUILD_DEPENDS:=python3/host python-build/host python-installer/host python-wheel/host
+HOST_BUILD_DEPENDS:=python3/host python-build/host python-installer/host python-flit-core/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
