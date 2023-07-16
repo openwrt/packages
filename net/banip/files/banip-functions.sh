@@ -73,6 +73,8 @@ ban_protov6="0"
 ban_ifv4=""
 ban_ifv6=""
 ban_dev=""
+ban_vlanallow=""
+ban_vlanblock=""
 ban_uplink=""
 ban_fetchcmd=""
 ban_fetchparm=""
@@ -224,7 +226,7 @@ f_log() {
 # load config
 #
 f_conf() {
-	unset ban_dev ban_ifv4 ban_ifv6 ban_feed ban_allowurl ban_blockinput ban_blockforwardwan ban_blockforwardlan ban_logterm ban_country ban_asn
+	unset ban_dev ban_vlanallow ban_vlanblock ban_ifv4 ban_ifv6 ban_feed ban_allowurl ban_blockinput ban_blockforwardwan ban_blockforwardlan ban_logterm ban_country ban_asn
 	config_cb() {
 		option_cb() {
 			local option="${1}"
@@ -235,14 +237,20 @@ f_conf() {
 			local option="${1}"
 			local value="${2}"
 			case "${option}" in
-				"ban_dev")
-					eval "${option}=\"$(printf "%s" "${ban_dev}")${value} \""
-					;;
 				"ban_ifv4")
 					eval "${option}=\"$(printf "%s" "${ban_ifv4}")${value} \""
 					;;
 				"ban_ifv6")
 					eval "${option}=\"$(printf "%s" "${ban_ifv6}")${value} \""
+					;;
+				"ban_dev")
+					eval "${option}=\"$(printf "%s" "${ban_dev}")${value} \""
+					;;
+				"ban_vlanallow")
+					eval "${option}=\"$(printf "%s" "${ban_vlanallow}")${value} \""
+					;;
+				"ban_vlanblock")
+					eval "${option}=\"$(printf "%s" "${ban_vlanblock}")${value} \""
 					;;
 				"ban_trigger")
 					eval "${option}=\"$(printf "%s" "${ban_trigger}")${value} \""
@@ -435,7 +443,7 @@ f_getdev() {
 	ban_dev="${ban_dev%%?}"
 	[ -z "${ban_dev}" ] && f_log "err" "no wan devices"
 
-	f_log "debug" "f_getdev    ::: auto/update: ${ban_autodetect}/${update}, devices: ${ban_dev}, cnt: ${cnt}"
+	f_log "debug" "f_getdev    ::: auto/update: ${ban_autodetect}/${update}, wan_devices: ${ban_dev}, cnt: ${cnt}"
 }
 
 # get local uplink
@@ -534,7 +542,11 @@ f_etag() {
 # build initial nft file with base table, chains and rules
 #
 f_nftinit() {
-	local feed_log feed_rc file="${1}"
+	local wan_dev vlan_allow vlan_block feed_log feed_rc file="${1}"
+
+	wan_dev="$(printf "%s" "${ban_dev}" | "${ban_sedcmd}" 's/^/\"/;s/$/\"/;s/ /\", \"/g')"
+	[ -n "${ban_vlanallow}" ] && vlan_allow="$(printf "%s" "${ban_vlanallow%%?}" | "${ban_sedcmd}" 's/^/\"/;s/$/\"/;s/ /\", \"/g')"
+	[ -n "${ban_vlanblock}" ] && vlan_block="$(printf "%s" "${ban_vlanblock%%?}" | "${ban_sedcmd}" 's/^/\"/;s/$/\"/;s/ /\", \"/g')"
 
 	{
 		# nft header (tables and chains)
@@ -551,7 +563,7 @@ f_nftinit() {
 		# default wan-input rules
 		#
 		printf "%s\n" "add rule inet banIP wan-input ct state established,related counter accept"
-		printf "%s\n" "add rule inet banIP wan-input iifname != { ${ban_dev// /, } } counter accept"
+		printf "%s\n" "add rule inet banIP wan-input iifname != { ${wan_dev} } counter accept"
 		printf "%s\n" "add rule inet banIP wan-input meta nfproto ipv4 udp sport 67-68 udp dport 67-68 counter accept"
 		printf "%s\n" "add rule inet banIP wan-input meta nfproto ipv6 udp sport 547 udp dport 546 counter accept"
 		printf "%s\n" "add rule inet banIP wan-input meta nfproto ipv4 icmp type { echo-request } limit rate 1000/second counter accept"
@@ -562,12 +574,14 @@ f_nftinit() {
 		# default wan-forward rules
 		#
 		printf "%s\n" "add rule inet banIP wan-forward ct state established,related counter accept"
-		printf "%s\n" "add rule inet banIP wan-forward iifname != { ${ban_dev// /, } } counter accept"
+		printf "%s\n" "add rule inet banIP wan-forward iifname != { ${wan_dev} } counter accept"
 
 		# default lan-forward rules
 		#
 		printf "%s\n" "add rule inet banIP lan-forward ct state established,related counter accept"
-		printf "%s\n" "add rule inet banIP lan-forward oifname != { ${ban_dev// /, } } counter accept"
+		printf "%s\n" "add rule inet banIP lan-forward oifname != { ${wan_dev} } counter accept"
+		[ -n "${vlan_allow}" ] && printf "%s\n" "add rule inet banIP lan-forward iifname { ${vlan_allow} } counter accept"
+		[ -n "${vlan_block}" ] && printf "%s\n" "add rule inet banIP lan-forward iifname { ${vlan_block} } counter reject"
 	} >"${file}"
 
 	# load initial banIP table within nft (atomic load)
@@ -575,7 +589,7 @@ f_nftinit() {
 	feed_log="$("${ban_nftcmd}" -f "${file}" 2>&1)"
 	feed_rc="${?}"
 
-	f_log "debug" "f_nftinit   ::: devices: ${ban_dev}, priority: ${ban_nftpriority}, policy: ${ban_nftpolicy}, loglevel: ${ban_nftloglevel}, rc: ${feed_rc:-"-"}, log: ${feed_log:-"-"}"
+	f_log "debug" "f_nftinit   ::: wan_dev: ${wan_dev}, vlan_allow: ${vlan_allow:-"-"}, vlan_block: ${vlan_block:-"-"}, priority: ${ban_nftpriority}, policy: ${ban_nftpolicy}, loglevel: ${ban_nftloglevel}, rc: ${feed_rc:-"-"}, log: ${feed_log:-"-"}"
 	return "${feed_rc}"
 }
 
@@ -1035,7 +1049,7 @@ f_genstatus() {
 				cnt_elements="$((cnt_elements + $("${ban_nftcmd}" -j list set inet banIP "${item}" 2>/dev/null | "${ban_jsoncmd}" -qe '@.nftables[*].set.elem[*]' | wc -l 2>/dev/null)))"
 			done
 		fi
-		runtime="action: ${ban_action:-"-"}, duration: ${duration:-"-"}, date: $(date "+%Y-%m-%d %H:%M:%S")"
+		runtime="action: ${ban_action:-"-"}, fetch: ${ban_fetchcmd##*/}, duration: ${duration:-"-"}, date: $(date "+%Y-%m-%d %H:%M:%S")"
 	fi
 	[ -s "${ban_customfeedfile}" ] && custom_feed="1"
 	[ "${ban_splitsize:-"0"}" -gt "0" ] && split="1"
@@ -1048,33 +1062,37 @@ f_genstatus() {
 	json_add_string "element_count" "${cnt_elements}"
 	json_add_array "active_feeds"
 	for object in ${table_sets:-"-"}; do
-		json_add_object
-		json_add_string "feed" "${object}"
-		json_close_object
+		json_add_string "${object}" "${object}"
 	done
 	json_close_array
-	json_add_array "active_devices"
+	json_add_array "wan_devices"
 	for object in ${ban_dev:-"-"}; do
-		json_add_object
-		json_add_string "device" "${object}"
-		json_close_object
+		json_add_string "${object}" "${object}"
 	done
+	json_close_array
+	json_add_array "wan_interfaces"
 	for object in ${ban_ifv4:-"-"} ${ban_ifv6:-"-"}; do
-		json_add_object
-		json_add_string "interface" "${object}"
-		json_close_object
+		json_add_string "${object}" "${object}"
+	done
+	json_close_array
+	json_add_array "vlan_allow"
+	for object in ${ban_vlanallow:-"-"}; do
+		json_add_string "${object}" "${object}"
+	done
+	json_close_array
+	json_add_array "vlan_block"
+	for object in ${ban_vlanblock:-"-"}; do
+		json_add_string "${object}" "${object}"
 	done
 	json_close_array
 	json_add_array "active_uplink"
 	for object in ${ban_uplink:-"-"}; do
-		json_add_object
-		json_add_string "uplink" "${object}"
-		json_close_object
+		json_add_string "${object}" "${object}"
 	done
 	json_close_array
 	json_add_string "nft_info" "priority: ${ban_nftpriority}, policy: ${ban_nftpolicy}, loglevel: ${ban_nftloglevel}, expiry: ${ban_nftexpiry:-"-"}"
-	json_add_string "run_info" "base: ${ban_basedir}, backup: ${ban_backupdir}, report: ${ban_reportdir}, custom feed: $(f_char ${custom_feed})"
-	json_add_string "run_flags" "auto: $(f_char ${ban_autodetect}), proto (4/6): $(f_char ${ban_protov4})/$(f_char ${ban_protov6}), log (wan-inp/wan-fwd/lan-fwd): $(f_char ${ban_loginput})/$(f_char ${ban_logforwardwan})/$(f_char ${ban_logforwardlan}), dedup: $(f_char ${ban_deduplicate}), split: $(f_char ${split}), allowed only: $(f_char ${ban_allowlistonly})"
+	json_add_string "run_info" "base: ${ban_basedir}, backup: ${ban_backupdir}, report: ${ban_reportdir}"
+	json_add_string "run_flags" "auto: $(f_char ${ban_autodetect}), proto (4/6): $(f_char ${ban_protov4})/$(f_char ${ban_protov6}), log (wan-inp/wan-fwd/lan-fwd): $(f_char ${ban_loginput})/$(f_char ${ban_logforwardwan})/$(f_char ${ban_logforwardlan}), dedup: $(f_char ${ban_deduplicate}), split: $(f_char ${split}), custom feed: $(f_char ${custom_feed}), allowed only: $(f_char ${ban_allowlistonly})"
 	json_add_string "last_run" "${runtime:-"-"}"
 	json_add_string "system_info" "cores: ${ban_cores}, memory: ${ban_memory}, device: ${ban_sysver}"
 	json_dump >"${ban_rtfile}"
@@ -1083,54 +1101,35 @@ f_genstatus() {
 # get status information
 #
 f_getstatus() {
-	local key keylist type value index_key1 index_key2 index_value1 index_value2
+	local key keylist value values
 
 	[ -z "${ban_dev}" ] && f_conf
 	json_load_file "${ban_rtfile}" >/dev/null 2>&1
 	if json_get_keys keylist; then
 		printf "%s\n" "::: banIP runtime information"
 		for key in ${keylist}; do
-			json_get_var value "${key}" >/dev/null 2>&1
-			if [ "${key}" = "status" ]; then
-				value="${value} ($(f_actual))"
-			elif [ "${key}" = "active_devices" ]; then
-				json_select "${key}" >/dev/null 2>&1
-				index=1
-				while json_get_type type "${index}" && [ "${type}" = "object" ]; do
-					json_get_keys index_key1 "${index}" >/dev/null 2>&1
-					json_get_keys index_key2 "$((index + 1))" >/dev/null 2>&1
-					json_get_values index_value1 "${index}" >/dev/null 2>&1
-					if [ "${index}" = "1" ] && [ "${index_key1// /}" = "device" ] && [ "${index_key2// /}" = "interface" ]; then
-						json_get_values index_value2 "$((index + 1))" >/dev/null 2>&1
-						value="${index_value1} ::: ${index_value2}"
-						index="$((index + 1))"
-					elif [ "${index}" = "1" ]; then
-						value="${index_value1}"
-					elif [ "${index}" != "1" ] && [ "${index_key1// /}" = "device" ] && [ "${index_key2// /}" = "interface" ]; then
-						json_get_values index_value2 "$((index + 1))" >/dev/null 2>&1
-						value="${value}, ${index_value1} ::: ${index_value2}"
-						index="$((index + 1))"
-					elif [ "${index}" != "1" ]; then
-						value="${value}, ${index_value1}"
-					fi
-					index="$((index + 1))"
-				done
-				json_select ".."
-			elif [ "${key%_*}" = "active" ]; then
-				json_select "${key}" >/dev/null 2>&1
-				index=1
-				while json_get_type type "${index}" && [ "${type}" = "object" ]; do
-					json_get_values index_value1 "${index}" >/dev/null 2>&1
-					if [ "${index}" = "1" ]; then
-						value="${index_value1}"
-					else
-						value="${value}, ${index_value1}"
-					fi
-					index="$((index + 1))"
-				done
-				json_select ".."
+			if [ "${key}" = "active_feeds" ] || [ "${key}" = "active_uplink" ]; then
+				json_get_values values "${key}" >/dev/null 2>&1
+				value="${values// /, }"
+			elif [ "${key}" = "wan_devices" ]; then
+				json_get_values values "${key}" >/dev/null 2>&1
+				value="wan: ${values// /, } / "
+				json_get_values values "wan_interfaces" >/dev/null 2>&1
+				value="${value}wan-if: ${values// /, } / "
+				json_get_values values "vlan_allow" >/dev/null 2>&1
+				value="${value}vlan-allow: ${values// /, } / "
+				json_get_values values "vlan_block" >/dev/null 2>&1
+				value="${value}vlan-block: ${values// /, }"
+				key="active_devices"
+			else
+				json_get_var value "${key}" >/dev/null 2>&1
+				if [ "${key}" = "status" ]; then
+					value="${value} ($(f_actual))"
+				fi
 			fi
-			printf "  + %-17s : %s\n" "${key}" "${value:-"-"}"
+			if [ "${key}" != "wan_interfaces" ] && [ "${key}" != "vlan_allow" ] && [ "${key}" != "vlan_block" ]; then
+				printf "  + %-17s : %s\n" "${key}" "${value:-"-"}"
+			fi
 		done
 	else
 		printf "%s\n" "::: no banIP runtime information available"
