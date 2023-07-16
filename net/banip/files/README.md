@@ -88,6 +88,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * Procd network interface trigger support
 * Add new or edit existing banIP feeds on your own with the LuCI integrated custom feed editor
 * Supports external allowlist URLs to reference additional IPv4/IPv6 feeds
+* Supports allowing / blocking of certain VLAN forwards
 
 ## Prerequisites
 * **[OpenWrt](https://openwrt.org)**, latest stable release or a snapshot with nft/firewall 4 and logd/logread support
@@ -159,6 +160,8 @@ Available commands:
 | ban_ifv4                | list   | - / autodetect                | logical wan IPv4 interfaces, e.g. 'wan'                                                                      |
 | ban_ifv6                | list   | - / autodetect                | logical wan IPv6 interfaces, e.g. 'wan6'                                                                     |
 | ban_dev                 | list   | - / autodetect                | wan device(s), e.g. 'eth2'                                                                                   |
+| ban_vlanallow           | list   | -                             | always allow certain VLAN forwards, e.g. br-lan.20                                                           |
+| ban_vlanblock           | list   | -                             | always block certain VLAN forwards, e.g. br-lan.10                                                           |
 | ban_trigger             | list   | -                             | logical startup trigger interface(s), e.g. 'wan'                                                             |
 | ban_triggerdelay        | option | 10                            | trigger timeout before banIP processing begins                                                               |
 | ban_triggeraction       | option | start                         | trigger action on ifup events, e.g. start, restart or reload                                                 |
@@ -230,19 +233,19 @@ Available commands:
 
 **banIP runtime information**  
 ```
-root@blackhole:~# /etc/init.d/banip status
+root@blackhole:/etc/config$ /etc/init.d/banip status
 ::: banIP runtime information
   + status            : active (nft: ✔, monitor: ✔)
-  + version           : 0.8.8-1
-  + element_count     : 104449
-  + active_feeds      : allowlistv4MAC, allowlistv6MAC, allowlistv4, allowlistv6, cinsscorev4, deblv4, countryv6, countryv4, deblv6, dropv6, dropv4, dohv6, dohv4, edropv4, threatviewv4, firehol1v4, ipthreatv4, urlvirv4, blocklistv4MAC, blocklistv6MAC, blocklistv4, blocklistv6
-  + active_devices    : br-wan ::: wan, wan6
+  + version           : 0.9.0-1
+  + element_count     : 111094
+  + active_feeds      : allowlistv4MAC, allowlistv6MAC, allowlistv4, allowlistv6, cinsscorev4, deblv4, countryv6, countryv4, deblv6, dropv6, dropv4, dohv6, dohv4, threatviewv4, firehol1v4, ipthreatv4, firehol2v4, urlvirv4, urlhausv4, blocklistv4MAC, blocklistv6MAC, blocklistv4, blocklistv6
+  + active_devices    : wan: br-wan, 10g-1 / wan-if: wan, wan6 / vlan-allow: - / vlan-block: -
   + active_uplink     : 91.63.198.120, 2a12:810c:0:80:a20d:52c3:5cf:f4f
   + nft_info          : priority: -200, policy: performance, loglevel: warn, expiry: -
-  + run_info          : base: /mnt/data/banIP, backup: /mnt/data/banIP/backup, report: /mnt/data/banIP/report, custom feed: ✘
-  + run_flags         : auto: ✔, proto (4/6): ✔/✔, log (wan-inp/wan-fwd/lan-fwd): ✔/✔/✔, dedup: ✔, split: ✘, allowed only: ✘
-  + last_run          : action: restart, duration: 0m 19s, date: 2023-06-21 06:45:52
-  + system_info       : cores: 4, memory: 1634, device: Bananapi BPI-R3, OpenWrt SNAPSHOT r23398-c4be106f4d
+  + run_info          : base: /mnt/data/banIP, backup: /mnt/data/banIP/backup, report: /mnt/data/banIP/report
+  + run_flags         : auto: ✔, proto (4/6): ✔/✔, log (wan-inp/wan-fwd/lan-fwd): ✔/✔/✔, dedup: ✔, split: ✘, custom feed: ✘, allowed only: ✘
+  + last_run          : action: reload, fetch: curl, duration: 0m 36s, date: 2023-07-16 06:59:28
+  + system_info       : cores: 4, memory: 1663, device: Bananapi BPI-R3, OpenWrt SNAPSHOT r23565-8fb0c196e8
 ```
 
 **banIP search information**  
