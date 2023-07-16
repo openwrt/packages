@@ -28,6 +28,7 @@
 				"fchmod",
 				"fcntl",
 				"fcntl64",
+				"ftruncate",
 				"ftruncate64",
 				"fstat",
 				"fstat64",
