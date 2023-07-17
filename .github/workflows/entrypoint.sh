@@ -20,15 +20,29 @@ for PKG in /ci/*.ipk; do
 	# package name including variant
 	PKG_NAME=$(sed -ne 's#^Package: \(.*\)$#\1#p' ./control)
 	# package version without release
-	PKG_VERSION=$(sed -ne 's#^Version: \(.*\)-[0-9]*$#\1#p' ./control)
-	# package source contianing test.sh script
-	PKG_SOURCE=$(sed -ne 's#^Source: .*/\(.*\)$#\1#p' ./control)
+	PKG_VERSION=$(sed -ne 's#^Version: \(.*\)$#\1#p' ./control)
+	PKG_VERSION="${PKG_VERSION%-[!-]*}"
+	# package source containing test.sh script
+	PKG_SOURCE=$(sed -ne 's#^Source: \(.*\)$#\1#p' ./control)
+	PKG_SOURCE="${PKG_SOURCE#/feed/}"
 
+	echo
 	echo "Testing package $PKG_NAME in version $PKG_VERSION from $PKG_SOURCE"
 
-	export PKG_NAME PKG_VERSION CI_HELPER
+	if ! [ -d "/ci/$PKG_SOURCE" ]; then
+		echo "$PKG_SOURCE is not a directory"
+		exit 1
+	fi
 
-	PRE_TEST_SCRIPT=$(find /ci/ -name "$PKG_SOURCE" -type d)/pre-test.sh
+	PRE_TEST_SCRIPT="/ci/$PKG_SOURCE/pre-test.sh"
+	TEST_SCRIPT="/ci/$PKG_SOURCE/test.sh"
+
+	if ! [ -f "$TEST_SCRIPT" ]; then
+		echo "No test.sh script available"
+		continue
+	fi
+
+	export PKG_NAME PKG_VERSION CI_HELPER
 
 	if [ -f "$PRE_TEST_SCRIPT" ]; then
 		echo "Use package specific pre-test.sh"
@@ -44,18 +58,12 @@ for PKG in /ci/*.ipk; do
 
 	opkg install "$PKG"
 
-	TEST_SCRIPT=$(find /ci/ -name "$PKG_SOURCE" -type d)/test.sh
-
-	if [ -f "$TEST_SCRIPT" ]; then
-		echo "Use package specific test.sh"
-		if sh "$TEST_SCRIPT" "$PKG_NAME" "$PKG_VERSION"; then
-			echo "Test successful"
-		else
-			echo "Test failed"
-			exit 1
-		fi
+	echo "Use package specific test.sh"
+	if sh "$TEST_SCRIPT" "$PKG_NAME" "$PKG_VERSION"; then
+		echo "Test successful"
 	else
-		echo "No test.sh script available"
+		echo "Test failed"
+		exit 1
 	fi
 
 	opkg remove "$PKG_NAME" --force-removal-of-dependent-packages --force-remove --autoremove || true
