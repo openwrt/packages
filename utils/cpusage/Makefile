@@ -7,7 +7,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cpusage
-PKG_VERSION:=$(AUTORELEASE)
+PKG_VERSION:=1
 PKG_MAINTAINER:=Thomas Hühn <thomas.huehn@hs-nordhausen.de>
 
 include $(INCLUDE_DIR)/package.mk
