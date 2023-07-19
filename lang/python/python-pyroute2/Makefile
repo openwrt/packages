@@ -7,16 +7,16 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=python3-pyroute2
-PKG_VERSION:=0.5.16
-PKG_RELEASE:=2
+PKG_NAME:=python-pyroute2
+PKG_VERSION:=0.7.9
+PKG_RELEASE:=1
 
 PYPI_NAME:=pyroute2
-PKG_HASH:=fe681a2d008cac815b9f287250d69a333fbfc2b2d89c37d58798104057149989
+PKG_HASH:=b69d82f140b0774317d7ba40f6c5fa1d755098ba3f3eb619982d16e750dc631a
 
 PKG_MAINTAINER:=Martin Matějek <martin.matejek@nic.cz>
 PKG_LICENSE:=GPL-2.0-or-later Apache-2.0
-PKG_LICENSE_FILES:=LICENSE.GPL.v2 LICENSE.Apache.v2
+PKG_LICENSE_FILES:=LICENSE.GPL-2.0-or-later LICENSE.Apache-2.0
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -28,13 +28,7 @@ define Package/python3-pyroute2
   CATEGORY:=Languages
   TITLE:=Python netlink library
   URL:=https://github.com/svinota/pyroute2
-  DEPENDS:= \
-	  +python3-light \
-	  +python3-distutils \
-	  +python3-logging \
-	  +python3-multiprocessing \
-	  +python3-sqlite3 \
-	  +python3-ctypes
+  DEPENDS:=+python3
 endef
 
 define Package/python3-pyroute2/description
