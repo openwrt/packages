@@ -8,12 +8,12 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=maxminddb
-PKG_VERSION:=2.0.3
+PKG_NAME:=python-maxminddb
+PKG_VERSION:=2.4.0
 PKG_RELEASE:=1
 
-PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=47e86a084dd814fac88c99ea34ba3278a74bc9de5a25f4b815b608798747c7dc
+PYPI_NAME:=maxminddb
+PKG_HASH:=81e54e53408bd502650e5969ccba16780af659ec1db1c44b2c997e4330a5ed96
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=Apache-2.0
@@ -28,7 +28,7 @@ define Package/python3-maxminddb
   CATEGORY:=Languages
   SUBMENU:=Python
   TITLE:=Reader for the MaxMind DB format
-  URL:=https://dev.maxmind.com/
+  URL:=https://www.maxmind.com/
   DEPENDS:=+python3-light +libmaxminddb
 endef
 
