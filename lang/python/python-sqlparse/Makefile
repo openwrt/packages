@@ -1,15 +1,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sqlparse
-PKG_VERSION:=0.4.2
-PKG_RELEASE:=2
+PKG_VERSION:=0.4.4
+PKG_RELEASE:=1
 
 PYPI_NAME:=sqlparse
-PKG_HASH:=0c00730c74263a94e5a9919ade150dfc3b19c574389985446148402998287dae
+PKG_HASH:=d446183e84b8349fa3061f0fe7f06ca94ba65b426946ffebe6e3e8295332420c
 
 PKG_MAINTAINER:=Peter Stadler <peter.stadler@student.uibk.ac.at>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
+
+PKG_BUILD_DEPENDS:=python-flit-core/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -19,19 +21,14 @@ define Package/python3-sqlparse
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=Non-validating SQL parser module.
+  TITLE:=Non-validating SQL parser
   URL:=https://github.com/andialbrecht/sqlparse
   DEPENDS:=+python3-light
 endef
 
 define Package/python3-sqlparse/description
-  A non-validating SQL parser module. It provides support for parsing, splitting and formatting SQL statements.
-endef
-
-define Py3Package/python3-sqlparse/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/$(PYTHON3_PKG_DIR)/sqlparse/__main__.py \
-		$(1)/usr/bin/sqlformat
+sqlparse is a non-validating SQL parser for Python. It provides support
+for parsing, splitting and formatting SQL statements.
 endef
 
 $(eval $(call Py3Package,python3-sqlparse))
