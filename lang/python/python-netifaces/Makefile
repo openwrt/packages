@@ -7,12 +7,12 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=python3-netifaces
-PKG_VERSION:=0.10.9
-PKG_RELEASE:=2
+PKG_NAME:=python-netifaces
+PKG_VERSION:=0.11.0
+PKG_RELEASE:=1
 
 PYPI_NAME:=netifaces
-PKG_HASH:=2dee9ffdd16292878336a58d04a20f0ffe95555465fee7c9bd23b3490ef2abf3
+PKG_HASH:=043a79146eb2907edf439899f262b3dfe41717d34124298ed281139a8b93ca32
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=MIT
