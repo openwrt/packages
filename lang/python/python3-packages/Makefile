@@ -89,8 +89,7 @@ req2dir=$(call recur,_req2dir,7,$(1))
 # --no-build-isolation, this is a new addition in pip3 and is needed when build
 #  depends on host modules
 HOST_PYTHON3_PIP_INSTALL=$(HOST_PYTHON3_PIP) install \
-	--root=$(1) \
-	--prefix=$(2) \
+	--prefix=$(1) \
 	--ignore-installed \
 	--no-build-isolation \
 	--no-compile \
