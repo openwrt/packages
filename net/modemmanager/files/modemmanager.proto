@@ -505,7 +505,6 @@ proto_modemmanager_teardown() {
 	json_get_vars device lowpower iptype
 
 	echo "stopping network"
-	proto_notify_error "${interface}" MM_TEARDOWN_IN_PROGRESS
 
 	# load connected bearer information, just the first one should be ok
 	modemstatus=$(mmcli --modem="${device}" --output-keyvalue)
