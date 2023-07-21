@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rclone
-PKG_VERSION:=1.63.0
+PKG_VERSION:=1.63.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/rclone/rclone/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=755af528052f946e8d41a3e96e5dbf8f03ecfe398f9d0fdeb7ca1a59208a75db
+PKG_HASH:=84b2b2206abc3cb56056c0b76cceefecef0b5f6ad86b208ca458675632f0edf6
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
