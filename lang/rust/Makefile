@@ -12,7 +12,7 @@ PKG_RELEASE:=1
 PKG_SOURCE:=rustc-$(PKG_VERSION)-src.tar.gz
 PKG_SOURCE_URL:=https://static.rust-lang.org/dist/
 PKG_HASH:=a667e4abdc5588ebfea35c381e319d840ffbf8d2dbfb79771730573642034c96
-HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/rust-$(RUSTC_TARGET_ARCH)/rustc-$(PKG_VERSION)-src
+HOST_BUILD_DIR:=$(BUILD_DIR)/host/rust-$(RUSTC_TARGET_ARCH)/rustc-$(PKG_VERSION)-src
 
 PKG_MAINTAINER:=Luca Barbato <lu_zero@luminem.org>
 PKG_LICENSE:=Apache-2.0 MIT
