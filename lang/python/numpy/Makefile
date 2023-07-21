@@ -6,11 +6,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=numpy
-PKG_VERSION:=1.24.3
+PKG_VERSION:=1.25.1
 PKG_RELEASE:=1
 
 PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=ab344f1bf21f140adab8e47fdbc7c35a477dc01408791f8ba00d018dd0bc5155
+PKG_HASH:=9a3a9f3a61480cc086117b426a8bd86869c213fc4072e606f01c4e4b66eb92bf
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
@@ -37,7 +37,7 @@ define Package/python3-numpy
   CATEGORY:=Languages
   TITLE:=The fundamental package for scientific computing with Python
   URL:=https://www.numpy.org/
-  DEPENDS:=@!SOFT_FLOAT +INSTALL_GFORTRAN:libgfortran +python3 \
+  DEPENDS:=@!SOFT_FLOAT +INSTALL_GFORTRAN:libgfortran +python3 +libstdcpp \
 	   +NUMPY_OPENBLAS_SUPPORT:openblas
 endef
 
