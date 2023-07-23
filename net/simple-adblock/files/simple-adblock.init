@@ -13,15 +13,17 @@ if type extra_command 1>/dev/null 2>&1; then
 	extra_command 'check' 'Checks if specified domain is found in current block-list'
 	extra_command 'dl' 'Force-downloads all enabled block-list'
 	extra_command 'killcache' 'Delete all cached files'
+	extra_command 'pause' 'Pauses AdBlocking for specified number of seconds (default: 60)'
 	extra_command 'sizes' 'Displays the file-sizes of enabled block-lists'
 	extra_command 'version' 'Show version information'
 else
 # shellcheck disable=SC2034
-	EXTRA_COMMANDS='allow check dl killcache sizes status_service version'
+	EXTRA_COMMANDS='allow check dl killcache pause sizes status_service version'
 # shellcheck disable=SC2034
 	EXTRA_HELP='	allow	Allows domain(s) in current block-list and config
 	check	Checks if specified domain is found in current block-list
 	dl	Force-downloads all enabled block-list
+	pause	Pauses AdBlocking for specified number of seconds (default: 60)
 	sizes	Displays the file-sizes of enabled block-lists'
 fi
 
@@ -528,10 +530,14 @@ dns() {
 
 			case "$dns" in
 				dnsmasq.addnhosts|dnsmasq.servers)
+					chmod 660 "$outputFile"
+					chown root:dnsmasq "$outputFile"
 					param=dnsmasq_restart
 					output_text='Reloading dnsmasq'
 				;;
 				dnsmasq.conf|dnsmasq.ipset|dnsmasq.nftset)
+					chmod 660 "$outputFile"
+					chown root:dnsmasq "$outputFile"
 					param=dnsmasq_restart
 					output_text='Restarting dnsmasq'
 				;;
@@ -686,7 +692,7 @@ cache() {
 	local R_TMP
 	case "$1" in
 		create|backup)
-			[ -s "$outputFile" ] && { mv -f "$outputFile" "$outputCache"; true > "$outputFile"; } >/dev/null 2>/dev/null
+			[ -s "$outputFile" ] && { mv -f "$outputFile" "$outputCache"; } >/dev/null 2>/dev/null
 			return $?
 		;;
 		restore|use)
@@ -1262,6 +1268,7 @@ adb_sizes() {
 	done
 }
 
+# shellcheck disable=SC2120
 adb_start() {
 	local action status error message stats c
 	local param="$1" validation_result="$3"
@@ -1274,13 +1281,13 @@ adb_start() {
 	stats="$(json get stats)"
 	action="$(json get triggers)"
 
-	if [ "$action" = 'on_boot' ] || [ "$1" = 'on_boot' ]; then
+	if [ "$action" = 'on_boot' ] || [ "$param" = 'on_boot' ]; then
 		if cache 'test_gzip' || cache 'test'; then
 			action='restore'
 		else
 			action='download'
 		fi
-	elif [ "$action" = 'download' ] || [ "$1" = 'download' ] || [ -n "$error" ]; then
+	elif [ "$action" = 'download' ] || [ "$param" = 'download' ] || [ -n "$error" ]; then
 		action='download'
 	elif [ ! -s "$outputFile" ]; then 
 		if cache 'test_gzip' || cache 'test'; then
@@ -1288,7 +1295,7 @@ adb_start() {
 		else
 			action='download'
 		fi
-	elif [ "$action" = 'restart' ] || [ "$1" = 'restart' ]; then
+	elif [ "$action" = 'restart' ] || [ "$param" = 'restart' ]; then
 		action='restart'
 	elif [ -s "$outputFile" ] && [ "$status" = "statusSuccess" ] && [ -z "$error" ]; then
 		status_service
@@ -1497,6 +1504,7 @@ adb_status() {
 	fi
 }
 
+# shellcheck disable=SC2120
 adb_stop() {
 	local validation_result="$3"
 	load_environment "$validation_result" 'quiet' || return 1
@@ -1519,6 +1527,19 @@ adb_stop() {
 			output "${_ERROR_}: $(get_text 'errorStopping')!\\n"
 		fi
 	fi
+}
+
+adb_pause() {
+	local timeout="${1:-$pause_timeout}"
+	local validation_result="$3"
+	adb_stop 'on_pause' '' "$validation_result"
+	output "Sleeping for $timeout seconds... "
+	if sleep "$timeout"; then
+		output_okn
+	else
+		output_failn
+	fi
+	adb_start 'on_pause' '' "$validation_result"
 }
 
 allow() { load_validate_config 'config' adb_allow "'$*'"; }
@@ -1579,6 +1600,7 @@ start_service() {
 }
 status_service() { load_validate_config 'config' adb_status "''"; }
 stop_service() { load_validate_config 'config' adb_stop "'$*'"; }
+pause() { load_validate_config 'config' adb_pause "'$*'"; }
 version() { echo "$PKG_VERSION"; }
 
 load_validate_config() {
@@ -1598,6 +1620,7 @@ load_validate_config() {
 	local config_update_enabled
 	local config_update_url
 	local download_timeout
+	local pause_timeout
 	local curl_additional_param
 	local curl_max_file_size
 	local curl_retry
@@ -1629,6 +1652,7 @@ load_validate_config() {
 		'config_update_enabled:bool:0' \
 		'config_update_url:string:https://cdn.jsdelivr.net/gh/openwrt/packages/net/simple-adblock/files/simple-adblock.conf.update' \
 		'download_timeout:range(1,60):20' \
+		'pause_timeout:range(10,120):60' \
 		'curl_additional_param:or("", string)' \
 		'curl_max_file_size:or("", uinteger)' \
 		'curl_retry:range(0,30):3' \
