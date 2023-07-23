@@ -1,6 +1,6 @@
 --- a/configure.py
 +++ b/configure.py
-@@ -1296,7 +1296,6 @@ def configure_node(o):
+@@ -1291,7 +1291,6 @@ def configure_node(o):
  
    # Enable branch protection for arm64
    if target_arch == 'arm64':

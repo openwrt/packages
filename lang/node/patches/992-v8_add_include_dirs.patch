@@ -16,7 +16,7 @@
        'conditions': [
          ['OS=="win"', {
            'msvs_precompiled_header': '<(V8_ROOT)/../../tools/msvs/pch/v8_pch.h',
-@@ -1431,6 +1433,7 @@
+@@ -1435,6 +1437,7 @@
        'type': 'executable',
        'libraries!':[ '-lcrypto', '-lssl', '-lz', '-lhttp_parser', '-luv', '-lnghttp2', '-lcares' ],
        'library_dirs':[ '../../../../staging_dir/hostpkg/share/icu/current/lib' ],
