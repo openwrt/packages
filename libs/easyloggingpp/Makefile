@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=easyloggingpp
-PKG_VERSION:=9.97.0
+PKG_VERSION:=9.97.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/abumq/easyloggingpp/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=9110638e21ef02428254af8688bf9e766483db8cc2624144aa3c59006907ce22
+PKG_HASH:=ebe473e17b13f1d1f16d0009689576625796947a711e14aec29530f39560c7c2
 
 PKG_MAINTAINER:=Volker Christian <me@vchrist.at>
 PKG_LICENSE:=MIT
