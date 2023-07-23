@@ -67,7 +67,7 @@ uci_changes() {
 	/sbin/uci ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} changes "$PACKAGE${CONFIG:+.$CONFIG}${OPTION:+.$OPTION}"
 }
 
-dnsmasq_restart() { [ -x /etc/init.d/dnsmasq ] || return 0; /etc/init.d/dnsmasq restart >/dev/null 2>&1; }
+dnsmasq_restart() { [ -x /etc/init.d/dnsmasq ] || return 1; /etc/init.d/dnsmasq restart >/dev/null 2>&1; }
 
 version() { echo "$PKG_VERSION"; }
 
@@ -223,7 +223,7 @@ start_service() {
 	local procd_fw_src_interfaces
 
 	local port=5053
-	output "Starting $serviceName "
+	output "Starting $serviceName instances "
 	config_load "$packageName"
 	config_get_bool canary_domains_icloud  'config' 'canary_domains_icloud' '1'
 	config_get_bool canary_domains_mozilla 'config' 'canary_domains_mozilla' '1'
@@ -240,11 +240,21 @@ start_service() {
 	dhcp_backup 'create'
 	config_load "$packageName"
 	config_foreach start_instance "$packageName"
-	if [ -n "$(uci_changes dhcp)" ]; then
-		uci_commit 'dhcp'
-		dnsmasq_restart
-	fi
 	output "\\n"
+	if [ -n "$(uci_changes dhcp)" ]; then
+		output "Updating dnsmasq config "
+		if uci_commit 'dhcp'; then
+			output_okn
+		else
+			output_failn
+		fi
+		output "Restarting dnsmasq "
+		if dnsmasq_restart; then
+			output_okn
+		else
+			output_failn
+		fi
+	fi
 }
 
 stop_service() {
