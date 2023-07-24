@@ -505,7 +505,6 @@ proto_modemmanager_teardown() {
 	json_get_vars device lowpower iptype
 
 	echo "stopping network"
-	proto_notify_error "${interface}" MM_TEARDOWN_IN_PROGRESS
 
 	# load connected bearer information, just the first one should be ok
 	modemstatus=$(mmcli --modem="${device}" --output-keyvalue)
@@ -540,6 +539,9 @@ proto_modemmanager_teardown() {
 	# low power, only if requested
 	[ "${lowpower:-0}" -lt 1 ] ||
 		mmcli --modem="${device}" --set-power-state-low
+
+	proto_init_update "*" 0
+	proto_send_update "$interface"
 }
 
 [ -n "$INCLUDE_ONLY" ] || {
