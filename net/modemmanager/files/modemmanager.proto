@@ -350,6 +350,15 @@ proto_modemmanager_init_config() {
 	proto_config_add_defaults
 }
 
+# Append param to the global 'connectargs' variable.
+append_param() {
+	local param="$1"
+
+	[ -z "$param" ] && return
+	[ -z "$connectargs" ] || connectargs="${connectargs},"
+	connectargs="${connectargs}${param}"
+}
+
 proto_modemmanager_setup() {
 	local interface="$1"
 
@@ -401,7 +410,16 @@ proto_modemmanager_setup() {
 		# allowed unless a user set the opposite
 		allow_roaming="yes"
 	fi
-	connectargs="apn=${apn},allow-roaming=${allow_roaming}${iptype:+,ip-type=${iptype}}${plmn:+,operator-id=${plmn}}${cliauth:+,allowed-auth=${cliauth}}${username:+,user=${username}}${password:+,password=${password}}${pincode:+,pin=${pincode}}"
+
+	# Append options to 'connectargs' variable
+	append_param "apn=${apn}"
+	append_param "allow-roaming=${allow_roaming}"
+	append_param "${iptype:+ip-type=${iptype}}"
+	append_param "${plmn:+operator-id=${plmn}}"
+	append_param "${cliauth:+allowed-auth=${cliauth}}"
+	append_param "${username:+user=${username}}"
+	append_param "${password:+password=${password}}"
+	append_param "${pincode:+pin=${pincode}}"
 
 	mmcli --modem="${device}" --timeout 120 --simple-connect="${connectargs}" || {
 		proto_notify_error "${interface}" MM_CONNECT_FAILED
