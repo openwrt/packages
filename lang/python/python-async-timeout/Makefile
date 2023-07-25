@@ -7,13 +7,12 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=async-timeout
-PKG_VERSION:=3.0.1
-PKG_RELEASE:=2
+PKG_NAME:=python-async-timeout
+PKG_VERSION:=4.0.2
+PKG_RELEASE:=1
 
-PYPI_NAME:=async_timeout
-PYPI_SOURCE_NAME:=async-timeout
-PKG_HASH:=0c3c816a028d47f659d6ff5c745cb2acf1f966da1fe5c19c77a70282b25f4c5f
+PYPI_NAME:=async-timeout
+PKG_HASH:=2163e1640ddb52b7a8c80d0a67a08587e5d245cc9c553a74a847056bc2976b15
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=Apache-2.0
