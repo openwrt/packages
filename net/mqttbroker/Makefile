@@ -20,11 +20,10 @@ PKG_LICENSE_FILES:=LICENSE
 
 PKG_BUILD_DEPENDS:=+snode.c
 
+CMAKE_INSTALL:=1
+
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
-
-CMAKE_OPTIONS += -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON \
-                 -DCMAKE_SKIP_RPATH=FALSE
 
 define Package/mqttbroker
   SECTION:=net
@@ -42,12 +41,45 @@ define Package/mqttbroker/description
   especially usable on resource limited systems.
 endef
 
+define remove_rpath_prefix
+	echo "Package install root: $(1)"; \
+	find $(1) -type f -a -exec file {} \; | \
+		sed -n -e 's/^\(.*\):.*ELF.*\(executable\|relocatable\|shared object\).*,.*/\1:\2/p' | \
+	( \
+		IFS=":"; \
+		while read F S; do \
+			echo "$$$$F: $$$$S"; \
+			b=$$$$(stat -c '%a' $$$$F); \
+			cur_rpath="$$$$($(STAGING_DIR_HOST)/bin/patchelf --print-rpath $$$$F)"; \
+			new_rpath=""; \
+			echo "Current RPATH: $$$$cur_rpath"; \
+			for path in $$$$cur_rpath; do \
+				case "$$$$path" in \
+					$(STAGING_DIR)/[^/]*) \
+						path_stripped=$$$$(echo $$$$path | sed "s|$(STAGING_DIR)||"); \
+						new_rpath="$$$${new_rpath:+$$$$new_rpath:}$$$$path_stripped"; \
+						;; \
+					*) \
+						new_rpath="$$$${new_rpath:+$$$$new_rpath:}$$$$path"; \
+						;; \
+				esac; \
+			done; \
+			echo "Final RPATH: $$$$new_rpath"; \
+			[ "$$$$new_rpath" = "$$$$cur_rpath" ] || $(STAGING_DIR_HOST)/bin/patchelf --set-rpath "$$$$new_rpath" $$$$F; \
+			a=$$$$(stat -c '%a' $$$$F); \
+			[ "$$$$a" = "$$$$b" ] || chmod $$$$b $$$$F; \
+		done; \
+		true; \
+	)
+endef
+
 define Package/mqttbroker/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/* $(1)/usr/lib/
 	find $(1)/usr/lib -name "*.so"  -exec rm {} ";"
+	$(call remove_rpath_prefix,$(1)/usr)
 endef
 
 $(eval $(call BuildPackage,mqttbroker))
