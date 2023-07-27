@@ -89,7 +89,7 @@
  # Option variables
  if [ ! -z "$PREFIX" ] ; then
    prefix="$PREFIX"
-@@ -327,80 +254,9 @@ if [ $static -ne 0 ] ; then
+@@ -337,80 +264,9 @@ if [ $static -ne 0 ] ; then
    ldflags="${ldflags}-static"
  fi
  
