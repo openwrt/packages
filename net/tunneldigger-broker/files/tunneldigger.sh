@@ -11,12 +11,8 @@ tunneldigger_get_bridge() {
 	# Discover the configured bridge.
 	unset _td_bridge
 	_td_bridge=""
-	config_cb() {
-		local cfg="$CONFIG_SECTION"
-		config_get configname "$cfg" TYPE
-		if [ "$configname" != "bridge" ]; then
-			return
-		fi
+	handle_bridge() {
+		local cfg="$1"
 
 		config_get cfg_mtu "$cfg" mtu
 		config_get interface "$cfg" interface
@@ -29,11 +25,12 @@ tunneldigger_get_bridge() {
 	}
 
 	config_load tunneldigger-broker
-	reset_cb
+	config_foreach handle_bridge bridge $mtu
 	if [ -z "$_td_bridge" ]; then
 		return
 	fi
 
-	eval $variable=$_td_bridge
-	# network_get_device $variable $_td_bridge
+	variable="$_td_bridge"
+	export ${NO_EXPORT:+-n} "$1=$variable"
 }
+
