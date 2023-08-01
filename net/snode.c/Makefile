@@ -47,6 +47,7 @@ endef
 
 define Package/snode.c
   $(call Package/snode.c/Default)
+  MENU:=1
 endef
 
 define BuildSNodeCModule
@@ -66,6 +67,7 @@ endef
 
 define Package/snode.c-full
   $(call Package/snode.c/Default)
+  DEPENDS:=snode.c
   PROVIDES:=snode.c-apps \
 	snode.c-core \
 	snode.c-core-mux-epoll \
@@ -183,7 +185,8 @@ endef
 define Package/snode.c-apps
   $(call Package/snode.c/Default)
   TITLE:=SNode.C demo applications
-  DEPENDS:=+snode.c-net-in-stream-legacy \
+  DEPENDS:=snode.c \
+	+snode.c-net-in-stream-legacy \
 	+snode.c-net-in-stream-tls \
 	+snode.c-net-in6-stream-legacy \
 	+snode.c-net-in6-stream-tls \
