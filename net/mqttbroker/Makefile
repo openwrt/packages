@@ -31,7 +31,7 @@ define Package/mqttbroker
   CATEGORY:=Network
   TITLE:=A very lightweight MQTT-Integration System
   URL:=https://github.com/VolkerChristian/mqttbroker
-  DEPENDS:=+snode.c
+  DEPENDS:=+snode.c-net-in-stream-legacy +snode.c-net-in-stream-tls +snode.c-net-un-stream-legacy +snode.c-http-server-express +snode.c-http-client +snode.c-websocket-server +snode.c-websocket-client +snode.c-mqtt-server +snode.c-mqtt-client
 endef
 
 define Package/mqttbroker/description
