@@ -49,34 +49,6 @@ define Package/snode.c
   $(call Package/snode.c/Default)
 endef
 
-define Package/snode.c-full
-  $(call Package/snode.c/Default)
-  PROVIDES:=snode.c-apps snode.c-core snode.c-core-mux-epoll snode.c-core-mux-poll snode.c-core-mux-select snode.c-core-socket snode.c-core-socket-stream snode.c-core-socket-stream-legacy snode.c-core-socket-stream-tls snode.c-db-mariadb snode.c-full snode.c-http snode.c-http-client snode.c-http-server snode.c-http-server-express snode.c-logger snode.c-mqtt snode.c-mqtt-client snode.c-mqtt-server snode.c-net snode.c-net-in snode.c-net-in6 snode.c-net-in6-stream snode.c-net-in6-stream-legacy snode.c-net-in6-stream-tls snode.c-net-in-stream snode.c-net-in-stream-legacy snode.c-net-in-stream-tls snode.c-net-l2 snode.c-net-l2-stream snode.c-net-l2-stream-legacy snode.c-net-l2-stream-tls snode.c-net-rc snode.c-net-rc-stream snode.c-net-rc-stream-legacy snode.c-net-rc-stream-tls snode.c-net-un snode.c-net-un-dgram snode.c-net-un-stream snode.c-net-un-stream-legacy snode.c-net-un-stream-tls snode.c-utils snode.c-websocket snode.c-websocket-client snode.c-websocket-server
-endef
-
-define Package/snode.c-full/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/* $(1)/usr/lib/
-	find $(1)/usr/lib -name "*.so"  -exec rm {} ";"
-	rm -r $(1)/usr/lib/cmake
-endef
-
-define Package/snode.c-apps
-  $(call Package/snode.c/Default)
-  TITLE:=SNode.C demo applications
-  DEPENDS:=+snode.c-net-in-stream-legacy +snode.c-net-in-stream-tls +snode.c-net-in6-stream-legacy +snode.c-net-in6-stream-tls +snode.c-net-l2-stream-legacy +snode.c-net-l2-stream-tls +snode.c-net-rc-stream-legacy +snode.c-net-rc-stream-tls +snode.c-net-un-stream-legacy +snode.c-net-un-stream-tls +snode.c-http-server-express +snode.c-http-client +snode.c-websocket-server +snode.c-websocket-client +snode.c-mqtt-server +snode.c-mqtt-client +snode.c-db-mariadb
-endef
-
-define Package/snode.c-apps/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
-	$(INSTALL_DIR) $(1)/usr/lib/snode.c/web/http/upgrade/websocket
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/snode.c/web/http/upgrade/websocket/libsnodec-websocket-echo-server.so.1 $(1)/usr/lib/snode.c/web/http/upgrade/websocket/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/snode.c/web/http/upgrade/websocket/libsnodec-websocket-echo-client.so.1 $(1)/usr/lib/snode.c/web/http/upgrade/websocket/
-endef
-
 define BuildSNodeCModule
   define Package/snode.c-$(1)
     $$(call Package/snode.c/Default)
@@ -90,6 +62,152 @@ define BuildSNodeCModule
   endef
 
   $$(eval $$(call BuildPackage,snode.c-$(1)))
+endef
+
+define Package/snode.c-full
+  $(call Package/snode.c/Default)
+  PROVIDES:=snode.c-apps \
+	snode.c-core \
+	snode.c-core-mux-epoll \
+	snode.c-core-mux-poll \
+	snode.c-core-mux-select \
+	snode.c-core-socket \
+	snode.c-core-socket-stream \
+	snode.c-core-socket-stream-legacy \
+	snode.c-core-socket-stream-tls \
+	snode.c-db-mariadb \
+	snode.c-http \
+	snode.c-http-client \
+	snode.c-http-server \
+	snode.c-http-server-express \
+	snode.c-logger \
+	snode.c-mqtt \
+	snode.c-mqtt-client \
+	snode.c-mqtt-server \
+	snode.c-net \
+	snode.c-net-in \
+	snode.c-net-in6 \
+	snode.c-net-in6-stream \
+	snode.c-net-in6-stream-legacy \
+	snode.c-net-in6-stream-tls \
+	snode.c-net-in-stream \
+	snode.c-net-in-stream-legacy \
+	snode.c-net-in-stream-tls \
+	snode.c-net-l2 \
+	snode.c-net-l2-stream \
+	snode.c-net-l2-stream-legacy \
+	snode.c-net-l2-stream-tls \
+	snode.c-net-rc \
+	snode.c-net-rc-stream \
+	snode.c-net-rc-stream-legacy \
+	snode.c-net-rc-stream-tls \
+	snode.c-net-un \
+	snode.c-net-un-dgram \
+	snode.c-net-un-stream \
+	snode.c-net-un-stream-legacy \
+	snode.c-net-un-stream-tls \
+	snode.c-utils \
+	snode.c-websocket \
+	snode.c-websocket-client \
+	snode.c-websocket-server
+endef
+
+define Package/snode.c-full/install
+	$(call Package/snode.c-apps/install,$(1))
+	$(call Package/snode.c-core/install,$(1))
+	$(call Package/snode.c-core-mux-epoll/install,$(1))
+	$(call Package/snode.c-core-mux-poll/install,$(1))
+	$(call Package/snode.c-core-mux-select/install,$(1))
+	$(call Package/snode.c-core-socket/install,$(1))
+	$(call Package/snode.c-core-socket-stream/install,$(1))
+	$(call Package/snode.c-core-socket-stream-legacy/install,$(1))
+	$(call Package/snode.c-core-socket-stream-tls/install,$(1))
+	$(call Package/snode.c-db-mariadb/install,$(1))
+	$(call Package/snode.c-http/install,$(1))
+	$(call Package/snode.c-http-client/install,$(1))
+	$(call Package/snode.c-http-server/install,$(1))
+	$(call Package/snode.c-http-server-express/install,$(1))
+	$(call Package/snode.c-logger/install,$(1))
+	$(call Package/snode.c-mqtt/install,$(1))
+	$(call Package/snode.c-mqtt-client/install,$(1))
+	$(call Package/snode.c-mqtt-server/install,$(1))
+	$(call Package/snode.c-net/install,$(1))
+	$(call Package/snode.c-net-in/install,$(1))
+	$(call Package/snode.c-net-in6/install,$(1))
+	$(call Package/snode.c-net-in6-stream/install,$(1))
+	$(call Package/snode.c-net-in6-stream-legacy/install,$(1))
+	$(call Package/snode.c-net-in6-stream-tls/install,$(1))
+	$(call Package/snode.c-net-in-stream/install,$(1))
+	$(call Package/snode.c-net-in-stream-legacy/install,$(1))
+	$(call Package/snode.c-net-in-stream-tls/install,$(1))
+	$(call Package/snode.c-net-l2/install,$(1))
+	$(call Package/snode.c-net-l2-stream/install,$(1))
+	$(call Package/snode.c-net-l2-stream-legacy/install,$(1))
+	$(call Package/snode.c-net-l2-stream-tls/install,$(1))
+	$(call Package/snode.c-net-rc/install,$(1))
+	$(call Package/snode.c-net-rc-stream/install,$(1))
+	$(call Package/snode.c-net-rc-stream-legacy/install,$(1))
+	$(call Package/snode.c-net-rc-stream-tls/install,$(1))
+	$(call Package/snode.c-net-un/install,$(1))
+	$(call Package/snode.c-net-un-dgram/install,$(1))
+	$(call Package/snode.c-net-un-stream/install,$(1))
+	$(call Package/snode.c-net-un-stream-legacy/install,$(1))
+	$(call Package/snode.c-net-un-stream-tls/install,$(1))
+	$(call Package/snode.c-utils/install,$(1))
+	$(call Package/snode.c-websocket/install,$(1))
+	$(call Package/snode.c-websocket-client/install,$(1))
+	$(call Package/snode.c-websocket-server/install,$(1))
+endef
+
+define Package/snode.c-full/postinst
+#!/bin/sh
+
+GROUP_NAME=$(GROUP_NAME)
+GROUP_ID=$(GROUP_ID)
+
+if [ -z "$$(grep ^$${GROUP_NAME}: $${IPKG_INSTROOT}/etc/group)" ]; then
+	echo "Adding group $${GROUP_NAME} to /etc/group and assign user root to it"
+	echo "$${GROUP_NAME}:x:$${GROUP_ID}:root" >> $${IPKG_INSTROOT}/etc/group
+fi
+endef
+
+define Package/snode.c-full/prerm
+#!/bin/sh
+
+GROUP_NAME=$(GROUP_NAME)
+
+echo "Removing group $${GROUP_NAME} from /etc/group"
+sed -i "/^$${GROUP_NAME}:/d" /etc/group
+endef
+
+define Package/snode.c-apps
+  $(call Package/snode.c/Default)
+  TITLE:=SNode.C demo applications
+  DEPENDS:=+snode.c-net-in-stream-legacy \
+	+snode.c-net-in-stream-tls \
+	+snode.c-net-in6-stream-legacy \
+	+snode.c-net-in6-stream-tls \
+	+snode.c-net-l2-stream-legacy \
+	+snode.c-net-l2-stream-tls \
+	+snode.c-net-rc-stream-legacy \
+	+snode.c-net-rc-stream-tls \
+	+snode.c-net-un-stream-legacy \
+	+snode.c-net-un-stream-tls \
+	+snode.c-http-server-express \
+	+snode.c-http-client \
+	+snode.c-websocket-server \
+	+snode.c-websocket-client \
+	+snode.c-mqtt-server \
+	+snode.c-mqtt-client \
+	+snode.c-db-mariadb
+endef
+
+define Package/snode.c-apps/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/usr/lib/snode.c/web/http/upgrade/websocket
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/snode.c/web/http/upgrade/websocket/libsnodec-websocket-echo-server.so.1 $(1)/usr/lib/snode.c/web/http/upgrade/websocket/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/snode.c/web/http/upgrade/websocket/libsnodec-websocket-echo-client.so.1 $(1)/usr/lib/snode.c/web/http/upgrade/websocket/
 endef
 
 define Package/snode.c-utils/postinst
@@ -114,7 +232,6 @@ sed -i "/^$${GROUP_NAME}:/d" /etc/group
 endef
 
 $(eval $(call BuildPackage,snode.c))
-$(eval $(call BuildPackage,snode.c-full))
 $(eval $(call BuildPackage,snode.c-apps))
 $(eval $(call BuildSNodeCModule,logger,logger,+libstdcpp,/usr/lib))
 $(eval $(call BuildSNodeCModule,utils,utils,+snode.c-logger,/usr/lib))
@@ -159,3 +276,4 @@ $(eval $(call BuildSNodeCModule,websocket-client,websocket-client,+snode.c-webso
 $(eval $(call BuildSNodeCModule,mqtt,mqtt,+snode.c-core-socket-stream,/usr/lib/snode.c/iot/mqtt))
 $(eval $(call BuildSNodeCModule,mqtt-server,mqtt-server,+snode.c-mqtt,/usr/lib/snode.c/iot/mqtt))
 $(eval $(call BuildSNodeCModule,mqtt-client,mqtt-client,+snode.c-mqtt,/usr/lib/snode.c/iot/mqtt))
+$(eval $(call BuildPackage,snode.c-full))
