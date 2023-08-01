@@ -53,7 +53,7 @@ define BuildSNodeCModule
   define Package/snode.c-$(1)
     $$(call Package/snode.c/Default)
     TITLE:=SNode.C $(2) module
-    DEPENDS:=$(3)
+    DEPENDS:=snode.c $(3)
   endef
 
   define Package/snode.c-$(1)/install
