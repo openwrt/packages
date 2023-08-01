@@ -1,0 +1,11 @@
+--- a/Makefile
++++ b/Makefile
+@@ -66,7 +66,7 @@ ultrix:
+ 	make "CFLAGS=-DBSD -DULTRIX_BUG" flip
+ 
+ flip: $(OBJS)
+-	$(LD) $(LDFLAGS) $(OBJS) -o flip
++	$(CC) $(LDFLAGS) $(OBJS) -o flip
+ 
+ flip.o: flip.c flip.h
+ 	$(CC) $(CPPFLAGS) $(CFLAGS) $(CFMORE) $*.c

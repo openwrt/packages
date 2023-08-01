@@ -1,0 +1,45 @@
+From: Jari Aalto <jari.aalto@cante.net>
+Date: Fri, 25 Dec 2020 12:53:36 -0500
+Subject: Add support for user set flags
+
+---
+ Makefile | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
+
+--- a/Makefile
++++ b/Makefile
+@@ -34,10 +34,10 @@ MANDIR = /usr/man/man1/.
+ # (relatively unchanging) flags for compiler
+ 
+ CC = cc
+-CFLAGS =
++# CFLAGS =
+ CFMORE = -c -DNDEBUG -O -DVERSION=\"$(VERSION)\"
+ LD = cc
+-LDFLAGS = -o flip
++# LDFLAGS = -o flip
+ 
+ # If your system does not supply getopt as a library function,
+ # add getopt.o to the RHS list on the next line and uncomment the
+@@ -47,6 +47,8 @@ OBJS = flip.o
+ #getopt.o: getopt.c flip.h
+ #	$(CC) $(CFLAGS) $(CFMORE) $*.c
+ 
++all: flip
++
+ nothing:
+ 	@echo \
+ 	'Please type "make sys_v", "make bsd", "make uport", or "make ultrix"'
+@@ -64,10 +66,10 @@ ultrix:
+ 	make "CFLAGS=-DBSD -DULTRIX_BUG" flip
+ 
+ flip: $(OBJS)
+-	$(LD) $(LDFLAGS) $(OBJS)
++	$(LD) $(LDFLAGS) $(OBJS) -o flip
+ 
+ flip.o: flip.c flip.h
+-	$(CC) $(CFLAGS) $(CFMORE) $*.c
++	$(CC) $(CPPFLAGS) $(CFLAGS) $(CFMORE) $*.c
+ 
+ clean:
+ 	rm -f *.o core flip

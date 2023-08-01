@@ -1,0 +1,39 @@
+From: Jari Aalto <jari.aalto@cante.net>
+Date: Fri, 25 Dec 2020 12:53:36 -0500
+Subject: Ignore files stat on stdio (CloseS: #518311).
+
+---
+ flip.c | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+--- a/flip.c
++++ b/flip.c
+@@ -317,7 +317,7 @@ enum choices which;
+ #endif
+    }
+ 
+-   if (!touch)
++   if (!touch  &&  ! use_stdio)
+       GETFT (infile, fname, timestamp);      /* save current timestamp */
+ 
+    assert (which == IXTOMS || which == MSTOIX);
+@@ -362,6 +362,8 @@ enum choices which;
+ 
+    if (!ferror(outfile) && fflush(outfile) != EOF && fclose(outfile) != EOF) {
+       int moved;
++      if (use_stdio)
++	  goto stdio_skip;
+ #ifdef IX
+       if (stat (tfname, &ofilestat)) {
+ 	/* can't get the file's permissions */
+@@ -391,6 +393,10 @@ enum choices which;
+ 	  }
+ 	}
+ #endif /* IX */
++
++
++      stdio_skip:
++
+       //      DELFILE (fname);
+       if (!use_stdio) {
+          moved = MVFILE (tfname, fname);

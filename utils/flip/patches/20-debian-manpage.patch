@@ -1,0 +1,80 @@
+From: Jari Aalto <jari.aalto@cante.net>
+Date: Fri, 25 Dec 2020 12:53:36 -0500
+Subject: Correct hyphens
+
+---
+ flip.1 | 30 +++++++++++++++---------------
+ 1 file changed, 15 insertions(+), 15 deletions(-)
+
+--- a/flip.1
++++ b/flip.1
+@@ -53,7 +53,7 @@ to convert all files to **IX format you
+ .sp
+ .nf
+ .\"                    flip -u *.*  (under MS-DOS)
+-                    flip -u *
++                    flip \-u *
+ .\"    (under **IX)
+ .fi
+ .sp
+@@ -92,15 +92,15 @@ converts a file.
+ .sp
+ \fBflip\fP is normally invoked as:
+ .nf
+-               flip -umhvtb file ...
++               flip \-umhvtb file ...
+ .fi
+-One of -u, -m, or -h is required.  Switches may be given
++One of \-u, \-m, or \-h is required.  Switches may be given
+ separately or combined together after a dash.  For example,
+ the three command lines given below are equivalent:
+ .nf
+-               flip -uvt *.c
+-               flip -u -v -t *.c
+-               flip -u -vt *.c
++               flip \-uvt *.c
++               flip \-u \-v \-t *.c
++               flip \-u \-vt *.c
+ .fi
+ 
+ On systems that allow a program to know its own name, \fBflip\fP
+@@ -109,7 +109,7 @@ may be renamed (or linked) to a file cal
+ for conversion to **IX format, or to a file called toms
+ .\" (or toms.exe under MS-DOS) 
+ for conversion to MS-DOS format.  When invoked with the name toix or
+-toms, \fBflip\fP will act as if it were invoked with the -u or -m
++toms, \fBflip\fP will act as if it were invoked with the \-u or \-m
+ option respectively.
+ .\" 
+ .\" .SH RETURN VALUE
+@@ -117,22 +117,22 @@ option respectively.
+ .\" On error, it returns \-1, and \fIerrno\fP is set appropriately.
+ .SH OPTIONS
+ 
+-.IP -u
++.IP \-u
+ Convert to **IX format (CR LF => LF, lone CR or LF unchanged, trailing
+ control Z removed, embedded control Z unchanged).
+-.IP -m
++.IP \-m
+ Convert to MS-DOS format (lone LF => CR LF, lone CR unchanged).
+-.IP -h
++.IP \-h
+ Give a help message.
+-.IP -v
++.IP \-v
+ Be verbose, print filenames as they are processed.
+-.IP -t
++.IP \-t
+ Touch files (don't preserve timestamps).
+-.IP -s
++.IP \-s
+ Strip high bit.
+-.IP -b
++.IP \-b
+ Convert binary files too (else binary files are left unchanged).
+-.IP -z
++.IP \-z
+ Truncate file at first control Z encountered.
+ .SH AUTHOR
+ Rahul Dhesi <dhesi@bsu-cs.bsu.edu>.
