@@ -138,29 +138,20 @@ create_empty_zone() {
 }
 
 append_routes() {
-	local tuple tuples="$1"
-	local string=
+	local tuple tuple="$(trim "$1")"
+	local network prefix router save octets compacted
 
-	local IFS=','
-	for tuple in $tuples; do
-		local network prefix router save octets compacted
+	save="${tuple% *}"
+	router="$(trim "${tuple#${save} }")"
 
-		tuple="$(trim "$tuple")"
+	network="$(trim "${save%/[0-9]*}")"
 
-		save="${tuple% *}"
-		router="$(trim "${tuple#${save} }")"
+	prefix="$(trim "${save##${network}/}")"
 
-		network="$(trim "${save%/[0-9]*}")"
+	octets=$((($prefix + 7) / 8))
+	compacted="$(echo "$network" | cut -d. -f1-$octets)"
 
-		prefix="$(trim "${save##${network}/}")"
-
-		octets=$((($prefix + 7) / 8))
-		compacted="$(echo "$network" | cut -d. -f1-$octets)"
-
-		string="${string:+, }$(explode "$prefix${compacted:+.$compacted}.$router")"
-	done
-
-	echo " option classless-ipv4-route $string;"
+	routes="$routes${routes:+, }$(explode "$prefix${compacted:+.$compacted}.$router")"
 }
 
 append_dhcp_options() {
@@ -306,8 +297,14 @@ static_host_add() {
 			extra_options="$extra_options${extra_options:+ }0c" ;;
 		domain-name)
 			extra_options="$extra_options${extra_options:+ }0f" ;;
+		renewal-time)
+			extra_options="$extra_options${extra_options:+ }3a" ;;
+		rebinding-time)
+			extra_options="$extra_options${extra_options:+ }3b" ;;
 		fqdn)
 			extra_options="$extra_options${extra_options:+ }51" ;;
+		routes)
+			extra_options="$extra_options${extra_options:+ }79" ;;
 		*)
 			echo "unknown option: $option" >&2 ;;
 		esac
@@ -344,7 +341,11 @@ static_host_add() {
 		if [ -n "$gateway" ] ; then
 			echo " option routers $gateway;"
 		fi
+
+		local routes=
 		config_list_foreach "$cfg" "routes" append_routes
+		[ -n "$routes" ] && echo " option classless-ipv4-route $routes;"
+
 		config_list_foreach "$cfg" "dhcp_option" append_dhcp_options
 		if [ -n "$extra_options" ]; then
 			echo -e " if exists dhcp-parameter-request-list {\n  option dhcp-parameter-request-list = concat(option dhcp-parameter-request-list, $extra_options);\n }"
@@ -391,7 +392,11 @@ gen_dhcp_subnet() {
 		echo " option routers $gateway;"
 	fi
 	echo " option domain-name-servers $DNS;"
+
+	local routes=
 	config_list_foreach "$cfg" "routes" append_routes
+	[ -n "$routes" ] && echo " option classless-ipv4-route $routes;"
+
 	config_list_foreach "$cfg" "dhcp_option" append_dhcp_options
 	echo "}"
 }

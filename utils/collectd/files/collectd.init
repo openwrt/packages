@@ -124,6 +124,100 @@ process_write_http_node() {
 	printf "\\t</Node>\n" >> "$COLLECTD_CONF"
 }
 
+process_mqtt() {
+	printf "<Plugin mqtt>\n" >> "$COLLECTD_CONF"
+	config_foreach process_mqtt_block mqtt_block
+	printf "</Plugin>\n\n" >> "$COLLECTD_CONF"
+}
+
+process_mqtt_block() {
+	local cfg="$1"
+
+	local blocktype name Host Port User Password ClientId QoS Prefix Retain StoreRates CleanSession Topic
+
+	config_get blocktype "$cfg" blocktype
+	[ -z "$blocktype" ] && {
+		$LOG notice "No blocktype option in config $cfg defined"
+		return 0
+	}
+	config_get name "$cfg" name
+	[ -z "$name" ] && {
+		$LOG notice "No name option in config $cfg defined"
+		return 0
+	}
+	config_get Host "$cfg" Host
+	[ -z "$Host" ] && {
+		$LOG notice "No Host option in config $cfg defined"
+		return 0
+	}
+	config_get Port "$cfg" Port
+	config_get User "$cfg" User
+	config_get Password "$cfg" Password
+	config_get QoS "$cfg" QoS
+	config_get ClientId "$cfg" ClientId
+	config_get Prefix "$cfg" Prefix
+	[ -n "$Prefix" ] && [ "$blocktype" != "Publish" ] && {
+		$LOG notice "Prefix option in config $cfg defined under non Publish block"
+		return 0
+	}
+	config_get Retain "$cfg" Retain
+	[ -n "$Retain" ] && [ "$blocktype" != "Publish" ] && {
+		$LOG notice "Retain option in config $cfg defined under non Publish block"
+		return 0
+	}
+	config_get StoreRates "$cfg" StoreRates
+	[ -n "$StoreRates" ] && [ "$blocktype" != "Publish" ] && {
+		$LOG notice "StoreRates option in config $cfg defined under non Publish block"
+		return 0
+	}
+	config_get CleanSession "$cfg" CleanSession
+	[ -n "$CleanSession" ] && [ "$blocktype" != "Subscribe" ] && {
+		$LOG notice "CleanSession option in config $cfg defined under non Subscribe block"
+		return 0
+	}
+	config_get Topic "$cfg" Topic
+	[ -n "$Topic" ] && [ "$blocktype" != "Subscribe" ] && {
+		$LOG notice "Topic option in config $cfg defined under non Subscribe block"
+		return 0
+	}
+
+	printf "\\t<%s \"%s\">\n" "${blocktype}" "${name}" >> "$COLLECTD_CONF"
+	[ -z "$Host" ] || {
+		printf "\\t\\tHost \"%s\"\n" "${Host}" >> "$COLLECTD_CONF"
+	}
+	[ -z "$Port" ] || {
+		printf "\\t\\tPort \"%s\"\n" "${Port}" >> "$COLLECTD_CONF"
+	}
+	[ -z "$User" ] || {
+		printf "\\t\\tUser \"%s\"\n" "${User}" >> "$COLLECTD_CONF"
+	}
+	[ -z "$Password" ] || {
+		printf "\\t\\tPassword \"%s\"\n" "${Password}" >> "$COLLECTD_CONF"
+	}
+	[ -z "$QoS" ] || {
+		printf "\\t\\tQoS %s\n" "${QoS}" >> "$COLLECTD_CONF"
+	}
+	[ -z "$ClientId" ] || {
+		printf "\\t\\tClientId \"%s\"\n" "${ClientId}" >> "$COLLECTD_CONF"
+	}
+	[ -z "$Prefix" ] || {
+		printf "\\t\\tPrefix \"%s\"\n" "${Prefix}" >> "$COLLECTD_CONF"
+	}
+	[ -z "$Retain" ] || {
+		printf "\\t\\tRetain \"%s\"\n" "${Retain}" >> "$COLLECTD_CONF"
+	}
+	[ -z "$StoreRates" ] || {
+		printf "\\t\\tStoreRates \"%s\"\n" "${StoreRates}" >> "$COLLECTD_CONF"
+	}
+	[ -z "$CleanSession" ] || {
+		printf "\\t\\tCleanSession \"%s\"\n" "${CleanSession}" >> "$COLLECTD_CONF"
+	}
+	[ -z "$Topic" ] || {
+		printf "\\t\\tTopic \"%s\"\n" "${Topic}" >> "$COLLECTD_CONF"
+	}
+	printf "\\t</%s>\n" "${blocktype}" >> "$COLLECTD_CONF"
+}
+
 process_network() {
 	local cfg="$1"
 
@@ -406,6 +500,10 @@ process_plugins() {
 		write_http)
 			CONFIG_STRING=""
 			process_write_http
+			;;
+		mqtt)
+			CONFIG_STRING=""
+			process_mqtt
 			;;
 		*)
 			CONFIG_STRING=""

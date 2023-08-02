@@ -221,3 +221,12 @@ config globals 'globals'
 #config write_http_node
 #	option name 'foo'
 #	option URL 'http://example.org/post-collectd'
+#
+#config plugin 'mqtt'
+#	option enable '1'
+#
+#config mqtt_block
+#	option name 'foo'
+#	option blocktype 'Subscribe'
+#	option Host 'localhost'
+#	option Topic 'collectd/#'

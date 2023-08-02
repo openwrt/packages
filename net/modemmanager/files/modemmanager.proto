@@ -346,7 +346,17 @@ proto_modemmanager_init_config() {
 	proto_config_add_string	 plmn
 	proto_config_add_int	 signalrate
 	proto_config_add_boolean lowpower
+	proto_config_add_boolean allow_roaming
 	proto_config_add_defaults
+}
+
+# Append param to the global 'connectargs' variable.
+append_param() {
+	local param="$1"
+
+	[ -z "$param" ] && return
+	[ -z "$connectargs" ] || connectargs="${connectargs},"
+	connectargs="${connectargs}${param}"
 }
 
 proto_modemmanager_setup() {
@@ -356,11 +366,11 @@ proto_modemmanager_setup() {
 	local bearermethod_ipv4 bearermethod_ipv6 auth cliauth
 	local operatorname operatorid registration accesstech signalquality
 
-	local device apn allowedauth username password pincode iptype plmn metric signalrate
+	local device apn allowedauth username password pincode iptype plmn metric signalrate allow_roaming
 
 	local address prefix gateway mtu dns1 dns2
 
-	json_get_vars device apn allowedauth username password pincode iptype plmn metric signalrate
+	json_get_vars device apn allowedauth username password pincode iptype plmn metric signalrate allow_roaming
 
 	# validate sysfs path given in config
 	[ -n "${device}" ] || {
@@ -393,7 +403,24 @@ proto_modemmanager_setup() {
 	echo "starting connection with apn '${apn}'..."
 	proto_notify_error "${interface}" MM_CONNECT_IN_PROGRESS
 
-	connectargs="apn=${apn}${iptype:+,ip-type=${iptype}}${plmn:+,operator-id=${plmn}}${cliauth:+,allowed-auth=${cliauth}}${username:+,user=${username}}${password:+,password=${password}}${pincode:+,pin=${pincode}}"
+	# setup allow-roaming parameter
+	if [ -n "${allow_roaming}" ] && [ "${allow_roaming}" -eq 0 ];then
+		allow_roaming="no"
+	else
+		# allowed unless a user set the opposite
+		allow_roaming="yes"
+	fi
+
+	# Append options to 'connectargs' variable
+	append_param "apn=${apn}"
+	append_param "allow-roaming=${allow_roaming}"
+	append_param "${iptype:+ip-type=${iptype}}"
+	append_param "${plmn:+operator-id=${plmn}}"
+	append_param "${cliauth:+allowed-auth=${cliauth}}"
+	append_param "${username:+user=${username}}"
+	append_param "${password:+password=${password}}"
+	append_param "${pincode:+pin=${pincode}}"
+
 	mmcli --modem="${device}" --timeout 120 --simple-connect="${connectargs}" || {
 		proto_notify_error "${interface}" MM_CONNECT_FAILED
 		proto_block_restart "${interface}"
@@ -505,7 +532,6 @@ proto_modemmanager_teardown() {
 	json_get_vars device lowpower iptype
 
 	echo "stopping network"
-	proto_notify_error "${interface}" MM_TEARDOWN_IN_PROGRESS
 
 	# load connected bearer information, just the first one should be ok
 	modemstatus=$(mmcli --modem="${device}" --output-keyvalue)
@@ -540,6 +566,9 @@ proto_modemmanager_teardown() {
 	# low power, only if requested
 	[ "${lowpower:-0}" -lt 1 ] ||
 		mmcli --modem="${device}" --set-power-state-low
+
+	proto_init_update "*" 0
+	proto_send_update "$interface"
 }
 
 [ -n "$INCLUDE_ONLY" ] || {
