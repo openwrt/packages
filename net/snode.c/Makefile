@@ -142,6 +142,11 @@ define Package/snode.c-full
 	snode.c-websocket-server
 endef
 
+define Package/snode.c-full/description
+ This meta-package contains dependencies for all of the snode.c modules.
+ Note that the demo applications are not part of that dependency.
+endef
+
 define Package/snode.c-apps
   $(call Package/snode.c/Default)
   TITLE:=SNode.C demo applications
