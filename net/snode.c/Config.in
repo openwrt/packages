@@ -1,0 +1,13 @@
+
+if PACKAGE_snode.c
+comment "Configuration"
+
+# --with-routing-table
+config SNODEC_GROUP_ID
+	string
+	prompt "Set the default group id for group snodec"
+	default "1023"
+
+comment "Packages"
+
+endif
