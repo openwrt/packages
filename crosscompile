@@ -1,0 +1,33 @@
+#!/bin/sh
+# set -x
+if [ ! -f feeds.conf ]; then
+#rm -rf openwrt-sdk-23.05.0-rc2-ipq40xx-generic_gcc-12.3.0_musl_eabi.Linux-x86_64/
+
+#wget -qO - https://downloads.openwrt.org/releases/23.05.0-rc2/targets/ipq40xx/generic/openwrt-sdk-23.05.0-rc2-ipq40xx-generic_gcc-12.3.0_musl_eabi.Linux-x86_64.tar.xz | tar Jx
+
+# tar xf openwrt-sdk-23.05.0-rc2-ipq40xx-generic_gcc-12.3.0_musl_eabi.Linux-x86_64.tar.xz
+
+#cd openwrt-sdk-23.05.0-rc2-ipq40xx-generic_gcc-12.3.0_musl_eabi.Linux-x86_64/
+
+echo "src-git-full base https://git.openwrt.org/openwrt/openwrt.git;openwrt-23.05" > feeds.conf
+echo "src-git snodec https://github.com/VolkerChristian/owrt-packages.git" >> feeds.conf
+
+cp ../key-build* .
+
+./scripts/feeds update -a            # Update the two necessary feeds (base, snodec)
+./scripts/feeds install snode.c      # Prepare SNode.C and it's dependencies for cross compilation
+
+make defconfig
+fi
+
+rm -f dl/snode.c*.tar.gz
+rm -f dl/mqttbroker*.tar.gz
+
+make -j $(($(nproc)+1)) package/mqttbroker/compile
+make -j $(($(nproc)+1)) package/index
+
+target_dir=$(ls -d "bin/packages/"* | sed 's|bin/packages/||')
+
+ssh root@proliant "mkdir -p /var/www/html/owrt/packages/$target_dir/"
+ssh root@proliant "rm /var/www/html/owrt/packages/$target_dir/*"
+scp bin/packages/$target_dir/snodec/* "root@proliant:/var/www/html/owrt/packages/$target_dir/"
