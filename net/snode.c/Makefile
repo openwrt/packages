@@ -61,7 +61,7 @@ define Package/snode.c/postinst
 #!/bin/sh
 
 GROUP_NAME=$(GROUP_NAME)
-GROUP_ID=$(call qstrip,$(SNODEC_GROUP_ID))
+GROUP_ID=$(call qstrip,$(CONFIG_SNODEC_GROUP_ID))
 
 if [ -z "$$(grep ^$${GROUP_NAME}: $${IPKG_INSTROOT}/etc/group)" ]; then
 	echo "Adding group $${GROUP_NAME} to /etc/group and assign user root to it"
@@ -145,6 +145,10 @@ endef
 define Package/snode.c-full/description
  This meta-package contains dependencies for all of the snode.c modules.
  Note that the demo applications are not part of that dependency.
+endef
+
+define Package/snode.c-full/install
+	true
 endef
 
 define Package/snode.c-apps
