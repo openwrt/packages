@@ -95,51 +95,51 @@ endef
 
 define Package/snode.c-full
   $(call Package/snode.c/Default)
-  TITLE:=all modules in one package
-  DEPENDS:=snode.c
-  PROVIDES:=snode.c-core \
-	snode.c-core-mux-epoll \
-	snode.c-core-mux-poll \
-	snode.c-core-mux-select \
-	snode.c-core-socket \
-	snode.c-core-socket-stream \
-	snode.c-core-socket-stream-legacy \
-	snode.c-core-socket-stream-tls \
-	snode.c-db-mariadb \
-	snode.c-http \
-	snode.c-http-client \
-	snode.c-http-server \
-	snode.c-http-server-express \
-	snode.c-logger \
-	snode.c-mqtt \
-	snode.c-mqtt-client \
-	snode.c-mqtt-server \
-	snode.c-net \
-	snode.c-net-in \
-	snode.c-net-in6 \
-	snode.c-net-in6-stream \
-	snode.c-net-in6-stream-legacy \
-	snode.c-net-in6-stream-tls \
-	snode.c-net-in-stream \
-	snode.c-net-in-stream-legacy \
-	snode.c-net-in-stream-tls \
-	snode.c-net-l2 \
-	snode.c-net-l2-stream \
-	snode.c-net-l2-stream-legacy \
-	snode.c-net-l2-stream-tls \
-	snode.c-net-rc \
-	snode.c-net-rc-stream \
-	snode.c-net-rc-stream-legacy \
-	snode.c-net-rc-stream-tls \
-	snode.c-net-un \
-	snode.c-net-un-dgram \
-	snode.c-net-un-stream \
-	snode.c-net-un-stream-legacy \
-	snode.c-net-un-stream-tls \
-	snode.c-utils \
-	snode.c-websocket \
-	snode.c-websocket-client \
-	snode.c-websocket-server
+  TITLE:=install all modules (no apps)
+  DEPENDS:=snode.c \
+	+snode.c-core \
+	+snode.c-core-mux-epoll \
+	+snode.c-core-mux-poll \
+	+snode.c-core-mux-select \
+	+snode.c-core-socket \
+	+snode.c-core-socket-stream \
+	+snode.c-core-socket-stream-legacy \
+	+snode.c-core-socket-stream-tls \
+	+snode.c-db-mariadb \
+	+snode.c-http \
+	+snode.c-http-client \
+	+snode.c-http-server \
+	+snode.c-http-server-express \
+	+snode.c-logger \
+	+snode.c-mqtt \
+	+snode.c-mqtt-client \
+	+snode.c-mqtt-server \
+	+snode.c-net \
+	+snode.c-net-in \
+	+snode.c-net-in6 \
+	+snode.c-net-in6-stream \
+	+snode.c-net-in6-stream-legacy \
+	+snode.c-net-in6-stream-tls \
+	+snode.c-net-in-stream \
+	+snode.c-net-in-stream-legacy \
+	+snode.c-net-in-stream-tls \
+	+snode.c-net-l2 \
+	+snode.c-net-l2-stream \
+	+snode.c-net-l2-stream-legacy \
+	+snode.c-net-l2-stream-tls \
+	+snode.c-net-rc \
+	+snode.c-net-rc-stream \
+	+snode.c-net-rc-stream-legacy \
+	+snode.c-net-rc-stream-tls \
+	+snode.c-net-un \
+	+snode.c-net-un-dgram \
+	+snode.c-net-un-stream \
+	+snode.c-net-un-stream-legacy \
+	+snode.c-net-un-stream-tls \
+	+snode.c-utils \
+	+snode.c-websocket \
+	+snode.c-websocket-client \
+	+snode.c-websocket-server
 endef
 
 define Package/snode.c-full/description
