@@ -18,8 +18,6 @@ PKG_MAINTAINER:=Volker Christian <me@vchrist.at>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=LICENSE
 
-#PKG_BUILD_DEPENDS:=snode.c
-
 CMAKE_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
