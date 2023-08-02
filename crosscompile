@@ -12,7 +12,7 @@ if ! grep -qFm1 VolkerChristian feeds.conf.default; then
 	cp ../key-build* .
 
 	./scripts/feeds update base packages snodec         # Only the feeds base, packages, and snodec are necessary
-	./scripts/feeds install snode.c                     # Prepare snodec and it's dependencies for cross compilation
+	./scripts/feeds install mqttbroker                  # Prepare snodec and it's dependencies for cross compilation
 	./scripts/feeds uninstall nlohmannjson file         # Make sure the packages nlohmannjson and file are taken from feed
 	./scripts/feeds install -p snodec nlohmannjson file # snodec. They need to be of a newer version than the one in OpenWRT
 
