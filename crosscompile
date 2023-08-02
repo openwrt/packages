@@ -1,23 +1,22 @@
 #!/bin/sh
 # set -x
-if [ ! -f feeds.conf ]; then
-#rm -rf openwrt-sdk-23.05.0-rc2-ipq40xx-generic_gcc-12.3.0_musl_eabi.Linux-x86_64/
 
-#wget -qO - https://downloads.openwrt.org/releases/23.05.0-rc2/targets/ipq40xx/generic/openwrt-sdk-23.05.0-rc2-ipq40xx-generic_gcc-12.3.0_musl_eabi.Linux-x86_64.tar.xz | tar Jx
+if ! grep -qFm1 VolkerChristian feeds.conf.default; then
+	# rm -rf openwrt-sdk-23.05.0-rc2-ipq40xx-generic_gcc-12.3.0_musl_eabi.Linux-x86_64/
+	# wget -qO - https://downloads.openwrt.org/releases/23.05.0-rc2/targets/ipq40xx/generic/openwrt-sdk-23.05.0-rc2-ipq40xx-generic_gcc-12.3.0_musl_eabi.Linux-x86_64.tar.xz | tar Jx
+	# tar xf openwrt-sdk-23.05.0-rc2-ipq40xx-generic_gcc-12.3.0_musl_eabi.Linux-x86_64.tar.xz
+	# cd openwrt-sdk-23.05.0-rc2-ipq40xx-generic_gcc-12.3.0_musl_eabi.Linux-x86_64/
 
-# tar xf openwrt-sdk-23.05.0-rc2-ipq40xx-generic_gcc-12.3.0_musl_eabi.Linux-x86_64.tar.xz
+	echo "src-git snodec https://github.com/VolkerChristian/owrt-packages.git" >> feeds.conf.default
 
-#cd openwrt-sdk-23.05.0-rc2-ipq40xx-generic_gcc-12.3.0_musl_eabi.Linux-x86_64/
+	cp ../key-build* .
 
-echo "src-git-full base https://git.openwrt.org/openwrt/openwrt.git;openwrt-23.05" > feeds.conf
-echo "src-git snodec https://github.com/VolkerChristian/owrt-packages.git" >> feeds.conf
+	./scripts/feeds update base packages snodec         # Only the feeds base, packages, and snodec are necessary
+	./scripts/feeds install mqttbroker                  # Prepare snodec and it's dependencies for cross compilation
+	./scripts/feeds uninstall nlohmannjson file         # Make sure the packages nlohmannjson and file are taken from feed
+	./scripts/feeds install -p snodec nlohmannjson file # snodec. They need to be of a newer version than the one in OpenWRT
 
-cp ../key-build* .
-
-./scripts/feeds update -a            # Update the two necessary feeds (base, snodec)
-./scripts/feeds install snode.c      # Prepare SNode.C and it's dependencies for cross compilation
-
-make defconfig
+	make defconfig
 fi
 
 rm -f dl/snode.c*.tar.gz
