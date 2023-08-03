@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-engineio
-PKG_VERSION:=4.1.0
+PKG_VERSION:=4.5.1
 PKG_RELEASE:=1
 
 PYPI_NAME:=python-engineio
-PKG_HASH:=21e1bcc62f5573a4bb1c805e69915c5a4c5aa953005dde6c2f707c24554c1020
+PKG_HASH:=b167a1b208fcdce5dbe96a61a6ca22391cfa6715d796c22de93e3adf9c07ae0c
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=MIT
@@ -26,7 +26,7 @@ define Package/python3-engineio
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=Engine.IO server
+  TITLE:=Engine.IO server and client
   URL:=https://github.com/miguelgrinberg/python-engineio
   DEPENDS:= \
 	+python3-light \
