@@ -42,10 +42,11 @@ define Package/adguardhome
 	TITLE:=Network-wide ads and trackers blocking DNS server
 	URL:=https://github.com/AdguardTeam/AdGuardHome
 	DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle
+	USERID:=adguardhome:adguardhome
 endef
 
 define Package/adguardhome/conffiles
-/etc/adguardhome.yaml
+/etc/adguardhome/adguardhome.yaml
 /etc/config/adguardhome
 endef
 
@@ -66,7 +67,9 @@ define Package/adguardhome/install
 	$(call GoPackage/Package/Install/Bin,$(1))
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/adguardhome.init $(1)/etc/init.d/adguardhome
-
+	$(INSTALL_DIR) $(1)/etc/adguardhome
+	$(INSTALL_DIR) $(1)/etc/capabilities
+	$(INSTALL_DATA) ./files/adguardhome.json $(1)/etc/capabilities/adguardhome.json
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DATA) ./files/adguardhome.config $(1)/etc/config/adguardhome
 endef
