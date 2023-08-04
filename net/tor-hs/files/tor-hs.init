@@ -9,10 +9,6 @@ TORRC_FILE=/etc/tor/torrc_generated # file with torrc config
 HS_DIR_PATH=/etc/tor/hidden_service #hidden service directory path
 TOR_USER=tor
 
-clean_hs() {
-	local name=""
-}
-
 config_tor() {
 	local restart_tor update_config
 	config_get_bool restart_tor "common" RestartTor
@@ -54,7 +50,6 @@ parse_hs_conf() {
 
 	config_get name "$config" Name
 	config_get description "$config" Description
-
 	config_get_bool enable_hs "$config" Enabled 0
 	config_get ipv4 "$config" IPv4
 
