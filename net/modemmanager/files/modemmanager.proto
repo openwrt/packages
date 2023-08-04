@@ -336,15 +336,15 @@ modemmanager_disconnected_method_common() {
 proto_modemmanager_init_config() {
 	available=1
 	no_device=1
-	proto_config_add_string	 device
-	proto_config_add_string	 apn
-	proto_config_add_string	 'allowedauth:list(string)'
-	proto_config_add_string	 username
-	proto_config_add_string	 password
-	proto_config_add_string	 pincode
-	proto_config_add_string	 iptype
-	proto_config_add_string	 plmn
-	proto_config_add_int	 signalrate
+	proto_config_add_string device
+	proto_config_add_string apn
+	proto_config_add_string 'allowedauth:list(string)'
+	proto_config_add_string username
+	proto_config_add_string password
+	proto_config_add_string pincode
+	proto_config_add_string iptype
+	proto_config_add_string plmn
+	proto_config_add_int signalrate
 	proto_config_add_boolean lowpower
 	proto_config_add_boolean allow_roaming
 	proto_config_add_defaults
