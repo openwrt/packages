@@ -49,6 +49,7 @@ parse_hs_conf() {
 	local config="$1"
 
 	config_get name "$config" Name
+	[ -z "$name" ] && return 0
 	config_get description "$config" Description
 	config_get_bool enable_hs "$config" Enabled 0
 	config_get ipv4 "$config" IPv4
@@ -69,9 +70,10 @@ parse_hs_conf_hooks() {
 	local name hook_script enable_hs hostname_file
 	local config="$1"
 
+	config_get name "$config" Name
+	[ -z "$name" ] && return 0
 	config_get enable_hs "$config" Enabled 0
 	config_get hook_script "$config" HookScript
-	config_get name "$config" Name
 
 	hostname="$HS_DIR_PATH/$name/hostname"
 
