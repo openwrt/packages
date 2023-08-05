@@ -56,8 +56,10 @@ CONFIGURE_ARGS += \
 	--enable-xzlib \
 	--enable-zlib \
 	--disable-libseccomp \
+	--disable-lzlib \
 	--disable-rpath \
 	--disable-warnings \
+	--disable-zstdlib \
 	--without-pic
 
 MAKE_PATH := src
