@@ -60,6 +60,7 @@ CONFIGURE_ARGS += \
 	--disable-lzlib \
 	--disable-rpath \
 	--disable-warnings \
+	--disable-zstdlib \
 	--without-pic
 
 MAKE_PATH := src
