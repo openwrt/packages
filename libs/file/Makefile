@@ -43,7 +43,7 @@ $(call Package/file/Default)
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE+= library
-  DEPENDS:=+zlib +liblzma +libbz2
+  DEPENDS:=+zlib +liblzma +libbz2 +libzstd
 endef
 
 TARGET_CFLAGS += $(FPIC)
