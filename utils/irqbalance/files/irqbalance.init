@@ -22,6 +22,9 @@ start_service() {
 	# 10 is the default
 	config_get interval irqbalance interval 10
 
+	# empty is the default
+	config_get banned_cpulist irqbalance banned_cpulist ''
+
 	# A list of IRQ's to ignore
 	banirq=""
 	handle_banirq_value()
@@ -31,6 +34,9 @@ start_service() {
 	config_list_foreach irqbalance banirq handle_banirq_value
 
 	procd_open_instance "irqbalance"
+	if [ -n "$banned_cpulist" ]; then
+		procd_set_param env IRQBALANCE_BANNED_CPULIST="$banned_cpulist"
+	fi
 	procd_set_param command /usr/sbin/irqbalance -f -c "$deepestcache" -t "$interval" "$banirq"
 	procd_set_param respawn
 	procd_close_instance
