@@ -9,7 +9,7 @@
  	/* Set in/out stream buffering before glibc */
  	if (set_buffering
  #ifdef SYS_gettid
-@@ -2045,7 +2045,7 @@ void destroy_toolcontext(struct cmd_cont
+@@ -2043,7 +2043,7 @@ void destroy_toolcontext(struct cmd_cont
  		dm_hash_destroy(cmd->cft_def_hash);
  
  	dm_device_list_destroy(&cmd->cache_dm_devs);
@@ -20,7 +20,7 @@
  		if (is_valid_fd(STDIN_FILENO) &&
 --- a/tools/lvmcmdline.c
 +++ b/tools/lvmcmdline.c
-@@ -3419,6 +3419,7 @@ int lvm_split(char *str, int *argc, char
+@@ -3432,6 +3432,7 @@ int lvm_split(char *str, int *argc, char
  /* Make sure we have always valid filedescriptors 0,1,2 */
  static int _check_standard_fds(void)
  {
@@ -28,7 +28,7 @@
  	int err = is_valid_fd(STDERR_FILENO);
  
  	if (!is_valid_fd(STDIN_FILENO) &&
-@@ -3445,6 +3446,12 @@ static int _check_standard_fds(void)
+@@ -3458,6 +3459,12 @@ static int _check_standard_fds(void)
  		       strerror(errno));
  		return 0;
  	}
