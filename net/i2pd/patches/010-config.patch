@@ -18,72 +18,72 @@
 -# certsdir = /var/lib/i2pd/certificates
 +certsdir = /usr/share/i2pd/certificates
  
- ## Where to write pidfile (default: i2pd.pid, not used in Windows)
+ ## Where to write pidfile (default: /run/i2pd.pid, not used in Windows)
  # pidfile = /run/i2pd.pid
 @@ -35,7 +35,7 @@
  # logfile = /var/log/i2pd/i2pd.log
- ## Log messages above this level (debug, info, *warn, error, none)
+ ## Log messages above this level (debug, info, *warn, error, critical, none)
  ## If you set it to none, logging will be disabled
 -# loglevel = warn
 +loglevel = none
  ## Write full CLF-formatted date and time to log (default: write only time)
  # logclftime = true
  
-@@ -115,9 +115,9 @@ ssu = false
+@@ -118,9 +118,9 @@ ipv6 = false
  [http]
  ## Web Console settings
- ## Uncomment and set to 'false' to disable Web Console
+ ## Enable the Web Console (default: true)
 -# enabled = true
 +enabled = true
- ## Address and port service will listen on
--address = 127.0.0.1
+ ## Address and port service will listen on (default: 127.0.0.1:7070)
+-# address = 127.0.0.1
 +address = 192.168.1.1
- port = 7070
- ## Path to web console, default "/"
+ # port = 7070
+ ## Path to web console (default: /)
  # webroot = /
-@@ -135,9 +135,9 @@ port = 7070
+@@ -138,9 +138,9 @@ ipv6 = false
  
  [httpproxy]
- ## Uncomment and set to 'false' to disable HTTP Proxy
+ ## Enable the HTTP proxy (default: true)
 -# enabled = true
 +enabled = true
- ## Address and port service will listen on
--address = 127.0.0.1
+ ## Address and port service will listen on (default: 127.0.0.1:4444)
+-# address = 127.0.0.1
 +address = 192.168.1.1
- port = 4444
- ## Optional keys file for proxy local destination
+ # port = 4444
+ ## Optional keys file for proxy local destination (default: http-proxy-keys.dat)
  # keys = http-proxy-keys.dat
-@@ -151,9 +151,9 @@ port = 4444
+@@ -154,9 +154,9 @@ ipv6 = false
  
  [socksproxy]
- ## Uncomment and set to 'false' to disable SOCKS Proxy
+ ## Enable the SOCKS proxy (default: true)
 -# enabled = true
 +enabled = true
- ## Address and port service will listen on
--address = 127.0.0.1
+ ## Address and port service will listen on (default: 127.0.0.1:4447)
+-# address = 127.0.0.1
 +address = 192.168.1.1
- port = 4447
- ## Optional keys file for proxy local destination
+ # port = 4447
+ ## Optional keys file for proxy local destination (default: socks-proxy-keys.dat)
  # keys = socks-proxy-keys.dat
-@@ -167,7 +167,7 @@ port = 4447
+@@ -170,7 +170,7 @@ ipv6 = false
  
  [sam]
- ## Comment or set to 'false' to disable SAM Bridge
--enabled = true
+ ## Enable the SAM bridge (default: true)
+-# enabled = false
 +enabled = false
- ## Address and port service will listen on
+ ## Address and ports service will listen on (default: 127.0.0.1:7656, udp: 7655)
  # address = 127.0.0.1
  # port = 7656
-@@ -202,7 +202,7 @@ enabled = true
+@@ -206,7 +206,7 @@ ipv6 = false
  
  [upnp]
  ## Enable or disable UPnP: automatic port forwarding (enabled by default in WINDOWS, ANDROID)
 -# enabled = false
 +enabled = false
- ## Name i2pd appears in UPnP forwardings list (default = I2Pd)
+ ## Name i2pd appears in UPnP forwardings list (default: I2Pd)
  # name = I2Pd
  
-@@ -244,7 +244,7 @@ verify = true
+@@ -248,7 +248,7 @@ verify = true
  [limits]
  ## Maximum active transit sessions (default: 5000)
  ## This value is doubled if floodfill mode is enabled!
