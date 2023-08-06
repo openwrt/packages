@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=collectd
 PKG_VERSION:=5.12.0
-PKG_RELEASE:=44
+PKG_RELEASE:=46
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://collectd.org/files/ \
@@ -31,7 +31,7 @@ PKG_CONFIG_DEPENDS:= \
 
 COLLECTD_PLUGINS_DISABLED:= \
 	amqp \
-	ampq1 \
+	amqp1 \
 	apple_sensors \
 	aquaero \
 	barometer \
@@ -341,8 +341,6 @@ ifneq ($(CONFIG_PACKAGE_collectd-mod-smart),)
   CONFIGURE_ARGS+= \
 	--with-libatasmart="$(STAGING_DIR)/usr" \
 	--with-libudev="$(STAGING_DIR)/usr"
-else
-  CONFIGURE_ARGS+= --without-libudev
 endif
 
 define Package/collectd/conffiles
