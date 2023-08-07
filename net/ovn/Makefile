@@ -10,7 +10,7 @@ include ../openvswitch/openvswitch.mk
 
 PKG_NAME:=ovn
 PKG_VERSION:=22.03.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/ovn-org/ovn.git
