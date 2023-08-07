@@ -82,6 +82,7 @@ CONFIGURE_ARGS+= \
 	--with-ovs-build=$(ovs_builddir) \
 
 CONFIGURE_VARS += \
+	ovs_cv_groff=no \
 	ovs_cv_flake8=no \
 	ovs_cv_sphinx=no \
 	ovs_cv_python3=$(HOST_PYTHON3_BIN) \

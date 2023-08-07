@@ -249,6 +249,7 @@ CONFIGURE_ARGS+= \
 	--disable-silent-rules \
 
 CONFIGURE_VARS += \
+	ovs_cv_groff=no \
 	$(if $(CONFIG_OPENVSWITCH_WITH_LIBUNBOUND),,ac_cv_lib_unbound_ub_ctx_create=no) \
 	ovs_cv_flake8=no \
 	ovs_cv_python3=$(PYTHON3) \
