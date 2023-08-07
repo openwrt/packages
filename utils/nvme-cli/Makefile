@@ -22,7 +22,7 @@ include $(INCLUDE_DIR)/meson.mk
 define Package/nvme-cli
   SECTION:=utils
   CATEGORY:=Utilities
-  SUBMENU:=Filesystem
+  SUBMENU:=Disc
   TITLE:=NVMe management command line interface
   URL:=https://nvmexpress.org/
   DEPENDS:=+libnvme 
