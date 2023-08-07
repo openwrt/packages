@@ -5,11 +5,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-click
-PKG_VERSION:=8.1.4
+PKG_VERSION:=8.1.6
 PKG_RELEASE:=1
 
 PYPI_NAME:=click
-PKG_HASH:=b97d0c74955da062a7d4ef92fadb583806a585b2ea81958a81bd72726cbb8e37
+PKG_HASH:=48ee849951919527a045bfe3bf7baa8a959c423134e1a5b98c05c20ba75a1cbd
 
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
