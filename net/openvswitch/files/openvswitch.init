@@ -3,279 +3,906 @@
 # Copyright (C) 2014-2017 OpenWrt.org
 # Copyright (C) 2018 Yousong Zhou <yszhou4tech@gmail.com>
 # Copyright (C) 2021 Felix Fietkau <nbd@nbd.name>
+# Copyright (C) 2023 Findlay Feng <i@fengch.me>
 
-. /lib/functions/procd.sh
+USE_PROCD=1
 START=15
 
-basescript=$(readlink "$initscript")
+package=$(basename $(readlink -f "$initscript"))
 
-ovs_ctl="/usr/share/openvswitch/scripts/ovs-ctl"; [ -x "$ovs_ctl" ] || ovs_ctl=:
-ovn_ctl="/usr/share/ovn/scripts/ovn-ctl"; [ -x "$ovn_ctl" ] || ovn_ctl=:
-
-extra_command "status" "Get status information"
-
-service_triggers() {
-	procd_add_reload_trigger openvswitch
+prepare_dir() {
+	for filepath; do
+		mkdir -p $(dirname "$filepath")
+	done
 }
 
-init_triggers() {
-	procd_open_service "$(basename ${basescript:-$initscript})" "$initscript"
-	procd_close_service set
-}
+is_enabled() {
+	local instance="$1"; shift
 
-start() {
-	init_triggers
-	ovs_action start "$@"
-}
+	local disabled
+	config_get_bool disabled "$instance" disabled "0"
 
-reload() {
-	start
-}
+	[ "$disabled" == "0" ] || return 1
 
-running() {
 	return 0
 }
 
-stop() {
-	procd_kill "$(basename ${basescript:-$initscript})"
-	ovs_action stop "$@"
+is_function() {
+	[[ "$(type $1)" =~ "function" ]]
 }
 
-restart() {
-	init_triggers
-	ovs_action restart "$@"
-}
+ovs_config_get() {
+	local instance="$1"; shift
+# log
+	local loglevel_default='warn'
+	local logfilelevel_default='off'
 
-status() {
-	ovs_action status "$@"
-}
+	local ovsdb_ovs_logfile_default="/var/log/openvswitch/${instance//_/-}.log"
+	local ovsdb_ovnsb_logfile_default="/var/log/ovn/${instance}.log"
+	local ovsdb_ovnnb_logfile_default="/var/log/ovn/${instance}.log"
+	local northd_logfile_default="/var/log/ovn/${instance//_/-}.log"
+	local controller_logfile_default="/var/log/ovn/${instance//_/-}.log"
+	local vswitchd_logfile_default="/var/log/openvswitch/${instance//_/-}.log"
 
-ovs_action_cfgs=
-ovs_action() {
-	local action="$1"; shift
+	ovs_bridge_logfile_default() {
+		local name
+		ovs_config_get $instance name
+
+		echo -n "/var/log/openvswitch/${name//_/-}.log"
+	}
+
+	ovs_port_logfile_default() {
+		local port
+		ovs_config_get $instance port
+
+		echo -n "/var/log/openvswitch/${port//_/-}.log"
+	}
+
+# pidfile
+	local ovsdb_ovs_pidfile_default="/var/run/openvswitch/${instance//_/-}.pid"
+	local vswitchd_pidfile_default="/var/run/openvswitch/${instance//_/-}.pid"
+
+	local ovsdb_ovnnb_pidfile_default="/var/run/ovn/${instance}.pid"
+	local ovsdb_ovnsb_pidfile_default="/var/run/ovn/${instance}.pid"
+	local northd_pidfile_default="/var/run/ovn/${instance//_/-}.pid"
+	local controller_pidfile_default="/var/run/ovn/${instance//_/-}.pid"
+
+# ssl
+	local ssl_default='0'
+	local sslbootstrap_default='0'
+
+	local ovsdb_ovs_key_default='db:Open_vSwitch,SSL,private_key'
+	local ovsdb_ovs_cert_default='db:Open_vSwitch,SSL,certificate'
+	local ovsdb_ovs_ca_default='db:Open_vSwitch,SSL,ca_cert'
+	local ovsdb_ovs_sslbootstrap_default='1'
+
+	local ovsdb_ovnnb_key_default='db:OVN_Northbound,SSL,private_key'
+	local ovsdb_ovnnb_cert_default='db:OVN_Northbound,SSL,certificate'
+	local ovsdb_ovnnb_sslprotocols_default='db:OVN_Northbound,SSL,ssl_protocols'
+	local ovsdb_ovnnb_sslciphers_default='db:OVN_Northbound,SSL,ssl_ciphers'
+
+	local ovsdb_ovnsb_key_default='db:OVN_Southbound,SSL,private_key'
+	local ovsdb_ovnsb_cert_default='db:OVN_Southbound,SSL,certificate'
+	local ovsdb_ovnsb_sslprotocols_default='db:OVN_Southbound,SSL,ssl_protocols'
+	local ovsdb_ovnsb_sslciphers_default='db:OVN_Southbound,SSL,ssl_ciphers'
+
+# ovsdb
+	local ovsdb_ovs_dbfile_default='/etc/openvswitch/conf.db'
+	local ovsdb_ovs_dbschema_default='/usr/share/openvswitch/vswitch.ovsschema'
+	local ovsdb_ovs_unixctl_default="/var/run/openvswitch/${instance//_/-}.ctl"
+
+	local ovsdb_ovnnb_dbfile_default="/etc/ovn/${instance}.db"
+	local ovsdb_ovnnb_dbschema_default='/usr/share/ovn/ovn-nb.ovsschema'
+	local ovsdb_ovnnb_unixctl_default="/var/run/ovn/${instance}.ctl"
+
+	local ovsdb_ovnsb_dbfile_default="/etc/ovn/${instance}.db"
+	local ovsdb_ovnsb_dbschema_default='/usr/share/ovn/ovn-sb.ovsschema'
+	local ovsdb_ovnsb_unixctl_default="/var/run/ovn/${instance}.ctl"
+
+# northd
+	local northd_ovnnbdb_default='unix:/var/run/ovn/ovnnb_db.sock'
+	local northd_ovnsbdb_default='unix:/var/run/ovn/ovnsb_db.sock'
+
+# vswitchd
+	local vswitchd_ovsdb_default='unix:/var/run/openvswitch/db.sock'
+	vswitchd_systemtype_default() {
+		local type_file=/etc/openvswitch/system-type.conf
+
+		[ -e "$type_file" ] && cat "$type_file" || echo -n 'openwrt'
+	}
+
+	vswitchd_systemversion_default() {
+		local version_file=/etc/openvswitch/system-version.conf
+		[ -e "$version_file" ] && cat "$version_file" || {
+			local json_old systemversion
+			json_set_namespace "systemversion" json_old
+			json_init
+			json_load "$(ubus call system board)"
+			json_select release
+			json_get_var systemversion version
+			json_cleanup
+			json_set_namespace json_old
+
+			echo -n "$systemversion"
+		}
+	}
+
+	local vswitchd_systemid_default='random'
+	local vswitchd_hostname_default="$(uname -n)"
+
+# controller
+	local controller_ovsdb_default='unix:/var/run/openvswitch/db.sock'
+	local controller_remote_default='unix:/var/run/ovn/ovnsb_db.sock'
+
+# ovs_bridge
+	local ovs_bridge_ovsdb_default='unix:/var/run/openvswitch/db.sock'
+	local ovs_bridge_name_default="br-$instance"
+	local ovs_bridge_fail_mode_default="standalone"
+
+# ovs_port
+	local ovs_port_ovsdb_default='unix:/var/run/openvswitch/db.sock'
+	local ovs_port_ofport_default='-1'
+
+	ovs_port_port_default() {
+		local bridge
+		ovs_config_get $instance bridge
+
+		echo -n "$bridge-$instance"
+	}
+
 	local cfgtype
+	config_get cfgtype "$instance" TYPE
 
-	ovs_action_cfgs="$*"
-	config_load openvswitch
-	for cfgtype in ovs ovn_northd ovn_controller; do
-		config_foreach "ovs_xx" "$cfgtype" "$action" "$cfgtype"
-	done
+	if [ "$cfgtype" == "ovsdb" ]; then
+		local role
+		config_get role "$instance" role 'ovs'
 
-	case "$action" in
-		restart|start)
-			config_foreach ovs_bridge_init "ovs_bridge"
-			;;
-	esac
-
-}
-
-ovs_xx() {
-	local cfg="$1"
-	local action="$2"
-	local cfgtype="$3"
-	local disabled
-
-	if [ -n "$ovs_action_cfgs" ] && ! list_contains "ovs_action_cfgs" "$cfg"; then
-		return
+		cfgtype="${cfgtype}_${role}"
 	fi
-	case "$action" in
-		status|stop) ;;
-		*)
-			config_get_bool disabled "$cfg" disabled 0
-			[ "$disabled" == "0" ] || return
-			;;
-	esac
 
-	case "$cfgtype" in
-		ovs)
-			"$ovs_ctl" "$action" \
-				--system-id=random 1000>&-
-			ovs_set_ssl
-			;;
-		ovn_*)
-			"$ovn_ctl" "${action}_${cfgtype#ovn_}"
-			;;
-	esac
+	for arg; do
+		local option=${arg#*=}
+		local default
+
+		if is_function "$cfgtype"_${option}_default; then
+			default=$(${cfgtype}_${option}_default)
+		elif is_function "$option"_default; then
+			default=$(${option}_default)
+		else
+			default=$(eval echo \${${cfgtype}_${option}_default:-\$${option}_default})
+		fi
+
+		config_get ${arg%%=*} "$instance" "$option" "$default"
+	done
 }
 
-ovs_bridge_parse_port() {
-	case "$1" in
-		*:*)
-			port="${1%%:*}"
-			type="${1#*:}"
-		;;
-		*)
-			port="$1"
-			type=""
-		;;
-	esac
-}
+ovs_config_list_get() {
+	local instance="$1"; shift
+	local option="$1"; shift
 
-ovs_bridge_port_add() {
-	[ -n "$1" ] || return
+	local ovsdb_ovs_remote_default='punix:/var/run/openvswitch/db.sock'
 
-	ovs_bridge_parse_port "$1"
-	cur_type="$(ovs-vsctl get interface "$port" type 2>/dev/null)"
-	[ "$?" = 0 ] && {
-		[ "$type" = "$cur_type" ] || ovs-vsctl del-port "$port"
+	local ovsdb_ovnnb_remote_default=''
+	append ovsdb_ovnnb_remote_default "punix:/var/run/ovn/$instance.sock"
+	append ovsdb_ovnnb_remote_default 'db:OVN_Northbound,NB_Global,connections'
+
+	local ovsdb_ovnsb_remote_default=''
+	append ovsdb_ovnsb_remote_default "punix:/var/run/ovn/$instance.sock"
+	append ovsdb_ovnsb_remote_default 'db:OVN_Southbound,SB_Global,connections'
+
+	local cfgtype
+	config_get cfgtype "$instance" TYPE
+
+	if [ "$cfgtype" == "ovsdb" ]; then
+		local role
+		config_get role "$instance" role 'ovs'
+
+		cfgtype="${cfgtype}_${role}"
+	fi
+
+	local ret=''
+
+	function _cb() {
+		append ret "$1"
 	}
 
-	ovs-vsctl --may-exist add-port "$name" "$port" ${type:+ -- set interface "$port" type="$type"}
-	ovs_bridge_port_up "$port"
-	__port_list="$__port_list ${port} "
+	config_list_foreach "$instance" "$option" _cb
+
+	[ "$ret" == '' ] &&
+		eval echo \${${cfgtype}_${option}_default:-\$${option}_default} ||
+		echo "$ret"
 }
 
-ovs_bridge_port_add_complex() {
-	local cfg="$1"
-	local cur_bridge="$2"
+ovs_update_config() {
+	_ovs_config_add() {
+		local type=$1; shift
+		local name=$1; shift
 
-	local bridge disabled ofport port tag type
-	local cur_tag cur_type del_port
+		uci_add "$package" "$type" "$name"
+	}
 
-	config_get_bool disabled "$cfg" disabled 0
-	[ "$disabled" = "0" ] || return
+	_ovs_config_set_when_null() {
+		local section=$1; shift
+		local option=$1; shift
+		local value=$1; shift
 
-	config_get bridge "$cfg" bridge
-	[ "$bridge" = "$cur_bridge" ] || return
-	ovs-vsctl br-exists "$bridge" || return
+		uci_get "$package" "$section" "$option" 1>0 ||
+			uci_set "$package" "$section" "$option" "$value"
+	}
 
-	config_get port "$cfg" port
-	[ -n "$port" ] || return
+	config_cb() {
+		local type="$1"
+		local name="$2"
+		case "$type" in
+			ovs)
+				case "$name" in
+					ovs)
+						_ovs_config_add ovsdb ovsdb_server
+						_ovs_config_set_when_null ovsdb_server role ovs
 
-	config_get ofport "$cfg" ofport
+						_ovs_config_add vswitchd ovs_vswitchd
 
-	config_get tag "$cfg" tag
-	if [ -n "$tag" ]; then
-		if cur_tag="$(ovs-vsctl get port "$port" tag 2>/dev/null)"; then
-			[ "$tag" = "$cur_tag" ] || del_port=1
-		fi
-	fi
+						option_cb() {
+							local name="$1"
+							local value="$2"
 
-	config_get type "$cfg" type
-	if [ -n "$type" ]; then
-		if cur_type="$(ovs-vsctl get interface "$port" type 2>/dev/null)"; then
-			[ "$type" = "$cur_type" ] || del_port=1
-		fi
-	fi
+							[ "$name" == "disabled" ] &&
+								_ovs_config_set_when_null ovsdb_server disabled "$value"
 
-	[ "${del_port:-0}" -eq 1 ] && ovs-vsctl --if-exists del-port "$bridge" "$port"
+							_ovs_config_set_when_null ovs_vswitchd "$name" "$value"
+						}
 
-	ovs-vsctl --may-exist add-port "$bridge" "$port" ${tag:+tag="$tag"} \
-		${ofport:+ -- set interface "$port" ofport_request="$ofport"} \
-		${type:+ -- set interface "$port" type="$type"}
-	ovs_bridge_port_up "$port"
-	__port_list="$__port_list ${port} "
-}
+						return
+						;;
+				esac
+				break
+				;;
+			ovn_northd)
+				case "$name" in
+					north)
+						_ovs_config_add ovsdb ovnnb_db
+						_ovs_config_set_when_null ovnnb_db role ovnnb
 
-ovs_bridge_port_cleanup() {
-	for port in `ovs-vsctl list-ports "$name"`; do
-		case "$__port_list" in
-			*" $port "*);;
-			*) ovs-vsctl del-port "$port";;
+						_ovs_config_add ovsdb ovnsb_db
+						_ovs_config_set_when_null ovnsb_db role ovnsb
+
+						_ovs_config_add northd ovn_northd
+
+						option_cb() {
+							local name="$1"
+							local value="$2"
+
+							[ "$name" == "disabled" ] && {
+								_ovs_config_set_when_null ovnnb_db disabled "$value"
+								_ovs_config_set_when_null ovnsb_db disabled "$value"
+							}
+
+							_ovs_config_set_when_null ovn_northd "$name" "$value"
+						}
+
+						return
+						;;
+				esac
+				break
+				;;
+			ovn_controller)
+				case "$name" in
+					controller)
+						_ovs_config_add controller ovn_controller
+
+						option_cb() {
+							local name="$1"
+							local value="$2"
+
+							_ovs_config_set_when_null ovn_controller "$name" "$value"
+						}
+
+						return
+						;;
+				esac
+				break
+				;;
+			"")
+				option_cb() { return 0; }
+				uci_commit "$package"
+				return
+				;;
 		esac
+
+		option_cb() { return 0; }
+	}
+
+	config_load "$package"
+	config_cb () { return 0; }
+}
+
+ovs_log_param() {
+	local instance="$1"; shift
+	local param=""
+
+	local loglevel logfile logfilelevel
+	ovs_config_get "$instance" loglevel logfile logfilelevel
+
+	append param "-vsyslog:off"
+	append param "-vconsole:$loglevel"
+	append param "-vfile:$logfilelevel"
+
+	[ "$logfilelevel" != "off" ] && {
+		prepare_dir "$logfile"
+		append param "--log-file=$logfile"
+	}
+
+	echo -n "${param}"
+}
+
+ovs_pidfile_param() {
+	local instance="$1"; shift
+	local param=""
+
+	local pidfile
+	ovs_config_get "$instance" pidfile
+
+	[ "$pidfile" != "" ] && {
+		prepare_dir "$pidfile"
+		append param "--pidfile=$pidfile"
+	}
+
+	echo -n "${param}"
+}
+
+ovs_unixctl_param() {
+	local instance="$1"; shift
+	local param=""
+
+	local unixctl
+	ovs_config_get "$instance" unixctl
+
+	[ "$unixctl" != "" ] && {
+		prepare_dir "$unixctl"
+		append param "--unixctl=$unixctl"
+	}
+
+	echo -n "${param}"
+}
+
+ovs_ssl_param() {
+	local instance="$1"; shift
+	local param=""
+
+	local ssl cert key ca sslbootstrap sslprotocols sslciphers
+	ovs_config_get "$instance" \
+		ssl cert key ca sslbootstrap sslprotocols sslciphers
+
+	[ "$(get_bool $ssl)" == "1" ] && {
+		[ "$cert" != "" ] && [ "$key" != "" ] && {
+			append param "--certificate=$cert"
+			append param "--private-key=$key"
+		}
+
+		[ "$ca" != "" ] && {
+			[ $(get_bool $sslbootstrap) == "1" ] &&
+				append param "--bootstrap-ca-cert=$ca" ||
+				append param "--ca-cert=$ca"
+		}
+
+		[ "$sslprotocols" != "" ] &&
+			append param "--ssl-protocols=$sslprotocols"
+
+		[ "$sslciphers" != "" ] &&
+			append param "--ssl-ciphers=$sslciphers"
+	}
+
+	echo -n "${param}"
+}
+
+ovs_param() {
+	local instance="$1"; shift
+	local param=""
+
+	for arg; do
+		is_function ovs_${arg}_param &&
+			append param "$(ovs_${arg}_param $instance)"
+	done
+
+	echo -n "${param}"
+}
+
+ovsdb_client () {
+	/usr/bin/ovsdb-client $@
+}
+
+ovs_vsctl() {
+	/usr/bin/ovs-vsctl $@
+}
+
+append_vsctl_cmds() {
+	local var="$1" ; shift
+	[ $# == 0 ] && return
+
+	append "$var" "--"
+	for arg; do
+		append "$var" $arg
 	done
 }
 
-ovs_bridge_port_up() {
-	local port="$1"
+generate_vsctl_update_cmd() {
+	local var="$1" ; shift
+	local table="$1" ; shift
+	local RE_cord="$1" ; shift
 
-	ip link set dev "$port" up
-}
-
-ovs_bridge_validate_datapath_id() {
-	local dpid="$1"
-
-	if expr "$dpid" : '[[:xdigit:]]\{16\}$' > /dev/null; then
-		return 0
-	elif expr "$dpid" : '0x[[:xdigit:]]\{1,16\}$' > /dev/null; then
-		return 0
-	else
-		logger -t openvswitch "invalid datapath_id: $dpid"
-		return 1
-	fi
-}
-
-ovs_bridge_validate_datapath_desc() {
-	local dpdesc="$1"
-
-	if [ "$(echo $dpdesc | wc -c)" -le 255 ]; then
-		return 0
-	else
-		logger -t openvswitch "invalid datapath_desc: $dpdesc"
-		return 1
-	fi
-}
-
-ovs_bridge_validate_fail_mode() {
-	local fail_mode="$1"
-
-	case "$fail_mode" in
-		secure|standalone)
-			return 0
-			;;
-		*)
-			logger -t openvswitch "invalid fail_mode: $fail_mode"
-			return 1
-			;;
-	esac
-}
-
-ovs_bridge_init() {
-	local cfg="$1"
-
-	local disabled
-	local name
-	local controller
-	local datapath_id
-
-	config_get_bool disabled "$cfg" disabled 0
-	[ "$disabled" == "0" ] || return
-
-	config_get name "$cfg" name $cfg
-	ovs-vsctl --may-exist add-br "$name"
-
-	config_get datapath_id "$cfg" datapath_id
-	[ -n "$datapath_id" ] && {
-		ovs_bridge_validate_datapath_id "$datapath_id" && {
-			ovs-vsctl --if-exists set bridge "$name" other-config:datapath-id="$datapath_id"
-		}
-	}
-
-	config_get datapath_desc "$cfg" datapath_desc
-	[ -n "$datapath_desc" ] && {
-		ovs_bridge_validate_datapath_desc "$datapath_desc" && {
-			ovs-vsctl --if-exists set bridge "$name" other-config:dp-desc="$datapath_desc"
-		}
-	}
-
-	config_get fail_mode "$cfg" fail_mode
-	[ -n "$fail_mode" ] && {
-		ovs_bridge_validate_fail_mode "$fail_mode" && {
-			ovs-vsctl set-fail-mode "$name" "$fail_mode" 2> /dev/null
-		} || {
-			ovs-vsctl del-fail-mode "$name" 2> /dev/null
-		}
+	local CO_lumns key
+	[[ "$1" =~ ":" ]] && {
+		CO_lumns="${1%%:*}"; key="${1#*:}"; shift
 	} || {
-		ovs-vsctl del-fail-mode "$name" 2> /dev/null
+		CO_lumns="${1}"; shift
+		key="${1}"; shift
 	}
 
-	config_list_foreach "$cfg" "ports" ovs_bridge_port_add
-	config_foreach ovs_bridge_port_add_complex ovs_port "$name"
-	config_get_bool drop "$cfg" "drop_unknown_ports" 0
-	[ "$drop" == 1 ] && ovs_bridge_port_cleanup
+	local value="$1" ; shift
 
-	config_get controller "$cfg" controller
-	[ -n "$controller" ] && \
-		ovs-vsctl set-controller "$name" "$controller"
+	local old=$(ovs_vsctl $@ get "$table" "$RE_cord" \
+		"$CO_lumns:$key" 2>/dev/null | sed 's|^"\(.*\)"$|\1|g')
+
+	[ "$old" == "$value" ] || {
+		[ -n "$value" ] &&
+			append_vsctl_cmds "$var" set "$table" "$RE_cord" \
+				"$CO_lumns:$key"="$value" ||
+			append_vsctl_cmds "$var" remove "$table" "$RE_cord" \
+				"$CO_lumns" "$key"
+	}
 }
 
-ovs_set_ssl() {
-	local ca="$(uci -q get openvswitch.ovs.ca)"
-	[ -f "$ca" ] || return
-	local cert="$(uci get openvswitch.ovs.cert)"
-	[ -f "$cert" ] || return
-	local key="$(uci get openvswitch.ovs.key)"
-	[ -f "$key" ] || return
+ovsdb_running() {
+	local ovsdb="$1"; shift
 
-	ovs-vsctl set-ssl "$key" "$cert" "$ca"
+	ovs_vsctl --db="$ovsdb" $@ init 2>/dev/null 1>/dev/null
+}
+
+start_ovsdb() {
+	is_enabled $@ || return
+
+	local instance="$1"; shift
+
+	local dbfile dbschema
+	ovs_config_get "$instance" dbfile dbschema
+
+	upgrade_db () {
+		action () {
+		local STRING=$1; shift
+		"$@"
+		rc=$?
+		if test "$rc" = 0; then
+				echo "$STRING"
+		else
+				echo "fail:$STRING"
+		fi
+		return "$rc"
+		}
+
+		ovsdb_tool () {
+			/usr/bin/ovsdb-tool -vconsole:off "$@"
+		}
+
+		create_db () {
+			DB_FILE="$1"
+			DB_SCHEMA="$2"
+			action "Creating empty database $DB_FILE" \
+				ovsdb_tool create "$DB_FILE" "$DB_SCHEMA"
+		}
+
+		backup_db () {
+			# Back up the old version.
+			version=`ovsdb_tool db-version "$DB_FILE"`
+			cksum=`ovsdb_tool db-cksum "$DB_FILE" | awk '{print $1}'`
+			backup=$DB_FILE.backup$version-$cksum
+			action "Backing up database to $backup" \
+				cp "$DB_FILE" "$backup" || return 1
+		}
+
+		DB_FILE="$1"
+		DB_SCHEMA="$2"
+
+		schemaver=`ovsdb_tool schema-version "$DB_SCHEMA"`
+		if test ! -e "$DB_FILE"; then
+			echo "warn:$DB_FILE does not exist"
+			prepare_dir "$DB_FILE"
+			create_db "$DB_FILE" "$DB_SCHEMA"
+		elif test X"`ovsdb_tool needs-conversion "$DB_FILE" "$DB_SCHEMA"`" = Xyes; then
+			backup_db || return 1
+
+			# Compact database.  This is important if the old schema did not enable
+			# garbage collection (i.e. if it did not have any tables with "isRoot":
+			# true) but the new schema does.  In that situation the old database
+			# may contain a transaction that creates a record followed by a
+			# transaction that creates the first use of the record.  Replaying that
+			# series of transactions against the new database schema (as "convert"
+			# does) would cause the record to be dropped by the first transaction,
+			# then the second transaction would cause a referential integrity
+			# failure (for a strong reference).
+			#
+			# Errors might occur on an Open vSwitch downgrade if ovsdb-tool doesn't
+			# understand some feature of the schema used in the OVSDB version that
+			# we're downgrading from, so we don't give up on error.
+			action "Compacting database" ovsdb_tool compact "$DB_FILE"
+
+			# Upgrade or downgrade schema.
+			if action "Converting database schema" ovsdb_tool convert "$DB_FILE" "$DB_SCHEMA"; then
+				:
+			else
+				echo "warn:Schema conversion failed, using empty database instead"
+				rm -f "$DB_FILE"
+				create_db "$DB_FILE" "$DB_SCHEMA"
+			fi
+		fi
+	}
+	upgrade_db "$dbfile" "$dbschema"
+
+	procd_open_instance "$instance"
+	procd_set_param command "/usr/sbin/ovsdb-server"
+	procd_append_param command "$dbfile"
+
+	for remote in $(ovs_config_list_get "$instance" remote); do
+		expr match "$remote" "punix:" >/dev/null && prepare_dir ${remote#punix:}
+		procd_append_param command "--remote=$remote"
+	done
+
+	procd_append_param command \
+		$(ovs_param "$instance" log pidfile ssl unixctl)
+
+	procd_append_param stdout 1
+	procd_append_param stderr 1
+
+	procd_close_instance
+}
+
+start_northd() {
+	is_enabled $@ || return
+	local instance="$1"; shift
+
+	local ovnnbdb ovnsbdb
+
+	ovs_config_get "$instance" ovnnbdb ovnsbdb
+
+	procd_open_instance "$instance"
+	procd_set_param command /usr/bin/ovn-northd
+
+	procd_append_param command \
+		$(ovs_param "$instance" log pidfile ssl unixctl)
+
+	procd_append_param command "--ovnnb-db=${ovnnbdb}"
+	procd_append_param command "--ovnsb-db=${ovnsbdb}"
+
+	procd_append_param stdout 1
+	procd_append_param stderr 1
+
+	procd_close_instance
+}
+
+start_vswitchd() {
+	is_enabled $@ || return
+	local instance="$1"; shift
+
+	local ovsdb
+
+	ovs_config_get "$instance" ovsdb
+
+	procd_open_instance "$instance"
+	procd_set_param command /usr/sbin/ovs-vswitchd
+	procd_append_param command "${ovsdb}"
+
+	procd_append_param command \
+		$(ovs_param "$instance" log pidfile ssl unixctl)
+
+	procd_append_param stdout 1
+	procd_append_param stderr 1
+
+	procd_close_instance
+}
+
+start_controller() {
+	is_enabled $@ || return
+	local instance="$1"; shift
+
+	local ovsdb
+	ovs_config_get "$instance" ovsdb
+
+	procd_open_instance "$instance"
+	procd_append_param command /usr/bin/ovn-controller
+	procd_append_param command "$ovsdb"
+
+	procd_append_param command \
+		$(ovs_param "$instance" log pidfile ssl)
+
+	procd_append_param stdout 1
+	procd_append_param stderr 1
+
+	procd_close_instance
+}
+
+start_service() {
+	ovs_update_config
+	config_load "$package"
+
+	for cfgtype in ovsdb northd vswitchd controller; do
+		is_function start_$cfgtype && \
+			config_foreach start_$cfgtype "$cfgtype" $@
+	done
+}
+
+_reload() {
+	local instance="$1"; shift
+
+	is_enabled $instance && {
+		running $instance || start $instance $@
+		return
+	}
+
+	running $instance || return
+	stop $instance $@
+}
+
+reload_vswitchd() {
+	local instance="$1"; shift
+	is_enabled $instance || {
+		running $instance && stop $instance $@
+		return
+	}
+
+	local ovsdb systemtype systemversion systemid hostname
+	ovs_config_get "$instance" ovsdb systemtype systemversion systemid hostname
+	local param=$(ovs_param "$instance" log ssl)
+
+	ovsdb_running "$ovsdb" "$param" || return
+	running $instance || {
+		start $instance $@
+		return
+	}
+
+	local schemaver=$(ovsdb_client "$param" get-schema-version "$ovsdb")
+	local ovsver=$(/usr/sbin/ovs-vswitchd --version | awk '/Open vSwitch/{print $NF}')
+
+	[ "$systemid" == "random" ] && {
+		local id_file=/etc/openvswitch/system-id.conf
+		local uuid_file=/etc/openvswitch/install_uuid.conf
+
+		[ -e "$id_file" ] && systemid=$(cat "$id_file") || {
+			[ -e "$uuid_file" ] && {
+				. "$uuid_file"
+				systemid=$INSTALLATION_UUID
+			} || systemid=$(uuidgen)
+
+			prepare_dir "$id_file"
+			echo -n "$systemid" > "$id_file"
+		}
+	}
+
+	ovs_vsctl --db="${ovsdb}" "${param}" \
+		set open_vswitch . \
+		ovs-version="${ovsver}" \
+		db-version="${schemaver}" \
+		system-type="${systemtype}" \
+		system-version="${systemversion}" \
+		external-ids:hostname="${hostname}" \
+		external-ids:system-id="${systemid}"
+}
+
+reload_controller() {
+	local instance="$1"; shift
+	is_enabled $instance || {
+		running $instance && stop $instance $@
+		return
+	}
+
+	local ovsdb remote bridge encap_type encap_ip
+	ovs_config_get "$instance" ovsdb remote bridge encap_type encap_ip
+	local param=$(ovs_param "$instance" log ssl)
+
+	ovsdb_running "$ovsdb" "$param" || return
+	running $instance || {
+		start $instance $@
+		return
+	}
+
+	append param "--db=$ovsdb"
+
+	local cmds=''
+	for arg in remote bridge encap_type encap_ip; do
+		generate_vsctl_update_cmd cmds \
+			open_vswitch . external_ids:ovn-${arg//_/-} \
+			"$(eval echo -n \$$arg)" $param
+	done
+
+	[ -n "$cmds" ] && {
+		ovs_vsctl $param $cmds
+		restart "$instance" $@
+	}
+}
+
+is_in () {
+	local i="$1"; shift
+
+	[ -n "$i" ] || return 2
+
+	for arg; do
+		[ "$i" == "$arg" ] && return 0
+	done
+
+	return 1
+}
+
+reload_ovs_bridge() {
+	is_enabled $@ || return
+	local instance="$1"; shift
+
+	local ovsdb name \
+		datapath_id datapath_desc \
+		drop_unknown_ports \
+		fail_mode controller
+	ovs_config_get "$instance" ovsdb name \
+		datapath_id datapath_desc \
+		drop_unknown_ports \
+		fail_mode controller
+	local param=$(ovs_param "$instance" log ssl)
+
+	ovsdb_running "$ovsdb" "$param" || return
+
+	append param "--db=$ovsdb"
+
+	ovs_vsctl "$param" br-exists "$name" ||
+	 	ovs_vsctl "$param" add-br "$name"
+
+	local cmds=''
+
+	[ "$(ovs_vsctl $param get bridge $name other-config:datapath-id 2>/dev/null)" != "$datapath_id" ] && {
+		[ -n "$datapath_id" ] &&
+			append_vsctl_cmds cmds set bridge "$name" other-config:datapath-id="$datapath_id" ||
+			append_vsctl_cmds cmds clear bridge "$name" other-config:datapath-id
+	}
+
+	[ "$(ovs_vsctl $param get bridge $name other-config:dp-desc 2>/dev/null)" != "$datapath_desc" ] && {
+		[ -n "$datapath_desc" ] &&
+			append_vsctl_cmds cmds set bridge "$name" other-config:dp-desc="$datapath_desc" ||
+			append_vsctl_cmds cmds clear bridge "$name" other-config:dp-desc
+	}
+
+	[ "$(ovs_vsctl $param get-fail-mode $name 2>/dev/null)" != "$fail_mode" ] && {
+		[ -n "$fail_mode" ] &&
+			append_vsctl_cmds cmds set-fail-mode "$name" "$fail_mode" ||
+			append_vsctl_cmds cmds del-fail-mode "$name"
+	}
+
+	[ "$(ovs_vsctl $param get-controller $name 2>/dev/null)" != "$controller" ] && {
+		[ -n "$controller" ] &&
+			append_vsctl_cmds cmds set-controller "$name" "$controller" ||
+			append_vsctl_cmds cmds del-controller "$name"
+	}
+
+	local ext_ports=""
+	_add_ext_port() {
+		is_enabled $@ || return
+
+		local instance="$1"; shift
+		local bridge port
+
+		config_get bridge "$instance" bridge
+		config_get port "$instance" port
+
+		[ -n "$bridge" ] || [ "$bridge" != "$name" ] || return
+		[ -n "$port" ] && {
+			is_in "$port" $ext_ports || append ext_ports "$port"
+		}
+	}
+
+	config_foreach _add_ext_port 'ovs_port' $@
+
+	local ports=$(ovs_config_list_get "$instance" ports)
+	local old_ports=$(ovs_vsctl $param list-ports $name 2>/dev/null | tr "\n" " ")
+
+	for port in $ports; do
+		is_in "$port" $ext_ports && continue
+
+		if is_in "$port" $old_ports; then
+			append_vsctl_cmds cmds clear port "$port" tag
+			append_vsctl_cmds cmds clear interface "$port" type
+			append_vsctl_cmds cmds clear interface "$port" ofport
+		else
+			append_vsctl_cmds cmds add-port "$name" "$port"
+		fi
+	done
+
+	[ "$(get_bool $drop_unknown_ports)" == "1" ] && {
+		for port in $old_ports; do
+			is_in "$port" $ext_ports $ports ||
+				append_vsctl_cmds cmds del-port "$name" "$port"
+		done
+	}
+
+	[ -n "$cmds" ] && ovs_vsctl $param $cmds
+}
+
+reload_ovs_port() {
+	is_enabled $@ || return
+
+	local instance="$1"; shift
+
+	local ovsdb bridge port ofport tag type
+	ovs_config_get "$instance"  ovsdb bridge port ofport tag type
+
+	local param=$(ovs_param "$instance" log ssl)
+
+	ovsdb_running "$ovsdb" "$param" || return
+
+	append param "--db=$ovsdb"
+	ovs_vsctl $param br-exists "$bridge" || return
+
+	local cmds=''
+	local ports=$(ovs_vsctl $param list-ports "$bridge" 2>/dev/null | tr "\n" " ")
+
+	if is_in "$port" $ports; then
+		local old
+
+		old=$(ovs_vsctl $param get port "$port" tag 2>/dev/null)
+		[ "$old" == "[]" ] && old=""
+		[ "$old" != "$tag" ] && {
+			[ -n "$tag" ] && append_vsctl_cmds cmds set port "$port" tag="$tag" ||
+				append_vsctl_cmds cmds clear port "$port" tag
+		}
+
+		old=$(ovs_vsctl $param get interface "$port" type 2>/dev/null | sed 's|^"\(.*\)"$|\1|g')
+		[ "$old" != "$type" ] && {
+			[ -n "$type" ] && append_vsctl_cmds cmds set interface "$port" type="$type" ||
+				append_vsctl_cmds cmds clear interface "$port" type
+		}
+
+		old=$(ovs_vsctl $param get interface "$port" ofport 2>/dev/null)
+		[ "$old" != "$ofport" ] && {
+			[ "$ofport" != "-1" ] && append_vsctl_cmds cmds set interface "$port" ofport="$ofport" ||
+				append_vsctl_cmds cmds clear interface "$port" ofport
+		}
+
+	else
+		append_vsctl_cmds cmds add-port "$bridge" "$port"
+
+		[ -n "$tag" ] && append_vsctl_cmds cmds set port "$port" tag="$tag"
+		[ -n "$type" ] && append_vsctl_cmds cmds set interface "$port" type="$type"
+		[ -n "$ofport" ] && append_vsctl_cmds cmds set interface "$port" ofport="$ofport"
+	fi
+
+	[ -n "$cmds" ] && ovs_vsctl $param $cmds
+}
+
+reload_service() {
+	config_load "$package"
+
+	for cfgtype in ovsdb northd vswitchd controller ovs_bridge ovs_port; do
+		local function_cb="_reload"
+
+		is_function "reload_$cfgtype" && function_cb="reload_$cfgtype"
+
+		config_foreach "$function_cb" "$cfgtype" $@
+	done
+}
+
+service_data() {
+	config_load "$package"
+
+	for cfgtype in ovsdb; do
+		is_function data_$cfgtype && \
+			config_foreach data_$cfgtype "$cfgtype" $@
+	done
+}
+
+service_triggers() {
+	procd_add_reload_trigger "$package"
+}
+
+service_started() {
+	config_load "$package"
+
+	for cfgtype in northd vswitchd controller; do
+		is_function started_$cfgtype && \
+			config_foreach started_$cfgtype "$cfgtype" $@
+	done
+
+	procd_set_config_changed "$package"
 }
