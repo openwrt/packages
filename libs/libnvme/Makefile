@@ -20,9 +20,8 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/meson.mk
 
 define Package/libnvme
-  SECTION:=utils
+  SECTION:=libs
   CATEGORY:=Libraries
-  SUBMENU:=Filesystem
   TITLE:=C Library for NVM Express on Linux
   URL:=https://github.com/linux-nvme/libnvme
   DEPENDS:=+libjson-c
