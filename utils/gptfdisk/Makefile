@@ -75,6 +75,7 @@ endef
 
 TARGET_CXXFLAGS += -std=c++11 -fno-rtti
 TARGET_LDFLAGS += -Wl,--as-needed
+MAKE_FLAGS += TARGET=linux
 
 define Package/gdisk/install
 	$(INSTALL_DIR) $(1)/usr/bin
