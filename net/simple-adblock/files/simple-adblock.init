@@ -1640,7 +1640,7 @@ load_validate_config() {
 	uci_load_validate "$packageName" "$packageName" "$1" "${2}${3:+ $3}" \
 		'enabled:bool:0' \
 		'force_dns:bool:1' \
-		'force_dns_port:list(integer):53 853' \
+		'force_dns_port:list(integer):"53 853"' \
 		'parallel_downloads:bool:1' \
 		'debug:bool:0' \
 		'compressed_cache:bool:0' \
