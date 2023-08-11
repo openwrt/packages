@@ -8,15 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-msgpack
-PKG_VERSION:=1.0.2
+PKG_VERSION:=1.0.5
 PKG_RELEASE:=1
 
 PYPI_NAME:=msgpack
-PKG_HASH:=fae04496f5bc150eefad4e9571d1a76c55d021325dcd484ce45065ebbdd00984
+PKG_HASH:=c075544284eadc5cddc70f4757331d99dcbc16b2bbd4849d15f8aae4cf36d31c
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=COPYING
+
+PKG_BUILD_DEPENDS:=python-cython/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -26,7 +28,7 @@ define Package/python3-msgpack
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=MessagePack (de)serializer
+  TITLE:=MessagePack serializer
   URL:=https://msgpack.org/
   DEPENDS:=+python3-light +libstdcpp
 endef
