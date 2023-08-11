@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=collectd
 PKG_VERSION:=5.12.0
-PKG_RELEASE:=46
+PKG_RELEASE:=47
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://collectd.org/files/ \
@@ -336,10 +336,16 @@ ifneq ($(CONFIG_PACKAGE_collectd-mod-rrdtool),)
   CONFIGURE_ARGS+= --with-librrd="$(STAGING_DIR)/usr/lib/rrdtool-1.0"
 endif
 
-# exception: mod-smart needs libatasmart
+# exception: mod-smart needs libatasmart and libudev
 ifneq ($(CONFIG_PACKAGE_collectd-mod-smart),)
   CONFIGURE_ARGS+= \
 	--with-libatasmart="$(STAGING_DIR)/usr" \
+	--with-libudev="$(STAGING_DIR)/usr"
+endif
+
+# exception: mod-disk needs libudev
+ifneq ($(CONFIG_PACKAGE_collectd-mod-disk),)
+  CONFIGURE_ARGS+= \
 	--with-libudev="$(STAGING_DIR)/usr"
 endif
 
@@ -463,7 +469,7 @@ $(eval $(call BuildPlugin,curl,cURL input,curl,+PACKAGE_collectd-mod-curl:libcur
 #$(eval $(call BuildPlugin,dbi,relational database input,dbi,+PACKAGE_collectd-mod-dbi:libdbi))
 $(eval $(call BuildPlugin,df,disk space input,df,))
 $(eval $(call BuildPlugin,dhcpleases,show dhcpleases,dhcpleases,))
-$(eval $(call BuildPlugin,disk,disk usage/timing input,disk,+PACKAGE_collectd-mod-smart:libudev))
+$(eval $(call BuildPlugin,disk,disk usage/timing input,disk,+PACKAGE_collectd-mod-disk:libudev))
 $(eval $(call BuildPlugin,dns,DNS traffic input,dns,+PACKAGE_collectd-mod-dns:libpcap))
 $(eval $(call BuildPlugin,email,email output,email,))
 $(eval $(call BuildPlugin,entropy,Entropy amount input,entropy,))
