@@ -6,6 +6,7 @@
 
 . /lib/functions.sh
 . /lib/netifd/netifd-proto.sh
+INCLUDE_ONLY=1 . /lib/netifd/proto/modemmanager.sh
 
 ################################################################################
 # Runtime state
@@ -139,10 +140,6 @@ mm_get_modem_config_foreach_cb() {
 	local cfg="$1"
 	local sysfspath="$2"
 
-	local proto
-	config_get proto "${cfg}" proto
-	[ "${proto}" = modemmanager ] || return 0
-
 	local dev
 	dev=$(uci_get network "${cfg}" device)
 	[ "${dev}" = "${sysfspath}" ] || return 0
@@ -237,19 +234,25 @@ mm_report_modem_wait() {
 ################################################################################
 # Cleanup interfaces
 
-mm_cleanup_interface_cb() {
-	local cfg="$1"
-
-	local proto
-	config_get proto "${cfg}" proto
-	[ "${proto}" = modemmanager ] || return 0
-
-	proto_set_available "${cfg}" 0
-}
-
 mm_cleanup_interfaces() {
-	config_load network
-	config_foreach mm_cleanup_interface_cb interface
+	local modemlist modemlength idx modeminfo modemsysfspath
+
+	modemlist=$(mmcli --list-modems --output-keyvalue)
+	[ -n "${modemlist}" ] || return 0
+
+	modemlength=$(modemmanager_get_field "${modemlist}" "modem-list.length")
+
+	# do nothing if no modem reported
+	[ -n "${modemlength}" ] && [ "${modemlength}" -ge 1 ] && {
+		idx=1
+		while [ $idx -le "$modemlength" ]; do
+			modempath=$(modemmanager_get_field "${modemlist}" "modem-list.value\[$idx\]")
+			modeminfo=$(mmcli --modem "${modempath}" --output-keyvalue)
+			modemsysfspath=$(modemmanager_get_field "${modeminfo}" "modem.generic.device")
+			mm_cleanup_interface_by_sysfspath "${modemsysfspath}"
+			idx=$((idx + 1))
+		done
+	}
 }
 
 mm_cleanup_interface_by_sysfspath() {
