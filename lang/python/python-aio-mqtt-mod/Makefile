@@ -7,11 +7,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-aio-mqtt-mod
-PKG_VERSION:=0.3.3
+PKG_VERSION:=0.3.4
 PKG_RELEASE:=1
 
 PYPI_NAME:=aio-mqtt-mod
-PKG_HASH:=2271f8a2fd6c6aea914896dc3d4dd6e384cd0da405b06dcfa566bd01f968bf9d
+PKG_HASH:=340184b35771b7eb7982072fcca313213d856638dd7f98b99bda3ab16ba23552
 
 PKG_MAINTAINER:=Quintin Hill <stuff@quintin.me.uk>
 PKG_LICENSE:=Apache-2.0
@@ -27,7 +27,7 @@ define Package/python3-aio-mqtt-mod
   SUBMENU:=Python
   TITLE:=Asynchronous MQTT client
   URL:=https://github.com/devbis/aio-mqtt
-  DEPENDS:=+python3-light +python3-asyncio +python3-openssl
+  DEPENDS:=+python3-light +python3-asyncio
 endef
 
 define Package/python3-aio-mqtt-mod/description
