@@ -29,6 +29,7 @@ unexport \
   GOOS \
   GOPATH \
   GOROOT \
+  GOTOOLCHAIN \
   GOTMPDIR \
   GOWORK
 # Unmodified:
@@ -219,7 +220,7 @@ GO_PIE_SUPPORTED_OS_ARCH:= \
   \
   aix_ppc64 \
   \
-  linux_ppc64le linux_riscv64 linux_s390x
+  linux_loong64 linux_ppc64le linux_riscv64 linux_s390x
 
 # From https://go.dev/src/cmd/go/internal/work/init.go
 go_pie_install_suffix=$(if $(filter $(1),aix_ppc64 windows_386 windows_amd64 windows_arm windows_arm64),,shared)
