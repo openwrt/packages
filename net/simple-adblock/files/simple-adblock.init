@@ -1393,7 +1393,7 @@ adb_start() {
 	fi
 	json_add_array firewall
 	if [ "$force_dns" -ne 0 ]; then
-		for c in $force_dns_port; do
+		for c in ${force_dns_port/,/ }; do
 			if netstat -tuln | grep LISTEN | grep ":${c}" >/dev/null 2>&1; then
 				json_add_object ""
 				json_add_string type redirect
@@ -1640,7 +1640,7 @@ load_validate_config() {
 	uci_load_validate "$packageName" "$packageName" "$1" "${2}${3:+ $3}" \
 		'enabled:bool:0' \
 		'force_dns:bool:1' \
-		'force_dns_port:list(integer):"53 853"' \
+		'force_dns_port:list(integer):53,853' \
 		'parallel_downloads:bool:1' \
 		'debug:bool:0' \
 		'compressed_cache:bool:0' \
@@ -1661,7 +1661,7 @@ load_validate_config() {
 		'procd_boot_wan_timeout:integer:60' \
 		'led:or("", "none", file, device, string)' \
 		'dns:or("dnsmasq.addnhosts", "dnsmasq.conf", "dnsmasq.ipset", "dnsmasq.nftset", "dnsmasq.servers", "unbound.adb_list"):dnsmasq.servers' \
-		'dns_instance:or(list(integer, string)):0' \
+		'dns_instance:list(or(integer, string)):0' \
 		'allowed_domain:list(string)' \
 		'allowed_domains_url:list(string)' \
 		'blocked_domain:list(string)' \
