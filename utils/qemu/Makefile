@@ -29,7 +29,7 @@ include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/package.mk
 
 QEMU_DEPS_IN_GUEST := @(TARGET_x86_64||TARGET_armsr||TARGET_malta)
-QEMU_DEPS_IN_HOST := @(TARGET_x86_64||TARGET_sunxi)
+QEMU_DEPS_IN_HOST := @(TARGET_x86_64||TARGET_armsr_armv8||TARGET_sunxi)
 QEMU_DEPS_IN_HOST += +libstdcpp
 QEMU_DEPS_IN_HOST += $(ICONV_DEPENDS)
 
@@ -220,6 +220,7 @@ endef
 qemu-target-list :=	\
 	x86_64-softmmu	\
 	arm-softmmu	\
+	aarch64-softmmu \
 
 qemu-target-x86_64-softmmu-deps:= \
 	+qemu-firmware-pxe \
