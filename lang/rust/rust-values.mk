@@ -22,6 +22,12 @@ ifdef CONFIG_PKG_CC_STACKPROTECTOR_STRONG
 endif
 endif
 
+ifeq ($(HOST_OS),Darwin)
+  ifeq ($(HOST_ARCH),arm64)
+    RUSTC_HOST_ARCH:=aarch64-apple-darwin
+  endif
+endif
+
 # mips64 openwrt has a specific targed in rustc
 ifeq ($(ARCH),mips64)
   RUSTC_TARGET_ARCH:=$(REAL_GNU_TARGET_NAME)
