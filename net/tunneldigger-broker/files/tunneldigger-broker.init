@@ -54,7 +54,7 @@ parse_broker() {
 		cfg_append_kv address "${address}"
 	}
 
-	OPTIONS="max_cookies max_tunnels port_base tunnel_id_base tunnel_timeout namespace connection_rate_limit pmtu"
+	OPTIONS="max_tunnels tunnel_id_base connection_rate_limit connection_rate_limit_per_ip_count connection_rate_limit_per_ip_time pmtu"
 	for option in ${OPTIONS}; do
 		cfg_append_option "$section" "${option}" "${option}"
 	done
@@ -66,13 +66,14 @@ parse_broker() {
 	cfg_append_kv "session.up" "${HOOKPATH}/setup"
 	cfg_append_kv "session.pre-down" "${HOOKPATH}/teardown"
 	cfg_append_kv "session.mtu-changed" "${HOOKPATH}/mtu-changed"
+	cfg_append_kv "broker.connection-rate-limit" "${HOOKPATH}/connection-rate-limit"
 }
 
 parse_log() {
 	local section="$1"
 	cfg_append_section log
 	
-	OPTIONS="filename verbosity"
+	OPTIONS="verbosity"
 	for option in ${OPTIONS}; do
 		cfg_append_option "$section" "${option}" "${option}"
 	done
@@ -97,8 +98,25 @@ start_service() {
 	procd_set_param command "/usr/bin/python"
 	procd_append_param command -m tunneldigger_broker.main
 	procd_append_param command "${CONFIGFILE}"
+
+	# Set up a trigger when the interface changes state
+	local netdev
+	network_get_physdev netdev $(uci show "tunneldigger-broker.@broker[0].interface" | cut -d \' -f 2)
+	procd_set_param netdev $netdev
+
 	procd_set_param respawn
 	procd_set_param stdout 1
 	procd_set_param stderr 1
 	procd_close_instance
 }
+
+reload_service() {
+	restart
+}
+
+service_triggers() {
+	local interface=$(uci show "tunneldigger-broker.@broker[0].interface" | cut -d \' -f 2)
+	procd_add_interface_trigger "interface.*.up" $interface /etc/init.d/tunneldigger-broker restart
+	procd_add_reload_trigger "tunneldigger-broker"
+}
+
