@@ -24,7 +24,7 @@ endif
 
 ifeq ($(HOST_OS),Darwin)
   ifeq ($(HOST_ARCH),arm64)
-    RUSTC_TARGET_ARCH:=aarch64-apple-darwin
+    RUSTC_HOST_ARCH:=aarch64-apple-darwin
   endif
 endif
 
