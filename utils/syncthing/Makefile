@@ -26,13 +26,13 @@ GO_PKG_BUILD_PKG:=\
 	$(if $(CONFIG_PACKAGE_strelaysrv),$(GO_PKG)/cmd/strelaysrv/)
 GO_PKG_INSTALL_EXTRA:=^gui/
 
+GO_PKG_TAGS:=noupgrade,noquic
 GO_PKG_LDFLAGS_X:=\
 	$(GO_PKG)/lib/build.Version=v$(PKG_VERSION) \
 	$(GO_PKG)/lib/build.Stamp=$(SOURCE_DATE_EPOCH) \
 	$(GO_PKG)/lib/build.User=openwrt \
 	$(GO_PKG)/lib/build.Host=openwrt \
-	$(GO_PKG)/lib/build.Tags=noupgrade
-GO_PKG_TAGS:=noupgrade
+	$(GO_PKG)/lib/build.Tags=$(GO_PKG_TAGS)
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
