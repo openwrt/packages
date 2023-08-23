@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=openthread-br
 PKG_SOURCE_DATE:=2023-08-01
 PKG_SOURCE_VERSION:=1738d8cd8b42106c2ef1262fbbac2f06beab83ba
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=https://github.com/openthread/ot-br-posix.git
@@ -74,7 +74,9 @@ CMAKE_OPTIONS += \
 	-DOTBR_SRP_SERVER_AUTO_ENABLE:BOOL=ON \
 	-DOTBR_TREL:BOOL=ON
 
-TARGET_CFLAGS += -DOPENTHREAD_POSIX_CONFIG_DAEMON_SOCKET_BASENAME=\\\"/var/run/openthread-%s\\\"
+TARGET_CFLAGS += -DOPENTHREAD_POSIX_CONFIG_DAEMON_SOCKET_BASENAME=\\\"/var/run/openthread-%s\\\" \
+		 -I$(STAGING_DIR)/usr/include/mdns \
+		 -L$(STAGING_DIR)/usr/lib/mdns
 
 define Package/luci-app-openthread/install
 	$(INSTALL_DIR) \
@@ -94,7 +96,6 @@ endef
 
 define Package/openthread-br/install
 	$(INSTALL_DIR) \
-		$(1)/etc/init.d \
 		$(1)/lib/netifd/proto \
 		$(1)/usr/sbin \
 		$(1)/var/lib/thread
