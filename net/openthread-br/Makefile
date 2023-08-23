@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=openthread-br
 PKG_SOURCE_DATE:=2023-08-01
 PKG_SOURCE_VERSION:=1738d8cd8b42106c2ef1262fbbac2f06beab83ba
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=https://github.com/openthread/ot-br-posix.git
@@ -93,10 +93,8 @@ endef
 
 define Package/openthread-br/install
 	$(INSTALL_DIR) \
-		$(1)/etc/init.d \
 		$(1)/lib/netifd/proto \
-		$(1)/usr/sbin \
-		$(1)/var/lib/thread
+		$(1)/usr/sbin
 	$(INSTALL_BIN) ./files/openthread-proto.sh $(1)/lib/netifd/proto/openthread.sh
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/* $(1)/usr/sbin
 endef
