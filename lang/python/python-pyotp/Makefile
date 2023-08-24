@@ -7,12 +7,12 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=pyotp
-PKG_VERSION:=2.3.0
-PKG_RELEASE:=2
+PKG_NAME:=python-pyotp
+PKG_VERSION:=2.9.0
+PKG_RELEASE:=1
 
-PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=fc537e8acd985c5cbf51e11b7d53c42276fee017a73aec7c07380695671ca1a1
+PYPI_NAME:=pyotp
+PKG_HASH:=346b6642e0dbdde3b4ff5a930b664ca82abfa116356ed48cc42c7d6590d36f63
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 PKG_LICENSE:=MIT
@@ -26,15 +26,16 @@ define Package/python3-pyotp
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=Python One-Time Password Library
+  TITLE:=One-Time Password Library
   URL:=https://github.com/pyauth/pyotp
-  DEPENDS:=+python3-light
+  DEPENDS:=+python3-light +python3-codecs +python3-urllib
 endef
 
 define Package/python3-pyotp/description
-  PyOTP is a Python library for generating and verifying one-time passwords.
-  It can be used to implement two-factor (2FA) or multi-factor (MFA) authentication methods
-  in web applications and in other systems that require users to log in.
+PyOTP is a Python library for generating and verifying one-time
+passwords. It can be used to implement two-factor (2FA) or multi-factor
+(MFA) authentication methods in web applications and in other systems
+that require users to log in.
 endef
 
 $(eval $(call Py3Package,python3-pyotp))

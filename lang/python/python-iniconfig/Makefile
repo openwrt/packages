@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-iniconfig
-PKG_VERSION:=1.1.1
-PKG_RELEASE:=2
+PKG_VERSION:=2.0.0
+PKG_RELEASE:=1
 
 PYPI_NAME:=iniconfig
-PKG_HASH:=bc3af051d7d14b2ee5ef9969666def0cd1a000e121eaea580d4a313df4b37f32
+PKG_HASH:=2d91e135bf72d31a410b17c16da610a82cb55f6b0477d1a902134b24a455b8b3
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_DEPENDS:=python-setuptools-scm/host
+PKG_BUILD_DEPENDS:=python-hatchling/host python-hatch-vcs/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -29,7 +29,7 @@ define Package/python3-iniconfig
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Simple config-ini parser
-  URL:=https://github.com/RonnyPfannschmidt/iniconfig
+  URL:=https://github.com/pytest-dev/iniconfig
   DEPENDS:= +python3-light
 endef
 

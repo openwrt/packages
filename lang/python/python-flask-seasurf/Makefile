@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-flask-seasurf
-PKG_VERSION:=0.3.0
+PKG_VERSION:=1.1.1
 PKG_RELEASE:=1
 
 PYPI_NAME:=Flask-SeaSurf
-PKG_HASH:=10d4946fdd9745a8ae0a38a46c48a9add0cca4896333c0893b3133e3852c2e80
+PKG_HASH:=54537008c769ac0ada8237877327c3e7ed74dcd8b01e74a9120ee0232c5951a9
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 PKG_LICENSE:=BSD-3-Clause
@@ -26,8 +26,8 @@ define Package/python3-flask-seasurf
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
-  TITLE:=Flask SeaSurf
-  URL:=https://flask-seasurf.readthedocs.io/en/latest/
+  TITLE:=Updated CSRF extension for Flask
+  URL:=https://github.com/maxcountryman/flask-seasurf
   DEPENDS:= \
     +python3-flask \
     +python3-light \
@@ -35,7 +35,8 @@ define Package/python3-flask-seasurf
 endef
 
 define Package/python3-flask-seasurf/description
-  SeaSurf is a Flask extension for preventing cross-site request forgery (CSRF).
+SeaSurf is a Flask extension for preventing cross-site request forgery
+(CSRF).
 endef
 
 $(eval $(call Py3Package,python3-flask-seasurf))

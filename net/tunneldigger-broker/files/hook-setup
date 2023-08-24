@@ -13,9 +13,14 @@ if [ -z "$bridge" ]; then
   exit 1
 fi
 
+# Get the isolation option for this bridge
+tunneldigger_get_bridge_isolate isolate "${MTU}"
+
 # Disable IPv6 on this interface as it will be bridged.
 echo 1 > /proc/sys/net/ipv6/conf/${INTERFACE}/disable_ipv6
 # Add the interface to the proper bridge and bring it up.
 ip link set dev ${INTERFACE} master ${bridge} mtu ${MTU} up
+# Isolate the bridge port, if so configured
+echo $isolate > /sys/class/net/${INTERFACE}/brport/isolated
 # Ensure bridge MTU.
 ip link set dev ${bridge} mtu ${MTU}
