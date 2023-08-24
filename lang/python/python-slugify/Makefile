@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-slugify
-PKG_VERSION:=4.0.1
+PKG_VERSION:=8.0.1
 PKG_RELEASE:=1
 
 PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=69a517766e00c1268e5bbfc0d010a0a8508de0b18d30ad5a1ff357f8ae724270
+PKG_HASH:=ce0d46ddb668b3be82f4ed5e503dbc33dd815d83e2eb6824211310d3fb172a27
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 PKG_LICENSE:=MIT
@@ -31,7 +31,6 @@ define Package/python3-slugify
   DEPENDS:= \
     +python3-light \
     +python3-codecs \
-    +python3-setuptools \
     +python3-text-unidecode
 endef
 
