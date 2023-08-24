@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-tornado
-PKG_VERSION:=6.1
+PKG_VERSION:=6.3.3
 PKG_RELEASE:=1
 
 PYPI_NAME:=tornado
-PKG_HASH:=33c6e81d7bd55b468d2e793517c909b139960b6c790a60b7991b9b6b76fb9791
+PKG_HASH:=e7d8db41c0181c80d76c982aacc442c0783a2c54d6400fe028954201a2e032fe
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 PKG_LICENSE:=Apache-2.0
@@ -27,17 +27,8 @@ define Package/python3-tornado
   CATEGORY:=Languages
   SUBMENU:=Python
   TITLE:=Web framework and asynchronous networking library
-  URL:=https://tornadoweb.org
-  DEPENDS:= \
-    +python3-asyncio \
-    +python3-codecs \
-    +python3-email \
-    +python3-light \
-    +python3-logging \
-    +python3-multiprocessing \
-    +python3-openssl \
-    +python3-unittest \
-    +python3-urllib
+  URL:=https://www.tornadoweb.org
+  DEPENDS:=+python3
 endef
 
 define Package/python3-tornado/description
