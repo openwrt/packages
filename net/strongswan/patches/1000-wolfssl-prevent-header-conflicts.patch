@@ -1,0 +1,18 @@
+--- a/src/libstrongswan/plugins/wolfssl/wolfssl_common.h
++++ b/src/libstrongswan/plugins/wolfssl/wolfssl_common.h
+@@ -57,6 +57,7 @@
+ #define ASN1_OCTET_STRING    REMAP_ASN1_OCTET_STRING
+ #define ASN1_UTCTIME         REMAP_ASN1_UTCTIME
+ #define ASN1_GENERALIZEDTIME REMAP_ASN1_GENERALIZEDTIME
++#define ASN1_UTF8STRING      REMAP_ASN1_UTF8STRING
+ 
+ #ifndef WOLFSSL_USER_SETTINGS
+ 	#include <wolfssl/options.h>
+@@ -91,6 +92,7 @@ typedef union {
+ #undef ASN1_OCTET_STRING
+ #undef ASN1_UTCTIME
+ #undef ASN1_GENERALIZEDTIME
++#undef ASN1_UTF8STRING
+ 
+ /* Eliminate macro conflicts */
+ #undef RNG
