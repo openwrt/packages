@@ -11,7 +11,7 @@ Subject: [PATCH] Update xz2 and use it static
 
 --- a/src/bootstrap/Cargo.lock
 +++ b/src/bootstrap/Cargo.lock
-@@ -443,9 +443,9 @@ dependencies = [
+@@ -430,9 +430,9 @@ dependencies = [
  
  [[package]]
  name = "lzma-sys"
@@ -23,7 +23,7 @@ Subject: [PATCH] Update xz2 and use it static
  dependencies = [
   "cc",
   "libc",
-@@ -912,9 +912,9 @@ dependencies = [
+@@ -899,9 +899,9 @@ dependencies = [
  
  [[package]]
  name = "xz2"
@@ -37,7 +37,7 @@ Subject: [PATCH] Update xz2 and use it static
  ]
 --- a/src/bootstrap/Cargo.toml
 +++ b/src/bootstrap/Cargo.toml
-@@ -50,7 +50,7 @@ toml = "0.5"
+@@ -49,7 +49,7 @@ toml = "0.5"
  ignore = "0.4.10"
  opener = "0.5"
  once_cell = "1.7.2"
