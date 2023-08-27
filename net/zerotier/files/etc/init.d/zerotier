@@ -18,7 +18,7 @@ start_instance() {
 	local args=""
 
 	if ! section_enabled "$cfg"; then
-		echo "disabled in config"
+		echo "disabled in /ect/config/zerotier"
 		return 1
 	fi
 
