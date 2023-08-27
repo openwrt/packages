@@ -1,0 +1,41 @@
+From 9b97099560a79529f2b5a748e73164ae038d2b76 Mon Sep 17 00:00:00 2001
+From: Moritz Warning <moritzwarning@web.de>
+Date: Sun, 27 Aug 2023 23:27:33 +0200
+Subject: [PATCH 2/5] remove PIE options
+
+Signed-off-by: Moritz Warning <moritzwarning@web.de>
+---
+ make-linux.mk | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+--- a/make-linux.mk
++++ b/make-linux.mk
+@@ -70,7 +70,7 @@ else
+ 	override CFLAGS+=-Wall -Wno-deprecated -pthread $(INCLUDES) -DNDEBUG $(DEFS)
+ 	CXXFLAGS?=-O3 -fstack-protector
+ 	override CXXFLAGS+=-Wall -Wno-deprecated -std=c++17 -pthread $(INCLUDES) -DNDEBUG $(DEFS)
+-	LDFLAGS=-pie -Wl,-z,relro,-z,now
++	LDFLAGS=-Wl,-z,relro,-z,now
+ 	RUSTFLAGS=--release
+ endif
+ 
+@@ -327,7 +327,7 @@ ifeq ($(ZT_CONTROLLER),1)
+ endif
+ 
+ # ARM32 hell -- use conservative CFLAGS
+-ifeq ($(ZT_ARCHITECTURE),3)
++ifeq (0,3)
+ 	ifeq ($(shell if [ -e /usr/bin/dpkg ]; then dpkg --print-architecture; fi),armel)
+ 		override CFLAGS+=-march=armv5t -mfloat-abi=soft -msoft-float -mno-unaligned-access -marm
+ 		override CXXFLAGS+=-march=armv5t -mfloat-abi=soft -msoft-float -mno-unaligned-access -marm
+@@ -354,8 +354,8 @@ ifeq ($(ZT_USE_ARM32_NEON_ASM_CRYPTO),1)
+ endif
+ 
+ # Position Independence
+-override CFLAGS+=-fPIC -fPIE
+-override CXXFLAGS+=-fPIC -fPIE
++#override CFLAGS+=-fPIC -fPIE
++#override CXXFLAGS+=-fPIC -fPIE
+ 
+ # Non-executable stack
+ override ASFLAGS+=--noexecstack
