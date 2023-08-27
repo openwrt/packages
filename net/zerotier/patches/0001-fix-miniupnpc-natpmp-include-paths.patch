@@ -1,11 +1,12 @@
-From 2c513f0db50eaee5623d58ac024d62142f4ac782 Mon Sep 17 00:00:00 2001
+From 8b30e8617720c2a540c84c5c00508e8081e9f06e Mon Sep 17 00:00:00 2001
 From: Moritz Warning <moritzwarning@web.de>
-Date: Mon, 4 Jul 2022 00:09:24 +0200
-Subject: [PATCH 1/2] fix makefile
+Date: Sun, 27 Aug 2023 23:26:33 +0200
+Subject: [PATCH 1/5] fix miniupnpc/natpmp include paths
 
+Signed-off-by: Moritz Warning <moritzwarning@web.de>
 ---
- make-linux.mk | 14 +++++++-------
- 1 file changed, 7 insertions(+), 7 deletions(-)
+ make-linux.mk | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
 --- a/make-linux.mk
 +++ b/make-linux.mk
@@ -29,32 +30,3 @@ Subject: [PATCH 1/2] fix makefile
  	ONE_OBJS+=ext/libnatpmp/natpmp.o ext/libnatpmp/getgateway.o
  else
  	LDLIBS+=-lnatpmp
-@@ -70,7 +70,7 @@ else
- 	override CFLAGS+=-Wall -Wno-deprecated -pthread $(INCLUDES) -DNDEBUG $(DEFS)
- 	CXXFLAGS?=-O3 -fstack-protector
- 	override CXXFLAGS+=-Wall -Wno-deprecated -std=c++17 -pthread $(INCLUDES) -DNDEBUG $(DEFS)
--	LDFLAGS=-pie -Wl,-z,relro,-z,now
-+	LDFLAGS=-Wl,-z,relro,-z,now
- 	RUSTFLAGS=--release
- endif
- 
-@@ -316,7 +316,7 @@ ifeq ($(ZT_CONTROLLER),1)
- endif
- 
- # ARM32 hell -- use conservative CFLAGS
--ifeq ($(ZT_ARCHITECTURE),3)
-+ifeq (0,3)
- 	ifeq ($(shell if [ -e /usr/bin/dpkg ]; then dpkg --print-architecture; fi),armel)
- 		override CFLAGS+=-march=armv5t -mfloat-abi=soft -msoft-float -mno-unaligned-access -marm
- 		override CXXFLAGS+=-march=armv5t -mfloat-abi=soft -msoft-float -mno-unaligned-access -marm
-@@ -343,8 +343,8 @@ ifeq ($(ZT_USE_ARM32_NEON_ASM_CRYPTO),1)
- endif
- 
- # Position Independence
--override CFLAGS+=-fPIC -fPIE
--override CXXFLAGS+=-fPIC -fPIE
-+#override CFLAGS+=-fPIC -fPIE
-+#override CXXFLAGS+=-fPIC -fPIE
- 
- .PHONY: all
- all:	one
