@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-voluptuous
-PKG_VERSION:=0.12.1
+PKG_VERSION:=0.13.1
 PKG_RELEASE:=1
 
 PYPI_NAME:=voluptuous
-PKG_HASH:=663572419281ddfaf4b4197fd4942d181630120fb39b333e3adad70aeb56444b
+PKG_HASH:=e8d31c20601d6773cb14d4c0f42aee29c6821bbd1018039aac7ac5605b489723
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
@@ -28,12 +28,12 @@ define Package/python3-voluptuous
   SUBMENU:=Python
   TITLE:=Data validation library
   URL:=https://github.com/alecthomas/voluptuous
-  DEPENDS:= \
-      +python3-light
+  DEPENDS:=+python3-light +python3-decimal +python3-urllib
 endef
 
 define Package/python3-voluptuous/description
-It is primarily intended for validating data coming into Python as JSON, YAML, etc.
+It is primarily intended for validating data coming into Python as JSON,
+YAML, etc.
 endef
 
 $(eval $(call Py3Package,python3-voluptuous))
