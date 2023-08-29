@@ -7,16 +7,16 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=voluptuous-serialize
-PKG_VERSION:=2.5.0
+PKG_NAME:=python-voluptuous-serialize
+PKG_VERSION:=2.6.0
 PKG_RELEASE:=1
 
-PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=5359f2e0a4f972ae03066e0777b4f0755c9226b2af099ca4fc55432efd1a447b
+PYPI_NAME:=voluptuous-serialize
+PKG_HASH:=79acdc58239582a393144402d827fa8efd6df0f5350cdc606d9242f6f9bca7c4
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 PKG_LICENSE:=Apache-2.0
-PKG_LICENSE_FILES:=COPYING
+PKG_LICENSE_FILES:=LICENSE
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
