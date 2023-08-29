@@ -1,0 +1,31 @@
+From 013c15db915d2b9d4cbd70779686b010f58e17b1 Mon Sep 17 00:00:00 2001
+From: Magnus Kessler <Magnus.Kessler@gmx.net>
+Date: Thu, 3 Aug 2023 17:50:43 +0200
+Subject: [PATCH] Add -fPIC CFLAG
+
+Without -fPIC linking fails with the OpenWRT mvebu toolchain:
+
+```
+/home/ubuntu/development/TurrisBuild/staging_dir/toolchain-arm_cortex-a9+vfpv3-d16_gcc-12.3.0_musl_eabi/lib/gcc/arm-openwrt-linux-muslgnueabi/12.3.0/../../../../arm-openwrt-linux-muslgnueabi/bin/ld: mhz.o: relocation R_ARM_MOVW_ABS_NC against `a local symbol' can not be used when making a shared object; recompile with -fPIC
+/home/ubuntu/development/TurrisBuild/staging_dir/toolchain-arm_cortex-a9+vfpv3-d16_gcc-12.3.0_musl_eabi/lib/gcc/arm-openwrt-linux-muslgnueabi/12.3.0/../../../../arm-openwrt-linux-muslgnueabi/bin/ld: mhz.o(.text+0x75c): unresolvable R_ARM_CALL relocation against symbol `__aeabi_l2d@@GCC_3.5'
+```
+
+Signed-off-by: Magnus Kessler <Magnus.Kessler@gmx.net>
+---
+ Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile b/Makefile
+index 4b73223..21049f9 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,5 +1,5 @@
+ CC         := gcc
+-CFLAGS     := -O3 -Wall -fomit-frame-pointer
++CFLAGS     := -O3 -Wall -fomit-frame-pointer -fPIC
+ 
+ all: mhz
+ 
+-- 
+2.34.1
+
