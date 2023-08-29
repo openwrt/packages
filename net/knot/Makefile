@@ -152,6 +152,7 @@ CONFIGURE_ARGS += 			\
 	--enable-cap-ng=no            	\
 	--enable-xdp=no                 \
 	--enable-maxminddb=no		\
+	--enable-quic			\
 	--disable-fastparser		\
 	--without-libidn		\
 	--with-libnghttp2=no		\
