@@ -215,9 +215,9 @@ endef
 
 
 define Download/nginx-mod-brotli
-  VERSION:=e505dce68acc190cc5a1e780a3b0275e39f160ca
+  VERSION:=25f86f0bac1101b6512135eac5f93c49c63609e3
   URL:=https://github.com/google/ngx_brotli.git
-  MIRROR_HASH:=04847f11ef808fed50f44b2af0ef3abf59ff0ffc06dfc7394d9ab51d53fef31f
+  MIRROR_HASH:=c85cdcfd76703c95aa4204ee4c2e619aa5b075cac18f428202f65552104add3b
   PROTO:=git
 endef
 
