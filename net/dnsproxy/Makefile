@@ -1,12 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-only
 #
 # Copyright (C) 2021 ImmortalWrt.org
+# Copyright (C) 2023 Bruce Chen <a805899926@gmail.com>
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dnsproxy
-PKG_VERSION:=0.52.0
-PKG_RELEASE:=1
+PKG_VERSION:=0.54.0
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/AdguardTeam/dnsproxy/tar.gz/v$(PKG_VERSION)?
@@ -33,7 +34,6 @@ define Package/dnsproxy
   TITLE:=Simple DNS proxy with DoH, DoT, DoQ and DNSCrypt support
   URL:=https://github.com/AdguardTeam/dnsproxy
   DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle
-  USERID:=dnsproxy=411:dnsproxy=411
 endef
 
 define Package/dnsproxy/description
@@ -53,6 +53,7 @@ endef
 
 define Package/dnsproxy/conffiles
 /etc/config/dnsproxy
+/etc/dnsproxy/
 endef
 
 $(eval $(call GoBinPackage,dnsproxy))
