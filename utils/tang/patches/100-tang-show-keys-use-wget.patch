@@ -1,10 +1,13 @@
 diff --git a/src/tang-show-keys b/src/tang-show-keys
-index 0c33c3a..f017e84 100755
+index 0c33c3a..4b64bda 100755
 --- a/src/tang-show-keys
 +++ b/src/tang-show-keys
-@@ -27,7 +27,7 @@ fi
+@@ -25,9 +25,9 @@ if [ $# -gt 1 ]; then
+     exit 1
+ fi
  
- port=${1-80}
+-port=${1-80}
++port=${1-9090}
  
 -adv=$(curl -sSf "localhost:$port/adv")
 +adv=$(wget -qO- "http://127.0.0.1:$port/adv")
