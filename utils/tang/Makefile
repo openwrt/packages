@@ -13,7 +13,7 @@ PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/latchset/$(PKG_NAME)/releases/download/v$(PKG_VERSION)/
-PKG_HASH:=0b56702a8ac19ff320d7e13a49682efba32403933c84ab1dae0b26ddcc4e3fe5
+PKG_HASH:=04263ed1cc98d60cab29fe47f908921b7b1aa4d6da5f9de2fcbe543773b75886
 
 PKG_MAINTAINER:=Tibor Dudlák <tibor.dudlak@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
