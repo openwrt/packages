@@ -440,6 +440,7 @@ config_remote() {
 	local rekeytime
 	local remote_ca_certs
 	local pools
+	local aggressive
 
 	config_get_bool enabled "$conf" enabled 0
 	[ $enabled -eq 0 ] && return
@@ -461,6 +462,7 @@ config_remote() {
 	config_get ca_cert "$conf" ca_cert ""
 	config_get rekeytime "$conf" rekeytime
 	config_get overtime "$conf" overtime
+	config_get aggressive "$1" aggressive ""
 
 	config_list_foreach "$conf" local_sourceip append_var local_sourceip ","
 	config_list_foreach "$conf" remote_ca_certs append_var remote_ca_certs ","
@@ -479,6 +481,17 @@ config_remote() {
 		fragmentation=
 		;;
 	esac
+
+	if [ "$keyexchange" = "ikev1" ]; then
+		case "$aggressive" in
+		yes|no|"")
+			;;
+		*)
+			fatal "aggressive value $aggressive invalid"
+			aggressive=""
+			;;
+		esac
+	fi
 
 	[ "$gateway" = "any" ] && remote_gateway="%any" || remote_gateway="$gateway"
 
@@ -519,6 +532,7 @@ config_remote() {
 	[ -n "$local_sourceip" ] && swanctl_xappend2 "vips = $local_sourceip"
 	[ -n "$fragmentation" ] && swanctl_xappend2 "fragmentation = $fragmentation"
 	[ -n "$pools" ] && swanctl_xappend2 "pools = $pools"
+	[ -n "$aggressive" ] && swanctl_xappend2 "aggressive = $aggressive"
 
 	swanctl_xappend2 "local {"
 	swanctl_xappend3 "auth = $auth_method"
