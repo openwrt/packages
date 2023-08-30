@@ -25,7 +25,7 @@ include $(INCLUDE_DIR)/meson.mk
 define Package/tang
   SECTION:=utils
   TITLE:=tang v$(PKG_VERSION) - daemon for binding data to the presence of a third party
-  DEPENDS:=+libhttp-parser +jose +bash
+  DEPENDS:=+libhttp-parser +jose
   URL:=https://github.com/latchset/tang
   USERID:=tang:tang
 endef
