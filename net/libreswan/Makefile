@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libreswan
-PKG_VERSION:=4.10
+PKG_VERSION:=4.12
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.libreswan.org/
-PKG_HASH:=5a9400c25a8edba07420426fb55dcbaafdaa3702e5b0f2c19205a6c567248a7b
+PKG_HASH:=ae85abe415f7becf4b6a2b9897e1712f27e5aac9c35dfbdddbcce0ad7dfd99f7
 
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -21,6 +21,7 @@ PKG_CPE_ID:=cpe:/a:libreswan:libreswan
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PKG_BUILD_FLAGS:=lto
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -65,7 +66,6 @@ define Package/libreswan/conffiles
 /etc/ipsec.secrets
 endef
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
-TARGET_CFLAGS += -flto
 
 MAKE_FLAGS+= \
     WERROR_CFLAGS=" " \
@@ -84,9 +84,11 @@ MAKE_FLAGS+= \
     PREFIX="/usr" \
     FINALRUNDIR="/var/run/pluto" \
     FINALNSSDIR="/etc/ipsec.d" \
+    DEFAULT_DNSSEC_ROOTKEY_FILE=/etc/unbound/root.key \
     MODPROBEARGS="-q" \
     OSDEP=linux \
     BUILDENV=linux \
+    LINUX_VARIANT="openwrt" \
     ARCH="$(LINUX_KARCH)" \
 
 define Build/Prepare
