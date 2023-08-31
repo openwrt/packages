@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 include ../python3-version.mk
 
 PKG_NAME:=python3
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 PKG_VERSION:=$(PYTHON3_VERSION).$(PYTHON3_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
@@ -31,7 +31,6 @@ PYTHON3_PKG_BUILD:=0
 include ../python3-package.mk
 
 PKG_FIXUP:=autoreconf
-PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 HOST_BUILD_PARALLEL:=1
 # LTO is handled here individually, see --with-lto below
@@ -51,44 +50,52 @@ define Package/python3/Default
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=Python $(PYTHON3_VERSION) programming language
+  TITLE:=Python $(PYTHON3_VERSION)
   URL:=https://www.python.org/
 endef
 
 define Package/python3/Default/description
- Python is a dynamic object-oriented programming language that can be used
- for many kinds of software development. It offers strong support for
- integration with other languages and tools, comes with extensive standard
- libraries, and can be learned in a few days. Many Python programmers
- report substantial productivity gains and feel the language encourages
- the development of higher quality, more maintainable code.
+Python is an interpreted, interactive, object-oriented programming
+language. It incorporates modules, exceptions, dynamic typing, very high
+level dynamic data types, and classes. It supports multiple programming
+paradigms beyond object-oriented programming, such as procedural and
+functional programming. Python combines remarkable power with very clear
+syntax. It has interfaces to many system calls and libraries, as well as
+to various window systems, and is extensible in C or C++. It is also
+usable as an extension language for applications that need a
+programmable interface. Finally, Python is portable: it runs on many
+Unix variants including Linux and macOS, and on Windows.
 endef
 
 define Package/libpython3
 $(call Package/python3/Default)
-  TITLE:=Python $(PYTHON3_VERSION) core library
+  TITLE+= core library
   DEPENDS:=+libpthread
   ABI_VERSION:=$(PYTHON3_VERSION)
 endef
 
 define Package/libpython3/description
-  This package contains only core Python library.
+$(call Package/python3/Default/description)
+
+This package contains only core Python library.
 endef
 
 define Package/python3-base
 $(call Package/python3/Default)
-  TITLE:=Python $(PYTHON3_VERSION) interpreter
+  TITLE+= base interpreter
   DEPENDS:=+libpython3
 endef
 
 define Package/python3-base/description
-  This package contains only the interpreter and the bare minimum
-  for the interpreter to start.
+$(call Package/python3/Default/description)
+
+This package contains only the interpreter and the bare minimum for the
+interpreter to start.
 endef
 
 define Package/python3-light
 $(call Package/python3/Default)
-  TITLE:=Python $(PYTHON3_VERSION) light installation
+  TITLE+= light installation
   DEPENDS:=+python3-base +libbz2 +zlib
 endef
 
@@ -97,14 +104,15 @@ define Package/python3-light/config
 endef
 
 define Package/python3-light/description
-  This package is essentially the python3-base package plus
-  a few of the rarely used (and big) libraries stripped out
-  into separate packages.
+$(call Package/python3/Default/description)
+
+This package installs the base interpreter package and contains the most
+commonly used parts of the standard library.
 endef
 
 PYTHON3_LIB_FILES_DEL:=
 PYTHON3_PACKAGES:=
-PYTHON3_SO_SUFFIX:=cpython-$(PYTHON3_VERSION_MAJOR)$(PYTHON3_VERSION_MINOR).so
+PYTHON3_SO_SUFFIX:=cpython-$(PYTHON3_VERSION_MAJOR)$(PYTHON3_VERSION_MINOR)-*.so
 PYTHON3_PACKAGES_DEPENDS:=
 define Py3BasePackage
   PYTHON3_PACKAGES+=$(1)
@@ -112,13 +120,15 @@ define Py3BasePackage
     PYTHON3_PACKAGES_DEPENDS+=$(1)
   endif
   PYTHON3_LIB_FILES_DEL+=$(2)
-  define Py3Package/$(1)/filespec
-    ifneq ($(2),)
-      $(subst $(space),$(newline),$(foreach lib_file,$(2),+|$(lib_file)))
-      -|/usr/lib/python$(PYTHON3_VERSION)/*/test
-      -|/usr/lib/python$(PYTHON3_VERSION)/*/tests
-    endif
-  endef
+  ifeq ($(2),)
+    Py3Package/$(1)/filespec=
+  else
+    define Py3Package/$(1)/filespec
+      $(foreach lib_file,$(2),
+        +|$(lib_file)
+      )
+    endef
+  endif
   Py3Package/$(1)/install?=:
 endef
 
@@ -126,16 +136,19 @@ include ./files/python3-package-*.mk
 
 define Package/python3
 $(call Package/python3/Default)
+  TITLE+= programming language
   DEPENDS:=+python3-light $(foreach package,$(PYTHON3_PACKAGES_DEPENDS),+$(package))
 endef
 
 define Package/python3/description
-  This package contains the (almost) full Python install.
-  It's python3-light + all other packages.
+$(call Package/python3/Default/description)
+
+This package installs almost all parts of the standard Python
+installation.
 endef
 
 # Set READELF here so that the exact same readelf program name can be
-# replaced in _sysconfigdata.py (in Py3Package/python3-base/install)
+# replaced in _sysconfigdata_*.py (in Build/Install)
 TARGET_CONFIGURE_OPTS+= \
 	READELF="$(TARGET_CROSS)readelf"
 
@@ -183,23 +196,38 @@ CONFIGURE_ARGS += \
 	$(if $(CONFIG_IPV6),--enable-ipv6) \
 	$(if $(findstring mips,$(CONFIG_ARCH)),,--with-lto)
 
+define Build/Install
+	$(call Build/Install/Default,)
+
+	$(SED) 's|$(TARGET_AR)|ar|g;s|$(TARGET_CROSS)readelf|readelf|g;s|$(TARGET_CC)|gcc|g;s|$(TARGET_CXX)|g++|g' \
+		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON3_VERSION)/_sysconfigdata_*.py \
+		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON3_VERSION)/config-$(PYTHON3_VERSION)-*/Makefile
+endef
+
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include $(1)/usr/lib $(1)/usr/lib/pkgconfig
-	$(INSTALL_DIR) $(2)/bin
+	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/include/python$(PYTHON3_VERSION) \
 		$(1)/usr/include/
+
+	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON3_VERSION) \
 		$(PKG_INSTALL_DIR)/usr/lib/libpython$(PYTHON3_VERSION).so* \
 		$(1)/usr/lib/
-	grep \
-		'^_PYTHON_HOST_PLATFORM=' \
-		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON3_VERSION)/config-$(PYTHON3_VERSION)/Makefile > \
-		$(1)/usr/lib/python$(PYTHON3_VERSION)/config-$(PYTHON3_VERSION)/Makefile-vars
+
+	$(INSTALL_DIR) $(1)/usr/lib/python$(PYTHON3_VERSION)/openwrt
+	grep -E \
+		'^(_PYTHON_HOST_PLATFORM|ABIFLAGS|MACHDEP|MULTIARCH)=' \
+		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON3_VERSION)/config-$(PYTHON3_VERSION)-*/Makefile > \
+		$(1)/usr/lib/python$(PYTHON3_VERSION)/openwrt/Makefile-vars
+
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/python*.pc \
 		$(1)/usr/lib/pkgconfig
+
+	$(INSTALL_DIR) $(2)/bin
 	$(INSTALL_BIN) \
 		$(PKG_INSTALL_DIR)/usr/bin/python$(PYTHON3_VERSION)-config \
 		$(2)/bin/
@@ -212,7 +240,7 @@ PYTHON3_BASE_LIB_FILES:= \
 	/usr/lib/python$(PYTHON3_VERSION)/encodings \
 	/usr/lib/python$(PYTHON3_VERSION)/_collections_abc.py \
 	/usr/lib/python$(PYTHON3_VERSION)/_sitebuiltins.py \
-	/usr/lib/python$(PYTHON3_VERSION)/_sysconfigdata.py \
+	/usr/lib/python$(PYTHON3_VERSION)/_sysconfigdata_*.py \
 	/usr/lib/python$(PYTHON3_VERSION)/_weakrefset.py \
 	/usr/lib/python$(PYTHON3_VERSION)/abc.py \
 	/usr/lib/python$(PYTHON3_VERSION)/codecs.py \
@@ -228,24 +256,22 @@ PYTHON3_LIB_FILES_DEL+=$(PYTHON3_BASE_LIB_FILES)
 
 define Py3Package/python3-base/filespec
 +|/usr/bin/python$(PYTHON3_VERSION)
-$(subst $(space),$(newline),$(foreach lib_file,$(PYTHON3_BASE_LIB_FILES),+|$(lib_file)))
+$(foreach lib_file,$(PYTHON3_BASE_LIB_FILES),
+  +|$(lib_file)
+)
 endef
 
 define Py3Package/python3-light/filespec
 +|/usr/lib/python$(PYTHON3_VERSION)
 -|/usr/lib/python$(PYTHON3_VERSION)/distutils/cygwinccompiler.py
--|/usr/lib/python$(PYTHON3_VERSION)/distutils/command/wininst*
 -|/usr/lib/python$(PYTHON3_VERSION)/idlelib
 -|/usr/lib/python$(PYTHON3_VERSION)/tkinter
 -|/usr/lib/python$(PYTHON3_VERSION)/turtledemo
--|/usr/lib/python$(PYTHON3_VERSION)/lib-dynload/_test*.so
--|/usr/lib/python$(PYTHON3_VERSION)/pdb.doc
--|/usr/lib/python$(PYTHON3_VERSION)/test
 -|/usr/lib/python$(PYTHON3_VERSION)/webbrowser.py
--|/usr/lib/python$(PYTHON3_VERSION)/*/test
--|/usr/lib/python$(PYTHON3_VERSION)/*/tests
 -|/usr/lib/python$(PYTHON3_VERSION)/_osx_support.py
-$(subst $(space),$(newline),$(foreach lib_file,$(PYTHON3_LIB_FILES_DEL),-|$(lib_file)))
+$(foreach lib_file,$(filter /usr/lib/python$(PYTHON3_VERSION)/%,$(PYTHON3_LIB_FILES_DEL)),
+  -|$(lib_file)
+)
 endef
 
 define Package/libpython3/install
@@ -258,17 +284,10 @@ define Py3Package/python3-base/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(LN) python$(PYTHON3_VERSION) $(1)/usr/bin/python3
 	$(LN) python$(PYTHON3_VERSION) $(1)/usr/bin/python
-  # This depends on being called before filespec is processed
-	$(SED) 's|$(TARGET_AR)|ar|g;s|$(TARGET_CROSS)readelf|readelf|g;s|$(TARGET_CC)|gcc|g;s|$(TARGET_CXX)|g++|g' \
-		$(PKG_INSTALL_DIR)/usr/lib/python$(PYTHON3_VERSION)/_sysconfigdata.py
 endef
 
 Py3Package/python3-light/install:=:
-Py3Package/python3/install:=:
-
-define Py3Package/python3/filespec
--|$(PYTHON3_PKG_DIR)
-endef
+Package/python3/install:=:
 
 # libuuid is provided by e2fsprogs and uuid/uuid.h is moved into
 # $(STAGING_DIR_HOST)/include/e2fsprogs
@@ -351,14 +370,13 @@ $(foreach package, $(PYTHON3_PACKAGES),  \
 )
 
 $(eval $(call BuildPackage,libpython3))
+$(eval $(call BuildPackage,python3))
 
 $(eval $(call Py3Package,python3-base))
 $(eval $(call Py3Package,python3-light))
-$(eval $(call Py3Package,python3))
 
 $(eval $(call BuildPackage,python3-base))
 $(eval $(call BuildPackage,python3-light))
-$(eval $(call BuildPackage,python3))
 
 $(eval $(call BuildPackage,python3-base-src))
 $(eval $(call BuildPackage,python3-light-src))
