@@ -1,9 +1,9 @@
 #!/bin/sh /etc/rc.common
-# Copyright 2019-2022 Stan Grishin (stangri@melmac.ca)
+# Copyright 2019-2023 Stan Grishin (stangri@melmac.ca)
 # shellcheck disable=SC1091,SC3043,SC3060
 
 # shellcheck disable=SC2034
-START=95
+START=90
 # shellcheck disable=SC2034
 USE_PROCD=1
 
@@ -71,7 +71,7 @@ dnsmasq_restart() { [ -x /etc/init.d/dnsmasq ] || return 1; /etc/init.d/dnsmasq 
 
 version() { echo "$PKG_VERSION"; }
 
-xappend() { param="$param $1"; }
+xappend() { PROG_param="$PROG_param $1"; }
 
 append_bool() {
 	local section="$1"
@@ -127,13 +127,18 @@ append_bootstrap() {
 	[ "$ipv6_resolvers_only" -eq 0 ] && xappend '-4'
 }
 
+resolver_health_check() { resolveip -t 3 one.one.one.one >/dev/null 2>&1; }
+
 boot() {
 	ubus -t 30 wait_for network.interface 2>/dev/null
 	rc_procd start_service 'on_boot'
+	resolver_health_check || rc_procd stop_service 'on_boot'
 }
 
 start_instance() {
-	local cfg="$1" param listen_addr listen_port ipv6_resolvers_only p url iface
+	local cfg="$1" param="$2"
+	local PROG_param 
+	local listen_addr listen_port ipv6_resolvers_only p url iface
 
 	config_get url "$cfg" 'resolver_url'
 	config_get_bool ipv6_resolvers_only "$cfg" 'use_ipv6_resolvers_only' '0'
@@ -153,7 +158,7 @@ start_instance() {
 
 	procd_open_instance
 # shellcheck disable=SC2086
-	procd_set_param command $PROG $param
+	procd_set_param command $PROG $PROG_param
 	procd_set_param stderr 1
 	procd_set_param stdout 1
 	procd_set_param respawn
@@ -161,7 +166,6 @@ start_instance() {
 	json_add_object mdns
 		procd_add_mdns_service "$packageName" 'udp' "$port" "DNS over HTTPS proxy"
 	json_close_object
-	json_add_string url "$url"
 	if [ "$force_dns" -ne 0 ]; then
 		json_add_array firewall
 		for iface in $procd_fw_src_interfaces; do
@@ -218,12 +222,13 @@ start_instance() {
 }
 
 start_service() {
+	local param="$1"
 	local canaryDomains canary_domains_icloud canary_domains_mozilla
 	local dnsmasq_config_update force_dns force_dns_port 
 	local procd_fw_src_interfaces
 
 	local port=5053
-	output "Starting $serviceName instances "
+	output "Starting $serviceName instances ${param:+$param }"
 	config_load "$packageName"
 	config_get_bool canary_domains_icloud  'config' 'canary_domains_icloud' '1'
 	config_get_bool canary_domains_mozilla 'config' 'canary_domains_mozilla' '1'
@@ -239,7 +244,7 @@ start_service() {
 	fi
 	dhcp_backup 'create'
 	config_load "$packageName"
-	config_foreach start_instance "$packageName"
+	config_foreach start_instance "$packageName" "$param"
 	output "\\n"
 	if [ -n "$(uci_changes dhcp)" ]; then
 		output "Updating dnsmasq config "
@@ -248,6 +253,10 @@ start_service() {
 		else
 			output_failn
 		fi
+		param='dnsmasq_restart'
+	fi
+	if [ "$param" = 'on_hotplug' ] || [ "$param" = 'on_boot' ] || \
+		[ "$param" = 'dnsmasq_restart' ] ; then
 		output "Restarting dnsmasq "
 		if dnsmasq_restart; then
 			output_okn
@@ -258,10 +267,11 @@ start_service() {
 }
 
 stop_service() {
+	local param="$1"
 	local canaryDomains canary_domains_icloud canary_domains_mozilla
 	local dnsmasq_config_update
 	local s=0
-	output "Stopping $serviceName "
+	output "Stopping $serviceName ${param:+$param }"
 	config_load "$packageName"
 	config_get dnsmasq_config_update        'config' 'dnsmasq_config_update' '*'
 	config_get_bool canary_domains_icloud   'config' 'canary_domains_icloud' '1'
@@ -278,7 +288,7 @@ stop_service() {
 		dnsmasq_restart || s=1
 	fi
 # shellcheck disable=SC2015
-	[ "$s" -eq 0 ] && output_okn || output_failn
+	[ "$s" = '0' ] && output_okn || output_failn
 }
 
 # shellcheck disable=SC1091
@@ -319,14 +329,16 @@ dnsmasq_doh_server() {
 				::) address='::1';;
 			esac
 			uci_add_list_if_new 'dhcp' "$cfg" 'server' "${address}#${port}"
+			uci_add_list_if_new 'dhcp' "$cfg" 'doh_server' "${address}#${port}"
 		;;
 		remove)
-			eval "$(ubus call service list "{ 'verbose': true, 'name': '$packageName' }" | jsonfilter -F '# ' -e 'TUPLES=@[*].instances[*].command[4,6]')"
-			for i in $TUPLES; do
+			for i in $(uci -q get "dhcp.$cfg.doh_server"); do
 				uci_remove_list 'dhcp' "$cfg" 'server' "$i"
+				uci_remove_list 'dhcp' "$cfg" 'doh_server' "$i"
 			done
 			for i in $canaryDomains; do
 				uci_remove_list 'dhcp' "$cfg" 'server' "/${i}/"
+				uci_remove_list 'dhcp' "$cfg" 'doh_server' "/${i}/"
 			done
 		;;
 	esac
