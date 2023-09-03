@@ -1,0 +1,2 @@
+#!/bin/sh
+/etc/init.d/https-dns-proxy start 'on_hotplug'
