@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-yaml
-PKG_VERSION:=6.0
-PKG_RELEASE:=4
+PKG_VERSION:=6.0.1
+PKG_RELEASE:=1
 
 PYPI_NAME:=PyYAML
-PKG_HASH:=68fb519c14306fec9720a2a5b45bc9f0c8d1b9c72adf45c37baedfcd949c35a2
+PKG_HASH:=bfdf460b1736c775f2ba9f6a92bca30bc2095067b8a9d77876d1fad6cc3b4a43
 
 PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
 PKG_LICENSE:=MIT
@@ -29,7 +29,7 @@ define Package/python3-yaml
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
-  TITLE:=YAML parser and emitter for Python
+  TITLE:=YAML parser and emitter
   URL:=https://github.com/yaml/pyyaml
   DEPENDS:=+libyaml +python3-light
 endef
