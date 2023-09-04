@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=slang
 PKG_VERSION:=2.3.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://www.jedsoft.org/releases/slang \
@@ -26,11 +26,10 @@ PKG_BUILD_PARALLEL:=0
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_BUILD_NLS \
 	CONFIG_PACKAGE_libslang2-mod-onig \
-	CONFIG_PACKAGE_libslang2-mod-pcre \
 	CONFIG_PACKAGE_libslang2-mod-png \
 	CONFIG_PACKAGE_libslang2-mod-zlib
 
-SLANG_MODULES:= base64 chksum csv fcntl fork histogram iconv json onig pcre \
+SLANG_MODULES:= base64 chksum csv fcntl fork histogram iconv json onig \
 	png rand select slsmg socket stats sysconf termios varray zlib
 
 include $(INCLUDE_DIR)/package.mk
@@ -88,12 +87,6 @@ $(call Package/libslang2-mod/Default)
   DEPENDS+=+PACKAGE_libslang2-mod-onig:oniguruma
 endef
 
-define Package/libslang2-mod-pcre
-$(call Package/libslang2-mod/Default)
-  TITLE+= (pcre module)
-  DEPENDS+=+PACKAGE_libslang2-mod-pcre:libpcre
-endef
-
 define Package/libslang2-mod-png
 $(call Package/libslang2-mod/Default)
   TITLE+= (png module)
@@ -126,10 +119,10 @@ CONFIGURE_ARGS+= \
 	--enable-warnings \
 	--with-readline=slang \
 	--with-terminfo=default \
+	--without-pcre \
 	--without-x \
 	$(if $(CONFIG_BUILD_NLS),--with-iconv="$(ICONV_PREFIX)",--without-iconv) \
 	$(if $(CONFIG_PACKAGE_libslang2-mod-onig),--with-onig="$(STAGING_DIR)/usr",--without-onig) \
-	$(if $(CONFIG_PACKAGE_libslang2-mod-pcre),--with-pcre="$(STAGING_DIR)/usr",--without-pcre) \
 	$(if $(CONFIG_PACKAGE_libslang2-mod-png),--with-png="$(STAGING_DIR)/usr",--without-png) \
 	$(if $(CONFIG_PACKAGE_libslang2-mod-zlib),--with-z="$(STAGING_DIR)/usr",--without-z)
 
