@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=Flask-Session
 PKG_HASH:=0768e2bbf06f963ec1aa711bde7aa32dc39ff70f89b495d6db687d899eae4423
 
-PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 

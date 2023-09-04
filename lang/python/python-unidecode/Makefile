@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=Unidecode
 PKG_HASH:=fed09cf0be8cf415b391642c2a5addfc72194407caee4f98719e40ec2a72b830
 
-PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=LICENSE
 

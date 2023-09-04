@@ -16,7 +16,7 @@ PKG_HASH:=e8d31c20601d6773cb14d4c0f42aee29c6821bbd1018039aac7ac5605b489723
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
-PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

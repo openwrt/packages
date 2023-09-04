@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=ruamel.yaml
 PKG_HASH:=ec939063761914e14542972a5cba6d33c23b0859ab6342f61cf070cfc600efc2
 
-PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
