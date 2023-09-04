@@ -15,7 +15,7 @@ PYPI_NAME:=flask-babel
 PYPI_SOURCE_NAME:=flask_babel
 PKG_HASH:=be015772c5d7f046f3b99c508dcf618636eb93d21b713b356db79f3e79f69f39
 
-PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 

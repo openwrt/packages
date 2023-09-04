@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=awesomeversion
 PKG_HASH:=a505558316010d2d10d487226f79c1157204af00fa462fdcf948e347011dd491
 
-PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENCE.md
 

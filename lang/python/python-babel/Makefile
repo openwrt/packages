@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=Babel
 PKG_HASH:=cc2d99999cd01d44420ae725a21c9e3711b3aadc7976d6147f622d8581963455
 
-PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 
