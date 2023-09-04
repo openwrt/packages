@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=tornado
 PKG_HASH:=e7d8db41c0181c80d76c982aacc442c0783a2c54d6400fe028954201a2e032fe
 
-PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 

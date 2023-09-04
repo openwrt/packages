@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=pyrsistent
 PKG_HASH:=1a2994773706bbb4995c31a97bc94f1418314923bd1048c6d964837040376440
 
-PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.mit
 
