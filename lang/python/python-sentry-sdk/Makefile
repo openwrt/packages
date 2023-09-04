@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=sentry-sdk
 PKG_HASH:=f7e54567937ebcbe938c4df1075ec891587faeb7c74184b88cf2894e47c86116
 
-PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=LICENSE
 

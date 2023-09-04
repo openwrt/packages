@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=Markdown
 PKG_HASH:=76df8ae32294ec39dcf89340382882dfa12975f87f45c3ed1ecdb1e8cefc7006
 
-PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.md
 

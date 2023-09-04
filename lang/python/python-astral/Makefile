@@ -16,7 +16,7 @@ PKG_HASH:=e41d9967d5c48be421346552f0f4dedad43ff39a83574f5ff2ad32b6627b6fbe
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

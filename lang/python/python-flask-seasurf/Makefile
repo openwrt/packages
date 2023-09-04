@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=Flask-SeaSurf
 PKG_HASH:=10d4946fdd9745a8ae0a38a46c48a9add0cca4896333c0893b3133e3852c2e80
 
-PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 

@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=SQLAlchemy
 PKG_HASH:=ec1be26cdccd60d180359a527d5980d959a26269a2c7b1b327a1eea0cab37ed8
 
-PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:sqlalchemy:sqlalchemy

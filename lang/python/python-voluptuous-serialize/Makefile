@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=5359f2e0a4f972ae03066e0777b4f0755c9226b2af099ca4fc55432efd1a447b
 
-PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=COPYING
 

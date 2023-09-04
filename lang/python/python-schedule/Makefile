@@ -14,7 +14,7 @@ PKG_RELEASE:=2
 PYPI_NAME:=schedule
 PKG_HASH:=f9fb5181283de4db6e701d476dd01b6a3dd81c38462a54991ddbb9d26db857c9
 
-PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.txt
 
