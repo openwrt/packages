@@ -11,7 +11,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=intelhex
 PKG_HASH:=892b7361a719f4945237da8ccf754e9513db32f5628852785aea108dcd250093
 
-PKG_MAINTAINER:=Karel Kočí <cynerd@email.cz>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com> 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.txt
 
