@@ -5,13 +5,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-cryptodome
-PKG_VERSION:=3.9.7
-PKG_RELEASE:=4
+PKG_VERSION:=3.18.0
+PKG_RELEASE:=1
 
 PYPI_NAME:=pycryptodome
-PKG_HASH:=f1add21b6d179179b3c177c33d18a2186a09cc0d3af41ff5ed3f377360b869f2
+PKG_HASH:=c9adee653fc882d98956e33ca2c1fb582e23a8af7ac82fee75bd6113c55a0413
 
-PKG_LICENSE:=BSD-2-Clause
+PKG_LICENSE:=Public-Domain BSD-2-Clause
 PKG_LICENSE_FILES:=LICENSE.rst
 PKG_MAINTAINER:=Richard Yu <yurichard3839@gmail.com>
 PKG_CPE_ID:=cpe:/a:pycryptodome:pycryptodome
@@ -24,12 +24,12 @@ PYTHON3_PKG_BUILD_VARS:= \
   CONFIG_BIG_ENDIAN="$(CONFIG_BIG_ENDIAN)"
 
 define Package/python3-cryptodome
-  SECTION:=lang-python
+  SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
-  TITLE:=A self-contained cryptographic library for Python
+  TITLE:=Self-contained cryptographic library
   URL:=https://www.pycryptodome.org/
-  DEPENDS:=+libgmp +python3
+  DEPENDS:=+libgmp +python3-light +python3-cffi
   PROVIDES:=python3-crypto
 endef
 
