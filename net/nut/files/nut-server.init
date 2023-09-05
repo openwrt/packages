@@ -135,6 +135,7 @@ build_server_config() {
 
 	if [ -n "$RUNAS" ]; then
 		chown "$RUNAS":"$(id -gn "$RUNAS")" "${STATEPATH}"
+		chgrp "$(id -gn "$RUNAS")" "$(dirname "$UPSD_C")"
 		chgrp "$(id -gn "$RUNAS")" "$USERS_C"
 		chgrp "$(id -gn "$RUNAS")" "$UPSD_C"
 	fi
