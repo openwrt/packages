@@ -11,15 +11,15 @@ include $(TOPDIR)/rules.mk
 include ../python3-version.mk
 
 PKG_NAME:=python3
-PKG_RELEASE:=3
+PKG_RELEASE:=1
 PKG_VERSION:=$(PYTHON3_VERSION).$(PYTHON3_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
-PKG_HASH:=2f0e409df2ab57aa9fc4cbddfb976af44e4e55bf6f619eee6bc5c2297264a7f6
+PKG_HASH:=85cd12e9cf1d6d5a45f17f7afe1cebe7ee628d3282281c492e86adf636defa3f
 
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
-PKG_LICENSE:=PSF-2.0
+PKG_LICENSE:=Python-2.0.1 0BSD
 PKG_LICENSE_FILES:=LICENSE Doc/copyright.rst Doc/license.rst Modules/_ctypes/darwin/LICENSE Modules/_ctypes/libffi_osx/LICENSE Modules/expat/COPYING
 PKG_CPE_ID:=cpe:/a:python:python
 
@@ -161,11 +161,6 @@ CONFIGURE_VARS += \
 	ac_cv_buggy_getaddrinfo=no \
 	ac_cv_file__dev_ptc=no \
 	ac_cv_file__dev_ptmx=yes
-
-# Do not link with libbsd for flock
-# https://github.com/openwrt/packages/issues/21161
-CONFIGURE_VARS += \
-	ac_cv_lib_bsd_flock=no
 
 # Disable stdlib modules
 # Check for a better way in the future: https://github.com/python/cpython/issues/98558
