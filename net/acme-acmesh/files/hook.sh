@@ -65,6 +65,9 @@ get)
 			staging_moved=1
 		else
 			set -- "$@" --renew --home "$state_dir" -d "$main_domain"
+			if [ "$dns" ] && [ "$dns_wait" ]; then
+				set -- "$@" --dnssleep "$dns_wait"
+			fi
 			log info "$ACME $*"
 			trap '$NOTIFY renew-failed;exit 1' INT
 			$ACME "$@"
