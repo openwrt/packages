@@ -65,8 +65,19 @@ get)
 			staging_moved=1
 		else
 			set -- "$@" --renew --home "$state_dir" -d "$main_domain"
-			if [ "$dns" ] && [ "$dns_wait" ]; then
-				set -- "$@" --dnssleep "$dns_wait"
+			if [ "$dns" ]; then
+				set -- "$@" --dns "$dns"
+				if [ "$dalias" ]; then
+					set -- "$@" --domain-alias "$dalias"
+					if [ "$calias" ]; then
+						log err "Both domain and challenge aliases are defined. Ignoring the challenge alias."
+					fi
+				elif [ "$calias" ]; then
+					set -- "$@" --challenge-alias "$calias"
+				fi
+				if [ "$dns_wait" ]; then
+					set -- "$@" --dnssleep "$dns_wait"
+				fi
 			fi
 			log info "$ACME $*"
 			trap '$NOTIFY renew-failed;exit 1' INT
