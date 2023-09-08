@@ -15,7 +15,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://dbus.freedesktop.org/releases/dbus
 PKG_HASH:=ba1f21d2bd9d339da2d4aa8780c09df32fea87998b73da24f49ab9df1e36a50f
 
-PKG_MAINTAINER:=
+PKG_MAINTAINER:=Robert Marko <robimarko@gmail.com>
 PKG_LICENSE:=AFL-2.1
 PKG_CPE_ID:=cpe:/a:freedesktop:dbus
 
