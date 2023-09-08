@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cache-domains
-PKG_VERSION:=2.3.1
-PKG_RELEASE:=2
+PKG_VERSION:=2.4.0
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Gerard Ryan <G.M0N3Y.2503@gmail.com>
 
@@ -27,6 +27,9 @@ define Package/cache-domains/install/default
 
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface/
 	$(INSTALL_BIN) ./files/30-cache-domains $(1)/etc/hotplug.d/iface/
+
+	$(INSTALL_DIR) $(1)/usr/share/cache-domains/
+	$(INSTALL_BIN) ./files/test.sh $(1)/usr/share/cache-domains/
 endef
 
 Build/Compile=# Nothing to compile, just install the scripts

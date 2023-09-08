@@ -1,0 +1,165 @@
+#!/bin/sh
+# Copyright 2023 MOSSDeF, Stan Grishin (stangri@melmac.ca)
+# shellcheck disable=SC1091,SC2015,SC3037,SC3043,SC2317,SC3060
+
+readonly packageName='adblock-fast'
+readonly _OK_='\033[0;32m\xe2\x9c\x93\033[0m'
+readonly _FAIL_='\033[0;31m\xe2\x9c\x97\033[0m'
+readonly __OK__='\033[0;32m[\xe2\x9c\x93]\033[0m'
+readonly __FAIL__='\033[0;31m[\xe2\x9c\x97]\033[0m'
+readonly _ERROR_='\033[0;31mERROR\033[0m'
+readonly _WARNING_='\033[0;33mWARNING\033[0m'
+output() {
+# Can take a single parameter (text) to be output at any verbosity
+# Or target verbosity level and text to be output at specifc verbosity
+	local msg memmsg logmsg
+	local sharedMemoryOutput="/dev/shm/$packageName-output"
+	verbosity="${verbosity:-2}"
+	if [ "$#" -ne 1 ]; then
+		if [ $((verbosity & $1)) -gt 0 ] || [ "$verbosity" = "$1" ]; then
+			shift
+		else
+			return 0
+		fi
+	fi
+	[ -t 1 ] && printf "%b" "$1"
+	msg="$1";
+	if [ "$(printf "%b" "$msg" | wc -l)" -gt 0 ]; then
+		[ -s "$sharedMemoryOutput" ] && memmsg="$(cat "$sharedMemoryOutput")"
+		logmsg="$(printf "%b" "${memmsg}${msg}" | sed 's/\x1b\[[0-9;]*m//g')"
+		logger -t "${packageName:-service}" "$(printf "%b" "$logmsg")"
+		rm -f "$sharedMemoryOutput"
+	else
+		printf "%b" "$msg" >> "$sharedMemoryOutput"
+	fi
+}
+output_ok() { output 1 "$_OK_"; output 2 "$__OK__\\n"; }
+output_okn() { output 1 "$_OK_\\n"; output 2 "$__OK__\\n"; }
+output_fail() { output 1 "$_FAIL_"; output 2 "$__FAIL__\\n"; }
+output_failn() { output 1 "$_FAIL_\\n"; output 2 "$__FAIL__\\n"; }
+is_present() { command -v "$1" >/dev/null 2>&1; }
+get_url_filesize() {
+	local url="$1" size size_command
+	[ -n "$1" ] || return 0
+	is_present 'curl' || return 0
+	size_command='curl --silent --insecure --fail --head --request GET'
+	size="$($size_command "$url" | grep -Po '^[cC]ontent-[lL]ength: \K\w+')"
+	echo -en "$size"
+}
+
+# Transition from simple-adblock
+_enable_url() {
+	local cfg="$1" url="$2" action="$3"
+	local u a
+	config_get u "$cfg" 'url'
+	config_get a "$cfg" 'action' 'block'
+	if [ "$u" = "$url" ] && [ "$a" = "$action" ]; then
+		uci del "${packageName}.${cfg}.enabled" && _found=1
+	fi
+}
+
+enable_add_url() {
+	local url="$1" action="$2" _found
+	config_load "$packageName"
+	config_foreach _enable_url 'file_url' "$url" "$action"
+	if [ -z "$_found" ]; then
+		uci add "${packageName}" 'file_url' >/dev/null 2>&1
+		uci set "${packageName}.@file_url[-1].url=$url"
+		uci set "${packageName}.@file_url[-1].size=$(get_url_filesize "$url")"
+		uci set "${packageName}.@file_url[-1].action=$action"
+	fi
+}
+
+if [ -s '/etc/config/simple-adblock' ] \
+	&& [ ! -s '/etc/config/adblock-fast-opkg' ] \
+	&& [ "$(uci get adblock-fast.config.enabled)" = '0' ]; then
+	cp -f '/etc/config/adblock-fast' '/etc/config/adblock-fast-opkg'
+	enabled="$(uci get simple-adblock.config.enabled)"
+	if [ -x '/etc/init.d/simple-adblock' ]; then
+		output "Stopping and disabling simple-adblock "
+		if /etc/init.d/simple-adblock stop  >/dev/null 2>&1 \
+			&& /etc/init.d/simple-adblock disable \
+			&& uci set simple-adblock.config.enabled=0 \
+			&& uci commit simple-adblock; then
+			output_okn
+		else
+			output_failn
+		fi
+	else
+		output "Disabling simple-adblock."
+		if uci set simple-adblock.config.enabled=0 \
+			&& uci commit simple-adblock; then
+			output_okn
+		else
+			output_failn
+		fi
+	fi
+	output "Migrating simple-adblock config file "
+	for i in allow_non_ascii canary_domains_icloud canary_domains_mozilla \
+		compressed_cache compressed_cache_dir config_update_enabled \
+		curl_additional_param curl_max_file_size curl_retry download_timeout \
+		debug dns dns_instance dnsmasq_config_file_url force_dns led \
+		parallel_downloads procd_trigger_wan6 procd_boot_wan_timeout verbosity; do
+		j="$(uci -q get simple-adblock.config.${i})"
+		[ -n "$j" ] && uci set "${packageName}.config.${i}=${j}"
+	done
+	[ -n "$enabled" ] && uci set "${packageName}.config.enabled=${enabled}"
+	j="$(uci -q get simple-adblock.config.config_update_url)"
+	if [ "${j//simple-adblock/}" = "$j" ]; then
+		uci set "${packageName}.config.config_update_url=$j"
+	fi
+	ccd="$(uci get simple-adblock.config.compressed_cache_dir)"
+	ccd="${ccd:-/etc}"
+	for j in $(uci -q get simple-adblock.config.allowed_domain); do
+		[ -n "$j" ] && uci add_list "${packageName}.config.allowed_domain=${j}"
+	done
+	for j in $(uci -q get simple-adblock.config.blocked_domain); do
+		[ -n "$j" ] && uci add_list "${packageName}.config.blocked_domain=${j}"
+	done
+	for j in $(uci -q get simple-adblock.config.force_dns_port); do
+		[ -n "$j" ] && uci add_list "${packageName}.config.force_dns_port=${j}"
+	done
+	output_okn
+
+	for i in allowed_domains_url blocked_adblockplus_url blocked_domains_url \
+		blocked_hosts_url; do
+		output "Migrating simple-adblock ${i} "
+		for j in $(uci -q get simple-adblock.config.${i}); do
+			if [ "$i" = 'allowed_domains_url' ]; then
+				enable_add_url "$j" 'allow'
+			else
+				enable_add_url "$j" 'block'
+			fi
+		done
+		output_okn
+	done
+	uci commit "$packageName"
+	output "Migrating simple-adblock cache file(s) "
+	for i in '/var/run/simple-adblock/dnsmasq.addnhosts.cache' \
+		'/var/run/simple-adblock/dnsmasq.conf.cache' \
+		'/var/run/simple-adblock/dnsmasq.ipset.cache' \
+		'/var/run/simple-adblock/dnsmasq.nftset.cache' \
+		'/var/run/simple-adblock/dnsmasq.servers.cache' \
+		'/var/run/simple-adblock/unbound.cache'; do
+		if [ -s "$i" ]; then
+			current_dir="$(dirname "$i")"
+			mkdir -p "${current_dir//simple-adblock/adblock-fast}"
+			mv -f "$i" "${i//simple-adblock/adblock-fast}" && output_okn || output_failn
+		fi
+	done
+	for i in 'simple-adblock.dnsmasq.addnhosts.gz' \
+		'simple-adblock.dnsmasq.conf.gz' \
+		'simple-adblock.dnsmasq.ipset.gz' \
+		'simple-adblock.dnsmasq.nftset.gz' \
+		'simple-adblock.dnsmasq.servers.gz' \
+		'simple-adblock.unbound.gz'; do
+		i="${ccd}/${i}"
+		if [ -s "$i" ]; then
+			mkdir -p "${ccd//simple-adblock/adblock-fast}"
+			mv -f "$i" "${i//simple-adblock/adblock-fast}" && output_okn || output_failn
+		fi
+	done
+	output_okn
+fi
+
+exit 0

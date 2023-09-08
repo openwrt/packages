@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=syncthing
-PKG_VERSION:=1.23.7
+PKG_VERSION:=1.24.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=syncthing-source-v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/syncthing/syncthing/releases/download/v$(PKG_VERSION)
-PKG_HASH:=18d8dd74d8077f500a139752261b78217ef0b0a912a7c017192097a7196e21a1
+PKG_HASH:=4a9459667f9b70a7d1e7d572c7c9d02431ef8f055679eef368300ce1a826608f
 
 PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/$(PKG_NAME)
 
@@ -26,7 +26,7 @@ GO_PKG_BUILD_PKG:=\
 	$(if $(CONFIG_PACKAGE_strelaysrv),$(GO_PKG)/cmd/strelaysrv/)
 GO_PKG_INSTALL_EXTRA:=^gui/
 
-GO_PKG_TAGS:=noupgrade,noquic
+GO_PKG_TAGS:=noupgrade
 GO_PKG_LDFLAGS_X:=\
 	$(GO_PKG)/lib/build.Version=v$(PKG_VERSION) \
 	$(GO_PKG)/lib/build.Stamp=$(SOURCE_DATE_EPOCH) \

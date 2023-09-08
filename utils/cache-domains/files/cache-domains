@@ -6,30 +6,41 @@ set -e
 
 CACHE_DOMAINS_SRC="https://api.github.com/repos/uklans/cache-domains/tarball/master"
 CACHE_DOMAINS_DIR="/var/cache-domains"
-CACHE_DOMAINS_CONF_FILE="${CACHE_DOMAINS_DIR}/lancache.conf"
 CONFIG_FILE="/etc/cache-domains.json"
 
 dnsmasq_conf() {
+	local ACTION="${1}"
+	local ADDN_CONF_DIR="${2}"
 	local I=0
 	local DNSMASQ_CONF_DIR
 	local DNSMASQ_CONF_FILE
 
 	while uci_get "dhcp" "@dnsmasq[${I}]" > /dev/null; do
 		DNSMASQ_CONF_DIR="$(uci_get "dhcp" "@dnsmasq[${I}]" "confdir" "/tmp/dnsmasq.d" || :)"
-		DNSMASQ_CONF_FILE="${DNSMASQ_CONF_DIR}/$(basename "${CACHE_DOMAINS_CONF_FILE}")"
+		uci_remove_list "dhcp" "@dnsmasq[${I}]" "addnmount" "${ADDN_CONF_DIR}"
 
-		case ${1} in
+		mkdir -p "${DNSMASQ_CONF_DIR}"
+		case "${ACTION}" in
 			add)
-				ln -sf "${CACHE_DOMAINS_CONF_FILE}" "${DNSMASQ_CONF_FILE}"
+				ln -s "${ADDN_CONF_DIR}/"* "${DNSMASQ_CONF_DIR}" 2> /dev/null || :
+				uci_add_list "dhcp" "@dnsmasq[${I}]" "addnmount" "${ADDN_CONF_DIR}"
 				;;
 			remove)
-				rm -f "${DNSMASQ_CONF_FILE}"
+				for DNSMASQ_CONF_FILE in "${DNSMASQ_CONF_DIR}/"*; do
+					case "$(readlink "${DNSMASQ_CONF_FILE}" || echo "${DNSMASQ_CONF_FILE}")" in
+						"${ADDN_CONF_DIR}"*)
+							rm -f "${DNSMASQ_CONF_FILE}"
+							;;
+					esac
+				done
 				;;
 			*)
-				echo "ERROR: Invalid action '${1}' for dnsmasq_conf()"
+				echo "ERROR: Invalid action '${ACTION}' for dnsmasq_conf()"
 				return 1
 				;;
 		esac
+
+		uci_commit "dhcp"
 
 		I=$((${I} + 1))
 	done
@@ -59,18 +70,16 @@ configure() {
 	cd "${SOURCE_DIR}/scripts/"
 	cp "${CONFIG_FILE}" "config.json"
 	./create-dnsmasq.sh > /dev/null
-	cat "./output/dnsmasq/"*".conf" > "${CACHE_DOMAINS_CONF_FILE}"
 	cd "${INITIAL_DIR}"
-	rm -fr "${SOURCE_DIR}"
 
-	dnsmasq_conf add
+	dnsmasq_conf add "${SOURCE_DIR}/scripts/output/dnsmasq"
 }
 
 cleanup() {
-	dnsmasq_conf remove
+	dnsmasq_conf remove "${CACHE_DOMAINS_DIR}/$(ls "${CACHE_DOMAINS_DIR}")/scripts/output/dnsmasq"
 }
 
-case ${1} in
+case "${1}" in
 	config*)
 		configure
 		;;

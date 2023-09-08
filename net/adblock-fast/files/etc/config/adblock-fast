@@ -1,0 +1,118 @@
+config adblock-fast 'config'
+	option enabled '0'
+	list allowed_domain 'cdn.jsdelivr.net'
+	option allow_non_ascii '0'
+	option canary_domains_icloud '0'
+	option canary_domains_mozilla '0'
+	option compressed_cache '0'
+	option compressed_cache_dir '/etc'
+	option config_update_enabled '0'
+	option config_update_url 'https://cdn.jsdelivr.net/gh/openwrt/packages/net/adblock-fast/files/adblock-fast.conf.update'
+	option curl_additional_param ''
+	option curl_max_file_size '30000000'
+	option curl_retry '3'
+	option debug '0'
+	option dns 'dnsmasq.servers'
+	option dnsmasq_instance '*'
+#	option dnsmasq_config_file_url 'https://big.oisd.nl/dnsmasq2'
+	option download_timeout '10'
+	option force_dns '1'
+	list force_dns_port '53'
+	list force_dns_port '853'
+# ports listed below are used by some
+# of the dnscrypt-proxy v1 resolvers
+#	list force_dns_port '553'
+#	list force_dns_port '1443'
+#	list force_dns_port '4343'
+#	list force_dns_port '4434'
+#	list force_dns_port '5443'
+#	list force_dns_port '8443'
+	option led 'none'
+	option parallel_downloads '1'
+	option procd_trigger_wan6 '0'
+	option procd_boot_wan_timeout '60'
+	option verbosity '2'
+
+config file_url
+	option url 'https://cdn.jsdelivr.net/gh/StevenBlack/hosts/hosts'
+	option size '6770929'
+	option action 'block'
+	option enabled '0'
+
+config file_url
+	option url 'https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_trackers_justdomains.txt'
+	option size '6241707'
+	option action 'block'
+	option enabled '0'
+
+config file_url
+	option url 'https://big.oisd.nl/'
+	option size '6163363'
+	option action 'block'
+	option enabled '0'
+
+config file_url
+	option url 'https://cdn.jsdelivr.net/gh/bongochong/CombinedPrivacyBlockLists/NoFormatting/cpbl-ctld.txt'
+	option size '2608152'
+	option action 'block'
+	option enabled '0'
+
+config file_url
+	option url 'http://sysctl.org/cameleon/hosts'
+	option size '638545'
+	option action 'block'
+	option enabled '0'
+
+config file_url
+	option url 'https://cdn.jsdelivr.net/gh/kboghdady/youTube_ads_4_pi-hole/black.list'
+	option size '553006'
+	option action 'block'
+	option enabled '0'
+
+config file_url
+	option url 'https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_clickthroughs_justdomains.txt'
+	option size '362170'
+	option action 'block'
+	option enabled '0'
+
+config file_url
+	option url 'https://someonewhocares.org/hosts/hosts'
+	option size '347410'
+	option action 'block'
+	option enabled '0'
+
+config file_url
+	option url 'https://winhelp2002.mvps.org/hosts.txt'
+	option size '334861'
+	option action 'block'
+	option enabled '0'
+
+config file_url
+	option url 'https://adaway.org/hosts.txt'
+	option size '243454'
+	option action 'block'
+	option enabled '0'
+
+config file_url
+	option url 'https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_ads_justdomains.txt'
+	option size '222595'
+	option action 'block'
+	option enabled '0'
+
+config file_url
+	option url 'https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_microsites_justdomains.txt'
+	option size '123275'
+	option action 'block'
+	option enabled '0'
+
+config file_url
+	option url 'https://pgl.yoyo.org/as/serverlist.php?hostformat=hosts&showintro=1&mimetype=plaintext'
+	option size '99588'
+	option action 'block'
+	option enabled '0'
+
+config file_url
+	option url 'https://cdn.jsdelivr.net/gh/hoshsadiq/adblock-nocoin-list/hosts.txt'
+	option size '11149'
+	option action 'block'
+	option enabled '0'
