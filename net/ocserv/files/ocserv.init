@@ -84,25 +84,25 @@ setup_config() {
 	[ -n "$hostname" ] && dyndns="true"
 
 	mkdir -p /var/etc
-	sed -e "s/|PORT|/$port/g" \
-	    -e "s/|UDP_PORT|/$udp_port/g" \
-	    -e "s/|MAX_CLIENTS|/$max_clients/g" \
-	    -e "s/|MAX_SAME|/$max_same/g" \
-	    -e "s/|DPD|/$dpd/g" \
+	sed -e "s#|PORT|#$port#g" \
+	    -e "s#|UDP_PORT|#$udp_port#g" \
+	    -e "s#|MAX_CLIENTS|#$max_clients#g" \
+	    -e "s#|MAX_SAME|#$max_same#g" \
+	    -e "s#|DPD|#$dpd#g" \
 	    -e "s#|AUTH|#$auth$authsuffix#g" \
 	    -e "s#|DYNDNS|#$dyndns#g" \
-	    -e "s/|PREDICTABLE_IPS|/$predictable_ips/g" \
-	    -e "s/|DEFAULT_DOMAIN|/$default_domain/g" \
-	    -e "s/|ENABLE_DEFAULT_DOMAIN|/$enable_default_domain/g" \
-	    -e "s/|ENABLE_SPLIT_DNS|/$enable_split_dns/g" \
-	    -e "s/|CISCO_COMPAT|/$cisco_compat/g" \
-	    -e "s/|PING_LEASES|/$ping_leases/g" \
-	    -e "s/|UDP|/$enable_udp/g" \
-	    -e "s/|COMPRESSION|/$enable_compression/g" \
-	    -e "s/|IPV4ADDR|/$ipaddr/g" \
-	    -e "s/|NETMASK|/$netmask/g" \
+	    -e "s#|PREDICTABLE_IPS|#$predictable_ips#g" \
+	    -e "s#|DEFAULT_DOMAIN|#$default_domain#g" \
+	    -e "s#|ENABLE_DEFAULT_DOMAIN|#$enable_default_domain#g" \
+	    -e "s#|ENABLE_SPLIT_DNS|#$enable_split_dns#g" \
+	    -e "s#|CISCO_COMPAT|#$cisco_compat#g" \
+	    -e "s#|PING_LEASES|#$ping_leases#g" \
+	    -e "s#|UDP|#$enable_udp#g" \
+	    -e "s#|COMPRESSION|#$enable_compression#g" \
+	    -e "s#|IPV4ADDR|#$ipaddr#g" \
+	    -e "s#|NETMASK|#$netmask#g" \
 	    -e "s#|IPV6ADDR|#$ip6addr#g" \
-	    -e "s/|ENABLE_IPV6|/$enable_ipv6/g" \
+	    -e "s#|ENABLE_IPV6|#$enable_ipv6#g" \
 	    /etc/ocserv/ocserv.conf.template > /var/etc/ocserv.conf
 
 	test -f /etc/ocserv/ocserv.conf.local && cat /etc/ocserv/ocserv.conf.local >> /var/etc/ocserv.conf
