@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-chardet
-PKG_VERSION:=5.1.0
+PKG_VERSION:=5.2.0
 PKG_RELEASE:=1
 PKG_LICENSE:=LGPL-2.1
 
 PYPI_NAME:=chardet
-PKG_HASH:=0d62712b956bc154f85fb0a266e2a3c5913c2967e00348701b32411d6def31e5
+PKG_HASH:=1b3b6ff479a8c414bc3fa2c0852995695c4a026dcd6d0633b2dd092ca39c1cf7
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -30,7 +30,7 @@ define Package/python3-chardet
 endef
 
 define Package/python3-chardet/description
-  Universal encoding detector for Python 2 and 3
+  Universal encoding detector for Python
 endef
 
 define Py3Package/python3-chardet/install
