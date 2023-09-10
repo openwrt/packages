@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=python-schema
 PKG_VERSION:=0.7.5
 PKG_RELEASE:=1
-PKG_MAINTAINER:=Karel Kočí <cynerd@email.cz>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com> 
 
 PYPI_NAME:=schema
 PKG_HASH:=f06717112c61895cabc4707752b88716e8420a8819d71404501e114f91043197
