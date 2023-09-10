@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ocserv
-PKG_VERSION:=1.2.0
+PKG_VERSION:=1.2.1
 PKG_RELEASE:=1
 PKG_BUILD_FLAGS:=no-mips16
 
 PKG_BUILD_DIR :=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=ftp://ftp.infradead.org/pub/ocserv/
-PKG_HASH:=47a66e504a6b04bb04856176d78ee392ad1385d22d1670d4ed48b7b95e9dffc5
+PKG_SOURCE_URL:=https://www.infradead.org/ocserv/download/
+PKG_HASH:=de54473ba68d42a8469e434f541ae6b3cf3d98f0936ad0eadfa2c2484810d994
 
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
