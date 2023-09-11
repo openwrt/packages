@@ -294,17 +294,17 @@ static_host_add() {
 	for option in $force_send; do
 		case "$option" in
 		hostname)
-			extra_options="$extra_options${extra_options:+ }0c" ;;
+			extra_options="$extra_options${extra_options:+,}0c" ;;
 		domain-name)
-			extra_options="$extra_options${extra_options:+ }0f" ;;
+			extra_options="$extra_options${extra_options:+,}0f" ;;
 		renewal-time)
-			extra_options="$extra_options${extra_options:+ }3a" ;;
+			extra_options="$extra_options${extra_options:+,}3a" ;;
 		rebinding-time)
-			extra_options="$extra_options${extra_options:+ }3b" ;;
+			extra_options="$extra_options${extra_options:+,}3b" ;;
 		fqdn)
-			extra_options="$extra_options${extra_options:+ }51" ;;
+			extra_options="$extra_options${extra_options:+,}51" ;;
 		routes)
-			extra_options="$extra_options${extra_options:+ }79" ;;
+			extra_options="$extra_options${extra_options:+,}79" ;;
 		*)
 			echo "unknown option: $option" >&2 ;;
 		esac
