@@ -8,8 +8,8 @@
 report_connected_v4() {
 	local address
 
-	if [ -n "$($IPT4 -S mwan3_connected 2> /dev/null)" ]; then
-		for address in $($IPS -o save list mwan3_connected_v4 | grep add | cut -d " " -f 3); do
+	if [ -n "$($IPT4 -S mwan3_connected_ipv4 2> /dev/null)" ]; then
+		for address in $($IPS -o save list mwan3_connected_ipv4 | grep add | cut -d " " -f 3); do
 			json_add_string "" "${address}"
 		done
 	fi
@@ -19,8 +19,8 @@ report_connected_v6() {
 	[ $NO_IPV6 -ne 0 ] && return
 	local address
 
-	if [ -n "$($IPT6 -S mwan3_connected 2> /dev/null)" ]; then
-		for address in $($IPS -o save list mwan3_connected_v6 | grep add | cut -d " " -f 3); do
+	if [ -n "$($IPT6 -S mwan3_connected_ipv6 2> /dev/null)" ]; then
+		for address in $($IPS -o save list mwan3_connected_ipv6 | grep add | cut -d " " -f 3); do
 			json_add_string "" "${address}"
 		done
 	fi
