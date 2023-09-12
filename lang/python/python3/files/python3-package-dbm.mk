@@ -7,8 +7,14 @@
 
 define Package/python3-dbm
 $(call Package/python3/Default)
-  TITLE:=Python $(PYTHON3_VERSION) dbm module
+  TITLE+= dbm module
   DEPENDS:=+python3-light +libgdbm
+endef
+
+define Package/python3-dbm/description
+$(call Package/python3/Default/description)
+
+This package contains the dbm module.
 endef
 
 $(eval $(call Py3BasePackage,python3-dbm, \
