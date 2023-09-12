@@ -15,9 +15,6 @@ ifeq ($(origin RUST_INCLUDE_DIR),undefined)
 endif
 include $(RUST_INCLUDE_DIR)/rust-values.mk
 
-# Support only a subset for now.
-RUST_ARCH_DEPENDS:=@(aarch64||arm||i386||i686||mips||mipsel||mips64||mips64el||mipsel||powerpc64||riscv64||x86_64)
-
 # $(1) path to the package (optional)
 # $(2) additional arguments to cargo (optional)
 define Build/Compile/Cargo
