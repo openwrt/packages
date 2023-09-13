@@ -44,7 +44,12 @@ PYTHON3_VARS = \
 	PYTHONDONTWRITEBYTECODE=1 \
 	_python_sysroot="$(STAGING_DIR)" \
 	_python_prefix="/usr" \
-	_python_exec_prefix="/usr"
+	_python_exec_prefix="/usr" \
+	CARGO_BUILD_TARGET="$(RUSTC_TARGET_ARCH)" \
+	CARGO_HOME="$(CARGO_HOME)" \
+	PATH="$(CARGO_HOME)/bin:$(PATH)" \
+	PYO3_CROSS_LIB_DIR="$(PYTHON3_LIB_DIR)" \
+	RUSTFLAGS="$(CARGO_RUSTFLAGS)"
 
 # $(1) => directory of python script
 # $(2) => python script and its arguments
