@@ -127,6 +127,7 @@ get_mwan3_status() {
 	json_add_string "status" "${status}"
 	json_add_boolean "enabled" "${enabled}"
 	json_add_boolean "running" "${running}"
+	json_add_string "tracking" "${track_status}"
 	json_add_boolean "up" "${up}"
 	json_add_array "track_ip"
 	for file in $MWAN3TRACK_STATUS_DIR/${iface}/TRACK_*; do
