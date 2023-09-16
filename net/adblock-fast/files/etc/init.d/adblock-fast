@@ -1124,7 +1124,7 @@ adb_allow() {
 			for c in $string; do
 				output 2 "  $c "
 				hf="$(echo "$c" | sed 's/\./\\./g')"
-				if sed -i "/(^|\.)${hf}$/d;" "$outputFile" && \
+				if sed -i "/\(^\|\.\)${hf}$/d;" "$outputFile" && \
 					uci_add_list_if_new "${packageName}" 'config' 'allowed_domain' "$c"; then
 						output_ok
 				else
