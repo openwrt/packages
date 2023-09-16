@@ -1,0 +1,14 @@
+#!/bin/sh
+# Copied from https://openwrt.org/docs/guide-user/advanced/hotplug_extras
+# shellcheck disable=SC1091
+. /lib/functions/network.sh
+network_flush_cache
+network_find_wan NET_IF
+network_find_wan6 NET_IF6
+[ "$INTERFACE" != "$NET_IF" ] && [ "$INTERFACE" != "$NET_IF6" ] && exit 0
+[ "$ACTION" != "ifup" ] && [ "$ACTION" != "ifupdate" ] && exit 0
+[ "$ACTION" = "ifupdate" ] && [ -z "$IFUPDATE_ADDRESSES" ] && \
+[ -z "$IFUPDATE_DATA" ] && exit 0
+
+sleep 10
+/etc/init.d/https-dns-proxy start 'on_hotplug'
