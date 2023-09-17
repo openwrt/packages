@@ -294,17 +294,17 @@ static_host_add() {
 	for option in $force_send; do
 		case "$option" in
 		hostname)
-			extra_options="$extra_options${extra_options:+ }0c" ;;
+			extra_options="$extra_options${extra_options:+,}0c" ;;
 		domain-name)
-			extra_options="$extra_options${extra_options:+ }0f" ;;
+			extra_options="$extra_options${extra_options:+,}0f" ;;
 		renewal-time)
-			extra_options="$extra_options${extra_options:+ }3a" ;;
+			extra_options="$extra_options${extra_options:+,}3a" ;;
 		rebinding-time)
-			extra_options="$extra_options${extra_options:+ }3b" ;;
+			extra_options="$extra_options${extra_options:+,}3b" ;;
 		fqdn)
-			extra_options="$extra_options${extra_options:+ }51" ;;
+			extra_options="$extra_options${extra_options:+,}51" ;;
 		routes)
-			extra_options="$extra_options${extra_options:+ }79" ;;
+			extra_options="$extra_options${extra_options:+,}79" ;;
 		*)
 			echo "unknown option: $option" >&2 ;;
 		esac
@@ -393,6 +393,8 @@ gen_dhcp_subnet() {
 	fi
 	echo " option domain-name-servers $DNS;"
 
+	[ -n "$domain" ] && echo " option domain-name \"$domain\";"
+
 	local routes=
 	config_list_foreach "$cfg" "routes" append_routes
 	[ -n "$routes" ] && echo " option classless-ipv4-route $routes;"
@@ -405,7 +407,7 @@ dhcpd_add() {
 	local cfg="$1" synthesize="$2"
 	local dhcp6range="::"
 	local dynamicdhcp defaultroute end gateway ifname ignore leasetime limit net netmask
-	local proto networkid start subnet
+	local proto networkid start subnet domain
 	local IP NETMASK BROADCAST NETWORK PREFIX DNS START END
 
 	config_get_bool ignore "$cfg" "ignore" 0
@@ -461,6 +463,8 @@ dhcpd_add() {
 	if ! network_get_gateway gateway "$net" ; then
 		gateway="$IP"
 	fi
+
+	config_get domain "$cfg" "domain"
 
 	gen_dhcp_subnet "$cfg"
 }
