@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=crowdsec
-PKG_VERSION:=1.5.2
+PKG_VERSION:=1.5.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/crowdsecurity/crowdsec/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=18de78572600166c3a7636e9cd4ea011d204211638810969d99cb65feb78c231
+PKG_HASH:=064f3d023daf6cab4e90c4699c2fb5b1f500ac7cf82819c82cc59803ec936761
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
@@ -29,7 +29,7 @@ CWD_BUILD_CODENAME:=alphaga
 CWD_BUILD_TIMESTAMP:=$(shell date +%F"_"%T)
 CWD_BUILD_TAG:=openwrt-$(PKG_VERSION)-$(PKG_RELEASE)
 
-CWD_VERSION_PKG:=github.com/crowdsecurity/crowdsec/pkg/cwversion
+CWD_VERSION_PKG:=github.com/crowdsecurity/go-cs-lib/version
 
 GO_PKG:=github.com/crowdsecurity/crowdsec
 GO_PKG_INSTALL_ALL:=1
@@ -52,14 +52,14 @@ endef
 
 define Package/crowdsec
 $(call Package/crowdsec/Default)
-  DEPENDS:=$(GO_ARCH_DEPENDS)
+  DEPENDS:=$(GO_ARCH_DEPENDS) +libre2-dev
 endef
 
 define Package/golang-crowdsec-dev
 $(call Package/crowdsec/Default)
 $(call GoPackage/GoSubMenu)
   TITLE+= (source files)
-  DEPENDS:=$(GO_ARCH_DEPENDS)
+  DEPENDS:=$(GO_ARCH_DEPENDS) +libre2-dev
   PKGARCH:=all
 endef
 
