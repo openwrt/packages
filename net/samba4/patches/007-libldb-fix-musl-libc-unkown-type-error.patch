@@ -15,12 +15,11 @@ Signed-off-by: Changqing Li <changqing.li@windriver.com>
 
 --- a/lib/tevent/tevent.h
 +++ b/lib/tevent/tevent.h
-@@ -32,6 +32,8 @@
- #include <talloc.h>
+@@ -33,6 +33,7 @@
  #include <sys/time.h>
+ #include <sys/types.h>
  #include <stdbool.h>
 +#include <sys/stat.h>
-+#include <sys/types.h>
  
  /* for old gcc releases that don't have the feature test macro __has_attribute */
  #ifndef __has_attribute
