@@ -1,0 +1,39 @@
+From 190b17d20c14d45f02619893f741a3f7a130038c Mon Sep 17 00:00:00 2001
+Message-ID: <190b17d20c14d45f02619893f741a3f7a130038c.1695223452.git.mschiffer@universe-factory.net>
+From: gordonwwang <gordonwwang@tencent.com>
+Date: Thu, 17 Aug 2023 11:04:39 +0800
+Subject: [PATCH] ovs.tmac: Fix troff warning in versions above groff-1.23.
+
+When the compilation dependency is groff-1.23, the following message is
+displayed in the compilation log, and the compilation fails:
+
+  troff:vswitchd/ovs-vswitchd.8:1298: warning: cannot select font 'CW'
+  make[1]: *** [Makefile:6761: manpage-check] Error 1
+
+CW font was removed and and now groff warns about non-existent font:
+ https://git.savannah.gnu.org/cgit/groff.git/commit/?id=d75ea8b2e283e37bd560e821fa4597065f36725f)
+
+Fix that by replacing CW with CR.  CW supposed to be an alias of CR
+anyway.
+
+Submitted-at: https://github.com/openvswitch/ovs/pull/416
+Co-authored-by: Xiaojie Chen <jackchanx@163.com>
+Signed-off-by: Xiaojie Chen <jackchanx@163.com>
+Signed-off-by: gordonwwang <gordonwwang@tencent.com>
+Signed-off-by: Ilya Maximets <i.maximets@ovn.org>
+(cherry picked from commit 0945e1a5fa3d66749facd24f8c60f732f7220f11)
+---
+ lib/ovs.tmac | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/lib/ovs.tmac
++++ b/lib/ovs.tmac
+@@ -175,7 +175,7 @@
+ .  nr mE \\n(.f
+ .  nf
+ .  nh
+-.  ft CW
++.  ft CR
+ ..
+ .
+ .
