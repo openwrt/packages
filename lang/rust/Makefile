@@ -3,16 +3,15 @@
 # Copyright (C) 2023 Luca Barbato and Donald Hoskins
 
 include $(TOPDIR)/rules.mk
-include ./rust-values.mk
 
 PKG_NAME:=rust
 PKG_VERSION:=1.72.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=rustc-$(PKG_VERSION)-src.tar.gz
 PKG_SOURCE_URL:=https://static.rust-lang.org/dist/
 PKG_HASH:=ea9d61bbb51d76b6ea681156f69f0e0596b59722f04414b01c6e100b4b5be3a1
-HOST_BUILD_DIR:=$(BUILD_DIR)/host/rust-$(RUSTC_TARGET_ARCH)/rustc-$(PKG_VERSION)-src
+HOST_BUILD_DIR:=$(BUILD_DIR)/host/rustc-$(PKG_VERSION)-src
 
 PKG_MAINTAINER:=Luca Barbato <lu_zero@luminem.org>
 PKG_LICENSE:=Apache-2.0 MIT
@@ -23,6 +22,7 @@ PKG_HOST_ONLY:=1
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
+include ./rust-values.mk
 
 define Package/rust
   SECTION:=lang
@@ -31,6 +31,7 @@ define Package/rust
   TITLE:=Rust Programming Language Compiler
   URL:=https://www.rust-lang.org/
   DEPENDS:=$(RUST_ARCH_DEPENDS)
+  BUILDONLY:=1
 endef
 
 define Package/rust/description
@@ -95,8 +96,7 @@ define Host/Install
 		\
 		sed -e 's|@RUSTC_TARGET_ARCH@|$(RUSTC_TARGET_ARCH)|g' \
 		    -e 's|@TARGET_CC_NOCACHE@|$(TARGET_CC_NOCACHE)|g' \
-		    -e 's|@RUSTC_LDFLAGS@|$(RUSTC_LDFLAGS)|g' \
-			$(CURDIR)/files/cargo-config > $(CARGO_HOME)/config ; \
+			$(CURDIR)/files/cargo-config > $(CARGO_HOME)/config.toml ; \
 	)
 endef
 
