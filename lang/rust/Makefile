@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rust
 PKG_VERSION:=1.72.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=rustc-$(PKG_VERSION)-src.tar.gz
 PKG_SOURCE_URL:=https://static.rust-lang.org/dist/
@@ -40,7 +40,7 @@ define Package/rust/description
 endef
 
 # Rust-lang has an uninstall script
-RUST_UNINSTALL:=$(CARGO_HOME)/lib/rustlib/uninstall.sh
+RUST_UNINSTALL:=$(STAGING_DIR)/host/lib/rustlib/uninstall.sh
 
 # Target Flags
 TARGET_CONFIGURE_ARGS = \
@@ -52,19 +52,19 @@ TARGET_CONFIGURE_ARGS = \
 	$(if $(CONFIG_USE_MUSL),--set=target.$(RUSTC_TARGET_ARCH).musl-root=$(TOOLCHAIN_DIR))
 
 # CARGO_HOME is an environmental
-HOST_CONFIGURE_OPTS += CARGO_HOME="$(CARGO_HOME)"
+HOST_CONFIGURE_VARS += CARGO_HOME="$(CARGO_HOME)"
 
 # Rust Configuration Arguments
 HOST_CONFIGURE_ARGS = \
 	--build=$(RUSTC_HOST_ARCH) \
 	--target=$(RUSTC_TARGET_ARCH),$(RUSTC_HOST_ARCH) \
 	--host=$(RUSTC_HOST_ARCH) \
-	--prefix=$(CARGO_HOME) \
-	--bindir=$(CARGO_HOME)/bin \
-	--libdir=$(CARGO_HOME)/lib \
-	--sysconfdir=$(CARGO_HOME)/etc \
-	--datadir=$(CARGO_HOME)/share \
-	--mandir=$(CARGO_HOME)/man \
+	--prefix=$(STAGING_DIR)/host \
+	--bindir=$(STAGING_DIR)/host/bin \
+	--libdir=$(STAGING_DIR)/host/lib \
+	--sysconfdir=$(STAGING_DIR)/host/etc \
+	--datadir=$(STAGING_DIR)/host/share \
+	--mandir=$(STAGING_DIR)/host/man \
 	--dist-compression-formats=gz \
 	--enable-missing-tools \
 	--disable-sanitizers \
@@ -82,6 +82,7 @@ endef
 define Host/Compile
 	( \
 		cd $(HOST_BUILD_DIR) ; \
+		CARGO_HOME=$(CARGO_HOME) \
 		OPENWRT_RUSTC_BOOTSTRAP_CACHE=$(DL_DIR)/rustc \
 		$(PYTHON) x.py --config ./config.toml dist build-manifest cargo llvm-tools \
 			rustc rust-std rust-src ; \
@@ -95,7 +96,7 @@ define Host/Install
 			$(STAGING_DIR_HOST)/bin/libdeflate-gzip -dc "$$$$targz" | tar -xf - ; \
 		done ; \
 		find . -mindepth 2 -maxdepth 2 -type f -name install.sh \
-			-execdir bash '{}' --prefix=$(CARGO_HOME) --disable-ldconfig \; ; \
+			-execdir bash '{}' --prefix=$(STAGING_DIR)/host --disable-ldconfig \; ; \
 		\
 		sed -e 's|@RUSTC_TARGET_ARCH@|$(RUSTC_TARGET_ARCH)|g' \
 		    -e 's|@TARGET_CC_NOCACHE@|$(TARGET_CC_NOCACHE)|g' \
