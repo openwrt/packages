@@ -265,9 +265,9 @@ define Download/nginx-mod-ts
 endef
 
 define Download/nginx-mod-naxsi
-  VERSION:=951123ad456bdf5ac94e8d8819342fe3d49bc002
+  VERSION:=d714f1636ea49a9a9f4f06dba14aee003e970834
   URL:=https://github.com/nbs-system/naxsi.git
-  MIRROR_HASH:=c734cae19a596affadd62a2df1b58d3df8d1364093a4e80a7cd1ab4555963535
+  MIRROR_HASH:=bd006686721a68d43f052f0a4f00e9ff99fb2abfbc4dcf8194a3562fe4e5c08b
   PROTO:=git
 endef
 
