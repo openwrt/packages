@@ -16,7 +16,7 @@ PKG_SOURCE_URL:=https://nginx.org/download/
 PKG_HASH:=05dd6d9356d66a74e61035f2a42162f8c754c97cf1ba64e7a801ba158d6c0711
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de> \
-				Ansuel Smith <ansuelsmth@gmail.com>
+				Christian Marangi <ansuelsmth@gmail.com>
 PKG_LICENSE:=2-clause BSD-like license
 PKG_CPE_ID:=cpe:/a:nginx:nginx
 
