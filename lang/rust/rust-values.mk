@@ -5,7 +5,7 @@
 # Rust Environmental Vars
 RUSTC_HOST_SUFFIX:=$(word 4, $(subst -, ,$(GNU_HOST_NAME)))
 RUSTC_HOST_ARCH:=$(HOST_ARCH)-unknown-linux-$(RUSTC_HOST_SUFFIX)
-CARGO_HOME:=$(STAGING_DIR)/host/cargo
+CARGO_HOME:=$(DL_DIR)/cargo
 CARGO_VARS?=
 
 ifeq ($(CONFIG_USE_MUSL),y)
