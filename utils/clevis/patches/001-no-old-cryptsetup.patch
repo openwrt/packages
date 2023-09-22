@@ -1,0 +1,24 @@
+--- a/src/luks/tests/meson.build	2023-09-21 18:25:28.574733087 +0200
++++ b/src/luks/tests/meson.build	2023-09-21 18:25:48.804764217 +0200
+@@ -73,15 +73,12 @@
+ # LUKS2 tests go here, and they get included if we get support for it, based
+ # on the cryptsetup version.
+ # Binding LUKS2 takes longer, so timeout is increased for a few tests.
+-if luksmeta_data.get('OLD_CRYPTSETUP') == '0'
+   test('bind-wrong-pass-luks2', find_program('bind-wrong-pass-luks2'), env: env)
+   test('bind-luks2', find_program('bind-luks2'), env: env, timeout: 60)
+   test('unbind-unbound-slot-luks2', find_program('unbind-unbound-slot-luks2'), env: env)
+   test('unbind-luks2', find_program('unbind-luks2'), env: env, timeout: 60)
+ 
+-  if keyutils.found() and luksmeta_data.get('OLD_CRYPTSETUP_EXISTING_TOKEN_ID') == '0'
+-    test('bind-luks2-ext-token', find_program('bind-luks2-ext-token'), env: env, timeout: 60)
+-  endif
++  test('bind-luks2-ext-token', find_program('bind-luks2-ext-token'), env: env, timeout: 60)
+ 
+   if jq.found()
+     test('list-recursive-luks2', find_program('list-recursive-luks2'), env: env, timeout: 60)
+@@ -99,4 +96,3 @@
+ 
+   test('backup-restore-luks2', find_program('backup-restore-luks2'), env: env, timeout: 120)
+   test('pass-tang-luks2', find_program('pass-tang-luks2'), env: env, timeout: 60)
+-endif
