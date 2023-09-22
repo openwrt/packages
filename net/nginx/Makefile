@@ -272,23 +272,23 @@ define Download/nginx-mod-naxsi
 endef
 
 define Download/nginx-mod-lua
-  VERSION:=68acad14e4a8f42e31d4a4bb5ed44d6f5b55fc1c
+  VERSION:=c89469e920713d17d703a5f3736c9335edac22bf
   URL:=https://github.com/openresty/lua-nginx-module.git
-  MIRROR_HASH:=366f24e1ba6221e34f6ba20ab29146438438f88c89fd71f9500d169b3f5aedf0
+  MIRROR_HASH:=dd66465f65c094a1ddfff2035bff4da870b7c6b7e033d307a9806a6df290a1a5
   PROTO:=git
 endef
 
 define Download/nginx-mod-lua-resty-core
-  VERSION:=698d7de385c7d58d00f4853b6a9ab2ab10243ca5
+  VERSION:=2e2b2adaa61719972fe4275fa4c3585daa0dcd84
   URL:=https://github.com/openresty/lua-resty-core.git
-  MIRROR_HASH:=366f24e1ba6221e34f6ba20ab29146438438f88c89fd71f9500d169b3f5aedf0
+  MIRROR_HASH:=4bfc267fd027161f88fcbeacce38e6bd13ba894a581c2d6dfe78ee270b1a473c
   PROTO:=git
 endef
 
 define Download/nginx-mod-lua-resty-lrucache
-  VERSION:=a79615ec9dc547fdb4aaee59ef8f5a50648ce9fd
+  VERSION:=52f5d00403c8b7aa8a4d4f3779681976b10a18c1
   URL:=https://github.com/openresty/lua-resty-lrucache.git
-  MIRROR_HASH:=7122a7f5f00fa0a1bb8e84f82fe1cc4ad7c368093508a8c04948b1c8d770a88f
+  MIRROR_HASH:=618a972574b6b1db1eebf4046d9a471ac03ec092bb825136ba975928d4af2351
   PROTO:=git
 endef
 
