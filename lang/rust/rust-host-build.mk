@@ -20,7 +20,6 @@ include $(RUST_INCLUDE_DIR)/rust-values.mk
 define Host/Compile/Cargo
 	( \
 		cd $(HOST_BUILD_DIR) ; \
-		export PATH="$(CARGO_HOME)/bin:$(PATH)" ; \
 		CARGO_HOME=$(CARGO_HOME) \
 		CC=$(HOSTCC_NOCACHE) \
 		cargo install -v \
@@ -34,7 +33,6 @@ endef
 define Host/Uninstall/Cargo
 	( \
 		cd $(HOST_BUILD_DIR) ; \
-		export PATH="$(CARGO_HOME)/bin:$(PATH)" ; \
 		CARGO_HOME=$(CARGO_HOME) \
 		CC=$(HOSTCC_NOCACHE) \
 		cargo uninstall -v \
