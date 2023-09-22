@@ -113,7 +113,7 @@ define Package/nginx-ssl
   $(Package/nginx/default)
   TITLE += with SSL support
   VARIANT:=ssl
-  DEPENDS+= +NGINX_PCRE:libpcre \
+  DEPENDS+= +NGINX_PCRE:libpcre2 \
 	+NGINX_PCRE:nginx-ssl-util +!NGINX_PCRE:nginx-ssl-util-nopcre \
 	+NGINX_HTTP_GZIP:zlib +NGINX_DAV:libxml2
   EXTRA_DEPENDS:=nginx-ssl-util$(if $(CONFIG_NGINX_PCRE),,-nopcre) (>=1.5-1) (<2)
@@ -163,7 +163,7 @@ endef
 define Package/nginx-full
   $(Package/nginx/default)
   TITLE += with ALL config selected
-  DEPENDS+=+libpcre +nginx-ssl-util +zlib +libxml2
+  DEPENDS+=+libpcre2 +nginx-ssl-util +zlib +libxml2
   EXTRA_DEPENDS:=nginx-ssl-util (>=1.5-1) (<2)
   VARIANT:=full
   PROVIDES += nginx-ssl
@@ -408,7 +408,6 @@ CONFIGURE_ARGS += \
 	--with-cc-opt="$(TARGET_CPPFLAGS) $(TARGET_CFLAGS)" \
 	--with-ld-opt="$(TARGET_LDFLAGS)" \
 	--without-http_upstream_zone_module \
-	--without-pcre2 \
 	--with-compat \
 	--with-http_ssl_module \
 	$(if $(call IsDisabled,NGINX_HTTP_CACHE),--without-http-cache) \
