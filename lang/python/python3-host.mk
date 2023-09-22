@@ -78,8 +78,7 @@ HOST_PYTHON3_VARS = \
 	CFLAGS="$(HOST_CFLAGS)" \
 	CPPFLAGS="$(HOST_CPPFLAGS) -I$(HOST_PYTHON3_INC_DIR)" \
 	LDFLAGS="$(HOST_LDFLAGS) -lpython$(PYTHON3_VERSION) -Wl$(comma)-rpath$(comma)$(STAGING_DIR_HOSTPKG)/lib" \
-	CARGO_HOME="$(CARGO_HOME)" \
-	PATH="$(CARGO_HOME)/bin:$(PATH)"
+	CARGO_HOME="$(CARGO_HOME)"
 
 # $(1) => directory of python script
 # $(2) => python script and its arguments

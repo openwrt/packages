@@ -20,7 +20,6 @@ include $(RUST_INCLUDE_DIR)/rust-values.mk
 define Build/Compile/Cargo
 	( \
 		cd $(PKG_BUILD_DIR) ; \
-		export PATH="$(CARGO_HOME)/bin:$(PATH)" ; \
 		CARGO_HOME=$(CARGO_HOME) \
 		TARGET_CFLAGS="$(TARGET_CFLAGS) $(RUSTC_CFLAGS)" \
 		TARGET_CC=$(TARGET_CC_NOCACHE) \
