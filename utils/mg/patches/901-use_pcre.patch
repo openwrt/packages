@@ -5,7 +5,7 @@
  #include <sys/queue.h>
  #include <sys/types.h>
 -#include <regex.h>
-+#include <pcreposix.h>
++#include <pcre2posix.h>
  #include <signal.h>
  #include <stdio.h>
  #include <string.h>
