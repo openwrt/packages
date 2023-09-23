@@ -151,7 +151,7 @@ append_routes() {
 	octets=$((($prefix + 7) / 8))
 	compacted="$(echo "$network" | cut -d. -f1-$octets)"
 
-	routes="$routes${routes:+, }$(explode "$prefix${compacted:+.$compacted}.$router")"
+	append routes "$(explode "$prefix${compacted:+.$compacted}.$router")" ", "
 }
 
 append_dhcp_options() {
@@ -174,7 +174,7 @@ append_dhcp_options() {
 			value="\"$value\""
 			;;
 		esac
-		formatted="$formatted${formatted:+, }$value"
+		append formatted "$value" ", "
 	done
 	echo " option $tag $formatted;"
 }
@@ -294,17 +294,17 @@ static_host_add() {
 	for option in $force_send; do
 		case "$option" in
 		hostname)
-			extra_options="$extra_options${extra_options:+,}0c" ;;
+			append extra_options "0c" "," ;;
 		domain-name)
-			extra_options="$extra_options${extra_options:+,}0f" ;;
+			append extra_options "0f" "," ;;
 		renewal-time)
-			extra_options="$extra_options${extra_options:+,}3a" ;;
+			append extra_options "3a" "," ;;
 		rebinding-time)
-			extra_options="$extra_options${extra_options:+,}3b" ;;
+			append extra_options "3b" "," ;;
 		fqdn)
-			extra_options="$extra_options${extra_options:+,}51" ;;
+			append extra_options "51" "," ;;
 		routes)
-			extra_options="$extra_options${extra_options:+,}79" ;;
+			append extra_options "79" "," ;;
 		*)
 			echo "unknown option: $option" >&2 ;;
 		esac
@@ -435,7 +435,7 @@ dhcpd_add() {
 
 	local octets="$(rfc1918_prefix "$subnet")"
 
-	[ -n "$octets" ] && rfc1918_nets="$rfc1918_nets${rfc1918_nets:+ }$octets"
+	[ -n "$octets" ] && append rfc1918_nets "$octets"
 
 	[ $synthesize -eq 0 ] && return
 
