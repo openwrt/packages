@@ -34,7 +34,7 @@ define Package/knot-resolver
     +knot-libs \
     +knot-libzscanner \
     +libuv \
-    +luajit \
+    @HAS_LUAJIT_ARCH +luajit \
     +luasec \
     +luasocket \
     +libstdcpp \
