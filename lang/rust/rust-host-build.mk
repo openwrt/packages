@@ -17,29 +17,27 @@ include $(RUST_INCLUDE_DIR)/rust-values.mk
 
 CARGO_HOST_VARS= \
 	$(CARGO_HOST_CONFIG_VARS) \
-	CC=$(HOSTCC_NOCACHE)
+	CC=$(HOSTCC_NOCACHE) \
+	MAKEFLAGS="$(HOST_JOBS)"
 
 # $(1) path to the package (optional)
 # $(2) additional arguments to cargo (optional)
 define Host/Compile/Cargo
-	( \
-		cd $(HOST_BUILD_DIR) ; \
-		$(CARGO_HOST_VARS) \
-		cargo install -v \
-			--profile $(CARGO_HOST_PROFILE) \
-			$(if $(RUST_HOST_FEATURES),--features "$(RUST_HOST_FEATURES)") \
-			--root $(HOST_INSTALL_DIR) \
-			--path "$(if $(strip $(1)),$(strip $(1)),.)" $(2) ; \
-	)
+	+$(CARGO_HOST_VARS) \
+	cargo install -v \
+		--profile $(CARGO_HOST_PROFILE) \
+		$(if $(RUST_HOST_FEATURES),--features "$(RUST_HOST_FEATURES)") \
+		--root $(HOST_INSTALL_DIR) \
+		--path "$(HOST_BUILD_DIR)/$(if $(strip $(1)),$(strip $(1)))" \
+		$(if $(filter --jobserver%,$(HOST_JOBS)),,-j1) \
+		$(2)
 endef
 
 define Host/Uninstall/Cargo
-	( \
-		cd $(HOST_BUILD_DIR) ; \
-		$(CARGO_HOST_VARS) \
-		cargo uninstall -v \
-			--root $(HOST_INSTALL_DIR) || true ; \
-	)
+	+$(CARGO_HOST_VARS) \
+	cargo uninstall -v \
+		--root $(HOST_INSTALL_DIR) \
+		|| true
 endef
 
 define RustBinHostBuild

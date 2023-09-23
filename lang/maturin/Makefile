@@ -17,6 +17,7 @@ PKG_LICENSE:=Apache-2.0 MIT
 PKG_LICENSE_FILES:=license-apache license-mit
 
 HOST_BUILD_DEPENDS:=rust/host
+HOST_BUILD_PARALLEL:=1
 PKG_HOST_ONLY:=1
 
 include $(INCLUDE_DIR)/host-build.mk
