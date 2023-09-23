@@ -80,13 +80,12 @@ define Host/Uninstall
 endef
 
 define Host/Compile
-	( \
-		cd $(HOST_BUILD_DIR) ; \
-		CARGO_HOME=$(CARGO_HOME) \
-		OPENWRT_RUSTC_BOOTSTRAP_CACHE=$(DL_DIR)/rustc \
-		$(PYTHON) x.py --config ./config.toml dist build-manifest cargo llvm-tools \
-			rustc rust-std rust-src ; \
-	)
+	CARGO_HOME=$(CARGO_HOME) \
+	OPENWRT_RUSTC_BOOTSTRAP_CACHE=$(DL_DIR)/rustc \
+	$(PYTHON) $(HOST_BUILD_DIR)/x.py \
+		--build-dir $(HOST_BUILD_DIR)/build \
+		--config $(HOST_BUILD_DIR)/config.toml \
+		dist build-manifest cargo llvm-tools rustc rust-std rust-src
 endef
 
 define Host/Install
