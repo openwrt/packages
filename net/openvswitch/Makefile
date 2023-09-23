@@ -251,6 +251,7 @@ CONFIGURE_ARGS+= \
 CONFIGURE_VARS += \
 	$(if $(CONFIG_OPENVSWITCH_WITH_LIBUNBOUND),,ac_cv_lib_unbound_ub_ctx_create=no) \
 	ovs_cv_flake8=no \
+	ovs_cv_groff=no \
 	ovs_cv_python3=$(PYTHON3) \
 	ovs_cv_python3_host=$(HOST_PYTHON3_BIN) \
 	SPHINXBUILD=none \
