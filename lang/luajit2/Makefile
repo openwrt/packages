@@ -17,13 +17,17 @@ PKG_BUILD_FLAGS:=no-mips16
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
 
+# HAS_LUAJIT_ARCH config is defined in luajit and is used to define
+# arch deoendency for luajit. Since luajit2 is an improved version of
+# luajit, they share the same arch dependency. Refer there to update
+# dependency for them.
 define Package/luajit2
  SECTION:=lang
  CATEGORY:=Languages
  SUBMENU:=Lua
  TITLE:=LuaJIT from OpenResty
  URL:=https://www.luajit.org
- DEPENDS:=@(i386||x86_64||arm||armeb||aarch64||powerpc||mips||mipsel||mips64)
+ DEPENDS:=@HAS_LUAJIT_ARCH
  PROVIDES:=luajit
 endef
 
