@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=avahi
 PKG_VERSION:=0.8
-PKG_RELEASE:=8
+PKG_RELEASE:=9
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/lathiat/avahi/releases/download/v$(PKG_VERSION) \
@@ -217,6 +217,23 @@ $(call Package/avahi/Default/description)
  For more information please see the avahi documentation.
 endef
 
+define Package/libavahi-glib
+  $(call Package/avahi/Default)
+  SECTION:=libs
+  CATEGORY:=Libraries
+  VARIANT:=dbus
+  DEPENDS:=+libavahi-client +glib2
+  TITLE+= (glib)
+endef
+
+define Package/libavahi-glib/description
+$(call Package/avahi/Default/description)
+ .
+ This package adds the libavahi-glib library.
+ It also automatically adds the required libavahi-client package.
+ For more information please see the avahi documentation.
+endef
+
 define Package/libavahi-compat-libdnssd
   $(call Package/avahi/Default)
   SECTION:=libs
@@ -251,12 +268,12 @@ $(call Package/avahi/Default/description)
  For more information please see the avahi documentation.
 endef
 
-TARGET_CFLAGS += $(FPIC) -DGETTEXT_PACKAGE
+TARGET_CFLAGS += $(FPIC)
 
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
-	--disable-glib \
+	--enable-glib \
 	--disable-gobject \
 	--disable-introspection \
 	--disable-qt3 \
@@ -346,6 +363,11 @@ define Package/libavahi-compat-libdnssd/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdns_sd.so* $(1)/usr/lib/
 endef
 
+define Package/libavahi-glib/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libavahi-glib.so* $(1)/usr/lib/
+endef
+
 define Package/avahi-utils/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
@@ -394,6 +416,7 @@ endef
 
 $(eval $(call BuildPackage,libavahi-client))
 $(eval $(call BuildPackage,libavahi-compat-libdnssd))
+$(eval $(call BuildPackage,libavahi-glib))
 $(eval $(call BuildPackage,avahi-utils))
 $(eval $(call BuildPackage,libavahi-dbus-support))
 $(eval $(call BuildPackage,libavahi-nodbus-support))
