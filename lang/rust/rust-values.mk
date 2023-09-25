@@ -62,12 +62,23 @@ endif
 # Support only a subset for now.
 RUST_ARCH_DEPENDS:=@(aarch64||arm||i386||i686||mips||mipsel||mips64||mips64el||mipsel||powerpc64||riscv64||x86_64)
 
+ifneq ($(CONFIG_RUST_SCCACHE),)
+  RUST_SCCACHE_DIR:=$(if $(call qstrip,$(CONFIG_RUST_SCCACHE_DIR)),$(call qstrip,$(CONFIG_RUST_SCCACHE_DIR)),$(TOPDIR)/.sccache)
+
+  RUST_SCCACHE_VARS:= \
+	CARGO_INCREMENTAL=0 \
+	RUSTC_WRAPPER=sccache \
+	SCCACHE_DIR=$(RUST_SCCACHE_DIR)
+endif
+
 CARGO_HOST_CONFIG_VARS= \
+	$(RUST_SCCACHE_VARS) \
 	CARGO_HOME=$(CARGO_HOME)
 
 CARGO_HOST_PROFILE:=release
 
 CARGO_PKG_CONFIG_VARS= \
+	$(RUST_SCCACHE_VARS) \
 	CARGO_BUILD_TARGET=$(RUSTC_TARGET_ARCH) \
 	CARGO_HOME=$(CARGO_HOME) \
 	CARGO_PROFILE_RELEASE_OPT_LEVEL=s \
