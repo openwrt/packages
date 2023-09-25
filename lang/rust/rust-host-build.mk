@@ -15,13 +15,16 @@ ifeq ($(origin RUST_INCLUDE_DIR),undefined)
 endif
 include $(RUST_INCLUDE_DIR)/rust-values.mk
 
+CARGO_HOST_VARS= \
+	$(CARGO_HOST_CONFIG_VARS) \
+	CC=$(HOSTCC_NOCACHE)
+
 # $(1) path to the package (optional)
 # $(2) additional arguments to cargo (optional)
 define Host/Compile/Cargo
 	( \
 		cd $(HOST_BUILD_DIR) ; \
-		CARGO_HOME=$(CARGO_HOME) \
-		CC=$(HOSTCC_NOCACHE) \
+		$(CARGO_HOST_VARS) \
 		cargo install -v \
 			--profile $(CARGO_HOST_PROFILE) \
 			$(if $(RUST_HOST_FEATURES),--features "$(RUST_HOST_FEATURES)") \
@@ -33,8 +36,7 @@ endef
 define Host/Uninstall/Cargo
 	( \
 		cd $(HOST_BUILD_DIR) ; \
-		CARGO_HOME=$(CARGO_HOME) \
-		CC=$(HOSTCC_NOCACHE) \
+		$(CARGO_HOST_VARS) \
 		cargo uninstall -v \
 			--root $(HOST_INSTALL_DIR) || true ; \
 	)

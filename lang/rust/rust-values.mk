@@ -6,7 +6,6 @@
 RUSTC_HOST_SUFFIX:=$(word 4, $(subst -, ,$(GNU_HOST_NAME)))
 RUSTC_HOST_ARCH:=$(HOST_ARCH)-unknown-linux-$(RUSTC_HOST_SUFFIX)
 CARGO_HOME:=$(DL_DIR)/cargo
-CARGO_VARS?=
 
 ifeq ($(CONFIG_USE_MUSL),y)
   # Force linking of the SSP library for musl
@@ -63,6 +62,18 @@ endif
 # Support only a subset for now.
 RUST_ARCH_DEPENDS:=@(aarch64||arm||i386||i686||mips||mipsel||mips64||mips64el||mipsel||powerpc64||riscv64||x86_64)
 
+CARGO_HOST_CONFIG_VARS= \
+	CARGO_HOME=$(CARGO_HOME)
+
 CARGO_HOST_PROFILE:=release
+
+CARGO_PKG_CONFIG_VARS= \
+	CARGO_BUILD_TARGET=$(RUSTC_TARGET_ARCH) \
+	CARGO_HOME=$(CARGO_HOME) \
+	CARGO_PROFILE_RELEASE_OPT_LEVEL=s \
+	CARGO_TARGET_$(subst -,_,$(call toupper,$(RUSTC_TARGET_ARCH)))_LINKER=$(TARGET_CC_NOCACHE) \
+	RUSTFLAGS="$(CARGO_RUSTFLAGS)" \
+	TARGET_CC=$(TARGET_CC_NOCACHE) \
+	TARGET_CFLAGS="$(TARGET_CFLAGS) $(RUSTC_CFLAGS)"
 
 CARGO_PKG_PROFILE:=$(if $(CONFIG_DEBUG),dev,release)
