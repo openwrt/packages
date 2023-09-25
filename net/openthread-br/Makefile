@@ -40,8 +40,7 @@ define Package/openthread-br
 	+libstdcpp \
 	+libubox \
 	+libubus \
-	+mdnsd \
-	+mdnsresponder
+	+libavahi-client
 endef
 
 define Package/openthread-br/description
@@ -67,7 +66,7 @@ CMAKE_OPTIONS += \
 	-DOTBR_BORDER_ROUTING:BOOL=ON \
 	-DOTBR_DNSSD_DISCOVERY_PROXY:BOOL=ON \
 	-DOTBR_DUA_ROUTING:BOOL=ON \
-	-DOTBR_MDNS=mDNSResponder \
+	-DOTBR_MDNS=avahi \
 	-DOTBR_OPENWRT:BOOL=ON \
 	-DOTBR_REST:BOOL=ON \
 	-DOTBR_SRP_ADVERTISING_PROXY:BOOL=ON \
