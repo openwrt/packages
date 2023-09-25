@@ -2,6 +2,14 @@
 #
 # Copyright (C) 2023 Luca Barbato and Donald Hoskins
 
+# Variables (all optional) to be set in package Makefiles:
+#
+# RUST_HOST_FEATURES - list of options, default empty
+#
+#   Space or comma separated list of features to activate
+#
+#   e.g. RUST_HOST_FEATURES:=enable-foo,with-bar
+
 ifeq ($(origin RUST_INCLUDE_DIR),undefined)
   RUST_INCLUDE_DIR:=$(dir $(lastword $(MAKEFILE_LIST)))
 endif
@@ -17,7 +25,7 @@ define Host/Compile/Cargo
 		CC=$(HOSTCC_NOCACHE) \
 		cargo install -v \
 			--profile stripped \
-			$(if $(RUST_PKG_FEATURES),--features "$(RUST_PKG_FEATURES)") \
+			$(if $(RUST_HOST_FEATURES),--features "$(RUST_HOST_FEATURES)") \
 			--root $(HOST_INSTALL_DIR) \
 			--path "$(if $(strip $(1)),$(strip $(1)),.)" $(2) ; \
 	)
