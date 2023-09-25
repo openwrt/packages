@@ -36,7 +36,7 @@ define Package/netavark/conffiles
 /etc/config/netavark
 endef
 
-CARGO_VARS += \
+CARGO_PKG_VARS += \
 	PROTOC=$(STAGING_DIR_HOSTPKG)/bin/protoc
 
 define Package/netavark/install
