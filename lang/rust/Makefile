@@ -30,13 +30,16 @@ define Package/rust
   TITLE:=Rust Programming Language Compiler
   URL:=https://www.rust-lang.org/
   DEPENDS:=$(RUST_ARCH_DEPENDS)
-  BUILDONLY:=1
 endef
 
 define Package/rust/description
   Rust is a multi-paradigm, general-purpose programming language designed for performance
   and safety, especially safe concurrency. Rust is syntactically similar to C++, but can
   guarantee memory safety by using a borrow checker to validate references.
+endef
+
+define Package/rust/config
+  source "$(SOURCE)/Config.in"
 endef
 
 # Rust-lang has an uninstall script
@@ -80,6 +83,7 @@ define Host/Uninstall
 endef
 
 define Host/Compile
+	$(RUST_SCCACHE_VARS) \
 	CARGO_HOME=$(CARGO_HOME) \
 	OPENWRT_RUSTC_BOOTSTRAP_CACHE=$(DL_DIR)/rustc \
 	$(PYTHON) $(HOST_BUILD_DIR)/x.py \
