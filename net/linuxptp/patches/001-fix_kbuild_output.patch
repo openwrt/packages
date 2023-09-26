@@ -6,6 +6,6 @@
  	prefix=""
 -	tstamp=/usr/include/linux/net_tstamp.h
 +	tstamp=/include/uapi/linux/net_tstamp.h
+ 	ptp_clock=/usr/include/linux/ptp_clock.h
  
  	if [ "x$KBUILD_OUTPUT" != "x" ]; then
- 		# With KBUILD_OUTPUT set, we are building against
