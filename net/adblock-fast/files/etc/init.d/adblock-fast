@@ -151,6 +151,7 @@ get_text() {
 		errorParsingList) r="failed to parse";;
 		errorNoSSLSupport) r="no HTTPS/SSL support on device";;
 		errorCreatingDirectory) r="failed to create output/cache/gzip file directory";;
+		errorDetectingFileType) r="failed to detect format";;
 
 		statusNoInstall) r="$serviceName is not installed or not found";;
 		statusStopped) r="Stopped";;
@@ -268,20 +269,35 @@ append_url() {
 	fi
 }
 
-detect_file_type() {
-	local file="$1"
-	if [ "$(head -1 "$file")" = '[Adblock Plus]' ]; then
-		echo 'adBlockPlus'
-	elif grep -q '^server=' "$file"; then
-		echo 'dnsmasqFile'
-	elif grep -q '^local=' "$file"; then
-		echo 'dnsmasq2File'
-	elif grep -q '^0.0.0.0' "$file" || grep -q '^127.0.0.1' "$file"; then
-		echo 'hosts'
-	else
-		echo 'domains'
-	fi
-}
+ detect_file_type() {
+ 	local file="$1"
+ 	if [ "$(head -1 "$file")" = '[Adblock Plus]' ] || \
+ 		grep -q '^||' "$file"; then
+ 		echo 'adBlockPlus'
+ 	elif grep -q '^server=' "$file"; then
+ 		echo 'dnsmasqFile'
+ 	elif grep -q '^local=' "$file"; then
+ 		echo 'dnsmasq2File'
+ 	elif grep -q '^0.0.0.0' "$file" || grep -q '^127.0.0.1' "$file"; then
+ 		echo 'hosts'
+ 	elif [ -n "$(sed "$domainsFilter" "$file" | head -1)" ]; then
+ 		echo 'domains'
+ 	fi
+ }
+# detect_file_type() {
+# 	local file="$1"
+# 	if [ -n "$(sed "$adBlockPlusFilter" "$file" | head -1)" ]; then
+# 		echo 'adBlockPlus'
+# 	elif [ -n "$(sed "$dnsmasqFileFilter" "$file" | head -1)" ]; then
+# 		echo 'dnsmasqFile'
+# 	elif [ -n "$(sed "$dnsmasq2FileFilter" "$file" | head -1)" ]; then
+# 		echo 'dnsmasq2File'
+# 	elif [ -n "$(sed "$hostsFilter" "$file" | head -1)" ]; then
+# 		echo 'hosts'
+# 	elif [ -n "$(sed "$domainsFilter" "$file" | head -1)" ]; then
+# 		echo 'domains'
+# 	fi
+# }
 
 load_environment() {
 	local i j
@@ -543,7 +559,7 @@ get_local_filesize() {
 	echo -en "$size"
 }
 
-resolver() {
+resolver_config() {
 	local cfg="$1" param="$2"
 	case "$param" in
 		dnsmasq.addnhosts)
@@ -580,10 +596,10 @@ dns() {
 
 			config_load 'dhcp'
 			if [ "$dnsmasq_instance" = "*" ]; then
-				config_foreach resolver 'dnsmasq' "$dns"
+				config_foreach resolver_config 'dnsmasq' "$dns"
 			elif [ -n "$dnsmasq_instance" ]; then
 				for i in $dnsmasq_instance; do
-					resolver "@dnsmasq[$i]" "$dns" || resolver "$i" "$dns"
+					resolver_config "@dnsmasq[$i]" "$dns" || resolver_config "$i" "$dns"
 				done
 			fi
 
@@ -849,16 +865,23 @@ process_file_url() {
 		format="$(detect_file_type "$R_TMP")"
 		case "$format" in
 			adBlockPlus) filter="$adBlockPlusFilter";;
-#			dnsmasqFile) filter="$dnsmasqFileFilter";;
-#			dnsmasq2File) filter="$dnsmasq2FileFilter";;
+			dnsmasqFile) filter="$dnsmasqFileFilter";;
+			dnsmasq2File) filter="$dnsmasq2FileFilter";;
 			domains) filter="$domainsFilter";;
 			hosts) filter="$hostsFilter";;
+			*)
+				output 1 "$_FAIL_"
+				output 2 "[DL] $type $label $__FAIL__\\n"
+				echo "errorDetectingFileType|${url}" >> "$sharedMemoryError"
+				rm -f "$R_TMP"
+				return 0
+			;;
 		esac
-		[ -n "$filter" ] && sed -i "$filter" "$R_TMP"
+		sed -i "$filter" "$R_TMP"
 		if [ ! -s "$R_TMP" ]; then
 			output 1 "$_FAIL_"
 			output 2 "[DL] $type $label ($format) $__FAIL__\\n"
-			echo "errorParsingList|${1}" >> "$sharedMemoryError"
+			echo "errorParsingList|${url}" >> "$sharedMemoryError"
 		else
 			cat "${R_TMP}" >> "$D_TMP"
 			output 1 "$_OK_"
@@ -1596,7 +1619,7 @@ killcache() {
 	rm -f "$dnsmasqServersCache" "${compressed_cache_dir}/${dnsmasqServersGzip}"
 	rm -f "$unboundCache" "$unboundGzip"
 	config_load 'dhcp'
-	config_foreach resolver 'dnsmasq' 'cleanup'
+	config_foreach resolver_config 'dnsmasq' 'cleanup'
 	uci_commit 'dhcp'
 	return 0
 }
