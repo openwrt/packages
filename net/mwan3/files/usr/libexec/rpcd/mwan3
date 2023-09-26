@@ -106,14 +106,10 @@ get_mwan3_status() {
 
 	config_get enabled "$iface" enabled 0
 
-	if [ -d "${MWAN3_STATUS_DIR}" ]; then
+	if [ -f "$MWAN3TRACK_STATUS_DIR/${iface}/STATUS" ]; then
 		network_get_uptime uptime "$iface"
 		network_is_up "$iface" && up="1"
-		if [ -f "$MWAN3TRACK_STATUS_DIR/${iface}/STATUS" ]; then
-			status="$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/STATUS")"
-		else
-			status="notracking"
-		fi
+		status="$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/STATUS")"
 	else
 		uptime=0
 		up=0
@@ -131,6 +127,7 @@ get_mwan3_status() {
 	json_add_string "status" "${status}"
 	json_add_boolean "enabled" "${enabled}"
 	json_add_boolean "running" "${running}"
+	json_add_string "tracking" "${track_status}"
 	json_add_boolean "up" "${up}"
 	json_add_array "track_ip"
 	for file in $MWAN3TRACK_STATUS_DIR/${iface}/TRACK_*; do
