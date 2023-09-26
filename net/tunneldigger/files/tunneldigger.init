@@ -21,6 +21,7 @@ parse_broker() {
 	config_get limit_bw_down "$section" limit_bw_down
 	config_get hook_script "$section" hook_script
 	config_get bind_interface "$section" bind_interface
+	config_get group "$section" group
 	
 	[ $enabled -eq 0 ] && return
 
@@ -53,6 +54,7 @@ parse_broker() {
 	procd_append_param command -i "${interface}"
 	procd_append_param command -t "${tunnel_id}"
 	procd_append_param command ${broker_opts}
+	[ -n "$group" ] && procd_set_param group "$group"
 	procd_set_param stdout 1
 	procd_set_param stderr 1
 	procd_set_param respawn
