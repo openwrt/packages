@@ -66,7 +66,7 @@ endef
 define Package/apache
 $(call Package/apache/Default)
   USERID:=apache=377:apache=377
-  DEPENDS:=+libapr +libaprutil +libpcre
+  DEPENDS:=+libapr +libaprutil +libpcre2
 endef
 
 define Package/apache/description
@@ -201,7 +201,7 @@ CONFIGURE_ARGS+= \
 	--with-apr-util="$(STAGING_DIR)/usr/bin/apu-1-config" \
 	--with-apr="$(STAGING_DIR)/usr/bin/apr-1-config" \
 	--with-mpm=prefork \
-	--with-pcre="$(STAGING_DIR)/usr/bin/pcre-config" \
+	--with-pcre="$(STAGING_DIR)/usr/bin/pcre2-config" \
 	--with-program-name=apache2 \
 	--with-ssl
 
