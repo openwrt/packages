@@ -1,6 +1,6 @@
 --- a/modules/md/md_crypt.c
 +++ b/modules/md/md_crypt.c
-@@ -1139,23 +1139,23 @@ const char *md_cert_get_serial_number(co
+@@ -1194,23 +1194,23 @@ int md_certs_are_equal(const md_cert_t *
  
  int md_cert_is_valid_now(const md_cert_t *cert)
  {
@@ -102,7 +102,7 @@
   * when the user points at an explicit non-engine flavor of OpenSSL
 --- a/support/ab.c
 +++ b/support/ab.c
-@@ -652,11 +652,11 @@ static void ssl_print_cert_info(BIO *bio
+@@ -665,11 +665,11 @@ static void ssl_print_cert_info(BIO *bio
  
      BIO_printf(bio, "Certificate version: %ld\n", X509_get_version(cert)+1);
      BIO_printf(bio,"Valid from: ");
@@ -116,7 +116,7 @@
      BIO_printf(bio,"\n");
  
      pk = X509_get_pubkey(cert);
-@@ -2634,8 +2634,10 @@ int main(int argc, const char * const ar
+@@ -2647,8 +2647,10 @@ int main(int argc, const char * const ar
      CRYPTO_malloc_init();
  #endif
  #endif
