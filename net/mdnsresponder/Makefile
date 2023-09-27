@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mDNSResponder
 PKG_VERSION:=IETF104
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=mDNSResponder-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://opensource.apple.com/tarballs/mDNSResponder/IETF/
@@ -121,11 +121,11 @@ define Build/Compile
 endef
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/dns_sd.h $(1)/usr/include/
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdns_sd.so.1 $(1)/usr/lib/
-	$(LN) -s libdns_sd.so.1 $(1)/usr/lib/libdns_sd.so
+	$(INSTALL_DIR) $(1)/usr/include/mdns
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/dns_sd.h $(1)/usr/include/mdns
+	$(INSTALL_DIR) $(1)/usr/lib/mdns
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdns_sd.so.1 $(1)/usr/lib/mdns
+	$(LN) -s libdns_sd.so.1 $(1)/usr/lib/mdns/libdns_sd.so
 endef
 
 define Package/mdns-utils/install
@@ -152,9 +152,9 @@ define Package/mdnsd/install
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/mdnsd.init $(1)/etc/init.d/mdnsd
-	$(INSTALL_DIR) $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdns_sd.so.1 $(1)/usr/lib/
-	$(LN) -s libdns_sd.so.1 $(1)/usr/lib/libdns_sd.so
+	$(INSTALL_DIR) $(1)/usr/lib/mdns
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdns_sd.so.1 $(1)/usr/lib/mdns
+	$(LN) -s libdns_sd.so.1 $(1)/usr/lib/mdns/libdns_sd.so
 endef
 
 define Package/mdnsresponder/install
