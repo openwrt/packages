@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adblock-fast
 PKG_VERSION:=1.0.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.ca>
 PKG_LICENSE:=GPL-3.0-or-later
 
@@ -18,6 +18,10 @@ define Package/adblock-fast
   TITLE:=AdBlock Fast Service
   URL:=https://docs.openwrt.melmac.net/adblock-fast/
   DEPENDS:=+jshn +curl
+	DEPENDS+=+!BUSYBOX_DEFAULT_AWK:gawk
+	DEPENDS+=+!BUSYBOX_DEFAULT_GREP:grep
+	DEPENDS+=+!BUSYBOX_DEFAULT_SED:sed
+	DEPENDS+=+!BUSYBOX_DEFAULT_SORT:coreutils-sort
   CONFLICTS:=simple-adblock
   PROVIDES:=simple-adblock
   PKGARCH:=all
