@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=micropython-lib
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/micropython/micropython-lib.git
@@ -50,7 +50,7 @@ endef
 define Package/micropython-lib-unix
 $(call Package/micropython-lib/Default)
   TITLE+= - Unix port packages
-  DEPENDS:=+micropython +libpcre +librt +libsqlite3
+  DEPENDS:=+micropython +libpcre2 +librt +libsqlite3
 endef
 
 define Package/micropython-lib-unix-src
