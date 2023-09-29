@@ -152,6 +152,7 @@ get_text() {
 		errorNoSSLSupport) r="no HTTPS/SSL support on device";;
 		errorCreatingDirectory) r="failed to create output/cache/gzip file directory";;
 		errorDetectingFileType) r="failed to detect format";;
+		errorNothingToDo) r="no blocked list URLs nor blocked-domains enabled";;
 
 		statusNoInstall) r="$serviceName is not installed or not found";;
 		statusStopped) r="Stopped";;
@@ -273,11 +274,11 @@ append_url() {
  	local file="$1"
  	if [ "$(head -1 "$file")" = '[Adblock Plus]' ] || \
  		grep -q '^||' "$file"; then
- 		echo 'adBlockPlus'
+ 		echo 'adblockplus'
  	elif grep -q '^server=' "$file"; then
- 		echo 'dnsmasqFile'
+ 		echo 'dnsmasq'
  	elif grep -q '^local=' "$file"; then
- 		echo 'dnsmasq2File'
+ 		echo 'dnsmasq2'
  	elif grep -q '^0.0.0.0' "$file" || grep -q '^127.0.0.1' "$file"; then
  		echo 'hosts'
  	elif [ -n "$(sed "$domainsFilter" "$file" | head -1)" ]; then
@@ -287,11 +288,11 @@ append_url() {
 # detect_file_type() {
 # 	local file="$1"
 # 	if [ -n "$(sed "$adBlockPlusFilter" "$file" | head -1)" ]; then
-# 		echo 'adBlockPlus'
+# 		echo 'adblockplus'
 # 	elif [ -n "$(sed "$dnsmasqFileFilter" "$file" | head -1)" ]; then
-# 		echo 'dnsmasqFile'
+# 		echo 'dnsmasq'
 # 	elif [ -n "$(sed "$dnsmasq2FileFilter" "$file" | head -1)" ]; then
-# 		echo 'dnsmasq2File'
+# 		echo 'dnsmasq2'
 # 	elif [ -n "$(sed "$hostsFilter" "$file" | head -1)" ]; then
 # 		echo 'hosts'
 # 	elif [ -n "$(sed "$domainsFilter" "$file" | head -1)" ]; then
@@ -864,9 +865,9 @@ process_file_url() {
 		fi
 		format="$(detect_file_type "$R_TMP")"
 		case "$format" in
-			adBlockPlus) filter="$adBlockPlusFilter";;
-			dnsmasqFile) filter="$dnsmasqFileFilter";;
-			dnsmasq2File) filter="$dnsmasq2FileFilter";;
+			adblockplus) filter="$adBlockPlusFilter";;
+			dnsmasq) filter="$dnsmasqFileFilter";;
+			dnsmasq2) filter="$dnsmasq2FileFilter";;
 			domains) filter="$domainsFilter";;
 			hosts) filter="$hostsFilter";;
 			*)
@@ -1389,21 +1390,27 @@ adb_start() {
 		fi
 	fi
 	if [ "$action" = 'download' ]; then
-		if [ -s "$outputFile" ] || cache 'test' || cache 'test_gzip'; then
-			output 0 "Force-reloading $serviceName... "
-			output 3 "Force-reloading $serviceName...\\n"
-			json set status "statusForceReloading"
+		if [ -z "$blocked_url" ] && [ -z "$blocked_domain" ]; then
+			json set status "statusFail"
+			json add error "errorNothingToDo"
+			output "${_ERROR_}: $(get_text 'errorNothingToDo')!\\n"
 		else
-			output 0 "Starting $serviceName... "
-			output 3 "Starting $serviceName...\\n"
-			json set status "statusStarting"
+			if [ -s "$outputFile" ] || cache 'test' || cache 'test_gzip'; then
+				output 0 "Force-reloading $serviceName... "
+				output 3 "Force-reloading $serviceName...\\n"
+				json set status "statusForceReloading"
+			else
+				output 0 "Starting $serviceName... "
+				output 3 "Starting $serviceName...\\n"
+				json set status "statusStarting"
+			fi
+			if [ "$dns" = 'dnsmasq.conf' ] && [ -n "$dnsmasq_config_file_url" ]; then
+				download_dnsmasq_file
+			else
+				download_lists
+			fi
+			dns 'on_start'
 		fi
-		if [ "$dns" = 'dnsmasq.conf' ] && [ -n "$dnsmasq_config_file_url" ]; then
-			download_dnsmasq_file
-		else
-			download_lists
-		fi
-		dns 'on_start'
 	fi
 	if [ "$action" = 'restart' ]; then
 		output 0 "Restarting $serviceName... "
