@@ -59,17 +59,6 @@ endef
 
 # Additional optional exporters:
 
-define Package/prometheus-node-exporter-lua-bmx6
-  $(call Package/prometheus-node-exporter-lua/Default)
-  TITLE+= (bmx6 links collector)
-  DEPENDS:=prometheus-node-exporter-lua bmx6 +lua-cjson +bmx6-json
-endef
-
-define Package/prometheus-node-exporter-lua-bmx6/install
-	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
-	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/bmx6.lua $(1)/usr/lib/lua/prometheus-collectors/
-endef
-
 define Package/prometheus-node-exporter-lua-bmx7
   $(call Package/prometheus-node-exporter-lua/Default)
   TITLE+= (bmx7 links collector)
@@ -236,7 +225,6 @@ define Package/prometheus-node-exporter-lua-realtek-poe/install
 endef
 
 $(eval $(call BuildPackage,prometheus-node-exporter-lua))
-$(eval $(call BuildPackage,prometheus-node-exporter-lua-bmx6))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-bmx7))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-dawn))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-hostapd_stations))
