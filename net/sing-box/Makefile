@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sing-box
-PKG_VERSION:=1.4.0
+PKG_VERSION:=1.5.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/SagerNet/sing-box/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=ab6698545442e9197339f459553e241ff91396ba39a8e5d14e0a792e78d290a0
+PKG_HASH:=ad344a5fe0a515e3e5d0ab8102482b4a3d38932cf754756e1d48db17d36a5609
 
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=LICENSE
@@ -54,6 +54,7 @@ define Package/sing-box/config
 
 		config SINGBOX_WITH_ECH
 			bool "Build with TLS ECH extension support for TLS outbound"
+			default y
 
 		config SINGBOX_WITH_EMBEDDED_TOR
 			bool "Build with embedded Tor support"
@@ -78,6 +79,8 @@ define Package/sing-box/config
 
 		config SINGBOX_WITH_SHADOWSOCKSR
 			bool "Build with ShadowsocksR support"
+			help
+				It will be marked deprecated in 1.5.0 and removed entirely in 1.6.0.
 
 		config SINGBOX_WITH_UTLS
 			bool "Build with uTLS support for TLS outbound"
