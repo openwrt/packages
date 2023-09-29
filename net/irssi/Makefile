@@ -8,23 +8,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=irssi
-PKG_VERSION:=1.2.3
-PKG_RELEASE:=2
+PKG_VERSION:=1.4.4
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/irssi/irssi/releases/download/$(PKG_VERSION)/
-PKG_HASH:=a647bfefed14d2221fa77b6edac594934dc672c4a560417b1abcbbc6b88d769f
+PKG_HASH:=fefe9ec8c7b1475449945c934a2360ab12693454892be47a6d288c63eb107ead
 
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:irssi:irssi
 
-PKG_FIXUP:=autoreconf
-PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
+include $(INCLUDE_DIR)/meson.mk
 
 define Package/irssi
   SUBMENU:=Instant Messaging
@@ -42,12 +41,12 @@ endef
 
 TARGET_LDFLAGS += -Wl,--gc-sections
 
-CONFIGURE_ARGS += \
-	--disable-glibtest \
-	--with-textui \
-	--without-bot \
-	--without-perl \
-	--without-proxy
+MESON_ARGS += \
+	-Dwithout-textui=no \
+	-Dwith-bot=no \
+	-Dwith-otr=no \
+	-Dwith-perl=no \
+	-Dwith-proxy=no \
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/irssi
