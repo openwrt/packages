@@ -1,0 +1,29 @@
+From 8c6a4f171b7d97a294590fab9dc2069b149b9b36 Mon Sep 17 00:00:00 2001
+From: Andras Gemes <andrasgemes@outlook.com>
+Date: Mon, 23 Jan 2023 10:42:39 +0100
+Subject: [PATCH 2/6] src/makefile: add PCRE2_CFLAGS to airodump and besside
+
+---
+ src/Makefile.inc | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/src/Makefile.inc
++++ b/src/Makefile.inc
+@@ -128,7 +128,7 @@ aireplay_ng_CFLAGS	= $(COMMON_CFLAGS) $(
+ aireplay_ng_LDADD		= $(COMMON_LDADD) $(LIBAIRCRACK_OSDEP_LIBS) $(LIBACCRYPTO_LIBS) $(AIRPCAP_LIBS) $(LIBAIRCRACK_LIBS) $(CRYPTO_LIBS)
+ 
+ airodump_ng_SOURCES		= $(SRC_ADU) $(SRC_DWRITE)
+-airodump_ng_CFLAGS		= $(COMMON_CFLAGS) $(PCRE_CFLAGS) $(LIBNL_CFLAGS)
++airodump_ng_CFLAGS		= $(COMMON_CFLAGS) $(PCRE_CFLAGS) $(PCRE2_CFLAGS) $(LIBNL_CFLAGS)
+ airodump_ng_CPPFLAGS	= $(AM_CPPFLAGS) -I$(abs_srcdir)/src/airodump-ng
+ airodump_ng_LDADD			= $(COMMON_LDADD) $(PCRE_LIBS) $(PCRE2_LIBS) $(LIBAIRCRACK_OSDEP_LIBS) $(LIBACCRYPTO_LIBS) $(LIBAIRCRACK_CE_WEP_LIBS) $(AIRPCAP_LIBS) $(LIBAIRCRACK_LIBS) $(CRYPTO_LIBS)
+ 
+@@ -163,7 +163,7 @@ buddy_ng_CPPFLAGS	= $(AM_CPPFLAGS) -I$(a
+ buddy_ng_LDADD		= $(COMMON_LDADD) $(LIBAIRCRACK_LIBS) $(CRYPTO_LIBS)
+ 
+ besside_ng_SOURCES	= $(SRC_BS)
+-besside_ng_CFLAGS		= $(COMMON_CFLAGS) $(PCRE_CFLAGS) $(LIBNL_CFLAGS)
++besside_ng_CFLAGS		= $(COMMON_CFLAGS) $(PCRE_CFLAGS) $(PCRE2_CFLAGS) $(LIBNL_CFLAGS)
+ besside_ng_LDADD		= $(COMMON_LDADD) $(PCRE_LIBS) $(PCRE2_LIBS) $(LIBAIRCRACK_OSDEP_LIBS) $(LIBACCRYPTO_LIBS) $(LIBPTW_LIBS) $(AIRPCAP_LIBS) $(LIBAIRCRACK_LIBS) $(CRYPTO_LIBS)
+ 
+ besside_ng_crawler_SOURCES	= $(SRC_BC)
