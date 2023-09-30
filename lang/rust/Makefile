@@ -17,7 +17,6 @@ PKG_MAINTAINER:=Luca Barbato <lu_zero@luminem.org>
 PKG_LICENSE:=Apache-2.0 MIT
 PKG_LICENSE_FILES:=LICENSE-APACHE LICENSE-MIT
 
-HOST_BUILD_DEPENDS:=python3/host
 PKG_HOST_ONLY:=1
 
 include $(INCLUDE_DIR)/host-build.mk
