@@ -41,7 +41,7 @@ define Package/libnetsnmp
 $(call Package/net-snmp/Default)
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libnl-tiny +libpci +libpcre
+  DEPENDS:=+libnl-tiny +libpci +libpcre2
   TITLE:=Open source SNMP implementation (libraries)
 endef
 
@@ -208,6 +208,7 @@ CONFIGURE_ARGS += \
 	--without-mysql \
 	--without-rpm \
 	--without-zlib \
+	--with-pcre2-8 \
 	--with-nl \
 	 $(call autoconf_bool,CONFIG_IPV6,ipv6) \
 	--disable-perl-cc-checks \
