@@ -82,6 +82,7 @@ endef
 define Host/Compile
 	( \
 		cd $(HOST_BUILD_DIR) ; \
+		OPENWRT_RUSTC_BOOTSTRAP_CACHE=$(DL_DIR)/rustc \
 		$(PYTHON) x.py --config ./config.toml dist build-manifest cargo llvm-tools \
 			rustc rust-std rust-src ; \
 	)
