@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=crun
-PKG_VERSION:=1.9
+PKG_VERSION:=1.9.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/containers/crun/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=dfe15045953f6876fde273518ac2cafbabda7c0eebd3dcdba34c4e5dc8b46661
+PKG_HASH:=a5ed2984a9ebb3e0e5cba0781832f03931423097a56f48a948ab034b46726aef
 
 PKG_BUILD_DEPENDS:=argp-standalone
 PKG_BUILD_PARALLEL:=1
