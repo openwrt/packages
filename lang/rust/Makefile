@@ -97,10 +97,6 @@ define Host/Install
 		done ; \
 		find . -mindepth 2 -maxdepth 2 -type f -name install.sh \
 			-execdir bash '{}' --prefix=$(STAGING_DIR)/host --disable-ldconfig \; ; \
-		\
-		sed -e 's|@RUSTC_TARGET_ARCH@|$(RUSTC_TARGET_ARCH)|g' \
-		    -e 's|@TARGET_CC_NOCACHE@|$(TARGET_CC_NOCACHE)|g' \
-			$(CURDIR)/files/cargo-config > $(CARGO_HOME)/config.toml ; \
 	)
 endef
 

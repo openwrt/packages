@@ -23,7 +23,7 @@ define Host/Compile/Cargo
 		CARGO_HOME=$(CARGO_HOME) \
 		CC=$(HOSTCC_NOCACHE) \
 		cargo install -v \
-			--profile stripped \
+			--profile $(CARGO_HOST_PROFILE) \
 			$(if $(RUST_HOST_FEATURES),--features "$(RUST_HOST_FEATURES)") \
 			--root $(HOST_INSTALL_DIR) \
 			--path "$(if $(strip $(1)),$(strip $(1)),.)" $(2) ; \
