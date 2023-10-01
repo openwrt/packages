@@ -21,13 +21,15 @@ define Build/Compile/Cargo
 	( \
 		cd $(PKG_BUILD_DIR) ; \
 		CARGO_HOME=$(CARGO_HOME) \
+		CARGO_PROFILE_RELEASE_OPT_LEVEL=s \
+		CARGO_TARGET_$(subst -,_,$(call toupper,$(RUSTC_TARGET_ARCH)))_LINKER=$(TARGET_CC_NOCACHE) \
 		TARGET_CFLAGS="$(TARGET_CFLAGS) $(RUSTC_CFLAGS)" \
 		TARGET_CC=$(TARGET_CC_NOCACHE) \
 		CC=$(HOSTCC_NOCACHE) \
 		RUSTFLAGS="$(CARGO_RUSTFLAGS)" \
 		$(CARGO_VARS) \
 		cargo install -v \
-			--profile stripped \
+			--profile $(CARGO_PKG_PROFILE) \
 			--target $(RUSTC_TARGET_ARCH) \
 			$(if $(strip $(RUST_PKG_FEATURES)),--features "$(strip $(RUST_PKG_FEATURES))") \
 			--root $(PKG_INSTALL_DIR) \

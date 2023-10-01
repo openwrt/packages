@@ -62,3 +62,7 @@ endif
 
 # Support only a subset for now.
 RUST_ARCH_DEPENDS:=@(aarch64||arm||i386||i686||mips||mipsel||mips64||mips64el||mipsel||powerpc64||riscv64||x86_64)
+
+CARGO_HOST_PROFILE:=release
+
+CARGO_PKG_PROFILE:=$(if $(CONFIG_DEBUG),dev,release)
