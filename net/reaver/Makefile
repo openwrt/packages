@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=reaver
 PKG_VERSION:=1.6.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
@@ -30,6 +30,8 @@ CONFIGURE_PATH:=src
 MAKE_PATH:=src
 
 CONFIGURE_ARGS += --enable-savetocurrent
+TARGET_CFLAGS += -I$(STAGING_DIR)/usr/include/libnl-tiny
+TARGET_LDFLAGS += -lnl-tiny
 
 define Package/reaver
   SECTION:=net
@@ -37,7 +39,7 @@ define Package/reaver
   SUBMENU:=Wireless
   TITLE:=Efficient brute force attack against Wifi Protected Setup
   URL:=https://github.com/t6x/reaver-wps-fork-t6x
-  DEPENDS:=+libpcap
+  DEPENDS:=+libpcap +libnl-tiny
 endef
 
 define Package/reaver/description

@@ -1,0 +1,72 @@
+--- a/src/iface.c
++++ b/src/iface.c
+@@ -34,6 +34,10 @@
+ #include "iface.h"
+ #include "lwe/iwlib.h"
+ #include "globule.h"
++#include <libnl-tiny/netlink/netlink.h>
++#include <libnl-tiny/netlink/genl/genl.h>
++#include <libnl-tiny/netlink/genl/ctrl.h>
++#include <linux/nl80211.h>
+ #include <net/if.h>
+ #include <netinet/in.h>
+ #include <sys/ioctl.h>
+@@ -159,6 +163,16 @@ int change_channel(int channel)
+ 	return 0;
+ }
+ #else
++// taken from aircrack-ng source code
++static int ieee80211_channel_to_frequency(int chan)
++{
++	if (chan < 14) return 2407 + chan * 5;
++
++	if (chan == 14) return 2484;
++
++	/* FIXME: dot11ChannelStartingFactor (802.11-2007 17.3.8.3.2) */
++	return (chan + 1000) * 5;
++}
+ int change_channel(int channel)
+ {
+         int skfd = 0, ret_val = 0;
+@@ -180,14 +194,33 @@ int change_channel(int channel)
+                 wrq.u.freq.flags = IW_FREQ_FIXED;
+ 
+         	cprintf(VERBOSE, "[+] Switching %s to channel %d\n", get_iface(), channel);
+-
+-                /* Set frequency */
+-                if(iw_set_ext(skfd, get_iface(), SIOCSIWFREQ, &wrq) >= 0)
+-                {
+-			set_channel(channel);
+-                        ret_val = 1;
+-                }
+-
++            /** patch to use nl80211 **/
++            struct nl_sock* sk = nl_socket_alloc();
++            genl_connect(sk);
++
++            struct nl_msg *mesg = nlmsg_alloc();
++            enum nl80211_commands command = NL80211_CMD_SET_WIPHY;
++            genlmsg_put(mesg, 0, 0, genl_ctrl_resolve(sk, "nl80211"), 0, 0, command, 0);
++
++            int idx = if_nametoindex(get_iface());
++            int ret = 0;
++            if (idx > 0) {
++                struct nl_cb *cb = nl_cb_alloc(NL_CB_DEFAULT);
++                NLA_PUT_U32(mesg, NL80211_ATTR_IFINDEX, idx);
++                NLA_PUT_U32(mesg, NL80211_ATTR_WIPHY_FREQ, ieee80211_channel_to_frequency(channel));
++                NLA_PUT_U32(mesg, NL80211_ATTR_CHANNEL_WIDTH, NL80211_CHAN_WIDTH_20);
++                ret = nl_send_auto_complete(sk, mesg);
++                nl_recvmsgs(sk, cb);
++                nl_cb_put(cb);
++                nlmsg_free(mesg);
++                nl_socket_free(sk);
++                set_channel(channel);
++                return 1;
++            nla_put_failure:
++                nlmsg_free(mesg);
++                return 0;
++            }
++            /** end patch to use nl80211 **/
+                 iw_sockets_close(skfd);
+         }
+ 
