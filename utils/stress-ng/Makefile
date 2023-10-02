@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=stress-ng
-PKG_VERSION:=0.15.10
+PKG_VERSION:=0.17.00
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ColinIanKing/stress-ng/tar.gz/refs/tags/V$(PKG_VERSION)?
-PKG_HASH:=fcd86e1b8db5b2c22182cefbf4b3131a8599bff5bdd85edf776ec15c2d80e8f1
+PKG_HASH:=eca62128f4918edc6d1e309f426a223968f44b304b737275443ec9e62855d42e
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
