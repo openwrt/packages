@@ -1,5 +1,4 @@
 menu "Configuration"
-	depends on PACKAGE_python3-pymysql
 
 config PYTHON3_PYMYSQL_SHA_PASSWORD_SUPPORT
 	bool "Enable support for SHA password authentication"
