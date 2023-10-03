@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dmidecode
 PKG_VERSION:=3.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SAVANNAH/$(PKG_NAME)
@@ -26,7 +26,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/dmidecode
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=@(TARGET_x86||TARGET_x86_64)
+  DEPENDS:=@(TARGET_x86||TARGET_x86_64||TARGET_armsr_armv8)
   TITLE:=Displays BIOS informations.
   URL:=https://www.nongnu.org/dmidecode/
 endef
