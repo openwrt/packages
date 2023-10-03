@@ -69,6 +69,7 @@ FFMPEG_CUSTOM_DECODERS:= \
 
 FFMPEG_CUSTOM_MUXERS:= \
 	ac3 \
+	avi \
 	ffm \
 	h264 \
 	hevc \
