@@ -162,9 +162,8 @@ Available commands:
 | ban_dev                 | list   | - / autodetect                | wan device(s), e.g. 'eth2'                                                                                   |
 | ban_vlanallow           | list   | -                             | always allow certain VLAN forwards, e.g. br-lan.20                                                           |
 | ban_vlanblock           | list   | -                             | always block certain VLAN forwards, e.g. br-lan.10                                                           |
-| ban_trigger             | list   | -                             | logical startup trigger interface(s), e.g. 'wan'                                                             |
-| ban_triggerdelay        | option | 10                            | trigger timeout before banIP processing begins                                                               |
-| ban_triggeraction       | option | start                         | trigger action on ifup events, e.g. start, restart or reload                                                 |
+| ban_trigger             | list   | -                             | logical reload trigger interface(s), e.g. 'wan'                                                              |
+| ban_triggerdelay        | option | 10                            | trigger timeout during interface reload and boot                                                             |
 | ban_deduplicate         | option | 1                             | deduplicate IP addresses across all active Sets                                                              |
 | ban_splitsize           | option | 0                             | split ext. Sets after every n lines/members (saves RAM)                                                      |
 | ban_cores               | option | - / autodetect                | limit the cpu cores used by banIP (saves RAM)                                                                |
@@ -176,6 +175,7 @@ Available commands:
 | ban_asn                 | list   | -                             | ASNs for the 'asn' feed, e.g.'32934'                                                                         |
 | ban_country             | list   | -                             | country iso codes for the 'country' feed, e.g. 'ru'                                                          |
 | ban_blockpolicy         | option | -                             | limit the default block policy to a certain chain, e.g. 'input', 'forwardwan' or 'forwardlan'                |
+| ban_blocktype           | option | drop                          | 'drop' packets silently on input and forwardwan chains or actively 'reject' the traffic                      |
 | ban_blockinput          | list   | -                             | limit a feed to the wan-input chain, e.g. 'country'                                                          |
 | ban_blockforwardwan     | list   | -                             | limit a feed to the wan-forward chain, e.g. 'debl'                                                           |
 | ban_blockforwardlan     | list   | -                             | limit a feed to the lan-forward chain, e.g. 'doh'                                                            |
