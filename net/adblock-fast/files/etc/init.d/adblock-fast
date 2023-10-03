@@ -64,8 +64,9 @@ readonly sharedMemoryError="/dev/shm/$packageName-error"
 readonly hostsFilter='/localhost/d;/^#/d;/^[^0-9]/d;s/^0\.0\.0\.0.//;s/^127\.0\.0\.1.//;s/[[:space:]]*#.*$//;s/[[:cntrl:]]$//;s/[[:space:]]//g;/[`~!@#\$%\^&\*()=+;:"'\'',<>?/\|[{}]/d;/]/d;/\./!d;/^$/d;/[^[:alnum:]_.-]/d;'
 readonly domainsFilter='/^#/d;s/[[:space:]]*#.*$//;s/[[:space:]]*$//;s/[[:cntrl:]]$//;/[[:space:]]/d;/[`~!@#\$%\^&\*()=+;:"'\'',<>?/\|[{}]/d;/]/d;/\./!d;/^$/d;/[^[:alnum:]_.-]/d;'
 readonly adBlockPlusFilter='/^#/d;/^!/d;s/[[:space:]]*#.*$//;s/^||//;s/\^$//;s/[[:space:]]*$//;s/[[:cntrl:]]$//;/[[:space:]]/d;/[`~!@#\$%\^&\*()=+;:"'\'',<>?/\|[{}]/d;/]/d;/\./!d;/^$/d;/[^[:alnum:]_.-]/d;'
-readonly dnsmasqFileFilter='\|^server=/[[:alnum:]_.-].*/|!d'
-readonly dnsmasq2FileFilter='\|^local=/[[:alnum:]_.-].*/|!d'
+readonly dnsmasqFileFilter='\|^server=/[[:alnum:]_.-].*/|!d;s|server=/||;s|/.*$||'
+readonly dnsmasq2FileFilter='\|^local=/[[:alnum:]_.-].*/|!d;s|local=/||;s|/.*$||'
+readonly dnsmasq3FileFilter='\|^address=/[[:alnum:]_.-].*/|!d;s|address=/||;s|/.*$||'
 readonly _OK_='\033[0;32m\xe2\x9c\x93\033[0m'
 readonly _FAIL_='\033[0;31m\xe2\x9c\x97\033[0m'
 readonly __OK__='\033[0;32m[\xe2\x9c\x93]\033[0m'
@@ -279,6 +280,8 @@ append_url() {
  		echo 'dnsmasq'
  	elif grep -q '^local=' "$file"; then
  		echo 'dnsmasq2'
+ 	elif grep -q '^address=' "$file"; then
+ 		echo 'dnsmasq3'
  	elif grep -q '^0.0.0.0' "$file" || grep -q '^127.0.0.1' "$file"; then
  		echo 'hosts'
  	elif [ -n "$(sed "$domainsFilter" "$file" | head -1)" ]; then
@@ -868,6 +871,7 @@ process_file_url() {
 			adblockplus) filter="$adBlockPlusFilter";;
 			dnsmasq) filter="$dnsmasqFileFilter";;
 			dnsmasq2) filter="$dnsmasq2FileFilter";;
+			dnsmasq3) filter="$dnsmasq3FileFilter";;
 			domains) filter="$domainsFilter";;
 			hosts) filter="$hostsFilter";;
 			*)
@@ -878,7 +882,9 @@ process_file_url() {
 				return 0
 			;;
 		esac
-		sed -i "$filter" "$R_TMP"
+		if [ -n "$filter" ] && [ "$action" != 'file' ]; then
+			sed -i "$filter" "$R_TMP"
+		fi
 		if [ ! -s "$R_TMP" ]; then
 			output 1 "$_FAIL_"
 			output 2 "[DL] $type $label ($format) $__FAIL__\\n"
@@ -1038,15 +1044,16 @@ $(cat $A_TMP)"
 		mv "$A_TMP" "$B_TMP"
 	fi
 
-	output 2 'Allowing domains '
-	json set message "$(get_text "statusProcessing"): allowing domains"
-	if sed -i -E "$allow_filter" "$B_TMP"; then
-		output_ok
-	else
-		output_failn
-		json add error "errorAllowListProcessing"
+	if [ -n "$allow_filter" ]; then
+		output 2 'Allowing domains '
+		json set message "$(get_text "statusProcessing"): allowing domains"
+		if sed -i -E "$allow_filter" "$B_TMP"; then
+			output_ok
+		else
+			output_failn
+			json add error "errorAllowListProcessing"
+		fi
 	fi
-
 	output 2 'Formatting merged file '
 	json set message "$(get_text "statusProcessing"): formatting merged file"
 	if [ -z "$outputFilterIPv6" ]; then
