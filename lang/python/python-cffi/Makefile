@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-cffi
-PKG_VERSION:=1.15.1
+PKG_VERSION:=1.16.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=cffi
-PKG_HASH:=d400bfb9a37b1351253cb402671cea7e89bdecc294e8016a707f6d1d8ac934f9
+PKG_HASH:=bcb3ef43e58665bbda2fb198698fcae6776483e0c4a631aa5647806c25e02cc0
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
@@ -40,6 +40,7 @@ define Package/python3-cffi
   DEPENDS:= \
       +libffi \
       +python3-light \
+      +python3-ctypes \
       +python3-pycparser
 endef
 
