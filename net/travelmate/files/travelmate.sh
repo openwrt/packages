@@ -580,6 +580,13 @@ f_addsta() {
 			set travelmate."${uci_cfg}".con_end_expiry="0"
 			set travelmate."${uci_cfg}".enabled="1"
 		EOC
+  		if [ -n "${trm_default_vpnservice}" ] && [ -n "${trm_default_vpniface}" ]; then
+			uci -q batch <<-EOC
+				set travelmate."${uci_cfg}".vpnservice="${trm_default_vpnservice}"
+				set travelmate."${uci_cfg}".vpniface="${trm_default_vpniface}" 
+				set travelmate."${uci_cfg}".vpn="1"
+			EOC
+		fi
 		if [ -n "$(uci -q changes "travelmate")" ] || [ -n "$(uci -q changes "wireless")" ]; then
 			trm_opensta="$((trm_opensta + 1))"
 			uci_commit "travelmate"
