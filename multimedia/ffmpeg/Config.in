@@ -303,6 +303,9 @@ comment "Muxers"
 config FFMPEG_CUSTOM_MUXER_ac3
 	bool "AC3"
 
+config FFMPEG_CUSTOM_MUXER_avi
+	bool "AVI"
+
 config FFMPEG_CUSTOM_MUXER_h264
 	bool "H.264 Raw Video"
 	depends on FFMPEG_CUSTOM_PATENTED
