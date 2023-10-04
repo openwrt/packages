@@ -20,8 +20,17 @@ PKG_LICENSE:=ZSH
 PKG_LICENSE_FILES:=LICENCE
 PKG_CPE_ID:=cpe:/a:zsh_project:zsh
 
+PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+
+# zsh include custom macro in the default aclocal.m4
+# When autoreconf PKG_FIXUP is used, if PKG_REMOVE_FILES
+# is not defined, it's set to remove the file aclocak.m4
+# by default resulting in problem with the custom macro
+# AC_PROG_LN
+# To prevent this, declare empty PKG_REMOVE_FILES
+PKG_REMOVE_FILES:=
 
 include $(INCLUDE_DIR)/package.mk
 
