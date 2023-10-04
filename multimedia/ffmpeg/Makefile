@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
 PKG_VERSION:=5.1.3
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ffmpeg.org/releases/
@@ -534,6 +534,12 @@ ifeq ($(BUILD_VARIANT),custom)
 	--disable-swresample
   endif
 
+  ifneq ($(CONFIG_PACKAGE_ffmpeg-custom),n)
+      FFMPEG_CONFIGURE+= \
+	--enable-avfilter \
+	--enable-ffmpeg
+  endif
+
   FFMPEG_CONFIGURE+= \
 	--disable-swscale \
 	--disable-everything \
@@ -649,6 +655,11 @@ define Build/InstallDev/custom
 ifeq ($(CONFIG_FFMPEG_CUSTOM_PROGRAMS),y)
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avfilter,swresample}.{a,so*} $(1)/usr/lib/
 endif
+ifeq ($(BUILD_VARIANT),custom)
+  ifneq ($(CONFIG_PACKAGE_ffmpeg-custom),n)
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libavfilter.{a,so*} $(1)/usr/lib/
+  endif
+endif
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/lib{avcodec,avdevice,avformat,avutil}.pc $(1)/usr/lib/pkgconfig/
 ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_libx264),y)
@@ -730,6 +741,11 @@ ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_libx264),y)
 endif
 ifeq ($(CONFIG_FFMPEG_CUSTOM_PROGRAMS),y)
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avfilter,swresample}.so.* $(1)/usr/lib/
+endif
+ifeq ($(BUILD_VARIANT),custom)
+  ifneq ($(CONFIG_PACKAGE_ffmpeg-custom),n)
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libavfilter.so.* $(1)/usr/lib/
+  endif
 endif
 endef
 
