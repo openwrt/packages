@@ -390,12 +390,6 @@ endef
 
 $(eval $(call HostBuild))
 
-$(foreach package, $(PYTHON3_PACKAGES),  \
-	$(eval $(call Py3Package,$(package))) \
-	$(eval $(call BuildPackage,$(package))) \
-	$(eval $(call BuildPackage,$(package)-src)) \
-)
-
 $(eval $(call BuildPackage,libpython3))
 
 $(eval $(call Py3Package,python3-base))
@@ -408,3 +402,9 @@ $(eval $(call BuildPackage,python3))
 
 $(eval $(call BuildPackage,python3-base-src))
 $(eval $(call BuildPackage,python3-light-src))
+
+$(foreach package, $(PYTHON3_PACKAGES),  \
+	$(eval $(call Py3Package,$(package))) \
+	$(eval $(call BuildPackage,$(package))) \
+	$(eval $(call BuildPackage,$(package)-src)) \
+)
