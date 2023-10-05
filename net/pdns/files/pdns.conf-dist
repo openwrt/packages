@@ -141,6 +141,11 @@
 # default-api-rectify=yes
 
 #################################
+# default-catalog-zone	Catalog zone to assign newly created primary zones (via the API) to
+#
+# default-catalog-zone=
+
+#################################
 # default-ksk-algorithm	Default KSK algorithm
 #
 # default-ksk-algorithm=ecdsa256
@@ -531,6 +536,11 @@
 # secondary=no
 
 #################################
+# secondary-check-signature-freshness	Check signatures in SOA freshness check. Sets DO flag on SOA queries. Outside some very problematic scenarios, say yes here.
+#
+# secondary-check-signature-freshness=yes
+
+#################################
 # secondary-do-renotify	If this secondary should send out notifications after receiving zone transfers from a primary
 #
 # secondary-do-renotify=no
@@ -581,7 +591,7 @@
 # slave-renotify=no
 
 #################################
-# socket-dir	Where the controlsocket will live, /var/run/pdns when unset and not chrooted. Set to the RUNTIME_DIRECTORY environment variable when that variable has a value (e.g. under systemd).
+# socket-dir	Where the controlsocket will live, /var/run/pdns when unset and not chrooted
 #
 # socket-dir=
 
@@ -694,6 +704,11 @@
 # webserver-print-arguments	If the webserver should print arguments
 #
 # webserver-print-arguments=no
+
+#################################
+# workaround-11804	Workaround for issue 11804: send single RR per AXFR chunk
+#
+# workaround-11804=no
 
 #################################
 # write-pid	Write a PID file
