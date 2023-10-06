@@ -1,0 +1,34 @@
+From 0bd31f72c9f5eeef49de1079917656b2fc063f7f Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Petr=20=C5=A0tetiar?= <ynezz@true.cz>
+Date: Thu, 29 Jun 2023 10:59:46 +0200
+Subject: [PATCH] build: unbreak builds with _FORTIFY_SOURCE=1
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Some downstream build systems allow passing custom _FORTIFY_SOURCE
+values and this results in conflicting compiler flags and build
+failures:
+
+ <command-line>: error: "_FORTIFY_SOURCE" redefined
+
+So lets fix it by undefining any previous _FORTIFY_SOURCE values and
+then forcing _FORTIFY_SOURCE=2.
+
+Upstream-Status: Pending [https://github.com/Yubico/libfido2/pull/708]
+Signed-off-by: Petr Štetiar <ynezz@true.cz>
+---
+ CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -299,7 +299,7 @@ else()
+ 
+ 	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g2")
+ 	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fno-omit-frame-pointer")
+-	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -D_FORTIFY_SOURCE=2")
++	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2")
+ 
+ 	if(CRYPTO_VERSION VERSION_GREATER_EQUAL 3.0)
+ 		add_definitions(-DOPENSSL_API_COMPAT=0x10100000L)
