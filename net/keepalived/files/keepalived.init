@@ -88,8 +88,11 @@ print_notify() {
 	shift
 	local name="$1"
 	shift
+	local indent="$1"
+	shift
+
 	for notify in "$@"; do
-		printf '%b%s' "${INDENT_1}" "$notify">> "$KEEPALIVED_CONF"
+		printf '%b%s' "${indent}" "$notify">> "$KEEPALIVED_CONF"
 		notify="$(echo "$notify" | tr 'a-z' 'A-Z')"
 		printf ' "/bin/busybox env -i ACTION=%s TYPE=%s NAME=%s /sbin/hotplug-call keepalived"\n' "$notify" "$type" "$name" >> "$KEEPALIVED_CONF"
 	done
@@ -320,7 +323,7 @@ vrrp_sync_group() {
 
 	print_elems_indent "$1" "$INDENT_1" no_val_smtp_alert no_val_global_tracking
 
-	print_notify "GROUP" "$name" notify_backup notify_master \
+	print_notify "GROUP" "$name" "$INDENT_1" notify_backup notify_master \
 		notify_fault notify
 
 	config_section_close
@@ -352,7 +355,7 @@ vrrp_instance() {
 		no_val_dont_track_primary no_val_smtp_alert no_val_nopreempt \
 		no_val_use_vmac
 
-	print_notify "INSTANCE" "$name" notify_backup notify_master \
+	print_notify "INSTANCE" "$name" "$INDENT_1" notify_backup notify_master \
 		notify_fault notify_stop
 
 	# Handle virtual_ipaddress & virtual_ipaddress_excluded lists
@@ -501,7 +504,12 @@ real_server() {
 	[ -n "$ipaddr" ] && [ -n "$port" ] && {
 		printf '%breal_server %s %d {\n' "${INDENT_1}" "$ipaddr" "$port" >> "$KEEPALIVED_CONF"
 		printf '%bweight %d\n' "${INDENT_2}" "$weight" >> "$KEEPALIVED_CONF"
+		print_notify "REAL_SERVER" "$name" "$INDENT_2" notify_up notify_down
 		case "$check" in
+			PING_CHECK)
+				printf '%b%s {\n' "${INDENT_2}" "$check" >> "$KEEPALIVED_CONF"
+				printf '%b}\n' "${INDENT_2}" >> "$KEEPALIVED_CONF"
+				;;
 			TCP_CHECK)
 				printf '%b%s {\n' "${INDENT_2}" "$check" >> "$KEEPALIVED_CONF"
 				print_elems_indent "$1" "$INDENT_3" connect_timeout \
