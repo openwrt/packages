@@ -76,8 +76,8 @@
 -SUBDIRS = . tests
 +SUBDIRS = .
  
- PYTHON_PREFIX=@prefix@
- PYTHON_EXEC_PREFIX=@prefix@
+ pkgpython_PYTHON = kea_conn.py kea_connector3.py
+ 
 --- a/src/hooks/dhcp/high_availability/Makefile.am
 +++ b/src/hooks/dhcp/high_availability/Makefile.am
 @@ -1,4 +1,4 @@
@@ -89,16 +89,16 @@
 --- a/src/hooks/dhcp/lease_cmds/Makefile.am
 +++ b/src/hooks/dhcp/lease_cmds/Makefile.am
 @@ -1,4 +1,4 @@
--SUBDIRS = . tests
-+SUBDIRS = .
+-SUBDIRS = . tests libloadtests
++SUBDIRS = . libloadtests
  
  AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
  AM_CPPFLAGS += $(BOOST_INCLUDES)
 --- a/src/hooks/dhcp/stat_cmds/Makefile.am
 +++ b/src/hooks/dhcp/stat_cmds/Makefile.am
 @@ -1,4 +1,4 @@
--SUBDIRS = . tests
-+SUBDIRS = .
+-SUBDIRS = . tests libloadtests
++SUBDIRS = . libloadtests
  
  AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
  AM_CPPFLAGS += $(BOOST_INCLUDES)
@@ -134,14 +134,6 @@
  
  AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
  AM_CPPFLAGS += $(BOOST_INCLUDES)
---- a/src/lib/cfgrpt/Makefile.am
-+++ b/src/lib/cfgrpt/Makefile.am
-@@ -1,4 +1,4 @@
--SUBDIRS = . tests
-+SUBDIRS = .
- 
- AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
- AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 --- a/src/lib/config/Makefile.am
 +++ b/src/lib/config/Makefile.am
 @@ -1,4 +1,4 @@
@@ -277,8 +269,8 @@
 --- a/src/lib/process/Makefile.am
 +++ b/src/lib/process/Makefile.am
 @@ -1,4 +1,4 @@
--SUBDIRS = . testutils tests
-+SUBDIRS = .
+-SUBDIRS = cfgrpt . testutils tests
++SUBDIRS = cfgrpt . testutils
  # DATA_DIR is the directory where to put PID files.
  dhcp_data_dir = @runstatedir@/@PACKAGE@
  AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
@@ -308,3 +300,67 @@
  
  AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
  AM_CPPFLAGS += $(BOOST_INCLUDES)
+--- a/src/hooks/dhcp/bootp/Makefile.am
++++ b/src/hooks/dhcp/bootp/Makefile.am
+@@ -1,4 +1,4 @@
+-SUBDIRS = . tests libloadtests
++SUBDIRS = . libloadtests
+ 
+ AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
+ AM_CPPFLAGS += $(BOOST_INCLUDES)
+--- a/src/hooks/dhcp/flex_option/Makefile.am
++++ b/src/hooks/dhcp/flex_option/Makefile.am
+@@ -1,4 +1,4 @@
+-SUBDIRS = . libloadtests tests
++SUBDIRS = . libloadtests
+ 
+ AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
+ AM_CPPFLAGS += $(BOOST_INCLUDES)
+--- a/src/hooks/dhcp/mysql_cb/Makefile.am
++++ b/src/hooks/dhcp/mysql_cb/Makefile.am
+@@ -1,4 +1,4 @@
+-SUBDIRS = . tests libloadtests
++SUBDIRS = . libloadtests
+ 
+ AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
+ AM_CPPFLAGS += $(BOOST_INCLUDES) $(MYSQL_CPPFLAGS)
+--- a/src/hooks/dhcp/pgsql_cb/Makefile.am
++++ b/src/hooks/dhcp/pgsql_cb/Makefile.am
+@@ -1,4 +1,4 @@
+-SUBDIRS = . tests libloadtests
++SUBDIRS = . libloadtests
+ 
+ AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
+ AM_CPPFLAGS += $(BOOST_INCLUDES) $(PGSQL_CPPFLAGS)
+--- a/src/hooks/dhcp/run_script/Makefile.am
++++ b/src/hooks/dhcp/run_script/Makefile.am
+@@ -1,4 +1,4 @@
+-SUBDIRS = . libloadtests tests
++SUBDIRS = . libloadtests
+ 
+ AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
+ AM_CPPFLAGS += $(BOOST_INCLUDES)
+--- a/src/lib/d2srv/Makefile.am
++++ b/src/lib/d2srv/Makefile.am
+@@ -1,4 +1,4 @@
+-SUBDIRS = . testutils tests
++SUBDIRS = . testutils
+ 
+ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
+ AM_CPPFLAGS += $(BOOST_INCLUDES)
+--- a/src/lib/process/cfgrpt/Makefile.am
++++ b/src/lib/process/cfgrpt/Makefile.am
+@@ -1,4 +1,4 @@
+-SUBDIRS = . tests
++SUBDIRS = .
+ 
+ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
+ AM_CXXFLAGS  = $(KEA_CXXFLAGS)
+--- a/src/lib/tcp/Makefile.am
++++ b/src/lib/tcp/Makefile.am
+@@ -1,4 +1,4 @@
+-SUBDIRS = . tests
++SUBDIRS = .
+ 
+ AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
+ AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
