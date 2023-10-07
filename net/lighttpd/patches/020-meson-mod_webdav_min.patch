@@ -9,7 +9,7 @@ Subject: [PATCH] [meson] mod_webdav_min w/o deps: xml2 sqlite3 uuid
 
 --- a/src/meson.build
 +++ b/src/meson.build
-@@ -876,6 +876,16 @@ if libsasl.found()
+@@ -877,6 +877,16 @@ if libsasl.found()
  	]
  endif
  
