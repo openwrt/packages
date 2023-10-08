@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cni-protocol
-PKG_VERSION:=20230217
+PKG_VERSION:=20231008
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
@@ -16,25 +16,44 @@ define Package/cni-protocol
 endef
 
 define Package/cni-protocol/description
-  protocol support for cni networks for netifd
-  makes defining network for podman and other similar
-  systems using cni networking much easier and simpler.
+  protocol support for netavark/cni networks for netifd
+  makes defining networks for podman and other similar
+  systems easier and simple.
 
-  with cni protocol support, on a network, where firewall
-  and portmapper management is disabled, you may control
-  firewalling with openwrt's default firewall configuration.
+  with protocol, a network where firewall and portmapper
+  management is disabled, control of firewalling, whether
+  it was exposing ports, and forwarding to them from wan,
+  or limiting/accepting access to other networks such
+  as lan can made through openwrt's own firewalling
+  configuration.
 
-  for example, create a container that hosts web content on
-  port 80 with static ip on your cni network, if your
-  network is 10.88.0.0/16, use for eg. 10.88.0.101 as
-  your containers static ip address. Create a zone, cni
-  to your firewall and add your interface to it.
+  example configuration could be as following:
+    - lan network: 10.0.0.0/16 (255.255.0.0)
+    - container network: 10.129.0.1/24 (255.255.255.0)
 
-  Now you can easily set up redirectiong to 10.88.0.101:80
-  to expose it's port 80 to wan for serving your website.
+  Add a network configuration for your container network
+  using cni protocol. Then create firewall zone for it.
 
-  Protocol has one setting: device, on podman this often
-  is cni-podman0.
+  You could create a new container/pod with static ip
+  address 10.129.0.2 (as 10.129.0.1 as container network's
+  gateway).
+
+  Easily define permissions so that local networks can
+  connect to cni network, but not the other way around.
+  Also you want to allow forwarding from/to wan.
+
+  Now, as cni cannot access local dns, make a rule for
+  your firewall to accept connections from cni network
+  to port 53 (dns).
+
+  Now all you have to do, is make redirects to your firewall
+  and point them to 10.129.0.2 and connections from wan are
+  redirectered to containers/pods.
+
+  Protocol has 2 settings: device and delay. Sometimes polling
+  interfaces takes some time, and in that case you might want
+  to add few seconds to delay. Otherwise, it can be excluded
+  from configuration.
 endef
 
 define Build/Configure
