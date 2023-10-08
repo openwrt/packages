@@ -46,7 +46,8 @@ PYTHON3_VARS = \
 	_python_prefix="/usr" \
 	_python_exec_prefix="/usr" \
 	$(CARGO_PKG_CONFIG_VARS) \
-	PYO3_CROSS_LIB_DIR="$(PYTHON3_LIB_DIR)"
+	PYO3_CROSS_LIB_DIR="$(PYTHON3_LIB_DIR)" \
+	SETUPTOOLS_RUST_CARGO_PROFILE="$(CARGO_PKG_PROFILE)"
 
 # $(1) => directory of python script
 # $(2) => python script and its arguments
