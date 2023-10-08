@@ -9,11 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-twisted
-PKG_VERSION:=22.10.0
+PKG_VERSION:=23.8.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=Twisted
-PKG_HASH:=32acbd40a94f5f46e7b42c109bfae2b302250945561783a8b7a059048f2d4d31
+PYPI_SOURCE_NAME:=twisted
+PKG_HASH:=3c73360add17336a622c0d811c2a2ce29866b6e59b1125fd6509b17252098a24
 
 PKG_BUILD_DEPENDS:=libtirpc
 
@@ -22,7 +23,7 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 PKG_CPE_ID:=cpe:/a:twistedmatrix:twisted
 
-PKG_BUILD_DEPENDS:=python-incremental/host
+PKG_BUILD_DEPENDS:=python-hatchling/host python-hatch-fancy-pypi-readme/host python-incremental/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -45,8 +46,6 @@ define Package/python3-twisted
       +python3-hyperlink \
       +python3-idna \
       +python3-incremental \
-      +python3-pkg-resources \
-      +python3-pyasn1 \
       +python3-pyopenssl \
       +python3-service-identity \
       +python3-typing-extensions \
@@ -55,12 +54,8 @@ endef
 
 define Package/python3-twisted/description
 Twisted is a networking engine written in Python, supporting numerous
-protocols. It contains a web server, numerous chat clients, chat servers,
-mail servers, and more.
-endef
-
-define Build/Configure
-	$(SED) 's/^version = attr: twisted.__version__$$$$/version = $(PKG_VERSION)/' $(PKG_BUILD_DIR)/setup.cfg
+protocols. It contains a web server, numerous chat clients, chat
+servers, mail servers, and more.
 endef
 
 define Py3Package/python3-twisted/filespec
