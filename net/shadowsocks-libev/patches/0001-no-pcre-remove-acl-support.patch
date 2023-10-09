@@ -1,0 +1,485 @@
+From d4f2421743ca55716c5630a6853f0bb2bed866c3 Mon Sep 17 00:00:00 2001
+From: Yousong Zhou <yszhou4tech@gmail.com>
+Date: Mon, 9 Oct 2023 20:16:04 +0800
+Subject: [PATCH] no pcre: remove acl support
+
+---
+ configure.ac      |   6 ---
+ src/Makefile.am   |  13 ++----
+ src/jconf.c       |   2 -
+ src/jconf.h       |   1 -
+ src/local.c       | 111 ++--------------------------------------------
+ src/manager.c     |  13 ------
+ src/manager.h     |   1 -
+ src/server.c      |  50 ---------------------
+ src/shadowsocks.h |   2 -
+ src/utils.c       |   4 --
+ 10 files changed, 7 insertions(+), 196 deletions(-)
+
+--- a/configure.ac
++++ b/configure.ac
+@@ -20,12 +20,6 @@ AC_DISABLE_STATIC
+ AC_DISABLE_SHARED
+ LT_INIT([dlopen])
+ 
+-dnl Check for pcre library
+-TS_CHECK_PCRE
+-if test "x${enable_pcre}" != "xyes"; then
+-  AC_MSG_ERROR([Cannot find pcre library. Configure --with-pcre=DIR])
+-fi
+-
+ dnl Checks for using shared libraries from system
+ AC_ARG_ENABLE(
+   [system-shared-lib],
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -24,9 +24,6 @@ if !BUILD_WINCOMPAT
+ bin_PROGRAMS += ss-manager
+ endif
+ 
+-acl_src = rule.c \
+-          acl.c
+-
+ crypto_src = crypto.c \
+              aead.c \
+              stream.c \
+@@ -49,8 +46,7 @@ endif
+ ss_local_SOURCES = local.c \
+                    $(common_src) \
+                    $(crypto_src) \
+-                   $(plugin_src) \
+-                   $(acl_src)
++                   $(plugin_src)
+ 
+ ss_tunnel_SOURCES = tunnel.c \
+                     $(common_src) \
+@@ -61,8 +57,7 @@ ss_server_SOURCES = resolv.c \
+                     server.c \
+                     $(common_src) \
+                     $(crypto_src) \
+-                    $(plugin_src) \
+-                    ${acl_src}
++                    $(plugin_src)
+ 
+ ss_manager_SOURCES = utils.c \
+                      jconf.c \
+@@ -109,7 +104,7 @@ libshadowsocks_libev_la_LDFLAGS = -versi
+ libshadowsocks_libev_la_LIBADD = $(ss_local_LDADD)
+ include_HEADERS = shadowsocks.h
+ 
+-noinst_HEADERS = acl.h crypto.h stream.h aead.h json.h netutils.h redir.h server.h uthash.h \
++noinst_HEADERS = crypto.h stream.h aead.h json.h netutils.h redir.h server.h uthash.h \
+                  cache.h local.h plugin.h resolv.h tunnel.h utils.h base64.h ppbloom.h \
+-                 common.h jconf.h manager.h rule.h socks5.h udprelay.h winsock.h
++                 common.h jconf.h manager.h socks5.h udprelay.h winsock.h
+ EXTRA_DIST = ss-nat
+--- a/src/jconf.c
++++ b/src/jconf.c
+@@ -347,8 +347,6 @@ read_jconf(const char *file)
+                 conf.tcp_tproxy = value->u.boolean;
+             } else if (strcmp(name, "workdir") == 0) {
+                 conf.workdir = to_string(value);
+-            } else if (strcmp(name, "acl") == 0) {
+-                conf.acl = to_string(value);
+             } else if (strcmp(name, "manager_address") == 0) {
+                 conf.manager_address = to_string(value);
+             }
+--- a/src/jconf.h
++++ b/src/jconf.h
+@@ -84,7 +84,6 @@ typedef struct {
+     int no_delay;
+     int tcp_tproxy;
+     char *workdir;
+-    char *acl;
+     char *manager_address;
+ } jconf_t;
+ 
+--- a/src/local.c
++++ b/src/local.c
+@@ -54,7 +54,6 @@
+ #include "netutils.h"
+ #include "utils.h"
+ #include "socks5.h"
+-#include "acl.h"
+ #include "plugin.h"
+ #include "local.h"
+ #include "winsock.h"
+@@ -91,7 +90,6 @@ char *stat_path   = NULL;
+ 
+ static crypto_t *crypto;
+ 
+-static int acl       = 0;
+ static int mode      = TCP_ONLY;
+ static int ipv6first = 0;
+ int fast_open        = 0;
+@@ -377,7 +375,7 @@ server_handshake(EV_P_ ev_io *w, buffer_
+         memcpy(abuf->data + abuf->len, buf->data + request_len, in_addr_len + 2);
+         abuf->len += in_addr_len + 2;
+ 
+-        if (acl || verbose) {
++        if (verbose) {
+             uint16_t p = load16_be(buf->data + request_len + in_addr_len);
+             if (!inet_ntop(AF_INET, (const void *)(buf->data + request_len),
+                            ip, INET_ADDRSTRLEN)) {
+@@ -395,7 +393,7 @@ server_handshake(EV_P_ ev_io *w, buffer_
+         memcpy(abuf->data + abuf->len, buf->data + request_len + 1, name_len + 2);
+         abuf->len += name_len + 2;
+ 
+-        if (acl || verbose) {
++        if (verbose) {
+             uint16_t p = load16_be(buf->data + request_len + 1 + name_len);
+             memcpy(host, buf->data + request_len + 1, name_len);
+             host[name_len] = '\0';
+@@ -409,7 +407,7 @@ server_handshake(EV_P_ ev_io *w, buffer_
+         memcpy(abuf->data + abuf->len, buf->data + request_len, in6_addr_len + 2);
+         abuf->len += in6_addr_len + 2;
+ 
+-        if (acl || verbose) {
++        if (verbose) {
+             uint16_t p = load16_be(buf->data + request_len + in6_addr_len);
+             if (!inet_ntop(AF_INET6, (const void *)(buf->data + request_len),
+                            ip, INET6_ADDRSTRLEN)) {
+@@ -446,95 +444,6 @@ server_handshake(EV_P_ ev_io *w, buffer_
+             LOGI("connect to [%s]:%s", ip, port);
+     }
+ 
+-    if (acl
+-#ifdef __ANDROID__
+-        && !(vpn && strcmp(port, "53") == 0)
+-#endif
+-        ) {
+-        int bypass   = 0;
+-        int resolved = 0;
+-        struct sockaddr_storage storage;
+-        memset(&storage, 0, sizeof(struct sockaddr_storage));
+-        int err;
+-
+-        int host_match = 0;
+-        if (atyp == SOCKS5_ATYP_DOMAIN)
+-            host_match = acl_match_host(host);
+-
+-        if (host_match > 0)
+-            bypass = 1;                             // bypass hostnames in black list
+-        else if (host_match < 0)
+-            bypass = 0;                             // proxy hostnames in white list
+-        else {
+-            if (atyp == SOCKS5_ATYP_DOMAIN
+-#ifdef __ANDROID__
+-                && !vpn
+-#endif
+-                ) {           // resolve domain so we can bypass domain with geoip
+-                if (get_sockaddr(host, port, &storage, 0, ipv6first))
+-                    goto not_bypass;
+-                resolved = 1;
+-                switch (((struct sockaddr *)&storage)->sa_family) {
+-                case AF_INET:
+-                {
+-                    struct sockaddr_in *addr_in = (struct sockaddr_in *)&storage;
+-                    if (!inet_ntop(AF_INET, &(addr_in->sin_addr), ip, INET_ADDRSTRLEN))
+-                        goto not_bypass;
+-                    break;
+-                }
+-                case AF_INET6:
+-                {
+-                    struct sockaddr_in6 *addr_in6 = (struct sockaddr_in6 *)&storage;
+-                    if (!inet_ntop(AF_INET6, &(addr_in6->sin6_addr), ip, INET6_ADDRSTRLEN))
+-                        goto not_bypass;
+-                    break;
+-                }
+-                default:
+-                    goto not_bypass;
+-                }
+-            }
+-
+-            int ip_match = (resolved || atyp == SOCKS5_ATYP_IPV4
+-                            || atyp == SOCKS5_ATYP_IPV6) ? acl_match_host(ip) : 0;
+-
+-            switch (get_acl_mode()) {
+-            case BLACK_LIST:
+-                if (ip_match > 0)
+-                    bypass = 1;                                               // bypass IPs in black list
+-                break;
+-            case WHITE_LIST:
+-                bypass = 1;
+-                if (ip_match < 0)
+-                    bypass = 0;                                               // proxy IPs in white list
+-                break;
+-            }
+-        }
+-
+-        if (bypass) {
+-            if (verbose) {
+-                if (atyp == SOCKS5_ATYP_DOMAIN)
+-                    LOGI("bypass %s:%s", host, port);
+-                else if (atyp == 1)
+-                    LOGI("bypass %s:%s", ip, port);
+-                else if (atyp == 4)
+-                    LOGI("bypass [%s]:%s", ip, port);
+-            }
+-            if (atyp == SOCKS5_ATYP_DOMAIN && !resolved)
+-#ifdef __ANDROID__
+-                if (vpn)
+-                    goto not_bypass;
+-                else
+-#endif
+-                err = get_sockaddr(host, port, &storage, 0, ipv6first);
+-            else
+-                err = get_sockaddr(ip, port, &storage, 0, ipv6first);
+-            if (err != -1) {
+-                remote = create_remote(server->listener, (struct sockaddr *)&storage, 1);
+-            }
+-        }
+-    }
+-
+-not_bypass:
+     // Not bypass
+     if (remote == NULL) {
+         remote = create_remote(server->listener, NULL, 0);
+@@ -1432,7 +1341,6 @@ main(int argc, char **argv)
+         { "reuse-port",  no_argument,       NULL, GETOPT_VAL_REUSE_PORT  },
+         { "fast-open",   no_argument,       NULL, GETOPT_VAL_FAST_OPEN   },
+         { "no-delay",    no_argument,       NULL, GETOPT_VAL_NODELAY     },
+-        { "acl",         required_argument, NULL, GETOPT_VAL_ACL         },
+         { "mtu",         required_argument, NULL, GETOPT_VAL_MTU         },
+         { "mptcp",       no_argument,       NULL, GETOPT_VAL_MPTCP       },
+         { "plugin",      required_argument, NULL, GETOPT_VAL_PLUGIN      },
+@@ -1458,10 +1366,6 @@ main(int argc, char **argv)
+         case GETOPT_VAL_FAST_OPEN:
+             fast_open = 1;
+             break;
+-        case GETOPT_VAL_ACL:
+-            LOGI("initializing acl...");
+-            acl = !init_acl(optarg);
+-            break;
+         case GETOPT_VAL_MTU:
+             mtu = atoi(optarg);
+             LOGI("set MTU to %d", mtu);
+@@ -1636,10 +1540,6 @@ main(int argc, char **argv)
+         if (ipv6first == 0) {
+             ipv6first = conf->ipv6_first;
+         }
+-        if (acl == 0 && conf->acl != NULL) {
+-            LOGI("initializing acl...");
+-            acl = !init_acl(conf->acl);
+-        }
+     }
+ 
+     if (remote_num == 0) {
+@@ -1982,11 +1882,6 @@ _start_ss_local_server(profile_t profile
+ 
+     USE_LOGFILE(log);
+ 
+-    if (profile.acl != NULL) {
+-        LOGI("initializing acl...");
+-        acl = !init_acl(profile.acl);
+-    }
+-
+     if (local_addr == NULL) {
+         local_addr = "127.0.0.1";
+     }
+--- a/src/manager.c
++++ b/src/manager.c
+@@ -156,10 +156,6 @@ construct_command_line(struct manager_ct
+              "%s --manager-address %s -f %s/.shadowsocks_%d.pid -c %s/.shadowsocks_%d.conf",
+              executable, manager->manager_address, working_dir, port, working_dir, port);
+ 
+-    if (manager->acl != NULL) {
+-        int len = strlen(cmd);
+-        snprintf(cmd + len, BUF_SIZE - len, " --acl %s", manager->acl);
+-    }
+     if (manager->timeout != NULL) {
+         int len = strlen(cmd);
+         snprintf(cmd + len, BUF_SIZE - len, " -t %s", manager->timeout);
+@@ -848,7 +844,6 @@ main(int argc, char **argv)
+ {
+     int i, c;
+     int pid_flags         = 0;
+-    char *acl             = NULL;
+     char *user            = NULL;
+     char *password        = NULL;
+     char *timeout         = NULL;
+@@ -883,7 +878,6 @@ main(int argc, char **argv)
+         { "fast-open",       no_argument,       NULL, GETOPT_VAL_FAST_OPEN   },
+         { "no-delay",        no_argument,       NULL, GETOPT_VAL_NODELAY     },
+         { "reuse-port",      no_argument,       NULL, GETOPT_VAL_REUSE_PORT  },
+-        { "acl",             required_argument, NULL, GETOPT_VAL_ACL         },
+         { "manager-address", required_argument, NULL,
+           GETOPT_VAL_MANAGER_ADDRESS },
+         { "executable",      required_argument, NULL,
+@@ -913,9 +907,6 @@ main(int argc, char **argv)
+         case GETOPT_VAL_NODELAY:
+             no_delay = 1;
+             break;
+-        case GETOPT_VAL_ACL:
+-            acl = optarg;
+-            break;
+         case GETOPT_VAL_MANAGER_ADDRESS:
+             manager_address = optarg;
+             break;
+@@ -1051,9 +1042,6 @@ main(int argc, char **argv)
+         if (workdir == NULL) {
+             workdir = conf->workdir;
+         }
+-        if (acl == NULL) {
+-            acl = conf->acl;
+-        }
+         if (manager_address == NULL) {
+             manager_address = conf->manager_address;
+         }
+@@ -1166,7 +1154,6 @@ main(int argc, char **argv)
+     manager.timeout         = timeout;
+     manager.method          = method;
+     manager.iface           = iface;
+-    manager.acl             = acl;
+     manager.user            = user;
+     manager.manager_address = manager_address;
+     manager.hosts           = server_host;
+--- a/src/manager.h
++++ b/src/manager.h
+@@ -49,7 +49,6 @@ struct manager_ctx {
+     char *timeout;
+     char *method;
+     char *iface;
+-    char *acl;
+     char *user;
+     char *plugin;
+     char *plugin_opts;
+--- a/src/server.c
++++ b/src/server.c
+@@ -53,7 +53,6 @@
+ 
+ #include "netutils.h"
+ #include "utils.h"
+-#include "acl.h"
+ #include "plugin.h"
+ #include "server.h"
+ #include "winsock.h"
+@@ -116,7 +115,6 @@ struct sockaddr_storage local_addr_v6;
+ 
+ static crypto_t *crypto;
+ 
+-static int acl       = 0;
+ static int mode      = TCP_ONLY;
+ static int ipv6first = 0;
+ int fast_open        = 0;
+@@ -435,27 +433,6 @@ connect_to_remote(EV_P_ struct addrinfo
+     const char *iface = server->listen_ctx->iface;
+ #endif
+ 
+-    if (acl) {
+-        char ipstr[INET6_ADDRSTRLEN];
+-        memset(ipstr, 0, INET6_ADDRSTRLEN);
+-
+-        if (res->ai_addr->sa_family == AF_INET) {
+-            struct sockaddr_in s;
+-            memcpy(&s, res->ai_addr, sizeof(struct sockaddr_in));
+-            inet_ntop(AF_INET, &s.sin_addr, ipstr, INET_ADDRSTRLEN);
+-        } else if (res->ai_addr->sa_family == AF_INET6) {
+-            struct sockaddr_in6 s;
+-            memcpy(&s, res->ai_addr, sizeof(struct sockaddr_in6));
+-            inet_ntop(AF_INET6, &s.sin6_addr, ipstr, INET6_ADDRSTRLEN);
+-        }
+-
+-        if (outbound_block_match_host(ipstr) == 1) {
+-            if (verbose)
+-                LOGI("outbound blocked %s", ipstr);
+-            return NULL;
+-        }
+-    }
+-
+     // initialize remote socks
+     sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+     if (sockfd == -1) {
+@@ -834,12 +811,6 @@ server_recv_cb(EV_P_ ev_io *w, int reven
+                 stop_server(EV_A_ server);
+                 return;
+             }
+-            if (acl && outbound_block_match_host(host) == 1) {
+-                if (verbose)
+-                    LOGI("outbound blocked %s", host);
+-                close_and_free_server(EV_A_ server);
+-                return;
+-            }
+             struct cork_ip ip;
+             if (cork_ip_init(&ip, host) != -1) {
+                 info.ai_socktype = SOCK_STREAM;
+@@ -1521,18 +1492,6 @@ accept_cb(EV_P_ ev_io *w, int revents)
+         return;
+     }
+ 
+-    char *peer_name = get_peer_name(serverfd);
+-    if (peer_name != NULL) {
+-        if (acl) {
+-            if ((get_acl_mode() == BLACK_LIST && acl_match_host(peer_name) == 1)
+-                || (get_acl_mode() == WHITE_LIST && acl_match_host(peer_name) >= 0)) {
+-                LOGE("Access denied from %s", peer_name);
+-                close(serverfd);
+-                return;
+-            }
+-        }
+-    }
+-
+     int opt = 1;
+     setsockopt(serverfd, SOL_TCP, TCP_NODELAY, &opt, sizeof(opt));
+ #ifdef SO_NOSIGPIPE
+@@ -1578,7 +1537,6 @@ main(int argc, char **argv)
+         { "fast-open",       no_argument,       NULL, GETOPT_VAL_FAST_OPEN   },
+         { "reuse-port",      no_argument,       NULL, GETOPT_VAL_REUSE_PORT  },
+         { "no-delay",        no_argument,       NULL, GETOPT_VAL_NODELAY     },
+-        { "acl",             required_argument, NULL, GETOPT_VAL_ACL         },
+         { "manager-address", required_argument, NULL,
+           GETOPT_VAL_MANAGER_ADDRESS },
+         { "mtu",             required_argument, NULL, GETOPT_VAL_MTU         },
+@@ -1607,10 +1565,6 @@ main(int argc, char **argv)
+             no_delay = 1;
+             LOGI("enable TCP no-delay");
+             break;
+-        case GETOPT_VAL_ACL:
+-            LOGI("initializing acl...");
+-            acl = !init_acl(optarg);
+-            break;
+         case GETOPT_VAL_MANAGER_ADDRESS:
+             manager_addr = optarg;
+             break;
+@@ -1781,10 +1735,6 @@ main(int argc, char **argv)
+         if (ipv6first == 0) {
+             ipv6first = conf->ipv6_first;
+         }
+-        if (acl == 0 && conf->acl != NULL) {
+-            LOGI("initializing acl...");
+-            acl = !init_acl(conf->acl);
+-        }
+     }
+ 
+     if (server_num == 0) {
+--- a/src/shadowsocks.h
++++ b/src/shadowsocks.h
+@@ -33,7 +33,6 @@ typedef struct {
+     int timeout;          // connection timeout
+ 
+     /*  Optional, set NULL if not valid   */
+-    char *acl;            // file path to acl
+     char *log;            // file path to log
+     int fast_open;        // enable tcp fast open
+     int mode;             // enable udp relay
+@@ -52,7 +51,6 @@ typedef struct {
+  *  .remote_port = 8338,
+  *  .local_port = 1080,
+  *  .timeout = 600;
+- *  .acl = NULL,
+  *  .log = NULL,
+  *  .fast_open = 0,
+  *  .mode = 0,
+--- a/src/utils.c
++++ b/src/utils.c
+@@ -387,10 +387,6 @@ usage()
+     printf(
+         "                                  with Linux kernel > 3.7.0.\n");
+ #endif
+-#if defined(MODULE_REMOTE) || defined(MODULE_LOCAL)
+-    printf(
+-        "       [--acl <acl_file>]         Path to ACL (Access Control List).\n");
+-#endif
+ #if defined(MODULE_REMOTE) || defined(MODULE_MANAGER)
+     printf(
+         "       [--manager-address <addr>] UNIX domain socket address.\n");
