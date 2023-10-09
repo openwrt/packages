@@ -53,6 +53,7 @@ ifeq ($(ARCH),arm)
 
   ifeq ($(CONFIG_HAS_FPU),y)
     RUSTC_TARGET_ARCH:=$(subst musleabi,musleabihf,$(RUSTC_TARGET_ARCH))
+    RUSTC_TARGET_ARCH:=$(subst gnueabi,gnueabihf,$(RUSTC_TARGET_ARCH))
   endif
 endif
 
