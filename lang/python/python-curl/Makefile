@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pycurl
 PKG_VERSION:=7.45.2
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=5730590be0271364a5bddd9e245c9cc0fb710c4cbacbdd95264a3122d23224ca
@@ -47,6 +47,9 @@ endif
 ifdef CONFIG_LIBCURL_WOLFSSL
   PYTHON3_PKG_BUILD_VARS:=PYCURL_SSL_LIBRARY=wolfssl
 endif
+
+PYTHON3_PKG_BUILD_VARS += \
+	PYCURL_CURL_CONFIG=$(STAGING_DIR)/usr/bin/curl-config
 
 $(eval $(call Py3Package,python3-curl))
 $(eval $(call BuildPackage,python3-curl))
