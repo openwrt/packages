@@ -1,7 +1,0 @@
-[target.@RUSTC_TARGET_ARCH@]
-linker = "@TARGET_CC_NOCACHE@"
-
-[profile.stripped]
-inherits = "release"
-opt-level = "s"
-strip = true
