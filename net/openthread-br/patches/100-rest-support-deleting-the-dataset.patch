@@ -16,8 +16,6 @@ otDatasetCreateNewNetwork).
  src/rest/resource.hpp |  1 +
  3 files changed, 57 insertions(+)
 
-diff --git a/src/rest/openapi.yaml b/src/rest/openapi.yaml
-index 2ba2a4dd56..2edc4af29a 100644
 --- a/src/rest/openapi.yaml
 +++ b/src/rest/openapi.yaml
 @@ -248,6 +248,18 @@ paths:
@@ -55,8 +53,6 @@ index 2ba2a4dd56..2edc4af29a 100644
  components:
    schemas:
      LeaderData:
-diff --git a/src/rest/resource.cpp b/src/rest/resource.cpp
-index a60e9d9483..829835341a 100644
 --- a/src/rest/resource.cpp
 +++ b/src/rest/resource.cpp
 @@ -767,12 +767,47 @@ exit:
@@ -107,8 +103,6 @@ index a60e9d9483..829835341a 100644
      case HttpMethod::kGet:
          GetDataset(aDatasetType, aRequest, aResponse);
          break;
-diff --git a/src/rest/resource.hpp b/src/rest/resource.hpp
-index d79085dbfc..362e501471 100644
 --- a/src/rest/resource.hpp
 +++ b/src/rest/resource.hpp
 @@ -150,6 +150,7 @@ private:
@@ -119,6 +113,3 @@ index d79085dbfc..362e501471 100644
  
      void DeleteOutDatedDiagnostic(void);
      void UpdateDiag(std::string aKey, std::vector<otNetworkDiagTlv> &aDiag);
--- 
-2.41.0
-

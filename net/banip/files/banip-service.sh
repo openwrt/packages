@@ -13,6 +13,7 @@ ban_funlib="/usr/lib/banip-functions.sh"
 
 # load config and set banIP environment
 #
+[ "${ban_action}" = "boot" ] && sleep "$(uci_get banip global ban_triggerdelay "10")"
 f_conf
 f_log "info" "start banIP processing (${ban_action})"
 f_log "debug" "f_system    ::: system: ${ban_sysver:-"n/a"}, version: ${ban_ver:-"n/a"}, memory: ${ban_memory:-"0"}, cpu_cores: ${ban_cores}"
@@ -56,7 +57,11 @@ fi
 # handle downloads
 #
 f_log "info" "start banIP download processes"
-[ "${ban_allowlistonly}" = "1" ] && ban_feed="" || f_getfeed
+if [ "${ban_allowlistonly}" = "1" ]; then
+	ban_feed=""
+else
+	f_getfeed
+fi
 [ "${ban_deduplicate}" = "1" ] && printf "\n" >"${ban_tmpfile}.deduplicate"
 
 cnt="1"
@@ -146,7 +151,7 @@ wait
 #
 if [ "${ban_mailnotification}" = "1" ] && [ -n "${ban_mailreceiver}" ] && [ -x "${ban_mailcmd}" ]; then
 	(
-		sleep ${ban_triggerdelay}
+		sleep 5
 		f_mail
 	) &
 fi
