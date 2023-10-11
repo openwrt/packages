@@ -65,7 +65,7 @@ HOST_CONFIGURE_ARGS = \
 	--sysconfdir=$(CARGO_HOME)/etc \
 	--datadir=$(CARGO_HOME)/share \
 	--mandir=$(CARGO_HOME)/man \
-	--dist-compression-formats=xz \
+	--dist-compression-formats=gz \
 	--enable-missing-tools \
 	--disable-sanitizers \
 	--release-channel=stable \
@@ -91,8 +91,11 @@ endef
 define Host/Install
 	( \
 		cd $(HOST_BUILD_DIR)/build/dist ; \
-		find -iname "*.xz" -exec tar -xJf {} \; ; \
-		find ./* -type f -name install.sh -execdir sh {} --prefix=$(CARGO_HOME) --disable-ldconfig \; ; \
+		for targz in *.tar.gz; do \
+			$(STAGING_DIR_HOST)/bin/libdeflate-gzip -dc "$$$$targz" | tar -xf - ; \
+		done ; \
+		find . -mindepth 2 -maxdepth 2 -type f -name install.sh \
+			-execdir bash '{}' --prefix=$(CARGO_HOME) --disable-ldconfig \; ; \
 		\
 		sed -e 's|@RUSTC_TARGET_ARCH@|$(RUSTC_TARGET_ARCH)|g' \
 		    -e 's|@TARGET_CC_NOCACHE@|$(TARGET_CC_NOCACHE)|g' \
