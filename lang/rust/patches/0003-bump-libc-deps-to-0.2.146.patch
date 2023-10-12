@@ -1,0 +1,156 @@
+This patch bumps all libc dependencies and checksums to 0.2.146, which includes the fix for musl 1.2.4.
+
+--- a/vendor/addr2line-0.20.0/Cargo.lock
++++ b/vendor/addr2line-0.20.0/Cargo.lock
+@@ -246,9 +246,9 @@ checksum = "e2abad23fbc42b3700f2f279844d
+ 
+ [[package]]
+ name = "libc"
+-version = "0.2.141"
++version = "0.2.146"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "3304a64d199bb964be99741b7a14d26972741915b3649639149b2479bb46f4b5"
++checksum = "f92be4933c13fd498862a9e02a3055f8a8d9c039ce33db97306fd5a6caa7f29b"
+ 
+ [[package]]
+ name = "libtest-mimic"
+--- a/vendor/backtrace-0.3.67/Cargo.lock
++++ b/vendor/backtrace-0.3.67/Cargo.lock
+@@ -64,9 +64,9 @@ checksum = "dec7af912d60cdbd3677c1af9352
+ 
+ [[package]]
+ name = "libc"
+-version = "0.2.138"
++version = "0.2.146"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "db6d7e329c562c5dfab7a46a2afabc8b987ab9a4834c9d1ca04dc54c1546cef8"
++checksum = "f92be4933c13fd498862a9e02a3055f8a8d9c039ce33db97306fd5a6caa7f29b"
+ 
+ [[package]]
+ name = "libloading"
+--- a/vendor/bstr/Cargo.lock
++++ b/vendor/bstr/Cargo.lock
+@@ -34,9 +34,9 @@ dependencies = [
+ 
+ [[package]]
+ name = "libc"
+-version = "0.2.138"
++version = "0.2.146"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "db6d7e329c562c5dfab7a46a2afabc8b987ab9a4834c9d1ca04dc54c1546cef8"
++checksum = "f92be4933c13fd498862a9e02a3055f8a8d9c039ce33db97306fd5a6caa7f29b"
+ 
+ [[package]]
+ name = "memchr"
+--- a/vendor/cranelift-jit/Cargo.lock
++++ b/vendor/cranelift-jit/Cargo.lock
+@@ -224,9 +224,9 @@ dependencies = [
+ 
+ [[package]]
+ name = "libc"
+-version = "0.2.141"
++version = "0.2.146"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "3304a64d199bb964be99741b7a14d26972741915b3649639149b2479bb46f4b5"
++checksum = "f92be4933c13fd498862a9e02a3055f8a8d9c039ce33db97306fd5a6caa7f29b"
+ 
+ [[package]]
+ name = "log"
+--- a/vendor/crossbeam-channel/Cargo.lock
++++ b/vendor/crossbeam-channel/Cargo.lock
+@@ -50,9 +50,9 @@ dependencies = [
+ 
+ [[package]]
+ name = "libc"
+-version = "0.2.141"
++version = "0.2.146"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "3304a64d199bb964be99741b7a14d26972741915b3649639149b2479bb46f4b5"
++checksum = "f92be4933c13fd498862a9e02a3055f8a8d9c039ce33db97306fd5a6caa7f29b"
+ 
+ [[package]]
+ name = "num_cpus"
+--- a/vendor/elasticlunr-rs/Cargo.lock
++++ b/vendor/elasticlunr-rs/Cargo.lock
+@@ -555,9 +555,9 @@ checksum = "e2abad23fbc42b3700f2f279844d
+ 
+ [[package]]
+ name = "libc"
+-version = "0.2.140"
++version = "0.2.146"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "99227334921fae1a979cf0bfdfcc6b3e5ce376ef57e16fb6fb3ea2ed6095f80c"
++checksum = "f92be4933c13fd498862a9e02a3055f8a8d9c039ce33db97306fd5a6caa7f29b"
+ 
+ [[package]]
+ name = "lindera"
+--- a/vendor/handlebars/Cargo.lock
++++ b/vendor/handlebars/Cargo.lock
+@@ -550,9 +550,9 @@ checksum = "e2abad23fbc42b3700f2f279844d
+ 
+ [[package]]
+ name = "libc"
+-version = "0.2.140"
++version = "0.2.146"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "99227334921fae1a979cf0bfdfcc6b3e5ce376ef57e16fb6fb3ea2ed6095f80c"
++checksum = "f92be4933c13fd498862a9e02a3055f8a8d9c039ce33db97306fd5a6caa7f29b"
+ 
+ [[package]]
+ name = "lock_api"
+--- a/vendor/icu_locid/Cargo.lock
++++ b/vendor/icu_locid/Cargo.lock
+@@ -318,9 +318,9 @@ checksum = "e2abad23fbc42b3700f2f279844d
+ 
+ [[package]]
+ name = "libc"
+-version = "0.2.141"
++version = "0.2.146"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "3304a64d199bb964be99741b7a14d26972741915b3649639149b2479bb46f4b5"
++checksum = "f92be4933c13fd498862a9e02a3055f8a8d9c039ce33db97306fd5a6caa7f29b"
+ 
+ [[package]]
+ name = "litemap"
+--- a/vendor/libffi/Cargo.lock
++++ b/vendor/libffi/Cargo.lock
+@@ -10,9 +10,9 @@ checksum = "50d30906286121d95be3d479533b
+ 
+ [[package]]
+ name = "libc"
+-version = "0.2.140"
++version = "0.2.146"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "99227334921fae1a979cf0bfdfcc6b3e5ce376ef57e16fb6fb3ea2ed6095f80c"
++checksum = "f92be4933c13fd498862a9e02a3055f8a8d9c039ce33db97306fd5a6caa7f29b"
+ 
+ [[package]]
+ name = "libffi"
+--- a/vendor/terminal_size/Cargo.lock
++++ b/vendor/terminal_size/Cargo.lock
+@@ -47,9 +47,9 @@ dependencies = [
+ 
+ [[package]]
+ name = "libc"
+-version = "0.2.140"
++version = "0.2.146"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "99227334921fae1a979cf0bfdfcc6b3e5ce376ef57e16fb6fb3ea2ed6095f80c"
++checksum = "f92be4933c13fd498862a9e02a3055f8a8d9c039ce33db97306fd5a6caa7f29b"
+ 
+ [[package]]
+ name = "linux-raw-sys"
+--- a/vendor/tracing-tree/Cargo.lock
++++ b/vendor/tracing-tree/Cargo.lock
+@@ -100,9 +100,9 @@ checksum = "e2abad23fbc42b3700f2f279844d
+ 
+ [[package]]
+ name = "libc"
+-version = "0.2.141"
++version = "0.2.146"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "3304a64d199bb964be99741b7a14d26972741915b3649639149b2479bb46f4b5"
++checksum = "f92be4933c13fd498862a9e02a3055f8a8d9c039ce33db97306fd5a6caa7f29b"
+ 
+ [[package]]
+ name = "log"
