@@ -1,0 +1,531 @@
+From cd84c46ce780242879e8aaa7d698b9cd87996dbd Mon Sep 17 00:00:00 2001
+From: Colin Ian King <colin.i.king@gmail.com>
+Date: Sun, 15 Oct 2023 15:50:07 +0100
+Subject: [PATCH] core-*, stress-*: Add musl-gcc detection and
+ HAVE_COMPILER_MUSL
+
+Detect for musl-gcc and define HAVE_COMPILER_MUSL and also define
+HAVE_COMPILER_GCC_OR_MUSL for GCC or MUSL compilers. Allows one
+to differentiate between gcc tool chains with and without glibc/musl
+libc.
+
+Fixes https://github.com/ColinIanKing/stress-ng/issues/325
+
+Signed-off-by: Colin Ian King <colin.i.king@gmail.com>
+---
+ core-attribute.h     | 56 ++++++++++++++++++++++----------------------
+ core-helper.c        |  4 ++--
+ core-pragma.h        | 18 +++++++-------
+ core-shim.c          |  2 +-
+ core-target-clones.h |  2 +-
+ core-vecmath.h       |  4 ++--
+ stress-atomic.c      |  4 ++--
+ stress-flushcache.c  |  2 +-
+ stress-lockbus.c     |  4 ++--
+ stress-malloc.c      |  4 ++--
+ stress-memthrash.c   | 12 +++++-----
+ stress-ng.h          | 32 ++++++++++++++++---------
+ stress-regs.c        |  8 +++----
+ stress-rseq.c        | 14 +++++------
+ stress-vnni.c        |  4 ++++
+ 15 files changed, 92 insertions(+), 78 deletions(-)
+
+--- a/core-attribute.h
++++ b/core-attribute.h
+@@ -20,7 +20,7 @@
+ #define CORE_ATTRIBUTE_H
+ 
+ /* warn unused attribute */
+-#if (defined(HAVE_COMPILER_GCC) && NEED_GNUC(4, 2, 0)) ||	\
++#if (defined(HAVE_COMPILER_GCC_OR_MUSL) && NEED_GNUC(4, 2, 0)) ||	\
+     (defined(HAVE_COMPILER_CLANG) && NEED_CLANG(3, 0, 0))
+ #define WARN_UNUSED	__attribute__((warn_unused_result))
+ #else
+@@ -36,7 +36,7 @@
+ 
+ #if defined(HAVE_ATTRIBUTE_FAST_MATH) &&		\
+     !defined(HAVE_COMPILER_ICC) &&			\
+-    defined(HAVE_COMPILER_GCC) &&			\
++    defined(HAVE_COMPILER_GCC_OR_MUSL) &&		\
+     NEED_GNUC(10, 0, 0)
+ #define OPTIMIZE_FAST_MATH __attribute__((optimize("fast-math")))
+ #else
+@@ -44,7 +44,7 @@
+ #endif
+ 
+ /* no return hint */
+-#if (defined(HAVE_COMPILER_GCC) && NEED_GNUC(2, 5, 0)) || 	\
++#if (defined(HAVE_COMPILER_GCC_OR_MUSL) && NEED_GNUC(2, 5, 0)) || 	\
+     (defined(HAVE_COMPILER_CLANG) && NEED_CLANG(3, 0, 0))
+ #define NORETURN 	__attribute__((noreturn))
+ #else
+@@ -52,7 +52,7 @@
+ #endif
+ 
+ /* weak attribute */
+-#if (defined(HAVE_COMPILER_GCC) && NEED_GNUC(4, 0, 0)) || 	\
++#if (defined(HAVE_COMPILER_GCC_OR_MUSL) && NEED_GNUC(4, 0, 0)) || 	\
+     (defined(HAVE_COMPILER_CLANG) && NEED_CLANG(3, 4, 0))
+ #define WEAK		__attribute__((weak))
+ #define HAVE_WEAK_ATTRIBUTE
+@@ -64,7 +64,7 @@
+ #undef ALWAYS_INLINE
+ #endif
+ /* force inlining hint */
+-#if (defined(HAVE_COMPILER_GCC) && NEED_GNUC(3, 4, 0) 				\
++#if (defined(HAVE_COMPILER_GCC_OR_MUSL) && NEED_GNUC(3, 4, 0) 			\
+      && ((!defined(__s390__) && !defined(__s390x__)) || NEED_GNUC(6, 0, 1))) ||	\
+     (defined(HAVE_COMPILER_CLANG) && NEED_CLANG(3, 0, 0))
+ #define ALWAYS_INLINE	__attribute__((always_inline))
+@@ -73,7 +73,7 @@
+ #endif
+ 
+ /* force no inlining hint */
+-#if (defined(HAVE_COMPILER_GCC) && NEED_GNUC(3, 4, 0)) ||	\
++#if (defined(HAVE_COMPILER_GCC_OR_MUSL) && NEED_GNUC(3, 4, 0)) ||	\
+     (defined(HAVE_COMPILER_CLANG) && NEED_CLANG(3, 0, 0))
+ #define NOINLINE	__attribute__((noinline))
+ #else
+@@ -81,9 +81,9 @@
+ #endif
+ 
+ /* -O3 attribute support */
+-#if defined(HAVE_COMPILER_GCC) &&	\
+-    !defined(HAVE_COMPILER_CLANG) &&	\
+-    !defined(HAVE_COMPILER_ICC) &&	\
++#if defined(HAVE_COMPILER_GCC_OR_MUSL) &&	\
++    !defined(HAVE_COMPILER_CLANG) &&		\
++    !defined(HAVE_COMPILER_ICC) &&		\
+     NEED_GNUC(4, 6, 0)
+ #define OPTIMIZE3 	__attribute__((optimize("-O3")))
+ #else
+@@ -91,9 +91,9 @@
+ #endif
+ 
+ /* -O2 attribute support */
+-#if defined(HAVE_COMPILER_GCC) &&	\
+-    !defined(HAVE_COMPILER_CLANG) &&	\
+-    !defined(HAVE_COMPILER_ICC) &&	\
++#if defined(HAVE_COMPILER_GCC_OR_MUSL) &&	\
++    !defined(HAVE_COMPILER_CLANG) &&		\
++    !defined(HAVE_COMPILER_ICC) &&		\
+     NEED_GNUC(4, 6, 0)
+ #define OPTIMIZE2 	__attribute__((optimize("-O2")))
+ #else
+@@ -101,9 +101,9 @@
+ #endif
+ 
+ /* -O1 attribute support */
+-#if defined(HAVE_COMPILER_GCC) &&	\
+-    !defined(HAVE_COMPILER_CLANG) &&	\
+-    !defined(HAVE_COMPILER_ICC) &&	\
++#if defined(HAVE_COMPILER_GCC_OR_MUSL) &&	\
++    !defined(HAVE_COMPILER_CLANG) &&		\
++    !defined(HAVE_COMPILER_ICC) &&		\
+     NEED_GNUC(4, 6, 0)
+ #define OPTIMIZE1 	__attribute__((optimize("-O1")))
+ #else
+@@ -111,8 +111,8 @@
+ #endif
+ 
+ /* -O0 attribute support */
+-#if defined(HAVE_COMPILER_GCC) &&	\
+-    !defined(HAVE_COMPILER_ICC) &&	\
++#if defined(HAVE_COMPILER_GCC_OR_MUSL) &&	\
++    !defined(HAVE_COMPILER_ICC) &&		\
+     NEED_GNUC(4, 6, 0)
+ #define OPTIMIZE0 	__attribute__((optimize("-O0")))
+ #elif (defined(HAVE_COMPILER_CLANG) && NEED_CLANG(10, 0, 0))
+@@ -121,10 +121,10 @@
+ #define OPTIMIZE0
+ #endif
+ 
+-#if ((defined(HAVE_COMPILER_GCC) && NEED_GNUC(3, 3, 0)) ||	\
+-     (defined(HAVE_COMPILER_CLANG) && NEED_CLANG(3, 0, 0)) ||	\
+-     (defined(HAVE_COMPILER_ICC) && NEED_ICC(2021, 0, 0))) &&	\
+-    !defined(HAVE_COMPILER_PCC) &&				\
++#if ((defined(HAVE_COMPILER_GCC_OR_MUSL) && NEED_GNUC(3, 3, 0)) ||	\
++     (defined(HAVE_COMPILER_CLANG) && NEED_CLANG(3, 0, 0)) ||		\
++     (defined(HAVE_COMPILER_ICC) && NEED_ICC(2021, 0, 0))) &&		\
++    !defined(HAVE_COMPILER_PCC) &&					\
+     !defined(__minix__)
+ #define ALIGNED(a)	__attribute__((aligned(a)))
+ #else
+@@ -136,7 +136,7 @@
+ #define ALIGN64		ALIGNED(64)
+ 
+ 
+-#if (defined(HAVE_COMPILER_GCC) && NEED_GNUC(4, 6, 0)) ||	\
++#if (defined(HAVE_COMPILER_GCC_OR_MUSL) && NEED_GNUC(4, 6, 0)) ||	\
+     (defined(HAVE_COMPILER_CLANG) && NEED_CLANG(3, 0, 0))
+ #if (defined(__APPLE__) && defined(__MACH__))
+ #define SECTION(s)	__attribute__((__section__(# s "," # s)))
+@@ -148,7 +148,7 @@
+ #endif
+ 
+ /* GCC hot attribute */
+-#if (defined(HAVE_COMPILER_GCC) && NEED_GNUC(4, 6, 0)) ||	\
++#if (defined(HAVE_COMPILER_GCC_OR_MUSL) && NEED_GNUC(4, 6, 0)) ||	\
+     (defined(HAVE_COMPILER_CLANG) && NEED_CLANG(3, 3, 0))
+ #define HOT		__attribute__((hot))
+ #else
+@@ -156,10 +156,10 @@
+ #endif
+ 
+ /* GCC mlocked data and data section attribute */
+-#if ((defined(HAVE_COMPILER_GCC) && NEED_GNUC(4, 6, 0) ||	\
+-     (defined(HAVE_COMPILER_CLANG) && NEED_CLANG(3, 0, 0)))) &&	\
+-    !defined(__sun__) &&					\
+-    !defined(__APPLE__) &&					\
++#if ((defined(HAVE_COMPILER_GCC_OR_MUSL) && NEED_GNUC(4, 6, 0) ||	\
++     (defined(HAVE_COMPILER_CLANG) && NEED_CLANG(3, 0, 0)))) &&		\
++    !defined(__sun__) &&						\
++    !defined(__APPLE__) &&						\
+     !defined(BUILD_STATIC)
+ #define MLOCKED_TEXT	__attribute__((__section__("mlocked_text")))
+ #define MLOCKED_SECTION	(1)
+@@ -168,7 +168,7 @@
+ #endif
+ 
+ /* print format attribute */
+-#if ((defined(HAVE_COMPILER_GCC) && NEED_GNUC(3, 2, 0)) ||	\
++#if ((defined(HAVE_COMPILER_GCC_OR_MUSL) && NEED_GNUC(3, 2, 0)) ||	\
+      (defined(HAVE_COMPILER_CLANG) && NEED_CLANG(3, 0, 0)))
+ #define FORMAT(func, a, b) __attribute__((format(func, a, b)))
+ #else
+--- a/core-helper.c
++++ b/core-helper.c
+@@ -3486,8 +3486,8 @@ void NORETURN MLOCKED_TEXT stress_sig_ha
+  *  __stack_chk_fail()
+  *	override stack smashing callback
+  */
+-#if defined(HAVE_COMPILER_GCC) &&	\
+-    !defined(HAVE_COMPILER_CLANG) &&	\
++#if defined(HAVE_COMPILER_GCC_OR_MUSL) &&	\
++    !defined(HAVE_COMPILER_CLANG) &&		\
+     defined(HAVE_WEAK_ATTRIBUTE)
+ extern void __stack_chk_fail(void);
+ 
+--- a/core-pragma.h
++++ b/core-pragma.h
+@@ -22,8 +22,8 @@
+ #define STRESS_PRAGMA_(x) _Pragma (#x)
+ #define STRESS_PRAGMA(x) STRESS_PRAGMA_(x)
+ 
+-#if defined(HAVE_PRAGMA_NO_HARD_DFP) &&	\
+-    defined(HAVE_COMPILER_GCC) &&	\
++#if defined(HAVE_PRAGMA_NO_HARD_DFP) &&		\
++    defined(HAVE_COMPILER_GCC_OR_MUSL) &&	\
+     defined(HAVE_PRAGMA)
+ #define STRESS_PRAGMA_NO_HARD_DFP	 _Pragma("GCC target (\"no-hard-dfp\")")
+ #endif
+@@ -34,8 +34,8 @@
+ #define STRESS_PRAGMA_PUSH		_Pragma("GCC diagnostic push")
+ #define STRESS_PRAGMA_POP		_Pragma("GCC diagnostic pop")
+ #define STRESS_PRAGMA_WARN_OFF		_Pragma("GCC diagnostic ignored \"-Weverything\"")
+-#elif defined(HAVE_COMPILER_GCC) &&	\
+-      defined(HAVE_PRAGMA) &&		\
++#elif defined(HAVE_COMPILER_GCC_OR_MUSL) &&	\
++      defined(HAVE_PRAGMA) &&			\
+       NEED_GNUC(7, 5, 0)
+ #define STRESS_PRAGMA_PUSH		_Pragma("GCC diagnostic push")
+ #define STRESS_PRAGMA_POP		_Pragma("GCC diagnostic pop")
+@@ -45,8 +45,8 @@
+ 					_Pragma("GCC diagnostic ignored \"-Wcast-qual\"") \
+ 					_Pragma("GCC diagnostic ignored \"-Wnonnull\"")	\
+ 					_Pragma("GCC diagnostic ignored \"-Wstringop-overflow\"")
+-#elif defined(HAVE_COMPILER_GCC) &&	\
+-      defined(HAVE_PRAGMA) &&		\
++#elif defined(HAVE_COMPILER_GCC_OR_MUSL) &&	\
++      defined(HAVE_PRAGMA) &&			\
+       NEED_GNUC(4, 6, 0)
+ #define STRESS_PRAGMA_PUSH		_Pragma("GCC diagnostic push")
+ #define STRESS_PRAGMA_POP		_Pragma("GCC diagnostic pop")
+@@ -65,8 +65,8 @@
+     NEED_CLANG(8, 0, 0) &&		\
+     defined(HAVE_PRAGMA)
+ #define STRESS_PRAGMA_WARN_CPP_OFF	_Pragma("GCC diagnostic ignored \"-Wcpp\"")
+-#elif defined(HAVE_COMPILER_GCC) &&	\
+-      defined(HAVE_PRAGMA) &&		\
++#elif defined(HAVE_COMPILER_GCC_OR_MUSL) &&	\
++      defined(HAVE_PRAGMA) &&			\
+       NEED_GNUC(10, 0, 0)
+ #define STRESS_PRAGMA_WARN_CPP_OFF	_Pragma("GCC diagnostic ignored \"-Wcpp\"")
+ #else
+@@ -80,7 +80,7 @@
+     NEED_CLANG(9, 0, 0)
+ #define PRAGMA_UNROLL_N(n)	STRESS_PRAGMA(unroll n)
+ #define PRAGMA_UNROLL		STRESS_PRAGMA(unroll)
+-#elif defined(HAVE_COMPILER_GCC) &&      \
++#elif defined(HAVE_COMPILER_GCC_OR_MUSL) &&      \
+     NEED_GNUC(10, 0, 0)
+ #define PRAGMA_UNROLL_N(n)	STRESS_PRAGMA(GCC unroll n)
+ #define PRAGMA_UNROLL		STRESS_PRAGMA(GCC unroll 8)
+--- a/core-shim.c
++++ b/core-shim.c
+@@ -494,7 +494,7 @@ int shim_getrandom(void *buff, size_t bu
+  */
+ void shim_flush_icache(void *begin, void *end)
+ {
+-#if defined(HAVE_COMPILER_GCC) &&	\
++#if defined(HAVE_COMPILER_GCC_OR_MUSL) &&	\
+     defined(STRESS_ARCH_ARM)
+ 	__clear_cache(begin, end);
+ #elif defined(STRESS_ARCH_RISCV) &&		\
+--- a/core-target-clones.h
++++ b/core-target-clones.h
+@@ -138,7 +138,7 @@
+ #endif
+ 
+ #if defined(HAVE_TARGET_CLONES_GRANITERAPIDS) &&	\
+-    defined(HAVE_COMPILER_GCC)
++    defined(HAVE_COMPILER_GCC_OR_MUSL)
+ #define TARGET_CLONE_GRANITERAPIDS "arch=graniterapids",
+ #define TARGET_CLONE_USE
+ #else
+--- a/core-vecmath.h
++++ b/core-vecmath.h
+@@ -38,8 +38,8 @@
+  *  PPC64 for some reason with some flavours of the toolchain
+  *  so disable this test for now
+  */
+-#if defined(STRESS_ARCH_PPC64) && \
+-    defined(HAVE_COMPILER_GCC) && \
++#if defined(STRESS_ARCH_PPC64) && 		\
++    defined(HAVE_COMPILER_GCC_OR_MUSL) &&	\
+     __GNUC__ < 6
+ #undef HAVE_VECMATH
+ #endif
+--- a/stress-atomic.c
++++ b/stress-atomic.c
+@@ -71,7 +71,7 @@ typedef int (*atomic_func_t)(const stres
+ 
+ #if defined(HAVE_ATOMIC_FETCH_NAND)
+ #define HAVE_ATOMIC_OPS
+-#if defined(HAVE_COMPILER_GCC) && __GNUC__ != 11
++#if defined(HAVE_COMPILER_GCC_OR_MUSL) && __GNUC__ != 11
+ #define	SHIM_ATOMIC_FETCH_NAND(ptr, val, memorder)	\
+ 	do { __atomic_fetch_nand(ptr, val, memorder); } while (0)
+ #else
+@@ -121,7 +121,7 @@ typedef int (*atomic_func_t)(const stres
+ 
+ #if defined(HAVE_ATOMIC_NAND_FETCH)
+ #define HAVE_ATOMIC_OPS
+-#if defined(HAVE_COMPILER_GCC) && __GNUC__ != 11
++#if defined(HAVE_COMPILER_GCC_OR_MUSL) && __GNUC__ != 11
+ #define	SHIM_ATOMIC_NAND_FETCH(ptr, val, memorder)	\
+ 	do { __atomic_nand_fetch(ptr, val, memorder); } while (0)
+ #else
+--- a/stress-flushcache.c
++++ b/stress-flushcache.c
+@@ -37,7 +37,7 @@ static const stress_help_t help[] = {
+      defined(STRESS_ARCH_S390) ||	\
+      defined(STRESS_ARCH_PPC64)) &&	\
+      defined(HAVE_MPROTECT) &&		\
+-     ((defined(HAVE_COMPILER_GCC) && NEED_GNUC(4,6,0)) ||		\
++     ((defined(HAVE_COMPILER_GCC_OR_MUSL) && NEED_GNUC(4,6,0)) ||	\
+       (defined(HAVE_COMPILER_CLANG) && NEED_CLANG(9,0,0)) || 		\
+       (defined(HAVE_COMPILER_ICX) && NEED_ICX(2023,2,0)) ||		\
+       (defined(HAVE_COMPILER_ICC) && NEED_ICC(2021,0,0)))
+--- a/stress-lockbus.c
++++ b/stress-lockbus.c
+@@ -37,14 +37,14 @@ static const stress_opt_set_func_t opt_s
+ 	{ 0,			NULL },
+ };
+ 
+-#if (((defined(HAVE_COMPILER_GCC) ||			\
++#if (((defined(HAVE_COMPILER_GCC_OR_MUSL) ||		\
+        defined(HAVE_COMPILER_CLANG) ||			\
+        defined(HAVE_COMPILER_ICC) ||			\
+        defined(HAVE_COMPILER_ICX) ||			\
+        defined(HAVE_COMPILER_TCC) ||			\
+        defined(HAVE_COMPILER_PCC)) &&			\
+        defined(STRESS_ARCH_X86)) ||			\
+-     (defined(HAVE_COMPILER_GCC) && 			\
++     (defined(HAVE_COMPILER_GCC_OR_MUSL) && 		\
+       (defined(HAVE_ATOMIC_ADD_FETCH) ||		\
+        defined(HAVE_ATOMIC_FETCH_ADD)) &&		\
+       defined(__ATOMIC_SEQ_CST) &&			\
+--- a/stress-malloc.c
++++ b/stress-malloc.c
+@@ -453,8 +453,8 @@ static int stress_malloc(const stress_ar
+ 			malloc_max = MIN_MALLOC_MAX;
+ 	}
+ 
+-#if defined(HAVE_COMPILER_GCC) && 	\
+-    defined(HAVE_MALLOPT) &&		\
++#if defined(HAVE_COMPILER_GCC_OR_MUSL) && 	\
++    defined(HAVE_MALLOPT) &&			\
+     defined(M_MMAP_THRESHOLD)
+ 	{
+ 		size_t malloc_threshold = DEFAULT_MALLOC_THRESHOLD;
+--- a/stress-memthrash.c
++++ b/stress-memthrash.c
+@@ -94,12 +94,12 @@ static sigset_t set;
+ 
+ static stress_memthrash_primes_t stress_memthrash_primes[MEM_SIZE_PRIMES];
+ 
+-#if (((defined(HAVE_COMPILER_GCC) || defined(HAVE_COMPILER_CLANG)) && 	\
+-       defined(STRESS_ARCH_X86)) ||					\
+-     (defined(HAVE_COMPILER_GCC) && 					\
+-      defined(HAVE_ATOMIC_ADD_FETCH) &&					\
+-      defined(__ATOMIC_SEQ_CST) &&					\
+-      NEED_GNUC(4,7,0) && 						\
++#if (((defined(HAVE_COMPILER_GCC_OR_MUSL) || defined(HAVE_COMPILER_CLANG)) &&	\
++       defined(STRESS_ARCH_X86)) ||						\
++     (defined(HAVE_COMPILER_GCC_OR_MUSL) && 					\
++      defined(HAVE_ATOMIC_ADD_FETCH) &&						\
++      defined(__ATOMIC_SEQ_CST) &&						\
++      NEED_GNUC(4,7,0) && 							\
+       defined(STRESS_ARCH_ARM)))
+ #if defined(HAVE_ATOMIC_ADD_FETCH)
+ #define MEM_LOCK(ptr, inc)	__atomic_add_fetch(ptr, inc, __ATOMIC_SEQ_CST)
+--- a/stress-ng.h
++++ b/stress-ng.h
+@@ -22,6 +22,14 @@
+ 
+ #include "config.h"
+ 
++#ifndef _GNU_SOURCE
++#define _GNU_SOURCE
++#endif
++
++#if defined(HAVE_FEATURES_H)
++#include <features.h>
++#endif
++
+ #if defined(__ICC) &&		\
+     defined(__INTEL_COMPILER)
+ /* Intel ICC compiler */
+@@ -41,15 +49,20 @@
+ #elif defined(__clang__)
+ /* clang */
+ #define HAVE_COMPILER_CLANG
++#elif defined(__GNUC__) && 	\
++      !defined(__USE_GNU)
++/* musl gcc */
++#define HAVE_COMPILER_MUSL
++#define HAVE_COMPILER_GCC_OR_MUSL
+ #elif defined(__GNUC__)
+ /* GNU C compiler */
+ #define HAVE_COMPILER_GCC
++#define HAVE_COMPILER_GCC_OR_MUSL
+ #endif
+ 
+-#ifndef _GNU_SOURCE
+-#define _GNU_SOURCE
+-#endif
++#ifndef _ATFILE_SOURCE
+ #define _ATFILE_SOURCE
++#endif
+ #ifndef _LARGEFILE_SOURCE
+ #define _LARGEFILE_SOURCE
+ #endif
+@@ -101,9 +114,6 @@
+ #include <string.h>
+ #include <time.h>
+ #include <unistd.h>
+-#if defined(HAVE_FEATURES_H)
+-#include <features.h>
+-#endif
+ #if defined(HAVE_LIB_PTHREAD)
+ #include <pthread.h>
+ #endif
+@@ -144,7 +154,7 @@
+ #endif
+ #if defined(HAVE_SYS_SYSINFO_H)
+ #include <sys/sysinfo.h>
+-#if defined(HAVE_COMPILER_GCC) &&	\
++#if defined(HAVE_COMPILER_GCC_OR_MUSL) &&	\
+     !defined(__GLIBC__)
+ /* Suppress kernel sysinfo to avoid collision with musl */
+ #define _LINUX_SYSINFO_H
+@@ -237,7 +247,7 @@ typedef struct stress_stressor_info {
+ 
+ #if defined(CHECK_UNEXPECTED) && 	\
+     defined(HAVE_PRAGMA) &&		\
+-    defined(HAVE_COMPILER_GCC)
++    defined(HAVE_COMPILER_GCC_OR_MUSL)
+ #define UNEXPECTED_PRAGMA(x) _Pragma (#x)
+ #define UNEXPECTED_XSTR(x) UNEXPECTED_STR(x)
+ #define UNEXPECTED_STR(x) # x
+@@ -427,7 +437,7 @@ typedef struct stressor_info {
+ } stressor_info_t;
+ 
+ /* gcc 4.7 and later support vector ops */
+-#if defined(HAVE_COMPILER_GCC) &&	\
++#if defined(HAVE_COMPILER_GCC_OR_MUSL) &&	\
+     NEED_GNUC(4, 7, 0)
+ #define STRESS_VECTOR	(1)
+ #endif
+@@ -508,7 +518,7 @@ extern const char stress_config[];
+ #define PAGE_MAPPED		(0x01)
+ #define PAGE_MAPPED_FAIL	(0x02)
+ 
+-#if defined(HAVE_COMPILER_GCC) || defined(HAVE_COMPILER_CLANG)
++#if defined(HAVE_COMPILER_GCC_OR_MUSL) || defined(HAVE_COMPILER_CLANG)
+ #define TYPEOF_CAST(a)	(typeof(a))
+ #else
+ #define	TYPEOF_CAST(a)
+@@ -839,7 +849,7 @@ extern void stress_metrics_set_const_che
+ 
+ #if !defined(STRESS_CORE_SHIM) &&	\
+     !defined(HAVE_PEDANTIC) &&		\
+-    (defined(HAVE_COMPILER_GCC) && defined(HAVE_COMPILER_CLANG))
++    (defined(HAVE_COMPILER_GCC_OR_MUSL) && defined(HAVE_COMPILER_CLANG))
+ int unlink(const char *pathname) __attribute__((deprecated("use shim_unlink")));
+ int unlinkat(int dirfd, const char *pathname, int flags) __attribute__((deprecated("use shim_unlinkat")));
+ int rmdir(const char *pathname) __attribute__((deprecated("use shim_rmdir")));
+--- a/stress-regs.c
++++ b/stress-regs.c
+@@ -33,10 +33,10 @@ static const stress_help_t help[] = {
+ 	{ NULL,	NULL,		NULL }
+ };
+ 
+-#if (defined(HAVE_COMPILER_GCC) && NEED_GNUC(8, 0, 0)) &&	\
+-    !defined(HAVE_COMPILER_CLANG) &&				\
+-    !defined(HAVE_COMPILER_ICC) &&				\
+-    !defined(HAVE_COMPILER_PCC) &&				\
++#if (defined(HAVE_COMPILER_GCC_OR_MUSL) && NEED_GNUC(8, 0, 0)) &&	\
++    !defined(HAVE_COMPILER_CLANG) &&					\
++    !defined(HAVE_COMPILER_ICC) &&					\
++    !defined(HAVE_COMPILER_PCC) &&					\
+     !defined(HAVE_COMPILER_TCC)
+ 
+ static volatile uint32_t stash32;
+--- a/stress-rseq.c
++++ b/stress-rseq.c
+@@ -32,13 +32,13 @@ static const stress_help_t help[] = {
+ 	{ NULL,	NULL,		NULL }
+ };
+ 
+-#if defined(HAVE_LINUX_RSEQ_H) &&	\
+-    defined(HAVE_ASM_NOP) &&		\
+-    defined(__NR_rseq) &&		\
+-    defined(HAVE_SYSCALL) &&		\
+-    defined(HAVE_COMPILER_GCC) &&	\
+-    !defined(HAVE_COMPILER_CLANG) &&	\
+-    !defined(HAVE_COMPILER_ICC) &&	\
++#if defined(HAVE_LINUX_RSEQ_H) &&		\
++    defined(HAVE_ASM_NOP) &&			\
++    defined(__NR_rseq) &&			\
++    defined(HAVE_SYSCALL) &&			\
++    defined(HAVE_COMPILER_GCC_OR_MUSL) &&	\
++    !defined(HAVE_COMPILER_CLANG) &&		\
++    !defined(HAVE_COMPILER_ICC) &&		\
+     !defined(HAVE_COMPILER_ICX)
+ 
+ #define STRESS_ACCESS_ONCE(x)     (*(__volatile__  __typeof__(x) *)&(x))
+--- a/stress-vnni.c
++++ b/stress-vnni.c
+@@ -25,6 +25,10 @@
+ #include "core-pragma.h"
+ #include "core-target-clones.h"
+ 
++#if defined(HAVE_COMPILER_MUSL)
++#undef HAVE_IMMINTRIN_H
++#endif
++
+ #if defined(HAVE_IMMINTRIN_H)
+ #include <immintrin.h>
+ #endif
