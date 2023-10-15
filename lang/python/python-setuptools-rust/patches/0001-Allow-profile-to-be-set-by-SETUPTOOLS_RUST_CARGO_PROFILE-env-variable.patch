@@ -1,0 +1,48 @@
+From b10cab4efeb80abb5a236d651c9ff9355e470527 Mon Sep 17 00:00:00 2001
+From: Jeffery To <jeffery.to@gmail.com>
+Date: Mon, 2 Oct 2023 16:13:51 +0800
+Subject: [PATCH] Allow profile to be set by SETUPTOOLS_RUST_CARGO_PROFILE env
+ variable
+
+This allows the profile to be set dynamically, without having to edit
+pyproject.toml/setup.py.
+---
+ setuptools_rust/build.py | 20 ++++++++++++++++----
+ 1 file changed, 16 insertions(+), 4 deletions(-)
+
+--- a/setuptools_rust/build.py
++++ b/setuptools_rust/build.py
+@@ -528,10 +528,10 @@ class build_rust(RustCommand):
+         if target_triple is not None:
+             args.extend(["--target", target_triple])
+ 
+-        if release:
+-            profile = ext.get_cargo_profile()
+-            if not profile:
+-                args.append("--release")
++        ext_profile = ext.get_cargo_profile()
++        env_profile = os.getenv("SETUPTOOLS_RUST_CARGO_PROFILE")
++        if release and not ext_profile and not env_profile:
++            args.append("--release")
+ 
+         if quiet:
+             args.append("-q")
+@@ -552,6 +552,18 @@ class build_rust(RustCommand):
+         if ext.args is not None:
+             args.extend(ext.args)
+ 
++        if env_profile:
++            if ext_profile:
++                args = [p for p in args if not p.startswith("--profile=")]
++                while True:
++                    try:
++                        index = args.index("--profile")
++                        del args[index:index + 2]
++                    except ValueError:
++                        break
++
++            args.extend(["--profile", env_profile])
++
+         if ext.cargo_manifest_args is not None:
+             args.extend(ext.cargo_manifest_args)
+ 

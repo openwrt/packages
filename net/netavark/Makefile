@@ -15,6 +15,7 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_BUILD_DEPENDS:= \
 	rust/host \
 	protobuf/host
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/rust/rust-package.mk
@@ -36,7 +37,7 @@ define Package/netavark/conffiles
 /etc/config/netavark
 endef
 
-CARGO_VARS += \
+CARGO_PKG_VARS += \
 	PROTOC=$(STAGING_DIR_HOSTPKG)/bin/protoc
 
 define Package/netavark/install
