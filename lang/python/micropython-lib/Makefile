@@ -24,7 +24,6 @@ PKG_BUILD_DEPENDS:=python3/host
 PKG_BUILD_PARALLEL:=1
 
 # keep in sync with micropython
-MP_VERSION:=1.20.0
 MP_MPY_FILE_VERSION:=6
 
 include $(INCLUDE_DIR)/package.mk
@@ -88,7 +87,7 @@ This contains source files for packages specific to the MicroPython Unix
 port.
 endef
 
-MP_INSTALLDEV_PATH:=$(STAGING_DIR)/host/lib/micropython-$(MP_VERSION)
+MP_INSTALLDEV_PATH:=$(STAGING_DIR)/host/lib/micropython
 
 define MicroPythonLib/Compile
 	cd "$(PKG_BUILD_DIR)" && python3 tools/build.py \
