@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-setuptools-rust
 PKG_VERSION:=1.7.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=setuptools-rust
 PKG_HASH:=c7100999948235a38ae7e555fe199aa66c253dc384b125f5d85473bf81eae3a3

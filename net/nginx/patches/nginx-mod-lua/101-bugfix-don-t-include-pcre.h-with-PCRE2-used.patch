@@ -1,0 +1,27 @@
+From f968d74c3af8259f325090d282aeb64854cdddf9 Mon Sep 17 00:00:00 2001
+From: Christian Marangi <ansuelsmth@gmail.com>
+Date: Fri, 13 Oct 2023 20:23:51 +0200
+Subject: [PATCH] bugfix: don't include pcre.h with PCRE2 used
+
+pcre.h is a PCRE header and is not exposed by PCRE2 library causing
+compilation error as the header is not found.
+
+Don't include pcre.h if nginx is compiled with PCRE2 support enabled.
+
+Fixes: cb83e33e2657 ("feature: support pcre2")
+Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
+---
+ nginx-mod-lua/src/ngx_http_lua_common.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/nginx-mod-lua/src/ngx_http_lua_common.h
++++ b/nginx-mod-lua/src/ngx_http_lua_common.h
+@@ -54,7 +54,7 @@ typedef struct {
+ #endif
+ 
+ 
+-#if (NGX_PCRE)
++#if defined(NGX_PCRE) && !(NGX_PCRE2)
+ #include <pcre.h>
+ #   if (PCRE_MAJOR > 8) || (PCRE_MAJOR == 8 && PCRE_MINOR >= 21)
+ #       define LUA_HAVE_PCRE_JIT 1

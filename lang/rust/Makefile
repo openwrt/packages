@@ -5,19 +5,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rust
-PKG_VERSION:=1.72.0
-PKG_RELEASE:=2
+PKG_VERSION:=1.73.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=rustc-$(PKG_VERSION)-src.tar.gz
 PKG_SOURCE_URL:=https://static.rust-lang.org/dist/
-PKG_HASH:=ea9d61bbb51d76b6ea681156f69f0e0596b59722f04414b01c6e100b4b5be3a1
+PKG_HASH:=96d62e6d1f2d21df7ac8acb3b9882411f9e7c7036173f7f2ede9e1f1f6b1bb3a
 HOST_BUILD_DIR:=$(BUILD_DIR)/host/rustc-$(PKG_VERSION)-src
 
 PKG_MAINTAINER:=Luca Barbato <lu_zero@luminem.org>
 PKG_LICENSE:=Apache-2.0 MIT
 PKG_LICENSE_FILES:=LICENSE-APACHE LICENSE-MIT
 
-HOST_BUILD_DEPENDS:=python3/host
 PKG_HOST_ONLY:=1
 
 include $(INCLUDE_DIR)/host-build.mk
@@ -31,7 +30,6 @@ define Package/rust
   TITLE:=Rust Programming Language Compiler
   URL:=https://www.rust-lang.org/
   DEPENDS:=$(RUST_ARCH_DEPENDS)
-  BUILDONLY:=1
 endef
 
 define Package/rust/description
@@ -40,8 +38,12 @@ define Package/rust/description
   guarantee memory safety by using a borrow checker to validate references.
 endef
 
+define Package/rust/config
+  source "$(SOURCE)/Config.in"
+endef
+
 # Rust-lang has an uninstall script
-RUST_UNINSTALL:=$(CARGO_HOME)/lib/rustlib/uninstall.sh
+RUST_UNINSTALL:=$(STAGING_DIR)/host/lib/rustlib/uninstall.sh
 
 # Target Flags
 TARGET_CONFIGURE_ARGS = \
@@ -50,23 +52,24 @@ TARGET_CONFIGURE_ARGS = \
 	--set=target.$(RUSTC_TARGET_ARCH).cxx=$(TARGET_CXX_NOCACHE) \
 	--set=target.$(RUSTC_TARGET_ARCH).linker=$(TARGET_CC_NOCACHE) \
 	--set=target.$(RUSTC_TARGET_ARCH).ranlib=$(TARGET_RANLIB) \
+	--set=target.$(RUSTC_TARGET_ARCH).crt-static=false \
 	$(if $(CONFIG_USE_MUSL),--set=target.$(RUSTC_TARGET_ARCH).musl-root=$(TOOLCHAIN_DIR))
 
 # CARGO_HOME is an environmental
-HOST_CONFIGURE_OPTS += CARGO_HOME="$(CARGO_HOME)"
+HOST_CONFIGURE_VARS += CARGO_HOME="$(CARGO_HOME)"
 
 # Rust Configuration Arguments
 HOST_CONFIGURE_ARGS = \
 	--build=$(RUSTC_HOST_ARCH) \
 	--target=$(RUSTC_TARGET_ARCH),$(RUSTC_HOST_ARCH) \
 	--host=$(RUSTC_HOST_ARCH) \
-	--prefix=$(CARGO_HOME) \
-	--bindir=$(CARGO_HOME)/bin \
-	--libdir=$(CARGO_HOME)/lib \
-	--sysconfdir=$(CARGO_HOME)/etc \
-	--datadir=$(CARGO_HOME)/share \
-	--mandir=$(CARGO_HOME)/man \
-	--dist-compression-formats=xz \
+	--prefix=$(STAGING_DIR)/host \
+	--bindir=$(STAGING_DIR)/host/bin \
+	--libdir=$(STAGING_DIR)/host/lib \
+	--sysconfdir=$(STAGING_DIR)/host/etc \
+	--datadir=$(STAGING_DIR)/host/share \
+	--mandir=$(STAGING_DIR)/host/man \
+	--dist-compression-formats=gz \
 	--enable-missing-tools \
 	--disable-sanitizers \
 	--release-channel=stable \
@@ -81,22 +84,23 @@ define Host/Uninstall
 endef
 
 define Host/Compile
-	( \
-		cd $(HOST_BUILD_DIR) ; \
-		$(PYTHON) x.py --config ./config.toml dist build-manifest cargo llvm-tools \
-			rustc rust-std rust-src ; \
-	)
+	$(RUST_SCCACHE_VARS) \
+	CARGO_HOME=$(CARGO_HOME) \
+	OPENWRT_RUSTC_BOOTSTRAP_CACHE=$(DL_DIR)/rustc \
+	$(PYTHON) $(HOST_BUILD_DIR)/x.py \
+		--build-dir $(HOST_BUILD_DIR)/build \
+		--config $(HOST_BUILD_DIR)/config.toml \
+		dist build-manifest cargo llvm-tools rustc rust-std rust-src
 endef
 
 define Host/Install
 	( \
 		cd $(HOST_BUILD_DIR)/build/dist ; \
-		find -iname "*.xz" -exec tar -xJf {} \; ; \
-		find ./* -type f -name install.sh -execdir sh {} --prefix=$(CARGO_HOME) --disable-ldconfig \; ; \
-		\
-		sed -e 's|@RUSTC_TARGET_ARCH@|$(RUSTC_TARGET_ARCH)|g' \
-		    -e 's|@TARGET_CC_NOCACHE@|$(TARGET_CC_NOCACHE)|g' \
-			$(CURDIR)/files/cargo-config > $(CARGO_HOME)/config.toml ; \
+		for targz in *.tar.gz; do \
+			$(STAGING_DIR_HOST)/bin/libdeflate-gzip -dc "$$$$targz" | tar -xf - ; \
+		done ; \
+		find . -mindepth 2 -maxdepth 2 -type f -name install.sh \
+			-execdir bash '{}' --prefix=$(STAGING_DIR)/host --disable-ldconfig \; ; \
 	)
 endef
 

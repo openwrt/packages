@@ -45,11 +45,9 @@ PYTHON3_VARS = \
 	_python_sysroot="$(STAGING_DIR)" \
 	_python_prefix="/usr" \
 	_python_exec_prefix="/usr" \
-	CARGO_BUILD_TARGET="$(RUSTC_TARGET_ARCH)" \
-	CARGO_HOME="$(CARGO_HOME)" \
-	PATH="$(CARGO_HOME)/bin:$(PATH)" \
+	$(CARGO_PKG_CONFIG_VARS) \
 	PYO3_CROSS_LIB_DIR="$(PYTHON3_LIB_DIR)" \
-	RUSTFLAGS="$(CARGO_RUSTFLAGS)"
+	SETUPTOOLS_RUST_CARGO_PROFILE="$(CARGO_PKG_PROFILE)"
 
 # $(1) => directory of python script
 # $(2) => python script and its arguments
