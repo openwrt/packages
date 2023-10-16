@@ -374,7 +374,9 @@ gen_dhcp_subnet() {
 		echo " range $START $END;"
 	fi
 	echo " option subnet-mask $netmask;"
-	if [ "$BROADCAST" != "0.0.0.0" ] ; then
+	# check for 0.0.0.0 until all active releases of ipcalc.sh omit it
+	# for small networks:
+	if [ -n "$BROADCAST" ] && [ "$BROADCAST" != "0.0.0.0" ] ; then
 		echo " option broadcast-address $BROADCAST;"
 	fi
 	if [ "$dynamicdhcp" -eq 0 ] ; then
@@ -443,7 +445,10 @@ dhcpd_add() {
 
 	dhcp_ifs="$dhcp_ifs $ifname"
 
-	eval "$(ipcalc.sh $subnet $start $limit)"
+	if ! ipcalc "$subnet" "$start" "$limit"; then
+		echo "invalid range params: $subnet start: $start limit $limit" >&2
+		return 1
+	fi
 
 	config_get netmask "$cfg" "netmask" "$NETMASK"
 	config_get leasetime "$cfg" "leasetime"
