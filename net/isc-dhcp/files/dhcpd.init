@@ -445,7 +445,10 @@ dhcpd_add() {
 
 	dhcp_ifs="$dhcp_ifs $ifname"
 
-	ipcalc $subnet $start $limit
+	if ! ipcalc "$subnet" "$start" "$limit"; then
+		echo "invalid range params: $subnet start: $start limit $limit" >&2
+		return 1
+	fi
 
 	config_get netmask "$cfg" "netmask" "$NETMASK"
 	config_get leasetime "$cfg" "leasetime"
