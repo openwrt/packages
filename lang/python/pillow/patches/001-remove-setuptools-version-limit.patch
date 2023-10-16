@@ -6,6 +6,6 @@
  requires = [
 -  "setuptools>=67.8",
 +  "setuptools",
-   "wheel",
  ]
  backend-path = [
+   "_custom_build",
