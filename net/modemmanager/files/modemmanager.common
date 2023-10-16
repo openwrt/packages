@@ -319,9 +319,6 @@ mm_report_event_from_cache_line() {
 }
 
 mm_report_events_from_cache() {
-	# Remove the sysfs cache
-	rm -f "${MODEMMANAGER_SYSFS_CACHE}"
-
 	local n=60
 	local step=1
 	local mmrunning=0
@@ -345,6 +342,9 @@ mm_report_events_from_cache() {
 		mm_log "error" "couldn't report initial kernel events: ModemManager not running"
 		return
 	}
+
+	# Remove the sysfs cache
+	rm -f "${MODEMMANAGER_SYSFS_CACHE}"
 
 	# Report cached kernel events
 	while IFS= read -r event_line; do
