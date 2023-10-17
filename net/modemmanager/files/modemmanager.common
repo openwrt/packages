@@ -235,24 +235,20 @@ mm_report_modem_wait() {
 # Cleanup interfaces
 
 mm_cleanup_interfaces() {
-	local modemlist modemlength idx modeminfo modemsysfspath
+	local sysfs_path status
 
-	modemlist=$(mmcli --list-modems --output-keyvalue)
-	[ -n "${modemlist}" ] || return 0
+	# Do nothing if there is no sysfs cache
+	[ -f "${MODEMMANAGER_SYSFS_CACHE}" ] || return
 
-	modemlength=$(modemmanager_get_field "${modemlist}" "modem-list.length")
+	while IFS= read -r sysfs_cache_line; do
+		sysfs_path=$(echo "${sysfs_cache_line}" | awk '{print $1}')
+		status=$(echo "${sysfs_cache_line}" | awk '{print $2}')
 
-	# do nothing if no modem reported
-	[ -n "${modemlength}" ] && [ "${modemlength}" -ge 1 ] && {
-		idx=1
-		while [ $idx -le "$modemlength" ]; do
-			modempath=$(modemmanager_get_field "${modemlist}" "modem-list.value\[$idx\]")
-			modeminfo=$(mmcli --modem "${modempath}" --output-keyvalue)
-			modemsysfspath=$(modemmanager_get_field "${modeminfo}" "modem.generic.device")
-			mm_cleanup_interface_by_sysfspath "${modemsysfspath}"
-			idx=$((idx + 1))
-		done
-	}
+		if [ "${status}" = "processed" ]; then
+			mm_log "debug" "call cleanup for: ${sysfs_path}"
+			mm_cleanup_interface_by_sysfspath "${sysfs_path}"
+		fi
+	done < ${MODEMMANAGER_SYSFS_CACHE}
 }
 
 mm_cleanup_interface_by_sysfspath() {
