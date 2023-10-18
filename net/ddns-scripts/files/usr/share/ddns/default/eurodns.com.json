@@ -1,0 +1,7 @@
+{
+	"name": "eurodns.com",
+	"ipv4": {
+		"url": "https://[username]:[password]@update.eurodyndns.org/update/?hostname=[DOMAIN]&myip=[IP]",
+		"answer": "good|nochg"
+	}
+}
