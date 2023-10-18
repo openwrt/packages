@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=modemmanager
-PKG_SOURCE_VERSION:=1.20.6
-PKG_RELEASE:=14
+PKG_SOURCE_VERSION:=1.22.0
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://gitlab.freedesktop.org/mobile-broadband/ModemManager.git
-PKG_MIRROR_HASH:=e90103e2e42bb826bbbac83937a9a69f50348cd6ce0d8da655a12b65494ce7c9
+PKG_MIRROR_HASH:=98daa1a15075c88afb3ed0de20dc83fe51d2ba3c66318ce3f731da4616a2e192
 
 PKG_MAINTAINER:=Nicholas Smith <nicholas@nbembedded.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -64,6 +64,7 @@ MESON_ARGS += \
 	-Dintrospection=false \
 	-Dman=false \
 	-Dbash_completion=false \
+	-Dbuiltin_plugins=true \
 	-Db_lto=true \
 	-Dmbim=$(if $(CONFIG_MODEMMANAGER_WITH_MBIM),true,false) \
 	-Dqmi=$(if $(CONFIG_MODEMMANAGER_WITH_QMI),true,false) \
@@ -97,10 +98,6 @@ define Package/modemmanager/install
 
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libmm-glib.so.* $(1)/usr/lib
-
-	$(INSTALL_DIR) $(1)/usr/lib/ModemManager
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ModemManager/libmm-shared-*.so* $(1)/usr/lib/ModemManager
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ModemManager/libmm-plugin-*.so* $(1)/usr/lib/ModemManager
 
 	$(INSTALL_DIR) $(1)/usr/lib/ModemManager/connection.d
 	$(INSTALL_BIN) ./files/10-report-down $(1)/usr/lib/ModemManager/connection.d
