@@ -1,0 +1,22 @@
+--- a/Makefile
++++ b/Makefile
+@@ -1,16 +1,11 @@
+-CC	= gcc
+-LD	= gcc
+-
+ # for debug
+-#CFLAGS	= -Wall -g
+-#LDFLAGS = -N
++#CFLAGS	= -Wall -O0 -g
+ 
+ # for production code
+-CFLAGS	= -Wall -O3 -fomit-frame-pointer
+-LDFLAGS = -s -N
++CFLAGS	+= -Wall -O3 -fomit-frame-pointer
+ 
+ statserial:	statserial.o
+-	$(LD) $(LDFLAGS) -o statserial statserial.o -lcurses
++	$(CC) $(LDFLAGS) -o statserial statserial.o -lncurses
+ 
+ statserial.o: statserial.c
+ 	$(CC) $(CFLAGS) -c statserial.c
