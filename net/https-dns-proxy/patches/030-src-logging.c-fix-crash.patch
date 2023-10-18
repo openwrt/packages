@@ -1,0 +1,11 @@
+--- a/src/logging.c
++++ b/src/logging.c
+@@ -78,7 +78,7 @@ void _log(const char *file, int line, in
+ 
+   struct timeval tv;
+   gettimeofday(&tv, NULL);
+-  fprintf(logf, "%s %8lu.%06lu %s:%d ", SeverityStr[severity],
++  fprintf(logf, "%s %8llu.%06llu %s:%d ", SeverityStr[severity],
+           (uint64_t)tv.tv_sec,
+           (uint64_t)tv.tv_usec, file, line);
+ 
