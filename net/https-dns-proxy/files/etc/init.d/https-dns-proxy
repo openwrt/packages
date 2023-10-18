@@ -5,6 +5,8 @@
 # shellcheck disable=SC2034
 START=90
 # shellcheck disable=SC2034
+STOP=15
+# shellcheck disable=SC2034
 USE_PROCD=1
 
 if type extra_command 1>/dev/null 2>&1; then
@@ -250,20 +252,21 @@ start_service() {
 		output "Updating dnsmasq config "
 		if uci_commit 'dhcp'; then
 			output_okn
-		else
-			output_failn
-		fi
-		param='dnsmasq_restart'
-	fi
-	if [ "$param" = 'on_hotplug' ] || [ "$param" = 'on_boot' ] || \
-		[ "$param" = 'dnsmasq_restart' ] ; then
-		output "Restarting dnsmasq "
-		if dnsmasq_restart; then
-			output_okn
+			param='on_config_update'
 		else
 			output_failn
 		fi
 	fi
+	case "$param" in
+		on_boot|on_config_update|on_hotplug)
+			output "Restarting dnsmasq ${param:+$param }"
+			if dnsmasq_restart; then
+				output_okn
+			else
+				output_failn
+			fi
+		;;
+	esac
 }
 
 stop_service() {
@@ -291,29 +294,13 @@ stop_service() {
 	[ "$s" = '0' ] && output_okn || output_failn
 }
 
-# shellcheck disable=SC1091
 service_triggers() {
-	local wan wan6 i
-	local procd_trigger_wan6
-	config_load "$packageName"
-	config_get_bool procd_trigger_wan6 'config' 'procd_trigger_wan6' '0'
-	. /lib/functions/network.sh
-	network_flush_cache
-	network_find_wan wan
-	wan="${wan:-wan}"
-	if [ "$procd_trigger_wan6" -ne 0 ]; then
-		network_find_wan6 wan6
-		wan6="${wan6:-wan6}"
-	fi
-	for i in "$wan" "$wan6"; do
-		[ -n "$i" ] && procd_add_interface_trigger "interface.*" "$i" "/etc/init.d/${packageName}" restart
-	done
-	procd_add_config_trigger "config.change" "$packageName" "/etc/init.d/${packageName}" reload
+	procd_add_raw_trigger "interface.*.up" 3000 "/etc/init.d/${packageName}" restart 'on_interface_up'
+	procd_add_config_trigger "config.change" "$packageName" "/etc/init.d/${packageName}" reload 'on_config_change'
 }
-
 service_started() { procd_set_config_changed firewall; }
 service_stopped() { procd_set_config_changed firewall; }
-restart() { procd_send_signal "$packageName"; rc_procd start_service; }
+restart() { procd_send_signal "$packageName"; rc_procd start_service "$*"; }
 
 dnsmasq_doh_server() {
 	local cfg="$1" param="$2" address="${3:-127.0.0.1}" port="$4" i
