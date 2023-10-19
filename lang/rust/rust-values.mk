@@ -5,7 +5,14 @@
 # Rust Environmental Vars
 RUSTC_HOST_SUFFIX:=$(word 4, $(subst -, ,$(GNU_HOST_NAME)))
 RUSTC_HOST_ARCH:=$(HOST_ARCH)-unknown-linux-$(RUSTC_HOST_SUFFIX)
-CARGO_HOME:=$(DL_DIR)/cargo
+
+ifeq ($(CONFIG_RUST_DOWNLOAD_FOLDER),)
+  RUST_DOWNLOAD_FOLDER:=$(DL_DIR)/rustc
+else
+  RUST_DOWNLOAD_FOLDER:=$(call qstrip,$(CONFIG_RUST_DOWNLOAD_FOLDER))
+endif
+
+CARGO_HOME:=$(RUST_DOWNLOAD_FOLDER)/cargo
 
 ifeq ($(CONFIG_USE_MUSL),y)
   # Force linking of the SSP library for musl

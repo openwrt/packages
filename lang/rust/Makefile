@@ -86,7 +86,7 @@ endef
 define Host/Compile
 	$(RUST_SCCACHE_VARS) \
 	CARGO_HOME=$(CARGO_HOME) \
-	OPENWRT_RUSTC_BOOTSTRAP_CACHE=$(DL_DIR)/rustc \
+	OPENWRT_RUSTC_BOOTSTRAP_CACHE=$(RUST_DOWNLOAD_FOLDER)/rustc \
 	$(PYTHON) $(HOST_BUILD_DIR)/x.py \
 		--build-dir $(HOST_BUILD_DIR)/build \
 		--config $(HOST_BUILD_DIR)/config.toml \

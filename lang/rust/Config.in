@@ -12,4 +12,19 @@ config RUST_SCCACHE_DIR
 	  Store sccache in this directory.
 	  If not set, uses './.sccache'
 
+config RUST_DOWNLOAD_SEPARATE
+	bool "Use separate download folder"
+	help
+	  By default, the rust downloads are stored in the rustc
+	  subdirectory of the openwrt download folder. However, this can
+	  cause problems if the download directory is not local but is an
+	  nfs mount.
+
+config RUST_DOWNLOAD_FOLDER
+	string "Rust download folder" if RUST_DOWNLOAD_SEPARATE
+	default ""
+	help
+	  Please specify a folder if the download folder for rust packages
+	  should be different than for openwrt packages.
+
 endmenu
