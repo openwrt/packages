@@ -44,14 +44,14 @@ CONFIGURE_ARGS += \
 	--disable-manpages
 
 define Build/Compile
-	+$(MAKE_VARS) EFI_CFLAGS="-I$(TOOLCHAIN_DIR)/include $(TARGET_CFLAGS)" \
+	+$(MAKE_VARS) EFI_CFLAGS="$(patsubst %,-I%,$(TOOLCHAIN_INC_DIRS)) $(TARGET_CFLAGS)" \
 	$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR)/$(MAKE_PATH) \
 		$(MAKE_FLAGS) \
 		$(1);
 endef
 
 define Build/Install
-	$(MAKE_VARS) EFI_CFLAGS="-I$(TOOLCHAIN_DIR)/include $(TARGET_CFLAGS)" \
+	$(MAKE_VARS) EFI_CFLAGS="$(patsubst %,-I%,$(TOOLCHAIN_INC_DIRS)) $(TARGET_CFLAGS)" \
 	$(MAKE) -C $(PKG_BUILD_DIR)/$(MAKE_PATH) \
 		$(MAKE_INSTALL_FLAGS) install
 endef

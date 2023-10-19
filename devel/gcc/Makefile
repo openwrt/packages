@@ -73,15 +73,15 @@ define Package/gcc/config
 endef
 
 ifeq ($(CONFIG_INCLUDE_STATIC_LIBC),y)
-	COPY_STATIC_LIBC=cp -a $(TOOLCHAIN_DIR)/lib/libc.a $(1)/usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)
+	COPY_STATIC_LIBC=cp -a $(TOOLCHAIN_ROOT_DIR)/lib/libc.a $(1)/usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)
 endif
 
 ifeq ($(CONFIG_INCLUDE_STATIC_LIBPTHREAD),y)
-	COPY_STATIC_LIBPTHREAD=cp -a $(TOOLCHAIN_DIR)/lib/libpthread.a $(1)/usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)
+	COPY_STATIC_LIBPTHREAD=cp -a $(TOOLCHAIN_ROOT_DIR)/lib/libpthread.a $(1)/usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)
 endif
 
 ifeq ($(CONFIG_INCLUDE_STATIC_LIBSTDC),y)
-	COPY_STATIC_LIBSTDC=cp -a $(TOOLCHAIN_DIR)/lib/libstdc++.a $(1)/usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)
+	COPY_STATIC_LIBSTDC=cp -a $(TOOLCHAIN_ROOT_DIR)/lib/libstdc++.a $(1)/usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)
 endif
 
 ifeq ($(CONFIG_INCLUDE_STATIC_LINK_SPEC),y)
@@ -95,9 +95,9 @@ PKGVERSION=OpenWrt GCC $(PKG_VERSION)
 TARGET_CPPFLAGS += -D_GLIBCXX_INCLUDE_NEXT_C_HEADERS
 
 # not using sstrip here as this messes up the .so's somehow
-STRIP:=$(TOOLCHAIN_DIR)/bin/$(TARGET_CROSS)strip
+STRIP:=$(firstword $(TOOLCHAIN_BIN_DIRS))/$(TARGET_CROSS)strip
 RSTRIP:= \
-	NM="$(TOOLCHAIN_DIR)/bin/$(TARGET_CROSS)nm" \
+	NM="$(firstword $(TOOLCHAIN_BIN_DIRS))/$(TARGET_CROSS)nm" \
 	STRIP="$(STRIP)" \
 	STRIP_KMOD="$(STRIP) --strip-debug" \
 	$(SCRIPT_DIR)/rstrip.sh
@@ -224,10 +224,10 @@ define Package/gcc/install
 	ln -s $(REAL_GNU_TARGET_NAME)-gcc $(1)/usr/bin/cc
 	ln -s $(REAL_GNU_TARGET_NAME)-gcc $(1)/usr/bin/$(REAL_GNU_TARGET_NAME)-gcc-$(PKG_VERSION)
 	cp -ar $(PKG_INSTALL_DIR)/usr/lib/gcc $(1)/usr/lib
-	cp -ar $(TOOLCHAIN_DIR)/include $(1)/usr
-	cp -a $(TOOLCHAIN_DIR)/lib/*.{o,so*} $(1)/usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)
-	cp -a $(TOOLCHAIN_DIR)/lib/*nonshared*.a  $(1)/usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)
-	cp -a $(TOOLCHAIN_DIR)/lib/libm.a  $(1)/usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)
+	cp -ar $(TOOLCHAIN_ROOT_DIR)/include $(1)/usr
+	cp -a $(TOOLCHAIN_ROOT_DIR)/lib/*.{o,so*} $(1)/usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)
+	cp -a $(TOOLCHAIN_ROOT_DIR)/lib/*nonshared*.a  $(1)/usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)
+	cp -a $(TOOLCHAIN_ROOT_DIR)/lib/libm.a  $(1)/usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)
 	$(COPY_STATIC_LIBC)
 	$(COPY_STATIC_LIBPTHREAD)
 	$(COPY_STATIC_LIBSTDC)
