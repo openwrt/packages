@@ -105,6 +105,11 @@ globals() {
 	printf '%benable_script_security\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
 	printf '%bprocess_names\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
 
+	printf '%bstartup_script "/bin/busybox env -i ACTION=startup /sbin/hotplug-call keepalived"\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
+	printf '%bstartup_script_timeout 10\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
+	printf '%bshutdown_script "/bin/busybox env -i ACTION=shutdown /sbin/hotplug-call keepalived"\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
+	printf '%bshutdown_script_timeout 10\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
+
 	config_get notification_email "$1" notification_email
 	print_list_indent notification_email
 
