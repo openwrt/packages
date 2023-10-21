@@ -1155,7 +1155,7 @@ adb_allow() {
 			for c in $string; do
 				output 2 "  $c "
 				hf="$(echo "$c" | sed 's/\./\\./g')"
-				if sed -i "/\(^\|\.\)${hf}$/d;" "$outputFile" && \
+				if sed -i "\:\(/\|\.\)${hf}/:d" "$outputFile" && \
 					uci_add_list_if_new "${packageName}" 'config' 'allowed_domain' "$c"; then
 						output_ok
 				else
@@ -1171,7 +1171,7 @@ adb_allow() {
 				fi
 			fi
 			output 2 "Committing changes to config "
-			if [ -n "$(uci_changes "$packageName")" ] && uci_commit "$packageName"; then
+			if uci_commit "$packageName"; then
 				allowed_domain="$(uci_get "$packageName" 'config' 'allowed_domain')"
 				json set triggers
 				json set stats "$serviceName is blocking $(wc -l < "$outputFile") domains (with ${dns})"
@@ -1196,7 +1196,8 @@ adb_allow() {
 			output 2 "Allowing domain(s) \\n"
 			for c in $string; do 
 				output 2 "  $c "
-				if sed -i "/${string}/d" "$outputFile" && \
+				hf="$(echo "$c" | sed 's/\./\\./g')"
+				if sed -i "\:\(\"\|\.\)${hf}\":d" "$outputFile" && \
 					uci_add_list_if_new "$packageName" 'config' 'allowed_domain' "$string"; then
 						output_ok
 				else
@@ -1212,7 +1213,7 @@ adb_allow() {
 				fi
 			fi
 			output 2 "Committing changes to config "
-			if [ -n "$(uci_changes "$packageName")" ] && uci_commit "$packageName"; then
+			if uci_commit "$packageName"; then
 				allowed_domain="$(uci_get "$packageName" 'config' 'allowed_domain')"
 				json set triggers
 				json set stats "$serviceName is blocking $(wc -l < "$outputFile") domains (with ${dns})"
@@ -1725,7 +1726,7 @@ load_validate_config() {
 		'config_update_enabled:bool:0' \
 		'config_update_url:string:https://cdn.jsdelivr.net/gh/openwrt/packages/net/adblock-fast/files/adblock-fast.conf.update' \
 		'download_timeout:range(1,60):20' \
-		'pause_timeout:range(10,120):60' \
+		'pause_timeout:range(1,60):20' \
 		'curl_additional_param:or("", string)' \
 		'curl_max_file_size:or("", uinteger)' \
 		'curl_retry:range(0,30):3' \
