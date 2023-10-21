@@ -210,6 +210,13 @@ run_bouncer() {
 		procd_set_param command "$PROG" -c "$VARCONFIG"
 		procd_set_param stdout 1
 		procd_set_param stderr 1
+		procd_set_param nice 10
+		if [ -x "/sbin/ujail" ]; then
+			procd_add_jail cs-bouncer log
+			procd_add_jail_mount $VARCONFIG
+			procd_add_jail_mount_rw /var/log/
+			procd_set_param no_new_privs 1
+		fi
 		procd_close_instance
 	fi
 }
