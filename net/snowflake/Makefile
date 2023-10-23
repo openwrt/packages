@@ -1,13 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=snowflake
-PKG_VERSION:=2.6.1
+PKG_VERSION:=2.7.0
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake.git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_MIRROR_HASH:=c6a7ef515bae874c42220ab52dd597c08df4569e7d97f700e5c80c8946e205bd
+PKG_MIRROR_HASH:=3156dbeffaea82761372c7e64322cf9c24a05894c54ccb0d80eaed61b54e08c6
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -39,11 +39,6 @@ endef
 define Package/snowflake-client
 $(call Package/snowflake/Default)
   TITLE+= Client
-endef
-
-define Package/snowflake-distinctcounter
-$(call Package/snowflake/Default)
-  TITLE+= Distinct Counter
 endef
 
 define Package/snowflake-probetest
@@ -81,12 +76,6 @@ $(call Package/snowflake/description/Default)
 This package contains the Snowflake client which provides the bridge to TOR.
 endef
 
-define Package/snowflake-distinctcounter/description
-$(call Package/snowflake/description/Default)
-
-This package provides the Snowflake distinct counter service.
-endef
-
 define Package/snowflake-probetest/description
 $(call Package/snowflake/description/Default)
 
@@ -115,11 +104,6 @@ define Package/snowflake-client/install
 	$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/client $(1)/usr/bin/snowflake-client
 endef
 
-define Package/snowflake-distinctcounter/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/distinctcounter $(1)/usr/bin/snowflake-distinctcounter
-endef
-
 define Package/snowflake-probetest/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/probetest $(1)/usr/bin/snowflake-probetest
@@ -138,7 +122,6 @@ endef
 
 $(eval $(call BuildPackage,snowflake-broker))
 $(eval $(call BuildPackage,snowflake-client))
-$(eval $(call BuildPackage,snowflake-distinctcounter))
 $(eval $(call BuildPackage,snowflake-probetest))
 $(eval $(call BuildPackage,snowflake-proxy))
 $(eval $(call BuildPackage,snowflake-server))
