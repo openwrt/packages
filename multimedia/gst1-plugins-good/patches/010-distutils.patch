@@ -1,6 +1,6 @@
 --- a/meson.build
 +++ b/meson.build
-@@ -461,7 +461,7 @@ endif
+@@ -469,7 +469,7 @@ endif
  
  presetdir = join_paths(get_option('datadir'), 'gstreamer-' + api_version, 'presets')
  
