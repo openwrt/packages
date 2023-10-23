@@ -287,7 +287,7 @@ Last-Update: 2021-07-28
  #endif
 --- a/src/string.c
 +++ b/src/string.c
-@@ -418,6 +418,7 @@ return ss;
+@@ -428,6 +428,7 @@ return ss;
  
  #if (defined(HAVE_LOCAL_SCAN) || defined(EXPAND_DLFUNC)) \
  	&& !defined(MACRO_PREDEF) && !defined(COMPILE_UTILITY)
@@ -295,7 +295,7 @@ Last-Update: 2021-07-28
  /*************************************************
  *            Copy and save string                *
  *************************************************/
-@@ -463,6 +464,7 @@ string_copyn_function(const uschar * s,
+@@ -473,6 +474,7 @@ string_copyn_function(const uschar * s,
  {
  return string_copyn(s, n);
  }
