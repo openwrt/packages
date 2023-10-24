@@ -1,15 +1,15 @@
 #!/bin/sh
 # travelmate, a wlan connection manager for travel router
-# Copyright (c) 2016-2022 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2016-2023 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # set (s)hellcheck exceptions
-# shellcheck disable=1091,2086,3040,3043,3057,3060
+# shellcheck disable=all
 
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 
-trm_ver="2.1.0"
+trm_ver="2.1.1"
 trm_enabled="0"
 trm_debug="0"
 trm_iface=""
@@ -34,6 +34,8 @@ trm_wpaflags=""
 trm_ovpninfolist=""
 trm_vpnifacelist=""
 trm_vpninfolist=""
+trm_stdvpnservice=""
+trm_stdvpniface=""
 trm_rtfile="/tmp/trm_runtime.json"
 trm_wifi="$(command -v wifi)"
 trm_fetch="$(command -v curl)"
@@ -41,7 +43,7 @@ trm_iwinfo="$(command -v iwinfo)"
 trm_logger="$(command -v logger)"
 trm_wpa="$(command -v wpa_supplicant)"
 trm_captiveurl="http://detectportal.firefox.com"
-trm_useragent="Mozilla/5.0 (Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0"
+trm_useragent="Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/118.0"
 trm_ntpfile="/var/state/travelmate.ntp"
 trm_vpnfile="/var/state/travelmate.vpn"
 trm_mailfile="/var/state/travelmate.mail"
@@ -58,7 +60,7 @@ f_env() {
 		return
 	fi
 
-	unset trm_stalist trm_radiolist trm_uplinklist trm_uplinkcfg trm_activesta trm_opensta
+	unset trm_stalist trm_radiolist trm_uplinklist trm_vpnifacelist trm_uplinkcfg trm_activesta trm_opensta
 
 	trm_sysver="$(ubus -S call system board 2>/dev/null | jsonfilter -q -e '@.model' -e '@.release.description' |
 		awk 'BEGIN{RS="";FS="\n"}{printf "%s, %s",$1,$2}')"
@@ -213,9 +215,6 @@ f_vpn() {
 					f_log "info" "take down vpn interface '${iface}/${vpn_instance:-"-"}' (initial)"
 				fi
 			done
-			if [ -f "/etc/init.d/sysntpd" ]; then
-				/etc/init.d/sysntpd restart >/dev/null 2>&1
-			fi
 			rm -f "${trm_vpnfile}"
 		elif [ "${vpn}" = "1" ] && [ -n "${vpn_iface}" ] && [ "${vpn_action}" = "enable_keep" ]; then
 			for info in ${trm_vpninfolist}; do
@@ -235,7 +234,7 @@ f_vpn() {
 		fi
 		if [ -x "${trm_vpnpgm}" ] && [ -n "${vpn_service}" ] && [ -n "${vpn_iface}" ]; then
 			if { [ "${vpn_action}" = "disable" ] && [ -f "${trm_vpnfile}" ]; } ||
-				{ [ -f "${trm_ntpfile}" ] && {  [ "${vpn}" = "1" ] && [ "${vpn_action%_*}" = "enable" ] && [ ! -f "${trm_vpnfile}" ]; } ||
+				{ [ -s "${trm_ntpfile}" ] && { [ "${vpn}" = "1" ] && [ "${vpn_action%_*}" = "enable" ] && [ ! -f "${trm_vpnfile}" ]; } ||
 				{ [ "${vpn}" != "1" ] && [ "${vpn_action%_*}" = "enable" ] && [ -f "${trm_vpnfile}" ]; }; }; then
 					result="$(f_net)"
 					if [ "${result}" = "net ok" ] || [ "${vpn_action}" = "disable" ]; then
@@ -298,22 +297,22 @@ f_ctrack() {
 			"start")
 				uci_remove "travelmate" "${trm_uplinkcfg}" "con_start" 2>/dev/null
 				uci_remove "travelmate" "${trm_uplinkcfg}" "con_end" 2>/dev/null
-				if [ -f "${trm_ntpfile}" ]; then
+				if [ -s "${trm_ntpfile}" ]; then
 					uci_set "travelmate" "${trm_uplinkcfg}" "con_start" "$(date "+%Y.%m.%d-%H:%M:%S")"
 				fi
 				;;
 			"refresh")
-				if [ -f "${trm_ntpfile}" ] && [ -z "$(uci_get "travelmate" "${trm_uplinkcfg}" "con_start")" ]; then
+				if [ -s "${trm_ntpfile}" ] && [ -z "$(uci_get "travelmate" "${trm_uplinkcfg}" "con_start")" ]; then
 					uci_set "travelmate" "${trm_uplinkcfg}" "con_start" "$(date "+%Y.%m.%d-%H:%M:%S")"
 				fi
 				;;
 			"end")
-				if [ -f "${trm_ntpfile}" ]; then
+				if [ -s "${trm_ntpfile}" ]; then
 					uci_set "travelmate" "${trm_uplinkcfg}" "con_end" "$(date "+%Y.%m.%d-%H:%M:%S")"
 				fi
 				;;
 			"start_expiry")
-				if [ -f "${trm_ntpfile}" ]; then
+				if [ -s "${trm_ntpfile}" ]; then
 					expiry="$(uci_get "travelmate" "${trm_uplinkcfg}" "con_start_expiry")"
 					uci_set "travelmate" "${trm_uplinkcfg}" "enabled" "0"
 					uci_set "travelmate" "${trm_uplinkcfg}" "con_end" "$(date "+%Y.%m.%d-%H:%M:%S")"
@@ -321,7 +320,7 @@ f_ctrack() {
 				fi
 				;;
 			"end_expiry")
-				if [ -f "${trm_ntpfile}" ]; then
+				if [ -s "${trm_ntpfile}" ]; then
 					expiry="$(uci_get "travelmate" "${trm_uplinkcfg}" "con_end_expiry")"
 					uci_set "travelmate" "${trm_uplinkcfg}" "enabled" "1"
 					uci_remove "travelmate" "${trm_uplinkcfg}" "con_start" 2>/dev/null
@@ -331,7 +330,7 @@ f_ctrack() {
 				;;
 			"disabled")
 				uci_set "travelmate" "${trm_uplinkcfg}" "enabled" "0"
-				if [ -f "${trm_ntpfile}" ]; then
+				if [ -s "${trm_ntpfile}" ]; then
 					uci_set "travelmate" "${trm_uplinkcfg}" "con_end" "$(date "+%Y.%m.%d-%H:%M:%S")"
 				fi
 				;;
@@ -536,7 +535,7 @@ f_setif() {
 # add open uplinks
 #
 f_addsta() {
-	local uci_cfg new_uplink="1" offset="1" radio="${1}" essid="${2}"
+	local wifi_cfg trm_cfg new_uplink="1" offset="1" radio="${1}" essid="${2}"
 
 	if [ "${trm_maxautoadd}" = "0" ] || [ "${trm_opensta:-0}" -lt "${trm_maxautoadd}" ]; then
 		config_cb() {
@@ -557,39 +556,45 @@ f_addsta() {
 	fi
 
 	if [ "${new_uplink}" = "1" ]; then
-		uci_cfg="trm_uplink$((offset + 1))"
-		while [ -n "$(uci_get "wireless.${uci_cfg}")" ]; do
+		wifi_cfg="trm_uplink$((offset + 1))"
+		while [ -n "$(uci_get "wireless.${wifi_cfg}")" ]; do
 			offset="$((offset + 1))"
-			uci_cfg="trm_uplink${offset}"
+			wifi_cfg="trm_uplink${offset}"
 		done
 		uci -q batch <<-EOC
-			set wireless."${uci_cfg}"="wifi-iface"
-			set wireless."${uci_cfg}".mode="sta"
-			set wireless."${uci_cfg}".network="${trm_iface}"
-			set wireless."${uci_cfg}".device="${radio}"
-			set wireless."${uci_cfg}".ssid="${essid}"
-			set wireless."${uci_cfg}".encryption="none"
-			set wireless."${uci_cfg}".disabled="1"
+			set wireless."${wifi_cfg}"="wifi-iface"
+			set wireless."${wifi_cfg}".mode="sta"
+			set wireless."${wifi_cfg}".network="${trm_iface}"
+			set wireless."${wifi_cfg}".device="${radio}"
+			set wireless."${wifi_cfg}".ssid="${essid}"
+			set wireless."${wifi_cfg}".encryption="none"
+			set wireless."${wifi_cfg}".disabled="1"
 		EOC
-		uci_cfg="$(uci -q add travelmate uplink)"
+		trm_cfg="$(uci -q add travelmate uplink)"
 		uci -q batch <<-EOC
-			set travelmate."${uci_cfg}".device="${radio}"
-			set travelmate."${uci_cfg}".ssid="${essid}"
-			set travelmate."${uci_cfg}".opensta="1"
-			set travelmate."${uci_cfg}".con_start_expiry="0"
-			set travelmate."${uci_cfg}".con_end_expiry="0"
-			set travelmate."${uci_cfg}".enabled="1"
+			set travelmate."${trm_cfg}".device="${radio}"
+			set travelmate."${trm_cfg}".ssid="${essid}"
+			set travelmate."${trm_cfg}".opensta="1"
+			set travelmate."${trm_cfg}".con_start_expiry="0"
+			set travelmate."${trm_cfg}".con_end_expiry="0"
+			set travelmate."${trm_cfg}".enabled="1"
 		EOC
-		if [ -n "$(uci -q changes "travelmate")" ] || [ -n "$(uci -q changes "wireless")" ]; then
-			trm_opensta="$((trm_opensta + 1))"
-			uci_commit "travelmate"
-			uci_commit "wireless"
-			f_wifi
-			if [ ! -f "${trm_refreshfile}" ]; then
-				printf "%s" "ui_reload" >"${trm_refreshfile}"
-			fi
-			f_log "info" "open uplink '${radio}/${essid}' added to wireless config"
+		if [ -n "${trm_stdvpnservice}" ] && [ -n "${trm_stdvpniface}" ]; then
+			uci -q batch <<-EOC
+				set travelmate."${trm_cfg}".vpnservice="${trm_stdvpnservice}"
+				set travelmate."${trm_cfg}".vpniface="${trm_stdvpniface}"
+				set travelmate."${trm_cfg}".vpn="1"
+			EOC
 		fi
+		trm_opensta="$((trm_opensta + 1))"
+		uci_commit "travelmate"
+		uci_commit "wireless"
+		f_wifi
+		if [ ! -f "${trm_refreshfile}" ]; then
+			printf "%s" "ui_reload" >"${trm_refreshfile}"
+		fi
+		f_log "info" "open uplink '${radio}/${essid}' added to wireless config"
+		printf "%s" "${wifi_cfg}-${radio}"
 	fi
 	f_log "debug" "f_addsta  ::: radio: ${radio:-"-"}, essid: ${essid}, opensta/maxautoadd: ${trm_opensta:-"-"}/${trm_maxautoadd:-"-"}, new_uplink: ${new_uplink}, offset: ${offset}"
 }
@@ -643,7 +648,7 @@ f_net() {
 # check interface status
 #
 f_check() {
-	local ifname radio dev_status result login_script login_script_args cp_domain wait_time="1" enabled="1" mode="${1}" status="${2}" sta_radio="${3}" sta_essid="${4}" sta_bssid="${5}"
+	local ifname radio dev_status result login_script login_script_args cp_domain wait_time="0" enabled="1" mode="${1}" status="${2}" sta_radio="${3}" sta_essid="${4}" sta_bssid="${5}"
 
 	if [ "${mode}" = "initial" ] || [ "${mode}" = "dev" ]; then
 		json_get_var station_id "station_id"
@@ -663,6 +668,8 @@ f_check() {
 		f_wifi
 	fi
 	while [ "${wait_time}" -le "${trm_maxwait}" ]; do
+		[ "${wait_time}" -gt "0" ] && sleep 1
+		wait_time="$((wait_time + 1))"
 		dev_status="$(ubus -S call network.wireless status 2>/dev/null)"
 		if [ -n "${dev_status}" ]; then
 			if [ "${mode}" = "dev" ]; then
@@ -681,8 +688,10 @@ f_check() {
 			else
 				ifname="$(printf "%s" "${dev_status}" | jsonfilter -q -l1 -e '@.*.interfaces[@.config.mode="sta"].ifname')"
 				if [ -n "${ifname}" ] && [ "${enabled}" = "1" ]; then
-					trm_ifquality="$(${trm_iwinfo} "${ifname}" info 2>/dev/null | awk -F '[ ]' '/Link Quality:/{split($NF,var0,"/");printf "%i\n",(var0[1]*100/var0[2])}')"
-					if [ "${trm_ifquality}" -ge "${trm_minquality}" ]; then
+					trm_ifquality="$(${trm_iwinfo} "${ifname}" info 2>/dev/null | awk -F '[ ]' '/Link Quality: [0-9]+\/[0-9]+/{split($NF,var0,"/");printf "%i\n",(var0[1]*100/var0[2])}')"
+					if [ -z "${trm_ifquality}" ]; then
+						continue
+					elif [ "${trm_ifquality}" -ge "${trm_minquality}" ]; then
 						trm_ifstatus="$(ubus -S call network.interface dump 2>/dev/null | jsonfilter -q -l1 -e "@.interface[@.device=\"${ifname}\"].up")"
 						if [ "${trm_ifstatus}" = "true" ]; then
 							result="$(f_net)"
@@ -768,8 +777,6 @@ f_check() {
 			f_jsnup
 			break
 		fi
-		wait_time="$((wait_time + 1))"
-		sleep 1
 	done
 	f_log "debug" "f_check   ::: mode: ${mode}, name: ${ifname:-"-"}, status: ${trm_ifstatus}, enabled: ${enabled}, connection: ${trm_connection:-"-"}, wait: ${wait_time}, max_wait: ${trm_maxwait}, min_quality: ${trm_minquality}, captive: ${trm_captive}, netcheck: ${trm_netcheck}"
 }
@@ -777,7 +784,7 @@ f_check() {
 # update runtime information
 #
 f_jsnup() {
-	local vpn vpn_iface section last_date last_station sta_iface sta_radio sta_essid sta_bssid sta_mac dev_status last_status status="${trm_ifstatus}" ntp_done="0" vpn_done="0" mail_done="0"
+	local vpn vpn_iface section last_date sta_iface sta_radio sta_essid sta_bssid sta_mac dev_status status="${trm_ifstatus}" ntp_done="0" vpn_done="0" mail_done="0"
 
 	if [ "${status}" = "true" ]; then
 		status="connected (${trm_connection:-"-"})"
@@ -792,16 +799,7 @@ f_jsnup() {
 			f_getcfg "${sta_radio}" "${sta_essid}" "${sta_bssid}"
 		fi
 		json_get_var last_date "last_run"
-		json_get_var last_station "station_id"
-		json_get_var last_status "travelmate_status"
 
-		if { [ -f "${trm_ntpfile}" ] && [ ! -s "${trm_ntpfile}" ]; } || [ "${last_status}" = "running (not connected)" ] ||
-			{ [ -n "${last_station}" ] && [ "${last_station}" != "${sta_radio:-"-"}/${sta_essid:-"-"}/${sta_bssid:-"-"}" ]; }; then
-			last_date="$(date "+%Y.%m.%d-%H:%M:%S")"
-			if [ -f "${trm_ntpfile}" ] && [ ! -s "${trm_ntpfile}" ]; then
-				printf "%s" "${last_date}" >"${trm_ntpfile}"
-			fi
-		fi
 		vpn="$(f_getval "vpn")"
 		if  [ "${trm_vpn}" = "1" ] && [ -n "${trm_vpninfolist}" ] && [ "${vpn}" = "1" ] && [ -f "${trm_vpnfile}" ]; then
 			vpn_iface="$(f_getval "vpniface")"			
@@ -942,6 +940,18 @@ f_main() {
 					if [ -n "${scan_quality}" ] && [ -n "${scan_open}" ] && [ -n "${scan_bssid}" ] && [ -n "${scan_essid}" ]; then
 						f_log "debug" "f_main-7  ::: radio(sta/scan): ${sta_radio}/${radio}, essid(sta/scan): \"${sta_essid}\"/${scan_essid}, bssid(sta/scan): ${sta_bssid}/${scan_bssid}, quality(min/scan): ${trm_minquality}/${scan_quality}, open: ${scan_open}"
 						if [ "${scan_quality}" -ge "${trm_minquality}" ]; then
+							if [ "${trm_autoadd}" = "1" ] && [ "${scan_open}" = "+" ] && [ "${scan_essid}" != "unknown" ]; then
+								open_essid="${scan_essid%?}"
+								open_essid="${open_essid:1}"
+								result="$(f_addsta "${radio}" "${open_essid}")"
+								if [ -n "${result}" ]; then
+									section="${result%%-*}"
+									sta_radio="$(uci_get "wireless" "${section}" "device")"
+									sta_essid="$(uci_get "wireless" "${section}" "ssid")"
+									sta_bssid=""
+									sta_mac=""
+								fi
+							fi
 							if { { [ "${scan_essid}" = "\"${sta_essid}\"" ] && { [ -z "${sta_bssid}" ] || [ "${scan_bssid}" = "${sta_bssid}" ]; }; } ||
 								{ [ "${scan_bssid}" = "${sta_bssid}" ] && [ "${scan_essid}" = "unknown" ]; }; } && [ "${radio}" = "${sta_radio}" ]; then
 								if [ -n "${config_radio}" ]; then
@@ -984,10 +994,6 @@ f_main() {
 									retrycnt="$((retrycnt + 1))"
 									sleep "$((trm_maxwait / 6))"
 								done
-							elif [ "${trm_autoadd}" = "1" ] && [ "${scan_open}" = "+" ] && [ "${scan_essid}" != "unknown" ]; then
-								scan_essid="${scan_essid%?}"
-								scan_essid="${scan_essid:1}"
-								f_addsta "${radio}" "${scan_essid}"
 							fi
 						fi
 					fi
@@ -1007,6 +1013,13 @@ if [ -r "/lib/functions.sh" ] && [ -r "/lib/functions/network.sh" ] && [ -r "/us
 	. "/usr/share/libubox/jshn.sh"
 else
 	f_log "err" "system libraries not found"
+fi
+
+# force ntp restart/sync
+#
+if [ -f "/etc/init.d/sysntpd" ] && [ ! -s "${trm_ntpfile}" ]; then
+	/etc/init.d/sysntpd restart >/dev/null 2>&1
+	f_log "debug" "ntp time sync requested"
 fi
 
 # control travelmate actions
