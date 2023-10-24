@@ -6,10 +6,10 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/SNodeC/snode.c/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=49c3629f302e7760edf08430c1d6787c181a835b1db136c2dcc30a68186134c7
+PKG_HASH:=dd26d3fb6232c19212b9bf5cc5e3fd9ab3a45a5142e0590771c8fe34568c16c3
 
 # PKG_SOURCE_URL:=https://api.github.com/repos/SNodeC/snode.c/tarball/v$(PKG_VERSION)?
-# PKG_HASH:=446e470b5f33291e75078d775308bc0efdd184b07e93d6a4f18022bb5afd60b1
+# PKG_HASH:=2df9a5086264a4f6034c18cd0fc9dfe3e6cfe7abb5a129c9a84793f23e528b5f
 
 PKG_MAINTAINER:=Volker Christian <me@vchrist.at>
 PKG_LICENSE:=LGPL-3.0-or-later
@@ -31,7 +31,8 @@ else ifdef CONFIG_SNODEC_SELECT
   CONFIG_SNODEC_IO_MULTIPLEXER=select
 endif
 
-CMAKE_OPTIONS+=-DIO_MULTIPLEXER=$(CONFIG_SNODEC_IO_MULTIPLEXER) \
+CMAKE_OPTIONS+=-DGROUP_NAME=$(patsubst "%",%,$(CONFIG_SNODEC_GROUP_NAME)) \
+               -DIO_MULTIPLEXER=$(CONFIG_SNODEC_IO_MULTIPLEXER) \
                -DREAD_BLOCKSIZE=$(CONFIG_SNODEC_READ_BLOCKSIZE) \
                -DWRITE_BLOCKSIZE=$(CONFIG_SNODEC_WRITE_BLOCKSIZE) \
                -DREAD_TIMEOUT=$(CONFIG_SNODEC_READ_TIMEOUT) \
@@ -62,14 +63,13 @@ define Package/snode.c/Default
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=SNode.C
-  URL:=https://github.com/VolkerChristian/snode.c
-  Maintainer:=Volker Christian <me@vchrist.at>
 endef
 
 define Package/snode.c
   $(call Package/snode.c/Default)
   TITLE:=Easy to use lightwight layer based network framework for C++
   DEPENDS:=+libstdcpp
+  USERID:=$(patsubst "%",%,$(CONFIG_SNODEC_GROUP_NAME)):$(patsubst "%",%,$(CONFIG_SNODEC_GROUP_NAME))
 endef
 
 define Package/snode.c/description
@@ -85,37 +85,6 @@ endef
 
 define Package/snode.c/install
 	true
-endef
-
-SNODEC_GROUP_NAME=snodec
-SNODEC_GROUP_ID=$(call qstrip,$(CONFIG_SNODEC_GROUP_ID))
-
-define Package/snode.c/postinst
-#!/bin/sh
-
-GROUP_NAME=$(SNODEC_GROUP_NAME)
-GROUP_ID=$(SNODEC_GROUP_ID)
-
-if [ -z $$(grep "^$${GROUP_NAME}:" $${IPKG_INSTROOT}/etc/group) ]; then
-	echo "Adding group '$${GROUP_NAME}' with ID $${GROUP_ID} to /etc/group and assign user root to it"
-	echo "$${GROUP_NAME}:x:$${GROUP_ID}:root" >> $${IPKG_INSTROOT}/etc/group
-else
-	echo "Adding group '$${GROUP_NAME}' to /etc/group failed: group exists"
-fi
-endef
-
-define Package/snode.c/prerm
-#!/bin/sh
-
-GROUP_NAME=$(SNODEC_GROUP_NAME)
-GROUP_ID=$(SNODEC_GROUP_ID)
-
-if [ ! -z $$(grep "^$${GROUP_NAME}:.*:$${GROUP_ID}" $${IPKG_INSTROOT}/etc/group) ]; then
-	echo "Removing group '$${GROUP_NAME}' from /etc/group"
-	sed -i "/^$${GROUP_NAME}:/d" /etc/group
-else
-	echo "Removing group '$${GROUP_NAME}' from /etc/group failed: no such group"
-fi
 endef
 
 SO_VERSION=$(shell echo $(PKG_VERSION) | cut -d'.' -f1)
@@ -212,7 +181,7 @@ define Package/snode.c-apps/install
 endef
 
 ifdef CONFIG_SNODEC_IO_MULTIPLEXER
-  CONFIG_SNODEC_IO_MULTIPLEXER_DEPENDENCY=+snode.c-core-mux-$(CONFIG_SNODEC_IO_MULTIPLEXER)
+  CONFIG_SNODEC_IO_MULTIPLEXER_DEPENDENCY:=+snode.c-core-mux-$(CONFIG_SNODEC_IO_MULTIPLEXER)
 endif
 
 $(eval $(call BuildPackage,snode.c))

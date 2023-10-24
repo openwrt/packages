@@ -1,17 +1,13 @@
 menu "Configuration"
 	depends on PACKAGE_snode.c-utils
 
-	config SNODEC_GROUP_ID
-		int
-		prompt "Group id of group snodec"
-		default "1023"
+	config SNODEC_GROUP_NAME
+		string "Group name of unix group used for config/log/pid file management"
+		default snodec
 		help
-				The group id for unix group 'snodec'. This group is used for config/log/pid file
-				management.
-				(default: 1023)
-
-				https://github.com/VolkerChristian/snode.c
-				Volker Christian <me@vchrist.at>
+				The group name for unix group used for permission management of
+				config, log, and pid files.
+				(default: snodec)
 
 	choice
 		depends on PACKAGE_snode.c-core
@@ -24,18 +20,12 @@ menu "Configuration"
 				  * poll
 				  * select
 
-				https://github.com/VolkerChristian/snode.c
-				Volker Christian <me@vchrist.at>
-
 		config SNODEC_EPOLL
 			select PACKAGE_snode.c-core-mux-epoll
 			bool "epoll"
 			help
 					If choosen SNode.C will use 'epoll' as default I/O multiplexer.
 					(overrideable with LD_PRELOAD)
-
-					https://github.com/VolkerChristian/snode.c
-					Volker Christian <me@vchrist.at>
 
 		config SNODEC_POLL
 			select PACKAGE_snode.c-core-mux-poll
@@ -44,18 +34,12 @@ menu "Configuration"
 					If choosen SNode.C will use 'poll' as default I/O multiplexer.
 					(override with LD_PRELOAD)
 
-					https://github.com/VolkerChristian/snode.c
-					Volker Christian <me@vchrist.at>
-
 		config SNODEC_SELECT
 			select PACKAGE_snode.c-core-mux-select
 			bool "select"
 			help
 					If choosen SNode.C will use 'select' as default I/O multiplexer.
 					(override with LD_PRELOAD)
-
-					https://github.com/VolkerChristian/snode.c
-					Volker Christian <me@vchrist.at>
 	endchoice
 
 	menu "Socket connection behavior"
@@ -69,9 +53,6 @@ menu "Configuration"
 					Read block size in bytes.
 					(default: 16384)
 
-					https://github.com/VolkerChristian/snode.c
-					Volker Christian <me@vchrist.at>
-
 		config SNODEC_WRITE_BLOCKSIZE
 			int
 			prompt "Write block size in bytes"
@@ -80,30 +61,21 @@ menu "Configuration"
 					Write block size in bytes.
 					(default: 16384)
 
-					https://github.com/VolkerChristian/snode.c
-					Volker Christian <me@vchrist.at>
-
 		config SNODEC_READ_TIMEOUT
 			int
 			prompt "Read inactivity timeout in seconds"
 			default 60
 			help
-					Read inactivity timeout after which a connection is aborted
+					Read inactivity timeout after which a connection is aborted.
 					(default: 60, 0 = unlimited)
-
-					https://github.com/VolkerChristian/snode.c
-					Volker Christian <me@vchrist.at>
 
 		config SNODEC_WRITE_TIMEOUT
 			int
 			prompt "Write inactivity timeout in seconds"
 			default 60
 			help
-					Write inactivity timeout after which a connection is aborted
+					Write inactivity timeout after which a connection is aborted.
 					(default: 60, 0 = unlimited)
-
-					https://github.com/VolkerChristian/snode.c
-					Volker Christian <me@vchrist.at>
 	endmenu
 
 	menu "Server (stream) behavior"
@@ -117,9 +89,6 @@ menu "Configuration"
 					Listen backlog count.
 					(default: 5)
 
-					https://github.com/VolkerChristian/snode.c
-					Volker Christian <me@vchrist.at>
-
 		config SNODEC_ACCEPTS_PER_TICK
 			int
 			prompt "Accepts per tick"
@@ -127,9 +96,6 @@ menu "Configuration"
 			help
 					Maximum number of accepted connections per tick.
 					(default: 1)
-
-					https://github.com/VolkerChristian/snode.c
-					Volker Christian <me@vchrist.at>
 	endmenu
 
 	menu "Socket (stream) behavior"
@@ -144,9 +110,6 @@ menu "Configuration"
 					is taken offline.
 					(default: 0, 0 = unlimited)
 
-					https://github.com/VolkerChristian/snode.c
-					Volker Christian <me@vchrist.at>
-
 		config SNODEC_CONNECT_TIMEOUT
 			int
 			default 10
@@ -156,19 +119,13 @@ menu "Configuration"
 					connection can not be established.
 					(default: 10, 0 = unlimited)
 
-					https://github.com/VolkerChristian/snode.c
-					Volker Christian <me@vchrist.at>
-
 		config SNODEC_TERMINATE_TIMEOUT
 			int
 			prompt "Shutdown timeout in seconds"
 			default 1
 			help
-					Shutdown timeout after which a connection is aborted
+					Shutdown timeout after which a connection is aborted.
 					(default: 1)
-
-					https://github.com/VolkerChristian/snode.c
-					Volker Christian <me@vchrist.at>
 
 		menuconfig SNODEC_RECONNECT
 			bool
@@ -177,9 +134,6 @@ menu "Configuration"
 			help
 					Reconnect to a server if a previous connection was lost.
 					(default: n)
-
-					https://github.com/VolkerChristian/snode.c
-					Volker Christian <me@vchrist.at>
 
 		config SNODEC_RECONNECT_TIME
 		    depends on SNODEC_RECONNECT
@@ -190,9 +144,6 @@ menu "Configuration"
 					Duration after disconnecting bevore reconnecting.
 					(default: 1)
 
-					https://github.com/VolkerChristian/snode.c
-					Volker Christian <me@vchrist.at>
-
 		menuconfig SNODEC_RETRY
 			bool
 			default n
@@ -201,9 +152,6 @@ menu "Configuration"
 					Retry *listen* in case the socket address/port is already in use.
 					Retry *connect* in case the connection to the peer could not be established.
 					(default: n)
-
-					https://github.com/VolkerChristian/snode.c
-					Volker Christian <me@vchrist.at>
 
 		config SNODEC_RETRY_TIMEOUT
 		    depends on SNODEC_RETRY
@@ -215,9 +163,6 @@ menu "Configuration"
 					exponential increase.
 					(default: 1)
 
-					https://github.com/VolkerChristian/snode.c
-					Volker Christian <me@vchrist.at>
-
 		config SNODEC_RETRY_TRIES
 		    depends on SNODEC_RETRY
 			int
@@ -226,9 +171,6 @@ menu "Configuration"
 			help
 					The upper limit of retries to listen on an address or to connect to a peer.
 					(default: 0, 0 = unlimited)
-
-					https://github.com/VolkerChristian/snode.c
-					Volker Christian <me@vchrist.at>
 
 		config SNODEC_RETRY_BASE
 		    depends on SNODEC_RETRY
@@ -239,9 +181,6 @@ menu "Configuration"
 					The current retry timeout is multiplied by this value for each retry.
 					(default: 1.8)
 
-					https://github.com/VolkerChristian/snode.c
-					Volker Christian <me@vchrist.at>
-
 		config SNODEC_RETRY_JITTER
 		    depends on SNODEC_RETRY
 			int
@@ -251,9 +190,6 @@ menu "Configuration"
 					Maximum jitter in percent applied randomly to the calculated retry timeout.
 					(default: 0, 0 = disable)
 
-					https://github.com/VolkerChristian/snode.c
-					Volker Christian <me@vchrist.at>
-
 		config SNODEC_RETRY_LIMIT
 		    depends on SNODEC_RETRY
 			int
@@ -261,10 +197,7 @@ menu "Configuration"
 			prompt "Upper limit of retry timeout in seconds"
 			help
 					Upper limit for the retry timeout even if the calculated timeout is greater.
-					(default: 0, 0 = unlimited).
-
-					https://github.com/VolkerChristian/snode.c
-					Volker Christian <me@vchrist.at>
+					(default: 0, 0 = unlimited)
 
 		config SNODEC_REUSE_ADDRESS
 			bool
@@ -273,9 +206,6 @@ menu "Configuration"
 			help
 					Whether the socket address should be immediately reusable or not.
 					(default: n)
-
-					https://github.com/VolkerChristian/snode.c
-					Volker Christian <me@vchrist.at>
 
 		config SNODEC_REUSE_PORT
 			depends on PACKAGE_snode.c-net-in || PACKAGE_snode.c-net-in6
@@ -287,9 +217,6 @@ menu "Configuration"
 					Under Linux this makes it is possible to create a simple "multitasking" server.
 					(default: n)
 
-					https://github.com/VolkerChristian/snode.c
-					Volker Christian <me@vchrist.at>
-
 		config SNODEC_IPV6_ONLY
 			depends on PACKAGE_snode.c-net-in6
 			bool
@@ -300,9 +227,6 @@ menu "Configuration"
 					If not selected, IPv4 connections are also accepted (dual stack).
 					(default: n)
 
-					https://github.com/VolkerChristian/snode.c
-					Volker Christian <me@vchrist.at>
-
 		config SNODEC_IPV4_MAPPED
 			depends on PACKAGE_snode.c-net-in6
 			bool
@@ -311,9 +235,6 @@ menu "Configuration"
 			help
 					If selected, domain names can also be resolved to IPv4-mapped IPv6 addresses.
 					(default: n)
-
-					https://github.com/VolkerChristian/snode.c
-					Volker Christian <me@vchrist.at>
 	endmenu
 
 	menu "SSL/TLS behavior"
@@ -327,18 +248,12 @@ menu "Configuration"
 					Maximum duration of the initial SSL/TLS handshake befor a connection is aborted.
 					(default: 10)
 
-					https://github.com/VolkerChristian/snode.c
-					Volker Christian <me@vchrist.at>
-
 		config SNODEC_TLS_SHUTDOWN_TIMEOUT
 			int
 			prompt "SSL/TLS teardown timeout in seconds"
 			default 2
 			help
-					Maximum duration of SSL/TLS shutdown before a connection is aborted.
+					Maximum duration of the SSL/TLS shutdown before a connection is aborted.
 					(default: 2)
-
-					https://github.com/VolkerChristian/snode.c
-					Volker Christian <me@vchrist.at>
 	endmenu
 endmenu
