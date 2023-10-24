@@ -28,6 +28,8 @@ readonly DEFAULT_BOOTSTRAP="${BOOTSTRAP_CF},${BOOTSTRAP_GOOGLE}"
 readonly canaryDomainsMozilla='use-application-dns.net'
 readonly canaryDomainsiCloud='mask.icloud.com mask-h2.icloud.com'
 
+on_boot_trigger=
+
 str_contains() { [ -n "$1" ] &&[ -n "$2" ] && [ "${1//$2}" != "$1" ]; }
 is_mac_address() { expr "$1" : '[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]$' >/dev/null; }
 is_ipv4() { expr "$1" : '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >/dev/null; }
@@ -133,7 +135,8 @@ resolver_health_check() { resolveip -t 3 one.one.one.one >/dev/null 2>&1; }
 
 boot() {
 	ubus -t 30 wait_for network.interface 2>/dev/null
-	rc_procd start_service 'on_boot'
+	on_boot_trigger=1
+	rc_procd start_service 'on_boot' && rc_procd service_started 'on_boot'
 	resolver_health_check || rc_procd stop_service 'on_boot'
 }
 
@@ -295,9 +298,28 @@ stop_service() {
 }
 
 service_triggers() {
-	procd_add_raw_trigger "interface.*.up" 3000 "/etc/init.d/${packageName}" restart 'on_interface_up'
+	local wan wan6 i
+	local procd_trigger_wan6
+	if [ "$on_boot_trigger" = '1' ]; then
+		procd_add_raw_trigger "interface.*.up" 3000 "/etc/init.d/${packageName}" restart 'on_interface_up'
+	else
+		config_load "$packageName"
+		config_get_bool procd_trigger_wan6 'config' 'procd_trigger_wan6' '0'
+		. /lib/functions/network.sh
+		network_flush_cache
+		network_find_wan wan
+		wan="${wan:-wan}"
+		if [ "$procd_trigger_wan6" -ne 0 ]; then
+			network_find_wan6 wan6
+			wan6="${wan6:-wan6}"
+		fi
+		for i in $wan $wan6; do
+			procd_add_interface_trigger "interface.*" "$i" "/etc/init.d/${packageName}" restart 'on_interface_trigger'
+		done
+	fi
 	procd_add_config_trigger "config.change" "$packageName" "/etc/init.d/${packageName}" reload 'on_config_change'
 }
+
 service_started() { procd_set_config_changed firewall; }
 service_stopped() { procd_set_config_changed firewall; }
 restart() { procd_send_signal "$packageName"; rc_procd start_service "$*"; }
