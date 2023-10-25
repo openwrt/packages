@@ -1,0 +1,115 @@
+--- a/Makefile
++++ b/Makefile
+@@ -41,7 +41,7 @@ PLATS= guess aix bsd c89 freebsd generic
+ # What to install.
+ TO_BIN= lua$V luac$V
+ TO_INC= lua.h luaconf.h lualib.h lauxlib.h lua.hpp
+-TO_LIB= liblua$V.a
++TO_LIB= liblua$V.a liblua$V.so.0.0.0
+ TO_MAN= lua$V.1 luac$V.1
+ 
+ # Lua version and release.
+@@ -59,6 +59,9 @@ install: dummy
+ 	cd src && $(INSTALL_EXEC) $(TO_BIN) $(INSTALL_BIN)
+ 	cd src && $(INSTALL_DATA) $(TO_INC) $(INSTALL_INC)
+ 	cd src && $(INSTALL_DATA) $(TO_LIB) $(INSTALL_LIB)
++	ln -s liblua$V.so.0.0.0 $(INSTALL_LIB)/liblua$V.so.0.0
++	ln -s liblua$V.so.0.0.0 $(INSTALL_LIB)/liblua$V.so.0
++	ln -s liblua$V.so.0.0.0 $(INSTALL_LIB)/liblua$V.so
+ 	cd doc && $(INSTALL_DATA) $(TO_MAN) $(INSTALL_MAN)
+ 
+ uninstall:
+--- a/src/ldebug.h
++++ b/src/ldebug.h
+@@ -36,7 +36,7 @@
+ #endif
+ 
+ 
+-LUAI_FUNC int luaG_getfuncline (const Proto *f, int pc);
++LUA_API int luaG_getfuncline (const Proto *f, int pc);
+ LUAI_FUNC const char *luaG_findlocal (lua_State *L, CallInfo *ci, int n,
+                                                     StkId *pos);
+ LUAI_FUNC l_noret luaG_typeerror (lua_State *L, const TValue *o,
+--- a/src/lstring.h
++++ b/src/lstring.h
+@@ -50,7 +50,7 @@ LUAI_FUNC void luaS_init (lua_State *L);
+ LUAI_FUNC void luaS_remove (lua_State *L, TString *ts);
+ LUAI_FUNC Udata *luaS_newudata (lua_State *L, size_t s, int nuvalue);
+ LUAI_FUNC TString *luaS_newlstr (lua_State *L, const char *str, size_t l);
+-LUAI_FUNC TString *luaS_new (lua_State *L, const char *str);
++LUA_API TString *luaS_new (lua_State *L, const char *str);
+ LUAI_FUNC TString *luaS_createlngstrobj (lua_State *L, size_t l);
+ 
+ 
+--- a/src/lundump.h
++++ b/src/lundump.h
+@@ -30,7 +30,7 @@
+ LUAI_FUNC LClosure* luaU_undump (lua_State* L, ZIO* Z, const char* name);
+ 
+ /* dump one chunk; from ldump.c */
+-LUAI_FUNC int luaU_dump (lua_State* L, const Proto* f, lua_Writer w,
++LUA_API int luaU_dump (lua_State* L, const Proto* f, lua_Writer w,
+                          void* data, int strip);
+ 
+ #endif
+--- a/src/lzio.h
++++ b/src/lzio.h
+@@ -44,7 +44,7 @@ typedef struct Mbuffer {
+ #define luaZ_freebuffer(L, buff)	luaZ_resizebuffer(L, buff, 0)
+ 
+ 
+-LUAI_FUNC void luaZ_init (lua_State *L, ZIO *z, lua_Reader reader,
++LUA_API void luaZ_init (lua_State *L, ZIO *z, lua_Reader reader,
+                                         void *data);
+ LUAI_FUNC size_t luaZ_read (ZIO* z, void *b, size_t n);	/* read next n bytes */
+ 
+--- a/src/Makefile
++++ b/src/Makefile
+@@ -33,6 +33,7 @@ CMCFLAGS=
+ PLATS= guess aix bsd c89 freebsd generic ios linux linux-readline macosx mingw posix solaris
+ 
+ LUA_A=	liblua$V.a
++LUA_SO=	liblua$V.so.0.0.0
+ CORE_O=	lapi.o lcode.o lctype.o ldebug.o ldo.o ldump.o lfunc.o lgc.o llex.o lmem.o lobject.o lopcodes.o lparser.o lstate.o lstring.o ltable.o ltm.o lundump.o lvm.o lzio.o
+ LIB_O=	lauxlib.o lbaselib.o lcorolib.o ldblib.o liolib.o lmathlib.o loadlib.o loslib.o lstrlib.o ltablib.o lutf8lib.o linit.o
+ BASE_O= $(CORE_O) $(LIB_O) $(MYOBJS)
+@@ -44,8 +45,9 @@ LUAC_T=	luac$V
+ LUAC_O=	luac.o
+ 
+ ALL_O= $(BASE_O) $(LUA_O) $(LUAC_O)
+-ALL_T= $(LUA_A) $(LUA_T) $(LUAC_T)
++ALL_T= $(LUA_A) $(LUA_SO) $(LUA_T) $(LUAC_T)
+ ALL_A= $(LUA_A)
++ALL_SO= $(LUA_SO)
+ 
+ # Targets start here.
+ default: $(PLAT)
+@@ -56,14 +58,25 @@ o:	$(ALL_O)
+ 
+ a:	$(ALL_A)
+ 
++so:	$(ALL_SO)
++
+ $(LUA_A): $(BASE_O)
+ 	$(AR) $@ $(BASE_O)
+ 	$(RANLIB) $@
+ 
+-$(LUA_T): $(LUA_O) $(LUA_A)
+-	$(CC) -o $@ $(LDFLAGS) $(LUA_O) $(LUA_A) $(LIBS)
++$(LUA_SO): $(CORE_O) $(LIB_O)
++	$(CC) -o $@ -Wl,-Bsymbolic-functions -shared -Wl,-soname="$@" $?
++	ln -fs $@ liblua$V.so.0.0
++	ln -fs $@ liblua$V.so.0
++	ln -fs $@ liblua$V.so
++
++$(LUA_T): $(LUA_O) $(LUA_SO)
++	$(CC) -o $@ -L. -llua$V $(MYLDFLAGS) $(LUA_O) $(LIBS)
++
++$(LUAC_T): $(LUAC_O) $(LUA_SO)
++	$(CC) -o $@ -L. -llua$V $(MYLDFLAGS) $(LUAC_O) $(LIBS)
+ 
+-$(LUAC_T): $(LUAC_O) $(LUA_A)
++$(LUAC_T)-host: $(LUAC_O) $(LUA_A)
+ 	$(CC) -o $@ $(LDFLAGS) $(LUAC_O) $(LUA_A) $(LIBS)
+ 
+ test:
