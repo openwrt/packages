@@ -13,13 +13,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nmap
-PKG_VERSION:=7.94
+# PKG_VERSION:=7.94
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Nuno Gonçalves <nunojpg@gmail.com>
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=https://nmap.org/dist/
-PKG_HASH:=d71be189eec43d7e099bac8571509d316c4577ca79491832ac3e1217bc8f92cc
+# Restore PKG_VERSION and revert to using release as soon as NMAP publish a new
+# version that supports PCRE2.
+# PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+# PKG_SOURCE_URL:=https://nmap.org/dist/
+# PKG_HASH:=d71be189eec43d7e099bac8571509d316c4577ca79491832ac3e1217bc8f92cc
+
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL=https://github.com/nmap/nmap
+PKG_SOURCE_DATE:=2023-08-28
+PKG_SOURCE_VERSION:=7dcea0187a9b8bccd552487de91512c97c791e3d
+PKG_MIRROR_HASH:=3a086013df4759f394c93a23254689fddd2dcbb06574d4898ea276bdabdf5bff
+
 PKG_LICENSE:=NPSL-0.94-or-NPSL-0.95
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:nmap:nmap
@@ -32,7 +41,7 @@ PYTHON3_PKG_FORCE_DISTUTILS_SETUP:=1
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python3-package.mk
 
-NMAP_DEPENDS:=+libpcap +libstdcpp +zlib +libpcre
+NMAP_DEPENDS:=+libpcap +libstdcpp +zlib +libpcre2
 NCAT_DEPENDS:=+libpcap
 NPING_DEPENDS:=+libpcap +libpthread +libstdcpp
 SSL_DEPENDS:=+libopenssl +ca-certs
@@ -60,7 +69,7 @@ endef
 
 define Package/nmap-full
 $(call Package/nmap/default)
-  DEPENDS:=$(NMAP_DEPENDS) +libopenssl +liblua5.4 +libssh2
+  DEPENDS:=$(NMAP_DEPENDS) $(SSL_DEPENDS) +liblua5.4 +libssh2
   VARIANT:=full
   TITLE:=Nmap (with OpenSSL and scripting support)
 endef
@@ -81,7 +90,7 @@ endef
 
 define Package/ncat-full
 $(call Package/nmap/default)
-  DEPENDS:=$(NCAT_DEPENDS) +libopenssl +liblua5.4
+  DEPENDS:=$(NCAT_DEPENDS) $(SSL_DEPENDS) +liblua5.4
   VARIANT:=full
   TITLE:=Ncat (with OpenSSL and scripting support)
 endef
