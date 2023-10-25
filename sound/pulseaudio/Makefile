@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pulseaudio
-PKG_VERSION:=14.2
-PKG_RELEASE:=10
+PKG_VERSION:=16.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://freedesktop.org/software/pulseaudio/releases
-PKG_HASH:=75d3f7742c1ae449049a4c88900e454b8b350ecaa8c544f3488a2562a9ff66f1
+PKG_HASH:=8eef32ce91d47979f95fd9a935e738cd7eb7463430dabc72863251751e504ae4
 
 PKG_MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -29,7 +29,7 @@ include $(INCLUDE_DIR)/meson.mk
 define Package/pulseaudio-daemon/Default
   SECTION:=sound
   CATEGORY:=Sound
-  DEPENDS:=+libsndfile +libltdl +libpthread +librt +alsa-lib \
+  DEPENDS:=+libsndfile +libltdl +alsa-lib \
 	+libopenssl +libcap $(ICONV_DEPENDS) $(INTL_DEPENDS)
   TITLE:=Network sound server
   URL:=https://www.freedesktop.org/wiki/Software/PulseAudio/
@@ -45,7 +45,7 @@ endef
 
 define Package/pulseaudio-daemon-avahi
   $(call Package/pulseaudio-daemon/Default)
-  DEPENDS+=+dbus +libavahi-client +sbc
+  DEPENDS+=+dbus +libavahi-client +sbc +bluez-daemon
   TITLE+= (avahi/bluez)
   VARIANT:=avahi
 endef
@@ -121,19 +121,20 @@ MESON_ARGS += \
 	-Dudev=disabled \
 	-Dx11=disabled \
 	-Dadrian-aec=true \
-	-Dwebrtc-aec=disabled
+	-Dwebrtc-aec=disabled \
+        -Ddoxygen=false
 
 ifeq ($(BUILD_VARIANT),avahi)
 MESON_ARGS += \
 	-Davahi=enabled \
-	-Dbluez5=true \
+	-Dbluez5=enabled \
 	-Ddbus=enabled
 endif
 
 ifeq ($(BUILD_VARIANT),noavahi)
 MESON_ARGS += \
 	-Davahi=disabled \
-	-Dbluez5=false \
+	-Dbluez5=disabled \
 	-Ddbus=disabled
 endif
 
@@ -183,8 +184,8 @@ define Package/pulseaudio-daemon/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pulseaudio/* $(1)/usr/lib/pulseaudio/
 
 	$(INSTALL_DIR) $(1)/usr/lib/pulse-$(PKG_VERSION)/modules
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pulse-$(PKG_VERSION)/modules/lib*.so $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pulse-$(PKG_VERSION)/modules/module*.so $(1)/usr/lib/pulse-$(PKG_VERSION)/modules/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pulseaudio/modules/lib*.so $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pulseaudio/modules/module*.so $(1)/usr/lib/pulseaudio/modules/
 endef
 
 define Package/pulseaudio-daemon-avahi/install
