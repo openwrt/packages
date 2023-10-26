@@ -5,10 +5,14 @@ START=95
 PIDFILE=/tmp/run/atftpd.pid
 
 start() {
+	local enable
 	local srv
 	local port
 
 	config_load atftpd
+
+	config_get enable service enable 0
+	[ "$enable" -eq "0" ] && return 0
 
 	config_get srv service path "/srv/tftp"
 	config_get port service port 69
