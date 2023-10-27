@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unixodbc
 PKG_VERSION:=2.3.9
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=unixODBC-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.unixodbc.org
@@ -36,8 +36,7 @@ include $(INCLUDE_DIR)/host-build.mk
 CONFIGURE_ARGS += \
 	--disable-gui \
 	--with-pic \
-	--enable-drivers \
-	--includedir=$(STAGING_DIR)/usr/include
+	--enable-drivers
 
 define Package/unixodbc/Default
   SUBMENU:=Database
@@ -84,7 +83,7 @@ endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) $(PKG_INSTALL_DIR)/$(STAGING_DIR)/usr/include/*.h $(1)/usr/include/
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/*.h $(1)/usr/include/
 	# Save autoconf config.h file for host build
 	# copy target autoconf config.h and unixodbc_conf.h file for host build
 	$(INSTALL_DIR) $(1)/usr/include/unixodbc
@@ -123,9 +122,12 @@ endef
 
 define Host/Configure
 	$(call Host/Configure/Default)
-	cp $(STAGING_DIR)/usr/include/unixodbc/config.h $(HOST_BUILD_DIR)
-	sed -i -e 's!\(LIB_PREFIX \).*$$$$!\1"$(STAGING_DIR)/usr/lib"!' $(HOST_BUILD_DIR)/config.h
-	cp $(STAGING_DIR)/usr/include/unixodbc/unixodbc_conf.h $(HOST_BUILD_DIR)
+	$(CP) $(STAGING_DIR)/usr/include/unixodbc/config.h $(HOST_BUILD_DIR)
+	$(CP) $(STAGING_DIR)/usr/include/unixodbc/unixodbc_conf.h $(HOST_BUILD_DIR)
+	$(SED) 's!^#define INCLUDE_PREFIX ".*"!#define INCLUDE_PREFIX "$(STAGING_DIR)/usr/include"!' \
+		-e 's!^#define LIB_PREFIX ".*"!#define LIB_PREFIX "$(STAGING_DIR)/usr/lib"!' \
+		$(HOST_BUILD_DIR)/config.h \
+		$(HOST_BUILD_DIR)/unixodbc_conf.h
 endef
 
 define Host/Compile
