@@ -9,7 +9,6 @@
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 
-trm_ver="2.1.1"
 trm_enabled="0"
 trm_debug="0"
 trm_iface=""
@@ -37,6 +36,8 @@ trm_vpninfolist=""
 trm_stdvpnservice=""
 trm_stdvpniface=""
 trm_rtfile="/tmp/trm_runtime.json"
+trm_ubuscmd="$(command -v ubus)"
+trm_jsoncmd="$(command -v jsonfilter)"
 trm_wifi="$(command -v wifi)"
 trm_fetch="$(command -v curl)"
 trm_iwinfo="$(command -v iwinfo)"
@@ -62,7 +63,7 @@ f_env() {
 
 	unset trm_stalist trm_radiolist trm_uplinklist trm_vpnifacelist trm_uplinkcfg trm_activesta trm_opensta
 
-	trm_sysver="$(ubus -S call system board 2>/dev/null | jsonfilter -q -e '@.model' -e '@.release.description' |
+	trm_sysver="$("${trm_ubuscmd}" -S call system board 2>/dev/null | "${trm_jsoncmd}" -ql1 -e '@.model' -e '@.release.description' |
 		awk 'BEGIN{RS="";FS="\n"}{printf "%s, %s",$1,$2}')"
 
 	config_cb() {
@@ -75,7 +76,7 @@ f_env() {
 			}
 			list_cb() {
 				local option="${1}" value="${2}"
-				if [ "${option}" = "trm_vpnifacelist" ]; then
+				if [ "${option}" = "trm_vpnifacelist" ] && ! printf "%s" "${trm_vpnifacelist}" | grep -q "${value}"; then
 					eval "trm_vpnifacelist=\"$(printf "%s" "${trm_vpnifacelist}") ${value}\""
 				fi
 			}
@@ -97,7 +98,7 @@ f_env() {
 	elif [ -z "${trm_iface}" ]; then
 		f_log "info" "travelmate is currently not configured, please use the 'Interface Setup' in LuCI or the 'setup' option in CLI"
 		/etc/init.d/travelmate stop
-	elif ! ubus -t "${trm_maxwait}" wait_for network.wireless network.interface."${trm_iface}" >/dev/null 2>&1; then
+	elif ! "${trm_ubuscmd}" -t "${trm_maxwait}" wait_for network.wireless network.interface."${trm_iface}" >/dev/null 2>&1; then
 		f_log "info" "travelmate interface '${trm_iface}' does not appear on ubus, please check your network setup"
 		/etc/init.d/travelmate stop
 	fi
@@ -172,8 +173,8 @@ f_wifi() {
 				break 2
 			fi
 			status="$("${trm_wifi}" status 2>/dev/null)"
-			if [ "$(printf "%s" "${status}" | jsonfilter -q -l1 -e "@.${radio}.up")" != "true" ] ||
-				[ "$(printf "%s" "${status}" | jsonfilter -q -l1 -e "@.${radio}.pending")" != "false" ]; then
+			if [ "$(printf "%s" "${status}" | "${trm_jsoncmd}" -ql1 -e "@.${radio}.up")" != "true" ] ||
+				[ "$(printf "%s" "${status}" | "${trm_jsoncmd}" -ql1 -e "@.${radio}.pending")" != "false" ]; then
 				if [ "${radio}" != "${radio_up}" ]; then
 					"${trm_wifi}" up "${radio}"
 					radio_up="${radio}"
@@ -206,9 +207,10 @@ f_vpn() {
 			for info in ${trm_vpninfolist}; do
 				iface="${info%%&&*}"
 				[ "${iface}" = "${info}" ] && vpn_instance="" || vpn_instance="${info##*&&}"
-				vpn_status="$(ifstatus "${iface}" | jsonfilter -q -l1 -e '@.up')"
+				vpn_status="$(ifstatus "${iface}" | "${trm_jsoncmd}" -ql1 -e '@.up')"
 				if [ "${vpn_status}" = "true" ]; then
-					ifdown "${iface}"
+					/sbin/ifdown "${iface}"
+					"${trm_ubuscmd}" -S call network.interface."${iface}" remove >/dev/null 2>&1
 					if [ -x "/etc/init.d/openvpn" ] && [ -n "${vpn_instance}" ] && /etc/init.d/openvpn running "${vpn_instance}"; then
 						/etc/init.d/openvpn stop "${vpn_instance}"
 					fi
@@ -220,7 +222,7 @@ f_vpn() {
 			for info in ${trm_vpninfolist}; do
 				iface="${info%%&&*}"
 				[ "${iface}" = "${info}" ] && vpn_instance="" || vpn_instance="${info##*&&}" 
-				vpn_status="$(ifstatus "${iface}" | jsonfilter -q -l1 -e '@.up')"
+				vpn_status="$(ifstatus "${iface}" | "${trm_jsoncmd}" -ql1 -e '@.up')"
 				if [ "${vpn_status}" = "true" ] && [ "${iface}" != "${vpn_iface}" ]; then
 					ifdown "${iface}"
 					if [ -x "/etc/init.d/openvpn" ] && [ -n "${vpn_instance}" ] && /etc/init.d/openvpn running "${vpn_instance}"; then
@@ -253,7 +255,7 @@ f_vpn() {
 			[ -n "${rc}" ] && f_jsnup
 		fi
 	fi
-	f_log "debug" "f_vpn     ::: vpn: ${trm_vpn:-"-"}, enabled: ${vpn:-"-"}, action: ${vpn_action}, service: ${vpn_service:-"-"}, iface: ${vpn_iface:-"-"}, instance: ${vpn_instance:-"-"}, infolist: ${trm_vpninfolist:-"-"}, result: ${result}, rc: ${rc:-"-"}"
+	f_log "debug" "f_vpn     ::: vpn: ${trm_vpn:-"-"}, enabled: ${vpn:-"-"}, action: ${vpn_action}, vpn_service: ${vpn_service:-"-"}, vpn_iface: ${vpn_iface:-"-"}, vpn_instance: ${vpn_instance:-"-"}, vpn_infolist: ${trm_vpninfolist:-"-"}, result: ${result}, rc: ${rc:-"-"}"
 }
 
 # mac helper function
@@ -273,13 +275,13 @@ f_mac() {
 			uci_set "wireless" "${section}" "macaddr" "${result}"
 		else
 			uci_remove "wireless" "${section}" "macaddr" 2>/dev/null
-			ifname="$(ubus -S call network.wireless status 2>/dev/null | jsonfilter -q -l1 -e '@.*.interfaces[@.config.mode="sta"].ifname')"
+			ifname="$("${trm_ubuscmd}" -S call network.wireless status 2>/dev/null | "${trm_jsoncmd}" -ql1 -e '@.*.interfaces[@.config.mode="sta"].ifname')"
 			result="$(${trm_iwinfo} "${ifname}" info 2>/dev/null | awk '/Access Point:/{printf "%s",$3}')"
 		fi
 	elif [ "${action}" = "get" ]; then
 		result="$(uci_get "wireless" "${section}" "macaddr")"
 		if [ -z "${result}" ]; then
-			ifname="$(ubus -S call network.wireless status 2>/dev/null | jsonfilter -q -l1 -e '@.*.interfaces[@.config.mode="sta"].ifname')"
+			ifname="$("${trm_ubuscmd}" -S call network.wireless status 2>/dev/null | "${trm_jsoncmd}" -ql1 -e '@.*.interfaces[@.config.mode="sta"].ifname')"
 			result="$(${trm_iwinfo} "${ifname}" info 2>/dev/null | awk '/Access Point:/{printf "%s",$3}')"
 		fi
 	fi
@@ -378,7 +380,7 @@ f_getovpn() {
 		config_load openvpn
 		config_foreach uci_config "openvpn"
 	fi
-	f_log "debug" "f_getovpn ::: ovpninfolist: ${trm_ovpninfolist:-"-"}"
+	f_log "debug" "f_getovpn ::: ovpn_infolist: ${trm_ovpninfolist:-"-"}"
 }
 
 # get logical vpn network interfaces
@@ -389,7 +391,7 @@ f_getvpn() {
 	proto="$(uci_get "network" "${iface}" "proto")"
 	device="$(uci_get "network" "${iface}" "device")"
 	if [ "${proto}" = "wireguard" ]; then
-		if { [ -z "${trm_vpnifacelist}" ] || printf "%s" "${trm_vpnifacelist}" | grep -q "${iface}"; }; then
+		if [ -z "${trm_vpnifacelist}" ] || printf "%s" "${trm_vpnifacelist}" | grep -q "${iface}"; then
 			if ! printf "%s" "${trm_vpninfolist}" | grep -q "${iface}"; then
 				trm_vpninfolist="$(f_trim "${trm_vpninfolist} ${iface}")"
 			fi
@@ -398,7 +400,7 @@ f_getvpn() {
 		if [ -z "${trm_ovpninfolist}" ]; then
 			f_getovpn
 		fi
-		if { [ -z "${trm_vpnifacelist}" ] || printf "%s" "${trm_vpnifacelist}" | grep -q "${iface}"; }; then
+		if [ -z "${trm_vpnifacelist}" ] || printf "%s" "${trm_vpnifacelist}" | grep -q "${iface}"; then
 			for info in ${trm_ovpninfolist}; do
 				if [ "${info%%&&*}" = "${device}" ]; then
 					if ! printf "%s" "${trm_vpninfolist}" | grep -q "${iface}"; then
@@ -409,7 +411,7 @@ f_getvpn() {
 			done
 		fi
 	fi
-	f_log "debug" "f_getvpn  ::: iface: ${iface:-"-"}, proto: ${proto:-"-"}, device: ${device:-"-"}, ifacelist: ${trm_vpnifacelist:-"-"}, infolist: ${trm_vpninfolist:-"-"}"
+	f_log "debug" "f_getvpn  ::: iface: ${iface:-"-"}, proto: ${proto:-"-"}, device: ${device:-"-"}, vpn_ifacelist: ${trm_vpnifacelist:-"-"}, vpn_infolist: ${trm_vpninfolist:-"-"}"
 }
 
 # get wan gateway addresses
@@ -608,9 +610,9 @@ f_net() {
 	json_raw="${raw#*\{}"
 	html_raw="${raw%%\{*}"
 	if [ -n "${json_raw}" ]; then
-		json_ec="$(printf "%s" "{${json_raw}" | jsonfilter -q -l1 -e '@.exitcode')"
-		json_rc="$(printf "%s" "{${json_raw}" | jsonfilter -q -l1 -e '@.response_code')"
-		json_cp="$(printf "%s" "{${json_raw}" | jsonfilter -q -l1 -e '@.redirect_url' | awk 'BEGIN{FS="/"}{printf "%s",tolower($3)}')"
+		json_ec="$(printf "%s" "{${json_raw}" | "${trm_jsoncmd}" -ql1 -e '@.exitcode')"
+		json_rc="$(printf "%s" "{${json_raw}" | "${trm_jsoncmd}" -ql1 -e '@.response_code')"
+		json_cp="$(printf "%s" "{${json_raw}" | "${trm_jsoncmd}" -ql1 -e '@.redirect_url' | awk 'BEGIN{FS="/"}{printf "%s",tolower($3)}')"
 		if [ "${json_ec}" = "0" ]; then
 			if [ -n "${json_cp}" ]; then
 				result="net cp '${json_cp}'"
@@ -628,7 +630,7 @@ f_net() {
 				fi
 			fi
 		else
-			err_msg="$(printf "%s" "{${json_raw}" | jsonfilter -q -l1 -e '@.errormsg')"
+			err_msg="$(printf "%s" "{${json_raw}" | "${trm_jsoncmd}" -ql1 -e '@.errormsg')"
 			json_ed="$(printf "%s" "{${err_msg}" | awk '/([[:alnum:]_-]{1,63}\.)+[[:alpha:]]+$/{printf "%s",tolower($NF)}')"
 			if [ "${json_ec}" = "6" ]; then
 				if [ -n "${json_ed}" ] && [ "${json_ed}" != "${trm_captiveurl#http*://*}" ]; then
@@ -670,7 +672,7 @@ f_check() {
 	while [ "${wait_time}" -le "${trm_maxwait}" ]; do
 		[ "${wait_time}" -gt "0" ] && sleep 1
 		wait_time="$((wait_time + 1))"
-		dev_status="$(ubus -S call network.wireless status 2>/dev/null)"
+		dev_status="$("${trm_ubuscmd}" -S call network.wireless status 2>/dev/null)"
 		if [ -n "${dev_status}" ]; then
 			if [ "${mode}" = "dev" ]; then
 				if [ "${trm_ifstatus}" != "${status}" ]; then
@@ -686,13 +688,13 @@ f_check() {
 				trm_ifstatus="${status}"
 				break
 			else
-				ifname="$(printf "%s" "${dev_status}" | jsonfilter -q -l1 -e '@.*.interfaces[@.config.mode="sta"].ifname')"
+				ifname="$(printf "%s" "${dev_status}" | "${trm_jsoncmd}" -ql1 -e '@.*.interfaces[@.config.mode="sta"].ifname')"
 				if [ -n "${ifname}" ] && [ "${enabled}" = "1" ]; then
 					trm_ifquality="$(${trm_iwinfo} "${ifname}" info 2>/dev/null | awk -F '[ ]' '/Link Quality: [0-9]+\/[0-9]+/{split($NF,var0,"/");printf "%i\n",(var0[1]*100/var0[2])}')"
 					if [ -z "${trm_ifquality}" ]; then
 						continue
 					elif [ "${trm_ifquality}" -ge "${trm_minquality}" ]; then
-						trm_ifstatus="$(ubus -S call network.interface dump 2>/dev/null | jsonfilter -q -l1 -e "@.interface[@.device=\"${ifname}\"].up")"
+						trm_ifstatus="$("${trm_ubuscmd}" -S call network.interface dump 2>/dev/null | "${trm_jsoncmd}" -ql1 -e "@.interface[@.device=\"${ifname}\"].up")"
 						if [ "${trm_ifstatus}" = "true" ]; then
 							result="$(f_net)"
 							if [ "${trm_captive}" = "1" ]; then
@@ -788,8 +790,8 @@ f_jsnup() {
 
 	if [ "${status}" = "true" ]; then
 		status="connected (${trm_connection:-"-"})"
-		dev_status="$(ubus -S call network.wireless status 2>/dev/null)"
-		section="$(printf "%s" "${dev_status}" | jsonfilter -q -l1 -e '@.*.interfaces[@.config.mode="sta"].section')"
+		dev_status="$("${trm_ubuscmd}" -S call network.wireless status 2>/dev/null)"
+		section="$(printf "%s" "${dev_status}" | "${trm_jsoncmd}" -ql1 -e '@.*.interfaces[@.config.mode="sta"].section')"
 		if [ -n "${section}" ]; then
 			sta_iface="$(uci_get "wireless" "${section}" "network")"
 			sta_radio="$(uci_get "wireless" "${section}" "device")"
@@ -865,8 +867,8 @@ f_log() {
 # main function for connection handling
 #
 f_main() {
-	local radio cnt retrycnt scan_dev scan_list scan_essid scan_bssid scan_open scan_quality
-	local station_id section sta sta_essid sta_bssid sta_radio sta_mac config_essid config_bssid config_radio
+	local radio cnt retrycnt scan_dev scan_list scan_essid scan_bssid scan_open scan_quality station_id section
+	local sta sta_essid sta_bssid sta_radio sta_mac open_sta open_essid config_radio config_essid config_bssid
 
 	f_check "initial" "false"
 	f_log "debug" "f_main-1  ::: status: ${trm_ifstatus}, proactive: ${trm_proactive}"
@@ -922,7 +924,7 @@ f_main() {
 					f_log "debug" "f_main-5  ::: sta_radio: ${sta_radio}, sta_essid: \"${sta_essid}\", sta_bssid: ${sta_bssid:-"-"}"
 				fi
 				if [ -z "${scan_list}" ]; then
-					scan_dev="$(ubus -S call network.wireless status 2>/dev/null | jsonfilter -q -l1 -e "@.${radio}.interfaces[0].ifname")"
+					scan_dev="$("${trm_ubuscmd}" -S call network.wireless status 2>/dev/null | "${trm_jsoncmd}" -ql1 -e "@.${radio}.interfaces[0].ifname")"
 					scan_list="$("${trm_iwinfo}" "${scan_dev:-${radio}}" scan 2>/dev/null |
 						awk 'BEGIN{FS="[[:space:]]"}/Address:/{var1=$NF}/ESSID:/{var2="";for(i=12;i<=NF;i++)if(var2==""){var2=$i}else{var2=var2" "$i}}
 						/Quality:/{split($NF,var0,"/")}/Encryption:/{if($NF=="none"){var3="+"}else{var3="-"};
@@ -943,9 +945,9 @@ f_main() {
 							if [ "${trm_autoadd}" = "1" ] && [ "${scan_open}" = "+" ] && [ "${scan_essid}" != "unknown" ]; then
 								open_essid="${scan_essid%?}"
 								open_essid="${open_essid:1}"
-								result="$(f_addsta "${radio}" "${open_essid}")"
-								if [ -n "${result}" ]; then
-									section="${result%%-*}"
+								open_sta="$(f_addsta "${radio}" "${open_essid}")"
+								if [ -n "${open_sta}" ]; then
+									section="${open_sta%%-*}"
 									sta_radio="$(uci_get "wireless" "${section}" "device")"
 									sta_essid="$(uci_get "wireless" "${section}" "ssid")"
 									sta_bssid=""
@@ -1004,6 +1006,10 @@ f_main() {
 		done
 	fi
 }
+
+# get travelmate version
+#
+trm_ver="$("${trm_ubuscmd}" -S call rpc-sys packagelist '{ "all": true }' 2>/dev/null | "${trm_jsoncmd}" -ql1 -e '@.packages.travelmate')"
 
 # source required system libraries
 #
