@@ -24,6 +24,7 @@ HOST_BUILD_DIR:=$(BUILD_DIR)/host/unixODBC-$(PKG_VERSION)
 HOST_BUILD_DEPENDS:=unixodbc
 
 PKG_FIXUP:=autoreconf
+PKG_INSTALL:=1
 
 # if your other package depends on unixodbc and needs
 # odbc_config, add to your other Makefile
@@ -81,19 +82,6 @@ define Package/pgsqlodbc/description
 	Postgresql driver for ODBC.
 endef
 
-define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR) \
-		DESTDIR="$(PKG_INSTALL_DIR)" \
-		$(MAKE_FLAGS) \
-		ARCH="$(ARCH)" \
-		CC="$(TARGET_CC)"
-	$(MAKE) -C $(PKG_BUILD_DIR) \
-		DESTDIR="$(PKG_INSTALL_DIR)" \
-		$(MAKE_FLAGS) \
-		ARCH="$(ARCH)" \
-		install -i
-endef
-
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/$(STAGING_DIR)/usr/include/*.h $(1)/usr/include/
@@ -141,12 +129,7 @@ define Host/Configure
 endef
 
 define Host/Compile
-	$(MAKE) -C $(HOST_BUILD_DIR)/exe \
-		DESTDIR="$(HOST_INSTALL_DIR)" \
-		CC="$(HOSTCC)" \
-		CFLAGS="$(HOST_CFLAGS) \
-		LDFLAGS="$(HOST_LDFLAGS)" \
-		odbc_config
+	$(call Host/Compile/Default,-C $(HOST_BUILD_DIR)/exe odbc_config)
 endef
 
 define Host/Install
