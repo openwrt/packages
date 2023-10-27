@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unixodbc
 PKG_VERSION:=2.3.9
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=unixODBC-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.unixodbc.org
@@ -107,7 +107,6 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/etc
 	$(CP) $(PKG_INSTALL_DIR)/etc/odbc* $(1)/etc/
 	$(INSTALL_DIR) $(1)/etc/ODBCDataSources
-	$(TARGET_CC) $(TARGET_CFLAGS) -E ./files/unixodbc_conf.h | tr '@' '\#' >$(1)/usr/include/unixodbc_conf.h
 endef
 
 define Package/unixodbc/install
@@ -145,7 +144,7 @@ define Host/Compile
 	$(MAKE) -C $(HOST_BUILD_DIR)/exe \
 		DESTDIR="$(HOST_INSTALL_DIR)" \
 		CC="$(HOSTCC)" \
-		CFLAGS="$(HOST_CFLAGS) -DUSE_UNIXODBC_CONF_H" \
+		CFLAGS="$(HOST_CFLAGS) \
 		LDFLAGS="$(HOST_LDFLAGS)" \
 		odbc_config
 endef
