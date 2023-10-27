@@ -277,7 +277,7 @@ mm_report_event() {
 	local sysfspath="$4"
 
 	# Do not save virtual devices
-	local virtual
+	local virtual result
 	virtual="$(echo "$sysfspath" | cut -d'/' -f4)"
 	[ "$virtual" = "virtual" ] && {
 		mm_log "debug" "sysfspath is a virtual device ($sysfspath)"
@@ -298,11 +298,15 @@ mm_report_event() {
 	esac
 
 	# Report the event
-	mm_log "debug" "event reported: action=${action}, name=${name}, subsystem=${subsystem}"
-	mmcli --report-kernel-event="action=${action},name=${name},subsystem=${subsystem}" 1>/dev/null 2>&1 &
+	mm_log "debug" "Report event: action=${action}, name=${name}, subsystem=${subsystem}"
+	result=$(mmcli --report-kernel-event="action=${action},name=${name},subsystem=${subsystem}" 2>&1)
+	if [ "$?" -eq "0" ]; then
+		# Wait for added modem if a sysfspath is given
+		[ -n "${sysfspath}" ] && [ "$action" = "add" ] && mm_report_modem_wait "${sysfspath}"
+	else
+		mm_log "error" "Couldn't report kernel event: ${result}"
+	fi
 
-	# Wait for added modem if a sysfspath is given
-	[ -n "${sysfspath}" ] && [ "$action" = "add" ] && mm_report_modem_wait "${sysfspath}"
 }
 
 mm_report_event_from_cache_line() {
@@ -319,9 +323,6 @@ mm_report_event_from_cache_line() {
 }
 
 mm_report_events_from_cache() {
-	# Remove the sysfs cache
-	rm -f "${MODEMMANAGER_SYSFS_CACHE}"
-
 	local n=60
 	local step=1
 	local mmrunning=0
@@ -345,6 +346,9 @@ mm_report_events_from_cache() {
 		mm_log "error" "couldn't report initial kernel events: ModemManager not running"
 		return
 	}
+
+	# Remove the sysfs cache
+	rm -f "${MODEMMANAGER_SYSFS_CACHE}"
 
 	# Report cached kernel events
 	while IFS= read -r event_line; do
