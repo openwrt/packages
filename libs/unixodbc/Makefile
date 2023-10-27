@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unixodbc
 PKG_VERSION:=2.3.9
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=unixODBC-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.unixodbc.org
@@ -99,9 +99,9 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/$(STAGING_DIR)/usr/include/*.h $(1)/usr/include/
 	# Save autoconf config.h file for host build
 	# copy target autoconf config.h and unixodbc_conf.h file for host build
-	$(INSTALL_DIR) $(1)/tmp/unixodbc
-	$(CP) $(PKG_BUILD_DIR)/config.h $(1)/tmp/unixodbc/
-	$(CP) $(PKG_BUILD_DIR)/unixodbc_conf.h $(1)/tmp/unixodbc/
+	$(INSTALL_DIR) $(1)/usr/include/unixodbc
+	$(CP) $(PKG_BUILD_DIR)/config.h $(1)/usr/include/unixodbc/
+	$(CP) $(PKG_BUILD_DIR)/unixodbc_conf.h $(1)/usr/include/unixodbc/
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/etc
@@ -135,9 +135,9 @@ endef
 
 define Host/Configure
 	$(call Host/Configure/Default)
-	cp $(STAGING_DIR)/tmp/unixodbc/config.h $(HOST_BUILD_DIR)
+	cp $(STAGING_DIR)/usr/include/unixodbc/config.h $(HOST_BUILD_DIR)
 	sed -i -e 's!\(LIB_PREFIX \).*$$$$!\1"$(STAGING_DIR)/usr/lib"!' $(HOST_BUILD_DIR)/config.h
-	cp $(STAGING_DIR)/tmp/unixodbc/unixodbc_conf.h $(HOST_BUILD_DIR)
+	cp $(STAGING_DIR)/usr/include/unixodbc/unixodbc_conf.h $(HOST_BUILD_DIR)
 endef
 
 define Host/Compile
