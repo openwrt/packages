@@ -115,9 +115,7 @@ define Package/pgsqlodbc/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libodbcpsql*so* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/etc/odbcinst.ini.d/
-	echo "[PostgreSQL]" > $(1)/etc/odbcinst.ini.d/pgsqlodbc.ini
-	echo "Description = unixODBC PostgreSQL driver" >> $(1)/etc/odbcinst.ini.d/pgsqlodbc.ini
-	echo "Driver = /usr/lib/libodbcpsql.so" >> $(1)/etc/odbcinst.ini.d/pgsqlodbc.ini
+	$(INSTALL_DATA) ./files/pgsqlodbc.ini $(1)/etc/odbcinst.ini.d/
 endef
 
 define Host/Configure
