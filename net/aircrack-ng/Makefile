@@ -83,6 +83,7 @@ CONFIGURE_ARGS += \
 	--with-libpcap-include=$(STAGING_DIR)/usr/include \
 	--with-libpcap-lib=$(STAGING_DIR)/usr/lib \
 	--without-opt \
+	--with-libbsd=no \
 	\
 	PYTHON=$(PYTHON) \
 	\
