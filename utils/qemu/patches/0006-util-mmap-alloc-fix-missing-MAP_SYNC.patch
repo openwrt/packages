@@ -32,9 +32,9 @@ Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
  #endif /* CONFIG_LINUX */
  
  #include "qemu/osdep.h"
-@@ -29,6 +26,13 @@
- #include <sys/vfs.h>
+@@ -57,6 +54,13 @@ QemuFsType qemu_fd_getfs(int fd)
  #endif
+ }
  
 +#ifndef MAP_SYNC
 +#define MAP_SYNC              0x0
