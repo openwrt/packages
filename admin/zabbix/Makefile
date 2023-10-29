@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
 PKG_VERSION:=6.2.3
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.zabbix.com/zabbix/sources/stable/$(basename $(PKG_VERSION))/ \
@@ -57,7 +57,7 @@ define Package/zabbix/Default
   TITLE:=Zabbix
   URL:=https://www.zabbix.com/
   USERID:=zabbix=53:zabbix=53
-  DEPENDS+=$(ICONV_DEPENDS) +libpcre +zlib
+  DEPENDS+=$(ICONV_DEPENDS) +libpcre2 +zlib
 endef
 
 define Package/zabbix-agentd
@@ -263,7 +263,7 @@ CONFIGURE_ARGS+= \
 	$(if $(CONFIG_ZABBIX_POSTGRESQL),--with-postgresql) \
 	$(if $(CONFIG_ZABBIX_SQLITE),--with-sqlite3=$(STAGING_DIR)/usr) \
 	--with-libevent=$(STAGING_DIR)/usr/include/libevent \
-	--with-libpcre=$(STAGING_DIR)/usr/include \
+	--with-libpcre2=$(STAGING_DIR)/usr/include \
 	--with-zlib=$(STAGING_DIR)/usr/include
 
 ifeq ($(BUILD_VARIANT),openssl)
