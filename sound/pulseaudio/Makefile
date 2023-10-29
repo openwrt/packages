@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pulseaudio
 PKG_VERSION:=16.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://freedesktop.org/software/pulseaudio/releases
@@ -122,7 +122,9 @@ MESON_ARGS += \
 	-Dx11=disabled \
 	-Dadrian-aec=true \
 	-Dwebrtc-aec=disabled \
-        -Ddoxygen=false
+        -Ddoxygen=false \
+        -Dtcpwrap=disabled \
+        -Dbluez5-gstreamer=disabled 
 
 ifeq ($(BUILD_VARIANT),avahi)
 MESON_ARGS += \
