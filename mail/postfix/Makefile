@@ -44,7 +44,7 @@ define Package/postfix
   	postfix=25:postfix=25 \
   	postdrop=26:postdrop=26
   URL:=http://www.postfix.org/
-  DEPENDS:=+POSTFIX_CDB:tinycdb +POSTFIX_TLS:libopenssl +POSTFIX_SASL:libsasl2 +POSTFIX_LDAP:libopenldap +POSTFIX_DB:libdb47 +POSTFIX_SQLITE:libsqlite3 +POSTFIX_MYSQL:libmysqlclient +POSTFIX_PGSQL:libpq +POSTFIX_EAI:icu +POSTFIX_PCRE:libpcre
+  DEPENDS:=+POSTFIX_CDB:tinycdb +POSTFIX_TLS:libopenssl +POSTFIX_SASL:libsasl2 +POSTFIX_LDAP:libopenldap +POSTFIX_DB:libdb47 +POSTFIX_SQLITE:libsqlite3 +POSTFIX_MYSQL:libmysqlclient +POSTFIX_PGSQL:libpq +POSTFIX_EAI:icu +POSTFIX_PCRE:libpcre2
   MENU:=1
 endef
 
@@ -172,8 +172,8 @@ ifdef CONFIG_POSTFIX_PGSQL
 endif
 
 ifdef CONFIG_POSTFIX_PCRE
-  CCARGS+=-DHAS_PCRE -I$(STAGING_DIR)/usr/include/
-  AUXLIBS+=-L$(STAGING_DIR)/usr/lib -lpcre
+  CCARGS+=-DHAS_PCRE2 -I$(STAGING_DIR)/usr/include/
+  AUXLIBS+=-L$(STAGING_DIR)/usr/lib -lpcre2-8
 else
   CCARGS+=-DNO_PCRE
 endif
