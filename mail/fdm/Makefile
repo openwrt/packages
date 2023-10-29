@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fdm
-PKG_VERSION:=2.0
-PKG_RELEASE:=3
+PKG_VERSION:=2.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/nicm/fdm/releases/download/$(PKG_VERSION)
-PKG_HASH:=06b28cb6b792570bc61d7e29b13d2af46b92fea77e058b2b17e11e8f7ed0cea4
+PKG_HASH:=53aad117829834e21c1b9bf20496a1aa1c0e0fb98fe7735e1e73314266fb6c16
 
 PKG_MAINTAINER:=Dmitry V. Zimin <pfzim@mail.ru>
 PKG_LICENSE:=BSD-2-Clause
@@ -30,7 +30,7 @@ define Package/fdm
   TITLE:=fetch mail and deliver
   URL:=https://github.com/nicm/fdm
   MENU:=1
-  DEPENDS:=+tdb +zlib +libopenssl +FDM_WITH_PCRE:libpcre
+  DEPENDS:=+tdb +zlib +libopenssl +FDM_WITH_PCRE:libpcre2
   USERID:=_fdm=99:_fdm=99
 endef
 
@@ -42,7 +42,7 @@ define Package/fdm/description
 endef
 
 ifdef CONFIG_FDM_WITH_PCRE
-	CONFIGURE_ARGS += --enable-pcre
+	CONFIGURE_ARGS += --enable-pcre2
 endif
 
 define Package/fdm/config
