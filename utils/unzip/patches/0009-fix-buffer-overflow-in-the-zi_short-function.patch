@@ -1,12 +1,20 @@
-From: "Steven M. Schweda" <sms@antinode.info>
-Subject: Fix CVE-2016-9844, buffer overflow in zipinfo
-Bug-Debian: https://bugs.debian.org/847486
-Bug-Ubuntu: https://launchpad.net/bugs/1643750
-X-Debian-version: 6.0-21
+From 39aef60cc5c9fd870dd4fc26cec4ff5a49e8c559 Mon Sep 17 00:00:00 2001
+From: OpenWrt community <openwrt-devel@lists.openwrt.org>
+Date: Mon, 30 Oct 2023 14:53:08 +0100
+Subject: [PATCH] fix: buffer overflow in the zi_short function
 
+https://nvd.nist.gov/vuln/detail/CVE-2016-9844
+
+CVE: CVE-2016-9844
+---
+ zipinfo.c | 13 ++++++++++++-
+ 1 file changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/zipinfo.c b/zipinfo.c
+index a92bca9..0148255 100644
 --- a/zipinfo.c
 +++ b/zipinfo.c
-@@ -1921,7 +1921,18 @@ static int zi_short(__G)   /* return PK-
+@@ -1921,7 +1921,18 @@ static int zi_short(__G)   /* return PK-type error code */
          ush  dnum=(ush)((G.crec.general_purpose_bit_flag>>1) & 3);
          methbuf[3] = dtype[dnum];
      } else if (methnum >= NUM_METHODS) {   /* unknown */
@@ -26,3 +34,5 @@ X-Debian-version: 6.0-21
      }
  
      for (k = 0;  k < 15;  ++k)
+-- 
+

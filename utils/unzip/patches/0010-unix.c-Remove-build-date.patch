@@ -1,0 +1,28 @@
+From 634103b6311206b8206ef15b076b21fd32fd495f Mon Sep 17 00:00:00 2001
+From: OpenWrt community <openwrt-devel@lists.openwrt.org>
+Date: Mon, 30 Oct 2023 14:54:43 +0100
+Subject: [PATCH] unix.c: Remove build date
+
+In order to make unzip build reproducibly, we remove the (already optional)
+build date from the binary.
+
+Bug-Debian: https://bugs.debian.org/782851
+---
+ unix/unix.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/unix/unix.c b/unix/unix.c
+index efa97fc..816e3da 100644
+--- a/unix/unix.c
++++ b/unix/unix.c
+@@ -1705,7 +1705,7 @@ void version(__G)
+ #endif /* Sun */
+ #endif /* SGI */
+ 
+-#ifdef __DATE__
++#if 0
+       " on ", __DATE__
+ #else
+       "", ""
+-- 
+

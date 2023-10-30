@@ -1,3 +1,18 @@
+From 170eddb01887e61a581ed1ac78aff05a476bbe59 Mon Sep 17 00:00:00 2001
+From: OpenWrt community <openwrt-devel@lists.openwrt.org>
+Date: Mon, 30 Oct 2023 14:37:54 +0100
+Subject: [PATCH] fix: heap-based buffer overflow in the CRC32
+ verification
+
+https://nvd.nist.gov/vuln/detail/CVE-2014-8139
+
+CVE: CVE-2014-8139
+---
+ extract.c | 17 ++++++++++++++---
+ 1 file changed, 14 insertions(+), 3 deletions(-)
+
+diff --git a/extract.c b/extract.c
+index 1acd769..df0fa1c 100644
 --- a/extract.c
 +++ b/extract.c
 @@ -1,5 +1,5 @@
@@ -16,7 +31,7 @@
     static ZCONST char Far InvalidComprDataEAs[] =
       " invalid compressed data for EAs\n";
  #  if (defined(WIN32) && defined(NTSD_EAS))
-@@ -2023,7 +2025,8 @@ static int TestExtraField(__G__ ef, ef_l
+@@ -2023,7 +2025,8 @@ static int TestExtraField(__G__ ef, ef_len)
          ebID = makeword(ef);
          ebLen = (unsigned)makeword(ef+EB_LEN);
  
@@ -26,7 +41,7 @@
             /* Discovered some extra field inconsistency! */
              if (uO.qflag)
                  Info(slide, 1, ((char *)slide, "%-22s ",
-@@ -2158,11 +2161,19 @@ static int TestExtraField(__G__ ef, ef_l
+@@ -2158,11 +2161,19 @@ static int TestExtraField(__G__ ef, ef_len)
                  }
                  break;
              case EF_PKVMS:
@@ -47,3 +62,5 @@
                  break;
              case EF_PKW32:
              case EF_PKUNIX:
+-- 
+
