@@ -1,0 +1,21 @@
+Index: wsdd2-2022-04-25-e37443ac/wsdd2.c
+From 50f97a909d2c0d8e2c20d87c055531151223600b Mon Sep 17 00:00:00 2001
+From: Lev <lev.shutov@gmail.com>
+Date: Sun, 12 Mar 2023 08:53:52 +0300
+Subject: [PATCH] Fix interface selection
+
+Fix selection of new/modified interface when running in single interface mode with -i key
+
+Backport from Netgear/wsdd2#46
+===================================================================
+--- wsdd2-2022-04-25-e37443ac.orig/wsdd2.c
++++ wsdd2-2022-04-25-e37443ac/wsdd2.c
+@@ -520,7 +520,7 @@ static bool is_new_addr(struct nlmsghdr
+ 
+ 	if (ifindex && ifam->ifa_index != ifindex) {
+ 		char buf[IFNAMSIZ];
+-		if (!if_indextoname(ifindex, buf) || strcmp(buf, ifname) != 0)
++		if (!if_indextoname(ifam->ifa_index, buf) || strcmp(buf, ifname) != 0)
+ 			return false;
+ 		ifindex = ifam->ifa_index;
+ 	}
