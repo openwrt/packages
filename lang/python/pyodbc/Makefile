@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pyodbc
 PKG_VERSION:=4.0.39
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=$(PKG_NAME)
 PKG_HASH:=e528bb70dd6d6299ee429868925df0866e3e919c772b9eff79c8e17920d8f116
@@ -27,7 +27,7 @@ define Package/python3-pyodbc
   SUBMENU:=Python
   TITLE:=python3-pyodbc
   URL:=https://github.com/mkleehammer/pyodbc
-  DEPENDS:=+unixodbc +python3-light +libstdcpp
+  DEPENDS:=+unixodbc +python3-light +python3-decimal +python3-uuid +libstdcpp
 endef
 
 define Package/python3-pyodbc/description
