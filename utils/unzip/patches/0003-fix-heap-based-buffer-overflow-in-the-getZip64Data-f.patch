@@ -1,6 +1,22 @@
+From 80614f70ca3a8ea0d1163a52ad670b631ac938cd Mon Sep 17 00:00:00 2001
+From: OpenWrt community <openwrt-devel@lists.openwrt.org>
+Date: Mon, 30 Oct 2023 14:45:21 +0100
+Subject: [PATCH] fix: heap-based buffer overflow in the getZip64Data
+ function
+
+https://nvd.nist.gov/vuln/detail/CVE-2014-8141
+
+CVE: CVE-2014-8141
+---
+ fileio.c  |  9 +++++++-
+ process.c | 68 +++++++++++++++++++++++++++++++++++++++++--------------
+ 2 files changed, 59 insertions(+), 18 deletions(-)
+
+diff --git a/fileio.c b/fileio.c
+index ba0a1d0..36bfea3 100644
 --- a/fileio.c
 +++ b/fileio.c
-@@ -176,6 +176,8 @@ static ZCONST char Far FilenameTooLongTr
+@@ -176,6 +176,8 @@ static ZCONST char Far FilenameTooLongTrunc[] =
  #endif
  static ZCONST char Far ExtraFieldTooLong[] =
    "warning:  extra field too long (%d).  Ignoring...\n";
@@ -9,7 +25,7 @@
  
  #ifdef WINDLL
     static ZCONST char Far DiskFullQuery[] =
-@@ -2295,7 +2297,12 @@ int do_string(__G__ length, option)   /*
+@@ -2295,7 +2297,12 @@ int do_string(__G__ length, option)   /* return PK-type error code */
              if (readbuf(__G__ (char *)G.extra_field, length) == 0)
                  return PK_EOF;
              /* Looks like here is where extra fields are read */
@@ -23,6 +39,8 @@
  #ifdef UNICODE_SUPPORT
              G.unipath_filename = NULL;
              if (G.UzO.U_flag < 2) {
+diff --git a/process.c b/process.c
+index 1e9a1e1..e3a3f8c 100644
 --- a/process.c
 +++ b/process.c
 @@ -1,5 +1,5 @@
@@ -131,3 +149,5 @@
          ef_buf += (eb_len + EB_HEADSIZE);
          ef_len -= (eb_len + EB_HEADSIZE);
      }
+-- 
+
