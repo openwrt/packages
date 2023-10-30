@@ -54,10 +54,15 @@ append_target() {
 	config_get_bool rrd               "$target" rrd 0
 
 	[ -z "$address" ] && return 0
-
-	srcip=$(uci_get network "$interface" ipaddr)
-	[ -z "$srcip" ] && network_get_ipaddr srcip "$interface"
-	srcip="${srcip:-0.0.0.0}"
+	if [ -z $(echo "$address"|sed "/:/d") ]; then
+		srcip=$(uci_get network "$interface" ip6addr)
+		[ -z "$srcip"] && network_get_ipaddr6 srcip "$interface"
+		srcip="${srcip:-::}"
+	else
+		srcip=$(uci_get network "$interface" ipaddr)
+		[ -z "$srcip"] && network_get_ipaddr srcip "$interface"
+		srcip="${srcip:-0.0.0.0}"
+	fi
 
 	alarms=${alarm_down:+\"${alarm_down}\"}
 	alarms=${alarm_delay:+${alarms:+${alarms}, }}${alarm_delay:+\"${alarm_delay}\"}
@@ -115,7 +120,7 @@ append_alarm_loss() {
 	local percent_low percent_high
 
 	config_get percent_low  "$alarm" percent_low
-	config_get percent_high "$alarm" percent_low
+	config_get percent_high "$alarm" percent_high
 
 	if [ -z "$percent_low" ] || [ -z "$percent_high" ]; then
 		return
@@ -132,9 +137,9 @@ init_apinger_config() {
 	local debug status_interval rrd_interval instance
 	instance=$1
 
-	config_get_bool debug             apinger debug 0
-	config_get      status_interval   apinger status_interval 1
-	config_get      rrd_interval      apinger rrd_interval 30
+	config_get_bool debug             "$instance" debug 0
+	config_get      status_interval   "$instance" status_interval 1
+	config_get      rrd_interval      "$instance" rrd_interval 30
 
 	[ "$debug" = "1" ] && debug=on || debug=off
 
