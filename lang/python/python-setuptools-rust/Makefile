@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-setuptools-rust
-PKG_VERSION:=1.7.0
-PKG_RELEASE:=2
+PKG_VERSION:=1.8.1
+PKG_RELEASE:=1
 
 PYPI_NAME:=setuptools-rust
-PKG_HASH:=c7100999948235a38ae7e555fe199aa66c253dc384b125f5d85473bf81eae3a3
+PKG_HASH:=94b1dd5d5308b3138d5b933c3a2b55e6d6927d1a22632e509fcea9ddd0f7e486
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
@@ -26,7 +26,6 @@ HOST_BUILD_DEPENDS:= \
 	python-wheel/host \
 	python-setuptools-scm/host \
 	python-semantic-version/host \
-	python-typing-extensions/host \
 	rust/host
 
 include ../pypi.mk
@@ -46,7 +45,6 @@ define Package/python3-setuptools-rust
     +python3-logging \
     +python3-semantic-version \
     +python3-setuptools \
-    +python3-typing-extensions \
     +rust
   BUILDONLY:=1
 endef
