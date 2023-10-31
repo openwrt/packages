@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gkrellmd
 PKG_VERSION:=2.4.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=gkrellm-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://gkrellm.srcbox.net/releases
@@ -26,7 +26,7 @@ include $(INCLUDE_DIR)/nls.mk
 define Package/gkrellmd
   SECTION:=admin
   CATEGORY:=Administration
-  DEPENDS:=+glib2
+  DEPENDS:=+glib2-core +glib2-gmodule +glib2-gthread
   TITLE:=The GNU Krell Monitors Server
   URL:=http://gkrellm.net/
 endef
