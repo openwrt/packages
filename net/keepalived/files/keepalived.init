@@ -105,6 +105,11 @@ globals() {
 	printf '%benable_script_security\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
 	printf '%bprocess_names\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
 
+	printf '%bstartup_script "/bin/busybox env -i ACTION=startup /sbin/hotplug-call keepalived"\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
+	printf '%bstartup_script_timeout 10\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
+	printf '%bshutdown_script "/bin/busybox env -i ACTION=shutdown /sbin/hotplug-call keepalived"\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
+	printf '%bshutdown_script_timeout 10\n' "${INDENT_1}" >> "$KEEPALIVED_CONF"
+
 	config_get notification_email "$1" notification_email
 	print_list_indent notification_email
 
@@ -353,7 +358,7 @@ vrrp_instance() {
 		garp_master_repeat garp_master_refresh_repeat \
 		no_val_vmac_xmit_base no_val_native_ipv6 no_val_accept \
 		no_val_dont_track_primary no_val_smtp_alert no_val_nopreempt \
-		no_val_use_vmac
+		no_val_use_vmac no_val_no_accept
 
 	print_notify "INSTANCE" "$name" "$INDENT_1" notify_backup notify_master \
 		notify_fault notify_stop
