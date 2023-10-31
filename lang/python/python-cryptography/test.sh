@@ -2,11 +2,13 @@
 
 [ "$1" = python3-cryptography ] || exit 0
 
-python3 - << EOF
-import sys
+python3 - << 'EOF'
+
 from cryptography.fernet import Fernet
 key = Fernet.generate_key()
 f = Fernet(key)
-token = f.encrypt(b"my deep dark secret")
-sys.exit(0 if f.decrypt(token) == b"my deep dark secret" else 1)
+msg = b"my deep dark secret"
+token = f.encrypt(msg)
+assert f.decrypt(token) == msg
+
 EOF

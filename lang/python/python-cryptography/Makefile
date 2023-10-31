@@ -8,15 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-cryptography
-PKG_VERSION:=41.0.4
+PKG_VERSION:=41.0.5
 PKG_RELEASE:=1
 
 PYPI_NAME:=cryptography
-PKG_HASH:=7febc3094125fc126a7f6fb1f420d0da639f3f32cb15c8ff0dc3997c4549f51a
+PKG_HASH:=392cb88b597247177172e02da6b7a63deeff1937fa6fec3bbf902ebd75d97ec7
 
 PKG_LICENSE:=Apache-2.0 BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.APACHE LICENSE.BSD
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
+PKG_CPE_ID:=cpe:/a:cryptography_project:cryptography
 
 PKG_BUILD_DEPENDS:=libffi/host python-cffi/host python-setuptools-rust/host
 
