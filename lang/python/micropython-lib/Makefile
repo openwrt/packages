@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=micropython-lib
-PKG_RELEASE:=2
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/micropython/micropython-lib.git
-PKG_SOURCE_VERSION:=7128d423c2e7c0309ac17a1e6ba873b909b24fcc
-PKG_SOURCE_DATE:=20230522
-PKG_MIRROR_HASH:=1f094aac257d2094ee91b457164f845f6461df1cf1d0ed7ee556c98f273f5afb
+PKG_SOURCE_VERSION:=d8e163bb5f3ef45e71e145c27bc4f207beaad70f
+PKG_SOURCE_DATE:=20231031
+PKG_MIRROR_HASH:=6abb0a1460984c6fde99986971517121ac0207dabeb43cfb1855f6d7d1fd9ae5
 
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=MIT Python-2.0.1
@@ -23,8 +23,8 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_BUILD_DEPENDS:=python3/host
 PKG_BUILD_PARALLEL:=1
 
-# keep in sync with micropython
-MP_MPY_FILE_VERSION:=6
+# keep in sync with micropython (MPY_VERSION in py/persistentcode.h)
+MICROPYTHON_MPY_VERSION:=6
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -111,7 +111,7 @@ define Build/Compile
 endef
 
 define Package/micropython-lib/install
-	$(call MicroPythonLib/Install,,$(MP_MPY_FILE_VERSION),$(1)/usr/lib/micropython)
+	$(call MicroPythonLib/Install,,$(MICROPYTHON_MPY_VERSION),$(1)/usr/lib/micropython)
 endef
 
 define Package/micropython-lib-src/install
@@ -119,7 +119,7 @@ define Package/micropython-lib-src/install
 endef
 
 define Package/micropython-lib-unix/install
-	$(call MicroPythonLib/Install,unix-ffi-index,$(MP_MPY_FILE_VERSION),$(1)/usr/lib/micropython/unix)
+	$(call MicroPythonLib/Install,unix-ffi-index,$(MICROPYTHON_MPY_VERSION),$(1)/usr/lib/micropython/unix)
 
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) ./files/micropython-unix $(1)/usr/bin/
