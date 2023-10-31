@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sing-box
-PKG_VERSION:=1.5.4
+PKG_VERSION:=1.6.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/SagerNet/sing-box/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=3238492e21246b56ef80e99f321c26ffaf9ac8877c916dce85273b61031c58b7
+PKG_HASH:=3272c9ac447d009749429f38d76e9879609c0c321442c3235ba806d995c0838a
 
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=LICENSE
@@ -35,7 +35,7 @@ endef
 
 define Package/sing-box/description
   Sing-box is a universal proxy platform which supports hysteria, SOCKS, Shadowsocks,
-  ShadowsocksR, ShadowTLS, Tor, trojan, VLess, VMess, WireGuard and so on.
+  ShadowTLS, Tor, trojan, VLess, VMess, WireGuard and so on.
 endef
 
 define Package/sing-box/config
@@ -77,11 +77,6 @@ define Package/sing-box/config
 			bool "Build with reality TLS server support, see TLS."
 			default y
 
-		config SINGBOX_WITH_SHADOWSOCKSR
-			bool "Build with ShadowsocksR support"
-			help
-				It will be marked deprecated in 1.5.0 and removed entirely in 1.6.0.
-
 		config SINGBOX_WITH_UTLS
 			bool "Build with uTLS support for TLS outbound"
 			default y
@@ -106,7 +101,6 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_SINGBOX_WITH_LWIP \
 	CONFIG_SINGBOX_WITH_QUIC \
 	CONFIG_SINGBOX_WITH_REALITY_SERVER \
-	CONFIG_SINGBOX_WITH_SHADOWSOCKSR \
 	CONFIG_SINGBOX_WITH_UTLS \
 	CONFIG_SINGBOX_WITH_V2RAY_API \
 	CONFIG_SINGBOX_WITH_WIREGUARD
@@ -121,7 +115,6 @@ GO_PKG_TAGS:=$(subst $(space),$(comma),$(strip \
 	$(if $(CONFIG_SINGBOX_WITH_GVISOR),with_gvisor) \
 	$(if $(CONFIG_SINGBOX_WITH_LWIP),with_lwip) \
 	$(if $(CONFIG_SINGBOX_WITH_QUIC),with_quic) \
-	$(if $(CONFIG_SINGBOX_WITH_SHADOWSOCKSR),with_shadowsocksr) \
 	$(if $(CONFIG_SINGBOX_WITH_REALITY_SERVER),with_reality_server) \
 	$(if $(CONFIG_SINGBOX_WITH_UTLS),with_utls) \
 	$(if $(CONFIG_SINGBOX_WITH_V2RAY_API),with_v2ray_api) \
