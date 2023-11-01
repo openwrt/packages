@@ -72,3 +72,35 @@
          'include_dirs': [
            '<(icu_path)/source/common',
            '<(icu_path)/source/i18n',
+@@ -418,6 +427,7 @@
+       'target_name': 'genrb',
+       'type': 'executable',
+       'toolsets': [ 'host' ],
++      'libraries!':[ '-lcrypto', '-lssl', '-lz', '-lhttp_parser', '-luv', '-lnghttp2', '-lcares' ],
+       'dependencies': [ 'icutools', 'icu_implementation' ],
+       'sources': [
+         '<@(icu_src_genrb)'
+@@ -440,6 +450,7 @@
+       'target_name': 'iculslocs',
+       'toolsets': [ 'host' ],
+       'type': 'executable',
++      'libraries!':[ '-lcrypto', '-lssl', '-lz', '-lhttp_parser', '-luv', '-lnghttp2', '-lcares' ],
+       'dependencies': [ 'icutools' ],
+       'sources': [
+         'iculslocs.cc',
+@@ -458,6 +469,7 @@
+       'target_name': 'icupkg',
+       'toolsets': [ 'host' ],
+       'type': 'executable',
++      'libraries!':[ '-lcrypto', '-lssl', '-lz', '-lhttp_parser', '-luv', '-lnghttp2', '-lcares' ],
+       'dependencies': [ 'icutools' ],
+       'sources': [
+         '<@(icu_src_icupkg)',
+@@ -475,6 +487,7 @@
+       'target_name': 'genccode',
+       'toolsets': [ 'host' ],
+       'type': 'executable',
++      'libraries!':[ '-lcrypto', '-lssl', '-lz', '-lhttp_parser', '-luv', '-lnghttp2', '-lcares' ],
+       'dependencies': [ 'icutools' ],
+       'sources': [
+         '<@(icu_src_genccode)',
