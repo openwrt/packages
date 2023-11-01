@@ -63,7 +63,7 @@ endef
 define Package/freeradius3-common
   $(call Package/freeradius3/Default)
   TITLE:=common files
-  DEPENDS:=+USE_GLIBC:libpthread +USE_GLIBC:libbsd +FREERADIUS3_OPENSSL:libopenssl +libcap +libpcap +libncurses +libpcre2 +libreadline +libtalloc +libatomic
+  DEPENDS:=+USE_GLIBC:libpthread +USE_GLIBC:libbsd +FREERADIUS3_OPENSSL:libopenssl +libcap +libpcap +libncurses +libreadline +libtalloc +libatomic
 endef
 
 define Package/freeradius3-default
@@ -482,11 +482,13 @@ endef
 # needed in a future release.
 EXTRA_CFLAGS+= -DHAVE_OPENSSL_RAND_H
 
+# Enable PCRE2 support again if ever backported or we switch to release 4.0.0
 CONFIGURE_ARGS+= \
 	--libdir=/usr/lib/freeradius3 \
 	--libexecdir=/usr/lib/freeradius3 \
 	--disable-developer \
 	--with-threads \
+	--with-pcre=no \
 	$(if $(CONFIG_FREERADIUS3_OPENSSL),--with,--without)-openssl \
 	$(if $(CONFIG_FREERADIUS3_OPENSSL),--with-openssl-includes="$(STAGING_DIR)/usr/include",) \
 	$(if $(CONFIG_FREERADIUS3_OPENSSL),--with-openssl-libraries="$(STAGING_DIR)/usr/lib",) \
