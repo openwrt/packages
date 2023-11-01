@@ -4,17 +4,18 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=pyodbc
-PKG_VERSION:=4.0.39
+PKG_NAME:=python-pyodbc
+PKG_VERSION:=5.0.1
 PKG_RELEASE:=1
 
-PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=e528bb70dd6d6299ee429868925df0866e3e919c772b9eff79c8e17920d8f116
+PYPI_NAME:=pyodbc
+PKG_HASH:=03d7d0b04d5a9156099ce8d03e92f3956783746fa9234eb6f5b5cfc12b645011
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.txt
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
+# for odbc_config
 PKG_BUILD_DEPENDS:=unixodbc/host
 
 include ../pypi.mk
@@ -25,17 +26,17 @@ define Package/python3-pyodbc
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
-  TITLE:=python3-pyodbc
+  TITLE:=DB API module for ODBC
   URL:=https://github.com/mkleehammer/pyodbc
-  DEPENDS:=+unixodbc +python3-light +libstdcpp
+  DEPENDS:=+python3-light +python3-decimal +python3-uuid +libodbc +libstdcpp
 endef
 
 define Package/python3-pyodbc/description
-DB API Module for ODBC
-
-A Python DB API 2 module for ODBC. This project provides an up-to-date,
-convenient interface to ODBC using native data types like datetime and decimal.
+pyodbc is an open source Python module that makes accessing ODBC
+databases simple. It implements the DB API 2.0 specification but is
+packed with even more Pythonic convenience.
 endef
 
 $(eval $(call Py3Package,python3-pyodbc))
 $(eval $(call BuildPackage,python3-pyodbc))
+# no src package - the module does not contain any Python code
