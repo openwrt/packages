@@ -36,7 +36,7 @@ CONFIGURE_ARGS += --with-local-libgcrypt
 endif
 
 ifneq ($(CONFIG_LIBNDPI_PCRE),)
-CONFIGURE_ARGS += --with-pcre
+CONFIGURE_ARGS += --with-pcre2
 endif
 
 ifneq ($(CONFIG_LIBNDPI_MAXMINDDB),)
@@ -48,7 +48,7 @@ define Package/libndpi
   CATEGORY:=Libraries
   TITLE:=Library for deep-packet inspection
   URL:=https://github.com/ntop/nDPI
-  DEPENDS:=+LIBNDPI_GCRYPT:libgcrypt +LIBNDPI_PCRE:libpcre +LIBNDPI_MAXMINDDB:libmaxminddb +LIBNDPI_NDPIREADER:libpcap
+  DEPENDS:=+LIBNDPI_GCRYPT:libgcrypt +LIBNDPI_PCRE:libpcre2 +LIBNDPI_MAXMINDDB:libmaxminddb +LIBNDPI_NDPIREADER:libpcap
 endef
 
 define Package/libndpi/description
