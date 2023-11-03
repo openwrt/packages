@@ -69,7 +69,7 @@ create_local_zone() {
 
 ##############################################################################
 
-create_host_record() {
+create_host_record_from_domain() {
   local cfg="$1"
   local ip name debug_ip
 
@@ -97,6 +97,35 @@ create_host_record() {
         DM_LIST_LOCAL_PTR="$DM_LIST_LOCAL_PTR $ip@@300@@$name"
         ;;
     esac
+  fi
+}
+
+##############################################################################
+
+create_host_record_from_host() {
+  local cfg="$1"
+  local dns ip name
+
+  # basefiles dhcp "host" clause which means host A and PTR records
+  config_get dns  "$cfg" dns
+  config_get ip   "$cfg" ip
+  config_get name "$cfg" name
+
+
+  if [ -n "$name" ] && [ -n "$ip" ] && [ $dns -eq 1 ] ; then
+    case $name in
+      *.*)
+        # domain present, do nothing
+        ;;
+      *)
+        name="$name.$UB_TXT_DOMAIN"
+        ;;
+    esac
+
+
+    create_local_zone "$name"
+    DM_LIST_LOCAL_DATA="$DM_LIST_LOCAL_DATA $name.@@300@@IN@@A@@$ip"
+    DM_LIST_LOCAL_PTR="$DM_LIST_LOCAL_PTR $ip@@300@@$name"
   fi
 }
 
@@ -215,7 +244,8 @@ dnsmasq_inactive() {
     # Parasite from the uci.dhcp.domain clauses
     DM_LIST_KNOWN_ZONES="$DM_LIST_KNOWN_ZONES $UB_TXT_DOMAIN"
     config_load dhcp
-    config_foreach create_host_record domain
+    config_foreach create_host_record_from_domain domain
+    config_foreach create_host_record_from_host host
 
 
     if [ $UB_D_EXTRA_DNS -gt 1 ] ; then
