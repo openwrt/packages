@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lolcat
-PKG_VERSION:=1.2
+PKG_VERSION:=1.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/jaseg/lolcat/tar.gz/refs/tags/v$(PKG_VERSION)?
-PKG_HASH:=b6e1a0e24479fbdd4eb907531339e2cafc0c00b78d19caf70e8377b8b7546331
+PKG_HASH:=6ea43ee2b2bb2f15fc91812b72ebcdaa883052853ed8f055b6f8b38637bda909
 
 PKG_MAINTAINER:=Rui Salvaterra <rsalvaterra@gmail.com>
 PKG_LICENSE:=WTFPL

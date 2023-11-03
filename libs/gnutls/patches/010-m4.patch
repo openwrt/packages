@@ -62,12 +62,12 @@
      [AC_COMPILE_IFELSE(
 --- a/src/gl/m4/gnulib-comp.m4
 +++ b/src/gl/m4/gnulib-comp.m4
-@@ -1188,7 +1188,7 @@ changequote([, ])dnl
+@@ -1252,7 +1252,7 @@ changequote([, ])dnl
    gl_UNISTD_MODULE_INDICATOR([sleep])
    AC_CHECK_DECLS_ONCE([alarm])
    AC_REQUIRE([gt_TYPE_WCHAR_T])
 -  AC_REQUIRE([gt_TYPE_WINT_T])
 +  AC_REQUIRE([gt_TYPE_WINT_T_GNUTLS])
    gl_FUNC_STRERROR_R
-   if test $HAVE_DECL_STRERROR_R = 0 || test $REPLACE_STRERROR_R = 1; then
+   AS_IF([test $HAVE_DECL_STRERROR_R = 0 || test $REPLACE_STRERROR_R = 1], [
      AC_LIBOBJ([strerror_r])

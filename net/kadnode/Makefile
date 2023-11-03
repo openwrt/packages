@@ -14,6 +14,7 @@ PKG_MAINTAINER:=Moritz Warning <moritzwarning@web.de>
 PKG_LICENSE:=MIT
 
 PKG_BUILD_PARALLEL:=1
+PKG_BUILD_FLAGS:=gc-sections
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -70,10 +71,6 @@ FEATURES += debug
 endif
 
 MAKE_FLAGS += FEATURES="$(FEATURES)"
-
-# Make binary smaller
-TARGET_CFLAGS += -ffunction-sections -fdata-sections
-TARGET_LDFLAGS += -Wl,--gc-sections
 
 define Package/kadnode/conffiles
 /etc/config/kadnode

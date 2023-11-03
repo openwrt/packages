@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nfs-kernel-server
 PKG_VERSION:=2.6.2
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 PKG_HASH:=26d46448982252e9e2c8346d10cf13e1143e7089c866f53e25db3359f3e9493c
 
 PKG_SOURCE_URL:=@SF/nfs
@@ -32,7 +32,7 @@ define Package/nfs-kernel-server/Default
 	SECTION:=net
 	CATEGORY:=Network
 	SUBMENU:=Filesystem
-	DEPENDS:=+libwrap +libblkid +libuuid +libtirpc
+	DEPENDS:=+libblkid +libuuid +libtirpc
 	URL:=http://nfs.sourceforge.net/
 	MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 endef
@@ -99,6 +99,10 @@ TARGET_CFLAGS += -Wno-error=implicit-function-declaration \
 		 -Wno-error=format-security \
 		 -Wno-error=undef \
 		 -Wno-error=missing-include-dirs
+
+ifneq ($(CONFIG_USE_MUSL),)
+  TARGET_CFLAGS += -D_LARGEFILE64_SOURCE
+endif
 
 TARGET_LDFLAGS += -L$(STAGING_DIR)/usr/lib/libevent
 

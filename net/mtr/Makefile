@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mtr
 PKG_VERSION:=0.95
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/traviscross/mtr/tar.gz/v$(PKG_VERSION)?
@@ -23,6 +23,7 @@ PKG_CPE_ID:=cpe:/a:matt_kimball_and_roger_wolff:mtr
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
+PKG_BUILD_FLAGS:=gc-sections
 
 CONFIGURE_ARGS += \
 	--without-gtk \
@@ -68,8 +69,7 @@ define Package/mtr/description
 	running statistics about each machine.
 endef
 
-TARGET_CFLAGS += -ffunction-sections -fdata-sections
-TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
+TARGET_LDFLAGS += -Wl,--as-needed
 
 CONFIGURE_VARS += ac_cv_lib_cap_cap_set_proc=no
 

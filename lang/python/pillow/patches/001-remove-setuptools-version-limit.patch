@@ -1,0 +1,11 @@
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -1,7 +1,7 @@
+ [build-system]
+ build-backend = "backend"
+ requires = [
+-  "setuptools>=67.8",
++  "setuptools",
+ ]
+ backend-path = [
+   "_custom_build",

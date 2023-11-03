@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=poco
 PKG_VERSION:=1.11.0
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=2
 
 ifeq ($(BUILD_VARIANT),all)
 _PKG_VERSION:=${PKG_VERSION}-all

@@ -1,6 +1,6 @@
 --- a/libxfs/libxfs_priv.h
 +++ b/libxfs/libxfs_priv.h
-@@ -87,9 +87,6 @@ struct iomap;
+@@ -89,9 +89,6 @@ struct iomap;
  /* for all the support code that uses progname in error messages */
  extern char    *progname;
  

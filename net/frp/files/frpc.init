@@ -69,6 +69,7 @@ start_service() {
 
 	procd_open_instance
 	procd_set_param command "$PROG" -c "$conf_file"
+	procd_set_param file $conf_file
 	procd_set_param stdout $stdout
 	procd_set_param stderr $stderr
 	[ -n "$user" ] && procd_set_param user "$user"
@@ -76,9 +77,4 @@ start_service() {
 	[ $respawn -eq 1 ] && procd_set_param respawn
 	[ -n "$env" ] && config_list_foreach "$init_cfg" env "procd_append_param env"
 	procd_close_instance
-}
-
-reload_service() {
-	stop
-	start
 }

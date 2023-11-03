@@ -28,7 +28,7 @@ ifdef CONFIG_USE_MIPS16
   TARGET_CFLAGS += -fno-ipa-sra
 endif
 
-TARGET_CFLAGS += -std=c99 -D_GNU_SOURCE
+TARGET_CFLAGS += -std=c99
 
 CONFIGURE_ARGS+= \
 	--disable-docs \

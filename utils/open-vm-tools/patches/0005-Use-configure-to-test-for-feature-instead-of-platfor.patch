@@ -27,7 +27,7 @@ Signed-off-by: Natanael Copa <ncopa@alpinelinux.org>
 
 --- a/configure.ac
 +++ b/configure.ac
-@@ -1169,6 +1169,7 @@ AC_CHECK_FUNCS(
+@@ -1179,6 +1179,7 @@ AC_CHECK_FUNCS(
  
  AC_CHECK_FUNCS([ecvt])
  AC_CHECK_FUNCS([fcvt])
@@ -35,7 +35,7 @@ Signed-off-by: Natanael Copa <ncopa@alpinelinux.org>
  
  AC_CHECK_FUNC([mkdtemp], [have_mkdtemp=yes])
  
-@@ -1378,10 +1379,13 @@ fi
+@@ -1388,10 +1389,13 @@ fi
  ###
  
  AC_CHECK_HEADERS([crypt.h])
@@ -65,7 +65,7 @@ Signed-off-by: Natanael Copa <ncopa@alpinelinux.org>
  #ifdef __APPLE__
  #include <sys/socket.h>
  #include <TargetConditionals.h>
-@@ -1025,31 +1022,32 @@ Id_EndSuperUser(uid_t uid)  // IN:
+@@ -1025,24 +1022,23 @@ Id_EndSuperUser(uid_t uid)  // IN:
  static Bool
  IdIsSetUGid(void)
  {
@@ -77,13 +77,13 @@ Signed-off-by: Natanael Copa <ncopa@alpinelinux.org>
      * We use __secure_getenv, which returns NULL if the binary is
 -    * setuid or setgid. Alternatives include,
 +    * setuid or setgid, when issetugid or getauxval(AT_SECURE) is not
-+    * available. Alternatives include,
++    * available. Alternatives included
      *
 -    *   a) getauxval(AT_SECURE); not available until glibc 2.16.
 -    *   b) __libc_enable_secure; may not be exported.
 +    *   a) issetugid(); not (yet?) available in glibc.
 +    *   b) getauxval(AT_SECURE); not available until glibc 2.16.
-+    *   c) __libc_enable_secure; may not be exported.
++    *   c) c) __libc_enable_secure; may not be exported.
      *
 -    * Use (a) when we are based on glibc 2.16, or newer.
 +    * Use (b) when we are based on glibc 2.16, or newer.
@@ -99,10 +99,11 @@ Signed-off-by: Natanael Copa <ncopa@alpinelinux.org>
 +#elif HAVE___SECURE_GETENV
     static const char envName[] = "VMW_SETUGID_TEST";
  
-    if (setenv(envName, "1", TRUE) == -1) {
-       return TRUE; /* Conservative */
+    /*
+@@ -1062,7 +1058,9 @@ IdIsSetUGid(void)
+       return secure_getenv(envName) == NULL;
     }
-    return __secure_getenv(envName) == NULL;
+    return TRUE;
 -#endif
 +#else
 +   /* Android does not have a secure_getenv, so be conservative. */

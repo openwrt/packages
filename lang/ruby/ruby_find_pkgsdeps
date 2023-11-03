@@ -6,6 +6,8 @@
 # Must run inside a openwrt with all *ruby* packages installed
 #
 
+require "rbconfig"
+
 RUBY_SIMPLE_VERSION = RUBY_VERSION.split(".")[0..1].join(".")
 failed = false
 
@@ -23,6 +25,8 @@ packages.each do
 	files=`opkg files "#{pkg}" | sed -e 1d`.split("\n")
 	package_files[pkg]=files if files
 end
+# Fake enc/utf_16 to dummy enc:
+package_files["ruby-enc"]+=[RbConfig::CONFIG["rubylibdir"] + "/enc/utf_16.rb" ]
 
 require_regex=/^require ["']([^"']+)["'].*/
 require_regex_ignore=/^require ([a-zA-Z\$]|["']$|.*\/$)/
@@ -181,7 +185,7 @@ end
 # For optional require or for breaking cycle dependencies
 weak_dependency=Hash.new { |h,k| h[k]=[] }
 weak_dependency.merge!({
-"ruby-irb"      =>%w{ruby-rdoc ruby-readline},		  # irb/cmd/help.rb
+"ruby-irb"      =>%w{ruby-rdoc ruby-readline ruby-debug}, # irb/cmd/help.rb irb/cmd/debug.rb,3.2/irb/cmd/debug.rb 
 "ruby-gems"     =>%w{ruby-bundler ruby-rdoc},	          # rubygems.rb rubygems/server.rb
 "ruby-racc"     =>%w{ruby-gems},			  # /usr/bin/racc*
 "ruby-rake"     =>%w{ruby-gems},	                  # /usr/bin/rake

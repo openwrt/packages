@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netbird
-PKG_VERSION:=0.12.0
+PKG_VERSION:=0.23.9
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/netbirdio/netbird/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=c88b65bb9358e5a6f9c34882e77a3414b02d4c5ac13b76fb2e60b952af6a18d7
+PKG_HASH:=1b037f35d3e426d8cbeba17e4d89d12265cd7e6fbd7c975ce552293e468db35a
 
 PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
@@ -14,11 +14,11 @@ PKG_LICENSE_FILES:=LICENSE
 
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16
 
 GO_PKG:=github.com/netbirdio/netbird
 GO_PKG_BUILD_PKG:=$(GO_PKG)/client
-GO_PKG_LDFLAGS_X:=$(GO_PKG)/client/system.version=$(PKG_VERSION)
+GO_PKG_LDFLAGS_X:=$(GO_PKG)/version.version=$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
@@ -38,6 +38,10 @@ define Package/netbird/description
 
   It requires zero configuration effort leaving behind the hassle of opening ports, complex firewall rules, VPN 
   gateways, and so forth.
+endef
+
+define Package/netbird/conffiles
+/etc/netbird/config.json
 endef
 
 define Package/netbird/install

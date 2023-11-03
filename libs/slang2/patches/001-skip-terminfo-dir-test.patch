@@ -1,6 +1,6 @@
 --- a/configure
 +++ b/configure
-@@ -7029,7 +7029,7 @@ TERMCAP=-ltermcap
+@@ -6987,7 +6987,7 @@ TERMCAP=-ltermcap
  
  for terminfo_dir in $JD_Terminfo_Dirs
  do

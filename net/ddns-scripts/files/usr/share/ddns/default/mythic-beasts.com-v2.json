@@ -1,0 +1,9 @@
+{
+        "name": "mythic-beasts.com (API v2)",
+        "ipv4": {
+                "url": "https://[USERNAME]:[PASSWORD]@ipv4.api.mythic-beasts.com/dns/v2/dynamic/[DOMAIN]"
+        },
+        "ipv6": {
+                "url": "https://[USERNAME]:[PASSWORD]@ipv6.api.mythic-beasts.com/dns/v2/dynamic/[DOMAIN]"
+        }
+}

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018, 2020 Jeffery To
+# Copyright (C) 2018, 2020-2021, 2023 Jeffery To
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -60,9 +60,10 @@ define GoCompiler/Default/Install/Bin
 
 	$(call GoCompiler/Default/Install/install-share-data,$(1),$(2),$(3),api)
 
+	$(INSTALL_DATA) -p "$(1)/go.env" "$(2)/lib/go-$(3)/"
 	$(INSTALL_DATA) -p "$(1)/VERSION" "$(2)/lib/go-$(3)/"
 
-	for file in AUTHORS CONTRIBUTING.md CONTRIBUTORS LICENSE PATENTS README.md SECURITY.md; do \
+	for file in CONTRIBUTING.md LICENSE PATENTS README.md SECURITY.md; do \
 		if [ -f "$(1)/$$$$file" ]; then \
 			$(INSTALL_DATA) -p "$(1)/$$$$file" "$(2)/share/go-$(3)/" ; \
 		fi ; \
@@ -76,8 +77,10 @@ define GoCompiler/Default/Install/Bin
 	$(INSTALL_BIN) -p "$(1)/bin/$(4)"/* "$(2)/lib/go-$(3)/bin/"
   endif
 
-	$(INSTALL_DIR) "$(2)/lib/go-$(3)/pkg"
-	$(CP) "$(1)/pkg/$(4)$(if $(5),_$(5))" "$(2)/lib/go-$(3)/pkg/"
+	if [ -d "$(1)/pkg/$(4)$(if $(5),_$(5))" ]; then \
+		$(INSTALL_DIR) "$(2)/lib/go-$(3)/pkg" ; \
+		$(CP) "$(1)/pkg/$(4)$(if $(5),_$(5))" "$(2)/lib/go-$(3)/pkg/" ; \
+	fi
 
 	$(INSTALL_DIR) "$(2)/lib/go-$(3)/pkg/tool/$(4)"
 	$(INSTALL_BIN) -p "$(1)/pkg/tool/$(4)"/* "$(2)/lib/go-$(3)/pkg/tool/$(4)/"

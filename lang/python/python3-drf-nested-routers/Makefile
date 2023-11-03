@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=drf-nested-routers
 PKG_VERSION:=0.93.4
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=2
 
 PYPI_NAME:=drf-nested-routers
 PKG_HASH:=01aa556b8c08608bb74fb34f6ca065a5183f2cda4dc0478192cc17a2581d71b0

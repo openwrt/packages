@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=efibootmgr
 PKG_VERSION:=18
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/rhboot/efibootmgr.git
@@ -23,7 +23,7 @@ define Package/efibootmgr
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Application to modify the EFI Boot Manager
-  DEPENDS:=@TARGET_x86_64 +efivar +libpopt
+  DEPENDS:=@(TARGET_x86_64||TARGET_armsr_armv8) +efivar +libpopt
   URL:=https://github.com/rhboot/efibootmgr
 endef
 

@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lcd4linux
-PKG_RELEASE:=8
+PKG_RELEASE:=10
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/feckert/lcd4linux
@@ -194,6 +194,10 @@ $(call Package/lcd4linux/Default/description)
  drivers and plugins.
 endef
 
+
+CONFIGURE_VARS+= \
+	ANSICXX_TRUE=yes \
+	am__fastdepCXX_TRUE=yes
 
 CONFIGURE_ARGS+= \
 	--disable-rpath

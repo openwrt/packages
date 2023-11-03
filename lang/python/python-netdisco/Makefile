@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-netdisco
-PKG_VERSION:=2.6.0
-PKG_RELEASE:=2
+PKG_VERSION:=3.0.0
+PKG_RELEASE:=1
 
 PYPI_NAME:=netdisco
-PKG_HASH:=2b3aca14a1807712a053f11fd80dc251dd821ee4899aefece515287981817762
+PKG_HASH:=4dbb590482f377ccc461e01742707ccbe8f1d2d1b28578af91dc9b7febcdcbd2
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=Apache-2.0
@@ -30,13 +30,17 @@ define Package/python3-netdisco
   URL:=https://github.com/home-assistant/netdisco
   DEPENDS:= \
 	  +python3-light \
+	  +python3-logging \
+	  +python3-urllib \
+	  +python3-xml \
 	  +python3-requests \
 	  +python3-zeroconf
 endef
 
 define Package/python3-netdisco/description
-  NetDisco is a Python 3 library to discover local devices and services.
-  It allows to scan on demand or offer a service that will scan the network in the background in a set interval.
+NetDisco is a Python 3 library to discover local devices and services.
+It allows to scan on demand or offer a service that will scan the
+network in the background in a set interval.
 endef
 
 $(eval $(call Py3Package,python3-netdisco))

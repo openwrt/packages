@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kitty-terminfo
 PKG_VERSION:=0.24.4
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=2
 
 PKG_LICENSE:=GPL-3.0-only
 

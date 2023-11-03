@@ -14,6 +14,7 @@ PKG_CONFIG_DEPENDS:= \
 PKG_BUILD_PARALLEL:=1
 PKG_CHECK_FORMAT_SECURITY:=0
 PKG_INSTALL:=1
+PKG_BUILD_FLAGS:=gc-sections
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0-or-later
@@ -52,11 +53,7 @@ CONFIGURE_VARS += \
 	ac_cv_header_sys_capability_h=no
 
 TARGET_CFLAGS+= \
-	$(FPIC) \
-	-ffunction-sections \
-	-fdata-sections
-
-TARGET_LDFLAGS += -Wl,--gc-sections
+	$(FPIC)
 
 define Package/miredo/install
 	$(INSTALL_DIR) $(1)/usr/lib

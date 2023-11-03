@@ -22,7 +22,7 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_BUILD_DEPENDS:=swig/host
 CMAKE_INSTALL:=1
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16
 PYTHON3_PKG_BUILD:=0
 
 include $(INCLUDE_DIR)/package.mk
@@ -54,7 +54,7 @@ endef
 define Package/libmraa
   $(call Package/libmraa/Default)
   TITLE:=Eclipse MRAA lowlevel IO C/C++ library
-  DEPENDS:=+libstdcpp +libjson-c @!arc @!armeb @!powerpc
+  DEPENDS:=+libstdcpp +libjson-c @!arc @!armeb @!powerpc @!riscv64
 endef
 
 define Package/libmraa/description

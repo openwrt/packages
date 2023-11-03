@@ -38,7 +38,7 @@
  #include <stdlib.h>
  #include <stdio.h>
  #include <unistd.h>
-@@ -2573,7 +2574,7 @@ HgfsStatToFileAttr(struct stat *stats,
+@@ -2566,7 +2567,7 @@ HgfsStatToFileAttr(struct stat *stats,
  #      define FMTTIMET "l"
  #   endif
  #else
@@ -47,7 +47,7 @@
  #endif
     LOG(4, "access: %"FMTTIMET"d/%"FMT64"u \nwrite: %"FMTTIMET"d/%"FMT64"u \n"
         "attr: %"FMTTIMET"d/%"FMT64"u\n",
-@@ -5301,7 +5302,7 @@ HgfsWriteCheckIORange(off_t offset,
+@@ -5294,7 +5295,7 @@ HgfsWriteCheckIORange(off_t offset,
        goto exit;
     }
  

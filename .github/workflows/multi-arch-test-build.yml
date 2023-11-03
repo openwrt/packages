@@ -3,6 +3,10 @@ name: Test Build
 on:
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   build:
     name: Test ${{ matrix.arch }}
@@ -11,17 +15,25 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - arch: arc_archs
-            target: archs38-generic
-            runtime_test: false
+          - arch: aarch64_generic
+            target: armsr-armv8
+            runtime_test: true
+
+          - arch: arm_cortex-a15_neon-vfpv4
+            target: armsr-armv7
+            runtime_test: true
 
           - arch: arm_cortex-a9_vfpv3-d16
             target: mvebu-cortexa9
             runtime_test: false
 
+          - arch: i386_pentium-mmx
+            target: x86-geode
+            runtime_test: true
+
           - arch: mips_24kc
             target: ath79-generic
-            runtime_test: false
+            runtime_test: true
 
           - arch: mipsel_24kc
             target: mt7621
@@ -31,21 +43,13 @@ jobs:
             target: apm821xx-nand
             runtime_test: false
 
-          - arch: powerpc_8540
+          - arch: powerpc_8548
             target: mpc85xx-p1010
             runtime_test: false
 
-          - arch: aarch64_cortex-a53
-            target: mvebu-cortexa53
-            runtime_test: true
-
-          - arch: arm_cortex-a15_neon-vfpv4
-            target: armvirt-32
-            runtime_test: true
-
-          - arch: i386_pentium-mmx
-            target: x86-geode
-            runtime_test: true
+          - arch: riscv64_riscv64
+            target: sifiveu-generic
+            runtime_test: false
 
           - arch: x86_64
             target: x86-64
@@ -86,14 +90,26 @@ jobs:
           echo "Building $PACKAGES"
           echo "PACKAGES=$PACKAGES" >> $GITHUB_ENV
 
+      - name: Generate build keys
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y signify-openbsd
+          signify-openbsd -G -n -c 'DO NOT USE - OpenWrt packages feed CI' -p packages_ci.pub -s packages_ci.sec
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "KEY_BUILD<<$EOF" >> $GITHUB_ENV
+          cat packages_ci.sec >> $GITHUB_ENV
+          echo "$EOF" >> $GITHUB_ENV
+
       - name: Build
         uses: openwrt/gh-action-sdk@v5
         env:
           ARCH: ${{ matrix.arch }}-${{ env.BRANCH }}
           FEEDNAME: packages_ci
+          INDEX: 1
+          KEY_BUILD: ${{ env.KEY_BUILD }}
 
       - name: Move created packages to project dir
-        run: cp bin/packages/${{ matrix.arch }}/packages_ci/*.ipk . || true
+        run: cp bin/packages/${{ matrix.arch }}/packages_ci/* . || true
 
       - name: Collect metadata
         run: |
@@ -136,6 +152,8 @@ jobs:
         with:
           name: ${{env.ARCHIVE_NAME}}-packages
           path: |
+            Packages
+            Packages.*
             *.ipk
             PKG-INFO
 
@@ -150,19 +168,32 @@ jobs:
       - name: Remove logs
         run: sudo rm -rf logs/ || true
 
-      - name: Register QEMU
-        if: ${{ matrix.runtime_test }}
+      - name: Check if any packages were built
         run: |
-          sudo docker run --rm --privileged aptman/qus -s -- -p
+          if [ -n "$(find . -maxdepth 1 -type f -name '*.ipk' -print -quit)" ]; then
+            echo "Found *.ipk files"
+            HAVE_IPKS=true
+          else
+            echo "No *.ipk files found"
+            HAVE_IPKS=false
+          fi
+          echo "HAVE_IPKS=$HAVE_IPKS" >> $GITHUB_ENV
+
+      - name: Register QEMU
+        if: ${{ matrix.runtime_test && fromJSON(env.HAVE_IPKS) }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-user-static binfmt-support
+          sudo update-binfmts --import
 
       - name: Build Docker container
-        if: ${{ matrix.runtime_test }}
+        if: ${{ matrix.runtime_test && fromJSON(env.HAVE_IPKS) }}
         run: |
           docker build -t test-container --build-arg ARCH .github/workflows/
         env:
           ARCH: ${{ matrix.arch }}-${{ env.BRANCH }}
 
       - name: Test via Docker container
-        if: ${{ matrix.runtime_test }}
+        if: ${{ matrix.runtime_test && fromJSON(env.HAVE_IPKS) }}
         run: |
           docker run --rm -v $GITHUB_WORKSPACE:/ci test-container

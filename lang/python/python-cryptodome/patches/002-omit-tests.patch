@@ -1,7 +1,7 @@
 --- a/setup.py
 +++ b/setup.py
-@@ -301,6 +301,9 @@ package_data = {
-     ],
+@@ -276,6 +276,9 @@ package_data = {
+     "Crypto.Util" : [ "*.pyi" ],
  }
  
 +packages = [i for i in packages if not i.startswith('Crypto.SelfTest')]

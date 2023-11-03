@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=audit
 PKG_VERSION:=2.8.5
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=7
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://people.redhat.com/sgrubb/audit
@@ -21,7 +21,7 @@ PKG_CPE_ID:=cpe:/a:linux_audit_project:linux_audit
 PKG_FIXUP:=autoreconf
 PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)-packages/$(PKG_NAME)-$(PKG_VERSION)
 
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16
 
 include $(INCLUDE_DIR)/package.mk
 

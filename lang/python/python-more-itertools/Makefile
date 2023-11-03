@@ -8,15 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-more-itertools
-PKG_VERSION:=8.7.0
+PKG_VERSION:=10.1.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=more-itertools
-PKG_HASH:=c5d6da9ca3ff65220c3bfd2a8db06d698f05d4d2b9be57e1deb2be5a45019713
+PKG_HASH:=626c369fa0eb37bac0291bce8259b332fd59ac792fa5497b59837309cd5b114a
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
+
+PKG_BUILD_DEPENDS:=python-flit-core/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -27,7 +29,7 @@ define Package/python3-more-itertools
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=More routines for operating on iterables, beyond itertools
-  URL:=https://github.com/erikrose/more-itertools
+  URL:=https://github.com/more-itertools/more-itertools
   DEPENDS:=+python3-light
 endef
 

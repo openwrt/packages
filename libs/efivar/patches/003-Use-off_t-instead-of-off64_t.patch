@@ -1,0 +1,40 @@
+From 914c686cc54b2405dab08bff77cd60827aab54b1 Mon Sep 17 00:00:00 2001
+From: Khem Raj <raj.khem@gmail.com>
+Date: Wed, 14 Dec 2022 16:55:51 -0800
+Subject: [PATCH] Use off_t instead of off64_t
+
+Pass _FILE_OFFSET_BITS=64 to ensure 64bit off_t
+
+This helps building efivar for 32bit arches on systems using musl C
+library. It works with glibc since _GNU_SOURCE defines
+_LARGEFILE64_SOURCE as well, this feature test macro enables the 64bit
+interfaces which were done as intermediate steps when transition to
+66-bit off_t was done as part olf LFS64 support.
+
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
+---
+ src/error.c             | 2 +-
+ src/include/defaults.mk | 1 +
+ 2 files changed, 2 insertions(+), 1 deletion(-)
+
+--- a/src/error.c
++++ b/src/error.c
+@@ -191,7 +191,7 @@ dbglog_write(void *cookie, const char *b
+ }
+ 
+ static int
+-dbglog_seek(void *cookie UNUSED, off64_t *offset, int whence)
++dbglog_seek(void *cookie UNUSED, off_t *offset, int whence)
+ {
+ 	FILE *log = efi_errlog ? efi_errlog : stderr;
+ 	int rc;
+--- a/src/include/defaults.mk
++++ b/src/include/defaults.mk
+@@ -34,6 +34,7 @@ CPPFLAGS ?=
+ override _CPPFLAGS := $(CPPFLAGS)
+ override CPPFLAGS = $(_CPPFLAGS) -DLIBEFIVAR_VERSION=$(VERSION) \
+ 	    -D_GNU_SOURCE \
++	    -D_FILE_OFFSET_BITS=64 \
+ 	    -I$(TOPDIR)/src/include/
+ CFLAGS ?= $(OPTIMIZE) $(DEBUGINFO) $(WARNINGS) $(ERRORS)
+ CFLAGS_GCC ?= -specs=$(TOPDIR)/src/include/gcc.specs \

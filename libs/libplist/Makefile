@@ -20,6 +20,7 @@ PKG_CPE_ID:=cpe:/a:libimobiledevice:libplist
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+PKG_BUILD_FLAGS:=lto
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -66,7 +67,6 @@ CONFIGURE_ARGS += \
 	--disable-static \
 	--without-cython
 
-TARGET_CFLAGS += -flto
 TARGET_LDFLAGS += -Wl,--gc-sections
 
 define Build/InstallDev

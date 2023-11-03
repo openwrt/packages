@@ -21,6 +21,7 @@ PKG_CPE_ID:=cpe:/a:graphicsmagick:graphicsmagick
 PKG_BUILD_PARALLEL:=1
 DISABLE_NLS:=
 PKG_BUILD_DEPENDS:=zlib freetype libpng libjpeg-turbo tiff
+PKG_BUILD_FLAGS:=lto
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -72,8 +73,6 @@ CONFIGURE_ARGS += \
 	--with-zlib \
 	--without-zstd \
 	--without-x
-
-TARGET_CFLAGS += $(if $(filter-out 5 6 7 8 9,$(word 1,$(subst ., ,$(call qstrip,$(CONFIG_GCC_VERSION))))),,-flto)
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include

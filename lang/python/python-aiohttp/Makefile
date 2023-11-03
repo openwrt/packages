@@ -7,16 +7,16 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=aiohttp
-PKG_VERSION:=3.7.4.post0
+PKG_NAME:=python-aiohttp
+PKG_VERSION:=3.8.5
 PKG_RELEASE:=1
 
-PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=493d3299ebe5f5a7c66b9819eacdcfbbaaf1a8e84911ddffcdc48888497afecf
+PYPI_NAME:=aiohttp
+PKG_HASH:=b9552ec52cc147dbf1944ac7ac98af7602e51ea2dcd076ed194ca3c0d1c7d0bc
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=Apache-2.0
-PKG_LICENSE_FILES:=LICENSE
+PKG_LICENSE_FILES:=LICENSE.txt
 PKG_CPE_ID:=cpe:/a:aio-libs_project:aiohttp
 
 include ../pypi.mk
@@ -30,17 +30,14 @@ define Package/python3-aiohttp
   TITLE:=Async http client/server framework (asyncio)
   URL:=https://github.com/aio-libs/aiohttp
   DEPENDS:= \
-	+python3-light \
-	+python3-attrs \
-	+python3-chardet \
-	+python3-multidict \
+	+python3 \
+	+python3-aiosignal \
 	+python3-async-timeout \
-	+python3-yarl \
-	+python3-logging \
-	+python3-codecs \
-	+python3-cgi \
-	+python3-openssl \
-	+python3-typing-extensions
+	+python3-attrs \
+	+python3-charset-normalizer \
+	+python3-frozenlist \
+	+python3-multidict \
+	+python3-yarl
 endef
 
 define Package/python3-aiohttp/description

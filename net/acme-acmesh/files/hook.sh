@@ -2,8 +2,6 @@
 set -u
 ACME=/usr/lib/acme/client/acme.sh
 LOG_TAG=acme-acmesh
-# webroot option deprecated, use the exported value directly in the next major version
-WEBROOT=${webroot:-$CHALLENGE_DIR}
 NOTIFY=/usr/lib/acme/notify
 
 # shellcheck source=net/acme/files/functions.sh
@@ -13,30 +11,32 @@ NOTIFY=/usr/lib/acme/notify
 export CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 export NO_TIMESTAMP=1
 
-link_certs()
-{
-    local main_domain
-    local domain_dir
-    domain_dir="$1"
-    main_domain="$2"
+link_certs() {
+	local main_domain
+	local domain_dir
+	domain_dir="$1"
+	main_domain="$2"
 
-    (umask 077; cat "$domain_dir/fullchain.cer" "$domain_dir/$main_domain.key" > "$domain_dir/combined.cer")
+	(
+		umask 077
+		cat "$domain_dir/fullchain.cer" "$domain_dir/$main_domain.key" >"$domain_dir/combined.cer"
+	)
 
-    if [ ! -e "$CERT_DIR/$main_domain.crt" ]; then
+	if [ ! -e "$CERT_DIR/$main_domain.crt" ]; then
 		ln -s "$domain_dir/$main_domain.cer" "$CERT_DIR/$main_domain.crt"
-    fi
-    if [ ! -e "$CERT_DIR/$main_domain.key" ]; then
+	fi
+	if [ ! -e "$CERT_DIR/$main_domain.key" ]; then
 		ln -s "$domain_dir/$main_domain.key" "$CERT_DIR/$main_domain.key"
-    fi
-    if [ ! -e "$CERT_DIR/$main_domain.fullchain.crt" ]; then
+	fi
+	if [ ! -e "$CERT_DIR/$main_domain.fullchain.crt" ]; then
 		ln -s "$domain_dir/fullchain.cer" "$CERT_DIR/$main_domain.fullchain.crt"
-    fi
-    if [ ! -e "$CERT_DIR/$main_domain.combined.crt" ]; then
+	fi
+	if [ ! -e "$CERT_DIR/$main_domain.combined.crt" ]; then
 		ln -s "$domain_dir/combined.cer" "$CERT_DIR/$main_domain.combined.crt"
-    fi
-    if [ ! -e "$CERT_DIR/$main_domain.chain.crt" ]; then
+	fi
+	if [ ! -e "$CERT_DIR/$main_domain.chain.crt" ]; then
 		ln -s "$domain_dir/ca.cer" "$CERT_DIR/$main_domain.chain.crt"
-    fi
+	fi
 }
 
 case $1 in
@@ -44,12 +44,14 @@ get)
 	set --
 	[ "$debug" = 1 ] && set -- "$@" --debug
 
-	case $keylength in
-	ec-*)
+	case $key_type in
+	ec*)
+		keylength=${key_type/ec/ec-}
 		domain_dir="$state_dir/${main_domain}_ecc"
 		set -- "$@" --ecc
 		;;
-	*)
+	rsa*)
+		keylength=${key_type#rsa}
 		domain_dir="$state_dir/$main_domain"
 		;;
 	esac
@@ -71,7 +73,7 @@ get)
 
 			case $status in
 			0)
-                                link_certs "$domain_dir" "$main_domain"
+				link_certs "$domain_dir" "$main_domain"
 				$NOTIFY renewed
 				exit
 				;;
@@ -121,8 +123,8 @@ get)
 	elif [ "$standalone" = 1 ]; then
 		set -- "$@" --standalone --listen-v6
 	else
-		mkdir -p "$WEBROOT"
-		set -- "$@" --webroot "$WEBROOT"
+		mkdir -p "$CHALLENGE_DIR"
+		set -- "$@" --webroot "$CHALLENGE_DIR"
 	fi
 
 	set -- "$@" --issue --home "$state_dir"
@@ -137,7 +139,7 @@ get)
 
 	case $status in
 	0)
-                link_certs "$domain_dir" "$main_domain"
+		link_certs "$domain_dir" "$main_domain"
 		$NOTIFY issued
 		;;
 	*)

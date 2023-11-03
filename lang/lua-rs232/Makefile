@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=lua-rs232
 PKG_SOURCE_DATE:=2019-11-20
 PKG_SOURCE_VERSION:=c106c94d1a5a84e8582c936528303528608776c2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/srdgame/librs232
@@ -24,6 +24,7 @@ PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=lua/host
+PKG_BUILD_FLAGS:=gc-sections
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -40,8 +41,7 @@ define Package/lua-rs232/description
   multiplatform library for serial communications over RS-232
 endef
 
-TARGET_CFLAGS += -ffunction-sections -fdata-sections
-TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
+TARGET_LDFLAGS += -Wl,--as-needed
 MAKE_FLAGS += luadir='$$$${prefix}/lib/lua' luaexecdir='$$$${exec_prefix}/lib/lua'
 
 define Build/InstallDev

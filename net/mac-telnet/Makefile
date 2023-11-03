@@ -13,13 +13,14 @@ PKG_SOURCE_DATE:=2015-09-02
 PKG_SOURCE_VERSION:=37d83cbc9c07266d6c957d27bf75285b305eceab
 PKG_MIRROR_HASH:=ed414f3fb08f1e2bb4313d00fb99327df697de7c60284fe588fc7eb3769adb7a
 
+PKG_BUILD_FLAGS:=gc-sections
+
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 
 include $(INCLUDE_DIR)/package.mk
 
-TARGET_CFLAGS += -ffunction-sections -fdata-sections $(if $(CONFIG_MACTELNET_PLAIN_SUPPORT),-DTELNET_SUPPORT)
-TARGET_LDFLAGS += -Wl,--gc-sections
+TARGET_CFLAGS += $(if $(CONFIG_MACTELNET_PLAIN_SUPPORT),-DTELNET_SUPPORT)
 
 # 1: name
 # 2: executable

@@ -3,7 +3,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=inotify-tools
 PKG_VERSION:=3.20.11.0
 PKG_HASH:=58a3cde89e4a5111a87ac16b56b06a8f885460fca0aea51b69c856ce30a37a14
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=https://codeload.github.com/rvoicilas/inotify-tools/tar.gz/$(PKG_VERSION)?
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -18,6 +18,10 @@ PKG_FIXUP:=autoreconf
 include $(INCLUDE_DIR)/package.mk
 
 CONFIGURE_ARGS+= --disable-doxygen
+
+ifneq ($(CONFIG_USE_MUSL),)
+  TARGET_CFLAGS += -D_LARGEFILE64_SOURCE
+endif
 
 define Build/Prepare
 	$(call Build/Prepare/Default)

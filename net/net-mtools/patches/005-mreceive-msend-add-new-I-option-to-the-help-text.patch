@@ -1,0 +1,33 @@
+From bf95bdeccab98cec77dc1b10bce0b215754e4e46 Mon Sep 17 00:00:00 2001
+From: Vladimir Oltean <vladimir.oltean@nxp.com>
+Date: Thu, 21 Apr 2022 16:45:08 +0300
+Subject: [PATCH 5/6] mreceive: msend: add new -I option to the help text
+
+Signed-off-by: Vladimir Oltean <vladimir.oltean@nxp.com>
+---
+ mreceive.c | 2 ++
+ msend.c    | 2 ++
+ 2 files changed, 4 insertions(+)
+
+--- a/mreceive.c
++++ b/mreceive.c
+@@ -58,6 +58,8 @@ Usage: mreceive [-g GROUP] [-p PORT] [-i
+   -p PORT      UDP port number used in the multicast packets.  Default: 4444\n\
+   -i ADDRESS   IP addresses of one or more interfaces to listen for the given\n\
+                multicast group.  Default: the system default interface.\n\
++  -I interface The interface on which to receive. Can be specified as an\n\
++               alternative to -i.\n\
+   -n           Interpret the contents of the message as a number instead of\n\
+                a string of characters.  Use this with `msend -n`\n\
+   -v           Print version information.\n\
+--- a/msend.c
++++ b/msend.c
+@@ -72,6 +72,8 @@ Usage:  msend [-g GROUP] [-p PORT] [-joi
+   -p PORT      UDP port number used in the multicast packets.  Default: 4444\n\
+   -i ADDRESS   IP address of the interface to use to send the packets.\n\
+                The default is to use the system default interface.\n\
++  -I interface The interface on which to send. Can be specified as an\n\
++               alternative to -i.\n\
+   -join        Multicast sender will join the multicast group.\n\
+                By default a sender never joins the group.\n\
+   -P PERIOD    Interval in milliseconds between packets.  Default 1000 msec\n\

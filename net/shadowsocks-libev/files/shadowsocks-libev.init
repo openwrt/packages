@@ -81,6 +81,7 @@ ss_xxx() {
 	[ -z "$mtu" ] || json_add_int mtu "$mtu"
 	[ -z "$timeout" ] || json_add_int timeout "$timeout"
 	[ -z "$user" ] || json_add_string user "$user"
+	[ -z "$acl" ] || json_add_string acl "$acl"
 	json_dump -i >"$confjson"
 
 	procd_open_instance "$cfgtype.$cfg"
@@ -273,7 +274,8 @@ validate_server_section() {
 }
 
 validate_ss_local_section() {
-	validate_common_client_options_ ss_local "$1" "$2"
+	validate_common_client_options_ ss_local "$1" "$2" \
+		'acl:file'
 }
 
 validate_ss_redir_section() {
@@ -307,7 +309,8 @@ validate_ss_server_section() {
 		'local_address:ipaddr' \
 		'local_ipv4_address:ip4addr' \
 		'local_ipv6_address:ip6addr' \
-		'bind_address:ipaddr'
+		'bind_address:ipaddr' \
+		'acl:file'
 }
 
 validate_ss_tunnel_section() {

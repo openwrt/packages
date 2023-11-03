@@ -22,6 +22,7 @@ PKG_LICENSE_FILES:=COPYING
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+PKG_BUILD_FLAGS:=gc-sections lto
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -37,9 +38,6 @@ endef
 define Package/dcstad/description
 Implementation of the Dual-Channel WiFi client daemon
 endef
-
-TARGET_CFLAGS += -ffunction-sections -fdata-sections -flto
-TARGET_LDFLAGS += -Wl,--gc-sections
 
 define Package/dcstad/install
 	$(INSTALL_DIR) $(1)/bin

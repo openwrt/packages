@@ -17,11 +17,16 @@ start_service() {
   config_get_bool std_err "settings" log_stderr 1
   config_get port "settings" port 41641
   config_get state_file "settings" state_file /etc/tailscale/tailscaled.state
+  config_get fw_mode "settings" fw_mode nftables
 
   /usr/sbin/tailscaled --cleanup
 
   procd_open_instance
   procd_set_param command /usr/sbin/tailscaled
+
+  # Starting with v1.48.1 ENV variable is required to enable use of iptables / nftables.
+  # Use nftables by default - can be changed to 'iptables' in tailscale config
+  procd_set_param env TS_DEBUG_FIREWALL_MODE="$fw_mode"
 
   # Set the port to listen on for incoming VPN packets.
   # Remote nodes will automatically be informed about the new port number,

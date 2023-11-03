@@ -22,6 +22,7 @@ PKG_LICENSE_FILES:=COPYING*
 PKG_CPE_ID:=cpe:/a:clamav:clamav
 
 PKG_BUILD_DEPENDS:=ncurses
+PKG_BUILD_FLAGS:=gc-sections lto
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -72,8 +73,8 @@ CMAKE_OPTIONS += \
 	-DENABLE_SYSTEMD=OFF \
 	-DHAVE_SYSTEM_LFS_FTS=O$(if $(CONFIG_USE_GLIBC),N,FF)
 
-TARGET_CXXFLAGS += -ffunction-sections -fdata-sections -fno-rtti -flto
-TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
+TARGET_CXXFLAGS += -fno-rtti
+TARGET_LDFLAGS += -Wl,--as-needed
 
 define Package/clamav/conffiles
 /etc/config/clamav

@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=restic
-PKG_VERSION:=0.15.1
+PKG_VERSION:=0.16.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/restic/restic/tar.gz/v${PKG_VERSION}?
-PKG_HASH:=fce382fdcdac0158a35daa640766d5e8a6e7b342ae2b0b84f2aacdff13990c52
+PKG_HASH:=88165b5b89b6064df37a9964d660f40ac62db51d6536e459db9aaea6f2b2fc11
 
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -14,7 +14,7 @@ PKG_MAINTAINER:=Tom Stöveken <tom@naaa.de>
 
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16
 
 GO_PKG:=github.com/restic/restic/
 GO_PKG_BUILD_PKG:=github.com/restic/restic/cmd/restic/

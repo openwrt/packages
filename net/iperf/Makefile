@@ -8,17 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=iperf
-PKG_VERSION:=2.1.8
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=2.1.9
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=8e2cf2fbc9d0d4d1cf9d109b1e328459f9622993dc9a4c5a7dc8a2088fb7beaf
+PKG_HASH:=5c0771aab00ef14520013aef01675977816e23bb8f5d9fde016f90eb2f1be788
 PKG_SOURCE_URL:=@SF/iperf2
 
 PKG_MAINTAINER:=Felix Fietkau <nbd@nbd.name>
 PKG_LICENSE:=BSD-3-Clause
+PKG_CPE_ID:=cpe:/a:iperf_project:iperf
 
 PKG_BUILD_PARALLEL:=1
+PKG_BUILD_FLAGS:=lto
 
 PKG_CONFIG_DEPENDS:=CONFIG_IPERF_ENABLE_MULTICAST
 
@@ -49,8 +51,7 @@ CONFIGURE_ARGS += \
 	$(call autoconf_bool,CONFIG_IPERF_ENABLE_MULTICAST,multicast) \
 	$(call autoconf_bool,CONFIG_IPV6,ipv6)
 
-TARGET_CFLAGS += -flto
-TARGET_CXXFLAGS += -fno-rtti -static-libstdc++ -flto -std=c++11
+TARGET_CXXFLAGS += -fno-rtti -static-libstdc++ -std=c++11
 TARGET_LDFLAGS += $(if $(CONFIG_USE_GLIBC),-lpthread -lm)
 
 define Package/iperf/install

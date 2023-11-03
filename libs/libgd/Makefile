@@ -20,6 +20,8 @@ PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:libgd:libgd
 
+PKG_BUILD_FLAGS:=lto
+
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
@@ -77,7 +79,7 @@ define Package/libgd/config
 	endif
 endef
 
-TARGET_CFLAGS += $(FPIC) -ffunction-sections -fdata-sections -flto
+TARGET_CFLAGS += $(FPIC) -ffunction-sections -fdata-sections
 
 CMAKE_OPTIONS += \
 	-DENABLE_FONTCONFIG=OFF \

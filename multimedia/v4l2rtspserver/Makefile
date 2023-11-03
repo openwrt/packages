@@ -8,13 +8,15 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=v4l2rtspserver
 PKG_VERSION:=0.3.7
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=8
 
 #cannot use codeload as this uses submodules
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/mpromonet/v4l2rtspserver
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 PKG_MIRROR_HASH:=f2eca75c8af9933f4ceb67cab74af488e1e9ec8af9cbef2534fda5b701b1d63d
+
+PKG_BUILD_FLAGS:=gc-sections lto
 
 LIVE555_VERSION:=2022.10.01
 LIVE555_HASH:=429de73061e3fc6901c4d2f0b7562ae3f6233060ca4b5e182fe555d065cbdd45
@@ -49,8 +51,7 @@ define Download/live555
 	HASH:=$(LIVE555_HASH)
 endef
 
-TARGET_CFLAGS += -ffunction-sections -fdata-sections -flto
-TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
+TARGET_LDFLAGS += -Wl,--as-needed
 
 CMAKE_OPTIONS += \
 	-DALSA=OFF \

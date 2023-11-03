@@ -11,7 +11,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=mqtt2influxdb
 PKG_HASH:=9fd98d2239c0b9a2482db8e55e3e5a310c5b644aa7d42c57d35ed775adb0101a
 
-PKG_MAINTAINER:=Karel Kočí <cynerd@email.cz>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com> 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 

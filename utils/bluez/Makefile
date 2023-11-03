@@ -22,6 +22,7 @@ PKG_CPE_ID:=cpe:/a:bluez:bluez
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PKG_BUILD_FLAGS:=gc-sections
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -79,8 +80,7 @@ define Package/bluez-daemon/conffiles
 /etc/config/bluetooth
 endef
 
-TARGET_CFLAGS += -D_GNU_SOURCE -ffunction-sections -fdata-sections
-TARGET_LDFLAGS += -Wl,--gc-sections
+TARGET_CFLAGS += -D_GNU_SOURCE
 
 CONFIGURE_ARGS += \
 	--enable-static \

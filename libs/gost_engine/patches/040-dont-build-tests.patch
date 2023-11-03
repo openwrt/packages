@@ -1,0 +1,131 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -213,128 +213,6 @@ set(GOST_PROV_SOURCE_FILES
+         gost_prov_mac.c
+         )
+ 
+-set(TEST_ENVIRONMENT_COMMON
+-        CMAKE_CURRENT_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}
+-        PERL5LIB=${CMAKE_CURRENT_SOURCE_DIR}/test
+-        OPENSSL_PROGRAM=${OPENSSL_PROGRAM}
+-        OPENSSL_CRYPTO_LIBRARY=${OPENSSL_CRYPTO_LIBRARY}
+-        )
+-
+-set(TEST_ENVIRONMENT_ENGINE
+-        ${TEST_ENVIRONMENT_COMMON}
+-        OPENSSL_ENGINES=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+-        OPENSSL_CONF=${CMAKE_CURRENT_SOURCE_DIR}/test/engine.cnf
+-        )
+-
+-set(TEST_ENVIRONMENT_PROVIDER
+-        ${TEST_ENVIRONMENT_COMMON}
+-        OPENSSL_MODULES=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+-        OPENSSL_CONF=${CMAKE_CURRENT_SOURCE_DIR}/test/provider.cnf
+-        )
+-
+-add_executable(test_digest test_digest.c)
+-target_link_libraries(test_digest OpenSSL::Crypto)
+-add_test(NAME digest-with-engine COMMAND test_digest)
+-set_tests_properties(digest-with-engine
+-  PROPERTIES ENVIRONMENT "${TEST_ENVIRONMENT_ENGINE}")
+-add_test(NAME digest-with-provider COMMAND test_digest)
+-set_tests_properties(digest-with-provider
+-  PROPERTIES ENVIRONMENT "${TEST_ENVIRONMENT_PROVIDER}")
+-
+-add_executable(test_ciphers test_ciphers.c)
+-target_link_libraries(test_ciphers OpenSSL::Crypto)
+-add_test(NAME ciphers-with-engine COMMAND test_ciphers)
+-set_tests_properties(ciphers-with-engine
+-  PROPERTIES ENVIRONMENT "${TEST_ENVIRONMENT_ENGINE}")
+-add_test(NAME ciphers-with-provider COMMAND test_ciphers)
+-set_tests_properties(ciphers-with-provider
+-  PROPERTIES ENVIRONMENT "${TEST_ENVIRONMENT_PROVIDER}")
+-
+-# test_curves is an internals testing program, it doesn't need a test env
+-add_executable(test_curves test_curves.c)
+-target_link_libraries(test_curves gost_core gost_err)
+-add_test(NAME curves COMMAND test_curves)
+-
+-add_executable(test_params test_params.c)
+-target_link_libraries(test_params OpenSSL::Crypto)
+-add_test(NAME parameters-with-engine COMMAND test_params)
+-set_tests_properties(parameters-with-engine
+-  PROPERTIES ENVIRONMENT "${TEST_ENVIRONMENT_ENGINE}")
+-
+-add_executable(test_derive test_derive.c)
+-target_link_libraries(test_derive OpenSSL::Crypto)
+-add_test(NAME derive-with-engine COMMAND test_derive)
+-set_tests_properties(derive-with-engine
+-  PROPERTIES ENVIRONMENT "${TEST_ENVIRONMENT_ENGINE}")
+-
+-add_executable(test_sign test_sign.c)
+-target_link_libraries(test_sign OpenSSL::Crypto)
+-add_test(NAME sign/verify-with-engine COMMAND test_sign)
+-set_tests_properties(sign/verify-with-engine
+-  PROPERTIES ENVIRONMENT "${TEST_ENVIRONMENT_ENGINE}")
+-
+-add_executable(test_tls test_tls.c)
+-target_link_libraries(test_tls OpenSSL::SSL)
+-add_test(NAME TLS-with-engine COMMAND test_tls)
+-set_tests_properties(TLS-with-engine
+-  PROPERTIES ENVIRONMENT "${TEST_ENVIRONMENT_ENGINE}")
+-
+-add_executable(test_context test_context.c)
+-target_link_libraries(test_context OpenSSL::Crypto)
+-add_test(NAME context-with-engine COMMAND test_context)
+-set_tests_properties(context-with-engine
+-  PROPERTIES ENVIRONMENT "${TEST_ENVIRONMENT_ENGINE}")
+-add_test(NAME context-with-provider COMMAND test_context)
+-set_tests_properties(context-with-provider
+-  PROPERTIES ENVIRONMENT "${TEST_ENVIRONMENT_PROVIDER}")
+-
+-# test_keyexpimp is an internals testing program, it doesn't need a test env
+-add_executable(test_keyexpimp test_keyexpimp.c)
+-#target_compile_definitions(test_keyexpimp PUBLIC -DOPENSSL_LOAD_CONF)
+-target_link_libraries(test_keyexpimp gost_core gost_err)
+-add_test(NAME keyexpimp COMMAND test_keyexpimp)
+-
+-# test_gost89 is an internals testing program, it doesn't need a test env
+-add_executable(test_gost89 test_gost89.c)
+-target_link_libraries(test_gost89 gost_core gost_err)
+-add_test(NAME gost89 COMMAND test_gost89)
+-
+-if(NOT SKIP_PERL_TESTS)
+-    execute_process(COMMAND perl -MTest2::V0 -e ""
+-       ERROR_QUIET RESULT_VARIABLE MISSING_TEST2_V0)
+-    find_program(HAVE_PROVE NAMES prove)
+-    if(NOT MISSING_TEST2_V0 AND HAVE_PROVE)
+-	add_test(NAME engine
+-	    COMMAND prove --merge -PWrapOpenSSL ${CMAKE_CURRENT_SOURCE_DIR}/test :: engine)
+-	set_tests_properties(engine PROPERTIES ENVIRONMENT "${TEST_ENVIRONMENT_ENGINE}")
+-	add_test(NAME provider
+-	    COMMAND prove --merge -PWrapOpenSSL ${CMAKE_CURRENT_SOURCE_DIR}/test :: provider)
+-	set_tests_properties(provider PROPERTIES ENVIRONMENT "${TEST_ENVIRONMENT_PROVIDER}")
+-    else()
+-        message(STATUS "No Test2::V0 perl module (engine and provider tests skipped)")
+-    endif()
+-endif()
+-
+-if(NOT MSVC)
+-  add_executable(sign benchmark/sign.c)
+-  target_link_libraries(sign gost_core gost_err ${CLOCK_GETTIME_LIB})
+-endif()
+-
+-# All that may need to load just built engine will have path to it defined.
+-set(BINARY_TESTS_TARGETS
+-        test_digest
+-        test_ciphers
+-        test_curves
+-        test_params
+-        test_derive
+-        test_sign
+-        test_context
+-        test_keyexpimp
+-        test_gost89
+-        test_tls
+-        )
+-set_property(TARGET ${BINARY_TESTS_TARGETS} APPEND PROPERTY COMPILE_DEFINITIONS ENGINE_DIR="${OUTPUT_DIRECTORY}")
+-
+ add_library(gost_core STATIC ${GOST_LIB_SOURCE_FILES})
+ set_target_properties(gost_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
+ target_link_libraries(gost_core PRIVATE OpenSSL::Crypto)

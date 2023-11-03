@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pyfuse3
-PKG_VERSION:=3.2.2
+PKG_VERSION:=3.3.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=pyfuse3
-PKG_HASH:=aa4080913e6148bff1365d4aaacdc96767b87a1e178031fd9caeb5f0b9fc8cec
+PKG_HASH:=2b31fe412479f9620da2067dd739ed23f4cc37364224891938dedf7766e573bd
 
 PKG_LICENSE:=LGPL-2.0-or-later
 PKG_LICENSE_FILES:=LICENSE
@@ -26,10 +26,12 @@ define Package/python3-pyfuse3
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
-  TITLE:=Python 3 bindings for libfuse 3 with async I/O support
+  TITLE:=libfuse 3 bindings with async I/O support
   URL:=https://github.com/libfuse/pyfuse3
   DEPENDS:= \
     +python3-light \
+    +python3-asyncio \
+    +python3-logging \
     +python3-trio \
     +libfuse3
 endef

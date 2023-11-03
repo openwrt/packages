@@ -1,6 +1,6 @@
 #!/bin/sh
 # dns based ad/abuse domain blocking
-# Copyright (c) 2015-2022 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2015-2023 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # disable (s)hellcheck in release
@@ -566,6 +566,7 @@ f_extconf() {
 						set firewall."adblock_${zone}${port}".src_dport="${port}"
 						set firewall."adblock_${zone}${port}".dest_port="${port}"
 						set firewall."adblock_${zone}${port}".target="DNAT"
+						set firewall."adblock_${zone}${port}".family="any"
 					EOC
 				fi
 				fwcfg="${fwcfg/adblock_${zone}${port}[ |\$]/}"
@@ -686,8 +687,13 @@ f_list() {
 			src_name="${mode}"
 			if [ "${src_name}" = "blacklist" ] && [ -f "${adb_blacklist}" ]; then
 				rset="/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower(\$1)}"
-				"${adb_awk}" "${rset}" "${adb_blacklist}" |
-					"${adb_awk}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' >"${adb_tmpdir}/tmp.raw.${src_name}"
+				"${adb_awk}" "${rset}" "${adb_blacklist}" >"${adb_tmpdir}/tmp.raw.${src_name}"
+				if [ -s "${adb_whitelist}" ]; then
+					"${adb_awk}" 'NR==FNR{member[$1];next}!($1 in member)' "${adb_whitelist}" "${adb_tmpdir}/tmp.raw.${src_name}" >"${adb_tmpdir}/tmp.deduplicate.${src_name}"
+				else
+					cat "${adb_tmpdir}/tmp.raw.${src_name}" >"${adb_tmpdir}/tmp.deduplicate.${src_name}"
+				fi
+				"${adb_awk}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' "${adb_tmpdir}/tmp.deduplicate.${src_name}" >"${adb_tmpdir}/tmp.raw.${src_name}"
 				"${adb_sort}" ${adb_srtopts} -u "${adb_tmpdir}/tmp.raw.${src_name}" 2>/dev/null >"${adb_tmpfile}.${src_name}"
 				out_rc="${?}"
 				rm -f "${adb_tmpdir}/tmp.raw.${src_name}"

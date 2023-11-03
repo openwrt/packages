@@ -4,6 +4,8 @@ Date: Wed, 2 Oct 2019 12:04:24 +0200
 Subject: [PATCH] sepolgen: adjust data_dir()
 
 Signed-off-by: Thomas Petazzoni <thomas.petazzoni@bootlin.com>
+(changed data_dir prefix from /usr/share to /etc)
+Signed-off-by: Jeffery To <jeffery.to@gmail.com>
 ---
  sepolgen/src/sepolgen/defaults.py | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
@@ -15,7 +17,7 @@ Signed-off-by: Thomas Petazzoni <thomas.petazzoni@bootlin.com>
  
  def data_dir():
 -    return "/var/lib/sepolgen"
-+    return "/usr/share/sepolgen"
++    return "/etc/sepolgen"
  
  def perm_map():
      return data_dir() + "/perm_map"

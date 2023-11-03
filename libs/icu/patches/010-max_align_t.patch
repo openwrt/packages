@@ -29,7 +29,7 @@
          *pErrorCode=U_MEMORY_ALLOCATION_ERROR;
 --- a/common/utext.cpp
 +++ b/common/utext.cpp
-@@ -569,7 +569,7 @@ enum {
+@@ -572,7 +572,7 @@ enum {
  
  struct ExtendedUText {
      UText               ut;
@@ -38,7 +38,7 @@
  };
  
  static const UText emptyText = UTEXT_INITIALIZER;
-@@ -584,7 +584,7 @@ utext_setup(UText *ut, int32_t extraSpac
+@@ -587,7 +587,7 @@ utext_setup(UText *ut, int32_t extraSpac
          // We need to heap-allocate storage for the new UText
          int32_t spaceRequired = sizeof(UText);
          if (extraSpace > 0) {
@@ -46,7 +46,7 @@
 +            spaceRequired = sizeof(ExtendedUText) + extraSpace - sizeof(max_align_t);
          }
          ut = (UText *)uprv_malloc(spaceRequired);
-         if (ut == NULL) {
+         if (ut == nullptr) {
 --- a/tools/toolutil/toolutil.cpp
 +++ b/tools/toolutil/toolutil.cpp
 @@ -267,7 +267,7 @@ struct UToolMemory {

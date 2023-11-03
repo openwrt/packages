@@ -1,6 +1,6 @@
 --- a/common/buildtest/masking.go
 +++ b/common/buildtest/masking.go
-@@ -45,7 +45,7 @@ func RunBuildWithMasking(t *testing.T, c
+@@ -55,7 +55,7 @@ func RunBuildWithMasking(t *testing.T, c
  
  	buf.Finish()
  

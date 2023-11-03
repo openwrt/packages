@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libcap-ng
 PKG_VERSION:=0.8.3
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://people.redhat.com/sgrubb/libcap-ng
@@ -22,6 +22,7 @@ PKG_LICENSE_FILES:=License
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
+PKG_BUILD_FLAGS:=lto
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -54,7 +55,6 @@ define Package/libcap-ng-bin/description
 endef
 
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed $(FPIC)
-TARGET_CFLAGS += -flto
 
 CONFIGURE_VARS += \
     ac_cv_prog_swig_found=no

@@ -1,19 +1,11 @@
 include $(TOPDIR)/rules.mk
-include $(INCLUDE_DIR)/openssl-engine.mk
+include $(INCLUDE_DIR)/openssl-module.mk
 
 PKG_NAME:=gost_engine
-ifeq ($(ENGINES_DIR),engines-1.1)
-  PKG_VERSION:=1.1.0.3
-  PKG_HASH:=fff725052e82c9adb5b738729b30141f61ac91fa457a4f4b5de18b8b24092f75
-  PKG_LICENSE:=OpenSSL
-  PATCH_DIR=./patches-1.1
-else
-  PKG_VERSION:=3.0.1
-  PKG_HASH:=bfeac85883724cfbe0ecc6d942ac0524b908143e019ab3d3b6abe47a3466a628
-  PKG_LICENSE:=Apache-2.0
-  PATCH_DIR=./patches-3
-endif
-PKG_RELEASE:=7
+PKG_VERSION:=3.0.1
+PKG_HASH:=bfeac85883724cfbe0ecc6d942ac0524b908143e019ab3d3b6abe47a3466a628
+PKG_LICENSE:=Apache-2.0
+PKG_RELEASE:=9
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/gost-engine/engine/archive/v$(PKG_VERSION)

@@ -54,7 +54,6 @@ iroute_ipv6
 keepalive
 key
 key_direction
-keysize
 learn_address
 link_mtu
 lladdr

@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shared-mime-info
-PKG_VERSION:=2.1
+PKG_VERSION:=2.2
 PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
@@ -16,7 +16,9 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=shared-mime-info-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://gitlab.freedesktop.org/xdg/$(PKG_NAME)/-/archive/$(PKG_VERSION)
-PKG_HASH:=37df6475da31a8b5fc63a54ba0770a3eefa0a708b778cb6366dccee96393cb60
+PKG_HASH:=418c480019d9865f67f922dfb88de00e9f38bf971205d55cdffab50432919e61
+
+PKG_BUILD_DEPENDS:=gettext-full/host
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk

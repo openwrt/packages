@@ -55,6 +55,14 @@ proxy_string() {
 	}
 }
 
+proxy_m_string() {
+	local SECTION=$1
+	local OPTION=$2
+
+	config_get _value "$SECTION" "$OPTION"
+	[ -n "$_value" ] && echo "${ALIAS:-${OPTION}} ""$_value"
+}
+
 proxy_flag() {
 	local SECTION=$1
 	local OPTION=$2
@@ -107,6 +115,8 @@ start_proxy() {
 	proxy_string "$1" StatHost StatHost 127.0.0.1
 	proxy_string "$1" StatFile
 	proxy_string "$1" LogFile
+
+	proxy_m_string "$1" BasicAuth
 
 	proxy_flag "$1" Syslog
 

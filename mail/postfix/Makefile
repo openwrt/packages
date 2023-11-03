@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postfix
-PKG_VERSION:=3.5.8
-PKG_RELEASE:=3
+PKG_VERSION:=3.8.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
 	https://de.postfix.org/ftpmirror/official/ \
 	http://ftp.porcupine.org/mirrors/postfix-release/official/
-PKG_HASH:=22582628cf3edc18c5155c9ff44543dd95a9435fb68135d76a99f572cb07456f
+PKG_HASH:=6790903cdbb5e0e47196691eb9a5f2cf8050262def941e039e6d4bf4043a5e30
 
 PKG_MAINTAINER:=Denis Shulyaka <Shulyaka@gmail.com>
 PKG_LICENSE:=IPL-1.0
@@ -44,7 +44,7 @@ define Package/postfix
   	postfix=25:postfix=25 \
   	postdrop=26:postdrop=26
   URL:=http://www.postfix.org/
-  DEPENDS:=+POSTFIX_CDB:tinycdb +POSTFIX_TLS:libopenssl +POSTFIX_SASL:libsasl2 +POSTFIX_LDAP:libopenldap +POSTFIX_DB:libdb47 +POSTFIX_SQLITE:libsqlite3 +POSTFIX_MYSQL:libmysqlclient +POSTFIX_PGSQL:libpq +POSTFIX_EAI:icu +POSTFIX_PCRE:libpcre
+  DEPENDS:=+POSTFIX_CDB:tinycdb +POSTFIX_TLS:libopenssl +POSTFIX_SASL:libsasl2 +POSTFIX_LDAP:libopenldap +POSTFIX_DB:libdb47 +POSTFIX_SQLITE:libsqlite3 +POSTFIX_MYSQL:libmysqlclient +POSTFIX_PGSQL:libpq +POSTFIX_EAI:icu +POSTFIX_PCRE:libpcre2
   MENU:=1
 endef
 
@@ -172,8 +172,8 @@ ifdef CONFIG_POSTFIX_PGSQL
 endif
 
 ifdef CONFIG_POSTFIX_PCRE
-  CCARGS+=-DHAS_PCRE -I$(STAGING_DIR)/usr/include/
-  AUXLIBS+=-L$(STAGING_DIR)/usr/lib -lpcre
+  CCARGS+=-DHAS_PCRE2 -I$(STAGING_DIR)/usr/include/
+  AUXLIBS+=-L$(STAGING_DIR)/usr/lib -lpcre2-8
 else
   CCARGS+=-DNO_PCRE
 endif

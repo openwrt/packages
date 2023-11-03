@@ -20,6 +20,7 @@ PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
 PKG_CONFIG_DEPENDS:=CONFIG_EMAILRELAY_SUPPORT_VERBOSE_DBG CONFIG_EMAILRELAY_SSL
+PKG_BUILD_FLAGS:=gc-sections lto
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -94,8 +95,7 @@ ifeq ($(CONFIG_EMAILRELAY_SUPPORT_VERBOSE_DBG),y)
 		--enable-debug=yes
 endif
 
-TARGET_CXXFLAGS += -ffunction-sections -fdata-sections -flto
-TARGET_CXXFLAGS += -Wl,--gc-sections,--as-needed
+TARGET_CXXFLAGS += -Wl,--as-needed
 
 define Package/emailrelay/install
 	$(INSTALL_DIR) $(1)/usr/bin

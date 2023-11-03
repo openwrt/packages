@@ -21,6 +21,8 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_CONFIG_DEPENDS:=CONFIG_PACKAGE_qrencode
 
+PKG_BUILD_FLAGS:=lto
+
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
@@ -60,7 +62,6 @@ CMAKE_OPTIONS += \
 	-DWITH_TESTS=OFF \
 	-DBUILD_SHARED_LIBS=ON
 
-TARGET_CFLAGS += -flto
 TARGET_LDFLAGS += -Wl,--gc-sections
 
 define Build/InstallDev

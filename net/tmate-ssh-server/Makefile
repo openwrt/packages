@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tmate-ssh-server
 PKG_VERSION:=511fd2bd852464e76824279609a34ee93fe148a4
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/tmate-io/tmate-ssh-server/tar.gz/$(PKG_VERSION)?

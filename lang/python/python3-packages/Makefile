@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python3-packages
 PKG_VERSION:=1.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 
@@ -30,6 +30,8 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_python3-packages-pip-opts \
 
 PKG_BUILD_DEPENDS:=python3 python3/host
+
+PYTHON3_PKG_BUILD:=0
 
 include $(INCLUDE_DIR)/package.mk
 include ../python3-host.mk

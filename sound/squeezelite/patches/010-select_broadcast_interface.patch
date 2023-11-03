@@ -132,16 +132,16 @@
  		} else {
 --- a/squeezelite.h
 +++ b/squeezelite.h
-@@ -458,7 +458,7 @@ char* strcasestr(const char *haystack, c
+@@ -463,7 +463,7 @@ char* strcasestr(const char *haystack, c
  
  char *next_param(char *src, char c);
  u32_t gettime_ms(void);
 -void get_mac(u8_t *mac);
 +in_addr_t get_iface_info(log_level level, char *iface, u8_t *mac);
  void set_nonblock(sockfd s);
+ void set_recvbufsize(sockfd s);
  int connect_timeout(sockfd sock, const struct sockaddr *addr, socklen_t addrlen, int timeout);
- void server_addr(char *server, in_addr_t *ip_ptr, unsigned *port_ptr);
-@@ -515,7 +515,7 @@ void buf_init(struct buffer *buf, size_t
+@@ -521,7 +521,7 @@ void buf_init(struct buffer *buf, size_t
  void buf_destroy(struct buffer *buf);
  
  // slimproto.c

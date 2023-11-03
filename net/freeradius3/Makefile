@@ -8,19 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=freeradius3
-PKG_VERSION:=3_0_21
+PKG_VERSION:=3.0.26
 PKG_RELEASE:=2
 
-PKG_SOURCE:=release_$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/FreeRADIUS/freeradius-server/archive
-PKG_HASH:=b2014372948a92f86cfe2cf43c58ef47921c03af05666eb9d6416bdc6eeaedc2
+PKG_SOURCE:=freeradius-server-$(PKG_VERSION).tar.bz2
+PKG_SOURCE_URL:=https://github.com/FreeRADIUS/freeradius-server/releases/download/release_$(subst .,_,$(PKG_VERSION))/
+PKG_HASH:=9a65314c462da4d4c4204df72c45f210de671f89317299b01f78549ac4503f59
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYRIGHT LICENSE
 PKG_CPE_ID:=cpe:/a:freeradius:freeradius
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/freeradius-server-release_$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/freeradius-server-$(PKG_VERSION)
 PKG_FIXUP:=autoreconf
 PYTHON3_PKG_BUILD:=0
 
@@ -63,7 +63,7 @@ endef
 define Package/freeradius3-common
   $(call Package/freeradius3/Default)
   TITLE:=common files
-  DEPENDS:=+USE_GLIBC:libpthread +USE_GLIBC:libbsd +FREERADIUS3_OPENSSL:libopenssl +libcap +libpcap +libncurses +libpcre +libreadline +libtalloc +libatomic
+  DEPENDS:=+USE_GLIBC:libpthread +USE_GLIBC:libbsd +FREERADIUS3_OPENSSL:libopenssl +libcap +libpcap +libncurses +libpcre2 +libreadline +libtalloc +libatomic
 endef
 
 define Package/freeradius3-default
@@ -77,7 +77,6 @@ define Package/freeradius3-default
 +freeradius3-mod-digest \
 +freeradius3-mod-eap \
 +freeradius3-mod-eap-gtc \
-+freeradius3-mod-eap-leap \
 +freeradius3-mod-eap-md5 \
 +freeradius3-mod-eap-mschapv2 \
 +freeradius3-mod-eap-peap \
@@ -193,12 +192,6 @@ define Package/freeradius3-mod-eap-gtc
   $(call Package/freeradius3/Default)
   DEPENDS:=freeradius3-mod-eap
   TITLE:=EAP/GTC module
-endef
-
-define Package/freeradius3-mod-eap-leap
-  $(call Package/freeradius3/Default)
-  DEPENDS:=freeradius3-mod-eap
-  TITLE:=EAP/LEAP module
 endef
 
 define Package/freeradius3-mod-eap-md5
@@ -774,7 +767,6 @@ $(eval $(call BuildPlugin,freeradius3-mod-detail,rlm_detail,))
 $(eval $(call BuildPlugin,freeradius3-mod-digest,rlm_digest,))
 $(eval $(call BuildPlugin,freeradius3-mod-eap,rlm_eap,))
 $(eval $(call BuildPlugin,freeradius3-mod-eap-gtc,rlm_eap_gtc,))
-$(eval $(call BuildPlugin,freeradius3-mod-eap-leap,rlm_eap_leap,))
 $(eval $(call BuildPlugin,freeradius3-mod-eap-md5,rlm_eap_md5,))
 $(eval $(call BuildPlugin,freeradius3-mod-eap-mschapv2,rlm_eap_mschapv2,))
 $(eval $(call BuildPlugin,freeradius3-mod-eap-peap,rlm_eap_peap,))

@@ -58,7 +58,7 @@ udp_broadcast_relay_redux_instance() {
         procd_append_param command "-t" "$dest_override"
     fi
 
-    procd_add_jail ubr-${PIDCOUNT}
+    procd_add_jail ubr-${PIDCOUNT} cgroupsns
     procd_close_instance
 }
 

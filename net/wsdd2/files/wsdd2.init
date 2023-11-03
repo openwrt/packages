@@ -29,8 +29,8 @@ start_service() {
 	}
 
 	[ -z "$SMB_CONF" ] && {
-		logger -p daemon.error -t 'wsdd2' "samba36/4 or ksmbd is not running, can't start wsdd2!"
-		exit 1
+		logger -p daemon.info -t 'wsdd2' "samba36/4 or ksmbd is not running"
+		return
 	}
 	
 	# cleanup comments

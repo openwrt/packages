@@ -1,22 +1,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tvheadend
-PKG_VERSION:=2022-11-20
-PKG_RELEASE:=3
+PKG_VERSION:=2023-06-05
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/tvheadend/tvheadend.git
-PKG_MIRROR_HASH:=9c1bb3eea3f3539454d17e4c6aabc774a104a772aa34ed39f248521cf6488ce5
-PKG_SOURCE_VERSION:=0ff96106aa2e0f9a384c3a2662ca005797a6b399
-PKG_SOURCE_DATE:=2022-11-20
+PKG_MIRROR_HASH:=921506f54a93fa78ba17578a0ef127f4eebd4df0691aef5905cd1eb2eae52bef
+PKG_SOURCE_VERSION:=003fd92707531bdf7ad1753ab028db8748ac5ab8
+PKG_SOURCE_DATE:=2023-06-05
 
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=LICENSE.md
 
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
-
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16
+PKG_BUILD_DEPENDS:=gettext-full/host
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -36,7 +36,6 @@ define Package/tvheadend
 	$(ICONV_DEPENDS) \
 	+zlib \
 	+TVHEADEND_AVAHI_SUPPORT:libavahi-client \
-	+TVHEADEND_REGEX_PCRE:libpcre \
 	+TVHEADEND_REGEX_PCRE2:libpcre2 \
 	+BUILD_PATENTED&&TVHEADEND_CSA:libdvbcsa
 
@@ -77,15 +76,12 @@ ifeq ($(CONFIG_TVHEADEND_TRACE),)
 	CONFIGURE_ARGS += --disable-trace
 endif
 
+CONFIGURE_ARGS += --disable-pcre
 ifneq ($(CONFIG_TVHEADEND_REGEX_PCRE2),)
-	CONFIGURE_ARGS += --disable-pcre --enable-pcre2
-else
-ifneq ($(CONFIG_TVHEADEND_REGEX_PCRE),)
-	CONFIGURE_ARGS += --enable-pcre --disable-pcre2
+	CONFIGURE_ARGS += --enable-pcre2
 else
 ifneq ($(CONFIG_TVHEADEND_REGEX_POSIX),)
-	CONFIGURE_ARGS += --disable-pcre --disable-pcre2
-endif
+	CONFIGURE_ARGS += --disable-pcre2
 endif
 endif
 

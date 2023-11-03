@@ -10,8 +10,8 @@ Signed-off-by: Luiz Angelo Daros de Luca <luizluca@gmail.com>
 
 --- a/build/build-dist.sh
 +++ b/build/build-dist.sh
-@@ -80,7 +80,7 @@ stage_unix() {
- 	
+@@ -86,7 +86,7 @@ stage_unix() {
+ 
  	# FreeBSD does not accept -i without argument in a way also acceptable by GNU sed
  	sed -i.tmp -e "s/~VER~/$VERSION/" \
 -		   -e "s/~DATE~/$(date)/" \
@@ -19,9 +19,9 @@ Signed-off-by: Luiz Angelo Daros de Luca <luizluca@gmail.com>
  		   -e "s/~HOST~/$(hostname -s)/" \
  		   -e "s/~GITHEAD~/$(git rev-parse HEAD)/" \
  		   "$DIST_ROOT/unix/$PV/easyrsa" || die "Cannot update easyrsa version data"
-@@ -122,7 +122,7 @@ stage_win() {
+@@ -128,7 +128,7 @@ stage_win() {
  		done
- 	
+ 
  		sed -i.tmp -e "s/~VER~/$VERSION/" \
 -			   -e "s/~DATE~/$(date)/" \
 +			   -e "s/~DATE~/$(SOURCE_DATE_EPOCH)/" \

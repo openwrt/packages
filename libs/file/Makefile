@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=file
-PKG_VERSION:=5.41
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=5.44
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.openpkg.org/components/cache/file/ \
 	ftp://ftp.astron.com/pub/file/
-PKG_HASH:=13e532c7b364f7d57e23dfeea3147103150cb90593a57af86c10e4f6e411603f
+PKG_HASH:=3751c7fba8dbc831cb8d7cc8aff21035459b8ce5155ef8b0880a27d028475f3b
 
 PKG_MAINTAINER:=Marko Ratkaj <markoratkaj@gmail.com>
 PKG_LICENSE:=BSD-2-Clause
@@ -56,8 +56,10 @@ CONFIGURE_ARGS += \
 	--enable-xzlib \
 	--enable-zlib \
 	--disable-libseccomp \
+	--disable-lzlib \
 	--disable-rpath \
 	--disable-warnings \
+	--disable-zstdlib \
 	--without-pic
 
 MAKE_PATH := src
@@ -82,20 +84,22 @@ define Build/InstallDev
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/include/magic.h $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libmagic.{a,so*} $(1)/usr/lib/
+	${INSTALL_DIR} $(1)/usr/lib/pkgconfig
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/libmagic.pc $(1)/usr/lib/pkgconfig/
 endef
 
 define Package/file/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/file $(1)/usr/bin/
-	$(INSTALL_DIR) $(1)/usr/share/misc
-	$(SED) "/^#/d" $(PKG_INSTALL_DIR)/usr/share/file/magic
-	$(SED) "/^$$$$/d" $(PKG_INSTALL_DIR)/usr/share/file/magic
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/file/magic $(1)/usr/share/misc/
 endef
 
 define Package/libmagic/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libmagic.so.* $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/share/misc
+	$(SED) "/^#/d" $(PKG_INSTALL_DIR)/usr/share/file/magic
+	$(SED) "/^$$$$/d" $(PKG_INSTALL_DIR)/usr/share/file/magic
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/file/magic $(1)/usr/share/misc/
 endef
 
 $(eval $(call BuildPackage,file))

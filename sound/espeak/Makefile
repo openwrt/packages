@@ -20,6 +20,7 @@ PKG_LICENSE_FILES:=License.txt
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+PKG_BUILD_FLAGS:=gc-sections lto
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -50,8 +51,8 @@ MAKE_FLAGS+= \
 
 MAKE_PATH:=./src
 
-TARGET_CXXFLAGS += -std=c++14 -ffunction-sections -fdata-sections -flto
-TARGET_LDFLAGS += $(FPIC) $(if $(CONFIG_USE_GLIBC),-lm) -Wl,--gc-sections,--as-needed
+TARGET_CXXFLAGS += -std=c++14
+TARGET_LDFLAGS += $(FPIC) $(if $(CONFIG_USE_GLIBC),-lm) -Wl,--as-needed
 
 define Package/espeak/install
 	$(INSTALL_DIR) $(1)/usr/bin

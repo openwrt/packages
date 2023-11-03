@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libfstrm
 PKG_VERSION:=0.6.1
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=1
 
 PKG_SOURCE:=fstrm-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://dl.farsightsecurity.com/dist/fstrm/

@@ -8,15 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-dns
-PKG_VERSION:=2.2.0
+PKG_VERSION:=2.4.1
 PKG_RELEASE:=1
 
 PYPI_NAME:=dnspython
-PKG_HASH:=e79351e032d0b606b98d38a4b0e6e2275b31a5b85c873e587cc11b73aca026d6
+PKG_HASH:=c33971c79af5be968bb897e95c2448e11a645ee84d93b265ce0b7aabe5dfdca8
 
 PKG_LICENSE:=ISC
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
+
+PKG_BUILD_DEPENDS:=python-poetry-core/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -26,13 +28,15 @@ define Package/python3-dns
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=dnspython
-  URL:=http://www.dnspython.org/
+  TITLE:=DNS toolkit
+  URL:=https://www.dnspython.org/
   DEPENDS:=+python3
 endef
 
 define Package/python3-dns/description
- dnspython is a DNS toolkit for Python. It supports almost all record types. It can be used for queries, zone transfers, and dynamic updates. It supports TSIG authenticated messages and EDNS0.
+dnspython is a DNS toolkit for Python. It supports almost all record
+types. It can be used for queries, zone transfers, and dynamic updates.
+It supports TSIG authenticated messages and EDNS0.
 endef
 
 $(eval $(call Py3Package,python3-dns))

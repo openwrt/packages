@@ -9,17 +9,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lxc
-PKG_VERSION:=5.0.1
-PKG_RELEASE:=4
+PKG_VERSION:=5.0.3
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://linuxcontainers.org/downloads/lxc/
-PKG_HASH:=d8195423bb1e206f8521d24b6cde4789f043960c7cf065990a9cf741dcfd4222
+PKG_HASH:=2693a4c654dcfdafb3aa95c262051d8122afa1b6f5cef1920221ebbdee934d07
 
 PKG_MAINTAINER:=Marko Ratkaj <markoratkaj@gmail.com>
 PKG_LICENSE:=LGPL-2.1-or-later BSD-2-Clause GPL-2.0
 PKG_LICENSE_FILES:=COPYING LICENSE.GPL2 LICENSE.LGPL2.1
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/meson.mk
@@ -33,7 +33,8 @@ MESON_ARGS += \
 	-Dselinux=false \
 	-Dseccomp=$(if $(CONFIG_LXC_SECCOMP),true,false) \
 	-Dexamples=false \
-	-Db_pie=true
+	-Db_pie=true \
+	-Druntime-path=/var/run
 
 LXC_APPLETS_BIN += \
 	attach autostart cgroup copy config console create destroy device \

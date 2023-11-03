@@ -1,6 +1,6 @@
 --- a/config/config.yaml
 +++ b/config/config.yaml
-@@ -10,7 +10,7 @@ common:
+@@ -9,7 +9,7 @@ common:
    working_dir: .
  config_paths:
    config_dir: /etc/crowdsec/

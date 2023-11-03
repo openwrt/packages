@@ -17,6 +17,7 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_BUILD_FLAGS:=lto
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -58,7 +59,7 @@ define Build/Configure
 endef
 
 TARGET_CFLAGS += \
-	$(FPIC) -flto \
+	$(FPIC) \
 	-D_GNU_SOURCE -DNO_SYSTEMD
 
 TARGET_LDFLAGS += -lkmod

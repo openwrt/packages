@@ -1,0 +1,29 @@
+From 7dfa8984f5a30f313d8675ff6097c8592d636d10 Mon Sep 17 00:00:00 2001
+From: Khem Raj <raj.khem@gmail.com>
+Date: Mon, 12 Dec 2022 12:50:07 -0800
+Subject: [PATCH] Use 64bit time_t on linux as well
+
+Alias 64bit version of stat functions to original functions
+we are already passing -D_FILE_OFFSET_BITS=64 in linux Makefile
+
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
+---
+ diskio-unix.cc | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+--- a/diskio-unix.cc
++++ b/diskio-unix.cc
+@@ -37,8 +37,12 @@
+ 
+ using namespace std;
+ 
+-#ifdef __APPLE__
++#if defined(__APPLE__) || defined(__linux__)
+ #define off64_t off_t
++#define stat64 stat
++#define fstat64 fstat
++#define lstat64 lstat
++#define lseek64 lseek
+ #endif
+ 
+ // Returns the official "real" name for a shortened version of same.

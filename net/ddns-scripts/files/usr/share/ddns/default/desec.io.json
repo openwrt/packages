@@ -1,11 +1,11 @@
 {
 	"name": "desec.io",
 	"ipv4": {
-		"url": "http://update.dedyn.io/update?username=[USERNAME]&password=[PASSWORD]&hostname=[DOMAIN]&myipv4=[IP]",
+		"url": "https://update.dedyn.io/update?username=[USERNAME]&password=[PASSWORD]&hostname=[DOMAIN]&myipv4=[IP]&myipv6=preserve",
 		"answer": "good|nochg"
 	},
 	"ipv6": {
-		"url": "http://update.dedyn.io/update?username=[USERNAME]&password=[PASSWORD]&hostname=[DOMAIN]&myipv6=[IP]",
+		"url": "https://update.dedyn.io/update?username=[USERNAME]&password=[PASSWORD]&hostname=[DOMAIN]&myipv6=[IP]&myipv4=preserve",
 		"answer": "good|nochg"
 	}
 }

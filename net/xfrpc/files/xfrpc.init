@@ -28,7 +28,7 @@ handle_xfrpc() {
 		echo "local_ip = $local_ip" >> "$config"
 		echo "local_port = $local_port" >> "$config"
 		case "$type" in
-		tcp)
+		tcp|mstsc|socks5)
 			config_get remote_port "$name" remote_port
 			echo "remote_port = $remote_port" >> "$config"
 			;;

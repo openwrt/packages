@@ -1,6 +1,6 @@
 #!/bin/sh
 
-if nginx -V 2>&1 | grep -q ubus; then
+if nginx -V 2>&1 | grep -q ubus && [ -f /usr/lib/nginx/modules/ngx_http_ubus_module.so ]; then
 	if [ -z "$(cat /etc/nginx/conf.d/luci.locations | grep ubus)" ]; then
 		cat <<EOT >> /etc/nginx/conf.d/luci.locations
 
@@ -9,6 +9,12 @@ location /ubus {
         ubus_socket_path /var/run/ubus/ubus.sock;
         ubus_parallel_req 2;
 }
+EOT
+	fi
+
+        if [ ! -f "/etc/nginx/module.d/luci.module" ]; then
+		cat <<EOT >> /etc/nginx/module.d/luci.module
+load_module /usr/lib/nginx/modules/ngx_http_ubus_module.so;
 EOT
 	fi
 fi

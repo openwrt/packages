@@ -25,6 +25,8 @@ PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
+CONFIGURE_VARS += ac_cv_path_ASCIIDOC="" ac_cv_path_XMLTO=""
+
 define Package/evtest
   SECTION:=utils
   CATEGORY:=Utilities

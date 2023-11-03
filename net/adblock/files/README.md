@@ -12,7 +12,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | :------------------ | :-----: | :--- | :--------------- | :-------------------------------------------------------------------------------- |
 | adaway              | x       | S    | mobile           | [Link](https://github.com/AdAway/adaway.github.io)                                |
 | adguard             | x       | L    | general          | [Link](https://adguard.com)                                                       |
-| adguard_tracking    |         | S    | tracking         | [Link](https://github.com/AdguardTeam/cname-trackers)                             |
+| adguard_tracking    |         | L    | tracking         | [Link](https://github.com/AdguardTeam/cname-trackers)                             |
 | android_tracking    |         | S    | tracking         | [Link](https://github.com/Perflyst/PiHoleBlocklist)                               |
 | andryou             |         | L    | compilation      | [Link](https://gitlab.com/andryou/block/-/blob/master/readme.md)                  |
 | anti_ad             |         | L    | compilation      | [Link](https://github.com/privacy-protection-tools/anti-AD/blob/master/README.md) |

@@ -1,3 +1,14 @@
+--- a/extensions/LUA/Kbuild
++++ b/extensions/LUA/Kbuild
+@@ -22,6 +22,8 @@ xt_LUA-y += nf_lua.o \
+ 			prot_buf_dynamic.o \
+ 
+ 
++# Enable <stddef.h> <stdarg.h>
++EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
+ # Adding Lua Support
+ EXTRA_CFLAGS += -I$(src)/lua -I$(src)/lua/include 
+ xt_LUA-y += lua/lapi.o \
 --- a/extensions/LUA/xt_LUA_target.c
 +++ b/extensions/LUA/xt_LUA_target.c
 @@ -19,7 +19,7 @@

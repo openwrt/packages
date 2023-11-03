@@ -6,14 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gummiboot
-PKG_VERSION:=45
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=48.1
+PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/rzr/gummiboot.git
-PKG_SOURCE_DATE:=2021-04-11
-PKG_SOURCE_VERSION:=eb3daf2ca4cb1657cf1f780957485d690a552bf6
-PKG_MIRROR_HASH:=4c57791693b57bbe36e85b49d70310728b8008c4c545006a71c5a5f71b8df501
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://dev.alpinelinux.org/archive/gummiboot/
+PKG_HASH:=2b649a6eb22007cd34bb355ba4ca6c1a8058e115c13048985f09a0f11f3d5295
 
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=LICENSE
@@ -42,7 +40,8 @@ endef
 CONFIGURE_ARGS += \
 	--with-efi-libdir=$(STAGING_DIR)/usr/lib \
 	--with-efi-ldsdir=$(STAGING_DIR)/usr/lib \
-	--with-efi-includedir=$(STAGING_DIR)/usr/include
+	--with-efi-includedir=$(STAGING_DIR)/usr/include \
+	--disable-manpages
 
 define Build/Compile
 	+$(MAKE_VARS) EFI_CFLAGS="-I$(TOOLCHAIN_DIR)/include $(TARGET_CFLAGS)" \

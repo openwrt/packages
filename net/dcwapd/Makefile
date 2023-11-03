@@ -22,6 +22,7 @@ PKG_LICENSE_FILES:=COPYING
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+PKG_BUILD_FLAGS:=gc-sections lto
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -42,8 +43,8 @@ CONFIGURE_ARGS += \
 	--enable-platform=linuxjsonstatic \
 	--enable-shared
 
-TARGET_CXXFLAGS += -std=c++11 -DRAPIDJSON_HAS_CXX11_RVALUE_REFS=0 -ffunction-sections -fdata-sections -flto
-TARGET_LDFLAGS += -ldcwproto -ldcwsocket -lmrmfilterparser -luci -Wl,--gc-sections,--as-needed
+TARGET_CXXFLAGS += -std=c++11 -DRAPIDJSON_HAS_CXX11_RVALUE_REFS=0
+TARGET_LDFLAGS += -ldcwproto -ldcwsocket -lmrmfilterparser -luci -Wl,--as-needed
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/lib

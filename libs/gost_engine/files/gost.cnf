@@ -1,4 +1,4 @@
-[gost]
+[gost_sect]
 default_algorithms = ALL
 # CRYPT_PARAMS: OID of default GOST 28147-89 parameters It allows the
 # user to choose between different parameter sets of symmetric cipher

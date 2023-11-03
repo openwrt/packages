@@ -1,6 +1,6 @@
 --- a/src/intlconv.c
 +++ b/src/intlconv.c
-@@ -36,9 +36,8 @@ intlconv_test( void )
+@@ -37,9 +37,8 @@ intlconv_test( void )
        (strcmp(s, "ZlutouckyKun") &&
         strcmp(s, "Zlutouck'yKun") &&
         strcmp(s, "?lu?ou?k?K??"))) {

@@ -1,5 +1,6 @@
 #
-# Copyright (C) 2006-2011, 2015-2018 OpenWrt.org
+# Copyright (C) 2006-2011 OpenWrt.org
+# Copyright (C) 2015-2016, 2018-2023 Jeffery To
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,11 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-twisted
-PKG_VERSION:=22.4.0
+PKG_VERSION:=23.8.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=Twisted
-PKG_HASH:=a047990f57dfae1e0bd2b7df2526d4f16dcdc843774dc108b78c52f2a5f13680
+PYPI_SOURCE_NAME:=twisted
+PKG_HASH:=3c73360add17336a622c0d811c2a2ce29866b6e59b1125fd6509b17252098a24
 
 PKG_BUILD_DEPENDS:=libtirpc
 
@@ -20,6 +22,8 @@ PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 PKG_CPE_ID:=cpe:/a:twistedmatrix:twisted
+
+PKG_BUILD_DEPENDS:=python-hatchling/host python-hatch-fancy-pypi-readme/host python-incremental/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -39,11 +43,9 @@ define Package/python3-twisted
       +python3-bcrypt \
       +python3-constantly \
       +python3-cryptography \
+      +python3-hyperlink \
       +python3-idna \
       +python3-incremental \
-      +python3-hyperlink \
-      +python3-pkg-resources \
-      +python3-pyasn1 \
       +python3-pyopenssl \
       +python3-service-identity \
       +python3-typing-extensions \
@@ -52,12 +54,8 @@ endef
 
 define Package/python3-twisted/description
 Twisted is a networking engine written in Python, supporting numerous
-protocols. It contains a web server, numerous chat clients, chat servers,
-mail servers, and more.
-endef
-
-define Build/Configure
-	$(SED) 's/^version = attr: twisted.__version__$$$$/version = $(PKG_VERSION)/' $(PKG_BUILD_DIR)/setup.cfg
+protocols. It contains a web server, numerous chat clients, chat
+servers, mail servers, and more.
 endef
 
 define Py3Package/python3-twisted/filespec

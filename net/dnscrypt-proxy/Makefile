@@ -23,6 +23,7 @@ PKG_LICENSE_FILES:=COPYING
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+PKG_BUILD_FLAGS:=gc-sections
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_DNSCRYPT_ENABLE_PLUGINS
 
@@ -84,12 +85,7 @@ define Build/Configure
 endef
 
 TARGET_CFLAGS += \
-	-fomit-frame-pointer \
-	-fdata-sections \
-	-ffunction-sections
-
-TARGET_LDFLAGS += \
-	-Wl,-gc-sections
+	-fomit-frame-pointer
 
 MAKE_FLAGS += \
 	CFLAGS="$(TARGET_CFLAGS)" \

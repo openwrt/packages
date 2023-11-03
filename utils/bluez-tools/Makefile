@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bluez-tools
 PKG_VERSION:=20201025.f653217
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Karl Osterseher <karli_o@gmx.at>
 

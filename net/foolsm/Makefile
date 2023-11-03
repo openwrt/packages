@@ -20,6 +20,7 @@ PKG_LICENSE:=GPL-2.0-only
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+PKG_BUILD_FLAGS:=gc-sections lto
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -43,8 +44,7 @@ endef
 MAKE_FLAGS += \
 	PREFIX="$(CONFIGURE_PREFIX)"
 
-TARGET_CFLAGS += -ffunction-sections -fdata-sections -flto
-TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
+TARGET_LDFLAGS += -Wl,--as-needed
 
 define Package/foolsm/install
 	$(INSTALL_DIR) $(1)/usr/sbin

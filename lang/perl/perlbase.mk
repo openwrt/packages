@@ -209,7 +209,7 @@ endef
 
 define Package/perlbase-bignum/install
 $(call perlmod/Install,$(1),bignum.pm bigrat.pm,)
-$(call perlmod/InstallBaseTests,$(1),dist/bignum/t)
+$(call perlmod/InstallBaseTests,$(1),cpan/bignum/t)
 endef
 
 $(eval $(call BuildPackage,perlbase-bignum))
@@ -306,7 +306,7 @@ endef
 define Package/perlbase-cpan/install
 $(call perlmod/Install,$(1),CPAN CPAN.pm Parse/CPAN/Meta.pm,CPAN/FirstTime.pm)
 $(call perlmod/Install/NoStrip,$(1),CPAN/FirstTime.pm,)
-$(call perlmod/InstallBaseTests,$(1),cpan/CPAN-Meta-Requirements/t cpan/CPAN-Meta-YAML/t cpan/CPAN-Meta/t cpan/CPAN/t cpan/Parse-CPAN-Meta/t)
+$(call perlmod/InstallBaseTests,$(1),cpan/CPAN-Meta-Requirements/t cpan/CPAN-Meta-YAML/t cpan/CPAN-Meta/t cpan/CPAN/t)
 endef
 
 $(eval $(call BuildPackage,perlbase-cpan))
@@ -390,7 +390,7 @@ endef
 define Package/perlbase-devel/install
 $(call perlmod/Install,$(1),Devel auto/Devel,Devel/PPPort.pm)
 $(call perlmod/Install/NoStrip,$(1),Devel/PPPort.pm,)
-$(call perlmod/InstallBaseTests,$(1),cpan/Devel-PPPort/t dist/Devel-SelfStubber/t ext/Devel-Peek/t)
+$(call perlmod/InstallBaseTests,$(1),dist/Devel-PPPort/t dist/Devel-SelfStubber/t ext/Devel-Peek/t)
 endef
 
 $(eval $(call BuildPackage,perlbase-devel))
@@ -502,7 +502,7 @@ endef
 
 define Package/perlbase-encoding/install
 $(call perlmod/Install,$(1),encoding encoding.pm,)
-$(call perlmod/InstallBaseTests,$(1),cpan/encoding-warnings/t)
+$(call perlmod/InstallBaseTests,$(1),dist/encoding-warnings/t)
 endef
 
 $(eval $(call BuildPackage,perlbase-encoding))
@@ -588,7 +588,7 @@ endef
 define Package/perlbase-extutils/install
 $(call perlmod/Install,$(1),ExtUtils,ExtUtils/MakeMaker/FAQ.pod ExtUtils/MakeMaker/Tutorial.pod ExtUtils/ParseXS.pm ExtUtils/ParseXS/Utilities.pm)
 $(call perlmod/Install/NoStrip,$(1),ExtUtils/ParseXS.pm ExtUtils/ParseXS/Utilities.pm,)
-$(call perlmod/InstallBaseTests,$(1),cpan/ExtUtils-Command/t cpan/ExtUtils-Constant/t cpan/ExtUtils-Install/t cpan/ExtUtils-MakeMaker/t cpan/ExtUtils-Manifest/t dist/ExtUtils-CBuilder/t dist/ExtUtils-ParseXS/t lib/ExtUtils/t lib/h2ph.t lib/h2xs.t utils/h2ph utils/h2xs)
+$(call perlmod/InstallBaseTests,$(1),cpan/ExtUtils-Constant/t cpan/ExtUtils-Install/t cpan/ExtUtils-MakeMaker/t cpan/ExtUtils-Manifest/t dist/ExtUtils-CBuilder/t dist/ExtUtils-ParseXS/t lib/ExtUtils/t lib/h2ph.t lib/h2xs.t utils/h2ph utils/h2xs)
 endef
 
 $(eval $(call BuildPackage,perlbase-extutils))
@@ -919,7 +919,7 @@ endef
 
 define Package/perlbase-math/install
 $(call perlmod/Install,$(1),Math auto/Math,)
-$(call perlmod/InstallBaseTests,$(1),cpan/Math-Complex/t dist/Math-BigInt-FastCalc/t dist/Math-BigInt/t dist/Math-BigRat/t)
+$(call perlmod/InstallBaseTests,$(1),cpan/Math-Complex/t cpan/Math-BigInt-FastCalc/t cpan/Math-BigInt/t cpan/Math-BigRat/t)
 endef
 
 $(eval $(call BuildPackage,perlbase-math))
@@ -1384,7 +1384,7 @@ endef
 define Package/perlbase-test/install
 $(call perlmod/Install,$(1),Test Test.pm ok.pm,Test/Builder.pm Test/Harness/TAP.pod Test/More.pm Test/Tutorial.pod)
 $(call perlmod/Install/NoStrip,$(1),Test/Builder.pm Test/More.pm,)
-$(call perlmod/InstallBaseTests,$(1),cpan/Test-Harness/t cpan/Test-Simple/t cpan/Test/t)
+$(call perlmod/InstallBaseTests,$(1),cpan/Test-Harness/t cpan/Test-Simple/t dist/Test/t)
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/prove $(1)/usr/bin
 endef
@@ -1456,7 +1456,7 @@ endef
 
 define Package/perlbase-time/install
 $(call perlmod/Install,$(1),Time auto/Time,)
-$(call perlmod/InstallBaseTests,$(1),cpan/Time-HiRes/t cpan/Time-Local/t cpan/Time-Piece/t lib/Time/gmtime.t lib/Time/localtime.t)
+$(call perlmod/InstallBaseTests,$(1),dist/Time-HiRes/t cpan/Time-Local/t cpan/Time-Piece/t lib/Time/gmtime.t lib/Time/localtime.t)
 endef
 
 $(eval $(call BuildPackage,perlbase-time))
@@ -1470,7 +1470,7 @@ endef
 
 define Package/perlbase-unicode/install
 $(call perlmod/Install,$(1),Unicode auto/Unicode,)
-$(call perlmod/InstallBaseTests,$(1),cpan/Unicode-Collate/t cpan/Unicode-Normalize/t lib/Unicode/UCD.t)
+$(call perlmod/InstallBaseTests,$(1),cpan/Unicode-Collate/t dist/Unicode-Normalize/t lib/Unicode/UCD.t)
 endef
 
 $(eval $(call BuildPackage,perlbase-unicode))

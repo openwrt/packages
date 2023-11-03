@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-eventlet
-PKG_VERSION:=0.30.2
+PKG_VERSION:=0.33.3
 PKG_RELEASE:=1
 
 PYPI_NAME:=eventlet
-PKG_HASH:=1811b122d9a45eb5bafba092d36911bca825f835cb648a862bbf984030acff9d
+PKG_HASH:=722803e7eadff295347539da363d68ae155b8b26ae6a634474d0a920be73cfda
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=MIT
