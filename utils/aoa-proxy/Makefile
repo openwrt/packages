@@ -27,8 +27,8 @@ TARGET_CFLAGS += -DNO_HID=1
  
 define Package/aoa-proxy
   SECTION:=utils
-  CATEGORY:=Network
-  TITLE:=Interact with Android devices using the Android Open Accessory Protocol
+  CATEGORY:=Utilities
+  TITLE:=Interact with Android devices using AOA
   URL:=https://github.com/jo-bitsch/aoa-proxy
   DEPENDS:=+libusb-1.0
 endef
@@ -56,7 +56,7 @@ define Package/aoa-proxy/install
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/usb
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/openwrt/etc/hotplug.d/usb/99-aoa-proxy $(1)/etc/hotplug.d/usb/
 	$(INSTALL_DIR) $(1)/etc/init.d/
-	$(INSTALL_DATA $(PKG_BUILD_DIR)/openwrt/etc/init.d/aoa-proxy-forward $(1)/etc/init.d/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/openwrt/etc/init.d/aoa-proxy-forward $(1)/etc/init.d/
 endef
  
 $(eval $(call BuildPackage,aoa-proxy))
