@@ -58,11 +58,13 @@ proto_yggdrasil_setup_multicast_interface() {
 	local beacon
 	local listen
 	local port=0
+	local password
 	local regex=""
 
 	config_get beacon "${interface_config}" "beacon"
 	config_get listen "${interface_config}" "listen"
 	config_get port "${interface_config}" "port"
+	config_get password "${interface_config}" "password"
 
 	json_add_object ""
 	json_add_boolean "Beacon" $beacon
@@ -71,6 +73,9 @@ proto_yggdrasil_setup_multicast_interface() {
 		json_add_int "Port" $port
 	else
 		json_add_int "Port" 0
+	fi;
+	if [ ! -z ${password} ]; then
+		json_add_string "Password" $password
 	fi;
 
 	config_list_foreach "${interface_config}" interface proto_yggdrasil_append_to_interface_regex
