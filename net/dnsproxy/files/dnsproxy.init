@@ -44,6 +44,7 @@ append_param_bool() {
 load_config_arg() {
 	append_param_bool "$1" "all_servers"
 	append_param_bool "$1" "fastest_addr"
+	append_param_bool "$1" "http3"
 	append_param_bool "$1" "insecure"
 	append_param_bool "$1" "ipv6_disabled"
 	append_param_bool "$1" "refuse_any"
@@ -51,6 +52,18 @@ load_config_arg() {
 }
 
 load_config_list() {
+	if is_empty "global" "listen_addr"; then
+		append_param "--listen" "127.0.0.1"
+	else 
+		config_list_foreach "global" "listen_addr" "append_param '--listen'"
+	fi
+
+	if is_empty "global" "listen_port"; then
+		append_param "--port" "5353"
+	else 
+		config_list_foreach "global" "listen_port" "append_param '--port'"
+	fi
+
 	is_empty "bogus_nxdomain" "ip_addr" || config_list_foreach "bogus_nxdomain" "ip_addr" "append_param '--bogus-nxdomain'"
 
 	for i in "bootstrap" "fallback" "upstream"; do
@@ -59,9 +72,8 @@ load_config_list() {
 }
 
 load_config_param() {
-	append_param_arg "global" "listen_addr" "--listen" "127.0.0.1"
-	append_param_arg "global" "listen_port" "--port" "5353"
 	append_param_arg "global" "log_file" "--output"
+	append_param_arg "global" "timeout" "--timeout"
 	append_param_arg "global" "max_go_routines" "--max-go-routines"
 	append_param_arg "global" "rate_limit" "--ratelimit"
 	append_param_arg "global" "udp_buf_size" "--udp-buf-size"
