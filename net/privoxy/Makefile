@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=privoxy
-PKG_VERSION:=3.0.33
-PKG_RELEASE:=4
+PKG_VERSION:=3.0.34
+PKG_RELEASE:=1
 
-PKG_SOURCE:=privoxy-$(PKG_VERSION)-stable-src.tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-stable-src.tar.gz
 PKG_SOURCE_URL:=@SF/ijbswa
-PKG_HASH:=04b104e70dac61561b9dd110684b250fafc8c13dbe437a60fae18ddd9a881fae
-PKG_BUILD_DIR:=$(BUILD_DIR)/privoxy-$(PKG_VERSION)-stable
+PKG_HASH:=e6ccbca1656f4e616b4657f8514e33a70f6697e9d7294356577839322a3c5d2c
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)-stable
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
@@ -58,7 +58,7 @@ define Package/privoxy
   URL:=http://www.privoxy.org/
   USERID:=privoxy=8118:privoxy=8118
   MENU:=1
-  DEPENDS:=+!PRIVOXY_no_pcre:libpcre +!PRIVOXY_no_pthread:libpthread +!PRIVOXY_no_zlib:zlib
+  DEPENDS:=+!PRIVOXY_no_pcre:libpcre2 +!PRIVOXY_no_pthread:libpthread +!PRIVOXY_no_zlib:zlib
 endef
 
 # shown in LuCI package description
