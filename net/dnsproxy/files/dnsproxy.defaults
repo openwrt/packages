@@ -1,0 +1,8 @@
+#!/bin/sh
+
+[ -s "/etc/config/dnsproxy" ] || exit 0
+
+#Migrate options 'listen_addr' 'listen_port' to list type
+sed -i -e "s,option listen_addr,list listen_addr,g" \
+       -e "s,option listen_port,list listen_port,g" "/etc/config/dnsproxy"
+exit 0
