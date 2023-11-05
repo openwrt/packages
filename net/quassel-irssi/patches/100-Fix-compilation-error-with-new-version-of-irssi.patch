@@ -1,0 +1,48 @@
+From 61aaa345d3924905aa26023b351fb9502a74de63 Mon Sep 17 00:00:00 2001
+From: Christian Marangi <ansuelsmth@gmail.com>
+Date: Sun, 5 Nov 2023 20:50:31 +0100
+Subject: [PATCH 2/2] Fix compilation error with new version of irssi
+
+Fix compilation error with new version of irssi that changed some
+functions names.
+
+Caused by https://github.com/irssi/irssi/pull/1246
+
+Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
+---
+ core/quassel-net.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+--- a/core/quassel-net.c
++++ b/core/quassel-net.c
+@@ -105,8 +105,8 @@ static void sig_connected(Quassel_SERVER
+ 	}
+ 
+ 	r->readtag =
+-		g_input_add(net_sendbuffer_handle(r->handle),
+-			    G_INPUT_READ,
++		i_input_add(net_sendbuffer_handle(r->handle),
++			    I_INPUT_READ,
+ 			    (GInputFunction) quassel_parse_incoming, r);
+ 
+ 	quassel_init_packet(net_sendbuffer_handle(r->handle), r->ssl);
+@@ -166,8 +166,8 @@ static void quassel_net_final_setup(SERV
+ 	server->handle->handle = handle;
+ 
+ 	server->readtag =
+-		g_input_add(handle,
+-			    G_INPUT_READ,
++		i_input_add(handle,
++			    I_INPUT_READ,
+ 			    (GInputFunction) quassel_parse_incoming, server);
+ }
+ 
+@@ -185,7 +185,7 @@ static void quassel_net_ssl_callback(SER
+ 	if (error & 1) {
+ 		if (server->connect_tag != -1)
+ 			g_source_remove(server->connect_tag);
+-		server->connect_tag = g_input_add(handle, error == 1 ? G_INPUT_READ : G_INPUT_WRITE,
++		server->connect_tag = i_input_add(handle, error == 1 ? I_INPUT_READ : I_INPUT_WRITE,
+ 						  (GInputFunction)
+ 						  quassel_net_ssl_callback,
+ 						  server);
