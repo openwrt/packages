@@ -91,7 +91,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * Supports allowing / blocking of certain VLAN forwards
 
 ## Prerequisites
-* **[OpenWrt](https://openwrt.org)**, latest stable release or a snapshot with nft/firewall 4 and logd/logread support
+* **[OpenWrt](https://openwrt.org)**, latest stable release or a snapshot with nft/firewall 4 support
 * A download utility with SSL support: 'aria2c', 'curl', full 'wget' or 'uclient-fetch' with one of the 'libustream-*' SSL libraries, the latter one doesn't provide support for ETag HTTP header
 * A certificate store like 'ca-bundle', as banIP checks the validity of the SSL certificates of all download sites by default
 * For E-Mail notifications you need to install and setup the additional 'msmtp' package
@@ -134,62 +134,63 @@ Available commands:
 
 ## banIP config options
 
-| Option                  | Type   | Default                       | Description                                                                                                  |
-| :---------------------- | :----- | :---------------------------- | :----------------------------------------------------------------------------------------------------------- |
-| ban_enabled             | option | 0                             | enable the banIP service                                                                                     |
-| ban_nicelimit           | option | 0                             | ulimit nice level of the banIP service (range 0-19)                                                          |
-| ban_filelimit           | option | 1024                          | ulimit max open/number of files (range 1024-4096)                                                            |
-| ban_loglimit            | option | 100                           | scan only the last n log entries permanently. A value of '0' disables the monitor                            |
-| ban_logcount            | option | 1                             | how many times the IP must appear in the log to be considered as suspicious                                  |
-| ban_logterm             | list   | regex                         | various regex for logfile parsing (default: dropbear, sshd, luci, nginx, asterisk)                           |
-| ban_autodetect          | option | 1                             | auto-detect wan interfaces, devices and subnets                                                              |
-| ban_debug               | option | 0                             | enable banIP related debug logging                                                                           |
-| ban_loginput            | option | 1                             | log drops in the wan-input chain                                                                             |
-| ban_logforwardwan       | option | 1                             | log drops in the wan-forward chain                                                                           |
-| ban_logforwardlan       | option | 0                             | log rejects in the lan-forward chain                                                                         |
-| ban_autoallowlist       | option | 1                             | add wan IPs/subnets and resolved domains automatically to the local allowlist (not only to the Sets)         |
-| ban_autoblocklist       | option | 1                             | add suspicious attacker IPs and resolved domains automatically to the local blocklist (not only to the Sets) |
-| ban_autoblocksubnet     | option | 0                             | add entire subnets to the blocklist Sets based on an additional RDAP request with the suspicious IP          |
-| ban_autoallowuplink     | option | subnet                        | limit the uplink autoallow function to: 'subnet', 'ip' or 'disable' it at all                                |
-| ban_allowlistonly       | option | 0                             | restrict the internet access from/to a given number of secure websites/IPs                                   |
-| ban_basedir             | option | /tmp                          | base working directory while banIP processing                                                                |
-| ban_reportdir           | option | /tmp/banIP-report             | directory where banIP stores the report files                                                                |
-| ban_backupdir           | option | /tmp/banIP-backup             | directory where banIP stores the compressed backup files                                                     |
-| ban_protov4             | option | - / autodetect                | enable IPv4 support                                                                                          |
-| ban_protov6             | option | - / autodetect                | enable IPv4 support                                                                                          |
-| ban_ifv4                | list   | - / autodetect                | logical wan IPv4 interfaces, e.g. 'wan'                                                                      |
-| ban_ifv6                | list   | - / autodetect                | logical wan IPv6 interfaces, e.g. 'wan6'                                                                     |
-| ban_dev                 | list   | - / autodetect                | wan device(s), e.g. 'eth2'                                                                                   |
-| ban_vlanallow           | list   | -                             | always allow certain VLAN forwards, e.g. br-lan.20                                                           |
-| ban_vlanblock           | list   | -                             | always block certain VLAN forwards, e.g. br-lan.10                                                           |
-| ban_trigger             | list   | -                             | logical reload trigger interface(s), e.g. 'wan'                                                              |
-| ban_triggerdelay        | option | 10                            | trigger timeout during interface reload and boot                                                             |
-| ban_deduplicate         | option | 1                             | deduplicate IP addresses across all active Sets                                                              |
-| ban_splitsize           | option | 0                             | split ext. Sets after every n lines/members (saves RAM)                                                      |
-| ban_cores               | option | - / autodetect                | limit the cpu cores used by banIP (saves RAM)                                                                |
-| ban_nftloglevel         | option | warn                          | nft loglevel, values: emerg, alert, crit, err, warn, notice, info, debug                                     |
-| ban_nftpriority         | option | -200                          | nft priority for the banIP table (default is the prerouting table priority)                                  |
-| ban_nftpolicy           | option | memory                        | nft policy for banIP-related Sets, values: memory, performance                                               |
-| ban_nftexpiry           | option | -                             | expiry time for auto added blocklist members, e.g. '5m', '2h' or '1d'                                        |
-| ban_feed                | list   | -                             | external download feeds, e.g. 'yoyo', 'doh', 'country' or 'talos' (see feed table)                           |
-| ban_asn                 | list   | -                             | ASNs for the 'asn' feed, e.g.'32934'                                                                         |
-| ban_country             | list   | -                             | country iso codes for the 'country' feed, e.g. 'ru'                                                          |
-| ban_blockpolicy         | option | -                             | limit the default block policy to a certain chain, e.g. 'input', 'forwardwan' or 'forwardlan'                |
-| ban_blocktype           | option | drop                          | 'drop' packets silently on input and forwardwan chains or actively 'reject' the traffic                      |
-| ban_blockinput          | list   | -                             | limit a feed to the wan-input chain, e.g. 'country'                                                          |
-| ban_blockforwardwan     | list   | -                             | limit a feed to the wan-forward chain, e.g. 'debl'                                                           |
-| ban_blockforwardlan     | list   | -                             | limit a feed to the lan-forward chain, e.g. 'doh'                                                            |
-| ban_fetchcmd            | option | - / autodetect                | 'uclient-fetch', 'wget', 'curl' or 'aria2c'                                                                  |
-| ban_fetchparm           | option | - / autodetect                | set the config options for the selected download utility                                                     |
-| ban_fetchretry          | option | 5                             | number of download attempts in case of an error (not supported by uclient-fetch)                             |
-| ban_fetchinsecure       | option | 0                             | don't check SSL server certificates during download                                                          |
-| ban_mailreceiver        | option | -                             | receiver address for banIP related notification E-Mails                                                      |
-| ban_mailsender          | option | no-reply@banIP                | sender address for banIP related notification E-Mails                                                        |
-| ban_mailtopic           | option | banIP notification            | topic for banIP related notification E-Mails                                                                 |
-| ban_mailprofile         | option | ban_notify                    | mail profile used in 'msmtp' for banIP related notification E-Mails                                          |
-| ban_mailnotification    | option | 0                             | receive E-Mail notifications with every banIP run                                                            |
-| ban_reportelements      | option | 1                             | count Set elements in the report, disable this option to speed up the report significantly                   |
-| ban_resolver            | option | -                             | external resolver used for DNS lookups                                                                       |
+| Option                  | Type   | Default                       | Description                                                                                                       |
+| :---------------------- | :----- | :---------------------------- | :---------------------------------------------------------------------------------------------------------------- |
+| ban_enabled             | option | 0                             | enable the banIP service                                                                                          |
+| ban_nicelimit           | option | 0                             | ulimit nice level of the banIP service (range 0-19)                                                               |
+| ban_filelimit           | option | 1024                          | ulimit max open/number of files (range 1024-4096)                                                                 |
+| ban_loglimit            | option | 100                           | scan only the last n log entries permanently. A value of '0' disables the monitor                                 |
+| ban_logcount            | option | 1                             | how many times the IP must appear in the log to be considered as suspicious                                       |
+| ban_logterm             | list   | regex                         | various regex for logfile parsing (default: dropbear, sshd, luci, nginx, asterisk)                                |
+| ban_logreadfile         | option | /var/log/messages             | alternative location for parsing the log file, e.g. via syslog-ng, to deactivate the standard parsing via logread |
+| ban_autodetect          | option | 1                             | auto-detect wan interfaces, devices and subnets                                                                   |
+| ban_debug               | option | 0                             | enable banIP related debug logging                                                                                |
+| ban_loginput            | option | 1                             | log drops in the wan-input chain                                                                                  |
+| ban_logforwardwan       | option | 1                             | log drops in the wan-forward chain                                                                                |
+| ban_logforwardlan       | option | 0                             | log rejects in the lan-forward chain                                                                              |
+| ban_autoallowlist       | option | 1                             | add wan IPs/subnets and resolved domains automatically to the local allowlist (not only to the Sets)              |
+| ban_autoblocklist       | option | 1                             | add suspicious attacker IPs and resolved domains automatically to the local blocklist (not only to the Sets)      |
+| ban_autoblocksubnet     | option | 0                             | add entire subnets to the blocklist Sets based on an additional RDAP request with the suspicious IP               |
+| ban_autoallowuplink     | option | subnet                        | limit the uplink autoallow function to: 'subnet', 'ip' or 'disable' it at all                                     |
+| ban_allowlistonly       | option | 0                             | restrict the internet access from/to a given number of secure websites/IPs                                        |
+| ban_basedir             | option | /tmp                          | base working directory while banIP processing                                                                     |
+| ban_reportdir           | option | /tmp/banIP-report             | directory where banIP stores the report files                                                                     |
+| ban_backupdir           | option | /tmp/banIP-backup             | directory where banIP stores the compressed backup files                                                          |
+| ban_protov4             | option | - / autodetect                | enable IPv4 support                                                                                               |
+| ban_protov6             | option | - / autodetect                | enable IPv4 support                                                                                               |
+| ban_ifv4                | list   | - / autodetect                | logical wan IPv4 interfaces, e.g. 'wan'                                                                           |
+| ban_ifv6                | list   | - / autodetect                | logical wan IPv6 interfaces, e.g. 'wan6'                                                                          |
+| ban_dev                 | list   | - / autodetect                | wan device(s), e.g. 'eth2'                                                                                        |
+| ban_vlanallow           | list   | -                             | always allow certain VLAN forwards, e.g. br-lan.20                                                                |
+| ban_vlanblock           | list   | -                             | always block certain VLAN forwards, e.g. br-lan.10                                                                |
+| ban_trigger             | list   | -                             | logical reload trigger interface(s), e.g. 'wan'                                                                   |
+| ban_triggerdelay        | option | 10                            | trigger timeout during interface reload and boot                                                                  |
+| ban_deduplicate         | option | 1                             | deduplicate IP addresses across all active Sets                                                                   |
+| ban_splitsize           | option | 0                             | split ext. Sets after every n lines/members (saves RAM)                                                           |
+| ban_cores               | option | - / autodetect                | limit the cpu cores used by banIP (saves RAM)                                                                     |
+| ban_nftloglevel         | option | warn                          | nft loglevel, values: emerg, alert, crit, err, warn, notice, info, debug                                          |
+| ban_nftpriority         | option | -200                          | nft priority for the banIP table (default is the prerouting table priority)                                       |
+| ban_nftpolicy           | option | memory                        | nft policy for banIP-related Sets, values: memory, performance                                                    |
+| ban_nftexpiry           | option | -                             | expiry time for auto added blocklist members, e.g. '5m', '2h' or '1d'                                             |
+| ban_feed                | list   | -                             | external download feeds, e.g. 'yoyo', 'doh', 'country' or 'talos' (see feed table)                                |
+| ban_asn                 | list   | -                             | ASNs for the 'asn' feed, e.g.'32934'                                                                              |
+| ban_country             | list   | -                             | country iso codes for the 'country' feed, e.g. 'ru'                                                               |
+| ban_blockpolicy         | option | -                             | limit the default block policy to a certain chain, e.g. 'input', 'forwardwan' or 'forwardlan'                     |
+| ban_blocktype           | option | drop                          | 'drop' packets silently on input and forwardwan chains or actively 'reject' the traffic                           |
+| ban_blockinput          | list   | -                             | limit a feed to the wan-input chain, e.g. 'country'                                                               |
+| ban_blockforwardwan     | list   | -                             | limit a feed to the wan-forward chain, e.g. 'debl'                                                                |
+| ban_blockforwardlan     | list   | -                             | limit a feed to the lan-forward chain, e.g. 'doh'                                                                 |
+| ban_fetchcmd            | option | - / autodetect                | 'uclient-fetch', 'wget', 'curl' or 'aria2c'                                                                       |
+| ban_fetchparm           | option | - / autodetect                | set the config options for the selected download utility                                                          |
+| ban_fetchretry          | option | 5                             | number of download attempts in case of an error (not supported by uclient-fetch)                                  |
+| ban_fetchinsecure       | option | 0                             | don't check SSL server certificates during download                                                               |
+| ban_mailreceiver        | option | -                             | receiver address for banIP related notification E-Mails                                                           |
+| ban_mailsender          | option | no-reply@banIP                | sender address for banIP related notification E-Mails                                                             |
+| ban_mailtopic           | option | banIP notification            | topic for banIP related notification E-Mails                                                                      |
+| ban_mailprofile         | option | ban_notify                    | mail profile used in 'msmtp' for banIP related notification E-Mails                                               |
+| ban_mailnotification    | option | 0                             | receive E-Mail notifications with every banIP run                                                                 |
+| ban_reportelements      | option | 1                             | count Set elements in the report, disable this option to speed up the report significantly                        |
+| ban_resolver            | option | -                             | external resolver used for DNS lookups                                                                            |
 
 ## Examples
 **banIP report information**  
