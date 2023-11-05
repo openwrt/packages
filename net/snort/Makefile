@@ -31,7 +31,7 @@ define Package/snort
   SUBMENU:=Firewall
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libdaq +libdnet +libnghttp2 +libopenssl +libpcap +libpcre +libpthread +libtirpc +libuuid +zlib @HAS_LUAJIT_ARCH +luajit +SNORT_LZMA:liblzma
+  DEPENDS:=+libdaq +libdnet +libnghttp2 +libopenssl +libpcap +libpcre2 +libpthread +libtirpc +libuuid +zlib @HAS_LUAJIT_ARCH +luajit +SNORT_LZMA:liblzma
   TITLE:=Lightweight Network Intrusion Detection System
   URL:=http://www.snort.org/
   CONFLICTS:=snort3
@@ -57,8 +57,8 @@ CONFIGURE_ARGS += \
 	--with-dnet-libraries="$(STAGING_DIR)/usr/lib" \
 	--with-libpcap-includes="$(STAGING_DIR)/usr/include" \
 	--with-libpcap-libraries="$(STAGING_DIR)/usr/lib" \
-	--with-libpcre-includes="$(STAGING_DIR)/usr/include" \
-	--with-libpcre-libraries="$(STAGING_DIR)/usr/lib" \
+	--with-libpcre2-includes="$(STAGING_DIR)/usr/include" \
+	--with-libpcre2-libraries="$(STAGING_DIR)/usr/lib" \
 	--with-daq-includes="$(STAGING_DIR)/usr/include/daq2" \
 	--with-daq-libraries="$(STAGING_DIR)/usr/lib/daq2" \
 	--disable-static-daq
