@@ -1,0 +1,50 @@
+From 0dd2511ff470cbbcdcdc80f422537dff08168cab Mon Sep 17 00:00:00 2001
+From: Christian Marangi <ansuelsmth@gmail.com>
+Date: Sun, 5 Nov 2023 20:01:14 +0100
+Subject: [PATCH] Tweak project to use dns_sd-mdns
+
+Tweak project to use dns_sd-mdns to permit coexist with avahi.
+
+Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
+---
+ configure.ac                               | 4 ++--
+ libdmapsharing/dmap-mdns-browser-dnssd.c   | 2 +-
+ libdmapsharing/dmap-mdns-publisher-dnssd.c | 2 +-
+ 3 files changed, 4 insertions(+), 4 deletions(-)
+
+--- a/configure.ac
++++ b/configure.ac
+@@ -228,9 +228,9 @@ fi
+ 
+ if test x"$HAVE_AVAHI" = xno; then
+ 	if test x"$WITH_MDNS" = xauto || test x"$WITH_MDNS" = xdns_sd; then
+-		AC_CHECK_HEADERS(dns_sd.h, HAVE_DNS_SD=yes)
++		AC_CHECK_HEADERS(mdns/dns_sd.h, HAVE_DNS_SD=yes)
+ 		if test x"$HAVE_DNS_SD" = xyes; then
+-			AC_CHECK_LIB(dns_sd, DNSServiceRegister, DNS_SD_LIBS="-ldns_sd",)
++			AC_CHECK_LIB(dns_sd-mdns, DNSServiceRegister, DNS_SD_LIBS="-ldns_sd-mdns",)
+ 		fi
+ 	fi
+ fi
+--- a/libdmapsharing/dmap-mdns-browser-dnssd.c
++++ b/libdmapsharing/dmap-mdns-browser-dnssd.c
+@@ -18,7 +18,7 @@
+ 
+ #include <stdlib.h>
+ #include <stdio.h>
+-#include <dns_sd.h>
++#include <mdns/dns_sd.h>
+ #include <string.h>
+ #include <assert.h>
+ #include <time.h>
+--- a/libdmapsharing/dmap-mdns-publisher-dnssd.c
++++ b/libdmapsharing/dmap-mdns-publisher-dnssd.c
+@@ -21,7 +21,7 @@
+ #include <stdio.h>
+ #include <string.h>
+ #include <glib.h>
+-#include <dns_sd.h>
++#include <mdns/dns_sd.h>
+ #include <arpa/inet.h>
+ 
+ #include "dmap-mdns-publisher.h"
