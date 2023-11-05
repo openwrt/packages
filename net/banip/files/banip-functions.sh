@@ -23,7 +23,8 @@ ban_rtfile="/var/run/banip_runtime.json"
 ban_rdapfile="/var/run/banip_rdap.json"
 ban_rdapurl="https://rdap.db.ripe.net/ip/"
 ban_lock="/var/run/banip.lock"
-ban_logreadcmd="$(command -v logread)"
+ban_logreadfile="/var/log/messages"
+ban_logreadcmd=""
 ban_logcmd="$(command -v logger)"
 ban_ubuscmd="$(command -v ubus)"
 ban_nftcmd="$(command -v nft)"
@@ -188,7 +189,12 @@ f_rmpid() {
 	local ppid pid pids
 
 	ppid="$("${ban_catcmd}" "${ban_pidfile}" 2>/dev/null)"
-	[ -n "${ppid}" ] && pids="$(pgrep -P "${ppid}" 2>/dev/null)"
+	if [ -n "${ppid}" ]; then
+		pids="$(pgrep -P "${ppid}" 2>/dev/null)"
+		for pid in ${pids}; do
+			pids="${pids} $(pgrep -P "${pid}" 2>/dev/null)"
+		done
+	fi
 	for pid in ${pids}; do
 		kill -INT "${pid}" >/dev/null 2>&1
 	done
@@ -283,19 +289,25 @@ f_conf() {
 		}
 	}
 	config_load banip
+	[ -f "${ban_logreadfile}" ] && ban_logreadcmd="$(command -v tail)" || ban_logreadcmd="$(command -v logread)"
 }
 
 # get nft/monitor actuals
 #
 f_actual() {
-	local nft monitor
+	local nft monitor ppid pid
 
 	if "${ban_nftcmd}" -t list set inet banIP allowlistv4MAC >/dev/null 2>&1; then
 		nft="$(f_char "1")"
 	else
 		nft="$(f_char "0")"
 	fi
-	if pgrep -f "${ban_logreadcmd##*/}" -P "$("${ban_catcmd}" "${ban_pidfile}" 2>/dev/null)" >/dev/null 2>&1; then
+
+	ppid="$("${ban_catcmd}" "${ban_pidfile}" 2>/dev/null)"
+	if [ -n "${ppid}" ]; then
+		pid="$(pgrep -oP "${ppid}" 2>/dev/null)"
+	fi
+	if pgrep -f "${ban_logreadcmd##*/}" -P "${pid}" >/dev/null 2>&1; then
 		monitor="$(f_char "1")"
 	else
 		monitor="$(f_char "0")"
@@ -1471,12 +1483,20 @@ f_mail() {
 # log monitor
 #
 f_monitor() {
-	local nft_expiry line proto ip log_raw log_count rdap_log rdap_rc rdap_elements rdap_info
+	local logread_cmd loglimit_cmd nft_expiry line proto ip log_raw log_count rdap_log rdap_rc rdap_elements rdap_info
 
-	if [ -x "${ban_logreadcmd}" ] && [ -n "${ban_logterm%%??}" ] && [ "${ban_loglimit}" != "0" ]; then
-		f_log "info" "start detached banIP log service"
+	if [ -f "${ban_logreadfile}" ]; then
+		logread_cmd="${ban_logreadcmd} -qf ${ban_logreadfile} 2>/dev/null | ${ban_grepcmd} -e \"${ban_logterm%%??}\" 2>/dev/null"
+		loglimit_cmd="${ban_logreadcmd} -qn ${ban_loglimit} ${ban_logreadfile} 2>/dev/null"
+	elif printf "%s" "${ban_packages}" | "${ban_grepcmd}" -q '"logd'; then
+		logread_cmd="${ban_logreadcmd} -fe \"${ban_logterm%%??}\" 2>/dev/null"
+		loglimit_cmd="${ban_logreadcmd} -l ${ban_loglimit} 2>/dev/null"
+	fi
+
+	if [ -x "${ban_logreadcmd}" ] && [ -n "${logread_cmd}" ] && [ -n "${loglimit_cmd}" ] && [ -n "${ban_logterm%%??}" ] && [ "${ban_loglimit}" != "0" ]; then
+		f_log "info" "start detached banIP log service (${ban_logreadcmd})"
 		[ -n "${ban_nftexpiry}" ] && nft_expiry="timeout $(printf "%s" "${ban_nftexpiry}" | "${ban_grepcmd}" -oE "([0-9]+[d|h|m|s])+$")"
-		"${ban_logreadcmd}" -fe "${ban_logterm%%??}" 2>/dev/null |
+		eval "${logread_cmd}" |
 			while read -r line; do
 				: >"${ban_rdapfile}"
 				proto=""
@@ -1492,7 +1512,7 @@ f_monitor() {
 				fi
 				if [ -n "${proto}" ] && ! "${ban_nftcmd}" get element inet banIP blocklist"${proto}" "{ ${ip} }" >/dev/null 2>&1 && ! "${ban_grepcmd}" -q "^${ip}" "${ban_allowlist}"; then
 					f_log "info" "suspicious IP '${ip}'"
-					log_raw="$("${ban_logreadcmd}" -l "${ban_loglimit}" 2>/dev/null)"
+					log_raw="$(eval ${loglimit_cmd})"
 					log_count="$(printf "%s\n" "${log_raw}" | "${ban_grepcmd}" -c "suspicious IP '${ip}'")"
 					if [ "${log_count}" -ge "${ban_logcount}" ]; then
 						if [ "${ban_autoblocksubnet}" = "1" ]; then
