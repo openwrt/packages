@@ -1,0 +1,35 @@
+From f4e9d0868c01246bd045e7e1ec0baab7def4f0d8 Mon Sep 17 00:00:00 2001
+From: Christian Marangi <ansuelsmth@gmail.com>
+Date: Sun, 5 Nov 2023 19:36:36 +0100
+Subject: [PATCH] mdns: use dns_sd-mdns for dns_sd library with mDNSResponder
+
+mDNSResponder has been tweaked to use dns_sd-mdns instead of the generic
+dns_sd to permit coexisting with avahi.
+
+Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
+---
+ src/mdns/CMakeLists.txt  | 2 +-
+ src/mdns/mdns_mdnssd.hpp | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+--- a/src/mdns/CMakeLists.txt
++++ b/src/mdns/CMakeLists.txt
+@@ -57,6 +57,6 @@ if(OTBR_MDNS STREQUAL "mDNSResponder")
+             otbr-common
+         PRIVATE
+             otbr-utils
+-            dns_sd
++            dns_sd-mdns
+     )
+ endif()
+--- a/src/mdns/mdns_mdnssd.hpp
++++ b/src/mdns/mdns_mdnssd.hpp
+@@ -43,7 +43,7 @@
+ #include <vector>
+ 
+ #include <assert.h>
+-#include <dns_sd.h>
++#include <mdns/dns_sd.h>
+ 
+ #include "common/code_utils.hpp"
+ #include "common/mainloop.hpp"
