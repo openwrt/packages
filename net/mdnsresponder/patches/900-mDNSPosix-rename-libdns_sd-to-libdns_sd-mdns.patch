@@ -1,0 +1,104 @@
+From 54f56d8233b62b9ea80dc5b20b76b087eb08eebc Mon Sep 17 00:00:00 2001
+From: Christian Marangi <ansuelsmth@gmail.com>
+Date: Sun, 5 Nov 2023 19:33:18 +0100
+Subject: [PATCH] mDNSPosix: rename libdns_sd to libdns_sd-mdns
+
+Rename libdns_sd to libdns_sd-mdns to permit coexisting with avahi
+compat library.
+
+Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
+---
+ Clients/Makefile   |  2 +-
+ mDNSPosix/Makefile | 22 +++++++++++-----------
+ 2 files changed, 12 insertions(+), 12 deletions(-)
+
+--- a/Clients/Makefile
++++ b/Clients/Makefile
+@@ -42,7 +42,7 @@ TARGETS = build/dns-sd build/dns-sd64
+ LIBS =
+ else
+ TARGETS = build/dns-sd
+-LIBS = -L../mDNSPosix/$(BUILDDIR)/ -ldns_sd
++LIBS = -L../mDNSPosix/$(BUILDDIR)/ -ldns_sd-mdns
+ endif
+ 
+ all: $(TARGETS)
+--- a/mDNSPosix/Makefile
++++ b/mDNSPosix/Makefile
+@@ -30,13 +30,13 @@
+ # If "make os=xxx" gives lots of errors like "Missing dependency operator",
+ # then try typing "gmake os=xxx" instead.
+ #
+-# This Makefile builds an mDNSResponder daemon and a libdns_sd.so shared library
++# This Makefile builds an mDNSResponder daemon and a libdns_sd-mdns.so shared library
+ # for Linux. It also builds several example programs for embedded systems.
+ #
+ # Make with no arguments to build all production targets.
+ # 'make DEBUG=1' to build debugging targets.
+ # 'make clean' or 'make clean DEBUG=1' to delete prod/debug objects & targets
+-# 'sudo make install [DEBUG=1]' to install mdnsd daemon and libdns_sd.
++# 'sudo make install [DEBUG=1]' to install mdnsd daemon and libdns_sd-mdns.
+ #
+ # Notes:
+ # $@ means "The file name of the target of the rule"
+@@ -236,7 +236,7 @@ MDNSCFLAGS = $(CFLAGS) $(CFLAGS_COMMON)
+ 
+ #############################################################################
+ 
+-all: setup Daemon libdns_sd Clients SAClient SAResponder SAProxyResponder Identify NetMonitor $(OPTIONALTARG)
++all: setup Daemon libdns_sd-mdns Clients SAClient SAResponder SAProxyResponder Identify NetMonitor $(OPTIONALTARG)
+ 
+ install: setup InstalledStartup InstalledDaemon InstalledLib InstalledManPages InstalledClients $(OPTINSTALL)
+ 
+@@ -272,17 +272,17 @@ $(BUILDDIR)/mdnsd: $(DAEMONOBJS)
+ 	$(CC) -o $@ $+ $(LINKOPTS)
+ 	$(STRIP) $@
+ 
+-# libdns_sd target builds the client library
+-libdns_sd: setup $(BUILDDIR)/libdns_sd.$(LDSUFFIX)
++# libdns_sd-mdns target builds the client library
++libdns_sd-mdns: setup $(BUILDDIR)/libdns_sd-mdns.$(LDSUFFIX)
+ 	@echo "Client library done"
+ 
+ CLIENTLIBOBJS = $(OBJDIR)/dnssd_clientlib.c.so.o $(OBJDIR)/dnssd_clientstub.c.so.o $(OBJDIR)/dnssd_ipc.c.so.o
+ 
+-$(BUILDDIR)/libdns_sd.$(LDSUFFIX): $(CLIENTLIBOBJS)
++$(BUILDDIR)/libdns_sd-mdns.$(LDSUFFIX): $(CLIENTLIBOBJS)
+ 	$(LD) $(SOOPTS) $(LINKOPTS) -o $@ $+
+ 	$(STRIP) $@
+ 
+-Clients: setup libdns_sd ../Clients/build/dns-sd
++Clients: setup libdns_sd-mdns ../Clients/build/dns-sd
+ 	@echo "Clients done"
+ 
+ ../Clients/build/dns-sd: ../Clients/dns-sd.c
+@@ -302,7 +302,7 @@ $(BUILDDIR)/$(NSSLIBFILE): $(CLIENTLIBOB
+ InstalledDaemon: $(INSTBASE)/sbin/mdnsd
+ 	@echo $+ " installed"
+ 
+-InstalledLib: $(INSTBASE)/lib/libdns_sd.$(LDSUFFIX).$(LIBVERS) $(INSTBASE)/include/dns_sd.h
++InstalledLib: $(INSTBASE)/lib/libdns_sd-mdns.$(LDSUFFIX).$(LIBVERS) $(INSTBASE)/include/dns_sd.h
+ 	@echo $+ " installed"
+ 
+ InstalledStartup: $(STARTUPSCRIPTDIR)/$(STARTUPSCRIPTNAME)
+@@ -323,9 +323,9 @@ $(INSTBASE)/sbin/mdnsd: $(BUILDDIR)/mdns
+ 	$(CP) $< $@
+ 	$(STARTUPSCRIPTDIR)/$(STARTUPSCRIPTNAME) start
+ 
+-$(INSTBASE)/lib/libdns_sd.$(LDSUFFIX).$(LIBVERS): $(BUILDDIR)/libdns_sd.$(LDSUFFIX)
++$(INSTBASE)/lib/libdns_sd-mdns.$(LDSUFFIX).$(LIBVERS): $(BUILDDIR)/libdns_sd-mdns.$(LDSUFFIX)
+ 	$(CP) $< $@
+-	$(LN) $@ $(INSTBASE)/lib/libdns_sd.$(LDSUFFIX)
++	$(LN) $@ $(INSTBASE)/lib/libdns_sd-mdns.$(LDSUFFIX)
+ ifdef LDCONFIG
+ 	# -m means 'merge into existing database', -R means 'rescan directories'
+ 	$(LDCONFIG) -mR
+@@ -437,7 +437,7 @@ JARCONTENTS =	$(OBJDIR)/com/apple/dnssd/
+ $(BUILDDIR)/dns_sd.jar: $(JARCONTENTS) setup
+ 	$(JAR) -cf $@ -C $(OBJDIR) com
+ 
+-$(BUILDDIR)/libjdns_sd.$(LDSUFFIX): $(JAVASRC)/JNISupport.c $(OBJDIR)/DNSSD.java.h setup libdns_sd
++$(BUILDDIR)/libjdns_sd.$(LDSUFFIX): $(JAVASRC)/JNISupport.c $(OBJDIR)/DNSSD.java.h setup libdns_sd-mdns
+ 	$(CC) -o $@ $< $(JAVACFLAGS) -I$(OBJDIR) -L$(BUILDDIR)
+ 
+ $(OBJDIR)/com/apple/dnssd/%.class:	$(JAVASRC)/%.java
