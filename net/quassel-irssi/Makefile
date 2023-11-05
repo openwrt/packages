@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=quassel-irssi
 PKG_SOURCE_DATE:=2017-11-30
 PKG_SOURCE_VERSION:=079be662dde374a383646256108a4974c2bc7796
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/phhusson/quassel-irssi/tar.gz/$(PKG_SOURCE_VERSION)?
