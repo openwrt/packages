@@ -1,4 +1,4 @@
-# Copyright 2023 Stan Grishin (stangri@melmac.ca)
+# Copyright 2023 MOSSDeF, Stan Grishin (stangri@melmac.ca)
 # TLD optimization written by Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adblock-fast
 PKG_VERSION:=1.0.0
-PKG_RELEASE:=7
+PKG_RELEASE:=11
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.ca>
 PKG_LICENSE:=GPL-3.0-or-later
 
@@ -46,7 +46,9 @@ endef
 define Package/adblock-fast/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/etc/init.d/adblock-fast $(1)/etc/init.d/adblock-fast
-	$(SED) "s|^\(readonly PKG_VERSION\).*|\1='$(PKG_VERSION)-$(PKG_RELEASE)'|" $(1)/etc/init.d/adblock-fast
+	$(INSTALL_DIR) $(1)/usr/share/adblock-fast
+	$(INSTALL_DATA) ./files/usr/share/adblock-fast/functions.sh $(1)/usr/share/adblock-fast/functions.sh
+	$(SED) "s|^\(readonly PKG_VERSION\).*|\1='$(PKG_VERSION)-$(PKG_RELEASE)'|" $(1)/usr/share/adblock-fast/functions.sh
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/etc/config/adblock-fast $(1)/etc/config/adblock-fast
 	$(INSTALL_DIR) $(1)/tmp
