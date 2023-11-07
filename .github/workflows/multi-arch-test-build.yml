@@ -101,17 +101,20 @@ jobs:
           echo "$EOF" >> $GITHUB_ENV
 
       - name: Build
-        uses: openwrt/gh-action-sdk@v5
+        uses: openwrt/gh-action-sdk@v7
         env:
           ARCH: ${{ matrix.arch }}-${{ env.BRANCH }}
           FEEDNAME: packages_ci
           INDEX: 1
           KEY_BUILD: ${{ env.KEY_BUILD }}
+          V: s
 
       - name: Move created packages to project dir
+        if: always()
         run: cp bin/packages/${{ matrix.arch }}/packages_ci/* . || true
 
       - name: Collect metadata
+        if: always()
         run: |
           MERGE_ID=$(git rev-parse --short HEAD)
           echo "MERGE_ID=$MERGE_ID" >> $GITHUB_ENV
@@ -122,6 +125,7 @@ jobs:
           echo "ARCHIVE_NAME=${{matrix.arch}}-PR$PRNUMBER-$MERGE_ID" >> $GITHUB_ENV
 
       - name: Generate metadata
+        if: always()
         run: |
           cat << _EOF_ > PKG-INFO
           Metadata-Version: 2.1
@@ -148,6 +152,7 @@ jobs:
           cat PKG-INFO
 
       - name: Store packages
+        if: always()
         uses: actions/upload-artifact@v3
         with:
           name: ${{env.ARCHIVE_NAME}}-packages
@@ -158,6 +163,7 @@ jobs:
             PKG-INFO
 
       - name: Store logs
+        if: always()
         uses: actions/upload-artifact@v3
         with:
           name: ${{env.ARCHIVE_NAME}}-logs
@@ -166,6 +172,7 @@ jobs:
             PKG-INFO
 
       - name: Remove logs
+        if: always()
         run: sudo rm -rf logs/ || true
 
       - name: Check if any packages were built
