@@ -1,0 +1,51 @@
+## Syntax highlighting for OpenWrt ucode scripts.
+
+syntax ucode "/ucode/|\.u[ct]$"
+header "^#!.*\<ucode\>"
+comment "//"
+
+# Declarations
+color green "\<(let|const|function|this)\>"
+
+# Arrow functions
+color green "(\<\w+\>|\([[:alnum:][:space:]_,.]*\))[[:space:]]*=>"
+
+# Flow control and keywords
+color brightyellow "\<(while|if|else|elif|switch|case|default|for|in|endif|endfor|endwhile|endfunction)\>"
+color brightyellow "\<(export|import|try|catch|delete)\>"
+
+# Exit points
+color magenta "\<(break|continue|return)\>"
+
+# Numeric literals
+color cyan "\<([0-9]+\.[0-9]+([eE][+-]?[0-9]+)?|[0-9]+[eE][+-]?[0-9]+)\>"
+color cyan "\<0[xX][[:xdigit:]]+(\.[[:xdigit:]]+)?\>"
+color cyan "\<(0[oO][0-7]+|0[bB][01]+|[0-9]+)\>"
+
+# Special values
+color cyan "\<(true|false|null|NaN|Infinity)\>"
+
+# Strings
+color brightmagenta ""([^"\{%#}]|\\.|\{[^"\{%#]|[%#}][^"\}]|[{%#}]\\.)*[{%#}]?""
+color brightmagenta "'([^'\{%#}]|\\.|\{[^'\{%#]|[%#}][^'\}]|[{%#}]\\.)*[{%#}]?'"
+color brightmagenta "`([^`\{%#}]|\\.|\{[^`\{%#]|[%#}][^`\}]|[{%#}]\\.)*[{%#}]?`"
+
+# Template string expressions
+color normal start="\$\{" end="}"
+
+# Comments
+color brightblue "(^|[[:blank:]])//.*"
+color brightblue start="(^|[[:space:]])/\*" end="\*/"
+color brightblue start="\{#" end="#\}"
+
+# Trailing whitespace.
+color ,green "[[:space:]]+$"
+
+# Text outside template directives
+color slate start="[}%#]\}" end="\{[{%#]"
+color slate start="^#!" end="\{[{%#]"
+color slate "^([^{%#}]|\{[^{%#]|[%#}][^}])+\{[{%#]"
+
+# Template tags
+color white "\{[{%][+-]?|-?[%}]\}"
+color brightblue "\{#[+-]?|-?#\}"
