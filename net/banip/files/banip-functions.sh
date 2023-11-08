@@ -674,8 +674,8 @@ f_down() {
 
 	# restore local backups
 	#
-	if { [ "${ban_action}" != "reload" ] || [ "${feed_url}" = "local" ] || [ -n "${ban_etagparm}" ]; } && [ "${feed%v*}" != "allowlist" ] && [ "${feed%v*}" != "blocklist" ]; then
-		if [ -n "${ban_etagparm}" ] && [ "${ban_action}" = "reload" ] && [ "${feed_url}" != "local" ]; then
+	if [ "${feed%v*}" != "blocklist" ]; then
+		if [ -n "${ban_etagparm}" ] && [ "${ban_action}" = "reload" ] && [ "${feed_url}" != "local" ] && [ "${feed%v*}" != "allowlist" ]; then
 			etag_rc="0"
 			if [ "${feed%v*}" = "country" ]; then
 				for country in ${ban_country}; do
@@ -697,16 +697,21 @@ f_down() {
 			fi
 		fi
 		if [ "${etag_rc}" = "0" ] || [ "${ban_action}" != "reload" ] || [ "${feed_url}" = "local" ]; then
-			f_restore "${feed}" "${feed_url}" "${tmp_load}" "${etag_rc}"
+			if [ "${feed%v*}" = "allowlist" ] && [ ! -f "${tmp_allow}" ]; then
+				f_restore "allowlist" "-" "${tmp_allow}" "${etag_rc}"
+			else
+				f_restore "${feed}" "${feed_url}" "${tmp_load}" "${etag_rc}"
+			fi
 			restore_rc="${?}"
 			feed_rc="${restore_rc}"
 		fi
 	fi
 
-	# prepare local allowlist
+	# prepare local/remote allowlist
 	#
 	if [ "${feed%v*}" = "allowlist" ] && [ ! -f "${tmp_allow}" ]; then
 		"${ban_catcmd}" "${ban_allowlist}" 2>/dev/null >"${tmp_allow}"
+		feed_rc="${?}"
 		for feed_url in ${ban_allowurl}; do
 			feed_log="$("${ban_fetchcmd}" ${ban_fetchparm} "${tmp_load}" "${feed_url}" 2>&1)"
 			feed_rc="${?}"
@@ -714,8 +719,15 @@ f_down() {
 				"${ban_catcmd}" "${tmp_load}" 2>/dev/null >>"${tmp_allow}"
 			else
 				f_log "info" "download for feed '${feed%v*}' failed (rc: ${feed_rc:-"-"}/log: ${feed_log})"
+				break
 			fi
 		done
+		if [ "${feed_rc}" = "0" ]; then
+			f_backup "allowlist" "${tmp_allow}"
+		elif [ -z "${restore_rc}" ] && [ "${feed_rc}" != "0" ]; then
+			f_restore "allowlist" "-" "${tmp_allow}" "${feed_rc}"
+		fi
+		feed_rc="${?}"
 	fi
 
 	# handle local feeds
@@ -980,7 +992,11 @@ f_down() {
 	# load generated nft file in banIP table
 	#
 	if [ "${feed_rc}" = "0" ]; then
-		cnt_dl="$("${ban_awkcmd}" 'END{printf "%d",NR}' "${tmp_split}" 2>/dev/null)"
+		if [ "${feed%v*}" = "allowlist" ]; then
+			cnt_dl="$("${ban_awkcmd}" 'END{printf "%d",NR}' "${tmp_allow}" 2>/dev/null)"
+		else
+			cnt_dl="$("${ban_awkcmd}" 'END{printf "%d",NR}' "${tmp_split}" 2>/dev/null)"
+		fi
 		if [ "${cnt_dl:-"0"}" -gt "0" ] || [ "${feed_url}" = "local" ] || [ "${feed%v*}" = "allowlist" ] || [ "${feed%v*}" = "blocklist" ]; then
 			feed_log="$("${ban_nftcmd}" -f "${tmp_nft}" 2>&1)"
 			feed_rc="${?}"
@@ -1098,7 +1114,7 @@ f_genstatus() {
 				cnt_elements="$((cnt_elements + $("${ban_nftcmd}" -j list set inet banIP "${object}" 2>/dev/null | "${ban_jsoncmd}" -qe '@.nftables[*].set.elem[*]' | wc -l 2>/dev/null)))"
 			done
 		fi
-		runtime="action: ${ban_action:-"-"}, fetch: ${ban_fetchcmd##*/}, duration: ${duration:-"-"}, date: $(date "+%Y-%m-%d %H:%M:%S")"
+		runtime="action: ${ban_action:-"-"}, log: ${ban_logreadcmd##*/}, fetch: ${ban_fetchcmd##*/}, duration: ${duration:-"-"}, date: $(date "+%Y-%m-%d %H:%M:%S")"
 	fi
 	[ -s "${ban_customfeedfile}" ] && custom_feed="1"
 	[ "${ban_splitsize:-"0"}" -gt "0" ] && split="1"
