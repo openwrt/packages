@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wavemon
-PKG_VERSION:=0.9.3
+PKG_VERSION:=0.9.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/uoaerg/wavemon/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=ddbeb6ec8ed7d94fa895e5d57ecfe338495df3991f6facc7cf40aa121bf7ff60
+PKG_HASH:=f84c55a40b470f2b98908d20cd0b38ffef6f587daed23b50281c9592df3331c6
 
 PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -28,7 +28,7 @@ define Package/wavemon
   SECTION:=net
   CATEGORY:=Network
   TITLE:=N-curses based wireless network devices monitor
-  DEPENDS:=+libncurses +libpthread +libnl-genl
+  DEPENDS:=+libncurses +libpthread +libnl-genl +libnl-cli
   SUBMENU:=Wireless
   URL:=https://github.com/uoaerg/wavemon/releases
 endef

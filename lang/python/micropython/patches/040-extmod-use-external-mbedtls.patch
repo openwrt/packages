@@ -9,7 +9,7 @@ Subject: [PATCH 06/10] extmod: Use system mbedtls
 
 --- a/extmod/extmod.mk
 +++ b/extmod/extmod.mk
-@@ -131,84 +131,8 @@ SRC_THIRDPARTY_C += $(addprefix $(AXTLS_
+@@ -131,85 +131,8 @@ SRC_THIRDPARTY_C += $(addprefix $(AXTLS_
  	crypto/sha1.c \
  	)
  else ifeq ($(MICROPY_SSL_MBEDTLS),1)
@@ -54,7 +54,6 @@ Subject: [PATCH 06/10] extmod: Use system mbedtls
 -	md4.c \
 -	md5.c \
 -	md.c \
--	md_wrap.c \
 -	oid.c \
 -	padlock.c \
 -	pem.c \
@@ -79,9 +78,11 @@ Subject: [PATCH 06/10] extmod: Use system mbedtls
 -	ssl_cli.c \
 -	ssl_cookie.c \
 -	ssl_srv.c \
+-	ssl_msg.c \
 -	ssl_ticket.c \
 -	ssl_tls.c \
 -	timing.c \
+-	constant_time.c \
 -	x509.c \
 -	x509_create.c \
 -	x509_crl.c \

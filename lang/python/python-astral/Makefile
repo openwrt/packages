@@ -16,7 +16,7 @@ PKG_HASH:=9b7c3b412e9e69d172cfb24be0e6addcc9f1bd01a28db8bebe66d75ccc533d88
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 
 PKG_BUILD_DEPENDS:=python-poetry-core/host
 

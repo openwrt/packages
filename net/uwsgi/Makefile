@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=uwsgi
-PKG_VERSION:=2.0.21
+PKG_VERSION:=2.0.22
 PKG_RELEASE:=1
 
 PYPI_NAME:=uWSGI
 PYPI_SOURCE_NAME:=uwsgi
-PKG_HASH:=35a30d83791329429bc04fe44183ce4ab512fcf6968070a7bfba42fc5a0552a9
+PKG_HASH:=4cc4727258671ac5fa17ab422155e9aaef8a2008ebb86e4404b66deaae965db2
 
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=LICENSE
@@ -34,7 +34,7 @@ define Package/uwsgi
   SUBMENU:=Web Servers/Proxies
   TITLE:=The uWSGI server
   URL:=https://uwsgi-docs.readthedocs.io/en/latest/
-  DEPENDS:=+libpcre +libcap +libuuid
+  DEPENDS:=+libpcre2 +libcap +libuuid
 endef
 
 define Package/uwsgi-logfile-plugin

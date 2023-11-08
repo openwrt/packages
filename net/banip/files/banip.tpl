@@ -6,9 +6,9 @@
 #
 local banip_info report_info log_info system_info mail_text
 
-banip_info="$(/etc/init.d/banip status 2>/dev/null | awk '{NR=1;max=140;if(length($0)>max+1)while($0){if(NR==1){print substr($0,1,max)}else{print substr($0,1,max)}{$0=substr($0,max+1);NR=NR+1}}else print}')"
+banip_info="$(/etc/init.d/banip status 2>/dev/null | awk '{NR=1;max=160;if(length($0)>max+1)while($0){if(NR==1){print substr($0,1,max)}else{print substr($0,1,max)}{$0=substr($0,max+1);NR=NR+1}}else print}')"
 report_info="$(cat ${ban_reportdir}/ban_report.txt 2>/dev/null)"
-log_info="$("${ban_logreadcmd}" -l 100 -e "banIP/" 2>/dev/null | awk '{NR=1;max=140;if(length($0)>max+1)while($0){if(NR==1){print substr($0,1,max)}else{print substr($0,1,max)}{$0=substr($0,max+1);NR=NR+1}}else print}')"
+log_info="$("${ban_logreadcmd}" -l 100 -e "banIP/" 2>/dev/null | awk '{NR=1;max=160;if(length($0)>max+1)while($0){if(NR==1){print substr($0,1,max)}else{print substr($0,1,max)}{$0=substr($0,max+1);NR=NR+1}}else print}')"
 system_info="$(
 	strings /etc/banner 2>/dev/null
 	ubus call system board | awk 'BEGIN{FS="[{}\"]"}{if($2=="kernel"||$2=="hostname"||$2=="system"||$2=="model"||$2=="description")printf "  + %-12s: %s\n",$2,$4}'

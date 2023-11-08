@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=slang
 PKG_VERSION:=2.3.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://www.jedsoft.org/releases/slang \
@@ -23,9 +23,13 @@ PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
 PKG_BUILD_PARALLEL:=0
-PKG_CONFIG_DEPENDS:=CONFIG_BUILD_NLS
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_BUILD_NLS \
+	CONFIG_PACKAGE_libslang2-mod-onig \
+	CONFIG_PACKAGE_libslang2-mod-png \
+	CONFIG_PACKAGE_libslang2-mod-zlib
 
-SLANG_MODULES:= base64 chksum csv fcntl fork histogram iconv json onig pcre \
+SLANG_MODULES:= base64 chksum csv fcntl fork histogram iconv json onig \
 	png rand select slsmg socket stats sysconf termios varray zlib
 
 include $(INCLUDE_DIR)/package.mk
@@ -39,9 +43,10 @@ define Package/libslang2/Default
 endef
 
 define Package/libslang2/Default/description
-  Multi-platform programmer's library providing facilities for interactive
-  applications.  Includes such things as display/screen management,
-  keyboard input, keymaps, etc.  Includes the embeddable S-Lang interpreter.
+Multi-platform programmer's library providing facilities for interactive
+applications. Includes such things as display/screen management,
+keyboard input, keymaps, etc. Includes the embeddable S-Lang
+interpreter.
 endef
 
 define Package/libslang2
@@ -56,43 +61,42 @@ endef
 define Package/libslang2-modules
 $(call Package/libslang2/Default)
   TITLE+= (all modules)
-  DEPENDS:=$(foreach mod,$(SLANG_MODULES),+libslang2-mod-$(mod))
+  DEPENDS:=@PACKAGE_libslang2 $(foreach mod,$(SLANG_MODULES),+libslang2-mod-$(mod))
 endef
 
 define Package/libslang2-modules/description
 $(call Package/libslang2/Default/description)
 
-  This installs all of S-Lang's bundled modules.
+This package installs all of S-Lang's bundled modules.
+endef
+
+define Package/libslang2-mod/Default
+$(call Package/libslang2/Default)
+  DEPENDS:=@PACKAGE_libslang2
 endef
 
 define Package/libslang2-mod-iconv
-$(call Package/libslang2/Default)
+$(call Package/libslang2-mod/Default)
   TITLE+= (iconv module)
-  DEPENDS:=$(ICONV_DEPENDS)
+  DEPENDS+=$(ICONV_DEPENDS)
 endef
 
 define Package/libslang2-mod-onig
-$(call Package/libslang2/Default)
+$(call Package/libslang2-mod/Default)
   TITLE+= (onig module)
-  DEPENDS:=+oniguruma
-endef
-
-define Package/libslang2-mod-pcre
-$(call Package/libslang2/Default)
-  TITLE+= (pcre module)
-  DEPENDS:=+libpcre
+  DEPENDS+=+PACKAGE_libslang2-mod-onig:oniguruma
 endef
 
 define Package/libslang2-mod-png
-$(call Package/libslang2/Default)
+$(call Package/libslang2-mod/Default)
   TITLE+= (png module)
-  DEPENDS:=+libpng
+  DEPENDS+=+PACKAGE_libslang2-mod-png:libpng
 endef
 
 define Package/libslang2-mod-zlib
-$(call Package/libslang2/Default)
+$(call Package/libslang2-mod/Default)
   TITLE+= (zlib module)
-  DEPENDS:=+zlib
+  DEPENDS+=+PACKAGE_libslang2-mod-zlib:zlib
 endef
 
 define Package/slsh
@@ -104,8 +108,8 @@ define Package/slsh
 endef
 
 define Package/slsh/description
-  This is a shell which is mostly just a wrapper around the S-Lang Interpreter,
-  which is part of the S-Lang Library.
+This is a shell which is mostly just a wrapper around the S-Lang
+Interpreter, which is part of the S-Lang Library.
 endef
 
 TARGET_CFLAGS+= $(FPIC)
@@ -113,14 +117,14 @@ TARGET_CFLAGS+= $(FPIC)
 CONFIGURE_ARGS+= \
 	--enable-largefile \
 	--enable-warnings \
-	--with-terminfo=default \
 	--with-readline=slang \
-	$(if $(CONFIG_BUILD_NLS),--with-iconv=$(ICONV_PREFIX)) \
-	--with-onig="$(STAGING_DIR)/usr" \
-	--with-pcre="$(STAGING_DIR)/usr" \
-	--with-png="$(STAGING_DIR)/usr" \
-	--with-z="$(STAGING_DIR)/usr" \
-	--without-x
+	--with-terminfo=default \
+	--without-pcre \
+	--without-x \
+	$(if $(CONFIG_BUILD_NLS),--with-iconv="$(ICONV_PREFIX)",--without-iconv) \
+	$(if $(CONFIG_PACKAGE_libslang2-mod-onig),--with-onig="$(STAGING_DIR)/usr",--without-onig) \
+	$(if $(CONFIG_PACKAGE_libslang2-mod-png),--with-png="$(STAGING_DIR)/usr",--without-png) \
+	$(if $(CONFIG_PACKAGE_libslang2-mod-zlib),--with-z="$(STAGING_DIR)/usr",--without-z)
 
 define Build/Compile
 	$(call Build/Compile/Default,)
@@ -165,15 +169,15 @@ endef
 define BuildModule
   ifndef Package/libslang2-mod-$(1)
     define Package/libslang2-mod-$(1)
-    $$(call Package/libslang2/Default)
+    $$(call Package/libslang2-mod/Default)
       TITLE+= ($(1) module)
     endef
   endif
 
   define Package/libslang2-mod-$(1)/description
-  $$(call Package/libslang2/Default/description)
+$$(call Package/libslang2/Default/description)
 
-    This contains the $(1) module.
+This package contains the $(1) module.
   endef
 
   define Package/libslang2-mod-$(1)/install

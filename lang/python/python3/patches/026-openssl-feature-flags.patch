@@ -47,7 +47,7 @@
      PY_HASH_ENTRY(NULL, NULL, NULL, 0),
  };
  
-@@ -873,11 +889,15 @@ py_evp_fromname(PyObject *module, const
+@@ -874,11 +890,15 @@ py_evp_fromname(PyObject *module, const
          goto exit;
      }
  

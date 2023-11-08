@@ -1,0 +1,39 @@
+From b8d0b8cb6caa6940443b3e6ca32efc78d0c9d00e Mon Sep 17 00:00:00 2001
+From: Christian Marangi <ansuelsmth@gmail.com>
+Date: Sun, 1 Oct 2023 00:32:16 +0200
+Subject: [PATCH] autotools: reset PCRE CFLAGS/LIBS with both PCRE and PCRE2
+ present
+
+Commit b381ef3f6b6c ("autotools: indicate if PCRE or PCRE2 is being
+used") fixed a case where both pcre and pcre2 library are detected and
+put a preference on using pcre2.
+
+Although the commit fix this corner case, there is still a latent
+problem with trying to link/include both library. This is caused by the
+fact that in the Makefile.inc for src and lib, we include both
+PCRE_CFLAGS and PCRE2_CFLAGS and PCRE_LIBS and PCRE2_LIBS for each
+tool/lib.
+
+To handle this and not bloat the Makefile with additional condition,
+simply reset the PCRE_CFLAGS and PCRE_LIBS in case where we detect both
+library and we prefer to use pcre2.
+
+Fixes: b381ef3f6b6c ("autotools: indicate if PCRE or PCRE2 is being used")
+Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
+---
+ build/m4/aircrack_ng_pcre.m4 | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+--- a/build/m4/aircrack_ng_pcre.m4
++++ b/build/m4/aircrack_ng_pcre.m4
+@@ -75,6 +75,10 @@ fi
+ if test "x$HAVE_PCRE" = "xyes" && test "x$HAVE_PCRE2" = "xyes"; then
+     AC_DEFINE([HAVE_PCRE2], [1], [Define this if you have libpcre2-8 on your system])
+     PCRE2_NOTE="(Pcre and Pcre2 found, using Pcre2)"
++    # Reset PCRE cflags and libs variables as we include both PCRE and PCRE2 in Makefile.inc
++    # and would result in trying to link/include both library.
++    PCRE_CFLAGS=""
++    PCRE_LIBS=""
+ elif test "x$HAVE_PCRE" = "xyes"; then
+     AC_DEFINE([HAVE_PCRE], [1], [Define this if you have libpcre on your system])
+ elif test "x$HAVE_PCRE2" = "xyes"; then

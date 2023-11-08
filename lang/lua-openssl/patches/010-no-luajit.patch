@@ -1,10 +1,14 @@
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -8,7 +8,6 @@ option(BUILD_SHARED_LUA_OPENSSL "Shared
+@@ -8,10 +8,7 @@ option(BUILD_SHARED_LUA_OPENSSL "Shared
  
  include(GNUInstallDirs)
  
 -find_package(LuaJIT)
- if(NOT LUAJIT_FOUND)
-     find_package(Lua REQUIRED)
- endif()
+-if(NOT LUAJIT_FOUND)
+-    find_package(Lua REQUIRED)
+-endif()
++find_package(Lua REQUIRED)
+ find_package(OpenSSL REQUIRED)
+ 
+ set(CMAKE_THREAD_PREFER_PTHREAD TRUE)

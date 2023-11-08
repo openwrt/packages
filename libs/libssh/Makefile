@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libssh
 PKG_VERSION:=0.10.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.libssh.org/files/0.10/
@@ -32,7 +32,7 @@ define Package/libssh
   CATEGORY:=Libraries
   URL:=$(PKG_SOURCE_URL)
   TITLE:=SSH library
-  DEPENDS:=+libpthread +librt +zlib +libopenssl
+  DEPENDS:=+libpthread +librt +zlib +libmbedtls
 endef
 
 define Package/libssh/description
@@ -46,6 +46,7 @@ CMAKE_OPTIONS += \
 	-DHAVE_TERMIOS_H=1 \
 	-DWITH_EXAMPLES:BOOL=OFF \
 	-DWITH_GCRYPT:BOOL=OFF \
+	-DWITH_MBEDTLS:BOOL=ON \
 	-DWITH_GSSAPI:BOOL=OFF \
 	-DWITH_LIBZ:BOOL=ON \
 	-DWITH_NACL:BOOL=OFF \

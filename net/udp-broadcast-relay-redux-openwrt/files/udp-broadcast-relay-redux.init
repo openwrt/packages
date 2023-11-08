@@ -15,7 +15,8 @@ validate_section_udp_broadcast_relay_redux()
 	'port:port' \
 	'network:list(string)' \
 	'src_override:ip4addr' \
-	'dest_override:ip4addr'
+	'dest_override:ip4addr' \
+	'multicast:ip4addr'
 
     [ -z "$id" ] && return 1
 
@@ -27,7 +28,7 @@ validate_section_udp_broadcast_relay_redux()
 }
 
 udp_broadcast_relay_redux_instance() {
-    local net network ifname id port src_override dest_override
+    local net network ifname id port src_override dest_override multicast
 
     validate_section_udp_broadcast_relay_redux "${1}" || {
 	echo "Validation failed"
@@ -56,6 +57,10 @@ udp_broadcast_relay_redux_instance() {
 
     if [ -n "$dest_override" ] ; then
         procd_append_param command "-t" "$dest_override"
+    fi
+
+    if [ -n "$multicast" ] ; then
+        procd_append_param command "--multicast" "$multicast"
     fi
 
     procd_add_jail ubr-${PIDCOUNT} cgroupsns

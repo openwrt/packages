@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=udp-broadcast-relay-redux
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_LICENSE:=GPL-2.0
 
 PKG_SOURCE_PROTO:=git

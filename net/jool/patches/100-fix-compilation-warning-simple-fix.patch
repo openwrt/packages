@@ -1,6 +1,6 @@
 --- a/src/mod/common/skbuff.c
 +++ b/src/mod/common/skbuff.c
-@@ -109,9 +109,9 @@ static void print_skb_fields(struct sk_buff *skb, unsigned int tabs)
+@@ -109,9 +109,9 @@ static void print_skb_fields(struct sk_b
  	print(tabs, "network_header:%u", skb->network_header);
  	print(tabs, "mac_header:%u", skb->mac_header);
  	print(tabs, "head:%p", skb->head);
@@ -15,7 +15,7 @@
  static int truncated(unsigned int tabs)
 --- a/src/mod/common/xlator.c
 +++ b/src/mod/common/xlator.c
-@@ -875,7 +875,7 @@ void xlator_put(struct xlator *jool)
+@@ -889,7 +889,7 @@ void xlator_put(struct xlator *jool)
  static bool offset_equals(struct instance_entry_usr *offset,
  		struct jool_instance *instance)
  {
@@ -26,7 +26,7 @@
  
 --- a/src/mod/common/nl/instance.c
 +++ b/src/mod/common/nl/instance.c
-@@ -37,7 +37,7 @@ static int serialize_instance(struct xlator *entry, void *arg)
+@@ -37,7 +37,7 @@ static int serialize_instance(struct xla
  	if (!root)
  		return 1;
  

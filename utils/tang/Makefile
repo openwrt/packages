@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tang
-PKG_VERSION:=12
-PKG_RELEASE:=2
+PKG_VERSION:=14
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/latchset/$(PKG_NAME)/releases/download/v$(PKG_VERSION)/
-PKG_HASH:=892e0b26ee2db01f2c257b083fbb85aede7d3f59de7361c9c9528c0d5783e69c
+PKG_HASH:=04263ed1cc98d60cab29fe47f908921b7b1aa4d6da5f9de2fcbe543773b75886
 
 PKG_MAINTAINER:=Tibor Dudlák <tibor.dudlak@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -25,7 +25,7 @@ include $(INCLUDE_DIR)/meson.mk
 define Package/tang
   SECTION:=utils
   TITLE:=tang v$(PKG_VERSION) - daemon for binding data to the presence of a third party
-  DEPENDS:=+libhttp-parser +jose +bash
+  DEPENDS:=+libhttp-parser +jose
   URL:=https://github.com/latchset/tang
   USERID:=tang:tang
 endef

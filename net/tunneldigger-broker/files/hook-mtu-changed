@@ -21,10 +21,14 @@ if [ -z "$new_bridge" ]; then
   exit 1
 fi
 
+# Get the isolation option for this bridge
+tunneldigger_get_bridge_isolate isolate "${NEW_MTU}"
+
 # Remove interface from old bridge.
 ip link set dev ${INTERFACE} nomaster
 ip link set dev ${old_bridge} mtu ${OLD_MTU}
 
 # Change interface bridge and MTU.
 ip link set dev ${INTERFACE} master ${new_bridge} mtu ${NEW_MTU}
+echo $isolate > /sys/class/net/${INTERFACE}/brport/isolated
 ip link set dev ${new_bridge} mtu ${NEW_MTU}

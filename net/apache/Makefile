@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apache
-PKG_VERSION:=2.4.52
+PKG_VERSION:=2.4.57
 PKG_RELEASE:=1
 PKG_SOURCE_NAME:=httpd
 
 PKG_SOURCE:=$(PKG_SOURCE_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@APACHE/httpd/
-PKG_HASH:=0127f7dc497e9983e9c51474bed75e45607f2f870a7675a86dc90af6d572f5c9
+PKG_HASH:=dbccb84aee95e095edfbb81e5eb926ccd24e6ada55dcd83caecb262e5cf94d2a
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_NAME)-$(PKG_VERSION)
 
@@ -66,7 +66,7 @@ endef
 define Package/apache
 $(call Package/apache/Default)
   USERID:=apache=377:apache=377
-  DEPENDS:=+libapr +libaprutil +libpcre
+  DEPENDS:=+libapr +libaprutil +libpcre2
 endef
 
 define Package/apache/description
@@ -201,7 +201,7 @@ CONFIGURE_ARGS+= \
 	--with-apr-util="$(STAGING_DIR)/usr/bin/apu-1-config" \
 	--with-apr="$(STAGING_DIR)/usr/bin/apr-1-config" \
 	--with-mpm=prefork \
-	--with-pcre="$(STAGING_DIR)/usr/bin/pcre-config" \
+	--with-pcre="$(STAGING_DIR)/usr/bin/pcre2-config" \
 	--with-program-name=apache2 \
 	--with-ssl
 

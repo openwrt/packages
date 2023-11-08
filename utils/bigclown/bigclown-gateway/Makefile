@@ -11,7 +11,7 @@ PKG_RELEASE:=3
 PYPI_NAME:=bcg
 PKG_HASH:=ce7f27f372551c0beb3f8929af2d779417d9dcd0feaa2fa2dc49e87b1416c536
 
-PKG_MAINTAINER:=Karel Kočí <cynerd@email.cz>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com> 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 

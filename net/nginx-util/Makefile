@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx-util
 PKG_VERSION:=1.6
-PKG_RELEASE:=19
+PKG_RELEASE:=20
 PKG_MAINTAINER:=Peter Stadler <peter.stadler@student.uibk.ac.at>
 
 include $(INCLUDE_DIR)/package.mk
@@ -30,7 +30,7 @@ endef
 define Package/nginx-ssl-util
   $(Package/nginx-ssl-util/default)
   TITLE+= (using PCRE)
-  DEPENDS+= +libpcre
+  DEPENDS+= +libpcre2
   CONFLICTS:=nginx-ssl-util-nopcre,
 endef
 

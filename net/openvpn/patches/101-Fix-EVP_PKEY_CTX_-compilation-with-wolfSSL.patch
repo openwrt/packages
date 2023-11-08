@@ -9,7 +9,7 @@
  #include <openssl/kdf.h>
  #endif
  #if OPENSSL_VERSION_NUMBER >= 0x30000000L
-@@ -1419,7 +1419,7 @@ engine_load_key(const char *file, SSL_CT
+@@ -1436,7 +1436,7 @@ engine_load_key(const char *file, SSL_CT
  #endif /* if HAVE_OPENSSL_ENGINE */
  }
  

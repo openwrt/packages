@@ -1,15 +1,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=reptyr
-PKG_VERSION:=0.8.0
-PKG_RELEASE:=5
+PKG_VERSION:=0.10.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/nelhage/reptyr/archive/
-PKG_HASH:=4b470ed2a0d25fed591739fa9613ce7ad3d0377891eb56cbe914e3c85db46ca8
+PKG_HASH:=c6ffbc34a511ac00d072219bda30699e51f2f4eb483cbae9e32e981d49e8b380
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_NAME)-$(PKG_VERSION)
 
-PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
 

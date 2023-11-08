@@ -12,22 +12,31 @@ PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
 
 include $(INCLUDE_DIR)/package.mk
 
-GEOIP_VER:=202308030045
+GEOIP_VER:=202310120354
 GEOIP_FILE:=geoip.dat.$(GEOIP_VER)
 define Download/geoip
   URL:=https://github.com/v2fly/geoip/releases/download/$(GEOIP_VER)/
   URL_FILE:=geoip.dat
   FILE:=$(GEOIP_FILE)
-  HASH:=9b7fa7407f35e3087f3b052d12ed40974182c6e1864570b848c1ec901292ea82
+  HASH:=7107cfe4e211d4df5234d0d2b1c47bdcd19f6602c2b7969f3a5e12f7cf48692e
 endef
 
-GEOSITE_VER:=20230803193133
+GEOSITE_VER:=20231015073627
 GEOSITE_FILE:=dlc.dat.$(GEOSITE_VER)
 define Download/geosite
   URL:=https://github.com/v2fly/domain-list-community/releases/download/$(GEOSITE_VER)/
   URL_FILE:=dlc.dat
   FILE:=$(GEOSITE_FILE)
-  HASH:=3d335d493f168eace5414ca1ff54e4f255f8e5b1a90261d2debb1cbefa0666a0
+  HASH:=2042c47d520634236fbf238a4168196bea64a2d61ca5e6cbab9fd0ac37c7e659
+endef
+
+GEOSITE_IRAN_VER:=202310160024
+GEOSITE_IRAN_FILE:=iran.dat.$(GEOSITE_IRAN_VER)
+define Download/geosite-ir
+  URL:=https://github.com/bootmortis/iran-hosted-domains/releases/download/$(GEOSITE_IRAN_VER)/
+  URL_FILE:=iran.dat
+  FILE:=$(GEOSITE_IRAN_FILE)
+  HASH:=70db057c5c1d07de251c4543e6c20ff0a352c95977e120d1522a7f826ff08cf2
 endef
 
 define Package/v2ray-geodata/template
@@ -54,6 +63,14 @@ define Package/v2ray-geosite
   LICENSE:=MIT
 endef
 
+define Package/v2ray-geosite-ir
+  $(call Package/v2ray-geodata/template)
+  TITLE:=Iran Geosite List for V2Ray
+  PROVIDES:=xray-geosite-ir
+  VERSION:=$(GEOSITE_IRAN_VER)-$(PKG_RELEASE)
+  LICENSE:=MIT
+endef
+
 define Build/Prepare
 	$(call Build/Prepare/Default)
 ifneq ($(CONFIG_PACKAGE_v2ray-geoip),)
@@ -61,6 +78,9 @@ ifneq ($(CONFIG_PACKAGE_v2ray-geoip),)
 endif
 ifneq ($(CONFIG_PACKAGE_v2ray-geosite),)
 	$(call Download,geosite)
+endif
+ifneq ($(CONFIG_PACKAGE_v2ray-geosite-ir),)
+	$(call Download,geosite-ir)
 endif
 endef
 
@@ -79,5 +99,12 @@ define Package/v2ray-geosite/install
 	$(LN) ../v2ray/geosite.dat $(1)/usr/share/xray/geosite.dat
 endef
 
+define Package/v2ray-geosite-ir/install
+	$(INSTALL_DIR) $(1)/usr/share/v2ray $(1)/usr/share/xray
+	$(INSTALL_DATA) $(DL_DIR)/$(GEOSITE_IRAN_FILE) $(1)/usr/share/v2ray/iran.dat
+	$(LN) ../v2ray/iran.dat $(1)/usr/share/xray/iran.dat
+endef
+
 $(eval $(call BuildPackage,v2ray-geoip))
 $(eval $(call BuildPackage,v2ray-geosite))
+$(eval $(call BuildPackage,v2ray-geosite-ir))

@@ -107,7 +107,7 @@ mwan3_get_mwan3track_status()
 			tracking="down"
 		fi
 	else
-		tracking="not enabled"
+		tracking="disabled"
 	fi
 	echo "$tracking"
 }

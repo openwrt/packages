@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=jool
-PKG_VERSION:=4.1.8
+PKG_VERSION:=4.1.10
 PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0-only
@@ -16,8 +16,8 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/NICMx/Jool.git
-PKG_SOURCE_VERSION:=6822bdee4ec63467e82d723a3381b3116c1853d9
-PKG_MIRROR_HASH:=6ef000459858a87e206c903828f428d469c18221789cb65fec91a8d822b0178f
+PKG_SOURCE_VERSION:=47334c9124b7a2e3253fb279e6c33acb9c2b09a6
+PKG_MIRROR_HASH:=ef34f68eb911c97016180ed09e852625a3c0fe49f7d7574382a03db75c23b60e
 
 PKG_BUILD_DIR=$(KERNEL_BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
 PKG_BUILD_PARALLEL:=1
@@ -67,7 +67,7 @@ endef
 define Package/jool/Default
   SECTION:=net
   CATEGORY:=Network
-  URL:=https://www.jool.mx
+  URL:=https://nicmx.github.io/Jool/
 endef
 
 define Package/jool/Default/description

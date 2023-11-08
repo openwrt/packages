@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-ubus
-PKG_VERSION:=0.1.1
-PKG_RELEASE:=2
+PKG_VERSION:=0.1.2
+PKG_RELEASE:=1
 
 PYPI_NAME:=ubus
-PKG_HASH:=7e57bda989bc35b48c7075d03ec2818226e722bbf1bde138d7e7ea26d462682a
+PKG_HASH:=4dc4ef0fbcc8abb7a2354691475a58ff3eb015f1bab3150750729f7f657dd440
 
 PKG_MAINTAINER:=Erik Larsson <who+openwrt@cnackers.org>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -28,7 +28,7 @@ define Package/python3-ubus
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=Python3 ubus
+  TITLE:=libubus bindings
   URL:=https://gitlab.nic.cz/turris/python-ubus/
   DEPENDS:=+libubus +libblobmsg-json +python3-light
 endef

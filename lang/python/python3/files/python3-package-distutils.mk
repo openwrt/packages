@@ -7,8 +7,14 @@
 
 define Package/python3-distutils
 $(call Package/python3/Default)
-  TITLE:=Python $(PYTHON3_VERSION) distutils module
+  TITLE+= distutils module
   DEPENDS:=+python3-light +python3-email
+endef
+
+define Package/python3-distutils/description
+$(call Package/python3/Default/description)
+
+This package contains the distutils module.
 endef
 
 $(eval $(call Py3BasePackage,python3-distutils, \

@@ -7,8 +7,14 @@
 
 define Package/python3-readline
 $(call Package/python3/Default)
-  TITLE:=Python $(PYTHON3_VERSION) readline module
+  TITLE+= readline module
   DEPENDS:=+python3-light +libreadline
+endef
+
+define Package/python3-readline/description
+$(call Package/python3/Default/description)
+
+This package contains the readline module.
 endef
 
 $(eval $(call Py3BasePackage,python3-readline, \

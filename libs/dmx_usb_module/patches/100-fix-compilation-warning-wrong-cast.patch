@@ -1,6 +1,23 @@
+From eeecf40c3eb3dbdf1981c508080ab3aa61e105e2 Mon Sep 17 00:00:00 2001
+From: Erwin Rol <erwin@erwinrol.com>
+Date: Fri, 13 Jan 2023 17:57:36 +0100
+Subject: [PATCH] Fix format warnings
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Fix the following warning
+
+warning: format ‘%d’ expects argument of type ‘int’, but argument 4 has type ‘size_t’ {aka ‘long unsigned int’}
+
+Signed-off-by: Erwin Rol <erwin@erwinrol.com>
+---
+ dmx_usb.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
 --- a/dmx_usb.c
 +++ b/dmx_usb.c
-@@ -406,7 +406,7 @@ static ssize_t dmx_usb_write (struct file *file, const char *buffer, size_t coun
+@@ -406,7 +406,7 @@ static ssize_t dmx_usb_write (struct fil
  
  	dev = (struct dmx_usb_device *)file->private_data;
  
@@ -9,3 +26,12 @@
  
  	/* lock this object */
  	down (&dev->sem);
+@@ -500,7 +500,7 @@ static long dmx_usb_ioctl (struct file *
+ 		return -ENODEV;
+ 	}
+ 
+-	dbg("%s - minor %d, cmd 0x%.4x, arg %ld", __FUNCTION__,
++	dbg("%s - minor %d, cmd 0x%.4x, arg %lu", __FUNCTION__,
+ 	    dev->minor, cmd, arg);
+ 
+ 	/* fill in your device specific stuff here */

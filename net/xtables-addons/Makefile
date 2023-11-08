@@ -8,7 +8,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=xtables-addons
 PKG_VERSION:=3.24
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_HASH:=3e823f71720519ced31c4c7d2bfaf7120d9c01c59a0843dfcbe93c95c64d81c1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
@@ -129,6 +129,42 @@ define Package/iptaccount/install
 endef
 
 
+define Package/iptasn
+  $(call Package/xtables-addons)
+  CATEGORY:=Network
+  TITLE:=iptables-mod-asn support scripts for MaxMind ASN databases
+  DEPENDS:=iptables +iptables-mod-asn \
+		+perl +perlbase-getopt +perlbase-io +perl-text-csv_xs \
+		+perl-net-cidr-lite \
+		+wget-ssl +!BUSYBOX_CONFIG_ZCAT:gzip
+endef
+
+define Package/iptasn/config
+	menu "Select iptasn options"
+		config IPTASN_PRESERVE
+			bool "Preserve across sysupgrades"
+			default n
+			help
+			  Backup and restore during sysupgrade (requires >7MB)
+	endmenu
+endef
+
+ifeq ($(CONFIG_IPTASN_PRESERVE),y)
+define Package/iptasn/conffiles
+/usr/share/xt_asn/
+endef
+endif
+
+define Package/iptasn/install
+	$(INSTALL_DIR) $(1)/usr/lib/xtables-addons
+	$(CP) \
+		$(PKG_INSTALL_DIR)/usr/lib/xtables-addons/xt_asn_{build,dl} \
+		$(1)/usr/lib/xtables-addons/
+	$(INSTALL_DIR) $(1)/usr/share/xt_asn
+	touch $(1)/usr/share/xt_asn/.keep
+endef
+
+
 define Package/iptgeoip
   $(call Package/xtables-addons)
   CATEGORY:=Network
@@ -158,7 +194,7 @@ endif
 define Package/iptgeoip/install
 	$(INSTALL_DIR) $(1)/usr/lib/xtables-addons
 	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/xtables-addons/xt_geoip_{build,dl} \
+		$(PKG_INSTALL_DIR)/usr/lib/xtables-addons/xt_geoip_{build,dl}{,_maxmind} \
 		$(1)/usr/lib/xtables-addons/
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) \
@@ -175,6 +211,7 @@ $(eval $(call BuildTemplate,compat-xtables,API compatibilty layer,,compat_xtable
 $(eval $(call BuildTemplate,nathelper-rtsp,RTSP Conntrack and NAT,,rtsp/nf_conntrack_rtsp rtsp/nf_nat_rtsp,+kmod-ipt-conntrack-extra +kmod-ipt-nat))
 
 $(eval $(call BuildTemplate,account,ACCOUNT,xt_ACCOUNT,ACCOUNT/xt_ACCOUNT,+kmod-ipt-compat-xtables))
+$(eval $(call BuildTemplate,asn,asn,xt_asn,xt_asn,))
 $(eval $(call BuildTemplate,chaos,CHAOS,xt_CHAOS,xt_CHAOS,+kmod-ipt-compat-xtables +kmod-ipt-delude +kmod-ipt-tarpit))
 $(eval $(call BuildTemplate,condition,Condition,xt_condition,xt_condition,))
 $(eval $(call BuildTemplate,delude,DELUDE,xt_DELUDE,xt_DELUDE,+kmod-ipt-compat-xtables))
@@ -197,4 +234,5 @@ $(eval $(call BuildTemplate,sysrq,SYSRQ,xt_SYSRQ,xt_SYSRQ,+kmod-ipt-compat-xtabl
 $(eval $(call BuildTemplate,tarpit,TARPIT,xt_TARPIT,xt_TARPIT,+kmod-ipt-compat-xtables))
 
 $(eval $(call BuildPackage,iptaccount))
+$(eval $(call BuildPackage,iptasn))
 $(eval $(call BuildPackage,iptgeoip))

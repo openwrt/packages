@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mg
 PKG_VERSION:=7.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ibara/mg/tar.gz/$(PKG_NAME)-$(PKG_VERSION)?
@@ -22,7 +22,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/mg
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libncurses +libpcre
+  DEPENDS:=+libncurses +libpcre2
   TITLE:=microscopic EMACS style editor
   URL:=https://github.com/ibara/mg
   SUBMENU:=Editors

@@ -1,0 +1,38 @@
+From e359a7a3c4f9e70360a068bef19c95938fdacede Mon Sep 17 00:00:00 2001
+From: Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
+Date: Wed, 23 Dec 2015 11:33:14 +0100
+Subject: [PATCH] Adjust library/header paths for cross-compilation
+
+When cross-compiling third-party extensions, the get_python_inc() or
+get_python_lib() can be called, to return the path to headers or
+libraries. However, they use the sys.prefix of the host Python, which
+returns incorrect paths when cross-compiling (paths pointing to host
+headers and libraries).
+
+In order to fix this, we introduce the _python_sysroot, _python_prefix
+and _python_exec_prefix variables, that allow to override these
+values, and get correct header/library paths when cross-compiling
+third-party Python modules.
+
+Signed-off-by: Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
+[adapt for setuptools, rename environment variable, use fixed lib path]
+Signed-off-by: Jeffery To <jeffery.to@gmail.com>
+---
+ Lib/distutils/command/build_ext.py |  5 ++++-
+ Lib/sysconfig.py                   | 15 +++++++++++----
+ 2 files changed, 15 insertions(+), 5 deletions(-)
+
+--- a/setuptools/_distutils/command/build_ext.py
++++ b/setuptools/_distutils/command/build_ext.py
+@@ -238,7 +238,10 @@ class build_ext(Command):
+         if sysconfig.get_config_var('Py_ENABLE_SHARED'):
+             if not sysconfig.python_build:
+                 # building third party extensions
+-                self.library_dirs.append(sysconfig.get_config_var('LIBDIR'))
++                libdir = sysconfig.get_config_var('LIBDIR')
++                if 'STAGING_DIR' in os.environ:
++                    libdir = os.environ.get('STAGING_DIR') + '/usr/lib'
++                self.library_dirs.append(libdir)
+             else:
+                 # building python standard extensions
+                 self.library_dirs.append('.')

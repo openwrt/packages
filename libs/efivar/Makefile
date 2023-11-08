@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=efivar
 PKG_VERSION:=38
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://github.com/rhboot/efivar/releases/download/$(PKG_VERSION)
@@ -25,7 +25,7 @@ define Package/efivar
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Tools and libraries to work with EFI variables
-  DEPENDS:=@TARGET_x86_64
+  DEPENDS:=@(TARGET_x86_64||TARGET_armsr_armv8)
   URL:=https://github.com/rhboot/efibootmgr
 endef
 

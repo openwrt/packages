@@ -7,15 +7,15 @@
 
 include $(TOPDIR)/rules.mk
 PKG_NAME:=frr
-PKG_VERSION:=8.5.1
+PKG_VERSION:=9.0.0
 PKG_RELEASE:=1
-PKG_SOURCE_DATE:=2023-05-12
+PKG_SOURCE_DATE:=2023-08-12
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
-PKG_SOURCE_VERSION:=05469ab2b553302c2a7032f4c89e4510dc3fa6d9
+PKG_SOURCE_VERSION:=9852228d1e87bdbad13e0fed8313203f00bf26af
 PKG_SOURCE_URL:=https://codeload.github.com/FRRouting/frr/tar.gz/$(PKG_SOURCE_VERSION)?
 
-PKG_HASH:=caf3fcf1998ecd9a08e67373921a2d4bf49dbfc707008d20a1d38fd1606ef298
+PKG_HASH:=6e611cd86ae9787a4b8d71411fdc38ad1fe843a839756c9c386848ffde81f6cf
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_SOURCE_VERSION)
@@ -59,7 +59,7 @@ PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 PKG_BUILD_FLAGS:=lto
 
-PKG_BUILD_DEPENDS:=frr/host
+PKG_BUILD_DEPENDS:=frr/host protobuf-c/host
 HOST_BUILD_DEPENDS:=python3/host
 
 include $(INCLUDE_DIR)/package.mk
@@ -96,7 +96,7 @@ endef
 define Package/frr-libfrr
   $(call Package/frr/Default)
   TITLE:=zebra library
-  DEPENDS+=+librt +libatomic +libcap +libjson-c +libyang +FRR_OPENSSL:libopenssl +FRR_SNMP:libnetsnmp
+  DEPENDS+=+librt +libatomic +libcap +libjson-c +libyang +libprotobuf-c +FRR_OPENSSL:libopenssl +FRR_SNMP:libnetsnmp
   CONFLICTS:=quagga-libzebra
 endef
 

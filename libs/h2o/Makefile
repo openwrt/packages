@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=h2o
 PKG_VERSION:=2.2.6
-PKG_RELEASE:=14
+PKG_RELEASE:=15
 
 PKG_SOURCE_URL:=https://codeload.github.com/h2o/h2o/tar.gz/v${PKG_VERSION}?
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz

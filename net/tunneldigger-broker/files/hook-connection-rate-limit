@@ -1,0 +1,17 @@
+#!/bin/bash
+set -e
+
+ENDPOINT_IP="$1"
+ENDPOINT_PORT="$2"
+UUID="$3"
+
+# This assumes that an ipset was created with something like
+# ```
+# ipset create create tunneldigger_blocked hash:ip family inet timeout 300
+# ```
+# and that a firewall rule like the following uses the ipset to block connections:
+# ```
+# -A INPUT -m set --match-set tunneldigger_blocked src -j DROP
+# ```
+
+#ipset add tunneldigger_blocked "$ENDPOINT_IP"
