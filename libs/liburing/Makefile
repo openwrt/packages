@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=liburing
-PKG_VERSION:=2.4
+PKG_VERSION:=2.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://git.kernel.dk/cgit/liburing/snapshot
-PKG_HASH:=ca260e7a5820c2d0e737ec1e9b999f10776dbe84a169a02a0eff10c8eeaf3394
+PKG_HASH:=319ff9096a5655362a9741c5145b45494db810e38679a1de82e2f440c17181a6
 
 PKG_MAINTAINER:=Christian Lachner <gladiac@gmail.com>
 PKG_LICENSE:=MIT
