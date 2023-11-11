@@ -49,6 +49,7 @@ CONFIGURE_ARGS += \
 	--without-afskmdm \
 	--without-ax25 \
 	--without-alsa \
+	--without-dnssd \
 	--without-go \
 	--without-ipmisol \
 	--without-kiss \
