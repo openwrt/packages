@@ -1,0 +1,116 @@
+#!/bin/sh /etc/rc.common
+
+START=95
+USE_PROCD=1
+PROG=/usr/bin/dhtd
+OPTS=""
+
+
+boot() {
+	# Wait for the loopback interface to be ready
+	ubus -t 30 wait_for network.interface network.loopback 2>/dev/null
+	rc_procd start_service
+}
+
+xappend() {
+	local name="$2" value="$1"
+	OPTS="$OPTS\n--${name//_/-} ${value//'/\\'}"
+}
+
+append_opts_list() {
+	local name cfg="$1"; shift
+	for name in $*; do
+		config_list_foreach "$cfg" "$name" xappend "$name"
+	done
+}
+
+append_opts() {
+	local name value cfg="$1"; shift
+	for name in $*; do
+		config_get value "$cfg" "$name"
+		[ -n "$value" ] && xappend "$value" "$name"
+	done
+}
+
+append_opts_boolean() {
+	local name value cfg="$1"; shift
+	for name in $*; do
+		config_get_bool value "$cfg" "$name" 0
+		[ $value -gt 0 ] && xappend '' $name
+	done
+}
+
+section_enabled() {
+	config_get_bool enabled "$1" 'enabled' 0
+	[ $enabled -gt 0 ]
+}
+
+start_instance() {
+	local cfg="$1"
+	local CONFIG_FILE=/tmp/dhtd.${cfg}.conf
+
+	section_enabled "$cfg" || return
+	. /lib/functions/network.sh
+
+	OPTS=""
+
+	append_opts "$cfg" verbosity peerfile port
+
+	config_get ifname "$cfg" "ifname"
+	if network_get_device IFNAME "$ifname";then
+		xappend "$IFNAME" "ifname"
+	else
+		[ -n "$ifname" ] && xappend "$ifname" "ifname"
+	fi
+
+	append_opts_list "$cfg" announce peer
+
+	append_opts_boolean "$cfg" lpd_disable ipv4 ipv6
+
+	# Close stdin when command line interface is present
+	if [ $($PROG --version | grep -c cli) -eq 1 ]; then
+		xappend "" "cli_disable_stdin"
+	fi
+
+	echo -e "$OPTS" > $CONFIG_FILE
+
+	procd_open_instance
+	procd_set_param command $PROG
+	procd_set_param file $CONFIG_FILE
+	procd_set_param stderr 1
+	procd_set_param stdout 1
+	procd_append_param command --config $CONFIG_FILE
+	procd_close_instance
+}
+
+stop_instance() {
+	local cfg="$1"
+	local CONFIG_FILE=/tmp/dhtd.${cfg}.conf
+
+	rm -f $CONFIG_FILE
+}
+
+add_interface_trigger() {
+	local ifname
+
+	config_get ifname "$1" ifname
+
+	[ -n "$ifname" ] && procd_add_interface_trigger "interface.*" "$ifname" /etc/init.d/dhtd restart
+}
+
+service_triggers() {
+	procd_add_reload_trigger "dhtd"
+
+	config_load dhtd
+	config_foreach add_interface_trigger dhtd
+}
+
+start_service() {
+	config_load 'dhtd'
+	config_foreach start_instance 'dhtd'
+}
+
+stop_service() {
+	config_load 'dhtd'
+	config_foreach stop_instance 'dhtd'
+}
