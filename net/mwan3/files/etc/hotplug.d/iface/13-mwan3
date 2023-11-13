@@ -1,0 +1,116 @@
+#!/bin/sh
+
+. /lib/functions.sh
+. /lib/functions/network.sh
+. /lib/mwan3/mwan3.sh
+
+initscript=/etc/init.d/mwan3
+. /lib/functions/procd.sh
+
+logging() {
+	local level="$1"
+	local message="$2"
+
+	logger -t "mwan3-hotplug[$$]" -p "daemon.${level}" "${message}"
+}
+
+[ "$ACTION" = "connected" ] || [ "$ACTION" = "disconnected" ] || exit 1
+[ -n "$INTERFACE" ] || exit 2
+
+if [ "$ACTION" = "connected" ]; then
+	[ -n "$DEVICE" ] || exit 3
+fi
+
+procd_lock
+
+config_load mwan3
+config_get enabled $INTERFACE enabled 0
+[ "$enabled" == "1" ] || {
+	exit 0
+}
+
+config_get online_metric $INTERFACE online_metric 0
+if [ "$online_metric" = 0 ]; then
+	logging notice "No online metric for interface "$INTERFACE" found"
+	exit 0
+fi
+
+mwan3_add_failover_metric() {
+	local iface="$1"
+	local device="$2"
+	local metric="$3"
+
+	local route_args ret
+
+	config_get family $iface family ipv4
+
+	if [ "$family" == "ipv4" ]; then
+		if ubus call network.interface.${iface}_4 status 1>/dev/null 2>&1; then
+			network_get_gateway route_args ${iface}_4
+		else
+			network_get_gateway route_args $iface
+		fi
+
+		if [ -n "$route_args" -a "$route_args" != "0.0.0.0" ]; then
+			route_args="via $route_args"
+		else
+			route_args=""
+		fi
+
+		$IP4 route add default $route_args dev $device proto static metric $metric 1>/dev/null 2>&1
+		ret="$?"
+		if [ "$ret" -ne 0 ]; then
+			logging warn "Unable to set online metric for interface '$iface' (IPv4)"
+		else
+			logging info "Online metric for interface '$iface' set to '$metric' (IPv4)"
+		fi
+	fi
+
+	if [ "$family" == "ipv6" ]; then
+		if ubus call network.interface.${iface}_6 status 1>/dev/null 2>&1; then
+			network_get_gateway6 route_args ${iface}_6
+		else
+			network_get_gateway6 route_args $iface
+		fi
+
+		if [ -n "$route_args" -a "$route_args" != "::" ]; then
+			route_args="via $route_args"
+		else
+			route_args=""
+		fi
+
+		$IP6 route add default $route_args dev $device proto static metric $metric 1>/dev/null 2>&1
+		if [ "$ret" -ne 0 ]; then
+			logging warn "Unable to set online metric for interface '$iface' (IPv6)"
+		else
+			logging info "Online metric for interface '$iface' set to '$metric' (IPv6)"
+		fi
+	fi
+}
+
+mwan3_del_failover_metric() {
+	local iface="$1"
+	local device="$2"
+	local metric="$3"
+
+	config_get family $iface family ipv4
+
+	if [ "$family" == "ipv4" ]; then
+		$IP4 route del default dev $device proto static metric $metric 1>/dev/null 2>&1
+	fi
+
+	if [ "$family" == "ipv6" ]; then
+		$IP6 route del default dev $device proto static metric $metric 1>/dev/null 2>&1
+	fi
+}
+
+case "$ACTION" in
+	connected)
+		mwan3_add_failover_metric "$INTERFACE" "$DEVICE" "$online_metric"
+		;;
+	disconnected)
+		mwan3_del_failover_metric "$INTERFACE" "$DEVICE" "$online_metric"
+		;;
+esac
+
+exit 0
