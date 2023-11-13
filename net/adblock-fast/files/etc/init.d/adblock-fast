@@ -1,6 +1,6 @@
 #!/bin/sh /etc/rc.common
 # Copyright 2023 MOSSDeF, Stan Grishin (stangri@melmac.ca)
-# shellcheck disable=SC2015,SC2016,SC2018,SC2019,SC2034,SC3037,SC3043,SC3045,SC3057,SC3060
+# shellcheck disable=SC3043
 
 # shellcheck disable=SC2034
 START=94
@@ -81,6 +81,7 @@ blocked_url=
 # shellcheck disable=SC1091
 . /usr/share/libubox/jshn.sh
 
+append_newline() { is_newline_ending "$1" || echo '' >> "$1"; }
 check_ipset() { { command -v ipset && /usr/sbin/ipset help hash:net; } >/dev/null 2>&1; }
 check_nft() { command -v nft >/dev/null 2>&1; }
 check_dnsmasq() { command -v dnsmasq >/dev/null 2>&1; }
@@ -104,6 +105,9 @@ dnsmasq_restart() { /etc/init.d/dnsmasq restart >/dev/null 2>&1; }
 is_enabled() { uci -q get "${1}.config.enabled"; }
 is_greater() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"; }
 is_greater_or_equal() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" = "$2"; }
+# shellcheck disable=SC3057
+is_https_url() { [ "${1:0:8}" = "https://" ]; }
+is_newline_ending() { [ "$(tail -c1 "$1" | wc -l)" -ne '0' ]; }
 is_present() { command -v "$1" >/dev/null 2>&1; }
 is_running() {
 	local i j
@@ -117,6 +121,8 @@ is_running() {
 }
 ipset() { "$ipset" "$@" >/dev/null 2>&1; }
 get_version() { grep -m1 -A2 -w "^Package: $1$" /usr/lib/opkg/status | sed -n 's/Version: //p'; }
+get_ram_free() { ubus call system info | jsonfilter -e '@.memory.free'; }
+get_ram_total() { ubus call system info | jsonfilter -e '@.memory.total'; }
 led_on(){ if [ -n "${1}" ] && [ -e "${1}/trigger" ]; then echo 'default-on' > "${1}/trigger" 2>&1; fi; }
 led_off(){ if [ -n "${1}" ] &&  [ -e "${1}/trigger" ]; then echo 'none' > "${1}/trigger" 2>&1; fi; }
 logger() { /usr/bin/logger -t "$packageName" "$@"; }
@@ -131,7 +137,9 @@ print_json_string() { json_init; json_add_string "$1" "$2"; json_dump; json_clea
 sanitize_dir() { [ -d "$(readlink -fn "$1")" ] && readlink -fn "$1"; }
 str_contains() { test "$1" != "$(str_replace "$1" "$2" '')"; }
 str_contains_word() { echo "$1" | grep -q -w "$2"; }
+# shellcheck disable=SC2018,SC2019
 str_to_lower() { echo "$1" | tr 'A-Z' 'a-z'; }
+# shellcheck disable=SC2018,SC2019
 str_to_upper() { echo "$1" | tr 'a-z' 'A-Z'; }
 str_replace() { printf "%b" "$1" | sed -e "s/$(printf "%b" "$2")/$(printf "%b" "$3")/g"; }
 ubus_get_data() { ubus call service list "{ 'name': '$packageName' }" | jsonfilter -e "@['${packageName}'].instances.main.data.${1}"; }
@@ -230,6 +238,7 @@ get_local_filesize() {
 	elif is_present wc; then
 		size="$(wc -c < "$file")"
 	fi
+# shellcheck disable=SC3037
 	echo -en "$size"
 }
 
@@ -239,6 +248,7 @@ get_url_filesize() {
 	is_present 'curl' || return 0
 	size_command='curl --silent --insecure --fail --head --request GET'
 	size="$($size_command "$url" | grep -Po '^[cC]ontent-[lL]ength: \K\w+')"
+# shellcheck disable=SC3037
 	echo -en "$size"
 }
 
@@ -262,6 +272,7 @@ output() {
 	fi
 	text="${text:-$*}";
 	[ -t 1 ] && printf "%b" "$text"
+# shellcheck disable=SC3060
 	msg="${text//$serviceName /service }";
 	if [ "$(printf "%b" "$msg" | wc -l)" -gt 0 ]; then
 		[ -s "$sharedMemoryOutput" ] && memmsg="$(cat "$sharedMemoryOutput")"
@@ -900,7 +911,7 @@ process_file_url() {
 		file) type='File'; D_TMP="$B_TMP"
 		;;
 	esac
-	if [ "${1:0:5}" = "https" ] && [ -z "$isSSLSupported" ]; then
+	if is_https_url "$url" && [ -z "$isSSLSupported" ]; then
 		output 1 "$_FAIL_"
 		output 2 "[DL] $type $label $__FAIL__\\n"
 		echo "errorNoSSLSupport|${1}" >> "$sharedMemoryError"
@@ -915,6 +926,7 @@ process_file_url() {
 		output 2 "[DL] $type $label $__FAIL__\\n"
 		echo "errorDownloadingList|${url}" >> "$sharedMemoryError"
 	else
+		append_newline "$R_TMP"
 		[ -n "$cfg" ] && new_size="$(get_local_filesize "$R_TMP")"
 		if [ -n "$new_size" ] && [ "$size" != "$new_size" ]; then
 			uci set "${packageName}.${cfg}.size=$size"
@@ -943,6 +955,7 @@ process_file_url() {
 			output 2 "[DL] $type $label ($format) $__FAIL__\\n"
 			echo "errorParsingList|${url}" >> "$sharedMemoryError"
 		else
+			append_newline "$R_TMP"
 			cat "${R_TMP}" >> "$D_TMP"
 			output 1 "$_OK_"
 			output 2 "[DL] $type $label ($format) $__OK__\\n"
@@ -959,7 +972,7 @@ download_dnsmasq_file() {
 	json set status 'statusDownloading'
 
 	rm -f "$A_TMP" "$B_TMP" "$outputFile" "$outputCache" "$outputGzip"
-	if [ "$($awk '/^MemFree/ {print int($2/1000)}' "/proc/meminfo")" -lt 32 ]; then
+	if [ "$(get_ram_free)" -lt 32 ]; then
 		output 3 'Low free memory, restarting resolver '
 		if resolver 'quiet_restart'; then
 			output_okn
@@ -1000,7 +1013,7 @@ download_lists() {
 			[ -n "$size" ] && total_sizes=$((total_sizes+size))
 		}
 		local i free_mem total_sizes
-		free_mem="$(ubus call system info | jsonfilter -e '@.memory.free')"
+		free_mem="$(get_ram_free)"
 		if [ -z "$free_mem" ]; then
 			json add warnning 'warningFreeRamCheckFail'
 			output "${_WARNING_}: $(get_text 'warningFreeRamCheckFail')!\\n"
@@ -1024,7 +1037,7 @@ download_lists() {
 	json set status 'statusDownloading'
 
 	rm -f "$A_TMP" "$B_TMP" "$outputFile" "$outputCache" "$outputGzip"
-	if [ "$($awk '/^MemFree/ {print int($2/1000)}' "/proc/meminfo")" -lt 32 ]; then
+	if [ "$(get_ram_total)" -lt 33554432 ]; then
 		output 3 'Low free memory, restarting resolver '
 		if resolver 'quiet_restart'; then
 			output_okn
@@ -1040,7 +1053,7 @@ download_lists() {
 	wait
 	if [ -n "$(uci changes "$packageName")" ]; then 
 		output 2 "Saving updated file size(s) "
-		uci commit "$packageName" && output_okn || output_failn
+		if uci commit "$packageName"; then output_okn; else output_failn; fi
 	fi
 	output 1 '\n'
 
@@ -1058,7 +1071,10 @@ download_lists() {
 		canaryDomains="${canaryDomains:+$canaryDomains }${canaryDomainsMozilla}"
 	fi
 
-	for hf in $blocked_domain $canaryDomains; do echo "$hf" | sed "$domainsFilter" >> $B_TMP; done
+	append_newline "$B_TMP"
+	for hf in $blocked_domain $canaryDomains; do
+		printf "%s\n" "$(echo "$hf" | sed "$domainsFilter")" >> "$B_TMP"
+	done
 	allowed_domain="${allowed_domain}
 $(cat $A_TMP)"
 	for hf in ${allowed_domain}; do hf="$(echo "$hf" | sed 's/\./\\./g')"; allow_filter="$allow_filter/(^|\.)${hf}$/d;"; done
@@ -1094,6 +1110,7 @@ $(cat $A_TMP)"
 		output 2 'Optimizing combined list '
 		json set message "$(get_text 'statusProcessing'): optimizing combined list"
 # 	sed -E 'G;:t;s/(.*)(\.)(.*)(\n)(.*)/\1\4\5\2\3/;tt;s/(.*)\n(\.)(.*)/\3\2\1/' is actually slower than command below
+# shellcheck disable=SC2016
 		if $awk -F "." '{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' "$A_TMP" > "$B_TMP"; then
 			if sort "$B_TMP" > "$A_TMP"; then
 				if $awk '{if(NR=1){tld=$NF};while(getline){if($NF!~tld"\\."){print tld;tld=$NF}}print tld}' "$A_TMP" > "$B_TMP"; then
@@ -1372,6 +1389,7 @@ adb_config_update() {
 		R_TMP="$(mktemp -u -q -t ${packageName}_tmp.XXXXXXXX)"
 	done
 	if ! $dl_command "$config_update_url" "$dl_flag" "$R_TMP" 2>/dev/null || [ ! -s "$R_TMP" ]; then
+		append_newline "$R_TMP"
 		output 1 "$_FAIL_\\n"
 		output 2 "[DL] Config  Update:  $label $__FAIL__\\n"
 		json add error 'errorDownloadingConfigUpdate'
@@ -1544,6 +1562,7 @@ adb_start() {
 	fi
 	json_add_array firewall
 	if [ "$force_dns" -ne 0 ]; then
+# shellcheck disable=SC3060
 		for c in ${force_dns_port/,/ }; do
 			if netstat -tuln | grep LISTEN | grep ":${c}" >/dev/null 2>&1; then
 				json_add_object ""
