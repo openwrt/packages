@@ -47,8 +47,9 @@ CONFIGURE_ARGS += \
 	--$(if $(CONFIG_GENSIO_GLIB),with,without)-glib \
 	--$(if $(CONFIG_GENSIO_TCL),with,without)-tcl \
 	--without-afskmdm \
-	--without-ax25 \
 	--without-alsa \
+	--without-ax25 \
+	--without-cm108gpio \
 	--without-dnssd \
 	--without-go \
 	--without-ipmisol \
@@ -56,6 +57,7 @@ CONFIGURE_ARGS += \
 	--without-openipmi \
 	--without-portaudio \
 	--without-sound \
+	--without-udev \
 	--with-cplusplus \
 	--with-flock-locking \
 	--with-uucp-locking \
