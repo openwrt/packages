@@ -79,7 +79,7 @@ consume(struct ustream *s, char **a)
 
 	battery.set = process(*a);
 	if (!battery.set)
-		ULOG_ERR("failed to parse message from serial: %s", a);
+		ULOG_ERR("failed to parse message from serial: %s", *a);
 
 	ustream_consume(s, eol - *a);
 	*a = eol;
