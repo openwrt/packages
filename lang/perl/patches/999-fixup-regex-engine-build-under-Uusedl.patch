@@ -59,8 +59,6 @@ all three modes without duplicate symbols.
  regexec.c         |   3 +-
  5 files changed, 181 insertions(+), 160 deletions(-)
 
-diff --git a/regcomp.c b/regcomp.c
-index d3c135fbfad1..6e35d95d2ac6 100644
 --- a/regcomp.c
 +++ b/regcomp.c
 @@ -290,6 +290,7 @@ S_edit_distance(const UV* src,
@@ -146,8 +144,6 @@ index d3c135fbfad1..6e35d95d2ac6 100644
  
  
  SV *
-diff --git a/regcomp.h b/regcomp.h
-index 31c91e6a68e8..017a9f843514 100644
 --- a/regcomp.h
 +++ b/regcomp.h
 @@ -1554,7 +1554,19 @@ typedef enum {
@@ -171,8 +167,6 @@ index 31c91e6a68e8..017a9f843514 100644
  
  #endif /* PERL_REGCOMP_H_ */
  
-diff --git a/regcomp_debug.c b/regcomp_debug.c
-index 93db7a89cf48..96598c49c0bc 100644
 --- a/regcomp_debug.c
 +++ b/regcomp_debug.c
 @@ -18,8 +18,7 @@
@@ -514,8 +508,7 @@ index 93db7a89cf48..96598c49c0bc 100644
 -
 -#endif  /* DEBUGGING */
 +#endif /* DEBUGGING */
-diff --git a/regcomp_invlist.c b/regcomp_invlist.c
-index 9ea3f431817d..82f82305846a 100644
+
 --- a/regcomp_invlist.c
 +++ b/regcomp_invlist.c
 @@ -18,7 +18,7 @@
@@ -535,8 +528,6 @@ index 9ea3f431817d..82f82305846a 100644
  
  /* This section of code defines the inversion list object and its methods.  The
   * interfaces are highly subject to change, so as much as possible is static to
-diff --git a/regexec.c b/regexec.c
-index c404d9aa3d73..de0b7c461918 100644
 --- a/regexec.c
 +++ b/regexec.c
 @@ -4428,7 +4428,8 @@ S_regtry(pTHX_ regmatch_info *reginfo, char **startposp)
