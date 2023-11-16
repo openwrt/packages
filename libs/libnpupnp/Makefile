@@ -1,23 +1,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libnpupnp
-PKG_VERSION:=5.0.0
-PKG_RELEASE:=2
+PKG_VERSION:=5.1.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.lesbonscomptes.com/upmpdcli/downloads
-PKG_HASH:=2e5648cf180a425ef57b8c9c0d9dbd77f0314487ea0e0a85ebc6c3ef87cab05b
+PKG_HASH:=a3eeff98b94366232b558798b75f751c808bb5d5fdac6bbc4d11487c9737a1e4
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
 
-PKG_INSTALL:=1
-PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=libmicrohttpd
-PKG_BUILD_FLAGS:=lto
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/meson.mk
 
 define Package/libnpupnp
   SECTION:=libs
@@ -32,6 +30,9 @@ npupnp (new pupnp or not pupnp ?) is an UPnP library derived from the
 venerable pupnp (https://github.com/pupnp/pupnp), based on its 1.6.x
 branch (around 1.6.25).
 endef
+
+MESON_OPTIONS += \
+	-Db_lto=true
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/npupnp
