@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tesseract
-PKG_VERSION:=4.1.1
-PKG_RELEASE:=3
+PKG_VERSION:=5.3.3
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/tesseract-ocr/tesseract/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=2a66ff0d8595bff8f04032165e6c936389b1e5727c3ce5a27b3e059d218db1cb
+PKG_HASH:=dc4329f85f41191b2d813b71b528ba6047745813474e583ccce8795ff2ff5681
 
 PKG_MAINTAINER:=Valentin Kivachuk <vk18496@gmail.com>
 PKG_LICENSE:=Apache-2.0
@@ -36,15 +36,17 @@ TARGET_CFLAGS:=$(filter-out -O%,$(TARGET_CFLAGS)) -O3
 
 CMAKE_OPTIONS += \
 	-DAUTO_OPTIMIZE=OFF \
-	-DBUILD_TRAINING_TOOLS=OFF
+	-DBUILD_SHARED_LIBS=ON \
+	-DBUILD_TRAINING_TOOLS=OFF \
+	-DDISABLE_CURL=ON
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/tesseract $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libtesseract.so* $(1)/usr/lib/
-	$(INSTALL_DIR) $(1)/usr/lib/cmake
-	$(CP) $(PKG_INSTALL_DIR)/usr/cmake/*.cmake $(1)/usr/lib/cmake/
+	$(INSTALL_DIR) $(1)/usr/lib/cmake/tesseract
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/cmake/tesseract/*.cmake $(1)/usr/lib/cmake/tesseract
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/tesseract.pc $(1)/usr/lib/pkgconfig/
 endef
