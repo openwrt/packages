@@ -11,22 +11,15 @@ include perlver.mk
 
 PKG_NAME:=perl
 PKG_VERSION:=$(PERL_VERSION)
-PKG_RELEASE:=10
+PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=\
-		https://cpan.metacpan.org/src/5.0 \
-		https://cpan.uib.no/src/5.0 \
-		https://mirrors.rit.edu/CPAN/src/5.0 \
-		https://mirror.transip.net/CPAN/src/5.0 \
-		https://mirrors.sonic.net/cpan/src/5.0 \
-		https://www.cpan.org/src/5.0
+PKG_SOURCE_URL:=https://www.cpan.org/src/5.0
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=fea7162d4cca940a387f0587b93f6737d884bf74d8a9d7cfd978bc12cd0b202d
+PKG_HASH:=eca551caec3bc549a4e590c0015003790bdd1a604ffe19cc78ee631d51f7072e
 
 PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
 PKG_LICENSE_FILES:=Copying Artistic README
-PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>, \
-		Philip Prindeville <philipp@redfish-solutions.com>
+PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>, Philip Prindeville <philipp@redfish-solutions.com>
 PKG_CPE_ID:=cpe:/a:perl:perl
 
 # Build settings
