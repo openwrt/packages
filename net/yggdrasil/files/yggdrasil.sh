@@ -91,10 +91,10 @@ proto_yggdrasil_add_string() {
 
 proto_yggdrasil_generate_keypair() {
 	json_load "$(yggdrasil -genconf -json)"
-	json_get_vars PublicKey PrivateKey
+	json_get_vars PrivateKey
 	json_cleanup
 	private_key=$PrivateKey
-	public_key=$PublicKey
+	public_key=${PrivateKey:64}
 }
 
 proto_yggdrasil_setup() {
