@@ -54,7 +54,7 @@ start_instance() {
 
 	OPTS=""
 
-	append_opts "$cfg" verbosity peerfile port
+	append_opts "$cfg" verbosity peerfile port execute
 
 	config_get ifname "$cfg" "ifname"
 	if network_get_device IFNAME "$ifname";then
