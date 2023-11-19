@@ -1,11 +1,19 @@
 #!/bin/sh /etc/rc.common
 
+. /lib/netifd/netifd-proto.sh
+
 START=99
 STOP=10
 
 USE_PROCD=1
 
+service_triggers() {
+	procd_add_interface_trigger "interface.*" "wan" /etc/init.d/netbird restart
+}
+
 start_service() {
+	local device
+
 	procd_open_instance
 	procd_set_param command /usr/bin/netbird
 	procd_append_param command service run
