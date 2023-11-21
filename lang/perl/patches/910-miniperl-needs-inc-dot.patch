@@ -1,6 +1,6 @@
 --- a/Makefile.SH
 +++ b/Makefile.SH
-@@ -333,7 +333,7 @@ PATH_SEP = $p_
+@@ -346,7 +346,7 @@ OBJ_EXT = $_o
  # Macros to invoke a copy of miniperl during the build.  Targets which
  # are built using these macros should depend on \$(MINIPERL_EXE)
  MINIPERL_EXE = miniperl\$(EXE_EXT)
