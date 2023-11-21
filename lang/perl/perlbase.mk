@@ -51,20 +51,6 @@ endef
 $(eval $(call BuildPackage,perlbase-archive))
 
 
-define Package/perlbase-arybase
-$(call Package/perlbase-template)
-TITLE:=arybase perl module
-DEPENDS+=+perlbase-xsloader
-endef
-
-define Package/perlbase-arybase/install
-$(call perlmod/Install,$(1),arybase.pm auto/arybase,)
-$(call perlmod/InstallBaseTests,$(1),ext/arybase/t)
-endef
-
-$(eval $(call BuildPackage,perlbase-arybase))
-
-
 define Package/perlbase-attribute
 $(call Package/perlbase-template)
 TITLE:=Attribute perl module
@@ -725,7 +711,7 @@ endef
 
 define Package/perlbase-findbin/install
 $(call perlmod/Install,$(1),FindBin.pm,)
-$(call perlmod/InstallBaseTests,$(1),lib/FindBin.t)
+$(call perlmod/InstallBaseTests,$(1),dist/FindBin/t)
 endef
 
 $(eval $(call BuildPackage,perlbase-findbin))
@@ -1441,7 +1427,7 @@ DEPENDS+=+perlbase-essential +perlbase-fcntl +perlbase-xsloader
 endef
 
 define Package/perlbase-tie/install
-$(call perlmod/Install,$(1),Tie auto/Tie,)
+$(call perlmod/Install,$(1),Tie,)
 $(call perlmod/InstallBaseTests,$(1),cpan/Tie-RefHash/t dist/Tie-File/t ext/Tie-Hash-NamedCapture/t ext/Tie-Memoize/lib/Tie/Memoize.pm ext/Tie-Memoize/t lib/Tie/Array/push.t lib/Tie/Array/splice.t lib/Tie/Array/std.t lib/Tie/Array/stdpush.t lib/Tie/ExtraHash.t lib/Tie/Handle/stdhandle.t lib/Tie/Handle/stdhandle_from_handle.t lib/Tie/Hash.t lib/Tie/Scalar.t lib/Tie/SubstrHash.t)
 endef
 
@@ -1522,7 +1508,7 @@ DEPENDS+=+perlbase-essential +perlbase-re +perlbase-unicore
 endef
 
 define Package/perlbase-utf8/install
-$(call perlmod/Install,$(1),utf8.pm utf8_heavy.pl,)
+$(call perlmod/Install,$(1),utf8.pm,)
 $(call perlmod/InstallBaseTests,$(1),lib/utf8.t)
 endef
 
