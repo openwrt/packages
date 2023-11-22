@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dhtd
-PKG_VERSION:=0.2.1
+PKG_VERSION:=0.2.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/mwarning/dhtd/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=65d2e0d6a3648fe3619d9fa4bef34a76c22577b7fe3fe460f96ac10510c3f06a
+PKG_HASH:=0f35cd0016689682b277f9769ec1e95c3c1321479cedc9727abc0bc91a0427d5
 
 PKG_MAINTAINER:=Moritz Warning <moritzwarning@web.de>
 PKG_LICENSE:=MIT
