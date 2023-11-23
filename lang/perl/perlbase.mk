@@ -140,7 +140,7 @@ endef
 
 define Package/perlbase-b/install
 $(call perlmod/Install,$(1),B B.pm auto/B,)
-$(call perlmod/InstallBaseTests,$(1),cpan/B-Debug/t ext/B/t lib/B/Deparse-core.t lib/B/Deparse-subclass.t lib/B/Deparse.t)
+$(call perlmod/InstallBaseTests,$(1),ext/B/t lib/B/Deparse-core.t lib/B/Deparse-subclass.t lib/B/Deparse.t)
 endef
 
 $(eval $(call BuildPackage,perlbase-b))
@@ -891,7 +891,7 @@ endef
 
 define Package/perlbase-locale/install
 $(call perlmod/Install,$(1),Locale,Locale/Constants.pod Locale/Country.pod Locale/Currency.pod Locale/Language.pod Locale/Maketext.pod Locale/Maketext/TPJ13.pod Locale/Script.pod)
-$(call perlmod/InstallBaseTests,$(1),cpan/Locale-Codes/t cpan/Locale-Maketext-Simple/t dist/Locale-Maketext/t)
+$(call perlmod/InstallBaseTests,$(1),cpan/Locale-Maketext-Simple/t dist/Locale-Maketext/t)
 endef
 
 $(eval $(call BuildPackage,perlbase-locale))
@@ -905,7 +905,7 @@ endef
 
 define Package/perlbase-math/install
 $(call perlmod/Install,$(1),Math auto/Math,)
-$(call perlmod/InstallBaseTests,$(1),cpan/Math-Complex/t cpan/Math-BigInt-FastCalc/t cpan/Math-BigInt/t cpan/Math-BigRat/t)
+$(call perlmod/InstallBaseTests,$(1),cpan/Math-BigInt-FastCalc/t cpan/Math-BigInt/t cpan/Math-BigRat/t)
 endef
 
 $(eval $(call BuildPackage,perlbase-math))
@@ -1128,7 +1128,7 @@ endef
 define Package/perlbase-pod/install
 $(call perlmod/Install,$(1),Pod,Pod/Usage.pm)
 $(call perlmod/Install/NoStrip,$(1),Pod/Usage.pm,)
-$(call perlmod/InstallBaseTests,$(1),cpan/Pod-Checker/t cpan/Pod-Escapes/t cpan/Pod-Parser/lib cpan/Pod-Parser/scripts cpan/Pod-Parser/t cpan/Pod-Perldoc/t cpan/Pod-Simple/t cpan/Pod-Usage/scripts cpan/Pod-Usage/t cpan/podlators/t ext/Pod-Functions/Functions.pm ext/Pod-Functions/t ext/Pod-Html/t lib/Pod/t)
+$(call perlmod/InstallBaseTests,$(1),cpan/Pod-Checker/t cpan/Pod-Escapes/t cpan/Pod-Perldoc/t cpan/Pod-Simple/t cpan/Pod-Usage/scripts cpan/Pod-Usage/t cpan/podlators/t ext/Pod-Functions/Functions.pm ext/Pod-Functions/t ext/Pod-Html/t lib/Pod/t)
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/pod2man $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/pod2text $(1)/usr/bin/
