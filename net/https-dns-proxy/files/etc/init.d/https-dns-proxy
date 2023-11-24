@@ -30,10 +30,11 @@ readonly canaryDomainsiCloud='mask.icloud.com mask-h2.icloud.com'
 
 on_boot_trigger=
 
-str_contains() { [ -n "$1" ] &&[ -n "$2" ] && [ "${1//$2}" != "$1" ]; }
+dnsmasq_restart() { [ -x /etc/init.d/dnsmasq ] || return 1; /etc/init.d/dnsmasq restart >/dev/null 2>&1; }
 is_mac_address() { expr "$1" : '[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]$' >/dev/null; }
 is_ipv4() { expr "$1" : '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >/dev/null; }
 is_ipv6() { ! is_mac_address "$1" && str_contains "$1" ":"; }
+is_resolver_working() { resolveip -t 3 one.one.one.one >/dev/null 2>&1; }
 output() {
 	local msg memmsg logmsg
 	local sharedMemoryOutput="/dev/shm/$packageName-output"
@@ -52,6 +53,7 @@ output_ok() { output "$_OK_"; }
 output_okn() { output "${_OK_}\\n"; }
 output_fail() { output "$_FAIL_"; }
 output_failn() { output "${_FAIL_}\\n"; }
+str_contains() { [ -n "$1" ] &&[ -n "$2" ] && [ "${1//$2}" != "$1" ]; }
 uci_add_list_if_new() {
 	local PACKAGE="$1"
 	local CONFIG="$2"
@@ -70,9 +72,6 @@ uci_changes() {
 	local OPTION="$3"
 	/sbin/uci ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} changes "$PACKAGE${CONFIG:+.$CONFIG}${OPTION:+.$OPTION}"
 }
-
-dnsmasq_restart() { [ -x /etc/init.d/dnsmasq ] || return 1; /etc/init.d/dnsmasq restart >/dev/null 2>&1; }
-
 version() { echo "$PKG_VERSION"; }
 
 xappend() { PROG_param="$PROG_param $1"; }
@@ -131,13 +130,11 @@ append_bootstrap() {
 	[ "$ipv6_resolvers_only" -eq 0 ] && xappend '-4'
 }
 
-resolver_health_check() { resolveip -t 3 one.one.one.one >/dev/null 2>&1; }
-
 boot() {
 	ubus -t 30 wait_for network.interface 2>/dev/null
 	on_boot_trigger=1
-	rc_procd start_service 'on_boot' && rc_procd service_started 'on_boot'
-	resolver_health_check || rc_procd stop_service 'on_boot'
+	rc_procd start_service 'on_boot' && service_started 'on_boot'
+	is_resolver_working || rc_procd stop_service 'on_boot' && service_stopped 'on_boot'
 }
 
 start_instance() {
@@ -203,7 +200,8 @@ start_instance() {
 	procd_close_data
 	procd_close_instance
 
-	if [ "$?" ]; then
+# shellcheck disable=SC2181
+	if [ "$?" -eq 0 ]; then
 		config_get listen_addr "$cfg" 'listen_addr' '127.0.0.1'
 		config_get listen_port "$cfg" 'listen_port' "$port"
 		if [ "$dnsmasq_config_update" = '*' ]; then
