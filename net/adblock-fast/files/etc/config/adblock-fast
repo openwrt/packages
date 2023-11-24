@@ -31,6 +31,7 @@ config adblock-fast 'config'
 	option parallel_downloads '1'
 	option pause_timeout '20'
 	option procd_trigger_wan6 '0'
+	option procd_boot_delay '0'
 	option procd_boot_wan_timeout '60'
 	option verbosity '2'
 

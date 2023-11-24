@@ -103,6 +103,13 @@ dnsmasq_hup() { killall -q -s HUP dnsmasq; }
 dnsmasq_kill() { killall -q -s KILL dnsmasq; }
 dnsmasq_restart() { /etc/init.d/dnsmasq restart >/dev/null 2>&1; }
 is_enabled() { uci -q get "${1}.config.enabled"; }
+is_integer() {
+	case "$1" in
+		(*[!0123456789]*) return 1;;
+		('')              return 1;;
+		(*)               return 0;;
+	esac
+}
 is_greater() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"; }
 is_greater_or_equal() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" = "$2"; }
 # shellcheck disable=SC3057
@@ -307,6 +314,7 @@ uci_changes() {
 if type extra_command 1>/dev/null 2>&1; then
 	extra_command 'allow' 'Allows domain in current block-list and config'
 	extra_command 'check' 'Checks if specified domain is found in current block-list'
+	extra_command 'check_lists' 'Checks if specified domain is found in enabled block-lists'
 	extra_command 'dl' 'Force-downloads all enabled block-list'
 	extra_command 'killcache' 'Delete all cached files'
 	extra_command 'pause' 'Pauses AdBlocking for specified number of seconds (default: 60)'
@@ -428,7 +436,7 @@ load_network() {
 append_url() {
 	local cfg="$1" var="$2"
 	local en action url
-	config_get en "$cfg" enabled '1'
+	config_get_bool en "$cfg" enabled '1'
 	config_get action "$cfg" action 'block'
 	config_get url "$cfg" url
 	if [ "$en" = '1' ]; then
@@ -1005,7 +1013,7 @@ download_lists() {
 		_config_calculate_sizes() {
 			local cfg="$1"
 			local en size url
-			config_get en "$cfg" enabled '1'
+			config_get_bool en "$cfg" enabled '1'
 			config_get size "$cfg" size
 			config_get url "$cfg" url
 			[ "$en" = '0' ] && return 0
@@ -1368,6 +1376,54 @@ adb_check() {
 	done
 }
 
+adb_check_lists() {
+	_check_list() {
+		local cfg="$1"
+		local en size url R_TMP string c
+		config_get_bool en "$cfg" enabled '1'
+		config_get action "$cfg" action 'block'
+		config_get url "$cfg" url
+		[ "$en" = '0' ] && return 0
+		[ "$action" != 'block' ] && return 0
+		if is_https_url "$url" && [ -z "$isSSLSupported" ]; then
+			output "[DL] $url $__FAIL__\\n"
+		fi
+		while [ -z "$R_TMP" ] || [ -e "$R_TMP" ]; do
+			R_TMP="$(mktemp -u -q -t ${packageName}_tmp.XXXXXXXX)"
+		done
+		if [ -z "$url" ] || ! $dl_command "$url" "$dl_flag" "$R_TMP" 2>/dev/null || \
+			[ ! -s "$R_TMP" ]; then
+			output "[DL] $url $__FAIL__\\n"
+		else
+			append_newline "$R_TMP"
+			for string in ${param}; do
+				c="$(grep -c "$string" "$R_TMP")"
+				if [ "$c" -gt 0 ]; then
+					if [ "$c" -eq 1 ]; then
+						output "Found 1 match for '$string' in '$url'.\\n"
+					else
+						output "Found $c matches for '$string' in '$url'.\\n"
+					fi
+					grep "$string" "$R_TMP"
+				else
+					output "The '$string' is not found in '$url'.\\n"
+				fi
+			done
+		rm -f "$R_TMP"
+		fi
+	}
+	local param="$1"
+	local validation_result="$3"
+	load_environment "$validation_result" 'quiet' || return 1
+	if [ -z "$param" ]; then
+		output "Usage: /etc/init.d/${packageName} check_lists 'domain' ...\\n"
+		return 0
+	fi
+	config_load "$packageName"
+	config_foreach _check_list 'file_url'
+	return 0
+}
+
 adb_config_update() {
 	local R_TMP label
 	local param validation_result="$3"
@@ -1708,7 +1764,7 @@ adb_pause() {
 	local validation_result="$3"
 	adb_stop 'on_pause' '' "$validation_result"
 	output "Sleeping for $timeout seconds... "
-	if sleep "$timeout"; then
+	if is_number "$timeout" && sleep "$timeout"; then
 		output_okn
 	else
 		output_failn
@@ -1718,10 +1774,16 @@ adb_pause() {
 
 allow() { load_validate_config 'config' adb_allow "'$*'"; }
 boot() {
+	local procd_boot_delay
 	ubus -t 30 wait_for network.interface 2>/dev/null
-	rc_procd start_service 'on_boot'
+	config_load "$packageName"
+	config_get procd_boot_delay 'config' 'procd_boot_delay' '0'
+# shellcheck disable=SC2154
+	{ is_integer "$procd_boot_delay" && sleep "$procd_boot_delay" || true; } && \
+		rc_procd start_service 'on_boot' && service_started 'on_boot' &
 }
 check() { load_validate_config 'config' adb_check "'$*'"; }
+check_lists() { load_validate_config 'config' adb_check_lists "'$*'"; }
 dl() { rc_procd start_service 'download'; }
 killcache() {
 	local compressed_cache_dir
