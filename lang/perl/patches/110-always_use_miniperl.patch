@@ -1,8 +1,8 @@
 --- a/Makefile.SH
 +++ b/Makefile.SH
-@@ -339,22 +339,11 @@ MANIFEST_SRT = MANIFEST.srt
- 
- !GROK!THIS!
+@@ -360,22 +360,11 @@ PERL_EXE_LDFLAGS=$exeldflags
+ 	;;
+ esac
  
 -case "$usecrosscompile$perl" in
 -define?*)

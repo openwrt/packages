@@ -1,6 +1,6 @@
 --- a/src/openvpn/crypto_openssl.c
 +++ b/src/openvpn/crypto_openssl.c
-@@ -51,7 +51,7 @@
+@@ -49,7 +49,7 @@
  #include <openssl/rand.h>
  #include <openssl/ssl.h>
  
@@ -9,8 +9,8 @@
  #include <openssl/kdf.h>
  #endif
  #if OPENSSL_VERSION_NUMBER >= 0x30000000L
-@@ -1436,7 +1436,7 @@ engine_load_key(const char *file, SSL_CT
- #endif /* if HAVE_OPENSSL_ENGINE */
+@@ -1374,7 +1374,7 @@ memcmp_constant_time(const void *a, cons
+     return CRYPTO_memcmp(a, b, size);
  }
  
 -#if (OPENSSL_VERSION_NUMBER >= 0x10100000L) && !defined(LIBRESSL_VERSION_NUMBER)

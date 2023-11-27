@@ -13,15 +13,16 @@ checking consistency of all components of python development environment... yes
 
 Signed-off-by: Michael Heimpold <mhei@heimpold.de>
 ---
- configure.ac | 2 ++
- 1 file changed, 2 insertions(+)
+ configure.ac | 3 +++
+ 1 file changed, 3 insertions(+)
 
 --- a/configure.ac
 +++ b/configure.ac
-@@ -1997,6 +1997,8 @@ if test "x$trypython" = "xyes"; then
+@@ -1997,6 +1997,9 @@ if test "x$trypython" = "xyes"; then
        PYTHON_CPPFLAGS="$pythoncflags"
     fi
     AX_PYTHON_DEVEL([], [true])
++   ax_python_devel_found=yes
 +else
 +   ax_python_devel_found=no
  fi

@@ -1,14 +1,14 @@
 --- a/Makefile.SH
 +++ b/Makefile.SH
-@@ -275,6 +275,7 @@ LNS = $lns
+@@ -289,6 +289,7 @@ LNS = $lns
  # NOTE: some systems don't grok "cp -f". XXX Configure test needed?
  CPS = $cp
  RMS = rm -f
 +RMS_R = rm -rf
  ranlib = $ranlib
+ ECHO = $echo
  
- # The following are mentioned only to make metaconfig include the
-@@ -736,7 +737,7 @@ bitcount.h: generate_uudmap$(HOST_EXE_EX
+@@ -786,7 +787,7 @@ bitcount.h: generate_uudmap$(HOST_EXE_EX
  	./generate_uudmap$(HOST_EXE_EXT) $(generated_headers)
  
  generate_uudmap$(HOST_EXE_EXT): generate_uudmap$(OBJ_EXT)
@@ -17,7 +17,7 @@
  	$(LNS) $(HOST_GENERATE) generate_uudmap$(HOST_EXE_EXT)
  
  !NO!SUBS!
-@@ -876,26 +877,26 @@ mydtrace.h: $(DTRACE_H)
+@@ -891,26 +892,26 @@ mydtrace.h: $(DTRACE_H)
  	define)
  		$spitshell >>$Makefile <<'!NO!SUBS!'
  $(DTRACE_MINI_O): perldtrace.d $(miniperl_objs_nodt)
@@ -48,7 +48,7 @@
  
  !NO!SUBS!
  		;;
-@@ -906,13 +907,13 @@ $(LIBPERL): $& $(perllib_dep) $(DYNALOAD
+@@ -921,13 +922,13 @@ $(LIBPERL): $& $(perllib_dep) $(DYNALOAD
  	case "$useshrplib" in
  	true)
  		$spitshell >>$Makefile <<'!NO!SUBS!'
@@ -64,7 +64,7 @@
  	mv $@ libperl$(OBJ_EXT)
  	$(AR) qv $(LIBPERL) libperl$(OBJ_EXT)
  !NO!SUBS!
-@@ -921,7 +922,7 @@ $(LIBPERL): $& $(perllib_dep) $(DYNALOAD
+@@ -936,7 +937,7 @@ $(LIBPERL): $& $(perllib_dep) $(DYNALOAD
  		;;
  	*)
  		$spitshell >>$Makefile <<'!NO!SUBS!'
@@ -73,7 +73,7 @@
  	$(AR) rc $(LIBPERL) $(perllib_objs) $(DYNALOADER)
  	@$(ranlib) $(LIBPERL)
  !NO!SUBS!
-@@ -954,7 +955,7 @@ $(MINIPERL_EXE): lib/buildcustomize.pl
+@@ -970,7 +971,7 @@ $(MINIPERL_EXE): lib/buildcustomize.pl
  	amigaos*)
  		$spitshell >>$Makefile <<'!NO!SUBS!'
  lib/buildcustomize.pl: $& $(miniperl_objs) write_buildcustomize.pl
@@ -119,9 +119,9 @@
 +	@$(RMS) miniperl.xok
  !NO!SUBS!
  
-         case $osname in
-@@ -1119,8 +1120,8 @@ pod/perl5281delta.pod: pod/perldelta.pod
- 	$(LNS) perldelta.pod pod/perl5281delta.pod
+         case "$osname" in
+@@ -1133,8 +1134,8 @@ pod/perl5380delta.pod: pod/perldelta.pod
+ 	$(LNS) perldelta.pod pod/perl5380delta.pod
  
  extra.pods: $(MINIPERL_EXE)
 -	-@test ! -f extra.pods || rm -f `cat extra.pods`
@@ -131,7 +131,7 @@
  	-@for x in `grep -l '^=[a-z]' README.* | grep -v README.vms` ; do \
  	    nx=`echo $$x | sed -e "s/README\.//"`; \
  	    $(LNS) ../$$x "pod/perl"$$nx".pod" ; \
-@@ -1340,11 +1341,11 @@ realclean:	_realcleaner _mopup
+@@ -1334,11 +1335,11 @@ realclean:	_realcleaner _mopup
  	@echo "Note that '$(MAKE) realclean' does not delete config.sh or Policy.sh"
  
  _clobber:
@@ -148,7 +148,7 @@
  
  clobber:	_realcleaner _mopup _clobber
  
-@@ -1352,23 +1353,23 @@ distclean:	clobber
+@@ -1346,24 +1347,24 @@ distclean:	clobber
  
  # Like distclean but also removes emacs backups and *.orig.
  veryclean:	_verycleaner _mopup _clobber
@@ -157,20 +157,22 @@
  
  # Do not 'make _mopup' directly.
  _mopup:
--	rm -f *$(OBJ_EXT) *$(LIB_EXT) all perlmain.c opmini.c perlmini.c generate_uudmap$(EXE_EXT) $(generated_headers)
-+	$(RMS) *$(OBJ_EXT) *$(LIB_EXT) all perlmain.c opmini.c perlmini.c generate_uudmap$(EXE_EXT) $(generated_headers)
+-	rm -f *$(OBJ_EXT) *$(LIB_EXT) all perlmain.c $(mini_only_src) generate_uudmap$(EXE_EXT) $(generated_headers)
++	$(RMS) *$(OBJ_EXT) *$(LIB_EXT) all perlmain.c $(mini_only_src) generate_uudmap$(EXE_EXT) $(generated_headers)
  	-rmdir .depending
+-	-rm *.depends makedepend_file
 -	-@test -f extra.pods && rm -f `cat extra.pods`
 -	-@test -f vms/README_vms.pod && rm -f vms/README_vms.pod
--	-rm -f perl.exp ext.libs $(generated_pods) uni.data opmini.o perlmini.o pod/roffitall
+-	-rm -f perl.exp ext.libs $(generated_pods) uni.data $(mini_only_objs) pod/roffitall
 -	-rm -f perl.export perl.dll perl.libexp perl.map perl.def
 -	-rm -f *perl.xok
 -	-rm -f cygwin.c libperl*.def libperl*.dll cygperl*.dll *.exe.stackdump
 -	-rm -f $(PERL_EXE) $(MINIPERL_EXE) $(LIBPERL) libperl.* microperl
 -	-rm -f config.arch config.over $(DTRACE_H)
++	$(RMS) *.depends makedepend_file
 +	-@test -f extra.pods && $(RMS) `cat extra.pods`
 +	-@test -f vms/README_vms.pod && $(RMS) vms/README_vms.pod
-+	$(RMS) perl.exp ext.libs $(generated_pods) uni.data opmini.o perlmini.o pod/roffitall
++	$(RMS) perl.exp ext.libs $(generated_pods) uni.data $(mini_only_objs) pod/roffitall
 +	$(RMS) perl.export perl.dll perl.libexp perl.map perl.def
 +	$(RMS) *perl.xok
 +	$(RMS) cygwin.c libperl*.def libperl*.dll cygperl*.dll *.exe.stackdump
@@ -183,7 +185,7 @@
  	-cd pod; $(LDLIBPTH) $(MAKE) $(CLEAN)
  	-cd utils; $(LDLIBPTH) $(MAKE) $(CLEAN)
  	-@if test -f $(MINIPERL_EXE) ; then \
-@@ -1378,31 +1379,31 @@ _cleaner1:
+@@ -1373,8 +1374,8 @@ _cleaner1:
  	else \
  	sh $(CLEAN).sh ; \
  	fi
@@ -193,9 +195,10 @@
 +	$(RMS) `grep -v ^# mkppport.lst | grep . | sed -e 's/$$/\/ppport.h/'`
  
  # Dear POSIX, thanks for making the default to xargs to be
- # run once if nothhing is passed in. It is such a great help.
- 
- # Some systems do not support "?", so keep these files separate.
+ # run once if nothing is passed in. It is such a great help.
+@@ -1389,24 +1390,24 @@ _cleaner1:
+ # Add new rules before that line - the next line (rm -f so_locations ...) is
+ # used as a placeholder by a regen script.
  _cleaner2:
 -	-rm -f core.*perl.*.? t/core.perl.*.? .?*.c
 -	rm -f core *perl.core t/core t/*perl.core core.* t/core.*
@@ -228,12 +231,14 @@
 +	$(RMS) pod2htmd.tmp
 +	$(RMS_R) pod/perlfunc pod/perlipc
  	-rmdir ext/B/lib
--	rm -f so_locations $(LIBPERL_NONSHR) $(MINIPERL_NONSHR)
-+	$(RMS) so_locations $(LIBPERL_NONSHR) $(MINIPERL_NONSHR)
+-	-rm -f dist/Time-HiRes/xdefine
+-	rm -f so_locations $(LIBPERL_NONSHR)
++	$(RMS) dist/Time-HiRes/xdefine
++	$(RMS) so_locations $(LIBPERL_NONSHR)
  	-rmdir lib/version lib/threads lib/inc/ExtUtils lib/inc lib/encoding
  	-rmdir lib/autodie/exception lib/autodie/Scope lib/autodie lib/XS
  	-rmdir lib/Win32API lib/VMS lib/Unicode/Collate/Locale
-@@ -1452,11 +1453,11 @@ _realcleaner:
+@@ -1457,11 +1458,11 @@ _realcleaner:
  _verycleaner:
  	@$(LDLIBPTH) $(MAKE) _cleaner1 CLEAN=veryclean
  	@$(LDLIBPTH) $(MAKE) _cleaner2
@@ -247,7 +252,7 @@
  	lint $(lintflags) -DPERL_CORE -D_REENTRANT -DDEBUGGING -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 $(c)
  
  cscopeflags = -Rb  # Recursive, build-only.
-@@ -1514,7 +1515,7 @@ case "$targethost" in
+@@ -1522,7 +1523,7 @@ case "$targethost" in
  '') $spitshell >>$Makefile <<'!NO!SUBS!'
  test_prep test-prep: test_prep_pre $(MINIPERL_EXE) $(unidatafiles) $(PERL_EXE) \
  	$(dynamic_ext) $(TEST_PERL_DLL) runtests $(generated_pods) common_build
@@ -256,7 +261,7 @@
  
  !NO!SUBS!
  ;;
-@@ -1564,7 +1565,7 @@ test_prep test-prep: test_prep_pre \$(MI
+@@ -1572,7 +1573,7 @@ test_prep test-prep: test_prep_pre \$(MI
  	$to config.sh
  # --- For lib/diagnostics.t with -Duseshrplib
  	$to \$(PERL_EXE)
@@ -265,7 +270,7 @@
  	$to t/\$(PERL_EXE)
  
  !GROK!THIS!
-@@ -1574,7 +1575,7 @@ esac
+@@ -1582,7 +1583,7 @@ esac
  $spitshell >>$Makefile <<'!NO!SUBS!'
  test_prep_reonly: $(MINIPERL_EXE) $(PERL_EXE) $(dynamic_ext_re) $(TEST_PERL_DLL)
  	$(MINIPERL) make_ext.pl $(dynamic_ext_re) MAKE="$(MAKE)" LIBPERL_A=$(LIBPERL) LINKTYPE=dynamic
@@ -274,12 +279,12 @@
  !NO!SUBS!
  
  case "$targethost" in
-@@ -1629,7 +1630,7 @@ minitest_prep:
+@@ -1637,7 +1638,7 @@ minitest_prep: $(MINIPERL_EXE)
  	@echo "You may see some irrelevant test failures if you have been unable"
  	@echo "to build lib/Config.pm, or the Unicode data files."
  	@echo " "
--	- cd t && (rm -f $(PERL_EXE); $(LNS) ../$(MINIPERL_EXE) $(PERL_EXE))
-+	- cd t && ($(RMS) $(PERL_EXE); $(LNS) ../$(MINIPERL_EXE) $(PERL_EXE))
+-	cd t && (rm -f $(PERL_EXE); $(LNS) ../$(MINIPERL_EXE) $(PERL_EXE))
++	cd t && ($(RMS) $(PERL_EXE); $(LNS) ../$(MINIPERL_EXE) $(PERL_EXE))
  
  MINITEST_TESTS = base/*.t comp/*.t cmd/*.t run/*.t io/*.t re/*.t opbasic/*.t op/*.t uni/*.t perf/*.t
  

@@ -107,7 +107,7 @@ create_host_record_from_host() {
   local dns ip name
 
   # basefiles dhcp "host" clause which means host A and PTR records
-  config_get dns  "$cfg" dns
+  config_get dns  "$cfg" dns 0
   config_get ip   "$cfg" ip
   config_get name "$cfg" name
 
