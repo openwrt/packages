@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=snort3
 PKG_VERSION:=3.1.75.0
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/snort3/snort3/archive/refs/tags/
@@ -25,7 +25,7 @@ define Package/snort3
   SUBMENU:=Firewall
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libstdcpp +libdaq3 +libdnet +libopenssl +libpcap +libpcre +libpthread +libuuid +zlib +libhwloc +libtirpc @HAS_LUAJIT_ARCH +luajit +libatomic
+  DEPENDS:=+libstdcpp +libdaq3 +libdnet +libopenssl +libpcap +libpcre +libpthread +libuuid +zlib +libhwloc +libtirpc @HAS_LUAJIT_ARCH +luajit +libatomic +kmod-nft-queue
   TITLE:=Lightweight Network Intrusion Detection System
   URL:=http://www.snort.org/
   MENU:=1
@@ -76,6 +76,10 @@ define Package/snort3/install
 		$(PKG_INSTALL_DIR)/usr/bin/u2{boat,spewfoo} \
 		$(1)/usr/bin/
 
+	$(INSTALL_BIN) \
+		./files/snort-{mgr,rules} \
+		$(1)/usr/bin/
+
 	$(INSTALL_DIR) $(1)/usr/lib/snort
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/snort/daq/daq_hext.so \
@@ -89,6 +93,19 @@ define Package/snort3/install
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/include/snort/lua/snort_plugin.lua \
 		$(1)/usr/share/lua/
+
+	$(INSTALL_DIR) $(1)/usr/share/snort
+	$(INSTALL_CONF) \
+		./files/main.uc \
+		$(1)/usr/share/snort/
+
+	$(INSTALL_DIR) $(1)/usr/share/snort/templates
+	$(INSTALL_CONF) \
+		./files/nftables.uc \
+		$(1)/usr/share/snort/templates/
+	$(INSTALL_CONF) \
+		./files/snort.uc \
+		$(1)/usr/share/snort/templates/
 
 	$(INSTALL_DIR) $(1)/etc/snort/{rules,lists,builtin_rules,so_rules}
 

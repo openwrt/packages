@@ -1,0 +1,260 @@
+#!/bin/sh
+# Copyright (c) 2023 Eric Fahlgren <eric.fahlgren@gmail.com>
+# SPDX-License-Identifier: GPL-2.0
+# shellcheck disable=SC2039  # "local" not defined in POSIX sh
+
+PROG="/usr/bin/snort"
+MAIN="/usr/share/snort/main.uc"
+CONF_DIR="/var/snort.d"
+CONF="${CONF_DIR}/snort_conf.lua"
+
+VERBOSE=
+TESTING=
+NLINES=0
+
+[ ! -e "$CONF_DIR" ] && mkdir "$CONF_DIR"
+[ -e /dev/stdin ] && STDIN=/dev/stdin || STDIN=/proc/self/fd/0
+[ -e /dev/stdout ] && STDOUT=/dev/stdout || STDOUT=/proc/self/fd/1
+[ -t 2 ] && export TTY=1
+
+die() {
+	[ -n "$QUIET" ] || echo "$@" >&2
+	exit 1
+}
+
+disable_offload()
+{
+	# From https://forum.openwrt.org/t/snort-3-nfq-with-ips-mode/161172
+	# https://blog.snort.org/2016/08/running-snort-on-commodity-hardware.html
+	# Not needed when running the nft daq as defragmentation is done by the kernel.
+	# What about pcap?
+
+	local filter_method=$(uci -q get snort.snort.method)
+	if [ "$filter_method" = "afpacket" ]; then
+		local wan=$(uci get snort.snort.interface)
+		if [ -n "$wan" ] && ethtool -k "$wan" | grep -q -E '(tcp-segmentation-offload|receive-offload): on' ; then
+			ethtool -K "$wan"   gro off   lro off   tso off   2> /dev/null
+			log "Disabled gro, lro and tso on '$wan' using ethtool."
+		fi
+	fi
+}
+
+nft_rm_table() {
+	for table_type in 'inet' 'netdev'; do
+		nft list tables | grep -q "${table_type} snort" && nft delete table "${table_type}" snort
+	done
+}
+
+nft_add_table() {
+	if [ "$(uci -q get snort.snort.method)" = "nfq" ]; then
+		print nftables | nft $VERBOSE -f $STDIN
+		[ -n "$VERBOSE" ] && nft list table inet snort
+	fi
+}
+
+setup() {
+	# Generates all the configuration, then reports the config file for snort.
+	# Does NOT generate the rules file, you'll need to do 'update-rules' first.
+	nft_rm_table
+	print snort > "$CONF"
+	nft_add_table
+	echo "$CONF"
+}
+
+teardown() {
+	# Merely cleans up after.
+	nft_rm_table
+	[ -e "$CONF" ] && rm "$CONF"
+}
+
+update_rules() {
+	/usr/bin/snort-rules $TESTING
+}
+
+print() {
+	# '$1' is file type to generate, one of:
+	#     config, snort or nftables
+	TYPE=$1 utpl -S "$MAIN"
+}
+
+check() {
+	local manual=$(uci get snort.snort.manual)
+	[ "$manual" = 1 ] && return 0
+
+	[ -n "$QUIET" ] && OUT=/dev/null || OUT=$STDOUT
+	local test_conf="${CONF_DIR}/test_conf.lua"
+	print snort > "${test_conf}" || die "Errors during generation of config."
+	if $PROG -T -q --warn-all -c "${test_conf}" 2> $OUT ; then
+		rm "${test_conf}"
+		return 0
+	fi
+	die "Errors in snort config tests."
+}
+
+report() {
+	# Reported IPs have source port stripped, but destination port (if any)
+	# retained.
+	#
+	# json notes
+	# from alert_fast:
+	# 08/30-11:39:57.639021 [**] [1:382:11] "PROTOCOL-ICMP PING Windows" [**] [Classification: Misc activity] [Priority: 3] {ICMP} 10.1.1.186 -> 10.1.1.20
+	#
+	# same event in alert_json (single line broken for clarity):
+	# { "timestamp" : "08/30-11:39:57.639021", "pkt_num" : 5366, "proto" : "ICMP", "pkt_gen" : "raw",
+	#   "pkt_len" : 60, "dir" : "C2S", "src_ap" : "10.1.1.186:0", "dst_ap" : "10.1.1.20:0",
+	#   "rule" : "1:382:11", "action" : "allow" }
+	#
+	# Second part of "rule", 382, is "sid" in ruleset, suffixing 11 is "rev".
+	# grep '\bsid:382\b' /etc/snort/rules/snort.rules  (again, single line broken for clarity):
+	# alert icmp $EXTERNAL_NET any -> $HOME_NET any ( msg:"PROTOCOL-ICMP PING Windows";
+	#     itype:8; content:"abcdefghijklmnop",depth 16; metadata:ruleset community;
+	#     classtype:misc-activity; sid:382; rev:11; )
+	#
+	# Not sure where the prefixing 1 comes from.
+
+	local logging=$(uci get snort.snort.logging)
+	local log_dir=$(uci get snort.snort.log_dir)
+	local pattern="$1"
+
+	if [ "$logging" = 0 ]; then
+		die "Logging is not enabled in snort config."
+	fi
+		
+	#if [ -z "$pattern" ]; then
+	#	die "Provide a valid IP and try again."
+	#fi
+
+	[ "$NLINES" = 0 ] && output="cat" || output="head -n $NLINES"
+
+	# Fix this to use json file.
+	tmp="/tmp/snort.report.$$"
+	echo "Intrusions involving ${pattern:-all IPs}"
+	grep "\b${pattern}\b" "$log_dir/alert_fast.txt" \
+		| sed 's/.*"\([^"]*\)".* \([^ :]*\)[: ].*-> \(.*\)/\1#\2#\3/' > "$tmp"
+	n_incidents="$(wc -l < $tmp)"
+	lines=$(sort "$tmp" | uniq -c | sort -nr \
+		| awk -F'#' '{printf "%-80s %-12s -> %s\n", $1, $2, $3}')
+	echo "$lines" | $output
+	n_lines=$(echo "$lines" | wc -l)
+	[ "$NLINES" -gt 0 ] && [ "$NLINES" -lt "$n_lines" ] && echo "    ... Only showing $NLINES of $n_lines most frequent incidents."
+	printf "%7d total incidents\n" "$n_incidents"
+	rm "$tmp"
+}
+
+status() {
+	echo 'tbd'
+}
+
+
+while [ -n "$1" ]; do
+	case "$1" in
+		-q)
+			export QUIET=1
+			shift
+		;;
+		-v)
+			export VERBOSE=-e
+			shift
+		;;
+		-t)
+			TESTING=-t
+			shift
+		;;
+		-n)
+			NLINES="$2"
+			shift
+			shift
+		;;
+		*)
+			break
+		;;
+	esac
+done
+
+case "$1" in
+	setup)
+		setup
+	;;
+	teardown)
+		teardown
+	;;
+	resetup)
+		QUIET=1 check || die "The generated snort lua configuration contains errors, not restarting."
+		teardown
+		setup
+	;;
+	update-rules)
+		update_rules
+	;;
+	check)
+		check
+	;;
+	print)
+		print "$2"
+	;;
+	report)
+		report "$2"
+	;;
+	status)
+		status
+	;;
+	*)
+		cat <<USAGE
+Usage:
+
+  -n = show only NLINES of output
+  -q = quiet
+  -v = verbose
+  -t = testing mode
+
+  $0 [-v] [-q] setup|teardown|resetup
+
+    Normally only used internally by init scripts to manage the generation
+    of configuration files and any needed firewall rules.  None of these
+    modify the snort rules in any way (see 'update-rules').
+      setup    = generates snort config, sets up firewall.
+      teardown = removes any firewall rules.
+      resetup  = shorthand for teardown and then setup.
+
+
+  $0 [-n lines] report [pattern]
+
+    Report on incidents.  Note this is somewhat experimental, so suggested
+    improvements are quite welcome.
+      pattern = IP or piece of IP or something in the message to filter.
+
+  $0 [-t] update-rules
+
+    Download and install the snort ruleset.  Testing mode generates a canned
+    rule that matches IPv4 ping requests.  A typical test scenario might look
+    like:
+
+      > snort-mgr -t update-rules
+      > /etc/init.d/snort start
+      > ping -c4 8.8.8.8
+      > logread -e "TEST ALERT"
+
+
+  $0 print config|snort|nftables
+
+    Print the rendered file contents.
+      config   = Display contents of /etc/config/snort, but with all values and
+                 descriptions.  Missing values shown with defaults.
+      snort    = The snort configuration file, which is a lua script.
+      nftables = The nftables script used to define the input queues when using
+                 the 'nfq' DAQ.
+
+
+  $0 [-q] check
+
+    Test the rendered config using snort's check mode without
+    applying it to the running system.
+
+
+  $0 status
+
+    Print the nfq counter values and blah blah blah
+
+USAGE
+	;;
+esac
