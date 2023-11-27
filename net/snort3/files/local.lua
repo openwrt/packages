@@ -1,3 +1,6 @@
+-- This file is no longer used if you are using 'snort-mgr' to create the
+-- configuration.  It is left as a sample.
+--
 -- use ths file to customize any functions defined in /etc/snort/snort.lua
 
 -- switch tap to inline in ips and uncomment the below to run snort in inline mode
