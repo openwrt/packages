@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postfix
 PKG_VERSION:=3.8.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
@@ -172,7 +172,7 @@ ifdef CONFIG_POSTFIX_PGSQL
 endif
 
 ifdef CONFIG_POSTFIX_PCRE
-  CCARGS+=-DHAS_PCRE2 -I$(STAGING_DIR)/usr/include/
+  CCARGS+=-DHAS_PCRE=2 -I$(STAGING_DIR)/usr/include/
   AUXLIBS+=-L$(STAGING_DIR)/usr/lib -lpcre2-8
 else
   CCARGS+=-DNO_PCRE
