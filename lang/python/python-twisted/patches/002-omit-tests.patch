@@ -1,6 +1,6 @@
 --- a/pyproject.toml
 +++ b/pyproject.toml
-@@ -194,6 +194,7 @@ exclude = [
+@@ -182,6 +182,7 @@ exclude = [
      "*.pxi",
      "*.pyx",
      "build.bat",

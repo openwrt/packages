@@ -11,7 +11,7 @@ Subject: [PATCH] Update xz2 and use it static
 
 --- a/src/bootstrap/Cargo.lock
 +++ b/src/bootstrap/Cargo.lock
-@@ -434,9 +434,9 @@ dependencies = [
+@@ -424,9 +424,9 @@ dependencies = [
  
  [[package]]
  name = "lzma-sys"
@@ -23,7 +23,7 @@ Subject: [PATCH] Update xz2 and use it static
  dependencies = [
   "cc",
   "libc",
-@@ -903,9 +903,9 @@ dependencies = [
+@@ -871,9 +871,9 @@ dependencies = [
  
  [[package]]
  name = "xz2"

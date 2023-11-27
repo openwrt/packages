@@ -1,0 +1,30 @@
+From 6bbc3056c4b9192010d888672d97810609ee23f9 Mon Sep 17 00:00:00 2001
+From: Michael Heimpold <mhei@heimpold.de>
+Date: Sat, 18 Nov 2023 21:46:15 +0100
+Subject: [PATCH] Ensure that $ax_python_devel_found is defined
+
+Otherwise in case of --without-python, it triggers an error like:
+-snip-
+...
+checking consistency of all components of python development environment... yes
+./configure: line 23729: test: =: unary operator expected
+...
+-snap-
+
+Signed-off-by: Michael Heimpold <mhei@heimpold.de>
+---
+ configure.ac | 3 +++
+ 1 file changed, 3 insertions(+)
+
+--- a/configure.ac
++++ b/configure.ac
+@@ -1997,6 +1997,9 @@ if test "x$trypython" = "xyes"; then
+       PYTHON_CPPFLAGS="$pythoncflags"
+    fi
+    AX_PYTHON_DEVEL([], [true])
++   ax_python_devel_found=yes
++else
++   ax_python_devel_found=no
+ fi
+ if test $ax_python_devel_found = yes; then
+    AX_PROG_PYTHON_VERSION([3.0.0],

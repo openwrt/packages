@@ -1,0 +1,14 @@
+--- a/src/network_inspectors/packet_capture/packet_capture.h
++++ b/src/network_inspectors/packet_capture/packet_capture.h
+@@ -20,9 +20,10 @@
+ #ifndef PACKET_CAPTURE_H
+ #define PACKET_CAPTURE_H
+ 
++#include <cstdint>
+ #include <string>
+ 
+-void packet_capture_enable(const std::string&, const int16_t g = -1);
++void packet_capture_enable(const std::string&, const std::int16_t g = -1);
+ void packet_capture_disable();
+ 
+ #endif

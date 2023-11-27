@@ -47,14 +47,17 @@ CONFIGURE_ARGS += \
 	--$(if $(CONFIG_GENSIO_GLIB),with,without)-glib \
 	--$(if $(CONFIG_GENSIO_TCL),with,without)-tcl \
 	--without-afskmdm \
-	--without-ax25 \
 	--without-alsa \
+	--without-ax25 \
+	--without-cm108gpio \
+	--without-dnssd \
 	--without-go \
 	--without-ipmisol \
 	--without-kiss \
 	--without-openipmi \
 	--without-portaudio \
 	--without-sound \
+	--without-udev \
 	--with-cplusplus \
 	--with-flock-locking \
 	--with-uucp-locking \
@@ -74,6 +77,9 @@ CONFIGURE_VARS += \
 	PYTHON_LIBS="$(shell $(STAGING_DIR)/host/bin/$(PYTHON3)-config --ldflags) -l${PYTHON3}" \
 	PYTHON_CPPFLAGS="$(shell $(STAGING_DIR)/host/bin/$(PYTHON3)-config --includes)" \
 	PYTHON="$(STAGING_DIR_HOSTPKG)/bin/$(PYTHON3)"
+
+MAKE_VARS += \
+	PYTHON_LIBS="$(shell $(STAGING_DIR)/host/bin/$(PYTHON3)-config --ldflags) -l${PYTHON3}"
 else
 CONFIGURE_ARGS += \
 	--without-python \

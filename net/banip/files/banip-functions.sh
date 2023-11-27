@@ -194,10 +194,10 @@ f_rmpid() {
 		for pid in ${pids}; do
 			pids="${pids} $(pgrep -P "${pid}" 2>/dev/null)"
 		done
+		for pid in ${pids}; do
+			kill -INT "${pid}" >/dev/null 2>&1
+		done
 	fi
-	for pid in ${pids}; do
-		kill -INT "${pid}" >/dev/null 2>&1
-	done
 	: >"${ban_rdapfile}"
 	: >"${ban_pidfile}"
 }
