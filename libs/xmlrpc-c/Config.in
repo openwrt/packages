@@ -1,0 +1,29 @@
+# xmlrpc-c configuration
+menu "Configuration"
+	depends on PACKAGE_xmlrpc-c
+
+comment "XML backend"
+
+choice
+	prompt "Selected XML backend"
+	default XMLRPC_C_INTERNAL
+
+	config XMLRPC_C_INTERNAL
+		bool "Internal"
+
+	config XMLRPC_C_LIBXML2
+		bool "libxml2"
+
+endchoice
+
+comment "Features"
+
+config XMLRPC_C_CLIENT
+	bool "XMLRPC client"
+	default n
+
+config XMLRPC_C_SERVER
+	bool "XMLRPC server"
+	default y
+
+endmenu
