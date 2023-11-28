@@ -55,13 +55,17 @@ endef
 define Package/rtorrent-rpc
 $(call Package/rtorrent/Default)
   VARIANT:=rpc
-  DEPENDS+=+xmlrpc-c-server
+  DEPENDS+=+xmlrpc-c
   TITLE+=(with rpc support)
 endef
 
 define Package/rtorrent-rpc/description
 $(call Package/rtorrent/Default/description)
  This package is built with xmlrpc support
+endef
+
+define Package/rtorrent-rpc/config
+    select XMLRPC_C_SERVER
 endef
 
 CONFIGURE_ARGS += \
