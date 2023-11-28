@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-idna
-PKG_VERSION:=3.4
+PKG_VERSION:=3.6
 PKG_RELEASE:=1
 
 PYPI_NAME:=idna
-PKG_HASH:=814f528e8dead7d329833b91c5faa87d60bf71824cd12a7530b5526063d02cb4
+PKG_HASH:=9ecdbbd083b06798ae1e86adcbfe8ab1479cf864e4ee30fe4e46a003d12491ca
 
 PKG_LICENSE:=BSD-3-Clause
-PKG_LICENSE_FILES:=LICENSE.rst
+PKG_LICENSE_FILES:=LICENSE.md
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
 PKG_BUILD_DEPENDS:=python-flit-core/host
@@ -30,9 +30,7 @@ define Package/python3-idna
   SUBMENU:=Python
   TITLE:=IDNA library
   URL:=https://github.com/kjd/idna
-  DEPENDS:= \
-      +python3-light \
-      +python3-codecs
+  DEPENDS:=+python3-light +python3-codecs
 endef
 
 define Package/python3-idna/description
