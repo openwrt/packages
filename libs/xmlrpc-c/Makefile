@@ -76,7 +76,7 @@ endef
 define Package/xmlrpc-c-abyss
   $(call Package/xmlrpc-c/Default)
   TITLE+= - abyss
-  DEPENDS:=+xmlrpc-c-common @BROKEN
+  DEPENDS:=+xmlrpc-c-common
 endef
 
 define Package/xmlrpc-c-server-abyss
@@ -101,11 +101,10 @@ Package/xmlrpc-c-internal/description += Uses internal expat variant (stripped d
 CONFIGURE_ARGS+= \
 	--disable-wininet-client \
 	--disable-libwww-client \
-	--disable-abyss-server \
 	--disable-cgi-server \
 	--disable-cplusplus \
-	--disable-abyss-threads \
-	--without-libwww-ssl
+	--without-libwww-ssl \
+	--disable-abyss-openssl
 
 ifeq ($(BUILD_VARIANT),libxml2)
 	CONFIGURE_ARGS += \
@@ -217,6 +216,6 @@ $(eval $(call BuildPackage,xmlrpc-c-common))
 #$(eval $(call BuildPackage,xmlrpc-c-libxml2))
 $(eval $(call BuildPackage,xmlrpc-c-internal))
 $(eval $(call BuildPackage,xmlrpc-c-server))
-#$(eval $(call BuildPackage,xmlrpc-c-abyss))
-#$(eval $(call BuildPackage,xmlrpc-c-server-abyss))
+$(eval $(call BuildPackage,xmlrpc-c-abyss))
+$(eval $(call BuildPackage,xmlrpc-c-server-abyss))
 $(eval $(call BuildPackage,xmlrpc-c-client))
