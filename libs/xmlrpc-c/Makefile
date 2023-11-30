@@ -42,22 +42,15 @@ define Package/xmlrpc-c-internal
   $(call Package/xmlrpc-c/Default)
   TITLE+= (uses internal expat variant)
   DEPENDS:=+xmlrpc-c-common
-#  PROVIDES:=xmlrpc-c
+  PROVIDES:=xmlrpc-c
   VARIANT:=internal
-  HIDDEN:=1
-endef
-
-define Package/xmlrpc-c
-  $(call Package/xmlrpc-c/Default)
-  TITLE+= (uses internal expat variant)
-  DEPENDS:=+xmlrpc-c-internal
 endef
 
 define Package/xmlrpc-c-libxml2
   $(call Package/xmlrpc-c/Default)
   TITLE+= (uses libxml2)
-  DEPENDS:=+xmlrpc-c-common +libxml2 @BROKEN
-#  PROVIDES:=xmlrpc-c
+  DEPENDS:=+xmlrpc-c-common +libxml2
+  PROVIDES:=xmlrpc-c
   VARIANT:=libxml2
 endef
 
@@ -117,7 +110,7 @@ ifeq ($(BUILD_VARIANT),internal)
 endif
 
 define Build/Compile
-	( cd $(PKG_BUILD_DIR)/lib/expat/gennmtab && cc -I$(PKG_BUILD_DIR) -c gennmtab.c -o gennmtab.o && cc -o gennmtab  gennmtab.o )
+	( cd $(PKG_BUILD_DIR)/lib/expat/gennmtab && cc -I$(PKG_BUILD_DIR) -c gennmtab.c -o gennmtab.o && cc -o gennmtab gennmtab.o )
 	$(call Build/Compile/Default)
 endef
 
@@ -207,13 +200,8 @@ define Package/xmlrpc-c-common/install
 		$(1)/usr/lib/
 endef
 
-define Package/xmlrpc-c/install
-	true
-endef
-
-$(eval $(call BuildPackage,xmlrpc-c))
 $(eval $(call BuildPackage,xmlrpc-c-common))
-#$(eval $(call BuildPackage,xmlrpc-c-libxml2))
+$(eval $(call BuildPackage,xmlrpc-c-libxml2))
 $(eval $(call BuildPackage,xmlrpc-c-internal))
 $(eval $(call BuildPackage,xmlrpc-c-server))
 $(eval $(call BuildPackage,xmlrpc-c-abyss))
