@@ -120,8 +120,8 @@
  !NO!SUBS!
  
          case "$osname" in
-@@ -1133,8 +1134,8 @@ pod/perl5380delta.pod: pod/perldelta.pod
- 	$(LNS) perldelta.pod pod/perl5380delta.pod
+@@ -1133,8 +1134,8 @@ pod/perl5382delta.pod: pod/perldelta.pod
+ 	$(LNS) perldelta.pod pod/perl5382delta.pod
  
  extra.pods: $(MINIPERL_EXE)
 -	-@test ! -f extra.pods || rm -f `cat extra.pods`
@@ -153,14 +153,14 @@
  # Like distclean but also removes emacs backups and *.orig.
  veryclean:	_verycleaner _mopup _clobber
 -	-@rm -f Obsolete Wanted
-+	$(RMS) Obsolete Wanted
++	@$(RMS) Obsolete Wanted
  
  # Do not 'make _mopup' directly.
  _mopup:
 -	rm -f *$(OBJ_EXT) *$(LIB_EXT) all perlmain.c $(mini_only_src) generate_uudmap$(EXE_EXT) $(generated_headers)
 +	$(RMS) *$(OBJ_EXT) *$(LIB_EXT) all perlmain.c $(mini_only_src) generate_uudmap$(EXE_EXT) $(generated_headers)
  	-rmdir .depending
--	-rm *.depends makedepend_file
+ 	-rm *.depends makedepend_file
 -	-@test -f extra.pods && rm -f `cat extra.pods`
 -	-@test -f vms/README_vms.pod && rm -f vms/README_vms.pod
 -	-rm -f perl.exp ext.libs $(generated_pods) uni.data $(mini_only_objs) pod/roffitall
@@ -169,7 +169,6 @@
 -	-rm -f cygwin.c libperl*.def libperl*.dll cygperl*.dll *.exe.stackdump
 -	-rm -f $(PERL_EXE) $(MINIPERL_EXE) $(LIBPERL) libperl.* microperl
 -	-rm -f config.arch config.over $(DTRACE_H)
-+	$(RMS) *.depends makedepend_file
 +	-@test -f extra.pods && $(RMS) `cat extra.pods`
 +	-@test -f vms/README_vms.pod && $(RMS) vms/README_vms.pod
 +	$(RMS) perl.exp ext.libs $(generated_pods) uni.data $(mini_only_objs) pod/roffitall
