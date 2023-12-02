@@ -20,7 +20,7 @@
    result = clock_gettime(CLOCK_MONOTONIC, &ts);
 --- a/deps/v8/src/base/platform/platform-posix.cc
 +++ b/deps/v8/src/base/platform/platform-posix.cc
-@@ -1066,7 +1066,7 @@ bool Thread::Start() {
+@@ -1072,7 +1072,7 @@ bool Thread::Start() {
  #if V8_OS_DARWIN
      // Default on Mac OS X is 512kB -- bump up to 1MB
      stack_size = 1 * 1024 * 1024;
