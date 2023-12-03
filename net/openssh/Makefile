@@ -79,6 +79,8 @@ define Package/openssh-keygen
 	$(call Package/openssh/Default)
 	DEPENDS+= +libopenssl +zlib
 	TITLE+= keygen
+	ALTERNATIVES:=\
+		200:/usr/bin/ssh-keygen:/usr/libexec/ssh-keygen-openssh
 endef
 
 define Package/openssh-keygen/description
@@ -219,8 +221,8 @@ define Package/openssh-client-utils/install
 endef
 
 define Package/openssh-keygen/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ssh-keygen $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/usr/libexec
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ssh-keygen $(1)/usr/libexec/ssh-keygen-openssh
 endef
 
 define Package/openssh-server/install
