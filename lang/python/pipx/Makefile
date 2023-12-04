@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pipx
-PKG_VERSION:=1.2.1
+PKG_VERSION:=1.3.2
 PKG_RELEASE:=1
 
 PYPI_NAME:=pipx
-PKG_HASH:=698777c05a97cca81df4dc6a71d9ca4ece2184c6f91dc7a0e4802ac51d86d32a
+PKG_HASH:=704d01d04c67c2dd0c776c5bf5ed35c7b249055b0174568b8507f07d72ed7a7f
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
-PKG_BUILD_DEPENDS:=python-hatchling/host
+PKG_BUILD_DEPENDS:=python-hatchling/host python-hatch-vcs/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -37,6 +37,7 @@ define Package/pipx
     +python3-venv \
     +python3-argcomplete \
     +python3-packaging \
+    +python3-platformdirs \
     +python3-userpath
 endef
 
