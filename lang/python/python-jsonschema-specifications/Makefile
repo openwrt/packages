@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-jsonschema-specifications
-PKG_VERSION:=2023.7.1
+PKG_VERSION:=2023.11.2
 PKG_RELEASE:=1
 
 PYPI_NAME:=jsonschema-specifications
 PYPI_SOURCE_NAME:=jsonschema_specifications
-PKG_HASH:=c91a50404e88a1f6ba40636778e2ee08f6e24c5613fe4c53ac24578a5a7f72bb
+PKG_HASH:=9472fc4fea474cd74bea4a2b190daeccb5a9e4db2ea80efcf7a1b582fc9a81b8
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
