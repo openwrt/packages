@@ -26,6 +26,7 @@ Once installed, you can configure the 2G/3G/4G modem connections directly in
         option lowpower    '1'
         option signalrate  '30'
         option allow_roaming '1'
+        option init_epsbearer '<none|default|custom>'
 
 Only 'device' and 'proto' are mandatory options, the remaining ones are all
 optional.
@@ -42,3 +43,17 @@ The 'plmn' option allows to set the network operator MCCMNC.
 
 The 'signalrate' option set's the signal refresh rate (in seconds) for the device.
 You can call signal info with command: mmcli -m 0 --signal-get
+
+If there is no Circuit switch network available, then an initial EPS
+bearer must be set, so this could be used during the network registration
+process in 4G and 5G network. For this resaon a new configuration option
+'init_epsbearer' was added, which could have the following values.
+* none:    Do not set an initial EPS bearer (default)
+* default: Use the configuration option 'apn', 'iptype', 'allowedauth',
+           'username' and 'password' for setting the initial EPS bearer.
+           These are the same options as when establishing a connection.
+* custom:  This could be used to use diffrent options when establishing a
+           connection. The options are prefixed with an 'init'. So we have
+           the following options 'init_apn', 'init_iptype',
+           'init_allowedauth', 'init_username' and 'init_password' for
+           setting the initial EPS bearer.

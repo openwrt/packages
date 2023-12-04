@@ -339,6 +339,12 @@ proto_modemmanager_init_config() {
 	proto_config_add_int signalrate
 	proto_config_add_boolean lowpower
 	proto_config_add_boolean allow_roaming
+	proto_config_add_string init_epsbearer
+	proto_config_add_string init_iptype
+	proto_config_add_string 'init_allowedauth:list(string)'
+	proto_config_add_string init_password
+	proto_config_add_string init_user
+	proto_config_add_string init_apn
 	proto_config_add_defaults
 }
 
@@ -362,6 +368,50 @@ modemmanager_set_allowed_mode() {
 		proto_block_restart "${interface}"
 		return 1
 	}
+}
+
+modemmanager_check_state() {
+	local device="$1"
+	local modemstatus="$2"
+	local pincode="$3"
+
+	local state reason
+
+	state="$(modemmanager_get_field "${modemstatus}" "state")"
+	state="${state%% *}"
+	reason="$(modemmanager_get_field "${modemstatus}" "state-failed-reason")"
+
+	case "$state" in
+		"failed")
+			case "$reason" in
+				"sim-missing")
+					echo "SIM missing"
+					proto_notify_error "${interface}" MM_FAILED_REASON_SIM_MISSING
+					proto_block_restart "${interface}"
+					return 1
+					;;
+				*)
+					proto_notify_error "${interface}" MM_FAILED_REASON_UNKNOWN
+					proto_block_restart "${interface}"
+					return 1
+					;;
+			esac
+			;;
+		"locked")
+			if [ -n "$pincode" ]; then
+				mmcli --modem="${device}" -i any --pin=${pincode} || {
+					proto_notify_error "${interface}" MM_PINCODE_WRONG
+					proto_block_restart "${interface}"
+					return 1
+				}
+			else
+				echo "PIN required"
+				proto_notify_error "${interface}" MM_PINCODE_REQUIRED
+				proto_block_restart "${interface}"
+				return 1
+			fi
+			;;
+	esac
 }
 
 modemmanager_set_preferred_mode() {
@@ -394,6 +444,38 @@ modemmanager_set_preferred_mode() {
 	}
 }
 
+modemmanager_init_epsbearer() {
+	local eps="$1"
+	local device="$2"
+	local connectargs="$3"
+	local apn="$4"
+
+	[ "$eps" != 'none' ] && [ -z "${apn}" ] && {
+		echo "No '$eps' init eps bearer apn configured"
+		proto_notify_error "${interface}" MM_INIT_EPS_BEARER_APN_NOT_CONFIGURED
+		proto_block_restart "${interface}"
+		return 1
+	}
+
+	if [ "$eps" = "none" ]; then
+		echo "Deleting inital EPS bearer..."
+	else
+		echo "Setting '$eps' inital EPS bearer apn to '$apn'..."
+	fi
+
+	mmcli --modem="${device}" \
+		--timeout 120 \
+		--3gpp-set-initial-eps-bearer-settings="${connectargs}" || {
+		proto_notify_error "${interface}" MM_INIT_EPS_BEARER_SET_FAILED
+		proto_block_restart "${interface}"
+		return 1
+	}
+
+	# Wait here so that the modem can set the init EPS bearer
+	# for registration
+	sleep 2
+}
+
 proto_modemmanager_setup() {
 	local interface="$1"
 
@@ -405,11 +487,19 @@ proto_modemmanager_setup() {
 	local device apn allowedauth username password pincode
 	local iptype plmn metric signalrate allow_roaming
 
+	local init_epsbearer
+	local init_iptype init_allowedauth
+	local init_password init_user init_apn
+
 	local address prefix gateway mtu dns1 dns2
 
 	json_get_vars device apn allowedauth username password
 	json_get_vars pincode iptype plmn metric signalrate allow_roaming
 	json_get_vars allowedmode preferredmode
+
+	json_get_vars init_epsbearer
+	json_get_vars init_iptype init_allowedauth
+	json_get_vars init_password init_user init_apn
 
 	# validate sysfs path given in config
 	[ -n "${device}" ] || {
@@ -429,6 +519,9 @@ proto_modemmanager_setup() {
 		return 1
 	}
 	echo "modem available at ${modempath}"
+
+	modemmanager_check_state "$device" "${modemstatus}" "$pincode"
+	[ "$?" -ne "0" ] && return 1
 
 	[ -z "${allowedmode}" ] || {
 		case "$allowedmode" in
@@ -460,10 +553,51 @@ proto_modemmanager_setup() {
 	# always cleanup before attempting a new connection, just in case
 	modemmanager_cleanup_connection "${modemstatus}"
 
-	# if allowedauth list given, build option string
-	for auth in $allowedauth; do
-		cliauth="${cliauth}${cliauth:+|}$auth"
-	done
+	mmcli --modem="${device}" --timeout 120 --enable || {
+		proto_notify_error "${interface}" MM_MODEM_DISABLED
+		return 1
+	}
+
+	# set initial eps bearer settings
+	[ -z "${init_epsbearer}" ] || {
+		case "$init_epsbearer" in
+			"none")
+				connectargs=""
+				modemmanager_init_epsbearer "none" \
+					"$device" "${connectargs}" "$apn"
+				;;
+			"default")
+				cliauth=""
+				for auth in $allowedauth; do
+					cliauth="${cliauth}${cliauth:+|}$auth"
+				done
+				connectargs=""
+				append_param "apn=${apn}"
+				append_param "${iptype:+ip-type=${iptype}}"
+				append_param "${cliauth:+allowed-auth=${cliauth}}"
+				append_param "${username:+user=${username}}"
+				append_param "${password:+password=${password}}"
+				modemmanager_init_epsbearer "default" \
+					"$device" "${connectargs}" "$apn"
+				;;
+			"custom")
+				cliauth=""
+				for auth in $init_allowedauth; do
+					cliauth="${cliauth}${cliauth:+|}$auth"
+				done
+				connectargs=""
+				append_param "apn=${init_apn}"
+				append_param "${init_iptype:+ip-type=${init_iptype}}"
+				append_param "${cliauth:+allowed-auth=${cliauth}}"
+				append_param "${init_username:+user=${init_username}}"
+				append_param "${init_password:+password=${init_password}}"
+				modemmanager_init_epsbearer "custom" \
+					"$device" "${connectargs}" "$init_apn"
+				;;
+		esac
+		# check error for init_epsbearer function call
+		[ "$?" -ne "0" ] && return 1
+	}
 
 	# setup connect args; APN mandatory (even if it may be empty)
 	echo "starting connection with apn '${apn}'..."
@@ -477,7 +611,12 @@ proto_modemmanager_setup() {
 		allow_roaming="yes"
 	fi
 
+	cliauth=""
+	for auth in $allowedauth; do
+		cliauth="${cliauth}${cliauth:+|}$auth"
+	done
 	# Append options to 'connectargs' variable
+	connectargs=""
 	append_param "apn=${apn}"
 	append_param "allow-roaming=${allow_roaming}"
 	append_param "${iptype:+ip-type=${iptype}}"
@@ -485,7 +624,6 @@ proto_modemmanager_setup() {
 	append_param "${cliauth:+allowed-auth=${cliauth}}"
 	append_param "${username:+user=${username}}"
 	append_param "${password:+password=${password}}"
-	append_param "${pincode:+pin=${pincode}}"
 
 	mmcli --modem="${device}" --timeout 120 --simple-connect="${connectargs}" || {
 		proto_notify_error "${interface}" MM_CONNECT_FAILED
