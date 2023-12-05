@@ -8,13 +8,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cligen
 PKG_VERSION:=6.5.0
-PKG_RELEASE:=1
-PKG_MAINTAINER:=Olof Hagsand <olof@hagsand.se>, Philip Prindeville <philipp@redfish-solutions.com>
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/clicon/$(PKG_NAME)/tar.gz/$(PKG_VERSION)?
 PKG_HASH:=8b3943430f7aa9eea6a5f7cf1ace5b68eb382380cf68f41ae3ef5e032e08816f
 
+PKG_MAINTAINER:=Olof Hagsand <olof@hagsand.se>, Philip Prindeville <philipp@redfish-solutions.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE.md
 
@@ -32,7 +32,8 @@ define Package/cligen
 endef
 
 define Package/cligen/description
-  CLIgen is a Command-Line Interface generator
+  CLIgen provides dynamic CLI interpretation from grammar files
+  handled at run-time.
 endef
 
 CONFIGURE_ARGS+= \
