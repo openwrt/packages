@@ -11,8 +11,13 @@ table inet snort {
 	chain {{ chain_type }}_{{ snort.mode }} {
 		type filter  hook {{ chain_type }}  priority {{ nfq.chain_priority }}
 		policy accept
-		{% if (nfq.include) { include(nfq.include, { snort, nfq }); } %}
-		# tcp flags ack  ct direction original  ct state established  counter  accept
+		{% if (nfq.include) {
+		  // We use the ucode include here, so that the included file is also
+		  // part of the template and can use values passed in from the config.
+		  printf("\n\t\t#-- The following content included from '%s'\n", nfq.include);
+		  include(nfq.include, { snort, nfq });
+		  printf("\t\t#-- End of included file.\n\n");
+		} %}
 		counter  queue flags bypass to {{ queues }}
 	}
 }

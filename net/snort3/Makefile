@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=snort3
 PKG_VERSION:=3.1.76.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/snort3/snort3/archive/refs/tags/
@@ -125,15 +125,12 @@ define Package/snort3/install
 	$(INSTALL_CONF) \
 		./files/snort.config \
 		$(1)/etc/config/snort
-	$(INSTALL_CONF) \
-		./files/local.lua \
-		$(1)/etc/snort
-	$(INSTALL_CONF) \
-		./files/homenet.lua \
-		$(1)/etc/snort
+	
 	sed \
-		-i -e "/^EXTERNAL_NET\\s\\+=/ a include 'homenet.lua'" \
-		-e "/^HOME_NET\\s\\+=/ i -- we set HOME_NET and EXTERNAL_NET here or via an included file" \
+		-i \
+		-e "/^-- HOME_NET and EXTERNAL_NET/ i -- The values for the two variables HOME_NET and EXTERNAL_NET have been" \
+		-e "/^-- HOME_NET and EXTERNAL_NET/ i -- moved to /etc/config/snort, so do not modify them here without good" \
+		-e "/^-- HOME_NET and EXTERNAL_NET/ i -- reason.\n" \
 		-e 's/^\(HOME_NET\s\+=\)/--\1/g' \
 		-e 's/^\(EXTERNAL_NET\s\+=\)/--\1/g' \
 		$(1)/etc/snort/snort.lua

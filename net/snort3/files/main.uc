@@ -93,6 +93,8 @@ const snort_config = {
 	action:          config_item("enum",  [ "alert", "block", "drop", "reject" ]),
 	interface:       config_item("str",   [ uci.get("network", "wan", "device") ]),
 	snaplen:         config_item("range", [ 1518, 65535 ]),     // int daq.snaplen = 1518: set snap length (same as -s) { 0:65535 }
+
+	include:         config_item("path",  [ "" ]),              // User-defined snort configuration, applied at end of snort.lua.
 };
 
 const nfq_config = {
@@ -123,7 +125,7 @@ snort
                       your lan range, default is '192.168.1.0/24'
     external_net    - IP range external to home.  Usually 'any', but if you only
                       care about true external hosts (trusting all lan devices),
-                      then '!$HOMENET' or some specific range
+                      then '!$HOME_NET' or some specific range
     mode            - 'ids' or 'ips', for detection-only or prevention, respectively
     oinkcode        - https://www.snort.org/oinkcodes
     config_dir      - Location of the base snort configuration files.  Default /etc/snort
@@ -138,6 +140,7 @@ snort
     action          - 'alert', 'block', 'reject' or 'drop'
     method          - 'pcap', 'afpacket' or 'nfq'
     snaplen         - int daq.snaplen = 1518: set snap length (same as -s) { 0:65535 }
+    include         - User-defined snort configuration, applied at end of generated snort.lua
 
 nfq - https://github.com/snort3/libdaq/blob/master/modules/nfq/README.nfq.md
     queue_maxlen    - nfq's '--daq-var queue_maxlen=int'
@@ -237,7 +240,8 @@ function render_help() {
 
 load_all();
 
-switch (getenv("TYPE")) {
+let table_type = getenv("TYPE");
+switch (table_type) {
 	case "snort":
 		render_snort();
 		return;
@@ -255,7 +259,7 @@ switch (getenv("TYPE")) {
 		return;
 
 	default:
-		print("Invalid table type.\n");
+		print(`Invalid table type '${table_type}', should be one of snort, nftables, config, help.\n`);
 		return;
 }
 
