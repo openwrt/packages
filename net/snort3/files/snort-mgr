@@ -1,7 +1,7 @@
 #!/bin/sh
 # Copyright (c) 2023 Eric Fahlgren <eric.fahlgren@gmail.com>
 # SPDX-License-Identifier: GPL-2.0
-# shellcheck disable=SC2039  # "local" not defined in POSIX sh
+# shellcheck disable=SC2039,SC2155  # "local" not defined in POSIX sh
 
 PROG="/usr/bin/snort"
 MAIN="/usr/share/snort/main.uc"
@@ -26,7 +26,7 @@ disable_offload()
 {
 	# From https://forum.openwrt.org/t/snort-3-nfq-with-ips-mode/161172
 	# https://blog.snort.org/2016/08/running-snort-on-commodity-hardware.html
-	# Not needed when running the nft daq as defragmentation is done by the kernel.
+	# Not needed when running the nfq daq as defragmentation is done by the kernel.
 	# What about pcap?
 
 	local filter_method=$(uci -q get snort.snort.method)
@@ -55,6 +55,8 @@ nft_add_table() {
 setup() {
 	# Generates all the configuration, then reports the config file for snort.
 	# Does NOT generate the rules file, you'll need to do 'update-rules' first.
+	local log_dir=$(uci get snort.snort.log_dir)
+	[ ! -e "$log_dir" ] && mkdir -p "$log_dir"
 	nft_rm_table
 	print snort > "$CONF"
 	nft_add_table
@@ -82,13 +84,33 @@ check() {
 	[ "$manual" = 1 ] && return 0
 
 	[ -n "$QUIET" ] && OUT=/dev/null || OUT=$STDOUT
-	local test_conf="${CONF_DIR}/test_conf.lua"
-	print snort > "${test_conf}" || die "Errors during generation of config."
-	if $PROG -T -q --warn-all -c "${test_conf}" 2> $OUT ; then
-		rm "${test_conf}"
-		return 0
+	local warn no_rules
+	if [ -n "$VERBOSE" ]; then
+		warn='--warn-all'
+		no_rules=0
+	else
+		warn='-q'
+		no_rules=1
 	fi
-	die "Errors in snort config tests."
+
+	local test_conf="${CONF_DIR}/test_conf.lua"
+	_SNORT_WITHOUT_RULES="$no_rules" print snort > "${test_conf}" || die "Errors during generation of snort config."
+	if $PROG -T $warn -c "${test_conf}" 2> $OUT ; then
+		rm "${test_conf}"
+	else
+		die "Errors in snort config tests.  Examine ${test_conf} for issues."
+	fi
+
+	if [ "$(uci -q get snort.snort.method)" = "nfq" ]; then
+		local test_nft="${CONF_DIR}/test_conf.nft"
+		print nftables > "${test_nft}" || die "Errors during generation of nftables config."
+		if nft $VERBOSE --check -f "${test_nft}" ; then
+			rm "${test_nft}"
+		else
+			die "Errors in nftables config tests.  Examine ${test_nft} for issues."
+		fi
+	fi
+
 }
 
 report() {
@@ -120,20 +142,23 @@ report() {
 		die "Logging is not enabled in snort config."
 	fi
 		
-	#if [ -z "$pattern" ]; then
-	#	die "Provide a valid IP and try again."
-	#fi
-
 	[ "$NLINES" = 0 ] && output="cat" || output="head -n $NLINES"
 
-	# Fix this to use json file.
+	local msg src dst dir
 	tmp="/tmp/snort.report.$$"
-	echo "Intrusions involving ${pattern:-all IPs}"
-	grep "\b${pattern}\b" "$log_dir/alert_fast.txt" \
-		| sed 's/.*"\([^"]*\)".* \([^ :]*\)[: ].*-> \(.*\)/\1#\2#\3/' > "$tmp"
+	for file in "${log_dir}"/*alert_json.txt; do
+		while read -r line; do
+			eval $(jsonfilter -s "$line" -e 'msg=$.msg' -e 'src=$.src_ap' -e 'dst=$.dst_ap' -e 'dir=$.dir')
+			src=$(echo "$src" | sed 's/:.*$//')  # Delete all source ports.
+			dst=$(echo "$dst" | sed 's/:0$//')   # Delete unspecified dest port.
+			echo "$msg#$src#$dst#$dir"
+		done < "$file"
+	done | grep -i "$pattern" > "$tmp"
+
+	echo "Events involving ${pattern:-all IPs}"
 	n_incidents="$(wc -l < $tmp)"
 	lines=$(sort "$tmp" | uniq -c | sort -nr \
-		| awk -F'#' '{printf "%-80s %-12s -> %s\n", $1, $2, $3}')
+		| awk -F'#' '{printf "%-80s %s %-13s -> %s\n", $1, $4, $2, $3}')
 	echo "$lines" | $output
 	n_lines=$(echo "$lines" | wc -l)
 	[ "$NLINES" -gt 0 ] && [ "$NLINES" -lt "$n_lines" ] && echo "    ... Only showing $NLINES of $n_lines most frequent incidents."
@@ -142,7 +167,8 @@ report() {
 }
 
 status() {
-	echo 'tbd'
+	echo -n 'snort is ' ; service snort status
+	ps w | grep -E 'PID|snort' | grep -v grep
 }
 
 
@@ -179,7 +205,7 @@ case "$1" in
 		teardown
 	;;
 	resetup)
-		QUIET=1 check || die "The generated snort lua configuration contains errors, not restarting."
+		QUIET=1 check || die "The generated snort lua configuration contains errors, not restarting.  Run 'snort-mgr check'"
 		teardown
 		setup
 	;;
@@ -221,7 +247,7 @@ Usage:
 
     Report on incidents.  Note this is somewhat experimental, so suggested
     improvements are quite welcome.
-      pattern = IP or piece of IP or something in the message to filter.
+      pattern = A case-insensitive grep pattern used to filter output.
 
   $0 [-t] update-rules
 
@@ -243,6 +269,7 @@ Usage:
       snort    = The snort configuration file, which is a lua script.
       nftables = The nftables script used to define the input queues when using
                  the 'nfq' DAQ.
+      help     = Display config file help.
 
 
   $0 [-q] check

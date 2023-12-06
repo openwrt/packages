@@ -7,7 +7,8 @@
 let home_net = snort.home_net == 'any' ? "'any'" : snort.home_net;
 let external_net = snort.external_net;
 
-let line_mode = snort.mode == "ids" ? "tap" : "inline";
+let line_mode = snort.mode == "ids" ? "tap"     : "inline";
+let mod_mode  = snort.mode == "ids" ? "passive" : "inline";
 
 let inputs = null;
 let vars   = null;
@@ -32,9 +33,8 @@ case "nfq":
 -- Do not edit, automatically generated.  See /usr/share/snort/templates.
 
 -- These must be defined before processing snort.lua
--- The default include '/etc/snort/homenet.lua' must not redefine them.
 HOME_NET     = [[ {{ home_net }} ]]
-EXTERNAL_NET = '{{ external_net }}'
+EXTERNAL_NET = [[ {{ external_net }} ]]
 
 include('{{ snort.config_dir }}/snort.lua')
 
@@ -42,7 +42,7 @@ snort  = {
 {% if (snort.mode == 'ips'): %}
   ['-Q'] = true,
 {% endif %}
-  ['--daq'] = {{ snort.method }},
+  ['--daq'] = '{{ snort.method }}',
 --['--daq-dir'] = '/usr/lib/daq/',
 {% if (snort.method == 'nfq'): %}
   ['--max-packet-threads'] = {{ nfq.thread_count }},
@@ -50,10 +50,14 @@ snort  = {
 }
 
 ips = {
-  mode            = {{ line_mode }},
+  mode            = '{{ line_mode }}',
   variables       = default_variables,
-  action_override = {{ snort.action }},
-  include         = "{{ snort.config_dir }}/" .. RULE_PATH .. '/snort.rules',
+  action_override = '{{ snort.action }}',
+{% if (getenv("_SNORT_WITHOUT_RULES") == "1"): %}
+  -- WARNING: THIS IS A TEST-ONLY CONFIGURATION WITHOUT ANY RULES.
+{% else %}
+  include         = '{{ snort.config_dir }}/' .. RULE_PATH .. '/snort.rules',
+{% endif -%}
 }
 
 daq = {
@@ -63,7 +67,7 @@ daq = {
   modules     = {
     {
       name      = '{{ snort.method }}',
-      mode      = {{ line_mode }},
+      mode      = '{{ mod_mode }}',
       variables = {{ vars }},
     }
   }
@@ -75,12 +79,11 @@ alert_syslog = {
 
 {% if (int(snort.logging)): %}
 -- Note that this is also the location of the PID file, if you use it.
-output.logdir = "{{ snort.log_dir }}"
+output.logdir = '{{ snort.log_dir }}'
 
--- Maybe add snort.log_type, 'fast', 'json' and 'full'?
--- Json would be best for reporting, see 'snort-mgr report' code.
 -- alert_full = { file = true, }
 
+--[[
 alert_fast = {
 -- bool alert_fast.file   = false: output to alert_fast.txt instead of stdout
 -- bool alert_fast.packet = false: output packet dump with alert
@@ -88,13 +91,39 @@ alert_fast = {
   file = true,
   packet = false,
 }
+--]]
+
 alert_json = {
 -- bool   alert_json.file      = false: output to alert_json.txt instead of stdout
--- multi  alert_json.fields    = timestamp pkt_num proto pkt_gen pkt_len dir src_ap dst_ap rule action: selected fields will be output
 -- int    alert_json.limit     = 0: set maximum size in MB before rollover (0 is unlimited) { 0:maxSZ }
 -- string alert_json.separator = , : separate fields with this character sequence
+-- multi  alert_json.fields    = 'timestamp pkt_num proto pkt_gen pkt_len dir src_ap dst_ap'
+--                               Rule action: selected fields will be output in given order left to right.
+--				{ action | class | b64_data | client_bytes | client_pkts | dir
+--				| dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src
+--				| eth_type | flowstart_time | geneve_vni | gid | icmp_code
+--				| icmp_id | icmp_seq | icmp_type | iface | ip_id | ip_len
+--				| msg | mpls | pkt_gen | pkt_len | pkt_num | priority
+--				| proto | rev | rule | seconds | server_bytes | server_pkts
+--				| service | sgt | sid | src_addr | src_ap | src_port | target
+--				| tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp
+--				| tos | ttl | udp_len | vlan }
+
+-- This is a minimal set of fields that simply supports 'snort-mgr report'
+-- and minimizes log size:
+  fields = 'dir src_ap dst_ap msg',
+
+-- This set also supports the report, but closely matches 'alert_fast' contents.
+--fields = 'timestamp pkt_num proto pkt_gen pkt_len dir src_ap dst_ap rule action msg',
+
   file = true,
 }
+
+--[[
+unified2 = {
+  limit = 10, -- int unified2.limit = 0: set maximum size in MB before rollover (0 is unlimited) { 0:maxSZ }
+}
+--]]
 
 {% endif -%}
 
@@ -124,3 +153,12 @@ appid = {
   app_stats_period = 60,
 }
 {% endif %}
+
+{%
+if (snort.include) {
+  // We use the ucode include here, so that the included file is also
+  // part of the template and can use values passed in from the config.
+  printf("-- The following content from included file '%s'\n", snort.include);
+  include(snort.include, { snort, nfq });
+}
+%}
