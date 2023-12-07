@@ -13,7 +13,7 @@ mkdir -p /var/lock/
 
 opkg update
 
-[ -n "${CI_HELPER:=''}" ] || CI_HELPER="/ci/.github/workflows/ci_helpers.sh"
+export CI_HELPER="/ci/.github/workflows/ci_helpers.sh"
 
 for PKG in /ci/*.ipk; do
 	tar -xzOf "$PKG" ./control.tar.gz | tar xzf - ./control
@@ -42,7 +42,7 @@ for PKG in /ci/*.ipk; do
 		continue
 	fi
 
-	export PKG_NAME PKG_VERSION CI_HELPER
+	export PKG_NAME PKG_VERSION
 
 	if [ -f "$PRE_TEST_SCRIPT" ]; then
 		echo "Use package specific pre-test.sh"
