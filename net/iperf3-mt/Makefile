@@ -45,7 +45,7 @@ define Package/iperf3-mt-ssl
 $(call Package/iperf3-mt/default)
   TITLE+= and iperf_auth support
   VARIANT:=ssl
-  DEPENDS:=+libopenssl +libatomic
+  DEPENDS:=+libopenssl +libatomic +libiperf3-mt
 endef
 
 define Package/libiperf3-mt
