@@ -1,7 +1,7 @@
 #!/bin/sh
 
 CLONEURL=https://git.haproxy.org/git/haproxy-2.8.git
-BASE_TAG=v2.8.4
+BASE_TAG=v2.8.5
 TMP_REPODIR=tmprepo
 PATCHESDIR=patches
 
