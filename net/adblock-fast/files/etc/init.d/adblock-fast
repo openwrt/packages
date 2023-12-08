@@ -293,7 +293,8 @@ get_url_filesize() {
 	[ -n "$url" ] || return 0
 	is_present 'curl' || return 0
 	size_command='curl --silent --insecure --fail --head --request GET'
-	size="$($size_command "$url" | grep -Po '^[cC]ontent-[lL]ength: \K\w+')"
+#	size="$($size_command "$url" | grep -Po '^[cC]ontent-[lL]ength: \K\w+')"
+	size="$($size_command "$url" | grep -Eo '^[cC]ontent-[lL]ength: (.*)' | awk '{print $2}')"
 # shellcheck disable=SC3037
 	echo -en "$size"
 }
@@ -346,7 +347,7 @@ uci_changes() {
 	local PACKAGE="$1"
 	local CONFIG="$2"
 	local OPTION="$3"
-	if [ -s "${UCI_CONFIG_DIR:-'/etc/config'}${PACKAGE}" ]; then
+	if [ -s "${UCI_CONFIG_DIR:-/etc/config/}${PACKAGE}" ]; then
 		/sbin/uci ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} changes "$PACKAGE${CONFIG:+.$CONFIG}${OPTION:+.$OPTION}"
 	fi
 }
@@ -775,6 +776,7 @@ load_environment() {
 resolver() {
 	_dnsmasq_instance_config() {
 		local cfg="$1" param="$2"
+		[ -s "/etc/config/dhcp" ] || return 0
 		case "$param" in
 			dnsmasq.addnhosts)
 				if [ "$(uci_get 'dhcp' "$cfg" 'serversfile')" = "$dnsmasqServersFile" ]; then
@@ -797,6 +799,7 @@ resolver() {
 		esac
 	}
 	_smartdns_instance_config() {
+		[ -s "/etc/config/smartdns" ] || return 0
 		local cfg="$1" param="$2"
 		case "$param" in
 			cleanup)
@@ -835,12 +838,16 @@ resolver() {
 			rm -f "$smartdnsIpsetFile" "$smartdnsIpsetCache" "${compressed_cache_dir}/${smartdnsIpsetGzip}" "$smartdnsIpsetConfig"
 			rm -f "$smartdnsNftsetFile" "$smartdnsNftsetCache" "${compressed_cache_dir}/${smartdnsNftsetGzip}" "$smartdnsNftsetConfig"
 			rm -f "$unboundFile" "$unboundCache" "$unboundGzip"
-			config_load 'dhcp'
-			config_foreach _dnsmasq_instance_config 'dnsmasq' 'cleanup'
-			uci_commit 'dhcp'
-			config_load 'smartdns'
-			config_foreach _smartdns_instance_config 'smartdns' 'cleanup'
-			uci_commit 'smartdns'
+			if [ -s "/etc/config/dhcp" ]; then
+				config_load 'dhcp'
+				config_foreach _dnsmasq_instance_config 'dnsmasq' 'cleanup'
+				[ -n "$(uci_changes 'dhcp')" ] && uci_commit 'dhcp'
+			fi
+			if [ -s "/etc/config/smartdns" ]; then
+				config_load 'smartdns'
+				config_foreach _smartdns_instance_config 'smartdns' 'cleanup'
+				[ -n "$(uci_changes 'smartdns')" ] && uci_commit 'smartdns'
+			fi
 		;;
 		on_start)
 			if [ ! -s "$outputFile" ]; then
