@@ -14,7 +14,7 @@ config_cb() {
 		local option="$1"
 		local value="$2"
 		case $option in
-		enabled|macprocs|nice|user|logfile)
+		enabled|gui_address|home|logfile|macprocs|nice|user)
 			eval $option=$value
 			;;
 		debug)
