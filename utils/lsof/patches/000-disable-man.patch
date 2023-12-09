@@ -1,0 +1,18 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -208,13 +208,8 @@ EXTRA_DIST += 00.README.FIRST 00CREDITS
+ # Testing
+ EXTRA_DIST += tests/00README tests/TestDB tests/CkTestDB tests/Makefile tests/LsofTest.h check.bash
+ 
+-# Manpages
+-lsof.man: Lsof.8 version 00DIALECTS
+-	soelim < Lsof.8 > $@
+-man8_MANS = lsof.man
+-EXTRA_DIST += Lsof.8
+ # Fix distcheck error
+ clean-local:
+ 	rm -rf lsof.man
+ distclean-local:
+-	rm -rf lockf_owner.h lockf.h
+\ No newline at end of file
++	rm -rf lockf_owner.h lockf.h
