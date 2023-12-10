@@ -51,6 +51,7 @@ proto_nebula_setup() {
 
 	[ -s "$config_file" ] || { log "Config file not found or empty!"; return 1; }
 	eval "$(yaml_parse "$config_file" "yaml_")"
+	yaml_tun_dev="${yaml_tun_dev%"${yaml_tun_dev##*[![:space:]]}"}"
 	[ "$yaml_tun_dev" = "$interface" ] || { log "Tunnel device in config file (${yaml_tun_dev}) doesn't match interface name (${interface})!"; return 1; }
 
 	log "Setting up ${interface} from $(basename "$config_file")."
@@ -73,7 +74,7 @@ proto_nebula_setup() {
 	json_close_array
 	proto_close_data
 	addresses="$(ip -4 a list dev "$interface" 2>/dev/null | grep inet | awk '{print $2}' | awk -F "/" '{print $1}')"
-	log "Running ${interface} from $(basename "$config_file") with addresses: ${addresses}."
+	log "Running ${interface} from $(basename "$config_file")${addresses+:  with addresses: $addresses}."
 	for address in ${addresses}; do
 		case "${address}" in
 			*:*/*)
