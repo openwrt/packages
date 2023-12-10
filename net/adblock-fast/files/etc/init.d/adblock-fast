@@ -1209,6 +1209,7 @@ download_lists() {
 $(cat $A_TMP)"
 	for hf in ${allowed_domain}; do hf="$(echo "$hf" | sed 's/\./\\./g')"; allow_filter="$allow_filter/(^|\.)${hf}$/d;"; done
 
+	sed -i '/^[[:space:]]*$/d' "$B_TMP"
 	[ ! -s "$B_TMP" ] && return 1
 
 	output 1 'Processing downloads '
