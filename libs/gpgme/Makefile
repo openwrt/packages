@@ -9,7 +9,7 @@ PKG_SOURCE_URL:=https://gnupg.org/ftp/gcrypt/$(PKG_NAME)
 PKG_HASH:=361d4eae47ce925dba0ea569af40e7b52c645c4ae2e65e5621bf1b6cdd8b0e9e
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
-PKG_LICENSE:=GPL-3.0-or-later
+PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:gnu:gpgme
 
