@@ -1,6 +1,6 @@
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -159,7 +159,7 @@ CLEANFILES = $(VC10_LIBVCXPROJ) $(VC10_S
+@@ -134,7 +134,7 @@ CLEANFILES = $(VC14_LIBVCXPROJ) \
  bin_SCRIPTS = curl-config
  
  SUBDIRS = lib src
@@ -9,7 +9,7 @@
  
  pkgconfigdir = $(libdir)/pkgconfig
  pkgconfig_DATA = libcurl.pc
-@@ -273,8 +273,6 @@ cygwinbin:
+@@ -248,8 +248,6 @@ cygwinbin:
  # We extend the standard install with a custom hook:
  install-data-hook:
  	(cd include && $(MAKE) install)
