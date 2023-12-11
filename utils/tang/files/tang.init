@@ -8,6 +8,7 @@ start_service() {
 	if [ -z "${KEYS}" ] || [ "${KEYS}" = "0" ]; then # if db is empty generate new key pair
 		mkdir -p /usr/share/tang/db
 		/usr/sbin/tangd-keygen /usr/share/tang/db
+		chown -R tang /usr/share/tang/db
 	fi
 
 	config_load "tang"

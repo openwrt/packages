@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xmlrpc-c
-PKG_VERSION:=1.51.07
+PKG_VERSION:=1.54.06
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=@SF/xmlrpc-c/Xmlrpc-c%20Super%20Stable/$(PKG_VERSION)
-PKG_HASH:=84d20ae33f927582f821d61c0b9194aefbf1d7924590a13fa9da5ae1698aded9
+PKG_HASH:=ae6d0fb58f38f1536511360dc0081d3876c1f209d9eaa54357e2bacd690a5640
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=VARIOUS
@@ -42,22 +42,15 @@ define Package/xmlrpc-c-internal
   $(call Package/xmlrpc-c/Default)
   TITLE+= (uses internal expat variant)
   DEPENDS:=+xmlrpc-c-common
-#  PROVIDES:=xmlrpc-c
+  PROVIDES:=xmlrpc-c
   VARIANT:=internal
-  HIDDEN:=1
-endef
-
-define Package/xmlrpc-c
-  $(call Package/xmlrpc-c/Default)
-  TITLE+= (uses internal expat variant)
-  DEPENDS:=+xmlrpc-c-internal
 endef
 
 define Package/xmlrpc-c-libxml2
   $(call Package/xmlrpc-c/Default)
   TITLE+= (uses libxml2)
-  DEPENDS:=+xmlrpc-c-common +libxml2 @BROKEN
-#  PROVIDES:=xmlrpc-c
+  DEPENDS:=+xmlrpc-c-common +libxml2
+  PROVIDES:=xmlrpc-c
   VARIANT:=libxml2
 endef
 
@@ -76,7 +69,7 @@ endef
 define Package/xmlrpc-c-abyss
   $(call Package/xmlrpc-c/Default)
   TITLE+= - abyss
-  DEPENDS:=+xmlrpc-c-common @BROKEN
+  DEPENDS:=+xmlrpc-c-common
 endef
 
 define Package/xmlrpc-c-server-abyss
@@ -101,11 +94,10 @@ Package/xmlrpc-c-internal/description += Uses internal expat variant (stripped d
 CONFIGURE_ARGS+= \
 	--disable-wininet-client \
 	--disable-libwww-client \
-	--disable-abyss-server \
 	--disable-cgi-server \
 	--disable-cplusplus \
-	--disable-abyss-threads \
-	--without-libwww-ssl
+	--without-libwww-ssl \
+	--disable-abyss-openssl
 
 ifeq ($(BUILD_VARIANT),libxml2)
 	CONFIGURE_ARGS += \
@@ -118,7 +110,7 @@ ifeq ($(BUILD_VARIANT),internal)
 endif
 
 define Build/Compile
-	( cd $(PKG_BUILD_DIR)/lib/expat/gennmtab && cc -I$(PKG_BUILD_DIR) -c gennmtab.c -o gennmtab.o && cc -o gennmtab  gennmtab.o )
+	( cd $(PKG_BUILD_DIR)/lib/expat/gennmtab && cc -I$(PKG_BUILD_DIR) -c gennmtab.c -o gennmtab.o && cc -o gennmtab gennmtab.o )
 	$(call Build/Compile/Default)
 endef
 
@@ -208,15 +200,10 @@ define Package/xmlrpc-c-common/install
 		$(1)/usr/lib/
 endef
 
-define Package/xmlrpc-c/install
-	true
-endef
-
-$(eval $(call BuildPackage,xmlrpc-c))
 $(eval $(call BuildPackage,xmlrpc-c-common))
-#$(eval $(call BuildPackage,xmlrpc-c-libxml2))
+$(eval $(call BuildPackage,xmlrpc-c-libxml2))
 $(eval $(call BuildPackage,xmlrpc-c-internal))
 $(eval $(call BuildPackage,xmlrpc-c-server))
-#$(eval $(call BuildPackage,xmlrpc-c-abyss))
-#$(eval $(call BuildPackage,xmlrpc-c-server-abyss))
+$(eval $(call BuildPackage,xmlrpc-c-abyss))
+$(eval $(call BuildPackage,xmlrpc-c-server-abyss))
 $(eval $(call BuildPackage,xmlrpc-c-client))

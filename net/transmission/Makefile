@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=transmission
-PKG_VERSION:=4.0.3
-PKG_RELEASE:=4
+PKG_VERSION:=4.0.4
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/transmission/transmission/releases/download/$(PKG_VERSION)/
-PKG_HASH:=b6b01fd58e42bb14f7aba0253db932ced050fcd2bba5d9f8469d77ddd8ad545a
+PKG_HASH:=15f7b4318fdfbffb19aa8d9a6b0fd89348e6ef1e86baa21a0806ffd1893bd5a6
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -45,7 +45,7 @@ define Package/transmission/template
   DEPENDS:=+libatomic +libcurl +libdeflate +libdht +libevent2 \
 	   +libevent2-pthreads +libminiupnpc +libnatpmp +libpthread +libpsl \
 	   +librt +libutp +zlib +LIBCURL_NOSSL:libmbedtls \
-	   +LIBCURL_GNUTLS:libmbedtls
+	   +LIBCURL_GNUTLS:libmbedtls +LIBCURL_MBEDTLS:libmbedtls
 endef
 
 define Package/transmission-daemon

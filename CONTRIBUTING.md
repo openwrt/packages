@@ -200,9 +200,9 @@ checking if `foobar --version` prints the correct version. `PKG_VERSION` is the
 OpenWrt version and therefore includes the `PKG_RELEASE`, which isn't usually
 part of the running programs version.
 
-The following snippet show a script that tests different binaries, depending
+The following snippet shows a script that tests different binaries depending on
 what IPK package was installed. The `gpsd` Makefile produces both a `gpsd` and
-a `gpsd-clients` IPK package.
+a `gpsd-clients` IPK packages.
 
 ```shell
  #!/bin/sh

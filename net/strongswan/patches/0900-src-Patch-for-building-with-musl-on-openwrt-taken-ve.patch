@@ -48,7 +48,7 @@ Subject: [PATCH 900/904] src: Patch for building with musl on openwrt (taken
  #include <linux/rtnetlink.h>
 --- a/src/libstrongswan/library.h
 +++ b/src/libstrongswan/library.h
-@@ -120,6 +120,7 @@
+@@ -121,6 +121,7 @@
  #include "utils/leak_detective.h"
  #include "plugins/plugin_loader.h"
  #include "settings/settings.h"

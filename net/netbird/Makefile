@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netbird
-PKG_VERSION:=0.21.7
+PKG_VERSION:=0.24.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/netbirdio/netbird/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=f2a18a6b9e6af15c182fd023cc47aecb2062d3da586820746f4987856d20f0ac
+PKG_HASH:=6590034fe8a8dc215242bbd7706197beef67a63a099a45a30c436373c892aab0
 
 PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
@@ -33,16 +33,22 @@ define Package/netbird
 endef
 
 define Package/netbird/description
-  NetBird is an open-source VPN management platform built on top of WireGuard® making it easy to create 
+  NetBird is an open-source VPN management platform built on top of WireGuard® making it easy to create
   secure private networks for your organization or home.
 
-  It requires zero configuration effort leaving behind the hassle of opening ports, complex firewall rules, VPN 
+  It requires zero configuration effort leaving behind the hassle of opening ports, complex firewall rules, VPN
   gateways, and so forth.
 endef
 
 define Package/netbird/conffiles
 /etc/netbird/config.json
 endef
+
+# Workaround for musl 1.2.4 compability in mattn/go-sqlite3
+# https://github.com/mattn/go-sqlite3/issues/1164
+ifneq ($(CONFIG_USE_MUSL),)
+	TARGET_CFLAGS += -D_LARGEFILE64_SOURCE
+endif
 
 define Package/netbird/install
 	$(call GoPackage/Package/Install/Bin,$(PKG_INSTALL_DIR))

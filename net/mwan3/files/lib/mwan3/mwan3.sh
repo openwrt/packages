@@ -1082,7 +1082,8 @@ mwan3_get_iface_hotplug_state() {
 
 mwan3_report_iface_status()
 {
-	local device result tracking IP IPT error
+	local device result tracking IP IPT
+	local status online uptime result
 
 	mwan3_get_iface_id id "$1"
 	network_get_device device "$1"
@@ -1099,40 +1100,39 @@ mwan3_report_iface_status()
 		IPT="$IPT6"
 	fi
 
-	if [ -z "$id" ] || [ -z "$device" ]; then
-		result="offline"
+	if [ -f "$MWAN3TRACK_STATUS_DIR/${1}/STATUS" ]; then
+		status="$(cat "$MWAN3TRACK_STATUS_DIR/${1}/STATUS")"
 	else
-		error=0
-		[ -n "$($IP rule | awk '$1 == "'$((id+1000)):'"')" ] ||
-			error=$((error+1))
-		[ -n "$($IP rule | awk '$1 == "'$((id+2000)):'"')" ] ||
-			error=$((error+2))
-		[ -n "$($IP rule | awk '$1 == "'$((id+3000)):'"')" ] ||
-			error=$((error+4))
-		[ -n "$($IPT -S mwan3_iface_in_$1 2> /dev/null)" ] ||
-			error=$((error+8))
-		[ -n "$($IP route list table $id default dev $device 2> /dev/null)" ] ||
-			error=$((error+16))
+		status="unknown"
 	fi
 
-	if [ "$result" = "offline" ]; then
-		:
-	elif [ $error -eq 0 ]; then
+	if [ "$status" = "online" ]; then
 		online=$(get_online_time "$1")
 		network_get_uptime uptime "$1"
 		online="$(printf '%02dh:%02dm:%02ds\n' $((online/3600)) $((online%3600/60)) $((online%60)))"
 		uptime="$(printf '%02dh:%02dm:%02ds\n' $((uptime/3600)) $((uptime%3600/60)) $((uptime%60)))"
 		result="$(mwan3_get_iface_hotplug_state $1) $online, uptime $uptime"
-	elif [ $error -gt 0 ] && [ $error -ne 31 ]; then
-		result="error (${error})"
-	elif [ "$enabled" = "1" ]; then
-		result="offline"
 	else
-		result="disabled"
+		result=0
+		[ -n "$($IP rule | awk '$1 == "'$((id+1000)):'"')" ] ||
+			result=$((result+1))
+		[ -n "$($IP rule | awk '$1 == "'$((id+2000)):'"')" ] ||
+			result=$((result+2))
+		[ -n "$($IP rule | awk '$1 == "'$((id+3000)):'"')" ] ||
+			result=$((result+4))
+		[ -n "$($IPT -S mwan3_iface_in_$1 2> /dev/null)" ] ||
+			result=$((result+8))
+		[ -n "$($IP route list table $id default dev $device 2> /dev/null)" ] ||
+			result=$((result+16))
+		[ "$result" = "0" ] && result=""
 	fi
 
 	tracking="$(mwan3_get_mwan3track_status $1)"
-	echo " interface $1 is $result and tracking is $tracking"
+	if [ -n "$result" ]; then
+		echo " interface $1 is $status and tracking is $tracking ($result)"
+	else
+		echo " interface $1 is $status and tracking is $tracking"
+	fi
 }
 
 mwan3_report_policies()

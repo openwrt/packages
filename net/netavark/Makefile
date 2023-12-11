@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netavark
-PKG_VERSION:=1.7.0
+PKG_VERSION:=1.9.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/containers/netavark/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=b0ed7d80fd96ef2af88e7a001d91024919125e5842d9772de94648044630e116
+PKG_HASH:=9ec50b715ded0a0699134c001656fdd1411e3fb5325d347695c6cb8cc5fcf572
 
 PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
 PKG_LICENSE:=Apache-2.0
@@ -15,6 +15,7 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_BUILD_DEPENDS:= \
 	rust/host \
 	protobuf/host
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/rust/rust-package.mk
@@ -36,7 +37,7 @@ define Package/netavark/conffiles
 /etc/config/netavark
 endef
 
-CARGO_VARS += \
+CARGO_PKG_VARS += \
 	PROTOC=$(STAGING_DIR_HOSTPKG)/bin/protoc
 
 define Package/netavark/install

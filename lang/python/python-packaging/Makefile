@@ -7,11 +7,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-packaging
-PKG_VERSION:=23.1
+PKG_VERSION:=23.2
 PKG_RELEASE:=1
 
 PYPI_NAME:=packaging
-PKG_HASH:=a392980d2b6cffa644431898be54b0045151319d1e7ec34f0cfed48767dd334f
+PKG_HASH:=048fb0e9405036518eaaf48a55953c750c11e1a1b68e0dd1a9d62ed0c092cfc5
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>, Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=Apache-2.0 BSD-2-Clause
@@ -32,7 +32,7 @@ define Package/python3-packaging
   SUBMENU:=Python
   TITLE:=Core utilities for Python packages
   URL:=https://github.com/pypa/packaging
-  DEPENDS:=+python3-light +python3-logging +python3-urllib
+  DEPENDS:=+python3-light +python3-email +python3-logging +python3-urllib
 endef
 
 define Package/python3-packaging/description

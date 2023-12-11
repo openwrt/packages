@@ -5,8 +5,7 @@
 # Rust Environmental Vars
 RUSTC_HOST_SUFFIX:=$(word 4, $(subst -, ,$(GNU_HOST_NAME)))
 RUSTC_HOST_ARCH:=$(HOST_ARCH)-unknown-linux-$(RUSTC_HOST_SUFFIX)
-CARGO_HOME:=$(STAGING_DIR)/host/cargo
-CARGO_VARS?=
+CARGO_HOME:=$(DL_DIR)/cargo
 
 ifeq ($(CONFIG_USE_MUSL),y)
   # Force linking of the SSP library for musl
@@ -53,6 +52,7 @@ ifeq ($(ARCH),arm)
 
   ifeq ($(CONFIG_HAS_FPU),y)
     RUSTC_TARGET_ARCH:=$(subst musleabi,musleabihf,$(RUSTC_TARGET_ARCH))
+    RUSTC_TARGET_ARCH:=$(subst gnueabi,gnueabihf,$(RUSTC_TARGET_ARCH))
   endif
 endif
 
@@ -62,3 +62,37 @@ endif
 
 # Support only a subset for now.
 RUST_ARCH_DEPENDS:=@(aarch64||arm||i386||i686||mips||mipsel||mips64||mips64el||mipsel||powerpc64||riscv64||x86_64)
+
+ifneq ($(CONFIG_RUST_SCCACHE),)
+  RUST_SCCACHE_DIR:=$(if $(call qstrip,$(CONFIG_RUST_SCCACHE_DIR)),$(call qstrip,$(CONFIG_RUST_SCCACHE_DIR)),$(TOPDIR)/.sccache)
+
+  RUST_SCCACHE_VARS:= \
+	CARGO_INCREMENTAL=0 \
+	RUSTC_WRAPPER=sccache \
+	SCCACHE_DIR=$(RUST_SCCACHE_DIR)
+endif
+
+CARGO_HOST_CONFIG_VARS= \
+	$(RUST_SCCACHE_VARS) \
+	CARGO_HOME=$(CARGO_HOME)
+
+CARGO_HOST_PROFILE:=release
+
+CARGO_PKG_CONFIG_VARS= \
+	$(RUST_SCCACHE_VARS) \
+	CARGO_BUILD_TARGET=$(RUSTC_TARGET_ARCH) \
+	CARGO_HOME=$(CARGO_HOME) \
+	CARGO_PROFILE_RELEASE_CODEGEN_UNITS=1 \
+	CARGO_PROFILE_RELEASE_DEBUG=false \
+	CARGO_PROFILE_RELEASE_DEBUG_ASSERTIONS=false \
+	CARGO_PROFILE_RELEASE_LTO=true \
+	CARGO_PROFILE_RELEASE_OPT_LEVEL=z \
+	CARGO_PROFILE_RELEASE_OVERFLOW_CHECKS=true \
+	CARGO_PROFILE_RELEASE_PANIC=unwind \
+	CARGO_PROFILE_RELEASE_RPATH=false \
+	CARGO_TARGET_$(subst -,_,$(call toupper,$(RUSTC_TARGET_ARCH)))_LINKER=$(TARGET_CC_NOCACHE) \
+	RUSTFLAGS="$(CARGO_RUSTFLAGS)" \
+	TARGET_CC=$(TARGET_CC_NOCACHE) \
+	TARGET_CFLAGS="$(TARGET_CFLAGS) $(RUSTC_CFLAGS)"
+
+CARGO_PKG_PROFILE:=$(if $(CONFIG_DEBUG),dev,release)

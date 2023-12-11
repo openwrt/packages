@@ -4,6 +4,7 @@ START=25
 USE_PROCD=1
 PROG=/usr/sbin/dhcpd
 
+WS=$'[\t ]'
 TTL=3600
 PREFIX="update add"
 
@@ -46,23 +47,35 @@ time2seconds() {
 	echo $(( number * multiplier ))
 }
 
-trim() {
-	local arg="$1"
+explode() {
+	echo "${1//\./ }"
+}
 
-	echo "$arg" | sed -e 's/^ *//' -e 's/ *$//'
+trim() {
+	local str="$1" prev
+
+	while true; do
+		prev="$str"
+		str="${str%%$WS}"
+		[ "$str" = "$prev" ] && break
+	done
+	while true; do
+		prev="$str"
+		str="${str##$WS}"
+		[ "$str" = "$prev" ] && break
+	done
+	echo "$str"
 }
 
 rfc1918_prefix() {
-	local octets="$(echo "${1%%/*}" | cut -d. -f1)"
+	local subnet="${1%/*}"
+	set -- $(explode "$subnet")
 
-	[ "$octets" = "10" ] && { echo "$octets"; return; }
-
-	octets="$(echo "${1%%/*}" | cut -d. -f1-2)"
-
-	case "$octets" in
+	case "$1.$2" in
+	10.*)
+		echo "$1" ;;
 	172.1[6789]|172.2[0-9]|172.3[01]|192.168)
-		echo "$octets"
-		;;
+		echo "$1.$2" ;;
 	esac
 }
 
@@ -110,12 +123,6 @@ update() {
 		echo -e "$PREFIX" "$lhs $family $type $@\nsend" >> $dyn_file
 }
 
-explode() {
-	local arg="$1"
-
-	echo "$arg" | sed -e 's/\./, /g'
-}
-
 rev_str() {
 	local str="$1" delim="$2"
 	local frag result="" IFS="$delim"
@@ -138,20 +145,35 @@ create_empty_zone() {
 }
 
 append_routes() {
-	local tuple tuple="$(trim "$1")"
-	local network prefix router save octets compacted
+	local tuple="$(trim "$1")"
+	local network prefix router subnet compacted octet
 
-	save="${tuple% *}"
-	router="$(trim "${tuple#${save} }")"
+	subnet="${tuple%%$WS*}"
 
-	network="$(trim "${save%/[0-9]*}")"
+	network="${subnet%/[0-9]*}"
 
-	prefix="$(trim "${save##${network}/}")"
+	prefix="${subnet#*/}"
 
-	octets=$((($prefix + 7) / 8))
-	compacted="$(echo "$network" | cut -d. -f1-$octets)"
+	set -- $(explode "$network")
 
-	routes="$routes${routes:+, }$(explode "$prefix${compacted:+.$compacted}.$router")"
+	case $((($prefix + 7) / 8)) in
+	0)
+		compacted= ;;
+	1)
+		compacted="$1" ;;
+	2)
+		compacted="$1 $2" ;;
+	3)
+		compacted="$1 $2 $3" ;;
+	4)
+		compacted="$1 $2 $3 $4" ;;
+	esac
+
+	router="${tuple#${subnet}$WS}"
+
+	for octet in $prefix $compacted $(explode "$router"); do
+		append routes "$octet" ", "
+	done
 }
 
 append_dhcp_options() {
@@ -174,7 +196,7 @@ append_dhcp_options() {
 			value="\"$value\""
 			;;
 		esac
-		formatted="$formatted${formatted:+, }$value"
+		append formatted "$value" ", "
 	done
 	echo " option $tag $formatted;"
 }
@@ -280,7 +302,7 @@ static_host_add() {
 	config_get leasetime "$cfg" "leasetime"
 	if [ -n "$leasetime" ] ; then
 		leasetime="$(time2seconds "$leasetime")"
-		[ "$?" -ne 0 ] && return 1
+		[ $? -ne 0 ] && return 1
 	fi
 
 	config_get hostid "$cfg" "hostid"
@@ -290,26 +312,24 @@ static_host_add() {
 
 	config_get force_send "$cfg" "force_send"
 	extra_options=
-	local _IFS="$IFS" IFS=','
-	for option in $force_send; do
+	for option in ${force_send//,/ }; do
 		case "$option" in
 		hostname)
-			extra_options="$extra_options${extra_options:+,}0c" ;;
+			append extra_options "0c" "," ;;
 		domain-name)
-			extra_options="$extra_options${extra_options:+,}0f" ;;
+			append extra_options "0f" "," ;;
 		renewal-time)
-			extra_options="$extra_options${extra_options:+,}3a" ;;
+			append extra_options "3a" "," ;;
 		rebinding-time)
-			extra_options="$extra_options${extra_options:+,}3b" ;;
+			append extra_options "3b" "," ;;
 		fqdn)
-			extra_options="$extra_options${extra_options:+,}51" ;;
+			append extra_options "51" "," ;;
 		routes)
-			extra_options="$extra_options${extra_options:+,}79" ;;
+			append extra_options "79" "," ;;
 		*)
 			echo "unknown option: $option" >&2 ;;
 		esac
 	done
-	IFS="$_IFS"
 
 	macn=0
 	for mac in $macs; do
@@ -325,7 +345,7 @@ static_host_add() {
 		echo " hardware ethernet $mac;"
 		echo " fixed-address $ip;"
 		echo " option host-name \"$name\";"
-		if [ "$broadcast" -eq 1 ] ; then
+		if [ $broadcast -eq 1 ] ; then
 			echo " always-broadcast true;"
 		fi
 		if [ -n "$leasetime" ] ; then
@@ -374,11 +394,13 @@ gen_dhcp_subnet() {
 		echo " range $START $END;"
 	fi
 	echo " option subnet-mask $netmask;"
-	if [ "$BROADCAST" != "0.0.0.0" ] ; then
+	# check for 0.0.0.0 until all active releases of ipcalc.sh omit it
+	# for small networks:
+	if [ -n "$BROADCAST" ] && [ "$BROADCAST" != "0.0.0.0" ] ; then
 		echo " option broadcast-address $BROADCAST;"
 	fi
-	if [ "$dynamicdhcp" -eq 0 ] ; then
-		if [ "$authoritative" -eq 1 ] ; then
+	if [ $dynamicdhcp -eq 0 ] ; then
+		if [ $authoritative -eq 1 ] ; then
 			echo " deny unknown-clients;"
 		else
 			echo " ignore unknown-clients;"
@@ -388,7 +410,7 @@ gen_dhcp_subnet() {
 		echo " default-lease-time $leasetime;"
 		echo " max-lease-time $leasetime;"
 	fi
-	if [ "$defaultroute" -eq 1 ] ; then
+	if [ $defaultroute -eq 1 ] ; then
 		echo " option routers $gateway;"
 	fi
 	echo " option domain-name-servers $DNS;"
@@ -411,7 +433,7 @@ dhcpd_add() {
 	local IP NETMASK BROADCAST NETWORK PREFIX DNS START END
 
 	config_get_bool ignore "$cfg" "ignore" 0
-	[ "$ignore" = "0" ] || return 0
+	[ $ignore -eq 1 ] && return 0
 
 	config_get net "$cfg" "interface"
 	[ -n "$net" ] || return 0
@@ -429,27 +451,30 @@ dhcpd_add() {
 	network_get_device ifname "$net" || return 0
 	network_get_protocol proto "$net" || return 0
 
-	[ static = "$proto" ] || return 0
+	[ "$proto" != "static" ] && return 0
 
 	local octets="$(rfc1918_prefix "$subnet")"
 
-	[ -n "$octets" ] && rfc1918_nets="$rfc1918_nets${rfc1918_nets:+ }$octets"
+	[ -n "$octets" ] && append rfc1918_nets "$octets"
 
-	[ $synthesize -eq 0 ] && return
+	[ $synthesize -eq 0 ] && return 0
 
 	config_get_bool dynamicdhcp "$cfg" "dynamicdhcp" 1
 
 	config_get_bool defaultroute "$cfg" "default_route" 1
 
-	dhcp_ifs="$dhcp_ifs $ifname"
+	append dhcp_ifs "$ifname"
 
-	eval "$(ipcalc.sh $subnet $start $limit)"
+	if ! ipcalc "$subnet" "$start" "$limit"; then
+		echo "invalid range params: $subnet start: $start limit $limit" >&2
+		return 1
+	fi
 
 	config_get netmask "$cfg" "netmask" "$NETMASK"
 	config_get leasetime "$cfg" "leasetime"
 	if [ -n "$leasetime" ] ; then
 		leasetime="$(time2seconds "$leasetime")"
-		[ "$?" -ne 0 ] && return 1
+		[ $? -ne 0 ] && return 1
 	fi
 
 	if network_get_dnsserver dnsserver "$net" ; then
@@ -488,9 +513,9 @@ general_config() {
 	[ $boot_unknown_clients -eq 0 ] && echo "boot-unknown-clients false;"
 
 	default_lease_time="$(time2seconds "$default_lease_time")"
-	[ "$?" -ne 0 ] && return 1
+	[ $? -ne 0 ] && return 1
 	max_lease_time="$(time2seconds "$max_lease_time")"
-	[ "$?" -ne 0 ] && return 1
+	[ $? -ne 0 ] && return 1
 
 	if [ $dynamicdns -eq 1 ]; then
 		create_empty_zone "$domain"
@@ -615,6 +640,7 @@ start_service() {
 		local rfc1918_nets=""
 
 		# alas we have to make 2 passes...
+		dhcp_ifs=
 		config_foreach dhcpd_add dhcp 0
 
 		rfc1918_nets="$(echo "$rfc1918_nets" | tr ' ' $'\n' | sort | uniq | tr $'\n' ' ')"
@@ -632,6 +658,7 @@ EOF
 
 		rfc1918_nets=
 
+		dhcp_ifs=
 		config_foreach dhcpd_add dhcp 1 >> $config_file
 
 		static_hosts >> $config_file

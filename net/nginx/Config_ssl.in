@@ -200,4 +200,9 @@ config NGINX_HTTP_SUB
 	prompt "Enable HTTP sub module"
 	default n
 
+config NGINX_STREAM_REAL_IP
+	bool
+	prompt "Enable STREAM real ip module"
+	default n
+
 endmenu

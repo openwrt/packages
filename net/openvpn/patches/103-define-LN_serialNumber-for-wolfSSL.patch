@@ -1,6 +1,6 @@
 --- a/src/openvpn/ssl_verify_openssl.c
 +++ b/src/openvpn/ssl_verify_openssl.c
-@@ -269,6 +269,9 @@ backend_x509_get_username(char *common_n
+@@ -267,6 +267,9 @@ backend_x509_get_username(char *common_n
              return FAILURE;
          }
      }

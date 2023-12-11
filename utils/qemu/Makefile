@@ -9,10 +9,10 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qemu
-PKG_VERSION:=8.0.2
+PKG_VERSION:=8.1.2
 PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=f060abd435fbe6794125e2c398568ffc3cfa540042596907a8b18edca34cf6a5
+PKG_HASH:=541526a764576eb494d2ff5ec46aeb253e62ea29035d1c23c0a8af4e6cd4f087
 PKG_SOURCE_URL:=http://download.qemu.org/
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=LICENSE tcg/LICENSE
@@ -392,7 +392,7 @@ CONFIGURE_ARGS +=			\
 	--disable-docs			\
 	--disable-fuse			\
 	--disable-gcrypt		\
-	--with-git-submodules=ignore	\
+	--disable-download		\
 	--disable-glusterfs		\
 	--disable-gnutls		\
 	--disable-guest-agent-msi	\

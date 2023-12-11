@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libndpi
-PKG_VERSION:=4.6
+PKG_VERSION:=4.8
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ntop/nDPI/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=6f307e23ab11b2b9e84a696120810e27a854072576a49783ff84fd37a1d7411b
+PKG_HASH:=8f6235ba672d4ac8e4cbebb5611bc712a74587d9d53a649f483e4bcca5b80e58
 PKG_BUILD_DIR:=$(BUILD_DIR)/nDPI-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Banglang Huang <banglang.huang@foxmail.com>, Toni Uhlig <matzeton@googlemail.com>
@@ -36,7 +36,7 @@ CONFIGURE_ARGS += --with-local-libgcrypt
 endif
 
 ifneq ($(CONFIG_LIBNDPI_PCRE),)
-CONFIGURE_ARGS += --with-pcre
+CONFIGURE_ARGS += --with-pcre2
 endif
 
 ifneq ($(CONFIG_LIBNDPI_MAXMINDDB),)
@@ -48,7 +48,7 @@ define Package/libndpi
   CATEGORY:=Libraries
   TITLE:=Library for deep-packet inspection
   URL:=https://github.com/ntop/nDPI
-  DEPENDS:=+LIBNDPI_GCRYPT:libgcrypt +LIBNDPI_PCRE:libpcre +LIBNDPI_MAXMINDDB:libmaxminddb +LIBNDPI_NDPIREADER:libpcap
+  DEPENDS:=+LIBNDPI_GCRYPT:libgcrypt +LIBNDPI_PCRE:libpcre2 +LIBNDPI_MAXMINDDB:libmaxminddb +LIBNDPI_NDPIREADER:libpcap
 endef
 
 define Package/libndpi/description

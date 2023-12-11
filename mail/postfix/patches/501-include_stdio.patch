@@ -1,6 +1,6 @@
 --- a/src/posttls-finger/posttls-finger.c
 +++ b/src/posttls-finger/posttls-finger.c
-@@ -342,6 +342,7 @@
+@@ -346,6 +346,7 @@
  #include <sys/un.h>
  #include <netinet/in.h>
  #include <arpa/inet.h>

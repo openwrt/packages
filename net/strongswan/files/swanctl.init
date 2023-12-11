@@ -244,6 +244,7 @@ config_child() {
 	local lifebytes
 	local rekeypackets
 	local lifepackets
+	local replay_window
 
 	config_get startaction "$conf" startaction "route"
 	config_get local_nat "$conf" local_nat ""
@@ -262,6 +263,7 @@ config_child() {
 	config_get lifebytes "$conf" lifebytes ""
 	config_get rekeypackets "$conf" rekeypackets ""
 	config_get lifepackets "$conf" lifepackets ""
+	config_get replay_window "$conf" replay_window ""
 
 	config_list_foreach "$conf" local_subnet append_var local_subnet ","
 	config_list_foreach "$conf" remote_subnet append_var remote_subnet ","
@@ -370,6 +372,7 @@ config_child() {
 
 	[ -n "$updown" ] && swanctl_xappend4 "updown = $updown"
 	[ -n "$dpdaction" ] && swanctl_xappend4 "dpd_action = $dpdaction"
+	[ -n "$replay_window" ] && swanctl_xappend4 "replay_window = $replay_window"
 
         swanctl_xappend3 "}"
 }

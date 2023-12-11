@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ser2net
-PKG_VERSION:=4.3.6
-PKG_RELEASE:=2
+PKG_VERSION:=4.5.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/ser2net
-PKG_HASH:=65515c7e9a5289167ae64c4032450904449a87ce20653241022af4f5db2e9510
+PKG_HASH:=6ee1b217aad026948fd17ea00c5ecf6e982de822384c4349118461ad83caa0da
 
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
@@ -44,7 +44,7 @@ endef
 
 define Package/ser2net/conffiles
 /etc/config/ser2net
-/etc/ser2net.conf
+/etc/ser2net.yaml
 endef
 
 define Package/ser2net/install
@@ -52,7 +52,7 @@ define Package/ser2net/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/ser2net $(1)/usr/sbin/
 
 	$(INSTALL_DIR) $(1)/etc
-	$(INSTALL_CONF) ./files/ser2net.conf $(1)/etc/
+	$(INSTALL_CONF) ./files/ser2net.yaml $(1)/etc/
 
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/ser2net.config $(1)/etc/config/ser2net

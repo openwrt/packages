@@ -1,12 +1,12 @@
-# Copyright 2023 Stan Grishin (stangri@melmac.ca)
+# Copyright 2023 MOSSDeF, Stan Grishin (stangri@melmac.ca)
 # TLD optimization written by Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adblock-fast
-PKG_VERSION:=1.0.0
-PKG_RELEASE:=2
+PKG_VERSION:=1.1.0
+PKG_RELEASE:=7
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.ca>
 PKG_LICENSE:=GPL-3.0-or-later
 
@@ -18,13 +18,17 @@ define Package/adblock-fast
   TITLE:=AdBlock Fast Service
   URL:=https://docs.openwrt.melmac.net/adblock-fast/
   DEPENDS:=+jshn +curl
+	DEPENDS+=+!BUSYBOX_DEFAULT_AWK:gawk
+	DEPENDS+=+!BUSYBOX_DEFAULT_GREP:grep
+	DEPENDS+=+!BUSYBOX_DEFAULT_SED:sed
+	DEPENDS+=+!BUSYBOX_DEFAULT_SORT:coreutils-sort
   CONFLICTS:=simple-adblock
   PROVIDES:=simple-adblock
   PKGARCH:=all
 endef
 
 define Package/adblock-fast/description
-Fast AdBlocking script to block ad or abuse/malware domains with DNSMASQ or Unbound.
+Fast AdBlocking script to block ad or abuse/malware domains with Dnsmasq, SmartDNS or Unbound.
 Script supports local/remote list of domains and hosts-files for both block-listing and allow-listing.
 Please see https://docs.openwrt.melmac.net/adblock-fast/ for more information.
 endef

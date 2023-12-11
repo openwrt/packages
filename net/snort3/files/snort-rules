@@ -1,0 +1,92 @@
+#!/bin/sh
+# Copyright (c) 2023 Eric Fahlgren <eric.fahlgren@gmail.com>
+# SPDX-License-Identifier: GPL-2.0
+# shellcheck disable=SC2039  # "local" not defined in POSIX sh
+
+alias log='logger -s -t "snort-rules[$$]" -p "info"'
+
+[ "$1" = "-t" ] && testing=true || testing=false
+
+download_rules() {
+	# Further information:
+	#    https://www.snort.org/products#rule_subscriptions
+	#    https://www.snort.org/oinkcodes
+	#
+	# Also, what to do about "subscription" vs Talos_LightSPD rules when subbed?
+	# Add a "use_rules" list or option or something?
+	oinkcode=$(uci -q get snort.snort.oinkcode)
+
+
+
+	local conf_dir=$(uci -q get snort.snort.config_dir || echo "/etc/snort")
+	local rules_file="$conf_dir/rules/snort.rules"
+	local data_dir=$(uci -q get snort.snort.temp_dir || echo "/var/snort.d")
+	local data_tar="$data_dir/rules.tar.gz"
+
+	# Make sure everything exists.
+	[ -d "$data_dir" ] || mkdir -p "$data_dir"
+
+
+	if $testing ; then
+		log "Generating testing rules..."
+		new_rules="$data_dir/testing.rules"
+		rm -f "$new_rules"
+		echo 'alert icmp any any <> any any (msg:"TEST ALERT ICMP v4"; icode:0; itype: 8; sid:10000010; rev:001;)' >> "$new_rules"
+		#echo 'alert icmp any any <> any any (msg:"TEST ALERT ICMP v6"; icode:0; itype:33; sid:10000011; rev:001;)' >> "$new_rules"
+		#echo 'alert icmp any any <> any any (msg:"TEST ALERT ICMP v6"; icode:0; itype:34; sid:10000012; rev:001;)' >> "$new_rules"
+
+	else
+		if [ -z "$oinkcode" ]; then
+			# If you do not have a subscription, then we use the community rules:
+			log "Downloading community rules..."
+			url="https://www.snort.org/downloads/community/snort3-community-rules.tar.gz"
+
+		else
+			# If you have a subscription and its corresponding oinkcode, use this:
+			#
+			# 'snortver' is the version number of the snort executable in use on your
+			# router.
+			#
+			# Ideally, the 'snort --version' output would work, but OpenWrt builds
+			# are often between (or, more likely, newer than) those listed on the
+			# snort.org downloads page.
+			#
+			# So instead, we define it manually to be the value just before the
+			# installed version.  Look on https://www.snort.org/advisories/ and
+			# select the most recent date.  On that page, find the closest version
+			# number preceding your installed version and modify the hard-coded
+			# value below (for example, installed is 31600 then use 31470):
+
+			#snortver=$(snort --version | awk '/Version/ {print gensub("\\.", "", "", $NF)}')
+			snortver=31470
+
+			log "Downloading subscription rules..."
+			url="https://www.snort.org/rules/snortrules-snapshot-$snortver.tar.gz?oinkcode=$oinkcode"
+		fi
+
+		wget "$url" -O "$data_tar" 2>&1 | log || exit 1
+
+		# ??? Does non-community tar contain just the one "*.rules" file, too???
+		new_rules=$(tar tzf "$data_tar" | grep '\.rules$')
+		new_rules="$data_dir/$new_rules"
+
+		old_rules="$data_dir/old.rules"
+		if [ -e "$new_rules" ]; then
+			# Before we overwrite with the new download.
+			log "Stashing old rules to $old_rules ..."
+			mv -f "$new_rules" "$old_rules"
+		fi
+
+		log "Unpacking $data_tar ..."
+		tar xzvf "$data_tar" -C "$data_dir" | log || exit 1
+		if [ -e "$old_rules" ] && ! cmp -s "$new_rules" "$old_rules" ; then
+			diff "$new_rules" "$old_rules" 2>&1 | log
+		fi
+	fi
+
+	rm -f "$rules_file"
+	ln -s "$new_rules" "$rules_file"
+
+	log "Snort rules loaded, restart snort now."
+}
+download_rules

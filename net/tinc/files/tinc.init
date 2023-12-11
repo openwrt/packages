@@ -91,11 +91,16 @@ prepare_host() {
 	HOST_CONF_FILE="$TMP_TINC/$n/hosts/$s"
 	MANDATORY_PARAM_IN_UCI=0
 	[ ! -f "/etc/tinc/$n/hosts/$s" ] && {
-	        config_get pk "$s" "PublicKey"
+		config_get pk_i "$s" "PublicKey"
+		config_get pk_f "$s" "PublicKeyFile"
+		config_get pked_i "$s" "Ed25519PublicKey"
+		config_get pked_f "$s" "Ed25519PublicKeyFile"
 		config_get na "$s" "Name"
-		if [ -n "$pk" -a -n "$na" ] ; then
-		        HOST_CONF_FILE="$TMP_TINC/$n/hosts/$na"
-		        MANDATORY_PARAM_IN_UCI=1
+		if [ -n "$na" ] ; then
+			HOST_CONF_FILE="$TMP_TINC/$n/hosts/$na"
+		fi
+		if [ -n "$pk_i$pk_f$pked_i$pked_f" ] ; then
+			MANDATORY_PARAM_IN_UCI=1
 		fi
 	}
 
@@ -107,7 +112,7 @@ prepare_host() {
 
 	[ ! -f "/etc/tinc/$n/hosts/$s" ] && {
 		if [ "$MANDATORY_PARAM_IN_UCI" -eq 1 ] ; then
-			touch "$HOST_CONF_FILE" ;
+			touch "$HOST_CONF_FILE"
 		else
 			echo -n "tinc: Warning, public key for $s for network $n "
 			echo -n "missing in /etc/tinc/$n/hosts/$s, "
@@ -118,12 +123,25 @@ prepare_host() {
 
 	# append flags
 	append_conf_bools "$s" "$HOST_CONF_FILE" \
-		ClampMSS IndirectData PMTUDiscovery TCPOnly
+		ClampMSS \
+		IndirectData \
+		PMTUDiscovery \
+		TCPOnly
 
 	# append params
 	append_conf_params "$s" "$HOST_CONF_FILE" \
-		Address Cipher Compression Digest Ed25519PublicKey MACLength Name PMTU \
-		Port PublicKey PublicKeyFile Subnet
+		Address \
+		Cipher \
+		Compression \
+		Digest \
+		Ed25519PublicKey \
+		Ed25519PublicKeyFile \
+		MACLength \
+		PMTU \
+		Port \
+		PublicKey \
+		PublicKeyFile \
+		Subnet
 }
 
 check_gen_own_key() {
@@ -139,9 +157,9 @@ check_gen_own_key() {
 
 	config_get k "$s" key_size
 	if [ -z "$k" ]; then
-		$BIN -c "$TMP_TINC/$s" --generate-keys </dev/null
+		$BIN -c "$TMP_TINC/$s" generate-keys </dev/null
 	else
-		$BIN -c "$TMP_TINC/$s" "--generate-keys=$k" </dev/null
+		$BIN -c "$TMP_TINC/$s" generate-keys "$k" </dev/null
 	fi
 
 	[ ! -d "/etc/tinc/$s/hosts" ] && mkdir -p "/etc/tinc/$s/hosts"
@@ -187,7 +205,6 @@ prepare_net() {
 		Device \
 		DeviceType \
 		Ed25519PrivateKeyFile \
-		ECDSAPublicKey \
 		Forwarding \
 		Interface \
 		ListenAddress \

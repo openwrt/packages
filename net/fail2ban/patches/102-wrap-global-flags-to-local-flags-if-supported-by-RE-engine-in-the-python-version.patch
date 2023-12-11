@@ -1,0 +1,36 @@
+From 4337e366163278815ea9fc6c952bffb579e885a0 Mon Sep 17 00:00:00 2001
+From: sebres <info@sebres.de>
+Date: Tue, 21 Jun 2022 16:56:57 +0200
+Subject: [PATCH] wrap global flags like ((?i)xxx) or (?:(?i)xxx) to local
+ flags (?i:xxx) if supported by RE-engine in the python version
+
+---
+ fail2ban/server/failregex.py | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+--- a/fail2ban/server/failregex.py
++++ b/fail2ban/server/failregex.py
+@@ -91,6 +91,13 @@ R_MAP = {
+ 	"port": "fport",
+ }
+ 
++# map global flags like ((?i)xxx) or (?:(?i)xxx) to local flags (?i:xxx) if supported by RE-engine in this python version:
++try:
++	re.search("^re(?i:val)$", "reVAL")
++	R_GLOB2LOCFLAGS = ( re.compile(r"(?<!\\)\((?:\?:)?(\(\?[a-z]+)\)"), r"\1:" )
++except:
++	R_GLOB2LOCFLAGS = ()
++
+ def mapTag2Opt(tag):
+ 	tag = tag.lower()
+ 	return R_MAP.get(tag, tag)
+@@ -128,6 +135,9 @@ class Regex:
+ 		#
+ 		if regex.lstrip() == '':
+ 			raise RegexException("Cannot add empty regex")
++		# special handling wrapping global flags to local flags:
++		if R_GLOB2LOCFLAGS:
++			regex = R_GLOB2LOCFLAGS[0].sub(R_GLOB2LOCFLAGS[1], regex)
+ 		try:
+ 			self._regexObj = re.compile(regex, re.MULTILINE if multiline else 0)
+ 			self._regex = regex

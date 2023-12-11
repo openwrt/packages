@@ -10,6 +10,7 @@
 
 proto_sstp_init_config() {
 	proto_config_add_string "server"
+	proto_config_add_string "port"
 	proto_config_add_string "username"
 	proto_config_add_string "password"
 	proto_config_add_string "pppd_options"
@@ -28,7 +29,7 @@ proto_sstp_setup() {
 	local iface="$2"
 	local ifname="sstp-$config"
 
-	local ip serv_addr server ipv6 defaultroute peerdns
+	local ip serv_addr server port ipv6 defaultroute peerdns
 	json_get_var server server && {
 		for ip in $(resolveip -t 5 "$server"); do
 			( proto_add_host_dependency "$config" "$ip" )
@@ -42,7 +43,7 @@ proto_sstp_setup() {
 		exit 1
 	}
 
-	json_get_vars username password pppd_options sstp_options log_level ipv6 defaultroute peerdns
+	json_get_vars port username password pppd_options sstp_options log_level ipv6 defaultroute peerdns
 	if [ "$ipv6" = 1 ]; then
 		ipv6=1
 	else
@@ -82,7 +83,7 @@ proto_sstp_setup() {
 		--save-server-route \
 		--ipparam $config \
 		$sstp_options \
-		$server \
+		$server${port:+:$port} \
 		ifname $ifname \
 		require-mschap-v2 \
 		${ipv6:++ipv6} \

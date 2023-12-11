@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luajit2
-PKG_VERSION:=2.1-20230410
+PKG_VERSION:=2.1-20231117
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/openresty/luajit2/archive/refs/tags/v$(PKG_VERSION).tar.gz?
-PKG_HASH:=77bbcbb24c3c78f51560017288f3118d995fe71240aa379f5818ff6b166712ff
+PKG_HASH:=cc92968c57c00303eb9eaebf65cc8b29a0f851670f16bb514896ab5057ae381f
 
 PKG_MAINTAINER:=Javier Marcet <javier@marcet.info>
 PKG_LICENSE:=MIT
@@ -17,13 +17,17 @@ PKG_BUILD_FLAGS:=no-mips16
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
 
+# HAS_LUAJIT_ARCH config is defined in luajit and is used to define
+# arch deoendency for luajit. Since luajit2 is an improved version of
+# luajit, they share the same arch dependency. Refer there to update
+# dependency for them.
 define Package/luajit2
  SECTION:=lang
  CATEGORY:=Languages
  SUBMENU:=Lua
  TITLE:=LuaJIT from OpenResty
  URL:=https://www.luajit.org
- DEPENDS:=@(i386||x86_64||arm||armeb||aarch64||powerpc||mips||mipsel||mips64)
+ DEPENDS:=@HAS_LUAJIT_ARCH
  PROVIDES:=luajit
 endef
 

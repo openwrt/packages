@@ -5,6 +5,8 @@
 # shellcheck disable=SC2034
 START=90
 # shellcheck disable=SC2034
+STOP=15
+# shellcheck disable=SC2034
 USE_PROCD=1
 
 if type extra_command 1>/dev/null 2>&1; then
@@ -26,10 +28,13 @@ readonly DEFAULT_BOOTSTRAP="${BOOTSTRAP_CF},${BOOTSTRAP_GOOGLE}"
 readonly canaryDomainsMozilla='use-application-dns.net'
 readonly canaryDomainsiCloud='mask.icloud.com mask-h2.icloud.com'
 
-str_contains() { [ -n "$1" ] &&[ -n "$2" ] && [ "${1//$2}" != "$1" ]; }
+on_boot_trigger=
+
+dnsmasq_restart() { [ -x /etc/init.d/dnsmasq ] || return 1; /etc/init.d/dnsmasq restart >/dev/null 2>&1; }
 is_mac_address() { expr "$1" : '[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]$' >/dev/null; }
 is_ipv4() { expr "$1" : '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >/dev/null; }
 is_ipv6() { ! is_mac_address "$1" && str_contains "$1" ":"; }
+is_resolver_working() { resolveip -t 3 one.one.one.one >/dev/null 2>&1; }
 output() {
 	local msg memmsg logmsg
 	local sharedMemoryOutput="/dev/shm/$packageName-output"
@@ -48,6 +53,7 @@ output_ok() { output "$_OK_"; }
 output_okn() { output "${_OK_}\\n"; }
 output_fail() { output "$_FAIL_"; }
 output_failn() { output "${_FAIL_}\\n"; }
+str_contains() { [ -n "$1" ] &&[ -n "$2" ] && [ "${1//$2}" != "$1" ]; }
 uci_add_list_if_new() {
 	local PACKAGE="$1"
 	local CONFIG="$2"
@@ -66,9 +72,6 @@ uci_changes() {
 	local OPTION="$3"
 	/sbin/uci ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} changes "$PACKAGE${CONFIG:+.$CONFIG}${OPTION:+.$OPTION}"
 }
-
-dnsmasq_restart() { [ -x /etc/init.d/dnsmasq ] || return 1; /etc/init.d/dnsmasq restart >/dev/null 2>&1; }
-
 version() { echo "$PKG_VERSION"; }
 
 xappend() { PROG_param="$PROG_param $1"; }
@@ -127,12 +130,11 @@ append_bootstrap() {
 	[ "$ipv6_resolvers_only" -eq 0 ] && xappend '-4'
 }
 
-resolver_health_check() { resolveip -t 3 one.one.one.one >/dev/null 2>&1; }
-
 boot() {
 	ubus -t 30 wait_for network.interface 2>/dev/null
-	rc_procd start_service 'on_boot'
-	resolver_health_check || rc_procd stop_service 'on_boot'
+	on_boot_trigger=1
+	rc_procd start_service 'on_boot' && service_started 'on_boot'
+	is_resolver_working || { rc_procd stop_service 'on_boot' && service_stopped 'on_boot'; }
 }
 
 start_instance() {
@@ -198,7 +200,8 @@ start_instance() {
 	procd_close_data
 	procd_close_instance
 
-	if [ "$?" ]; then
+# shellcheck disable=SC2181
+	if [ "$?" -eq 0 ]; then
 		config_get listen_addr "$cfg" 'listen_addr' '127.0.0.1'
 		config_get listen_port "$cfg" 'listen_port' "$port"
 		if [ "$dnsmasq_config_update" = '*' ]; then
@@ -250,20 +253,21 @@ start_service() {
 		output "Updating dnsmasq config "
 		if uci_commit 'dhcp'; then
 			output_okn
-		else
-			output_failn
-		fi
-		param='dnsmasq_restart'
-	fi
-	if [ "$param" = 'on_hotplug' ] || [ "$param" = 'on_boot' ] || \
-		[ "$param" = 'dnsmasq_restart' ] ; then
-		output "Restarting dnsmasq "
-		if dnsmasq_restart; then
-			output_okn
+			param='on_config_update'
 		else
 			output_failn
 		fi
 	fi
+	case "$param" in
+		on_boot|on_config_update|on_hotplug)
+			output "Restarting dnsmasq ${param:+$param }"
+			if dnsmasq_restart; then
+				output_okn
+			else
+				output_failn
+			fi
+		;;
+	esac
 }
 
 stop_service() {
@@ -291,29 +295,32 @@ stop_service() {
 	[ "$s" = '0' ] && output_okn || output_failn
 }
 
-# shellcheck disable=SC1091
 service_triggers() {
 	local wan wan6 i
 	local procd_trigger_wan6
-	config_load "$packageName"
-	config_get_bool procd_trigger_wan6 'config' 'procd_trigger_wan6' '0'
-	. /lib/functions/network.sh
-	network_flush_cache
-	network_find_wan wan
-	wan="${wan:-wan}"
-	if [ "$procd_trigger_wan6" -ne 0 ]; then
-		network_find_wan6 wan6
-		wan6="${wan6:-wan6}"
+	if [ "$on_boot_trigger" = '1' ]; then
+		procd_add_raw_trigger "interface.*.up" 3000 "/etc/init.d/${packageName}" restart 'on_interface_up'
+	else
+		config_load "$packageName"
+		config_get_bool procd_trigger_wan6 'config' 'procd_trigger_wan6' '0'
+		. /lib/functions/network.sh
+		network_flush_cache
+		network_find_wan wan
+		wan="${wan:-wan}"
+		if [ "$procd_trigger_wan6" -ne 0 ]; then
+			network_find_wan6 wan6
+			wan6="${wan6:-wan6}"
+		fi
+		for i in $wan $wan6; do
+			procd_add_interface_trigger "interface.*" "$i" "/etc/init.d/${packageName}" restart 'on_interface_trigger'
+		done
 	fi
-	for i in "$wan" "$wan6"; do
-		[ -n "$i" ] && procd_add_interface_trigger "interface.*" "$i" "/etc/init.d/${packageName}" restart
-	done
-	procd_add_config_trigger "config.change" "$packageName" "/etc/init.d/${packageName}" reload
+	procd_add_config_trigger "config.change" "$packageName" "/etc/init.d/${packageName}" reload 'on_config_change'
 }
 
 service_started() { procd_set_config_changed firewall; }
 service_stopped() { procd_set_config_changed firewall; }
-restart() { procd_send_signal "$packageName"; rc_procd start_service; }
+restart() { procd_send_signal "$packageName"; rc_procd start_service "$*"; }
 
 dnsmasq_doh_server() {
 	local cfg="$1" param="$2" address="${3:-127.0.0.1}" port="$4" i
