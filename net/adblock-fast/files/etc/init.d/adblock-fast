@@ -53,8 +53,9 @@ readonly unboundFile="/var/lib/unbound/adb_list.${packageName}"
 readonly unboundCache="/var/run/${packageName}/unbound.cache"
 readonly unboundGzip="${packageName}.unbound.gz"
 readonly unboundFilter='s|^|local-zone: "|;s|$|" static|'
-readonly A_TMP="/var/${packageName}.hosts.a.tmp"
-readonly B_TMP="/var/${packageName}.hosts.b.tmp"
+readonly A_TMP="/var/${packageName}.a.tmp"
+readonly B_TMP="/var/${packageName}.b.tmp"
+readonly SED_TMP="/var/${packageName}.sed.tmp"
 readonly jsonFile="/dev/shm/$packageName-status.json"
 readonly sharedMemoryError="/dev/shm/$packageName-error"
 readonly hostsFilter='/localhost/d;/^#/d;/^[^0-9]/d;s/^0\.0\.0\.0.//;s/^127\.0\.0\.1.//;s/[[:space:]]*#.*$//;s/[[:cntrl:]]$//;s/[[:space:]]//g;/[`~!@#\$%\^&\*()=+;:"'\'',<>?/\|[{}]/d;/]/d;/\./!d;/^$/d;/[^[:alnum:]_.-]/d;'
@@ -875,7 +876,7 @@ resolver() {
 				;;
 				smartdns.*)
 					chmod 660 "$outputFile" "$outputConfig"
-					chown root:smartdns "$outputFile" "$outputConfig"
+					chown root:root "$outputFile" "$outputConfig"
 					param='smartdns_restart'
 					output_text='Restarting SmartDNS'
 				;;
@@ -1084,12 +1085,10 @@ process_file_url() {
 }
 
 download_dnsmasq_file() {
-	local hf allow_filter j=0 R_TMP
-
 	json set message "$(get_text 'statusDownloading')..."
 	json set status 'statusDownloading'
 
-	rm -f "$A_TMP" "$B_TMP" "$outputFile" "$outputCache" "$outputGzip"
+	rm -f "$A_TMP" "$B_TMP" "$SED_TMP" "$outputFile" "$outputCache" "$outputGzip"
 	if [ "$(get_ram_free)" -lt 32 ]; then
 		output 3 'Low free memory, restarting resolver '
 		if resolver 'quiet_restart'; then
@@ -1098,7 +1097,7 @@ download_dnsmasq_file() {
 			output_failn
 		fi
 	fi
-	touch $A_TMP; touch $B_TMP;
+	touch "$A_TMP" "$B_TMP" "$SED_TMP"
 	output 1 'Downloading dnsmasq file '
 	rm -f "$sharedMemoryError"
 	process_file_url '' "$dnsmasq_config_file_url" 'file'
@@ -1147,14 +1146,14 @@ download_lists() {
 			return 0
 		fi
 	}
-	local hf allow_filter j=0 R_TMP
+	local hf j=0 R_TMP
 
 	_ram_check || return 1
 
 	json set message "$(get_text 'statusDownloading')..."
 	json set status 'statusDownloading'
 
-	rm -f "$A_TMP" "$B_TMP" "$outputFile" "$outputCache" "$outputGzip"
+	rm -f "$A_TMP" "$B_TMP" "$SED_TMP" "$outputFile" "$outputCache" "$outputGzip"
 	if [ "$(get_ram_total)" -lt 33554432 ]; then
 		output 3 'Low free memory, restarting resolver '
 		if resolver 'quiet_restart'; then
@@ -1163,7 +1162,7 @@ download_lists() {
 			output_failn
 		fi
 	fi
-	touch $A_TMP; touch $B_TMP;
+	touch "$A_TMP" "$B_TMP" "$SED_TMP"
 	output 1 'Downloading lists '
 	rm -f "$sharedMemoryError"
 	config_load "$packageName"
@@ -1194,8 +1193,11 @@ download_lists() {
 		printf "%s\n" "$(echo "$hf" | sed "$domainsFilter")" >> "$B_TMP"
 	done
 	allowed_domain="${allowed_domain}
-$(cat $A_TMP)"
-	for hf in ${allowed_domain}; do hf="$(echo "$hf" | sed 's/\./\\./g')"; allow_filter="$allow_filter/(^|\.)${hf}$/d;"; done
+$(sed '/^[[:space:]]*$/d' "$A_TMP")"
+	for hf in ${allowed_domain}; do
+		hf="$(echo "$hf" | sed 's/\./\\./g')"
+		echo "/(^|\.)${hf}$/d;" >> "$SED_TMP"
+	done
 
 	sed -i '/^[[:space:]]*$/d' "$B_TMP"
 	[ ! -s "$B_TMP" ] && return 1
@@ -1266,10 +1268,10 @@ $(cat $A_TMP)"
 		mv "$A_TMP" "$B_TMP"
 	fi
 
-	if [ -n "$allow_filter" ]; then
+	if [ -s "$SED_TMP" ]; then
 		output 2 'Allowing domains '
 		json set message "$(get_text 'statusProcessing'): allowing domains"
-		if sed -i -E "$allow_filter" "$B_TMP"; then
+		if sed -i -E -f "$SED_TMP" "$B_TMP"; then
 			output_ok
 		else
 			output_failn
@@ -1358,7 +1360,7 @@ $(cat $A_TMP)"
 	fi
 	output 2 'Removing temporary files '
 	json set message "$(get_text 'statusProcessing'): removing temporary files"
-	rm -f "/tmp/${packageName}_tmp.*" "$A_TMP" "$B_TMP" "$outputCache" || j=1
+	rm -f "/tmp/${packageName}_tmp.*" "$A_TMP" "$B_TMP" "$SED_TMP" "$outputCache" || j=1
 	if [ $j -eq 0 ]; then
 		output_ok
 	else
