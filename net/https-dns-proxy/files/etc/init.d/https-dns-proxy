@@ -31,6 +31,7 @@ readonly canaryDomainsiCloud='mask.icloud.com mask-h2.icloud.com'
 on_boot_trigger=
 
 dnsmasq_restart() { [ -x /etc/init.d/dnsmasq ] || return 1; /etc/init.d/dnsmasq restart >/dev/null 2>&1; }
+is_fw4_restart_needed() { [ "$(uci_get "$packageName" 'config' 'force_dns' '1')" = '1' ]; }
 is_mac_address() { expr "$1" : '[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]$' >/dev/null; }
 is_ipv4() { expr "$1" : '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >/dev/null; }
 is_ipv6() { ! is_mac_address "$1" && str_contains "$1" ":"; }
@@ -168,7 +169,7 @@ start_instance() {
 	json_add_object mdns
 		procd_add_mdns_service "$packageName" 'udp' "$port" "DNS over HTTPS proxy"
 	json_close_object
-	if [ "$force_dns" -ne 0 ]; then
+	if [ "$force_dns" -ne '0' ]; then
 		json_add_array firewall
 		for iface in $procd_fw_src_interfaces; do
 			for p in $force_dns_port; do
@@ -218,7 +219,7 @@ start_instance() {
 		fi
 		output_ok
 		port="$((port+1))"
-		force_dns=0
+		force_dns='0'
 	else
 		output_fail
 	fi
@@ -318,8 +319,8 @@ service_triggers() {
 	procd_add_config_trigger "config.change" "$packageName" "/etc/init.d/${packageName}" reload 'on_config_change'
 }
 
-service_started() { procd_set_config_changed firewall; }
-service_stopped() { procd_set_config_changed firewall; }
+service_started() { is_fw4_restart_needed && procd_set_config_changed firewall; }
+service_stopped() { is_fw4_restart_needed && procd_set_config_changed firewall; }
 restart() { procd_send_signal "$packageName"; rc_procd start_service "$*"; }
 
 dnsmasq_doh_server() {
@@ -339,7 +340,7 @@ dnsmasq_doh_server() {
 			uci_add_list_if_new 'dhcp' "$cfg" 'doh_server' "${address}#${port}"
 		;;
 		remove)
-			for i in $(uci -q get "dhcp.$cfg.doh_server"); do
+			for i in $(uci_get 'dhcp' "$cfg" 'doh_server'); do
 				uci_remove_list 'dhcp' "$cfg" 'server' "$i"
 				uci_remove_list 'dhcp' "$cfg" 'doh_server' "$i"
 			done
