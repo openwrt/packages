@@ -289,7 +289,7 @@ Signed-off-by: Jeffery To <jeffery.to@gmail.com>
 +#endif
 --- a/configure.ac
 +++ b/configure.ac
-@@ -917,180 +917,14 @@ fi
+@@ -925,180 +925,14 @@ fi
  
  
  AC_MSG_CHECKING([for the platform triplet based on compiler characteristics])
