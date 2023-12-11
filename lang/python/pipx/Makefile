@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pipx
-PKG_VERSION:=1.3.2
+PKG_VERSION:=1.3.3
 PKG_RELEASE:=1
 
 PYPI_NAME:=pipx
-PKG_HASH:=704d01d04c67c2dd0c776c5bf5ed35c7b249055b0174568b8507f07d72ed7a7f
+PKG_HASH:=6d5474e71e78c28d83570443e5418c56599aa8319a950ccf5984c5cb0a35f0a7
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
@@ -29,7 +29,7 @@ define Package/pipx
   CATEGORY:=Languages
   SUBMENU:=Python
   TITLE:=Install/Run Python Applications in Isolated Environments
-  URL:=https://github.com/pypa/pipx
+  URL:=https://pipx.pypa.io/
   DEPENDS:= \
     +python3-light \
     +python3-logging \
