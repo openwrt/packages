@@ -567,7 +567,7 @@ $(eval $(call BuildPackage,perlbase-experimental))
 define Package/perlbase-extutils
 $(call Package/perlbase-template)
 TITLE:=ExtUtils perl module
-DEPENDS+=+perlbase-autosplit +perlbase-base +perlbase-config +perlbase-cwd +perlbase-dirhandle +perlbase-encode +perlbase-essential +perlbase-file +perlbase-io +perlbase-ipc +perlbase-ostype +perlbase-symbol +perlbase-text
+DEPENDS+=+perlbase-autosplit +perlbase-base +perlbase-config +perlbase-cwd +perlbase-dirhandle +perlbase-encode +perlbase-essential +perlbase-file +perlbase-io +perlbase-ipc +perlbase-ostype +perlbase-symbol +perlbase-text +perlbase-version
 endef
 
 define Package/perlbase-extutils/install
