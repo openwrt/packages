@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wifidog
 PKG_VERSION:=1.3.0
-PKG_RELEASE:=8
+PKG_RELEASE:=9
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/wifidog/wifidog-gateway
@@ -68,7 +68,7 @@ Package/wifidog-tls/conffiles = $(Package/wifidog/conffiles)
 ifeq ($(BUILD_VARIANT),tls)
 
 CONFIGURE_ARGS += \
-  --enable-cyassl
+  --enable-wolfssl
 
 endif
 
