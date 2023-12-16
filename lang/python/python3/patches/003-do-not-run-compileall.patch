@@ -1,6 +1,6 @@
 --- a/Makefile.pre.in
 +++ b/Makefile.pre.in
-@@ -2128,6 +2128,7 @@ libinstall:	all $(srcdir)/Modules/xxmodu
+@@ -2133,6 +2133,7 @@ libinstall:	all $(srcdir)/Modules/xxmodu
  		$(INSTALL_DATA) $(srcdir)/Modules/xxmodule.c \
  			$(DESTDIR)$(LIBDEST)/distutils/tests ; \
  	fi
@@ -8,7 +8,7 @@
  	-PYTHONPATH=$(DESTDIR)$(LIBDEST)  $(RUNSHARED) \
  		$(PYTHON_FOR_BUILD) -Wi $(DESTDIR)$(LIBDEST)/compileall.py \
  		-j0 -d $(LIBDEST) -f \
-@@ -2155,6 +2156,7 @@ libinstall:	all $(srcdir)/Modules/xxmodu
+@@ -2160,6 +2161,7 @@ libinstall:	all $(srcdir)/Modules/xxmodu
  		$(PYTHON_FOR_BUILD) -Wi -OO $(DESTDIR)$(LIBDEST)/compileall.py \
  		-j0 -d $(LIBDEST)/site-packages -f \
  		-x badsyntax $(DESTDIR)$(LIBDEST)/site-packages

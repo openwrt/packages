@@ -1,6 +1,6 @@
 --- a/Makefile.pre.in
 +++ b/Makefile.pre.in
-@@ -2173,7 +2173,7 @@ python-config: $(srcdir)/Misc/python-con
+@@ -2178,7 +2178,7 @@ python-config: $(srcdir)/Misc/python-con
  	@ # On Darwin, always use the python version of the script, the shell
  	@ # version doesn't use the compiler customizations that are provided
  	@ # in python (_osx_support.py).
