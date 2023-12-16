@@ -4,7 +4,7 @@ START=50
 USE_PROCD=1
 
 start_service() {
-	KEYS=$(find /usr/share/tang/db -name "*.jw*" -maxdepth 1 | wc -l)
+	KEYS=$(find /usr/share/tang/db -name "*.jw*" -maxdepth 1 2>/dev/null | wc -l)
 	if [ -z "${KEYS}" ] || [ "${KEYS}" = "0" ]; then # if db is empty generate new key pair
 		mkdir -p /usr/share/tang/db
 		/usr/sbin/tangd-keygen /usr/share/tang/db
