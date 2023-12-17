@@ -13,6 +13,19 @@ local __STATUS
 
 [ $use_ipv6 -ne 0 ] && __RRTYPE="AAAA" || __RRTYPE="A"
 
+local _len
+local _auth
+_len=${#password}
+if [ "$_len" -eq "24" ]; then
+    _auth="Authorization: Apikey "
+elif [ "$_len" -eq "40" ]; then
+    _auth="Authorization: Bearer "
+else
+    write_log 14 "Password wasn't length 24 or 40, cannot determine type"
+    return 1
+fi;
+#write_log 7 $_auth
+   
 # Construct JSON payload
 json_init
 json_add_int rrset_ttl "$__TTL"
@@ -22,13 +35,13 @@ json_close_array
 
 # Log the curl command
 write_log 7 "curl -s -X PUT \"$__ENDPOINT/domains/$domain/records/$username/$__RRTYPE\" \
-	-H \"Authorization: Apikey $password\" \
+	-H \"$_auth $password\" \
 	-H \"Content-Type: application/json\" \
 	-d \"$(json_dump)\" \
 	--connect-timeout 30"
 
 __STATUS=$(curl -s -X PUT "$__ENDPOINT/domains/$domain/records/$username/$__RRTYPE" \
-	-H "Authorization: Apikey $password" \
+	-H "$_auth $password" \
 	-H "Content-Type: application/json" \
 	-d "$(json_dump)" \
 	--connect-timeout 30 \
