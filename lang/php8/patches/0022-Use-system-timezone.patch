@@ -15,7 +15,7 @@ To be used in tandem with use_embedded_timezonedb.patch and use_embedded_timezon
 
 --- a/ext/date/php_date.c
 +++ b/ext/date/php_date.c
-@@ -549,6 +549,23 @@ static char* guess_timezone(const timeli
+@@ -567,6 +567,23 @@ static const char* guess_timezone(const
  	} else if (*DATEG(default_timezone)) {
  		return DATEG(default_timezone);
  	}
