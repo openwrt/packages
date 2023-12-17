@@ -52,7 +52,9 @@ snort  = {
 ips = {
   mode            = '{{ line_mode }}',
   variables       = default_variables,
+{% if (snort.action != 'default'): %}
   action_override = '{{ snort.action }}',
+{% endif %}
 {% if (getenv("_SNORT_WITHOUT_RULES") == "1"): %}
   -- WARNING: THIS IS A TEST-ONLY CONFIGURATION WITHOUT ANY RULES.
 {% else %}
