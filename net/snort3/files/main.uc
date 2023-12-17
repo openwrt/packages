@@ -90,7 +90,7 @@ const snort_config = {
 
 	mode:            config_item("enum",  [ "ids", "ips" ]),
 	method:          config_item("enum",  [ "pcap", "afpacket", "nfq" ]),
-	action:          config_item("enum",  [ "alert", "block", "drop", "reject" ]),
+	action:          config_item("enum",  [ "default", "alert", "block", "drop", "reject" ]),
 	interface:       config_item("str",   [ uci.get("network", "wan", "device") ]),
 	snaplen:         config_item("range", [ 1518, 65535 ]),     // int daq.snaplen = 1518: set snap length (same as -s) { 0:65535 }
 
@@ -137,7 +137,9 @@ snort
                       PID file (why?).  Default /var/log
     openappid       - Enabled inspection using the 'openappid' package
                       See 'opkg info openappid'
-    action          - 'alert', 'block', 'reject' or 'drop'
+    action          - Override the specified action of your rules.  One of 'default',
+                      'alert', 'block', 'reject' or 'drop', where 'default' means use
+                      the rule as defined and don't override.
     method          - 'pcap', 'afpacket' or 'nfq'
     snaplen         - int daq.snaplen = 1518: set snap length (same as -s) { 0:65535 }
     include         - User-defined snort configuration, applied at end of generated snort.lua
