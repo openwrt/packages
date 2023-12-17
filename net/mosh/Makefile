@@ -27,8 +27,9 @@ PKG_BUILD_FLAGS:=gc-sections lto
 include $(INCLUDE_DIR)/package.mk
 
 define Package/mosh/Default
-  SECTION:=utils
-  CATEGORY:=Utilities
+  SECTION:=net
+  CATEGORY:=Network
+  SUBMENU:=SSH
   TITLE:=Mosh mobile shell
   DEPENDS:=+libncursesw +libopenssl +protobuf
   URL:=https://mosh.org/
