@@ -59,6 +59,12 @@ define Package/telegraf-full/description
 	(Full build. including all plugins)
 endef
 
+define Package/telegraf/conffiles
+/etc/telegraf.conf
+endef
+
+Package/telegraf-full/conffiles = $(Package/telegraf/conffiles)
+
 define Build/Prepare
 	$(call Build/Prepare/Default)
 ifeq ($(BUILD_VARIANT),small)
