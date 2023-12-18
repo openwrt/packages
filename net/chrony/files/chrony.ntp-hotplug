@@ -1,0 +1,6 @@
+#!/bin/sh
+# Wait for sync for up to 5 minutes and notify other services
+
+/usr/bin/chronyc waitsync 300 1 0.0 1 || exit 0
+
+ubus call hotplug.ntp call '{ "env": [ "ACTION=stratum" ] }'

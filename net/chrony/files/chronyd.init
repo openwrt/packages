@@ -4,6 +4,7 @@
 START=15
 USE_PROCD=1
 PROG=/usr/sbin/chronyd
+HOTPLUG=/usr/sbin/chrony-hotplug
 CONFIGFILE=/etc/chrony/chrony.conf
 INCLUDEFILE=/var/etc/chrony.d/10-uci.conf
 RTCDEVICE=/dev/rtc0
@@ -77,6 +78,10 @@ start_service() {
 	procd_set_param command $PROG -n
 	procd_set_param file $CONFIGFILE
 	procd_set_param file $INCLUDEFILE
+	procd_close_instance
+
+	procd_open_instance
+	procd_set_param command $HOTPLUG
 	procd_close_instance
 
 	config_load chrony

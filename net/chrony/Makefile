@@ -85,6 +85,7 @@ define Package/chrony/install
 	$(INSTALL_DIR) $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/chronyd $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/chronyc $(1)/usr/bin
+	$(INSTALL_BIN) ./files/chrony.ntp-hotplug $(1)/usr/sbin/chrony-hotplug
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DIR) $(1)/etc/chrony
