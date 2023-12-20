@@ -171,7 +171,7 @@ openvpn_add_instance() {
 	procd_close_instance
 }
 
-start_instance() {
+start_uci_instance() {
 	local s="$1"
 
 	config_get config "$s" config
@@ -226,9 +226,9 @@ start_service() {
 
 	if [ -n "$instance" ]; then
 		[ "$instance_found" -gt 0 ] || return
-		start_instance "$instance"
+		start_uci_instance "$instance"
 	else
-		config_foreach start_instance 'openvpn'
+		config_foreach start_uci_instance 'openvpn'
 
 		local path name up down
 		for path in /etc/openvpn/*.conf; do
