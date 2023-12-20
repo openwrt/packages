@@ -1,15 +1,20 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -2239,9 +2239,9 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [
- # flags. If not, check if adding -march=armv8-a+crc flag helps.
- # CFLAGS_ARMV8_CRC32C is set if the extra flag is required.
- PGAC_ARMV8_CRC32C_INTRINSICS([])
--if test x"$pgac_armv8_crc32c_intrinsics" != x"yes"; then
--  PGAC_ARMV8_CRC32C_INTRINSICS([-march=armv8-a+crc])
--fi
-+#if test x"$pgac_armv8_crc32c_intrinsics" != x"yes"; then
-+#  PGAC_ARMV8_CRC32C_INTRINSICS([-march=armv8-a+crc])
-+#fi
- AC_SUBST(CFLAGS_ARMV8_CRC32C)
- 
- # Select CRC-32C implementation.
+@@ -2161,13 +2161,13 @@ if test x"$USE_SLICING_BY_8_CRC32C" = x"
+         USE_ARMV8_CRC32C=1
+       else
+         # ARM CRC Extension, with runtime check?
+-        if test x"$pgac_armv8_crc32c_intrinsics" = x"yes"; then
+-          USE_ARMV8_CRC32C_WITH_RUNTIME_CHECK=1
+-        else
++        #if test x"$pgac_armv8_crc32c_intrinsics" = x"yes"; then
++        #  USE_ARMV8_CRC32C_WITH_RUNTIME_CHECK=1
++        #else
+           # fall back to slicing-by-8 algorithm, which doesn't require any
+           # special CPU support.
+           USE_SLICING_BY_8_CRC32C=1
+-	fi
++	#fi
+       fi
+     fi
+   fi

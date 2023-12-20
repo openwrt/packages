@@ -5,7 +5,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postgresql
-PKG_VERSION:=15.3
+PKG_VERSION:=16.1
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=PostgreSQL
@@ -17,7 +17,7 @@ PKG_SOURCE_URL:=\
 	http://ftp.postgresql.org/pub/source/v$(PKG_VERSION) \
 	ftp://ftp.postgresql.org/pub/source/v$(PKG_VERSION)
 
-PKG_HASH:=ffc7d4891f00ffbf5c3f4eab7fbbced8460b8c0ee63c5a5167133b9e6599d932
+PKG_HASH:=ce3c4d85d19b0121fe0d3f8ef1fa601f71989e86f8a66f7dc3ad546dd5564fec
 
 PKG_BUILD_FLAGS:=no-mips16
 PKG_FIXUP:=autoreconf
@@ -31,7 +31,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/libpq
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libpthread
+  DEPENDS:=+libpthread +icu
   TITLE:=PostgreSQL client library
   URL:=http://www.postgresql.org/
   SUBMENU:=Database
@@ -137,6 +137,7 @@ HOST_CONFIGURE_ARGS += \
 			--disable-rpath \
 			--without-bonjour \
 			--without-gssapi \
+			--without-icu \
 			--without-ldap \
 			--without-openssl \
 			--without-pam \
@@ -182,7 +183,7 @@ define Host/Install
 endef
 
 define Build/Compile
-	$(MAKE) -C $(PKG_BUILD_DIR) MAKELEVEL=0 all contrib
+	$(MAKE) -C $(PKG_BUILD_DIR) RANLIB="$(TARGET_CROSS)ranlib" MAKELEVEL=0 all contrib
 endef
 
 # because PROFILE means something else in the project Makefile

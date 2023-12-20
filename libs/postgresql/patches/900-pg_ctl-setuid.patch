@@ -1,6 +1,6 @@
 --- a/src/bin/pg_ctl/pg_ctl.c
 +++ b/src/bin/pg_ctl/pg_ctl.c
-@@ -96,6 +96,7 @@ static char *event_source = NULL;
+@@ -91,6 +91,7 @@ static char *event_source = NULL;
  static char *register_servicename = "PostgreSQL";	/* FIXME: + version ID? */
  static char *register_username = NULL;
  static char *register_password = NULL;
@@ -8,7 +8,7 @@
  static char *argv0 = NULL;
  static bool allow_core_files = false;
  static time_t start_time;
-@@ -2086,6 +2087,9 @@ do_help(void)
+@@ -1991,6 +1992,9 @@ do_help(void)
  #endif
  	printf(_("  -s, --silent           only print errors, no informational messages\n"));
  	printf(_("  -t, --timeout=SECS     seconds to wait when using -w option\n"));
@@ -18,7 +18,7 @@
  	printf(_("  -V, --version          output version information, then exit\n"));
  	printf(_("  -w, --wait             wait until operation completes (default)\n"));
  	printf(_("  -W, --no-wait          do not wait until operation completes\n"));
-@@ -2298,6 +2302,7 @@ main(int argc, char **argv)
+@@ -2203,6 +2207,7 @@ main(int argc, char **argv)
  		{"options", required_argument, NULL, 'o'},
  		{"silent", no_argument, NULL, 's'},
  		{"timeout", required_argument, NULL, 't'},
@@ -26,7 +26,7 @@
  		{"core-files", no_argument, NULL, 'c'},
  		{"wait", no_argument, NULL, 'w'},
  		{"no-wait", no_argument, NULL, 'W'},
-@@ -2338,20 +2343,6 @@ main(int argc, char **argv)
+@@ -2243,20 +2248,6 @@ main(int argc, char **argv)
  		}
  	}
  
@@ -47,7 +47,7 @@
  
  	env_wait = getenv("PGCTLTIMEOUT");
  	if (env_wait != NULL)
-@@ -2437,11 +2428,15 @@ main(int argc, char **argv)
+@@ -2342,11 +2333,15 @@ main(int argc, char **argv)
  					wait_seconds_arg = true;
  					break;
  				case 'U':
@@ -63,7 +63,7 @@
  					break;
  				case 'w':
  					do_wait = true;
-@@ -2523,6 +2518,41 @@ main(int argc, char **argv)
+@@ -2428,6 +2423,41 @@ main(int argc, char **argv)
  		exit(1);
  	}
  
