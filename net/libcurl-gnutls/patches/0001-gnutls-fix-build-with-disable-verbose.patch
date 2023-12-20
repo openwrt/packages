@@ -1,0 +1,54 @@
+From af520ac9fec7d88e942f05fdcd90704adb9fa566 Mon Sep 17 00:00:00 2001
+From: Baruch Siach <baruch@tkos.co.il>
+Date: Mon, 11 Dec 2023 20:45:01 +0200
+Subject: [PATCH] gnutls: fix build with --disable-verbose
+
+infof() parameters must be defined event with --disable-verbose since
+commit dac293cfb702 ("lib: apache style infof and trace
+macros/functions").
+
+Move also 'ptr' definition under !CURL_DISABLE_VERBOSE_STRINGS.
+
+Fixes the following build failure:
+
+In file included from ../lib/sendf.h:29,
+                 from vtls/gtls.c:44:
+vtls/gtls.c: In function 'Curl_gtls_verifyserver':
+vtls/gtls.c:841:34: error: 'version' undeclared (first use in this function); did you mean 'session'?
+  841 |         gnutls_protocol_get_name(version), ptr);
+      |                                  ^~~~~~~
+
+Closes #12505
+---
+ lib/vtls/gtls.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+--- a/lib/vtls/gtls.c
++++ b/lib/vtls/gtls.c
+@@ -822,16 +822,17 @@ Curl_gtls_verifyserver(struct Curl_easy
+   char certname[65] = ""; /* limited to 64 chars by ASN.1 */
+   size_t size;
+   time_t certclock;
+-  const char *ptr;
+   int rc;
+   CURLcode result = CURLE_OK;
+ #ifndef CURL_DISABLE_VERBOSE_STRINGS
++  const char *ptr;
+   unsigned int algo;
+   unsigned int bits;
+   gnutls_protocol_t version = gnutls_protocol_get_version(session);
+ #endif
+   long * const certverifyresult = &ssl_config->certverifyresult;
+ 
++#ifndef CURL_DISABLE_VERBOSE_STRINGS
+   /* the name of the cipher suite used, e.g. ECDHE_RSA_AES_256_GCM_SHA384. */
+   ptr = gnutls_cipher_suite_get_name(gnutls_kx_get(session),
+                                      gnutls_cipher_get(session),
+@@ -839,6 +840,7 @@ Curl_gtls_verifyserver(struct Curl_easy
+ 
+   infof(data, "SSL connection using %s / %s",
+         gnutls_protocol_get_name(version), ptr);
++#endif
+ 
+   /* This function will return the peer's raw certificate (chain) as sent by
+      the peer. These certificates are in raw format (DER encoded for
