@@ -1,0 +1,47 @@
+#!/bin/sh
+
+# if there is an existing config, our work is already done
+uci -q get yggdrasil-jumper.config.stun_server >/dev/null 2>&1
+
+if [ $? -ne 0 ]; then
+
+    # register commit handler
+    uci -q batch <<-EOF >/dev/null
+        delete ucitrack.@yggdrasil-jumper[-1]
+        add ucitrack yggdrasil-jumper
+        set ucitrack.@yggdrasil-jumper[-1].init=yggdrasil-jumper
+        commit ucitrack
+EOF
+
+    # generate configuration
+    touch /etc/config/yggdrasil-jumper
+
+    uci batch <<-EOF
+        set yggdrasil-jumper.config=yggdrasil-jumper
+        set yggdrasil-jumper.config.listen_port=4701
+        set yggdrasil-jumper.config.allow_ipv4=1
+        set yggdrasil-jumper.config.allow_ipv6=0
+        add_list yggdrasil-jumper.config.stun_server='stunserver.stunprotocol.org:3478'
+        add_list yggdrasil-jumper.config.stun_server='136.243.59.79:3478'
+        add_list yggdrasil-jumper.config.stun_server='34.192.137.246:3478'
+        add_list yggdrasil-jumper.config.stun_server='94.130.130.49:3478'
+        add_list yggdrasil-jumper.config.stun_server='192.172.233.145:3478'
+        add_list yggdrasil-jumper.config.stun_server='185.125.180.70:3478'
+        add_list yggdrasil-jumper.config.stun_server='95.216.78.222:3478'
+        add_list yggdrasil-jumper.config.stun_server='88.99.67.241:3478'
+        add_list yggdrasil-jumper.config.stun_server='88.218.220.40:3478'
+        add_list yggdrasil-jumper.config.stun_server='54.177.85.190:3478'
+        add_list yggdrasil-jumper.config.stun_server='88.198.151.128:3478'
+        add_list yggdrasil-jumper.config.stun_server='83.64.250.246:3478'
+        add_list yggdrasil-jumper.config.stun_server='62.72.83.10:3478'
+        add_list yggdrasil-jumper.config.stun_server='202.1.117.2:3478'
+        add_list yggdrasil-jumper.config.stun_server='188.118.52.172:3478'
+        add_list yggdrasil-jumper.config.stun_server='51.83.201.84:3478'
+        add_list yggdrasil-jumper.config.stun_server='34.206.168.53:3478'
+        add_list yggdrasil-jumper.config.stun_server='157.161.10.32:3478'
+        add_list yggdrasil-jumper.config.stun_server='91.213.98.54:3478'
+        set yggdrasil-jumper.config.stun_randomize=1
+        commit yggdrasil-jumper
+EOF
+
+fi

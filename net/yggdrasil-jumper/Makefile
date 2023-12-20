@@ -17,6 +17,7 @@ PKG_BUILD_PARALLEL:=1
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/rust/rust-package.mk
 
+
 define Package/yggdrasil-jumper
 	SECTION:=net
 	CATEGORY:=Network
@@ -26,25 +27,36 @@ define Package/yggdrasil-jumper
 	DEPENDS:=$(RUST_ARCH_DEPENDS) @!arc @IPV6 +kmod-tun
 endef
 
+
 define Package/yggdrasil-jumper/description
-  Yggdrasil-jumper enhances the performance of data-intensive applications over the Yggdrasil
-  network by establishing direct peer-to-peer connections, bypassing intermediary nodes.
-  It utilizes NAT traversal to create a direct bridge to potentially reduce latency.
+  Yggdrasil-Jumper utilizes NAT traversal for latency reduction within the Yggdrasil network by
+  creating direct peer-to-peer connections. It offers self-activating NAT/Firewall traversal,
+  eliminating the necessity for firewall or port configuration. It probles for Yggdrasil-Jumper
+  of routers found in active sessions to leverage NAT traversal for constructing direct internet
+  bridges.
 endef
 
-# define Package/yggdrasil-jumper/conffiles
-#   /etc/yggdrasil-jumper/yggdrasil-jumper.conf
-# endef
 
 define Package/yggdrasil-jumper/install
-	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/uci-defaults $(1)/etc/init.d
+
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/yggdrasil-jumper $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/stun-tcp $(1)/usr/sbin
 
-	# $(INSTALL_DIR) $(1)/etc/yggdrasil-jumper
-	# $(INSTALL_CONF) ./files/etc/yggdrasil-jumper/yggdrasil-jumper.conf $(1)/etc/yggdrasil-jumper
+	$(INSTALL_BIN) ./files/yggdrasil-jumper.defaults $(1)/etc/uci-defaults/yggdrasil-jumper
 
+	$(INSTALL_BIN) ./files/yggdrasil-jumper.init $(1)/etc/init.d/yggdrasil-jumper
 endef
+
+
+define Package/cjdns/postinst
+#!/bin/sh
+if [ -z $${IPKG_INSTROOT} ] ; then
+	( . /etc/uci-defaults/yggdrasil-jumper ) && rm -f /etc/uci-defaults/yggdrasil-jumper
+	/etc/init.d/yggdrasil-jumper enabled || /etc/init.d/yggdrasil-jumper enable
+	exit 0
+fi
+endef
+
 
 $(eval $(call RustBinPackage,yggdrasil-jumper))
 $(eval $(call BuildPackage,yggdrasil-jumper))
