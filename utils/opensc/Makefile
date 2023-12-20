@@ -8,9 +8,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=opensc
-PKG_VERSION:=0.22.0
-PKG_RELEASE:=2
-PKG_HASH:=8d4e5347195ebea332be585df61dcc470331c26969e4b0447c851fb0844c7186
+PKG_VERSION:=0.24.0
+PKG_RELEASE:=1
+PKG_HASH:=24d03c69287291da32a30c4c38a304ad827f56cb85d83619e1f5403ab6480ef8
 
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
@@ -107,13 +107,17 @@ TOOLS:= \
 	cardos-tool \
 	cryptoflex-tool \
 	dnie-tool \
+	egk-tool \
 	eidenv \
+	gids-tool \
+	goid-tool \
 	iasecc-tool \
 	netkey-tool \
 	openpgp-tool \
 	opensc-tool \
 	opensc-explorer:+libncurses:+libreadline \
 	piv-tool \
+	pkcs11-register \
 	pkcs11-tool \
 	pkcs15-crypt \
 	pkcs15-init \
@@ -129,6 +133,7 @@ PROFILES:= \
 	entersafe \
 	epass2003 \
 	flex \
+	gids \
 	gpk \
 	ias_adele_admin1 \
 	ias_adele_admin2 \
@@ -138,14 +143,14 @@ PROFILES:= \
 	iasecc_generic_pki \
 	iasecc \
 	incrypto34 \
-	jcop \
-	miocos \
+	isoApplet \
 	muscle \
 	myeid \
 	oberthur \
 	openpgp \
 	pkcs15 \
 	rutoken_ecp \
+	rutoken_lite \
 	rutoken \
 	sc-hsm \
 	setcos \
