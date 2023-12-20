@@ -271,7 +271,12 @@ start_service() {
 	else
 		config_foreach start_uci_instance 'openvpn'
 
-		start_path_instances
+		auto="$(uci_get openvpn globals autostart 1)"
+		if [ "$auto" = "1" ]; then
+			start_path_instances
+		else
+			logger -t openvpn "Autostart for configs in '$PATH_INSTANCE_DIR/*.conf' disabled"
+		fi
 	fi
 }
 
