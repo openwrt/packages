@@ -2,11 +2,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
 
-PKG_VERSION:=0.19.4
+PKG_VERSION:=0.20.0
 PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/gnunet
-PKG_HASH:=00a63df408d5987f5ba9a50441f2a77182bd9fb32f1e302ae563ac94e7ac009b
+PKG_HASH:=56029e78a99c04d52b1358094ae5074e4cd8ea9b98cf6855f57ad9af27ac9518
 
 PKG_LICENSE:=AGPL-3.0
 PKG_LICENSE_FILES:=COPYING
@@ -268,9 +268,9 @@ CONF_fs:=fs
 
 DEPENDS_gns:=+gnunet-vpn +iptables-mod-extra
 USERID_gns:=:gnunetdns=452
-BIN_gns:=gns namecache namestore resolver zoneimport
+BIN_gns:=gns namecache namestore namestore-dbtool namestore-zonefile resolver zoneimport
 LIB_gns:=gns gnsrecord namecache namestore
-PLUGIN_gns:=block_dns block_gns gnsrecord_conversation gnsrecord_dns gnsrecord_gns
+PLUGIN_gns:=block_dns block_gns gnsrecord_conversation gnsrecord_dns gnsrecord_gns namecache_flat
 LIBEXEC_gns:=dns2gns helper-dns service-dns service-gns service-namecache service-namestore service-resolver service-zonemaster
 CONF_gns:=dns gns namecache namestore resolver zonemaster
 FILE_MODES_gns:=/usr/lib/gnunet/libexec/gnunet-helper-dns:root:gnunetdns:4750 /usr/lib/gnunet/libexec/gnunet-service-dns:gnunet:gnunetdns:2750
