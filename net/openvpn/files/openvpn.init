@@ -263,8 +263,11 @@ start_service() {
 	config_load 'openvpn'
 
 	if [ -n "$instance" ]; then
-		[ "$instance_found" -gt 0 ] || return
-		start_uci_instance "$instance"
+		if [ "$instance_found" -gt 0 ]; then
+			start_uci_instance "$instance"
+		else
+			start_path_instance "$instance"
+		fi
 	else
 		config_foreach start_uci_instance 'openvpn'
 
