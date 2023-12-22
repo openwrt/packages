@@ -10,6 +10,7 @@ STOP=10
 USE_PROCD=1
 PROG=/usr/sbin/openvpn
 
+PATH_INSTANCE_DIR="/etc/openvpn"
 LIST_SEP="
 "
 
@@ -171,7 +172,7 @@ openvpn_add_instance() {
 	procd_close_instance
 }
 
-start_instance() {
+start_uci_instance() {
 	local s="$1"
 
 	config_get config "$s" config
@@ -206,6 +207,43 @@ start_instance() {
 	openvpn_add_instance "$s" "/var/etc" "openvpn-$s.conf" "$script_security" "$up" "$down"
 }
 
+start_path_instances() {
+	local path name
+
+	for path in ${PATH_INSTANCE_DIR}/*.conf; do
+		[ -f "$path" ] && {
+			name="${path##*/}"
+			name="${name%.conf}"
+			start_path_instance "$name"
+		}
+	done
+}
+
+start_path_instance() {
+	local name="$1"
+
+	local path up down
+
+	path="${PATH_INSTANCE_DIR}/${name}.conf"
+
+	# don't start configs again that are already started by uci
+	if echo "$UCI_STARTED" | grep -qxF "$path"; then
+		logger -t openvpn "$name.conf already started"
+		return
+	fi
+
+	# don't start configs which are set to disabled in uci
+	if echo "$UCI_DISABLED" | grep -qxF "$path"; then
+		logger -t openvpn "$name.conf is disabled in /etc/config/openvpn"
+		return
+	fi
+
+	get_openvpn_option "$path" up up || up=""
+	get_openvpn_option "$path" down down || down=""
+
+	openvpn_add_instance "$name" "${path%/*}" "$path" "" "$up" "$down"
+}
+
 start_service() {
 	local instance="$1"
 	local instance_found=0
@@ -225,31 +263,20 @@ start_service() {
 	config_load 'openvpn'
 
 	if [ -n "$instance" ]; then
-		[ "$instance_found" -gt 0 ] || return
-		start_instance "$instance"
+		if [ "$instance_found" -gt 0 ]; then
+			start_uci_instance "$instance"
+		else
+			start_path_instance "$instance"
+		fi
 	else
-		config_foreach start_instance 'openvpn'
+		config_foreach start_uci_instance 'openvpn'
 
-		local path name up down
-		for path in /etc/openvpn/*.conf; do
-			if [ -f "$path" ]; then
-				name="${path##*/}"; name="${name%.conf}"
-
-				# don't start configs again that are already started by uci
-				if echo "$UCI_STARTED" | grep -qxF "$path"; then
-					continue
-
-				# don't start configs which are set to disabled in uci
-				elif echo "$UCI_DISABLED" | grep -qxF "$path"; then
-					logger -t openvpn "$name.conf is disabled in /etc/config/openvpn"
-					continue
-				fi
-
-				get_openvpn_option "$path" up up || up=""
-				get_openvpn_option "$path" down down || down=""
-				openvpn_add_instance "$name" "${path%/*}" "$path" "" "$up" "$down"
-			fi
-		done
+		auto="$(uci_get openvpn globals autostart 1)"
+		if [ "$auto" = "1" ]; then
+			start_path_instances
+		else
+			logger -t openvpn "Autostart for configs in '$PATH_INSTANCE_DIR/*.conf' disabled"
+		fi
 	fi
 }
 
