@@ -10,7 +10,6 @@
 #	option retrydelay		1
 #	option CheckHostIP		yes
 #	option Compression		no
-#	option CompressionLevel		6
 #	option IdentityFile		/root/.ssh/id_rsa
 #	option LogLevel			INFO
 #	option PKCS11Provider		/lib/pteidpkcs11.so

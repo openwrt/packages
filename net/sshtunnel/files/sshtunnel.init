@@ -18,16 +18,6 @@ _err() {
 	logger -p daemon.err -t sshtunnel "$@"
 }
 
-append_params() {
-	local p v args
-	for p in "$@"; do
-		eval "v=\$$p"
-		[ -n "$v" ] && args="$args -o $p=$v"
-	done
-
-	ARGS_options="${args# *}"
-}
-
 append_string() {
 	local varname="$1"; local add="$2"; local separator="${3:- }"; local actual new
 	eval "actual=\$$varname"
@@ -45,7 +35,6 @@ validate_server_section() {
 		'PKCS11Provider:file' \
 		'CheckHostIP:or("yes", "no")' \
 		'Compression:or("yes", "no")' \
-		'CompressionLevel:range(1,9)' \
 		'IdentityFile:file' \
 		'LogLevel:or("QUIET", "FATAL", "ERROR", "INFO", "VERBOSE", "DEBUG", "DEBUG1", "DEBUG2", "DEBUG3")' \
 		'ServerAliveCountMax:min(1)' \
@@ -172,8 +161,6 @@ load_server() {
 
 	[ "$2" = 0 ] || { _err "server $server: validation failed"; return 1; }
 
-	local ARGS=""
-	local ARGS_options=""
 	local ARGS_tunnels=""
 	local count=0
 
@@ -183,19 +170,27 @@ load_server() {
 	config_foreach validate_tunnelW_section "tunnelW" load_tunnelW
 	[ "$count" -eq 0 ] && { _err "tunnels to $server not started - no tunnels defined"; return 1; }
 
-	append_params CheckHostIP Compression CompressionLevel \
-		LogLevel PKCS11Provider ServerAliveCountMax ServerAliveInterval \
-		StrictHostKeyChecking TCPKeepAlive VerifyHostKeyDNS
+	# old dbclient use -y for StrictHostKeyChecking.
+	# The -y for OpenSSH means to use syslog but that's ok
+	local db_StrictHostKeyChecking=""
+	[ "$StrictHostKeyChecking" = "accept-new" ] && db_StrictHostKeyChecking="-y"
+	[ "$StrictHostKeyChecking" = "no" ] && db_StrictHostKeyChecking="-yy"
 
-	# dropbear doesn't support -o IdentityFile so use -i instead
-	[ -n "$IdentityFile" ] && ARGS_options="$ARGS_options -i $IdentityFile"
-	# dbclient doesn't support StrictHostKeyChecking but it has the -y option that works same
-	[ "$StrictHostKeyChecking" = "accept-new" ] && ARGS_options="$ARGS_options -y"
-	[ "$StrictHostKeyChecking" = "no" ] && ARGS_options="$ARGS_options -yy"
-	ARGS="$ARGS_options -o ExitOnForwardFailure=yes -o BatchMode=yes -nN $ARGS_tunnels "
-	[ -n "$port" ] && ARGS="$ARGS -p $port "
-	[ -n "$user" ] && ARGS="$ARGS $user@"
-	ARGS="${ARGS}$hostname"
+	local ARGS="$hostname $ARGS_tunnels \
+	${port:+-p $port} \
+	${user:+-l $user} \
+	${IdentityFile:+-i $IdentityFile} \
+	${CheckHostIP:+-o CheckHostIP=$CheckHostIP} \
+	${VerifyHostKeyDNS:+-o VerifyHostKeyDNS=$VerifyHostKeyDNS} \
+	${Compression:+-o Compression=$Compression} \
+	${LogLevel:+-o LogLevel=$LogLevel} \
+	${PKCS11Provider:+-o PKCS11Provider=$PKCS11Provider} \
+	${TCPKeepAlive:+-o TCPKeepAlive=$TCPKeepAlive} \
+	${ServerAliveCountMax:+-o ServerAliveCountMax=$ServerAliveCountMax} \
+	${ServerAliveInterval:+-o ServerAliveInterval=$ServerAliveInterval} \
+	${StrictHostKeyChecking:+-o StrictHostKeyChecking=$StrictHostKeyChecking $db_StrictHostKeyChecking} \
+	-o ExitOnForwardFailure=yes -o BatchMode=yes -nN \
+	"
 
 	procd_open_instance "$server"
 	procd_set_param command "$PROG" $ARGS
