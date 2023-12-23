@@ -277,14 +277,16 @@ _should_wifi_enabled()
 startup()
 {
     _log "startup"
-    local _enable_wifi=$(_should_wifi_enabled)
-    if [[ ${_enable_wifi} -eq 0 ]]
-    then
-        _log "enable wifi"
-        enable_wifi
-    else 
-        _log "disable wifi"
-        disable_wifi
+    local global_enabled=$(_get_uci_value ${GLOBAL}.enabled) || _exit 1
+    if [ ${global_enabled} -eq 1 ]; then
+        local _enable_wifi=$(_should_wifi_enabled)
+        if [ ${_enable_wifi} -eq 0 ]; then
+            _log "enable wifi"
+            enable_wifi
+        else
+            _log "disable wifi"
+            disable_wifi
+        fi
     fi
 }
 
