@@ -9,10 +9,10 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qemu
-PKG_VERSION:=8.1.2
+PKG_VERSION:=8.2.0
 PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=541526a764576eb494d2ff5ec46aeb253e62ea29035d1c23c0a8af4e6cd4f087
+PKG_HASH:=bf00d2fa12010df8b0ade93371def58e632cb32a6bfdc5f5a0ff8e6a1fb1bf32
 PKG_SOURCE_URL:=http://download.qemu.org/
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=LICENSE tcg/LICENSE
@@ -336,7 +336,6 @@ CONFIGURE_ARGS +=			\
 
 # accel
 CONFIGURE_ARGS +=			\
-	--disable-hax			\
 	--disable-hvf			\
 	--disable-whpx			\
 	--disable-xen			\
@@ -378,6 +377,7 @@ CONFIGURE_ARGS +=			\
 #
 CONFIGURE_ARGS +=			\
 	--audio-drv-list=''		\
+	--disable-af-xdp                \
 	--disable-attr			\
 	--disable-auth-pam		\
 	--disable-brlapi		\
@@ -401,6 +401,7 @@ CONFIGURE_ARGS +=			\
 	--disable-libpmem		\
 	--disable-libssh		\
 	--$(if $(CONFIG_QEMU_DEV_USB),enable,disable)-libusb		\
+	--disable-libkeyutils           \
 	--disable-linux-aio		\
 	--disable-linux-io-uring	\
 	--disable-lzfse			\
@@ -417,6 +418,7 @@ CONFIGURE_ARGS +=			\
 	--disable-qom-cast-debug	\
 	--disable-rbd			\
 	--disable-rdma			\
+	--disable-rutabaga-gfx          \
 	--disable-sanitizers		\
 	--$(if $(CONFIG_QEMU_SECCOMP),enable,disable)-seccomp		\
 	--disable-smartcard		\
