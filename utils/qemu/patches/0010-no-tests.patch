@@ -1,6 +1,6 @@
 --- a/meson.build
 +++ b/meson.build
-@@ -3451,10 +3451,6 @@ subdir('common-user')
+@@ -3513,10 +3513,6 @@ subdir('common-user')
  subdir('bsd-user')
  subdir('linux-user')
  
@@ -11,7 +11,7 @@
  # accel modules
  tcg_real_module_ss = ss.source_set()
  tcg_real_module_ss.add_all(when: 'CONFIG_TCG_MODULAR', if_true: tcg_module_ss)
-@@ -3945,10 +3941,6 @@ subdir('scripts')
+@@ -4012,10 +4008,6 @@ subdir('scripts')
  subdir('tools')
  subdir('pc-bios')
  subdir('docs')
