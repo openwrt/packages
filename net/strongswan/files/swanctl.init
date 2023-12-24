@@ -712,6 +712,16 @@ stop_service() {
 service_triggers() {
 	procd_add_reload_trigger "ipsec"
 	config load "ipsec"
+
+	config_foreach service_trigger_ipsec ipsec
+}
+
+service_trigger_ipsec() {
+	local interface interface_list
+	config_list_foreach "$1" interface append_var interface_list
+	for interface in $interface_list; do
+		procd_add_reload_interface_trigger $interface
+	done
 }
 
 start_service() {
