@@ -1,0 +1,18 @@
+{
+    "ProxyBook": {
+        "wireguard": [
+            "udp",
+            "127.0.0.1:8388"
+        ]
+    },
+    "BindAddr": [
+        ":49443",
+        ":4980"
+    ],
+    "BypassUID": [
+        "---UID---"
+    ],
+    "RedirAddr": "bing.com",
+    "PrivateKey": "---PRIVATE---",
+    "DatabasePath": "/etc/cloak/userinfo.db"
+}

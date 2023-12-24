@@ -1,0 +1,75 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2010-2011 OpenWrt.org
+
+START=90
+
+USE_PROCD=1
+NAME=cloak
+
+start_server () {
+	local enabled server_config verbosity pprof
+
+	config_get_bool enabled "$1" enabled
+	config_get server_config "$1" config
+	config_get verbosity "$1" verbosity info
+	config_get pprof "$1" pprof
+
+	[ "$enabled" = 0 ] && return 1
+
+	procd_open_instance
+	procd_set_param command "/usr/bin/ck-server"
+
+	procd_append_param command -c "$server_config"
+	[ -n "$verbosity" ] && procd_append_param command -verbosity "$verbosity"
+	[ -n "$pprof" ] && procd_append_param command -d "$pprof"
+
+	procd_set_param file "$server_config"
+	procd_set_param respawn
+	procd_close_instance
+}
+
+
+start_client () {
+	local enabled admin_uid client_config local_host local_port remote_host remote_port proxy udp verbosity
+
+
+	config_get_bool enabled "$1" enabled
+	config_get admin_uid "$1" admin_uid
+	config_get client_config "$1" config
+	config_get local_host "$1" local_host
+	config_get local_port "$1" local_port
+	config_get remote_host "$1" remote_host
+	config_get remote_port "$1" remote_port
+	config_get proxy "$1" proxy
+	config_get_bool udp "$1" udp
+	config_get verbosity "$1" verbosity
+
+	[ "$enabled" = 0 ] && return 1
+
+
+	procd_open_instance
+	procd_set_param command "/usr/bin/ck-client"
+
+	[ -n "$admin_uid" ] && procd_append_param command -a "$admin_uid"
+
+	procd_append_param command -c "$client_config"
+
+	[ -n "$local_host" ] && procd_append_param command -i "$local_host"
+	[ -n "$local_port" ] && procd_append_param command -l "$local_port"
+	[ -n "$remote_host" ] && procd_append_param command -s "$remote_host"
+	[ -n "$remote_port" ] && procd_append_param command -p "$remote_port"
+	[ -n "$proxy" ] && procd_append_param command -proxy "$proxy"
+	[ "$udp" == 1 ] && procd_append_param command -u
+	[ -n "$verbosity" ] && procd_append_param command -verbosity "$verbosity"
+
+	procd_set_param file "$client_config"
+	procd_set_param respawn
+	procd_close_instance
+}
+
+
+start_service() {
+	config_load "${NAME}"
+	config_foreach start_server 'server'
+	config_foreach start_client 'client'
+}

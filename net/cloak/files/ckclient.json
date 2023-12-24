@@ -1,0 +1,15 @@
+{
+    "UID": "---UID---",
+    "Transport": "direct",
+    "PublicKey": "---PUBLIC---",
+    "ProxyMethod": "wireguard",
+    "EncryptionMethod": "plain",
+    "ServerName": "bing.com",
+    "AlternativeNames": [
+        "cloudflare.com",
+        "github.com"
+    ],
+    "NumConn": 4,
+    "BrowserSig": "chrome",
+    "StreamTimeout": 300
+}
