@@ -119,6 +119,7 @@ define Build/InstallDev
 		$(1)/usr/include \
 		$(1)/usr/lib \
 		$(1)/usr/bin \
+		$(1)/usr/lib/pkgconfig \
 		$(2)/bin
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/include/* \
@@ -136,6 +137,9 @@ define Build/InstallDev
 	$(SED) \
 		's,LIBINST_DIR="/usr/lib",LIBINST_DIR="$(STAGING_DIR)/usr/lib",g' \
 		$(2)/bin/xmlrpc-c-config
+	$(INSTALL_DATA) \
+		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/*.pc \
+		$(1)/usr/lib/pkgconfig/
 endef
 
 define Package/xmlrpc-c-libxml2/install
