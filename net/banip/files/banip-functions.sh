@@ -5,11 +5,13 @@
 # (s)hellcheck exceptions
 # shellcheck disable=all
 
-# set initial defaults
+# environment
 #
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 
+# initial defaults
+#
 ban_basedir="/tmp"
 ban_backupdir="/tmp/banIP-backup"
 ban_reportdir="/tmp/banIP-report"
@@ -25,18 +27,6 @@ ban_rdapurl="https://rdap.db.ripe.net/ip/"
 ban_lock="/var/run/banip.lock"
 ban_logreadfile="/var/log/messages"
 ban_logreadcmd=""
-ban_logcmd="$(command -v logger)"
-ban_ubuscmd="$(command -v ubus)"
-ban_nftcmd="$(command -v nft)"
-ban_fw4cmd="$(command -v fw4)"
-ban_awkcmd="$(command -v awk)"
-ban_grepcmd="$(command -v grep)"
-ban_sedcmd="$(command -v sed)"
-ban_catcmd="$(command -v cat)"
-ban_zcatcmd="$(command -v zcat)"
-ban_lookupcmd="$(command -v nslookup)"
-ban_jsoncmd="$(command -v jsonfilter)"
-ban_mailcmd="$(command -v msmtp)"
 ban_mailsender="no-reply@banIP"
 ban_mailreceiver=""
 ban_mailtopic="banIP notification"
@@ -103,7 +93,7 @@ f_system() {
 		ban_debug="$(uci_get banip global ban_debug)"
 		ban_cores="$(uci_get banip global ban_cores)"
 	fi
-	ban_packages="$(${ban_ubuscmd} -S call rpc-sys packagelist '{ "all": true }' 2>/dev/null)"
+	ban_packages="$("${ban_ubuscmd}" -S call rpc-sys packagelist '{ "all": true }' 2>/dev/null)"
 	ban_memory="$("${ban_awkcmd}" '/^MemAvailable/{printf "%s",int($2/1000)}' "/proc/meminfo" 2>/dev/null)"
 	ban_ver="$(printf "%s" "${ban_packages}" | "${ban_jsoncmd}" -ql1 -e '@.packages.banip')"
 	ban_sysver="$("${ban_ubuscmd}" -S call system board 2>/dev/null | "${ban_jsoncmd}" -ql1 -e '@.model' -e '@.release.description' |
@@ -114,6 +104,23 @@ f_system() {
 		[ "${cpu}" = "0" ] && cpu="1"
 		[ "${core}" = "0" ] && core="1"
 		ban_cores="$((cpu * core))"
+	fi
+}
+
+# command selector
+#
+f_cmd() {
+	local cmd pri_cmd="${1}" sec_cmd="${2}"
+
+	cmd="$(command -v "${pri_cmd}" 2>/dev/null)"
+	if [ ! -x "${cmd}" ]; then
+		if [ -n "${sec_cmd}" ]; then
+			[ "${sec_cmd}" = "true" ] && return
+			cmd="$(command -v "${sec_cmd}" 2>/dev/null)"
+		fi
+		[ -x "${cmd}" ] && printf "%s" "${cmd}" || f_log "emerg" "command '${pri_cmd:-"-"}'/'${sec_cmd:-"-"}' not found"
+	else
+		printf "%s" "${cmd}"
 	fi
 }
 
@@ -192,9 +199,9 @@ f_rmpid() {
 
 	ppid="$("${ban_catcmd}" "${ban_pidfile}" 2>/dev/null)"
 	if [ -n "${ppid}" ]; then
-		pids="$(pgrep -P "${ppid}" 2>/dev/null)"
+		pids="$("${ban_pgrepcmd}" -P "${ppid}" 2>/dev/null)"
 		for pid in ${pids}; do
-			pids="${pids} $(pgrep -P "${pid}" 2>/dev/null)"
+			pids="${pids} $("${ban_pgrepcmd}" -P "${pid}" 2>/dev/null)"
 		done
 		for pid in ${pids}; do
 			kill -INT "${pid}" >/dev/null 2>&1
@@ -216,13 +223,15 @@ f_log() {
 			printf "%s %s %s\n" "${class}" "banIP-${ban_ver}[${$}]" "${log_msg}"
 		fi
 	fi
-	if [ "${class}" = "err" ]; then
-		"${ban_nftcmd}" delete table inet banIP >/dev/null 2>&1
-		if [ "${ban_enabled}" = "1" ]; then
-			f_genstatus "error"
-			[ "${ban_mailnotification}" = "1" ] && [ -n "${ban_mailreceiver}" ] && [ -x "${ban_mailcmd}" ] && f_mail
-		else
-			f_genstatus "disabled"
+	if [ "${class}" = "err" ] || [ "${class}" = "emerg" ]; then
+		if [ "${class}" = "err" ]; then 
+			"${ban_nftcmd}" delete table inet banIP >/dev/null 2>&1
+			if [ "$(uci_get banip global ban_enabled)" = "1" ]; then
+				f_genstatus "error"
+				[ "${ban_mailnotification}" = "1" ] && [ -n "${ban_mailreceiver}" ] && [ -x "${ban_mailcmd}" ] && f_mail
+			else
+				f_genstatus "disabled"
+			fi
 		fi
 		f_rmdir "${ban_tmpdir}"
 		f_rmpid
@@ -297,7 +306,7 @@ f_conf() {
 # get nft/monitor actuals
 #
 f_actual() {
-	local nft monitor ppid pid
+	local nft monitor ppid pids pid
 
 	if "${ban_nftcmd}" -t list set inet banIP allowlistv4MAC >/dev/null 2>&1; then
 		nft="$(f_char "1")"
@@ -307,10 +316,15 @@ f_actual() {
 
 	ppid="$("${ban_catcmd}" "${ban_pidfile}" 2>/dev/null)"
 	if [ -n "${ppid}" ]; then
-		pid="$(pgrep -oP "${ppid}" 2>/dev/null)"
-	fi
-	if pgrep -f "${ban_logreadcmd##*/}" -P "${pid}" >/dev/null 2>&1; then
-		monitor="$(f_char "1")"
+		pids="$("${ban_pgrepcmd}" -P "${ppid}" 2>/dev/null)"
+		for pid in ${pids}; do
+			if "${ban_pgrepcmd}" -f "${ban_logreadcmd##*/}" -P "${pid}" >/dev/null 2>&1; then
+				monitor="$(f_char "1")"
+				break
+			else
+				monitor="$(f_char "0")"
+			fi
+		done
 	else
 		monitor="$(f_char "0")"
 	fi
@@ -325,9 +339,7 @@ f_getfetch() {
 	if { [ "${ban_fetchcmd}" = "uclient-fetch" ] && printf "%s" "${ban_packages}" | "${ban_grepcmd}" -q '"libustream-'; } ||
 		{ [ "${ban_fetchcmd}" = "wget" ] && printf "%s" "${ban_packages}" | "${ban_grepcmd}" -q '"wget-ssl'; } ||
 		[ "${ban_fetchcmd}" = "curl" ] || [ "${ban_fetchcmd}" = "aria2c" ]; then
-		ban_fetchcmd="$(command -v "${ban_fetchcmd}")"
-	else
-		ban_fetchcmd=""
+		ban_fetchcmd="$(f_cmd "${ban_fetchcmd}" "true")"
 	fi
 
 	if [ "${ban_autodetect}" = "1" ] && [ ! -x "${ban_fetchcmd}" ]; then
@@ -380,44 +392,47 @@ f_getfetch() {
 # get wan interfaces
 #
 f_getif() {
-	local iface update="0"
+	local iface iface_del update="0"
 
 	if [ "${ban_autodetect}" = "1" ]; then
-		if [ -z "${ban_ifv4}" ]; then
-			network_flush_cache
-			network_find_wan iface
-			if [ -n "${iface}" ] && "${ban_ubuscmd}" -t 10 wait_for network.interface."${iface}" >/dev/null 2>&1; then
-				ban_protov4="1"
-				ban_ifv4="${iface}"
-				uci_set banip global ban_protov4 "1"
-				uci_add_list banip global ban_ifv4 "${iface}"
-				f_log "info" "add IPv4 interface '${iface}' to config"
-			fi
+		network_flush_cache
+		network_find_wan iface
+		if [ -n "${iface}" ] && [ "${iface}" != "$(f_trim "${ban_ifv4}")" ] && "${ban_ubuscmd}" -t 10 wait_for network.interface."${iface}" >/dev/null 2>&1; then
+			for iface_del in ${ban_ifv4}; do
+				uci_remove_list banip global ban_ifv4 "${iface_del}"
+				f_log "info" "remove IPv4 interface '${iface_del}' from config"
+			done
+			ban_protov4="1"
+			ban_ifv4="${iface}"
+			uci_set banip global ban_protov4 "1"
+			uci_add_list banip global ban_ifv4 "${iface}"
+			f_log "info" "add IPv4 interface '${iface}' to config"
 		fi
-		if [ -z "${ban_ifv6}" ]; then
-			network_flush_cache
-			network_find_wan6 iface
-			if [ -n "${iface}" ] && "${ban_ubuscmd}" -t 10 wait_for network.interface."${iface}" >/dev/null 2>&1; then
-				ban_protov6="1"
-				ban_ifv6="${iface}"
-				uci_set banip global ban_protov6 "1"
-				uci_add_list banip global ban_ifv6 "${iface}"
-				f_log "info" "add IPv6 interface '${iface}' to config"
-			fi
+		network_find_wan6 iface
+		if [ -n "${iface}" ] && [ "${iface}" != "$(f_trim "${ban_ifv6}")" ] && "${ban_ubuscmd}" -t 10 wait_for network.interface."${iface}" >/dev/null 2>&1; then
+			for iface_del in ${ban_ifv6}; do
+				uci_remove_list banip global ban_ifv6 "${iface_del}"
+				f_log "info" "remove IPv6 interface '${iface_del}' from config"
+			done
+			ban_protov6="1"
+			ban_ifv6="${iface}"
+			uci_set banip global ban_protov6 "1"
+			uci_add_list banip global ban_ifv6 "${iface}"
+			f_log "info" "add IPv6 interface '${iface}' to config"
 		fi
 	fi
 	if [ -n "$(uci -q changes "banip")" ]; then
 		update="1"
 		uci_commit "banip"
 	else
-		ban_ifv4="${ban_ifv4%%?}"
-		ban_ifv6="${ban_ifv6%%?}"
 		for iface in ${ban_ifv4} ${ban_ifv6}; do
 			if ! "${ban_ubuscmd}" -t 10 wait_for network.interface."${iface}" >/dev/null 2>&1; then
 				f_log "err" "no wan interface '${iface}'"
 			fi
 		done
 	fi
+	ban_ifv4="$(f_trim "${ban_ifv4}")"
+	ban_ifv6="$(f_trim "${ban_ifv6}")"
 	[ -z "${ban_ifv4}" ] && [ -z "${ban_ifv6}" ] && f_log "err" "no wan interfaces"
 
 	f_log "debug" "f_getif     ::: auto/update: ${ban_autodetect}/${update}, interfaces (4/6): ${ban_ifv4}/${ban_ifv6}, protocols (4/6): ${ban_protov4}/${ban_protov6}"
@@ -426,31 +441,36 @@ f_getif() {
 # get wan devices
 #
 f_getdev() {
-	local dev iface update="0" cnt="0" cnt_max="30"
+	local dev dev_del iface update="0"
 
 	if [ "${ban_autodetect}" = "1" ]; then
-		while [ "${cnt}" -lt "${cnt_max}" ] && [ -z "${ban_dev}" ]; do
-			network_flush_cache
-			for iface in ${ban_ifv4} ${ban_ifv6}; do
-				network_get_device dev "${iface}"
-				if [ -n "${dev}" ] && ! printf " %s " "${ban_dev}" | "${ban_grepcmd}" -q " ${dev} "; then
+		network_flush_cache
+		dev_del="${ban_dev}"
+		for iface in ${ban_ifv4} ${ban_ifv6}; do
+			network_get_device dev "${iface}"
+			if [ -n "${dev}" ]; then
+				dev_del="${dev_del/${dev} / }"
+				if ! printf " %s " "${ban_dev}" | "${ban_grepcmd}" -q " ${dev} "; then
 					ban_dev="${ban_dev}${dev} "
 					uci_add_list banip global ban_dev "${dev}"
 					f_log "info" "add device '${dev}' to config"
 				fi
-			done
-			cnt="$((cnt + 1))"
-			sleep 1
+			fi
+		done
+		for dev in ${dev_del}; do
+			ban_dev="${ban_dev/${dev} / }"
+			uci_remove_list banip global ban_dev "${dev}"
+			f_log "info" "remove device '${dev}' from config"
 		done
 	fi
 	if [ -n "$(uci -q changes "banip")" ]; then
 		update="1"
 		uci_commit "banip"
 	fi
-	ban_dev="${ban_dev%%?}"
+	ban_dev="$(f_trim "${ban_dev}")"
 	[ -z "${ban_dev}" ] && f_log "err" "no wan devices"
 
-	f_log "debug" "f_getdev    ::: auto/update: ${ban_autodetect}/${update}, wan_devices: ${ban_dev}, cnt: ${cnt}"
+	f_log "debug" "f_getdev    ::: auto/update: ${ban_autodetect}/${update}, wan_devices: ${ban_dev}"
 }
 
 # get local uplink
@@ -488,7 +508,7 @@ f_getuplink() {
 				update="1"
 			fi
 		done
-		ban_uplink="${ban_uplink%%?}"
+		ban_uplink="$(f_trim "${ban_uplink}")"
 	elif [ "${ban_autoallowlist}" = "1" ] && [ "${ban_autoallowuplink}" = "disable" ]; then
 		"${ban_sedcmd}" -i "/# uplink added on /d" "${ban_allowlist}"
 		update="1"
@@ -1090,7 +1110,7 @@ f_rmset() {
 	} >"${tmp_del}"
 
 	if [ -n "${del_set}" ]; then
-		del_set="${del_set%%??}"
+		del_set="$(f_trim "${del_set}")"
 		feed_log="$("${ban_nftcmd}" -f "${tmp_del}" 2>&1)"
 		feed_rc="${?}"
 	fi
@@ -1573,15 +1593,29 @@ if [ -r "/lib/functions.sh" ] && [ -r "/lib/functions/network.sh" ] && [ -r "/us
 	. "/lib/functions/network.sh"
 	. "/usr/share/libubox/jshn.sh"
 else
-	rm -rf "${ban_lock}"
-	exit 1
+	f_log "emerg" "system libraries not found"
 fi
 
-# check banIP availability
+# initial system calls
 #
-f_system
+ban_awkcmd="$(f_cmd gawk awk)"
+ban_catcmd="$(f_cmd cat)"
+ban_fw4cmd="$(f_cmd fw4)"
+ban_grepcmd="$(f_cmd grep)"
+ban_jsoncmd="$(f_cmd jsonfilter)"
+ban_logcmd="$(f_cmd logger)"
+ban_lookupcmd="$(f_cmd nslookup)"
+ban_mailcmd="$(f_cmd msmtp true)"
+ban_nftcmd="$(f_cmd nft)"
+ban_pgrepcmd="$(f_cmd pgrep)"
+ban_sedcmd="$(f_cmd sed)"
+ban_ubuscmd="$(f_cmd ubus)"
+ban_zcatcmd="$(f_cmd zcat)"
+
 if [ "${ban_action}" != "stop" ]; then
 	[ ! -d "/etc/banip" ] && f_log "err" "no banIP config directory"
 	[ ! -r "/etc/config/banip" ] && f_log "err" "no banIP config"
 	[ "$(uci_get banip global ban_enabled)" = "0" ] && f_log "err" "banIP is disabled"
 fi
+
+f_system
