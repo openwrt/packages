@@ -9,11 +9,11 @@
 ban_action="${1}"
 ban_starttime="$(date "+%s")"
 ban_funlib="/usr/lib/banip-functions.sh"
-[ -z "$(command -v "f_system")" ] && . "${ban_funlib}"
+[ -z "${ban_ver}" ] && . "${ban_funlib}"
 
 # load config and set banIP environment
 #
-[ "${ban_action}" = "boot" ] && sleep "$(uci_get banip global ban_triggerdelay "10")"
+[ "${ban_action}" = "boot" ] && sleep "$(uci_get banip global ban_triggerdelay "20")"
 f_conf
 f_log "info" "start banIP processing (${ban_action})"
 f_log "debug" "f_system    ::: system: ${ban_sysver:-"n/a"}, version: ${ban_ver:-"n/a"}, memory: ${ban_memory:-"0"}, cpu_cores: ${ban_cores}"

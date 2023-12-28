@@ -106,8 +106,9 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * Install banIP (_opkg install banip_) - the banIP service is disabled by default
 * Install the LuCI companion package 'luci-app-banip' (opkg install luci-app-banip)
 * It's strongly recommended to use the LuCI frontend to easily configure all aspects of banIP, the application is located in LuCI under the 'Services' menu
+* If you're using a complex network setup, e.g. special tunnel interfaces, than untick the 'Auto Detection' option under the 'General Settings' tab and set the required options manually
+* Start the service with '/etc/init.d/banip start' and check everything is working by running '/etc/init.d/banip status' and also check the 'Firewall Log' and 'Processing Log' tabs
 * If you're going to configure banIP via CLI, edit the config file '/etc/config/banip' and enable the service (set ban\_enabled to '1'), then add pre-configured feeds via 'ban\_feed' (see the feed list above) and add/change other options to your needs (see the options reference below)
-* Start the service with '/etc/init.d/banip start' and check everything is working by running '/etc/init.d/banip status'
 
 ## banIP CLI interface
 * All important banIP functions are accessible via CLI.
