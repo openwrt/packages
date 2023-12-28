@@ -24,7 +24,8 @@ ban_lock="/var/run/banip.lock"
 { [ "${action}" = "stop" ] || [ "${action}" = "report" ] || [ "${action}" = "search" ] || [ "${action}" = "survey" ] || [ "${action}" = "lookup" ]; } && ! "${ban_init}" running && exit 0
 [ ! -r "${ban_funlib}" ] && { [ "${action}" = "boot" ] || [ "${action}" = "start" ] || [ "${action}" = "restart" ] || [ "${action}" = "reload" ] || [ "${action}" = "stop" ] || [ "${action}" = "report" ] || [ "${action}" = "search" ] || [ "${action}" = "lookup" ] || [ "${action}" = "status" ]; } && exit 1
 [ -d "${ban_lock}" ] && { [ "${action}" = "boot" ] || [ "${action}" = "start" ] || [ "${action}" = "restart" ] || [ "${action}" = "reload" ] || [ "${action}" = "lookup" ]; } && exit 1
-[ ! -d "${ban_lock}" ] && { [ "${action}" = "boot" ] || [ "${action}" = "start" ] || [ "${action}" = "restart" ] || [ "${action}" = "reload" ] || [ "${action}" = "lookup" ]; } && { mkdir -p "${ban_lock}"; . "${ban_funlib}"; }
+[ ! -d "${ban_lock}" ] && { [ "${action}" = "boot" ] || [ "${action}" = "start" ] || [ "${action}" = "restart" ] || [ "${action}" = "reload" ] || [ "${action}" = "lookup" ]; } && mkdir -p "${ban_lock}"
+{ [ "${action}" = "boot" ] || [ "${action}" = "start" ] || [ "${action}" = "restart" ] || [ "${action}" = "reload" ] || [ "${action}" = "stop" ] || [ "${action}" = "report" ] || [ "${action}" = "search" ] || [ "${action}" = "lookup" ] || [ "${action}" = "status" ]; } && . "${ban_funlib}"
 [ ! -d "${ban_lock}" ] && { [ "${action}" = "boot" ] || [ "${action}" = "start" ] || [ "${action}" = "restart" ] || [ "${action}" = "reload" ] || [ "${action}" = "lookup" ]; } && exit 1
 
 boot() {
@@ -55,7 +56,6 @@ reload_service() {
 }
 
 stop_service() {
-	[ -z "${ban_ver}" ] && . "${ban_funlib}"
 	"${ban_nftcmd}" delete table inet banIP >/dev/null 2>&1
 	f_genstatus "stopped"
 	f_rmpid
@@ -72,7 +72,6 @@ status() {
 }
 
 status_service() {
-	. "${ban_funlib}"
 	f_getstatus
 }
 
