@@ -59,7 +59,15 @@ local errors = {
 		type = "errors"
 	},
 	{
+		name = "rx_uncorrected_protected",
+		type = "errors"
+	},
+	{
 		name = "rx_retransmitted",
+		type = "errors"
+	},
+	{
+		name = "rx_corrected",
 		type = "errors"
 	},
 	{
