@@ -25,11 +25,11 @@ local line_vars = {
 	},
 	{
 		name = "satn",
-		type = "snr"
+		type = "gauge"
 	},
 	{
 		name = "latn",
-		type = "snr"
+		type = "gauge"
 	},
 	{
 		name = "attndr",
@@ -64,6 +64,14 @@ local errors = {
 	},
 	{
 		name = "tx_retransmitted",
+		type = "errors"
+	},
+	{
+		name = "crc_p",
+		type = "errors"
+	},
+	{
+		name = "crcp_p",
 		type = "errors"
 	}
 }
