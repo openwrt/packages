@@ -113,11 +113,17 @@ end
 local function get_values(hostname, variables, metrics, direction)
 	for _, information in pairs(variables) do
 		local name = information["name"]
+		local type = information["type"]
 
 		if metrics and metrics[name] ~= nil then
 			local value = metrics[name]
-			local metric = build_metric(name, direction)
-			if information["type"] == "bool" then
+
+			if name = type then
+				local metric = direction
+			else
+				local metric = build_metric(name, direction)
+			end
+			if type == "bool" then
 				if metrics[name] == true then
 					value = 1
 				else
@@ -128,7 +134,7 @@ local function get_values(hostname, variables, metrics, direction)
 			local t = {
 				host = host,
 				plugin = 'dsl',
-				type = information["type"],
+				type = type,
 				type_instance = metric,
 				values = {value}
 			}
