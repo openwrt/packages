@@ -2,6 +2,12 @@
 #
 # Copyright (C) 2023 Luca Barbato and Donald Hoskins
 
+# Clear environment variables which should be handled internally,
+# as users might configure their own env on the host
+
+# CCache
+unexport RUSTC_WRAPPER
+
 # Rust Environmental Vars
 RUSTC_HOST_SUFFIX:=$(word 4, $(subst -, ,$(GNU_HOST_NAME)))
 RUSTC_HOST_ARCH:=$(HOST_ARCH)-unknown-linux-$(RUSTC_HOST_SUFFIX)
