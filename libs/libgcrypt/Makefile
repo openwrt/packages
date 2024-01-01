@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libgcrypt
-PKG_VERSION:=1.10.2
+PKG_VERSION:=1.10.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://www.gnupg.org/ftp/gcrypt/libgcrypt/
-PKG_HASH:=3b9c02a004b68c256add99701de00b383accccf37177e0d6c58289664cce0c03
+PKG_HASH:=8b0870897ac5ac67ded568dcfadf45969cfa8a6beb0fd60af2a9eadc2a3272aa
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_CPE_ID:=cpe:/a:gnupg:libgcrypt
