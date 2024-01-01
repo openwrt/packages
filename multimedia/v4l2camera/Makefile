@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=v4l2camera
 PKG_VERSION:=0.1.8
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/mpromonet/v4l2camera
@@ -23,6 +23,8 @@ LIVE555_FILE:=live.$(LIVE555_VERSION).tar.gz
 PKG_MAINTAINER:=Michel Promonet<michel.promonet@free.fr>
 PKG_LICENSE:=Unlicense
 PKG_LICENSE_FILES:=LICENCE
+
+PKG_BUILD_FLAGS:=gc-sections lto
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
