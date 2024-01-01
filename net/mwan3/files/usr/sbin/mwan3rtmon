@@ -95,6 +95,13 @@ mwan3_rtmon_route_handle()
 	fi
 	route_line=$(echo "$route_line" | sed -ne "$MWAN3_ROUTE_LINE_EXP")
 
+	if [ "$action" = "del" ]; then
+		if mwan3_get_routes | grep -qxF "$route_line"; then
+			LOG debug "deleted but route still exists - $route_line"
+			return
+		fi
+	fi
+
 	handle_route() {
 		local error
 		local iface=$1
