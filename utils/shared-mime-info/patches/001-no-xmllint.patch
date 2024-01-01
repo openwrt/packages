@@ -1,6 +1,6 @@
 --- a/meson.build
 +++ b/meson.build
-@@ -20,7 +20,7 @@ config.set_quoted('VERSION', meson.proje
+@@ -21,7 +21,7 @@ config.set_quoted('VERSION', meson.proje
  ###############################################################################
  # Find tools
  

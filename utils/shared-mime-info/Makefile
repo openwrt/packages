@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shared-mime-info
-PKG_VERSION:=2.2
+PKG_VERSION:=2.4
 PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
@@ -16,7 +16,7 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=shared-mime-info-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://gitlab.freedesktop.org/xdg/$(PKG_NAME)/-/archive/$(PKG_VERSION)
-PKG_HASH:=418c480019d9865f67f922dfb88de00e9f38bf971205d55cdffab50432919e61
+PKG_HASH:=32dc32ae39ff1c1bf8434dd3b36770b48538a1772bc0298509d034f057005992
 
 PKG_BUILD_DEPENDS:=gettext-full/host
 
@@ -27,7 +27,7 @@ include $(INCLUDE_DIR)/meson.mk
 define Package/shared-mime-info
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+glib2 +libxml2
+  DEPENDS:=+glib2 +libxml2 +libstdcpp
   TITLE:=MIME-type information
   URL:=https://freedesktop.org/wiki/Software/shared-mime-info/
 endef
