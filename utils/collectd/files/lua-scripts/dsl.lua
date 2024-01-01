@@ -126,11 +126,7 @@ local function get_values(hostname, variables, metrics, direction)
 		if metrics and metrics[name] ~= nil then
 			local value = metrics[name]
 
-			if name = type then
-				local metric = direction
-			else
-				local metric = build_metric(name, direction)
-			end
+			local metric = build_metric(name, direction)
 			if type == "bool" then
 				if metrics[name] == true then
 					value = 1
