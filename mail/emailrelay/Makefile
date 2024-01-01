@@ -19,7 +19,11 @@ PKG_MAINTAINER:=Federico Di Marco <fededim@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
-PKG_CONFIG_DEPENDS:=CONFIG_EMAILRELAY_SUPPORT_VERBOSE_DBG CONFIG_EMAILRELAY_SSL
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_EMAILRELAY_SUPPORT_VERBOSE_DBG \
+	CONFIG_EMAILRELAY_SSL \
+	CONFIG_EMAILRELAY_NOSSL
+
 PKG_BUILD_FLAGS:=gc-sections lto
 
 include $(INCLUDE_DIR)/package.mk
@@ -35,20 +39,7 @@ endef
 
 
 define Package/emailrelay/config
-config EMAILRELAY_SUPPORT_VERBOSE_DBG
-	bool "Enable support for extended logging"
-	depends on PACKAGE_emailrelay
-	default n
-	help
-	  Enables support for extended logging (must also be explicitely enabled by using command line switch --debug when starting emailrelay)
-
-config EMAILRELAY_SSL
-	bool "Enable support for OpenSSL"
-	depends on PACKAGE_emailrelay
-	default y
-	select PACKAGE_libopenssl
-	help
- 	  Builds the package with OpenSSL support (SSMTP is supported).
+	source "$(SOURCE)/Config.in"
 endef
 
 
@@ -72,7 +63,6 @@ endef
 CONFIGURE_ARGS += \
 	--without-doxygen \
 	--without-man2html \
-	--without-mbedtls \
 	--without-pam \
 	--disable-bsd \
 	--disable-gui \
