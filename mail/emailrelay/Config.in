@@ -12,6 +12,16 @@ choice
 		help
 			Builds the package with OpenSSL.
 
+	config EMAILRELAY_SSL_MBEDTLS
+		bool "MbedTLS"
+		select PACKAGE_libmbedtls
+		select MBEDTLS_DEBUG_C
+		select MBEDTLS_VERSION_C
+		select MBEDTLS_VERSION_FEATURES
+		select MBEDTLS_SSL_RENEGOTIATION
+		help
+			Builds the package with MbedTLS.
+
 	config EMAILRELAY_NOSSL
 		bool "No TLS support"
 endchoice
