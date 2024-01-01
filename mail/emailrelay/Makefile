@@ -22,6 +22,7 @@ PKG_LICENSE_FILES:=COPYING
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_EMAILRELAY_SUPPORT_VERBOSE_DBG \
 	CONFIG_EMAILRELAY_SSL \
+	CONFIG_EMAILRELAY_SSL_MBEDTLS\
 	CONFIG_EMAILRELAY_NOSSL
 
 PKG_BUILD_FLAGS:=gc-sections lto
@@ -31,7 +32,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/emailrelay
   SECTION:=mail
   CATEGORY:=Mail
-  DEPENDS:=+EMAILRELAY_SSL:libopenssl +libstdcpp
+  DEPENDS:=+EMAILRELAY_SSL:libopenssl +EMAILRELAY_SSL_MBEDTLS:libmbedtls +libstdcpp
   TITLE:=E-MailRelay A lightweight email server
   URL:=https://emailrelay.sourceforge.net/
   MENU:=1
@@ -76,6 +77,14 @@ ifeq ($(CONFIG_EMAILRELAY_SSL),y)
 else
 	CONFIGURE_ARGS += \
 		--without-openssl
+endif
+
+ifeq ($(CONFIG_EMAILRELAY_SSL_MBEDTLS),y)
+	CONFIGURE_ARGS += \
+		--with-mbedtls
+else
+	CONFIGURE_ARGS += \
+		--without-mbedtls
 endif
 
 ifeq ($(CONFIG_EMAILRELAY_SUPPORT_VERBOSE_DBG),y)
