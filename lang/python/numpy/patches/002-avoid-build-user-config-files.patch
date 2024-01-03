@@ -1,6 +1,6 @@
 --- a/numpy/distutils/system_info.py
 +++ b/numpy/distutils/system_info.py
-@@ -403,7 +403,7 @@ def get_standard_file(fname):
+@@ -404,7 +404,7 @@ def get_standard_file(fname):
          pass
      else:
          user_file = os.path.join(f, fname)

@@ -55,6 +55,8 @@ start_service() {
 
 	config_load "syncthing"
 
+	local group=$(id -gn $user)
+
 	# Some of the default values below might not match the defaults
 	#   in /etc/config/syncthing: the reason is to remain backwards
 	#   compatible with the older versions of this service as it
@@ -67,12 +69,12 @@ start_service() {
 		[ -d "$IDX_DB" ] || mkdir -p "$IDX_DB"
 
 		# A separate step to handle an upgrade use case
-		[ -d "$IDX_DB" ] && chown -R $user:$user "$IDX_DB"
+		[ -d "$IDX_DB" ] && chown -R $user:$group "$IDX_DB"
 	fi
 
 	[ -d "$home" ] || mkdir -p "$home"
 	# A separate step to handle an upgrade use case
-	[ -d "$home" ] && chown -R $user:$user "$home"
+	[ -d "$home" ] && chown -R $user:$group "$home"
 
 	# Changes to "niceness"/macprocs are not picked up by "reload_config"
 	#   nor by "restart": the service has to be stopped/started
