@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sendmail
 PKG_VERSION:=8.16.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME).$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=ftp://ftp.sendmail.org/pub/sendmail
@@ -90,7 +90,7 @@ programs access to mail messages as they are being processed in order to
 filter meta-information and content.
 endef
 
-TARGET_CFLAGS += $(FPIC)
+TARGET_CFLAGS += $(FPIC) -DNETINET6 -DNEEDSGETIPNODE
 
 define Build/Prepare
 	$(Build/Prepare/Default)
