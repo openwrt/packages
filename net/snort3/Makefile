@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=snort3
 PKG_VERSION:=3.1.78.0
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/snort3/snort3/archive/refs/tags/
@@ -25,8 +25,11 @@ define Package/snort3
   SUBMENU:=Firewall
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libstdcpp +libdaq3 +libdnet +libopenssl +libpcap +libpcre +libpthread +libuuid +zlib +libhwloc +libtirpc @HAS_LUAJIT_ARCH +luajit +libatomic +kmod-nft-queue +liblzma \
-	+ucode +ucode-mod-fs +ucode-mod-uci
+  DEPENDS:= \
+	    +(TARGET_x86||TARGET_x86_64):hyperscan-runtime \
+	    +libstdcpp +libdaq3 +libdnet +libopenssl +libpcap +libpcre +libpthread \
+	    +libuuid +zlib +libhwloc +libtirpc @HAS_LUAJIT_ARCH +luajit +libatomic \
+	    +kmod-nft-queue +liblzma +ucode +ucode-mod-fs +ucode-mod-uci
   TITLE:=Lightweight Network Intrusion Detection System
   URL:=http://www.snort.org/
   MENU:=1
@@ -39,6 +42,11 @@ define Package/snort3/description
   analysis and pattern matching in order to detect anomalies, misuse and
   attacks.
 endef
+
+# Hyperscan and gperftools only builds for x86
+ifdef CONFIG_TARGET_x86_64
+	CMAKE_OPTIONS += -DHS_INCLUDE_DIRS=$(STAGING_DIR)/usr/include/hs
+endif
 
 CMAKE_OPTIONS += \
 	-DUSE_TIRPC:BOOL=YES \
