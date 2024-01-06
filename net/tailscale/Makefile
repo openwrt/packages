@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tailscale
 PKG_VERSION:=1.56.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/tailscale/tailscale/tar.gz/v$(PKG_VERSION)?
@@ -25,33 +25,22 @@ PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=no-mips16
 
 GO_PKG:=\
-	tailscale.com/cmd/tailscale \
 	tailscale.com/cmd/tailscaled
 GO_PKG_LDFLAGS:=-X 'tailscale.com/version.longStamp=$(PKG_VERSION)-$(PKG_RELEASE) (OpenWrt)'
 GO_PKG_LDFLAGS_X:=tailscale.com/version.shortStamp=$(PKG_VERSION)
+GO_PKG_TAGS:=ts_include_cli
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
 
-define Package/tailscale/Default
+define Package/tailscale
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=VPN
   TITLE:=Zero config VPN
   URL:=https://tailscale.com
-  DEPENDS:=$(GO_ARCH_DEPENDS)
-endef
-
-define Package/tailscaled
-  $(call Package/tailscale/Default)
-  TITLE+= (daemon)
-  DEPENDS+= +ca-bundle +kmod-tun
-endef
-
-define Package/tailscale
-  $(call Package/tailscale/Default)
-  TITLE+= (utility)
-  DEPENDS+= +tailscaled
+  DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle +kmod-tun
+  PROVIDES:=tailscaled
 endef
 
 define Package/tailscale/description
@@ -59,24 +48,17 @@ define Package/tailscale/description
   and cloud instances. Even when separated by firewalls or subnets.
 endef
 
-Package/tailscaled/description:=$(Package/tailscale/description)
-
-define Package/tailscaled/conffiles
+define Package/tailscale/conffiles
 /etc/config/tailscale
 /etc/tailscale/
 endef
 
 define Package/tailscale/install
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/tailscale $(1)/usr/sbin
-endef
-
-define Package/tailscaled/install
 	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/init.d $(1)/etc/config
 	$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/tailscaled $(1)/usr/sbin
+	$(LN) tailscaled $(1)/usr/sbin/tailscale
 	$(INSTALL_BIN) ./files//tailscale.init $(1)/etc/init.d/tailscale
 	$(INSTALL_DATA) ./files//tailscale.conf $(1)/etc/config/tailscale
 endef
 
 $(eval $(call BuildPackage,tailscale))
-$(eval $(call BuildPackage,tailscaled))
