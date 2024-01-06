@@ -1,0 +1,11 @@
+--- a/setup.py
++++ b/setup.py
+@@ -82,7 +82,7 @@
+     with_cython = True
+ try:
+     from Cython.Distutils.extension import Extension as _Extension
+-    from Cython.Distutils import build_ext as _build_ext
++    from Cython.Distutils.old_build_ext import old_build_ext as _build_ext
+     with_cython = True
+ except ImportError:
+     if with_cython:
