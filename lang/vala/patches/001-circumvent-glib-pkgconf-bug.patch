@@ -9,7 +9,7 @@ https://github.com/pkgconf/pkgconf/issues/268
 
 --- a/configure
 +++ b/configure
-@@ -13598,11 +13598,11 @@ if test -n "$GLIB_CFLAGS"; then
+@@ -13601,11 +13601,11 @@ if test -n "$GLIB_CFLAGS"; then
   elif test -n "$PKG_CONFIG"; then
      if test -n "$PKG_CONFIG" && \
      { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"glib-2.0 >= \$GLIB_REQUIRED gobject-2.0 >= \$GLIB_REQUIRED\""; } >&5
@@ -23,7 +23,7 @@ https://github.com/pkgconf/pkgconf/issues/268
  		      test "x$?" != "x0" && pkg_failed=yes
  else
    pkg_failed=yes
-@@ -13615,11 +13615,11 @@ if test -n "$GLIB_LIBS"; then
+@@ -13618,11 +13618,11 @@ if test -n "$GLIB_LIBS"; then
   elif test -n "$PKG_CONFIG"; then
      if test -n "$PKG_CONFIG" && \
      { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"glib-2.0 >= \$GLIB_REQUIRED gobject-2.0 >= \$GLIB_REQUIRED\""; } >&5
@@ -37,18 +37,18 @@ https://github.com/pkgconf/pkgconf/issues/268
  		      test "x$?" != "x0" && pkg_failed=yes
  else
    pkg_failed=yes
-@@ -13640,9 +13640,9 @@ else
+@@ -13643,9 +13643,9 @@ else
          _pkg_short_errors_supported=no
  fi
          if test $_pkg_short_errors_supported = yes; then
--	        GLIB_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "glib-2.0 >= $GLIB_REQUIRED gobject-2.0 >= $GLIB_REQUIRED" 2>&1`
-+	        GLIB_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gobject-2.0 >= $GLIB_REQUIRED glib-2.0 >= $GLIB_REQUIRED" 2>&1`
+-                GLIB_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "glib-2.0 >= $GLIB_REQUIRED gobject-2.0 >= $GLIB_REQUIRED" 2>&1`
++                GLIB_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gobject-2.0 >= $GLIB_REQUIRED glib-2.0 >= $GLIB_REQUIRED" 2>&1`
          else
--	        GLIB_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "glib-2.0 >= $GLIB_REQUIRED gobject-2.0 >= $GLIB_REQUIRED" 2>&1`
-+	        GLIB_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gobject-2.0 >= $GLIB_REQUIRED glib-2.0 >= $GLIB_REQUIRED" 2>&1`
+-                GLIB_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "glib-2.0 >= $GLIB_REQUIRED gobject-2.0 >= $GLIB_REQUIRED" 2>&1`
++                GLIB_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gobject-2.0 >= $GLIB_REQUIRED glib-2.0 >= $GLIB_REQUIRED" 2>&1`
          fi
- 	# Put the nasty error message in config.log where it belongs
- 	echo "$GLIB_PKG_ERRORS" >&5
+         # Put the nasty error message in config.log where it belongs
+         echo "$GLIB_PKG_ERRORS" >&5
 --- a/gobject-introspection/Makefile.in
 +++ b/gobject-introspection/Makefile.in
 @@ -383,8 +383,8 @@ libgidl_la_SOURCES = \
