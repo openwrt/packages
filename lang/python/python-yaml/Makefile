@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-yaml
-PKG_VERSION:=6.0.1
+PKG_VERSION:=5.4.1
 PKG_RELEASE:=1
 
 PYPI_NAME:=PyYAML
-PKG_HASH:=bfdf460b1736c775f2ba9f6a92bca30bc2095067b8a9d77876d1fad6cc3b4a43
+PKG_HASH:=607774cbba28732bfa802b54baa7484215f530991055bb562efbed5b2f20a45e
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=MIT
