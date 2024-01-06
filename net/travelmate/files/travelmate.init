@@ -1,5 +1,5 @@
 #!/bin/sh /etc/rc.common
-# Copyright (c) 2016-2023 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2016-2024 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # set (s)hellcheck exceptions
@@ -15,6 +15,7 @@ extra_command "setup" "[<iface>] [<zone>] [<metric>] Setup the travelmate uplink
 trm_init="/etc/init.d/travelmate"
 trm_script="/usr/bin/travelmate.sh"
 trm_pidfile="/var/run/travelmate.pid"
+trm_scanfile="/var/run/travelmate.scan"
 
 boot() {
 	if [ -s "${trm_pidfile}" ]; then
@@ -76,19 +77,20 @@ status_service() {
 }
 
 scan() {
-	local result scan_name radio="${1}"
+	local result radio="${1}"
 
+	: > "${trm_scanfile}"
 	if [ -z "${radio}" ]; then
-		scan_name="$(ubus -S call network.wireless status 2>/dev/null | jsonfilter -q -l1 -e '@[@.up=true].interfaces[0].ifname')"
+		radio="$(ubus -S call network.wireless status 2>/dev/null | jsonfilter -q -l1 -e '@[@.up=true].interfaces[0].ifname')"
 	fi
-	result="$(iwinfo "${radio:-${scan_name}}" scan 2>/dev/null |
+	result="$(iwinfo "${radio}" scan 2>/dev/null |
 		awk 'BEGIN{FS="[[:space:]]"}/Address:/{var1=$NF}/ESSID:/{var2="";
 		for(i=12;i<=NF;i++)if(var2==""){var2=$i}else{var2=var2" "$i}}/Channel:/{var3=$NF}/Quality:/{split($NF,var0,"/")}/Encryption:/{var4="";
 		for(j=12;j<=NF;j++)if(var4==""){var4=$j}else{var4=var4" "$j};printf "    %-11i%-10s%-35s%-20s%s\n",(var0[1]*100/var0[2]),var3,var2,var1,var4}' |
 		sort -rn)"
-	printf "%s\n" "::: Available nearby uplinks on '${radio:-${scan_name}}'"
-	printf "%s\n" ":::"
+	printf "::: %s\n:::\n" "Available nearby uplinks on '${radio}'"
 	if [ -n "${result}" ]; then
+		printf "%s\n" "${result}" > "${trm_scanfile}"
 		printf "%-15s%-10s%-35s%-20s%s\n" "    Strength" "Channel" "ESSID" "BSSID" "Encryption"
 		printf "%s\n" "    --------------------------------------------------------------------------------------"
 		printf "%s\n" "${result}"
@@ -162,13 +164,13 @@ setup() {
 }
 
 assoc() {
-	local result assoc_name radio="${1}"
+	local result radio="${1}"
 
 	if [ -z "${radio}" ]; then
-		assoc_name="$(ubus -S call network.wireless status 2>/dev/null | jsonfilter -q -l1 -e '@[@.*.*.config.mode="ap"].interfaces[0].ifname')"
+		radio="$(ubus -S call network.wireless status 2>/dev/null | jsonfilter -q -l1 -e '@[@.*.*.config.mode="ap"].interfaces[0].ifname')"
 	fi
-	result="$(iwinfo "${radio:-${assoc_name}}" assoc 2>/dev/null | awk '/^[A-Z0-9:]+/{printf "    %s\n",$1}')"
-	printf "%s\n" "::: Associated wlan stations on '${radio:-${assoc_name}}'"
+	result="$(iwinfo "${radio}" assoc 2>/dev/null | awk '/^[A-Z0-9:]+/{printf "    %s\n",$1}')"
+	printf "%s\n" "::: Associated wlan stations on '${radio}'"
 	printf "%s\n" ":::"
 	if [ -n "${result}" ]; then
 		printf "%s\n" "    MAC addresses"
