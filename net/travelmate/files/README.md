@@ -43,9 +43,8 @@ To avoid these kind of deadlocks, travelmate will set all station interfaces to 
 
 ## Installation & Usage
 * **Please note:** before you start with travelmate ...
-    * you should setup at least one Access Point, ideally on a separate radio,
-    * if you're updating from a former 1.x release, please use the '--force-reinstall --force-maintainer' options in opkg,
-    * and remove any existing travelmate related uplink stations in your wireless config manually
+    * setup at least one AP, ideally on a separate radio
+    * if you're using a single radio unit set the AP channel to 'auto'
 * download [travelmate](https://downloads.openwrt.org/snapshots/packages/x86_64/packages)
 * download [luci-app-travelmate](https://downloads.openwrt.org/snapshots/packages/x86_64/luci)
 * install both packages (_opkg install travelmate_, _opkg install luci-app-travelmate_)
