@@ -29,47 +29,27 @@ PKG_CONFIG_DEPENDS:= \
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
-define Package/owntone/default
-  SECTION:=sound
-  CATEGORY:=Sound
-  TITLE:=iTunes (DAAP) server for Apple Remote and AirPlay
-  URL:=https://github.com/owntone/owntone-server
-  DEPENDS:=+libgpg-error +libgcrypt +libgdbm +zlib +libexpat +libunistring \
-  	+libevent2 +libevent2-pthreads +libdaemon +confuse +alsa-lib +libffmpeg-full \
-  	+mxml +libavahi-client +sqlite3-cli +libplist +libcurl +libjson-c \
-  	+libprotobuf-c +libgnutls +libsodium +libwebsockets +libuuid $(ICONV_DEPENDS)
-  PROVIDES:=owntone
-endef
-
 define Package/owntone
-  $(Package/owntone/default)
-  TITLE+= (original)
-  VARIANT:=original
-  DEFAULT_VARIANT:=1
+SECTION:=sound
+CATEGORY:=Sound
+TITLE:=iTunes (DAAP) server for Apple Remote and AirPlay
+URL:=https://github.com/owntone/owntone-server
+DEPENDS:=+libgpg-error +libgcrypt +libgdbm +zlib +libexpat +libunistring \
+	+libevent2 +libevent2-pthreads +libdaemon +confuse +alsa-lib +libffmpeg-full \
+	+mxml +libavahi-client +sqlite3-cli +libplist +libcurl +libjson-c +AUDIO_SUPPORT:pulseaudio \
+	+libprotobuf-c +libgnutls +libsodium +libwebsockets +libuuid $(ICONV_DEPENDS)
 endef
 
-define Package/owntone-pulseaudio
-  $(Package/owntone/default)
-  TITLE+= (with pulseaudio support)
-  DEPENDS+= +AUDIO_SUPPORT:pulseaudio
-  VARIANT:=pulseaudio
-  CONFLICTS:=owntone
-endef
-
-define Package/owntone/default/description
+define Package/owntone/description
   OwnTone is a Linux/FreeBSD DAAP (iTunes), MPD (Music Player Daemon) and
   RSP (Roku) media server. It has support for AirPlay speakers, Chromecast,
   Apple Remote (and compatibles), MPD clients, Spotify, internet radio and
   LastFM. It does not support AirPlay/Chromecast video.
 endef
-Package/owntone/description = $(Package/owntone/default/description)
-Package/owntone-pulseaudio/description = $(Package/owntone/default/description)
 
-define Package/owntone/default/conffiles
+define Package/owntone/conffiles
 /etc/owntone.conf
 endef
-Package/owntone/conffiles = $(Package/owntone/default/conffiles)
-Package/owntone-pulseaudio/conffiles = $(Package/owntone/default/conffiles)
 
 CONFIGURE_ARGS += \
 	--enable-chromecast \
@@ -92,7 +72,7 @@ ifeq ($(CONFIG_AUDIO_SUPPORT),y)
 endif
 endif
 
-define Package/owntone/default/install
+define Package/owntone/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/owntone $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc
@@ -104,8 +84,5 @@ define Package/owntone/default/install
 	$(INSTALL_DIR) $(1)/usr/share/owntone
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/owntone/htdocs $(1)/usr/share/owntone
 endef
-Package/owntone/install = $(Package/owntone/default/install)
-Package/owntone-pulseaudio/install = $(Package/owntone/default/install)
 
 $(eval $(call BuildPackage,owntone))
-$(eval $(call BuildPackage,owntone-pulseaudio))
