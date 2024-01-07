@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sing-box
-PKG_VERSION:=1.7.7
+PKG_VERSION:=1.8.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/SagerNet/sing-box/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=ce182cb2181e898b56ca9b6ce0d5adeaece8e761ac62ce8cde69b3c7219b8430
+PKG_HASH:=80ae2a860fc77d961c578999e5fcfe964f969c81d9ccac156b2fef1340eca12f
 
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=LICENSE
@@ -66,9 +66,6 @@ define Package/sing-box/config
 			bool "Build with gVisor support"
 			default y
 
-		config SINGBOX_WITH_LWIP
-			bool "Build with LWIP Tun stack support"
-
 		config SINGBOX_WITH_QUIC
 			bool "Build with QUIC support"
 			default y
@@ -98,7 +95,6 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_SINGBOX_WITH_EMBEDDED_TOR \
 	CONFIG_SINGBOX_WITH_GRPC \
 	CONFIG_SINGBOX_WITH_GVISOR \
-	CONFIG_SINGBOX_WITH_LWIP \
 	CONFIG_SINGBOX_WITH_QUIC \
 	CONFIG_SINGBOX_WITH_REALITY_SERVER \
 	CONFIG_SINGBOX_WITH_UTLS \
@@ -113,7 +109,6 @@ GO_PKG_TAGS:=$(subst $(space),$(comma),$(strip \
 	$(if $(CONFIG_SINGBOX_WITH_EMBEDDED_TOR),with_embedded_tor) \
 	$(if $(CONFIG_SINGBOX_WITH_GRPC),with_grpc) \
 	$(if $(CONFIG_SINGBOX_WITH_GVISOR),with_gvisor) \
-	$(if $(CONFIG_SINGBOX_WITH_LWIP),with_lwip) \
 	$(if $(CONFIG_SINGBOX_WITH_QUIC),with_quic) \
 	$(if $(CONFIG_SINGBOX_WITH_REALITY_SERVER),with_reality_server) \
 	$(if $(CONFIG_SINGBOX_WITH_UTLS),with_utls) \
