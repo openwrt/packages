@@ -466,6 +466,7 @@ config_remote() {
 	config_get ca_cert "$conf" ca_cert ""
 	config_get rekeytime "$conf" rekeytime
 	config_get overtime "$conf" overtime
+	config_get send_cert "$conf" send_cert
 
 	config_list_foreach "$conf" local_sourceip append_var local_sourceip ","
 	config_list_foreach "$conf" remote_ca_certs append_var remote_ca_certs ","
@@ -559,6 +560,8 @@ config_remote() {
 		keyexchange=
 		;;
 	esac
+
+	[ -n "$send_cert" ] && swanctl_xappend2 "send_cert = $send_cert"
 
 	[ $mobike -eq 1 ] && swanctl_xappend2 "mobike = yes" || swanctl_xappend2 "mobike = no"
 
