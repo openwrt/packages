@@ -1,0 +1,37 @@
+From 17dc5b6cd96dcfe64fd71789c771ca9b96d260e5 Mon Sep 17 00:00:00 2001
+From: "Andrew J. Hesford" <ajh@sideband.org>
+Date: Fri, 21 Jul 2023 09:50:00 -0400
+Subject: [PATCH] Fix builds with Cython 3
+
+This is a *de minimis* fix for building with Cython 3. Recent Cython<3
+releases provided `Cython.Distutils.build_ext` as an alias to
+`Cython.Distutils.old_build_ext.old_build_ext`; Cython 3 drops this
+alias and instead uses a wholly new `Cython.Distutils.build_ext` that
+does not provide the `cython_sources` function used in `setup.py`.
+
+Explicitly importing `old_build_ext` preserves the existing behavior for
+recent Cython<3 and uses the correct behavior for Cython 3. Should the
+import fail (*e.g.*, because the version of Cython available predates
+the availability of `old_build_ext`), the import falls back to just
+`Cython.Distutils.build_ext`.
+
+Signed-off-by: Andrew J. Hesford <ajh@sideband.org>
+---
+ setup.py | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+--- a/setup.py
++++ b/setup.py
+@@ -82,7 +82,11 @@
+     with_cython = True
+ try:
+     from Cython.Distutils.extension import Extension as _Extension
+-    from Cython.Distutils import build_ext as _build_ext
++    try:
++        from Cython.Distutils.old_build_ext import old_build_ext as _build_ext
++    except ImportError:
++        from Cython.Distutils import build_ext as _build_ext
++
+     with_cython = True
+ except ImportError:
+     if with_cython:
