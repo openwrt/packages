@@ -1,6 +1,6 @@
 #!/bin/sh
 # travelmate, a wlan connection manager for travel router
-# Copyright (c) 2016-2023 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2016-2024 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # set (s)hellcheck exceptions
@@ -692,6 +692,16 @@ f_check() {
 				if [ -n "${ifname}" ] && [ "${enabled}" = "1" ]; then
 					trm_ifquality="$(${trm_iwinfo} "${ifname}" info 2>/dev/null | awk -F '[ ]' '/Link Quality: [0-9]+\/[0-9]+/{split($NF,var0,"/");printf "%i\n",(var0[1]*100/var0[2])}')"
 					if [ -z "${trm_ifquality}" ]; then
+						trm_ifstatus="$("${trm_ubuscmd}" -S call network.interface dump 2>/dev/null | "${trm_jsoncmd}" -ql1 -e "@.interface[@.device=\"${ifname}\"].up")"
+						if { [ -n "${trm_connection}" ] && [ "${trm_ifstatus}" = "false" ]; } || [ "${wait_time}" -eq "${trm_maxwait}" ]; then
+							f_log "info" "no signal from uplink"
+							f_vpn "disable"
+							unset trm_connection
+							trm_ifstatus="${status}"
+							f_ctrack "end"
+							f_jsnup
+							break
+						fi
 						continue
 					elif [ "${trm_ifquality}" -ge "${trm_minquality}" ]; then
 						trm_ifstatus="$("${trm_ubuscmd}" -S call network.interface dump 2>/dev/null | "${trm_jsoncmd}" -ql1 -e "@.interface[@.device=\"${ifname}\"].up")"
