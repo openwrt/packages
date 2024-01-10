@@ -1,6 +1,6 @@
 {%
 //------------------------------------------------------------------------------
-// Copyright (c) 2023 Eric Fahlgren <eric.fahlgren@gmail.com>
+// Copyright (c) 2023-2024 Eric Fahlgren <eric.fahlgren@gmail.com>
 // SPDX-License-Identifier: GPL-2.0
 //
 // The tables defined using 'config_item' are the source of record for the
@@ -9,11 +9,14 @@
 //
 //------------------------------------------------------------------------------
 
+QUIET; // Reference globals passed from CLI, so we get errors when missing.
+TYPE;
+
 import { cursor } from 'uci';
 let uci = cursor();
 
 function wrn(fmt, ...args) {
-	if (getenv("QUIET"))
+	if (QUIET)
 		exit(1);
 
 	let msg = "ERROR: " + sprintf(fmt, ...args);
@@ -23,6 +26,15 @@ function wrn(fmt, ...args) {
 	else
 		warn(`[!] ${msg}\n`);
 	exit(1);
+}
+
+function rpad(str, fill, len)
+{
+    str = rtrim(str) + ' ';
+    while (length(str) < len) {
+        str += fill;
+    }
+    return str;
 }
 
 //------------------------------------------------------------------------------
@@ -221,11 +233,11 @@ function dump_config(settings) {
 }
 
 function render_snort() {
-	include("templates/snort.uc", { snort, nfq });
+	include("templates/snort.uc", { snort, nfq, rpad });
 }
 
 function render_nftables() {
-	include("templates/nftables.uc", { snort, nfq });
+	include("templates/nftables.uc", { snort, nfq, rpad });
 }
 
 function render_config() {
@@ -242,7 +254,7 @@ function render_help() {
 
 load_all();
 
-let table_type = getenv("TYPE");
+let table_type = TYPE;  // Supply on cli with '-D TYPE=snort'...
 switch (table_type) {
 	case "snort":
 		render_snort();

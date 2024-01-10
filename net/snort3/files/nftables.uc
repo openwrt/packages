@@ -1,6 +1,6 @@
 # Do not edit, automatically generated.  See /usr/share/snort/templates.
 {%
-// Copyright (c) 2023 Eric Fahlgren <eric.fahlgren@gmail.com>
+// Copyright (c) 2023-2024 Eric Fahlgren <eric.fahlgren@gmail.com>
 // SPDX-License-Identifier: GPL-2.0
 
 let queues     = `${nfq.queue_start}-${int(nfq.queue_start)+int(nfq.queue_count)-1}`;
@@ -14,9 +14,9 @@ table inet snort {
 		{% if (nfq.include) {
 		  // We use the ucode include here, so that the included file is also
 		  // part of the template and can use values passed in from the config.
-		  printf("\n\t\t#-- The following content included from '%s'\n", nfq.include);
+		  printf("\n\t\t" + rpad(`#-- Include from '${nfq.include}'`, ">", 64) + "\n");
 		  include(nfq.include, { snort, nfq });
-		  printf("\t\t#-- End of included file.\n\n");
+		  printf("\t\t" + rpad("#-- End of included file.", "<", 64) + "\n\n");
 		} %}
 		counter  queue flags bypass to {{ queues }}
 	}
