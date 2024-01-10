@@ -47,6 +47,25 @@ define Host/Clean
 	rm -f $(STAGING_DIR_HOST)/bin/modinfo
 endef
 
+HOST_CONFIGURE_VARS += ./configure --with-zlib
+
+define Host/Compile
+	$(MAKE) -C $(HOST_BUILD_DIR) tools/kmod
+endef
+
+define Host/Install
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/tools/kmod $(STAGING_DIR_HOST)/bin/kmod
+	ln -sf kmod $(STAGING_DIR_HOST)/bin/depmod
+	ln -sf kmod $(STAGING_DIR_HOST)/bin/modinfo
+endef
+
+define Host/Clean
+	$(Host/Clean/Default)
+	rm -f $(STAGING_DIR_HOST)/bin/kmod
+	rm -f $(STAGING_DIR_HOST)/bin/depmod
+	rm -f $(STAGING_DIR_HOST)/bin/modinfo
+endef
+
 define Package/kmod/Default
   SECTION:=utils
   CATEGORY:=Utilities
