@@ -297,11 +297,6 @@ $(call Package/erlang/Default/description)
 endef
 
 # Host
-# host-compile is done with LibreSSL provided by OpenWrt tools/libressl
-
-HOST_CFLAGS += \
-        -DHAS_EVP_PKEY_CTX \
-        -DHAVE_EVP_CIPHER_CTX_COPY
 
 HOST_CONFIGURE_ARGS += \
 	--with-ssl="$(STAGING_DIR_HOST)" \
