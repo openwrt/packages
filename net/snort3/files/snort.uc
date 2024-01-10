@@ -1,11 +1,10 @@
 {%
-// Copyright (c) 2023 Eric Fahlgren <eric.fahlgren@gmail.com>
+// Copyright (c) 2023-2024 Eric Fahlgren <eric.fahlgren@gmail.com>
 // SPDX-License-Identifier: GPL-2.0
 
-// Create some snort-format-specific items.
+import { lsdir } from 'fs';
 
-let home_net = snort.home_net == 'any' ? "'any'" : snort.home_net;
-let external_net = snort.external_net;
+// Create some snort-format-specific items.
 
 let line_mode = snort.mode == "ids" ? "tap"     : "inline";
 let mod_mode  = snort.mode == "ids" ? "passive" : "inline";
@@ -33,8 +32,8 @@ case "nfq":
 -- Do not edit, automatically generated.  See /usr/share/snort/templates.
 
 -- These must be defined before processing snort.lua
-HOME_NET     = [[ {{ home_net }} ]]
-EXTERNAL_NET = [[ {{ external_net }} ]]
+HOME_NET     = [[ {{ snort.home_net }} ]]
+EXTERNAL_NET = [[ {{ snort.external_net }} ]]
 
 include('{{ snort.config_dir }}/snort.lua')
 
@@ -43,26 +42,38 @@ snort  = {
   ['-Q'] = true,
 {% endif %}
   ['--daq'] = '{{ snort.method }}',
---['--daq-dir'] = '/usr/lib/daq/',
 {% if (snort.method == 'nfq'): %}
   ['--max-packet-threads'] = {{ nfq.thread_count }},
 {% endif %}
 }
 
 ips = {
+  -- View all options with "snort --help-module ips"
   mode            = '{{ line_mode }}',
   variables       = default_variables,
+--enable_builtin_rules=true,
 {% if (snort.action != 'default'): %}
   action_override = '{{ snort.action }}',
 {% endif %}
 {% if (getenv("_SNORT_WITHOUT_RULES") == "1"): %}
   -- WARNING: THIS IS A TEST-ONLY CONFIGURATION WITHOUT ANY RULES.
 {% else %}
-  include         = '{{ snort.config_dir }}/' .. RULE_PATH .. '/snort.rules',
+  rules = [[
+{%
+    let rules_dir = snort.config_dir + '/rules';
+    for (let rule in lsdir(rules_dir)) {
+      if (wildcard(rule, '*includes.rules', true)) continue;
+      if (wildcard(rule, '*.rules', true)) {
+        printf(`    include ${rules_dir}/${rule}\n`);
+      }
+    }
+%}
+  ]],
 {% endif -%}
 }
 
 daq = {
+  -- View all options with "snort --help-module daq"
   inputs      = {{ inputs }},
   snaplen     = {{ snort.snaplen }},
   module_dirs = { '/usr/lib/daq/', },
@@ -75,57 +86,57 @@ daq = {
   }
 }
 
-alert_syslog = {
-  level = 'info',
-}
+-- alert_syslog = { level = 'info', }  -- Generate output to syslog.
+alert_syslog = nil -- Disable output to syslog
 
 {% if (int(snort.logging)): %}
 -- Note that this is also the location of the PID file, if you use it.
-output.logdir = '{{ snort.log_dir }}'
+output = {
+  -- View all options with "snort --help-module output"
+  logdir    = '{{ snort.log_dir }}',
 
--- alert_full = { file = true, }
+  show_year = true,  -- Include year in timestamps.
+  -- See also 'process.utc = true' if you wish to record timestamps
+  -- in UTC.
+}
+
+--[[
+alert_full = {
+  -- View all options with "snort --help-config alert_full"
+  file = true,
+}
+--]]
 
 --[[
 alert_fast = {
--- bool alert_fast.file   = false: output to alert_fast.txt instead of stdout
--- bool alert_fast.packet = false: output packet dump with alert
--- int alert_fast.limit   = 0: set maximum size in MB before rollover (0 is unlimited) { 0:maxSZ }
+  -- View all options with "snort --help-config alert_fast"
   file = true,
   packet = false,
 }
 --]]
 
 alert_json = {
--- bool   alert_json.file      = false: output to alert_json.txt instead of stdout
--- int    alert_json.limit     = 0: set maximum size in MB before rollover (0 is unlimited) { 0:maxSZ }
--- string alert_json.separator = , : separate fields with this character sequence
--- multi  alert_json.fields    = 'timestamp pkt_num proto pkt_gen pkt_len dir src_ap dst_ap'
---                               Rule action: selected fields will be output in given order left to right.
---				{ action | class | b64_data | client_bytes | client_pkts | dir
---				| dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src
---				| eth_type | flowstart_time | geneve_vni | gid | icmp_code
---				| icmp_id | icmp_seq | icmp_type | iface | ip_id | ip_len
---				| msg | mpls | pkt_gen | pkt_len | pkt_num | priority
---				| proto | rev | rule | seconds | server_bytes | server_pkts
---				| service | sgt | sid | src_addr | src_ap | src_port | target
---				| tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp
---				| tos | ttl | udp_len | vlan }
-
--- This is a minimal set of fields that simply supports 'snort-mgr report'
--- and minimizes log size:
-  fields = 'dir src_ap dst_ap msg',
-
--- This set also supports the report, but closely matches 'alert_fast' contents.
---fields = 'timestamp pkt_num proto pkt_gen pkt_len dir src_ap dst_ap rule action msg',
-
+  -- View all options with "snort --help-config alert_json"
   file = true,
-}
 
---[[
-unified2 = {
-  limit = 10, -- int unified2.limit = 0: set maximum size in MB before rollover (0 is unlimited) { 0:maxSZ }
+  -- This is a minimal set of fields that simply supports 'snort-mgr report'
+  -- and minimizes log size, but loses a lot of information:
+--fields = 'timestamp dir src_addr src_port dst_addr dst_port gid sid msg',
+
+  -- This is our preferred smallish set, which also supports the report, but
+  -- more closely matches 'alert_fast' contents.
+  fields = [[
+    timestamp
+    pkt_num pkt_gen pkt_len
+    proto
+    dir
+    src_addr src_port
+    dst_addr dst_port
+    gid sid rev
+    action
+    msg
+  ]],
 }
---]]
 
 {% endif -%}
 
@@ -136,12 +147,12 @@ normalizer = {
 }
 
 file_policy = {
-  enable_type = true,
+  enable_type      = true,
   enable_signature = true,
   rules = {
     use = {
-      verdict = 'log',
-      enable_file_type = true,
+      verdict               = 'log',
+      enable_file_type      = true,
       enable_file_signature = true,
     }
   }
@@ -150,7 +161,8 @@ file_policy = {
 -- To use openappid with snort, 'opkg install openappid' and enable in config.
 {% if (int(snort.openappid)): %}
 appid = {
-  log_stats = true,
+  -- View all options with "snort --help-module appid"
+  log_stats        = true,
   app_detector_dir = '/usr/lib/openappid',
   app_stats_period = 60,
 }
@@ -160,7 +172,8 @@ appid = {
 if (snort.include) {
   // We use the ucode include here, so that the included file is also
   // part of the template and can use values passed in from the config.
-  printf("-- The following content from included file '%s'\n", snort.include);
+  printf(rpad(`-- Include from '${snort.include}'`, ">", 80) + "\n");
   include(snort.include, { snort, nfq });
+  printf(rpad("-- End of included file.", "<", 80) + "\n");
 }
 %}
