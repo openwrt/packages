@@ -1,0 +1,38 @@
+#!/bin/sh
+
+. /usr/share/ModemManager/modemmanager.common
+
+MODEM_PATH="$1"
+
+watcher_clean_up() {
+	# This step is necessary to terminate all pending child pipelines
+	# (especially mmcli --monitor-state)
+	child_pids=$(pgrep -P $$)
+	if [ -n "${child_pids}" ]; then
+		mm_log "debug" "Cleanup watcher pids: $child_pids"
+		kill -9 "$child_pids" 2>/dev/null
+	fi
+}
+
+main() {
+	local disconnect_detected=0
+
+	mm_log "info" "Start modem state watcher for $MODEM_PATH"
+
+	trap watcher_clean_up INT TERM
+
+	while read -r line; do
+		mm_log "debug" "State changed: $line"
+		if echo "$line" | grep -q "'connected' --> 'disconnecting'"; then
+			mm_log "info" "Disconnect detected"
+			disconnect_detected=1
+			break
+		fi
+	done < <(mmcli --monitor-state --modem "$MODEM_PATH")
+
+	if [ "${disconnect_detected}" -eq 1 ]; then
+		watcher_clean_up
+	fi
+}
+
+main

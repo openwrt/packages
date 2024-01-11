@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=modemmanager
 PKG_SOURCE_VERSION:=1.22.0
-PKG_RELEASE:=10
+PKG_RELEASE:=11
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://gitlab.freedesktop.org/mobile-broadband/ModemManager.git
@@ -130,6 +130,9 @@ define Package/modemmanager/install
 
 	$(INSTALL_DIR) $(1)/lib/netifd/proto
 	$(INSTALL_BIN) ./files/modemmanager.proto $(1)/lib/netifd/proto/modemmanager.sh
+
+	$(INSTALL_DIR) $(1)/usr/libexec/modemmanager
+	$(INSTALL_BIN) ./files/usr/libexec/modemmanager/ModemManager-watcher $(1)/usr/libexec/modemmanager
 endef
 
 $(eval $(call BuildPackage,modemmanager))
