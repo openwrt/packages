@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=p910nd
 PKG_VERSION:=0.97
-PKG_RELEASE:=9
+PKG_RELEASE:=10
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/p910nd
@@ -28,6 +28,7 @@ define Package/p910nd
   SUBMENU:=Printing
   TITLE:=A small non-spooling printer server
   URL:=http://p910nd.sourceforge.net
+  DEPENDS:=+USB_SUPPORT:kmod-usb-printer
   USERID:=p910nd=393:lp=7
 endef
 
