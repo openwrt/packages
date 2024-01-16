@@ -1,4 +1,4 @@
-From 6674d49dea0104031b3f54df4c7a356dc4307bb2 Mon Sep 17 00:00:00 2001
+From fc552b1e5c503c530763e40d2b83df55c5c2e9a3 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?=C3=81lvaro=20Fern=C3=A1ndez=20Rojas?= <noltari@gmail.com>
 Date: Wed, 25 Mar 2020 20:58:35 +0100
 Subject: [PATCH] rpi-eeprom-update: change default include path
@@ -8,8 +8,8 @@ Content-Transfer-Encoding: 8bit
 
 Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
 ---
- rpi-eeprom-update | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ rpi-eeprom-update | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
 
 --- a/rpi-eeprom-update
 +++ b/rpi-eeprom-update
@@ -24,7 +24,16 @@ Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
  fi
  
  LOCAL_MODE=0
-@@ -380,7 +380,7 @@ The system should then boot normally.
+@@ -423,7 +423,7 @@ checkDependencies() {
+       echo "Run with -h for more information."
+       echo
+       echo "To enable flashrom programming of the EEPROM"
+-      echo "Add these the following entries to /etc/default/rpi-eeprom-update"
++      echo "Add these the following entries to /etc/bcm27xx-eeprom.conf"
+       echo "RPI_EEPROM_USE_FLASHROM=1"
+       echo "CM4_ENABLE_RPI_EEPROM_UPDATE=1"
+       echo 
+@@ -514,7 +514,7 @@ The system should then boot normally.
  
  If /boot does not correspond to the boot partition and this
  is not a NOOBS system, then the mount point for BOOTFS should be defined
@@ -33,7 +42,7 @@ Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
  
  A backup of the current EEPROM config file is written to ${FIRMWARE_BACKUP_DIR}
  before applying the update.
-@@ -413,7 +413,7 @@ Options:
+@@ -546,7 +546,7 @@ Options:
     -u Install the specified VL805 (USB EEPROM) image file.
  
  Environment:
@@ -42,3 +51,12 @@ Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
  
  EEPROM_CONFIG_HOOK
  
+@@ -618,7 +618,7 @@ must first be enabled by removing ENABLE
+ via usbboot.
+ 
+ After enabling self-update set the CM4_ENABLE_RPI_EEPROM_UPDATE=1 environment
+-variable or define it in /etc/default/rpi-eeprom-update.
++variable or define it in /etc/bcm27xx-eeprom.conf.
+ 
+ N.B. If there is a power failure during SELF_UPDATE the EEPROM write may fail and
+ usbboot must be used to flash the bootloader EEPROM. SELF_UPDATE is not recommended
