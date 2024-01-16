@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bcm27xx-eeprom
-PKG_VERSION:=v2022.04.26-138a1
+PKG_VERSION:=v.2024.01.05-2712
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/raspberrypi/rpi-eeprom/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=7c54839e68f226c5853fb63c8a1539b729d84b2e6bac311a51766c601d10a413
+PKG_HASH:=ae1d9f10e4383ee39b291b4b3be1be583f6f32f806f65a1431da65ca4ccffe39
 
 PKG_LICENSE:=BSD-3-Clause Custom
 PKG_LICENSE_FILES:=LICENSE
@@ -21,7 +21,7 @@ TAR_CMD=$(HOST_TAR) -C $(1) $(TAR_OPTIONS)
 define Package/bcm27xx-eeprom
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=bcm27xx-userland +blkid +coreutils +coreutils-od +pciutils +python3-light
+  DEPENDS:=bcm27xx-userland +blkid +coreutils +coreutils-od +mount-utils +pciutils +python3-light
   TITLE:=BCM27xx EEPROM tools
 endef
 
@@ -46,14 +46,13 @@ define Package/bcm27xx-eeprom/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/rpi-eeprom-digest $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/rpi-eeprom-update $(1)/usr/bin
 
-	$(INSTALL_DIR) $(1)/lib/firmware/raspberrypi/bootloader
-	$(CP) $(PKG_BUILD_DIR)/firmware/release-notes.md $(1)/lib/firmware/raspberrypi/bootloader
+	$(INSTALL_DIR) $(1)/lib/firmware/raspberrypi/bootloader-2711
+	$(INSTALL_DIR) $(1)/lib/firmware/raspberrypi/bootloader-2711/default
+	$(INSTALL_DIR) $(1)/lib/firmware/raspberrypi/bootloader-2711/latest
 
-	$(INSTALL_DIR) $(1)/lib/firmware/raspberrypi/bootloader/critical
-	$(CP) $(PKG_BUILD_DIR)/firmware/critical/ $(1)/lib/firmware/raspberrypi/bootloader/
-
-	$(INSTALL_DIR) $(1)/lib/firmware/raspberrypi/bootloader/stable
-	$(CP) $(PKG_BUILD_DIR)/firmware/stable/ $(1)/lib/firmware/raspberrypi/bootloader/
+	$(CP) $(PKG_BUILD_DIR)/firmware-2711/release-notes.md $(1)/lib/firmware/raspberrypi/bootloader-2711
+	$(CP) $(PKG_BUILD_DIR)/firmware-2711/default $(1)/lib/firmware/raspberrypi/bootloader-2711
+	$(CP) $(PKG_BUILD_DIR)/firmware-2711/latest $(1)/lib/firmware/raspberrypi/bootloader-2711
 endef
 
 $(eval $(call BuildPackage,bcm27xx-eeprom))
