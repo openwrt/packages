@@ -18,15 +18,39 @@ include $(INCLUDE_DIR)/package.mk
 TAR_OPTIONS:=--strip-components 1 $(TAR_OPTIONS)
 TAR_CMD=$(HOST_TAR) -C $(1) $(TAR_OPTIONS)
 
-define Package/bcm27xx-eeprom
+define Package/bcm27xx-eeprom/Default
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=bcm27xx-userland +blkid +coreutils +coreutils-od +mount-utils +pciutils +python3-light
+endef
+
+define Package/bcm27xx-eeprom
+$(call Package/bcm27xx-eeprom/Default)
   TITLE:=BCM27xx EEPROM tools
+  DEPENDS:=bcm27xx-userland +blkid +coreutils +coreutils-od +mount-utils +pciutils +python3-light
+endef
+
+define Package/bcm2711-eeprom
+$(call Package/bcm27xx-eeprom/Default)
+  TITLE:=BCM2711 EEPROM tools
+  DEPENDS:=+bcm27xx-eeprom
+endef
+
+define Package/bcm2712-eeprom
+$(call Package/bcm27xx-eeprom/Default)
+  TITLE:=BCM2712 EEPROM tools
+  DEPENDS:=+bcm27xx-eeprom
 endef
 
 define Package/bcm27xx-eeprom/description
-  BCM27xx EEPROM tools.
+  BCM27xx EEPROM config and update tools.
+endef
+
+define Package/bcm2711-eeprom/description
+  BCM2711 EEPROM config and update tools.
+endef
+
+define Package/bcm2712-eeprom/description
+  BCM2712 EEPROM config and update tools.
 endef
 
 define Build/Compile
@@ -45,7 +69,9 @@ define Package/bcm27xx-eeprom/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/rpi-eeprom-config $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/rpi-eeprom-digest $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/rpi-eeprom-update $(1)/usr/bin
+endef
 
+define Package/bcm2711-eeprom/install
 	$(INSTALL_DIR) $(1)/lib/firmware/raspberrypi/bootloader-2711
 	$(INSTALL_DIR) $(1)/lib/firmware/raspberrypi/bootloader-2711/default
 	$(INSTALL_DIR) $(1)/lib/firmware/raspberrypi/bootloader-2711/latest
@@ -55,4 +81,16 @@ define Package/bcm27xx-eeprom/install
 	$(CP) $(PKG_BUILD_DIR)/firmware-2711/latest $(1)/lib/firmware/raspberrypi/bootloader-2711
 endef
 
+define Package/bcm2712-eeprom/install
+	$(INSTALL_DIR) $(1)/lib/firmware/raspberrypi/bootloader-2712
+	$(INSTALL_DIR) $(1)/lib/firmware/raspberrypi/bootloader-2712/default
+	$(INSTALL_DIR) $(1)/lib/firmware/raspberrypi/bootloader-2712/latest
+
+	$(CP) $(PKG_BUILD_DIR)/firmware-2712/release-notes.md $(1)/lib/firmware/raspberrypi/bootloader-2712
+	$(CP) $(PKG_BUILD_DIR)/firmware-2712/default $(1)/lib/firmware/raspberrypi/bootloader-2712
+	$(CP) $(PKG_BUILD_DIR)/firmware-2712/latest $(1)/lib/firmware/raspberrypi/bootloader-2712
+endef
+
 $(eval $(call BuildPackage,bcm27xx-eeprom))
+$(eval $(call BuildPackage,bcm2711-eeprom))
+$(eval $(call BuildPackage,bcm2712-eeprom))
