@@ -27,9 +27,6 @@ main() {
 	mm_report_events_from_cache
 
 	wait "$CHILD"
-
-	# Set all configured interfaces as unavailable
-	mm_cleanup_interfaces
 }
 
 main "$@"

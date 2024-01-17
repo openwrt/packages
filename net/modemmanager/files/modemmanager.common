@@ -13,7 +13,7 @@
 MODEMMANAGER_RUNDIR="/var/run/modemmanager"
 MODEMMANAGER_PID_FILE="${MODEMMANAGER_RUNDIR}/modemmanager.pid"
 MODEMMANAGER_CDCWDM_CACHE="${MODEMMANAGER_RUNDIR}/cdcwdm.cache"
-MODEMMANAGER_SYSFS_CACHE="${MODEMMANAGER_RUNDIR}/sysfs.cache"
+MODEMMANAGER_MONITOR_CACHE="${MODEMMANAGER_RUNDIR}/monitor.cache"
 MODEMMANAGER_EVENTS_CACHE="${MODEMMANAGER_RUNDIR}/events.cache"
 
 ################################################################################
@@ -92,48 +92,6 @@ mm_untrack_cdcwdm() {
 	echo "${cdcwdm}"
 }
 
-################################################################################
-# ModemManager needs some time from the ports being added until a modem object
-# is exposed in DBus. With the logic here we do an explicit wait of N seconds
-# for ModemManager to expose the new modem object, making sure that the wait is
-# unique per device (i.e. per physical device sysfs path).
-
-# Gets the modem wait status as retrieved from the cache
-mm_get_modem_wait_status() {
-	local sysfspath="$1"
-
-	# If no sysfs cache file, we're done
-	[ -f "${MODEMMANAGER_SYSFS_CACHE}" ] || return
-
-	# Get status of the sysfs path
-	awk -v sysfspath="${sysfspath}" '!/^#/ && $0 ~ sysfspath { print $2 }' "${MODEMMANAGER_SYSFS_CACHE}"
-}
-
-# Clear the modem wait status from the cache, if any
-mm_clear_modem_wait_status() {
-	local sysfspath="$1"
-
-	local escaped_sysfspath
-
-	[ -f "${MODEMMANAGER_SYSFS_CACHE}" ] && {
-		# escape '/', '\' and '&' for sed...
-		escaped_sysfspath=$(echo "$sysfspath" | sed -e 's/[\/&]/\\&/g')
-		sed -i "/${escaped_sysfspath}/d" "${MODEMMANAGER_SYSFS_CACHE}"
-	}
-}
-
-# Sets the modem wait status in the cache
-mm_set_modem_wait_status() {
-	local sysfspath="$1"
-	local status="$2"
-
-	# Remove sysfs line before adding the new one with the new state
-	mm_clear_modem_wait_status "${sysfspath}"
-
-	# Add the new status
-	echo "${sysfspath} ${status}" >> "${MODEMMANAGER_SYSFS_CACHE}"
-}
-
 # Callback for config_foreach()
 mm_get_modem_config_foreach_cb() {
 	local cfg="$1"
@@ -153,112 +111,6 @@ mm_get_modem_config() {
 	# Look for configuration for the given sysfs path
 	config_load network
 	config_foreach mm_get_modem_config_foreach_cb interface "${sysfspath}"
-}
-
-# Wait for a modem in the specified sysfspath
-mm_wait_for_modem() {
-	local cfg="$1"
-	local sysfspath="$2"
-
-	# TODO: config max wait
-	local n=45
-	local step=5
-
-	while [ $n -ge 0 ]; do
-		[ -d "${sysfspath}" ] || {
-			mm_log "error" "ignoring modem detection request: no device at ${sysfspath}"
-			proto_set_available "${cfg}" 0
-			return 1
-		}
-
-		# Check if the modem exists at the given sysfs path
-		if ! mmcli -m "${sysfspath}" > /dev/null 2>&1
-		then
-			mm_log "error" "modem not detected at sysfs path"
-		else
-			mm_log "info" "modem exported successfully at ${sysfspath}"
-			mm_log "info" "setting interface '${cfg}' as available"
-			proto_set_available "${cfg}" 1
-			return 0
-		fi
-
-		sleep $step
-		n=$((n-step))
-	done
-
-	mm_log "error" "timed out waiting for the modem to get exported at ${sysfspath}"
-	proto_set_available "${cfg}" 0
-	return 2
-}
-
-mm_report_modem_wait() {
-	local sysfspath=$1
-
-	local parent_sysfspath status
-
-	parent_sysfspath=$(mm_find_physdev_sysfs_path "$sysfspath")
-	[ -n "${parent_sysfspath}" ] || {
-		mm_log "error" "parent device sysfspath not found"
-		return
-	}
-
-	status=$(mm_get_modem_wait_status "${parent_sysfspath}")
-	case "${status}" in
-		"")
-			local cfg
-
-			cfg=$(mm_get_modem_config "${parent_sysfspath}")
-			if [ -n "${cfg}" ]; then
-				mm_log "info" "interface '${cfg}' is set to configure device '${parent_sysfspath}'"
-				mm_log "info" "now waiting for modem at sysfs path ${parent_sysfspath}"
-				mm_set_modem_wait_status "${parent_sysfspath}" "processed"
-				# Launch subshell for the explicit wait
-				( mm_wait_for_modem "${cfg}" "${parent_sysfspath}" ) > /dev/null 2>&1 &
-			else
-				mm_log "info" "no need to wait for modem at sysfs path ${parent_sysfspath}"
-				mm_set_modem_wait_status "${parent_sysfspath}" "ignored"
-			fi
-			;;
-		"processed")
-			mm_log "info" "already waiting for modem at sysfs path ${parent_sysfspath}"
-			;;
-		"ignored")
-			;;
-		*)
-			mm_log "error" "unknown status read for device at sysfs path ${parent_sysfspath}"
-			;;
-	esac
-}
-
-################################################################################
-# Cleanup interfaces
-
-mm_cleanup_interfaces() {
-	local sysfs_path status
-
-	# Do nothing if there is no sysfs cache
-	[ -f "${MODEMMANAGER_SYSFS_CACHE}" ] || return
-
-	while IFS= read -r sysfs_cache_line; do
-		sysfs_path=$(echo "${sysfs_cache_line}" | awk '{print $1}')
-		status=$(echo "${sysfs_cache_line}" | awk '{print $2}')
-
-		if [ "${status}" = "processed" ]; then
-			mm_log "debug" "call cleanup for: ${sysfs_path}"
-			mm_cleanup_interface_by_sysfspath "${sysfs_path}"
-		fi
-	done < ${MODEMMANAGER_SYSFS_CACHE}
-}
-
-mm_cleanup_interface_by_sysfspath() {
-	local dev="$1"
-
-	local cfg
-	cfg=$(mm_get_modem_config "$dev")
-	[ -n "${cfg}" ] || return
-
-	mm_log "info" "setting interface '$cfg' as unavailable"
-	proto_set_available "${cfg}" 0
 }
 
 ################################################################################
@@ -295,13 +147,9 @@ mm_report_event() {
 	# Report the event
 	mm_log "debug" "Report event: action=${action}, name=${name}, subsystem=${subsystem}"
 	result=$(mmcli --report-kernel-event="action=${action},name=${name},subsystem=${subsystem}" 2>&1)
-	if [ "$?" -eq "0" ]; then
-		# Wait for added modem if a sysfspath is given
-		[ -n "${sysfspath}" ] && [ "$action" = "add" ] && mm_report_modem_wait "${sysfspath}"
-	else
+	if [ "$?" -ne "0" ]; then
 		mm_log "error" "Couldn't report kernel event: ${result}"
 	fi
-
 }
 
 mm_report_event_from_cache_line() {
