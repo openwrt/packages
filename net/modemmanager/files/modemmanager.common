@@ -21,6 +21,8 @@ MODEMMANAGER_EVENTS_CACHE="${MODEMMANAGER_RUNDIR}/events.cache"
 
 mm_log() {
 	local level="$1"; shift
+
+	[ "${level}" = "debug" ] && return
 	logger -p "daemon.${level}" -t "ModemManager[$$]" "hotplug: $*"
 }
 
