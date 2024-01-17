@@ -200,6 +200,7 @@ start_instance() {
 
 	if [ ! -z "$config" ]; then
 		append UCI_STARTED "$config" "$LIST_SEP"
+		[ -n "$script_security" ] || get_openvpn_option "$config" script_security script-security
 		[ -n "$up" ] || get_openvpn_option "$config" up up
 		[ -n "$down" ] || get_openvpn_option "$config" down down
 		[ -n "$route_up" ] || get_openvpn_option "$config" route_up route-up
