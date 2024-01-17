@@ -8,6 +8,7 @@
 	. /lib/functions.sh
 	. ../netifd-proto.sh
 	. ./ppp.sh
+	. /usr/share/ModemManager/modemmanager.common
 	init_proto "$@"
 }
 
@@ -22,72 +23,6 @@ cdr2mask ()
 		shift
 	fi
 	echo "${1-0}"."${2-0}"."${3-0}"."${4-0}"
-}
-
-# This method expects as first argument a list of key-value pairs, as returned by mmcli --output-keyvalue
-# The second argument must be exactly the name of the field to read
-#
-# Sample output:
-#     $ mmcli -m 0 -K
-#     modem.dbus-path                                 : /org/freedesktop/ModemManager1/Modem/0
-#     modem.generic.device-identifier                 : ed6eff2e3e0f90463da1c2a755b2acacd1335752
-#     modem.generic.manufacturer                      : Dell Inc.
-#     modem.generic.model                             : DW5821e Snapdragon X20 LTE
-#     modem.generic.revision                          : T77W968.F1.0.0.4.0.GC.009\n026
-#     modem.generic.carrier-configuration             : GCF
-#     modem.generic.carrier-configuration-revision    : 08E00009
-#     modem.generic.hardware-revision                 : DW5821e Snapdragon X20 LTE
-#     ....
-modemmanager_get_field() {
-	local list=$1
-	local field=$2
-	local value=""
-
-	[ -z "${list}" ] || [ -z "${field}" ] && return
-
-	# there is always at least a whitespace after each key, and we use that as part of the
-	# key matching we do (e.g. to avoid getting 'modem.generic.state-failed-reason' as a result
-	# when grepping for 'modem.generic.state'.
-	line=$(echo "${list}" | grep "${field} ")
-	value=$(echo ${line#*:})
-
-	# not found?
-	[ -n "${value}" ] || return 2
-
-	# only print value if set
-	[ "${value}" != "--" ] && echo "${value}"
-	return 0
-}
-
-# build a comma-separated list of values from the list
-modemmanager_get_multivalue_field() {
-	local list=$1
-	local field=$2
-	local value=""
-	local length idx item
-
-	[ -z "${list}" ] || [ -z "${field}" ] && return
-
-	length=$(modemmanager_get_field "${list}" "${field}.length")
-	[ -n "${length}" ] || return 0
-	[ "$length" -ge 1 ] || return 0
-
-	idx=1
-	while [ $idx -le "$length" ]; do
-		item=$(modemmanager_get_field "${list}" "${field}.value\[$idx\]")
-		[ -n "${item}" ] && [ "${item}" != "--" ] && {
-			[ -n "${value}" ] && value="${value}, "
-			value="${value}${item}"
-		}
-		idx=$((idx + 1))
-	done
-
-	# nothing built?
-	[ -n "${value}" ] || return 2
-
-	# only print value if set
-	echo "${value}"
-	return 0
 }
 
 modemmanager_cleanup_connection() {
