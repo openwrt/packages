@@ -150,15 +150,18 @@ modemmanager_connected_method_dhcp_ipv4() {
 modemmanager_connected_method_static_ipv4() {
 	local interface="$1"
 	local wwan="$2"
-	local address="$3"
-	local prefix="$4"
-	local gateway="$5"
-	local mtu="$6"
-	local dns1="$7"
-	local dns2="$8"
-	local metric="$9"
+	local bearerstatus="$3"
+	local metric="$4"
 
+	local address prefix gateway mtu dns1 dns2
 	local mask=""
+
+	address=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv4-config.address")
+	prefix=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv4-config.prefix")
+	gateway=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv4-config.gateway")
+	mtu=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv4-config.mtu")
+	dns1=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv4-config.dns.value\[1\]")
+	dns2=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv4-config.dns.value\[2\]")
 
 	[ -n "${address}" ] || {
 		proto_notify_error "${interface}" ADDRESS_MISSING
@@ -216,13 +219,17 @@ modemmanager_connected_method_dhcp_ipv6() {
 modemmanager_connected_method_static_ipv6() {
 	local interface="$1"
 	local wwan="$2"
-	local address="$3"
-	local prefix="$4"
-	local gateway="$5"
-	local mtu="$6"
-	local dns1="$7"
-	local dns2="$8"
-	local metric="$9"
+	local bearerstatus="$3"
+	local metric="$4"
+
+	local address prefix gateway mtu dns1 dns2
+
+	address=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv6-config.address")
+	prefix=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv6-config.prefix")
+	gateway=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv6-config.gateway")
+	mtu=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv6-config.mtu")
+	dns1=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv6-config.dns.value\[1\]")
+	dns2=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv6-config.dns.value\[2\]")
 
 	[ -n "${address}" ] || {
 		proto_notify_error "${interface}" ADDRESS_MISSING
@@ -614,13 +621,7 @@ proto_modemmanager_setup() {
 			modemmanager_connected_method_dhcp_ipv4 "${interface}" "${beareriface}" "${metric}"
 			;;
 		"static")
-			address=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv4-config.address")
-			prefix=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv4-config.prefix")
-			gateway=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv4-config.gateway")
-			mtu=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv4-config.mtu")
-			dns1=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv4-config.dns.value\[1\]")
-			dns2=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv4-config.dns.value\[2\]")
-			modemmanager_connected_method_static_ipv4 "${interface}" "${beareriface}" "${address}" "${prefix}" "${gateway}" "${mtu}" "${dns1}" "${dns2}" "${metric}"
+			modemmanager_connected_method_static_ipv4 "${interface}" "${beareriface}" "${bearerstatus}" "${metric}"
 			;;
 		"ppp")
 			modemmanager_connected_method_ppp_ipv4 "${interface}" "${beareriface}" "${username}" "${password}" "${allowedauth}"
@@ -641,13 +642,7 @@ proto_modemmanager_setup() {
 			modemmanager_connected_method_dhcp_ipv6 "${interface}" "${beareriface}" "${metric}"
 			;;
 		"static")
-			address=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv6-config.address")
-			prefix=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv6-config.prefix")
-			gateway=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv6-config.gateway")
-			mtu=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv6-config.mtu")
-			dns1=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv6-config.dns.value\[1\]")
-			dns2=$(modemmanager_get_field "${bearerstatus}" "bearer.ipv6-config.dns.value\[2\]")
-			modemmanager_connected_method_static_ipv6 "${interface}" "${beareriface}" "${address}" "${prefix}" "${gateway}" "${mtu}" "${dns1}" "${dns2}" "${metric}"
+			modemmanager_connected_method_static_ipv6 "${interface}" "${beareriface}" "${bearerstatus}" "${metric}"
 			;;
 		"ppp")
 			proto_notify_error "${interface}" "unsupported method"
