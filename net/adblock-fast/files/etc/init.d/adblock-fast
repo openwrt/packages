@@ -1716,7 +1716,7 @@ adb_start() {
 	action="$(config_cache get 'trigger_service')"
 	fw4_restart_flag="$(config_cache get 'trigger_fw4')"
 
-	if [ "$action" = 'on_boot' ] || [ "$param" = 'on_boot' ]; then
+	if [ "$action" = 'on_boot' ] || [ "$param" = 'on_boot' ] || [ "$param" = 'on_pause' ]; then
 		if cache 'test_gzip' || cache 'test'; then
 			action='restore'
 		else

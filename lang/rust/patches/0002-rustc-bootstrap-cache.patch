@@ -9,9 +9,9 @@
              rustc_cache = os.path.join(cache_dst, key)
              if not os.path.exists(rustc_cache):
                  os.makedirs(rustc_cache)
---- a/src/bootstrap/download.rs
-+++ b/src/bootstrap/download.rs
-@@ -211,7 +211,13 @@ impl Config {
+--- a/src/bootstrap/src/core/download.rs
++++ b/src/bootstrap/src/core/download.rs
+@@ -208,7 +208,13 @@ impl Config {
              Some(other) => panic!("unsupported protocol {other} in {url}"),
              None => panic!("no protocol in {url}"),
          }
@@ -26,7 +26,7 @@
      }
  
      fn download_http_with_retries(&self, tempfile: &Path, url: &str, help_on_error: &str) {
-@@ -529,7 +535,10 @@ impl Config {
+@@ -544,7 +550,10 @@ impl Config {
          key: &str,
          destination: &str,
      ) {
@@ -38,7 +38,7 @@
          let cache_dir = cache_dst.join(key);
          if !cache_dir.exists() {
              t!(fs::create_dir_all(&cache_dir));
-@@ -656,7 +665,10 @@ download-rustc = false
+@@ -671,7 +680,10 @@ download-rustc = false
          let llvm_assertions = self.llvm_assertions;
  
          let cache_prefix = format!("llvm-{llvm_sha}-{llvm_assertions}");
