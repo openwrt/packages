@@ -523,7 +523,9 @@ proto_modemmanager_setup() {
 	modemmanager_check_state "$device" "${modemstatus}" "$pincode"
 	[ "$?" -ne "0" ] && return 1
 
-	[ -z "${allowedmode}" ] || {
+	if [ -z "${allowedmode}" ]; then
+		modemmanager_set_allowed_mode "$device" "$interface" "any"
+	else
 		case "$allowedmode" in
 			"2g")
 				modemmanager_set_allowed_mode "$device" \
@@ -548,7 +550,7 @@ proto_modemmanager_setup() {
 		esac
 		# check error for allowed_mode and preferred_mode function call
 		[ "$?" -ne "0" ] && return 1
-	}
+	fi
 
 	# always cleanup before attempting a new connection, just in case
 	modemmanager_cleanup_connection "${modemstatus}"
