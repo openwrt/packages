@@ -123,7 +123,7 @@ define Package/syslog-ng/install
 	touch $(1)/etc/syslog-ng.d/.keep
 
 	$(INSTALL_DIR) $(1)/sbin
-	$(INSTALL_BIN) ./files/logread $(1)/sbin
+	$(INSTALL_BIN) ./files/logread $(1)/usr/sbin
 
 	$(INSTALL_DIR) $(1)/usr/share/syslog-ng/include/
 	$(CP) -r ./files/scl $(1)/usr/share/syslog-ng/include/
