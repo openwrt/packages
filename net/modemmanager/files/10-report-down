@@ -16,9 +16,8 @@ STATE="$4"
 
 [ "${STATE}" = "disconnected" ] || exit 0
 
-. /usr/share/ModemManager/modemmanager.common
 . /lib/netifd/netifd-proto.sh
-INCLUDE_ONLY=1 . /lib/netifd/proto/modemmanager.sh
+. /usr/share/ModemManager/modemmanager.common
 
 MODEM_STATUS=$(mmcli --modem="${MODEM_PATH}" --output-keyvalue)
 [ -n "${MODEM_STATUS}" ] || exit 1
