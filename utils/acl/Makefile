@@ -18,6 +18,7 @@ PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 
 PKG_LICENSE:=LGPL-2.1 GPL-2.0
 PKG_LICENSE_FILES:=doc/COPYING doc/COPYING.LGPL
+PKG_CPE_ID:=cpe:/a:acl_project:acl
 
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
