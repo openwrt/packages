@@ -21,6 +21,7 @@ PKG_HASH:=ccf417aa66ce37f72ea15b7fbcff4c71e823566ea74bda696b9c1e19aae08739
 PKG_MAINTAINER:=David Yang <mmyangfl@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:i2pd:i2pd
 
 include $(INCLUDE_DIR)/package.mk
 
