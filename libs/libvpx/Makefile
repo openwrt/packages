@@ -20,7 +20,7 @@ PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
-PKG_CPE_ID:=cpe:/a:john_koleszar:libvpx
+PKG_CPE_ID:=cpe:/a:webmproject:libvpx
 PKG_BUILD_PARALLEL:=1
 
 PKG_ABI_VERSION:=$(subst $(space),.,$(wordlist 1, 2, $(subst .,$(space),$(PKG_VERSION))))
