@@ -14,7 +14,7 @@ PKG_BUILD_FLAGS:=no-mips16
 
 PKG_BUILD_DIR :=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=ftp://ftp.infradead.org/pub/ocserv/
+PKG_SOURCE_URL:=https://www.infradead.org/ocserv/download/
 PKG_HASH:=d30f29c5967715f7b118e89bba496011b2be2af0f49bb9e332f12be7fbf693d7
 
 PKG_LICENSE:=GPL-2.0-or-later
