@@ -20,7 +20,7 @@ PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_CPE_ID:=cpe:/a:apache:apr
+PKG_CPE_ID:=cpe:/a:apache:portable_runtime
 
 PKG_BUILD_PARALLEL:=1
 
