@@ -18,6 +18,7 @@ PKG_HASH:=32bcf49df8c80c470352e63004a82d9601b90ccf406096099656250a4515ac28
 PKG_MAINTAINER:=David Woodhouse <dwmw2@infradead.org>
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=License.txt
+PKG_CPE_ID:=cpe:/a:domoticz:domoticz
 
 PKG_BUILD_DEPENDS:=python3 minizip cereal
 PKG_BUILD_FLAGS:=no-mips16 lto
