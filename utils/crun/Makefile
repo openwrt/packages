@@ -16,6 +16,7 @@ PKG_INSTALL:=1
 PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:crun_project:crun
 
 include $(INCLUDE_DIR)/package.mk
 
