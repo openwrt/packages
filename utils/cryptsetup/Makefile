@@ -18,6 +18,7 @@ PKG_HASH:=da5d1419e2a86e01aa32fd79582cd54d208857cb541bca2fd426a5ff1aaabbc3
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-2.0-or-later LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING COPYING.LGPL
+PKG_CPE_ID:=cpe:/a:cryptsetup_project:cryptsetup
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
