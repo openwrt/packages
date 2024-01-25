@@ -16,6 +16,7 @@ PKG_HASH:=383108e5f8644cefb288537950923b7520f642e7e114efb843f6e7ea9268b1e0
 PKG_MAINTAINER:=Gerald Kerma <gandalf@gk2.net>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:fail2ban:fail2ban
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python3-package.mk
