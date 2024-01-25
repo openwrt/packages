@@ -18,6 +18,7 @@ PKG_MIRROR_HASH:=7ecc6d1e565392817311254045337907bbad015b46ec88542ea63594f47778b
 PKG_BUILD_FLAGS:=gc-sections
 
 PKG_MAINTAINER:=Nicholas Smith <nicholas@nbembedded.com>
+PKG_CPE_ID:=cpe:/a:freedesktop:libmbim
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
