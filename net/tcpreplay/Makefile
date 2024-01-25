@@ -17,7 +17,7 @@ PKG_HASH:=352fcd073c61140e5008ffe4e37d4744c31037e73854a921cd8b6b5d9f29cd54
 
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=docs/LICENSE
-PKG_CPE_ID:=cpe:/a:appneta:tcpreplay
+PKG_CPE_ID:=cpe:/a:broadcom:tcpreplay
 
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
