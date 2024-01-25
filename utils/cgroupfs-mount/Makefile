@@ -10,6 +10,7 @@ PKG_SOURCE_DATE:=2020-06-26
 PKG_MIRROR_HASH:=ca217ffff5aa938149d2d8adfe15d800903d2fec180acb2400c36d62905988ea
 
 PKG_MAINTAINER:=Gerard Ryan <G.M0N3Y.2503@gmail.com>
+PKG_CPE_ID:=cpe:/a:cgroupfs-mount_project:cgroupfs-mount
 
 include $(INCLUDE_DIR)/package.mk
 
