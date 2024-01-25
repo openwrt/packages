@@ -15,6 +15,7 @@ PKG_HASH:=ff33a570b5a936c81e6c08389a8581c2665311d026ce3d225c88d09c49f9b440
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:freedesktop:libinput
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/meson.mk
