@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bcm27xx-eeprom
 PKG_VERSION:=v.2024.01.05-2712
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/raspberrypi/rpi-eeprom/tar.gz/$(PKG_VERSION)?
@@ -26,7 +26,7 @@ endef
 define Package/bcm27xx-eeprom
 $(call Package/bcm27xx-eeprom/Default)
   TITLE:=BCM27xx EEPROM tools
-  DEPENDS:=bcm27xx-userland +blkid +coreutils +coreutils-od +mount-utils +pciutils +python3-light
+  DEPENDS:=bcm27xx-utils +blkid +coreutils +coreutils-od +mount-utils +pciutils +python3-light
 endef
 
 define Package/bcm2711-eeprom
