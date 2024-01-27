@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
 PKG_VERSION:=5.1.3
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ffmpeg.org/releases/
@@ -348,6 +348,7 @@ define Package/libffmpeg-full
 $(call Package/libffmpeg/Default)
  TITLE+= (full)
  DEPENDS+= +alsa-lib +libgnutls +PACKAGE_libopus:libopus \
+    +PACKAGE_libv4l:libv4l \
     +SOFT_FLOAT:shine \
     +!SOFT_FLOAT:lame-lib \
     +PACKAGE_libx264:libx264 \
@@ -475,7 +476,8 @@ ifeq ($(BUILD_VARIANT),full)
 			$(call FFMPEG_DISABLE,muxer,$(FFMPEG_PATENTED_MUXERS)) \
 			$(call FFMPEG_DISABLE,demuxer,$(FFMPEG_PATENTED_DEMUXERS)) \
 			$(call FFMPEG_DISABLE,parser,$(FFMPEG_PATENTED_PARSERS))) \
-		$(if $(CONFIG_PACKAGE_libopus),--enable-libopus)
+		$(if $(CONFIG_PACKAGE_libopus),--enable-libopus) \
+		$(if $(CONFIG_PACKAGE_libv4l),--enable-libv4l2)
   ifeq ($(CONFIG_SOFT_FLOAT),y)
 	FFMPEG_CONFIGURE+= \
 		--enable-small \
