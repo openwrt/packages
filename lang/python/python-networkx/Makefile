@@ -12,7 +12,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=networkx
 PKG_HASH:=9f1bb5cf3409bf324e0a722c20bdb4c20ee39bf1c30ce8ae499c8502b0b5e0c6
 
-PKG_LICENSE:=BSD-3-clause
+PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.txt
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
