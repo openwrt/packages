@@ -9,7 +9,7 @@ PKG_SOURCE_URL:=https://github.com/Duncaen/OpenDoas/releases/download/v$(PKG_VER
 PKG_HASH:=4e98828056d6266bd8f2c93e6ecf12a63a71dbfd70a5ea99ccd4ab6d0745adf0
 
 PKG_MAINTAINER:=Michal Vasilek <michal.vasilek@nic.cz>
-PKG_LICENSE:=ISC, BSD-3-Clause
+PKG_LICENSE:=ISC BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_INSTALL:=1

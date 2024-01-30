@@ -9,8 +9,8 @@ PKG_SOURCE_URL:=https://downloads.powerdns.com/releases/
 PKG_HASH:=7469dd81fb7df11197f49638fa49ceff9f973225fc8f9c7160b0bfc00a2e7471
 
 PKG_MAINTAINER:=Peter van Dijk <peter.van.dijk@powerdns.com>
-PKG_LICENCE:=GPL-2.0-only
-PKG_LICENCE_FILES:=COPYING
+PKG_LICENSE:=GPL-2.0-only
+PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:powerdns:authoritative
 
 PKG_FIXUP:=autoreconf
