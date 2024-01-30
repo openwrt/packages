@@ -17,7 +17,7 @@ PKG_SOURCE_URL:= \
 PKG_HASH:=3adaedb9e70c3c5f40603bf60a01e336190a6dbe01929d395f16b01fe84a0156
 
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
-PKG_LICENCE:=MPL-2.0
+PKG_LICENSE:=MPL-2.0
 PKG_LICENSE_FILES:=nss/COPYING
 PKG_CPE_ID:=cpe:/a:mozilla:network_security_services
 

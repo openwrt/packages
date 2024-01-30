@@ -14,7 +14,7 @@ PKG_RELEASE:=2
 
 #As i couldn't find real license used "Public Domain"
 #as referense to http://www.iana.org/time-zones/repository/tz-link.html
-PKG_LICENSE:=Public Domain
+PKG_LICENSE:=Public-Domain
 
 PKG_SOURCE:=tzdata$(PKG_VERSION).tar.gz
 PKG_SOURCE_CODE:=tzcode$(PKG_VERSION).tar.gz

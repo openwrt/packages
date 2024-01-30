@@ -20,8 +20,8 @@ PKG_HASH:=3bb6b7d6f30c591dd65aaaff1c8b7a5b94d81687998ca9400082c739a690436c
 
 # The source for the library (xxhash.c and xxhash.h) is BSD
 # The source for the command line tool (xxhsum.c) is GPLv2+
-PKG_LICENSE:=BSD-2-Clause,GPL-2.0-or-later
-PKG_LICENSE_FILES:=LICENSE,cli/COPYING
+PKG_LICENSE:=BSD-2-Clause GPL-2.0-or-later
+PKG_LICENSE_FILES:=LICENSE cli/COPYING
 PKG_MAINTAINER:=Julien Malik <julien.malik@paraiso.me>
 
 PKG_INSTALL:=1
