@@ -27,9 +27,9 @@ guidelines:
 - Convenience macros for popular mirrors are defined. Using these macros will
   make your package downloads more robust by mapping to a list of possible
   source mirrors for archive availability.
-  - @SF - Sourceforge (downloads.sourceforge.net) with 5 retries due to
+  - @SF - SourceForge (downloads.sourceforge.net) with 5 retries due to
     re-directs
-  - @GITHUB - Github (raw.githubusercontent.com) with 5 retries due to
+  - @GITHUB - GitHub (raw.githubusercontent.com) with 5 retries due to
     re-directs
   - @GNU - 8 regional servers
   - @GNOME - 8 regional servers
@@ -70,18 +70,22 @@ guidelines:
 
 ### Commits in your pull-requests should
 
-- Have a useful description prefixed with the package name (E.g.: "foopkg: Add
-  libzot dependency")
+- Have a useful commit subject prefixed with the package name (E.g.: "foopkg:
+  Add libzot dependency").
 - Include Signed-off-by tag in the commit comments.  See: [Sign your
   work](https://openwrt.org/submitting-patches#sign_your_work)
+- Author and sign-off must match and be a real name or known identity and
+  a real email address. GitHub private email addresses will not be accepted.
+- Follow all [Submission Guidelines](https://openwrt.org/submitting-patches#submission_guidelines)
+  requirements, including maximum characters per line.
 
 ## Advice on pull requests
 
-Pull requests are the easiest way to contribute changes to git repos at Github.
+Pull requests are the easiest way to contribute changes to git repos at GitHub.
 They are the preferred contribution method, as they offer a nice way for
 commenting and amending the proposed changes.
 
-- You need a local "fork" of the Github repo.
+- You need a local "fork" of the GitHub repo.
 
 - Use a "feature branch" for your changes. That separates the changes in the
   pull request from your other changes and makes it easy to edit/amend commits
@@ -89,10 +93,10 @@ commenting and amending the proposed changes.
   - Update your local git fork to the tip (of the master, usually)
   - Create the feature branch with `git checkout -b feature_x`
   - Edit changes and commit them locally
-  - Push them to your Github fork by `git push -u origin feature_x`. That
-    creates the "feature_x" branch at your Github fork and sets it as the
+  - Push them to your GitHub fork by `git push -u origin feature_x`. That
+    creates the "feature_x" branch at your GitHub fork and sets it as the
     remote of this branch
-  - When you now visit Github, you should see a proposal to create a pull
+  - When you now visit GitHub, you should see a proposal to create a pull
     request
 
 - If you later need to add new commits to the pull request, you can simply
@@ -109,7 +113,7 @@ commenting and amending the proposed changes.
   - If you added several new commits or made other changes that require
     cleaning up, you can use `git rebase -i HEAD~X` (X = number of commits to
     edit) to possibly squash some commits
-  - Push the changed commits to Github with `git push -f` to overwrite the
+  - Push the changed commits to GitHub with `git push -f` to overwrite the
     original commits in the "feature_x" branch with the new ones. The pull
     request gets automatically updated
 
