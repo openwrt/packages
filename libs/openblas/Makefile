@@ -11,7 +11,7 @@ PKG_RELEASE:=1
 PKG_SOURCE:=OpenBLAS-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/xianyi/OpenBLAS/releases/download/v$(PKG_VERSION)/
 PKG_HASH:=4e6e4f5cb14c209262e33e6816d70221a2fe49eb69eaf0a06f065598ac602c68
-PKG_LICENSE:=BSD 3-Clause
+PKG_LICENSE:=BSD-3-Clause
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
 PKG_BUILD_PARALLEL:=1

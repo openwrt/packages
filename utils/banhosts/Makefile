@@ -13,7 +13,7 @@ PKG_RELEASE:=2
 
 PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_MAINTAINER:=Matteo Croce <matteo@openwrt.org>
-PKG_LICENCE:=GPL-2.0
+PKG_LICENSE:=GPL-2.0
 
 include $(INCLUDE_DIR)/package.mk
 
