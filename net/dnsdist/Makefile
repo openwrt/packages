@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dnsdist
-PKG_VERSION:=1.8.3
-PKG_RELEASE:=2
+PKG_VERSION:=1.9.0-rc1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://downloads.powerdns.com/releases/
-PKG_HASH:=858323f2ed5181488bb7558fbf4f84ec7198600b070b2c5375d15d40695727f4
+PKG_HASH=:be379f29b9f2993c9cd7cb2a3f3494fe574f08697c579e4667818a633a44177d
 
 PKG_MAINTAINER:=Peter van Dijk <peter.van.dijk@powerdns.com>
 PKG_LICENSE:=GPL-2.0-only
@@ -74,10 +74,12 @@ define Package/dnsdist
   DEPENDS+= \
 	  +DNSDIST_LIBEDIT:libedit \
 	  +DNSDIST_DNSTAP:libfstrm \
-	  +DNSDIST_GNUTLS:libgnutls \
-	  +DNSDIST_DNS_OVER_HTTPS:libh2o-evloop \
-	  +DNSDIST_NET_SNMP:libnetsnmp \
+	  +DNSDIST_DNS_OVER_HTTP3:quiche \
+	  +DNSDIST_DNS_OVER_HTTPS:libnghttp2 \
 	  +DNSDIST_DNS_OVER_HTTPS_OUTGOING:libnghttp2 \
+	  +DNSDIST_DNS_OVER_QUIC:quiche \
+	  +DNSDIST_GNUTLS:libgnutls \
+	  +DNSDIST_NET_SNMP:libnetsnmp \
 	  +DNSDIST_OPENSSL:libopenssl \
 	  +DNSDIST_SODIUM:libsodium \
 	  +DNSDIST_LMDB:lmdb \
@@ -95,11 +97,11 @@ define Package/dnsdist-full
 	  +libedit \
 	  +libfstrm \
 	  +libgnutls \
-	  +libh2o-evloop \
 	  +libnetsnmp \
 	  +libnghttp2 \
 	  +libopenssl \
 	  +libsodium \
+	  +quiche \
 	  +lmdb \
 	  +tinycdb \
 	  +re2
@@ -165,7 +167,9 @@ CONFIGURE_ARGS+= \
 	$(if $(call IsEnabled,DNSDIST_IPCIPHER),--enable,--disable)-ipcipher \
 	$(if $(call IsEnabled,DNSDIST_EBPF),--with,--without)-ebpf \
 	$(if $(call IsEnabled,DNSDIST_DNS_OVER_HTTPS),--enable-dns-over-https,) \
-	$(if $(call IsEnabled,DNSDIST_DNS_OVER_HTTPS_OUTGOING),--with,--without)-nghttp2
+	$(if $(call IsEnabled,DNSDIST_DNS_OVER_HTTPS_OUTGOING),--with,--without)-nghttp2 \
+	$(if $(call IsEnabled,DNSDIST_DNS_OVER_HTTP3),--enable-dns-over-http3,) \
+	$(if $(call IsEnabled,DNSDIST_DNS_OVER_QUIC),--enable-dns-over-quic,)
 
 $(eval $(call BuildPackage,dnsdist))
 $(eval $(call BuildPackage,dnsdist-full))

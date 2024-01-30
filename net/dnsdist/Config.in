@@ -25,7 +25,7 @@ menu "Configuration"
 	depends on !DNSDIST_NOSSL
 		bool "DNS over HTTPS Support"
 		help
-			"Enables DNS over HTTPS Support for dnsdist"
+			"Enable DNS over HTTPS Support for dnsdist"
 		default y
 
 	config DNSDIST_DNS_OVER_HTTPS_OUTGOING
@@ -33,14 +33,26 @@ menu "Configuration"
 	depends on !DNSDIST_NOSSL
 		bool "Outgoing DNS over HTTPS Support"
 		help
-			"Enables Outgoing DNS over HTTPS Support for dnsdist"
+			"Enable Outgoing DNS over HTTPS Support for dnsdist"
 		default y
 
 	config DNSDIST_DNS_OVER_TLS
 	depends on !DNSDIST_NOSSL
 		bool "DNS over TLS Support"
 		help
-			"Enabled DNS over TLS Support for dnsdist"
+			"Enable DNS over TLS Support for dnsdist"
+		default y
+
+	config DNSDIST_DNS_OVER_QUIC
+		bool "DNS over QUIC Support"
+		help
+			"Enable DNS over QUIC Support for dnsdist"
+		default y
+
+	config DNSDIST_DNS_OVER_HTTP3
+		bool "DNS over HTTP3 Support"
+		help
+			"Enable DNS over HTTP3 Support for dnsdist"
 		default y
 
 	config DNSDIST_CARBON
