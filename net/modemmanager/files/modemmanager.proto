@@ -124,14 +124,13 @@ modemmanager_disconnected_method_ppp_ipv4() {
 				;;
 		esac
 	} || echo "pppd result code not given"
-
-	proto_kill_command "$interface"
 }
 
 modemmanager_connected_method_dhcp_ipv4() {
 	local interface="$1"
 	local wwan="$2"
 	local metric="$3"
+	local device="$4"
 
 	proto_init_update "${wwan}" 1
 	proto_set_keep 1
@@ -145,6 +144,8 @@ modemmanager_connected_method_dhcp_ipv4() {
 	[ -n "$metric" ] && json_add_int metric "${metric}"
 	json_close_object
 	ubus call network add_dynamic "$(json_dump)"
+
+	modemmanager_start_watcher "${interface}" "${device}"
 }
 
 modemmanager_connected_method_static_ipv4() {
@@ -152,6 +153,7 @@ modemmanager_connected_method_static_ipv4() {
 	local wwan="$2"
 	local bearerstatus="$3"
 	local metric="$4"
+	local device="$5"
 
 	local address prefix gateway mtu dns1 dns2
 	local mask=""
@@ -194,12 +196,15 @@ modemmanager_connected_method_static_ipv4() {
 	}
 	[ -n "$metric" ] && json_add_int metric "${metric}"
 	proto_send_update "${interface}"
+
+	modemmanager_start_watcher "${interface}" "${device}"
 }
 
 modemmanager_connected_method_dhcp_ipv6() {
 	local interface="$1"
 	local wwan="$2"
 	local metric="$3"
+	local device="$4"
 
 	proto_init_update "${wwan}" 1
 	proto_set_keep 1
@@ -214,6 +219,8 @@ modemmanager_connected_method_dhcp_ipv6() {
 	[ -n "$metric" ] && json_add_int metric "${metric}"
 	json_close_object
 	ubus call network add_dynamic "$(json_dump)"
+
+	modemmanager_start_watcher "${interface}" "${device}"
 }
 
 modemmanager_connected_method_static_ipv6() {
@@ -221,6 +228,7 @@ modemmanager_connected_method_static_ipv6() {
 	local wwan="$2"
 	local bearerstatus="$3"
 	local metric="$4"
+	local device="$5"
 
 	local address prefix gateway mtu dns1 dns2
 
@@ -263,6 +271,8 @@ modemmanager_connected_method_static_ipv6() {
 	}
 	[ -n "$metric" ] && json_add_int metric "${metric}"
 	proto_send_update "${interface}"
+
+	modemmanager_start_watcher "${interface}" "${device}"
 }
 
 proto_modemmanager_init_config() {
@@ -416,6 +426,13 @@ modemmanager_init_epsbearer() {
 	# Wait here so that the modem can set the init EPS bearer
 	# for registration
 	sleep 2
+}
+
+modemmanager_start_watcher() {
+	local interface="$1"
+	local device="$2"
+
+	proto_run_command "$interface" mmcli --modem="${device}" --track-state
 }
 
 proto_modemmanager_setup() {
@@ -618,10 +635,10 @@ proto_modemmanager_setup() {
 		echo "IPv4 connection setup required in interface ${interface}: ${bearermethod_ipv4}"
 		case "${bearermethod_ipv4}" in
 		"dhcp")
-			modemmanager_connected_method_dhcp_ipv4 "${interface}" "${beareriface}" "${metric}"
+			modemmanager_connected_method_dhcp_ipv4 "${interface}" "${beareriface}" "${metric}" "${device}"
 			;;
 		"static")
-			modemmanager_connected_method_static_ipv4 "${interface}" "${beareriface}" "${bearerstatus}" "${metric}"
+			modemmanager_connected_method_static_ipv4 "${interface}" "${beareriface}" "${bearerstatus}" "${metric}" "${device}"
 			;;
 		"ppp")
 			modemmanager_connected_method_ppp_ipv4 "${interface}" "${beareriface}" "${username}" "${password}" "${allowedauth}"
@@ -639,10 +656,10 @@ proto_modemmanager_setup() {
 		echo "IPv6 connection setup required in interface ${interface}: ${bearermethod_ipv6}"
 		case "${bearermethod_ipv6}" in
 		"dhcp")
-			modemmanager_connected_method_dhcp_ipv6 "${interface}" "${beareriface}" "${metric}"
+			modemmanager_connected_method_dhcp_ipv6 "${interface}" "${beareriface}" "${metric}" "${device}"
 			;;
 		"static")
-			modemmanager_connected_method_static_ipv6 "${interface}" "${beareriface}" "${bearerstatus}" "${metric}"
+			modemmanager_connected_method_static_ipv6 "${interface}" "${beareriface}" "${bearerstatus}" "${metric}" "${device}"
 			;;
 		"ppp")
 			proto_notify_error "${interface}" "unsupported method"
@@ -675,6 +692,7 @@ proto_modemmanager_teardown() {
 	[ -n "${bearerpath}" ] || {
 		echo "couldn't load bearer path: disconnecting anyway"
 		mmcli --modem="${device}" --simple-disconnect >/dev/null 2>&1
+		proto_kill_command "${interface}"
 		return
 	}
 
@@ -689,6 +707,8 @@ proto_modemmanager_teardown() {
 
 	# disconnection handling only requires special treatment in IPv4/PPP
 	[ "${bearermethod_ipv4}" = "ppp" ] && modemmanager_disconnected_method_ppp_ipv4 "${interface}"
+
+	proto_kill_command "${interface}"
 
 	# disconnect
 	mmcli --modem="${device}" --simple-disconnect ||
