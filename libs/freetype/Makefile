@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=freetype
-PKG_VERSION:=2.11.1
+PKG_VERSION:=2.13.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/freetype
-PKG_HASH:=3333ae7cfda88429c97a7ae63b7d01ab398076c3b67182e960e5684050f2c5c8
+PKG_HASH:=12991c4e55c506dd7f9b765933e62fd2be2e06d421505d7950a132e4f1bb484d
 
 PKG_MAINTAINER:=Val Kulkov <val.kulkov@gmail.com>
 PKG_LICENSE:=FTL GPL-2.0-only MIT ZLIB GPL-3.0-or-later
@@ -27,7 +27,7 @@ define Package/libfreetype
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=A free, high-quality and portable font engine
-  URL:=http://www.freetype.org/
+  URL:=https://www.freetype.org/
   DEPENDS:=+zlib +libpng
 endef
 
@@ -50,7 +50,7 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/freetype2
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/freetype2/* $(1)/usr/include/freetype2/
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libfreetype.{a,so}* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libfreetype.so* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/freetype2.pc $(1)/usr/lib/pkgconfig/freetype2.pc
 endef
