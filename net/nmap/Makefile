@@ -73,14 +73,14 @@ endef
 
 define Package/ncat-ssl
 $(call Package/nmap/default)
-  DEPENDS:=$(NCAT_DEPENDS) +libopenssl
+  DEPENDS:=$(NCAT_DEPENDS) +libopenssl +ca-bundle
   VARIANT:=ssl
   TITLE:=Ncat (with OpenSSL support)
 endef
 
 define Package/ncat-full
 $(call Package/nmap/default)
-  DEPENDS:=$(NCAT_DEPENDS) +libopenssl +liblua5.3
+  DEPENDS:=$(NCAT_DEPENDS) +libopenssl +ca-bundle +liblua5.3
   VARIANT:=full
   TITLE:=Ncat (with OpenSSL and scripting support)
 endef
@@ -179,7 +179,6 @@ endef
 define Package/ncat-ssl/install
 	$(call Package/ncat/install,$(1))
 	$(INSTALL_DIR) $(1)/usr/share/ncat
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/ncat/ca-bundle.crt $(1)/usr/share/ncat/
 endef
 
 Package/ncat-full/install=$(Package/ncat-ssl/install)
