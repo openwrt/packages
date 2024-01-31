@@ -6,14 +6,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=imagemagick
-PKG_VERSION:=7.0.9
-PKG_REVISION:=5
-PKG_RELEASE:=4
+PKG_VERSION:=7.1.1
+PKG_REVISION:=27
+PKG_RELEASE:=1
 PKG_MAINTAINER:=Val Kulkov <val.kulkov@gmail.com>
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_REVISION).tar.gz
-PKG_SOURCE_URL:=http://github.com/ImageMagick/ImageMagick/archive/$(PKG_VERSION)-$(PKG_REVISION)
-PKG_HASH:=d15abd31e7e18f7edec47df156773a23e5100386e55c6ce50f5353e9572d3413
+PKG_SOURCE:=ImageMagick-$(PKG_VERSION)-$(PKG_REVISION).tar.gz
+PKG_SOURCE_URL:=https://imagemagick.org/archive
+PKG_HASH:=df0af0386df5bb3333ac9b1173ac4c893dcdd20b28100128e857f3d8f6466e1a
 PKG_BUILD_DIR:=$(BUILD_DIR)/ImageMagick-$(PKG_VERSION)-$(PKG_REVISION)
 PKG_FIXUP:=autoreconf
 
@@ -35,7 +35,7 @@ endef
 
 define Package/imagemagick
   $(call Package/imagemagick/Default)
-  DEPENDS:=+libltdl +libpthread +zlib +libfreetype +libpng +libjpeg +libtiff
+  DEPENDS:=+libltdl +libpthread +zlib +libfreetype +libpng +libjpeg +libtiff +libstdcpp
 endef
 
 define Package/imagemagick/description
@@ -63,27 +63,16 @@ define Package/imagemagick/conffiles
 endef
 
 CONFIGURE_ARGS += \
-	--enable-shared \
 	--disable-static \
 	--disable-docs \
 	--enable-dependency-tracking \
 	--with-modules \
-	--with-threads \
-	--with-ltdl \
-	--with-zlib \
 	--disable-hdri \
 	--with-quantum-depth=8 \
-	--disable-deprecated \
 	--disable-cipher \
 	--without-bzlib \
-	--without-autotrace \
 	--without-djvu \
-	--without-dps \
-	--without-fftw \
-	--without-flif \
-	--without-fpx \
 	--without-fontconfig \
-	--without-gslib \
 	--without-gvc \
 	--without-heic \
 	--without-jbig \
@@ -98,17 +87,9 @@ CONFIGURE_ARGS += \
 	--without-webp \
 	--without-x \
 	--without-zstd \
-	--without-gslib \
-	--without-gvc \
 	--without-pango \
-	--without-perl \
-	--without-rsvg \
 	--without-wmf \
-	--without-xml \
-	--with-freetype \
-	--with-jpeg \
-	--with-png \
-	--with-tiff
+	--without-xml
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
