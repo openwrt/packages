@@ -1,0 +1,66 @@
+Author: Konstantin Demin <rockdrilla@gmail.com>
+Title: ncat: avoid shipping/using internal ca-bundle.crt
+
+1. ca-bundle.crt may provide outdated trusted CAs.
+2. maintain trusted CAs in one place.
+
+Also remove references to NCAT_CA_CERTS_FILE and NCAT_CA_CERTS_PATH in order to catch future errors early (i.e. at compile-time).
+
+ ncat/Makefile.in  |  1 -
+ ncat/ncat_posix.c | 13 +------------
+ ncat/ncat_ssl.h   |  2 --
+ 3 files changed, 1 insertion(+), 15 deletions(-)
+
+--- a/ncat/Makefile.in
++++ b/ncat/Makefile.in
+@@ -80,7 +80,6 @@ DATAFILES =
+ ifneq ($(HAVE_OPENSSL),)
+ SRCS += http_digest.c
+ OBJS += http_digest.o
+-DATAFILES = certs/ca-bundle.crt
+ endif
+ 
+ ifneq ($(NOLUA),yes)
+--- a/ncat/ncat_posix.c
++++ b/ncat/ncat_posix.c
+@@ -347,28 +347,17 @@ void set_lf_mode(void)
+ 
+ #ifdef HAVE_OPENSSL
+ 
+-#define NCAT_CA_CERTS_PATH (NCAT_DATADIR "/" NCAT_CA_CERTS_FILE)
+-
+ int ssl_load_default_ca_certs(SSL_CTX *ctx)
+ {
+     int rc;
+ 
+     if (o.debug)
+-        logdebug("Using system default trusted CA certificates and those in %s.\n", NCAT_CA_CERTS_PATH);
++        logdebug("Using system default trusted CA certificates.\n");
+ 
+     /* Load distribution-provided defaults, if any. */
+     rc = SSL_CTX_set_default_verify_paths(ctx);
+     ncat_assert(rc > 0);
+ 
+-    /* Also load the trusted certificates we ship. */
+-    rc = SSL_CTX_load_verify_locations(ctx, NCAT_CA_CERTS_PATH, NULL);
+-    if (rc != 1) {
+-        if (o.debug)
+-            logdebug("Unable to load trusted CA certificates from %s: %s\n",
+-                NCAT_CA_CERTS_PATH, ERR_error_string(ERR_get_error(), NULL));
+-        return -1;
+-    }
+-
+     return 0;
+ }
+ #endif
+--- a/ncat/ncat_ssl.h
++++ b/ncat/ncat_ssl.h
+@@ -67,8 +67,6 @@
+ #include <openssl/ssl.h>
+ #include <openssl/err.h>
+ 
+-#define NCAT_CA_CERTS_FILE "ca-bundle.crt"
+-
+ enum {
+     SHA1_BYTES = 160 / 8,
+     /* 40 bytes for hex digits and 9 bytes for ' '. */
