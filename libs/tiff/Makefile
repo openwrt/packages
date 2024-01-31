@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tiff
-PKG_VERSION:=4.5.0
+PKG_VERSION:=4.6.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.osgeo.org/libtiff
-PKG_HASH:=c7a1d9296649233979fa3eacffef3fa024d73d05d589cb622727b5b08c423464
+PKG_HASH:=88b3979e6d5c7e32b50d7ec72fb15af724f6ab2cbf7e10880c360a77e4b5d99a
 
 PKG_MAINTAINER:=Jiri Slachta <jiri@slachta.eu>
 PKG_LICENSE:=BSD-3-Clause
@@ -48,16 +48,6 @@ endef
 
 CMAKE_OPTIONS += \
 	-Dld-version-script=OFF \
-	-Dccitt=ON \
-	-Dpackbits=ON \
-	-Dlzw=ON \
-	-Dthunder=ON \
-	-Dnext=ON \
-	-Dlogluv=ON \
-	-Dmdi=ON \
-	-Dzlib=ON \
-	-Dpixarlog=ON \
-	-Djpeg=ON \
 	-Dold-jpeg=OFF \
 	-Djbig=OFF \
 	-Dlzma=OFF \
