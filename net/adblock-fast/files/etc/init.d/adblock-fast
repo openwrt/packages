@@ -60,7 +60,7 @@ readonly runningConfigFile="/dev/shm/${packageName}.config"
 readonly runningErrorFile="/dev/shm/${packageName}.error"
 readonly runningStatusFile="/dev/shm/${packageName}.status"
 readonly hostsFilter='/localhost/d;/^#/d;/^[^0-9]/d;s/^0\.0\.0\.0.//;s/^127\.0\.0\.1.//;s/[[:space:]]*#.*$//;s/[[:cntrl:]]$//;s/[[:space:]]//g;/[`~!@#\$%\^&\*()=+;:"'\'',<>?/\|[{}]/d;/]/d;/\./!d;/^$/d;/[^[:alnum:]_.-]/d;'
-readonly domainsFilter='/^#/d;s/[[:space:]]*#.*$//;s/[[:space:]]*$//;s/[[:cntrl:]]$//;/[[:space:]]/d;/[`~!@#\$%\^&\*()=+;:"'\'',<>?/\|[{}]/d;/]/d;/\./!d;/^$/d;/[^[:alnum:]_.-]/d;'
+readonly domainsFilter='/^#/d;s/[[:space:]]*#.*$//;s/[[:space:]]*$//;s/[[:cntrl:]]$//;/[[:space:]]/d;/[`~!@#\$%\^&\*()=+;:"'\'',<>?/\|[{}]/d;/]/d;/^$/d;/[^[:alnum:]_.-]/d;'
 readonly adBlockPlusFilter='/^#/d;/^!/d;s/[[:space:]]*#.*$//;s/^||//;s/\^$//;s/[[:space:]]*$//;s/[[:cntrl:]]$//;/[[:space:]]/d;/[`~!@#\$%\^&\*()=+;:"'\'',<>?/\|[{}]/d;/]/d;/\./!d;/^$/d;/[^[:alnum:]_.-]/d;'
 readonly dnsmasqFileFilter='\|^server=/[[:alnum:]_.-].*/|!d;s|server=/||;s|/.*$||'
 readonly dnsmasq2FileFilter='\|^local=/[[:alnum:]_.-].*/|!d;s|local=/||;s|/.*$||'
@@ -330,6 +330,7 @@ print_json_bool() { json_init; json_add_boolean "$1" "$2"; json_dump; json_clean
 print_json_int() { json_init; json_add_int "$1" "$2"; json_dump; json_cleanup; }
 print_json_string() { json_init; json_add_string "$1" "$2"; json_dump; json_cleanup; }
 sanitize_dir() { [ -d "$(readlink -fn "$1")" ] && readlink -fn "$1"; }
+smartdns_restart() { /etc/init.d/smartdns restart >/dev/null 2>&1; }
 str_contains() { test "$1" != "$(str_replace "$1" "$2" '')"; }
 str_contains_word() { echo "$1" | grep -q -w "$2"; }
 # shellcheck disable=SC2018,SC2019
@@ -339,6 +340,7 @@ str_to_upper() { echo "$1" | tr 'a-z' 'A-Z'; }
 str_replace() { printf "%b" "$1" | sed -e "s/$(printf "%b" "$2")/$(printf "%b" "$3")/g"; }
 ubus_get_data() { ubus call service list "{ 'name': '$packageName' }" | jsonfilter -e "@['${packageName}'].instances.main.data.${1}"; }
 ubus_get_ports() { ubus call service list "{ 'name': '$packageName' }" | jsonfilter -e "@['${packageName}'].instances.main.data.firewall.*.dest_port"; }
+uci_get_protocol() { uci_get 'network' "$1" 'proto'; }
 unbound_restart() { /etc/init.d/unbound restart >/dev/null 2>&1; }
 
 json() {
@@ -425,9 +427,8 @@ output() {
 	local msg memmsg logmsg text
 	local sharedMemoryOutput="/dev/shm/$packageName-output"
 	if [ -z "$verbosity" ] && [ -n "$packageName" ]; then
-		verbosity="$(uci -q get "$packageName.config.verbosity")"
+		verbosity="$(uci_get "$packageName" 'config' 'verbosity' '2')"
 	fi
-	verbosity="${verbosity:-2}"
 	if [ $# -ne 1 ] && is_integer "$1"; then
 		if [ $((verbosity & $1)) -gt 0 ] || [ "$verbosity" = "$1" ]; then shift; text="$*"; else return 0; fi
 	fi
@@ -549,7 +550,7 @@ get_text() {
 
 load_network() {
 	local param="$1"
-	local i j wan_if wan_gw wan_proto
+	local i j wan_if wan_gw
 	local counter wan_if_timeout="$procd_boot_wan_timeout" wan_gw_timeout='5'
 	counter=0
 	while [ -z "$wan_if" ]; do
@@ -570,8 +571,7 @@ load_network() {
 	done
 
 	counter=0
-	wan_proto="$(uci -q get "network.${wan_if}.proto")"
-	if [ "$wan_proto" = 'pppoe' ]; then
+	if [ "$(uci_get_protocol "$wan_if")" = 'pppoe' ]; then
 		wan_gw_timeout=$((wan_gw_timeout+10))
 	fi
 	while [ "$counter" -le "$wan_gw_timeout" ]; do
@@ -830,7 +830,7 @@ load_environment() {
 }
 
 resolver() {
-	_resolver_config() {
+	_dnsmasq_instance_config() {
 		local cfg="$1" param="$2"
 		[ -s "/etc/config/dhcp" ] || return 0
 		case "$param" in
@@ -915,10 +915,18 @@ resolver() {
 
 			config_load 'dhcp'
 			if [ "$dnsmasq_instance" = "*" ]; then
-				config_foreach _resolver_config 'dnsmasq' "$dns"
+				config_foreach _dnsmasq_instance_config 'dnsmasq' "$dns"
 			elif [ -n "$dnsmasq_instance" ]; then
 				for i in $dnsmasq_instance; do
-					_resolver_config "@dnsmasq[$i]" "$dns" || _resolver_config "$i" "$dns"
+					_dnsmasq_instance_config "@dnsmasq[$i]" "$dns" || _dnsmasq_instance_config "$i" "$dns"
+				done
+			fi
+			config_load 'smartdns'
+			if [ "$smartdns_instance" = "*" ]; then
+				config_foreach _smartdns_instance_config 'smartdns' "$dns"
+			elif [ -n "$smartdns_instance" ]; then
+				for i in $smartdns_instance; do
+					_smartdns_instance_config "@smartdns[$i]" "$dns" || _smartdns_instance_config "$i" "$dns"
 				done
 			fi
 
@@ -926,7 +934,7 @@ resolver() {
 				dnsmasq.*)
 					chmod 660 "$outputFile"
 					chown root:dnsmasq "$outputFile"
-					param=dnsmasq_restart
+					param='dnsmasq_restart'
 					output_text='Restarting dnsmasq'
 				;;
 				smartdns.*)
@@ -943,14 +951,18 @@ resolver() {
 				;;
 			esac
 
-			if [ -n "$(uci_changes dhcp)" ]; then
-				uci_commit dhcp
-				if [ "$param" = 'unbound_restart' ]; then
-					param='dnsmasq_restart; unbound_restart;'
-					output_text='Restarting Unbound/dnsmasq'
-				else
-					param=dnsmasq_restart
-					output_text='Restarting dnsmasq'
+			if [ -n "$(uci_changes dhcp)" ]; then 
+				uci_commit 'dhcp'
+				if ! str_contains "$param" 'dnsmasq_restart'; then
+					param="${param:+"$param; dnsmasq_restart"}"
+					output_text="${output_text}/dnsmasq"
+				fi
+			fi
+			if [ -n "$(uci_changes smartdns)" ]; then 
+				uci_commit 'smartdns'
+				if ! str_contains "$param" 'smartdns_restart'; then
+					param="${param:+"$param; "}smartdns_restart"
+					output_text="${output_text}/smartDNS"
 				fi
 			fi
 			output 1 "$output_text "
@@ -981,12 +993,12 @@ resolver() {
 				;;
 			esac
 			if [ -n "$(uci_changes dhcp)" ]; then 
-				uci_commit dhcp
-				if [ "$param" = 'unbound_restart' ]; then
-					param='dnsmasq_restart; unbound_restart;'
-				else
-					param=dnsmasq_restart
-				fi
+				uci_commit 'dhcp'
+				str_contains "$param" 'dnsmasq_restart' || param="${param:+"$param; dnsmasq_restart"}"
+			fi
+			if [ -n "$(uci_changes smartdns)" ]; then 
+				uci_commit 'smartdns'
+				str_contains "$param" 'smartdns_restart' || param="${param:+"$param; "}smartdns_restart"
 			fi
 			eval "$param"
 			return $?
@@ -1103,7 +1115,7 @@ process_file_url() {
 		append_newline "$R_TMP"
 		[ -n "$cfg" ] && new_size="$(get_local_filesize "$R_TMP")"
 		if [ -n "$new_size" ] && [ "$size" != "$new_size" ]; then
-			uci set "${packageName}.${cfg}.size=$size"
+			uci_set "$packageName" "$cfg" 'size' "$size"
 		fi
 		format="$(detect_file_type "$R_TMP")"
 		case "$format" in
@@ -1223,9 +1235,9 @@ download_lists() {
 	config_load "$packageName"
 	config_foreach load_validate_file_url_section 'file_url' process_file_url_wrapper
 	wait
-	if [ -n "$(uci changes "$packageName")" ]; then 
+	if [ -n "$(uci_changes "$packageName")" ]; then 
 		output 2 "Saving updated file size(s) "
-		if uci commit "$packageName"; then output_okn; else output_failn; fi
+		if uci_commit "$packageName"; then output_okn; else output_failn; fi
 	fi
 	output 1 '\n'
 
@@ -1688,7 +1700,7 @@ adb_sizes() {
 		size="$(get_url_filesize "$url")"
 		output "$url${size:+: $size} "
 		if [ -n "$size" ]; then
-			uci set "${packageName}.${cfg}.size=$size"
+			uci_set "$packageName" "$cfg" 'size' "$size"
 			output_okn
 		else
 			output_failn
@@ -1699,7 +1711,7 @@ adb_sizes() {
 	load_environment "$validation_result" 'quiet' || return 1
 	config_load "$packageName"
 	config_foreach _config_add_url_size 'file_url'
-	uci commit "$packageName"
+	uci_commit "$packageName"
 }
 
 # shellcheck disable=SC2120
@@ -2119,6 +2131,7 @@ load_validate_config() {
 		'led:or("", "none", file, device, string)' \
 		'dns:or("dnsmasq.addnhosts", "dnsmasq.conf", "dnsmasq.ipset", "dnsmasq.nftset", "dnsmasq.servers", "smartdns.domainset", "smartdns.ipset", "smartdns.nftset", "unbound.adb_list"):dnsmasq.servers' \
 		'dnsmasq_instance:list(or(integer, string)):*' \
+		'smartdns_instance:list(or(integer, string)):*' \
 		'allowed_domain:list(string)' \
 		'blocked_domain:list(string)' \
 		'dnsmasq_config_file_url:string'
