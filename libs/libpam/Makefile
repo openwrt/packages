@@ -19,7 +19,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/Linux-PAM-$(PKG_VERSION)
 PKG_MAINTAINER:=Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>
 PKG_LICENSE:=BSD-3c GPL
 PKG_LICENSE_FILES:=COPYING Copyright
-PKG_CPE_ID:=cpe:/a:kernel:linux-pam
+PKG_CPE_ID:=cpe:/a:linux-pam:linux-pam
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
