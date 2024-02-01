@@ -22,7 +22,7 @@
  
  # Linux using LCC
  #CXX=lcc
-@@ -167,7 +167,7 @@ uninstall-unrar:
+@@ -170,7 +170,7 @@ uninstall-unrar:
  			rm -f $(DESTDIR)/bin/unrar
  
  install-lib:
