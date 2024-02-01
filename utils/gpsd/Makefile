@@ -18,7 +18,7 @@ PKG_HASH:=7e5e53e5ab157dce560a2f22e20322ef1136d3ebde99162def833a3306de01e5
 PKG_MAINTAINER:=Pushpal Sidhu <psidhu.devel@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
-PKG_CPE_ID:=cpe:/a:berlios:gps_daemon
+PKG_CPE_ID:=cpe:/a:gpsd_project:gpsd
 
 PKG_BUILD_DEPENDS:=scons/host
 
