@@ -9,7 +9,7 @@ PKG_NAME:=imagemagick
 PKG_VERSION:=7.1.1
 PKG_REVISION:=27
 PKG_RELEASE:=1
-PKG_MAINTAINER:=Val Kulkov <val.kulkov@gmail.com>
+PKG_MAINTAINER:=Aleksey Vasilenko <aleksey.vasilenko@gmail.com>
 
 PKG_SOURCE:=ImageMagick-$(PKG_VERSION)-$(PKG_REVISION).tar.gz
 PKG_SOURCE_URL:=https://imagemagick.org/archive
