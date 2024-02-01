@@ -16,7 +16,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_HASH:=93caba72b4e051d1f8d4f5a076ab63c99b77faee019b72b9783b267986dbb45f
 
 PKG_MAINTAINER:=
-PKG_CPE_ID:=cpe:/a:libidn2_project:libidn2
+PKG_CPE_ID:=cpe:/a:gnu:libidn2
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
