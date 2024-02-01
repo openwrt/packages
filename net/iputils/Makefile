@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=iputils
-PKG_VERSION:=20211215
-PKG_RELEASE:=2
+PKG_VERSION:=20240117
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/iputils/iputils/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=b6f67fc705490673ff4471d006221b4a2f1b1180b929d9fefd771352621ccedf
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=https://github.com/iputils/iputils/releases/download/$(PKG_VERSION)
+PKG_HASH:=2c3f1f4d6f2481dec05b441de9c81d4059bdb202d4d0e98404f62ee1502bf1dc
 PKG_BUILD_DIR:=$(BUILD_DIR)/iputils-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Noah Meyerhans <frodo@morgul.net>
@@ -27,15 +27,9 @@ include $(INCLUDE_DIR)/meson.mk
 
 MESON_ARGS += \
 	-DBUILD_MANS=false \
-	-DBUILD_HTML_MANS=false \
 	-DUSE_CAP=false \
 	-DUSE_IDN=false \
 	-DUSE_GETTEXT=false \
-	-DNO_SETCAP_OR_SUID=true \
-	-DBUILD_PING=true \
-	-DBUILD_ARPING=true \
-	-DBUILD_CLOCKDIFF=true \
-	-DBUILD_TRACEPATH=true \
 	-DSKIP_TESTS=true
 
 define Package/iputils/Default
