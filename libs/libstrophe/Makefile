@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libstrophe
-PKG_VERSION:=0.10.0
+PKG_VERSION:=0.13.0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/strophe/libstrophe/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=8d804e4c74cea1133203cc95a59a88f700fbdaead076e7959b495d734dd7936d
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=https://github.com/strophe/libstrophe/releases/download/$(PKG_VERSION)
+PKG_HASH:=8d7c17c694efff7d2e2d3632684537e7ba874ce3d7f0e750a539f2299021bbaa
 
 PKG_MAINTAINER:=Chih-Wei Chen <changeway@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -35,7 +35,7 @@ define Package/libstrophe
 	CATEGORY:=Libraries
 	TITLE:=XMPP client library
 	URL:=http://strophe.im/libstrophe
-	DEPENDS:= +libopenssl +libstrophe-libxml2:libxml2 +libstrophe-expat:libexpat
+	DEPENDS:= +libopenssl +libstrophe-libxml2:libxml2 +libstrophe-expat:libexpat +zlib
 	MENU:=1
 endef
 
