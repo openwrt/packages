@@ -17,7 +17,7 @@ PKG_HASH:=ef2420f0232c087801abf705e89ae65f6257df6b7931d37846a193ef2e8cdcbe
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
-PKG_CPE_ID:=cpe:/a:libexpat:expat
+PKG_CPE_ID:=cpe:/a:libexpat_project:libexpat
 
 CMAKE_INSTALL:=1
 
