@@ -18,7 +18,7 @@ PKG_HASH:=dce41b4a4f08521c53a0ab163ad2007d18b5e1aa173ea5803bd47a1be3159c24
 PKG_MAINTAINER:=
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
-PKG_CPE_ID:=cpe:/a:miniupnp_project:miniupnp
+PKG_CPE_ID:=cpe:/a:miniupnp_project:miniupnpc
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
