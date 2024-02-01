@@ -16,7 +16,7 @@ PKG_HASH:=06811f5aed3e7bc03e63d05537ff4b501de5283108c8ee79396c60601a00830c
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
-PKG_CPE_ID:=cpe:/a:vips:vips
+PKG_CPE_ID:=cpe:/a:libvips:libvips
 
 PKG_BUILD_DEPENDS:=glib2/host
 
