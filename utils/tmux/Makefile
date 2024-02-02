@@ -12,7 +12,7 @@ PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 
 PKG_LICENSE:=ISC
 PKG_LICENSE_FILES:=COPYING
-PKG_CPE_ID:=cpe:/a:nicholas_marriott:tmux
+PKG_CPE_ID:=cpe:/a:tmux_project:tmux
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
