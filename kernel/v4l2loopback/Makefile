@@ -15,6 +15,7 @@ PKG_SOURCE_DATE:=2021-07-13
 PKG_MIRROR_HASH:=811a4b0bbefe14cf4a74dbb3d45f5ae147f50f1d67dbb6f0fe3e5a9888adf49a
 
 PKG_MAINTAINER:=Michel Promonet <michel.promonet@free.fr>
+PKG_CPE_ID:=cpe:/o:v4l2loopback_project:v4l2loopback
 
 include $(INCLUDE_DIR)/package.mk
 

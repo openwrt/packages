@@ -11,6 +11,7 @@ PKG_HASH:=5699473b29941e8dafed10de5c8cb37a3581edf62ba7d04b911ca247d4de3c5d
 PKG_MAINTAINER:=Hans Dedecker <dedeckeh@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:nghttp2:nghttp2
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk

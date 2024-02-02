@@ -14,6 +14,7 @@ PKG_HASH:=541cd3e3e252fb19a7b48f420b798b53483302b7fe4d9954c947605d0a263d62
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=LICENSE.rst
 PKG_MAINTAINER:=Richard Yu <yurichard3839@gmail.com>
+PKG_CPE_ID:=cpe:/a:pycryptodome:pycryptodomex
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

@@ -16,6 +16,7 @@ PKG_SOURCE_URL:=https://codeload.github.com/lz4/lz4/tar.gz/v$(PKG_VERSION)?
 PKG_HASH:=030644df4611007ff7dc962d981f390361e6c97a34e5cbc393ddfbe019ffe2c1
 
 PKG_MAINTAINER:=Darik Horn <dajhorn@vanadac.com>
+PKG_CPE_ID:=cpe:/a:lz4_project:lz4
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1

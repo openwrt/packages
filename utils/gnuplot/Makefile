@@ -4,6 +4,7 @@ PKG_NAME:=gnuplot
 PKG_VERSION:=5.4.2
 PKG_RELEASE:=2
 PKG_MAINTAINER:=Matteo Cicuttin <datafl4sh@toxicnet.eu>
+PKG_CPE_ID:=cpe:/a:gnuplot_project:gnuplot
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/gnuplot-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz

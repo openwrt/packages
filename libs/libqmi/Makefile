@@ -16,6 +16,7 @@ PKG_SOURCE_URL:=https://gitlab.freedesktop.org/mobile-broadband/libqmi.git
 PKG_MIRROR_HASH:=a0fa33a89011bdb593f66fd0b674f2a7c31f87e43ffd7f3e9a515b00864c4a91
 
 PKG_MAINTAINER:=Nicholas Smith <nicholas@nbembedded.com>
+PKG_CPE_ID:=cpe:/a:libqmi_project:libqmi
 
 PKG_INSTALL:=1
 

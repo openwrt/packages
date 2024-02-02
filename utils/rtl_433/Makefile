@@ -17,6 +17,7 @@ PKG_HASH:=12a5cb7a733ba352467522c704d5b685aa6137582dc18aaa444d4891c29ee839
 PKG_MAINTAINER:=Jasper Scholte <NightNL@outlook.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:rtl_433_project:rtl_433
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk

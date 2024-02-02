@@ -14,6 +14,7 @@ PKG_HASH:=5410474b23552016220d04aa181903cb50ae988f29e99cb03f3e2de86a109be4
 PKG_MAINTAINER:=Lucian CRISTIAN <lucian.cristian@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:open-iscsi_project:open-iscsi
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

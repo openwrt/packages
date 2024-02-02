@@ -10,6 +10,7 @@ PKG_HASH:=e24eb88b8ce7db3b7ca6eb80115dd1284abc5ec32a8deccfed2224fc2532b9fd
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:libtirpc_project:libtirpc
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1

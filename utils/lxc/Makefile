@@ -20,6 +20,7 @@ PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 PKG_LICENSE:=LGPL-2.1-or-later BSD-2-Clause GPL-2.0
 PKG_LICENSE_FILES:=COPYING LICENSE.GPL2 LICENSE.LGPL2.1
 PKG_USE_MIPS16:=0
+PKG_CPE_ID:=cpe:/a:linuxcontainers:lxc
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/meson.mk
