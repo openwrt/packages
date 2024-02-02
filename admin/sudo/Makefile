@@ -19,7 +19,7 @@ PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
 PKG_LICENSE:=ISC
 PKG_LICENSE_FILES:=doc/LICENSE
-PKG_CPE_ID:=cpe:/a:todd_miller:sudo
+PKG_CPE_ID:=cpe:/a:sudo_project:sudo
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
