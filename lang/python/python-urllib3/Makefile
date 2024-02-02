@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.txt
-PKG_CPE_ID:=cpe:/a:urllib3_project:urllib3
+PKG_CPE_ID:=cpe:/a:python:urllib3
 
 PYPI_NAME:=urllib3
 PKG_HASH:=8d22f86aae8ef5e410d4f539fde9ce6b2113a001bb4d189e0aed70642d602b11
