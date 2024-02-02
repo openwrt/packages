@@ -17,6 +17,7 @@ PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:libzip:libzip
 
 CMAKE_INSTALL:=1
 

@@ -19,6 +19,7 @@ PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:libsamplerate_project:libsamplerate
 
 PKG_INSTALL:=1
 

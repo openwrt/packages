@@ -19,6 +19,7 @@ PKG_MIRROR_HASH:=0cd74320be0270a07931e42d2f14f87a8b3fb664ecb5db58b0e838886211ab1
 PKG_MAINTAINER:=Charles Southerland <charlie@stuphlabs.com>
 PKG_LICENSE:=ISC
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:yajl_project:yajl
 
 CMAKE_INSTALL:=1
 

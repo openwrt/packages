@@ -16,6 +16,7 @@ PKG_HASH:=9cdaca154bc92afc3117f0e5f5b3208dd5f84583af1cf061c39baa0a2bb142f9
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:jan_kara:linux_diskquota
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1

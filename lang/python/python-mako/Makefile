@@ -15,6 +15,7 @@ PKG_HASH:=d60a3903dc3bb01a18ad6a89cdbe2e4eadc69c0bc8ef1e3773ba53d44c3f7a34
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:sqlalchemy:mako
 
 PKG_HOST_ONLY:=1
 HOST_BUILD_DEPENDS:= \

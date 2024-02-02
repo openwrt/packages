@@ -20,6 +20,7 @@ PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
 PKG_LICENSE:=PHP-3.01
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:php:imagick
 
 PKG_BUILD_DEPENDS:=php8
 PKG_BUILD_DIR:=$(BUILD_DIR)/pecl-php8/$(PECL_NAME)-$(PKG_VERSION)

@@ -12,6 +12,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/LuaJIT-$(PKG_VERSION)
 PKG_MAINTAINER:=Morteza Milani <milani@pichak.co>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYRIGHT
+PKG_CPE_ID:=cpe:/a:luajit:luajit
 
 PKG_BUILD_FLAGS:=no-mips16
 

@@ -11,6 +11,7 @@ PKG_HASH:=d3ed26a1131a13686dfca4935e520eb7c90ae76fbc45d98bb50a8dc86230342b
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_LICENSE:=BSD-3-Clause IJG zlib
 PKG_LICENSE_FILES:=LICENSE.md
+PKG_CPE_ID:=cpe:/a:libjpeg-turbo:libjpeg-turbo
 
 # Allows ASM compilation for speed
 PKG_BUILD_FLAGS:=no-mips16

@@ -8,6 +8,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/HardySimpson/$(PKG_NAME)/archive/refs/tags/$(PKG_VERSION).tar.gz?
 PKG_HASH:=00037ab8d52772a95d645f1dcfd2c292b7cea326b54e63e219a5b7fdcb7e6508
 PKG_MAINTAINER:=Marko Ratkaj <markoratkaj@gmail.com>
+PKG_CPE_ID:=cpe:/a:zlog_project:zlog
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1

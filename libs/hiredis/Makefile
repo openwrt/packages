@@ -17,6 +17,7 @@ PKG_HASH:=fe6d21741ec7f3fc9df409d921f47dfc73a4d8ff64f4ac6f1d95f951bf7f53d6
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:redis:hiredis
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 
 PKG_BUILD_PARALLEL:=1

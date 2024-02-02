@@ -17,6 +17,7 @@ PKG_HASH:=5b260c2b754fd8d409ba83ee7aee294ecdbb2c235f9f78fe90bc11cb6e5debc2
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:scapy:scapy
 
 include ../../lang/python/pypi.mk
 include $(INCLUDE_DIR)/package.mk

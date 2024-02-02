@@ -19,6 +19,7 @@ PKG_HASH:=b262435a5241e89bfa51c3cabd5133753952f7a7b7b93f32e08cb9d96f580d69
 PKG_MAINTAINER:=Stijn Segers <borromini.reg@protonmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:net-tools_project:net-tools
 
 include $(INCLUDE_DIR)/package.mk
 

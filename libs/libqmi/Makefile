@@ -18,6 +18,7 @@ PKG_MIRROR_HASH:=674f5848c56c11cdc2fbc82c52e5bc2a3a0fddb56315dc4220544688a7b0e17
 PKG_BUILD_FLAGS:=gc-sections
 
 PKG_MAINTAINER:=Nicholas Smith <nicholas@nbembedded.com>
+PKG_CPE_ID:=cpe:/a:libqmi_project:libqmi
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk

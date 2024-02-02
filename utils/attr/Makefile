@@ -16,6 +16,7 @@ PKG_SOURCE_URL:=http://git.savannah.nongnu.org/cgit/attr.git/snapshot
 PKG_HASH:=69991b2fc5fe7917d996b05d5d4fe3c44d074c9d806dd263b14a42fab57bfc2f
 
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
+PKG_CPE_ID:=cpe:/a:attr_project:attr
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

@@ -17,6 +17,7 @@ PKG_HASH:=ec939063761914e14542972a5cba6d33c23b0859ab6342f61cf070cfc600efc2
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:ruamel.yaml_project:ruamel.yaml
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

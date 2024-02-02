@@ -13,6 +13,7 @@ TINI_COMMIT:=de40ad0
 PKG_MAINTAINER:=Gerard Ryan <G.M0N3Y.2503@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:tini_project:tini
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk

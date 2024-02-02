@@ -19,6 +19,7 @@ PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING.LESSER
+PKG_CPE_ID:=cpe:/a:libmodbus:libmodbus
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

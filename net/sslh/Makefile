@@ -18,6 +18,7 @@ PKG_HASH:=8e3742d14edf4119350cfdc7bb96b89134d9218eb6d2a6e1f70891ca18a649b1
 PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:sslh_project:sslh
 
 include $(INCLUDE_DIR)/package.mk
 

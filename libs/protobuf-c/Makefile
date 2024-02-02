@@ -20,6 +20,7 @@ HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/protobuf-c-$(PKG_VERSION)
 PKG_MAINTAINER:=
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:protobuf-c_project:protobuf-c
 
 HOST_BUILD_DEPENDS:=protobuf/host
 PKG_BUILD_DEPENDS:=protobuf
