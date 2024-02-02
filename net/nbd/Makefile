@@ -16,7 +16,7 @@ PKG_SOURCE_URL:=@SF/nbd
 PKG_HASH:=b4466412f13e057659f25d35e1e8e181afd62c7179bff22a6add81445ecb8690
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_MAINTAINER:=Marcin Jurkowski <marcin1j@gmail.com>
-PKG_CPE_ID:=cpe:/a:network_block_device:nbd
+PKG_CPE_ID:=cpe:/a:network_block_device_project:network_block_device
 
 PKG_INSTALL:=1
 
