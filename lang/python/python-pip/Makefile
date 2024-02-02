@@ -17,7 +17,7 @@ PKG_HASH:=fb0bd5435b3200c602b5bf61d2d43c2f13c02e29c1707567ae7fbc514eb9faf2
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.txt
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
-CPE_ID:=cpe:/a:python:pip
+PKG_CPE_ID:=cpe:/a:pypa:pip
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
