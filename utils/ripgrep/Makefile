@@ -15,6 +15,7 @@ PKG_HASH:=0fb17aaf285b3eee8ddab17b833af1e190d73de317ff9648751ab0660d763ed2
 PKG_MAINTAINER:=Luca Barbato <lu_zero@luminem.org>
 PKG_LICENSE:=MIT Unlicense
 PKG_LICENSE_FILES:=LICENSE-MIT UNLICENSE
+PKG_CPE_ID:=cpe:/a:ripgrep_project:ripgrep
 
 PKG_BUILD_DEPENDS:=rust/host
 PKG_BUILD_PARALLEL:=1

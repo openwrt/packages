@@ -16,6 +16,7 @@ PKG_HASH:=cc3360d3d913684fb080db97a434b04be45e2cef23cc5bc4cbc5f64b0c5e7bca
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
 PKG_LICENSE:=GPL-2.0 GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING LICENSE
+PKG_CPE_ID:=cpe:/a:hp:linux_imaging_and_printing_project
 
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=libcups

@@ -17,6 +17,7 @@ PKG_HASH:=e7d8db41c0181c80d76c982aacc442c0783a2c54d6400fe028954201a2e032fe
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:tornadoweb:tornado
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

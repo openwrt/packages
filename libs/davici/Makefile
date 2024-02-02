@@ -18,6 +18,7 @@ PKG_HASH:=b03c5a1aad905e962271d70246d6af6c337ffd00449d990082ea02161327bde8
 PKG_MAINTAINER:=Lukas Voegl <lvoegl@tdt.de>
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:strongswan:davici
 
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
