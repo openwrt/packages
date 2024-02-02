@@ -18,6 +18,7 @@ PKG_HASH:=5f66908044cc0c504f4a7e618ae390c9a78d108d3f713d7839e440693f43b5e7
 PKG_MAINTAINER:=Daniel Bermond <dbermond@archlinux.org>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:proxychains-ng_project:proxychains-ng
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1

@@ -13,6 +13,7 @@ PKG_RELEASE:=3
 PKG_MAINTAINER:=Marcin Jurkowski <marcin1j@gmail.com>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:minisnmpd_project:minisnmpd
 
 PKG_SOURCE:=mini-snmpd-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/troglobit/mini-snmpd/tar.gz/v$(PKG_VERSION)?

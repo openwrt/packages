@@ -18,6 +18,7 @@ PKG_HASH:=52c083b77c2b0d8449dee141f9c3eba76e6d4c5ad44ef05df25891126cb85ae9
 PKG_MAINTAINER:=Lucian CRISTIAN <lucian.cristian@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later LGPL-2.1-or-later
 PKG_LICENSE_FILES:=License
+PKG_CPE_ID:=cpe:/a:libcap-ng_project:libcap-ng
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1

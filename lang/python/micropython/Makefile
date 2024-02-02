@@ -18,6 +18,7 @@ PKG_HASH:=96fc71b42ed331c64e1adc5a830ec4f29f2975c23e8751109c03f32b80fa3eb4
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:micropython:micropython
 
 PKG_BUILD_PARALLEL:=1
 

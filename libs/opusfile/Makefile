@@ -16,6 +16,7 @@ PKG_HASH:=118d8601c12dd6a44f52423e68ca9083cc9f2bfe72da7a8c1acb22a80ae3550b
 PKG_MAINTAINER:=Eduardo Abinader <eduardoabinader@gmail.com>
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:xiph:opusfile
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

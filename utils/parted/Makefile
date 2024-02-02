@@ -15,6 +15,7 @@ PKG_INSTALL:=1
 
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:parted_project:parted
 PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
 
 PKG_CONFIG_DEPENDS:= \
