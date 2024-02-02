@@ -18,6 +18,7 @@ PKG_HASH:=d8be783efd5cd4ae534cee4132338e3f40f182c3205d23b200094ec85faaaef8
 PKG_MAINTAINER:=Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:p11-kit_project:p11-kit
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/meson.mk

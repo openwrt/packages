@@ -19,6 +19,7 @@ PKG_MIRROR_HASH:=745a465062065104e2222ffc1b1bb3e0ce14626d44ee2176cb2a5c3723e3163
 PKG_MAINTAINER:=Nathaniel Wesley Filardo <nwfilardo@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:rng-tools_project:rng-tools
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

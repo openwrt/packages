@@ -11,6 +11,7 @@ PKG_HASH:=16b28c9130b4dfab0b571dce6d2959d2ee93fce27aa0f4b2c1bb30700f371393
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:namjaejeon:exfatprogs
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

@@ -19,6 +19,7 @@ PKG_HASH:=07618e71c4d9a6b6b3dc1986540486ee310a9838ba754926c7d14a17d8fccf3d
 
 PKG_FIXUP:=autoreconf
 PKG_LICENSE:=GPL-2.0+
+PKG_CPE_ID:=cpe:/a:netfilter:libnetfilter_cthelper
 
 PKG_INSTALL:=1
 
