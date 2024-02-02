@@ -18,7 +18,7 @@ PKG_HASH:=2757ddc62cf64b411f569db2fa85c25ec846c0db110023f6befb33691f078986
 PKG_MAINTAINER:=Erwan Mas <erwan@mas.nom.fr>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
-PKG_CPE_ID:=cpe:/a:tinc:tinc
+PKG_CPE_ID:=cpe:/a:tinc-vpn:tinc
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
