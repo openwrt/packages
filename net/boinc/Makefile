@@ -19,7 +19,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-client_release-$(PKG_VERSION_SHORT)-$(PK
 PKG_MAINTAINER:=Christian Dreihsig <christian.dreihsig@t-online.de>, Steffen Moeller <moeller@debian.org>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
-PKG_CPE_ID:=cpe:/a:boinc_project:boinc
+PKG_CPE_ID:=cpe:/a:rom_walton:boinc
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=0
