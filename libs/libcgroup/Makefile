@@ -11,6 +11,7 @@ PKG_HASH:=e4e38bdc7ef70645ce33740ddcca051248d56b53283c0dc6d404e17706f6fb51
 PKG_MAINTAINER:=Daniel Danzberger <daniel@dd-wrt.com>
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:libcgroup_project:libcgroup
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

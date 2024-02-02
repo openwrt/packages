@@ -12,6 +12,7 @@ PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://git.kernel.org/pub/scm/linux/kernel/git/dhowells/keyutils.git/snapshot/
 PKG_HASH:=a61d5706136ae4c05bd48f86186bcfdbd88dd8bd5107e3e195c924cfc1b39bb4
+PKG_CPE_ID:=cpe:/a:keyutils_project:keyutils
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1

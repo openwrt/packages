@@ -18,6 +18,7 @@ PKG_HASH:=f5a6949043cc72c001b728d8c218609c5a15f3c33d75614b78c79418fcf00d80
 PKG_MAINTAINER:=Jeff Waugh <jdub@bethesignal.org>
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:kernel:kmod
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

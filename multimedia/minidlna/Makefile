@@ -18,6 +18,7 @@ PKG_HASH:=222ce45a1a60c3ce3de17527955d38e5ff7a4592d61db39577e6bf88e0ae1cb0
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0-or-later BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING LICENCE.miniupnpd
+PKG_CPE_ID:=cpe:/a:readymedia_project:readymedia
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

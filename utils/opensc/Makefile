@@ -14,6 +14,7 @@ PKG_HASH:=8d4e5347195ebea332be585df61dcc470331c26969e4b0447c851fb0844c7186
 
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:opensc_project:opensc
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_SOURCE_URL:=https://github.com/OpenSC/OpenSC/releases/download/$(PKG_VERSION)/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz

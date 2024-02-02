@@ -24,6 +24,7 @@ PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:shadowsocks:shadowsocks-libev
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

@@ -18,6 +18,7 @@ PKG_HASH:=ec9c46c2aefbb960fb6a6b7f800fe39de48343437b6ce08e30a8d9688ed14ba4
 PKG_MAINTAINER:=Valentín Kivachuk <vk18496@gmail.com>
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=leptonica-license.txt
+PKG_CPE_ID:=cpe:/a:leptonica:leptonica
 
 CMAKE_BINARY_SUBDIR:=openwrt-build
 

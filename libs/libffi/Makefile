@@ -17,6 +17,7 @@ PKG_HASH:=0acbca9fd9c0eeed7e5d9460ae2ea945d3f1f3d48e13a4c54da12c7e0d23c313
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:libffi_project:libffi
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

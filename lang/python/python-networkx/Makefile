@@ -14,6 +14,7 @@ PKG_HASH:=de346335408f84de0eada6ff9fafafff9bcda11f0a0dfaa931133debb146ab61
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.txt
+PKG_CPE_ID:=cpe:/a:python:networkx
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
 include ../pypi.mk

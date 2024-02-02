@@ -11,6 +11,7 @@ PKG_HASH:=fce01ccac59812bddadffacff017dac2e4762bdb6ebc6ffe06f6ed4f6192c971
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=LGPL-3.0-or-later GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING.GPLv2 COPYING.GPLv3 COPYING.LGPLv3
+PKG_CPE_ID:=cpe:/a:gnupg:libksba
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
