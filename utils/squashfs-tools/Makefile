@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
-PKG_CPE_ID:=cpe:/a:phillip_lougher:squashfs
+PKG_CPE_ID:=cpe:/a:squashfs-tools_project:squashfs-tools
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/plougher/squashfs-tools/tar.gz/${PKG_VERSION}?
