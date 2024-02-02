@@ -17,7 +17,7 @@ PKG_HASH:=26b602ae454b0ba6d99ef44a09b6b9e0dfa7f67228106736df1f278c70bc91d3
 
 PKG_MAINTAINER:=Cezary Jackiewicz <cezary@eko.one.pl>
 PKG_LICENSE:=GPLv2
-PKG_CPE_ID:=cpe:/a:beasts:vsftpd
+PKG_CPE_ID:=cpe:/a:vsftpd_project:vsftpd
 
 include $(INCLUDE_DIR)/package.mk
 
