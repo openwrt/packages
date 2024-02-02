@@ -17,6 +17,7 @@ PKG_HASH:=329ea3e3130b026c03a4acc50e168e7daff4e6e661bc6a7dfec0d77b570851d5
 PKG_MAINTAINER:=David Woodhouse <dwmw2@infradead.org>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:usc:cereal
 
 CMAKE_INSTALL:=1
 

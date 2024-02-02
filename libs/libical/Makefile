@@ -18,6 +18,7 @@ PKG_SOURCE_URL:=https://github.com/libical/libical/releases/download/v$(PKG_VERS
 PKG_MAINTAINER:=Jose Zapater <jzapater@gmail.com>
 PKG_LICENSE:=LGPL-2.1-or-later MPL-2.0
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:libical_project:libical
 
 CMAKE_INSTALL:=1
 

@@ -17,6 +17,7 @@ PKG_HASH:=51c75c4126074b472f746a24399ad32f6053d1b34b68d2fa41e558e6f4a98719
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:pytest:py
 
 PKG_BUILD_DEPENDS:=python-setuptools-scm/host
 

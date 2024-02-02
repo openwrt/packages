@@ -16,6 +16,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/json-$(PKG_VERSION)
 PKG_MAINTAINER:=Leonid Esman <leonid.esman@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.MIT
+PKG_CPE_ID:=cpe:/a:json-for-modern-cpp_project:json-for-modern-cpp
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/meson.mk

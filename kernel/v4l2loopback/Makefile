@@ -14,6 +14,7 @@ PKG_SOURCE_VERSION:=v0.12.7
 PKG_MIRROR_HASH:=e5e5d897bdaa7f2fb0b897e503cecaeee234fcdc7f2f138aae501ef742f5b2b2
 
 PKG_MAINTAINER:=Michel Promonet <michel.promonet@free.fr>
+PKG_CPE_ID:=cpe:/o:v4l2loopback_project:v4l2loopback
 
 include $(INCLUDE_DIR)/package.mk
 

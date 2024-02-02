@@ -17,6 +17,7 @@ PKG_HASH:=2ab219f651901a337a7d3c268128711b80330a99ea36bdc528c76b591a624c3c
 PKG_MAINTAINER:=David Woodhouse <dwmw2@infradead.org>
 PKG_LICENSE:=Zlib
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:zlib-ng:minizip-ng
 
 PKG_BUILD_FLAGS:=lto
 

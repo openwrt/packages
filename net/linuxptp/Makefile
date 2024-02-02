@@ -18,6 +18,7 @@ PKG_HASH:=e1743d44f8208897e30895da3579e670ff919b914feb4b5a949f3e421ddde535
 PKG_MAINTAINER:=Wojciech Dubowik <Wojciech.Dubowik@westermo.com>
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:linuxptp_project:linuxptp
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/kernel.mk
