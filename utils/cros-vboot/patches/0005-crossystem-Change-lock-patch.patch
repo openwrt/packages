@@ -1,0 +1,21 @@
+From 9e15aa1e3d62070f4a843f7a70ba567678d72d36 Mon Sep 17 00:00:00 2001
+From: Brian Norris <computersforpeace@gmail.com>
+Date: Thu, 17 Aug 2023 00:02:48 -0700
+Subject: [PATCH 5/5] crossystem: Change lock patch
+
+Signed-off-by: Brian Norris <computersforpeace@gmail.com>
+---
+ host/lib/crossystem.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/host/lib/crossystem.c
++++ b/host/lib/crossystem.c
+@@ -25,7 +25,7 @@
+ #include "vboot_struct.h"
+ 
+ /* Filename for crossystem lock */
+-#define CROSSYSTEM_LOCK_PATH "/run/lock/crossystem.lock"
++#define CROSSYSTEM_LOCK_PATH "/var/run/crossystem.lock"
+ 
+ /* Filename for kernel command line */
+ #define KERNEL_CMDLINE_PATH "/proc/cmdline"

@@ -1,0 +1,99 @@
+From aa0f1661f48975ed542731719d1cbba71a786ee9 Mon Sep 17 00:00:00 2001
+From: Brian Norris <computersforpeace@gmail.com>
+Date: Wed, 16 Aug 2023 22:17:11 -0700
+Subject: [PATCH 1/5] flashrom: Switch to "internal"
+
+"host" is just a ChromiumOS alias for "internal". But this package can
+be built for non-ChromiumOS tooling (e.g., upstream flashrom).
+
+Signed-off-by: Brian Norris <computersforpeace@gmail.com>
+---
+ futility/updater_manifest.c            | 2 +-
+ host/lib/include/flashrom.h            | 2 +-
+ scripts/image_signing/get_gbb_flags.sh | 2 +-
+ scripts/image_signing/set_gbb_flags.sh | 4 ++--
+ utility/dev_debug_vboot                | 6 +++---
+ 5 files changed, 8 insertions(+), 8 deletions(-)
+
+--- a/futility/updater_manifest.c
++++ b/futility/updater_manifest.c
+@@ -926,7 +926,7 @@ void print_json_manifest(const struct ma
+ 			const char *fpath;
+ 			bool is_host;
+ 		} images[] = {
+-			{"host", m->image, true},
++			{"internal", m->image, true},
+ 			{"ec", m->ec_image},
+ 		};
+ 		bool is_first = true;
+--- a/host/lib/include/flashrom.h
++++ b/host/lib/include/flashrom.h
+@@ -10,7 +10,7 @@
+ #include "2return_codes.h"
+ #include "fmap.h"
+ 
+-#define FLASHROM_PROGRAMMER_INTERNAL_AP "host"
++#define FLASHROM_PROGRAMMER_INTERNAL_AP "internal"
+ #define FLASHROM_PROGRAMMER_INTERNAL_EC "ec"
+ 
+ /* Utilities for firmware images and (FMAP) sections */
+--- a/scripts/image_signing/get_gbb_flags.sh
++++ b/scripts/image_signing/get_gbb_flags.sh
+@@ -13,7 +13,7 @@ SCRIPT_BASE="$(dirname "$0")"
+ # DEFINE_string name default_value description flag
+ DEFINE_string file "" "Path to firmware image. Default to system firmware." "f"
+ DEFINE_boolean explicit ${FLAGS_FALSE} "Print list of what flags are set." "e"
+-DEFINE_string programmer "host" "Programmer to use when setting GBB flags" "p"
++DEFINE_string programmer "internal" "Programmer to use when setting GBB flags" "p"
+ DEFINE_boolean servo "${FLAGS_FALSE}"  "Determine programmer using servo" ""
+ 
+ set -e
+--- a/scripts/image_signing/set_gbb_flags.sh
++++ b/scripts/image_signing/set_gbb_flags.sh
+@@ -13,7 +13,7 @@ SCRIPT_BASE="$(dirname "$0")"
+ # DEFINE_string name default_value description flag
+ DEFINE_string file "" "Path to firmware image. Default to system firmware." "f"
+ DEFINE_boolean check_wp ${FLAGS_TRUE} "Check write protection states first." ""
+-DEFINE_string programmer "host" "Programmer to use when setting GBB flags" "p"
++DEFINE_string programmer "internal" "Programmer to use when setting GBB flags" "p"
+ DEFINE_boolean servo "${FLAGS_FALSE}"  "Determine programmer using servo" ""
+ 
+ set -e
+@@ -23,7 +23,7 @@ set -e
+ check_write_protection() {
+   local hw_wp="" sw_wp=""
+   local programmer="$1"
+-  if [ "${programmer}" = "host" ] && ! crossystem "wpsw_cur?0"; then
++  if [ "${programmer}" = "internal" ] && ! crossystem "wpsw_cur?0"; then
+     hw_wp="on"
+   fi
+   # Keep 'local' declaration split from assignment so return code is checked.
+--- a/utility/dev_debug_vboot
++++ b/utility/dev_debug_vboot
+@@ -303,7 +303,7 @@ devs=$(awk '/(mmcblk[0-9])$|(sd[a-z])$|(
+ for d in $devs; do
+   log cgpt show $d
+ done
+-log flashrom -V -p host --wp-status
++log flashrom -V -p internal --wp-status
+ tpm_fwver=$(crossystem tpm_fwver) || tpm_fwver="UNKNOWN"
+ tpm_kernver=$(crossystem tpm_kernver) || tpm_kernver="UNKNOWN"
+ set -e
+@@ -316,7 +316,7 @@ if [ -n "${OPT_BIOS}" ]; then
+   fix_old_names
+ else
+   # First try pulling just the components we want (using new-style names)
+-  if log flashrom -p host -r /dev/null \
++  if log flashrom -p internal -r /dev/null \
+     -i"GBB":GBB \
+     -i"FMAP":FMAP \
+     -i"VBLOCK_A":VBLOCK_A \
+@@ -326,7 +326,7 @@ else
+       log futility dump_fmap FMAP
+     else
+       info "Couldn't read individual components. Read the whole thing..."
+-      if log flashrom -p host -r bios.rom ; then
++      if log flashrom -p internal -r bios.rom ; then
+         log futility dump_fmap -x bios.rom
+         fix_old_names
+       else

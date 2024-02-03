@@ -1,0 +1,97 @@
+From 1f9fad8433795892ebe52f6c83ee26ba62862c66 Mon Sep 17 00:00:00 2001
+From: Brian Norris <computersforpeace@gmail.com>
+Date: Wed, 16 Aug 2023 22:43:12 -0700
+Subject: [PATCH 2/5] flashrom: Strip out incompatible libflashrom APIs
+
+Signed-off-by: Brian Norris <computersforpeace@gmail.com>
+---
+ host/lib/flashrom_drv.c | 55 ++++++++---------------------------------
+ 1 file changed, 10 insertions(+), 45 deletions(-)
+
+--- a/host/lib/flashrom_drv.c
++++ b/host/lib/flashrom_drv.c
+@@ -83,8 +83,6 @@ static int flashrom_read_image_impl(stru
+ 
+ 	len = flashrom_flash_getsize(flashctx);
+ 
+-	flashrom_flag_set(flashctx, FLASHROM_FLAG_SKIP_UNREADABLE_REGIONS, true);
+-
+ 	if (regions) {
+ 		int i;
+ 		r = flashrom_layout_read_fmap_from_rom(
+@@ -197,10 +195,7 @@ int flashrom_write_image(const struct fi
+ 		}
+ 	}
+ 
+-	/* Must occur before attempting to read FMAP from SPI flash. */
+-	flashrom_flag_set(flashctx, FLASHROM_FLAG_SKIP_UNREADABLE_REGIONS, true);
+-
+-	if (regions && regions[0]) {
++	if (regions) {
+ 		int i;
+ 		r = flashrom_layout_read_fmap_from_buffer(
+ 			&layout, flashctx, (const uint8_t *)image->data,
+@@ -232,7 +227,6 @@ int flashrom_write_image(const struct fi
+ 		goto err_cleanup;
+ 	}
+ 
+-	flashrom_flag_set(flashctx, FLASHROM_FLAG_SKIP_UNWRITABLE_REGIONS, true);
+ 	flashrom_flag_set(flashctx, FLASHROM_FLAG_VERIFY_WHOLE_CHIP, false);
+ 	flashrom_flag_set(flashctx, FLASHROM_FLAG_VERIFY_AFTER_WRITE,
+ 			  do_verify);
+@@ -371,46 +365,17 @@ int flashrom_get_info(const char *prog_w
+ 		      uint32_t *vid, uint32_t *pid,
+ 		      uint32_t *flash_len, int verbosity)
+ {
+-	int r = 0;
+-
+-	g_verbose_screen = (verbosity == -1) ? FLASHROM_MSG_INFO : verbosity;
+-
+-	char *programmer, *params;
+-	char *tmp = flashrom_extract_params(prog_with_params,
+-					    &programmer, &params);
+-
+-	struct flashrom_programmer *prog = NULL;
+-	struct flashrom_flashctx *flashctx = NULL;
+-
+-	flashrom_set_log_callback((flashrom_log_callback *)&flashrom_print_cb);
+-
+-	if (flashrom_init(1) ||
+-	    flashrom_programmer_init(&prog, programmer, params)) {
+-		r = -1;
+-		goto err_init;
+-	}
+-	if (flashrom_flash_probe(&flashctx, prog, NULL)) {
+-		r = -1;
+-		goto err_probe;
+-	}
+-
+-	struct flashrom_flashchip_info info;
+-	flashrom_flash_getinfo(flashctx, &info);
+-
+-	*vendor = strdup(info.vendor);
+-	*name = strdup(info.name);
+-	*vid = info.manufacture_id;
+-	*pid = info.model_id;
+-	*flash_len = info.total_size * 1024;
+-
+-	flashrom_flash_release(flashctx);
++	int r;
+ 
+-err_probe:
+-	r |= flashrom_programmer_shutdown(prog);
++	r = flashrom_get_size(prog_with_params, flash_len, verbosity);
++	if (r)
++		return r;
++	*vendor = strdup("vendor is missing; libflashrom isn't new enough");
++	*name = strdup("name is missing; libflashrom isn't new enough");
++	*vid = 0xdead;
++	*pid = 0xbeef;
+ 
+-err_init:
+-	free(tmp);
+-	return r;
++	return 0;
+ }
+ 
+ int flashrom_get_size(const char *prog_with_params,
