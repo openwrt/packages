@@ -16,7 +16,7 @@ PKG_SOURCE_URL:=https://download.osgeo.org/libtiff
 PKG_HASH:=88b3979e6d5c7e32b50d7ec72fb15af724f6ab2cbf7e10880c360a77e4b5d99a
 
 PKG_MAINTAINER:=Jiri Slachta <jiri@slachta.eu>
-PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE:=libtiff
 PKG_LICENSE_FILES:=COPYRIGHT
 PKG_CPE_ID:=cpe:/a:libtiff:libtiff
 
