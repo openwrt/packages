@@ -114,7 +114,9 @@ define Build/Compile
 	$(call Build/Compile/Default)
 endef
 
-define Build/InstallDev
+TARGET_VARIANT=$(if $(ALL_VARIANTS),$(if $(VARIANT),$(VARIANT),$(firstword $(ALL_VARIANTS))))
+ifeq ($(if $(TARGET_VARIANT),$(BUILD_VARIANT)),$(TARGET_VARIANT))
+  define Build/InstallDev
 	$(INSTALL_DIR) \
 		$(1)/usr/include \
 		$(1)/usr/lib \
@@ -140,7 +142,8 @@ define Build/InstallDev
 	$(INSTALL_DATA) \
 		$(PKG_INSTALL_DIR)/usr/lib/pkgconfig/*.pc \
 		$(1)/usr/lib/pkgconfig/
-endef
+  endef
+endif
 
 define Package/xmlrpc-c-libxml2/install
 	$(INSTALL_DIR) \
