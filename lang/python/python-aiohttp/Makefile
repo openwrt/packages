@@ -17,7 +17,7 @@ PKG_HASH:=b9552ec52cc147dbf1944ac7ac98af7602e51ea2dcd076ed194ca3c0d1c7d0bc
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE.txt
-PKG_CPE_ID:=cpe:/a:aio-libs_project:aiohttp
+PKG_CPE_ID:=cpe:/a:aiohttp:aiohttp
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
