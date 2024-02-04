@@ -69,13 +69,13 @@ parse_hs_conf_hooks() {
 
 	config_get name "$config" Name
 	[ -z "$name" ] && return 0
-	config_get enable_hs "$config" Enabled 0
+	config_get_bool enable_hs "$config" Enabled 0
 	config_get hook_script "$config" HookScript
 
 	hostname_file="$HS_DIR_PATH/$name/hostname"
 
 	# check if we should run hook_script
-	if [ "$enable_hs" = "true" ] && [ -x "$hook_script" ] && [ -f "$hostname_file" ]; then
+	if [ "$enable_hs" = "1" ] && [ -x "$hook_script" ] && [ -f "$hostname_file" ]; then
 		hostname_uri=$(cat "$hostname_file")
 		# call hook script
 		$hook_script "--update-onion" "$hostname_uri"
