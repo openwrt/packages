@@ -25,7 +25,7 @@ define Package/snort3
   SUBMENU:=Firewall
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libstdcpp +libdaq3 +libdnet +libopenssl +libpcap +libpcre +libpthread +libuuid +zlib +libhwloc +libtirpc @HAS_LUAJIT_ARCH +luajit +libatomic +kmod-nft-queue +liblzma
+  DEPENDS:=+libstdcpp +libdaq3 +libdnet +libopenssl +libpcap +libpcre2 +libpthread +libuuid +zlib +libhwloc +libtirpc @HAS_LUAJIT_ARCH +luajit +libatomic +kmod-nft-queue +liblzma
   TITLE:=Lightweight Network Intrusion Detection System
   URL:=http://www.snort.org/
   MENU:=1
