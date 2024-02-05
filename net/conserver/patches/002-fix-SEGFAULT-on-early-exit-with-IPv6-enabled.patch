@@ -1,0 +1,43 @@
+From ec846dfedde7931689ff0a56be5ba75a5aefc9ea Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Bj=C3=B8rn=20Mork?= <bjorn@mork.no>
+Date: Mon, 5 Feb 2024 21:16:51 +0100
+Subject: [PATCH] fix SEGFAULT on early exit with IPv6 enabled
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Some command line options, like e.g -V, will cause conserver
+to exit before the IPv6 address variables are initialized.
+Avoid the calls to freeaddrinfo() in these cases.
+
+Signed-off-by: Bjørn Mork <bjorn@mork.no>
+---
+ conserver/main.c | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
+
+--- a/conserver/main.c
++++ b/conserver/main.c
+@@ -53,8 +53,8 @@ int fAll = 0, fNoinit = 0, fVersion = 0,
+ char *pcConfig = CONFIGFILE;
+ int cMaxMemb = MAXMEMB;
+ #if USE_IPV6
+-struct addrinfo *bindAddr;
+-struct addrinfo *bindBaseAddr;
++struct addrinfo *bindAddr = (struct addrinfo *)0;
++struct addrinfo *bindBaseAddr = (struct addrinfo *)0;
+ #else
+ in_addr_t bindAddr = INADDR_ANY;
+ unsigned short bindPort;
+@@ -781,8 +781,10 @@ DestroyDataStructures(void)
+ 
+ #if USE_IPV6
+     /* clean up addrinfo stucts */
+-    freeaddrinfo(bindAddr);
+-    freeaddrinfo(bindBaseAddr);
++    if ((struct addrinfo *)0 != bindAddr)
++	freeaddrinfo(bindAddr);
++    if ((struct addrinfo *)0 != bindBaseAddr)
++	freeaddrinfo(bindBaseAddr);
+ #else
+     if (myAddrs != (struct in_addr *)0)
+ 	free(myAddrs);
