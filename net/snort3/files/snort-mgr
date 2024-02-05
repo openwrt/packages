@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: GPL-2.0
 # shellcheck disable=SC2039,SC2155  # "local" not defined in POSIX sh
 
+set -o nounset
+
 PROG="$(command -v snort)"
 MAIN="/usr/share/snort/main.uc"
 CONF_DIR=$(uci -q get snort.snort.temp_dir || echo "/var/snort.d")
@@ -73,7 +75,7 @@ setup() {
 teardown() {
 	# Merely cleans up after.
 	nft_rm_table
-	[ -e "$CONF" ] && rm "$CONF"
+	[ -e "$CONF" ] && rm "${CONF:?}"
 }
 
 resetup() {
@@ -110,7 +112,7 @@ check() {
 	local test_conf="${CONF_DIR}/test_conf.lua"
 	_SNORT_WITHOUT_RULES="$no_rules" print snort > "${test_conf}" || die "Errors during generation of snort config"
 	if $PROG -T $warn -c "${test_conf}" 2> $OUT ; then
-		rm "${test_conf}"
+		rm "${test_conf:?}"
 	else
 		die "Errors in snort config tests.  Examine ${test_conf} for issues"
 	fi
@@ -121,7 +123,7 @@ check() {
 		print nftables > "${test_nft}" || die "Errors during generation of nftables config"
 		$VERBOSE && options='-e'
 		if nft $options --check -f "${test_nft}" ; then
-			rm "${test_nft}"
+			rm "${test_nft:?}"
 		else
 			die "Errors in nftables config tests.  Examine ${test_nft} for issues"
 		fi
@@ -173,7 +175,7 @@ report() {
 	local msg src srcP dst dstP dir gid sid
 	local tmp=$(mktemp -t snort.rep.XXXXXX)
 	_filter_by_date "${log_dir}" | while read -r line; do
-		unset -v src dst srcP dstP
+		src='' && dst='' && srcP='' && dstP=''
 		eval "$(jsonfilter -s "$line" \
 			-e 'msg=$.msg' \
 			-e 'src=$.src_addr' \
@@ -196,7 +198,7 @@ report() {
 	[ "$NLINES" = 0 ] && output="cat" || output="head -n $NLINES"
 
 	local lines=$($SORT "$tmp" | uniq -c | $SORT -nr | $output)
-	rm "$tmp"
+	rm "${tmp:?}"
 	if [ -z "$lines" ]; then
 		echo -n "There were no incidents "
 		[ -z "$PATTERN" ] && echo "reported." || echo "matching pattern '$PATTERN'."
@@ -254,7 +256,7 @@ report() {
 		echo 'Hosts by name:'
 		local IP
 		local peerdns=$(ifstatus wan | jsonfilter -e '$["dns-server"][0]')
-		echo "$lines" | awk -F'#' '{printf "%s\n%s\n", $2, $3}' | sed 's/(.*//' | sort -u \
+		echo "$lines" | awk -F'#' '{printf "%s\n%s\n", $2, $3}' | sed 's/(.*//' | $SORT -u \
 		| while read -r IP; do
 			[ -z "$IP" ] && continue
 			n=$(nslookup "$IP" | awk '/name = / {n=$NF} END{print n}')
@@ -362,7 +364,7 @@ USAGE
 	exit 1
 }
 
-while [ -n "$1" ]; do
+while [ "${1:-}" ]; do
 	case "$1" in
 		-h|--help)
 			usage
