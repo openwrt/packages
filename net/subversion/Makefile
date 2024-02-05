@@ -6,14 +6,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=subversion
-PKG_VERSION:=1.14.1
+PKG_VERSION:=1.14.3
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=@APACHE/subversion
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_HASH:=2c5da93c255d2e5569fa91d92457fdb65396b0666fad4fd59b22e154d986e1a9
+PKG_HASH:=949efd451a09435f7e8573574c71c7b71b194d844890fa49cd61d2262ea1a440
 
-PKG_MAINTAINER:=Val Kulkov <val.kulkov@gmail.com>
+PKG_MAINTAINER:=Aleksey Vasilenko <aleksey.vasilenko@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:apache:subversion
@@ -80,11 +80,7 @@ define Package/subversion-server/conffiles
 endef
 
 CONFIGURE_ARGS += \
-	--disable-mod-activation \
-	--without-ruby-sitedir \
 	--without-swig \
-	--without-jikes \
-	--without-junit \
 	--without-berkeley-db \
 	--without-apxs \
 	--without-sasl \
