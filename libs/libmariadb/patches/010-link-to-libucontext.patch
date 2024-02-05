@@ -23,7 +23,7 @@ the box - like musl based platforms.
  
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -227,6 +227,14 @@ IF(UNIX)
+@@ -230,6 +230,14 @@ IF(UNIX)
    SEARCH_LIBRARY(LIBPTHREAD pthread_getspecific "pthread;pthreads")
    SEARCH_LIBRARY(LIBNSL gethostbyname_r "nsl_r;nsl")
    SEARCH_LIBRARY(LIBSOCKET setsockopt socket)
