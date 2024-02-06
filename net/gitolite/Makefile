@@ -8,12 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gitolite
-PKG_VERSION:=3.6.11
-PKG_RELEASE:=3
+PKG_VERSION:=3.6.13
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=2166a61b14de19e605b14f4a13a070fbfd5ecd247b6fd725108f111198a2c121
-PKG_SOURCE_URL:=https://codeload.github.com/sitaramc/gitolite/tar.gz/v$(PKG_VERSION)?
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/sitaramc/gitolite.git
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+PKG_MIRROR_HASH:=f4ac58bc11fde65ef2c6a07f84af214989324147c4aa117ae1483ba0453e402f
 
 PKG_CPE_ID:=cpe:/a:sitaram_chamarty:gitolite
 
@@ -39,7 +40,7 @@ define Package/gitolite
 	+perlbase-utf8 \
 
   TITLE:=Easy administration of git repositories
-  URL:=http://gitolite.com/gitolite
+  URL:=https://gitolite.com/gitolite/
   USERID:=git=382:git=382
 endef
 
