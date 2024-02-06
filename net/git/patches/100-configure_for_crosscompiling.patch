@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -955,7 +955,8 @@ AC_RUN_IFELSE(
+@@ -964,7 +964,8 @@ AC_RUN_IFELSE(
  		FILE *f = fopen(".", "r");
  		return f != NULL;]])],
  	[ac_cv_fread_reads_directories=no],
@@ -10,7 +10,7 @@
  ])
  if test $ac_cv_fread_reads_directories = yes; then
  	FREAD_READS_DIRECTORIES=UnfortunatelyYes
-@@ -989,7 +990,8 @@ AC_RUN_IFELSE(
+@@ -998,7 +999,8 @@ AC_RUN_IFELSE(
  		  if (snprintf(buf, 3, "%s", "12345") != 5
  		      || strcmp(buf, "12")) return 1]])],
  	[ac_cv_snprintf_returns_bogus=no],
@@ -20,7 +20,7 @@
  ])
  if test $ac_cv_snprintf_returns_bogus = yes; then
  	SNPRINTF_RETURNS_BOGUS=UnfortunatelyYes
-@@ -1012,7 +1014,8 @@ yippeeyeswehaveit
+@@ -1021,7 +1023,8 @@ yippeeyeswehaveit
  #endif
  ]),
  	[ac_cv_sane_mode_bits=yes],
