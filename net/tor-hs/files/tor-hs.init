@@ -92,14 +92,36 @@ parse_common_conf() {
 
 start_service() {
 	config_load tor-hs
+	validate_common_section || {
+		echo "validation failed"
+		return 1
+	}
 	# clean config
 	echo -n "" > "$TORRC_FILE"
 	# load common config
 	parse_common_conf
 	# load hs service
-	config_foreach parse_hs_conf hidden-service
+	config_foreach validate_hidden_service_section hidden-service parse_hs_conf
 	# update tor config
 	config_tor
 	# load and run tor-hs hooks
 	config_foreach parse_hs_conf_hooks hidden-service
+}
+
+validate_common_section() {
+	uci_validate_section tor-hs tor-hs common \
+		'GenConf:string:/etc/tor/torrc_generated' \
+		'HSDir:string:/etc/tor/hidden_service' \
+		'RestartTor:bool:1' \
+		'UpdateTorConf:bool:1'
+}
+
+validate_hidden_service_section() {
+	uci_load_validate tor-hs hidden-service "$1" "$2" \
+		'Name:string(1)' \
+		'Description:string' \
+		'Enabled:bool:0' \
+		'IPv4:host:127.0.0.1' \
+		'PublicLocalPort:list(string)' \
+		'HookScript:string'
 }
