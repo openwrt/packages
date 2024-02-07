@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fping
-PKG_VERSION:=5.0
+PKG_VERSION:=5.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://fping.org/dist
-PKG_HASH:=ed38c0b9b64686a05d1b3bc1d66066114a492e04e44eef1821d43b1263cd57b8
+PKG_HASH:=1ee5268c063d76646af2b4426052e7d81a42b657e6a77d8e7d3d2e60fd7409fe
 
 PKG_MAINTAINER:=Nikil Mehta <nikil.mehta@gmail.com>
 PKG_LICENSE:=BSD-4-Clause
@@ -41,7 +41,6 @@ define Package/fping/description
 endef
 
 CONFIGURE_ARGS += \
-	--enable-ipv4 \
 	$(if $(CONFIG_IPV6),en,dis)able-ipv6
 
 define Package/fping/install
