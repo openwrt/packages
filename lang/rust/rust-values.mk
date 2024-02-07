@@ -55,7 +55,9 @@ ifeq ($(ARCH),arm)
   ifeq ($(CONFIG_arm_v7),y)
     RUSTC_TARGET_ARCH:=$(subst arm,armv7,$(RUSTC_TARGET_ARCH))
   endif
-
+  ifneq (,$(findstring fa526,$(CONFIG_CPU_TYPE)))
+    RUSTC_TARGET_ARCH:=$(subst arm,armv4,$(RUSTC_TARGET_ARCH))
+  endif
   ifeq ($(CONFIG_HAS_FPU),y)
     RUSTC_TARGET_ARCH:=$(subst musleabi,musleabihf,$(RUSTC_TARGET_ARCH))
     RUSTC_TARGET_ARCH:=$(subst gnueabi,gnueabihf,$(RUSTC_TARGET_ARCH))

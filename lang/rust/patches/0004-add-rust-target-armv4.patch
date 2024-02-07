@@ -1,0 +1,187 @@
+diff -Nur a/compiler/rustc_target/src/spec/armv4_unknown_linux_musleabi.rs b/compiler/rustc_target/src/spec/armv4_unknown_linux_musleabi.rs
+--- a/compiler/rustc_target/src/spec/targets/armv4_unknown_linux_musleabi.rs	1970-01-01 01:00:00.000000000 +0100
++++ b/compiler/rustc_target/src/spec/targets/armv4_unknown_linux_musleabi.rs	2023-09-11 22:14:45.608962857 +0200
+@@ -0,0 +1,22 @@
++use crate::spec::{base, Target, TargetOptions};
++
++pub fn target() -> Target {
++    Target {
++        // It's important we use "gnueabi" and not "musleabi" here. LLVM
++        // uses it to determine the calling convention and float ABI, and LLVM
++        // doesn't support the "musleabi" value.
++        llvm_target: "armv4-unknown-linux-gnueabi".into(),
++        pointer_width: 32,
++        data_layout: "e-m:e-p:32:32-Fi8-i64:64-v128:64:128-a:0:32-n32-S64".into(),
++        arch: "arm".into(),
++        options: TargetOptions {
++            abi: "eabi".into(),
++            features: "+soft-float,+strict-align".into(),
++            // Atomic operations provided by compiler-builtins
++            max_atomic_width: Some(32),
++            mcount: "\u{1}mcount".into(),
++            has_thumb_interworking: false,
++            ..base::linux_musl::opts()
++        },
++    }
++}
+diff -Nur a/compiler/rustc_target/src/spec/mod.rs b/compiler/rustc_target/src/spec/mod.rs
+--- a/compiler/rustc_target/src/spec/mod.rs	2023-08-23 21:50:10.000000000 +0200
++++ b/compiler/rustc_target/src/spec/mod.rs	2023-09-11 22:37:47.198969857 +0200
+@@ -1268,6 +1268,7 @@
+     ("armeb-unknown-linux-gnueabi", armeb_unknown_linux_gnueabi),
+     ("arm-unknown-linux-musleabi", arm_unknown_linux_musleabi),
+     ("arm-unknown-linux-musleabihf", arm_unknown_linux_musleabihf),
++    ("armv4-unknown-linux-musleabi", armv4_unknown_linux_musleabi),
+     ("armv4t-unknown-linux-gnueabi", armv4t_unknown_linux_gnueabi),
+     ("armv5te-unknown-linux-gnueabi", armv5te_unknown_linux_gnueabi),
+     ("armv5te-unknown-linux-musleabi", armv5te_unknown_linux_musleabi),
+diff -Nur a/src/bootstrap/configure.py b/src/bootstrap/configure.py
+--- a/src/bootstrap/configure.py	2023-08-23 21:50:10.000000000 +0200
++++ b/src/bootstrap/configure.py	2023-09-11 22:24:45.507989276 +0200
+@@ -122,6 +122,8 @@
+   "arm-unknown-linux-musleabi install directory")
+ v("musl-root-armhf", "target.arm-unknown-linux-musleabihf.musl-root",
+   "arm-unknown-linux-musleabihf install directory")
++v("musl-root-armv4", "target.armv4-unknown-linux-musleabi.musl-root",
++  "armv4-unknown-linux-musleabi install directory")
+ v("musl-root-armv5te", "target.armv5te-unknown-linux-musleabi.musl-root",
+   "armv5te-unknown-linux-musleabi install directory")
+ v("musl-root-armv7", "target.armv7-unknown-linux-musleabi.musl-root",
+diff -Nur a/src/llvm-project/compiler-rt/cmake/builtin-config-ix.cmake b/src/llvm-project/compiler-rt/cmake/builtin-config-ix.cmake
+--- a/src/llvm-project/compiler-rt/cmake/builtin-config-ix.cmake	2023-08-23 21:50:25.000000000 +0200
++++ b/src/llvm-project/compiler-rt/cmake/builtin-config-ix.cmake	2023-09-11 22:19:52.146577417 +0200
+@@ -29,7 +29,7 @@
+ endif()
+ 
+ set(ARM64 aarch64)
+-set(ARM32 arm armhf armv4t armv5te armv6 armv6m armv7m armv7em armv7 armv7s armv7k armv8m.base armv8m.main armv8.1m.main)
++set(ARM32 arm armhf armv4 armv4t armv5te armv6 armv6m armv7m armv7em armv7 armv7s armv7k armv8m.base armv8m.main armv8.1m.main)
+ set(AVR avr)
+ set(HEXAGON hexagon)
+ set(X86 i386)
+diff -Nur a/src/llvm-project/compiler-rt/lib/builtins/CMakeLists.txt b/src/llvm-project/compiler-rt/lib/builtins/CMakeLists.txt
+--- a/src/llvm-project/compiler-rt/lib/builtins/CMakeLists.txt	2023-08-23 21:50:25.000000000 +0200
++++ b/src/llvm-project/compiler-rt/lib/builtins/CMakeLists.txt	2023-09-11 22:22:58.603485494 +0200
+@@ -590,6 +590,7 @@
+   )
+ endif()
+ 
++set(armv4_SOURCES ${arm_min_SOURCES})
+ set(armv4t_SOURCES ${arm_min_SOURCES})
+ set(armv5te_SOURCES ${arm_min_SOURCES})
+ set(armv6_SOURCES ${arm_min_SOURCES})
+diff -Nur a/src/tools/build-manifest/src/main.rs b/src/tools/build-manifest/src/main.rs
+--- a/src/tools/build-manifest/src/main.rs	2023-08-23 21:50:10.000000000 +0200
++++ b/src/tools/build-manifest/src/main.rs	2023-09-11 22:34:03.782196641 +0200
+@@ -67,6 +67,7 @@
+     "arm-unknown-linux-gnueabihf",
+     "arm-unknown-linux-musleabi",
+     "arm-unknown-linux-musleabihf",
++    "armv4-unknown-linux-musleabi",
+     "armv5te-unknown-linux-gnueabi",
+     "armv5te-unknown-linux-musleabi",
+     "armv7-apple-ios",
+diff -Nur a/vendor/cc/src/lib.rs b/vendor/cc/src/lib.rs
+--- a/vendor/cc/src/lib.rs	2023-08-24 00:08:19.000000000 +0200
++++ b/vendor/cc/src/lib.rs	2023-09-11 22:30:17.337491902 +0200
+@@ -1821,6 +1821,12 @@
+                     cmd.args.push("-mfpu=neon-vfpv4".into());
+                 }
+ 
++                if target.starts_with("armv4-unknown-linux-") {
++                    cmd.args.push("-march=armv4".into());
++                    cmd.args.push("-marm".into());
++                    cmd.args.push("-mfloat-abi=soft".into());
++                }
++
+                 if target.starts_with("armv4t-unknown-linux-") {
+                     cmd.args.push("-march=armv4t".into());
+                     cmd.args.push("-marm".into());
+@@ -2888,6 +2894,7 @@
+             "aarch64-unknown-linux-musl" => Some("aarch64-linux-musl"),
+             "aarch64-unknown-netbsd" => Some("aarch64--netbsd"),
+             "arm-unknown-linux-gnueabi" => Some("arm-linux-gnueabi"),
++            "armv4-unknown-linux-musleabi" => Some("arm-linux-gnueabi"),
+             "armv4t-unknown-linux-gnueabi" => Some("arm-linux-gnueabi"),
+             "armv5te-unknown-linux-gnueabi" => Some("arm-linux-gnueabi"),
+             "armv5te-unknown-linux-musleabi" => Some("arm-linux-gnueabi"),
+diff -Nur a/vendor/cc-1.0.73/src/lib.rs b/vendor/cc-1.0.73/src/lib.rs
+--- a/vendor/cc-1.0.73/src/lib.rs	2023-08-24 00:08:19.000000000 +0200
++++ b/vendor/cc-1.0.73/src/lib.rs	2023-09-11 22:32:02.985808470 +0200
+@@ -1705,6 +1705,12 @@
+                     cmd.args.push("-mfpu=neon-vfpv4".into());
+                 }
+ 
++                if target.starts_with("armv4-unknown-linux-") {
++                    cmd.args.push("-march=armv4".into());
++                    cmd.args.push("-marm".into());
++                    cmd.args.push("-mfloat-abi=soft".into());
++                }
++
+                 if target.starts_with("armv4t-unknown-linux-") {
+                     cmd.args.push("-march=armv4t".into());
+                     cmd.args.push("-marm".into());
+@@ -2552,6 +2558,7 @@
+             "aarch64-unknown-linux-musl" => Some("aarch64-linux-musl"),
+             "aarch64-unknown-netbsd" => Some("aarch64--netbsd"),
+             "arm-unknown-linux-gnueabi" => Some("arm-linux-gnueabi"),
++            "armv4-unknown-linux-musleabi" => Some("arm-linux-gnueabi"),
+             "armv4t-unknown-linux-gnueabi" => Some("arm-linux-gnueabi"),
+             "armv5te-unknown-linux-gnueabi" => Some("arm-linux-gnueabi"),
+             "armv5te-unknown-linux-musleabi" => Some("arm-linux-gnueabi"),
+diff -Nur a/vendor/compiler_builtins/build.rs b/vendor/compiler_builtins/build.rs
+--- a/vendor/compiler_builtins/build.rs	2023-08-24 00:08:19.000000000 +0200
++++ b/vendor/compiler_builtins/build.rs	2023-09-11 22:17:42.965919385 +0200
+@@ -84,7 +84,7 @@
+     // Only emit the ARM Linux atomic emulation on pre-ARMv6 architectures. This
+     // includes the old androideabi. It is deprecated but it is available as a
+     // rustc target (arm-linux-androideabi).
+-    if llvm_target[0] == "armv4t"
++    if llvm_target[0] == "armv4" || llvm_target[0] == "armv4t"
+         || llvm_target[0] == "armv5te"
+         || target == "arm-linux-androideabi"
+     {
+diff -Nur a/vendor/futures-task/no_atomic_cas.rs b/vendor/futures-task/no_atomic_cas.rs
+--- a/vendor/futures-task/no_atomic_cas.rs	2023-08-24 00:08:20.000000000 +0200
++++ b/vendor/futures-task/no_atomic_cas.rs	2023-09-11 22:42:46.876081902 +0200
+@@ -2,6 +2,7 @@
+ // It is not intended for manual editing.
+ 
+ const NO_ATOMIC_CAS: &[&str] = &[
++    "armv4-none-eabi",
+     "armv4t-none-eabi",
+     "armv5te-none-eabi",
+     "avr-unknown-gnu-atmega328",
+diff -Nur a/vendor/libc/Cargo.toml b/vendor/libc/Cargo.toml
+--- a/vendor/libc/Cargo.toml	2023-08-24 00:08:20.000000000 +0200
++++ b/vendor/libc/Cargo.toml	2023-09-11 22:21:29.651057574 +0200
+@@ -66,6 +66,7 @@
+     "arm-unknown-linux-musleabihf",
+     "armebv7r-none-eabi",
+     "armebv7r-none-eabihf",
++    "armv4-unknown-linux-musleabi",
+     "armv5te-unknown-linux-gnueabi",
+     "armv5te-unknown-linux-musleabi",
+     "armv7-linux-androideabi",
+diff -Nur a/vendor/openssl-src/src/lib.rs b/vendor/openssl-src/src/lib.rs
+--- a/vendor/openssl-src/src/lib.rs	2023-08-24 00:08:20.000000000 +0200
++++ b/vendor/openssl-src/src/lib.rs	2023-09-11 22:28:35.325042649 +0200
+@@ -246,6 +246,7 @@
+             "arm-unknown-linux-gnueabihf" => "linux-armv4",
+             "arm-unknown-linux-musleabi" => "linux-armv4",
+             "arm-unknown-linux-musleabihf" => "linux-armv4",
++            "armv4-unknown-linux-musleabi" => "linux-armv4",
+             "armv5te-unknown-linux-gnueabi" => "linux-armv4",
+             "armv5te-unknown-linux-musleabi" => "linux-armv4",
+             "armv6-unknown-freebsd" => "BSD-generic32",
+diff -Nur a/vendor/target-lexicon/src/triple.rs b/vendor/target-lexicon/src/triple.rs
+--- a/vendor/target-lexicon/src/triple.rs	2023-08-24 00:08:21.000000000 +0200
++++ b/vendor/target-lexicon/src/triple.rs	2023-09-11 22:48:30.961419639 +0200
+@@ -210,6 +210,7 @@
+                 || self.operating_system == OperatingSystem::Wasi
+                 || (self.operating_system == OperatingSystem::None_
+                     && (self.architecture == Architecture::Arm(ArmArchitecture::Armv4t)
++                        || self.architecture == Architecture::Arm(ArmArchitecture::Armv4)
+                         || self.architecture == Architecture::Arm(ArmArchitecture::Armv5te)
+                         || self.architecture == Architecture::Arm(ArmArchitecture::Armebv7r)
+                         || self.architecture == Architecture::Arm(ArmArchitecture::Armv7a)
