@@ -11,12 +11,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xxhash
-PKG_VERSION:=0.8.1
-PKG_RELEASE:=2
+PKG_VERSION:=0.8.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/Cyan4973/xxHash/archive/v$(PKG_VERSION)
-PKG_HASH:=3bb6b7d6f30c591dd65aaaff1c8b7a5b94d81687998ca9400082c739a690436c
+PKG_HASH:=baee0c6afd4f03165de7a4e67988d16f0f2b257b51d0e3cb91909302a26a79c4
 
 # The source for the library (xxhash.c and xxhash.h) is BSD
 # The source for the command line tool (xxhsum.c) is GPLv2+
@@ -32,7 +32,7 @@ PKG_UNPACK:=$(HOST_TAR) -C "$(PKG_BUILD_DIR)" --strip-components=1 -xzf "$(DL_DI
 
 define Package/xxhash/Default
   TITLE:=Extremely fast hash algorithm
-  URL:=https://cyan4973.github.io/xxHash/
+  URL:=https://xxhash.com/
 endef
 
 define Package/xxhash/Default/description
