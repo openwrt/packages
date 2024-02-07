@@ -52,11 +52,12 @@ parse_hs_conf() {
 	config_get ipv4 "$config" IPv4
 
 	if [ "$enable_hs" = "1" ]; then
-		mkdir -p "$HS_DIR_PATH/$name"
-		chown "$TOR_USER":"$TOR_USER" "$HS_DIR_PATH/"
-		chown "$TOR_USER:$TOR_USER" "$HS_DIR_PATH/$name"
-		chmod 700 "$HS_DIR_PATH/"
-		chmod 700 "$HS_DIR_PATH/$name/"
+		if [ ! -d "$HS_DIR_PATH/$name" ]; then
+			echo "New onion service dir is $HS_DIR_PATH/$name"
+			mkdir -p -m 700 "$HS_DIR_PATH/"
+			mkdir -m 700 "$HS_DIR_PATH/$name"
+			chown -R "$TOR_USER:$TOR_USER" "$HS_DIR_PATH/"
+		fi
 
 		echo "HiddenServiceDir $HS_DIR_PATH/$name" >> "$TORRC_FILE"
 		config_list_foreach "$config" PublicLocalPort handle_hs_ports_conf "$ipv4"
