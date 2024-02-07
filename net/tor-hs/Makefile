@@ -30,6 +30,7 @@ endef
 
 define Package/tor-hs/conffiles
 /etc/config/tor-hs
+/etc/tor
 endef
 
 define Build/Compile
