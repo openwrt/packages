@@ -5,7 +5,7 @@ STOP=52
 
 USE_PROCD=1
 
-TORRC_FILE=/etc/tor/torrc_generated # file with torrc config
+TORRC_FILE=/var/run/tor/torrc_generated # file with torrc config
 HS_DIR_PATH=/etc/tor/hidden_service # onion services directory
 TOR_USER=tor
 
@@ -92,15 +92,19 @@ parse_common_conf() {
 }
 
 start_service() {
+	# create runtime dir
+	mkdir -p -m 700 /var/run/tor
+	chown -R "$TOR_USER:$TOR_USER" /var/run/tor
 	config_load tor-hs
 	validate_common_section || {
 		echo "validation failed"
 		return 1
 	}
-	# clean config
-	echo -n "" > "$TORRC_FILE"
 	# load common config
 	parse_common_conf
+	# clean config
+	echo -n "" > "$TORRC_FILE"
+	chown "$TOR_USER:$TOR_USER" "$TORRC_FILE"
 	# load hs service
 	config_foreach validate_hidden_service_section hidden-service parse_hs_conf
 	# update tor config
@@ -111,7 +115,7 @@ start_service() {
 
 validate_common_section() {
 	uci_validate_section tor-hs tor-hs common \
-		'GenConf:string:/etc/tor/torrc_generated' \
+		'GenConf:string:/var/run/tor/torrc_generated' \
 		'HSDir:string:/etc/tor/hidden_service' \
 		'RestartTor:bool:1' \
 		'UpdateTorConf:bool:1'
