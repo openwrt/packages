@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=erlang
-PKG_VERSION:=26.2.1
+PKG_VERSION:=26.2.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=otp_src_$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:= https://github.com/erlang/otp/releases/download/OTP-$(PKG_VERSION)/
-PKG_HASH:=80d66bafbae409481a4e1badcb4a6275b07a8e9af82980c08d7a8add483232a9
+PKG_SOURCE_URL:=https://github.com/erlang/otp/releases/download/OTP-$(PKG_VERSION)
+PKG_HASH:=d537ff4ac5d8c1cb507aedaf7198fc1f155ea8aa65a8d83edb35c2802763cc28
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE.txt
@@ -21,7 +21,6 @@ PKG_MAINTAINER:=Arnaud Sautaux <arnaud.sautaux@infoteam.ch>
 PKG_CPE_ID:=cpe:/a:erlang:erlang
 
 PKG_BUILD_DEPENDS:=erlang/host openssl
-PKG_BUILD_FLAGS:=no-mips16
 PKG_ASLR_PIE:=0
 
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/otp_src_$(PKG_VERSION)
@@ -47,7 +46,7 @@ endef
 define Package/erlang
 $(call Package/erlang/Default)
   DEPENDS+= +libncurses +librt +zlib +libstdcpp
-  PROVIDES:= erlang-erts=14.2.1 erlang-kernel=9.2 erlang-sasl=4.2.1 erlang-stdlib=5.2
+  PROVIDES:= erlang-erts=14.2.2 erlang-kernel=9.2.1 erlang-sasl=4.2.1 erlang-stdlib=5.2
 endef
 
 define Package/erlang/description
@@ -184,7 +183,7 @@ endef
 define Package/erlang-ssh
 $(call Package/erlang/Default)
   TITLE:=Secure Shell (SSH) support
-  VERSION:=5.1.1
+  VERSION:=5.1.2
   DEPENDS+= +erlang +erlang-crypto
 endef
 
@@ -199,7 +198,7 @@ endef
 define Package/erlang-ssl
 $(call Package/erlang/Default)
   TITLE:=Secure Sockets Layer (SSL) support
-  VERSION:=11.1
+  VERSION:=11.1.1
   DEPENDS+= +erlang +erlang-crypto
 endef
 
@@ -257,7 +256,7 @@ endef
 define Package/erlang-erl-interface
 $(call Package/erlang/Default)
   TITLE:=Erlang erl_interface support
-  VERSION:=5.5
+  VERSION:=5.5.1
   DEPENDS+= +erlang
 endef
 
@@ -333,7 +332,7 @@ define Package/erlang/install
 		$(CP) $(PKG_INSTALL_DIR)/usr/bin/$$$$f $(1)/usr/bin/ ; \
 	done
 	$(INSTALL_DIR) $(1)/usr/lib/erlang/bin
-	for f in erl erlc escript run_erl start start.boot start.script start_clean.boot start_erl start_sasl.boot no_dot_erlang.boot to_erl; do \
+	for f in epmd erl erlc escript run_erl start start.boot start.script start_clean.boot start_erl start_sasl.boot no_dot_erlang.boot to_erl; do \
 		$(CP) $(PKG_INSTALL_DIR)/usr/lib/erlang/bin/$$$$f $(1)/usr/lib/erlang/bin/ ; \
 	done
 	$(INSTALL_DIR) $(1)/usr/lib/erlang/lib
