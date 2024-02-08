@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lynx
 PKG_VERSION:=2.9.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Leonid Esman <leonid.esman@gmail.com>
@@ -56,8 +56,10 @@ CONFIGURE_ARGS += \
 	--disable-idna \
 	--without-bzlib
 
-CONFIGURE_VARS += cf_cv_ncurses_header="ncursesw/curses.h" \
-		  ac_cv_path_NCURSES_CONFIG=""
+CONFIGURE_VARS += \
+	ac_cv_lib_bsd_arc4random=no \
+	cf_cv_ncurses_header="ncursesw/curses.h" \
+	ac_cv_path_NCURSES_CONFIG=""
 
 define Package/lynx/install
 	$(INSTALL_DIR) $(1)/usr/bin
