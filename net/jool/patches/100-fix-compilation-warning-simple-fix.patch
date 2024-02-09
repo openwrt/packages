@@ -15,7 +15,7 @@
  static int truncated(unsigned int tabs)
 --- a/src/mod/common/xlator.c
 +++ b/src/mod/common/xlator.c
-@@ -889,7 +889,7 @@ void xlator_put(struct xlator *jool)
+@@ -890,7 +890,7 @@ void xlator_put(struct xlator *jool)
  static bool offset_equals(struct instance_entry_usr *offset,
  		struct jool_instance *instance)
  {
