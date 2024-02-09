@@ -18,10 +18,6 @@ if PACKAGE_squid
 		bool "Enable ICAP client support"
 		default n
 
-	config SQUID_enable-dlmalloc
-		bool "Compile & use the malloc package by Doug Lea"
-		default y
-
 	config SQUID_enable-ssl-crtd
 		bool "Enable dynamic SSL certificate generation"
 		depends on !SQUID_use-gnutls
@@ -92,4 +88,3 @@ if PACKAGE_squid
 	comment "Additional tools"
 
 endif
-
