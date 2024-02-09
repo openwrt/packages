@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=squid
 PKG_VERSION:=6.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www2.pl.squid-cache.org/Versions/v6/ \
@@ -91,7 +91,6 @@ CONFIGURE_ARGS += \
 	$(if $(CONFIG_SQUID_auth-digest),--enable,--disable)-auth-digest \
 	$(if $(CONFIG_SQUID_auth-ntlm),--enable,--disable)-auth-ntlm \
 	$(if $(CONFIG_SQUID_auth-negotiate),--enable,--disable)-auth-negotiate \
-	$(if $(CONFIG_SQUID_enable-ipv6),--enable,--disable)-dlmalloc \
 	$(if $(CONFIG_SQUID_enable-ipv6),--enable,--disable)-ipv6 \
 	$(if $(CONFIG_SQUID_enable-ssl-crtd),--enable-ssl-crtd) \
 	$(if $(CONFIG_SQUID_use-gnutls),--with,--without)-gnutls \
@@ -100,10 +99,10 @@ CONFIGURE_ARGS += \
 	$(if $(CONFIG_SQUID_enable-icmp),--enable,--disable)-icmp \
 	$(if $(CONFIG_SQUID_enable-icap-client),--enable,--disable)-icap-client \
 	$(if $(CONFIG_SQUID_enable-snmp),--enable,--disable)-snmp \
-	$(if $(CONFIG_SQUID_with-libcap),--with,--without)-libcap \
+	$(if $(CONFIG_SQUID_with-libcap),--with,--without)-cap \
 	$(if $(CONFIG_SQUID_with-nettle),--with,--without)-nettle \
 	$(if $(CONFIG_SQUID_with-expat),--with,--without)-expat \
-	$(if $(CONFIG_SQUID_with-libxml2),--with,--without)-libxml2
+	$(if $(CONFIG_SQUID_with-libxml2),--with,--without)-xml2
 
 CONFIGURE_VARS += \
 	ac_cv_header_linux_netfilter_ipv4_h=yes \
