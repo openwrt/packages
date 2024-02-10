@@ -10,7 +10,7 @@ Subject: [PATCH] Run autoreconf
 
 --- a/configure
 +++ b/configure
-@@ -898,6 +898,8 @@ with_dnssec
+@@ -928,6 +928,8 @@ with_dnssec
  enable_dnssec
  with_rpm
  enable_rpm
@@ -19,7 +19,7 @@ Subject: [PATCH] Run autoreconf
  with_pcre
  enable_pcre
  with_install_prefix
-@@ -1810,6 +1812,8 @@ Compiler Options:
+@@ -1851,6 +1853,8 @@ Compiler Options:
    --without-rpm                   Don't include support for the RPM package
                                    management system when building the host MIB
                                    module.
@@ -28,7 +28,7 @@ Subject: [PATCH] Run autoreconf
    --without-pcre                  Don't include pcre process searching
                                    support in the agent.
    --with-install-prefix=PATH      Just for installing, prefix all
-@@ -4907,6 +4911,21 @@ fi
+@@ -5259,6 +5263,21 @@ fi
  
  
  
@@ -49,8 +49,8 @@ Subject: [PATCH] Run autoreconf
 +
  
  # Check whether --with-pcre was given.
- if test "${with_pcre+set}" = set; then :
-@@ -22321,6 +22340,112 @@ LIBS="$netsnmp_save_LIBS"
+ if test ${with_pcre+y}
+@@ -26477,6 +26496,112 @@ LIBS="$netsnmp_save_LIBS"
  #
  #   regex in process table
  #
@@ -161,9 +161,9 @@ Subject: [PATCH] Run autoreconf
 +if test "x$with_pcre2" != "xyes"; then
 +
  if test "x$with_pcre" != "xno"; then
-   ac_fn_c_check_header_mongrel "$LINENO" "pcre.h" "ac_cv_header_pcre_h" "$ac_includes_default"
- if test "x$ac_cv_header_pcre_h" = xyes; then :
-@@ -25886,6 +26011,7 @@ done
+   ac_fn_c_check_header_compile "$LINENO" "pcre.h" "ac_cv_header_pcre_h" "$ac_includes_default"
+ if test "x$ac_cv_header_pcre_h" = xyes
+@@ -31486,6 +31611,7 @@ printf "%s\n" "#define pid_t $ac_pid_typ
  
  
  fi
@@ -173,7 +173,7 @@ Subject: [PATCH] Run autoreconf
  
 --- a/include/net-snmp/net-snmp-config.h.in
 +++ b/include/net-snmp/net-snmp-config.h.in
-@@ -722,6 +722,9 @@
+@@ -727,6 +727,9 @@
  /* Define to 1 if you have the <pci/pci.h> header file. */
  #undef HAVE_PCI_PCI_H
  
