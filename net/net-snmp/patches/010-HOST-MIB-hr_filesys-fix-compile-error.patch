@@ -29,6 +29,6 @@ Signed-off-by: Stijn Tintel <stijn@linux-ipv6.be>
  {
 -next:
 +next: ;
- #if HAVE_GETFSSTAT
+ #ifdef HAVE_GETFSSTAT
      if (HRFS_index >= fscount)
          return -1;
