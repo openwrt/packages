@@ -83,7 +83,7 @@ start_p910nd() {
 			[ -n "$mdns_ver" ] && set -- "$@" "usb_VER=$mdns_ver"
 
 			# Call procd_add_mdns with the positional parameters
-			procd_add_mdns "$@"
+			MDNS_INSTANCE_NAME="$mdns_ty" procd_add_mdns "$@"
 		fi
 		procd_close_instance
 	fi
