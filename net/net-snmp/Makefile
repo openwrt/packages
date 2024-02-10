@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=net-snmp
-PKG_VERSION:=5.9.1
-PKG_RELEASE:=7
+PKG_VERSION:=5.9.4
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/net-snmp
-PKG_HASH:=eb7fd4a44de6cddbffd9a92a85ad1309e5c1054fb9d5a7dd93079c8953f48c3f
+PKG_HASH:=8b4de01391e74e3c7014beb43961a2d6d6fa03acc34280b9585f4930745b0544
 PKG_MAINTAINER:=Stijn Tintel <stijn@linux-ipv6.be>
 PKG_LICENSE:=MIT BSD-3-Clause-Clear
 PKG_CPE_ID:=cpe:/a:net-snmp:net-snmp
@@ -148,7 +148,7 @@ SNMP_MIB_MODULES_INCLUDED = \
 	snmpv3/usmStats \
 	snmpv3/usmUser \
 	tunnel \
-	ucd-snmp/disk \
+	ucd-snmp/disk_hw \
 	ucd-snmp/dlmod \
 	ucd-snmp/extensible \
 	ucd-snmp/loadave \
