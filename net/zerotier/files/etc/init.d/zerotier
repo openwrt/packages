@@ -7,6 +7,82 @@ USE_PROCD=1
 PROG=/usr/bin/zerotier-one
 CONFIG_PATH=/var/lib/zerotier-one
 
+extra_command "addnat" "Add firewall rule to allow zerotier clients access your LAN network"
+extra_command "delnat" "Delete firewall rule to reject zerotier clients access your LAN network"
+
+log() {
+	echo "$@"
+	logger -t $(basename $initscript) "$@" # debug
+}
+
+addnat() {
+	local enabled nat FW
+
+	# Ensure that the service is enabled
+	enabled="$(uci -q get zerotier.@zerotier[0].enabled)"
+	if [ "$enabled" != "1" ] && ! $initscript enabled; then
+		log "Service is disabled."
+		return 0
+	fi
+
+	nat="$(uci -q get zerotier.@zerotier[0].nat)"
+	if [ "$nat" != "1" ]; then
+		log "NAT disabled in config."
+		return 0
+	fi
+
+	# Wait zt tun device
+	while [ "$(ifconfig | grep 'zt' | awk '{print $1}')" = "" ]
+	do
+		log "Waiting zt device ... "
+		sleep 1
+	done
+
+	[ -x "$(command -v nft)" ] && FW="fw4" || FW="fw3"
+	for i in $(ifconfig | grep 'zt' | awk '{print $1}')
+	do
+		if [ "$FW" = "fw3" ]; then
+			if iptables -S FORWARD | grep -sq "$i"; then
+				continue
+			fi
+			iptables -I FORWARD -i "$i" -j ACCEPT
+			iptables -I FORWARD -o "$i" -j ACCEPT
+			iptables -t nat -I POSTROUTING -o "$i" -j MASQUERADE
+		else
+			if nft list chain inet fw4 forward | grep -sq "$i"; then
+				continue
+			fi
+			nft insert rule inet fw4 forward iifname "$i" accept
+			nft insert rule inet fw4 forward oifname "$i" accept
+			nft insert rule inet fw4 srcnat oifname "$i" counter masquerade
+		fi
+		log "Added nat rules for zt interface $i!"
+	done
+}
+
+delnat() {
+	local FW
+
+	[ -x "$(command -v nft)" ] && FW="fw4" || FW="fw3"
+	for i in $(ifconfig | grep 'zt' | awk '{print $1}')
+	do
+		if [ "$FW" = "fw3" ]; then
+			iptables -D FORWARD -i "$i" -j ACCEPT 2>/dev/null
+			iptables -D FORWARD -o "$i" -j ACCEPT 2>/dev/null
+			iptables -t nat -D POSTROUTING -o "$i" -j MASQUERADE 2>/dev/null
+		else
+			chains="forward srcnat"
+			for c in $chains; do
+				handles=$(nft -a list chain inet fw4 $c | grep -E "$i" | cut -d'#' -f2 | cut -d' ' -f3)
+				for h in $handles; do
+					nft delete rule inet fw4 $c handle $h
+				done
+			done
+		fi
+		log "Removed nat rules for zt interface $i!"
+	done
+}
+
 section_enabled() {
 	config_get_bool enabled "$1" 'enabled' 0
 	[ $enabled -ne 0 ]
@@ -35,9 +111,10 @@ start_instance() {
 
 	# Create link or copy files from CONFIG_PATH to config_path
 	if [ -n "$config_path" -a "$config_path" != "$path" ]; then
+		# Create the config path to init and persist
 		if [ ! -d "$config_path" ]; then
-			echo "ZeroTier config_path does not exist: $config_path" 1>&2
-			return
+			echo "ZeroTier config_path does not exist: $config_path, create..."
+			mkdir -p $config_path
 		fi
 
 		# ensure that the target exists
@@ -60,7 +137,7 @@ start_instance() {
 		args="$args -p${port}"
 	fi
 
-	if [ -z "$secret" ]; then
+	if [ -z "$secret" -a ! -f $path/identity.secret ]; then
 		echo "Generate secret - please wait..."
 		local sf="/tmp/zt.$cfg.secret"
 
@@ -101,16 +178,29 @@ start_instance() {
 start_service() {
 	config_load 'zerotier'
 	config_foreach start_instance 'zerotier'
+
+	# Wait service running
+	sleep 1
+
+	# Add NAT rules
+	# Run in background, let service start
+	addnat &
 }
 
 stop_instance() {
 	local cfg="$1"
+
+	# Remove existing networks
+	rm -f ${CONFIG_PATH}_${cfg}/networks.d/*.conf
 
 	# Remove existing link or folder
 	rm -rf ${CONFIG_PATH}_${cfg}
 }
 
 stop_service() {
+	# Remove NAT rules
+	delnat
+
 	config_load 'zerotier'
 	config_foreach stop_instance 'zerotier'
 	rm -f ${CONFIG_PATH}

@@ -18,3 +18,6 @@ config zerotier sample_config
 	# Join a public network called Earth
 	list join '8056c2e21c000001'
 	#list join '<other_network>'
+
+	# Allow zerotier clients access your LAN network
+	option nat 0
