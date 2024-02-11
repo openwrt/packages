@@ -57,6 +57,7 @@ start_p910nd() {
 
 			# Set initial arguments
 			set -- "pdl-datastream" "tcp" "$((port+9100))"
+			set -- "$@" "txtvers=1"
 			# bonjourprinting-1.2.1.pdf spec mandates (at least) MFG, MDL, CMD for Socket type
 			[ -n "$mdns_note" ] && set -- "$@" "note=$mdns_note"
 			[ -n "$mdns_ty" ] && set -- "$@" "ty=$mdns_ty"
