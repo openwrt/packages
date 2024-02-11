@@ -228,9 +228,11 @@ get_and_store_printer_info() {
 	local CMD
 	local CLS
 	local DES
+	local DRV
 	local CID
 	local CMT
 	local SN
+	local VER
 
 
 	# Build array of /dev/usb/lpX character devices already configured
@@ -249,7 +251,7 @@ get_and_store_printer_info() {
 		[ $DEBUG ] && echo i:"$i"
 
 		case $i in
-			MFG:* | MANUFACTURER:* ) 
+			MFG:* | MANUFACTURER:* | MFR:* ) 
 				MFG=${i##*:};;
 			MDL:* | MODEL:* )
 				MDL=${i##*:};;
@@ -257,14 +259,18 @@ get_and_store_printer_info() {
 				CMD=${i##*:};;
 			CLS:* )
 				CLS=${i##*:};;
-			DES:* )
+			DES:* | DESCRIPTION:* )
 				DES=${i##*:};;
+			DRV:* )
+				DRV=${i##*:};;
 			CID:* | COMPATIBLEID:* )
 				CID=${i##*:};;
 			COMMENT:* )
 				CMT=${i##*:};;
-			SN:* )
+			SN:* | SERIALNUMBER:* | SERN:* )
 				SN=${i##*:};;
+			VER:* )
+				VER=${i##*:};;
 		esac
 
 		[ -n "$SN" ] || SN=$iSerialNumber
@@ -288,7 +294,9 @@ get_and_store_printer_info() {
 		[ -z "$(eval "$uqgddu_cmd".mdns_cid)" ] && [ -n "$CID" ] && eval "$uqsddu_cmd.mdns_cid='$CID'"
 		[ -z "$(eval "$uqgddu_cmd".mdns_cls)" ] && [ -n "$CLS" ] && eval "$uqsddu_cmd.mdns_cls='$CLS'"
 		[ -z "$(eval "$uqgddu_cmd".mdns_cmt)" ] && [ -n "$CMT" ] && eval "$uqsddu_cmd.mdns_cmt='$CMT'"
+		[ -z "$(eval "$uqgddu_cmd".mdns_drv)" ] && [ -n "$DRV" ] && eval "$uqsddu_cmd.mdns_drv='$DRV'"
 		[ -z "$(eval "$uqgddu_cmd".mdns_sn)" ] && [ -n "$SN" ] && eval "$uqsddu_cmd.mdns_sn='$SN'"
+		[ -z "$(eval "$uqgddu_cmd".mdns_ver)" ] && [ -n "$VER" ] && eval "$uqsddu_cmd.mdns_ver='$VER'"
 
 		# No previously configured device? Configure this instance. Set CHAR_DEV so we can send driver.
 		[ $UCI_DEV_CFG_NUMBER -eq -1 ] && eval "$uqsddu_cmd.device=/dev/'$DEVNAME'" && CHAR_DEV=/dev/"$DEVNAME"
