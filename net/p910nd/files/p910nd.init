@@ -32,7 +32,9 @@ start_service() {
 start_p910nd() {
 	local section="$1" runas_root
 	config_get_bool "enabled" "$section" "enabled" '0'
-	if [ "$enabled" -gt 0 ]; then
+	config_get device "$section" device
+	# If the device path exists, the device is connected; set it up:
+	if [ "$enabled" -gt 0 ] && [ -e "$device" ]; then
 		args="-d "
 		config_get port "$section" port
 		append_bool "$section" bidirectional "-b"
