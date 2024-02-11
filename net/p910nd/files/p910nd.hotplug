@@ -48,7 +48,7 @@ SYSUPGRADE_CONF="/etc/sysupgrade.conf"
 # DEV_TYPE_FILTER="usb_device"
 
 # Test the script by running $0 -d.
-if [ -n "$1" -a "$1" == "-d" ]; then
+if [ -n "$1" ] && [ "$1" = "-d" ]; then
 	# Set the variable DEBUG to true (or anything) for extra debug output
 	DEBUG=true
 
@@ -230,6 +230,9 @@ get_and_store_printer_info() {
 	# Build array of /dev/usb/lpX character devices already configured
 	match_current_device
 
+	uqgddu_cmd="uci -q get $DAEMON.@$DAEMON[$UCI_DEV_CFG_NUMBER]"
+	uqsddu_cmd="uci -q set $DAEMON.@$DAEMON[$UCI_DEV_CFG_NUMBER]"
+
 	# set Internal Field Separator to semicolon found in ieee1284_id files
 	IFS=";"
 	# Got 1284 Device ID string
@@ -237,8 +240,7 @@ get_and_store_printer_info() {
 	[ $DEBUG ] && echo ieee1284info: $ieee1284info
 
 	for i in "$@"; do
-		[ $DEBUG ] && echo "$i"
-		[ $DEBUG ] && echo
+		[ $DEBUG ] && echo i:"$i"
 
 		case $i in
 			MFG:* | MANUFACTURER:* ) 
@@ -264,19 +266,25 @@ get_and_store_printer_info() {
 
 		[ $DEBUG ] && echo 'uci set' for UCI_DEV_CFG_NUMBER: $UCI_DEV_CFG_NUMBER
 		# Take the USB info as fact: set bidir regardless. It seems to be a source of confusion.
-		uci -q set $DAEMON.@$DAEMON[$UCI_DEV_CFG_NUMBER].bidirectional="$BIDIR"
-		[ -z "$(uci -q get $DAEMON.@$DAEMON[$UCI_DEV_CFG_NUMBER].port)" ] && uci set $DAEMON.@$DAEMON[$UCI_DEV_CFG_NUMBER].port="0"
-		[ -z "$(uci -q get $DAEMON.@$DAEMON[$UCI_DEV_CFG_NUMBER].enabled)" ] && uci set $DAEMON.@$DAEMON[$UCI_DEV_CFG_NUMBER].enabled="1"
-		[ -z "$(uci -q get $DAEMON.@$DAEMON[$UCI_DEV_CFG_NUMBER].usbvidpid)" -a -n "$THIS_USB_VIDPID" ] && uci set $DAEMON.@$DAEMON[$UCI_DEV_CFG_NUMBER].usbvidpid="$THIS_USB_VIDPID"
-		# [ -z "$(uci -q get $DAEMON.@$DAEMON[$UCI_DEV_CFG_NUMBER].mdns)" ] && uci set $DAEMON.@$DAEMON[$UCI_DEV_CFG_NUMBER].mdns="1"
-		[ -z "$(uci -q get $DAEMON.@$DAEMON[$UCI_DEV_CFG_NUMBER].mdns_ty)" -a -n "$DES" ] && uci set $DAEMON.@$DAEMON[$UCI_DEV_CFG_NUMBER].mdns_ty="$DES"
-		[ -z "$(uci -q get $DAEMON.@$DAEMON[$UCI_DEV_CFG_NUMBER].mdns_product)" -a -n "$DES" ] && uci set $DAEMON.@$DAEMON[$UCI_DEV_CFG_NUMBER].mdns_product="($DES)"
-		[ -z "$(uci -q get $DAEMON.@$DAEMON[$UCI_DEV_CFG_NUMBER].mdns_mfg)" -a -n "$MFG" ] && uci set $DAEMON.@$DAEMON[$UCI_DEV_CFG_NUMBER].mdns_mfg="$MFG"
-		[ -z "$(uci -q get $DAEMON.@$DAEMON[$UCI_DEV_CFG_NUMBER].mdns_mdl)" -a -n "$MDL" ] && uci set $DAEMON.@$DAEMON[$UCI_DEV_CFG_NUMBER].mdns_mdl="$MDL"
-		[ -z "$(uci -q get $DAEMON.@$DAEMON[$UCI_DEV_CFG_NUMBER].mdns_cmd)" -a -n "$CMD" ] && uci set $DAEMON.@$DAEMON[$UCI_DEV_CFG_NUMBER].mdns_cmd="$CMD"
-		[ -z "$(uci -q get $DAEMON.@$DAEMON[$UCI_DEV_CFG_NUMBER].mdns_note)" -a -n "$SN" ] && uci set $DAEMON.@$DAEMON[$UCI_DEV_CFG_NUMBER].mdns_note="SN:"$SN" Auto-configured by $DAEMON_HOTPLUG"
+		eval "$uqsddu_cmd.bidirectional='$BIDIR'"
+		[ -z "$(eval "$uqgddu_cmd".port)" ] && eval "$uqsddu_cmd.port='0'"
+		[ -z "$(eval "$uqgddu_cmd".enabled)" ] && eval "$uqsddu_cmd.enabled='1'"
+		[ -z "$(eval "$uqgddu_cmd".usbvidpid)" ] && [ -n "$THIS_USB_VIDPID" ] && eval "$uqsddu_cmd.usbvidpid='$THIS_USB_VIDPID'"
+		# Safe to default to on for mDNS if we found one of the mandatory properties (e.g. MDL)
+		[ -z "$(eval "$uqgddu_cmd".mdns)" ] && [ -n "$MDL" ] && eval "$uqsddu_cmd.mdns='1'"
+		[ -z "$(eval "$uqgddu_cmd".mdns_ty)" ] && [ -n "$DES" ] && eval "$uqsddu_cmd.mdns_ty='$DES'"
+		[ -z "$(eval "$uqgddu_cmd".mdns_product)" ] && [ -n "$DES" ] && eval "$uqsddu_cmd.mdns_product='($DES)'"
+		[ -z "$(eval "$uqgddu_cmd".mdns_mfg)" ] && [ -n "$MFG" ] && eval "$uqsddu_cmd.mdns_mfg='$MFG'"
+		[ -z "$(eval "$uqgddu_cmd".mdns_mdl)" ] && [ -n "$MDL" ] && eval "$uqsddu_cmd.mdns_mdl='$MDL'"
+		[ -z "$(eval "$uqgddu_cmd".mdns_cmd)" ] && [ -n "$CMD" ] && eval "$uqsddu_cmd.mdns_cmd='$CMD'"
+		[ -z "$(eval "$uqgddu_cmd".mdns_note)" ] && eval "$uqsddu_cmd.mdns_note='Located near router'"
+		# Optional ieee1284_id parameters
+		[ -z "$(eval "$uqgddu_cmd".mdns_cid)" ] && [ -n "$CID" ] && eval "$uqsddu_cmd.mdns_cid='$CID'"
+		[ -z "$(eval "$uqgddu_cmd".mdns_cls)" ] && [ -n "$CLS" ] && eval "$uqsddu_cmd.mdns_cls='$CLS'"
+		[ -z "$(eval "$uqgddu_cmd".mdns_cmt)" ] && [ -n "$CMT" ] && eval "$uqsddu_cmd.mdns_cmt='$CMT'"
+		[ -z "$(eval "$uqgddu_cmd".mdns_sn)" ] && [ -n "$SN" ] && eval "$uqsddu_cmd.mdns_sn='$SN'"
 
-		if [ -n "$MFG" -a -n "$MDL" -a -n "$DRIVER_BLOBNAME_TAIL" ] && [ -z "$(uci -q get $DAEMON.@$DAEMON[$UCI_DEV_CFG_NUMBER].driver_file)" ]; then
+		if [ -n "$MFG" ] && [ -n "$MDL" ] && [ -n "$DRIVER_BLOBNAME_TAIL" ] && [ -z "$($uqgddu_cmd.driver_file)" ]; then
 			DRIVER_FILE="$MFG"_"$MDL"_"$DRIVER_BLOBNAME_TAIL"
 			# Make blob filename more friendly: change space to underscore
 			DRIVER_FILE="$DRIVER_HOME"/"${DRIVER_FILE// /_}"
@@ -335,7 +343,7 @@ case "$ACTION" in
 		# [ -z "${PRODUCT##*$THIS_USB_VIDPID*}" ]
 
 		# Ensure dev is character device
-		if [ -n "$THIS_USB_VIDPID" -a -c $CHAR_DEV ]; then
+		if [ -n "$THIS_USB_VIDPID" ] && [ -c $CHAR_DEV ]; then
 			# if zero string, i.e. usb_ID is a match for $PRODUCT supplied by hotplug
 			if [ $(uci -q get $DAEMON.@$DAEMON[$UCI_DEV_CFG_NUMBER].usbvidpid) == "$THIS_USB_VIDPID" ]; then
 				[ $DEBUG ] && echo "THIS_USB_VIDPID match for $DAEMON device $THIS_USB_VIDPID."
