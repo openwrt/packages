@@ -54,6 +54,14 @@ start_p910nd() {
 			config_get mdns_mfg "$section" mdns_mfg
 			config_get mdns_mdl "$section" mdns_mdl
 			config_get mdns_cmd "$section" mdns_cmd
+			# Optional parameters
+			config_get mdns_cid "$section" mdns_cid
+			config_get mdns_cls "$section" mdns_cls
+			config_get mdns_cmt "$section" mdns_cmt
+			config_get mdns_des "$section" mdns_des
+			config_get mdns_drv "$section" mdns_drv
+			config_get mdns_sn "$section" mdns_sn
+			config_get mdns_ver "$section" mdns_ver
 
 			# Set initial arguments
 			set -- "pdl-datastream" "tcp" "$((port+9100))"
@@ -65,6 +73,14 @@ start_p910nd() {
 			[ -n "$mdns_mfg" ] && set -- "$@" "usb_MFG=$mdns_mfg"
 			[ -n "$mdns_mdl" ] && set -- "$@" "usb_MDL=$mdns_mdl"
 			[ -n "$mdns_cmd" ] && set -- "$@" "usb_CMD=$mdns_cmd"
+			# Optional parameters
+			[ -n "$mdns_cid" ] && set -- "$@" "usb_CID=$mdns_cid"
+			[ -n "$mdns_cls" ] && set -- "$@" "usb_CLS=$mdns_cls"
+			[ -n "$mdns_cmt" ] && set -- "$@" "usb_CMT=$mdns_cmt"
+			[ -n "$mdns_des" ] && set -- "$@" "usb_DES=$mdns_des"
+			[ -n "$mdns_drv" ] && set -- "$@" "usb_DRV=$mdns_drv"
+			[ -n "$mdns_sn" ] && set -- "$@" "usb_SN=$mdns_sn"
+			[ -n "$mdns_ver" ] && set -- "$@" "usb_VER=$mdns_ver"
 
 			# Call procd_add_mdns with the positional parameters
 			procd_add_mdns "$@"
