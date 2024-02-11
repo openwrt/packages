@@ -120,6 +120,12 @@ case $BIP in
 		;;
 esac
 
+# Verify that we have p910nd settings
+if ! uci -q get $DAEMON; then
+	touch /etc/config/$DAEMON
+	uci -q add $DAEMON $DAEMON
+	uci -q commit
+fi
 
 # Next, we need THIS_USB_VIDPID. This is to ensure that we send the right blob
 # to the right USB printer. THIS_USB_VIDPID is an anchor, or filter, if you will.
@@ -138,7 +144,7 @@ THIS_USB_VIDPID="$idVendor/$idProduct"
 
 
 # Not always available:
-iSerialNumber=$( cat "iSerialNumber" 2>/dev/null ) || iSerialNumber=$( cat "serial" 2>/dev/null )
+iSerialNumber=$( cat "$PARENT_DEVPATH/iSerialNumber" 2>/dev/null ) || iSerialNumber=$( cat "$PARENT_DEVPATH/serial" 2>/dev/null )
 [ $DEBUG ] && echo iSerialNumber is $iSerialNumber
 
 
@@ -151,7 +157,7 @@ ieee1284info=$(cat ""$ACTUAL_DEVPATH"/ieee1284_id" )
 [ -z $(uci -q get $DAEMON.@hotplug[0]) ] && uci -q add $DAEMON hotplug
 
 # # Absent the driver_home path config, set it to a default
-[ -z $(uci -q get $DAEMON.@hotplug[0].driver_home) ] && uci -q set $DAEMON.@hotplug[-1].driver_home=$DRIVER_HOME_DEFAULT
+[ -z $(uci -q get $DAEMON.@hotplug[0].driver_home) ] && uci -q set $DAEMON.@hotplug[-1].driver_home=$DRIVER_HOME_DEFAULT && uci -q commit $DAEMON
 
 # Make the driver folder hierarchy
 if ! $(mkdir -p $DRIVER_HOME_DEFAULT); then
@@ -283,6 +289,9 @@ get_and_store_printer_info() {
 		[ -z "$(eval "$uqgddu_cmd".mdns_cls)" ] && [ -n "$CLS" ] && eval "$uqsddu_cmd.mdns_cls='$CLS'"
 		[ -z "$(eval "$uqgddu_cmd".mdns_cmt)" ] && [ -n "$CMT" ] && eval "$uqsddu_cmd.mdns_cmt='$CMT'"
 		[ -z "$(eval "$uqgddu_cmd".mdns_sn)" ] && [ -n "$SN" ] && eval "$uqsddu_cmd.mdns_sn='$SN'"
+
+		# No previously configured device? Configure this instance. Set CHAR_DEV so we can send driver.
+		[ $UCI_DEV_CFG_NUMBER -eq -1 ] && eval "$uqsddu_cmd.device=/dev/'$DEVNAME'" && CHAR_DEV=/dev/"$DEVNAME"
 
 		if [ -n "$MFG" ] && [ -n "$MDL" ] && [ -n "$DRIVER_BLOBNAME_TAIL" ] && [ -z "$($uqgddu_cmd.driver_file)" ]; then
 			DRIVER_FILE="$MFG"_"$MDL"_"$DRIVER_BLOBNAME_TAIL"
