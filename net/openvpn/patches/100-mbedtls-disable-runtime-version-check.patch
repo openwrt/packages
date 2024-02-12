@@ -1,6 +1,6 @@
 --- a/src/openvpn/ssl_mbedtls.c
 +++ b/src/openvpn/ssl_mbedtls.c
-@@ -1533,7 +1533,7 @@ const char *
+@@ -1612,7 +1612,7 @@ const char *
  get_ssl_library_version(void)
  {
      static char mbedtls_version[30];
