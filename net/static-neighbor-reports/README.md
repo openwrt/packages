@@ -10,7 +10,7 @@ The uci config name is `static-neighbor-report`. There's currently only the sect
 type `neighbor`.
 
 ### neighbor
-The followign options are supported for `neighbor` sections:
+The following options are supported for `neighbor` sections:
 
 #### neighbor_report
 This is the binary neighbor report element from a foreign AP. It is required for each neighbor.
