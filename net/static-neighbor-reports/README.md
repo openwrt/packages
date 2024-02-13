@@ -30,7 +30,7 @@ The SSID of the foreign AP. This option can be omitted, in case it matches the S
 Space separated list of hostapd interfaces the neighbor should be installed to.
 
 ## Retrieving neighbor information
-To retrieve the neighbor informations of an AP to be isntalled on a foreign AP, make sure the UCI option
+To retrieve the neighbor information of an AP to be installed on a foreign AP, make sure the UCI option
 `ieee80211k` is set to `1` on the VAP.
 
 Execute `ubus call hostapd.<ifname> rrm_nr_get_own` on the AP. To get a list of all available interfaces,
