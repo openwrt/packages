@@ -16,7 +16,7 @@ PKG_SOURCE_URL:=https://github.com/strophe/libstrophe/releases/download/$(PKG_VE
 PKG_HASH:=8d7c17c694efff7d2e2d3632684537e7ba874ce3d7f0e750a539f2299021bbaa
 
 PKG_MAINTAINER:=Chih-Wei Chen <changeway@gmail.com>
-PKG_LICENSE:=GPL-3.0-or-later
+PKG_LICENSE:=MIT OR GPL-3.0-only
 PKG_LICENSE_FILES:=COPYING
 
 PKG_FIXUP:=autoreconf
