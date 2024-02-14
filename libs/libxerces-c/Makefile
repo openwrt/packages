@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xerces-c
-PKG_VERSION:=3.2.4
+PKG_VERSION:=3.2.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@APACHE/xerces/c/3/sources
-PKG_HASH:=075bc57940da0f9be6dd183c550c8ce0b9833e4550dc382048377a1a5e3b2bd9
+PKG_HASH:=6239e6035645b21bc9bf7f02004db334dce3fe6d85428ee4fe7e180c2d948230
 
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 PKG_LICENSE:=Apache-2.0
