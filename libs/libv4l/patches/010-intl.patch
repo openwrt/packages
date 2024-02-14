@@ -1,0 +1,50 @@
+--- a/lib/libdvbv5/meson.build
++++ b/lib/libdvbv5/meson.build
+@@ -124,6 +124,7 @@ install_headers(libdvbv5_api, subdir: 'l
+ 
+ libdvbv5_deps = [
+     dep_iconv,
++    dep_intl,
+     dep_libm,
+     dep_librt,
+     dep_libudev,
+--- a/meson.build
++++ b/meson.build
+@@ -178,6 +178,8 @@ size_t iconv (iconv_t cd, char * *inbuf,
+     endif
+ endif
+ 
++dep_intl = dependency('intl')
++
+ have_gconv = cc.has_header('gconv.h', required : get_option('gconv'))
+ 
+ # Detect system gconv directory
+--- a/utils/dvb/meson.build
++++ b/utils/dvb/meson.build
+@@ -1,5 +1,6 @@
+ dvb_common_deps =  [
+     dep_argp,
++    dep_intl,
+     dep_libdvbv5,
+     dep_libudev,
+     dep_threads,
+--- a/utils/ir-ctl/meson.build
++++ b/utils/ir-ctl/meson.build
+@@ -12,6 +12,7 @@ ir_ctl_sources = files(
+ 
+ ir_ctl_deps =  [
+     dep_argp,
++    dep_intl,
+ ]
+ 
+ ir_ctl = executable('ir-ctl',
+--- a/utils/keytable/meson.build
++++ b/utils/keytable/meson.build
+@@ -11,6 +11,7 @@ ir_keytable_sources = files(
+ 
+ ir_keytable_deps = [
+     dep_argp,
++    dep_intl,
+ ]
+ 
+ ir_keytable_system_dir = udevdir
