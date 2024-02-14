@@ -1716,7 +1716,7 @@ adb_sizes() {
 
 # shellcheck disable=SC2120
 adb_start() {
-	local action status error message stats c
+	local action status error message stats c iface
 	local param="$1" validation_result="$3"
 
 	load_environment "$validation_result" "$param" || return 1
@@ -1852,25 +1852,29 @@ adb_start() {
 # shellcheck disable=SC3060
 		for c in ${force_dns_port/,/ }; do
 			if netstat -tuln | grep LISTEN | grep ":${c}" >/dev/null 2>&1; then
-				json_add_object ""
-				json_add_string type redirect
-				json_add_string target DNAT
-				json_add_string src lan
-				json_add_string proto "tcp udp"
-				json_add_string src_dport "$c"
-				json_add_string dest_port "$c"
-				json_add_string family any
-				json_add_boolean reflection 0
-				json_close_object
+				for iface in $force_dns_interface; do
+					json_add_object ""
+					json_add_string type redirect
+					json_add_string target DNAT
+					json_add_string src "$iface"
+					json_add_string proto "tcp udp"
+					json_add_string src_dport "$c"
+					json_add_string dest_port "$c"
+					json_add_string family any
+					json_add_boolean reflection 0
+					json_close_object
+				done
 			else
-				json_add_object ""
-				json_add_string type rule
-				json_add_string src lan
-				json_add_string dest "*"
-				json_add_string proto "tcp udp"
-				json_add_string dest_port "$c"
-				json_add_string target REJECT
-				json_close_object
+				for iface in $force_dns_interface; do
+					json_add_object ""
+					json_add_string type rule
+					json_add_string src "$iface"
+					json_add_string dest "*"
+					json_add_string proto "tcp udp"
+					json_add_string dest_port "$c"
+					json_add_string target REJECT
+					json_close_object
+				done
 			fi
 		done
 	fi
@@ -1882,14 +1886,16 @@ adb_start() {
 			json_add_string match dest_net
 			json_add_string storage hash
 			json_close_object
-			json_add_object ""
-			json_add_string type rule
-			json_add_string ipset adb
-			json_add_string src lan
-			json_add_string dest "*"
-			json_add_string proto "tcp udp"
-			json_add_string target REJECT
-			json_close_object
+			for iface in $force_dns_interface; do
+				json_add_object ""
+				json_add_string type rule
+				json_add_string ipset adb
+				json_add_string src "$iface"
+				json_add_string dest "*"
+				json_add_string proto "tcp udp"
+				json_add_string target REJECT
+				json_close_object
+			done
 		;;
 		dnsmasq.nftset|smartdns.nftset)
 			json_add_object ""
@@ -1898,14 +1904,16 @@ adb_start() {
 			json_add_string family 4
 			json_add_string match dest_net
 			json_close_object
-			json_add_object ""
-			json_add_string type rule
-			json_add_string ipset adb4
-			json_add_string src lan
-			json_add_string dest "*"
-			json_add_string proto "tcp udp"
-			json_add_string target REJECT
-			json_close_object
+			for iface in $force_dns_interface; do
+				json_add_object ""
+				json_add_string type rule
+				json_add_string ipset adb4
+				json_add_string src "$iface"
+				json_add_string dest "*"
+				json_add_string proto "tcp udp"
+				json_add_string target REJECT
+				json_close_object
+			done
 			if [ "$ipv6_enabled" -ne '0' ]; then
 				json_add_object ""
 				json_add_string type ipset
@@ -1913,14 +1921,16 @@ adb_start() {
 				json_add_string family 6
 				json_add_string match dest_net
 				json_close_object
-				json_add_object ""
-				json_add_string type rule
-				json_add_string ipset adb6
-				json_add_string src lan
-				json_add_string dest "*"
-				json_add_string proto "tcp udp"
-				json_add_string target REJECT
-				json_close_object
+				for iface in $force_dns_interface; do
+					json_add_object ""
+					json_add_string type rule
+					json_add_string ipset adb6
+					json_add_string src "$iface"
+					json_add_string dest "*"
+					json_add_string proto "tcp udp"
+					json_add_string target REJECT
+					json_close_object
+				done
 			fi
 		;;
 	esac
@@ -2081,6 +2091,7 @@ load_validate_file_url_section() {
 load_validate_config() {
 	local enabled
 	local force_dns
+	local force_dns_interface
 	local force_dns_port
 	local parallel_downloads
 	local debug
@@ -2100,6 +2111,7 @@ load_validate_config() {
 	local verbosity
 	local procd_trigger_wan6
 	local procd_boot_wan_timeout
+	local procd_lan_interface_name
 	local led
 	local dns
 	local dnsmasq_instance
@@ -2109,6 +2121,7 @@ load_validate_config() {
 	uci_load_validate "$packageName" "$packageName" "$1" "${2}${3:+ $3}" \
 		'enabled:bool:0' \
 		'force_dns:bool:1' \
+		'force_dns_interface:list(network):lan' \
 		'force_dns_port:list(integer):53,853' \
 		'parallel_downloads:bool:1' \
 		'debug:bool:0' \
