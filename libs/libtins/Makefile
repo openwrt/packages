@@ -8,12 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libtins
-PKG_VERSION:=4.4
-PKG_RELEASE:=4
+PKG_VERSION:=4.5
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/mfontanini/libtins/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=ff0121b4ec070407e29720c801b7e1a972042300d37560a62c57abadc9635634
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+PKG_SOURCE_URL:=https://github.com/mfontanini/libtins
+PKG_MIRROR_HASH:=4029af89fd86246f166a89c11d5382bb0f5fe3bda95b00b4cf54d22596b37fcf
 
 PKG_MAINTAINER:= Steven Hessing <steven.hessing@gmail.com>
 PKG_LICENSE:=BSD-2-Clause
