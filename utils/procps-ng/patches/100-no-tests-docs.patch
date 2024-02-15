@@ -1,0 +1,26 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -18,10 +18,7 @@ PACKAGE_VERSION = @PACKAGE_VERSION@
+ 
+ ACLOCAL_AMFLAGS = -I m4
+ SUBDIRS = \
+-	local \
+-	po-man \
+-	po \
+-	testsuite
++	local
+ 
+ AM_CFLAGS = -Ilibrary/include
+ LDADD = ./library/libproc2.la $(CYGWINFLAGS)
+--- a/configure.ac
++++ b/configure.ac
+@@ -421,8 +421,5 @@ AC_CHECK_FUNCS([__fpending alarm atexit
+ 
+ AC_CONFIG_FILES([Makefile
+                  local/Makefile
+-                 po-man/Makefile
+-                 po/Makefile.in
+-                 library/libproc2.pc
+-                 testsuite/Makefile])
++                 library/libproc2.pc])
+ AC_OUTPUT
