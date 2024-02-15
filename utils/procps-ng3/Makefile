@@ -7,11 +7,12 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=procps-ng
+PKG_NAME:=procps-ng3
 PKG_VERSION:=4.0.4
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_BUILD_DIR:=$(BUILD_DIR)/procps-ng-$(PKG_VERSION)
+PKG_SOURCE:=procps-ng-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/procps-ng
 PKG_HASH:=22870d6feb2478adb617ce4f09a787addaf2d260c5a8aa7b17d889a962c5e42e
 
@@ -45,7 +46,7 @@ PROCPS_APPLETS_DIR_BIN:=kill ps watch
 PROCPS_APPLETS_DIR_SBIN:=sysctl
 procps-applets-dir=$(if $(filter $(PROCPS_APPLETS_DIR_BIN),$(1)),/bin,$(if $(filter $(PROCPS_APPLETS_DIR_SBIN),$(1)),/sbin,/usr/bin))
 
-define Package/procps-ng/Default
+define Package/procps-ng3/Default
   SECTION:=utils
   CATEGORY:=Utilities
   DEPENDS:=+libncurses
@@ -58,12 +59,12 @@ define Build/Prepare
 	echo "$(PKG_VERSION)" > "$(PKG_BUILD_DIR)/.tarball-version"
 endef
 
-define Package/procps-ng
-  $(call Package/procps-ng/Default)
+define Package/procps-ng3
+  $(call Package/procps-ng3/Default)
   MENU:=1
 endef
 
-define Package/procps-ng/description
+define Package/procps-ng3/description
   procps is a set of command line and full-screen utilities that provide information out of the pseudo-filesystem
   most commonly located at /proc. This filesystem provides a simple interface to the kernel data structures.
   The programs of procps generally concentrate on the structures that describe the processess running on the system.
@@ -73,14 +74,14 @@ define Package/procps-ng/description
 endef
 
 define GenPlugin
- define Package/procps-ng-$(1)
-   $(call Package/procps-ng/Default)
-   DEPENDS:=procps-ng
-   TITLE:=Applet $(1) from the procps-ng package
+ define Package/procps-ng3-$(1)
+   $(call Package/procps-ng3/Default)
+   DEPENDS:=procps-ng3
+   TITLE:=Applet $(1) from the procps-ng3 package
    ALTERNATIVES:=200:$(2)/$(1):/usr/libexec/$(1)-procps-ng
  endef
 
- define Package/procps-ng-$(1)/description
+ define Package/procps-ng3-$(1)/description
   Installs the applet $(1).
  endef
 endef
@@ -92,7 +93,7 @@ MAKE_FLAGS += \
 	CPPFLAGS="$(TARGET_CPPFLAGS)" \
 	LDFLAGS="$(TARGET_LDFLAGS)" \
 
-define Package/procps-ng/install
+define Package/procps-ng3/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libproc2.so* $(1)/usr/lib/
 endef
@@ -104,13 +105,13 @@ define Build/InstallDev
 endef
 
 define BuildPlugin
-  define Package/procps-ng-$(1)/install
+  define Package/procps-ng3-$(1)/install
 	$(INSTALL_DIR) $$(1)/usr/libexec
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)$(2)/$(1) $$(1)/usr/libexec/$(1)-procps-ng
   endef
 
-  $$(eval $$(call BuildPackage,procps-ng-$(1)))
+  $$(eval $$(call BuildPackage,procps-ng3-$(1)))
 endef
 
 $(foreach a,$(PROCPS_APPLETS),$(eval $(call BuildPlugin,$(a),$(call procps-applets-src-dir,$(a)))))
-$(eval $(call BuildPackage,procps-ng))
+$(eval $(call BuildPackage,procps-ng3))
