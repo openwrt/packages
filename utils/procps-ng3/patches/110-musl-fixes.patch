@@ -1,0 +1,27 @@
+From https://git.alpinelinux.org/aports/tree/community/procps-compat/musl-fixes.patch?id=781a465d3d41af56a6e4bf9d52b7273c87899e25
+
+--- a/w.c
++++ b/w.c
+@@ -55,11 +55,7 @@
+ #include <termios.h>
+ #include <time.h>
+ #include <unistd.h>
+-#ifdef HAVE_UTMPX_H
+-#	include <utmpx.h>
+-#else
+-#	include <utmp.h>
+-#endif
++#include <utmp.h>
+ #include <arpa/inet.h>
+ 
+ static int ignoreuser = 0;	/* for '-u' */
+--- a/proc/escape.c
++++ b/proc/escape.c
+@@ -21,6 +21,7 @@
+ #include <sys/types.h>
+ #include <string.h>
+ #include <limits.h>
++#include <langinfo.h>
+ #include "procps.h"
+ #include "escape.h"
+ #include "readproc.h"
