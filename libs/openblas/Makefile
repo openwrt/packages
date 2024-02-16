@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=OpenBLAS
 PKG_VERSION:=0.3.26
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=OpenBLAS-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/xianyi/OpenBLAS/releases/download/v$(PKG_VERSION)/
@@ -49,13 +49,26 @@ endmenu
 endef
 
 OPENBLAS_TARGET=$(call qstrip,$(CONFIG_OPENBLAS_TARGET_OVERRIDE))
-CPU_TYPE=$(call qstrip,$(CONFIG_CPU_TYPE))
 
 ifeq ($(OPENBLAS_TARGET),)
 # initialize to GENERIC as default
 OPENBLAS_TARGET:=GENERIC
 
-ifeq ($(ARCH),aarch64)
+ifneq ($(findstring cortex-a9,$(CONFIG_CPU_TYPE)),)
+	ifneq ($(findstring neon,$(CONFIG_CPU_TYPE)),)
+		# CORTEXA9 relies on NEON
+		OPENBLAS_TARGET:=CORTEXA9
+	else
+		# Fallback for CPUs without NEON
+		OPENBLAS_TARGET:=ARMV7
+	endif
+else ifneq ($(findstring cortex-a15,$(CONFIG_CPU_TYPE)),)
+	OPENBLAS_TARGET:=CORTEXA15
+else ifneq ($(findstring cortex-a53,$(CONFIG_CPU_TYPE)),)
+	OPENBLAS_TARGET:=CORTEXA53
+else ifneq ($(findstring cortex-a72,$(CONFIG_CPU_TYPE)),)
+	OPENBLAS_TARGET:=CORTEXA72
+else ifeq ($(ARCH),aarch64)
   OPENBLAS_TARGET:=ARMV8
 else ifeq ($(ARCH),arm)
   OPENBLAS_TARGET:=ARMV5
