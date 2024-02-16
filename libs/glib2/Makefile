@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=glib2
 PKG_VERSION:=2.74.0
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=glib-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNOME/glib/$(basename $(PKG_VERSION))
@@ -45,23 +45,27 @@ define Package/glib2/description
   The GLib library of C routines
 endef
 
-COMP_ARGS= \
-	-Dselinux=disabled \
-	-Dlibmount=disabled \
-	-Dman=false \
-	-Ddtrace=false \
-	-Dsystemtap=false \
-	-Dsysprof=disabled \
-	-Dgtk_doc=false \
-	-Dbsymbolic_functions=true \
-	-Dforce_posix_threads=true \
-	-Dtests=false \
-	-Dinstalled_tests=false \
-	-Doss_fuzz=disabled \
-	-Dglib_debug=disabled \
-	-Dglib_assert=false \
-	-Dglib_checks=true \
-	-Dlibelf=disabled
+COMP_ARGS:=
+
+# default feature=auto see meson_options.txt
+COMP_ARGS+=-Dglib_debug=disabled
+
+# default feature=auto see meson_options.txt
+COMP_ARGS+=-Dlibmount=disabled
+
+# default feature=auto see meson_options.txt
+COMP_ARGS+=-Dselinux=disabled
+
+
+# default boolean=false see meson_options.txt
+COMP_ARGS+=-Dforce_posix_threads=true
+
+# default boolean=true see meson_options.txt
+COMP_ARGS+=-Dglib_assert=false
+
+# default boolean=true see meson_options.txt
+COMP_ARGS+=-Dtests=false
+
 
 MESON_HOST_ARGS += $(COMP_ARGS) -Dxattr=false -Ddefault_library=static -Dnls=disabled
 MESON_ARGS += $(COMP_ARGS) -Dxattr=true -Db_lto=true -Ddefault_library=both -Dnls=$(if $(CONFIG_BUILD_NLS),en,dis)abled
