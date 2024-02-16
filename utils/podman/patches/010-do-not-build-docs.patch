@@ -1,6 +1,6 @@
 --- a/Makefile
 +++ b/Makefile
-@@ -224,7 +224,7 @@ GV_VERSION=v0.7.1
+@@ -224,7 +224,7 @@ GV_VERSION=v0.7.2
  default: all
  
  .PHONY: all
