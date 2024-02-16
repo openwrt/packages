@@ -2,6 +2,8 @@
 # Copyright (C) 2007 OpenWrt.org
 START=99
 USE_PROCD=1
+DAEMON_NAME="p910nd"
+CONFIG="p910nd"
 
 append_bool() {
 	local section="$1"
@@ -22,38 +24,69 @@ append_string() {
 }
 
 start_service() {
-	config_load "p910nd"
-	config_foreach start_p910nd p910nd
+	config_load $CONFIG
+	config_foreach start_p910nd $CONFIG
 }
 
 
 start_p910nd() {
 	local section="$1" runas_root
 	config_get_bool "enabled" "$section" "enabled" '0'
-	if [ "$enabled" -gt 0 ]; then
+	config_get device "$section" device
+	# If the device path exists, the device is connected; set it up:
+	if [ "$enabled" -gt 0 ] && [ -e "$device" ]; then
 		args="-d "
 		config_get port "$section" port
-		name=p910${port}d
 		append_bool "$section" bidirectional "-b"
 		append_string "$section" device "-f "
 		append_string "$section" bind "-i "
 		append_string "$section" port ""
-		procd_open_instance $name
-		procd_set_param command /usr/sbin/p910nd $args
+		procd_open_instance $DAEMON_NAME
+		procd_set_param command /usr/sbin/$DAEMON_NAME $args
 		procd_set_param respawn
 
 		config_get_bool runas_root "$section" runas_root 0
-		[ "$runas_root" -ne 1 ] && procd_set_param user p910nd
+		[ "$runas_root" -ne 1 ] && procd_set_param user $DAEMON_NAME
 
 		config_get_bool "mdns" "$section" "mdns" '0'
-		config_get mdns_note "$section" mdns_note
-		config_get mdns_ty "$section" mdns_ty
-		config_get mdns_product "$section" mdns_product
-		config_get mdns_mfg "$section" mdns_mfg
-		config_get mdns_mdl "$section" mdns_mdl
-		config_get mdns_cmd "$section" mdns_cmd
-		[ "$mdns" -gt 0 ] && procd_add_mdns "pdl-datastream" "tcp" "$((port+9100))" "note=$mdns_note" "ty=$mdns_ty" "product=$mdns_product" "usb_MFG=$mdns_mfg" "usb_MDL=$mdns_mdl" "usb_CMD=$mdns_cmd"
+		if [ "$mdns" -gt 0 ]; then
+			config_get mdns_note "$section" mdns_note
+			config_get mdns_ty "$section" mdns_ty
+			config_get mdns_product "$section" mdns_product
+			config_get mdns_mfg "$section" mdns_mfg
+			config_get mdns_mdl "$section" mdns_mdl
+			config_get mdns_cmd "$section" mdns_cmd
+			# Optional parameters
+			config_get mdns_cid "$section" mdns_cid
+			config_get mdns_cls "$section" mdns_cls
+			config_get mdns_cmt "$section" mdns_cmt
+			config_get mdns_des "$section" mdns_des
+			config_get mdns_drv "$section" mdns_drv
+			config_get mdns_sn "$section" mdns_sn
+			config_get mdns_ver "$section" mdns_ver
 
+			# Set initial arguments
+			set -- "pdl-datastream" "tcp" "$((port+9100))"
+			set -- "$@" "txtvers=1"
+			# bonjourprinting-1.2.1.pdf spec mandates (at least) MFG, MDL, CMD for Socket type
+			[ -n "$mdns_note" ] && set -- "$@" "note=$mdns_note"
+			[ -n "$mdns_ty" ] && set -- "$@" "ty=$mdns_ty"
+			[ -n "$mdns_product" ] && set -- "$@" "product=$mdns_product"
+			[ -n "$mdns_mfg" ] && set -- "$@" "usb_MFG=$mdns_mfg"
+			[ -n "$mdns_mdl" ] && set -- "$@" "usb_MDL=$mdns_mdl"
+			[ -n "$mdns_cmd" ] && set -- "$@" "usb_CMD=$mdns_cmd"
+			# Optional parameters
+			[ -n "$mdns_cid" ] && set -- "$@" "usb_CID=$mdns_cid"
+			[ -n "$mdns_cls" ] && set -- "$@" "usb_CLS=$mdns_cls"
+			[ -n "$mdns_cmt" ] && set -- "$@" "usb_CMT=$mdns_cmt"
+			[ -n "$mdns_des" ] && set -- "$@" "usb_DES=$mdns_des"
+			[ -n "$mdns_drv" ] && set -- "$@" "usb_DRV=$mdns_drv"
+			[ -n "$mdns_sn" ] && set -- "$@" "usb_SN=$mdns_sn"
+			[ -n "$mdns_ver" ] && set -- "$@" "usb_VER=$mdns_ver"
+
+			# Call procd_add_mdns with the positional parameters
+			MDNS_INSTANCE_NAME="$mdns_ty" procd_add_mdns "$@"
+		fi
 		procd_close_instance
 	fi
 }
@@ -61,6 +94,6 @@ start_p910nd() {
 service_triggers()
 {
 	procd_open_trigger
-	procd_add_config_trigger "config.change" "p910nd" /etc/init.d/p910nd reload
+	procd_add_config_trigger "config.change" $DAEMON_NAME /etc/init.d/$DAEMON_NAME reload
 	procd_close_trigger
 }
