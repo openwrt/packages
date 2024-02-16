@@ -88,7 +88,7 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/build-1/* $(1)/usr/share/build-1
 	$(SED) '/^prefix=\|^exec_prefix=/s|/usr|$(STAGING_DIR)/usr|' \
 					$(1)/usr/bin/apr-1-config
-	$(SED) '/^bindir=/s|/usr/bin|$(STAGING_DIR)|' $(1)/usr/bin/apr-1-config
+	$(SED) '/^bindir=/s|/usr|$$$${prefix}|' $(1)/usr/bin/apr-1-config
 	$(SED) '/^datadir=/s|/usr|$$$${prefix}|' $(1)/usr/bin/apr-1-config
 	$(SED) '/^datarootdir=/s|/usr|$$$${prefix}|' $(1)/usr/bin/apr-1-config
 	$(SED) 's,/usr/share/build-1,$(STAGING_DIR)/usr/share/build-1,g' \
