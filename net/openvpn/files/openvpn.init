@@ -281,7 +281,7 @@ start_service() {
 	if [ -n "$instance" ]; then
 		if [ "$instance_found" -gt 0 ]; then
 			start_uci_instance "$instance"
-		else
+		elif [ -f "${PATH_INSTANCE_DIR}/${instance}.conf" ]; then
 			start_path_instance "$instance"
 		fi
 	else
@@ -299,4 +299,3 @@ start_service() {
 service_triggers() {
 	procd_add_reload_trigger openvpn
 }
-
