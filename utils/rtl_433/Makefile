@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtl_433
-PKG_VERSION:=22.11
+PKG_VERSION:=23.11
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/merbanan/rtl_433/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=61a9163d69cc4b1da46aebbcaf969bd180a055a6b90f42ad281218cc4fbefb86
+PKG_HASH:=1260c58400bf35832ac1b76cb3cccf3dc1335ffa2416909c63c7d7060c74663b
 
 PKG_MAINTAINER:=Jasper Scholte <NightNL@outlook.com>
 PKG_LICENSE:=GPL-2.0-or-later
