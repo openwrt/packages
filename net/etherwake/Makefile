@@ -12,7 +12,7 @@ PKG_VERSION:=1.09
 PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).orig.tar.gz
-PKG_SOURCE_URL:=http://ftp.debian.org/debian/pool/main/e/etherwake
+PKG_SOURCE_URL:=https://ftp.debian.org/debian/pool/main/e/etherwake
 PKG_HASH:=54241c7689579dc86e29e6afbc6d60e69f97135091a1395c8a10f6d5a2daec1d
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION).orig
@@ -23,7 +23,7 @@ define Package/etherwake
   SECTION:=net
   CATEGORY:=Network
   TITLE:=WoL client for magic packets via ethernet frames
-  URL:=http://ftp.debian.org/debian/pool/main/e/etherwake
+  URL:=https://ftp.debian.org/debian/pool/main/e/etherwake
   MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 endef
 
