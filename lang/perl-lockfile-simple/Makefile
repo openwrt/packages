@@ -11,7 +11,7 @@ PKG_NAME:=perl-lockfile-simple
 PKG_VERSION:=0.208
 PKG_RELEASE:=4
 
-PKG_SOURCE_URL:=http://www.cpan.org/authors/id/S/SC/SCHWIGON/lockfile-simple/
+PKG_SOURCE_URL:=https://www.cpan.org/authors/id/S/SC/SCHWIGON/lockfile-simple/
 PKG_SOURCE:=LockFile-Simple-$(PKG_VERSION).tar.gz
 PKG_HASH:=45c77896b2a5a0a45f6202a6f813f437ff8b283f84a1c60d0c4f3730802af3a2
 

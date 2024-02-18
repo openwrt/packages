@@ -11,7 +11,7 @@ PKG_NAME:=perl-www-robotrules
 PKG_VERSION:=6.02
 PKG_RELEASE:=2
 
-PKG_SOURCE_URL:=http://www.cpan.org/authors/id/G/GA/GAAS
+PKG_SOURCE_URL:=https://www.cpan.org/authors/id/G/GA/GAAS
 PKG_SOURCE:=WWW-RobotRules-$(PKG_VERSION).tar.gz
 PKG_HASH:=46b502e7a288d559429891eeb5d979461dd3ecc6a5c491ead85d165b6e03a51e
 

@@ -5,7 +5,7 @@ PKG_VERSION:=1.1
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.cs.columbia.edu/~lennox/udptunnel
+PKG_SOURCE_URL:=https://www.cs.columbia.edu/~lennox/udptunnel
 PKG_HASH:=45c0e12045735bc55734076ebbdc7622c746d1fe4e6f7267fa122e2421754670
 
 

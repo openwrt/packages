@@ -12,7 +12,7 @@ PKG_VERSION:=1.6.4
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://download.lighttpd.net/spawn-fcgi/releases-1.6.x/
+PKG_SOURCE_URL:=https://download.lighttpd.net/spawn-fcgi/releases-1.6.x/
 PKG_HASH:=423b0c317e0084773b483985cc21930c4b8dfcb411f7353d6ee6fc41d9cb9d45
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
