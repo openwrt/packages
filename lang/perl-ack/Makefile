@@ -8,7 +8,7 @@ PKG_NAME:=perl-ack
 PKG_VERSION:=3.7.0
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=http://www.cpan.org/authors/id/P/PE/PETDANCE/
+PKG_SOURCE_URL:=https://www.cpan.org/authors/id/P/PE/PETDANCE/
 PKG_SOURCE:=ack-v$(PKG_VERSION).tar.gz
 PKG_HASH:=ea7caa14f757de083310ed2cba298661ddcca5dee06ec8f18043ea625a79df20
 

@@ -11,7 +11,7 @@ PKG_NAME:=perl-xml-parser
 PKG_VERSION:=2.46
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=http://www.cpan.org/authors/id/T/TO/TODDR/
+PKG_SOURCE_URL:=https://www.cpan.org/authors/id/T/TO/TODDR/
 PKG_SOURCE:=XML-Parser-$(PKG_VERSION).tar.gz
 PKG_HASH:=d331332491c51cccfb4cb94ffc44f9cd73378e618498d4a37df9e043661c515d
 
