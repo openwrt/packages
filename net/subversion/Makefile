@@ -80,6 +80,8 @@ define Package/subversion-server/conffiles
 endef
 
 CONFIGURE_ARGS += \
+	--with-apr=$(STAGING_DIR)/usr/bin/apr-1-config \
+	--with-apr-util=$(STAGING_DIR)/usr/bin/apu-1-config \
 	--without-swig \
 	--without-berkeley-db \
 	--without-apxs \
