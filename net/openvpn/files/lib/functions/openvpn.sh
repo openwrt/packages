@@ -1,13 +1,11 @@
 #!/bin/sh
 
 get_openvpn_option() {
-	local config="$1"
-	local variable="$2"
-	local option="$3"
+	local value config="$1" variable="$2" option="$3"
 
-	local value="$(sed -rne 's/^[ \t]*'"$option"'[ \t]+'"'([^']+)'"'[ \t]*$/\1/p' "$config" | tail -n1)"
-	[ -n "$value" ] || value="$(sed -rne 's/^[ \t]*'"$option"'[ \t]+"(([^"\\]|\\.)+)"[ \t]*$/\1/p' "$config" | tail -n1 | sed -re 's/\\(.)/\1/g')"
-	[ -n "$value" ] || value="$(sed -rne 's/^[ \t]*'"$option"'[ \t]+(([^ \t\\]|\\.)+)[ \t]*$/\1/p' "$config" | tail -n1 | sed -re 's/\\(.)/\1/g')"
+	value="$(sed -rne 's/^[ \t]*'"$option"'[ \t]+'"'([^']+)'"'[ \t]*$/\1/p' "$config" 2>/dev/null | tail -n1 2>/dev/null)"
+	[ -n "$value" ] || value="$(sed -rne 's/^[ \t]*'"$option"'[ \t]+"(([^"\\]|\\.)+)"[ \t]*$/\1/p' "$config" 2>/dev/null | tail -n1 2>/dev/null | sed -re 's/\\(.)/\1/g' 2>/dev/null)"
+	[ -n "$value" ] || value="$(sed -rne 's/^[ \t]*'"$option"'[ \t]+(([^ \t\\]|\\.)+)[ \t]*$/\1/p' "$config" 2>/dev/null | tail -n1 2>/dev/null | sed -re 's/\\(.)/\1/g' 2>/dev/null)"
 	[ -n "$value" ] || return 1
 
 	export -n "$variable=$value"
