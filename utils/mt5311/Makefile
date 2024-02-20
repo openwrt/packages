@@ -37,6 +37,7 @@ define Package/mt5311/install
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/ebm.lua $(1)/usr/lib/lua/mt5311/
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/register.lua $(1)/usr/lib/lua/mt5311/
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/register.map $(1)/usr/lib/lua/mt5311/
+	$(INSTALL_DATA) ./files/init.lua $(1)/usr/lib/lua/mt5311/
 
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) ./files/ebm-read $(1)/usr/bin/
