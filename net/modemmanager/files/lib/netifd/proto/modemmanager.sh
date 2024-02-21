@@ -466,6 +466,17 @@ proto_modemmanager_setup() {
 		return 1
 	}
 
+	[ -z "${plmn}" ] || {
+		echo "starting network registraion with plmn '${plmn}'..."
+		mmcli --modem="${device}" \
+			--timeout 120 \
+			--3gpp-register-in-operator="${plmn}" || {
+			proto_notify_error "${interface}" MM_3GPP_OPERATOR_REGISTRATION_FAILED
+			proto_block_restart "${interface}"
+			return 1
+		}
+	}
+
 	if [ -z "${allowedmode}" ]; then
 		modemmanager_set_allowed_mode "$device" "$interface" "any"
 	else
