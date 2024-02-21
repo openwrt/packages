@@ -11,13 +11,13 @@ PKG_NAME:=libcurl-gnutls
 
 PKG_SOURCE_NAME:=curl
 PKG_VERSION:=8.6.0
-PKG_RELEASE:=1
-PKG_SOURCE:=$(PKG_SOURCE_NAME)-$(PKG_VERSION).tar.bz2
+PKG_RELEASE:=2
+PKG_SOURCE:=$(PKG_SOURCE_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/curl/curl/releases/download/curl-$(subst .,_,$(PKG_VERSION))/ \
 	https://dl.uxnr.de/mirror/curl/ \
 	https://curl.askapache.com/download/ \
 	https://curl.se/download/
-PKG_HASH:=b4785f2d8877fa92c0e45d7155cf8cc6750dbda961f4b1a45bcbec990cf2fa9b
+PKG_HASH:=3ccd55d91af9516539df80625f818c734dc6f2ecf9bada33c76765e99121db15
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=MIT
@@ -51,27 +51,32 @@ TARGET_CFLAGS += $(FPIC)
 CONFIGURE_ARGS += \
 	$(call autoconf_bool,CONFIG_IPV6,ipv6) \
 	--with-gnutls="$(STAGING_DIR)/usr" \
-	--with-libidn="$(STAGING_DIR)/usr" \
+	--with-libidn2="$(STAGING_DIR)/usr" \
 	--with-zlib="$(STAGING_DIR)/usr" \
 	--with-ca-path="/etc/ssl/certs/" \
 	--enable-shared \
 	--enable-static \
-	--without-axtls \
 	--without-brotli \
 	--without-libssh2 \
 	--without-winidn \
 	--without-librtmp \
 	--without-nghttp2 \
-	--without-nss \
-	--without-cyassl \
+	--without-nghttp3 \
+	--without-wolfssl \
 	--without-libpsl \
-	--without-polarssl \
 	--without-openssl \
-	--without-winssl \
+	--without-schannel \
 	--without-zstd \
+	--disable-libcurl-option \
 	--disable-ares \
 	--disable-sspi \
-	--disable-crypto-auth \
+	--disable-basic-auth \
+	--disable-bearer-auth \
+	--disable-digest-auth \
+	--disable-kerberos-auth \
+	--disable-negotiate-auth \
+	--disable-aws \
+	--disable-ntlm \
 	--disable-ntlm-wb \
 	--disable-tls-srp \
 	--disable-ldap \
