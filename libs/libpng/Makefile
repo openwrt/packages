@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libpng
-PKG_VERSION:=1.6.39
+PKG_VERSION:=1.6.42
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/libpng
-PKG_HASH:=1f4696ce70b4ee5f85f1e1623dc1229b210029fa4b7aee573df3e2ba7b036937
+PKG_HASH:=c919dbc11f4c03b05aba3f8884d8eb7adfe3572ad228af972bb60057bdb48450
 
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 PKG_LICENSE:=Libpng GPL-2.0-or-later BSD-3-Clause
@@ -33,14 +33,11 @@ endef
 
 CMAKE_OPTIONS += \
 	-DCMAKE_POSITION_INDEPENDENT_CODE=ON \
-	-DPNG_BUILD_ZLIB=OFF \
-	-DPNG_SHARED=ON \
-	-DPNG_STATIC=ON \
-	-DPNG_EXECUTABLES=OFF \
+	-DPNG_TOOLS=OFF \
 	-DPNG_TESTS=OFF \
 	-DPNG_FRAMEWORK=OFF \
-	-DPNG_DEBUG=OFF \
 	-DPNG_HARDWARE_OPTIMIZATIONS=O$(if $(findstring powerpc,$(CONFIG_ARCH))$(findstring mips,$(CONFIG_ARCH)),FF,N) \
+	-DPNG_ARM_NEON=$(if $(or $(findstring aarch64,$(CONFIG_ARCH)),$(findstring neon,$(CONFIG_CPU_TYPE))),on,off) \
 	-Dld-version-script=OFF
 
 define Build/InstallDev
