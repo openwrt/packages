@@ -30,6 +30,12 @@ endef
 
 CMAKE_OPTIONS += -DENABLE_LIB_ONLY=ON
 
+define Build/InstallDev
+	$(call Build/InstallDev/cmake,$(1))
+	$(SED) 's,/usr/include,$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/libnghttp3.pc
+	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/libnghttp3.pc
+endef
+
 define Package/libnghttp3/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libnghttp3.so* $(1)/usr/lib
