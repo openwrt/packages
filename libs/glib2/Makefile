@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=glib2
 PKG_VERSION:=2.74.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=glib-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNOME/glib/$(basename $(PKG_VERSION))
@@ -67,7 +67,7 @@ COMP_ARGS+=-Dglib_assert=false
 COMP_ARGS+=-Dtests=false
 
 
-MESON_HOST_ARGS += $(COMP_ARGS) -Dxattr=false -Ddefault_library=static -Dnls=disabled
+MESON_HOST_ARGS += $(COMP_ARGS) -Dxattr=false -Ddefault_library=static -Dnls=disabled -Dforce_fallback_for=libpcre2-8
 MESON_ARGS += $(COMP_ARGS) -Dxattr=true -Db_lto=true -Ddefault_library=both -Dnls=$(if $(CONFIG_BUILD_NLS),en,dis)abled
 
 define Build/InstallDev
