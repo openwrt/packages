@@ -6,15 +6,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=boinc
-PKG_VERSION:=7.16.16
+PKG_VERSION:=7.24.3
 PKG_VERSION_SHORT:=$(shell echo $(PKG_VERSION)| cut -f1,2 -d.)
-PKG_RELEASE:=3
+PKG_RELEASE:=1
 
-PKG_SOURCE_DATE:=2020-02-25
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/BOINC/boinc/tar.gz/client_release/$(PKG_VERSION_SHORT)/$(PKG_VERSION)?
-PKG_HASH:=0d5656a9f8ed1048936a5764270848b892d63f27bdb863d0ace447f1eaae6002
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-client_release-$(PKG_VERSION_SHORT)-$(PKG_VERSION)
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/BOINC/boinc
+PKG_SOURCE_VERSION:=client_release/$(PKG_VERSION_SHORT)/$(PKG_VERSION)
+PKG_MIRROR_HASH:=c13c496c3d7127c410b1628afecacd6ce46648af01b1549dc79d418159cf69ad
 
 PKG_MAINTAINER:=Christian Dreihsig <christian.dreihsig@t-online.de>, Steffen Moeller <moeller@debian.org>
 PKG_LICENSE:=GPL-3.0-or-later
