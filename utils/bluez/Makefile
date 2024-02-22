@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bluez
-PKG_VERSION:=5.66
+PKG_VERSION:=5.72
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/bluetooth/
-PKG_HASH:=39fea64b590c9492984a0c27a89fc203e1cdc74866086efb8f4698677ab2b574
+PKG_HASH:=499d7fa345a996c1bb650f5c6749e1d929111fa6ece0be0e98687fee6124536e
 
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
@@ -29,7 +29,7 @@ include $(INCLUDE_DIR)/nls.mk
 
 define Package/bluez/Default
   TITLE:=Bluetooth
-  URL:=http://www.bluez.org/
+  URL:=https://www.bluez.org/
 endef
 
 define Package/bluez-libs
@@ -84,7 +84,6 @@ TARGET_CFLAGS += -D_GNU_SOURCE
 
 CONFIGURE_ARGS += \
 	--enable-static \
-	--enable-shared \
 	--enable-client \
 	--enable-datafiles \
 	--enable-experimental \
