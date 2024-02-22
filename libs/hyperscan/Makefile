@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hyperscan
 PKG_VERSION:=5.4.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/intel/hyperscan/tar.gz/v$(PKG_VERSION)?
@@ -62,7 +62,7 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/hs
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/include/hs/* $(1)/usr/include/hs/
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libhs* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libhs* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/libhs.pc $(1)/usr/lib/pkgconfig/libhs.pc
 endef
@@ -75,7 +75,7 @@ endef
 
 define Package/hyperscan-runtime/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libhs* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libhs* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,hyperscan-headers))
