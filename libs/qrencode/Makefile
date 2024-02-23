@@ -45,7 +45,7 @@ define Package/qrencode
   CATEGORY:=Utilities
   TITLE:=qrencode binary for producing qr codes
   URL:=http://fukuchi.org/works/qrencode/
-  DEPENDS:=+libqrencode
+  DEPENDS:=+libqrencode +libpng
 endef
 
 define Package/qrencode/description
@@ -56,8 +56,8 @@ digits or 4000 characters, and is highly robust.
 endef
 
 CMAKE_OPTIONS += \
-	-DCMAKE_DISABLE_FIND_PACKAGE_PNG=ON \
-	-DWITHOUT_PNG=ON \
+	-DCMAKE_DISABLE_FIND_PACKAGE_PNG=OFF \
+	-DWITHOUT_PNG=OFF \
 	-DWITH_TOOLS=O$(if $(CONFIG_PACKAGE_qrencode),N,FF) \
 	-DWITH_TESTS=OFF \
 	-DBUILD_SHARED_LIBS=ON
