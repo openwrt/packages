@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=c-ares
-PKG_VERSION:=1.19.1
+PKG_VERSION:=1.27.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://c-ares.org/download
-PKG_HASH:=321700399b72ed0e037d0074c629e7741f6b2ec2dda92956abe3e9671d3e268e
+PKG_HASH:=0a72be66959955c43e2af2fbd03418e82a2bd5464604ec9a62147e37aceb420b
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.md
@@ -29,7 +29,7 @@ define Package/libcares
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Library for asyncronous DNS Requests (including name resolves)
-  URL:=http://c-ares.haxx.se/
+  URL:=https://c-ares.org/
   MAINTAINER:=Karl Palsson <karlp@etactica.com>
 endef
 
@@ -42,10 +42,7 @@ Netware, Android and many more operating systems.
 endef
 
 CMAKE_OPTIONS += \
-	-DCARES_STATIC=OFF \
-	-DCARES_SHARED=ON \
 	-DCARES_STATIC_PIC=ON \
-	-DCARES_BUILD_TESTS=OFF \
 	-DCARES_BUILD_TOOLS=OFF
 
 define Build/InstallDev
