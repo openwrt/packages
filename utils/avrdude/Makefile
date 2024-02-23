@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=avrdude
 PKG_VERSION:=7.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/avrdudes/avrdude
@@ -29,7 +29,7 @@ define Package/avrdude
   SUBMENU:=Microcontroller programming
   TITLE:=AVR Downloader/UploaDEr
   URL:=https://github.com/avrdudes/avrdude
-  DEPENDS:=+libncurses +libreadline +libusb-1.0 +libftdi1 +libelf
+  DEPENDS:=+libncurses +libreadline +libusb-1.0 +libftdi1 +libelf +libgpiod
 endef
 
 define Package/avrdude/description
@@ -37,6 +37,10 @@ define Package/avrdude/description
 endef
 
 CMAKE_OPTIONS += \
+	-DHAVE_LIBUSB=OFF \
+	-DHAVE_LIBFTDI=OFF \
+	-DHAVE_LIBHIDAPI=OFF \
+	-DHAVE_LIBSERIALPORT=OFF \
 	-DHAVE_LINUXGPIO=ON
 
 define Package/avrdude/conffiles
