@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sysstat
 PKG_VERSION:=12.7.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://sysstat.github.io/sysstat-packages
@@ -32,7 +32,7 @@ define Package/sysstat
   CATEGORY:=Utilities
   TITLE:=Sysstat performance monitoring tools
   URL:=https://sysstat.github.io/
-  DEPENDS:=$(INTL_DEPENDS) +xz
+  DEPENDS:=$(INTL_DEPENDS) +xz-utils +xz
 endef
 
 define Package/sysstat/description
