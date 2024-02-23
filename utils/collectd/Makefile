@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=collectd
 PKG_VERSION:=5.12.0
-PKG_RELEASE:=49
+PKG_RELEASE:=50
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://collectd.org/files/ \
@@ -108,7 +108,6 @@ COLLECTD_PLUGINS_DISABLED:= \
 	sigrok \
 	slurm \
 	snmp_agent \
-	statsd \
 	synproxy \
 	sysevent \
 	tape \
@@ -192,6 +191,7 @@ COLLECTD_PLUGINS_SELECTED:= \
 	smart \
 	snmp \
 	snmp6 \
+	statsd \
 	swap \
 	syslog \
 	table \
@@ -514,6 +514,7 @@ $(eval $(call BuildPlugin,sensors,lm_sensors input,sensors,+PACKAGE_collectd-mod
 $(eval $(call BuildPlugin,smart,smart input,smart,+PACKAGE_collectd-mod-smart:libatasmart))
 $(eval $(call BuildPlugin,snmp,SNMP input,snmp,+PACKAGE_collectd-mod-snmp:libnetsnmp))
 $(eval $(call BuildPlugin,snmp6,snmp6 input,snmp6,))
+$(eval $(call BuildPlugin,statsd,statsd input,statsd,))
 $(eval $(call BuildPlugin,swap,swap input,swap,))
 $(eval $(call BuildPlugin,syslog,syslog output,syslog,))
 $(eval $(call BuildPlugin,tail,tail input,tail,))
