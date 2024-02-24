@@ -234,13 +234,13 @@ f_vpn() {
 				if [ "${vpn_status}" = "true" ] && [ "${iface}" != "${vpn_iface}" ]; then
 					/sbin/ifdown "${iface}"
 					f_log "info" "take down vpn interface '${iface}/${vpn_instance:-"-"}' (switch)"
+					rm -f "${trm_vpnfile}"
+					break
 				fi
 				if [ -x "/etc/init.d/openvpn" ] && [ -n "${vpn_instance}" ] && /etc/init.d/openvpn running "${vpn_instance}"; then
 					/etc/init.d/openvpn stop "${vpn_instance}"
 					f_log "info" "take down openvpn instance '${vpn_instance:-"-"}' (switch)"
 				fi
-				rm -f "${trm_vpnfile}"
-				break
 			done
 		fi
 		if [ -x "${trm_vpnpgm}" ] && [ -n "${vpn_service}" ] && [ -n "${vpn_iface}" ]; then
@@ -952,7 +952,7 @@ f_main() {
 					if [ -n "${scan_quality}" ] && [ -n "${scan_open}" ] && [ -n "${scan_bssid}" ] && [ -n "${scan_essid}" ]; then
 						f_log "debug" "f_main-7  ::: radio(sta/scan): ${sta_radio}/${radio}, essid(sta/scan): \"${sta_essid}\"/${scan_essid}, bssid(sta/scan): ${sta_bssid}/${scan_bssid}, quality(min/scan): ${trm_minquality}/${scan_quality}, open: ${scan_open}"
 						if [ "${scan_quality}" -lt "${trm_minquality}" ]; then
-							continue 3
+							continue 2
 						elif [ "${scan_quality}" -ge "${trm_minquality}" ]; then
 							if [ "${trm_autoadd}" = "1" ] && [ "${scan_open}" = "+" ] && [ "${scan_essid}" != "unknown" ]; then
 								open_essid="${scan_essid%?}"

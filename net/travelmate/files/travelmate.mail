@@ -1,10 +1,10 @@
 #!/bin/sh
 # send mail script for travelmate notifications
-# Copyright (c) 2020-2022 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2020-2024 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # set (s)hellcheck exceptions
-# shellcheck disable=1091,3040
+# shellcheck disable=all
 
 # Please note: you have to setup the package 'msmtp' before using this script
 
@@ -43,7 +43,7 @@ trm_mailhead="From: ${trm_mailsender}\nTo: ${trm_mailreceiver}\nSubject: ${trm_m
 
 # mail body
 #
-trm_mailtext="<html><body><pre style='display:block;font-family:monospace;font-size:1rem;padding:20;background-color:#f3eee5;white-space:pre'>"
+trm_mailtext="<html><body><pre style='font-family:monospace;padding:20;background-color:#f3eee5;white-space:pre-wrap;overflow-x:auto;' >"
 trm_mailtext="${trm_mailtext}\n<strong>++\n++ System Information ++\n++</strong>\n${sys_info}"
 trm_mailtext="${trm_mailtext}\n\n<strong>++\n++ Travelmate Information ++\n++</strong>\n${trm_info}"
 trm_mailtext="${trm_mailtext}</pre></body></html>"
