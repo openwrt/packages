@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libwebsockets
-PKG_VERSION:=4.3.2
-PKG_RELEASE:=2
+PKG_VERSION:=4.3.3
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=https://codeload.github.com/warmcat/libwebsockets/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=6a85a1bccf25acc7e8e5383e4934c9b32a102880d1e4c37c70b27ae2a42406e1
+PKG_HASH:=6fd33527b410a37ebc91bb64ca51bdabab12b076bc99d153d7c5dd405e4bdf90
 
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 
@@ -67,6 +67,15 @@ define Package/libwebsockets-mbedtls
 	CONFLICTS:=libwebsockets-openssl
 endef
 
+define Package/libwebsockets-wolfssl
+	$(call Package/$(PKG_NAME)/Default)
+	TITLE += (wolfSSL)
+	DEPENDS += +libwolfssl
+	VARIANT:=wolfssl
+	PROVIDES:=libwebsockets
+	CONFLICTS:=libwebsockets-openssl
+endef
+
 define Package/libwebsockets-full
 	$(call Package/libwebsockets/Default)
 	TITLE += (Full - OpenSSL, libuv, plugins, CGI)
@@ -82,6 +91,12 @@ endif
 
 ifeq ($(BUILD_VARIANT),mbedtls)
     CMAKE_OPTIONS += -DLWS_WITH_MBEDTLS=1
+endif
+
+ifeq ($(BUILD_VARIANT),wolfssl)
+    CMAKE_OPTIONS += -DLWS_WITH_WOLFSSL=ON
+    CMAKE_OPTIONS += -DLWS_WOLFSSL_INCLUDE_DIRS=$(STAGING_DIR)/usr/include
+    CMAKE_OPTIONS += -DLWS_WOLFSSL_LIBRARIES=$(STAGING_DIR)/usr/lib/libwolfssl.so
 endif
 
 ifeq ($(BUILD_VARIANT),full)
@@ -101,6 +116,7 @@ define Package/libwebsockets/install
 endef
 
 Package/libwebsockets-mbedtls/install = $(Package/libwebsockets/install)
+Package/libwebsockets-wolfssl/install = $(Package/libwebsockets/install)
 Package/libwebsockets-openssl/install = $(Package/libwebsockets/install)
 
 define Package/libwebsockets-full/install
@@ -110,4 +126,5 @@ endef
 
 $(eval $(call BuildPackage,libwebsockets-openssl))
 $(eval $(call BuildPackage,libwebsockets-mbedtls))
+$(eval $(call BuildPackage,libwebsockets-wolfssl))
 $(eval $(call BuildPackage,libwebsockets-full))

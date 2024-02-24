@@ -1,0 +1,14 @@
+--- a/lib/core/context.c
++++ b/lib/core/context.c
+@@ -788,7 +788,11 @@ lws_create_context(const struct lws_cont
+ #endif /* network */
+ 
+ #if defined(LWS_WITH_MBEDTLS)
++#if defined(MBEDTLS_VERSION_C)
+ 	mbedtls_version_get_string(mbedtls_version);
++#else
++	strcpy(mbedtls_version, MBEDTLS_VERSION_STRING);
++#endif
+ #endif
+ 
+ #if defined(LWS_WITH_MBEDTLS)

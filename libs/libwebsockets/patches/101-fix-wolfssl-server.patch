@@ -1,0 +1,21 @@
+--- a/lib/tls/openssl/openssl-server.c
++++ b/lib/tls/openssl/openssl-server.c
+@@ -308,7 +308,7 @@ lws_tls_server_certs_load(struct lws_vho
+ 						  flen);
+ 	}
+ #else
+-	ret = wolfSSL_CTX_use_PrivateKey_buffer(vhost->tls.ssl_ctx, p, flen,
++	ret = wolfSSL_CTX_use_PrivateKey_buffer(vhost->tls.ssl_ctx, p, (long) flen,
+ 						WOLFSSL_FILETYPE_ASN1);
+ #endif
+ 	lws_free_set_NULL(p);
+@@ -441,7 +441,9 @@ check_key:
+ 	/* Get X509 certificate from ssl context */
+ #if !defined(LWS_WITH_BORINGSSL)
+ #if !defined(LWS_HAVE_SSL_EXTRA_CHAIN_CERTS)
++#if !defined(USE_WOLFSSL)
+ 	x = sk_X509_value(vhost->tls.ssl_ctx->extra_certs, 0);
++#endif
+ #else
+ 	SSL_CTX_get_extra_chain_certs_only(vhost->tls.ssl_ctx, &extra_certs);
+ 	if (extra_certs)
