@@ -73,7 +73,6 @@ To avoid these kind of deadlocks, travelmate will set all station interfaces to 
 | trm_maxwait        | 30                                 | how long should travelmate wait for a successful wlan uplink connection                               |
 | trm_timeout        | 60                                 | overall retry timeout in seconds                                                                      |
 | trm_maxautoadd     | 5                                  | limit the max. number of automatically added open uplinks. To disable this limitation set it to '0'   |
-| trm_maxscan        | 10                                 | limit nearby scan results to process only the strongest uplinks                                       |
 | trm_captiveurl     | http://detectportal.firefox.com    | pre-configured provider URLs that will be used for connectivity- and captive portal checks            |
 | trm_useragent      | Mozilla/5.0 ...                    | pre-configured user agents that will be used for connectivity- and captive portal checks              |
 | trm_nice           | 0, normal priority                 | change the priority of the travelmate background processing                                           |
@@ -107,13 +106,18 @@ To avoid these kind of deadlocks, travelmate will set all station interfaces to 
 
 
 ## VPN client setup
-Please follow one of the following guides to get a working vpn client setup on your travel router:
+Please read one of the following guides to get a working vpn client setup on your travel router:
 
 * [Wireguard client setup guide](https://openwrt.org/docs/guide-user/services/vpn/wireguard/client)
-* [OpenVPN client setup guide](https://openwrt.org/docs/guide-user/services/vpn/openvpn/client)
+* [OpenVPN client setup guide](https://openwrt.org/docs/guide-user/services/vpn/openvpn/client-luci)
 
 **Please note:** Make sure to uncheck the "Bring up on boot" option during vpn interface setup, so that netifd doesn't interfere with travelmate.  
-Once your vpn client connection is running, you can reference to that setup in travelmate to handle VPN (re-) connections automatically.
+Also please prevent potential vpn protocol autostarts, e.g. add in newer openvpn uci configs an additional 'globals' section:  
+<pre><code>
+config globals 'globals'
+        option autostart '0'
+</code></pre>
+Once your vpn client connection setup is correct, you can reference to that config in travelmate to handle VPN (re-) connections automatically.
 
 ## E-Mail setup
 To use E-Mail notifications you have to setup the package 'msmtp'.  
