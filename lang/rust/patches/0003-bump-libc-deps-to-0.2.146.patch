@@ -84,17 +84,3 @@ This patch bumps all libc dependencies and checksums to 0.2.147, which includes 
  
  [[package]]
  name = "libffi"
---- a/vendor/tracing-tree/Cargo.lock
-+++ b/vendor/tracing-tree/Cargo.lock
-@@ -296,9 +296,9 @@ checksum = "e2abad23fbc42b3700f2f279844d
- 
- [[package]]
- name = "libc"
--version = "0.2.141"
-+version = "0.2.147"
- source = "registry+https://github.com/rust-lang/crates.io-index"
--checksum = "3304a64d199bb964be99741b7a14d26972741915b3649639149b2479bb46f4b5"
-+checksum = "b4668fb0ea861c1df094127ac5f1da3409a82116a4ba74fca2e58ef927159bb3"
- 
- [[package]]
- name = "linux-raw-sys"
