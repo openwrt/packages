@@ -1,0 +1,123 @@
+From 8c6c45e7c9c0981f55e81e3d1d21fe0e271e6294 Mon Sep 17 00:00:00 2001
+From: Liu Dongmiao <liudongmiao@gmail.com>
+Date: Thu, 29 Feb 2024 05:36:02 +0000
+Subject: [PATCH] support cipher none
+
+---
+ src/crypto.c | 40 ++++++++++++++++++++++++++++++++++++++++
+ src/local.c  |  2 +-
+ src/redir.c  |  2 +-
+ src/server.c |  2 +-
+ src/tunnel.c |  2 +-
+ 5 files changed, 44 insertions(+), 4 deletions(-)
+
+diff --git a/src/crypto.c b/src/crypto.c
+index b44d8674c..76570ec30 100644
+--- a/src/crypto.c
++++ b/src/crypto.c
+@@ -131,6 +131,42 @@ entropy_check(void)
+ #endif
+ }
+ 
++#ifndef ATTR_UNUSED
++#define ATTR_UNUSED __attribute__((unused))
++#endif
++
++static int none_encrypt_all(ATTR_UNUSED buffer_t *a, ATTR_UNUSED cipher_t *b, ATTR_UNUSED size_t c) {
++    return CRYPTO_OK;
++}
++
++static int none_decrypt_all(ATTR_UNUSED buffer_t *a, ATTR_UNUSED cipher_t *b, ATTR_UNUSED size_t c) {
++    return CRYPTO_OK;
++}
++
++static int none_encrypt(ATTR_UNUSED buffer_t *a, ATTR_UNUSED cipher_ctx_t *b, ATTR_UNUSED size_t c) {
++    return CRYPTO_OK;
++}
++
++static int none_decrypt(ATTR_UNUSED buffer_t *a, ATTR_UNUSED cipher_ctx_t *b, ATTR_UNUSED size_t c) {
++    return CRYPTO_OK;
++}
++
++static void none_ctx_init(ATTR_UNUSED cipher_t *a, ATTR_UNUSED cipher_ctx_t *b, ATTR_UNUSED int c) {
++}
++
++static void none_ctx_release(ATTR_UNUSED cipher_ctx_t *a) {
++}
++
++static crypto_t none_crypt = {
++        .cipher      = NULL,
++        .encrypt_all = &none_encrypt_all,
++        .decrypt_all = &none_decrypt_all,
++        .encrypt     = &none_encrypt,
++        .decrypt     = &none_decrypt,
++        .ctx_init    = &none_ctx_init,
++        .ctx_release = &none_ctx_release,
++};
++
+ crypto_t *
+ crypto_init(const char *password, const char *key, const char *method)
+ {
+@@ -150,6 +186,10 @@ crypto_init(const char *password, const char *key, const char *method)
+ #endif
+ 
+     if (method != NULL) {
++        if (strcmp(method, "none") == 0) {
++            return &none_crypt;
++        }
++
+         for (i = 0; i < STREAM_CIPHER_NUM; i++)
+             if (strcmp(method, supported_stream_ciphers[i]) == 0) {
+                 m = i;
+diff --git a/src/local.c b/src/local.c
+index fa1ca7b31..e57dc1a1b 100644
+--- a/src/local.c
++++ b/src/local.c
+@@ -1709,7 +1709,7 @@ main(int argc, char **argv)
+         exit(EXIT_FAILURE);
+     }
+ #endif
+-    if (!password && !key) {
++    if (!password && !key && strcmp(method, "none")) {
+         fprintf(stderr, "both password and key are NULL\n");
+         exit(EXIT_FAILURE);
+     }
+diff --git a/src/redir.c b/src/redir.c
+index d36fe3fe7..3110f11fc 100644
+--- a/src/redir.c
++++ b/src/redir.c
+@@ -1150,7 +1150,7 @@ main(int argc, char **argv)
+     }
+ 
+     if (remote_num == 0 || remote_port == NULL || local_port == NULL
+-        || (password == NULL && key == NULL)) {
++        || (password == NULL && key == NULL && strcmp(method, "none"))) {
+         usage();
+         exit(EXIT_FAILURE);
+     }
+diff --git a/src/server.c b/src/server.c
+index 73b65996d..91cd2e935 100644
+--- a/src/server.c
++++ b/src/server.c
+@@ -2100,7 +2100,7 @@ main(int argc, char **argv)
+     }
+ 
+     if (server_num == 0 || server_port == NULL
+-        || (password == NULL && key == NULL)) {
++        || (password == NULL && key == NULL && strcmp(method, "none"))) {
+         usage();
+         exit(EXIT_FAILURE);
+     }
+diff --git a/src/tunnel.c b/src/tunnel.c
+index 99ed41287..fd5f2eb2c 100644
+--- a/src/tunnel.c
++++ b/src/tunnel.c
+@@ -1151,7 +1151,7 @@ main(int argc, char **argv)
+     }
+ 
+     if (remote_num == 0 || remote_port == NULL || tunnel_addr_str == NULL
+-        || local_port == NULL || (password == NULL && key == NULL)) {
++        || local_port == NULL || (password == NULL && key == NULL && strcmp(method, "none"))) {
+         usage();
+         exit(EXIT_FAILURE);
+     }

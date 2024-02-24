@@ -239,7 +239,7 @@ validate_common_server_options_() {
 		'server_port:port' \
 		'password:string' \
 		'key:string' \
-		"method:or($stream_methods, $aead_methods)" \
+		"method:or($stream_methods, $aead_methods, 'none')" \
 		'plugin:string' \
 		'plugin_opts:string'
 }
