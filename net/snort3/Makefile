@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=snort3
 PKG_VERSION:=3.1.81.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/snort3/snort3/archive/refs/tags/
@@ -27,6 +27,7 @@ define Package/snort3
   CATEGORY:=Network
   DEPENDS:= \
 	    +(TARGET_x86||TARGET_x86_64):hyperscan-runtime \
+	    +(TARGET_x86||TARGET_x86_64):gperftools-runtime \
 	    +libstdcpp +libdaq3 +libdnet +libopenssl +libpcap +libpcre +libpthread \
 	    +libuuid +zlib +libhwloc +libtirpc @HAS_LUAJIT_ARCH +luajit +libatomic \
 	    +kmod-nft-queue +liblzma +ucode +ucode-mod-fs +ucode-mod-uci
@@ -46,6 +47,13 @@ endef
 # Hyperscan and gperftools only builds for x86
 ifdef CONFIG_TARGET_x86_64
 	CMAKE_OPTIONS += -DHS_INCLUDE_DIRS=$(STAGING_DIR)/usr/include/hs
+endif
+
+# Hyperscan and gperftools only builds for x86
+ifdef CONFIG_TARGET_x86_64
+	CMAKE_OPTIONS += -DHS_INCLUDE_DIRS=$(STAGING_DIR)/usr/include/hs \
+			 -DENABLE_TCMALLOC=ON \
+			 -DTCMALLOC_LIBRARIES=$(STAGING_DIR)/usr/lib/libtcmalloc.so
 endif
 
 CMAKE_OPTIONS += \
