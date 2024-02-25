@@ -8,23 +8,23 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=httping
-PKG_VERSION:=2.5
+PKG_VERSION:=3.5
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
-PKG_SOURCE_URL:=http://www.vanheusden.com/httping
-PKG_HASH:=3e895a0a6d7bd79de25a255a1376d4da88eb09c34efdd0476ab5a907e75bfaf8
-
-PKG_INSTALL:=1
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/folkertvanheusden/HTTPing
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+PKG_MIRROR_HASH:=70c2a9baeed9fdb69009fcf159a5b7ef133df0b7f6df198ae2ccd1691b4713b8
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/cmake.mk
 include $(INCLUDE_DIR)/nls.mk
 
 define Package/httping/Default
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Httping is like 'ping' but for http-requests
-  URL:=http://www.vanheusden.com/httping/
+  URL:=https://www.vanheusden.com/httping/
   DEPENDS:=$(INTL_DEPENDS)
   MAINTAINER:=Marcin Jurkowski <marcin1j@gmail.com>
 endef
@@ -58,29 +58,21 @@ define Package/httping-nossl/description
 	This package is built without SSL support.
 endef
 
-define Build/Configure
-endef
-
-TARGET_LDFLAGS += $(INTL_LDFLAGS) $(if $(INTL_FULL),-lintl)
-
-MAKE_FLAGS += \
-	DEBUG="no" \
-	FW="no" \
-	NC="no" \
-	TFO="no" \
-	JSON="no" \
-	NAGIOS="no" \
-	HELP="yes" \
-	FULLHELP="no"
-
+CMAKE_OPTIONS += \
+	-DENABLE_SSL=ON \
+	-DENABLE_NCURSES=OFF \
+	-DENABLE_FFTW=OFF
 
 ifeq ($(BUILD_VARIANT),nossl)
-	MAKE_FLAGS += SSL="no"
+	CMAKE_OPTIONS += -DENABLE_SSL=OFF
 endif
+
+define Build/Install
+endef
 
 define Package/httping/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/httping $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/httping $(1)/usr/bin/
 endef
 
 Package/httping-nossl/install = $(Package/httping/install)
