@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dnsdist
 PKG_VERSION:=1.9.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://downloads.powerdns.com/releases/
@@ -149,6 +149,7 @@ CONFIGURE_ARGS+= \
 	--with-pic \
 	--with-lua=luajit \
 	--with-libcap \
+	--without-xsk \
 	$(if $(call IsEnabled,DNSDIST_PIE),,--disable-hardening) \
 	$(if $(call IsEnabled,DNSDIST_SODIUM),--enable-dnscrypt --with-libsodium,--disable-dnscrypt --without-libsodium) \
 	$(if $(call IsEnabled,DNSDIST_DNSTAP),--enable-dnstap=yes,--enable-dnstap=no) \
