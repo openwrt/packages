@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shairport-sync
 PKG_VERSION:=4.3.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/mikebrady/shairport-sync/tar.gz/$(PKG_VERSION)?
@@ -29,7 +29,7 @@ define Package/shairport-sync/default
   SECTION:=sound
   CATEGORY:=Sound
   TITLE:=AirPlay compatible audio player
-  DEPENDS:=@AUDIO_SUPPORT +libpthread +alsa-lib +libconfig +libdaemon +libpopt +libstdcpp +libplist +libsodium +libgcrypt +libffmpeg-full +libuuid +nqptp
+  DEPENDS:=@AUDIO_SUPPORT +libpthread +alsa-lib +libconfig +libdaemon +libpopt +libplist +libsodium +libgcrypt +libffmpeg-full +libuuid +nqptp
   PROVIDES:=shairport-sync
   URL:=https://github.com/mikebrady/shairport-sync
 endef
@@ -95,6 +95,8 @@ ifeq ($(BUILD_VARIANT),mini)
 else
   CONFIGURE_ARGS+= --with-avahi --with-soxr
 endif
+
+TARGET_LDFLAGS += -Wl,--as-needed
 
 define Package/shairport-sync/default/conffiles
 /etc/config/shairport-sync
