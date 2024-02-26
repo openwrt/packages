@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dump1090
 PKG_VERSION:=9.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/flightaware/dump1090/tar.gz/v${PKG_VERSION}?
@@ -57,6 +57,10 @@ MAKE_FLAGS += \
 	BLADERF=no \
 	CFLAGS="$(TARGET_CFLAGS)" \
 	UNAME="Linux"
+
+ifeq ($(CONFIG_SOFT_FLOAT),y)
+MAKE_FLAGS += CPUFEATURES=no
+endif
 
 TARGET_LDFLAGS += -Wl,--as-needed
 
