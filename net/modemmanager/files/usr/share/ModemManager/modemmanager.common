@@ -130,7 +130,20 @@ mm_report_event() {
 	virtual="$(echo "$sysfspath" | cut -d'/' -f4)"
 	[ "$virtual" = "virtual" ] && {
 		mm_log "debug" "sysfspath is a virtual device ($sysfspath)"
-		return
+		case "$name" in
+			"qmapmux"*)
+				mm_log "debug" "rmnet netdevice $name"
+				;;
+			"qmimux"*)
+				mm_log "debug" "qmi_wwan qmap netdevice $name"
+				;;
+			"mbimmux"*)
+				mm_log "debug" "mbim vlan netdevice $name"
+				;;
+			*)
+				return
+				;;
+		esac
 	}
 
 	# Track/untrack events in cache
