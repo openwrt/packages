@@ -96,8 +96,7 @@ define Package/openthread-br/install
 	$(INSTALL_DIR) \
 		$(1)/etc/init.d \
 		$(1)/lib/netifd/proto \
-		$(1)/usr/sbin \
-		$(1)/var/lib/thread
+		$(1)/usr/sbin
 	$(INSTALL_BIN) ./files/openthread-proto.sh $(1)/lib/netifd/proto/openthread.sh
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/* $(1)/usr/sbin
 endef
