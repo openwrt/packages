@@ -3,7 +3,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=inotify-tools
 PKG_VERSION:=4.23.9.0
 PKG_HASH:=1dfa33f80b6797ce2f6c01f454fd486d30be4dca1b0c5c2ea9ba3c30a5c39855
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=https://codeload.github.com/rvoicilas/inotify-tools/tar.gz/$(PKG_VERSION)?
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -25,6 +25,7 @@ endif
 
 ## Avoid linking with libstdcpp
 TARGET_CXXFLAGS+= -nodefaultlibs -lc -fno-exceptions
+TARGET_LDFLAGS+= $(if $(CONFIG_USE_MUSL),-lssp_nonshared)
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
