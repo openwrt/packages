@@ -1,8 +1,6 @@
 #!/bin/sh /etc/rc.common
 # Copyright (C) 2018 Dengfeng Liu
 
-. /lib/functions/network.sh
-
 START=99
 
 USE_PROCD=1
@@ -10,43 +8,46 @@ NAME=wifidogx
 PROG=/usr/bin/${NAME}
 CONFIGFILE=/tmp/wifidogx.conf
 
-service_trigger() {
-	procd_add_reload_trigger ${NAME}
-}
-
 prepare_wifidog_conf() {
 
 	[ -f ${CONFIGFILE} ] && rm -f ${CONFIGFILE}
-
-	network_get_device external_interface wan
 
 	uci_validate_section ${NAME} ${NAME} common \
 		'enabled:bool:0' \
 		'gateway_id:string' \
 		'gateway_interface:string:br-lan' \
-		'external_interface:string:external_interface' \
 		'auth_server_hostname:string' \
 		'auth_server_port:port:443' \
 		'auth_server_path:string:/wifidog/' \
 		'check_interval:integer:60' \
 		'client_timeout:integer:5' \
-		'js_filter:bool:1' \
 		'wired_passed:bool:1' \
 		'apple_cna:bool:0' \
+		'channel_path:string' \
+		'trusted_domains:string' \
+		'trusted_macs:string' \
 		'js_filter:bool:1' 
 
 	# if gateway_id is not set, get it from br-lan
 	if [ -z "$gateway_id" ]; then
 		gateway_id=$(sed -e 's/://g' /sys/class/net/${gateway_interface}/address)
+		# convert to upper case
+		gateway_id=$(echo $gateway_id | tr '[a-z]' '[A-Z]')
 		# uci add gateway_id to config file
 		uci set ${NAME}.common.gateway_id=$gateway_id
 		uci commit ${NAME}
 	fi
 	
+	# if channel_path is not set, set it to apfree
+	if [ -z "$channel_path" ]; then
+		channel_path=apfree
+		uci set ${NAME}.common.channel_path=$channel_path
+		uci commit ${NAME}
+	fi
+
 	# set above variables to config file
 	echo "GatewayID $gateway_id" > ${CONFIGFILE}
 	echo "GatewayInterface $gateway_interface" >> ${CONFIGFILE}
-	echo "ExternalInterface $external_interface" >> ${CONFIGFILE}
 	echo "AuthServer {
 	Hostname $auth_server_hostname
 	HTTPPort $auth_server_port
@@ -57,33 +58,31 @@ prepare_wifidog_conf() {
 	echo "JsFilter $js_filter" >> ${CONFIGFILE}
 	echo "WiredPassed $wired_passed" >> ${CONFIGFILE}
 	echo "BypassAppleCNA $apple_cna" >> ${CONFIGFILE}
-}
-
-init_config() {
-
-	prepare_wifidog_conf 
-
-	if [ ! -f ${CONFIGFILE} ]; then
-		echo "no wifidogx.conf, exit..." >&2
-		exit
+	# if has trusted_domains, add it to config file
+	if [ ! -z "$trusted_domains" ]; then
+		echo "TrustedDomains $trusted_domains" >> ${CONFIGFILE}
+	fi
+	# if has trusted_macs, add it to config file
+	if [ ! -z "$trusted_macs" ]; then
+		echo "TrustedMACList $trusted_macs" >> ${CONFIGFILE}
 	fi
 }
 
 start_service() {
 	config_load $NAME
 
-	init_config
+	prepare_wifidog_conf
 
 	[ "$enabled" -eq 0 ] && {
 		echo "wifidogx is disabled, exit..." >&2
-		exit 0
+		return
 	}
 
 	procd_open_instance
 	# -f: run in foreground
 	procd_set_param command $PROG -c $CONFIGFILE -f -d 0
 	procd_set_param respawn # respawn automatically if something died
-	procd_set_param file $CONFIGFILE
+	procd_set_param file /etc/config/wifidogx
 	procd_close_instance
 }
 
@@ -94,4 +93,8 @@ status_service() {
 reload_service() {
 	stop 
 	start
+}
+
+service_triggers() {
+	procd_add_reload_trigger "${NAME}"
 }
