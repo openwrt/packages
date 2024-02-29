@@ -205,43 +205,37 @@ f_vpn() {
 		if [ ! -f "${trm_vpnfile}" ] || { [ -f "${trm_vpnfile}" ] && [ "${vpn_action}" = "enable" ]; }; then
 			for info in ${trm_vpninfolist}; do
 				iface="${info%%&&*}"
-				if [ "${iface}" = "${info}" ]; then
-					vpn_instance=""
-				else
-					vpn_instance="${info##*&&}"
-				fi
 				vpn_status="$(ifstatus "${iface}" | "${trm_jsoncmd}" -ql1 -e '@.up')"
 				if [ "${vpn_status}" = "true" ]; then
 					/sbin/ifdown "${iface}"
 					"${trm_ubuscmd}" -S call network.interface."${iface}" remove >/dev/null 2>&1
-					f_log "info" "take down vpn interface '${iface}/${vpn_instance:-"-"}' (initial)"
+					f_log "info" "take down vpn interface '${iface}' (initial)"
 				fi
+				[ "${iface}" = "${info}" ] && vpn_instance="" || vpn_instance="${info##*&&}"
 				if [ -x "/etc/init.d/openvpn" ] && [ -n "${vpn_instance}" ] && /etc/init.d/openvpn running "${vpn_instance}"; then
 					/etc/init.d/openvpn stop "${vpn_instance}"
-					f_log "info" "take down openvpn instance '${vpn_instance:-"-"}' (initial)"
+					f_log "info" "take down openvpn instance '${vpn_instance}' (initial)"
 				fi
 			done
 			rm -f "${trm_vpnfile}"
 		elif [ "${vpn}" = "1" ] && [ -n "${vpn_iface}" ] && [ "${vpn_action}" = "enable_keep" ]; then
 			for info in ${trm_vpninfolist}; do
 				iface="${info%%&&*}"
-				if [ "${iface}" = "${info}" ]; then
-					vpn_instance=""
-				else
-					vpn_instance="${info##*&&}"
-				fi
 				vpn_status="$(ifstatus "${iface}" | "${trm_jsoncmd}" -ql1 -e '@.up')"
 				if [ "${vpn_status}" = "true" ] && [ "${iface}" != "${vpn_iface}" ]; then
 					/sbin/ifdown "${iface}"
-					f_log "info" "take down vpn interface '${iface}/${vpn_instance:-"-"}' (switch)"
-					rm -f "${trm_vpnfile}"
-					break
+					f_log "info" "take down vpn interface '${iface}' (switch)"
+					rc="1"
 				fi
+				[ "${iface}" = "${info}" ] && vpn_instance="" || vpn_instance="${info##*&&}"
 				if [ -x "/etc/init.d/openvpn" ] && [ -n "${vpn_instance}" ] && /etc/init.d/openvpn running "${vpn_instance}"; then
 					/etc/init.d/openvpn stop "${vpn_instance}"
-					f_log "info" "take down openvpn instance '${vpn_instance:-"-"}' (switch)"
+					f_log "info" "take down openvpn instance '${vpn_instance}' (switch)"
+					rc="1"
 				fi
+				[ "${rc}" = "1" ] && break
 			done
+			rm -f "${trm_vpnfile}"
 		fi
 		if [ -x "${trm_vpnpgm}" ] && [ -n "${vpn_service}" ] && [ -n "${vpn_iface}" ]; then
 			if { [ "${vpn_action}" = "disable" ] && [ -f "${trm_vpnfile}" ]; } ||
@@ -251,11 +245,7 @@ f_vpn() {
 						for info in ${trm_vpninfolist}; do
 							iface="${info%%&&*}"
 							if [ "${iface}" = "${vpn_iface}" ]; then 
-								if [ "${iface}" = "${info}" ]; then
-									vpn_instance=""
-								else
-									vpn_instance="${info##*&&}"
-								fi
+								[ "${iface}" = "${info}" ] && vpn_instance="" || vpn_instance="${info##*&&}"
 								break
 							fi
 						done
