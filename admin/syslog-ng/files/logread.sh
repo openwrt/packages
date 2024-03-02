@@ -20,12 +20,6 @@
 
 logfile="/var/log/messages"
 
-if [ ! -f "${logfile}" ]
-then
-	echo "Error: logfile not found!"
-	exit 2
-fi
-
 usage()
 {
 	echo "Usage: logread [options]"
