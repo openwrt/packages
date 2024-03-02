@@ -1,14 +1,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=https-dns-proxy
-PKG_VERSION:=2023-10-25
-PKG_RELEASE:=5
+PKG_VERSION:=2023-11-19
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/aarond10/https_dns_proxy/
 PKG_SOURCE_DATE:=$(PKG_VERSION)
-PKG_SOURCE_VERSION:=977341a4e35a37ee454e97e82caf4276b1b4961a
-PKG_MIRROR_HASH:=8622846f1038ac05436a48d9b36a07c516cbb6504ce68e7ee8c5529788fac39b
+PKG_SOURCE_VERSION:=489c57efd46983e688579974a2ab7aeaa7df8d83
+PKG_MIRROR_HASH:=6c8e0e158dfbfde29b1c22f1a1c90a7deae540111c26daac13c8fbb5a49081a5
 
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.ca>
 PKG_LICENSE:=MIT
@@ -24,7 +24,7 @@ define Package/https-dns-proxy
 	CATEGORY:=Network
 	TITLE:=DNS Over HTTPS Proxy
 	URL:=https://docs.openwrt.melmac.net/https-dns-proxy/
-	DEPENDS:=+libcares +libcurl +libev +ca-bundle +jsonfilter
+	DEPENDS:=+libcares +libcurl +libev +ca-bundle +jsonfilter +resolveip
 	DEPENDS+=+!BUSYBOX_DEFAULT_GREP:grep
 	DEPENDS+=+!BUSYBOX_DEFAULT_SED:sed
 	CONFLICTS:=https_dns_proxy
