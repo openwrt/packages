@@ -22,18 +22,19 @@ logfile="/var/log/messages"
 
 if [ ! -f "${logfile}" ]
 then
-	printf "%s\n" "Error: logfile not found!"
+	echo "Error: logfile not found!"
 	exit 2
 fi
 
 usage()
 {
-	printf "%s\n" "Usage: logread [options]"
-	printf "%s\n" "Options:"
-	printf "%5s %-10s%s\n" "-l" "<count>" "Got only the last 'count' messages"
-	printf "%5s %-10s%s\n" "-e" "<pattern>" "Filter messages with a regexp"
-	printf "%5s %-10s%s\n" "-f" "" "Follow log messages"
-	printf "%5s %-10s%s\n" "-h" "" "Print this help message"
+	echo "Usage: logread [options]"
+	echo "Options:"
+	echo " -l <count>   Got only the last 'count' messages"
+	echo " -e <pattern> Filter messages with a regexp"
+	echo " -f           Follow log messages"
+	echo " -h           Print this help message"
+	exit 1
 }
 
 if [ -z "${1}" ]
@@ -68,7 +69,6 @@ else
 				;;
 			-h|*)
 				usage
-				exit 1
 				;;
 		esac
 		shift
