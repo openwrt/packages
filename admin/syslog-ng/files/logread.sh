@@ -31,40 +31,28 @@ usage()
 	exit 1
 }
 
-if [ -z "${1}" ]
-then
-	cat "${logfile}"
-	exit 0
+count=
+pattern=
+follow=
+while getopts "l:e:fh" OPTION
+do
+	case $OPTION in
+		l) count=$OPTARG;;
+		e) pattern=$OPTARG;;
+		f) follow="-F";;
+		h) usage;;
+		*) echo "Unsupported option $OPTION. See $0 -h"
+	esac
+done
+
+# if no count and follow then print from beginning
+[ -z "$count$follow" ] && count="+1"
+# if no count but follow then print only new lines
+[ -z "$count" ] && count="0"
+
+# shellcheck disable=SC2086
+if [ -z "$pattern" ]; then
+	tail -n "$count" $follow "$logfile"
 else
-	while [ "${1}" ]
-	do
-		case "${1}" in
-			-l)
-				shift
-				count="${1//[^0-9]/}"
-				tail -n "${count:-50}" "${logfile}"
-				exit 0
-				;;
-			-e)
-				shift
-				pattern="${1}"
-				grep -E "${pattern}" "${logfile}"
-				exit 0
-				;;
-			-f)
-				tail -f "${logfile}"
-				exit 0
-				;;
-			-fe)
-				shift
-				pattern="${1}"
-				tail -f "${logfile}" | grep -E "${pattern}"
-				exit 0
-				;;
-			-h|*)
-				usage
-				;;
-		esac
-		shift
-	done
+	tail -n "$count" $follow "$logfile" | grep -E "$pattern"
 fi
