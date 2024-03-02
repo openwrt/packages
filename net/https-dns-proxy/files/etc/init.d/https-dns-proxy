@@ -135,7 +135,7 @@ boot() {
 	ubus -t 30 wait_for network.interface 2>/dev/null
 	on_boot_trigger=1
 	rc_procd start_service 'on_boot' && service_started 'on_boot'
-	is_resolver_working || { rc_procd stop_service 'on_boot' && service_stopped 'on_boot'; }
+	is_resolver_working || { rc_procd stop_service 'on_failed_health_check' && service_stopped 'on_failed_health_check'; }
 }
 
 start_instance() {
