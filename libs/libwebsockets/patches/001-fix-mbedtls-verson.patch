@@ -1,0 +1,35 @@
+From 8eb89bafb12a35711171d0d9c2603915801f2b27 Mon Sep 17 00:00:00 2001
+From: Luka Kudra <lukakudra@github.invalid>
+Date: Tue, 21 Nov 2023 17:07:29 +0000
+Subject: [PATCH] mbedtls: dont rely on potentially missing version api
+
+https://github.com/warmcat/libwebsockets/issues/3013
+---
+ lib/core/context.c | 9 +--------
+ 1 file changed, 1 insertion(+), 8 deletions(-)
+
+--- a/lib/core/context.c
++++ b/lib/core/context.c
+@@ -386,9 +386,6 @@ lws_create_context(const struct lws_cont
+ #if defined(LWS_WITH_CACHE_NSCOOKIEJAR) && defined(LWS_WITH_CLIENT)
+ 	struct lws_cache_creation_info ci;
+ #endif
+-#if defined(LWS_WITH_MBEDTLS)
+-	char mbedtls_version[32];
+-#endif
+ 
+ #if defined(__ANDROID__)
+ 	struct rlimit rt;
+@@ -788,11 +785,7 @@ lws_create_context(const struct lws_cont
+ #endif /* network */
+ 
+ #if defined(LWS_WITH_MBEDTLS)
+-	mbedtls_version_get_string(mbedtls_version);
+-#endif
+-
+-#if defined(LWS_WITH_MBEDTLS)
+-	lwsl_cx_notice(context, "LWS: %s, MbedTLS-%s %s%s", library_version, mbedtls_version, opts_str, s);
++	lwsl_cx_notice(context, "LWS: %s, MbedTLS-%s %s%s", library_version, MBEDTLS_VERSION_STRING, opts_str, s);
+ #else
+ 	lwsl_cx_notice(context, "LWS: %s, %s%s", library_version, opts_str, s);
+ #endif
