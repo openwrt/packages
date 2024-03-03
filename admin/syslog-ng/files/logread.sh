@@ -33,26 +33,30 @@ usage()
 
 count=
 pattern=
-follow=
+follow_arg=
 while getopts "l:e:fh" OPT
 do
 	case "$OPT" in
 		l) count=$OPTARG;;
 		e) pattern=$OPTARG;;
-		f) follow="-F";;
+		f) follow_arg="-F";;
 		h) usage;;
 		?) echo "Unsupported option. See $0 -h"
 	esac
 done
 
-# if no count and follow then print from beginning
-[ -z "$count$follow" ] && count="+1"
-# if no count but follow then print only new lines
-[ -z "$count" ] && count="0"
+if [ -z "$count" ]; then
+	# if follow then print only new lines, otherwise from beginning
+	if [ -n "$follow_arg" ]; then
+		count="0"
+	else
+		count="+1"
+	fi
+fi
 
 # shellcheck disable=SC2086
 if [ -z "$pattern" ]; then
-	tail -n "$count" $follow "$logfile"
+	echo tail -n "$count" $follow_arg "$logfile"
 else
-	tail -n "$count" $follow "$logfile" | grep -E "$pattern"
+	echo tail -n "$count" $follow_arg "$logfile" | grep -E "$pattern"
 fi
