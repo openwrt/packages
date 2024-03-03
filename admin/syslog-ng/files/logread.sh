@@ -34,14 +34,14 @@ usage()
 count=
 pattern=
 follow=
-while getopts "l:e:fh" OPTION
+while getopts "l:e:fh" OPT
 do
-	case $OPTION in
+	case "$OPT" in
 		l) count=$OPTARG;;
 		e) pattern=$OPTARG;;
 		f) follow="-F";;
 		h) usage;;
-		*) echo "Unsupported option $OPTION. See $0 -h"
+		?) echo "Unsupported option. See $0 -h"
 	esac
 done
 
