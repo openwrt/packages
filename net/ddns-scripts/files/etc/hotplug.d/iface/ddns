@@ -9,8 +9,9 @@ case "$ACTION" in
 		/usr/lib/ddns/dynamic_dns_updater.sh -n "$INTERFACE" -- stop
 		;;
 	ifupdate)
-                [ -z "$IFUPDATE_ADDRESSES" ] && exit 0
+		[ -z "$IFUPDATE_ADDRESSES" ] && exit 0
 		/usr/lib/ddns/dynamic_dns_updater.sh -n "$INTERFACE" -- stop
+		sleep 1	# give time to shutdown
 		/etc/init.d/ddns enabled && /usr/lib/ddns/dynamic_dns_updater.sh -n "$INTERFACE" -- start
 		;;
 esac
