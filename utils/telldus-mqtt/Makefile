@@ -6,13 +6,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=telldus-mqtt
-PKG_VERSION:=0.2
+PKG_VERSION:=0.3
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/PeterFromSweden/telldus-mqtt.git
-PKG_SOURCE_VERSION:=8ee4187fd4ea44541b637bb63ed34d4cc182b2a4
-PKG_MIRROR_HASH:=e5c5ab541ffe45f1b4f9e978abed82837fb65f9367120c209890d231d44c43ec
+PKG_SOURCE_VERSION:=ffcbadc3aa3e36a238e35319bab66819e93db347
+PKG_MIRROR_HASH:=dad652d9c5d9e93d2a2163740cabbc00a699480d945805f601762853095ddf04
 
 PKG_MAINTAINER:=Peter Liedholm <PeterFromSwe884@gmail.com>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -30,6 +30,7 @@ endef
 
 define Package/telldus-mqtt/description
 	MQTT protocol converter for Telldus USB-based 433 MHz RF transceiver for home automation.
+	Please see https://github.com/PeterFromSweden/telldus-mqtt/blob/master/Readme.md for more information.
 endef
 
 define Package/telldus-mqtt/conffiles
