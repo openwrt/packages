@@ -1,0 +1,53 @@
+#!/bin/sh /etc/rc.common
+
+START=60
+
+USE_PROCD=1
+PROG=/usr/bin/mezoura
+
+. /lib/functions/network.sh
+
+add_iface_v4() {
+	local addr
+	network_get_subnet addr "$1"
+	network_get_physdev iface "$1"
+	addr=$(echo "$addr" | sed "s/ /\//")
+	procd_append_param command -4 "${addr}/${iface}"
+}
+
+start_service() {
+	local iface interface6 port addr6
+
+	config_load "mezoura"
+	config_get interface6 main interface6 ""
+	config_get_bool exporter main exporter '1'
+	config_get port main listen_port "9999"
+	config_get config_file main config_file ""
+
+	procd_open_instance
+	procd_set_param command "$PROG"
+	[ $exporter -eq 1 ] && procd_append_param command -e
+	if [ -n "$interface6" ]; then
+		network_get_prefix6 addr6 "$interface6"
+
+		addr6=$(echo "$addr6" | sed "s/ /\//")
+		procd_append_param command -6 "${addr6}"
+	fi
+	procd_append_param command -p "${port}"
+	config_list_foreach 'main' interface  "add_iface_v4"
+
+	procd_set_param respawn
+	procd_close_instance
+}
+
+stop_service() {
+	local pid
+
+	# kill all previous mezoura processes
+	for pid in $(pidof mezoura)
+	do
+		[ "$pid" = "$$" ] && continue
+		[ -e "/proc/$pid/stat" ] && kill $pid
+	done
+	return 0;
+}
