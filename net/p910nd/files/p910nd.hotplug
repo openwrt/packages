@@ -335,10 +335,9 @@ send_driver() {
 			logger -t "$DAEMON_HOTPLUG" -p "$DAEMON_ERR" "Sending driver to $CHAR_DEV [ $THIS_USB_VIDPID ] failed for some reason."
 		else
 			logger -t "$DAEMON_HOTPLUG" -p "$DAEMON_INFO" "Sent $DRIVER_FILE to $CHAR_DEV [ $THIS_USB_VIDPID ]."
-			daemon_restart
 		fi
 	else
-		logger -t "$DAEMON_HOTPLUG"  -p "$DAEMON_ERR" "Missing driver file: $DRIVER_FILE for $CHAR_DEV [ $THIS_USB_VIDPID ] (please upload it)."
+		logger -t "$DAEMON_HOTPLUG"  -p "$DAEMON_INFO" "No driver file: $DRIVER_FILE for $CHAR_DEV [ $THIS_USB_VIDPID ] (upload it if your printer needs a driver loading)."
 	fi
 }
 
@@ -375,6 +374,8 @@ case "$ACTION" in
 				[ "$DEBUG" ] && echo "No THIS_USB_VIDPID match."
 			fi
 		fi
+
+		daemon_restart
 
 		;;
 	remove)
