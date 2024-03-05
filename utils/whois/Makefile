@@ -5,7 +5,7 @@ PKG_VERSION:=5.5.20
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://ftp.debian.org/debian/pool/main/w/whois
+PKG_SOURCE_URL:=https://ftp.debian.org/debian/pool/main/w/whois
 PKG_HASH:=42085102dfad82067abe2d5d1cfca59586573dee528718559b022e762bb85cf1
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
