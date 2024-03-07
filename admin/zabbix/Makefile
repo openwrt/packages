@@ -63,6 +63,7 @@ endef
 define Package/zabbix-agentd
   $(call Package/zabbix/Default)
   TITLE+= agentd
+  DEPENDS+= +libevent2-pthreads
   PROVIDES:=zabbix-agentd
   VARIANT:=nossl
   DEFAULT_VARIANT:=1
@@ -71,7 +72,7 @@ endef
 define Package/zabbix-agentd-openssl
   $(call Package/zabbix/Default)
   TITLE+= agentd (with OpenSSL)
-  DEPENDS+= +libopenssl
+  DEPENDS+= +libevent2-pthreads +libopenssl
   PROVIDES:=zabbix-agentd
   VARIANT:=openssl
 endef
@@ -79,7 +80,7 @@ endef
 define Package/zabbix-agentd-gnutls
   $(call Package/zabbix/Default)
   TITLE+= agentd (with GnuTLS)
-  DEPENDS+= +libgnutls
+  DEPENDS+= +libevent2-pthreads +libgnutls
   PROVIDES:=zabbix-agentd
   VARIANT:=gnutls
 endef
