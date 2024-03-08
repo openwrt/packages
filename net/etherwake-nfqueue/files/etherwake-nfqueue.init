@@ -60,6 +60,9 @@ start_instance()
     config_get value "${section}" password
     [ -n "${value}" ] && procd_append_param command -p "${value}"
 
+    config_get value "${section}" defer
+    [ -n "${value}" ] && procd_append_param command -d "${value}"
+
     config_get value "${section}" nfqueue_num 0
     procd_append_param command -q "${value}"
 
