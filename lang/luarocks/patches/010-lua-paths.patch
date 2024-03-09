@@ -1,0 +1,32 @@
+--- a/GNUmakefile
++++ b/GNUmakefile
+@@ -7,7 +7,7 @@ INSTALL = install
+ INSTALL_DATA = $(INSTALL) -m 644
+ BINARY_PLATFORM = unix
+ 
+-SHEBANG = \#!$(LUA_BINDIR)/$(LUA_INTERPRETER)
++SHEBANG = \#!/usr/bin/env lua5.1
+ LUA = $(LUA_BINDIR)/$(LUA_INTERPRETER)
+ luarocksconfdir = $(sysconfdir)/luarocks
+ luadir = $(datarootdir)/lua/$(LUA_VERSION)
+@@ -40,9 +40,9 @@ $(builddir)/config-$(LUA_VERSION).lua: c
+ 	'}\n'\
+ 	"$$([ -n "$(LUA_INTERPRETER)" ] && printf 'lua_interpreter = "%s";\\n' "$(LUA_INTERPRETER)")"\
+ 	'variables = {\n'\
+-	"$$([ -n "$(LUA_DIR)" ] && printf '   LUA_DIR = "%s";\\n' "$(LUA_DIR)")"\
++	"$$([ -n "$(LUA_DIR)" ] && printf '   LUA_DIR = "%s";\\n' "/usr/bin")"\
+ 	"$$([ -n "$(LUA_INCDIR)" ] && printf '   LUA_INCDIR = "%s";\\n' "$(LUA_INCDIR)")"\
+-	"$$([ -n "$(LUA_BINDIR)" ] && printf '   LUA_BINDIR = "%s";\\n' "$(LUA_BINDIR)")"\
++	"$$([ -n "$(LUA_BINDIR)" ] && printf '   LUA_BINDIR = "%s";\\n' "/usr/bin")"\
+ 	"$$([ -n "$(LUA_LIBDIR)" ] && printf '   LUA_LIBDIR = "%s";\\n' "$(LUA_LIBDIR)")"\
+ 	'}\n'\
+ 	> $@
+@@ -55,7 +55,7 @@ luarocks: config.unix $(builddir)/config
+ 	echo "unset $(LUA_ENV_VARS)" >> luarocks
+ 	echo 'LUAROCKS_SYSCONFDIR="$(luarocksconfdir)" LUA_PATH="$(CURDIR)/src/?.lua;;" exec "$(LUA)" "$(CURDIR)/src/bin/luarocks" --project-tree="$(CURDIR)/lua_modules" "$$@"' >> luarocks
+ 	chmod +rx ./luarocks
+-	./luarocks init
++	./luarocks --lua-dir $(LUA_DIR) init
+ 
+ luarocks-admin: config.unix
+ 	rm -f src/luarocks/core/hardcoded.lua
