@@ -120,6 +120,21 @@ start_instance() {
 		append_num "$cfg" stdout_buffer_length "audio_backend_buffer_desired_length"
 		printf "};\n\n"
 
+		# MQTT
+		printf "mqtt =\n"
+		printf "{\n"
+		append_str "$cfg" mqtt_enabled "enabled"
+		append_str "$cfg" mqtt_hostname "hostname"
+		append_num "$cfg" mqtt_port "port"
+		append_str "$cfg" mqtt_username "username"
+		append_str "$cfg" mqtt_password "password"
+		append_str "$cfg" mqtt_topic "topic"
+		append_str "$cfg" mqtt_publish_raw "publish_raw"
+		append_str "$cfg" mqtt_publish_parsed "publish_parsed"
+		append_str "$cfg" mqtt_publish_cover "publish_cover"
+		append_str "$cfg" mqtt_enable_remote "enable_remote"
+		printf "};\n\n"
+
 		# AO audio back end
 		printf "ao =\n"
 		printf "{\n"
