@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019 Mister Benjamin <144dbspl@gmail.com>
+# Copyright (C) 2024 Mister Benjamin <144dbspl@gmail.com>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -25,7 +25,7 @@ include $(INCLUDE_DIR)/cmake.mk
 define Package/etherwake-nfqueue
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libnetfilter-queue +nftables +kmod-nft-queue
+  DEPENDS:=+libnetfilter-queue +nftables +kmod-nft-queue +libmnl
   TITLE:=Wake up computers on netfilter match
   URL:=https://github.com/mister-benjamin/etherwake-nfqueue
 endef
