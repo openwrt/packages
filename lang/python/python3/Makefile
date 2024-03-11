@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 include ../python3-version.mk
 
 PKG_NAME:=python3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_VERSION:=$(PYTHON3_VERSION).$(PYTHON3_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
@@ -262,7 +262,6 @@ define Py3Package/python3-light/filespec
 -|/usr/lib/python$(PYTHON3_VERSION)/idlelib
 -|/usr/lib/python$(PYTHON3_VERSION)/tkinter
 -|/usr/lib/python$(PYTHON3_VERSION)/turtledemo
--|/usr/lib/python$(PYTHON3_VERSION)/webbrowser.py
 -|/usr/lib/python$(PYTHON3_VERSION)/_osx_support.py
 $(foreach lib_file,$(filter /usr/lib/python$(PYTHON3_VERSION)/%,$(PYTHON3_LIB_FILES_DEL)),
   -|$(lib_file)
