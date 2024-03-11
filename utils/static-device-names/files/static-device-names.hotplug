@@ -1,0 +1,25 @@
+#!/bin/sh
+
+# This script is part of the static-device-names package.
+# See /usr/share/doc/static-device-names
+
+. /lib/functions.sh
+
+[ "$SUBSYSTEM" = "net" ] || exit 0
+
+add() {
+    config_load "static-device-names"
+    config_get_bool enabled globals hotplug true
+    if [ "$enabled" -eq 1 ] ; then
+        echo service static-device-names reload
+    fi
+}
+
+remove() {
+    # Run on remove too in case conflicts need to be resolved
+    config_load "static-device-names"
+    config_get_bool enabled globals hotplug true
+    if [ "$enabled" -eq 1 ] ; then
+        echo service static-device-names reload
+    fi
+}
