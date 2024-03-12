@@ -59,7 +59,6 @@ MESON_ARGS+= \
 	-Dcapng=disabled \
 	-Dclient=disabled \
 	-Dconfig_tests=disabled \
-	-Ddnstap=disabled \
 	-Ddoc=disabled \
 	-Dinstall_kresd_conf=disabled \
 	-Dinstall_root_keys=disabled \
