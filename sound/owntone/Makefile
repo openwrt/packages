@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=owntone
 PKG_VERSION:=28.8
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/owntone/owntone-server/releases/download/$(PKG_VERSION)/
@@ -23,6 +23,9 @@ PKG_MAINTAINER:=Espen Jürgensen <espenjurgensen+openwrt@gmail.com>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_AUDIO_SUPPORT
+
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
@@ -33,7 +36,7 @@ TITLE:=iTunes (DAAP) server for Apple Remote and AirPlay
 URL:=https://github.com/owntone/owntone-server
 DEPENDS:=+libgpg-error +libgcrypt +libgdbm +zlib +libexpat +libunistring \
 	+libevent2 +libevent2-pthreads +libdaemon +confuse +alsa-lib +libffmpeg-full \
-	+mxml +libavahi-client +sqlite3-cli +libplist +libcurl +libjson-c \
+	+mxml +libavahi-client +sqlite3-cli +libplist +libcurl +libjson-c +AUDIO_SUPPORT:pulseaudio \
 	+libprotobuf-c +libgnutls +libsodium +libwebsockets +libuuid $(ICONV_DEPENDS)
 endef
 
@@ -53,10 +56,21 @@ CONFIGURE_ARGS += \
 	--disable-install_systemd \
 	--disable-install_conf_file \
 	--disable-install_user \
-	--with-alsa \
-	--without-pulseaudio
+	--with-alsa
+
+ifeq ($(BUILD_VARIANT),pulseaudio)
+  CONFIGURE_ARGS+= --with-pulseaudio
+else
+  CONFIGURE_ARGS+= --without-pulseaudio
+endif
 
 TARGET_CFLAGS += $(FPIC)
+
+ifeq ($(BUILD_VARIANT),pulseaudio)
+ifeq ($(CONFIG_AUDIO_SUPPORT),y)
+	TARGET_LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib/pulseaudio
+endif
+endif
 
 define Package/owntone/install
 	$(INSTALL_DIR) $(1)/usr/sbin
