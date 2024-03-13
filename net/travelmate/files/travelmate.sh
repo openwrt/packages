@@ -225,17 +225,19 @@ f_vpn() {
 				if [ "${vpn_status}" = "true" ] && [ "${iface}" != "${vpn_iface}" ]; then
 					/sbin/ifdown "${iface}"
 					f_log "info" "take down vpn interface '${iface}' (switch)"
-					rc="1"
+					rc=true
 				fi
 				[ "${iface}" = "${info}" ] && vpn_instance="" || vpn_instance="${info##*&&}"
 				if [ -x "/etc/init.d/openvpn" ] && [ -n "${vpn_instance}" ] && /etc/init.d/openvpn running "${vpn_instance}"; then
 					/etc/init.d/openvpn stop "${vpn_instance}"
 					f_log "info" "take down openvpn instance '${vpn_instance}' (switch)"
-					rc="1"
+					rc=true
 				fi
-				[ "${rc}" = "1" ] && break
+				if "${rc:-false}"; then
+        				rm -f "${trm_vpnfile}"
+					break
+				fi
 			done
-			rm -f "${trm_vpnfile}"
 		fi
 		if [ -x "${trm_vpnpgm}" ] && [ -n "${vpn_service}" ] && [ -n "${vpn_iface}" ]; then
 			if { [ "${vpn_action}" = "disable" ] && [ -f "${trm_vpnfile}" ]; } ||
