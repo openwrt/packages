@@ -189,11 +189,11 @@ jobs:
       - name: Build Docker container
         if: ${{ matrix.runtime_test && fromJSON(env.HAVE_IPKS) }}
         run: |
-          docker build -t test-container --build-arg ARCH .github/workflows/
+          docker build --platform linux/${{ matrix.arch }} -t test-container --build-arg ARCH .github/workflows/
         env:
           ARCH: ${{ matrix.arch }}-${{ env.BRANCH }}
 
       - name: Test via Docker container
         if: ${{ matrix.runtime_test && fromJSON(env.HAVE_IPKS) }}
         run: |
-          docker run --rm -v $GITHUB_WORKSPACE:/ci test-container
+          docker run --platform linux/${{ matrix.arch }} --rm -v $GITHUB_WORKSPACE:/ci test-container
