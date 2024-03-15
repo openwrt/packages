@@ -10,6 +10,8 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=httping
 PKG_VERSION:=3.5
 PKG_RELEASE:=1
+PKG_LICENSE:=GPL-3.0-or-later
+PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/folkertvanheusden/HTTPing
