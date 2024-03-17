@@ -48,7 +48,7 @@ endef
 
 CONFIGURE_ARGS += \
 	--$(if $(CONFIG_BUILD_PATENTED),en,dis)able-dvbcsa \
-	--$(if $(CONFIG_MINISATIP_AES),en,dis)able-dvbaes \
+	--$(if $(CONFIG_MINISATIP_AES),en,dis)able-dvbca \
 	--$(if $(CONFIG_MINISATIP_CLIENT),en,dis)able-satipc
 
 define Package/minisatip/install
