@@ -31,12 +31,10 @@ local function get_wifi_interface_labels()
 
   for _, dev_table in pairs(status) do
     for _, intf in ipairs(dev_table['interfaces']) do
-      local cfg = intf['config']
-
-      if is_ubus_interface(ubus_interfaces, cfg['ifname']) then
+      if is_ubus_interface(ubus_interfaces, intf['ifname']) then
 
         -- Migrate this to ubus interface once it exposes all interesting labels
-        local handle = io.popen("hostapd_cli -i " .. cfg['ifname'] .." status")
+        local handle = io.popen("hostapd_cli -i " .. intf['ifname'] .." status")
         local hostapd_status = handle:read("*a")
         handle:close()
 
@@ -50,7 +48,7 @@ local function get_wifi_interface_labels()
             hostapd["channel"] = value
           -- hostapd gives us all bss on the relevant phy, find the one we're interested in
           elseif string.match(name, "bss%[%d%]") then
-            if value == cfg['ifname'] then
+            if value == intf['ifname'] then
               bss_idx = tonumber(string.match(name, "bss%[(%d)%]"))
             end
           elseif bss_idx >= 0 then
@@ -63,10 +61,10 @@ local function get_wifi_interface_labels()
         end
 
         local labels = {
-          vif = cfg['ifname'],
+          vif = intf['ifname'],
           ssid = hostapd['ssid'],
           bssid = hostapd['bssid'],
-          encryption = cfg['encryption'], -- In a mixed scenario it would be good to know if A or B was used
+          encryption = intf['config']['encryption'], -- In a mixed scenario it would be good to know if A or B was used
           frequency = hostapd['freq'],
           channel = hostapd['channel'],
         }
