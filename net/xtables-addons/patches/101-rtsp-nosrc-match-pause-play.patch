@@ -1,0 +1,273 @@
+--- a/extensions/rtsp/nf_conntrack_rtsp.c
++++ b/extensions/rtsp/nf_conntrack_rtsp.c
+@@ -52,6 +52,8 @@
+ #include <net/netfilter/nf_conntrack.h>
+ #include <net/netfilter/nf_conntrack_helper.h>
+ #include <net/netfilter/nf_conntrack_zones.h>
++#include <net/netfilter/nf_conntrack_core.h>
++#include <net/netfilter/nf_nat.h>
+ #include "nf_conntrack_rtsp.h"
+ 
+ #define NF_NEED_STRNCASECMP
+@@ -110,6 +112,87 @@ EXPORT_SYMBOL_GPL(nf_nat_rtsp_hook);
+ #define SKIP_WSPACE(ptr,len,off) while(off < len && isspace(*(ptr+off))) { off++; }
+ 
+ /*
++ * Get the seq number of RTSP message
++ * Parameters:
++ *  IN      str   pointer to rtsp message pointing to seq number
++*/
++static int rtsp_get_cseq(const char *str)
++{
++        unsigned long cseq = 0, i = 0;
++        char c = *str;
++        while(i++ < 10 && c && c != 0xd && c>='0' && c <= '9'){
++                cseq = (cseq * 10) + (c - '0');
++                c = *(str + i);
++        }
++        if(!cseq)
++                cseq = -1;
++        return (int) cseq;
++}
++
++/*
++ * set timeout value for the expect entry of all child conntrack
++ * Parameters:
++ *  IN      master_ct   conntrack entry point as parent
++ *  IN      timeout     timeout value to timeout value to set for child
++*/
++static void rtsp_set_child_ct_timeout(struct nf_conn *master_ct, unsigned int timeout)
++{
++       struct nf_conntrack_tuple_hash *h;
++       struct hlist_nulls_node *n;
++       struct nf_conn *ct = NULL;
++       int i;
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,18,0)
++       spinlock_t *lockp;
++#endif
++
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,18,0)
++       spin_lock_bh(&nf_conntrack_lock);
++#endif
++
++       for (i = 0; i < nf_conntrack_htable_size; i++) {
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,18,0)
++               lockp = &nf_conntrack_locks[i % CONNTRACK_LOCKS];
++               spin_lock_bh(lockp);
++#endif
++
++               hlist_nulls_for_each_entry(h, n, &nf_conntrack_hash[i], hnnode) {
++                       ct = nf_ct_tuplehash_to_ctrack(h);
++                       if(ct->master == master_ct)
++                               ct->timeout = nfct_time_stamp + ((u32)timeout*HZ);
++               }
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,18,0)
++               spin_unlock_bh(lockp);
++#endif
++
++       }
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,18,0)
++       spin_unlock_bh(&nf_conntrack_lock);
++#endif
++}
++
++/*
++ * callback function that set conntrack matching flag
++ * Parameters:
++ * IN    ct    conntrack pointer
++ * IN    exp   expect entry pointer
++*/
++static void nf_nat_follow_master_nosrc(struct nf_conn *ct,
++                          struct nf_conntrack_expect *exp)
++{
++        struct nf_nat_range2 range;
++
++        /* This must be a fresh one. */
++        BUG_ON(ct->status & IPS_NAT_DONE_MASK);
++
++        /* For DST manip, map port here to where it's expected. */
++        range.flags = (NF_NAT_RANGE_MAP_IPS | NF_NAT_RANGE_PROTO_SPECIFIED);
++        range.min_proto = range.max_proto = exp->saved_proto;
++        range.min_addr = range.max_addr
++                = ct->master->tuplehash[!exp->dir].tuple.src.u3;
++        nf_nat_setup_info(ct, &range, NF_NAT_MANIP_DST);
++}
++
++/*
+  * Parse an RTSP packet.
+  *
+  * Returns zero if parsing failed.
+@@ -306,6 +389,43 @@ rtsp_parse_transport(char* ptran, uint t
+ 	return rc;
+ }
+ 
++void remove_rtsp_exp_session(struct nf_conn *master_ct)
++{
++       struct nf_conntrack_tuple_hash *h;
++       struct hlist_nulls_node *n;
++       struct nf_conn *ct = NULL;
++       int i;
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,18,0)
++       spinlock_t *lockp;
++#endif
++
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,18,0)
++       spin_lock_bh(&nf_conntrack_lock);
++#endif
++
++       for (i = 0; i < nf_conntrack_htable_size; i++) {
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,18,0)
++               lockp = &nf_conntrack_locks[i % CONNTRACK_LOCKS];
++               spin_lock_bh(lockp);
++#endif
++
++               hlist_nulls_for_each_entry(h, n, &nf_conntrack_hash[i], hnnode) {
++                       ct = nf_ct_tuplehash_to_ctrack(h);
++                       if(ct->master == master_ct)
++                               ct->timeout = (u32)jiffies;
++               }
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,18,0)
++               spin_unlock_bh(lockp);
++#endif
++
++       }
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,18,0)
++       spin_unlock_bh(&nf_conntrack_lock);
++#endif
++
++       /*remove all unestablished expect*/
++       nf_ct_remove_expectations(master_ct);
++}
+ 
+ /*** conntrack functions ***/
+ 
+@@ -329,6 +449,8 @@ help_out(struct sk_buff *skb, unsigned c
+ 	//uint    datalen = tcplen - tcph->doff * 4;
+ 	uint    dataoff = 0;
+ 	int ret = NF_ACCEPT;
++        int cseq = 0;
++        struct nf_ct_rtsp_info *info = NULL;
+	
+ 	struct nf_conntrack_expect *rtp_exp;
+ 	struct nf_conntrack_expect *rtcp_exp = NULL;
+@@ -357,9 +479,28 @@ help_out(struct sk_buff *skb, unsigned c
+ 					&transoff, &translen))
+ 			break;      /* not a valid message */
+ 
++                info = nfct_help_data(ct);
++                if(strncmp(pdata+cmdoff, "PAUSE ", 6) == 0) {
++                        pr_debug("PAUSE handled\n");
++                        cseq = strncmp(pdata+cseqoff, "CSeq: ", 6);
++                        if(cseq == -1) {
++                                cseq = strncmp(pdata+cseqoff, "Cseq: ", 6);
++                                if(cseq == -1) {
++                                        pr_debug("nf_ct_rtsp: wrong PAUSE msg\n");
++                                } else {
++                                        cseq = rtsp_get_cseq(pdata+cseqoff+cseq+6);
++                                }
++                        } else {
++                                cseq = rtsp_get_cseq(pdata+cseqoff+cseq+6);
++                        }
++                        info->paused = cseq;
++                        break;
++                } else
++                        info->paused = 0;
++
+ 		if (strncmp(pdata+cmdoff, "TEARDOWN ", 9) == 0) {
+ 			pr_debug("teardown handled\n");
+-			nf_ct_remove_expectations(ct); /* FIXME must be session id aware */
++			remove_rtsp_exp_session(ct);
+ 			break;
+ 		}
+ 
+@@ -416,11 +557,12 @@ help_out(struct sk_buff *skb, unsigned c
+ 		}
+ 
+ 		nf_ct_expect_init(rtp_exp, NF_CT_EXPECT_CLASS_DEFAULT,
+-				  nf_ct_l3num(ct), NULL,
++				  nf_ct_l3num(ct), &ct->tuplehash[!dir].tuple.src.u3,
+ 				  &ct->tuplehash[!dir].tuple.dst.u3,
+ 				  IPPROTO_UDP, NULL, &be_loport);
+ 
+ 		rtp_exp->flags = 0;
++		rtp_exp->expectfn = nf_nat_follow_master_nosrc;
+ 
+ 		if (expinfo.pbtype == pb_range || expinfo.pbtype == pb_discon) {
+ 			pr_debug("setup expectation for rtcp\n");
+@@ -433,11 +575,12 @@ help_out(struct sk_buff *skb, unsigned c
+ 			}
+ 
+ 			nf_ct_expect_init(rtcp_exp, NF_CT_EXPECT_CLASS_DEFAULT,
+-					  nf_ct_l3num(ct), NULL,
++					  nf_ct_l3num(ct), &ct->tuplehash[!dir].tuple.src.u3,
+ 					  &ct->tuplehash[!dir].tuple.dst.u3,
+ 					  IPPROTO_UDP, NULL, &be_hiport);
+ 
+ 			rtcp_exp->flags = 0;
++			rtcp_exp->expectfn = nf_nat_follow_master_nosrc;
+ 
+ 			pr_debug("expect_related %pI4:%u-%u-%pI4:%u-%u\n",
+ 				   &rtp_exp->tuple.src.u3.ip,
+@@ -509,6 +652,9 @@ help_in(struct sk_buff *skb, unsigned ch
+ 	struct nf_conntrack_expect *exp_ct = NULL;
+ 	struct nf_conntrack_tuple t;
+ 	struct net *net = nf_ct_net(ct);
++        struct nf_ct_rtsp_info *info = NULL;
++        int cseq = 0;
++        char *cseq_p = NULL;
+
+ 	memset(&expinfo, 0, sizeof(expinfo));
+ 
+@@ -521,6 +667,28 @@ help_in(struct sk_buff *skb, unsigned ch
+ 		uint transoff = 0;
+ 		uint translen = 0;
+ 
++                info = nfct_help_data(ct);
++                /* Response to a previous PAUSE message */
++                if (info->paused) {
++                        cseq_p = strstr(pdata+cmdoff, "CSeq: ");
++                        if(cseq_p == NULL) {
++                                cseq_p = strstr(pdata+cmdoff, "Cseq: ");
++                                if(cseq_p == NULL) {
++                                   pr_debug("nf_ct_rtsp: wrong reply msg\n");
++                                } else {
++                                   cseq = rtsp_get_cseq(cseq_p + 6);
++                                }
++                        } else {
++                                cseq = rtsp_get_cseq(cseq_p + 6);
++                        }
++                        if(cseq == info->paused) {
++                               pr_debug("nf_ct_rtsp: Reply to PAUSE\n");
++                               rtsp_set_child_ct_timeout(ct, 3600);
++                               info->paused = 0;
++                               goto out;
++                       }
++                }
++
+ 		if (!rtsp_parse_message(pdata, datalen, &dataoff,
+ 					&hdrsoff, &hdrslen,
+ 					&cseqoff, &cseqlen,
+@@ -537,7 +705,7 @@ help_in(struct sk_buff *skb, unsigned ch
+ 
+ 			srvaddr = expinfo.srvaddr;
+ 
+-			if (nf_inet_addr_cmp(&srvaddr, &ct->tuplehash[dir].tuple.src.u3) ||
++			if (nf_inet_addr_cmp(&srvaddr, &ct->tuplehash[dir].tuple.dst.u3) ||
+ 					nf_inet_addr_cmp(&srvaddr, &zeroaddr))
+ 				continue;
+ 		} else
+--- a/extensions/rtsp/nf_conntrack_rtsp.h
++++ b/extensions/rtsp/nf_conntrack_rtsp.h
+@@ -28,6 +28,12 @@ typedef enum {
+     pb_discon   /* client_port=x/y (rtspbis) */
+ } portblock_t;
+ 
++/* record to keep seq number for pause message sent from client */
++struct nf_ct_rtsp_info {
++        /* set when the client has sent PAUSE message and not replied */
++        int paused;
++};
++
+ /* We record seq number and length of rtsp headers here, all in host order. */
+ 
+ /*
