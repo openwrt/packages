@@ -39,6 +39,25 @@ define Package/p11-kit/description
   way that they are discoverable.
 endef
 
+define Package/p11-kit-utils
+  SECTION:=libs
+  CATEGORY:=Utilities
+  TITLE:=A library that provides a way to load and enumerate PKCS11 modules.
+  URL:=https://p11-glue.github.io/p11-glue/p11-kit.html
+  DEPENDS:=+libtasn1 +libpthread +p11-kit
+endef
+
+define Package/p11-kit-utils/description
+  Run a server process that exposes PKCS#11 module remotely.
+  $ p11-kit server pkcs11:token1 pkcs11:token2 ...
+  $ p11-kit server --provider /path/to/pkcs11-module.so pkcs11:token1 pkcs11:token2 ...
+
+  This launches a server that exposes the given PKCS#11 tokens on a local socket. The tokens
+  must belong to the same module. To access the socket, use p11-kit-client.so module. The
+  server address and PID are printed as a shell-script snippet which sets the appropriate
+  environment variable: P11_KIT_SERVER_ADDRESS and P11_KIT_SERVER_PID
+endef
+
 TARGET_LDFLAGS += -Wl,--gc-sections
 
 MESON_ARGS += \
@@ -69,4 +88,16 @@ ifneq ($(CONFIG_PACKAGE_libopensc),)
 endif
 endef
 
+define Package/p11-kit-utils/install
+	$(INSTALL_DIR) $(1)/etc/pkcs11/modules/
+	$(CP) ./files/p11kitclient.module $(1)/etc/pkcs11/modules/
+	$(INSTALL_DIR) $(1)/usr/lib/pkcs11
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkcs11/p11-kit-client.so $(1)/usr/lib/pkcs11
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/p11-kit $(1)/usr/bin
+	$(INSTALL_DIR) $(1)/usr/libexec/p11-kit
+	$(CP) $(PKG_INSTALL_DIR)/usr/libexec/p11-kit/* $(1)/usr/libexec/p11-kit
+endef
+
 $(eval $(call BuildPackage,p11-kit))
+$(eval $(call BuildPackage,p11-kit-utils))
