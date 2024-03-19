@@ -10,6 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=luafilesystem
 PKG_VERSION:=1.8.0
 PKG_RELEASE:=1
+PKG_LICENSE:=MIT
 
 PKG_MIRROR_HASH:=0342b54bcbd4aa1679bf23b2a4cc8177f630e6415b7a82e58cefb9f8991e0a8e
 PKG_SOURCE_URL:=https://github.com/keplerproject/luafilesystem.git
