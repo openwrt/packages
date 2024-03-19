@@ -323,15 +323,6 @@ modemmanager_connected_method_static_ipv6() {
 	proto_send_update "${interface}"
 }
 
-modemmanager_disconnected_method_common() {
-	local interface="$1"
-
-	echo "running disconnection (common)"
-
-	proto_init_update "*" 0
-	proto_send_update "${interface}"
-}
-
 proto_modemmanager_init_config() {
 	available=1
 	no_device=1
@@ -628,7 +619,6 @@ proto_modemmanager_teardown() {
 
 	# disconnection handling only requires special treatment in IPv4/PPP
 	[ "${bearermethod_ipv4}" = "ppp" ] && modemmanager_disconnected_method_ppp_ipv4 "${interface}"
-	modemmanager_disconnected_method_common "${interface}"
 
 	# disconnect
 	mmcli --modem="${device}" --simple-disconnect ||
@@ -640,9 +630,6 @@ proto_modemmanager_teardown() {
 	# low power, only if requested
 	[ "${lowpower:-0}" -lt 1 ] ||
 		mmcli --modem="${device}" --set-power-state-low
-
-	proto_init_update "*" 0
-	proto_send_update "$interface"
 }
 
 [ -n "$INCLUDE_ONLY" ] || {
