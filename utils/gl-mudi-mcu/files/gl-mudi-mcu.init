@@ -1,0 +1,46 @@
+#!/bin/sh /etc/rc.common
+
+START=20
+STOP=10
+
+boot() {
+    echo -e '{OK}' > /dev/ttyS0
+    start
+}
+
+start() {
+    crontab -l | grep -q '/usr/bin/gl-mudi-mcu' 2>/dev/null && exit 0
+    echo "* * * * * /usr/bin/gl-mudi-mcu" >> /etc/crontabs/root
+    /etc/init.d/cron restart
+
+    echo -e '{ "display_mask": "1f", "custom_en": "0", "content": "" }' > /dev/ttyS0
+    /usr/bin/gl-mudi-mcu
+}
+
+stop() {
+    sed -i '\|/usr/bin/gl-mudi-mcu|d' /etc/crontabs/root
+    /etc/init.d/cron restart
+
+    echo -e '{ "display_mask": "0", "custom_en": "1", "content": "MCU disconnected" }' > /dev/ttyS0
+}
+
+extra_command "running" "Check if service is running"
+running() {
+    crontab -l | grep -q '/usr/bin/gl-mudi-mcu' 2>/dev/null
+    return $?
+}
+
+extra_command "status" "Service status"
+status() {
+    if running; then
+        echo 'running'
+    else
+        echo 'inactive'
+    fi
+    return 0
+}
+
+shutdown() {
+    echo -e '{ "system": "reboot" }' > /dev/ttyS0
+    stop
+}
