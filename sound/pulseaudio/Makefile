@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pulseaudio
-PKG_VERSION:=16.1
-PKG_RELEASE:=2
+PKG_VERSION:=17.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://freedesktop.org/software/pulseaudio/releases
-PKG_HASH:=8eef32ce91d47979f95fd9a935e738cd7eb7463430dabc72863251751e504ae4
+PKG_HASH:=053794d6671a3e397d849e478a80b82a63cb9d8ca296bd35b73317bb5ceb87b5
 
 PKG_MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -193,8 +193,8 @@ endef
 define Package/pulseaudio-daemon-avahi/install
 	$(call Package/pulseaudio-daemon/install,$1)
 
-	$(INSTALL_DIR) $(1)/etc/dbus-1/system.d
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/dbus-1/system.d/pulseaudio-system.conf $(1)/etc/dbus-1/system.d/pulseaudio-system.conf
+	$(INSTALL_DIR) $(1)/usr/share/dbus-1/system.d
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/dbus-1/system.d/pulseaudio-system.conf $(1)/usr/share/dbus-1/system.d/pulseaudio-system.conf
 endef
 
 define Package/pulseaudio-tools/install
