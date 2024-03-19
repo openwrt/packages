@@ -96,6 +96,8 @@ else
   $(eval $(call Programmer,satamv,$(FLASHROM_PCI)))
 endif
 
+# strip leading extra white space
+PROGRAMMER_ARGS := $(strip $(PROGRAMMER_ARGS))
 comma := ,
 MESON_ARGS += \
 	-Ddefault_programmer_name=$(DEFAULT_PROGRAMMER_NAME) \
