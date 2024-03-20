@@ -1,0 +1,62 @@
+From f206904999175a8d10f8c2ec7245af06c4a4d371 Mon Sep 17 00:00:00 2001
+From: ghhccghk <2137610394@qq.com>
+Date: Mon, 18 Mar 2024 12:51:11 +0800
+Subject: [PATCH] add add_compile_options(-fPIC)
+
+Signed-off-by: ghhccghk <2137610394@qq.com>
+---
+ CMakeLists.txt             | 1 +
+ cjson/CMakeLists.txt       | 1 +
+ dlfcn-win32/CMakeLists.txt | 1 +
+ euicc/CMakeLists.txt       | 1 +
+ src/CMakeLists.txt         | 1 +
+ 5 files changed, 5 insertions(+)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 40b422d..02aa3a7 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -48,3 +48,4 @@ add_subdirectory(cjson)
+ add_subdirectory(euicc)
+ add_subdirectory(interface)
+ add_subdirectory(src)
++add_compile_options(-fPIC)
+diff --git a/cjson/CMakeLists.txt b/cjson/CMakeLists.txt
+index 29e3531..73718f4 100644
+--- a/cjson/CMakeLists.txt
++++ b/cjson/CMakeLists.txt
+@@ -1,3 +1,4 @@
+ aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR} LIB_CJSON_SRCS)
+ add_library(cjson-static STATIC ${LIB_CJSON_SRCS})
++set_target_properties(cjson-static PROPERTIES POSITION_INDEPENDENT_CODE ON)
+ target_include_directories(cjson-static PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>)
+diff --git a/dlfcn-win32/CMakeLists.txt b/dlfcn-win32/CMakeLists.txt
+index 0a8ad47..4fa1716 100644
+--- a/dlfcn-win32/CMakeLists.txt
++++ b/dlfcn-win32/CMakeLists.txt
+@@ -1,3 +1,4 @@
+ aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR} LIB_DLFCN_SRCS)
+ add_library(dlfcn-win32 STATIC ${LIB_DLFCN_SRCS})
+ target_include_directories(dlfcn-win32 PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>)
++add_compile_options(-fPIC)
+diff --git a/euicc/CMakeLists.txt b/euicc/CMakeLists.txt
+index 76f3715..faeb80e 100644
+--- a/euicc/CMakeLists.txt
++++ b/euicc/CMakeLists.txt
+@@ -2,3 +2,4 @@ aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR} LIB_EUICC_SRCS)
+ add_library(euicc STATIC ${LIB_EUICC_SRCS})
+ target_link_libraries(euicc cjson-static)
+ target_include_directories(euicc PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>)
++add_compile_options(-fPIC)
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index f93bfad..3ddc3ef 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -30,3 +30,4 @@ add_dependencies(lpac version)
+ if(UNIX)
+     install(TARGETS lpac RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
+ endif()
++add_compile_options(-fPIC)
+--
+2.44.0
+
