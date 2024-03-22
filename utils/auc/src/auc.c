@@ -24,6 +24,7 @@
 #include <glob.h>
 #include <stdio.h>
 #include <time.h>
+#include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -65,6 +66,9 @@
 #endif
 
 static const char server_issues[]="https://github.com/openwrt/asu/issues";
+
+static const char uci_defaults_filename[] = "/rom/etc/uci-defaults/99-asu-defaults";
+static const int uci_defaults_size_max = 20480;
 
 static struct ubus_context *ctx;
 static struct uclient *ucl = NULL;
@@ -1785,6 +1789,10 @@ int main(int args, char *argv[]) {
 	unsigned char argc = 1;
 	bool force = false, use_get = false, in_queue = false, release_only = false;
 
+	int uci_defaults_fd;
+	void *uci_defaults_addr = NULL;
+	struct stat uci_defaults_statbuf;
+
 	snprintf(user_agent, sizeof(user_agent), "%s/%s", argv[0], AUC_VERSION);
 	fprintf(stdout, "%s\n", user_agent);
 
@@ -1989,6 +1997,41 @@ int main(int args, char *argv[]) {
 
 	req_add_selected_packages(&reqbuf);
 
+	uci_defaults_fd = open(uci_defaults_filename, O_RDONLY);
+	if (uci_defaults_fd == -1) {
+		if (errno != ENOENT) {
+			rc = -errno;
+			fprintf(stderr, "Can't open '%s' file\n", uci_defaults_filename);
+			goto freebranches;
+		}
+	} else {
+		if (fstat(uci_defaults_fd, &uci_defaults_statbuf) == -1) {
+			rc = -errno;
+			fprintf(stderr, "fstat() error for '%s'\n", uci_defaults_filename);
+			close(uci_defaults_fd);
+			goto freebranches;
+		}
+
+		if (uci_defaults_statbuf.st_size <= uci_defaults_size_max) {
+			// mapping +1 byte for the string NULL ending
+			uci_defaults_addr = mmap(NULL, uci_defaults_statbuf.st_size + 1, PROT_READ,
+						MAP_PRIVATE, uci_defaults_fd, 0);
+			if (uci_defaults_addr == MAP_FAILED) {
+				rc = -errno;
+				fprintf(stderr, "Can't mmap file '%s'\n", uci_defaults_filename);
+				close(uci_defaults_fd);
+				goto freebranches;
+			}
+
+			blobmsg_add_string(&reqbuf, "defaults", uci_defaults_addr);
+		} else {
+			fprintf(stderr, "WARNING: %s file is bigger than %d bytes and will be excluded from the firmware!\n", uci_defaults_filename, uci_defaults_size_max);
+		}
+
+		close(uci_defaults_fd);
+	}
+
+
 	snprintf(url, sizeof(url), "%s/%s", serverurl, API_REQUEST);
 
 	use_get = false;
@@ -2063,6 +2106,7 @@ int main(int args, char *argv[]) {
 	} while(retry);
 
 	free(sanetized_board_name);
+	munmap(uci_defaults_addr, uci_defaults_statbuf.st_size + 1);
 
 	if (!tb[TARGET_IMAGES] || !tb[TARGET_BINDIR]) {
 		if (!rc)
