@@ -1,6 +1,6 @@
 --- a/collectors/python.d.plugin/Makefile.am
 +++ b/collectors/python.d.plugin/Makefile.am
-@@ -147,109 +147,3 @@ dist_third_party_DATA = \
+@@ -121,109 +121,3 @@ dist_third_party_DATA = \
      python_modules/third_party/monotonic.py \
      python_modules/third_party/filelock.py \
      $(NULL)
