@@ -234,7 +234,7 @@ index 5506738..b45253d 100644
  module_exit(wg_mod_exit);
  MODULE_LICENSE("GPL v2");
 -MODULE_DESCRIPTION("WireGuard secure network tunnel");
-+MODULE_DESCRIPTION("WireGuard (Amnezia VPN) secure network tunnel");
++MODULE_DESCRIPTION("AmneziaWG secure network tunnel");
  MODULE_AUTHOR("Jason A. Donenfeld <Jason@zx2c4.com>");
  MODULE_VERSION(WIREGUARD_VERSION);
  MODULE_ALIAS_RTNL_LINK(KBUILD_MODNAME);
