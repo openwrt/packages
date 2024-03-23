@@ -135,7 +135,7 @@ upnpd() {
 		done
 
 		config_load "upnpd"
-		upnpd_write_bool enable_natpmp 1
+		upnpd_write_bool enable_pcp_pmp 1
 		upnpd_write_bool enable_upnp 1
 		upnpd_write_bool secure_mode 1
 		upnpd_write_bool system_uptime 1
