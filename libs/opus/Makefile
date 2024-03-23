@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=opus
 PKG_VERSION:=1.5.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://downloads.xiph.org/releases/opus
@@ -24,7 +24,6 @@ PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/meson.mk
 
 define Package/libopus
   SECTION:=libs
@@ -39,23 +38,23 @@ define Package/libopus/description
  is also intended for storage and streaming applications.
 endef
 
-MESON_ARGS+= \
-	-Ddocs=disabled \
-	-Dextra-programs=disabled
+CONFIGURE_ARGS+= \
+	--disable-doc \
+	--disable-extra-programs
 
 ifeq ($(CONFIG_SOFT_FLOAT),y)
-	MESON_ARGS+= \
-		-Dfixed-point=true
+	CONFIGURE_ARGS+= \
+		--enable-fixed-point
 endif
 
 ifneq ($(findstring neon,$(CONFIG_CPU_TYPE))$(findstring aarch64,$(CONFIG_ARCH)),)
-	MESON_ARGS+= \
-		-Dfixed-point=true
+	CONFIGURE_ARGS+= \
+		--enable-fixed-point
 endif
 
 CPU_ASM_BLACKLIST:=xscale arm926ej-s
 ifneq ($(findstring $(call qstrip,$(CONFIG_CPU_TYPE)),$(CPU_ASM_BLACKLIST)),)
-	MESON_ARGS+= -Dasm=disabled
+	CONFIGURE_ARGS+= --disable-asm
 endif
 
 define Build/InstallDev
