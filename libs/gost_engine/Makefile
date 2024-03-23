@@ -2,8 +2,8 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/openssl-module.mk
 
 PKG_NAME:=gost_engine
-PKG_VERSION:=3.0.1
-PKG_HASH:=bfeac85883724cfbe0ecc6d942ac0524b908143e019ab3d3b6abe47a3466a628
+PKG_VERSION:=3.0.3
+PKG_HASH:=8cf888333d08b8bbcc12e4e8c0d8b258c74dbd67941286ffbcc648c6d3d66735
 PKG_LICENSE:=Apache-2.0
 PKG_RELEASE:=9
 
