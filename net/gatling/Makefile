@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gatling
 PKG_VERSION:=0.16
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.fefe.de/gatling/
@@ -32,9 +32,19 @@ define Package/gatling/description
   Gatling is particularly good in situations with very high load.
 endef
 
+define Package/gatling/conffiles
+/etc/config/gatling
+endef
+
 define Package/gatling/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/gatling $(1)/usr/bin/
+
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/gatling.conf $(1)/etc/config/gatling
+
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/gatling.init $(1)/etc/init.d/gatling
 endef
 
 $(eval $(call BuildPackage,gatling))
