@@ -56,6 +56,7 @@ readonly unboundFilter='s|^|local-zone: "|;s|$|" static|'
 readonly A_TMP="/var/${packageName}.a.tmp"
 readonly B_TMP="/var/${packageName}.b.tmp"
 readonly SED_TMP="/var/${packageName}.sed.tmp"
+readonly uciConfigFile="/etc/config/${packageName}"
 readonly runningConfigFile="/dev/shm/${packageName}.config"
 readonly runningErrorFile="/dev/shm/${packageName}.error"
 readonly runningStatusFile="/dev/shm/${packageName}.status"
@@ -128,7 +129,7 @@ config_cache() {
 	local i ret
 	case "$param" in
 		create|set)
-			cp -f "/etc/config/${packageName}" "$runningConfigFile"
+			cp -f "$uciConfigFile" "$runningConfigFile"
 		;;
 		get)
 			case "$var" in
@@ -145,6 +146,8 @@ config_cache() {
 				local old_allowed_url old_blocked_url
 				if [ ! -s "$runningConfigFile" ]; then
 					ret='on_boot'
+				elif cmp -s "$uciConfigFile" "$runningConfigFile"; then
+					ret='restart'
 				else
 					for i in $_reload; do
 						local val_current val_old UCI_CONFIG_DIR
@@ -199,7 +202,7 @@ config_cache() {
 	;;
 	esac
 }
-debug() { local i j; for i in "$@"; do eval "j=\$$i"; echo "${i}: ${j} "; done; }
+debug() { local __i __j; for __i in "$@"; do eval "__j=\$$__i"; echo "${__i}: ${__j} "; done; }
 dns_set_output_values() {
 	case "$1" in
 		dnsmasq.addnhosts)
@@ -315,7 +318,6 @@ is_running() {
 	fi
 }
 ipset() { "$ipset" "$@" >/dev/null 2>&1; }
-get_version() { grep -m1 -A2 -w "^Package: $1$" /usr/lib/opkg/status | sed -n 's/Version: //p'; }
 get_ram_free() { ubus call system info | jsonfilter -e '@.memory.free'; }
 get_ram_total() { ubus call system info | jsonfilter -e '@.memory.total'; }
 led_on(){ if [ -n "${1}" ] && [ -e "${1}/trigger" ]; then echo 'default-on' > "${1}/trigger" 2>&1; fi; }
@@ -807,11 +809,8 @@ load_environment() {
 		dl_flag="-O"
 	fi
 	led="${led:+/sys/class/leds/$led}"
-	if curl --version 2>/dev/null | grep -q "https" \
-		|| wget --version 2>/dev/null | grep -q "+https" \
-		|| grep -q "libustream-mbedtls" /usr/lib/opkg/status \
-		|| grep -q "libustream-openssl" /usr/lib/opkg/status \
-		|| grep -q "libustream-wolfssl" /usr/lib/opkg/status; then
+	if curl --version 2>/dev/null | grep -q "Protocols: .*https.*" \
+		|| wget --version 2>/dev/null | grep -q "+ssl"; then
 		isSSLSupported=1
 	else
 		unset isSSLSupported
