@@ -171,24 +171,13 @@ output() {
 		printf "%b" "$msg" >> "$sharedMemoryOutput"
 	fi
 }
-_build_ifaces_all() { ifacesAll="${ifacesAll}${1} "; }
-_build_ifaces_supported() { is_supported_interface "$1" && ! str_contains "$ifacesSupported" "$1" && ifacesSupported="${ifacesSupported}${1} "; }
 pbr_find_iface() {
 	local iface i param="$2"
-	if [ -n "$procd_wan_interface" ] && [ "$param" = 'wan' ]; then
-		iface="$procd_wan_interface"
-	elif [ -n "$procd_wan6_interface" ] && [ "$param" = 'wan6' ]; then
-		iface="$procd_wan6_interface"
-	else
-		"network_find_${param}" iface
-		is_tunnel "$iface" && unset iface
-		if [ -z "$iface" ]; then
-			for i in $ifacesAll; do
-				if "is_${param}" "$i"; then break; else unset i; fi
-			done
-		fi
-	fi
-	eval "$1"='${iface:-$i}'
+	case "$param" in
+		wan6)  iface="$procd_wan6_interface";;
+		wan|*) iface="$procd_wan_interface";;
+	esac
+	eval "$1"='${iface}'
 }
 pbr_get_gateway() {
 	local iface="$2" dev="$3" gw
@@ -228,7 +217,6 @@ is_greater() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"; }
 is_greater_or_equal() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" = "$2"; }
 is_ignored_interface() { str_contains_word "$ignored_interface" "$1"; }
 is_ignore_target() { [ "$(str_to_lower "$1")" = 'ignore' ]; }
-is_installed() { grep -q "Provides: ${1}" /usr/lib/opkg/status; }
 is_integer() {
 	case "$1" in
 		(*[!0123456789]*) return 1;;
@@ -366,7 +354,6 @@ check_dnsmasq_nftset() {
 }
 print_json_bool() { json_init; json_add_boolean "$1" "$2"; json_dump; json_cleanup; }
 print_json_string() { json_init; json_add_string "$1" "$2"; json_dump; json_cleanup; }
-opkg_get_version() { grep -m1 -A1 "Package: $1$" '/usr/lib/opkg/status' | grep -m1 'Version: ' | sed 's|Version: \(.*\)|\1|'; }
 
 if type extra_command >/dev/null 2>&1; then
 	extra_command 'status' "Generates output required to troubleshoot routing issues
@@ -459,11 +446,8 @@ process_url() {
 		dl_command="uclient-fetch --no-check-certificate -q"
 		dl_flag="-O"
 	fi
-	if curl --version 2>/dev/null | grep -q "https" \
-		|| wget --version 2>/dev/null | grep -q "+https" \
-		|| grep -q "libustream-mbedtls" /usr/lib/opkg/status \
-		|| grep -q "libustream-openssl" /usr/lib/opkg/status \
-		|| grep -q "libustream-wolfssl" /usr/lib/opkg/status; then
+	if curl --version 2>/dev/null | grep -q "Protocols: .*https.*" \
+		|| wget --version 2>/dev/null | grep -q "+ssl"; then
 		dl_https_supported=1
 	else
 		unset dl_https_supported
@@ -521,8 +505,8 @@ load_package_config() {
 	config_get      procd_boot_timeout        'config' 'procd_boot_timeout' '30'
 	config_get      procd_lan_interface       'config' 'procd_lan_interface'
 	config_get      procd_wan_ignore_status   'config' 'procd_wan_ignore_status' '0'
-	config_get      procd_wan_interface       'config' 'procd_wan_interface'
-	config_get      procd_wan6_interface      'config' 'procd_wan6_interface'
+	config_get      procd_wan_interface       'config' 'procd_wan_interface'  'wan'
+	config_get      procd_wan6_interface      'config' 'procd_wan6_interface' 'wan6'
 	config_get      wan_ip_rules_priority     'config' 'wan_ip_rules_priority' '30000'
 	config_get      wan_mark                  'config' 'wan_mark' '010000'
 	fw_mask="0x${fw_mask}"
@@ -612,6 +596,7 @@ load_environment() {
 }
 
 load_network() {
+	_build_ifaces_supported() { is_supported_interface "$1" && ! str_contains "$ifacesSupported" "$1" && ifacesSupported="${ifacesSupported}${1} "; }
 	_find_firewall_wan_zone() { [ "$(uci_get 'firewall' "$1" 'name')" = "wan" ] && firewallWanZone="$1"; }
 	local i param="$1"
 	if [ -z "$ifacesSupported" ]; then
@@ -619,26 +604,21 @@ load_network() {
 		config_foreach _find_firewall_wan_zone 'zone'
 		for i in $(uci_get 'firewall' "$firewallWanZone" 'network'); do
 			is_supported_interface "$i" && ! str_contains "$ifacesSupported" "$1" && ifacesSupported="${ifacesSupported}${i} "
-			if ! is_tunnel "$i"; then
-				is_wan  "$i" && wanIface4="$i"
-				[ -n "$ipv6_enabled" ] && is_wan6 "$i" && wanIface6="$i"
-			fi
 		done
 		config_load 'network'
-		[ -z "$ifacesAll" ] && config_foreach _build_ifaces_all 'interface'
 		config_foreach _build_ifaces_supported 'interface'
 	fi
-	[ -z "$wanIface4" ] && pbr_find_iface wanIface4 'wan'
-	[ -n "$wanIface4" ] && [ -z "$wanGW4" ] && network_get_gateway wanGW4 "$wanIface4"
+	wanIface4="$procd_wan_interface"
+	[ -z "$wanGW4" ] && network_get_gateway wanGW4 "$wanIface4"
 	if [ -n "$ipv6_enabled" ]; then
-		[ -z "$wanIface6" ] && pbr_find_iface wanIface6 'wan6'
-		[ -n "$wanIface6" ] && [ -z "$wanGW6" ] && network_get_gateway6 wanGW6 "$wanIface6"
+		wanIface6="$procd_wan6_interface"
+		[ -z "$wanGW6" ] && network_get_gateway6 wanGW6 "$wanIface6"
 	fi
 	case "$param" in
 		on_boot|on_start)
-			[ -n "$wanIface4" ] && output 2 "Found wan interface (${param}): $wanIface4 \\n"
+			[ -n "$wanIface4" ] && output 2 "Using wan interface (${param}): $wanIface4 \\n"
 			[ -n "$wanGW4" ] && output 2 "Found wan gateway (${param}): $wanGW4 \\n"
-			[ -n "$wanIface6" ] && output 2 "Found wan6 interface (${param}): $wanIface6 \\n"
+			[ -n "$wanIface6" ] && output 2 "Using wan6 interface (${param}): $wanIface6 \\n"
 			[ -n "$wanGW6" ] && output 2 "Found wan6 gateway (${param}): $wanGW6 \\n"
 		;;
 	esac
@@ -653,7 +633,7 @@ is_wan_up() {
 	while [ -z "$wanGW" ] ; do
 		load_network "$param"
 		if [ $((sleepCount)) -gt $((procd_boot_timeout)) ] || [ -n "$wanGW" ]; then break; fi
-		output "$serviceName waiting for ${procd_wan_interface:-wan} gateway...\\n"
+		output "$serviceName waiting for $procd_wan_interface gateway...\\n"
 		sleep 1
 		network_flush_cache
 		sleepCount=$((sleepCount+1))
@@ -2823,7 +2803,7 @@ status_service_iptables() {
 	} | tee -a /var/${packageName}-support
 	if [ -n "$set_p" ]; then
 		printf "%b" "Pasting to paste.ee... "
-		if is_present 'curl' && is_installed 'libopenssl' && is_installed 'ca-bundle'; then
+		if curl --version 2>/dev/null | grep -q "Protocols: .*https.*"; then
 			json_init; json_add_string 'description' "${packageName}-support"
 			json_add_array 'sections'; json_add_object '0'
 			json_add_string 'name' "$(uci_get 'system' '@system[0]' 'hostname')"
@@ -2862,8 +2842,8 @@ load_validate_config() {
 		'procd_lan_interface:string' \
 		'procd_reload_delay:integer:0' \
 		'procd_wan_ignore_status:bool:0' \
-		'procd_wan_interface:string' \
-		'procd_wan6_interface:string' \
+		'procd_wan_interface:network:wan' \
+		'procd_wan6_interface:network:wan6' \
 		'wan_ip_rules_priority:uinteger:30000' \
 		'rule_create_option:or("", add, insert):add' \
 		'webui_supported_protocol:list(string)' \
