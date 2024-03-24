@@ -41,15 +41,6 @@ CONFIGURE_ARGS+= \
 	--with-kbuild="$(LINUX_DIR)" \
 	--with-xtlibdir="/usr/lib/iptables"
 
-ifdef CONFIG_EXTERNAL_TOOLCHAIN
-MAKE_FLAGS:= \
-	$(patsubst ARCH=%,ARCH=$(LINUX_KARCH),$(MAKE_FLAGS)) \
-	DEPMOD="/bin/true"
-
-MAKE_INSTALL_FLAGS:= \
-	$(patsubst ARCH=%,ARCH=$(LINUX_KARCH),$(MAKE_FLAGS)) \
-	DEPMOD="/bin/true"
-else
 define Build/Compile
 	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) \
 		$(KERNEL_MAKE_FLAGS) \
@@ -65,7 +56,6 @@ define Build/Install
 		DEPMOD="/bin/true" \
 		install
 endef
-endif
 
 # 1: extension/module suffix used in package name
 # 2: extension/module display name used in package title/description
