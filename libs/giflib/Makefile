@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=giflib
-PKG_VERSION:=5.2.1
-PKG_RELEASE:=2
+PKG_VERSION:=5.2.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/giflib
-PKG_HASH:=31da5562f44c5f15d63340a09a4fd62b48c45620cd302f77a6d9acf0077879bd
+PKG_HASH:=be7ffbd057cadebe2aa144542fd90c6838c6a083b5e8a9048b8ee3b66b29d5fb
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=MIT
@@ -57,6 +57,12 @@ MAKE_FLAGS += \
 	CFLAGS="$(TARGET_CFLAGS)" \
 	LDFLAGS="$(TARGET_LDFLAGS)" \
 	PREFIX=$(CONFIGURE_PREFIX)
+
+## Avoid 'convert' invocation during the build
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	touch $(PKG_BUILD_DIR)/doc/giflib-logo.gif
+endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/{lib,include}
