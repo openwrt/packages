@@ -1,0 +1,250 @@
+Linux 5.16 includes 04e85bbf71c9 ("isystem: delete global -isystem compile option")
+
+compile error on >=5.16
+xtables-addons-3.21/extensions/LUA/lua/lua.h:12:10: fatal error: stdarg.h: No such file or directory
+   12 | #include <stdarg.h>
+      |          ^~~~~~~~~~
+
+Generated with coccinelle:
+
+cat <<EOF>cocci-xtables-lua-linux-5.16.spatch
+@include_arg@
+@@
+ #include <stdarg.h>
+
+@include_def@
+@@
+ #include <stddef.h>
+
+@include_both depends on include_arg && include_def@
+@@
+ #include <stdarg.h>
+
+@add_include_linux_stdheaders_both depends on include_both@
+@@
++#include <linux/version.h>
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 16, 0)
+?#include <stdarg.h>
+?#include <stddef.h>
++#else
++#include <linux/stdarg.h>
++#include <linux/stddef.h>
++#endif
+
+@add_include_linux_stdheaders depends on !include_both@
+@@
+(
++#include <linux/version.h>
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 16, 0)
+ #include <stdarg.h>
++#else
++#include <linux/stdarg.h>
++#endif
+|
++#include <linux/version.h>
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 16, 0)
+ #include <stddef.h>
++#else
++#include <linux/stddef.h>
++#endif
+)
+EOF
+spatch --in-place --include-headers --no-includes --sp-file cocci-xtables-lua-linux-5.16.spatch --dir extensions/LUA/lua/
+
+---
+
+--- a/extensions/LUA/lua/lauxlib.h
++++ b/extensions/LUA/lua/lauxlib.h
+@@ -9,7 +9,12 @@
+ #define lauxlib_h
+ 
+ 
++#include <linux/version.h>
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 16, 0)
+ #include <stddef.h>
++#else
++#include <linux/stddef.h>
++#endif
+ #include <linux/slab.h>	/* for kmalloc and kfree when allocating luaL_Buffer */
+ 
+ #if !defined(__KERNEL__)
+--- a/extensions/LUA/lua/ldebug.c
++++ b/extensions/LUA/lua/ldebug.c
+@@ -5,7 +5,12 @@
+ */
+ 
+ 
++#include <linux/version.h>
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 16, 0)
+ #include <stddef.h>
++#else
++#include <linux/stddef.h>
++#endif
+ #include <string.h>
+ 
+ #define ldebug_c
+--- a/extensions/LUA/lua/ldump.c
++++ b/extensions/LUA/lua/ldump.c
+@@ -4,7 +4,12 @@
+ ** See Copyright Notice in lua.h
+ */
+ 
++#include <linux/version.h>
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 16, 0)
+ #include <stddef.h>
++#else
++#include <linux/stddef.h>
++#endif
+ 
+ #define ldump_c
+ #define LUA_CORE
+--- a/extensions/LUA/lua/lfunc.c
++++ b/extensions/LUA/lua/lfunc.c
+@@ -5,7 +5,12 @@
+ */
+ 
+ 
++#include <linux/version.h>
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 16, 0)
+ #include <stddef.h>
++#else
++#include <linux/stddef.h>
++#endif
+ 
+ #define lfunc_c
+ #define LUA_CORE
+--- a/extensions/LUA/lua/llimits.h
++++ b/extensions/LUA/lua/llimits.h
+@@ -7,7 +7,12 @@
+ #ifndef llimits_h
+ #define llimits_h
+ 
++#include <linux/version.h>
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 16, 0)
+ #include <stddef.h>
++#else
++#include <linux/stddef.h>
++#endif
+ 
+ #include "lua.h"
+ 
+--- a/extensions/LUA/lua/lmem.c
++++ b/extensions/LUA/lua/lmem.c
+@@ -5,7 +5,12 @@
+ */
+ 
+ 
++#include <linux/version.h>
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 16, 0)
+ #include <stddef.h>
++#else
++#include <linux/stddef.h>
++#endif
+ 
+ #define lmem_c
+ #define LUA_CORE
+--- a/extensions/LUA/lua/lmem.h
++++ b/extensions/LUA/lua/lmem.h
+@@ -8,7 +8,12 @@
+ #define lmem_h
+ 
+ 
++#include <linux/version.h>
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 16, 0)
+ #include <stddef.h>
++#else
++#include <linux/stddef.h>
++#endif
+ 
+ #include "llimits.h"
+ #include "lua.h"
+--- a/extensions/LUA/lua/lobject.h
++++ b/extensions/LUA/lua/lobject.h
+@@ -9,7 +9,12 @@
+ #define lobject_h
+ 
+ 
++#include <linux/version.h>
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 16, 0)
+ #include <stdarg.h>
++#else
++#include <linux/stdarg.h>
++#endif
+ 
+ 
+ #include "llimits.h"
+--- a/extensions/LUA/lua/lstate.c
++++ b/extensions/LUA/lua/lstate.c
+@@ -5,7 +5,12 @@
+ */
+ 
+ 
++#include <linux/version.h>
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 16, 0)
+ #include <stddef.h>
++#else
++#include <linux/stddef.h>
++#endif
+ 
+ #define lstate_c
+ #define LUA_CORE
+--- a/extensions/LUA/lua/lstrlib.c
++++ b/extensions/LUA/lua/lstrlib.c
+@@ -6,7 +6,12 @@
+ 
+ 
+ #include <ctype.h>
++#include <linux/version.h>
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 16, 0)
+ #include <stddef.h>
++#else
++#include <linux/stddef.h>
++#endif
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+--- a/extensions/LUA/lua/ltablib.c
++++ b/extensions/LUA/lua/ltablib.c
+@@ -5,7 +5,12 @@
+ */
+ 
+ 
++#include <linux/version.h>
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 16, 0)
+ #include <stddef.h>
++#else
++#include <linux/stddef.h>
++#endif
+ 
+ #define ltablib_c
+ #define LUA_LIB
+--- a/extensions/LUA/lua/lua.h
++++ b/extensions/LUA/lua/lua.h
+@@ -9,7 +9,12 @@
+ #ifndef lua_h
+ #define lua_h
+ 
++#include <linux/version.h>
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 16, 0)
+ #include <stddef.h>
++#else
++#include <linux/stddef.h>
++#endif
+ 
+ #include "luaconf.h"
+ 
+--- a/extensions/LUA/lua/luaconf.h
++++ b/extensions/LUA/lua/luaconf.h
+@@ -8,7 +8,12 @@
+ #ifndef lconfig_h
+ #define lconfig_h
+ 
++#include <linux/version.h>
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 16, 0)
+ #include <stddef.h>
++#else
++#include <linux/stddef.h>
++#endif
+ 
+ #if !defined(__KERNEL__)
+ #include <limits.h>
