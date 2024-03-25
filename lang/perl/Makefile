@@ -117,6 +117,8 @@ define Build/Configure
 endef
 
 define Build/Compile
+	# make depend is required to avoid race conditions: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=996953
+	+$(MAKE) -C $(PKG_BUILD_DIR) depend
 	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR)
 endef
 
