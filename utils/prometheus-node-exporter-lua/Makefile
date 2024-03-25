@@ -246,6 +246,17 @@ define Package/prometheus-node-exporter-lua-realtek-poe/install
 	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/realtek-poe.lua $(1)/usr/lib/lua/prometheus-collectors/
 endef
 
+define Package/prometheus-node-exporter-lua-mwan3
+  $(call Package/prometheus-node-exporter-lua/Default)
+  TITLE+= (mwan3 collector)
+  DEPENDS:=prometheus-node-exporter-lua +libubus-lua
+endef
+
+define Package/prometheus-node-exporter-lua-mwan3/install
+	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/mwan3.lua $(1)/usr/lib/lua/prometheus-collectors/
+endef
+
 $(eval $(call BuildPackage,prometheus-node-exporter-lua))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-bmx7))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-dawn))
@@ -264,3 +275,4 @@ $(eval $(call BuildPackage,prometheus-node-exporter-lua-wifi))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-wifi_stations))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-snmp6))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-realtek-poe))
+$(eval $(call BuildPackage,prometheus-node-exporter-lua-mwan3))
