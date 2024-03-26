@@ -6,8 +6,337 @@ STOP=50
 
 USE_PROCD=1
 PROG=/usr/sbin/sshd
+NAME=sshd
+TEMPCONF="/tmp/sshd_config.tmp"
+
+. /lib/functions.sh
+. /lib/functions/network.sh
+
+validate_section_sshd() {
+	uci_load_validate sshd sshd "$1" "$2" \
+		'AllowUsers:list(string)' \
+		'BannerFile:file' \
+		'Ciphers:list(string)' \
+		'enable:bool:1' \
+		'GatewayPorts:bool:0' \
+		'HostKeyAlgorithms:list(string)' \
+		'HostKeyFiles:list(file)' \
+		'IdleTimeout:uinteger:0' \
+		'Interface:string' \
+		'KexAlgorithms:list(string)' \
+		'MacAlgorithms:list(string)' \
+		'MaxAuthTries:uinteger:6' \
+		'mdns:bool:1' \
+		'PasswordAuth:bool:1' \
+		'Port:port:22' \
+		'RootLogin:bool:1' \
+		'RootPasswordAuth:bool:1' \
+		'UsePAM:bool:0'
+}
+
+append_config() {
+	local Param="${1}"
+	local Value="${2}"
+
+	[ -n "${Param}" ] || return
+
+	echo "${Param} ${Value}" >> "${TEMPCONF}"
+}
+
+set_mac_algorithms() {
+	local MacAlgorithms="${1}"
+	local MacList=""
+
+	[ -n "${MacAlgorithms}" ] || return
+
+	for MacAlgorithm in $MacAlgorithms; do
+		# if this is the first iteration, then MacList
+		# should be empty, and we only want to add a
+		# comma if there are multiple values,
+		# this is to avoid extra comma in the end
+		if [ -z "${MacList}" ]; then
+			MacList="${MacAlgorithm}"
+		else
+			MacList="${MacAlgorithm},${MacList}"
+		fi
+	done
+
+	append_config "MACs" "${MacList}"
+}
+
+set_allow_users() {
+	local AllowUsers="${1}"
+	local UserList=""
+
+	[ -n "${AllowUsers}" ] || return
+
+	for User in $AllowUsers; do
+		UserList="${User} ${UserList}"
+	done
+
+	append_config "AllowUsers" "${UserList}"
+}
+
+set_banner_file() {
+	local BannerFile="${1}"
+
+	[ -n "${BannerFile}" ] || return
+
+	append_config "Banner" "${BannerFile}"
+}
+
+set_ciphers() {
+	local Ciphers="${1}"
+	local CipherList=""
+
+	[ -n "${Ciphers}" ] || return
+
+	for Cipher in $Ciphers; do
+		# we only want to add a comma if there are multiple values,
+		# this is to avoid extra comma in the end
+		if [ -z "${CipherList}" ]; then
+			CipherList="${Cipher}"
+		else
+			CipherList="${Cipher},${CipherList}"
+		fi
+	done
+
+	append_config "Ciphers" "${CipherList}"
+}
+
+set_gateway_ports() {
+	local GatewayPorts="${1}"
+
+	[ -n "${GatewayPorts}" ] || return
+
+	if [ "${GatewayPorts}" -eq 0 ]; then
+		append_config "GatewayPorts" "no"
+	else
+		append_config "GatewayPorts" "yes"
+	fi
+}
+
+set_host_key_files() {
+	local HostKeyFiles="${1}"
+	local HostKeyFileList=""
+
+	[ -n "${HostKeyFiles}" ] || return
+
+	for HostKeyFile in $HostKeyFiles; do
+		# we only want to add a comma if there are multiple values,
+		# this is to avoid extra comma in the end
+		if [ -z "${HostKeyFileList}" ]; then
+			HostKeyFileList="${HostKeyFile}"
+		else
+			HostKeyFileList="${HostKeyFile},${HostKeyFileList}"
+		fi
+	done
+
+	append_config "HostKey" "${HostKeyFileList}"
+}
+
+set_host_key_algorithms() {
+	local HostKeyAlgorithms="${1}"
+	local HostKeyAlgorithmList=""
+
+	[ -n "${HostKeyAlgorithms}" ] || return
+
+	for HostKeyAlgorithm in $HostKeyAlgorithms; do
+		# we only want to add a comma if there are multiple values,
+		# this is to avoid extra comma in the end
+		if [ -z "${HostKeyAlgorithmList}" ]; then
+			HostKeyAlgorithmList="${HostKeyAlgorithm}"
+		else
+			HostKeyAlgorithmList="${HostKeyAlgorithm},${HostKeyAlgorithmList}"
+		fi
+	done
+
+	append_config "HostKeyAlgorithms" "${HostKeyAlgorithmList}"
+}
+
+set_kex_algorithms() {
+	local KexAlgorithms="${1}"
+	local KexAlgorithmList=""
+
+	[ -n "${KexAlgorithms}" ] || return
+
+	for KexAlgorithm in $KexAlgorithms; do
+		# we only want to add a comma if there are multiple values,
+		# this is to avoid extra comma in the end
+		if [ -z "${KexAlgorithmList}" ]; then
+			KexAlgorithmList="${KexAlgorithm}"
+		else
+			KexAlgorithmList="${KexAlgorithm},${KexAlgorithmList}"
+		fi
+	done
+
+	append_config "KexAlgorithms" "${KexAlgorithmList}"
+}
+
+set_port() {
+	local Port="${1}"
+
+	if [ "${Port}" -gt 0 ]; then
+		append_config "Port" "${Port}"
+	fi
+}
+
+# because sshd does not have an option for specifying an interface
+# but only for specifying listen address
+# we get the addresses of interface and add them
+set_listen_addresses() {
+	local Port="${1}"
+	local IpAddrs="${2}"
+
+	set_port "${Port}"
+
+	for Addr in $IpAddrs; do
+		append_config "ListenAddress" "${Addr}"
+	done
+}
+
+set_idle_timeout() {
+	local IdleTimeout="${1}"
+
+	# from https://www.man7.org/linux/man-pages/man5/sshd_config.5.html
+	# ClientAliveCountMax:
+	# The default value is 3.  If ClientAliveInterval is set to
+	# 15, and ClientAliveCountMax is left at the default,
+	# unresponsive SSH clients will be disconnected after
+	# approximately 45 seconds.  Setting a zero
+	# ClientAliveCountMax disables connection termination.
+	# 
+	# Therefore, to mimic IdleTimeout from dropbear, we set
+	# ClientAliveCountMax to 1 and ClientAliveInterval to
+	# the time we want to wait
+	if [ "${IdleTimeout}" -ne 0 ]; then
+		append_config "ClientAliveCountMax" "1"
+		append_config "ClientAliveInterval" "${IdleTimeout}"
+	fi
+}
+
+set_max_auth_tries() {
+	local MaxAuthTries="${1}"
+
+	if [ "${MaxAuthTries}" -gt 0 ]; then
+		append_config "MaxAuthTries" "${MaxAuthTries}"
+	fi
+}
+
+set_root_login() {
+	local RootLogin="${1}"
+	local RootPasswordAuth="${2}"
+
+	if [ "${RootLogin}" -eq 0 ]; then
+		append_config "PermitRootLogin" "no"
+	else
+		if [ "${RootPasswordAuth}" -eq 0 ]; then
+			append_config "PermitRootLogin" "prohibit-password"
+		else
+			append_config "PermitRootLogin" "yes"
+		fi
+	fi
+}
+
+set_password_auth() {
+	local PasswordAuth="${1}"
+
+	if [ "${PasswordAuth}" -eq 0 ]; then
+		append_config "PasswordAuthentication" "no"
+		# disable all forms of interactive login attempts
+		# this is necessary when UsePAM is set to yes
+		append_config "KbdInteractiveAuthentication" "no"
+	else
+		append_config "PasswordAuthentication" "yes"
+		append_config "KbdInteractiveAuthentication" "yes"
+	fi
+}
+
+set_use_pam() {
+	local UsePAM="${1}"
+
+	if [ "${UsePAM}" -eq 0 ]; then
+		append_config "UsePAM" "no"
+	else
+		append_config "UsePAM" "yes"
+	fi
+}
+
+set_params() {
+	local ConfigFile="${1}"
+
+	# start fresh
+	rm -rf "${TEMPCONF}"
+	touch "${TEMPCONF}"
+
+	set_allow_users "${AllowUsers}"
+	set_banner_file "${BannerFile}"
+	set_ciphers "${Ciphers}"
+	set_gateway_ports "${GatewayPorts}"
+	set_host_key_algorithms "${HostKeyAlgorithms}"
+	set_host_key_files "${HostKeyFiles}"
+	set_idle_timeout "${IdleTimeout}"
+	set_kex_algorithms "${KexAlgorithms}"
+	set_listen_addresses "${Port}" "${IpAddrs}"
+	set_mac_algorithms "${MacAlgorithms}"
+	set_max_auth_tries "${MaxAuthTries}"
+	set_password_auth "${PasswordAuth}"
+	set_root_login "${RootLogin}" "${RootPasswordAuth}"
+	set_use_pam "${UsePAM}"
+
+	# finalize
+	mkdir -p "$(dirname "${ConfigFile}")"
+	mv "${TEMPCONF}" "${ConfigFile}"
+}
+
+sshd_instance() {
+	local IpAddrs
+	local Cfg="${1}"
+	local ValidationResult="${2}"
+
+	[ "${ValidationResult}" = 0 ] || {
+		echo "validation failed"
+		return 1
+	}
+
+	[ "${enable}" -eq 0 ] && return 0
+
+	[ -n "${Interface}" ] && {
+		network_get_ipaddrs_all IpAddrs "${Interface}" || {
+			echo "interface ${Interface} has no physdev or physdev has no suitable ip"
+			return 1
+		}
+	}
+
+	local PidFile="/var/run/${NAME}.${Cfg}.pid"
+	local ConfigFile="/var/etc/${NAME}.${Cfg}.conf"
+
+	# create config file
+	set_params "${ConfigFile}"
+
+	# set up procd instance
+	procd_open_instance "${Cfg}"
+	procd_set_param command "${PROG}" -D
+	procd_append_param command -o "PidFile ${PidFile}"
+
+	# pass config to daemon
+	procd_append_param command -f "${ConfigFile}"
+
+	procd_set_param respawn
+	procd_close_instance
+}
+
+# for adding trigger
+load_interfaces() {
+	config_get Interface "${1}" Interface
+	config_get_bool enable "${1}" enable 1
+
+	[ "${enable}" = "1" ] && Interfaces=" ${Interface} ${Interfaces}"
+}
 
 start_service() {
+	mkdir -m 0700 -p /etc/ssh
+
 	for type in rsa ed25519
 	do
 		# check for keys
@@ -27,19 +356,32 @@ start_service() {
 		}
 	done
 	mkdir -m 0700 -p /var/empty
+	mkdir -m 0700 -p /root/.ssh
 
-	local lport=$(awk '/^Port / { print $2; exit }' /etc/ssh/sshd_config)
-	[ -z "$lport" ] && lport=22
-
-	procd_open_instance
-	procd_add_mdns "ssh" "tcp" "$lport"
-	procd_set_param command $PROG -D
-	procd_set_param respawn
-	procd_close_instance
+	config_load "${NAME}"
+	config_foreach validate_section_sshd sshd sshd_instance
 }
 
 reload_service() {
-	procd_send_signal sshd
+	rc_procd start_service "$@"
+	procd_send_signal sshd "$@"
+}
+
+service_triggers() {
+	local Interfaces
+
+	procd_add_config_trigger "config.change" "sshd" /etc/init.d/sshd reload
+
+	config_load "${NAME}"
+	config_foreach load_interfaces sshd
+
+	[ -n "${Interfaces}" ] && {
+		for n in $Interfaces ; do
+			procd_add_interface_trigger "interface.*" "${n}" /etc/init.d/sshd reload
+		done
+	}
+
+	procd_add_validation validate_section_sshd
 }
 
 shutdown() {
