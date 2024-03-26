@@ -75,6 +75,40 @@ nginx_init() {
 	logger -t "nginx_init" -p "daemon.info" "using ${CONF} (the test is ok)"
 }
 
+add_mdns() {
+        local cfg="$1"
+        local port enabled mdns service
+
+        config_get enabled "$cfg" enabled
+        config_get mdns "$cfg" mdns
+        config_get port "$cfg" listen
+
+        port=$(echo "$port" | head -n1 | awk '{print $1;}')
+
+        if [ "${mdns}" == "0" ] || [ "${mdns}" == "false" ]; then
+                return
+        fi
+
+        if [ "${enabled}" != "0" ] && [ "${enabled}" != "false" ] && [ -n "${port}" ]; then
+		[ "${port}" == "80" ] && service="http"
+		[ "${port}" == "8080" ] && service="http-alt"
+		[ "${port}" == "443" ] && service="https"
+		[ "${port}" == "8443" ] && service="pcsync-https"
+
+		procd_add_mdns_service "$service" "tcp" "$port" "daemon=nginx"
+        fi
+}
+
+configure_mdns() {
+	procd_open_data
+	json_add_object "mdns"
+
+	config_load nginx
+	config_foreach add_mdns server
+
+	json_close_object
+	procd_close_data
+}
 
 start_service() {
 	nginx_init
@@ -86,6 +120,9 @@ start_service() {
 	procd_set_param file "${CONF}" "${CONF_DIR}*.crt" "${CONF_DIR}*.key" \
 		"${CONF_DIR}*.conf" "${CONF_DIR}*.locations"
 	procd_set_param respawn
+
+	configure_mdns
+
 	procd_close_instance
 }
 
