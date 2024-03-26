@@ -119,7 +119,7 @@ SCONS_OPTIONS += \
 	implicit_link=no \
 	chrpath=no \
 	manbuild=no \
-	sysroot="$(TOOLCHAIN_DIR)" \
+	sysroot="$(TOOLCHAIN_ROOT_DIR)" \
 	target="$(TARGET_CROSS:-=)"
 
 define Build/InstallDev

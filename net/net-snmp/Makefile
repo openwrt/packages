@@ -223,8 +223,6 @@ ifeq ($(CONFIG_IPV6),y)
 SNMP_TRANSPORTS_INCLUDED+= UDPIPv6
 endif
 
-TARGET_LDFLAGS += -L$(TOOLCHAIN_DIR)/usr/lib
-
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
 		INSTALL_PREFIX="$(PKG_INSTALL_DIR)" \
