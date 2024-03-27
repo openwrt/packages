@@ -130,7 +130,10 @@ SNMP_MIB_MODULES_INCLUDED = \
 	host/hr_system \
 	ieee802dot11 \
 	if-mib/ifXTable \
+	ip-mib/ipAddressTable \
 	ip-mib/inetNetToMediaTable \
+	ip-forward-mib/inetCidrRouteTable \
+	ip-forward-mib/ipCidrRouteTable \
 	mibII/at \
 	mibII/icmp \
 	mibII/ifTable \
