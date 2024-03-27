@@ -304,10 +304,11 @@ main() {
 						result=$?
 					;;
 					nping-*)
-						WRAP nping -c $count $track_ip --${FAMILY#nping-} > $TRACK_OUTPUT &
+						WRAP nping --${track_method#nping-} -c $count $track_ip > $TRACK_OUTPUT &
 						TRACK_PID=$!
 						wait $TRACK_PID
-						result=$(grep $TRACK_OUTPUT Lost | awk '{print $12}')
+						! grep -Eq '^Raw packets sent: [^|]+ \| Rcvd: 0 ' $TRACK_OUTPUT
+						result=$?
 					;;
 				esac
 				do_log=""
