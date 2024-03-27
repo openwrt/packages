@@ -4,6 +4,7 @@ START=99
 
 USE_PROCD=1
 PROG="/usr/sbin/snmpd"
+NAME="snmpd"
 
 CONFIGFILE="/var/run/snmpd.conf"
 
@@ -175,6 +176,20 @@ snmpd_pass_add() {
 	echo "$pass $priority $miboid $prog" >> $CONFIGFILE
 }
 
+snmpd_json_pass_add() {
+	. /usr/share/libubox/jshn.sh
+	[ -d /usr/share/snmp/pass/ ] || return
+	for file in /usr/share/snmp/pass/*.json; do
+		local pass='pass'
+		local miboid prog persist priority
+		json_load_file "${file}"
+		json_get_vars miboid prog persist priority
+		[ -z "$persist" ] || pass='pass_persist'
+		priority=${priority:+-p $priority}
+		echo "$pass $priority $miboid $prog" >> $CONFIGFILE
+	done
+}
+
 snmpd_exec_add() {
 	local cfg="$1"
 
@@ -289,6 +304,8 @@ start_service() {
 	config_get_bool snmp_enabled general enabled 1
 	[ "$snmp_enabled" -eq 0 ] && return
 
+	local pid_file="/var/run/${NAME}.pid"
+
 	procd_open_instance
 
 	config_foreach snmpd_agent_add agent
@@ -305,6 +322,7 @@ start_service() {
 	config_foreach snmpd_access_HostName_add access_HostName
 	config_foreach snmpd_access_HostIP_add access_HostIP
 	config_foreach snmpd_pass_add pass
+	snmpd_json_pass_add
 	config_foreach snmpd_exec_add exec
 	config_foreach snmpd_extend_add extend
 	config_foreach snmpd_disk_add disk
@@ -317,8 +335,8 @@ start_service() {
 	append_parm v1trapaddress host v1trapaddress
 	append_parm trapsess trapsess trapsess
 
-	procd_set_param command $PROG -Lf /dev/null -f -r
-	procd_set_param file $CONFIGFILE
+	procd_set_param command $PROG -Lf /dev/null -f -r -p "$pid_file"
+	procd_append_param command -C -c $CONFIGFILE
 	procd_set_param respawn
 
 	for iface in $(ls /sys/class/net 2>/dev/null); do
@@ -340,6 +358,10 @@ service_stopped() {
 	[ -f "$CONFIGFILE" ] || return
 	rm -f "$CONFIGFILE"
 	procd_set_config_changed firewall
+}
+
+reload_service() {
+	restart
 }
 
 service_triggers(){
