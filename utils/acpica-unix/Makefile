@@ -8,19 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=acpica-unix
-PKG_VERSION:=20230628
+PKG_VERSION:=20240322
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_CAT:=gzip -dc
-PKG_SOURCE_URL:=https://acpica.org/sites/$(patsubst %-unix,%,$(PKG_NAME))/files/
-PKG_HASH:=86876a745e3d224dcfd222ed3de465b47559e85811df2db9820ef09a9dff5cce
-PKG_MAINTAINER:=Philip Prindeville <philipp@redfish-solutions.com>
+PKG_SOURCE_URL:=https://codeload.github.com/acpica/$(patsubst %-unix,%,$(PKG_NAME))/tar.gz/G$(PKG_VERSION)?
+PKG_HASH:=4c674ee3be56e3cdca21e792548caa2698163d2bb8914e7621f43a3750c2da29
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
+PKG_MAINTAINER:=Philip Prindeville <philipp@redfish-solutions.com>
 PKG_LICENSE:=GPL-2.0
 
 PKG_FORTIFY_SOURCE:=0
 PKG_BUILD_PARALLEL:=1
+
+HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
@@ -42,6 +44,18 @@ define Package/acpica-unix/description
 endef
 
 define Build/Configure
+endef
+
+define Build/Prepare
+	mkdir -p $(PKG_BUILD_DIR)
+	$(TAR) -xzvf $(DL_DIR)/$(PKG_SOURCE) --strip=1 -C $(PKG_BUILD_DIR)
+	$(Build/Patch)
+endef
+
+define Host/Prepare
+	mkdir -p $(HOST_BUILD_DIR)
+	$(TAR) -xzvf $(DL_DIR)/$(PKG_SOURCE) --strip=1 -C $(HOST_BUILD_DIR)
+	$(Build/Patch)
 endef
 
 define Host/Install
