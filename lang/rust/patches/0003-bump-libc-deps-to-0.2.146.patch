@@ -1,47 +1,5 @@
 This patch bumps all libc dependencies and checksums to 0.2.147, which includes the fix for musl 1.2.4.
 
---- a/vendor/addr2line-0.19.0/Cargo.lock
-+++ b/vendor/addr2line-0.19.0/Cargo.lock
-@@ -235,9 +235,9 @@ checksum = "e2abad23fbc42b3700f2f279844d
- 
- [[package]]
- name = "libc"
--version = "0.2.126"
-+version = "0.2.147"
- source = "registry+https://github.com/rust-lang/crates.io-index"
--checksum = "349d5a591cd28b49e1d1037471617a32ddcda5731b99419008085f72d5a53836"
-+checksum = "b4668fb0ea861c1df094127ac5f1da3409a82116a4ba74fca2e58ef927159bb3"
- 
- [[package]]
- name = "memchr"
---- a/vendor/backtrace-0.3.67/Cargo.lock
-+++ b/vendor/backtrace-0.3.67/Cargo.lock
-@@ -64,9 +64,9 @@ checksum = "dec7af912d60cdbd3677c1af9352
- 
- [[package]]
- name = "libc"
--version = "0.2.138"
-+version = "0.2.147"
- source = "registry+https://github.com/rust-lang/crates.io-index"
--checksum = "db6d7e329c562c5dfab7a46a2afabc8b987ab9a4834c9d1ca04dc54c1546cef8"
-+checksum = "b4668fb0ea861c1df094127ac5f1da3409a82116a4ba74fca2e58ef927159bb3"
- 
- [[package]]
- name = "libloading"
---- a/vendor/crossbeam-channel/Cargo.lock
-+++ b/vendor/crossbeam-channel/Cargo.lock
-@@ -50,9 +50,9 @@ dependencies = [
- 
- [[package]]
- name = "libc"
--version = "0.2.141"
-+version = "0.2.147"
- source = "registry+https://github.com/rust-lang/crates.io-index"
--checksum = "3304a64d199bb964be99741b7a14d26972741915b3649639149b2479bb46f4b5"
-+checksum = "b4668fb0ea861c1df094127ac5f1da3409a82116a4ba74fca2e58ef927159bb3"
- 
- [[package]]
- name = "num_cpus"
 --- a/vendor/elasticlunr-rs/Cargo.lock
 +++ b/vendor/elasticlunr-rs/Cargo.lock
 @@ -555,9 +555,9 @@ checksum = "e2abad23fbc42b3700f2f279844d
@@ -56,20 +14,6 @@ This patch bumps all libc dependencies and checksums to 0.2.147, which includes 
  
  [[package]]
  name = "lindera"
---- a/vendor/handlebars/Cargo.lock
-+++ b/vendor/handlebars/Cargo.lock
-@@ -550,9 +550,9 @@ checksum = "e2abad23fbc42b3700f2f279844d
- 
- [[package]]
- name = "libc"
--version = "0.2.140"
-+version = "0.2.147"
- source = "registry+https://github.com/rust-lang/crates.io-index"
--checksum = "99227334921fae1a979cf0bfdfcc6b3e5ce376ef57e16fb6fb3ea2ed6095f80c"
-+checksum = "b4668fb0ea861c1df094127ac5f1da3409a82116a4ba74fca2e58ef927159bb3"
- 
- [[package]]
- name = "lock_api"
 --- a/vendor/libffi/Cargo.lock
 +++ b/vendor/libffi/Cargo.lock
 @@ -10,9 +10,9 @@ checksum = "50d30906286121d95be3d479533b
