@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vim
 PKG_VERSION:=9.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 VIMVER:=90
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -209,6 +209,8 @@ define Package/vim/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/vim_tiny $(1)/usr/bin/vim
 	$(INSTALL_DIR) $(1)/usr/share/vim
 	$(INSTALL_CONF) ./files/vimrc $(1)/usr/share/vim/
+	mkdir -p $(1)/usr/share/vim/vim$(VIMVER)
+	touch $(1)/usr/share/vim/vim$(VIMVER)/defaults.vim
 endef
 
 define Package/vim-full/install
@@ -217,6 +219,8 @@ define Package/vim-full/install
 	$(INSTALL_DIR) $(1)/usr/share/vim
 	$(LN) vim $(1)/usr/bin/vimdiff
 	$(INSTALL_CONF) ./files/vimrc.full $(1)/usr/share/vim/vimrc
+	mkdir -p $(1)/usr/share/vim/vim$(VIMVER)
+	touch $(1)/usr/share/vim/vim$(VIMVER)/defaults.vim
 endef
 
 
