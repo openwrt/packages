@@ -13,6 +13,7 @@ start_service() {
 	mkdir -p "$RUN_D"
 
 	procd_open_instance
+	procd_add_mdns "l2tp" "udp" "1701" "daemon=xl2tpd"
 	procd_set_param command $BIN -D -l -p "$PID_F"
 	procd_set_param respawn
 	procd_close_instance
