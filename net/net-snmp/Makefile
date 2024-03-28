@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=net-snmp
 PKG_VERSION:=5.9.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/net-snmp
@@ -130,7 +130,10 @@ SNMP_MIB_MODULES_INCLUDED = \
 	host/hr_system \
 	ieee802dot11 \
 	if-mib/ifXTable \
+	ip-mib/ipAddressTable \
 	ip-mib/inetNetToMediaTable \
+	ip-forward-mib/inetCidrRouteTable \
+	ip-forward-mib/ipCidrRouteTable \
 	mibII/at \
 	mibII/icmp \
 	mibII/ifTable \
