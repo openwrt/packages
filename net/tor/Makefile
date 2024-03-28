@@ -114,6 +114,7 @@ endef
 
 define Package/tor/conffiles
 /etc/tor/torrc
+/etc/tor/torrc.d/*
 /var/lib/tor/fingerprint
 /var/lib/tor/keys/*
 /etc/config/tor
