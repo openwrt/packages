@@ -6,8 +6,99 @@ STOP=50
 
 USE_PROCD=1
 PROG=/usr/sbin/sshd
+NAME=sshd
 
-start_service() {
+. /lib/functions.sh
+. /lib/functions/network.sh
+
+validate_section_sshd()
+{
+	uci_load_validate sshd sshd "$1" "$2" \
+		'PasswordAuth:bool:1' \
+		'RootPasswordAuth:bool:1' \
+		'RootLogin:bool:1' \
+		'Interface:string' \
+		'Port:port:22' \
+		'IdleTimeout:uinteger:0' \
+		'MaxAuthTries:uinteger:3' \
+		'enable:bool:1' \
+		'mdns:bool:1'
+}
+
+# because sshd does not have an option for specifying an interface
+# but only for specifying listen address
+# we get the addresses of interface and add them
+append_addresses()
+{
+	local ipaddrs="${1}"
+	local port="${2}"
+
+	procd_append_param command -o "Port ${port}"
+
+	for addr in $ipaddrs; do
+		procd_append_param command -o "ListenAddress ${addr}"
+	done
+}
+
+set_params()
+{
+	append_addresses "${ipaddrs}" "${Port}"
+
+	[ "${PasswordAuth}" -eq 0 ] && procd_append_param command -o "PasswordAuthentication no"
+	[ "${RootPasswordAuth}" -eq 1 ] && procd_append_param command -o "PermitRootLogin yes"
+	[ "${RootLogin}" -eq 0 ] && procd_append_param command -o "PermitRootLogin no"
+	[ "${MaxAuthTries}" -gt 0 ] && procd_append_param command -o "MaxAuthTries ${MaxAuthTries}"
+	[ "${mdns}" -ne 0 ] && procd_add_mdns "ssh" "tcp" "${Port}" "daemon=sshd"
+
+	if [ "${IdleTimeout}" -ne 0 ]; then
+		procd_append_param command -o "ClientAliveCountMax 1"
+		procd_append_param command -o "ClientAliveInterval ${IdleTimeout}"
+	fi
+}
+
+sshd_instance()
+{
+	local ipaddrs
+	local cfg="$1"
+	local validation_result="${2}"
+
+	[ "${validation_result}" = 0 ] || {
+		echo "validation failed"
+		return 1
+	}
+
+	[ "${enable}" -eq 0 ] && return 0
+
+	[ -n "${Interface}" ] && {
+		network_get_ipaddrs_all ipaddrs "${Interface}" || {
+			echo "interface ${Interface} has no physdev or physdev has no suitable ip"
+			return 1
+		}
+	}
+
+	local pid_file="/var/run/${NAME}.${cfg}.pid"
+
+	procd_open_instance $cfg
+	procd_set_param command $PROG -D
+	procd_append_param command -o "PidFile $pid_file"
+
+	set_params
+
+	procd_set_param respawn
+	procd_close_instance
+}
+
+# for adding trigger
+load_interfaces()
+{
+	config_get Interface "$1" Interface
+	config_get enable "$1" enable 1
+
+	[ "${enable}" = "1" ] && interfaces=" ${Interface} ${interfaces}"
+}
+
+start_service()
+{
 	for type in rsa ed25519
 	do
 		# check for keys
@@ -20,19 +111,28 @@ start_service() {
 		}
 	done
 	mkdir -m 0700 -p /var/empty
+	mkdir -m 0700 -p /root/.ssh
 
-	local lport=$(awk '/^Port / { print $2; exit }' /etc/ssh/sshd_config)
-	[ -z "$lport" ] && lport=22
-
-	procd_open_instance
-	procd_add_mdns "ssh" "tcp" "$lport"
-	procd_set_param command $PROG -D
-	procd_set_param respawn
-	procd_close_instance
+	config_load "${NAME}"
+	config_foreach validate_section_sshd sshd sshd_instance
 }
 
-reload_service() {
-	procd_send_signal sshd
+service_triggers()
+{
+	local interfaces
+
+	procd_add_config_trigger "config.change" "sshd" /etc/init.d/sshd reload
+
+	config_load "${NAME}"
+	config_foreach load_interfaces sshd
+
+	[ -n "${interfaces}" ] && {
+		for n in $interfaces ; do
+			procd_add_interface_trigger "interface.*" $n /etc/init.d/sshd reload
+		done
+	}
+
+	procd_add_validation validate_section_sshd
 }
 
 shutdown() {
