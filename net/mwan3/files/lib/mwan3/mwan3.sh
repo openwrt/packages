@@ -829,6 +829,7 @@ mwan3_set_user_iptables_rule()
 	[ -z "$dest_ip" ] && unset dest_ip
 	[ -z "$src_ip" ] && unset src_ip
 	[ -z "$ipset" ] && unset ipset
+	[ -z "$ipset_src" ] && unset ipset_src
 	[ -z "$src_port" ] && unset src_port
 	[ -z "$dest_port" ] && unset dest_port
 	if [ "$proto" != 'tcp' ] && [ "$proto" != 'udp' ]; then
@@ -849,6 +850,10 @@ mwan3_set_user_iptables_rule()
 
 	if [ -n "$ipset" ]; then
 		ipset="-m set --match-set $ipset dst"
+	fi
+
+	if [ -n "$ipset_src" ]; then
+		ipset_src="-m set --match-set $ipset_src src"
 	fi
 
 	if [ -z "$use_policy" ]; then
@@ -899,7 +904,7 @@ mwan3_set_user_iptables_rule()
 				  ${src_ip:+-s} $src_ip \
 				  ${src_dev:+-i} $src_dev \
 				  ${dest_ip:+-d} $dest_ip \
-				  $ipset \
+				  $ipset $ipset_src \
 				  ${src_port:+-m} ${src_port:+multiport} ${src_port:+--sports} $src_port \
 				  ${dest_port:+-m} ${dest_port:+multiport} ${dest_port:+--dports} $dest_port \
 				  -m mark --mark 0/$MMX_MASK \
@@ -912,7 +917,7 @@ mwan3_set_user_iptables_rule()
 			  ${src_ip:+-s} $src_ip \
 			  ${src_dev:+-i} $src_dev \
 			  ${dest_ip:+-d} $dest_ip \
-			  $ipset \
+			  $ipset $ipset_src \
 			  ${src_port:+-m} ${src_port:+multiport} ${src_port:+--sports} $src_port \
 			  ${dest_port:+-m} ${dest_port:+multiport} ${dest_port:+--dports} $dest_port \
 			  -m mark --mark 0/$MMX_MASK \
