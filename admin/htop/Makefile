@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=htop
 PKG_VERSION:=3.3.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/htop-dev/htop/tar.gz/$(PKG_VERSION)?
@@ -33,7 +33,7 @@ define Package/htop
   SECTION:=admin
   CATEGORY:=Administration
   TITLE:=Interactive processes viewer
-  DEPENDS:=+libncurses
+  DEPENDS:=+libncurses +HTOP_LMSENSORS:libsensors
   URL:=https://hisham.hm/htop/
   MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
 endef
@@ -46,13 +46,11 @@ endef
 
 define Package/htop/config
 	config HTOP_LMSENSORS
-		bool "Compile Htop with lm-sensors support"
+		bool "Enable support for reading temperature data"
 		depends on PACKAGE_htop
 		default y if TARGET_x86
 		help
-			Build htop with lm-sensors support.
-			This doesn't add lm-sensors as dependency,
-			if present it'll loaded using dlopen().
+			This adds libsensors as dependency.
 endef
 
 CONFIGURE_ARGS += \
