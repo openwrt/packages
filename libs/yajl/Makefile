@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=yajl
 PKG_VERSION:=2.1.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/lloyd/yajl
@@ -19,6 +19,7 @@ PKG_MIRROR_HASH:=0cd74320be0270a07931e42d2f14f87a8b3fb664ecb5db58b0e838886211ab1
 PKG_MAINTAINER:=Charles Southerland <charlie@stuphlabs.com>
 PKG_LICENSE:=ISC
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:yajl_project:yajl
 
 CMAKE_INSTALL:=1
 

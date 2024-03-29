@@ -1,6 +1,6 @@
 --- a/client/cs_platforms.cpp
 +++ b/client/cs_platforms.cpp
-@@ -76,6 +76,21 @@ void CLIENT_STATE::add_platform(const ch
+@@ -171,6 +171,21 @@ int launch_child_process_to_detect_emula
  //
  void CLIENT_STATE::detect_platforms() {
  
@@ -22,7 +22,7 @@
  #if defined(_WIN32) && !defined(__CYGWIN32__)
  #if defined(_WIN64) && defined(_M_X64)
      add_platform("windows_x86_64");
-@@ -210,15 +225,6 @@ void CLIENT_STATE::detect_platforms() {
+@@ -306,15 +321,6 @@ void CLIENT_STATE::detect_platforms() {
          add_platform("i686-pc-linux-gnu");
      }
  
@@ -38,7 +38,7 @@
  #elif defined(sun)
      // Check if we can run 64-bit binaries...
      // this assumes there isn't a 64-bit only solaris.  (Every 64-bit solaris can run 32 bit binaries)
-@@ -294,6 +300,8 @@ void CLIENT_STATE::detect_platforms() {
+@@ -390,6 +396,8 @@ void CLIENT_STATE::detect_platforms() {
  #endif
  
  #endif

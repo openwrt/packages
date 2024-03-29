@@ -18,6 +18,7 @@ PKG_HASH:=5e1471869dd27ba4120dd3942d2f4ec6646cf917fb056be9ae0d3a8259668d47
 PKG_MAINTAINER:=Bruno Randolf <br1@einfach.org>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:gnu:bc
 
 include $(INCLUDE_DIR)/package.mk
 

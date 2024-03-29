@@ -12,6 +12,7 @@ PKG_VERSION:=1.10.0
 PKG_RELEASE:=3
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 PKG_LICENSE:=LGPL-2.1-or-later
+PKG_CPE_ID:=cpe:/a:noping:liboping
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://noping.cc/files

@@ -1,11 +1,11 @@
 #!/bin/sh
-# Copyright (c) 2023 Eric Fahlgren <eric.fahlgren@gmail.com>
+# Copyright (c) 2023-2024 Eric Fahlgren <eric.fahlgren@gmail.com>
 # SPDX-License-Identifier: GPL-2.0
-# shellcheck disable=SC2039  # "local" not defined in POSIX sh
+# shellcheck disable=SC2039,SC2155  # "local" not defined in POSIX sh
+
+set -o nounset
 
 alias log='logger -s -t "snort-rules[$$]" -p "info"'
-
-[ "$1" = "-t" ] && testing=true || testing=false
 
 download_rules() {
 	# Further information:
@@ -14,32 +14,39 @@ download_rules() {
 	#
 	# Also, what to do about "subscription" vs Talos_LightSPD rules when subbed?
 	# Add a "use_rules" list or option or something?
-	oinkcode=$(uci -q get snort.snort.oinkcode)
-
-
+	local oinkcode=$(uci -q get snort.snort.oinkcode)
 
 	local conf_dir=$(uci -q get snort.snort.config_dir || echo "/etc/snort")
-	local rules_file="$conf_dir/rules/snort.rules"
+	local rules_dir="$conf_dir/rules"
 	local data_dir=$(uci -q get snort.snort.temp_dir || echo "/var/snort.d")
 	local data_tar="$data_dir/rules.tar.gz"
+
+	local new_rules
+	local rules_file
+	local archive_loc
 
 	# Make sure everything exists.
 	[ -d "$data_dir" ] || mkdir -p "$data_dir"
 
-
 	if $testing ; then
 		log "Generating testing rules..."
-		new_rules="$data_dir/testing.rules"
-		rm -f "$new_rules"
-		echo 'alert icmp any any <> any any (msg:"TEST ALERT ICMP v4"; icode:0; itype: 8; sid:10000010; rev:001;)' >> "$new_rules"
-		#echo 'alert icmp any any <> any any (msg:"TEST ALERT ICMP v6"; icode:0; itype:33; sid:10000011; rev:001;)' >> "$new_rules"
-		#echo 'alert icmp any any <> any any (msg:"TEST ALERT ICMP v6"; icode:0; itype:34; sid:10000012; rev:001;)' >> "$new_rules"
+		archive_loc="testing-rules"
+		new_rules="$data_dir/$archive_loc"
+		rm -fr "${new_rules:?}"
+		mkdir -p "$new_rules"
+		rules_file="$new_rules/testing.rules"
+		{
+			echo 'alert icmp any any <> any any (msg:"TEST ALERT ICMP v4"; icode:0; itype: 8; sid:99010;)'
+			echo 'alert icmp any any <> any any (msg:"TEST ALERT ICMP v6"; icode:0; itype:33; sid:99011;)'
+			echo 'alert icmp any any <> any any (msg:"TEST ALERT ICMP v6"; icode:0; itype:34; sid:99012;)'
+		} >> "$rules_file"
 
 	else
 		if [ -z "$oinkcode" ]; then
 			# If you do not have a subscription, then we use the community rules:
 			log "Downloading community rules..."
 			url="https://www.snort.org/downloads/community/snort3-community-rules.tar.gz"
+			archive_loc="snort3-community-rules"
 
 		else
 			# If you have a subscription and its corresponding oinkcode, use this:
@@ -62,31 +69,103 @@ download_rules() {
 
 			log "Downloading subscription rules..."
 			url="https://www.snort.org/rules/snortrules-snapshot-$snortver.tar.gz?oinkcode=$oinkcode"
+			# Non-community tar contains many "*.rules" file, we only care about
+			# the one directory.
+			archive_loc="rules"
 		fi
 
 		wget "$url" -O "$data_tar" 2>&1 | log || exit 1
 
-		# ??? Does non-community tar contain just the one "*.rules" file, too???
-		new_rules=$(tar tzf "$data_tar" | grep '\.rules$')
-		new_rules="$data_dir/$new_rules"
-
 		old_rules="$data_dir/old.rules"
-		if [ -e "$new_rules" ]; then
-			# Before we overwrite with the new download.
-			log "Stashing old rules to $old_rules ..."
-			mv -f "$new_rules" "$old_rules"
+		if $backup; then
+			rm -fr "${old_rules:?}"
+			mkdir -p "$old_rules"
+
+			for rules_file in "$rules_dir"/*; do
+				# Before we overwrite with the new download.
+				log "Stashing '$rules_file' to '$old_rules/'..."
+				mv -f "$rules_file" "$old_rules/"
+			done
 		fi
 
-		log "Unpacking $data_tar ..."
-		tar xzvf "$data_tar" -C "$data_dir" | log || exit 1
-		if [ -e "$old_rules" ] && ! cmp -s "$new_rules" "$old_rules" ; then
-			diff "$new_rules" "$old_rules" 2>&1 | log
-		fi
+		log "Unpacking '$data_tar'..."
+		tar xzvof "$data_tar" "$archive_loc" -C "$data_dir" | log || exit 1
+
+		# Get rid of the non-rule files and aggregator.
+		new_rules="$data_dir/$archive_loc"
+		find "$new_rules" \( -iname 'includes.rules' -o ! -iname '*.rules' -type f \) -exec rm '{}' \;
+
+		# Old unfinished experiment with diffing old and new rules.
+		#for rules_file in "$new_rules"/*; do
+		#blah blah
+		#if [ -e "$old_rules" ] && ! cmp -s "$new_rules" "$old_rules" ; then
+		#	diff "$new_rules" "$old_rules" 2>&1 | log
+		#fi
 	fi
 
-	rm -f "$rules_file"
-	ln -s "$new_rules" "$rules_file"
+
+	mkdir -p "$conf_dir"
+	rm -fr "${rules_dir:?}"
+	if $persist; then
+		mv -f "$new_rules" "$rules_dir"
+	else
+		ln -s "$new_rules" "$rules_dir"
+	fi
 
 	log "Snort rules loaded, restart snort now."
 }
+
+#-------------------------------------------------------------------------------
+
+testing=false
+persist=false
+backup=false
+
+usage() {
+	local msg="$1"
+	[ -n "$msg" ] && printf "ERROR: %s\n\n" "$msg"
+
+	cat <<USAGE
+Usage:
+
+  $0 [-b/--backup] [-t/--testing] [-p/--persist]
+
+  -b = Attempt to copy current rules to '\$temp_dir/old.rules/' before
+       installing new rules.
+
+  -t = Don't download any rules, instead create synthetic testing rules.
+
+  -p = Move the downloaded rules to '\$conf_dir/rules/' (usually '/etc/snort/'),
+       so that they persist across reboots and sysupgrades.  If you do not
+       specify this option, then the rules are stored in '\$temp_dir', and a
+       symbolic link is created to them.
+
+After running 'snort-rules', you should run 'snort-mgr check -v' to verify
+that there are no errors.
+
+USAGE
+	exit 1
+}
+
+while [ "${1:-}" ]; do
+	case "$1" in
+		-h|--help)
+			usage
+		;;
+		-b|--backup)
+			backup=true
+		;;
+		-t|--testing)
+			testing=true
+		;;
+		-p|--persist)
+			persist=true
+		;;
+		*)
+			usage "'$1' is not a valid option"
+		;;
+	esac
+	shift
+done
+
 download_rules

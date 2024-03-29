@@ -1,0 +1,22 @@
+#!/bin/sh /etc/rc.common
+ 
+START=10
+STOP=15
+
+config_databag() {
+  config_get store_path "$1" store_path "/tmp/store"
+  config_get service_port "$1" service_port "7001"
+ 
+  mkdir -p "${store_path}"
+  cp -n /opt/databag/databag.db ${store_path}
+  /usr/bin/databag -p ${service_port} -s ${store_path} -w /opt/databag/web/build
+}
+
+start() {
+  config_load databag
+  config_foreach config_databag databag
+}
+
+stop() {
+  killall databag
+}

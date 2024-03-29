@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bash
-PKG_VERSION:=5.2.15
+PKG_VERSION:=5.2.21
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/bash
-PKG_HASH:=13720965b5f4fc3a0d4b61dd37e7565c741da9a5be24edc2ae00182fc1b3588c
+PKG_HASH:=c8e31bdc59b69aaffc5b36509905ba3e5cbb12747091d27b4b977f078560d5b8
 
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -31,7 +31,7 @@ define Package/bash
   SUBMENU:=Shells
   TITLE:=The GNU Bourne Again SHell
   DEPENDS:=+libncurses +libreadline
-  URL:=http://www.gnu.org/software/bash/
+  URL:=https://www.gnu.org/software/bash/
 endef
 
 define Package/bash/description

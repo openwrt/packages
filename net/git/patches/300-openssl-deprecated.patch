@@ -14,7 +14,7 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
 
 --- a/imap-send.c
 +++ b/imap-send.c
-@@ -274,8 +274,10 @@ static int ssl_socket_connect(struct ima
+@@ -278,8 +278,10 @@ static int ssl_socket_connect(struct ima
  	int ret;
  	X509 *cert;
  

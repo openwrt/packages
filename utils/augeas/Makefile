@@ -18,6 +18,8 @@ PKG_HASH:=321942c9cc32185e2e9cb72d0a70eea106635b50269075aca6714e3ec282cb87
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_LICENSE:=LGPL-2.1-or-later
+PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:augeas:augeas
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 
 include $(INCLUDE_DIR)/package.mk

@@ -56,12 +56,12 @@ get)
 		;;
 	esac
 
-	log info "Running ACME for $main_domain"
+	log info "Running ACME for $main_domain with validation_method $validation_method"
 
 	if [ -e "$domain_dir" ]; then
 		if [ "$staging" = 0 ] && grep -q "acme-staging" "$domain_dir/$main_domain.conf"; then
 			mv "$domain_dir" "$domain_dir.staging"
-			log info "Certificates are previously issued from a staging server, but staging option is diabled, moved to $domain_dir.staging."
+			log info "Certificates are previously issued from a staging server, but staging option is disabled, moved to $domain_dir.staging."
 			staging_moved=1
 		else
 			set -- "$@" --renew --home "$state_dir" -d "$main_domain"
@@ -107,7 +107,8 @@ get)
 		set -- "$@" --days "$days"
 	fi
 
-	if [ "$dns" ]; then
+	case "$validation_method" in
+	"dns")
 		set -- "$@" --dns "$dns"
 		if [ "$dalias" ]; then
 			set -- "$@" --domain-alias "$dalias"
@@ -120,12 +121,18 @@ get)
 		if [ "$dns_wait" ]; then
 			set -- "$@" --dnssleep "$dns_wait"
 		fi
-	elif [ "$standalone" = 1 ]; then
+		;;
+	"standalone")
 		set -- "$@" --standalone --listen-v6
-	else
+		;;
+	"webroot")
 		mkdir -p "$CHALLENGE_DIR"
 		set -- "$@" --webroot "$CHALLENGE_DIR"
-	fi
+		;;
+	*)
+		log err "Unsupported validation_method $validation_method"
+		;;
+	esac
 
 	set -- "$@" --issue --home "$state_dir"
 

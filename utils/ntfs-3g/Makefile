@@ -16,7 +16,7 @@ PKG_HASH:=0489fbb6972581e1b417ab578d543f6ae522e7fa648c3c9b49c789510fd5eb93
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=GPL-2.0-only LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING COPYING.LIB
-PKG_CPE_ID:=cpe:/a:ntfs-3g:ntfs-3g
+PKG_CPE_ID:=cpe:/a:tuxera:ntfs-3g
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

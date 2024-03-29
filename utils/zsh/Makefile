@@ -18,7 +18,7 @@ PKG_HASH:=9b8d1ecedd5b5e81fbf1918e876752a7dd948e05c1a0dba10ab863842d45acd5
 PKG_MAINTAINER:=Vadim A. Misbakh-Soloviov <openwrt-zsh@mva.name>
 PKG_LICENSE:=ZSH
 PKG_LICENSE_FILES:=LICENCE
-PKG_CPE_ID:=cpe:/a:zsh_project:zsh
+PKG_CPE_ID:=cpe:/a:zsh:zsh
 
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1

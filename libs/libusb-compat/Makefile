@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libusb-compat
-PKG_VERSION:=0.1.7
-PKG_RELEASE:=2
+PKG_VERSION:=0.1.8
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://github.com/libusb/libusb-compat-0.1/releases/download/v$(PKG_VERSION)
-PKG_HASH:=8259f8d5b084fe43c47823a939e955e0ba21942b8d112266c39d228cc14764d6
+PKG_HASH:=b692dcf674c070c8c0bee3c8230ce4ee5903f926d77dc8b968a4dd1b70f9b05c
 
 PKG_MAINTAINER:= Felix Fietkau <nbd@nbd.name>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -29,7 +29,7 @@ define Package/libusb-compat
   CATEGORY:=Libraries
   TITLE:=libusb-0.1 compatibility library
   DEPENDS:=+libusb-1.0
-  URL:=http://libusb.wiki.sourceforge.net/
+  URL:=https://libusb.info/
   ABI_VERSION:=4
 endef
 

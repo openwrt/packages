@@ -1,16 +1,19 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -33,9 +33,6 @@ AC_SYS_LARGEFILE
+@@ -34,12 +34,6 @@ AC_SYS_LARGEFILE
  AM_PROG_AR
  LT_INIT
  
--AM_GNU_GETTEXT_VERSION([0.18.2])
+-dnl Minimal version supporting AM_GNU_GETTEXT_REQUIRE_VERSION.
+-AM_GNU_GETTEXT_VERSION([0.19.6])
+-dnl Require at least the following version, but use the latest available one.
+-AM_GNU_GETTEXT_REQUIRE_VERSION([0.19.8])
 -AM_GNU_GETTEXT([external])
 -
  AC_ARG_ENABLE([debug],
  	[AS_HELP_STRING([--enable-debug], [Enable extra debugging])])
  AS_IF([test "x$enable_debug" = "xyes"],
-@@ -67,6 +64,5 @@ AC_CONFIG_COMMANDS([include/sys],
+@@ -69,6 +63,5 @@ AC_CONFIG_COMMANDS([include/sys],
  AC_CONFIG_FILES([
  	libacl.pc
  	Makefile

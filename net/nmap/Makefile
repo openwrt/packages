@@ -14,7 +14,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nmap
 PKG_VERSION:=7.93
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_MAINTAINER:=Nuno Gonçalves <nunojpg@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -35,6 +35,7 @@ include ../../lang/python/python3-package.mk
 NMAP_DEPENDS:=+libpcap +libstdcpp +zlib +libpcre
 NCAT_DEPENDS:=+libpcap
 NPING_DEPENDS:=+libpcap +libpthread +libstdcpp
+SSL_DEPENDS:=+libopenssl +ca-certs
 
 define Package/nmap/default
   SUBMENU:=NMAP Suite
@@ -52,14 +53,14 @@ endef
 
 define Package/nmap-ssl
 $(call Package/nmap/default)
-  DEPENDS:=$(NMAP_DEPENDS) +libopenssl
+  DEPENDS:=$(NMAP_DEPENDS) $(SSL_DEPENDS)
   VARIANT:=ssl
   TITLE:=Nmap (with OpenSSL support)
 endef
 
 define Package/nmap-full
 $(call Package/nmap/default)
-  DEPENDS:=$(NMAP_DEPENDS) +libopenssl +liblua5.3 +libssh2
+  DEPENDS:=$(NMAP_DEPENDS) $(SSL_DEPENDS) +liblua5.3 +libssh2
   VARIANT:=full
   TITLE:=Nmap (with OpenSSL and scripting support)
 endef
@@ -73,14 +74,14 @@ endef
 
 define Package/ncat-ssl
 $(call Package/nmap/default)
-  DEPENDS:=$(NCAT_DEPENDS) +libopenssl
+  DEPENDS:=$(NCAT_DEPENDS) $(SSL_DEPENDS)
   VARIANT:=ssl
   TITLE:=Ncat (with OpenSSL support)
 endef
 
 define Package/ncat-full
 $(call Package/nmap/default)
-  DEPENDS:=$(NCAT_DEPENDS) +libopenssl +liblua5.3
+  DEPENDS:=$(NCAT_DEPENDS) $(SSL_DEPENDS) +liblua5.3
   VARIANT:=full
   TITLE:=Ncat (with OpenSSL and scripting support)
 endef
@@ -94,7 +95,7 @@ endef
 
 define Package/nping-ssl
 $(call Package/nmap/default)
-  DEPENDS:=$(NPING_DEPENDS) +libopenssl
+  DEPENDS:=$(NPING_DEPENDS) $(SSL_DEPENDS)
   VARIANT:=ssl
   TITLE:=Nping (with OpenSSL support)
 endef
@@ -179,7 +180,6 @@ endef
 define Package/ncat-ssl/install
 	$(call Package/ncat/install,$(1))
 	$(INSTALL_DIR) $(1)/usr/share/ncat
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/ncat/ca-bundle.crt $(1)/usr/share/ncat/
 endef
 
 Package/ncat-full/install=$(Package/ncat-ssl/install)

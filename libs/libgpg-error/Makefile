@@ -20,6 +20,7 @@ PKG_HASH:=9e3c670966b96ecc746c28c2c419541e3bcb787d1a73930f5e5f5e1bcbbb9bdb
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:gnupg:libgpg-error
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

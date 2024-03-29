@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mc
 PKG_VERSION:=4.8.30
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_CPE_ID:=cpe:/a:midnight_commander:midnight_commander
@@ -35,7 +35,7 @@ include $(INCLUDE_DIR)/nls.mk
 define Package/mc
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+glib2 +libncurses +libmount +MC_VFS:libssh2 $(ICONV_DEPENDS)
+  DEPENDS:=+glib2 +libncurses +libmount +libe2p +MC_VFS:libssh2 $(ICONV_DEPENDS)
   TITLE:=Midnight Commander - a powerful visual file manager
   URL:=https://www.midnight-commander.org/
   MENU:=1

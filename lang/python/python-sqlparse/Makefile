@@ -10,6 +10,7 @@ PKG_HASH:=d446183e84b8349fa3061f0fe7f06ca94ba65b426946ffebe6e3e8295332420c
 PKG_MAINTAINER:=Peter Stadler <peter.stadler@student.uibk.ac.at>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:sqlparse_project:sqlparse
 
 PKG_BUILD_DEPENDS:=python-flit-core/host
 

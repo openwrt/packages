@@ -34,7 +34,7 @@ This commit prevents the call to btd_adv_manager_refresh for non-LE devices.
 
 --- a/src/adapter.c
 +++ b/src/adapter.c
-@@ -634,7 +634,9 @@ static void settings_changed(struct btd_
+@@ -643,7 +643,9 @@ static void settings_changed(struct btd_
  		 */
  		if (!adapter->discovery_discoverable)
  			store_adapter_info(adapter);

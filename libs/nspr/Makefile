@@ -10,7 +10,8 @@ PKG_NAME:=nspr
 PKG_VERSION:=4.35
 PKG_RELEASE:=2
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
-PKG_LICENCE:=MPL-2.0
+PKG_LICENSE:=MPL-2.0
+PKG_CPE_ID:=cpe:/a:mozilla:netscape_portable_runtime
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \

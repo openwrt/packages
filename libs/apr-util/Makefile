@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apr-util
-PKG_VERSION:=1.6.1
-PKG_RELEASE:=7
+PKG_VERSION:=1.6.3
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@APACHE/apr/
-PKG_HASH:=d3e12f7b6ad12687572a3a39475545a072608f4ba03a6ce8a3778f607dd0035b
+PKG_HASH:=a41076e3710746326c3945042994ad9a4fcac0ce0277dd8fea076fec3c9772b5
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 
 PKG_LICENSE:=Apache-2.0
@@ -48,6 +48,11 @@ $(call Package/libaprutil/Default)
   DEPENDS:=+libapr +libexpat +libuuid $(ICONV_DEPENDS)
   TITLE:=Apache Portable Runtime Utility Library
 endef
+
+## Prevent apu-iconv.m4 to append "/lib" to LDFLAGS if ICONV_PREFIX is empty
+ifeq ($(ICONV_PREFIX),)
+ICONV_PREFIX=no
+endif
 
 CONFIGURE_ARGS += \
 	--with-apr="$(STAGING_DIR)/usr/bin/apr-1-config" \

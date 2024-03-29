@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netavark
-PKG_VERSION:=1.9.0
+PKG_VERSION:=1.10.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/containers/netavark/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=9ec50b715ded0a0699134c001656fdd1411e3fb5325d347695c6cb8cc5fcf572
+PKG_HASH:=fdc3010cb221f0fcef0302f57ef6f4d9168a61f9606238a3e1ed4d2e348257b7
 
 PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
 PKG_LICENSE:=Apache-2.0
@@ -33,18 +33,12 @@ define Package/netavark/description
   applicable for other OCI container management applications.
 endef
 
-define Package/netavark/conffiles
-/etc/config/netavark
-endef
-
 CARGO_PKG_VARS += \
 	PROTOC=$(STAGING_DIR_HOSTPKG)/bin/protoc
 
 define Package/netavark/install
 	$(INSTALL_DIR) $(1)/etc/config $(1)/usr/lib/podman
-	$(INSTALL_CONF) ./files/netavark-config $(1)/etc/config/netavark
-	$(INSTALL_BIN) ./files/netavark-wrapper $(1)/usr/lib/podman/netavark
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/netavark $(1)/usr/lib/podman/netavark-bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/netavark $(1)/usr/lib/podman
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/netavark-dhcp-proxy-client $(1)/usr/lib/podman/
 endef
 

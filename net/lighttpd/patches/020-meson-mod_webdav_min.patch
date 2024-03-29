@@ -9,8 +9,8 @@ Subject: [PATCH] [meson] mod_webdav_min w/o deps: xml2 sqlite3 uuid
 
 --- a/src/meson.build
 +++ b/src/meson.build
-@@ -877,6 +877,16 @@ if libsasl.found()
- 	]
+@@ -871,6 +871,16 @@ if (host_machine.system() == 'darwin')
+ 	plugin_suffix = 'so'  # use "so" instead of "dylib"
  endif
  
 +modules += [

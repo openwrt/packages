@@ -19,6 +19,7 @@ PKG_HASH:=2693a4c654dcfdafb3aa95c262051d8122afa1b6f5cef1920221ebbdee934d07
 PKG_MAINTAINER:=Marko Ratkaj <markoratkaj@gmail.com>
 PKG_LICENSE:=LGPL-2.1-or-later BSD-2-Clause GPL-2.0
 PKG_LICENSE_FILES:=COPYING LICENSE.GPL2 LICENSE.LGPL2.1
+PKG_CPE_ID:=cpe:/a:linuxcontainers:lxc
 PKG_BUILD_FLAGS:=no-mips16
 
 include $(INCLUDE_DIR)/package.mk
