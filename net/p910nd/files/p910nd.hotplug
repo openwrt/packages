@@ -281,8 +281,7 @@ get_and_store_printer_info() {
 		[ "$DEBUG" ] && echo ${MFG:+MFG=$MFG} ${MDL:+MDL=$MDL} ${CMD:+CMD=$CMD} ${CLS:+CLS=$CLS} ${DES:+DES=$DES} ${SN:+SN=$SN}
 
 		[ "$DEBUG" ] && echo 'uci set' for UCI_DEV_CFG_NUMBER: $UCI_DEV_CFG_NUMBER
-		# Take the USB info as fact: set bidir regardless. It seems to be a source of confusion.
-		eval "$uqsddu_cmd.bidirectional='$BIDIR'"
+		[ -z "$(eval "$uqgddu_cmd".bidirectional)" ] && eval "$uqsddu_cmd.bidirectional='$BIDIR'"
 		[ -z "$(eval "$uqgddu_cmd".port)" ] && eval "$uqsddu_cmd.port='0'"
 		[ -z "$(eval "$uqgddu_cmd".enabled)" ] && eval "$uqsddu_cmd.enabled='1'"
 		[ -z "$(eval "$uqgddu_cmd".usbvidpid)" ] && [ -n "$THIS_USB_VIDPID" ] && eval "$uqsddu_cmd.usbvidpid='$THIS_USB_VIDPID'"
