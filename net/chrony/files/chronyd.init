@@ -10,7 +10,7 @@ INCLUDEFILE=/var/etc/chrony.d/10-uci.conf
 RTCDEVICE=/dev/rtc0
 
 handle_source() {
-	local cfg=$1 sourcetype=$2 disabled hostname minpoll maxpoll iburst nts
+	local cfg=$1 sourcetype=$2 disabled hostname minpoll maxpoll maxsources iburst nts
 
 	config_get_bool disabled "$cfg" disabled 0
 	[ "$disabled" = "1" ] && return
@@ -19,12 +19,14 @@ handle_source() {
 	[ -z "$hostname" ] && return
 	config_get minpoll "$cfg" minpoll
 	config_get maxpoll "$cfg" maxpoll
+	config_get maxsources "$cfg" maxsources
 	config_get_bool iburst "$cfg" iburst 0
 	config_get_bool nts "$cfg" nts 0
 	echo $(
 		echo $sourcetype $hostname
 		[ -n "$minpoll" ] && echo minpoll $minpoll
 		[ -n "$maxpoll" ] && echo maxpoll $maxpoll
+		[ -n "$maxsources" ] && echo maxsources $maxsources
 		[ "$iburst" = "1" ] && echo iburst
 		[ "$nts" = "1" ] && echo nts
 	)
