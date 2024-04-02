@@ -56,10 +56,8 @@ start_instance() {
 		append_num "$cfg" port "port"
 		append_num "$cfg" udp_port_base "udp_port_base"
 		append_num "$cfg" udp_port_range "udp_port_range"
-		append_str "$cfg" statistics "statistics"
 		append_num "$cfg" drift "drift"
 		append_num "$cfg" resync_threshold "resync_threshold"
-		append_num "$cfg" log_verbosity "log_verbosity"
 		append_str "$cfg" ignore_volume_control "ignore_volume_control"
 		append_num "$cfg" volume_range_db "volume_range_db"
 		append_str "$cfg" regtype "regtype"
@@ -140,6 +138,17 @@ start_instance() {
 		printf "{\n"
 		append_num "$cfg" ao_latency_offset "audio_backend_latency_offset"
 		append_num "$cfg" ao_buffer_length "audio_backend_buffer_desired_length"
+		printf "};\n\n"
+
+		# Diagnostics
+		config_get log_verbosity "$cfg" log_verbosity
+		config_get statistics "$cfg" statistics
+
+		printf "diagnostics =\n"
+		printf "{\n"
+		append_str "$cfg" diagnostics_statistics "statistics" "${statistics}"
+		append_str "$cfg" diagnostics_log_output_to "log_output_to"
+		append_num "$cfg" diagnostics_log_verbosity "log_verbosity" "${log_verbosity}"
 		printf "};\n\n"
 	} > "$conf_file"
 
