@@ -37,6 +37,7 @@ init_yaml() {
 	local ipv4
 	local input_chain_name
 	local input6_chain_name
+	local retry_initial_connect
 
 	config_get update_frequency $section update_frequency '10s'
 	config_get log_level $section log_level 'info'
@@ -52,6 +53,7 @@ init_yaml() {
 	config_get_bool ipv4 $section ipv4 '1'
 	config_get input_chain_name $section input_chain_name "input"
 	config_get input6_chain_name $section input6_chain_name "input"
+	config_get_bool retry_initial_connect $section retry_initial_connect '1'
 
 	# Create tmp dir & permissions if needed
 	if [ ! -d "${VARCONFIGDIR}" ]; then
@@ -72,6 +74,7 @@ init_yaml() {
 	log_max_age: $log_max_age
 	api_url: $api_url
 	api_key: $api_key
+	retry_initial_connect: bool($retry_initial_connect)
 	insecure_skip_verify: true
 	disable_ipv6: boolnot($ipv6)
 	deny_action: $deny_action
