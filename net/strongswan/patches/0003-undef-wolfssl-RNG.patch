@@ -1,0 +1,39 @@
+commit 5226561a77efc94b53d708a855df267b11f53b83
+Author: Philip Prindeville <philipp@redfish-solutions.com>
+Date:   Wed Mar 27 17:41:18 2024 -0600
+
+    wolfssl: avoid RNG redefinition
+    
+    There are definitions of RNG in <wolfcrypt/settings.h> and
+    <wolfcrypt/random.h> that play havoc with the literal RNG being
+    used in the expansions of _PLUGIN_FEATURE_RNG() => __PLUGIN_FEATURE()
+    in <plugins/plugin_feature.h> when ##-concatenated to build the
+    enum FEATURE_RNG.
+    
+    <plugins/plugin_feature.h> must always be included before
+    <woldssl/ssl.h>, and RNG must be undefined before any plugins are
+    declared.
+    
+    Signed-off-by: Philip Prindeville <philipp@redfish-solutions.com>
+
+--- a/src/libstrongswan/plugins/wolfssl/wolfssl_common.h
++++ b/src/libstrongswan/plugins/wolfssl/wolfssl_common.h
+@@ -80,7 +80,4 @@ typedef union {
+ 
+ #undef PARSE_ERROR
+ 
+-/* Eliminate macro conflicts */
+-#undef RNG
+-
+ #endif /* WOLFSSL_PLUGIN_COMMON_H_ */
+--- a/src/libstrongswan/plugins/wolfssl/wolfssl_plugin.c
++++ b/src/libstrongswan/plugins/wolfssl/wolfssl_plugin.c
+@@ -47,6 +47,8 @@
+ 
+ #include <wolfssl/ssl.h>
+ 
++#undef RNG
++
+ #ifndef FIPS_MODE
+ #define FIPS_MODE 0
+ #endif
