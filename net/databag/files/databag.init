@@ -1,0 +1,24 @@
+#!/bin/sh /etc/rc.common
+ 
+USE_PROCD=1
+START=50
+STOP=51
+
+start_service() {
+	# load config
+	config_load databag
+	config_get store_path "config" "store_path" "/tmp/databag/store"
+	config_get service_port "config" "service_port" "7001"
+
+	# init store
+	mkdir -p "${store_path}"
+	cp -n "/usr/share/databag/databag.db" "${store_path}"
+
+	# setup serice
+	procd_open_instance 
+	procd_set_param command "/usr/bin/databag"
+	procd_append_param command -p "${service_port}"
+	procd_append_param command -s "${store_path}"
+	procd_append_param command -w "/usr/share/databag/web/build"
+	procd_close_instance
+}
