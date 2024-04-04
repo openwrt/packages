@@ -10,14 +10,14 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=libcurl-gnutls
 
 PKG_SOURCE_NAME:=curl
-PKG_VERSION:=8.6.0
-PKG_RELEASE:=2
+PKG_VERSION:=8.7.1
+PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_SOURCE_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/curl/curl/releases/download/curl-$(subst .,_,$(PKG_VERSION))/ \
 	https://dl.uxnr.de/mirror/curl/ \
 	https://curl.askapache.com/download/ \
 	https://curl.se/download/
-PKG_HASH:=3ccd55d91af9516539df80625f818c734dc6f2ecf9bada33c76765e99121db15
+PKG_HASH:=6fea2aac6a4610fbd0400afb0bcddbe7258a64c63f1f68e5855ebc0c659710cd
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=MIT
