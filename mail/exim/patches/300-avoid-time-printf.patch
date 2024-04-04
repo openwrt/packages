@@ -1,0 +1,11 @@
+--- a/src/transports/smtp.c
++++ b/src/transports/smtp.c
+@@ -938,7 +938,7 @@ if (  sx->early_pipe_active
+     if (!(er = dbfn_read_enforce_length(dbm_file, ehlo_resp_key, sizeof(dbdata_ehlo_resp))))
+       debug_printf("no ehlo-resp record!\n");
+     else
+-      debug_printf("ehlo-resp record is %d seconds old\n", time(NULL) - er->time_stamp);
++      debug_printf("ehlo-resp record is %.0f seconds old\n", difftime(time(NULL), er->time_stamp));
+     }
+ 
+   dbfn_delete(dbm_file, ehlo_resp_key);
