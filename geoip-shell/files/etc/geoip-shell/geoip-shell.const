@@ -1,0 +1,2 @@
+export PATH="/usr/sbin:/usr/bin:/sbin:/bin" initsys="procd" use_shell="/bin/sh"
+export _OWRT_install=1
