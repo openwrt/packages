@@ -1,16 +1,16 @@
 # SPDX-Identifier-License: GPL-3.0-or-later
 #
-# Copyright (C) 2022-2023 源 文雨 <fumiama@foxmail.com>
+# Copyright (C) 2022-2024 源 文雨 <fumiama@foxmail.com>
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=base16384
-PKG_VERSION:=2.2.5
+PKG_VERSION:=2.3.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/fumiama/base16384/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=f1a7d18f96ce06085911f224f61ce490e5e02c3b179667befef01adaaf7bc659
+PKG_HASH:=b3cda811eabd002cc16f5c0a3fdcac7bf4ffbdeb1447139e6fd21de4811e2f76
 
 PKG_MAINTAINER:=源 文雨 <fumiama@foxmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
