@@ -23,6 +23,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=gcc
 GCC_VERSION:=$(call qstrip,$(CONFIG_GCC_VERSION))
 PKG_VERSION:=$(firstword $(subst +, ,$(GCC_VERSION)))
+GCC_MAJOR_VERSION:=$(word 1,$(subst ., ,$(PKG_VERSION)))
 PKG_RELEASE:=5
 GCC_DIR:=$(PKG_NAME)-$(PKG_VERSION)
 
@@ -50,7 +51,7 @@ ifeq ($(PKG_VERSION),12.3.0)
 	PKG_HASH:=949a5d4f99e786421a93b532b22ffab5578de7321369975b91aec97adfda8c3b
 endif
 
-PATCH_DIR=./patches/$(GCC_VERSION)
+PATCH_DIR:=patches-$(GCC_MAJOR_VERSION).x
 
 include $(INCLUDE_DIR)/package.mk
 
