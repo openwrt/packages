@@ -53,6 +53,10 @@ define Package/libopenldap
   TITLE+= (libraries)
 endef
 
+define Package/libopenldap/config
+  source "$(SOURCE)/Config.in"
+endef
+
 define Package/openldap/config
   source "$(SOURCE)/Config.in"
 endef
