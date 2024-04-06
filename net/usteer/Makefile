@@ -9,7 +9,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=https://git.openwrt.org/project/usteer.git
-PKG_MIRROR_HASH:=b15e1c4ef3fe2322e481f4913d736500cee890cef5592bae106a4025004bd27e
+PKG_MIRROR_HASH:=8478c6551351eab53f3909da0bccc680b1e22e782e827f4d67bef25af3f824cd
 
 PKG_MAINTAINER:=David Bauer <mail@david-bauer.net>
 PKG_LICENSE:=GPL-2.0-only

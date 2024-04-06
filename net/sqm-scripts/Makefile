@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/tohojo/sqm-scripts
-PKG_MIRROR_HASH:=c79be093924e70c4e32c0da5c946c0b7a03a981ba7aa704db42a5e87ae06ee81
+PKG_MIRROR_HASH:=abe04270207177fb3ba4df103ffce3db4037d52d601ce1ce4e75206ad4b21377
 
 PKG_MAINTAINER:=Toke Høiland-Jørgensen <toke@toke.dk>
 PKG_LICENSE:=GPL-2.0-only
