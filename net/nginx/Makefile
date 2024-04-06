@@ -406,7 +406,6 @@ CONFIGURE_ARGS += \
 	--http-proxy-temp-path=/var/lib/nginx/proxy \
 	--http-fastcgi-temp-path=/var/lib/nginx/fastcgi \
 	--with-cc="$(TARGET_CC)" \
-	--with-cc-opt="$(TARGET_CPPFLAGS) $(TARGET_CFLAGS)" \
 	--with-ld-opt="$(TARGET_LDFLAGS)" \
 	--without-http_upstream_zone_module \
 	--with-compat \
