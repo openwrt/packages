@@ -10,11 +10,9 @@ Add input and output support for MIDI System Common and System Realtime operatio
  ttymidi-sysex.c | 194 ++++++++++++++++++++++++++++++++++++++++++++----
  1 file changed, 181 insertions(+), 13 deletions(-)
 
-diff --git a/ttymidi-sysex.c b/ttymidi-sysex.c
-index ceaeaa9..fc39f49 100644
 --- a/ttymidi-sysex.c
 +++ b/ttymidi-sysex.c
-@@ -338,18 +338,103 @@ void parse_midi_command(snd_seq_t* seq, int port_out_id, unsigned char *buf, int
+@@ -338,18 +338,103 @@ void parse_midi_command(snd_seq_t* seq,
  			break;
  
  		case 0xF0:  // *new*
@@ -129,7 +127,7 @@ index ceaeaa9..fc39f49 100644
  			}
  			break;
  
-@@ -464,6 +549,83 @@ void write_midi_action_to_serial_port(snd_seq_t* seq_handle)
+@@ -464,6 +549,83 @@ void write_midi_action_to_serial_port(sn
  				}
  				break;
  
@@ -213,7 +211,7 @@ index ceaeaa9..fc39f49 100644
  			default:
  				if (!arguments.silent) {  // *new*
  					printf("Alsa    %02X Unknown MIDI cmd   %02X %02X %02X\n", bytes[0]&0xF0, bytes[0]&0x0F, bytes[1], bytes[2]);  // *new*
-@@ -484,8 +646,10 @@ void write_midi_action_to_serial_port(snd_seq_t* seq_handle)
+@@ -484,8 +646,10 @@ void write_midi_action_to_serial_port(sn
  			if (bytes[0]!=0x00)
  			{
  				bytes[1] = (bytes[1] & 0x7F); // just to be sure that one bit is really zero
@@ -225,7 +223,7 @@ index ceaeaa9..fc39f49 100644
  				} else {
  					bytes[2] = (bytes[2] & 0x7F);
  					write(serial, bytes, 3);
-@@ -570,7 +734,11 @@ void* read_midi_from_serial_port(void* seq)
+@@ -570,7 +734,11 @@ void* read_midi_from_serial_port(void* s
  					break;
  				}
  				buf[0] = buf[i];
