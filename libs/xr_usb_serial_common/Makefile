@@ -8,7 +8,7 @@ PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/kasbert/epsolar-tracer
-PKG_MIRROR_HASH:=ca9e4f48a1a71e8d8e595ce8981a876d11a7d3d0f67b9e68c7825730f2f8756a
+PKG_MIRROR_HASH:=0907dfbcb18cc0b2ff3e2af79eb7943c5215ec176db994a89832aef606c98a1a
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-2.0-or-later
