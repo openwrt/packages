@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=base16384
-PKG_VERSION:=2.3.0
+PKG_VERSION:=2.3.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/fumiama/base16384/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=b3cda811eabd002cc16f5c0a3fdcac7bf4ffbdeb1447139e6fd21de4811e2f76
+PKG_HASH:=71ee39510c8c687254315ccc1aa5de601a5e2a2554b6db843f3874c12415a77a
 
 PKG_MAINTAINER:=源 文雨 <fumiama@foxmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
