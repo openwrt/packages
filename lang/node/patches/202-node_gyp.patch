@@ -1,10 +1,10 @@
 --- a/node.gyp
 +++ b/node.gyp
-@@ -1193,6 +1193,7 @@
+@@ -1197,6 +1197,7 @@
        'dependencies': [
          'deps/simdutf/simdutf.gyp:simdutf#host',
        ],
 +      'libraries!':[ '-licui18n', '-licuuc', '-licudata', '-lcrypto', '-lssl', '-lz', '-lhttp_parser', '-luv', '-lnghttp2', '-lcares' ],
        'include_dirs': [
-         'tools'
-       ],
+         'tools',
+         'src',
