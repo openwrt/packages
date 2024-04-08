@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -434,8 +434,7 @@ ACX_PTHREAD([
+@@ -439,8 +439,7 @@ ACX_PTHREAD([
               LIBS="$PTHREAD_LIBS $LIBS"
               CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
               CXXFLAGS="$CXXFLAGS $PTHREAD_CXXFLAGS"
