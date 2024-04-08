@@ -5,13 +5,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=graphicsmagick
-PKG_VERSION:=1.3.42
+PKG_VERSION:=1.3.43
 PKG_RELEASE:=1
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/GraphicsMagick-$(PKG_VERSION)
 PKG_SOURCE:=GraphicsMagick-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/graphicsmagick
-PKG_HASH:=484fccfd2b2faf6c2ba9151469ece5072bcb91ba4ed73e75ed3d8e46c759d557
+PKG_HASH:=2b88580732cd7e409d9e22c6116238bef4ae06fcda11451bf33d259f9cbf399f
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=Copyright.txt
@@ -31,7 +31,7 @@ define Package/graphicsmagick/Default
   SECTION:=multimedia
   CATEGORY:=Multimedia
   TITLE:=Graphics manipulation tools
-  URL:=https://www.graphicsmagick.org/
+  URL:=http://www.graphicsmagick.org/
   DEPENDS:=graphicsmagick
 endef
 
