@@ -1,6 +1,6 @@
 This package will add the so-called `pppossh` protocol support to OpenWrt.  The idea is mainly from [`pvpn` project](https://github.com/halhen/pvpn) (poor man's VPN over SSH).
 
-PPPoSSH is generally not considered a network setup for production use mainly due to the TCP-over-TCP styles of traffic transport, but it can be quite handy for personal use.  And with what's already in OpenWrt, it is really easy and takes little extra space to configure it up running.
+PPPoSSH is generally not considered a network setup for production use mainly due to the TCP-over-TCP styles of traffic transport, but it can be quite handy for personal use.  And with what's already in OpenWrt, it is really easy and takes little extra space to configure it up and running.
 
 ## Prerequisites and dependency.
 
@@ -32,6 +32,7 @@ The protocol name to use in `/etc/config/network` is `pppossh`.  Options are as 
 - `ipaddr`, local ip address to be assigned.
 - `peeraddr`, peer ip address to be assigned.
 - `ssh_options`, extra options for the ssh client.
+- `peer_pppd_options`, extra options for the pppd command run on the peer side.
 - `use_hostdep`, set it to `0` to disable the use of `proto_add_host_dependency`.  This is mainly for the case that the appropriate route to `server` is not registered to `netifd` and thus causing a incorrect route being setup.
 
 ## Tips
@@ -63,6 +64,6 @@ It's possible that pppd may output protocol negotiation incompatibilities issues
 
 To debug such problems, we can try adding `option pppd_optinos debug` to the interface config.  In the above case, it's a LCP CCP configure rej (the CCP options struct is exactly 6 octets in size as indicated in source code `pppd/ccp.h`) and since the internet fee is not charged on the bytes transferred, I will just use `noccp` to disable the negotiation altogether.
 
-Also to optimize bulk transfer performance, you can try tweaking the ciphers.  OpenSSH client does not support `none` cipher by default and you have to patch and install it for by yourself.  Another option is to try ciphers like `arcfour` and `blowfish-cbc`.  In my case, `arcfour` has the best throughput.
+Also to optimize bulk transfer performance, you can try tweaking the ciphers.  OpenSSH client does not support `none` cipher by default and you have to patch and install it by yourself.  Another option is to try ciphers like `arcfour` and `blowfish-cbc`.  In my case, `arcfour` has the best throughput.
 
 	option ssh_options '-o "Ciphers arcfour"'
