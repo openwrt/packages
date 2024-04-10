@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adblock-fast
 PKG_VERSION:=1.1.1
-PKG_RELEASE:=r7
+PKG_RELEASE:=r8
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.ca>
 PKG_LICENSE:=GPL-3.0-or-later
 
@@ -69,10 +69,11 @@ define Package/adblock-fast/prerm
 	#!/bin/sh
 	# check if we are on real system
 	if [ -z "$${IPKG_INSTROOT}" ]; then
-		echo "Stopping service and removing rc.d symlink for adblock-fast"
-		/etc/init.d/adblock-fast stop || true
-		/etc/init.d/adblock-fast killcache || true
-		/etc/init.d/adblock-fast disable || true
+		echo -n "Stopping adblock-fast service... "
+		{ /etc/init.d/adblock-fast stop && \
+		  /etc/init.d/adblock-fast killcache; } >/dev/null 2>&1 && echo "OK" || echo "FAIL"
+		echo -n "Removing rc.d symlink for adblock-fast... "
+		/etc/init.d/adblock-fast disable >/dev/null 2>&1 && echo "OK" || echo "FAIL"
 	fi
 	exit 0
 endef
