@@ -156,6 +156,7 @@ add_listener() {
     append_if "$1" tls_engine_kpass_sha1
     append_if "$1" tls_keyform
     append_if "$1" tls_version
+    append_if "$1" allow_anonymous
     append_optional_bool "$1" use_identity_as_username
     append_optional_bool "$1" use_subject_as_username
     append_if "$1" psk_hint
