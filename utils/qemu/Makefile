@@ -9,11 +9,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qemu
-PKG_VERSION:=8.2.0
+PKG_VERSION:=8.2.2
 PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=bf00d2fa12010df8b0ade93371def58e632cb32a6bfdc5f5a0ff8e6a1fb1bf32
-PKG_SOURCE_URL:=http://download.qemu.org/
+PKG_HASH:=847346c1b82c1a54b2c38f6edbd85549edeb17430b7d4d3da12620e2962bc4f3
+PKG_SOURCE_URL:=https://download.qemu.org/
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=LICENSE tcg/LICENSE
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
@@ -154,7 +154,7 @@ define Package/qemu-keymaps
   CATEGORY:=Utilities
   SUBMENU:=Virtualization
   TITLE:=QEMU reverse keymaps for use with -k argument
-  URL:=http://www.qemu.org
+  URL:=https://www.qemu.org
   DEPENDS:=$(QEMU_DEPS_IN_HOST)
 endef
 
