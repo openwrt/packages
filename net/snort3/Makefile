@@ -29,7 +29,7 @@ define Package/snort3
 	    +(TARGET_x86||TARGET_x86_64):hyperscan-runtime \
 	    +(TARGET_x86||TARGET_x86_64):gperftools-runtime \
 	    +libstdcpp +libdaq3 +libdnet +libopenssl +libpcap +libpcre +libpthread \
-	    +libuuid +zlib +libhwloc +libtirpc @HAS_LUAJIT_ARCH +luajit +libatomic \
+	    +libuuid +zlib +libhwloc +libtirpc +luajit +libatomic \
 	    +kmod-nft-queue +liblzma +ucode +ucode-mod-fs +ucode-mod-uci
   TITLE:=Lightweight Network Intrusion Detection System
   URL:=http://www.snort.org/
