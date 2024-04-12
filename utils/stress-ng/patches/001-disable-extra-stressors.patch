@@ -1,6 +1,6 @@
 --- a/Makefile.config
 +++ b/Makefile.config
-@@ -327,10 +327,10 @@ clean:
+@@ -351,10 +351,10 @@ clean:
  .PHONY: libraries
  libraries: \
  	configdir \
