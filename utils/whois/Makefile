@@ -1,14 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=whois
-PKG_VERSION:=5.5.21
+PKG_VERSION:=5.5.22
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://ftp.debian.org/debian/pool/main/w/whois
-PKG_HASH:=760ab584beae76acdcc89c6aec2e91cff571185bccc2bee8e4412a3f8e70be77
+PKG_HASH:=03f12c27ae85870d7bcd95b14f3fb8b174532b2f2a59d8380c42ae436d0630d7
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 PKG_BUILD_DEPENDS:=perl/host
 
 PKG_MAINTAINER:=Paul Spooren <mail@aparcar.org>
