@@ -1,0 +1,38 @@
+#!/bin/sh
+# shellcheck disable=SC3037,SC3043
+
+readonly pbrFunctionsFile='/etc/init.d/pbr'
+if [ -s "$pbrFunctionsFile" ]; then
+# shellcheck source=../../etc/init.d/pbr
+	. "$pbrFunctionsFile"
+else
+	printf "%b: pbr init.d file (%s) not found! \n" '\033[0;31mERROR\033[0m' "$pbrFunctionsFile"
+fi
+
+# shellcheck disable=SC2317
+pbr_iface_setup() {
+	local iface="${1}"
+	local proto
+	if is_supported_interface "${iface}"; then
+		output "Setting up ${packageName} routing tables for ${iface}... "
+		uci_set 'network' "${iface}" 'ip4table' "${ipTablePrefix}_${iface%6}"
+		uci_set 'network' "${iface}" 'ip6table' "${ipTablePrefix}_${iface%6}"
+		if ! grep -q -E -e "^[0-9]+\s+${ipTablePrefix}_${iface%6}$" "$rtTablesFile"; then
+			sed -i -e "\$a $(($(sort -r -n "$rtTablesFile" | grep -o -E -m 1 "^[0-9]+")+1))\t${ipTablePrefix}_${iface%6}" \
+				"$rtTablesFile"
+		fi
+		output_okbn
+	fi
+}
+
+sed -i "/${ipTablePrefix}_/d" "$rtTablesFile"
+sync
+config_load network
+config_foreach pbr_iface_setup interface
+uci_commit network
+sync
+output "Restarting network... "
+/etc/init.d/network restart
+output_okn
+
+exit 0
