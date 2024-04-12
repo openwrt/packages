@@ -58,7 +58,7 @@ start_service() {
 	local config_dir="${config_path%/*}"
 	[ -d "$config_dir" ] || mkdir -p "$config_dir"
 	touch "${config_path}"
-	chown rclone "${config_path}"
+	chown rclone "${config_path}" "${config_dir}"
 
 	[ -d "/lib/upgrade/keep.d" ] || mkdir -p "/lib/upgrade/keep.d/"
 	echo "$config_path" > "/lib/upgrade/keep.d/luci-app-rclone"
