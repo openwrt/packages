@@ -58,6 +58,7 @@ start_service() {
 	local config_dir="${config_path%/*}"
 	[ -d "$config_dir" ] || mkdir -p "$config_dir"
 	touch "${config_path}"
+	chown rclone "${config_dir}"
 	chown rclone "${config_path}"
 
 	[ -d "/lib/upgrade/keep.d" ] || mkdir -p "/lib/upgrade/keep.d/"
