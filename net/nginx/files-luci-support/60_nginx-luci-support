@@ -12,8 +12,8 @@ location /ubus {
 EOT
 	fi
 
-        if [ ! -f "/etc/nginx/module.d/luci.module" ]; then
-		cat <<EOT >> /etc/nginx/module.d/luci.module
+        if [ ! -f "/etc/nginx/module.d/ngx_http_ubus.module" ]; then
+		cat <<EOT > /etc/nginx/module.d/ngx_http_ubus.module
 load_module /usr/lib/nginx/modules/ngx_http_ubus_module.so;
 EOT
 	fi
