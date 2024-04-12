@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=snort3
-PKG_VERSION:=3.1.82.0
-PKG_RELEASE:=3
+PKG_VERSION:=3.1.84.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/snort3/snort3/archive/refs/tags/
-PKG_HASH:=64304315e1c172b80cb9fef8c27fa457357329ecf02ee27a6604a79fd6cfa10f
+PKG_HASH:=dca1707a66f6ca56ddd526163b2d951cefdb168bddc162c791adc74c0d226c7f
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>, John Audia <therealgraysky@proton.me>
 PKG_LICENSE:=GPL-2.0-only
@@ -43,11 +43,6 @@ define Package/snort3/description
   analysis and pattern matching in order to detect anomalies, misuse and
   attacks.
 endef
-
-# Hyperscan and gperftools only builds for x86
-ifdef CONFIG_TARGET_x86_64
-	CMAKE_OPTIONS += -DHS_INCLUDE_DIRS=$(STAGING_DIR)/usr/include/hs
-endif
 
 # Hyperscan and gperftools only builds for x86
 ifdef CONFIG_TARGET_x86_64

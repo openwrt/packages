@@ -12,9 +12,9 @@ src/network_inspectors/packet_capture/packet_capture.h:25:54: error: 'int16_t' d
 
 --- a/src/network_inspectors/packet_capture/packet_capture.h
 +++ b/src/network_inspectors/packet_capture/packet_capture.h
-@@ -21,6 +21,7 @@
- #define PACKET_CAPTURE_H
+@@ -22,6 +22,7 @@
  
+ #include <cstdint>
  #include <string>
 +#include <cstdint>
  
