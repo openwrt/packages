@@ -175,6 +175,7 @@ COLLECTD_PLUGINS_SELECTED:= \
 	mysql \
 	netlink \
 	network \
+	nftables \
 	nginx \
 	ntpd \
 	nut \
@@ -498,6 +499,7 @@ $(eval $(call BuildPlugin,modbus,read variables through libmodbus,modbus,+PACKAG
 $(eval $(call BuildPlugin,mqtt,transmit data with MQTT,mqtt,+PACKAGE_collectd-mod-mqtt:libmosquitto))
 $(eval $(call BuildPlugin,netlink,netlink input,netlink,+PACKAGE_collectd-mod-netlink:libmnl))
 $(eval $(call BuildPlugin,network,network input/output,network,+PACKAGE_COLLECTD_ENCRYPTED_NETWORK:libgcrypt))
+$(eval $(call BuildPlugin,nftables,nftables named counters,nftables,+PACKAGE_collectd-mod-nftables:libmnl))
 $(eval $(call BuildPlugin,nginx,nginx status input,nginx,+PACKAGE_collectd-mod-nginx:libcurl))
 $(eval $(call BuildPlugin,ntpd,NTP daemon status input,ntpd,))
 $(eval $(call BuildPlugin,nut,UPS monitoring input,nut,+PACKAGE_collectd-mod-nut:nut-common))
