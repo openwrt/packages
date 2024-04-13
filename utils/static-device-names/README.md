@@ -158,3 +158,13 @@ uci set static-device-names.globals.hotplug=0
 uci commit static-device-names
 ```
 
+## Debugging
+
+If you run into any issues, run the service's `debug` command to dump the
+configuration, device details and other useful information:
+
+```sh
+service static-device-names debug
+```
+
+Please provide the full output of this command when opening issues/tickets.

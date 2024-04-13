@@ -13,12 +13,6 @@ START=11
 NAME=static-device-names
 TRACE=${TRACE:-0}
 
-LOG() {
-  local level ; level=$1
-  [ "$level" = "debug" ] && [ "$TRACE" = 0 ] && return
-  logger -s -t "$NAME" -p "syslog.$level" -- "$@"
-}
-
 # don't run within buildroot
 [ -n "${IPKG_INSTROOT}" ] && return 0
 
@@ -27,6 +21,12 @@ LOG() {
 ###################
 
 N=$'\n'  # New line
+
+LOG() {
+  local level ; level=$1 ; shift
+  [ "$level" = "debug" ] && [ "$TRACE" = 0 ] && return
+  logger -s -t "$NAME" -p "syslog.$level" -- "$@"
+}
 
 target_devices=
 mac_to_device_mapping=
@@ -329,11 +329,11 @@ status() {
   for in_dev in $(list_devices) ; do
     dev=$(get_target_device_name "$in_dev")
     if [ -z "$dev" ] ; then
-      echo "WARN:  $(get_device_info_str "$in_dev") unknown"
+      LOG warning "$(get_device_info_str "$in_dev") unknown"
     elif [ "$in_dev" == "$dev" ] ; then
-      echo "INFO:  $(get_device_info_str "$in_dev")"
+      LOG info "$(get_device_info_str "$in_dev")"
     else
-      echo "ERROR: $(get_device_info_str "$in_dev") != $dev"
+      LOG error "$(get_device_info_str "$in_dev") != $dev"
     fi
   done
 }
@@ -345,4 +345,16 @@ hotplug() {
   local DEVICENAME ; DEVICENAME=$1
   # For now, just reload
   reload
+}
+
+extra_command "debug" "Service debug"
+
+debug() {
+  # Disable logging to syslog. Send all to stderr.
+  LOG() {
+    local level ; level=$1 ; shift
+    echo "$level: $*" >&2
+  }
+  LOG debug "/etc/config/static-device-names:$N~~~$N$(cat /etc/config/static-device-names)$N~~~"
+  status
 }
