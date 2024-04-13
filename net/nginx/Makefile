@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
-PKG_VERSION:=1.25.3
-PKG_RELEASE:=1
+PKG_VERSION:=1.25.4
+PKG_RELEASE:=2
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nginx.org/download/
-PKG_HASH:=64c5b975ca287939e828303fa857d22f142b251f17808dfe41733512d9cded86
+PKG_HASH:=760729901acbaa517996e681ee6ea259032985e37c2768beef80df3a877deed9
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de> \
 				Christian Marangi <ansuelsmth@gmail.com>
@@ -23,7 +23,7 @@ PKG_CPE_ID:=cpe:/a:nginx:nginx
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
-PKG_BUILD_FLAGS:=gc-sections
+PKG_BUILD_FLAGS:=gc-sections lto
 
 # 3rd-party modules
 PKG_MOD_EXTRA := \
@@ -406,7 +406,6 @@ CONFIGURE_ARGS += \
 	--http-proxy-temp-path=/var/lib/nginx/proxy \
 	--http-fastcgi-temp-path=/var/lib/nginx/fastcgi \
 	--with-cc="$(TARGET_CC)" \
-	--with-cc-opt="$(TARGET_CPPFLAGS) $(TARGET_CFLAGS)" \
 	--with-ld-opt="$(TARGET_LDFLAGS)" \
 	--without-http_upstream_zone_module \
 	--with-compat \

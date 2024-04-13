@@ -300,7 +300,9 @@ service_triggers() {
 	local wan wan6 i
 	local procd_trigger_wan6
 	if [ "$on_boot_trigger" = '1' ]; then
+		output "Setting $serviceName raw_trigger for 'interface.*.up'"
 		procd_add_raw_trigger "interface.*.up" 3000 "/etc/init.d/${packageName}" restart 'on_interface_up'
+		output_okn
 	else
 		config_load "$packageName"
 		config_get_bool procd_trigger_wan6 'config' 'procd_trigger_wan6' '0'

@@ -14,7 +14,7 @@ PKG_RELEASE:=2
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/nhorman/rng-tools
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_MIRROR_HASH:=745a465062065104e2222ffc1b1bb3e0ce14626d44ee2176cb2a5c3723e3163a
+PKG_MIRROR_HASH:=ed3b07062ab6d89ffd145a4df495534b9d529bebb64bc2c2e4dc266acdde181b
 
 PKG_MAINTAINER:=Nathaniel Wesley Filardo <nwfilardo@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later

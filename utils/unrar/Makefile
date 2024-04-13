@@ -6,12 +6,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unrar
-PKG_VERSION:=6.2.12
+PKG_VERSION:=7.0.7
 PKG_RELEASE:=1
 
 PKG_SOURCE:=unrarsrc-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.rarlab.com/rar
-PKG_HASH:=a008b5f949bca9bb4ffa1bebbfc8b3c14b89df10a10354809b845232d5f582e5
+PKG_HASH:=da95829c7e66fe461c06eb4bea8145e58d88d76909432d0875cd1ff86669f728
+
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)-$(BUILD_VARIANT)/unrar
 
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>, \

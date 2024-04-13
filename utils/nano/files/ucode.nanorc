@@ -43,7 +43,7 @@ color ,green "[[:space:]]+$"
 
 # Text outside template directives
 color slate start="[}%#]\}" end="\{[{%#]"
-color slate start="^#!" end="\{[{%#]"
+color slate start="^#!.*(\<utpl\>|[[:space:]]-[[:alnum:]]*T[[:alnum:]]*\>)" end="\{[{%#]"
 color slate "^([^{%#}]|\{[^{%#]|[%#}][^}])+\{[{%#]"
 
 # Template tags

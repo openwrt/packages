@@ -1,6 +1,6 @@
 --- a/Makefile
 +++ b/Makefile
-@@ -135,7 +135,7 @@ CFLAGS += -std=c11 -Wall -Wextra -Wshado
+@@ -152,7 +152,7 @@ CFLAGS += -std=c11 -Wall -Wextra -Wshado
  CFLAGS += $(CFLAGS_OPTIMIZATION)
  CFLAGS += $(CFLAGS_CURSES)
  

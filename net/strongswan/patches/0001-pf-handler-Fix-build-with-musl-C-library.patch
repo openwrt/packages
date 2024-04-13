@@ -1,0 +1,58 @@
+commit f5b1ca4ef60bc4fca91f0d1e852ef8447d23c99a
+Author: Tobias Brunner <tobias@strongswan.org>
+Date:   Fri Mar 22 09:57:07 2024 +0100
+
+    pf-handler: Fix build with musl C library
+    
+    musl's headers define a lot of networking structs.  For some, the
+    definition in the Linux UAPI headers is then suppressed by e.g.
+    __UAPI_DEF_ETHHDR.
+    
+    Since we included musl's net/ethernet.h, which includes netinet/if_ether.h
+    that defines `struct ethhdr` (and the above constant), **after** we
+    include linux/if_ether.h, there was a compilation error because the
+    struct was defined multiple times.
+    
+    However, simply moving that include doesn't fix the problem because for
+    ARP-specific structs the Linux headers don't provide __UAPI_DEF* checks.
+    So instead of directly including the linux/ headers, we include those
+    provided by the C library.  For glibc these usually just include the
+    Linux headers, but for musl this allows them to define the struct
+    directly.  We also need to move if.h and add packet.h, which define
+    other structs (or include headers that do so) that we use.
+    
+    Fixes: 187c72d1afdc ("dhcp: Port the plugin to FreeBSD/macOS")
+
+--- a/src/libcharon/network/pf_handler.c
++++ b/src/libcharon/network/pf_handler.c
+@@ -20,23 +20,23 @@
+ 
+ #include <library.h>
+ #include <unistd.h>
++#include <errno.h>
++#include <net/ethernet.h>
++#include <net/if.h>
++#include <sys/ioctl.h>
+ 
+ #if !defined(__APPLE__) && !defined(__FreeBSD__)
+-#include <linux/if_arp.h>
+-#include <linux/if_ether.h>
++#include <net/if_arp.h>
++#include <netinet/if_ether.h>
++#include <netpacket/packet.h>
+ #include <linux/filter.h>
+ #else
+ #include <fcntl.h>
+ #include <ifaddrs.h>
+ #include <net/bpf.h>
+-#include <net/if.h>
+ #include <net/if_dl.h>
+ #endif /* !defined(__APPLE__) && !defined(__FreeBSD__) */
+ 
+-#include <errno.h>
+-#include <net/ethernet.h>
+-#include <sys/ioctl.h>
+-
+ #if !defined(__APPLE__) && !defined(__FreeBSD__)
+ 
+ /**

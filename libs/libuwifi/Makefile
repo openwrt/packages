@@ -12,7 +12,7 @@ PKG_RELEASE:=2
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/br101/libuwifi.git
 PKG_SOURCE_VERSION:=0bfb8949c7a766555042f64be3d5ea9f8ed52690
-PKG_MIRROR_HASH:=79be6f8b603bc76bae983ebd007a203c6ebfa069efbb233aaf09ccdff502310d
+PKG_MIRROR_HASH:=dafa4c1c83e9b385599435794f5bd34f11b529945cfa5a2b17dbdcd808ae41ec
 
 PKG_MAINTAINER:=Bruno Randolf <br1@einfach.org>, Nick Hainke <vincent@systemli.org>
 PKG_LICENSE:=LGPL-3.0-only

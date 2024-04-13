@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pciutils
-PKG_VERSION:=3.10.0
+PKG_VERSION:=3.12.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/software/utils/pciutils
-PKG_HASH:=238a2e27166730e53a17fe07bfad229e07fa39b618117e5944b6d7eda9fbb0e9
+PKG_HASH:=f185d116d5ff99b797497efce8f19f1ee8ccc5a668b97a159e3d13472f674154
 
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENSE:=GPL-2.0

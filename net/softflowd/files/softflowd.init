@@ -44,6 +44,7 @@ start_instance() {
 	append_string "$section" 'tracking_level' '-T'
 	append_string "$section" 'sampling_rate' '-s'
 	append_bool "$section" track_ipv6 '-6'
+	append_bool "$section" bidirectional '-b'
 
 	procd_open_instance
 	procd_set_param command /usr/sbin/softflowd -d $args${pid_file:+ -p $pid_file} "$filter"

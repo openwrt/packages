@@ -9,12 +9,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ola
-PKG_VERSION:=0.10.8
-PKG_RELEASE:=4
+PKG_VERSION:=0.10.9
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/OpenLightingProject/ola/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=45bc101d1ddcc1c6320c063eb25a9345e5820a4233acfa5b29f2dfd99f7452e1
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_VERSION:=$(PKG_VERSION)
+PKG_SOURCE_URL:=https://github.com/OpenLightingProject/ola
+PKG_MIRROR_HASH:=55b9c82dec4133c3895a9af99a3245764ece14fc5b0a4e0841686903b1d6f365
 
 PKG_MAINTAINER:=Christian Beier <dontmind@freeshell.org>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -62,10 +63,8 @@ HOST_CONFIGURE_ARGS += \
 	--disable-examples \
 	--disable-unittests \
 	--disable-doxygen-html \
-	--disable-doxygen-doc
-
-HOST_LDFLAGS += -Wl,-rpath$(comma)$(STAGING_DIR_HOSTPKG)/lib
-TARGET_LDFLAGS += $(if $(CONFIG_USE_GLIBC),-lm)
+	--disable-doxygen-doc \
+	--with-protoc=$(STAGING_DIR_HOSTPKG)/bin/protoc
 
 # only build the ola_protoc thingy
 define Host/Compile

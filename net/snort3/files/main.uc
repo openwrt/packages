@@ -76,6 +76,10 @@ function config_item(type, values, def) {
 		wrn(`Invalid item type '${type}', must be one of "enum", "range", "path" or "str".`);
 		return;
 	}
+	if (type == "enum") {
+		// Convert values to strings, so 'in' works in 'contains'.
+		values = map(values, function(i) { return "" + i; });
+	}
 	if (type == "range" && (length(values) != 2 || values[0] > values[1])) {
 		wrn(`A 'range' type item must have exactly 2 values in ascending order.`);
 		return;

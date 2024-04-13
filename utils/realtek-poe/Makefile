@@ -10,7 +10,7 @@ PKG_MAINTAINER:=Martin Kennedy <hurricos@gmail.com>
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/Hurricos/realtek-poe.git
 PKG_SOURCE_VERSION:=39c93d39dd10da77b4fe48bc1d6bdd3c5978f866
-PKG_MIRROR_HASH:=ad9652dda8d77281e4724e0104552e18e521cedd4e24f56b0483cf6c5ee5ff69
+PKG_MIRROR_HASH:=eb10a6d204bd79ab5a2925f05a68a1a66e0b5402de5d304265858b87d3f7b027
 CMAKE_SOURCE_SUBDIR:=src
 
 include $(INCLUDE_DIR)/package.mk
