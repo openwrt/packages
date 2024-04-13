@@ -3,6 +3,9 @@
 # This script is part of the static-device-names package.
 # See /usr/share/doc/static-device-names
 #
+# Copyright (C) 2024 qualIP Software.
+# Released under the GPL v3.0 or later.
+#
 # Location: /etc/hotplug.d/net/00-00-static-device-names
 # Note: This file is prefixed with "00-00-" to be sorted before "00-syslog"
 

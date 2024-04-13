@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# Copyright (C) 2024 qualIP Software
-#
+# Copyright (C) 2024 qualIP Software.
+# Released under the GPL v3.0 or later.
 
 include $(TOPDIR)/rules.mk
 

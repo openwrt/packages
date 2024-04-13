@@ -1,5 +1,8 @@
 # static-device-names package for OpenWRT
 
+Copyright (C) 2024 qualIP Software.
+Released under the GPL v3.0 or later.
+
 Inspired in part by @bobafetthotmail's script published here:
 https://forum.openwrt.org/t/how-does-openwrt-ensure-network-device-names-are-consistent/90185/3
 
