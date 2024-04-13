@@ -9,11 +9,11 @@ to a different motherboard slot may device names to be assigned in a different
 order during boot.
 
 The static-device-names service matches network devices by a number of
-criteria, like their MAC address or PCI ID.
+criteria, like their MAC address, PCI ID, or PCI/USB slot.
 
-When it encounters a network device (e.g., "eth0") that matchs a criterion (a
-MAC address) it will rename the network device to match the target name
-(`eth20`).
+When it encounters a network device (e.g., "eth0") that matches a criterion
+(e.g., a MAC address) it will rename the network device to match the target
+name (`eth20`).
 
 If a different interface already occupies the same name it will be moved out of
 the way by being renamed in turn.
@@ -51,25 +51,59 @@ named "eth0":
    uci set static-device-names.WAN=device
    uci set static-device-names.WAN.name=eth0
 
-Here's how to assign a specific MAC address to the "WAN" device section:
+Here's how to assign a specific **MAC address** to the "WAN" device section:
 
    uci set static-device-names.WAN.mac=08:00:27:7a:4e:87
 
-Here's how to assign a PCI ID to the "WAN" device section:
+Matching based on MAC address is the preferred method since all Ethernet
+devices have a unique "burnt-in" MAC address (with the exception of virtual
+devices for which the MAC address is auto-generated or configurable).
+
+For advanced setups, you may want to match based on other criteria below.
+
+Here's how to assign **PCI ID** for a PCI or USB device:
 
    uci set static-device-names.WAN.pci_id=10ec:8125
+
+PCI IDs are in the industry-standard hexadecimal "\<vendor\>:\<device\>" form.
+
+Or, a **PCI slot**:
+
+   uci set static-device-names.WAN.pci_slot=07:00.0
+
+PCI slots are assigned by the Linux kernel and are generally in the
+"\<bus\>:\<device\>.\<func\>" form.
+
+Or, a **USB slot**:
+
+   uci set static-device-names.WAN.usb_slot=9-1:1.0
+
+USB slots are assigned by the Linux kernel and are generally in the
+"\<bus\>-\<port\>:\<port\>.\<if\>" form.
 
 Don't forget to commit the configuration changes:
 
    uci commit static-commit-names
 
-Both `mac` and `pci_id` options can be lists. This can be useful if
-configurations are staged or tested on a virtual machine or meant to be used on
-multiple devices:
+Any of `mac`, `pci_id`, `pci_slot`, and `usb_slot` options can be lists.
+This can be useful if configurations are staged or tested on a virtual machine
+or meant to be used on multiple devices:
 
    uci add_list static-device-names.WAN.mac=08:00:27:7a:4e:87
    uci add_list static-device-names.WAN.mac=08:00:28:8a:5e:88
    uci commit static-commit-names
+
+> [!TIP]
+> To determine the criteria that match your inserted devices, run the service's
+> status command:
+>
+> ```
+> /etc/init.d/static-device-names status
+> INFO:  eth0 (mac=00:1b:21:xx:yy:zz pci_id=8086:a01f pci_slot=07:00.0)
+> INFO:  eth1 (mac=48:22:54:xx:yy:zz pci_id=10ec:8125 pci_slot=05:00.0)
+> INFO:  eth2 (mac=bc:ae:c5:xx:yy:zz pci_id=1043:820d pci_slot=09:01.0)
+> INFO:  wlan0 (mac=00:1d:0f:xx:yy:zz pci_id=0cf3:9170 usb_slot=9-1:1.0)
+> ```
 
 ## Service
 
@@ -95,7 +129,7 @@ To rename device names, start/restart/reload the service:
 service static-device-names reload
 ```
 
-To see the current status of network devices:
+To see the current status of network devices without making any changes:
 
 ```sh
 service static-device-names status

@@ -24,7 +24,7 @@ endef
 
 define Package/static-device-names/description
   This package contains a utility to automatically rename device names based on
-  predetermined rules such as MAC addresses or PCI IDs.
+  predetermined rules such as MAC addresses or PCI IDs and PCI/USB slots.
 endef
 
 define Package/static-device-names/conffiles
