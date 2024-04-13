@@ -25,9 +25,10 @@ PKG_LICENSE:=BSD-2-Clause GPL-2.0-or-later
 PKG_LICENSE_FILES:=LICENSE cli/COPYING
 PKG_MAINTAINER:=Julien Malik <julien.malik@paraiso.me>
 
-PKG_INSTALL:=1
+CMAKE_SOURCE_SUBDIR:=cmake_unofficial
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/xxhash/Default
   TITLE:=Extremely fast hash algorithm
@@ -73,7 +74,7 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/*.h $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libxxhash.{a,so*} $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libxxhash.so* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libxxhash.pc $(1)/usr/lib/pkgconfig/
 endef
