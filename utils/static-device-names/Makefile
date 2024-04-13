@@ -38,7 +38,7 @@ define Package/static-device-names/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/static-device-names.init $(1)/etc/init.d/static-device-names
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/net
-	$(INSTALL_BIN) ./files/static-device-names.hotplug $(1)/etc/hotplug.d/net/static-device-names
+	$(INSTALL_BIN) ./files/static-device-names.hotplug $(1)/etc/hotplug.d/net/00-00-static-device-names
 	$(INSTALL_DIR) $(1)/usr/share/doc/static-device-names
 	$(INSTALL_DATA) ./README.md $(1)/usr/share/doc/static-device-names/
 endef

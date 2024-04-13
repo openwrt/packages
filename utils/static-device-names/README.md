@@ -108,7 +108,7 @@ service static-device-names status
 
 Hotplug script:
 
-	/etc/hotplug.d/net/static-device-names
+	/etc/hotplug.d/net/00-00-static-device-names
 
 To enable hotplug support:
 

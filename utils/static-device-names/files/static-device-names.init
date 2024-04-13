@@ -2,6 +2,12 @@
 
 # This script is part of the static-device-names package.
 # See /usr/share/doc/static-device-names
+#
+# Location: /etc/init.d/static-device-names
+#
+# For debugging purposes, run:
+#
+#     TRACE=1 /etc/init.d/static-device-names status
 
 START=11
 NAME=static-device-names
@@ -256,4 +262,13 @@ status() {
       echo "ERROR: $(get_device_info_str "$in_dev") != $dev"
     fi
   done
+}
+
+# hotplug command called by /etc/hotplug.d/net/static-device-names
+extra_command "hotplug" "Service hotplug"
+
+hotplug() {
+  local DEVICENAME ; DEVICENAME=$1
+  # For now, just reload
+  reload
 }
