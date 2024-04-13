@@ -184,7 +184,7 @@ pbr_find_iface() {
 	esac
 	eval "$1"='${iface}'
 }
-pbr_get_gateway() {
+pbr_get_gateway4() {
 	local iface="$2" dev="$3" gw
 	network_get_gateway gw "$iface" true
 	if [ -z "$gw" ] || [ "$gw" = '0.0.0.0' ]; then
@@ -608,6 +608,7 @@ load_network() {
 	_build_ifaces_supported() { is_supported_interface "$1" && ! str_contains "$ifacesSupported" "$1" && ifacesSupported="${ifacesSupported}${1} "; }
 	_find_firewall_wan_zone() { [ "$(uci_get 'firewall' "$1" 'name')" = "wan" ] && firewallWanZone="$1"; }
 	local i param="$1"
+	local dev4 dev6
 	if [ -z "$ifacesSupported" ]; then
 		config_load 'firewall'
 		config_foreach _find_firewall_wan_zone 'zone'
@@ -618,11 +619,16 @@ load_network() {
 		config_foreach _build_ifaces_supported 'interface'
 	fi
 	wanIface4="$procd_wan_interface"
-	[ -z "$wanGW4" ] && network_get_gateway wanGW4 "$wanIface4"
+	network_get_device dev4 "$wanIface4"
+	[ -z "$dev4" ] && network_get_physdev dev4 "$wanIface4"
+	[ -z "$wanGW4" ] && pbr_get_gateway4 wanGW4 "$wanIface4" "$dev4"
 	if [ -n "$ipv6_enabled" ]; then
 		wanIface6="$procd_wan6_interface"
-		[ -z "$wanGW6" ] && network_get_gateway6 wanGW6 "$wanIface6"
+		network_get_device dev6 "$wanIface6"
+		[ -z "$dev6" ] && network_get_physdev dev6 "$wanIface6"
+		[ -z "$wanGW6" ] && pbr_get_gateway6 wanGW6 "$wanIface6" "$dev6"
 	fi
+
 	case "$param" in
 		on_boot|on_start)
 			[ -n "$wanIface4" ] && output 2 "Using wan interface (${param}): $wanIface4 \\n"
@@ -2001,7 +2007,7 @@ interface_routing() {
 		create)
 			if is_netifd_table_interface "$iface"; then
 				ipv4_error=0
-				$ip_bin rule del table "$tid" >/dev/null 2>&1
+				$ip_bin -4 rule del table "$tid" >/dev/null 2>&1
 				try "$ip_bin" -4 rule add fwmark "${mark}/${fw_mask}" table "$tid" priority "$priority" || ipv4_error=1
 				if is_nft_mode; then
 					try nft add chain inet "$nftTable" "${nftPrefix}_mark_${mark}" || ipv4_error=1 
@@ -2014,7 +2020,8 @@ interface_routing() {
 				fi
 				if [ -n "$ipv6_enabled" ]; then
 					ipv6_error=0
-					try "$ip_bin" -6 rule add fwmark "${mark}/${fw_mask}" table "$tid" priority "$priority" || ipv6_error=1
+					$ip_bin -6 rule del table "$tid" >/dev/null 2>&1
+					try "$ip_bin" -6 rule add fwmark "${mark}/${fw_mask}" table "$tid" priority "$((priority-1))" || ipv6_error=1
 				fi
 			else
 				if ! grep -q "$tid ${ipTablePrefix}_${iface}" "$rtTablesFile"; then
@@ -2023,8 +2030,8 @@ interface_routing() {
 					echo "$tid ${ipTablePrefix}_${iface}" >> "$rtTablesFile"
 					sync
 				fi
-				$ip_bin rule del table "$tid" >/dev/null 2>&1
-				$ip_bin route flush table "$tid" >/dev/null 2>&1
+				$ip_bin -4 rule del table "$tid" >/dev/null 2>&1
+				$ip_bin -4 route flush table "$tid" >/dev/null 2>&1
 				if [ -n "$gw4" ] || [ "$strict_enforcement" -ne 0 ]; then
 					ipv4_error=0
 					if [ -z "$gw4" ]; then
@@ -2056,11 +2063,13 @@ EOF
 				fi
 				if [ -n "$ipv6_enabled" ]; then
 					ipv6_error=0
+					$ip_bin -6 rule del table "$tid" >/dev/null 2>&1
+					$ip_bin -6 route flush table "$tid" >/dev/null 2>&1
 					if { [ -n "$gw6" ] && [ "$gw6" != "::/0" ]; } || [ "$strict_enforcement" -ne 0 ]; then
 						if [ -z "$gw6" ] || [ "$gw6" = "::/0" ]; then
 							try "$ip_bin" -6 route add unreachable default table "$tid" >/dev/null 2>&1 || ipv6_error=1
-						elif try "$ip_bin" -6 route list table main | grep -q " dev $dev6 "; then
-							try "$ip_bin" -6 route add default via "$gw6" dev "$dev6" table "$tid" >/dev/null 2>&1 || ipv6_error=1
+						elif "$ip_bin" -6 route list table main | grep -q " dev $dev6 "; then
+							"$ip_bin" -6 route add default via "$gw6" dev "$dev6" table "$tid" >/dev/null 2>&1 || ipv6_error=1
 							while read -r i; do
 								i="$(echo "$i" | sed 's/ linkdown$//')"
 								i="$(echo "$i" | sed 's/ onlink$//')"
@@ -2074,7 +2083,7 @@ EOF
 							try "$ip_bin" -6 route add default dev "$dev6" table "$tid" >/dev/null 2>&1 || ipv6_error=1
 						fi
 					fi
-					try "$ip_bin" -6 rule add fwmark "${mark}/${fw_mask}" table "$tid" priority "$priority" >/dev/null 2>&1 || ipv6_error=1
+					try "$ip_bin" -6 rule add fwmark "${mark}/${fw_mask}" table "$tid" priority "$((priority-1))" >/dev/null 2>&1 || ipv6_error=1
 				fi
 			fi
 			if [ "$ipv4_error" -eq 0 ] || [ "$ipv6_error" -eq 0 ]; then
@@ -2253,7 +2262,7 @@ interface_process() {
 			[ -z "$ifaceTableID" ] && ifaceTableID="$(get_rt_tables_next_id)"
 			eval "mark_${iface//-/_}"='$ifaceMark'
 			eval "tid_${iface//-/_}"='$ifaceTableID'
-			pbr_get_gateway gw4 "$iface" "$dev"
+			pbr_get_gateway4 gw4 "$iface" "$dev"
 			pbr_get_gateway6 gw6 "$iface" "$dev6"
 			dispGw4="${gw4:-0.0.0.0}"
 			dispGw6="${gw6:-::/0}"
@@ -2277,7 +2286,7 @@ interface_process() {
 			[ -z "$ifaceTableID" ] && ifaceTableID="$(get_rt_tables_next_id)"
 			eval "mark_${iface//-/_}"='$ifaceMark'
 			eval "tid_${iface//-/_}"='$ifaceTableID'
-			pbr_get_gateway gw4 "$iface" "$dev"
+			pbr_get_gateway4 gw4 "$iface" "$dev"
 			pbr_get_gateway6 gw6 "$iface" "$dev6"
 			dispGw4="${gw4:-0.0.0.0}"
 			dispGw6="${gw6:-::/0}"
@@ -2293,7 +2302,7 @@ interface_process() {
 			[ -z "$ifaceTableID" ] && ifaceTableID="$(get_rt_tables_next_id)"
 			eval "mark_${iface//-/_}"='$ifaceMark'
 			eval "tid_${iface//-/_}"='$ifaceTableID'
-			pbr_get_gateway gw4 "$iface" "$dev"
+			pbr_get_gateway4 gw4 "$iface" "$dev"
 			pbr_get_gateway6 gw6 "$iface" "$dev6"
 			dispGw4="${gw4:-0.0.0.0}"
 			dispGw6="${gw6:-::/0}"
@@ -2312,7 +2321,7 @@ interface_process() {
 			[ -z "$ifaceTableID" ] && ifaceTableID="$(get_rt_tables_next_id)"
 			eval "mark_${iface//-/_}"='$ifaceMark'
 			eval "tid_${iface//-/_}"='$ifaceTableID'
-			pbr_get_gateway gw4 "$iface" "$dev"
+			pbr_get_gateway4 gw4 "$iface" "$dev"
 			pbr_get_gateway6 gw6 "$iface" "$dev6"
 			dispGw4="${gw4:-0.0.0.0}"
 			dispGw6="${gw6:-::/0}"
@@ -2328,7 +2337,7 @@ interface_process() {
 			[ -z "$ifaceTableID" ] && ifaceTableID="$(get_rt_tables_next_id)"
 			eval "mark_${iface//-/_}"='$ifaceMark'
 			eval "tid_${iface//-/_}"='$ifaceTableID'
-			pbr_get_gateway gw4 "$iface" "$dev"
+			pbr_get_gateway4 gw4 "$iface" "$dev"
 			pbr_get_gateway6 gw6 "$iface" "$dev6"
 			dispGw4="${gw4:-0.0.0.0}"
 			dispGw6="${gw6:-::/0}"
@@ -2354,7 +2363,7 @@ interface_process() {
 	esac
 #	ifaceTableID="$((ifaceTableID + 1))"
 	ifaceMark="$(printf '0x%06x' $((ifaceMark + wan_mark)))"
-	ifacePriority="$((ifacePriority - 1))"
+	ifacePriority="$((ifacePriority - 2))"
 	return $s
 }
 
