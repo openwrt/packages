@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=erlang
-PKG_VERSION:=26.2.3
+PKG_VERSION:=26.2.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=otp_src_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/erlang/otp/releases/download/OTP-$(PKG_VERSION)
-PKG_HASH:=2c4e61b24fb1c131d9f30cfe2415320899180debdb71fb59195c72bd9a4ab625
+PKG_HASH:=b51ad69f57e2956dff4c893bcb09ad68fee23a7f8f6bba7d58449516b696de95
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE.txt
@@ -46,7 +46,7 @@ endef
 define Package/erlang
 $(call Package/erlang/Default)
   DEPENDS+= +libncurses +librt +zlib +libstdcpp
-  PROVIDES:= erlang-erts=14.2.3 erlang-kernel=9.2.2 erlang-sasl=4.2.1 erlang-stdlib=5.2.1
+  PROVIDES:= erlang-erts=14.2.4 erlang-kernel=9.2.3 erlang-sasl=4.2.1 erlang-stdlib=5.2.2
 endef
 
 define Package/erlang/description
@@ -60,7 +60,7 @@ endef
 define Package/erlang-asn1
 $(call Package/erlang/Default)
   TITLE:=Abstract Syntax Notation One (ASN.1) support
-  VERSION:=5.2.1
+  VERSION:=5.2.2
   DEPENDS+= +erlang +erlang-syntax-tools
 endef
 
@@ -75,7 +75,7 @@ endef
 define Package/erlang-compiler
 $(call Package/erlang/Default)
   TITLE:=Byte code compiler
-  VERSION:=8.4.2
+  VERSION:=8.4.3
   DEPENDS+= +erlang
 endef
 
@@ -90,7 +90,7 @@ endef
 define Package/erlang-crypto
 $(call Package/erlang/Default)
   TITLE:=Cryptography support
-  VERSION:=5.4.1
+  VERSION:=5.4.2
   DEPENDS+= +erlang +libopenssl
 endef
 
@@ -183,7 +183,7 @@ endef
 define Package/erlang-ssh
 $(call Package/erlang/Default)
   TITLE:=Secure Shell (SSH) support
-  VERSION:=5.1.3
+  VERSION:=5.1.4
   DEPENDS+= +erlang +erlang-crypto
 endef
 
@@ -198,7 +198,7 @@ endef
 define Package/erlang-ssl
 $(call Package/erlang/Default)
   TITLE:=Secure Sockets Layer (SSL) support
-  VERSION:=11.1.2
+  VERSION:=11.1.3
   DEPENDS+= +erlang +erlang-crypto
 endef
 
