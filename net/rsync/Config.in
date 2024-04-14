@@ -17,4 +17,14 @@ if PACKAGE_rsync
 		prompt "Enable zstd stream compression"
 		default n
 
+	config RSYNC_lz4
+		bool
+		prompt "Enable lz4, extremely fast compression"
+		default n
+
+	config RSYNC_xxhash
+		bool
+		prompt "Enable xxhash, extremely fast hash"
+		default n
+
 endif
