@@ -1,0 +1,91 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Hauke Mehrtens <hauke@hauke-m.de>
+Date: Sun, 14 Apr 2024 16:06:15 +0200
+Subject: Support POSIX basename() from musl libc
+
+Musl libc 1.2.5 removed the definition of the basename() function from
+string.h and only provides it in libgen.h as the POSIX standard
+defines it.
+
+This change fixes compilation with musl libc 1.2.5.
+````
+build_dir/target-mips_24kc_musl/rtty-mbedtls/rtty-8.1.1/src/file.c:156:24: error: implicit declaration of function 'basename' [-Werror=implicit-function-declaration]
+  156 |     const char *name = basename(path);
+      |                        ^~~~~~~~
+````
+
+basename() modifies the input string, copy it first with strdup(), If
+strdup() returns NULL the code will handle it.
+
+Signed-off-by: Hauke Mehrtens <hauke@hauke-m.de>
+---
+ src/file.c    | 8 +++++++-
+ src/filectl.c | 6 +++++-
+ 2 files changed, 12 insertions(+), 2 deletions(-)
+
+--- a/src/file.c
++++ b/src/file.c
+@@ -29,6 +29,7 @@
+ #include <unistd.h>
+ #include <mntent.h>
+ #include <inttypes.h>
++#include <libgen.h>
+ #include <sys/statvfs.h>
+ #include <linux/limits.h>
+ #include <sys/sysinfo.h>
+@@ -153,13 +154,17 @@ static int start_upload_file(struct file
+ {
+     struct tty *tty = container_of(ctx, struct tty, file);
+     struct rtty *rtty = tty->rtty;
+-    const char *name = basename(path);
++    const char *name;
+     struct stat st;
+     int fd;
++    char *dirc;
+ 
++    dirc = strdup(path);
++    name = basename(dirc);
+     fd = open(path, O_RDONLY);
+     if (fd < 0) {
+         log_err("open '%s' fail: %s\n", path, strerror(errno));
++        free(dirc);
+         return -1;
+     }
+ 
+@@ -177,6 +182,7 @@ static int start_upload_file(struct file
+     ctx->remain_size = st.st_size;
+ 
+     log_info("upload file: %s, size: %" PRIu64 "\n", path, (uint64_t)st.st_size);
++    free(dirc);
+ 
+     return 0;
+ }
+--- a/src/filectl.c
++++ b/src/filectl.c
+@@ -30,6 +30,7 @@
+ #include <errno.h>
+ #include <stdio.h>
+ #include <fcntl.h>
++#include <libgen.h>
+ 
+ #include "utils.h"
+ #include "file.h"
+@@ -75,6 +76,7 @@ static void handle_file_control_msg(int
+ {
+     struct file_control_msg msg;
+     struct buffer b = {};
++    char *dirc;
+ 
+     while (true) {
+         if (buffer_put_fd(&b, fd, -1, NULL) < 0)
+@@ -90,7 +92,9 @@ static void handle_file_control_msg(int
+             if (sfd > -1) {
+                 close(sfd);
+                 gettimeofday(&start_time, NULL);
+-                printf("Transferring '%s'...Press Ctrl+C to cancel\n", basename(path));
++                dirc = strdup(path);
++                printf("Transferring '%s'...Press Ctrl+C to cancel\n", basename(dirc));
++                free(dirc);
+ 
+                 if (total_size == 0) {
+                     printf("  100%%    0 B     0s\n");
