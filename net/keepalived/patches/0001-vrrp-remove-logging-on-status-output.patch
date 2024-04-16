@@ -1,0 +1,24 @@
+From 6cce75f4eb65551a61d2e4ba775637b288c1d592 Mon Sep 17 00:00:00 2001
+From: Florian Eckert <fe@dev.tdt.de>
+Date: Mon, 6 May 2024 13:10:55 +0200
+Subject: [PATCH] vrrp: remove logging on status output
+
+A message is output to the log each time the status is queried. This is
+not necessary and can therefore be omitted.
+
+Signed-off-by: Florian Eckert <fe@dev.tdt.de>
+---
+ keepalived/vrrp/vrrp_daemon.c | 2 --
+ 1 file changed, 2 deletions(-)
+
+--- a/keepalived/vrrp/vrrp_daemon.c
++++ b/keepalived/vrrp/vrrp_daemon.c
+@@ -755,8 +755,6 @@ sigusr2_vrrp(__attribute__((unused)) voi
+ static void
+ sigjson_vrrp(__attribute__((unused)) void *v, __attribute__((unused)) int sig)
+ {
+-	log_message(LOG_INFO, "Printing VRRP as json for process(%d) on signal",
+-		getpid());
+ 	thread_add_event(master, print_vrrp_json, NULL, 0);
+ }
+ #endif
