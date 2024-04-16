@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=modemmanager
 PKG_VERSION:=1.22.0
-PKG_RELEASE:=16
+PKG_RELEASE:=17
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://gitlab.freedesktop.org/mobile-broadband/ModemManager.git
@@ -43,6 +43,7 @@ define Package/modemmanager
 	+glib2 \
 	+dbus \
 	+ppp \
+	+lua-cjson \
 	+MODEMMANAGER_WITH_MBIM:libmbim \
 	+MODEMMANAGER_WITH_QMI:libqmi \
 	+MODEMMANAGER_WITH_QRTR:libqrtr-glib
@@ -94,6 +95,10 @@ define Package/modemmanager/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/ModemManager $(1)/usr/sbin
 	$(INSTALL_BIN) ./files/usr/sbin/ModemManager-wrapper $(1)/usr/sbin
 	$(INSTALL_BIN) ./files/usr/sbin/ModemManager-monitor $(1)/usr/sbin
+
+	$(INSTALL_DIR) $(1)/usr/libexec/rpcd
+	$(INSTALL_BIN) ./files/usr/libexec/rpcd/modemmanager \
+		$(1)/usr/libexec/rpcd/
 
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mmcli $(1)/usr/bin
