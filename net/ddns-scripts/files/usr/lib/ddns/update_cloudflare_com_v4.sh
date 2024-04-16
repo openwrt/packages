@@ -42,10 +42,13 @@ __DOMAIN=$(printf %s "$domain" | cut -d@ -f2)
 # __HOST   = the FQDN of record to modify
 # i.e. example.com for the "domain record" or host.sub.example.com for "host record"
 
+if [ -z "$__HOST" ]; then
 # handling domain record then set __HOST = __DOMAIN
-[ -z "$__HOST" ] && __HOST=$__DOMAIN
+	__HOST=$__DOMAIN
+else
 # handling host record then rebuild fqdn host@domain.tld => host.domain.tld
-[ "$__HOST" != "$__DOMAIN" ] && __HOST="${__HOST}.${__DOMAIN}"
+	__HOST="${__HOST}.${__DOMAIN}"
+fi
 
 # set record type
 [ $use_ipv6 -eq 0 ] && __TYPE="A" || __TYPE="AAAA"
