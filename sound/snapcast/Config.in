@@ -1,0 +1,15 @@
+menu "Select Snapcast Options"
+	depends on PACKAGE_snapcast
+	comment "Choose server or client"
+	config PACKAGE_snapserver
+		prompt "Snapserver"
+		help
+			Snapcast server
+		default n
+
+	config PACKAGE_snapclient
+		prompt "Snapclient"
+		help
+			Snapcast client
+		default y
+endmenu
