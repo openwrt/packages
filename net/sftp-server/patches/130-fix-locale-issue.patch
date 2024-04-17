@@ -1,0 +1,21 @@
+From 5b944c94527555457ee76815351d50a662892929 Mon Sep 17 00:00:00 2001
+From: Andy Pan <andy0130tw@yahoo.com.tw>
+Date: Mon, 13 Nov 2023 01:13:35 +0800
+Subject: [PATCH] Do not print char >= 0x7f even if isprint returns nonzero
+
+... which is seemingly caused by `setlocale(LC_CTYPE, "");`
+---
+ debug.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/debug.c
++++ b/debug.c
+@@ -75,7 +75,7 @@ void sftp_debug_hexdump(const void *ptr,
+     output += 2;
+     for(j = 0; j < 16; ++j)
+       if(i + j < n)
+-        *output++ = isprint(p[i + j]) ? p[i + j] : '.';
++        *output++ = (isprint(p[i + j]) && p[i + j] < 0x7f) ? p[i + j] : '.';
+     *output++ = '\n';
+     *output = 0;
+     fputs(buffer, debugfp);

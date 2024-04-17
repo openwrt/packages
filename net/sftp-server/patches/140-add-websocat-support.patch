@@ -1,0 +1,127 @@
+From 1c589910e6726bfc2d01ec01092ae744174f7219 Mon Sep 17 00:00:00 2001
+From: Andy Pan <andy0130tw@yahoo.com.tw>
+Date: Thu, 16 Nov 2023 03:25:04 +0800
+Subject: [PATCH] Add an option --websocat in SFTP server
+
+---
+ configure.ac |  2 +-
+ send.c       |  8 ++++++++
+ sftpclient.c |  3 +++
+ sftpserver.c | 19 +++++++++++++++++++
+ sftpserver.h |  7 +++++++
+ 5 files changed, 38 insertions(+), 1 deletion(-)
+
+--- a/configure.ac
++++ b/configure.ac
+@@ -41,7 +41,7 @@ AC_CHECK_LIB([socket],[socket])
+ AC_CHECK_LIB([readline],[readline],
+              [AC_SUBST([LIBREADLINE],[-lreadline])
+               AC_DEFINE([HAVE_READLINE],[1],[define if you have a readline library])])
+-AC_CHECK_LIB([readline],[rl_copy_text])
++AC_CHECK_LIB([readline],[rl_copy_text],[true])
+ RJK_ICONV
+ AC_DEFINE([_GNU_SOURCE], [1], [required for e.g. strsignal])
+ AC_C_INLINE
+--- a/send.c
++++ b/send.c
+@@ -93,6 +93,14 @@ void sftp_send_end(struct worker *w) {
+     D(("%s:", sendtype));
+     sftp_debug_hexdump(w->buffer + 4, w->bufused - 4);
+   }
++
++  if (websocat_compatible) {
++    uint32_t buf_prefix = htonl(w->bufused);
++    if ((n = write(sftpout, &buf_prefix, 4)) != 4) {
++      sftp_fatal("error sending response prefix: %s", strerror(errno));
++    }
++  }
++
+   /* Write the whole buffer, coping with short writes */
+   written = 0;
+   while((size_t)written < w->bufused)
+--- a/sftpclient.c
++++ b/sftpclient.c
+@@ -132,6 +132,9 @@ static int forceversion;
+ 
+ static char *sftp_realpath(const char *path);
+ 
++/* used in server; unused in client. */
++int websocat_compatible;
++
+ enum {
+   OPT_QUIRK_REVERSE_SYMLINK = 256,
+   OPT_STOP_ON_ERROR,
+--- a/sftpserver.c
++++ b/sftpserver.c
+@@ -82,8 +82,14 @@ static const struct queuedetails workque
+ const struct sftpprotocol *protocol = &sftp_preinit;
+ const char sendtype[] = "response";
+ 
++int websocat_compatible;
++
+ /* Options */
+ 
++enum {
++  OPT_WEBSOCAT_COMPATIBLE = 256,
++};
++
+ static const struct option options[] = {
+     {"help", no_argument, 0, 'h'},
+     {"version", no_argument, 0, 'V'},
+@@ -99,6 +105,7 @@ static const struct option options[] = {
+     {"ipv4", no_argument, 0, '4'},
+     {"ipv6", no_argument, 0, '6'},
+ #endif
++    {"websocat", no_argument, 0, OPT_WEBSOCAT_COMPATIBLE},
+     {"readonly", no_argument, 0, 'R'},
+     {0, 0, 0, 0}};
+ 
+@@ -121,6 +128,7 @@ static void attribute((noreturn)) help(v
+                "  -4|-6                    Force IPv4 or IPv6 for --listen\n"
+                "  --background, -b         Daemonize\n"
+ #endif
++               "  --websocat               Transmit length-prefixed messages\n"
+                "  --readonly, -R           Read-only mode\n");
+   exit(0);
+ }
+@@ -498,6 +506,9 @@ int main(int argc, char **argv) {
+     case 'C':
+       config = optarg;
+       break;
++    case OPT_WEBSOCAT_COMPATIBLE:
++      websocat_compatible = 1;
++      break;
+     default:
+       exit(1);
+     }
+@@ -664,6 +675,14 @@ static void sftp_service(void) {
+   umask(0);
+   while(sftp_state_get() != sftp_state_stop &&
+         !sftp_xread(0, &len, sizeof len)) {
++
++    if (websocat_compatible) {
++      /* discard the prefix and read again */
++      if (sftp_xread(0, &len, sizeof len)) {
++        break;
++      }
++    }
++
+     job = sftp_xmalloc(sizeof *job);
+     job->len = ntohl(len);
+     if(!job->len || job->len > MAXREQUEST)
+--- a/sftpserver.h
++++ b/sftpserver.h
+@@ -57,6 +57,13 @@
+ #    define NTHREADS 4
+ #  endif
+ 
++/* If true, operate in websocat-compatible mode.
++   For use in conjunction with "lengthprefix:" overlay in websocat.
++   See websocat's doc for detail.
++   Prefix all outgoing messages with their length in uint32BE.
++   Also expect incoming messages to be formatted in the same way. */
++extern int websocat_compatible;
++
+ /** @brief Send an @ref SSH_FXP_STATUS message
+  * @param job Job
+  * @param status Status code

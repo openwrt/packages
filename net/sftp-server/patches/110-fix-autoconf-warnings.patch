@@ -1,0 +1,83 @@
+From 234709884c84896511d5d5d52f5f7926b44ca6ad Mon Sep 17 00:00:00 2001
+From: Andy Pan <andypan@ntuosc.org>
+Date: Wed, 6 Sep 2023 14:12:03 +0800
+Subject: [PATCH] Eliminate autoconf warnings
+
+---
+ acinclude.m4 | 20 ++++++++++----------
+ configure.ac |  6 +++---
+ 2 files changed, 13 insertions(+), 13 deletions(-)
+
+--- a/acinclude.m4
++++ b/acinclude.m4
+@@ -120,10 +120,10 @@ $suppress \
+   fi
+   AC_CACHE_CHECK([whether <inttypes.h> macros produce warnings],
+                  [rjk_cv_inttypeswarnings],[
+-    AC_TRY_COMPILE([#include <stddef.h>
++    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <stddef.h>
+ #include <stdio.h>
+-#include <inttypes.h>],
+-                   [uint64_t x=0;size_t sz=0;printf("%"PRIu64" %zu\n", x, sz);],
++#include <inttypes.h>]],[
++                   [uint64_t x=0;size_t sz=0;printf("%"PRIu64" %zu\n", x, sz);]])],
+                    [rjk_cv_inttypeswarnings=no],
+                    [rjk_cv_inttypeswarnings=yes])
+   ])
+@@ -144,16 +144,16 @@ AC_DEFUN([RJK_GTKFLAGS],[
+ AC_DEFUN([RJK_STAT_TIMESPEC],[
+   AC_CACHE_CHECK([for timespec style in struct stat],[rjk_cv_stat_timespec],[
+     rjk_cv_stat_timespec=none
+-    AC_TRY_COMPILE([#include <sys/stat.h>],[
++    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/stat.h>]],[[
+       struct stat sb;
+       sb.st_atim.tv_sec = 0;
+       (void)sb;
+-    ],[rjk_cv_stat_timespec=POSIX])
+-    AC_TRY_COMPILE([#include <sys/stat.h>],[
++    ]])],[rjk_cv_stat_timespec=POSIX],[])
++    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/stat.h>]],[[
+       struct stat sb;
+       sb.st_atimespec.tv_sec = 0;
+       (void)sb;
+-    ],[rjk_cv_stat_timespec=BSD])
++    ]])],[rjk_cv_stat_timespec=BSD],[])
+   ])
+   case "$rjk_cv_stat_timespec" in
+   BSD )
+@@ -243,12 +243,12 @@ AC_DEFUN([RJK_SIZE_MAX],[
+   AC_CHECK_SIZEOF([size_t])
+   AC_CHECK_HEADERS([stdint.h])
+   AC_CACHE_CHECK([for SIZE_MAX],[rjk_cv_size_max],[
+-    AC_TRY_COMPILE([#include <limits.h>
++    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <limits.h>
+                     #include <stddef.h>
+                     #if HAVE_STDINT_H
+                     # include <stdint.h>
+-                    #endif],
+-                   [size_t x = SIZE_MAX;++x;],
++                    #endif]],
++                   [[size_t x = SIZE_MAX;++x;]])],
+                    [rjk_cv_size_max=yes],
+                    [rjk_cv_size_max=no])
+   ])
+--- a/configure.ac
++++ b/configure.ac
+@@ -17,14 +17,14 @@
+ # USA
+ 
+ # Process this file with autoconf to produce a configure script.
+-AC_INIT(sftpserver, 2, rjk@greenend.org.uk)
++AC_INIT([sftpserver],[2],[rjk@greenend.org.uk])
+ AC_CONFIG_AUX_DIR([config.aux])
+ AM_INIT_AUTOMAKE([foreign])
+ AC_CONFIG_SRCDIR([alloc.c])
+-AM_CONFIG_HEADER([config.h])
++AC_CONFIG_HEADERS([config.h])
+ 
+ AC_PROG_CC
+-AC_SET_MAKE
++AC_PROG_MAKE_SET
+ 
+ #AC_PROG_LIBTOOL
+ #AC_LIBTOOL_DLOPEN

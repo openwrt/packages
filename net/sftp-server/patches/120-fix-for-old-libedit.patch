@@ -1,0 +1,21 @@
+From b5113a1a3fd72dca5d358ce8c8c7f387f7f9356b Mon Sep 17 00:00:00 2001
+From: Andy Pan <andy0130tw@yahoo.com.tw>
+Date: Mon, 13 Nov 2023 01:09:56 +0800
+Subject: [PATCH] Fix config script where rl_copy_text is not found in old
+ libedit.
+
+ref. https://github.com/gphoto/gphoto2/issues/381
+---
+ configure.ac | 1 +
+ 1 file changed, 1 insertion(+)
+
+--- a/configure.ac
++++ b/configure.ac
+@@ -41,6 +41,7 @@ AC_CHECK_LIB([socket],[socket])
+ AC_CHECK_LIB([readline],[readline],
+              [AC_SUBST([LIBREADLINE],[-lreadline])
+               AC_DEFINE([HAVE_READLINE],[1],[define if you have a readline library])])
++AC_CHECK_LIB([readline],[rl_copy_text])
+ RJK_ICONV
+ AC_DEFINE([_GNU_SOURCE], [1], [required for e.g. strsignal])
+ AC_C_INLINE
