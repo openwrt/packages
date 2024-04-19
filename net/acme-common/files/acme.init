@@ -57,6 +57,7 @@ load_options() {
 	config_get days "$section" days
 	export days
 	config_get standalone "$section" standalone
+	export standalone
 	[ -n "$standalone" ] && log warn "Option \"standalone\" is deprecated."
 	config_get dns_wait "$section" dns_wait
 	export dns_wait
@@ -126,7 +127,7 @@ load_globals() {
 		log warn "Option \"state_dir\" is deprecated, please remove it. Certificates now exist in $CERT_DIR."
 		mkdir -p "$state_dir"
 	else
-		state_dir=/etc/acme
+		state_dir=$CERT_DIR
 	fi
 	export state_dir
 
