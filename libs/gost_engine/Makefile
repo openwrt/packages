@@ -3,20 +3,19 @@ include $(INCLUDE_DIR)/openssl-module.mk
 
 PKG_NAME:=gost_engine
 PKG_VERSION:=3.0.3
-PKG_HASH:=8cf888333d08b8bbcc12e4e8c0d8b258c74dbd67941286ffbcc648c6d3d66735
-PKG_LICENSE:=Apache-2.0
-PKG_RELEASE:=9
+PKG_RELEASE:=10
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/gost-engine/engine/archive/v$(PKG_VERSION)
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+PKG_SOURCE_URL:=https://github.com/gost-engine/engine
+PKG_MIRROR_HASH:=ad88b0bc4ede265bc91757f0bb9777a381f8e271faa43992a054ddd5f435ad88
 
 PKG_MAINTAINER:=Artur Petrov <github@phpchain.ru>
+PKG_LICENSE:=Apache-2.0
+PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
-
-PKG_UNPACK:=$(HOST_TAR) -C "$(PKG_BUILD_DIR)" --strip-components=1 -xzf "$(DL_DIR)/$(PKG_SOURCE)"
-PKG_INSTALL:=
 
 define Package/gost_engine/Default
   $(call Package/openssl/engine/Default)
@@ -49,7 +48,7 @@ define Package/gost_engine-util
     $(call Package/gost_engine/Default)
     SECTION:=utils
     CATEGORY:=Utilities
-    DEPENDS:=libopenssl-gost_engine
+    DEPENDS:=+libopenssl-gost_engine
     TITLE+= (utilities)
 endef
 
@@ -61,15 +60,17 @@ endef
 CMAKE_OPTIONS += -DOPENSSL_ENGINES_DIR=/usr/lib/$(ENGINES_DIR)
 
 define Package/libopenssl-gost_engine/install
-	$(INSTALL_DIR) $(1)/usr/lib/$(ENGINES_DIR) $(1)/etc/ssl/engines.cnf.d
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/bin/gost.so \
+	$(INSTALL_DIR) $(1)/usr/lib $(1)/usr/lib/$(ENGINES_DIR) $(1)/etc/ssl/engines.cnf.d
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libgost.so \
+			$(1)/usr/lib/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/$(ENGINES_DIR)/gost.so \
 			$(1)/usr/lib/$(ENGINES_DIR)/
 	$(INSTALL_DATA) ./files/gost.cnf $(1)/etc/ssl/engines.cnf.d/
 endef
 
 define Package/gost_engine-util/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/{gost12sum,gostsum} \
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/{gost12sum,gostsum} \
 			$(1)/usr/bin/
 endef
 
