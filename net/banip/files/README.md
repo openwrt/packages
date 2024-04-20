@@ -17,12 +17,12 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 | antipopads          | antipopads IPs                 |         |         |    x    | tcp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
 | asn                 | ASN segments                   |         |         |    x    | tcp: 80, 443 | [Link](https://asn.ipinfo.app)                               |
 | backscatterer       | backscatterer IPs              |    x    |    x    |         |              | [Link](https://www.uceprotect.net/en/index.php)              |
+| becyber             | malicious attacker IPs         |    x    |    x    |         |              | [Link](https://github.com/duggytuxy/malicious_ip_addresses)  |
 | binarydefense       | binary defense banlist         |    x    |    x    |         |              | [Link](https://iplists.firehol.org/?ipset=bds_atif)          |
 | bogon               | bogon prefixes                 |    x    |    x    |         |              | [Link](https://team-cymru.com)                               |
 | bruteforceblock     | bruteforceblocker IPs          |    x    |    x    |         |              | [Link](https://danger.rulez.sk/index.php/bruteforceblocker/) |
 | country             | country blocks                 |    x    |    x    |         |              | [Link](https://www.ipdeny.com/ipblocks)                      |
 | cinsscore           | suspicious attacker IPs        |    x    |    x    |         |              | [Link](https://cinsscore.com/#list)                          |
-| darklist            | blocks suspicious attacker IPs |    x    |    x    |         |              | [Link](https://darklist.de)                                  |
 | debl                | fail2ban IP blacklist          |    x    |    x    |         |              | [Link](https://www.blocklist.de)                             |
 | doh                 | public DoH-Provider            |         |         |    x    | tcp: 80, 443 | [Link](https://github.com/dibdot/DoH-IP-blocklists)          |
 | drop                | spamhaus drop compilation      |    x    |    x    |         |              | [Link](https://www.spamhaus.org)                             |
@@ -37,14 +37,15 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 | greensnow           | suspicious server IPs          |    x    |    x    |         |              | [Link](https://greensnow.co)                                 |
 | iblockads           | Advertising IPs                |         |         |    x    | tcp: 80, 443 | [Link](https://www.iblocklist.com)                           |
 | iblockspy           | Malicious spyware IPs          |         |         |    x    | tcp: 80, 443 | [Link](https://www.iblocklist.com)                           |
-| ipblackhole         | blackhole IPs                  |    x    |    x    |         |              | [Link](https://ip.blackhole.monster)                         |
+| ipsum               | malicious IPs                  |    x    |    x    |         |              | [Link](https://github.com/stamparm/ipsum)                    |
 | ipthreat            | hacker and botnet TPs          |    x    |    x    |         |              | [Link](https://ipthreat.net)                                 |
 | myip                | real-time IP blocklist         |    x    |    x    |         |              | [Link](https://myip.ms)                                      |
 | nixspam             | iX spam protection             |    x    |    x    |         |              | [Link](http://www.nixspam.org)                               |
 | oisdbig             | OISD-big IPs                   |         |         |    x    | tcp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
 | oisdnsfw            | OISD-nsfw IPs                  |         |         |    x    | tcp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
 | oisdsmall           | OISD-small IPs                 |         |         |    x    | tcp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
-| proxy               | open proxies                   |    x    |         |         |              | [Link](https://iplists.firehol.org/?ipset=proxylists)        |
+| pallebone           | curated IP blocklist           |    x    |    x    |         |              | [Link](https://github.com/pallebone/StrictBlockPAllebone)    |
+| proxy               | open proxies                   |    x    |    x    |         |              | [Link](https://iplists.firehol.org/?ipset=proxylists)        |
 | ssbl                | SSL botnet IPs                 |    x    |    x    |         |              | [Link](https://sslbl.abuse.ch)                               |
 | stevenblack         | stevenblack IPs                |         |         |    x    | tcp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
 | talos               | talos IPs                      |    x    |    x    |         |              | [Link](https://talosintelligence.com/reputation_center)      |
@@ -66,10 +67,12 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * Full IPv4 and IPv6 support
 * Supports nft atomic Set loading
 * Supports blocking by ASN numbers and by iso country codes
+* Block countries dynamically by Regional Internet Registry (RIR), e.g. all countries related to ARIN. Supported service regions are: AFRINIC, ARIN, APNIC, LACNIC and RIPE
 * Supports local allow- and blocklist with MAC/IPv4/IPv6 addresses or domain names
 * Supports concatenation of local MAC addresses with IPv4/IPv6 addresses, e.g. to enforce dhcp assignments
 * All local input types support ranges in CIDR notation
 * Auto-add the uplink subnet or uplink IP to the local allowlist
+* Prevent common ICMP, UDP and SYN flood attacks and drop spoofed tcp flags & invalid conntrack packets (DDoS attacks) in an additional prerouting chain
 * Provides a small background log monitor to ban unsuccessful login attempts in real-time (like fail2ban, crowdsec etc.)
 * Auto-add unsuccessful LuCI, nginx, Asterisk or ssh login attempts to the local blocklist
 * Auto-add entire subnets to the blocklist Sets based on an additional RDAP request with the monitored suspicious IP
@@ -80,6 +83,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * Provides HTTP ETag support to download only ressources that have been updated on the server side, to speed up banIP reloads and to save bandwith
 * Supports an 'allowlist only' mode, this option skips all blocklists and restricts the internet access only to specific, explicitly allowed IP segments
 * Supports external allowlist URLs to reference additional IPv4/IPv6 feeds
+* Optionally always allow certain protocols/destination ports in wan-input and wan-forward chains
 * Deduplicate IPs accross all Sets (single IPs only, no intervals)
 * Provides comprehensive runtime information
 * Provides a detailed Set report
@@ -149,14 +153,19 @@ Available commands:
 | ban_logreadfile         | option | /var/log/messages             | alternative location for parsing the log file, e.g. via syslog-ng, to deactivate the standard parsing via logread |
 | ban_autodetect          | option | 1                             | auto-detect wan interfaces, devices and subnets                                                                   |
 | ban_debug               | option | 0                             | enable banIP related debug logging                                                                                |
-| ban_loginput            | option | 1                             | log drops in the wan-input chain                                                                                  |
-| ban_logforwardwan       | option | 1                             | log drops in the wan-forward chain                                                                                |
-| ban_logforwardlan       | option | 0                             | log rejects in the lan-forward chain                                                                              |
+| ban_icmplimit           | option | 10                            | treshold in number of packets to detect icmp DDoS in prerouting chain                                             |
+| ban_synlimit            | option | 10                            | treshold in number of packets to detect syn DDoS in prerouting chain                                              |
+| ban_udplimit            | option | 100                           | treshold in number of packets to detect udp DDoS in prerouting chain                                              |
+| ban_logprerouting       | option | 0                             | log supsicious packets in the prerouting chain                                                                    |
+| ban_loginput            | option | 0                             | log supsicious packets in the wan-input chain                                                                     |
+| ban_logforwardwan       | option | 0                             | log supsicious packets in the wan-forward chain                                                                   |
+| ban_logforwardlan       | option | 0                             | log supsicious packets in the lan-forward chain                                                                   |
 | ban_autoallowlist       | option | 1                             | add wan IPs/subnets and resolved domains automatically to the local allowlist (not only to the Sets)              |
 | ban_autoblocklist       | option | 1                             | add suspicious attacker IPs and resolved domains automatically to the local blocklist (not only to the Sets)      |
 | ban_autoblocksubnet     | option | 0                             | add entire subnets to the blocklist Sets based on an additional RDAP request with the suspicious IP               |
 | ban_autoallowuplink     | option | subnet                        | limit the uplink autoallow function to: 'subnet', 'ip' or 'disable' it at all                                     |
 | ban_allowlistonly       | option | 0                             | skip all blocklists and restrict the internet access only to specific, explicitly allowed IP segments             |
+| ban_allowflag           | option | -                             | always allow certain protocols(tcp or udp) plus destination ports or port ranges, e.g.: 'tcp 80 443-445'          |
 | ban_allowurl            | list   | -                             | external allowlist feed URLs, one or more references to simple remote IP lists                                    |
 | ban_basedir             | option | /tmp                          | base working directory while banIP processing                                                                     |
 | ban_reportdir           | option | /tmp/banIP-report             | directory where banIP stores the report files                                                                     |
@@ -174,11 +183,12 @@ Available commands:
 | ban_splitsize           | option | 0                             | split ext. Sets after every n lines/members (saves RAM)                                                           |
 | ban_cores               | option | - / autodetect                | limit the cpu cores used by banIP (saves RAM)                                                                     |
 | ban_nftloglevel         | option | warn                          | nft loglevel, values: emerg, alert, crit, err, warn, notice, info, debug                                          |
-| ban_nftpriority         | option | -200                          | nft priority for the banIP table (default is the prerouting table priority)                                       |
+| ban_nftpriority         | option | -100                          | nft priority for the banIP table (the prerouting table is fixed to priority -150)                                 |
 | ban_nftpolicy           | option | memory                        | nft policy for banIP-related Sets, values: memory, performance                                                    |
 | ban_nftexpiry           | option | -                             | expiry time for auto added blocklist members, e.g. '5m', '2h' or '1d'                                             |
 | ban_feed                | list   | -                             | external download feeds, e.g. 'yoyo', 'doh', 'country' or 'talos' (see feed table)                                |
 | ban_asn                 | list   | -                             | ASNs for the 'asn' feed, e.g.'32934'                                                                              |
+| ban_region              | list   | -                             | Regional Internet Registry (RIR) country selection. Supported regions are: AFRINIC, ARIN, APNIC, LACNIC and RIPE  |
 | ban_country             | list   | -                             | country iso codes for the 'country' feed, e.g. 'ru'                                                               |
 | ban_blockpolicy         | option | -                             | limit the default block policy to a certain chain, e.g. 'input', 'forwardwan' or 'forwardlan'                     |
 | ban_blocktype           | option | drop                          | 'drop' packets silently on input and forwardwan chains or actively 'reject' the traffic                           |
@@ -206,39 +216,46 @@ Available commands:
 :::
 ::: banIP Set Statistics
 :::
-    Timestamp: 2024-03-02 07:38:28
+    Timestamp: 2024-04-17 23:02:15
     ------------------------------
-    auto-added to allowlist today: 0
-    auto-added to blocklist today: 0
+    blocked syn-flood packets in prerouting  : 5
+    blocked udp-flood packets in prerouting  : 11
+    blocked icmp-flood packets in prerouting : 6
+    blocked invalid ct packets in prerouting : 277
+    blocked invalid tcp packets in prerouting: 0
+    ----------
+    auto-added IPs to allowlist today: 0
+    auto-added IPs to blocklist today: 0
 
     Set                  | Elements     | WAN-Input (packets)   | WAN-Forward (packets) | LAN-Forward (packets) | Port/Protocol Limit
     ---------------------+--------------+-----------------------+-----------------------+-----------------------+------------------------
-    allowlistv4MAC       | 0            | -                     | -                     | OK: 0                 | -                     
-    allowlistv6MAC       | 0            | -                     | -                     | OK: 0                 | -                     
-    allowlistv4          | 1            | OK: 0                 | OK: 0                 | OK: 0                 | -                     
-    allowlistv6          | 2            | OK: 0                 | OK: 0                 | OK: 0                 | -                     
-    adguardtrackersv6    | 74           | -                     | -                     | OK: 0                 | tcp: 80, 443          
-    adguardtrackersv4    | 883          | -                     | -                     | OK: 0                 | tcp: 80, 443          
-    cinsscorev4          | 12053        | OK: 25                | OK: 0                 | -                     | -                     
-    countryv4            | 37026        | OK: 14                | OK: 0                 | -                     | -                     
-    deblv4               | 13592        | OK: 0                 | OK: 0                 | -                     | -                     
-    countryv6            | 38139        | OK: 0                 | OK: 0                 | -                     | -                     
-    deblv6               | 82           | OK: 0                 | OK: 0                 | -                     | -                     
-    dohv6                | 837          | -                     | -                     | OK: 0                 | tcp: 80, 443          
-    dohv4                | 1240         | -                     | -                     | OK: 0                 | tcp: 80, 443          
-    dropv6               | 51           | OK: 0                 | OK: 0                 | -                     | -                     
-    dropv4               | 592          | OK: 0                 | OK: 0                 | -                     | -                     
-    firehol1v4           | 906          | OK: 1                 | OK: 0                 | -                     | -                     
-    firehol2v4           | 2105         | OK: 0                 | OK: 0                 | OK: 0                 | -                     
-    threatv4             | 55           | OK: 0                 | OK: 0                 | -                     | -                     
-    ipthreatv4           | 2042         | OK: 0                 | OK: 0                 | -                     | -                     
-    turrisv4             | 6433         | OK: 0                 | OK: 0                 | -                     | -                     
-    blocklistv4MAC       | 0            | -                     | -                     | OK: 0                 | -                     
-    blocklistv6MAC       | 0            | -                     | -                     | OK: 0                 | -                     
-    blocklistv4          | 0            | OK: 0                 | OK: 0                 | OK: 0                 | -                     
-    blocklistv6          | 0            | OK: 0                 | OK: 0                 | OK: 0                 | -                     
+    allowlistv4MAC       | 0            | -                     | -                     | ON: 0                 | -                     
+    allowlistv6MAC       | 0            | -                     | -                     | ON: 0                 | -                     
+    allowlistv4          | 1            | ON: 0                 | ON: 0                 | ON: 0                 | -                     
+    allowlistv6          | 2            | ON: 0                 | ON: 0                 | ON: 0                 | -                     
+    adguardtrackersv6    | 105          | -                     | -                     | ON: 0                 | tcp: 80, 443          
+    adguardtrackersv4    | 816          | -                     | -                     | ON: 0                 | tcp: 80, 443          
+    becyberv4            | 229006       | ON: 2254              | ON: 0                 | -                     | -                     
+    cinsscorev4          | 7135         | ON: 1630              | ON: 2                 | -                     | -                     
+    deblv4               | 10191        | ON: 23                | ON: 0                 | -                     | -                     
+    countryv6            | 38233        | ON: 7                 | ON: 0                 | -                     | -                     
+    countryv4            | 37169        | ON: 2323              | ON: 0                 | -                     | -                     
+    deblv6               | 65           | ON: 0                 | ON: 0                 | -                     | -                     
+    dropv6               | 66           | ON: 0                 | ON: 0                 | -                     | -                     
+    dohv4                | 1219         | -                     | -                     | ON: 0                 | tcp: 80, 443          
+    dropv4               | 895          | ON: 75                | ON: 0                 | -                     | -                     
+    dohv6                | 832          | -                     | -                     | ON: 0                 | tcp: 80, 443          
+    threatv4             | 20           | ON: 0                 | ON: 0                 | -                     | -                     
+    firehol1v4           | 753          | ON: 1                 | ON: 0                 | -                     | -                     
+    ipthreatv4           | 1369         | ON: 20                | ON: 0                 | -                     | -                     
+    firehol2v4           | 2216         | ON: 1                 | ON: 0                 | -                     | -                     
+    turrisv4             | 5613         | ON: 179               | ON: 0                 | -                     | -                     
+    blocklistv4MAC       | 0            | -                     | -                     | ON: 0                 | -                     
+    blocklistv6MAC       | 0            | -                     | -                     | ON: 0                 | -                     
+    blocklistv4          | 0            | ON: 0                 | ON: 0                 | ON: 0                 | -                     
+    blocklistv6          | 0            | ON: 0                 | ON: 0                 | ON: 0                 | -                     
     ---------------------+--------------+-----------------------+-----------------------+-----------------------+------------------------
-    24                   | 116113       | 16 (40)               | 16 (0)                | 13 (0)
+    25                   | 335706       | 17 (6513)             | 17 (2)                | 12 (0)
 ```
 
 **banIP runtime information**  
@@ -246,16 +263,16 @@ Available commands:
 ~# /etc/init.d/banip status
 ::: banIP runtime information
   + status            : active (nft: ✔, monitor: ✔)
-  + version           : 0.9.4-1
-  + element_count     : 116113
-  + active_feeds      : allowlistv4MAC, allowlistv6MAC, allowlistv4, allowlistv6, adguardtrackersv6, adguardtrackersv4, cinsscorev4, countryv4, deblv4, countryv6, deblv6, dohv6, dohv4, dropv6, dropv4, firehol1v4, firehol2v4, threatv4, ipthreatv4, turrisv4, blocklistv4MAC, blocklistv6MAC, blocklistv4, blocklistv6
+  + version           : 0.9.5-r1
+  + element_count     : 335706
+  + active_feeds      : allowlistv4MAC, allowlistv6MAC, allowlistv4, allowlistv6, adguardtrackersv6, adguardtrackersv4, becyberv4, cinsscorev4, deblv4, countryv6, countryv4, deblv6, dropv6, dohv4, dropv4, dohv6, threatv4, firehol1v4, ipthreatv4, firehol2v4, turrisv4, blocklistv4MAC, blocklistv6MAC, blocklistv4, blocklistv6
   + active_devices    : wan: pppoe-wan / wan-if: wan, wan_6 / vlan-allow: - / vlan-block: -
-  + active_uplink     : 217.89.211.113, fe80::2c35:fb80:e78c:cf71, 2003:ed:b5ff:2338:2c15:fb80:e78c:cf71
-  + nft_info          : priority: -200, policy: performance, loglevel: warn, expiry: 2h
+  + active_uplink     : 217.83.205.130, fe80::9cd6:12e9:c4df:75d3, 2003:ed:b5ff:43bd:9cd5:12e7:c3ef:75d8
+  + nft_info          : priority: 0, policy: performance, loglevel: warn, expiry: 2h
   + run_info          : base: /mnt/data/banIP, backup: /mnt/data/banIP/backup, report: /mnt/data/banIP/report
-  + run_flags         : auto: ✔, proto (4/6): ✔/✔, log (wan-inp/wan-fwd/lan-fwd): ✔/✔/✔, dedup: ✔, split: ✘, custom feed: ✘, allowed only: ✘
-  + last_run          : action: reload, log: logread, fetch: curl, duration: 0m 50s, date: 2024-03-02 07:35:01
-  + system_info       : cores: 4, memory: 1685, device: Bananapi BPI-R3, OpenWrt SNAPSHOT r25356-09be63de70
+  + run_flags         : auto: ✔, proto (4/6): ✔/✔, log (pre/inp/fwd/lan): ✔/✘/✘/✘, dedup: ✔, split: ✘, custom feed: ✘, allowed only: ✘
+  + last_run          : action: reload, log: logread, fetch: curl, duration: 2m 33s, date: 2024-04-17 05:57:56
+  + system_info       : cores: 4, memory: 1573, device: Bananapi BPI-R3, OpenWrt SNAPSHOT r25932-338b463e1e
 ```
 
 **banIP search information**  
@@ -315,10 +332,13 @@ Both local lists also accept domain names as input to allow IP filtering based o
 banIP supports an "allowlist only" mode. This option skips all blocklists and restricts the internet access only to specific, explicitly allowed IP segments - and block access to the rest of the internet. All IPs which are _not_ listed in the allowlist (plus the external Allowlist URLs) are blocked.
 
 **MAC/IP-binding**
-banIP supports concatenation of local MAC addresses with IPv4/IPv6 addresses, e.g. to enforce dhcp assignments. Following notations in the local allow and block lists are allowed:
+banIP supports concatenation of local MAC addresses/ranges with IPv4/IPv6 addresses, e.g. to enforce dhcp assignments. Following notations in the local allow and block lists are allowed:
 ```
 MAC-address only:
 C8:C2:9B:F7:80:12                                  => this will be populated to the v4MAC- and v6MAC-Sets with the IP-wildcards 0.0.0.0/0 and ::/0
+
+MAC-address range:
+C8:C2:9B:F7:80:12/24                               => this populate the MAC-range C8:C2:9B:00:00:00", "C8:C2:9B:FF:FF:FF to the v4MAC- and v6MAC-Sets with the IP-wildcards 0.0.0.0/0 and ::/0
 
 MAC-address with IPv4 concatenation:
 C8:C2:9B:F7:80:12 192.168.1.10                     => this will be populated only to v4MAC-Set with the certain IP, no entry in the v6MAC-Set
@@ -334,6 +354,7 @@ MAC-address with IPv4 and IPv6 wildcard concatenation:
 C8:C2:9B:F7:80:12 192.168.1.10                     => this will be populated to v4MAC-Set with the certain IP
 C8:C2:9B:F7:80:12                                  => this will be populated to v6MAC-Set with the IP-wildcard ::/0
 ```
+
 **enable the cgi interface to receive remote logging events**  
 banIP ships a basic cgi interface in '/www/cgi-bin/banip' to receive remote logging events (disabled by default). The cgi interface evaluates logging events via GET or POST request (see examples below). To enable the cgi interface set the following options:  
 
@@ -407,12 +428,12 @@ A valid JSON source object contains the following information, e.g.:
 		"rule_4": "/^(([0-9]{1,3}\\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\\/(1?[0-9]|2?[0-9]|3?[0-2]))?)$/{printf \"%s,\\n\",$1}",
 		"rule_6": "/^(([0-9A-f]{0,4}:){1,7}[0-9A-f]{0,4}:?(\\/(1?[0-2][0-8]|[0-9][0-9]))?)$/{printf \"%s,\\n\",$1}",
 		"descr": "tor exit nodes",
-		"flag": "80-89 443 tcp"
+		"flag": "tcp 80-89 443"
 	},
 	[...]
 ```
 Add an unique feed name (no spaces, no special chars) and make the required changes: adapt at least the URL, the regex and the description for a new feed.  
-Please note: the flag field is optional, it's a space separated list of options: supported are 'gz' as an archive format, port numbers (plus ranges) for destination port limitations with 'tcp' (default) or 'udp' as protocol variants.  
+Please note: the flag field is optional, it's a space separated list of options: supported are 'gz' as an archive format, protocols 'tcp' or 'udp' with port numbers/port ranges for destination port limitations.  
 
 ## Support
 Please join the banIP discussion in this [forum thread](https://forum.openwrt.org/t/banip-support-thread/16985) or contact me by mail <dev@brenken.org>
