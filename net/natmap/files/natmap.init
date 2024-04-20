@@ -27,7 +27,9 @@ validate_section_natmap() {
 		'port:port' \
 		'forward_target:host' \
 		'forward_port:port' \
-		'notify_script:file'
+		'notify_script:file' \
+		'log_stdout:bool:1' \
+		'log_stderr:bool:1'
 }
 
 natmap_instance() {
@@ -63,8 +65,8 @@ natmap_instance() {
 	procd_append_param command -e /usr/lib/natmap/update.sh
 
 	procd_set_param respawn
-	procd_set_param stdout 1
-	procd_set_param stderr 1
+	procd_set_param stdout "${log_stdout}"
+	procd_set_param stderr "${log_stderr}"
 
 	procd_close_instance
 }
