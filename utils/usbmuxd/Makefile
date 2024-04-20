@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=usbmuxd
 PKG_VERSION:=1.1.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://www.libimobiledevice.org/downloads
@@ -31,7 +31,7 @@ define Package/usbmuxd
   SUBMENU:=libimobiledevice
   TITLE:=USB multiplexing daemon
   URL:=https://www.libimobiledevice.org/
-  DEPENDS:=+librt +libusb-1.0 +libusbmuxd +libopenssl +libimobiledevice
+  DEPENDS:=+libusb-1.0 +libusbmuxd +libopenssl +libimobiledevice +usbutils
 endef
 
 define Package/usbmuxd/description
@@ -50,7 +50,9 @@ endef
 CONFIGURE_ARGS += --with-systemd
 
 define Package/usbmuxd/install
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/usb
 	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/usbmuxd.hotplug $(1)/etc/hotplug.d/usb/40-usbmuxd
 	$(INSTALL_BIN) ./files/usbmuxd.init $(1)/etc/init.d/usbmuxd
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/usbmuxd $(1)/usr/sbin/
