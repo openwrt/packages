@@ -5,7 +5,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=geoip-shell
 PKG_VERSION:=0.5
-PKG_RELEASE:=r2
+PKG_RELEASE:=2
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_MAINTAINER:=antonk <antonk.d3v@gmail.com>
 PKG_SOURCE_PROTO:=git
