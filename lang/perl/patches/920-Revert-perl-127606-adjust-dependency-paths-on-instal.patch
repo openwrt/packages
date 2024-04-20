@@ -1,0 +1,114 @@
+From 002d6666a3ed5bc9c360c1f91116ebbf0c5ef57c Mon Sep 17 00:00:00 2001
+From: Georgi Valkov <gvalkov@gmail.com>
+Date: Sat, 20 Apr 2024 16:18:37 +0300
+Subject: [PATCH] revert 88efce38149481334db7ddb932f9b74eaaa9765b
+
+Signed-off-by: Georgi Valkov <gvalkov@gmail.com>
+---
+ Makefile.SH | 35 ++---------------------------------
+ installperl | 25 -------------------------
+ 2 files changed, 2 insertions(+), 58 deletions(-)
+
+--- a/Makefile.SH
++++ b/Makefile.SH
+@@ -61,16 +61,8 @@ true)
+                             -compatibility_version \
+ 				${api_revision}.${api_version}.${api_subversion} \
+ 			     -current_version \
+-				${revision}.${patchlevel}.${subversion}"
+-		case "$osvers" in
+-	        1[5-9]*|[2-9]*)
+-			shrpldflags="$shrpldflags -install_name `pwd`/\$@ -Xlinker -headerpad_max_install_names"
+-			exeldflags="-Xlinker -headerpad_max_install_names"
+-			;;
+-		*)
+-			shrpldflags="$shrpldflags -install_name \$(shrpdir)/\$@"
+-			;;
+-		esac
++				${revision}.${patchlevel}.${subversion} \
++			     -install_name \$(shrpdir)/\$@"
+ 		;;
+ 	cygwin*)
+ 		shrpldflags="$shrpldflags -Wl,--out-implib=libperl.dll.a"
+@@ -353,14 +345,6 @@ MANIFEST_SRT = MANIFEST.srt
+ 
+ !GROK!THIS!
+ 
+-case "$useshrplib$osname" in
+-truedarwin)
+-	$spitshell >>$Makefile <<!GROK!THIS!
+-PERL_EXE_LDFLAGS=$exeldflags
+-!GROK!THIS!
+-	;;
+-esac
+-
+ $spitshell >>$Makefile <<!GROK!THIS!
+ # Macros to invoke a copy of our fully operational perl during the build.
+ PERL_EXE = perl\$(EXE_EXT)
+@@ -1040,20 +1024,6 @@ $(PERL_EXE): $& $(perlmain_dep) $(LIBPER
+ 	$(SHRPENV) $(CC) -o perl $(CLDFLAGS) $(CCDLFLAGS) $(perlmain_objs) $(LLIBPERL) $(static_ext) `cat ext.libs` $(libs)
+ !NO!SUBS!
+         ;;
+-
+-	darwin)
+-	    case "$useshrplib$osvers" in
+-	    true1[5-9]*|true[2-9]*) $spitshell >>$Makefile <<'!NO!SUBS!'
+-	$(SHRPENV) $(CC) -o perl $(PERL_EXE_LDFLAGS) $(CLDFLAGS) $(CCDLFLAGS) $(perlmain_objs) $(static_ext) $(LLIBPERL) `cat ext.libs` $(libs)
+-!NO!SUBS!
+-	       ;;
+-	    *) $spitshell >>$Makefile <<'!NO!SUBS!'
+-	$(SHRPENV) $(CC) -o perl $(CLDFLAGS) $(CCDLFLAGS) $(perlmain_objs) $(static_ext) $(LLIBPERL) `cat ext.libs` $(libs)
+-!NO!SUBS!
+-	       ;;
+-	    esac
+-        ;;
+-
+         *) $spitshell >>$Makefile <<'!NO!SUBS!'
+ 	$(SHRPENV) $(CC) -o perl $(CLDFLAGS) $(CCDLFLAGS) $(perlmain_objs) $(static_ext) $(LLIBPERL) `cat ext.libs` $(libs)
+ !NO!SUBS!
+--- a/installperl
++++ b/installperl
+@@ -282,7 +282,6 @@ else {
+     safe_unlink("$installbin/$perl_verbase$ver$exe_ext");
+     copy("perl$exe_ext", "$installbin/$perl_verbase$ver$exe_ext");
+     strip("$installbin/$perl_verbase$ver$exe_ext");
+-    fix_dep_names("$installbin/$perl_verbase$ver$exe_ext");
+     chmod(0755, "$installbin/$perl_verbase$ver$exe_ext");
+     `chtag -r "$installbin/$perl_verbase$ver$exe_ext"` if ($^O eq 'os390');
+ }
+@@ -350,7 +349,6 @@ foreach my $file (@corefiles) {
+     if (copy_if_diff($file,"$installarchlib/CORE/$file")) {
+ 	if ($file =~ /\.(\Q$so\E|\Q$dlext\E)$/) {
+ 	    strip("-S", "$installarchlib/CORE/$file") if $^O eq 'darwin';
+-	    fix_dep_names("$installarchlib/CORE/$file");
+ 	    chmod($SO_MODE, "$installarchlib/CORE/$file");
+ 	} else {
+ 	    chmod($NON_SO_MODE, "$installarchlib/CORE/$file");
+@@ -749,27 +747,4 @@ sub strip
+     }
+ }
+ 
+-sub fix_dep_names {
+-    my $file = shift;
+-
+-    $^O eq "darwin" && $Config{osvers} =~ /^(1[5-9]|[2-9])/
+-      && $Config{useshrplib}
+-      or return;
+-
+-    my @opts;
+-    my $so = $Config{so};
+-    my $libperl = "$Config{archlibexp}/CORE/libperl.$Config{so}";
+-    if ($file =~ /\blibperl.\Q$Config{so}\E$/a) {
+-        push @opts, -id => $libperl;
+-    }
+-    else {
+-        push @opts, -change => getcwd . "/libperl.$so", $libperl;
+-    }
+-    push @opts, $file;
+-
+-    $opts{verbose} and print "  install_name_tool @opts\n";
+-    system "install_name_tool", @opts
+-      and die "Cannot update $file dependency paths\n";
+-}
+-
+ # ex: set ts=8 sts=4 sw=4 et:
