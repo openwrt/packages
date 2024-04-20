@@ -10,7 +10,7 @@ include $(INCLUDE_DIR)/nls.mk
 
 PKG_NAME:=curl
 PKG_VERSION:=8.7.1
-PKG_RELEASE:=r1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://github.com/curl/curl/releases/download/curl-$(subst .,_,$(PKG_VERSION))/ \
@@ -81,7 +81,7 @@ define Package/curl/Default
   SECTION:=net
   CATEGORY:=Network
   URL:=http://curl.se/
-  MAINTAINER:=Stan Grishin <stangri@melmac.ca>
+  MAINTAINER:=
 endef
 
 define Package/curl
