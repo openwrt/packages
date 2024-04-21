@@ -1559,14 +1559,14 @@ f_search() {
 		printf "%s\n%s\n%s\n" ":::" "::: no valid search input" ":::"
 		return
 	fi
-	printf "%s\n%s\n%s\n" ":::" "::: banIP Search" ":::"
-	printf "    %s\n" "Looking for IP '${ip}' on $(date "+%Y-%m-%d %H:%M:%S")"
-	printf "    %s\n" "---"
 	cnt="1"
 	for item in ${table_sets}; do
 		[ -f "${result_flag}" ] && break
 		(
 			if "${ban_nftcmd}" get element inet banIP "${item}" "{ ${ip} }" >/dev/null 2>&1; then
+				printf "%s\n%s\n%s\n" ":::" "::: banIP Search" ":::"
+				printf "    %s\n" "Looking for IP '${ip}' on $(date "+%Y-%m-%d %H:%M:%S")"
+				printf "    %s\n" "---"
 				printf "    %s\n" "IP found in Set '${item}'"
 				: >"${result_flag}"
 			fi
@@ -1576,7 +1576,14 @@ f_search() {
 		cnt="$((cnt + 1))"
 	done
 	wait
-	[ -f "${result_flag}" ] && rm -f "${result_flag}" || printf "    %s\n" "IP not found"
+	if [ -f "${result_flag}" ]; then
+		rm -f "${result_flag}"
+	else
+		printf "%s\n%s\n%s\n" ":::" "::: banIP Search" ":::"
+		printf "    %s\n" "Looking for IP '${ip}' on $(date "+%Y-%m-%d %H:%M:%S")"
+		printf "    %s\n" "---"
+		printf "    %s\n" "IP not found"
+	fi
 }
 
 # Set survey
