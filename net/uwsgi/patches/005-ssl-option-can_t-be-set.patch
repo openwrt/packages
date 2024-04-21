@@ -18,6 +18,6 @@ Given the changeset which introduced this option with the ssl-enable3 option whi
  	{"ssl-enable-tlsv1", no_argument, 0, "enable TLSv1 (insecure)", uwsgi_opt_true, &uwsgi.tlsv1, 0},
 -	{"ssl-option", no_argument, 0, "set a raw ssl option (numeric value)", uwsgi_opt_add_string_list, &uwsgi.ssl_options, 0},
 +	{"ssl-option", required_argument, 0, "set a raw ssl option (numeric value)", uwsgi_opt_add_string_list, &uwsgi.ssl_options, 0},
- #ifdef UWSGI_PCRE
+ #if defined(UWSGI_PCRE) || defined(UWSGI_PCRE2)
  	{"sni-regexp", required_argument, 0, "add an SNI-governed SSL context (the key is a regexp)", uwsgi_opt_sni, NULL, 0},
  #endif
