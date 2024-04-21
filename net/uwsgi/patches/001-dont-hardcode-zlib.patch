@@ -1,6 +1,6 @@
 --- a/uwsgiconfig.py
 +++ b/uwsgiconfig.py
-@@ -859,11 +859,11 @@ class uConf(object):
+@@ -863,11 +863,11 @@ class uConf(object):
                  self.cflags.append('-DUWSGI_HAS_EXECINFO')
                  report['execinfo'] = True
  
