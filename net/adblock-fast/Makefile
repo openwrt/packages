@@ -1,14 +1,14 @@
-# Copyright 2023 MOSSDeF, Stan Grishin (stangri@melmac.ca)
-# TLD optimization written by Dirk Brenken (dev@brenken.org)
-# This is free software, licensed under the GNU General Public License v3.
+# Copyright 2023-2024 MOSSDeF, Stan Grishin (stangri@melmac.ca).
+# TLD optimization written by Dirk Brenken (dev@brenken.org).
+# This is free software, licensed under AGPL-3.0-or-later.
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adblock-fast
 PKG_VERSION:=1.1.1
-PKG_RELEASE:=r8
+PKG_RELEASE:=11
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.ca>
-PKG_LICENSE:=GPL-3.0-or-later
+PKG_LICENSE:=AGPL-3.0-or-later
 
 include $(INCLUDE_DIR)/package.mk
 
