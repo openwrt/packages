@@ -1477,14 +1477,16 @@ unbound_include() {
   fi
 
 
-  if [ -z "$adb_files" ] || [  ! -x /usr/bin/adblock.sh ] \
-  || [ ! -x /etc/init.d/adblock ] ; then
+  if [ -z "$adb_files" ]; then
     adb_enabled=0
 
-  elif /etc/init.d/adblock enabled ; then
+  elif { [ -x /etc/init.d/adblock-fast ] && /etc/init.d/adblock-fast enabled; } \
+  || { [ -x /usr/bin/adblock.sh ] && [ -x /etc/init.d/adblock ] \
+  &&  /etc/init.d/adblock enabled; }; then
     adb_enabled=1
     {
-      # Pull in your selected openwrt/pacakges/net/adblock generated lists
+      # Pull in your selected openwrt/pacakges/net/adblock or
+      # openwrt/pacakges/net/adblock-fast generated lists
       echo "include: $UB_VARDIR/adb_list.*"
       echo
     } >> $UB_TOTAL_CONF
