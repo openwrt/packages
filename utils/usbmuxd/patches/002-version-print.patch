@@ -1,0 +1,11 @@
+--- a/src/main.c
++++ b/src/main.c
+@@ -584,7 +584,7 @@ static void parse_opts(int argc, char **
+ 			++verbose;
+ 			break;
+ 		case 'V':
+-			printf("%s\n", PACKAGE_STRING);
++			printf("%s %s\n", PACKAGE_STRING, PACKAGE_VERSION);
+ 			exit(0);
+ 		case 'U':
+ 			drop_privileges = 1;
