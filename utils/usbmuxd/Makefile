@@ -8,18 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=usbmuxd
-PKG_VERSION:=1.1.1
-PKG_RELEASE:=2
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=https://www.libimobiledevice.org/downloads
-PKG_HASH:=c0ec9700172bf635ccb5bed98daae607d2925c2bc3597f25706ecd9dfbfd2d9e
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/libimobiledevice/usbmuxd.git
+PKG_SOURCE_DATE:=2023-10-11
+PKG_SOURCE_VERSION:=360619c5f721f93f0b9d8af1a2df0b926fbcf281
+PKG_MIRROR_HASH:=e674ee39abbbae6dea7364be8b8287db2e333d033c226d4b2ed95f2e61a78576
 
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING.GPLv2
 PKG_CPE_ID:=cpe:/a:libimobiledevice:usbmuxd
 
+PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
@@ -47,7 +49,9 @@ define Package/usbmuxd/conffiles
 /etc/lockdown/SystemConfiguration.plist
 endef
 
-CONFIGURE_ARGS += --with-systemd
+CONFIGURE_ARGS += \
+	--with-systemd \
+	PACKAGE_VERSION=$(PKG_VERSION)
 
 define Package/usbmuxd/install
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/usb
