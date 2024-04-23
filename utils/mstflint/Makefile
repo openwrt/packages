@@ -31,7 +31,7 @@ define Package/mstflint
   CATEGORY:=Utilities
   TITLE:=Mellanox Firmware Burning and Diagnostics Tools
   URL:=https://github.com/Mellanox/mstflint
-  DEPENDS:=@!(mips||mipsel) \
+  DEPENDS:=@!(mips||mips64||mipsel) \
     +libcurl +liblzma +libopenssl +libsqlite3 \
     +libstdcpp +libxml2 +python3-ctypes \
     +python3-urllib +python3-xml +zlib
