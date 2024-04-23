@@ -47,7 +47,7 @@ define Package/dockerd
     +kmod-veth \
     +tini \
     +uci-firewall \
-    @!(mips||mipsel)
+    @!(mips||mips64||mipsel)
   USERID:=docker:docker
   MENU:=1
 endef
