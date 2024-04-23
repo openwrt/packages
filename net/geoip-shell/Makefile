@@ -4,14 +4,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=geoip-shell
-PKG_VERSION:=0.5
-PKG_RELEASE:=2
+PKG_VERSION:=0.5.2
+PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_MAINTAINER:=antonk <antonk.d3v@gmail.com>
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=3b56796aea49d7ae1e5ce3de1f5ccfafd36c7f3f
+PKG_SOURCE_VERSION:=db8bbf4ce04094843beea1b1aa4fbceb0d35688d
 PKG_SOURCE_URL:=https://github.com/friendly-bits/geoip-shell-openwrt.git
-PKG_MIRROR_HASH:=2a6cb1996fc7c48f146267e193fe1812addeb228adc5fe16a55341509d4a5353
+PKG_MIRROR_HASH:=4b0b90a936b8e9b476a0b85bd2100fcc4d1da25cd6929c0bcc282ae7ff137e9f
 
 include $(INCLUDE_DIR)/package.mk
 
