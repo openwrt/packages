@@ -1,0 +1,71 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Petr=20=C5=A0tetiar?= <ynezz@true.cz>
+Date: Sat, 4 May 2024 06:33:16 +0000
+Subject: [PATCH] sys-crypto.h: add support for OpenSSL as crypto library
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Each TLS module in lighttpd is built to utilize its corresponding TLS
+library. For example, lighttpd's mod_openssl module utilizes OpenSSL,
+and its mod_mbedtls module uses mbedTLS.
+
+Separately, the core lighttpd application may employ cryptographic
+functions. For efficiency and portability, if lighttpd is compiled with
+Nettle, it becomes the default cryptographic library for the base
+application. However, each TLS module within lighttpd still relies on
+its respective TLS library.
+
+In scenarios where lighttpd is configured with only one TLS library and
+without Nettle, the base application adopts the cryptographic functions
+from that specific TLS library.
+
+When preparing for Linux distributions, lighttpd might be built with
+several TLS modules, where each module uses its designated TLS library.
+Presently, lighttpd does not offer a distinct, dedicated option to
+select the cryptographic library for the base application.
+
+In contexts like embedded systems, where a single TLS library might be
+utilized across the entire base system, specific configurations allow
+the use of either mbedTLS or wolfSSL. For these, lighttpd is compiled
+with -DFORCE_MBEDTLS_CRYPTO or -DFORCE_WOLFSSL_CRYPTO, respectively.
+
+To extend this capability, let's introduce the FORCE_OPENSSL_CRYPTO
+define, enabling lighttpd to also use OpenSSL as an additional
+cryptographic library, akin to the existing support for mbedTLS and
+wolfSSL.
+
+
+Suggested-by: Glenn Strauss <gstrauss@gluelogic.com>
+Signed-off-by: Petr Štetiar <ynezz@true.cz>
+---
+ src/sys-crypto.h | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+
+--- a/src/sys-crypto.h
++++ b/src/sys-crypto.h
+@@ -60,4 +60,24 @@
+ #endif
+ #endif
+ 
++#ifdef USE_OPENSSL_CRYPTO
++#ifdef FORCE_OPENSSL_CRYPTO
++#undef USE_GNUTLS_CRYPTO
++#undef USE_MBEDTLS_CRYPTO
++#undef USE_NETTLE_CRYPTO
++#undef USE_NSS_CRYPTO
++#undef USE_WOLFSSL_CRYPTO
++#endif
++#endif
++
++#ifdef USE_GNUTLS_CRYPTO
++#ifdef FORCE_GNUTLS_CRYPTO
++#undef USE_MBEDTLS_CRYPTO
++#undef USE_NETTLE_CRYPTO
++#undef USE_NSS_CRYPTO
++#undef USE_OPENSSL_CRYPTO
++#undef USE_WOLFSSL_CRYPTO
++#endif
++#endif
++
+ #endif
