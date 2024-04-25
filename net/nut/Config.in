@@ -22,7 +22,7 @@
 		bool "Build with support for SNMP drivers"
 		help
 			If you have a UPS you can connect to via SNMP, select this.
-		default n
+		default y
 
 	config NUT_DRIVER_SERIAL
 		depends on PACKAGE_nut

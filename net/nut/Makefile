@@ -97,9 +97,6 @@ define Package/nut-common
 	$(call Package/nut/Default)
 	TITLE+= (common)
 	DEPENDS:= nut \
-		+NUT_DRIVER_SNMP:libnetsnmp \
-		+NUT_DRIVER_USB:libusb-compat \
-		+NUT_DRIVER_NEON:libneon \
 		+NUT_SSL:libopenssl
 endef
 
@@ -368,10 +365,9 @@ define DriverPackage
 		$(call Package/nut/Default)
 		TITLE:=$(2) (NUT $(1) driver)
 		DEPENDS:=nut +nut-server
-		$(if $(filter $(1),snmp),DEPENDS+= @NUT_DRIVER_SNMP)
-		$(if $(filter $(1),usb),DEPENDS+= @NUT_DRIVER_USB)
-		$(if $(filter $(1),serial),DEPENDS+= @NUT_DRIVER_SERIAL)
-                $(if $(filter $(1),neon),DEPENDS+= @NUT_DRIVER_NEON)
+		$(if $(filter $(1),snmp),DEPENDS+= +libnetsnmp)
+		$(if $(filter $(1),usb),DEPENDS+= +libusb-compat)
+                $(if $(filter $(1),neon),DEPENDS+= +libneon)
         endef
 	# Deliberately empty description in order to trigger a build failure.
 	# It should be overridden by the list below, and when updating to a
