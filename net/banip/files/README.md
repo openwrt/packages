@@ -15,7 +15,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 | adguard             | adguard IPs                    |         |         |    x    | tcp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
 | adguardtrackers     | adguardtracker IPs             |         |         |    x    | tcp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
 | antipopads          | antipopads IPs                 |         |         |    x    | tcp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
-| asn                 | ASN segments                   |         |         |    x    | tcp: 80, 443 | [Link](https://asn.ipinfo.app)                               |
+| asn                 | ASN segments                   |    x    |    x    |    x    |              | [Link](https://asn.ipinfo.app)                               |
 | backscatterer       | backscatterer IPs              |    x    |    x    |         |              | [Link](https://www.uceprotect.net/en/index.php)              |
 | becyber             | malicious attacker IPs         |    x    |    x    |         |              | [Link](https://github.com/duggytuxy/malicious_ip_addresses)  |
 | binarydefense       | binary defense banlist         |    x    |    x    |         |              | [Link](https://iplists.firehol.org/?ipset=bds_atif)          |
@@ -114,7 +114,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * It's strongly recommended to use the LuCI frontend to easily configure all aspects of banIP, the application is located in LuCI under the 'Services' menu
 * If you're using a complex network setup, e.g. special tunnel interfaces, than untick the 'Auto Detection' option under the 'General Settings' tab and set the required options manually
 * Start the service with '/etc/init.d/banip start' and check everything is working by running '/etc/init.d/banip status' and also check the 'Firewall Log' and 'Processing Log' tabs
-* If you're going to configure banIP via CLI, edit the config file '/etc/config/banip' and enable the service (set ban\_enabled to '1'), then add pre-configured feeds via 'ban\_feed' (see the feed list above) and add/change other options to your needs (see the options reference below)
+* If you're going to configure banIP via CLI, edit the config file '/etc/config/banip' and enable the service (set ban\_enabled to '1'), then add pre-configured feeds via 'ban\_feed' (see the feed list above) and add/change other options to your needs, see the options reference table below
 
 ## banIP CLI interface
 * All important banIP functions are accessible via CLI.
@@ -428,12 +428,12 @@ A valid JSON source object contains the following information, e.g.:
 		"rule_4": "/^(([0-9]{1,3}\\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\\/(1?[0-9]|2?[0-9]|3?[0-2]))?)$/{printf \"%s,\\n\",$1}",
 		"rule_6": "/^(([0-9A-f]{0,4}:){1,7}[0-9A-f]{0,4}:?(\\/(1?[0-2][0-8]|[0-9][0-9]))?)$/{printf \"%s,\\n\",$1}",
 		"descr": "tor exit nodes",
-		"flag": "tcp 80-89 443"
+		"flag": "gz tcp 80-88 udp 50000"
 	},
 	[...]
 ```
 Add an unique feed name (no spaces, no special chars) and make the required changes: adapt at least the URL, the regex and the description for a new feed.  
-Please note: the flag field is optional, it's a space separated list of options: supported are 'gz' as an archive format, protocols 'tcp' or 'udp' with port numbers/port ranges for destination port limitations.  
+Please note: the flag field is optional, it's a space separated list of options: supported are 'gz' as an archive format, protocols 'tcp' or 'udp' with port numbers/port ranges for destination port limitations - multiple definitions are possible.  
 
 ## Support
 Please join the banIP discussion in this [forum thread](https://forum.openwrt.org/t/banip-support-thread/16985) or contact me by mail <dev@brenken.org>
