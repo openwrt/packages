@@ -23,10 +23,10 @@ ban_lock="/var/run/banip.lock"
 [ "${action}" = "boot" ] && "${ban_init}" running && exit 0
 { [ "${action}" = "stop" ] || [ "${action}" = "report" ] || [ "${action}" = "search" ] || [ "${action}" = "survey" ] || [ "${action}" = "lookup" ]; } && ! "${ban_init}" running && exit 0
 [ ! -r "${ban_funlib}" ] && { [ "${action}" = "boot" ] || [ "${action}" = "start" ] || [ "${action}" = "restart" ] || [ "${action}" = "reload" ] || [ "${action}" = "stop" ] || [ "${action}" = "report" ] || [ "${action}" = "search" ] || [ "${action}" = "survey" ] || [ "${action}" = "lookup" ] || [ "${action}" = "status" ]; } && exit 1
-[ -d "${ban_lock}" ] && { [ "${action}" = "boot" ] || [ "${action}" = "start" ] || [ "${action}" = "restart" ] || [ "${action}" = "reload" ] || [ "${action}" = "lookup" ]; } && exit 1
-[ ! -d "${ban_lock}" ] && { [ "${action}" = "boot" ] || [ "${action}" = "start" ] || [ "${action}" = "restart" ] || [ "${action}" = "reload" ] || [ "${action}" = "lookup" ]; } && mkdir -p "${ban_lock}"
+[ -d "${ban_lock}" ] && { [ "${action}" = "boot" ] || [ "${action}" = "start" ] || [ "${action}" = "restart" ] || [ "${action}" = "reload" ] || [ "${action}" = "lookup" ] || [ "${action}" = "search" ]; } && exit 1
+[ ! -d "${ban_lock}" ] && { [ "${action}" = "boot" ] || [ "${action}" = "start" ] || [ "${action}" = "restart" ] || [ "${action}" = "reload" ] || [ "${action}" = "lookup" ] || [ "${action}" = "search" ]; } && mkdir -p "${ban_lock}"
 { [ "${action}" = "boot" ] || [ "${action}" = "start" ] || [ "${action}" = "restart" ] || [ "${action}" = "reload" ] || [ "${action}" = "stop" ] || [ "${action}" = "report" ] || [ "${action}" = "search" ] || [ "${action}" = "survey" ] || [ "${action}" = "lookup" ] || [ "${action}" = "status" ]; } && . "${ban_funlib}"
-[ ! -d "${ban_lock}" ] && { [ "${action}" = "boot" ] || [ "${action}" = "start" ] || [ "${action}" = "restart" ] || [ "${action}" = "reload" ] || [ "${action}" = "lookup" ]; } && exit 1
+[ ! -d "${ban_lock}" ] && { [ "${action}" = "boot" ] || [ "${action}" = "start" ] || [ "${action}" = "restart" ] || [ "${action}" = "reload" ] || [ "${action}" = "lookup" ] || [ "${action}" = "search" ]; } && exit 1
 
 boot() {
 	: >"${ban_pidfile}"
@@ -81,6 +81,7 @@ report() {
 
 search() {
 	f_search "${1}"
+	rm -rf "${ban_lock}"
 }
 
 survey() {

@@ -1,7 +1,6 @@
-diff -u --recursive gcc-8.4.0-vanilla/gcc/real.h gcc-8.4.0/gcc/real.h
---- gcc-8.4.0-vanilla/gcc/real.h	2020-03-04 02:30:01.000000000 -0600
-+++ gcc-8.4.0/gcc/real.h	2022-05-18 17:02:22.708820427 -0500
-@@ -70,8 +70,10 @@
+--- a/gcc/real.h
++++ b/gcc/real.h
+@@ -77,8 +77,10 @@ struct GTY(()) real_value {
     + (REAL_VALUE_TYPE_SIZE%HOST_BITS_PER_WIDE_INT ? 1 : 0)) /* round up */
  
  /* Verify the guess.  */

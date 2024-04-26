@@ -12,11 +12,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xxhash
 PKG_VERSION:=0.8.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
-PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/Cyan4973/xxHash/archive/v$(PKG_VERSION)
-PKG_HASH:=baee0c6afd4f03165de7a4e67988d16f0f2b257b51d0e3cb91909302a26a79c4
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+PKG_SOURCE_URL:=https://github.com/Cyan4973/xxHash
+PKG_MIRROR_HASH:=0602a12e9ecd009f97a2a845fb5e46af69a60f96547952e5b00228f33bed5cdd
 
 # The source for the library (xxhash.c and xxhash.h) is BSD
 # The source for the command line tool (xxhsum.c) is GPLv2+
@@ -24,11 +25,10 @@ PKG_LICENSE:=BSD-2-Clause GPL-2.0-or-later
 PKG_LICENSE_FILES:=LICENSE cli/COPYING
 PKG_MAINTAINER:=Julien Malik <julien.malik@paraiso.me>
 
-PKG_INSTALL:=1
+CMAKE_SOURCE_SUBDIR:=cmake_unofficial
 
 include $(INCLUDE_DIR)/package.mk
-
-PKG_UNPACK:=$(HOST_TAR) -C "$(PKG_BUILD_DIR)" --strip-components=1 -xzf "$(DL_DIR)/$(PKG_SOURCE)"
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/xxhash/Default
   TITLE:=Extremely fast hash algorithm
@@ -74,7 +74,7 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/*.h $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libxxhash.{a,so*} $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libxxhash.so* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libxxhash.pc $(1)/usr/lib/pkgconfig/
 endef

@@ -5,7 +5,7 @@
 		"rule_4": "/^(([0-9]{1,3}\\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\\/(1?[0-9]|2?[0-9]|3?[0-2]))?)[[:space:]]/{printf \"%s,\\n\",$1}",
 		"rule_6": "/^(([0-9A-f]{0,4}:){1,7}[0-9A-f]{0,4}:?(\\/(1?[0-2][0-8]|[0-9][0-9]))?)[[:space:]]/{printf \"%s,\\n\",$1}",
 		"descr": "adaway IPs",
-		"flag": "80 443"
+		"flag": "tcp 80 443"
 	},
 	"adguard":{
 		"url_4": "https://raw.githubusercontent.com/dibdot/banIP-IP-blocklists/main/adguard-ipv4.txt",
@@ -13,7 +13,7 @@
 		"rule_4": "/^(([0-9]{1,3}\\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\\/(1?[0-9]|2?[0-9]|3?[0-2]))?)[[:space:]]/{printf \"%s,\\n\",$1}",
 		"rule_6": "/^(([0-9A-f]{0,4}:){1,7}[0-9A-f]{0,4}:?(\\/(1?[0-2][0-8]|[0-9][0-9]))?)[[:space:]]/{printf \"%s,\\n\",$1}",
 		"descr": "adguard IPs",
-		"flag": "80 443"
+		"flag": "tcp 80 443"
 	},
 	"adguardtrackers":{
 		"url_4": "https://raw.githubusercontent.com/dibdot/banIP-IP-blocklists/main/adguardtrackers-ipv4.txt",
@@ -21,7 +21,7 @@
 		"rule_4": "/^(([0-9]{1,3}\\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\\/(1?[0-9]|2?[0-9]|3?[0-2]))?)[[:space:]]/{printf \"%s,\\n\",$1}",
 		"rule_6": "/^(([0-9A-f]{0,4}:){1,7}[0-9A-f]{0,4}:?(\\/(1?[0-2][0-8]|[0-9][0-9]))?)[[:space:]]/{printf \"%s,\\n\",$1}",
 		"descr": "adguardtracker IPs",
-		"flag": "80 443"
+		"flag": "tcp 80 443"
 	},
 	"antipopads":{
 		"url_4": "https://raw.githubusercontent.com/dibdot/banIP-IP-blocklists/main/antipopads-ipv4.txt",
@@ -29,7 +29,7 @@
 		"rule_4": "/^(([0-9]{1,3}\\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\\/(1?[0-9]|2?[0-9]|3?[0-2]))?)[[:space:]]/{printf \"%s,\\n\",$1}",
 		"rule_6": "/^(([0-9A-f]{0,4}:){1,7}[0-9A-f]{0,4}:?(\\/(1?[0-2][0-8]|[0-9][0-9]))?)[[:space:]]/{printf \"%s,\\n\",$1}",
 		"descr": "antipopads IPs",
-		"flag": "80 443"
+		"flag": "tcp 80 443"
 	},
 	"asn":{
 		"url_4": "https://asn.ipinfo.app/api/text/list/",
@@ -37,13 +37,20 @@
 		"rule_4": "/^(([0-9]{1,3}\\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\\/(1?[0-9]|2?[0-9]|3?[0-2]))?)$/{printf \"%s,\\n\",$1}",
 		"rule_6": "/^(([0-9A-f]{0,4}:){1,7}[0-9A-f]{0,4}:?(\\/(1?[0-2][0-8]|[0-9][0-9]))?)$/{printf \"%s,\\n\",$1}",
 		"descr": "ASN IP segments",
-		"flag": "80 443"
+		"flag": "tcp 80 443"
 	},
 	"backscatterer":{
 		"url_4": "http://wget-mirrors.uceprotect.net/rbldnsd-all/ips.backscatterer.org.gz",
 		"rule_4": "/^(([0-9]{1,3}\\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\\/(1?[0-9]|2?[0-9]|3?[0-2]))?)$/{printf \"%s,\\n\",$1}",
 		"descr": "backscatterer IPs",
 		"flag": "gz"
+	},
+	"becyber":{
+		"url_4": "https://raw.githubusercontent.com/duggytuxy/malicious_ip_addresses/main/botnets_zombies_scanner_spam_ips.txt",
+		"url_6": "https://raw.githubusercontent.com/duggytuxy/malicious_ip_addresses/main/botnets_zombies_scanner_spam_ips_ipv6.txt",
+		"rule_4": "/^(([0-9]{1,3}\\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\\/(1?[0-9]|2?[0-9]|3?[0-2]))?)$/{printf \"%s,\\n\",$1}",
+		"rule_6": "/^(([0-9A-f]{0,4}:){1,7}[0-9A-f]{0,4}:?(\\/(1?[0-2][0-8]|[0-9][0-9]))?)$/{printf \"%s,\\n\",$1}",
+		"descr": "malicious attacker IPs"
 	},
 	"binarydefense":{
 		"url_4": "https://iplists.firehol.org/files/bds_atif.ipset",
@@ -74,14 +81,9 @@
 		"rule_6": "/^(([0-9A-f]{0,4}:){1,7}[0-9A-f]{0,4}:?(\\/(1?[0-2][0-8]|[0-9][0-9]))?)$/{printf \"%s,\\n\",$1}",
 		"descr": "country blocks"
 	},
-	"darklist":{
-		"url_4": "https://darklist.de/raw.php",
-		"rule_4": "/^(([0-9]{1,3}\\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\\/(1?[0-9]|2?[0-9]|3?[0-2]))?)$/{printf \"%s,\\n\",$1}",
-		"descr": "suspicious attacker IPs"
-	},
 	"debl":{
-		"url_4": "https://www.blocklist.de/downloads/export-ips_all.txt",
-		"url_6": "https://www.blocklist.de/downloads/export-ips_all.txt",
+		"url_4": "https://lists.blocklist.de/lists/all.txt",
+		"url_6": "https://lists.blocklist.de/lists/all.txt",
 		"rule_4": "/^(([0-9]{1,3}\\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\\/(1?[0-9]|2?[0-9]|3?[0-2]))?)$/{printf \"%s,\\n\",$1}",
 		"rule_6": "/^(([0-9A-f]{0,4}:){1,7}[0-9A-f]{0,4}:?(\\/(1?[0-2][0-8]|[0-9][0-9]))?)$/{printf \"%s,\\n\",$1}",
 		"descr": "fail2ban IP blocklist"
@@ -92,7 +94,7 @@
 		"rule_4": "/^(([0-9]{1,3}\\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\\/(1?[0-9]|2?[0-9]|3?[0-2]))?)[[:space:]]/{printf \"%s,\\n\",$1}",
 		"rule_6": "/^(([0-9A-f]{0,4}:){1,7}[0-9A-f]{0,4}:?(\\/(1?[0-2][0-8]|[0-9][0-9]))?)[[:space:]]/{printf \"%s,\\n\",$1}",
 		"descr": "public DoH-Provider",
-		"flag": "80 443"
+		"flag": "tcp 80 443"
 	},
 	"drop":{
 		"url_4": "https://www.spamhaus.org/drop/drop.txt",
@@ -105,11 +107,6 @@
 		"url_4": "https://feeds.dshield.org/block.txt",
 		"rule_4": "/^(([0-9]{1,3}\\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\\/(1?[0-9]|2?[0-9]|3?[0-2]))?)[[:space:]]/{printf \"%s/%s,\\n\",$1,$3}",
 		"descr": "dshield IP blocklist"
-	},
-	"edrop":{
-		"url_4": "https://www.spamhaus.org/drop/edrop.txt",
-		"rule_4": "/^(([0-9]{1,3}\\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\\/(1?[0-9]|2?[0-9]|3?[0-2]))?)[[:space:]]/{printf \"%s,\\n\",$1}",
-		"descr": "spamhaus edrop compilation"
 	},
 	"etcompromised":{
 		"url_4": "https://iplists.firehol.org/files/et_compromised.ipset",
@@ -150,18 +147,18 @@
 		"url_4": "https://list.iblocklist.com/?list=dgxtneitpuvgqqcpfulq&fileformat=cidr&archiveformat=gz",
 		"rule_4": "/^(([0-9]{1,3}\\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\\/(1?[0-9]|2?[0-9]|3?[0-2]))?)$/{printf \"%s,\\n\",$1}",
 		"descr": "advertising IPs",
-		"flag": "gz 80 443"
+		"flag": "gz tcp 80 443"
 	},
 	"iblockspy":{
 		"url_4": "https://list.iblocklist.com/?list=llvtlsjyoyiczbkjsxpf&fileformat=cidr&archiveformat=gz",
 		"rule_4": "/^(([0-9]{1,3}\\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\\/(1?[0-9]|2?[0-9]|3?[0-2]))?)$/{printf \"%s,\\n\",$1}",
 		"descr": "malicious spyware IPs",
-		"flag": "gz 80 443"
+		"flag": "gz tcp 80 443"
 	},
-	"ipblackhole":{
-		"url_4": "https://ip.blackhole.monster/blackhole-today",
-		"rule_4": "/^(([0-9]{1,3}\\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\\/(1?[0-9]|2?[0-9]|3?[0-2]))?)$/{printf \"%s,\\n\",$1}",
-		"descr": "blackhole IP blocklist"
+	"ipsum":{
+		"url_4": "https://raw.githubusercontent.com/stamparm/ipsum/master/levels/3.txt",
+		"rule_4": "/^(([0-9]{1,3}\\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\\/(1?[0-9]|2?[0-9]|3?[0-2]))?)[-[:space:]]?/{printf \"%s,\\n\",$1}",
+		"descr": "malicious IPs"
 	},
 	"ipthreat":{
 		"url_4": "https://lists.ipthreat.net/file/ipthreat-lists/threat/threat-30.txt.gz",
@@ -188,7 +185,7 @@
 		"rule_4": "/^(([0-9]{1,3}\\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\\/(1?[0-9]|2?[0-9]|3?[0-2]))?)[[:space:]]/{printf \"%s,\\n\",$1}",
 		"rule_6": "/^(([0-9A-f]{0,4}:){1,7}[0-9A-f]{0,4}:?(\\/(1?[0-2][0-8]|[0-9][0-9]))?)[[:space:]]/{printf \"%s,\\n\",$1}",
 		"descr": "OISD-big IPs",
-		"flag": "80 443"
+		"flag": "tcp 80 443"
 	},
 	"oisdnsfw":{
 		"url_4": "https://raw.githubusercontent.com/dibdot/banIP-IP-blocklists/main/oisdnsfw-ipv4.txt",
@@ -196,7 +193,7 @@
 		"rule_4": "/^(([0-9]{1,3}\\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\\/(1?[0-9]|2?[0-9]|3?[0-2]))?)[[:space:]]/{printf \"%s,\\n\",$1}",
 		"rule_6": "/^(([0-9A-f]{0,4}:){1,7}[0-9A-f]{0,4}:?(\\/(1?[0-2][0-8]|[0-9][0-9]))?)[[:space:]]/{printf \"%s,\\n\",$1}",
 		"descr": "OISD-nsfw IPs",
-		"flag": "80 443"
+		"flag": "tcp 80 443"
 	},
 	"oisdsmall":{
 		"url_4": "https://raw.githubusercontent.com/dibdot/banIP-IP-blocklists/main/oisdsmall-ipv4.txt",
@@ -204,7 +201,12 @@
 		"rule_4": "/^(([0-9]{1,3}\\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\\/(1?[0-9]|2?[0-9]|3?[0-2]))?)[[:space:]]/{printf \"%s,\\n\",$1}",
 		"rule_6": "/^(([0-9A-f]{0,4}:){1,7}[0-9A-f]{0,4}:?(\\/(1?[0-2][0-8]|[0-9][0-9]))?)[[:space:]]/{printf \"%s,\\n\",$1}",
 		"descr": "OISD-small IPs",
-		"flag": "80 443"
+		"flag": "tcp 80 443"
+	},
+	"pallebone":{
+		"url_4": "https://raw.githubusercontent.com/pallebone/StrictBlockPAllebone/master/BlockIP.txt",
+		"rule_4": "/^(([0-9]{1,3}\\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\\/(1?[0-9]|2?[0-9]|3?[0-2]))?)$/{printf \"%s,\\n\",$1}",
+		"descr": "curated IP blocklist"
 	},
 	"proxy":{
 		"url_4": "https://iplists.firehol.org/files/proxylists.ipset",
@@ -222,7 +224,7 @@
 		"rule_4": "/^(([0-9]{1,3}\\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\\/(1?[0-9]|2?[0-9]|3?[0-2]))?)[[:space:]]/{printf \"%s,\\n\",$1}",
 		"rule_6": "/^(([0-9A-f]{0,4}:){1,7}[0-9A-f]{0,4}:?(\\/(1?[0-2][0-8]|[0-9][0-9]))?)[[:space:]]/{printf \"%s,\\n\",$1}",
 		"descr": "stevenblack IPs",
-		"flag": "80 443"
+		"flag": "tcp 80 443"
 	},
 	"talos":{
 		"url_4": "https://www.talosintelligence.com/documents/ip-blacklist",
@@ -295,6 +297,6 @@
 		"rule_4": "/^(([0-9]{1,3}\\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\\/(1?[0-9]|2?[0-9]|3?[0-2]))?)[[:space:]]/{printf \"%s,\\n\",$1}",
 		"rule_6": "/^(([0-9A-f]{0,4}:){1,7}[0-9A-f]{0,4}:?(\\/(1?[0-2][0-8]|[0-9][0-9]))?)[[:space:]]/{printf \"%s,\\n\",$1}",
 		"descr": "yoyo IPs",
-		"flag": "80 443"
+		"flag": "tcp 80 443"
 	}
 }

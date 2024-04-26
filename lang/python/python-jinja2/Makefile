@@ -15,10 +15,13 @@ PKG_MAINTAINER:=Michal Vasilek <michal.vasilek@nic.cz>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.rst
 PKG_CPE_ID:=cpe:/a:pocoo:jinja2
+HOST_BUILD_DEPENDS:= python-markupsafe/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 include ../python3-package.mk
+include ../python3-host-build.mk
 
 define Package/python3-jinja2
   SECTION:=lang
@@ -43,3 +46,4 @@ endef
 $(eval $(call Py3Package,python3-jinja2))
 $(eval $(call BuildPackage,python3-jinja2))
 $(eval $(call BuildPackage,python3-jinja2-src))
+$(eval $(call HostBuild))

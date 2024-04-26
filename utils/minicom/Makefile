@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=minicom
-PKG_VERSION:=2.8
-PKG_RELEASE:=2
+PKG_VERSION:=2.9
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://salsa.debian.org/minicom-team/minicom/-/archive/$(PKG_VERSION)
-PKG_HASH:=38cea30913a20349326ff3f1763ee1512b7b41601c24f065f365e18e9db0beba
+PKG_HASH:=9efbb6458140e5a0de445613f0e76bcf12cbf7a9892b2f53e075c2e7beaba86c
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 
 PKG_LICENSE:=GPL-2.0-or-later

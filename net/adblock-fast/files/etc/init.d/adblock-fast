@@ -52,7 +52,7 @@ readonly smartdnsNftsetFilter=';'
 readonly unboundFile="/var/lib/unbound/adb_list.${packageName}"
 readonly unboundCache="/var/run/${packageName}/unbound.cache"
 readonly unboundGzip="${packageName}.unbound.gz"
-readonly unboundFilter='s|^|local-zone: "|;s|$|" static|'
+readonly unboundFilter='s|^|local-zone: "|;s|$|." always_nxdomain|'
 readonly A_TMP="/var/${packageName}.a.tmp"
 readonly B_TMP="/var/${packageName}.b.tmp"
 readonly SED_TMP="/var/${packageName}.sed.tmp"
@@ -267,7 +267,7 @@ dns_set_output_values() {
 			outputFilter="$unboundFilter"
 			outputFile="$unboundFile"
 			outputCache="$unboundCache"
-			outputGzip="$unboundGzip"
+			outputGzip="${compressed_cache_dir}/${unboundGzip}"
 		;;
 	esac
 }
@@ -757,7 +757,7 @@ load_environment() {
 	[ "$dns" = 'smartdns.domainset' ] || rm -f "$smartdnsDomainSetFile" "$smartdnsDomainSetCache" "${compressed_cache_dir}/${smartdnsDomainSetGzip}" "$smartdnsDomainSetConfig"
 	[ "$dns" = 'smartdns.ipset' ]     || rm -f "$smartdnsIpsetFile" "$smartdnsIpsetCache" "${compressed_cache_dir}/${smartdnsIpsetGzip}" "$smartdnsIpsetConfig"
 	[ "$dns" = 'smartdns.nftset' ]    || rm -f "$smartdnsNftsetFile" "$smartdnsNftsetCache" "${compressed_cache_dir}/${smartdnsNftsetGzip}" "$smartdnsNftsetConfig"
-	[ "$dns" = 'unbound.adb_list' ]   || rm -f "$unboundFile" "$unboundCache" "$unboundGzip"
+	[ "$dns" = 'unbound.adb_list' ]   || rm -f "$unboundFile" "$unboundCache" "${compressed_cache_dir}/${unboundGzip}"
 
 	for i in "$runningConfigFile" "$runningErrorFile" "$runningStatusFile" "$outputFile" "$outputCache" "$outputGzip" "$outputConfig"; do
 		[ -n "$i" ] || continue
@@ -892,7 +892,7 @@ resolver() {
 			rm -f "$smartdnsDomainSetFile" "$smartdnsDomainSetCache" "${compressed_cache_dir}/${smartdnsDomainSetGzip}" "$smartdnsDomainSetConfig"
 			rm -f "$smartdnsIpsetFile" "$smartdnsIpsetCache" "${compressed_cache_dir}/${smartdnsIpsetGzip}" "$smartdnsIpsetConfig"
 			rm -f "$smartdnsNftsetFile" "$smartdnsNftsetCache" "${compressed_cache_dir}/${smartdnsNftsetGzip}" "$smartdnsNftsetConfig"
-			rm -f "$unboundFile" "$unboundCache" "$unboundGzip"
+			rm -f "$unboundFile" "$unboundCache" "${compressed_cache_dir}/${unboundGzip}"
 			if [ -s "/etc/config/dhcp" ]; then
 				config_load 'dhcp'
 				config_foreach _dnsmasq_instance_config 'dnsmasq' 'cleanup'
@@ -932,19 +932,19 @@ resolver() {
 			case "$dns" in
 				dnsmasq.*)
 					chmod 660 "$outputFile"
-					chown root:dnsmasq "$outputFile"
+					chown root:dnsmasq "$outputFile" >/dev/null 2>/dev/null
 					param='dnsmasq_restart'
 					output_text='Restarting dnsmasq'
 				;;
 				smartdns.*)
 					chmod 660 "$outputFile" "$outputConfig"
-					chown root:root "$outputFile" "$outputConfig"
+					chown root:root "$outputFile" "$outputConfig" >/dev/null 2>/dev/null
 					param='smartdns_restart'
 					output_text='Restarting SmartDNS'
 				;;
 				unbound.*)
 					chmod 660 "$outputFile"
-					chown root:unbound "$outputFile"
+					chown root:unbound "$outputFile" >/dev/null 2>/dev/null
 					param='unbound_restart'
 					output_text='Restarting Unbound'
 				;;
@@ -1036,7 +1036,7 @@ cache() {
 			return $?
 		;;
 		test_gzip)
-			[ -s "$outputGzip" ] && gzip -t -c "$outputGzip"
+			[ -s "$outputGzip" ] && gzip -t -c "$outputGzip" >/dev/null 2>/dev/null
 			return $?
 		;;
 		create_gzip)
@@ -1412,6 +1412,11 @@ $(sed '/^[[:space:]]*$/d' "$A_TMP")"
 		output_failn
 		json add error 'errorMovingDataFile'
 	fi
+	case "$dns" in
+		unbound.adb_list)
+			sed -i '1 i\server:' "$outputFile"
+		;;
+	esac
 	if [ "$compressed_cache" -gt 0 ]; then
 		output 2 'Creating compressed cache '
 		json set message "$(get_text 'statusProcessing'): creating compressed cache"
@@ -1596,7 +1601,7 @@ adb_check() {
 					smartdns.*)
 						grep "$string" "$outputFile";;
 					unbound.adb_list)
-						grep "$string" "$outputFile" | sed 's|^local-zone: "||;s|" static$||;';;
+						grep "$string" "$outputFile" | sed 's|^local-zone: "||;s|." always_nxdomain$||;';;
 				esac
 			fi
 		else
