@@ -1,0 +1,67 @@
+From 707812db69cc5fdb8b6b4417d3a6b18405116d9f Mon Sep 17 00:00:00 2001
+From: Christian Marangi <ansuelsmth@gmail.com>
+Date: Sun, 28 Apr 2024 12:00:02 +0200
+Subject: [PATCH] nsock: Fix compilation error with OPENSSL_NO_DTLS
+
+Commit ba26cc78f207 ("Replace check for DTLS_client_method with
+OPENSSL_NO_DTLS") made DTLS support depend on the openssl define
+directly but leave some use of dtlsctx not guarded by ifdef.
+
+Fix this by adding to the remaining use of dtlsctx ifdef guard and
+return fatal print for running function with unsupported OpenSSL
+feature.
+
+Fixes: ba26cc78f207 ("Replace check for DTLS_client_method with OPENSSL_NO_DTLS")
+Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
+---
+ nsock/src/nsock_connect.c | 4 ++++
+ nsock/src/nsock_core.c    | 9 ++++++++-
+ nsock/src/nsock_pool.c    | 2 ++
+ 3 files changed, 14 insertions(+), 1 deletion(-)
+
+--- a/nsock/src/nsock_connect.c
++++ b/nsock/src/nsock_connect.c
+@@ -472,8 +472,12 @@ nsock_event_id nsock_connect_ssl(nsock_p
+ 
+   if (proto == IPPROTO_UDP)
+   {
++#ifndef OPENSSL_NO_DTLS
+     if (!ms->dtlsctx)
+       nsock_pool_dtls_init(ms, 0);
++#else
++    fatal("%s called with no OpenSSL DTLS support", __func__);
++#endif
+   }
+   else
+   {
+--- a/nsock/src/nsock_core.c
++++ b/nsock/src/nsock_core.c
+@@ -364,7 +364,14 @@ void handle_connect_result(struct npool
+     if (nse->type == NSE_TYPE_CONNECT_SSL &&
+         nse->status == NSE_STATUS_SUCCESS) {
+ #if HAVE_OPENSSL
+-      sslctx = iod->lastproto == IPPROTO_UDP ? ms->dtlsctx : ms->sslctx;
++      if (iod->lastproto == IPPROTO_UDP)
++#ifndef OPENSSL_NO_DTLS
++        sslctx = ms->dtlsctx;
++#else
++        fatal("%s called with no OpenSSL DTLS support", __func__);
++#endif
++      else
++        sslctx = ms->sslctx;
+       assert(sslctx != NULL);
+       /* Reuse iod->ssl if present. If set, this is the second try at connection
+          without the SSL_OP_NO_SSLv2 option set. */
+--- a/nsock/src/nsock_pool.c
++++ b/nsock/src/nsock_pool.c
+@@ -178,8 +178,10 @@ nsock_pool nsock_pool_new(void *userdata
+ 
+ #if HAVE_OPENSSL
+   nsp->sslctx = NULL;
++#ifndef OPENSSL_NO_DTLS
+   nsp->dtlsctx = NULL;
+ #endif
++#endif
+ 
+   nsp->px_chain = NULL;
+ 
