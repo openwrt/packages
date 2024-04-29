@@ -163,7 +163,7 @@ sample_load() {
 	cat /proc/$$/stat
 	while : ; do
 		sleep 1s
-		egrep "^cpu[0-9]*" /proc/stat
+		grep -E "^cpu[0-9]*" /proc/stat
 		for c in $cpus; do
 			[ -r $c/$f ] && echo "cpufreq $(basename $c) $(cat $c/$f)"
 		done
