@@ -54,7 +54,7 @@ nft_rm_table() {
 
 nft_add_table() {
 	if [ "$(uci -q get snort.snort.method)" = "nfq" ]; then
-		local options
+		local options=''
 		$VERBOSE && options='-e'
 		print nftables | nft $options -f $STDIN
 		$VERBOSE && nft list table inet snort
@@ -118,7 +118,7 @@ check() {
 	fi
 
 	if [ "$(uci -q get snort.snort.method)" = "nfq" ]; then
-		local options
+		local options=''
 		local test_nft="${CONF_DIR}/test_conf.nft"
 		print nftables > "${test_nft}" || die "Errors during generation of nftables config"
 		$VERBOSE && options='-e'
