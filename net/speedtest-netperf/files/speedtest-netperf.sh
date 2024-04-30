@@ -20,16 +20,19 @@
 # first downloading and then uploading network streams, while concurrent mode
 # provides a stress test by dowloading and uploading streams simultaneously.
 #
+# The script also supports measuring latency when idle as a baseline prior to
+# testing under network load.
+#
 # NOTE: The script uses servers and network bandwidth that are provided by
-# generous volunteers (not some wealthy "big company"). Feel free to use the
-# script to test your SQM configuration or troubleshoot network and latency
-# problems.  Continuous or high rate use of this script may result in denied
-# access. Happy testing!
+# generous volunteers. Feel free to use the script to test your SQM
+# configuration or troubleshoot network and latency problems, but be warned
+# that continuous or high-rate use of the servers may result in denied access.
+# Happy testing!
 #
 # For more information, consult the online README.md:
 # https://github.com/openwrt/packages/blob/master/net/speedtest-netperf/files/README.md
 
-# Usage: speedtest-netperf.sh [-4 | -6] [ -H netperf-server ] [ -t duration ] [ -p host-to-ping ] [ -n simultaneous-streams ] [ -s | -c ]
+# Usage: speedtest-netperf.sh [-4 | -6] [ -H netperf-server ] [ -t duration ] [ -p host-to-ping ] [ -n simultaneous-streams ] [ -s | -c [duration] ] [ -i [duration] ]
 
 # Options: If options are present:
 #
@@ -37,14 +40,15 @@
 #                Alternate servers are netperf-east (east coast US),
 #                netperf-west (California), and netperf-eu (Denmark)
 # -4 | -6:       Enable ipv4 or ipv6 testing (ipv4 is the default)
-# -t | --time:   Duration of each direction's test - (default - 60 seconds)
-# -p | --ping:   Host to ping to measure latency (default - gstatic.com)
-# -n | --number: Number of simultaneous sessions (default - 5 sessions)
+# -t | --time:   Duration of each direction's test - (default - 30 seconds)
+# -p | --ping:   Host to ping to measure latency (default - one.one.one.one)
+# -n | --number: Number of simultaneous streams (default - 5 streams)
 #                based on whether concurrent or sequential upload/downloads)
-# -s | -c:       Sequential or concurrent download/upload (default - sequential)
+# -s | -c:       Sequential or concurrent download/upload (default - disabled)
+# -i | --idle:   Measure idle latency before speed test (default - disabled)
 
 # Copyright (c) 2014 - Rich Brown <rich.brown@blueberryhillsoftware.com>
-# Copyright (c) 2018 - Tony Ambardar <itugrok@yahoo.com>
+# Copyright (c) 2018-2024 - Tony Ambardar <itugrok@yahoo.com>
 # GPLv2
 
 
@@ -163,7 +167,7 @@ sample_load() {
 	cat /proc/$$/stat
 	while : ; do
 		sleep 1s
-		egrep "^cpu[0-9]*" /proc/stat
+		grep "^cpu[0-9]*" /proc/stat
 		for c in $cpus; do
 			[ -r $c/$f ] && echo "cpufreq $(basename $c) $(cat $c/$f)"
 		done
@@ -179,13 +183,13 @@ print_dots() {
 	done
 }
 
-# Start $MAXSESSIONS datastreams between netperf client and server
+# Start $MAXSTREAMS datastreams between netperf client and server
 # netperf writes the sole output value (in Mbps) to stdout when completed
 
 start_netperf() {
-	for i in $( seq $MAXSESSIONS ); do
-		netperf $TESTPROTO -H $TESTHOST -t $1 -l $TESTDUR -v 0 -P 0 >> $2 &
-#		echo "Starting PID $! params: $TESTPROTO -H $TESTHOST -t $1 -l $TESTDUR -v 0 -P 0 >> $2"
+	for i in $( seq $MAXSTREAMS ); do
+		netperf $TESTPROTO -H $TESTHOST -t $1 -l $SPEEDDUR -v 0 -P 0 >> $2 &
+#		echo "Starting PID $! params: $TESTPROTO -H $TESTHOST -t $1 -l $SPEEDDUR -v 0 -P 0 >> $2"
 	done
 }
 
@@ -258,6 +262,50 @@ kill_background_and_exit() {
 	exit 1
 }
 
+# Measure ping latency at idle as a baseline for comparison.
+
+measure_idle() {
+
+	# Create temp files for netperf up/download results
+	PINGFILE=$(mktemp /tmp/measurepings.XXXXXX) || exit 1
+	LOADFILE=$(mktemp /tmp/measureload.XXXXXX) || exit 1
+#	echo $PINGFILE $LOADFILE
+
+	# Start dots
+	print_dots &
+	DOTS_PID=$!
+#	echo "Dots PID: $DOTS_PID"
+
+	# Start Ping
+	ping $TESTPROTO $PINGHOST > $PINGFILE &
+	PING_PID=$!
+#	echo "Ping PID: $PING_PID"
+
+	# Start CPU load sampling
+	sample_load > $LOADFILE &
+	LOAD_PID=$!
+#	echo "Load PID: $LOAD_PID"
+
+	# Wait for idle test period
+	sleep $IDLEDUR
+
+	# When idle time elapses, stop the CPU monitor, dots and pings
+	kill_load
+	kill_pings
+	kill_dots
+	echo
+
+	# Summarize the ping data
+	summarize_pings $PINGFILE
+
+	# Summarize the load data
+	summarize_load $LOADFILE
+
+	# Clean up
+	rm -f $PINGFILE
+	rm -f $LOADFILE
+}
+
 # Measure speed, ping latency and cpu usage of netperf data transfers
 # Called with direction parameter: "Download", "Upload", or "Bidirectional"
 # The function gets other info from globals and command-line arguments.
@@ -280,11 +328,7 @@ measure_direction() {
 #	echo "Dots PID: $DOTS_PID"
 
 	# Start Ping
-	if [ $TESTPROTO -eq "-4" ]; then
-		ping  $PINGHOST > $PINGFILE &
-	else
-		ping6 $PINGHOST > $PINGFILE &
-	fi
+	ping $TESTPROTO $PINGHOST > $PINGFILE &
 	PING_PID=$!
 #	echo "Ping PID: $PING_PID"
 
@@ -308,7 +352,10 @@ measure_direction() {
 
 	# Wait until background netperf processes complete, check errors
 	if ! wait_netperf; then
-		echo;echo "WARNING: netperf returned errors. Results may be inaccurate!"
+		echo
+		echo "WARNING: Results may be inaccurate since 'netperf' returned errors."
+		echo "         Run directly for more details:"
+		echo "         netperf $TESTPROTO -H $TESTHOST"
 	fi
 
 	# When netperf completes, stop the CPU monitor, dots and pings
@@ -338,49 +385,80 @@ measure_direction() {
 	rm -f $LOADFILE
 }
 
+print_usage() {
+	echo \
+"Usage: speedtest-netperf.sh [ -H netperf-server ] [ -p host-to-ping ] [-4 | -6]
+                            [ -i [duration] ] [ -s | -c [duration] ]
+                            [ -t duration ] [ -n simultaneous-streams ]"
+}
+
+is_number() {
+	case "$1" in
+		""|*[![:digit:]]*) return 1;;
+		*) return 0 ;;
+	esac
+}
+
 # ------- Start of the main routine --------
 
-# set an initial values for defaults
+# Set initial values for defaults
 TESTHOST="netperf.bufferbloat.net"
-TESTDUR="60"
-PINGHOST="gstatic.com"
-MAXSESSIONS=5
+PINGHOST="one.one.one.one"
+MAXSTREAMS=5
 TESTPROTO="-4"
-TESTSEQ=1
+TESTSPEED=0
+SPEEDDUR="30"
+TESTIDLE=0
+IDLEDUR="30"
 
-# read the options
+# Clear temp files
+DLFILE=
+ULFILE=
+PINGFILE=
+LOADFILE=
 
-# extract options and their arguments into variables.
+# Parse options and their parameters into variables. Options for --idle,
+# --sequential and --concurrent have optional parameters.
 while [ $# -gt 0 ]
 do
 	case "$1" in
-		-s|--sequential) TESTSEQ=1 ; shift 1 ;;
-		-c|--concurrent) TESTSEQ=0 ; shift 1 ;;
+		-i|--idle)
+			TESTIDLE=1 ; shift 1
+			is_number "$1" && { IDLEDUR=$1 ; shift 1 ; } ;;
+		-s|--sequential)
+			TESTSPEED=1 ; shift 1
+			is_number "$1" && { SPEEDDUR=$1 ; shift 1 ; } ;;
+		-c|--concurrent)
+			TESTSPEED=2 ; shift 1
+			is_number "$1" && { SPEEDDUR=$1 ; shift 1 ; } ;;
 		-4|-6) TESTPROTO=$1 ; shift 1 ;;
 		-H|--host)
 			case "$2" in
 				"") echo "Missing hostname" ; exit 1 ;;
-				*) TESTHOST=$2 ; shift 2 ;;
+				*) TESTHOST="$2" ; shift 2 ;;
 			esac ;;
 		-t|--time)
-			case "$2" in
-				"") echo "Missing duration" ; exit 1 ;;
-				*) TESTDUR=$2 ; shift 2 ;;
-			esac ;;
+			is_number "$2" || { echo "Missing duration" ; exit 1 ; }
+			IDLEDUR=$2 ; SPEEDDUR=$2 ; shift 2 ;;
 		-p|--ping)
 			case "$2" in
 				"") echo "Missing ping host" ; exit 1 ;;
 				*) PINGHOST=$2 ; shift 2 ;;
 			esac ;;
 		-n|--number)
-			case "$2" in
-				"") echo "Missing number of simultaneous streams" ; exit 1 ;;
-				*) MAXSESSIONS=$2 ; shift 2 ;;
-			esac ;;
+			is_number $2 || { echo "Missing number of streams" ; exit 1 ; }
+			MAXSTREAMS=$2 ; shift 2 ;;
 		--) shift ; break ;;
-		*) echo "Usage: speedtest-netperf.sh [ -s | -c ] [-4 | -6] [ -H netperf-server ] [ -t duration ] [ -p host-to-ping ] [ -n simultaneous-sessions ]" ; exit 1 ;;
+		*) print_usage ; exit 1 ;;
 	esac
 done
+
+# Extra argument validations
+
+if [ $TESTIDLE -eq "0" ] && [ $TESTSPEED -eq "0" ]; then
+	echo "Please select an idle latency test and/or speed test:"
+	print_usage ; exit 1
+fi
 
 # Check dependencies
 
@@ -388,21 +466,34 @@ if ! netperf -V >/dev/null 2>&1; then
 	echo "Missing netperf program, please install" ; exit 1
 fi
 
-# Start the main test
-
-DATE=$(date "+%Y-%m-%d %H:%M:%S")
-echo "$DATE Starting speedtest for $TESTDUR seconds per transfer session."
-echo "Measure speed to $TESTHOST (IPv${TESTPROTO#-}) while pinging $PINGHOST."
-echo -n "Download and upload sessions are "
-[ "$TESTSEQ " -eq "1" ] && echo -n "sequential," || echo -n "concurrent,"
-echo " each with $MAXSESSIONS simultaneous streams."
-
 # Catch a Ctl-C and stop background netperf, CPU stats, pinging and print_dots
 trap kill_background_and_exit HUP INT TERM
 
-if [ $TESTSEQ -eq "1" ]; then
-	measure_direction "Download"
-	measure_direction "Upload"
-else
-	measure_direction "Bidirectional"
+# Start the main tests
+
+DATE=$(date "+%Y-%m-%d %H:%M:%S")
+echo -n "$DATE Begin test with "
+[ $TESTIDLE -eq "1" ] && echo -n "$IDLEDUR-second ping"
+[ $(($TESTIDLE * $TESTSPEED)) -ne "0" ] && echo -n ", "
+[ $TESTSPEED -ne "0" ] && echo -n "$SPEEDDUR-second transfer"
+echo " sessions."
+
+if [ $TESTIDLE -eq "1" ]; then
+	echo "Measure idle latency by pinging $PINGHOST (IPv${TESTPROTO#-})."
+	measure_idle
+	echo
+fi
+
+if [ $TESTSPEED -ne "0" ]; then
+	echo "Measure speed to $TESTHOST (IPv${TESTPROTO#-}) while pinging $PINGHOST."
+	echo -n "Download and upload sessions are "
+	[ "$TESTSPEED" -eq "1" ] && echo -n "sequential," || echo -n "concurrent,"
+	echo " each with $MAXSTREAMS simultaneous streams."
+
+	if [ $TESTSPEED -eq "1" ]; then
+		measure_direction "Download"
+		measure_direction "Upload"
+	else
+		measure_direction "Bidirectional"
+	fi
 fi
