@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=knot
 PKG_VERSION:=3.3.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://secure.nic.cz/files/knot-dns/
@@ -57,8 +57,8 @@ define Package/knot
 	$(call Package/knot/Default)
 	TITLE+= server with control utility
 	DEPENDS+=+libedit +liburcu +knot-libs +knot-libzscanner
-	EXTRA_DEPENDS:=knot-libs (=$(PKG_VERSION)-$(PKG_RELEASE)), \
-	               knot-libzscanner (=$(PKG_VERSION)-$(PKG_RELEASE))
+	EXTRA_DEPENDS:=knot-libs (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
+	               knot-libzscanner (=$(PKG_VERSION)-r$(PKG_RELEASE))
 	USERID:=knot=5353:knot=5353
 endef
 
@@ -66,46 +66,46 @@ define Package/knot-dig
 	$(call Package/knot/Default)
 	TITLE+= advanced DNS lookup utility
 	DEPENDS+=+libedit +knot-libs
-	EXTRA_DEPENDS:=knot-libs (=$(PKG_VERSION)-$(PKG_RELEASE))
+	EXTRA_DEPENDS:=knot-libs (=$(PKG_VERSION)-r$(PKG_RELEASE))
 endef
 
 define Package/knot-host
 	$(call Package/knot/Default)
 	TITLE+= simple DNS lookup utility
 	DEPENDS+=+libedit +knot-libs
-	EXTRA_DEPENDS:=knot-libs (=$(PKG_VERSION)-$(PKG_RELEASE))
+	EXTRA_DEPENDS:=knot-libs (=$(PKG_VERSION)-r$(PKG_RELEASE))
 endef
 
 define Package/knot-nsupdate
 	$(call Package/knot/Default)
 	TITLE+= dynamic DNS update utility
 	DEPENDS+=+libedit +knot-libs +knot-libzscanner
-	EXTRA_DEPENDS:=knot-libs (=$(PKG_VERSION)-$(PKG_RELEASE)), \
-	               knot-libzscanner (=$(PKG_VERSION)-$(PKG_RELEASE))
+	EXTRA_DEPENDS:=knot-libs (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
+	               knot-libzscanner (=$(PKG_VERSION)-r$(PKG_RELEASE))
 endef
 
 define Package/knot-zonecheck
 	$(call Package/knot/Default)
 	TITLE+= zonefile check utility
 	DEPENDS+=+libedit +liburcu +knot-libs +knot-libzscanner
-	EXTRA_DEPENDS:=knot-libs (=$(PKG_VERSION)-$(PKG_RELEASE)), \
-	               knot-libzscanner (=$(PKG_VERSION)-$(PKG_RELEASE))
+	EXTRA_DEPENDS:=knot-libs (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
+	               knot-libzscanner (=$(PKG_VERSION)-r$(PKG_RELEASE))
 endef
 
 define Package/knot-keymgr
 	$(call Package/knot/Default)
 	TITLE+= DNSSEC key management utility
 	DEPENDS+=+libedit +liburcu +knot-libs +knot-libzscanner
-	EXTRA_DEPENDS:=knot-libs (=$(PKG_VERSION)-$(PKG_RELEASE)), \
-	               knot-libzscanner (=$(PKG_VERSION)-$(PKG_RELEASE))
+	EXTRA_DEPENDS:=knot-libs (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
+	               knot-libzscanner (=$(PKG_VERSION)-r$(PKG_RELEASE))
 endef
 
 define Package/knot-tests
 	$(call Package/knot/Default)
 	TITLE+= tests
 	DEPENDS+=+libedit +liburcu +knot-libs +knot-libzscanner
-	EXTRA_DEPENDS:=knot-libs (=$(PKG_VERSION)-$(PKG_RELEASE)), \
-	               knot-libzscanner (=$(PKG_VERSION)-$(PKG_RELEASE))
+	EXTRA_DEPENDS:=knot-libs (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
+	               knot-libzscanner (=$(PKG_VERSION)-r$(PKG_RELEASE))
 endef
 
 define Package/knot-libs/description
