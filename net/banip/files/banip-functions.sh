@@ -1354,6 +1354,7 @@ f_report() {
 	local report_jsn report_txt tmp_val ruleset_raw item table_sets set_cnt set_input set_forwardwan set_forwardlan set_cntinput set_cntforwardwan set_cntforwardlan set_proto set_dport set_details
 	local expr detail jsnval timestamp autoadd_allow autoadd_block sum_sets sum_setinput sum_setforwardwan sum_setforwardlan sum_setelements sum_cntinput sum_cntforwardwan sum_cntforwardlan
 	local sum_synflood sum_udpflood sum_icmpflood sum_ctinvalid sum_tcpinvalid output="${1}"
+
 	[ -z "${ban_dev}" ] && f_conf
 	f_mkdir "${ban_reportdir}"
 	report_jsn="${ban_reportdir}/ban_report.jsn"
@@ -1549,7 +1550,7 @@ f_report() {
 			[ -n "${ban_mailreceiver}" ] && [ -x "${ban_mailcmd}" ] && f_mail
 			;;
 	esac
-	rm -f "${report_txt}"
+	: >"${report_txt}"
 }
 
 # Set search
@@ -1682,6 +1683,9 @@ f_monitor() {
 					log_raw="$(eval ${loglimit_cmd})"
 					log_count="$(printf "%s\n" "${log_raw}" | "${ban_grepcmd}" -c "suspicious IP '${ip}'")"
 					if [ "${log_count}" -ge "${ban_logcount}" ]; then
+						if "${ban_nftcmd}" add element inet banIP "blocklist${proto}" { ${ip} ${nft_expiry} } >/dev/null 2>&1; then
+							f_log "info" "add IP '${ip}' (expiry: ${ban_nftexpiry:-"-"}) to blocklist${proto} set"
+						fi
 						if [ "${ban_autoblocksubnet}" = "1" ]; then
 							rdap_log="$("${ban_fetchcmd}" ${ban_rdapparm} "${ban_rdapfile}" "${ban_rdapurl}${ip}" 2>&1)"
 							rdap_rc="${?}"
@@ -1698,11 +1702,6 @@ f_monitor() {
 								fi
 							else
 								f_log "info" "rdap request failed (rc: ${rdap_rc:-"-"}/log: ${rdap_log})"
-							fi
-						fi
-						if [ "${ban_autoblocksubnet}" = "0" ] || [ "${rdap_rc}" != "0" ] || [ ! -s "${ban_rdapfile}" ] || [ -z "${rdap_prefix}" ] || [ -z "${rdap_length}" ]; then
-							if "${ban_nftcmd}" add element inet banIP "blocklist${proto}" { ${ip} ${nft_expiry} } >/dev/null 2>&1; then
-								f_log "info" "add IP '${ip}' (expiry: ${ban_nftexpiry:-"-"}) to blocklist${proto} set"
 							fi
 						fi
 						if [ -z "${ban_nftexpiry}" ] && [ "${ban_autoblocklist}" = "1" ] && ! "${ban_grepcmd}" -q "^${ip}" "${ban_blocklist}"; then
