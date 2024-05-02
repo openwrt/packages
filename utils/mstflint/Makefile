@@ -96,6 +96,14 @@ TARGET_CFLAGS += \
 	-D_GNU_SOURCE \
 	-I$(STAGING_DIR)/usr/include/libxml2
 
+define Build/InstallDev
+	$(INSTALL_DIR) $(1)/usr/include
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/mstflint $(1)/usr/include/
+
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/mstflint $(1)/usr/lib/
+endef
+
 define Package/mstflint/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstarchive $(1)/usr/bin/
