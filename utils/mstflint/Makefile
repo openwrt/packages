@@ -32,9 +32,8 @@ define Package/mstflint
   TITLE:=Mellanox Firmware Burning and Diagnostics Tools
   URL:=https://github.com/Mellanox/mstflint
   DEPENDS:=@!(mips||mips64||mipsel) \
-    +libcurl +liblzma +libopenssl +libsqlite3 \
-    +libstdcpp +libxml2 +python3-ctypes \
-    +python3-urllib +python3-xml +zlib
+    +libcurl +liblzma +libopenssl \
+    +libsqlite3 +libstdcpp +libxml2 +zlib
 endef
 
 define Package/mstflint/description
@@ -75,6 +74,20 @@ define Package/mstflint/description
       link status and issues related to them.
 endef
 
+define Package/mstflint/config
+  config PACKAGE_MSTFLINT_INCLUDE_PYTHON
+    bool "Include Python-dependent tools"
+    default y
+    depends on PACKAGE_mstflint
+    select PACKAGE_python3-ctypes
+    select PACKAGE_python3-logging
+    select PACKAGE_python3-xml
+    help
+      All mstflint tools including the following Python-dependent:
+        msftwreset, mstfwtrace, mstprivhost,
+        mstresourcedump, mstresourceparse
+endef
+
 CONFIGURE_ARGS += \
 	--enable-fw-mgr \
 	--disable-inband
@@ -85,13 +98,32 @@ TARGET_CFLAGS += \
 
 define Package/mstflint/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
-
-	$(INSTALL_DIR) $(1)/usr/lib/mstflint
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/mstflint $(1)/usr/lib/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstarchive $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstconfig $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstcongestion $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstflint $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstfwmanager $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstmcra $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstmread $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstmtserver $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstmwrite $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstregdump $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstvpd $(1)/usr/bin/
 
 	$(INSTALL_DIR) $(1)/usr/share/mstflint
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/mstflint $(1)/usr/share/
+
+ifeq ($(CONFIG_PACKAGE_MSTFLINT_INCLUDE_PYTHON),y)
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstfwreset $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstfwtrace $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstprivhost $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstresourcedump $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstresourceparse $(1)/usr/bin/
+
+	$(INSTALL_DIR) $(1)/usr/lib/mstflint
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/mstflint/python_tools $(1)/usr/lib/mstflint/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/mstflint/sdk $(1)/usr/lib/mstflint/
+endif
 endef
 
 $(eval $(call BuildPackage,mstflint))
