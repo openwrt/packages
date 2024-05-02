@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 PKG_NAME:=frr
 PKG_VERSION:=9.0.0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_SOURCE_DATE:=2023-08-12
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
@@ -106,6 +106,8 @@ define Package/frr-vtysh
   DEPENDS+=+frr-libfrr +libreadline +libncurses +more
   TITLE:=integrated shell for frr routing software
   CONFLICTS:=quagga-vtysh
+  DEFAULT:=y if PACKAGE_frr
+  HIDDEN:=1
 endef
 
 define Package/frr-watchfrr
