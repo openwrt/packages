@@ -8,9 +8,9 @@ PKG_MAINTAINER:=Thibaut VARÈNE <hacks@slashdirt.org>
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/f00b4r0/uspot.git
-PKG_SOURCE_DATE:=2024-03-25
-PKG_SOURCE_VERSION:=094f0df88150ff2c351cfca4fabf76a7edcac79d
-PKG_MIRROR_HASH:=2ffc723e6560e76f53496b444568724d3c52a45ac143ca259096c3d20522de0f
+PKG_SOURCE_DATE:=2024-05-03
+PKG_SOURCE_VERSION:=92d3356d3fb3ae36199dbd494b5d9a9ae1a9db07
+PKG_MIRROR_HASH:=c7584c6b029c56d7c16156c007500ad61e2be29a6fd939f192ad6cb4444e1f2b
 
 CMAKE_SOURCE_SUBDIR:=src
 
@@ -25,7 +25,7 @@ define Package/uspot
   EXTRA_DEPENDS:=ucode (>= 2023-11-07)
   DEPENDS:=+conntrack \
 	   +libblobmsg-json +liblucihttp-ucode +libradcli +libubox +libubus +libuci \
-	   +spotfilter \
+	   +uspotfilter \
 	   +ucode +ucode-mod-log +ucode-mod-math +ucode-mod-nl80211 +ucode-mod-rtnl +uhttpd-mod-ucode +ucode-mod-uloop
 
 endef
@@ -61,16 +61,14 @@ endef
 define Package/uspotfilter
   SECTION:=net
   CATEGORY:=Network
-  TITLE:=uspot implementation of spotfilter
-  PROVIDES:=spotfilter
-  CONFLICTS:=spotfilter
+  TITLE:=uspot firewall interface
   EXTRA_DEPENDS:=ucode (>= 2023-11-07)
   DEPENDS:=+conntrack +nftables-json +ucode +ucode-mod-rtnl +ucode-mod-uloop
   PKGARCH:=all
 endef
 
 define Package/uspotfilter/description
-  This package provides the nftables firewall interface to spotfilter.
+  This package provides the nftables firewall interface to uspot.
   It is compatible with firewall4.
 endef
 
@@ -91,7 +89,7 @@ endef
 
 define Package/uspotfilter/install
 	$(INSTALL_DIR) $(1)/usr/share $(1)/etc/init.d
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/etc/init.d/spotfilter $(1)/etc/init.d/spotfilter
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/etc/init.d/uspotfilter $(1)/etc/init.d/uspotfilter
 	$(CP) $(PKG_BUILD_DIR)/files/usr/share/uspotfilter $(1)/usr/share/
 endef
 
