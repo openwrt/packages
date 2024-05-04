@@ -128,10 +128,11 @@ unexport \
 go_arch=$(subst \
   aarch64,arm64,$(subst \
   i386,386,$(subst \
+  loongarch64,loong64,$(subst \
   mipsel,mipsle,$(subst \
   mips64el,mips64le,$(subst \
   powerpc64,ppc64,$(subst \
-  x86_64,amd64,$(1)))))))
+  x86_64,amd64,$(1))))))))
 
 GO_OS:=linux
 GO_ARCH:=$(call go_arch,$(ARCH))
@@ -202,7 +203,7 @@ endif
 
 # Target Go
 
-GO_ARCH_DEPENDS:=@(aarch64||arm||i386||i686||mips||mips64||mips64el||mipsel||powerpc64||riscv64||x86_64)
+GO_ARCH_DEPENDS:=@(aarch64||arm||i386||i686||loongarch64||mips||mips64||mips64el||mipsel||powerpc64||riscv64||x86_64)
 
 
 # ASLR/PIE
