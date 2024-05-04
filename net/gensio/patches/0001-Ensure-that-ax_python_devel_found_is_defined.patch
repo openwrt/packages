@@ -1,0 +1,10 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -2002,6 +2002,7 @@ if test "x$trypython" = "xyes"; then
+       PYTHON_CPPFLAGS="$pythoncflags"
+    fi
+    AX_PYTHON_DEVEL([], [true])
++   ax_python_devel_found=yes
+ else
+    ax_python_devel_found=no
+ fi
