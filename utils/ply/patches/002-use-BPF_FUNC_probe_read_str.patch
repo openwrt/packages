@@ -1,0 +1,11 @@
+--- a/src/libply/built-in/memory.c
++++ b/src/libply/built-in/memory.c
+@@ -140,7 +140,7 @@ static int str_ir_post(const struct func
+ 	ir_emit_ldbp(pb->ir, BPF_REG_1, n->sym->irs.stack);
+ 	ir_emit_insn(ir, MOV_IMM((int32_t)type_sizeof(n->sym->type)), BPF_REG_2, 0);
+ 	ir_emit_sym_to_reg(ir, BPF_REG_3, ptr->sym);
+-	ir_emit_insn(ir, CALL(BPF_FUNC_probe_read_kernel_str), 0, 0);
++	ir_emit_insn(ir, CALL(BPF_FUNC_probe_read_str), 0, 0);
+ 	return 0;
+ }
+ 

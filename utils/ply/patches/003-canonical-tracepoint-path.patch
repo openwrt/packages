@@ -1,0 +1,25 @@
+--- a/src/libply/provider/tracepoint.c
++++ b/src/libply/provider/tracepoint.c
+@@ -350,6 +350,13 @@ static int tracepoint_detach(struct ply_
+ 	return 0;
+ }
+ 
++static void canonical_path(char *path)
++{
++	char *p = strchr(path, ':');
++	if (p)
++		*p = '/';
++}
++
+ static int tracepoint_probe(struct ply_probe *pb)
+ {
+ 	struct tracepoint *tp;
+@@ -370,6 +377,8 @@ static int tracepoint_probe(struct ply_p
+ 	fprintf(fp, TRACEPATH "events/%s", name);
+ 	fclose(fp);
+ 
++	canonical_path(tp->path);
++
+ 	tp->data_func = tracepoint_data_func;
+ 
+ 	data_t  = xcalloc(1, sizeof(*data_t));
