@@ -154,9 +154,9 @@ Available commands:
 | ban_logreadfile         | option | /var/log/messages             | alternative location for parsing the log file, e.g. via syslog-ng, to deactivate the standard parsing via logread |
 | ban_autodetect          | option | 1                             | auto-detect wan interfaces, devices and subnets                                                                   |
 | ban_debug               | option | 0                             | enable banIP related debug logging                                                                                |
-| ban_icmplimit           | option | 10                            | treshold in number of packets to detect icmp DDoS in prerouting chain                                             |
-| ban_synlimit            | option | 10                            | treshold in number of packets to detect syn DDoS in prerouting chain                                              |
-| ban_udplimit            | option | 100                           | treshold in number of packets to detect udp DDoS in prerouting chain                                              |
+| ban_icmplimit           | option | 10                            | threshold in number of packets to detect icmp DDoS in prerouting chain. A value of '0' disables this safeguard    |
+| ban_synlimit            | option | 10                            | threshold in number of packets to detect syn DDoS in prerouting chain. A value of '0' disables this safeguard     |
+| ban_udplimit            | option | 100                           | threshold in number of packets to detect udp DDoS in prerouting chain. A value of '0' disables this safeguard     |
 | ban_logprerouting       | option | 0                             | log supsicious packets in the prerouting chain                                                                    |
 | ban_loginput            | option | 0                             | log supsicious packets in the wan-input chain                                                                     |
 | ban_logforwardwan       | option | 0                             | log supsicious packets in the wan-forward chain                                                                   |

@@ -150,14 +150,14 @@ wait
 
 # end processing
 #
-if [ "${ban_mailnotification}" = "1" ] && [ -n "${ban_mailreceiver}" ] && [ -x "${ban_mailcmd}" ]; then
-	(
-		sleep 5
+(
+	sleep 5
+	if [ "${ban_mailnotification}" = "1" ] && [ -n "${ban_mailreceiver}" ] && [ -x "${ban_mailcmd}" ]; then
 		f_mail
-	) &
-fi
-json_cleanup
-rm -rf "${ban_lock}"
+	fi
+	json_cleanup
+	rm -rf "${ban_lock}"
+) &
 
 # start detached log service (infinite loop)
 #
