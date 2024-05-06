@@ -220,7 +220,6 @@ use() {
 	# firewall rules
 
 	local interface device src_ip family
-	mwan3_init
 
 	interface=$1 ; shift
 	[ -z "$*" ] && echo "no command specified for mwan3 use" && return
@@ -234,16 +233,17 @@ use() {
 	[ -z "$family" ] && echo "could not find family for $interface. Using ipv4." && family='ipv4'
 
 	echo "Running '$*' with DEVICE=$device SRCIP=$src_ip FWMARK=$MMX_DEFAULT FAMILY=$family"
-	# shellcheck disable=SC2048
-	FAMILY=$family DEVICE=$device SRCIP=$src_ip FWMARK=$MMX_DEFAULT LD_PRELOAD=/lib/mwan3/libwrap_mwan3_sockopt.so.1.0 $*
-
+	# if a program (not a shell builtin) is run: use "exec" for allowing direct process control
+	if [ -x "$(command -v "$1")" ]; then
+		set -- exec "$@"
+	fi
+	FAMILY=$family DEVICE=$device SRCIP=$src_ip FWMARK=$MMX_DEFAULT LD_PRELOAD=/lib/mwan3/libwrap_mwan3_sockopt.so.1.0 "$@"
 }
 
 case "$1" in
 	ifup|ifdown|interfaces|policies|connected|rules|status|start|stop|restart|use|internal)
 		mwan3_init
-		# shellcheck disable=SC2048
-		$*
+		"$@"
 	;;
 	*)
 		help
