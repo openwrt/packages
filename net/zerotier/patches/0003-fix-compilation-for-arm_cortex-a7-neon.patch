@@ -1,4 +1,4 @@
-From 1689085363cf87deb3877139931a8a88d8c7bcd3 Mon Sep 17 00:00:00 2001
+From fee674d5a5c7cc847d7e1925ddf41eea89d915c4 Mon Sep 17 00:00:00 2001
 From: Moritz Warning <moritzwarning@web.de>
 Date: Mon, 4 Jul 2022 00:10:52 +0200
 Subject: [PATCH 3/5] fix compilation for arm_cortex-a7+neon
