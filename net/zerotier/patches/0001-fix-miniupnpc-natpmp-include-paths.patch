@@ -1,6 +1,6 @@
-From 8b30e8617720c2a540c84c5c00508e8081e9f06e Mon Sep 17 00:00:00 2001
+From f53004bd22365900a1dbb120dae62ce8b614d31d Mon Sep 17 00:00:00 2001
 From: Moritz Warning <moritzwarning@web.de>
-Date: Sun, 27 Aug 2023 23:26:33 +0200
+Date: Mon, 6 May 2024 22:31:57 +0200
 Subject: [PATCH 1/5] fix miniupnpc/natpmp include paths
 
 Signed-off-by: Moritz Warning <moritzwarning@web.de>
@@ -10,7 +10,7 @@ Signed-off-by: Moritz Warning <moritzwarning@web.de>
 
 --- a/make-linux.mk
 +++ b/make-linux.mk
-@@ -25,8 +25,8 @@ TIMESTAMP=$(shell date +"%Y%m%d%H%M")
+@@ -26,8 +26,8 @@ TIMESTAMP=$(shell date +"%Y%m%d%H%M")
  # otherwise build into binary as done on Mac and Windows.
  ONE_OBJS+=osdep/PortMapper.o
  override DEFS+=-DZT_USE_MINIUPNPC
@@ -21,7 +21,7 @@ Signed-off-by: Moritz Warning <moritzwarning@web.de>
  ifeq ($(MINIUPNPC_IS_NEW_ENOUGH),1)
  	override DEFS+=-DZT_USE_SYSTEM_MINIUPNPC
  	LDLIBS+=-lminiupnpc
-@@ -34,7 +34,7 @@ else
+@@ -35,7 +35,7 @@ else
  	override DEFS+=-DMINIUPNP_STATICLIB -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -DOS_STRING="\"Linux\"" -DMINIUPNPC_VERSION_STRING="\"2.0\"" -DUPNP_VERSION_STRING="\"UPnP/1.1\"" -DENABLE_STRNATPMPERR
  	ONE_OBJS+=ext/miniupnpc/connecthostport.o ext/miniupnpc/igd_desc_parse.o ext/miniupnpc/minisoap.o ext/miniupnpc/minissdpc.o ext/miniupnpc/miniupnpc.o ext/miniupnpc/miniwget.o ext/miniupnpc/minixml.o ext/miniupnpc/portlistingparse.o ext/miniupnpc/receivedata.o ext/miniupnpc/upnpcommands.o ext/miniupnpc/upnpdev.o ext/miniupnpc/upnperrors.o ext/miniupnpc/upnpreplyparse.o
  endif

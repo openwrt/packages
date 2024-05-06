@@ -1,4 +1,4 @@
-From adcc68c6c3de8460bd6263d3478873953a4cf894 Mon Sep 17 00:00:00 2001
+From 2a5a279ac0192bc444cd1c3059169f576817d8b9 Mon Sep 17 00:00:00 2001
 From: Moritz Warning <moritzwarning@web.de>
 Date: Mon, 28 Aug 2023 09:48:28 +0200
 Subject: [PATCH 5/5] remove noexecstack
@@ -10,7 +10,7 @@ The compilers for arm_cortex-a9 do not recognize this argument.
 
 --- a/make-linux.mk
 +++ b/make-linux.mk
-@@ -358,7 +358,7 @@ endif
+@@ -364,7 +364,7 @@ endif
  #override CXXFLAGS+=-fPIC -fPIE
  
  # Non-executable stack
