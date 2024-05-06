@@ -56,7 +56,8 @@ EXTRA_CPPFLAGS+=-I$(STAGING_DIR)/usr/include/readline/
 EXTRA_LDFLAGS+=-lncurses
 
 CONFIGURE_VARS += \
-	ac_cv_file__proc_self_exe=yes
+	ac_cv_file__proc_self_exe=yes \
+	ac_cv_prog_IPCALC=/bin/true
 
 CONFIGURE_ARGS+= \
 	--with-pager="" \
