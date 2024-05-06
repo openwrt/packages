@@ -428,7 +428,9 @@ config_remote() {
 	local gateway
 	local local_sourceip
 	local local_ip
+	local local_identifier
 	local remote_gateway
+	local remote_identifier
 	local pre_shared_key
 	local auth_method
 	local keyingtries
