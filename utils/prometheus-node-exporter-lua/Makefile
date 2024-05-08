@@ -4,8 +4,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=prometheus-node-exporter-lua
-PKG_VERSION:=2024.06.16
-PKG_RELEASE:=2
+PKG_VERSION:=2025.06.08
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
 PKG_LICENSE:=Apache-2.0
@@ -257,6 +257,17 @@ define Package/prometheus-node-exporter-lua-mwan3/install
 	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/mwan3.lua $(1)/usr/lib/lua/prometheus-collectors/
 endef
 
+define Package/prometheus-node-exporter-lua-ethtool
+  $(call Package/prometheus-node-exporter-lua/Default)
+  TITLE+= (ethtool collector)
+  DEPENDS:=prometheus-node-exporter-lua +ethtool-lua
+endef
+
+define Package/prometheus-node-exporter-lua-ethtool/install
+	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/ethtool.lua $(1)/usr/lib/lua/prometheus-collectors/
+endef
+
 $(eval $(call BuildPackage,prometheus-node-exporter-lua))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-bmx7))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-dawn))
@@ -276,3 +287,4 @@ $(eval $(call BuildPackage,prometheus-node-exporter-lua-wifi_stations))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-snmp6))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-realtek-poe))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-mwan3))
+$(eval $(call BuildPackage,prometheus-node-exporter-lua-ethtool))
