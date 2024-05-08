@@ -1,0 +1,12 @@
+Index: bluez-5.72/tools/hex2hcd.c
+===================================================================
+--- bluez-5.72.orig/tools/hex2hcd.c
++++ bluez-5.72/tools/hex2hcd.c
+@@ -24,6 +24,7 @@
+ #include <stdlib.h>
+ #include <stdbool.h>
+ #include <sys/stat.h>
++#include <libgen.h>
+ 
+ static ssize_t process_record(int fd, const char *line, uint16_t *upper_addr)
+ {
