@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
 PKG_VERSION:=8.3.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 PKG_LICENSE:=PHP-3.01
@@ -299,7 +299,6 @@ endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-intl),)
   CONFIGURE_ARGS+= --enable-intl=shared
-  TARGET_CXXFLAGS+= -std=c++0x
 else
   CONFIGURE_ARGS+= --disable-intl
 endif
