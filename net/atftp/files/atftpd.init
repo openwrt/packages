@@ -11,7 +11,7 @@ start() {
 
 	config_load atftpd
 
-	config_get enable service enable 0
+	config_get_bool enable service enable 0
 	[ "$enable" -eq "0" ] && return 0
 
 	config_get srv service path "/srv/tftp"

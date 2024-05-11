@@ -466,7 +466,7 @@ process_plugins() {
 
 	local enable keys key option value
 
-	config_get enable "$cfg" enable 0
+	config_get_bool enable "$cfg" enable 0
 	[ "$enable" = "1" ] || return 0
 
 	[ -f "/usr/lib/collectd/$cfg.so" ] || {

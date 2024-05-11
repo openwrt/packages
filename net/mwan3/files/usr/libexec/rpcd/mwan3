@@ -104,7 +104,7 @@ get_mwan3_status() {
 	online=$(get_online_time "$iface")
 	offline=$(get_offline_time "$iface")
 
-	config_get enabled "$iface" enabled 0
+	config_get_bool enabled "$iface" enabled 0
 
 	if [ -f "$MWAN3TRACK_STATUS_DIR/${iface}/STATUS" ]; then
 		network_get_uptime uptime "$iface"
