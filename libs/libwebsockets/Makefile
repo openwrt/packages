@@ -61,7 +61,7 @@ endef
 define Package/libwebsockets-mbedtls
 	$(call Package/$(PKG_NAME)/Default)
 	TITLE += (mbedTLS)
-	DEPENDS += +libmbedtls @MBEDTLS_VERSION_C
+	DEPENDS += +libmbedtls
 	VARIANT:=mbedtls
 	PROVIDES:=libwebsockets
 	CONFLICTS:=libwebsockets-openssl
