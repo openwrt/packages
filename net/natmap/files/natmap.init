@@ -10,7 +10,7 @@ STATUS_PATH=/var/run/natmap
 
 load_interfaces() {
 	config_get interface "$1" interface
-	config_get enable "$1" enable 1
+	config_get_bool enable "$1" enable 1
 
 	[ "${enable}" = "1" ] && interfaces=" ${interface} ${interfaces}"
 }

@@ -43,7 +43,7 @@ mwan3_update_dev_to_table()
 		config_get family "$1" family ipv4
 		network_get_device device "$1"
 		[ -z "$device" ] && return
-		config_get enabled "$1" enabled
+		config_get_bool enabled "$1" enabled
 		[ "$enabled" -eq 0 ] && return
 		curr_table=$(eval "echo	 \"\$mwan3_dev_tbl_${family}\"")
 		export "mwan3_dev_tbl_$family=${curr_table}${device}=$_tid "
@@ -1087,7 +1087,7 @@ mwan3_report_iface_status()
 
 	mwan3_get_iface_id id "$1"
 	network_get_device device "$1"
-	config_get enabled "$1" enabled 0
+	config_get_bool enabled "$1" enabled 0
 	config_get family "$1" family ipv4
 
 	if [ "$family" = "ipv4" ]; then

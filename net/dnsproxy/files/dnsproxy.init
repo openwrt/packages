@@ -9,7 +9,7 @@ PROG="/usr/bin/dnsproxy"
 
 is_enabled() {
 	local enabled
-	config_get enabled "$1" "$2" "0"
+	config_get_bool enabled "$1" "$2" "0"
 	if [ "$enabled" -eq "1" ]; then
 		return 0
 	else
