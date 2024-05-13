@@ -1,0 +1,35 @@
+--- a/tools/hex2hcd.c
++++ b/tools/hex2hcd.c
+@@ -24,6 +24,7 @@
+ #include <stdlib.h>
+ #include <stdbool.h>
+ #include <sys/stat.h>
++#include <libgen.h>
+ 
+ static ssize_t process_record(int fd, const char *line, uint16_t *upper_addr)
+ {
+@@ -289,6 +290,7 @@ static void ver_parse_entry(const char *
+ {
+ 	struct stat st;
+ 	int fd;
++	char *pncopy = strdup(pathname);
+ 
+ 	fd = open(pathname, O_RDONLY);
+ 	if (fd < 0) {
+@@ -302,7 +304,7 @@ static void ver_parse_entry(const char *
+ 	}
+ 
+ 	if (S_ISREG(st.st_mode)) {
+-		ver_parse_file(basename(pathname));
++		ver_parse_file(basename(pncopy));
+ 		goto done;
+ 	}
+ 
+@@ -329,6 +331,7 @@ static void ver_parse_entry(const char *
+ 
+ done:
+ 	close(fd);
++	free(pncopy);
+ }
+ 
+ static void ver_print_table(int argc, char *argv[])
