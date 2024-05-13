@@ -1,6 +1,7 @@
---- /dev/null
-+++ b/agent/mibgroup/ieee802dot11.c
-@@ -0,0 +1,4915 @@
+diff -Naur a/agent/mibgroup/ieee802dot11.c b/agent/mibgroup/ieee802dot11.c
+--- a/agent/mibgroup/ieee802dot11.c	1970-01-01 07:00:00.000000000 +0700
++++ b/agent/mibgroup/ieee802dot11.c	2024-05-08 20:19:26.050637500 +0700
+@@ -0,0 +1,4916 @@
 +/****************************************************************************
 +*                                                                           *
 +*  File Name:           ieee802dot11.c                                      *
@@ -30,6 +31,7 @@
 +#include <net-snmp/agent/net-snmp-agent-includes.h>
 +#include "ieee802dot11.h"
 +#include "iwlib.h"
++#include "util_funcs/header_generic.h"
 +
 +/****************************************************************************
 +*                                Defines                                    *
@@ -4700,12 +4702,12 @@
 +addList ( char *l, char *data, int len  )
 +{
 +  char uid[256];
-+  LIST_HEAD ( , avNode ) *list;       
++  avList_t *list;       
 +
 +  // NOTE: this assumes the UID is at the beginning of the 
 +  //       data structure and that UIDs are strings
 +  
-+  list = ( LIST_HEAD ( , avNode ) * ) l;            // NOTE: don't know how to get 
++  list = ( avList_t * ) l;            // NOTE: don't know how to get 
 +  strcpy ( uid, data );                             //  rid of compiler warning on
 +                                                    //  LISTHEAD typecast
 +  // create a new node and the data that goes in it
@@ -4787,9 +4789,9 @@
 +****************************************************************************/
 +static void flushList ( char *l )
 +{
-+  LIST_HEAD ( , avNode ) *list;
++  avList_t *list;
 +  
-+  list = ( LIST_HEAD ( , avNode ) * ) l;    // NOTE: don't know how to get 
++  list = ( avList_t * ) l;    // NOTE: don't know how to get 
 +  while ( !LIST_EMPTY ( list )) {           //  rid of compiler warning on
 +    np = LIST_FIRST ( list );               //  LISTHEAD typecast
 +    if ( np->data )
@@ -4916,9 +4918,10 @@
 +  return ( changed );
 +}
 +
---- /dev/null
-+++ b/agent/mibgroup/ieee802dot11.h
-@@ -0,0 +1,730 @@
+diff -Naur a/agent/mibgroup/ieee802dot11.h b/agent/mibgroup/ieee802dot11.h
+--- a/agent/mibgroup/ieee802dot11.h	1970-01-01 07:00:00.000000000 +0700
++++ b/agent/mibgroup/ieee802dot11.h	2024-05-08 20:28:44.890095700 +0700
+@@ -0,0 +1,732 @@
 +/****************************************************************************
 +*                                                                           *
 +*  File Name:           ieee802dot11.h                                      *
@@ -5648,10 +5651,13 @@
 +WriteMethod write_dot11SupportedRxAntenna;
 +WriteMethod write_dot11DiversitySelectionRx;
 +
++void shutdown_ieee802dot11 ( void );
++
 +#endif /* _MIBGROUP_IEEE802DOT11_H */
---- /dev/null
-+++ b/agent/mibgroup/iwlib.h
-@@ -0,0 +1,502 @@
+diff -Naur a/agent/mibgroup/iwlib.h b/agent/mibgroup/iwlib.h
+--- a/agent/mibgroup/iwlib.h	1970-01-01 07:00:00.000000000 +0700
++++ b/agent/mibgroup/iwlib.h	2024-05-08 13:46:30.437277900 +0700
+@@ -0,0 +1,509 @@
 +/*
 + *	Wireless Tools
 + *
@@ -5683,6 +5689,9 @@
 +#include <unistd.h>
 +#include <netdb.h>		/* gethostbyname, getnetbyname */
 +#include <net/ethernet.h>	/* struct ether_addr */
++#ifdef HAVE_NET_IF_H
++#include <net/if.h>
++#endif
 +#include <sys/time.h>		/* struct timeval */
 +#include <unistd.h>
 +
@@ -5738,6 +5747,10 @@
 +      && LINUX_VERSION_CODE >= KERNEL_VERSION(2,0,0) \
 +      && LINUX_VERSION_CODE < KERNEL_VERSION(2,1,0)
 +#define LIBC5_HEADERS
++
++/* Musl */
++#elif !defined(__GLIBC__) && LINUX_VERSION_CODE >= KERNEL_VERSION(3,0,0)
++#define GENERIC_HEADERS
 +
 +/* Unsupported combination */
 +#else

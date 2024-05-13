@@ -1,0 +1,11 @@
+diff -Naur a/agent/mib_modules.c b/agent/mib_modules.c
+--- a/agent/mib_modules.c	2023-08-16 03:32:01.000000000 +0700
++++ b/agent/mib_modules.c	2024-05-08 20:31:04.377907500 +0700
+@@ -42,6 +42,7 @@
+ #include <net-snmp/agent/table.h>
+ #include <net-snmp/agent/table_iterator.h>
+ #include "mib_module_includes.h"
++#include "mibgroup/ieee802dot11.h"
+ 
+ static int need_shutdown = 0;
+ 
