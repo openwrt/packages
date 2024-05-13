@@ -5,8 +5,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adblock-fast
-PKG_VERSION:=1.1.1
-PKG_RELEASE:=11
+PKG_VERSION:=1.1.2
+PKG_RELEASE:=1
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.ca>
 PKG_LICENSE:=AGPL-3.0-or-later
 
