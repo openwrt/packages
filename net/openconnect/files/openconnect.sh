@@ -16,6 +16,7 @@ append_args() {
 proto_openconnect_init_config() {
 	proto_config_add_string "server"
 	proto_config_add_int "port"
+	proto_config_add_string "uri"
 	proto_config_add_int "mtu"
 	proto_config_add_int "juniper"
 	proto_config_add_int "reconnect_timeout"
@@ -65,6 +66,7 @@ proto_openconnect_setup() {
 		proxy \
 		reconnect_timeout \
 		server \
+		uri \
 		serverhash \
 		token_mode \
 		token_script \
@@ -78,6 +80,8 @@ proto_openconnect_setup() {
 
 	[ -n "$interface" ] && {
 		local trials=5
+
+		[ -n $uri ] && server=$(echo $uri | awk -F[/:] '{print $4}')
 
 		logger -t "openconnect" "adding host dependency for $server at $config"
 		while resolveip -t 10 "$server" > "$tmpfile" && [ "$trials" -gt 0 ]; do
@@ -95,8 +99,9 @@ proto_openconnect_setup() {
 	}
 
 	[ -n "$port" ] && port=":$port"
+	[ -z "$uri" ] && uri="$server$port"
 
-	append_args "$server$port" -i "$ifname" --non-inter --syslog --script /lib/netifd/vpnc-script
+	append_args "$uri" -i "$ifname" --non-inter --syslog --script /lib/netifd/vpnc-script
 	[ "$pfs" = 1 ] && append_args --pfs
 	[ "$no_dtls" = 1 ] && append_args --no-dtls
 	[ -n "$mtu" ] && append_args --mtu "$mtu"
