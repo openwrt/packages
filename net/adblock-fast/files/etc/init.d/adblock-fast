@@ -8,8 +8,33 @@ START=94
 USE_PROCD=1
 LC_ALL=C
 
-readonly PKG_VERSION='dev-test'
+if type extra_command 1>/dev/null 2>&1; then
+	extra_command 'allow' 'Allows domain in current block-list and config'
+	extra_command 'check' 'Checks if specified domain is found in current block-list'
+	extra_command 'check_lists' 'Checks if specified domain is found in enabled block-lists'
+	extra_command 'dl' 'Force-downloads all enabled block-list'
+	extra_command 'killcache' 'Delete all cached files'
+	extra_command 'pause' 'Pauses AdBlocking for specified number of seconds (default: 60)'
+	extra_command 'show_blocklist' 'List currently blocked domains'
+	extra_command 'sizes' 'Displays the file-sizes of enabled block-lists'
+	extra_command 'version' 'Show version information'
+else
+# shellcheck disable=SC2034
+	EXTRA_COMMANDS='allow check dl killcache pause sizes status_service version'
+# shellcheck disable=SC2034
+	EXTRA_HELP='	allow	Allows domain(s) in current block-list and config
+	check	Checks if specified domain is found in current block-list
+	check_lists	Checks if specified domain is found in enabled block-lists
+	dl	Force-downloads all enabled block-list
+	pause	Pauses AdBlocking for specified number of seconds (default: 60)
+	show_blocklist	List currently blocked domains
+	sizes	Displays the file-sizes of enabled block-lists
+	version	Show version information'
+fi
+
 readonly packageName='adblock-fast'
+readonly PKG_VERSION='dev-test'
+readonly packageCompat='1'
 readonly serviceName="$packageName $PKG_VERSION"
 readonly packageConfigFile="/etc/config/${packageName}"
 readonly dnsmasqAddnhostsFile="/var/run/${packageName}/dnsmasq.addnhosts"
@@ -17,42 +42,51 @@ readonly dnsmasqAddnhostsCache="/var/run/${packageName}/dnsmasq.addnhosts.cache"
 readonly dnsmasqAddnhostsGzip="${packageName}.dnsmasq.addnhosts.gz"
 readonly dnsmasqAddnhostsFilter='s|^|127.0.0.1 |;s|$||'
 readonly dnsmasqAddnhostsFilterIPv6='s|^|:: |;s|$||'
+readonly dnsmasqAddnhostsOutputFilter='s|^127.0.0.1 ||;s|^:: ||;'
 readonly dnsmasqConfFile="/tmp/dnsmasq.d/${packageName}"
 readonly dnsmasqConfCache="/var/run/${packageName}/dnsmasq.conf.cache"
 readonly dnsmasqConfGzip="${packageName}.dnsmasq.conf.gz"
 readonly dnsmasqConfFilter='s|^|local=/|;s|$|/|'
+readonly dnsmasqConfOutputFilter='s|local=/||;s|/$||;'
 readonly dnsmasqIpsetFile="/tmp/dnsmasq.d/${packageName}.ipset"
 readonly dnsmasqIpsetCache="/var/run/${packageName}/dnsmasq.ipset.cache"
 readonly dnsmasqIpsetGzip="${packageName}.dnsmasq.ipset.gz"
 readonly dnsmasqIpsetFilter='s|^|ipset=/|;s|$|/adb|'
+readonly dnsmasqIpsetOutputFilter='s|ipset=/||;s|/adb$||;'
 readonly dnsmasqNftsetFile="/tmp/dnsmasq.d/${packageName}.nftset"
 readonly dnsmasqNftsetCache="/var/run/${packageName}/dnsmasq.nftset.cache"
 readonly dnsmasqNftsetGzip="${packageName}.dnsmasq.nftset.gz"
 readonly dnsmasqNftsetFilter='s|^|nftset=/|;s|$|/4#inet#fw4#adb4|'
 readonly dnsmasqNftsetFilterIPv6='s|^|nftset=/|;s|$|/4#inet#fw4#adb4,6#inet#fw4#adb6|'
+readonly dnsmasqNftsetOutputFilter='s|nftset=/||;s|/4#inet#adb#adb4||;'
 readonly dnsmasqServersFile="/var/run/${packageName}/dnsmasq.servers"
 readonly dnsmasqServersCache="/var/run/${packageName}/dnsmasq.servers.cache"
 readonly dnsmasqServersGzip="${packageName}.dnsmasq.servers.gz"
 readonly dnsmasqServersFilter='s|^|server=/|;s|$|/|'
+readonly dnsmasqServersOutputFilter='s|server=/||;s|/$||;'
 readonly smartdnsDomainSetFile="/var/run/${packageName}/smartdns.domainset"
 readonly smartdnsDomainSetCache="/var/run/${packageName}/smartdns.domainset.cache"
 readonly smartdnsDomainSetConfig="/var/run/${packageName}/smartdns.domainset.conf"
 readonly smartdnsDomainSetGzip="${packageName}.smartdns.domainset.gz"
-readonly smartdnsDomainSetFilter=';'
+readonly smartdnsDomainSetFilter=''
+readonly smartdnsDomainSetOutputFilter=''
 readonly smartdnsIpsetFile="/var/run/${packageName}/smartdns.ipset"
 readonly smartdnsIpsetCache="/var/run/${packageName}/smartdns.ipset.cache"
 readonly smartdnsIpsetConfig="/var/run/${packageName}/smartdns.ipset.conf"
 readonly smartdnsIpsetGzip="${packageName}.smartdns.ipset.gz"
-readonly smartdnsIpsetFilter=';'
+readonly smartdnsIpsetFilter=''
+readonly smartdnsIpsetOutputFilter=''
 readonly smartdnsNftsetFile="/var/run/${packageName}/smartdns.nftset"
 readonly smartdnsNftsetCache="/var/run/${packageName}/smartdns.nftset.cache"
 readonly smartdnsNftsetConfig="/var/run/${packageName}/smartdns.nftset.conf"
 readonly smartdnsNftsetGzip="${packageName}.smartdns.nftset.gz"
-readonly smartdnsNftsetFilter=';'
+readonly smartdnsNftsetFilter=''
+readonly smartdnsNftsetOutputFilter=''
 readonly unboundFile="/var/lib/unbound/adb_list.${packageName}"
 readonly unboundCache="/var/run/${packageName}/unbound.cache"
 readonly unboundGzip="${packageName}.unbound.gz"
 readonly unboundFilter='s|^|local-zone: "|;s|$|." always_nxdomain|'
+readonly unboundOutputFilter='s|^local-zone: "||;s|." always_nxdomain$||;'
 readonly A_TMP="/var/${packageName}.a.tmp"
 readonly B_TMP="/var/${packageName}.b.tmp"
 readonly SED_TMP="/var/${packageName}.sed.tmp"
@@ -89,6 +123,7 @@ outputFilterIPv6=
 outputFile=
 outputGzip=
 outputCache=
+outputOutputFilter=
 awk='awk'
 load_environment_flag=
 allowed_url=
@@ -210,6 +245,7 @@ dns_set_output_values() {
 			outputFile="$dnsmasqAddnhostsFile"
 			outputCache="$dnsmasqAddnhostsCache"
 			outputGzip="${compressed_cache_dir}/${dnsmasqAddnhostsGzip}"
+			outputOutputFilter="$dnsmasqAddnhostsOutputFilter"
 			if [ "$ipv6_enabled" -ne '0' ]; then
 				outputFilterIPv6="$dnsmasqAddnhostsFilterIPv6"
 			fi
@@ -219,12 +255,14 @@ dns_set_output_values() {
 			outputFile="$dnsmasqConfFile"
 			outputCache="$dnsmasqConfCache"
 			outputGzip="${compressed_cache_dir}/${dnsmasqConfGzip}"
+			outputOutputFilter="$dnsmasqConfOutputFilter"
 		;;
 		dnsmasq.ipset)
 			outputFilter="$dnsmasqIpsetFilter"
 			outputFile="$dnsmasqIpsetFile"
 			outputCache="$dnsmasqIpsetCache"
 			outputGzip="${compressed_cache_dir}/${dnsmasqIpsetGzip}"
+			outputOutputFilter="$dnsmasqIpsetOutputFilter"
 		;;
 		dnsmasq.nftset)
 			if [ "$ipv6_enabled" -ne '0' ]; then
@@ -235,12 +273,14 @@ dns_set_output_values() {
 			outputFile="$dnsmasqNftsetFile"
 			outputCache="$dnsmasqNftsetCache"
 			outputGzip="${compressed_cache_dir}/${dnsmasqNftsetGzip}"
+			outputOutputFilter="$dnsmasqNftsetOutputFilter"
 		;;
 		dnsmasq.servers)
 			outputFilter="$dnsmasqServersFilter"
 			outputFile="$dnsmasqServersFile"
 			outputCache="$dnsmasqServersCache"
 			outputGzip="${compressed_cache_dir}/${dnsmasqServersGzip}"
+			outputOutputFilter="$dnsmasqServersOutputFilter"
 		;;
 		smartdns.domainset)
 			outputFilter="$smartdnsDomainSetFilter"
@@ -248,6 +288,7 @@ dns_set_output_values() {
 			outputCache="$smartdnsDomainSetCache"
 			outputGzip="${compressed_cache_dir}/${smartdnsDomainSetGzip}"
 			outputConfig="$smartdnsDomainSetConfig"
+			outputOutputFilter="$smartdnsDomainSetOutputFilter"
 		;;
 		smartdns.ipset)
 			outputFilter="$smartdnsIpsetFilter"
@@ -255,6 +296,7 @@ dns_set_output_values() {
 			outputCache="$smartdnsIpsetCache"
 			outputGzip="${compressed_cache_dir}/${smartdnsIpsetGzip}"
 			outputConfig="$smartdnsIpsetConfig"
+			outputOutputFilter="$smartdnsIpsetOutputFilter"
 		;;
 		smartdns.nftset)
 			outputFilter="$smartdnsNftsetFilter"
@@ -262,12 +304,14 @@ dns_set_output_values() {
 			outputCache="$smartdnsNftsetCache"
 			outputGzip="${compressed_cache_dir}/${smartdnsNftsetGzip}"
 			outputConfig="$smartdnsNftsetConfig"
+			outputOutputFilter="$smartdnsNftsetOutputFilter"
 		;;
 		unbound.adb_list)
 			outputFilter="$unboundFilter"
 			outputFile="$unboundFile"
 			outputCache="$unboundCache"
 			outputGzip="${compressed_cache_dir}/${unboundGzip}"
+			outputOutputFilter="$unboundOutputFilter"
 		;;
 	esac
 }
@@ -469,26 +513,6 @@ uci_changes() {
 		/sbin/uci ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} changes "$PACKAGE${CONFIG:+.$CONFIG}${OPTION:+.$OPTION}"
 	fi
 }
-
-if type extra_command 1>/dev/null 2>&1; then
-	extra_command 'allow' 'Allows domain in current block-list and config'
-	extra_command 'check' 'Checks if specified domain is found in current block-list'
-	extra_command 'check_lists' 'Checks if specified domain is found in enabled block-lists'
-	extra_command 'dl' 'Force-downloads all enabled block-list'
-	extra_command 'killcache' 'Delete all cached files'
-	extra_command 'pause' 'Pauses AdBlocking for specified number of seconds (default: 60)'
-	extra_command 'sizes' 'Displays the file-sizes of enabled block-lists'
-	extra_command 'version' 'Show version information'
-else
-# shellcheck disable=SC2034
-	EXTRA_COMMANDS='allow check dl killcache pause sizes status_service version'
-# shellcheck disable=SC2034
-	EXTRA_HELP='	allow	Allows domain(s) in current block-list and config
-	check	Checks if specified domain is found in current block-list
-	dl	Force-downloads all enabled block-list
-	pause	Pauses AdBlocking for specified number of seconds (default: 60)
-	sizes	Displays the file-sizes of enabled block-lists'
-fi
 
 get_text() {
 	local r
@@ -1587,22 +1611,7 @@ adb_check() {
 				output "Found $c matches for '$string' in '$outputFile'.\\n"
 			fi
 			if [ "$c" -le 20 ]; then
-				case "$dns" in
-					dnsmasq.addnhosts)
-						grep "$string" "$outputFile" | sed 's|^127.0.0.1 ||;s|^:: ||;';;
-					dnsmasq.conf)
-						grep "$string" "$outputFile" | sed 's|local=/||;s|/$||;';;
-					dnsmasq.ipset)
-						grep "$string" "$outputFile" | sed 's|ipset=/||;s|/adb$||;';;
-					dnsmasq.nftset)
-						grep "$string" "$outputFile" | sed 's|nftset=/||;s|/4#inet#adb#adb4||;';;
-					dnsmasq.servers)
-						grep "$string" "$outputFile" | sed 's|server=/||;s|/$||;';;
-					smartdns.*)
-						grep "$string" "$outputFile";;
-					unbound.adb_list)
-						grep "$string" "$outputFile" | sed 's|^local-zone: "||;s|." always_nxdomain$||;';;
-				esac
+				grep "$string" "$outputFile" | sed "$outputOutputFilter"
 			fi
 		else
 			output "The '$string' is not found in current block-list ('$outputFile').\\n"
@@ -1695,6 +1704,12 @@ adb_config_update() {
 	fi
 	rm -f "$R_TMP"
 	return 0
+}
+
+adb_show_blocklist() {
+	local validation_result="$3"
+	load_environment "$validation_result" 'quiet' || return 1
+	sed "$outputOutputFilter" "$outputFile"
 }
 
 adb_sizes() {
@@ -2053,6 +2068,7 @@ killcache() {
 	resolver 'cleanup'
 	return 0
 }
+show_blocklist() { load_validate_config 'config' adb_show_blocklist "'$*'"; }
 reload_service() { rc_procd start_service 'restart'; }
 restart_service() { rc_procd start_service 'restart'; }
 service_started() { is_fw4_restart_needed && procd_set_config_changed firewall; }
