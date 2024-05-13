@@ -1,6 +1,6 @@
 --- /dev/null
 +++ b/agent/mibgroup/ieee802dot11.c
-@@ -0,0 +1,4915 @@
+@@ -0,0 +1,4916 @@
 +/****************************************************************************
 +*                                                                           *
 +*  File Name:           ieee802dot11.c                                      *
@@ -30,6 +30,7 @@
 +#include <net-snmp/agent/net-snmp-agent-includes.h>
 +#include "ieee802dot11.h"
 +#include "iwlib.h"
++#include "util_funcs/header_generic.h"
 +
 +/****************************************************************************
 +*                                Defines                                    *
@@ -4700,12 +4701,12 @@
 +addList ( char *l, char *data, int len  )
 +{
 +  char uid[256];
-+  LIST_HEAD ( , avNode ) *list;       
++  LIST_HEAD ( , avNode ) *list;      
 +
 +  // NOTE: this assumes the UID is at the beginning of the 
 +  //       data structure and that UIDs are strings
 +  
-+  list = ( LIST_HEAD ( , avNode ) * ) l;            // NOTE: don't know how to get 
++  list = ( LIST_HEAD ( , avNode ) * ) l;          // NOTE: don't know how to get 
 +  strcpy ( uid, data );                             //  rid of compiler warning on
 +                                                    //  LISTHEAD typecast
 +  // create a new node and the data that goes in it
@@ -4918,7 +4919,7 @@
 +
 --- /dev/null
 +++ b/agent/mibgroup/ieee802dot11.h
-@@ -0,0 +1,730 @@
+@@ -0,0 +1,732 @@
 +/****************************************************************************
 +*                                                                           *
 +*  File Name:           ieee802dot11.h                                      *
@@ -5024,8 +5025,8 @@
 +/****************************************************************************
 +*                           Linked List Structure                           *
 +****************************************************************************/
-+static struct avNode {  
-+  LIST_ENTRY ( avNode ) nodes; 
++static struct avNode {
++  LIST_ENTRY ( avNode ) nodes;
 +  char *data;                                 // pointer to data
 +};
 +
@@ -5648,10 +5649,12 @@
 +WriteMethod write_dot11SupportedRxAntenna;
 +WriteMethod write_dot11DiversitySelectionRx;
 +
++void shutdown_ieee802dot11 ( void );
++
 +#endif /* _MIBGROUP_IEEE802DOT11_H */
 --- /dev/null
 +++ b/agent/mibgroup/iwlib.h
-@@ -0,0 +1,502 @@
+@@ -0,0 +1,509 @@
 +/*
 + *	Wireless Tools
 + *
@@ -5683,6 +5686,9 @@
 +#include <unistd.h>
 +#include <netdb.h>		/* gethostbyname, getnetbyname */
 +#include <net/ethernet.h>	/* struct ether_addr */
++#ifdef HAVE_NET_IF_H
++#include <net/if.h>
++#endif
 +#include <sys/time.h>		/* struct timeval */
 +#include <unistd.h>
 +
@@ -5739,26 +5745,30 @@
 +      && LINUX_VERSION_CODE < KERNEL_VERSION(2,1,0)
 +#define LIBC5_HEADERS
 +
++/* Musl */
++#elif !defined(__GLIBC__) && LINUX_VERSION_CODE >= KERNEL_VERSION(3,0,0)
++#define GENERIC_HEADERS
++
 +/* Unsupported combination */
 +#else
 +#error "Your kernel/libc combination is not supported"
 +#endif
 +
-+#ifdef GENERIC_HEADERS 
++#ifdef GENERIC_HEADERS
 +/* Proposed by Dr. Michael Rietz <rietz@mail.amps.de>, 27.3.2 */
 +/* If this works for all, it might be more stable on the long term - Jean II */
 +#include <net/if_arp.h>		/* For ARPHRD_ETHER */
 +#include <sys/socket.h>		/* For AF_INET & struct sockaddr */
 +#include <netinet/in.h>         /* For struct sockaddr_in */
 +#include <netinet/if_ether.h>
-+#endif /* GENERIC_HEADERS */    
++#endif /* GENERIC_HEADERS */ 
 +
-+#ifdef GLIBC22_HEADERS 
++#ifdef GLIBC22_HEADERS
 +/* Added by Ross G. Miller <Ross_Miller@baylor.edu>, 3/28/01 */
 +#include <linux/if_arp.h> 	/* For ARPHRD_ETHER */
 +#include <linux/socket.h>	/* For AF_INET & struct sockaddr */
 +#include <sys/socket.h>
-+#endif /* GLIBC22_HEADERS */    
++#endif /* GLIBC22_HEADERS */   
 +
 +#ifdef KLUDGE_HEADERS
 +#include <socketbits.h>
