@@ -9,11 +9,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dump1090
 PKG_VERSION:=9.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/flightaware/dump1090/tar.gz/v${PKG_VERSION}?
-PKG_HASH:=6190622c3625713ec9cff882a9d6f6a51b6d2f83ef20e6e1905a3902c7b08483
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+PKG_SOURCE_URL:=https://github.com/flightaware/dump1090
+PKG_MIRROR_HASH:=5acbfd0afbed020fc8328b44ade406c855cf617a54a9049b309586e181242ec8
 
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
