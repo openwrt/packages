@@ -1,0 +1,23 @@
+From 9f84dcdef89e8950bc631ba15b286530547bec72 Mon Sep 17 00:00:00 2001
+From: murray <murray.calavera@protonmail.com>
+Date: Thu, 15 Feb 2024 10:33:25 +0000
+Subject: [PATCH] Fix poll.h include path
+
+The correct include path for poll(2) is poll.h not sys/poll.h.
+sys/poll.h may not be available on some libcs or may issue a
+warning. In particular this fixes a warning on musl systems.
+---
+ src/st-util/gdb-remote.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/src/st-util/gdb-remote.c
++++ b/src/st-util/gdb-remote.c
+@@ -12,7 +12,7 @@
+ #include <win32_socket.h>
+ #else
+ #include <unistd.h>
+-#include <sys/poll.h>
++#include <poll.h>
+ #endif
+ 
+ #include "gdb-remote.h"
