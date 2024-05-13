@@ -2,11 +2,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=stlink
 PKG_VERSION:=1.8.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/stlink-org/$(PKG_NAME)/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=cff760b5c212c2cc480f705b9ca7f3828d6b9c267950c6a547002cd0a1f5f6ac
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+PKG_SOURCE_URL:=https://github.com/stlink-org/stlink
+PKG_MIRROR_HASH:=6211ce88fe699d5e810f6bb1dc7baaa7c66e8e0dcbd773f03f2d4524f1961512
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=BSD-3-Clause
