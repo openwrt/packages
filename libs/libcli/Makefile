@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libcli
+PKG_VERSION:=1.10.7
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL=https://github.com/dparrish/libcli.git
-PKG_SOURCE_DATE:=2022-07-06
-PKG_SOURCE_VERSION:=V1.10.7
-PKG_MIRROR_HASH:=ee686c27f80317680d151423b621ed0643992e28f6b5be2caca28318a25fe98c
+PKG_SOURCE_VERSION:=V$(PKG_VERSION)
+PKG_SOURCE_URL=https://github.com/dparrish/libcli
+PKG_MIRROR_HASH:=a9842266ae80f78b838f71c98bbfeed6c7082fadedd2d9a301aedc3e47a88af7
 
 PKG_MAINTAINER:=Martin Blumenstingl <martin.blumenstingl@googlemail.com>
 PKG_LICENSE:=LGPL-2.1
@@ -25,7 +25,6 @@ define Package/libcli
   CATEGORY:=Libraries
   TITLE:=libcli
   URL:=https://dparrish.com/link/libcli
-  DEPENDS:=+libc
 endef
 
 define Package/libcli/description
