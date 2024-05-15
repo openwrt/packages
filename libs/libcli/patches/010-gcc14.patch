@@ -1,0 +1,96 @@
+--- a/libcli.c
++++ b/libcli.c
+@@ -427,7 +427,7 @@ struct cli_command *cli_register_command
+   struct cli_command *c;
+ 
+   if (!command) return NULL;
+-  if (!(c = calloc(sizeof(struct cli_command), 1))) return NULL;
++  if (!(c = calloc(1, sizeof(struct cli_command)))) return NULL;
+   c->command_type = CLI_REGULAR_COMMAND;
+   c->callback = callback;
+   c->next = NULL;
+@@ -597,10 +597,10 @@ struct cli_def *cli_init() {
+   struct cli_def *cli;
+   struct cli_command *c;
+ 
+-  if (!(cli = calloc(sizeof(struct cli_def), 1))) return 0;
++  if (!(cli = calloc(1, sizeof(struct cli_def)))) return 0;
+ 
+   cli->buf_size = 1024;
+-  if (!(cli->buffer = calloc(cli->buf_size, 1))) {
++  if (!(cli->buffer = calloc(1, cli->buf_size))) {
+     cli_done(cli);
+     return 0;
+   }
+@@ -778,7 +778,7 @@ static char *cli_int_return_newword(cons
+ 
+   // allocate space (including terminal NULL, then go through and deal with escaping characters as we copy them
+ 
+-  if (!(newword = calloc(len + 1, 1))) return 0;
++  if (!(newword = calloc(1, len + 1))) return 0;
+   to = newword;
+   while (start != end) {
+     if (*start == '\\')
+@@ -1940,7 +1940,7 @@ int cli_match_filter_init(struct cli_def
+   char *search_flags = cli_get_optarg_value(cli, "search_flags", NULL);
+ 
+   filt->filter = cli_match_filter;
+-  filt->data = state = calloc(sizeof(struct cli_match_filter_state), 1);
++  filt->data = state = calloc(1, sizeof(struct cli_match_filter_state));
+   if (!state) return CLI_ERROR;
+ 
+   if (!strcmp(cli->pipeline->current_stage->words[0], "include")) {
+@@ -2033,7 +2033,7 @@ int cli_range_filter_init(struct cli_def
+   //    from the command line processing and continue
+ 
+   filt->filter = cli_range_filter;
+-  filt->data = state = calloc(sizeof(struct cli_range_filter_state), 1);
++  filt->data = state = calloc(1, sizeof(struct cli_range_filter_state));
+   if (state) {
+     state->from = from;
+     state->to = to;
+@@ -2070,7 +2070,7 @@ int cli_count_filter_init(struct cli_def
+   }
+ 
+   filt->filter = cli_count_filter;
+-  if (!(filt->data = calloc(sizeof(int), 1))) return CLI_ERROR;
++  if (!(filt->data = calloc(1, sizeof(int)))) return CLI_ERROR;
+ 
+   return CLI_OK;
+ }
+@@ -2127,7 +2127,7 @@ struct cli_command *cli_register_filter(
+   struct cli_command *c;
+ 
+   if (!command) return NULL;
+-  if (!(c = calloc(sizeof(struct cli_command), 1))) return NULL;
++  if (!(c = calloc(1, sizeof(struct cli_command)))) return NULL;
+ 
+   c->command_type = CLI_FILTER_COMMAND;
+   c->init = init;
+@@ -2239,7 +2239,7 @@ struct cli_optarg *cli_register_optarg(s
+       goto CLEANUP;
+     }
+   }
+-  if (!(optarg = calloc(sizeof(struct cli_optarg), 1))) goto CLEANUP;
++  if (!(optarg = calloc(1, sizeof(struct cli_optarg)))) goto CLEANUP;
+   if (!(optarg->name = strdup(name))) goto CLEANUP;
+   if (help && !(optarg->help = strdup(help))) goto CLEANUP;
+ 
+@@ -2505,7 +2505,7 @@ struct cli_command *cli_int_register_bui
+   struct cli_command *c;
+ 
+   if (!command) return NULL;
+-  if (!(c = calloc(sizeof(struct cli_command), 1))) return NULL;
++  if (!(c = calloc(1, sizeof(struct cli_command)))) return NULL;
+ 
+   c->flags = flags;
+   c->callback = callback;
+@@ -3068,7 +3068,7 @@ int cli_int_execute_pipeline(struct cli_
+     struct cli_pipeline_stage *stage = &pipeline->stage[stage_num];
+     pipeline->current_stage = stage;
+     cli->found_optargs = stage->found_optargs;
+-    *filt = calloc(sizeof(struct cli_filter), 1);
++    *filt = calloc(1, sizeof(struct cli_filter));
+     if (*filt) {
+       if ((rc = stage->command->init(cli, stage->num_words, stage->words, *filt) != CLI_OK)) {
+         break;
