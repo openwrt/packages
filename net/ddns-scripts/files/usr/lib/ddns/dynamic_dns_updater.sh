@@ -322,9 +322,6 @@ else
 	write_log 7 "last update: $(eval $EPOCH_TIME)"
 fi
 
-# verify DNS server
-[ -n "$dns_server" ] && verify_dns "$dns_server"
-
 # verify Proxy server and set environment
 [ -n "$proxy" ] && {
 	verify_proxy "$proxy" && {
