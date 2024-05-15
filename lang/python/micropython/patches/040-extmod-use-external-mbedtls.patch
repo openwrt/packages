@@ -9,7 +9,7 @@ Subject: [PATCH 06/10] extmod: Use system mbedtls
 
 --- a/extmod/extmod.mk
 +++ b/extmod/extmod.mk
-@@ -131,85 +131,8 @@ SRC_THIRDPARTY_C += $(addprefix $(AXTLS_
+@@ -227,85 +227,8 @@ SRC_THIRDPARTY_C += $(addprefix $(AXTLS_
  	crypto/sha1.c \
  	)
  else ifeq ($(MICROPY_SSL_MBEDTLS),1)
@@ -92,7 +92,7 @@ Subject: [PATCH 06/10] extmod: Use system mbedtls
 -	x509write_csr.c \
 -	xtea.c \
 -	)
-+CFLAGS_EXTMOD += -DMICROPY_SSL_MBEDTLS=1
++CFLAGS_EXTMOD += -DMICROPY_SSL_MBEDTLS=1 -DMBEDTLS_CONFIG_FILE=\"$(STAGING_DIR)/usr/include/mbedtls/mbedtls_config.h\"
 +LDFLAGS_MOD += -lmbedx509 -lmbedtls -lmbedcrypto
  endif
  endif
