@@ -1,0 +1,10 @@
+--- a/remserial.c
++++ b/remserial.c
+@@ -54,6 +54,7 @@ void sighandler(int sig);
+ int connect_to(struct sockaddr_in *addr);
+ void usage(char *progname);
+ void link_slave(int fd);
++void set_tty(int fd,char *settings);
+ 
+ int main(int argc, char *argv[])
+ {
