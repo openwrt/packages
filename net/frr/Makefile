@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 PKG_NAME:=frr
 PKG_VERSION:=9.0.0
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 PKG_SOURCE_DATE:=2023-08-12
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
@@ -128,6 +128,9 @@ define BuildDaemon
     define Package/frr-$(1)
 	$$(call Package/frr/Default)
 	TITLE:= $(1) routing engine
+ifeq ($(1),bgpd)
+	KCONFIG:=CONFIG_TCP_MD5SIG=y
+endif
 	DEPENDS+=$(2)
     endef
 #	if [ "$(1)" == "bfdd" ]; then \
