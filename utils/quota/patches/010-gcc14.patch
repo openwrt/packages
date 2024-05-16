@@ -1,0 +1,57 @@
+--- a/common.h
++++ b/common.h
+@@ -7,6 +7,7 @@
+ #ifndef GUARD_COMMON_H
+ #define GUARD_COMMON_H
+ 
++#include <libgen.h>
+ #include <time.h>
+ #include <stdarg.h>
+ 
+--- a/edquota.c
++++ b/edquota.c
+@@ -38,7 +38,7 @@ char *progname;
+ static int flags, quotatype;
+ static int fmt = -1;
+ static char *protoname;
+-static char *dirname;
++static char *dname;
+ 
+ static void usage(void)
+ {
+@@ -138,7 +138,7 @@ static int parse_options(int argc, char
+ 				  exit(1);
+ 			  break;
+ 		  case 'f':
+-			  dirname = optarg;
++			  dname = optarg;
+ 			  break;
+ 		  case 256:
+ 			  flags |= FL_NUMNAMES;
+@@ -176,7 +176,7 @@ static void copy_prototype(int argc, cha
+ 	protoprivs = getprivs(protoid, handles, 0);
+ 	while (argc-- > 0) {
+ 		id = name2id(*argv, quotatype, !!(flags & FL_NUMNAMES), NULL);
+-		curprivs = getprivs(id, handles, !dirname);
++		curprivs = getprivs(id, handles, !dname);
+ 		if (!curprivs)
+ 			die(1, _("Cannot get quota information for user %s\n"), *argv);
+ 		argv++;
+@@ -223,7 +223,7 @@ int main(int argc, char **argv)
+ 	argv += ret;
+ 
+ 	init_kernel_interface();
+-	handles = create_handle_list(dirname ? 1 : 0, dirname ? &dirname : NULL, quotatype, fmt,
++	handles = create_handle_list(dname ? 1 : 0, dname ? &dname : NULL, quotatype, fmt,
+ 			(flags & FL_NO_MIXED_PATHS) ? 0 : IOI_NFS_MIXED_PATHS,
+ 			(flags & FL_REMOTE) ? 0 : MS_LOCALONLY);
+ 	if (!handles[0]) {
+@@ -296,7 +296,7 @@ int main(int argc, char **argv)
+ 	else {
+ 		for (; argc > 0; argc--, argv++) {
+ 			id = name2id(*argv, quotatype, !!(flags & FL_NUMNAMES), NULL);
+-			curprivs = getprivs(id, handles, !dirname);
++			curprivs = getprivs(id, handles, !dname);
+ 			if (!curprivs)
+ 				die(1, _("Cannot get quota information for user %s.\n"), *argv);
+ 			if (flags & FL_EDIT_TIMES) {
