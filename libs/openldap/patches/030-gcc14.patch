@@ -1,0 +1,11 @@
+--- a/servers/slapd/config.c
++++ b/servers/slapd/config.c
+@@ -151,7 +151,7 @@ int config_check_vals(ConfigTable *Conf,
+ 	int rc, arg_user, arg_type, arg_syn, iarg;
+ 	unsigned uiarg;
+ 	long larg;
+-	size_t ularg;
++	unsigned long ularg;
+ 	ber_len_t barg;
+ 	
+ 	if(Conf->arg_type == ARG_IGNORED) {
