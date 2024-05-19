@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sslh
-PKG_VERSION:=v1.22c
+PKG_VERSION:=v1.23.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://rutschle.net/tech/sslh/
-PKG_HASH:=8e3742d14edf4119350cfdc7bb96b89134d9218eb6d2a6e1f70891ca18a649b1
+PKG_HASH:=2aac006b40e5ae90e3b0fccb44acc994174e24e64457f25041b06aa2433ae637
 
 PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -47,6 +47,16 @@ endef
 
 MAKE_FLAGS += \
   USELIBCAP=1
+
+define Build/Compile
+
+ifeq ($(CONFIG_SSLH_SELECT),y)
+	$(call Build/Compile/Default,sslh-select)
+else
+	$(call Build/Compile/Default,sslh-fork)
+endif
+
+endef
 
 define Package/sslh/install
 	$(INSTALL_DIR) $(1)/usr/sbin
