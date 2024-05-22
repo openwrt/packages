@@ -1,0 +1,11 @@
+--- a/src/shout_private.h
++++ b/src/shout_private.h
+@@ -33,6 +33,8 @@
+ #include <common/timing/timing.h>
+ #include "util.h"
+ 
++#include <stdio.h>
++#include <stdlib.h>
+ #include <sys/types.h>
+ 
+ #ifdef HAVE_STDINT_H
