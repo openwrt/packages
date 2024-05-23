@@ -259,7 +259,8 @@ endif
 ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-gd),)
   CONFIGURE_ARGS+= \
 	--enable-gd=shared,"$(STAGING_DIR)/usr" \
-	--with-external-gd
+	--with-jpeg \
+	--with-webp
 else
   CONFIGURE_ARGS+= --disable-gd
 endif
@@ -647,7 +648,7 @@ $(eval $(call BuildModule,exif,EXIF))
 $(eval $(call BuildModule,fileinfo,Fileinfo))
 $(eval $(call BuildModule,filter,Filter))
 $(eval $(call BuildModule,ftp,FTP,+PACKAGE_php8-mod-ftp:libopenssl))
-$(eval $(call BuildModule,gd,GD graphics,+PACKAGE_php8-mod-gd:libgd-full))
+$(eval $(call BuildModule,gd,GD graphics,+PACKAGE_php8-mod-gd:libjpeg-turbo +PACKAGE_php8-mod-gd:libwebp +PACKAGE_php8-mod-gd:libpng))
 $(eval $(call BuildModule,gettext,Gettext,+PACKAGE_php8-mod-gettext:libintl-full))
 $(eval $(call BuildModule,gmp,GMP,+PACKAGE_php8-mod-gmp:libgmp))
 $(eval $(call BuildModule,iconv,iConv,$(ICONV_DEPENDS)))
