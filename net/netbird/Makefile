@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netbird
 PKG_VERSION:=0.28.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/netbirdio/netbird/tar.gz/v$(PKG_VERSION)?
@@ -29,7 +29,7 @@ define Package/netbird
   SUBMENU:=VPN
   TITLE:=Connect your devices into a single secure private WireGuard®-based mesh network
   URL:=https://netbird.io
-  DEPENDS:=$(GO_ARCH_DEPENDS)
+  DEPENDS:=$(GO_ARCH_DEPENDS) +kmod-wireguard
 endef
 
 define Package/netbird/description
