@@ -1,0 +1,14 @@
+--- a/libatalk/adouble/ad_open.c
++++ b/libatalk/adouble/ad_open.c
+@@ -1284,7 +1284,10 @@
+         /* It doesnt exist, EPERM or another error */
+         if (!(errno == ENOATTR || errno == ENOENT)) {
+             LOG(log_error, logtype_ad, "ad_open_hf_ea: unexpected: %s", strerror(errno));
++            /* OpenWrt ends up with EINVAL at this point, no clue why. Log it but keep going. */
++            if (errno != EINVAL) {
++                EC_FAIL;
++            }
+-            EC_FAIL;
+         }
+ 
+         /* Create one */
