@@ -1,5 +1,21 @@
-Maintainer: me / @\<github-user> (find it by checking history of the package Makefile)
-Compile tested: (put here arch, model, OpenWrt version)
-Run tested: (put here arch, model, OpenWrt version, tests done)
+1. **Package details**
 
-Description:
+    a. Maintainer: @\<github-user> (find it by checking history of the package Makefile)
+
+    b. Description:
+
+2. **Indication of run testing**
+
+    a. OpenWrt version:
+
+    b. OpenWrt target/subtarget:
+
+    c. OpenWrt device:
+
+3. **Formalitiesr**
+
+    a. Review the [CONTRIBUTING.md](../CONTRIBUTING.md) file for detailed contributing guidelines.
+
+    b. If your PR contains patch
+    - Mmke sure that it can be applied by git am
+    - Must be in a way that it is potentianally upstreamable (subject, commit description, etc.)
