@@ -38,7 +38,8 @@ endef
 define Package/netatalk/decription
   Netatalk is a freely-available Open Source AFP fileserver.
   It also provides a kernel level implementation of the AppleTalk
-  Protocol Suite.
+  Protocol Suite. It supports TimeMachine functionality for
+  old MacOS versions that cannot use SMB shares for backups.
 endef
 
 TARGET_CFLAGS += -std=gnu99
