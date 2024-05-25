@@ -14,7 +14,7 @@ PKG_RELEASE:=2
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://gitlab.freedesktop.org/mobile-broadband/libmbim.git
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
-PKG_MIRROR_HASH:=fdb9d945465b7ad13ccd180b3e2c580f45ba6859d464e75191d6f3f38257c1ac
+PKG_MIRROR_HASH:=0ff9212138eb68c2e33ad9220aa64df2e9a0da86f03dd02bf6d4cf02bcd95a68
 
 PKG_BUILD_FLAGS:=gc-sections
 
