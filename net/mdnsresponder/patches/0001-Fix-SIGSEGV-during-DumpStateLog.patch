@@ -1,0 +1,25 @@
+From 14cc53bb09a3d8adf301f3842c765598467e63e1 Mon Sep 17 00:00:00 2001
+From: Alex Kiernan <alex.kiernan@gmail.com>
+Date: Thu, 1 Feb 2024 14:07:03 +0000
+Subject: [PATCH] Fix SIGSEGV during DumpStateLog()
+
+DumpStateLog() calls LogMsgWithLevelv() with category == NULL, avoid
+crashing in this case.
+
+Upstream-Status: Inactive-Upstream [Upstream does not take patches]
+Signed-off-by: Alex Kiernan <alex.kiernan@gmail.com>
+---
+ mDNSShared/mDNSDebug.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/mDNSShared/mDNSDebug.c
++++ b/mDNSShared/mDNSDebug.c
+@@ -71,7 +71,7 @@ mDNSlocal void LogMsgWithLevelv(os_log_t
+ mDNSlocal void LogMsgWithLevelv(const char *category, mDNSLogLevel_t level, const char *format, va_list args)
+ {
+     // Do not print the logs if the log category is MDNS_LOG_CATEGORY_DISABLED.
+-    if (strcmp(category, MDNS_LOG_CATEGORY_DISABLED) == 0)
++    if (category && strcmp(category, MDNS_LOG_CATEGORY_DISABLED) == 0)
+     {
+         return;
+     }
