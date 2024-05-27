@@ -1,0 +1,56 @@
+From c1f3e19d3cb0aa948248616eb1684a1e80aa39b4 Mon Sep 17 00:00:00 2001
+From: Nate Karstens <nate.karstens@garmin.com>
+Date: Wed, 28 Jun 2017 17:30:00 -0500
+Subject: [PATCH 1/8] Create subroutine for cleaning recent interfaces
+
+Moves functionality for cleaning the list of recent
+interfaces into its own subroutine.
+
+Upstream-Status: Submitted [dts@apple.com]
+
+Signed-off-by: Nate Karstens <nate.karstens@garmin.com>
+Signed-off-by: Alex Kiernan <alex.kiernan@gmail.com>
+---
+ mDNSPosix/mDNSPosix.c | 24 ++++++++++++++----------
+ 1 file changed, 14 insertions(+), 10 deletions(-)
+
+--- a/mDNSPosix/mDNSPosix.c
++++ b/mDNSPosix/mDNSPosix.c
+@@ -1322,6 +1322,19 @@ mDNSlocal int SetupSocket(struct sockadd
+     return err;
+ }
+ 
++// Clean up any interfaces that have been hanging around on the RecentInterfaces list for more than a minute
++mDNSlocal void CleanRecentInterfaces(void)
++{
++    PosixNetworkInterface **ri = &gRecentInterfaces;
++    const mDNSs32 utc = mDNSPlatformUTC();
++    while (*ri)
++    {
++        PosixNetworkInterface *pi = *ri;
++        if (utc - pi->LastSeen < 60) ri = (PosixNetworkInterface **)&pi->coreIntf.next;
++        else { *ri = (PosixNetworkInterface *)pi->coreIntf.next; mdns_free(pi); }
++    }
++}
++
+ // Creates a PosixNetworkInterface for the interface whose IP address is
+ // intfAddr and whose name is intfName and registers it with mDNS core.
+ mDNSlocal int SetupOneInterface(mDNS *const m, struct sockaddr *intfAddr, struct sockaddr *intfMask,
+@@ -1559,16 +1572,7 @@ mDNSlocal int SetupInterfaceList(mDNS *c
+ 
+     // Clean up.
+     if (intfList != NULL) freeifaddrs(intfList);
+-
+-    // Clean up any interfaces that have been hanging around on the RecentInterfaces list for more than a minute
+-    PosixNetworkInterface **ri = &gRecentInterfaces;
+-    const mDNSs32 utc = mDNSPlatformUTC();
+-    while (*ri)
+-    {
+-        PosixNetworkInterface *pi = *ri;
+-        if (utc - pi->LastSeen < 60) ri = (PosixNetworkInterface **)&pi->coreIntf.next;
+-        else { *ri = (PosixNetworkInterface *)pi->coreIntf.next; mdns_free(pi); }
+-    }
++    CleanRecentInterfaces();
+ 
+     return err;
+ }
