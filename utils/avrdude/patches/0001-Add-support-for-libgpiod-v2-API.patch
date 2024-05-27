@@ -1,0 +1,349 @@
+From 315df4ba7670a1e5190373155196a40d5a3fd54b Mon Sep 17 00:00:00 2001
+From: Michael Heimpold <mhei@heimpold.de>
+Date: Wed, 27 Mar 2024 22:33:21 +0100
+Subject: [PATCH] Add support for libgpiod v2+ API
+
+libgpiod in version 2 or above introduced an API change which results
+in compile error with the current code.
+
+This commit adds some glue magic for the newer versions and
+tries to detect the used libgpiod version based on the information
+available in the pkg-config files.
+
+At the moment, this eliminates the possibility to statically link
+against this library.
+
+Signed-off-by: Michael Heimpold <mhei@heimpold.de>
+(cherry picked from commit ea701bc2f59c465f48dc290e8e6cf6d14416205f)
+Upstream-Status: Accepted - will be part of next release
+---
+ CMakeLists.txt        |  39 ++++++++---
+ src/Makefile.am       |   4 +-
+ src/cmake_config.h.in |   3 +
+ src/configure.ac      |  31 +++++++++
+ src/linuxgpio.c       | 156 ++++++++++++++++++++++++++++++++++++++++++
+ 5 files changed, 222 insertions(+), 11 deletions(-)
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -126,7 +126,6 @@ if(USE_STATIC_LIBS)
+     set(PREFERRED_LIBFTDI1 libftdi1.a ftdi1)
+     set(PREFERRED_LIBREADLINE libreadline.a readline)
+     set(PREFERRED_LIBSERIALPORT libserialport.a serialport)
+-    set(PREFERRED_LIBGPIOD libgpiod.a gpiod)
+ else()
+     set(PREFERRED_LIBELF elf)
+     set(PREFERRED_LIBUSB usb)
+@@ -136,7 +135,6 @@ else()
+     set(PREFERRED_LIBFTDI1 ftdi1)
+     set(PREFERRED_LIBREADLINE readline)
+     set(PREFERRED_LIBSERIALPORT serialport)
+-    set(PREFERRED_LIBGPIOD gpiod)
+ endif()
+ 
+ # -------------------------------------
+@@ -237,12 +235,32 @@ if(HAVE_LIBSERIALPORT)
+ endif()
+ 
+ # -------------------------------------
+-# Find libgpiod, if needed
++# Find libgpiod using pkg-config, if needed
+ if(HAVE_LINUXGPIO)
+-    find_library(HAVE_LIBGPIOD NAMES ${PREFERRED_LIBGPIOD})
+-    if(HAVE_LIBGPIOD)
+-        set(LIB_LIBGPIOD ${HAVE_LIBGPIOD})
+-        set(CMAKE_REQUIRED_LIBRARIES ${LIB_LIBGPIOD})
++    # defaults/fallbacks
++    set(HAVE_LIBGPIOD 0)
++    set(HAVE_LIBGPIOD_V2 0)
++
++    find_package(PkgConfig)
++    if(PKG_CONFIG_FOUND)
++        # check whether we have version >= 2.0
++        pkg_check_modules(LIBGPIODV2 libgpiod>=2.0)
++        if(LIBGPIODV2_FOUND)
++            set(HAVE_LIBGPIOD 1)
++            set(HAVE_LIBGPIOD_V2 1)
++            set(CMAKE_REQUIRED_LIBRARIES ${LIBGPIODV2_LIBRARIES})
++            set(LIB_LIBGPIOD ${LIBGPIODV2_LINK_LIBRARIES})
++        else()
++            # check whether we have at least an older version
++            pkg_check_modules(LIBGPIOD libgpiod)
++            if(LIBGPIOD_FOUND)
++                set(HAVE_LIBGPIOD 1)
++                set(CMAKE_REQUIRED_LIBRARIES ${LIBGPIOD_LIBRARIES})
++                set(LIB_LIBGPIOD ${LIBGPIOD_LINK_LIBRARIES})
++            endif()
++        endif()
++    else()
++        message(WARNING "For using libgpiod, pkg-config would be required which is not available.")
+     endif()
+ endif()
+ 
+@@ -339,7 +357,8 @@ if (DEBUG_CMAKE)
+     message(STATUS "HAVE_LIBUSB_1_0_LIBUSB_H: ${HAVE_LIBUSB_1_0_LIBUSB_H}")
+     message(STATUS "HAVE_HIDAPI_HIDAPI_H: ${HAVE_HIDAPI_HIDAPI_H}")
+     message(STATUS "LIBUSB_COMPAT_DIR: ${LIBUSB_COMPAT_DIR}")
+-    message(STATUS "HAVE_LIBGPIOD: ${HAVE_LIBGPIOD}")
++    message(STATUS "LIBGPIODV2_FOUND: ${LIBGPIODV2_FOUND}")
++    message(STATUS "LIBGPIOD_FOUND: ${LIBGPIOD_FOUND}")
+     message(STATUS "----------------------")
+ endif()
+ 
+@@ -409,7 +428,9 @@ endif()
+ 
+ if(HAVE_LINUXGPIO)
+     message(STATUS "ENABLED    linuxgpio")
+-    if (HAVE_LIBGPIOD)
++    if (LIBGPIODV2_FOUND)
++        message(STATUS "DO HAVE    libgpiod (v2.x)")
++    elseif(LIBGPIOD_FOUND)
+         message(STATUS "DO HAVE    libgpiod")
+     else()
+         message(STATUS "DON'T HAVE libgpiod")
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -62,10 +62,10 @@ libavrdude_la_CPPFLAGS = $(libavrdude_a_
+ 
+ avrdude_CFLAGS   = @ENABLE_WARNINGS@
+ 
+-libavrdude_a_CFLAGS   = @ENABLE_WARNINGS@
++libavrdude_a_CFLAGS   = @ENABLE_WARNINGS@ $(LIBGPIOD_CFLAGS)
+ libavrdude_la_CFLAGS  = $(libavrdude_a_CFLAGS)
+ 
+-avrdude_LDADD  = $(top_builddir)/$(noinst_LIBRARIES) @LIBUSB_1_0@ @LIBHIDAPI@ @LIBUSB@ @LIBFTDI1@ @LIBFTDI@ @LIBHID@ @LIBELF@ @LIBPTHREAD@ @LIBSERIALPORT@ -lm
++avrdude_LDADD  = $(top_builddir)/$(noinst_LIBRARIES) @LIBUSB_1_0@ @LIBHIDAPI@ @LIBUSB@ @LIBFTDI1@ @LIBFTDI@ @LIBHID@ @LIBELF@ @LIBPTHREAD@ @LIBSERIALPORT@ $(LIBGPIOD_LIBS) -lm
+ 
+ bin_PROGRAMS = avrdude
+ 
+--- a/src/cmake_config.h.in
++++ b/src/cmake_config.h.in
+@@ -30,6 +30,9 @@
+ /* Let linuxgpio know if libgpiod is available. */
+ #cmakedefine HAVE_LIBGPIOD
+ 
++/* Let linuxgpio know whether v2 of libgpiod is available. */
++#cmakedefine HAVE_LIBGPIOD_V2
++
+ /* Linux SPI support enabled */
+ #cmakedefine HAVE_LINUXSPI 1
+ 
+--- a/src/configure.ac
++++ b/src/configure.ac
+@@ -65,6 +65,14 @@ AN_MAKEVAR([AR], [AC_PROG_AR])
+ AN_PROGRAM([ar], [AC_PROG_AR])
+ AC_DEFUN([AC_PROG_AR], [AC_CHECK_TARGET_TOOL(AR, ar, :)])
+ AC_PROG_AR
++
++# If macro PKG_PROG_PKG_CONFIG is not available, Autoconf generates a misleading error message,
++# so check for existence first, and otherwise provide helpful advice.
++m4_ifndef([PKG_PROG_PKG_CONFIG], [m4_fatal(m4_normalize([
++  Macro PKG_PROG_PKG_CONFIG is not available.
++  It is usually defined in file pkg.m4 provided by package pkg-config.]))])
++PKG_PROG_PKG_CONFIG([0.23])
++
+ AH_TEMPLATE([HAVE_YYLEX_DESTROY],
+             [Define if lex/flex has yylex_destroy])
+ # flex should have this
+@@ -465,6 +473,22 @@ fi
+ if test "$enabled_linuxgpio" = "yes"; then
+ 	AC_DEFINE(HAVE_LINUXGPIO, 1, [Linux sysfs GPIO support enabled])
+ 	confsubst="$confsubst -e /^@HAVE_LINUXGPIO_/d"
++
++	PKG_CHECK_MODULES([LIBGPIOD], [libgpiod >= 2.0], [
++		have_libgpiod=yes
++		have_libgpiodv2=yes
++		AC_DEFINE([HAVE_LIBGPIOD], [1], [Linux libgpiod available])
++		AC_DEFINE([HAVE_LIBGPIOD_V2], [1], [Linux libgpiod (v2.x) available])
++	], [
++		PKG_CHECK_MODULES([LIBGPIOD], [libgpiod], [
++			have_libgpiod=yes
++			have_libgpiodv2=no
++			AC_DEFINE([HAVE_LIBGPIOD], [1], [Linux libgpiod available])
++		], [
++			have_libgpiod=no
++			have_libgpiodv2=no
++		])
++	])
+ else
+ 	confsubst="$confsubst -e /^@HAVE_LINUXGPIO_BEGIN@/,/^@HAVE_LINUXGPIO_END@/d"
+ fi
+@@ -678,6 +702,13 @@ fi
+ 
+ if test x$enabled_linuxgpio = xyes; then
+    echo "ENABLED    linuxgpio"
++   if test "x$have_libgpiodv2" = xyes; then
++       echo "DO HAVE    libgpiod (v2.x)"
++   elif test "x$have_libgpiod" = xyes; then
++       echo "DO HAVE    libgpiod"
++   else
++       echo "DON'T HAVE libgpiod"
++   fi
+ else
+    echo "DISABLED   linuxgpio"
+ fi
+--- a/src/linuxgpio.c
++++ b/src/linuxgpio.c
+@@ -337,6 +337,162 @@ static void linuxgpio_sysfs_close(PROGRA
+ 
+ #ifdef HAVE_LIBGPIOD
+ 
++#ifdef HAVE_LIBGPIOD_V2
++
++struct gpiod_line {
++  struct gpiod_chip *chip;
++  struct gpiod_line_request *line_request;
++  unsigned int gpio_num;
++};
++
++struct gpiod_line *gpiod_line_get(const char *port, int gpio_num) {
++  struct gpiod_line *rv;
++  char abs_port[32];
++
++  if (snprintf(abs_port, sizeof(abs_port), "/dev/%s", port) >= (int)sizeof(abs_port))
++    return NULL;
++
++  rv = calloc(sizeof(struct gpiod_line), 1);
++  if (!rv)
++    return NULL;
++
++  rv->gpio_num = gpio_num;
++
++  rv->chip = gpiod_chip_open(abs_port);
++  if (!rv->chip) {
++    free(rv);
++    return NULL;
++  }
++
++  return rv;
++}
++
++int gpiod_line_request_input(struct gpiod_line *gpio_line, const char *consumer) {
++  struct gpiod_line_settings *line_settings = NULL;
++  struct gpiod_line_config *line_config = NULL;
++  struct gpiod_request_config *req_cfg = NULL;
++  int retval = -1;
++
++  line_settings = gpiod_line_settings_new();
++  line_config = gpiod_line_config_new();
++  req_cfg = gpiod_request_config_new();
++
++  if (!line_settings || !line_config || !req_cfg)
++    goto err_out;
++
++  retval = gpiod_line_settings_set_direction(line_settings, GPIOD_LINE_DIRECTION_INPUT);
++  if (retval != 0)
++    goto err_out;
++
++  retval = gpiod_line_config_add_line_settings(line_config, &gpio_line->gpio_num, 1, line_settings);
++  if (retval != 0)
++    goto err_out;
++
++  gpiod_request_config_set_consumer(req_cfg, consumer);
++
++  gpio_line->line_request = gpiod_chip_request_lines(gpio_line->chip, req_cfg, line_config);
++  if (!gpio_line->line_request)
++    goto err_out;
++
++  retval = 0;
++
++err_out:
++  gpiod_line_settings_free(line_settings);
++  gpiod_line_config_free(line_config);
++  gpiod_request_config_free(req_cfg);
++  return retval;
++}
++
++int gpiod_line_request_output(struct gpiod_line *gpio_line, const char *consumer, int value) {
++  struct gpiod_line_settings *line_settings = NULL;
++  struct gpiod_line_config *line_config = NULL;
++  struct gpiod_request_config *req_cfg = NULL;
++  int retval = -1;
++
++  line_settings = gpiod_line_settings_new();
++  line_config = gpiod_line_config_new();
++  req_cfg = gpiod_request_config_new();
++
++  if (!line_settings || !line_config || !req_cfg)
++    goto err_out;
++
++  retval = gpiod_line_settings_set_direction(line_settings, GPIOD_LINE_DIRECTION_OUTPUT);
++  if (retval != 0)
++    goto err_out;
++
++  retval = gpiod_line_settings_set_output_value(line_settings, value ? GPIOD_LINE_VALUE_ACTIVE : GPIOD_LINE_VALUE_INACTIVE);
++  if (retval != 0)
++    goto err_out;
++
++  retval = gpiod_line_config_add_line_settings(line_config, &gpio_line->gpio_num, 1, line_settings);
++  if (retval != 0)
++    goto err_out;
++
++  gpiod_request_config_set_consumer(req_cfg, consumer);
++
++  gpio_line->line_request = gpiod_chip_request_lines(gpio_line->chip, req_cfg, line_config);
++  if (!gpio_line->line_request)
++    goto err_out;
++
++  retval = 0;
++
++err_out:
++  gpiod_line_settings_free(line_settings);
++  gpiod_line_config_free(line_config);
++  gpiod_request_config_free(req_cfg);
++  return retval;
++}
++
++int gpiod_line_set_direction_input(struct gpiod_line *gpio_line) {
++  struct gpiod_line_settings *line_settings = NULL;
++  struct gpiod_line_config *line_config = NULL;
++  int retval = -1;
++
++  line_settings = gpiod_line_settings_new();
++  line_config = gpiod_line_config_new();
++
++  if (!line_settings || !line_config)
++    goto err_out;
++
++  retval = gpiod_line_settings_set_direction(line_settings, GPIOD_LINE_DIRECTION_INPUT);
++  if (retval != 0)
++    goto err_out;
++
++  retval = gpiod_line_config_add_line_settings(line_config, &gpio_line->gpio_num, 1, line_settings);
++  if (retval != 0)
++    goto err_out;
++
++  retval = gpiod_line_request_reconfigure_lines(gpio_line->line_request, line_config);
++
++err_out:
++  gpiod_line_settings_free(line_settings);
++  gpiod_line_config_free(line_config);
++  return retval;
++}
++
++/* this helper is not thread safe, but we are not using threads... */
++char *gpiod_line_name(struct gpiod_line *gpio_line) {
++  static char buffer[16];
++  snprintf(buffer, sizeof(buffer), "%u", gpio_line->gpio_num);
++  return buffer;
++}
++
++void gpiod_line_release(struct gpiod_line *gpio_line) {
++  gpiod_line_request_release(gpio_line->line_request);
++  gpiod_chip_close(gpio_line->chip);
++  free(gpio_line);
++}
++
++static inline int gpiod_line_set_value(struct gpiod_line *gpio_line, int value) {
++  return gpiod_line_request_set_value(gpio_line->line_request, gpio_line->gpio_num, value);
++}
++
++static inline int gpiod_line_get_value(struct gpiod_line *gpio_line) {
++  return gpiod_line_request_get_value(gpio_line->line_request, gpio_line->gpio_num);
++}
++
++#endif
++
+ struct gpiod_line * linuxgpio_libgpiod_lines[N_PINS];
+ 
+ // Try to tell if libgpiod is going to work.
