@@ -1,4 +1,9 @@
 #!/bin/sh
+# Create a symlink to webroot
+if [ -d /www/ ] && [ ! -L /www/.well-known/acme-challenge ] && [ ! -d /www/.well-known/acme-challenge/ ]; then
+	mkdir -p /www/.well-known/
+	ln -s /var/run/acme/challenge/ /www/.well-known/acme-challenge
+fi
 
 grep -q '/etc/init.d/acme' /etc/crontabs/root 2>/dev/null && exit 0
 echo "0 0 * * * /etc/init.d/acme start" >>/etc/crontabs/root
