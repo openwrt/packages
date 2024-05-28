@@ -211,7 +211,7 @@
 # disable-axfr-rectify=no
 
 #################################
-# disable-syslog	Disable logging to syslog, useful when running inside a supervisor that logs stdout
+# disable-syslog	Disable logging to syslog, useful when running inside a supervisor that logs stderr
 #
 # disable-syslog=no
 
@@ -234,6 +234,11 @@
 # dnsupdate	Enable/Disable DNS update (RFC2136) support. Default is no.
 #
 # dnsupdate=no
+
+#################################
+# dnsupdate-require-tsig	Require TSIG secured DNS updates. Default is no.
+#
+# dnsupdate-require-tsig=no
 
 #################################
 # domain-metadata-cache-ttl	Seconds to cache zone metadata from the database
@@ -379,6 +384,11 @@
 # lua-records-exec-limit	LUA records scripts execution limit (instructions count). Values <= 0 mean no limit
 #
 # lua-records-exec-limit=1000
+
+#################################
+# lua-records-insert-whitespace	Insert whitespace when combining LUA chunks
+#
+# lua-records-insert-whitespace=no
 
 #################################
 # max-cache-entries	Maximum number of entries in the query cache
