@@ -219,14 +219,14 @@ Available commands:
 :::
     Timestamp: 2024-04-17 23:02:15
     ------------------------------
-    blocked syn-flood packets in prerouting  : 5
-    blocked udp-flood packets in prerouting  : 11
-    blocked icmp-flood packets in prerouting : 6
-    blocked invalid ct packets in prerouting : 277
-    blocked invalid tcp packets in prerouting: 0
-    ----------
-    auto-added IPs to allowlist today: 0
-    auto-added IPs to blocklist today: 0
+    blocked syn-flood packets  : 5
+    blocked udp-flood packets  : 11
+    blocked icmp-flood packets : 6
+    blocked invalid ct packets : 277
+    blocked invalid tcp packets: 0
+    ---
+    auto-added IPs to allowlist: 0
+    auto-added IPs to blocklist: 0
 
     Set                  | Elements     | WAN-Input (packets)   | WAN-Forward (packets) | LAN-Forward (packets) | Port/Protocol Limit
     ---------------------+--------------+-----------------------+-----------------------+-----------------------+------------------------
@@ -261,19 +261,18 @@ Available commands:
 
 **banIP runtime information**  
 ```
-~# /etc/init.d/banip status
 ::: banIP runtime information
   + status            : active (nft: ✔, monitor: ✔)
-  + version           : 0.9.5-r1
-  + element_count     : 335706
-  + active_feeds      : allowlistv4MAC, allowlistv6MAC, allowlistv4, allowlistv6, adguardtrackersv6, adguardtrackersv4, becyberv4, cinsscorev4, deblv4, countryv6, countryv4, deblv6, dropv6, dohv4, dropv4, dohv6, threatv4, firehol1v4, ipthreatv4, firehol2v4, turrisv4, blocklistv4MAC, blocklistv6MAC, blocklistv4, blocklistv6
+  + version           : 0.9.6-r1
+  + element_count     : 108036
+  + active_feeds      : allowlistv4MAC, allowlistv6MAC, allowlistv4, allowlistv6, cinsscorev4, deblv4, countryv6, countryv4, deblv6, dohv4, dohv6, turrisv4, blocklistv4MAC, blocklistv6MAC, blocklistv4, blocklistv6
   + active_devices    : wan: pppoe-wan / wan-if: wan, wan_6 / vlan-allow: - / vlan-block: -
   + active_uplink     : 217.83.205.130, fe80::9cd6:12e9:c4df:75d3, 2003:ed:b5ff:43bd:9cd5:12e7:c3ef:75d8
-  + nft_info          : priority: 0, policy: performance, loglevel: warn, expiry: 2h
+  + nft_info          : priority: -100, policy: performance, loglevel: warn, expiry: 2h, limit (icmp/syn/udp): 10/10/100
   + run_info          : base: /mnt/data/banIP, backup: /mnt/data/banIP/backup, report: /mnt/data/banIP/report
   + run_flags         : auto: ✔, proto (4/6): ✔/✔, log (pre/inp/fwd/lan): ✔/✘/✘/✘, dedup: ✔, split: ✘, custom feed: ✘, allowed only: ✘
-  + last_run          : action: reload, log: logread, fetch: curl, duration: 2m 33s, date: 2024-04-17 05:57:56
-  + system_info       : cores: 4, memory: 1573, device: Bananapi BPI-R3, OpenWrt SNAPSHOT r25932-338b463e1e
+  + last_run          : action: reload, log: logread, fetch: curl, duration: 1m 21s, date: 2024-05-27 05:56:29
+  + system_info       : cores: 4, memory: 1661, device: Bananapi BPI-R3, OpenWrt SNAPSHOT r26353-a96354bcfb
 ```
 
 **banIP search information**  
@@ -300,16 +299,6 @@ Available commands:
 1.10.255.58
 1.11.67.53
 1.11.114.211
-1.11.208.29
-1.12.75.87
-1.12.231.227
-1.12.247.134
-1.12.251.141
-1.14.96.156
-1.14.250.37
-1.15.40.79
-1.15.71.140
-1.15.77.237
 [...]
 ```
 **default regex for logfile parsing**  
@@ -423,18 +412,21 @@ The banIP default blocklist feeds are stored in an external JSON file '/etc/bani
 A valid JSON source object contains the following information, e.g.:
 ```
 	[...]
-	"tor":{
-		"url_4": "https://raw.githubusercontent.com/SecOps-Institute/Tor-IP-Addresses/master/tor-exit-nodes.lst",
-		"url_6": "https://raw.githubusercontent.com/SecOps-Institute/Tor-IP-Addresses/master/tor-exit-nodes.lst",
-		"rule_4": "/^(([0-9]{1,3}\\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\\/(1?[0-9]|2?[0-9]|3?[0-2]))?)$/{printf \"%s,\\n\",$1}",
-		"rule_6": "/^(([0-9A-f]{0,4}:){1,7}[0-9A-f]{0,4}:?(\\/(1?[0-2][0-8]|[0-9][0-9]))?)$/{printf \"%s,\\n\",$1}",
-		"descr": "tor exit nodes",
-		"flag": "gz tcp 80-88 udp 50000"
+"stevenblack":{
+		"url_4": "https://raw.githubusercontent.com/dibdot/banIP-IP-blocklists/main/stevenblack-ipv4.txt",
+		"url_6": "https://raw.githubusercontent.com/dibdot/banIP-IP-blocklists/main/stevenblack-ipv6.txt",
+		"rule_4": "/^127\\./{next}/^(([1-9][0-9]{0,2}\\.){1}([0-9]{1,3}\\.){2}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\\/(1?[0-9]|2?[0-9]|3?[0-2]))?)[[:space:]]/{printf \"%s,\\n\",$1}",
+		"rule_6": "/^(([0-9A-f]{0,4}:){1,7}[0-9A-f]{0,4}:?(\\/(1?[0-2][0-8]|[0-9][0-9]))?)[[:space:]]/{printf \"%s,\\n\",$1}",
+		"descr": "stevenblack IPs",
+		"flag": "tcp 80 443"
 	},
 	[...]
 ```
 Add an unique feed name (no spaces, no special chars) and make the required changes: adapt at least the URL, the regex and the description for a new feed.  
 Please note: the flag field is optional, it's a space separated list of options: supported are 'gz' as an archive format, protocols 'tcp' or 'udp' with port numbers/port ranges for destination port limitations - multiple definitions are possible.  
+
+## FAQ
+TODO!  
 
 ## Support
 Please join the banIP discussion in this [forum thread](https://forum.openwrt.org/t/banip-support-thread/16985) or contact me by mail <dev@brenken.org>

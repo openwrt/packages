@@ -97,7 +97,7 @@ f_system() {
 	local cpu core
 
 	if [ -z "${ban_dev}" ]; then
-		ban_debug="$(uci_get banip global ban_debug)"
+		ban_debug="$(uci_get banip global ban_debug "0")"
 		ban_cores="$(uci_get banip global ban_cores)"
 	fi
 	ban_packages="$("${ban_ubuscmd}" -S call rpc-sys packagelist '{ "all": true }' 2>/dev/null)"
@@ -1258,7 +1258,7 @@ f_genstatus() {
 		json_add_string "${object}" "${object}"
 	done
 	json_close_array
-	json_add_string "nft_info" "priority: ${ban_nftpriority}, policy: ${ban_nftpolicy}, loglevel: ${ban_nftloglevel}, expiry: ${ban_nftexpiry:-"-"}"
+	json_add_string "nft_info" "priority: ${ban_nftpriority}, policy: ${ban_nftpolicy}, loglevel: ${ban_nftloglevel}, expiry: ${ban_nftexpiry:-"-"}, limit (icmp/syn/udp): ${ban_icmplimit}/${ban_synlimit}/${ban_udplimit}"
 	json_add_string "run_info" "base: ${ban_basedir}, backup: ${ban_backupdir}, report: ${ban_reportdir}"
 	json_add_string "run_flags" "auto: $(f_char ${ban_autodetect}), proto (4/6): $(f_char ${ban_protov4})/$(f_char ${ban_protov6}), log (pre/inp/fwd/lan): $(f_char ${ban_logprerouting})/$(f_char ${ban_loginput})/$(f_char ${ban_logforwardwan})/$(f_char ${ban_logforwardlan}), dedup: $(f_char ${ban_deduplicate}), split: $(f_char ${split}), custom feed: $(f_char ${custom_feed}), allowed only: $(f_char ${ban_allowlistonly})"
 	json_add_string "last_run" "${runtime:-"-"}"
@@ -1354,7 +1354,7 @@ f_lookup() {
 	end_time="$(date "+%s")"
 	duration="$(((end_time - start_time) / 60))m $(((end_time - start_time) % 60))s"
 
-	f_log "debug" "f_lookup    ::: feed: ${feed}, domains: ${cnt_domain}, IPs: ${cnt_ip}, duration: ${duration}"
+	f_log "info" "domain lookup finished in ${duration} (${feed}, ${cnt_domain} domains, ${cnt_ip} IPs)"
 }
 
 # table statistics
@@ -1509,7 +1509,7 @@ f_report() {
 				printf "%s\n" "    blocked icmp-flood packets : ${sum_icmpflood}"
 				printf "%s\n" "    blocked invalid ct packets : ${sum_ctinvalid}"
 				printf "%s\n" "    blocked invalid tcp packets: ${sum_tcpinvalid}"
-				printf "%s\n" "    ----------"
+				printf "%s\n" "    ---"
 				printf "%s\n" "    auto-added IPs to allowlist: ${autoadd_allow}"
 				printf "%s\n\n" "    auto-added IPs to blocklist: ${autoadd_block}"
 				json_select "sets" >/dev/null 2>&1
@@ -1752,10 +1752,9 @@ ban_sedcmd="$(f_cmd sed)"
 ban_ubuscmd="$(f_cmd ubus)"
 ban_zcatcmd="$(f_cmd zcat)"
 
+f_system
 if [ "${ban_action}" != "stop" ]; then
 	[ ! -d "/etc/banip" ] && f_log "err" "no banIP config directory"
 	[ ! -r "/etc/config/banip" ] && f_log "err" "no banIP config"
 	[ "$(uci_get banip global ban_enabled)" = "0" ] && f_log "err" "banIP is disabled"
 fi
-
-f_system
