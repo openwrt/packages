@@ -37,8 +37,8 @@ load_options() {
 	export dalias
 	config_get domains "$section" domains
 	export domains
-	export main_domain
 	main_domain="$(first_arg $domains)"
+	export main_domain
 	config_get keylength "$section" keylength
 	if [ "$keylength" ]; then
 		log warn "Option \"keylength\" is deprecated, please use key_type (e.g., ec256, rsa2048) instead."
