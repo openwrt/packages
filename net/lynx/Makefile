@@ -7,8 +7,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lynx
-PKG_VERSION:=2.9.0
-PKG_RELEASE:=2
+PKG_VERSION:=2.9.2
+PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Leonid Esman <leonid.esman@gmail.com>
@@ -16,7 +16,7 @@ PKG_CPE_ID:=cpe:/a:lynx:lynx
 PKG_SOURCE:=$(PKG_NAME)$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://invisible-mirror.net/archives/lynx/tarballs/ \
                 https://fossies.org/linux/www/
-PKG_HASH:=5bcae5e2e6043ca7b220963a97763c49c13218d849ffda6be7739bfd5a2d36ff
+PKG_HASH:=7374b89936d991669e101f4e97f2c9592036e1e8cdaa7bafc259a77ab6fb07ce
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
