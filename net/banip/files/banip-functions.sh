@@ -332,7 +332,7 @@ f_conf() {
 f_actual() {
 	local nft monitor ppid pids pid
 
-	if "${ban_nftcmd}" list chain inet banIP pre-routing >/dev/null 2>&1; then
+	if "${ban_nftcmd}" -t list set inet banIP allowlistv4MAC >/dev/null 2>&1; then
 		nft="$(f_char "1")"
 	else
 		nft="$(f_char "0")"
@@ -632,7 +632,7 @@ f_nftinit() {
 		# nft header (tables and chains)
 		#
 		printf "%s\n\n" "#!/usr/sbin/nft -f"
-		if "${ban_nftcmd}" list chain inet banIP pre-routing >/dev/null 2>&1; then
+		if "${ban_nftcmd}" -t list set inet banIP allowlistv4MAC >/dev/null 2>&1; then
 			printf "%s\n" "delete table inet banIP"
 		fi
 		printf "%s\n" "add table inet banIP"
@@ -1292,7 +1292,7 @@ f_getstatus() {
 			else
 				json_get_var value "${key}" >/dev/null 2>&1
 				if [ "${key}" = "status" ]; then
-					value="${value} ($(f_actual))"
+					[ "${value}" = "active" ] && value="${value} ($(f_actual))" || value="${value}"
 				fi
 			fi
 			if [ "${key}" != "wan_interfaces" ] && [ "${key}" != "vlan_allow" ] && [ "${key}" != "vlan_block" ]; then
