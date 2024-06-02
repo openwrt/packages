@@ -505,6 +505,7 @@ verify_host_port() {
 	local __PORT=$2
 	local __NC=$(command -v nc)
 	local __NCEXT=$($(command -v nc) --help 2>&1 | grep "\-w" 2>/dev/null)	# busybox nc compiled with extensions
+	local __NCZERO=$($(command -v nc) --help 2>&1 | grep "\-z" 2>/dev/null)	# nc with zero mode
 	local __IP __IPV4 __IPV6 __RUNPROG __PROG __ERR
 	# return codes
 	# 1	system specific error
@@ -589,7 +590,13 @@ verify_host_port() {
 	[ $force_ipversion -ne 0 -a $use_ipv6 -ne 0 -o -z "$__IPV4" ] && __IP=$__IPV6 || __IP=$__IPV4
 
 	if [ -n "$__NCEXT" ]; then	# BusyBox nc compiled with extensions (timeout support)
-		__RUNPROG="$__NC -w 1 $__IP $__PORT </dev/null >$DATFILE 2>$ERRFILE"
+		# nc with zero mode
+		$__NC --help 2>&1 | grep "\-z" >/dev/null 2>&1 && __NCZERO="TRUE"
+		if [ -n "$__NCZERO" ]; then
+			__RUNPROG="$__NC -z -w 1 $__IP $__PORT >$DATFILE 2>$ERRFILE"
+		else
+			__RUNPROG="$__NC -w 1 $__IP $__PORT </dev/null >$DATFILE 2>$ERRFILE"
+		fi
 		write_log 7 "#> $__RUNPROG"
 		eval $__RUNPROG
 		__ERR=$?
