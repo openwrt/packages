@@ -1,0 +1,32 @@
+--- a/src/lib/daemon.c
++++ b/src/lib/daemon.c
+@@ -40,7 +40,9 @@
+ #include <string.h>
+ #include <sys/types.h>
+ // some linux are picky
+-#define __USE_GNU
++#ifndef _GNU_SOURCE
++#define _GNU_SOURCE
++#endif
+ #include <unistd.h>
+ 
+ #include "util.h"
+@@ -151,4 +153,4 @@ void SetPriv(char *userid, char *groupid
+         }
+     }
+ 
+-}  // End of SetPriv
+\ No newline at end of file
++}  // End of SetPriv
+--- a/src/nfreplay/nfreplay.c
++++ b/src/nfreplay/nfreplay.c
+@@ -73,8 +73,7 @@
+ #undef FPURGE
+ #ifdef HAVE___FPURGE
+ #define FPURGE __fpurge
+-#endif
+-#ifdef HAVE_FPURGE
++#elif defined(HAVE_FPURGE)
+ #define FPURGE fpurge
+ #endif
+ 

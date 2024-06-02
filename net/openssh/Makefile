@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openssh
-PKG_VERSION:=9.6p1
-PKG_RELEASE:=1
+PKG_VERSION:=9.7p1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/ \
 		https://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/
-PKG_HASH:=910211c07255a8c5ad654391b40ee59800710dd8119dd5362de09385aa7a777c
+PKG_HASH:=490426f766d82a2763fcacd8d83ea3d70798750c7bd2aff2e57dc5660f773ffd
 
 PKG_LICENSE:=BSD ISC
 PKG_LICENSE_FILES:=LICENCE
@@ -81,6 +81,7 @@ define Package/openssh-keygen
 	$(call Package/openssh/Default)
 	DEPENDS+= +libopenssl +zlib
 	TITLE+= keygen
+	ALTERNATIVES:=200:/usr/bin/ssh-keygen:/usr/libexec/ssh-keygen-openssh
 endef
 
 define Package/openssh-keygen/description
@@ -221,8 +222,8 @@ define Package/openssh-client-utils/install
 endef
 
 define Package/openssh-keygen/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ssh-keygen $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/usr/libexec
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ssh-keygen $(1)/usr/libexec/ssh-keygen-openssh
 endef
 
 define Package/openssh-server/install

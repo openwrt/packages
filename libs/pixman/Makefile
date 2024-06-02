@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pixman
-PKG_VERSION:=0.40.0
+PKG_VERSION:=0.43.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.cairographics.org/releases
-PKG_HASH:=6d200dec3740d9ec4ec8d1180e25779c00bc749f94278c8b9021f5534db223fc
+PKG_HASH:=a0624db90180c7ddb79fc7a9151093dc37c646d8c38d3f232f767cf64b85a226
 
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 PKG_LICENSE:=MIT
@@ -27,7 +27,7 @@ define Package/pixman
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=a low-level software library for pixel manipulation
-  URL:=http://www.pixman.org/
+  URL:=https://www.pixman.org/
 endef
 
 define Package/pixman/description

@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fontconfig
-PKG_VERSION:=2.13.94
-PKG_RELEASE:=3
+PKG_VERSION:=2.15.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://fontconfig.org/release/
-PKG_HASH:=a5f052cb73fd479ffb7b697980510903b563bbb55b8f7a2b001fcfb94026003c
+PKG_SOURCE_URL:=https://www.freedesktop.org/software/fontconfig/release/
+PKG_HASH:=63a0658d0e06e0fa886106452b58ef04f21f58202ea02a94c39de0d3335d7c0e
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=
@@ -31,7 +31,7 @@ define Package/fontconfig
   SUBMENU:=Font-Utils
   TITLE:=fontconfig
   DEPENDS:=+libpthread +libexpat +libfreetype
-  URL:=http://fontconfig.org/
+  URL:=https://www.freedesktop.org/wiki/Software/fontconfig/
 endef
 
 MESON_ARGS += \

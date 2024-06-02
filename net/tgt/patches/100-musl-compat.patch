@@ -13,9 +13,9 @@
  #define NR_SCSI_OPCODES		256
 --- a/usr/util.h
 +++ b/usr/util.h
-@@ -20,6 +20,10 @@
- #include <sys/types.h>
+@@ -21,6 +21,10 @@
  #include <sys/stat.h>
+ #include <sys/types.h>
  
 +#ifndef __WORDSIZE
 +#include <sys/reg.h>

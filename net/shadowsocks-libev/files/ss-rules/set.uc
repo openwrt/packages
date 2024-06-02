@@ -44,7 +44,7 @@ let set_suffix = {
 		str: o_src_checkdst,
 	},
 	"dst_bypass": {
-		str: o_dst_bypass,
+		str: o_dst_bypass + " " + o_remote_servers,
 		file: o_dst_bypass_file,
 	},
 	"dst_bypass_": {

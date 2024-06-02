@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=OpenBLAS
-PKG_VERSION:=0.3.26
+PKG_VERSION:=0.3.27
 PKG_RELEASE:=2
 
 PKG_SOURCE:=OpenBLAS-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/xianyi/OpenBLAS/releases/download/v$(PKG_VERSION)/
-PKG_HASH:=4e6e4f5cb14c209262e33e6816d70221a2fe49eb69eaf0a06f065598ac602c68
+PKG_HASH:=aa2d68b1564fe2b13bc292672608e9cdeeeb6dc34995512e65c3b10f4599e897
 PKG_LICENSE:=BSD-3-Clause
 PKG_CPE_ID:=cpe:/a:openblas_project:openblas
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
@@ -100,6 +100,7 @@ MAKE_FLAGS += \
 	NUM_THREADS=2 \
 	PREFIX=/usr \
 	COMMON_OPT="" \
+	ONLY_CBLAS=1 \
 	TARGET=$(call qstrip,$(OPENBLAS_TARGET))
 
 ifneq ($(CONFIG_INSTALL_GFORTRAN),y)
@@ -112,6 +113,8 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/* $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/* $(1)/usr/include/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/* $(1)/usr/lib/pkgconfig/
+	$(SED) 's,/usr/include,$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/openblas.pc
+	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/openblas.pc
 endef
 
 define Package/openblas/install

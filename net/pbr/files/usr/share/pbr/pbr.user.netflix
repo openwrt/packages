@@ -3,45 +3,63 @@
 # Credits to https://forum.openwrt.org/u/dscpl for api.hackertarget.com code.
 # Credits to https://github.com/kkeker and https://github.com/tophirsch for api.bgpview.io code.
 
-TARGET_SET='pbr_wan_4_dst_ip_user'
-TARGET_IPSET='pbr_wan_4_dst_net_user'
+TARGET_INTERFACE='wan'
+TARGET_NFTSET_4="pbr_${TARGET_INTERFACE}_4_dst_ip_user"
+TARGET_NFTSET_6="pbr_${TARGET_INTERFACE}_6_dst_ip_user"
+TARGET_IPSET_4="pbr_${TARGET_INTERFACE}_4_dst_net_user"
+TARGET_IPSET_6="pbr_${TARGET_INTERFACE}_6_dst_net_user"
 TARGET_TABLE='inet fw4'
 TARGET_ASN='2906'
-TARGET_DL_FILE="/var/pbr_tmp_AS${TARGET_ASN}"
-TARGET_NFT_FILE="/var/pbr_tmp_AS${TARGET_ASN}.nft"
-#DB_SOURCE='ipinfo.io'
+TARGET_DL_FILE_4="/var/pbr_tmp_AS${TARGET_ASN}.ipv4"
+# Uncomment the following line if you enabled ipv6 for pbr and want IPv6 entries added to the IPv6 set
+# TARGET_DL_FILE_6="/var/pbr_tmp_AS${TARGET_ASN}.ipv6"
+DB_SOURCE='ipinfo.io'
 #DB_SOURCE='api.hackertarget.com'
-DB_SOURCE='api.bgpview.io'
-[ -z "$nft" ] && nft="$(command -v nft)"
-_ret=1
+#DB_SOURCE='api.bgpview.io'
+REGEX_IPV4='[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\/[0-9]\{1,\}'
+REGEX_IPV6='.*::.*'
+_ret=0
 
-if [ ! -s "$TARGET_DL_FILE" ]; then
+if [ ! -s "$TARGET_DL_FILE_4" ]; then
 	if [ "$DB_SOURCE" = "ipinfo.io" ]; then
 		TARGET_URL="https://ipinfo.io/AS${TARGET_ASN}"
-		uclient-fetch --no-check-certificate -qO- "$TARGET_URL" 2>/dev/null | grep -E "a href.*${TARGET_ASN}\/" | grep -v ":" | sed "s/^.*<a href=\"\/AS${TARGET_ASN}\///; s/\" >//" > "$TARGET_DL_FILE"
+		uclient-fetch --no-check-certificate -qO- "$TARGET_URL" 2>/dev/null | sed -n "s|\(.*\)/AS${TARGET_ASN}/\($REGEX_IPV4\)\"|\2|p" > "$TARGET_DL_FILE_4"
 	fi
 	if [ "$DB_SOURCE" = "api.hackertarget.com" ]; then
 		TARGET_URL="https://api.hackertarget.com/aslookup/?q=AS${TARGET_ASN}"
-		uclient-fetch --no-check-certificate -qO- "$TARGET_URL" 2>/dev/null | sed '1d' > "$TARGET_DL_FILE"
+		uclient-fetch --no-check-certificate -qO- "$TARGET_URL" 2>/dev/null | sed '1d' > "$TARGET_DL_FILE_4"
 	fi
 	if [ "$DB_SOURCE" = "api.bgpview.io" ]; then
 		TARGET_URL="https://api.bgpview.io/asn/${TARGET_ASN}/prefixes"
-		uclient-fetch --no-check-certificate -qO- "$TARGET_URL" 2>/dev/null | jsonfilter -e '@.data.ipv4_prefixes[*].prefix' > "$TARGET_DL_FILE"
+		uclient-fetch --no-check-certificate -qO- "$TARGET_URL" 2>/dev/null | jsonfilter -e '@.data.ipv4_prefixes[*].prefix' > "$TARGET_DL_FILE_4"
+	fi
+fi
+if [ -s "$TARGET_DL_FILE_4" ]; then
+	if [ -n "$nft" ] && [ -x "$nft" ]; then
+		while read -r p; do "$nft" "add element $TARGET_TABLE $TARGET_NFTSET_4 { $p }" || _ret=1; done < "$TARGET_DL_FILE_4"
+	elif ipset -q list "$TARGET_IPSET_4" >/dev/null 2>&1; then
+		if awk -v ipset="$TARGET_IPSET_4" '{print "add " ipset " " $1}' "$TARGET_DL_FILE_4" | ipset restore -!; then
+			_ret=0
+		else
+			_ret=1
+		fi
 	fi
 fi
 
-if [ -s "$TARGET_DL_FILE" ]; then
-	if ipset -q list "$TARGET_IPSET" >/dev/null 2>&1; then
-			if awk -v ipset="$TARGET_IPSET" '{print "add " ipset " " $1}' "$TARGET_DL_FILE" | ipset restore -!; then
-				_ret=0
-			fi
-	elif [ -n "$nft" ] && [ -x "$nft" ] && "$nft" list set "$TARGET_TABLE" "$TARGET_SET" >/dev/null 2>&1; then
-		printf "add element %s %s { " "$TARGET_TABLE" "$TARGET_SET" > "$TARGET_NFT_FILE"
-		awk '{printf $1 ", "}' "$TARGET_DL_FILE" >> "$TARGET_NFT_FILE"
-		printf " } " >> "$TARGET_NFT_FILE"
-		if "$nft" -f "$TARGET_NFT_FILE"; then
-			rm -f "$TARGET_NFT_FILE"
+if [ -n "$TARGET_DL_FILE_6" ] && [ ! -s "$TARGET_DL_FILE_6" ]; then
+	if [ "$DB_SOURCE" = "ipinfo.io" ]; then
+		TARGET_URL="https://ipinfo.io/AS${TARGET_ASN}"
+		uclient-fetch --no-check-certificate -qO- "$TARGET_URL" 2>/dev/null | sed -n "s|\(.*\)/AS${TARGET_ASN}/\($REGEX_IPV6\)\"|\2|p" > "$TARGET_DL_FILE_6"
+	fi
+fi
+if [ -s "$TARGET_DL_FILE_6" ]; then
+	if [ -n "$nft" ] && [ -x "$nft" ]; then
+		while read -r p; do "$nft" "add element $TARGET_TABLE $TARGET_NFTSET_6 { $p }" || _ret=1; done < "$TARGET_DL_FILE_6"
+	elif ipset -q list "$TARGET_IPSET_6" >/dev/null 2>&1; then
+		if awk -v ipset="$TARGET_IPSET_6" '{print "add " ipset " " $1}' "$TARGET_DL_FILE_6" | ipset restore -!; then
 			_ret=0
+		else
+			_ret=1
 		fi
 	fi
 fi

@@ -1,0 +1,22 @@
+From 5557b6ffe8d4eeb93532d043649b40eb10120bf7 Mon Sep 17 00:00:00 2001
+From: Gavin <gavin.bravery@jagsiacs.co.uk>
+Date: Wed, 25 Oct 2023 11:40:50 +0100
+Subject: [PATCH] Update pf_ring.c
+
+Change to remove .sendpage assignment, as that attribute seems to have gone away in 6.5.3 kernel.
+---
+ kernel/pf_ring.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+--- a/kernel/pf_ring.c
++++ b/kernel/pf_ring.c
+@@ -8470,7 +8470,9 @@ static struct proto_ops ring_ops = {
+   .getname = sock_no_getname,
+   .listen = sock_no_listen,
+   .shutdown = sock_no_shutdown,
++  #if(LINUX_VERSION_CODE < KERNEL_VERSION(6,5,3))
+   .sendpage = sock_no_sendpage,
++  #endif
+ 
+   /* Now the operations that really occur. */
+   .release = ring_release,

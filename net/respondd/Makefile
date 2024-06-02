@@ -9,12 +9,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=respondd
 PKG_SOURCE_DATE:=2019-05-01
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/freifunk-gluon/respondd.git
 PKG_SOURCE_VERSION:=58405297e76f97d4752dc7511dc15bbc7a01e586
-PKG_MIRROR_HASH:=22bc00df280fe611cfc895528f17269f03af804ea4c2ca2dc62da2457d3a1ee0
+PKG_MIRROR_HASH:=a47edea6b7e9c1f02cf5672458f7066611de6cdfe45dd62cbb5b9a910c2435ef
 
 PKG_MAINTAINER:=David Bauer <mail@david-bauer.net>
 PKG_LICENSE:=BSD-2-Clause

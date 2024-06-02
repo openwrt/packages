@@ -9,7 +9,7 @@
  
  clean:
  	rm -f $(BINS) $(MANS) dump.c errnos.h errno.o \
-@@ -28,9 +28,6 @@ install:
+@@ -33,9 +33,6 @@ install:
  	$(INSTALL_BIN) $(BINS) $(DESTDIR)$(PREFIX)/bin
  	install $(PERLSCRIPTS) $(DESTDIR)$(PREFIX)/bin
  

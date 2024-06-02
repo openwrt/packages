@@ -26,7 +26,7 @@ define Package/gperftools-headers
   SECTION:=libs
   TITLE:=Gperftools Headers
   URL:=https://github.com/gperftools/gperftools
-  DEPENDS:= @!mips @!mipsel @!powerpc
+  DEPENDS:= @!(mips||mips64||mipsel||powerpc)
 endef
 
 define Package/gperftools-runtime
@@ -34,7 +34,7 @@ define Package/gperftools-runtime
   CATEGORY:=Libraries
   TITLE:=Gperftools Runtime
   URL:=https://github.com/gperftools/gperftools
-  DEPENDS:= +libunwind +libstdcpp @!mips @!mipsel @!powerpc
+  DEPENDS:= +libunwind +libstdcpp @!(mips||mips64||mipsel||powerpc)
 endef
 
 define Package/gperftools-headers/description

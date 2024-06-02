@@ -1,0 +1,53 @@
+--- a/cmake/Modules/FindMbedTLS.cmake
++++ b/cmake/Modules/FindMbedTLS.cmake
+@@ -34,7 +34,7 @@ set(_MBEDTLS_ROOT_HINTS_AND_PATHS
+ 
+ find_path(MBEDTLS_INCLUDE_DIR
+     NAMES
+-        mbedtls/config.h
++        mbedtls/version.h
+     HINTS
+         ${_MBEDTLS_ROOT_HINTS_AND_PATHS}
+     PATH_SUFFIXES
+@@ -72,7 +72,13 @@ find_library(MBEDTLS_X509_LIBRARY
+ set(MBEDTLS_LIBRARIES ${MBEDTLS_SSL_LIBRARY} ${MBEDTLS_CRYPTO_LIBRARY}
+         ${MBEDTLS_X509_LIBRARY})
+ 
+-if (MBEDTLS_INCLUDE_DIR AND EXISTS "${MBEDTLS_INCLUDE_DIR}/mbedtls/version.h")
++if (MBEDTLS_INCLUDE_DIR AND EXISTS "${MBEDTLS_INCLUDE_DIR}/mbedtls/build_info.h")
++    file(STRINGS "${MBEDTLS_INCLUDE_DIR}/mbedtls/build_info.h" _mbedtls_version_str REGEX
++            "^#[\t ]*define[\t ]+MBEDTLS_VERSION_STRING[\t ]+\"[0-9]+.[0-9]+.[0-9]+\"")
++
++    string(REGEX REPLACE "^.*MBEDTLS_VERSION_STRING.*([0-9]+.[0-9]+.[0-9]+).*"
++            "\\1" MBEDTLS_VERSION "${_mbedtls_version_str}")
++elseif (MBEDTLS_INCLUDE_DIR AND EXISTS "${MBEDTLS_INCLUDE_DIR}/mbedtls/version.h")
+     file(STRINGS "${MBEDTLS_INCLUDE_DIR}/mbedtls/version.h" _mbedtls_version_str REGEX
+             "^#[\t ]*define[\t ]+MBEDTLS_VERSION_STRING[\t ]+\"[0-9]+.[0-9]+.[0-9]+\"")
+ 
+@@ -93,7 +99,7 @@ if (MBEDTLS_VERSION)
+             in the system variable MBEDTLS_ROOT_DIR"
+     )
+ else (MBEDTLS_VERSION)
+-    find_package_handle_standard_args(MBedTLS
++    find_package_handle_standard_args(MbedTLS
+         "Could NOT find mbedTLS, try to set the path to mbedLS root folder in
+         the system variable MBEDTLS_ROOT_DIR"
+         MBEDTLS_INCLUDE_DIR
+--- a/src/libmbedcrypto.c
++++ b/src/libmbedcrypto.c
+@@ -118,8 +118,14 @@ int hmac_update(HMACCTX c, const void *d
+ 
+ int hmac_final(HMACCTX c, unsigned char *hashmacbuf, size_t *len)
+ {
++    const mbedtls_md_info_t *md_info;
+     int rc;
+-    *len = (unsigned int)mbedtls_md_get_size(c->md_info);
++#if MBEDTLS_VERSION_MAJOR >= 3
++	md_info = mbedtls_md_info_from_ctx(c);
++#else
++	md_info = c->md_info;
++#endif
++    *len = (unsigned int)mbedtls_md_get_size(md_info);
+     rc = !mbedtls_md_hmac_finish(c, hashmacbuf);
+     mbedtls_md_free(c);
+     SAFE_FREE(c);

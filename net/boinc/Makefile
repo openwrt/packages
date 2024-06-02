@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/BOINC/boinc
 PKG_SOURCE_VERSION:=client_release/$(PKG_VERSION_SHORT)/$(PKG_VERSION)
-PKG_MIRROR_HASH:=c13c496c3d7127c410b1628afecacd6ce46648af01b1549dc79d418159cf69ad
+PKG_MIRROR_HASH:=568a87739949e018c3a0ab0b72ba887b82bfc1b91a060f1cf1266dbfe0a5f81b
 
 PKG_MAINTAINER:=Christian Dreihsig <christian.dreihsig@t-online.de>, Steffen Moeller <moeller@debian.org>
 PKG_LICENSE:=GPL-3.0-or-later

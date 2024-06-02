@@ -11,7 +11,7 @@ PKG_RELEASE:=2
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/umlaeute/v4l2loopback.git
 PKG_SOURCE_VERSION:=v0.12.7
-PKG_MIRROR_HASH:=e5e5d897bdaa7f2fb0b897e503cecaeee234fcdc7f2f138aae501ef742f5b2b2
+PKG_MIRROR_HASH:=ee4adacdd38901c83349b36627ad9e8698564797d2e96297bfeb5202e80667a5
 
 PKG_MAINTAINER:=Michel Promonet <michel.promonet@free.fr>
 PKG_CPE_ID:=cpe:/o:v4l2loopback_project:v4l2loopback

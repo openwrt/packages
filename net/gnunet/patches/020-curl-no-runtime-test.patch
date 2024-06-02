@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -727,12 +727,7 @@ LIBCURL_CHECK_CONFIG([], [7.34.0], [],
+@@ -727,12 +727,7 @@ LIBCURL_CHECK_CONFIG([], [7.85.0], [],
  
  OLD_LIBS=$LIBS
  LIBS="$LIBS $LIBCURL"

@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lualanes
-PKG_VERSION:=3.16.2
+PKG_VERSION:=3.16.3
 PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/LuaLanes/lanes.git
-PKG_SOURCE_VERSION:=489f7caf9ed893c1e8efc5c1b6ecb757a2131932
-PKG_MIRROR_HASH:=667042a2d773bb4d6139abca1ed2b62c2b6b3f4dd7c5446914de548625ea08f8
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/LuaLanes/lanes/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=22cfa836de4be14fe588b9cd34e936d6f61ec6f4096d8ae30d4ec35855d9608f
+PKG_BUILD_DIR:=$(BUILD_DIR)/lanes-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Vladimir Malyutin <first-leon@yandex.ru>
 PKG_LICENSE:=BSD-3-Clause

@@ -14,7 +14,7 @@ trm_debug="0"
 trm_iface=""
 trm_captive="1"
 trm_proactive="1"
-trm_vpn="1"
+trm_vpn="0"
 trm_netcheck="0"
 trm_autoadd="0"
 trm_randomize="0"
@@ -233,9 +233,11 @@ f_vpn() {
 					f_log "info" "take down openvpn instance '${vpn_instance}' (switch)"
 					rc="1"
 				fi
-				[ "${rc}" = "1" ] && break
+				if [ "${rc}" = "1" ]; then
+					rm -f "${trm_vpnfile}"
+					break
+				fi
 			done
-			rm -f "${trm_vpnfile}"
 		fi
 		if [ -x "${trm_vpnpgm}" ] && [ -n "${vpn_service}" ] && [ -n "${vpn_iface}" ]; then
 			if { [ "${vpn_action}" = "disable" ] && [ -f "${trm_vpnfile}" ]; } ||

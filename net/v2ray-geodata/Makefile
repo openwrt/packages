@@ -12,31 +12,31 @@ PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
 
 include $(INCLUDE_DIR)/package.mk
 
-GEOIP_VER:=202402220038
+GEOIP_VER:=202405230041
 GEOIP_FILE:=geoip.dat.$(GEOIP_VER)
 define Download/geoip
   URL:=https://github.com/v2fly/geoip/releases/download/$(GEOIP_VER)/
   URL_FILE:=geoip.dat
   FILE:=$(GEOIP_FILE)
-  HASH:=331c5031528f577dde3d63681d32a15693aace4e38095d40dbe3f751e0db5536
+  HASH:=0401b0a1b82ad0d01c119f311d7ae0e0bae4d928f287251df2a98281d173f3d7
 endef
 
-GEOSITE_VER:=20240221053250
+GEOSITE_VER:=20240508170917
 GEOSITE_FILE:=dlc.dat.$(GEOSITE_VER)
 define Download/geosite
   URL:=https://github.com/v2fly/domain-list-community/releases/download/$(GEOSITE_VER)/
   URL_FILE:=dlc.dat
   FILE:=$(GEOSITE_FILE)
-  HASH:=d2ef9bd9cac2678088f5494b888bf9eecdad385dc2b5689e6c7d56e4d97173a3
+  HASH:=25d6120b009498ac83ae723e9751a19ff545fac4800dad53ab6e2592c3407533
 endef
 
-GEOSITE_IRAN_VER:=202402260026
+GEOSITE_IRAN_VER:=202405201648
 GEOSITE_IRAN_FILE:=iran.dat.$(GEOSITE_IRAN_VER)
 define Download/geosite-ir
   URL:=https://github.com/bootmortis/iran-hosted-domains/releases/download/$(GEOSITE_IRAN_VER)/
   URL_FILE:=iran.dat
   FILE:=$(GEOSITE_IRAN_FILE)
-  HASH:=8f75363476277905b3f4c0ad0b6f958569e14d8ce59fb8b814fe55faf914a66d
+  HASH:=8c37d450d8b756fcc58e71eeef67d4db419c05216259c177bd2cf01c55851d67
 endef
 
 define Package/v2ray-geodata/template
@@ -51,7 +51,7 @@ define Package/v2ray-geoip
   $(call Package/v2ray-geodata/template)
   TITLE:=GeoIP List for V2Ray
   PROVIDES:=v2ray-geodata xray-geodata xray-geoip
-  VERSION:=$(GEOIP_VER)-$(PKG_RELEASE)
+  VERSION:=$(GEOIP_VER)-r$(PKG_RELEASE)
   LICENSE:=CC-BY-SA-4.0
 endef
 
@@ -59,7 +59,7 @@ define Package/v2ray-geosite
   $(call Package/v2ray-geodata/template)
   TITLE:=Geosite List for V2Ray
   PROVIDES:=v2ray-geodata xray-geodata xray-geosite
-  VERSION:=$(GEOSITE_VER)-$(PKG_RELEASE)
+  VERSION:=$(GEOSITE_VER)-r$(PKG_RELEASE)
   LICENSE:=MIT
 endef
 
@@ -67,7 +67,7 @@ define Package/v2ray-geosite-ir
   $(call Package/v2ray-geodata/template)
   TITLE:=Iran Geosite List for V2Ray
   PROVIDES:=xray-geosite-ir
-  VERSION:=$(GEOSITE_IRAN_VER)-$(PKG_RELEASE)
+  VERSION:=$(GEOSITE_IRAN_VER)-r$(PKG_RELEASE)
   LICENSE:=MIT
 endef
 

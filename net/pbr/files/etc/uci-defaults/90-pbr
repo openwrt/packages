@@ -1,19 +1,33 @@
 #!/bin/sh
-# shellcheck disable=SC1091,SC3037,SC3043
 
-readonly __OK__='\033[0;32m[\xe2\x9c\x93]\033[0m'
+readonly pbrFunctionsFile='/etc/init.d/pbr'
+if [ -s "$pbrFunctionsFile" ]; then
+# shellcheck source=../../etc/init.d/pbr
+	. "$pbrFunctionsFile"
+else
+	printf "%b: pbr init.d file (%s) not found! \n" '\033[0;31mERROR\033[0m' "$pbrFunctionsFile"
+fi
 
 # Transition from vpn-policy-routing
-if [ -s '/etc/config/vpn-policy-routing' ] && [ ! -s '/etc/config/pbr-opkg' ]; then
+if [ -s '/etc/config/vpn-policy-routing' ] && [ ! -s '/etc/config/pbr-opkg' ] \
+	&& [ "$(uci_get pbr config enabled)" = '0' ]; then
 	if [ -x '/etc/init.d/vpn-policy-routing' ]; then
-		echo "Stopping and disabling vpn-policy-routing."
-		/etc/init.d/vpn-policy-routing stop
-		/etc/init.d/vpn-policy-routing disable
+		output "Stopping and disabling vpn-policy-routing."
+		if /etc/init.d/vpn-policy-routing stop \
+			&& /etc/init.d/vpn-policy-routing disable; then
+			output_okn
+		else
+			output_failn
+		fi
 	fi
-	echo "Migrating vpn-policy-routing config file."
-	mv '/etc/config/pbr' '/etc/config/pbr-opkg'
-	sed 's/vpn-policy-routing/pbr/g' /etc/config/vpn-policy-routing > /etc/config/pbr
-	uci set vpn-policy-routing.config.enabled=0; uci commit vpn-policy-routing;
+	output "Migrating vpn-policy-routing config file."
+	if mv '/etc/config/pbr' '/etc/config/pbr-opkg' \
+		&& sed 's/vpn-policy-routing/pbr/g' /etc/config/vpn-policy-routing > /etc/config/pbr \
+		&& uci_set vpn-policy-routing config enabled 0 && uci_commit vpn-policy-routing; then
+		output_okn
+	else
+		output_failn
+	fi
 fi
 
 # Transition from older versions of pbr
@@ -26,14 +40,17 @@ sed -i "s/'PREROUTING'/'prerouting'/g" /etc/config/pbr
 sed -i "s/'POSTROUTING'/'postrouting'/g" /etc/config/pbr
 sed -i "s/option fw_mask '0x\(.*\)'/option fw_mask '\1'/g" /etc/config/pbr
 sed -i "s/option wan_mark '0x\(.*\)'/option wan_mark '\1'/g" /etc/config/pbr
+sed -i "s|option path '/etc/pbr/|option path '/usr/share/pbr/|g" /etc/config/pbr
 
-if [ -s '/usr/share/pbr/pbr.firewall.include' ]; then
+# add firewall include file to fw4 config
+# shellcheck source=../../usr/share/pbr/firewall.include
+if [ -s '/usr/share/pbr/firewall.include' ]; then
 uci -q batch <<-EOT
 	delete firewall.pbr
 	set firewall.pbr='include'
 	set firewall.pbr.fw4_compatible='1'
 	set firewall.pbr.type='script'
-	set firewall.pbr.path='/usr/share/pbr/pbr.firewall.include'
+	set firewall.pbr.path='/usr/share/pbr/firewall.include'
 	commit firewall
 EOT
 fi

@@ -132,7 +132,7 @@ class smatch {
 
     std::string::const_iterator end;
 
-    std::vector<int> vec{};
+    std::vector<PCRE2_SIZE> vec{};
 
     int n = 0;
 
@@ -227,13 +227,21 @@ auto regex_search(const std::string::const_iterator begin,
     match.vec.reserve(sz);
 
     const char* subj = &*begin;
-    int len = static_cast<int>(&*end - subj);
+    int n, len = static_cast<int>(&*end - subj);
+    unsigned int ov_count;
+    PCRE2_SIZE *ov;
 
     match.begin = begin;
     match.end = end;
 
     pcre2_match_data *match_data = pcre2_match_data_create(sz, NULL);
-    match.n = pcre2_match(rgx(), (PCRE2_SPTR)subj, len, 0, 0, match_data, NULL);
+    n = pcre2_match(rgx(), (PCRE2_SPTR)subj, len, 0, 0, match_data, NULL);
+    ov = pcre2_get_ovector_pointer(match_data);
+    ov_count = pcre2_get_ovector_count(match_data);
+
+    match.vec.assign(ov, ov + ov_count);
+    match.n = n;
+
     pcre2_match_data_free(match_data);
 
     if (match.n < 0) {

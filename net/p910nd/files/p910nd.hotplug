@@ -281,8 +281,7 @@ get_and_store_printer_info() {
 		[ "$DEBUG" ] && echo ${MFG:+MFG=$MFG} ${MDL:+MDL=$MDL} ${CMD:+CMD=$CMD} ${CLS:+CLS=$CLS} ${DES:+DES=$DES} ${SN:+SN=$SN}
 
 		[ "$DEBUG" ] && echo 'uci set' for UCI_DEV_CFG_NUMBER: $UCI_DEV_CFG_NUMBER
-		# Take the USB info as fact: set bidir regardless. It seems to be a source of confusion.
-		eval "$uqsddu_cmd.bidirectional='$BIDIR'"
+		[ -z "$(eval "$uqgddu_cmd".bidirectional)" ] && eval "$uqsddu_cmd.bidirectional='$BIDIR'"
 		[ -z "$(eval "$uqgddu_cmd".port)" ] && eval "$uqsddu_cmd.port='0'"
 		[ -z "$(eval "$uqgddu_cmd".enabled)" ] && eval "$uqsddu_cmd.enabled='1'"
 		[ -z "$(eval "$uqgddu_cmd".usbvidpid)" ] && [ -n "$THIS_USB_VIDPID" ] && eval "$uqsddu_cmd.usbvidpid='$THIS_USB_VIDPID'"
@@ -335,10 +334,9 @@ send_driver() {
 			logger -t "$DAEMON_HOTPLUG" -p "$DAEMON_ERR" "Sending driver to $CHAR_DEV [ $THIS_USB_VIDPID ] failed for some reason."
 		else
 			logger -t "$DAEMON_HOTPLUG" -p "$DAEMON_INFO" "Sent $DRIVER_FILE to $CHAR_DEV [ $THIS_USB_VIDPID ]."
-			daemon_restart
 		fi
 	else
-		logger -t "$DAEMON_HOTPLUG"  -p "$DAEMON_ERR" "Missing driver file: $DRIVER_FILE for $CHAR_DEV [ $THIS_USB_VIDPID ] (please upload it)."
+		logger -t "$DAEMON_HOTPLUG"  -p "$DAEMON_INFO" "No driver file: $DRIVER_FILE for $CHAR_DEV [ $THIS_USB_VIDPID ] (upload it if your printer needs a driver loading)."
 	fi
 }
 
@@ -375,6 +373,8 @@ case "$ACTION" in
 				[ "$DEBUG" ] && echo "No THIS_USB_VIDPID match."
 			fi
 		fi
+
+		daemon_restart
 
 		;;
 	remove)

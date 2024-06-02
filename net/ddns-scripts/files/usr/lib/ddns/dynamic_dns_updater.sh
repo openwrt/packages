@@ -89,7 +89,7 @@ case "$1" in
 		exit 1
 		;;
 	reload)
-		killall -1 dynamic_dns_updater.sh 2>/dev/null
+		killall dynamic_dns_updater.sh 2>/dev/null
 		exit $?
 		;;
 	*)	usage_err "unknown command - $1";;

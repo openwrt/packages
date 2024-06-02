@@ -42,7 +42,7 @@ Subject: [PATCH 904/904] gmpdh: Plugin that implements gmp DH functions in an
  AM_CONDITIONAL(USE_CURVE25519, test x$curve25519 = xtrue)
  AM_CONDITIONAL(USE_RDRAND, test x$rdrand = xtrue)
  AM_CONDITIONAL(USE_AESNI, test x$aesni = xtrue)
-@@ -1996,6 +1999,7 @@ AC_CONFIG_FILES([
+@@ -1997,6 +2000,7 @@ AC_CONFIG_FILES([
  	src/libstrongswan/plugins/mgf1/Makefile
  	src/libstrongswan/plugins/fips_prf/Makefile
  	src/libstrongswan/plugins/gmp/Makefile

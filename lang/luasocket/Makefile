@@ -11,9 +11,10 @@ PKG_NAME:=luasocket
 PKG_VERSION:=3.1.0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=v$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/lunarmodules/luasocket/archive/refs/tags
-PKG_HASH:=bf033aeb9e62bcaa8d007df68c119c966418e8c9ef7e4f2d7e96bddeca9cca6e
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+PKG_SOURCE_URL:=https://github.com/lunarmodules/luasocket
+PKG_MIRROR_HASH:=1ee81f1f5a63d0d14c8c8571e8940604cbf1443c3b18ee7d3d1bac6791f853fc
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=MIT

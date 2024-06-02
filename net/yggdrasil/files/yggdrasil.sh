@@ -8,8 +8,17 @@
 }
 
 proto_yggdrasil_init_config() {
-	proto_config_add_string "private_key"
 	available=1
+
+	# Yggdrasil
+	proto_config_add_string "private_key"
+	proto_config_add_boolean "allocate_listen_addresses"
+
+	# Jumper
+	proto_config_add_boolean "jumper_enable"
+	proto_config_add_string "jumper_loglevel"
+	proto_config_add_boolean "jumper_autofill_listen_addresses"
+	proto_config_add_string "jumper_config"
 }
 
 proto_yggdrasil_setup_peer_if_non_interface() {
@@ -97,6 +106,52 @@ proto_yggdrasil_generate_keypair() {
 	public_key=${PrivateKey:64}
 }
 
+proto_yggdrasil_allocate_listen_addresses() {
+	local config="$1"
+
+	# Collect already defined protocols
+	protocols=""
+	_add_address_protocol() {
+		protocols="${protocols}$(echo $1 | cut -d "://" -f1) "
+	}
+	config_list_foreach "$config" listen_address _add_address_protocol
+
+	# Add new address for each previously unspecified protocol
+	for protocol in "tls" "quic"; do
+		if ! echo "$protocols" | grep "$protocol" &>/dev/null; then
+			# By default linux dynamically alocates ports in the range 32768..60999
+			# `sysctl net.ipv4.ip_local_port_range`
+			random_port=$(( ($RANDOM + $RANDOM) % 22767 + 10000 ))
+			proto_yggdrasil_add_string "${protocol}://127.0.0.1:${random_port}"
+		fi
+	done
+}
+
+proto_yggdrasil_generate_jumper_config() {
+	local config="$1"
+	local ygg_sock="$2"
+	local ygg_cfg="$3"
+
+	# Autofill Yggdrasil listeners
+	config_get is_autofill_listeners "$config" "jumper_autofill_listen_addresses"
+	if [ "$is_autofill_listeners" == "1" ]; then
+		echo "yggdrasil_listen = ["
+		_print_address() {
+			echo "\"${1}\","
+		}
+		json_load_file "${ygg_cfg}"
+		json_for_each_item _print_address "Listen"
+		echo "]"
+	fi
+
+	# Print admin api socket
+	echo "yggdrasil_admin_listen = [ \"${ygg_sock}\" ]"
+
+	# Print extra config
+	config_get jumper_config "$config" "jumper_config"
+	echo "${jumper_config}"
+}
+
 proto_yggdrasil_setup() {
 	local config="$1"
 	local device="$2"
@@ -178,6 +233,14 @@ EOF
 
 	json_add_array "Listen"
 	config_list_foreach "$config" listen_address proto_yggdrasil_add_string
+
+	# If needed, add new address for each previously unspecified protocol
+	config_get is_jumper_enabled "$config" "jumper_enable"
+	config_get allocate_listen_addresses "$config" "allocate_listen_addresses"
+	if [ "$is_jumper_enabled" == "1" ] && [ "$allocate_listen_addresses" == "1" ]; then
+		proto_yggdrasil_allocate_listen_addresses "$config"
+	fi
+
 	json_close_array
 
 	json_add_array "MulticastInterfaces"
@@ -193,6 +256,16 @@ EOF
 	proto_add_ipv6_address "$(yggdrasil -useconffile "${ygg_cfg}" -address)" "7"
 	proto_add_ipv6_prefix "$(yggdrasil -useconffile "${ygg_cfg}" -subnet)"
 	proto_send_update "$config"
+
+	# Start jumper if needed
+	config_get is_jumper_enabled "$config" "jumper_enable"
+	if [ "$is_jumper_enabled" == "1" ] && [ -f /usr/sbin/yggdrasil-jumper ]; then
+		jumper_cfg="${ygg_dir}/${config}-jumper.conf"
+		proto_yggdrasil_generate_jumper_config "$config" "$ygg_sock" "$ygg_cfg" > "$jumper_cfg"
+
+		config_get jumper_loglevel "$config" "jumper_loglevel"
+		sh -c "sleep 2 && exec /usr/sbin/yggdrasil-jumper --loglevel \"${jumper_loglevel:-info}\" --config \"$jumper_cfg\" 2&>1 | logger -t \"${config}-jumper\"" &
+	fi
 }
 
 proto_yggdrasil_teardown() {

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bluez
 PKG_VERSION:=5.72
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/bluetooth/
@@ -79,8 +79,6 @@ define Package/bluez-daemon/conffiles
 /etc/bluetooth/keys
 /etc/config/bluetooth
 endef
-
-TARGET_CFLAGS += -D_GNU_SOURCE
 
 CONFIGURE_ARGS += \
 	--enable-static \

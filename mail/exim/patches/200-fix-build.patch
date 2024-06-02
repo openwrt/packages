@@ -1,17 +1,6 @@
---- a/src/drtables.c
-+++ b/src/drtables.c
-@@ -736,7 +736,7 @@ else
-     {
-     char * name = ent->d_name;
-     int len = (int)strlen(name);
--    if (regex_match(regex_islookupmod, US name, len, NUL))
-+    if (regex_match(regex_islookupmod, US name, len, NULL))
-       {
-       int pathnamelen = len + (int)strlen(LOOKUP_MODULE_DIR) + 2;
-       void *dl;
 --- a/src/exim.c
 +++ b/src/exim.c
-@@ -636,13 +636,15 @@ exim_nullstd(void)
+@@ -642,13 +642,15 @@ exim_nullstd(void)
  {
  int devnull = -1;
  struct stat statbuf;
@@ -31,7 +20,7 @@
    }
 --- a/src/local_scan.h
 +++ b/src/local_scan.h
-@@ -26,6 +26,7 @@ store.c
+@@ -27,6 +27,7 @@ store.c
  settings, and the store functions. */
  
  #include <stdarg.h>

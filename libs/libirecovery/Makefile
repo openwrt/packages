@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libirecovery
-PKG_VERSION:=1.0.0
-PKG_RELEASE:=2
+PKG_VERSION:=1.2.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=https://www.libimobiledevice.org/downloads
-PKG_HASH:=cda0aba10a5b6fc2e1d83946b009e3e64d0be36912a986e35ad6d34b504ad9b4
+PKG_SOURCE_URL:=https://github.com/libimobiledevice/libirecovery/releases/download/$(PKG_VERSION)
+PKG_HASH:=74448348f8a68b654015fe1952fdc4e0781db20dcf4e1d85ec97d6f91e95eb14
 
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -37,7 +37,7 @@ define Package/libirecovery
   TITLE:=A library that talks to Apple iBoot/iBSS
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libreadline +libusb-1.0
+  DEPENDS:=+libimobiledevice-glue +libreadline +libusb-1.0
 endef
 
 define Package/libirecovery/description

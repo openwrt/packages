@@ -10,11 +10,13 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=httping
 PKG_VERSION:=3.5
 PKG_RELEASE:=1
+PKG_LICENSE:=GPL-3.0-or-later
+PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/folkertvanheusden/HTTPing
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_MIRROR_HASH:=70c2a9baeed9fdb69009fcf159a5b7ef133df0b7f6df198ae2ccd1691b4713b8
+PKG_MIRROR_HASH:=71e79fa5608db2ac8dc064ae80acb287a82c765167105f990e13c6a21b0e32e8
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk

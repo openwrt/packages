@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
-PKG_VERSION:=8.3.3
+PKG_VERSION:=8.3.7
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
@@ -16,7 +16,7 @@ PKG_CPE_ID:=cpe:/a:php:php
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.php.net/distributions/
-PKG_HASH:=b0a996276fe21fe9ca8f993314c8bc02750f464c7b0343f056fb0894a8dfa9d1
+PKG_HASH:=d53433c1ca6b2c8741afa7c524272e6806c1e895e5912a058494fea89988570a
 
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=no-mips16
@@ -299,7 +299,6 @@ endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-intl),)
   CONFIGURE_ARGS+= --enable-intl=shared
-  TARGET_CXXFLAGS+= -std=c++0x
 else
   CONFIGURE_ARGS+= --disable-intl
 endif

@@ -8,21 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=upmpdcli
-PKG_VERSION:=1.8.6
+PKG_VERSION:=1.8.11
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.lesbonscomptes.com/upmpdcli/downloads
-PKG_HASH:=55e3d27bea5bef4560f319137f1a5c7d08abbba5a9aae90ee3240903fdb8c3e4
+PKG_HASH:=d715120b869382ea701f07baa604c77b7895537e0655e1ed4dfa68d986d6a59f
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
 
-PKG_INSTALL:=1
-PKG_BUILD_PARALLEL:=1
-
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/meson.mk
 
 define Package/upmpdcli
   SECTION:=sound

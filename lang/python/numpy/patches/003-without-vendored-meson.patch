@@ -1,15 +1,25 @@
 --- a/pyproject.toml
 +++ b/pyproject.toml
-@@ -1,6 +1,6 @@
+@@ -1,8 +1,8 @@
  [build-system]
 -build-backend = "mesonpy"
--backend-path = ['./vendored-meson/meson-python']
 +#build-backend = "mesonpy"
-+#backend-path = ['./vendored-meson/meson-python']
  requires = [
      "Cython>=0.29.34,<3.1",
-     # All dependencies of the vendored meson-python (except for meson, because
-@@ -194,8 +194,8 @@ repair-wheel-command = ""
+-    "meson-python>=0.15.0,<0.16.0",
++#    "meson-python>=0.15.0,<0.16.0",
+ ]
+ 
+ [project]
+@@ -181,14 +181,14 @@ environment = {PKG_CONFIG_PATH="/opt/32/
+ config-settings = "setup-args=--vsenv setup-args=-Dallow-noblas=true"
+ repair-wheel-command = ""
+ 
+-[tool.meson-python]
+-meson = 'vendored-meson/meson/meson.py'
++#[tool.meson-python]
++#meson = 'vendored-meson/meson/meson.py'
+ 
  [tool.spin]
  package = 'numpy'
  

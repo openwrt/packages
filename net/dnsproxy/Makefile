@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dnsproxy
-PKG_VERSION:=0.65.2
-PKG_RELEASE:=1
+PKG_VERSION:=0.71.1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/AdguardTeam/dnsproxy/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=7c863404075daf76f1c6b291cc473670cbc45651af8f409e488c10a47fb73117
+PKG_HASH:=9c55c83ce3521c5197293a7618ed3ff103d236344aabf73ba37055e3964d2087
 
 PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
 PKG_LICENSE:=Apache-2.0
@@ -45,6 +45,8 @@ endef
 define Package/dnsproxy/install
 	$(call GoPackage/Package/Install/Bin,$(1))
 
+	$(INSTALL_DIR) $(1)/etc/capabilities/
+	$(INSTALL_DATA) $(CURDIR)/files/dnsproxy.json $(1)/etc/capabilities/dnsproxy.json
 	$(INSTALL_DIR) $(1)/etc/config/
 	$(INSTALL_CONF) $(CURDIR)/files/dnsproxy.config $(1)/etc/config/dnsproxy
 	$(INSTALL_DIR) $(1)/etc/init.d/

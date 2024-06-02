@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unixodbc
 PKG_VERSION:=2.3.12
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=unixODBC-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.unixodbc.org

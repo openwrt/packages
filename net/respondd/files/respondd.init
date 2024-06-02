@@ -11,7 +11,7 @@ multicast_group()
 {
 	config_get group "$1" group
 	config_get interfaces "$1" interface
-	config_get disabled "$1" disabled 0
+	config_get_bool disabled "$1" disabled 0
 
 	if [ "$disabled" -gt "0" ]; then
 		return

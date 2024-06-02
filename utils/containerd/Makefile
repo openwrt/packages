@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=containerd
-PKG_VERSION:=1.7.13
+PKG_VERSION:=1.7.15
 PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
@@ -9,7 +9,7 @@ PKG_CPE_ID:=cpe:/a:linuxfoundation:containerd
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/containerd/containerd/tar.gz/v${PKG_VERSION}?
-PKG_HASH:=ae2b914bff0ddbb9b29d5fc689a51e1ce89ea4edfc4df9ae10517c6f5d2d5aaf
+PKG_HASH:=2dc491434b182334b51350f810ed68ace3624c8a2d6e1eac490d93c653498a33
 
 PKG_MAINTAINER:=Gerard Ryan <G.M0N3Y.2503@gmail.com>
 
@@ -36,8 +36,11 @@ define Package/containerd/description
 An industry-standard container runtime with an emphasis on simplicity, robustness and portability
 endef
 
-GO_PKG_BUILD_VARS += GO111MODULE=auto
-GO_PKG_INSTALL_ALL:=1
+GO_PKG_INSTALL_EXTRA:=\
+	vendor/google.golang.org/protobuf/internal/editiondefaults/editions_defaults.binpb \
+	Makefile \
+	vendor/modules.txt
+
 MAKE_PATH:=$(GO_PKG_WORK_DIR_NAME)/build/src/$(GO_PKG)
 MAKE_VARS += $(GO_PKG_VARS)
 MAKE_FLAGS += \
