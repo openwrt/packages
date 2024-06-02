@@ -1,12 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=whois
-PKG_VERSION:=5.5.22
+PKG_VERSION:=5.5.23
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://ftp.debian.org/debian/pool/main/w/whois
-PKG_HASH:=03f12c27ae85870d7bcd95b14f3fb8b174532b2f2a59d8380c42ae436d0630d7
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+PKG_SOURCE_URL:=https://github.com/rfc1036/whois
+PKG_MIRROR_HASH:=114893f8dd18fb9a4912deba2afaf09bce593b04a72c73381ec2303d71ff708d
 
 PKG_BUILD_DEPENDS:=perl/host
 
