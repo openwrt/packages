@@ -9,15 +9,15 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/nls.mk
 
 PKG_NAME:=curl
-PKG_VERSION:=8.7.1
-PKG_RELEASE:=2
+PKG_VERSION:=8.8.0
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/curl/curl/releases/download/curl-$(subst .,_,$(PKG_VERSION))/ \
 	https://dl.uxnr.de/mirror/curl/ \
 	https://curl.askapache.com/download/ \
 	https://curl.se/download/
-PKG_HASH:=05bbd2b698e9cfbab477c33aa5e99b4975501835a41b7ca6ca71de03d8849e76
+PKG_HASH:=0f58bb95fc330c8a46eeb3df5701b0d90c9d9bfcc42bd1cd08791d12551d4400
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
@@ -80,8 +80,8 @@ include $(INCLUDE_DIR)/package.mk
 define Package/curl/Default
   SECTION:=net
   CATEGORY:=Network
-  URL:=http://curl.se/
-  MAINTAINER:=
+  URL:=https://curl.se/
+  MAINTAINER:=Aleksey Vasilenko <aleksey.vasilenko@gmail.com>
 endef
 
 define Package/curl
