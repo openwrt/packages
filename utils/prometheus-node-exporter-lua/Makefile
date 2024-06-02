@@ -4,7 +4,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=prometheus-node-exporter-lua
-PKG_VERSION:=2023.07.13
+PKG_VERSION:=2024.06.02
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
@@ -23,7 +23,7 @@ endef
 
 define Package/prometheus-node-exporter-lua
   $(call Package/prometheus-node-exporter-lua/Default)
-  DEPENDS:=+luasocket +lua +uhttpd +uhttpd-mod-lua
+  DEPENDS:=+luasocket +lua +uhttpd +uhttpd-mod-lua +libubus-lua
 endef
 
 define Package/prometheus-node-exporter-lua/install
@@ -73,7 +73,7 @@ endef
 define Package/prometheus-node-exporter-lua-dawn
   $(call Package/prometheus-node-exporter-lua/Default)
   TITLE+= (dawn collector)
-  DEPENDS:=prometheus-node-exporter-lua +libiwinfo-lua +libubus-lua
+  DEPENDS:=prometheus-node-exporter-lua +libiwinfo-lua
 endef
 
 define Package/prometheus-node-exporter-lua-dawn/install
@@ -84,7 +84,7 @@ endef
 define Package/prometheus-node-exporter-lua-hostapd_stations
   $(call Package/prometheus-node-exporter-lua/Default)
   TITLE+= (hostapd_stations collector) - Requires a full hostapd / wpad build
-  DEPENDS:=prometheus-node-exporter-lua +hostapd-utils +lua-bit32 +libubus-lua
+  DEPENDS:=prometheus-node-exporter-lua +hostapd-utils +lua-bit32
 endef
 
 define Package/prometheus-node-exporter-lua-hostapd_stations/install
@@ -95,7 +95,7 @@ endef
 define Package/prometheus-node-exporter-lua-hostapd_ubus_stations
   $(call Package/prometheus-node-exporter-lua/Default)
   TITLE+= (hostapd_ubus_stations collector)
-  DEPENDS:=prometheus-node-exporter-lua +luabitop +libubus-lua
+  DEPENDS:=prometheus-node-exporter-lua +luabitop
 endef
 
 define Package/prometheus-node-exporter-lua-hostapd_ubus_stations/install
@@ -150,7 +150,7 @@ endef
 define Package/prometheus-node-exporter-lua-openwrt
   $(call Package/prometheus-node-exporter-lua/Default)
   TITLE+= (openwrt collector)
-  DEPENDS:=prometheus-node-exporter-lua +libubus-lua
+  DEPENDS:=prometheus-node-exporter-lua
 endef
 
 define Package/prometheus-node-exporter-lua-openwrt/install
@@ -205,7 +205,7 @@ endef
 define Package/prometheus-node-exporter-lua-wifi
   $(call Package/prometheus-node-exporter-lua/Default)
   TITLE+= (wifi collector)
-  DEPENDS:=prometheus-node-exporter-lua +libiwinfo-lua +libubus-lua
+  DEPENDS:=prometheus-node-exporter-lua +libiwinfo-lua
 endef
 
 define Package/prometheus-node-exporter-lua-wifi/install
@@ -216,7 +216,7 @@ endef
 define Package/prometheus-node-exporter-lua-wifi_stations
   $(call Package/prometheus-node-exporter-lua/Default)
   TITLE+= (wifi_stations collector)
-  DEPENDS:=prometheus-node-exporter-lua +libiwinfo-lua +libubus-lua
+  DEPENDS:=prometheus-node-exporter-lua +libiwinfo-lua
 endef
 
 define Package/prometheus-node-exporter-lua-wifi_stations/install
@@ -227,7 +227,7 @@ endef
 define Package/prometheus-node-exporter-lua-snmp6
   $(call Package/prometheus-node-exporter-lua/Default)
   TITLE+= (snmp6 collector)
-  DEPENDS:=prometheus-node-exporter-lua +libubus-lua
+  DEPENDS:=prometheus-node-exporter-lua
 endef
 
 define Package/prometheus-node-exporter-lua-snmp6/install
@@ -238,7 +238,7 @@ endef
 define Package/prometheus-node-exporter-lua-realtek-poe
   $(call Package/prometheus-node-exporter-lua/Default)
   TITLE+= (realtek-poe collector)
-  DEPENDS:=prometheus-node-exporter-lua +libubus-lua +realtek-poe
+  DEPENDS:=prometheus-node-exporter-lua +realtek-poe
 endef
 
 define Package/prometheus-node-exporter-lua-realtek-poe/install
