@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-bad
-PKG_VERSION:=1.24.3
+PKG_VERSION:=1.24.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=gst-plugins-bad-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gst-plugins-bad/
-PKG_HASH:=e90f26c7dc9c76f4aa599b758cfd6d8c10d6a0b9cb265ba2c3c9bdf3888558f8
+PKG_HASH:=260bd0a463b4faff9a42f41e5e028f787f10a92b779af8959aec64586f546bd3
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-bad-$(PKG_VERSION)
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
@@ -197,7 +197,6 @@ MESON_ARGS += \
 	-Dgsm=disabled \
 	-Dipcpipeline=disabled \
 	-Diqa=disabled \
-	-Dkate=disabled \
 	-Dkms=disabled \
 	-Dladspa=disabled \
 	-Dlibde265=disabled \
