@@ -25,52 +25,66 @@ local function load(device, file) -- load a single sysfs file, trim trailing new
   end
 end
 
-local function file_gauge(name, device, file)
-  local value = load(device, file)
-  if value ~= nil then
-    metric("node_network_" .. name, "gauge", {device = device}, tonumber(value))
-  end
-end
-
-local function file_counter(name, device, file)
-  local value = load(device, file)
-  if value ~= nil then
-    metric("node_network_" .. name, "counter", {device = device}, tonumber(value))
-  end
-end
-
-local function get_metric(device)
+local function get_metric(device, metric_node_network)
   local address = load(device, "address")
   local broadcast = load(device, "broadcast")
   local duplex = load(device, "duplex")
   local operstate = load(device, "operstate")
   local ifalias = load(device, "ifalias")
-  metric("node_network_info", "gauge", {device = device, address = address, broadcast = broadcast, duplex = duplex, operstate = operstate, ifalias = ifalias}, 1)
-  file_gauge("address_assign_type", device, "addr_assign_type")
-  file_gauge("carrier", device, "carrier")
-  file_counter("carrier_changes_total", device, "carrier_changes")
-  file_counter("carrier_up_changes_total", device, "carrier_up_count")
-  file_counter("carrier_down_changes_total", device, "carrier_down_count")
-  file_gauge("device_id", device, "dev_id")
-  file_gauge("dormant", device, "dormant")
-  file_gauge("flags", device, "flags")
-  file_gauge("iface_id", device, "ifindex")
-  file_gauge("iface_link", device, "iflink")
-  file_gauge("iface_link_mode", device, "link_mode")
-  file_gauge("mtu_bytes", device, "mtu")
-  file_gauge("name_assign_type", device, "name_assign_type")
-  file_gauge("net_dev_group", device, "netdev_group")
-  file_gauge("transmit_queue_length", device, "tx_queue_len")
-  file_gauge("protocol_type", device, "type")
+  metric_node_network.info({device = device, address = address, broadcast = broadcast, duplex = duplex, operstate = operstate, ifalias = ifalias}, 1)
   local speed = load(device, "speed")
   if speed ~= nil and tonumber(speed) >= 0 then
-    metric("node_network_speed_bytes", "gauge", {device = device}, tonumber(speed)*1000*1000/8)
+    metric_node_network.speed_bytes({device = device}, tonumber(speed)*1000*1000/8)
+  end
+  local file_to_metric = {
+    addr_assign_type   = "address_assign_type",
+    carrier            = "carrier",
+    carrier_changes    = "carrier_changes_total",
+    carrier_up_count   = "carrier_up_changes_total",
+    carrier_down_count = "carrier_down_changes_total",
+    dev_id             = "device_id",
+    dormant            = "dormant",
+    flags              = "flags",
+    ifindex            = "iface_id",
+    iflink             = "iface_link",
+    link_mode          = "iface_link_mode",
+    mtu                = "mtu_bytes",
+    name_assign_type   = "name_assign_type",
+    netdev_group       = "net_dev_group",
+    tx_queue_len       = "transmit_queue_length",
+    type               = "protocol_type",
+  }
+  for file, metric in pairs(file_to_metric) do
+    local value = load(device, file)
+    if value ~= nil then
+      metric_node_network[metric]({device = device}, tonumber(value))
+    end
   end
 end
 
 local function scrape()
+  local metric_node_network = {
+    info                       = metric("node_network_info", "gauge"),
+    address_assign_type        = metric("node_network_address_assign_type", "gauge"),
+    carrier                    = metric("node_network_carrier", "gauge"),
+    carrier_changes_total      = metric("node_network_carrier_changes_total", "counter"),
+    carrier_up_changes_total   = metric("node_network_carrier_up_changes_total", "counter"),
+    carrier_down_changes_total = metric("node_network_carrier_down_changes_total", "counter"),
+    device_id                  = metric("node_network_device_id", "gauge"),
+    dormant                    = metric("node_network_dormant", "gauge"),
+    flags                      = metric("node_network_flags", "gauge"),
+    iface_id                   = metric("node_network_iface_id", "gauge"),
+    iface_link                 = metric("node_network_iface_link", "gauge"),
+    iface_link_mode            = metric("node_network_iface_link_mode", "gauge"),
+    mtu_bytes                  = metric("node_network_mtu_bytes", "gauge"),
+    name_assign_type           = metric("node_network_name_assign_type", "gauge"),
+    net_dev_group              = metric("node_network_net_dev_group", "gauge"),
+    transmit_queue_length      = metric("node_network_transmit_queue_length", "gauge"),
+    protocol_type              = metric("node_network_protocol_type", "gauge"),
+    speed_bytes                = metric("node_network_speed_bytes", "gauge"),
+  }
   for _, devicename in ipairs(get_devices()) do
-    get_metric(devicename)
+    get_metric(devicename, metric_node_network)
   end
 end
 
