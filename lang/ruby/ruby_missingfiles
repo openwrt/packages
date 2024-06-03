@@ -6,7 +6,25 @@
 function list_staging_files {
 	cd "$1"; find \
 		\( \( -name "root-*" -or -name "packages" -or -name "stamp" -or -name "pkginfo" -or -name "host" -or -name man \) -prune \) -or -true \
-		\( -path "*ruby*" -or -name "erb" -or -name "gem" -or -name "irb" -or -name "rake" -or -name "rdoc" -or -name "ri" -or -name "testrb"  -or -name "racc" -or -name "racc2y" -or -name "y2racc" \) \
+		\( \
+			-path "*ruby*" -or \
+			-name "bundle" -or \
+			-name "bundler" -or \
+			-name "erb" -or \
+			-name "gem" -or \
+			-name "irb" -or \
+			-name "racc" -or \
+			-name "racc2y" -or \
+			-name "rake" -or \
+			-name "rbs" -or \
+			-name "rdbg" -or \
+			-name "rdoc" -or \
+			-name "ri" -or \
+			-name "syntax_suggest" -or \
+			-name "testrb" -or \
+			-name "typeprof" -or \
+			-name "y2racc" \
+		\) \
 		-not -path "*/usr/lib/ruby/gems/*/cache/*" \
 		-not -name "*test_case.rb" \
 		-not -name "*.rdoc" \
