@@ -1,0 +1,24 @@
+From fee976dcfe3be03cc72c099f9ed3bac938a34b58 Mon Sep 17 00:00:00 2001
+From: James Le Cuirot <chewi@gentoo.org>
+Date: Tue, 12 Dec 2023 15:24:05 +0000
+Subject: meson: Fix building with -Dv4l-utils=false
+
+ir_bpf_enabled was referenced without being defined.
+Tested-by: Peter Seiderer <ps.report@gmx.net>
+
+Signed-off-by: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+---
+ meson.build | 2 ++
+ 1 file changed, 2 insertions(+)
+
+--- a/meson.build
++++ b/meson.build
+@@ -360,6 +360,8 @@ subdir('lib')
+ if get_option('v4l-utils')
+     subdir('utils')
+     subdir('contrib')
++else
++    ir_bpf_enabled = false
+ endif
+ 
+ subdir('doc')
