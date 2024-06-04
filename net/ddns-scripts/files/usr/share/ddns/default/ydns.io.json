@@ -4,7 +4,7 @@
 		"url": "https://ydns.io/hosts/update/[PASSWORD]",
 		"answer": "good"
 	},
-	"ipv4": {
+	"ipv6": {
 		"url": "https://ydns.io/hosts/update/[PASSWORD]",
 		"answer": "good"
 	}
