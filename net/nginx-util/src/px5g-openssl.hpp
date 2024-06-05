@@ -1,7 +1,6 @@
 #ifndef _PX5G_OPENSSL_HPP
 #define _PX5G_OPENSSL_HPP
 
-// #define OPENSSL_API_COMPAT 0x10102000L
 #include <fcntl.h>
 #include <openssl/bn.h>
 #include <openssl/err.h>
@@ -93,25 +92,45 @@ auto gen_eckey(const int curve) -> EVP_PKEY_ptr
 
     EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, nullptr);
 
-    if (!EVP_PKEY_paramgen_init(ctx)) {
-        throw std::runtime_error("Could not init paramgen");
+    if (!ctx || !EVP_PKEY_paramgen_init(ctx)) {
+        EC_GROUP_free(group);
+        if (ctx) EVP_PKEY_CTX_free(ctx);
+        throw std::runtime_error("gen_eckey error: could not initialize paramgen");
     }
 
-    EVP_PKEY_CTX_set_ec_paramgen_curve_nid(ctx, curve);
+    if (EVP_PKEY_CTX_set_ec_paramgen_curve_nid(ctx, curve) <= 0) {
+        EVP_PKEY_CTX_free(ctx);
+        EC_GROUP_free(group);
+        std::string errmsg{"gen_eckey error: cannot set curve nid\n"};
+        ERR_print_errors_cb(print_error, &errmsg);
+        throw std::runtime_error(errmsg);
+    }
 
     EVP_PKEY* params = nullptr;
-    EVP_PKEY_paramgen(ctx, &params);
+    if (EVP_PKEY_paramgen(ctx, &params) <= 0) {
+        EVP_PKEY_CTX_free(ctx);
+        EC_GROUP_free(group);
+        std::string errmsg{"gen_eckey error: cannot generate parameters\n"};
+        ERR_print_errors_cb(print_error, &errmsg);
+        throw std::runtime_error(errmsg);
+    }
+
+    EVP_PKEY_CTX_free(ctx);
+
+    std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)> params_ptr(params, EVP_PKEY_free);
 
     EVP_PKEY_CTX* key_gen_ctx = EVP_PKEY_CTX_new(params, nullptr);
 
-    if (EVP_PKEY_keygen_init(key_gen_ctx) <= 0) {
+    if (!key_gen_ctx || EVP_PKEY_keygen_init(key_gen_ctx) <= 0) {
+        EC_GROUP_free(group);
+        if (key_gen_ctx) EVP_PKEY_CTX_free(key_gen_ctx);
         std::string errmsg{"gen_eckey error: cannot initialize key generation context\n"};
         ERR_print_errors_cb(print_error, &errmsg);
         throw std::runtime_error(errmsg);
     }
 
     EVP_PKEY* pkey = nullptr;
-    if (!EVP_PKEY_keygen(key_gen_ctx, &pkey)) {
+    if (EVP_PKEY_keygen(key_gen_ctx, &pkey) <= 0) {
         EVP_PKEY_CTX_free(key_gen_ctx);
         EC_GROUP_free(group);
         std::string errmsg{"gen_eckey error: cannot generate key pair\n"};
@@ -119,12 +138,10 @@ auto gen_eckey(const int curve) -> EVP_PKEY_ptr
         throw std::runtime_error(errmsg);
     }
 
-    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_CTX_free(key_gen_ctx);
     EC_GROUP_free(group);
 
-    EVP_PKEY_ptr pkey_ptr{pkey, ::EVP_PKEY_free};
-
-    return pkey_ptr;
+    return EVP_PKEY_ptr{pkey, EVP_PKEY_free};
 }
 
 auto gen_rsakey(const int keysize) -> EVP_PKEY_ptr
@@ -197,7 +214,7 @@ auto subject2name(const std::string& subject) -> X509_NAME_ptr
         throw std::runtime_error("subject2name errror: not starting with /");
     }
 
-    X509_NAME_ptr name = {X509_NAME_new(), ::X509_NAME_free};
+    X509_NAME_ptr name = {X509_NAME_new(), X509_NAME_free};
 
     if (!name) {
         std::string errmsg{"subject2name error: cannot create X509 name \n"};
