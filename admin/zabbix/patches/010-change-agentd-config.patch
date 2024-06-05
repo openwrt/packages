@@ -30,7 +30,7 @@
 @@ -136,6 +133,7 @@ Server=127.0.0.1
  # Range: 0-100
  # Default:
- # StartAgents=3
+ # StartAgents=10
 +StartAgents=1
  
  ##### Active checks related
