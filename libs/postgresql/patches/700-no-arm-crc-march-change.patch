@@ -1,15 +1,17 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -2239,9 +2239,9 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [
+@@ -2124,10 +2124,10 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [
+ # First check if __crc32c* intrinsics can be used with the default compiler
  # flags. If not, check if adding -march=armv8-a+crc flag helps.
- # CFLAGS_ARMV8_CRC32C is set if the extra flag is required.
- PGAC_ARMV8_CRC32C_INTRINSICS([])
+ # CFLAGS_CRC is set if the extra flag is required.
+-PGAC_ARMV8_CRC32C_INTRINSICS([])
 -if test x"$pgac_armv8_crc32c_intrinsics" != x"yes"; then
 -  PGAC_ARMV8_CRC32C_INTRINSICS([-march=armv8-a+crc])
 -fi
++#PGAC_ARMV8_CRC32C_INTRINSICS([])
 +#if test x"$pgac_armv8_crc32c_intrinsics" != x"yes"; then
 +#  PGAC_ARMV8_CRC32C_INTRINSICS([-march=armv8-a+crc])
 +#fi
- AC_SUBST(CFLAGS_ARMV8_CRC32C)
  
- # Select CRC-32C implementation.
+ AC_SUBST(CFLAGS_CRC)
+ 
