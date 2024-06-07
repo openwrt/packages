@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=erlang
 PKG_VERSION:=27.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=otp_src_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/erlang/otp/releases/download/OTP-$(PKG_VERSION)
@@ -22,6 +22,9 @@ PKG_CPE_ID:=cpe:/a:erlang:erlang
 
 PKG_BUILD_DEPENDS:=erlang/host openssl
 PKG_ASLR_PIE:=0
+
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_KERNEL_TRANSPARENT_HUGEPAGE
 
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/otp_src_$(PKG_VERSION)
 PKG_BUILD_DIR:=$(BUILD_DIR)/otp_src_$(PKG_VERSION)
@@ -307,9 +310,16 @@ CONFIGURE_ARGS += \
 	--without-javac \
 	--enable-dynamic-ssl-lib
 
+## Override incorrect THP detection by configure script
+ERTS_THP=no
+ifeq ($(CONFIG_KERNEL_TRANSPARENT_HUGEPAGE),y)
+	ERTS_THP=yes
+endif
+
 CONFIGURE_VARS += \
 	SHLIB_LD="$(TARGET_CC)" \
 	TARGET_ARCH="$(TARGET_ARCH)" \
+	erts_cv_linux_thp=$(ERTS_THP) \
 	ac_cv_func_mmap_fixed_mapped=yes \
 	ac_cv_path_WX_CONFIG_PATH=no \
 	erl_xcomp_getaddrinfo=no \
