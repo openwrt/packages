@@ -1323,20 +1323,13 @@ f_lookup() {
 			if [ "${ip%%.*}" = "127" ] || [ "${ip%%.*}" = "0" ] || [ -z "${ip%%::*}" ]; then
 				continue
 			else
-				if { [ "${feed}" = "allowlist" ] && ! "${ban_grepcmd}" -q "^${ip}" "${ban_allowlist}"; } ||
-					{ [ "${feed}" = "blocklist" ] && ! "${ban_grepcmd}" -q "^${ip}" "${ban_blocklist}"; }; then
-					if [ "${ip##*:}" = "${ip}" ]; then
-						elementsv4="${elementsv4} ${ip},"
-					else
-						elementsv6="${elementsv6} ${ip},"
-					fi
-					if [ "${feed}" = "allowlist" ] && [ "${ban_autoallowlist}" = "1" ]; then
-						printf "%-42s%s\n" "${ip}" "# '${domain}' added on $(date "+%Y-%m-%d %H:%M:%S")" >>"${ban_allowlist}"
-					elif [ "${feed}" = "blocklist" ] && [ "${ban_autoblocklist}" = "1" ]; then
-						printf "%-42s%s\n" "${ip}" "# '${domain}' added on $(date "+%Y-%m-%d %H:%M:%S")" >>"${ban_blocklist}"
-					fi
-					cnt_ip="$((cnt_ip + 1))"
+				[ "${ip##*:}" = "${ip}" ] && elementsv4="${elementsv4} ${ip}," || elementsv6="${elementsv6} ${ip},"
+				if [ "${feed}" = "allowlist" ] && [ "${ban_autoallowlist}" = "1" ] && ! "${ban_grepcmd}" -q "^${ip}[[:blank:]]*#" "${ban_allowlist}"; then
+					printf "%-42s%s\n" "${ip}" "# '${domain}' added on $(date "+%Y-%m-%d %H:%M:%S")" >>"${ban_allowlist}"
+				elif [ "${feed}" = "blocklist" ] && [ "${ban_autoblocklist}" = "1" ] && ! "${ban_grepcmd}" -q "^${ip}[[:blank:]]*#" "${ban_blocklist}"; then
+					printf "%-42s%s\n" "${ip}" "# '${domain}' added on $(date "+%Y-%m-%d %H:%M:%S")" >>"${ban_blocklist}"
 				fi
+				cnt_ip="$((cnt_ip + 1))"
 			fi
 		done
 		cnt_domain="$((cnt_domain + 1))"
