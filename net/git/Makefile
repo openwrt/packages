@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=git
-PKG_VERSION:=2.44.0
+PKG_VERSION:=2.45.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/software/scm/git/
-PKG_HASH:=e358738dcb5b5ea340ce900a0015c03ae86e804e7ff64e47aa4631ddee681de3
+PKG_HASH:=51bfe87eb1c02fed1484051875365eeab229831d30d0cec5d89a14f9e40e9adb
 
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
@@ -101,6 +101,11 @@ MAKE_FLAGS := \
 
 CONFIGURE_ARGS += \
 	--without-iconv \
+
+CONFIGURE_VARS += \
+	ac_cv_fread_reads_directories=yes \
+	ac_cv_snprintf_returns_bogus=yes \
+	ac_cv_sane_mode_bits=no
 
 define Build/Configure
 	$(MAKE) -C $(PKG_BUILD_DIR) \
