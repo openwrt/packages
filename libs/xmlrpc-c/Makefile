@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xmlrpc-c
-PKG_VERSION:=1.59.02
+PKG_VERSION:=1.59.03
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=@SF/xmlrpc-c/Xmlrpc-c%20Super%20Stable/$(PKG_VERSION)
-PKG_HASH:=e25e45be1bae7e90f1de69be3d6838917ba3839b2f1c7d3fc0e6663d8622a5ab
+PKG_HASH:=bdb71db42ab0be51591555885d11682b044c1034d4a3296401bf921ec0b233fe
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=VARIOUS
@@ -23,6 +23,7 @@ PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/xmlrpc-c/Default
   SECTION:=libs
