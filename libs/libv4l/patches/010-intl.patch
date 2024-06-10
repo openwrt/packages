@@ -10,7 +10,7 @@
      dep_libudev,
 --- a/meson.build
 +++ b/meson.build
-@@ -178,6 +178,8 @@ size_t iconv (iconv_t cd, char * *inbuf,
+@@ -202,6 +202,8 @@ size_t iconv (iconv_t cd, char * *inbuf,
      endif
  endif
  
