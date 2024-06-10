@@ -1,0 +1,19 @@
+--- a/common/device-utils.c
++++ b/common/device-utils.c
+@@ -30,6 +30,7 @@
+ #include <fcntl.h>
+ #include <dirent.h>
+ #include <errno.h>
++#include <libgen.h>
+ #include <blkid/blkid.h>
+ #include "kernel-lib/sizes.h"
+ #include "kernel-shared/disk-io.h"
+@@ -346,7 +347,7 @@ static u64 device_get_partition_size_sys
+ 	name = realpath(dev, path);
+ 	if (!name)
+ 		return 0;
+-	name = basename(path);
++	name = basename(strdupa(path));
+ 
+ 	ret = path_cat3_out(sysfs, "/sys/class/block", name, "size");
+ 	if (ret < 0)
