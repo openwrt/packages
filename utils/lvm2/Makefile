@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=LVM2
 PKG_VERSION:=2.03.23
 PKG_VERSION_DM:=1.02.197
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME).$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=https://sourceware.org/pub/lvm2

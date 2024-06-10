@@ -1,0 +1,19 @@
+--- a/lib/device/device_id.c
++++ b/lib/device/device_id.c
+@@ -26,6 +26,7 @@
+ #include "lib/datastruct/str_list.h"
+ #include "lib/metadata/metadata-exported.h"
+ 
++#include <libgen.h>
+ #include <sys/stat.h>
+ #include <fcntl.h>
+ #include <unistd.h>
+@@ -723,7 +724,7 @@ static int _dev_read_sys_serial(struct c
+ 		int ret;
+ 
+ 		/* /dev/vda to vda */
+-		base = basename(devname);
++		base = basename(strdupa(devname));
+ 
+ 		/* vda1 to vda */
+ 		for (i = 0; i < strlen(base); i++) {
