@@ -557,7 +557,6 @@ proto_modemmanager_setup() {
 
 	# setup connect args; APN mandatory (even if it may be empty)
 	echo "starting connection with apn '${apn}'..."
-	proto_notify_error "${interface}" MM_CONNECT_IN_PROGRESS
 
 	# setup allow-roaming parameter
 	if [ -n "${allow_roaming}" ] && [ "${allow_roaming}" -eq 0 ];then
