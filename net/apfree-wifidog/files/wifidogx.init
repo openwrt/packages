@@ -14,6 +14,7 @@ prepare_wifidog_conf() {
 
 	uci_validate_section ${NAME} ${NAME} common \
 		'enabled:bool:0' \
+		'log_level:integer:7' \
 		'gateway_id:string' \
 		'gateway_interface:string:br-lan' \
 		'auth_server_hostname:string' \
@@ -24,8 +25,12 @@ prepare_wifidog_conf() {
 		'wired_passed:bool:1' \
 		'apple_cna:bool:0' \
 		'channel_path:string' \
-		'trusted_domains:string' \
-		'trusted_macs:string' \
+		'trusted_domains:list(host)' \
+		'trusted_macs:list(string)' \
+		'app_white_list:list(string)' \
+		'mac_white_list:list(string)' \
+		'enable_dns_forward:bool:1' \
+		'enable_websocket:bool:1' \
 		'js_filter:bool:1' 
 
 	# if gateway_id is not set, get it from br-lan
@@ -45,6 +50,28 @@ prepare_wifidog_conf() {
 		uci commit ${NAME}
 	fi
 
+	if [ ! -z "$app_white_list" ]; then
+		# iterate app_white_list and find the corresponding domain according to the item
+		for group in $app_white_list; do
+			group_domain_list=$(uci get wifidogx.$group.domain_name)
+			# if the domain list is not empty, add it to trusted_domains
+			if [ ! -z "$group_domain_list" ]; then
+				trusted_domains="$trusted_domains $group_domain_list"
+			fi
+		done
+	fi
+
+	if [ ! -z "$mac_white_list" ]; then
+		# iterate mac_white_list and find the corresponding mac according to the item
+		for group in $mac_white_list; do
+			group_mac_list=$(uci get wifidogx.$group.mac_address)
+			# if the mac list is not empty, add it to trusted_macs
+			if [ ! -z "$group_mac_list" ]; then
+				trusted_macs="$trusted_macs $group_mac_list"
+			fi
+		done
+	fi
+
 	# set above variables to config file
 	echo "GatewayID $gateway_id" > ${CONFIGFILE}
 	echo "GatewayInterface $gateway_interface" >> ${CONFIGFILE}
@@ -58,12 +85,16 @@ prepare_wifidog_conf() {
 	echo "JsFilter $js_filter" >> ${CONFIGFILE}
 	echo "WiredPassed $wired_passed" >> ${CONFIGFILE}
 	echo "BypassAppleCNA $apple_cna" >> ${CONFIGFILE}
-	# if has trusted_domains, add it to config file
+	echo "EnableDNSForward $enable_dns_forward" >> ${CONFIGFILE}
+	echo "EnableWS $enable_websocket" >> ${CONFIGFILE}
+	# if has trusted_domains, parse the list to a string with ',' as separator and add it to config file
 	if [ ! -z "$trusted_domains" ]; then
+		trusted_domains=$(echo $trusted_domains | tr ' ' ',')
 		echo "TrustedDomains $trusted_domains" >> ${CONFIGFILE}
 	fi
 	# if has trusted_macs, add it to config file
 	if [ ! -z "$trusted_macs" ]; then
+		trusted_macs=$(echo $trusted_macs | tr ' ' ',')
 		echo "TrustedMACList $trusted_macs" >> ${CONFIGFILE}
 	fi
 }
@@ -80,7 +111,7 @@ start_service() {
 
 	procd_open_instance
 	# -f: run in foreground
-	procd_set_param command $PROG -c $CONFIGFILE -f -d 0
+	procd_set_param command $PROG -c $CONFIGFILE -s -f -d $log_level
 	procd_set_param respawn # respawn automatically if something died
 	procd_set_param file /etc/config/wifidogx
 	procd_close_instance
