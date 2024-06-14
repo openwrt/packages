@@ -16,7 +16,7 @@ PKG_SOURCE_URL:=https://codeload.github.com/Yubico/libfido2/tar.gz/$(PKG_VERSION
 PKG_HASH:=3601792e320032d428002c4cce8499a4c7b803319051a25a0c9f1f138ffee45a
 
 PKG_MAINTAINER:=Linos Giannopoulos <linosgian00+openwrt@gmail.com>
-PKG_LICENSE:=GPL-3.0-or-later
+PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=COPYING
 
 PKG_FORTIFY_SOURCE:=0
