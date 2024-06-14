@@ -15,7 +15,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/PJK/libcbor/tar.gz/v$(PKG_VERSION)?
 PKG_HASH:=89e0a83d16993ce50651a7501355453f5250e8729dfc8d4a251a78ea23bb26d7
 
-PKG_LICENSE:=GPL-3.0-or-later
+PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Linos Giannopoulos <linosgian00+openwrt@gmail.com>
 
