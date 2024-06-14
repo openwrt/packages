@@ -146,6 +146,7 @@ The full list of options for a target is:
 | interface   | no       | The interface used for sending the magic packet, default is interface=eth0 |
 | broadcast   | no       | Send magic packet to broadcast address, default is broadcast=off |
 | password    | no       | Set a password (required by some adapters), e.g. password=00:22:44:66:88:aa or 192.168.1.1 |
+| defer       | no       | Defer delivery of matched packets until host with specified IP address responds to a ping i.e. has woken up |
 | enabled     | no       | Optionally disable the target, default is enabled=true |
 
 After committing your changes, the settings are persisted to
@@ -172,6 +173,7 @@ config target
         option nfqueue_num '2'
         option interface 'eth0.3'
         option broadcast 'on'
+        option defer '192.168.3.2'
         option password '00:25:90:00:d5:fb'
 ```
 
