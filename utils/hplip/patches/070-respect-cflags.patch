@@ -18,7 +18,7 @@
     then
     echo $FLAGS
     fi
-@@ -659,7 +659,7 @@ if test "$class_driver" = "no" && test "
+@@ -668,7 +668,7 @@ if test "$class_driver" = "no" && test "
     AS_IF([test "x$FOUND_HEADER" != "xyes"],
            [AC_MSG_ERROR([cannot find python-devel support], 6)])
  fi
