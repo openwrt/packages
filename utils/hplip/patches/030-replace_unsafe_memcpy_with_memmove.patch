@@ -4,7 +4,7 @@ memcpy should never be used with overlapping memory regions
 
 --- a/io/hpmud/musb.c
 +++ b/io/hpmud/musb.c
-@@ -775,7 +775,7 @@ static int device_id(int fd, unsigned ch
+@@ -776,7 +776,7 @@ static int device_id(int fd, unsigned ch
          len = size-1;   /* leave byte for zero termination */
      if (len > 2)
          len -= 2;
