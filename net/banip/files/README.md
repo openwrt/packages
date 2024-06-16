@@ -104,7 +104,9 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * A certificate store like 'ca-bundle', as banIP checks the validity of the SSL certificates of all download sites by default
 * For E-Mail notifications you need to install and setup the additional 'msmtp' package  
 
-Please note: Devices with less than 256Mb of RAM are **_not_** supported
+**Please note:**
+* Devices with less than 256Mb of RAM are **_not_** supported
+* Any previous installation of ancient banIP 0.7.x must be uninstalled, and the /etc/banip folder and the /etc/config/banip configuration file must be deleted (they are recreated when this version is installed)
 
 ## Installation & Usage
 * Update your local opkg repository (_opkg update_)
