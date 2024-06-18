@@ -1048,8 +1048,7 @@ f_down() {
 		# split Sets
 		#
 		if [ "${feed_rc}" = "0" ]; then
-			if [ -n "${ban_splitsize//[![:digit:]]/}" ]; then
-				[ "${ban_splitsize//[![:digit:]]/}" -lt "512" ] && ban_splitsize="512"
+			if [ -n "${ban_splitsize//[![:digit:]]/}" ] && [ "${ban_splitsize//[![:digit:]]/}" -ge "512" ]; then
 				if ! "${ban_awkcmd}" "NR%${ban_splitsize//[![:digit:]]/}==1{file=\"${tmp_file}.\"++i;}{ORS=\" \";print > file}" "${tmp_split}" 2>/dev/null; then
 					feed_rc="${?}"
 					rm -f "${tmp_file}".*
