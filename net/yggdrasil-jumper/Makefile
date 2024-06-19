@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=yggdrasil-jumper
-PKG_VERSION:=0.3.0
+PKG_VERSION:=0.3.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/one-d-wide/yggdrasil-jumper/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=d0fd59e9f7a110094c9189b49b812fb0014c6c45535b4d30effd7cf602961454
+PKG_HASH:=7f3e2021fe901ed866c6220d7ffdc0a0bc949ffb7c86fd3cd3783a594526d8fd
 
 PKG_MAINTAINER:=Remy D. Farley <one-d-wide@protonmail.com>
 PKG_LICENSE:=LGPL-3.0-only
@@ -28,11 +28,12 @@ define Package/yggdrasil-jumper
 endef
 
 define Package/yggdrasil-jumper/description
-  Yggdrasil Jumper is independent project that aims to transparently reduce latency of
-  a connection over Yggdrasil network, utilizing NAT traversal to bypass intermediary
-  nodes. It periodically probes for active sessions and automatically establishes direct
-  peerings over internet with remote nodes running Yggdrasil Jumper without requiring
-  firewall or port configuration.
+  Yggdrasil-Jumper is an independent project that aims to transparently reduce
+  latency of a connection over Yggdrasil network, utilizing NAT traversal to
+  bypass intermediary nodes. It periodically probes for active sessions and
+  automatically establishes direct peerings over internet with remote nodes
+  running Yggdrasil-Jumper without requiring any firewall configuration or
+  port mapping.
 endef
 
 define Package/yggdrasil-jumper/install
