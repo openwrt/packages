@@ -26,7 +26,10 @@ start_service() {
 
 	append_param_arg "config" "/etc/cloudflared/config.yml"
 	append_param_arg "origincert" "/etc/cloudflared/cert.pem"
+	append_param_arg "edge-bind-address"
+	append_param_arg "protocol"
 	append_param_arg "region"
+	append_param_arg "retries"
 	append_param_arg "loglevel"
 	append_param_arg "logfile"
 
