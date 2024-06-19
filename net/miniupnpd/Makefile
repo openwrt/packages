@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=miniupnpd
-PKG_VERSION:=2.3.3
-PKG_RELEASE:=2
+PKG_VERSION:=2.3.6
+PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=https://miniupnp.tuxfamily.org/files
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=6fd7019f936ff88c41e7c822f46f10b51bd72d665978f6586483de75b30c36bf
+PKG_HASH:=11ca7bf4d4ba6c6ba12c70c3041807f516f4d9f6b6697bea04e837626b9d679c
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=BSD-3-Clause
@@ -34,7 +34,7 @@ define Package/miniupnpd/Default
 	+libmnl \
 	+libuuid
   PROVIDES:=miniupnpd
-  TITLE:=Lightweight UPnP IGD, NAT-PMP & PCP daemon
+  TITLE:=Lightweight UPnP IGD & PCP/NAT-PMP daemon
   SUBMENU:=Firewall
   URL:=https://miniupnp.tuxfamily.org/
 endef
