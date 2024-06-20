@@ -1,1 +1,1 @@
-/mnt	*(ro,all_squash,insecure,sync)
+# /mnt	*(ro,all_squash,insecure,sync)
