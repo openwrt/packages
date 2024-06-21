@@ -9,7 +9,7 @@
  #include <openssl/kdf.h>
  #endif
  #if OPENSSL_VERSION_NUMBER >= 0x30000000L
-@@ -1374,7 +1374,7 @@ memcmp_constant_time(const void *a, cons
+@@ -1398,7 +1398,7 @@ memcmp_constant_time(const void *a, cons
      return CRYPTO_memcmp(a, b, size);
  }
  
