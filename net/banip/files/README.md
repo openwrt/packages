@@ -7,7 +7,11 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 
 ## Main Features
 * banIP supports the following fully pre-configured domain blocklist feeds (free for private usage, for commercial use please check their individual licenses).  
-  **Please note:** By default every feed blocks all supported chains. The columns "WAN-INP", "WAN-FWD" and "LAN-FWD" show for which chains the feeds are suitable in common scenarios, e.g. the first entry should be limited to the LAN forward chain - see the config options 'ban\_blockpolicy', 'ban\_blockinput', 'ban\_blockforwardwan' and 'ban\_blockforwardlan' below.  
+**Please note:** By default every feed blocks packet traversal in all supported chains, the table columns "WAN-INP", "WAN-FWD" and "LAN-FWD" show for which chains the feeds are suitable in common scenarios:  
+  * WAN-INP chain applies to packets from internet to your router  
+  * WAN-FWD chain applies to packets from internet to other local devices (not your router)  
+  * LAN-FWD chain applies to local packets going out to the internet (not your router)  
+  For instance the first entry should be limited to the LAN forward chain - just set the 'LAN-Forward Chain' option under the 'Feed/Set Seetings' config tab accordingly.  
 
 | Feed                | Focus                          | WAN-INP | WAN-FWD | LAN-FWD | Port-Limit   | Information                                                  |
 | :------------------ | :----------------------------- | :-----: | :-----: | :-----: | :----------: | :----------------------------------------------------------- |
@@ -52,7 +56,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 | talos               | talos IPs                      |    x    |    x    |         |              | [Link](https://talosintelligence.com/reputation_center)      |
 | threat              | emerging threats               |    x    |    x    |         |              | [Link](https://rules.emergingthreats.net)                    |
 | threatview          | malicious IPs                  |    x    |    x    |         |              | [Link](https://threatview.io)                                |
-| tor                 | tor exit nodes                 |    x    |    x    |         |              | [Link](https://github.com/SecOps-Institute/Tor-IP-Addresses) |
+| tor                 | tor exit nodes                 |    x    |    x    |    x    |              | [Link](https://www.dan.me.uk)                                |
 | turris              | turris sentinel blocklist      |    x    |    x    |         |              | [Link](https://view.sentinel.turris.cz)                      |
 | uceprotect1         | spam protection level 1        |    x    |    x    |         |              | [Link](https://www.uceprotect.net/en/index.php)              |
 | uceprotect2         | spam protection level 2        |    x    |    x    |         |              | [Link](https://www.uceprotect.net/en/index.php)              |
@@ -319,17 +323,19 @@ The following feeds are just my personal recommendation as an initial setup:
 In total, this feed selection blocks about 20K IP addresses. It may also be useful to include some countries to the country feed in WAN-Input and WAN-Forward chain.  
 Please note: don't just blindly activate (too) many feeds at once, sooner or later this will lead to OOM conditions.  
 
-**Regular expressions for logfile parsing**  
-Like fail2ban, banIP supports logfile scanning and automatic blocking of suspicious attacker IPs. By default the following regex are in place to detect failed login attempts via dropbear, sshd, nginx, asterisk or LuCI.  
+**Log Terms for logfile parsing**  
+Like fail2ban and crowdsec, banIP supports logfile scanning and automatic blocking of suspicious attacker IPs.  
+In the default config only the log terms to detect failed login attempts via dropbear and LuCI are in place. The following search pattern has been tested as well - just transfer the required regular expression via cut and paste to your config (without quotation marks):  
 ```
-list ban_logterm 'Exit before auth from'
-list ban_logterm 'luci: failed login'
-list ban_logterm 'error: maximum authentication attempts exceeded'
-list ban_logterm 'sshd.*Connection closed by.*\[preauth\]'
-list ban_logterm 'SecurityEvent=\"InvalidAccountID\".*RemoteAddress='
-list ban_logterm 'received a suspicious remote IP '\''.*'\'''
+dropbear : 'Exit before auth from'
+LuCI     : 'luci: failed login'
+sshd1    : 'error: maximum authentication attempts exceeded'
+sshd2    : 'sshd.*Connection closed by.*\[preauth\]'
+asterisk : 'SecurityEvent=\"InvalidAccountID\".*RemoteAddress='
+nginx    : 'received a suspicious remote IP '\''.*'\'''
+openvpn  : 'TLS Error: could not determine wrapping from \[AF_INET\]'
 ```
-Just add more log terms to protect additional services, e.g. an openvpn server.  
+You find the 'Log Terms' option in LuCI under the 'Log Settings' tab. Feel free to add more log terms to meet your needs and protect additional services.  
 
 **Allow-/Blocklist handling**  
 banIP supports local allow- and block-lists, MAC/IPv4/IPv6 addresses (incl. ranges in CIDR notation) or domain names. These files are located in /etc/banip/banip.allowlist and /etc/banip/banip.blocklist.  
