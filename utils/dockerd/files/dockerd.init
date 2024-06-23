@@ -178,6 +178,7 @@ process_config() {
 	config_get log_driver globals log_driver ""
 	config_get bip globals bip ""
 	config_get registry_mirrors globals registry_mirrors ""
+	config_get insecure_registries globals insecure_registries ""
 	config_get hosts globals hosts ""
 	config_get dns globals dns ""
 	config_get_bool ipv6 globals ipv6 ""
@@ -195,6 +196,9 @@ process_config() {
 	[ -z "${registry_mirrors}" ] || json_add_array "registry-mirrors"
 	[ -z "${registry_mirrors}" ] || config_list_foreach globals registry_mirrors json_add_array_string
 	[ -z "${registry_mirrors}" ] || json_close_array
+	[ -z "${insecure_registries}" ] || json_add_array "insecure-registries"
+	[ -z "${insecure_registries}" ] || config_list_foreach globals insecure_registries json_add_array_string  
+	[ -z "${insecure_registries}" ] || json_close_array
 	[ -z "${hosts}" ] || json_add_array "hosts"
 	[ -z "${hosts}" ] || config_list_foreach globals hosts json_add_array_string
 	[ -z "${hosts}" ] || json_close_array

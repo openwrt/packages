@@ -20,6 +20,8 @@ config globals 'globals'
 #	list dns '172.17.0.1'
 #	list registry_mirrors 'https://<my-docker-mirror-host>'
 #	list registry_mirrors 'https://hub.docker.com'
+#  	list insecure_registries '<my-docker-mirror-host>'
+# 	list insecure_registries '127.0.0.0/8'
 
 # Docker doesn't work well out of the box with fw4. This is because Docker relies on a compatibility layer that
 # naively translates iptables rules. For the best compatibility replace the following dependencies:
