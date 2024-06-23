@@ -45,7 +45,7 @@ Signed-off-by: Georgi Valkov <gvalkov@gmail.com>
  $spitshell >>$Makefile <<!GROK!THIS!
  # Macros to invoke a copy of our fully operational perl during the build.
  PERL_EXE = perl\$(EXE_EXT)
-@@ -1040,20 +1024,6 @@ $(PERL_EXE): $& $(perlmain_dep) $(LIBPER
+@@ -1045,20 +1029,6 @@ $(PERL_EXE): $& $(perlmain_dep) $(LIBPER
  	$(SHRPENV) $(CC) -o perl $(CLDFLAGS) $(CCDLFLAGS) $(perlmain_objs) $(LLIBPERL) $(static_ext) `cat ext.libs` $(libs)
  !NO!SUBS!
          ;;

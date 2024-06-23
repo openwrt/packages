@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnuplot
-PKG_VERSION:=6.0.0
+PKG_VERSION:=6.0.1
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Matteo Cicuttin <datafl4sh@toxicnet.eu>
 PKG_CPE_ID:=cpe:/a:gnuplot_project:gnuplot
@@ -9,7 +9,7 @@ PKG_CPE_ID:=cpe:/a:gnuplot_project:gnuplot
 PKG_BUILD_DIR:=$(BUILD_DIR)/gnuplot-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/gnuplot
-PKG_HASH:=635a28f0993f6ab0d1179e072ad39b8139d07f51237f841d93c6c2ff4b1758ec
+PKG_HASH:=e85a660c1a2a1808ff24f7e69981ffcbac66a45c9dcf711b65610b26ea71379a
 PKG_CAT:=zcat
 PKG_FIXUP:=autoreconf
 
@@ -47,4 +47,3 @@ define Package/gnuplot/install
 endef
 
 $(eval $(call BuildPackage,gnuplot))
-

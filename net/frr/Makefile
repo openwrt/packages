@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 PKG_NAME:=frr
 PKG_VERSION:=9.0.0
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 PKG_SOURCE_DATE:=2023-08-12
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
@@ -163,6 +163,9 @@ endef
 HOST_CPPFLAGS += -I$(STAGING_DIR_HOST)/include/libelf
 HOST_CONFIGURE_ARGS+= \
 	--enable-clippy-only
+
+HOST_MAKE_FLAGS = \
+        LIBS+='-lz'
 
 define Host/Install
 	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/bin

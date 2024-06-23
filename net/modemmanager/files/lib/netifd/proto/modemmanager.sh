@@ -274,6 +274,7 @@ proto_modemmanager_init_config() {
 	proto_config_add_int signalrate
 	proto_config_add_boolean lowpower
 	proto_config_add_boolean allow_roaming
+	proto_config_add_boolean force_connection
 	proto_config_add_string init_epsbearer
 	proto_config_add_string init_iptype
 	proto_config_add_string 'init_allowedauth:list(string)'
@@ -421,6 +422,7 @@ proto_modemmanager_setup() {
 
 	local device apn allowedauth username password pincode
 	local iptype plmn metric signalrate allow_roaming
+	local force_connection
 
 	local init_epsbearer
 	local init_iptype init_allowedauth
@@ -430,7 +432,7 @@ proto_modemmanager_setup() {
 
 	json_get_vars device apn allowedauth username password
 	json_get_vars pincode iptype plmn metric signalrate allow_roaming
-	json_get_vars allowedmode preferredmode
+	json_get_vars allowedmode preferredmode force_connection
 
 	json_get_vars init_epsbearer
 	json_get_vars init_iptype init_allowedauth
@@ -471,8 +473,14 @@ proto_modemmanager_setup() {
 		mmcli --modem="${device}" \
 			--timeout 120 \
 			--3gpp-register-in-operator="${plmn}" || {
-			proto_notify_error "${interface}" MM_3GPP_OPERATOR_REGISTRATION_FAILED
-			proto_block_restart "${interface}"
+
+			if [ -n "${force_connection}" ] && [ "${force_connection}" -eq 1 ]; then
+				echo "3GPP operator registration failed -> attempting restart"
+				proto_notify_error "${interface}" MM_INTERFACE_RESTART
+			else
+				proto_notify_error "${interface}" MM_3GPP_OPERATOR_REGISTRATION_FAILED
+				proto_block_restart "${interface}"
+			fi
 			return 1
 		}
 	}
@@ -549,7 +557,6 @@ proto_modemmanager_setup() {
 
 	# setup connect args; APN mandatory (even if it may be empty)
 	echo "starting connection with apn '${apn}'..."
-	proto_notify_error "${interface}" MM_CONNECT_IN_PROGRESS
 
 	# setup allow-roaming parameter
 	if [ -n "${allow_roaming}" ] && [ "${allow_roaming}" -eq 0 ];then
@@ -574,8 +581,13 @@ proto_modemmanager_setup() {
 	append_param "${password:+password=${password}}"
 
 	mmcli --modem="${device}" --timeout 120 --simple-connect="${connectargs}" || {
-		proto_notify_error "${interface}" MM_CONNECT_FAILED
-		proto_block_restart "${interface}"
+		if [ -n "${force_connection}" ] && [ "${force_connection}" -eq 1 ]; then
+			echo "Connection failed -> attempting restart"
+			proto_notify_error "${interface}" MM_INTERFACE_RESTART
+		else
+			proto_notify_error "${interface}" MM_CONNECT_FAILED
+			proto_block_restart "${interface}"
+		fi
 		return 1
 	}
 
