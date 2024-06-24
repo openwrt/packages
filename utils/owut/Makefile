@@ -6,13 +6,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=owut
-PKG_VERSION:=2024.06.20
+PKG_SOURCE_DATE:=2024-06-24
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=86a5f6f664643d40249dacae149ce17f6dada6d9
-PKG_SOURCE_URL:=https://github.com/efahl/$(PKG_NAME).git
-PKG_MIRROR_HASH:=3c4bae24b0ca73d7423c554a40be68c2cf67071a0f9edb3b99673d2136a1b960
+PKG_SOURCE_VERSION:=1b222bdcb803d3a762eaedac93a91e05272ef56d
+PKG_SOURCE_URL:=https://github.com/efahl/owut.git
+PKG_MIRROR_HASH:=34be9ca40b6820bcb1eff317bf9ffe324e97d3b40c5fb8e9d04c94d1bd8c7197
 
 PKG_MAINTAINER:=Eric Fahlgren <ericfahlgren@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
@@ -37,7 +37,8 @@ define Package/owut/description
   sysupgrade images containing installed packages and installs
   images.  It is written in ucode for easy end-user customization.
 
-  Documentation is available at https://github.com/efahl/owut
+  Documentation is available at
+  https://openwrt.org/docs/guide-user/installation/sysupgrade.owut
 endef
 
 define Build/Configure
