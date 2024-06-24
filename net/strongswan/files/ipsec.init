@@ -146,7 +146,7 @@ config_conn() {
 	ipsec_xappend "  right=$remote_gateway"
 
 	[ -n "$local_sourceip" ] && ipsec_xappend "  leftsourceip=$local_sourceip"
-	[ -n "$local_subnet" ] && ipsec_xappend "  leftsubnet=$local_subnet"
+	[ -n "$local_subnet" ] && ipsec_xappend "  leftsubnet=${local_subnet// /,}"
 
 	[ -n "$local_firewall" ] && ipsec_xappend "  leftfirewall=$local_firewall"
 	[ -n "$remote_firewall" ] && ipsec_xappend "  rightfirewall=$remote_firewall"
@@ -166,7 +166,7 @@ config_conn() {
 		ipsec_xappend "  rightauth=psk"
 
 		[ "$remote_sourceip" != "" ] && ipsec_xappend "  rightsourceip=$remote_sourceip"
-		[ "$remote_subnet" != "" ] && ipsec_xappend "  rightsubnet=$remote_subnet"
+		[ "$remote_subnet" != "" ] && ipsec_xappend "  rightsubnet=${remote_subnet// /,}"
 
 		ipsec_xappend "  auto=$mode"
 	else
