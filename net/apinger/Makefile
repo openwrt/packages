@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=apinger
 PKG_SOURCE_DATE:=2015-04-09
 PKG_SOURCE_VERSION:=78eb328721ba1a10571c19df95acddcb5f0c17c8
-PKG_RELEASE:=7
+PKG_RELEASE:=8
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/Jajcus/apinger
