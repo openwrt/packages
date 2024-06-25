@@ -1,6 +1,6 @@
 --- a/scripts/mysql_install_db.sh
 +++ b/scripts/mysql_install_db.sh
-@@ -369,6 +369,14 @@ then
+@@ -371,6 +371,14 @@ then
      exit 1
    fi
    plugindir=`find_in_dirs --dir auth_pam.so $basedir/lib*/plugin $basedir/lib*/mysql/plugin $basedir/lib/*/mariadb19/plugin`
@@ -15,7 +15,7 @@
    pamtooldir=$plugindir
  # relative from where the script was run for a relocatable install
  elif test -n "$dirname0" -a -x "$rel_mysqld" -a ! "$rel_mysqld" -ef "@sbindir@/mariadbd"
-@@ -501,7 +509,9 @@ do
+@@ -503,7 +511,9 @@ do
    fi
  done
  
@@ -26,7 +26,7 @@
  then
    if test -z "$srcdir" -a "$in_rpm" -eq 0
    then
-@@ -522,6 +532,10 @@ then
+@@ -524,6 +534,10 @@ then
          echo
      fi
    fi
