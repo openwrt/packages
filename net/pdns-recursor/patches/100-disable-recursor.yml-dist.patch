@@ -1,14 +1,11 @@
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -529,15 +529,6 @@ $(srcdir)/effective_tld_names.dat:
+@@ -551,12 +551,6 @@ $(srcdir)/effective_tld_names.dat:
  pubsuffix.cc: $(srcdir)/effective_tld_names.dat
- 	$(AM_V_GEN)./mkpubsuffixcc
+ 	$(srcdir)/mkpubsuffixcc $< $@
  
 -## Config file
--sysconf_DATA = recursor.conf-dist recursor.yml-dist
--
--recursor.conf-dist: pdns_recursor
--	$(AM_V_GEN)./pdns_recursor --config=default > $@
+-sysconf_DATA = recursor.yml-dist
 -
 -recursor.yml-dist: pdns_recursor
 -	dir=$$(mktemp -d) && touch "$$dir/recursor.yml" && ./pdns_recursor --config-dir="$$dir" --config=default 2> /dev/null > $@ && rm "$$dir/recursor.yml" && rmdir "$$dir"
