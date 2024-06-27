@@ -1,8 +1,8 @@
 #!/bin/sh /etc/rc.common
-# Copyright (c) 2015-2022 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2015-2024 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
-# disable (s)hellcheck in release
+# (s)hellcheck exceptions
 # shellcheck disable=all
 
 START=30
@@ -19,16 +19,12 @@ adb_init="/etc/init.d/adblock"
 adb_script="/usr/bin/adblock.sh"
 adb_pidfile="/var/run/adblock.pid"
 
-if [ -s "${adb_pidfile}" ] && { [ "${action}" = "start" ] || [ "${action}" = "stop" ] ||
-	[ "${action}" = "restart" ] || [ "${action}" = "reload" ] || [ "${action}" = "report" ] ||
-	[ "${action}" = "suspend" ] || [ "${action}" = "resume" ] || [ "${action}" = "query" ] ||
-	{ [ "${action}" = "list" ] && [ -n "${1}" ]; }; }; then
-	return 0
-fi
+[ "${action}" = "boot" ] && "${adb_init}" running && exit 0
+[ -s "${adb_pidfile}" ] && { [ "${action}" = "start" ] || [ "${action}" = "stop" ] || [ "${action}" = "restart" ] || [ "${action}" = "reload" ] || [ "${action}" = "report" ] || [ "${action}" = "suspend" ] || [ "${action}" = "resume" ] || [ "${action}" = "query" ] || { [ "${action}" = "list" ] && [ -n "${1}" ]; }; } && exit 1
 
 boot() {
-	[ -s "${adb_pidfile}" ] && : >"${adb_pidfile}"
-	rc_procd start_service
+	: >"${adb_pidfile}"
+	rc_procd start_service "boot"
 }
 
 start_service() {
