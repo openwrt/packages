@@ -1,0 +1,11 @@
+{
+	"name": "ydns.eu",
+	"ipv4": {
+		"url": "https://ydns.io/hosts/update/[PASSWORD]",
+		"answer": "good"
+	},
+	"ipv6": {
+		"url": "https://ydns.io/hosts/update/[PASSWORD]",
+		"answer": "good"
+	}
+}
