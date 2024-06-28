@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -5839,20 +5839,13 @@ if test "$with_readline" != no; then
+@@ -5840,20 +5840,13 @@ if test "$with_readline" != no; then
    # library.  NOTE: Keep the precedence of listed libraries synchronised
    # with setup.py.
    AC_MSG_CHECKING([how to link readline libs])
@@ -28,7 +28,7 @@
  
    # Uncomment this line if you want to use READLINE_LIBS in Makefile or scripts
    #AC_SUBST([READLINE_LIBS])
-@@ -5860,8 +5853,6 @@ if test "$with_readline" != no; then
+@@ -5861,8 +5854,6 @@ if test "$with_readline" != no; then
      AC_MSG_RESULT([none])
    else
      AC_MSG_RESULT([$READLINE_LIBS])
@@ -37,7 +37,7 @@
    fi
  fi
  
-@@ -6099,12 +6090,6 @@ then
+@@ -6100,12 +6091,6 @@ then
    [Define if you have struct stat.st_mtimensec])
  fi
  
