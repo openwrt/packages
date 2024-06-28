@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=alist
-PKG_VERSION:=3.34.0
+PKG_VERSION:=3.35.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/alist-org/alist/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=843d6ccc74210d6541d0c976c4b396381ca98a855a9c75b2e753e94c7f78cbad
+PKG_HASH:=e349a178cd41fff9b668e9d8df9ff1b407b7f6d6fd3dbb2f8a7ca9d0d5ecad55
 
 PKG_LICENSE:=AGPL-3.0-only
 PKG_LICENSE_FILES:=LICENSE
@@ -24,6 +24,9 @@ GO_PKG:=github.com/alist-org/alist/v3
 GO_PKG_LDFLAGS_X:= \
 	$(GO_PKG)/internal/conf.Version=$(PKG_VERSION) \
 	$(GO_PKG)/internal/conf.WebVersion=$(PKG_VERSION)
+ifeq ($(filter aarch64 x86_64, $(ARCH)),)
+  GO_PKG_EXCLUDES:=drivers/lark
+endif
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
@@ -46,13 +49,13 @@ define Package/alist/conffiles
 /etc/config/alist
 endef
 
-WEB_VERSION:=3.34.0
+WEB_VERSION:=3.35.0
 WEB_FILE:=$(PKG_NAME)-web-$(WEB_VERSION).tar.gz
 define Download/alist-web
 	URL:=https://github.com/alist-org/alist-web/releases/download/$(WEB_VERSION)/
 	URL_FILE:=dist.tar.gz
 	FILE:=$(WEB_FILE)
-	HASH:=82a634c20df88b0ce385d029d0a23a8047b825273621d08c276232fb3309442c
+	HASH:=940608c2b9f64cf585ad4d241545e5f1e59e5f6e54ef8ea2c9c3a29998313fc7
 endef
 
 define Build/Prepare
