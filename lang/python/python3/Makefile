@@ -284,17 +284,6 @@ endef
 Py3Package/python3-light/install:=:
 Package/python3/install:=:
 
-# libuuid is provided by util-linux and pkgconfig does not work properly with
-# tools. Add the necessary includes manually.
-# $(STAGING_DIR_HOST)/include/uuid
-HOST_CFLAGS += \
-       -I$(STAGING_DIR_HOST)/include/uuid
-HOST_CPPFLAGS += \
-       -I$(STAGING_DIR_HOST)/include/uuid
-
-HOST_LDFLAGS += \
-	-Wl$(comma)-rpath$(comma)$(STAGING_DIR_HOSTPKG)/lib
-
 ifeq ($(HOST_OS),Linux)
 HOST_LDFLAGS += \
 	-Wl,--no-as-needed -lrt
