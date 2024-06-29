@@ -284,13 +284,6 @@ endef
 Py3Package/python3-light/install:=:
 Package/python3/install:=:
 
-# libuuid is provided by e2fsprogs and uuid/uuid.h is moved into
-# $(STAGING_DIR_HOST)/include/e2fsprogs
-HOST_CFLAGS += \
-	-I$(STAGING_DIR_HOST)/include/e2fsprogs
-HOST_CPPFLAGS += \
-	-I$(STAGING_DIR_HOST)/include/e2fsprogs
-
 HOST_LDFLAGS += \
 	-Wl$(comma)-rpath$(comma)$(STAGING_DIR_HOSTPKG)/lib
 
