@@ -284,9 +284,6 @@ endef
 Py3Package/python3-light/install:=:
 Package/python3/install:=:
 
-HOST_LDFLAGS += \
-	-Wl$(comma)-rpath$(comma)$(STAGING_DIR_HOSTPKG)/lib
-
 ifeq ($(HOST_OS),Linux)
 HOST_LDFLAGS += \
 	-Wl,--no-as-needed -lrt
