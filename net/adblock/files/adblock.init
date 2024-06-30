@@ -24,7 +24,7 @@ adb_pidfile="/var/run/adblock.pid"
 
 boot() {
 	: >"${adb_pidfile}"
-	rc_procd start_service "boot"
+	rc_procd start_service
 }
 
 start_service() {
