@@ -1,0 +1,216 @@
+#!/usr/bin/env lua
+
+local json = require "cjson"
+
+local status = {}
+local bearers = {}
+local sim = {}
+local signal = {}
+local location = {}
+
+local info = {}
+
+function mm_get_modem_bearer(index)
+
+	local command = string.format("/usr/bin/mmcli --bearer=%s --output-json 2>/dev/null", index)
+
+	local handle = io.popen(command)
+	local output = handle:read("*a")
+	handle:close()
+
+	local ok, status = pcall(function()
+		return json.decode(string.format(output))
+	end)
+
+	if not ok then
+		return
+	end
+
+	table.insert(bearers, status["bearer"])
+end
+
+function mm_get_modem_sim(index)
+
+	local command = string.format("/usr/bin/mmcli --sim=%s --output-json 2>/dev/null", index)
+
+	local handle = io.popen(command)
+	local output = handle:read("*a")
+	handle:close()
+
+	local ok, status = pcall(function()
+		return json.decode(string.format(output))
+	end)
+
+	if not ok then
+		return
+	end
+
+	sim = status["sim"]
+end
+
+function mm_get_modem_signal(modem)
+
+	local command = string.format("/usr/bin/mmcli --modem=%s --signal-get --output-json 2>/dev/null", modem)
+
+	local handle = io.popen(command)
+	local output = handle:read("*a")
+	handle:close()
+
+	local ok, status = pcall(function()
+		return json.decode(string.format(output))
+	end)
+
+	if ok == false then
+		return
+	end
+
+	signal = status["modem"]["signal"]
+end
+
+function mm_get_modem_location(modem)
+
+	local command = string.format("/usr/bin/mmcli --modem=%s --location-get --output-json 2>/dev/null", modem)
+
+	local handle = io.popen(command)
+	local output = handle:read("*a")
+	handle:close()
+
+	local ok, status = pcall(function()
+		return json.decode(string.format(output))
+	end)
+
+	if ok == false then
+		return
+	end
+
+	location = status["modem"]["location"]
+end
+
+function mm_get_modem_status(modem)
+
+	local command = string.format("/usr/bin/mmcli --modem=%s --output-json 2>/dev/null", modem)
+
+	local handle = io.popen(command)
+	local output = handle:read("*a")
+	handle:close()
+
+	local ok, mstatus = pcall(function()
+		return json.decode(string.format(output))
+	end)
+
+	if ok == false then
+		return
+	end
+
+	if mstatus["modem"]["generic"]["bearers"] ~= nil then
+		bearers = {}
+		for k, v in ipairs(mstatus["modem"]["generic"]["bearers"]) do
+			mm_get_modem_bearer(v)
+		end
+		if (next(bearers) ~= nil) then
+			mstatus["modem"]["generic"]["bearers"] = bearers
+		end
+	end
+
+	if mstatus["modem"]["generic"]["sim"] ~= "--" then
+		sim = {}
+		mm_get_modem_sim(mstatus["modem"]["generic"]["sim"])
+		if (next(sim) ~= nil) then
+			mstatus["modem"]["generic"]["sim"] = sim
+		end
+	else
+		mstatus["modem"]["generic"]["sim"] = {}
+	end
+
+	signal = {}
+	mm_get_modem_signal(modem)
+	if (next(signal) ~= nil) then
+		mstatus["modem"]["signal"] = signal
+	else
+		mstatus["modem"]["signal"] = {}
+	end
+
+	location = {}
+	mm_get_modem_location(modem)
+	if (next(location) ~= nil) then
+		mstatus["modem"]["location"] = location
+	else
+		mstatus["modem"]["location"] = {}
+	end
+
+	mstatus["modem"]["device"] = mstatus["modem"]["generic"]["device"]
+
+	table.insert(status["modem"], mstatus["modem"])
+end
+
+function aquire_data_modemmanager()
+
+	local command = string.format("/usr/bin/mmcli --list-modems --output-json 2>/dev/null")
+
+	local handle = io.popen(command)
+	local output = handle:read("*a")
+	handle:close()
+
+	local ok, modems = pcall(function()
+		return json.decode(output)
+	end)
+
+	if not ok then
+		return
+	end
+
+	entry_cache = {}
+	status = {}
+	status["modem"] = {}
+	for k, v in ipairs(modems["modem-list"]) do
+		mm_get_modem_status(modems["modem-list"][k])
+	end
+end
+
+function aquire_data_info()
+	aquire_data_modemmanager()
+
+	-- check if modemmanger is available and is using a modem
+	if status['modem'] == nil then
+		return
+	end
+
+	info['modem'] = {}
+
+	for k, v in ipairs(status['modem']) do
+		local element = {}
+
+		element['imei'] = status['modem'][k]['3gpp']['imei']
+		element['signal'] = status['modem'][k]['generic']['signal-quality']['value']
+		element['technology'] = status['modem'][k]['generic']['access-technologies'][1]
+		if status['modem'][k]['3gpp']['operator-name'] ~= '--' then
+			element['operator'] = status['modem'][k]['3gpp']['operator-name']
+		end
+		if status['modem'][k]['generic']['sim']['properties'] ~= nil then
+			element['iccid'] = status['modem'][k]['generic']['sim']['properties']['iccid']
+			element['imsi'] = status['modem'][k]['generic']['sim']['properties']['imsi']
+		end
+		element['device'] = status['modem'][k]['device']
+
+		table.insert(info['modem'], element)
+	end
+end
+
+function main(cmd, call)
+	if cmd == "list" then
+		print(json.encode({
+			dump = {},
+			info = {}
+		}))
+	elseif cmd == "call" then
+		if call == "dump" then
+			aquire_data_modemmanager()
+			print(json.encode(status))
+		elseif call == "info" then
+			aquire_data_info()
+			print(json.encode(info))
+		end
+	end
+end
+
+main(arg[1], arg[2])
