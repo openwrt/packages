@@ -79,7 +79,8 @@ CONFIGURE_ARGS = \
 	--leasefile \
 	--portinuse \
 	--firewall=$(BUILD_VARIANT) \
-	--disable-fork
+	--disable-fork \
+	--regex
 
 TARGET_CFLAGS += $(FPIC)
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
