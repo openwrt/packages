@@ -1,0 +1,360 @@
+--- a/contrib/xc3028-firmware/firmware-tool.c
++++ b/contrib/xc3028-firmware/firmware-tool.c
+@@ -29,6 +29,8 @@
+ #include <string.h>
+ #include <unistd.h>
+ 
++#include "linux/compiler.h"
++
+ #include <asm/byteorder.h>
+ #include <asm/types.h>
+ 
+--- a/include/linux/compiler.h
++++ b/include/linux/compiler.h
+@@ -1,6 +1,7 @@
+ #ifndef __linux_compiler_h
+ #define __linux_compiler_h
+ 
++#define __SANE_USERSPACE_TYPES__
+ #define __user
+ 
+ #endif
+--- a/utils/cec-compliance/cec-compliance.cpp
++++ b/utils/cec-compliance/cec-compliance.cpp
+@@ -3,6 +3,7 @@
+  * Copyright 2016 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
+  */
+ 
++#include <cinttypes>
+ #include <sstream>
+ 
+ #include <fcntl.h>
+@@ -276,7 +277,7 @@ static std::string ts2s(__u64 ts)
+ 	t = res.tv_sec;
+ 	s = ctime(&t);
+ 	s = s.substr(0, s.length() - 6);
+-	sprintf(buf, "%03lu", res.tv_usec / 1000);
++	sprintf(buf, "%03" PRIu64, (uint64_t)res.tv_usec / 1000);
+ 	return s + "." + buf;
+ }
+ 
+--- a/utils/cec-compliance/cec-compliance.h
++++ b/utils/cec-compliance/cec-compliance.h
+@@ -8,6 +8,8 @@
+ #ifndef _CEC_COMPLIANCE_H_
+ #define _CEC_COMPLIANCE_H_
+ 
++#include "linux/compiler.h"
++
+ #include <linux/cec-funcs.h>
+ #include "cec-htng-funcs.h"
+ 
+--- a/utils/cec-compliance/cec-test-adapter.cpp
++++ b/utils/cec-compliance/cec-test-adapter.cpp
+@@ -4,6 +4,7 @@
+  */
+ 
+ #include <cerrno>
++#include <cinttypes>
+ #include <ctime>
+ #include <string>
+ 
+@@ -1276,9 +1277,9 @@ static int testLostMsgs(struct node *nod
+ 			printf("\t\tReceived messages: %d of which %d were CEC_MSG_CEC_VERSION\n",
+ 			       pending_rx_msgs, pending_rx_cec_version_msgs);
+ 		if (pending_quick_msgs < pending_msgs)
+-			printf("\t\tReceived %d messages immediately, and %d over %ld seconds\n",
++			printf("\t\tReceived %d messages immediately, and %d over %" PRIu64 " seconds\n",
+ 			       pending_quick_msgs, pending_msgs - pending_quick_msgs,
+-			       time(nullptr) - start);
++			       (uint64_t)time(nullptr) - start);
+ 	}
+ 	print_sfts(sft[1][1], "SFTs for repeating messages (>= 7)");
+ 	print_sfts(sft[1][0], "SFTs for repeating remote messages (>= 7)");
+--- a/utils/cec-ctl/cec-ctl.cpp
++++ b/utils/cec-ctl/cec-ctl.cpp
+@@ -6,6 +6,7 @@
+ #include <algorithm>
+ #include <cctype>
+ #include <cerrno>
++#include <cinttypes>
+ #include <cstring>
+ #include <ctime>
+ #include <map>
+@@ -20,6 +21,8 @@
+ #include <sys/time.h>
+ #include <unistd.h>
+ 
++#include "linux/compiler.h"
++
+ #include <linux/cec-funcs.h>
+ #include "cec-htng-funcs.h"
+ #include "cec-log.h"
+@@ -414,7 +417,7 @@ std::string ts2s(__u64 ts)
+ 		strftime(buf, sizeof(buf), "%a %b %e %T.000000", &tm);
+ 	}
+ 	secs = last_secs + t - last_t;
+-	sprintf(buf + 14, "%02u:%02u.%06lu", secs / 60, secs % 60, res.tv_usec);
++	sprintf(buf + 14, "%02u:%02u.%06d", secs / 60, secs % 60, (int)res.tv_usec);
+ 	return buf;
+ }
+ 
+@@ -942,10 +945,10 @@ static void monitor(const struct node &n
+ 		}
+ 		fprintf(fstore, "# cec-ctl --store-pin\n");
+ 		fprintf(fstore, "# version %d\n", CEC_CTL_VERSION);
+-		fprintf(fstore, "# start_monotonic %lu.%09lu\n",
+-			start_monotonic.tv_sec, start_monotonic.tv_nsec);
+-		fprintf(fstore, "# start_timeofday %lu.%06lu\n",
+-			start_timeofday.tv_sec, start_timeofday.tv_usec);
++		fprintf(fstore, "# start_monotonic %" PRIu64 ".%09" PRIu64 "\n",
++			(uint64_t)start_monotonic.tv_sec, (uint64_t)start_monotonic.tv_nsec);
++		fprintf(fstore, "# start_timeofday %" PRIu64 ".%06" PRIu64 "\n",
++			(uint64_t)start_timeofday.tv_sec, (uint64_t)start_timeofday.tv_usec);
+ 		fprintf(fstore, "# log_addr_mask 0x%04x\n", node.log_addr_mask);
+ 		fprintf(fstore, "# phys_addr %x.%x.%x.%x\n",
+ 			cec_phys_addr_exp(node.phys_addr));
+@@ -984,10 +987,10 @@ static void monitor(const struct node &n
+ 			 */
+ 			clock_gettime(CLOCK_MONOTONIC, &start_monotonic);
+ 			gettimeofday(&start_timeofday, nullptr);
+-			fprintf(fstore, "# start_monotonic %lu.%09lu\n",
+-				start_monotonic.tv_sec, start_monotonic.tv_nsec);
+-			fprintf(fstore, "# start_timeofday %lu.%06lu\n",
+-				start_timeofday.tv_sec, start_timeofday.tv_usec);
++			fprintf(fstore, "# start_monotonic %" PRIu64 ".%09" PRIu64 "\n",
++				(uint64_t)start_monotonic.tv_sec, (uint64_t)start_monotonic.tv_nsec);
++			fprintf(fstore, "# start_timeofday %" PRIu64 ".%06" PRIu64 "\n",
++				(uint64_t)start_timeofday.tv_sec, (uint64_t)start_timeofday.tv_usec);
+ 			fflush(fstore);
+ 			start_minute = now;
+ 		}
+--- a/utils/cec-ctl/cec-ctl.h
++++ b/utils/cec-ctl/cec-ctl.h
+@@ -6,6 +6,8 @@
+ #ifndef _CEC_CTL_H_
+ #define _CEC_CTL_H_
+ 
++#include "linux/compiler.h"
++
+ #include <cec-info.h>
+ 
+ // cec-ctl.cpp
+--- a/utils/cec-ctl/cec-pin.cpp
++++ b/utils/cec-ctl/cec-pin.cpp
+@@ -3,6 +3,8 @@
+  * Copyright 2017 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
+  */
+ 
++#include "linux/compiler.h"
++
+ #include <string>
+ 
+ #include <linux/cec.h>
+--- a/utils/cec-follower/cec-follower.cpp
++++ b/utils/cec-follower/cec-follower.cpp
+@@ -3,6 +3,7 @@
+  * Copyright 2016 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
+  */
+ 
++#include <cinttypes>
+ #include <cstring>
+ #include <ctime>
+ #include <sstream>
+@@ -354,7 +355,7 @@ void print_timers(struct node *node)
+ 			printf("source: %s, ", source.c_str());
+ 			if (t.recording_seq)
+ 				printf("rec-seq: 0x%x, ", t.recording_seq);
+-			printf("needs: %ld %s\n", t.duration, "MB."); /* 1MB per second. */
++			printf("needs: %" PRIu64 " %s\n", (uint64_t)t.duration, "MB."); /* 1MB per second. */
+ 		}
+ 		printf("Total media space available for recording: ");
+ 		if (node->state.media_space_available >= 0)
+--- a/utils/cec-follower/cec-processing.cpp
++++ b/utils/cec-follower/cec-processing.cpp
+@@ -3,7 +3,10 @@
+  * Copyright 2016 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
+  */
+ 
++#include "linux/compiler.h"
++
+ #include <cerrno>
++#include <cinttypes>
+ #include <ctime>
+ #include <string>
+ 
+@@ -72,7 +75,7 @@ static std::string ts2s(__u64 ts, bool w
+ 	t = res.tv_sec;
+ 	s = ctime(&t);
+ 	s = s.substr(0, s.length() - 6);
+-	sprintf(buf, "%03lu", res.tv_usec / 1000);
++	sprintf(buf, "%03" PRIu64, (uint64_t)res.tv_usec / 1000);
+ 	return s + "." + buf;
+ }
+ 
+--- a/utils/common/v4l2-info.h
++++ b/utils/common/v4l2-info.h
+@@ -8,6 +8,8 @@
+ 
+ #include <string>
+ 
++#include "linux/compiler.h"
++
+ #include <linux/videodev2.h>
+ #include <linux/v4l2-subdev.h>
+ 
+--- a/utils/cx18-ctl/cx18-ctl.c
++++ b/utils/cx18-ctl/cx18-ctl.c
+@@ -34,6 +34,8 @@
+ #include <sys/time.h>
+ #include <math.h>
+ 
++#include "linux/compiler.h"
++
+ #include <linux/videodev2.h>
+ #include <v4l-getsubopt.h>
+ 
+--- a/utils/ivtv-ctl/ivtv-ctl.c
++++ b/utils/ivtv-ctl/ivtv-ctl.c
+@@ -34,6 +34,8 @@
+ #include <sys/time.h>
+ #include <math.h>
+ 
++#include "linux/compiler.h"
++
+ #include <linux/videodev2.h>
+ #include <v4l-getsubopt.h>
+ 
+--- a/utils/keytable/keytable.c
++++ b/utils/keytable/keytable.c
+@@ -12,6 +12,8 @@
+    GNU General Public License for more details.
+  */
+ 
++#include "linux/compiler.h"
++
+ #include <ctype.h>
+ #include <errno.h>
+ #include <fcntl.h>
+@@ -212,6 +214,7 @@ static enum sysfs_protocols parse_sysfs_
+ 	return SYSFS_INVALID;
+ }
+ 
++__attribute__((format(printf, 3, 0)))
+ static void write_sysfs_protocols(enum sysfs_protocols protocols, FILE *fp, const char *fmt)
+ {
+ 	const struct protocol_map_entry *pme;
+--- a/utils/libv4l2util/v4l2_driver.c
++++ b/utils/libv4l2util/v4l2_driver.c
+@@ -15,6 +15,7 @@
+ #include <assert.h>
+ #include <errno.h>
+ #include <fcntl.h>
++#include <inttypes.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+@@ -174,13 +175,13 @@ static void prt_buf_info(char *name,stru
+ {
+ 	struct v4l2_timecode *tc=&p->timecode;
+ 
+-	printf ("%s: %02ld:%02d:%02d.%08ld index=%d, type=%s, "
++	printf ("%s: %02" PRIu64 ":%02d:%02d.%08" PRIu64 " index=%d, type=%s, "
+ 		"bytesused=%d, flags=0x%08x, "
+ 		"field=%s, sequence=%d, memory=%s, offset=0x%08x, length=%d\n",
+ 		name, (p->timestamp.tv_sec/3600),
+ 		(int)(p->timestamp.tv_sec/60)%60,
+ 		(int)(p->timestamp.tv_sec%60),
+-		p->timestamp.tv_usec,
++		(uint64_t)p->timestamp.tv_usec,
+ 		p->index,
+ 		prt_names(p->type,v4l2_type_names),
+ 		p->bytesused,p->flags,
+--- a/utils/media-ctl/media-ctl.c
++++ b/utils/media-ctl/media-ctl.c
+@@ -34,6 +34,8 @@
+ #include <string.h>
+ #include <unistd.h>
+ 
++#include "linux/compiler.h"
++
+ #include <linux/media.h>
+ #include <linux/types.h>
+ #include <linux/v4l2-mediabus.h>
+--- a/utils/v4l2-compliance/v4l2-compliance.h
++++ b/utils/v4l2-compliance/v4l2-compliance.h
+@@ -26,6 +26,8 @@
+ #include <string>
+ #include <cstdint>
+ 
++#include "linux/compiler.h"
++
+ #include <linux/videodev2.h>
+ #include <linux/v4l2-subdev.h>
+ #include <linux/media.h>
+--- a/utils/v4l2-ctl/v4l2-ctl-common.cpp
++++ b/utils/v4l2-ctl/v4l2-ctl-common.cpp
+@@ -9,6 +9,8 @@
+ #include <sys/stat.h>
+ #include <sys/sysmacros.h>
+ 
++#include "linux/compiler.h"
++
+ #include <linux/media.h>
+ 
+ #include "v4l2-ctl.h"
+--- a/utils/v4l2-ctl/v4l2-ctl-streaming.cpp
++++ b/utils/v4l2-ctl/v4l2-ctl-streaming.cpp
+@@ -3,6 +3,8 @@
+ #include <netdb.h>
+ #include <sys/types.h>
+ 
++#include "linux/compiler.h"
++
+ #include <linux/media.h>
+ 
+ #include "compiler.h"
+--- a/utils/v4l2-ctl/v4l2-ctl.cpp
++++ b/utils/v4l2-ctl/v4l2-ctl.cpp
+@@ -27,6 +27,8 @@
+ #include <getopt.h>
+ #include <sys/epoll.h>
+ 
++#include "linux/compiler.h"
++
+ #include <linux/media.h>
+ 
+ #include "v4l2-ctl.h"
+--- a/utils/v4l2-ctl/v4l2-ctl.h
++++ b/utils/v4l2-ctl/v4l2-ctl.h
+@@ -1,6 +1,8 @@
+ #ifndef _V4L2_CTL_H
+ #define _V4L2_CTL_H
+ 
++#include "linux/compiler.h"
++
+ #include <cstdint>
+ #include <linux/videodev2.h>
+ #include <linux/v4l2-subdev.h>
+--- a/utils/v4l2-dbg/v4l2-dbg.cpp
++++ b/utils/v4l2-dbg/v4l2-dbg.cpp
+@@ -31,6 +31,8 @@
+ #include <sys/klog.h>
+ #endif
+ 
++#include "linux/compiler.h"
++
+ #include <linux/videodev2.h>
+ #include <v4l-getsubopt.h>
+ 
+--- a/utils/v4l2-tracer/retrace.cpp
++++ b/utils/v4l2-tracer/retrace.cpp
+@@ -66,7 +66,7 @@ void retrace_mmap(json_object *mmap_obj,
+ 	                           (long) buf_address_retrace_pointer);
+ 
+ 	if (is_verbose() || (errno != 0)) {
+-		fprintf(stderr, "fd: %d, offset: %ld, ", fd_retrace, off);
++		fprintf(stderr, "fd: %d, offset: %lld, ", fd_retrace, (long long)off);
+ 		if (is_mmap64)
+ 			perror("mmap64");
+ 		else

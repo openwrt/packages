@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=v4l-utils
 PKG_VERSION:=1.26.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.linuxtv.org/downloads/v4l-utils
@@ -87,6 +87,7 @@ MESON_ARGS += \
 	-Dv4l-utils=$(if $(CONFIG_PACKAGE_v4l-utils),true,false) \
 	-Ddoxygen-doc=disabled
 
+TARGET_CFLAGS += -Werror=format=2 -Wno-error=format-nonliteral
 TARGET_LDFLAGS += -Wl,--gc-sections
 
 define Build/InstallDev
