@@ -4,7 +4,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lpac
 PKG_VERSION:=2.0.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/estkme-group/lpac/tar.gz/refs/tags/v$(PKG_VERSION)?
@@ -22,7 +22,10 @@ define Package/lpac
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=eUICC eSIM LPA written in C
-  DEPENDS:=+libpcsclite +pcscd +libcurl
+  DEPENDS:= \
+    +LPAC_WITH_PCSC:libpcsclite \
+    +LPAC_WITH_PCSC:pcscd \
+    +libcurl
   URL:=https://github.com/estkme-group/lpac
 endef
 
@@ -32,11 +35,21 @@ define Package/lpac/description
   backends.
 endef
 
+define Package/lpac/config
+  source "$(SOURCE)/Config.in"
+endef
+
 define Package/lpac/conffiles
 /etc/config/lpac
 endef
 
 TARGET_CFLAGS += $(FPIC)
+
+CMAKE_OPTIONS += \
+  -DLPAC_WITH_APDU_PCSC=$(if $(CONFIG_LPAC_WITH_PCSC),ON,OFF) \
+  -DLPAC_WITH_APDU_AT=$(if $(CONFIG_LPAC_WITH_AT),ON,OFF) \
+  # libqmi 1.35.4 or newer is required for this
+  -DLPAC_WITH_APDU_QMI_QRTR=OFF
 
 define Package/lpac/install
 	$(INSTALL_DIR) $(1)/usr/bin
