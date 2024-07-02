@@ -52,8 +52,13 @@ endif
 
 # ARM Logic
 ifeq ($(ARCH),arm)
+ifeq ($(ARCH),arm)
+  ifneq ($(CONFIG_arm_v6),y)
+    RUSTC_TARGET_ARCH:=$(subst arm,armv5te,$(RUSTC_TARGET_ARCH))
+  endif
+
   ifeq ($(CONFIG_arm_v7),y)
-    RUSTC_TARGET_ARCH:=$(subst arm,armv7,$(RUSTC_TARGET_ARCH))
+    RUSTC_TARGET_ARCH:=$(subst armv5te,armv7,$(RUSTC_TARGET_ARCH))
   endif
 
   ifeq ($(CONFIG_HAS_FPU),y)
