@@ -1,0 +1,52 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -5839,20 +5839,13 @@ if test "$with_readline" != no; then
+   # library.  NOTE: Keep the precedence of listed libraries synchronised
+   # with setup.py.
+   AC_MSG_CHECKING([how to link readline libs])
+-  for py_libtermcap in "" tinfo ncursesw ncurses curses termcap; do
+-    if test -z "$py_libtermcap"; then
+-      READLINE_LIBS="-l$LIBREADLINE"
+-    else
+-      READLINE_LIBS="-l$LIBREADLINE -l$py_libtermcap"
+-    fi
+-    LIBS="$READLINE_LIBS $LIBS_no_readline"
+-    AC_LINK_IFELSE(
+-      [AC_LANG_CALL([],[readline])],
+-      [py_cv_lib_readline=yes])
+-    if test $py_cv_lib_readline = yes; then
+-      break
+-    fi
+-  done
++  PKG_CHECK_MODULES_STATIC(
++    [READLINE], [readline], [
++      py_cv_lib_readline=yes
++      AC_DEFINE(HAVE_LIBREADLINE, 1,
++        [Define to build the readline module.])
++    ], py_cv_lib_readline=no
++  )
+ 
+   # Uncomment this line if you want to use READLINE_LIBS in Makefile or scripts
+   #AC_SUBST([READLINE_LIBS])
+@@ -5860,8 +5853,6 @@ if test "$with_readline" != no; then
+     AC_MSG_RESULT([none])
+   else
+     AC_MSG_RESULT([$READLINE_LIBS])
+-    AC_DEFINE(HAVE_LIBREADLINE, 1,
+-      [Define to build the readline module.])
+   fi
+ fi
+ 
+@@ -6099,12 +6090,6 @@ then
+   [Define if you have struct stat.st_mtimensec])
+ fi
+ 
+-# first curses header check
+-ac_save_cppflags="$CPPFLAGS"
+-if test "$cross_compiling" = no; then
+-  CPPFLAGS="$CPPFLAGS -I/usr/include/ncursesw"
+-fi
+-
+ AC_CHECK_HEADERS(curses.h ncurses.h)
+ 
+ # On Solaris, term.h requires curses.h
