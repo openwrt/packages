@@ -81,6 +81,10 @@ define Package/git-gitweb/conffiles
 /etc/gitweb.conf
 endef
 
+ifeq ($(CONFIG_USE_LTO),y)
+  TARGET_CPPFLAGS := $(filter-out -O%,$(TARGET_CFLAGS)) -O2
+endif
+
 MAKE_FLAGS := \
 	CC="$(TARGET_CC)" \
 	CFLAGS="$(TARGET_CFLAGS)" \
