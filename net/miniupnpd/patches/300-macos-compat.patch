@@ -20,17 +20,3 @@
  endif
  
  TESTUPNPDESCGENOBJS = testupnpdescgen.o upnpdescgen.o
-@@ -143,11 +143,11 @@ install:	miniupnpd $(SRCDIR)/miniupnpd.8
- 	$(INSTALL) $(SRCDIR)/netfilter/ip6tables_init.sh $(DESTDIR)$(ETCINSTALLDIR)
- 	$(INSTALL) $(SRCDIR)/netfilter/ip6tables_removeall.sh $(DESTDIR)$(ETCINSTALLDIR)
- 	$(INSTALL) $(SRCDIR)/netfilter/miniupnpd_functions.sh $(DESTDIR)$(ETCINSTALLDIR)
--	$(INSTALL) --mode=0644 -b $(SRCDIR)/miniupnpd.conf $(DESTDIR)$(ETCINSTALLDIR)
-+	$(INSTALL) -m 0644 -b $(SRCDIR)/miniupnpd.conf $(DESTDIR)$(ETCINSTALLDIR)
- 	$(INSTALL) -d $(DESTDIR)$(PREFIX)/etc/init.d
- 	$(INSTALL) $(SRCDIR)/linux/miniupnpd.init.d.script $(DESTDIR)$(PREFIX)/etc/init.d/miniupnpd
- 	$(INSTALL) -d $(DESTDIR)$(MANINSTALLDIR)
--	$(INSTALL) --mode=0644 $(SRCDIR)/miniupnpd.8 $(DESTDIR)$(MANINSTALLDIR)
-+	$(INSTALL) -m 0644 $(SRCDIR)/miniupnpd.8 $(DESTDIR)$(MANINSTALLDIR)
- 	gzip -f $(DESTDIR)$(MANINSTALLDIR)/miniupnpd.8
- 
- # genuuid is using the uuidgen CLI tool which is part of libuuid
