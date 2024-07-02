@@ -56,10 +56,6 @@ COMP_ARGS+=-Dlibmount=disabled
 # default feature=auto see meson_options.txt
 COMP_ARGS+=-Dselinux=disabled
 
-
-# default boolean=false see meson_options.txt
-COMP_ARGS+=-Dforce_posix_threads=true
-
 # default boolean=true see meson_options.txt
 COMP_ARGS+=-Dglib_assert=false
 
