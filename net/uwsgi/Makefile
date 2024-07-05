@@ -10,6 +10,7 @@ PKG_HASH:=d653d2d804c194c8cbe2585fa56efa2650313ae75c686a9d7931374d4dfbfc6e
 
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:unbit:uwsgi
 PKG_MAINTAINER:=Ansuel Smith <ansuelsmth@gmail.com>
 
 PKG_BUILD_DEPENDS:=python3/host
