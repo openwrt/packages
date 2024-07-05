@@ -14,6 +14,7 @@ PKG_FIXUP:=autoreconf
 PKG_MAINTAINER:=Espen Jürgensen <espenjurgensen+openwrt@gmail.com>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:mini-xml_project:mini-xml
 
 include $(INCLUDE_DIR)/package.mk
 
