@@ -1,0 +1,119 @@
+--- a/m4/mbedtls.m4
++++ b/m4/mbedtls.m4
+@@ -31,7 +31,7 @@ AC_DEFUN([ss_MBEDTLS],
+   AC_COMPILE_IFELSE(
+     [AC_LANG_PROGRAM(
+       [[
+-#include <mbedtls/config.h>
++#include <mbedtls/mbedtls_config.h>
+       ]],
+       [[
+ #ifndef MBEDTLS_CIPHER_MODE_CFB
+@@ -48,7 +48,7 @@ AC_DEFUN([ss_MBEDTLS],
+   AC_COMPILE_IFELSE(
+     [AC_LANG_PROGRAM(
+       [[
+-#include <mbedtls/config.h>
++#include <mbedtls/mbedtls_config.h>
+       ]],
+       [[
+ #ifndef MBEDTLS_ARC4_C
+@@ -64,7 +64,7 @@ AC_DEFUN([ss_MBEDTLS],
+   AC_COMPILE_IFELSE(
+     [AC_LANG_PROGRAM(
+       [[
+-#include <mbedtls/config.h>
++#include <mbedtls/mbedtls_config.h>
+       ]],
+       [[
+ #ifndef MBEDTLS_BLOWFISH_C
+@@ -80,7 +80,7 @@ AC_DEFUN([ss_MBEDTLS],
+   AC_COMPILE_IFELSE(
+     [AC_LANG_PROGRAM(
+       [[
+-#include <mbedtls/config.h>
++#include <mbedtls/mbedtls_config.h>
+       ]],
+       [[
+ #ifndef MBEDTLS_CAMELLIA_C
+--- a/src/crypto.c
++++ b/src/crypto.c
+@@ -103,7 +103,7 @@ crypto_md5(const unsigned char *d, size_t n, unsigned char *md)
+     if (md == NULL) {
+         md = m;
+     }
+-#if MBEDTLS_VERSION_NUMBER >= 0x02070000
++#if MBEDTLS_VERSION_NUMBER < 0x03000000 && MBEDTLS_VERSION_NUMBER >= 0x02070000
+     if (mbedtls_md5_ret(d, n, md) != 0)
+         FATAL("Failed to calculate MD5");
+ #else
+--- a/src/aead.c
++++ b/src/aead.c
+@@ -178,8 +178,8 @@ aead_cipher_encrypt(cipher_ctx_t *cipher_ctx,
+     case AES192GCM:
+     case AES128GCM:
+ 
+-        err = mbedtls_cipher_auth_encrypt(cipher_ctx->evp, n, nlen, ad, adlen,
+-                                          m, mlen, c, clen, c + mlen, tlen);
++        err = mbedtls_cipher_auth_encrypt_ext(cipher_ctx->evp, n, nlen, ad, adlen,
++                                          m, mlen, c, mlen + tlen, clen, tlen);
+         *clen += tlen;
+         break;
+     case CHACHA20POLY1305IETF:
+@@ -226,8 +226,8 @@ aead_cipher_decrypt(cipher_ctx_t *cipher_ctx,
+     // Otherwise, just use the mbedTLS one with crappy AES-NI.
+     case AES192GCM:
+     case AES128GCM:
+-        err = mbedtls_cipher_auth_decrypt(cipher_ctx->evp, n, nlen, ad, adlen,
+-                                          m, mlen - tlen, p, plen, m + mlen - tlen, tlen);
++        err = mbedtls_cipher_auth_decrypt_ext(cipher_ctx->evp, n, nlen, ad, adlen,
++                                          m, mlen, p, mlen - tlen, plen, tlen);
+         break;
+     case CHACHA20POLY1305IETF:
+         err = crypto_aead_chacha20poly1305_ietf_decrypt(p, &long_plen, NULL, m, mlen,
+@@ -724,9 +724,9 @@ aead_key_init(int method, const char
+     if (method >= CHACHA20POLY1305IETF) {
+         cipher_kt_t *cipher_info = (cipher_kt_t *)ss_malloc(sizeof(cipher_kt_t));
+         cipher->info             = cipher_info;
+-        cipher->info->base       = NULL;
+-        cipher->info->key_bitlen = supported_aead_ciphers_key_size[method] * 8;
+-        cipher->info->iv_size    = supported_aead_ciphers_nonce_size[method];
++        cipher->info->private_base_idx       = 0;
++        cipher->info->private_key_bitlen = supported_aead_ciphers_key_size[method] * 8;
++        cipher->info->private_iv_size    = supported_aead_ciphers_nonce_size[method];
+     } else {
+         cipher->info = (cipher_kt_t *)aead_get_cipher_type(method);
+     }
+--- a/src/stream.c
++++ b/src/stream.c
+@@ -174,7 +174,7 @@ cipher_nonce_size(const cipher_t *cipher)
+     if (cipher == NULL) {
+         return 0;
+     }
+-    return cipher->info->iv_size;
++    return cipher->info->private_iv_size;
+ }
+ 
+ int
+@@ -192,7 +192,7 @@ cipher_key_size(const cipher_t *cipher)
+         return 0;
+     }
+     /* From Version 1.2.7 released 2013-04-13 Default Blowfish keysize is now 128-bits */
+-    return cipher->info->key_bitlen / 8;
++    return cipher->info->private_key_bitlen / 8;
+ }
+ 
+ const cipher_kt_t *
+@@ -645,9 +645,9 @@ stream_key_init(int method, const char
+     if (method == SALSA20 || method == CHACHA20 || method == CHACHA20IETF) {
+         cipher_kt_t *cipher_info = (cipher_kt_t *)ss_malloc(sizeof(cipher_kt_t));
+         cipher->info             = cipher_info;
+-        cipher->info->base       = NULL;
+-        cipher->info->key_bitlen = supported_stream_ciphers_key_size[method] * 8;
+-        cipher->info->iv_size    = supported_stream_ciphers_nonce_size[method];
++        cipher->info->private_base_idx       = 0;
++        cipher->info->private_key_bitlen = supported_stream_ciphers_key_size[method] * 8;
++        cipher->info->private_iv_size    = supported_stream_ciphers_nonce_size[method];
+     } else {
+         cipher->info = (cipher_kt_t *)stream_get_cipher_type(method);
+     }
