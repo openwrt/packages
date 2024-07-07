@@ -38,7 +38,7 @@
  #ifndef MBEDTLS_CAMELLIA_C
 --- a/src/crypto.c
 +++ b/src/crypto.c
-@@ -103,7 +103,7 @@ crypto_md5(const unsigned char *d, size_t n, unsigned char *md)
+@@ -103,7 +103,7 @@ crypto_md5(const unsigned char *d, size_
      if (md == NULL) {
          md = m;
      }
@@ -49,18 +49,19 @@
  #else
 --- a/src/aead.c
 +++ b/src/aead.c
-@@ -178,8 +178,8 @@ aead_cipher_encrypt(cipher_ctx_t *cipher_ctx,
+@@ -178,9 +178,8 @@ aead_cipher_encrypt(cipher_ctx_t *cipher
      case AES192GCM:
      case AES128GCM:
  
 -        err = mbedtls_cipher_auth_encrypt(cipher_ctx->evp, n, nlen, ad, adlen,
 -                                          m, mlen, c, clen, c + mlen, tlen);
+-        *clen += tlen;
 +        err = mbedtls_cipher_auth_encrypt_ext(cipher_ctx->evp, n, nlen, ad, adlen,
 +                                          m, mlen, c, mlen + tlen, clen, tlen);
-         *clen += tlen;
          break;
      case CHACHA20POLY1305IETF:
-@@ -226,8 +226,8 @@ aead_cipher_decrypt(cipher_ctx_t *cipher_ctx,
+         err = crypto_aead_chacha20poly1305_ietf_encrypt(c, &long_clen, m, mlen,
+@@ -226,8 +225,8 @@ aead_cipher_decrypt(cipher_ctx_t *cipher
      // Otherwise, just use the mbedTLS one with crappy AES-NI.
      case AES192GCM:
      case AES128GCM:
@@ -71,7 +72,7 @@
          break;
      case CHACHA20POLY1305IETF:
          err = crypto_aead_chacha20poly1305_ietf_decrypt(p, &long_plen, NULL, m, mlen,
-@@ -724,9 +724,9 @@ aead_key_init(int method, const char
+@@ -724,9 +723,9 @@ aead_key_init(int method, const char *pa
      if (method >= CHACHA20POLY1305IETF) {
          cipher_kt_t *cipher_info = (cipher_kt_t *)ss_malloc(sizeof(cipher_kt_t));
          cipher->info             = cipher_info;
@@ -86,7 +87,7 @@
      }
 --- a/src/stream.c
 +++ b/src/stream.c
-@@ -174,7 +174,7 @@ cipher_nonce_size(const cipher_t *cipher)
+@@ -174,7 +174,7 @@ cipher_nonce_size(const cipher_t *cipher
      if (cipher == NULL) {
          return 0;
      }
@@ -104,7 +105,7 @@
  }
  
  const cipher_kt_t *
-@@ -645,9 +645,9 @@ stream_key_init(int method, const char
+@@ -645,9 +645,9 @@ stream_key_init(int method, const char *
      if (method == SALSA20 || method == CHACHA20 || method == CHACHA20IETF) {
          cipher_kt_t *cipher_info = (cipher_kt_t *)ss_malloc(sizeof(cipher_kt_t));
          cipher->info             = cipher_info;
