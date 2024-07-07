@@ -1,0 +1,201 @@
+From c2bdb9847e374331a4f1c8fcd3d93e0b57d4c6fc Mon Sep 17 00:00:00 2001
+From: Zxl hhyccc <zxlhhy@gmail.com>
+Date: Sun, 7 Jul 2024 17:08:27 +0800
+Subject: [PATCH] Fix in 'mbedtls 3.6.0 ver' compilation failure issue
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+*** The added patch is available in 'mbedtls 3.6 version'.
+
+*** fix *clen += tlen; may cause potential bounds error.
+
+Co-authored-by: Lu jicong <jiconglu58@gmail.com>
+Signed-off-by: Zxl hhyccc <zxlhhy@gmail.com>
+---
+ m4/mbedtls.m4	| 20 +++++++++++++++++++
+ src/aead.c	| 17 ++++++++++++++++
+ src/crypto.c	|  2 +-
+ src/stream.c	| 17 ++++++++++++++++
+ 
+ 4 files changed, 55 insertions(+), 1 deletion(-)
+
+--- a/m4/mbedtls.m4
++++ b/m4/mbedtls.m4
+@@ -31,7 +31,12 @@ AC_DEFUN([ss_MBEDTLS],
+   AC_COMPILE_IFELSE(
+     [AC_LANG_PROGRAM(
+       [[
++#include <mbedtls/version.h>
++#if MBEDTLS_VERSION_NUMBER >= 0x03000000
++#include <mbedtls/mbedtls_config.h>
++#else
+ #include <mbedtls/config.h>
++#endif
+       ]],
+       [[
+ #ifndef MBEDTLS_CIPHER_MODE_CFB
+@@ -48,7 +53,12 @@ AC_DEFUN([ss_MBEDTLS],
+   AC_COMPILE_IFELSE(
+     [AC_LANG_PROGRAM(
+       [[
++#include <mbedtls/version.h>
++#if MBEDTLS_VERSION_NUMBER >= 0x03000000
++#include <mbedtls/mbedtls_config.h>
++#else
+ #include <mbedtls/config.h>
++#endif
+       ]],
+       [[
+ #ifndef MBEDTLS_ARC4_C
+@@ -64,7 +74,12 @@ AC_DEFUN([ss_MBEDTLS],
+   AC_COMPILE_IFELSE(
+     [AC_LANG_PROGRAM(
+       [[
++#include <mbedtls/version.h>
++#if MBEDTLS_VERSION_NUMBER >= 0x03000000
++#include <mbedtls/mbedtls_config.h>
++#else
+ #include <mbedtls/config.h>
++#endif
+       ]],
+       [[
+ #ifndef MBEDTLS_BLOWFISH_C
+@@ -80,7 +95,12 @@ AC_DEFUN([ss_MBEDTLS],
+   AC_COMPILE_IFELSE(
+     [AC_LANG_PROGRAM(
+       [[
++#include <mbedtls/version.h>
++#if MBEDTLS_VERSION_NUMBER >= 0x03000000
++#include <mbedtls/mbedtls_config.h>
++#else
+ #include <mbedtls/config.h>
++#endif
+       ]],
+       [[
+ #ifndef MBEDTLS_CAMELLIA_C
+--- a/src/aead.c
++++ b/src/aead.c
+@@ -178,9 +178,14 @@ aead_cipher_encrypt(cipher_ctx_t *cipher_ctx,
+     case AES192GCM:
+     case AES128GCM:
+ 
++#if MBEDTLS_VERSION_NUMBER < 0x03000000
+         err = mbedtls_cipher_auth_encrypt(cipher_ctx->evp, n, nlen, ad, adlen,
+                                           m, mlen, c, clen, c + mlen, tlen);
+         *clen += tlen;
++#else
++        err = mbedtls_cipher_auth_encrypt_ext(cipher_ctx->evp, n, nlen, ad, adlen,
++                                              m, mlen, c, mlen + tlen, clen, tlen);
++#endif
+         break;
+     case CHACHA20POLY1305IETF:
+         err = crypto_aead_chacha20poly1305_ietf_encrypt(c, &long_clen, m, mlen,
+@@ -226,8 +231,13 @@ aead_cipher_decrypt(cipher_ctx_t *cipher_ctx,
+     // Otherwise, just use the mbedTLS one with crappy AES-NI.
+     case AES192GCM:
+     case AES128GCM:
++#if MBEDTLS_VERSION_NUMBER < 0x03000000
+         err = mbedtls_cipher_auth_decrypt(cipher_ctx->evp, n, nlen, ad, adlen,
+                                           m, mlen - tlen, p, plen, m + mlen - tlen, tlen);
++#else
++        err = mbedtls_cipher_auth_decrypt_ext(cipher_ctx->evp, n, nlen, ad, adlen,
++                                              m, mlen, p, mlen - tlen, plen, tlen);
++#endif
+         break;
+     case CHACHA20POLY1305IETF:
+         err = crypto_aead_chacha20poly1305_ietf_decrypt(p, &long_plen, NULL, m, mlen,
+@@ -724,9 +734,26 @@ aead_key_init(int method, const char *pass, const char *key)
+     if (method >= CHACHA20POLY1305IETF) {
+         cipher_kt_t *cipher_info = (cipher_kt_t *)ss_malloc(sizeof(cipher_kt_t));
+         cipher->info             = cipher_info;
++#if MBEDTLS_VERSION_NUMBER < 0x03000000
+         cipher->info->base       = NULL;
+         cipher->info->key_bitlen = supported_aead_ciphers_key_size[method] * 8;
+         cipher->info->iv_size    = supported_aead_ciphers_nonce_size[method];
++#else
++        cipher->info->private_base_idx   = 0;
++
++#ifdef MBEDTLS_KEY_BITLEN_SHIFT
++        cipher->info->private_key_bitlen = supported_aead_ciphers_key_size[method] * 8 >> MBEDTLS_KEY_BITLEN_SHIFT;
++#else
++        cipher->info->private_key_bitlen = supported_aead_ciphers_key_size[method] * 8;
++#endif
++
++#ifdef MBEDTLS_IV_SIZE_SHIFT
++        cipher->info->private_iv_size    = supported_aead_ciphers_nonce_size[method] >> MBEDTLS_IV_SIZE_SHIFT;
++#else
++        cipher->info->private_iv_size    = supported_aead_ciphers_nonce_size[method];
++#endif
++
++#endif
+     } else {
+         cipher->info = (cipher_kt_t *)aead_get_cipher_type(method);
+     }
+--- a/src/crypto.c
++++ b/src/crypto.c
+@@ -103,7 +103,7 @@ crypto_md5(const unsigned char *d, size_t n, unsigned char *md)
+     if (md == NULL) {
+         md = m;
+     }
+-#if MBEDTLS_VERSION_NUMBER >= 0x02070000
++#if MBEDTLS_VERSION_NUMBER < 0x03000000 && MBEDTLS_VERSION_NUMBER >= 0x02070000
+     if (mbedtls_md5_ret(d, n, md) != 0)
+         FATAL("Failed to calculate MD5");
+ #else
+--- a/src/stream.c
++++ b/src/stream.c
+@@ -174,7 +174,11 @@ cipher_nonce_size(const cipher_t *cipher)
+     if (cipher == NULL) {
+         return 0;
+     }
++#if MBEDTLS_VERSION_NUMBER < 0x03000000
+     return cipher->info->iv_size;
++#else
++    return (int)mbedtls_cipher_info_get_iv_size(cipher->info);
++#endif
+ }
+ 
+ int
+@@ -192,7 +196,11 @@ cipher_key_size(const cipher_t *cipher)
+         return 0;
+     }
+     /* From Version 1.2.7 released 2013-04-13 Default Blowfish keysize is now 128-bits */
++#if MBEDTLS_VERSION_NUMBER < 0x03000000
+     return cipher->info->key_bitlen / 8;
++#else
++    return (int)mbedtls_cipher_info_get_key_bitlen(cipher->info) / 8;
++#endif
+ }
+ 
+ const cipher_kt_t *
+@@ -645,9 +653,26 @@ stream_key_init(int method, const char *pass, const char *key)
+     if (method == SALSA20 || method == CHACHA20 || method == CHACHA20IETF) {
+         cipher_kt_t *cipher_info = (cipher_kt_t *)ss_malloc(sizeof(cipher_kt_t));
+         cipher->info             = cipher_info;
++#if MBEDTLS_VERSION_NUMBER < 0x03000000
+         cipher->info->base       = NULL;
+         cipher->info->key_bitlen = supported_stream_ciphers_key_size[method] * 8;
+         cipher->info->iv_size    = supported_stream_ciphers_nonce_size[method];
++#else
++        cipher->info->private_base_idx   = 0;
++
++#ifdef MBEDTLS_KEY_BITLEN_SHIFT
++        cipher->info->private_key_bitlen = supported_stream_ciphers_key_size[method] * 8 >> MBEDTLS_KEY_BITLEN_SHIFT;
++#else
++        cipher->info->private_key_bitlen = supported_stream_ciphers_key_size[method] * 8;
++#endif
++
++#ifdef MBEDTLS_IV_SIZE_SHIFT
++        cipher->info->private_iv_size    = supported_stream_ciphers_nonce_size[method] >> MBEDTLS_IV_SIZE_SHIFT;
++#else
++        cipher->info->private_iv_size    = supported_stream_ciphers_nonce_size[method];
++#endif
++
++#endif
+     } else {
+         cipher->info = (cipher_kt_t *)stream_get_cipher_type(method);
+     }
+-- 
+2.17.1
+
