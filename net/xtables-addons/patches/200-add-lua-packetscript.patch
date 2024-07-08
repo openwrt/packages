@@ -17221,7 +17221,7 @@
 +
 --- /dev/null
 +++ b/extensions/LUA/prot_buf_ip.c
-@@ -0,0 +1,209 @@
+@@ -0,0 +1,210 @@
 +/*
 + *	Copyright (C) 2010 University of Basel <http://cn.cs.unibas.ch/>
 + *	by Andre Graf <andre@dergraf.org>
@@ -17241,6 +17241,7 @@
 + */
 +
 +#if defined(__KERNEL__)
++	#include <linux/bitops.h>
 +	#include <net/checksum.h>
 +	#include <net/tcp.h>
 +#endif
@@ -17479,7 +17480,7 @@
 +}
 --- /dev/null
 +++ b/extensions/LUA/prot_buf_tcp.c
-@@ -0,0 +1,188 @@
+@@ -0,0 +1,189 @@
 +/*
 + *	Copyright (C) 2010 University of Basel <http://cn.cs.unibas.ch/>
 + *	by Andre Graf <andre@dergraf.org>
@@ -17499,6 +17500,7 @@
 + */
 +
 +#if defined(__KERNEL__)
++	#include <linux/bitops.h>
 +	#include <net/checksum.h>
 +	#include <net/tcp.h>
 +#endif
@@ -17760,7 +17762,7 @@
 +}
 --- /dev/null
 +++ b/extensions/LUA/prot_buf_udp.c
-@@ -0,0 +1,53 @@
+@@ -0,0 +1,54 @@
 +/*
 + *	Copyright (C) 2010 University of Basel <http://cn.cs.unibas.ch/>
 + *	by Andre Graf <andre@dergraf.org>
@@ -17780,6 +17782,7 @@
 + */
 +
 +#if defined(__KERNEL__)
++	#include <linux/bitops.h>
 +	#include <net/checksum.h>
 +#endif
 +
