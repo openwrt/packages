@@ -4,7 +4,7 @@ include $(INCLUDE_DIR)/kernel.mk
 PKG_NAME:=usb-serial-xr_usb_serial_common
 PKG_SOURCE_DATE:=2023-03-21
 PKG_SOURCE_VERSION:=90ad530166f096347a5a57b6f9eb21c422a40fd9
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/kasbert/epsolar-tracer
