@@ -1,15 +1,13 @@
 --- a/src/bin/pg_ctl/pg_ctl.c
 +++ b/src/bin/pg_ctl/pg_ctl.c
-@@ -12,11 +12,13 @@
+@@ -12,9 +12,11 @@
  #include "postgres_fe.h"
  
  #include <fcntl.h>
 +#include <pwd.h>
  #include <signal.h>
  #include <time.h>
- #include <sys/resource.h>
  #include <sys/stat.h>
- #include <sys/time.h>
 +#include <sys/types.h>
  #include <sys/wait.h>
  #include <unistd.h>

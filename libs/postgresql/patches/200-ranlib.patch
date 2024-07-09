@@ -1,0 +1,10 @@
+--- a/src/port/Makefile
++++ b/src/port/Makefile
+@@ -83,6 +83,7 @@ uninstall:
+ libpgport.a: $(OBJS)
+ 	rm -f $@
+ 	$(AR) $(AROPT) $@ $^
++	$(RANLIB) libpgport.a
+ 
+ # getaddrinfo.o and getaddrinfo_shlib.o need PTHREAD_CFLAGS (but getaddrinfo_srv.o does not)
+ getaddrinfo.o: CFLAGS+=$(PTHREAD_CFLAGS)
