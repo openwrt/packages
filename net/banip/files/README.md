@@ -109,7 +109,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * For E-Mail notifications you need to install and setup the additional 'msmtp' package  
 
 **Please note:**
-* Devices with less than 256Mb of RAM are **_not_** supported
+* Devices with less than 256MB of RAM are **_not_** supported
 * Any previous installation of ancient banIP 0.7.x must be uninstalled, and the /etc/banip folder and the /etc/config/banip configuration file must be deleted (they are recreated when this version is installed)
 
 ## Installation & Usage
@@ -308,7 +308,7 @@ Available commands:
 
 ## Best practise & tweaks
 **Recommendation for low memory systems**  
-nftables supports the atomic loading of firewall rules (incl. elements), which is cool but unfortunately is also very memory intensive. To reduce the memory pressure on low memory systems (i.e. those with 256-512Mb RAM), you should optimize your configuration with the following options:  
+nftables supports the atomic loading of firewall rules (incl. elements), which is cool but unfortunately is also very memory intensive. To reduce the memory pressure on low memory systems (i.e. those with 256-512MB RAM), you should optimize your configuration with the following options:  
 
 * point 'ban_basedir', 'ban_reportdir' and 'ban_backupdir' to an external usb drive
 * set 'ban_cores' to '1' (only useful on a multicore system) to force sequential feed processing
