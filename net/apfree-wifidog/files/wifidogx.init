@@ -26,9 +26,11 @@ prepare_wifidog_conf() {
 		'apple_cna:bool:0' \
 		'channel_path:string' \
 		'trusted_domains:list(host)' \
+		'trusted_wildcard_domains:list(string)' \
 		'trusted_macs:list(string)' \
 		'app_white_list:list(string)' \
 		'mac_white_list:list(string)' \
+		'wildcard_white_list:list(string)' \
 		'enable_dns_forward:bool:1' \
 		'enable_websocket:bool:1' \
 		'js_filter:bool:1' 
@@ -72,6 +74,16 @@ prepare_wifidog_conf() {
 		done
 	fi
 
+	if [ ! -z "$wildcard_white_list" ]; then
+		# iterate wildcard_white_list and find the corresponding domain according to the item
+		for group in $wildcard_white_list; do
+			group_wildcard_list=$(uci get wifidogx.$group.wildcard_domain)
+			if [ ! -z "$group_wildcard_list" ]; then
+				trusted_wildcard_domains="$trusted_wildcard_domains $group_wildcard_list"
+			fi
+		done
+	fi
+
 	# set above variables to config file
 	echo "GatewayID $gateway_id" > ${CONFIGFILE}
 	echo "GatewayInterface $gateway_interface" >> ${CONFIGFILE}
@@ -96,6 +108,11 @@ prepare_wifidog_conf() {
 	if [ ! -z "$trusted_macs" ]; then
 		trusted_macs=$(echo $trusted_macs | tr ' ' ',')
 		echo "TrustedMACList $trusted_macs" >> ${CONFIGFILE}
+	fi
+	# if has trusted_wildcard_domains, add it to config file
+	if [ ! -z "$trusted_wildcard_domains" ]; then
+		trusted_wildcard_domains=$(echo $trusted_wildcard_domains | tr ' ' ',')
+		echo "TrustedPanDomains $trusted_wildcard_domains" >> ${CONFIGFILE}
 	fi
 }
 
