@@ -1,0 +1,12 @@
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -59,6 +59,9 @@ download = "https://pypi.org/project/num
+ tracker = "https://github.com/numpy/numpy/issues"
+ "release notes" = "https://numpy.org/doc/stable/release"
+ 
++[tool.setuptools]
++py-modules = []
++
+ [tool.towncrier]
+     single_file = false
+     filename = "doc/source/release/notes-towncrier.rst"
