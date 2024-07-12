@@ -9,8 +9,8 @@ PKG_SOURCE_URL:=https://gnupg.org/ftp/gcrypt/$(PKG_NAME)
 PKG_HASH:=8e8c2fcc982f9ca67dcbb1d95e2dc746b1739a4668bc20b3a3c5be632edb34e4
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
-PKG_LICENSE:=GPL-3.0-or-later
-PKG_LICENSE_FILES:=COPYING
+PKG_LICENSE:=LGPL-2.1-or-later
+PKG_LICENSE_FILES:=COPYING COPYING.LIB
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

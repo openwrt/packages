@@ -17,6 +17,7 @@ PKG_SOURCE_URL:=https://dist.torproject.org/ \
 PKG_HASH:=e628b4fab70edb4727715b23cf2931375a9f7685ac08f2c59ea498a178463a86
 PKG_MAINTAINER:=Hauke Mehrtens <hauke@hauke-m.de> \
 		Peter Wagner <tripolar@gmx.at>
+PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:torproject:tor
 

@@ -15,7 +15,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.eecis.udel.edu/~ntp/ntp_spool/ntp4/ntp-4.2/
 PKG_HASH:=103dd272e6a66c5b8df07dce5e9a02555fcd6f1397bdfb782237328e89d3a866
 
-PKG_LICENSE:=Unique
+PKG_LICENSE:=NTP
 PKG_LICENSE_FILES:=COPYRIGHT html/copyright.html
 PKG_CPE_ID:=cpe:/a:ntp:ntp
 
