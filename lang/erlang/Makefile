@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=erlang
-PKG_VERSION:=27.0
-PKG_RELEASE:=2
+PKG_VERSION:=27.0.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=otp_src_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/erlang/otp/releases/download/OTP-$(PKG_VERSION)
-PKG_HASH:=56412677466b756740fb2dbf4a8019e7c7cc38f01bd30c4cac5210214cafeef6
+PKG_HASH:=26d894e2f0dda9d13560af08ea589afc01569df6b5486e565beb5accb99c9cf4
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE.txt
@@ -49,7 +49,7 @@ endef
 define Package/erlang
 $(call Package/erlang/Default)
   DEPENDS+= +libncurses +librt +zlib +libstdcpp
-  PROVIDES:= erlang-erts=15.0 erlang-kernel=10.0 erlang-sasl=4.2.2 erlang-stdlib=6.0
+  PROVIDES:= erlang-erts=15.0.1 erlang-kernel=10.0.1 erlang-sasl=4.2.2 erlang-stdlib=6.0.1
 endef
 
 define Package/erlang/description
@@ -78,7 +78,7 @@ endef
 define Package/erlang-compiler
 $(call Package/erlang/Default)
   TITLE:=Byte code compiler
-  VERSION:=8.5
+  VERSION:=8.5.1
   DEPENDS+= +erlang
 endef
 
@@ -172,7 +172,7 @@ endef
 define Package/erlang-public-key
 $(call Package/erlang/Default)
   TITLE:=Public Key support
-  VERSION:=1.16
+  VERSION:=1.16.1
   DEPENDS+= +erlang +erlang-crypto +erlang-asn1
 endef
 
@@ -186,7 +186,7 @@ endef
 define Package/erlang-ssh
 $(call Package/erlang/Default)
   TITLE:=Secure Shell (SSH) support
-  VERSION:=5.2
+  VERSION:=5.2.1
   DEPENDS+= +erlang +erlang-crypto
 endef
 
@@ -201,7 +201,7 @@ endef
 define Package/erlang-ssl
 $(call Package/erlang/Default)
   TITLE:=Secure Sockets Layer (SSL) support
-  VERSION:=11.2
+  VERSION:=11.2.1
   DEPENDS+= +erlang +erlang-crypto
 endef
 
@@ -301,6 +301,7 @@ endef
 # Host
 
 HOST_CONFIGURE_ARGS += \
+	--without-wx \
 	--with-ssl="$(STAGING_DIR_HOST)" \
 	--without-javac
 
