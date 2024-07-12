@@ -6,9 +6,7 @@ PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/tvheadend/tvheadend.git
-PKG_MIRROR_HASH:=9c640c7697eaf2deca64d3994fd655288f96f7118a88a649bd8614a6164bd30f
 PKG_SOURCE_VERSION:=003fd92707531bdf7ad1753ab028db8748ac5ab8
-PKG_SOURCE_DATE:=2023-06-05
 
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=LICENSE.md
@@ -35,6 +33,7 @@ define Package/tvheadend
 	+libopenssl \
 	$(ICONV_DEPENDS) \
 	+zlib \
+	+TVHEADEND_URIPARSER:liburiparser \
 	+TVHEADEND_AVAHI_SUPPORT:libavahi-client \
 	+TVHEADEND_REGEX_PCRE2:libpcre2 \
 	+BUILD_PATENTED&&TVHEADEND_CSA:libdvbcsa
@@ -89,6 +88,10 @@ ifeq ($(CONFIG_TVHEADEND_AVAHI_SUPPORT),)
 	CONFIGURE_ARGS += --disable-avahi
 else
 	CONFIGURE_ARGS += --enable-avahi
+endif
+
+ifeq ($(CONFIG_TVHEADEND_URIPARSER),)
+        CONFIGURE_ARGS += --disable-uriparser
 endif
 
 ifeq ($(CONFIG_TVHEADEND_IMAGECACHE),)
@@ -215,7 +218,6 @@ CONFIGURE_ARGS += \
 	--disable-libfdkaac_static \
 	--disable-pcloud_cache \
 	--enable-bundle \
-	--disable-uriparser \
 	--disable-execinfo \
 	--nowerror=unused-variable
 
