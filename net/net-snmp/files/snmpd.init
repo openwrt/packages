@@ -385,6 +385,7 @@ start_service() {
 	append_authtrapenable authtrapenable enable authtrapenable
 	append_parm v1trapaddress host v1trapaddress
 	append_parm trapsess trapsess trapsess
+	config_foreach snmpd_snmpv3_add v3 general
 
 	procd_set_param command $PROG -Lf /dev/null -f -r
 	procd_set_param file $CONFIGFILE
