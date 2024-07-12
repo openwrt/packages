@@ -242,6 +242,66 @@ snmpd_sink_add() {
 	echo "$section $host$port $community" >> $CONFIGFILE
 }
 
+snmpd_snmpv3_add() {
+	local cfg="$1"
+	local cfg2="$2"
+
+	local version
+	local username
+	local auth_type
+	local auth_pass
+	local privacy_type
+	local privacy_pass
+	local allow_write
+	local oid
+
+	config_get version "$cfg2" snmp_version
+	if [ "$version" != "v1/v2c/v3" ] && [ "$version" != "v3" ]; then
+		return 0
+	fi
+
+	config_get username "$cfg" username
+	[ -n "$username" ] || return 0
+
+	config_get auth_type "$cfg" auth_type
+	[ -n "$auth_type" ] || return 0
+
+	config_get auth_pass "$cfg" auth_pass
+	config_get privacy_type "$cfg" privacy_type
+	config_get privacy_pass "$cfg" privacy_pass
+	config_get oid "$cfg" RestrictedOID
+
+	config_get_bool allow_write "$cfg" allow_write
+	local useraccess="Rouser"
+	[ $allow_write -eq 1 ] && useraccess="Rwuser"
+
+	if [ -n "$privacy_type" ] && [ -n "$auth_pass" ] && [ -n "$privacy_pass" ]; then
+		echo "createUser $username $auth_type \"$auth_pass\" $privacy_type \"$privacy_pass\"" >> $CONFIGFILE
+		if [ -n "$oid" ]; then
+			echo "$useraccess $username priv $oid" >> $CONFIGFILE
+		else
+			echo "$useraccess $username priv" >> $CONFIGFILE
+		fi
+		return
+	fi
+
+	if [ -n "$auth_type" ]; then
+		echo "createUser $username $auth_type \"$auth_pass\"" >> $CONFIGFILE
+		if [ -n "$oid" ]; then
+			echo "$useraccess $username auth $oid" >> $CONFIGFILE
+		else
+			echo "$useraccess $username auth" >> $CONFIGFILE
+		fi
+	else
+		echo "createUser $username" >> $CONFIGFILE
+		if [ -n "$oid" ]; then
+			echo "$useraccess $username noauth $oid" >> $CONFIGFILE
+		else
+			echo "$useraccess $username noauth" >> $CONFIGFILE
+		fi
+	fi
+}
+
 append_parm() {
 	local section="$1"
 	local option="$2"
@@ -319,6 +379,7 @@ start_service() {
 	append_authtrapenable authtrapenable enable authtrapenable
 	append_parm v1trapaddress host v1trapaddress
 	append_parm trapsess trapsess trapsess
+	config_foreach snmpd_snmpv3_add v3 general
 
 	procd_set_param command $PROG -Lf /dev/null -f -r
 	procd_set_param file $CONFIGFILE
