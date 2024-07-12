@@ -50,7 +50,7 @@ LXC_SCRIPTS += \
 
 DEPENDS_APPLETS = +libpthread +libcap +liblxc
 
-DEPENDS_create = +lxc-configs +lxc-hooks +lxc-templates +flock +getopt
+DEPENDS_create = +lxc-configs +lxc-hooks +lxc-templates +flock +getopt +tar
 
 define Package/lxc/Default
   SECTION:=utils
