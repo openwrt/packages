@@ -150,7 +150,7 @@ ucidel() {
 }
 
 process_config() {
-	local alt_config_file data_root log_level iptables bip
+	local alt_config_file data_root log_level iptables ip6tables bip
 
 	[ -f /etc/config/dockerd ] || {
 		# Use the daemon default configuration
@@ -172,6 +172,7 @@ process_config() {
 	config_get data_root globals data_root "/opt/docker/"
 	config_get log_level globals log_level "warn"
 	config_get_bool iptables globals iptables "1"
+	config_get_bool ip6tables globals ip6tables "0"
 
 	# Don't add these options by default
 	# omission == docker defaults
@@ -190,6 +191,7 @@ process_config() {
 	json_add_string "data-root" "${data_root}"
 	json_add_string "log-level" "${log_level}"
 	json_add_boolean "iptables" "${iptables}"
+	json_add_boolean "ip6tables" "${ip6tables}"
 	[ -z "${log_driver}" ] || json_add_string "log-driver" "${log_driver}"
 	[ -z "${bip}" ] || json_add_string "bip" "${bip}"
 	[ -z "${registry_mirrors}" ] || json_add_array "registry-mirrors"
