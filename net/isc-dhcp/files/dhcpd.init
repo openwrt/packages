@@ -465,8 +465,13 @@ dhcpd_add() {
 
 	append dhcp_ifs "$ifname"
 
-	if ! ipcalc "$subnet" "$start" "$limit"; then
-		echo "invalid range params: $subnet start: $start limit $limit" >&2
+	if [ -z "$start$limit" ]; then
+		if ! ipcalc "$subnet"; then
+			echo "invalid subnet param: $start" >&2
+			return 1
+		fi
+	elif ! ipcalc "$subnet" "$start" "$limit"; then
+		echo "invalid range params: $subnet start: $start limit: $limit" >&2
 		return 1
 	fi
 
