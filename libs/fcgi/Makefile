@@ -7,12 +7,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fcgi
 PKG_VERSION:=2.4.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
-PKG_SOURCE:=$(PKG_NAME)2-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/FastCGI-Archives/fcgi2/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=1fe83501edfc3a7ec96bb1e69db3fd5ea1730135bd73ab152186fd0b437013bc
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)2-$(PKG_VERSION)
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_VERSION:=$(PKG_VERSION)
+PKG_SOURCE_URL:=https://github.com/FastCGI-Archives/fcgi2
+PKG_MIRROR_HASH:=e4a6cf23b4c9b00b111aaed817a8beb33191b10581e005f794a9f801bb4abc43
 
 PKG_MAINTAINER:=Petr Štetiar <ynezz@true.cz>
 PKG_LICENSE:=MIT
