@@ -10,7 +10,7 @@ Last-Update: 2021-07-28
 
 --- a/src/EDITME
 +++ b/src/EDITME
-@@ -904,6 +904,21 @@ HEADERS_CHARSET="ISO-8859-1"
+@@ -913,6 +913,21 @@ HEADERS_CHARSET="ISO-8859-1"
  
  
  #------------------------------------------------------------------------------
@@ -275,7 +275,7 @@ Last-Update: 2021-07-28
  /* End of local_scan.h */
 --- a/src/readconf.c
 +++ b/src/readconf.c
-@@ -216,6 +216,9 @@ static optionlist optionlist_config[] =
+@@ -219,6 +219,9 @@ static optionlist optionlist_config[] =
    { "local_from_prefix",        opt_stringptr,   {&local_from_prefix} },
    { "local_from_suffix",        opt_stringptr,   {&local_from_suffix} },
    { "local_interfaces",         opt_stringptr,   {&local_interfaces} },
@@ -287,7 +287,7 @@ Last-Update: 2021-07-28
  #endif
 --- a/src/string.c
 +++ b/src/string.c
-@@ -453,6 +453,7 @@ return ss;
+@@ -455,6 +455,7 @@ return ss;
  
  #if (defined(HAVE_LOCAL_SCAN) || defined(EXPAND_DLFUNC)) \
  	&& !defined(MACRO_PREDEF) && !defined(COMPILE_UTILITY)
@@ -295,7 +295,7 @@ Last-Update: 2021-07-28
  /*************************************************
  *            Copy and save string                *
  *************************************************/
-@@ -498,6 +499,7 @@ string_copyn_function(const uschar * s,
+@@ -500,6 +501,7 @@ string_copyn_function(const uschar * s,
  {
  return string_copyn(s, n);
  }
