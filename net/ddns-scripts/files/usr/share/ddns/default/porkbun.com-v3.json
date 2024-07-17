@@ -1,0 +1,9 @@
+{
+	"name": "porkbun.com-v3",
+	"ipv4": {
+		"url": "update_porkbun_v3.sh"
+	},
+	"ipv6": {
+		"url": "update_porkbun_v3.sh"
+	}
+}
