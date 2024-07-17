@@ -34,7 +34,7 @@
  #ifndef OPENSSL_NO_ECDH
  # include <openssl/ec.h>
  #endif
-@@ -944,8 +947,9 @@ pkey = EVP_RSA_gen(2048);
+@@ -947,8 +950,9 @@ pkey = EVP_RSA_gen(2048);
  
  X509_set_version(x509, 2);				/* N+1 - version 3 */
  ASN1_INTEGER_set(X509_get_serialNumber(x509), 1);
@@ -46,7 +46,7 @@
  X509_set_pubkey(x509, pkey);
  
  name = X509_get_subject_name(x509);
-@@ -4979,8 +4983,8 @@ return string_fmt_append(g,
+@@ -4972,8 +4976,8 @@ return string_fmt_append(g,
      "                          Runtime: %s\n"
      "                                 : %s\n",
  	     OPENSSL_VERSION_TEXT,
@@ -57,7 +57,7 @@
    /* third line is 38 characters for the %s and the line is 73 chars long;
    the OpenSSL output includes a "built on: " prefix already. */
  }
-@@ -5022,8 +5026,6 @@ if (pidnow != pidlast)
+@@ -5015,8 +5019,6 @@ if (pidnow != pidlast)
    is unique for each thread", this doesn't apparently apply across processes,
    so our own warning from vaguely_random_number_fallback() applies here too.
    Fix per PostgreSQL. */
