@@ -292,6 +292,22 @@ define Package/ddns-scrtips-one/description
 endef
 
 
+define Package/ddns-scripts-porkbun
+	$(call Package/ddns-scripts/Default)
+	TITLE:=Extension for porkbun.com API v3
+	DEPENDS:=ddns-scripts +curl
+	PROVIDES:=ddns-scripts_porkbun.com-v3
+endef
+
+define Package/ddns-scripts-porkbun/description
+	Dynamic DNS Client scripts extension for porkbun.com API v3 (require curl)
+	It requires:
+	"option username" to be a Porkbun API key
+	"option password" to be the corresponding Porkbun API secret key
+	"option domain" to be the FQDN for which to configure DDNS
+endef
+
+
 define Build/Configure
 endef
 
@@ -369,6 +385,7 @@ define Package/ddns-scripts-services/install
 	rm $(1)/usr/share/ddns/default/transip.nl.json
 	rm $(1)/usr/share/ddns/default/ns1.com.json
 	rm $(1)/usr/share/ddns/default/one.com.json
+	rm $(1)/usr/share/ddns/default/porkbun.com-v3.json
 endef
 
 
@@ -685,6 +702,25 @@ exit 0
 endef
 
 
+define Package/ddns-scripts-porkbun/install
+	$(INSTALL_DIR) $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_porkbun_v3.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/porkbun.com-v3.json \
+		$(1)/usr/share/ddns/default/
+endef
+
+define Package/ddns-scripts-porkbun/prerm
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
+endef
+
+
 $(eval $(call BuildPackage,ddns-scripts))
 $(eval $(call BuildPackage,ddns-scripts-services))
 $(eval $(call BuildPackage,ddns-scripts-utils))
@@ -704,3 +740,4 @@ $(eval $(call BuildPackage,ddns-scripts-pdns))
 $(eval $(call BuildPackage,ddns-scripts-transip))
 $(eval $(call BuildPackage,ddns-scripts-ns1))
 $(eval $(call BuildPackage,ddns-scripts-one))
+$(eval $(call BuildPackage,ddns-scripts-porkbun))
