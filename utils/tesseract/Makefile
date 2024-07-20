@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tesseract
-PKG_VERSION:=5.3.4
+PKG_VERSION:=5.4.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/tesseract-ocr/tesseract/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=141afc12b34a14bb691a939b4b122db0d51bd38feda7f41696822bacea7710c7
+PKG_HASH:=c4bc2a81c12a472f445b7c2fb4705a08bd643ef467f51ec84f0e148bd368051b
 
 PKG_MAINTAINER:=Valentin Kivachuk <vk18496@gmail.com>
 PKG_LICENSE:=Apache-2.0
