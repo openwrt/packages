@@ -86,7 +86,7 @@ USB slots are assigned by the Linux kernel and are generally in the
 
 Don't forget to commit the configuration changes:
 
-    uci commit static-commit-names
+    uci commit static-device-names
 
 Any of `mac`, `pci_id`, `pci_slot`, and `usb_slot` options can be lists.
 This can be useful if configurations are staged or tested on a virtual machine
@@ -94,7 +94,7 @@ or meant to be used on multiple devices:
 
     uci add_list static-device-names.WAN.mac=08:00:27:7a:4e:87
     uci add_list static-device-names.WAN.mac=08:00:28:8a:5e:88
-    uci commit static-commit-names
+    uci commit static-device-names
 
 > [!TIP]
 > To determine the criteria that match your inserted devices, run the service's
