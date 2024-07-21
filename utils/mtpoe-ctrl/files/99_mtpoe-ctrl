@@ -1,0 +1,8 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2018 Sergey Sergeev adron@yapic.net
+
+START=11
+
+start() {
+	/usr/bin/mtpoe-ctrl --action=load_poe_from_uci >/dev/null 2>&1
+}
