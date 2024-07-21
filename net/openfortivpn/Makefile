@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openfortivpn
-PKG_VERSION:=1.20.3
+PKG_VERSION:=1.22.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/adrienverge/openfortivpn/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=e54331098dc2c009cf98524f0ade027e337739506c5a60b65e2c2bf5f9c1d7e1
+PKG_HASH:=9aaaae2229f01b35bf79dcc9e1c0a4363cec75084a30fd46df58c20d52bff809
 
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later OpenSSL
