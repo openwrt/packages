@@ -1244,7 +1244,7 @@ trap_handler() {
 			fi ;;
 		 1)	write_log 6 "PID '$$' received 'SIGHUP' at $(eval $DATE_PROG)"
 			# reload config via starting the script again
-			/usr/lib/ddns/dynamic_dns_updater.sh -v "0" -S "$__SECTIONID" -- start || true
+			/usr/lib/ddns/dynamic_dns_updater.sh -v "0" -S "$SECTION_ID" -- start &
 			exit 0 ;;	# and leave this one
 		 2)	write_log 5 "PID '$$' terminated by 'SIGINT' at $(eval $DATE_PROG)${N}";;
 		 3)	write_log 5 "PID '$$' terminated by 'SIGQUIT' at $(eval $DATE_PROG)${N}";;
