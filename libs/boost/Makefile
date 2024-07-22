@@ -384,12 +384,10 @@ TARGET_LDFLAGS += -pthread -lrt -lstdc++ -Wl,--as-needed,--print-gc-sections
 TARGET_CFLAGS += \
 	$(if $(CONFIG_SOFT_FLOAT),-DBOOST_NO_FENV_H) -fPIC
 
-ifeq ($(word 1,$(subst ., ,$(call qstrip,$(CONFIG_GCC_VERSION)))),5)
-    EXTRA_CXXFLAGS += -std=gnu++14
-else ifneq ($(filter-out 6 7 8 9,$(word 1,$(subst ., ,$(call qstrip,$(CONFIG_GCC_VERSION))))),)
-    EXTRA_CXXFLAGS += -std=gnu++17
-else
+ifeq ($(word 1,$(subst ., ,$(call qstrip,$(CONFIG_GCC_VERSION)))),11)
     EXTRA_CXXFLAGS += -std=gnu++20
+else
+    EXTRA_CXXFLAGS += -std=gnu++23
 endif
 
 ifneq ($(findstring mips,$(ARCH)),)
