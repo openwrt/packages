@@ -123,6 +123,7 @@ CONFIGURE_ARGS += \
 	--without-ca-path \
 	--without-libpsl \
 	--without-zstd \
+	--without-brotli \
 	--with-ca-bundle=/etc/ssl/certs/ca-certificates.crt \
 	\
 	$(call autoconf_bool,CONFIG_IPV6,ipv6) \
