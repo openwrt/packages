@@ -33,7 +33,7 @@ define Package/v4l2rtspserver
 	SECTION:=multimedia
 	CATEGORY:=Multimedia
 	TITLE:=v4l2rtspserver
-	DEPENDS:=+libstdcpp
+	DEPENDS:=+libstdcpp +alsa-lib
 	URL:=https://github.com/mpromonet/v4l2rtspserver
 endef
 
@@ -54,7 +54,7 @@ endef
 TARGET_LDFLAGS += -Wl,--as-needed
 
 CMAKE_OPTIONS += \
-	-DALSA=OFF \
+	-DALSA=ON \
 	-DSTATICSTDCPP=OFF \
 	-DWITH_SSL=OFF \
 	-DLIVE555CFLAGS="SOCKLEN_T=socklen_t;_LARGEFILE_SOURCE=1;_FILE_OFFSET_BITS=64;LOCALE_NOT_USED;NO_SSTREAM=1;ALLOW_RTSP_SERVER_PORT_REUSE=1;NO_STD_LIB=1;VERSION=\"$(PKG_VERSION)\""
