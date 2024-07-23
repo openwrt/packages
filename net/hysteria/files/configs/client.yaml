@@ -1,0 +1,13 @@
+server: your.domain.net:443 
+
+auth: Se7RAuFZ8Lzg 
+
+bandwidth: 
+  up: 20 mbps
+  down: 100 mbps
+
+socks5:
+  listen: 127.0.0.1:1080 
+
+http:
+  listen: 127.0.0.1:8080

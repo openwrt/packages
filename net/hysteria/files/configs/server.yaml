@@ -1,0 +1,16 @@
+# listen: :443 
+
+acme:
+  domains:
+    - your.domain.net 
+  email: your@email.com 
+
+auth:
+  type: password
+  password: Se7RAuFZ8Lzg 
+
+masquerade: 
+  type: proxy
+  proxy:
+    url: https://news.ycombinator.com/ 
+    rewriteHost: true

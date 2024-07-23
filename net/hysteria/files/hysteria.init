@@ -1,0 +1,174 @@
+#!/bin/sh /etc/rc.common
+
+USE_PROCD=1
+START=99
+
+package=$(basename $(readlink -f "$initscript"))
+prog="/usr/bin/hysteria"
+scripts_dir="/usr/share/${package}/bin"
+dnsmasq_confdir=$(uci -q  get dhcp.@dnsmasq[0].confdir || echo -n "/tmp/dnsmasq.d")
+
+_is_enabled() {
+	local instance="$1"; shift
+
+	local enabled
+	config_get_bool enabled "$instance" "enabled" "0"
+
+	[ "$enabled" = "1" ] || return 1
+}
+
+get_instance_data_value() {
+	local instance=$1; shift
+	local key=$1; shift
+
+	echo $(ubus call service list | jsonfilter -e "$.${package}.instances.${instance}.data.${key}")
+}
+
+setdown_tproxy() {
+	local instance=${1:-"*"}
+
+	local tproxy_list=$(get_instance_data_value "$instance" TPROXY)
+	local route_table_lits=$(get_instance_data_value "$instance" TPROXY_ROUTE_TABLE)
+	local table_list=$(get_instance_data_value "$instance" TPROXY_TABLE)
+
+	for i in $(seq $(echo "$tproxy_list" | wc -l)); do
+		local tproxy=$(get_bool $(echo "$tproxy_list" | sed -n "${i}p") 0)
+
+		[ "$tproxy" = "0" ] && continue
+
+		local table=$(echo "$table_list" | sed -n "${i}p")
+		local route_table=$(echo "$route_table_list" | sed -n "${i}p")
+
+		TABLE=${table} \
+		ROUTE_TABLE=${route_table} \
+			${scripts_dir}/set-tproxy down
+	done
+}
+
+clean_dnsmasq_conf() {
+	local instance=${1:-"*"}
+
+	find  $dnsmasq_confdir -type f -name "${package}_${instance}.conf" -exec rm {} \;
+}
+
+get_dnsmasq_conf() {
+	local instance=$1; shift
+	local server=$1; shift
+	local nftset=$1; shift
+
+	for domain; do
+		echo "server=/${domain}/${server}"
+		echo "nftset=/${domain}/${nftset}"
+	done
+}
+
+restart_dnsmasq() {
+	/etc/init.d/dnsmasq status 1>/dev/null && /etc/init.d/dnsmasq restart
+}
+
+stop_service() {
+	setdown_tproxy $@
+	clean_dnsmasq_conf $@
+	restart_dnsmasq
+}
+
+hysteria_start_client() {
+	local instance=$1; shift
+	_is_enabled $instance || {
+		status $instance 1>/dev/null && stop $instance
+		return
+	}
+
+	local conffile
+	config_get conffile $instance conffile "${instance}.yaml"
+	[ "${conffile:0:1}" != "/" ] && {
+		local confdir
+		config_get confdir $instance confdir "/etc/hysteria"
+
+		conffile="${confdir}/${conffile}"
+	}
+
+	procd_open_instance "$instance"
+	procd_set_param command "$prog" client
+	procd_append_param command --disable-update-check
+	procd_append_param command --config "$conffile"
+
+	[ -x /sbin/ujail -a -e /etc/capabilities/hysteria.json ] && {
+		procd_add_jail client log
+
+		procd_add_jail_mount "$conffile"
+		procd_add_jail_mount "/etc/ssl/certs"
+
+		procd_set_param capabilities /etc/capabilities/hysteria.json
+
+		procd_set_param user hysteria
+		procd_set_param group hysteria
+
+		procd_set_param no_new_privs 1
+	}
+
+	local enabled_tproxy
+	config_get_bool enabled_tproxy ${instance} enabled_tproxy "0"
+	setdown_tproxy $instance
+	[ "$enabled_tproxy" = "1" ] && {
+		local mark user port table set route_table
+
+		config_get mark ${instance} tproxy_mark "0x1000"
+		config_get user ${instance} tproxy_user "hysteria"
+		config_get port ${instance} tproxy_port "2500"
+		config_get table ${instance} tproxy_table "${instance}"
+		config_get set ${instance} tproxy_set "proxy"
+		config_get route_table ${instance} tproxy_route_table "100"
+
+		MARK=${mark} \
+		USER=${user} \
+		PORT=${port} \
+		TABLE=${table} \
+		SET=${set} \
+		ROUTE_TABLE=${route_table} \
+			${scripts_dir}/set-tproxy up
+
+		procd_set_param data TPROXY=1
+		procd_append_param data TPROXY_TABLE=${table}
+		procd_append_param data TPROXY_ROUTE_TABLE=${route_table}
+	}
+
+	procd_set_param file "$conffile"
+
+	procd_set_param limits core="unlimited"
+	local nofile=$(cat /proc/sys/fs/nr_open)
+	procd_set_param limits nofile="$nofile $nofile"
+
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+
+	procd_set_param respawn 0 10 0
+
+	procd_close_instance
+
+	local enabled_dnsmasq
+	config_get_bool enabled_dnsmasq ${instance} enabled_dnsmasq "0"
+	if [ "$enabled_dnsmasq" = "1" ]; then
+		local server nftset
+
+		config_get server ${instance} dnsmasq_server "127.0.0.53"
+		config_get nftset ${instance} dnsmasq_nftset "4#ip#${instance}#proxy"
+
+		get_dnsmasq_conf $instance $server $nftset $(config_list_foreach ${instance} dnsmasq_domains echo) > \
+			"$dnsmasq_confdir/${package}_${instance}.conf"
+	else
+		clean_dnsmasq_conf $instance
+	fi
+
+	restart_dnsmasq
+}
+
+start_service() {
+	config_load hysteria
+
+ 	config_foreach hysteria_start_client client $@
+}
+
+service_triggers() {
+	procd_add_reload_trigger hysteria
+}

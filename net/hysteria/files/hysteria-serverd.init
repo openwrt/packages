@@ -1,0 +1,64 @@
+#!/bin/sh /etc/rc.common
+
+USE_PROCD=1
+START=55
+
+package=$(basename $(readlink -f "$initscript"))
+prog="/usr/bin/hysteria"
+
+_is_enabled() {
+	local instance="$1"; shift
+
+	local enabled
+	config_get_bool enabled "$instance" "enabled" "0"
+
+	[ "$enabled" = "1" ] || return 1
+}
+
+hysteria_start_server() {
+	local instance=$1; shift
+
+	local conffile
+
+	_is_enabled $instance || {
+		status $instance 1>/dev/null && stop $instance
+		return
+	}
+
+	local conffile
+	config_get conffile $instance conffile "${instance}.yaml"
+	[ "${conffile:0:1}" != "/" ] && {
+		local confdir
+		config_get confdir $instance confdir "/etc/hysteria"
+
+		conffile="${confdir}/${conffile}"
+	}
+
+	procd_open_instance "$instance"
+	procd_set_param command "$prog" "server"
+	procd_append_param command --disable-update-check
+	procd_append_param command --config "$conffile"
+
+	procd_set_param file "$conffile"
+
+	procd_set_param limits core="unlimited"
+	local nofile=$(cat /proc/sys/fs/nr_open)
+	procd_set_param limits nofile="$nofile $nofile"
+
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+
+	procd_set_param respawn 300 5 3
+
+	procd_close_instance
+}
+
+start_service() {
+	config_load hysteria
+
+	config_foreach hysteria_start_server server $@
+}
+
+service_triggers() {
+	procd_add_reload_trigger hysteria
+}
