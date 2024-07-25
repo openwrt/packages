@@ -1,7 +1,7 @@
 This patch bumps all libc dependencies and checksums to 0.2.147, which includes the fix for musl 1.2.4.
 
---- a/vendor/elasticlunr-rs/Cargo.lock
-+++ b/vendor/elasticlunr-rs/Cargo.lock
+--- a/vendor/elasticlunr-rs-3.0.2/Cargo.lock
++++ b/vendor/elasticlunr-rs-3.0.2/Cargo.lock
 @@ -555,9 +555,9 @@ checksum = "e2abad23fbc42b3700f2f279844d
  
  [[package]]
@@ -14,8 +14,8 @@ This patch bumps all libc dependencies and checksums to 0.2.147, which includes 
  
  [[package]]
  name = "lindera"
---- a/vendor/libffi/Cargo.lock
-+++ b/vendor/libffi/Cargo.lock
+--- a/vendor/libffi-3.2.0/Cargo.lock
++++ b/vendor/libffi-3.2.0/Cargo.lock
 @@ -10,9 +10,9 @@ checksum = "50d30906286121d95be3d479533b
  
  [[package]]
