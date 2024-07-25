@@ -107,7 +107,7 @@ endef
 
 define Build/Compile
 	$(call MicroPythonLib/Compile)
-	$(call MicroPythonLib/Compile,unix-ffi-index,--unix-ffi)
+	$(call MicroPythonLib/Compile,unix-ffi-index)
 endef
 
 define Package/micropython-lib/install
