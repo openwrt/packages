@@ -11,7 +11,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruby
-PKG_VERSION:=3.2.4
+PKG_VERSION:=3.2.5
 PKG_RELEASE:=1
 
 # First two numbes
@@ -19,7 +19,7 @@ PKG_ABI_VERSION:=$(subst $(space),.,$(wordlist 1, 2, $(subst .,$(space),$(PKG_VE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://cache.ruby-lang.org/pub/ruby/$(PKG_ABI_VERSION)/
-PKG_HASH:=e7f1653d653232ec433472489a91afbc7433c9f760cc822defe7437c9d95791b
+PKG_HASH:=7780d91130139406d39b29ed8fe16bba350d8fa00e510c76bef9b8ec1340903c
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=COPYING
