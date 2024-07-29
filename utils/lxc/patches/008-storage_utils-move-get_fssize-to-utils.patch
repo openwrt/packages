@@ -1,0 +1,122 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Alexander Mikhalitsyn <aleksandr.mikhalitsyn@canonical.com>
+Date: Sun, 18 Feb 2024 16:04:54 +0100
+Subject: [PATCH] storage_utils: move get_fssize to utils
+
+This helper is used in the lxc/tools and it's
+fully independent of storage_utils code, let's move it
+to utils.c
+
+Signed-off-by: Alexander Mikhalitsyn <aleksandr.mikhalitsyn@canonical.com>
+(cherry picked from commit 9eee450d253650699a6f871695bfed1901679931)
+---
+ src/lxc/storage/storage_utils.c | 34 ---------------------------------
+ src/lxc/storage/storage_utils.h |  1 -
+ src/lxc/utils.c                 | 34 +++++++++++++++++++++++++++++++++
+ src/lxc/utils.h                 |  2 ++
+ 4 files changed, 36 insertions(+), 35 deletions(-)
+
+--- a/src/lxc/storage/storage_utils.c
++++ b/src/lxc/storage/storage_utils.c
+@@ -408,40 +408,6 @@ bool unpriv_snap_allowed(struct lxc_stor
+ 	return false;
+ }
+ 
+-uint64_t get_fssize(char *s)
+-{
+-	uint64_t ret;
+-	char *end;
+-
+-	ret = strtoull(s, &end, 0);
+-	if (end == s) {
+-		ERROR("Invalid blockdev size '%s', using default size", s);
+-		return 0;
+-	}
+-
+-	while (isblank(*end))
+-		end++;
+-
+-	if (*end == '\0') {
+-		ret *= 1024ULL * 1024ULL; /* MB by default */
+-	} else if (*end == 'b' || *end == 'B') {
+-		ret *= 1ULL;
+-	} else if (*end == 'k' || *end == 'K') {
+-		ret *= 1024ULL;
+-	} else if (*end == 'm' || *end == 'M') {
+-		ret *= 1024ULL * 1024ULL;
+-	} else if (*end == 'g' || *end == 'G') {
+-		ret *= 1024ULL * 1024ULL * 1024ULL;
+-	} else if (*end == 't' || *end == 'T') {
+-		ret *= 1024ULL * 1024ULL * 1024ULL * 1024ULL;
+-	} else {
+-		ERROR("Invalid blockdev unit size '%c' in '%s', using default size", *end, s);
+-		return 0;
+-	}
+-
+-	return ret;
+-}
+-
+ bool lxc_is_valid_storage_type(const char *type)
+ {
+ 	if (strcmp(type, "dir") == 0 ||
+--- a/src/lxc/storage/storage_utils.h
++++ b/src/lxc/storage/storage_utils.h
+@@ -36,7 +36,6 @@ __hidden extern int find_fstype_cb(char
+ __hidden extern const char *linkderef(const char *path, char *dest);
+ __hidden extern bool unpriv_snap_allowed(struct lxc_storage *b, const char *t, bool snap,
+ 					 bool maybesnap);
+-__hidden extern uint64_t get_fssize(char *s);
+ extern bool lxc_is_valid_storage_type(const char *type);
+ __hidden extern int storage_destroy_wrapper(void *data);
+ 
+--- a/src/lxc/utils.c
++++ b/src/lxc/utils.c
+@@ -2150,3 +2150,37 @@ int print_r(int fd, const char *path)
+ 		     (st.st_mode & ~S_IFMT), st.st_uid, st.st_gid, maybe_empty(path));
+ 	return ret;
+ }
++
++uint64_t get_fssize(char *s)
++{
++	uint64_t ret;
++	char *end;
++
++	ret = strtoull(s, &end, 0);
++	if (end == s) {
++		ERROR("Invalid blockdev size '%s', using default size", s);
++		return 0;
++	}
++
++	while (isblank(*end))
++		end++;
++
++	if (*end == '\0') {
++		ret *= 1024ULL * 1024ULL; /* MB by default */
++	} else if (*end == 'b' || *end == 'B') {
++		ret *= 1ULL;
++	} else if (*end == 'k' || *end == 'K') {
++		ret *= 1024ULL;
++	} else if (*end == 'm' || *end == 'M') {
++		ret *= 1024ULL * 1024ULL;
++	} else if (*end == 'g' || *end == 'G') {
++		ret *= 1024ULL * 1024ULL * 1024ULL;
++	} else if (*end == 't' || *end == 'T') {
++		ret *= 1024ULL * 1024ULL * 1024ULL * 1024ULL;
++	} else {
++		ERROR("Invalid blockdev unit size '%c' in '%s', using default size", *end, s);
++		return 0;
++	}
++
++	return ret;
++}
+--- a/src/lxc/utils.h
++++ b/src/lxc/utils.h
+@@ -248,6 +248,8 @@ __hidden extern int safe_mount_beneath_a
+ 					  const char *fstype, unsigned int flags, const void *data);
+ __hidden __lxc_unused int print_r(int fd, const char *path);
+ 
++__hidden extern uint64_t get_fssize(char *s);
++
+ static inline int copy_struct_from_client(__u32 server_size, void *dst,
+ 					  __u32 client_size, const void *src)
+ {

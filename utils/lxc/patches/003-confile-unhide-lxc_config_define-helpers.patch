@@ -1,0 +1,36 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Alexander Mikhalitsyn <aleksandr.mikhalitsyn@canonical.com>
+Date: Sat, 17 Feb 2024 16:58:02 +0100
+Subject: [PATCH] confile: unhide lxc_config_define*() helpers
+
+Let's unhide lxc_config_define_add, lxc_config_define_load and
+lxc_config_define_free helpers. These functions are safe enough
+to be used by external tools. Semantic is also clear.
+
+Reason is that we have lxc-start/lxc-execute tools which
+use these symbols. Right now it works, because we just
+link a whole liblxc statically to each lxc-* tool...
+
+Signed-off-by: Alexander Mikhalitsyn <aleksandr.mikhalitsyn@canonical.com>
+(cherry picked from commit b7591ad49d6051047371824bae6f19e37ba86dea)
+---
+ src/lxc/confile.h | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+--- a/src/lxc/confile.h
++++ b/src/lxc/confile.h
+@@ -77,11 +77,11 @@ __hidden extern int lxc_config_read(cons
+ 
+ __hidden extern int append_unexp_config_line(const char *line, struct lxc_conf *conf);
+ 
+-__hidden extern int lxc_config_define_add(struct lxc_list *defines, char *arg);
++extern int lxc_config_define_add(struct lxc_list *defines, char *arg);
+ 
+-__hidden extern bool lxc_config_define_load(struct lxc_list *defines, struct lxc_container *c);
++extern bool lxc_config_define_load(struct lxc_list *defines, struct lxc_container *c);
+ 
+-__hidden extern void lxc_config_define_free(struct lxc_list *defines);
++extern void lxc_config_define_free(struct lxc_list *defines);
+ 
+ #define LXC_ARCH_UNCHANGED 0xffffffffL
+ /*

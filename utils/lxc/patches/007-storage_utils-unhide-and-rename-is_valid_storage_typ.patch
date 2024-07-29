@@ -1,0 +1,47 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Alexander Mikhalitsyn <aleksandr.mikhalitsyn@canonical.com>
+Date: Sun, 18 Feb 2024 15:56:47 +0100
+Subject: [PATCH] storage_utils: unhide and rename is_valid_storage_type to
+ lxc_is_valid_storage_type
+
+Signed-off-by: Alexander Mikhalitsyn <aleksandr.mikhalitsyn@canonical.com>
+(cherry picked from commit 6eb0a73e22027ff84b0768da0c2aec4029b7d143)
+---
+ src/lxc/storage/storage_utils.c | 2 +-
+ src/lxc/storage/storage_utils.h | 2 +-
+ src/lxc/tools/lxc_create.c      | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+
+--- a/src/lxc/storage/storage_utils.c
++++ b/src/lxc/storage/storage_utils.c
+@@ -442,7 +442,7 @@ uint64_t get_fssize(char *s)
+ 	return ret;
+ }
+ 
+-bool is_valid_storage_type(const char *type)
++bool lxc_is_valid_storage_type(const char *type)
+ {
+ 	if (strcmp(type, "dir") == 0 ||
+ 	    strcmp(type, "btrfs") == 0 ||
+--- a/src/lxc/storage/storage_utils.h
++++ b/src/lxc/storage/storage_utils.h
+@@ -37,7 +37,7 @@ __hidden extern const char *linkderef(co
+ __hidden extern bool unpriv_snap_allowed(struct lxc_storage *b, const char *t, bool snap,
+ 					 bool maybesnap);
+ __hidden extern uint64_t get_fssize(char *s);
+-__hidden extern bool is_valid_storage_type(const char *type);
++extern bool lxc_is_valid_storage_type(const char *type);
+ __hidden extern int storage_destroy_wrapper(void *data);
+ 
+ #endif /* __LXC_STORAGE_UTILS_H */
+--- a/src/lxc/tools/lxc_create.c
++++ b/src/lxc/tools/lxc_create.c
+@@ -236,7 +236,7 @@ int main(int argc, char *argv[])
+ 	/* Final check whether the user gave use a valid bdev type. */
+ 	if (strncmp(my_args.bdevtype, "best", strlen(my_args.bdevtype)) != 0 &&
+ 	    strncmp(my_args.bdevtype, "_unset", strlen(my_args.bdevtype)) != 0 &&
+-	    !is_valid_storage_type(my_args.bdevtype)) {
++	    !lxc_is_valid_storage_type(my_args.bdevtype)) {
+ 		ERROR("%s is not a valid backing storage type", my_args.bdevtype);
+ 		exit(EXIT_FAILURE);
+ 	}

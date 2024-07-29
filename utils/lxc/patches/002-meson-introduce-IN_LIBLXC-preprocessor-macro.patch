@@ -1,0 +1,78 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Alexander Mikhalitsyn <aleksandr.mikhalitsyn@canonical.com>
+Date: Sat, 17 Feb 2024 16:47:41 +0100
+Subject: [PATCH] meson: introduce IN_LIBLXC preprocessor macro
+
+The purpose of it is to tell us if we are compiling
+liblxc or lxc test/tool/command.
+
+This thing is needed to exclude unnecessary functions
+from being compiled-in in the resulting executables
+like lxc-start, lxc-attach, etc.
+
+The problem is that lxc tools (lxc-start, lxc-stop, etc)
+depend not only on the liblxc as a shared library, but also
+require some non-exported symbols or helpers from liblxc
+internals. So, we have to link these executables with some liblxc
+object files directly which results in the dependency hell,
+because linking one .c file from liblxc may end up having to
+link with another one (what contains some dependency) and so on.
+By using IN_LIBLXC in the liblxc internals we can selectively
+omit some functions from being compiled in such cases.
+
+Signed-off-by: Alexander Mikhalitsyn <aleksandr.mikhalitsyn@canonical.com>
+(cherry picked from commit f14656ebf62ab0dbb836431e2781cfd363f4e4aa)
+---
+ src/lxc/meson.build | 2 +-
+ src/lxc/state.c     | 4 ++++
+ src/lxc/utils.c     | 4 ++++
+ 3 files changed, 9 insertions(+), 1 deletion(-)
+
+--- a/src/lxc/meson.build
++++ b/src/lxc/meson.build
+@@ -157,7 +157,7 @@ liblxc_static = static_library(
+     install: true,
+     include_directories: liblxc_includes,
+     dependencies: [threads] + liblxc_dependency_headers,
+-    c_args: '-fvisibility=default')
++    c_args: ['-fvisibility=default', '-DIN_LIBLXC'])
+ 
+ lxc_functions = configure_file(
+     configuration: conf,
+--- a/src/lxc/state.c
++++ b/src/lxc/state.c
+@@ -52,6 +52,8 @@ lxc_state_t lxc_str2state(const char *st
+ 	return -1;
+ }
+ 
++#ifdef IN_LIBLXC
++
+ lxc_state_t lxc_getstate(const char *name, const char *lxcpath)
+ {
+ 	return lxc_cmd_get_state(name, lxcpath);
+@@ -117,3 +119,5 @@ int lxc_wait(const char *lxcname, const
+ 
+ 	return 0;
+ }
++
++#endif /* IN_LIBLXC */
+--- a/src/lxc/utils.c
++++ b/src/lxc/utils.c
+@@ -61,6 +61,8 @@ lxc_log_define(utils, lxc);
+  */
+ extern bool btrfs_try_remove_subvol(const char *path);
+ 
++#ifdef IN_LIBLXC
++
+ static int _recursive_rmdir(const char *dirname, dev_t pdev,
+ 			    const char *exclude, int level, bool onedev)
+ {
+@@ -193,6 +195,8 @@ extern int lxc_rmdir_onedev(const char *
+ 	return _recursive_rmdir(path, mystat.st_dev, exclude, 0, onedev);
+ }
+ 
++#endif /* IN_LIBLXC */
++
+ /* borrowed from iproute2 */
+ extern int get_u16(unsigned short *val, const char *arg, int base)
+ {

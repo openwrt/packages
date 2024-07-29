@@ -1,0 +1,217 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Alexander Mikhalitsyn <aleksandr.mikhalitsyn@canonical.com>
+Date: Sun, 18 Feb 2024 17:12:49 +0100
+Subject: [PATCH] meson: link with liblxc dynamically everywhere if possible
+
+Link tests/tools/commands dynamically with liblxc if possible.
+
+Signed-off-by: Alexander Mikhalitsyn <aleksandr.mikhalitsyn@canonical.com>
+(cherry picked from commit 86799f55422f31a0536c95639fe4b78fa7aa780f)
+---
+ src/lxc/cmd/meson.build   |  5 +++--
+ src/lxc/meson.build       | 43 +++++++++++++++++++++++++++++++++++++++
+ src/lxc/tools/meson.build | 26 ++++++++++++++++++-----
+ src/tests/meson.build     | 20 +++++++++++-------
+ 4 files changed, 80 insertions(+), 14 deletions(-)
+
+--- a/src/lxc/cmd/meson.build
++++ b/src/lxc/cmd/meson.build
+@@ -1,6 +1,6 @@
+ # SPDX-License-Identifier: LGPL-2.1-or-later
+ 
+-cmd_common_sources = liblxc_sources + include_sources
++cmd_common_sources = liblxc_ext_sources + include_sources
+ 
+ cmd_lxc_init_sources = files(
+     'lxc_init.c',
+@@ -46,7 +46,7 @@ cmd_lxc_init_static_sources = files(
+     '../string_utils.c',
+     '../string_utils.h') + include_sources
+ 
+-cmd_lxc_monitord_sources = files('lxc_monitord.c') + cmd_common_sources + netns_ifaddrs_sources
++cmd_lxc_monitord_sources = files('lxc_monitord.c') + include_sources + netns_ifaddrs_sources
+ cmd_lxc_user_nic_sources = files('lxc_user_nic.c') + cmd_common_sources + netns_ifaddrs_sources
+ cmd_lxc_usernsexec_sources = files('lxc_usernsexec.c') + cmd_common_sources + netns_ifaddrs_sources
+ 
+@@ -89,6 +89,7 @@ cmd_programs += executable(
+     cmd_lxc_monitord_sources,
+     include_directories: liblxc_includes,
+     dependencies: liblxc_dep,
++    link_with: [liblxc_static],
+     install: true,
+     install_dir: lxclibexec)
+ 
+--- a/src/lxc/meson.build
++++ b/src/lxc/meson.build
+@@ -141,6 +141,49 @@ liblxc_sources = files(
+     'uuid.c',
+     'uuid.h')
+ 
++# subset of liblxc sources for internal users like tools/commands/tests
++liblxc_ext_sources = files(
++    'caps.c',
++    'caps.h',
++    'compiler.h',
++    'error.c',
++    'error.h',
++    'error_utils.h',
++    'file_utils.c',
++    'file_utils.h',
++    'hlist.h',
++    'idmap_utils.c',
++    'idmap_utils.h',
++    'initutils.c',
++    'initutils.h',
++    'list.h',
++    'log.c',
++    'log.h',
++    'mainloop.c',
++    'mainloop.h',
++    'namespace.c',
++    'namespace.h',
++    'network.c',
++    'network.h',
++    'nl.c',
++    'nl.h',
++    'parse.c',
++    'parse.h',
++    'open_utils.h',
++    'rexec.c',
++    'rexec.h',
++    'rtnl.c',
++    'rtnl.h',
++    'open_utils.h',
++    'process_utils.c',
++    'process_utils.h',
++    'string_utils.c',
++    'string_utils.h',
++    'syscall_numbers.h',
++    'syscall_wrappers.h',
++    'utils.c',
++    'utils.h')
++
+ if want_apparmor and libapparmor.found()
+     liblxc_sources += files('lsm/apparmor.c')
+ endif
+--- a/src/lxc/tools/meson.build
++++ b/src/lxc/tools/meson.build
+@@ -1,19 +1,35 @@
+ # SPDX-License-Identifier: LGPL-2.1-or-later
+ 
+-tools_common_sources = liblxc_sources + files('arguments.c', 'arguments.h') + include_sources + netns_ifaddrs_sources
++tools_common_sources = files('arguments.c', 'arguments.h') + include_sources + netns_ifaddrs_sources
+ 
+-tools_commands = ['attach', 'autostart', 'cgroup', 'checkpoint', 'config',
++tools_commands_dynamic_link = ['attach', 'autostart', 'cgroup', 'checkpoint', 'config',
+     'console', 'copy', 'create', 'destroy', 'device', 'execute', 'freeze',
+-    'info', 'ls', 'monitor', 'snapshot', 'start', 'stop', 'top', 'unfreeze',
++    'info', 'ls', 'snapshot', 'start', 'stop', 'top', 'unfreeze',
+     'unshare', 'wait']
+ 
++tools_commands_static_link = ['monitor']
++
++tools_commands = tools_commands_dynamic_link + tools_commands_static_link
++
+ if want_tools
+-    foreach cmd : tools_commands 
++    foreach cmd : tools_commands_dynamic_link
++        public_programs += executable(
++            'lxc-' + cmd,
++            files('lxc_' + cmd + '.c') + tools_common_sources + liblxc_ext_sources,
++            dependencies: liblxc_dependencies,
++            include_directories: liblxc_includes,
++            c_args: ['-DNO_LXC_CONF'],
++            link_with: [liblxc],
++            install: true)
++    endforeach
++
++    foreach cmd : tools_commands_static_link
+         public_programs += executable(
+             'lxc-' + cmd,
+             files('lxc_' + cmd + '.c') + tools_common_sources,
++            dependencies: liblxc_dependencies,
+             include_directories: liblxc_includes,
+-            dependencies: liblxc_dep,
++            link_with: [liblxc_static],
+             install: true)
+     endforeach
+ endif
+--- a/src/tests/meson.build
++++ b/src/tests/meson.build
+@@ -1,6 +1,6 @@
+ # SPDX-License-Identifier: LGPL-2.1-or-later
+ 
+-tests_common_sources = liblxc_sources + include_sources + netns_ifaddrs_sources
++tests_common_sources = liblxc_ext_sources + include_sources + netns_ifaddrs_sources
+ 
+ if want_tests
+     test_programs += executable(
+@@ -26,9 +26,10 @@ if want_tests
+ 
+     test_programs += executable(
+         'lxc-test-attach',
+-        files('attach.c') + tests_common_sources,
++        files('attach.c'),
+         include_directories: liblxc_includes,
+         dependencies: liblxc_dep,
++        link_with: [liblxc_static],
+         install: true)
+ 
+     test_programs += executable(
+@@ -47,9 +48,10 @@ if want_tests
+ 
+     test_programs += executable(
+         'lxc-test-cgpath',
+-        files('cgpath.c') + tests_common_sources,
++        files('cgpath.c'),
+         include_directories: liblxc_includes,
+         dependencies: liblxc_dep,
++        link_with: [liblxc_static],
+         install: true)
+ 
+     test_programs += executable(
+@@ -68,9 +70,10 @@ if want_tests
+ 
+     test_programs += executable(
+         'lxc-test-config-jump-table',
+-        files('config_jump_table.c') + tests_common_sources,
++        files('config_jump_table.c'),
+         include_directories: liblxc_includes,
+         dependencies: liblxc_dep,
++        link_with: [liblxc_static],
+         install: true)
+ 
+     test_programs += executable(
+@@ -152,16 +155,18 @@ if want_tests
+ 
+     test_programs += executable(
+         'lxc-test-locktests',
+-        files('locktests.c') + tests_common_sources,
++        files('locktests.c'),
+         include_directories: liblxc_includes,
+         dependencies: liblxc_dep,
++        link_with: [liblxc_static],
+         install: true)
+ 
+     test_programs += executable(
+         'lxc-test-utils',
+-        files('lxc-test-utils.c') + tests_common_sources,
++        files('lxc-test-utils.c'),
+         include_directories: liblxc_includes,
+         dependencies: liblxc_dep,
++        link_with: [liblxc_static],
+         install: true)
+ 
+     test_programs += executable(
+@@ -194,9 +199,10 @@ if want_tests
+ 
+     test_programs += executable(
+         'lxc-test-parse-config-file',
+-        files('parse_config_file.c') + tests_common_sources,
++        files('parse_config_file.c'),
+         include_directories: liblxc_includes,
+         dependencies: liblxc_dep,
++        link_with: [liblxc_static],
+         install: true)
+ 
+     test_programs += executable(
