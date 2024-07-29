@@ -1,0 +1,144 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Alexander Mikhalitsyn <aleksandr.mikhalitsyn@canonical.com>
+Date: Sat, 17 Feb 2024 16:43:21 +0100
+Subject: [PATCH] confile: move lxc_fill_elevated_privileges() to
+ tools/lxc_attach
+
+lxc_fill_elevated_privileges() is used only in lxc-attach tool,
+let's move this function in there.
+
+Signed-off-by: Alexander Mikhalitsyn <aleksandr.mikhalitsyn@canonical.com>
+(cherry picked from commit 672b2172de2277e950e05d2abe0b1115fa6c3f53)
+---
+ src/lxc/confile.c          | 45 -------------------------------------
+ src/lxc/confile.h          |  2 --
+ src/lxc/tools/lxc_attach.c | 46 ++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 46 insertions(+), 47 deletions(-)
+
+--- a/src/lxc/confile.c
++++ b/src/lxc/confile.c
+@@ -3295,51 +3295,6 @@ int lxc_config_parse_arch(const char *ar
+ 	return ret_errno(EINVAL);
+ }
+ 
+-int lxc_fill_elevated_privileges(char *flaglist, unsigned int *flags)
+-{
+-	unsigned int flags_tmp = 0;
+-	char *token;
+-	struct {
+-		const char *token;
+-		int flag;
+-	} all_privs[] = {
+-		{ "CGROUP", LXC_ATTACH_MOVE_TO_CGROUP    },
+-		{ "CAP",    LXC_ATTACH_DROP_CAPABILITIES },
+-		{ "LSM",    LXC_ATTACH_LSM_EXEC          },
+-		{ NULL,     0                            }
+-	};
+-
+-	if (!flaglist) {
+-		/*
+-		 * For the sake of backward compatibility, keep all privileges
+-		 * if no specific privileges are specified.
+-		 */
+-		for (unsigned int i = 0; all_privs[i].token; i++)
+-			flags_tmp |= all_privs[i].flag;
+-
+-		*flags = flags_tmp;
+-		return 0;
+-	}
+-
+-	lxc_iterate_parts(token, flaglist, "|") {
+-		bool valid_token = false;
+-
+-		for (unsigned int i = 0; all_privs[i].token; i++) {
+-			if (!strequal(all_privs[i].token, token))
+-				continue;
+-
+-			valid_token = true;
+-			flags_tmp |= all_privs[i].flag;
+-		}
+-
+-		if (!valid_token)
+-			return syserror_set(-EINVAL, "Invalid elevated privilege \"%s\" requested", token);
+-	}
+-
+-	*flags = flags_tmp;
+-	return 0;
+-}
+-
+ /* Write out a configuration file. */
+ int write_config(int fd, const struct lxc_conf *conf)
+ {
+--- a/src/lxc/confile.h
++++ b/src/lxc/confile.h
+@@ -90,8 +90,6 @@ __hidden extern void lxc_config_define_f
+  */
+ __hidden extern int lxc_config_parse_arch(const char *arch, signed long *persona);
+ 
+-__hidden extern int lxc_fill_elevated_privileges(char *flaglist, unsigned int *flags);
+-
+ __hidden extern int lxc_clear_config_item(struct lxc_conf *c, const char *key);
+ 
+ __hidden extern int write_config(int fd, const struct lxc_conf *conf);
+--- a/src/lxc/tools/lxc_attach.c
++++ b/src/lxc/tools/lxc_attach.c
+@@ -46,6 +46,7 @@ __attribute__((constructor)) static void
+ #endif
+ 
+ static int my_parser(struct lxc_arguments *args, int c, char *arg);
++static int lxc_fill_elevated_privileges(char *flaglist, unsigned int *flags);
+ static int add_to_simple_array(char ***array, ssize_t *capacity, char *value);
+ static bool stdfd_is_pty(void);
+ static int lxc_attach_create_log_file(const char *log_file);
+@@ -213,6 +214,51 @@ static int my_parser(struct lxc_argument
+ 	return 0;
+ }
+ 
++static int lxc_fill_elevated_privileges(char *flaglist, unsigned int *flags)
++{
++	unsigned int flags_tmp = 0;
++	char *token;
++	struct {
++		const char *token;
++		int flag;
++	} all_privs[] = {
++		{ "CGROUP", LXC_ATTACH_MOVE_TO_CGROUP    },
++		{ "CAP",    LXC_ATTACH_DROP_CAPABILITIES },
++		{ "LSM",    LXC_ATTACH_LSM_EXEC          },
++		{ NULL,     0                            }
++	};
++
++	if (!flaglist) {
++		/*
++		 * For the sake of backward compatibility, keep all privileges
++		 * if no specific privileges are specified.
++		 */
++		for (unsigned int i = 0; all_privs[i].token; i++)
++			flags_tmp |= all_privs[i].flag;
++
++		*flags = flags_tmp;
++		return 0;
++	}
++
++	lxc_iterate_parts(token, flaglist, "|") {
++		bool valid_token = false;
++
++		for (unsigned int i = 0; all_privs[i].token; i++) {
++			if (!strequal(all_privs[i].token, token))
++				continue;
++
++			valid_token = true;
++			flags_tmp |= all_privs[i].flag;
++		}
++
++		if (!valid_token)
++			return syserror_set(-EINVAL, "Invalid elevated privilege \"%s\" requested", token);
++	}
++
++	*flags = flags_tmp;
++	return 0;
++}
++
+ static int add_to_simple_array(char ***array, ssize_t *capacity, char *value)
+ {
+ 	ssize_t count = 0;

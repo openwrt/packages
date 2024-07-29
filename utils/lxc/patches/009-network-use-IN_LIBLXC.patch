@@ -1,0 +1,153 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Alexander Mikhalitsyn <aleksandr.mikhalitsyn@canonical.com>
+Date: Sun, 18 Feb 2024 17:05:10 +0100
+Subject: [PATCH] network: use IN_LIBLXC
+
+Put a bunch of functions under #if IN_LIBLXC to compile-out
+them when network.c is linked with tools/tests code.
+
+Signed-off-by: Alexander Mikhalitsyn <aleksandr.mikhalitsyn@canonical.com>
+(cherry picked from commit b90fecfda1474edbbe68abeb0b392ebeabd7f8d7)
+---
+ src/lxc/network.c | 33 +++++++++++++++++++++++++++++++++
+ 1 file changed, 33 insertions(+)
+
+--- a/src/lxc/network.c
++++ b/src/lxc/network.c
+@@ -113,8 +113,13 @@ char *lxc_ifname_alnum_case_sensitive(ch
+ 
+ 	return template;
+ }
++
++#ifdef IN_LIBLXC
++
+ static const char loop_device[] = "lo";
+ 
++#endif /* IN_LIBLXC */
++
+ static int lxc_ip_route_dest(__u16 nlmsg_type, int family, int ifindex, void *dest, unsigned int netmask)
+ {
+ 	call_cleaner(nlmsg_free) struct nlmsg *answer = NULL, *nlmsg = NULL;
+@@ -172,6 +177,8 @@ static int lxc_ipv6_dest_add(int ifindex
+ 	return lxc_ip_route_dest(RTM_NEWROUTE, AF_INET6, ifindex, dest, netmask);
+ }
+ 
++#ifdef IN_LIBLXC
++
+ static int lxc_ipv4_dest_del(int ifindex, struct in_addr *dest, unsigned int netmask)
+ {
+ 	return lxc_ip_route_dest(RTM_DELROUTE, AF_INET, ifindex, dest, netmask);
+@@ -1267,6 +1274,8 @@ static netdev_configure_server_cb netdev
+ 	[LXC_NET_NONE]    = netdev_configure_server_none,
+ };
+ 
++#endif /* IN_LIBLXC */
++
+ static int __netdev_configure_container_common(struct lxc_netdev *netdev)
+ {
+ 	char current_ifname[IFNAMSIZ];
+@@ -1355,6 +1364,8 @@ static netdev_configure_container_cb net
+ 	[LXC_NET_NONE]    = netdev_configure_container_none,
+ };
+ 
++#ifdef IN_LIBLXC
++
+ static int netdev_shutdown_server_veth(struct lxc_handler *handler, struct lxc_netdev *netdev)
+ {
+ 	int ret;
+@@ -1496,6 +1507,8 @@ static netdev_shutdown_server_cb netdev_
+ 	[LXC_NET_NONE]    = netdev_shutdown_server_none,
+ };
+ 
++#endif /* IN_LIBLXC */
++
+ static int lxc_netdev_move_by_index_fd(int ifindex, int fd, const char *ifname)
+ {
+ 	call_cleaner(nlmsg_free) struct nlmsg *nlmsg = NULL;
+@@ -2360,6 +2373,8 @@ static int neigh_proxy_set(const char *i
+ 	return proc_sys_net_write(path, flag ? "1" : "0");
+ }
+ 
++#ifdef IN_LIBLXC
++
+ static int lxc_is_ip_neigh_proxy_enabled(const char *ifname, int family)
+ {
+ 	int ret;
+@@ -2378,6 +2393,8 @@ static int lxc_is_ip_neigh_proxy_enabled
+ 	return lxc_read_file_expect(path, buf, 1, "1");
+ }
+ 
++#endif /* IN_LIBLXC */
++
+ int lxc_neigh_proxy_on(const char *name, int family)
+ {
+ 	return neigh_proxy_set(name, family, 1);
+@@ -2901,6 +2918,8 @@ int lxc_find_gateway_addresses(struct lx
+ 	return 0;
+ }
+ 
++#ifdef IN_LIBLXC
++
+ #define LXC_USERNIC_PATH LIBEXECDIR "/lxc/lxc-user-nic"
+ static int lxc_create_network_unpriv_exec(const char *lxcpath,
+ 					  const char *lxcname,
+@@ -3430,6 +3449,8 @@ static int lxc_create_network_priv(struc
+ 	return 0;
+ }
+ 
++#endif /* IN_LIBLXC */
++
+ /*
+  * LXC moves network devices into the target namespace based on their created
+  * name. The created name can either be randomly generated for e.g. veth
+@@ -3567,6 +3588,8 @@ static int network_requires_advanced_set
+ 	return true;
+ }
+ 
++#ifdef IN_LIBLXC
++
+ static int lxc_create_network_unpriv(struct lxc_handler *handler)
+ {
+ 	int hooks_version = handler->conf->hooks_version;
+@@ -3709,6 +3732,8 @@ clear_ifindices:
+ 	return true;
+ }
+ 
++#endif /* IN_LIBLXC */
++
+ int lxc_requests_empty_network(struct lxc_handler *handler)
+ {
+ 	struct list_head *netdevs = &handler->conf->netdevs;
+@@ -4152,6 +4177,8 @@ int lxc_network_recv_name_and_ifindex_fr
+ 	return 0;
+ }
+ 
++#ifdef IN_LIBLXC
++
+ void lxc_delete_network(struct lxc_handler *handler)
+ {
+ 	bool bret;
+@@ -4173,6 +4200,8 @@ void lxc_delete_network(struct lxc_handl
+ 		DEBUG("Deleted network devices");
+ }
+ 
++#endif /* IN_LIBLXC */
++
+ int lxc_netns_set_nsid(int fd)
+ {
+ 	int ret;
+@@ -4302,6 +4331,8 @@ int lxc_netns_get_nsid(int fd)
+ 	return -1;
+ }
+ 
++#ifdef IN_LIBLXC
++
+ int lxc_create_network(struct lxc_handler *handler)
+ {
+ 	int ret;
+@@ -4316,3 +4347,5 @@ int lxc_create_network(struct lxc_handle
+ 
+ 	return lxc_create_network_unpriv(handler);
+ }
++
++#endif /* IN_LIBLXC */
