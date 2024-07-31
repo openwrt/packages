@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=net-snmp
 PKG_VERSION:=5.9.4
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/net-snmp
@@ -41,7 +41,7 @@ define Package/libnetsnmp
 $(call Package/net-snmp/Default)
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libnl-tiny +libpci +libpcre2
+  DEPENDS:=+libnl-tiny +libpci +libpcre2 +libopenssl
   TITLE:=Open source SNMP implementation (libraries)
 endef
 
@@ -206,7 +206,7 @@ CONFIGURE_ARGS += \
 	--with-mib-modules="$(SNMP_MIB_MODULES_INCLUDED)" \
 	--with-out-transports="$(SNMP_TRANSPORTS_EXCLUDED)" \
 	--with-transports="$(SNMP_TRANSPORTS_INCLUDED)" \
-	--without-openssl \
+	--with-openssl="$(STAGING_DIR)/usr" \
 	--without-libwrap \
 	--without-mysql \
 	--without-rpm \
