@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mstflint
+PKG_VERSION:=4.28.0
 PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/Mellanox/mstflint
-PKG_MIRROR_HASH:=4dca9f50bd20b16e58d10c58455b628e55c0158452e111fd3a64d98cab46ed1b
-PKG_SOURCE_VERSION:=17e9b849ba57cfac1b28240a25ece300a0f74a45
-PKG_SOURCE_DATE:=2024-01-15
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-1.tar.gz
+PKG_SOURCE_URL:=https://github.com/Mellanox/$(PKG_NAME)/releases/download/v$(PKG_VERSION)-1
+PKG_SOURCE_DATE:=2024-05-06
+PKG_HASH:=cef08373ff7002a4f75c123d03990ea6b9e79b9d8493ca067b625eddd287b62d
 
 PKG_MAINTAINER:=Til Kaiser <mail@tk154.de>
 PKG_LICENSE:=GPL-2.0-only
@@ -31,10 +31,9 @@ define Package/mstflint
   CATEGORY:=Utilities
   TITLE:=Mellanox Firmware Burning and Diagnostics Tools
   URL:=https://github.com/Mellanox/mstflint
-  DEPENDS:=@!(mips||mipsel) \
-    +libcurl +liblzma +libopenssl +libsqlite3 \
-    +libstdcpp +libxml2 +python3-ctypes \
-    +python3-urllib +python3-xml +zlib
+  DEPENDS:=@!(mips||mips64||mipsel) \
+    +libcurl +liblzma +libopenssl \
+    +libsqlite3 +libstdcpp +libxml2 +zlib
 endef
 
 define Package/mstflint/description
@@ -75,6 +74,20 @@ define Package/mstflint/description
       link status and issues related to them.
 endef
 
+define Package/mstflint/config
+  config PACKAGE_MSTFLINT_INCLUDE_PYTHON
+    bool "Include Python-dependent tools"
+    default y
+    depends on PACKAGE_mstflint
+    select PACKAGE_python3-ctypes
+    select PACKAGE_python3-logging
+    select PACKAGE_python3-xml
+    help
+      All mstflint tools including the following Python-dependent:
+        msftwreset, mstfwtrace, mstprivhost,
+        mstresourcedump, mstresourceparse
+endef
+
 CONFIGURE_ARGS += \
 	--enable-fw-mgr \
 	--disable-inband
@@ -83,15 +96,42 @@ TARGET_CFLAGS += \
 	-D_GNU_SOURCE \
 	-I$(STAGING_DIR)/usr/include/libxml2
 
+define Build/InstallDev
+	$(INSTALL_DIR) $(1)/usr/include
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/mstflint $(1)/usr/include/
+
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/mstflint $(1)/usr/lib/
+endef
+
 define Package/mstflint/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
-
-	$(INSTALL_DIR) $(1)/usr/lib/mstflint
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/mstflint $(1)/usr/lib/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstarchive $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstconfig $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstcongestion $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstflint $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstfwmanager $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstmcra $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstmread $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstmtserver $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstmwrite $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstregdump $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstvpd $(1)/usr/bin/
 
 	$(INSTALL_DIR) $(1)/usr/share/mstflint
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/mstflint $(1)/usr/share/
+
+ifeq ($(CONFIG_PACKAGE_MSTFLINT_INCLUDE_PYTHON),y)
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstfwreset $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstfwtrace $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstprivhost $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstresourcedump $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstresourceparse $(1)/usr/bin/
+
+	$(INSTALL_DIR) $(1)/usr/lib/mstflint
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/mstflint/python_tools $(1)/usr/lib/mstflint/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/mstflint/sdk $(1)/usr/lib/mstflint/
+endif
 endef
 
 $(eval $(call BuildPackage,mstflint))

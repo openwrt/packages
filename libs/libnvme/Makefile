@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libnvme
-PKG_VERSION:=1.5
+PKG_VERSION:=1.9
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/linux-nvme/libnvme/archive/refs/tags/v$(PKG_VERSION)
-PKG_HASH:=f73ba1edde059b2d5e7c1048ad4f895e6047bff241c94b34a7aff5894779d086
+PKG_HASH:=455867060d2b7563eab59fe21779dff469d98465028997178c7efbe4b8763206
 
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=LICENSE
@@ -36,7 +36,7 @@ define Package/libnvme/description
 endef
 
 MESON_ARGS += \
-	-Dopenssl=disabled -Dpython=disabled -Dlibdbus=disabled -Dkeyutils=disabled
+	-Dopenssl=disabled -Dpython=disabled -Dkeyutils=disabled
 
 define Package/libnvme/install
 	$(INSTALL_DIR) $(1)/usr/lib

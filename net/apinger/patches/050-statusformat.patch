@@ -14,8 +14,8 @@
 -			ctime(&t->last_received_tv.tv_sec));
 -		fprintf(f,"Average delay: %0.3fms\n",AVG_DELAY(t));
 +		if(config->status_format){
-+			fprintf(f,"%s|%s|%s|%i|%i|%u|",t->name, t->config->srcip, t->description, t->last_sent+1,
-+				 t->received, t->last_received_tv.tv_sec);
++			fprintf(f,"%s|%s|%s|%i|%i|%" PRIu64 "|",t->name, t->config->srcip, t->description, t->last_sent+1,
++				 t->received, (uint64_t)t->last_received_tv.tv_sec);
 +			fprintf(f,"%0.3fms|", AVG_DELAY(t));
 +		}
 +		else{

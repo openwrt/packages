@@ -1,0 +1,28 @@
+From 650070ad5d4a97fc87f9018743e3b566deba36c8 Mon Sep 17 00:00:00 2001
+From: Khem Raj <raj.khem@gmail.com>
+Date: Tue, 21 May 2024 14:09:32 -0700
+Subject: [PATCH] plugins/ssstc: Replace __uint16_t with uint16_t
+
+uint16_t is ISO defined and comes from stdint.h, makes it
+portable across glibc and musl on linux.
+
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
+---
+ plugins/ssstc/ssstc-nvme.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+--- a/plugins/ssstc/ssstc-nvme.c
++++ b/plugins/ssstc/ssstc-nvme.c
+@@ -64,9 +64,9 @@ void show_ssstc_add_smart_log_jsn(struct
+ 		unsigned int nsid, const char *devname)
+ {
+ 	struct json_object *root, *entry_stats, *dev_stats, *multi;
+-	__uint16_t wear_level_min = 0;
+-	__uint16_t wear_level_max = 0;
+-	__uint16_t wear_level_avg = 0;
++	uint16_t wear_level_min = 0;
++	uint16_t wear_level_max = 0;
++	uint16_t wear_level_avg = 0;
+ 	uint64_t raw_val = 0;
+ 
+ 	root = json_create_object();

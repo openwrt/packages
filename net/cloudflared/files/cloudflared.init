@@ -10,7 +10,7 @@ PROG="/usr/bin/cloudflared"
 append_param_arg() {
 	local value
 	config_get value "config" "$1" $2
-	[ -n "$value" ] && procd_append_param command "--$1" "$value"
+	[ -n "$value" ] && procd_append_param command "--${1//_/-}" "$value"
 }
 
 start_service() {
@@ -26,7 +26,14 @@ start_service() {
 
 	append_param_arg "config" "/etc/cloudflared/config.yml"
 	append_param_arg "origincert" "/etc/cloudflared/cert.pem"
+	append_param_arg "edge_bind_address"
+	append_param_arg "edge_ip_version"
+	append_param_arg "grace_period"
+	append_param_arg "protocol"
 	append_param_arg "region"
+	append_param_arg "retries"
+	append_param_arg "tag"
+	append_param_arg "metrics"
 	append_param_arg "loglevel"
 	append_param_arg "logfile"
 

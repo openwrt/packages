@@ -1,0 +1,22 @@
+From 906c7bbdd20e8d962f76364dea6e5486220c578b Mon Sep 17 00:00:00 2001
+From: Georgi Valkov <gvalkov@gmail.com>
+Date: Mon, 22 Apr 2024 23:13:48 +0300
+Subject: [PATCH] Revert "usb: Set default mode to 3 to include CDC NCM, and
+ fix a log message"
+
+This reverts commit c7a0dd9b82633ea347497626282e3051a469ef50.
+---
+ src/usb.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/src/usb.c
++++ b/src/usb.c
+@@ -691,7 +691,7 @@ static void get_mode_cb(struct libusb_tr
+ 	unsigned char *data = libusb_control_transfer_get_data(transfer);
+ 
+ 	char* desired_mode_char = getenv(ENV_DEVICE_MODE);
+-	int desired_mode = desired_mode_char ? atoi(desired_mode_char) : 3;
++	int desired_mode = desired_mode_char ? atoi(desired_mode_char) : 1;
+ 	int guessed_mode = guess_mode(context->dev, dev);
+ 
+ 	// Response is 3:3:3:0 for initial mode, 5:3:3:0 otherwise.

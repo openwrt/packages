@@ -1,6 +1,6 @@
 --- a/src/exim.c
 +++ b/src/exim.c
-@@ -642,13 +642,15 @@ exim_nullstd(void)
+@@ -647,13 +647,15 @@ exim_nullstd(void)
  {
  int devnull = -1;
  struct stat statbuf;

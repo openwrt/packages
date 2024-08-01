@@ -28,44 +28,48 @@ end
 # Fake enc/utf_16 to dummy enc:
 package_files["ruby-enc"]+=[RbConfig::CONFIG["rubylibdir"] + "/enc/utf_16.rb" ]
 
-require_regex=/^require ["']([^"']+)["'].*/
-require_regex_ignore=/^require ([a-zA-Z\$]|["']$|.*\/$)/
+require_regex=/^ *require ["']([^"']+)["'].*/
+require_regex_ignore=/^ *require ([a-zA-Z\$]|["']\$|.*\/$|.*#.*|.*\.$)/
 require_ignore=%w{
-        bundler
-        capistrano/version
-        coverage/helpers
-        dbm
-        diff/lcs
-        foo
-        gettext/mo
-        gettext/po_parser
-        graphviz
-        iconv
-        java
-        jruby
-        json/pure
-        minitest/proveit
-        open3/jruby_windows
-        profile
-        racc/cparse-jruby.jar
-        rubygems/defaults/operating_system
-        sorted_set
-        stackprof
-        thread
-        tracer
-        uconv
-        webrick
-        webrick/https
-        win32api
-        win32console
-        win32ole
-        win32/resolv
-        win32/sspi
-        xml/encoding-ja
-        xmlencoding-ja
-        xml/parser
-        xmlparser
-        xmlscan/scanner
+	bundler
+	capistrano/version
+	coverage/helpers
+	dbm
+	ffi
+	fiber
+	foo
+	gettext/mo
+	gettext/po_parser
+	graphviz
+	iconv
+	java
+	jruby
+	json/pure
+	minitest/proveit
+	open3/jruby_windows
+	prism/prism
+	profile
+	racc/cparse-jruby.jar
+	repl_type_completor
+	rubygems/defaults/operating_system
+	rubygems/net/http
+	rubygems/timeout
+	sorted_set
+	stackprof
+	thread
+	tracer
+	uconv
+	webrick
+	webrick/https
+	win32api
+	win32ole
+	win32/resolv
+	win32/sspi
+	xml/encoding-ja
+	xmlencoding-ja
+	xml/parser
+	xmlparser
+	xmlscan/scanner
 }
 
 matched_ignored={}
@@ -122,11 +126,11 @@ packages.each do
 				when /^require /
 					#puts "#{file}:#{line}"
 					if require_regex_ignore =~ line
-						#puts "Ignoring #{line} at #{file}:#{lineno} (REGEX)..."
+						puts "Ignoring #{line} at #{file}:#{lineno} (REGEX)..."
 						next
 					end
 					if not require_regex =~ line
-						puts "Unknown require: '#{line}' at file #{file}:#{lineno}"
+						puts "Unknown require: '#{line}' at file #{file}:#{lineno} and it did not match #{require_regex_ignore}"
 						failed=true
 					end
 					require=line.gsub(require_regex,"\\1")
@@ -185,13 +189,13 @@ end
 # For optional require or for breaking cycle dependencies
 weak_dependency=Hash.new { |h,k| h[k]=[] }
 weak_dependency.merge!({
-"ruby-irb"      =>%w{ruby-rdoc ruby-readline ruby-debug}, # irb/cmd/help.rb irb/cmd/debug.rb,3.2/irb/cmd/debug.rb 
-"ruby-gems"     =>%w{ruby-bundler ruby-rdoc},	          # rubygems.rb rubygems/server.rb
-"ruby-racc"     =>%w{ruby-gems},			  # /usr/bin/racc*
-"ruby-rake"     =>%w{ruby-gems},	                  # /usr/bin/rake
-"ruby-rdoc"     =>%w{ruby-readline},		          # rdoc/ri/driver.rb
-"ruby-testunit" =>%w{ruby-io-console},			  # gems/test-unit-3.1.5/lib/test/unit/ui/console/testrunner.rb
-"ruby-net-http" =>%w{ruby-open-uri}			  # net/http/status.rb
+	"ruby-irb"      =>%w{ruby-rdoc ruby-readline ruby-debug}, # irb/cmd/help.rb irb/cmd/debug.rb,3.2/irb/cmd/debug.rb 
+	"ruby-gems"     =>%w{ruby-bundler ruby-rdoc},             # rubygems.rb rubygems/server.rb rdoc/rubygems_hook
+	"ruby-racc"     =>%w{ruby-gems},			  # /usr/bin/racc*
+	"ruby-rake"     =>%w{ruby-gems ruby-debug},               # /usr/bin/rake gems/3.3/gems/rake-13.1.0/lib/rake/application.rb
+	"ruby-rdoc"     =>%w{ruby-readline},			  # rdoc/ri/driver.rb
+	"ruby-testunit" =>%w{ruby-io-console},			  # gems/test-unit-3.1.5/lib/test/unit/ui/console/testrunner.rb
+	"ruby-net-http" =>%w{ruby-open-uri}			  # net/http/status.rb
 })
 
 puts "Looking for package dependencies..."
@@ -240,8 +244,8 @@ begin
 		deps.each {|dep| puts "#{pkg}: #{dep} also depends on #{pkg}" if package_dependencies[dep].include?(pkg) }
 		deps_new = deps.collect {|dep| [dep] + package_dependencies[dep] }.inject([],:+).uniq.sort
 		if not deps == deps_new
-			puts "#{pkg}: #{deps.join(",")}"
-			puts "#{pkg}: #{deps_new.join(",")}"
+			puts "#{pkg}: {deps.join(",")} (OLD)"
+			puts "#{pkg}: #{deps_new.join(",")} (NEW)"
 			package_dependencies[pkg]=deps_new
 
 			if deps_new.include?(pkg)

@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -471,6 +471,8 @@ DEFAULT_VALGRINDFLAGS='-q --error-exitco
+@@ -508,6 +508,8 @@ DEFAULT_VALGRINDFLAGS='-q --error-exitco
  
  gl_VALGRIND_TESTS_DEFAULT_NO
  

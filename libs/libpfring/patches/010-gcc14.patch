@@ -1,0 +1,24 @@
+--- a/kernel/pf_ring.c
++++ b/kernel/pf_ring.c
+@@ -4713,8 +4713,8 @@ void reserve_memory(unsigned long base,
+ {
+   struct page *page, *page_end;
+ 
+-  page_end = virt_to_page(base + mem_len - 1);
+-  for(page = virt_to_page(base); page <= page_end; page++)
++  page_end = virt_to_page((void*)base + mem_len - 1);
++  for(page = virt_to_page((void*)base); page <= page_end; page++)
+     SetPageReserved(page);
+ }
+ 
+@@ -4722,8 +4722,8 @@ void unreserve_memory(unsigned long base
+ {
+   struct page *page, *page_end;
+ 
+-  page_end = virt_to_page(base + mem_len - 1);
+-  for(page = virt_to_page(base); page <= page_end; page++)
++  page_end = virt_to_page((void*)base + mem_len - 1);
++  for(page = virt_to_page((void*)base); page <= page_end; page++)
+     ClearPageReserved(page);
+ }
+ 

@@ -31,7 +31,7 @@ Signed-off-by: Adam Duskett <adam.duskett@amarulasolutions.com>
  		return 0;
  
 +#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 2, 0)
-+	dev_vdbg(&xr_usb_serial->data->dev, "%s - count %ld\n", __func__, count);
++	dev_vdbg(&xr_usb_serial->data->dev, "%s - count %zd\n", __func__, count);
 +#else
  	dev_vdbg(&xr_usb_serial->data->dev, "%s - count %d\n", __func__, count);
 +#endif
@@ -43,7 +43,7 @@ Signed-off-by: Adam Duskett <adam.duskett@amarulasolutions.com>
  
  	count = (count > xr_usb_serial->writesize) ? xr_usb_serial->writesize : count;
 +#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 2, 0)
-+	dev_vdbg(&xr_usb_serial->data->dev, "%s - write %ld\n", __func__, count);
++	dev_vdbg(&xr_usb_serial->data->dev, "%s - write %zd\n", __func__, count);
 +#else
  	dev_vdbg(&xr_usb_serial->data->dev, "%s - write %d\n", __func__, count);
 +#endif

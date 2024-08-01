@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua-cjson
 PKG_VERSION:=2.1.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_MAINTAINER:=Dirk Chang <dirk@kooiot.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.kyne.com.au/~mark/software/download/
+PKG_SOURCE_URL:=https://kyne.au/~mark/software/download/
 PKG_HASH:=51bc69cd55931e0cba2ceae39e9efa2483f4292da3a88a1ed470eda829f6c778
 
 HOST_BUILD_DEPENDS:=lua/host

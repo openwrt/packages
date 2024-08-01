@@ -1,17 +1,17 @@
 --- a/src/main/threads.c
 +++ b/src/main/threads.c
-@@ -298,6 +298,7 @@ static void ssl_locking_function(int mod
+@@ -265,6 +265,7 @@ static void ssl_locking_function(int mod
   */
  int tls_mutexes_init(void)
  {
 +#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
- 	int i;
+ 	int i, num;
  
- 	ssl_mutexes = rad_malloc(CRYPTO_num_locks() * sizeof(pthread_mutex_t));
-@@ -316,6 +317,7 @@ int tls_mutexes_init(void)
- #ifdef HAVE_CRYPTO_SET_LOCKING_CALLBACK
+ 	rad_assert(ssl_mutexes == NULL);
+@@ -282,6 +283,7 @@ int tls_mutexes_init(void)
+ 	}
+ 
  	CRYPTO_set_locking_callback(ssl_locking_function);
- #endif
 +#endif
  
  	return 0;
@@ -26,7 +26,7 @@
  
  #if OPENSSL_VERSION_NUMBER >= 0x30000000L
  #  include <openssl/provider.h>
-@@ -2954,7 +2955,7 @@ int cbtls_verify(int ok, X509_STORE_CTX
+@@ -2998,7 +2999,7 @@ int cbtls_verify(int ok, X509_STORE_CTX
  	int		my_ok = ok;
  
  	ASN1_INTEGER	*sn = NULL;
@@ -35,7 +35,7 @@
  	VALUE_PAIR	**certs;
  	char **identity;
  #ifdef HAVE_OPENSSL_OCSP_H
-@@ -3028,7 +3029,7 @@ int cbtls_verify(int ok, X509_STORE_CTX
+@@ -3089,7 +3090,7 @@ int cbtls_verify(int ok, X509_STORE_CTX
  	 *	Get the Expiration Date
  	 */
  	buf[0] = '\0';
@@ -44,7 +44,7 @@
  	if (certs && (lookup <= 1) && asn_time &&
  	    (asn_time->length < (int) sizeof(buf))) {
  		memcpy(buf, (char*) asn_time->data, asn_time->length);
-@@ -3041,7 +3042,7 @@ int cbtls_verify(int ok, X509_STORE_CTX
+@@ -3102,7 +3103,7 @@ int cbtls_verify(int ok, X509_STORE_CTX
  	 *	Get the Valid Since Date
  	 */
  	buf[0] = '\0';
@@ -53,9 +53,9 @@
  	if (certs && (lookup <= 1) && asn_time &&
  	    (asn_time->length < (int) sizeof(buf))) {
  		memcpy(buf, (char*) asn_time->data, asn_time->length);
-@@ -3592,10 +3593,12 @@ static int set_ecdh_curve(SSL_CTX *ctx,
+@@ -3666,10 +3667,12 @@ static int set_ecdh_curve(SSL_CTX *ctx,
   */
- int tls_global_init(bool spawn_flag, bool check)
+ int tls_global_init(TLS_UNUSED bool spawn_flag, TLS_UNUSED bool check)
  {
 +#if OPENSSL_VERSION_NUMBER < 0x10100000L
  	SSL_load_error_strings();	/* readable error messages (examples show call before library_init) */
@@ -66,7 +66,7 @@
  
  	/*
  	 *	Initialize the index for the certificates.
-@@ -3693,6 +3696,7 @@ int tls_global_version_check(char const
+@@ -3769,6 +3772,7 @@ int tls_global_version_check(char const
   */
  void tls_global_cleanup(void)
  {
@@ -74,7 +74,7 @@
  #if OPENSSL_VERSION_NUMBER < 0x10000000L
  	ERR_remove_state(0);
  #elif OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
-@@ -3718,6 +3722,7 @@ void tls_global_cleanup(void)
+@@ -3794,6 +3798,7 @@ void tls_global_cleanup(void)
  	ERR_free_strings();
  	EVP_cleanup();
  	CRYPTO_cleanup_all_ex_data();

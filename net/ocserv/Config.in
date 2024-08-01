@@ -24,8 +24,4 @@ config OCSERV_PROTOBUF
 	bool "use external libprotobuf"
 	default y
 
-config OCSERV_HTTP_PARSER
-	bool "use external libhttp-parser"
-	default y
-
 endmenu

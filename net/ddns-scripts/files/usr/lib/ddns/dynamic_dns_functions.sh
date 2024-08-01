@@ -547,8 +547,11 @@ verify_host_port() {
 			return 2
 		}
 		# extract IP address
-		if [ -n "$BIND_HOST" -o -n "$KNOT_HOST" ]; then	# use BIND host or Knot host if installed
+		if [ -n "$BIND_HOST" ]; then	# use BIND host if installed
 			__IPV4="$(awk -F "address " '/has address/ {print $2; exit}' "$DATFILE")"
+			__IPV6="$(awk -F "address " '/has IPv6/ {print $2; exit}' "$DATFILE")"
+		elif [ -n "$KNOT_HOST" ]; then	# use Knot host if installed
+			__IPV4="$(awk -F "address " '/has IPv4/ {print $2; exit}' "$DATFILE")"
 			__IPV6="$(awk -F "address " '/has IPv6/ {print $2; exit}' "$DATFILE")"
 		elif [ -n "$DRILL" ]; then	# use drill if installed
 			__IPV4="$(awk '/^'"$__HOST"'/ {print $5}' "$DATFILE" | grep -m 1 -o "$IPV4_REGEX")"

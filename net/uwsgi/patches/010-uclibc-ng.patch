@@ -1,6 +1,6 @@
 --- a/core/uwsgi.c
 +++ b/core/uwsgi.c
-@@ -1825,7 +1825,7 @@ void uwsgi_plugins_atexit(void) {
+@@ -1794,7 +1794,7 @@ void uwsgi_plugins_atexit(void) {
  
  void uwsgi_backtrace(int depth) {
  

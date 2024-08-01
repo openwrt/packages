@@ -11,9 +11,10 @@ PKG_NAME:=luaexpat
 PKG_VERSION:=1.5.1
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/lunarmodules/luaexpat/archive/refs/tags
-PKG_HASH:=7d455f154de59eb0b073c3620bc8b873f7f697b3f21a112e6ff8dc9fca6d0826
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_VERSION:=$(PKG_VERSION)
+PKG_SOURCE_URL:=https://github.com/lunarmodules/luaexpat
+PKG_MIRROR_HASH:=7e370d47e947a1acfeb4d00df012f47116fe7971f5b12033e92666e37a9312a1
 
 PKG_CPE_ID:=cpe:/a:matthewwild:luaexpat
 

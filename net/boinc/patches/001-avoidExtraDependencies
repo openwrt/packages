@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -543,8 +543,10 @@ SAH_CHECK_LIB([dl], [dlopen],
+@@ -546,8 +546,10 @@ SAH_CHECK_LIB([dl], [dlopen],
      [BOINC_EXTRA_LIBS="${BOINC_EXTRA_LIBS} ${sah_lib_last}"])
  SAH_CHECK_LIB([nsl], [gethostbyname],
      [BOINC_EXTRA_LIBS="${BOINC_EXTRA_LIBS} ${sah_lib_last}"])

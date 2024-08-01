@@ -7,11 +7,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=snort3
 PKG_VERSION:=3.1.84.0
-PKG_RELEASE:=1
+PKG_RELEASE:=4
 
-PKG_SOURCE:=$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/snort3/snort3/archive/refs/tags/
-PKG_HASH:=dca1707a66f6ca56ddd526163b2d951cefdb168bddc162c791adc74c0d226c7f
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_VERSION:=$(PKG_VERSION)
+PKG_SOURCE_URL:=https://github.com/snort3/snort3
+PKG_MIRROR_HASH:=ffa69fdd95c55a943ab4dd782923caf31937dd8ad29e202d7fe781373ed84444
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>, John Audia <therealgraysky@proton.me>
 PKG_LICENSE:=GPL-2.0-only
@@ -27,9 +28,8 @@ define Package/snort3
   CATEGORY:=Network
   DEPENDS:= \
 	    +(TARGET_x86||TARGET_x86_64):hyperscan-runtime \
-	    +(TARGET_x86||TARGET_x86_64):gperftools-runtime \
-	    +libstdcpp +libdaq3 +libdnet +libopenssl +libpcap +libpcre +libpthread \
-	    +libuuid +zlib +libhwloc +libtirpc @HAS_LUAJIT_ARCH +luajit +libatomic \
+	    +gperftools-runtime +libstdcpp +libdaq3 +libdnet +libopenssl +libpcap +libpcre2 \
+	    +libpthread +libuuid +zlib +libhwloc +libtirpc @HAS_LUAJIT_ARCH +luajit +libatomic \
 	    +kmod-nft-queue +liblzma +ucode +ucode-mod-fs +ucode-mod-uci
   TITLE:=Lightweight Network Intrusion Detection System
   URL:=http://www.snort.org/
@@ -44,11 +44,9 @@ define Package/snort3/description
   attacks.
 endef
 
-# Hyperscan and gperftools only builds for x86
+# Hyperscan only builds for x86
 ifdef CONFIG_TARGET_x86_64
-	CMAKE_OPTIONS += -DHS_INCLUDE_DIRS=$(STAGING_DIR)/usr/include/hs \
-			 -DENABLE_TCMALLOC=ON \
-			 -DTCMALLOC_LIBRARIES=$(STAGING_DIR)/usr/lib/libtcmalloc.so
+	CMAKE_OPTIONS += -DHS_INCLUDE_DIRS=$(STAGING_DIR)/usr/include/hs
 endif
 
 CMAKE_OPTIONS += \
@@ -64,6 +62,8 @@ CMAKE_OPTIONS += \
 	-DMAKE_PDF_DOC:BOOL=NO \
 	-DMAKE_TEXT_DOC:BOOL=NO \
 	-DHAVE_LIBUNWIND=OFF \
+	-DENABLE_TCMALLOC=ON \
+	-DTCMALLOC_LIBRARIES=$(STAGING_DIR)/usr/lib/libtcmalloc.so \
 	-DHAVE_LZMA=ON
 
 TARGET_CFLAGS  += -I$(STAGING_DIR)/usr/include/daq3 -I$(STAGING_DIR)/usr/include/tirpc

@@ -3,7 +3,7 @@
 # Copyright (c) 2015-2024 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
-# disable (s)hellcheck in release
+# (s)hellcheck exceptions
 # shellcheck disable=all
 
 # set initial defaults
@@ -1306,12 +1306,22 @@ f_report() {
 			(
 				if [ "${adb_repiface}" = "any" ]; then
 					"${adb_dumpcmd}" "${resolve}" -tttt -r "${file}" 2>/dev/null |
-						"${adb_awk}" -v cnt="${cnt}" '!/\.lan\. |PTR\? | SOA\? /&&/ A[\? ]+|NXDomain|0\.0\.0\.0/{a=$1;b=substr($2,0,8);c=$6;sub(/\.[0-9]+$/,"",c);gsub(/[^[:alnum:]\.:-]/,"",c);d=cnt $9;sub(/\*$/,"",d);
-						e=$(NF-1);sub(/[0-9]\/[0-9]\/[0-9]|0\.0\.0\.0/,"NX",e);sub(/\.$/,"",e);sub(/([0-9]{1,3}\.){3}[0-9]{1,3}/,"OK",e);gsub(/[^[:alnum:]\.-]/,"",e);if(e==""){e="err"};printf "%s\t%s\t%s\t%s\t%s\n",d,e,a,b,c}' >>"${report_raw}"
+					"${adb_awk}" -v cnt="${cnt}" '!/\.lan\. |PTR\? | SOA\? | Flags /&&/ A[A]*\? |NXDomain|0\.0\.0\.0|[0-9]\/[0-9]\/[0-9]/{sub(/\.[0-9]+$/,"",$6);
+						type=substr($(NF-1),length($(NF-1)));
+						if(type=="."&&$(NF-2)!="CNAME")
+							{domain=substr($(NF-1),1,length($(NF-1))-1);type="RQ"}
+						else
+							{if($(NF-1)~/[0-9]\/[0-9]\/[0-9]/||$(NF-1)=="0.0.0.0"){type="NX"}else{type="OK"};domain=""};
+						printf "%08d\t%s\t%s\t%s\t%-25s\t%s\n",$9,type,$1,substr($2,1,8),$6,domain}' >>"${report_raw}"
 				else
-					"${adb_dumpcmd}" "${resolve}" -tttt -r "${file}" 2>/dev/null |
-						"${adb_awk}" -v cnt="${cnt}" '!/\.lan\. |PTR\? | SOA\? /&&/ A[\? ]+|NXDomain|0\.0\.0\.0/{a=$1;b=substr($2,0,8);c=$4;sub(/\.[0-9]+$/,"",c);gsub(/[^[:alnum:]\.:-]/,"",c);d=cnt $7;sub(/\*$/,"",d);
-						e=$(NF-1);sub(/[0-9]\/[0-9]\/[0-9]|0\.0\.0\.0/,"NX",e);sub(/\.$/,"",e);sub(/([0-9]{1,3}\.){3}[0-9]{1,3}/,"OK",e);gsub(/[^[:alnum:]\.-]/,"",e);if(e==""){e="err"};printf "%s\t%s\t%s\t%s\t%s\n",d,e,a,b,c}' >>"${report_raw}"
+					"${adb_dumpcmd}" "${resolve}"  -tttt -r "${file}" 2>/dev/null |
+					"${adb_awk}" -v cnt="${cnt}" '!/\.lan\. |PTR\? | SOA\? | Flags /&&/ A[A]*\? |NXDomain|0\.0\.0\.0|[0-9]\/[0-9]\/[0-9]/{sub(/\.[0-9]+$/,"",$4);
+						type=substr($(NF-1),length($(NF-1)));
+						if(type=="."&&$(NF-2)!="CNAME")
+							{domain=substr($(NF-1),1,length($(NF-1))-1);type="RQ"}
+						else
+							{if($(NF-1)~/[0-9]\/[0-9]\/[0-9]/||$(NF-1)=="0.0.0.0"){type="NX"}else{type="OK"};domain=""};
+						printf "%08d\t%s\t%s\t%s\t%-25s\t%s\n",$7,type,$1,substr($2,1,8),$4,domain}' >>"${report_raw}"
 				fi
 			) &
 			hold="$((cnt % adb_cores))"
@@ -1320,10 +1330,10 @@ f_report() {
 		done
 		wait
 		if [ -s "${report_raw}" ]; then
-			"${adb_sort}" ${adb_srtopts} -k1 -k3 -k4 -k5 -k1 -ur "${report_raw}" |
-				"${adb_awk}" '{currA=($1+0);currB=$1;currC=substr($1,length($1),1);if(reqA==currB){reqA=0;printf "%s\t%s\n",d,$2}else if(currC=="+"){reqA=currA;d=$3"\t"$4"\t"$5"\t"$2}}' |
-				"${adb_sort}" ${adb_srtopts} -k1 -k2 -k3 -k4 -ur >"${report_srt}"
-			rm -f "${report_raw}"
+			"${adb_sort}" ${adb_srtopts} -k3,3 -k4,4 -k1,1 -k2,2 -u -r "${report_raw}" |
+				"${adb_awk}" '{currA=($1+0);currB=$1;currC=$2;if(reqA==currB){reqA=0;printf "%-90s\t%s\n",d,$2}else if(currC=="RQ"){reqA=currA;d=$3"\t"$4"\t"$5"\t"$6}}' |
+				"${adb_sort}" ${adb_srtopts} -u -r >"${report_srt}"
+			: >"${report_raw}"
 		fi
 
 		if [ -s "${report_srt}" ]; then
@@ -1368,7 +1378,7 @@ f_report() {
 			search="${search//./\\.}"
 			search="${search//[+*~%\$&\"\' ]/}"
 			"${adb_awk}" "BEGIN{i=0;printf \"\t\\\"requests\\\": [\n\"}/(${search})/{i++;if(i==1)printf \"\n\t\t{\n\t\t\t\\\"date\\\": \\\"%s\\\",\n\t\t\t\\\"time\\\": \\\"%s\\\",\n\t\t\t\\\"client\\\": \\\"%s\\\",\n\t\t\t\\\"domain\\\": \\\"%s\\\",\n\t\t\t\\\"rc\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2,\$3,\$4,\$5;else if(i<=${res_count})printf \",\n\t\t{\n\t\t\t\\\"date\\\": \\\"%s\\\",\n\t\t\t\\\"time\\\": \\\"%s\\\",\n\t\t\t\\\"client\\\": \\\"%s\\\",\n\t\t\t\\\"domain\\\": \\\"%s\\\",\n\t\t\t\\\"rc\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2,\$3,\$4,\$5}END{printf \"\n\t]\n}\n\"}" "${adb_reportdir}/adb_report.srt" >>"${report_jsn}"
-			rm -f "${report_srt}"
+			: >"${report_srt}"
 		fi
 	fi
 
@@ -1422,7 +1432,7 @@ f_report() {
 			json_select ".."
 		done
 		content="$(cat "${report_txt}" 2>/dev/null)"
-		rm -f "${report_txt}"
+		: >"${report_txt}"
 	fi
 
 	# report output

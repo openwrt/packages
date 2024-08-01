@@ -1,0 +1,55 @@
+--- a/Clients/dns-sd.c
++++ b/Clients/dns-sd.c
+@@ -2463,7 +2463,7 @@ Fail:
+ // The "@(#) " pattern is a special prefix the "what" command looks for
+ #pragma GCC diagnostic push
+ #pragma GCC diagnostic ignored "-Wdate-time"
+-    const char VersionString_SCCS[] = "@(#) dns-sd " STRINGIFY(mDNSResponderVersion) " (" __DATE__ " " __TIME__ ")";
++    const char VersionString_SCCS[] = "@(#) dns-sd " STRINGIFY(mDNSResponderVersion);
+ #pragma GCC diagnostic pop
+ 
+ #if _BUILDING_XCODE_PROJECT_
+--- a/mDNSPosix/PosixDaemon.c
++++ b/mDNSPosix/PosixDaemon.c
+@@ -308,9 +308,9 @@ asm (".desc ___crashreporter_info__, 0x1
+ 
+ // For convenience when using the "strings" command, this is the last thing in the file
+ #if mDNSResponderVersion > 1
+-mDNSexport const char mDNSResponderVersionString_SCCS[] = "@(#) mDNSResponder-" STRINGIFY(mDNSResponderVersion) " (" __DATE__ " " __TIME__ ")";
++mDNSexport const char mDNSResponderVersionString_SCCS[] = "@(#) mDNSResponder-" STRINGIFY(mDNSResponderVersion);
+ #elif MDNS_VERSIONSTR_NODTS
+ mDNSexport const char mDNSResponderVersionString_SCCS[] = "@(#) mDNSResponder (Engineering Build)";
+ #else
+-mDNSexport const char mDNSResponderVersionString_SCCS[] = "@(#) mDNSResponder (Engineering Build) (" __DATE__ " " __TIME__ ")";
++mDNSexport const char mDNSResponderVersionString_SCCS[] = "@(#) mDNSResponder (Engineering Build)";
+ #endif
+--- a/mDNSShared/Java/JNISupport.c
++++ b/mDNSShared/Java/JNISupport.c
+@@ -1069,4 +1069,4 @@ exit:
+ 
+ // NOT static -- otherwise the compiler may optimize it out
+ // The "@(#) " pattern is a special prefix the "what" command looks for
+-const char VersionString_SCCS[] = "@(#) libjdns_sd " STRINGIFY(mDNSResponderVersion) " (" __DATE__ " " __TIME__ ")";
++const char VersionString_SCCS[] = "@(#) libjdns_sd " STRINGIFY(mDNSResponderVersion);
+--- a/mDNSShared/dnsextd.c
++++ b/mDNSShared/dnsextd.c
+@@ -3132,7 +3132,7 @@ mDNS mDNSStorage;
+ 
+ // For convenience when using the "strings" command, this is the last thing in the file
+ // The "@(#) " pattern is a special prefix the "what" command looks for
+-const char mDNSResponderVersionString_SCCS[] = "@(#) dnsextd " STRINGIFY(mDNSResponderVersion) " (" __DATE__ " " __TIME__ ")";
++const char mDNSResponderVersionString_SCCS[] = "@(#) dnsextd " STRINGIFY(mDNSResponderVersion);
+ 
+ #if _BUILDING_XCODE_PROJECT_
+ // If the process crashes, then this string will be magically included in the automatically-generated crash log
+--- a/mDNSShared/dnssd_clientlib.c
++++ b/mDNSShared/dnssd_clientlib.c
+@@ -372,7 +372,7 @@ DNSServiceErrorType DNSSD_API TXTRecordG
+ #pragma GCC diagnostic push
+ #pragma GCC diagnostic ignored "-Wdate-time"
+ #endif
+-const char VersionString_SCCS_libdnssd[] DNSSD_USED = "@(#) libdns_sd " STRINGIFY(mDNSResponderVersion) " (" __DATE__ " " __TIME__ ")";
++const char VersionString_SCCS_libdnssd[] DNSSD_USED = "@(#) libdns_sd " STRINGIFY(mDNSResponderVersion);
+ #if defined(__GNUC__)
+ #pragma GCC diagnostic pop
+ #endif

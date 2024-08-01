@@ -1,0 +1,77 @@
+From 2c82451650e0fe781cee6728c3ceef4cb3161562 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Sat, 29 Jun 2024 17:05:33 -0700
+Subject: [PATCH] pcsc-lite: fix formats under musl
+
+pthread_t is a pointer on musl libc.
+
+../src/debuglog.c: In function 'log_line':
+../src/debuglog.c:279:40: error: format '%lu' expects argument of type 'long unsigned int', but argument 5 has type 'pthread_t' {aka 'struct __pthread *'} [-Werror=format=]
+  279 |                                 printf("%s%.8d%s [" THREAD_FORMAT "] %s%s%s, %s%s%s\n",
+      |                                        ^~~~~~~~~~~~
+  280 |                                         time_pfx, delta, time_sfx, thread_id,
+      |                                                                    ~~~~~~~~~
+      |                                                                    |
+      |                                                                    pthread_t {aka struct __pthread *}
+../src/debuglog.c:268:26: note: format string is defined here
+  268 | #define THREAD_FORMAT "%lu"
+      |                        ~~^
+      |                          |
+      |                          long unsigned int
+../src/debuglog.c:285:40: error: format '%lu' expects argument of type 'long unsigned int', but argument 5 has type 'pthread_t' {aka 'struct __pthread *'} [-Werror=format=]
+  285 |                                 printf("%s%.8d%s [" THREAD_FORMAT "] %s%s%s\n",
+      |                                        ^~~~~~~~~~~~
+  286 |                                         time_pfx, delta, time_sfx, thread_id,
+      |                                                                    ~~~~~~~~~
+      |                                                                    |
+      |                                                                    pthread_t {aka struct __pthread *}
+../src/debuglog.c:268:26: note: format string is defined here
+  268 | #define THREAD_FORMAT "%lu"
+      |                        ~~^
+      |                          |
+      |                          long unsigned int
+cc1: some warnings being treated as errors
+ninja: build stopped: subcommand failed.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ src/debuglog.c       | 6 +++---
+ src/spy/libpcscspy.c | 4 ++--
+ 2 files changed, 5 insertions(+), 5 deletions(-)
+
+--- a/src/debuglog.c
++++ b/src/debuglog.c
+@@ -262,10 +262,10 @@ static void log_line(const int priority,
+ 					break;
+ 			}
+ 
+-#ifdef __APPLE__
+-#define THREAD_FORMAT "%p"
+-#else
++#ifdef __GLIBC__
+ #define THREAD_FORMAT "%lu"
++#else
++#define THREAD_FORMAT "%p"
+ #endif
+ 			if (rv_text)
+ 			{
+--- a/src/spy/libpcscspy.c
++++ b/src/spy/libpcscspy.c
+@@ -121,7 +121,7 @@ static void spy_line_direct(char *line)
+ 	if (Log_fd < 0)
+ 		return;
+ 
+-	snprintf(threadid, sizeof threadid, "%lX@", pthread_self());
++	snprintf(threadid, sizeof threadid, "%lX@", (unsigned long)pthread_self());
+ 	pthread_mutex_lock(&Log_fd_mutex);
+ 	r = write(Log_fd, threadid, strlen(threadid));
+ 	r = write(Log_fd, line, strlen(line));
+@@ -150,7 +150,7 @@ static void spy_line(const char *fmt, ..
+ 		printf("libpcsc-spy: Buffer is too small!\n");
+ 		return;
+ 	}
+-	snprintf(threadid, sizeof threadid, "%lX@", pthread_self());
++	snprintf(threadid, sizeof threadid, "%lX@", (unsigned long)pthread_self());
+ 	pthread_mutex_lock(&Log_fd_mutex);
+ 	r = write(Log_fd, threadid, strlen(threadid));
+ 	r = write(Log_fd, line, size);

@@ -89,7 +89,7 @@ case "$1" in
 		exit 1
 		;;
 	reload)
-		killall -1 dynamic_dns_updater.sh 2>/dev/null
+		killall dynamic_dns_updater.sh 2>/dev/null
 		exit $?
 		;;
 	*)	usage_err "unknown command - $1";;
@@ -321,9 +321,6 @@ else
 	EPOCH_TIME="date -d @$EPOCH_TIME +'$ddns_dateformat'"
 	write_log 7 "last update: $(eval $EPOCH_TIME)"
 fi
-
-# verify DNS server
-[ -n "$dns_server" ] && verify_dns "$dns_server"
 
 # verify Proxy server and set environment
 [ -n "$proxy" ] && {

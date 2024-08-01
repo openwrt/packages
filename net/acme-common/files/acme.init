@@ -25,10 +25,10 @@ cleanup() {
 load_options() {
 	section=$1
 
+	config_get staging "$section" staging
 	# compatibility for old option name
-	config_get_bool staging "$section" use_staging
 	if [ -z "$staging" ]; then
-		config_get_bool staging "$section" staging 0
+		config_get_bool staging "$section" use_staging 0
 	fi
 	export staging
 	config_get calias "$section" calias
@@ -37,8 +37,8 @@ load_options() {
 	export dalias
 	config_get domains "$section" domains
 	export domains
-	export main_domain
 	main_domain="$(first_arg $domains)"
+	export main_domain
 	config_get keylength "$section" keylength
 	if [ "$keylength" ]; then
 		log warn "Option \"keylength\" is deprecated, please use key_type (e.g., ec256, rsa2048) instead."
@@ -130,7 +130,7 @@ load_globals() {
 	fi
 	export state_dir
 
-	config_get debug "$section" debug 0
+	config_get_bool debug "$section" debug 0
 	export debug
 
 	# only look for the first acme section

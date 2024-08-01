@@ -8,17 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libimobiledevice
-PKG_VERSION:=1.3.0
-PKG_RELEASE:=2
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=https://www.libimobiledevice.org/downloads
-PKG_HASH:=53f2640c6365cd9f302a6248f531822dc94a6cced3f17128d4479a77bd75b0f6
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/libimobiledevice/libimobiledevice.git
+PKG_SOURCE_DATE:=2024-05-20
+PKG_SOURCE_VERSION:=9ccc52222c287b35e41625cc282fb882544676c6
+PKG_MIRROR_HASH:=9d272d40515c5ba6be5fa22eb897724d8940a505163918120c005bbeed352475
 
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING.LESSER
 
+PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
@@ -39,7 +41,7 @@ define Package/libimobiledevice
   $(call Package/libimobiledevice/Default)
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libplist +libusbmuxd +libopenssl
+  DEPENDS:=+libplist +libimobiledevice-glue +libusbmuxd +libopenssl
   LICENSE:=LGPL-2.1-or-later
   LICENSE_FILES:=COPYING.LESSER
 endef
@@ -64,7 +66,8 @@ endef
 
 CONFIGURE_ARGS += \
 	--disable-static \
-	--without-cython
+	--without-cython \
+	PACKAGE_VERSION=$(PKG_VERSION)
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include

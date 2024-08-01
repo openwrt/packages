@@ -277,7 +277,7 @@
  IFS=$as_save_IFS
 +if $as_found
 +then :
-+
+ 
 +else $as_nop
 +  if { test -f "$SHELL" || test -f "$SHELL.exe"; } &&
 +	      as_run=a "$SHELL" -c "$as_bourne_compatible""$as_required" 2>/dev/null
@@ -286,8 +286,8 @@
 +fi
 +fi
  
- 
 -      if test "x$CONFIG_SHELL" != x; then :
++
 +      if test "x$CONFIG_SHELL" != x
 +then :
    export CONFIG_SHELL
@@ -463,7 +463,7 @@
  rm -f conf$$ conf$$.exe conf$$.file
  if test -d conf$$.dir; then
    rm -f conf$$.dir/conf$$.file
-@@ -575,19 +606,19 @@ MFLAGS=
+@@ -575,12 +606,12 @@ MFLAGS=
  MAKEFLAGS=
  
  # Identity of this package.
@@ -482,31 +482,7 @@
  
  ac_unique_file="rlm_krb5.c"
  ac_subst_vars='LTLIBOBJS
- LIBOBJS
--targetname
- mod_cflags
- mod_ldflags
-+targetname
- krb5_config
- CPP
- OBJEXT
-@@ -616,6 +647,7 @@ infodir
- docdir
- oldincludedir
- includedir
-+runstatedir
- localstatedir
- sharedstatedir
- sysconfdir
-@@ -688,6 +720,7 @@ datadir='${datarootdir}'
- sysconfdir='${prefix}/etc'
- sharedstatedir='${prefix}/com'
- localstatedir='${prefix}/var'
-+runstatedir='${localstatedir}/run'
- includedir='${prefix}/include'
- oldincludedir='/usr/include'
- docdir='${datarootdir}/doc/${PACKAGE}'
-@@ -717,8 +750,6 @@ do
+@@ -719,8 +750,6 @@ do
    *)    ac_optarg=yes ;;
    esac
  
@@ -515,7 +491,7 @@
    case $ac_dashdash$ac_option in
    --)
      ac_dashdash=yes ;;
-@@ -759,9 +790,9 @@ do
+@@ -761,9 +790,9 @@ do
      ac_useropt=`expr "x$ac_option" : 'x-*disable-\(.*\)'`
      # Reject names that are not valid shell variable names.
      expr "x$ac_useropt" : ".*[^-+._$as_cr_alnum]" >/dev/null &&
@@ -527,7 +503,7 @@
      case $ac_user_opts in
        *"
  "enable_$ac_useropt"
-@@ -785,9 +816,9 @@ do
+@@ -787,9 +816,9 @@ do
      ac_useropt=`expr "x$ac_option" : 'x-*enable-\([^=]*\)'`
      # Reject names that are not valid shell variable names.
      expr "x$ac_useropt" : ".*[^-+._$as_cr_alnum]" >/dev/null &&
@@ -539,23 +515,7 @@
      case $ac_user_opts in
        *"
  "enable_$ac_useropt"
-@@ -940,6 +971,15 @@ do
-   | -silent | --silent | --silen | --sile | --sil)
-     silent=yes ;;
- 
-+  -runstatedir | --runstatedir | --runstatedi | --runstated \
-+  | --runstate | --runstat | --runsta | --runst | --runs \
-+  | --run | --ru | --r)
-+    ac_prev=runstatedir ;;
-+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-+  | --run=* | --ru=* | --r=*)
-+    runstatedir=$ac_optarg ;;
-+
-   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
-     ac_prev=sbindir ;;
-   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
-@@ -989,9 +1029,9 @@ do
+@@ -1000,9 +1029,9 @@ do
      ac_useropt=`expr "x$ac_option" : 'x-*with-\([^=]*\)'`
      # Reject names that are not valid shell variable names.
      expr "x$ac_useropt" : ".*[^-+._$as_cr_alnum]" >/dev/null &&
@@ -567,7 +527,7 @@
      case $ac_user_opts in
        *"
  "with_$ac_useropt"
-@@ -1005,9 +1045,9 @@ do
+@@ -1016,9 +1045,9 @@ do
      ac_useropt=`expr "x$ac_option" : 'x-*without-\(.*\)'`
      # Reject names that are not valid shell variable names.
      expr "x$ac_useropt" : ".*[^-+._$as_cr_alnum]" >/dev/null &&
@@ -579,7 +539,7 @@
      case $ac_user_opts in
        *"
  "with_$ac_useropt"
-@@ -1051,9 +1091,9 @@ Try \`$0 --help' for more information"
+@@ -1062,9 +1091,9 @@ Try \`$0 --help' for more information"
  
    *)
      # FIXME: should be removed in autoconf 3.0.
@@ -591,7 +551,7 @@
      : "${build_alias=$ac_option} ${host_alias=$ac_option} ${target_alias=$ac_option}"
      ;;
  
-@@ -1069,7 +1109,7 @@ if test -n "$ac_unrecognized_opts"; then
+@@ -1080,7 +1109,7 @@ if test -n "$ac_unrecognized_opts"; then
    case $enable_option_checking in
      no) ;;
      fatal) as_fn_error $? "unrecognized options: $ac_unrecognized_opts" ;;
@@ -600,16 +560,7 @@
    esac
  fi
  
-@@ -1077,7 +1117,7 @@ fi
- for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
- 		datadir sysconfdir sharedstatedir localstatedir includedir \
- 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
--		libdir localedir mandir
-+		libdir localedir mandir runstatedir
- do
-   eval ac_val=\$$ac_var
-   # Remove trailing slashes.
-@@ -1133,7 +1173,7 @@ $as_expr X"$as_myself" : 'X\(.*[^/]\)//*
+@@ -1144,7 +1173,7 @@ $as_expr X"$as_myself" : 'X\(.*[^/]\)//*
  	 X"$as_myself" : 'X\(//\)[^/]' \| \
  	 X"$as_myself" : 'X\(//\)$' \| \
  	 X"$as_myself" : 'X\(/\)' \| . 2>/dev/null ||
@@ -618,26 +569,16 @@
      sed '/^X\(.*[^/]\)\/\/*[^/][^/]*\/*$/{
  	    s//\1/
  	    q
-@@ -1230,6 +1270,7 @@ Fine tuning of the installation director
-   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
-   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
-   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
-   --libdir=DIR            object code libraries [EPREFIX/lib]
-   --includedir=DIR        C header files [PREFIX/include]
-   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
-@@ -1256,8 +1297,8 @@ if test -n "$ac_init_help"; then
- Optional Packages:
+@@ -1269,7 +1298,7 @@ Optional Packages:
    --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
    --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
--  --with-rlm_krb5              build rlm_krb5. (default=yes)
--  --with-rlm-krb5-dir=DIR       Directory for krb5 files
-+  --without-rlm_krb5      build without Kerberos support
+   --without-rlm_krb5      build without Kerberos support
+-  --with-rlm-krb5-dir=DIR Directory for krb5 files
 +  --with-rlm-krb5-dir=DIR directory where krb5 files are installed
  
  Some influential environment variables:
    CC          C compiler command
-@@ -1288,9 +1329,9 @@ if test "$ac_init_help" = "recursive"; t
+@@ -1300,9 +1329,9 @@ if test "$ac_init_help" = "recursive"; t
  case "$ac_dir" in
  .) ac_dir_suffix= ac_top_builddir_sub=. ac_top_build_prefix= ;;
  *)
@@ -649,7 +590,7 @@
    case $ac_top_builddir_sub in
    "") ac_top_builddir_sub=. ac_top_build_prefix= ;;
    *)  ac_top_build_prefix=$ac_top_builddir_sub/ ;;
-@@ -1318,7 +1359,8 @@ esac
+@@ -1330,7 +1359,8 @@ esac
  ac_abs_srcdir=$ac_abs_top_srcdir$ac_dir_suffix
  
      cd "$ac_dir" || { ac_status=$?; continue; }
@@ -659,7 +600,7 @@
      if test -f "$ac_srcdir/configure.gnu"; then
        echo &&
        $SHELL "$ac_srcdir/configure.gnu" --help=recursive
-@@ -1326,7 +1368,7 @@ ac_abs_srcdir=$ac_abs_top_srcdir$ac_dir_
+@@ -1338,7 +1368,7 @@ ac_abs_srcdir=$ac_abs_top_srcdir$ac_dir_
        echo &&
        $SHELL "$ac_srcdir/configure" --help=recursive
      else
@@ -668,7 +609,7 @@
      fi || ac_status=$?
      cd "$ac_pwd" || { ac_status=$?; break; }
    done
-@@ -1336,9 +1378,9 @@ test -n "$ac_init_help" && exit $ac_stat
+@@ -1348,9 +1378,9 @@ test -n "$ac_init_help" && exit $ac_stat
  if $ac_init_version; then
    cat <<\_ACEOF
  configure
@@ -680,18 +621,7 @@
  This configure script is free software; the Free Software Foundation
  gives unlimited permission to copy, distribute and modify it.
  _ACEOF
-@@ -1349,20 +1391,25 @@ fi
- ## Autoconf initialization. ##
- ## ------------------------ ##
- 
-+echo
-+echo Running tests for rlm_krb5
-+echo
-+
-+
- # ac_fn_c_try_compile LINENO
- # --------------------------
- # Try to compile conftest.$ac_ext, and return whether this succeeded.
+@@ -1372,14 +1402,14 @@ echo
  ac_fn_c_try_compile ()
  {
    as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
@@ -708,7 +638,7 @@
    (eval "$ac_compile") 2>conftest.err
    ac_status=$?
    if test -s conftest.err; then
-@@ -1370,14 +1417,15 @@ $as_echo "$ac_try_echo"; } >&5
+@@ -1387,14 +1417,15 @@ $as_echo "$ac_try_echo"; } >&5
      cat conftest.er1 >&5
      mv -f conftest.er1 conftest.err
    fi
@@ -728,7 +658,7 @@
  sed 's/^/| /' conftest.$ac_ext >&5
  
  	ac_retval=1
-@@ -1399,7 +1447,7 @@ case "(($ac_try" in
+@@ -1416,7 +1447,7 @@ case "(($ac_try" in
    *) ac_try_echo=$ac_try;;
  esac
  eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
@@ -737,7 +667,7 @@
    (eval "$ac_cpp conftest.$ac_ext") 2>conftest.err
    ac_status=$?
    if test -s conftest.err; then
-@@ -1407,14 +1455,15 @@ $as_echo "$ac_try_echo"; } >&5
+@@ -1424,14 +1455,15 @@ $as_echo "$ac_try_echo"; } >&5
      cat conftest.er1 >&5
      mv -f conftest.er1 conftest.err
    fi
@@ -757,7 +687,7 @@
  sed 's/^/| /' conftest.$ac_ext >&5
  
      ac_retval=1
-@@ -1430,14 +1479,14 @@ fi
+@@ -1447,14 +1479,14 @@ fi
  ac_fn_c_try_link ()
  {
    as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
@@ -774,7 +704,7 @@
    (eval "$ac_link") 2>conftest.err
    ac_status=$?
    if test -s conftest.err; then
-@@ -1445,17 +1494,18 @@ $as_echo "$ac_try_echo"; } >&5
+@@ -1462,17 +1494,18 @@ $as_echo "$ac_try_echo"; } >&5
      cat conftest.er1 >&5
      mv -f conftest.er1 conftest.err
    fi
@@ -797,7 +727,7 @@
  sed 's/^/| /' conftest.$ac_ext >&5
  
  	ac_retval=1
-@@ -1476,11 +1526,12 @@ fi
+@@ -1493,11 +1526,12 @@ fi
  ac_fn_c_check_func ()
  {
    as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
@@ -815,7 +745,7 @@
    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
  /* end confdefs.h.  */
  /* Define $2 to an innocuous variant, in case <limits.h> declares $2.
-@@ -1488,16 +1539,9 @@ else
+@@ -1505,16 +1539,9 @@ else
  #define $2 innocuous_$2
  
  /* System header to define __stub macros and hopefully few prototypes,
@@ -834,7 +764,7 @@
  #undef $2
  
  /* Override any GCC internal prototype to avoid an error.
-@@ -1515,32 +1559,33 @@ choke me
+@@ -1532,32 +1559,33 @@ choke me
  #endif
  
  int
@@ -876,7 +806,7 @@
  ac_fn_c_try_run ()
  {
    as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-@@ -1550,25 +1595,26 @@ case "(($ac_try" in
+@@ -1567,25 +1595,26 @@ case "(($ac_try" in
    *) ac_try_echo=$ac_try;;
  esac
  eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
@@ -911,7 +841,7 @@
  sed 's/^/| /' conftest.$ac_ext >&5
  
         ac_retval=$ac_status
-@@ -1578,14 +1624,34 @@ fi
+@@ -1595,14 +1624,34 @@ fi
    as_fn_set_status $ac_retval
  
  } # ac_fn_c_try_run
@@ -948,7 +878,7 @@
  
  _ACEOF
  exec 5>>config.log
-@@ -1618,8 +1684,12 @@ as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+@@ -1635,8 +1684,12 @@ as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
  for as_dir in $PATH
  do
    IFS=$as_save_IFS
@@ -963,7 +893,7 @@
    done
  IFS=$as_save_IFS
  
-@@ -1654,7 +1724,7 @@ do
+@@ -1671,7 +1724,7 @@ do
      | -silent | --silent | --silen | --sile | --sil)
        continue ;;
      *\'*)
@@ -972,7 +902,7 @@
      esac
      case $ac_pass in
      1) as_fn_append ac_configure_args0 " '$ac_arg'" ;;
-@@ -1689,11 +1759,13 @@ done
+@@ -1706,11 +1759,13 @@ done
  # WARNING: Use '\'' to represent an apostrophe within the trap.
  # WARNING: Do not start the trap code with a newline, due to a FreeBSD 4.0 bug.
  trap 'exit_status=$?
@@ -987,7 +917,7 @@
  ## Cache variables. ##
  ## ---------------- ##"
      echo
-@@ -1704,8 +1776,8 @@ trap 'exit_status=$?
+@@ -1721,8 +1776,8 @@ trap 'exit_status=$?
      case $ac_val in #(
      *${as_nl}*)
        case $ac_var in #(
@@ -998,7 +928,7 @@
        esac
        case $ac_var in #(
        _ | IFS | as_nl) ;; #(
-@@ -1729,7 +1801,7 @@ $as_echo "$as_me: WARNING: cache variabl
+@@ -1746,7 +1801,7 @@ $as_echo "$as_me: WARNING: cache variabl
  )
      echo
  
@@ -1007,7 +937,7 @@
  ## Output variables. ##
  ## ----------------- ##"
      echo
-@@ -1737,14 +1809,14 @@ $as_echo "$as_me: WARNING: cache variabl
+@@ -1754,14 +1809,14 @@ $as_echo "$as_me: WARNING: cache variabl
      do
        eval ac_val=\$$ac_var
        case $ac_val in
@@ -1025,7 +955,7 @@
  ## File substitutions. ##
  ## ------------------- ##"
        echo
-@@ -1752,15 +1824,15 @@ $as_echo "$as_me: WARNING: cache variabl
+@@ -1769,15 +1824,15 @@ $as_echo "$as_me: WARNING: cache variabl
        do
  	eval ac_val=\$$ac_var
  	case $ac_val in
@@ -1044,7 +974,7 @@
  ## confdefs.h. ##
  ## ----------- ##"
        echo
-@@ -1768,8 +1840,8 @@ $as_echo "$as_me: WARNING: cache variabl
+@@ -1785,8 +1840,8 @@ $as_echo "$as_me: WARNING: cache variabl
        echo
      fi
      test "$ac_signal" != 0 &&
@@ -1055,7 +985,7 @@
    } >&5
    rm -f core *.core core.conftest.* &&
      rm -f -r conftest* confdefs* conf$$* $ac_clean_files &&
-@@ -1783,63 +1855,48 @@ ac_signal=0
+@@ -1800,63 +1855,48 @@ ac_signal=0
  # confdefs.h avoids OS command line length limits that DEFS can exceed.
  rm -f -r conftest* confdefs.h
  
@@ -1142,7 +1072,7 @@
  as_fn_error $? "failed to load site script $ac_site_file
  See \`config.log' for more details" "$LINENO" 5; }
    fi
-@@ -1849,19 +1906,327 @@ if test -r "$cache_file"; then
+@@ -1866,19 +1906,327 @@ if test -r "$cache_file"; then
    # Some versions of bash will fail to source /dev/null (special files
    # actually), so we avoid doing that.  DJGPP emulates it as a regular file.
    if test /dev/null != "$cache_file" && test -f "$cache_file"; then
@@ -1474,7 +1404,7 @@
  # Check that the precious variables saved in the cache have kept the same
  # value.
  ac_cache_corrupted=false
-@@ -1872,12 +2237,12 @@ for ac_var in $ac_precious_vars; do
+@@ -1889,12 +2237,12 @@ for ac_var in $ac_precious_vars; do
    eval ac_new_val=\$ac_env_${ac_var}_value
    case $ac_old_set,$ac_new_set in
      set,)
@@ -1491,7 +1421,7 @@
        ac_cache_corrupted=: ;;
      ,);;
      *)
-@@ -1886,24 +2251,24 @@ $as_echo "$as_me: error: \`$ac_var' was
+@@ -1903,24 +2251,24 @@ $as_echo "$as_me: error: \`$ac_var' was
  	ac_old_val_w=`echo x $ac_old_val`
  	ac_new_val_w=`echo x $ac_new_val`
  	if test "$ac_old_val_w" != "$ac_new_val_w"; then
@@ -1525,7 +1455,7 @@
      *) ac_arg=$ac_var=$ac_new_val ;;
      esac
      case " $ac_configure_args " in
-@@ -1913,11 +2278,12 @@ $as_echo "$as_me:   current value: \`$ac
+@@ -1930,11 +2278,12 @@ $as_echo "$as_me:   current value: \`$ac
    fi
  done
  if $ac_cache_corrupted; then
@@ -1543,13 +1473,9 @@
  fi
  ## -------------------- ##
  ## Main body of script. ##
-@@ -1934,15 +2300,39 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
+@@ -1955,7 +2304,8 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
  
  
- 
-+
-+
-+
  # Check whether --with-rlm_krb5 was given.
 -if test "${with_rlm_krb5+set}" = set; then :
 +if test ${with_rlm_krb5+y}
@@ -1557,20 +1483,10 @@
    withval=$with_rlm_krb5;
  fi
  
+@@ -1973,6 +2323,15 @@ fr_features=
+ if test x"$with_rlm_krb5" != xno; then
  
--if test x$with_rlm_krb5 != xno; then
  
--	ac_ext=c
-+
-+fail=
-+fr_status=
-+fr_features=
-+: > "config.report"
-+: > "config.report.tmp"
-+
-+
-+
-+if test x"$with_rlm_krb5" != xno; then
 +
 +
 +
@@ -1580,13 +1496,10 @@
 +
 +
 +
-+
-+
-+ac_ext=c
+ ac_ext=c
  ac_cpp='$CPP $CPPFLAGS'
  ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
- ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-@@ -1950,11 +2340,12 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
+@@ -1981,11 +2340,12 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
  if test -n "$ac_tool_prefix"; then
    # Extract the first word of "${ac_tool_prefix}gcc", so it can be a program name with args.
  set dummy ${ac_tool_prefix}gcc; ac_word=$2
@@ -1604,7 +1517,7 @@
    if test -n "$CC"; then
    ac_cv_prog_CC="$CC" # Let the user override the test.
  else
-@@ -1962,11 +2353,15 @@ as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+@@ -1993,11 +2353,15 @@ as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
  for as_dir in $PATH
  do
    IFS=$as_save_IFS
@@ -1623,7 +1536,7 @@
      break 2
    fi
  done
-@@ -1977,11 +2372,11 @@ fi
+@@ -2008,11 +2372,11 @@ fi
  fi
  CC=$ac_cv_prog_CC
  if test -n "$CC"; then
@@ -1639,7 +1552,7 @@
  fi
  
  
-@@ -1990,11 +2385,12 @@ if test -z "$ac_cv_prog_CC"; then
+@@ -2021,11 +2385,12 @@ if test -z "$ac_cv_prog_CC"; then
    ac_ct_CC=$CC
    # Extract the first word of "gcc", so it can be a program name with args.
  set dummy gcc; ac_word=$2
@@ -1657,7 +1570,7 @@
    if test -n "$ac_ct_CC"; then
    ac_cv_prog_ac_ct_CC="$ac_ct_CC" # Let the user override the test.
  else
-@@ -2002,11 +2398,15 @@ as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+@@ -2033,11 +2398,15 @@ as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
  for as_dir in $PATH
  do
    IFS=$as_save_IFS
@@ -1676,7 +1589,7 @@
      break 2
    fi
  done
-@@ -2017,11 +2417,11 @@ fi
+@@ -2048,11 +2417,11 @@ fi
  fi
  ac_ct_CC=$ac_cv_prog_ac_ct_CC
  if test -n "$ac_ct_CC"; then
@@ -1692,7 +1605,7 @@
  fi
  
    if test "x$ac_ct_CC" = x; then
-@@ -2029,8 +2429,8 @@ fi
+@@ -2060,8 +2429,8 @@ fi
    else
      case $cross_compiling:$ac_tool_warned in
  yes:)
@@ -1703,7 +1616,7 @@
  ac_tool_warned=yes ;;
  esac
      CC=$ac_ct_CC
-@@ -2043,11 +2443,12 @@ if test -z "$CC"; then
+@@ -2074,11 +2443,12 @@ if test -z "$CC"; then
            if test -n "$ac_tool_prefix"; then
      # Extract the first word of "${ac_tool_prefix}cc", so it can be a program name with args.
  set dummy ${ac_tool_prefix}cc; ac_word=$2
@@ -1721,7 +1634,7 @@
    if test -n "$CC"; then
    ac_cv_prog_CC="$CC" # Let the user override the test.
  else
-@@ -2055,11 +2456,15 @@ as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+@@ -2086,11 +2456,15 @@ as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
  for as_dir in $PATH
  do
    IFS=$as_save_IFS
@@ -1740,7 +1653,7 @@
      break 2
    fi
  done
-@@ -2070,11 +2475,11 @@ fi
+@@ -2101,11 +2475,11 @@ fi
  fi
  CC=$ac_cv_prog_CC
  if test -n "$CC"; then
@@ -1756,7 +1669,7 @@
  fi
  
  
-@@ -2083,11 +2488,12 @@ fi
+@@ -2114,11 +2488,12 @@ fi
  if test -z "$CC"; then
    # Extract the first word of "cc", so it can be a program name with args.
  set dummy cc; ac_word=$2
@@ -1774,7 +1687,7 @@
    if test -n "$CC"; then
    ac_cv_prog_CC="$CC" # Let the user override the test.
  else
-@@ -2096,15 +2502,19 @@ as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+@@ -2127,15 +2502,19 @@ as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
  for as_dir in $PATH
  do
    IFS=$as_save_IFS
@@ -1798,7 +1711,7 @@
      break 2
    fi
  done
-@@ -2120,18 +2530,18 @@ if test $ac_prog_rejected = yes; then
+@@ -2151,18 +2530,18 @@ if test $ac_prog_rejected = yes; then
      # However, it has the same basename, so the bogon will be chosen
      # first if we set CC to just the basename; use the full file name.
      shift
@@ -1822,7 +1735,7 @@
  fi
  
  
-@@ -2142,11 +2552,12 @@ if test -z "$CC"; then
+@@ -2173,11 +2552,12 @@ if test -z "$CC"; then
    do
      # Extract the first word of "$ac_tool_prefix$ac_prog", so it can be a program name with args.
  set dummy $ac_tool_prefix$ac_prog; ac_word=$2
@@ -1840,7 +1753,7 @@
    if test -n "$CC"; then
    ac_cv_prog_CC="$CC" # Let the user override the test.
  else
-@@ -2154,11 +2565,15 @@ as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+@@ -2185,11 +2565,15 @@ as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
  for as_dir in $PATH
  do
    IFS=$as_save_IFS
@@ -1859,7 +1772,7 @@
      break 2
    fi
  done
-@@ -2169,11 +2584,11 @@ fi
+@@ -2200,11 +2584,11 @@ fi
  fi
  CC=$ac_cv_prog_CC
  if test -n "$CC"; then
@@ -1875,7 +1788,7 @@
  fi
  
  
-@@ -2186,11 +2601,12 @@ if test -z "$CC"; then
+@@ -2217,11 +2601,12 @@ if test -z "$CC"; then
  do
    # Extract the first word of "$ac_prog", so it can be a program name with args.
  set dummy $ac_prog; ac_word=$2
@@ -1893,7 +1806,7 @@
    if test -n "$ac_ct_CC"; then
    ac_cv_prog_ac_ct_CC="$ac_ct_CC" # Let the user override the test.
  else
-@@ -2198,11 +2614,15 @@ as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+@@ -2229,11 +2614,15 @@ as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
  for as_dir in $PATH
  do
    IFS=$as_save_IFS
@@ -1912,7 +1825,7 @@
      break 2
    fi
  done
-@@ -2213,11 +2633,11 @@ fi
+@@ -2244,11 +2633,11 @@ fi
  fi
  ac_ct_CC=$ac_cv_prog_ac_ct_CC
  if test -n "$ac_ct_CC"; then
@@ -1928,7 +1841,7 @@
  fi
  
  
-@@ -2229,34 +2649,138 @@ done
+@@ -2260,34 +2649,138 @@ done
    else
      case $cross_compiling:$ac_tool_warned in
  yes:)
@@ -2074,7 +1987,7 @@
    (eval "$ac_compiler $ac_option >&5") 2>conftest.err
    ac_status=$?
    if test -s conftest.err; then
-@@ -2266,7 +2790,7 @@ $as_echo "$ac_try_echo"; } >&5
+@@ -2297,7 +2790,7 @@ $as_echo "$ac_try_echo"; } >&5
      cat conftest.er1 >&5
    fi
    rm -f conftest.er1 conftest.err
@@ -2083,7 +1996,7 @@
    test $ac_status = 0; }
  done
  
-@@ -2274,7 +2798,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_
+@@ -2305,7 +2798,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_
  /* end confdefs.h.  */
  
  int
@@ -2092,7 +2005,7 @@
  {
  
    ;
-@@ -2286,9 +2810,9 @@ ac_clean_files="$ac_clean_files a.out a.
+@@ -2317,9 +2810,9 @@ ac_clean_files="$ac_clean_files a.out a.
  # Try to create an executable without -o first, disregard a.out.
  # It will help us diagnose broken compilers, and finding out an intuition
  # of exeext.
@@ -2105,7 +2018,7 @@
  
  # The possible output files:
  ac_files="a.out conftest.exe conftest a.exe a_out.exe b.out conftest.*"
-@@ -2309,11 +2833,12 @@ case "(($ac_try" in
+@@ -2340,11 +2833,12 @@ case "(($ac_try" in
    *) ac_try_echo=$ac_try;;
  esac
  eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
@@ -2121,7 +2034,7 @@
    # Autoconf-2.13 could set the ac_cv_exeext variable to `no'.
  # So ignore a value of `no', otherwise this would lead to `EXEEXT = no'
  # in a Makefile.  We should not override ac_cv_exeext if it was cached,
-@@ -2330,7 +2855,7 @@ do
+@@ -2361,7 +2855,7 @@ do
  	# certainly right.
  	break;;
      *.* )
@@ -2130,7 +2043,7 @@
  	then :; else
  	   ac_cv_exeext=`expr "$ac_file" : '[^.]*\(\..*\)'`
  	fi
-@@ -2346,44 +2871,46 @@ do
+@@ -2377,44 +2871,46 @@ do
  done
  test "$ac_cv_exeext" = no && ac_cv_exeext=
  
@@ -2197,7 +2110,7 @@
    # If both `conftest.exe' and `conftest' are `present' (well, observable)
  # catch `conftest.exe'.  For instance with Cygwin, `ls conftest' will
  # work properly (i.e., refer to `conftest.exe'), while it won't with
-@@ -2397,15 +2924,15 @@ for ac_file in conftest.exe conftest con
+@@ -2428,15 +2924,15 @@ for ac_file in conftest.exe conftest con
      * ) break;;
    esac
  done
@@ -2218,7 +2131,7 @@
  
  rm -f conftest.$ac_ext
  EXEEXT=$ac_cv_exeext
-@@ -2414,7 +2941,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_
+@@ -2445,7 +2941,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_
  /* end confdefs.h.  */
  #include <stdio.h>
  int
@@ -2227,7 +2140,7 @@
  {
  FILE *f = fopen ("conftest.out", "w");
   return ferror (f) || fclose (f) != 0;
-@@ -2426,8 +2953,8 @@ _ACEOF
+@@ -2457,8 +2953,8 @@ _ACEOF
  ac_clean_files="$ac_clean_files conftest.out"
  # Check that the compiler produces executables we can run.  If not, either
  # the compiler is broken, or we cross compile.
@@ -2238,7 +2151,7 @@
  if test "$cross_compiling" != yes; then
    { { ac_try="$ac_link"
  case "(($ac_try" in
-@@ -2435,10 +2962,10 @@ case "(($ac_try" in
+@@ -2466,10 +2962,10 @@ case "(($ac_try" in
    *) ac_try_echo=$ac_try;;
  esac
  eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
@@ -2251,7 +2164,7 @@
    test $ac_status = 0; }
    if { ac_try='./conftest$ac_cv_exeext'
    { { case "(($ac_try" in
-@@ -2446,39 +2973,40 @@ $as_echo "$ac_try_echo"; } >&5
+@@ -2477,39 +2973,40 @@ $as_echo "$ac_try_echo"; } >&5
    *) ac_try_echo=$ac_try;;
  esac
  eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
@@ -2305,7 +2218,7 @@
  {
  
    ;
-@@ -2492,11 +3020,12 @@ case "(($ac_try" in
+@@ -2523,11 +3020,12 @@ case "(($ac_try" in
    *) ac_try_echo=$ac_try;;
  esac
  eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
@@ -2321,7 +2234,7 @@
    for ac_file in conftest.o conftest.obj conftest.*; do
    test -f "$ac_file" || continue;
    case $ac_file in
-@@ -2505,31 +3034,32 @@ $as_echo "$ac_try_echo"; } >&5
+@@ -2536,31 +3034,32 @@ $as_echo "$ac_try_echo"; } >&5
         break;;
    esac
  done
@@ -2366,7 +2279,7 @@
  {
  #ifndef __GNUC__
         choke me
-@@ -2539,29 +3069,33 @@ main ()
+@@ -2570,29 +3069,33 @@ main ()
    return 0;
  }
  _ACEOF
@@ -2411,7 +2324,7 @@
    ac_save_c_werror_flag=$ac_c_werror_flag
     ac_c_werror_flag=yes
     ac_cv_prog_cc_g=no
-@@ -2570,57 +3104,60 @@ else
+@@ -2601,57 +3104,60 @@ else
  /* end confdefs.h.  */
  
  int
@@ -2486,7 +2399,7 @@
    CFLAGS=$ac_save_CFLAGS
  elif test $ac_cv_prog_cc_g = yes; then
    if test "$GCC" = yes; then
-@@ -2635,94 +3172,144 @@ else
+@@ -2666,94 +3172,144 @@ else
      CFLAGS=
    fi
  fi
@@ -2703,13 +2616,7 @@
  fi
  
  ac_ext=c
-@@ -2731,45 +3318,41 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS con
- ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
- ac_compiler_gnu=$ac_cv_c_compiler_gnu
- 
--	ac_ext=c
-+ac_ext=c
- ac_cpp='$CPP $CPPFLAGS'
+@@ -2767,40 +3323,36 @@ ac_cpp='$CPP $CPPFLAGS'
  ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
  ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
  ac_compiler_gnu=$ac_cv_c_compiler_gnu
@@ -2762,7 +2669,7 @@
    # Broken: fails on valid input.
  continue
  fi
-@@ -2781,10 +3364,11 @@ rm -f conftest.err conftest.i conftest.$
+@@ -2812,10 +3364,11 @@ rm -f conftest.err conftest.i conftest.$
  /* end confdefs.h.  */
  #include <ac_nonexistent.h>
  _ACEOF
@@ -2776,7 +2683,7 @@
    # Passes both tests.
  ac_preproc_ok=:
  break
-@@ -2794,7 +3378,8 @@ rm -f conftest.err conftest.i conftest.$
+@@ -2825,7 +3378,8 @@ rm -f conftest.err conftest.i conftest.$
  done
  # Because of `break', _AC_PREPROC_IFELSE's cleaning code was skipped.
  rm -f conftest.i conftest.err conftest.$ac_ext
@@ -2786,7 +2693,7 @@
    break
  fi
  
-@@ -2806,29 +3391,24 @@ fi
+@@ -2837,29 +3391,24 @@ fi
  else
    ac_cv_prog_CPP=$CPP
  fi
@@ -2822,7 +2729,7 @@
    # Broken: fails on valid input.
  continue
  fi
-@@ -2840,10 +3420,11 @@ rm -f conftest.err conftest.i conftest.$
+@@ -2871,10 +3420,11 @@ rm -f conftest.err conftest.i conftest.$
  /* end confdefs.h.  */
  #include <ac_nonexistent.h>
  _ACEOF
@@ -2836,7 +2743,7 @@
    # Passes both tests.
  ac_preproc_ok=:
  break
-@@ -2853,11 +3434,12 @@ rm -f conftest.err conftest.i conftest.$
+@@ -2884,11 +3434,12 @@ rm -f conftest.err conftest.i conftest.$
  done
  # Because of `break', _AC_PREPROC_IFELSE's cleaning code was skipped.
  rm -f conftest.i conftest.err conftest.$ac_ext
@@ -2853,38 +2760,21 @@
  as_fn_error $? "C preprocessor \"$CPP\" fails sanity check
  See \`config.log' for more details" "$LINENO" 5; }
  fi
-@@ -2869,31 +3451,32 @@ ac_link='$CC -o conftest$ac_exeext $CFLA
- ac_compiler_gnu=$ac_cv_c_compiler_gnu
- 
- 
--		rlm_krb5_dir=
-+rlm_krb5_dir=
+@@ -2903,8 +3454,9 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
+ rlm_krb5_dir=
  
  # Check whether --with-rlm-krb5-dir was given.
 -if test "${with_rlm_krb5_dir+set}" = set; then :
 -  withval=$with_rlm_krb5_dir;  case "$withval" in
--	    no)
 +if test ${with_rlm_krb5_dir+y}
 +then :
 +  withval=$with_rlm_krb5_dir; case "$withval" in
-+	no)
+ 	no)
  		as_fn_error $? "Need rlm-krb5-dir" "$LINENO" 5
  		;;
--	    yes)
-+	yes)
- 		;;
--	    *)
-+	*)
- 		rlm_krb5_dir="$withval"
- 		;;
--	  esac
--
-+	esac
- fi
+@@ -2919,11 +3471,12 @@ fi
  
- 
--	# Extract the first word of "krb5-config", so it can be a program name with args.
-+# Extract the first word of "krb5-config", so it can be a program name with args.
+ # Extract the first word of "krb5-config", so it can be a program name with args.
  set dummy krb5-config; ac_word=$2
 -{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 -$as_echo_n "checking for $ac_word... " >&6; }
@@ -2900,7 +2790,7 @@
    case $krb5_config in
    [\\/]* | ?:[\\/]*)
    ac_cv_path_krb5_config="$krb5_config" # Let the user override the test with a path.
-@@ -2904,11 +3487,15 @@ as_dummy="${rlm_krb5_dir}/bin:${PATH}:/u
+@@ -2934,11 +3487,15 @@ as_dummy="${rlm_krb5_dir}/bin:${PATH}:/u
  for as_dir in $as_dummy
  do
    IFS=$as_save_IFS
@@ -2920,7 +2810,7 @@
      break 2
    fi
  done
-@@ -2921,1920 +3508,1639 @@ esac
+@@ -2951,78 +3508,55 @@ esac
  fi
  krb5_config=$ac_cv_path_krb5_config
  if test -n "$krb5_config"; then
@@ -2936,94 +2826,97 @@
  fi
  
  
--					if test "$krb5_config" != 'not-found'; then
--		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking krb5-config CFLAGS" >&5
+-
+ if test "$krb5_config" != 'not-found'; then
+-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking krb5-config CFLAGS" >&5
 -$as_echo_n "checking krb5-config CFLAGS... " >&6; }
--		SMART_CPPFLAGS=$($krb5_config --cflags)
--		SMART_CPPFLAGS=$(echo "$SMART_CPPFLAGS" | sed 's/-I[ ]*/-isystem /g')
--		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: \"$SMART_CPPFLAGS\"" >&5
--$as_echo "\"$SMART_CPPFLAGS\"" >&6; }
--
--		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking krb5-config LDFLAGS" >&5
--$as_echo_n "checking krb5-config LDFLAGS... " >&6; }
--		SMART_LIBS=$($krb5_config --libs)
--		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${SMART_LIBS}" >&5
--$as_echo "${SMART_LIBS}" >&6; }
--
--		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking krb5-config reported version" >&5
--$as_echo_n "checking krb5-config reported version... " >&6; }
--		krb5_version_raw=$($krb5_config --version)
--
--				krb5_version=$(echo "$krb5_version_raw" | head -n 1 | \
--			awk '{split($(4),v,"."); if (v["3"] = "") v["3"] = "0"; print v["1"]v["2"]v["3"] }')
--		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${krb5_version_raw} ($krb5_version)" >&5
--$as_echo "${krb5_version_raw} ($krb5_version)" >&6; }
--
--		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking krb5-config reported vendor" >&5
--$as_echo_n "checking krb5-config reported vendor... " >&6; }
--		krb5_vendor=$($krb5_config --vendor)
--		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${krb5_vendor}" >&5
--$as_echo "${krb5_vendor}" >&6; }
--
--		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking canonical API type" >&5
--$as_echo_n "checking canonical API type... " >&6; }
--		if test "$krb5_vendor" = "Massachusetts Institute of Technology" || \
--			echo "$krb5_vendor" | grep -i 'MIT' > /dev/null 2>&1 || \
--			echo "$krb5_version_raw" | grep -i 'MIT' > /dev/null 2>&1 ; then
--			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: MIT" >&5
--$as_echo "MIT" >&6; }
--			krb5_api_type='mit'
--		else
--			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: HEIMDAL" >&5
--$as_echo "HEIMDAL" >&6; }
--			krb5_api_type='heimdal'
--		fi
-+if test "$krb5_config" != 'not-found'; then
 +	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking krb5-config CFLAGS" >&5
 +printf %s "checking krb5-config CFLAGS... " >&6; }
-+	SMART_CPPFLAGS=$($krb5_config --cflags)
-+	SMART_CPPFLAGS=$(echo "$SMART_CPPFLAGS" | sed 's/-I[ ]*/-isystem /g')
+ 	SMART_CPPFLAGS=$($krb5_config --cflags)
+ 	SMART_CPPFLAGS=$(echo "$SMART_CPPFLAGS" | sed 's/-I[ ]*/-isystem /g')
+-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: \"$SMART_CPPFLAGS\"" >&5
+-$as_echo "\"$SMART_CPPFLAGS\"" >&6; }
 +	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: \"$SMART_CPPFLAGS\"" >&5
 +printf "%s\n" "\"$SMART_CPPFLAGS\"" >&6; }
-+
+ 
+-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking krb5-config LDFLAGS" >&5
+-$as_echo_n "checking krb5-config LDFLAGS... " >&6; }
 +	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking krb5-config LDFLAGS" >&5
 +printf %s "checking krb5-config LDFLAGS... " >&6; }
-+	SMART_LIBS=$($krb5_config --libs)
+ 	SMART_LIBS=$($krb5_config --libs)
+-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${SMART_LIBS}" >&5
+-$as_echo "${SMART_LIBS}" >&6; }
 +	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: ${SMART_LIBS}" >&5
 +printf "%s\n" "${SMART_LIBS}" >&6; }
-+
+ 
+-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking krb5-config reported version" >&5
+-$as_echo_n "checking krb5-config reported version... " >&6; }
 +	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking krb5-config reported version" >&5
 +printf %s "checking krb5-config reported version... " >&6; }
-+	krb5_version_raw=$($krb5_config --version)
-+
-+		krb5_version=$(echo "$krb5_version_raw" | head -n 1 | \
+ 	krb5_version_raw=$($krb5_config --version)
+ 
+ 		krb5_version=$(echo "$krb5_version_raw" | head -n 1 | \
+-		awk '{split($(4),v,"."); if (v["3"] = "") v["3"] = "0"; print v["1"]v["2"]v["3"] }')
+-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${krb5_version_raw} ($krb5_version)" >&5
+-$as_echo "${krb5_version_raw} ($krb5_version)" >&6; }
 +		awk '{split($(4),v,"."); if (v["3"] == "") v["3"] = "0"; print v["1"]v["2"]v["3"] }')
 +	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: ${krb5_version_raw} ($krb5_version)" >&5
 +printf "%s\n" "${krb5_version_raw} ($krb5_version)" >&6; }
-+
+ 
+-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking krb5-config reported vendor" >&5
+-$as_echo_n "checking krb5-config reported vendor... " >&6; }
 +	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking krb5-config reported vendor" >&5
 +printf %s "checking krb5-config reported vendor... " >&6; }
-+	krb5_vendor=$($krb5_config --vendor)
+ 	krb5_vendor=$($krb5_config --vendor)
+-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${krb5_vendor}" >&5
+-$as_echo "${krb5_vendor}" >&6; }
 +	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: ${krb5_vendor}" >&5
 +printf "%s\n" "${krb5_vendor}" >&6; }
-+
+ 
+-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking canonical API type" >&5
+-$as_echo_n "checking canonical API type... " >&6; }
 +	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking canonical API type" >&5
 +printf %s "checking canonical API type... " >&6; }
-+	if test "$krb5_vendor" = "Massachusetts Institute of Technology" || \
-+		echo "$krb5_vendor" | grep -i 'MIT' > /dev/null 2>&1 || \
-+		echo "$krb5_version_raw" | grep -i 'MIT' > /dev/null 2>&1 ; then
+ 	if test "$krb5_vendor" = "Massachusetts Institute of Technology" || \
+ 		echo "$krb5_vendor" | grep -i 'MIT' > /dev/null 2>&1 || \
+ 		echo "$krb5_version_raw" | grep -i 'MIT' > /dev/null 2>&1 ; then
+-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: MIT" >&5
+-$as_echo "MIT" >&6; }
 +		{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: MIT" >&5
 +printf "%s\n" "MIT" >&6; }
-+		krb5_api_type='mit'
+ 		krb5_api_type='mit'
+-
+-if echo "$fr_features" | grep -q "+using MIT kerberos+"; then :
+-else :
+-	fr_report_prefix=""
+-	if test x"$fr_features" != x""; then
+-		fr_report_prefix="                                 "
+-	fi
+-	$as_echo "$fr_report_prefix""" >> config.report.tmp
+-	fr_features="$fr_features +using MIT kerberos+"
+-fi
+-
  	else
--		smart_try_dir="$rlm_krb5_dir/include"
+-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: HEIMDAL" >&5
+-$as_echo "HEIMDAL" >&6; }
 +		{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: HEIMDAL" >&5
 +printf "%s\n" "HEIMDAL" >&6; }
-+		krb5_api_type='heimdal'
-+	fi
-+else
-+	smart_try_dir="$rlm_krb5_dir/include"
- 
+ 		krb5_api_type='heimdal'
+-
+-if echo "$fr_features" | grep -q "+using Heimdal kerberos+"; then :
+-else :
+-	fr_report_prefix=""
+-	if test x"$fr_features" != x""; then
+-		fr_report_prefix="                                 "
+-	fi
+-	$as_echo "$fr_report_prefix""" >> config.report.tmp
+-	fr_features="$fr_features +using Heimdal kerberos+"
+-fi
+-
+ 	fi
+ else
+ 	smart_try_dir="$rlm_krb5_dir/include"
+@@ -3030,168 +3564,201 @@ else
  
  
  ac_safe=`echo "krb5.h" | sed 'y%./+-%__pm%'`
@@ -3239,86 +3132,31 @@
  
  if test "x$smart_include" = "x"; then
 -
--  for prefix in $smart_prefix; do
--
--
--if test "x$LOCATE" != "x"; then
--        DIRS=
--  file="${_prefix}/${1}"
--
--  for x in `${LOCATE} $file 2>/dev/null`; do
--                                        base=`echo $x | sed "s%/${file}%%"`
--    if test "x$x" = "x$base"; then
--      continue;
--    fi
--
--    dir=`${DIRNAME} $x 2>/dev/null`
--                exclude=`echo ${dir} | ${GREP} /home`
--    if test "x$exclude" != "x"; then
--      continue
--    fi
--
--                    already=`echo \$_smart_include_dir ${DIRS} | ${GREP} ${dir}`
--    if test "x$already" = "x"; then
--      DIRS="$DIRS $dir"
--    fi
--  done
--fi
--
--eval "_smart_include_dir=\"\$_smart_include_dir $DIRS\""
--
--  done
-+for try in $_smart_include_dir; do
-+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for krb5.h in $try" >&5
-+printf %s "checking for krb5.h in $try... " >&6; }
-+  CPPFLAGS="-isystem $try $old_CPPFLAGS"
-+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-+/* end confdefs.h.  */
- 
- 
--if test "x$LOCATE" != "x"; then
--        DIRS=
--  file=krb5.h
--
--  for x in `${LOCATE} $file 2>/dev/null`; do
--                                        base=`echo $x | sed "s%/${file}%%"`
--    if test "x$x" = "x$base"; then
--      continue;
--    fi
-+		                        #include <krb5.h>
- 
--    dir=`${DIRNAME} $x 2>/dev/null`
--                exclude=`echo ${dir} | ${GREP} /home`
--    if test "x$exclude" != "x"; then
--      continue
--    fi
--
--                    already=`echo \$_smart_include_dir ${DIRS} | ${GREP} ${dir}`
--    if test "x$already" = "x"; then
--      DIRS="$DIRS $dir"
--    fi
--  done
--fi
--
--eval "_smart_include_dir=\"\$_smart_include_dir $DIRS\""
-+int
-+main (void)
-+{
- 
-+                                        int a = 1;
- 
 -  for try in $_smart_include_dir; do
 -    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for krb5.h in $try" >&5
 -$as_echo_n "checking for krb5.h in $try... " >&6; }
 -    CPPFLAGS="-isystem $try $old_CPPFLAGS"
 -    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
--/* end confdefs.h.  */
++for try in $_smart_include_dir; do
++  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for krb5.h in $try" >&5
++printf %s "checking for krb5.h in $try... " >&6; }
++  CPPFLAGS="-isystem $try $old_CPPFLAGS"
++  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ /* end confdefs.h.  */
  
 -		    #include <krb5.h>
--int
++
++		                        #include <krb5.h>
++
+ int
 -main ()
--{
++main (void)
+ {
 -int a = 1;
++
++                                        int a = 1;
++
++
    ;
    return 0;
  }
@@ -3366,22 +3204,7 @@
  fi
  
  smart_prefix=
- 
--		if test "$ac_cv_header_krb5_h" != "yes"; then
--			fail="$fail krb5.h"
--		fi
-+	if test "$ac_cv_header_krb5_h" != "yes"; then
-+
-+fail="$fail krb5.h"
- 
--		krb5libcrypto=
--		smart_try_dir="$rlm_krb5_dir/lib"
-+	fi
-+
-+	krb5libcrypto=
-+	smart_try_dir="$rlm_krb5_dir/lib"
- 
- 
+@@ -3209,118 +3776,131 @@ fail="$fail krb5.h"
  sm_lib_safe=`echo "k5crypto" | sed 'y%./+-%__p_%'`
  sm_func_safe=`echo "krb5_encrypt_data" | sed 'y%./+-%__p_%'`
  
@@ -3477,13 +3300,13 @@
  }
  _ACEOF
 -if ac_fn_c_try_link "$LINENO"; then :
-+if ac_fn_c_try_link "$LINENO"
-+then :
- 
+-
 -	        smart_lib="-lk5crypto"
 -	        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 -$as_echo "yes" >&6; }
--
++if ac_fn_c_try_link "$LINENO"
++then :
+ 
 -else
 -  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 -$as_echo "no" >&6; }
@@ -3504,62 +3327,7 @@
  fi
  
  if test "x$smart_lib" = "x"; then
--
--
--if test "x$LOCATE" != "x"; then
--        DIRS=
--  file=libk5crypto${libltdl_cv_shlibext}
--
--  for x in `${LOCATE} $file 2>/dev/null`; do
--                                        base=`echo $x | sed "s%/${file}%%"`
--    if test "x$x" = "x$base"; then
--      continue;
--    fi
--
--    dir=`${DIRNAME} $x 2>/dev/null`
--                exclude=`echo ${dir} | ${GREP} /home`
--    if test "x$exclude" != "x"; then
--      continue
--    fi
--
--                    already=`echo \$smart_lib_dir ${DIRS} | ${GREP} ${dir}`
--    if test "x$already" = "x"; then
--      DIRS="$DIRS $dir"
--    fi
--  done
--fi
--
--eval "smart_lib_dir=\"\$smart_lib_dir $DIRS\""
--
--
--
--if test "x$LOCATE" != "x"; then
--        DIRS=
--  file=libk5crypto.a
--
--  for x in `${LOCATE} $file 2>/dev/null`; do
--                                        base=`echo $x | sed "s%/${file}%%"`
--    if test "x$x" = "x$base"; then
--      continue;
--    fi
--
--    dir=`${DIRNAME} $x 2>/dev/null`
--                exclude=`echo ${dir} | ${GREP} /home`
--    if test "x$exclude" != "x"; then
--      continue
--    fi
--
--                    already=`echo \$smart_lib_dir ${DIRS} | ${GREP} ${dir}`
--    if test "x$already" = "x"; then
--      DIRS="$DIRS $dir"
--    fi
--  done
--fi
--
--eval "smart_lib_dir=\"\$smart_lib_dir $DIRS\""
--
--
--  for try in $smart_lib_dir /usr/local/lib /opt/lib; do
+-  for try in /usr/local/lib /opt/lib; do
 -    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for krb5_encrypt_data in -lk5crypto in $try" >&5
 -$as_echo_n "checking for krb5_encrypt_data in -lk5crypto in $try... " >&6; }
 -    LIBS="-lk5crypto $old_LIBS"
@@ -3583,15 +3351,15 @@
  }
  _ACEOF
 -if ac_fn_c_try_link "$LINENO"; then :
--
++if ac_fn_c_try_link "$LINENO"
++then :
+ 
 -		  smart_lib="-lk5crypto"
 -		  smart_ldflags="-L$try -Wl,-rpath,$try"
 -		  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 -$as_echo "yes" >&6; }
 -		  break
-+if ac_fn_c_try_link "$LINENO"
-+then :
- 
+-
 -else
 -  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 -$as_echo "no" >&6; }
@@ -3627,17 +3395,8 @@
 +SMART_LD_FOUND="$smart_ld_found"
  fi
  
--		if test "x$ac_cv_lib_k5crypto_krb5_encrypt_data" = xyes; then
--			krb5libcrypto="-lk5crypto"
--		fi
-+	if test "x$ac_cv_lib_k5crypto_krb5_encrypt_data" = xyes; then
-+		krb5libcrypto="-lk5crypto"
-+	fi
- 
--		if test "x$krb5libcrypto" = x; then
-+	if test "x$krb5libcrypto" = x; then
- 
- 
+ 	if test "x$ac_cv_lib_k5crypto_krb5_encrypt_data" = xyes; then
+@@ -3333,118 +3913,131 @@ fi
  sm_lib_safe=`echo "crypto" | sed 'y%./+-%__p_%'`
  sm_func_safe=`echo "DH_new" | sed 'y%./+-%__p_%'`
  
@@ -3760,62 +3519,7 @@
  fi
  
  if test "x$smart_lib" = "x"; then
--
--
--if test "x$LOCATE" != "x"; then
--        DIRS=
--  file=libcrypto${libltdl_cv_shlibext}
--
--  for x in `${LOCATE} $file 2>/dev/null`; do
--                                        base=`echo $x | sed "s%/${file}%%"`
--    if test "x$x" = "x$base"; then
--      continue;
--    fi
--
--    dir=`${DIRNAME} $x 2>/dev/null`
--                exclude=`echo ${dir} | ${GREP} /home`
--    if test "x$exclude" != "x"; then
--      continue
--    fi
--
--                    already=`echo \$smart_lib_dir ${DIRS} | ${GREP} ${dir}`
--    if test "x$already" = "x"; then
--      DIRS="$DIRS $dir"
--    fi
--  done
--fi
--
--eval "smart_lib_dir=\"\$smart_lib_dir $DIRS\""
--
--
--
--if test "x$LOCATE" != "x"; then
--        DIRS=
--  file=libcrypto.a
--
--  for x in `${LOCATE} $file 2>/dev/null`; do
--                                        base=`echo $x | sed "s%/${file}%%"`
--    if test "x$x" = "x$base"; then
--      continue;
--    fi
--
--    dir=`${DIRNAME} $x 2>/dev/null`
--                exclude=`echo ${dir} | ${GREP} /home`
--    if test "x$exclude" != "x"; then
--      continue
--    fi
--
--                    already=`echo \$smart_lib_dir ${DIRS} | ${GREP} ${dir}`
--    if test "x$already" = "x"; then
--      DIRS="$DIRS $dir"
--    fi
--  done
--fi
--
--eval "smart_lib_dir=\"\$smart_lib_dir $DIRS\""
--
--
--  for try in $smart_lib_dir /usr/local/lib /opt/lib; do
+-  for try in /usr/local/lib /opt/lib; do
 -    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for DH_new in -lcrypto in $try" >&5
 -$as_echo_n "checking for DH_new in -lcrypto in $try... " >&6; }
 -    LIBS="-lcrypto $old_LIBS"
@@ -3883,25 +3587,19 @@
 +SMART_LD_FOUND="$smart_ld_found"
  fi
  
--			if test "x$ac_cv_lib_crypto_DH_new" = xyes; then
--				krb5libcrypto="-lcrypto"
--			fi
-+		if test "x$ac_cv_lib_crypto_DH_new" = xyes; then
-+			krb5libcrypto="-lcrypto"
- 		fi
-+	fi
+ 		if test "x$ac_cv_lib_crypto_DH_new" = xyes; then
+@@ -3453,8 +4046,8 @@ fi
+ 	fi
  
--		if test "x$krb5libcrypto" = x; then
--			{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: neither krb5 'k5crypto' nor 'crypto' libraries are found!" >&5
+ 	if test "x$krb5libcrypto" = x; then
+-		{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: neither krb5 'k5crypto' nor 'crypto' libraries are found!" >&5
 -$as_echo "$as_me: WARNING: neither krb5 'k5crypto' nor 'crypto' libraries are found!" >&2;}
--		fi
-+	if test "x$krb5libcrypto" = x; then
 +		{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: neither krb5 'k5crypto' nor 'crypto' libraries are found!" >&5
 +printf "%s\n" "$as_me: WARNING: neither krb5 'k5crypto' nor 'crypto' libraries are found!" >&2;}
-+	fi
+ 	fi
  
  
- 
+@@ -3462,123 +4055,136 @@ $as_echo "$as_me: WARNING: neither krb5
  sm_lib_safe=`echo "com_err" | sed 'y%./+-%__p_%'`
  sm_func_safe=`echo "set_com_err_hook" | sed 'y%./+-%__p_%'`
  
@@ -4024,62 +3722,7 @@
  fi
  
  if test "x$smart_lib" = "x"; then
--
--
--if test "x$LOCATE" != "x"; then
--        DIRS=
--  file=libcom_err${libltdl_cv_shlibext}
--
--  for x in `${LOCATE} $file 2>/dev/null`; do
--                                        base=`echo $x | sed "s%/${file}%%"`
--    if test "x$x" = "x$base"; then
--      continue;
--    fi
--
--    dir=`${DIRNAME} $x 2>/dev/null`
--                exclude=`echo ${dir} | ${GREP} /home`
--    if test "x$exclude" != "x"; then
--      continue
--    fi
--
--                    already=`echo \$smart_lib_dir ${DIRS} | ${GREP} ${dir}`
--    if test "x$already" = "x"; then
--      DIRS="$DIRS $dir"
--    fi
--  done
--fi
--
--eval "smart_lib_dir=\"\$smart_lib_dir $DIRS\""
--
--
--
--if test "x$LOCATE" != "x"; then
--        DIRS=
--  file=libcom_err.a
--
--  for x in `${LOCATE} $file 2>/dev/null`; do
--                                        base=`echo $x | sed "s%/${file}%%"`
--    if test "x$x" = "x$base"; then
--      continue;
--    fi
--
--    dir=`${DIRNAME} $x 2>/dev/null`
--                exclude=`echo ${dir} | ${GREP} /home`
--    if test "x$exclude" != "x"; then
--      continue
--    fi
--
--                    already=`echo \$smart_lib_dir ${DIRS} | ${GREP} ${dir}`
--    if test "x$already" = "x"; then
--      DIRS="$DIRS $dir"
--    fi
--  done
--fi
--
--eval "smart_lib_dir=\"\$smart_lib_dir $DIRS\""
--
--
--  for try in $smart_lib_dir /usr/local/lib /opt/lib; do
+-  for try in /usr/local/lib /opt/lib; do
 -    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for set_com_err_hook in -lcom_err in $try" >&5
 -$as_echo_n "checking for set_com_err_hook in -lcom_err in $try... " >&6; }
 -    LIBS="-lcom_err $old_LIBS"
@@ -4147,17 +3790,15 @@
 +SMART_LD_FOUND="$smart_ld_found"
  fi
  
--		if test "x$ac_cv_lib_com_err_set_com_err_hook" != xyes; then
--			{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: the comm_err library isn't found!" >&5
+ 	if test "x$ac_cv_lib_com_err_set_com_err_hook" != xyes; then
+-		{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: the comm_err library isn't found!" >&5
 -$as_echo "$as_me: WARNING: the comm_err library isn't found!" >&2;}
--		fi
-+	if test "x$ac_cv_lib_com_err_set_com_err_hook" != xyes; then
 +		{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: the comm_err library isn't found!" >&5
 +printf "%s\n" "$as_me: WARNING: the comm_err library isn't found!" >&2;}
-+	fi
+ 	fi
  
  
- 
+@@ -3586,264 +4192,268 @@ $as_echo "$as_me: WARNING: the comm_err
  sm_lib_safe=`echo "krb5" | sed 'y%./+-%__p_%'`
  sm_func_safe=`echo "krb5_verify_user_opt" | sed 'y%./+-%__p_%'`
  
@@ -4199,15 +3840,15 @@
  }
  _ACEOF
 -if ac_fn_c_try_link "$LINENO"; then :
--
++if ac_fn_c_try_link "$LINENO"
++then :
+ 
 -		 smart_lib="-lkrb5"
 -		 smart_ldflags="-L$try -Wl,-rpath,$try"
 -		 { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 -$as_echo "yes" >&6; }
 -		 break
-+if ac_fn_c_try_link "$LINENO"
-+then :
- 
+-
 -else
 -  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 -$as_echo "no" >&6; }
@@ -4280,62 +3921,7 @@
  fi
  
  if test "x$smart_lib" = "x"; then
--
--
--if test "x$LOCATE" != "x"; then
--        DIRS=
--  file=libkrb5${libltdl_cv_shlibext}
--
--  for x in `${LOCATE} $file 2>/dev/null`; do
--                                        base=`echo $x | sed "s%/${file}%%"`
--    if test "x$x" = "x$base"; then
--      continue;
--    fi
--
--    dir=`${DIRNAME} $x 2>/dev/null`
--                exclude=`echo ${dir} | ${GREP} /home`
--    if test "x$exclude" != "x"; then
--      continue
--    fi
--
--                    already=`echo \$smart_lib_dir ${DIRS} | ${GREP} ${dir}`
--    if test "x$already" = "x"; then
--      DIRS="$DIRS $dir"
--    fi
--  done
--fi
--
--eval "smart_lib_dir=\"\$smart_lib_dir $DIRS\""
--
--
--
--if test "x$LOCATE" != "x"; then
--        DIRS=
--  file=libkrb5.a
--
--  for x in `${LOCATE} $file 2>/dev/null`; do
--                                        base=`echo $x | sed "s%/${file}%%"`
--    if test "x$x" = "x$base"; then
--      continue;
--    fi
--
--    dir=`${DIRNAME} $x 2>/dev/null`
--                exclude=`echo ${dir} | ${GREP} /home`
--    if test "x$exclude" != "x"; then
--      continue
--    fi
--
--                    already=`echo \$smart_lib_dir ${DIRS} | ${GREP} ${dir}`
--    if test "x$already" = "x"; then
--      DIRS="$DIRS $dir"
--    fi
--  done
--fi
--
--eval "smart_lib_dir=\"\$smart_lib_dir $DIRS\""
--
--
--  for try in $smart_lib_dir /usr/local/lib /opt/lib; do
+-  for try in /usr/local/lib /opt/lib; do
 -    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for krb5_verify_user_opt in -lkrb5 in $try" >&5
 -$as_echo_n "checking for krb5_verify_user_opt in -lkrb5 in $try... " >&6; }
 -    LIBS="-lkrb5 $old_LIBS"
@@ -4403,15 +3989,33 @@
 +SMART_LD_FOUND="$smart_ld_found"
  fi
  
--		if test "x$ac_cv_lib_krb5_krb5_verify_user_opt" = xyes; then
--			krb5_api_type='heimdal'
--		else
--			krb5_api_type='mit'
-+	if test "x$ac_cv_lib_krb5_krb5_verify_user_opt" = xyes; then
-+		krb5_api_type='heimdal'
-+	else
-+		krb5_api_type='mit'
+ 	if test "x$ac_cv_lib_krb5_krb5_verify_user_opt" = xyes; then
+ 		krb5_api_type='heimdal'
+-
+-if echo "$fr_features" | grep -q "+using Heimdal kerberos+"; then :
+-else :
+-	fr_report_prefix=""
+-	if test x"$fr_features" != x""; then
+-		fr_report_prefix="                                 "
+-	fi
+-	$as_echo "$fr_report_prefix""" >> config.report.tmp
+-	fr_features="$fr_features +using Heimdal kerberos+"
+-fi
+-
+ 	else
+ 		krb5_api_type='mit'
  
+-if echo "$fr_features" | grep -q "+using MIT kerberos+"; then :
+-else :
+-	fr_report_prefix=""
+-	if test x"$fr_features" != x""; then
+-		fr_report_prefix="                                 "
+-	fi
+-	$as_echo "$fr_report_prefix""" >> config.report.tmp
+-	fr_features="$fr_features +using MIT kerberos+"
+-fi
+-
+-
  
  
  sm_lib_safe=`echo "krb5" | sed 'y%./+-%__p_%'`
@@ -4509,13 +4113,13 @@
  }
  _ACEOF
 -if ac_fn_c_try_link "$LINENO"; then :
-+if ac_fn_c_try_link "$LINENO"
-+then :
- 
+-
 -	        smart_lib="-lkrb5"
 -	        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 -$as_echo "yes" >&6; }
--
++if ac_fn_c_try_link "$LINENO"
++then :
+ 
 -else
 -  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 -$as_echo "no" >&6; }
@@ -4536,62 +4140,7 @@
  fi
  
  if test "x$smart_lib" = "x"; then
--
--
--if test "x$LOCATE" != "x"; then
--        DIRS=
--  file=libkrb5${libltdl_cv_shlibext}
--
--  for x in `${LOCATE} $file 2>/dev/null`; do
--                                        base=`echo $x | sed "s%/${file}%%"`
--    if test "x$x" = "x$base"; then
--      continue;
--    fi
--
--    dir=`${DIRNAME} $x 2>/dev/null`
--                exclude=`echo ${dir} | ${GREP} /home`
--    if test "x$exclude" != "x"; then
--      continue
--    fi
--
--                    already=`echo \$smart_lib_dir ${DIRS} | ${GREP} ${dir}`
--    if test "x$already" = "x"; then
--      DIRS="$DIRS $dir"
--    fi
--  done
--fi
--
--eval "smart_lib_dir=\"\$smart_lib_dir $DIRS\""
--
--
--
--if test "x$LOCATE" != "x"; then
--        DIRS=
--  file=libkrb5.a
--
--  for x in `${LOCATE} $file 2>/dev/null`; do
--                                        base=`echo $x | sed "s%/${file}%%"`
--    if test "x$x" = "x$base"; then
--      continue;
--    fi
--
--    dir=`${DIRNAME} $x 2>/dev/null`
--                exclude=`echo ${dir} | ${GREP} /home`
--    if test "x$exclude" != "x"; then
--      continue
--    fi
--
--                    already=`echo \$smart_lib_dir ${DIRS} | ${GREP} ${dir}`
--    if test "x$already" = "x"; then
--      DIRS="$DIRS $dir"
--    fi
--  done
--fi
--
--eval "smart_lib_dir=\"\$smart_lib_dir $DIRS\""
--
--
--  for try in $smart_lib_dir /usr/local/lib /opt/lib; do
+-  for try in /usr/local/lib /opt/lib; do
 -    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for krb5_get_init_creds_password in -lkrb5 in $try" >&5
 -$as_echo_n "checking for krb5_get_init_creds_password in -lkrb5 in $try... " >&6; }
 -    LIBS="-lkrb5 $old_LIBS"
@@ -4615,15 +4164,15 @@
  }
  _ACEOF
 -if ac_fn_c_try_link "$LINENO"; then :
--
++if ac_fn_c_try_link "$LINENO"
++then :
+ 
 -		  smart_lib="-lkrb5"
 -		  smart_ldflags="-L$try -Wl,-rpath,$try"
 -		  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 -$as_echo "yes" >&6; }
 -		  break
-+if ac_fn_c_try_link "$LINENO"
-+then :
- 
+-
 -else
 -  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 -$as_echo "no" >&6; }
@@ -4659,22 +4208,12 @@
 +SMART_LD_FOUND="$smart_ld_found"
  fi
  
--			if test "x$ac_cv_lib_krb5_krb5_get_init_creds_password" != xyes; then
--			    fail="$fail krb5"
--			fi
--		fi
-+		if test "x$ac_cv_lib_krb5_krb5_get_init_creds_password" != xyes; then
+ 		if test "x$ac_cv_lib_krb5_krb5_get_init_creds_password" != xyes; then
+@@ -3858,17 +4468,24 @@ fi
+ LDFLAGS="${LDFLAGS} ${SMART_LIBS}"
+ CFLAGS="${CFLAGS} ${SMART_CPPFLAGS}"
  
-+fail="$fail krb5"
-+
-+		fi
- 	fi
- 
--				LDFLAGS="${LDFLAGS} ${SMART_LIBS}"
--	CFLAGS="${CFLAGS} ${SMART_CPPFLAGS}"
-+fi
- 
--				for ac_func in krb5_get_error_message krb5_free_error_string krb5_free_error_message
+-for ac_func in krb5_get_error_message krb5_free_error_string krb5_free_error_message
 -do :
 -  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 -ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -4682,55 +4221,29 @@
 -  cat >>confdefs.h <<_ACEOF
 -#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
 -_ACEOF
-+LDFLAGS="${LDFLAGS} ${SMART_LIBS}"
-+CFLAGS="${CFLAGS} ${SMART_CPPFLAGS}"
-+
 +ac_fn_c_check_func "$LINENO" "krb5_get_error_message" "ac_cv_func_krb5_get_error_message"
 +if test "x$ac_cv_func_krb5_get_error_message" = xyes
 +then :
 +  printf "%s\n" "#define HAVE_KRB5_GET_ERROR_MESSAGE 1" >>confdefs.h
- 
- fi
--done
++
++fi
 +ac_fn_c_check_func "$LINENO" "krb5_free_error_string" "ac_cv_func_krb5_free_error_string"
 +if test "x$ac_cv_func_krb5_free_error_string" = xyes
 +then :
 +  printf "%s\n" "#define HAVE_KRB5_FREE_ERROR_STRING 1" >>confdefs.h
- 
--	if test "x$ac_cv_func_krb5_get_error_message" = xyes; then
--		krb5mod_cflags="${krb5mod_cflags} -DHAVE_KRB5_GET_ERROR_MESSAGE"
--	fi
--	if test "x$ac_cv_func_krb5_free_error_message" = xyes; then
--		krb5mod_cflags="${krb5mod_cflags} -DHAVE_KRB5_FREE_ERROR_MESSAGE"
--	fi
--	if test "x$ac_cv_func_krb5_free_error_string" = xyes; then
--		krb5mod_cflags="${krb5mod_cflags} -DHAVE_KRB5_FREE_ERROR_STRING"
--	fi
++
 +fi
 +ac_fn_c_check_func "$LINENO" "krb5_free_error_message" "ac_cv_func_krb5_free_error_message"
 +if test "x$ac_cv_func_krb5_free_error_message" = xyes
 +then :
 +  printf "%s\n" "#define HAVE_KRB5_FREE_ERROR_MESSAGE 1" >>confdefs.h
  
--				if test "$krb5threadsafe" != "no"; then
--		krb5threadsafe=
-+fi
-+
-+if test "x$ac_cv_func_krb5_get_error_message" = xyes; then
-+	krb5mod_cflags="${krb5mod_cflags} -DHAVE_KRB5_GET_ERROR_MESSAGE"
-+fi
-+if test "x$ac_cv_func_krb5_free_error_message" = xyes; then
-+	krb5mod_cflags="${krb5mod_cflags} -DHAVE_KRB5_FREE_ERROR_MESSAGE"
-+fi
-+if test "x$ac_cv_func_krb5_free_error_string" = xyes; then
-+	krb5mod_cflags="${krb5mod_cflags} -DHAVE_KRB5_FREE_ERROR_STRING"
-+fi
-+
-+if test "$krb5threadsafe" != "no"; then
-+	krb5threadsafe=
+ fi
+-done
  
- 
- 
+ if test "x$ac_cv_func_krb5_get_error_message" = xyes; then
+ 	krb5mod_cflags="${krb5mod_cflags} -DHAVE_KRB5_GET_ERROR_MESSAGE"
+@@ -3888,143 +4505,156 @@ if test "$krb5threadsafe" != "no"; then
  sm_lib_safe=`echo "krb5" | sed 'y%./+-%__p_%'`
  sm_func_safe=`echo "krb5_is_thread_safe" | sed 'y%./+-%__p_%'`
  
@@ -4772,15 +4285,15 @@
  }
  _ACEOF
 -if ac_fn_c_try_link "$LINENO"; then :
-+if ac_fn_c_try_link "$LINENO"
-+then :
- 
+-
 -		 smart_lib="-lkrb5"
 -		 smart_ldflags="-L$try -Wl,-rpath,$try"
 -		 { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 -$as_echo "yes" >&6; }
 -		 break
--
++if ac_fn_c_try_link "$LINENO"
++then :
+ 
 -else
 -  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 -$as_echo "no" >&6; }
@@ -4853,62 +4366,7 @@
  fi
  
  if test "x$smart_lib" = "x"; then
--
--
--if test "x$LOCATE" != "x"; then
--        DIRS=
--  file=libkrb5${libltdl_cv_shlibext}
--
--  for x in `${LOCATE} $file 2>/dev/null`; do
--                                        base=`echo $x | sed "s%/${file}%%"`
--    if test "x$x" = "x$base"; then
--      continue;
--    fi
--
--    dir=`${DIRNAME} $x 2>/dev/null`
--                exclude=`echo ${dir} | ${GREP} /home`
--    if test "x$exclude" != "x"; then
--      continue
--    fi
--
--                    already=`echo \$smart_lib_dir ${DIRS} | ${GREP} ${dir}`
--    if test "x$already" = "x"; then
--      DIRS="$DIRS $dir"
--    fi
--  done
--fi
--
--eval "smart_lib_dir=\"\$smart_lib_dir $DIRS\""
--
--
--
--if test "x$LOCATE" != "x"; then
--        DIRS=
--  file=libkrb5.a
--
--  for x in `${LOCATE} $file 2>/dev/null`; do
--                                        base=`echo $x | sed "s%/${file}%%"`
--    if test "x$x" = "x$base"; then
--      continue;
--    fi
--
--    dir=`${DIRNAME} $x 2>/dev/null`
--                exclude=`echo ${dir} | ${GREP} /home`
--    if test "x$exclude" != "x"; then
--      continue
--    fi
--
--                    already=`echo \$smart_lib_dir ${DIRS} | ${GREP} ${dir}`
--    if test "x$already" = "x"; then
--      DIRS="$DIRS $dir"
--    fi
--  done
--fi
--
--eval "smart_lib_dir=\"\$smart_lib_dir $DIRS\""
--
--
--  for try in $smart_lib_dir /usr/local/lib /opt/lib; do
+-  for try in /usr/local/lib /opt/lib; do
 -    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for krb5_is_thread_safe in -lkrb5 in $try" >&5
 -$as_echo_n "checking for krb5_is_thread_safe in -lkrb5 in $try... " >&6; }
 -    LIBS="-lkrb5 $old_LIBS"
@@ -4976,14 +4434,13 @@
 +SMART_LD_FOUND="$smart_ld_found"
  fi
  
--		if test "x$ac_cv_lib_krb5_krb5_is_thread_safe" = xyes; then
--			if test "$cross_compiling" = yes; then :
+ 	if test "x$ac_cv_lib_krb5_krb5_is_thread_safe" = xyes; then
+-		if test "$cross_compiling" = yes; then :
 -  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 -$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
 -as_fn_error $? "cannot run test program while cross compiling
 -See \`config.log' for more details" "$LINENO" 5; }
 -else
-+	if test "x$ac_cv_lib_krb5_krb5_is_thread_safe" = xyes; then
 +		if test "$cross_compiling" = yes
 +then :
 +  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: cross compiling: not checking" >&5
@@ -5014,18 +4471,7 @@
  fi
  rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
    conftest.$ac_objext conftest.beam conftest.$ac_ext
- fi
- 
--		fi
--	else
--		krb5threadsafe=""
- 	fi
-+else
-+	krb5threadsafe=""
-+fi
- 
--	if test "$krb5_api_type" = "mit"; then
-+if test "$krb5_api_type" = "mit"; then
+@@ -4039,168 +4669,201 @@ if test "$krb5_api_type" = "mit"; then
  
  
  ac_safe=`echo "com_err.h" | sed 'y%./+-%__pm%'`
@@ -5240,87 +4686,32 @@
  fi
  
  if test "x$smart_include" = "x"; then
-+for try in $_smart_include_dir; do
-+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for com_err.h in $try" >&5
-+printf %s "checking for com_err.h in $try... " >&6; }
-+  CPPFLAGS="-isystem $try $old_CPPFLAGS"
-+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-+/* end confdefs.h.  */
- 
--  for prefix in $smart_prefix; do
 -
--
--if test "x$LOCATE" != "x"; then
--        DIRS=
--  file="${_prefix}/${1}"
--
--  for x in `${LOCATE} $file 2>/dev/null`; do
--                                        base=`echo $x | sed "s%/${file}%%"`
--    if test "x$x" = "x$base"; then
--      continue;
--    fi
--
--    dir=`${DIRNAME} $x 2>/dev/null`
--                exclude=`echo ${dir} | ${GREP} /home`
--    if test "x$exclude" != "x"; then
--      continue
--    fi
--
--                    already=`echo \$_smart_include_dir ${DIRS} | ${GREP} ${dir}`
--    if test "x$already" = "x"; then
--      DIRS="$DIRS $dir"
--    fi
--  done
--fi
--
--eval "_smart_include_dir=\"\$_smart_include_dir $DIRS\""
--
--  done
--
--
--if test "x$LOCATE" != "x"; then
--        DIRS=
--  file=com_err.h
--
--  for x in `${LOCATE} $file 2>/dev/null`; do
--                                        base=`echo $x | sed "s%/${file}%%"`
--    if test "x$x" = "x$base"; then
--      continue;
--    fi
--
--    dir=`${DIRNAME} $x 2>/dev/null`
--                exclude=`echo ${dir} | ${GREP} /home`
--    if test "x$exclude" != "x"; then
--      continue
--    fi
- 
--                    already=`echo \$_smart_include_dir ${DIRS} | ${GREP} ${dir}`
--    if test "x$already" = "x"; then
--      DIRS="$DIRS $dir"
--    fi
--  done
--fi
-+		                        #include <com_err.h>
- 
--eval "_smart_include_dir=\"\$_smart_include_dir $DIRS\""
-+int
-+main (void)
-+{
- 
-+                                        int a = 1;
- 
 -  for try in $_smart_include_dir; do
 -    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for com_err.h in $try" >&5
 -$as_echo_n "checking for com_err.h in $try... " >&6; }
 -    CPPFLAGS="-isystem $try $old_CPPFLAGS"
 -    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
--/* end confdefs.h.  */
++for try in $_smart_include_dir; do
++  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for com_err.h in $try" >&5
++printf %s "checking for com_err.h in $try... " >&6; }
++  CPPFLAGS="-isystem $try $old_CPPFLAGS"
++  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ /* end confdefs.h.  */
  
 -		    #include <com_err.h>
--int
++
++		                        #include <com_err.h>
++
+ int
 -main ()
--{
++main (void)
+ {
 -int a = 1;
++
++                                        int a = 1;
++
++
    ;
    return 0;
  }
@@ -5368,9 +4759,7 @@
  fi
  
  smart_prefix=
- 
--		if test "$ac_cv_header_com_err_h" != "yes"; then
-+	if test "$ac_cv_header_com_err_h" != "yes"; then
+@@ -4209,168 +4872,201 @@ smart_prefix=
  
  
  ac_safe=`echo "et/com_err.h" | sed 'y%./+-%__pm%'`
@@ -5585,87 +4974,32 @@
  fi
  
  if test "x$smart_include" = "x"; then
-+for try in $_smart_include_dir; do
-+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for et/com_err.h in $try" >&5
-+printf %s "checking for et/com_err.h in $try... " >&6; }
-+  CPPFLAGS="-isystem $try $old_CPPFLAGS"
-+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-+/* end confdefs.h.  */
- 
--  for prefix in $smart_prefix; do
 -
--
--if test "x$LOCATE" != "x"; then
--        DIRS=
--  file="${_prefix}/${1}"
--
--  for x in `${LOCATE} $file 2>/dev/null`; do
--                                        base=`echo $x | sed "s%/${file}%%"`
--    if test "x$x" = "x$base"; then
--      continue;
--    fi
--
--    dir=`${DIRNAME} $x 2>/dev/null`
--                exclude=`echo ${dir} | ${GREP} /home`
--    if test "x$exclude" != "x"; then
--      continue
--    fi
--
--                    already=`echo \$_smart_include_dir ${DIRS} | ${GREP} ${dir}`
--    if test "x$already" = "x"; then
--      DIRS="$DIRS $dir"
--    fi
--  done
--fi
--
--eval "_smart_include_dir=\"\$_smart_include_dir $DIRS\""
--
--  done
--
--
--if test "x$LOCATE" != "x"; then
--        DIRS=
--  file=et/com_err.h
--
--  for x in `${LOCATE} $file 2>/dev/null`; do
--                                        base=`echo $x | sed "s%/${file}%%"`
--    if test "x$x" = "x$base"; then
--      continue;
--    fi
--
--    dir=`${DIRNAME} $x 2>/dev/null`
--                exclude=`echo ${dir} | ${GREP} /home`
--    if test "x$exclude" != "x"; then
--      continue
--    fi
- 
--                    already=`echo \$_smart_include_dir ${DIRS} | ${GREP} ${dir}`
--    if test "x$already" = "x"; then
--      DIRS="$DIRS $dir"
--    fi
--  done
--fi
-+		                        #include <et/com_err.h>
- 
--eval "_smart_include_dir=\"\$_smart_include_dir $DIRS\""
-+int
-+main (void)
-+{
- 
-+                                        int a = 1;
- 
 -  for try in $_smart_include_dir; do
 -    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for et/com_err.h in $try" >&5
 -$as_echo_n "checking for et/com_err.h in $try... " >&6; }
 -    CPPFLAGS="-isystem $try $old_CPPFLAGS"
 -    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
--/* end confdefs.h.  */
++for try in $_smart_include_dir; do
++  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for et/com_err.h in $try" >&5
++printf %s "checking for et/com_err.h in $try... " >&6; }
++  CPPFLAGS="-isystem $try $old_CPPFLAGS"
++  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ /* end confdefs.h.  */
  
 -		    #include <et/com_err.h>
--int
++
++		                        #include <et/com_err.h>
++
+ int
 -main ()
--{
++main (void)
+ {
 -int a = 1;
++
++                                        int a = 1;
++
++
    ;
    return 0;
  }
@@ -5713,98 +5047,22 @@
  fi
  
  smart_prefix=
- 
--			if test "$ac_cv_header_et_com_err_h" != "yes"; then
--				fail="$fail com_err.h"
--			else
--				krb5mod_cflags="$krb5mod_cflags -DET_COMM_ERR "
--			fi
-+		if test "$ac_cv_header_et_com_err_h" != "yes"; then
-+
-+fail="$fail com_err.h"
-+
-+		else
-+			krb5mod_cflags="$krb5mod_cflags -DET_COMM_ERR "
- 		fi
--	else
--		krb5mod_cflags="$krb5mod_cflags -DHEIMDAL_KRB5"
- 	fi
-+else
-+	krb5mod_cflags="$krb5mod_cflags -DHEIMDAL_KRB5"
-+fi
-+
-+
- 	targetname=rlm_krb5
- else
- 	targetname=
- 	echo \*\*\* module rlm_krb5 is disabled.
-+
-+
-+fr_status="disabled"
-+
- fi
- 
- if test x"$fail" != x""; then
-+	targetname=""
-+
-+
- 	if test x"${enable_strict_dependencies}" = x"yes"; then
+@@ -4406,10 +5102,10 @@ if test x"$fail" != x""; then
  		as_fn_error $? "set --without-rlm_krb5 to disable it explicitly." "$LINENO" 5
  	else
+ 
 -		{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: silently not building rlm_krb5." >&5
 -$as_echo "$as_me: WARNING: silently not building rlm_krb5." >&2;}
 -		{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: FAILURE: rlm_krb5 requires: $fail." >&5
 -$as_echo "$as_me: WARNING: FAILURE: rlm_krb5 requires: $fail." >&2;};
--		targetname=""
-+
 +		{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: silently not building rlm_krb5." >&5
 +printf "%s\n" "$as_me: WARNING: silently not building rlm_krb5." >&2;}
 +		{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: FAILURE: rlm_krb5 requires: $fail." >&5
 +printf "%s\n" "$as_me: WARNING: FAILURE: rlm_krb5 requires: $fail." >&2;};
-+		fail="$(echo $fail)"
-+
-+
-+fr_status="skipping (requires $fail)"
-+
-+		fr_features=
-+
- 	fi
-+
-+else
-+
-+
-+fr_status="OK"
-+
- fi
- 
--mod_ldflags="$krb5mod_ldflags $krb5libcrypto $SMART_LIBS"
--mod_cflags="$krb5mod_cflags $krb5threadsafe $SMART_CPPFLAGS"
-+if test x"$fr_features" = x""; then
-+	$as_echo "$fr_status" > "config.report"
-+else
-+	$as_echo_n "$fr_status ... " > "config.report"
-+	cat "config.report.tmp" >> "config.report"
-+fi
- 
-+rm "config.report.tmp"
+ 		fail="$(echo $fail)"
  
  
- 
- 
--  unset ac_cv_env_LIBS_set
--  unset ac_cv_env_LIBS_value
-+mod_ldflags="$krb5mod_ldflags $krb5libcrypto $SMART_LIBS"
-+mod_cflags="$krb5mod_cflags $krb5threadsafe $SMART_CPPFLAGS"
- 
--  ac_config_files="$ac_config_files all.mk"
-+
-+
-+
-+ac_config_files="$ac_config_files all.mk"
- 
- cat >confcache <<\_ACEOF
- # This file is a shell script that caches the results of configure
-@@ -4863,8 +5169,8 @@ _ACEOF
+@@ -4473,8 +5169,8 @@ _ACEOF
      case $ac_val in #(
      *${as_nl}*)
        case $ac_var in #(
@@ -5815,7 +5073,7 @@
        esac
        case $ac_var in #(
        _ | IFS | as_nl) ;; #(
-@@ -4894,15 +5200,15 @@ $as_echo "$as_me: WARNING: cache variabl
+@@ -4504,15 +5200,15 @@ $as_echo "$as_me: WARNING: cache variabl
       /^ac_cv_env_/b end
       t clear
       :clear
@@ -5834,7 +5092,7 @@
        if test ! -f "$cache_file" || test -h "$cache_file"; then
  	cat confcache >"$cache_file"
        else
-@@ -4916,8 +5222,8 @@ $as_echo "$as_me: updating cache $cache_
+@@ -4526,8 +5222,8 @@ $as_echo "$as_me: updating cache $cache_
        fi
      fi
    else
@@ -5845,7 +5103,7 @@
    fi
  fi
  rm -f confcache
-@@ -4970,7 +5276,7 @@ U=
+@@ -4580,7 +5276,7 @@ U=
  for ac_i in : $LIBOBJS; do test "x$ac_i" = x: && continue
    # 1. Remove the extension, and $U if already installed.
    ac_script='s/\$U\././;s/\.o$//;s/\.obj$//'
@@ -5854,7 +5112,7 @@
    # 2. Prepend LIBOBJDIR.  When used with automake>=1.10 LIBOBJDIR
    #    will be set to the directory where LIBOBJS objects are built.
    as_fn_append ac_libobjs " \${LIBOBJDIR}$ac_i\$U.$ac_objext"
-@@ -4986,8 +5292,8 @@ LTLIBOBJS=$ac_ltlibobjs
+@@ -4596,8 +5292,8 @@ LTLIBOBJS=$ac_ltlibobjs
  ac_write_fail=0
  ac_clean_files_save=$ac_clean_files
  ac_clean_files="$ac_clean_files $CONFIG_STATUS"
@@ -5865,7 +5123,7 @@
  as_write_fail=0
  cat >$CONFIG_STATUS <<_ASEOF || as_write_fail=1
  #! $SHELL
-@@ -5010,14 +5316,16 @@ cat >>$CONFIG_STATUS <<\_ASEOF || as_wri
+@@ -4620,14 +5316,16 @@ cat >>$CONFIG_STATUS <<\_ASEOF || as_wri
  
  # Be more Bourne compatible
  DUALCASE=1; export DUALCASE # for MKS sh
@@ -5884,7 +5142,7 @@
    case `(set -o) 2>/dev/null` in #(
    *posix*) :
      set -o posix ;; #(
-@@ -5027,46 +5335,46 @@ esac
+@@ -4637,46 +5335,46 @@ esac
  fi
  
  
@@ -5966,7 +5224,7 @@
    PATH_SEPARATOR=:
    (PATH='/bin;/bin'; FPATH=$PATH; sh -c :) >/dev/null 2>&1 && {
      (PATH='/bin:/bin'; FPATH=$PATH; sh -c :) >/dev/null 2>&1 ||
-@@ -5075,13 +5383,6 @@ if test "${PATH_SEPARATOR+set}" != set;
+@@ -4685,13 +5383,6 @@ if test "${PATH_SEPARATOR+set}" != set;
  fi
  
  
@@ -5980,7 +5238,7 @@
  # Find who we are.  Look in the path if we contain no directory separator.
  as_myself=
  case $0 in #((
-@@ -5090,8 +5391,12 @@ case $0 in #((
+@@ -4700,8 +5391,12 @@ case $0 in #((
  for as_dir in $PATH
  do
    IFS=$as_save_IFS
@@ -5995,7 +5253,7 @@
    done
  IFS=$as_save_IFS
  
-@@ -5103,30 +5408,10 @@ if test "x$as_myself" = x; then
+@@ -4713,30 +5408,10 @@ if test "x$as_myself" = x; then
    as_myself=$0
  fi
  if test ! -f "$as_myself"; then
@@ -6027,7 +5285,7 @@
  
  
  # as_fn_error STATUS ERROR [LINENO LOG_FD]
-@@ -5139,13 +5424,14 @@ as_fn_error ()
+@@ -4749,13 +5424,14 @@ as_fn_error ()
    as_status=$1; test $as_status -eq 0 && as_status=1
    if test "$4"; then
      as_lineno=${as_lineno-"$3"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
@@ -6044,7 +5302,7 @@
  # as_fn_set_status STATUS
  # -----------------------
  # Set $? to STATUS, without forking.
-@@ -5172,18 +5458,20 @@ as_fn_unset ()
+@@ -4782,18 +5458,20 @@ as_fn_unset ()
    { eval $1=; unset $1;}
  }
  as_unset=as_fn_unset
@@ -6067,7 +5325,7 @@
    as_fn_append ()
    {
      eval $1=\$$1\$2
-@@ -5195,12 +5483,13 @@ fi # as_fn_append
+@@ -4805,12 +5483,13 @@ fi # as_fn_append
  # Perform arithmetic evaluation on the ARGs, and store the result in the
  # global $as_val. Take advantage of shells that can avoid forks. The arguments
  # must be portable across $(()) and expr.
@@ -6083,7 +5341,7 @@
    as_fn_arith ()
    {
      as_val=`expr "$@" || test $? -eq 1`
-@@ -5231,7 +5520,7 @@ as_me=`$as_basename -- "$0" ||
+@@ -4841,7 +5520,7 @@ as_me=`$as_basename -- "$0" ||
  $as_expr X/"$0" : '.*/\([^/][^/]*\)/*$' \| \
  	 X"$0" : 'X\(//\)$' \| \
  	 X"$0" : 'X\(/\)' \| . 2>/dev/null ||
@@ -6092,7 +5350,7 @@
      sed '/^.*\/\([^/][^/]*\)\/*$/{
  	    s//\1/
  	    q
-@@ -5253,6 +5542,10 @@ as_cr_Letters=$as_cr_letters$as_cr_LETTE
+@@ -4863,6 +5542,10 @@ as_cr_Letters=$as_cr_letters$as_cr_LETTE
  as_cr_digits='0123456789'
  as_cr_alnum=$as_cr_Letters$as_cr_digits
  
@@ -6103,7 +5361,7 @@
  ECHO_C= ECHO_N= ECHO_T=
  case `echo -n x` in #(((((
  -n*)
-@@ -5266,6 +5559,12 @@ case `echo -n x` in #(((((
+@@ -4876,6 +5559,12 @@ case `echo -n x` in #(((((
    ECHO_N='-n';;
  esac
  
@@ -6116,7 +5374,7 @@
  rm -f conf$$ conf$$.exe conf$$.file
  if test -d conf$$.dir; then
    rm -f conf$$.dir/conf$$.file
-@@ -5307,7 +5606,7 @@ as_fn_mkdir_p ()
+@@ -4917,7 +5606,7 @@ as_fn_mkdir_p ()
      as_dirs=
      while :; do
        case $as_dir in #(
@@ -6125,7 +5383,7 @@
        *) as_qdir=$as_dir;;
        esac
        as_dirs="'$as_qdir' $as_dirs"
-@@ -5316,7 +5615,7 @@ $as_expr X"$as_dir" : 'X\(.*[^/]\)//*[^/
+@@ -4926,7 +5615,7 @@ $as_expr X"$as_dir" : 'X\(.*[^/]\)//*[^/
  	 X"$as_dir" : 'X\(//\)[^/]' \| \
  	 X"$as_dir" : 'X\(//\)$' \| \
  	 X"$as_dir" : 'X\(/\)' \| . 2>/dev/null ||
@@ -6134,7 +5392,7 @@
      sed '/^X\(.*[^/]\)\/\/*[^/][^/]*\/*$/{
  	    s//\1/
  	    q
-@@ -5379,7 +5678,7 @@ cat >>$CONFIG_STATUS <<\_ACEOF || ac_wri
+@@ -4989,7 +5678,7 @@ cat >>$CONFIG_STATUS <<\_ACEOF || ac_wri
  # values after options handling.
  ac_log="
  This file was extended by $as_me, which was
@@ -6143,7 +5401,7 @@
  
    CONFIG_FILES    = $CONFIG_FILES
    CONFIG_HEADERS  = $CONFIG_HEADERS
-@@ -5428,14 +5727,16 @@ $config_files
+@@ -5038,14 +5727,16 @@ $config_files
  Report bugs to the package provider."
  
  _ACEOF
@@ -6163,7 +5421,7 @@
  This config.status script is free software; the Free Software Foundation
  gives unlimited permission to copy, distribute and modify it."
  
-@@ -5472,21 +5773,21 @@ do
+@@ -5082,21 +5773,21 @@ do
    -recheck | --recheck | --rechec | --reche | --rech | --rec | --re | --r)
      ac_cs_recheck=: ;;
    --version | --versio | --versi | --vers | --ver | --ve | --v | -V )
@@ -6189,7 +5447,7 @@
    -q | -quiet | --quiet | --quie | --qui | --qu | --q \
    | -silent | --silent | --silen | --sile | --sil | --si | --s)
      ac_cs_silent=: ;;
-@@ -5514,7 +5815,7 @@ cat >>$CONFIG_STATUS <<_ACEOF || ac_writ
+@@ -5124,7 +5815,7 @@ cat >>$CONFIG_STATUS <<_ACEOF || ac_writ
  if \$ac_cs_recheck; then
    set X $SHELL '$0' $ac_configure_args \$ac_configure_extra_args --no-create --no-recursion
    shift
@@ -6198,7 +5456,7 @@
    CONFIG_SHELL='$SHELL'
    export CONFIG_SHELL
    exec "\$@"
-@@ -5528,7 +5829,7 @@ exec 5>>config.log
+@@ -5138,7 +5829,7 @@ exec 5>>config.log
    sed 'h;s/./-/g;s/^.../## /;s/...$/ ##/;p;x;p;x' <<_ASBOX
  ## Running $as_me. ##
  _ASBOX
@@ -6207,7 +5465,7 @@
  } >&5
  
  _ACEOF
-@@ -5553,7 +5854,7 @@ done
+@@ -5163,7 +5854,7 @@ done
  # We use the long form for the default assignment because of an extremely
  # bizarre bug on SunOS 4.1.3.
  if $ac_need_defaults; then
@@ -6216,7 +5474,7 @@
  fi
  
  # Have a temporary directory for convenience.  Make it in the build tree
-@@ -5781,7 +6082,7 @@ do
+@@ -5391,7 +6082,7 @@ do
  	   esac ||
  	   as_fn_error 1 "cannot find input file: \`$ac_f'" "$LINENO" 5;;
        esac
@@ -6225,7 +5483,7 @@
        as_fn_append ac_file_inputs " '$ac_f'"
      done
  
-@@ -5789,17 +6090,17 @@ do
+@@ -5399,17 +6090,17 @@ do
      # use $as_me), people would be surprised to read:
      #    /* config.h.  Generated by config.status.  */
      configure_input='Generated from '`
@@ -6247,7 +5505,7 @@
         sed 's/[\\\\&|]/\\\\&/g'`;; #(
      *) ac_sed_conf_input=$configure_input;;
      esac
-@@ -5816,7 +6117,7 @@ $as_expr X"$ac_file" : 'X\(.*[^/]\)//*[^
+@@ -5426,7 +6117,7 @@ $as_expr X"$ac_file" : 'X\(.*[^/]\)//*[^
  	 X"$ac_file" : 'X\(//\)[^/]' \| \
  	 X"$ac_file" : 'X\(//\)$' \| \
  	 X"$ac_file" : 'X\(/\)' \| . 2>/dev/null ||
@@ -6256,7 +5514,7 @@
      sed '/^X\(.*[^/]\)\/\/*[^/][^/]*\/*$/{
  	    s//\1/
  	    q
-@@ -5840,9 +6141,9 @@ $as_echo X"$ac_file" |
+@@ -5450,9 +6141,9 @@ $as_echo X"$ac_file" |
  case "$ac_dir" in
  .) ac_dir_suffix= ac_top_builddir_sub=. ac_top_build_prefix= ;;
  *)
@@ -6268,7 +5526,7 @@
    case $ac_top_builddir_sub in
    "") ac_top_builddir_sub=. ac_top_build_prefix= ;;
    *)  ac_top_build_prefix=$ac_top_builddir_sub/ ;;
-@@ -5895,8 +6196,8 @@ ac_sed_dataroot='
+@@ -5505,8 +6196,8 @@ ac_sed_dataroot='
  case `eval "sed -n \"\$ac_sed_dataroot\" $ac_file_inputs"` in
  *datarootdir*) ac_datarootdir_seen=yes;;
  *@datadir@*|*@docdir@*|*@infodir@*|*@localedir@*|*@mandir@*)
@@ -6279,7 +5537,7 @@
  _ACEOF
  cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
    ac_datarootdir_hack='
-@@ -5938,9 +6239,9 @@ test -z "$ac_datarootdir_hack$ac_dataroo
+@@ -5548,9 +6239,9 @@ test -z "$ac_datarootdir_hack$ac_dataroo
    { ac_out=`sed -n '/\${datarootdir}/p' "$ac_tmp/out"`; test -n "$ac_out"; } &&
    { ac_out=`sed -n '/^[	 ]*datarootdir[	 ]*:*=/p' \
        "$ac_tmp/out"`; test -z "$ac_out"; } &&
@@ -6291,7 +5549,7 @@
  which seems to be undefined.  Please make sure it is defined" >&2;}
  
    rm -f "$ac_tmp/stdin"
-@@ -5987,8 +6288,8 @@ if test "$no_create" != yes; then
+@@ -5597,7 +6288,8 @@ if test "$no_create" != yes; then
    $ac_cs_success || as_fn_exit 1
  fi
  if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
@@ -6301,335 +5559,100 @@
 +printf "%s\n" "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
  fi
  
- 
++
 --- a/src/modules/rlm_krb5/configure.ac
 +++ b/src/modules/rlm_krb5/configure.ac
-@@ -1,187 +1,178 @@
--AC_PREREQ([2.53])
--AC_INIT(rlm_krb5.c)
+@@ -1,4 +1,4 @@
+-AC_PREREQ([2.69])
 +AC_PREREQ([2.71])
-+AC_INIT
-+AC_CONFIG_SRCDIR([rlm_krb5.c])
+ AC_INIT
+ AC_CONFIG_SRCDIR([rlm_krb5.c])
  AC_REVISION($Revision$)
--AC_DEFUN(modname,[rlm_krb5])
-+FR_INIT_MODULE([rlm_krb5], [Kerberos support])
- 
--AC_ARG_WITH([]modname,
--[  --with-[]modname              build []modname. (default=yes)])
-+FR_MODULE_START_TESTS
- 
--if test x$with_[]modname != xno; then
-+AC_PROG_CC
-+AC_PROG_CPP
- 
--	AC_PROG_CC
--	AC_PROG_CPP
--
--	dnl extra argument: --with-rlm-krb5-dir
--	rlm_krb5_dir=
--	AC_ARG_WITH(rlm-krb5-dir,
--	[  --with-rlm-krb5-dir=DIR       Directory for krb5 files []],
+@@ -13,8 +13,8 @@ dnl extra argument: --with-rlm-krb5-dir
+ rlm_krb5_dir=
+ AC_ARG_WITH(rlm-krb5-dir,
+ 	[AS_HELP_STRING([--with-rlm-krb5-dir=DIR],
+-		[Directory for krb5 files])],
 -	[ case "$withval" in
--	    no)
-+dnl extra argument: --with-rlm-krb5-dir
-+rlm_krb5_dir=
-+AC_ARG_WITH(rlm-krb5-dir,
-+	[AS_HELP_STRING([--with-rlm-krb5-dir=DIR],
 +		[directory where krb5 files are installed])],
 +	[case "$withval" in
-+	no)
+ 	no)
  		AC_MSG_ERROR(Need rlm-krb5-dir)
  		;;
--	    yes)
-+	yes)
- 		;;
--	    *)
-+	*)
- 		rlm_krb5_dir="$withval"
- 		;;
--	  esac ]
--	)
-+	esac])
+@@ -26,7 +26,6 @@ AC_ARG_WITH(rlm-krb5-dir,
+ 	esac])
  
--	AC_PATH_PROG(krb5_config, krb5-config, not-found, [${rlm_krb5_dir}/bin:${PATH}:/usr/bin:/usr/local/bin])
--	dnl #
--	dnl # If we can find krb5-config we can get the version of the library and determine
--	dnl # whether it's safe to enable threading.
--	dnl #
--	if test "$krb5_config" != 'not-found'; then
--		AC_MSG_CHECKING([krb5-config CFLAGS])
--		SMART_CPPFLAGS=$($krb5_config --cflags)
--		SMART_CPPFLAGS=[$(echo "$SMART_CPPFLAGS" | sed 's/-I[ ]*/-isystem /g')]
--		AC_MSG_RESULT("$SMART_CPPFLAGS")
+ AC_PATH_PROG(krb5_config, krb5-config, not-found, [${rlm_krb5_dir}/bin:${PATH}:/usr/bin:/usr/local/bin])
 -
--		AC_MSG_CHECKING([krb5-config LDFLAGS])
--		SMART_LIBS=$($krb5_config --libs)
--		AC_MSG_RESULT(${SMART_LIBS})
--
--		AC_MSG_CHECKING([krb5-config reported version])
--		krb5_version_raw=$($krb5_config --version)
--
--		dnl # AWK originally from from https://github.com/hpc/lustre
--		krb5_version=$(echo "$krb5_version_raw" | head -n 1 | \
--			awk '{split($(4),v,"."); if (v@<:@"3"@:>@ = "") v@<:@"3"@:>@ = "0"; print v@<:@"1"@:>@v@<:@"2"@:>@v@<:@"3"@:>@ }')
--		AC_MSG_RESULT([${krb5_version_raw} ($krb5_version)])
--
--		AC_MSG_CHECKING([krb5-config reported vendor])
--		krb5_vendor=$($krb5_config --vendor)
--		AC_MSG_RESULT([${krb5_vendor}])
--
--		AC_MSG_CHECKING([canonical API type])
--		if test "$krb5_vendor" = "Massachusetts Institute of Technology" || \
--			echo "$krb5_vendor" | grep -i 'MIT' > /dev/null 2>&1 || \
--			echo "$krb5_version_raw" | grep -i 'MIT' > /dev/null 2>&1 ; then
--			AC_MSG_RESULT([MIT])
--			krb5_api_type='mit'
--		else
--			AC_MSG_RESULT([HEIMDAL])
--			krb5_api_type='heimdal'
--		fi
-+AC_PATH_PROG(krb5_config, krb5-config, not-found, [${rlm_krb5_dir}/bin:${PATH}:/usr/bin:/usr/local/bin])
-+dnl #
-+dnl # If we can find krb5-config we can get the version of the library and determine
-+dnl # whether it's safe to enable threading.
-+dnl #
-+if test "$krb5_config" != 'not-found'; then
-+	AC_MSG_CHECKING([krb5-config CFLAGS])
-+	SMART_CPPFLAGS=$($krb5_config --cflags)
-+	SMART_CPPFLAGS=[$(echo "$SMART_CPPFLAGS" | sed 's/-I[ ]*/-isystem /g')]
-+	AC_MSG_RESULT("$SMART_CPPFLAGS")
-+
-+	AC_MSG_CHECKING([krb5-config LDFLAGS])
-+	SMART_LIBS=$($krb5_config --libs)
-+	AC_MSG_RESULT(${SMART_LIBS})
-+
-+	AC_MSG_CHECKING([krb5-config reported version])
-+	krb5_version_raw=$($krb5_config --version)
-+
-+	dnl # AWK originally from from https://github.com/hpc/lustre
-+	krb5_version=$(echo "$krb5_version_raw" | head -n 1 | \
+ dnl #
+ dnl # If we can find krb5-config we can get the version of the library and determine
+ dnl # whether it's safe to enable threading.
+@@ -46,7 +45,7 @@ if test "$krb5_config" != 'not-found'; t
+ 
+ 	dnl # AWK originally from from https://github.com/hpc/lustre
+ 	krb5_version=$(echo "$krb5_version_raw" | head -n 1 | \
+-		awk '{split($(4),v,"."); if (v@<:@"3"@:>@ = "") v@<:@"3"@:>@ = "0"; print v@<:@"1"@:>@v@<:@"2"@:>@v@<:@"3"@:>@ }')
 +		awk '{split($(4),v,"."); if (v@<:@"3"@:>@ == "") v@<:@"3"@:>@ = "0"; print v@<:@"1"@:>@v@<:@"2"@:>@v@<:@"3"@:>@ }')
-+	AC_MSG_RESULT([${krb5_version_raw} ($krb5_version)])
-+
-+	AC_MSG_CHECKING([krb5-config reported vendor])
-+	krb5_vendor=$($krb5_config --vendor)
-+	AC_MSG_RESULT([${krb5_vendor}])
-+
-+	AC_MSG_CHECKING([canonical API type])
-+	if test "$krb5_vendor" = "Massachusetts Institute of Technology" || \
-+		echo "$krb5_vendor" | grep -i 'MIT' > /dev/null 2>&1 || \
-+		echo "$krb5_version_raw" | grep -i 'MIT' > /dev/null 2>&1 ; then
-+		AC_MSG_RESULT([MIT])
-+		krb5_api_type='mit'
+ 	AC_MSG_RESULT([${krb5_version_raw} ($krb5_version)])
+ 
+ 	AC_MSG_CHECKING([krb5-config reported vendor])
+@@ -59,11 +58,9 @@ if test "$krb5_config" != 'not-found'; t
+ 		echo "$krb5_version_raw" | grep -i 'MIT' > /dev/null 2>&1 ; then
+ 		AC_MSG_RESULT([MIT])
+ 		krb5_api_type='mit'
+-		FR_MODULE_FEATURE([using MIT kerberos])
  	else
--		smart_try_dir="$rlm_krb5_dir/include"
--		FR_SMART_CHECK_INCLUDE(krb5.h)
--		if test "$ac_cv_header_krb5_h" != "yes"; then
--			fail="$fail krb5.h"
--		fi
--
--		krb5libcrypto=
--		smart_try_dir="$rlm_krb5_dir/lib"
--		FR_SMART_CHECK_LIB(k5crypto, krb5_encrypt_data)
--		if test "x$ac_cv_lib_k5crypto_krb5_encrypt_data" = xyes; then
--			krb5libcrypto="-lk5crypto"
--		fi
--
--		if test "x$krb5libcrypto" = x; then
--			FR_SMART_CHECK_LIB(crypto, DH_new)
--			if test "x$ac_cv_lib_crypto_DH_new" = xyes; then
--				krb5libcrypto="-lcrypto"
--			fi
--		fi
--
--		if test "x$krb5libcrypto" = x; then
--			AC_MSG_WARN([neither krb5 'k5crypto' nor 'crypto' libraries are found!])
--		fi
--
--		FR_SMART_CHECK_LIB(com_err, set_com_err_hook)
--		if test "x$ac_cv_lib_com_err_set_com_err_hook" != xyes; then
--			AC_MSG_WARN([the comm_err library isn't found!])
--		fi
-+		AC_MSG_RESULT([HEIMDAL])
-+		krb5_api_type='heimdal'
-+	fi
-+else
-+	smart_try_dir="$rlm_krb5_dir/include"
-+	FR_SMART_CHECK_INCLUDE(krb5.h)
-+	if test "$ac_cv_header_krb5_h" != "yes"; then
-+		FR_MODULE_FAIL([krb5.h])
-+	fi
- 
--		dnl #
--		dnl # Only the heimdal version of the library has this function
--		dnl #
--		FR_SMART_CHECK_LIB(krb5, krb5_verify_user_opt)
--		if test "x$ac_cv_lib_krb5_krb5_verify_user_opt" = xyes; then
--			krb5_api_type='heimdal'
--		else
--			krb5_api_type='mit'
-+	krb5libcrypto=
-+	smart_try_dir="$rlm_krb5_dir/lib"
-+	FR_SMART_CHECK_LIB(k5crypto, krb5_encrypt_data)
-+	if test "x$ac_cv_lib_k5crypto_krb5_encrypt_data" = xyes; then
-+		krb5libcrypto="-lk5crypto"
-+	fi
- 
--			FR_SMART_CHECK_LIB(krb5, krb5_get_init_creds_password)
--			if test "x$ac_cv_lib_krb5_krb5_get_init_creds_password" != xyes; then
--			    fail="$fail krb5"
--			fi
-+	if test "x$krb5libcrypto" = x; then
-+		FR_SMART_CHECK_LIB(crypto, DH_new)
-+		if test "x$ac_cv_lib_crypto_DH_new" = xyes; then
-+			krb5libcrypto="-lcrypto"
- 		fi
--
+ 		AC_MSG_RESULT([HEIMDAL])
+ 		krb5_api_type='heimdal'
+-		FR_MODULE_FEATURE([using Heimdal kerberos])
  	fi
+ else
+ 	smart_try_dir="$rlm_krb5_dir/include"
+@@ -101,14 +98,12 @@ else
+ 	FR_SMART_CHECK_LIB(krb5, krb5_verify_user_opt)
+ 	if test "x$ac_cv_lib_krb5_krb5_verify_user_opt" = xyes; then
+ 		krb5_api_type='heimdal'
+-		FR_MODULE_FEATURE([using Heimdal kerberos])
+ 	else
+ 		krb5_api_type='mit'
+-		FR_MODULE_FEATURE([using MIT kerberos])
  
--	dnl #
--	dnl # Need to ensure the test program(s) link against the right library
--	dnl #
--	LDFLAGS="${LDFLAGS} ${SMART_LIBS}"
--	CFLAGS="${CFLAGS} ${SMART_CPPFLAGS}"
--
--	dnl #
--	dnl # Check how to free things returned by krb5_get_error_message
--	dnl #
--	AC_CHECK_FUNCS([krb5_get_error_message krb5_free_error_string krb5_free_error_message])
--	if test "x$ac_cv_func_krb5_get_error_message" = xyes; then
--		krb5mod_cflags="${krb5mod_cflags} -DHAVE_KRB5_GET_ERROR_MESSAGE"
--	fi
--	if test "x$ac_cv_func_krb5_free_error_message" = xyes; then
--		krb5mod_cflags="${krb5mod_cflags} -DHAVE_KRB5_FREE_ERROR_MESSAGE"
-+	if test "x$krb5libcrypto" = x; then
-+		AC_MSG_WARN([neither krb5 'k5crypto' nor 'crypto' libraries are found!])
- 	fi
--	if test "x$ac_cv_func_krb5_free_error_string" = xyes; then
--		krb5mod_cflags="${krb5mod_cflags} -DHAVE_KRB5_FREE_ERROR_STRING"
-+
-+	FR_SMART_CHECK_LIB(com_err, set_com_err_hook)
-+	if test "x$ac_cv_lib_com_err_set_com_err_hook" != xyes; then
-+		AC_MSG_WARN([the comm_err library isn't found!])
- 	fi
- 
- 	dnl #
--	dnl # Only check if version checks have not found kerberos to be thread unsafe
-+	dnl # Only the heimdal version of the library has this function
- 	dnl #
--	if test "$krb5threadsafe" != "no"; then
--		krb5threadsafe=
-+	FR_SMART_CHECK_LIB(krb5, krb5_verify_user_opt)
-+	if test "x$ac_cv_lib_krb5_krb5_verify_user_opt" = xyes; then
-+		krb5_api_type='heimdal'
-+	else
-+		krb5_api_type='mit'
- 
--		FR_SMART_CHECK_LIB(krb5, krb5_is_thread_safe)
--		if test "x$ac_cv_lib_krb5_krb5_is_thread_safe" = xyes; then
--			AC_RUN_IFELSE([AC_LANG_PROGRAM([[#include <krb5.h>]], [[return krb5_is_thread_safe() ? 0 : 1]])],
--				[krb5threadsafe="-DKRB5_IS_THREAD_SAFE"], [AC_MSG_WARN([[libkrb5 is not threadsafe]])])
-+		FR_SMART_CHECK_LIB(krb5, krb5_get_init_creds_password)
-+		if test "x$ac_cv_lib_krb5_krb5_get_init_creds_password" != xyes; then
+ 		FR_SMART_CHECK_LIB(krb5, krb5_get_init_creds_password)
+ 		if test "x$ac_cv_lib_krb5_krb5_get_init_creds_password" != xyes; then
+-		    FR_MODULE_FAIL([krb5])
 +			FR_MODULE_FAIL([krb5])
  		fi
--	else
--		krb5threadsafe=""
  	fi
  
--	if test "$krb5_api_type" = "mit"; then
--		dnl #
--		dnl # This lives in different places depending on the distro
--		dnl #
--		FR_SMART_CHECK_INCLUDE([com_err.h])
--		if test "$ac_cv_header_com_err_h" != "yes"; then
--			FR_SMART_CHECK_INCLUDE([et/com_err.h])
--			if test "$ac_cv_header_et_com_err_h" != "yes"; then
--				fail="$fail com_err.h"
--			else
--				krb5mod_cflags="$krb5mod_cflags -DET_COMM_ERR "
--			fi
--		fi
--	else
--		krb5mod_cflags="$krb5mod_cflags -DHEIMDAL_KRB5"
-+fi
-+
-+dnl #
-+dnl # Need to ensure the test program(s) link against the right library
-+dnl #
-+LDFLAGS="${LDFLAGS} ${SMART_LIBS}"
-+CFLAGS="${CFLAGS} ${SMART_CPPFLAGS}"
-+
-+dnl #
-+dnl # Check how to free things returned by krb5_get_error_message
-+dnl #
+@@ -123,7 +118,11 @@ CFLAGS="${CFLAGS} ${SMART_CPPFLAGS}"
+ dnl #
+ dnl # Check how to free things returned by krb5_get_error_message
+ dnl #
+-AC_CHECK_FUNCS([krb5_get_error_message krb5_free_error_string krb5_free_error_message])
 +AC_CHECK_FUNCS(\
 +	krb5_get_error_message \
 +	krb5_free_error_string \
 +	krb5_free_error_message \
 +)
-+if test "x$ac_cv_func_krb5_get_error_message" = xyes; then
-+	krb5mod_cflags="${krb5mod_cflags} -DHAVE_KRB5_GET_ERROR_MESSAGE"
-+fi
-+if test "x$ac_cv_func_krb5_free_error_message" = xyes; then
-+	krb5mod_cflags="${krb5mod_cflags} -DHAVE_KRB5_FREE_ERROR_MESSAGE"
-+fi
-+if test "x$ac_cv_func_krb5_free_error_string" = xyes; then
-+	krb5mod_cflags="${krb5mod_cflags} -DHAVE_KRB5_FREE_ERROR_STRING"
-+fi
-+
-+dnl #
-+dnl # Only check if version checks have not found kerberos to be thread unsafe
-+dnl #
-+if test "$krb5threadsafe" != "no"; then
-+	krb5threadsafe=
-+
-+	FR_SMART_CHECK_LIB(krb5, krb5_is_thread_safe)
-+	if test "x$ac_cv_lib_krb5_krb5_is_thread_safe" = xyes; then
-+		AC_RUN_IFELSE([AC_LANG_PROGRAM([[#include <krb5.h>]], [[return krb5_is_thread_safe() ? 0 : 1]])],
+ if test "x$ac_cv_func_krb5_get_error_message" = xyes; then
+ 	krb5mod_cflags="${krb5mod_cflags} -DHAVE_KRB5_GET_ERROR_MESSAGE"
+ fi
+@@ -143,7 +142,8 @@ if test "$krb5threadsafe" != "no"; then
+ 	FR_SMART_CHECK_LIB(krb5, krb5_is_thread_safe)
+ 	if test "x$ac_cv_lib_krb5_krb5_is_thread_safe" = xyes; then
+ 		AC_RUN_IFELSE([AC_LANG_PROGRAM([[#include <krb5.h>]], [[return krb5_is_thread_safe() ? 0 : 1]])],
+-			[krb5threadsafe="-DKRB5_IS_THREAD_SAFE"], [AC_MSG_WARN([[libkrb5 is not threadsafe]])])
 +			[krb5threadsafe="-DKRB5_IS_THREAD_SAFE"], [AC_MSG_WARN([[libkrb5 is not threadsafe]])],
 +			[AC_MSG_WARN(cross compiling: not checking)])
  	fi
--	targetname=modname
  else
--	targetname=
--	echo \*\*\* module modname is disabled.
-+	krb5threadsafe=""
+ 	krb5threadsafe=""
+@@ -166,7 +166,7 @@ else
+ 	krb5mod_cflags="$krb5mod_cflags -DHEIMDAL_KRB5"
  fi
  
--if test x"$fail" != x""; then
--	if test x"${enable_strict_dependencies}" = x"yes"; then
--		AC_MSG_ERROR([set --without-]modname[ to disable it explicitly.])
--	else
--		AC_MSG_WARN([silently not building ]modname[.])
--		AC_MSG_WARN([FAILURE: ]modname[ requires: $fail.]);
--		targetname=""
-+if test "$krb5_api_type" = "mit"; then
-+	dnl #
-+	dnl # This lives in different places depending on the distro
-+	dnl #
-+	FR_SMART_CHECK_INCLUDE([com_err.h])
-+	if test "$ac_cv_header_com_err_h" != "yes"; then
-+		FR_SMART_CHECK_INCLUDE([et/com_err.h])
-+		if test "$ac_cv_header_et_com_err_h" != "yes"; then
-+			FR_MODULE_FAIL([com_err.h])
-+		else
-+			krb5mod_cflags="$krb5mod_cflags -DET_COMM_ERR "
-+		fi
- 	fi
-+else
-+	krb5mod_cflags="$krb5mod_cflags -DHEIMDAL_KRB5"
- fi
- 
+-FR_MODULE_END_TESTS
 +FR_MODULE_END_TESTS(strict)
-+
+ 
  mod_ldflags="$krb5mod_ldflags $krb5libcrypto $SMART_LIBS"
  mod_cflags="$krb5mod_cflags $krb5threadsafe $SMART_CPPFLAGS"
- 
- AC_SUBST(mod_ldflags)
- AC_SUBST(mod_cflags)
--AC_SUBST(targetname)
--AC_OUTPUT(all.mk)
-+
-+AC_CONFIG_FILES([all.mk])
-+AC_OUTPUT

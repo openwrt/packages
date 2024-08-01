@@ -24,7 +24,7 @@ Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
  fi
  
  LOCAL_MODE=0
-@@ -423,7 +423,7 @@ checkDependencies() {
+@@ -436,7 +436,7 @@ checkDependencies() {
        echo "Run with -h for more information."
        echo
        echo "To enable flashrom programming of the EEPROM"
@@ -33,7 +33,7 @@ Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
        echo "RPI_EEPROM_USE_FLASHROM=1"
        echo "CM4_ENABLE_RPI_EEPROM_UPDATE=1"
        echo 
-@@ -514,7 +514,7 @@ The system should then boot normally.
+@@ -523,7 +523,7 @@ The system should then boot normally.
  
  If /boot does not correspond to the boot partition and this
  is not a NOOBS system, then the mount point for BOOTFS should be defined
@@ -42,7 +42,7 @@ Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
  
  A backup of the current EEPROM config file is written to ${FIRMWARE_BACKUP_DIR}
  before applying the update.
-@@ -546,7 +546,7 @@ Options:
+@@ -555,7 +555,7 @@ Options:
     -u Install the specified VL805 (USB EEPROM) image file.
  
  Environment:
@@ -51,7 +51,7 @@ Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
  
  EEPROM_CONFIG_HOOK
  
-@@ -618,7 +618,7 @@ must first be enabled by removing ENABLE
+@@ -627,7 +627,7 @@ must first be enabled by removing ENABLE
  via usbboot.
  
  After enabling self-update set the CM4_ENABLE_RPI_EEPROM_UPDATE=1 environment

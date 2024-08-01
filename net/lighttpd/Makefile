@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lighttpd
 PKG_VERSION:=1.4.76
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 # release candidate ~rcX testing; remove for release
 #PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
@@ -48,13 +48,17 @@ PKG_CONFIG_DEPENDS:= \
   CONFIG_LIGHTTPD_PCRE2 \
   CONFIG_LIGHTTPD_CRYPTOLIB_NONE \
   CONFIG_LIGHTTPD_CRYPTOLIB_NETTLE \
+  CONFIG_LIGHTTPD_CRYPTOLIB_GNUTLS \
   CONFIG_LIGHTTPD_CRYPTOLIB_MBEDTLS \
+  CONFIG_LIGHTTPD_CRYPTOLIB_OPENSSL \
   CONFIG_LIGHTTPD_CRYPTOLIB_WOLFSSL
 
 PKG_BUILD_DEPENDS:= \
   LIGHTTPD_PCRE2:pcre2 \
   LIGHTTPD_CRYPTOLIB_NETTLE:nettle \
+  LIGHTTPD_CRYPTOLIB_GNUTLS:gnutls \
   LIGHTTPD_CRYPTOLIB_MBEDTLS:mbedtls \
+  LIGHTTPD_CRYPTOLIB_OPENSSL:openssl \
   LIGHTTPD_CRYPTOLIB_WOLFSSL:wolfssl
 
 include $(INCLUDE_DIR)/package.mk
@@ -64,10 +68,16 @@ include $(INCLUDE_DIR)/meson.mk
 # (separate from lighttpd TLS modules, which are each standalone)
 cryptolibdep= \
   +LIGHTTPD_CRYPTOLIB_NETTLE:libnettle \
+  +LIGHTTPD_CRYPTOLIB_GNUTLS:libgnutls \
   +LIGHTTPD_CRYPTOLIB_MBEDTLS:libmbedtls \
+  +LIGHTTPD_CRYPTOLIB_OPENSSL:libopenssl \
   +LIGHTTPD_CRYPTOLIB_WOLFSSL:libwolfssl
 ifdef CONFIG_LIGHTTPD_CRYPTOLIB_MBEDTLS
   TARGET_CPPFLAGS += -DFORCE_MBEDTLS_CRYPTO
+else ifdef CONFIG_LIGHTTPD_CRYPTOLIB_GNUTLS
+  TARGET_CPPFLAGS += -DFORCE_GNUTLS_CRYPTO
+else ifdef CONFIG_LIGHTTPD_CRYPTOLIB_OPENSSL
+  TARGET_CPPFLAGS += -DFORCE_OPENSSL_CRYPTO
 else ifdef CONFIG_LIGHTTPD_CRYPTOLIB_WOLFSSL
   TARGET_CPPFLAGS += -DFORCE_WOLFSSL_CRYPTO
 endif
@@ -131,8 +141,14 @@ if PACKAGE_lighttpd
 		config LIGHTTPD_CRYPTOLIB_NETTLE
 			bool "libnettle"
 
+		config LIGHTTPD_CRYPTOLIB_GNUTLS
+			bool "libgnutls"
+
 		config LIGHTTPD_CRYPTOLIB_MBEDTLS
 			bool "libmbedtls"
+
+		config LIGHTTPD_CRYPTOLIB_OPENSSL
+			bool "libopenssl"
 
 		config LIGHTTPD_CRYPTOLIB_WOLFSSL
 			bool "libwolfssl"
@@ -152,25 +168,25 @@ MESON_ARGS += \
 	-Dwith_bzip=disabled \
 	-Dwith_dbi=$(if $(CONFIG_PACKAGE_lighttpd-mod-authn_dbi)$(CONFIG_PACKAGE_lighttpd-mod-vhostdb_dbi),enabled,disabled) \
 	-Dwith_fam=disabled \
-	-Dwith_gnutls=$(if $(CONFIG_PACKAGE_lighttpd-mod-gnutls),true,false) \
+	-Dwith_gnutls=$(if $(CONFIG_PACKAGE_lighttpd-mod-gnutls)$(CONFIG_LIGHTTPD_CRYPTOLIB_GNUTLS),true,false) \
 	-Dwith_krb5=$(if $(CONFIG_PACKAGE_lighttpd-mod-authn_gssapi),enabled,disabled) \
 	-Dwith_ldap=$(if $(CONFIG_PACKAGE_lighttpd-mod-authn_ldap)$(CONFIG_PACKAGE_lighttpd-mod-vhostdb_ldap),enabled,disabled) \
 	-Dwith_libunwind=disabled \
 	-Dwith_lua=$(if $(CONFIG_PACKAGE_lighttpd-mod-magnet),true,false) \
 	-Dlua_version=lua \
 	-Dwith_maxminddb=$(if $(CONFIG_PACKAGE_lighttpd-mod-maxminddb),enabled,disabled) \
-	-Dwith_mbedtls=$(if $(CONFIG_PACKAGE_lighttpd-mod-mbedtls),true,false) \
+	-Dwith_mbedtls=$(if $(CONFIG_PACKAGE_lighttpd-mod-mbedtls)$(CONFIG_LIGHTTPD_CRYPTOLIB_MBEDTLS),true,false) \
 	-Dwith_mysql=$(if $(CONFIG_PACKAGE_lighttpd-mod-vhostdb_mysql),enabled,disabled) \
 	-Dwith_nettle=$(if $(CONFIG_LIGHTTPD_CRYPTOLIB_NETTLE),true,false) \
 	-Dwith_nss=$(if $(CONFIG_PACKAGE_lighttpd-mod-nss),true,false) \
-	-Dwith_openssl=$(if $(CONFIG_PACKAGE_lighttpd-mod-openssl),true,false) \
+	-Dwith_openssl=$(if $(CONFIG_PACKAGE_lighttpd-mod-openssl)$(CONFIG_LIGHTTPD_CRYPTOLIB_OPENSSL),true,false) \
 	-Dwith_pam=$(if $(CONFIG_PACKAGE_lighttpd-mod-authn_pam),enabled,disabled) \
 	-Dwith_pcre2=$(if $(CONFIG_LIGHTTPD_PCRE2),true,false) \
 	-Dwith_pgsql=$(if $(CONFIG_PACKAGE_lighttpd-mod-vhostdb_pgsql),enabled,disabled) \
 	-Dwith_sasl=$(if $(CONFIG_PACKAGE_lighttpd-mod-authn_sasl),enabled,disabled) \
 	-Dwith_webdav_locks=$(if $(CONFIG_PACKAGE_lighttpd-mod-webdav),enabled,disabled) \
 	-Dwith_webdav_props=$(if $(CONFIG_PACKAGE_lighttpd-mod-webdav),enabled,disabled) \
-	-Dwith_wolfssl=$(if $(CONFIG_PACKAGE_lighttpd-mod-wolfssl),true,false) \
+	-Dwith_wolfssl=$(if $(CONFIG_PACKAGE_lighttpd-mod-wolfssl)$(CONFIG_LIGHTTPD_CRYPTOLIB_WOLFSSL),true,false) \
 	-Dwith_xattr=false \
 	-Dwith_zlib=$(if $(CONFIG_PACKAGE_lighttpd-mod-deflate),enabled,disabled) \
 	-Dwith_zstd=disabled

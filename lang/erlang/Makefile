@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=erlang
-PKG_VERSION:=26.2.3
+PKG_VERSION:=27.0.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=otp_src_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/erlang/otp/releases/download/OTP-$(PKG_VERSION)
-PKG_HASH:=2c4e61b24fb1c131d9f30cfe2415320899180debdb71fb59195c72bd9a4ab625
+PKG_HASH:=26d894e2f0dda9d13560af08ea589afc01569df6b5486e565beb5accb99c9cf4
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE.txt
@@ -22,6 +22,9 @@ PKG_CPE_ID:=cpe:/a:erlang:erlang
 
 PKG_BUILD_DEPENDS:=erlang/host openssl
 PKG_ASLR_PIE:=0
+
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_KERNEL_TRANSPARENT_HUGEPAGE
 
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/otp_src_$(PKG_VERSION)
 PKG_BUILD_DIR:=$(BUILD_DIR)/otp_src_$(PKG_VERSION)
@@ -46,7 +49,7 @@ endef
 define Package/erlang
 $(call Package/erlang/Default)
   DEPENDS+= +libncurses +librt +zlib +libstdcpp
-  PROVIDES:= erlang-erts=14.2.3 erlang-kernel=9.2.2 erlang-sasl=4.2.1 erlang-stdlib=5.2.1
+  PROVIDES:= erlang-erts=15.0.1 erlang-kernel=10.0.1 erlang-sasl=4.2.2 erlang-stdlib=6.0.1
 endef
 
 define Package/erlang/description
@@ -60,7 +63,7 @@ endef
 define Package/erlang-asn1
 $(call Package/erlang/Default)
   TITLE:=Abstract Syntax Notation One (ASN.1) support
-  VERSION:=5.2.1
+  VERSION:=5.3
   DEPENDS+= +erlang +erlang-syntax-tools
 endef
 
@@ -75,7 +78,7 @@ endef
 define Package/erlang-compiler
 $(call Package/erlang/Default)
   TITLE:=Byte code compiler
-  VERSION:=8.4.2
+  VERSION:=8.5.1
   DEPENDS+= +erlang
 endef
 
@@ -90,7 +93,7 @@ endef
 define Package/erlang-crypto
 $(call Package/erlang/Default)
   TITLE:=Cryptography support
-  VERSION:=5.4.1
+  VERSION:=5.5
   DEPENDS+= +erlang +libopenssl
 endef
 
@@ -105,7 +108,7 @@ endef
 define Package/erlang-inets
 $(call Package/erlang/Default)
   TITLE:=Internet clients and servers
-  VERSION:=9.1
+  VERSION:=9.2
   DEPENDS+= +erlang
 endef
 
@@ -121,7 +124,7 @@ endef
 define Package/erlang-mnesia
 $(call Package/erlang/Default)
   TITLE:=Distributed database
-  VERSION:=4.23
+  VERSION:=4.23.2
   DEPENDS+= +erlang
 endef
 
@@ -138,7 +141,7 @@ endef
 define Package/erlang-runtime-tools
 $(call Package/erlang/Default)
   TITLE:=Low-profile debugging/tracing tools
-  VERSION:=2.0.1
+  VERSION:=2.1
   DEPENDS+= +erlang
 endef
 
@@ -153,7 +156,7 @@ endef
 define Package/erlang-snmp
 $(call Package/erlang/Default)
   TITLE:=Simple Network Management Protocol (SNMP) support
-  VERSION:=5.15
+  VERSION:=5.16
   DEPENDS+= +erlang +erlang-asn1
 endef
 
@@ -169,7 +172,7 @@ endef
 define Package/erlang-public-key
 $(call Package/erlang/Default)
   TITLE:=Public Key support
-  VERSION:=1.15.1
+  VERSION:=1.16.1
   DEPENDS+= +erlang +erlang-crypto +erlang-asn1
 endef
 
@@ -183,7 +186,7 @@ endef
 define Package/erlang-ssh
 $(call Package/erlang/Default)
   TITLE:=Secure Shell (SSH) support
-  VERSION:=5.1.3
+  VERSION:=5.2.1
   DEPENDS+= +erlang +erlang-crypto
 endef
 
@@ -198,7 +201,7 @@ endef
 define Package/erlang-ssl
 $(call Package/erlang/Default)
   TITLE:=Secure Sockets Layer (SSL) support
-  VERSION:=11.1.2
+  VERSION:=11.2.1
   DEPENDS+= +erlang +erlang-crypto
 endef
 
@@ -213,7 +216,7 @@ endef
 define Package/erlang-syntax-tools
 $(call Package/erlang/Default)
   TITLE:=Abstract Erlang syntax trees handling support
-  VERSION:=3.1
+  VERSION:=3.2
   DEPENDS+= +erlang
 endef
 
@@ -228,7 +231,7 @@ endef
 define Package/erlang-tools
 $(call Package/erlang/Default)
   TITLE:=Erlang tools support
-  VERSION:=3.6
+  VERSION:=4.0
   DEPENDS+= +erlang
 endef
 
@@ -242,7 +245,7 @@ endef
 define Package/erlang-reltool
 $(call Package/erlang/Default)
   TITLE:=Erlang reltool support
-  VERSION:=1.0
+  VERSION:=1.0.1
   DEPENDS+= +erlang
 endef
 
@@ -256,7 +259,7 @@ endef
 define Package/erlang-erl-interface
 $(call Package/erlang/Default)
   TITLE:=Erlang erl_interface support
-  VERSION:=5.5.1
+  VERSION:=5.5.2
   DEPENDS+= +erlang
 endef
 
@@ -269,7 +272,7 @@ endef
 define Package/erlang-os_mon
 $(call Package/erlang/Default)
   TITLE:=Erlang OS Monitoring Application
-  VERSION:=2.9.1
+  VERSION:=2.10
   DEPENDS+= +erlang
 endef
 
@@ -285,7 +288,7 @@ endef
 define Package/erlang-xmerl
 $(call Package/erlang/Default)
   TITLE:=Erlang XML export
-  VERSION:=1.3.34
+  VERSION:=2.0
   DEPENDS+= +erlang
 endef
 
@@ -298,6 +301,7 @@ endef
 # Host
 
 HOST_CONFIGURE_ARGS += \
+	--without-wx \
 	--with-ssl="$(STAGING_DIR_HOST)" \
 	--without-javac
 
@@ -307,9 +311,16 @@ CONFIGURE_ARGS += \
 	--without-javac \
 	--enable-dynamic-ssl-lib
 
+## Override incorrect THP detection by configure script
+ERTS_THP=no
+ifeq ($(CONFIG_KERNEL_TRANSPARENT_HUGEPAGE),y)
+	ERTS_THP=yes
+endif
+
 CONFIGURE_VARS += \
 	SHLIB_LD="$(TARGET_CC)" \
 	TARGET_ARCH="$(TARGET_ARCH)" \
+	erts_cv_linux_thp=$(ERTS_THP) \
 	ac_cv_func_mmap_fixed_mapped=yes \
 	ac_cv_path_WX_CONFIG_PATH=no \
 	erl_xcomp_getaddrinfo=no \

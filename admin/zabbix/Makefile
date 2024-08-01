@@ -8,16 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
-PKG_VERSION:=6.4.7
-PKG_RELEASE:=2
+PKG_VERSION:=7.0.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.zabbix.com/zabbix/sources/stable/$(basename $(PKG_VERSION))/ \
 	https://cdn.zabbix.com/zabbix/sources/oldstable/$(basename $(PKG_VERSION))/
-PKG_HASH:=6b4e81f07de4c82c7994871bea51be4d6427683fa9a7fbe112fd7559b3670e49
+PKG_HASH:=520641483223f680ef6e685284b556ba34a496d886a38dc3bca085cde21031b1
 
 PKG_MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
-PKG_LICENSE:=GPL-2.0
+PKG_LICENSE:=AGPL-3.0-only
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:zabbix:zabbix
 
@@ -63,6 +63,7 @@ endef
 define Package/zabbix-agentd
   $(call Package/zabbix/Default)
   TITLE+= agentd
+  DEPENDS+= +libevent2-pthreads
   PROVIDES:=zabbix-agentd
   VARIANT:=nossl
   DEFAULT_VARIANT:=1
@@ -71,7 +72,7 @@ endef
 define Package/zabbix-agentd-openssl
   $(call Package/zabbix/Default)
   TITLE+= agentd (with OpenSSL)
-  DEPENDS+= +libopenssl
+  DEPENDS+= +libevent2-pthreads +libopenssl
   PROVIDES:=zabbix-agentd
   VARIANT:=openssl
 endef
@@ -79,7 +80,7 @@ endef
 define Package/zabbix-agentd-gnutls
   $(call Package/zabbix/Default)
   TITLE+= agentd (with GnuTLS)
-  DEPENDS+= +libgnutls
+  DEPENDS+= +libevent2-pthreads +libgnutls
   PROVIDES:=zabbix-agentd
   VARIANT:=gnutls
 endef

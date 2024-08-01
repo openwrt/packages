@@ -23,7 +23,7 @@
  CFLAGS += -DUSE_EVENTFD
  TGTD_OBJS += bs_aio.o
  LIBS += -laio
-@@ -55,7 +55,7 @@ ifneq ($(SD_NOTIFY),)
+@@ -56,7 +56,7 @@ ifneq ($(SD_NOTIFY),)
  LIBS += -lsystemd
  endif
  
@@ -32,7 +32,7 @@
  TGTD_OBJS += tgtd.o mgmt.o target.o scsi.o log.o driver.o util.o work.o \
  		concat_buf.o parser.o spc.o sbc.o mmc.o osd.o scc.o smc.o \
  		ssc.o libssc.o bs_rdwr.o bs_ssc.o \
-@@ -82,14 +82,6 @@ tgtadm: $(TGTADM_OBJS)
+@@ -83,14 +83,6 @@ tgtadm: $(TGTADM_OBJS)
  
  -include $(TGTADM_DEP)
  
