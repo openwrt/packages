@@ -40,3 +40,6 @@ remove() {
         service static-device-names reload
     fi
 }
+
+[ "$ACTION" = "add" ] && add
+[ "$ACTION" = "remove" ] && remove
