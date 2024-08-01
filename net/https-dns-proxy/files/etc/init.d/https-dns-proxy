@@ -9,6 +9,8 @@ STOP=15
 # shellcheck disable=SC2034
 USE_PROCD=1
 
+[ -n "${IPKG_INSTROOT}" ] && return 0
+
 if type extra_command 1>/dev/null 2>&1; then
 	extra_command 'version' 'Show version information'
 else
@@ -357,6 +359,7 @@ dnsmasq_doh_server() {
 dnsmasq_create_server_backup() {
 	local cfg="$1" i
 	[ -n "$(uci_get 'dhcp' "$cfg")" ] || return 1
+#	uci_remove 'dhcp' "$cfg" 'doh_server' # this removes outdated doh_server entries, but causes unnecessary dnsmasq restarts
 	if [ -z "$(uci_get 'dhcp' "$cfg" 'doh_backup_noresolv')" ]; then
 		if [ -z "$(uci_get 'dhcp' "$cfg" 'noresolv')" ]; then
 			uci_set 'dhcp' "$cfg" 'doh_backup_noresolv' '-1'
