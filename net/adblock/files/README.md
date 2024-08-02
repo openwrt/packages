@@ -26,6 +26,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | easyprivacy         |         | M    | tracking         | [Link](https://easylist.to)                                                       |
 | firetv_tracking     |         | S    | tracking         | [Link](https://github.com/Perflyst/PiHoleBlocklist)                               |
 | games_tracking      |         | S    | tracking         | [Link](https://www.gameindustry.eu)                                               |
+| hagezi_pro          |         | XL   | compilation      | [Link](https://github.com/hagezi/dns-blocklists)                                  |
 | hblock              |         | XL   | compilation      | [Link](https://hblock.molinero.dev)                                               |
 | lightswitch05       |         | XL   | compilation      | [Link](https://github.com/lightswitch05/hosts)                                    |
 | notracking          |         | XL   | tracking         | [Link](https://github.com/notracking/hosts-blocklists)                            |

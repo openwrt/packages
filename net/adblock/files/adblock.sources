@@ -111,6 +111,13 @@
 		"focus": "tracking",
 		"descurl": "https://www.gameindustry.eu"
 	},
+	"hagezi_pro": {
+			"url": "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/pro-onlydomains.txt",
+			"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
+			"size": "XL",
+			"focus": "compilation",
+			"descurl": "https://github.com/hagezi/dns-blocklists"
+	},
 	"hblock": {
 		"url": "https://hblock.molinero.dev/hosts_domains.txt",
 		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
