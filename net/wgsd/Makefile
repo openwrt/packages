@@ -28,7 +28,7 @@ define Package/wgsd/Default
   SUBMENU:=VPN
   TITLE:=WireGuard Service Discovery
   URL:=https://github.com/jwhited/wgsd
-  DEPENDS:=+kmod-wireguard
+  DEPENDS:=$(GO_ARCH_DEPENDS) +kmod-wireguard
 endef
 
 define Package/wgsd-coredns
