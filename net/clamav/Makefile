@@ -31,7 +31,9 @@ include $(INCLUDE_DIR)/cmake.mk
 
 define Package/clamav/Default
   SECTION:=net
-  DEPENDS:=+check +libstdcpp +libpthread +zlib +libbz2 +libxml2 +libcurl +libjson-c +libmilter-sendmail +libopenssl +libltdl +libpcre2 $(ICONV_DEPENDS)
+  DEPENDS:=+check +libstdcpp +libpthread +zlib +libbz2 +libxml2 \
+    +libcurl +libjson-c +libmilter-sendmail +libopenssl +libltdl \
+    +libpcre2 $(ICONV_DEPENDS) $(RUST_ARCH_DEPENDS)
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
   TITLE:=ClamAV
