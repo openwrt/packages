@@ -1,0 +1,72 @@
+From b17e77450c02ff4a1ef79d9126006a0073851704 Mon Sep 17 00:00:00 2001
+From: Christian Svensson <blue@cmd.nu>
+Date: Sat, 3 Aug 2024 19:29:25 +0200
+Subject: [PATCH] Fix endian conversions to work for big-endian
+
+Before:
+```
+Current status for hub 3 [6b1d:0200 Linux 6.1.98 xhci-hcd xHCI Host Controller 0000:01:00.0, USB 0.02, 2 ports, ppps]
+  Port 1: 0305 power lowspeed suspend connect [9911:c068 Sierra Wireless, Incorporated MC7304-CP]
+  Port 2: 0301 power lowspeed connect [0304:0160 FTDI FT232R USB UART A10OEDEW]
+```
+
+After:
+
+```
+Current status for hub 1 [1d6b:0002 Linux 6.1.98 ehci_hcd EHCI Host Controller 16f0000000000.ehci, USB 2.00, 2 ports, nops]
+  Port 1: 0503 power highspeed enable connect [0424:2240 Generic Ultra Fast Media 000000225001]
+  Port 2: 0100 power
+Current status for hub 3 [1d6b:0002 Linux 6.1.98 xhci-hcd xHCI Host Controller 0000:01:00.0, USB 2.00, 2 ports, ppps]
+  Port 1: 0503 power highspeed enable connect [1199:68c0 Sierra Wireless, Incorporated MC7304-CP]
+  Port 2: 0103 power enable connect [0403:6001 FTDI FT232R USB UART A10OEDEW]
+```
+
+Tested on both x86-64 and MIPS64.
+
+Signed-off-by: Christian Svensson <blue@cmd.nu>
+---
+ uhubctl.c | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+--- a/uhubctl.c
++++ b/uhubctl.c
+@@ -404,7 +404,7 @@ static int get_hub_info(struct libusb_de
+         return rc;
+     if (desc.bDeviceClass != LIBUSB_CLASS_HUB)
+         return LIBUSB_ERROR_INVALID_PARAM;
+-    int bcd_usb = libusb_le16_to_cpu(desc.bcdUSB);
++    int bcd_usb = desc.bcdUSB;
+     int desc_type = bcd_usb >= USB_SS_BCD ? LIBUSB_DT_SUPERSPEED_HUB
+                                           : LIBUSB_DT_HUB;
+     rc = libusb_open(dev, &devh);
+@@ -427,8 +427,8 @@ static int get_hub_info(struct libusb_de
+             snprintf(
+                 info->vendor, sizeof(info->vendor),
+                 "%04x:%04x",
+-                libusb_le16_to_cpu(desc.idVendor),
+-                libusb_le16_to_cpu(desc.idProduct)
++                desc.idVendor,
++                desc.idProduct
+             );
+ 
+             /* Convert bus and ports array into USB location string */
+@@ -524,7 +524,7 @@ static int get_port_status(struct libusb
+     if (rc < 0) {
+         return rc;
+     }
+-    return ust.wPortStatus;
++    return libusb_le16_to_cpu(ust.wPortStatus);
+ }
+ 
+ 
+@@ -662,8 +662,8 @@ static int get_device_description(struct
+     if (rc)
+         return rc;
+     bzero(ds, sizeof(*ds));
+-    id_vendor  = libusb_le16_to_cpu(desc.idVendor);
+-    id_product = libusb_le16_to_cpu(desc.idProduct);
++    id_vendor  = desc.idVendor;
++    id_product = desc.idProduct;
+     rc = libusb_open(dev, &devh);
+     if (rc == 0) {
+         if (!opt_nodesc) {
