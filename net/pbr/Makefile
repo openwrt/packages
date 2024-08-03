@@ -1,11 +1,11 @@
-# Copyright 2017-2023 MOSSDeF, Stan Grishin (stangri@melmac.ca)
-# This is free software, licensed under the GNU General Public License v3.
+# Copyright 2017-2024 MOSSDeF, Stan Grishin (stangri@melmac.ca).
+# This is free software, licensed under AGPL-3.0-or-later.
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pbr
-PKG_VERSION:=1.1.4
-PKG_RELEASE:=16
+PKG_VERSION:=1.1.6
+PKG_RELEASE:=20
 PKG_LICENSE:=AGPL-3.0-or-later
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.ca>
 
@@ -16,12 +16,11 @@ define Package/pbr/default
   CATEGORY:=Network
   SUBMENU:=Routing and Redirection
   TITLE:=Policy Based Routing Service
-  URL:=https://docs.openwrt.melmac.net/pbr/
+  URL:=https://github.com/stangri/pbr/
   DEPENDS:=+ip-full +jshn +jsonfilter +resolveip
 	DEPENDS+=+!BUSYBOX_DEFAULT_AWK:gawk
 	DEPENDS+=+!BUSYBOX_DEFAULT_GREP:grep
 	DEPENDS+=+!BUSYBOX_DEFAULT_SED:sed
-  CONFLICTS:=vpnbypass vpn-policy-routing
   PROVIDES:=pbr
   PKGARCH:=all
 endef
@@ -32,7 +31,6 @@ $(call Package/pbr/default)
   DEPENDS+=+kmod-nft-core +kmod-nft-nat +nftables-json
   VARIANT:=nftables
   DEFAULT_VARIANT:=1
-  PROVIDES+=vpnbypass vpn-policy-routing
 endef
 
 define Package/pbr-iptables
@@ -44,7 +42,7 @@ endef
 
 define Package/pbr-netifd
 $(call Package/pbr/default)
-  TITLE+= with netifd support
+  TITLE+= with nft/nft set and netifd support
   VARIANT:=netifd
 endef
 
@@ -54,18 +52,18 @@ endef
 
 define Package/pbr/description
   $(call Package/pbr/default/description)
-  This version supports OpenWrt with both firewall3/ipset/iptables and firewall4/nft.
+  This version supports OpenWrt (23.05 and newer) with firewall4/nft.
 endef
 
 define Package/pbr-iptables/description
   $(call Package/pbr/default/description)
-  This version supports OpenWrt with firewall3/ipset/iptables.
+  This version supports OpenWrt (22.03 and older) with firewall3/ipset/iptables.
 endef
 
 define Package/pbr-netifd/description
   $(call Package/pbr/default/description)
-  This version supports OpenWrt with both firewall3/ipset/iptables and firewall4/nft.
-  This version uses OpenWrt native netifd/tables to set up interfaces. This is WIP.
+  This version supports OpenWrt with (23.05 and newer) firewall4/nft.
+  This version uses OpenWrt native netifd/tables to set up interfaces. This is a WIP.
 endef
 
 define Package/pbr/default/conffiles
@@ -83,26 +81,24 @@ define Build/Compile
 endef
 
 define Package/pbr/default/install
-	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/etc/init.d/pbr $(1)/etc/init.d/pbr
-	$(SED) "s|^\(readonly PKG_VERSION\).*|\1='$(PKG_VERSION)-$(PKG_RELEASE)'|" $(1)/etc/init.d/pbr
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN)  ./files/etc/uci-defaults/90-pbr $(1)/etc/uci-defaults/90-pbr
 	$(INSTALL_DIR) $(1)/usr/share/pbr
 	$(INSTALL_DATA) ./files/usr/share/pbr/.keep $(1)/usr/share/pbr/.keep
-	$(INSTALL_DATA) ./files/usr/share/pbr/pbr.user.aws $(1)/usr/share/pbr/pbr.user.aws
-	$(INSTALL_DATA) ./files/usr/share/pbr/pbr.user.netflix $(1)/usr/share/pbr/pbr.user.netflix
 	$(INSTALL_DATA) ./files/usr/share/pbr/pbr.user.wg_server_and_client $(1)/usr/share/pbr/pbr.user.wg_server_and_client
 endef
-#	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
-#	$(INSTALL_DATA) ./files/etc/hotplug.d/iface/70-pbr $(1)/etc/hotplug.d/iface/70-pbr
 
 define Package/pbr/install
 $(call Package/pbr/default/install,$(1))
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/etc/init.d/pbr $(1)/etc/init.d/pbr
+	$(SED) "s|^\(readonly PKG_VERSION\).*|\1='$(PKG_VERSION)-$(PKG_RELEASE)'|" $(1)/etc/init.d/pbr
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/etc/config/pbr $(1)/etc/config/pbr
 	$(INSTALL_DIR) $(1)/usr/share/pbr
 	$(INSTALL_DATA) ./files/usr/share/pbr/firewall.include $(1)/usr/share/pbr/firewall.include
+	$(INSTALL_DATA) ./files/usr/share/pbr/pbr.user.aws $(1)/usr/share/pbr/pbr.user.aws
+	$(INSTALL_DATA) ./files/usr/share/pbr/pbr.user.netflix $(1)/usr/share/pbr/pbr.user.netflix
 	$(INSTALL_DIR) $(1)/usr/share/nftables.d
 	$(CP) ./files/usr/share/nftables.d/* $(1)/usr/share/nftables.d/
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
@@ -111,16 +107,24 @@ endef
 
 define Package/pbr-iptables/install
 $(call Package/pbr/default/install,$(1))
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/etc/init.d/pbr-iptables $(1)/etc/init.d/pbr
+	$(SED) "s|^\(readonly PKG_VERSION\).*|\1='$(PKG_VERSION)-$(PKG_RELEASE)'|" $(1)/etc/init.d/pbr
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/firewall
 	$(INSTALL_DATA) ./files/etc/hotplug.d/firewall/70-pbr $(1)/etc/hotplug.d/firewall/70-pbr
 	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_CONF) ./files/etc/config/pbr.iptables $(1)/etc/config/pbr
+	$(INSTALL_CONF) ./files/etc/config/pbr-iptables $(1)/etc/config/pbr
+	$(INSTALL_DIR) $(1)/usr/share/pbr
+	$(INSTALL_DATA) ./files/usr/share/pbr/pbr.user.aws-iptables $(1)/usr/share/pbr/pbr.user.aws
+	$(INSTALL_DATA) ./files/usr/share/pbr/pbr.user.netflix-iptables $(1)/usr/share/pbr/pbr.user.netflix
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN)  ./files/etc/uci-defaults/91-pbr-iptables $(1)/etc/uci-defaults/91-pbr-iptables
 endef
 
 define Package/pbr-netifd/install
 $(call Package/pbr/default/install,$(1))
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/etc/init.d/pbr $(1)/etc/init.d/pbr
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/etc/config/pbr $(1)/etc/config/pbr
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
