@@ -14,12 +14,6 @@ if [ "$(uci_get pbr config resolver_set)" != 'dnsmasq.nftset' ]; then
 	if check_dnsmasq_nftset; then
 		output "Setting resolver_set to 'dnsmasq.nftset'... "
 		uci_set pbr config resolver_set 'dnsmasq.nftset' && output_okn || output_failn
-	elif check_agh_ipset; then
-		output "Setting resolver_set to 'adguardhome.ipset'... "
-		uci_set pbr config resolver_set 'adguardhome.ipset' && output_okn || output_failn
-	elif check_dnsmasq_ipset; then
-		output "Setting resolver_set to 'dnsmasq.ipset'... "
-		uci_set pbr config resolver_set 'dnsmasq.ipset' && output_okn || output_failn
 	else
 		output "Setting resolver_set to 'none'... "
 		uci_set pbr config resolver_set 'none' && output_okn || output_failn
