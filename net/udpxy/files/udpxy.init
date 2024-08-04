@@ -29,6 +29,7 @@ append_bool() {
 start_instance() {
 	local cfg="$1"
 	local aux
+	local dev
 
 	config_get_bool aux "$cfg" 'disabled' '0'
 	[ "$aux" = 1 ] && return 1
@@ -54,11 +55,21 @@ start_instance() {
 	config_get_bool aux "$cfg" 'respawn' '0'
 	[ "$aux" = 1 ] && procd_set_param respawn
 
+	config_get dev "$cfg" "source"
+	[ -n "$dev" ] && procd_set_param netdev $dev
+
 	procd_close_instance
 }
 
-service_triggers() { 
-	procd_add_reload_trigger "udpxy" 
+service_triggers() {
+	local cfg
+	local dev
+	local ifname
+	procd_add_reload_trigger "udpxy"
+	cfg=$(config_foreach echo $1 udpxy)
+	config_get dev "$cfg" "source"
+	[ -n "$dev" ] && ifname=$(uci show network | grep $dev | awk '{split($0,arr,".");print arr[2]}')
+	[ -n "$ifname" ] && procd_add_interface_trigger "interface.*" $ifname /etc/init.d/udpxy restart
 }
 
 start_service() {
