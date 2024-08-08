@@ -13,7 +13,7 @@ Forwarded: https://github.com/nodejs/node/issues/33816
  //
  // Permission is hereby granted, free of charge, to any person obtaining a
  // copy of this software and associated documentation files (the
-@@ -1338,13 +1339,6 @@ function lookupAndConnect(self, options)
+@@ -1339,13 +1340,6 @@ function lookupAndConnect(self, options)
      hints: options.hints || 0,
    };
  
