@@ -386,8 +386,10 @@ TARGET_CFLAGS += \
 
 ifeq ($(word 1,$(subst ., ,$(call qstrip,$(CONFIG_GCC_VERSION)))),5)
     EXTRA_CXXFLAGS += -std=gnu++14
-else ifneq ($(filter-out 6 7 8 9,$(word 1,$(subst ., ,$(call qstrip,$(CONFIG_GCC_VERSION))))),)
+else ifneq ($(filter 6 7,$(word 1,$(subst ., ,$(call qstrip,$(CONFIG_GCC_VERSION))))),)
     EXTRA_CXXFLAGS += -std=gnu++17
+else ifneq ($(filter 8 9,$(word 1,$(subst ., ,$(call qstrip,$(CONFIG_GCC_VERSION))))),)
+    EXTRA_CXXFLAGS += -std=gnu++2a
 else
     EXTRA_CXXFLAGS += -std=gnu++20
 endif
