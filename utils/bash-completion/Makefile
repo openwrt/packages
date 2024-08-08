@@ -40,7 +40,7 @@ define Package/bash-completion/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/bash-completion/bash_completion $(1)/usr/share/bash-completion
 	$(INSTALL_DIR) $(1)/usr/share/bash-completion/completions
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/bash-completion/completions/* $(1)/usr/share/bash-completion/completions/
-	$(CP) ./files/* $(PKG_INSTALL_DIR)/usr/share/bash-completion/* $(1)/usr/share/bash-completion/completions/
+	$(CP) ./files/* $(1)/usr/share/bash-completion/completions/
 	$(INSTALL_DIR) $(1)/usr/share/bash-completion/helpers
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/bash-completion/helpers/* $(1)/usr/share/bash-completion/helpers
 endef
