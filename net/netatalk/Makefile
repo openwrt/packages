@@ -8,13 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netatalk
-PKG_VERSION:=3.2.0
+PKG_VERSION:=3.2.5
 PKG_RELEASE:=1
+PKG_LICENSE:=GPL-2.0-or-later
 
 #PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/netatalk
-PKG_HASH:=0c2b4b47450bc7ac95a268d1033471f572a3e06b64131fcef9b66e73663b6d08
+PKG_HASH:=57de9a7ed411029d6176e429a14ef314460251d8aebe7139aeadc35633d9584b
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -33,7 +34,7 @@ define Package/netatalk
   DEPENDS:=+libattr +libdb47 +libgcrypt +libopenssl +libevent2
   TITLE:=netatalk
   URL:=http://netatalk.sourceforge.net
-  MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
+  MAINTAINER:=An Pa <apccv@outlook.com>
 endef
 
 define Package/netatalk/decription
