@@ -9,10 +9,10 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=freeradius3
 PKG_VERSION:=3.2.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=freeradius-server-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://freeradius.org/ftp/pub/freeradius
+PKG_SOURCE_URL:=https://www.freeradius.org/ftp/pub/freeradius/
 PKG_HASH:=1e75f5fc1961d9854d1cb3c6921612fbe2b9edb8ee508a5a7cbd69f1e7607115
 
 PKG_MAINTAINER:=
@@ -575,7 +575,7 @@ define Package/freeradius3-mod-sql-map
   TITLE:=Map module
 endef
 
-define Package/freeradius3-mod-map/conffiles
+define Package/freeradius3-mod-sql-map/conffiles
 /etc/freeradius3/mods-available/sql_map
 endef
 
@@ -845,6 +845,14 @@ else
   CONFIGURE_ARGS+= --without-rlm_json
 endif
 
+ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-krb5),)
+  CONFIGURE_ARGS+= \
+		--with-rlm_krb5 \
+		--with-rlm-krb5-dir="$(STAGING_DIR)/host/bin/krb5-config"
+else
+  CONFIGURE_ARGS+= --without-rlm_krb5
+endif
+
 ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-ldap),)
   CONFIGURE_ARGS+= --with-rlm_ldap \
 		--with-rlm_ldap-include-dir="$(STAGING_DIR)/usr/include" \
@@ -974,7 +982,7 @@ CONFIGURE_VARS+= \
 	LDFLAGS="$$$$LDFLAGS" \
 	LIBS="$(CONFIGURE_LIBS)" \
 	MYSQL_CONFIG="no" \
-	ac_cv_lib_readline=no \
+	vl_cv_lib_readline=no \
 	ax_cv_cc_builtin_choose_expr=yes \
 	ax_cv_cc_builtin_types_compatible_p=yes ax_cv_cc_builtin_bswap64=yes \
 	ax_cv_cc_bounded_attribute=no \
