@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adblock-fast
 PKG_VERSION:=1.1.2
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.ca>
 PKG_LICENSE:=AGPL-3.0-or-later
 
@@ -16,7 +16,7 @@ define Package/adblock-fast
   SECTION:=net
   CATEGORY:=Network
   TITLE:=AdBlock Fast Service
-  URL:=https://docs.openwrt.melmac.net/adblock-fast/
+  URL:=https://github.com/stangri/adblock-fast/
   DEPENDS:=+jshn +curl
 	DEPENDS+=+!BUSYBOX_DEFAULT_AWK:gawk
 	DEPENDS+=+!BUSYBOX_DEFAULT_GREP:grep
@@ -49,17 +49,14 @@ define Package/adblock-fast/install
 	$(SED) "s|^\(readonly PKG_VERSION\).*|\1='$(PKG_VERSION)-$(PKG_RELEASE)'|" $(1)/etc/init.d/adblock-fast
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/etc/config/adblock-fast $(1)/etc/config/adblock-fast
-	$(INSTALL_DIR) $(1)/tmp
-	$(INSTALL_DATA) ./files/adblock-fast.config.update $(1)/tmp/adblock-fast.config.update
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN)  ./files/etc/uci-defaults/90-adblock-fast $(1)/etc/uci-defaults/90-adblock-fast
+	$(INSTALL_BIN) ./files/etc/uci-defaults/90-adblock-fast $(1)/etc/uci-defaults/90-adblock-fast
 endef
 
 define Package/adblock-fast/postinst
 	#!/bin/sh
 	# check if we are on real system
 	if [ -z "$${IPKG_INSTROOT}" ]; then
-		sed -f /tmp/adblock-fast.config.update -i /etc/config/adblock-fast || true
 		/etc/init.d/adblock-fast enable
 	fi
 	exit 0
