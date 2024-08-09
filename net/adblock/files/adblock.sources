@@ -118,6 +118,13 @@
 		"focus": "compilation",
 		"descurl": "https://hblock.molinero.dev"
 	},
+	"hagezi": {
+		"url": "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/",
+		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
+		"size": "VAR",
+		"focus": "compilation",
+		"descurl": "https://github.com/hagezi/dns-blocklists"
+	},
 	 "lightswitch05": {
 		"url": "https://www.github.developerdan.com/hosts/lists/ads-and-tracking-extended.txt",
 		"rule": "/^0\\.0\\.0\\.0[[:space:]]+([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
