@@ -26,6 +26,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | easyprivacy         |         | M    | tracking         | [Link](https://easylist.to)                                                       |
 | firetv_tracking     |         | S    | tracking         | [Link](https://github.com/Perflyst/PiHoleBlocklist)                               |
 | games_tracking      |         | S    | tracking         | [Link](https://www.gameindustry.eu)                                               |
+| hagezi              |         | VAR  | compilation      | [Link](https://github.com/hagezi/dns-blocklists)                                  |
 | hblock              |         | XL   | compilation      | [Link](https://hblock.molinero.dev)                                               |
 | lightswitch05       |         | XL   | compilation      | [Link](https://github.com/lightswitch05/hosts)                                    |
 | notracking          |         | XL   | tracking         | [Link](https://github.com/notracking/hosts-blocklists)                            |
@@ -67,7 +68,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     • <b>S</b> (-10k), <b>M</b> (10k-30k) and <b>L</b> (30k-80k) should work for 128 MByte devices,  
     • <b>XL</b> (80k-200k) should work for 256-512 MByte devices,  
     • <b>XXL</b> (200k-) needs more RAM and Multicore support, e.g. x86 or raspberry devices.  
-    • <b>VAR</b> (50k-500k) variable size depending on the selection.  
+    • <b>VAR</b> (50k-900k) variable size depending on the selection.  
 * Zero-conf like automatic installation & setup, usually no manual changes needed
 * Simple but yet powerful adblock engine: adblock does not use error prone external iptables rulesets, http pixel server instances and things like that
 * Supports five different DNS backend formats: dnsmasq, unbound, named (bind), kresd or raw (e.g. used by dnscrypt-proxy)
@@ -107,7 +108,6 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * A certificate store such as 'ca-bundle' or 'ca-certificates', as adblock checks the validity of the SSL certificates of all download sites by default
 * Optional E-Mail notification support: for E-Mail notifications you need to install the additional 'msmtp' package
 * Optional DNS Query Report support: for DNS reporting you need to install the additional package 'tcpdump-mini' or 'tcpdump'
-* Optional support for gnu awk as alternative to the busybox default, install the additional package 'gawk'
 
 ## Installation & Usage
 * Update your local opkg repository (_opkg update_)
@@ -324,4 +324,3 @@ No matter what you decide - thank you very much for your support!
 
 Have fun!  
 Dirk
-
