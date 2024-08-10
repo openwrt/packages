@@ -8,6 +8,8 @@ START=94
 USE_PROCD=1
 LC_ALL=C
 
+[ -n "${IPKG_INSTROOT}" ] && return 0
+
 if type extra_command 1>/dev/null 2>&1; then
 	extra_command 'allow' 'Allows domain in current block-list and config'
 	extra_command 'check' 'Checks if specified domain is found in current block-list'
@@ -34,7 +36,7 @@ fi
 
 readonly packageName='adblock-fast'
 readonly PKG_VERSION='dev-test'
-readonly packageCompat='1'
+readonly packageCompat='2'
 readonly serviceName="$packageName $PKG_VERSION"
 readonly packageConfigFile="/etc/config/${packageName}"
 readonly dnsmasqAddnhostsFile="/var/run/${packageName}/dnsmasq.addnhosts"
@@ -1111,7 +1113,8 @@ process_file_url() {
 
 	label="${url##*//}"
 	label="${label%%/*}"
-	label="File: $label"
+	label="${name:-$label}"
+	label="List: $label"
 	case "$action" in
 		allow) type='Allowed'; D_TMP="$A_TMP"
 		;;
@@ -1668,6 +1671,13 @@ adb_check_lists() {
 }
 
 adb_config_update() {
+	_cleanup_missing_urls() {
+		local cfg="$1" url size
+		config_get url "$cfg" url
+		if [ -z "$url" ]; then
+			uci_delete "$packageName" "$cfg"
+		fi
+	}
 	local R_TMP label
 	local param validation_result="$3"
 	case "$1" in
@@ -1703,6 +1713,9 @@ adb_config_update() {
 		fi
 	fi
 	rm -f "$R_TMP"
+	config_load "$packageName"
+	config_foreach _cleanup_missing_urls 'file_url'
+	[ -n "$(uci_changes "$packageName")" ] && uci_commit "$packageName"
 	return 0
 }
 
@@ -1714,10 +1727,11 @@ adb_show_blocklist() {
 
 adb_sizes() {
 	_config_add_url_size() {
-		local cfg="$1" url size
+		local cfg="$1" url name size
 		config_get url "$cfg" url
+		config_get name "$cfg" name
 		size="$(get_url_filesize "$url")"
-		output "$url${size:+: $size} "
+		output "${name:-$url}${size:+: $size} "
 		if [ -n "$size" ]; then
 			uci_set "$packageName" "$cfg" 'size' "$size"
 			output_okn
@@ -1730,7 +1744,7 @@ adb_sizes() {
 	load_environment "$validation_result" 'quiet' || return 1
 	config_load "$packageName"
 	config_foreach _config_add_url_size 'file_url'
-	uci_commit "$packageName"
+	[ -n "$(uci_changes "$packageName")" ] && uci_commit "$packageName"
 }
 
 # shellcheck disable=SC2120
@@ -2105,6 +2119,7 @@ load_validate_file_url_section() {
 		'enabled:bool:1' \
 		'action:or("allow", "block"):block' \
 		'size:or(uinteger, "")' \
+		'name:string' \
 		'url:string'
 }
 
