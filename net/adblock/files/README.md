@@ -10,7 +10,8 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 
 | Source              | Enabled | Size | Focus            | Information                                                                       |
 | :------------------ | :-----: | :--- | :--------------- | :-------------------------------------------------------------------------------- |
-| adaway              | x       | S    | mobile           | [Link](https://github.com/AdAway/adaway.github.io)                                |
+| 1Hosts              |         | VAR  | compilation      | [Link](https://github.com/badmojr/1Hosts)                                         |
+| adaway              |         | S    | mobile           | [Link](https://github.com/AdAway/adaway.github.io)                                |
 | adguard             | x       | L    | general          | [Link](https://adguard.com)                                                       |
 | adguard_tracking    |         | L    | tracking         | [Link](https://github.com/AdguardTeam/cname-trackers)                             |
 | android_tracking    |         | S    | tracking         | [Link](https://github.com/Perflyst/PiHoleBlocklist)                               |
@@ -20,7 +21,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | anudeep             |         | M    | compilation      | [Link](https://github.com/anudeepND/blacklist)                                    |
 | bitcoin             |         | S    | mining           | [Link](https://github.com/hoshsadiq/adblock-nocoin-list)                          |
 | cpbl                |         | XL   | compilation      | [Link](https://github.com/bongochong/CombinedPrivacyBlockLists)                   |
-| disconnect          | x       | S    | general          | [Link](https://disconnect.me)                                                     |
+| disconnect          |         | S    | general          | [Link](https://disconnect.me)                                                     |
 | doh_blocklist       |         | S    | doh_server       | [Link](https://github.com/dibdot/DoH-IP-blocklists)                               |
 | easylist            |         | M    | compilation      | [Link](https://easylist.to)                                                       |
 | easyprivacy         |         | M    | tracking         | [Link](https://easylist.to)                                                       |
@@ -60,7 +61,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | whocares            |         | M    | general          | [Link](https://someonewhocares.org)                                               |
 | winhelp             |         | S    | general          | [Link](https://winhelp2002.mvps.org)                                              |
 | winspy              |         | S    | win_telemetry    | [Link](https://github.com/crazy-max/WindowsSpyBlocker)                            |
-| yoyo                | x       | S    | general          | [Link](https://pgl.yoyo.org/adservers)                                            |
+| yoyo                |         | S    | general          | [Link](https://pgl.yoyo.org/adservers)                                            |
 
 * List of supported and fully pre-configured adblock sources, already active sources are pre-selected.  
   <b><em>To avoid OOM errors, please do not select too many lists!</em></b>  
@@ -134,7 +135,7 @@ Available commands:
 	resume          Resume adblock processing
 	query           &lt;domain&gt; Query active blocklists and backups for a specific domain
 	report          [&lt;search&gt;] Print DNS statistics with an optional search parameter
-	list            [&lt;add&gt;|&lt;add_utc&gt;|&lt;add_eng&gt;|&lt;add_stb&gt;|&lt;remove&gt;|&lt;remove_utc&gt;|&lt;remove_eng&gt;|&lt;remove_stb&gt;] &lt;source(s)&gt; List/Edit available sources
+	list            List available sources
 	timer           [&lt;add&gt; &lt;tasks&gt; &lt;hour&gt; [&lt;minute&gt;] [&lt;weekday&gt;]]|[&lt;remove&gt; &lt;line no.&gt;] List/Edit cron update intervals
 	version         Print version information
 	running         Check if service is running

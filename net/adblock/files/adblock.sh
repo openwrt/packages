@@ -11,7 +11,7 @@
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 
-adb_ver="4.2.0"
+adb_ver="4.2.1"
 adb_enabled="0"
 adb_debug="0"
 adb_forcedns="0"
@@ -185,6 +185,8 @@ f_conf() {
 				eval "${option}=\"$(printf "%s" "${adb_sources}") ${value}\""
 			elif [ "${option}" = "adb_hag_sources" ]; then
 				eval "${option}=\"$(printf "%s" "${adb_hag_sources}") ${value}\""
+			elif [ "${option}" = "adb_hst_sources" ]; then
+				eval "${option}=\"$(printf "%s" "${adb_hst_sources}") ${value}\""
 			elif [ "${option}" = "adb_stb_sources" ]; then
 				eval "${option}=\"$(printf "%s" "${adb_stb_sources}") ${value}\""
 			elif [ "${option}" = "adb_utc_sources" ]; then
@@ -1211,11 +1213,14 @@ f_main() {
 				) &
 			fi
 		else
-			if [ "${src_name}" = "stevenblack" ] && [ -n "${adb_stb_sources}" ]; then
-				src_cat="${adb_stb_sources}"
+			if [ "${src_name}" = "1hosts" ] && [ -n "${adb_hst_sources}" ]; then
+				src_cat="${adb_hst_sources}"
 			elif [ "${src_name}" = "hagezi" ] && [ -n "${adb_hag_sources}" ]; then
 				src_cat="${adb_hag_sources}"
-			elif { [ "${src_name}" = "hagezi" ] && [ -z "${adb_hag_sources}" ]; } ||
+			elif [ "${src_name}" = "stevenblack" ] && [ -n "${adb_stb_sources}" ]; then
+				src_cat="${adb_stb_sources}"
+			elif { [ "${src_name}" = "1hosts" ] && [ -z "${adb_hst_sources}" ]; } ||
+				{ [ "${src_name}" = "hagezi" ] && [ -z "${adb_hag_sources}" ]; } ||
 				{ [ "${src_name}" = "stevenblack" ] && [ -z "${adb_stb_sources}" ]; }; then
 				continue
 			fi
