@@ -11,7 +11,7 @@ OpenWrt base build system decide flavor of fortify_source to use
 
 --- a/configure
 +++ b/configure
-@@ -758,6 +758,8 @@ for opt do
+@@ -760,6 +760,8 @@ for opt do
    ;;
    --gdb=*) gdb_bin="$optarg"
    ;;
