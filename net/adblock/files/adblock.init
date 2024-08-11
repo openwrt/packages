@@ -201,8 +201,10 @@ service_triggers() {
 
 	iface="$(uci_get adblock global adb_trigger)"
 	delay="$(uci_get adblock global adb_triggerdelay "5")"
-	PROCD_RELOAD_DELAY="$((delay * 1000))"
 
+	PROCD_RELOAD_DELAY="$((delay * 1000))"
 	[ -n "${iface}" ] && procd_add_interface_trigger "interface.*.up" "${iface}" "${adb_init}" "start"
+
+	PROCD_RELOAD_DELAY="$((2 * 1000))"
 	procd_add_reload_trigger "adblock"
 }
