@@ -29,11 +29,11 @@ LOG() {
   logger -s -t "$NAME" -p "syslog.$level" -- "$@"
 }
 
-target_devices=
-mac_to_device_mapping=
-pci_id_to_device_mapping=
-pci_slot_to_device_mapping=
-usb_slot_to_device_mapping=
+TARGET_DEVICES=
+MAC_TO_DEVICE_MAPPING=
+PCI_ID_TO_DEVICE_MAPPING=
+PCI_SLOT_TO_DEVICE_MAPPING=
+USB_SLOT_TO_DEVICE_MAPPING=
 
 ## Read configuration using UCI
 read_static_device_names_config() {
@@ -45,28 +45,28 @@ read_static_device_names_config() {
   local usb_slot
   local i
 
-  if [ -z "$target_devices" ] ; then
-    target_devices=
-    mac_to_device_mapping=
-    pci_id_to_device_mapping=
-    pci_slot_to_device_mapping=
-    usb_slot_to_device_mapping=
+  if [ -z "$TARGET_DEVICES" ] ; then
+    TARGET_DEVICES=
+    MAC_TO_DEVICE_MAPPING=
+    PCI_ID_TO_DEVICE_MAPPING=
+    PCI_SLOT_TO_DEVICE_MAPPING=
+    USB_SLOT_TO_DEVICE_MAPPING=
     i=0
     while uci -q get "static-device-names.@device[$i]" > /dev/null ; do
       dev=$(uci -q get "static-device-names.@device[$i].name")
       if [ -n "$dev" ] ; then
-        target_devices="$target_devices$N$dev"
+        TARGET_DEVICES="$TARGET_DEVICES$N$dev"
         for mac in $(uci -q get "static-device-names.@device[$i].mac") ; do
-          mac_to_device_mapping="${mac_to_device_mapping:+$mac_to_device_mapping$N}$mac $dev"
+          MAC_TO_DEVICE_MAPPING="${MAC_TO_DEVICE_MAPPING:+$MAC_TO_DEVICE_MAPPING$N}$mac $dev"
         done
         for pci_id in $(uci -q get "static-device-names.@device[$i].pci_id") ; do
-          pci_id_to_device_mapping="${pci_id_to_device_mapping:+$pci_id_to_device_mapping$N}$pci_id $dev"
+          PCI_ID_TO_DEVICE_MAPPING="${PCI_ID_TO_DEVICE_MAPPING:+$PCI_ID_TO_DEVICE_MAPPING$N}$pci_id $dev"
         done
         for pci_slot in $(uci -q get "static-device-names.@device[$i].pci_slot") ; do
-          pci_slot_to_device_mapping="${pci_slot_to_device_mapping:+$pci_slot_to_device_mapping$N}$pci_slot $dev"
+          PCI_SLOT_TO_DEVICE_MAPPING="${PCI_SLOT_TO_DEVICE_MAPPING:+$PCI_SLOT_TO_DEVICE_MAPPING$N}$pci_slot $dev"
         done
         for usb_slot in $(uci -q get "static-device-names.@device[$i].usb_slot") ; do
-          usb_slot_to_device_mapping="${usb_slot_to_device_mapping:+$usb_slot_to_device_mapping$N}$usb_slot $dev"
+          USB_SLOT_TO_DEVICE_MAPPING="${USB_SLOT_TO_DEVICE_MAPPING:+$USB_SLOT_TO_DEVICE_MAPPING$N}$usb_slot $dev"
         done
       else
         LOG err "Configuration static-device-names.@device[$i] mission option 'name'"
@@ -74,12 +74,12 @@ read_static_device_names_config() {
       fi
       i=$((i+1))
     done
-    target_devices="$(echo "$target_devices" | sort -u)"
-    LOG debug config: target_devices: $target_devices
-    LOG debug config: mac_to_device_mapping: $mac_to_device_mapping
-    LOG debug config: pci_id_to_device_mapping: $pci_id_to_device_mapping
-    LOG debug config: pci_slot_to_device_mapping: $pci_slot_to_device_mapping
-    LOG debug config: usb_slot_to_device_mapping: $usb_slot_to_device_mapping
+    TARGET_DEVICES="$(echo "$TARGET_DEVICES" | sort -u)"
+    LOG debug config: TARGET_DEVICES: $TARGET_DEVICES
+    LOG debug config: MAC_TO_DEVICE_MAPPING: $MAC_TO_DEVICE_MAPPING
+    LOG debug config: PCI_ID_TO_DEVICE_MAPPING: $PCI_ID_TO_DEVICE_MAPPING
+    LOG debug config: PCI_SLOT_TO_DEVICE_MAPPING: $PCI_SLOT_TO_DEVICE_MAPPING
+    LOG debug config: USB_SLOT_TO_DEVICE_MAPPING: $USB_SLOT_TO_DEVICE_MAPPING
   fi
   return $rc
 }
@@ -185,7 +185,7 @@ get_target_device_name() {
   # Match device by MAC address
   mac=$(get_device_mac "$in_dev")
   if [ -n "$mac" ] ; then
-    dev=$(echo "$mac_to_device_mapping" | grep -i -- "^$mac " | awk '{print $2}' | head -n 1)
+    dev=$(echo "$MAC_TO_DEVICE_MAPPING" | grep -i -- "^$mac " | awk '{print $2}' | head -n 1)
     if [ -n "$dev" ] ; then
       echo "$dev"
       return
@@ -195,7 +195,7 @@ get_target_device_name() {
   # Match device by PCI ID
   pci_id=$(get_device_pci_id "$in_dev")
   if [ -n "$pci_id" ] ; then
-    dev=$(echo "$pci_id_to_device_mapping" | grep -i -- "^$pci_id " | awk '{print $2}' | head -n 1)
+    dev=$(echo "$PCI_ID_TO_DEVICE_MAPPING" | grep -i -- "^$pci_id " | awk '{print $2}' | head -n 1)
     if [ -n "$dev" ] ; then
       echo "$dev"
       return
@@ -205,7 +205,7 @@ get_target_device_name() {
   # Match device by PCI slot
   pci_slot=$(get_device_pci_slot "$in_dev")
   if [ -n "$pci_slot" ] ; then
-    dev=$(echo "$pci_slot_to_device_mapping" | grep -i -- "^$pci_slot " | awk '{print $2}' | head -n 1)
+    dev=$(echo "$PCI_SLOT_TO_DEVICE_MAPPING" | grep -i -- "^$pci_slot " | awk '{print $2}' | head -n 1)
     if [ -n "$dev" ] ; then
       echo "$dev"
       return
@@ -215,7 +215,7 @@ get_target_device_name() {
   # Match device by USB slot
   usb_slot=$(get_device_usb_slot "$in_dev")
   if [ -n "$usb_slot" ] ; then
-    dev=$(echo "$usb_slot_to_device_mapping" | grep -i -- "^$usb_slot " | awk '{print $2}' | head -n 1)
+    dev=$(echo "$USB_SLOT_TO_DEVICE_MAPPING" | grep -i -- "^$usb_slot " | awk '{print $2}' | head -n 1)
     if [ -n "$dev" ] ; then
       echo "$dev"
       return
@@ -231,7 +231,7 @@ is_known_target_device() {
   local dev=$1
   shift
 
-  echo "$target_devices" | grep -q "^$dev$"
+  echo "$TARGET_DEVICES" | grep -q "^$dev$"
 }
 
 ## Lists all network devices on the system.
