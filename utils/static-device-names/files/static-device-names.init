@@ -56,30 +56,50 @@ read_static_device_names_config() {
 			dev=$(uci -q get "static-device-names.@device[$i].name")
 			if [ -n "$dev" ] ; then
 				TARGET_DEVICES="$TARGET_DEVICES$NL$dev"
-				for mac in $(uci -q get "static-device-names.@device[$i].mac") ; do
-					MAC_TO_DEVICE_MAPPING="${MAC_TO_DEVICE_MAPPING:+$MAC_TO_DEVICE_MAPPING$NL}$mac $dev"
+				for mac in \
+					$(uci -q get "static-device-names.@device[$i].mac") ; do
+					MAC_TO_DEVICE_MAPPING=\
+						"${MAC_TO_DEVICE_MAPPING:+$MAC_TO_DEVICE_MAPPING$NL}\
+						$mac $dev"
 				done
-				for pci_id in $(uci -q get "static-device-names.@device[$i].pci_id") ; do
-					PCI_ID_TO_DEVICE_MAPPING="${PCI_ID_TO_DEVICE_MAPPING:+$PCI_ID_TO_DEVICE_MAPPING$NL}$pci_id $dev"
+				for pci_id in \
+					$(uci -q get "static-device-names.@device[$i].pci_id")
+				do
+					PCI_ID_TO_DEVICE_MAPPING=\
+						"${PCI_ID_TO_DEVICE_MAPPING:+$PCI_ID_TO_DEVICE_MAPPING$NL}\
+						$pci_id $dev"
 				done
-				for pci_slot in $(uci -q get "static-device-names.@device[$i].pci_slot") ; do
-					PCI_SLOT_TO_DEVICE_MAPPING="${PCI_SLOT_TO_DEVICE_MAPPING:+$PCI_SLOT_TO_DEVICE_MAPPING$NL}$pci_slot $dev"
+				for pci_slot in \
+					$(uci -q get "static-device-names.@device[$i].pci_slot")
+				do
+					PCI_SLOT_TO_DEVICE_MAPPING=\
+						"${PCI_SLOT_TO_DEVICE_MAPPING:+$PCI_SLOT_TO_DEVICE_MAPPING$NL}\
+						$pci_slot $dev"
 				done
-				for usb_slot in $(uci -q get "static-device-names.@device[$i].usb_slot") ; do
-					USB_SLOT_TO_DEVICE_MAPPING="${USB_SLOT_TO_DEVICE_MAPPING:+$USB_SLOT_TO_DEVICE_MAPPING$NL}$usb_slot $dev"
+				for usb_slot in \
+					$(uci -q get "static-device-names.@device[$i].usb_slot") ; do
+					USB_SLOT_TO_DEVICE_MAPPING=\
+						"${USB_SLOT_TO_DEVICE_MAPPING:+$USB_SLOT_TO_DEVICE_MAPPING$NL}\
+						$usb_slot $dev"
 				done
 			else
-				LOG err "Configuration static-device-names.@device[$i] mission option 'name'"
+				LOG err "Configuration static-device-names.@device[$i] \
+					missing option 'name'"
 				rc=1
 			fi
 			i=$((i+1))
 		done
 		TARGET_DEVICES="$(echo "$TARGET_DEVICES" | sort -u)"
-		LOG debug config: TARGET_DEVICES: $TARGET_DEVICES
-		LOG debug config: MAC_TO_DEVICE_MAPPING: $MAC_TO_DEVICE_MAPPING
-		LOG debug config: PCI_ID_TO_DEVICE_MAPPING: $PCI_ID_TO_DEVICE_MAPPING
-		LOG debug config: PCI_SLOT_TO_DEVICE_MAPPING: $PCI_SLOT_TO_DEVICE_MAPPING
-		LOG debug config: USB_SLOT_TO_DEVICE_MAPPING: $USB_SLOT_TO_DEVICE_MAPPING
+		LOG debug config: TARGET_DEVICES: \
+			$TARGET_DEVICES
+		LOG debug config: MAC_TO_DEVICE_MAPPING: \
+			$MAC_TO_DEVICE_MAPPING
+		LOG debug config: PCI_ID_TO_DEVICE_MAPPING: \
+			$PCI_ID_TO_DEVICE_MAPPING
+		LOG debug config: PCI_SLOT_TO_DEVICE_MAPPING: \
+			$PCI_SLOT_TO_DEVICE_MAPPING
+		LOG debug config: USB_SLOT_TO_DEVICE_MAPPING: \
+			$USB_SLOT_TO_DEVICE_MAPPING
 	fi
 	return $rc
 }
@@ -111,10 +131,14 @@ get_device_pci_id() {
 
 	if [ -f "/sys/class/net/$dev/device/subsystem_vendor" ] ; then
 		# e.g., PCI
-		echo $(cat "/sys/class/net/$dev/device/subsystem_vendor"):$(cat "/sys/class/net/$dev/device/subsystem_device") | sed -e 's/0x//g'
+		echo $(cat "/sys/class/net/$dev/device/subsystem_vendor"):\
+			$(cat "/sys/class/net/$dev/device/subsystem_device") \
+			| sed -e 's/0x//g'
 	elif [ -f "/sys/class/net/$dev/device/../idProduct" ] ; then
 		# e.g., USB
-		echo $(cat "/sys/class/net/$dev/device/../idVendor"):$(cat "/sys/class/net/$dev/device/../idProduct") | sed -e 's/0x//g'
+		echo $(cat "/sys/class/net/$dev/device/../idVendor"):\
+			$(cat "/sys/class/net/$dev/device/../idProduct") \
+			| sed -e 's/0x//g'
 	fi
 }
 
@@ -185,7 +209,10 @@ get_target_device_name() {
 	# Match device by MAC address
 	mac=$(get_device_mac "$in_dev")
 	if [ -n "$mac" ] ; then
-		dev=$(echo "$MAC_TO_DEVICE_MAPPING" | grep -i -- "^$mac " | awk '{print $2}' | head -n 1)
+		dev=$(echo "$MAC_TO_DEVICE_MAPPING" \
+			| grep -i -- "^$mac " \
+			| awk '{print $2}' \
+			| head -n 1)
 		if [ -n "$dev" ] ; then
 			echo "$dev"
 			return
@@ -195,7 +222,10 @@ get_target_device_name() {
 	# Match device by PCI ID
 	pci_id=$(get_device_pci_id "$in_dev")
 	if [ -n "$pci_id" ] ; then
-		dev=$(echo "$PCI_ID_TO_DEVICE_MAPPING" | grep -i -- "^$pci_id " | awk '{print $2}' | head -n 1)
+		dev=$(echo "$PCI_ID_TO_DEVICE_MAPPING" \
+			| grep -i -- "^$pci_id " \
+			| awk '{print $2}' \
+			| head -n 1)
 		if [ -n "$dev" ] ; then
 			echo "$dev"
 			return
@@ -205,7 +235,10 @@ get_target_device_name() {
 	# Match device by PCI slot
 	pci_slot=$(get_device_pci_slot "$in_dev")
 	if [ -n "$pci_slot" ] ; then
-		dev=$(echo "$PCI_SLOT_TO_DEVICE_MAPPING" | grep -i -- "^$pci_slot " | awk '{print $2}' | head -n 1)
+		dev=$(echo "$PCI_SLOT_TO_DEVICE_MAPPING" \
+			| grep -i -- "^$pci_slot " \
+			| awk '{print $2}' \
+			| head -n 1)
 		if [ -n "$dev" ] ; then
 			echo "$dev"
 			return
@@ -215,14 +248,18 @@ get_target_device_name() {
 	# Match device by USB slot
 	usb_slot=$(get_device_usb_slot "$in_dev")
 	if [ -n "$usb_slot" ] ; then
-		dev=$(echo "$USB_SLOT_TO_DEVICE_MAPPING" | grep -i -- "^$usb_slot " | awk '{print $2}' | head -n 1)
+		dev=$(echo "$USB_SLOT_TO_DEVICE_MAPPING" \
+			| grep -i -- "^$usb_slot " \
+			| awk '{print $2}' \
+			| head -n 1)
 		if [ -n "$dev" ] ; then
 			echo "$dev"
 			return
 		fi
 	fi
 
-	LOG debug "No target device name for $in_dev: mac=$mac, pci_id=$pci_id, pci_slot=$pci_slot, usb_slot=$usb_slot"
+	LOG debug "No target device name for $in_dev: \
+		mac=$mac, pci_id=$pci_id, pci_slot=$pci_slot, usb_slot=$usb_slot"
 }
 
 ## Returns whether the device has a known target device name.
@@ -284,7 +321,8 @@ rename_device() {
 	shift 2
 
 	if device_exists "$new_dev" ; then
-		LOG err "Cannot rename device $(get_device_info_str "$dev"): $new_dev already exists"
+		LOG err "Cannot rename device $(get_device_info_str "$dev"): \
+			$new_dev already exists"
 		return 1
 	fi
 	ip link set "$dev" down
@@ -314,7 +352,8 @@ start() {
 
 		if [ -n "$dev" ] && ! device_exists "$dev" ; then
 			# Target name is free: Rename
-			LOG notice "Renaming device $(get_device_info_str "$in_dev") to $dev"
+			LOG notice "Renaming device $(get_device_info_str "$in_dev") \
+				to $dev"
 			rename_device "$in_dev" "$dev" || rc=1
 			continue
 		fi
@@ -335,7 +374,8 @@ start() {
 		# Move aside with "tmp" prefix and retry in next passes
 		devtype=$(echo "$in_dev" | sed -e 's/[0-9].*//' -e 's/^tmp//')
 		dev="$(get_next_device_name "tmp$devtype")"
-		LOG notice "Temporarily renaming device $(get_device_info_str "$in_dev") to $dev"
+		LOG notice "Temporarily renaming device \
+			$(get_device_info_str "$in_dev") to $dev"
 		rename_device "$in_dev" "$dev" || rc=1
 	done
 
@@ -345,7 +385,8 @@ start() {
 		dev=$(get_target_device_name "$in_dev")
 		if [ -n "$dev" ] ; then
 			# Known device: Rename
-			LOG notice "Renaming device $(get_device_info_str "$in_dev") to $dev"
+			LOG notice "Renaming device $(get_device_info_str "$in_dev") \
+				to $dev"
 			rename_device "$in_dev" "$dev" || rc=1
 		fi
 	done
@@ -356,7 +397,8 @@ start() {
 		# Unknown device: Remove free name of correct prefix
 		devtype=$(echo "$in_dev" | sed -e 's/[0-9].*//' -e 's/^tmp//')
 		dev=$(get_next_device_name "$devtype")
-		LOG notice "Renaming unknown device $(get_device_info_str "$in_dev") to $dev"
+		LOG notice "Renaming unknown device $(get_device_info_str "$in_dev") \
+			to $dev"
 		rename_device "$in_dev" "$dev" || rc=1
 	done
 
@@ -400,6 +442,9 @@ debug() {
 
 		echo "$level: $*" >&2
 	}
-	LOG debug "/etc/config/static-device-names:$NL~~~$NL$(cat /etc/config/static-device-names)$NL~~~"
+	LOG debug "/etc/config/static-device-names:\
+		$NL~~~$NL\
+		$(cat /etc/config/static-device-names)\
+		$NL~~~"
 	status
 }
