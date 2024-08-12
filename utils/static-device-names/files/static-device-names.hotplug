@@ -25,20 +25,20 @@
 #   DEVTYPE=wlan
 
 add() {
-    config_load "static-device-names"
-    config_get_bool enabled globals hotplug true
-    if [ "$enabled" -eq 1 ] ; then
-        service static-device-names hotplug "$DEVICENAME"
-    fi
+	config_load "static-device-names"
+	config_get_bool enabled globals hotplug true
+	if [ "$enabled" -eq 1 ] ; then
+		service static-device-names hotplug "$DEVICENAME"
+	fi
 }
 
 remove() {
-    # Run on remove too in case conflicts need to be resolved
-    config_load "static-device-names"
-    config_get_bool enabled globals hotplug true
-    if [ "$enabled" -eq 1 ] ; then
-        service static-device-names reload
-    fi
+	# Run on remove too in case conflicts need to be resolved
+	config_load "static-device-names"
+	config_get_bool enabled globals hotplug true
+	if [ "$enabled" -eq 1 ] ; then
+		service static-device-names reload
+	fi
 }
 
 [ "$ACTION" = "add" ] && add
