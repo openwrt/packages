@@ -10,7 +10,8 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 
 | Source              | Enabled | Size | Focus            | Information                                                                       |
 | :------------------ | :-----: | :--- | :--------------- | :-------------------------------------------------------------------------------- |
-| adaway              | x       | S    | mobile           | [Link](https://github.com/AdAway/adaway.github.io)                                |
+| 1Hosts              |         | VAR  | compilation      | [Link](https://github.com/badmojr/1Hosts)                                         |
+| adaway              |         | S    | mobile           | [Link](https://github.com/AdAway/adaway.github.io)                                |
 | adguard             | x       | L    | general          | [Link](https://adguard.com)                                                       |
 | adguard_tracking    |         | L    | tracking         | [Link](https://github.com/AdguardTeam/cname-trackers)                             |
 | android_tracking    |         | S    | tracking         | [Link](https://github.com/Perflyst/PiHoleBlocklist)                               |
@@ -20,12 +21,13 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | anudeep             |         | M    | compilation      | [Link](https://github.com/anudeepND/blacklist)                                    |
 | bitcoin             |         | S    | mining           | [Link](https://github.com/hoshsadiq/adblock-nocoin-list)                          |
 | cpbl                |         | XL   | compilation      | [Link](https://github.com/bongochong/CombinedPrivacyBlockLists)                   |
-| disconnect          | x       | S    | general          | [Link](https://disconnect.me)                                                     |
+| disconnect          |         | S    | general          | [Link](https://disconnect.me)                                                     |
 | doh_blocklist       |         | S    | doh_server       | [Link](https://github.com/dibdot/DoH-IP-blocklists)                               |
 | easylist            |         | M    | compilation      | [Link](https://easylist.to)                                                       |
 | easyprivacy         |         | M    | tracking         | [Link](https://easylist.to)                                                       |
 | firetv_tracking     |         | S    | tracking         | [Link](https://github.com/Perflyst/PiHoleBlocklist)                               |
 | games_tracking      |         | S    | tracking         | [Link](https://www.gameindustry.eu)                                               |
+| hagezi              |         | VAR  | compilation      | [Link](https://github.com/hagezi/dns-blocklists)                                  |
 | hblock              |         | XL   | compilation      | [Link](https://hblock.molinero.dev)                                               |
 | lightswitch05       |         | XL   | compilation      | [Link](https://github.com/lightswitch05/hosts)                                    |
 | notracking          |         | XL   | tracking         | [Link](https://github.com/notracking/hosts-blocklists)                            |
@@ -59,7 +61,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | whocares            |         | M    | general          | [Link](https://someonewhocares.org)                                               |
 | winhelp             |         | S    | general          | [Link](https://winhelp2002.mvps.org)                                              |
 | winspy              |         | S    | win_telemetry    | [Link](https://github.com/crazy-max/WindowsSpyBlocker)                            |
-| yoyo                | x       | S    | general          | [Link](https://pgl.yoyo.org/adservers)                                            |
+| yoyo                |         | S    | general          | [Link](https://pgl.yoyo.org/adservers)                                            |
 
 * List of supported and fully pre-configured adblock sources, already active sources are pre-selected.  
   <b><em>To avoid OOM errors, please do not select too many lists!</em></b>  
@@ -67,7 +69,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     • <b>S</b> (-10k), <b>M</b> (10k-30k) and <b>L</b> (30k-80k) should work for 128 MByte devices,  
     • <b>XL</b> (80k-200k) should work for 256-512 MByte devices,  
     • <b>XXL</b> (200k-) needs more RAM and Multicore support, e.g. x86 or raspberry devices.  
-    • <b>VAR</b> (50k-500k) variable size depending on the selection.  
+    • <b>VAR</b> (50k-900k) variable size depending on the selection.  
 * Zero-conf like automatic installation & setup, usually no manual changes needed
 * Simple but yet powerful adblock engine: adblock does not use error prone external iptables rulesets, http pixel server instances and things like that
 * Supports five different DNS backend formats: dnsmasq, unbound, named (bind), kresd or raw (e.g. used by dnscrypt-proxy)
@@ -107,7 +109,6 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * A certificate store such as 'ca-bundle' or 'ca-certificates', as adblock checks the validity of the SSL certificates of all download sites by default
 * Optional E-Mail notification support: for E-Mail notifications you need to install the additional 'msmtp' package
 * Optional DNS Query Report support: for DNS reporting you need to install the additional package 'tcpdump-mini' or 'tcpdump'
-* Optional support for gnu awk as alternative to the busybox default, install the additional package 'gawk'
 
 ## Installation & Usage
 * Update your local opkg repository (_opkg update_)
@@ -134,7 +135,7 @@ Available commands:
 	resume          Resume adblock processing
 	query           &lt;domain&gt; Query active blocklists and backups for a specific domain
 	report          [&lt;search&gt;] Print DNS statistics with an optional search parameter
-	list            [&lt;add&gt;|&lt;add_utc&gt;|&lt;add_eng&gt;|&lt;add_stb&gt;|&lt;remove&gt;|&lt;remove_utc&gt;|&lt;remove_eng&gt;|&lt;remove_stb&gt;] &lt;source(s)&gt; List/Edit available sources
+	list            List available sources
 	timer           [&lt;add&gt; &lt;tasks&gt; &lt;hour&gt; [&lt;minute&gt;] [&lt;weekday&gt;]]|[&lt;remove&gt; &lt;line no.&gt;] List/Edit cron update intervals
 	version         Print version information
 	running         Check if service is running
@@ -324,4 +325,3 @@ No matter what you decide - thank you very much for your support!
 
 Have fun!  
 Dirk
-

@@ -116,7 +116,7 @@
 -SUBDIRS = . tests
 +SUBDIRS = .
  
- AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
+ AM_CPPFLAGS  = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
  AM_CPPFLAGS += $(BOOST_INCLUDES)
 --- a/src/lib/asiolink/Makefile.am
 +++ b/src/lib/asiolink/Makefile.am
@@ -169,7 +169,7 @@
 --- a/src/lib/dhcp/Makefile.am
 +++ b/src/lib/dhcp/Makefile.am
 @@ -1,4 +1,4 @@
--SUBDIRS = . tests
+-SUBDIRS = . testutils tests
 +SUBDIRS = .
  
  AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
@@ -256,16 +256,16 @@
 -SUBDIRS = . testutils tests
 +SUBDIRS = .
  
- AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
- AM_CPPFLAGS += $(BOOST_INCLUDES) $(MYSQL_CPPFLAGS)
+ AM_CPPFLAGS  =
+ AM_CPPFLAGS += -DKEA_ADMIN=\"@prefix@/sbin/kea-admin\"
 --- a/src/lib/pgsql/Makefile.am
 +++ b/src/lib/pgsql/Makefile.am
 @@ -1,4 +1,4 @@
 -SUBDIRS = . testutils tests
 +SUBDIRS = .
  
- AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
- AM_CPPFLAGS += $(BOOST_INCLUDES) $(PGSQL_CPPFLAGS)
+ AM_CPPFLAGS  =
+ AM_CPPFLAGS += -DKEA_ADMIN=\"@prefix@/sbin/kea-admin\"
 --- a/src/lib/process/Makefile.am
 +++ b/src/lib/process/Makefile.am
 @@ -1,4 +1,4 @@

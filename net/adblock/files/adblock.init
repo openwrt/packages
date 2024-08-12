@@ -12,7 +12,7 @@ extra_command "suspend" "Suspend adblock processing"
 extra_command "resume" "Resume adblock processing"
 extra_command "query" "<domain> Query active blocklists and backups for a specific domain"
 extra_command "report" "[[<cli>|<mail>|<gen>|<json>] [<top_count>] [<res_count>] [<search>]] Print DNS statistics with an optional search parameter"
-extra_command "list" "[<add>|<add_utc>|<add_eng>|<add_stb>|<remove>|<remove_utc>|<remove_eng>|<remove_stb>] <source(s)> List/Edit available sources"
+extra_command "list" "List available sources"
 extra_command "timer" "[<add> <tasks> <hour> [<minute>] [<weekday>]]|[<remove> <line no.>] List/Edit cron update intervals"
 
 adb_init="/etc/init.d/adblock"
@@ -71,117 +71,60 @@ report() {
 }
 
 list() {
-	local src_archive src_file src_enabled enabled name utc_list size focus descurl action="${1}"
+	local src_archive src_file src_enabled enabled name utc_list size focus descurl
 
-	if [ "${action%_*}" = "add" ] || [ "${action%_*}" = "remove" ]; then
-		shift
-		for name in "${@}"; do
-			case "${action}" in
-				"add")
-					if ! uci_get adblock global adb_sources | grep -q "${name}"; then
-						uci_add_list adblock global adb_sources "${name}"
-						printf "%s\n" "::: adblock source '${name}' added to config"
-					fi
-					;;
-				"remove")
-					if uci_get adblock global adb_sources | grep -q "${name}"; then
-						uci_remove_list adblock global adb_sources "${name}"
-						printf "%s\n" "::: adblock source '${name}' removed from config"
-					fi
-					;;
-				"add_utc")
-					if ! uci_get adblock global adb_utc_sources | grep -q "${name}"; then
-						uci_add_list adblock global adb_utc_sources "${name}"
-						printf "%s\n" "::: adblock utcapitole '${name}' added to config"
-					fi
-					;;
-				"remove_utc")
-					if uci_get adblock global adb_utc_sources | grep -q "${name}"; then
-						uci_remove_list adblock global adb_utc_sources "${name}"
-						printf "%s\n" "::: adblock utcapitole '${name}' removed from config"
-					fi
-					;;
-				"add_eng")
-					if ! uci_get adblock global adb_eng_sources | grep -q "${name}"; then
-						uci_add_list adblock global adb_eng_sources "${name}"
-						printf "%s\n" "::: adblock energized '${name}' added to config"
-					fi
-					;;
-				"remove_eng")
-					if uci_get adblock global adb_eng_sources | grep -q "${name}"; then
-						uci_remove_list adblock global adb_eng_sources "${name}"
-						printf "%s\n" "::: adblock energized '${name}' removed from config"
-					fi
-					;;
-				"add_stb")
-					if ! uci_get adblock global adb_stb_sources | grep -q "${name}"; then
-						uci_add_list adblock global adb_stb_sources "${name}"
-						printf "%s\n" "::: adblock stevenblack '${name}' added to config"
-					fi
-					;;
-				"remove_stb")
-					if uci_get adblock global adb_stb_sources | grep -q "${name}"; then
-						uci_remove_list adblock global adb_stb_sources "${name}"
-						printf "%s\n" "::: adblock stevenblack '${name}' removed from config"
-					fi
-					;;
-			esac
-		done
-		[ -n "$(uci -q changes adblock)" ] && { uci_commit adblock; "${adb_init}" start; }
-	else
-		src_archive="$(uci_get adblock global adb_srcarc "/etc/adblock/adblock.sources.gz")"
-		src_file="$(uci_get adblock global adb_srcfile "/tmp/adb_sources.json")"
-		src_enabled="$(uci -q show adblock.global.adb_sources)"
-		[ -r "${src_archive}" ] && zcat "${src_archive}" >"${src_file}" || printf "%s\n" "::: adblock source archive '${src_archive}' not found"
+	src_archive="$(uci_get adblock global adb_srcarc "/etc/adblock/adblock.sources.gz")"
+	src_file="$(uci_get adblock global adb_srcfile "/tmp/adb_sources.json")"
+	src_enabled="$(uci -q show adblock.global.adb_sources)"
+	[ -r "${src_archive}" ] && zcat "${src_archive}" >"${src_file}" || printf "%s\n" "::: adblock source archive '${src_archive}' not found"
 
-		if [ -r "${src_file}" ]; then
-			src_enabled="${src_enabled#*=}"
-			src_enabled="${src_enabled//\'}"
-			printf "%s\n" "::: Available adblock sources"
-			printf "%s\n" ":::"
-			printf "%-25s%-10s%-7s%-21s%s\n" "    Name" "Enabled" "Size" "Focus" "Info URL"
-			printf "%s\n" "    -------------------------------------------------------------------"
-			json_load_file "${src_file}"
-			json_get_keys keylist
-			for key in ${keylist}; do
-				json_select "${key}"
-				json_get_var size "size"
-				json_get_var focus "focus"
-				json_get_var descurl "descurl"
-				json_get_var url "url"
-				json_get_var rule "rule"
-				if [ -n "${url}" ] && [ -n "${rule}" ]; then
-					if printf "%s" "${src_enabled}" | grep -q "${key}"; then
-						enabled="x"
-					else
-						enabled=" "
-					fi
-					src_enabled="${src_enabled/${key}}"
-					printf "  + %-21s%-10s%-7s%-21s%s\n" "${key:0:20}" "${enabled}" "${size:0:3}" "${focus:0:20}" "${descurl:0:50}"
+	if [ -r "${src_file}" ]; then
+		src_enabled="${src_enabled#*=}"
+		src_enabled="${src_enabled//\'}"
+		printf "%s\n" "::: Available adblock sources"
+		printf "%s\n" ":::"
+		printf "%-25s%-10s%-7s%-21s%s\n" "    Name" "Enabled" "Size" "Focus" "Info URL"
+		printf "%s\n" "    -------------------------------------------------------------------"
+		json_load_file "${src_file}"
+		json_get_keys keylist
+		for key in ${keylist}; do
+			json_select "${key}"
+			json_get_var size "size"
+			json_get_var focus "focus"
+			json_get_var descurl "descurl"
+			json_get_var url "url"
+			json_get_var rule "rule"
+			if [ -n "${url}" ] && [ -n "${rule}" ]; then
+				if printf "%s" "${src_enabled}" | grep -q "${key}"; then
+					enabled="x"
 				else
-					src_enabled="${src_enabled} ${key}"
+					enabled=" "
 				fi
-				json_select ..
-			done
-			utc_list="$(uci_get adblock global adb_utc_sources "-")"
-			eng_list="$(uci_get adblock global adb_eng_sources "-")"
-			stb_list="$(uci_get adblock global adb_stb_sources "-")"
-			printf "%s\n" "    ---------------------------------------------------------------------------"
-			printf "  * %s\n" "Configured utcapitole categories: ${utc_list// /, }"
-			printf "  * %s\n" "Configured energized variants: ${eng_list// /, }"
-			printf "  * %s\n" "Configured stevenblack variants: ${stb_list// /, }"
-
-			if [ -n "${src_enabled// }" ]; then
-				printf "%s\n" "    ---------------------------------------------------------------------------"
-				printf "%s\n" "    Sources with invalid configuration"
-				printf "%s\n" "    ---------------------------------------------------------------------------"
-				for key in ${src_enabled}; do
-					printf "  - %s\n" "${key:0:20}"
-				done
+				src_enabled="${src_enabled/${key}}"
+				printf "  + %-21s%-10s%-7s%-21s%s\n" "${key:0:20}" "${enabled}" "${size:0:3}" "${focus:0:20}" "${descurl:0:50}"
+			else
+				src_enabled="${src_enabled} ${key}"
 			fi
-		else
-			printf "%s\n" "::: adblock source file '${src_file}' not found"
+			json_select ..
+		done
+		utc_list="$(uci_get adblock global adb_utc_sources "-")"
+		hag_list="$(uci_get adblock global adb_hag_sources "-")"
+		stb_list="$(uci_get adblock global adb_stb_sources "-")"
+		printf "%s\n" "    ---------------------------------------------------------------------------"
+		printf "  * %s\n" "Configured utcapitole categories: ${utc_list// /, }"
+		printf "  * %s\n" "Configured hagezi variants: ${hag_list// /, }"
+		printf "  * %s\n" "Configured stevenblack variants: ${stb_list// /, }"
+
+		if [ -n "${src_enabled// }" ]; then
+			printf "%s\n" "    ---------------------------------------------------------------------------"
+			printf "%s\n" "    Sources with invalid configuration"
+			printf "%s\n" "    ---------------------------------------------------------------------------"
+			for key in ${src_enabled}; do
+				printf "  - %s\n" "${key:0:20}"
+			done
 		fi
+	else
+		printf "%s\n" "::: adblock source file '${src_file}' not found"
 	fi
 }
 
@@ -258,8 +201,10 @@ service_triggers() {
 
 	iface="$(uci_get adblock global adb_trigger)"
 	delay="$(uci_get adblock global adb_triggerdelay "5")"
-	PROCD_RELOAD_DELAY="$((delay * 1000))"
 
+	PROCD_RELOAD_DELAY="$((delay * 1000))"
 	[ -n "${iface}" ] && procd_add_interface_trigger "interface.*.up" "${iface}" "${adb_init}" "start"
+
+	PROCD_RELOAD_DELAY="$((2 * 1000))"
 	procd_add_reload_trigger "adblock"
 }

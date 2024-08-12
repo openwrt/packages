@@ -1,6 +1,6 @@
 --- a/Makefile
 +++ b/Makefile
-@@ -9,13 +9,13 @@ CC?=gcc
+@@ -7,13 +7,13 @@
  
  # BSD flavour
  # PREFIX?=/usr/local
