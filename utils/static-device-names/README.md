@@ -45,18 +45,18 @@ uci commit static-device-names
 ### Configuring a static device name
 
 Each `device` section of the configuration should have a name to make them
-easier to configure. The section name can be anything, like "WAN", or a network
+easier to configure. The section name can be anything, like "wan", or a network
 device name like "eth0".
 
-Add a new `device` section called "WAN" to hold options for the network device
+Add a new `device` section called "wan" to hold options for the network device
 named "eth0":
 
-    uci set static-device-names.WAN=device
-    uci set static-device-names.WAN.name=eth0
+    uci set static-device-names.wan=device
+    uci set static-device-names.wan.name=eth0
 
-Here's how to assign a specific **MAC address** to the "WAN" device section:
+Here's how to assign a specific **MAC address** to the "wan" device section:
 
-    uci set static-device-names.WAN.mac=08:00:27:7a:4e:87
+    uci set static-device-names.wan.mac=08:00:27:7a:4e:87
 
 Matching based on MAC address is the preferred method since all Ethernet
 devices have a unique "burnt-in" MAC address (with the exception of virtual
@@ -66,20 +66,20 @@ For advanced setups, you may want to match based on other criteria below.
 
 Here's how to assign **PCI ID** for a PCI or USB device:
 
-    uci set static-device-names.WAN.pci_id=10ec:8125
+    uci set static-device-names.wan.pci_id=10ec:8125
 
 PCI IDs are in the industry-standard hexadecimal "\<vendor\>:\<device\>" form.
 
 Or, a **PCI slot**:
 
-    uci set static-device-names.WAN.pci_slot=07:00.0
+    uci set static-device-names.wan.pci_slot=07:00.0
 
 PCI slots are assigned by the Linux kernel and are generally in the
 "\<bus\>:\<device\>.\<func\>" form.
 
 Or, a **USB slot**:
 
-    uci set static-device-names.WAN.usb_slot=9-1:1.0
+    uci set static-device-names.wan.usb_slot=9-1:1.0
 
 USB slots are assigned by the Linux kernel and are generally in the
 "\<bus\>-\<port\>:\<port\>.\<if\>" form.
@@ -92,8 +92,8 @@ Any of `mac`, `pci_id`, `pci_slot`, and `usb_slot` options can be lists.
 This can be useful if configurations are staged or tested on a virtual machine
 or meant to be used on multiple devices:
 
-    uci add_list static-device-names.WAN.mac=08:00:27:7a:4e:87
-    uci add_list static-device-names.WAN.mac=08:00:28:8a:5e:88
+    uci add_list static-device-names.wan.mac=08:00:27:7a:4e:87
+    uci add_list static-device-names.wan.mac=08:00:28:8a:5e:88
     uci commit static-device-names
 
 > [!TIP]
