@@ -19,7 +19,7 @@ TRACE=${TRACE:-0}
 # LOCAL FUNCTIONS #
 ###################
 
-N=$'\n'  # New line
+NL=$'\n'  # New line
 
 LOG() {
   local level=$1
@@ -55,18 +55,18 @@ read_static_device_names_config() {
     while uci -q get "static-device-names.@device[$i]" > /dev/null ; do
       dev=$(uci -q get "static-device-names.@device[$i].name")
       if [ -n "$dev" ] ; then
-        TARGET_DEVICES="$TARGET_DEVICES$N$dev"
+        TARGET_DEVICES="$TARGET_DEVICES$NL$dev"
         for mac in $(uci -q get "static-device-names.@device[$i].mac") ; do
-          MAC_TO_DEVICE_MAPPING="${MAC_TO_DEVICE_MAPPING:+$MAC_TO_DEVICE_MAPPING$N}$mac $dev"
+          MAC_TO_DEVICE_MAPPING="${MAC_TO_DEVICE_MAPPING:+$MAC_TO_DEVICE_MAPPING$NL}$mac $dev"
         done
         for pci_id in $(uci -q get "static-device-names.@device[$i].pci_id") ; do
-          PCI_ID_TO_DEVICE_MAPPING="${PCI_ID_TO_DEVICE_MAPPING:+$PCI_ID_TO_DEVICE_MAPPING$N}$pci_id $dev"
+          PCI_ID_TO_DEVICE_MAPPING="${PCI_ID_TO_DEVICE_MAPPING:+$PCI_ID_TO_DEVICE_MAPPING$NL}$pci_id $dev"
         done
         for pci_slot in $(uci -q get "static-device-names.@device[$i].pci_slot") ; do
-          PCI_SLOT_TO_DEVICE_MAPPING="${PCI_SLOT_TO_DEVICE_MAPPING:+$PCI_SLOT_TO_DEVICE_MAPPING$N}$pci_slot $dev"
+          PCI_SLOT_TO_DEVICE_MAPPING="${PCI_SLOT_TO_DEVICE_MAPPING:+$PCI_SLOT_TO_DEVICE_MAPPING$NL}$pci_slot $dev"
         done
         for usb_slot in $(uci -q get "static-device-names.@device[$i].usb_slot") ; do
-          USB_SLOT_TO_DEVICE_MAPPING="${USB_SLOT_TO_DEVICE_MAPPING:+$USB_SLOT_TO_DEVICE_MAPPING$N}$usb_slot $dev"
+          USB_SLOT_TO_DEVICE_MAPPING="${USB_SLOT_TO_DEVICE_MAPPING:+$USB_SLOT_TO_DEVICE_MAPPING$NL}$usb_slot $dev"
         done
       else
         LOG err "Configuration static-device-names.@device[$i] mission option 'name'"
@@ -400,6 +400,6 @@ debug() {
 
     echo "$level: $*" >&2
   }
-  LOG debug "/etc/config/static-device-names:$N~~~$N$(cat /etc/config/static-device-names)$N~~~"
+  LOG debug "/etc/config/static-device-names:$NL~~~$NL$(cat /etc/config/static-device-names)$NL~~~"
   status
 }
