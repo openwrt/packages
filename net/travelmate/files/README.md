@@ -3,8 +3,10 @@
 # travelmate, a wlan connection manager for travel router
 
 ## Description
-If you’re planning an upcoming vacation or a business trip, taking your laptop, tablet or smartphone give you the ability to connect with friends or complete work on the go. But many hotels don’t have a secure wireless network setup or you’re limited on using a single device at once. Investing in a portable, mini travel router is a great way to connect all of your devices at once while having total control over your own personalized wireless network.  
-A logical combination of AP+STA mode on one physical radio allows most of OpenWrt supported router devices to connect to a wireless hotspot/station (STA) and provide a wireless access point (AP) from that hotspot at the same time. Downside of this solution: whenever the STA interface looses the connection it will go into an active scan cycle which renders the radio unusable for AP mode operation, therefore the AP is taken down if the STA looses its association.  
+If you’re planning an upcoming vacation or a business trip, taking your laptop, tablet or smartphone give you the ability to connect with friends or complete work on the go. But many hotels don’t have a secure wireless network setup or you’re limited on using a single device at once. Investing in a portable, mini travel router is a great way to connect all of your devices at once while having total control over your own personalized wireless network.
+
+A logical combination of AP+STA mode on one physical radio allows most of OpenWrt supported router devices to connect to a wireless hotspot/station (STA) and provide a wireless access point (AP) from that hotspot at the same time. Downside of this solution: whenever the STA interface loses the connection it will go into an active scan cycle which renders the radio unusable for AP mode operation, therefore the AP is taken down if the STA loses its association.
+
 To avoid these kind of deadlocks, travelmate will set all station interfaces to an "always off" mode and connects automatically to available/configured hotspots.  
 
 ## Main Features
@@ -81,10 +83,10 @@ To avoid these kind of deadlocks, travelmate will set all station interfaces to 
 | trm_mail           | 0, disabled                        | sends notification e-mails after every succesful uplink connect                                       |
 | trm_mailreceiver   | -, not set                         | e-mail receiver address for travelmate notifications                                                  |
 | trm_mailsender     | no-reply@travelmate                | e-mail sender address for travelmate notifications                                                    |
-| trm_mailtopic      | travelmate connection to '<sta>'   | topic for travelmate notification E-Mails                                                             |
+| trm_mailtopic      | travelmate connection to '\<sta>'   | topic for travelmate notification E-Mails                                                             |
 | trm_mailprofile    | trm_notify                         | profile used by 'msmtp' for travelmate notification E-Mails                                           |
   
-* per uplink exist an additional 'uplink' section in the travelmate config, with the following options:
+In addition, the travelmate config supports a `uplink` section for every uplink, with the following options:
 
 | Option             | Default                            | Description/Valid Values                                                                              |
 | :----------------- | :--------------------------------- | :---------------------------------------------------------------------------------------------------- |
@@ -116,7 +118,8 @@ Once your vpn client connection is running, you can reference to that setup in t
 To use E-Mail notifications you have to setup the package 'msmtp'.  
 
 Modify the file '/etc/msmtprc', e.g. for gmail:
-<pre><code>
+
+```
 [...]
 defaults
 auth            on
@@ -131,36 +134,39 @@ port            587
 from            xxx@gmail.com
 user            yyy
 password        zzz
-</code></pre>
+```
 
 Finally enable E-Mail support in travelmate and add a valid E-Mail receiver address.
 
 ## Captive Portal auto-logins
 For automated captive portal logins you can reference an external shell script per uplink. All login scripts should be executable and located in '/etc/travelmate' with the extension '.login'. The package ships multiple ready to run auto-login scripts:  
-    * 'wifionice.login' for ICE hotspots (DE)
-    * 'db-bahn.login' for german DB railway hotspots via portal login API (still WIP, only tested at Hannover central station)
-    * 'chs-hotel.login' for german chs hotels
-    * 'h-hotels.login' for Telekom hotspots in h+hotels (DE)
-    * 'julianahoeve.login' for Julianahoeve beach resort (NL)
-    * 'telekom.login' for telekom hotspots (DE)
-    * 'vodafone.login' for vodafone hotspots (DE)
-    * 'generic-user-pass.login' a template to demonstrate the optional parameter handling in login scripts
+
+* `wifionice.login` for ICE hotspots (DE)
+* `db-bahn.login` for german DB railway hotspots via portal login API (still WIP, only tested at Hannover central station)
+* `chs-hotel.login` for german chs hotels
+* `h-hotels.login` for Telekom hotspots in h+hotels (DE)
+* `julianahoeve.login` for Julianahoeve beach resort (NL)
+* `telekom.login` for telekom hotspots (DE)
+* `vodafone.login` for vodafone hotspots (DE)
+* `generic-user-pass.login` a template to demonstrate the optional parameter handling in login scripts
 
 A typical and successful captive portal login looks like this:
-<pre><code>
+
+```
 [...]
 Thu Sep 10 13:30:16 2020 user.info trm-2.0.0[26222]: captive portal domain 'www.wifionice.de' added to to dhcp rebind whitelist
 Thu Sep 10 13:30:19 2020 user.info trm-2.0.0[26222]: captive portal login '/etc/travelmate/wifionice.login ' for 'www.wifionice.de' has been executed with rc '0'
 Thu Sep 10 13:30:19 2020 user.info trm-2.0.0[26222]: connected to uplink 'radio1/WIFIonICE/-' with mac 'B2:9D:F5:96:86:A4' (1/3)
 [...]
-</code></pre>
+```
 
 Hopefully more scripts for different captive portals will be provided by the community!
 
 ## Runtime information
 
 **receive travelmate runtime information:**
-<pre><code>
+
+```
 root@2go_ar750s:~# /etc/init.d/travelmate status
 ::: travelmate runtime information
   + travelmate_status  : connected (net ok/100)
@@ -173,7 +179,7 @@ root@2go_ar750s:~# /etc/init.d/travelmate status
   + ext_hooks          : ntp: ✔, vpn: ✘, mail: ✘
   + last_run           : 2020.09.10-15:21:19
   + system             : GL.iNet GL-AR750S (NOR/NAND), OpenWrt SNAPSHOT r14430-2dda301d40
-</code></pre>
+```
 
 To debug travelmate runtime problems, please always enable the 'trm\_debug' flag, restart travelmate and check the system log afterwards (_logread -e "trm-"_)
 
@@ -186,3 +192,4 @@ Please join the travelmate discussion in this [forum thread](https://forum.lede-
 
 Have fun!  
 Dirk  
+
