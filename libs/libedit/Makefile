@@ -15,7 +15,7 @@ PKG_MAINTAINER:=Daniel Salzman <daniel.salzman@nic.cz>
 PKG_LICENSE:=BSD-3-Clause
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://thrysoee.dk/editline/
+PKG_SOURCE_URL:=https://thrysoee.dk/editline/
 PKG_HASH:=5f0573349d77c4a48967191cdd6634dd7aa5f6398c6a57fe037cc02696d6099f
 
 PKG_INSTALL:=1
