@@ -982,9 +982,12 @@ CONFIGURE_VARS+= \
 	LDFLAGS="$$$$LDFLAGS" \
 	LIBS="$(CONFIGURE_LIBS)" \
 	MYSQL_CONFIG="no" \
-	vl_cv_lib_readline=no \
+	ac_cv_header_readline_h=no \
+	ac_cv_header_readline_readline_h=no \
+	ac_cv_header_readline_history_h=no \
 	ax_cv_cc_builtin_choose_expr=yes \
-	ax_cv_cc_builtin_types_compatible_p=yes ax_cv_cc_builtin_bswap64=yes \
+	ax_cv_cc_builtin_types_compatible_p=yes \
+	ax_cv_cc_builtin_bswap64=yes \
 	ax_cv_cc_bounded_attribute=no \
 	ac_cv_lib_collectdclient_lcc_connect=no \
 	ac_cv_lib_execinfo_backtrace_symbols=no
