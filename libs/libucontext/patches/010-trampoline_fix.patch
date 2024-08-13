@@ -1,0 +1,11 @@
+--- a/meson.build
++++ b/meson.build
+@@ -40,7 +40,7 @@ if cpu in ['ppc', 'ppc64']
+     'arch' / cpu / 'retfromsyscall.c'
+   ]
+ endif
+-if cpu not in ['mips', 'mips64', 'ppc', 'ppc64', 's390x']
++if cpu not in ['loongarch64', 'mips', 'mips64', 'ppc', 'ppc64', 's390x', 'x86']
+   project_source_files += [
+     'arch' / cpu / 'trampoline.c'
+   ]
