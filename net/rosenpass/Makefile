@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rosenpass
-PKG_VERSION:=e92fa55
+PKG_VERSION:=72f68c9bac3b1b3cd09110493f9b953f6dc29eff
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/rosenpass/rosenpass/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=2b46cf58328cd2f6fb9c3f0dd9677a0c773e291f3f7e20a120d857584e94fdc1
+PKG_SOURCE_URL:=https://codeload.github.com/aparcar/rosenpass/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=145e5cb4da4ce14188b622b99be5704d4a4adce2a732a70512a37740b410d76f
 
 PKG_MAINTAINER:=Paul Spooren <mail@aparcar.org>
 PKG_LICENSE:=MIT
@@ -26,7 +26,7 @@ define Package/rosenpass
   SECTION:=net
   CATEGORY:=Network
   TITLE:=PQC for WireGuard
-  DEPENDS:=$(RUST_ARCH_DEPENDS) +libsodium
+  DEPENDS:=$(RUST_ARCH_DEPENDS) +libsodium +libopenssl
   URL:=https://github.com/rosenpass/rosenpass
 endef
 
