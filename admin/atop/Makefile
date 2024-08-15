@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=atop
 PKG_RELEASE:=1
-PKG_VERSION:=2.7.1
+PKG_VERSION:=2.7.1x
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.atoptool.nl/download/
