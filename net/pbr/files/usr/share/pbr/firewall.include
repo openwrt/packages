@@ -1,6 +1,5 @@
 #!/bin/sh
-[ "$ACTION" = "reload" ] || [ "$ACTION" = "restart" ] || exit 0
 if [ -x /etc/init.d/pbr ] && /etc/init.d/pbr enabled; then
 	logger -t "pbr" "Sending reload signal to pbr due to firewall action: $ACTION"
-	/etc/init.d/pbr reload
+	/etc/init.d/pbr on_firewall_reload "$ACTION"
 fi

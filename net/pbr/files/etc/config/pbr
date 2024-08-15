@@ -2,14 +2,23 @@ config pbr 'config'
 	option enabled '0'
 	option verbosity '2'
 	option strict_enforcement '1'
-	option resolver_set 'none'
+	option resolver_set 'dnsmasq.nftset'
+	list resolver_instance '*'
 	option ipv6_enabled '0'
 	list ignored_interface 'vpnserver'
-	list ignored_interface 'wgserver'
 	option boot_timeout '30'
 	option rule_create_option 'add'
+	option procd_boot_delay '0'
 	option procd_reload_delay '1'
 	option webui_show_ignore_target '0'
+	option nft_rule_counter '0'
+	option nft_set_auto_merge '1'
+	option nft_set_counter '0'
+	option nft_set_flags_interval '1'
+	option nft_set_flags_timeout '0'
+	option nft_set_gc_interval ''
+	option nft_set_policy 'performance'
+	option nft_set_timeout ''
 	list webui_supported_protocol 'all'
 	list webui_supported_protocol 'tcp'
 	list webui_supported_protocol 'udp'
@@ -18,11 +27,27 @@ config pbr 'config'
 
 config include
 	option path '/usr/share/pbr/pbr.user.aws'
-	option enabled 0
+	option enabled '0'
 
 config include
 	option path '/usr/share/pbr/pbr.user.netflix'
-	option enabled 0
+	option enabled '0'
+
+config include
+	option path '/usr/share/pbr/pbr.user.wg_server_and_client'
+	option enabled '0'
+
+config dns_policy
+	option name 'Redirect Local IP DNS'
+	option src_addr '192.168.1.5'
+	option dest_dns '1.1.1.1'
+	option enabled '0'
+
+config policy
+	option name 'Ignore Local Requests'
+	option interface 'ignore'
+	option dest_addr '10.0.0.0/24 10.0.1.0/24 192.168.100.0/24 192.168.1.0/24'
+	option enabled '0'
 
 config policy
 	option name 'Plex/Emby Local Server'

@@ -6,6 +6,8 @@
 TARGET_INTERFACE='wan'
 TARGET_NFTSET_4="pbr_${TARGET_INTERFACE}_4_dst_ip_user"
 TARGET_NFTSET_6="pbr_${TARGET_INTERFACE}_6_dst_ip_user"
+TARGET_IPSET_4="pbr_${TARGET_INTERFACE}_4_dst_net_user"
+TARGET_IPSET_6="pbr_${TARGET_INTERFACE}_6_dst_net_user"
 TARGET_TABLE='inet fw4'
 TARGET_ASN='2906'
 TARGET_DL_FILE_4="/var/pbr_tmp_AS${TARGET_ASN}.ipv4"
@@ -32,11 +34,16 @@ if [ ! -s "$TARGET_DL_FILE_4" ]; then
 		uclient-fetch --no-check-certificate -qO- "$TARGET_URL" 2>/dev/null | jsonfilter -e '@.data.ipv4_prefixes[*].prefix' > "$TARGET_DL_FILE_4"
 	fi
 fi
-
 if [ -s "$TARGET_DL_FILE_4" ]; then
-	params=
-	while read -r p; do params="${params:+$params, }${p}"; done < "$TARGET_DL_FILE_4"
-	[ -n "$params" ] && nft "add element $TARGET_TABLE $TARGET_NFTSET_4 { $params }" || _ret=1
+	if [ -n "$nft" ] && [ -x "$nft" ]; then
+		while read -r p; do nft "add element $TARGET_TABLE $TARGET_NFTSET_4 { $p }" || _ret=1; done < "$TARGET_DL_FILE_4"
+	elif ipset -q list "$TARGET_IPSET_4" >/dev/null 2>&1; then
+		if awk -v ipset="$TARGET_IPSET_4" '{print "add " ipset " " $1}' "$TARGET_DL_FILE_4" | ipset restore -!; then
+			_ret=0
+		else
+			_ret=1
+		fi
+	fi
 fi
 
 if [ -n "$TARGET_DL_FILE_6" ] && [ ! -s "$TARGET_DL_FILE_6" ]; then
@@ -46,9 +53,15 @@ if [ -n "$TARGET_DL_FILE_6" ] && [ ! -s "$TARGET_DL_FILE_6" ]; then
 	fi
 fi
 if [ -s "$TARGET_DL_FILE_6" ]; then
-	params=
-	while read -r p; do params="${params:+$params, }${p}"; done < "$TARGET_DL_FILE_6"
-	[ -n "$params" ] && nft "add element $TARGET_TABLE $TARGET_NFTSET_6 { $params }" || _ret=1
+	if [ -n "$nft" ] && [ -x "$nft" ]; then
+		while read -r p; do nft "add element $TARGET_TABLE $TARGET_NFTSET_6 { $p }" || _ret=1; done < "$TARGET_DL_FILE_6"
+	elif ipset -q list "$TARGET_IPSET_6" >/dev/null 2>&1; then
+		if awk -v ipset="$TARGET_IPSET_6" '{print "add " ipset " " $1}' "$TARGET_DL_FILE_6" | ipset restore -!; then
+			_ret=0
+		else
+			_ret=1
+		fi
+	fi
 fi
 
 return $_ret
