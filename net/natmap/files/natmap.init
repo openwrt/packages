@@ -24,7 +24,7 @@ validate_section_natmap() {
 		'interval:uinteger' \
 		'stun_server:host' \
 		'http_server:host' \
-		'port:portrange' \
+		'port:or(port,portrange)' \
 		'forward_target:host' \
 		'forward_port:port' \
 		'notify_script:file' \
