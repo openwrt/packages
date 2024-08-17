@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    name: Check autorelease deprecation
+    name: Check APK compatible version/release
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -48,15 +48,15 @@ jobs:
                 PKG_RELEASE=$(grep -E '^PKG_RELEASE' "$ROOT/Makefile" | cut -f 2 -d '=')
                 if [ -n "$PKG_RELEASE" ]; then
                   if [[ "$PKG_RELEASE" == '^[0-9]+$' ]]; then
-                    echo "PKG_RELEASE is not an integer"
+                    echo "PKG_RELEASE is not an integer: $PKG_RELEASE"
                     INCOMPATIBLE_VERSION+=" $ROOT"
                     break
                   fi
                 fi
                 PKG_VERSION=$(grep -E '^PKG_VERSION' "$ROOT/Makefile" | cut -f 2 -d '=')
                 if [ -n "$PKG_VERSION" ]; then
-                  if [[ $($GITHUB_WORKSPACE/apk version --check "$PKG_VERSION") -ne "" ]]; then
-                    echo "PKG_VERSION is not compatible"
+                  if [[ -n $($GITHUB_WORKSPACE/apk version --check "$PKG_VERSION") ]]; then
+                    echo "PKG_VERSION is not compatible: $PKG_VERSION"
                     INCOMPATIBLE_VERSION+=" $ROOT"
                   fi
                 fi
