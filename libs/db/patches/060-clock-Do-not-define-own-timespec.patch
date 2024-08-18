@@ -1,0 +1,45 @@
+From 96b303caf70a7635953c36e5bfb9ad6e75cb7637 Mon Sep 17 00:00:00 2001
+From: Khem Raj <raj.khem@gmail.com>
+Date: Fri, 14 Feb 2020 14:12:59 -0800
+Subject: [PATCH] clock: Do not define own timespec
+
+timespec is provided by libc and its best left to libc
+os_gettime takes a db_timespec and passed its address to clock_gettime
+which assumes that db_timespec and timespec are same but actually
+its 12-bytes here and libc has 16-bytes
+
+This can cause problems especially with 64bit time_t
+
+Upstream-Status: Inappropriate [as far as open source community is concerned, upstream is dead]
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
+---
+ src/dbinc/clock.h | 17 +----------------
+ 1 file changed, 1 insertion(+), 16 deletions(-)
+
+--- a/src/dbinc/clock.h
++++ b/src/dbinc/clock.h
+@@ -44,22 +44,8 @@
+ extern "C" {
+ #endif
+ 
+-/*
+- * This declaration is POSIX-compatible.  Because there are lots of different
+- * time.h include file patterns out there, it's easier to declare our own name
+- * in all cases than to try and discover if a system has a struct timespec.
+- * For the same reason, and because we'd have to #include <sys/time.h> in db.h,
+- * we don't export any timespec structures in the DB API, even in places where
+- * it would make sense, like the replication statistics information.
+- */
+-typedef struct {
+-	time_t	tv_sec;				/* seconds */
+-#ifdef HAVE_MIXED_SIZE_ADDRESSING
+-	int32_t tv_nsec;
+-#else
+-	long	tv_nsec;			/* nanoseconds */
+-#endif
+-} db_timespec;
++#include <time.h>
++#define db_timespec struct timespec
+ 
+ /* Operations on timespecs */
+ #undef	timespecclear

@@ -1,0 +1,15 @@
+--- a/src/dbinc/mutex_int.h
++++ b/src/dbinc/mutex_int.h
+@@ -850,7 +850,11 @@ typedef volatile unsigned char tsl_t;
+  * alignment locally.
+  */
+ #ifndef	MUTEX_ALIGN
+-#define	MUTEX_ALIGN	sizeof(unsigned int)
++# if defined(__linux__) && defined(__sparc__)
++# define	MUTEX_ALIGN	8
++# else
++# define	MUTEX_ALIGN	sizeof(unsigned int)
++# endif
+ #endif
+ 
+ /*

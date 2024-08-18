@@ -1,0 +1,19 @@
+With higher paralelism it sometimes fails with:
+libtool: link: `util_log.lo' is not a valid libtool object
+make: *** [db_replicate] Error 1
+
+Upstream-Status: Inappropriate [as far as open source community is concerned, upstream is dead]
+
+Signed-off-by: Martin Jansa <Martin.Jansa@gmail.com>
+
+--- a/dist/Makefile.in
++++ b/dist/Makefile.in
+@@ -1034,7 +1034,7 @@ db_recover: db_recover@o@ util_sig@o@ $(
+ 	    db_recover@o@ util_sig@o@ $(DEF_LIB) $(LIBS)
+ 	$(POSTLINK) $@
+ 
+-db_replicate: db_replicate@o@ util_sig@o@ $(DEF_LIB)
++db_replicate: db_replicate@o@ util_log@o@ util_sig@o@ $(DEF_LIB)
+ 	$(CCLINK) -o $@ $(LDFLAGS) \
+ 	    db_replicate@o@ util_log@o@ util_sig@o@ $(DEF_LIB) $(LIBS)
+ 	$(POSTLINK) $@
