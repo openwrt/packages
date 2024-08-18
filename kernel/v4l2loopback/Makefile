@@ -6,12 +6,13 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=v4l2loopback
-PKG_RELEASE:=2
+PKG_VERSION:=0.13.2
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/umlaeute/v4l2loopback.git
-PKG_SOURCE_VERSION:=v0.12.7
-PKG_MIRROR_HASH:=ee4adacdd38901c83349b36627ad9e8698564797d2e96297bfeb5202e80667a5
+PKG_SOURCE_URL:=https://github.com/umlaeute/v4l2loopback
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+PKG_MIRROR_HASH:=06b786138b35daab3edfafb95432f1b838676e6dd615c481eae0553182eac67b
 
 PKG_MAINTAINER:=Michel Promonet <michel.promonet@free.fr>
 PKG_CPE_ID:=cpe:/o:v4l2loopback_project:v4l2loopback
