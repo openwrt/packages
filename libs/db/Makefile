@@ -7,24 +7,20 @@
 
 include $(TOPDIR)/rules.mk
 
-BASE_VERSION:=4.7.25
+PKG_NAME:=db
+PKG_VERSION:=5.3.28
+PKG_RELEASE:=1
 
-PKG_NAME:=db47
-PKG_VERSION:=$(BASE_VERSION).4.NC
-PKG_RELEASE:=7
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/db-$(BASE_VERSION).NC
-PKG_SOURCE:=db-$(BASE_VERSION).NC.tar.gz
-PKG_SOURCE_URL:=http://download.oracle.com/berkeley-db/
-PKG_HASH:=cd39c711023ff44c01d3c8ff0323eef7318660772b24f287556e6bf676a12535
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://download.oracle.com/berkeley-db/
+PKG_HASH:=e0a992d740709892e81f9d93f06daf305cf73fb81b545afe72478043172c3628
 
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 PKG_LICENSE:=Sleepycat
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_DEPENDS:=libxml2
 PKG_FIXUP:=autoreconf
-PKG_LIBTOOL_PATHS:=. build_unix
+PKG_BUILD_DEPENDS:=libxml2
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -32,26 +28,28 @@ include $(INCLUDE_DIR)/package.mk
 define Package/libdb47
   SECTION:=libs
   CATEGORY:=Libraries
-  TITLE:=Berkeley DB library (4.7)
+  TITLE:=Berkeley DB library
   URL:=http://www.oracle.com/us/products/database/berkeley-db
   PROVIDES:=libdb47-full
+  ABI_VERSION:=5
 endef
 
 define Package/libdb47/description
-  Berkeley DB library (4.7).
+  Berkeley DB library.
 endef
 
 define Package/libdb47xx
   SECTION:=libs
   CATEGORY:=Libraries
   DEPENDS:=+libdb47 +libstdcpp
-  TITLE:=Berkeley DB library (4.7) for C++
+  TITLE:=Berkeley DB library for C++
   URL:=http://www.oracle.com/us/products/database/berkeley-db
   PROVIDES:=libdb47xx-full
+  ABI_VERSION:=5
 endef
 
 define Package/libdb47xx/description
-  Berkeley DB library (4.7).  C++ wrapper.
+  Berkeley DB library C++ wrapper.
 endef
 
 CONFIGURE_PATH = build_unix
@@ -63,7 +61,6 @@ CONFIGURE_ARGS += \
 	--disable-java \
 	--with-mutex=POSIX/pthreads/library \
 	--disable-tcl \
-	--disable-rpc \
 	--enable-compat185 \
 	--disable-debug \
 	$(if $(CONFIG_PACKAGE_libdb47xx),--enable-cxx,--disable-cxx)
