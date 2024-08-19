@@ -55,7 +55,8 @@ jobs:
                 fi
                 PKG_VERSION=$(grep -E '^PKG_VERSION' "$ROOT/Makefile" | cut -f 2 -d '=')
                 if [ -n "$PKG_VERSION" ]; then
-                  if [[ -n $($GITHUB_WORKSPACE/apk version --check "$PKG_VERSION") ]]; then
+                  $GITHUB_WORKSPACE/apk version --quiet --check "$PKG_VERSION"
+                  if [[ "$?" -gt "0" ]]; then
                     echo "PKG_VERSION is not compatible: $PKG_VERSION"
                     INCOMPATIBLE_VERSION+=" $ROOT"
                   fi
