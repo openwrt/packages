@@ -62,7 +62,7 @@
   if ((cls == "ipv4") && (hst != "-") && (cdr == 32) && (NF == 9)) {
     # IPV4 ; only for provided hostnames and full /32 assignments
     # NF=9 ; odhcpd errata in field format without host name
-    ptr = adr ; qpr = "" ; split( ptr, ptr, "." ) ;
+    ptr = adr ; qpr = "" ; split( ptr, ptrarr, "." ) ;
     slaac = slaac_eui64( id ) ;
 
 
@@ -74,7 +74,7 @@
 
 
     # always create the pipe file
-    for( i=1; i<=4; i++ ) { qpr = ( ptr[i] "." qpr) ; }
+    for( i=1; i<=4; i++ ) { qpr = ( ptrarr[i] "." qpr) ; }
     x = ( fqdn ". 300 IN A " adr ) ;
     y = ( qpr "in-addr.arpa. 300 IN PTR " fqdn ) ;
     print ( x "\n" y ) > pipefile ;
@@ -160,27 +160,27 @@
 
 ##############################################################################
 
-function ipv6_ptr( ipv6,    arpa, ary, end, i, j, new6, sz, start ) {
+function ipv6_ptr( ipv6, arpa, ary, end, m, n, new6, sz, start ) {
   # IPV6 colon flexibility is a challenge when creating [ptr].ip6.arpa.
   sz = split( ipv6, ary, ":" ) ; end = 9 - sz ;
 
 
-  for( i=1; i<=sz; i++ ) {
-    if( length(ary[i]) == 0 ) {
-      for( j=1; j<=end; j++ ) { ary[i] = ( ary[i] "0000" ) ; }
+  for( m=1; m<=sz; m++ ) {
+    if( length(ary[m]) == 0 ) {
+      for( n=1; n<=end; n++ ) { ary[m] = ( ary[m] "0000" ) ; }
     }
 
     else {
-      ary[i] = substr( ( "0000" ary[i] ), length( ary[i] )+5-4 ) ;
+      ary[m] = substr( ( "0000" ary[m] ), length( ary[m] )+5-4 ) ;
     }
   }
 
 
   new6 = ary[1] ;
-  for( i = 2; i <= sz; i++ ) { new6 = ( new6 ary[i] ) ; }
+  for( m = 2; m <= sz; m++ ) { new6 = ( new6 ary[m] ) ; }
   start = length( new6 ) ;
-  for( i=start; i>0; i-- ) { arpa = ( arpa substr( new6, i, 1 ) ) ; } ;
-  gsub( /./, "&\.", arpa ) ; arpa = ( arpa "ip6.arpa" ) ;
+  for( m=start; m>0; m-- ) { arpa = ( arpa substr( new6, m, 1 ) ) ; } ;
+  gsub( /./, "&.", arpa ) ; arpa = ( arpa "ip6.arpa" ) ;
 
   return arpa ;
 }

@@ -14,11 +14,11 @@ PKG_MAINTAINER:=Harald Geyer <harald@ccbib.org>
 PKG_NAME:=elektra
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.md
-PKG_VERSION:=0.9.7
-PKG_RELEASE:=5
+PKG_VERSION:=0.9.14
+PKG_RELEASE:=1
 
 # Use this for official releasees
-PKG_HASH:=12b7b046004db29317b7b937dc794abf719c400ba3115af8d41849127b562681
+PKG_HASH:=e4632bb6baa78f6a68c312469e41fd1ef07406571749e32f2645b1858d01a58d
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://ftp.libelektra.org/ftp/elektra/releases
 
@@ -97,8 +97,8 @@ define Package/libelektra-plugins
 endef
 
 define CONTENT_ELEKTRA_PLUGINS_TEXT
-base64 conditionals csvstorage date file filecheck glob hexcode
-hexnumber hosts iconv ipaddr keytometa line lineendings list
+base64 blacklist conditionals csvstorage date file filecheck glob hexcode
+hexnumber hosts iconv ipaddr keytometa line lineendings
 mathcheck macaddr mini network path profile quickdump
 range reference rgbcolor shell syslog type uname unit validation
 endef
@@ -265,7 +265,7 @@ endef
 define Package/libelektra-lua
   $(call Package/libelektra/Default)
   TITLE:=Elektra lua plugin
-  DEPENDS:=+libelektra-core +lua5.3 +libstdcpp
+  DEPENDS:=+libelektra-core +lua5.4 +libstdcpp
 endef
 
 define Package/libelektra-lua/description
@@ -335,9 +335,7 @@ define Package/libelektra-core/install
 	#$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektraintercept-* $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-resolver_fm_pb_b.so $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-utility.so* $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-cache.so $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-internalnotification.so $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-mmapstorage.so $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-ni.so $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-spec.so $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libelektra-sync.so $(1)/usr/lib/

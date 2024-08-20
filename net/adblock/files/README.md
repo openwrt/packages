@@ -102,8 +102,10 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * Strong LuCI support, all relevant options are exposed to the web frontend
 
 ## Prerequisites
-* [OpenWrt](https://openwrt.org), tested with the stable release series and with the latest rolling snapshot releases.  
+* [OpenWrt](https://openwrt.org), tested with the stable release series and with the latest snapshot releases.  
   <b>Please note:</b> Devices with less than 128 MByte RAM are _not_ supported!  
+  <b>Please note:</b> For performance reasons, adblock depent on gnu awk (gawk) by default.  
+  If you insist to use the slow busybox awk implementation, remove the gawk package afterwards (_opkg remove gawk --force-depends_) or install adblock without any dependency checks/installation (_opkg install adblock --nodeps_). Both installation variants are officially unsupported.  
 * A usual setup with an enabled DNS backend at minimum - dumb AP modes without a working DNS backend are _not_ supported
 * A download utility with SSL support: 'wget', 'uclient-fetch' with one of the 'libustream-*' ssl libraries, 'aria2c' or 'curl' is required
 * A certificate store such as 'ca-bundle' or 'ca-certificates', as adblock checks the validity of the SSL certificates of all download sites by default
