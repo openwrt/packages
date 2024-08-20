@@ -188,7 +188,7 @@ f_env() {
 f_conf() {
 	local cnt="0" cnt_max="10"
 
-	[ ! -r "/etc/config/adblock" ] && f_log "err" "no valid adblock config found, please re-install the package via opkg with the '--force-reinstall --force-maintainer' options"
+	[ ! -r "/etc/config/adblock" ] && f_log "err" "no valid adblock config found, please re-install the adblock package"
 
 	config_cb() {
 		option_cb() {
@@ -223,15 +223,6 @@ f_conf() {
 		}
 	}
 	config_load adblock
-
-	if [ -z "${adb_fetchutil}" ] || [ -z "${adb_dns}" ]; then
-		while [ -z "${adb_packages}" ] && [ "${cnt}" -le "${cnt_max}" ]; do
-			adb_packages="$(opkg list-installed 2>/dev/null)"
-			cnt="$((cnt + 1))"
-			sleep 1
-		done
-		[ -z "${adb_packages}" ] && f_log "err" "local opkg package repository is not available, please set 'adb_fetchutil' and 'adb_dns' manually"
-	fi
 }
 
 # status helper function
@@ -1476,7 +1467,7 @@ else
 	f_log "err" "system libraries not found"
 fi
 
-# initial system calls
+# reference required system utilities
 #
 adb_awkcmd="$(f_cmd gawk awk)"
 adb_sortcmd="$(f_cmd sort)"
