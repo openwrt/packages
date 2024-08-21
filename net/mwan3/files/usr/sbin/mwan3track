@@ -307,7 +307,7 @@ main() {
 						WRAP nping -c $count $track_ip --${FAMILY#nping-} > $TRACK_OUTPUT &
 						TRACK_PID=$!
 						wait $TRACK_PID
-						result=$(grep $TRACK_OUTPUT Lost | awk '{print $12}')
+						result=$(grep Lost $TRACK_OUTPUT | awk '{print $12}')
 					;;
 				esac
 				do_log=""
