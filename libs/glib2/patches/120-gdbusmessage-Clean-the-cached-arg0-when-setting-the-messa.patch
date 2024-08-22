@@ -1,0 +1,39 @@
+From: =?utf-8?b?Ik1hcmNvIFRyZXZpc2FuIChUcmV2acOxbyki?= <mail@3v1n0.net>
+Date: Wed, 8 May 2024 22:53:51 +0200
+Subject: gdbusmessage: Clean the cached arg0 when setting the message body
+
+We're now caching arg0 but such value is not cleared when a new body is
+set as it's in the connection filter test cases where we've a leak as
+highlighted by both valgrind and leak sanitizer
+
+Origin: upstream, 2.80.3, commit:fe89e9f3cb6e0fd0dc2bd8a2d413799e1443cef1
+Bug-Debian: https://bugs.debian.org/1070851
+---
+ gio/gdbusmessage.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+--- a/gio/gdbusmessage.c
++++ b/gio/gdbusmessage.c
+@@ -1164,10 +1164,12 @@ g_dbus_message_set_body (GDBusMessage  *
+ 
+   if (message->body != NULL)
+     g_variant_unref (message->body);
++
++  g_clear_pointer (&message->arg0_cache, g_variant_unref);
++
+   if (body == NULL)
+     {
+       message->body = NULL;
+-      message->arg0_cache = NULL;
+       g_dbus_message_set_signature (message, NULL);
+     }
+   else
+@@ -1181,8 +1183,6 @@ g_dbus_message_set_body (GDBusMessage  *
+       if (g_variant_is_of_type (message->body, G_VARIANT_TYPE_TUPLE) &&
+           g_variant_n_children (message->body) > 0)
+         message->arg0_cache = g_variant_get_child_value (message->body, 0);
+-      else
+-        message->arg0_cache = NULL;
+ 
+       type_string = g_variant_get_type_string (body);
+       type_string_len = strlen (type_string);

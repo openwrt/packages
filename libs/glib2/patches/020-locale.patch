@@ -12,9 +12,9 @@ https://gitlab.gnome.org/GNOME/glib/-/merge_requests/2797
 
 --- a/gobject/glib-mkenums.in
 +++ b/gobject/glib-mkenums.in
-@@ -19,6 +19,9 @@ import errno
- import codecs
- import locale
+@@ -22,6 +22,9 @@ import locale
+ # Non-english locale systems might complain to unrecognized character
+ sys.stdout = io.TextIOWrapper(sys.stdout.detach(), encoding='utf-8')
  
 +# Non-english locale systems might complain to unrecognized character
 +sys.stdout = io.TextIOWrapper(sys.stdout.detach(), encoding='utf-8')

@@ -1,6 +1,6 @@
 --- a/glib/meson.build
 +++ b/glib/meson.build
-@@ -365,6 +365,7 @@ pcre2_static_args = []
+@@ -366,6 +366,7 @@ pcre2_static_args = []
  
  if use_pcre2_static_flag
    pcre2_static_args = ['-DPCRE2_STATIC']
