@@ -11,7 +11,7 @@
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 
-adb_ver="4.2.1"
+adb_ver="4.2.2-r3"
 adb_enabled="0"
 adb_debug="0"
 adb_forcedns="0"
@@ -43,11 +43,6 @@ adb_dnsjail="${adb_dnsprefix}.jail"
 adb_srcarc="/etc/adblock/adblock.sources.gz"
 adb_srcfile="${adb_tmpbase}/adb_sources.json"
 adb_rtfile="${adb_tmpbase}/adb_runtime.json"
-adb_sort="$(command -v sort)"
-adb_awk="$(command -v gawk)"
-adb_loggercmd="$(command -v logger)"
-adb_dumpcmd="$(command -v tcpdump)"
-adb_lookupcmd="$(command -v nslookup)"
 adb_fetchutil=""
 adb_fetchinsecure=""
 adb_zonelist=""
@@ -63,23 +58,45 @@ adb_packages=""
 adb_sources=""
 adb_cnt=""
 
-# load & check adblock environment
+# command selector
+#
+f_cmd() {
+	local cmd pri_cmd="${1}" sec_cmd="${2}"
+
+	cmd="$(command -v "${pri_cmd}" 2>/dev/null)"
+	if [ ! -x "${cmd}" ]; then
+		if [ -n "${sec_cmd}" ]; then
+			[ "${sec_cmd}" = "optional" ] && return
+			cmd="$(command -v "${sec_cmd}" 2>/dev/null)"
+		fi
+		if [ -x "${cmd}" ]; then
+			printf "%s" "${cmd}"
+		else
+			f_log "emerg" "command '${pri_cmd:-"-"}'/'${sec_cmd:-"-"}' not found"
+		fi
+	else
+		printf "%s" "${cmd}"
+	fi
+}
+
+# load adblock environment
 #
 f_load() {
 	local bg_pid iface port ports cpu core
 
-	adb_sysver="$(ubus -S call system board 2>/dev/null | jsonfilter -q -e '@.model' -e '@.release.description' |
-		"${adb_awk}" 'BEGIN{RS="";FS="\n"}{printf "%s, %s",$1,$2}')"
-	adb_memory="$("${adb_awk}" '/^MemTotal|^MemFree|^MemAvailable/{ORS="/"; print int($2/1000)}' "/proc/meminfo" 2>/dev/null |
-		"${adb_awk}" '{print substr($0,1,length($0)-1)}')"
-
+	adb_sysver="$("${adb_ubuscmd}" -S call system board 2>/dev/null | "${adb_jsoncmd}" -q -e '@.model' -e '@.release.description' |
+		"${adb_awkcmd}" 'BEGIN{RS="";FS="\n"}{printf "%s, %s",$1,$2}')"
+	adb_memory="$("${adb_awkcmd}" '/^MemAvailable/{printf "%s",int($2/1000)}' "/proc/meminfo" 2>/dev/null)"
 	f_conf
 
-	cpu="$(grep -c '^processor' /proc/cpuinfo 2>/dev/null)"
-	core="$(grep -cm1 '^core id' /proc/cpuinfo 2>/dev/null)"
-	[ "${cpu}" = "0" ] && cpu="1"
-	[ "${core}" = "0" ] && core="1"
-	adb_cores="$((cpu * core))"
+	if [ -z "${adb_cores}" ]; then
+		cpu="$("${adb_grepcmd}" -c '^processor' /proc/cpuinfo 2>/dev/null)"
+		core="$("${adb_grepcmd}" -cm1 '^core id' /proc/cpuinfo 2>/dev/null)"
+		[ "${cpu}" = "0" ] && cpu="1"
+		[ "${core}" = "0" ] && core="1"
+		adb_cores="$((cpu * core))"
+		[ "${adb_cores}" -gt "16" ] && adb_cores="16"
+	fi
 
 	if [ "${adb_action}" != "report" ]; then
 		f_dns
@@ -102,7 +119,7 @@ f_load() {
 		exit 0
 	fi
 
-	bg_pid="$(pgrep -f "^${adb_dumpcmd}.*adb_report\\.pcap$" | "${adb_awk}" '{ORS=" "; print $1}')"
+	bg_pid="$("${adb_pgrepcmd}" -f "^${adb_dumpcmd}.*adb_report\\.pcap$" | "${adb_awkcmd}" '{ORS=" "; print $1}')"
 	if [ -x "${adb_dumpcmd}" ] && { [ "${adb_report}" = "0" ] || { [ -n "${bg_pid}" ] && { [ "${adb_action}" = "stop" ] || [ "${adb_action}" = "restart" ]; }; }; }; then
 		if [ -n "${bg_pid}" ]; then
 			kill -HUP "${bg_pid}" 2>/dev/null
@@ -129,7 +146,7 @@ f_load() {
 		fi
 		if [ -n "${adb_repiface}" ] && [ -d "${adb_reportdir}" ]; then
 			("${adb_dumpcmd}" --immediate-mode -nn -p -s0 -l -i ${adb_repiface} ${ports} -C${adb_repchunksize} -W${adb_repchunkcnt} -w "${adb_reportdir}/adb_report.pcap" >/dev/null 2>&1 &)
-			bg_pid="$(pgrep -f "^${adb_dumpcmd}.*adb_report\\.pcap$" | "${adb_awk}" '{ORS=" "; print $1}')"
+			bg_pid="$("${adb_pgrepcmd}" -f "^${adb_dumpcmd}.*adb_report\\.pcap$" | "${adb_awkcmd}" '{ORS=" "; print $1}')"
 		else
 			f_log "info" "Please set the name of the reporting network device 'adb_repiface' manually"
 		fi
@@ -170,7 +187,7 @@ f_env() {
 f_conf() {
 	local cnt="0" cnt_max="10"
 
-	[ ! -r "/etc/config/adblock" ] && f_log "err" "no valid adblock config found, please re-install the package via opkg with the '--force-reinstall --force-maintainer' options"
+	[ ! -r "/etc/config/adblock" ] && f_log "err" "no valid adblock config found, please re-install the adblock package"
 
 	config_cb() {
 		option_cb() {
@@ -263,9 +280,9 @@ f_dns() {
 				adb_dnsuser="${adb_dnsuser:-"dnsmasq"}"
 				adb_dnsdir="${adb_dnsdir:-"/tmp/dnsmasq.d"}"
 				adb_dnsheader="${adb_dnsheader:-""}"
-				adb_dnsdeny="${adb_dnsdeny:-"${adb_awk} '{print \"local=/\"\$0\"/\"}'"}"
-				adb_dnsallow="${adb_dnsallow:-"${adb_awk} '{print \"local=/\"\$0\"/#\"}'"}"
-				adb_dnssafesearch="${adb_dnssafesearch:-"${adb_awk} -v item=\"\$item\" '{print \"address=/\"\$0\"/\"item\"\";print \"local=/\"\$0\"/\"}'"}"
+				adb_dnsdeny="${adb_dnsdeny:-"${adb_awkcmd} '{print \"local=/\"\$0\"/\"}'"}"
+				adb_dnsallow="${adb_dnsallow:-"${adb_awkcmd} '{print \"local=/\"\$0\"/#\"}'"}"
+				adb_dnssafesearch="${adb_dnssafesearch:-"${adb_awkcmd} -v item=\"\$item\" '{print \"address=/\"\$0\"/\"item\"\";print \"local=/\"\$0\"/\"}'"}"
 				adb_dnsstop="${adb_dnsstop:-"address=/#/\nlocal=/#/"}"
 				;;
 			"unbound")
@@ -274,9 +291,9 @@ f_dns() {
 				adb_dnsuser="${adb_dnsuser:-"unbound"}"
 				adb_dnsdir="${adb_dnsdir:-"/var/lib/unbound"}"
 				adb_dnsheader="${adb_dnsheader:-""}"
-				adb_dnsdeny="${adb_dnsdeny:-"${adb_awk} '{print \"local-zone: \\042\"\$0\"\\042 always_nxdomain\"}'"}"
-				adb_dnsallow="${adb_dnsallow:-"${adb_awk} '{print \"local-zone: \\042\"\$0\"\\042 always_transparent\"}'"}"
-				adb_dnssafesearch="${adb_dnssafesearch:-"${adb_awk} -v item=\"\$item\" '{type=\"AAAA\";if(match(item,/^([0-9]{1,3}\.){3}[0-9]{1,3}$/)){type=\"A\"}}{print \"local-data: \\042\"\$0\" \"type\" \"item\"\\042\"}'"}"
+				adb_dnsdeny="${adb_dnsdeny:-"${adb_awkcmd} '{print \"local-zone: \\042\"\$0\"\\042 always_nxdomain\"}'"}"
+				adb_dnsallow="${adb_dnsallow:-"${adb_awkcmd} '{print \"local-zone: \\042\"\$0\"\\042 always_transparent\"}'"}"
+				adb_dnssafesearch="${adb_dnssafesearch:-"${adb_awkcmd} -v item=\"\$item\" '{type=\"AAAA\";if(match(item,/^([0-9]{1,3}\.){3}[0-9]{1,3}$/)){type=\"A\"}}{print \"local-data: \\042\"\$0\" \"type\" \"item\"\\042\"}'"}"
 				adb_dnsstop="${adb_dnsstop:-"local-zone: \".\" always_nxdomain"}"
 				;;
 			"named")
@@ -285,11 +302,11 @@ f_dns() {
 				adb_dnsuser="${adb_dnsuser:-"bind"}"
 				adb_dnsdir="${adb_dnsdir:-"/var/lib/bind"}"
 				adb_dnsheader="${adb_dnsheader:-"\$TTL 2h\n@ IN SOA localhost. root.localhost. (1 6h 1h 1w 2h)\n  IN NS  localhost.\n"}"
-				adb_dnsdeny="${adb_dnsdeny:-"${adb_awk} '{print \"\"\$0\" CNAME .\\n*.\"\$0\" CNAME .\"}'"}"
-				adb_dnsallow="${adb_dnsallow:-"${adb_awk} '{print \"\"\$0\" CNAME rpz-passthru.\\n*.\"\$0\" CNAME rpz-passthru.\"}'"}"
-				adb_dnsdenyip="${adb_dnsdenyip:-"${adb_awk} '{print \"\"\$0\".rpz-client-ip CNAME .\"}'"}"
-				adb_dnsallowip="${adb_dnsallowip:-"${adb_awk} '{print \"\"\$0\".rpz-client-ip CNAME rpz-passthru.\"}'"}"
-				adb_dnssafesearch="${adb_dnssafesearch:-"${adb_awk} -v item=\"\$item\" '{print \"\"\$0\" CNAME \"item\".\\n*.\"\$0\" CNAME \"item\".\"}'"}"
+				adb_dnsdeny="${adb_dnsdeny:-"${adb_awkcmd} '{print \"\"\$0\" CNAME .\\n*.\"\$0\" CNAME .\"}'"}"
+				adb_dnsallow="${adb_dnsallow:-"${adb_awkcmd} '{print \"\"\$0\" CNAME rpz-passthru.\\n*.\"\$0\" CNAME rpz-passthru.\"}'"}"
+				adb_dnsdenyip="${adb_dnsdenyip:-"${adb_awkcmd} '{print \"\"\$0\".rpz-client-ip CNAME .\"}'"}"
+				adb_dnsallowip="${adb_dnsallowip:-"${adb_awkcmd} '{print \"\"\$0\".rpz-client-ip CNAME rpz-passthru.\"}'"}"
+				adb_dnssafesearch="${adb_dnssafesearch:-"${adb_awkcmd} -v item=\"\$item\" '{print \"\"\$0\" CNAME \"item\".\\n*.\"\$0\" CNAME \"item\".\"}'"}"
 				adb_dnsstop="${adb_dnsstop:-"* CNAME ."}"
 				;;
 			"kresd")
@@ -298,9 +315,9 @@ f_dns() {
 				adb_dnsuser="${adb_dnsuser:-"root"}"
 				adb_dnsdir="${adb_dnsdir:-"/etc/kresd"}"
 				adb_dnsheader="${adb_dnsheader:-"\$TTL 2h\n@ IN SOA localhost. root.localhost. (1 6h 1h 1w 2h)\n"}"
-				adb_dnsdeny="${adb_dnsdeny:-"${adb_awk} '{print \"\"\$0\" CNAME .\\n*.\"\$0\" CNAME .\"}'"}"
-				adb_dnsallow="${adb_dnsallow:-"${adb_awk} '{print \"\"\$0\" CNAME rpz-passthru.\\n*.\"\$0\" CNAME rpz-passthru.\"}'"}"
-				adb_dnssafesearch="${adb_dnssafesearch:-"${adb_awk} -v item=\"\$item\" '{type=\"AAAA\";if(match(item,/^([0-9]{1,3}\.){3}[0-9]{1,3}$/)){type=\"A\"}}{print \"\"\$0\" \"type\" \"item\"\"}'"}"
+				adb_dnsdeny="${adb_dnsdeny:-"${adb_awkcmd} '{print \"\"\$0\" CNAME .\\n*.\"\$0\" CNAME .\"}'"}"
+				adb_dnsallow="${adb_dnsallow:-"${adb_awkcmd} '{print \"\"\$0\" CNAME rpz-passthru.\\n*.\"\$0\" CNAME rpz-passthru.\"}'"}"
+				adb_dnssafesearch="${adb_dnssafesearch:-"${adb_awkcmd} -v item=\"\$item\" '{type=\"AAAA\";if(match(item,/^([0-9]{1,3}\.){3}[0-9]{1,3}$/)){type=\"A\"}}{print \"\"\$0\" \"type\" \"item\"\"}'"}"
 				adb_dnsstop="${adb_dnsstop:-"* CNAME ."}"
 				;;
 			"raw")
@@ -331,7 +348,7 @@ f_dns() {
 
 	if [ "${adb_dns}" != "raw" ] && [ "${adb_action}" != "stop" ]; then
 		while [ "${cnt}" -le 30 ]; do
-			dns_up="$(ubus -S call service list "{\"name\":\"${adb_dns}\"}" 2>/dev/null | jsonfilter -l1 -e "@[\"${adb_dns}\"].instances.*.running" 2>/dev/null)"
+			dns_up="$("${adb_ubuscmd}" -S call service list "{\"name\":\"${adb_dns}\"}" 2>/dev/null | "${adb_jsoncmd}" -l1 -e "@[\"${adb_dns}\"].instances.*.running" 2>/dev/null)"
 			if [ "${dns_up}" = "true" ]; then
 				break
 			fi
@@ -452,7 +469,7 @@ f_rmtemp() {
 f_rmdns() {
 	local status
 
-	status="$(ubus -S call service list '{"name":"adblock"}' 2>/dev/null | jsonfilter -l1 -e '@["adblock"].instances.*.running' 2>/dev/null)"
+	status="$("${adb_ubuscmd}" -S call service list '{"name":"adblock"}' 2>/dev/null | "${adb_jsoncmd}" -l1 -e '@["adblock"].instances.*.running' 2>/dev/null)"
 	if [ "${adb_dns}" = "raw" ] || { [ -n "${adb_dns}" ] && [ -n "${status}" ]; }; then
 		: >"${adb_rtfile}"
 		[ "${adb_backup}" = "1" ] && rm -f "${adb_backupdir}/${adb_dnsprefix}".*.gz
@@ -469,7 +486,7 @@ f_uci() {
 	local change config="${1}"
 
 	if [ -n "${config}" ]; then
-		change="$(uci -q changes "${config}" | "${adb_awk}" '{ORS=" "; print $0}')"
+		change="$(uci -q changes "${config}" | "${adb_awkcmd}" '{ORS=" "; print $0}')"
 		if [ -n "${change}" ]; then
 			uci_commit "${config}"
 			case "${config}" in
@@ -556,7 +573,7 @@ f_extconf() {
 	f_uci "${config}"
 
 	config="firewall"
-	fwcfg="$(uci -qNX show "${config}" | "${adb_awk}" 'BEGIN{FS="[.=]"};/adblock_/{if(zone==$2){next}else{ORS=" ";zone=$2;print zone}}')"
+	fwcfg="$(uci -qNX show "${config}" | "${adb_awkcmd}" 'BEGIN{FS="[.=]"};/adblock_/{if(zone==$2){next}else{ORS=" ";zone=$2;print zone}}')"
 	if [ "${adb_enabled}" = "1" ] && [ "${adb_forcedns}" = "1" ] &&
 		/etc/init.d/firewall enabled; then
 		for zone in ${adb_zonelist}; do
@@ -628,11 +645,11 @@ f_dnsup() {
 	if [ "${restart_rc}" = "0" ]; then
 		rset="/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower(\$1)}"
 		while [ "${cnt}" -le "${adb_dnstimeout}" ]; do
-			dns_service="$(ubus -S call service list "{\"name\":\"${adb_dns}\"}")"
-			dns_up="$(printf "%s" "${dns_service}" | jsonfilter -l1 -e "@[\"${adb_dns}\"].instances.*.running")"
-			dns_pid="$(printf "%s" "${dns_service}" | jsonfilter -l1 -e "@[\"${adb_dns}\"].instances.*.pid")"
+			dns_service="$("${adb_ubuscmd}" -S call service list "{\"name\":\"${adb_dns}\"}")"
+			dns_up="$(printf "%s" "${dns_service}" | "${adb_jsoncmd}" -l1 -e "@[\"${adb_dns}\"].instances.*.running")"
+			dns_pid="$(printf "%s" "${dns_service}" | "${adb_jsoncmd}" -l1 -e "@[\"${adb_dns}\"].instances.*.pid")"
 			if [ "${dns_up}" = "true" ] && [ -n "${dns_pid}" ] && ! ls "/proc/${dns_pid}/fd/${adb_dnsdir}/${adb_dnsfile}" >/dev/null 2>&1; then
-				if [ -x "${adb_lookupcmd}" ] && [ -n "$(printf "%s" "${adb_lookupdomain}" | "${adb_awk}" "${rset}")" ]; then
+				if [ -x "${adb_lookupcmd}" ] && [ -n "$(printf "%s" "${adb_lookupdomain}" | "${adb_awkcmd}" "${rset}")" ]; then
 					if "${adb_lookupcmd}" "${adb_lookupdomain}" >/dev/null 2>&1; then
 						out_rc="0"
 						break
@@ -671,7 +688,7 @@ f_list() {
 				if [ -n "${adb_allowip}" ]; then
 					: >"${adb_tmpdir}/tmp.raw.${src_name}"
 					for ip in ${adb_allowip}; do
-						printf "%s" "${ip}" | "${adb_awk}" "${rset}" >>"${adb_tmpdir}/tmp.raw.${src_name}"
+						printf "%s" "${ip}" | "${adb_awkcmd}" "${rset}" >>"${adb_tmpdir}/tmp.raw.${src_name}"
 					done
 					eval "${adb_dnsallowip}" "${adb_tmpdir}/tmp.raw.${src_name}" >"${adb_tmpdir}/tmp.add.${src_name}"
 					out_rc="${?}"
@@ -679,7 +696,7 @@ f_list() {
 				if [ -n "${adb_denyip}" ] && { [ -z "${out_rc}" ] || [ "${out_rc}" = "0" ]; }; then
 					: >"${adb_tmpdir}/tmp.raw.${src_name}"
 					for ip in ${adb_denyip}; do
-						printf "%s" "${ip}" | "${adb_awk}" "${rset}" >>"${adb_tmpdir}/tmp.raw.${src_name}"
+						printf "%s" "${ip}" | "${adb_awkcmd}" "${rset}" >>"${adb_tmpdir}/tmp.raw.${src_name}"
 					done
 					eval "${adb_dnsdenyip}" "${adb_tmpdir}/tmp.raw.${src_name}" >>"${adb_tmpdir}/tmp.add.${src_name}"
 					out_rc="${?}"
@@ -691,24 +708,24 @@ f_list() {
 			src_name="${mode}"
 			if [ "${src_name}" = "blacklist" ] && [ -f "${adb_blacklist}" ]; then
 				rset="/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower(\$1)}"
-				"${adb_awk}" "${rset}" "${adb_blacklist}" >"${adb_tmpdir}/tmp.raw.${src_name}"
+				"${adb_awkcmd}" "${rset}" "${adb_blacklist}" >"${adb_tmpdir}/tmp.raw.${src_name}"
 				if [ -s "${adb_whitelist}" ]; then
-					"${adb_awk}" 'NR==FNR{member[$1];next}!($1 in member)' "${adb_whitelist}" "${adb_tmpdir}/tmp.raw.${src_name}" >"${adb_tmpdir}/tmp.deduplicate.${src_name}"
+					"${adb_awkcmd}" 'NR==FNR{member[$1];next}!($1 in member)' "${adb_whitelist}" "${adb_tmpdir}/tmp.raw.${src_name}" >"${adb_tmpdir}/tmp.deduplicate.${src_name}"
 				else
 					cat "${adb_tmpdir}/tmp.raw.${src_name}" >"${adb_tmpdir}/tmp.deduplicate.${src_name}"
 				fi
-				"${adb_awk}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' "${adb_tmpdir}/tmp.deduplicate.${src_name}" >"${adb_tmpdir}/tmp.raw.${src_name}"
-				"${adb_sort}" ${adb_srtopts} -u "${adb_tmpdir}/tmp.raw.${src_name}" 2>/dev/null >"${adb_tmpfile}.${src_name}"
+				"${adb_awkcmd}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' "${adb_tmpdir}/tmp.deduplicate.${src_name}" >"${adb_tmpdir}/tmp.raw.${src_name}"
+				"${adb_sortcmd}" ${adb_srtopts} -u "${adb_tmpdir}/tmp.raw.${src_name}" 2>/dev/null >"${adb_tmpfile}.${src_name}"
 				out_rc="${?}"
 				: > "${adb_tmpdir}/tmp.raw.${src_name}"
 			elif [ "${src_name}" = "whitelist" ] && [ -f "${adb_whitelist}" ]; then
 				rset="/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower(\$1)}"
-				printf "%s\n" "${adb_lookupdomain}" | "${adb_awk}" "${rset}" >"${adb_tmpdir}/tmp.raw.${src_name}"
-				"${adb_awk}" "${rset}" "${adb_whitelist}" >>"${adb_tmpdir}/tmp.raw.${src_name}"
+				printf "%s\n" "${adb_lookupdomain}" | "${adb_awkcmd}" "${rset}" >"${adb_tmpdir}/tmp.raw.${src_name}"
+				"${adb_awkcmd}" "${rset}" "${adb_whitelist}" >>"${adb_tmpdir}/tmp.raw.${src_name}"
 				out_rc="${?}"
 				if [ "${out_rc}" = "0" ]; then
 					rset="/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower(\$1)}"
-					"${adb_awk}" "${rset}" "${adb_tmpdir}/tmp.raw.${src_name}" >"${adb_tmpdir}/tmp.rem.${src_name}"
+					"${adb_awkcmd}" "${rset}" "${adb_tmpdir}/tmp.raw.${src_name}" >"${adb_tmpdir}/tmp.rem.${src_name}"
 					out_rc="${?}"
 					if [ "${out_rc}" = "0" ] && [ "${adb_dnsallow}" != "1" ]; then
 						eval "${adb_dnsallow}" "${adb_tmpdir}/tmp.raw.${src_name}" >"${adb_tmpdir}/tmp.add.${src_name}"
@@ -743,8 +760,8 @@ f_list() {
 					fi
 					if [ "${out_rc}" = "0" ]; then
 						if [ -x "${adb_lookupcmd}" ]; then
-							safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awk}" '/^Address[ 0-9]*: /{ORS=" ";print $NF}')"
-							[ -n "${safe_ips}" ] && "${adb_awk}" "${rset}" "${safe_domains}" >"${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
+							safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awkcmd}" '/^Address[ 0-9]*: /{ORS=" ";print $NF}')"
+							[ -n "${safe_ips}" ] && "${adb_awkcmd}" "${rset}" "${safe_domains}" >"${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
 						fi
 						out_rc="${?}"
 					fi
@@ -753,7 +770,7 @@ f_list() {
 					safe_cname="strict.bing.com"
 					safe_domains="www.bing.com"
 					if [ -x "${adb_lookupcmd}" ]; then
-						safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awk}" '/^Address[ 0-9]*: /{ORS=" ";print $NF}')"
+						safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awkcmd}" '/^Address[ 0-9]*: /{ORS=" ";print $NF}')"
 						[ -n "${safe_ips}" ] && printf "%s\n" ${safe_domains} >"${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
 					fi
 					out_rc="${?}"
@@ -762,7 +779,7 @@ f_list() {
 					safe_cname="safe.duckduckgo.com"
 					safe_domains="duckduckgo.com"
 					if [ -x "${adb_lookupcmd}" ]; then
-						safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awk}" '/^Address[ 0-9]*: /{ORS=" ";print $NF}')"
+						safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awkcmd}" '/^Address[ 0-9]*: /{ORS=" ";print $NF}')"
 						[ -n "${safe_ips}" ] && printf "%s\n" ${safe_domains} >"${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
 					fi
 					out_rc="${?}"
@@ -771,7 +788,7 @@ f_list() {
 					safe_cname="safesearch.pixabay.com"
 					safe_domains="pixabay.com"
 					if [ -x "${adb_lookupcmd}" ]; then
-						safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awk}" '/^Address[ 0-9]*: /{ORS=" ";print $NF}')"
+						safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awkcmd}" '/^Address[ 0-9]*: /{ORS=" ";print $NF}')"
 						[ -n "${safe_ips}" ] && printf "%s\n" ${safe_domains} >"${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
 					fi
 					out_rc="${?}"
@@ -780,7 +797,7 @@ f_list() {
 					safe_cname="familysearch.yandex.ru"
 					safe_domains="ya.ru yandex.ru yandex.com yandex.com.tr yandex.ua yandex.by yandex.ee yandex.lt yandex.lv yandex.md yandex.uz yandex.tm yandex.tj yandex.az yandex.kz"
 					if [ -x "${adb_lookupcmd}" ]; then
-						safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awk}" '/^Address[ 0-9]*: /{ORS=" ";print $NF}')"
+						safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awkcmd}" '/^Address[ 0-9]*: /{ORS=" ";print $NF}')"
 						[ -n "${safe_ips}" ] && printf "%s\n" ${safe_domains} >"${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
 					fi
 					out_rc="${?}"
@@ -793,7 +810,7 @@ f_list() {
 					fi
 					safe_domains="www.youtube.com m.youtube.com youtubei.googleapis.com youtube.googleapis.com www.youtube-nocookie.com"
 					if [ -x "${adb_lookupcmd}" ]; then
-						safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awk}" '/^Address[ 0-9]*: /{ORS=" ";print $NF}')"
+						safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awkcmd}" '/^Address[ 0-9]*: /{ORS=" ";print $NF}')"
 						[ -n "${safe_ips}" ] && printf "%s\n" ${safe_domains} >"${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
 					fi
 					out_rc="${?}"
@@ -861,7 +878,7 @@ f_list() {
 				find "${adb_backupdir}" ${ffiles} -print0 2>/dev/null | xargs -0 rm 2>/dev/null
 			fi
 			unset src_name
-			"${adb_sort}" ${adb_srtopts} -mu "${adb_tmpfile}".* 2>/dev/null >"${adb_tmpdir}/${adb_dnsfile}"
+			"${adb_sortcmd}" ${adb_srtopts} -mu "${adb_tmpfile}".* 2>/dev/null >"${adb_tmpdir}/${adb_dnsfile}"
 			out_rc="${?}"
 			rm -f "${adb_tmpfile}".*
 			;;
@@ -888,11 +905,11 @@ f_list() {
 f_tld() {
 	local cnt cnt_tld cnt_rem source="${1}" temp_tld="${1}.tld"
 
-	if "${adb_awk}" '{if(NR==1){tld=$NF};while(getline){if(index($NF,tld".")==0){print tld;tld=$NF}}print tld}' "${source}" |
-		"${adb_awk}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' >"${temp_tld}"; then
+	if "${adb_awkcmd}" '{if(NR==1){tld=$NF};while(getline){if(index($NF,tld".")==0){print tld;tld=$NF}}print tld}' "${source}" |
+		"${adb_awkcmd}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' >"${temp_tld}"; then
 		cnt_tld="$(wc -l 2>/dev/null <"${temp_tld}")"
 		if [ -s "${adb_tmpdir}/tmp.rem.whitelist" ]; then
-			"${adb_awk}" 'NR==FNR{del[$0];next};!($0 in del)' "${adb_tmpdir}/tmp.rem.whitelist" "${temp_tld}" >"${source}"
+			"${adb_awkcmd}" 'NR==FNR{del[$0];next};!($0 in del)' "${adb_tmpdir}/tmp.rem.whitelist" "${temp_tld}" >"${source}"
 			cnt_rem="$(wc -l 2>/dev/null <"${source}")"
 		else
 			mv -f "${temp_tld}" "${source}"
@@ -973,7 +990,7 @@ f_query() {
 		while [ "${domain}" != "${tld}" ]; do
 			search="${domain//[+*~%\$&\"\']/}"
 			search="${search//./\\.}"
-			result="$("${adb_awk}" -F '/|\"|\t| ' "/^(${search}|${prefix}+${search}.*${suffix})$/{i++;if(i<=9){printf \"  + %s\n\",\$${field}}else if(i==10){printf \"  + %s\n\",\"[...]\";exit}}" "${adb_dnsdir}/${adb_dnsfile}")"
+			result="$("${adb_awkcmd}" -F '/|\"|\t| ' "/^(${search}|${prefix}+${search}.*${suffix})$/{i++;if(i<=9){printf \"  + %s\n\",\$${field}}else if(i==10){printf \"  + %s\n\",\"[...]\";exit}}" "${adb_dnsdir}/${adb_dnsfile}")"
 			printf "%s\n%s\n%s\n" ":::" "::: domain '${domain}' in active blocklist" ":::"
 			printf "%s\n\n" "${result:-"  - no match"}"
 			domain="${tld}"
@@ -987,9 +1004,9 @@ f_query() {
 				suffix="${file##*.}"
 				if [ "${suffix}" = "gz" ]; then
 					zcat "${file}" 2>/dev/null |
-						"${adb_awk}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' | "${adb_awk}" -v f="${file##*/}" "BEGIN{rc=1};/^($search|.*\\.${search})$/{i++;if(i<=3){printf \"  + %-30s%s\n\",f,\$1;rc=0}else if(i==4){printf \"  + %-30s%s\n\",f,\"[...]\"}};END{exit rc}"
+						"${adb_awkcmd}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' | "${adb_awkcmd}" -v f="${file##*/}" "BEGIN{rc=1};/^($search|.*\\.${search})$/{i++;if(i<=3){printf \"  + %-30s%s\n\",f,\$1;rc=0}else if(i==4){printf \"  + %-30s%s\n\",f,\"[...]\"}};END{exit rc}"
 				else
-					"${adb_awk}" -v f="${file##*/}" "BEGIN{rc=1};/^($search|.*\\.${search})$/{i++;if(i<=3){printf \"  + %-30s%s\n\",f,\$1;rc=0}else if(i==4){printf \"  + %-30s%s\n\",f,\"[...]\"}};END{exit rc}" "${file}"
+					"${adb_awkcmd}" -v f="${file##*/}" "BEGIN{rc=1};/^($search|.*\\.${search})$/{i++;if(i<=3){printf \"  + %-30s%s\n\",f,\$1;rc=0}else if(i==4){printf \"  + %-30s%s\n\",f,\"[...]\"}};END{exit rc}" "${file}"
 				fi
 				if [ "${?}" = "0" ]; then
 					result="true"
@@ -1010,8 +1027,8 @@ f_query() {
 f_jsnup() {
 	local entry sources runtime utils bg_pid status="${1:-"enabled"}"
 
-	adb_memory="$("${adb_awk}" '/^MemTotal|^MemFree|^MemAvailable/{ORS="/"; print int($2/1000)}' "/proc/meminfo" 2>/dev/null |
-		"${adb_awk}" '{print substr($0,1,length($0)-1)}')"
+	adb_memory="$("${adb_awkcmd}" '/^MemTotal|^MemFree|^MemAvailable/{ORS="/"; print int($2/1000)}' "/proc/meminfo" 2>/dev/null |
+		"${adb_awkcmd}" '{print substr($0,1,length($0)-1)}')"
 
 	case "${status}" in
 		"enabled" | "error")
@@ -1032,7 +1049,7 @@ f_jsnup() {
 	esac
 	json_init
 	if json_load_file "${adb_rtfile}" >/dev/null 2>&1; then
-		utils="download: $(readlink -fn "${adb_fetchutil}"), sort: $(readlink -fn "${adb_sort}"), awk: $(readlink -fn "${adb_awk}")"
+		utils="download: $(readlink -fn "${adb_fetchutil}"), sort: $(readlink -fn "${adb_sortcmd}"), awk: $(readlink -fn "${adb_awkcmd}")"
 		[ -z "${adb_cnt}" ] && { json_get_var adb_cnt "blocked_domains"; adb_cnt="${adb_cnt%% *}"; }
 		[ -z "${runtime}" ] && json_get_var runtime "last_run"
 	fi
@@ -1040,7 +1057,7 @@ f_jsnup() {
 		adb_cnt="0"
 		sources="restrictive_jail"
 	else
-		sources="$(printf "%s\n" ${adb_sources} | "${adb_sort}" | "${adb_awk}" '{ORS=" ";print $0}')"
+		sources="$(printf "%s\n" ${adb_sources} | "${adb_sortcmd}" | "${adb_awkcmd}" '{ORS=" ";print $0}')"
 	fi
 
 	: >"${adb_rtfile}"
@@ -1082,7 +1099,7 @@ f_log() {
 	if [ -n "${log_msg}" ] && { [ "${class}" != "debug" ] || [ "${adb_debug}" = "1" ]; }; then
 		[ -x "${adb_loggercmd}" ] && "${adb_loggercmd}" -p "${class}" -t "adblock-${adb_ver}[${$}]" "${log_msg}" || \
 			printf "%s %s %s\n" "${class}" "adblock-${adb_ver}[${$}]" "${log_msg}"
-		if [ "${class}" = "err" ]; then
+		if [ "${class}" = "err" ] || [ "${class}" = "emerg" ]; then
 			f_rmdns
 			f_jsnup "error"
 			exit 1
@@ -1095,7 +1112,7 @@ f_log() {
 f_main() {
 	local src_tmpload src_tmpfile src_name src_rset src_url src_log src_arc src_cat src_item src_list src_entries src_suffix src_rc entry cnt
 
-	f_log "debug" "f_main   ::: memory: ${adb_memory:-0}, cores: ${adb_cores}, safe_search: ${adb_safesearch}, force_dns: ${adb_forcedns}, awk: ${adb_awk}"
+	f_log "debug" "f_main   ::: memory: ${adb_memory:-0}, cores: ${adb_cores}, safe_search: ${adb_safesearch}, force_dns: ${adb_forcedns}, awk: ${adb_awkcmd}"
 
 	# white- and blacklist preparation
 	#
@@ -1189,13 +1206,13 @@ f_main() {
 						fi
 						: >"${src_arc}"
 					else
-						src_log="$(printf "%s" "${src_log}" | "${adb_awk}" '{ORS=" ";print $0}')"
+						src_log="$(printf "%s" "${src_log}" | "${adb_awkcmd}" '{ORS=" ";print $0}')"
 						f_log "info" "download of '${src_name}' failed, url: ${src_url}, rule: ${src_rset:-"-"}, categories: ${src_cat:-"-"}, rc: ${src_rc}, log: ${src_log:-"-"}"
 					fi
 					if [ "${src_rc}" = "0" ] && [ -s "${src_tmpload}" ]; then
-						"${adb_awk}" "${src_rset}" "${src_tmpload}" | sed "s/\r//g" | "${adb_awk}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' >"${src_tmpsort}"
+						"${adb_awkcmd}" "${src_rset}" "${src_tmpload}" | "${adb_sedcmd}" "s/\r//g" | "${adb_awkcmd}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' >"${src_tmpsort}"
 						: >"${src_tmpload}"
-						"${adb_sort}" ${adb_srtopts} -u "${src_tmpsort}" 2>/dev/null >"${src_tmpfile}"
+						"${adb_sortcmd}" ${adb_srtopts} -u "${src_tmpsort}" 2>/dev/null >"${src_tmpfile}"
 						src_rc="${?}"
 						: >"${src_tmpsort}"
 						if [ "${src_rc}" = "0" ] && [ -s "${src_tmpfile}" ]; then
@@ -1239,10 +1256,10 @@ f_main() {
 					fi
 				done
 				if [ "${src_rc}" = "0" ] && [ -s "${src_tmpload}" ]; then
-					"${adb_awk}" "${src_rset}" "${src_tmpload}" | sed "s/\r//g" |
-						"${adb_awk}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' >"${src_tmpsort}"
+					"${adb_awkcmd}" "${src_rset}" "${src_tmpload}" | "${adb_sedcmd}" "s/\r//g" |
+						"${adb_awkcmd}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' >"${src_tmpsort}"
 					: >"${src_tmpload}"
-					"${adb_sort}" ${adb_srtopts} -u "${src_tmpsort}" 2>/dev/null >"${src_tmpfile}"
+					"${adb_sortcmd}" ${adb_srtopts} -u "${src_tmpsort}" 2>/dev/null >"${src_tmpfile}"
 					src_rc="${?}"
 					: >"${src_tmpsort}"
 					if [ "${src_rc}" = "0" ] && [ -s "${src_tmpfile}" ]; then
@@ -1254,7 +1271,7 @@ f_main() {
 						: >"${src_tmpfile}"
 					fi
 				else
-					src_log="$(printf "%s" "${src_log}" | "${adb_awk}" '{ORS=" ";print $0}')"
+					src_log="$(printf "%s" "${src_log}" | "${adb_awkcmd}" '{ORS=" ";print $0}')"
 					f_log "info" "download of '${src_name}' failed, url: ${src_url}, rule: ${src_rset:-"-"}, categories: ${src_cat:-"-"}, rc: ${src_rc}, log: ${src_log:-"-"}"
 					[ "${adb_backup}" = "1" ] && [ "${adb_action}" != "start" ] && f_list restore
 				fi
@@ -1306,7 +1323,7 @@ f_report() {
 			(
 				if [ "${adb_repiface}" = "any" ]; then
 					"${adb_dumpcmd}" "${resolve}" --immediate-mode -T domain -tttt -r "${file}" 2>/dev/null |
-					"${adb_awk}" -v cnt="${cnt}" '!/\.lan\. |PTR\? | SOA\? | Flags /&&/ A[A]*\? |NXDomain|0\.0\.0\.0|[0-9]\/[0-9]\/[0-9]/{sub(/\.[0-9]+$/,"",$6);
+					"${adb_awkcmd}" -v cnt="${cnt}" '!/\.lan\. |PTR\? | SOA\? | Flags /&&/ A[A]*\? |NXDomain|0\.0\.0\.0|[0-9]\/[0-9]\/[0-9]/{sub(/\.[0-9]+$/,"",$6);
 						type=substr($(NF-1),length($(NF-1)));
 						if(type=="."&&$(NF-2)!="CNAME")
 							{domain=substr($(NF-1),1,length($(NF-1))-1);type="RQ"}
@@ -1315,7 +1332,7 @@ f_report() {
 						printf "%08d\t%s\t%s\t%s\t%-25s\t%s\n",$9,type,$1,substr($2,1,8),$6,domain}' >>"${report_raw}"
 				else
 					"${adb_dumpcmd}" "${resolve}" --immediate-mode -T domain -tttt -r "${file}" 2>/dev/null |
-					"${adb_awk}" -v cnt="${cnt}" '!/\.lan\. |PTR\? | SOA\? | Flags /&&/ A[A]*\? |NXDomain|0\.0\.0\.0|[0-9]\/[0-9]\/[0-9]/{sub(/\.[0-9]+$/,"",$4);
+					"${adb_awkcmd}" -v cnt="${cnt}" '!/\.lan\. |PTR\? | SOA\? | Flags /&&/ A[A]*\? |NXDomain|0\.0\.0\.0|[0-9]\/[0-9]\/[0-9]/{sub(/\.[0-9]+$/,"",$4);
 						type=substr($(NF-1),length($(NF-1)));
 						if(type=="."&&$(NF-2)!="CNAME")
 							{domain=substr($(NF-1),1,length($(NF-1))-1);type="RQ"}
@@ -1330,18 +1347,18 @@ f_report() {
 		done
 		wait
 		if [ -s "${report_raw}" ]; then
-			"${adb_sort}" ${adb_srtopts} -k3,3 -k4,4 -k1,1 -k2,2 -u -r "${report_raw}" |
-				"${adb_awk}" '{currA=($1+0);currB=$1;currC=$2;if(reqA==currB){reqA=0;printf "%-90s\t%s\n",d,$2}else if(currC=="RQ"){reqA=currA;d=$3"\t"$4"\t"$5"\t"$6}}' |
-				"${adb_sort}" ${adb_srtopts} -u -r >"${report_srt}"
+			"${adb_sortcmd}" ${adb_srtopts} -k3,3 -k4,4 -k1,1 -k2,2 -u -r "${report_raw}" |
+				"${adb_awkcmd}" '{currA=($1+0);currB=$1;currC=$2;if(reqA==currB){reqA=0;printf "%-90s\t%s\n",d,$2}else if(currC=="RQ"){reqA=currA;d=$3"\t"$4"\t"$5"\t"$6}}' |
+				"${adb_sortcmd}" ${adb_srtopts} -u -r >"${report_srt}"
 			: >"${report_raw}"
 		fi
 
 		if [ -s "${report_srt}" ]; then
-			start="$("${adb_awk}" 'END{printf "%s_%s",$1,$2}' "${report_srt}")"
-			end="$("${adb_awk}" 'NR==1{printf "%s_%s",$1,$2}' "${report_srt}")"
+			start="$("${adb_awkcmd}" 'END{printf "%s_%s",$1,$2}' "${report_srt}")"
+			end="$("${adb_awkcmd}" 'NR==1{printf "%s_%s",$1,$2}' "${report_srt}")"
 			total="$(wc -l <"${report_srt}")"
-			blocked="$("${adb_awk}" '{if($5=="NX")cnt++}END{printf "%s",cnt}' "${report_srt}")"
-			percent="$("${adb_awk}" -v t="${total}" -v b="${blocked}" 'BEGIN{printf "%.2f%s",b/t*100,"%"}')"
+			blocked="$("${adb_awkcmd}" '{if($5=="NX")cnt++}END{printf "%s",cnt}' "${report_srt}")"
+			percent="$("${adb_awkcmd}" -v t="${total}" -v b="${blocked}" 'BEGIN{printf "%.2f%s",b/t*100,"%"}')"
 			: >"${report_jsn}"
 			{
 				printf "%s\n" "{ "
@@ -1358,26 +1375,26 @@ f_report() {
 				printf "\t%s" "\"${top}\": [ " >>"${report_jsn}"
 				case "${top}" in
 					"top_clients")
-						"${adb_awk}" '{print $3}' "${report_srt}" | "${adb_sort}" ${adb_srtopts} | uniq -c |
-							"${adb_sort}" ${adb_srtopts} -nr |
-							"${adb_awk}" "{ORS=\" \";if(NR==1)printf \"\n\t\t{\n\t\t\t\\\"count\\\": \\\"%s\\\",\n\t\t\t\\\"address\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2; else if(NR<=${top_count})printf \",\n\t\t{\n\t\t\t\\\"count\\\": \\\"%s\\\",\n\t\t\t\\\"address\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2}" >>"${report_jsn}"
+						"${adb_awkcmd}" '{print $3}' "${report_srt}" | "${adb_sortcmd}" ${adb_srtopts} | uniq -c |
+							"${adb_sortcmd}" ${adb_srtopts} -nr |
+							"${adb_awkcmd}" "{ORS=\" \";if(NR==1)printf \"\n\t\t{\n\t\t\t\\\"count\\\": \\\"%s\\\",\n\t\t\t\\\"address\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2; else if(NR<=${top_count})printf \",\n\t\t{\n\t\t\t\\\"count\\\": \\\"%s\\\",\n\t\t\t\\\"address\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2}" >>"${report_jsn}"
 						;;
 					"top_domains")
-						"${adb_awk}" '{if($5!="NX")print $4}' "${report_srt}" | "${adb_sort}" ${adb_srtopts} | uniq -c |
-							"${adb_sort}" ${adb_srtopts} -nr |
-							"${adb_awk}" "{ORS=\" \";if(NR==1)printf \"\n\t\t{\n\t\t\t\\\"count\\\": \\\"%s\\\",\n\t\t\t\\\"address\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2; else if(NR<=${top_count})printf \",\n\t\t{\n\t\t\t\\\"count\\\": \\\"%s\\\",\n\t\t\t\\\"address\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2}" >>"${report_jsn}"
+						"${adb_awkcmd}" '{if($5!="NX")print $4}' "${report_srt}" | "${adb_sortcmd}" ${adb_srtopts} | uniq -c |
+							"${adb_sortcmd}" ${adb_srtopts} -nr |
+							"${adb_awkcmd}" "{ORS=\" \";if(NR==1)printf \"\n\t\t{\n\t\t\t\\\"count\\\": \\\"%s\\\",\n\t\t\t\\\"address\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2; else if(NR<=${top_count})printf \",\n\t\t{\n\t\t\t\\\"count\\\": \\\"%s\\\",\n\t\t\t\\\"address\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2}" >>"${report_jsn}"
 						;;
 					"top_blocked")
-						"${adb_awk}" '{if($5=="NX")print $4}' "${report_srt}" |
-							"${adb_sort}" ${adb_srtopts} | uniq -c | "${adb_sort}" ${adb_srtopts} -nr |
-							"${adb_awk}" "{ORS=\" \";if(NR==1)printf \"\n\t\t{\n\t\t\t\\\"count\\\": \\\"%s\\\",\n\t\t\t\\\"address\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2; else if(NR<=${top_count})printf \",\n\t\t{\n\t\t\t\\\"count\\\": \\\"%s\\\",\n\t\t\t\\\"address\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2}" >>"${report_jsn}"
+						"${adb_awkcmd}" '{if($5=="NX")print $4}' "${report_srt}" |
+							"${adb_sortcmd}" ${adb_srtopts} | uniq -c | "${adb_sortcmd}" ${adb_srtopts} -nr |
+							"${adb_awkcmd}" "{ORS=\" \";if(NR==1)printf \"\n\t\t{\n\t\t\t\\\"count\\\": \\\"%s\\\",\n\t\t\t\\\"address\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2; else if(NR<=${top_count})printf \",\n\t\t{\n\t\t\t\\\"count\\\": \\\"%s\\\",\n\t\t\t\\\"address\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2}" >>"${report_jsn}"
 						;;
 				esac
 				printf "\n\t%s\n" "]," >>"${report_jsn}"
 			done
 			search="${search//./\\.}"
 			search="${search//[+*~%\$&\"\' ]/}"
-			"${adb_awk}" "BEGIN{i=0;printf \"\t\\\"requests\\\": [\n\"}/(${search})/{i++;if(i==1)printf \"\n\t\t{\n\t\t\t\\\"date\\\": \\\"%s\\\",\n\t\t\t\\\"time\\\": \\\"%s\\\",\n\t\t\t\\\"client\\\": \\\"%s\\\",\n\t\t\t\\\"domain\\\": \\\"%s\\\",\n\t\t\t\\\"rc\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2,\$3,\$4,\$5;else if(i<=${res_count})printf \",\n\t\t{\n\t\t\t\\\"date\\\": \\\"%s\\\",\n\t\t\t\\\"time\\\": \\\"%s\\\",\n\t\t\t\\\"client\\\": \\\"%s\\\",\n\t\t\t\\\"domain\\\": \\\"%s\\\",\n\t\t\t\\\"rc\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2,\$3,\$4,\$5}END{printf \"\n\t]\n}\n\"}" "${adb_reportdir}/adb_report.srt" >>"${report_jsn}"
+			"${adb_awkcmd}" "BEGIN{i=0;printf \"\t\\\"requests\\\": [\n\"}/(${search})/{i++;if(i==1)printf \"\n\t\t{\n\t\t\t\\\"date\\\": \\\"%s\\\",\n\t\t\t\\\"time\\\": \\\"%s\\\",\n\t\t\t\\\"client\\\": \\\"%s\\\",\n\t\t\t\\\"domain\\\": \\\"%s\\\",\n\t\t\t\\\"rc\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2,\$3,\$4,\$5;else if(i<=${res_count})printf \",\n\t\t{\n\t\t\t\\\"date\\\": \\\"%s\\\",\n\t\t\t\\\"time\\\": \\\"%s\\\",\n\t\t\t\\\"client\\\": \\\"%s\\\",\n\t\t\t\\\"domain\\\": \\\"%s\\\",\n\t\t\t\\\"rc\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2,\$3,\$4,\$5}END{printf \"\n\t]\n}\n\"}" "${adb_reportdir}/adb_report.srt" >>"${report_jsn}"
 			: >"${report_srt}"
 		fi
 	fi
@@ -1457,6 +1474,19 @@ if [ -r "/lib/functions.sh" ] && [ -r "/lib/functions/network.sh" ] && [ -r "/us
 else
 	f_log "err" "system libraries not found"
 fi
+
+# reference required system utilities
+#
+adb_awkcmd="$(f_cmd gawk awk)"
+adb_sortcmd="$(f_cmd sort)"
+adb_grepcmd="$(f_cmd grep)"
+adb_pgrepcmd="$(f_cmd pgrep)"
+adb_sedcmd="$(f_cmd sed)"
+adb_jsoncmd="$(f_cmd jsonfilter)"
+adb_ubuscmd="$(f_cmd ubus)"
+adb_loggercmd="$(f_cmd logger)"
+adb_dumpcmd="$(f_cmd tcpdump optional)"
+adb_lookupcmd="$(f_cmd nslookup)"
 
 # handle different adblock actions
 #

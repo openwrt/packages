@@ -3,7 +3,7 @@
 # DNS based ad/abuse domain blocking
 
 ## Description
-A lot of people already use adblocker plugins within their desktop browsers, but what if you are using your (smart) phone, tablet, watch or any other (wlan) gadget!? Getting rid of annoying ads, trackers and other abuse sites (like facebook) is simple: block them with your router. When the DNS server on your router receives DNS requests, you will sort out queries that ask for the resource records of ad servers and return a simple 'NXDOMAIN'. This is nothing but **N**on-e**X**istent Internet or Intranet domain name, if domain name is unable to resolved using the DNS server, a condition called the 'NXDOMAIN' occurred.  
+A lot of people already use adblocker plugins within their desktop browsers, but what if you are using your (smart) phone, tablet, watch or any other (wlan) gadget!? Getting rid of annoying ads, trackers and other abuse sites (like facebook) is simple: block them with your router. When the DNS server on your router receives DNS requests, you will sort out queries that ask for the resource records of ad servers and return a simple 'NXDOMAIN'. This is nothing but **N**on-e**X**istent Internet or Intranet domain name, if domain name is unable to resolved using the DNS server, a condition called the 'NXDOMAIN' occurred.
 
 ## Main Features
 * Support of the following fully pre-configured domain blocklist sources (free for private usage, for commercial use please check their individual licenses)
@@ -63,13 +63,13 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | winspy              |         | S    | win_telemetry    | [Link](https://github.com/crazy-max/WindowsSpyBlocker)                            |
 | yoyo                |         | S    | general          | [Link](https://pgl.yoyo.org/adservers)                                            |
 
-* List of supported and fully pre-configured adblock sources, already active sources are pre-selected.  
-  <b><em>To avoid OOM errors, please do not select too many lists!</em></b>  
-  List size information with the respective domain ranges as follows:  
-    • <b>S</b> (-10k), <b>M</b> (10k-30k) and <b>L</b> (30k-80k) should work for 128 MByte devices,  
-    • <b>XL</b> (80k-200k) should work for 256-512 MByte devices,  
-    • <b>XXL</b> (200k-) needs more RAM and Multicore support, e.g. x86 or raspberry devices.  
-    • <b>VAR</b> (50k-900k) variable size depending on the selection.  
+* List of supported and fully pre-configured adblock sources, already active sources are pre-selected.
+  <b><em>To avoid OOM errors, please do not select too many lists!</em></b>
+  List size information with the respective domain ranges as follows:
+    • <b>S</b> (-10k), <b>M</b> (10k-30k) and <b>L</b> (30k-80k) should work for 128 MByte devices,
+    • <b>XL</b> (80k-200k) should work for 256-512 MByte devices,
+    • <b>XXL</b> (200k-) needs more RAM and Multicore support, e.g. x86 or raspberry devices.
+    • <b>VAR</b> (50k-900k) variable size depending on the selection.
 * Zero-conf like automatic installation & setup, usually no manual changes needed
 * Simple but yet powerful adblock engine: adblock does not use error prone external iptables rulesets, http pixel server instances and things like that
 * Supports five different DNS backend formats: dnsmasq, unbound, named (bind), kresd or raw (e.g. used by dnscrypt-proxy)
@@ -102,8 +102,10 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * Strong LuCI support, all relevant options are exposed to the web frontend
 
 ## Prerequisites
-* [OpenWrt](https://openwrt.org), tested with the stable release series and with the latest rolling snapshot releases.  
-  <b>Please note:</b> Devices with less than 128 MByte RAM are _not_ supported!  
+* [OpenWrt](https://openwrt.org), tested with the stable release series and with the latest snapshot releases.
+  <b>Please note:</b> Devices with less than 128 MByte RAM are _not_ supported!
+  <b>Please note:</b> For performance reasons, adblock depends on gnu awk (gawk) by default.
+  If you insist to use the slow busybox awk implementation, remove the gawk package afterwards (_opkg remove gawk --force-depends_) or install adblock without any dependency checks/installation (_opkg install adblock --nodeps_). Both installation variants are officially unsupported.
 * A usual setup with an enabled DNS backend at minimum - dumb AP modes without a working DNS backend are _not_ supported
 * A download utility with SSL support: 'wget', 'uclient-fetch' with one of the 'libustream-*' ssl libraries, 'aria2c' or 'curl' is required
 * A certificate store such as 'ca-bundle' or 'ca-certificates', as adblock checks the validity of the SSL certificates of all download sites by default
@@ -118,7 +120,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * Update from a former adblock version is easy. During the update a backup is made of the old configuration '/etc/config/adblock-backup' and replaced by the new config - that's all
 
 ## Adblock CLI Options
-* All important adblock functions are accessible via CLI as well.  
+* All important adblock functions are accessible via CLI as well.
 <pre><code>
 ~# /etc/init.d/adblock
 Syntax: /etc/init.d/adblock [command]
@@ -190,12 +192,12 @@ Available commands:
 | adb_jaildir        | /tmp                               | path for the generated jail list                                                               |
 
 ## Examples
-**Change the DNS backend to 'unbound':**  
-No further configuration is needed, adblock deposits the final blocklist 'adb_list.overall' in '/var/lib/unbound' by default.  
+**Change the DNS backend to 'unbound':**
+No further configuration is needed, adblock deposits the final blocklist 'adb_list.overall' in '/var/lib/unbound' by default.
 To preserve the DNS cache after adblock processing please install the additional package 'unbound-control'.
 
-**Change the DNS backend to 'bind':**  
-Adblock deposits the final blocklist 'adb_list.overall' in '/var/lib/bind' by default.  
+**Change the DNS backend to 'bind':**
+Adblock deposits the final blocklist 'adb_list.overall' in '/var/lib/bind' by default.
 To preserve the DNS cache after adblock processing please install the additional package 'bind-rdnc'.
 To use the blocklist please modify '/etc/bind/named.conf':
 <pre><code>
@@ -211,15 +213,15 @@ and at the end of the file add:
   };
 </code></pre>
 
-**Change the DNS backend to 'kresd':**  
-Adblock deposits the final blocklist 'adb_list.overall' in '/etc/kresd', no further configuration needed.  
+**Change the DNS backend to 'kresd':**
+Adblock deposits the final blocklist 'adb_list.overall' in '/etc/kresd', no further configuration needed.
 <b>Please note:</b> The knot-resolver (kresd) is only available on Turris devices and does not support the SafeSearch functionality yet.
 
-**Use restrictive jail modes:**  
+**Use restrictive jail modes:**
 You can enable a restrictive 'adb_list.jail' to block access to all domains except those listed in the whitelist file. Usually this list will be generated as an additional list for guest or kidsafe configurations (for a separate dns server instance). If the jail directory points to your primary dns directory, adblock enables the restrictive jail mode automatically (jail mode only).
 
-**Manually override the download options:**  
-By default adblock uses the following pre-configured download options:  
+**Manually override the download options:**
+By default adblock uses the following pre-configured download options:
 * aria2c: <code>--timeout=20 --allow-overwrite=true --auto-file-renaming=false --log-level=warn --dir=/ -o</code>
 * curl: <code>--connect-timeout 20 --silent --show-error --location -o</code>
 * uclient-fetch: <code>--timeout=20 -O</code>
@@ -227,8 +229,8 @@ By default adblock uses the following pre-configured download options:
 
 To override the default set 'adb_fetchparm' manually to your needs.
 
-**Enable E-Mail notification via 'msmtp':**  
-To use the email notification you have to install & configure the package 'msmtp'.  
+**Enable E-Mail notification via 'msmtp':**
+To use the email notification you have to install & configure the package 'msmtp'.
 Modify the file '/etc/msmtprc':
 <pre><code>
 [...]
@@ -248,8 +250,8 @@ password        xxx
 </code></pre>
 Finally enable E-Mail support and add a valid E-Mail receiver address in LuCI.
 
-**Service status output:**  
-In LuCI you'll see the realtime status in the 'Runtime' section on the overview page.  
+**Service status output:**
+In LuCI you'll see the realtime status in the 'Runtime' section on the overview page.
 To get the status in the CLI, just call _/etc/init.d/adblock status_ or _/etc/init.d/adblock status\_service_:
 <pre><code>
 ~#@blackhole:~# /etc/init.d/adblock status
@@ -267,10 +269,10 @@ To get the status in the CLI, just call _/etc/init.d/adblock status_ or _/etc/in
   + last_run        : restart, 3m 17s, 249/73/68, 2022-09-10T13:43:07+02:00
   + system          : ASUS RT-AX53U, OpenWrt SNAPSHOT r20535-2ca5602864
 </code></pre>
-The 'last\_run' line includes the used start type, the run duration, the memory footprint after DNS backend loading (total/free/available) and the date/time of the last run.  
+The 'last\_run' line includes the used start type, the run duration, the memory footprint after DNS backend loading (total/free/available) and the date/time of the last run.
 
-**Edit, add new adblock sources:**  
-The adblock blocklist sources are stored in an external, compressed JSON file '/etc/adblock/adblock.sources.gz'. 
+**Edit, add new adblock sources:**
+The adblock blocklist sources are stored in an external, compressed JSON file '/etc/adblock/adblock.sources.gz'.
 This file is directly parsed in LuCI and accessible via CLI, just call _/etc/init.d/adblock list_:
 <pre><code>
 /etc/init.d/adblock list
@@ -290,7 +292,7 @@ This file is directly parsed in LuCI and accessible via CLI, just call _/etc/ini
   + yoyo                 x         S      general             https://pgl.yoyo.org
 </code></pre>
 
-To add new or edit existing sources extract the compressed JSON file _gunzip /etc/adblock/adblock.sources.gz_.  
+To add new or edit existing sources extract the compressed JSON file _gunzip /etc/adblock/adblock.sources.gz_.
 A valid JSON source object contains the following required information, e.g.:
 <pre><code>
 	[...]
@@ -303,8 +305,8 @@ A valid JSON source object contains the following required information, e.g.:
 	},
 	[...]
 </code></pre>
-Add an unique object name, make the required changes to 'url', 'rule', 'size' and 'descurl' and finally compress the changed JSON file _gzip /etc/adblock/adblock.sources_ to use the new source object in adblock.  
-<b>Please note:</b> if you're going to add new sources on your own, please make a copy of the default file and work with that copy further on, cause the default will be overwritten with every adblock update. To reference your copy set the option 'adb\_srcarc' which points by default to '/etc/adblock/adblock.sources.gz'  
+Add an unique object name, make the required changes to 'url', 'rule', 'size' and 'descurl' and finally compress the changed JSON file _gzip /etc/adblock/adblock.sources_ to use the new source object in adblock.
+<b>Please note:</b> if you're going to add new sources on your own, please make a copy of the default file and work with that copy further on, cause the default will be overwritten with every adblock update. To reference your copy set the option 'adb\_srcarc' which points by default to '/etc/adblock/adblock.sources.gz'
 <b>Please note:</b> when adblock starts, it looks for the uncompressed 'adb\_srcfile', only if this file is not found the archive 'adb\_srcarc' is unpacked once and then the uncompressed file is used
 
 ## Support
@@ -314,14 +316,14 @@ Please join the adblock discussion in this [forum thread](https://forum.openwrt.
 Stop all adblock related services with _/etc/init.d/adblock stop_ and remove the adblock package if necessary.
 
 ## Donations
-You like this project - is there a way to donate? Generally speaking "No" - I have a well-paying full-time job and my OpenWrt projects are just a hobby of mine in my spare time.  
+You like this project - is there a way to donate? Generally speaking "No" - I have a well-paying full-time job and my OpenWrt projects are just a hobby of mine in my spare time.
 
-If you still insist to donate some bucks ...  
+If you still insist to donate some bucks ...
 * I would be happy if you put your money in kind into other, social projects in your area, e.g. a children's hospice
 * Let's meet and invite me for a coffee if you are in my area, the “Markgräfler Land” in southern Germany or in Switzerland (Basel)
 * Send your money to my [PayPal account](https://www.paypal.me/DirkBrenken) and I will collect your donations over the year to support various social projects in my area
 
-No matter what you decide - thank you very much for your support!  
+No matter what you decide - thank you very much for your support!
 
-Have fun!  
+Have fun!
 Dirk
