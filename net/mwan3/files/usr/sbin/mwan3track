@@ -278,7 +278,7 @@ main() {
 							TRACK_PID=$!
 							wait $TRACK_PID
 							ping_status=$?
-							loss="$(sed $TRACK_OUTPUT -ne 's/.*\([0-9]\+\)% packet loss.*/\1/p')"
+							loss="$(sed $TRACK_OUTPUT -ne 's/.* \([0-9]\+\)% packet loss.*/\1/p')"
 							if [ "$ping_status" -ne 0 ] || [ "$loss" -eq 100 ]; then
 								latency=999999
 								loss=100
