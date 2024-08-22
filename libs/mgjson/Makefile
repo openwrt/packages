@@ -1,22 +1,14 @@
-#
-# Copyright (C) 2021 OpenWrt.org
-#
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
-#
-
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mgjson
 PKG_RELEASE:=1
 
-PKG-BRANCH=main
 PKG_SOURCE_URL=https://github.com/TheRootED24/mgjson.git
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_DATE:=2024-08-17
+PKG_SOURCE_DATE:=2024-08-22
 
-PKG_SOURCE_VERSION:=9793e7ba97f1197909dda8fa3002673e4dd7266b
-PKG_MIRROR_HASH:=85c5b3c3704e0b834f4d315b345baadd79a5e972bf688f46269d2887d4ae6acd
+PKG_SOURCE_VERSION:=b0182ca18f1dfabdf9eec188afb58549b738b8be
+PKG_MIRROR_HASH:=02c3974ff71f9537f0e48f56b229aa68f2ba53a6201e1e3bec343f1e617c1ef4
 
 PKG_MAINTAINER:=Scott Mercer <TheRootED24@gmail.com>
 
@@ -29,10 +21,8 @@ include $(INCLUDE_DIR)/cmake.mk
 define Package/mgjson
   SECTION:=libs
   CATEGORY:=Libraries
-  TITLE:=A Stripped down OpenWrt version of Mongoose C Networking. mgjson provides only the mg_json, mg_str, and mg_iobuf, functionilty of the Mongoose Library.
+  TITLE:=A Stripped down version of The Mongoose C Networking Library. 
 endef
-
-TARGET_CFLAGS += -std=gnu99 -I$(STAGING_DIR)/usr/include/mgjson/
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/mgjson
