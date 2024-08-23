@@ -3,7 +3,14 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=hv-tools
 PKG_VERSION:=1.0.0
 PKG_RELEASE:=1
+
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/NikulovE/hv-tools/
+PKG_SOURCE_VERSION:=844a7715a3c7757b8dd28716c748accb9c0dce1f
+
+PKG_MAINTAINER:=Evgeniy Nikulov <nikulov@live.ru>
 PKG_LICENSE:=MIT
+PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/kernel.mk
