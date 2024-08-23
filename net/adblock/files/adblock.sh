@@ -11,6 +11,7 @@
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 
+adb_ver="4.2.2-r3"
 adb_enabled="0"
 adb_debug="0"
 adb_forcedns="0"
@@ -65,7 +66,7 @@ f_cmd() {
 	cmd="$(command -v "${pri_cmd}" 2>/dev/null)"
 	if [ ! -x "${cmd}" ]; then
 		if [ -n "${sec_cmd}" ]; then
-			[ "${sec_cmd}" = "true" ] && return
+			[ "${sec_cmd}" = "optional" ] && return
 			cmd="$(command -v "${sec_cmd}" 2>/dev/null)"
 		fi
 		if [ -x "${cmd}" ]; then
@@ -83,8 +84,6 @@ f_cmd() {
 f_load() {
 	local bg_pid iface port ports cpu core
 
-	adb_packages="$("${adb_ubuscmd}" -S call rpc-sys packagelist '{ "all": true }' 2>/dev/null)"
-	adb_ver="$(printf "%s" "${adb_packages}" | "${adb_jsoncmd}" -ql1 -e '@.packages.adblock')"
 	adb_sysver="$("${adb_ubuscmd}" -S call system board 2>/dev/null | "${adb_jsoncmd}" -q -e '@.model' -e '@.release.description' |
 		"${adb_awkcmd}" 'BEGIN{RS="";FS="\n"}{printf "%s, %s",$1,$2}')"
 	adb_memory="$("${adb_awkcmd}" '/^MemAvailable/{printf "%s",int($2/1000)}' "/proc/meminfo" 2>/dev/null)"
@@ -188,7 +187,7 @@ f_env() {
 f_conf() {
 	local cnt="0" cnt_max="10"
 
-	[ ! -r "/etc/config/adblock" ] && f_log "err" "no valid adblock config found, please re-install the package via opkg with the '--force-reinstall --force-maintainer' options"
+	[ ! -r "/etc/config/adblock" ] && f_log "err" "no valid adblock config found, please re-install the adblock package"
 
 	config_cb() {
 		option_cb() {
@@ -1476,7 +1475,7 @@ else
 	f_log "err" "system libraries not found"
 fi
 
-# initial system calls
+# reference required system utilities
 #
 adb_awkcmd="$(f_cmd gawk awk)"
 adb_sortcmd="$(f_cmd sort)"
@@ -1486,7 +1485,7 @@ adb_sedcmd="$(f_cmd sed)"
 adb_jsoncmd="$(f_cmd jsonfilter)"
 adb_ubuscmd="$(f_cmd ubus)"
 adb_loggercmd="$(f_cmd logger)"
-adb_dumpcmd="$(f_cmd tcpdump)"
+adb_dumpcmd="$(f_cmd tcpdump optional)"
 adb_lookupcmd="$(f_cmd nslookup)"
 
 # handle different adblock actions
