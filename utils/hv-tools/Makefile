@@ -6,7 +6,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/NikulovE/hv-tools/
-PKG_SOURCE_VERSION:=844a7715a3c7757b8dd28716c748accb9c0dce1f
+PKG_SOURCE_VERSION:=5e21cbbf232940b004cb47fbdb23b9f13eab40bb
 
 PKG_MAINTAINER:=Evgeniy Nikulov <nikulov@live.ru>
 PKG_LICENSE:=MIT
@@ -20,8 +20,7 @@ define Package/hv-tools
   CATEGORY:=Utilities
   SUBMENU:=Virtualization
   TITLE:=Hyper-V Guest Tools
-  DEPENDS:=+procd +libpthread
-  DEPENDS:=@(TARGET_x86||TARGET_x86_64)
+  DEPENDS:=+procd +libpthread @(TARGET_x86||TARGET_x86_64)
 endef
 
 define Package/hv-tools/description
