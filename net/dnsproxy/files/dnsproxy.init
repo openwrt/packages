@@ -54,17 +54,21 @@ load_config_arg() {
 load_config_list() {
 	if is_empty "global" "listen_addr"; then
 		append_param "--listen" "127.0.0.1"
-	else 
+	else
 		config_list_foreach "global" "listen_addr" "append_param '--listen'"
 	fi
 
 	if is_empty "global" "listen_port"; then
 		append_param "--port" "5353"
-	else 
+	else
 		config_list_foreach "global" "listen_port" "append_param '--port'"
 	fi
 
 	is_empty "bogus_nxdomain" "ip_addr" || config_list_foreach "bogus_nxdomain" "ip_addr" "append_param '--bogus-nxdomain'"
+
+	is_enabled "hosts" "enabled" && {
+		config_list_foreach "hosts" "hosts_files" "append_param '--hosts-files'"
+	}
 
 	is_enabled "private_rdns" "enabled" && {
 		append_param "--use-private-rdns"
@@ -82,6 +86,8 @@ load_config_param() {
 	append_param_arg "global" "max_go_routines" "--max-go-routines"
 	append_param_arg "global" "rate_limit" "--ratelimit"
 	append_param_arg "global" "udp_buf_size" "--udp-buf-size"
+
+	append_param_arg "hosts" "enabled" "--hosts-file-enabled" "0"
 
 	is_enabled "cache" "enabled" && {
 		append_param "--cache"
