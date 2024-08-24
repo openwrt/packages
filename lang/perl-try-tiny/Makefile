@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-try-tiny
-PKG_VERSION:=0.31
+PKG_VERSION:=0.32
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=https://cpan.metacpan.org/authors/id/E/ET/ETHER/
 PKG_SOURCE:=Try-Tiny-$(PKG_VERSION).tar.gz
-PKG_HASH:=3300d31d8a4075b26d8f46ce864a1d913e0e8467ceeba6655d5d2b2e206c11be
+PKG_HASH:=ef2d6cab0bad18e3ab1c4e6125cc5f695c7e459899f512451c8fa3ef83fa7fc0
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/Try-Tiny-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Matt Merhar <mattmerhar@protonmail.com>
