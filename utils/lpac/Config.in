@@ -13,4 +13,10 @@ config LPAC_WITH_AT
 	help
 	  Compile LPAC with APDU AT Backend support.
 
+config LPAC_WITH_UQMI
+	bool "Include APDU uqmi Backend support"
+	default y
+	help
+	  Compile LPAC with APDU uqmi Backend support.
+
 endmenu
