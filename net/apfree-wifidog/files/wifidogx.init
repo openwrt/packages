@@ -8,6 +8,36 @@ NAME=wifidogx
 PROG=/usr/bin/${NAME}
 CONFIGFILE=/tmp/wifidogx.conf
 
+handle_gateway() {
+	local section=$1
+	local gateway_name gateway_channel gateway_id
+
+	config_get gateway_name $section gateway_name
+	config_get gateway_channel $section gateway_channel
+	config_get gateway_id $section gateway_id
+	if [ -z "$gateway_name" ] || [ -z  "$gateway_channel" ]; then
+		echo "gateway_name is required for $section" >&2
+		return
+	fi
+	# if gateway_id is not set, get it from the gateway_name
+	if [ -z "$gateway_id" ]; then
+		gateway_id=$(ifconfig $gateway_name | grep HWaddr | awk '{print $5}' | tr 'a-z' 'A-Z')
+		[ -z "$gateway_id" ] && {
+			echo "Failed to get gateway_id for $gateway_name" >&2
+			return
+		}
+		gateway_id=$(echo $gateway_id | tr -d ':')
+		uci set wifidogx.$section.gateway_id=$gateway_id
+		uci commit wifidogx
+	fi
+
+	echo "GatewaySetting { 
+	GatewayInterface $gateway_name
+	GatewayChannel $gateway_channel
+	GatewayID $gateway_id
+}" >> ${CONFIGFILE}
+}
+
 prepare_wifidog_conf() {
 
 	[ -f ${CONFIGFILE} ] && rm -f ${CONFIGFILE}
@@ -15,8 +45,7 @@ prepare_wifidog_conf() {
 	uci_validate_section ${NAME} ${NAME} common \
 		'enabled:bool:0' \
 		'log_level:integer:7' \
-		'gateway_id:string' \
-		'gateway_interface:string:br-lan' \
+		'device_id:string' \
 		'auth_server_hostname:string' \
 		'auth_server_port:port:443' \
 		'auth_server_path:string:/wifidog/' \
@@ -24,7 +53,6 @@ prepare_wifidog_conf() {
 		'client_timeout:integer:5' \
 		'wired_passed:bool:1' \
 		'apple_cna:bool:0' \
-		'channel_path:string' \
 		'trusted_domains:list(host)' \
 		'trusted_wildcard_domains:list(string)' \
 		'trusted_macs:list(string)' \
@@ -34,23 +62,6 @@ prepare_wifidog_conf() {
 		'enable_dns_forward:bool:1' \
 		'enable_websocket:bool:1' \
 		'js_filter:bool:1' 
-
-	# if gateway_id is not set, get it from br-lan
-	if [ -z "$gateway_id" ]; then
-		gateway_id=$(sed -e 's/://g' /sys/class/net/${gateway_interface}/address)
-		# convert to upper case
-		gateway_id=$(echo $gateway_id | tr '[a-z]' '[A-Z]')
-		# uci add gateway_id to config file
-		uci set ${NAME}.common.gateway_id=$gateway_id
-		uci commit ${NAME}
-	fi
-	
-	# if channel_path is not set, set it to apfree
-	if [ -z "$channel_path" ]; then
-		channel_path=apfree
-		uci set ${NAME}.common.channel_path=$channel_path
-		uci commit ${NAME}
-	fi
 
 	if [ ! -z "$app_white_list" ]; then
 		# iterate app_white_list and find the corresponding domain according to the item
@@ -85,8 +96,7 @@ prepare_wifidog_conf() {
 	fi
 
 	# set above variables to config file
-	echo "GatewayID $gateway_id" > ${CONFIGFILE}
-	echo "GatewayInterface $gateway_interface" >> ${CONFIGFILE}
+	echo "DeviceID $device_id" > ${CONFIGFILE}
 	echo "AuthServer {
 	Hostname $auth_server_hostname
 	HTTPPort $auth_server_port
@@ -114,6 +124,8 @@ prepare_wifidog_conf() {
 		trusted_wildcard_domains=$(echo $trusted_wildcard_domains | tr ' ' ',')
 		echo "TrustedPanDomains $trusted_wildcard_domains" >> ${CONFIGFILE}
 	fi
+
+	config_foreach handle_gateway gateway
 }
 
 start_service() {
@@ -145,4 +157,5 @@ reload_service() {
 
 service_triggers() {
 	procd_add_reload_trigger "${NAME}"
+	procd_add_interface_trigger "interface.*.up" "wan" /etc/init.d/wifidogx restart
 }
