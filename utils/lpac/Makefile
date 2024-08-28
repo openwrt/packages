@@ -10,7 +10,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/estkme-group/lpac/tar.gz/refs/tags/v$(PKG_VERSION)?
 PKG_HASH:=532c5daef6888fe91b0838e8e23bf23ea2f5f39cbb755c008676b9cdfbd833fb
 
-PKG_MAINTAINER:=David Bauer <mail@david-bauer.net>
+PKG_MAINTAINER:=David Bauer <david.bauer@uniberg.com>
 PKG_LICENSE:=AGPL-3.0-only LGPL-2.0-only
 
 CMAKE_INSTALL:=1
