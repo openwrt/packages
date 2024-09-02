@@ -14,8 +14,8 @@ proto_tayga_setup() {
 	local iface="$2"
 	local link="tayga-$cfg"
 
-	local ipv4_addr ipv6_addr prefix dynamic_pool ipaddr ip6addr noroutes
-	json_get_vars ipv4_addr ipv6_addr prefix dynamic_pool ipaddr ip6addr noroutes
+	local ipv4_addr ipv6_addr prefix dynamic_pool map_ipv4 map_ipv6 ipaddr ip6addr noroutes
+	json_get_vars ipv4_addr ipv6_addr prefix dynamic_pool map_ipv4 map_ipv6 ipaddr ip6addr noroutes
 	[ -z "$ipv4_addr" -o -z "$prefix" ] && {
 		proto_notify_error "$cfg" "REQUIRED_PARAMETERS_MISSING"
 		proto_block_restart "$cfg"
@@ -34,8 +34,10 @@ proto_tayga_setup() {
 		echo "prefix $prefix" >>$tmpconf
 	[ -n "$dynamic_pool" ] &&
 		echo "dynamic-pool $dynamic_pool" >>$tmpconf
+	# TODO: Allow setting multiple static mapping
+	[ -n "$map_ipv4" ] &&
+		echo "map $map_ipv4 $map_ipv6" >>$tmpconf
 	echo "data-dir /var/run/tayga/$cfg" >>$tmpconf
-	#TODO: Support static mapping of IPv4 <-> IPv6
 
 	# here we create TUN device and check configuration
 	tayga -c $tmpconf --mktun
@@ -63,6 +65,7 @@ proto_tayga_setup() {
 			proto_add_ipv6_route "$prefix6" "$mask6"
 		}
 	}
+	# TODO: Set up routes and firewall rules for clat/nat46 automatically?
 
 	proto_send_update "$cfg"
 
@@ -86,6 +89,8 @@ proto_tayga_init_config() {
 	proto_config_add_string "ipv6_addr"
 	proto_config_add_string "prefix"
 	proto_config_add_string "dynamic_pool"
+	proto_config_add_string "map_ipv4"
+	proto_config_add_string "map_ipv6"
 	proto_config_add_string "ipaddr"
 	proto_config_add_string "ip6addr:ip6addr"
 	proto_config_add_boolean "noroutes"
