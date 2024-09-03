@@ -14,9 +14,8 @@ USE_PROCD=1
 
 readonly packageName='pbr'
 readonly PKG_VERSION='dev-test'
-readonly packageCompat='5'
+readonly packageCompat='7'
 readonly serviceName="$packageName $PKG_VERSION"
-readonly serviceTrapSignals='exit SIGHUP SIGQUIT SIGKILL'
 readonly packageConfigFile="/etc/config/${packageName}"
 readonly packageLockFile="/var/run/${packageName}.lock"
 readonly dnsmasqFileDefault="/var/dnsmasq.d/${packageName}"
@@ -54,18 +53,15 @@ fw_mask=
 icmp_interface=
 ignored_interface=
 ipv6_enabled=
-nft_file_support='1'
 nft_user_set_policy=
 nft_user_set_counter=
 procd_boot_delay=
 procd_reload_delay=
-procd_lan_interface=
 procd_wan_ignore_status=
 procd_wan_interface=
 procd_wan6_interface=
 resolver_set=
 resolver_instance=
-secure_reload=
 strict_enforcement=
 supported_interface=
 verbosity=
@@ -136,7 +132,7 @@ str_replace() { echo "${1//$2/$3}"; }
 str_to_dnsmsaq_nftset() { echo "$1" | tr ' ' '/'; }
 str_to_lower() { echo "$1" | tr 'A-Z' 'a-z'; }
 str_to_upper() { echo "$1" | tr 'a-z' 'A-Z'; }
-debug() { local i j; for i in "$@"; do eval "j=\$$i"; logger "${i}: ${j} "; done; }
+debug() { local i j; for i in "$@"; do eval "j=\$$i"; logger "${packageName:+-t $packageName}" "${i}: ${j} "; done; }
 quiet_mode() {
 	case "$1" in
 		on) verbosity=0;;
@@ -296,6 +292,7 @@ inline_set() {
 # shellcheck disable=SC2016
 is_bad_user_file_nft_call() { grep -q '"\$nft" list' "$1" || grep '"\$nft" -f' "$1";}
 is_config_enabled() {
+# shellcheck disable=SC2317
 	_check_config() { local en; config_get_bool en "$1" 'enabled' '1'; [ "$en" -gt '0' ] && _cfg_enabled=0; }
 	local cfg="$1" _cfg_enabled=1
 	[ -n "$1" ] || return 1
@@ -303,9 +300,11 @@ is_config_enabled() {
 	config_foreach _check_config "$cfg"
 	return "$_cfg_enabled"
 }
+# shellcheck disable=SC2317
 uci_get_device() { uci_get 'network' "$1" 'device' || uci_get 'network' "$1" 'dev'; }
 uci_get_protocol() { uci_get 'network' "$1" 'proto'; }
 is_default_dev() { [ "$1" = "$(ip -4 r | grep -m1 'dev' | grep -Eso 'dev [^ ]*' | awk '{print $2}')" ]; }
+is_disabled_interface() { [ "$(uci_get 'network' "$1" 'disabled')" = '1' ]; }
 is_domain() { ! is_ipv6 "$1" && str_contains "$1" '[a-zA-Z]'; }
 is_dslite() { local p; network_get_protocol p "$1"; [ "${p:0:6}" = "dslite" ]; }
 is_family_mismatch() { ( is_ipv4_netmask "${1//!}" && is_ipv6 "${2//!}" ) || ( is_ipv6 "${1//!}" && is_ipv4_netmask "${2//!}" ); }
@@ -345,7 +344,7 @@ is_supported_iface_dev() { local n dev; for n in $ifacesSupported; do network_ge
 is_supported_protocol() { grep -o '^[^#]*' /etc/protocols | grep -w -v '0' | grep . | awk '{print $1}' | grep -q "$1"; }
 is_pptp() { local p; network_get_protocol p "$1"; [ "${p:0:4}" = "pptp" ]; }
 is_softether() { local d; network_get_device d "$1"; [ "${d:0:4}" = "vpn_" ]; }
-is_supported_interface() { is_lan "$1" && return 1; str_contains_word "$supported_interface" "$1" || { ! is_ignored_interface "$1" && { is_wan "$1" || is_wan6 "$1" || is_tunnel "$1"; }; } || is_ignore_target "$1" || is_xray "$1"; }
+is_supported_interface() { is_lan "$1" && return 1; str_contains_word "$supported_interface" "$1" || { ! is_ignored_interface "$1" && ! is_disabled_interface "$1" && { is_wan "$1" || is_wan6 "$1" || is_tunnel "$1"; }; } || is_ignore_target "$1" || is_xray "$1"; }
 is_tailscale() { local d; network_get_device d "$1"; [ "${d:0:9}" = "tailscale" ]; }
 is_tor() { [ "$(str_to_lower "$1")" = "tor" ]; }
 is_tor_running() {
@@ -370,6 +369,7 @@ is_url_https() { [ "$1" != "${1#https://}" ];}
 is_wan() { [ "$1" = "$wanIface4" ] || { [ "${1##wan}" != "$1" ] && [ "${1##wan6}" = "$1" ]; } || [ "${1%%wan}" != "$1" ]; }
 is_wan6() { [ -n "$wanIface6" ] && [ "$1" = "$wanIface6" ] || [ "${1/#wan6}" != "$1" ] || [ "${1/%wan6}" != "$1" ]; }
 is_wg() { local p lp; network_get_protocol p "$1"; uci_get_listen_port lp "$1"; [ -z "$lp" ] && [ "${p:0:9}" = "wireguard" ]; }
+is_wg_server() { local p lp; network_get_protocol p "$1"; uci_get_listen_port lp "$1"; [ -n "$lp" ] && [ "${p:0:9}" = "wireguard" ]; }
 is_xray() { [ -n "$(get_xray_traffic_port "$1")" ]; }
 dnsmasq_kill() { killall -q -s HUP dnsmasq; }
 dnsmasq_restart() { output 3 'Restarting dnsmasq '; if /etc/init.d/dnsmasq restart >/dev/null 2>&1; then output_okn; else output_failn; fi; }
@@ -430,7 +430,7 @@ check_dnsmasq_nftset() {
 print_json_bool() { json_init; json_add_boolean "$1" "$2"; json_dump; json_cleanup; }
 print_json_string() { json_init; json_add_string "$1" "$2"; json_dump; json_cleanup; }
 try() {
-	if ! "$@"; then
+	if ! "$@" >/dev/null 2>&1; then
 		state add 'errorSummary' 'errorTryFailed' "$*"
 		return 1
 	fi
@@ -497,6 +497,7 @@ get_text() {
 		errorDownloadUrl) r="Failed to download '%s'!";;
 		errorNoDownloadWithSecureReload) r="Policy '%s' refers to URL which can't be downloaded in 'secure_reload' mode!";;
 		errorFileSchemaRequiresCurl) r="The file:// schema requires curl, but it's not detected on this system!";;
+		errorIncompatibleUserFile) r="Incompatible custom user file detected '%s'!";;
 		warningInvalidOVPNConfig) r="Invalid OpenVPN config for '%s' interface.";;
 		warningResolverNotSupported) r="Resolver set (${resolver_set}) is not supported on this system.";;
 		warningPolicyProcessCMD) r="'%s'";;
@@ -505,7 +506,7 @@ get_text() {
 		warningTorUnsetChainNft) r="Please unset 'chain' or set 'chain' to 'prerouting' for policy '%s'.";;
 		warningOutdatedWebUIApp) r="The WebUI application is outdated (version %s), please update it.";;
 		warningBadNftCallsInUserFile) r="Incompatible nft calls detected in user include file, disabling fw4 nft file support.";;
-		warningDnsmasqInstanceNoConfdir) r="Dnsmasq instance (%s) targeted in settings, but it doesn't have its own confdir.";;
+		warningDnsmasqInstanceNoConfdir) r="Dnsmasq instance '%s' targeted in settings, but it doesn't have its own confdir.";;
 	esac
 	echo "$r"
 }
@@ -534,7 +535,7 @@ process_url() {
 		unset dl_https_supported
 	fi
 	while [ -z "$dl_temp_file" ] || [ -e "$dl_temp_file" ]; do
-		dl_temp_file="$(mktemp -u -q -t ${packageName}_tmp.XXXXXXXX)"
+		dl_temp_file="$(mktemp -u -q -t "${packageName}_tmp.XXXXXXXX")"
 	done
 	if is_url_file "$url" && ! is_present 'curl'; then
 		state add 'errorSummary' 'errorFileSchemaRequiresCurl' "$url"
@@ -549,16 +550,6 @@ process_url() {
 }
 
 load_package_config() {
-	_check_user_files_for_bad_nft_calls() {
-		local cfg="$1"
-		local en path
-		config_get_bool en   "$cfg" 'enabled' '1'
-		config_get      path "$cfg" 'path'
-		[ "$en" -eq '0' ] && return 0
-		[ -z "$path" ] && return 0
-		[ -s "$path" ] || return 0
-		is_bad_user_file_nft_call "$path" && user_file_check_result='bad'
-	}
 	local param="$1"
 	local user_file_check_result i
 	config_load "$packageName"
@@ -577,13 +568,11 @@ load_package_config() {
 	config_get      nft_set_timeout           'config' 'nft_set_timeout'
 	config_get      resolver_set              'config' 'resolver_set'
 	config_get      resolver_instance         'config' 'resolver_instance' '*'
-	config_get_bool secure_reload             'config' 'secure_reload' '0'
 	config_get_bool strict_enforcement        'config' 'strict_enforcement' '1'
 	config_get      supported_interface       'config' 'supported_interface'
 	config_get      verbosity                 'config' 'verbosity' '2'
 	config_get      procd_boot_delay          'config' 'procd_boot_delay' '0'
 	config_get      procd_boot_timeout        'config' 'procd_boot_timeout' '30'
-	config_get      procd_lan_interface       'config' 'procd_lan_interface'
 	config_get      procd_wan_ignore_status   'config' 'procd_wan_ignore_status' '0'
 	config_get      procd_wan_interface       'config' 'procd_wan_interface'  'wan'
 	config_get      procd_wan6_interface      'config' 'procd_wan6_interface' 'wan6'
@@ -595,13 +584,7 @@ load_package_config() {
 		[ -s "${agh%/*}/AdGuardHome.yaml" ] && aghConfigFile="${agh%/*}/AdGuardHome.yaml"
 	fi
 	[ -n "$ipv6_enabled" ] && [ "$ipv6_enabled" -eq '0' ] && unset ipv6_enabled
-	[ -n "$nft_file_support" ] && [ "$nft_file_support" -eq '0' ] && unset nft_file_support
 	[ -n "$nft_user_set_counter" ] && [ "$nft_user_set_counter" -eq '0' ] && unset nft_user_set_counter
-	[ -n "$secure_reload" ] && [ "$secure_reload" -eq '0' ] && unset secure_reload
-	config_foreach _check_user_files_for_bad_nft_calls 'include'
-	[ -n "$user_file_check_result" ] && unset nft_file_support
-	[ -n "$nft_file_support" ] && unset secure_reload
-	is_config_enabled 'include' && unset secure_reload
 	fw_maskXor="$(printf '%#x' "$((fw_mask ^ 0xffffffff))")"
 	fw_maskXor="${fw_maskXor:-0xff00ffff}"
 
@@ -670,7 +653,9 @@ load_environment() {
 }
 
 load_network() {
+# shellcheck disable=SC2317
 	_build_ifaces_supported() { is_supported_interface "$1" && ! str_contains "$ifacesSupported" "$1" && ifacesSupported="${ifacesSupported}${1} "; }
+# shellcheck disable=SC2317
 	_find_firewall_wan_zone() { [ "$(uci_get 'firewall' "$1" 'name')" = "wan" ] && firewallWanZone="$1"; }
 	local i param="$1"
 	local dev4 dev6
@@ -737,7 +722,6 @@ nft_file() {
 	[ -x "$nft" ] || return 1
 	case "$1" in
 		add|add_command)
-			[ -n "$nft_file_support" ] || return 1
 			shift
 			grep -q "$*" "$nftTempFile" || echo "$*" >> "$nftTempFile"
 		;;
@@ -746,20 +730,18 @@ nft_file() {
 			for i in "$nftTempFile" "$nftPermFile"; do 
 				mkdir -p "${i%/*}"
 			done
-			[ -n "$nft_file_support" ] || return 1
 			{ echo '#!/usr/sbin/nft -f'; echo ''; } > "$nftTempFile"
 		;;
 		delete|rm|remove)
 			rm -f "$nftTempFile" "$nftPermFile"
 		;;
 		enabled)
-			[ -n "$nft_file_support" ] && return 0 || return 1
+			return 0
 		;;
 		exists)
 			[ -s "$nftPermFile" ] && return 0 || return 1
 		;;
 		install)
-			[ -n "$nft_file_support" ] || return 1
 			[ -s "$nftTempFile" ] || return 1
 			output "Installing fw4 nft file "
 			if nft_call -c -f "$nftTempFile" && \
@@ -901,7 +883,7 @@ nftset() {
 cleanup_rt_tables() { 
 	local i
 # shellcheck disable=SC2013
-	for i in $(grep -oh "${ipTablePrefix}_.*" $rtTablesFile); do
+	for i in $(grep -oh "${ipTablePrefix}_.*" "$rtTablesFile"); do
 		! is_netifd_table "$i" && sed -i "/${i}/d" "$rtTablesFile"
 	done
 	sync
@@ -1160,56 +1142,6 @@ resolver() {
 				compare_hash) :;;
 				store_hash) :;;
 			esac
-		;;
-	esac
-}
-
-trap_process() {
-	output "\\n"
-	output "Unexpected exit or service termination: '${1}'!\\n"
-	state add 'errorSummary' 'errorUnexpectedExit' "$1"
-	traffic_killswitch 'remove'
-}
-
-traffic_killswitch() {
-	local s=0
-	case "$1" in
-		insert)
-			local lan_subnet wan_device wan6_device
-			[ -n "$secure_reload" ] || return 0
-			nft_file 'enabled' && return 0
-			for i in $serviceTrapSignals; do
-# shellcheck disable=SC2064
-				trap "trap_process $i" "$i"
-			done
-			output 3 'Activating traffic killswitch '
-			network_get_subnet lan_subnet "${procd_lan_interface:-lan}"
-			network_get_physdev wan_device "${wanIface4:-wan}"
-			network_get_physdev wan6_device "${wanIface6:-wan6}"
-			nft_call add chain inet "$nftTable" "${nftPrefix}_killswitch" '{ type filter hook forward priority 0; policy accept; }' || s=1
-			nft_call add rule inet "$nftTable" "${nftPrefix}_killswitch" oifname "$wan_device"  "$nftIPv4Flag" saddr "$lan_subnet" counter reject || s=1
-			nft_call add rule inet "$nftTable" "${nftPrefix}_killswitch" oifname "$wan6_device" "$nftIPv6Flag" saddr "$lan_subnet" counter reject
-			if [ "$s" -eq '0' ]; then
-				output_okn
-			else
-				output_failn
-			fi
-		;;
-		remove)
-			if [ -n "$secure_reload" ] && ! nft_file 'enabled'; then
-				output 3 'Deactivating traffic killswitch '
-			fi
-			nft_call flush chain inet "$nftTable" "${nftPrefix}_killswitch" || s=1
-			nft_call delete chain inet "$nftTable" "${nftPrefix}_killswitch" || s=1
-			if [ -n "$secure_reload" ] && ! nft_file 'enabled'; then
-				if [ "$s" -eq '0' ]; then
-					output_okn
-				else
-					output_failn
-				fi
-			fi
-# shellcheck disable=SC2086
-			trap - $serviceTrapSignals
 		;;
 	esac
 }
@@ -1639,9 +1571,7 @@ policy_process() {
 
 	unset j
 	for i in $src_addr; do
-		if [ -n "$secure_reload" ] && is_url_dl "$i"; then
-			state add 'errorSummary' 'errorNoDownloadWithSecureReload' "$name"
-		elif is_url "$i"; then
+		if is_url "$i"; then
 			i="$(process_url "$i")"
 		fi
 		j="${j:+$j }$i"
@@ -1650,9 +1580,7 @@ policy_process() {
 
 	unset j
 	for i in $dest_addr; do
-		if [ -n "$secure_reload" ] && is_url_dl "$i"; then
-			state add 'errorSummary' 'errorNoDownloadWithSecureReload' "$name"
-		elif is_url "$i"; then
+		if is_url "$i"; then
 			i="$(process_url "$i")"
 		fi
 		j="${j:+$j }$i"
@@ -1702,24 +1630,23 @@ interface_routing() {
 		create)
 			if is_netifd_table_interface "$iface"; then
 				ipv4_error=0
-				ip -4 rule del table "$tid" >/dev/null 2>&1
+				ip -4 rule del table "$tid" prio "$priority" >/dev/null 2>&1
 				try ip -4 rule add fwmark "${mark}/${fw_mask}" table "$tid" priority "$priority" || ipv4_error=1
 				try nft add chain inet "$nftTable" "${nftPrefix}_mark_${mark}" || ipv4_error=1 
 				try nft add rule inet "$nftTable" "${nftPrefix}_mark_${mark} ${nft_rule_params} mark set mark and ${fw_maskXor} xor ${mark}" || ipv4_error=1
 				try nft add rule inet "$nftTable" "${nftPrefix}_mark_${mark} return" || ipv4_error=1
 				if [ -n "$ipv6_enabled" ]; then
 					ipv6_error=0
-					ip -6 rule del table "$tid" >/dev/null 2>&1
+					ip -6 rule del table "$tid" prio "$priority" >/dev/null 2>&1
 					try ip -6 rule add fwmark "${mark}/${fw_mask}" table "$tid" priority "$((priority-1))" || ipv6_error=1
 				fi
 			else
 				if ! grep -q "$tid ${ipTablePrefix}_${iface}" "$rtTablesFile"; then
 					sed -i "/${ipTablePrefix}_${iface}/d" "$rtTablesFile"
-					sync
 					echo "$tid ${ipTablePrefix}_${iface}" >> "$rtTablesFile"
 					sync
 				fi
-				ip -4 rule del table "$tid" >/dev/null 2>&1
+				ip -4 rule flush table "$tid" >/dev/null 2>&1
 				ip -4 route flush table "$tid" >/dev/null 2>&1
 				if [ -n "$gw4" ] || [ "$strict_enforcement" -ne '0' ]; then
 					ipv4_error=0
@@ -1746,7 +1673,7 @@ EOF
 				fi
 				if [ -n "$ipv6_enabled" ]; then
 					ipv6_error=0
-					ip -6 rule del table "$tid" >/dev/null 2>&1
+					ip -6 rule flush table "$tid" >/dev/null 2>&1
 					ip -6 route flush table "$tid" >/dev/null 2>&1
 					if { [ -n "$gw6" ] && [ "$gw6" != "::/0" ]; } || [ "$strict_enforcement" -ne '0' ]; then
 						if [ -z "$gw6" ] || [ "$gw6" = "::/0" ]; then
@@ -1795,8 +1722,9 @@ EOF
 			return "$s"
 		;;
 		delete|destroy)
-			ip rule del table "$tid" >/dev/null 2>&1
+			ip rule del table "$tid" prio "$priority" >/dev/null 2>&1
 			if ! is_netifd_table_interface "$iface"; then
+				ip rule flush table "$tid" >/dev/null 2>&1
 				ip route flush table "$tid" >/dev/null 2>&1
 				sed -i "/${ipTablePrefix}_${iface}\$/d" "$rtTablesFile"
 				sync
@@ -1804,10 +1732,11 @@ EOF
 			return "$s"
 		;;
 		reload_interface)
+			ip rule del table "$tid" prio "$priority" >/dev/null 2>&1
 			is_netifd_table_interface "$iface" && return 0;
 			ipv4_error=0
-			ip rule del table "$tid" >/dev/null 2>&1
 			if ! is_netifd_table_interface "$iface"; then
+				ip rule flush table "$tid" >/dev/null 2>&1
 				ip route flush table "$tid" >/dev/null 2>&1
 			fi
 			if [ -n "$gw4" ] || [ "$strict_enforcement" -ne '0' ]; then
@@ -1889,6 +1818,33 @@ interface_process() {
 				;;
 			destroy)
 				;;
+		esac
+		return 0
+	fi
+
+	if is_wg_server "$iface"; then
+		local disabled listen_port
+		disabled="$(uci_get 'network' "$iface" 'disabled')"
+		listen_port="$(uci_get 'network' "$iface" 'listen_port')"
+		case "$action" in
+			create|reload)
+				if [ "$disabled" != '1' ] && [ -n "$listen_port" ]; then
+					if [ -n "$wanIface4" ]; then
+						ip rule del sport "$listen_port" table "pbr_${wanIface4}" >/dev/null 2>&1
+						ip rule add sport "$listen_port" table "pbr_${wanIface4}" >/dev/null 2>&1
+					fi
+					if [ -n "$ipv6_enabled" ] && [ -n "$wanIface6" ]; then
+						ip rule del sport "$listen_port" table "pbr_${wanIface6}" >/dev/null 2>&1
+						ip rule add sport "$listen_port" table "pbr_${wanIface6}" >/dev/null 2>&1
+					fi
+				fi
+			;;
+			destroy)
+				if [ -n "$listen_port" ]; then
+					ip rule del sport "$listen_port" table "pbr_${wanIface4}" >/dev/null 2>&1
+					ip rule del sport "$listen_port" table "pbr_${wanIface6}" >/dev/null 2>&1
+				fi
+			;;
 		esac
 		return 0
 	fi
@@ -2046,6 +2002,11 @@ user_file_process() {
 		output_fail
 		return 1
 	fi
+	if is_bad_user_file_nft_call "$path"; then
+		state add 'errorSummary' 'errorIncompatibleUserFile' "$path"
+		output_fail
+		return 1
+	fi
 	output 2 "Running $path "
 # shellcheck disable=SC1090
 	if ! . "$path"; then
@@ -2161,48 +2122,7 @@ start_service() {
 			json_close_array
 			output 1 '\n'
 		;;
-		on_reload)
-			traffic_killswitch 'insert'
-			resolver 'store_hash'
-			resolver 'cleanup_all'
-			resolver 'configure'
-			resolver 'init'
-			cleanup_main_chains
-			cleanup_sets
-			nft_file 'create'
-			json_add_array 'gateways'
-			interface_process 'all' 'prepare'
-			config_foreach interface_process 'interface' 'reload'
-			interface_process 'tor' 'destroy'
-			is_tor_running && interface_process 'tor' 'reload'
-			json_close_array
-			if is_config_enabled 'policy'; then
-				output 1 'Processing policies '
-				config_load "$packageName"
-				config_foreach load_validate_policy 'policy' policy_process
-				output 1 '\n'
-			fi
-			if is_config_enabled 'dns_policy'; then
-				output 1 'Processing dns policies '
-				config_load "$packageName"
-				config_foreach load_validate_dns_policy 'dns_policy' dns_policy_process
-				output 1 '\n'
-			fi
-			if is_config_enabled 'include'; then
-				interface_process 'all' 'prepare'
-				config_foreach interface_process 'interface' 'create_user_set'
-				output 1 'Processing user file(s) '
-				config_load "$packageName"
-				config_foreach load_validate_include 'include' user_file_process
-				output 1 '\n'
-			fi
-			nft_file 'install'
-			resolver 'init_end'
-			! nft_file 'exists' && resolver 'compare_hash' && resolver 'restart'
-			traffic_killswitch 'remove'
-		;;
-		on_start|*)
-			traffic_killswitch 'insert'
+		on_reload|on_start|*)
 			resolver 'store_hash'
 			resolver 'cleanup_all'
 			resolver 'configure'
@@ -2244,7 +2164,6 @@ start_service() {
 			nft_file 'install'
 			resolver 'init_end'
 			! nft_file 'exists' && resolver 'compare_hash' && resolver 'restart'
-			traffic_killswitch 'remove'
 		;;
 	esac
 
@@ -2300,9 +2219,9 @@ service_triggers() {
 	procd_close_validate
 	procd_open_trigger
 		procd_add_config_trigger "config.change" 'openvpn' "/etc/init.d/${packageName}" reload 'on_openvpn_change'
-		procd_add_config_trigger "config.change" "${packageName}" /etc/init.d/${packageName} reload
+		procd_add_config_trigger "config.change" "${packageName}" "/etc/init.d/${packageName}" reload
 		for n in $ifacesSupported; do 
-			procd_add_interface_trigger "interface.*" "$n" /etc/init.d/${packageName} on_interface_reload "$n"
+			procd_add_interface_trigger "interface.*" "$n" "/etc/init.d/${packageName}" on_interface_reload "$n"
 		done
 	procd_close_trigger
 #	procd_add_raw_trigger "interface.*.up" 4000 "/etc/init.d/${packageName}" restart 'on_interface_up'
@@ -2316,7 +2235,6 @@ stop_service() {
 	load_environment 'on_stop'
 	! is_service_running && [ "$(get_rt_tables_next_id)" = "$(get_rt_tables_non_pbr_next_id)" ] && return 0
 	[ "$1" = 'quiet' ] && quiet_mode 'on'
-	traffic_killswitch 'insert'
 	if nft_file 'exists'; then
 		nft_file_mode=1
 	fi
@@ -2336,7 +2254,6 @@ stop_service() {
 	resolver 'store_hash'
 	resolver 'cleanup_all'
 	resolver 'compare_hash' && resolver 'restart'
-	traffic_killswitch 'remove'
 	if [ "$enabled" -ne '0' ]; then
 		if [ -n "$nft_file_mode" ]; then
 			output "$serviceName (fw4 nft file mode) stopped "; output_okn;
@@ -2402,9 +2319,9 @@ status_service() {
 #	echo "$_SEPARATOR_"
 #	ip rule list | grep "${packageName}_"
 	echo "$_SEPARATOR_"
-	tableCount="$(grep -c "${packageName}_" $rtTablesFile)" || tableCount=0
+	tableCount="$(grep -c "${packageName}_" "$rtTablesFile")" || tableCount=0
 	wan_tid=$(($(get_rt_tables_next_id)-tableCount))
-	i=0; while [ "$i" -lt "$tableCount" ]; do 
+	i=0; while [ "$i" -lt "$tableCount" ]; do
 		echo "IPv4 table $((wan_tid + i)) route: $(ip -4 route show table $((wan_tid + i)) | grep default)"
 		echo "IPv4 table $((wan_tid + i)) rule(s):"
 		ip -4 rule list table "$((wan_tid + i))"
@@ -2422,7 +2339,6 @@ load_validate_config() {
 	uci_load_validate "$packageName" "$packageName" "$1" "${2}${3:+ $3}" \
 		'enabled:bool:0' \
 		'strict_enforcement:bool:1' \
-		'secure_reload:bool:0' \
 		'ipv6_enabled:bool:0' \
 		'resolver_set:or("", "none", "dnsmasq.nftset")' \
 		'resolver_instance:list(or(integer, string)):*' \
@@ -2434,7 +2350,6 @@ load_validate_config() {
 		'supported_interface:list(or(ignore, tor, regex("xray_.*"), uci("network", "@interface")))' \
 		'procd_boot_delay:integer:0' \
 		'procd_boot_timeout:integer:30' \
-		'procd_lan_interface:string' \
 		'procd_reload_delay:integer:0' \
 		'procd_wan_ignore_status:bool:0' \
 		'procd_wan_interface:network:wan' \
