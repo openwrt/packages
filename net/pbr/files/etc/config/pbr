@@ -33,10 +33,6 @@ config include
 	option path '/usr/share/pbr/pbr.user.netflix'
 	option enabled '0'
 
-config include
-	option path '/usr/share/pbr/pbr.user.wg_server_and_client'
-	option enabled '0'
-
 config dns_policy
 	option name 'Redirect Local IP DNS'
 	option src_addr '192.168.1.5'

@@ -1,4 +1,5 @@
 #!/bin/sh
+# shellcheck disable=SC3043
 
 readonly pbrFunctionsFile='/etc/init.d/pbr'
 if [ -s "$pbrFunctionsFile" ]; then
@@ -54,5 +55,17 @@ uci -q batch <<-EOT
 	commit firewall
 EOT
 fi
+
+# Transition from pre-1.1.7 versions
+_remove_wg_server_client() {
+	local path
+	config_get path "$1" 'path'
+	if [ "$path" = '/usr/share/pbr/pbr.user.wg_server_and_client' ]; then
+		uci_remove pbr "$1"
+	fi
+}
+config_load pbr
+config_foreach _remove_wg_server_client include
+[ -n "$(uci changes pbr)" ] && uci_commit pbr
 
 exit 0
