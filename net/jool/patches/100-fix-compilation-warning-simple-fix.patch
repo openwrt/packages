@@ -1,36 +1,21 @@
---- a/src/mod/common/skbuff.c
-+++ b/src/mod/common/skbuff.c
-@@ -109,9 +109,9 @@ static void print_skb_fields(struct sk_b
- 	print(tabs, "network_header:%u", skb->network_header);
- 	print(tabs, "mac_header:%u", skb->mac_header);
- 	print(tabs, "head:%p", skb->head);
--	print(tabs, "data:%ld", skb->data - skb->head);
--	print(tabs, "tail:%u", skb->tail);
--	print(tabs, "end:%u", skb->end);
-+	print(tabs, "data:%ld", (long int)(skb->data - skb->head));
-+	print(tabs, "tail:%u", (unsigned int)skb->tail);
-+	print(tabs, "end:%u", (unsigned int)skb->end);
- }
- 
- static int truncated(unsigned int tabs)
 --- a/src/mod/common/xlator.c
 +++ b/src/mod/common/xlator.c
-@@ -890,7 +890,7 @@ void xlator_put(struct xlator *jool)
+@@ -891,7 +891,7 @@ void xlator_put(struct xlator *jool)
  static bool offset_equals(struct instance_entry_usr *offset,
  		struct jool_instance *instance)
  {
--	return (offset->ns == ((__u64)instance->jool.ns & 0xFFFFFFFF))
+-	return (offset->ns == ((PTR_AS_UINT_TYPE)instance->jool.ns & 0xFFFFFFFF))
 +	return (offset->ns == ((uintptr_t)instance->jool.ns & 0xFFFFFFFF))
  			&& (strcmp(offset->iname, instance->jool.iname) == 0);
  }
  
 --- a/src/mod/common/nl/instance.c
 +++ b/src/mod/common/nl/instance.c
-@@ -37,7 +37,7 @@ static int serialize_instance(struct xla
+@@ -38,7 +38,7 @@ static int serialize_instance(struct xla
  	if (!root)
  		return 1;
  
--	error = nla_put_u32(skb, JNLAIE_NS, ((__u64)entry->ns) & 0xFFFFFFFF);
+-	error = nla_put_u32(skb, JNLAIE_NS, ((PTR_AS_UINT_TYPE)entry->ns) & 0xFFFFFFFF);
 +	error = nla_put_u32(skb, JNLAIE_NS, ((uintptr_t)entry->ns) & 0xFFFFFFFF);
  	if (error)
  		goto cancel;
