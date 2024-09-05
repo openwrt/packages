@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qbee-agent
-PKG_VERSION:=2024.23
+PKG_VERSION:=2024.36
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/qbee-io/qbee-agent.git
-PKG_SOURCE_VERSION:=3219c17730eab4c80598494732b4bed4c4c18b51
+PKG_SOURCE_VERSION:=d52fb5e69b479550636570a2db6cebe06f5f129b
 PKG_MIRROR_HASH:=ab109061103afdbefb1b6e1c4c38050f6dcd726c0a326cfecce1eac4e217b950
 
 PKG_LICENSE:=Apache-2.0
@@ -23,7 +23,7 @@ GO_PKG_LDFLAGS_X:= \
 	$(GO_PKG)/app.Commit=$(PKG_SOURCE_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
-include ../../lang/golang/golang-package.mk
+include ../../lang/golang/golang-package.mk	
 
 define Package/qbee-agent
   SECTION:=admin
