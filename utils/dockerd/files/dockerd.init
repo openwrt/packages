@@ -185,6 +185,10 @@ process_config() {
 	config_get ip globals ip ""
 	config_get fixed_cidr globals fixed_cidr ""
 	config_get fixed_cidr_v6 globals fixed_cidr_v6 ""
+	# Use the *_proxy environment variable as the default value
+	config_get http_proxy proxies http_proxy "${http_proxy}"
+	config_get https_proxy proxies https_proxy "${https_proxy}"
+	config_get no_proxy proxies no_proxy "${no_proxy}"
 
 	. /usr/share/libubox/jshn.sh
 	json_init
@@ -207,6 +211,13 @@ process_config() {
 	[ -z "${ip}" ] || json_add_string "ip" "${ip}"
 	[ -z "${fixed_cidr}" ] || json_add_string "fixed-cidr" "${fixed_cidr}"
 	[ -z "${fixed_cidr_v6}" ] || json_add_string "fixed-cidr-v6" "${fixed_cidr_v6}"
+	if [ -n "${http_proxy}" ] || [ -n "${https_proxy}" ] || [ -n "${no_proxy}" ]; then
+		json_add_object "proxies"
+		[ -z "${http_proxy}" ] || json_add_string "http-proxy" "${http_proxy}"
+		[ -z "${https_proxy}" ] || json_add_string "https-proxy" "${https_proxy}"
+		[ -z "${no_proxy}" ] || json_add_string "no-proxy" "${no_proxy}"
+		json_close_object
+	fi
 	json_dump > "${DOCKERD_CONF}"
 
 	[ "${iptables}" -eq "1" ] && config_foreach iptables_add_blocking_rule firewall
