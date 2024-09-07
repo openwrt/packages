@@ -9,13 +9,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
-PKG_VERSION:=10.9.8
-PKG_RELEASE:=4
+PKG_VERSION:=11.4.3
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL := https://archive.mariadb.org/$(PKG_NAME)-$(PKG_VERSION)/source
 
-PKG_HASH:=fcdc6f73882477c20310e795a02f746e54934aa7a8b368900bd45e78a5daf6ed
+PKG_HASH:=6f0017b9901bb1897de0eed21caef9ffa9d66ef559345a0d8a6f011308413ece
 PKG_MAINTAINER:=Michal Hrusecky <Michal@Hrusecky.net>
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING THIRDPARTY
@@ -320,6 +320,9 @@ CMAKE_OPTIONS += -DSTACK_DIRECTION=-1
 # Make it explicit that we are cross-compiling
 CMAKE_OPTIONS += -DCMAKE_CROSSCOMPILING=1
 
+# Apply workaround to pass LIBFMT check when cross-compiling
+CMAKE_OPTIONS += -DHAVE_SYSTEM_LIBFMT_EXITCODE=0
+
 # Explicitly disable dtrace to avoid detection of a host version
 CMAKE_OPTIONS += -DENABLE_DTRACE=0
 
@@ -435,11 +438,12 @@ endef
 
 define Host/Install
 	$(SED) 's|$(HOST_BUILD_DIR)|$(STAGING_DIR_HOSTPKG)/share/mariadb|' $(HOST_BUILD_DIR)/import_executables.cmake
-	$(INSTALL_DIR) $(1)/share/mariadb/{dbug,extra,scripts,sql}
+	$(INSTALL_DIR) $(1)/share/mariadb/{dbug,extra,scripts,sql,strings}
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/dbug/factorial $(1)/share/mariadb/dbug
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/extra/comp_err $(1)/share/mariadb/extra
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/scripts/comp_sql $(1)/share/mariadb/scripts
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/sql/{gen_lex_hash,gen_lex_token} $(1)/share/mariadb/sql
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/strings/uca-dump $(1)/share/mariadb/strings
 	$(INSTALL_DATA) $(HOST_BUILD_DIR)/import_executables.cmake $(1)/share/mariadb
 endef
 
