@@ -25,7 +25,7 @@ have the latest vpnc-scripts and openconnect packages.
 
 [This option is available since ocserv-0.10.9-2 package]
 
-To setup a server the provides access to LAN with network address
+To setup a server that provides access to LAN with network address
 10.100.2.0/255.255.255.0 add the following to /etc/config/ocserv.
 The following setup will assign the upper 62 addresses for VPN use.
 
