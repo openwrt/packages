@@ -1,6 +1,6 @@
 --- a/mysys/CMakeLists.txt
 +++ b/mysys/CMakeLists.txt
-@@ -141,7 +141,7 @@ ELSEIF(CMAKE_SYSTEM_PROCESSOR MATCHES "a
+@@ -137,7 +137,7 @@ ELSEIF(CMAKE_SYSTEM_PROCESSOR MATCHES "a
    ENDIF()
  ENDIF()
  
@@ -11,7 +11,7 @@
          COMPILE_FLAGS "${COMPILE_FLAGS} -maltivec -mvsx -mpower8-vector -mcrypto -mpower8-vector")
 --- a/mysys/crc32ieee.cc
 +++ b/mysys/crc32ieee.cc
-@@ -52,7 +52,6 @@ static my_crc32_t init_crc32()
+@@ -51,7 +51,6 @@ static my_crc32_t init_crc32()
  static const my_crc32_t my_checksum_func= init_crc32();
  
  #ifdef __powerpc64__
