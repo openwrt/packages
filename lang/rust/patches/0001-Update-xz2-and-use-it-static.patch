@@ -9,7 +9,7 @@ Subject: [PATCH] Update xz2 and use it static
 
 --- a/src/bootstrap/Cargo.toml
 +++ b/src/bootstrap/Cargo.toml
-@@ -62,7 +62,7 @@ tar = "0.4"
+@@ -60,7 +60,7 @@ tar = "0.4"
  termcolor = "1.4"
  toml = "0.5"
  walkdir = "2.4"
