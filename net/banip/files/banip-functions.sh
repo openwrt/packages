@@ -123,7 +123,7 @@ f_cmd() {
 	cmd="$(command -v "${pri_cmd}" 2>/dev/null)"
 	if [ ! -x "${cmd}" ]; then
 		if [ -n "${sec_cmd}" ]; then
-			[ "${sec_cmd}" = "true" ] && return
+			[ "${sec_cmd}" = "optional" ] && return
 			cmd="$(command -v "${sec_cmd}" 2>/dev/null)"
 		fi
 		if [ -x "${cmd}" ]; then
@@ -1645,7 +1645,7 @@ f_mail() {
 # log monitor
 #
 f_monitor() {
-	local daemon logread_cmd loglimit_cmd nft_expiry line proto ip log_raw log_count rdap_log rdap_rc rdap_prefix rdap_length rdap_info
+	local daemon logread_cmd loglimit_cmd nft_expiry line proto ip log_raw log_count idx prefix cidr rdap_log rdap_rc rdap_idx rdap_info
 
 	if [ -f "${ban_logreadfile}" ]; then
 		logread_cmd="${ban_logreadcmd} -qf ${ban_logreadfile} 2>/dev/null | ${ban_grepcmd} -e \"${ban_logterm%%??}\" 2>/dev/null"
@@ -1693,16 +1693,22 @@ f_monitor() {
 							rdap_log="$("${ban_fetchcmd}" ${ban_rdapparm} "${ban_rdapfile}" "${ban_rdapurl}${ip}" 2>&1)"
 							rdap_rc="${?}"
 							if [ "${rdap_rc}" = "0" ] && [ -s "${ban_rdapfile}" ]; then
-								[ "${proto}" = "v4" ] && rdap_prefix="$(jsonfilter -l1 -i "${ban_rdapfile}" -qe '@.cidr0_cidrs.*.v4prefix')"
-								[ "${proto}" = "v6" ] && rdap_prefix="$(jsonfilter -l1 -i "${ban_rdapfile}" -qe '@.cidr0_cidrs.*.v6prefix')"
-								rdap_length="$(jsonfilter -l1 -i "${ban_rdapfile}" -qe '@.cidr0_cidrs.*.length')"
-								rdap_info="$(jsonfilter -l1 -i "${ban_rdapfile}" -qe '@.country' -qe '@.notices[@.title="Source"].description[1]' | awk 'BEGIN{RS="";FS="\n"}{printf "%s, %s",$1,$2}')"
-								[ -z "${rdap_info}" ] && rdap_info="$(jsonfilter -l1 -i "${ban_rdapfile}" -qe '@.notices[0].links[0].value' | awk 'BEGIN{FS="[/.]"}{printf"%s, %s","n/a",toupper($4)}')"
-								if [ -n "${rdap_prefix}" ] && [ -n "${rdap_length}" ]; then
-									if "${ban_nftcmd}" add element inet banIP "blocklist${proto}" { ${rdap_prefix}/${rdap_length} ${nft_expiry} } >/dev/null 2>&1; then
-										f_log "info" "add IP range '${rdap_prefix}/${rdap_length}' (source: ${rdap_info:-"n/a"} ::: expiry: ${ban_nftexpiry:-"-"}) to blocklist${proto} set"
+								[ "${proto}" = "v4" ] && rdap_idx="$("${ban_jsoncmd}" -i "${ban_rdapfile}" -qe '@.cidr0_cidrs[@.v4prefix].*' | "${ban_awkcmd}" '{ORS=" "; print}')"
+								[ "${proto}" = "v6" ] && rdap_idx="$("${ban_jsoncmd}" -i "${ban_rdapfile}" -qe '@.cidr0_cidrs[@.v6prefix].*' | "${ban_awkcmd}" '{ORS=" "; print}')"
+								rdap_info="$("${ban_jsoncmd}" -l1 -i "${ban_rdapfile}" -qe '@.country' -qe '@.notices[@.title="Source"].description[1]' | "${ban_awkcmd}" 'BEGIN{RS="";FS="\n"}{printf "%s, %s",$1,$2}')"
+								[ -z "${rdap_info}" ] && rdap_info="$("${ban_jsoncmd}" -l1 -i "${ban_rdapfile}" -qe '@.notices[0].links[0].value' | "${ban_awkcmd}" 'BEGIN{FS="[/.]"}{printf"%s, %s","n/a",toupper($4)}')"
+								for idx in ${rdap_idx}; do
+									if [ -z "${prefix}" ]; then
+										prefix="${idx}"
+										continue
+									else
+										cidr="${prefix}/${idx}"
+										if "${ban_nftcmd}" add element inet banIP "blocklist${proto}" { ${cidr} ${nft_expiry} } >/dev/null 2>&1; then
+											f_log "info" "add IP range '${cidr}' (source: ${rdap_info:-"n/a"} ::: expiry: ${ban_nftexpiry:-"-"}) to blocklist${proto} set"
+										fi
+										prefix=""
 									fi
-								fi
+								done
 							else
 								f_log "info" "rdap request failed (rc: ${rdap_rc:-"-"}/log: ${rdap_log})"
 							fi
@@ -1730,7 +1736,7 @@ else
 	f_log "emerg" "system libraries not found"
 fi
 
-# initial system calls
+# reference required system utilities
 #
 ban_awkcmd="$(f_cmd gawk awk)"
 ban_catcmd="$(f_cmd cat)"
@@ -1739,7 +1745,7 @@ ban_grepcmd="$(f_cmd grep)"
 ban_jsoncmd="$(f_cmd jsonfilter)"
 ban_logcmd="$(f_cmd logger)"
 ban_lookupcmd="$(f_cmd nslookup)"
-ban_mailcmd="$(f_cmd msmtp true)"
+ban_mailcmd="$(f_cmd msmtp optional)"
 ban_nftcmd="$(f_cmd nft)"
 ban_pgrepcmd="$(f_cmd pgrep)"
 ban_sedcmd="$(f_cmd sed)"
