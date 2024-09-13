@@ -294,14 +294,32 @@ main() {
 						result=$?
 					;;
 					httping)
-						if [ "$httping_ssl" -eq 1 ]; then
-							WRAP httping -c $count -t $timeout -q "https://$track_ip" &> /dev/null &
+						if [ $check_quality -eq 0 ]; then
+							if [ "$httping_ssl" -eq 1 ]; then
+								WRAP httping -c $count -t $timeout -q "https://$track_ip" &> /dev/null &
+							else
+								WRAP httping -c $count -t $timeout -q "http://$track_ip" &> /dev/null &
+							fi
+							TRACK_PID=$!
+							wait $TRACK_PID
+							result=$?
 						else
-							WRAP httping -c $count -t $timeout -q "http://$track_ip" &> /dev/null &
+							if [ "$httping_ssl" -eq 1 ]; then
+								WRAP httping -c $count -t $timeout "https://$track_ip" 2> /dev/null > $TRACK_OUTPUT &
+							else
+								WRAP httping -c $count -t $timeout "http://$track_ip" 2> /dev/null > $TRACK_OUTPUT &
+							fi
+							TRACK_PID=$!
+							wait $TRACK_PID
+							ping_status=$?
+							loss="$(sed $TRACK_OUTPUT -ne 's/.* \([0-9]\+\).*% failed.*/\1/p')"
+							if [ "$ping_status" -ne 0 ] || [ "$loss" -eq 100 ]; then
+								latency=999999
+								loss=100
+							else
+								latency="$(sed $TRACK_OUTPUT -ne 's%\(rtt\|round-trip\).* = [^/]*/\([0-9]\+\).*%\2%p')"
+							fi
 						fi
-						TRACK_PID=$!
-						wait $TRACK_PID
-						result=$?
 					;;
 					nping-*)
 						WRAP nping -c $count $track_ip --${FAMILY#nping-} > $TRACK_OUTPUT &
