@@ -1,6 +1,6 @@
 #!/bin/sh
 # ntp hotplug script for travelmate
-# Copyright (c) 2020-2023 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2020-2024 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # set (s)hellcheck exceptions
@@ -8,9 +8,12 @@
 
 trm_init="/etc/init.d/travelmate"
 trm_ntpfile="/var/state/travelmate.ntp"
-trm_logger="$(command -v logger)"
 
 if [ "${ACTION}" = "stratum" ] && [ ! -s "${trm_ntpfile}" ] && "${trm_init}" enabled; then
 	printf "%s" "$(date "+%Y.%m.%d-%H:%M:%S")" > "${trm_ntpfile}"
-	"${trm_logger}" -p "info" -t "trm-ntp  [${$}]" "get ntp time sync"
+	trm_ubuscmd="$(command -v ubus)"
+	trm_jsoncmd="$(command -v jsonfilter)"
+	trm_logger="$(command -v logger)"
+	trm_ver="$("${trm_ubuscmd}" -S call rpc-sys packagelist '{ "all": true }' 2>/dev/null | "${trm_jsoncmd}" -ql1 -e '@.packages.travelmate')"
+	"${trm_logger}" -p "info" -t "trm-${trm_ver}[${$}]" "get ntp time sync"
 fi
