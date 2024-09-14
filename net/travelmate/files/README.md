@@ -191,5 +191,15 @@ Please join the travelmate discussion in this [forum thread](https://forum.lede-
 * stop the travelmate daemon with _/etc/init.d/travelmate stop_
 * remove the travelmate package (_opkg remove luci-app-travelmate_, _opkg remove travelmate_)
 
+## Donations
+You like this project - is there a way to donate? Generally speaking "No" - I have a well-paying full-time job and my OpenWrt projects are just a hobby of mine in my spare time.  
+
+If you still insist to donate some bucks ...  
+* I would be happy if you put your money in kind into other, social projects in your area, e.g. a children's hospice
+* Let's meet and invite me for a coffee if you are in my area, the “Markgräfler Land” in southern Germany or in Switzerland (Basel)
+* Send your money to my [PayPal account](https://www.paypal.me/DirkBrenken) and I will collect your donations over the year to support various social projects in my area
+
+No matter what you decide - thank you very much for your support!  
+
 Have fun!  
 Dirk  

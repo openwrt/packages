@@ -669,6 +669,11 @@ f_check() {
 		{ [ "${mode}" = "dev" ] && { [ "${status}" = "false" ] || { [ "${trm_ifstatus}" != "${status}" ] && [ "${enabled}" = "0" ]; }; }; }; then
 		f_wifi
 	fi
+	if [ "${mode}" = "sta" ]; then
+		"${trm_ubuscmd}" -S call network.interface."${trm_iface}" down >/dev/null 2>&1
+		"${trm_ubuscmd}" -S call network.interface."${trm_iface}" up >/dev/null 2>&1
+	fi
+
 	while [ "${wait_time}" -le "${trm_maxwait}" ]; do
 		[ "${wait_time}" -gt "0" ] && sleep 1
 		wait_time="$((wait_time + 1))"
@@ -1025,11 +1030,10 @@ else
 	f_log "err" "system libraries not found"
 fi
 
-# force ntp restart/sync
+# force ntp hotplug event/time sync
 #
-if [ -f "/etc/init.d/sysntpd" ] && [ ! -s "${trm_ntpfile}" ]; then
-	/etc/init.d/sysntpd restart >/dev/null 2>&1
-	f_log "debug" "ntp time sync requested"
+if [ ! -s "${trm_ntpfile}" ]; then
+	"${trm_ubuscmd}" -S call hotplug.ntp call '{ "env": [ "ACTION=stratum" ] }' >/dev/null 2>&1
 fi
 
 # control travelmate actions
