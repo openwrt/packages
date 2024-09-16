@@ -11,13 +11,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=boost
-PKG_VERSION:=1.85.0
-PKG_SOURCE_VERSION:=1_85_0
+PKG_VERSION:=1.86.0
+PKG_SOURCE_VERSION:=1_86_0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_SOURCE_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)/$(PKG_NAME)/$(PKG_VERSION) https://boostorg.jfrog.io/artifactory/main/release/$(PKG_VERSION)/source/
-PKG_HASH:=7009fe1faa1697476bdc7027703a2badb84e849b7b0baad5086b087b971f8617
+PKG_HASH:=1bed88e40401b2cb7a1f76d4bab499e352fa4d0c5f31c0dbae64e24d34d7513b
 
 PKG_MAINTAINER:=Carlos M. Ferreira <carlosmf.pt@gmail.com>
 PKG_LICENSE:=BSL-1.0
@@ -42,12 +42,12 @@ define Package/boost/Default
 endef
 
 define Package/boost/description
-This package provides the Boost v1.85.0 libraries.
+This package provides the Boost v1.86.0 libraries.
 Boost is a set of free, peer-reviewed, portable C++ source libraries.
 
 This package provides the following run-time libraries:
  - atomic
- - charconv (new)
+ - charconv
  - chrono
  - cobalt
  - container
@@ -80,7 +80,7 @@ This package provides the following run-time libraries:
  - wave
 
 There are many more header-only libraries supported by Boost.
-See more at http://www.boost.org/doc/libs/1_85_0/
+See more at http://www.boost.org/doc/libs/1_86_0/
 endef
 
 PKG_BUILD_DEPENDS:=boost/host
