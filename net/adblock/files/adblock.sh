@@ -11,7 +11,7 @@
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 
-adb_ver="4.2.2-r3"
+adb_ver="4.2.2-r4"
 adb_enabled="0"
 adb_debug="0"
 adb_forcedns="0"
@@ -128,6 +128,7 @@ f_load() {
 			done
 			unset bg_pid
 		fi
+		rm -f "${adb_reportdir}"/adb_report.pcap*
 	fi
 
 	if [ -x "${adb_dumpcmd}" ] && [ "${adb_report}" = "1" ] && [ -z "${bg_pid}" ] && [ "${adb_action}" != "report" ] && [ "${adb_action}" != "stop" ]; then
@@ -1328,7 +1329,7 @@ f_report() {
 						if(type=="."&&$(NF-2)!="CNAME")
 							{domain=substr($(NF-1),1,length($(NF-1))-1);type="RQ"}
 						else
-							{if($(NF-1)~/[0-9]\/[0-9]\/[0-9]/||$(NF-1)=="0.0.0.0"){type="NX"}else{type="OK"};domain=""};
+							{if($(NF-2)~/NXDomain/||$(NF-1)=="0.0.0.0"){type="NX"}else{type="OK"};domain=""};
 						printf "%08d\t%s\t%s\t%s\t%-25s\t%s\n",$9,type,$1,substr($2,1,8),$6,domain}' >>"${report_raw}"
 				else
 					"${adb_dumpcmd}" "${resolve}" --immediate-mode -T domain -tttt -r "${file}" 2>/dev/null |
@@ -1337,7 +1338,7 @@ f_report() {
 						if(type=="."&&$(NF-2)!="CNAME")
 							{domain=substr($(NF-1),1,length($(NF-1))-1);type="RQ"}
 						else
-							{if($(NF-1)~/[0-9]\/[0-9]\/[0-9]/||$(NF-1)=="0.0.0.0"){type="NX"}else{type="OK"};domain=""};
+							{if($(NF-2)~/NXDomain/||$(NF-1)=="0.0.0.0"){type="NX"}else{type="OK"};domain=""};
 						printf "%08d\t%s\t%s\t%s\t%-25s\t%s\n",$7,type,$1,substr($2,1,8),$4,domain}' >>"${report_raw}"
 				fi
 			) &
