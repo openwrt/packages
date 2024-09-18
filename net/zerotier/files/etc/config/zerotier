@@ -18,7 +18,7 @@ config zerotier 'global'
 
 # Network configuration, you can have as many configurations as networks you
 # want to join (the network name is optional)
-config network 'mynet'
+config network 'earth'
 	# Identifier of the network you wish to join
 	option id '8056c2e21c000001'
 	# Network configuration parameters (all are optional, if not indicated the
