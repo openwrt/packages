@@ -1,24 +1,14 @@
-From c10b5ed4c6c44e36178b0a5a82da9e8eaa957008 Mon Sep 17 00:00:00 2001
+From 81a632c99b581790344729ad327eb473c4c05260 Mon Sep 17 00:00:00 2001
 From: Moritz Warning <moritzwarning@web.de>
-Date: Mon, 6 May 2024 22:34:15 +0200
+Date: Tue, 17 Sep 2024 15:36:36 +0200
 Subject: [PATCH 2/5] remove PIE options
 
-Signed-off-by: Moritz Warning <moritzwarning@web.de>
 ---
- make-linux.mk | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ make-linux.mk | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
 --- a/make-linux.mk
 +++ b/make-linux.mk
-@@ -71,7 +71,7 @@ else
- 	override CFLAGS+=-Wall -Wno-deprecated -pthread $(INCLUDES) -DNDEBUG $(DEFS)
- 	CXXFLAGS?=-O3 -fstack-protector
- 	override CXXFLAGS+=-Wall -Wno-deprecated -std=c++17 -pthread $(INCLUDES) -DNDEBUG $(DEFS)
--	LDFLAGS=-pie -Wl,-z,relro,-z,now
-+	LDFLAGS=-Wl,-z,relro,-z,now
- 	ZT_CARGO_FLAGS=--release
- endif
- 
 @@ -333,7 +333,7 @@ ifeq ($(ZT_CONTROLLER),1)
  endif
  
@@ -38,4 +28,4 @@ Signed-off-by: Moritz Warning <moritzwarning@web.de>
 +#override CXXFLAGS+=-fPIC -fPIE
  
  # Non-executable stack
- override ASFLAGS+=--noexecstack
+ override LDFLAGS+=-Wl,-z,noexecstack
