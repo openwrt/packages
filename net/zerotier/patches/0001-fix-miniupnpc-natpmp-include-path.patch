@@ -1,9 +1,8 @@
-From f53004bd22365900a1dbb120dae62ce8b614d31d Mon Sep 17 00:00:00 2001
+From ec02787ae7c5b6e906ab50bcebcd676d4219c812 Mon Sep 17 00:00:00 2001
 From: Moritz Warning <moritzwarning@web.de>
-Date: Mon, 6 May 2024 22:31:57 +0200
-Subject: [PATCH 1/5] fix miniupnpc/natpmp include paths
+Date: Tue, 17 Sep 2024 14:17:08 +0200
+Subject: [PATCH 1/5] fix miniupnpc natpmp include path
 
-Signed-off-by: Moritz Warning <moritzwarning@web.de>
 ---
  make-linux.mk | 6 +++---
  1 file changed, 3 insertions(+), 3 deletions(-)
