@@ -41,6 +41,7 @@ start_service() {
 
 	if [ ${enabled} -eq 0 ]; then
 		echo "disabled in /etc/config/zerotier"
+		return
 	fi
 
 	# Remove existing link or folder
