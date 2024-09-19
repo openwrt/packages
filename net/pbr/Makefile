@@ -5,7 +5,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pbr
 PKG_VERSION:=1.1.7
-PKG_RELEASE:=7
+PKG_RELEASE:=10
 PKG_LICENSE:=AGPL-3.0-or-later
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.ca>
 
@@ -135,6 +135,9 @@ define Package/pbr-netifd/postinst
 	#!/bin/sh
 	# check if we are on real system
 	if [ -z "$${IPKG_INSTROOT}" ]; then
+		chmod -x /etc/init.d/pbr || true
+		fw4 -q reload || true
+		chmod +x /etc/init.d/pbr || true
 		echo -n "Installing rc.d symlink for pbr-netifd... "
 		/etc/init.d/pbr enable && echo "OK" || echo "FAIL"
 	fi

@@ -465,7 +465,7 @@ get_text() {
 		errorResolverNotSupported) r="Resolver set (${resolver_set}) is not supported on this system!";;
 		errorServiceDisabled) r="The ${packageName} service is currently disabled!";;
 		errorNoWanGateway) r="The ${serviceName} service failed to discover WAN gateway!";;
-		errorNoWanInterface) r="The %s inteface not found, you need to set the 'pbr.config.procd_wan_interface' option!";;
+		errorNoWanInterface) r="The %s interface not found, you need to set the 'pbr.config.procd_wan_interface' option!";;
 		errorNoWanInterfaceHint) r="Refer to https://docs.openwrt.melmac.net/pbr/#procd_wan_interface.";;
 		errorNftsetNameTooLong) r="The nft set name '%s' is longer than allowed 255 characters!";;
 		errorUnexpectedExit) r="Unexpected exit or service termination: '%s'!";;
@@ -723,7 +723,7 @@ nft_file() {
 	case "$1" in
 		add|add_command)
 			shift
-			grep -q "$*" "$nftTempFile" || echo "$*" >> "$nftTempFile"
+			echo "$*" >> "$nftTempFile"
 		;;
 		create)
 			rm -f "$nftTempFile" "$nftPermFile"
@@ -754,7 +754,7 @@ nft_file() {
 		;;
 	esac
 }
-nft() { [ -x "$nft" ] && [ -n "$*" ] && { nft_file 'add_command' "$@" || "$nft" "$@" >/dev/null 2>&1;} }
+nft() { [ -x "$nft" ] && [ -n "$*" ] && nft_file 'add_command' "$@"; }
 nft4() { nft "$@"; }
 nft6() { [ -n "$ipv6_enabled" ] || return 0; nft "$@"; }
 nftset() {
@@ -1846,7 +1846,7 @@ interface_process() {
 				fi
 			;;
 		esac
-		return 0
+		str_contains_word "$supported_interface" "$iface" || return 0
 	fi
 
 	is_supported_interface "$iface" || return 0
@@ -2153,17 +2153,24 @@ start_service() {
 				config_foreach load_validate_dns_policy 'dns_policy' dns_policy_process
 				output 1 '\n'
 			fi
-			if is_config_enabled 'include'; then
+			if is_config_enabled 'include' || [ -d "/etc/${packageName}.d/" ]; then
 				interface_process 'all' 'prepare'
 				config_foreach interface_process 'interface' 'create_user_set'
 				output 1 'Processing user file(s) '
 				config_load "$packageName"
 				config_foreach load_validate_include 'include' user_file_process
+				if [ -d "/etc/${packageName}.d/" ]; then
+					local i
+					for i in "/etc/${packageName}.d/"*; do
+						local enabled='1' path="$i"
+						[ -f "$i" ] && user_file_process
+					done
+				fi
 				output 1 '\n'
 			fi
 			nft_file 'install'
 			resolver 'init_end'
-			! nft_file 'exists' && resolver 'compare_hash' && resolver 'restart'
+			resolver 'compare_hash' && resolver 'restart'
 		;;
 	esac
 
@@ -2186,7 +2193,6 @@ service_started() {
 	if nft_file 'exists'; then
 		procd_set_config_changed firewall
 		if nft_file 'exists'; then
-			resolver 'compare_hash' && resolver 'restart'
 			[ -n "$gatewaySummary" ] && output "$serviceName (fw4 nft file mode) started with gateways:\\n${gatewaySummary}"
 		else
 			output "$serviceName FAILED TO START in fw4 nft file mode!!!"
