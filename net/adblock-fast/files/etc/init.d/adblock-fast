@@ -364,6 +364,7 @@ is_running() {
 	fi
 }
 ipset() { "$ipset" "$@" >/dev/null 2>&1; }
+get_ram_available() { ubus call system info | jsonfilter -e '@.memory.available'; }
 get_ram_free() { ubus call system info | jsonfilter -e '@.memory.free'; }
 get_ram_total() { ubus call system info | jsonfilter -e '@.memory.total'; }
 led_on(){ if [ -n "${1}" ] && [ -e "${1}/trigger" ]; then echo 'default-on' > "${1}/trigger" 2>&1; fi; }
@@ -1067,7 +1068,7 @@ cache() {
 		;;
 		create_gzip)
 			rm -f "$outputGzip" >/dev/null 2>/dev/null
-			R_TMP="$(mktemp -u -q -t ${packageName}_tmp.XXXXXXXX)"
+			R_TMP="$(mktemp -u -q -t "${packageName}_tmp.XXXXXXXX")"
 			if gzip < "$outputFile" > "$R_TMP"; then
 				if mv "$R_TMP" "$outputGzip"; then
 					rm -f "$R_TMP"
@@ -1130,7 +1131,7 @@ process_file_url() {
 		return 0
 	fi
 	while [ -z "$R_TMP" ] || [ -e "$R_TMP" ]; do
-		R_TMP="$(mktemp -u -q -t ${packageName}_tmp.XXXXXXXX)"
+		R_TMP="$(mktemp -u -q -t "${packageName}_tmp.XXXXXXXX")"
 	done
 	if [ -z "$url" ] || ! $dl_command "$url" "$dl_flag" "$R_TMP" 2>/dev/null || \
 		[ ! -s "$R_TMP" ]; then
@@ -1141,7 +1142,7 @@ process_file_url() {
 		append_newline "$R_TMP"
 		[ -n "$cfg" ] && new_size="$(get_local_filesize "$R_TMP")"
 		if [ -n "$new_size" ] && [ "$size" != "$new_size" ]; then
-			uci_set "$packageName" "$cfg" 'size' "$size"
+			uci_set "$packageName" "$cfg" 'size' "$new_size"
 		fi
 		format="$(detect_file_type "$R_TMP")"
 		case "$format" in
@@ -1182,7 +1183,7 @@ download_dnsmasq_file() {
 	json set status 'statusDownloading'
 
 	rm -f "$A_TMP" "$B_TMP" "$SED_TMP" "$outputFile" "$outputCache" "$outputGzip"
-	if [ "$(get_ram_free)" -lt 32 ]; then
+	if [ "$(get_ram_available)" -lt 32 ]; then
 		output 3 'Low free memory, restarting resolver '
 		if resolver 'quiet_restart'; then
 			output_okn
@@ -1211,6 +1212,7 @@ download_dnsmasq_file() {
 }
 
 download_lists() {
+# shellcheck disable=SC2317
 	_ram_check() {
 		_config_calculate_sizes() {
 			local cfg="$1"
@@ -1223,7 +1225,7 @@ download_lists() {
 			[ -n "$size" ] && total_sizes=$((total_sizes+size))
 		}
 		local i free_mem total_sizes
-		free_mem="$(get_ram_free)"
+		free_mem="$(get_ram_available)"
 		if [ -z "$free_mem" ]; then
 			json add warnning 'warningFreeRamCheckFail'
 			output "${_WARNING_}: $(get_text 'warningFreeRamCheckFail')!\\n"
@@ -1623,6 +1625,7 @@ adb_check() {
 }
 
 adb_check_lists() {
+# shellcheck disable=SC2317
 	_check_list() {
 		local cfg="$1"
 		local en size url R_TMP string c
@@ -1635,7 +1638,7 @@ adb_check_lists() {
 			output "[DL] $url $__FAIL__\\n"
 		fi
 		while [ -z "$R_TMP" ] || [ -e "$R_TMP" ]; do
-			R_TMP="$(mktemp -u -q -t ${packageName}_tmp.XXXXXXXX)"
+			R_TMP="$(mktemp -u -q -t "${packageName}_tmp.XXXXXXXX")"
 		done
 		if [ -z "$url" ] || ! $dl_command "$url" "$dl_flag" "$R_TMP" 2>/dev/null || \
 			[ ! -s "$R_TMP" ]; then
@@ -1671,6 +1674,7 @@ adb_check_lists() {
 }
 
 adb_config_update() {
+# shellcheck disable=SC2317
 	_cleanup_missing_urls() {
 		local cfg="$1" url size
 		config_get url "$cfg" url
@@ -1695,7 +1699,7 @@ adb_config_update() {
 	fi
 	output 1 'Updating config '
 	while [ -z "$R_TMP" ] || [ -e "$R_TMP" ]; do
-		R_TMP="$(mktemp -u -q -t ${packageName}_tmp.XXXXXXXX)"
+		R_TMP="$(mktemp -u -q -t "${packageName}_tmp.XXXXXXXX")"
 	done
 	if ! $dl_command "$config_update_url" "$dl_flag" "$R_TMP" 2>/dev/null || [ ! -s "$R_TMP" ]; then
 		append_newline "$R_TMP"
@@ -1726,6 +1730,7 @@ adb_show_blocklist() {
 }
 
 adb_sizes() {
+# shellcheck disable=SC2317
 	_config_add_url_size() {
 		local cfg="$1" url name size
 		config_get url "$cfg" url
