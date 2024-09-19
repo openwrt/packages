@@ -57,6 +57,7 @@ EOT
 fi
 
 # Transition from pre-1.1.7 versions
+# shellcheck disable=SC2317
 _remove_wg_server_client() {
 	local path
 	config_get path "$1" 'path'
