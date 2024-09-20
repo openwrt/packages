@@ -31,7 +31,6 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 | doh                 | public DoH-Provider            |         |         |    x    | tcp: 80, 443 | [Link](https://github.com/dibdot/DoH-IP-blocklists)          |
 | drop                | spamhaus drop compilation      |    x    |    x    |         |              | [Link](https://www.spamhaus.org)                             |
 | dshield             | dshield IP blocklist           |    x    |    x    |         |              | [Link](https://www.dshield.org)                              |
-| edrop               | spamhaus edrop compilation     |    x    |    x    |         |              | [Link](https://www.spamhaus.org)                             |
 | etcompromised       | ET compromised hosts           |    x    |    x    |         |              | [Link](https://iplists.firehol.org/?ipset=et_compromised)    |
 | feodo               | feodo tracker                  |    x    |    x    |         |              | [Link](https://feodotracker.abuse.ch)                        |
 | firehol1            | firehol level 1 compilation    |    x    |    x    |         |              | [Link](https://iplists.firehol.org/?ipset=firehol_level1)    |
