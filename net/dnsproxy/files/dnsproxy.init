@@ -42,8 +42,6 @@ append_param_bool() {
 }
 
 load_config_arg() {
-	append_param_bool "$1" "all_servers"
-	append_param_bool "$1" "fastest_addr"
 	append_param_bool "$1" "http3"
 	append_param_bool "$1" "insecure"
 	append_param_bool "$1" "ipv6_disabled"
@@ -82,10 +80,11 @@ load_config_list() {
 
 load_config_param() {
 	append_param_arg "global" "log_file" "--output"
-	append_param_arg "global" "timeout" "--timeout"
 	append_param_arg "global" "max_go_routines" "--max-go-routines"
 	append_param_arg "global" "rate_limit" "--ratelimit"
+	append_param_arg "global" "timeout" "--timeout"
 	append_param_arg "global" "udp_buf_size" "--udp-buf-size"
+	append_param_arg "global" "upstream_mode" "--upstream-mode"
 
 	append_param_arg "hosts" "enabled" "--hosts-file-enabled" "0"
 
