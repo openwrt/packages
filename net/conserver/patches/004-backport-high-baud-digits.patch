@@ -1,0 +1,36 @@
+From 1a961cdf18e2de6240c78f127029f76b147226fc Mon Sep 17 00:00:00 2001
+From: "Bjoern A. Zeeb" <patch@zabbadoz.net>
+Date: Fri, 16 Jul 2021 16:28:15 +0000
+Subject: [PATCH] conserver: reflect that baud values have increased to 7
+ digits
+
+When having "examine" print baud/parity increase the maximum string
+width from 6 to 7 digits.  And while here try to indicate more baud
+values in the manual going up to 4000000.
+---
+ conserver.cf/conserver.cf.man.in | 2 +-
+ conserver/group.c                | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+--- a/conserver.cf/conserver.cf.man.in
++++ b/conserver.cf/conserver.cf.man.in
+@@ -468,7 +468,7 @@ all consoles have an implicit ``include
+ of their definition).
+ .RS
+ .TP
+-\f3baud\fP \f3300\fP|\f3600\fP|\f31800\fP|\f32400\fP|\f34800\fP|\f39600\fP|\f319200\fP|\f338400\fP|\f357600\fP|\f3115200\fP
++\f3baud\fP \f3300\fP|\f3600\fP|\f31800\fP|\f32400\fP|\f34800\fP|\f39600\fP|\f319200\fP|\f338400\fP|\f357600\fP|\f3115200\fP|..|\f34000000\fP
+ .br
+ Assign the baud rate to the console.
+ Only consoles of type ``device'' will use this value.
+--- a/conserver/group.c
++++ b/conserver/group.c
+@@ -2210,7 +2210,7 @@ CommandExamine(GRPENT *pGE, CONSCLIENT *
+ 		break;
+ 	}
+ 	FilePrint(pCLServing->fd, FLAGFALSE,
+-		  " %-24.24s on %-32.32s at %6.6s%c\r\n", pCE->server, d,
++		  " %-24.24s on %-32.32s at %7.7s%c\r\n", pCE->server, d,
+ 		  b, p);
+ 	if (args != (char *)0)
+ 	    break;

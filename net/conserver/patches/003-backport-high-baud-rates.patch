@@ -1,0 +1,62 @@
+From e7ca230c2239735d1b4c05747da8efbbae2fb547 Mon Sep 17 00:00:00 2001
+From: Peter Chubb <Peter.Chubb@data61.csiro.au>
+Date: Tue, 16 Mar 2021 10:31:27 +1100
+Subject: [PATCH] Conserver-server: Add high baud rates
+
+Linux (and others) allow higher baud rates than POSIX.
+Add the definitions so that baud rates up to 4Mb/s are recognised
+and can be used.
+
+Signed-off-by: Peter Chubb <peter.chubb@data61.csiro.au>
+---
+ conserver/consent.c | 39 +++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 39 insertions(+)
+
+--- a/conserver/consent.c
++++ b/conserver/consent.c
+@@ -86,6 +86,45 @@ BAUD baud[] = {
+     {"3500000", 32},
+     {"4000000", 33},
+ #else /* FOR_CYCLADES_TS */
++# if defined(B4000000)
++    {"4000000", B4000000},
++# endif
++# if defined(B3500000)
++    {"3500000", B3500000},
++# endif
++# if defined(B3000000)
++    {"3000000", B3000000},
++# endif
++# if defined(B2500000)
++    {"2500000", B2500000},
++# endif
++# if defined(B2000000)
++    {"2000000", B2000000},
++# endif
++# if defined(B1500000)
++    {"1500000", B1500000},
++# endif
++# if defined(B1152000)
++    {"1152000", B1152000},
++# endif
++# if defined(B1000000)
++    {"1000000", B1000000},
++# endif
++# if defined(B921600)
++    {"921600", B921600},
++# endif
++# if defined(B576000)
++    {"576000", B576000},
++# endif
++# if defined(B500000)
++    {"500000", B500000},
++# endif
++# if defined(B460800)
++    {"460800", B460800},
++# endif
++# if defined(B230400)
++    {"230400", B230400},
++# endif
+ # if defined(B115200)
+     {"115200", B115200},
+ # endif
