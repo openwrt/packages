@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2020 Jerônimo Cordoni Pellegrini <j_p@aleph0.info>
+# Copyright (C) 2019-2024 Jerônimo Pellegrini <j_p@aleph0.info>
 #
 # This file is free software, licensed under the GNU General Public License v3
 # or later.
@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=chicken-scheme
-PKG_VERSION:=5.2.0
-PKG_RELEASE:=2
+PKG_VERSION:=5.4.0
+PKG_RELEASE:=1
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/chicken-$(PKG_VERSION)
 PKG_SOURCE:=chicken-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://code.call-cc.org/releases/$(PKG_VERSION)/
-PKG_HASH:=819149c8ce7303a9b381d3fdc1d5765c5f9ac4dee6f627d1652f47966a8780fa
+PKG_HASH:=3c5d4aa61c1167bf6d9bf9eaf891da7630ba9f5f3c15bf09515a7039bfcdec5f
 PKG_MAINTAINER:=Jeronimo Pellegrini <j_p@aleph0.info>
 
 PKG_LICENSE:=BSD-3-Clause
@@ -30,9 +30,12 @@ define Package/chicken-scheme/Default
   ABI_VERSION:=11
 endef
 
-##
-## chicken-scheme-interpreter
-##
+
+###############################
+###
+### chicken-scheme-interpreter
+###
+###############################
 
 define Package/chicken-scheme-interpreter
 $(call Package/chicken-scheme/Default)
@@ -73,10 +76,15 @@ $(eval $(call BuildPackage,chicken-scheme-interpreter))
 
 
 
-##
-## chicken-scheme-full
-##
+########################
+###
+### chicken-scheme-full
+###
+########################
 
+## ABOUT NOT STRIPPING THE BINARIES:
+## --------------------------------
+#
 # mips-openwrt-linux-musl-gcc dowsn't seem to link with libchicken.so.
 # already tried -lchicken and passing /usr/lib/libchicken.so on the command
 # line.
@@ -84,16 +92,17 @@ $(eval $(call BuildPackage,chicken-scheme-interpreter))
 #
 # current solution: we do not strip binaries in chicken-scheme-full
 # we do this by unsetting STRIP and RSTRIP, *and* reloading rules.mk
-#
+# Here:
 STRIP:=:
 RSTRIP:=:
+
 include $(TOPDIR)/rules.mk
 
 define Package/chicken-scheme-full
 $(call Package/chicken-scheme/Default)
   TITLE+=full package
   # csc depends on gcc; chicken-install uses the 'install' command from coreutils
-  DEPENDS:=gcc coreutils-install
+  DEPENDS:=+gcc +coreutils-install
 endef
 
 define Package/chicken-scheme-full/description
