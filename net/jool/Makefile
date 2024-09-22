@@ -102,7 +102,7 @@ endef
 define Package/jool-tools-netfilter
   $(call Package/jool/Default)
   TITLE:=Jool userspace control programs
-  DEPENDS:=+libnl +kmod-jool-netfilter
+  DEPENDS:=+libnl +libnl-genl +kmod-jool-netfilter
 endef
 
 define Package/jool-tools-netfilter/description
