@@ -102,7 +102,7 @@ endef
 define Package/jool-tools-netfilter
   $(call Package/jool/Default)
   TITLE:=Jool userspace control programs
-  DEPENDS:=+libnl +libnl-genl +kmod-jool-netfilter
+  DEPENDS:=+libnl +libnl-genl +kmod-jool-netfilter +ethtool
 endef
 
 define Package/jool-tools-netfilter/description
@@ -134,6 +134,9 @@ define Package/jool-tools-netfilter/install
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/jool.init $(1)/etc/init.d/jool
+
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/net
+	$(INSTALL_BIN) ./files/jool-disable-fraglist-gro.sh $(1)/etc/hotplug.d/net/90-jool-disable-fraglist-gro.sh
 
 	$(INSTALL_DIR) $(1)/etc/jool
 	$(INSTALL_CONF) ./files/jool-nat64.conf.json $(1)/etc/jool/jool-nat64.conf.json
