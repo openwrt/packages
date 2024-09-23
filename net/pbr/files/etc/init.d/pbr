@@ -1664,7 +1664,7 @@ interface_routing() {
 							try ip -4 route add $i table "$tid" >/dev/null 2>&1 || ipv4_error=1
 						fi
 					done << EOF
-					$(ip -4 route list table main)
+					$(ip -4 route list table main proto static)
 EOF
 					try ip -4 rule add fwmark "${mark}/${fw_mask}" table "$tid" priority "$priority" || ipv4_error=1
 					try nft add chain inet "$nftTable" "${nftPrefix}_mark_${mark}" || ipv4_error=1 
