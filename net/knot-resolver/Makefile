@@ -21,6 +21,11 @@ PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=GPL-3.0-later
 PKG_LICENSE_FILES:=COPYING
 
+PKG_CONFIG_DEPENDS := \
+	CONFIG_PACKAGE_knot-resolver_dnstap
+
+PKG_BUILD_DEPENDS += PACKAGE_knot-resolver_dnstap:libprotobuf
+
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/meson.mk
 
