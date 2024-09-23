@@ -64,10 +64,6 @@ load_config_list() {
 
 	is_empty "bogus_nxdomain" "ip_addr" || config_list_foreach "bogus_nxdomain" "ip_addr" "append_param '--bogus-nxdomain'"
 
-	is_enabled "hosts" "enabled" && {
-		config_list_foreach "hosts" "hosts_files" "append_param '--hosts-files'"
-	}
-
 	is_enabled "private_rdns" "enabled" && {
 		append_param "--use-private-rdns"
 		config_list_foreach "private_rdns" "upstream" "append_param '--private-rdns-upstream'"
@@ -85,8 +81,6 @@ load_config_param() {
 	append_param_arg "global" "timeout" "--timeout"
 	append_param_arg "global" "udp_buf_size" "--udp-buf-size"
 	append_param_arg "global" "upstream_mode" "--upstream-mode"
-
-	append_param_arg "hosts" "enabled" "--hosts-file-enabled" "0"
 
 	is_enabled "cache" "enabled" && {
 		append_param "--cache"
@@ -132,6 +126,12 @@ start_service() {
 	load_config_list
 	load_config_param
 
+	# This must be set at last, all other options set after this will be ignored
+	is_enabled "hosts" "enabled" && {
+		append_param "--hosts-file-enabled" "true"
+		config_list_foreach "hosts" "hosts_files" "append_param '--hosts-files'"
+	} || append_param "--hosts-file-enabled" "false"
+
 	procd_set_param respawn
 	procd_set_param stdout 1
 	procd_set_param stderr 1
@@ -139,17 +139,14 @@ start_service() {
 
 	procd_add_jail dnsproxy ronly log
 	procd_set_param capabilities "/etc/capabilities/dnsproxy.json"
+	procd_add_jail_mount "/etc/hosts"
 	procd_add_jail_mount "/etc/ssl/certs/ca-certificates.crt"
 	[ -z "$log_file" ] || procd_add_jail_mount_rw "$log_file"
 	[ -z "$tls_crt" ] || procd_add_jail_mount "$tls_crt"
 	[ -z "$tls_key" ] || procd_add_jail_mount "$tls_key"
+	is_enabled "hosts" "enabled" && config_list_foreach "hosts" "hosts_files" "procd_add_jail_mount"
 
 	procd_close_instance
-}
-
-reload_service() {
-	stop
-	start
 }
 
 service_triggers() {
