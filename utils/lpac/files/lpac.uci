@@ -1,0 +1,13 @@
+config global global
+	option		apdu_backend	'uqmi'
+	option		http_backend	'curl'
+	option		apdu_debug	'0'
+	option		http_debug	'0'
+
+config at at
+	option		device		'/dev/ttyUSB2'
+	option		debug		'0'
+
+config uqmi uqmi
+	option		device		'/dev/cdc-wdm0'
+	option		debug		'0'
