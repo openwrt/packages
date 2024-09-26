@@ -308,45 +308,73 @@ modemmanager_set_allowed_mode() {
 	}
 }
 
+modemmanager_check_state_failed() {
+	local device="$1"
+	local interface="$2"
+	local modemstatus="$3"
+
+	local reason
+
+	reason="$(modemmanager_get_field "${modemstatus}" "modem.generic.state-failed-reason")"
+
+	case "$reason" in
+		"sim-missing")
+			echo "SIM missing"
+			proto_notify_error "${interface}" MM_FAILED_REASON_SIM_MISSING
+			proto_block_restart "${interface}"
+			return 1
+			;;
+		*)
+			proto_notify_error "${interface}" MM_FAILED_REASON_UNKNOWN
+			proto_block_restart "${interface}"
+			return 1
+			;;
+	esac
+}
+
+modemmanager_check_state_locked() {
+	local device="$1"
+	local interface="$2"
+	local modemstatus="$3"
+	local pincode="$4"
+
+	if [ -n "$pincode" ]; then
+		mmcli --modem="${device}" -i any --pin=${pincode} || {
+			proto_notify_error "${interface}" MM_PINCODE_WRONG
+			proto_block_restart "${interface}"
+			return 1
+		}
+		return 0
+	else
+		echo "PIN required"
+		proto_notify_error "${interface}" MM_PINCODE_REQUIRED
+		proto_block_restart "${interface}"
+		return 1
+	fi
+}
+
 modemmanager_check_state() {
 	local device="$1"
 	local modemstatus="$2"
 	local pincode="$3"
 
-	local state reason
+	local state
 
 	state="$(modemmanager_get_field "${modemstatus}" "modem.generic.state")"
 
 	case "$state" in
 		"failed")
-			reason="$(modemmanager_get_field "${modemstatus}" "modem.generic.state-failed-reason")"
-			case "$reason" in
-				"sim-missing")
-					echo "SIM missing"
-					proto_notify_error "${interface}" MM_FAILED_REASON_SIM_MISSING
-					proto_block_restart "${interface}"
-					return 1
-					;;
-				*)
-					proto_notify_error "${interface}" MM_FAILED_REASON_UNKNOWN
-					proto_block_restart "${interface}"
-					return 1
-					;;
-			esac
+			modemmanager_check_state_failed "$device" \
+				"$interface" \
+				"$modemstatus"
+			[ "$?" -ne "0" ] && return 1
 			;;
 		"locked")
-			if [ -n "$pincode" ]; then
-				mmcli --modem="${device}" -i any --pin=${pincode} || {
-					proto_notify_error "${interface}" MM_PINCODE_WRONG
-					proto_block_restart "${interface}"
-					return 1
-				}
-			else
-				echo "PIN required"
-				proto_notify_error "${interface}" MM_PINCODE_REQUIRED
-				proto_block_restart "${interface}"
-				return 1
-			fi
+			modemmanager_check_state_locked "$device" \
+				"$interface" \
+				"$modemstatus" \
+				"$pincode"
+			[ "$?" -ne "0" ] && return 1
 			;;
 	esac
 }
