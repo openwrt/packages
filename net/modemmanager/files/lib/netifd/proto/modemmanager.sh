@@ -315,12 +315,11 @@ modemmanager_check_state() {
 
 	local state reason
 
-	state="$(modemmanager_get_field "${modemstatus}" "state")"
-	state="${state%% *}"
-	reason="$(modemmanager_get_field "${modemstatus}" "state-failed-reason")"
+	state="$(modemmanager_get_field "${modemstatus}" "modem.generic.state")"
 
 	case "$state" in
 		"failed")
+			reason="$(modemmanager_get_field "${modemstatus}" "modem.generic.state-failed-reason")"
 			case "$reason" in
 				"sim-missing")
 					echo "SIM missing"
