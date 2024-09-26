@@ -338,19 +338,20 @@ modemmanager_check_state_locked() {
 	local modemstatus="$3"
 	local pincode="$4"
 
-	if [ -n "$pincode" ]; then
-		mmcli --modem="${device}" -i any --pin=${pincode} || {
-			proto_notify_error "${interface}" MM_PINCODE_WRONG
-			proto_block_restart "${interface}"
-			return 1
-		}
-		return 0
-	else
+	if [ -z "$pincode" ]; then
 		echo "PIN required"
 		proto_notify_error "${interface}" MM_PINCODE_REQUIRED
 		proto_block_restart "${interface}"
 		return 1
 	fi
+
+	mmcli --modem="${device}" -i any --pin=${pincode} || {
+		proto_notify_error "${interface}" MM_PINCODE_WRONG
+		proto_block_restart "${interface}"
+		return 1
+	}
+
+	return 0
 }
 
 modemmanager_check_state() {
