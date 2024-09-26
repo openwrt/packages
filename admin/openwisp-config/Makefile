@@ -5,15 +5,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openwisp-config
-PKG_RELEASE:=2
+PKG_VERSION:=1.1.0
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Federico Capoano <f.capoano@openwisp.io>
 PKG_LICENSE:=GPL-3.0-or-later
 
 PKG_SOURCE_URL:=https://github.com/openwisp/openwisp-config.git
-PKG_MIRROR_HASH:=7daa10a9d170e665f33a5555a246b4da2223c2d8d0e8a047edb01701c8886986
+PKG_MIRROR_HASH:=18aac13395b2b78d87a50bcc9ab962ff12ab041ec032c214c34d3de3ac67f10a
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=1.0.1
+PKG_SOURCE_VERSION:=$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 
