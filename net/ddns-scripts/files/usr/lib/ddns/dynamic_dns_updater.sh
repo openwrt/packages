@@ -149,7 +149,7 @@ trap "trap_handler 15" 15	# SIGTERM	Termination
 # ip_source	source to detect current IP ('network' or 'web' or 'script' or 'interface')
 # ip_network	local defined network to read IP from i.e. 'wan' or 'wan6'
 # ip_url	URL to read current IP from i.e. http://checkip.dyndns.com/ or http://checkipv6.dyndns.com/
-# ip_script	full path and name of your script to detect current IP
+# ip_script	either full path and name of your script or single (Ash-compatible) statement to detect current IP
 # ip_interface	physical interface to use for detecting
 #
 # check_interval	check for changes every  !!! checks below 10 minutes make no sense because the Internet
@@ -282,7 +282,8 @@ esac
 if [ "$ip_source" = "script" ]; then
 	set -- $ip_script	#handling script with parameters, we need a trick
 	[ -z "$1" ] && write_log 14 "No script defined to detect current IP!"
-	[ -x "$1" ] || write_log 14 "Script to detect current IP not executable!"
+	[ -f "$1" -a ! -x "$1" ] && write_log 14 "Script to detect current IP not executable!"
+	[ ! -f "$1" ] && ( command -v "$1" > /dev/null 2>&1 || write_log 14 "Script to detect current IP: File or command not found!" )
 fi
 
 # compute update interval in seconds
