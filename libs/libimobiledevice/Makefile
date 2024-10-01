@@ -12,9 +12,9 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/libimobiledevice/libimobiledevice.git
-PKG_SOURCE_DATE:=2024-05-20
-PKG_SOURCE_VERSION:=9ccc52222c287b35e41625cc282fb882544676c6
-PKG_MIRROR_HASH:=9d272d40515c5ba6be5fa22eb897724d8940a505163918120c005bbeed352475
+PKG_SOURCE_DATE:=2024-09-16
+PKG_SOURCE_VERSION:=ed9703db1ee6d54e3801b618cee9524563d709e1
+PKG_MIRROR_HASH:=f49a6e22e9cc5ac085decdcf783ded3e3fbf0adc4bdd9c8e1689068c58c0c668
 
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -41,7 +41,7 @@ define Package/libimobiledevice
   $(call Package/libimobiledevice/Default)
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libplist +libimobiledevice-glue +libusbmuxd +libopenssl
+  DEPENDS:=+libplist +libimobiledevice-glue +libtatsu +libusbmuxd +libopenssl
   LICENSE:=LGPL-2.1-or-later
   LICENSE_FILES:=COPYING.LESSER
 endef
@@ -56,7 +56,7 @@ define Package/libimobiledevice-utils
   CATEGORY:=Utilities
   DEPENDS:=+libimobiledevice
   LICENSE:=GPL-2.0-or-later
-  ICENSE_FILES:=COPYING
+  LICENSE_FILES:=COPYING
 endef
 
 define Package/libimobiledevice-utils/description
