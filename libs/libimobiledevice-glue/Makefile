@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libimobiledevice-glue
-PKG_VERSION:=1.2.0
+PKG_VERSION:=1.3.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://github.com/libimobiledevice/libimobiledevice-glue/releases/download/$(PKG_VERSION)
-PKG_HASH:=ff9cbc240c9780edfa43914a057b86362054053721b65fb04f54a25023b92b62
+PKG_HASH:=96ec4eb2b1e217392149eafb2b5c3cd3e7110200f0e2bb5003c37d3ead7244ef
 
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -22,28 +22,18 @@ PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/libimobiledevice-glue/Default
-  TITLE:=Common code used by libimobiledevice.
-  URL:=https://www.libimobiledevice.org/
-  SUBMENU:=libimobiledevice
-endef
-
-define Package/libimobiledevice-glue/Default/description
-  libimobiledevice-glue is a library with common code used by the
-  libraries and tools around the libimobiledevice project.
-endef
-
 define Package/libimobiledevice-glue
-  $(call Package/libimobiledevice-glue/Default)
   SECTION:=libs
   CATEGORY:=Libraries
+  SUBMENU:=libimobiledevice
+  TITLE:=Common code used by libimobiledevice.
+  URL:=https://www.libimobiledevice.org/
   DEPENDS:=+libplist
-  LICENSE:=LGPL-2.1-or-later
-  LICENSE_FILES:=COPYING
 endef
 
 define Package/libimobiledevice-glue/description
-  $(call Package/libimobiledevice-glue/Default/description)
+  libimobiledevice-glue is a library with common code used by the
+  libraries and tools around the libimobiledevice project.
 endef
 
 CONFIGURE_ARGS += \
