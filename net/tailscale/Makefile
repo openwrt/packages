@@ -15,7 +15,8 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/tailscale/tailscale/tar.gz/v$(PKG_VERSION)?
 PKG_HASH:=ef7b8a76ce81133dc10f243d733302c070232cdd6594b685c6adbf32769d4f2c
 
-PKG_MAINTAINER:=Zephyr Lykos <self@mochaa.ws>
+PKG_MAINTAINER:=Zephyr Lykos <self@mochaa.ws>, \
+		Sandro Jäckel <sandro.jaeckel@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 
