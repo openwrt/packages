@@ -14,7 +14,7 @@ USE_PROCD=1
 
 readonly packageName='pbr'
 readonly PKG_VERSION='dev-test'
-readonly packageCompat='7'
+readonly packageCompat='8'
 readonly serviceName="$packageName $PKG_VERSION"
 readonly packageConfigFile="/etc/config/${packageName}"
 readonly packageLockFile="/var/run/${packageName}.lock"
@@ -460,7 +460,6 @@ get_text() {
 	local r
 	case "$1" in
 		errorConfigValidation) r="Config ($packageConfigFile) validation failure!";;
-		errorNoIpFull) r="ip-full binary cannot be found!";;
 		errorNoNft) r="Resolver set support (${resolver_set}) requires nftables, but nft binary cannot be found!";;
 		errorResolverNotSupported) r="Resolver set (${resolver_set}) is not supported on this system!";;
 		errorServiceDisabled) r="The ${packageName} service is currently disabled!";;
@@ -498,6 +497,9 @@ get_text() {
 		errorNoDownloadWithSecureReload) r="Policy '%s' refers to URL which can't be downloaded in 'secure_reload' mode!";;
 		errorFileSchemaRequiresCurl) r="The file:// schema requires curl, but it's not detected on this system!";;
 		errorIncompatibleUserFile) r="Incompatible custom user file detected '%s'!";;
+		errorDefaultFw4TableMissing) r="Default fw4 table '%s' is missing!";;
+		errorDefaultFw4ChainMissing) r="Default fw4 chain '%s' is missing!";;
+		errorRequiredBinaryMissing) r="Required binary '%s' is missing!";;
 		warningInvalidOVPNConfig) r="Invalid OpenVPN config for '%s' interface.";;
 		warningResolverNotSupported) r="Resolver set (${resolver_set}) is not supported on this system.";;
 		warningPolicyProcessCMD) r="'%s'";;
@@ -617,10 +619,31 @@ load_package_config() {
 		${nft_set_timeout:+ timeout "$nft_set_timeout";} \
 		"
 
-	resolver 'check_support' && resolver 'configure_instances'
 }
 
 load_environment() {
+	_system_health_check() {
+		local i
+		# TODO: implement ip-full check
+		# state add 'errorSummary' 'errorRequiredBinaryMissing' 'ip-full'
+		if ! nft_call list table inet fw4; then
+			state add 'errorSummary' 'errorDefaultFw4TableMissing' 'fw4'
+			return 1
+		fi
+		if is_config_enabled 'dns_policy'; then
+			if ! nft_call list chain inet fw4 dstnat_lan; then
+				state add 'errorSummary' 'errorDefaultFw4ChainMissing' 'dstnat_lan'
+				return 1
+			fi
+		fi
+		for i in $chainsList; do
+			if ! nft_call list chain inet fw4 "mangle_${i}"; then
+				state add 'errorSummary' 'errorDefaultFw4ChainMissing' "mangle_${i}"
+				return 1
+			fi
+		done
+		return 0
+	}
 	local param="$1" validation_result="$2"
 	load_package_config "$param"
 	case "$param" in
@@ -635,11 +658,7 @@ load_environment() {
 				state add 'errorSummary' 'errorConfigValidation'
 				return 1
 			fi
-			# TODO: implement ip-full check
-#			if [ ! -x ip ]; then
-#				state add 'errorSummary' 'errorNoIpFull'
-#				return 1
-#			fi
+			_system_health_check || return 1
 			if [ "$(uci_get 'firewall' 'defaults' 'auto_includes')" = '0' ]; then
 				uci_remove 'firewall' 'defaults' 'auto_includes'
 				uci_commit firewall
@@ -649,6 +668,7 @@ load_environment() {
 			:
 		;;
 	esac
+	resolver 'check_support' && resolver 'configure_instances'
 	load_network "$param"
 }
 
@@ -692,7 +712,6 @@ load_network() {
 
 is_wan_up() {
 	local sleepCount='1' param="$1"
-	load_network "$param"
 	[ "$procd_wan_ignore_status" -eq '0' ] || return 0
 	[ "$param" = 'on_boot' ] || procd_boot_timeout='1'
 	if [ -z "$(uci_get network "$procd_wan_interface")" ]; then
@@ -1664,8 +1683,9 @@ interface_routing() {
 							try ip -4 route add $i table "$tid" >/dev/null 2>&1 || ipv4_error=1
 						fi
 					done << EOF
-					$(ip -4 route list table main proto static)
+					$(ip -4 route list table main)
 EOF
+#					$(ip -4 route list table main proto static)
 					try ip -4 rule add fwmark "${mark}/${fw_mask}" table "$tid" priority "$priority" || ipv4_error=1
 					try nft add chain inet "$nftTable" "${nftPrefix}_mark_${mark}" || ipv4_error=1 
 					try nft add rule inet "$nftTable" "${nftPrefix}_mark_${mark} ${nft_rule_params} mark set mark and ${fw_maskXor} xor ${mark}" || ipv4_error=1
