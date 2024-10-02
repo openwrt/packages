@@ -127,7 +127,7 @@ main() {
 		mm_log "info" "Checking if ModemManager is available..."
 
 		if ! /usr/bin/mmcli -L >/dev/null 2>&1; then
-			mm_log "info" "ModemManager not yet available"
+			mm_log "info" "ModemManager not yet available (count=${n})"
 		else
 			mmrunning=1
 			break
