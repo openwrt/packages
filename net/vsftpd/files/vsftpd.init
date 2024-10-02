@@ -2,12 +2,15 @@
 # Copyright (C) 2006-2011 OpenWrt.org
 
 START=50
+USE_PROCD=1
+BIN=vsftpd
 
-start() {
-	mkdir -m 0755 -p /var/run/vsftpd
-	service_start /usr/sbin/vsftpd
-}
+start_service() {
+	procd_open_instance
 
-stop() {
-	service_stop /usr/sbin/vsftpd
+	procd_add_mdns "ftp" "tcp" "21" "daemon=vsftpd"
+
+	procd_set_param command $BIN
+	procd_set_param respawn
+	procd_close_instance
 }
