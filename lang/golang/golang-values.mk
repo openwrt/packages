@@ -59,11 +59,13 @@ unexport \
 # Architecture-specific environment variables:
 unexport \
   GOARM \
+  GOARM64 \
   GO386 \
   GOAMD64 \
   GOMIPS \
   GOMIPS64 \
   GOPPC64 \
+  GORISCV64 \
   GOWASM
 
 # Environment variables for use with code coverage:
