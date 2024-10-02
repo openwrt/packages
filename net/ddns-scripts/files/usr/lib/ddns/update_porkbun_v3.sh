@@ -62,7 +62,7 @@ function api_call() {
 	response=$($CURL --data "$2" "$url")
 	write_log 7 "API response JSON payload: $response"
 	echo "$response"
-
+}
 
 # Check Porkbun API response status
 function json_check_status() {
