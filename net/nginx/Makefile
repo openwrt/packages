@@ -37,7 +37,8 @@ PKG_MOD_EXTRA := \
 	brotli \
 	headers-more \
 	ts \
-	ubus
+	ubus \
+	njs
 # official and 3rd-party modules
 PKG_MOD_ALL := \
 	$(PKG_MOD_EXTRA) \
@@ -254,7 +255,6 @@ define Download/nginx-mod-headers-more
   PROTO:=git
 endef
 
-
 define Download/nginx-mod-brotli
   SOURCE_DATE:=2020-04-23
   VERSION:=25f86f0bac1101b6512135eac5f93c49c63609e3
@@ -324,6 +324,14 @@ define Download/nginx-mod-ubus
   VERSION:=b2d7260dcb428b2fb65540edb28d7538602b4a26
   URL:=https://github.com/Ansuel/nginx-ubus-module.git
   MIRROR_HASH:=515bb9d355ad80916f594046a45c190a68fb6554d6795a54ca15cab8bdd12fda
+  PROTO:=git
+endef
+
+define Download/nginx-mod-njs
+  SOURCE_DATE:=2024-10-03
+  VERSION:=c5a29a7af8894ee1ec44ebda71ef0ea1f2a31af6
+  URL:=https://github.com/nginx/njs.git
+  MIRROR_HASH:=69bc424d4bfd8b7a0a70feeb4787ff8b503ac893fb730f07f3244e35fde876e4
   PROTO:=git
 endef
 
@@ -473,7 +481,8 @@ CONFIGURE_ARGS += \
 	$(if $(CONFIG_PACKAGE_nginx-mod-stream),--with-stream=dynamic --with-stream_ssl_module --with-stream_ssl_preread_module) \
 	$(if $(call IsEnabled,NGINX_STREAM_REAL_IP),--with-stream_realip_module) \
 	$(if $(CONFIG_PACKAGE_nginx-mod-naxsi),--add-dynamic-module=$(PKG_BUILD_DIR)/nginx-mod-naxsi/naxsi_src) \
-	$(foreach m,$(filter-out lua-resty-core lua-resty-lrucache naxsi,$(PKG_MOD_EXTRA)), \
+	$(if $(CONFIG_PACKAGE_nginx-mod-njs),--add-dynamic-module=$(PKG_BUILD_DIR)/nginx-mod-njs/nginx) \
+	$(foreach m,$(filter-out lua-resty-core lua-resty-lrucache naxsi njs,$(PKG_MOD_EXTRA)), \
 		$(if $(CONFIG_PACKAGE_nginx-mod-$(m)),--add-dynamic-module=$(PKG_BUILD_DIR)/nginx-mod-$(m)))
 
 $(eval $(call BuildPackage,nginx-ssl))
@@ -501,6 +510,8 @@ $(eval $(call BuildModule,naxsi,,ngx_http_naxsi, \
 	Enable NAXSI module.))
 $(eval $(call BuildModule,geoip2,+@NGINX_STREAM_CORE_MODULE +nginx-mod-stream +libmaxminddb,ngx_http_geoip2 ngx_stream_geoip2, \
 	Enable MaxMind GeoIP2 module.))
+$(eval $(call BuildModule,njs,+zlib +libxml2 +libxslt +libpcre2,ngx_http_js, \
+	Enable NJS module.))
 
 # TODO: remove after a transition period (together with pkg nginx-util):
 # It is for smoothly substituting nginx and nginx-mod-luci-ssl (by nginx-ssl
