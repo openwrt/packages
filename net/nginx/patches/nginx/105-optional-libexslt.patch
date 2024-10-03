@@ -1,0 +1,29 @@
+--- a/auto/options
++++ b/auto/options
+@@ -165,6 +165,7 @@ USE_PERL=NO
+ NGX_PERL=perl
+ 
+ USE_LIBXSLT=NO
++USE_LIBEXSLT=NO
+ USE_LIBGD=NO
+ USE_GEOIP=NO
+ 
+@@ -370,6 +371,7 @@ use the \"--with-mail_ssl_module\" optio
+         --with-pcre-opt=*)               PCRE_OPT="$value"          ;;
+         --with-pcre-jit)                 PCRE_JIT=YES               ;;
+         --without-pcre2)                 PCRE2=DISABLED             ;;
++        --with-libexslt)                 USE_LIBEXSLT=YES           ;;
+ 
+         --with-openssl=*)                OPENSSL="$value"           ;;
+         --with-openssl-opt=*)            OPENSSL_OPT="$value"       ;;
+--- a/auto/lib/libxslt/conf
++++ b/auto/lib/libxslt/conf
+@@ -156,7 +156,7 @@ if [ $ngx_found = no ]; then
+ fi
+ 
+ 
+-if [ $ngx_found = yes ]; then
++if [ $ngx_found = yes ] && [ $USE_LIBEXSLT = "YES" ]; then
+     if [ $USE_LIBXSLT = YES ]; then
+         CORE_LIBS="$CORE_LIBS -lexslt"
+     fi
