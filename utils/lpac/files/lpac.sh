@@ -2,32 +2,18 @@
 
 . /lib/config/uci.sh
 
-APDU_BACKEND="$(uci_get lpac global apdu_backend uqmi)"
-APDU_DEBUG="$(uci_get lpac global apdu_debug 0)"
+: "${LPAC_APDU=$(uci_get lpac global apdu_backend)}"; export LPAC_APDU
+LIBEUICC_DEBUG_APDU="$(uci_get lpac global apdu_debug)" && export LIBEUICC_DEBUG_APDU
 
-HTTP_BACKEND="$(uci_get lpac global http_backend curl)"
-HTTP_DEBUG="$(uci_get lpac global http_debug 0)"
-
-export LPAC_HTTP="$HTTP_BACKEND"
-if [ "$HTTP_DEBUG" -eq 1 ]; then
-    export LIBEUICC_DEBUG_HTTP="1"
+if [ "$LPAC_APDU" = "at" ]; then
+    export AT_DEVICE="$(uci_get lpac at device)"
+    AT_DEBUG="$(uci_get lpac at debug)" && export AT_DEBUG
+elif [ "$LPAC_APDU" = "uqmi" ]; then
+    export LPAC_QMI_DEV="$(uci_get lpac uqmi device)"
+    LPAC_QMI_DEBUG="$(uci_get lpac uqmi debug)" && export LPAC_QMI_DEBUG
 fi
 
-export LPAC_APDU="$APDU_BACKEND"
-if [ "$APDU_DEBUG" -eq 1 ]; then
-    export LIBEUICC_DEBUG_APDU="1"
-fi
+export LPAC_HTTP="$(uci_get lpac global http_backend)"
+LIBEUICC_DEBUG_HTTP="$(uci_get lpac global http_debug)" && export LIBEUICC_DEBUG_HTTP
 
-if [ "$APDU_BACKEND" = "at" ]; then
-    AT_DEVICE="$(uci_get lpac at device /dev/ttyUSB2)"
-    AT_DEBUG="$(uci_get lpac at debug 0)"
-    export AT_DEVICE="$AT_DEVICE"
-    export AT_DEBUG="$AT_DEBUG"
-elif [ "$APDU_BACKEND" = "uqmi" ]; then
-    UQMI_DEV="$(uci_get lpac uqmi device /dev/cdc-wdm0)"
-    UQMI_DEBUG="$(uci_get lpac uqmi debug 0)"
-    export LPAC_QMI_DEV="$UQMI_DEV"
-    export LPAC_QMI_DEBUG="$UQMI_DEBUG"
-fi
-
-/usr/lib/lpac "$@"
+exec /usr/lib/lpac "$@"
