@@ -995,7 +995,7 @@ cleanup_rt_tables() {
 
 cleanup_main_chains() {
 	local i j
-	for i in $chainsList dstnat_lan; do
+	for i in $chainsList dstnat; do
 		i="$(str_to_lower "$i")"
 		nft_call flush chain inet "$nftTable" "${nftPrefix}_${i}"
 	done
@@ -1638,7 +1638,7 @@ dns_policy_routing_nft() {
 	local mark i nftInsertOption='add'
 	local param4 param6 proto_i negation value dest4 dest6 dest_dns4 dest_dns6
 	local name="$1" src_addr="$2" dest_dns="$3" uid="$4"
-	local proto='tcp udp' chain='dstnat_lan' iface='dns'
+	local proto='tcp udp' chain='dstnat' iface='dns'
 
 	if [ -z "$ipv6_enabled" ] && { is_ipv6 "$src_addr" || is_ipv6 "$dest_dns"; }; then
 		processPolicyError='true'
@@ -3162,7 +3162,7 @@ status_service_nft() {
 	fi
 	echo "$_SEPARATOR_"
 	echo "$packageName chains - policies"
-	for i in $chainsList dstnat_lan; do
+	for i in $chainsList dstnat; do
 		"$nft" -a list table inet "$nftTable" | sed -n "/chain ${nftPrefix}_${i} {/,/\t}/p"
 	done
 	echo "$_SEPARATOR_"

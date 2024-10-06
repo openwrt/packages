@@ -909,7 +909,7 @@ cleanup_rt_tables() {
 
 cleanup_main_chains() {
 	local i j
-	for i in $chainsList dstnat_lan; do
+	for i in $chainsList dstnat; do
 		i="$(str_to_lower "$i")"
 		nft_call flush chain inet "$nftTable" "${nftPrefix}_${i}"
 	done
@@ -1187,8 +1187,8 @@ traffic_killswitch() {
 			network_get_physdev wan_device "${wanIface4:-wan}"
 			network_get_physdev wan6_device "${wanIface6:-wan6}"
 			nft_call add chain inet "$nftTable" "${nftPrefix}_killswitch" '{ type filter hook forward priority 0; policy accept; }' || s=1
-			nft_call add rule inet "$nftTable" "${nftPrefix}_killswitch" oifname "$wan_device"  "$nftIPv4Flag" saddr "$lan_subnet" counter reject || s=1
-			nft_call add rule inet "$nftTable" "${nftPrefix}_killswitch" oifname "$wan6_device" "$nftIPv6Flag" saddr "$lan_subnet" counter reject
+			nft_call add rule inet "$nftTable" "${nftPrefix}_killswitch" oifname "$wan_device"  "$nftIPv4Flag" saddr "$lan_subnet" reject || s=1
+			nft_call add rule inet "$nftTable" "${nftPrefix}_killswitch" oifname "$wan6_device" "$nftIPv6Flag" saddr "$lan_subnet" reject
 			if [ "$s" -eq '0' ]; then
 				output_okn
 			else
@@ -1221,7 +1221,7 @@ dns_policy_routing() {
 	local negation value dest4 dest6 first_value
 	local inline_set_ipv4_empty_flag inline_set_ipv6_empty_flag
 	local name="$1" src_addr="$2" dest_dns="$3" uid="$4"
-	local chain='dstnat_lan' iface='dns'
+	local chain='dstnat' iface='dns'
 
 	if [ -z "${dest_dns_ipv4}${dest_dns_ipv6}" ]; then
 		processPolicyError='true'
@@ -1246,8 +1246,8 @@ dns_policy_routing() {
 		unset param4
 		unset param6
 
-		dest4="dport 53 counter dnat ip to ${dest_dns_ipv4}:53"
-		dest6="dport 53 counter dnat ip6 to ${dest_dns_ipv6}:53"
+		dest4="dport 53 dnat ip to ${dest_dns_ipv4}:53"
+		dest6="dport 53 dnat ip6 to ${dest_dns_ipv6}:53"
 
 		if [ -n "$src_addr" ]; then
 			if [ "${src_addr:0:1}" = "!" ]; then
@@ -1286,8 +1286,8 @@ dns_policy_routing() {
 			fi
 		fi
 
-		param4="$nftInsertOption rule inet ${nftTable} ${nftPrefix}_${chain} ${param4} ${proto_i} ${nft_rule_params} ${dest4} comment \"$name\""
-		param6="$nftInsertOption rule inet ${nftTable} ${nftPrefix}_${chain} ${param6} ${proto_i} ${nft_rule_params} ${dest6} comment \"$name\""
+		param4="$nftInsertOption rule inet ${nftTable} ${nftPrefix}_${chain} ${param4} ${nft_rule_params} ${proto_i} ${dest4} comment \"$name\""
+		param6="$nftInsertOption rule inet ${nftTable} ${nftPrefix}_${chain} ${param6} ${nft_rule_params} ${proto_i} ${dest6} comment \"$name\""
 
 		local ipv4_error='0' ipv6_error='0'
 		if [ "$policy_routing_nft_prev_param4" != "$param4" ] && \
@@ -1488,13 +1488,14 @@ policy_routing() {
 			local dest_udp_53 dest_tcp_80 dest_udp_80 dest_tcp_443 dest_udp_443
 			local ipv4_error='0' ipv6_error='0'
 			local dest_i dest4 dest6
-			param4="$nftInsertOption rule inet $nftTable ${nftPrefix}_${chain} dstnat meta nfproto ipv4 $param4"
-			param6="$nftInsertOption rule inet $nftTable ${nftPrefix}_${chain} dstnat meta nfproto ipv6 $param6"
-			dest_udp_53="udp dport 53 counter redirect to :${torDnsPort} comment 'Tor-DNS-UDP'"
-			dest_tcp_80="tcp dport 80 counter redirect to :${torTrafficPort} comment 'Tor-HTTP-TCP'"
-			dest_udp_80="udp dport 80 counter redirect to :${torTrafficPort} comment 'Tor-HTTP-UDP'"
-			dest_tcp_443="tcp dport 443 counter redirect to :${torTrafficPort} comment 'Tor-HTTPS-TCP'"
-			dest_udp_443="udp dport 443 counter redirect to :${torTrafficPort} comment 'Tor-HTTPS-UDP'"
+			chain='dstnat'
+			param4="$nftInsertOption rule inet $nftTable ${nftPrefix}_${chain} meta nfproto ipv4 $param4"
+			param6="$nftInsertOption rule inet $nftTable ${nftPrefix}_${chain} meta nfproto ipv6 $param6"
+			dest_udp_53="udp dport 53 redirect to :${torDnsPort} comment 'Tor-DNS-UDP'"
+			dest_tcp_80="tcp dport 80 redirect to :${torTrafficPort} comment 'Tor-HTTP-TCP'"
+			dest_udp_80="udp dport 80 redirect to :${torTrafficPort} comment 'Tor-HTTP-UDP'"
+			dest_tcp_443="tcp dport 443 redirect to :${torTrafficPort} comment 'Tor-HTTPS-TCP'"
+			dest_udp_443="udp dport 443 redirect to :${torTrafficPort} comment 'Tor-HTTPS-UDP'"
 			for dest_i in dest_udp_53 dest_tcp_80 dest_udp_80 dest_tcp_443 dest_udp_443; do
 				eval "dest4=\$$dest_i"
 				eval "dest6=\$$dest_i"
@@ -2381,7 +2382,7 @@ status_service() {
 	fi
 	echo "$_SEPARATOR_"
 	echo "$packageName chains - policies"
-	for i in $chainsList dstnat_lan; do
+	for i in $chainsList dstnat; do
 		"$nft" -a list table inet "$nftTable" | sed -n "/chain ${nftPrefix}_${i} {/,/\t}/p"
 	done
 	echo "$_SEPARATOR_"
