@@ -1,4 +1,4 @@
-chain pbr_dstnat_lan {}
+chain pbr_dstnat {}
 chain pbr_forward {}
 chain pbr_input {}
 chain pbr_output {}

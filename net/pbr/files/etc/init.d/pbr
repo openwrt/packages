@@ -57,6 +57,7 @@ nft_user_set_policy=
 nft_user_set_counter=
 procd_boot_delay=
 procd_reload_delay=
+procd_lan_interface=
 procd_wan_ignore_status=
 procd_wan_interface=
 procd_wan6_interface=
@@ -305,7 +306,7 @@ uci_get_device() { uci_get 'network' "$1" 'device' || uci_get 'network' "$1" 'de
 uci_get_protocol() { uci_get 'network' "$1" 'proto'; }
 is_default_dev() { [ "$1" = "$(ip -4 r | grep -m1 'dev' | grep -Eso 'dev [^ ]*' | awk '{print $2}')" ]; }
 is_disabled_interface() { [ "$(uci_get 'network' "$1" 'disabled')" = '1' ]; }
-is_domain() { ! is_ipv6 "$1" && str_contains "$1" '[a-zA-Z]'; }
+is_domain() { ! is_ipv6 "$1" && ! is_mac_address "$1" && ! is_phys_dev "$1" && str_contains "$1" '[a-zA-Z]'; }
 is_dslite() { local p; network_get_protocol p "$1"; [ "${p:0:6}" = "dslite" ]; }
 is_family_mismatch() { ( is_ipv4_netmask "${1//!}" && is_ipv6 "${2//!}" ) || ( is_ipv6 "${1//!}" && is_ipv4_netmask "${2//!}" ); }
 is_greater() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"; }
@@ -326,7 +327,7 @@ is_ipv6_link_local() { [ "${1:0:4}" = 'fe80' ]; }
 is_ipv6_unique_local() { [ "${1:0:2}" = 'fc' ] || [ "${1:0:2}" = 'fd' ]; }
 is_list() { str_contains "$1" ',' || str_contains "$1" ' '; }
 is_ipv4_netmask() { local ip="${1%/*}"; [ "$ip" != "$1" ] && is_ipv4 "$ip"; }
-is_lan() { local d; network_get_device d "$1"; str_contains "$d" 'br-lan'; }
+is_lan() { local d; network_get_device d "$1"; str_contains "$procd_lan_interface" "$d"; }
 is_l2tp() { local p; network_get_protocol p "$1"; [ "${p:0:4}" = "l2tp" ]; }
 is_mac_address() { expr "$1" : '[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]$' >/dev/null; }
 is_negation() { [ "${1:0:1}" = '!' ]; }
@@ -575,6 +576,7 @@ load_package_config() {
 	config_get      verbosity                 'config' 'verbosity' '2'
 	config_get      procd_boot_delay          'config' 'procd_boot_delay' '0'
 	config_get      procd_boot_timeout        'config' 'procd_boot_timeout' '30'
+	config_get      procd_lan_interface       'config' 'procd_lan_interface'  'br-lan'
 	config_get      procd_wan_ignore_status   'config' 'procd_wan_ignore_status' '0'
 	config_get      procd_wan_interface       'config' 'procd_wan_interface'  'wan'
 	config_get      procd_wan6_interface      'config' 'procd_wan6_interface' 'wan6'
@@ -630,9 +632,9 @@ load_environment() {
 			state add 'errorSummary' 'errorDefaultFw4TableMissing' 'fw4'
 			return 1
 		fi
-		if is_config_enabled 'dns_policy'; then
-			if ! nft_call list chain inet fw4 dstnat_lan; then
-				state add 'errorSummary' 'errorDefaultFw4ChainMissing' 'dstnat_lan'
+		if is_config_enabled 'dns_policy' || is_tor_running; then
+			if ! nft_call list chain inet fw4 dstnat; then
+				state add 'errorSummary' 'errorDefaultFw4ChainMissing' 'dstnat'
 				return 1
 			fi
 		fi
@@ -910,7 +912,7 @@ cleanup_rt_tables() {
 
 cleanup_main_chains() {
 	local i j
-	for i in $chainsList dstnat_lan; do
+	for i in $chainsList dstnat; do
 		i="$(str_to_lower "$i")"
 		nft_call flush chain inet "$nftTable" "${nftPrefix}_${i}"
 	done
@@ -1172,7 +1174,7 @@ dns_policy_routing() {
 	local negation value dest4 dest6 first_value
 	local inline_set_ipv4_empty_flag inline_set_ipv6_empty_flag
 	local name="$1" src_addr="$2" dest_dns="$3" uid="$4"
-	local chain='dstnat_lan' iface='dns'
+	local chain='dstnat' iface='dns'
 
 	if [ -z "${dest_dns_ipv4}${dest_dns_ipv6}" ]; then
 		processPolicyError='true'
@@ -1197,8 +1199,8 @@ dns_policy_routing() {
 		unset param4
 		unset param6
 
-		dest4="dport 53 counter dnat ip to ${dest_dns_ipv4}:53"
-		dest6="dport 53 counter dnat ip6 to ${dest_dns_ipv6}:53"
+		dest4="dport 53 dnat ip to ${dest_dns_ipv4}:53"
+		dest6="dport 53 dnat ip6 to ${dest_dns_ipv6}:53"
 
 		if [ -n "$src_addr" ]; then
 			if [ "${src_addr:0:1}" = "!" ]; then
@@ -1237,8 +1239,8 @@ dns_policy_routing() {
 			fi
 		fi
 
-		param4="$nftInsertOption rule inet ${nftTable} ${nftPrefix}_${chain} ${param4} ${proto_i} ${nft_rule_params} ${dest4} comment \"$name\""
-		param6="$nftInsertOption rule inet ${nftTable} ${nftPrefix}_${chain} ${param6} ${proto_i} ${nft_rule_params} ${dest6} comment \"$name\""
+		param4="$nftInsertOption rule inet ${nftTable} ${nftPrefix}_${chain} ${param4} ${nft_rule_params} meta nfproto ipv4 ${proto_i} ${dest4} comment \"$name\""
+		param6="$nftInsertOption rule inet ${nftTable} ${nftPrefix}_${chain} ${param6} ${nft_rule_params} meta nfproto ipv6 ${proto_i} ${dest6} comment \"$name\""
 
 		local ipv4_error='0' ipv6_error='0'
 		if [ "$policy_routing_nft_prev_param4" != "$param4" ] && \
@@ -1439,13 +1441,14 @@ policy_routing() {
 			local dest_udp_53 dest_tcp_80 dest_udp_80 dest_tcp_443 dest_udp_443
 			local ipv4_error='0' ipv6_error='0'
 			local dest_i dest4 dest6
-			param4="$nftInsertOption rule inet $nftTable ${nftPrefix}_${chain} dstnat meta nfproto ipv4 $param4"
-			param6="$nftInsertOption rule inet $nftTable ${nftPrefix}_${chain} dstnat meta nfproto ipv6 $param6"
-			dest_udp_53="udp dport 53 counter redirect to :${torDnsPort} comment 'Tor-DNS-UDP'"
-			dest_tcp_80="tcp dport 80 counter redirect to :${torTrafficPort} comment 'Tor-HTTP-TCP'"
-			dest_udp_80="udp dport 80 counter redirect to :${torTrafficPort} comment 'Tor-HTTP-UDP'"
-			dest_tcp_443="tcp dport 443 counter redirect to :${torTrafficPort} comment 'Tor-HTTPS-TCP'"
-			dest_udp_443="udp dport 443 counter redirect to :${torTrafficPort} comment 'Tor-HTTPS-UDP'"
+			chain='dstnat'
+			param4="$nftInsertOption rule inet $nftTable ${nftPrefix}_${chain} ${nft_rule_params} meta nfproto ipv4 $param4"
+			param6="$nftInsertOption rule inet $nftTable ${nftPrefix}_${chain} ${nft_rule_params} meta nfproto ipv6 $param6"
+			dest_udp_53="udp dport 53 redirect to :${torDnsPort} comment 'Tor-DNS-UDP'"
+			dest_tcp_80="tcp dport 80 redirect to :${torTrafficPort} comment 'Tor-HTTP-TCP'"
+			dest_udp_80="udp dport 80 redirect to :${torTrafficPort} comment 'Tor-HTTP-UDP'"
+			dest_tcp_443="tcp dport 443 redirect to :${torTrafficPort} comment 'Tor-HTTPS-TCP'"
+			dest_udp_443="udp dport 443 redirect to :${torTrafficPort} comment 'Tor-HTTPS-UDP'"
 			for dest_i in dest_udp_53 dest_tcp_80 dest_udp_80 dest_tcp_443 dest_udp_443; do
 				eval "dest4=\$$dest_i"
 				eval "dest6=\$$dest_i"
@@ -1483,7 +1486,6 @@ policy_routing() {
 					nft6 "$param6" || ipv6_error='1'
 					policy_routing_nft_prev_param6="$param6"
 			fi
-
 			if [ -n "$ipv6_enabled" ] && [ "$ipv4_error" -eq '1' ] && [ "$ipv6_error" -eq '1' ]; then
 				processPolicyError='true'
 				state add 'errorSummary' 'errorPolicyProcessInsertionFailed' "$name"
@@ -1816,7 +1818,7 @@ json_add_gateway() {
 	json_close_object
 }
 
-interface_process() {
+process_interface() {
 	local gw4 gw6 dev dev6 s=0 dscp iface="$1" action="$2" reloadedIface="$3"
 	local displayText dispDev dispGw4 dispGw6 dispStatus
 
@@ -2080,8 +2082,8 @@ start_service() {
 	load_environment "${param:-on_start}" "$(load_validate_config)" || return 1
 	is_wan_up "$param" || return 1
 
-	interface_process 'all' 'prepare'
-	config_foreach interface_process 'interface' 'pre_init'
+	process_interface 'all' 'prepare'
+	config_foreach process_interface 'interface' 'pre_init'
 
 	case "$param" in
 		on_boot)
@@ -2137,8 +2139,8 @@ start_service() {
 		on_interface_reload)
 			output 1 "Reloading Interface: $reloadedIface "
 			json_add_array 'gateways'
-			interface_process 'all' 'prepare'
-			config_foreach interface_process 'interface' 'reload_interface' "$reloadedIface"
+			process_interface 'all' 'prepare'
+			config_foreach process_interface 'interface' 'reload_interface' "$reloadedIface"
 			json_close_array
 			output 1 '\n'
 		;;
@@ -2154,10 +2156,10 @@ start_service() {
 			nft_file 'create'
 			output 1 'Processing interfaces '
 			json_add_array 'gateways'
-			interface_process 'all' 'prepare'
-			config_foreach interface_process 'interface' 'create'
-			interface_process 'tor' 'destroy'
-			is_tor_running && interface_process 'tor' 'create'
+			process_interface 'all' 'prepare'
+			config_foreach process_interface 'interface' 'create'
+			process_interface 'tor' 'destroy'
+			is_tor_running && process_interface 'tor' 'create'
 			json_close_array
 			ip route flush cache
 			output 1 '\n'
@@ -2174,8 +2176,8 @@ start_service() {
 				output 1 '\n'
 			fi
 			if is_config_enabled 'include' || [ -d "/etc/${packageName}.d/" ]; then
-				interface_process 'all' 'prepare'
-				config_foreach interface_process 'interface' 'create_user_set'
+				process_interface 'all' 'prepare'
+				config_foreach process_interface 'interface' 'create_user_set'
 				output 1 'Processing user file(s) '
 				config_load "$packageName"
 				config_foreach load_validate_include 'include' user_file_process
@@ -2270,8 +2272,8 @@ stop_service() {
 	cleanup_marking_chains
 	output 1 'Resetting interfaces '
 	config_load 'network'
-	config_foreach interface_process 'interface' 'destroy'
-	interface_process 'tor' 'destroy'
+	config_foreach process_interface 'interface' 'destroy'
+	process_interface 'tor' 'destroy'
 	cleanup_rt_tables
 	output 1 "\\n"
 	ip route flush cache
@@ -2324,7 +2326,7 @@ status_service() {
 	fi
 	echo "$_SEPARATOR_"
 	echo "$packageName chains - policies"
-	for i in $chainsList dstnat_lan; do
+	for i in $chainsList dstnat; do
 		"$nft" -a list table inet "$nftTable" | sed -n "/chain ${nftPrefix}_${i} {/,/\t}/p"
 	done
 	echo "$_SEPARATOR_"
@@ -2377,6 +2379,7 @@ load_validate_config() {
 		'procd_boot_delay:integer:0' \
 		'procd_boot_timeout:integer:30' \
 		'procd_reload_delay:integer:0' \
+		'procd_lan_interface:list(or(network)):br-lan' \
 		'procd_wan_ignore_status:bool:0' \
 		'procd_wan_interface:network:wan' \
 		'procd_wan6_interface:network:wan6' \
