@@ -13,6 +13,7 @@ PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Muhamad Aji Wibisono <muhamadajiw71@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
+PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/ostreedev/ostree/releases/download/v$(PKG_VERSION)/
@@ -25,11 +26,11 @@ TARGET_CFLAGS += -Wno-format-nonliteral
 include $(INCLUDE_DIR)/package.mk
 
 define Package/libostree
-	SECTION:=utils
-	CATEGORY:=Utilities
-	DEPENDS:=+glib2 +libarchive +libsoup3 +libgpgme +fuse3-utils +libmount +libe2p
-	TITLE:=a git-like suite for bootable filesystem trees
-	URL:=https://ostreedev.github.io/ostree/
+  SECTION:=utils
+  CATEGORY:=Utilities
+  TITLE:=a git-like suite for bootable filesystem trees
+  DEPENDS:=+glib2 +libarchive +libsoup3 +libgpgme +fuse3-utils +libmount +libe2p
+  URL:=https://ostreedev.github.io/ostree/
 endef
 
 define Package/libostree/description
