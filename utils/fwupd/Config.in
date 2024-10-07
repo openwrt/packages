@@ -49,17 +49,16 @@ config FWUPD_LIBARCHIVE
 	help
 	  Compile fwupd with libarchive support
 
-config FWUPD_GUDEV
-	bool "GUdev"
-	default n
-	help
-	  Compile fwupd with GUdev support
-
 config FWUPD_PLUGIN_MODEMMANAGER
 	bool "ModemManager plugin"
 	default y
-	select FWUPD_GUDEV
 	help
 	  Compile fwupd with ModemManager plugin
+
+config FWUPD_PLUGIN_FASTBOOT
+	bool "fastboot plugin"
+	default y
+	help
+	  Compile fwupd with fastboot plugin
 
 endmenu
