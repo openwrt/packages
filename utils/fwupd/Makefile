@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fwupd
-PKG_VERSION:=1.9.24
+PKG_VERSION:=2.0.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/fwupd/fwupd/releases/download/$(PKG_VERSION)
-PKG_HASH:=12f560b35dbed981fde8cf774c6d1f2e658a157d3a63d6c439bf418dbcc44b4c
+PKG_HASH:=60a62b850e2c3a818f3178cb1de0f632b1e04c6ab07c02483af398940713548a
 
 PKG_MAINTAINER:=Lukas Voegl <lvoegl@tdt.de>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -42,12 +42,11 @@ define Package/fwupd/Default
 	+libxmlb \
 	+libjcat \
 	+libprotobuf-c \
+	+libusb-1.0 \
 	+FWUPD_LIBARCHIVE:libarchive \
 	+FWUPD_CBOR:libcbor \
 	+FWUPD_LZMA:liblzma \
 	+FWUPD_CURL:libcurl \
-	+FWUPD_SQLITE:libsqlite3 \
-	+FWUPD_GUDEV:libgudev \
 	+FWUPD_PLUGIN_MODEMMANAGER:modemmanager \
 	+FWUPD_PLUGIN_MODEMMANAGER:libqmi \
 	+FWUPD_PLUGIN_MODEMMANAGER:libmbim
@@ -98,7 +97,6 @@ MESON_ARGS += \
 	-Db_lto=true \
 	-Dbuild=all \
 	-Dpython=$(HOST_PYTHON3_BIN) \
-	-Dudevdir=/lib/udev \
 	-Dsupported_build=enabled \
 	-Dstatic_analysis=false \
 	-Dtests=false \
@@ -106,14 +104,16 @@ MESON_ARGS += \
 	-Dbash_completion=false \
 	-Dfish_completion=false \
 	-Dman=false \
-	-Dthinklmi_compat=false \
 	-Dconsolekit=disabled \
 	-Ddocs=disabled \
 	-Dintrospection=disabled \
 	-Dbluez=disabled \
+	-Dvendor_ids_dir=/usr/share/hwdata \
 	-Dpolkit=disabled \
 	-Dgnutls=disabled \
 	-Dpassim=disabled \
+	-Dsqlite=disabled \
+	-Dudev=enabled \
 	-Dplugin_acpi_phat=disabled \
 	-Dplugin_amdgpu=disabled \
 	-Dplugin_android_boot=disabled \
@@ -148,8 +148,6 @@ MESON_ARGS += \
 	-Dplugin_uf2=disabled \
 	-Dplugin_upower=disabled \
 	-Dplugin_powerd=disabled \
-	-Dplugin_fastboot=disabled \
-	-Dgusb=disabled \
 	-Dsystemd=disabled \
 	-Dlaunchd=disabled \
 	-Delogind=disabled \
@@ -159,17 +157,16 @@ MESON_ARGS += \
 	-Dcbor=$(if $(CONFIG_FWUPD_CBOR),enabled,disabled) \
 	-Dlzma=$(if $(CONFIG_FWUPD_LZMA),enabled,disabled) \
 	-Dcurl=$(if $(CONFIG_FWUPD_CURL),enabled,disabled) \
-	-Dsqlite=$(if $(CONFIG_FWUPD_SQLITE),enabled,disabled) \
 	-Dlibarchive=$(if $(CONFIG_FWUPD_LIBARCHIVE),enabled,disabled) \
-	-Dgudev=$(if $(CONFIG_FWUPD_GUDEV),enabled,disabled) \
-	-Dplugin_modem_manager=$(if $(CONFIG_FWUPD_PLUGIN_MODEMMANAGER),enabled,disabled)
+	-Dplugin_modem_manager=$(if $(CONFIG_FWUPD_PLUGIN_MODEMMANAGER),enabled,disabled) \
+	-Dplugin_fastboot=$(if $(CONFIG_FWUPD_PLUGIN_FASTBOOT),enabled,disabled)
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include/fwupd-1
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/fwupd-1/fwupd.h $(1)/usr/include/fwupd-1
+	$(INSTALL_DIR) $(1)/usr/include/fwupd-3
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/fwupd-3/fwupd.h $(1)/usr/include/fwupd-3
 
-	$(INSTALL_DIR) $(1)/usr/include/fwupd-1/libfwupd
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/fwupd-1/libfwupd/*.h $(1)/usr/include/fwupd-1/libfwupd
+	$(INSTALL_DIR) $(1)/usr/include/fwupd-3/libfwupd
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/fwupd-3/libfwupd/*.h $(1)/usr/include/fwupd-3/libfwupd
 
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libfwupd.so* $(1)/usr/lib
@@ -194,10 +191,6 @@ define Package/fwupd-libs/install
 	$(INSTALL_DIR) $(1)/etc/pki
 	$(CP) $(PKG_INSTALL_DIR)/etc/pki/fwupd $(1)/etc/pki
 	$(CP) $(PKG_INSTALL_DIR)/etc/pki/fwupd-metadata $(1)/etc/pki
-
-	$(if $(CONFIG_FWUPD_GUDEV), \
-		$(INSTALL_DIR) $(1)/lib/udev/rules.d; \
-		$(INSTALL_DATA) $(PKG_INSTALL_DIR)/lib/udev/rules.d/*.rules $(1)/lib/udev/rules.d)
 
 	$(INSTALL_DIR) $(1)/usr/share/dbus-1/system.d
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/dbus-1/system.d/org.freedesktop.fwupd.conf $(1)/usr/share/dbus-1/system.d
