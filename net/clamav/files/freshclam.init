@@ -11,7 +11,6 @@ FRESHCLAM_CONFIGFILE="/tmp/clamav/freshclam.conf"
 validate_freshclam_section() {
 	uci_load_validate freshclam freshclam "$1" "$2" \
 		'freshclam_config_file:string' \
-		'UpdateLogFile:string' \
 		'DatabaseMirror:string' \
 		'NotifyClamd:string' \
 		'DatabaseOwner:string' \
@@ -29,14 +28,12 @@ start_freshclam_instance() {
 
 	mkdir -p "$DatabaseDirectory"
 	mkdir -p /etc/clamav
-	touch /tmp/freshclam.log
 	touch /tmp/freshclam.pid
 
 	mkdir -p "$(dirname $FRESHCLAM_CONFIGFILE)"
 	ln -sf "$freshclam_config_file" "$FRESHCLAM_CONFIGFILE"
 
 	{
-	echo "UpdateLogFile " "$UpdateLogFile"
 	echo "DatabaseMirror " "$DatabaseMirror"
 	echo "NotifyClamd " "$NotifyClamd"
 	echo "DatabaseOwner " "$DatabaseOwner"
