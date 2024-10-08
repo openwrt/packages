@@ -23,6 +23,7 @@ validate_clamav_milter_section() {
 		'LogVerbose:string' \
 		'LogTime:string' \
 		'LogSyslog:string' \
+		'Debug:string' \
 		'LogFacility:string' \
 		'LogInfected:string' \
 		'LogClean:string' \
@@ -62,6 +63,7 @@ start_clamav_milter_instance() {
 	echo "LogVerbose " "$LogVerbose"
 	echo "LogTime " "$LogTime"
 	echo "LogSyslog " "$LogSyslog"
+	echo "Debug " "$Debug"
 	echo "LogFacility " "$LogFacility"
 	echo "LogInfected " "$LogInfected"
 	echo "LogClean " "$LogClean"
