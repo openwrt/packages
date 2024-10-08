@@ -11,8 +11,6 @@ CLAMD_CONFIGFILE="/tmp/clamav/clamd.conf"
 validate_clamav_section() {
 	uci_load_validate clamav clamav "$1" "$2" \
 		'clamd_config_file:string' \
-		'LogFile:string' \
-		'LogFileMaxSize:string' \
 		'LogVerbose:string' \
 		'ExtendedDetectionInfo:string' \
 		'LogTime:string' \
@@ -63,8 +61,6 @@ start_clamav_instance() {
 	ln -sf "$clamd_config_file" "$CLAMD_CONFIGFILE"
 
 	{
-	echo "LogFile " "$LogFile"
-	echo "LogFileMaxSize " "$LogFileMaxSize"
 	echo "LogVerbose " "$LogVerbose"
 	echo "ExtendedDetectionInfo " "$ExtendedDetectionInfo"
 	echo "LogTime " "$LogTime"
