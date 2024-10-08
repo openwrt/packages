@@ -41,7 +41,7 @@ https://gitlab.alpinelinux.org/alpine/aports/commit/76b81b486480fd9c3294cd420bcf
      if (local_err) {
 -        error_propagate(errp, local_err);
 -        return;
-+        const char fallback_argv[] = {fallback_cmd, (char *) NULL};
++        const char *fallback_argv[] = {fallback_cmd, (char *) NULL};
 +        ga_run_command(fallback_argv, NULL, fallback_cmd, &local_err);
 +        if (local_err) {
 +            error_propagate(errp, local_err);
