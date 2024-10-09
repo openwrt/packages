@@ -1,8 +1,8 @@
 --- a/deps/zlib/zlib.gyp
 +++ b/deps/zlib/zlib.gyp
-@@ -9,6 +9,7 @@
+@@ -8,6 +8,7 @@
+     'use_system_zlib%': 0,
      'arm_fpu%': '',
-     'llvm_version%': '0.0',
    },
 +  'include_dirs!': [ '<!@(echo "$STAGING_DIR"/usr/include)' ],
    'conditions': [

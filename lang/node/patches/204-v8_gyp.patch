@@ -136,9 +136,9 @@
          'include_dirs': [
            '<(V8_ROOT)/include',
          ],
-@@ -1988,15 +2009,19 @@
-         'WARNING_CFLAGS!': ['-Wno-invalid-offsetof']
-       },
+@@ -1982,15 +2003,19 @@
+         }],
+       ],
        'direct_dependent_settings': {
 +        'include_dirs!': [ '<!@(echo "$STAGING_DIR"/usr/include)' ],
          'include_dirs': [
