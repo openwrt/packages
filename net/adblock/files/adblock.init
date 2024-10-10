@@ -133,36 +133,21 @@ status() {
 }
 
 status_service() {
-	local key keylist value idxval values type rtfile
+	local key keylist value values rtfile
 
 	rtfile="$(uci_get adblock global adb_rtfile "/tmp/adb_runtime.json")"
-
+	json_init
 	json_load_file "${rtfile}" >/dev/null 2>&1
 	json_get_keys keylist
 	if [ -n "${keylist}" ]; then
 		printf "%s\n" "::: adblock runtime information"
 		for key in ${keylist}; do
 			json_get_var value "${key}" >/dev/null 2>&1
-			if [ "${key%_*}" = "active" ]; then
-				printf "  + %-15s : " "${key}"
-				json_select "${key}" >/dev/null 2>&1
-				values=""
-				index="1"
-				while json_get_type type "${index}" && [ "${type}" = "object" ]; do
-					json_get_values idxval "${index}" >/dev/null 2>&1
-					if [ "${index}" = "1" ]; then
-						values="${idxval}"
-					else
-						values="${values}, ${idxval}"
-					fi
-					index="$((index + 1))"
-				done
-				values="$(printf "%s" "${values}" | awk '{NR=1;max=98;if(length($0)>max+1)while($0){if(NR==1){print substr($0,1,max)}else{printf"%-22s%s\n","",substr($0,1,max)}{$0=substr($0,max+1);NR=NR+1}}else print}')"
-				printf "%s\n" "${values:-"-"}"
-				json_select ".."
-			else
-				printf "  + %-15s : %s\n" "${key}" "${value:-"-"}"
+			if [ "${key}" = "active_sources" ]; then
+				json_get_values values "${key}" >/dev/null 2>&1
+				value="${values// /, }"
 			fi
+			printf "  + %-15s : %s\n" "${key}" "${value:-"-"}"
 		done
 	else
 		printf "%s\n" "::: no adblock runtime information available"
