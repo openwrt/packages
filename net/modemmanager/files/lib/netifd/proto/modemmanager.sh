@@ -308,46 +308,159 @@ modemmanager_set_allowed_mode() {
 	}
 }
 
+modemmanager_check_state_failed() {
+	local device="$1"
+	local interface="$2"
+	local modemstatus="$3"
+
+	local reason
+
+	reason="$(modemmanager_get_field "${modemstatus}" "modem.generic.state-failed-reason")"
+
+	case "$reason" in
+		"sim-missing")
+			echo "SIM missing"
+			proto_notify_error "${interface}" MM_FAILED_REASON_SIM_MISSING
+			proto_block_restart "${interface}"
+			return 1
+			;;
+		*)
+			proto_notify_error "${interface}" MM_FAILED_REASON_UNKNOWN
+			proto_block_restart "${interface}"
+			return 1
+			;;
+	esac
+}
+
+modemmanager_check_state_lock_simpin() {
+	local interface="$1"
+	local unlock_value="$2"
+
+	[ $unlock_value -ge 2 ] && return 0
+
+	echo "please check PIN (remaining attempts: ${unlock_value})"
+	proto_notify_error "${interface}" MM_CHECK_UNLOCK_PIN
+	proto_block_restart "${interface}"
+	return 1
+}
+
+modemmanager_check_state_lock_simpuk() {
+	local interface="$1"
+	local unlock_value="$2"
+
+	echo "unlock with PUK required (remaining attempts: ${unlock_value})"
+	proto_notify_error "${interface}" MM_CHECK_UNLOCK_PIN
+	proto_block_restart "${interface}"
+	return 1
+}
+
+modemmanager_check_state_lock_sim() {
+	local interface="$1"
+	local unlock_lock="$2"
+	local unlock_value="$3"
+
+	case "$unlock_lock" in
+		"sim-pin")
+			modemmanager_check_state_lock_simpin \
+				"$interface" \
+				"$unlock_value"
+			[ "$?" -ne "0" ] && return 1
+			;;
+		"sim-puk")
+			modemmanager_check_state_lock_simpuk \
+				"$interface" \
+				"$unlock_value"
+			[ "$?" -ne "0" ] && return 1
+			;;
+		*)
+			echo "PIN/PUK check '$unlock_lock' not implemented"
+			;;
+	esac
+
+	return 0
+}
+
+modemmanager_check_state_locked() {
+	local device="$1"
+	local interface="$2"
+	local modemstatus="$3"
+	local pincode="$4"
+
+	local unlock_required unlock_retries unlock_retry unlock_lock
+	local unlock_value unlock_match
+
+	if [ -z "$pincode" ]; then
+		echo "PIN required"
+		proto_notify_error "${interface}" MM_PINCODE_REQUIRED
+		proto_block_restart "${interface}"
+		return 1
+	fi
+
+	unlock_required="$(modemmanager_get_field "${modemstatus}" "modem.generic.unlock-required")"
+	unlock_retries="$(modemmanager_get_multivalue_field "${modemstatus}" "modem.generic.unlock-retries")"
+
+	# Output of unlock-retries:
+	#   'sim-pin (3), sim-puk (10), sim-pin2 (3), sim-puk2 (10)'
+	# Replace alle '<spaces>' of unlock-retures with '', so we could
+	# iterate in the for loop. Replace result is:
+	#   'sim-pin(3),sim-puk(10),sim-pin2(3),sim-puk2(10)'
+	unlock_match=0
+	for unlock_retry in $(echo "${unlock_retries// /}" | tr "," "\n"); do
+		unlock_lock="${unlock_retry%%(*}"
+
+		# extract x value from 'sim-puk(x)' || 'sim-pin(x)'
+		unlock_value="${unlock_retry##*(}"
+		unlock_value="${unlock_value:0:-1}"
+
+		[ "$unlock_lock" = "$unlock_required" ] && {
+			unlock_match=1
+			modemmanager_check_state_lock_sim \
+				"$interface" \
+				"$unlock_lock" \
+				"$unlock_value"
+				[ "$?" -ne "0" ] && return 1
+		}
+	done
+
+	if [ "$unlock_match" = "0" ]; then
+		echo "unable to check PIN/PUK attempts"
+		proto_notify_error "${interface}" MM_CHECK_UNLOCK_UNKNOWN
+		proto_block_restart "${interface}"
+		return 1
+	fi
+
+	mmcli --modem="${device}" -i any --pin=${pincode} || {
+		proto_notify_error "${interface}" MM_PINCODE_WRONG
+		proto_block_restart "${interface}"
+		return 1
+	}
+
+	return 0
+}
+
 modemmanager_check_state() {
 	local device="$1"
-	local modemstatus="$2"
-	local pincode="$3"
+	local interface="$2"
+	local modemstatus="$3"
+	local pincode="$4"
 
-	local state reason
+	local state
 
-	state="$(modemmanager_get_field "${modemstatus}" "state")"
-	state="${state%% *}"
-	reason="$(modemmanager_get_field "${modemstatus}" "state-failed-reason")"
+	state="$(modemmanager_get_field "${modemstatus}" "modem.generic.state")"
 
 	case "$state" in
 		"failed")
-			case "$reason" in
-				"sim-missing")
-					echo "SIM missing"
-					proto_notify_error "${interface}" MM_FAILED_REASON_SIM_MISSING
-					proto_block_restart "${interface}"
-					return 1
-					;;
-				*)
-					proto_notify_error "${interface}" MM_FAILED_REASON_UNKNOWN
-					proto_block_restart "${interface}"
-					return 1
-					;;
-			esac
+			modemmanager_check_state_failed "$device" \
+				"$interface" \
+				"$modemstatus"
+			[ "$?" -ne "0" ] && return 1
 			;;
 		"locked")
-			if [ -n "$pincode" ]; then
-				mmcli --modem="${device}" -i any --pin=${pincode} || {
-					proto_notify_error "${interface}" MM_PINCODE_WRONG
-					proto_block_restart "${interface}"
-					return 1
-				}
-			else
-				echo "PIN required"
-				proto_notify_error "${interface}" MM_PINCODE_REQUIRED
-				proto_block_restart "${interface}"
-				return 1
-			fi
+			modemmanager_check_state_locked "$device" \
+				"$interface" \
+				"$modemstatus" \
+				"$pincode"
+			[ "$?" -ne "0" ] && return 1
 			;;
 	esac
 }
@@ -459,7 +572,7 @@ proto_modemmanager_setup() {
 	}
 	echo "modem available at ${modempath}"
 
-	modemmanager_check_state "$device" "${modemstatus}" "$pincode"
+	modemmanager_check_state "$device" "$interface" "${modemstatus}" "$pincode"
 	[ "$?" -ne "0" ] && return 1
 
 	# always cleanup before attempting a new connection, just in case
