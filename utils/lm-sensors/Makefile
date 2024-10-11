@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lm-sensors
 PKG_VERSION:=3.6.2
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_VERSION_SUBST=$(subst .,-,$(PKG_VERSION))
 PKG_SOURCE_URL:=https://codeload.github.com/hramrach/lm-sensors/tar.gz/V$(PKG_VERSION_SUBST)?
@@ -59,6 +59,22 @@ define Package/libsensors
   ABI_VERSION:=5
 endef
 
+define Package/isadump
+  $(call Package/lm-sensors/Default)
+  SECTION:=utils
+  CATEGORY:=Utilities
+  TITLE:=isadump
+  DEPENDS+=@TARGET_x86
+endef
+
+define Package/isaset
+  $(call Package/lm-sensors/Default)
+  SECTION:=utils
+  CATEGORY:=Utilities
+  TITLE:=isaset
+  DEPENDS+=@TARGET_x86
+endef
+
 define Package/lm-sensors/description
  utility to read hardware sensor data
 endef
@@ -69,6 +85,16 @@ endef
 
 define Package/libsensors/description
  lm-sensors libraries
+endef
+
+define Package/isadump/description
+ isadump is a small helper program to examine registers visible through
+ the ISA bus.
+endef
+
+define Package/isaset/description
+ isaset is a small helper program to set registers visible through
+ the ISA bus.
 endef
 
 define Package/lm-sensors/conffiles
@@ -122,6 +148,18 @@ define Package/libsensors/install
 	$(CP) $(PKG_BUILD_DIR)/lib/libsensors.so* $(1)/usr/lib
 endef
 
+define Package/isadump/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/prog/dump/isadump $(1)/usr/sbin
+endef
+
+define Package/isaset/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/prog/dump/isaset $(1)/usr/sbin
+endef
+
 $(eval $(call BuildPackage,libsensors))
 $(eval $(call BuildPackage,lm-sensors))
 $(eval $(call BuildPackage,lm-sensors-detect))
+$(eval $(call BuildPackage,isaset))
+$(eval $(call BuildPackage,isadump))
