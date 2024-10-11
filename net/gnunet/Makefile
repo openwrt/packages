@@ -2,11 +2,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnunet
 
-PKG_VERSION:=0.21.2
+PKG_VERSION:=0.23.1
 PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/gnunet
-PKG_HASH:=8c2351268e9b8ba2ad288b8b337ce399f79c18e3ffd960803f4ed5de7dda9fa1
+PKG_HASH:=6fd05b69076b3b1a8e7e20b254e044fdd4c6da5313196317f3de088f7d025cf2
 
 PKG_LICENSE:=AGPL-3.0
 PKG_LICENSE_FILES:=COPYING
@@ -33,18 +33,22 @@ CONFIGURE_ARGS+= \
 	--disable-testruns \
 	--disable-documentation \
 	--enable-experimental \
-	--with-extractor=$(STAGING_DIR)/usr \
-	--with-gnutls=$(STAGING_DIR)/usr \
-	--with-jose=$(STAGING_DIR)/usr \
-	--with-libcurl=$(STAGING_DIR)/usr \
-	--with-ogg=$(STAGING_DIR)/usr \
-	--with-opus=$(STAGING_DIR)/usr \
-	--with-pabc=$(STAGING_DIR)/usr \
-	--with-png=$(STAGING_DIR)/usr \
-	--with-pulse=$(STAGING_DIR)/usr \
-	--with-microhttpd=$(STAGING_DIR)/usr
+	--with-extractor="$(STAGING_DIR)/usr" \
+	--with-libgcrypt-prefix="$(STAGING_DIR)/usr" \
+	--with-gnutls="$(STAGING_DIR)/usr" \
+	--with-jose="$(STAGING_DIR)/usr" \
+	--with-libcurl="$(STAGING_DIR)/usr" \
+	--with-ogg="$(STAGING_DIR)/usr" \
+	--with-opus="$(STAGING_DIR)/usr" \
+	--with-pabc="$(STAGING_DIR)/usr" \
+	--with-png="$(STAGING_DIR)/usr" \
+	--with-pulse="$(STAGING_DIR)/usr" \
+	--with-microhttpd="$(STAGING_DIR)/usr"
 
-# upstream now provides --with-pulseaudio but doesn't detect rpath
+CONFIGURE_VARS+= \
+	GPGRT_CONFIG="$(STAGING_DIR)/host/bin/gpgrt-config"
+
+# upstream now provides --with-pulse= but doesn't detect rpath
 TARGET_LDFLAGS+= -Wl,-rpath-link=$(STAGING_DIR)/usr/lib/pulseaudio
 
 define Package/gnunet/Default
@@ -256,7 +260,7 @@ DEPENDS_gns:=+gnunet-vpn +iptables-mod-extra
 USERID_gns:=:gnunetdns=452
 BIN_gns:=gns namecache namestore namestore-dbtool namestore-zonefile resolver revocation zoneimport
 LIB_gns:=gns gnsrecord namecache namestore revocation
-PLUGIN_gns:=block_dns block_gns block_revocation gnsrecord_conversation gnsrecord_dns gnsrecord_gns namecache_flat
+PLUGIN_gns:=block_dns block_gns block_revocation gnsrecord_dns gnsrecord_gns namecache_flat
 LIBEXEC_gns:=dns2gns helper-dns service-dns service-gns service-namecache service-namestore service-resolver service-revocation service-zonemaster
 CONF_gns:=dns gns namecache namestore resolver revocation zonemaster
 FILE_MODES_gns:=/usr/lib/gnunet/libexec/gnunet-helper-dns:root:gnunetdns:4750 /usr/lib/gnunet/libexec/gnunet-service-dns:gnunet:gnunetdns:2750
