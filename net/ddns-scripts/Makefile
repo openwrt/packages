@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ddns-scripts
 PKG_VERSION:=2.8.2
-PKG_RELEASE:=48
+PKG_RELEASE:=49
 
 PKG_LICENSE:=GPL-2.0
 
@@ -307,6 +307,15 @@ define Package/ddns-scripts-porkbun/description
 	"option domain" to be the FQDN for which to configure DDNS
 endef
 
+define Package/ddns-scripts-huaweicloud
+  $(call Package/ddns-scripts/Default)
+  TITLE:=Extension for huaweicloud.com API
+  DEPENDS:=ddns-scripts +curl +openssl-util
+endef
+
+define Package/ddns-scripts-huaweicloud/description
+  Dynamic DNS Client scripts extension for huaweicloud.com API (require curl and openssl)
+endef
 
 define Build/Configure
 endef
@@ -386,6 +395,7 @@ define Package/ddns-scripts-services/install
 	rm $(1)/usr/share/ddns/default/ns1.com.json
 	rm $(1)/usr/share/ddns/default/one.com.json
 	rm $(1)/usr/share/ddns/default/porkbun.com-v3.json
+	rm $(1)/usr/share/ddns/default/huaweicloud.com.json
 endef
 
 
@@ -721,6 +731,25 @@ exit 0
 endef
 
 
+define Package/ddns-scripts-huaweicloud/install
+	$(INSTALL_DIR) $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_huaweicloud_com.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/huaweicloud.com.json \
+		$(1)/usr/share/ddns/default/
+endef
+
+define Package/ddns-scripts-huaweicloud/prerm
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
+endef
+
+
 $(eval $(call BuildPackage,ddns-scripts))
 $(eval $(call BuildPackage,ddns-scripts-services))
 $(eval $(call BuildPackage,ddns-scripts-utils))
@@ -741,3 +770,4 @@ $(eval $(call BuildPackage,ddns-scripts-transip))
 $(eval $(call BuildPackage,ddns-scripts-ns1))
 $(eval $(call BuildPackage,ddns-scripts-one))
 $(eval $(call BuildPackage,ddns-scripts-porkbun))
+$(eval $(call BuildPackage,ddns-scripts-huaweicloud))
