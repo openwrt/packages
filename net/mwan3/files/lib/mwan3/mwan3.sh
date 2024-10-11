@@ -527,7 +527,10 @@ mwan3_create_iface_rules()
 
 	mwan3_delete_iface_rules "$1"
 
+	network_get_ipaddr wan_addr "${1}"
+
 	$IP rule add pref $((id+1000)) iif "$2" lookup "$id"
+	$IP rule add pref $((id+1500)) from ${wan_addr} lookup "$id"
 	$IP rule add pref $((id+2000)) fwmark "$(mwan3_id2mask id MMX_MASK)/$MMX_MASK" lookup "$id"
 	$IP rule add pref $((id+3000)) fwmark "$(mwan3_id2mask id MMX_MASK)/$MMX_MASK" unreachable
 }
