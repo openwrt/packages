@@ -38,6 +38,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 | firehol3            | firehol level 3 compilation    |    x    |    x    |         |              | [Link](https://iplists.firehol.org/?ipset=firehol_level3)    |
 | firehol4            | firehol level 4 compilation    |    x    |    x    |         |              | [Link](https://iplists.firehol.org/?ipset=firehol_level4)    |
 | greensnow           | suspicious server IPs          |    x    |    x    |         |              | [Link](https://greensnow.co)                                 |
+| hagezi              | Threat IP blocklist            |         |         |    x    | tcp: 80, 443 | [Link](https://github.com/hagezi/dns-blocklists)             |
 | iblockads           | Advertising IPs                |         |         |    x    | tcp: 80, 443 | [Link](https://www.iblocklist.com)                           |
 | iblockspy           | Malicious spyware IPs          |         |         |    x    | tcp: 80, 443 | [Link](https://www.iblocklist.com)                           |
 | ipblackhole         | blackhole IPs                  |    x    |    x    |         |              | [Link](https://github.com/BlackHoleMonster/IP-BlackHole)     |
@@ -52,7 +53,6 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 | proxy               | open proxies                   |    x    |    x    |         |              | [Link](https://iplists.firehol.org/?ipset=proxylists)        |
 | ssbl                | SSL botnet IPs                 |    x    |    x    |         |              | [Link](https://sslbl.abuse.ch)                               |
 | stevenblack         | stevenblack IPs                |         |         |    x    | tcp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
-| talos               | talos IPs                      |    x    |    x    |         |              | [Link](https://talosintelligence.com/reputation_center)      |
 | threat              | emerging threats               |    x    |    x    |         |              | [Link](https://rules.emergingthreats.net)                    |
 | threatview          | malicious IPs                  |    x    |    x    |         |              | [Link](https://threatview.io)                                |
 | tor                 | tor exit nodes                 |    x    |    x    |    x    |              | [Link](https://www.dan.me.uk)                                |
@@ -333,6 +333,7 @@ sshd2    : 'sshd.*Connection closed by.*\[preauth\]'
 asterisk : 'SecurityEvent=\"InvalidAccountID\".*RemoteAddress='
 nginx    : 'received a suspicious remote IP '\''.*'\'''
 openvpn  : 'TLS Error: could not determine wrapping from \[AF_INET\]'
+AdGuard  : 'AdGuardHome.*\[error\].*/control/login: from ip'
 ```
 You find the 'Log Terms' option in LuCI under the 'Log Settings' tab. Feel free to add more log terms to meet your needs and protect additional services.  
 
