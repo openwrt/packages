@@ -7,7 +7,7 @@ export initscript="nft-qos-monitor"
 
 . /lib/nft-qos/monitor.sh
 
-logger -t nft-qos-monitor "ACTION=$ACTION, MACADDR=$MACADDR, IPADDR=$IPADDR, HOSTNAME=$HOSTNAME"
+# logger -t nft-qos-monitor "ACTION=$ACTION, MACADDR=$MACADDR, IPADDR=$IPADDR, HOSTNAME=$HOSTNAME"
 
 case "$ACTION" in
 	add | update)
