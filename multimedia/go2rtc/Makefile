@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=go2rtc
 PKG_VERSION:=1.9.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/AlexxIT/go2rtc/tar.gz/v$(PKG_VERSION)?
@@ -28,6 +28,7 @@ define Package/go2rtc
   TITLE:=go2rtc camera streaming
   URL:=https://github.com/AlexxIT/go2rtc
   DEPENDS:=$(GO_ARCH_DEPENDS) +ffmpeg
+  USERID:=go2rtc:go2rtc
 endef
 
 define Package/go2rtc/description
