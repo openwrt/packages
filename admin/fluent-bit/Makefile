@@ -41,7 +41,10 @@ CMAKE_OPTIONS+= \
 	-DFLB_CHUNK_TRACE=No \
 	-DFLB_BACKTRACE=No \
 	-DFLB_WASM=No \
-	-DFLB_LUAJIT=No
+	-DFLB_LUAJIT=No \
+	-DWITH_SASL=No \
+	-DWITH_ZLIB=No \
+	-DWITH_ZSTD=No
 
 define Package/fluent-bit/install
 	$(INSTALL_DIR) $(1)/usr/sbin
