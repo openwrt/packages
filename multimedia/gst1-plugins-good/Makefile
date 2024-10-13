@@ -170,6 +170,7 @@ MESON_ARGS += \
 	\
 	-Dximagesrc=disabled \
 	-Dv4l2=$(if $(CONFIG_PACKAGE_gst1-mod-video4linux2),en,dis)abled \
+	-Dv4l2-gudev=disabled \
 	-Dexamples=disabled \
 	-Dtests=disabled \
 	-Dnls=enabled \
