@@ -8,7 +8,7 @@ START=90
 STOP=10
 
 # default params
-PROG=/usr/sbin/i2pd
+PROG=/usr/bin/i2pd
 USER="i2pd"
 GROUP="i2pd"
 PIDFILE=/var/run/i2pd.pid
