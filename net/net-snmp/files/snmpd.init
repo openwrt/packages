@@ -111,20 +111,18 @@ snmpd_access_add() {
 
 snmpd_trap_hostname_add() {
 	local cfg="$1"
-	config_get hostname "$cfg" HostName
-	config_get port "$cfg" Port
+	config_get hostname "$cfg" Host
 	config_get community "$cfg" Community
 	config_get type "$cfg" Type
-	echo "$type $hostname $community $port" >> $CONFIGFILE
+	echo "$type $hostname $community" >> $CONFIGFILE
 }
 
 snmpd_trap_ip_add() {
 	local cfg="$1"
-	config_get host_ip "$cfg" HostIP
-	config_get port "$cfg" Port
+	config_get host_ip "$cfg" Host
 	config_get community "$cfg" Community
 	config_get type "$cfg" Type
-	echo "$type $host_ip $community $port" >> $CONFIGFILE
+	echo "$type $host_ip $community" >> $CONFIGFILE
 }
 
 snmpd_access_default_add() {
