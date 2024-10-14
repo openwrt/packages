@@ -9,6 +9,8 @@ STOP=15
 # shellcheck disable=SC2034
 USE_PROCD=1
 
+[ -n "${IPKG_INSTROOT}" ] && return 0
+
 if type extra_command 1>/dev/null 2>&1; then
 	extra_command 'version' 'Show version information'
 else
@@ -135,7 +137,7 @@ boot() {
 	ubus -t 30 wait_for network.interface 2>/dev/null
 	on_boot_trigger=1
 	rc_procd start_service 'on_boot' && service_started 'on_boot'
-	is_resolver_working || { rc_procd stop_service 'on_boot' && service_stopped 'on_boot'; }
+	is_resolver_working || { rc_procd stop_service 'on_failed_health_check' && service_stopped 'on_failed_health_check'; }
 }
 
 start_instance() {
@@ -300,7 +302,9 @@ service_triggers() {
 	local wan wan6 i
 	local procd_trigger_wan6
 	if [ "$on_boot_trigger" = '1' ]; then
+		output "Setting $serviceName raw_trigger for 'interface.*.up'"
 		procd_add_raw_trigger "interface.*.up" 3000 "/etc/init.d/${packageName}" restart 'on_interface_up'
+		output_okn
 	else
 		config_load "$packageName"
 		config_get_bool procd_trigger_wan6 'config' 'procd_trigger_wan6' '0'
@@ -355,6 +359,7 @@ dnsmasq_doh_server() {
 dnsmasq_create_server_backup() {
 	local cfg="$1" i
 	[ -n "$(uci_get 'dhcp' "$cfg")" ] || return 1
+#	uci_remove 'dhcp' "$cfg" 'doh_server' # this removes outdated doh_server entries, but causes unnecessary dnsmasq restarts
 	if [ -z "$(uci_get 'dhcp' "$cfg" 'doh_backup_noresolv')" ]; then
 		if [ -z "$(uci_get 'dhcp' "$cfg" 'noresolv')" ]; then
 			uci_set 'dhcp' "$cfg" 'doh_backup_noresolv' '-1'

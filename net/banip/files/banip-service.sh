@@ -1,6 +1,6 @@
 #!/bin/sh
 # banIP main service script - ban incoming and outgoing IPs via named nftables Sets
-# Copyright (c) 2018-2023 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2018-2024 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # (s)hellcheck exceptions
@@ -24,34 +24,21 @@ f_getif
 f_getdev
 f_getuplink
 f_mkdir "${ban_backupdir}"
-f_mkfile "${ban_blocklist}"
 f_mkfile "${ban_allowlist}"
+f_mkfile "${ban_blocklist}"
 
-# firewall check
+# firewall/fw4 pre-check
 #
-if [ "${ban_action}" != "reload" ]; then
-	if [ -x "${ban_fw4cmd}" ]; then
-		cnt="0"
-		while [ "${cnt}" -lt "30" ] && ! /etc/init.d/firewall status >/dev/null 2>&1; do
-			cnt="$((cnt + 1))"
-			sleep 1
-		done
-		if ! /etc/init.d/firewall status >/dev/null 2>&1; then
-			f_log "err" "error in nft based firewall/fw4"
-		fi
-	else
-		f_log "err" "no nft based firewall/fw4"
-	fi
+if [ ! -x "${ban_fw4cmd}" ] || [ ! -x "/etc/init.d/firewall" ]; then
+	f_log "err" "firewall/fw4 not found"
+elif ! /etc/init.d/firewall status >/dev/null 2>&1; then
+	f_log "info" "firewall/fw4 is not running"
 fi
 
-# init nft namespace
+# init banIP nftables namespace
 #
-if [ "${ban_action}" != "reload" ] || ! "${ban_nftcmd}" -t list set inet banIP allowlistv4MAC >/dev/null 2>&1; then
-	if f_nftinit "${ban_tmpfile}".init.nft; then
-		f_log "info" "initialize nft namespace"
-	else
-		f_log "err" "can't initialize nft namespace"
-	fi
+if [ "${ban_action}" != "reload" ] || ! "${ban_nftcmd}" list chain inet banIP pre-routing >/dev/null 2>&1; then
+	f_nftinit "${ban_tmpfile}".init.nft
 fi
 
 # handle downloads
@@ -99,7 +86,7 @@ for feed in allowlist ${ban_feed} blocklist; do
 		continue
 	fi
 
-	# handle IPv4/IPv6 feeds with the same/single download URL
+	# handle IPv4/IPv6 feeds with a single download URL
 	#
 	if [ "${feed_url_4}" = "${feed_url_6}" ]; then
 		if [ "${ban_protov4}" = "1" ] && [ -n "${feed_url_4}" ] && [ -n "${feed_rule_4}" ]; then
@@ -115,7 +102,8 @@ for feed in allowlist ${ban_feed} blocklist; do
 		fi
 		continue
 	fi
-	# handle IPv4/IPv6 feeds with separated download URLs
+
+	# handle IPv4/IPv6 feeds with separate download URLs
 	#
 	if [ "${ban_protov4}" = "1" ] && [ -n "${feed_url_4}" ] && [ -n "${feed_rule_4}" ]; then
 		(f_down "${feed}" "4" "${feed_url_4}" "${feed_rule_4}" "${feed_flag}") &
@@ -149,14 +137,14 @@ wait
 
 # end processing
 #
-if [ "${ban_mailnotification}" = "1" ] && [ -n "${ban_mailreceiver}" ] && [ -x "${ban_mailcmd}" ]; then
-	(
-		sleep 5
+(
+	sleep 5
+	if [ "${ban_mailnotification}" = "1" ] && [ -n "${ban_mailreceiver}" ] && [ -x "${ban_mailcmd}" ]; then
 		f_mail
-	) &
-fi
-json_cleanup
-rm -rf "${ban_lock}"
+	fi
+	json_cleanup
+	rm -rf "${ban_lock}"
+) &
 
 # start detached log service (infinite loop)
 #

@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmaxminddb
-PKG_VERSION:=1.9.1
+PKG_VERSION:=1.11.0
 PKG_RELEASE=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/maxmind/libmaxminddb/releases/download/$(PKG_VERSION)
-PKG_HASH:=a80682a89d915fdf60b35d316232fb04ebf36fff27fda9bd39fe8a38d3cd3f12
+PKG_HASH:=b2eea79a96fed77ad4d6c39ec34fed83d45fcb75a31c58956813d58dcf30b19f
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=Apache-2.0

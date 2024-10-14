@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=microsocks
-PKG_VERSION:=1.0.3
+PKG_VERSION:=1.0.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/rofl0r/microsocks/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=6801559b6f8e17240ed8eef17a36eea8643412b5a7476980fd4e24b02a021b82
+PKG_HASH:=130127a87f55870f18fbe47a64d9b9533020e2900802d36a0f6fd2b074313deb
 
 PKG_MAINTAINER:=Mateusz Korniak <matkorgithubcom@ant.gliwice.pl>
 PKG_LICENSE:=MIT

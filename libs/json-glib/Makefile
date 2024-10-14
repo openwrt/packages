@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=json-glib
-PKG_VERSION:=1.6.6
+PKG_VERSION:=1.8.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNOME/json-glib/$(basename $(PKG_VERSION))
-PKG_HASH:=96ec98be7a91f6dde33636720e3da2ff6ecbb90e76ccaa49497f31a6855a490e
+PKG_HASH:=97ef5eb92ca811039ad50a65f06633f1aae64792789307be7170795d8b319454
 
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
@@ -45,7 +45,6 @@ endef
 MESON_ARGS += \
 	-Dgtk_doc=disabled \
 	-Dintrospection=disabled \
-	-Dman=false \
 	-Dtests=false
 
 define Build/Prepare

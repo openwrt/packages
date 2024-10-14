@@ -11,7 +11,7 @@ PKG_RELEASE:=1
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://gitlab.freedesktop.org/libinput/libinput.git
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
-PKG_MIRROR_HASH:=33220a76fae55ac425bd5f082ddcfedd8cbe501cdd3114064f8dc5f16f8a10cb
+PKG_MIRROR_HASH:=e2c4a46292a17d2e037ba4eb439c135e9834041993ac641e23c71fd5ddfceb72
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=MIT

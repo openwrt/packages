@@ -13,13 +13,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nmap
-PKG_VERSION:=7.93
-PKG_RELEASE:=4
+PKG_VERSION:=7.95
+PKG_RELEASE:=1
 PKG_MAINTAINER:=Nuno Gonçalves <nunojpg@gmail.com>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://nmap.org/dist/
-PKG_HASH:=55bcfe4793e25acc96ba4274d8c4228db550b8e8efd72004b38ec55a2dd16651
+PKG_HASH:=e14ab530e47b5afd88f1c8a2bac7f89cd8fe6b478e22d255c5b9bddb7a1c5778
+
 PKG_LICENSE:=NPSL-0.94-or-NPSL-0.95
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:nmap:nmap
@@ -32,7 +33,7 @@ PYTHON3_PKG_FORCE_DISTUTILS_SETUP:=1
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python3-package.mk
 
-NMAP_DEPENDS:=+libpcap +libstdcpp +zlib +libpcre
+NMAP_DEPENDS:=+libpcap +libstdcpp +zlib +libpcre2
 NCAT_DEPENDS:=+libpcap
 NPING_DEPENDS:=+libpcap +libpthread +libstdcpp
 SSL_DEPENDS:=+libopenssl +ca-certs
@@ -60,7 +61,7 @@ endef
 
 define Package/nmap-full
 $(call Package/nmap/default)
-  DEPENDS:=$(NMAP_DEPENDS) $(SSL_DEPENDS) +liblua5.3 +libssh2
+  DEPENDS:=$(NMAP_DEPENDS) $(SSL_DEPENDS) +liblua5.4 +libssh2
   VARIANT:=full
   TITLE:=Nmap (with OpenSSL and scripting support)
 endef
@@ -81,7 +82,7 @@ endef
 
 define Package/ncat-full
 $(call Package/nmap/default)
-  DEPENDS:=$(NCAT_DEPENDS) $(SSL_DEPENDS) +liblua5.3
+  DEPENDS:=$(NCAT_DEPENDS) $(SSL_DEPENDS) +liblua5.4
   VARIANT:=full
   TITLE:=Ncat (with OpenSSL and scripting support)
 endef

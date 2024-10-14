@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=natmap
-PKG_VERSION:=20240126
-PKG_RELEASE:=1
+PKG_VERSION:=20240813
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/heiher/natmap/releases/download/$(PKG_VERSION)
-PKG_HASH:=7d8b3fe5c29dfe30271197b8ea1f78af292830483aefb1ccc21a3ec05f74627b
+PKG_HASH:=2fd89d286b19b9235d5e3477699c3752911bc5e80840ea1ed6930bfe98f47248
 
 PKG_MAINTAINER:=Richard Yu <yurichard3839@gmail.com>, Ray Wang <r@hev.cc>
 PKG_LICENSE:=MIT

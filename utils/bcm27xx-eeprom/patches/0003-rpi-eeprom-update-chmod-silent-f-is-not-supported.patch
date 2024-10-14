@@ -13,7 +13,7 @@ Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
 
 --- a/rpi-eeprom-update
 +++ b/rpi-eeprom-update
-@@ -216,7 +216,7 @@ applyRecoveryUpdate()
+@@ -220,7 +220,7 @@ applyRecoveryUpdate()
                  || die "Failed to copy ${TMP_EEPROM_IMAGE} to ${BOOTFS}"
  
          # For NFS mounts ensure that the files are readable to the TFTP user
@@ -22,7 +22,7 @@ Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
                  || die "Failed to set permissions on eeprom update files"
     fi
  
-@@ -227,7 +227,7 @@ applyRecoveryUpdate()
+@@ -231,7 +231,7 @@ applyRecoveryUpdate()
                  || die "Failed to copy ${VL805_UPDATE_IMAGE} to ${BOOTFS}/vl805.bin"
  
          # For NFS mounts ensure that the files are readable to the TFTP user

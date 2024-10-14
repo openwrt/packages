@@ -1,20 +1,39 @@
 
-config zerotier sample_config
+config zerotier 'global'
+	# Sets whether ZeroTier is enabled or not
 	option enabled 0
-
-	# persistent configuration folder (for ZT controller mode)
+	# Sets the ZeroTier listening port (default 9993; set to 0 for random)
+	#option port '9993'
+	# Client secret (leave blank to generate a secret on first run)
+	option secret ''
+	# Path of the optional file local.conf (see documentation at
+	# https://docs.zerotier.com/config#local-configuration-options)
+	#option local_conf_path '/etc/zerotier.conf'
+	# Persistent configuration directory (to perform other configurations such
+	# as controller mode or moons, etc.)
 	#option config_path '/etc/zerotier'
-	# copy <config_path> to RAM to prevent writing to flash (for ZT controller mode)
+	# Copy the contents of the persistent configuration directory to memory
+	# instead of linking it, this avoids writing to flash
 	#option copy_config_path '1'
 
-	#option port '9993'
+# Network configuration, you can have as many configurations as networks you
+# want to join (the network name is optional)
+config network 'earth'
+	# Identifier of the network you wish to join
+	option id '8056c2e21c000001'
+	# Network configuration parameters (all are optional, if not indicated the
+	# default values are set, see documentation at
+	# https://docs.zerotier.com/config/#network-specific-configuration)
+	option allow_managed '1'
+	option allow_global '0'
+	option allow_default '0'
+	option allow_dns '0'
 
-	# path to the local.conf
-	#option local_conf '/etc/zerotier.conf'
+# Example of a second network (unnamed as it is optional)
+#config network
+#	option id '1234567890123456'
+#	option allow_managed '1'
+#	option allow_global '0'
+#	option allow_default '0'
+#	option allow_dns '0'
 
-	# Generate secret on first start
-	option secret ''
-
-	# Join a public network called Earth
-	list join '8056c2e21c000001'
-	#list join '<other_network>'

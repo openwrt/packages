@@ -10,7 +10,7 @@ ic/ovn-ic.c:430:40: note: 'ls' was declared here
 
 --- a/ic/ovn-ic.c
 +++ b/ic/ovn-ic.c
-@@ -427,7 +427,7 @@ find_ts_in_nb(struct ic_context *ctx, ch
+@@ -433,7 +433,7 @@ find_ts_in_nb(struct ic_context *ctx, ch
          nbrec_logical_switch_index_init_row(ctx->nbrec_ls_by_name);
      nbrec_logical_switch_index_set_name(key, ts_name);
  

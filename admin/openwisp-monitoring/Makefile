@@ -5,16 +5,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openwisp-monitoring
-PKG_RELEASE:=2
+PKG_VERSION:=0.2.0
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Federico Capoano <support@openwisp.io>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE_URL:=https://github.com/openwisp/openwrt-openwisp-monitoring.git
-PKG_MIRROR_HASH:=ce2ed94d24f68c58320ca700a088471368e1097754be23ad6053842cf0aaa97e
+PKG_MIRROR_HASH:=6baad2b319cdc072a83547593b447e2c93c42fcdda386f5993c22b88ad991cdd
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=0.1.1
+PKG_SOURCE_VERSION:=$(PKG_VERSION)
 PKGARCH:=all
 
 include $(INCLUDE_DIR)/package.mk

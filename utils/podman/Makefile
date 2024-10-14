@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=podman
-PKG_VERSION:=4.8.0
+PKG_VERSION:=5.2.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/containers/podman/archive/v$(PKG_VERSION)
-PKG_HASH:=cd0afd1fb493b0c099fd8634525f318f35e4e84c1d7735d8426a722a4d5c8409
+PKG_HASH:=571658f175d61724269c1a20626c1e39424af59b7bcf7ff94135d03b790bbecb
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
@@ -39,7 +39,9 @@ define Package/podman
   CATEGORY:=Utilities
   TITLE:=Podman
   URL:=https://podman.io
-  DEPENDS:=$(GO_ARCH_DEPENDS) +conmon +libgpgme +libseccomp +nsenter +zoneinfo-simple +kmod-veth +slirp4netns +netavark +aardvark-dns +catatonit +crun +PODMAN_SELINUX_SUPPORT:libselinux
+  DEPENDS:=$(GO_ARCH_DEPENDS) +conmon +libgpgme +libseccomp +nsenter \
+	+zoneinfo-simple +kmod-veth +slirp4netns +netavark +aardvark-dns \
+	+catatonit +crun +PODMAN_SELINUX_SUPPORT:libselinux
 endef
 
 define Package/podman/description
@@ -64,42 +66,20 @@ define Package/podman/conffiles
 /etc/containers/networks/podman.json
 endef
 
+GO_PKG_TAGS:=seccomp exclude_graphdriver_devicemapper apparmor
 ifdef CONFIG_PODMAN_SELINUX_SUPPORT
-  GO_PKG_TAGS=seccomp,exclude_graphdriver_devicemapper,selinux,apparmor
-else
-  GO_PKG_TAGS=seccomp,exclude_graphdriver_devicemapper,apparmor
+  GO_PKG_TAGS+= selinux
 endif
 
 MAKE_VARS += \
-	GO_INSTALL_BIN_PATH="$(strip $(GO_PKG_INSTALL_BIN_PATH))" \
-	BUILD_DIR="$(PKG_BUILD_DIR)" \
-	GO_BUILD_DIR="$(GO_PKG_BUILD_DIR)" \
-	GO_BUILD_BIN_DIR="$(GO_PKG_BUILD_BIN_DIR)" \
-	GO_BUILD_DEPENDS_PATH="$(GO_PKG_BUILD_DEPENDS_PATH)" \
-	GO_BUILD_DEPENDS_SRC="$(GO_PKG_BUILD_DEPENDS_SRC)" \
-	GOOS="$(GO_OS)" \
-	GOARCH="$(GO_ARCH)" \
-	CC="$(TARGET_CC)" \
-	CXX="$(TARGET_CXX)" \
-	CGO_CFLAGS="$(filter-out $(GO_CFLAGS_TO_REMOVE),$(TARGET_CFLAGS))" \
-	CGO_CPPFLAGS="$(TARGET_CPPFLAGS)" \
-	CGO_CXXFLAGS="$(filter-out $(GO_CFLAGS_TO_REMOVE),$(TARGET_CXXFLAGS))" \
-	CGO_LDFLAGS="$(TARGET_LDFLAGS)" \
-	GOPATH="$(GO_PKG_BUILD_DIR)" \
-	GOCACHE="$(GO_BUILD_CACHE_DIR)" \
-	GOMODCACHE="$(GO_MOD_CACHE_DIR)" \
-	GOFLAGS="$(GO_PKG_GCFLAGS)" \
-	GO_PKG_CFLAGS="$(GO_PKG_CFLAGS)" \
-	CGO_ENABLED=1 \
-	GOENV=off \
+	$(GO_GENERAL_BUILD_CONFIG_VARS) \
+	$(GO_PKG_BUILD_CONFIG_VARS) \
+	$(GO_PKG_VARS) \
 	PREFIX=/usr \
 	LIBEXECDIR=/usr/lib \
 	LIBEXECPODMAN=/usr/lib/podman \
-	SHAREDIR_CONTAINERS=/usr/share/containers \
-	ETCDIR=/etc \
 	TMPFILESDIR=/var/run/podman \
-	BUILDTAGS="$(GO_PKG_TAGS)" \
-	EXTRA_LDFLAGS="$(GO_PKG_LDFLAGS)"
+	BUILDTAGS="$(GO_PKG_TAGS)"
 
 define Build/Prepare
 	$(call Build/Prepare/Default)

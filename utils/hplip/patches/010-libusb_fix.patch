@@ -9,7 +9,7 @@
  libhpmud_la_LDFLAGS += -lusb-1.0
  endif
  
-@@ -363,7 +363,7 @@ hpmudext_la_CFLAGS += -Iprotocol/discove
+@@ -365,7 +365,7 @@ hpmudext_la_CFLAGS += -Iprotocol/discove
  endif
  
  if !LIBUSB01_BUILD

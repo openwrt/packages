@@ -6,7 +6,7 @@ PKG_RELEASE:=1
 PKG_SOURCE_URL:=https://github.com/wlanslovenija/tunneldigger.git
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=v0.4.0
-PKG_MIRROR_HASH:=c67a0e626cec571823085a7a28bc72fcaa077669cac52c441b0dde02d676e16c
+PKG_MIRROR_HASH:=2871db8492de82e8f013d42b430fbf97397df84ab428b1ebfbb370e1faa9fafb
 
 PKG_MAINTAINER:=Nick Hainke <vincent@systemli.org>
 PKG_LICENSE:=AGPL-3.0

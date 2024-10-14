@@ -11,11 +11,11 @@ include perlver.mk
 
 PKG_NAME:=perl
 PKG_VERSION:=$(PERL_VERSION)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=https://www.cpan.org/src/5.0
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=d91115e90b896520e83d4de6b52f8254ef2b70a8d545ffab33200ea9f1cf29e8
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_HASH:=c740348f357396327a9795d3e8323bafd0fe8a5c7835fc1cbaba0cc8dfe7161f
 
 PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
 PKG_LICENSE_FILES:=Copying Artistic README
@@ -102,7 +102,7 @@ define Build/Configure
 	                                -Dowrt:threads=$(if $(CONFIG_PERL_THREADS),yes,no) \
 	                                -Dowrt:staging_dir='$(STAGING_DIR)' \
 	                                -Dowrt:host_perl_prefix='$(HOST_PERL_PREFIX)' \
-	                                -Dsysroot='$(TOOLCHAIN_DIR)' \
+	                                -Dsysroot='$(TOOLCHAIN_ROOT_DIR)' \
 	                                files/version.config \
 	                                files/base.config \
 	                                files/$(patsubst i386,i486,$(ARCH)).config \
@@ -117,6 +117,8 @@ define Build/Configure
 endef
 
 define Build/Compile
+	# make depend is required to avoid race conditions: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=996953
+	+$(MAKE) -C $(PKG_BUILD_DIR) depend
 	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR)
 endef
 

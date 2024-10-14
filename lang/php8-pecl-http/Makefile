@@ -14,7 +14,7 @@ PKG_HASH:=fb1e10c2e5edfb011ff8dc2e473cdbd2bbe0127d1279dfce4d98570555ac6ded
 
 PKG_NAME:=php8-pecl-http
 PKG_SOURCE:=$(PECL_NAME)-$(PKG_VERSION).tgz
-PKG_SOURCE_URL:=http://pecl.php.net/get/
+PKG_SOURCE_URL:=https://pecl.php.net/get/
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 

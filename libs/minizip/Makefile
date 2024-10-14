@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=minizip-ng
-PKG_VERSION:=4.0.4
+PKG_VERSION:=4.0.7
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/zlib-ng/minizip-ng/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=955800fe39f9d830fcb84e60746952f6a48e41093ec7a233c63ad611b5fcfe9f
+PKG_HASH:=a87f1f734f97095fe1ef0018217c149d53d0f78438bcb77af38adc21dff2dfbc
 
 PKG_MAINTAINER:=David Woodhouse <dwmw2@infradead.org>
 PKG_LICENSE:=Zlib

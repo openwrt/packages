@@ -30,14 +30,45 @@ function wrn(fmt, ...args) {
 
 function rpad(str, fill, len)
 {
-    str = rtrim(str) + ' ';
-    while (length(str) < len) {
-        str += fill;
-    }
-    return str;
+	str = rtrim(str) + ' ';
+	while (length(str) < len) {
+		str += fill;
+	}
+	return str;
 }
 
 //------------------------------------------------------------------------------
+
+const ConfigItem = {
+	contains: function(value) {
+		// Check if the value is contained in the listed values,
+		// depending on the item type.
+		switch (this.type) {
+		case "enum":
+			return value in this.values;
+		case "range":
+			return value >= this.values[0] && value <= this.values[1];
+		default:
+			return true;
+		}
+	},
+
+	allowed: function() {
+		// Show a pretty version of the possible values, for error messages.
+		switch (this.type) {
+		case "enum":
+			return "one of [" + join(", ", this.values) + "]";
+		case "range":
+			return `${this.values[0]} <= x <= ${this.values[1]}`;
+		case "path":
+			return "a path string";
+		case "str":
+			return "a string";
+		default:
+			return "???";
+		}
+	},
+};
 
 function config_item(type, values, def) {
 	// If no default value is provided explicity, then values[0] is used as default.
@@ -45,46 +76,21 @@ function config_item(type, values, def) {
 		wrn(`Invalid item type '${type}', must be one of "enum", "range", "path" or "str".`);
 		return;
 	}
+	if (type == "enum") {
+		// Convert values to strings, so 'in' works in 'contains'.
+		values = map(values, function(i) { return "" + i; });
+	}
 	if (type == "range" && (length(values) != 2 || values[0] > values[1])) {
 		wrn(`A 'range' type item must have exactly 2 values in ascending order.`);
 		return;
 	}
-	// Maybe check paths for existence???
+	// Maybe check 'path' values for existence???
 		
-	return {
+	return proto({
 		type:     type,
 		values:   values,
 		default:  def ?? values[0],
-
-		contains: function(value) {
-			// Check if the value is contained in the listed values,
-			// depending on the item type.
-			switch (this.type) {
-			case "enum":
-				return value in this.values;
-			case "range":
-				return value >= this.values[0] && value <= this.values[1];
-			default:
-				return true;
-			}
-		},
-
-		allowed: function() {
-			// Show a pretty version of the possible values, for error messages.
-			switch (this.type) {
-			case "enum":
-				return "one of [" + join(", ", this.values) + "]";
-			case "range":
-				return `${this.values[0]} <= x <= ${this.values[1]}`;
-			case "path":
-				return "a path string";
-			case "str":
-				return "a string";
-			default:
-				return "???";
-			}
-		},
-	}
+	}, ConfigItem);
 };
 
 const snort_config = {

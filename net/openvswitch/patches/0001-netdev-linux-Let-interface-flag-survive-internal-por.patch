@@ -18,7 +18,7 @@ Signed-off-by: Helmut Schaa <helmut.schaa@googlemail.com>
 
 --- a/lib/netdev-linux.c
 +++ b/lib/netdev-linux.c
-@@ -3546,7 +3546,13 @@ update_flags(struct netdev_linux *netdev
+@@ -3571,7 +3571,13 @@ update_flags(struct netdev_linux *netdev
      unsigned int old_flags, new_flags;
      int error = 0;
  

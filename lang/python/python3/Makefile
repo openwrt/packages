@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 include ../python3-version.mk
 
 PKG_NAME:=python3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_VERSION:=$(PYTHON3_VERSION).$(PYTHON3_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
@@ -41,7 +41,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/Python-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/Python-$(PKG_VERSION)
 
 PKG_BUILD_DEPENDS:=bluez python3/host python-build/host python-installer/host python-wheel/host
-HOST_BUILD_DEPENDS:=bzip2/host libffi/host
+HOST_BUILD_DEPENDS:=bzip2/host libffi/host readline/host
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
@@ -283,16 +283,6 @@ endef
 
 Py3Package/python3-light/install:=:
 Package/python3/install:=:
-
-# libuuid is provided by e2fsprogs and uuid/uuid.h is moved into
-# $(STAGING_DIR_HOST)/include/e2fsprogs
-HOST_CFLAGS += \
-	-I$(STAGING_DIR_HOST)/include/e2fsprogs
-HOST_CPPFLAGS += \
-	-I$(STAGING_DIR_HOST)/include/e2fsprogs
-
-HOST_LDFLAGS += \
-	-Wl$(comma)-rpath$(comma)$(STAGING_DIR_HOSTPKG)/lib
 
 ifeq ($(HOST_OS),Linux)
 HOST_LDFLAGS += \

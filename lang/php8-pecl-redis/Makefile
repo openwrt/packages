@@ -14,7 +14,7 @@ PKG_HASH:=01aeccb0e14f897fe56f0509be6e6991ff0ad459f9d34e95e4556d02699b9a03
 
 PKG_NAME:=php8-pecl-redis
 PKG_SOURCE:=$(PECL_NAME)-$(PKG_VERSION).tgz
-PKG_SOURCE_URL:=http://pecl.php.net/get/
+PKG_SOURCE_URL:=https://pecl.php.net/get/
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 

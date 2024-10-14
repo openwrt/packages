@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apr
-PKG_VERSION:=1.7.4
+PKG_VERSION:=1.7.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@APACHE/apr/
-PKG_HASH:=fc648de983f3a2a6c9e78dea1f180639bd2fad6c06d556d4367a701fe5c35577
+PKG_HASH:=cd0f5d52b9ab1704c72160c5ee3ed5d3d4ca2df4a7f8ab564e3cb352b67232f2
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 
@@ -88,7 +88,7 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/build-1/* $(1)/usr/share/build-1
 	$(SED) '/^prefix=\|^exec_prefix=/s|/usr|$(STAGING_DIR)/usr|' \
 					$(1)/usr/bin/apr-1-config
-	$(SED) '/^bindir=/s|/usr/bin|$(STAGING_DIR)|' $(1)/usr/bin/apr-1-config
+	$(SED) '/^bindir=/s|/usr|$$$${prefix}|' $(1)/usr/bin/apr-1-config
 	$(SED) '/^datadir=/s|/usr|$$$${prefix}|' $(1)/usr/bin/apr-1-config
 	$(SED) '/^datarootdir=/s|/usr|$$$${prefix}|' $(1)/usr/bin/apr-1-config
 	$(SED) 's,/usr/share/build-1,$(STAGING_DIR)/usr/share/build-1,g' \

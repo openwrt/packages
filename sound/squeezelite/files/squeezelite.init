@@ -102,6 +102,10 @@ make_cmdline() {
 	local dop
 	config_get dop options dsd_over_pcm 0
 	[ "$dop" -eq 1 ] && cmdline="$cmdline -D"
+
+	local unmute
+	config_get unmute options unmute ""
+	[ -n "$unmute" ] && cmdline="$cmdline -U $unmute"
 }
 
 start_service() {

@@ -4,12 +4,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tgt
-PKG_VERSION:=1.0.89
+PKG_VERSION:=1.0.93
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/fujita/tgt/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=cd09daffacc00a6641a7b95d31c43441656ce0b01af8d512359bc91bac3c6d99
+PKG_HASH:=587e4a160a46851d049dbf07b0fae7e269ed1c3f58ad3fbbdbe45c9bb36093db
 
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
@@ -34,10 +34,6 @@ that supports the iSCSI and iSER transport protocols and that also
 supports multiple methods for accessing block storage. Tgt consists of
 user-space daemon and tools.
 endef
-
-ifneq ($(CONFIG_USE_MUSL),)
-  TARGET_CFLAGS += -D_LARGEFILE64_SOURCE
-endif
 
 define Build/Compile
 	$(call Build/Compile/Default,programs)

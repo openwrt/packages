@@ -8,20 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libndp
-PKG_VERSION:=1.7
+PKG_VERSION:=1.8
 PKG_RELEASE:=1
-PKG_LICENSE:=LGPL-2.1
-PKG_MAINTAINER:=Thomas Guyot-Sionnest <tguyot@gmail.com>
-PKG_CPE_ID:=cpe:/a:libndp:libndp
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://libndp.org/files/
-PKG_HASH:=2c480afbffb02792dbae3c13bbfb71d89f735562f2795cca0640ed3428b491b6
+PKG_HASH:=88ffb66ee2eb527f146f5c02f5ccbc38ba97d2b0d57eb46bfba488821ab0c02b
 
+PKG_MAINTAINER:=Thomas Guyot-Sionnest <tguyot@gmail.com>
+PKG_LICENSE:=LGPL-2.1-or-later
+PKG_CPE_ID:=cpe:/a:libndp:libndp
 
+PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
-PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 

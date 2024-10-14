@@ -8,18 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gdbm
-PKG_VERSION:=1.21
-PKG_RELEASE:=2
+PKG_VERSION:=1.23
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/gdbm
-PKG_HASH:=b0b7dbdefd798de7ddccdd8edf6693a30494f7789777838042991ef107339cc2
+PKG_HASH:=74b1081d21fff13ae4bd7c16e5d6e504a4c26f7cde1dca0d963a484174bbcacd
 
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
-PKG_INSTALL:=2
+PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=0
 
 include $(INCLUDE_DIR)/package.mk
@@ -47,6 +47,7 @@ define Build/Compile
 		BINOWN=`id -u` \
 		BINGRP=`id -g` \
 		DESTDIR="$(PKG_INSTALL_DIR)" \
+		SUBDIRS=src \
 		all install
 endef
 

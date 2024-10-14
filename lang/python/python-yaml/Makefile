@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-yaml
 PKG_VERSION:=6.0.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=PyYAML
 PKG_HASH:=bfdf460b1736c775f2ba9f6a92bca30bc2095067b8a9d77876d1fad6cc3b4a43
@@ -20,10 +20,13 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:pyyaml:pyyaml
 
 PKG_BUILD_DEPENDS:=python-cython/host
+HOST_BUILD_DEPENDS:=python-cython/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 include ../python3-package.mk
+include ../python3-host-build.mk
 
 define Package/python3-yaml
   SECTION:=lang
@@ -43,3 +46,4 @@ PYTHON3_PKG_BUILD_VARS:=PYYAML_FORCE_LIBYAML=1
 $(eval $(call Py3Package,python3-yaml))
 $(eval $(call BuildPackage,python3-yaml))
 $(eval $(call BuildPackage,python3-yaml-src))
+$(eval $(call HostBuild))

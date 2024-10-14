@@ -45,9 +45,9 @@ if [ "${vpn}" = "1" ] && [ "${vpn_action%_*}" = "enable" ]; then
 		if [ "${vpn_status}" != "true" ]; then
 			/sbin/ifdown "${vpn_iface}"
 			"${trm_ubuscmd}" -S call network.interface."${vpn_iface}" remove >/dev/null 2>&1
-			if [ "${vpn_service}" = "openvpn" ] && [ -n "${vpn_instance}" ] && [ -x "/etc/init.d/openvpn" ] && /etc/init.d/openvpn running "${vpn_instance}"; then
-				/etc/init.d/openvpn stop "${vpn_instance}"
-			fi
+		fi
+		if [ "${vpn_service}" = "openvpn" ] && [ -n "${vpn_instance}" ] && [ -x "/etc/init.d/openvpn" ] && /etc/init.d/openvpn running "${vpn_instance}"; then
+			/etc/init.d/openvpn stop "${vpn_instance}"
 			sleep 1
 		fi
 		if [ "${vpn_service}" = "openvpn" ] && [ -n "${vpn_instance}" ] && [ -x "/etc/init.d/openvpn" ] && ! /etc/init.d/openvpn running "${vpn_instance}"; then

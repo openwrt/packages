@@ -1,6 +1,0 @@
-#!/bin/sh
-
-FW_DRIVER=$(uci -q get 'netavark.@firewall[0].driver')
-[ -z "$FW_DRIVER" ] && FW_DRIVER="none"
-
-NETAVARK_FW="$FW_DRIVER" /usr/lib/podman/netavark-bin $@

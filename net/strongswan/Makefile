@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=strongswan
-PKG_VERSION:=5.9.13
-PKG_RELEASE:=2
+PKG_VERSION:=5.9.14
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://download.strongswan.org/ https://download2.strongswan.org/
-PKG_HASH:=56e30effb578fd9426d8457e3b76c8c3728cd8a5589594b55649b2719308ba55
+PKG_HASH:=728027ddda4cb34c67c4cec97d3ddb8c274edfbabdaeecf7e74693b54fc33678
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_MAINTAINER:=Philip Prindeville <philipp@redfish-solutions.com>, Noel Kuntze <noel.kuntze@thermi.consulting>
 PKG_CPE_ID:=cpe:/a:strongswan:strongswan
@@ -325,7 +325,7 @@ endef
 define Package/strongswan-isakmp/description
 $(call Package/strongswan/description/Default)
  This meta-package contains only dependencies to establish  ISAKMP /
- IKE PSK connections, dropping other capabilities in favor of small size 
+ IKE PSK connections, dropping other capabilities in favor of small size
  Can fit most routers even with 4Mb flash (after removing IPv6 support).
 endef
 
@@ -585,6 +585,8 @@ define Package/strongswan-swanctl/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/swanctl $(1)/usr/sbin/
 	$(INSTALL_BIN) ./files/swanctl.init $(1)/etc/init.d/swanctl
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/ipsec.config $(1)/etc/config/ipsec
 endef
 
 define Package/strongswan-gencerts/install

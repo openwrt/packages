@@ -1,11 +1,8 @@
-From 1689085363cf87deb3877139931a8a88d8c7bcd3 Mon Sep 17 00:00:00 2001
+From 71ed5b791fb0f7bfe1f564726fdc979b71313fbe Mon Sep 17 00:00:00 2001
 From: Moritz Warning <moritzwarning@web.de>
-Date: Mon, 4 Jul 2022 00:10:52 +0200
-Subject: [PATCH 3/5] fix compilation for arm_cortex-a7+neon
+Date: Tue, 17 Sep 2024 15:38:01 +0200
+Subject: [PATCH 3/5] fix compilation for arm_cortex a7 neon
 
-Fixes "error: 'vrbitq_u8' was not declared in this scope"
-
-Signed-off-by: Rosen Penev <rosenp@gmail.com>
 ---
  node/Constants.hpp | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)

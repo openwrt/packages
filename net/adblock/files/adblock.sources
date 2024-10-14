@@ -1,4 +1,11 @@
 {
+	"1hosts": {
+		"url": "https://raw.githubusercontent.com/badmojr/1Hosts/master/",
+		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
+		"size": "VAR",
+		"focus": "compilation",
+		"descurl": "https://github.com/badmojr/1Hosts"
+	},
 	"adaway": {
 		"url": "https://raw.githubusercontent.com/AdAway/adaway.github.io/master/hosts.txt",
 		"rule": "/^127\\.0\\.0\\.1[[:space:]]+([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
@@ -118,6 +125,13 @@
 		"focus": "compilation",
 		"descurl": "https://hblock.molinero.dev"
 	},
+	"hagezi": {
+		"url": "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/",
+		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
+		"size": "VAR",
+		"focus": "compilation",
+		"descurl": "https://github.com/hagezi/dns-blocklists"
+	},
 	 "lightswitch05": {
 		"url": "https://www.github.developerdan.com/hosts/lists/ads-and-tracking-extended.txt",
 		"rule": "/^0\\.0\\.0\\.0[[:space:]]+([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
@@ -133,22 +147,22 @@
 		"descurl": "https://github.com/notracking/hosts-blocklists"
 	},
 	"oisd_big": {
-		"url": "https://big.oisd.nl/domainswild",
-		"rule": "BEGIN{FS=\"\\\\*.\"}/^\\*\\.([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
+		"url": "https://big.oisd.nl/domainswild2",
+		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
 		"size": "XXL",
 		"focus": "general",
 		"descurl": "https://oisd.nl"
 	},
 	"oisd_nsfw": {
-		"url": "https://nsfw.oisd.nl/domainswild",
-		"rule": "BEGIN{FS=\"\\\\*.\"}/^\\*\\.([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
+		"url": "https://nsfw.oisd.nl/domainswild2",
+		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
 		"size": "XXL",
 		"focus": "porn",
 		"descurl": "https://oisd.nl"
 	},
 	"oisd_small": {
-		"url": "https://small.oisd.nl/domainswild",
-		"rule": "BEGIN{FS=\"\\\\*.\"}/^\\*\\.([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
+		"url": "https://small.oisd.nl/domainswild2",
+		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
 		"size": "L",
 		"focus": "general",
 		"descurl": "https://oisd.nl"

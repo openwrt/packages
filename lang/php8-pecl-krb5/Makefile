@@ -14,7 +14,7 @@ PKG_HASH:=2798e57ad231aa3467f09460e3e69169e04c88bd82972d8e86a6641e4ddc9d3d
 
 PKG_NAME:=php8-pecl-krb5
 PKG_SOURCE:=$(PECL_NAME)-$(PKG_VERSION).tgz
-PKG_SOURCE_URL:=http://pecl.php.net/get/
+PKG_SOURCE_URL:=https://pecl.php.net/get/
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 

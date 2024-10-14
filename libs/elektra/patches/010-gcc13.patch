@@ -15,5 +15,5 @@ Subject: [PATCH] bindings: include <cstdint> in key.hpp for uint8_t
  #include <cstdarg>
 +#include <cstdint>
  #include <cstring>
- #include <functional>
- #include <locale>
+ 
+ #if __GNUC__ >= 12

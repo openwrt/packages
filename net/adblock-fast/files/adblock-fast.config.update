@@ -13,3 +13,4 @@ s|list blocked_hosts_url 'https://hosts.oisd.nl/'|list blocked_adblockplus_url '
 \|dnsmasq.oisd.nl|d
 \|dnsmasq2.oisd.nl|d
 \|https://cdn.jsdelivr.net/gh/AdguardTeam/cname-trackers@master/combined_disguised_trackers_justdomains.txt|d
+\|sysctl.org/cameleon/hosts|d

@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=inotify-tools
-PKG_VERSION:=3.20.11.0
-PKG_HASH:=58a3cde89e4a5111a87ac16b56b06a8f885460fca0aea51b69c856ce30a37a14
+PKG_VERSION:=4.23.9.0
+PKG_HASH:=1dfa33f80b6797ce2f6c01f454fd486d30be4dca1b0c5c2ea9ba3c30a5c39855
 PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=https://codeload.github.com/rvoicilas/inotify-tools/tar.gz/$(PKG_VERSION)?
@@ -22,6 +22,10 @@ CONFIGURE_ARGS+= --disable-doxygen
 ifneq ($(CONFIG_USE_MUSL),)
   TARGET_CFLAGS += -D_LARGEFILE64_SOURCE
 endif
+
+## Avoid linking with libstdcpp
+TARGET_CXXFLAGS+= -nodefaultlibs -lc -fno-exceptions
+TARGET_LDFLAGS+= $(if $(CONFIG_USE_MUSL),-lssp_nonshared)
 
 define Build/Prepare
 	$(call Build/Prepare/Default)

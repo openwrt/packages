@@ -1,11 +1,11 @@
 --- a/Makefile.top
 +++ b/Makefile.top
-@@ -87,7 +87,7 @@ LIBCURRENT  = 41
- LIBAGE      = 1
- LIBREVISION = 0
+@@ -87,7 +87,7 @@ LIBCURRENT  = 42
+ LIBAGE      = 2
+ LIBREVISION = 1
  
--LIB_LD_CMD      = $(LIBTOOL) --mode=link $(LINKCC) $(CFLAGS) -rpath $(libdir) -version-info $(LIBCURRENT):$(LIBREVISION):$(LIBAGE) -o
-+LIB_LD_CMD      = $(LIBTOOL) --mode=link $(LINKCC) $(CFLAGS) -rpath $(libdir) $(LDFLAGS) -version-info $(LIBCURRENT):$(LIBREVISION):$(LIBAGE) -o
+-LIB_LD_CMD      = $(LIBTOOL) --mode=link $(LINKCC) $(CFLAGS) -rpath $(libdir) -version-info $(LIBCURRENT):$(LIBREVISION):$(LIBAGE) @LD_NO_UNDEFINED@ -o
++LIB_LD_CMD      = $(LIBTOOL) --mode=link $(LINKCC) $(CFLAGS) -rpath $(libdir) $(LDFLAGS) -version-info $(LIBCURRENT):$(LIBREVISION):$(LIBAGE) @LD_NO_UNDEFINED@ -o
  LIB_EXTENSION   = la
  LIB_VERSION     =
  LIB_LDCONFIG_CMD = $(LIBTOOL) --mode=finish $(INSTALL_PREFIX)$(libdir)

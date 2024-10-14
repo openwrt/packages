@@ -1,0 +1,39 @@
+#!/bin/sh
+
+# SPDX-License-Identifier: CC0-1.0
+# 2022 Aleksander Morgado <aleksander@aleksander.es>
+#
+# Automatically report to netifd that the underlying modem
+# is really disconnected
+#
+# require program name and at least 4 arguments
+[ $# -lt 4 ] && exit 1
+
+MODEM_PATH="$1"
+BEARER_PATH="$2"
+INTERFACE="$3"
+STATE="$4"
+
+[ "${STATE}" = "disconnected" ] || exit 0
+
+. /lib/netifd/netifd-proto.sh
+. /usr/share/ModemManager/modemmanager.common
+
+MODEM_STATUS=$(mmcli --modem="${MODEM_PATH}" --output-keyvalue)
+[ -n "${MODEM_STATUS}" ] || exit 1
+
+MODEM_DEVICE=$(modemmanager_get_field "${MODEM_STATUS}" "modem.generic.device")
+[ -n "${MODEM_DEVICE}" ] || exit 2
+
+CFG=$(mm_get_modem_config "${MODEM_DEVICE}")
+[ -n "${CFG}" ] || exit 3
+
+IFUP=$(ifstatus "${CFG}" | jsonfilter -e "@.up")
+
+[ "${IFUP}" = "true" ] && {
+	mm_log "info" "Reconnecting '${CFG}' on '${STATE}' event"
+	ubus call network.interface down "{ 'interface': '${CFG}'}"
+	ubus call network.interface up "{ 'interface': '${CFG}'}"
+}
+
+exit 0

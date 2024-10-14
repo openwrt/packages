@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-good
-PKG_VERSION:=1.22.8
+PKG_VERSION:=1.24.8
 PKG_RELEASE:=1
 
 PKG_SOURCE:=gst-plugins-good-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gst-plugins-good/
-PKG_HASH:=e305b9f07f52743ca481da0a4e0c76c35efd60adaf1b0694eb3bb021e2137e39
+PKG_HASH:=613a20f03bd4544b52f10f6ceb4e0fffd25eff15bf338ab8b12b971982eb0153
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-good-$(PKG_VERSION)
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
@@ -86,6 +86,8 @@ define Package/gstreamer1-plugins-good/config
   endmenu
 
 endef
+
+TARGET_CFLAGS += -Wno-error=incompatible-pointer-types
 
 GST_COND_SELECT = -D$(1)=$(if $(CONFIG_PACKAGE_gst1-mod-$(1)),en,dis)abled
 
@@ -168,6 +170,7 @@ MESON_ARGS += \
 	\
 	-Dximagesrc=disabled \
 	-Dv4l2=$(if $(CONFIG_PACKAGE_gst1-mod-video4linux2),en,dis)abled \
+	-Dv4l2-gudev=disabled \
 	-Dexamples=disabled \
 	-Dtests=disabled \
 	-Dnls=enabled \

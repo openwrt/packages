@@ -8,19 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xfsprogs
-PKG_VERSION:=6.2.0
+PKG_VERSION:=6.10.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/utils/fs/xfs/xfsprogs
-PKG_HASH:=d67dcba5a28e0904b60886b6e5f752bc7c9c3a5c7096153855b5adca9db86c51
+PKG_HASH:=6cb839be1a9535f8352441b3f6eea521ead5c5c7c913e8106cdfac96aa117041
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=LICENSES/GPL-2.0
 PKG_CPE_ID:=cpe:/a:sgi:xfsprogs
 
-PKG_BUILD_DEPENDS:=inih
+PKG_BUILD_DEPENDS:=inih attr
 PKG_BUILD_FLAGS:=no-mips16
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -31,8 +31,8 @@ define Package/xfsprogs/default
   SECTION:=utils
   CATEGORY:=Utilities
   SUBMENU:=Filesystem
-  DEPENDS:=+liburcu +libuuid +libpthread
-  URL:=https://xfs.org/
+  DEPENDS:=+liburcu +libuuid +libpthread +libblkid
+  URL:=https://xfs.wiki.kernel.org/
 endef
 
 define Package/xfs-admin
@@ -57,18 +57,16 @@ $(call Package/xfsprogs/default)
 endef
 
 CONFIGURE_ARGS += \
+	--enable-lto \
 	--disable-gettext \
-	--disable-blkid \
-	--disable-readline \
-	--disable-editline \
-	--disable-termcap \
 	--disable-lib64 \
 	--disable-librt \
-	--disable-ubisan \
-	--disable-addrsan \
-	--disable-threadsan \
 	--disable-scrub \
 	--disable-libicu
+
+CONFIGURE_VARS += \
+	DEBUG=-DNDEBUG \
+	OPTIMIZER="$(TARGET_OPTIMIZATION)"
 
 TARGET_CFLAGS += -DHAVE_MAP_SYNC $(if $(CONFIG_USE_MUSL),-D_LARGEFILE64_SOURCE)
 TARGET_LDFLAGS += $(if $(CONFIG_USE_GLIBC),-lrt)
@@ -81,12 +79,12 @@ endef
 
 define Package/xfs-mkfs/install
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/sbin/mkfs.xfs $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/mkfs.xfs $(1)/usr/sbin
 endef
 
 define Package/xfs-fsck/install
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/sbin/xfs_repair $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/xfs_repair $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/xfs_db $(1)/usr/sbin
 endef
 

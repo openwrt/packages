@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua-eco
-PKG_VERSION:=3.2.0
+PKG_VERSION:=3.6.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL=https://github.com/zhaojh329/lua-eco/releases/download/v$(PKG_VERSION)
-PKG_HASH:=b317599302c5c73195d980bfcfc1977e55da485137fc81f16d1a958ca893e2ed
+PKG_HASH:=0fdcd8eb9e93f2d1f0ff2132298faae2e13a8bfd676bd91db4d53e48917d6a74
 
 PKG_MAINTAINER:=Jianhui Zhao <zhaojh329@gmail.com>
 PKG_LICENSE:=MIT
@@ -55,13 +55,14 @@ Package/lua-eco-ssl=$(call Package/lua-eco/Module,ssl,\
   +LUA_ECO_MBEDTLS:libmbedtls +LUA_ECO_MBEDTLS:zlib +lua-eco-socket)
 Package/lua-eco-ubus=$(call Package/lua-eco/Module,ubus,+libubus)
 Package/lua-eco-http=$(call Package/lua-eco/Module,http/https,+lua-eco-dns +lua-eco-ssl +lua-eco-base64 +lua-eco-log)
-Package/lua-eco-mqtt=$(call Package/lua-eco/Module,mqtt,+lua-eco-socket +lua-eco-dns +libmosquitto-ssl)
+Package/lua-eco-mqtt=$(call Package/lua-eco/Module,mqtt,+lua-eco-socket +lua-eco-ssl)
 Package/lua-eco-websocket=$(call Package/lua-eco/Module,websocket,+lua-eco-http +lua-eco-base64 +lua-eco-sha1)
 Package/lua-eco-termios=$(call Package/lua-eco/Module,termios)
 Package/lua-eco-netlink=$(call Package/lua-eco/Module,netlink,+lua-eco-socket)
 Package/lua-eco-ip=$(call Package/lua-eco/Module,ip utils,+lua-eco-netlink)
 Package/lua-eco-nl80211=$(call Package/lua-eco/Module,nl80211,+lua-eco-netlink)
 Package/lua-eco-ssh=$(call Package/lua-eco/Module,ssh,+lua-eco-socket +libssh2)
+Package/lua-eco-packet=$(call Package/lua-eco/Module,packet,+lua-eco-nl80211)
 
 define Package/lua-eco-ssl/config
 	choice
@@ -153,9 +154,8 @@ define Package/lua-eco-http/install
 endef
 
 define Package/lua-eco-mqtt/install
-	$(INSTALL_DIR) $(1)/usr/local/lib/lua/5.3/eco/core
+	$(INSTALL_DIR) $(1)/usr/local/lib/lua/5.3/eco
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/mqtt.lua $(1)/usr/local/lib/lua/5.3/eco
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/mqtt.so $(1)/usr/local/lib/lua/5.3/eco/core
 endef
 
 define Package/lua-eco-websocket/install
@@ -192,6 +192,11 @@ define Package/lua-eco-ssh/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ssh.so $(1)/usr/local/lib/lua/5.3/eco/core
 endef
 
+define Package/lua-eco-packet/install
+	$(INSTALL_DIR) $(1)/usr/local/lib/lua/5.3/eco
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/packet.lua $(1)/usr/local/lib/lua/5.3/eco
+endef
+
 $(eval $(call BuildPackage,lua-eco))
 $(eval $(call BuildPackage,lua-eco-log))
 $(eval $(call BuildPackage,lua-eco-base64))
@@ -209,3 +214,4 @@ $(eval $(call BuildPackage,lua-eco-netlink))
 $(eval $(call BuildPackage,lua-eco-ip))
 $(eval $(call BuildPackage,lua-eco-nl80211))
 $(eval $(call BuildPackage,lua-eco-ssh))
+$(eval $(call BuildPackage,lua-eco-packet))

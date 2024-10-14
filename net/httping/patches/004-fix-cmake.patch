@@ -1,0 +1,32 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -34,16 +34,21 @@ target_link_libraries(httping m)
+ 
+ include(FindPkgConfig)
+ 
++if (ENABLE_NCURSES)
+ pkg_check_modules(NCURSES ncurses)
+ target_link_libraries(httping ${NCURSES_LIBRARIES})
+ target_include_directories(httping PUBLIC ${NCURSES_INCLUDE_DIRS})
+ target_compile_options(httping PUBLIC ${NCURSES_CFLAGS_OTHER})
++endif()
+ 
++if (ENABLE_FFTW3)
+ pkg_check_modules(FFTW3 fftw3)
+ target_link_libraries(httping ${FFTW3_LIBRARIES})
+ target_include_directories(httping PUBLIC ${FFTW3_INCLUDE_DIRS})
+ target_compile_options(httping PUBLIC ${FFTW3_CFLAGS_OTHER})
++endif()
+ 
++if (ENABLE_SSL)
+ pkg_check_modules(SSL libssl)
+ target_link_libraries(httping ${SSL_LIBRARIES})
+ target_include_directories(httping PUBLIC ${SSL_INCLUDE_DIRS})
+@@ -53,6 +58,7 @@ pkg_check_modules(OPENSSL openssl)
+ target_link_libraries(httping ${OPENSSL_LIBRARIES})
+ target_include_directories(httping PUBLIC ${OPENSSL_INCLUDE_DIRS})
+ target_compile_options(httping PUBLIC ${OPENSSL_CFLAGS_OTHER})
++endif()
+ 
+ execute_process (
+     COMMAND bash -c "msgfmt -o nl.mo ${CMAKE_SOURCE_DIR}/nl.po"

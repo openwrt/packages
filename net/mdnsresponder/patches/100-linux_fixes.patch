@@ -1,0 +1,182 @@
+--- a/Clients/Makefile
++++ b/Clients/Makefile
+@@ -42,7 +42,7 @@ TARGETS = build/dns-sd build/dns-sd64
+ LIBS =
+ else
+ TARGETS = build/dns-sd
+-LIBS = -L../mDNSPosix/$(BUILDDIR)/ -ldns_sd
++LIBS ?= -L../mDNSPosix/$(BUILDDIR)/ -ldns_sd
+ endif
+ 
+ all: $(TARGETS)
+--- a/mDNSPosix/PosixDaemon.c
++++ b/mDNSPosix/PosixDaemon.c
+@@ -38,6 +38,11 @@
+ #include <pwd.h>
+ #include <sys/types.h>
+ #include <sys/socket.h>
++#ifdef __linux__
++#include <sys/capability.h> /* !!! We require libcap-dev for this. Oh well. */
++/* prctl is required to enable inheriting of capabilities across setuid */
++#include <sys/prctl.h>
++#endif /* __linux__ */
+ 
+ #if __APPLE__
+ #undef daemon
+@@ -194,6 +199,18 @@ int main(int argc, char **argv)
+ 
+     Reconfigure(&mDNSStorage);
+ 
++#ifdef __linux__
++    /*
++     * SO_BINDTODEVICE is privileged operation; however, we can get
++     * around it using capabilities instead of remaining root.
++     */
++    if (mStatus_NoError == err)
++      {
++        if (prctl(PR_SET_KEEPCAPS, 1, 0, 0, 0) < 0)
++          perror("prctl PR_SET_KEEPCAPS");
++      }
++#endif /* __linux__ */
++
+     // Now that we're finished with anything privileged, switch over to running as "nobody"
+     if (mStatus_NoError == err)
+     {
+@@ -209,6 +226,21 @@ int main(int argc, char **argv)
+             {
+                 LogMsg("WARNING: mdnsd continuing as root because setuid to \"nobody\" failed with %s", strerror(errno));
+             }
++#ifdef __linux__
++            struct __user_cap_header_struct ch;
++            struct __user_cap_data_struct cd[_LINUX_CAPABILITY_U32S_3];
++
++            memset(&ch, 0, sizeof(ch));
++            ch.version = _LINUX_CAPABILITY_VERSION_3;
++            ch.pid = getpid();
++            memset(&cd[0], 0, sizeof(cd));
++            /* CAP_NET_RAW is required to use SO_BINDTODEVICE */
++            int caps = CAP_TO_MASK(CAP_NET_RAW);
++            cd[0].permitted = caps;
++            cd[0].effective = caps;
++            if (capset(&ch, &cd[0]) < 0)
++              perror("capset");
++#endif /* __linux__ */
+         }
+         else
+         {
+@@ -216,6 +248,11 @@ int main(int argc, char **argv)
+         }
+     }
+ 
++#ifdef __linux__
++    if (mStatus_NoError == err)
++      err = mDNSPlatformPosixRefreshInterfaceList(&mDNSStorage);
++#endif /* __linux__ */
++
+     if (mStatus_NoError == err)
+         err = MainLoop(&mDNSStorage);
+ 
+--- a/mDNSPosix/mDNSPosix.c
++++ b/mDNSPosix/mDNSPosix.c
+@@ -1223,6 +1223,29 @@ mDNSlocal int SetupSocket(struct sockadd
+             if (err < 0) { err = errno; perror("setsockopt - IP_MULTICAST_TTL"); }
+         }
+ 
++#ifdef __linux__
++#ifdef SO_BINDTODEVICE
++        if (err == 0 && interfaceIndex)
++        {
++            char ifname[IFNAMSIZ];
++            if (if_indextoname(interfaceIndex, ifname))
++              {
++                err = setsockopt(*sktPtr, SOL_SOCKET, SO_BINDTODEVICE, ifname, strlen(ifname));
++                if (err < 0)
++                  {
++                    err = errno;
++                    perror("setsockopt - SO_BINDTODEVICE");
++                  }
++              }
++            else
++              {
++                err = errno;
++                perror("if_indextoname");
++              }
++        }
++#endif /* SO_BINDTODEVICE */
++#endif /* __linux__ */
++
+         // And start listening for packets
+         if (err == 0)
+         {
+@@ -1298,6 +1321,29 @@ mDNSlocal int SetupSocket(struct sockadd
+             if (err < 0) { err = errno; perror("setsockopt - IPV6_MULTICAST_HOPS"); }
+         }
+ 
++#ifdef __linux__
++#ifdef SO_BINDTODEVICE
++        if (err == 0 && interfaceIndex)
++        {
++            char ifname[IFNAMSIZ];
++            if (if_indextoname(interfaceIndex, ifname))
++              {
++                err = setsockopt(*sktPtr, SOL_SOCKET, SO_BINDTODEVICE, ifname, strlen(ifname));
++                if (err < 0)
++                  {
++                    err = errno;
++                    perror("setsockopt - SO_BINDTODEVICE");
++                  }
++              }
++            else
++              {
++                err = errno;
++                perror("if_indextoname");
++              }
++        }
++#endif /* SO_BINDTODEVICE */
++#endif /* __linux__ */
++
+         // And start listening for packets
+         if (err == 0)
+         {
+@@ -1899,8 +1945,12 @@ mDNSexport mStatus mDNSPlatformInit(mDNS
+     if (err == mStatus_NoError) err = SetupSocket(&sa, zeroIPPort, 0, &m->p->unicastSocket6);
+ #endif
+ 
++    // In Linux case, we can't set up sockets with different owner -
++    // it blows up SO_REUSEPORT. So we do this step bit later.
++#ifndef __linux__
+     // Tell mDNS core about the network interfaces on this machine.
+     if (err == mStatus_NoError) err = SetupInterfaceList(m);
++#endif /* !__linux__ */
+ 
+     // Tell mDNS core about DNS Servers
+     mDNS_Lock(m);
+--- a/mDNSShared/dnsextd_parser.y
++++ b/mDNSShared/dnsextd_parser.y
+@@ -15,6 +15,8 @@
+  * limitations under the License.
+  */
+ 
++%parse-param { void *context }
++
+ %{
+ #include <stdio.h>
+ #include <stdlib.h>
+@@ -23,7 +25,7 @@
+ #include "DebugServices.h"
+ #include "dnsextd.h"
+ 
+-void yyerror( const char* error );
++void yyerror( void* context, const char* error );
+ int  yylex(void);
+ 
+ 
+@@ -409,7 +411,7 @@ int yywrap(void);
+ 
+ extern int yylineno;
+ 
+-void yyerror( const char *str )
++void yyerror( void* context, const char *str )
+ {
+         fprintf( stderr,"%s:%d: error: %s\n", g_filename, yylineno, str );
+ }

@@ -8,13 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dhcpcd
-PKG_VERSION:=9.4.1
+PKG_VERSION:=10.0.10
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=ftp://roy.marples.name/pub/dhcpcd \
-    http://roy.marples.name/downloads/dhcpcd
+PKG_SOURCE_URL:=https://github.com/NetworkConfiguration/dhcpcd/releases/download/v$(PKG_VERSION)/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=819357634efed1ea5cf44ec01b24d3d3f8852fec8b4249925dcc5667c54e376c
+PKG_HASH:=d582012992efddd2442bb1213c518a37d90febbcf8b11f8e76448c710dacad27
 
 PKG_LICENSE:=BSD-2c
 PKG_LICENSE_FILES:=
@@ -32,6 +31,7 @@ define Package/dhcpcd
   CATEGORY:=Network
   TITLE:=DHCPv4/IPv4LL/IPv6RS/DHCPv6 quad stack client
   URL:=http://roy.marples.name/projects/dhcpcd
+  USERID:=dhcpcd:dhcpcd
 endef
 
 define Package/dhcpcd/description

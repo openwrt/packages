@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=btrfs-progs
-PKG_VERSION:=6.5.1
+PKG_VERSION:=6.11
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/kernel/people/kdave/btrfs-progs
-PKG_HASH:=dacbb28136e82586af802205263a428c3d1941778bc3fdc9b1b386ea12eb904e
+PKG_HASH:=ff9ae91521303a90d87e1c4be230f0121f39c44ddbe52c2aeae263c6fecfa099
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-v$(PKG_VERSION)
 
 PKG_MAINTAINER:=Karel Kočí <karel.koci@nic.cz>
@@ -30,7 +30,7 @@ define Package/btrfs-progs
   CATEGORY:=Utilities
   SUBMENU:=Filesystem
   TITLE:=Btrfs filesystems utilities
-  URL:=https://btrfs.wiki.kernel.org/
+  URL:=https://btrfs.readthedocs.io
   DEPENDS:= \
     +libattr \
     +libuuid \

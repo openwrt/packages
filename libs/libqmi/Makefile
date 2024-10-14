@@ -8,17 +8,23 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libqmi
-PKG_SOURCE_VERSION:=1.34.0
-PKG_RELEASE:=1
+PKG_VERSION:=1.34.0
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://gitlab.freedesktop.org/mobile-broadband/libqmi.git
-PKG_MIRROR_HASH:=af3dc760d0c40ef8af1f8b424435daa12bff698ed45b1cc9a9e38ea62ed047f0
+PKG_SOURCE_VERSION:=$(PKG_VERSION)
+PKG_MIRROR_HASH:=65ee91b81c6f68d908cc94a0b5d670eefa29d550ecf8ef94cb836981fbfa4c2a
 
 PKG_BUILD_FLAGS:=gc-sections
 
 PKG_MAINTAINER:=Nicholas Smith <nicholas@nbembedded.com>
 PKG_CPE_ID:=cpe:/a:libqmi_project:libqmi
+
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_LIBQMI_COLLECTION_FULL \
+	CONFIG_LIBQMI_COLLECTION_BASIC \
+	CONFIG_LIBQMI_COLLECTION_MINIMAL
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk

@@ -14,7 +14,7 @@ PKG_HASH:=12ea2fbbf2e2efbe790a12121f77bf096c8b84cef81d0216bec00d56e5badef4
 
 PKG_NAME:=php8-pecl-mcrypt
 PKG_SOURCE:=$(PECL_NAME)-$(PKG_VERSION).tgz
-PKG_SOURCE_URL:=http://pecl.php.net/get/
+PKG_SOURCE_URL:=https://pecl.php.net/get/
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 

@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=linuxptp
-PKG_VERSION:=4.1
+PKG_VERSION:=4.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
-PKG_SOURCE_URL:=@SF/$(PKG_NAME)/v$(PKG_VERSION)
-PKG_HASH:=e1743d44f8208897e30895da3579e670ff919b914feb4b5a949f3e421ddde535
+PKG_SOURCE_URL:=https://downloads.nwtime.org/linuxptp/
+PKG_HASH:=61757bc0a58d789b8fcbdddf56c88a0230597184a70dcb2ac05b4c6b619f7d5c
 
 PKG_MAINTAINER:=Wojciech Dubowik <Wojciech.Dubowik@westermo.com>
 PKG_LICENSE:=GPL-2.0-only
@@ -28,7 +28,7 @@ define Package/linuxptp
   CATEGORY:=Network
   SUBMENU:=Time Synchronization
   TITLE:=Linux Precision Time Protocol (PTP) daemon
-  URL:=http://linuxptp.sourceforge.net/
+  URL:=https://linuxptp.nwtime.org/
 endef
 
 define Package/linuxptp/description
@@ -42,7 +42,8 @@ EXTRA_CFLAGS += -DHAVE_CLOCK_ADJTIME -DHAVE_POSIX_SPAWN -DHAVE_ONESTEP_SYNC
 
 MAKE_VARS += \
 	EXTRA_CFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS) $(EXTRA_CFLAGS)" \
-	KBUILD_OUTPUT="$(LINUX_DIR)"
+	KBUILD_OUTPUT="$(LINUX_DIR)" \
+	NO_AUTODETECT_SAD_MAC_LIB="y"
 
 define Package/linuxptp/install
 	$(INSTALL_DIR) $(1)/usr/sbin
