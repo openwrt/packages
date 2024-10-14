@@ -1,7 +1,7 @@
 #!/bin/sh /etc/rc.common
 # Startup Script for wifi_schedule
 
-START=100
+START=99
 
 start() {
     /usr/bin/wifi_schedule.sh startup
