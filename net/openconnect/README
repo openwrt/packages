@@ -18,6 +18,9 @@ config interface 'MYVPN'
 	# Reconnect after a temporary network down time (in seconds)
 	#option reconnect_timeout '30'
 
+	# Shell command line for using a vpnc-compatible config script (default: "/lib/netifd/vpnc-script")
+	# option script '/lib/netifd/vpnc-script'
+
 	# For second factor auth:
 
 	# when a fixed 2FA password can be used
