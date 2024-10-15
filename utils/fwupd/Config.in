@@ -37,29 +37,22 @@ config FWUPD_CURL
 	help
 	  Compile fwupd with curl support
 
-config FWUPD_SQLITE
-	bool "sqlite"
-	default n
-	help
-	  Compile fwupd with sqlite support
-
 config FWUPD_LIBARCHIVE
 	bool "libarchive"
 	default y
 	help
 	  Compile fwupd with libarchive support
 
-config FWUPD_GUDEV
-	bool "GUdev"
-	default n
-	help
-	  Compile fwupd with GUdev support
-
 config FWUPD_PLUGIN_MODEMMANAGER
 	bool "ModemManager plugin"
 	default y
-	select FWUPD_GUDEV
 	help
 	  Compile fwupd with ModemManager plugin
+
+config FWUPD_PLUGIN_FASTBOOT
+	bool "fastboot plugin"
+	default y
+	help
+	  Compile fwupd with fastboot plugin
 
 endmenu

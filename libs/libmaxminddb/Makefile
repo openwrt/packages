@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmaxminddb
 PKG_VERSION:=1.11.0
-PKG_RELEASE=1
+PKG_RELEASE=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/maxmind/libmaxminddb/releases/download/$(PKG_VERSION)
@@ -45,6 +45,8 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libmaxminddb.so* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libmaxminddb.pc $(1)/usr/lib/pkgconfig
+	$(SED) 's,libdir=lib,libdir=$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/libmaxminddb.pc
+	$(SED) 's,includedir=include,includedir=$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/libmaxminddb.pc
 endef
 
 define Package/libmaxminddb/install
