@@ -63,7 +63,8 @@ igmp_add_network() {
 }
 
 igmp_add_firewall_routing() {
-	local direction zone ssdp_target ssdp
+	local direction zone ssdp
+	local ssdp_target="DROP
 
 	config_get direction $1 direction
 	config_get zone $1 zone
@@ -75,11 +76,10 @@ igmp_add_firewall_routing() {
 	# Old logic to drop SSDP in any case removed. Added new config option to enable SSDP in case needed.
 	# However, default behaviour is unchanged.
 
-	ssdp_target = "DROP"
 	config_get_bool ssdp $1 ssdp 0
 
-	if [ $ssdp -gt 0]; then
-		ssdp_target = "ACCEPT"
+	if [ $ssdp -gt 0 ]; then
+		local ssdp_target="ACCEPT"
 	fi
 
 	json_add_object ""
