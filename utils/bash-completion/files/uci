@@ -1,0 +1,77 @@
+_uci_command_complete() {
+    local i
+    for i in batch export import changes commit add add_list del_list show get set delete rename revert reorder; do
+        if [[ "$i" =~ ^${COMP_WORDS[COMP_CWORD]} ]] || [[ -z "${COMP_WORDS[COMP_CWORD]}" ]]; then
+            COMPREPLY+=("$i")
+        fi
+    done
+}
+
+_uci_config_complete() {
+    local i
+    for i in $(cd /etc/config; echo "${COMP_WORDS[COMP_CWORD]}"*); do
+        if [[ ! "$i" =~ .*-opkg$ ]]; then
+            COMPREPLY+=("$i")
+        fi
+    done
+}
+
+_uci_section_complete() {
+    local i
+    for i in $(uci -q show | grep "^${COMP_WORDS[COMP_CWORD]}" | grep -v '.-opkg\.' | sed 's|=.*||' | sort -u); do
+        COMPREPLY+=("$i")
+    done
+}
+
+_uci_global_options_complete() {
+    local i
+    for i in -c -d -m -n -N -p -P -t -q -s -S -X; do
+        if [[ "x$i" =~ ^x${COMP_WORDS[COMP_CWORD]} ]] || [[ -z "${COMP_WORDS[COMP_CWORD]}" ]]; then
+            COMPREPLY+=("$i")
+        fi
+    done
+}
+
+_uci_completition() {
+    if [[ "${#COMP_WORDS[@]}" -eq "2" ]]; then
+        _uci_global_options_complete
+        _uci_command_complete
+        return
+    fi
+    if [[ "${#COMP_WORDS[@]}" -gt "3" ]]; then
+        case "${COMP_WORDS[$((COMP_CWORD - 2))]}" in
+            -*c|-*p|-*P|-*t|-*d|-*f)
+                _uci_global_options_complete
+                _uci_command_complete
+                return
+                ;;
+        esac
+    fi
+    if [[ "${#COMP_WORDS[@]}" -gt "2" ]]; then
+        case "${COMP_WORDS[$((COMP_CWORD - 1))]}" in
+            -*c|-*p|-*P|-*t)
+                COMPREPLY=($(compgen -d "${COMP_WORDS[$COMP_CWORD]}"))
+                return
+                ;;
+            -*f)
+                COMPREPLY=($(compgen -f "${COMP_WORDS[$COMP_CWORD]}"))
+                return
+                ;;
+            -*m*|-*n*|-*N*|-*q*|-*s*|-*S*|-*X*)
+                _uci_global_options_complete
+                _uci_command_complete
+                return
+                ;;
+            export|import|changes|commit|add)
+                _uci_config_complete
+                return
+                ;;
+            add_list|del_list|show|get|set|delete|rename|revert|reorder)
+                _uci_section_complete
+                return
+                ;;
+        esac
+    fi
+}
+
+complete -F _uci_completition uci
