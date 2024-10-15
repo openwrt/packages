@@ -64,7 +64,7 @@ igmp_add_network() {
 
 igmp_add_firewall_routing() {
 	local direction zone ssdp
-	local ssdp_target="DROP
+	local ssdp_target="DROP"
 
 	config_get direction $1 direction
 	config_get zone $1 zone
