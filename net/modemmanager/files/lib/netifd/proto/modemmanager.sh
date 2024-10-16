@@ -438,7 +438,7 @@ modemmanager_check_state_locked() {
 	return 0
 }
 
-modemmanager_check_state() {
+modemmanager_check_pin_state() {
 	local device="$1"
 	local interface="$2"
 	local modemstatus="$3"
@@ -572,7 +572,7 @@ proto_modemmanager_setup() {
 	}
 	echo "modem available at ${modempath}"
 
-	modemmanager_check_state "$device" "$interface" "${modemstatus}" "$pincode"
+	modemmanager_check_pin_state "$device" "$interface" "${modemstatus}" "$pincode"
 	[ "$?" -ne "0" ] && return 1
 
 	# always cleanup before attempting a new connection, just in case
