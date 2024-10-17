@@ -40,6 +40,7 @@ HOST_CONFIGURE_ARGS += \
 	--disable-install-capi \
 	--without-gmp \
 	--with-static-linked-ext \
+        --disable-yjit \
 	--with-out-ext=-test-/*,bigdecimal,cgi/escape,continuation,coverage,etc,fcntl,fiddle,io/console,json,json/generator,json/parser,mathn/complex,mathn/rational,nkf,objspace,pty,racc/cparse,rbconfig/sizeof,readline,rubyvm,syslog,win32,win32ole,win32/resolv
 
 HOST_BUILD_DEPENDS:=yaml/host
@@ -53,7 +54,8 @@ CONFIGURE_ARGS += \
 	--disable-install-capi \
 	--with-ruby-version=minor \
 	--with-iconv-dir=$(ICONV_PREFIX) \
-	--with-out-ext=win32,win32ole
+	--with-out-ext=win32,win32ole \
+        --disable-yjit
 
 ifndef CONFIG_RUBY_DIGEST_USE_OPENSSL
 CONFIGURE_ARGS += \
