@@ -242,6 +242,15 @@ snmpd_sink_add() {
 	echo "$section $host$port $community" >> $CONFIGFILE
 }
 
+snmpd_dlmod_add() {
+	local cfg="$1"
+	config_get name "$cfg" name
+	[ -n "$name" ] || return 0
+	config_get path "$cfg" path
+	[ -n $path ] || return 0
+	echo "dlmod $name $path" >> $CONFIGFILE
+}
+
 append_parm() {
 	local section="$1"
 	local option="$2"
@@ -316,6 +325,7 @@ start_service() {
 	config_foreach snmpd_sink_add trapsink trapsink
 	config_foreach snmpd_sink_add trap2sink trap2sink
 	config_foreach snmpd_sink_add informsink informsink
+	config_foreach snmpd_dlmod_add dlmod
 	append_authtrapenable authtrapenable enable authtrapenable
 	append_parm v1trapaddress host v1trapaddress
 	append_parm trapsess trapsess trapsess
