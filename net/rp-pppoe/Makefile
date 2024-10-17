@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rp-pppoe
-PKG_VERSION:=3.15
+PKG_VERSION:=4.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://dianne.skoll.ca/projects/rp-pppoe/download
-PKG_HASH:=b1f318bc7e4e5b0fd8a8e23e8803f5e6e43165245a5a10a7162a92a6cf17829a
+PKG_SOURCE_URL:=https://downloads.uls.co.za/rp-pppoe/
+PKG_HASH:=41ac34e5db4482f7a558780d3b897bdbb21fae3fef4645d2852c3c0c19d81cea
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=LGPL-2.0-or-later
