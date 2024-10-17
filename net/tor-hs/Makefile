@@ -8,10 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tor-hs
-PKG_VERSION:=0.0.1
-PKG_RELEASE:=3
+PKG_VERSION:=0.0.2
+PKG_RELEASE:=1
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
+PKG_MAINTAINER:=Sergey Ponomarev <stokito@gmail.com>, \
+		Paul Donald <newtwen+github@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
 
 include $(INCLUDE_DIR)/package.mk
