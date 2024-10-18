@@ -54,13 +54,10 @@ CMAKE_OPTIONS += \
 
 define Package/lpac/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) ./files/lpac.sh $(1)/usr/bin/lpac
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/lpac ./files/lpac.sh $(1)/usr/bin/
 
 	$(INSTALL_DIR) $(1)/etc/config
 	$(CP) ./files/lpac.uci $(1)/etc/config/lpac
-
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/lpac $(1)/usr/lib/lpac
 endef
 
 $(eval $(call BuildPackage,lpac))
