@@ -9,4 +9,3 @@
          && EVP_CipherUpdate(ctx, NULL, &len, NULL, in->len) != 1)
      {
          ngx_ssl_error(NGX_LOG_INFO, log, 0, "EVP_CipherUpdate() failed");
-
