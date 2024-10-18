@@ -674,7 +674,7 @@ do_postamble() {
 }
 
 prepare_env() {
-	mkdir -p /var/ipsec /var/swanctl
+	mkdir -p /var/ipsec /var/swanctl/conf.d
 
 	swan_reset
 	swanctl_reset
