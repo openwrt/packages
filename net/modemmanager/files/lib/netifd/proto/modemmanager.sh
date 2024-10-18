@@ -527,6 +527,26 @@ modemmanager_init_epsbearer() {
 	sleep 2
 }
 
+modemmanager_set_plmn() {
+	local device="$1"
+	local interface="$2"
+	local plmn="$3"
+	local force_connection="$4"
+
+	mmcli --modem="${device}" \
+		--timeout 120 \
+		--3gpp-register-in-operator="${plmn}" || {
+		if [ -n "${force_connection}" ] && [ "${force_connection}" -eq 1 ]; then
+			echo "3GPP operator registration failed -> attempting restart"
+				proto_notify_error "${interface}" MM_INTERFACE_RESTART
+			else
+				proto_notify_error "${interface}" MM_3GPP_OPERATOR_REGISTRATION_FAILED
+				proto_block_restart "${interface}"
+		fi
+		return 1
+	}
+}
+
 proto_modemmanager_setup() {
 	local interface="$1"
 
@@ -624,22 +644,10 @@ proto_modemmanager_setup() {
 		[ "$?" -ne "0" ] && return 1
 	}
 
-
 	[ -z "${plmn}" ] || {
-		echo "starting network registraion with plmn '${plmn}'..."
-		mmcli --modem="${device}" \
-			--timeout 120 \
-			--3gpp-register-in-operator="${plmn}" || {
-
-			if [ -n "${force_connection}" ] && [ "${force_connection}" -eq 1 ]; then
-				echo "3GPP operator registration failed -> attempting restart"
-				proto_notify_error "${interface}" MM_INTERFACE_RESTART
-			else
-				proto_notify_error "${interface}" MM_3GPP_OPERATOR_REGISTRATION_FAILED
-				proto_block_restart "${interface}"
-			fi
-			return 1
-		}
+		echo "starting network registration with plmn '${plmn}'..."
+		modemmanager_set_plmn "$device" "$interface" "$plmn" "$force_connection"
+		[ "$?" -ne "0" ] && return 1
 	}
 
 	if [ -z "${allowedmode}" ]; then
