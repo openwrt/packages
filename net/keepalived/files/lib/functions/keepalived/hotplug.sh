@@ -82,7 +82,7 @@ is_sync_file() {
 	list_contains SYNC_FILES_LIST "$1"
 }
 
-set_update_target() {
+_set_update_target() {
 	set_var UPDATE_TARGET "${1:-1}"
 }
 
@@ -90,8 +90,8 @@ get_update_target() {
 	get_var UPDATE_TARGET
 }
 
-unset_update_target() {
-	set_var UPDATE_TARGET
+set_disable_update_target() {
+	_set_update_target 0
 }
 
 is_update_target() {
@@ -170,8 +170,12 @@ skip_running_check() {
 	get_var_flag NOTIFY_SKIP_RUNNING
 }
 
+_set_reload_if_sync() {
+	set_var NOTIFY_SYNC_RELOAD "${1:-0}"
+}
+
 set_reload_if_sync() {
-	set_var NOTIFY_SYNC_RELOAD "${1:-1}"
+	_set_reload_if_sync 1
 }
 
 get_reload_if_sync() {
@@ -257,8 +261,8 @@ keepalived_hotplug() {
 	[ -z "$(get_fault_cb)" ] && set_fault_cb _notify_fault
 	[ -z "$(get_sync_cb)" ] && set_sync_cb _notify_sync
 
-	[ -z "$(get_update_target)" ] && set_update_target "$@"
-	[ -z "$(get_reload_if_sync)" ] && set_reload_if_sync "$@"
+	[ -z "$(get_update_target)" ] && _set_update_target "$@"
+	[ -z "$(get_reload_if_sync)" ] && _set_reload_if_sync "$@"
 
 	case $ACTION in
 		NOTIFY_MASTER) call_cb "$(get_master_cb)" ;;
