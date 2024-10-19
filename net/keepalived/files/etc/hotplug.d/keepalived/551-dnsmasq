@@ -7,7 +7,6 @@ set_service_name dnsmasq
 
 set_restart_if_master
 set_stop_if_backup
-set_reload_if_sync
 
 add_sync_file /etc/config/dhcp
 add_sync_file /tmp/dhcp.leases
