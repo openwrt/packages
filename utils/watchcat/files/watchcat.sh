@@ -54,6 +54,18 @@ get_ping_family_flag() {
 	echo $family
 }
 
+get_ping_timeout() {
+	timeout=$1
+	case "$timeout" in
+	''|*[!0-9]*)
+		# Fallback to default value if not an integer
+		timeout=10
+		;;
+	esac
+
+	echo $timeout
+}
+
 reboot_now() {
 	reboot &
 
@@ -107,6 +119,7 @@ watchcat_monitor_network() {
 	mm_iface_unlock_bands="$7"
 	address_family="$8"
 	script="$9"
+	timeout="$10"
 
 	time_now="$(cat /proc/uptime)"
 	time_now="${time_now%%.*}"
@@ -121,6 +134,8 @@ watchcat_monitor_network() {
 	ping_size="$(get_ping_size "$ping_size")"
 
 	ping_family="$(get_ping_family_flag "$address_family")"
+
+	ping_timeout="$(get_ping_timeout "$timeout")"
 
 	while true; do
 		# account for the time ping took to return. With a ping time of 5s, ping might take more than that, so it is important to avoid even more delay.
@@ -137,12 +152,12 @@ watchcat_monitor_network() {
 		for host in $ping_hosts; do
 			if [ "$iface" != "" ]; then
 				ping_result="$(
-					ping $ping_family -I "$iface" -s "$ping_size" -c 1 "$host" &> /dev/null
+					ping $ping_family ${iface:+-I $iface} ${ping_size:+-s $ping_size} -c 1 ${ping_timeout:+-W $ping_timeout} "$host" &> /dev/null
 					echo $?
 				)"
 			else
 				ping_result="$(
-					ping $ping_family -s "$ping_size" -c 1 "$host" &> /dev/null
+					ping $ping_family ${ping_size:+-s $ping_size} -c 1 ${ping_timeout:+-W $ping_timeout} "$host" &> /dev/null
 					echo $?
 				)"
 			fi
@@ -189,6 +204,7 @@ watchcat_ping() {
 	ping_size="$5"
 	address_family="$6"
 	iface="$7"
+	timeout="$8"
 
 	time_now="$(cat /proc/uptime)"
 	time_now="${time_now%%.*}"
@@ -203,6 +219,8 @@ watchcat_ping() {
 	ping_size="$(get_ping_size "$ping_size")"
 
 	ping_family="$(get_ping_family_flag "$address_family")"
+
+	ping_timeout="$(get_ping_timeout "$timeout")"
 
 	while true; do
 		# account for the time ping took to return. With a ping time of 5s, ping might take more than that, so it is important to avoid even more delay.
@@ -219,12 +237,12 @@ watchcat_ping() {
 		for host in $ping_hosts; do
 			if [ "$iface" != "" ]; then
 				ping_result="$(
-					ping $ping_family -I "$iface" -s "$ping_size" -c 1 "$host" &> /dev/null
+					ping $ping_family ${iface:+-I $iface} ${ping_size:+-s $ping_size} -c 1 ${ping_timeout:+-W $ping_timeout} "$host" &> /dev/null
 					echo $?
 				)"
 			else
 				ping_result="$(
-					ping $ping_family -s "$ping_size" -c 1 "$host" &> /dev/null
+					ping $ping_family ${ping_size:+-s $ping_size} -c 1 ${ping_timeout:+-W $ping_timeout} "$host" &> /dev/null
 					echo $?
 				)"
 			fi
@@ -253,16 +271,16 @@ periodic_reboot)
 	watchcat_periodic "$2" "$3"
 	;;
 ping_reboot)
-	# args from init script: period forcedelay pinghosts pingperiod pingsize addressfamily interface
-	watchcat_ping "$2" "$3" "$4" "$5" "$6" "$7" "$8"
+	# args from init script: period forcedelay pinghosts pingperiod pingsize addressfamily interface pingtimeout
+	watchcat_ping "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
 	;;
 restart_iface)
-	# args from init script: period pinghosts pingperiod pingsize interface mmifacename unlockbands addressfamily
-	watchcat_monitor_network "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" ""
+	# args from init script: period pinghosts pingperiod pingsize interface mmifacename unlockbands addressfamily pingtimeout
+	watchcat_monitor_network "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "" "${10}"
 	;;
 run_script)
-	# args from init script: period pinghosts pingperiod pingsize interface addressfamily script
-	watchcat_monitor_network "$2" "$3" "$4" "$5" "$6" "" "" "$7" "$8"
+	# args from init script: period pinghosts pingperiod pingsize interface addressfamily script pingtimeout
+	watchcat_monitor_network "$2" "$3" "$4" "$5" "$6" "" "" "$7" "$8" "$9"
 	;;
 *)
 	echo "Error: invalid mode selected: $mode"
