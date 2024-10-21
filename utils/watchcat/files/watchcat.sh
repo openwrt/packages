@@ -55,15 +55,7 @@ get_ping_family_flag() {
 }
 
 get_ping_timeout() {
-	timeout=$1
-	case "$timeout" in
-	''|*[!0-9]*)
-		# Fallback to default value if not an integer
-		timeout=10
-		;;
-	esac
-
-	echo $timeout
+	echo ${1:-10}
 }
 
 reboot_now() {
