@@ -1,0 +1,23 @@
+From e7236faafd2a45605455cdd50f8c918ddf8a3510 Mon Sep 17 00:00:00 2001
+From: "shegaoyuan@aliyun.com" <shegaoyuan@aliyun.com>
+Date: Tue, 14 May 2024 09:51:27 +0800
+Subject: [PATCH 2/2] if MBEDTLS_PSA_CRYPTO_CLIENT defined, PSA is enabled,
+ must call psa_crypto_init() first
+
+---
+ src/ssl/mbedtls.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+--- a/src/ssl/mbedtls.c
++++ b/src/ssl/mbedtls.c
+@@ -164,6 +164,10 @@ struct ssl_context *ssl_context_new(bool
+     if (!ctx)
+         return NULL;
+ 
++#if defined(MBEDTLS_PSA_CRYPTO_CLIENT)
++    psa_crypto_init();
++#endif
++
+     ctx->server = server;
+     mbedtls_pk_init(&ctx->key);
+     mbedtls_x509_crt_init(&ctx->cert);
