@@ -26,16 +26,23 @@ define Package/openwisp-monitoring
   SECTION:=admin
   SUBMENU:=openwisp
   DEPENDS:=+netjson-monitoring +openwisp-config
+  PKGARCH:=all
   URL:=http://openwisp.org
 endef
 
 define Package/netjson-monitoring
-  TITLE:=NetJson Monitoring
+  TITLE:=NetJSON Monitoring
   CATEGORY:=Administration
   SECTION:=admin
   SUBMENU:=openwisp
-  DEPENDS:=+libubus-lua +lua-cjson +rpcd +rpcd-mod-iwinfo
+  DEPENDS:=+libubus-lua +lua-cjson +rpcd
+  DEPENDS+=+NETJSON_MONITORING_IWINFO:rpcd-mod-iwinfo
+  PKGARCH:=all
   URL:=http://openwisp.org
+endef
+
+define Package/netjson-monitoring/config
+	source "$(SOURCE)/Config.in"
 endef
 
 define Build/Compile
@@ -50,7 +57,7 @@ define Package/netjson-monitoring/install
 		$(1)/usr/sbin \
 		$(1)/usr/libexec \
 		$(1)/usr/lib/lua/openwisp-monitoring \
-		$(1)/etc/openwisp-monitoring
+		$(1)/usr/lib/openwisp-monitoring
 
 	$(INSTALL_BIN) \
 		$(PKG_BUILD_DIR)/openwisp-monitoring/files/sbin/netjson-monitoring.lua \
@@ -88,8 +95,12 @@ define Package/netjson-monitoring/install
 		$(PKG_BUILD_DIR)/openwisp-monitoring/files/lib/openwisp-monitoring/wifi.lua \
 		$(1)/usr/lib/lua/openwisp-monitoring/wifi.lua
 
-	$(CP) $(PKG_BUILD_DIR)/VERSION $(1)/etc/openwisp-monitoring/
+	# Iwinfo is enabled by default unless specified otherwise
+	$(INSTALL_DIR) $(1)/usr/lib/lua/openwisp-monitoring
+	sed 's/true/$(if $(CONFIG_NETJSON_MONITORING_IWINFO),true,false)/' \
+		$(PKG_BUILD_DIR)/openwisp-monitoring/files/lib/openwisp-monitoring/iwinfo.lua > $(1)/usr/lib/lua/openwisp-monitoring/iwinfo.lua
 
+	$(CP) $(PKG_BUILD_DIR)/VERSION $(1)/usr/lib/openwisp-monitoring/
 endef
 
 define Package/openwisp-monitoring/install
@@ -97,7 +108,8 @@ define Package/openwisp-monitoring/install
 		$(1)/usr/sbin \
 		$(1)/etc/init.d \
 		$(1)/etc/config \
-		$(1)/etc/openwisp-monitoring
+		$(1)/usr/lib/openwisp-monitoring \
+		$(1)/etc/hotplug.d/openwisp
 
 	$(INSTALL_BIN) \
 		$(PKG_BUILD_DIR)/openwisp-monitoring/files/monitoring.agent \
@@ -106,6 +118,10 @@ define Package/openwisp-monitoring/install
 	$(INSTALL_BIN) \
 		$(PKG_BUILD_DIR)/openwisp-monitoring/files/monitoring.init \
 		$(1)/etc/init.d/openwisp-monitoring
+
+	$(INSTALL_BIN) \
+		$(PKG_BUILD_DIR)/openwisp-monitoring/files/openwisp-monitoring.hotplug \
+		$(1)/etc/hotplug.d/openwisp/openwisp-monitoring
 
 	$(INSTALL_CONF) \
 		$(PKG_BUILD_DIR)/openwisp-monitoring/files/monitoring.config \
