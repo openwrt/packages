@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openwisp-config
 PKG_VERSION:=1.1.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Federico Capoano <f.capoano@openwisp.io>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -38,6 +38,7 @@ endef
 
 define Package/openwisp-config/conffiles
 /etc/config/openwisp
+/etc/openwisp/
 endef
 
 define Package/openwisp-config/install
@@ -45,16 +46,16 @@ define Package/openwisp-config/install
 		$(1)/usr/sbin \
 		$(1)/etc/init.d \
 		$(1)/etc/config \
-		$(1)/etc/openwisp \
+		$(1)/usr/lib/openwisp-config \
 		$(1)/usr/lib/lua/openwisp
 
 	$(INSTALL_BIN) \
 		$(PKG_BUILD_DIR)/openwisp-config/files/openwisp.agent \
-		$(1)/usr/sbin/openwisp_config
+		$(1)/usr/sbin/openwisp-config
 
 	$(INSTALL_BIN) \
 		$(PKG_BUILD_DIR)/openwisp-config/files/openwisp.init \
-		$(1)/etc/init.d/openwisp_config
+		$(1)/etc/init.d/openwisp-config
 
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/openwisp-config/files/openwisp.config \
 		$(1)/etc/config/openwisp
@@ -95,7 +96,11 @@ define Package/openwisp-config/install
 		$(PKG_BUILD_DIR)/openwisp-config/files/sbin/openwisp-get-address.lua \
 		$(1)/usr/sbin/openwisp-get-address
 
-	$(CP) $(PKG_BUILD_DIR)/VERSION $(1)/etc/openwisp/
+	$(INSTALL_BIN) \
+		$(PKG_BUILD_DIR)/openwisp-config/files/sbin/openwisp-get-random-number.lua \
+		$(1)/usr/sbin/openwisp-get-random-number
+
+	$(CP) $(PKG_BUILD_DIR)/VERSION $(1)/usr/lib/openwisp-config/
 endef
 
 $(eval $(call BuildPackage,openwisp-config))
