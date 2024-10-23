@@ -578,6 +578,47 @@ proto_modemmanager_setup() {
 	# always cleanup before attempting a new connection, just in case
 	modemmanager_cleanup_connection "${modemstatus}"
 
+	# set initial eps bearer settings
+	[ -z "${init_epsbearer}" ] || {
+		case "$init_epsbearer" in
+			"none")
+				connectargs=""
+				modemmanager_init_epsbearer "none" \
+					"$device" "${connectargs}" "$apn"
+				;;
+			"default")
+				cliauth=""
+				for auth in $allowedauth; do
+					cliauth="${cliauth}${cliauth:+|}$auth"
+				done
+				connectargs=""
+				append_param "apn=${apn}"
+				append_param "${iptype:+ip-type=${iptype}}"
+				append_param "${cliauth:+allowed-auth=${cliauth}}"
+				append_param "${username:+user=${username}}"
+				append_param "${password:+password=${password}}"
+				modemmanager_init_epsbearer "default" \
+					"$device" "${connectargs}" "$apn"
+				;;
+			"custom")
+				cliauth=""
+				for auth in $init_allowedauth; do
+					cliauth="${cliauth}${cliauth:+|}$auth"
+				done
+				connectargs=""
+				append_param "apn=${init_apn}"
+				append_param "${init_iptype:+ip-type=${init_iptype}}"
+				append_param "${cliauth:+allowed-auth=${cliauth}}"
+				append_param "${init_username:+user=${init_username}}"
+				append_param "${init_password:+password=${init_password}}"
+				modemmanager_init_epsbearer "custom" \
+					"$device" "${connectargs}" "$init_apn"
+				;;
+		esac
+		# check error for init_epsbearer function call
+		[ "$?" -ne "0" ] && return 1
+	}
+
 	mmcli --modem="${device}" --timeout 120 --enable || {
 		proto_notify_error "${interface}" MM_MODEM_DISABLED
 		return 1
@@ -628,47 +669,6 @@ proto_modemmanager_setup() {
 		# check error for allowed_mode and preferred_mode function call
 		[ "$?" -ne "0" ] && return 1
 	fi
-
-	# set initial eps bearer settings
-	[ -z "${init_epsbearer}" ] || {
-		case "$init_epsbearer" in
-			"none")
-				connectargs=""
-				modemmanager_init_epsbearer "none" \
-					"$device" "${connectargs}" "$apn"
-				;;
-			"default")
-				cliauth=""
-				for auth in $allowedauth; do
-					cliauth="${cliauth}${cliauth:+|}$auth"
-				done
-				connectargs=""
-				append_param "apn=${apn}"
-				append_param "${iptype:+ip-type=${iptype}}"
-				append_param "${cliauth:+allowed-auth=${cliauth}}"
-				append_param "${username:+user=${username}}"
-				append_param "${password:+password=${password}}"
-				modemmanager_init_epsbearer "default" \
-					"$device" "${connectargs}" "$apn"
-				;;
-			"custom")
-				cliauth=""
-				for auth in $init_allowedauth; do
-					cliauth="${cliauth}${cliauth:+|}$auth"
-				done
-				connectargs=""
-				append_param "apn=${init_apn}"
-				append_param "${init_iptype:+ip-type=${init_iptype}}"
-				append_param "${cliauth:+allowed-auth=${cliauth}}"
-				append_param "${init_username:+user=${init_username}}"
-				append_param "${init_password:+password=${init_password}}"
-				modemmanager_init_epsbearer "custom" \
-					"$device" "${connectargs}" "$init_apn"
-				;;
-		esac
-		# check error for init_epsbearer function call
-		[ "$?" -ne "0" ] && return 1
-	}
 
 	# setup connect args; APN mandatory (even if it may be empty)
 	echo "starting connection with apn '${apn}'..."
