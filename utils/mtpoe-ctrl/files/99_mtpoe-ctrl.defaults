@@ -1,0 +1,28 @@
+#!/bin/sh
+
+uci -q get network.mtik_poe || {
+	num=0
+	board=$(cat /tmp/sysinfo/board_name)
+	case "$board" in
+	rb-750p-pbr2|\
+	mikrotik,routerboard-960pgs)
+		num=4
+		;;
+	mikrotik,rb5009|\
+	mikrotik,rb5009upr)
+		num=8
+		;;
+	*)
+		return 0
+		;;
+	esac
+	if [ "$num" -gt 0 ]; then
+		uci set network.mtik_poe='mtik_poe'
+		n=0
+		while [ "$n" -lt "$num" ]; do
+			uci set network.mtik_poe.port$n='0'
+			n=$((n + 1))
+		done
+		uci commit network
+	fi
+}
