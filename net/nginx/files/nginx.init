@@ -11,7 +11,7 @@ NGINX_UTIL="/usr/bin/nginx-util"
 UCI_CONF_TEMPLATE="/etc/nginx/uci.conf.template"
 LATEST_UCI_CONF_VERSION="1.2"
 
-eval $("${NGINX_UTIL}" get_env)
+[ -f "${NGINX_UTIL}" ] && eval $("${NGINX_UTIL}" get_env)
 
 CONF=""
 
