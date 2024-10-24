@@ -11,7 +11,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruby
-PKG_VERSION:=3.3.4
+PKG_VERSION:=3.3.5
 PKG_RELEASE:=1
 
 # First two numbes
@@ -19,13 +19,21 @@ PKG_ABI_VERSION:=$(subst $(space),.,$(wordlist 1, 2, $(subst .,$(space),$(PKG_VE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://cache.ruby-lang.org/pub/ruby/$(PKG_ABI_VERSION)/
-PKG_HASH:=fe6a30f97d54e029768f2ddf4923699c416cdbc3a6e96db3e2d5716c7db96a34
+PKG_HASH:=3781a3504222c2f26cb4b9eb9c1a12dbf4944d366ce24a9ff8cf99ecbce75196
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:ruby-lang:ruby
 
-PKG_BUILD_DEPENDS:=ruby/host
+
+# YJIT may not be suitable for certain applications. It
+# currently only supports macOS, Linux and BSD on x86-64 and
+# arm64/aarch64 CPUs.
+# Ruby 3.3.5 (latest) still does not support cross-compiling. It
+# will only work when target matches the host arch. Anyway, we
+# will provide a working rustc for those supported archs to let
+# it work when they match.
+PKG_BUILD_DEPENDS:=ruby/host RUBY_ENABLE_YJIT:rust/host
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
@@ -38,6 +46,7 @@ HOST_CONFIGURE_ARGS += \
 	--disable-install-doc \
 	--disable-install-rdoc \
 	--disable-install-capi \
+	--disable-yjit \
 	--without-gmp \
 	--with-static-linked-ext \
 	--with-out-ext=-test-/*,bigdecimal,cgi/escape,continuation,coverage,etc,fcntl,fiddle,io/console,json,json/generator,json/parser,mathn/complex,mathn/rational,nkf,objspace,pty,racc/cparse,rbconfig/sizeof,readline,rubyvm,syslog,win32,win32ole,win32/resolv
@@ -70,6 +79,12 @@ endif
 CONFIGURE_ARGS += --disable-jit-support
 # Host JIT does work but it is not worth it
 HOST_CONFIGURE_ARGS += --disable-jit-support
+
+ifndef CONFIG_RUBY_ENABLE_YJIT
+	# it is only worth it to enable yjit for target package
+	CONFIGURE_ARGS += --disable-yjit
+endif
+
 
 # Apple ld generates warning if LD_FLAGS var includes path to lib that is not 
 # exist (e.g. -L$(STAGING_DIR)/host/lib). configure script fails if ld generates 
@@ -152,6 +167,17 @@ define RubyDependency
 endef
 
 define Package/ruby/config
+    config RUBY_ENABLE_YJIT
+	bool "Enable YJIT"
+	depends on PACKAGE_ruby
+	depends on x86_64||aarch64
+	default y if x86_64||aarch64
+	help
+	 	YJIT is a lightweight, minimalistic Ruby JIT built
+	 	inside CRuby. It lazily compiles code using a Basic Block Versioning (BBV)
+	 	architecture. YJIT is currently supported for macOS, Linux and BSD on x86-64
+	 	and arm64/aarch64 CPUs.
+
     comment "Standard Library"
       depends on PACKAGE_ruby
 
