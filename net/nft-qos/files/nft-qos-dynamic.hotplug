@@ -18,7 +18,7 @@ qosdef_check_if_dynamic() {
 }
 
 
-logger -t nft-qos-dynamic "ACTION=$ACTION, MACADDR=$MACADDR, IPADDR=$IPADDR, HOSTNAME=$HOSTNAME"
+# logger -t nft-qos-dynamic "ACTION=$ACTION, MACADDR=$MACADDR, IPADDR=$IPADDR, HOSTNAME=$HOSTNAME"
 
 case "$ACTION" in
 	add | update | remove)
