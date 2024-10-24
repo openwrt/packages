@@ -59,10 +59,9 @@ upnpd_write_bool() {
 upnpd() {
 	config_load "upnpd"
 	local external_iface external_iface6 external_zone external_ip internal_iface
-	local upload download log_output port config_file serial_number model_number
+	local upload_kbps download_kbps log_output port config_file serial_number model_number
 	local use_stun stun_host stun_port uuid notify_interval presentation_url
-	local upnp_lease_file clean_ruleset_threshold clean_ruleset_interval
-	local ipv6_disable
+	local upnp_lease_file ipv6_disable
 
 	local enabled
 	config_get_bool enabled config enabled 1
@@ -74,8 +73,8 @@ upnpd() {
 	config_get external_ip config external_ip
 	config_get internal_iface config internal_iface
 	config_get port config port 5000
-	config_get upload config upload
-	config_get download config download
+	config_get upload_kbps config upload_kbps
+	config_get download_kbps config download_kbps
 	config_get_bool log_output config log_output 0
 	config_get config_file config config_file
 	config_get serial_number config serial_number
@@ -87,9 +86,9 @@ upnpd() {
 	config_get notify_interval config notify_interval
 	config_get presentation_url config presentation_url
 	config_get upnp_lease_file config upnp_lease_file
-	config_get clean_ruleset_threshold config clean_ruleset_threshold
-	config_get clean_ruleset_interval config clean_ruleset_interval
 	config_get ipv6_disable config ipv6_disable 0
+	config_get_bool allow_third_party_maps config allow_third_party_maps 0
+	config_get upnp_igd_compat config upnp_igd_compat igdv1
 
 	local conf ifname ifname6
 
@@ -135,11 +134,21 @@ upnpd() {
 		done
 
 		config_load "upnpd"
-		upnpd_write_bool enable_natpmp 1
+		upnpd_write_bool enable_pcp_pmp 1
 		upnpd_write_bool enable_upnp 1
-		upnpd_write_bool secure_mode 1
+		if [ "$allow_third_party_maps" = "1" ]; then
+		  echo "secure_mode=no"
+		  echo "pcp_allow_thirdparty=yes"
+		else
+		  echo "secure_mode=yes"
+		  echo "pcp_allow_thirdparty=no"
+		fi
+		if [ "$upnp_igd_compat" = "igdv1" ]; then
+		  echo "force_igd_desc_v1=yes"
+		else
+		  echo "force_igd_desc_v1=no"
+		fi
 		upnpd_write_bool system_uptime 1
-		upnpd_write_bool igdv1 0 force_igd_desc_v1
 		upnpd_write_bool use_stun 0 ext_perform_stun
 		upnpd_write_bool ipv6_disable $ipv6_disable
 
@@ -148,16 +157,14 @@ upnpd() {
 			[ -n "$stun_port" ] && echo "ext_stun_port=$stun_port"
 		}
 
-		[ -n "$upload" ] && [ -n "$download" ] && {
-			echo "bitrate_down=$((download * 1024 * 8))"
-			echo "bitrate_up=$((upload * 1024 * 8))"
+		[ -n "$upload_kbps" ] && [ -n "$download_kbps" ] && {
+			echo "bitrate_down=$((download_kbps * 1000))"
+			echo "bitrate_up=$((upload_kbps * 1000))"
 		}
 
 		[ -n "$upnp_lease_file" ] && touch "$upnp_lease_file" && echo "lease_file=$upnp_lease_file"
 		[ -n "$presentation_url" ] && echo "presentation_url=$presentation_url"
 		[ -n "$notify_interval" ] && echo "notify_interval=$notify_interval"
-		[ -n "$clean_ruleset_threshold" ] && echo "clean_ruleset_threshold=$clean_ruleset_threshold"
-		[ -n "$clean_ruleset_interval" ] && echo "clean_ruleset_interval=$clean_ruleset_interval"
 		[ -n "$serial_number" ] && echo "serial=$serial_number"
 		[ -n "$model_number" ] && echo "model_number=$model_number"
 		[ -n "$port" ] && echo "port=$port"
