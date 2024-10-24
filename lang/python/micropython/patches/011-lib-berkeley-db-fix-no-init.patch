@@ -1,0 +1,22 @@
+--- a/lib/berkeley-db-1.xx/btree/bt_split.c
++++ b/lib/berkeley-db-1.xx/btree/bt_split.c
+@@ -91,7 +91,7 @@ __bt_split(t, sp, key, data, flags, ilen
+ 	PAGE *h, *l, *r, *lchild, *rchild;
+ 	indx_t nxtindex;
+ 	u_int16_t skip;
+-	u_int32_t n, nbytes, nksize = 0;
++	u_int32_t n, nbytes = 0, nksize = 0;
+ 	int parentsplit;
+ 	char *dest;
+ 	pgno_t pg_tmp;
+@@ -626,8 +626,8 @@ bt_psplit(t, h, l, r, pskip, ilen)
+ 	PAGE *rval;
+ 	void *src = NULL;
+ 	indx_t full, half, nxt, off, skip, top, used;
+-	u_int32_t nbytes;
+-	int bigkeycnt, isbigkey;
++	u_int32_t nbytes = 0;
++	int bigkeycnt, isbigkey = 0;
+ 
+ 	/*
+ 	 * Split the data to the left and right pages.  Leave the skip index
