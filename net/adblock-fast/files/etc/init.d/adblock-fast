@@ -1390,6 +1390,7 @@ $(sed '/^[[:space:]]*$/d' "$A_TMP")"
 	fi
 
 	if [ -n "$outputAllowFilter" ] && [ -n "$allowed_domain" ]; then
+		rm -f "$SED_TMP"; touch "$SED_TMP";
 		output 2 'Allowing domains '
 		json set message "$(get_text 'statusProcessing'): allowing domains"
 		for hf in ${allowed_domain}; do
