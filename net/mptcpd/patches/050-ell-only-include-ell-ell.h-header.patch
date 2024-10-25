@@ -1,0 +1,562 @@
+From b1239f7518de8d5d59ac51e3b9e30f45c7286c80 Mon Sep 17 00:00:00 2001
+From: "Matthieu Baerts (NGI0)" <matttbe@kernel.org>
+Date: Sat, 26 Oct 2024 12:41:31 +0200
+Subject: [PATCH] ell: only include 'ell/ell.h' header
+
+When looking at the code of other projects using ELL (IWD, BlueZ,
+Ofono), it looks like only 'ell.h' should be included, not individual
+header files from the 'ell' header directory.
+
+That looks like the way to go, because when looking at ell/genl.h, it
+uses functions declared in ell/netlink.h, without including this file
+before. This causes issues when compiling the code using libell-dev
+installed on the system:
+
+  libtool: compile:  gcc (...) -c path_manager.c (...)
+  In file included from path_manager.c:21:
+  /usr/include/ell/genl.h: In function 'l_genl_attr_next':
+  /usr/include/ell/genl.h:98:16: error: implicit declaration of function 'l_netlink_attr_next'; did you mean 'l_genl_attr_next'? [-Wimplicit-function-declaration]
+     98 |         return l_netlink_attr_next((struct l_netlink_attr *) attr,
+        |                ^~~~~~~~~~~~~~~~~~~
+        |                l_genl_attr_next
+  /usr/include/ell/genl.h: In function 'l_genl_attr_recurse':
+  /usr/include/ell/genl.h:105:16: error: implicit declaration of function 'l_netlink_attr_recurse'; did you mean 'l_genl_attr_recurse'? [-Wimplicit-function-declaration]
+    105 |         return l_netlink_attr_recurse((struct l_netlink_attr *) attr,
+        |                ^~~~~~~~~~~~~~~~~~~~~~
+        |                l_genl_attr_recurse
+  make[2]: *** [Makefile:597: libmptcpd_la-path_manager.lo] Error 1
+
+All .c files including ELL header files have been modified to include
+only <ell/ell.h>. The .cpp file in the tests has not been modified,
+because it looks like that causes some issues. For the same reason,
+include/mptcpd/private/plugin.h file has not been modified as well.
+
+Closes: #302
+Signed-off-by: Matthieu Baerts (NGI0) <matttbe@kernel.org>
+---
+ lib/hash_sockaddr.c              |  6 +-----
+ lib/id_manager.c                 |  9 +--------
+ lib/listener_manager.c           |  8 +-------
+ lib/network_monitor.c            | 10 +---------
+ lib/path_manager.c               |  8 +-------
+ lib/plugin.c                     |  8 +-------
+ lib/sockaddr.c                   |  5 +----
+ plugins/path_managers/addr_adv.c |  7 +------
+ plugins/path_managers/sspi.c     |  7 +------
+ src/commands.c                   |  7 +------
+ src/configuration.c              |  9 +--------
+ src/mptcpd.c                     |  7 +------
+ src/netlink_pm.c                 |  6 +-----
+ src/netlink_pm_mptcp_org.c       |  4 +---
+ src/netlink_pm_upstream.c        |  7 +------
+ src/path_manager.c               |  9 +--------
+ tests/plugins/noop/noop.c        |  6 +-----
+ tests/plugins/priority/one.c     |  6 +-----
+ tests/plugins/priority/two.c     |  6 +-----
+ tests/plugins/security/four.c    |  6 +-----
+ tests/plugins/security/three.c   |  6 +-----
+ tests/test-addr-info.c           |  3 +--
+ tests/test-commands.c            | 11 +----------
+ tests/test-configuration.c       |  8 +-------
+ tests/test-id-manager.c          |  3 +--
+ tests/test-listener-manager.c    |  7 +------
+ tests/test-murmur-hash.c         |  7 +------
+ tests/test-network-monitor.c     |  9 +--------
+ tests/test-path-manager.c        |  9 +--------
+ tests/test-plugin.c              |  3 +--
+ tests/test-sockaddr.c            |  7 +------
+ 31 files changed, 31 insertions(+), 183 deletions(-)
+
+--- a/lib/hash_sockaddr.c
++++ b/lib/hash_sockaddr.c
+@@ -16,11 +16,7 @@
+ #include <string.h>
+ #include <netinet/in.h>
+ 
+-#pragma GCC diagnostic push
+-#pragma GCC diagnostic ignored "-Wpedantic"
+-#include <ell/util.h>
+-#pragma GCC diagnostic pop
+-
++#include <ell/ell.h>
+ 
+ #include <mptcpd/private/murmur_hash.h>
+ 
+--- a/lib/id_manager.c
++++ b/lib/id_manager.c
+@@ -20,14 +20,7 @@
+ #include <sys/socket.h>
+ #include <netinet/in.h>
+ 
+-#pragma GCC diagnostic push
+-#pragma GCC diagnostic ignored "-Wpedantic"
+-#include <ell/hashmap.h>
+-#include <ell/uintset.h>
+-#include <ell/util.h>
+-#include <ell/log.h>
+-#include <ell/random.h>
+-#pragma GCC diagnostic pop
++#include <ell/ell.h>
+ 
+ #include <mptcpd/private/murmur_hash.h>
+ #include <mptcpd/private/id_manager.h>
+--- a/lib/listener_manager.c
++++ b/lib/listener_manager.c
+@@ -19,13 +19,7 @@
+ #include <errno.h>
+ #include <string.h>
+ 
+-#pragma GCC diagnostic push
+-#pragma GCC diagnostic ignored "-Wpedantic"
+-#include <ell/hashmap.h>
+-#include <ell/util.h>
+-#include <ell/log.h>
+-#include <ell/random.h>
+-#pragma GCC diagnostic pop
++#include <ell/ell.h>
+ 
+ #include <mptcpd/private/murmur_hash.h>
+ #include <mptcpd/private/listener_manager.h>
+--- a/lib/network_monitor.c
++++ b/lib/network_monitor.c
+@@ -23,15 +23,7 @@
+ #include <net/if.h>  // For standard network interface flags.
+ #include <netinet/in.h>
+ 
+-#pragma GCC diagnostic push
+-#pragma GCC diagnostic ignored "-Wpedantic"
+-#include <ell/netlink.h>
+-#include <ell/log.h>
+-#include <ell/util.h>
+-#include <ell/queue.h>
+-#include <ell/timeout.h>
+-#include <ell/rtnl.h>
+-#pragma GCC diagnostic pop
++#include <ell/ell.h>
+ 
+ #include <mptcpd/private/path_manager.h>
+ #include <mptcpd/private/sockaddr.h>
+--- a/lib/path_manager.c
++++ b/lib/path_manager.c
+@@ -16,13 +16,7 @@
+ 
+ #include <netinet/in.h>
+ 
+-#pragma GCC diagnostic push
+-#pragma GCC diagnostic ignored "-Wpedantic"
+-#include <ell/genl.h>
+-#include <ell/queue.h>
+-#include <ell/util.h>  // For L_STRINGIFY needed by l_error().
+-#include <ell/log.h>
+-#pragma GCC diagnostic pop
++#include <ell/ell.h>
+ 
+ #include <mptcpd/path_manager.h>
+ #include <mptcpd/private/path_manager.h>
+--- a/lib/plugin.c
++++ b/lib/plugin.c
+@@ -20,13 +20,7 @@
+ #include <unistd.h>
+ #include <assert.h>
+ 
+-#pragma GCC diagnostic push
+-#pragma GCC diagnostic ignored "-Wpedantic"
+-#include <ell/queue.h>
+-#include <ell/hashmap.h>
+-#include <ell/util.h>
+-#include <ell/log.h>
+-#pragma GCC diagnostic pop
++#include <ell/ell.h>
+ 
+ /**
+  * @todo Remove this preprocessor symbol definition once support for
+--- a/lib/sockaddr.c
++++ b/lib/sockaddr.c
+@@ -11,10 +11,7 @@
+ #include <sys/socket.h>
+ #include <netinet/in.h>
+ 
+-#pragma GCC diagnostic push
+-#pragma GCC diagnostic ignored "-Wpedantic"
+-#include <ell/util.h>
+-#pragma GCC diagnostic pop
++#include <ell/ell.h>
+ 
+ #include <mptcpd/private/sockaddr.h>
+ 
+--- a/plugins/path_managers/addr_adv.c
++++ b/plugins/path_managers/addr_adv.c
+@@ -13,12 +13,7 @@
+ 
+ #include <errno.h>
+ 
+-#pragma GCC diagnostic push
+-#pragma GCC diagnostic ignored "-Wpedantic"
+-#include <ell/util.h>  // For L_STRINGIFY needed by ELL log macros.
+-#include <ell/log.h>
+-#pragma GCC diagnostic pop
+-
++#include <ell/ell.h>
+ 
+ #include <mptcpd/private/path_manager.h>
+ #include <mptcpd/private/configuration.h>
+--- a/plugins/path_managers/sspi.c
++++ b/plugins/path_managers/sspi.c
+@@ -17,12 +17,7 @@
+ 
+ #include <netinet/in.h>
+ 
+-#pragma GCC diagnostic push
+-#pragma GCC diagnostic ignored "-Wpedantic"
+-#include <ell/util.h>  // For L_STRINGIFY needed by l_error().
+-#include <ell/log.h>
+-#include <ell/queue.h>
+-#pragma GCC diagnostic pop
++#include <ell/ell.h>
+ 
+ #include <mptcpd/network_monitor.h>
+ #include <mptcpd/path_manager.h>
+--- a/src/commands.c
++++ b/src/commands.c
+@@ -16,12 +16,7 @@
+ #include <string.h>
+ #include <arpa/inet.h>
+ 
+-#pragma GCC diagnostic push
+-#pragma GCC diagnostic ignored "-Wpedantic"
+-#include <ell/genl.h>
+-#include <ell/util.h>  // For L_STRINGIFY needed by l_error(), etc.
+-#include <ell/log.h>
+-#pragma GCC diagnostic pop
++#include <ell/ell.h>
+ 
+ #include "commands.h"
+ 
+--- a/src/configuration.c
++++ b/src/configuration.c
+@@ -21,14 +21,7 @@
+ #include <sys/stat.h>
+ #include <unistd.h>
+ 
+-#pragma GCC diagnostic push
+-#pragma GCC diagnostic ignored "-Wpedantic"
+-#include <ell/log.h>
+-#include <ell/util.h>
+-#include <ell/settings.h>
+-#include <ell/queue.h>
+-#include <ell/string.h>
+-#pragma GCC diagnostic pop
++#include <ell/ell.h>
+ 
+ #include <mptcpd/types.h>
+ 
+--- a/src/mptcpd.c
++++ b/src/mptcpd.c
+@@ -15,12 +15,7 @@
+ #include <signal.h>
+ #include <assert.h>
+ 
+-#pragma GCC diagnostic push
+-#pragma GCC diagnostic ignored "-Wpedantic"
+-#include <ell/util.h>  // For L_STRINGIFY needed by l_error().
+-#include <ell/log.h>
+-#include <ell/main.h>
+-#pragma GCC diagnostic pop
++#include <ell/ell.h>
+ 
+ #include <mptcpd/private/configuration.h>
+ 
+--- a/src/netlink_pm.c
++++ b/src/netlink_pm.c
+@@ -10,11 +10,7 @@
+ #include <stdbool.h>
+ #include <stdio.h>
+ 
+-#pragma GCC diagnostic push
+-#pragma GCC diagnostic ignored "-Wpedantic"
+-#include <ell/log.h>
+-#include <ell/util.h>
+-#pragma GCC diagnostic pop
++#include <ell/ell.h>
+ 
+ #include "netlink_pm.h"
+ 
+--- a/src/netlink_pm_mptcp_org.c
++++ b/src/netlink_pm_mptcp_org.c
+@@ -15,9 +15,7 @@
+ #include <errno.h>
+ #include <stdio.h>
+ 
+-#include <ell/genl.h>
+-#include <ell/util.h>  // For L_STRINGIFY needed by l_error(), etc.
+-#include <ell/log.h>
++#include <ell/ell.h>
+ 
+ #include "commands.h"
+ #include "netlink_pm.h"
+--- a/src/netlink_pm_upstream.c
++++ b/src/netlink_pm_upstream.c
+@@ -15,12 +15,7 @@
+ #include <errno.h>
+ #include <sys/socket.h>
+ 
+-#pragma GCC diagnostic push
+-#pragma GCC diagnostic ignored "-Wpedantic"
+-#include <ell/genl.h>
+-#include <ell/util.h>  // For L_STRINGIFY needed by l_error(), etc.
+-#include <ell/log.h>
+-#pragma GCC diagnostic pop
++#include <ell/ell.h>
+ 
+ #include <mptcpd/types.h>
+ #include <mptcpd/listener_manager.h>
+--- a/src/path_manager.c
++++ b/src/path_manager.c
+@@ -21,14 +21,7 @@
+ #include <arpa/inet.h>   // For inet_ntop().
+ #include <netinet/in.h>
+ 
+-#pragma GCC diagnostic push
+-#pragma GCC diagnostic ignored "-Wpedantic"
+-#include <ell/genl.h>
+-#include <ell/log.h>
+-#include <ell/queue.h>
+-#include <ell/timeout.h>
+-#include <ell/util.h>
+-#pragma GCC diagnostic pop
++#include <ell/ell.h>
+ 
+ #include <mptcpd/path_manager.h>
+ #include <mptcpd/private/path_manager.h>
+--- a/tests/plugins/noop/noop.c
++++ b/tests/plugins/noop/noop.c
+@@ -7,11 +7,7 @@
+  * Copyright (c) 2019-2022, Intel Corporation
+  */
+ 
+-#pragma GCC diagnostic push
+-#pragma GCC diagnostic ignored "-Wpedantic"
+-#include <ell/util.h>  // For L_STRINGIFY needed by l_error().
+-#include <ell/log.h>
+-#pragma GCC diagnostic pop
++#include <ell/ell.h>
+ 
+ #ifdef HAVE_CONFIG_H
+ # include <mptcpd/private/config.h>
+--- a/tests/plugins/priority/one.c
++++ b/tests/plugins/priority/one.c
+@@ -7,11 +7,7 @@
+  * Copyright (c) 2019-2022, Intel Corporation
+  */
+ 
+-#pragma GCC diagnostic push
+-#pragma GCC diagnostic ignored "-Wpedantic"
+-#include <ell/util.h>  // For L_STRINGIFY needed by l_error().
+-#include <ell/log.h>
+-#pragma GCC diagnostic pop
++#include <ell/ell.h>
+ 
+ #ifdef HAVE_CONFIG_H
+ # include <mptcpd/private/config.h>
+--- a/tests/plugins/priority/two.c
++++ b/tests/plugins/priority/two.c
+@@ -7,11 +7,7 @@
+  * Copyright (c) 2019-2022, Intel Corporation
+  */
+ 
+-#pragma GCC diagnostic push
+-#pragma GCC diagnostic ignored "-Wpedantic"
+-#include <ell/util.h>  // For L_STRINGIFY needed by l_error().
+-#include <ell/log.h>
+-#pragma GCC diagnostic pop
++#include <ell/ell.h>
+ 
+ #ifdef HAVE_CONFIG_H
+ # include <mptcpd/private/config.h>
+--- a/tests/plugins/security/four.c
++++ b/tests/plugins/security/four.c
+@@ -7,11 +7,7 @@
+  * Copyright (c) 2019-2022, Intel Corporation
+  */
+ 
+-#pragma GCC diagnostic push
+-#pragma GCC diagnostic ignored "-Wpedantic"
+-#include <ell/util.h>  // For L_STRINGIFY needed by l_error().
+-#include <ell/log.h>
+-#pragma GCC diagnostic pop
++#include <ell/ell.h>
+ 
+ #ifdef HAVE_CONFIG_H
+ # include <mptcpd/private/config.h>
+--- a/tests/plugins/security/three.c
++++ b/tests/plugins/security/three.c
+@@ -7,11 +7,7 @@
+  * Copyright (c) 2019-2022, Intel Corporation
+  */
+ 
+-#pragma GCC diagnostic push
+-#pragma GCC diagnostic ignored "-Wpedantic"
+-#include <ell/util.h>  // For L_STRINGIFY needed by l_error().
+-#include <ell/log.h>
+-#pragma GCC diagnostic pop
++#include <ell/ell.h>
+ 
+ #ifdef HAVE_CONFIG_H
+ # include <mptcpd/private/config.h>
+--- a/tests/test-addr-info.c
++++ b/tests/test-addr-info.c
+@@ -8,8 +8,7 @@
+  */
+ 
+ #include <arpa/inet.h>  // htonl() and htons()
+-#include <ell/log.h>
+-#include <ell/test.h>
++#include <ell/ell.h>
+ 
+ #include <mptcpd/addr_info.h>
+ #include <mptcpd/private/addr_info.h>
+--- a/tests/test-commands.c
++++ b/tests/test-commands.c
+@@ -14,16 +14,7 @@
+ #include <arpa/inet.h>
+ #include <net/if.h>
+ 
+-#pragma GCC diagnostic push
+-#pragma GCC diagnostic ignored "-Wpedantic"
+-#include <ell/main.h>
+-#include <ell/idle.h>
+-#include <ell/util.h>      // Needed by <ell/log.h>
+-#include <ell/log.h>
+-#include <ell/netlink.h>
+-#include <ell/rtnl.h>
+-#include <ell/test.h>
+-#pragma GCC diagnostic pop
++#include <ell/ell.h>
+ 
+ // Internal Headers
+ // -----------------
+--- a/tests/test-configuration.c
++++ b/tests/test-configuration.c
+@@ -7,13 +7,7 @@
+  * Copyright (c) 2019, 2021, Intel Corporation
+  */
+ 
+-#pragma GCC diagnostic push
+-#pragma GCC diagnostic ignored "-Wpedantic"
+-#include <ell/main.h>
+-#include <ell/util.h>      // Needed by <ell/log.h>
+-#include <ell/log.h>
+-#include <ell/test.h>
+-#pragma GCC diagnostic pop
++#include <ell/ell.h>
+ 
+ #include <mptcpd/private/configuration.h>  // INTERNAL!
+ 
+--- a/tests/test-id-manager.c
++++ b/tests/test-id-manager.c
+@@ -9,8 +9,7 @@
+ 
+ #include <stddef.h>
+ 
+-#include <ell/log.h>
+-#include <ell/test.h>
++#include <ell/ell.h>
+ 
+ #include <mptcpd/private/id_manager.h>
+ #include <mptcpd/id_manager.h>
+--- a/tests/test-listener-manager.c
++++ b/tests/test-listener-manager.c
+@@ -11,12 +11,7 @@
+ #include <netinet/in.h>
+ #include <sys/un.h>
+ 
+-#pragma GCC diagnostic push
+-#pragma GCC diagnostic ignored "-Wpedantic"
+-#include <ell/util.h>
+-#include <ell/log.h>
+-#include <ell/test.h>
+-#pragma GCC diagnostic pop
++#include <ell/ell.h>
+ 
+ #include <mptcpd/private/listener_manager.h>
+ #include <mptcpd/listener_manager.h>
+--- a/tests/test-murmur-hash.c
++++ b/tests/test-murmur-hash.c
+@@ -10,12 +10,7 @@
+ #include <stdint.h>
+ #include <stddef.h>
+ 
+-#pragma GCC diagnostic push
+-#pragma GCC diagnostic ignored "-Wpedantic"
+-#include <ell/util.h>  // Needed by <ell/log.h>.
+-#include <ell/log.h>
+-#include <ell/test.h>
+-#pragma GCC diagnostic pop
++#include <ell/ell.h>
+ 
+ #include <mptcpd/private/murmur_hash.h>
+ 
+--- a/tests/test-network-monitor.c
++++ b/tests/test-network-monitor.c
+@@ -15,14 +15,7 @@
+ #include <netinet/in.h>  // For INET_ADDRSTRLEN and INET6_ADDRSTRLEN.
+ #include <net/if.h>      // For standard network interface flags.
+ 
+-#pragma GCC diagnostic push
+-#pragma GCC diagnostic ignored "-Wpedantic"
+-#include <ell/main.h>
+-#include <ell/idle.h>
+-#include <ell/util.h>      // Needed by <ell/log.h>
+-#include <ell/log.h>
+-#include <ell/queue.h>
+-#pragma GCC diagnostic pop
++#include <ell/ell.h>
+ 
+ #include <mptcpd/private/network_monitor.h>
+ #include <mptcpd/network_monitor.h>
+--- a/tests/test-path-manager.c
++++ b/tests/test-path-manager.c
+@@ -9,14 +9,7 @@
+ 
+ #include <unistd.h>
+ 
+-#pragma GCC diagnostic push
+-#pragma GCC diagnostic ignored "-Wpedantic"
+-#include <ell/main.h>
+-#include <ell/genl.h>
+-#include <ell/timeout.h>
+-#include <ell/util.h>      // Needed by <ell/log.h>
+-#include <ell/log.h>
+-#pragma GCC diagnostic pop
++#include <ell/ell.h>
+ 
+ #include "test-util.h"
+ 
+--- a/tests/test-plugin.c
++++ b/tests/test-plugin.c
+@@ -14,8 +14,7 @@
+ #include <stdlib.h>
+ #include <stdbool.h>
+ 
+-#include <ell/test.h>
+-#include <ell/queue.h>
++#include <ell/ell.h>
+ 
+ #include <mptcpd/plugin.h>
+ #include <mptcpd/private/plugin.h>
+--- a/tests/test-sockaddr.c
++++ b/tests/test-sockaddr.c
+@@ -9,12 +9,7 @@
+ 
+ #include <sys/un.h>
+ 
+-#pragma GCC diagnostic push
+-#pragma GCC diagnostic ignored "-Wpedantic"
+-#include <ell/log.h>
+-#include <ell/test.h>
+-#include <ell/util.h>
+-#pragma GCC diagnostic pop
++#include <ell/ell.h>
+ 
+ #include <mptcpd/private/sockaddr.h>
+ 
