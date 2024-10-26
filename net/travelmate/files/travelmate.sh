@@ -35,13 +35,6 @@ trm_vpninfolist=""
 trm_stdvpnservice=""
 trm_stdvpniface=""
 trm_rtfile="/tmp/trm_runtime.json"
-trm_ubuscmd="$(command -v ubus)"
-trm_jsoncmd="$(command -v jsonfilter)"
-trm_wifi="$(command -v wifi)"
-trm_fetch="$(command -v curl)"
-trm_iwinfo="$(command -v iwinfo)"
-trm_logger="$(command -v logger)"
-trm_wpa="$(command -v wpa_supplicant)"
 trm_captiveurl="http://detectportal.firefox.com"
 trm_useragent="Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/118.0"
 trm_ntpfile="/var/state/travelmate.ntp"
@@ -50,6 +43,27 @@ trm_mailfile="/var/state/travelmate.mail"
 trm_refreshfile="/var/state/travelmate.refresh"
 trm_pidfile="/var/run/travelmate.pid"
 trm_action="${1:-"start"}"
+
+# command selector
+#
+f_cmd() {
+	local cmd pri_cmd="${1}" sec_cmd="${2}"
+
+	cmd="$(command -v "${pri_cmd}" 2>/dev/null)"
+	if [ ! -x "${cmd}" ]; then
+		if [ -n "${sec_cmd}" ]; then
+			[ "${sec_cmd}" = "optional" ] && return
+			cmd="$(command -v "${sec_cmd}" 2>/dev/null)"
+		fi
+		if [ -x "${cmd}" ]; then
+			printf "%s" "${cmd}"
+		else
+			f_log "emerg" "command '${pri_cmd:-"-"}'/'${sec_cmd:-"-"}' not found"
+		fi
+	else
+		printf "%s" "${cmd}"
+	fi
+}
 
 # load travelmate environment
 #
@@ -62,8 +76,8 @@ f_env() {
 
 	unset trm_stalist trm_radiolist trm_uplinklist trm_vpnifacelist trm_uplinkcfg trm_activesta trm_opensta
 
-	trm_sysver="$("${trm_ubuscmd}" -S call system board 2>/dev/null | "${trm_jsoncmd}" -ql1 -e '@.model' -e '@.release.description' |
-		awk 'BEGIN{RS="";FS="\n"}{printf "%s, %s",$1,$2}')"
+	trm_sysver="$("${trm_ubuscmd}" -S call system board 2>/dev/null | "${trm_jsoncmd}" -ql1 -e '@.model' -e '@.release.target' -e '@.release.distribution' -e '@.release.version' -e '@.release.revision' |
+		"${trm_awkcmd}" 'BEGIN{RS="";FS="\n"}{printf "%s, %s, %s %s %s %s",$1,$2,$3,$4,$5,$6}')"
 
 	config_cb() {
 		local name="${1}" type="${2}"
@@ -75,7 +89,7 @@ f_env() {
 			}
 			list_cb() {
 				local option="${1}" value="${2}"
-				if [ "${option}" = "trm_vpnifacelist" ] && ! printf "%s" "${trm_vpnifacelist}" | grep -q "${value}"; then
+				if [ "${option}" = "trm_vpnifacelist" ] && ! printf "%s" "${trm_vpnifacelist}" | "${trm_grepcmd}" -q "${value}"; then
 					eval "trm_vpnifacelist=\"$(printf "%s" "${trm_vpnifacelist}") ${value}\""
 				fi
 			}
@@ -105,15 +119,15 @@ f_env() {
 	if [ -z "${trm_wpaflags}" ]; then
 		wpa_checks="sae owe eap suiteb192"
 		for check in ${wpa_checks}; do
-			if [ -x "${trm_wpa}" ]; then
-				if "${trm_wpa}" -v"${check}" >/dev/null 2>&1; then
+			if [ -x "${trm_wpacmd}" ]; then
+				if "${trm_wpacmd}" -v"${check}" >/dev/null 2>&1; then
 					result="$(f_trim "${result} ${check}: $(f_char 1)")"
 				else
 					result="$(f_trim "${result} ${check}: $(f_char 0)")"
 				fi
 			fi
 		done
-		trm_wpaflags="$(printf "%s" "${result}" | awk '{printf "%s %s, %s %s, %s %s, %s %s",$1,$2,$3,$4,$5,$6,$7,$8}')"
+		trm_wpaflags="$(printf "%s" "${result}" | "${trm_awkcmd}" '{printf "%s %s, %s %s, %s %s, %s %s",$1,$2,$3,$4,$5,$6,$7,$8}')"
 	fi
 
 	config_load wireless
@@ -165,17 +179,17 @@ f_char() {
 f_wifi() {
 	local status radio radio_up timeout="0"
 
-	"${trm_wifi}" reload
+	"${trm_wificmd}" reload
 	for radio in ${trm_radiolist}; do
 		while true; do
 			if [ "${timeout}" -ge "${trm_maxwait}" ]; then
 				break 2
 			fi
-			status="$("${trm_wifi}" status 2>/dev/null)"
+			status="$("${trm_wificmd}" status 2>/dev/null)"
 			if [ "$(printf "%s" "${status}" | "${trm_jsoncmd}" -ql1 -e "@.${radio}.up")" != "true" ] ||
 				[ "$(printf "%s" "${status}" | "${trm_jsoncmd}" -ql1 -e "@.${radio}.pending")" != "false" ]; then
 				if [ "${radio}" != "${radio_up}" ]; then
-					"${trm_wifi}" up "${radio}"
+					"${trm_wificmd}" up "${radio}"
 					radio_up="${radio}"
 				fi
 				timeout="$((timeout + 1))"
@@ -274,19 +288,19 @@ f_mac() {
 			uci_set "wireless" "${section}" "macaddr" "${result}"
 		elif [ "${trm_randomize}" = "1" ]; then
 			result="$(hexdump -n6 -ve '/1 "%.02X "' /dev/random 2>/dev/null |
-				awk -v local="2,6,A,E" -v seed="$(date +%s)" 'BEGIN{srand(seed)}NR==1{split(local,b,",");
+				"${trm_awkcmd}" -v local="2,6,A,E" -v seed="$(date +%s)" 'BEGIN{srand(seed)}NR==1{split(local,b,",");
 				seed=int(rand()*4+1);printf "%s%s:%s:%s:%s:%s:%s",substr($1,0,1),b[seed],$2,$3,$4,$5,$6}')"
 			uci_set "wireless" "${section}" "macaddr" "${result}"
 		else
 			uci_remove "wireless" "${section}" "macaddr" 2>/dev/null
 			ifname="$("${trm_ubuscmd}" -S call network.wireless status 2>/dev/null | "${trm_jsoncmd}" -ql1 -e '@.*.interfaces[@.config.mode="sta"].ifname')"
-			result="$(${trm_iwinfo} "${ifname}" info 2>/dev/null | awk '/Access Point:/{printf "%s",$3}')"
+			result="$("${trm_iwinfocmd}" "${ifname}" info 2>/dev/null | "${trm_awkcmd}" '/Access Point:/{printf "%s",$3}')"
 		fi
 	elif [ "${action}" = "get" ]; then
 		result="$(uci_get "wireless" "${section}" "macaddr")"
 		if [ -z "${result}" ]; then
 			ifname="$("${trm_ubuscmd}" -S call network.wireless status 2>/dev/null | "${trm_jsoncmd}" -ql1 -e '@.*.interfaces[@.config.mode="sta"].ifname')"
-			result="$(${trm_iwinfo} "${ifname}" info 2>/dev/null | awk '/Access Point:/{printf "%s",$3}')"
+			result="$("${trm_iwinfocmd}" "${ifname}" info 2>/dev/null | "${trm_awkcmd}" '/Access Point:/{printf "%s",$3}')"
 		fi
 	fi
 	printf "%s" "${result}"
@@ -361,10 +375,10 @@ f_getovpn() {
 			instance="${file##*/}"
 			instance="${instance%.conf}"
 			instance="${instance%.ovpn}"
-			device="$(awk '/^[[:space:]]*dev /{print $2}' "${file}")"
+			device="$("${trm_awkcmd}" '/^[[:space:]]*dev /{print $2}' "${file}")"
 			[ "${device}" = "tun" ] && device="tun0"
 			[ "${device}" = "tap" ] && device="tap0"
-			if [ -n "${device}" ] && [ -n "${instance}" ] && ! printf "%s" "${trm_ovpninfolist}" | grep -q "${device}"; then
+			if [ -n "${device}" ] && [ -n "${instance}" ] && ! printf "%s" "${trm_ovpninfolist}" | "${trm_grepcmd}" -q "${device}"; then
 				trm_ovpninfolist="${trm_ovpninfolist} ${device}&&${instance}"
 			fi
 		fi
@@ -376,7 +390,7 @@ f_getovpn() {
 		device="$(uci_get "openvpn" "${section}" "dev")"
 		[ "${device}" = "tun" ] && device="tun0"
 		[ "${device}" = "tap" ] && device="tap0"
-		if [ -n "${device}" ] && ! printf "%s" "${trm_ovpninfolist}" | grep -q "${device}"; then
+		if [ -n "${device}" ] && ! printf "%s" "${trm_ovpninfolist}" | "${trm_grepcmd}" -q "${device}"; then
 			trm_ovpninfolist="${trm_ovpninfolist} ${device}&&${section}"
 		fi
 	}
@@ -395,8 +409,8 @@ f_getvpn() {
 	proto="$(uci_get "network" "${iface}" "proto")"
 	device="$(uci_get "network" "${iface}" "device")"
 	if [ "${proto}" = "wireguard" ]; then
-		if [ -z "${trm_vpnifacelist}" ] || printf "%s" "${trm_vpnifacelist}" | grep -q "${iface}"; then
-			if ! printf "%s" "${trm_vpninfolist}" | grep -q "${iface}"; then
+		if [ -z "${trm_vpnifacelist}" ] || printf "%s" "${trm_vpnifacelist}" | "${trm_grepcmd}" -q "${iface}"; then
+			if ! printf "%s" "${trm_vpninfolist}" | "${trm_grepcmd}" -q "${iface}"; then
 				trm_vpninfolist="$(f_trim "${trm_vpninfolist} ${iface}")"
 			fi
 		fi
@@ -404,10 +418,10 @@ f_getvpn() {
 		if [ -z "${trm_ovpninfolist}" ]; then
 			f_getovpn
 		fi
-		if [ -z "${trm_vpnifacelist}" ] || printf "%s" "${trm_vpnifacelist}" | grep -q "${iface}"; then
+		if [ -z "${trm_vpnifacelist}" ] || printf "%s" "${trm_vpnifacelist}" | "${trm_grepcmd}" -q "${iface}"; then
 			for info in ${trm_ovpninfolist}; do
 				if [ "${info%%&&*}" = "${device}" ]; then
-					if ! printf "%s" "${trm_vpninfolist}" | grep -q "${iface}"; then
+					if ! printf "%s" "${trm_vpninfolist}" | "${trm_grepcmd}" -q "${iface}"; then
 						trm_vpninfolist="$(f_trim "${trm_vpninfolist} ${iface}&&${info##*&&}")"
 						break
 					fi
@@ -477,7 +491,7 @@ f_setdev() {
 	fi
 	if [ -n "${trm_radio}" ] && [ -z "${trm_radiolist}" ]; then
 		trm_radiolist="${trm_radio}"
-	elif [ -z "${trm_radio}" ] && ! printf "%s" "${trm_radiolist}" | grep -q "${radio}"; then
+	elif [ -z "${trm_radio}" ] && ! printf "%s" "${trm_radiolist}" | "${trm_grepcmd}" -q "${radio}"; then
 		trm_radiolist="$(f_trim "${trm_radiolist} ${radio}")"
 	fi
 	f_log "debug" "f_setdev  ::: radio: ${radio:-"-"}, radio_list(cnf/cur): ${trm_radio:-"-"}/${trm_radiolist:-"-"}, disabled: ${disabled:-"-"}"
@@ -610,20 +624,20 @@ f_addsta() {
 f_net() {
 	local err_msg raw json_raw html_raw html_cp js_cp json_ec json_rc json_cp json_ed result="net nok"
 
-	raw="$(${trm_fetch} --user-agent "${trm_useragent}" --referer "http://www.example.com" --header "Cache-Control: no-cache, no-store, must-revalidate, max-age=0" --write-out "%{json}" --silent --max-time $((trm_maxwait / 6)) "${trm_captiveurl}")"
+	raw="$("${trm_fetchcmd}" --user-agent "${trm_useragent}" --referer "http://www.example.com" --header "Cache-Control: no-cache, no-store, must-revalidate, max-age=0" --write-out "%{json}" --silent --max-time $((trm_maxwait / 6)) "${trm_captiveurl}")"
 	json_raw="${raw#*\{}"
 	html_raw="${raw%%\{*}"
 	if [ -n "${json_raw}" ]; then
 		json_ec="$(printf "%s" "{${json_raw}" | "${trm_jsoncmd}" -ql1 -e '@.exitcode')"
 		json_rc="$(printf "%s" "{${json_raw}" | "${trm_jsoncmd}" -ql1 -e '@.response_code')"
-		json_cp="$(printf "%s" "{${json_raw}" | "${trm_jsoncmd}" -ql1 -e '@.redirect_url' | awk 'BEGIN{FS="/"}{printf "%s",tolower($3)}')"
+		json_cp="$(printf "%s" "{${json_raw}" | "${trm_jsoncmd}" -ql1 -e '@.redirect_url' | "${trm_awkcmd}" 'BEGIN{FS="/"}{printf "%s",tolower($3)}')"
 		if [ "${json_ec}" = "0" ]; then
 			if [ -n "${json_cp}" ]; then
 				result="net cp '${json_cp}'"
 			else
 				if [ "${json_rc}" = "200" ] || [ "${json_rc}" = "204" ]; then
-					html_cp="$(printf "%s" "${html_raw}" | awk 'match(tolower($0),/^.*<meta[ \t]+http-equiv=['\''"]*refresh.*[ \t;]url=/){print substr(tolower($0),RLENGTH+1)}' | awk 'BEGIN{FS="[:/]"}{printf "%s",$4;exit}')"
-					js_cp="$(printf "%s" "${html_raw}" | awk 'match(tolower($0),/^.*location\.href=['\''"]*/){print substr(tolower($0),RLENGTH+1)}' | awk 'BEGIN{FS="[:/]"}{printf "%s",$4;exit}')"
+					html_cp="$(printf "%s" "${html_raw}" | "${trm_awkcmd}" 'match(tolower($0),/^.*<meta[ \t]+http-equiv=['\''"]*refresh.*[ \t;]url=/){print substr(tolower($0),RLENGTH+1)}' | "${trm_awkcmd}" 'BEGIN{FS="[:/]"}{printf "%s",$4;exit}')"
+					js_cp="$(printf "%s" "${html_raw}" | "${trm_awkcmd}" 'match(tolower($0),/^.*location\.href=['\''"]*/){print substr(tolower($0),RLENGTH+1)}' | "${trm_awkcmd}" 'BEGIN{FS="[:/]"}{printf "%s",$4;exit}')"
 					if [ -n "${html_cp}" ]; then
 						result="net cp '${html_cp}'"
 					elif [ -n "${js_cp}" ]; then
@@ -635,7 +649,7 @@ f_net() {
 			fi
 		else
 			err_msg="$(printf "%s" "{${json_raw}" | "${trm_jsoncmd}" -ql1 -e '@.errormsg')"
-			json_ed="$(printf "%s" "{${err_msg}" | awk '/([[:alnum:]_-]{1,63}\.)+[[:alpha:]]+$/{printf "%s",tolower($NF)}')"
+			json_ed="$(printf "%s" "{${err_msg}" | "${trm_awkcmd}" '/([[:alnum:]_-]{1,63}\.)+[[:alpha:]]+$/{printf "%s",tolower($NF)}')"
 			if [ "${json_ec}" = "6" ]; then
 				if [ -n "${json_ed}" ] && [ "${json_ed}" != "${trm_captiveurl#http*://*}" ]; then
 					result="net cp '${json_ed}'"
@@ -644,7 +658,7 @@ f_net() {
 		fi
 	fi
 	printf "%s" "${result}"
-	f_log "debug" "f_net     ::: fetch: ${trm_fetch}, timeout: $((trm_maxwait / 6)), cp (json/html/js): ${json_cp:-"-"}/${html_cp:-"-"}/${js_cp:-"-"}, result: ${result}, error (rc/msg): ${json_ec}/${err_msg:-"-"}, url: ${trm_captiveurl}"
+	f_log "debug" "f_net     ::: fetch: ${trm_fetchcmd}, timeout: $((trm_maxwait / 6)), cp (json/html/js): ${json_cp:-"-"}/${html_cp:-"-"}/${js_cp:-"-"}, result: ${result}, error (rc/msg): ${json_ec}/${err_msg:-"-"}, url: ${trm_captiveurl}"
 }
 
 # check interface status
@@ -695,7 +709,7 @@ f_check() {
 			else
 				ifname="$(printf "%s" "${dev_status}" | "${trm_jsoncmd}" -ql1 -e '@.*.interfaces[@.config.mode="sta"].ifname')"
 				if [ -n "${ifname}" ] && [ "${enabled}" = "1" ]; then
-					trm_ifquality="$(${trm_iwinfo} "${ifname}" info 2>/dev/null | awk -F '[ ]' '/Link Quality: [0-9]+\/[0-9]+/{split($NF,var0,"/");printf "%i\n",(var0[1]*100/var0[2])}')"
+					trm_ifquality="$("${trm_iwinfocmd}" "${ifname}" info 2>/dev/null | "${trm_awkcmd}" -F '[ ]' '/Link Quality: [0-9]+\/[0-9]+/{split($NF,var0,"/");printf "%i\n",(var0[1]*100/var0[2])}')"
 					if [ -z "${trm_ifquality}" ]; then
 						trm_ifstatus="$("${trm_ubuscmd}" -S call network.interface dump 2>/dev/null | "${trm_jsoncmd}" -ql1 -e "@.interface[@.device=\"${ifname}\"].up")"
 						if { [ -n "${trm_connection}" ] && [ "${trm_ifstatus}" = "false" ]; } || [ "${wait_time}" -eq "${trm_maxwait}" ]; then
@@ -714,9 +728,9 @@ f_check() {
 							result="$(f_net)"
 							if [ "${trm_captive}" = "1" ]; then
 								while true; do
-									cp_domain="$(printf "%s" "${result}" | awk -F '['\''| ]' '/^net cp/{printf "%s",$4}')"
+									cp_domain="$(printf "%s" "${result}" | "${trm_awkcmd}" -F '['\''| ]' '/^net cp/{printf "%s",$4}')"
 									if [ -x "/etc/init.d/dnsmasq" ] && [ -f "/etc/config/dhcp" ] &&
-										[ -n "${cp_domain}" ] && ! uci_get "dhcp" "@dnsmasq[0]" "rebind_domain" | grep -q "${cp_domain}"; then
+										[ -n "${cp_domain}" ] && ! uci_get "dhcp" "@dnsmasq[0]" "rebind_domain" | "${trm_grepcmd}" -q "${cp_domain}"; then
 										uci_add_list "dhcp" "@dnsmasq[0]" "rebind_domain" "${cp_domain}"
 										uci_commit "dhcp"
 										/etc/init.d/dnsmasq reload
@@ -857,8 +871,8 @@ f_log() {
 	local class="${1}" log_msg="${2}"
 
 	if [ -n "${log_msg}" ] && { [ "${class}" != "debug" ] || [ "${trm_debug}" = "1" ]; }; then
-		if [ -x "${trm_logger}" ]; then
-			"${trm_logger}" -p "${class}" -t "trm-${trm_ver}[${$}]" "${log_msg}"
+		if [ -x "${trm_loggercmd}" ]; then
+			"${trm_loggercmd}" -p "${class}" -t "trm-${trm_ver}[${$}]" "${log_msg}"
 		else
 			printf "%s %s %s\n" "${class}" "trm-${trm_ver}[${$}]" "${log_msg}"
 		fi
@@ -900,7 +914,7 @@ f_main() {
 		# radio loop
 		#
 		for radio in ${trm_radiolist}; do
-			if ! printf "%s" "${trm_stalist}" | grep -q "\\-${radio}"; then
+			if ! printf "%s" "${trm_stalist}" | "${trm_grepcmd}" -q "\\-${radio}"; then
 				if [ "${trm_autoadd}" = "0" ]; then
 					f_log "info" "no enabled station on radio '${radio}'"
 					continue
@@ -932,11 +946,11 @@ f_main() {
 				fi
 				if [ -z "${scan_list}" ]; then
 					scan_dev="$("${trm_ubuscmd}" -S call network.wireless status 2>/dev/null | "${trm_jsoncmd}" -ql1 -e "@.${radio}.interfaces[0].ifname")"
-					scan_list="$("${trm_iwinfo}" "${scan_dev:-${radio}}" scan 2>/dev/null |
-						awk 'BEGIN{FS="[[:space:]]"}/Address:/{var1=$NF}/ESSID:/{var2="";for(i=12;i<=NF;i++)if(var2==""){var2=$i}else{var2=var2" "$i}}
+					scan_list="$("${trm_iwinfocmd}" "${scan_dev:-${radio}}" scan 2>/dev/null |
+						"${trm_awkcmd}" 'BEGIN{FS="[[:space:]]"}/Address:/{var1=$NF}/ESSID:/{var2="";for(i=12;i<=NF;i++)if(var2==""){var2=$i}else{var2=var2" "$i}}
 						/Quality:/{split($NF,var0,"/")}/Encryption:/{if($NF=="none"){var3="+"}else{var3="-"};
-						printf "%i %s %s %s\n",(var0[1]*100/var0[2]),var3,var1,var2}' | sort -rn)"
-					f_log "debug" "f_main-6  ::: radio: ${radio}, scan_device: ${scan_dev}, scan_cnt: $(printf "%s" "${scan_list}" | grep -c "^")"
+						printf "%i %s %s %s\n",(var0[1]*100/var0[2]),var3,var1,var2}' | "${trm_sortcmd}" -rn)"
+					f_log "debug" "f_main-6  ::: radio: ${radio}, scan_device: ${scan_dev}, scan_cnt: $(printf "%s" "${scan_list}" | "${trm_grepcmd}" -c "^")"
 					if [ -z "${scan_list}" ]; then
 						f_log "info" "no scan results on '${radio}'"
 						continue 2
@@ -1016,10 +1030,6 @@ f_main() {
 	fi
 }
 
-# get travelmate version
-#
-trm_ver="$("${trm_ubuscmd}" -S call rpc-sys packagelist '{ "all": true }' 2>/dev/null | "${trm_jsoncmd}" -ql1 -e '@.packages.travelmate')"
-
 # source required system libraries
 #
 if [ -r "/lib/functions.sh" ] && [ -r "/lib/functions/network.sh" ] && [ -r "/usr/share/libubox/jshn.sh" ]; then
@@ -1029,6 +1039,23 @@ if [ -r "/lib/functions.sh" ] && [ -r "/lib/functions/network.sh" ] && [ -r "/us
 else
 	f_log "err" "system libraries not found"
 fi
+
+# reference required system utilities
+#
+trm_awkcmd="$(f_cmd gawk awk)"
+trm_sortcmd="$(f_cmd sort)"
+trm_grepcmd="$(f_cmd grep)"
+trm_jsoncmd="$(f_cmd jsonfilter)"
+trm_ubuscmd="$(f_cmd ubus)"
+trm_loggercmd="$(f_cmd logger)"
+trm_wificmd="$(f_cmd wifi)"
+trm_fetchcmd="$(f_cmd curl)"
+trm_iwinfocmd="$(f_cmd iwinfo)"
+trm_wpacmd="$(f_cmd wpa_supplicant)"
+
+# get travelmate version
+#
+trm_ver="$("${trm_ubuscmd}" -S call rpc-sys packagelist '{ "all": true }' 2>/dev/null | "${trm_jsoncmd}" -ql1 -e '@.packages.travelmate')"
 
 # force ntp hotplug event/time sync
 #
