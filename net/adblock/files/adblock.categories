@@ -23,6 +23,7 @@ hag;tracker.apple;native.apple-onlydomains.txt
 hag;tracker.huawei;native.huawei-onlydomains.txt
 hag;tracker.lgwebos;native.lgwebos-onlydomains.txt
 hag;tracker.oppo-realme;native.oppo-realme-onlydomains.txt
+hag;tracker.samsung;native.samsung-onlydomains.txt
 hag;tracker.tiktok;native.tiktok-onlydomains.txt
 hag;tracker.tiktok.extended;native.tiktok.extended-onlydomains.txt
 hag;tracker.vivo;native.vivo-onlydomains.txt
