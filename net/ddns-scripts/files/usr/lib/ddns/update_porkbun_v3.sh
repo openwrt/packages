@@ -130,6 +130,7 @@ function edit_record() {
 	local request response
 	json_init
 	json_authenticate
+	json_add_string "name" "$__SUBDOMAIN"
 	json_add_string "type" "$__TYPE"
 	json_add_string "content" "$__ADDR"
 	request=$(json_dump)
