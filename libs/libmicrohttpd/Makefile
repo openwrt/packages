@@ -63,7 +63,9 @@ CONFIGURE_ARGS += \
 ifeq ($(BUILD_VARIANT),ssl)
 CONFIGURE_ARGS += \
 	--enable-https \
-	--with-gnutls
+	--with-gnutls \
+	--enable-md5=tlslib \
+	--enable-sha256=tlslib
 else
 CONFIGURE_ARGS += \
 	--disable-https \
