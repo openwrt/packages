@@ -57,7 +57,6 @@ CONFIGURE_ARGS += \
 	--disable-rpath \
 	--disable-doc \
 	--disable-examples \
-	--disable-poll \
 	--enable-epoll \
 	--with-pic
 
