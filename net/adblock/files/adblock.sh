@@ -11,7 +11,6 @@
 export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 
-adb_ver="4.2.2-r6"
 adb_enabled="0"
 adb_debug="0"
 adb_forcedns="0"
@@ -84,6 +83,8 @@ f_cmd() {
 f_load() {
 	local bg_pid iface port ports cpu core
 
+	adb_packages="$("${adb_ubuscmd}" -S call rpc-sys packagelist '{ "all": true }' 2>/dev/null)"
+	adb_ver="$(printf "%s" "${adb_packages}" | "${adb_jsoncmd}" -ql1 -e '@.packages.adblock')"
 	adb_sysver="$("${adb_ubuscmd}" -S call system board 2>/dev/null | "${adb_jsoncmd}" -ql1  -e '@.model' -e '@.release.target' -e '@.release.distribution' -e '@.release.version' -e '@.release.revision' |
 		"${adb_awkcmd}" 'BEGIN{RS="";FS="\n"}{printf "%s, %s, %s %s %s %s",$1,$2,$3,$4,$5,$6}')"
 	adb_memory="$("${adb_awkcmd}" '/^MemAvailable/{printf "%s",int($2/1000)}' "/proc/meminfo" 2>/dev/null)"
@@ -152,6 +153,7 @@ f_load() {
 			f_log "info" "Please set the name of the reporting network device 'adb_repiface' manually"
 		fi
 	fi
+	f_log "info" "DEBUG ::: $(ubus call rpc-sys packagelist '{ "all": true }' | wc -l) packages"
 }
 
 # check & set environment
@@ -186,8 +188,6 @@ f_env() {
 # load adblock config
 #
 f_conf() {
-	local cnt="0" cnt_max="10"
-
 	[ ! -r "/etc/config/adblock" ] && f_log "err" "no valid adblock config found, please re-install the adblock package"
 
 	config_cb() {
@@ -223,15 +223,6 @@ f_conf() {
 		}
 	}
 	config_load adblock
-
-	if [ -z "${adb_fetchutil}" ] || [ -z "${adb_dns}" ]; then
-		while [ -z "${adb_packages}" ] && [ "${cnt}" -le "${cnt_max}" ]; do
-			adb_packages="$(opkg list-installed 2>/dev/null)"
-			cnt="$((cnt + 1))"
-			sleep 1
-		done
-		[ -z "${adb_packages}" ] && f_log "err" "local opkg package repository is not available, please set 'adb_fetchutil' and 'adb_dns' manually"
-	fi
 }
 
 # status helper function
@@ -253,13 +244,15 @@ f_dns() {
 	local util utils dns_up cnt="0"
 
 	if [ -z "${adb_dns}" ]; then
-		utils="knot-resolver bind unbound dnsmasq raw"
+		utils="knot-resolver bind-server unbound-daemon dnsmasq raw"
 		for util in ${utils}; do
-			if [ "${util}" = "raw" ] || printf "%s" "${adb_packages}" | "${adb_grepcmd}" -q "^${util}"; then
+			if [ "${util}" = "raw" ] || printf "%s" "${adb_packages}" | "${adb_grepcmd}" -q "${util}"; then
 				if [ "${util}" = "knot-resolver" ]; then
 					util="kresd"
-				elif [ "${util}" = "bind" ]; then
+				elif [ "${util}" = "bind-server" ]; then
 					util="named"
+				elif [ "${util}" = "unbound-daemon" ]; then
+					util="unbound"
 				fi
 				if [ "${util}" = "raw" ] || [ -x "$(command -v "${util}")" ]; then
 					adb_dns="${util}"
@@ -349,7 +342,7 @@ f_dns() {
 
 	if [ "${adb_dns}" != "raw" ] && [ "${adb_action}" != "stop" ]; then
 		while [ "${cnt}" -le 30 ]; do
-			dns_up="$("${adb_ubuscmd}" -S call service list "{\"name\":\"${adb_dns}\"}" 2>/dev/null | "${adb_jsoncmd}" -l1 -e "@[\"${adb_dns}\"].instances.*.running" 2>/dev/null)"
+			dns_up="$("${adb_ubuscmd}" -S call service list "{\"name\":\"${adb_dns}\"}" 2>/dev/null | "${adb_jsoncmd}" -ql1 -e "@[\"${adb_dns}\"].instances.*.running" 2>/dev/null)"
 			if [ "${dns_up}" = "true" ]; then
 				break
 			fi
@@ -401,8 +394,8 @@ f_fetch() {
 	if [ -z "${adb_fetchutil}" ]; then
 		utils="aria2c curl wget uclient-fetch"
 		for util in ${utils}; do
-			if { [ "${util}" = "uclient-fetch" ] && printf "%s" "${adb_packages}" | "${adb_grepcmd}" -q "^libustream-"; } ||
-				{ [ "${util}" = "wget" ] && printf "%s" "${adb_packages}" | "${adb_grepcmd}" -q "^wget -"; } ||
+			if { [ "${util}" = "uclient-fetch" ] && printf "%s" "${adb_packages}" | "${adb_grepcmd}" -q "libustream-"; } ||
+				{ [ "${util}" = "wget" ] && printf "%s" "${adb_packages}" | "${adb_grepcmd}" -q "wget-ssl"; } ||
 				[ "${util}" = "curl" ] || [ "${util}" = "aria2c" ]; then
 				if [ -x "$(command -v "${util}")" ]; then
 					adb_fetchutil="${util}"
