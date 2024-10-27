@@ -28,7 +28,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/libmicrohttpd/default
   SECTION:=libs
   CATEGORY:=Libraries
-  TITLE:=GNU libmicrohttpd is a library that runs an HTTP server.
+  TITLE:=GNU libmicrohttpd is a library that provides an HTTP server interface
   URL:=https://www.gnu.org/software/libmicrohttpd/
 endef
 
