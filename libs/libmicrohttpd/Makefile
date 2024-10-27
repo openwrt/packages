@@ -43,7 +43,7 @@ define Package/libmicrohttpd-ssl
 $(call Package/libmicrohttpd/default)
   TITLE+= with SSL support
   VARIANT:=ssl
-  DEPENDS:=+libgcrypt +libgnutls +libgpg-error
+  DEPENDS:=+libgnutls
   PROVIDES:=libmicrohttpd
 endef
 
