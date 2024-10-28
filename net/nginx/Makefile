@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
 PKG_VERSION:=1.26.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nginx.org/download/
@@ -212,10 +212,9 @@ define Package/nginx-mod-luci/install
 endef
 
 define Download/nginx-mod-geoip2
-  SOURCE_DATE:=2020-01-22
-  VERSION:=1cabd8a1f68ea3998f94e9f3504431970f848fbf
-  URL:=https://github.com/leev/ngx_http_geoip2_module.git
-  MIRROR_HASH:=f3d2a1af5c34812b5a34453457ba6a4d8093c92085aa7f76c46a1c4185c9735c
+  VERSION:=3.4
+  URL:=https://github.com/leev/ngx_http_geoip2_module
+  MIRROR_HASH:=22d67e35067faed200ea398581dd0dc9d599bc6ab4c0ea2034a1ea55666fdc1d
   PROTO:=git
 endef
 
