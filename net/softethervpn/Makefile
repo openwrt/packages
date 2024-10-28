@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=softethervpn
 PKG_VERSION:=4.38-9760
 PKG_VERREL:=rtm
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=softether-src-v$(PKG_VERSION)-$(PKG_VERREL).tar.gz
 PKG_SOURCE_URL:=https://github.com/SoftEtherVPN/SoftEtherVPN_Stable/releases/download/v$(PKG_VERSION)-$(PKG_VERREL)
