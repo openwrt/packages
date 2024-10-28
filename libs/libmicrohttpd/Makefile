@@ -28,12 +28,12 @@ include $(INCLUDE_DIR)/package.mk
 define Package/libmicrohttpd/default
   SECTION:=libs
   CATEGORY:=Libraries
-  TITLE:=GNU libmicrohttpd is a library that provides an HTTP server interface
   URL:=https://www.gnu.org/software/libmicrohttpd/
 endef
 
 define Package/libmicrohttpd-no-ssl
 $(call Package/libmicrohttpd/default)
+  TITLE:=GNU libmicrohttpd is an embbeded HTTP server library
   VARIANT:=nossl
   DEFAULT_VARIANT:=1
   PROVIDES:=libmicrohttpd
@@ -41,7 +41,7 @@ endef
 
 define Package/libmicrohttpd-ssl
 $(call Package/libmicrohttpd/default)
-  TITLE+= with SSL support
+  TITLE:=GNU libmicrohttpd is an embbeded HTTP and HTTPS server library
   VARIANT:=ssl
   DEPENDS:=+libgnutls
   PROVIDES:=libmicrohttpd
