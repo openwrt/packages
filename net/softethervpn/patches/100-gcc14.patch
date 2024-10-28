@@ -1,0 +1,121 @@
+--- a/src/Mayaqua/Secure.c
++++ b/src/Mayaqua/Secure.c
+@@ -417,11 +417,11 @@ bool SignSecByObject(SECURE *sec, SEC_OB
+ 	// Perform Signing
+ 	size = 128;
+ 	// First try with 1024 bit
+-	ret = sec->Api->C_Sign(sec->SessionId, hash, sizeof(hash), dst, &size);
++	ret = sec->Api->C_Sign(sec->SessionId, hash, sizeof(hash), dst, (CK_ULONG*)&size);
+ 	if (ret != CKR_OK && 128 < size && size <= 4096/8)
+ 	{
+ 		// Retry with expanded bits
+-		ret = sec->Api->C_Sign(sec->SessionId, hash, sizeof(hash), dst, &size);
++		ret = sec->Api->C_Sign(sec->SessionId, hash, sizeof(hash), dst, (CK_ULONG*)&size);
+ 	}
+ 	if (ret != CKR_OK || size == 0 || size > 4096/8)
+ 	{
+@@ -474,7 +474,7 @@ bool WriteSecKey(SECURE *sec, bool priva
+ 	UINT key_type = CKK_RSA;
+ 	CK_BBOOL b_true = true, b_false = false, b_private_obj = private_obj;
+ 	UINT obj_class = CKO_PRIVATE_KEY;
+-	UINT object;
++	CK_ULONG object;
+ 	UINT ret;
+ 	BUF *b;
+ 	RSA *rsa;
+@@ -716,7 +716,7 @@ bool WriteSecCert(SECURE *sec, bool priv
+ 	UCHAR value[4096];
+ 	UINT ret;
+ 	BUF *b;
+-	UINT object;
++	CK_ULONG object;
+ 	CK_ATTRIBUTE a[] =
+ 	{
+ 		{CKA_SUBJECT,			subject,		0},			// 0
+@@ -1264,7 +1264,7 @@ LIST *CloneEnumSecObject(LIST *o)
+ LIST *EnumSecObject(SECURE *sec)
+ {
+ 	CK_BBOOL b_true = true, b_false = false;
+-	UINT objects[MAX_OBJ];
++	CK_ULONG objects[MAX_OBJ];
+ 	UINT i;
+ 	UINT ret;
+ 	LIST *o;
+@@ -1273,7 +1273,7 @@ LIST *EnumSecObject(SECURE *sec)
+ 	{
+ 		{CKA_TOKEN,		&b_true,		sizeof(b_true)},
+ 	};
+-	UINT num_objects = MAX_OBJ;
++	CK_ULONG num_objects = MAX_OBJ;
+ 	// Validate arguments
+ 	if (sec == NULL)
+ 	{
+@@ -1389,7 +1389,7 @@ bool WriteSecData(SECURE *sec, bool priv
+ {
+ 	UINT object_class = CKO_DATA;
+ 	CK_BBOOL b_true = true, b_false = false, b_private_obj = private_obj;
+-	UINT object;
++	CK_ULONG object;
+ 	CK_ATTRIBUTE a[] =
+ 	{
+ 		{CKA_TOKEN,		&b_true,		sizeof(b_true)},
+@@ -1713,7 +1713,7 @@ void CloseSecSession(SECURE *sec)
+ bool OpenSecSession(SECURE *sec, UINT slot_number)
+ {
+ 	UINT err = 0;
+-	UINT session;
++	CK_ULONG session;
+ 	// Validate arguments
+ 	if (sec == NULL)
+ 	{
+@@ -1827,7 +1827,7 @@ SECURE *OpenSec(UINT id)
+ 
+ 	// Get the slot list
+ 	sec->NumSlot = 0;
+-	if ((err = sec->Api->C_GetSlotList(true, NULL, &sec->NumSlot)) != CKR_OK || sec->NumSlot == 0)
++	if ((err = sec->Api->C_GetSlotList(true, NULL, (CK_ULONG*)&sec->NumSlot)) != CKR_OK || sec->NumSlot == 0)
+ 	{
+ 		// Failure
+ 		FreeSecModule(sec);
+@@ -1837,7 +1837,7 @@ SECURE *OpenSec(UINT id)
+ 
+ 	sec->SlotIdList = (UINT *)ZeroMalloc(sizeof(UINT) * sec->NumSlot);
+ 
+-	if (sec->Api->C_GetSlotList(TRUE, sec->SlotIdList, &sec->NumSlot) != CKR_OK)
++	if (sec->Api->C_GetSlotList(TRUE, (CK_ULONG*)sec->SlotIdList, (CK_ULONG*)&sec->NumSlot) != CKR_OK)
+ 	{
+ 		// Failure
+ 		Free(sec->SlotIdList);
+--- a/src/Mayaqua/Unix.c
++++ b/src/Mayaqua/Unix.c
+@@ -309,9 +309,8 @@ OS_DISPATCH_TABLE *UnixGetDispatchTable(
+ 	return &t;
+ }
+ 
+-static void *signal_received_for_ignore(int sig, siginfo_t *info, void *ucontext) 
++static void signal_received_for_ignore(int sig, siginfo_t *info, void *ucontext) 
+ {
+-	return NULL;
+ }
+ 
+ // Ignore the signal flew to the thread
+--- a/src/Cedar/BridgeUnix.c
++++ b/src/Cedar/BridgeUnix.c
+@@ -151,6 +151,7 @@ struct my_tpacket_auxdata
+ #endif	// UNIX_LINUX
+ 
+ static LIST *eth_offload_list = NULL;
++extern void FreeTap(VLAN *v);
+ 
+ // Initialize
+ void InitEth()
+--- a/src/Cedar/Console.c
++++ b/src/Cedar/Console.c
+@@ -104,6 +104,7 @@
+ 
+ #include "CedarPch.h"
+ 
++extern int getch(void);
+ 
+ // Display the help for the command
+ void PrintCmdHelp(CONSOLE *c, char *cmd_name, TOKEN_LIST *param_list)
