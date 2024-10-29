@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openwisp-monitoring
 PKG_VERSION:=0.2.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Federico Capoano <support@openwisp.io>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -34,8 +34,13 @@ define Package/netjson-monitoring
   CATEGORY:=Administration
   SECTION:=admin
   SUBMENU:=openwisp
-  DEPENDS:=+libubus-lua +lua-cjson +rpcd +rpcd-mod-iwinfo
+  DEPENDS:=+libubus-lua +lua-cjson +rpcd
+  DEPENDS+=+NETJSON_MONITORING_IWINFO:rpcd-mod-iwinfo
   URL:=http://openwisp.org
+endef
+
+define Package/netjson-monitoring/config
+  source "$(SOURCE)/Config.in"
 endef
 
 define Build/Compile
@@ -87,6 +92,11 @@ define Package/netjson-monitoring/install
 	$(INSTALL_DATA) \
 		$(PKG_BUILD_DIR)/openwisp-monitoring/files/lib/openwisp-monitoring/wifi.lua \
 		$(1)/usr/lib/lua/openwisp-monitoring/wifi.lua
+
+# Iwinfo is enabled by default unless specified otherwise
+ifeq ($(CONFIG_NETJSON_MONITORING_IWINFO), y)
+	$(CP) $(PKG_BUILD_DIR)/openwisp-monitoring/files/lib/openwisp-monitoring/iwinfo.lua $(1)/usr/lib/lua/openwisp-monitoring/iwinfo.lua
+endif
 
 	$(CP) $(PKG_BUILD_DIR)/VERSION $(1)/usr/lib/openwisp-monitoring/
 
