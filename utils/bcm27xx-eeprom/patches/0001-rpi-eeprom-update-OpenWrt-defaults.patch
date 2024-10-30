@@ -28,8 +28,9 @@ Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
 @@ -1,7 +1,7 @@
  
  FIRMWARE_ROOT=/lib/firmware/raspberrypi/bootloader
- FIRMWARE_RELEASE_STATUS="default"
+-FIRMWARE_RELEASE_STATUS="default"
 -FIRMWARE_BACKUP_DIR="/var/lib/raspberrypi/bootloader/backup"
++FIRMWARE_RELEASE_STATUS="latest"
 +FIRMWARE_BACKUP_DIR="${FIRMWARE_ROOT}/backup"
  EEPROM_CONFIG_HOOK=
  
