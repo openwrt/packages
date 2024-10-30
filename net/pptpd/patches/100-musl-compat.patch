@@ -9,29 +9,13 @@
                                  {
                                    if (errno == ENETDOWN) {
                                      syslog(LOG_NOTICE, "ignored ENETDOWN from sendto(), a network interface was going down?");
---- a/compat.c
-+++ b/compat.c
-@@ -13,9 +13,9 @@
+--- a/plugins/pptpd-logwtmp.c
++++ b/plugins/pptpd-logwtmp.c
+@@ -17,6 +17,7 @@
+ #include <pppd/pppd.h>
+ #include <pppd/options.h>
  
- #include <string.h>
++extern void logwtmp(const char *line, const char *name, const char *host);
+ char pppd_version[] = PPPD_VERSION;
  
--#ifndef HAVE_STRLCPY
- #include <stdio.h>
- 
-+#ifndef HAVE_STRLCPY
- void strlcpy(char *dst, const char *src, size_t size)
- {
-         strncpy(dst, src, size - 1);
---- /dev/null
-+++ b/net/ppp_defs.h
-@@ -0,0 +1,10 @@
-+#ifndef _NET_PPP_DEFS_H
-+#define _NET_PPP_DEFS_H 1
-+
-+#define __need_time_t
-+#include <time.h>
-+
-+#include <asm/types.h>
-+#include <linux/ppp_defs.h>
-+
-+#endif /* net/ppp_defs.h */
+ static char pptpd_original_ip[PATH_MAX+1];
