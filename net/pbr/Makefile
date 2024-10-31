@@ -5,7 +5,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pbr
 PKG_VERSION:=1.1.7
-PKG_RELEASE:=29
+PKG_RELEASE:=47
 PKG_LICENSE:=AGPL-3.0-or-later
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.ca>
 
@@ -160,6 +160,9 @@ define Package/pbr-netifd/prerm
 			echo "FAIL"
 		fi
 		echo -n "Cleaning up /etc/config/network... "
+		uci -q delete 'network.pbr_default' || true
+		uci -q delete 'network.pbr_default6' || true
+		uci commit network || true
 		if sed -i '/ip.table.*pbr_/d' /etc/config/network; then
 			echo "OK"
 		else
@@ -185,4 +188,4 @@ define Package/pbr-netifd/postrm
 endef
 
 $(eval $(call BuildPackage,pbr))
-# $(eval $(call BuildPackage,pbr-netifd))
+$(eval $(call BuildPackage,pbr-netifd))
