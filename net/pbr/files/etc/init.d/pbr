@@ -14,11 +14,11 @@ USE_PROCD=1
 
 readonly packageName='pbr'
 readonly PKG_VERSION='dev-test'
-readonly packageCompat='9'
+readonly packageCompat='11'
 readonly serviceName="$packageName $PKG_VERSION"
 readonly packageConfigFile="/etc/config/${packageName}"
 readonly packageLockFile="/var/run/${packageName}.lock"
-readonly dnsmasqFileDefault="/var/dnsmasq.d/${packageName}"
+readonly dnsmasqFileDefault="/var/run/${packageName}.dnsmasq"
 readonly _OK_='\033[0;32m\xe2\x9c\x93\033[0m'
 readonly __OK__='\033[0;32m[\xe2\x9c\x93]\033[0m'
 readonly _OKB_='\033[1;34m\xe2\x9c\x93\033[0m'
@@ -57,10 +57,11 @@ nft_user_set_policy=
 nft_user_set_counter=
 procd_boot_delay=
 procd_reload_delay=
-procd_lan_interface=
+procd_lan_device=
 procd_wan_ignore_status=
 procd_wan_interface=
 procd_wan6_interface=
+procd_wan6_metric='128'
 resolver_set=
 resolver_instance=
 strict_enforcement=
@@ -84,7 +85,6 @@ errorSummary=
 warningSummary=
 wanIface4=
 wanIface6=
-dnsmasqFile=
 dnsmasqFileList=
 ifaceMark=
 ifaceTableID=
@@ -113,12 +113,7 @@ torTrafficPort=
 # shellcheck disable=SC1091
 . /usr/share/libubox/jshn.sh
 
-output_ok() { output 1 "$_OK_"; output 2 "$__OK__\n"; }
-output_okn() { output 1 "$_OK_\n"; output 2 "$__OK__\n"; }
-output_okb() { output 1 "$_OKB_"; output 2 "$__OKB__\n"; }
-output_okbn() { output 1 "$_OKB_\n"; output 2 "$__OKB__\n"; }
-output_fail() { output 1 "$_FAIL_"; output 2 "$__FAIL__\n"; }
-output_failn() { output 1 "$_FAIL_\n"; output 2 "$__FAIL__\n"; }
+debug() { local i j; for i in "$@"; do eval "j=\$$i"; logger "${packageName:+-t $packageName}" "${i}: ${j} "; done; }
 str_contains() { [ -n "$1" ] && [ -n "$2" ] && [ "${1//$2}" != "$1" ]; }
 str_contains_word() { echo "$1" | grep -q -w "$2"; }
 str_extras_to_underscore() { echo "$1" | tr '[\. ~`!@#$%^&*()\+/,<>?//;:]' '_'; }
@@ -127,41 +122,34 @@ str_first_value_interface() { local i; for i in $1; do is_supported_interface "$
 str_first_value_ipv4() { local i; for i in $1; do is_ipv4 "$i" && { echo "$i"; break; }; done; }
 str_first_value_ipv6() { local i; for i in $1; do is_ipv6 "$i" && { echo "$i"; break; }; done; }
 str_first_word() { echo "${1%% *}"; }
-# shellcheck disable=SC2317
-str_replace() { printf "%b" "$1" | sed -e "s/$(printf "%b" "$2")/$(printf "%b" "$3")/g"; }
 str_replace() { echo "${1//$2/$3}"; }
 str_to_dnsmsaq_nftset() { echo "$1" | tr ' ' '/'; }
 str_to_lower() { echo "$1" | tr 'A-Z' 'a-z'; }
 str_to_upper() { echo "$1" | tr 'a-z' 'A-Z'; }
-debug() { local i j; for i in "$@"; do eval "j=\$$i"; logger "${packageName:+-t $packageName}" "${i}: ${j} "; done; }
+# shellcheck disable=SC3060
+output() {
+	local v="${verbosity:-1}"
+	[ "$#" -ne '1' ] && {
+		case "$1" in [0-9]) [ $((v & $1)) -gt 0 ] && shift || return 0;; esac }
+	local msg="$*" queue="/dev/shm/$packageName-output"
+	[ -t 1 ] && printf "%b" "$msg"
+	[ "$msg" != "${msg//\\n}" ] && {
+		[ -s "$queue" ] && msg="$(cat "$queue")${msg}" && rm -f "$queue"
+		msg="$(printf "%b" "$msg" | sed 's/\x1b\[[0-9;]*m//g')"
+		logger -t "$packageName [$$]" "$(printf "%b" "$msg")"
+	} || printf "%b" "$msg" >> "$queue"
+}
+output_ok() { output 1 "$_OK_"; output 2 "$__OK__\n"; }
+output_okn() { output 1 "$_OK_\n"; output 2 "$__OK__\n"; }
+output_okb() { output 1 "$_OKB_"; output 2 "$__OKB__\n"; }
+output_okbn() { output 1 "$_OKB_\n"; output 2 "$__OKB__\n"; }
+output_fail() { output 1 "$_FAIL_"; output 2 "$__FAIL__\n"; }
+output_failn() { output 1 "$_FAIL_\n"; output 2 "$__FAIL__\n"; }
 quiet_mode() {
 	case "$1" in
 		on) verbosity=0;;
 		off) verbosity="$(uci_get "$packageName" 'config' 'verbosity' '2')";;
 	esac
-}
-output() {
-# Target verbosity level with the first parameter being an integer
-	is_integer() { case "$1" in ''|*[!0-9]*) return 1;; esac; }
-	local msg memmsg logmsg text
-	local sharedMemoryOutput="/dev/shm/$packageName-output"
-	if [ -z "$verbosity" ] && [ -n "$packageName" ]; then
-		verbosity="$(uci_get "$packageName" 'config' 'verbosity' '2')"
-	fi
-	if [ "$#" -ne '1' ] && is_integer "$1"; then
-		if [ "$((verbosity & $1))" -gt '0' ] || [ "$verbosity" = "$1" ]; then shift; text="$*"; else return 0; fi
-	fi
-	text="${text:-$*}";
-	[ -t 1 ] && printf "%b" "$text"
-	msg="${text//$serviceName /service }";
-	if [ "$(printf "%b" "$msg" | wc -l)" -gt '0' ]; then
-		[ -s "$sharedMemoryOutput" ] && memmsg="$(cat "$sharedMemoryOutput")"
-		logmsg="$(printf "%b" "${memmsg}${msg}" | sed 's/\x1b\[[0-9;]*m//g')"
-		logger -t "${packageName:-service} [$$]" "$(printf "%b" "$logmsg")"
-		rm -f "$sharedMemoryOutput"
-	else
-		printf "%b" "$msg" >> "$sharedMemoryOutput"
-	fi
 }
 pbr_find_iface() {
 	local iface i param="$2"
@@ -182,6 +170,7 @@ pbr_get_gateway4() {
 }
 pbr_get_gateway6() {
 	local iface="$2" dev="$3" gw
+	[ "$iface" = "$procd_wan_interface" ] && iface="$procd_wan6_interface"  
 	network_get_gateway6 gw "$iface" true
 	if [ -z "$gw" ] || [ "$gw" = '::/0' ] || [ "$gw" = '::0/0' ] || [ "$gw" = '::' ]; then
 		gw="$(ip -6 a list dev "$dev" 2>/dev/null | grep inet6 | grep 'scope global' | awk '{print $2}')"
@@ -219,7 +208,12 @@ is_config_enabled() {
 	return "$_cfg_enabled"
 }
 # shellcheck disable=SC2317
-uci_get_device() { uci_get 'network' "$1" 'device' || uci_get 'network' "$1" 'dev'; }
+uci_get_device() {
+	local __tmp
+	__tmp="$(uci_get 'network' "$2" 'device')"
+	[ -z "$__tmp" ] && unset "$1" && return 1
+	eval "$1=$__tmp"
+}
 uci_get_protocol() { uci_get 'network' "$1" 'proto'; }
 is_default_dev() { [ "$1" = "$(ip -4 r | grep -m1 'dev' | grep -Eso 'dev [^ ]*' | awk '{print $2}')" ]; }
 is_disabled_interface() { [ "$(uci_get 'network' "$1" 'disabled')" = '1' ]; }
@@ -233,11 +227,12 @@ is_ignore_target() { [ "$(str_to_lower "$1")" = 'ignore' ]; }
 is_integer() { case "$1" in ''|*[!0-9]*) return 1;; esac; }
 is_ipv4() { expr "${1%/*}" : '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >/dev/null; }
 is_ipv6() { ! is_mac_address "$1" && str_contains "$1" ':'; }
-is_ipv6_global() { [ "${1:0:4}" = '2001' ]; }
-is_ipv6_link_local() { [ "${1:0:4}" = 'fe80' ]; }
-is_ipv6_unique_local() { [ "${1:0:2}" = 'fc' ] || [ "${1:0:2}" = 'fd' ]; }
+is_ipv6_global_scope() { [ "${1:0:4}" = '2001' ]; }
+is_ipv6_local_scope() { is_ipv6_local_link "$1" || is_ipv6_local_unique "$1"; }
+is_ipv6_local_link() { [ "${1:0:4}" = 'fe80' ]; }
+is_ipv6_local_unique() { [ "${1:0:2}" = 'fc' ] || [ "${1:0:2}" = 'fd' ]; }
 is_list() { str_contains "$1" ',' || str_contains "$1" ' '; }
-is_lan() { local d; network_get_device d "$1"; str_contains "$procd_lan_interface" "$d"; }
+is_lan() { local d; network_get_device d "$1"; str_contains "$procd_lan_device" "$d"; }
 is_l2tp() { local p; network_get_protocol p "$1"; [ "${p:0:4}" = "l2tp" ]; }
 is_mac_address() { expr "$1" : '[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]$' >/dev/null; }
 is_negation() { [ "${1:0:1}" = '!' ]; }
@@ -404,6 +399,7 @@ get_text() {
 		errorDefaultFw4TableMissing) r="Default fw4 table '%s' is missing!";;
 		errorDefaultFw4ChainMissing) r="Default fw4 chain '%s' is missing!";;
 		errorRequiredBinaryMissing) r="Required binary '%s' is missing!";;
+		errorInterfaceRoutingUnknownDevType) r="Unknown IPv6 Link type for device '%s'!";;
 		warningInvalidOVPNConfig) r="Invalid OpenVPN config for '%s' interface.";;
 		warningResolverNotSupported) r="Resolver set (${resolver_set}) is not supported on this system.";;
 		warningPolicyProcessCMD) r="'%s'";;
@@ -413,7 +409,7 @@ get_text() {
 		warningOutdatedWebUIApp) r="The WebUI application is outdated (version %s), please update it.";;
 		warningBadNftCallsInUserFile) r="Incompatible nft calls detected in user include file, disabling fw4 nft file support.";;
 		warningDnsmasqInstanceNoConfdir) r="Dnsmasq instance '%s' targeted in settings, but it doesn't have its own confdir.";;
-		warningDhcpLanForce) r="Please set 'dhcp.lan.force=1' to speed up service start-up.";;
+		warningDhcpLanForce) r="Please set 'dhcp.%s.force=1' to speed up service start-up.";;
 	esac
 	echo "$r"
 }
@@ -480,8 +476,8 @@ load_package_config() {
 	config_get      verbosity                 'config' 'verbosity' '2'
 	config_get      procd_boot_delay          'config' 'procd_boot_delay' '0'
 	config_get      procd_boot_timeout        'config' 'procd_boot_timeout' '30'
-	config_get      procd_lan_interface       'config' 'procd_lan_interface'  'br-lan'
-	config_get      procd_wan_ignore_status   'config' 'procd_wan_ignore_status' '0'
+	config_get      procd_lan_device          'config' 'procd_lan_device'  'br-lan'
+	config_get      procd_wan_ignore_status   'config' 'procd_wan_ignore_status' '1'
 	config_get      procd_wan_interface       'config' 'procd_wan_interface'  'wan'
 	config_get      procd_wan6_interface      'config' 'procd_wan6_interface' 'wan6'
 	config_get      wan_ip_rules_priority     'config' 'wan_ip_rules_priority' '30000'
@@ -529,13 +525,17 @@ load_package_config() {
 
 load_environment() {
 	_system_health_check() {
+# shellcheck disable=SC2317
+		_check_dhcp_force() {
+			is_lan "$1" || return 0
+			if [ "$(uci_get dhcp "$1" force 0)" = '0' ]; then
+				state add 'warningSummary' 'warningDhcpLanForce' "$1"
+			fi
+		}
 		local i _ret=0
 		if [ "$(uci_get 'firewall' 'defaults' 'auto_includes')" = '0' ]; then
 			uci_remove 'firewall' 'defaults' 'auto_includes'
 			uci_commit firewall
-		fi
-		if [ "$(uci_get dhcp lan force 0)" = '0' ]; then
-			state add 'warningSummary' 'warningDhcpLanForce'
 		fi
 		# TODO: implement ip-full check
 		# state add 'errorSummary' 'errorRequiredBinaryMissing' 'ip-full'
@@ -555,6 +555,8 @@ load_environment() {
 				_ret='1'
 			fi
 		done
+		config_load 'network'
+		config_foreach _check_dhcp_force 'interface'
 		return "$_ret"
 	}
 	local param="$1" validation_result="$2"
@@ -854,6 +856,7 @@ cleanup_sets() {
 
 state() {
 	local action="$1" param="$2" value="${3//#/_}"
+	local array_name
 	shift 3
 # shellcheck disable=SC2124
 	local extras="$@"
@@ -868,10 +871,11 @@ state() {
 			json_add_object "$packageName"
 			case "$param" in
 				errorSummary)
-					json_add_array 'errors';;
+					array_name='errors';;
 				warningSummary)
-					json_add_array 'warnings';;
+					array_name='warnings';;
 			esac
+			json_add_array "$array_name"
 			if [ -n "$(eval echo "\$$param")" ]; then
 				while read -r line; do
 					if str_contains "$line" ' '; then
@@ -880,7 +884,7 @@ state() {
 					else
 						error_id="$line"
 					fi
-					json_add_object
+					json_add_object "$array_name"
 					json_add_string 'id' "$error_id"
 					json_add_string 'extra' "$error_extra"
 					json_close_object
@@ -919,21 +923,16 @@ EOF
 	esac
 }
 
-_resolver_dnsmasq_confdir() {
-	local cfg="$1"
-	local confdir
-	[ -z "$(uci_get 'dhcp' "$cfg")" ] && return 1;
-	config_get confdir "$1" 'confdir'
-	if [ -z "$confdir" ] && [ "$resolver_instance" != "*" ]; then
-		state add 'warningSummary' 'warningDnsmasqInstanceNoConfdir' "$cfg"
-	fi
-	if [ -n "$confdir" ] && ! str_contains "$dnsmasqFileList" "$confdir"; then
-		dnsmasqFile="${confdir}/${packageName}"
-		dnsmasqFileList="${dnsmasqFileList:+$dnsmasqFileList }${dnsmasqFile}"
-	fi
-}
-
 resolver() {
+	_resolver_dnsmasq_confdir() {
+		local cfg="$1"
+		local confdir confdirFile
+		config_get confdir "$1" 'confdir' '/tmp/dnsmasq.d'
+		confdirFile="${confdir}/${packageName}"
+		if ! str_contains "$dnsmasqFileList" "$confdirFile"; then
+			dnsmasqFileList="${dnsmasqFileList:+$dnsmasqFileList }${confdirFile}"
+		fi
+	}
 	local agh_version
 	local param="$1" iface="$2" target="$3" type="$4" uid="$5" name="$6" value="$7"
 	shift
@@ -1002,6 +1001,7 @@ resolver() {
 					if [ -n "$resolver_set_supported" ]; then
 						local dfl
 						for dfl in $dnsmasqFileList; do
+							[ "${dfl%/*}" = '/var/run' ] && continue
 							mkdir -p "${dfl%/*}"
 							chmod -R 660 "${dfl%/*}"
 							chown -R root:dnsmasq "${dfl%/*}"
@@ -1015,18 +1015,14 @@ resolver() {
 					config_load 'dhcp'
 					if [ "$resolver_instance" = "*" ]; then
 						config_foreach _resolver_dnsmasq_confdir 'dnsmasq'
-						dnsmasqFile="${dnsmasqFile:-$dnsmasqFileDefault}"
-						str_contains "$dnsmasqFileList" "$dnsmasqFileDefault" || \
-							dnsmasqFileList="${dnsmasqFileList:+$dnsmasqFileList }${dnsmasqFileDefault}"
 					else
 						for i in $resolver_instance; do
 							_resolver_dnsmasq_confdir "@dnsmasq[$i]" \
 							|| _resolver_dnsmasq_confdir "$i"
 						done
-						dnsmasqFile="${dnsmasqFile:-$dnsmasqFileDefault}"
-						str_contains "$dnsmasqFileList" "$dnsmasqFileDefault" || \
-							dnsmasqFileList="${dnsmasqFileList:-$dnsmasqFileDefault}"
 					fi
+					str_contains "$dnsmasqFileList" "$dnsmasqFileDefault" || \
+						dnsmasqFileList="${dnsmasqFileList:+$dnsmasqFileList }${dnsmasqFileDefault}"
 				;;
 				init) :;;
 				init_end) :;;
@@ -1057,13 +1053,13 @@ resolver() {
 				compare_hash)
 					[ -z "$resolver_set_supported" ] && return 1
 					local resolverNewHash
-					if [ -s "$dnsmasqFile" ]; then
-						resolverNewHash="$(md5sum "$dnsmasqFile" | awk '{ print $1; }')"
+					if [ -s "$dnsmasqFileDefault" ]; then
+						resolverNewHash="$(md5sum "$dnsmasqFileDefault" | awk '{ print $1; }')"
 					fi
 					[ "$resolverNewHash" != "$resolverStoredHash" ]
 				;;
 				store_hash)
-					[ -s "$dnsmasqFile" ] && resolverStoredHash="$(md5sum "$dnsmasqFile" | awk '{ print $1; }')";;
+					[ -s "$dnsmasqFileDefault" ] && resolverStoredHash="$(md5sum "$dnsmasqFileDefault" | awk '{ print $1; }')";;
 			esac
 		;;
 		unbound.nftset)
@@ -1590,9 +1586,9 @@ interface_routing() {
 				if [ -n "$gw4" ] || [ "$strict_enforcement" -ne '0' ]; then
 					ipv4_error=0
 					if [ -z "$gw4" ]; then
-						try ip -4 route add unreachable default table "$tid" >/dev/null 2>&1 || ipv4_error=1
+						try ip -4 route add unreachable default table "$tid" || ipv4_error=1
 					else
-						try ip -4 route add default via "$gw4" dev "$dev" table "$tid" >/dev/null 2>&1 || ipv4_error=1
+						try ip -4 route add default via "$gw4" dev "$dev" table "$tid" || ipv4_error=1
 					fi
 # shellcheck disable=SC2086
 					while read -r i; do
@@ -1600,7 +1596,7 @@ interface_routing() {
 						i="$(echo "$i" | sed 's/ onlink$//')"
 						idev="$(echo "$i" | grep -Eso 'dev [^ ]*' | awk '{print $2}')"
 						if ! is_supported_iface_dev "$idev"; then
-							try ip -4 route add $i table "$tid" >/dev/null 2>&1 || ipv4_error=1
+							try ip -4 route add $i table "$tid" || ipv4_error=1
 						fi
 					done << EOF
 					$(ip -4 route list table main)
@@ -1617,22 +1613,31 @@ EOF
 					ip -6 route flush table "$tid" >/dev/null 2>&1
 					if { [ -n "$gw6" ] && [ "$gw6" != "::/0" ]; } || [ "$strict_enforcement" -ne '0' ]; then
 						if [ -z "$gw6" ] || [ "$gw6" = "::/0" ]; then
-							try ip -6 route add unreachable default table "$tid" >/dev/null 2>&1 || ipv6_error=1
+							try ip -6 route add unreachable default table "$tid" || ipv6_error=1
 						elif ip -6 route list table main | grep -q " dev $dev6 "; then
-							ip -6 route add default via "$gw6" dev "$dev6" table "$tid" >/dev/null 2>&1 || ipv6_error=1
+							if ip -6 address show dev "$dev6" | grep -q "BROADCAST"; then
+								try ip -6 route add default via "$gw6" dev "$dev6" table "$tid" metric "$procd_wan6_metric" || ipv6_error=1
+							elif ip -6 address show dev "$dev6" | grep -q "POINTOPOINT"; then
+								try ip -6 route add default dev "$dev6" table "$tid" metric "$procd_wan6_metric" || ipv6_error=1
+							else
+								state add 'errorSummary' 'errorInterfaceRoutingUnknownDevType' "$dev6"
+							fi
+#							if ! ip -6 route add default via "$gw6" dev "$dev6" table "$tid" >/dev/null 2>&1; then  
+#								try ip -6 route add default dev "$dev6" table "$tid" metric "$procd_wan6_metric" || ipv6_error=1
+#							fi
 							while read -r i; do
 								i="$(echo "$i" | sed 's/ linkdown$//')"
 								i="$(echo "$i" | sed 's/ onlink$//')"
 								# shellcheck disable=SC2086
-								try ip -6 route add $i table "$tid" >/dev/null 2>&1 || ipv6_error=1
+								try ip -6 route add $i table "$tid" || ipv6_error=1
 							done << EOF
 							$(ip -6 route list table main | grep " dev $dev6 ")
 EOF
 						else
-							try ip -6 route add "$(ip -6 -o a show "$dev6" | awk '{print $4}')" dev "$dev6" table "$tid" >/dev/null 2>&1 || ipv6_error=1
-							try ip -6 route add default dev "$dev6" table "$tid" >/dev/null 2>&1 || ipv6_error=1
+							try ip -6 route add "$(ip -6 -o a show "$dev6" | awk '{print $4}')" dev "$dev6" table "$tid" || ipv6_error=1
+							try ip -6 route add default dev "$dev6" table "$tid" || ipv6_error=1
 						fi
-						try ip -6 rule add fwmark "${mark}/${fw_mask}" table "$tid" priority "$((priority-1))" >/dev/null 2>&1 || ipv6_error=1
+						try ip -6 rule add fwmark "${mark}/${fw_mask}" table "$tid" priority "$((priority-1))" || ipv6_error=1
 					fi
 				fi
 			fi
@@ -1681,9 +1686,9 @@ EOF
 			fi
 			if [ -n "$gw4" ] || [ "$strict_enforcement" -ne '0' ]; then
 				if [ -z "$gw4" ]; then
-					try ip -4 route add unreachable default table "$tid" >/dev/null 2>&1 || ipv4_error=1
+					try ip -4 route add unreachable default table "$tid" || ipv4_error=1
 				else
-					try ip -4 route add default via "$gw4" dev "$dev" table "$tid" >/dev/null 2>&1 || ipv4_error=1
+					try ip -4 route add default via "$gw4" dev "$dev" table "$tid" || ipv4_error=1
 				fi
 				try ip rule add fwmark "${mark}/${fw_mask}" table "$tid" priority "$priority" || ipv4_error=1
 			fi
@@ -1693,15 +1698,22 @@ EOF
 					if [ -z "$gw6" ] || [ "$gw6" = "::/0" ]; then
 						try ip -6 route add unreachable default table "$tid" || ipv6_error=1
 					elif ip -6 route list table main | grep -q " dev $dev6 "; then
+						if ip -6 address show dev "$dev6" | grep -q "BROADCAST"; then
+							try ip -6 route add default via "$gw6" dev "$dev6" table "$tid" metric "$procd_wan6_metric" || ipv6_error=1
+						elif ip -6 address show dev "$dev6" | grep -q "POINTOPOINT"; then
+							try ip -6 route add default dev "$dev6" table "$tid" metric "$procd_wan6_metric" || ipv6_error=1
+						else
+							state add 'errorSummary' 'errorInterfaceRoutingUnknownDevType' "$dev6"
+						fi
 						while read -r i; do
 							# shellcheck disable=SC2086
-							try ip -6 route add $i table "$tid" >/dev/null 2>&1 || ipv6_error=1
+							try ip -6 route add $i table "$tid" || ipv6_error=1
 						done << EOF
 						$(ip -6 route list table main | grep " dev $dev6 ")
 EOF
 					else
-						try ip -6 route add "$(ip -6 -o a show "$dev6" | awk '{print $4}')" dev "$dev6" table "$tid" >/dev/null 2>&1 || ipv6_error=1
-						try ip -6 route add default dev "$dev6" table "$tid" >/dev/null 2>&1 || ipv6_error=1
+						try ip -6 route add "$(ip -6 -o a show "$dev6" | awk '{print $4}')" dev "$dev6" table "$tid" || ipv6_error=1
+						try ip -6 route add default dev "$dev6" table "$tid" || ipv6_error=1
 					fi
 				fi
 				try ip -6 rule add fwmark "${mark}/${fw_mask}" table "$tid" priority "$priority" || ipv6_error=1
@@ -1718,7 +1730,7 @@ EOF
 
 json_add_gateway() {
 	local action="$1" tid="$2" mark="$3" iface="$4" gw4="$5" dev4="$6" gw6="$7" dev6="$8" priority="$9" default="${10}"
-	json_add_object ''
+	json_add_object 'gateways'
 	json_add_string 'name' "$iface"
 	json_add_string 'device_ipv4' "$dev4"
 	json_add_string 'gateway_ipv4' "$gw4"
@@ -1998,7 +2010,7 @@ start_service() {
 	local resolverStoredHash resolverNewHash i param="$1" reloadedIface
 
 	load_environment "${param:-on_start}" "$(load_validate_config)" || return 1
-#	is_wan_up "$param" || return 1
+	is_wan_up "$param" || return 1
 
 	process_interface 'all' 'prepare'
 	config_foreach process_interface 'interface' 'pre_init'
@@ -2300,8 +2312,8 @@ load_validate_config() {
 		'procd_boot_delay:integer:0' \
 		'procd_boot_timeout:integer:30' \
 		'procd_reload_delay:integer:0' \
-		'procd_lan_interface:list(or(network)):br-lan' \
-		'procd_wan_ignore_status:bool:0' \
+		'procd_lan_device:list(or(network)):br-lan' \
+		'procd_wan_ignore_status:bool:1' \
 		'procd_wan_interface:network:wan' \
 		'procd_wan6_interface:network:wan6' \
 		'wan_ip_rules_priority:uinteger:30000' \
@@ -2345,7 +2357,7 @@ load_validate_policy() {
 		'enabled:bool:1' \
 		'interface:or("ignore", "tor", regex("xray_.*"), uci("network", "@interface")):wan' \
 		'proto:or(string)' \
-		'chain:or("", "forward", "input", "output", "prerouting", "postrouting", "FORWARD", "INPUT", "OUTPUT", "PREROUTING", "POSTROUTING"):prerouting' \
+		'chain:or("", "forward", "input", "output", "prerouting", "postrouting"):prerouting' \
 		'src_addr:list(neg(or(host,network,macaddr,string)))' \
 		'src_port:list(neg(or(portrange,string)))' \
 		'dest_addr:list(neg(or(host,network,string)))' \
