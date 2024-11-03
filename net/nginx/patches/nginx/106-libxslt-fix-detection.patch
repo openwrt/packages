@@ -9,7 +9,7 @@
      ngx_feature_libs="-lxml2 -lxslt"
      ngx_feature_test="xmlParserCtxtPtr    ctxt = NULL;
                        xsltStylesheetPtr   sheet = NULL;
-@@ -100,7 +100,7 @@ fi
+@@ -102,7 +102,7 @@ if [ $USE_LIBEXSLT = YES ]; then
      ngx_feature_name=NGX_HAVE_EXSLT
      ngx_feature_run=no
      ngx_feature_incs="#include <libexslt/exslt.h>"
