@@ -18,12 +18,17 @@
          --with-openssl-opt=*)            OPENSSL_OPT="$value"       ;;
 --- a/auto/lib/libxslt/conf
 +++ b/auto/lib/libxslt/conf
-@@ -156,7 +156,7 @@ if [ $ngx_found = no ]; then
+@@ -96,6 +96,8 @@ END
  fi
  
  
--if [ $ngx_found = yes ]; then
-+if [ $ngx_found = yes ] && [ $USE_LIBEXSLT = "YES" ]; then
-     if [ $USE_LIBXSLT = YES ]; then
-         CORE_LIBS="$CORE_LIBS -lexslt"
-     fi
++if [ $USE_LIBEXSLT = YES ]; then
++
+     ngx_feature="libexslt"
+     ngx_feature_name=NGX_HAVE_EXSLT
+     ngx_feature_run=no
+@@ -163,3 +165,4 @@ if [ $ngx_found = yes ]; then
+ 
+     NGX_LIB_LIBXSLT="$NGX_LIB_LIBXSLT -lexslt"
+ fi
++fi
