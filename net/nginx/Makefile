@@ -420,7 +420,8 @@ ifneq ($(CONFIG_PACKAGE_nginx-mod-lua),)
 					LUAJIT_LIB=$(STAGING_DIR)/usr/lib
 endif
 
-CONFIGURE_VARS += CONFIG_BIG_ENDIAN=$(CONFIG_BIG_ENDIAN)
+CONFIGURE_VARS += LIBXML2_INC=$(STAGING_DIR)/usr/include/libxml2 \
+			CONFIG_BIG_ENDIAN=$(CONFIG_BIG_ENDIAN)
 
 CONFIGURE_ARGS += \
 	--crossbuild=Linux::$(ARCH) \
