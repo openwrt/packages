@@ -4,6 +4,7 @@
 #
 
 include $(TOPDIR)/rules.mk
+include $(INCLUDE_DIR)/nls.mk
 
 PKG_NAME:=atop
 PKG_RELEASE:=1
