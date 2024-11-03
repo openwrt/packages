@@ -10,15 +10,15 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=netatalk
 PKG_VERSION:=4.0.4
 PKG_RELEASE:=1
-PKG_LICENSE:=GPL-2.0-or-later
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/netatalk
 PKG_HASH:=3234ed4aee2dff05319544eec53eda232ecc94742c5cbee39376899551351219
 
+PKG_MAINTAINER:=Antonio Pastor <antonio.pastor@gmail.com>
+PKG_LICENSE:=GPL-2.0-or-later
+PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:netatalk:netatalk
-
-PKG_BUILD_DEPENDS:=libevent2
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -28,16 +28,18 @@ define Package/netatalk
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=Filesystem
-  DEPENDS:=+libevent2 +libdb47 +libgcrypt
-  TITLE:=netatalk
+  TITLE:=Netatalk - Apple Filing Protocol (AFP) file server.
   URL:=http://netatalk.sourceforge.net
-  MAINTAINER:=An Pa <apccv@outlook.com>
+  DEPENDS:=+libevent2 +libdb47 +libgcrypt
 endef
 
 define Package/netatalk/decription
-  Netatalk is a freely-available Open Source AFP fileserver.
-  It also provides a kernel level implementation of the AppleTalk
-  Protocol Suite.
+  Netatalk is an Open Source Apple Filing Protocol (AFP) fileserver.
+  Implements a service that allows Macintosh file sharing
+  and Time Machine backups. Modern MacOS prefers Samba network shares
+  but AFP has shown superior throughput. High Sierra and older MacOS
+  only support AFP for Time Machine backups.
+  Does not support old AppleTalk protocols to talk to non OSX Macs.
 endef
 
 MESON_ARGS += \
