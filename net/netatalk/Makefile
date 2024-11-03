@@ -39,15 +39,15 @@ define Package/netatalk/decription
   and Time Machine backups. Modern MacOS prefers Samba network shares
   but AFP has shown superior throughput. High Sierra and older MacOS
   only support AFP for Time Machine backups.
-  Does not support old AppleTalk protocols to talk to non OSX Macs.
+  Includes support of AppleTalk protocols to network with pre-OSX Macs.
 endef
 
 MESON_ARGS += \
-	-Dwith-appletalk=false \
+	-Dwith-appletalk=true \
 	-Dwith-zeroconf=false \
 	-Dwith-cups=false \
 	-Dwith-quota=false \
-	-Dwith-afpstats=false \
+	-Dwith-afpstats=true \
 	-Dwith-acls=false \
 	-Dwith-ldap=false \
 	-Dwith-cnid-default-backend=dbd \
@@ -76,6 +76,8 @@ define Package/netatalk/conffiles
 /etc/afp.conf
 /etc/extmap.conf
 /etc/netatalk/
+/etc/atalkd.conf
+/etc/papd.conf
 endef
 
 define Package/netatalk/install
@@ -90,6 +92,8 @@ define Package/netatalk/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/* $(1)/usr/sbin/
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/afp.conf $(1)/etc/
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/extmap.conf $(1)/etc/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/papd.conf $(1)/etc/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/atalkd.conf $(1)/etc/
 	$(INSTALL_BIN) ./files/afpd.init $(1)/etc/init.d/afpd
 endef
 
