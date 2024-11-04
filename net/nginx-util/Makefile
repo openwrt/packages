@@ -17,7 +17,6 @@ define Package/nginx-ssl-util/default
   SUBMENU:=Web Servers/Proxies
   TITLE:=Nginx configurator including SSL
   DEPENDS:=+libstdcpp +libuci +libubus +libubox +libpthread +libopenssl
-  EXTRA_DEPENDS:=nginx-util (>=1.4-2)
 endef
 
 
