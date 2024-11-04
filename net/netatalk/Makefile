@@ -33,7 +33,7 @@ define Package/netatalk
   DEPENDS:=+libevent2 +libdb47 +libgcrypt
 endef
 
-define Package/netatalk/decription
+define Package/netatalk/description
   Netatalk is an Open Source Apple Filing Protocol (AFP) fileserver.
   Implements a service that allows Macintosh file sharing
   and Time Machine backups. Modern MacOS prefers Samba network shares
@@ -47,7 +47,7 @@ MESON_ARGS += \
 	-Dwith-zeroconf=false \
 	-Dwith-cups=false \
 	-Dwith-quota=false \
-	-Dwith-afpstats=true \
+	-Dwith-afpstats=false \
 	-Dwith-acls=false \
 	-Dwith-ldap=false \
 	-Dwith-cnid-default-backend=dbd \
