@@ -1,0 +1,10 @@
+if PACKAGE_net-snmp-ssl
+	menu "Configuration"
+		depends on PACKAGE_net-snmp-ssl
+
+		config NETSNMP_WITH_OPENSSL
+			bool
+			default y
+			prompt "Enable compilation with OPENSSL"
+	endmenu
+endif

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=net-snmp
 PKG_VERSION:=5.9.4
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/net-snmp
@@ -36,14 +36,42 @@ define Package/net-snmp/Default/description
  IPv4 and IPv6.
 endef
 
+define Package/net-snmp-ssl
+$(call Package/net-snmp/Default)
+  TITLE:=net-snmp with Openssl
+  CONFLICTS:=net-snmp-nossl
+  VARIANT:=with-openssl
+  DEPENDS:= \
+  	    +snmp-mibs \
+  	    +snmp-utils \
+  	    +snmpd-ssl \
+  	    +snmpd-static \
+  	    +snmptrapd
+endef
+
+define Package/net-snmp-nossl
+$(call Package/net-snmp/Default)
+  TITLE:=net-snmp without Openssl
+  CONFLICTS:=net-snmp-ssl
+  VARIANT:=without-openssl
+  DEFAULT_VARIANT:=1
+  DEPENDS:= \
+  	    +snmp-mibs \
+  	    +snmp-utils \
+  	    +snmpd \
+  	    +snmpd-static \
+  	    +snmptrapd
+endef
+
 
 define Package/libnetsnmp
 $(call Package/net-snmp/Default)
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libnl-tiny +libpci +libpcre2
+  DEPENDS:=+libnl-tiny +libpci +libpcre2 +NETSNMP_WITH_OPENSSL:libopenssl
   TITLE:=Open source SNMP implementation (libraries)
 endef
+
 
 define Package/libnetsnmp/description
 $(call Package/net-snmp/Default/description)
@@ -51,6 +79,9 @@ $(call Package/net-snmp/Default/description)
  This package contains shared libraries, needed by other programs.
 endef
 
+define Package/libnetsnmp/config
+	source "$(SOURCE)/Config.in"
+endef
 
 define Package/snmp-mibs
 $(call Package/net-snmp/Default)
@@ -86,6 +117,7 @@ endef
 define Package/snmpd
 $(call Package/net-snmp/Default)
   DEPENDS:=+libnetsnmp
+  CONFLICTS:=snmpd-ssl
   TITLE:=Open source SNMP implementation (daemon)
 endef
 
@@ -96,9 +128,23 @@ $(call Package/net-snmp/Default/description)
 endef
 
 
+define Package/snmpd-ssl
+$(call Package/net-snmp/Default)
+  DEPENDS:=+libnetsnmp
+  CONFLICTS:=snmpd
+  TITLE:=Open source SNMP implementation (daemon) with Openssl encryption
+endef
+
+define Package/snmpd-ssl/description
+$(call Package/net-snmp/Default/description)
+ .
+ This package contains the SNMP agent, dynamically linked.
+endef
+
+
 define Package/snmpd-static
 $(call Package/net-snmp/Default)
-  DEPENDS:=+snmpd
+DEPENDS:=+NETSNMP_WITH_OPENSSL:snmpd-ssl +(!NETSNMP_WITH_OPENSSL):snmpd
   TITLE:=Open source SNMP implementation (daemon)
   BUILDONLY:=1
 endef
@@ -206,7 +252,6 @@ CONFIGURE_ARGS += \
 	--with-mib-modules="$(SNMP_MIB_MODULES_INCLUDED)" \
 	--with-out-transports="$(SNMP_TRANSPORTS_EXCLUDED)" \
 	--with-transports="$(SNMP_TRANSPORTS_INCLUDED)" \
-	--without-openssl \
 	--without-libwrap \
 	--without-mysql \
 	--without-rpm \
@@ -216,7 +261,7 @@ CONFIGURE_ARGS += \
 	 $(call autoconf_bool,CONFIG_IPV6,ipv6) \
 	--disable-perl-cc-checks \
 	--disable-embedded-perl \
-	--without-perl-modules
+	--without-perl-modules \
 
 CONFIGURE_VARS += \
 	ac_cv_header_netlink_netlink_h=yes \
@@ -224,6 +269,14 @@ CONFIGURE_VARS += \
 
 ifeq ($(CONFIG_IPV6),y)
 SNMP_TRANSPORTS_INCLUDED+= UDPIPv6
+endif
+
+ifeq ($(BUILD_VARIANT),with-openssl)
+CONFIGURE_ARGS += \
+--with-openssl="$(STAGING_DIR)/usr"
+else
+CONFIGURE_ARGS += \
+--without-openssl
 endif
 
 define Build/Compile
@@ -261,11 +314,14 @@ define Package/snmp-utils/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/snmp{get,set,status,test,trap,walk} $(1)/usr/bin/
 endef
 
-define Package/snmpd/conffiles
+define Package/snmpd/conffiles/Default
 /etc/config/snmpd
 endef
 
-define Package/snmpd/install
+Package/snmpd-ssl/conffiles = $(Packag/snmpd/conffiles/Default)
+Package/snmpd-nossl/conffiles = $(Packag/snmpd/conffiles/Default)
+
+define Package/snmpd/install/Default
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DATA) ./files/snmpd.conf $(1)/etc/config/snmpd
 	$(INSTALL_DIR) $(1)/etc/snmp
@@ -274,7 +330,15 @@ define Package/snmpd/install
 	$(INSTALL_BIN) ./files/snmpd.init $(1)/etc/init.d/snmpd
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/snmpd $(1)/usr/sbin/snmpd
+
+	ifeq ($(CONFIG_NETSNMP_WITH_OPENSSL),y)
+		sed -i -e 's/CONFIG_NETSNMP_WITH_OPENSSL=n/CONFIG_NETSNMP_WITH_OPENSSL=y/g' $(1)/etc/init.d/snmpd
+	endif
+
 endef
+
+Package/snmpd-ssl/install = $(Package/snmpd/install/Default)
+Package/snmpd/install = $(Package/snmpd/install/Default)
 
 define Package/snmptrapd/install
 	$(INSTALL_DIR) $(1)/etc/init.d
@@ -288,6 +352,9 @@ endef
 $(eval $(call BuildPackage,libnetsnmp))
 $(eval $(call BuildPackage,snmp-mibs))
 $(eval $(call BuildPackage,snmp-utils))
+$(eval $(call BuildPackage,snmpd-ssl))
 $(eval $(call BuildPackage,snmpd))
 $(eval $(call BuildPackage,snmpd-static))
 $(eval $(call BuildPackage,snmptrapd))
+$(eval $(call BuildPackage,net-snmp-nossl))
+$(eval $(call BuildPackage,net-snmp-ssl))
