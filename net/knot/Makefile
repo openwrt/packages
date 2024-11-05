@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=knot
-PKG_VERSION:=3.4.1
+PKG_VERSION:=3.4.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://secure.nic.cz/files/knot-dns/
-PKG_HASH:=252a2b83a9319a605103f7491d73a881e97c63339d09170ac9d525155fa41b1a
+PKG_HASH:=d835285c1057d45effa1479cfe1f107a50e83d11c1c6d36f270deda88799883e
 
 PKG_MAINTAINER:=Daniel Salzman <daniel.salzman@nic.cz>
 PKG_LICENSE:=GPL-3.0 LGPL-2.0 0BSD BSD-3-Clause OLDAP-2.8
@@ -30,6 +30,7 @@ define Package/knot-lib/Default
 	TITLE:=Knot DNS
 	DEPENDS=+libpthread
 	URL:=https://www.knot-dns.cz
+	VERSION:=${PKG_VERSION}-r${PKG_RELEASE}
 endef
 
 define Package/knot/Default
@@ -39,6 +40,7 @@ define Package/knot/Default
 	TITLE:=Knot DNS
 	DEPENDS=+libatomic
 	URL:=https://www.knot-dns.cz
+	VERSION:=${PKG_VERSION}-r${PKG_RELEASE}
 endef
 
 define Package/knot-libs
