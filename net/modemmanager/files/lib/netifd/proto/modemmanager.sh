@@ -644,12 +644,6 @@ proto_modemmanager_setup() {
 		[ "$?" -ne "0" ] && return 1
 	}
 
-	[ -z "${plmn}" ] || {
-		echo "starting network registration with plmn '${plmn}'..."
-		modemmanager_set_plmn "$device" "$interface" "$plmn" "$force_connection"
-		[ "$?" -ne "0" ] && return 1
-	}
-
 	if [ -z "${allowedmode}" ]; then
 		modemmanager_set_allowed_mode "$device" "$interface" "any"
 	else
@@ -678,6 +672,12 @@ proto_modemmanager_setup() {
 		# check error for allowed_mode and preferred_mode function call
 		[ "$?" -ne "0" ] && return 1
 	fi
+
+	[ -z "${plmn}" ] || {
+		echo "starting network registration with plmn '${plmn}'..."
+		modemmanager_set_plmn "$device" "$interface" "$plmn" "$force_connection"
+		[ "$?" -ne "0" ] && return 1
+	}
 
 	# setup connect args; APN mandatory (even if it may be empty)
 	echo "starting connection with apn '${apn}'..."
