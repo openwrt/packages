@@ -673,11 +673,14 @@ proto_modemmanager_setup() {
 		[ "$?" -ne "0" ] && return 1
 	fi
 
-	[ -z "${plmn}" ] || {
+	if [ -z "${plmn}" ]; then
+		modemmanager_set_plmn "$device" "$interface" "" "$force_connection"
+		[ "$?" -ne "0" ] && return 1
+	else
 		echo "starting network registration with plmn '${plmn}'..."
 		modemmanager_set_plmn "$device" "$interface" "$plmn" "$force_connection"
 		[ "$?" -ne "0" ] && return 1
-	}
+	fi
 
 	# setup connect args; APN mandatory (even if it may be empty)
 	echo "starting connection with apn '${apn}'..."
