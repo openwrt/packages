@@ -435,6 +435,10 @@ modemmanager_check_state_locked() {
 		return 1
 	}
 
+	# Give the modem time to change to the initializing state after
+	# unlocking 
+	sleep 1
+
 	return 0
 }
 
@@ -444,7 +448,10 @@ modemmanager_check_pin_state() {
 	local modemstatus="$3"
 	local pincode="$4"
 
-	local state
+	local state modemstatus
+
+	local timeout=20
+	local count=0
 
 	state="$(modemmanager_get_field "${modemstatus}" "modem.generic.state")"
 
@@ -463,6 +470,19 @@ modemmanager_check_pin_state() {
 			[ "$?" -ne "0" ] && return 1
 			;;
 	esac
+
+	# After the SIM has been successfully unlocked, it is initialized.
+	# This can take longer on some modems, so we must wait until the
+	# modem is ready to execute the next commands.
+	while [ $count -lt "$timeout" ]; do
+		modemstatus=$(mmcli --modem="${device}" --output-keyvalue)
+		state="$(modemmanager_get_field "${modemstatus}" "modem.generic.state")"
+
+		[ "$state" != "initializing" ] && return 0
+		count=$((count + 1))
+		echo "waiting for SIM initializing (${count}s)"
+		sleep 1
+	done
 }
 
 modemmanager_set_preferred_mode() {
