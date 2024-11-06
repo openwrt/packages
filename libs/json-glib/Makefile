@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2020 Sebastian Kemper <sebastian_ml@gmx.net>
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -17,7 +15,7 @@ PKG_HASH:=97ef5eb92ca811039ad50a65f06633f1aae64792789307be7170795d8b319454
 
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
-PKG_MAINTAINER:=Sebastian Kemper <sebastian_ml@gmx.net>
+PKG_MAINTAINER:=
 
 PKG_BUILD_DEPENDS:=glib2/host
 
