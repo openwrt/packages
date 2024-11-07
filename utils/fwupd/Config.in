@@ -43,6 +43,12 @@ config FWUPD_LIBARCHIVE
 	help
 	  Compile fwupd with libarchive support
 
+config FWUPD_LIBDRM
+	bool "libdrm"
+	default n
+	help
+	  Compile fwupd with libdrm support
+
 config FWUPD_PLUGIN_MODEMMANAGER
 	bool "ModemManager plugin"
 	default y
