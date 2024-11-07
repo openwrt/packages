@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fwupd
-PKG_VERSION:=2.0.0
+PKG_VERSION:=2.0.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/fwupd/fwupd/releases/download/$(PKG_VERSION)
-PKG_HASH:=60a62b850e2c3a818f3178cb1de0f632b1e04c6ab07c02483af398940713548a
+PKG_HASH:=04226d0c689a56cc51de017e736f18f1f5e951b9a7c1b18e3281eb923c435891
 
 PKG_MAINTAINER:=Lukas Voegl <lvoegl@tdt.de>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -44,6 +44,7 @@ define Package/fwupd/Default
 	+libprotobuf-c \
 	+libusb-1.0 \
 	+FWUPD_LIBARCHIVE:libarchive \
+	+FWUPD_LIBDRM:libdrm \
 	+FWUPD_CBOR:libcbor \
 	+FWUPD_LZMA:liblzma \
 	+FWUPD_CURL:libcurl \
@@ -158,6 +159,7 @@ MESON_ARGS += \
 	-Dlzma=$(if $(CONFIG_FWUPD_LZMA),enabled,disabled) \
 	-Dcurl=$(if $(CONFIG_FWUPD_CURL),enabled,disabled) \
 	-Dlibarchive=$(if $(CONFIG_FWUPD_LIBARCHIVE),enabled,disabled) \
+	-Dlibdrm=$(if $(CONFIG_FWUPD_LIBDRM),enabled,disabled) \
 	-Dplugin_modem_manager=$(if $(CONFIG_FWUPD_PLUGIN_MODEMMANAGER),enabled,disabled) \
 	-Dplugin_fastboot=$(if $(CONFIG_FWUPD_PLUGIN_FASTBOOT),enabled,disabled)
 
