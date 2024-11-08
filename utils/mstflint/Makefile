@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mstflint
-PKG_VERSION:=4.29.0
+PKG_VERSION:=4.30.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-1.tar.gz
 PKG_SOURCE_URL:=https://github.com/Mellanox/$(PKG_NAME)/releases/download/v$(PKG_VERSION)-1
-PKG_SOURCE_DATE:=2024-08-13
-PKG_HASH:=1bd048146f1fe0493d4770b244b02e32981b49caed068fd96a22700103220654
+PKG_SOURCE_DATE:=2024-11-06
+PKG_HASH:=f2fd1a795cb56466f335d2fbd55d6a9bab20132d1edde6f61750cff0bde6da7b
 
 PKG_MAINTAINER:=Til Kaiser <mail@tk154.de>
 PKG_LICENSE:=GPL-2.0-only
@@ -33,7 +33,7 @@ define Package/mstflint
   URL:=https://github.com/Mellanox/mstflint
   DEPENDS:=@!(mips||mips64||mipsel) \
     +libcurl +libexpat +liblzma +libopenssl \
-    +libsqlite3 +libstdcpp +libxml2 +zlib
+    +libsqlite3 +libstdcpp +libxml2
 endef
 
 define Package/mstflint/description
