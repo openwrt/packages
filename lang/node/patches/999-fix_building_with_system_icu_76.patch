@@ -1,0 +1,25 @@
+From 54299ac3a3d4e4520b8604dce43c2584092ccde2 Mon Sep 17 00:00:00 2001
+From: Michael Cho <michael@michaelcho.dev>
+Date: Sun, 27 Oct 2024 10:08:07 -0400
+Subject: [PATCH] build: fix building with system icu 76
+
+ICU 76 decided to reduce overlinking[^1] thus `icu-i18n` will no longer
+add `icu-uc` when linking to shared libraries. This results in undefined
+symbols/references when trying to build with system ICU 76.
+
+[^1]: unicode-org/icu@199bc82
+---
+ configure.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/configure.py
++++ b/configure.py
+@@ -1829,7 +1829,7 @@ def configure_intl(o):
+   elif with_intl == 'system-icu':
+     # ICU from pkg-config.
+     o['variables']['v8_enable_i18n_support'] = 1
+-    pkgicu = pkg_config('icu-i18n')
++    pkgicu = pkg_config(['icu-i18n', 'icu-uc'])
+     if not pkgicu[0]:
+       error('''Could not load pkg-config data for "icu-i18n".
+        See above errors or the README.md.''')
