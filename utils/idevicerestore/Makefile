@@ -10,9 +10,9 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/libimobiledevice/idevicerestore.git
-PKG_SOURCE_DATE:=2024-04-04
-PKG_SOURCE_VERSION:=6d40d0ab626eb0ffee4f005b7fdc915bc561deb9
-PKG_MIRROR_HASH:=96906ce58e21914961018adf160459386d322cdec4f66f311555c87bb4b9cbfa
+PKG_SOURCE_DATE:=2024-11-03
+PKG_SOURCE_VERSION:=61a76ce6fc68e9bc14e3bb4ba7a20344afb1e300
+PKG_MIRROR_HASH:=f01a3f6e9d001fd666f0fd56dfbee9d369e50c488287a1f3f6fbd009f7325bdc
 
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -30,7 +30,7 @@ define Package/idevicerestore
   SUBMENU:=libimobiledevice
   TITLE:=Restore/upgrade firmware of iOS devices
   URL:=https://github.com/libimobiledevice/idevicerestore
-  DEPENDS:=+libirecovery +libzip +libcurl +usbmuxd
+  DEPENDS:=+libirecovery +libzip +libtatsu +usbmuxd
 endef
 
 define Package/idevicerestore/description
