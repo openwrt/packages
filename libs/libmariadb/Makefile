@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2019 Sebastian Kemper <sebastian_ml@gmx.net>
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
