@@ -4,13 +4,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qcsuper
-PKG_VERSION:=2022-08-11
+PKG_VERSION:=2.0.1
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/P1sec/QCSuper.git
-PKG_SOURCE_VERSION:=5c4e5295bf336bcce63c8ad7112ac04dee4b04fd
-PKG_MIRROR_HASH:=70776fa5cc69673d786fae5082e667aadaa1e39e4fabfce77dc369967cc7c9d6
+PKG_SOURCE_VERSION:=$(PKG_VERSION)
+PKG_MIRROR_HASH:=6bdb0d1d6edf211b73434da5e5a3dade1288e9c6c98d2668a61d3c2fafeb5c44
 
 PKG_MAINTAINER:=David Bauer <mail@david-bauer.net>
 PKG_LICENSE:=GPL-3.0
@@ -42,14 +42,14 @@ endef
 define Package/qcsuper/install
 	$(INSTALL_DIR) $(1)/usr/lib/qcsuper/inputs $(1)/usr/lib/qcsuper/modules $(1)/usr/lib/qcsuper/protocol $(1)/usr/bin
 
-	$(CP) $(PKG_BUILD_DIR)/inputs/* $(1)/usr/lib/qcsuper/inputs/
-	$(RM) -rf $(1)/usr/lib/qcsuper/inputs/external
-	$(RM) -rf $(1)/usr/lib/qcsuper/inputs/adb_bridge
-	$(RM) -rf $(1)/usr/lib/qcsuper/inputs/adb_wsl2_bridge
+	$(CP) $(PKG_BUILD_DIR)/src/inputs/* $(1)/usr/lib/qcsuper/inputs/
+	$(RM) -rf $(1)/usr/lib/qcsuper/src/inputs/external
+	$(RM) -rf $(1)/usr/lib/qcsuper/src/inputs/adb_bridge
+	$(RM) -rf $(1)/usr/lib/qcsuper/src/inputs/adb_wsl2_bridge
 
-	$(CP) $(PKG_BUILD_DIR)/modules/* $(1)/usr/lib/qcsuper/modules/
+	$(CP) $(PKG_BUILD_DIR)/src/modules/* $(1)/usr/lib/qcsuper/modules/
 
-	$(CP) $(PKG_BUILD_DIR)/protocol/* $(1)/usr/lib/qcsuper/protocol/
+	$(CP) $(PKG_BUILD_DIR)/src/protocol/* $(1)/usr/lib/qcsuper/protocol/
 
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/qcsuper.py $(1)/usr/lib/qcsuper/
 	$(LN) /usr/lib/qcsuper/qcsuper.py $(1)/usr/bin/qcsuper
