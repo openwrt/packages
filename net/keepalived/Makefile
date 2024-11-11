@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=keepalived
 PKG_VERSION:=2.3.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.keepalived.org/software
@@ -84,6 +84,7 @@ endef
 
 CONFIGURE_ARGS+= \
 	--enable-json \
+	--enable-reproducible-build \
 	--with-init=SYSV \
 	--disable-track-process \
 	--runstatedir="/var/run"
@@ -216,6 +217,8 @@ endif
 	$(INSTALL_DIR) $(1)/etc/keepalived
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/keepalived/keepalived.conf.sample \
 		$(1)/etc/keepalived/keepalived.conf
+	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/keepalived/keepalived.config-opts \
+		$(1)/etc/keepalived/
 
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/etc/uci-defaults/keepalived \
