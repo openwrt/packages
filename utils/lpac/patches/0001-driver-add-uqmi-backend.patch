@@ -302,7 +302,7 @@ Signed-off-by: David Bauer <david.bauer@uniberg.com>
 +    return 0;
 +}
 +
-+static void libapduinterface_fini(void)
++static void libapduinterface_fini(void*)
 +{
 +}
 +
