@@ -22,7 +22,7 @@ define Package/uspot
   SECTION:=net
   CATEGORY:=Network
   TITLE:=uspot hotspot daemon
-  EXTRA_DEPENDS:=ucode (>= 2023-11-07)
+  EXTRA_DEPENDS:=ucode (>= 2023.11.07)
   DEPENDS:=+conntrack \
 	   +libblobmsg-json +liblucihttp-ucode +libradcli +libubox +libubus +libuci \
 	   +uspotfilter \
@@ -62,7 +62,7 @@ define Package/uspotfilter
   SECTION:=net
   CATEGORY:=Network
   TITLE:=uspot firewall interface
-  EXTRA_DEPENDS:=ucode (>= 2023-11-07)
+  EXTRA_DEPENDS:=ucode (>= 2023.11.07)
   DEPENDS:=+conntrack +nftables-json +ucode +ucode-mod-rtnl +ucode-mod-uloop
   PKGARCH:=all
 endef
