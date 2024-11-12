@@ -9,7 +9,8 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=isc-dhcp
 UPSTREAM_NAME:=dhcp
-PKG_VERSION:=4.4.3-P1
+PKG_REALVERSION:=4.4.3-P1
+PKG_VERSION:=4.4.3_p1
 PKG_RELEASE:=8
 
 PKG_LICENSE:=BSD-3-Clause
@@ -17,16 +18,16 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Philip Prindeville <philipp@redfish-solutions.com>
 PKG_CPE_ID:=cpe:/a:isc:dhcp
 
-PKG_SOURCE:=$(UPSTREAM_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=ftp://ftp.isc.org/isc/dhcp/$(PKG_VERSION) \
-		http://ftp.funet.fi/pub/mirrors/ftp.isc.org/isc/dhcp/$(PKG_VERSION) \
-		http://ftp.iij.ad.jp/pub/network/isc/dhcp/$(PKG_VERSION)
+PKG_SOURCE:=$(UPSTREAM_NAME)-$(PKG_REALVERSION).tar.gz
+PKG_SOURCE_URL:=ftp://ftp.isc.org/isc/dhcp/$(PKG_REALVERSION) \
+		http://ftp.funet.fi/pub/mirrors/ftp.isc.org/isc/dhcp/$(PKG_REALVERSION) \
+		http://ftp.iij.ad.jp/pub/network/isc/dhcp/$(PKG_REALVERSION)
 PKG_HASH:=0ac416bb55997ca8632174fd10737fd61cdb8dba2752160a335775bc21dc73c7
 
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(UPSTREAM_NAME)-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(UPSTREAM_NAME)-$(PKG_REALVERSION)
 
 include $(INCLUDE_DIR)/package.mk
 
