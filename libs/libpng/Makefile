@@ -46,6 +46,9 @@ CMAKE_OPTIONS += \
 
 define Build/InstallDev
 	$(call Build/InstallDev/cmake,$(1))
+ifdef CONFIG_DEBUG
+	$(LN) libpng16d.so $(1)/usr/lib/libpng16.so
+endif
 	$(SED) 's,^\(prefix\|exec_prefix\)=.*,\1=$(STAGING_DIR)/usr,g' $(1)/usr/bin/libpng{,16}-config
 	$(SED) '/^includedir=/s|/usr|$$$${prefix}|' $(1)/usr/bin/libpng{,16}-config
 	$(SED) '/^libdir=/s|/usr|$$$${prefix}|' $(1)/usr/bin/libpng{,16}-config
@@ -59,7 +62,10 @@ endef
 
 define Package/libpng/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpng16.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpng16$(if $(CONFIG_DEBUG),d).so* $(1)/usr/lib/
+ifdef CONFIG_DEBUG
+	$(LN) libpng16d.so $(1)/usr/lib/libpng16.so
+endif
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpng.so $(1)/usr/lib/
 endef
 
