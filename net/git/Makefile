@@ -23,6 +23,10 @@ PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
+ifeq ($(CONFIG_USE_LTO),y)
+	PKG_FORTIFY_SOURCE:=0
+endif
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/git/Default
