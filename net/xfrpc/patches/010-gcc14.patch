@@ -1,0 +1,10 @@
+--- a/xfrpc.c
++++ b/xfrpc.c
+@@ -51,6 +51,7 @@
+ #include "plugins/telnetd.h"
+ #include "plugins/instaloader.h"
+ #include "plugins/httpd.h"
++#include "plugins/youtubedl.h"
+ 
+ static void start_xfrpc_local_service()
+ {
