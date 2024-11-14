@@ -1,0 +1,13 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -30,7 +30,9 @@ add_executable(
+ 
+ set(CMAKE_BUILD_TYPE Debug)
+ 
+-target_link_libraries(httping m)
++find_package(Intl)
++
++target_link_libraries(httping m Intl::Intl)
+ 
+ include(FindPkgConfig)
+ 
