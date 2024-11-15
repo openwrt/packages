@@ -6,10 +6,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ntfs-3g
+PKG_SOURCE_VERSION:=2022.10.3
 PKG_VERSION:=2022.10.3
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)_ntfsprogs-$(PKG_VERSION).tgz
+PKG_SOURCE:=$(PKG_NAME)_ntfsprogs-$(PKG_SOURCE_VERSION).tgz
 PKG_SOURCE_URL:=https://www.tuxera.com/opensource/
 PKG_HASH:=f20e36ee68074b845e3629e6bced4706ad053804cbaf062fbae60738f854170c
 
@@ -23,10 +24,10 @@ PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
 # release contains fuseext/int hint
-PKG_RELEASE:=$(PKG_RELEASE)$(if $(CONFIG_PACKAGE_NTFS-3G_USE_LIBFUSE),-fuseext,-fuseint)
+PKG_VARIANT:=$(if $(CONFIG_PACKAGE_NTFS-3G_USE_LIBFUSE),-fuseext,-fuseint)
 
 # define build dir, respect fuseext/int
-PKG_BUILD_DIR:= $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)-$(PKG_RELEASE)
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)$(PKG_VARIANT)-$(PKG_VERSION)-$(PKG_RELEASE)
 
 include $(INCLUDE_DIR)/package.mk
 
