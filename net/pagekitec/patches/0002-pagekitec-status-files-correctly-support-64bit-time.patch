@@ -14,11 +14,9 @@ Signed-off-by: Karl Palsson <karlp@etactica.com>
  contrib/backends/pagekitec.c | 6 +++---
  1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/contrib/backends/pagekitec.c b/contrib/backends/pagekitec.c
-index ce39e30..76a78ac 100644
 --- a/contrib/backends/pagekitec.c
 +++ b/contrib/backends/pagekitec.c
-@@ -54,7 +54,7 @@ Note: For alternate license terms, see the file COPYING.md.
+@@ -54,7 +54,7 @@ Note: For alternate license terms, see t
          "  \"pagekitec_status_code\": %d,\n" \
          "  \"pagekitec_pid\": %d,\n"         \
          "  \"pagekitec_update_min_interval\": %d,\n" \
@@ -27,7 +25,7 @@ index ce39e30..76a78ac 100644
          "}\n")
  
  /* Enable this format using -Y text:/path/to/file/ */
-@@ -64,7 +64,7 @@ Note: For alternate license terms, see the file COPYING.md.
+@@ -64,7 +64,7 @@ Note: For alternate license terms, see t
          "pagekitec_status_code: %d\n" \
          "pagekitec_pid: %d\n"         \
          "pagekitec_update_min_interval: %d\n" \
@@ -36,7 +34,7 @@ index ce39e30..76a78ac 100644
  
  
  pagekite_mgr m;
-@@ -153,7 +153,7 @@ int summarize_status(const char* fpath, const char* format, const char *status_m
+@@ -153,7 +153,7 @@ int summarize_status(const char* fpath,
      }
  
      fprintf(fd, format,
@@ -45,6 +43,3 @@ index ce39e30..76a78ac 100644
  
      if (0 == ftruncate(fileno(fd), ftell(fd))) fflush(fd);
      fclose(fd);
--- 
-2.37.3
-
