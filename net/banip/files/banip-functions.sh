@@ -360,10 +360,8 @@ f_actual() {
 f_getfetch() {
 	local item utils insecure update="0"
 
-	if { [ "${ban_fetchcmd}" = "uclient-fetch" ] && printf "%s" "${ban_packages}" | "${ban_grepcmd}" -q '"libustream-'; } ||
-		{ [ "${ban_fetchcmd}" = "wget" ] && printf "%s" "${ban_packages}" | "${ban_grepcmd}" -q '"wget-ssl'; } ||
-		[ "${ban_fetchcmd}" = "curl" ] || [ "${ban_fetchcmd}" = "aria2c" ]; then
-		ban_fetchcmd="$(f_cmd "${ban_fetchcmd}" "true")"
+	if [ -n "${ban_fetchcmd}" ]; then
+		ban_fetchcmd="$(f_cmd "${ban_fetchcmd}" optional)"
 	fi
 
 	if [ "${ban_autodetect}" = "1" ] && [ ! -x "${ban_fetchcmd}" ]; then
