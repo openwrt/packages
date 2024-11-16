@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mptcpd
-PKG_VERSION:=0.12
+PKG_VERSION:=0.13
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/multipath-tcp/mptcpd/releases/download/v$(PKG_VERSION)
-PKG_HASH:=0507d497383b773a168cd35f4680b41894fcd8d941cb6619800a8e2bed831cbe
+PKG_HASH:=7acb115c50c89aff5e0e5c53df4aef5c9846e79b32442f8700ff6d737396edab
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=BSD-3-clause

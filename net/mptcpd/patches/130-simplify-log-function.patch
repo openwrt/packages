@@ -9,7 +9,7 @@ Subject: [PATCH 09/11] 7
 
 --- a/src/configuration.c
 +++ b/src/configuration.c
-@@ -52,7 +52,10 @@
+@@ -51,7 +51,10 @@
  # error Problem configuring default log message destination.
  #endif
  /// Name of the default logging function determined at compile-time.
