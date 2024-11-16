@@ -7,13 +7,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtklib
-PKG_VERSION:=2.4.3_b34
+PKG_VERSION:=2.4.3.34
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/tomojitakasu/RTKLIB
 PKG_SOURCE_VERSION:=180043ee24b6d2b168f98b64be15f69d50046b1a
-PKG_MIRROR_HASH:=9e6560d271866fe0ff5f69ef7385b9ef0a94ddd4951208880d149c0aee9f0b68
+PKG_MIRROR_HASH:=54f0d9a50f2b8b9caf9e3d391f1ad211ca8fcb54743bd8f43fc7301396143a11
 
 PKG_MAINTAINER:=Nuno Goncalves <nunojpg@gmail.com>
 PKG_LICENSE:=BSD-2-Clause
@@ -23,7 +23,7 @@ PKG_BUILD_PARALLEL:=0
 include $(INCLUDE_DIR)/package.mk
 
 define Package/rtklib/default
-  SUBMENU:=RTKLIB Suite
+  SUBMENU:=RTKLIB Suite for GNSS Positioning
   SECTION:=utils
   CATEGORY:=Utilities
   URL:=http://www.rtklib.com/
