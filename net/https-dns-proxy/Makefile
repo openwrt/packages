@@ -30,6 +30,7 @@ define Package/https-dns-proxy
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=DNS Over HTTPS Proxy
+	SUBMENU:=IP Addresses and Names
 	URL:=https://github.com/stangri/https-dns-proxy/
 	DEPENDS:=+libcares +libcurl +libev +ca-bundle +jsonfilter +resolveip
 	DEPENDS+=+!BUSYBOX_DEFAULT_GREP:grep

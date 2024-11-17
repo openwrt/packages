@@ -36,6 +36,7 @@ define Package/dnscrypt-proxy2
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Flexible DNS proxy with encrypted DNS protocols
+  SUBMENU:=IP Addresses and Names
   URL:=https://github.com/DNSCrypt/dnscrypt-proxy
   DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle
   CONFLICTS:=dnscrypt-proxy

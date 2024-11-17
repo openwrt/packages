@@ -34,6 +34,7 @@ define Package/nextdns
   SECTION:=net
   CATEGORY:=Network
   TITLE:=NextDNS DNS over HTTPS Proxy
+  SUBMENU:=IP Addresses and Names
   URL:=https://github.com/nextdns/nextdns
   DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle
 endef

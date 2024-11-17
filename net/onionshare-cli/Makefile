@@ -31,6 +31,7 @@ define Package/onionshare-cli
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Secure chat, web and file sharing
+  SUBMENU:=File Transfer
   URL:=https://onionshare.org/
   DEPENDS:= \
     +python3-light \

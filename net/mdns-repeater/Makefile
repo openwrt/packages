@@ -24,6 +24,7 @@ define Package/mdns-repeater
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Multicast DNS repeater for Linux
+  SUBMENU:=IP Addresses and Names
   URL:=https://github.com/kennylevinsen/mdns-repeater
 endef
 
