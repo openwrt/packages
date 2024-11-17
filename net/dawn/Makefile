@@ -25,6 +25,7 @@ include $(INCLUDE_DIR)/cmake.mk
 define Package/dawn
   SECTION:=net
   CATEGORY:=Network
+  SUBMENU:=Wireless
   TITLE:=Decentralized wifi controller
   URL:=https://github.com/berlin-open-wireless-lab/DAWN.git
   DEPENDS:=$(DRV_DEPENDS) +libubus +libubox +libblobmsg-json +libuci +libgcrypt +libiwinfo +umdns
