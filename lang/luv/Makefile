@@ -1,12 +1,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luv
-PKG_VERSION:=1.40.0-0
+PKG_REAL_VERSION:=1.40.0-0
+PKG_VERSION:=$(subst -,.,$(PKG_REAL_VERSION))
 PKG_RELEASE:=2
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/luvit/luv/releases/download/$(PKG_VERSION)
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_REAL_VERSION).tar.gz
+PKG_SOURCE_URL:=https://github.com/luvit/luv/releases/download/$(PKG_REAL_VERSION)
 PKG_HASH:=24473a081c3928eec2a352369cbafda97059574f4a4276861274473e7c7d17a0
+
+PKG_BUILD_DIR :=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_REAL_VERSION)
 
 PKG_MAINTAINER:=Morteza Milani <milani@pichak.co>
 PKG_LICENSE:=Apache-2.0
