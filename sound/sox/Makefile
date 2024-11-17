@@ -7,13 +7,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sox
 PKG_VERSION:=14.4.2
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/sox
 PKG_HASH:=81a6956d4330e75b5827316e44ae381e6f1e8928003c6aa45896da9041ea149c
 
-PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=LGPL-2.1 GPL-2.0
 PKG_LICENSE_FILES:=COPYING LICENSE.LGPL LICENSE.GPL
 PKG_CPE_ID:=cpe:/a:sound_exchange_project:sound_exchange
@@ -49,6 +48,7 @@ CONFIGURE_ARGS += \
 		--without-png \
 		--without-sndfile \
 		--without-opus \
+		--without-wavpack \
 		--with-lame \
 		--with-id3tag \
 		--disable-openmp
