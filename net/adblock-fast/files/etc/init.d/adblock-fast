@@ -24,7 +24,7 @@ fi
 
 readonly packageName='adblock-fast'
 readonly PKG_VERSION='dev-test'
-readonly packageCompat='3'
+readonly packageCompat='4'
 readonly serviceName="$packageName $PKG_VERSION"
 readonly packageConfigFile="/etc/config/${packageName}"
 readonly dnsmasqAddnhostsFile="/var/run/${packageName}/dnsmasq.addnhosts"
@@ -465,9 +465,9 @@ get_url_filesize() {
 
 # shellcheck disable=SC3060
 output() {
-	local v="${verbosity:-1}"
+	[ -z "$verbosity" ] && verbosity="$(uci_get "$packageName" 'config' 'verbosity' '1')"
 	[ "$#" -ne '1' ] && {
-		case "$1" in [0-9]) [ $((v & $1)) -gt 0 ] && shift || return 0;; esac }
+		case "$1" in [0-9]) [ $((verbosity & $1)) -gt 0 ] && shift || return 0;; esac }
 	local msg="$*" queue="/dev/shm/$packageName-output"
 	[ -t 1 ] && printf "%b" "$msg"
 	[ "$msg" != "${msg//\\n}" ] && {
@@ -765,9 +765,9 @@ load_environment() {
 	dns_set_output_values "$dns"
 
 	[ "$dns" = 'dnsmasq.addnhosts' ]  || rm -f "$dnsmasqAddnhostsFile" "$dnsmasqAddnhostsCache" "${compressed_cache_dir}/${dnsmasqAddnhostsGzip}"
-	[ "$dns" = 'dnsmasq.conf' ]       || rm -f "$dnsmasqConfFile" "$dnsmasqConfCache" "${compressed_cache_dir}/${dnsmasqConfGzip}"
-	[ "$dns" = 'dnsmasq.ipset' ]      || rm -f "$dnsmasqIpsetFile" "$dnsmasqIpsetCache" "${compressed_cache_dir}/${dnsmasqIpsetGzip}"
-	[ "$dns" = 'dnsmasq.nftset' ]     || rm -f "$dnsmasqNftsetFile" "$dnsmasqNftsetCache" "${compressed_cache_dir}/${dnsmasqNftsetGzip}"
+	[ "$dns" = 'dnsmasq.conf' ]       || rm -f "$dnsmasqConfCache" "${compressed_cache_dir}/${dnsmasqConfGzip}"
+	[ "$dns" = 'dnsmasq.ipset' ]      || rm -f "$dnsmasqIpsetCache" "${compressed_cache_dir}/${dnsmasqIpsetGzip}"
+	[ "$dns" = 'dnsmasq.nftset' ]     || rm -f "$dnsmasqNftsetCache" "${compressed_cache_dir}/${dnsmasqNftsetGzip}"
 	[ "$dns" = 'dnsmasq.servers' ]    || rm -f "$dnsmasqServersFile" "$dnsmasqServersCache" "${compressed_cache_dir}/${dnsmasqServersGzip}"
 	[ "$dns" = 'smartdns.domainset' ] || rm -f "$smartdnsDomainSetFile" "$smartdnsDomainSetCache" "${compressed_cache_dir}/${smartdnsDomainSetGzip}" "$smartdnsDomainSetConfig"
 	[ "$dns" = 'smartdns.ipset' ]     || rm -f "$smartdnsIpsetFile" "$smartdnsIpsetCache" "${compressed_cache_dir}/${smartdnsIpsetGzip}" "$smartdnsIpsetConfig"
@@ -788,12 +788,11 @@ load_environment() {
 	if ! is_present '/usr/libexec/grep-gnu' || ! is_present '/usr/libexec/sed-gnu' || \
 		! is_present '/usr/libexec/sort-coreutils' || ! is_present 'gawk'; then
 			local s
-			is_present 'gawk' || s="${s:+$s }gawk"
-			is_present '/usr/libexec/grep-gnu' || s="${s:+$s }grep"
-			is_present '/usr/libexec/sed-gnu' || s="${s:+$s }sed"
-			is_present '/usr/libexec/sort-coreutils' || s="${s:+$s }coreutils-sort"
+			is_present 'gawk' || { json add warning 'warningMissingRecommendedPackages' 'gawk'; s="${s:+$s }gawk"; }
+			is_present '/usr/libexec/grep-gnu' || { json add warning 'warningMissingRecommendedPackages' 'grep'; s="${s:+$s }grep"; }
+			is_present '/usr/libexec/sed-gnu' || { json add warning 'warningMissingRecommendedPackages' 'sed'; s="${s:+$s }sed"; }
+			is_present '/usr/libexec/sort-coreutils' || { json add warning 'warningMissingRecommendedPackages' 'coreutils-sort'; s="${s:+$s }coreutils-sort"; }
 			if [ "$param" != 'quiet' ]; then
-				json add warning 'warningMissingRecommendedPackages' "$s"
 				output "${_WARNING_}: $(get_text 'warningMissingRecommendedPackages'), install them by running:\n"
 				output "opkg update; opkg --force-overwrite install $s;\n"
 			fi
@@ -855,6 +854,8 @@ resolver() {
 				uci_add_list_if_new 'dhcp' "$cfg" 'addnhosts' "$dnsmasqAddnhostsFile"
 			;;
 			cleanup|unbound.adb_list)
+				config_get confdir "$cfg" 'confdir' '/tmp/dnsmasq.d'
+				rm -f "${confdir}/${dnsmasqConfFile}" "${confdir}/${dnsmasqIpsetFile}" "${confdir}/${dnsmasqNftsetFile}"
 				uci_remove_list 'dhcp' "$cfg" 'addnhosts' "$dnsmasqAddnhostsFile"
 				if [ "$(uci_get 'dhcp' "$cfg" 'serversfile')" = "$dnsmasqServersFile" ]; then
 					uci_remove 'dhcp' "$cfg" 'serversfile'
@@ -882,8 +883,8 @@ resolver() {
 			dnsmasq.conf|dnsmasq.ipset|dnsmasq.nftset)
 				config_get confdir "$cfg" 'confdir' '/tmp/dnsmasq.d'
 				confdirFile="${confdir}/${outputFile}"
-				if ! str_contains "$dnsmasqFileList" "$confdirFile"; then
-					dnsmasqFileList="${dnsmasqFileList:+$dnsmasqFileList }${confdirFile}"
+				if ! str_contains "$outputDnsmasqFileList" "$confdirFile"; then
+					outputDnsmasqFileList="${outputDnsmasqFileList:+$outputDnsmasqFileList }${confdirFile}"
 				fi
 			;;
 		esac
@@ -920,9 +921,9 @@ resolver() {
 	case $1 in
 		cleanup)
 			rm -f "$dnsmasqAddnhostsFile" "$dnsmasqAddnhostsCache" "${compressed_cache_dir}/${dnsmasqAddnhostsGzip}"
-			rm -f "$dnsmasqConfFile" "$dnsmasqConfCache" "${compressed_cache_dir}/${dnsmasqConfGzip}"
-			rm -f "$dnsmasqIpsetFile" "$dnsmasqIpsetCache" "${compressed_cache_dir}/${dnsmasqIpsetGzip}"
-			rm -f "$dnsmasqNftsetFile" "$dnsmasqNftsetCache" "${compressed_cache_dir}/${dnsmasqNftsetGzip}"
+			rm -f "$dnsmasqConfCache" "${compressed_cache_dir}/${dnsmasqConfGzip}"
+			rm -f "$dnsmasqIpsetCache" "${compressed_cache_dir}/${dnsmasqIpsetGzip}"
+			rm -f "$dnsmasqNftsetCache" "${compressed_cache_dir}/${dnsmasqNftsetGzip}"
 			rm -f "$dnsmasqServersFile" "$dnsmasqServersCache" "${compressed_cache_dir}/${dnsmasqServersGzip}"
 			rm -f "$smartdnsDomainSetFile" "$smartdnsDomainSetCache" "${compressed_cache_dir}/${smartdnsDomainSetGzip}" "$smartdnsDomainSetConfig"
 			rm -f "$smartdnsIpsetFile" "$smartdnsIpsetCache" "${compressed_cache_dir}/${smartdnsIpsetGzip}" "$smartdnsIpsetConfig"
@@ -942,7 +943,7 @@ resolver() {
 		on_load)
 			case "$dns" in
 				dnsmasq.conf|dnsmasq.ipset|dnsmasq.nftset)
-					[ -z "$dnsmasqFileList" ] || return 0
+					[ -z "$outputDnsmasqFileList" ] || return 0
 					config_load 'dhcp'
 					if [ "$dnsmasq_instance" = "*" ]; then
 						config_foreach _dnsmasq_instance_init 'dnsmasq' "$dns"
@@ -951,7 +952,7 @@ resolver() {
 							_dnsmasq_instance_init "@dnsmasq[$i]" "$dns" || _dnsmasq_instance_init "$i" "$dns"
 						done
 					fi
-					outputFile="$(str_first_word "$dnsmasqFileList")"
+					outputFile="$(str_first_word "$outputDnsmasqFileList")"
 				;;
 			esac
 		;;
@@ -981,9 +982,9 @@ resolver() {
 
 			case "$dns" in
 				dnsmasq.*)
-					if [ -n "$dnsmasqFileList" ]; then
+					if [ -n "$outputDnsmasqFileList" ]; then
 						local i
-						for i in $dnsmasqFileList; do
+						for i in $outputDnsmasqFileList; do
 							chmod 660 "$i"
 							chown root:dnsmasq "$i" >/dev/null 2>/dev/null
 						done
@@ -1087,9 +1088,9 @@ cache() {
 	local R_TMP
 	case "$1" in
 		create|backup)
-			if [ -n "$dnsmasqFileList" ]; then
+			if [ -n "$outputDnsmasqFileList" ]; then
 				local i __firstFile
-				for i in $dnsmasqFileList; do
+				for i in $outputDnsmasqFileList; do
 				if [ -z "$__firstFile" ]; then
 					__firstFile="$i"
 					if ! mv "$i" "$outputCache"; then
@@ -1107,9 +1108,9 @@ cache() {
 			fi
 		;;
 		restore|use)
-			if [ -n "$dnsmasqFileList" ]; then
+			if [ -n "$outputDnsmasqFileList" ]; then
 				local i __firstFile
-				for i in $dnsmasqFileList; do
+				for i in $outputDnsmasqFileList; do
 				if [ -z "$__firstFile" ]; then
 					__firstFile="$i"
 					if ! mv "$outputCache" "$i"; then
@@ -1170,6 +1171,16 @@ process_file_url_wrapper() {
 }
 
 process_file_url() {
+	_sanitize_source() {
+		local type="$1" file="$2"
+		case "$type" in
+			hosts)
+				sed -i '/# Title: StevenBlack/,/# Start StevenBlack/d' "$file"
+#				sed -i -E '/^(.*)[\t ](local|localhost|localhost.localdomain)$/d;/^255.255.255.255[\t ]broadcasthost$/d;/^0.0.0.0[\t ]0.0.0.0$/d' "$file"
+#				sed -i -E '/^(.*)[\t ](ip6-localhost|ip6-loopback|ip6-localnet|ip6-mcastprefix|ip6-allnodes|ip6-allrouters|ip6-allhosts)/d' "$file"
+			;;
+		esac
+	}
 	local cfg="$1" new_size
 	local label type D_TMP R_TMP filter
 	if [ -z "$cfg" ] || [ -n "${2}${3}" ]; then
@@ -1219,7 +1230,10 @@ process_file_url() {
 			dnsmasq2) filter="$dnsmasq2FileFilter";;
 			dnsmasq3) filter="$dnsmasq3FileFilter";;
 			domains) filter="$domainsFilter";;
-			hosts) filter="$hostsFilter";;
+			hosts)
+				filter="$hostsFilter"
+				_sanitize_source 'hosts' "$R_TMP"
+			;;
 			*)
 				output 1 "$_FAIL_"
 				output 2 "[DL] $type $label $__FAIL__\n"
@@ -1271,7 +1285,7 @@ download_dnsmasq_file() {
 	fi
 	output 2 'Moving dnsmasq file '
 	local i __firstFile
-	for i in $dnsmasqFileList; do
+	for i in $outputDnsmasqFileList; do
 	if [ -z "$__firstFile" ]; then
 		__firstFile="$i"
 		if mv "$B_TMP" "$i"; then
@@ -1545,7 +1559,7 @@ $(sed '/^[[:space:]]*$/d' "$A_TMP")"
 	case "$dns" in
 		dnsmasq.conf|dnsmasq.ipset|dnsmasq.nftset)
 			local i __firstFile
-			for i in $dnsmasqFileList; do
+			for i in $outputDnsmasqFileList; do
 			if [ -z "$__firstFile" ]; then
 				__firstFile="$i"
 				if mv "$B_TMP" "$i"; then
@@ -1628,7 +1642,7 @@ adb_allow() {
 				output 2 "  $c "
 				hf="$(echo "$c" | sed 's/\./\\./g')"
 				local f
-				for f in ${dnsmasqFileList:-$outputFile}; do
+				for f in ${outputDnsmasqFileList:-$outputFile}; do
 					if sed -i "\:\(/\|\.\)${hf}/:d" "$f"; then
 							output_ok
 					else
