@@ -378,13 +378,23 @@ stubby daemon. By default, this is an empty string.
 If set, this specifies the acceptable ciphers for DNS over TLS. With OpenSSL
 1.1.1 this list is for TLS1.2 and older only. Ciphers for TLS1.3 should be set
 with the `tls_ciphersuites` option. This option can also be given per upstream
-resolver. By default, this option is not set.
+resolver. The default value is `'EECDH+CHACHA20:EECDH+AESGCM'`. Set to
+`'EECDH+AESGCM:EECDH+CHACHA20'` to prefer AES over ChaCha, if the CPU of the
+OpenWRT device has the [AES instruction
+set](https://en.wikipedia.org/wiki/AES_instruction_set).
 
 #### `option tls_ciphersuites`
 
 If set, this specifies the acceptable cipher for DNS over TLS1.3. OpenSSL
 version 1.1.1 or greater is required for this option. This option can also be
-given per upstream resolver. By default, this option is not set.
+given per upstream resolver. The default value is
+`'TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384'`.
+Set to
+`'TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256'`
+or
+`'TLS_AES_256_GCM_SHA384:TLS_AES_128_GCM_SHA256:TLS_CHACHA20_POLY1305_SHA256'`
+to prefer AES over ChaCha, if the CPU of the OpenWRT device has the [AES
+instruction set](https://en.wikipedia.org/wiki/AES_instruction_set).
 
 #### `option tls_min_version`
 
