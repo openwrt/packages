@@ -65,6 +65,8 @@ define Package/dnsdist/install/Default
 	$(INSTALL_DIR) $(1)/etc
 	$(INSTALL_DIR) $(1)/etc/dnsdist.conf.d
 	$(INSTALL_CONF) ./files/dnsdist.conf $(1)/etc/dnsdist.conf
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/sample.uci.conf $(1)/etc/config/dnsdist
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/dnsdist.init $(1)/etc/init.d/dnsdist
 	$(INSTALL_DIR) $(1)/usr/bin
@@ -82,18 +84,6 @@ define Package/dnsdist/install/Default
 	$(CP) ./files/sample.uci.conf $(1)/usr/share/dnsdist/sample.uci.conf
 	$(CP) ./files/dnsdist.config $(1)/usr/share/dnsdist/simple.uci.conf
 	$(INSTALL_BIN) ./files/diag.sh $(1)/usr/share/dnsdist/diag.sh
-endef
-
-define Package/dnsdist/postinst/Default
-#!/bin/sh
-# if we are on a "real" system, IPKG_INSTROOT will be empty,
-# otherwise we are in the process of building an image and
-# thus on the host system
-local root="$${IPKG_INSTROOT}"
-
-if [ ! -e "$${root}/etc/config/dnsdist" ]; then
-        cp "$${root}/usr/share/dnsdist/simple.uci.conf" "$${root}/etc/config/dnsdist"
-fi
 endef
 
 define Package/dnsdist
@@ -114,7 +104,6 @@ endef
 Package/dnsdist/description=$(call Package/dnsdist/description/Default)
 Package/dnsdist/conffiles=$(call Package/dnsdist/conffiles/Default)
 Package/dnsdist/install=$(call Package/dnsdist/install/Default,$1)
-Package/dnsdist/postinst=$(call Package/dnsdist/postinst/Default)
 
 define Package/dnsdist-full
   $(call Package/dnsdist/Default,full,- full version with all the features built in)
@@ -133,7 +122,6 @@ endef
 Package/dnsdist-full/description=$(call Package/dnsdist/description/Default)
 Package/dnsdist-full/conffiles=$(call Package/dnsdist/conffiles/Default)
 Package/dnsdist-full/install=$(call Package/dnsdist/install/Default,$1)
-Package/dnsdist-full/postinst=$(call Package/dnsdist/postinst/Default)
 
 # not everything groks --disable-nls
 DISABLE_NLS:=
