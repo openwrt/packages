@@ -1,5 +1,6 @@
 #!/bin/sh /etc/rc.common
 
+START=20
 USE_PROCD=1
 run_dir=/var/run/acme
 export CHALLENGE_DIR=$run_dir/challenge
@@ -156,4 +157,9 @@ start_service() {
 service_triggers() {
 	procd_add_config_trigger config.change acme \
 		/etc/init.d/acme start
+}
+
+boot() {
+        mkdir -p "$CHALLENGE_DIR"
+        return 0
 }
