@@ -1,0 +1,19 @@
+From 3da07ae96f5b40f76b75e1ccd4b20267f6a5988e Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Jakub=20Kul=C3=ADk?= <kulikjak@gmail.com>
+Date: Wed, 28 Aug 2024 09:43:04 +0200
+Subject: [PATCH] remove incorrect freeaddrinfo call
+
+---
+ src/net.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+--- a/src/net.c
++++ b/src/net.c
+@@ -145,7 +145,6 @@ create_socket(int domain, int proto, con
+     if ((gerror = getaddrinfo(server, portstr, &hints, &server_res)) != 0) {
+ 	if (local)
+ 	    freeaddrinfo(local_res);
+-        freeaddrinfo(server_res);
+         return -1;
+     }
+ 
