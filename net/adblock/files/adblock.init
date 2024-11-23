@@ -36,8 +36,8 @@ start_service() {
 		procd_set_param command "${adb_script}" "${@}"
 		procd_set_param pidfile "${adb_pidfile}"
 		procd_set_param nice "$(uci_get adblock global adb_nice "0")"
-		procd_set_param stdout 1
-		procd_set_param stderr 1
+		procd_set_param stdout 0
+		procd_set_param stderr 0
 		procd_close_instance
 	fi
 }
@@ -188,7 +188,7 @@ service_triggers() {
 	delay="$(uci_get adblock global adb_triggerdelay "5")"
 
 	PROCD_RELOAD_DELAY="$((delay * 1000))"
-	[ -n "${iface}" ] && procd_add_interface_trigger "interface.*.up" "${iface}" "${adb_init}" "start"
+	[ -n "${iface}" ] && procd_add_interface_trigger "interface.*.up" "${iface}" "${adb_init}" start
 
 	PROCD_RELOAD_DELAY="$((2 * 1000))"
 	procd_add_reload_trigger "adblock"
