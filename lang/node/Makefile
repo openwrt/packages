@@ -8,12 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=node
-PKG_VERSION:=20.18.0
-PKG_RELEASE:=2
+PKG_VERSION:=22.11.0
+PKG_RELEASE:=1
+NODE_MODULE_VERSION:=127
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nodejs.org/dist/v$(PKG_VERSION)
-PKG_HASH:=c0819f8fc5038584d24c22002aeffd23f2d4a6fd6b337b30c502cbe4a659720c
+PKG_HASH:=24e5130fa7bc1eaab218a0c9cb05e03168fa381bb9e3babddc6a11f655799222
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-v$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)-v$(PKG_VERSION)
 
@@ -42,6 +43,7 @@ define Package/node
   DEPENDS:=@HAS_FPU @(i386||x86_64||arm||aarch64) \
 	   +libstdcpp +libopenssl +zlib +libnghttp2 \
 	   +libcares +libatomic +NODEJS_ICU_SYSTEM:icu +NODEJS_ICU_SYSTEM:icu-full-data
+  ABI_VERSION:=$(NODE_MODULE_VERSION)
 endef
 
 define Package/node/description
