@@ -177,6 +177,7 @@ Available commands:
 | adb_repchunksize   | 1                                  | report chunk size used by tcpdump in MB                                                        |
 | adb_represolve     | 0, disabled                        | resolve reporting IP addresses using reverse DNS (PTR) lookups                                 |
 | adb_backup         | 1, enabled                         | set to 0 to disable the backup function                                                        |
+| adb_tld            | 1, enabled                         | set to 0 to disable the top level domain compression (tld) function                            |
 | adb_backupdir      | /tmp                               | path for adblock backups                                                                       |
 | adb_tmpbase        | /tmp                               | path for all adblock related runtime operations, e.g. downloading, sorting, merging etc.       |
 | adb_safesearch     | 0, disabled                        | set to 1 to enforce SafeSearch for google, bing, duckduckgo, yandex, youtube and pixabay       |
@@ -257,17 +258,16 @@ To get the status in the CLI, just call _/etc/init.d/adblock status_ or _/etc/in
 ~#@blackhole:~# /etc/init.d/adblock status
 ::: adblock runtime information
   + adblock_status  : enabled
-  + adblock_version : 4.1.4
-  + blocked_domains : 268355
-  + active_sources  : adaway, adguard, adguard_tracking, android_tracking, bitcoin, disconnect, firetv_tracking, games_t
-                      racking, hblock, oisd_basic, phishing_army, smarttv_tracking, stopforumspam, wally3k, winspy, yoyo
-  + dns_backend     : unbound (unbound-control), /var/lib/unbound
-  + run_utils       : download: /usr/bin/curl, sort: /usr/libexec/sort-coreutils, awk: /bin/busybox
-  + run_ifaces      : trigger: wan, report: br-lan
-  + run_directories : base: /tmp, backup: /mnt/data/adblock-Backup, report: /mnt/data/adblock-Report, jail: /tmp
-  + run_flags       : backup: ✔, flush: ✘, force: ✔, search: ✘, report: ✔, mail: ✔, jail: ✘
-  + last_run        : restart, 3m 17s, 249/73/68, 2022-09-10T13:43:07+02:00
-  + system          : ASUS RT-AX53U, OpenWrt SNAPSHOT r20535-2ca5602864
+  + adblock_version : 4.2.3-r1
+  + blocked_domains : 785573
+  + active_sources  : adguard, doh_blocklist, hagezi, winspy
+  + dns_backend     : dnsmasq (-), /tmp/dnsmasq.d
+  + run_utils       : download: /usr/bin/curl, sort: /usr/libexec/sort-coreutils, awk: /usr/bin/gawk
+  + run_ifaces      : trigger: trm_wwan, report: br-lan
+  + run_directories : base: /tmp, backup: /tmp/adblock-Backup, report: /tmp/adblock-Report, jail: /tmp
+  + run_flags       : backup: ✔, tld: ✔, force: ✔, flush: ✘, search: ✘, report: ✔, mail: ✘, jail: ✘
+  + last_run        : reload, 1m 3s, 650 MB available, 1664 KB max. used, 2024-11-23T18:11:41+01:00
+  + system          : OpenWrt One, mediatek/filogic, OpenWrt SNAPSHOT r28034-ca53f2d430
 </code></pre>
 The 'last\_run' line includes the used start type, the run duration, the memory footprint after DNS backend loading (total/free/available) and the date/time of the last run.
 
