@@ -12,7 +12,7 @@ PKG_VERSION:=0.3.17
 PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://liboil.freedesktop.org/download/
+PKG_SOURCE_URL:=https://liboil.freedesktop.org/download/
 PKG_HASH:=105f02079b0b50034c759db34b473ecb5704ffa20a5486b60a8b7698128bfc69
 
 PKG_LICENSE:=FREE

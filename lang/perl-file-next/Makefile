@@ -8,7 +8,7 @@ PKG_NAME:=perl-file-next
 PKG_VERSION:=1.18
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=http://www.cpan.org/authors/id/P/PE/PETDANCE/
+PKG_SOURCE_URL:=https://www.cpan.org/authors/id/P/PE/PETDANCE/
 PKG_SOURCE:=File-Next-$(PKG_VERSION).tar.gz
 PKG_HASH:=f900cb39505eb6e168a9ca51a10b73f1bbde1914b923a09ecd72d9c02e6ec2ef
 
