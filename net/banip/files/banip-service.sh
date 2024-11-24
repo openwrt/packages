@@ -15,8 +15,7 @@ ban_funlib="/usr/lib/banip-functions.sh"
 #
 [ "${ban_action}" = "boot" ] && sleep "$(uci_get banip global ban_triggerdelay "20")"
 f_conf
-f_log "info" "start banIP processing (${ban_action})"
-f_log "debug" "f_system    ::: system: ${ban_sysver:-"n/a"}, version: ${ban_ver:-"n/a"}, memory: ${ban_memory:-"0"}, cpu_cores: ${ban_cores}"
+f_log "info" "start banIP processing (${ban_action}, ${ban_ver:-"n/a"})"
 f_genstatus "processing"
 f_tmp
 f_getfetch
