@@ -30,7 +30,7 @@ ban_lock="/var/run/banip.lock"
 
 boot() {
 	: >"${ban_pidfile}"
-	rc_procd start_service "boot"
+	rc_procd start_service boot
 }
 
 start_service() {
@@ -41,8 +41,8 @@ start_service() {
 		procd_set_param pidfile "${ban_pidfile}"
 		procd_set_param nice "$(uci_get banip global ban_nicelimit "0")"
 		procd_set_param limits nofile="$(uci_get banip global ban_filelimit "1024")"
-		procd_set_param stdout 1
-		procd_set_param stderr 1
+		procd_set_param stdout 0
+		procd_set_param stderr 0
 		procd_close_instance
 	else
 		f_log "err" "banIP service autostart is disabled"
@@ -52,7 +52,7 @@ start_service() {
 
 reload_service() {
 	f_rmpid
-	rc_procd start_service "reload"
+	rc_procd start_service reload
 }
 
 stop_service() {
@@ -64,7 +64,7 @@ stop_service() {
 
 restart() {
 	stop_service
-	rc_procd start_service "restart"
+	rc_procd start_service restart
 }
 
 status() {
@@ -109,9 +109,9 @@ service_triggers() {
 
 	PROCD_RELOAD_DELAY="$((delay * 1000))"
 	for iface in ${trigger}; do
-		procd_add_interface_trigger "interface.*.up" "${iface}" "${ban_init}" reload
+		procd_add_interface_trigger "interface.*.up" "${iface}" "${ban_init}" start
 	done
 
 	PROCD_RELOAD_DELAY="$((2 * 1000))"
-	procd_add_reload_trigger "banip"
+	procd_add_reload_trigger banip
 }
