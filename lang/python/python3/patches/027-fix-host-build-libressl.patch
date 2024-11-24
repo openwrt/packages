@@ -1,15 +1,6 @@
 --- a/Modules/_ssl.c
 +++ b/Modules/_ssl.c
-@@ -4551,7 +4551,7 @@ set_sni_callback(PySSLContext *self, PyO
-     return 0;
- }
- 
--#if OPENSSL_VERSION_NUMBER < 0x30300000L
-+#if OPENSSL_VERSION_NUMBER < 0x30300000L && !defined(LIBRESSL_VERSION_NUMBER)
- static X509_OBJECT *x509_object_dup(const X509_OBJECT *obj)
- {
-     int ok;
-@@ -4624,7 +4624,11 @@ _ssl__SSLContext_cert_store_stats_impl(P
+@@ -4827,7 +4827,11 @@ _ssl__SSLContext_cert_store_stats_impl(P
      int x509 = 0, crl = 0, ca = 0, i;
  
      store = SSL_CTX_get_cert_store(self->ctx);
@@ -21,7 +12,7 @@
      if (objs == NULL) {
          PyErr_SetString(PyExc_MemoryError, "failed to query cert store");
          return NULL;
-@@ -4679,7 +4683,11 @@ _ssl__SSLContext_get_ca_certs_impl(PySSL
+@@ -4883,7 +4887,11 @@ _ssl__SSLContext_get_ca_certs_impl(PySSL
      }
  
      store = SSL_CTX_get_cert_store(self->ctx);
