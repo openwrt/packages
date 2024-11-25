@@ -96,6 +96,7 @@ FFMPEG_CUSTOM_DEMUXERS:= \
 	mp3 \
 	mpegps \
 	mpegts \
+	hls \
 	mpegvideo \
 	mpc \
 	mpc8 \
@@ -121,7 +122,7 @@ FFMPEG_CUSTOM_PARSERS:= \
 	vc1 \
 
 FFMPEG_CUSTOM_PROTOCOLS:= \
-	file http icecast pipe rtp tcp udp
+	file http icecast pipe rtp tcp udp https crypto
 
 FFMPEG_MINI_DECODERS:= \
 	ac3 \
@@ -314,7 +315,8 @@ $(call Package/libffmpeg/Default)
            +FFMPEG_CUSTOM_SELECT_libopus:libopus \
            +PACKAGE_libx264:libx264 +PACKAGE_lame-lib:lame-lib \
            +FFMPEG_CUSTOM_SELECT_libshine:shine \
-           +PACKAGE_fdk-aac:fdk-aac
+           +PACKAGE_fdk-aac:fdk-aac \
+           +FFMPEG_CUSTOM_PROTOCOL_https:libopenssl
  VARIANT:=custom
  MENU:=1
 endef
@@ -508,6 +510,9 @@ ifeq ($(BUILD_VARIANT),custom)
 	$(foreach c, $(2), \
 		$(if $($(3)_$(c)),--enable-$(1)="$(c)") \
 	)
+  ifeq ($(CONFIG_FFMPEG_CUSTOM_PROTOCOL_https),y)
+	FFMPEG_CONFIGURE+=--enable-openssl
+  endif
 
   ifeq ($(CONFIG_FFMPEG_CUSTOM_LARGE),y)
 	FFMPEG_CONFIGURE+= \
