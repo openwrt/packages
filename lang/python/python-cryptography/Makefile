@@ -35,7 +35,6 @@ define Package/python3-cryptography
       +libopenssl \
       +libopenssl-legacy \
       +python3-light \
-      +python3-email \
       +python3-urllib \
       +python3-cffi \
       $(RUST_ARCH_DEPENDS)
