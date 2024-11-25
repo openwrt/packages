@@ -159,7 +159,7 @@ MESON_ARGS += \
 	-Dy4m=$(if $(CONFIG_PACKAGE_gst1-mod-y4mdec),en,dis)abled \
 	\
 	-Dopencv=disabled \
-	-Dwayland=disabled \
+	-Dwayland=$(if $(CONFIG_PACKAGE_libgst1gl),en,dis)abled \
 	-Dx11=disabled \
 	\
 	-Daom=disabled \
@@ -191,7 +191,7 @@ MESON_ARGS += \
 	-Dfdkaac=disabled \
 	-Dflite=disabled \
 	-Dfluidsynth=disabled \
-	-Dgl=disabled \
+	-Dgl=$(if $(CONFIG_PACKAGE_libgst1gl),en,dis)abled \
 	-Dgme=disabled \
 	-Dgpl=enabled \
 	-Dgsm=disabled \
