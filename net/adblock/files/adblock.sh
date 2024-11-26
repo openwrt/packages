@@ -256,7 +256,7 @@ f_dns() {
 	if [ -z "${adb_dns}" ]; then
 		utils="knot-resolver bind-server unbound-daemon dnsmasq-full dnsmasq-dhcpv6 dnsmasq"
 		for util in ${utils}; do
-			if printf "%s" "${adb_packages}" | "${adb_jsoncmd}" -ql1 -e "@.packages.${util}" >/dev/null 2>&1; then
+			if printf "%s" "${adb_packages}" | "${adb_jsoncmd}" -ql1 -e "@.packages[\"${util}\"]" >/dev/null 2>&1; then
 				case "${util}" in
 					"knot-resolver")
 						util="kresd"
@@ -361,10 +361,11 @@ f_dns() {
 f_fetch() {
 	local util utils insecure
 
-	if [ -z "${adb_fetchutil}" ]; then
+	adb_fetchutil="$(command -v "${adb_fetchutil}")"
+	if [ ! -x "${adb_fetchutil}" ]; then
 		utils="aria2 curl wget-ssl libustream-openssl libustream-wolfssl libustream-mbedtls"
 		for util in ${utils}; do
-			if printf "%s" "${adb_packages}" | "${adb_jsoncmd}" -ql1 -e "@.packages.${util}" >/dev/null 2>&1; then
+			if printf "%s" "${adb_packages}" | "${adb_jsoncmd}" -ql1 -e "@.packages[\"${util}\"]" >/dev/null 2>&1; then
 				case "${util}" in
 					"aria2")
 						util="aria2c"
@@ -378,7 +379,7 @@ f_fetch() {
 				esac
 
 				if [ -x "$(command -v "${util}")" ]; then
-					adb_fetchutil="${util}"
+					adb_fetchutil="$(command -v "${util}")"
 					uci_set adblock global adb_fetchutil "${util}"
 					f_uci "adblock"
 					break
@@ -387,11 +388,9 @@ f_fetch() {
 		done
 	fi
 
-	if [ ! -x "$(command -v "${adb_fetchutil}")" ]; then
-		f_log "err" "download utility with SSL support not found, please set 'adb_fetchutil' manually"
-	fi
+	[ ! -x "${adb_fetchutil}" ] && f_log "err" "download utility with SSL support not found, please set 'adb_fetchutil' manually"
 
-	case "${adb_fetchutil}" in
+	case "${adb_fetchutil##*/}" in
 		"aria2c")
 			[ "${adb_fetchinsecure}" = "1" ] && insecure="--check-certificate=false"
 			adb_fetchparm="${adb_fetchparm:-"${insecure} --timeout=20 --allow-overwrite=true --auto-file-renaming=false --log-level=warn --dir=/ -o"}"
@@ -409,8 +408,6 @@ f_fetch() {
 			adb_fetchparm="${adb_fetchparm:-"${insecure} --no-cache --no-cookies --max-redirect=0 --timeout=20 -O"}"
 			;;
 	esac
-
-	adb_fetchutil="$(command -v "${adb_fetchutil}")"
 
 	f_log "debug" "f_fetch  ::: fetch_util: ${adb_fetchutil:-"-"}, fetch_parm: ${adb_fetchparm:-"-"}"
 }
