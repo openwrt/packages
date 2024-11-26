@@ -362,7 +362,7 @@ f_getfetch() {
 	if { [ "${ban_autodetect}" = "1" ] && [ -z "${ban_fetchcmd}" ]; } || [ ! -x "${ban_fetchcmd}" ]; then
 		utils="aria2 curl wget-ssl libustream-openssl libustream-wolfssl libustream-mbedtls"
 		for util in ${utils}; do
-			if printf "%s" "${ban_packages}" | "${ban_jsoncmd}" -ql1 -e "@.packages.${util}" >/dev/null 2>&1; then
+			if printf "%s" "${ban_packages}" | "${ban_jsoncmd}" -ql1 -e "@.packages[\"${util}\"]" >/dev/null 2>&1; then
 				case "${util}" in
 					"aria2")
 						util="aria2c"
