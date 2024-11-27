@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=beep
 PKG_VERSION:=1.4.12
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
@@ -23,7 +23,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/beep
   SECTION:=sound
   CATEGORY:=Sound
-  DEPENDS:=+TARGET_x86:kmod-pcspkr @!TARGET_x86:kmod-gpio-beeper
+  DEPENDS:=+TARGET_x86:kmod-pcspkr +!TARGET_x86:kmod-gpio-beeper
   TITLE:=Play beep sounds through a PC speaker
   URL:=https://github.com/spkr-beep/beep
 endef
