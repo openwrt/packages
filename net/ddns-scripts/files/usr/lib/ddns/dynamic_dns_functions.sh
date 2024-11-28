@@ -1210,9 +1210,9 @@ get_registered_ip() {
 
 get_uptime() {
 	# $1	Variable to store result in
-	[ $# -ne 1 ] && write_log 12 "Error calling 'verify_host_port()' - wrong number of parameters"
-	local __UPTIME=$(cat /proc/uptime)
-	eval "$1=\"${__UPTIME%%.*}\""
+	[ $# -ne 1 ] && write_log 12 "Error calling 'get_uptime()' - requires exactly 1 argument."
+	read -r uptime < /proc/uptime
+	eval "$1=\"${uptime%%.*}\""
 }
 
 trap_handler() {
