@@ -204,15 +204,14 @@ start_daemon_for_all_ddns_sections()
 # stop sections process incl. childs (sleeps)
 # $1 = section
 stop_section_processes() {
-	local __PID=0
-	local __PIDFILE="$ddns_rundir/$1.pid"
-	[ $# -ne 1 ] && write_log 12 "Error calling 'stop_section_processes()' - wrong number of parameters"
+	local pid_file
+	pid_file="$ddns_rundir/$1.pid"
+	[ $# -ne 1 ] && write_log 12 "Error: 'stop_section_processes()' requires exactly one parameter"
 
-	[ -e "$__PIDFILE" ] && {
-		__PID=$(cat $__PIDFILE)
-		busybox ps | grep "^[\t ]*$__PID" >/dev/null 2>&1 && kill $__PID || __PID=0	# terminate it
+	[ -e "$pid_file" ] && {
+		xargs kill < "$pid_file" 2>/dev/null && return 1
 	}
-	[ $__PID -eq 0 ] # report if process was running
+	return 0 # nothing killed
 }
 
 # stop updater script for all defines sections or only for one given
