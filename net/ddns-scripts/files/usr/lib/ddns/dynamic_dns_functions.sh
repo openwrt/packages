@@ -184,20 +184,14 @@ load_all_service_sections() {
 # and by /etc/init.d/ddns start
 start_daemon_for_all_ddns_sections()
 {
-	local __EVENTIF="$1"
-	local __SECTIONS=""
-	local __SECTIONID=""
-	local __IFACE=""
+	local event_if sections section_id configured_if
+	event_if="$1"
 
-	load_all_service_sections __SECTIONS
-	for __SECTIONID in $__SECTIONS; do
-		config_get __IFACE "$__SECTIONID" interface "wan"
-		[ -z "$__EVENTIF" -o "$__IFACE" = "$__EVENTIF" ] || continue
-		if [ $VERBOSE -eq 0 ]; then	# start in background
-			/usr/lib/ddns/dynamic_dns_updater.sh -v 0 -S "$__SECTIONID" -- start &
-		else
-			/usr/lib/ddns/dynamic_dns_updater.sh -v "$VERBOSE" -S "$__SECTIONID" -- start
-		fi
+	load_all_service_sections sections
+	for section_id in $sections; do
+		config_get configured_if "$section_id" interface "wan"
+		[ -z "$event_if" ] || [ "$configured_if" = "$event_if" ] || continue
+		/usr/lib/ddns/dynamic_dns_updater.sh -v "$VERBOSE" -S "$section_id" -- start
 	done
 }
 
