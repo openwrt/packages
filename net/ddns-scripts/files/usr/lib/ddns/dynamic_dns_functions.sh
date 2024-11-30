@@ -129,35 +129,34 @@ USE_CURL=$(uci -q get ddns.global.use_curl) || USE_CURL=0	# read config
 # $1 = ddns, $2 = SECTION_ID
 load_all_config_options()
 {
-	local __PKGNAME="$1"
-	local __SECTIONID="$2"
-	local __VAR
-	local __ALL_OPTION_VARIABLES=""
+	local pkg_name section_id tmp_var all_opt_vars
+	pkg_name="$1"
+	section_id="$2"
 
-	# this callback loads all the variables in the __SECTIONID section when we do
+	# this callback loads all the variables in the $section_id section when we do
 	# config_load. We need to redefine the option_cb for different sections
 	# so that the active one isn't still active after we're done with it.  For reference
 	# the $1 variable is the name of the option and $2 is the name of the section
 	config_cb()
 	{
-		if [ ."$2" = ."$__SECTIONID" ]; then
+		if [ ."$2" = ."$section_id" ]; then
 			option_cb()
 			{
-				__ALL_OPTION_VARIABLES="$__ALL_OPTION_VARIABLES $1"
+				all_opt_vars="$all_opt_vars $1"
 			}
 		else
 			option_cb() { return 0; }
 		fi
 	}
 
-	config_load "$__PKGNAME"
+	config_load "$pkg_name"
 
 	# Given SECTION_ID not found so no data, so return 1
-	[ -z "$__ALL_OPTION_VARIABLES" ] && return 1
+	[ -z "$all_opt_vars" ] && return 1
 
-	for __VAR in $__ALL_OPTION_VARIABLES
+	for tmp_var in $all_opt_vars
 	do
-		config_get "$__VAR" "$__SECTIONID" "$__VAR"
+		config_get "$tmp_var" "$section_id" "$tmp_var"
 	done
 	return 0
 }
