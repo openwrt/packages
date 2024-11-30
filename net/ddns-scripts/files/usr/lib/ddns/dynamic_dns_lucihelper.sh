@@ -147,19 +147,19 @@ case "$1" in
 		;;
 	start)
 		[ -z "$SECTION" ] &&  usage_err "command 'start': 'SECTION' not set"
-		if [ $VERBOSE -eq 0 ]; then	# start in background
-			$DDNSPRG -v 0 -S $SECTION -- start &
+		if [ "$VERBOSE" -eq 0 ]; then	# start in background
+			"$DDNSPRG" -v 0 -S "$SECTION" -- start &
 		else
-			$DDNSPRG -v $VERBOSE -S $SECTION -- start
+			"$DDNSPRG" -v "$VERBOSE" -S "$SECTION" -- start
 		fi
 		;;
 	reload)
-		$DDNSPRG -- reload
+		"$DDNSPRG" -- reload
 		;;
 	restart)
-		$DDNSPRG -- stop
+		"$DDNSPRG" -- stop
 		sleep 1
-		$DDNSPRG -- start
+		"$DDNSPRG" -- start
 		;;
 	*)
 		__RET=255
@@ -167,6 +167,6 @@ case "$1" in
 esac
 
 # remove out and err file
-[ -f $DATFILE ] && rm -f $DATFILE
-[ -f $ERRFILE ] && rm -f $ERRFILE
+[ -f "$DATFILE" ] && rm -f "$DATFILE"
+[ -f "$ERRFILE" ] && rm -f "$ERRFILE"
 return $__RET
