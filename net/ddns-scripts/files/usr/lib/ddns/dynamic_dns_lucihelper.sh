@@ -26,6 +26,7 @@ Commands:
  start               start given SECTION
  reload              force running ddns processes to reload changed configuration
  restart             restart all ddns processes
+ stop                stop given SECTION
 
 Parameters:
  -6                  => use_ipv6=1          (default 0)
@@ -39,7 +40,7 @@ Parameters:
  -s SCRIPT           => ip_script=SCRIPT; ip_source="script"
  -t                  => force_dnstcp=1      (default 0)
  -u URL              => ip_url=URL; ip_source="web"
- -S SECTION          SECTION to start
+ -S SECTION          SECTION to [start|stop]
 
  -h                  => show this help and exit
  -L                  => use_logfile=1    (default 0)
@@ -160,6 +161,15 @@ case "$1" in
 		"$DDNSPRG" -- stop
 		sleep 1
 		"$DDNSPRG" -- start
+		;;
+	stop)
+		if [ -n "$SECTION" ]; then
+			# section stop
+			"$DDNSPRG" -S "$SECTION" -- stop
+		else
+			# global stop
+			"$DDNSPRG" -- stop
+		fi
 		;;
 	*)
 		__RET=255
