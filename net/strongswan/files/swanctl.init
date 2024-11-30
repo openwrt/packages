@@ -450,6 +450,7 @@ config_remote() {
 	local auth_method
 	local keyingtries
 	local dpddelay
+	local encap
 	local inactivity
 	local keyexchange
 	local fragmentation
@@ -473,6 +474,7 @@ config_remote() {
 	config_get local_ip "$conf" local_ip "%any"
 	config_get keyingtries "$conf" keyingtries "3"
 	config_get dpddelay "$conf" dpddelay "30s"
+	config_get_bool encap "$conf" encap 0
 	config_get inactivity "$conf" inactivity
 	config_get keyexchange "$conf" keyexchange "ikev2"
 	config_get fragmentation "$conf" fragmentation "yes"
@@ -597,6 +599,7 @@ config_remote() {
 
 	swanctl_xappend2 "proposals = $ike_proposal"
 	[ -n "$dpddelay" ] && swanctl_xappend2 "dpd_delay = $dpddelay"
+	[ $encap -eq 1 ] && swanctl_xappend2 "encap = yes" || swanctl_xappend2 "encap = no"
 	[ "$keyingtries" = "%forever" ] && swanctl_xappend2 "keyingtries = 0" || swanctl_xappend2 "keyingtries = $keyingtries"
 
 	swanctl_xappend1 "}"
