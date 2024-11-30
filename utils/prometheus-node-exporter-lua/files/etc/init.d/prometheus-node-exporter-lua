@@ -17,6 +17,8 @@ start_service() {
 	config_get keepalive "main" http_keepalive 70
 	config_get interface "main" listen_interface "loopback"
 	config_get port "main" listen_port 9100
+	config_get cert_path "main" cert_path "none"
+	config_get key_path "main" key_path "none"
 
 	[ "$interface" = "*" ] || {
 		network_get_ipaddr  bind4 "$interface"
@@ -32,12 +34,34 @@ start_service() {
 	procd_set_param command /usr/sbin/uhttpd -f -c /dev/null -l / -L /usr/bin/prometheus-node-exporter-lua
 	[ $keepalive -gt 0 ] && procd_append_param command -k $keepalive
 
-	if [ "$interface" = "*" ]; then
+	if [ "$interface" = "*" ] && [ "$cert_path" = "none"] && ["$key_path" = "none"]; then
 		procd_append_param command -p $port
-	else
+	elif [ "$cert_path" = "none"] && ["$key_path" = "none"]; then 
 		[ -n "$bind4" ] && procd_append_param command -p $bind4:$port
 		[ -n "$bind6" ] && procd_append_param command -p [$bind6]:$port
 	fi
+
+	if [ "$cert_path" != "none" ] && [ "$key_path" != "none" ]; then
+		if [ -f "$cert_path" ] && [ -f "$key_path" ]; then
+			procd_append_param -C $cert_path -K $key_path
+			if [ "$interface" = "*" ]; then
+				procd_append_param -s $port
+			else
+				[ -n "$bind4" ] && procd_append_param command -s $bind4:$port
+				[ -n "$bind6" ] && procd_append_param command -s [$bind6]:$port
+			fi
+		elif [ ! -f "$cert_path" ]; then
+			_log "No cert file found under path: $cert_path"
+			return 0
+		elif [ ! - "$key_path" ]; then
+			_log "No key file found under path: $key_path"
+			return 0
+		else
+			_log "Error setting up TLS"
+			return 0
+		fi
+	fi
+
 
 	procd_set_param stdout 1
 	procd_set_param stderr 1
