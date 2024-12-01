@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gping
-PKG_VERSION:=1.17.3
+PKG_VERSION:=1.18.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/orf/gping/tar.gz/$(PKG_NAME)-v$(PKG_VERSION)?
-PKG_HASH:=bed3e1d46c2311ae15cad114700458a138e7d29fd45322cb9dd2c1108eb5a68e
+PKG_HASH:=a76e09619831c0f2bb95f505a92c1332de89c3c43383b4d832a69afcb0fafd4c
 
 PKG_MAINTAINER:=Jonas Jelonek <jelonek.jonas@gmail.com>
 PKG_LICENSE:=MIT
