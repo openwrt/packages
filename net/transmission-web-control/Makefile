@@ -1,13 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=transmission-web-control
-PKG_RELEASE:=3
+PKG_SOURCE_DATE:=2024-04-08
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/ronggang/transmission-web-control
-PKG_SOURCE_DATE:=2021-09-25
-PKG_SOURCE_VERSION:=4b2e1858f7a46ee678d5d1f3fa1a6cf2c739b88a
-PKG_MIRROR_HASH:=0134b0d03cfc0e0769a2e751caa307f2fd48639bab9bd4d2f3ab720ad04e6ced
+PKG_SOURCE_VERSION:=f02a47aff2680de10c2269e22a3d0b37a318dbcd
+PKG_MIRROR_HASH:=06e190f8e39f599dce8c681fd48b16dd2cb069a047f4b32e2e319e6938808081
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
@@ -21,7 +21,7 @@ define Package/transmission-web-control
   SUBMENU:=BitTorrent
   DEPENDS:=+transmission-daemon
   CONFLICTS:=transmission-web
-  TITLE:=Transmission Web Control
+  TITLE:=A custom web UI for Transmission
   URL:=https://github.com/ronggang/transmission-web-control
   PKGARCH:=all
 endef
