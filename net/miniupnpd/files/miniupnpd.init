@@ -88,6 +88,7 @@ upnpd() {
 	config_get upnp_lease_file config upnp_lease_file
 	config_get ipv6_disable config ipv6_disable 0
 	config_get_bool secure_mode config secure_mode 1
+	config_get upnp_igd_compat config upnp_igd_compat igdv1
 
 	local conf ifname ifname6
 
@@ -141,8 +142,12 @@ upnpd() {
 		else
 		  echo "pcp_allow_thirdparty=no"
 		fi
+		if [ "$upnp_igd_compat" = "igdv1" ]; then
+		  echo "force_igd_desc_v1=yes"
+		else
+		  echo "force_igd_desc_v1=no"
+		fi
 		upnpd_write_bool system_uptime 1
-		upnpd_write_bool igdv1 1 force_igd_desc_v1
 		upnpd_write_bool use_stun 0 ext_perform_stun
 		upnpd_write_bool ipv6_disable $ipv6_disable
 
