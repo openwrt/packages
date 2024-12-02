@@ -9,6 +9,7 @@ uci -q get network.mtik_poe || {
 		num=4
 		;;
 	mikrotik,rb5009|\
+	mikrotik,rb5009ug|\
 	mikrotik,rb5009upr)
 		num=8
 		;;
