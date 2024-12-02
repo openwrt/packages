@@ -59,7 +59,7 @@ upnpd_write_bool() {
 upnpd() {
 	config_load "upnpd"
 	local external_iface external_iface6 external_zone external_ip internal_iface
-	local upload download log_output port config_file serial_number model_number
+	local upload_kbps download_kbps log_output port config_file serial_number model_number
 	local use_stun stun_host stun_port uuid notify_interval presentation_url
 	local upnp_lease_file ipv6_disable
 
@@ -73,8 +73,8 @@ upnpd() {
 	config_get external_ip config external_ip
 	config_get internal_iface config internal_iface
 	config_get port config port 5000
-	config_get upload config upload
-	config_get download config download
+	config_get upload_kbps config upload_kbps
+	config_get download_kbps config download_kbps
 	config_get_bool log_output config log_output 0
 	config_get config_file config config_file
 	config_get serial_number config serial_number
@@ -151,9 +151,9 @@ upnpd() {
 			[ -n "$stun_port" ] && echo "ext_stun_port=$stun_port"
 		}
 
-		[ -n "$upload" ] && [ -n "$download" ] && {
-			echo "bitrate_down=$((download * 1024 * 8))"
-			echo "bitrate_up=$((upload * 1024 * 8))"
+		[ -n "$upload_kbps" ] && [ -n "$download_kbps" ] && {
+			echo "bitrate_down=$((download_kbps * 1000))"
+			echo "bitrate_up=$((upload_kbps * 1000))"
 		}
 
 		[ -n "$upnp_lease_file" ] && touch "$upnp_lease_file" && echo "lease_file=$upnp_lease_file"
