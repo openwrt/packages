@@ -51,6 +51,10 @@ end
 function mm_get_modem_signal(modem)
 
 	local command = string.format("/usr/bin/mmcli --modem=%s --signal-get --output-json 2>/dev/null", modem)
+	local signal_setup = string.format("/usr/bin/mmcli --modem=%s --signal-setup=1 2>/dev/null", modem)
+
+	io.popen(signal_setup)
+	io.popen(command)
 
 	local handle = io.popen(command)
 	local output = handle:read("*a")
@@ -179,10 +183,12 @@ function aquire_data_info()
 
 	for k, v in ipairs(status['modem']) do
 		local element = {}
+		local technology = status['modem'][k]['generic']['access-technologies'][1]
 
 		element['imei'] = status['modem'][k]['3gpp']['imei']
 		element['signal'] = status['modem'][k]['generic']['signal-quality']['value']
-		element['technology'] = status['modem'][k]['generic']['access-technologies'][1]
+		element['rssi'] = status['modem'][k]['signal'][technology]['rssi']
+		element['technology'] = technology
 		if status['modem'][k]['3gpp']['operator-name'] ~= '--' then
 			element['operator'] = status['modem'][k]['3gpp']['operator-name']
 		end
