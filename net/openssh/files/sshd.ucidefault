@@ -1,0 +1,150 @@
+#!/bin/sh
+
+# the purpose of this script is to generate sshd config
+# from a dropbear config, if present, or, if sshd config is not present
+# then a default sshd config is generated
+
+. /lib/functions.sh
+
+set_option_list()
+{
+	local SectionName="$1"
+	local OptionName="$2"
+	local Values="$3"
+
+	if [ -n "$SectionName" -a -n "$OptionName" -a -n "$Values" ]; then
+		for Value in $Values; do
+			uci -q add_list "sshd.${SectionName}.${OptionName}"="${Value}"
+		done
+	fi
+}
+
+set_option()
+{
+	local SectionName="$1"
+	local OptionName="$2"
+	local Value="$3"
+
+	if [ -n "$SectionName" -a -n "$OptionName" -a -n "$Value" ]; then
+		uci -q set "sshd.${SectionName}.${OptionName}"="${Value}"
+	fi
+}
+
+generate_sshd_section()
+{
+	local AllowUsers="root"
+	local BannerFile=""
+	local Ciphers="aes128-ctr aes192-ctr aes256-ctr"
+	local Enable=1
+	local ForceCommand=""
+	local GatewayPorts=0
+	local HostKeyAlgorithms="ecdsa-sha2-nistp256 ecdsa-sha2-nistp384 ecdsa-sha2-nistp521 ssh-rsa ssh-dss"
+	local KexAlgorithms="ecdh-sha2-nistp256 ecdh-sha2-nistp384 ecdh-sha2-nistp521 diffie-hellman-group14-sha1 diffie-hellman-group-exchange-sha256"
+	local IdleTimeout=0
+	local Interface=""
+	local MacAlgorithms="hmac-sha1 hmac-sha2-256 hmac-sha2-512"
+	local MaxAuthTries=6
+	local mdns=""
+	local PasswordAuth=1
+	local Port=22
+	local RecvWindowSize=""
+	local RootLogin=1
+	local RootPasswordAuth=1
+	local SSHKeepAlive=""
+	local Verbose=""
+
+	local Cfg="$1"
+	local SectionName="$Cfg"
+	local Migrate="$2"
+
+	# if not the default case, then config_get can be used
+	# as dropbear config is present
+	if [ "$Migrate" = "true" ]; then
+		config_get BannerFile  "$Cfg" BannerFile
+		config_get_bool Enable "$Cfg" enable 1
+		config_get ForceCommand "$Cfg" ForceCommand
+		config_get_bool GatewayPorts  "$Cfg" GatewayPorts 0
+		config_get IdleTimeout "$Cfg" IdleTimeout 0
+		config_get Interface "$Cfg" Interface
+		config_get MaxAuthTries "$Cfg" MaxAuthTries 6
+		config_get_bool mdns "$Cfg" mdns 1
+		config_get_bool PasswordAuth "$Cfg" PasswordAuth 1
+		config_get Port "$Cfg" Port 22
+		config_get_bool RecvWindowSize "$Cfg" RecvWindowSize 24576
+		config_get_bool RootLogin "$Cfg" RootLogin 1
+		config_get_bool RootPasswordAuth "$Cfg" RootPasswordAuth 1
+		config_get SSHKeepAlive "$Cfg" SSHKeepAlive 300
+		config_get_bool Verbose "$Cfg" verbose 0
+	fi
+
+	# using uci set instead of uci add because they achieve the same thing
+	# but uci set allows us to control section name at the same time
+	uci -q set "sshd.${SectionName}=sshd"
+
+	# set options
+	set_option_list "$SectionName" "AllowUsers" "$AllowUsers"
+	set_option "$SectionName" "BannerFile" "$BannerFile"
+	set_option_list "$SectionName" "Ciphers" "$Ciphers"
+	set_option "$SectionName" "enable" "$Enable"
+	set_option "$SectionName" "GatewayPorts" "$GatewayPorts"
+	set_option_list "$SectionName" "HostKeyAlgorithms" "$HostKeyAlgorithms"
+	set_option "$SectionName" "IdleTimeout" "$IdleTimeout"
+	set_option "$SectionName" "Interface" "$Interface"
+	set_option_list "$SectionName" "KexAlgorithms" "$KexAlgorithms"
+	set_option_list "$SectionName" "MacAlgorithms" "$MacAlgorithms"
+	set_option "$SectionName" "MaxAuthTries" "$MaxAuthTries"
+	set_option "$SectionName" "PasswordAuth" "$PasswordAuth"
+	set_option "$SectionName" "Port" "$Port"
+	set_option "$SectionName" "mdns" "$mdns"
+	set_option "$SectionName" "RootLogin" "$RootLogin"
+	set_option "$SectionName" "RootPasswordAuth" "$RootPasswordAuth"
+}
+
+migrate_config()
+{
+	rm -f "/etc/config/sshd"
+	touch "/etc/config/sshd"
+
+	config_load "dropbear"
+	# for all sections, call generate_sshd_section with migrate flag as true
+	config_foreach generate_sshd_section "dropbear" "true"
+}
+
+migrate_authorized_keys()
+{
+	local SourceAuthorizedKeysFile="/etc/dropbear/authorized_keys"
+	local DestAuthorizedKeysFile="/root/.ssh/authorized_keys"
+
+	if [ -s "$SourceAuthorizedKeysFile" ]; then
+		# create key directory if not present
+		mkdir -m 0700 -p /root/.ssh
+		# copy dropbear key file
+		cp "$SourceAuthorizedKeysFile" "$DestAuthorizedKeysFile"
+		# remove dropbear key file
+		rm -f "$SourceAuthorizedKeysFile"
+	fi
+}
+
+# if dropbear config is present, then it over-writes sshd config
+# the assumption is that there was a working dropbear config
+if [ -s "/etc/config/dropbear" ]; then
+	# migrate dropbear config
+	migrate_config
+	migrate_authorized_keys
+	# remove config
+	rm -f "/etc/config/dropbear"
+elif uci -q get "sshd.@sshd[0]" >/dev/null 2>&1; then
+	# return if there is any valid content
+	exit
+else
+	# no valid content
+	rm -f "/etc/config/sshd"
+	# create sshd config file so that uci set can work
+	touch "/etc/config/sshd"
+	# generate a default sshd config if sshd UCI not found
+	# pass a section name and migrate flag as false
+	generate_sshd_section "sshd1" "false"
+fi
+
+# commit sshd
+uci commit "sshd"
