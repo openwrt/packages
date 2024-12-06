@@ -17,7 +17,7 @@ _enable_url() {
 	config_get u "$cfg" 'url'
 	config_get a "$cfg" 'action' 'block'
 	if [ "$u" = "$url" ] && [ "$a" = "$action" ]; then
-		uci del "${packageName}.${cfg}.enabled" && _found=1
+		uci_remove "$packageName" "$cfg" 'enabled' && _found=1
 	fi
 }
 
@@ -26,32 +26,32 @@ enable_add_url() {
 	config_load "$packageName"
 	config_foreach _enable_url 'file_url' "$url" "$action"
 	if [ -z "$_found" ]; then
-		uci add "${packageName}" 'file_url' >/dev/null 2>&1
-		uci set "${packageName}.@file_url[-1].url=$url"
-		uci set "${packageName}.@file_url[-1].size=$(get_url_filesize "$url")"
-		uci set "${packageName}.@file_url[-1].action=$action"
+		uci_add "$packageName" 'file_url'
+		uci_set "$packageName" '@file_url[-1]' 'url' "$url"
+		uci_set "$packageName" '@file_url[-1]' 'size' "$(get_url_filesize "$url")"
+		uci_set "$packageName" '@file_url[-1]' 'action' "$action"
 	fi
 }
 
 if [ -s '/etc/config/simple-adblock' ] \
 	&& [ ! -s '/etc/config/adblock-fast-opkg' ] \
-	&& [ "$(uci get adblock-fast.config.enabled)" = '0' ]; then
+	&& [ "$(uci_get adblock-fast config enabled)" = '0' ]; then
 	cp -f '/etc/config/adblock-fast' '/etc/config/adblock-fast-opkg'
-	enabled="$(uci get simple-adblock.config.enabled)"
+	enabled="$(uci_get simple-adblock config enabled)"
 	if [ -x '/etc/init.d/simple-adblock' ]; then
 		output "Stopping and disabling simple-adblock "
 		if /etc/init.d/simple-adblock stop  >/dev/null 2>&1 \
 			&& /etc/init.d/simple-adblock disable \
-			&& uci set simple-adblock.config.enabled=0 \
-			&& uci commit simple-adblock; then
+			&& uci_set simple-adblock config enabled 0 \
+			&& uci_commit simple-adblock; then
 			output_okn
 		else
 			output_failn
 		fi
 	else
 		output "Disabling simple-adblock."
-		if uci set simple-adblock.config.enabled=0 \
-			&& uci commit simple-adblock; then
+		if uci_set simple-adblock config enabled 0 \
+			&& uci_commit simple-adblock; then
 			output_okn
 		else
 			output_failn
@@ -63,31 +63,30 @@ if [ -s '/etc/config/simple-adblock' ] \
 		curl_additional_param curl_max_file_size curl_retry download_timeout \
 		debug dns dns_instance dnsmasq_config_file_url force_dns led \
 		parallel_downloads procd_trigger_wan6 procd_boot_wan_timeout verbosity; do
-		j="$(uci -q get simple-adblock.config.${i})"
-		[ -n "$j" ] && uci set "${packageName}.config.${i}=${j}"
+		j="$(uci_get simple-adblock.config.${i})"
+		[ -n "$j" ] && uci_set "$packageName" config "$i" "$j"
 	done
-	[ -n "$enabled" ] && uci set "${packageName}.config.enabled=${enabled}"
-	j="$(uci -q get simple-adblock.config.config_update_url)"
+	[ -n "$enabled" ] && uci_set "$packageName" config enabled "$enabled"
+	j="$(uci_get simple-adblock config config_update_url)"
 	if [ "${j//simple-adblock/}" = "$j" ]; then
-		uci set "${packageName}.config.config_update_url=$j"
+		uci_set "$packageName" config config_update_url "$j"
 	fi
-	ccd="$(uci get simple-adblock.config.compressed_cache_dir)"
-	ccd="${ccd:-/etc}"
-	for j in $(uci -q get simple-adblock.config.allowed_domain); do
-		[ -n "$j" ] && uci add_list "${packageName}.config.allowed_domain=${j}"
+	ccd="$(uci_get simple-adblock config compressed_cache_dir '/etc')"
+	for j in $(uci_get simple-adblock config allowed_domain); do
+		[ -n "$j" ] && uci_add_list "$packageName" config allowed_domain "$j"
 	done
-	for j in $(uci -q get simple-adblock.config.blocked_domain); do
-		[ -n "$j" ] && uci add_list "${packageName}.config.blocked_domain=${j}"
+	for j in $(uci_get simple-adblock config blocked_domain); do
+		[ -n "$j" ] && uci_add_list "$packageName" config blocked_domain "$j"
 	done
-	for j in $(uci -q get simple-adblock.config.force_dns_port); do
-		[ -n "$j" ] && uci add_list "${packageName}.config.force_dns_port=${j}"
+	for j in $(uci_get simple-adblock config force_dns_port); do
+		[ -n "$j" ] && uci_add_list "$packageName" config force_dns_port "$j"
 	done
 	output_okn
 
 	for i in allowed_domains_url blocked_adblockplus_url blocked_domains_url \
 		blocked_hosts_url; do
 		output "Migrating simple-adblock ${i} "
-		for j in $(uci -q get simple-adblock.config.${i}); do
+		for j in $(uci_get simple-adblock config "$i"); do
 			if [ "$i" = 'allowed_domains_url' ]; then
 				enable_add_url "$j" 'allow'
 			else
@@ -96,7 +95,7 @@ if [ -s '/etc/config/simple-adblock' ] \
 		done
 		output_okn
 	done
-	uci commit "$packageName"
+	uci_commit "$packageName"
 	output "Migrating simple-adblock cache file(s) "
 	for i in '/var/run/simple-adblock/dnsmasq.addnhosts.cache' \
 		'/var/run/simple-adblock/dnsmasq.conf.cache' \
