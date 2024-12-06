@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adblock-fast
 PKG_VERSION:=1.1.2
-PKG_RELEASE:=5
+PKG_RELEASE:=18
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.ca>
 PKG_LICENSE:=AGPL-3.0-or-later
 
@@ -28,7 +28,7 @@ define Package/adblock-fast
 endef
 
 define Package/adblock-fast/description
-Fast AdBlocking script to block ad or abuse/malware domains with DNSMASQ or Unbound.
+Fast AdBlocking script to block ad or abuse/malware domains with Dnsmasq, SmartDNS or Unbound.
 Script supports local/remote list of domains and hosts-files for both block-listing and allow-listing.
 Please see https://docs.openwrt.melmac.net/adblock-fast/ for more information.
 endef
