@@ -900,14 +900,6 @@ resolver() {
 			;;
 		esac
 	}
-# shellcheck disable=SC2317
-	_dnsmasq_instance_append_force_dns_port() {
-		local cfg="$1" instance_port
-		[ -s "/etc/config/dhcp" ] || return 0
-		[ -n "$(uci_get 'dhcp' "$cfg")" ] || return 1
-		config_get instance_port "$cfg" 'port' '53'
-		str_contains_word "$force_dns_port" "$instance_port" || force_dns_port="${force_dns_port:+$force_dns_port }${instance_port}"
-	}
 # shellcheck disable=SC2016,SC2317
 	_dnsmasq_instance_init() {
 		local cfg="$1" param="$2" confdir confdirFile
@@ -1233,7 +1225,7 @@ process_file_url() {
 		local type="$1" file="$2"
 		case "$type" in
 			hosts)
-				sed -i '/# Title: StevenBlack/,/# Custom host records are listed here/d' "$file"
+				sed -i '/# Title: StevenBlack/,/# Start StevenBlack/d' "$file"
 #				sed -i -E '/^(.*)[\t ](local|localhost|localhost.localdomain)$/d;/^255.255.255.255[\t ]broadcasthost$/d;/^0.0.0.0[\t ]0.0.0.0$/d' "$file"
 #				sed -i -E '/^(.*)[\t ](ip6-localhost|ip6-loopback|ip6-localnet|ip6-mcastprefix|ip6-allnodes|ip6-allrouters|ip6-allhosts)/d' "$file"
 			;;
