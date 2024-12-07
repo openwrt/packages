@@ -128,9 +128,9 @@ str_to_lower() { echo "$1" | tr 'A-Z' 'a-z'; }
 str_to_upper() { echo "$1" | tr 'a-z' 'A-Z'; }
 # shellcheck disable=SC3060
 output() {
-	local v="${verbosity:-1}"
+	[ -z "$verbosity" ] && verbosity="$(uci_get "$packageName" 'config' 'verbosity' '1')"
 	[ "$#" -ne '1' ] && {
-		case "$1" in [0-9]) [ $((v & $1)) -gt 0 ] && shift || return 0;; esac }
+		case "$1" in [0-9]) [ $((verbosity & $1)) -gt 0 ] && shift || return 0;; esac }
 	local msg="$*" queue="/dev/shm/$packageName-output"
 	[ -t 1 ] && printf "%b" "$msg"
 	[ "$msg" != "${msg//\\n}" ] && {
@@ -190,16 +190,14 @@ filter_options() {
 inline_set() {
 	local value="$1" inline_set i
 	for i in $value; do
-		[ "${i:0:1}" = "!" ] && i=${i:1}
-		[ "${i:0:1}" = "@" ] && i=${i:1}
-		inline_set="${inline_set:+$inline_set, }$i"
+		inline_set="${inline_set:+$inline_set, }${i#[@\!]}"
 	done
 	echo "$inline_set"
 }
 # shellcheck disable=SC2016
 is_bad_user_file_nft_call() { grep -q '"\$nft" list' "$1" || grep '"\$nft" -f' "$1"; }
-is_config_enabled() {
 # shellcheck disable=SC2317
+is_config_enabled() {
 	_check_config() { local en; config_get_bool en "$1" 'enabled' '1'; [ "$en" -gt '0' ] && _cfg_enabled=0; }
 	local cfg="$1" _cfg_enabled=1
 	[ -n "$1" ] || return 1
@@ -207,7 +205,6 @@ is_config_enabled() {
 	config_foreach _check_config "$cfg"
 	return "$_cfg_enabled"
 }
-# shellcheck disable=SC2317
 uci_get_device() {
 	local __tmp
 	__tmp="$(uci_get 'network' "$2" 'device')"
@@ -217,7 +214,7 @@ uci_get_device() {
 uci_get_protocol() { uci_get 'network' "$1" 'proto'; }
 is_default_dev() { [ "$1" = "$(ip -4 r | grep -m1 'dev' | grep -Eso 'dev [^ ]*' | awk '{print $2}')" ]; }
 is_disabled_interface() { [ "$(uci_get 'network' "$1" 'disabled')" = '1' ]; }
-is_domain(){ echo "$1" | grep -qE '^([a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]\.)*[a-zA-Z]{2,}$'; }
+is_domain(){ echo "$1" | grep -qE '^([a-zA-Z0-9][a-zA-Z0-9-]{0,61}\.)*[a-zA-Z]{2,}$'; }
 is_dslite() { local p; network_get_protocol p "$1"; [ "${p:0:6}" = "dslite" ]; }
 is_family_mismatch() { ( is_ipv4 "${1//!}" && is_ipv6 "${2//!}" ) || ( is_ipv6 "${1//!}" && is_ipv4 "${2//!}" ); }
 is_greater() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"; }
@@ -246,24 +243,13 @@ is_present() { command -v "$1" >/dev/null 2>&1; }
 is_service_running() { is_service_running_nft; }
 is_service_running_nft() { [ -x "$nft" ] && [ -n "$(get_mark_nft_chains)" ]; }
 is_supported_iface_dev() { local n dev; for n in $ifacesSupported; do network_get_device dev "$n"; [ "$1" = "$dev" ] && return 0; done; return 1; }
-is_supported_protocol() { grep -o '^[^#]*' /etc/protocols | grep -w -v '0' | grep . | awk '{print $1}' | grep -q "$1"; }
+is_supported_protocol(){ grep -qi "^${1:--}" /etc/protocols;}
 is_pptp() { local p; network_get_protocol p "$1"; [ "${p:0:4}" = "pptp" ]; }
 is_softether() { local d; network_get_device d "$1"; [ "${d:0:4}" = "vpn_" ]; }
-is_supported_interface() { is_lan "$1" && return 1; str_contains_word "$supported_interface" "$1" || { ! is_ignored_interface "$1" && ! is_disabled_interface "$1" && { is_wan "$1" || is_wan6 "$1" || is_tunnel "$1"; }; } || is_ignore_target "$1" || is_xray "$1"; }
+is_supported_interface() { { is_lan "$1" || is_disabled_interface "$1"; } && return 1; str_contains_word "$supported_interface" "$1" || { ! is_ignored_interface "$1" && { is_wan "$1" || is_wan6 "$1" || is_tunnel "$1"; }; } || is_ignore_target "$1" || is_xray "$1"; }
 is_tailscale() { local d; network_get_device d "$1"; [ "${d:0:9}" = "tailscale" ]; }
 is_tor() { [ "$(str_to_lower "$1")" = "tor" ]; }
-is_tor_running() {
-	local ret=0
-	is_ignored_interface 'tor' && return 1
-	[ -s "$torConfigFile" ] || return 1
-	json_load "$(ubus call service list "{ 'name': 'tor' }")" >/dev/null || return 1
-	json_select 'tor' >/dev/null || return 1
-	json_select 'instances' >/dev/null || return 1
-	json_select 'instance1' >/dev/null || return 1
-	json_get_var ret 'running' >/dev/null || return 1
-	json_cleanup
-	if [ "$ret" = "0" ]; then return 1; else return 0; fi
-}
+is_tor_running() { ! is_ignored_interface 'tor' && [ -s "$torConfigFile" ] && str_contains "$(ubus call service list "{ 'name': 'tor' }" | jsonfilter -e '@.tor.instances.*.running')" 'true' && return 0 || return 1; }
 is_tunnel() { is_dslite "$1" || is_l2tp "$1" || is_oc "$1" || is_ovpn "$1" || is_pptp "$1" || is_softether "$1" || is_tailscale "$1" || is_tor "$1" || is_wg "$1"; }
 is_url() { is_url_file "$1" || is_url_dl "$1"; }
 is_url_dl() { is_url_ftp "$1" || is_url_http "$1" || is_url_https "$1"; }
@@ -293,9 +279,9 @@ resolveip_to_nftset() { resolveip "$@" | sed -n 'H;${x;s/\n/,/g;s/^,//;p;};d'; }
 resolveip_to_nftset4() { resolveip_to_nftset -4 "$@"; }
 resolveip_to_nftset6() { [ -n "$ipv6_enabled" ] && resolveip_to_nftset -6 "$@"; }
 # shellcheck disable=SC2016
-ipv4_leases_to_nftset() { [ -s '/tmp/dhcp.leases' ] || return 1; grep "$1" '/tmp/dhcp.leases' | awk '{print $3}' | sed -n 'H;${x;s/\n/,/g;s/^,//;p;};d' | tr '\n' ' '; }
+ipv4_leases_to_nftset(){ [ -s '/tmp/dhcp.leases' ] && awk -v arg="$1" 'BEGIN{fs=""};$0~arg{printf fs$3;fs=","}' /tmp/dhcp.leases;}
 # shellcheck disable=SC2016
-ipv6_leases_to_nftset() { [ -s '/tmp/hosts/odhcpd' ] || return 1; grep -v '^#' '/tmp/hosts/odhcpd' | grep "$1" | awk '{print $1}' | sed -n 'H;${x;s/\n/,/g;s/^,//;p;};d' | tr '\n' ' '; }
+ipv6_leases_to_nftset(){ [ -s '/tmp/hosts/odhcpd' ] && awk -v arg="$1" 'BEGIN{fs=""};$0~arg{printf fs$1;fs=","}' /tmp/hosts/odhcpd;}
 # shellcheck disable=SC3037
 ports_to_nftset() { echo -en "$1"; }
 get_mark_nft_chains() { [ -x "$nft" ] && "$nft" list table inet "$nftTable" 2>/dev/null | grep chain | grep "${nftPrefix}_mark_" | awk '{ print $2 }'; }
@@ -523,9 +509,9 @@ load_package_config() {
 
 }
 
+# shellcheck disable=SC2317
 load_environment() {
 	_system_health_check() {
-# shellcheck disable=SC2317
 		_check_dhcp_force() {
 			is_lan "$1" || return 0
 			if [ "$(uci_get dhcp "$1" force 0)" = '0' ]; then
@@ -537,8 +523,10 @@ load_environment() {
 			uci_remove 'firewall' 'defaults' 'auto_includes'
 			uci_commit firewall
 		fi
-		# TODO: implement ip-full check
-		# state add 'errorSummary' 'errorRequiredBinaryMissing' 'ip-full'
+		if [ "$(readlink /sbin/ip)" != "$ip_full" ]; then
+			state add 'errorSummary' 'errorRequiredBinaryMissing' 'ip-full'
+			_ret='1'
+		fi
 		if ! nft_call list table inet fw4; then
 			state add 'errorSummary' 'errorDefaultFw4TableMissing' 'fw4'
 			_ret='1'
@@ -561,7 +549,7 @@ load_environment() {
 	}
 	local param="$1" validation_result="$2"
 	case "$param" in
-		on_start)
+		on_boot|on_start)
 			output 1 "Loading environment ($param) "
 			load_package_config "$param"
 			if [ "$enabled" -eq '0' ]; then
@@ -594,10 +582,9 @@ load_environment() {
 	esac
 }
 
+# shellcheck disable=SC2317
 load_network() {
-# shellcheck disable=SC2317
 	_build_ifaces_supported() { is_supported_interface "$1" && ! str_contains "$ifacesSupported" "$1" && ifacesSupported="${ifacesSupported}${1} "; }
-# shellcheck disable=SC2317
 	_find_firewall_wan_zone() { [ "$(uci_get 'firewall' "$1" 'name')" = "wan" ] && firewallWanZone="$1"; }
 	local i param="$1"
 	local dev4 dev6
@@ -927,7 +914,12 @@ resolver() {
 	_resolver_dnsmasq_confdir() {
 		local cfg="$1"
 		local confdir confdirFile
-		config_get confdir "$1" 'confdir' '/tmp/dnsmasq.d'
+# shellcheck disable=SC2016
+		if grep -q 'config_get dnsmasqconfdir "$cfg" confdir "/tmp/dnsmasq${cfg:+.$cfg}.d"' '/etc/init.d/dnsmasq'; then
+			config_get confdir "$cfg" 'confdir' "/tmp/dnsmasq${cfg:+.$cfg}.d"
+		else
+			config_get confdir "$cfg" 'confdir' '/tmp/dnsmasq.d'
+		fi
 		confdirFile="${confdir}/${packageName}"
 		if ! str_contains "$dnsmasqFileList" "$confdirFile"; then
 			dnsmasqFileList="${dnsmasqFileList:+$dnsmasqFileList }${confdirFile}"
@@ -1457,7 +1449,7 @@ dns_policy_process() {
 	local filter_list_src_addr='phys_dev phys_dev_negative mac_address mac_address_negative domain domain_negative ipv4 ipv4_negative ipv6 ipv6_negative'
 	local filter_group_src_addr filtered_value_src_addr
 	for filter_group_src_addr in $filter_list_src_addr; do
-		filtered_value_src_addr=$(filter_options "$filter_group_src_addr" "$src_addr")
+		filtered_value_src_addr="$(filter_options "$filter_group_src_addr" "$src_addr")"
 		if [ -n "$src_addr" ] && [ -n "$filtered_value_src_addr" ]; then
 			if str_contains "$filter_group_src_addr" 'ipv4' && [ -z "$dest_dns_ipv4" ] ; then
 					continue
@@ -1529,11 +1521,11 @@ policy_process() {
 	local filter_group_src_addr filtered_value_src_addr filter_group_dest_addr filtered_value_dest_addr
 	[ -z "$src_addr" ] && filter_list_src_addr='none'
 	for filter_group_src_addr in $filter_list_src_addr; do
-		filtered_value_src_addr=$(filter_options "$filter_group_src_addr" "$src_addr")
+		filtered_value_src_addr="$(filter_options "$filter_group_src_addr" "$src_addr")"
 		if [ -z "$src_addr" ] || { [ -n "$src_addr" ] && [ -n "$filtered_value_src_addr" ]; }; then
 			[ -z "$dest_addr" ] && filter_list_dest_addr='none'
 			for filter_group_dest_addr in $filter_list_dest_addr; do
-				filtered_value_dest_addr=$(filter_options "$filter_group_dest_addr" "$dest_addr")
+				filtered_value_dest_addr="$(filter_options "$filter_group_dest_addr" "$dest_addr")"
 				if [ -z "$dest_addr" ] || { [ -n "$dest_addr" ] && [ -n "$filtered_value_dest_addr" ]; }; then
 					if str_contains "$filter_group_src_addr" 'ipv4' && str_contains "$filter_group_dest_addr" 'ipv6'; then
 							continue
@@ -1573,7 +1565,7 @@ interface_routing() {
 				if [ -n "$ipv6_enabled" ]; then
 					ipv6_error=0
 					ip -6 rule del table "$tid" prio "$priority" >/dev/null 2>&1
-					try ip -6 rule add fwmark "${mark}/${fw_mask}" table "$tid" priority "$((priority-1))" || ipv6_error=1
+					try ip -6 rule add fwmark "${mark}/${fw_mask}" table "$tid" priority "$priority" || ipv6_error=1
 				fi
 			else
 				if ! grep -q "$tid ${ipTablePrefix}_${iface}" "$rtTablesFile"; then
@@ -1637,7 +1629,7 @@ EOF
 							try ip -6 route add "$(ip -6 -o a show "$dev6" | awk '{print $4}')" dev "$dev6" table "$tid" || ipv6_error=1
 							try ip -6 route add default dev "$dev6" table "$tid" || ipv6_error=1
 						fi
-						try ip -6 rule add fwmark "${mark}/${fw_mask}" table "$tid" priority "$((priority-1))" || ipv6_error=1
+						try ip -6 rule add fwmark "${mark}/${fw_mask}" table "$tid" priority "$priority" || ipv6_error=1
 					fi
 				fi
 			fi
@@ -1667,22 +1659,30 @@ EOF
 			return "$s"
 		;;
 		delete|destroy)
-			ip rule del table "$tid" prio "$priority" >/dev/null 2>&1
+			ip -4 rule del table "$tid" prio "$priority" >/dev/null 2>&1
+			ip -6 rule del table "$tid" prio "$priority" >/dev/null 2>&1
 			if ! is_netifd_table_interface "$iface"; then
-				ip rule flush table "$tid" >/dev/null 2>&1
-				ip route flush table "$tid" >/dev/null 2>&1
+				ip -4 rule flush table "$tid" >/dev/null 2>&1
+				ip -4 route flush table "$tid" >/dev/null 2>&1
+				ip -6 rule flush table "$tid" >/dev/null 2>&1
+				ip -6 route flush table "$tid" >/dev/null 2>&1
 				sed -i "/${ipTablePrefix}_${iface}\$/d" "$rtTablesFile"
 				sync
 			fi
 			return "$s"
 		;;
 		reload_interface)
-			ip rule del table "$tid" prio "$priority" >/dev/null 2>&1
+			ip -4 rule del table "$tid" prio "$priority" >/dev/null 2>&1
+			[ -n "$ipv6_enabled" ] && ip -6 rule del table "$tid" prio "$priority" >/dev/null 2>&1
 			is_netifd_table_interface "$iface" && return 0;
 			ipv4_error=0
 			if ! is_netifd_table_interface "$iface"; then
-				ip rule flush table "$tid" >/dev/null 2>&1
-				ip route flush table "$tid" >/dev/null 2>&1
+				ip -4 rule flush table "$tid" >/dev/null 2>&1
+				ip -4 route flush table "$tid" >/dev/null 2>&1
+				if [ -n "$ipv6_enabled" ]; then
+					ip -6 rule flush table "$tid" >/dev/null 2>&1
+					ip -6 route flush table "$tid" >/dev/null 2>&1
+				fi
 			fi
 			if [ -n "$gw4" ] || [ "$strict_enforcement" -ne '0' ]; then
 				if [ -z "$gw4" ]; then
@@ -1786,15 +1786,15 @@ process_interface() {
 						ip rule add sport "$listen_port" table "pbr_${wanIface4}" >/dev/null 2>&1
 					fi
 					if [ -n "$ipv6_enabled" ] && [ -n "$wanIface6" ]; then
-						ip rule del sport "$listen_port" table "pbr_${wanIface6}" >/dev/null 2>&1
-						ip rule add sport "$listen_port" table "pbr_${wanIface6}" >/dev/null 2>&1
+						ip -6 rule del sport "$listen_port" table "pbr_${wanIface4}" >/dev/null 2>&1
+						ip -6 rule add sport "$listen_port" table "pbr_${wanIface4}" >/dev/null 2>&1
 					fi
 				fi
 			;;
 			destroy)
 				if [ -n "$listen_port" ]; then
 					ip rule del sport "$listen_port" table "pbr_${wanIface4}" >/dev/null 2>&1
-					ip rule del sport "$listen_port" table "pbr_${wanIface6}" >/dev/null 2>&1
+					ip -6 rule del sport "$listen_port" table "pbr_${wanIface4}" >/dev/null 2>&1
 				fi
 			;;
 		esac
@@ -1887,7 +1887,8 @@ process_interface() {
 			displayText="${iface}/${dispDev:+$dispDev/}${dispGw4}${ipv6_enabled:+/$dispGw6}"
 			displayText="${iface}/${dispDev:+$dispDev/}${dispGw4}${ipv6_enabled:+/$dispGw6}"
 			output 2 "Removing routing for '$displayText' "
-			interface_routing 'destroy' "${ifaceTableID}" "${ifaceMark}" "${iface}"
+			#interface_routing 'destroy' "${ifaceTableID}" "${ifaceMark}" "${iface}"
+			interface_routing 'destroy' "$ifaceTableID" "$ifaceMark" "$iface" "$gw4" "$dev" "$gw6" "$dev6" "$ifacePriority"
 			if is_netifd_table_interface "$iface"; then output_okb; else output_ok; fi
 		;;
 		reload)
@@ -2227,6 +2228,57 @@ stop_service() {
 
 version() { echo "$PKG_VERSION"; }
 
+# shellcheck disable=SC2317
+setup_netifd() {
+	local param="$1"
+	_pbr_iface_setup() {
+		local iface="${1}" param="$2" tid
+		if is_supported_interface "${iface}"; then
+			output "Setting up ${packageName} routing tables for ${iface} ${param:+($param) }"
+			tid="$(get_rt_tables_next_id)"
+			if ! grep -q "$tid ${ipTablePrefix}_${iface%6}" "$rtTablesFile"; then
+				sed -i "/${ipTablePrefix}_${iface%6}/d" "$rtTablesFile"
+				echo "$tid ${ipTablePrefix}_${iface%6}" >> "$rtTablesFile"
+				sync
+			fi
+			uci_set 'network' "${iface}" 'ip4table' "${ipTablePrefix}_${iface%6}"
+			uci_set 'network' "${iface}" 'ip6table' "${ipTablePrefix}_${iface%6}"
+			output_okbn
+		fi
+	}
+	_pbr_default_route_setup() {
+		local iface iface6 param="$1"
+		iface="$(uci_get 'pbr' 'config' 'procd_wan_interface')"
+		iface6="$(uci_get 'pbr' 'config' 'procd_wan6_interface')"
+		[ -z "$iface" ] && { network_flush_cache; network_find_wan iface; }
+		[ -z "$iface6" ] && { network_flush_cache; network_find_wan6 iface6; }
+		output "Setting up ${packageName} default route for ${iface:-wan} ${param:+($param) }"
+		uci -q delete network.default || true # remove manual default route
+		uci -q delete network.pbr_default || true
+		uci_add network rule pbr_default
+		uci_set network pbr_default lookup "pbr_${iface:-wan}"
+		uci_set network pbr_default priority "40000"
+		output_okbn
+		output "Setting up ${packageName} default route for ${iface6:-wan6} ${param:+($param) }"
+		uci -q delete network.default6 || true # remove manual default route
+		uci -q delete network.pbr_default6 || true
+		uci_add network rule6 pbr_default6
+		uci_set network pbr_default6 lookup "pbr_${iface6:-wan6}"
+		uci_set network pbr_default6 priority "40000"
+		output_okbn
+	}
+	sed -i "/${ipTablePrefix}_/d" "$rtTablesFile"
+	sync
+	config_load 'network'
+	config_foreach _pbr_iface_setup 'interface' "$param"
+	_pbr_default_route_setup "$param"
+	uci_commit 'network'
+	sync
+	output "Restarting network ${param:+($param) }"
+	/etc/init.d/network restart
+	output_okn
+}
+
 status_service() {
 	local i dev dev6 wan_tid
 
@@ -2237,8 +2289,8 @@ status_service() {
 	fi
 	if [ -n "$wanIface6" ]; then
 		network_get_device dev6 "$wanIface6"
-		wanGW6=$(ip -6 route show | grep -m1 " dev $dev6 " | awk '{print $1}')
-		[ "$wanGW6" = "default" ] && wanGW6=$(ip -6 route show | grep -m1 " dev $dev6 " | awk '{print $3}')
+		wanGW6="$(ip -6 route show | grep -m1 " dev $dev6 " | awk '{print $1}')"
+		[ "$wanGW6" = "default" ] && wanGW6="$(ip -6 route show | grep -m1 " dev $dev6 " | awk '{print $3}')"
 	fi
 	while [ "${1:0:1}" = "-" ]; do param="${1//-/}"; eval "set_$param=1"; shift; done
 	[ -e "/var/${packageName}-support" ] && rm -f "/var/${packageName}-support"
@@ -2283,14 +2335,20 @@ status_service() {
 	tableCount="$(grep -c "${packageName}_" "$rtTablesFile")" || tableCount=0
 	wan_tid=$(($(get_rt_tables_next_id)-tableCount))
 	i=0; while [ "$i" -lt "$tableCount" ]; do
-		echo "IPv4 table $((wan_tid + i)) route: $(ip -4 route show table $((wan_tid + i)) | grep default)"
-		echo "IPv4 table $((wan_tid + i)) rule(s):"
+		local status_table
+		status_table="$(grep $((wan_tid + i)) "$rtTablesFile")"
+		echo "IPv4 table $status_table route:"
+		ip -4 route show table "$((wan_tid + i))" | grep default
+		echo "IPv4 table $status_table rule(s):"
 		ip -4 rule list table "$((wan_tid + i))"
-		if [ -n "$ipv6_enabled" ]; then
-			echo "IPv6 table $((wan_tid + i)) route: $(ip -6 route show table $((wan_tid + i)) | grep default)"
-			echo "IPv6 table $((wan_tid + i)) rule(s):"
-			ip -6 route show table $((wan_tid + i))
+		if [ "$(uci_get "$packageName" config ipv6_enabled)" = "1" ]; then
+			echo "$_SEPARATOR_"
+			echo "IPv6 table $status_table route:"
+			ip -6 route show table "$((wan_tid + i))" | grep default
+			echo "IPv6 table $status_table rule(s):"
+			ip -6 rule list table "$((wan_tid + i))"
 		fi
+		echo "$_SEPARATOR_"
 		i=$((i + 1))
 	done
 }
