@@ -39,6 +39,15 @@ start_service() {
 	elif [ "$cert_path" = "none"] && ["$key_path" = "none"]; then 
 		[ -n "$bind4" ] && procd_append_param command -p $bind4:$port
 		[ -n "$bind6" ] && procd_append_param command -p [$bind6]:$port
+	elif [ "$cert_path" = "none" ] && [ "$key_path" ! = "none" ]; then
+		[ -n "$bind4" ] && procd_append_param command -p $bind4:$port
+		[ -n "$bind6" ] && procd_append_param command -p [$bind6]:$port
+	elif [ "$cert_path" ! = "none" ] && [ "$key_path" = "none" ]; then
+		[ -n "$bind4" ] && procd_append_param command -p $bind4:$port
+		[ -n "$bind6" ] && procd_append_param command -p [$bind6]:$port
+	else
+		_log "Faulty configuration for variable cert_path with value $cert_path or variable key_path with value $key_path"
+		return 0
 	fi
 
 	if [ "$cert_path" != "none" ] && [ "$key_path" != "none" ]; then
