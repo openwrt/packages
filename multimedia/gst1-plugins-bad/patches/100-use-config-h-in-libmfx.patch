@@ -1,0 +1,28 @@
+--- a/sys/qsv/libmfx/api/vpl/mfxdefs.h
++++ b/sys/qsv/libmfx/api/vpl/mfxdefs.h
+@@ -59,8 +59,13 @@ extern "C"
+ 
+ #define MFX_PACK_BEGIN_USUAL_STRUCT()        MFX_PACK_BEGIN_X(4)
+ 
++#include <config.h>
++
+ /* 64-bit LP64 data model */
+-#if defined(_WIN64) || defined(__LP64__)
++#if defined(SIZEOF_VOIDP) && defined(SIZEOF_LONG)
++    #define MFX_PACK_BEGIN_STRUCT_W_PTR()    MFX_PACK_BEGIN_X(SIZEOF_VOIDP)
++    #define MFX_PACK_BEGIN_STRUCT_W_L_TYPE() MFX_PACK_BEGIN_X(SIZEOF_LONG)
++#elif defined(_WIN64) || defined(__LP64__)
+     #define MFX_PACK_BEGIN_STRUCT_W_PTR()    MFX_PACK_BEGIN_X(8)
+     #define MFX_PACK_BEGIN_STRUCT_W_L_TYPE() MFX_PACK_BEGIN_X(8)
+ /* 32-bit ILP32 data model Windows* (Intel(r) architecture) */
+--- a/sys/qsv/libmfx/meson.build
++++ b/sys/qsv/libmfx/meson.build
+@@ -79,7 +79,7 @@ libmfx_static = static_library('libmfx-s
+   c_args : libmfx_extra_args,
+   cpp_args : libmfx_extra_args,
+   dependencies : libmfx_extra_deps + [gst_dep],
+-  include_directories : libmfx_incl,
++  include_directories : [configinc, libmfx_incl],
+   override_options: ['werror=false'],
+ )
+ 
