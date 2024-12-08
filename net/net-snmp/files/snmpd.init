@@ -242,6 +242,66 @@ snmpd_sink_add() {
 	echo "$section $host$port $community" >> $CONFIGFILE
 }
 
+snmpd_snmpv3_add() {
+	local cfg="$1"
+	local cfg2="$2"
+
+	local version
+	local username
+	local auth_type
+	local auth_pass
+	local privacy_type
+	local privacy_pass
+	local allow_write
+	local oid
+
+	config_get version "$cfg2" snmp_version
+	if [ "$version" != "v1/v2c/v3" ] && [ "$version" != "v3" ]; then
+		return 0
+	fi
+
+	config_get username "$cfg" username
+	[ -n "$username" ] || return 0
+
+	config_get auth_type "$cfg" auth_type
+	[ -n "$auth_type" ] || return 0
+
+	config_get auth_pass "$cfg" auth_pass
+	config_get privacy_type "$cfg" privacy_type
+	config_get privacy_pass "$cfg" privacy_pass
+	config_get oid "$cfg" RestrictedOID
+
+	config_get_bool allow_write "$cfg" allow_write
+	local useraccess="Rouser"
+	[ $allow_write -eq 1 ] && useraccess="Rwuser"
+
+	if [ -n "$privacy_type" ] && [ -n "$auth_pass" ] && [ -n "$privacy_pass" ]; then
+		echo "createUser $username $auth_type \"$auth_pass\" $privacy_type \"$privacy_pass\"" >> $CONFIGFILE
+		if [ -n "$oid" ]; then
+			echo "$useraccess $username priv $oid" >> $CONFIGFILE
+		else
+			echo "$useraccess $username priv" >> $CONFIGFILE
+		fi
+		return
+	fi
+
+	if [ -n "$auth_type" ]; then
+		echo "createUser $username $auth_type \"$auth_pass\"" >> $CONFIGFILE
+		if [ -n "$oid" ]; then
+			echo "$useraccess $username auth $oid" >> $CONFIGFILE
+		else
+			echo "$useraccess $username auth" >> $CONFIGFILE
+		fi
+	else
+		echo "createUser $username" >> $CONFIGFILE
+		if [ -n "$oid" ]; then
+			echo "$useraccess $username noauth $oid" >> $CONFIGFILE
+		else
+			echo "$useraccess $username noauth" >> $CONFIGFILE
+		fi
+	fi
+}
+
 append_parm() {
 	local section="$1"
 	local option="$2"
@@ -284,6 +344,64 @@ snmpd_setup_fw_rules() {
 	HANDLED_SNMP_ZONES="$HANDLED_SNMP_ZONES $zone"
 }
 
+snmpd_configure_logging() {
+	local cfg="$1"
+	local log_syslog
+	local log_syslog_facility
+	local log_syslog_priority
+	local log_file
+	local log_file_path
+	local log_file_priority
+
+	config_get_bool log_syslog "$cfg" log_syslog 0
+
+	# d - LOG_DAEMON,
+	# u - LOG_USER,
+	# 0-7 - LOG_LOCAL0 through LOG_LOCAL7.
+
+	# 0 or ! - LOG_EMERG
+	# 1 or a - LOG_ALERT
+	# 2 or c - LOG_CRIT
+	# 3 or e - LOG_ERR
+	# 4 or w - LOG_WARN
+	# 5 or n - LOG_NOTICE
+	# 6 or i - LOG_INFO
+	# 7 or d - LOG_DEBUG
+
+	if [ "$log_syslog" -eq 1 ]; then
+		config_get log_syslog_facility "$cfg" log_syslog_facility "daemon"
+		config_get log_syslog_priority "$cfg" log_syslog_priority "info"
+
+		if [ "$log_syslog_facility" = "daemon" ] ||
+			[ "$log_syslog_facility" = "user" ]; then
+				log_syslog_facility=$(echo "$log_syslog_facility" |
+				cut -c 1)
+		else
+			log_syslog_facility=$(echo "$log_syslog_facility" |
+				cut -c 6)
+		fi
+
+		[ "$log_syslog_priority" = "emerg" ] && log_syslog_priority="!"
+		log_syslog_priority=$(echo "$log_syslog_priority" |
+			cut -c 1)
+
+		procd_append_param command "-LS ${log_syslog_priority} ${log_syslog_facility}"
+	fi
+
+	config_get_bool log_file "$cfg" log_file 0
+
+	if [ "$log_file" -eq 1 ]; then
+		config_get log_file_path "$cfg" log_file_path "/var/log/snmpd.log"
+		config_get log_file_priority "$cfg" log_file_priority "info"
+
+		[ "$log_file_priority" = "emerg" ] && log_file_priority="!"
+		log_file_priority=$(echo "$log_file_priority" | cut -c 1)
+
+		mkdir -p "$(dirname "${log_file_path}")"
+		procd_append_param command "-LF ${log_file_priority} ${log_file_path}"
+	fi
+}
+
 start_service() {
 	[ -f "$CONFIGFILE" ] && rm -f "$CONFIGFILE"
 
@@ -319,9 +437,11 @@ start_service() {
 	append_authtrapenable authtrapenable enable authtrapenable
 	append_parm v1trapaddress host v1trapaddress
 	append_parm trapsess trapsess trapsess
+	config_foreach snmpd_snmpv3_add v3 general
 
-	procd_set_param command $PROG -Lf /dev/null -f -r
-	procd_set_param file $CONFIGFILE
+	procd_set_param command $PROG -f -r -p "$pid_file"
+	config_foreach snmpd_configure_logging log
+	procd_append_param command -C -c $CONFIGFILE
 	procd_set_param respawn
 
 	for iface in $(ls /sys/class/net 2>/dev/null); do
