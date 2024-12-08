@@ -12,6 +12,28 @@ config_get_sane()
 	set -- "$(echo "$1" | tr -d '<>[]{};%?=#\n')"
 }
 
+config_get_ram()
+{
+	ramsize=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+	if [ "$ramsize" -lt 65537 ];then
+		printf "\tsmb2 max read = 64K\n"
+		printf "\tsmb2 max write = 64K\n"
+		printf "\tsmb2 max trans = 64K\n"
+		printf "\tcache read buffers = no\n"
+		printf "\tcache trans buffers = no\n"
+	elif [ "$ramsize" -gt 65536 ] && [ "$ramsize" -lt 134073 ];then
+		printf "\tsmb2 max read = 128K\n"
+		printf "\tsmb2 max write = 128K\n"
+		printf "\tsmb2 max trans = 128K\n"
+		printf "\tcache read buffers = no\n"
+		printf "\tcache trans buffers = no\n"
+	elif [ "$ramsize" -gt 134072 ] && [ "$ramsize" -lt 262146 ];then
+		printf "\tsmb2 max read = 1M\n"
+		printf "\tsmb2 max write = 1M\n"
+		printf "\tsmb2 max trans = 1M\n"
+	fi
+}
+
 smb_header()
 {
 	config_get_sane SMBD_IFACE "$1" interface "lan"
@@ -40,6 +62,7 @@ smb_header()
 	    -e "s#|INTERFACES|#$interfaces#g" \
 	    /etc/ksmbd/ksmbd.conf.template > /var/etc/ksmbd/ksmbd.conf
 		
+	config_get_ram >> /var/etc/ksmbd/ksmbd.conf
 	{
 		printf "\n######### Dynamic written config options #########\n"
 
