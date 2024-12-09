@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=liborcania
 PKG_VERSION:=2.3.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/babelouest/orcania/tar.gz/v$(PKG_VERSION)?
@@ -33,6 +33,11 @@ endef
 
 define Package/liborcania/description
   Potluck with different functions for different purposes that can be shared among C programs.
+endef
+
+define Package/liborcania/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/liborcania.so* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,liborcania))
