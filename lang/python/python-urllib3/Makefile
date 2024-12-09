@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-urllib3
 PKG_VERSION:=2.0.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=MIT
@@ -20,10 +20,13 @@ PYPI_NAME:=urllib3
 PKG_HASH:=8d22f86aae8ef5e410d4f539fde9ce6b2113a001bb4d189e0aed70642d602b11
 
 PKG_BUILD_DEPENDS:=python-hatchling/host
+HOST_BUILD_DEPENDS:=python-hatchling/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 include ../python3-package.mk
+include ../python3-host-build.mk
 
 define Package/python3-urllib3
   SUBMENU:=Python
@@ -41,3 +44,4 @@ endef
 $(eval $(call Py3Package,python3-urllib3))
 $(eval $(call BuildPackage,python3-urllib3))
 $(eval $(call BuildPackage,python3-urllib3-src))
+$(eval $(call HostBuild))

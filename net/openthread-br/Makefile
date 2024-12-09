@@ -32,7 +32,7 @@ define Package/openthread-br
   SECTION:=net
   TITLE:=OpenThread Border Router
   DEPENDS:= \
-  	+kmod-tun \
+	+kmod-tun \
 	+libblobmsg-json \
 	+libjson-c \
 	+libncurses \

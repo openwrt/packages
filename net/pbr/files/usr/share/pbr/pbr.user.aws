@@ -13,8 +13,9 @@ mkdir -p "${TARGET_DL_FILE%/*}"
 	uclient-fetch --no-check-certificate -qO- "$TARGET_URL" | \
 		gzip > "$TARGET_DL_FILE"
 
-[ "$(uci get pbr.config.ipv6_enabled)" = "1" ] && vers="4 6" || vers="4"
+[ -s "$TARGET_DL_FILE" ] || return 1
 
+[ "$(uci get pbr.config.ipv6_enabled)" = "1" ] && vers="4 6" || vers="4"
 for ver in $vers;do
 	case "$ver" in
 		4) search='@.prefixes[*].ip_prefix';;

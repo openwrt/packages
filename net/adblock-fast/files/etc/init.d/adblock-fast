@@ -854,7 +854,12 @@ resolver() {
 				uci_add_list_if_new 'dhcp' "$cfg" 'addnhosts' "$dnsmasqAddnhostsFile"
 			;;
 			cleanup|unbound.adb_list)
-				config_get confdir "$cfg" 'confdir' '/tmp/dnsmasq.d'
+# shellcheck disable=SC2016
+				if grep -q 'config_get dnsmasqconfdir "$cfg" confdir "/tmp/dnsmasq${cfg:+.$cfg}.d"' '/etc/init.d/dnsmasq'; then
+					config_get confdir "$cfg" 'confdir' "/tmp/dnsmasq${cfg:+.$cfg}.d"
+				else
+					config_get confdir "$cfg" 'confdir' '/tmp/dnsmasq.d'
+				fi
 				rm -f "${confdir}/${dnsmasqConfFile}" "${confdir}/${dnsmasqIpsetFile}" "${confdir}/${dnsmasqNftsetFile}"
 				uci_remove_list 'dhcp' "$cfg" 'addnhosts' "$dnsmasqAddnhostsFile"
 				if [ "$(uci_get 'dhcp' "$cfg" 'serversfile')" = "$dnsmasqServersFile" ]; then
@@ -875,13 +880,17 @@ resolver() {
 			;;
 		esac
 	}
-# shellcheck disable=SC2317
+# shellcheck disable=SC2016,SC2317
 	_dnsmasq_instance_init() {
 		local cfg="$1" param="$2" confdir confdirFile
 		[ -s "/etc/config/dhcp" ] || return 0
 		case "$param" in
 			dnsmasq.conf|dnsmasq.ipset|dnsmasq.nftset)
-				config_get confdir "$cfg" 'confdir' '/tmp/dnsmasq.d'
+				if grep -q 'config_get dnsmasqconfdir "$cfg" confdir "/tmp/dnsmasq${cfg:+.$cfg}.d"' '/etc/init.d/dnsmasq'; then
+					config_get confdir "$cfg" 'confdir' "/tmp/dnsmasq${cfg:+.$cfg}.d"
+				else
+					config_get confdir "$cfg" 'confdir' '/tmp/dnsmasq.d'
+				fi
 				confdirFile="${confdir}/${outputFile}"
 				if ! str_contains "$outputDnsmasqFileList" "$confdirFile"; then
 					outputDnsmasqFileList="${outputDnsmasqFileList:+$outputDnsmasqFileList }${confdirFile}"
