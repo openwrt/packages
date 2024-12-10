@@ -79,7 +79,11 @@ case "$1" in
 		fi
 		;;
 	stop)
-		if [ -n "$INTERFACE" ]; then
+		if [ -n "$SECTION_ID" ]; then
+			stop_section_processes "$SECTION_ID"
+			exit 0
+		fi
+		if [ -n "$NETWORK" ]; then
 			stop_daemon_for_all_ddns_sections "$NETWORK"
 			exit 0
 		else
@@ -266,16 +270,16 @@ esac
 
 [ -n "$update_url" ] && {
 	# only check if update_url is given, update_scripts have to check themselves
-	[ -z "$domain" ] && $(echo "$update_url" | grep "\[DOMAIN\]" >/dev/null 2>&1) && \
-		write_log 14 "Service section not configured correctly! Missing 'domain'"
-	[ -z "$username" ] && $(echo "$update_url" | grep "\[USERNAME\]" >/dev/null 2>&1) && \
-		write_log 14 "Service section not configured correctly! Missing 'username'"
-	[ -z "$password" ] && $(echo "$update_url" | grep "\[PASSWORD\]" >/dev/null 2>&1) && \
-		write_log 14 "Service section not configured correctly! Missing 'password'"
-	[ -z "$param_enc" ] && $(echo "$update_url" | grep "\[PARAMENC\]" >/dev/null 2>&1) && \
-		write_log 14 "Service section not configured correctly! Missing 'param_enc'"
-	[ -z "$param_opt" ] && $(echo "$update_url" | grep "\[PARAMOPT\]" >/dev/null 2>&1) && \
-		write_log 14 "Service section not configured correctly! Missing 'param_opt'"
+	[ -z "$domain" ] && [ "${update_url##*'[DOMAIN]'}" != "$update_url" ] && \
+		write_log 14 "Service section missing 'domain'"
+	[ -z "$username" ] && [ "${update_url##*'[USERNAME]'}" != "$update_url" ] && \
+		write_log 14 "Service section missing 'username'"
+	[ -z "$password" ] && [ "${update_url##*'[PASSWORD]'}" != "$update_url" ] && \
+		write_log 14 "Service section missing 'password'"
+	[ -z "$param_enc" ] && [ "${update_url##*'[PARAMENC]'}" != "$update_url" ] && \
+		write_log 14 "Service section missing 'param_enc'"
+	[ -z "$param_opt" ] && [ "${update_url##*'[PARAMOPT]'}" != "$update_url" ] && \
+		write_log 14 "Service section missing 'param_opt'"
 }
 
 # verify ip_source 'script' if script is configured and executable
