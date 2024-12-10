@@ -2,13 +2,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libulfius
 PKG_VERSION:=2.7.10
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/babelouest/ulfius/tar.gz/v$(PKG_VERSION)?
 PKG_HASH:=616c5df99584071461a1285dd7155883f7d2b94abf0931038feeebd3da3a6def
 
-PKG_MAINTAINER:=Toni Uhlig <matzeton@googlemail.com>
+PKG_MAINTAINER:=Toni Uhlig <matzeton@googlemail.com>, Austin Lane <vidplace7@gmail.com>
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=LICENSE
 
@@ -59,6 +59,14 @@ ifeq ($(BUILD_VARIANT),gnutls)
 else
 	CMAKE_OPTIONS += -DWITH_GNUTLS=OFF
 endif
+
+define Package/libulfius/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libulfius.so* $(1)/usr/lib/
+endef
+
+Package/libulfius-nossl/install = $(Package/libulfius/install)
+Package/libulfius-gnutls/install = $(Package/libulfius/install)
 
 $(eval $(call BuildPackage,libulfius-gnutls))
 $(eval $(call BuildPackage,libulfius-nossl))
