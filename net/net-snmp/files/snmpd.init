@@ -284,6 +284,14 @@ snmpd_setup_fw_rules() {
 	HANDLED_SNMP_ZONES="$HANDLED_SNMP_ZONES $zone"
 }
 
+snmpd_include_file() {
+	local section="$1"
+	local file_name=""
+
+	config_get file_name "$section" path
+	[ -n "$file_name" ] && echo "includeFile $file_name" >> $CONFIGFILE
+}
+
 start_service() {
 	[ -f "$CONFIGFILE" ] && rm -f "$CONFIGFILE"
 
@@ -316,6 +324,7 @@ start_service() {
 	config_foreach snmpd_sink_add trapsink trapsink
 	config_foreach snmpd_sink_add trap2sink trap2sink
 	config_foreach snmpd_sink_add informsink informsink
+	config_foreach snmpd_include_file include
 	append_authtrapenable authtrapenable enable authtrapenable
 	append_parm v1trapaddress host v1trapaddress
 	append_parm trapsess trapsess trapsess
