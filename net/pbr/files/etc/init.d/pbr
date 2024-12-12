@@ -2332,6 +2332,7 @@ status_service() {
 #	echo "$_SEPARATOR_"
 #	ip rule list | grep "${packageName}_"
 	echo "$_SEPARATOR_"
+	echo "$packageName tables & routing"
 	tableCount="$(grep -c "${packageName}_" "$rtTablesFile")" || tableCount=0
 	wan_tid=$(($(get_rt_tables_next_id)-tableCount))
 	i=0; while [ "$i" -lt "$tableCount" ]; do
