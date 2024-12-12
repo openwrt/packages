@@ -6,8 +6,266 @@ STOP=50
 
 USE_PROCD=1
 PROG=/usr/sbin/sshd
+NAME=sshd
+BASECONFIGFILE="/var/etc/sshd.conf"
 
-start_service() {
+. /lib/functions.sh
+. /lib/functions/network.sh
+
+validate_section_sshd()
+{
+	uci_load_validate sshd sshd "$1" "$2" \
+		'AllowUsers:list(string)' \
+		'BannerFile:file' \
+		'Ciphers:list(string)' \
+		'ClientAliveCountMax:uinteger' \
+		'ClientAliveInterval:uinteger' \
+		'enable:bool:1' \
+		'enabled:bool:1' \
+		'GatewayPorts:bool:0' \
+		'HostKeyAlgorithms:list(string)' \
+		'HostKeyFiles:list(file)' \
+		'IdleTimeout:uinteger:0' \
+		'IncludeConfigFile:file:/etc/ssh/sshd_config' \
+		'Interface:string' \
+		'KexAlgorithms:list(string)' \
+		'MacAlgorithms:list(string)' \
+		'MaxAuthTries:uinteger:6' \
+		'mdns:bool:1' \
+		'PasswordAuth:bool:1' \
+		'Port:port:22' \
+		'RootLogin:bool:1' \
+		'RootPasswordAuth:bool:1'
+}
+
+append_config()
+{
+	local Param="${1}"
+	local Value="${2}"
+
+	if [ -n "${Param}" ]; then
+		echo "${Param} ${Value}" >> "${TEMPCONF}"
+	fi
+}
+
+set_option_list_comma()
+{
+	local OptionName="${1}"
+	local Values="${2}"
+	local ValueList=""
+
+	for Value in $Values; do
+		# if this is the first iteration, then ValueList
+		# should be empty, and we only want to add a
+		# comma if there are multiple values,
+		# this is to avoid extra comma in the end
+		if [ -z "${ValueList}" ]; then
+			ValueList="${Value}"
+		else
+			ValueList="${Value},${ValueList}"
+		fi
+	done
+
+	append_config "${OptionName}" "${ValueList}"
+}
+
+set_option_list_space()
+{
+	local OptionName="${1}"
+	local Values="${2}"
+	local ValueList=""
+
+	for Value in $Values; do
+		ValueList="${Value} ${ValueList}" 
+	done
+
+	append_config "${OptionName}" "${ValueList}"
+}
+
+set_gateway_ports()
+{
+	local GatewayPorts="${1}"
+
+	if [ -n "${GatewayPorts}" ]; then
+		if [ "${GatewayPorts}" -eq 0 ]; then
+			append_config "GatewayPorts" "no"
+		else
+			append_config "GatewayPorts" "yes"
+		fi
+	fi
+}
+
+# because sshd does not have an option for specifying an interface
+# but only for specifying listen address
+# we get the addresses of interface and add them
+set_listen_addresses()
+{
+	local Port="${1}"
+	local IpAddrs="${2}"
+
+	[ "${Port}" -gt 0 ] && append_config "Port" "${Port}"
+
+	for Addr in $IpAddrs; do
+		append_config "ListenAddress" "${Addr}"
+	done
+}
+
+set_idle_timeout()
+{
+	local IdleTimeout="${1}"
+
+	# from https://www.man7.org/linux/man-pages/man5/sshd_config.5.html
+	# ClientAliveCountMax:
+	# The default value is 3.  If ClientAliveInterval is set to
+        # 15, and ClientAliveCountMax is left at the default,
+        # unresponsive SSH clients will be disconnected after
+        # approximately 45 seconds.  Setting a zero
+        # ClientAliveCountMax disables connection termination.
+	# 
+	# Therefore, to mimic IdleTimeout from dropbear, we set
+	# ClientAliveCountMax to 1 and ClientAliveInterval to
+	# the time we want to wait
+	if [ "${IdleTimeout}" -ne 0 ]; then
+		append_config "ClientAliveCountMax" "1"
+		append_config "ClientAliveInterval" "${IdleTimeout}"
+	fi
+}
+
+publish_ssh_service_over_mdns()
+{
+	local mdns="${1}"
+	local Port="${2}"
+
+	if [ "${mdns}" -ne 0 ] && [ "${Port}" -gt 0 ]; then
+		procd_add_mdns "ssh" "tcp" "${Port}" "daemon=sshd"
+	fi
+}
+
+set_root_login()
+{
+	local RootLogin="${1}"
+	local RootPasswordAuth="${2}"
+
+	if [ "${RootLogin}" -eq 0 ]; then
+		append_config "PermitRootLogin" "no"
+	else
+		if [ "${RootPasswordAuth}" -eq 0 ]; then
+			append_config "PermitRootLogin" "prohibit-password"
+		else
+			append_config "PermitRootLogin" "yes"
+		fi
+	fi
+}
+
+set_password_auth()
+{
+	local PasswordAuth="${1}"
+
+	if [ "${PasswordAuth}" -eq 0 ]; then
+		append_config "PasswordAuthentication" "no"
+	else
+		append_config "PasswordAuthentication" "yes"
+	fi
+}
+
+set_params()
+{
+	local ConfigFile="${1}"
+
+	# start fresh
+	rm -rf "${TEMPCONF}"
+	touch "${TEMPCONF}"
+
+	[ -n "${AllowUsers}" ] && set_option_list_space "AllowUsers" "${AllowUsers}"
+	[ -n "${BannerFile}" ] && append_config "Banner" "${BannerFile}"
+	[ -n "${Ciphers}" ] && set_option_list_comma "Ciphers" "${Ciphers}"
+	[ -n "${ClientAliveCountMax}" ] && append_config "ClientAliveCountMax" "${ClientAliveCountMax}"
+	[ -n "${ClientAliveInterval}" ] && append_config "ClientAliveInterval" "${ClientAliveInterval}"
+	[ -n "${IncludeConfigFile}" ] && append_config "Include" "${IncludeConfigFile}"
+	[ -n "${HostKeyAlgorithms}" ] && set_option_list_comma "HostKeyAlgorithms" "${HostKeyAlgorithms}"
+	[ -n "${HostKeyFiles}" ] && set_option_list_comma "HostKey" "${HostKeyFiles}"
+	[ -n "${KexAlgorithms}" ] && set_option_list_comma "KexAlgorithms" "${KexAlgorithms}"
+	[ -n "${MacAlgorithms}" ] && set_option_list_comma "MACs" "${MacAlgorithms}"
+	[ "${MaxAuthTries}" -gt 0 ] && append_config "MaxAuthTries" "${MaxAuthTries}"
+
+	# these require a little handling
+	set_gateway_ports "${GatewayPorts}"
+	set_listen_addresses "${Port}" "${IpAddrs}"
+	set_password_auth "${PasswordAuth}"
+	set_root_login "${RootLogin}" "${RootPasswordAuth}"
+
+	# if ClientAliveCountMax or ClientAliveInterval are set explicitly
+	# then IdleTimeout cannot be used because IdleTimeout also uses them
+	# IdleTimeout is present in dropbear and not in sshd anyways
+	# so user can go with dropbear style (IdleTimeout) or sshd style (explicit)
+	[ -z "${ClientAliveCountMax}" ] && [ -z "${ClientAliveInterval}" ] && set_idle_timeout "${IdleTimeout}"
+
+	# finalize
+	mv -f "${TEMPCONF}" "${ConfigFile}"
+}
+
+sshd_instance()
+{
+	local IpAddrs
+	local Cfg="$1"
+	local ValidationResult="${2}"
+
+	[ "${ValidationResult}" = 0 ] || {
+		echo "validation failed"
+		return 1
+	}
+
+	# user can use either of enable or enabled
+	[ "${enable}" -eq 0 ] || [ "${enabled}" -eq 0 ] && return 0
+
+	[ -n "${Interface}" ] && {
+		network_get_ipaddrs_all IpAddrs "${Interface}" || {
+			echo "interface ${Interface} has no physdev or physdev has no suitable ip"
+			return 1
+		}
+	}
+
+	local PidFile="/var/run/${NAME}.${Cfg}.pid"
+	# ConfigFile is BASECONFIGFILE + uci section name
+	local ConfigFile="${BASECONFIGFILE}.${Cfg}"
+	# global
+	TEMPCONF="${ConfigFile}.tmp"
+
+	# create directory if not present
+	mkdir -p $(dirname $ConfigFile)
+
+	# create config file
+	set_params "$ConfigFile"
+
+	# set up procd instance
+	procd_open_instance $Cfg
+	procd_set_param command $PROG -D
+	procd_set_param file "$ConfigFile"
+	procd_append_param command -o "PidFile $PidFile"
+
+	# pass config to daemon
+	procd_append_param command -f "$ConfigFile"
+
+	# announce mdns service
+	publish_ssh_service_over_mdns "${mdns}" "${Port}"
+
+	procd_set_param respawn
+	procd_close_instance
+}
+
+# for adding trigger
+load_interfaces()
+{
+	config_get Interface "$1" Interface
+	config_get_bool enable "$1" enable 1
+	config_get_bool enabled "$1" enabled 1
+
+	# user can use either of enable or enabled
+	[ "${enable}" = "1" ] && [ "${enabled}" = "1" ] && Interfaces=" ${Interface} ${Interfaces}"
+}
+
+start_service()
+{
 	for type in rsa ed25519
 	do
 		# check for keys
@@ -20,19 +278,34 @@ start_service() {
 		}
 	done
 	mkdir -m 0700 -p /var/empty
+	mkdir -m 0700 -p /root/.ssh
 
-	local lport=$(awk '/^Port / { print $2; exit }' /etc/ssh/sshd_config)
-	[ -z "$lport" ] && lport=22
-
-	procd_open_instance
-	procd_add_mdns "ssh" "tcp" "$lport"
-	procd_set_param command $PROG -D
-	procd_set_param respawn
-	procd_close_instance
+	config_load "${NAME}"
+	config_foreach validate_section_sshd sshd sshd_instance
 }
 
-reload_service() {
-	procd_send_signal sshd
+reload_service()
+{
+	rc_procd start_service "$@"
+	procd_send_signal sshd "$@"
+}
+
+service_triggers()
+{
+	local Interfaces
+
+	procd_add_config_trigger "config.change" "sshd" /etc/init.d/sshd reload
+
+	config_load "${NAME}"
+	config_foreach load_interfaces sshd
+
+	[ -n "${Interfaces}" ] && {
+		for n in $Interfaces ; do
+			procd_add_interface_trigger "interface.*" $n /etc/init.d/sshd reload
+		done
+	}
+
+	procd_add_validation validate_section_sshd
 }
 
 shutdown() {
@@ -44,6 +317,6 @@ shutdown() {
 	for pid in $(pidof sshd)
 	do
 		[ "$pid" = "$$" ] && continue
-		[ -e "/proc/$pid/stat" ] && kill $pid
+		[ -e "/proc/$pid/stat" ] && kill "$pid"
 	done
 }
