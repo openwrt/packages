@@ -1,0 +1,46 @@
+#!/bin/sh
+
+. /lib/functions.sh
+
+KEEPALIVED_STATUS_DIR="/var/run/keepalived"
+
+# Add a TAG for configured INSTANCE/GROUP
+tag_config() {
+	local cfg="$1"
+	local type="$2"
+	local name
+
+	config_get name "$cfg" name
+	mkdir -p "${KEEPALIVED_STATUS_DIR}/${name}_${type}"
+	touch "${KEEPALIVED_STATUS_DIR}/${name}_${type}/TAG"
+}
+
+main() {
+	# Remove TAG flag
+	for dir in ${KEEPALIVED_STATUS_DIR}/*; do
+		rm -rf "$dir/TAG"
+	done
+
+	config_load keepalived
+	config_foreach tag_config vrrp_instance INSTANCE
+	config_foreach tag_config vrrp_sync_group GROUP
+
+	# Delete run time directories which are not configured anymore
+	for dir in ${KEEPALIVED_STATUS_DIR}/*; do
+		if [ ! -e "$dir/TAG" ]; then
+			rm -rf "$dir"
+		fi
+	done
+
+	# Do not update 'GROUP' status if action is 'NOTIFY'
+	[ "$ACTION" = "NOTIFY" ] && [ "$TYPE" = "GROUP" ] && return
+
+	if [ -n "${NAME}" ] && [ -n "${TYPE}" ]; then
+		mkdir -p "${KEEPALIVED_STATUS_DIR}/${NAME}_${TYPE}"
+		[ -n "$ACTION" ] || ACTION="NOTIFY_UNKNOWN"
+		echo "$ACTION" > "${KEEPALIVED_STATUS_DIR}/${NAME}_${TYPE}/STATUS"
+		date +'%s' > "${KEEPALIVED_STATUS_DIR}/${NAME}_${TYPE}/TIME"
+	fi
+}
+
+main
