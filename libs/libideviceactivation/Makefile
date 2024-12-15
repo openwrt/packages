@@ -10,9 +10,9 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/libimobiledevice/libideviceactivation.git
-PKG_SOURCE_DATE:=2024-04-16
-PKG_SOURCE_VERSION:=6925d58ef7994168fb9585aa6f48421149982329
-PKG_MIRROR_HASH:=671a4feef00d6cc1b81df1e8f305a2e7a26752848b23c8ab60432940f307fe57
+PKG_SOURCE_DATE:=2024-10-29
+PKG_SOURCE_VERSION:=c28aef0902f4b94492905bd642393de15855323a
+PKG_MIRROR_HASH:=81babd86c9386daccd2177ce02e47fac1ea63e2ba1015c7dcada0648403dfdeb
 
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -24,6 +24,7 @@ PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/libideviceactivation/Default
   TITLE:=Manage the activation of Apple iOS devices

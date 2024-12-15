@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qemu
 PKG_VERSION:=9.1.0
-PKG_RELEASE:=2
+PKG_RELEASE:=4
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_HASH:=816b7022a8ba7c2ac30e2e0cf973e826f6bcc8505339603212c5ede8e94d7834
 PKG_SOURCE_URL:=https://download.qemu.org/
@@ -24,11 +24,13 @@ PKG_INSTALL:=1
 PKG_BUILD_FLAGS:=no-mips16
 
 PKG_BUILD_DEPENDS+=spice-protocol
+PKG_BUILD_DEPENDS+=python3/host
 
 include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/package.mk
+include ../../lang/python/python3-host.mk
 
-QEMU_DEPS_IN_GUEST := @(TARGET_x86_64||TARGET_armsr||TARGET_malta)
+QEMU_DEPS_IN_GUEST := @(TARGET_x86||TARGET_x86_64||TARGET_armsr||TARGET_malta)
 QEMU_DEPS_IN_HOST := @(TARGET_x86_64||TARGET_armsr_armv8||TARGET_sunxi)
 QEMU_DEPS_IN_HOST += +libstdcpp
 QEMU_DEPS_IN_HOST += $(ICONV_DEPENDS)

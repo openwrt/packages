@@ -218,6 +218,7 @@ MESON_ARGS += \
 	-Dopenni2=disabled \
 	-Dopensles=disabled \
 	-Dopus=$(if $(CONFIG_PACKAGE_gst1-mod-opusparse),en,dis)abled \
+	-Dqsv=$(if $(CONFIG_i386)$(CONFIG_i686)$(CONFIG_x86_64),en,dis)abled \
 	-Dresindvd=disabled \
 	-Drsvg=disabled \
 	-Drtmp=disabled \
