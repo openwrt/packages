@@ -1,0 +1,10 @@
+--- a/src/libserver/tcptunserver.cpp    2024-12-10 01:39:57.000000000 +0100
++++ b/src/libserver/tcptunserver.cpp    2024-12-14 08:52:53.663366396 +0100
+@@ -21,6 +21,7 @@
+ #include "config.h"
+ #include "tunchannel.h"
+
++#include <unistd.h>
+ #include <netinet/tcp.h>
+ #include <sys/un.h>
+ #include <arpa/inet.h>
