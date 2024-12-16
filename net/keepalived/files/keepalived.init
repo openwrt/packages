@@ -600,7 +600,6 @@ process_config() {
 	local alt_config_file linkbeat_use_polling
 
 	rm -f "$KEEPALIVED_CONF"
-	[ -f /etc/config/keepalived ] || return 0
 	config_load 'keepalived'
 	config_get alt_config_file globals alt_config_file
 
@@ -654,14 +653,20 @@ reload_service() {
 }
 
 start_service() {
+	local enabled
+
+	[ -f /etc/config/keepalived ] || return 0
+
+	config_load 'keepalived'
+	config_get_bool enabled globals enabled 1
+	[ "$enabled" = "0" ] && return 0
+
+	process_config
+
 	procd_open_instance
 	procd_set_param command /usr/sbin/keepalived
 	procd_append_param command -n # don't daemonize, procd will handle that for us
 	procd_append_param command -f "$KEEPALIVED_CONF"
-
-	process_config
-
-	# set auto respawn behavior
 	procd_set_param respawn
 	procd_close_instance
 }
