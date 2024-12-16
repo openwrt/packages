@@ -51,6 +51,14 @@ define Package/lm-sensors-detect
 	+PACKAGE_lm-sensors-detect:perlbase-xsloader
 endef
 
+define Package/fancontrol
+  $(call Package/lm-sensors/Default)
+  SECTION:=utils
+  CATEGORY:=Utilities
+  TITLE:=fancontrol
+  DEPENDS+=+bash
+endef
+
 define Package/libsensors
   $(call Package/lm-sensors/Default)
   SECTION:=libs
@@ -65,6 +73,10 @@ endef
 
 define Package/lm-sensors-detect/description
  script to autodetect sensor hardware
+endef
+
+define Package/fancontrol/description
+ automated software based fan speed regulation
 endef
 
 define Package/libsensors/description
@@ -118,6 +130,18 @@ define Package/lm-sensors-detect/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/prog/detect/sensors-detect $(1)/usr/sbin
 endef
 
+define Package/fancontrol/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/prog/pwm/fancontrol $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/prog/pwm/pwmconfig  $(1)/usr/sbin
+
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/fancontrol.init $(1)/etc/init.d/fancontrol
+
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/fancontrol.config $(1)/etc/config/fancontrol
+endef
+
 define Package/libsensors/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_BUILD_DIR)/lib/libsensors.so* $(1)/usr/lib
@@ -126,3 +150,4 @@ endef
 $(eval $(call BuildPackage,libsensors))
 $(eval $(call BuildPackage,lm-sensors))
 $(eval $(call BuildPackage,lm-sensors-detect))
+$(eval $(call BuildPackage,fancontrol))
