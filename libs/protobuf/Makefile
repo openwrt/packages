@@ -8,19 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=protobuf
-PKG_VERSION:=3.17.3
-PKG_RELEASE:=3
+PKG_VERSION:=29.5
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-cpp-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/google/protobuf/releases/download/v$(PKG_VERSION)
-PKG_HASH:=51cec99f108b83422b7af1170afd7aeb2dd77d2bcbb7b6bad1f92509e9ccf8cb
+PKG_HASH:=a191d2afdd75997ba59f62019425016703daed356a9d92f7425f4741439ae544
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:google:protobuf
 
-CMAKE_SOURCE_SUBDIR:=cmake
+HOST_BUILD_DEPENDS:=abseil-cpp/host
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
@@ -31,7 +31,7 @@ define Package/protobuf/Default
   CATEGORY:=Libraries
   TITLE:=A structured data encoding library
   URL:=https://github.com/google/protobuf
-  DEPENDS:=+zlib +libpthread +libatomic +libstdcpp
+  DEPENDS:=+zlib +libpthread +libatomic +libstdcpp +abseil-cpp
 endef
 
 define Package/protobuf
@@ -65,14 +65,18 @@ This package provides the libprotobuf-lite library.
 endef
 
 CMAKE_HOST_OPTIONS += \
+	-Dprotobuf_ABSL_PROVIDER="package" \
 	-Dprotobuf_BUILD_PROTOC_BINARIES=ON \
 	-Dprotobuf_BUILD_TESTS=OFF \
+	-Dprotobuf_BUILD_EXAMPLES=OFF \
 	-DBUILD_SHARED_LIBS=OFF \
 	-DCMAKE_INSTALL_LIBDIR=lib
 
 CMAKE_OPTIONS += \
+	-Dprotobuf_ABSL_PROVIDER="package" \
 	-Dprotobuf_BUILD_PROTOC_BINARIES=ON \
 	-Dprotobuf_BUILD_TESTS=OFF \
+	-Dprotobuf_BUILD_EXAMPLES=OFF \
 	-Dprotobuf_WITH_ZLIB=ON \
 	-DBUILD_SHARED_LIBS=ON
 
@@ -84,20 +88,24 @@ define Build/InstallDev
 	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/protobuf.pc
 	$(SED) 's,/usr/include,$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/protobuf-lite.pc
 	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/protobuf-lite.pc
+	$(SED) 's,/usr/include,$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/upb.pc
+	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/upb.pc
+	$(SED) 's,/usr/include,$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/utf8_range.pc
+	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/utf8_range.pc
 endef
 
 define Package/protobuf-lite/install
-	$(INSTALL_DIR) \
-		$(1)/usr/lib
+	$(INSTALL_DIR) $(1)/usr/lib
 
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libutf8_range.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libutf8_validity.so* $(1)/usr/lib/
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/libprotobuf-lite.so* \
 		$(1)/usr/lib/
 endef
 
 define Package/protobuf/install
-	$(INSTALL_DIR) \
-		$(1)/usr/lib
+	$(INSTALL_DIR) $(1)/usr/lib
 
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/libprotoc.so*  \
