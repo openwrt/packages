@@ -21,6 +21,9 @@ PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=GPL-3.0-later
 PKG_LICENSE_FILES:=COPYING
 
+PKG_CONFIG_DEPENDS:= \
+        CONFIG_PACKAGE_knot-resolver_dnstap
+
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/meson.mk
 
@@ -40,8 +43,8 @@ define Package/knot-resolver
     +libstdcpp \
     +libnghttp2 \
     +lmdb \
-    PACKAGE_knot-resolver_dnstap:libfstrm \
-    PACKAGE_knot-resolver_dnstap:libprotobuf-c
+    +PACKAGE_knot-resolver_dnstap:libfstrm \
+    +PACKAGE_knot-resolver_dnstap:libprotobuf-c
   USERID:=kresd=3536:kresd=3536
 endef
 
