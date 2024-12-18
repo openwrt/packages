@@ -29,7 +29,12 @@ MODEM_DEVICE=$(modemmanager_get_field "${MODEM_STATUS}" "modem.generic.device")
 CFG=$(mm_get_modem_config "${MODEM_DEVICE}")
 [ -n "${CFG}" ] || exit 3
 
-logger -t "modemmanager" "interface ${CFG} (network device ${INTERFACE}) ${STATE}"
-proto_init_update $INTERFACE 0
-proto_send_update $CFG
+IFUP=$(ifstatus "${CFG}" | jsonfilter -e "@.up")
+
+[ "${IFUP}" = "true" ] && {
+	logger -t "modemmanager" "interface ${CFG} (network device ${INTERFACE}) ${STATE}"
+	proto_init_update $INTERFACE 0
+	proto_send_update $CFG
+}
+
 exit 0
