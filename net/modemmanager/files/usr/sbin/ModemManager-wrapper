@@ -20,7 +20,6 @@ main() {
 
 	mkdir -p "${MODEMMANAGER_RUNDIR}"
 	chmod 0755 "${MODEMMANAGER_RUNDIR}"
-	mm_cleanup_interfaces
 
 	/usr/sbin/ModemManager "$@" 1>/dev/null 2>/dev/null &
 	CHILD="$!"
@@ -28,6 +27,9 @@ main() {
 	mm_report_events_from_cache
 
 	wait "$CHILD"
+
+	# Set all configured interfaces as unavailable
+	mm_cleanup_interfaces
 }
 
 main "$@"
