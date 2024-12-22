@@ -46,7 +46,6 @@ define Package/vim-full
   CONFLICTS:=vim
 endef
 
-
 define Package/vim-fuller
   $(call Package/vim/Default)
   TITLE+= (Big)
@@ -82,34 +81,44 @@ define Package/vim/conffiles
 endef
 
 define Package/vim/description
- Vim is an almost compatible version of the UNIX editor Vi.
- (Tiny build)
+  Vim is an almost compatible version of the UNIX editor Vi.
+
+  This package includes tiny version of Vim. For details please visit this link:
+  https://vimdoc.sourceforge.net/htmldoc/various.html#:ve
 endef
 
 define Package/vim-full/description
- Vim is an almost compatible version of the UNIX editor Vi.
- (Normal build)
+  Vim is an almost compatible version of the UNIX editor Vi.
+
+  This package includes normal version of Vim. For details please visit this link:
+  https://vimdoc.sourceforge.net/htmldoc/various.html#:ve
 endef
 
 
 define Package/vim-fuller/description
- Vim is an almost compatible version of the UNIX editor Vi.
- (Big build)
+  Vim is an almost compatible version of the UNIX editor Vi.
+
+  This package includes huge version of Vim. For details please visit this link:
+  https://vimdoc.sourceforge.net/htmldoc/various.html#:ve
 endef
 
 define Package/vim-runtime/description
- Vim is an almost compatible version of the UNIX editor Vi.
- (Runtime files)
+  Vim is an almost compatible version of the UNIX editor Vi.
+
+  This package includes runtime files for Vim. For details please visit this link:
+  https://vimdoc.sourceforge.net/htmldoc/various.html#:ve
 endef
 
 define Package/vim-help/description
- Vim is an almost compatible version of the UNIX editor Vi.
- (Help files)
+  Vim is an almost compatible version of the UNIX editor Vi.
+
+  This package includes Vimdoc help files for Vim. For details please visit this link:
+  https://vimdoc.sourceforge.net/htmldoc/various.html#:ve
 endef
 
 define Package/xxd/description
- xxd creates a hex dump of a given file or standard input, it can also convert
- a hex dump back to its original binary form.
+  xxd creates a hex dump of a given file or standard input, it can also convert
+  a hex dump back to its original binary form.
 endef
 
 CONFIGURE_ARGS += \
@@ -179,7 +188,12 @@ define Build/Compile/vim-fuller
 endef
 endif
 
-
+define Build/Compile/vim-runtime
+	$(MAKE) -C $(PKG_BUILD_DIR)/src DESTDIR="$(PKG_INSTALL_DIR)" installrtbase
+	(cd $(PKG_INSTALL_DIR) && tar -cf $(PKG_BUILD_DIR)/docs.tar ./usr/share/vim/vim$(VIMVER)/doc)
+	rm -rf $(PKG_INSTALL_DIR)/usr/share/vim/vim$(VIMVER)/doc
+	rm -rf $(PKG_INSTALL_DIR)/usr/man
+endef
 
 ifneq ($(CONFIG_PACKAGE_xxd),)
 define Build/Compile/xxd
@@ -187,13 +201,6 @@ define Build/Compile/xxd
 		DESTDIR="$(PKG_INSTALL_DIR)" all
 endef
 endif
-
-define Build/Compile/vim-runtime
-	$(MAKE) -C $(PKG_BUILD_DIR)/src DESTDIR="$(PKG_INSTALL_DIR)" installrtbase
-	(cd $(PKG_INSTALL_DIR) && tar -cf $(PKG_BUILD_DIR)/docs.tar ./usr/share/vim/vim$(VIMVER)/doc)
-	rm -rf $(PKG_INSTALL_DIR)/usr/share/vim/vim$(VIMVER)/doc
-	rm -rf $(PKG_INSTALL_DIR)/usr/man
-endef
 
 define Build/Compile
 $(call Build/Compile/vim)
@@ -227,8 +234,6 @@ define Package/vim-fuller/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/vim/vim$(VIMVER) $(1)/usr/share/vim
 	$(INSTALL_CONF) ./files/vimrc.full $(1)/usr/share/vim/vimrc
 endef
-
-
 
 define Package/vim-runtime/install
 	$(CP) $(PKG_INSTALL_DIR)/* $(1)
