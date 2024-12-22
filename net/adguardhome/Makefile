@@ -6,13 +6,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adguardhome
-PKG_VERSION:=0.107.53
+PKG_VERSION:=0.107.56
 PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_SOURCE_URL:=https://github.com/AdguardTeam/AdGuardHome
-PKG_MIRROR_HASH:=d74702bc4f8b82bda64a0a937a98e73ee602c21b9361c0c683671212e03e9316
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/AdguardTeam/AdGuardHome/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=e4285c8d7611fe677e45dad469fbc0237ebeea57094148a059edd5aa32ab8fce
+PKG_BUILD_DIR:=$(BUILD_DIR)/AdGuardHome-$(PKG_VERSION)
 
 PKG_LICENSE:=GPL-3.0-only
 PKG_LICENSE_FILES:=LICENSE.txt
@@ -28,7 +28,7 @@ GO_PKG_BUILD_PKG:=github.com/AdguardTeam/AdGuardHome
 AGH_BUILD_TIME:=$(shell date -d @$(SOURCE_DATE_EPOCH) +%FT%TZ%z)
 AGH_VERSION_PKG:=github.com/AdguardTeam/AdGuardHome/internal/version
 GO_PKG_LDFLAGS_X:=$(AGH_VERSION_PKG).channel=release \
-	$(AGH_VERSION_PKG).version=$(PKG_SOURCE_VERSION) \
+	$(AGH_VERSION_PKG).version=$(PKG_VERSION) \
 	$(AGH_VERSION_PKG).buildtime=$(AGH_BUILD_TIME) \
 	$(AGH_VERSION_PKG).goarm=$(GO_ARM) \
 	$(AGH_VERSION_PKG).gomips=$(GO_MIPS)
