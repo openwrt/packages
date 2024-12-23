@@ -31,7 +31,7 @@ define Package/netatalk/Default
   TITLE:=Apple Filing Protocol
   PROVIDES:=netatalk
   URL:=https://netatalk.io
-  DEPENDS:=+libevent2 +libdb47 +libgcrypt +iniparser $(ATOMIC64_DEPENDS)
+  DEPENDS:=+libevent2 +libdb47 +libgcrypt-mini +iniparser $(ATOMIC64_DEPENDS)
 endef
 
 define Package/netatalk-small
