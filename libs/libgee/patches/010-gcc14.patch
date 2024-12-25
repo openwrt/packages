@@ -1,0 +1,396 @@
+--- a/gee/concurrentlist.c
++++ b/gee/concurrentlist.c
+@@ -466,7 +466,7 @@ gee_concurrent_list_construct (GType obj
+ 	self->priv->_head = _tmp5_;
+ 	_tmp6_ = self->priv->_head;
+ 	_tmp7_ = _gee_concurrent_list_node_ref0 (_tmp6_);
+-	gee_hazard_pointer_set_pointer (GEE_CONCURRENT_LIST_TYPE_NODE, (GBoxedCopyFunc) gee_concurrent_list_node_ref, (GDestroyNotify) gee_concurrent_list_node_unref, &self->priv->_tail, _tmp7_, (gsize) 0, (gsize) 0);
++	gee_hazard_pointer_set_pointer (GEE_CONCURRENT_LIST_TYPE_NODE, (GBoxedCopyFunc) gee_concurrent_list_node_ref, (GDestroyNotify) gee_concurrent_list_node_unref, (gconstpointer**) &self->priv->_tail, _tmp7_, (gsize) 0, (gsize) 0);
+ 	(equal_func_target_destroy_notify == NULL) ? NULL : (equal_func_target_destroy_notify (equal_func_target), NULL);
+ 	equal_func = NULL;
+ 	equal_func_target = NULL;
+@@ -511,7 +511,7 @@ gee_concurrent_list_construct_with_closu
+ 	self->priv->_head = _tmp1_;
+ 	_tmp2_ = self->priv->_head;
+ 	_tmp3_ = _gee_concurrent_list_node_ref0 (_tmp2_);
+-	gee_hazard_pointer_set_pointer (GEE_CONCURRENT_LIST_TYPE_NODE, (GBoxedCopyFunc) gee_concurrent_list_node_ref, (GDestroyNotify) gee_concurrent_list_node_unref, &self->priv->_tail, _tmp3_, (gsize) 0, (gsize) 0);
++	gee_hazard_pointer_set_pointer (GEE_CONCURRENT_LIST_TYPE_NODE, (GBoxedCopyFunc) gee_concurrent_list_node_ref, (GDestroyNotify) gee_concurrent_list_node_unref, (gconstpointer**) &self->priv->_tail, _tmp3_, (gsize) 0, (gsize) 0);
+ 	_gee_functions_equal_data_func_closure_unref0 (equal_func);
+ 	return self;
+ }
+@@ -710,7 +710,7 @@ gee_concurrent_list_real_clear (GeeAbstr
+ 	}
+ 	_tmp5_ = self->priv->_head;
+ 	_tmp6_ = _gee_concurrent_list_node_ref0 (_tmp5_);
+-	gee_hazard_pointer_set_pointer (GEE_CONCURRENT_LIST_TYPE_NODE, (GBoxedCopyFunc) gee_concurrent_list_node_ref, (GDestroyNotify) gee_concurrent_list_node_unref, &self->priv->_tail, _tmp6_, (gsize) 0, (gsize) 0);
++	gee_hazard_pointer_set_pointer (GEE_CONCURRENT_LIST_TYPE_NODE, (GBoxedCopyFunc) gee_concurrent_list_node_ref, (GDestroyNotify) gee_concurrent_list_node_unref, (gconstpointer**) &self->priv->_tail, _tmp6_, (gsize) 0, (gsize) 0);
+ 	_g_object_unref0 (iter);
+ 	_gee_hazard_pointer_context_free0 (ctx);
+ }
+@@ -1166,13 +1166,13 @@ gee_concurrent_list_update_tail (GeeConc
+ 	GeeConcurrentListNode* _tmp2_;
+ 	GeeConcurrentListNode* result;
+ 	g_return_val_if_fail (self != NULL, NULL);
+-	_tmp0_ = gee_hazard_pointer_get_pointer (GEE_CONCURRENT_LIST_TYPE_NODE, (GBoxedCopyFunc) gee_concurrent_list_node_ref, (GDestroyNotify) gee_concurrent_list_node_unref, &self->priv->_tail, (gsize) 0, NULL);
++	_tmp0_ = gee_hazard_pointer_get_pointer (GEE_CONCURRENT_LIST_TYPE_NODE, (GBoxedCopyFunc) gee_concurrent_list_node_ref, (GDestroyNotify) gee_concurrent_list_node_unref, (gconstpointer**) &self->priv->_tail, (gsize) 0, NULL);
+ 	tail = (GeeConcurrentListNode*) _tmp0_;
+ 	gee_concurrent_list_node_backtrace (self->priv->g_type, (GBoxedCopyFunc) self->priv->g_dup_func, (GDestroyNotify) self->priv->g_destroy_func, &tail);
+ 	gee_concurrent_list_node_search_for (self->priv->g_type, (GBoxedCopyFunc) self->priv->g_dup_func, (GDestroyNotify) self->priv->g_destroy_func, NULL, &tail);
+ 	_tmp1_ = tail;
+ 	_tmp2_ = _gee_concurrent_list_node_ref0 (_tmp1_);
+-	gee_hazard_pointer_set_pointer (GEE_CONCURRENT_LIST_TYPE_NODE, (GBoxedCopyFunc) gee_concurrent_list_node_ref, (GDestroyNotify) gee_concurrent_list_node_unref, &self->priv->_tail, _tmp2_, (gsize) 0, (gsize) 0);
++	gee_hazard_pointer_set_pointer (GEE_CONCURRENT_LIST_TYPE_NODE, (GBoxedCopyFunc) gee_concurrent_list_node_ref, (GDestroyNotify) gee_concurrent_list_node_unref, (gconstpointer**) &self->priv->_tail, _tmp2_, (gsize) 0, (gsize) 0);
+ 	result = tail;
+ 	return result;
+ }
+@@ -2382,7 +2382,7 @@ gee_concurrent_list_node_compare_and_exc
+ 	gboolean result;
+ 	g_return_val_if_fail (self != NULL, FALSE);
+ 	_tmp0_ = _gee_concurrent_list_node_ref0 (new_node);
+-	result = gee_hazard_pointer_compare_and_exchange_pointer (GEE_CONCURRENT_LIST_TYPE_NODE, (GBoxedCopyFunc) gee_concurrent_list_node_ref, (GDestroyNotify) gee_concurrent_list_node_unref, &self->_succ, old_node, _tmp0_, (gsize) 3, (gsize) old_state, (gsize) new_state);
++	result = gee_hazard_pointer_compare_and_exchange_pointer (GEE_CONCURRENT_LIST_TYPE_NODE, (GBoxedCopyFunc) gee_concurrent_list_node_ref, (GDestroyNotify) gee_concurrent_list_node_unref, (gconstpointer**) &self->_succ, old_node, _tmp0_, (gsize) 3, (gsize) old_state, (gsize) new_state);
+ 	return result;
+ }
+ 
+@@ -2435,7 +2435,7 @@ gee_concurrent_list_node_get_succ (GeeCo
+ 	GeeConcurrentListNode* _tmp2_;
+ 	GeeConcurrentListNode* result;
+ 	g_return_val_if_fail (self != NULL, NULL);
+-	_tmp1_ = gee_hazard_pointer_get_pointer (GEE_CONCURRENT_LIST_TYPE_NODE, (GBoxedCopyFunc) gee_concurrent_list_node_ref, (GDestroyNotify) gee_concurrent_list_node_unref, &self->_succ, (gsize) 3, &_tmp0_);
++	_tmp1_ = gee_hazard_pointer_get_pointer (GEE_CONCURRENT_LIST_TYPE_NODE, (GBoxedCopyFunc) gee_concurrent_list_node_ref, (GDestroyNotify) gee_concurrent_list_node_unref, (gconstpointer**) &self->_succ, (gsize) 3, &_tmp0_);
+ 	rstate = _tmp0_;
+ 	succ = (GeeConcurrentListNode*) _tmp1_;
+ 	_vala_state = (GeeConcurrentListState) rstate;
+@@ -2457,7 +2457,7 @@ gee_concurrent_list_node_set_succ (GeeCo
+ 	GeeConcurrentListNode* _tmp0_;
+ 	g_return_if_fail (self != NULL);
+ 	_tmp0_ = _gee_concurrent_list_node_ref0 (next);
+-	gee_hazard_pointer_set_pointer (GEE_CONCURRENT_LIST_TYPE_NODE, (GBoxedCopyFunc) gee_concurrent_list_node_ref, (GDestroyNotify) gee_concurrent_list_node_unref, &self->_succ, _tmp0_, (gsize) 3, (gsize) state);
++	gee_hazard_pointer_set_pointer (GEE_CONCURRENT_LIST_TYPE_NODE, (GBoxedCopyFunc) gee_concurrent_list_node_ref, (GDestroyNotify) gee_concurrent_list_node_unref, (gconstpointer**) &self->_succ, _tmp0_, (gsize) 3, (gsize) state);
+ }
+ 
+ static inline GeeConcurrentListNode*
+@@ -2466,7 +2466,7 @@ gee_concurrent_list_node_get_backlink (G
+ 	gpointer _tmp0_;
+ 	GeeConcurrentListNode* result;
+ 	g_return_val_if_fail (self != NULL, NULL);
+-	_tmp0_ = gee_hazard_pointer_get_pointer (GEE_CONCURRENT_LIST_TYPE_NODE, (GBoxedCopyFunc) gee_concurrent_list_node_ref, (GDestroyNotify) gee_concurrent_list_node_unref, &self->_backlink, (gsize) 0, NULL);
++	_tmp0_ = gee_hazard_pointer_get_pointer (GEE_CONCURRENT_LIST_TYPE_NODE, (GBoxedCopyFunc) gee_concurrent_list_node_ref, (GDestroyNotify) gee_concurrent_list_node_unref, (gconstpointer**) &self->_backlink, (gsize) 0, NULL);
+ 	result = (GeeConcurrentListNode*) _tmp0_;
+ 	return result;
+ }
+@@ -2478,7 +2478,7 @@ gee_concurrent_list_node_set_backlink (G
+ 	GeeConcurrentListNode* _tmp0_;
+ 	g_return_if_fail (self != NULL);
+ 	_tmp0_ = _gee_concurrent_list_node_ref0 (backlink);
+-	gee_hazard_pointer_compare_and_exchange_pointer (GEE_CONCURRENT_LIST_TYPE_NODE, (GBoxedCopyFunc) gee_concurrent_list_node_ref, (GDestroyNotify) gee_concurrent_list_node_unref, &self->_backlink, NULL, _tmp0_, (gsize) 0, (gsize) 0, (gsize) 0);
++	gee_hazard_pointer_compare_and_exchange_pointer (GEE_CONCURRENT_LIST_TYPE_NODE, (GBoxedCopyFunc) gee_concurrent_list_node_ref, (GDestroyNotify) gee_concurrent_list_node_unref, (gconstpointer**) &self->_backlink, NULL, _tmp0_, (gsize) 0, (gsize) 0, (gsize) 0);
+ }
+ 
+ static void
+@@ -2637,8 +2637,8 @@ gee_concurrent_list_node_finalize (GeeCo
+ 	GeeConcurrentListNode * self;
+ 	self = G_TYPE_CHECK_INSTANCE_CAST (obj, GEE_CONCURRENT_LIST_TYPE_NODE, GeeConcurrentListNode);
+ 	g_signal_handlers_destroy (self);
+-	gee_hazard_pointer_set_pointer (GEE_CONCURRENT_LIST_TYPE_NODE, (GBoxedCopyFunc) gee_concurrent_list_node_ref, (GDestroyNotify) gee_concurrent_list_node_unref, &self->_succ, NULL, (gsize) 3, (gsize) 0);
+-	gee_hazard_pointer_set_pointer (GEE_CONCURRENT_LIST_TYPE_NODE, (GBoxedCopyFunc) gee_concurrent_list_node_ref, (GDestroyNotify) gee_concurrent_list_node_unref, &self->_backlink, NULL, (gsize) 0, (gsize) 0);
++	gee_hazard_pointer_set_pointer (GEE_CONCURRENT_LIST_TYPE_NODE, (GBoxedCopyFunc) gee_concurrent_list_node_ref, (GDestroyNotify) gee_concurrent_list_node_unref, (gconstpointer**) &self->_succ, NULL, (gsize) 3, (gsize) 0);
++	gee_hazard_pointer_set_pointer (GEE_CONCURRENT_LIST_TYPE_NODE, (GBoxedCopyFunc) gee_concurrent_list_node_ref, (GDestroyNotify) gee_concurrent_list_node_unref, (gconstpointer**) &self->_backlink, NULL, (gsize) 0, (gsize) 0);
+ 	gee_hazard_pointer_set_pointer (self->priv->g_type, (GBoxedCopyFunc) self->priv->g_dup_func, (GDestroyNotify) self->priv->g_destroy_func, &self->_data, NULL, (gsize) 0, (gsize) 0);
+ }
+ 
+@@ -2747,7 +2747,7 @@ gee_concurrent_list_finalize (GObject *
+ 	gee_utils_misc_unused (_tmp1_);
+ 	_gee_concurrent_list_node_unref0 (self->priv->_head);
+ 	self->priv->_head = NULL;
+-	gee_hazard_pointer_set_pointer (GEE_CONCURRENT_LIST_TYPE_NODE, (GBoxedCopyFunc) gee_concurrent_list_node_ref, (GDestroyNotify) gee_concurrent_list_node_unref, &self->priv->_tail, NULL, (gsize) 0, (gsize) 0);
++	gee_hazard_pointer_set_pointer (GEE_CONCURRENT_LIST_TYPE_NODE, (GBoxedCopyFunc) gee_concurrent_list_node_ref, (GDestroyNotify) gee_concurrent_list_node_unref, (gconstpointer**) &self->priv->_tail, NULL, (gsize) 0, (gsize) 0);
+ 	_gee_hazard_pointer_context_free0 (ctx);
+ 	_gee_concurrent_list_node_unref0 (self->priv->_head);
+ 	_gee_functions_equal_data_func_closure_unref0 (self->priv->_equal_func);
+--- a/gee/concurrentset.c
++++ b/gee/concurrentset.c
+@@ -3632,7 +3632,7 @@ gee_concurrent_set_sub_set_real_get_size
+ 		gpointer _tmp6_;
+ 		acc = 1;
+ 		_tmp5_ = self->priv->_range;
+-		_tmp6_ = gee_hazard_pointer_get_pointer (GEE_CONCURRENT_SET_TYPE_TOWER, (GBoxedCopyFunc) gee_concurrent_set_tower_ref, (GDestroyNotify) gee_concurrent_set_tower_unref, &_tmp5_->_bookmark._iter[0], (gsize) 0, NULL);
++		_tmp6_ = gee_hazard_pointer_get_pointer (GEE_CONCURRENT_SET_TYPE_TOWER, (GBoxedCopyFunc) gee_concurrent_set_tower_ref, (GDestroyNotify) gee_concurrent_set_tower_unref, (gconstpointer**) &_tmp5_->_bookmark._iter[0], (gsize) 0, NULL);
+ 		prev = (GeeConcurrentSetTower*) _tmp6_;
+ 		while (TRUE) {
+ 			GeeConcurrentSetRange* _tmp7_;
+@@ -4947,7 +4947,7 @@ gee_concurrent_set_range_copy_bookmark (
+ 				if (!(i < GEE_CONCURRENT_SET__MAX_HEIGHT)) {
+ 					break;
+ 				}
+-				_tmp2_ = gee_hazard_pointer_get_pointer (GEE_CONCURRENT_SET_TYPE_TOWER, (GBoxedCopyFunc) gee_concurrent_set_tower_ref, (GDestroyNotify) gee_concurrent_set_tower_unref, &range->_bookmark._iter[i], (gsize) 0, NULL);
++				_tmp2_ = gee_hazard_pointer_get_pointer (GEE_CONCURRENT_SET_TYPE_TOWER, (GBoxedCopyFunc) gee_concurrent_set_tower_ref, (GDestroyNotify) gee_concurrent_set_tower_unref, (gconstpointer**) &range->_bookmark._iter[i], (gsize) 0, NULL);
+ 				_gee_concurrent_set_tower_unref0 (self->_bookmark._iter[i]);
+ 				self->_bookmark._iter[i] = (GeeConcurrentSetTower*) _tmp2_;
+ 			}
+@@ -5375,7 +5375,7 @@ gee_concurrent_set_range_improve_bookmar
+ 		{
+ 			if ((&_vala_out_curr) != NULL) {
+ 				gpointer _tmp0_;
+-				_tmp0_ = gee_hazard_pointer_get_pointer (GEE_CONCURRENT_SET_TYPE_TOWER, (GBoxedCopyFunc) gee_concurrent_set_tower_ref, (GDestroyNotify) gee_concurrent_set_tower_unref, &range->_bookmark._iter[0], (gsize) 0, NULL);
++				_tmp0_ = gee_hazard_pointer_get_pointer (GEE_CONCURRENT_SET_TYPE_TOWER, (GBoxedCopyFunc) gee_concurrent_set_tower_ref, (GDestroyNotify) gee_concurrent_set_tower_unref, (gconstpointer**) &range->_bookmark._iter[0], (gsize) 0, NULL);
+ 				_gee_concurrent_set_tower_unref0 (_vala_out_curr);
+ 				_vala_out_curr = (GeeConcurrentSetTower*) _tmp0_;
+ 				if ((&_vala_prev) != NULL) {
+@@ -5425,7 +5425,7 @@ gee_concurrent_set_range_improve_bookmar
+ 							if (!(i < GEE_CONCURRENT_SET__MAX_HEIGHT)) {
+ 								break;
+ 							}
+-							_tmp10_ = gee_hazard_pointer_get_pointer (GEE_CONCURRENT_SET_TYPE_TOWER, (GBoxedCopyFunc) gee_concurrent_set_tower_ref, (GDestroyNotify) gee_concurrent_set_tower_unref, &range->_bookmark._iter[i], (gsize) 0, NULL);
++							_tmp10_ = gee_hazard_pointer_get_pointer (GEE_CONCURRENT_SET_TYPE_TOWER, (GBoxedCopyFunc) gee_concurrent_set_tower_ref, (GDestroyNotify) gee_concurrent_set_tower_unref, (gconstpointer**) &range->_bookmark._iter[i], (gsize) 0, NULL);
+ 							_gee_concurrent_set_tower_unref0 (_vala_prev._iter[i]);
+ 							_vala_prev._iter[i] = (GeeConcurrentSetTower*) _tmp10_;
+ 						}
+@@ -5477,7 +5477,7 @@ gee_concurrent_set_range_improve_bookmar
+ 						if (!(i >= 0)) {
+ 							break;
+ 						}
+-						_tmp13_ = gee_hazard_pointer_get_pointer (GEE_CONCURRENT_SET_TYPE_TOWER, (GBoxedCopyFunc) gee_concurrent_set_tower_ref, (GDestroyNotify) gee_concurrent_set_tower_unref, &range->_bookmark._iter[i], (gsize) 0, NULL);
++						_tmp13_ = gee_hazard_pointer_get_pointer (GEE_CONCURRENT_SET_TYPE_TOWER, (GBoxedCopyFunc) gee_concurrent_set_tower_ref, (GDestroyNotify) gee_concurrent_set_tower_unref, (gconstpointer**) &range->_bookmark._iter[i], (gsize) 0, NULL);
+ 						curr = (GeeConcurrentSetTower*) _tmp13_;
+ 						_tmp14_ = curr;
+ 						_tmp15_ = _gee_concurrent_set_tower_ref0 (_tmp14_);
+@@ -5527,9 +5527,9 @@ gee_concurrent_set_range_improve_bookmar
+ 							_tmp30_ = curr_old;
+ 							_tmp31_ = curr;
+ 							_tmp32_ = _gee_concurrent_set_tower_ref0 (_tmp31_);
+-							if (!gee_hazard_pointer_compare_and_exchange_pointer (GEE_CONCURRENT_SET_TYPE_TOWER, (GBoxedCopyFunc) gee_concurrent_set_tower_ref, (GDestroyNotify) gee_concurrent_set_tower_unref, &range->_bookmark._iter[i], _tmp30_, _tmp32_, (gsize) 0, (gsize) 0, (gsize) 0)) {
++							if (!gee_hazard_pointer_compare_and_exchange_pointer (GEE_CONCURRENT_SET_TYPE_TOWER, (GBoxedCopyFunc) gee_concurrent_set_tower_ref, (GDestroyNotify) gee_concurrent_set_tower_unref, (gconstpointer**) &range->_bookmark._iter[i], _tmp30_, _tmp32_, (gsize) 0, (gsize) 0, (gsize) 0)) {
+ 								gpointer _tmp33_;
+-								_tmp33_ = gee_hazard_pointer_get_pointer (GEE_CONCURRENT_SET_TYPE_TOWER, (GBoxedCopyFunc) gee_concurrent_set_tower_ref, (GDestroyNotify) gee_concurrent_set_tower_unref, &range->_bookmark._iter[i], (gsize) 0, NULL);
++								_tmp33_ = gee_hazard_pointer_get_pointer (GEE_CONCURRENT_SET_TYPE_TOWER, (GBoxedCopyFunc) gee_concurrent_set_tower_ref, (GDestroyNotify) gee_concurrent_set_tower_unref, (gconstpointer**) &range->_bookmark._iter[i], (gsize) 0, NULL);
+ 								_gee_concurrent_set_tower_unref0 (curr);
+ 								curr = (GeeConcurrentSetTower*) _tmp33_;
+ 							}
+@@ -5620,9 +5620,9 @@ gee_concurrent_set_range_improve_bookmar
+ 								_tmp56_ = curr_old;
+ 								_tmp57_ = curr;
+ 								_tmp58_ = _gee_concurrent_set_tower_ref0 (_tmp57_);
+-								if (!gee_hazard_pointer_compare_and_exchange_pointer (GEE_CONCURRENT_SET_TYPE_TOWER, (GBoxedCopyFunc) gee_concurrent_set_tower_ref, (GDestroyNotify) gee_concurrent_set_tower_unref, &range->_bookmark._iter[i], _tmp56_, _tmp58_, (gsize) 0, (gsize) 0, (gsize) 0)) {
++								if (!gee_hazard_pointer_compare_and_exchange_pointer (GEE_CONCURRENT_SET_TYPE_TOWER, (GBoxedCopyFunc) gee_concurrent_set_tower_ref, (GDestroyNotify) gee_concurrent_set_tower_unref, (gconstpointer**) &range->_bookmark._iter[i], _tmp56_, _tmp58_, (gsize) 0, (gsize) 0, (gsize) 0)) {
+ 									gpointer _tmp59_;
+-									_tmp59_ = gee_hazard_pointer_get_pointer (GEE_CONCURRENT_SET_TYPE_TOWER, (GBoxedCopyFunc) gee_concurrent_set_tower_ref, (GDestroyNotify) gee_concurrent_set_tower_unref, &range->_bookmark._iter[i], (gsize) 0, NULL);
++									_tmp59_ = gee_hazard_pointer_get_pointer (GEE_CONCURRENT_SET_TYPE_TOWER, (GBoxedCopyFunc) gee_concurrent_set_tower_ref, (GDestroyNotify) gee_concurrent_set_tower_unref, (gconstpointer**) &range->_bookmark._iter[i], (gsize) 0, NULL);
+ 									_gee_concurrent_set_tower_unref0 (curr);
+ 									curr = (GeeConcurrentSetTower*) _tmp59_;
+ 								}
+@@ -7085,7 +7085,7 @@ gee_concurrent_set_tower_compare_and_exc
+ 	_tmp0_ = self->_nodes;
+ 	_tmp0__length1 = -1;
+ 	_tmp1_ = _gee_concurrent_set_tower_ref0 (new_tower);
+-	result = gee_hazard_pointer_compare_and_exchange_pointer (GEE_CONCURRENT_SET_TYPE_TOWER, (GBoxedCopyFunc) gee_concurrent_set_tower_ref, (GDestroyNotify) gee_concurrent_set_tower_unref, &_tmp0_[level]._succ, old_tower, _tmp1_, (gsize) 3, (gsize) old_state, (gsize) new_state);
++	result = gee_hazard_pointer_compare_and_exchange_pointer (GEE_CONCURRENT_SET_TYPE_TOWER, (GBoxedCopyFunc) gee_concurrent_set_tower_ref, (GDestroyNotify) gee_concurrent_set_tower_unref, (gconstpointer**) &_tmp0_[level]._succ, old_tower, _tmp1_, (gsize) 3, (gsize) old_state, (gsize) new_state);
+ 	return result;
+ }
+ 
+@@ -7154,7 +7154,7 @@ gee_concurrent_set_tower_get_succ (GeeCo
+ 	g_return_val_if_fail (self != NULL, NULL);
+ 	_tmp0_ = self->_nodes;
+ 	_tmp0__length1 = -1;
+-	_tmp2_ = gee_hazard_pointer_get_pointer (GEE_CONCURRENT_SET_TYPE_TOWER, (GBoxedCopyFunc) gee_concurrent_set_tower_ref, (GDestroyNotify) gee_concurrent_set_tower_unref, &_tmp0_[level]._succ, (gsize) 3, &_tmp1_);
++	_tmp2_ = gee_hazard_pointer_get_pointer (GEE_CONCURRENT_SET_TYPE_TOWER, (GBoxedCopyFunc) gee_concurrent_set_tower_ref, (GDestroyNotify) gee_concurrent_set_tower_unref, (gconstpointer**) &_tmp0_[level]._succ, (gsize) 3, &_tmp1_);
+ 	rstate = _tmp1_;
+ 	succ = (GeeConcurrentSetTower*) _tmp2_;
+ 	_vala_state = (GeeConcurrentSetState) rstate;
+@@ -7181,7 +7181,7 @@ gee_concurrent_set_tower_set_succ (GeeCo
+ 	_tmp0_ = self->_nodes;
+ 	_tmp0__length1 = -1;
+ 	_tmp1_ = _gee_concurrent_set_tower_ref0 (next);
+-	gee_hazard_pointer_set_pointer (GEE_CONCURRENT_SET_TYPE_TOWER, (GBoxedCopyFunc) gee_concurrent_set_tower_ref, (GDestroyNotify) gee_concurrent_set_tower_unref, &_tmp0_[level]._succ, _tmp1_, (gsize) 3, (gsize) state);
++	gee_hazard_pointer_set_pointer (GEE_CONCURRENT_SET_TYPE_TOWER, (GBoxedCopyFunc) gee_concurrent_set_tower_ref, (GDestroyNotify) gee_concurrent_set_tower_unref, (gconstpointer**) &_tmp0_[level]._succ, _tmp1_, (gsize) 3, (gsize) state);
+ }
+ 
+ static inline GeeConcurrentSetTower*
+@@ -7195,7 +7195,7 @@ gee_concurrent_set_tower_get_backlink (G
+ 	g_return_val_if_fail (self != NULL, NULL);
+ 	_tmp0_ = self->_nodes;
+ 	_tmp0__length1 = -1;
+-	_tmp1_ = gee_hazard_pointer_get_pointer (GEE_CONCURRENT_SET_TYPE_TOWER, (GBoxedCopyFunc) gee_concurrent_set_tower_ref, (GDestroyNotify) gee_concurrent_set_tower_unref, &_tmp0_[level]._backlink, (gsize) 0, NULL);
++	_tmp1_ = gee_hazard_pointer_get_pointer (GEE_CONCURRENT_SET_TYPE_TOWER, (GBoxedCopyFunc) gee_concurrent_set_tower_ref, (GDestroyNotify) gee_concurrent_set_tower_unref, (gconstpointer**) &_tmp0_[level]._backlink, (gsize) 0, NULL);
+ 	result = (GeeConcurrentSetTower*) _tmp1_;
+ 	return result;
+ }
+@@ -7212,7 +7212,7 @@ gee_concurrent_set_tower_set_backlink (G
+ 	_tmp0_ = self->_nodes;
+ 	_tmp0__length1 = -1;
+ 	_tmp1_ = _gee_concurrent_set_tower_ref0 (backlink);
+-	gee_hazard_pointer_compare_and_exchange_pointer (GEE_CONCURRENT_SET_TYPE_TOWER, (GBoxedCopyFunc) gee_concurrent_set_tower_ref, (GDestroyNotify) gee_concurrent_set_tower_unref, &_tmp0_[level]._backlink, NULL, _tmp1_, (gsize) 0, (gsize) 0, (gsize) 0);
++	gee_hazard_pointer_compare_and_exchange_pointer (GEE_CONCURRENT_SET_TYPE_TOWER, (GBoxedCopyFunc) gee_concurrent_set_tower_ref, (GDestroyNotify) gee_concurrent_set_tower_unref, (gconstpointer**) &_tmp0_[level]._backlink, NULL, _tmp1_, (gsize) 0, (gsize) 0, (gsize) 0);
+ }
+ 
+ static inline gint
+--- a/gee/hashmap.c
++++ b/gee/hashmap.c
+@@ -4086,7 +4086,7 @@ gee_hash_map_map_iterator_gee_map_iterat
+ 	iface->next = (gboolean (*) (GeeMapIterator*)) gee_hash_map_node_iterator_next;
+ 	iface->has_next = (gboolean (*) (GeeMapIterator*)) gee_hash_map_node_iterator_has_next;
+ 	iface->get_mutable = gee_hash_map_map_iterator_real_get_mutable;
+-	iface->get_read_only = gee_hash_map_map_iterator_real_get_read_only;
++	iface->get_read_only = (gboolean (*) (GeeMapIterator*)) gee_hash_map_map_iterator_real_get_read_only;
+ 	iface->get_valid = (gboolean (*) (GeeMapIterator *)) gee_hash_map_node_iterator_get_valid;
+ }
+ 
+--- a/gee/hazardpointer.c
++++ b/gee/hazardpointer.c
+@@ -427,11 +427,11 @@ ___lambda56_ (void)
+ 	_tmp0_ = GEE_HAZARD_POINTER_POLICY_TRY_FREE;
+ 	_tmp1_ = gee_hazard_pointer_context_new (&_tmp0_);
+ 	ctx = _tmp1_;
+-	gee_hazard_pointer_release_policy_swap (GEE_TYPE_ARRAY_LIST, (GBoxedCopyFunc) g_object_ref, (GDestroyNotify) g_object_unref, &gee_hazard_pointer__global_to_free, &ctx->_to_free);
++	gee_hazard_pointer_release_policy_swap (GEE_TYPE_ARRAY_LIST, (GBoxedCopyFunc) g_object_ref, (GDestroyNotify) g_object_unref, (gpointer*) &gee_hazard_pointer__global_to_free, (gpointer*) &ctx->_to_free);
+ 	_tmp2_ = ctx->_to_free;
+ 	gee_hazard_pointer_release_policy_pull_from_queue ((GeeCollection*) _tmp2_, FALSE);
+ 	gee_hazard_pointer_context_try_free (ctx);
+-	gee_hazard_pointer_release_policy_swap (GEE_TYPE_ARRAY_LIST, (GBoxedCopyFunc) g_object_ref, (GDestroyNotify) g_object_unref, &gee_hazard_pointer__global_to_free, &ctx->_to_free);
++	gee_hazard_pointer_release_policy_swap (GEE_TYPE_ARRAY_LIST, (GBoxedCopyFunc) g_object_ref, (GDestroyNotify) g_object_unref, (gpointer*) &gee_hazard_pointer__global_to_free, (gpointer*) &ctx->_to_free);
+ 	result = TRUE;
+ 	_gee_hazard_pointer_context_free0 (ctx);
+ 	return result;
+--- a/gee/treemap.c
++++ b/gee/treemap.c
+@@ -4198,7 +4198,7 @@ gee_tree_map_real_get_ascending_keys (Ge
+ 		_tmp4_ = keys;
+ 		self->priv->_keys = _tmp4_;
+ 		_tmp5_ = keys;
+-		g_object_add_weak_pointer ((GObject*) _tmp5_, &self->priv->_keys);
++		g_object_add_weak_pointer ((GObject*) _tmp5_, (gpointer*) &self->priv->_keys);
+ 	}
+ 	result = keys;
+ 	return result;
+@@ -4228,7 +4228,7 @@ gee_tree_map_real_get_ascending_entries
+ 		_tmp4_ = entries;
+ 		self->priv->_entries = _tmp4_;
+ 		_tmp5_ = entries;
+-		g_object_add_weak_pointer ((GObject*) _tmp5_, &self->priv->_entries);
++		g_object_add_weak_pointer ((GObject*) _tmp5_, (gpointer*) &self->priv->_entries);
+ 	}
+ 	result = entries;
+ 	return result;
+@@ -5879,7 +5879,7 @@ gee_tree_map_sub_map_real_get_keys (GeeA
+ 		_tmp6_ = keys;
+ 		self->priv->_keys = _tmp6_;
+ 		_tmp7_ = keys;
+-		g_object_add_weak_pointer ((GObject*) _tmp7_, &self->priv->_keys);
++		g_object_add_weak_pointer ((GObject*) _tmp7_, (gpointer*) &self->priv->_keys);
+ 	}
+ 	result = (GeeSet*) keys;
+ 	return result;
+@@ -5913,7 +5913,7 @@ gee_tree_map_sub_map_real_get_values (Ge
+ 		_tmp6_ = values;
+ 		self->priv->_values = _tmp6_;
+ 		_tmp7_ = values;
+-		g_object_add_weak_pointer ((GObject*) _tmp7_, &self->priv->_values);
++		g_object_add_weak_pointer ((GObject*) _tmp7_, (gpointer*) &self->priv->_values);
+ 	}
+ 	result = values;
+ 	return result;
+@@ -5947,7 +5947,7 @@ gee_tree_map_sub_map_real_get_entries (G
+ 		_tmp6_ = entries;
+ 		self->priv->_entries = _tmp6_;
+ 		_tmp7_ = entries;
+-		g_object_add_weak_pointer ((GObject*) _tmp7_, &self->priv->_entries);
++		g_object_add_weak_pointer ((GObject*) _tmp7_, (gpointer*) &self->priv->_entries);
+ 	}
+ 	result = (GeeSet*) entries;
+ 	return result;
+@@ -5991,7 +5991,7 @@ gee_tree_map_sub_map_real_get_ascending_
+ 		_tmp6_ = keys;
+ 		self->priv->_keys = _tmp6_;
+ 		_tmp7_ = keys;
+-		g_object_add_weak_pointer ((GObject*) _tmp7_, &self->priv->_keys);
++		g_object_add_weak_pointer ((GObject*) _tmp7_, (gpointer*) &self->priv->_keys);
+ 	}
+ 	result = keys;
+ 	return result;
+@@ -6027,7 +6027,7 @@ gee_tree_map_sub_map_real_get_ascending_
+ 		_tmp6_ = entries;
+ 		self->priv->_entries = _tmp6_;
+ 		_tmp7_ = entries;
+-		g_object_add_weak_pointer ((GObject*) _tmp7_, &self->priv->_entries);
++		g_object_add_weak_pointer ((GObject*) _tmp7_, (gpointer*) &self->priv->_entries);
+ 	}
+ 	_tmp8_ = self->priv->_entries;
+ 	_tmp9_ = _g_object_ref0 (_tmp8_);
+@@ -13955,7 +13955,7 @@ gee_tree_map_map_iterator_gee_map_iterat
+ 	iface->next = (gboolean (*) (GeeMapIterator*)) gee_tree_map_node_iterator_next;
+ 	iface->has_next = (gboolean (*) (GeeMapIterator*)) gee_tree_map_node_iterator_has_next;
+ 	iface->unset = (void (*) (GeeMapIterator*)) gee_tree_map_node_iterator_unset;
+-	iface->get_read_only = gee_tree_map_map_iterator_real_get_read_only;
++	iface->get_read_only = (gboolean (*) (GeeMapIterator*)) gee_tree_map_map_iterator_real_get_read_only;
+ 	iface->get_mutable = gee_tree_map_map_iterator_real_get_mutable;
+ 	iface->get_valid = (gboolean (*) (GeeMapIterator *)) gee_tree_map_node_iterator_get_valid;
+ }
+@@ -14320,7 +14320,7 @@ gee_tree_map_sub_map_iterator_gee_map_it
+ 	iface->next = (gboolean (*) (GeeMapIterator*)) gee_tree_map_sub_node_iterator_next;
+ 	iface->has_next = (gboolean (*) (GeeMapIterator*)) gee_tree_map_sub_node_iterator_has_next;
+ 	iface->unset = (void (*) (GeeMapIterator*)) gee_tree_map_sub_node_iterator_unset;
+-	iface->get_read_only = gee_tree_map_sub_map_iterator_real_get_read_only;
++	iface->get_read_only = (gboolean (*) (GeeMapIterator*)) gee_tree_map_sub_map_iterator_real_get_read_only;
+ 	iface->get_mutable = gee_tree_map_sub_map_iterator_real_get_mutable;
+ 	iface->get_valid = (gboolean (*) (GeeMapIterator *)) gee_tree_map_sub_node_iterator_get_valid;
+ }
+--- a/tests/testarraylist.c
++++ b/tests/testarraylist.c
+@@ -566,7 +566,7 @@ array_list_tests_test_typed_to_array (Ar
+ 	_vala_assert (gee_collection_add ((GeeCollection*) _tmp3_, (gpointer) ((gintptr) FALSE)), "bool_list.add (false)");
+ 	_tmp4_ = bool_list;
+ 	_tmp6_ = gee_collection_to_array ((GeeCollection*) _tmp4_, &_tmp5_);
+-	bool_array = _tmp6_;
++	bool_array = (gboolean*) _tmp6_;
+ 	bool_array_length1 = _tmp5_;
+ 	_bool_array_size_ = bool_array_length1;
+ 	index = 0;
+@@ -624,7 +624,7 @@ array_list_tests_test_typed_to_array (Ar
+ 	_vala_assert (gee_collection_add ((GeeCollection*) _tmp22_, (gpointer) ((gintptr) 3)), "int_list.add (3)");
+ 	_tmp23_ = int_list;
+ 	_tmp25_ = gee_collection_to_array ((GeeCollection*) _tmp23_, &_tmp24_);
+-	int_array = _tmp25_;
++	int_array = (gint*) _tmp25_;
+ 	int_array_length1 = _tmp24_;
+ 	_int_array_size_ = int_array_length1;
+ 	index = 0;
+@@ -685,7 +685,7 @@ array_list_tests_test_typed_to_array (Ar
+ 	_vala_assert (gee_collection_add ((GeeCollection*) _tmp43_, &_tmp44_), "double_list.add (2.0d)");
+ 	_tmp45_ = double_list;
+ 	_tmp47_ = gee_collection_to_array ((GeeCollection*) _tmp45_, &_tmp46_);
+-	double_array = _tmp47_;
++	double_array = (gdouble**) _tmp47_;
+ 	double_array_length1 = _tmp46_;
+ 	_double_array_size_ = double_array_length1;
+ 	index = 0;
+@@ -748,7 +748,7 @@ array_list_tests_test_typed_to_array (Ar
+ 	_vala_assert (gee_collection_add ((GeeCollection*) _tmp65_, (gpointer) ((gintptr) ARRAY_LIST_TESTS_TEST_ENUM_THREE)), "enum_list.add (TestEnum.THREE)");
+ 	_tmp66_ = enum_list;
+ 	_tmp68_ = gee_collection_to_array ((GeeCollection*) _tmp66_, &_tmp67_);
+-	enum_array = _tmp68_;
++	enum_array = (ArrayListTestsTestEnum*) _tmp68_;
+ 	enum_array_length1 = _tmp67_;
+ 	_enum_array_size_ = enum_array_length1;
+ 	index = 0;
+--- a/tests/testcase.c
++++ b/tests/testcase.c
+@@ -278,7 +278,7 @@ gee_test_case_add_test (GeeTestCase* sel
+ 	_tmp3_ = self->priv->suite;
+ 	_tmp4_ = gee_test_case_adaptor_get_name (adaptor);
+ 	_tmp5_ = _tmp4_;
+-	_tmp6_ = g_test_create_case (_tmp5_, (gsize) 0, adaptor, _gee_test_case_adaptor_set_up_gtest_fixture_func, _gee_test_case_adaptor_run_gtest_fixture_func, _gee_test_case_adaptor_tear_down_gtest_fixture_func);
++	_tmp6_ = g_test_create_case (_tmp5_, (gsize) 0, adaptor, (GTestFixtureFunc) _gee_test_case_adaptor_set_up_gtest_fixture_func, (GTestFixtureFunc) _gee_test_case_adaptor_run_gtest_fixture_func, (GTestFixtureFunc) _gee_test_case_adaptor_tear_down_gtest_fixture_func);
+ 	g_test_suite_add (_tmp3_, _tmp6_);
+ 	_gee_test_case_adaptor_unref0 (adaptor);
+ 	(test_target_destroy_notify == NULL) ? NULL : (test_target_destroy_notify (test_target), NULL);
+--- a/tests/testdata.c
++++ b/tests/testdata.c
+@@ -769,7 +769,7 @@ test_data_sort_array (gchar** array,
+ 	gchar** _tmp1_;
+ 	gint _tmp1__length1;
+ 	gchar** result;
+-	_vala_g_qsort_with_data (G_TYPE_STRING, (GBoxedCopyFunc) g_strdup, (GDestroyNotify) g_free, array, (gint) array_length1, (gsize) sizeof (gchar*), (GCompareDataFunc) ___lambda4__gcompare_data_func, NULL);
++	_vala_g_qsort_with_data (G_TYPE_STRING, (GBoxedCopyFunc) g_strdup, (GDestroyNotify) g_free, (gpointer*) array, (gint) array_length1, (gsize) sizeof (gchar*), (GCompareDataFunc) ___lambda4__gcompare_data_func, NULL);
+ 	_tmp0_ = array;
+ 	_tmp0__length1 = array_length1;
+ 	array = NULL;
