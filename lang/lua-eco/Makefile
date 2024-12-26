@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua-eco
-PKG_VERSION:=3.6.2
+PKG_VERSION:=3.7.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL=https://github.com/zhaojh329/lua-eco/releases/download/v$(PKG_VERSION)
-PKG_HASH:=89dc89a70a30fd1b42a5341b6a5e42aba2509b02492aca635148d6f0e0669152
+PKG_HASH:=c8f35657cc873cbfc6e2c3cd0e9bfb3add0b634d1cfba648947e47f303f81d1d
 
 PKG_MAINTAINER:=Jianhui Zhao <zhaojh329@gmail.com>
 PKG_LICENSE:=MIT
@@ -47,7 +47,9 @@ endef
 Package/lua-eco-log=$(call Package/lua-eco/Module,log utils)
 Package/lua-eco-base64=$(call Package/lua-eco/Module,base64)
 Package/lua-eco-sha1=$(call Package/lua-eco/Module,sha1)
+Package/lua-eco-sha256=$(call Package/lua-eco/Module,sha256)
 Package/lua-eco-md5=$(call Package/lua-eco/Module,md5)
+Package/lua-eco-hmac=$(call Package/lua-eco/Module,hmac)
 Package/lua-eco-socket=$(call Package/lua-eco/Module,socket)
 Package/lua-eco-dns=$(call Package/lua-eco/Module,dns,+lua-eco-socket)
 Package/lua-eco-ssl=$(call Package/lua-eco/Module,ssl,\
@@ -120,9 +122,19 @@ define Package/lua-eco-sha1/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/sha1.so $(1)/usr/local/lib/lua/5.3/eco/hash
 endef
 
+define Package/lua-eco-sha256/install
+	$(INSTALL_DIR) $(1)/usr/local/lib/lua/5.3/eco/hash
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/sha256.so $(1)/usr/local/lib/lua/5.3/eco/hash
+endef
+
 define Package/lua-eco-md5/install
 	$(INSTALL_DIR) $(1)/usr/local/lib/lua/5.3/eco/hash
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/md5.so $(1)/usr/local/lib/lua/5.3/eco/hash
+endef
+
+define Package/lua-eco-hmac/install
+	$(INSTALL_DIR) $(1)/usr/local/lib/lua/5.3/eco/hash
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/hmac.lua $(1)/usr/local/lib/lua/5.3/eco/hash
 endef
 
 define Package/lua-eco-socket/install
@@ -201,7 +213,9 @@ $(eval $(call BuildPackage,lua-eco))
 $(eval $(call BuildPackage,lua-eco-log))
 $(eval $(call BuildPackage,lua-eco-base64))
 $(eval $(call BuildPackage,lua-eco-sha1))
+$(eval $(call BuildPackage,lua-eco-sha256))
 $(eval $(call BuildPackage,lua-eco-md5))
+$(eval $(call BuildPackage,lua-eco-hmac))
 $(eval $(call BuildPackage,lua-eco-socket))
 $(eval $(call BuildPackage,lua-eco-dns))
 $(eval $(call BuildPackage,lua-eco-ssl))
