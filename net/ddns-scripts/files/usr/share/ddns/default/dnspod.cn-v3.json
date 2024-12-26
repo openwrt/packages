@@ -1,0 +1,9 @@
+{
+	"name": "dnspod.cn-v3",
+	"ipv4": {
+		"url": "update_dnspod_cn_v3.sh"
+	},
+	"ipv6": {
+		"url": "update_dnspod_cn_v3.sh"
+	}
+}
