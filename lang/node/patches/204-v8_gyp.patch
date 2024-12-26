@@ -156,17 +156,3 @@
        ],
        'sources': [
          '<(V8_ROOT)/third_party/zlib/adler32.c',
-@@ -2229,10 +2254,13 @@
-         'ABSEIL_ROOT': '../../deps/v8/third_party/abseil-cpp',
-       },
-       'direct_dependent_settings': {
-+        'include_dirs!': [ '<!@(echo "$STAGING_DIR"/usr/include)' ],
-         'include_dirs': [
-           '<(ABSEIL_ROOT)',
-+          '<!@(echo "$STAGING_DIR"/usr/../usr/include)',
-         ],
-       },
-+      'include_dirs!': [ '<!@(echo "$STAGING_DIR"/usr/include)' ],
-       'include_dirs': [
-         '<(ABSEIL_ROOT)',
-       ],
