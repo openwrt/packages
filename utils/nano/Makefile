@@ -129,6 +129,8 @@ endef
 define Package/nano/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/$(PKG_NAME) $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/etc/profile.d
+	printf "export EDITOR=/usr/bin/$(PKG_NAME)\n" >$(1)/etc/profile.d/$(PKG_NAME).sh
 endef
 
 define Package/nano-plus/install
