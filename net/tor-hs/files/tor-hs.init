@@ -3,15 +3,9 @@
 START=52
 STOP=52
 
-USE_PROCD=1
-
 TORRC_FILE=/etc/tor/torrc_generated # file with torrc config
 HS_DIR_PATH=/etc/tor/hidden_service #hidden service directory path
 TOR_USER=tor
-
-clean_hs() {
-	local name=""
-}
 
 config_tor() {
 	local restart_tor update_config
@@ -97,10 +91,11 @@ parse_common_conf() {
 	[ -n "$generated_config" ] && TORRC_FILE="$generated_config"
 }
 
-start_service() {
+start() {
 	config_load tor-hs
+	
 	# clean config
-	echo "" > $TORRC_FILE # clean config
+	echo "" > $TORRC_FILE
 
 	# load common config
 	parse_common_conf
