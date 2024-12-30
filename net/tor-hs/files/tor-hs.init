@@ -89,13 +89,13 @@ parse_common_conf() {
 	config_get hs_dir "common" HSDir
 	[ -n "$hs_dir" ] && HS_DIR_PATH="$hs_dir"
 	[ -n "$generated_config" ] && TORRC_FILE="$generated_config"
+
+	# clean config
+	echo "" > $TORRC_FILE
 }
 
 start() {
 	config_load tor-hs
-	
-	# clean config
-	echo "" > $TORRC_FILE
 
 	# load common config
 	parse_common_conf
