@@ -26,6 +26,7 @@ handle_bt_agent() {
 start_service()
 {
 	config_load btagent
+	echo "" > $AGENT_PIN_FILE
 	config_foreach handle_bt_agent btagent
 	
 	procd_open_instance
