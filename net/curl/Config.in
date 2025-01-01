@@ -45,6 +45,10 @@ config LIBCURL_HTTP
 	bool "HTTP / HTTPS protocol"
 	default y
 
+config LIBCURL_WEBSOCKETS
+	bool "WebSockets protocol"
+	default n
+
 config LIBCURL_COOKIES
 	bool "Enable Cookies support"
 	depends on LIBCURL_HTTP
