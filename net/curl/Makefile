@@ -44,6 +44,7 @@ PKG_CONFIG_DEPENDS:= \
   CONFIG_LIBCURL_FTP \
   CONFIG_LIBCURL_GOPHER \
   CONFIG_LIBCURL_HTTP \
+  CONFIG_LIBCURL_WEBSOCKETS \
   CONFIG_LIBCURL_IMAP \
   CONFIG_LIBCURL_LDAP \
   CONFIG_LIBCURL_LDAPS \
@@ -153,6 +154,7 @@ CONFIGURE_ARGS += \
 	$(call autoconf_bool,CONFIG_LIBCURL_SMTP,smtp) \
 	$(call autoconf_bool,CONFIG_LIBCURL_TELNET,telnet) \
 	$(call autoconf_bool,CONFIG_LIBCURL_TFTP,tftp) \
+	$(call autoconf_bool,CONFIG_LIBCURL_WEBSOCKETS,websockets) \
 	\
 	$(call autoconf_bool,CONFIG_LIBCURL_COOKIES,cookies) \
 	$(call autoconf_bool,CONFIG_LIBCURL_CRYPTO_AUTH,crypto-auth) \
