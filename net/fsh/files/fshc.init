@@ -1,0 +1,50 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+USE_PROCD=1
+
+NAME=fsh
+PROG=/usr/bin/$NAME
+
+validate_section_fshc() {
+	uci_load_validate "${NAME}" fshc "$1" "$2" \
+		'enable:bool:0' \
+		'addr:string' \
+		'port:port' \
+		'token:string' \
+		'params:string'
+}
+
+fshc_instance() {
+	[ "$2" = 0 ] || {
+		echo "validation failed"
+		return 1
+	}
+
+	[ "${enable}" = 0 ] && return 1
+
+	procd_open_instance "$1"
+
+	procd_set_param command "$PROG"
+	procd_append_param command ${params}
+	if [ -z "$token" ]; then
+		procd_append_param command "$addr":"$port"
+	else
+		procd_append_param command "$addr":"$port"/"$token"
+	fi
+
+	procd_close_instance
+}
+
+start_service() {
+	config_load "${NAME}"
+	config_foreach validate_section_fshc fshc fshc_instance
+}
+
+service_triggers() {
+	procd_add_reload_trigger "$NAME"
+
+	procd_open_validate
+	validate_section_fshc
+	procd_close_validate
+}
