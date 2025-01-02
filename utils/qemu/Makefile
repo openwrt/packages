@@ -423,6 +423,7 @@ CONFIGURE_ARGS +=			\
 	--disable-tsan			\
 	--disable-ubsan			\
 	--disable-fuzzing		\
+	--disable-safe-stack		\
 	--$(if $(CONFIG_QEMU_SECCOMP),enable,disable)-seccomp		\
 	--disable-smartcard		\
 	--disable-snappy		\
