@@ -4,12 +4,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=open-iscsi
-PKG_VERSION:=2.1.7
+PKG_VERSION:=2.1.10
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/open-iscsi/open-iscsi/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=d96761e47a69f8214c5fbd251d844f37961b14c3e437b63a15cc64f5b8cba2f0
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/open-iscsi/open-iscsi
+PKG_SOURCE_VERSION:=$(PKG_VERSION)
+PKG_MIRROR_HASH:=934cfe18caf5de9a85e394d10731ee9fd104b47cebc6da05b5fed8b117acb3db
 
 PKG_MAINTAINER:=Lucian CRISTIAN <lucian.cristian@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -21,6 +22,7 @@ PKG_INSTALL:=1
 PKG_BUILD_FLAGS:=lto
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/meson.mk
 
 define Package/open-iscsi
 	SECTION:=net
@@ -44,37 +46,8 @@ define Build/Prepare
 	$(SED)'s,/run,/var/run,g' $(PKG_BUILD_DIR)/usr/initiator.h
 endef
 
-define Build/Configure
-	$(call Build/Configure/Default)
-	(cd $(PKG_BUILD_DIR)/iscsiuio/; \
-	autoreconf --install; \
-	./configure \
-		--target=$(GNU_TARGET_NAME) \
-		--host=$(GNU_TARGET_NAME) \
-		--build=$(GNU_HOST_NAME) \
-		--prefix=/usr \
-		LIB_DIR=/usr/lib \
-		CC="$(TARGET_CC)" \
-		CFLAGS="$(TARGET_CFLAGS) $(EXTRA_CFLAGS)" \
-	)
-endef
-
-TARGET_CFLAGS += \
-	$(FPIC) \
-	-D_GNU_SOURCE -DNO_SYSTEMD
-
-TARGET_LDFLAGS += -lkmod
-
-MAKE_FLAGS += \
-	CC="$(TARGET_CC)" \
-	CFLAGS="$(TARGET_CFLAGS) $(EXTRA_CFLAGS) \
-		-I$(PKG_BUILD_DIR)/include \
-		-I$(PKG_BUILD_DIR)/usr \
-		-I$(PKG_BUILD_DIR)/libopeniscsiusr" \
-	LDFLAGS="$(TARGET_LDFLAGS) $(EXTRA_LDFLAGS) \
-		-L$(PKG_BUILD_DIR)/libopeniscsiusr" \
-	PREFIX=/usr \
-	LIB_DIR=/usr/lib
+MESON_ARGS += \
+	-Dno_systemd=true
 
 define Package/open-iscsi/conffiles
 /etc/iscsi/
@@ -88,12 +61,11 @@ endef
 define Package/open-iscsi/install
 	$(INSTALL_DIR) \
 	 $(1)/etc/init.d $(1)/etc/iscsi \
-	 $(1)/usr/lib $(1)/sbin $(1)/usr/sbin
+	 $(1)/usr/lib $(1)/usr/sbin
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/iscsi/iscsid.conf $(1)/etc/iscsi/
 	$(INSTALL_BIN) ./files/iscsi* $(1)/usr/sbin/
 	$(INSTALL_BIN) ./files/open-iscsi $(1)/etc/init.d/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/sbin/iscsi{adm,d,-iname} $(1)/sbin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/iscsiuio $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/iscsi{adm,d,-iname,uio} $(1)/usr/sbin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libopeniscsiusr.so* $(1)/usr/lib/
 endef
 
