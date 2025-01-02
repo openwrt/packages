@@ -1,0 +1,29 @@
+From c14b6ccaecba0a85fee0261774d31187a6c66f71 Mon Sep 17 00:00:00 2001
+From: Daniel Alder <daald@users.noreply.github.com>
+Date: Wed, 13 Dec 2023 15:16:20 +0100
+Subject: [PATCH 200/204] Allow customizing the list of monitored network
+ interfaces
+
+This is a simple way to customize the selection of network interfaces. If INTERFACE_NAMES_OVERRIDE is set in muninlite.conf, that list is used instead of auto-detection. As muninlite.conf
+itself is also a script, it is even possible to write a custom command.
+This feature is helpful in environments with virtual machines or containers, like docker or lxc where there are lots of br-*, veth*, lxcbr* etc interfaces where monitoring doesn't make much
+sense. I didn't find a way to reliably filter physical interfaces.
+---
+ muninlite.in | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+--- a/muninlite.in
++++ b/muninlite.in
+@@ -78,7 +78,11 @@ RES=""
+ for PLUG in $PLUGINS; do
+   case "$PLUG" in
+     if_|if_err_)
+-      interface_names=$(sed 's/^ *//; s/:.*$//; / /d; /^lo$/d' /proc/net/dev)
++      if [ -z "$INTERFACE_NAMES_OVERRIDE" ]; then
++        interface_names=$(sed 's/^ *//; s/:.*$//; / /d; /^lo$/d' /proc/net/dev)
++      else
++        interface_names="$INTERFACE_NAMES_OVERRIDE"
++      fi
+       for INTER in $interface_names; do
+         INTERRES=$(echo "$INTER" | sed -e 's/\./VLAN/' -e 's/\-/_/g')
+         RES="$RES ${PLUG}${INTERRES}"
