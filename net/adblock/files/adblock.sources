@@ -251,6 +251,13 @@
 		"focus": "reg_korea",
 		"descurl": "https://github.com/List-KR/List-KR"
 	},
+	"reg_lt": {
+		"url": "https://easylist-downloads.adblockplus.org/easylistlithuania.txt",
+		"rule": "BEGIN{FS=\"[|^]\"}/^\\|\\|([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+\\^(\\$third-party)?$/{print tolower($3)}",
+		"size": "S",
+		"focus": "reg_lithuania",
+		"descurl": "https://github.com/EasyList-Lithuania/easylist_lithuania"
+	},
 	"reg_nl": {
 		"url": "https://easylist-downloads.adblockplus.org/easylistdutch.txt",
 		"rule": "BEGIN{FS=\"[|^]\"}/^\\|\\|([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+\\^(\\$third-party)?$/{print tolower($3)}",
