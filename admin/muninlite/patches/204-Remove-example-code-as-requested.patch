@@ -1,0 +1,16 @@
+From 6f27355dc64ddc1ad9588f1402a21ad112bfbc01 Mon Sep 17 00:00:00 2001
+From: Daniel Alder <daald@users.noreply.github.com>
+Date: Fri, 15 Dec 2023 22:42:18 +0100
+Subject: [PATCH 204/204] Remove example code as requested
+
+---
+ muninlite.conf | 1 -
+ 1 file changed, 1 deletion(-)
+
+--- a/muninlite.conf
++++ b/muninlite.conf
+@@ -3,4 +3,3 @@ NTP_PEER="pool.ntp.org"
+ DF_IGNORE_FILESYSTEM_REGEX="(none|unknown|rootfs|iso9660|squashfs|udf|romfs|ramfs|debugfs|cgroup_root|devtmpfs)"
+ 
+ #INTERFACE_NAMES_OVERRIDE="eth0"
+-#INTERFACE_NAMES_OVERRIDE="$(sed 's/^ *//; s/:.*$//; / /d' /proc/net/dev | grep -E '^(eth|wlan|en)')"
