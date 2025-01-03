@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <math.h>
 
 #include <arpa/inet.h>
 
@@ -616,13 +617,15 @@ struct cidr * cidr_parse(const char *op, const char *s, int af_hint)
 
 bool cidr_howmany(struct cidr *a, struct cidr *b)
 {
+	int prefix_diff;
 	if (printed)
 		qprintf(" ");
 
-	if (b->prefix < a->prefix)
+	prefix_diff = (b->prefix - a->prefix);
+	if (prefix_diff < 1)
 		qprintf("0");
 	else
-		qprintf("%u", 1 << (b->prefix - a->prefix));
+		qprintf("%.0LF", powl(2, prefix_diff));
 
 	return true;
 }
