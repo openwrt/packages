@@ -378,7 +378,7 @@ print_json_string() { json_init; json_add_string "$1" "$2"; json_dump; json_clea
 sanitize_dir() { [ -d "$(readlink -fn "$1")" ] && readlink -fn "$1"; }
 smartdns_restart() { /etc/init.d/smartdns restart >/dev/null 2>&1; }
 str_contains() { test "$1" != "$(str_replace "$1" "$2" '')"; }
-str_contains_word() { echo "$1" | grep -q -w "$2"; }
+str_contains_word() { echo "$1" | grep -qw "$2"; }
 str_first_word() { echo "${1%% *}"; }
 # shellcheck disable=SC2018,SC2019
 str_to_lower() { echo "$1" | tr 'A-Z' 'a-z'; }
@@ -846,6 +846,7 @@ resolver() {
 	_dnsmasq_instance_config() {
 		local cfg="$1" param="$2" confdir confdirFile
 		[ -s "/etc/config/dhcp" ] || return 0
+		[ -n "$(uci_get dhcp "$cfg")" ] || return 1
 		case "$param" in
 			dnsmasq.addnhosts)
 				if [ "$(uci_get 'dhcp' "$cfg" 'serversfile')" = "$dnsmasqServersFile" ]; then
@@ -880,10 +881,19 @@ resolver() {
 			;;
 		esac
 	}
+# shellcheck disable=SC2317
+	_dnsmasq_instance_append_force_dns_port() {
+		local cfg="$1" instance_port
+		[ -s "/etc/config/dhcp" ] || return 0
+		[ -n "$(uci_get 'dhcp' "$cfg")" ] || return 1
+		config_get instance_port "$cfg" 'port' '53'
+		str_contains_word "$force_dns_port" "$instance_port" || force_dns_port="${force_dns_port:+$force_dns_port }${instance_port}"
+	}
 # shellcheck disable=SC2016,SC2317
 	_dnsmasq_instance_init() {
 		local cfg="$1" param="$2" confdir confdirFile
 		[ -s "/etc/config/dhcp" ] || return 0
+		[ -n "$(uci_get 'dhcp' "$cfg")" ] || return 1
 		case "$param" in
 			dnsmasq.conf|dnsmasq.ipset|dnsmasq.nftset)
 				if grep -q 'config_get dnsmasqconfdir "$cfg" confdir "/tmp/dnsmasq${cfg:+.$cfg}.d"' '/etc/init.d/dnsmasq'; then
@@ -898,8 +908,16 @@ resolver() {
 			;;
 		esac
 	}
+	_smartdns_instance_append_force_dns_port() {
+		[ -s "/etc/config/smartdns" ] || return 0
+		[ -n "$(uci_get 'smartdns' "$cfg")" ] || return 1
+		local cfg="$1" instance_port
+		config_get instance_port "$cfg" 'port' '53'
+		str_contains_word "$force_dns_port" "$instance_port" || force_dns_port="${force_dns_port:+$force_dns_port }${instance_port}"
+	}
 	_smartdns_instance_config() {
 		[ -s "/etc/config/smartdns" ] || return 0
+		[ -n "$(uci_get 'smartdns' "$cfg")" ] || return 1
 		local cfg="$1" param="$2"
 		case "$param" in
 			cleanup)
@@ -924,6 +942,14 @@ resolver() {
 				uci_add_list_if_new 'smartdns' "$cfg" 'conf_files' "$outputConfig"
 			;;
 		esac
+	}
+# shellcheck disable=SC2317
+	_unbound_instance_append_force_dns_port() {
+		[ -s "/etc/config/unbound" ] || return 0
+		[ -n "$(uci_get 'unbound' "$cfg")" ] || return 1
+		local cfg="$1" instance_port
+		config_get instance_port "$cfg" 'listen_port' '53'
+		str_contains_word "$force_dns_port" "$instance_port" || force_dns_port="${force_dns_port:+$force_dns_port }${instance_port}"
 	}
 	
 	local param output_text i
@@ -975,17 +1001,21 @@ resolver() {
 			config_load 'dhcp'
 			if [ "$dnsmasq_instance" = "*" ]; then
 				config_foreach _dnsmasq_instance_config 'dnsmasq' "$dns"
+				config_foreach _dnsmasq_instance_append_force_dns_port 'dnsmasq'
 			elif [ -n "$dnsmasq_instance" ]; then
 				for i in $dnsmasq_instance; do
 					_dnsmasq_instance_config "@dnsmasq[$i]" "$dns" || _dnsmasq_instance_config "$i" "$dns"
+					_dnsmasq_instance_append_force_dns_port "@dnsmasq[$i]" || _dnsmasq_instance_append_force_dns_port "$i"
 				done
 			fi
 			config_load 'smartdns'
 			if [ "$smartdns_instance" = "*" ]; then
 				config_foreach _smartdns_instance_config 'smartdns' "$dns"
+				config_foreach _smartdns_instance_append_force_dns_port 'smartdns'
 			elif [ -n "$smartdns_instance" ]; then
 				for i in $smartdns_instance; do
 					_smartdns_instance_config "@smartdns[$i]" "$dns" || _smartdns_instance_config "$i" "$dns"
+					_smartdns_instance_append_force_dns_port "@smartdns[$i]" || _smartdns_instance_append_force_dns_port "$i"
 				done
 			fi
 
@@ -1927,7 +1957,7 @@ adb_sizes() {
 
 # shellcheck disable=SC2120
 adb_start() {
-	local action status error message stats c iface
+	local action status error message stats p iface
 	local param="$1" validation_result="$3"
 
 	load_environment "$validation_result" "$param" || return 1
@@ -2061,29 +2091,29 @@ adb_start() {
 	json_add_array firewall
 	if [ "$force_dns" -ne '0' ]; then
 # shellcheck disable=SC3060
-		for c in ${force_dns_port/,/ }; do
-			if netstat -tuln | grep LISTEN | grep ":${c}" >/dev/null 2>&1; then
+		for p in ${force_dns_port/,/ }; do
+			if netstat -tuln | grep LISTEN | grep ":${p}" >/dev/null 2>&1; then
 				for iface in $force_dns_interface; do
-					json_add_object ""
-					json_add_string type redirect
-					json_add_string target DNAT
+					json_add_object ''
+					json_add_string type 'redirect'
+					json_add_string target 'DNAT'
 					json_add_string src "$iface"
-					json_add_string proto "tcp udp"
-					json_add_string src_dport "$c"
-					json_add_string dest_port "$c"
-					json_add_string family any
-					json_add_boolean reflection 0
+					json_add_string proto 'tcp udp'
+					json_add_string src_dport '53'
+					json_add_string dest_port "$p"
+					json_add_string family 'any'
+					json_add_boolean reflection '0'
 					json_close_object
 				done
 			else
 				for iface in $force_dns_interface; do
-					json_add_object ""
-					json_add_string type rule
+					json_add_object ''
+					json_add_string type 'rule'
 					json_add_string src "$iface"
-					json_add_string dest "*"
-					json_add_string proto "tcp udp"
-					json_add_string dest_port "$c"
-					json_add_string target REJECT
+					json_add_string dest '*'
+					json_add_string proto 'tcp udp'
+					json_add_string dest_port "$p"
+					json_add_string target 'REJECT'
 					json_close_object
 				done
 			fi
@@ -2091,55 +2121,55 @@ adb_start() {
 	fi
 	case "$dns" in
 		dnsmasq.ipset|smartdns.ipset)
-			json_add_object ""
-			json_add_string type ipset
-			json_add_string name adb
-			json_add_string match dest_net
-			json_add_string storage hash
+			json_add_object ''
+			json_add_string type 'ipset'
+			json_add_string name 'adb'
+			json_add_string match 'dest_net'
+			json_add_string storage 'hash'
 			json_close_object
 			for iface in $force_dns_interface; do
-				json_add_object ""
-				json_add_string type rule
-				json_add_string ipset adb
+				json_add_object ''
+				json_add_string type 'rule'
+				json_add_string ipset 'adb'
 				json_add_string src "$iface"
-				json_add_string dest "*"
-				json_add_string proto "tcp udp"
-				json_add_string target REJECT
+				json_add_string dest '*'
+				json_add_string proto 'tcp udp'
+				json_add_string target 'REJECT'
 				json_close_object
 			done
 		;;
 		dnsmasq.nftset|smartdns.nftset)
-			json_add_object ""
-			json_add_string type ipset
-			json_add_string name adb4
-			json_add_string family 4
-			json_add_string match dest_net
+			json_add_object ''
+			json_add_string type 'ipset'
+			json_add_string name 'adb4'
+			json_add_string family '4'
+			json_add_string match 'dest_net'
 			json_close_object
 			for iface in $force_dns_interface; do
-				json_add_object ""
-				json_add_string type rule
-				json_add_string ipset adb4
+				json_add_object ''
+				json_add_string type 'rule'
+				json_add_string ipset 'adb4'
 				json_add_string src "$iface"
-				json_add_string dest "*"
-				json_add_string proto "tcp udp"
-				json_add_string target REJECT
+				json_add_string dest '*'
+				json_add_string proto 'tcp udp'
+				json_add_string target 'REJECT'
 				json_close_object
 			done
 			if [ "$ipv6_enabled" -ne '0' ]; then
-				json_add_object ""
-				json_add_string type ipset
-				json_add_string name adb6
-				json_add_string family 6
-				json_add_string match dest_net
+				json_add_object ''
+				json_add_string type 'ipset'
+				json_add_string name 'adb6'
+				json_add_string family '6'
+				json_add_string match 'dest_net'
 				json_close_object
 				for iface in $force_dns_interface; do
-					json_add_object ""
-					json_add_string type rule
-					json_add_string ipset adb6
+					json_add_object ''
+					json_add_string type 'rule'
+					json_add_string ipset 'adb6'
 					json_add_string src "$iface"
-					json_add_string dest "*"
-					json_add_string proto "tcp udp"
-					json_add_string target REJECT
+					json_add_string dest '*'
+					json_add_string proto 'tcp udp'
+					json_add_string target 'REJECT'
 					json_close_object
 				done
 			fi
