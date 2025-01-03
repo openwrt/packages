@@ -1,0 +1,10 @@
+
+#config antiblock
+	#option url 'https://antifilter.download/list/domains.lst'
+	#option file '/root/my_urls.txt'
+	#option DNS '1.1.1.1:53'
+	#option listen '192.168.1.1:5053'
+	#option VPN_name 'VPN'
+	#option output '/tmp/antiblock'
+	#option log '1'
+	#option stat '1'
