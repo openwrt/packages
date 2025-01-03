@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua-eco
-PKG_VERSION:=3.10.0
+PKG_VERSION:=3.7.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL=https://github.com/zhaojh329/lua-eco/releases/download/v$(PKG_VERSION)
-PKG_HASH:=0205e0c20c4bbaa0829909b0722ac77df6f8a47d87669edaa8f79bdf87d15510
+PKG_HASH:=c8f35657cc873cbfc6e2c3cd0e9bfb3add0b634d1cfba648947e47f303f81d1d
 
 PKG_MAINTAINER:=Jianhui Zhao <zhaojh329@gmail.com>
 PKG_LICENSE:=MIT
@@ -101,11 +101,11 @@ define Package/lua-eco/install
 	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/local/lib/lua/5.4/eco/core \
 		$(1)/usr/lib $(1)/usr/local/lib/lua/5.4/eco/encoding
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/eco $(1)/usr/bin
-	$(CP) $(PKG_BUILD_DIR)/libeco.so* $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bufio.so $(1)/usr/local/lib/lua/5.4/eco
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/hex.lua $(1)/usr/local/lib/lua/5.4/eco/encoding
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/{time,bufio,sys,file}.so $(1)/usr/local/lib/lua/5.4/eco/core
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/{time,sys,file,sync,channel}.lua $(1)/usr/local/lib/lua/5.4/eco
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/libeco.so* $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bufio.so $(1)/usr/local/lib/lua/5.3/eco
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/hex.lua $(1)/usr/local/lib/lua/5.3/eco/encoding
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/{time,bufio,sys,file}.so $(1)/usr/local/lib/lua/5.3/eco/core
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/{time,sys,file,sync,channel}.lua $(1)/usr/local/lib/lua/5.3/eco
 endef
 
 define Package/lua-eco-log/install
@@ -128,6 +128,11 @@ define Package/lua-eco-sha256/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/sha256.so $(1)/usr/local/lib/lua/5.4/eco/hash
 endef
 
+define Package/lua-eco-sha256/install
+	$(INSTALL_DIR) $(1)/usr/local/lib/lua/5.3/eco/hash
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/sha256.so $(1)/usr/local/lib/lua/5.3/eco/hash
+endef
+
 define Package/lua-eco-md5/install
 	$(INSTALL_DIR) $(1)/usr/local/lib/lua/5.4/eco/hash
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/md5.so $(1)/usr/local/lib/lua/5.4/eco/hash
@@ -136,6 +141,11 @@ endef
 define Package/lua-eco-hmac/install
 	$(INSTALL_DIR) $(1)/usr/local/lib/lua/5.4/eco/hash
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/hmac.lua $(1)/usr/local/lib/lua/5.4/eco/hash
+endef
+
+define Package/lua-eco-hmac/install
+	$(INSTALL_DIR) $(1)/usr/local/lib/lua/5.3/eco/hash
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/hmac.lua $(1)/usr/local/lib/lua/5.3/eco/hash
 endef
 
 define Package/lua-eco-socket/install
