@@ -12,7 +12,7 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/cpupower
   SECTION:=utils
-  CATEGORY:=Utils
+  CATEGORY:=Utilities
   TITLE:=Shows and sets processor power related values
   URL:=https://www.kernel.org
   DEPENDS:=+libpci
