@@ -87,6 +87,7 @@ upnpd() {
 	config_get presentation_url config presentation_url
 	config_get upnp_lease_file config upnp_lease_file
 	config_get ipv6_disable config ipv6_disable 0
+	config_get_bool secure_mode config secure_mode 1
 
 	local conf ifname ifname6
 
@@ -135,6 +136,11 @@ upnpd() {
 		upnpd_write_bool enable_pcp_pmp 1
 		upnpd_write_bool enable_upnp 1
 		upnpd_write_bool secure_mode 1
+		if [ "$secure_mode" = "0" ]; then
+		  echo "pcp_allow_thirdparty=yes"
+		else
+		  echo "pcp_allow_thirdparty=no"
+		fi
 		upnpd_write_bool system_uptime 1
 		upnpd_write_bool igdv1 1 force_igd_desc_v1
 		upnpd_write_bool use_stun 0 ext_perform_stun
