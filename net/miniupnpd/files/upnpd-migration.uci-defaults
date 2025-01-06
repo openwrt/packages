@@ -103,13 +103,6 @@ if [ "$(uci get upnpd.@perm_rule[0].action)" = "allow" ] &&
 		set upnpd.@perm_rule[1].int_addr='0.0.0.0/0'
 		set upnpd.@perm_rule[1].int_ports='1-1023'
 		set upnpd.@perm_rule[1].comment='Low ports'
-		add upnpd perm_rule
-		set upnpd.@perm_rule[2]=perm_rule
-		set upnpd.@perm_rule[2].action='deny'
-		set upnpd.@perm_rule[2].ext_ports='1-65535'
-		set upnpd.@perm_rule[2].int_addr='0.0.0.0/0'
-		set upnpd.@perm_rule[2].int_ports='1-65535'
-		set upnpd.@perm_rule[2].comment='Deny by default'
 		commit upnpd
 	EOF
 fi
