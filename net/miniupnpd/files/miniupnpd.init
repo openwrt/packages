@@ -65,7 +65,7 @@ upnpd() {
 	local ipv6_disable
 
 	local enabled
-	config_get_bool enabled config enabled 1
+	config_get_bool enabled config enabled 0
 	[ "$enabled" -eq 0 ] && return 1
 
 	config_get external_iface config external_iface
@@ -139,7 +139,7 @@ upnpd() {
 		upnpd_write_bool enable_upnp 1
 		upnpd_write_bool secure_mode 1
 		upnpd_write_bool system_uptime 1
-		upnpd_write_bool igdv1 0 force_igd_desc_v1
+		upnpd_write_bool igdv1 1 force_igd_desc_v1
 		upnpd_write_bool use_stun 0 ext_perform_stun
 		upnpd_write_bool ipv6_disable $ipv6_disable
 
