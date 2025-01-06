@@ -94,8 +94,10 @@ define Package/miniupnpd/install/Default
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/miniupnpd $(1)/usr/sbin/miniupnpd
 	$(INSTALL_BIN) ./files/miniupnpd.init $(1)/etc/init.d/miniupnpd
+	$(INSTALL_BIN) ./files/upnpd-migration.uci-defaults $(1)/etc/uci-defaults/90-miniupnpd
 	$(INSTALL_CONF) ./files/upnpd.config $(1)/etc/config/upnpd
 	$(INSTALL_DATA) ./files/miniupnpd.hotplug $(1)/etc/hotplug.d/iface/50-miniupnpd
 endef
