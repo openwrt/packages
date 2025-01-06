@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=croc
-PKG_VERSION:=10.1.1
+PKG_VERSION:=10.2.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/schollz/croc/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=7351abed3bb509e6c13f1a9d8c38662dcafc29f8b1e123127e8ee75e7eb0719b
+PKG_HASH:=78bf0efd00daa9002bcdeb460f4ddaf82dde4480e63862feab0958ed9ed54963
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
