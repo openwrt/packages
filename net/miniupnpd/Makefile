@@ -80,7 +80,8 @@ CONFIGURE_ARGS = \
 	--portinuse \
 	--firewall=$(BUILD_VARIANT) \
 	--disable-fork \
-	--regex
+	--regex \
+	--disable-pppconn
 
 TARGET_CFLAGS += $(FPIC)
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
