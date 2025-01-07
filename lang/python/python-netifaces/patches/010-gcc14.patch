@@ -1,0 +1,23 @@
+--- a/netifaces.c
++++ b/netifaces.c
+@@ -1801,13 +1801,13 @@ gateways (PyObject *self)
+       struct sockaddr_nl sanl_from;
+       struct iovec iov = { msgbuf, bufsize };
+       struct msghdr msghdr = {
+-        &sanl_from,
+-        sizeof(sanl_from),
+-        &iov,
+-        1,
+-        NULL,
+-        0,
+-        0
++        .msg_name = &sanl_from,
++        .msg_namelen = sizeof(sanl_from),
++        .msg_iov = &iov,
++        .msg_iovlen = 1,
++        .msg_control = NULL,
++        .msg_controllen = 0,
++        .msg_flags = 0
+       };
+       int nllen;
+ 
