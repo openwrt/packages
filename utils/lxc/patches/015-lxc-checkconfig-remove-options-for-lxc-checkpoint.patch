@@ -1,0 +1,12 @@
+--- a/src/lxc/cmd/lxc-checkconfig.in
++++ b/src/lxc/cmd/lxc-checkconfig.in
+@@ -256,9 +256,6 @@ printf "CONFIG_NETFILTER_XT_MATCH_COMMEN
+ echo
+ 
+ echo "
+---- Checkpoint/Restore ---"
+-printf "checkpoint restore: " && is_enabled CONFIG_CHECKPOINT_RESTORE
+-echo
+ printf "CONFIG_FHANDLE: " && is_enabled CONFIG_FHANDLE
+ echo
+ printf "CONFIG_EVENTFD: " && is_enabled CONFIG_EVENTFD
