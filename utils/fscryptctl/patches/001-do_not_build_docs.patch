@@ -1,0 +1,11 @@
+--- a/Makefile
++++ b/Makefile
+@@ -133,7 +133,7 @@ test-all:
+ 
+ # Installation, uninstallation, and cleanup targets
+ 
+-all:fscryptctl fscryptctl.1
++all:fscryptctl
+ 
+ .PHONY: all install install-bin install-man uninstall clean
+ 
