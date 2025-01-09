@@ -21,7 +21,7 @@ PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:transmissionbt:transmission
 
 PKG_INSTALL:=1
-PKG_BUILD_DEPENDS:=libb64 node/host
+PKG_BUILD_DEPENDS:=libb64
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=gc-sections lto
 PKG_CONFIG_DEPENDS:= \
