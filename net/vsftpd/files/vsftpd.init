@@ -3,12 +3,13 @@
 
 START=50
 USE_PROCD=1
-BIN=vsftpd
+BIN="/usr/sbin/vsftpd"
 
 . /lib/functions.sh
 
 PORT=21
 OUTPUT_CONF="/var/etc/vsftpd.conf"
+readonly DEFAULT_SECURE_CHROOT="/var/run/vsftpd"
 readonly TEMP_OUTPUT_CONF="/var/etc/vsftpd.conf.tmp"
 
 write_conf() {
@@ -74,6 +75,7 @@ setup_vsftpd() {
 		return 1
 	fi
 
+	# Clean up
 	rm -rf "$TEMP_OUTPUT_CONF"  # Clear temporary file
 	touch "$TEMP_OUTPUT_CONF"
 
@@ -108,9 +110,15 @@ setup_vsftpd() {
 	[ -n "$local_root" ] && write_conf "local_root" "$local_root"
 	[ -n "$rsa_cert_file" ] && write_conf "rsa_cert_file" "$rsa_cert_file"
 	[ -n "$rsa_private_key_file" ] && write_conf "rsa_private_key_file" "$rsa_private_key_file"
-	[ -n "$secure_chroot_dir" ] && write_conf "secure_chroot_dir" "$secure_chroot_dir"
 	[ -n "$userlist_file" ] && write_conf "userlist_file" "$userlist_file"
 	[ -n "$xferlog_file" ] && write_conf "xferlog_file" "$xferlog_file"
+
+	if [ -n "$secure_chroot_dir" ] && [ "$secure_chroot_dir" != "$DEFAULT_SECURE_CHROOT" ]; then
+		# remove the DEFAULT_SECURE_CHROOT directory
+		# it is not needed now
+		rm -rf "$DEFAULT_SECURE_CHROOT"
+		write_conf "secure_chroot_dir" "$secure_chroot_dir"
+	fi
 
 	# move temporary file to the main configuration file
 	mv "$TEMP_OUTPUT_CONF" "$OUTPUT_CONF"
@@ -128,6 +136,11 @@ start_service() {
 		return
 	fi
 
+	# clean and create the default chroot directory
+	rm -rf "$DEFAULT_SECURE_CHROOT"
+	mkdir -m 0755 -p "$DEFAULT_SECURE_CHROOT"
+	chown root:root "$DEFAULT_SECURE_CHROOT"
+
 	config_get_bool conf_file global conf_file ""
 	if [ -n "$conf_file" ]; then 
 		# use user defined conf file instead of UCI
@@ -140,7 +153,7 @@ start_service() {
 	procd_open_instance "vsftpd"
 
 	config_get_bool mdns global mdns 0
-	[ "${mdns}" -eq 1 ] && procd_add_mdns "ftp" "tcp" "$PORT" "daemon=$BIN"
+	[ "${mdns}" -eq 1 ] && procd_add_mdns "ftp" "tcp" "$PORT" "daemon=vsftpd"
 
 	procd_set_param command "$BIN" "$OUTPUT_CONF"
 	procd_set_param respawn
