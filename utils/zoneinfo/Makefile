@@ -18,7 +18,7 @@ PKG_LICENSE:=Public-Domain
 
 PKG_SOURCE:=tzdata$(PKG_VERSION).tar.gz
 PKG_SOURCE_CODE:=tzcode$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.iana.org/time-zones/repository/releases
+PKG_SOURCE_URL:=https://www.iana.org/time-zones/repository/releases
 PKG_HASH:=70e754db126a8d0db3d16d6b4cb5f7ec1e04d5f261255e4558a67fe92d39e550
 
 include $(INCLUDE_DIR)/package.mk

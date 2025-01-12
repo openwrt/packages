@@ -7,7 +7,7 @@ PKG_VERSION:=0.74
 PKG_RELEASE:=1
 
 PKG_SOURCE:=File-RsyncP-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://search.cpan.org/CPAN/authors/id/C/CB/CBARRATT/
+PKG_SOURCE_URL:=https://search.cpan.org/CPAN/authors/id/C/CB/CBARRATT/
 PKG_HASH:=ba4df5f9b0db6c9d86a6c5cf9861cf00d17b18e77cfa028e7a9157c0015a5aa3
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/File-RsyncP-$(PKG_VERSION)
 
