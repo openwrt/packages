@@ -69,7 +69,7 @@
  #	JVMArg "-Djava.class.path=@prefix@/share/collectd/java/collectd-api.jar"
 --- a/src/collectd.conf.pod
 +++ b/src/collectd.conf.pod
-@@ -4343,6 +4343,27 @@ and all other interrupts are collected.
+@@ -4343,6 +4343,29 @@ and all other interrupts are collected.
  
  =back
  
@@ -94,12 +94,14 @@
 +
 +=back
 +
++
++
  =head2 Plugin C<java>
  
  The I<Java> plugin makes it possible to write extensions for collectd in Java.
 --- /dev/null
 +++ b/src/iwinfo.c
-@@ -0,0 +1,150 @@
+@@ -0,0 +1,187 @@
 +/**
 + * collectd - src/iwinfo.c
 + * Copyright (C) 2011  Jo-Philipp Wich
@@ -154,6 +156,25 @@
 +	return 0;
 +}
 +
++static void iwinfo_submit_assoc(const char *ifname, const char *type, const char *bssid, int value)
++{
++	value_t values[1];
++	value_list_t vl = VALUE_LIST_INIT;
++
++	values[0].gauge = value;
++
++	vl.values = values;
++	vl.values_len = 1;
++
++	sstrncpy(vl.host, hostname_g, sizeof(vl.host));
++	sstrncpy(vl.plugin, "iwinfo", sizeof(vl.plugin));
++	sstrncpy(vl.plugin_instance, ifname, sizeof(vl.plugin_instance));
++	sstrncpy(vl.type, type, sizeof(vl.type));
++	sstrncpy(vl.type_instance, bssid, sizeof(vl.type_instance));
++
++	plugin_dispatch_values(&vl);
++}
++
 +static void iwinfo_submit(const char *ifname, const char *type, int value)
 +{
 +	value_t values[1];
@@ -178,6 +199,8 @@
 +	int val;
 +	char buf[IWINFO_BUFSIZE];
 +	const struct iwinfo_ops *iw = iwinfo_backend(ifname);
++	struct iwinfo_assoclist_entry *e;
++	char assoc_bssid[18];
 +
 +	/* does appear to be a wifi iface */
 +	if (iw)
@@ -202,6 +225,22 @@
 +			val = 0;
 +		iwinfo_submit(ifname, "stations",
 +		              val / sizeof(struct iwinfo_assoclist_entry));
++
++		for (int i = 0; i < val; i += sizeof(struct iwinfo_assoclist_entry)) {
++			e = (struct iwinfo_assoclist_entry *) &buf[i];
++			snprintf(assoc_bssid, sizeof(assoc_bssid), "%02X:%02X:%02X:%02X:%02X:%02X",
++				e->mac[0], e->mac[1], e->mac[2], e->mac[3], e->mac[4], e->mac[5]);
++			iwinfo_submit_assoc(ifname, "signal_power", assoc_bssid, e->signal);
++			iwinfo_submit_assoc(ifname, "signal_noise", assoc_bssid, e->noise);
++			iwinfo_submit_assoc(ifname, "assoc_rx_packets", assoc_bssid, e->rx_packets);
++			iwinfo_submit_assoc(ifname, "assoc_tx_packets", assoc_bssid, e->tx_packets);
++			if (e->rx_rate.rate > 0) {
++				iwinfo_submit_assoc(ifname, "assoc_rx_rate", assoc_bssid, e->rx_rate.rate);
++			}
++			if (e->tx_rate.rate > 0) {
++				iwinfo_submit_assoc(ifname, "assoc_tx_rate", assoc_bssid, e->tx_rate.rate);
++			}
++		}
 +	}
 +
 +	iwinfo_finish();
@@ -252,7 +291,18 @@
 +}
 --- a/src/types.db
 +++ b/src/types.db
-@@ -308,6 +308,7 @@ snr                     value:GAUGE:0:U
+@@ -253,6 +253,10 @@ serial_octets           rx:DERIVE:0:U, t
+ signal_noise            value:GAUGE:U:0
+ signal_power            value:GAUGE:U:0
+ signal_quality          value:GAUGE:0:U
++assoc_tx_packets        value:DERIVE:0:U
++assoc_rx_packets        value:DERIVE:0:U
++assoc_tx_rate           value:DERIVE:0:U
++assoc_rx_rate           value:DERIVE:0:U
+ slurm_job_state         value:GAUGE:0:U
+ slurm_node_state        value:GAUGE:0:U
+ slurm_backfilled_jobs   value:DERIVE:0:U
+@@ -308,6 +312,7 @@ snr                     value:GAUGE:0:U
  spam_check              value:GAUGE:0:U
  spam_score              value:GAUGE:U:U
  spl                     value:GAUGE:U:U
