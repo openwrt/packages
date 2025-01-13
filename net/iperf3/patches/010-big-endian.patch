@@ -10,7 +10,7 @@ iperf_printf is using an int format here but an int64_t variable. The format onl
 
 --- a/src/iperf_api.c
 +++ b/src/iperf_api.c
-@@ -4056,7 +4056,7 @@ iperf_print_results(struct iperf_test *t
+@@ -4137,7 +4137,7 @@ iperf_print_results(struct iperf_test *t
                                  iperf_printf(test, report_sender_not_available_summary_format, "SUM");
                          }
                          else {
