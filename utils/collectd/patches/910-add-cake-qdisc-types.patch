@@ -1,6 +1,6 @@
 --- a/src/types.db
 +++ b/src/types.db
-@@ -359,6 +359,17 @@ vs_memory               value:GAUGE:0:92
+@@ -363,6 +363,17 @@ vs_memory               value:GAUGE:0:92
  vs_processes            value:GAUGE:0:65535
  vs_threads              value:GAUGE:0:65535
  
