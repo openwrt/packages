@@ -1,6 +1,6 @@
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -551,12 +551,6 @@ $(srcdir)/effective_tld_names.dat:
+@@ -563,12 +563,6 @@ $(srcdir)/effective_tld_names.dat:
  pubsuffix.cc: $(srcdir)/effective_tld_names.dat
  	$(srcdir)/mkpubsuffixcc $< $@
  
