@@ -141,7 +141,7 @@ start_service() {
 	mkdir -m 0755 -p "$DEFAULT_SECURE_CHROOT"
 	chown root:root "$DEFAULT_SECURE_CHROOT"
 
-	config_get_bool conf_file global conf_file ""
+	config_get conf_file global conf_file ""
 	if [ -n "$conf_file" ]; then 
 		# use user defined conf file instead of UCI
 		OUTPUT_CONF="$conf_file"
