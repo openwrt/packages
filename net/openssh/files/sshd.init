@@ -12,6 +12,13 @@ start_service() {
 	do
 		# check for keys
 		key=/etc/ssh/ssh_host_${type}_key
+		[ -f $key ] && {
+			[ -x /usr/bin/ssh-keygen ] && {
+				if ! /usr/bin/ssh-keygen -y -f $key > /dev/null 2>&1; then
+					rm -rf $key
+				fi
+			}
+		}
 		[ ! -f $key ] && {
 			# generate missing keys
 			[ -x /usr/bin/ssh-keygen ] && {
