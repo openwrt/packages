@@ -8,6 +8,9 @@
 #	- at: net/ddns-scripts/files/usr/lib/ddns/update_cloudflare_com_v4.sh
 # - github.com/nixonli/ddns-scripts_dnspod for "update_dnspod_cn.sh"
 #
+# v1.2.0:
+#   - Migrate retry_count to retry_max_count
+#   - Fix signature expiration during retries
 # v1.1.0: Publish script
 #
 # 2024 FriesI23 <FriesI23@outlook.com>
@@ -44,6 +47,7 @@ local __URLHOST="dnspod.tencentcloudapi.com"
 local __URLBASE="https://$__URLHOST"
 local __METHOD="POST"
 local __CONTENT_TYPE="application/json"
+local __RETRY_COUNT=${retry_count:-$retry_max_count}
 
 # Build base command to use
 local __PRGBASE="$CURL -RsS -o $DATFILE --stderr $ERRFILE"
@@ -90,11 +94,11 @@ tencentcloud_transfer() {
 		}
 
 		__CNT=$(($__CNT + 1)) # increment error counter
-		# if error count > retry_count leave here
-		[ $retry_count -gt 0 -a $__CNT -gt $retry_count ] &&
-			write_log 14 "Transfer failed after $retry_count retries"
+		# if error count > __RETRY_COUNT leave here
+		[ $__RETRY_COUNT -gt 0 -a $__CNT -gt $__RETRY_COUNT ] &&
+			write_log 14 "Transfer failed after $__RETRY_COUNT retries"
 
-		write_log 4 "Transfer failed - retry $__CNT/$retry_count in $RETRY_SECONDS seconds"
+		write_log 4 "Transfer failed - retry $__CNT/$__RETRY_COUNT in $RETRY_SECONDS seconds"
 		sleep $RETRY_SECONDS &
 		PID_SLEEP=$!
 		wait $PID_SLEEP # enable trap-handler
