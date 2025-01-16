@@ -1,6 +1,6 @@
 #!/bin/sh
 # banIP main service script - ban incoming and outgoing IPs via named nftables Sets
-# Copyright (c) 2018-2024 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2018-2025 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # (s)hellcheck exceptions
@@ -25,6 +25,7 @@ f_getuplink
 f_mkdir "${ban_backupdir}"
 f_mkfile "${ban_allowlist}"
 f_mkfile "${ban_blocklist}"
+f_rmdir "${ban_errordir}"
 
 # firewall/fw4 pre-check
 #
@@ -57,7 +58,7 @@ for feed in allowlist ${ban_feed} blocklist; do
 	if [ "${feed}" = "allowlist" ] || [ "${feed}" = "blocklist" ]; then
 		for proto in 4MAC 6MAC 4 6; do
 			[ "${feed}" = "blocklist" ] && wait
-			f_down "${feed}" "${proto}"
+			f_down "${feed}" "${proto}" "-" "-" "inout"
 		done
 		continue
 	fi
@@ -70,7 +71,7 @@ for feed in allowlist ${ban_feed} blocklist; do
 		uci_commit "banip"
 		continue
 	fi
-	json_objects="url_4 rule_4 url_6 rule_6 flag"
+	json_objects="url_4 rule_4 url_6 rule_6 chain flag"
 	for object in ${json_objects}; do
 		eval json_get_var feed_"${object}" '${object}' >/dev/null 2>&1
 	done
@@ -85,36 +86,44 @@ for feed in allowlist ${ban_feed} blocklist; do
 		continue
 	fi
 
-	# handle IPv4/IPv6 feeds with a single download URL
+	# handle IPv4/IPv6 feeds
 	#
-	if [ "${feed_url_4}" = "${feed_url_6}" ]; then
-		if [ "${ban_protov4}" = "1" ] && [ -n "${feed_url_4}" ] && [ -n "${feed_rule_4}" ]; then
-			(f_down "${feed}" "4" "${feed_url_4}" "${feed_rule_4}" "${feed_flag}") &
+	if [ "${ban_protov4}" = "1" ] && [ -n "${feed_url_4}" ] && [ -n "${feed_rule_4}" ]; then
+		if [ "${feed}" = "country" ] && [ "${ban_countrysplit}" = "1" ]; then
+			for country in ${ban_country}; do
+				f_down "${feed}.${country}" "4" "${feed_url_4}" "${feed_rule_4}" "${feed_chain:-"in"}" "${feed_flag}"
+			done
+		elif [ "${feed}" = "asn" ] && [ "${ban_asnsplit}" = "1" ]; then
+			for asn in ${ban_asn}; do
+				f_down "${feed}.${asn}" "4" "${feed_url_4}" "${feed_rule_4}" "${feed_chain:-"in"}" "${feed_flag}"
+			done
+		else
+			(f_down "${feed}" "4" "${feed_url_4}" "${feed_rule_4}" "${feed_chain:-"in"}" "${feed_flag}") &
+		fi
+		if [ "${feed_url_4}" = "${feed_url_6}" ]; then
 			feed_url_6="local"
 			wait
-		fi
-		if [ "${ban_protov6}" = "1" ] && [ -n "${feed_url_6}" ] && [ -n "${feed_rule_6}" ]; then
-			(f_down "${feed}" "6" "${feed_url_6}" "${feed_rule_6}" "${feed_flag}") &
+		else
 			hold="$((cnt % ban_cores))"
 			[ "${hold}" = "0" ] && wait
 			cnt="$((cnt + 1))"
 		fi
-		continue
-	fi
-
-	# handle IPv4/IPv6 feeds with separate download URLs
-	#
-	if [ "${ban_protov4}" = "1" ] && [ -n "${feed_url_4}" ] && [ -n "${feed_rule_4}" ]; then
-		(f_down "${feed}" "4" "${feed_url_4}" "${feed_rule_4}" "${feed_flag}") &
-		hold="$((cnt % ban_cores))"
-		[ "${hold}" = "0" ] && wait
-		cnt="$((cnt + 1))"
 	fi
 	if [ "${ban_protov6}" = "1" ] && [ -n "${feed_url_6}" ] && [ -n "${feed_rule_6}" ]; then
-		(f_down "${feed}" "6" "${feed_url_6}" "${feed_rule_6}" "${feed_flag}") &
+		if [ "${feed}" = "country" ] && [ "${ban_countrysplit}" = "1" ]; then
+			for country in ${ban_country}; do
+				f_down "${feed}.${country}" "6" "${feed_url_6}" "${feed_rule_6}" "${feed_chain:-"in"}" "${feed_flag}"
+			done
+		elif [ "${feed}" = "asn" ] && [ "${ban_asnsplit}" = "1" ]; then
+			for asn in ${ban_asn}; do
+				f_down "${feed}.${asn}" "6" "${feed_url_6}" "${feed_rule_6}" "${feed_chain:-"in"}" "${feed_flag}"
+			done
+		else
+			(f_down "${feed}" "6" "${feed_url_6}" "${feed_rule_6}" "${feed_chain:-"in"}" "${feed_flag}") &
+		fi
+		cnt="$((cnt + 1))"
 		hold="$((cnt % ban_cores))"
 		[ "${hold}" = "0" ] && wait
-		cnt="$((cnt + 1))"
 	fi
 done
 wait

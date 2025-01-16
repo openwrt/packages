@@ -1,12 +1,12 @@
 # banIP - ban incoming and outgoing IPs via named nftables Sets
-# Copyright (c) 2018-2024 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2018-2025 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=banip
-PKG_VERSION:=1.0.1
-PKG_RELEASE:=2
+PKG_VERSION:=1.5.0
+PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
 
