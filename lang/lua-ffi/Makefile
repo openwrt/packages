@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua-ffi
-PKG_VERSION:=1.0.0
+PKG_VERSION:=1.1.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL=https://github.com/zhaojh329/lua-ffi/releases/download/v$(PKG_VERSION)
-PKG_HASH:=e26a8ed685c1aa31566683e3c06b057fd9ae6c7eec9922abe7661eeb678f1cd8
+PKG_HASH:=85651aa772de5717b85fc6ac9bba61f0dc20155707fad8099245f97ecd301996
 
 PKG_MAINTAINER:=Jianhui Zhao <zhaojh329@gmail.com>
 PKG_LICENSE:=MIT
