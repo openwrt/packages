@@ -20,6 +20,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | antipopads          |         | L    | compilation      | [Link](https://github.com/AdroitAdorKhan/antipopads-re)                           |
 | anudeep             |         | M    | compilation      | [Link](https://github.com/anudeepND/blacklist)                                    |
 | bitcoin             |         | S    | mining           | [Link](https://github.com/hoshsadiq/adblock-nocoin-list)                          |
+| certpl              |         | L    | phishing         | [Link](https://cert.pl/en/warning-list/)                                          |
 | cpbl                |         | XL   | compilation      | [Link](https://github.com/bongochong/CombinedPrivacyBlockLists)                   |
 | disconnect          |         | S    | general          | [Link](https://disconnect.me)                                                     |
 | doh_blocklist       |         | S    | doh_server       | [Link](https://github.com/dibdot/DoH-IP-blocklists)                               |
@@ -33,6 +34,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | notracking          |         | XL   | tracking         | [Link](https://github.com/notracking/hosts-blocklists)                            |
 | oisd_big            |         | XXL  | general          | [Link](https://oisd.nl)                                                           |
 | oisd_nsfw           |         | XXL  | porn             | [Link](https://oisd.nl)                                                           |
+| oisd_nsfw_small     |         | M    | porn             | [Link](https://oisd.nl)                                                           |
 | oisd_small          |         | L    | general          | [Link](https://oisd.nl)                                                           |
 | openphish           |         | S    | phishing         | [Link](https://openphish.com)                                                     |
 | phishing_army       |         | S    | phishing         | [Link](https://phishing.army)                                                     |
@@ -46,6 +48,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | reg_it              |         | S    | reg_italy        | [Link](https://easylist.to)                                                       |
 | reg_jp              |         | S    | reg_japan        | [Link](https://github.com/k2jp/abp-japanese-filters)                              |
 | reg_kr              |         | S    | reg_korea        | [Link](https://github.com/List-KR/List-KR)                                        |
+| reg_nl              |         | S    | reg_lithuania    | [Link](https://easylist.to)                                                       |
 | reg_nl              |         | S    | reg_netherlands  | [Link](https://easylist.to)                                                       |
 | reg_pl              |         | M    | reg_poland       | [Link](https://kadantiscam.netlify.com)                                           |
 | reg_ro              |         | S    | reg_romania      | [Link](https://easylist.to)                                                       |
