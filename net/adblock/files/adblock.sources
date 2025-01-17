@@ -167,6 +167,13 @@
 		"focus": "general",
 		"descurl": "https://oisd.nl"
 	},
+	"oisd_nsfw_small": {
+		"url": "https://nsfw-small.oisd.nl/domainswild2",
+		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
+		"size": "M",
+		"focus": "porn",
+		"descurl": "https://oisd.nl"
+	},
 	"openphish": {
 		"url": "https://openphish.com/feed.txt",
 		"rule": "BEGIN{FS=\"\/\"}/^http[s]?:\\/\\/([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+(\\/|$)/{print tolower($3)}",

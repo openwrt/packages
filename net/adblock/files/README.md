@@ -33,6 +33,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | notracking          |         | XL   | tracking         | [Link](https://github.com/notracking/hosts-blocklists)                            |
 | oisd_big            |         | XXL  | general          | [Link](https://oisd.nl)                                                           |
 | oisd_nsfw           |         | XXL  | porn             | [Link](https://oisd.nl)                                                           |
+| oisd_nsfw_small     |         | M    | porn             | [Link](https://oisd.nl)                                                           |
 | oisd_small          |         | L    | general          | [Link](https://oisd.nl)                                                           |
 | openphish           |         | S    | phishing         | [Link](https://openphish.com)                                                     |
 | phishing_army       |         | S    | phishing         | [Link](https://phishing.army)                                                     |
