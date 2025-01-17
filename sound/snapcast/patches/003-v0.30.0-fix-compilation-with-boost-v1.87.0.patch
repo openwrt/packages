@@ -1,0 +1,44 @@
+From 6190041e863968d76b6d16140bba90be6dff848f Mon Sep 17 00:00:00 2001
+From: badaix <johannes.pohl@badaix.de>
+Date: Thu, 19 Dec 2024 21:36:08 +0100
+Subject: [PATCH] Fix compilation with boost v1.87.0
+
+---
+ client/client_connection.cpp | 5 ++---
+ server/stream_session_ws.cpp | 2 +-
+ 2 files changed, 3 insertions(+), 4 deletions(-)
+
+--- a/client/client_connection.cpp
++++ b/client/client_connection.cpp
+@@ -124,10 +124,9 @@ std::string ClientConnection::getMacAddr
+ 
+ void ClientConnection::connect(const ResultHandler& handler)
+ {
+-    tcp::resolver::query query(server_.host, cpt::to_string(server_.port), boost::asio::ip::resolver_query_base::numeric_service);
+     boost::system::error_code ec;
+     LOG(INFO, LOG_TAG) << "Resolving host IP for: " << server_.host << "\n";
+-    auto iterator = resolver_.resolve(query, ec);
++    auto iterator = resolver_.resolve(server_.host, cpt::to_string(server_.port), boost::asio::ip::resolver_query_base::numeric_service, ec);
+     if (ec)
+     {
+         LOG(ERROR, LOG_TAG) << "Failed to resolve host '" << server_.host << "', error: " << ec.message() << "\n";
+@@ -141,7 +140,7 @@ void ClientConnection::connect(const Res
+     for (const auto& iter : iterator)
+     {
+         LOG(INFO, LOG_TAG) << "Connecting to " << iter.endpoint() << "\n";
+-        socket_.connect(*iterator, ec);
++        socket_.connect(iter, ec);
+         if (!ec || (ec == boost::system::errc::interrupted))
+         {
+             // We were successful or interrupted, e.g. by sig int
+--- a/server/stream_session_ws.cpp
++++ b/server/stream_session_ws.cpp
+@@ -114,7 +114,7 @@ void StreamSessionWebsocket::on_read_ws(
+         return;
+     }
+ 
+-    auto* data = boost::asio::buffer_cast<char*>(buffer_.data());
++    auto* data = static_cast<char*>(buffer_.data().data());
+     baseMessage_.deserialize(data);
+     LOG(DEBUG, LOG_TAG) << "getNextMessage: " << baseMessage_.type << ", size: " << baseMessage_.size << ", id: " << baseMessage_.id
+                         << ", refers: " << baseMessage_.refersTo << "\n";

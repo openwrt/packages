@@ -1,0 +1,87 @@
+From b2fd2bf9ef835104a813c40c190d71e3644125d7 Mon Sep 17 00:00:00 2001
+From: Rudi Heitbaum <rudi@heitbaum.com>
+Date: Thu, 19 Dec 2024 02:23:11 +1100
+Subject: [PATCH] use make_address from boost as from_string is deprecated
+ (#1308)
+
+Since boost 1.87.0 boost::asio::ip::address::from_string is no longer available
+
+ref: https://github.com/boostorg/asio/commit/c0d1cfce7767599c4cf00df36f8017a1073339ae
+
+fixes:
+    ../server/control_server.cpp: In member function 'void ControlServer::start()':
+    ../server/control_server.cpp:164:111: error: 'from_string' is not a member of 'boost::asio::ip::address'
+      164 |                                                                       tcp::endpoint(boost::asio::ip::address::from_string(address), tcp_settings_.port)));
+          |                                                                                                               ^~~~~~~~~~~
+    ../server/control_server.cpp:180:112: error: 'from_string' is not a member of 'boost::asio::ip::address'
+      180 |                                                                        tcp::endpoint(boost::asio::ip::address::from_string(address), http_settings_.port)));
+          |                                                                                                                ^~~~~~~~~~~
+    ../server/streamreader/tcp_stream.cpp: In constructor 'streamreader::TcpStream::TcpStream(streamreader::PcmStream::Listener*, boost::asio::io_context&, const ServerSettings&, const streamreader::StreamUri&)':
+    ../server/streamreader/tcp_stream.cpp:67:97: error: 'from_string' is not a member of 'boost::asio::ip::address'
+       67 |         acceptor_ = make_unique<tcp::acceptor>(strand_, tcp::endpoint(boost::asio::ip::address::from_string(host_), port_));
+          |                                                                                                 ^~~~~~~~~~~
+    ../server/streamreader/tcp_stream.cpp: In member function 'virtual void streamreader::TcpStream::connect()':
+    ../server/streamreader/tcp_stream.cpp:96:75: error: 'from_string' is not a member of 'boost::asio::ip::address'
+       96 |         boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::address::from_string(host_), port_);
+          |                                                                           ^~~~~~~~~~~
+    ../server/stream_server.cpp: In member function 'void StreamServer::start()':
+    ../server/stream_server.cpp:234:103: error: 'from_string' is not a member of 'boost::asio::ip::address'
+      234 |                                                               tcp::endpoint(boost::asio::ip::address::from_string(address), settings_.stream.port)));
+          |
+---
+ server/control_server.cpp          | 4 ++--
+ server/stream_server.cpp           | 2 +-
+ server/streamreader/tcp_stream.cpp | 4 ++--
+ 3 files changed, 5 insertions(+), 5 deletions(-)
+
+--- a/server/control_server.cpp
++++ b/server/control_server.cpp
+@@ -161,7 +161,7 @@ void ControlServer::start()
+             {
+                 LOG(INFO, LOG_TAG) << "Creating TCP acceptor for address: " << address << ", port: " << tcp_settings_.port << "\n";
+                 acceptor_tcp_.emplace_back(make_unique<tcp::acceptor>(boost::asio::make_strand(io_context_.get_executor()),
+-                                                                      tcp::endpoint(boost::asio::ip::make_address(address), settings_.tcp.port)));
++                                                                      tcp::endpoint(boost::asio::ip::make_address(address), tcp_settings_.port)));
+             }
+             catch (const boost::system::system_error& e)
+             {
+@@ -177,7 +177,7 @@ void ControlServer::start()
+             {
+                 LOG(INFO, LOG_TAG) << "Creating HTTP acceptor for address: " << address << ", port: " << http_settings_.port << "\n";
+                 acceptor_http_.emplace_back(make_unique<tcp::acceptor>(boost::asio::make_strand(io_context_.get_executor()),
+-                                                                       tcp::endpoint(boost::asio::ip::make_address(address), settings_.http.port)));
++                                                                       tcp::endpoint(boost::asio::ip::make_address(address), http_settings_.port)));
+             }
+             catch (const boost::system::system_error& e)
+             {
+--- a/server/stream_server.cpp
++++ b/server/stream_server.cpp
+@@ -231,7 +231,7 @@ void StreamServer::start()
+         {
+             LOG(INFO, LOG_TAG) << "Creating stream acceptor for address: " << address << ", port: " << settings_.stream.port << "\n";
+             acceptor_.emplace_back(make_unique<tcp::acceptor>(boost::asio::make_strand(io_context_.get_executor()),
+-                                                              tcp::endpoint(boost::asio::ip::address::from_string(address), settings_.stream.port)));
++                                                              tcp::endpoint(boost::asio::ip::make_address(address), settings_.stream.port)));
+         }
+         catch (const boost::system::system_error& e)
+         {
+--- a/server/streamreader/tcp_stream.cpp
++++ b/server/streamreader/tcp_stream.cpp
+@@ -64,7 +64,7 @@ TcpStream::TcpStream(PcmStream::Listener
+ 
+     LOG(INFO, LOG_TAG) << "TcpStream host: " << host_ << ", port: " << port_ << ", is server: " << is_server_ << "\n";
+     if (is_server_)
+-        acceptor_ = make_unique<tcp::acceptor>(strand_, tcp::endpoint(boost::asio::ip::address::from_string(host_), port_));
++        acceptor_ = make_unique<tcp::acceptor>(strand_, tcp::endpoint(boost::asio::ip::make_address(host_), port_));
+ }
+ 
+ 
+@@ -93,7 +93,7 @@ void TcpStream::connect()
+     else
+     {
+         stream_ = make_unique<tcp::socket>(strand_);
+-        boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::address::from_string(host_), port_);
++        boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::make_address(host_), port_);
+         stream_->async_connect(endpoint,
+                                [this](const boost::system::error_code& ec)
+                                {
