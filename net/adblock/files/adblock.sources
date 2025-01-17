@@ -69,6 +69,13 @@
 		"focus": "mining",
 		"descurl": "https://github.com/hoshsadiq/adblock-nocoin-list"
 	},
+	"certpl": {
+		"url": "https://hole.cert.pl/domains/v2/domains.txt",
+		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
+		"size": "L",
+		"focus": "phishing",
+		"descurl": "https://cert.pl"
+	},
 	"cpbl": {
 		"url": "https://raw.githubusercontent.com/bongochong/CombinedPrivacyBlockLists/master/NoFormatting/cpbl-ctld.txt",
 		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
@@ -157,6 +164,13 @@
 		"url": "https://nsfw.oisd.nl/domainswild2",
 		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
 		"size": "XXL",
+		"focus": "porn",
+		"descurl": "https://oisd.nl"
+	},
+	"oisd_nsfw_small": {
+		"url": "https://nsfw-small.oisd.nl/domainswild2",
+		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
+		"size": "M",
 		"focus": "porn",
 		"descurl": "https://oisd.nl"
 	},
@@ -250,6 +264,13 @@
 		"size": "S",
 		"focus": "reg_korea",
 		"descurl": "https://github.com/List-KR/List-KR"
+	},
+	"reg_lt": {
+		"url": "https://easylist-downloads.adblockplus.org/easylistlithuania.txt",
+		"rule": "BEGIN{FS=\"[|^]\"}/^\\|\\|([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+\\^(\\$third-party)?$/{print tolower($3)}",
+		"size": "S",
+		"focus": "reg_lithuania",
+		"descurl": "https://easylist.to"
 	},
 	"reg_nl": {
 		"url": "https://easylist-downloads.adblockplus.org/easylistdutch.txt",
