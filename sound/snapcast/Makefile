@@ -81,7 +81,10 @@ define Package/snapserver/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/snapserver $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/snapserver.init $(1)/etc/init.d/snapserver
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/server/etc/snapserver.conf $(1)/etc/snapserver.conf
+	$(INSTALL_CONF) $(PKG_BUILD_DIR)/server/etc/snapserver.conf $(1)/etc/snapserver.conf
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/snapserver.conf $(1)/etc/config/snapserver
+
 endef
 
 define Package/snapclient/install
@@ -89,6 +92,8 @@ define Package/snapclient/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/snapclient $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/snapclient.init $(1)/etc/init.d/snapclient
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/snapclient.conf $(1)/etc/config/snapclient
 endef
 
 $(eval $(call BuildPackage,snapserver))
