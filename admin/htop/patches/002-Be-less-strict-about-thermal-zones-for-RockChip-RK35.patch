@@ -1,0 +1,28 @@
+From f2f724b6414d9f49c087e6c177e8a1c2eb80a0c8 Mon Sep 17 00:00:00 2001
+From: Benny Baumann <BenBE@geshi.org>
+Date: Fri, 30 Aug 2024 21:56:18 +0200
+Subject: [PATCH] Be less strict about thermal zones for RockChip RK3588 SoC
+
+---
+ linux/LibSensors.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+--- a/linux/LibSensors.c
++++ b/linux/LibSensors.c
+@@ -142,6 +142,7 @@ static int tempDriverPriority(const sens
+       { "littlecore_thermal", 0 },
+       { "bigcore0_thermal",   0 },
+       { "bigcore1_thermal",   0 },
++      { "bigcore2_thermal",   0 },
+       /* Low priority drivers */
+       { "acpitz",             1 },
+    };
+@@ -233,7 +234,7 @@ void LibSensors_getCPUTemperatures(CPUDa
+                coreTempCount += 2;
+                continue;
+             }
+-            if (String_eq(chip->prefix, "bigcore1_thermal")) {
++            if (String_eq(chip->prefix, "bigcore1_thermal") || String_eq(chip->prefix, "bigcore2_thermal")) {
+                data[7] = temp;
+                data[8] = temp;
+                coreTempCount += 2;
