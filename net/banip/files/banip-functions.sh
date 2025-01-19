@@ -770,7 +770,7 @@ f_down() {
 	# set log target
 	#
 	[ "${ban_loginbound}" = "1" ] && log_inbound="log level ${ban_nftloglevel} prefix \"banIP/inbound/${ban_blockpolicy}/${feed}: \""
-	[ "${ban_logoutbound}" = "1" ] && log_outbound="tlog level ${ban_nftloglevel} prefix \"banIP/outbound/reject/${feed}: \""
+	[ "${ban_logoutbound}" = "1" ] && log_outbound="log level ${ban_nftloglevel} prefix \"banIP/outbound/reject/${feed}: \""
 
 	# set feed target
 	#

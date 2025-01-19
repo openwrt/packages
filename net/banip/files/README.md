@@ -2,11 +2,13 @@
 
 # banIP - ban incoming and outgoing IP addresses/subnets via Sets in nftables
 
+<a id="description"></a>
 ## Description
 IP address blocking is commonly used to protect against brute force attacks, prevent disruptive or unauthorized address(es) from access or it can be used to restrict access to or from a particular geographic area — for example. Further more banIP scans the log file via logread and bans IPs that make too many password failures, e.g. via ssh.  
 
+<a id="main-features"></a>
 ## Main Features
-* banIP supports the following fully pre-configured domain blocklist feeds (free for private usage, for commercial use please check their individual licenses).  
+* banIP supports the following fully pre-configured IP blocklist feeds (free for private usage, for commercial use please check their individual licenses).  
 **Please note:** By default, each feed blocks the packet flow in the chain shown in the table below. _Inbound_ combines the chains WAN-Input and WAN-Forward, _Outbound_ represents the LAN-FWD chain:  
   * WAN-INP chain applies to packets from internet to your router  
   * WAN-FWD chain applies to packets from internet to other local devices (not your router)  
@@ -100,6 +102,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * Supports allowing / blocking of certain VLAN forwards
 * Provides an option to transfer logging events on remote servers via cgi interface
 
+<a id="prerequisites"></a>
 ## Prerequisites
 * **[OpenWrt](https://openwrt.org)**, latest stable release or a snapshot with nft/firewall 4 support
 * A download utility with SSL support: 'aria2c', 'curl', full 'wget' or 'uclient-fetch' with one of the 'libustream-*' SSL libraries, the latter one doesn't provide support for ETag HTTP header
@@ -109,17 +112,20 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 **Please note:**
 * Devices with less than 256MB of RAM are **_not_** supported
 
-## Installation & Usage
-* Update your local opkg repository (_opkg update_)
-* Install banIP (_opkg install banip_) - the banIP service is disabled by default
-* Install the LuCI companion package 'luci-app-banip' (opkg install luci-app-banip)
+<a id="installation-and-usage"></a>
+## Installation and Usage
+* Update your local opkg/apk repository
+* Install the LuCI companion package 'luci-app-banip' which also installs the main 'banip' package as a dependency
 * It's strongly recommended to use the LuCI frontend to easily configure all aspects of banIP, the application is located in LuCI under the 'Services' menu
+* It's also recommended to configure a 'Reload Trigger Interface' to depend on your WAN ifup events during boot or restart of your router
 * To be able to use banIP in a meaningful way, you must activate the service and possibly also activate a few blocklist feeds
 * If you're using a complex network setup, e.g. special tunnel interfaces, than untick the 'Auto Detection' option under the 'General Settings' tab and set the required options manually
 * Start the service with '/etc/init.d/banip start' and check everything is working by running '/etc/init.d/banip status' and also check the 'Firewall Log' and 'Processing Log' tabs
 
+<a id="banip-cli-interface"></a>
 ## banIP CLI interface
 * All important banIP functions are accessible via CLI, too. If you're going to configure banIP via CLI, edit the config file '/etc/config/banip' and enable the service, add pre-configured feeds and add/change other options to your needs, see the options reference table below.  
+
 ```
 ~# /etc/init.d/banip
 Syntax: /etc/init.d/banip [command]
@@ -142,6 +148,7 @@ Available commands:
 	info            Dump procd service info
 ```
 
+<a id="banip-config-options"></a>
 ## banIP config options
 
 | Option                  | Type   | Default                       | Description                                                                                                       |
@@ -216,8 +223,10 @@ Available commands:
 | ban_remotelog           | option | 0                             | enable the cgi interface to receive remote logging events                                                         |
 | ban_remotetoken         | option | -                             | unique token to communicate with the cgi interface                                                                |
 
+<a id="examples"></a>
 ## Examples
 **banIP report information**  
+
 ```
 ~# /etc/init.d/banip report
 :::
@@ -264,23 +273,25 @@ Available commands:
 ```
 
 **banIP runtime information**  
+
 ```
-~# /etc/init.d/banip status
+root@blackhole:~# /etc/init.d/banip status
 ::: banIP runtime information
   + status            : active (nft: ✔, monitor: ✔)
   + version           : 1.5.0-r1
-  + element_count     : 94811
-  + active_feeds      : allowlist.v4MAC, allowlist.v6MAC, allowlist.v4, allowlist.v6, cinsscore.v4, country.v6, country.v4, debl.v4, debl.v6, doh.v6, doh.v4, threat.v4, turris.v4, blocklist.v4MAC, blocklist.v6MAC, blocklist.v4, blocklist.v6
+  + element_count     : 95820
+  + active_feeds      : cinsscore.v4, country.v6, blocklist.v4, allowlist.v4MAC, allowlist.v6MAC, allowlist.v4, allowlist.v6, country.v4, debl.v4, debl.v6, doh.v4, doh.v6, turris.v4, threat.v4, blocklist.v4MAC, blocklist.v6MAC, blocklist.v6
   + active_devices    : wan: pppoe-wan / wan-if: wan, wan_6 / vlan-allow: - / vlan-block: -
-  + active_uplink     : 81.63.213.211, fe80::687c:205:a02c:f879, 2004:fc:35ff:3f2:493c:205:a02c:f779
+  + active_uplink     : 91.61.217.158, 2001:fc:37ff:f64:b513:16dd:6903:7710
   + nft_info          : ver: 1.1.1-r1, priority: -100, policy: performance, loglevel: warn, expiry: 2h, limit (icmp/syn/udp): 10/10/100
   + run_info          : base: /mnt/data/banIP, backup: /mnt/data/banIP/backup, report: /mnt/data/banIP/report, error: /mnt/data/banIP/error
   + run_flags         : auto: ✔, proto (4/6): ✔/✔, log (pre/in/out): ✘/✘/✘, count: ✔, dedup: ✔, split: ✘, custom feed: ✘, allowed only: ✘
-  + last_run          : mode: restart, period: 0m 11s, memory: 1402 MB available, 1792 KB max. used, cores: 4, log: logread, fetch: wget
-  + system_info       : 2025-01-13 22:07:32, Bananapi BPI-R3, mediatek/filogic, OpenWrt SNAPSHOT r28560-3f87c5ac42 
+  + last_run          : mode: reload, period: 0m 49s, memory: 1388 MB available, 4760 KB max. used, cores: 4, log: logread, fetch: uclient-fetch
+  + system_info       : 2025-01-19 17:10:42, Bananapi BPI-R3, mediatek/filogic, OpenWrt SNAPSHOT r28616-7924acdd63 
 ```
 
 **banIP search information**  
+
 ```
 ~# /etc/init.d/banip search 8.8.8.8
 :::
@@ -293,6 +304,7 @@ Available commands:
 ```
 
 **banIP survey information**  
+
 ```
 ~# /etc/init.d/banip survey doh.v4
 :::
@@ -314,7 +326,8 @@ Available commands:
 [...]
 ```
 
-## Best practise & tweaks
+<a id="best-practise-and-tweaks"></a>
+## Best practise and tweaks
 **Recommendation for low memory systems**  
 nftables supports the atomic loading of firewall rules (incl. elements), which is cool but unfortunately is also very memory intensive. To reduce the memory pressure on low memory systems (i.e. those with 256-512MB RAM), you should optimize your configuration with the following options:  
 
@@ -322,6 +335,7 @@ nftables supports the atomic loading of firewall rules (incl. elements), which i
 * set 'ban_cores' to '1' (only useful on a multicore system) to force sequential feed processing
 * set 'ban_splitsize' e.g. to '1024' to split the load of an external Set after every 1024 lines/elements
 * set 'ban_reportelements' to '0' to disable the CPU intensive counting of Set elements
+* set 'ban_nftcount' to '0' to disable element counter creation on Set level
 
 **Sensible choice of blocklists**  
 The following feeds are just my personal recommendation as an initial setup:  
@@ -333,6 +347,7 @@ Please note: don't just blindly activate (too) many feeds at once, sooner or lat
 **Log Terms for logfile parsing**  
 Like fail2ban and crowdsec, banIP supports logfile scanning and automatic blocking of suspicious attacker IPs.  
 In the default config only the log terms to detect failed login attempts via dropbear and LuCI are in place. The following search pattern has been tested as well:  
+
 ```
 dropbear : 'Exit before auth from'
 LuCI     : 'luci: failed login'
@@ -343,6 +358,7 @@ nginx    : 'received a suspicious remote IP '\''.*'\'''
 openvpn  : 'TLS Error: could not determine wrapping from \[AF_INET\]'
 AdGuard  : 'AdGuardHome.*\[error\].*/control/login: from ip'
 ```
+
 You find the 'Log Terms' option in LuCI under the 'Log Settings' tab. Feel free to add more log terms to meet your needs and protect additional services.  
 
 **Allow-/Blocklist handling**  
@@ -356,8 +372,9 @@ Both local lists also accept domain names as input to allow IP filtering based o
 banIP supports an "allowlist only" mode. This option skips all blocklists and restricts Internet access only to certain, explicitly permitted IP segments - and blocks access to the rest of the Internet. All IPs that are _not_ listed in the allowlist or in the external allowlist URLs are blocked. In this mode it might be useful to limit the allowlist feed to the inbound chain, to still allow outbound communication to the rest of the world.  
 
 **MAC/IP-binding**
-banIP supports concatenation of local MAC addresses/ranges with IPv4/IPv6 addresses, e.g. to enforce dhcp assignments.  
+banIP supports concatenation of local MAC addresses/ranges with IPv4/IPv6 addresses, e.g. to enforce dhcp assignments or to free connected clients from outbound blocking.  
 The following notations in the local allow- and block-list are supported:
+
 ```
 MAC-address only:
 C8:C2:9B:F7:80:12                                  => this will be populated to the v4MAC- and v6MAC-Sets with the IP-wildcards 0.0.0.0/0 and ::/0
@@ -395,17 +412,20 @@ Please note: for security reasons use this cgi interface only internally and onl
 
 **Download options**  
 By default banIP uses the following pre-configured download options:
+
 ```
     * aria2c: --timeout=20 --retry-wait=10 --max-tries=5 --max-file-not-found=5 --allow-overwrite=true --auto-file-renaming=false --log-level=warn --dir=/ -o
     * curl: --connect-timeout 20 --retry-delay 10 --retry 5 --retry-all-errors --fail --silent --show-error --location -o
     * wget: --no-cache --no-cookies --timeout=20 --waitretry=10 --tries=5 --retry-connrefused --max-redirect=0 -O
     * uclient-fetch: --timeout=20 -O
 ```
+
 To override the default set 'ban_fetchretry', 'ban_fetchinsecure' or globally 'ban_fetchparm' to your needs.
 
 **Configure E-Mail notifications via 'msmtp'**  
 To use the email notification you must install and configure the package 'msmtp'.  
 Modify the file '/etc/msmtprc', e.g.:
+
 ```
 [...]
 defaults
@@ -422,20 +442,24 @@ from            <address>@gmail.com
 user            <gmail-user>
 password        <password>
 ```
+
 Finally add a valid E-Mail receiver address in banIP.
 
 **Send status E-Mails and update the banIP lists via cron job**  
 For a regular, automatic status mailing and update of the used lists on a daily basis set up a cron job, e.g.
+
 ```
 55 03 * * * /etc/init.d/banip report mail
 00 04 * * * /etc/init.d/banip reload
 ```
+
 **Redirect asterisk security logs to lodg/logread**  
 By default banIP scans the logfile via logread, so to monitor attacks on asterisk, its security log must be available via logread. To do this, edit '/etc/asterisk/logger.conf' and add the line 'syslog.local0 = security', then run 'asterisk -rx reload logger' to update the running asterisk configuration.
 
 **Change/add banIP feeds and set optional feed flags**  
 The banIP default blocklist feeds are stored in an external JSON file '/etc/banip/banip.feeds'. All custom changes should be stored in an external JSON file '/etc/banip/banip.custom.feeds' (empty by default). It's recommended to use the LuCI based Custom Feed Editor to make changes to this file.  
 A valid JSON source object contains the following information, e.g.:
+
 ```
 	[...]
 	"stevenblack":{
@@ -449,6 +473,7 @@ A valid JSON source object contains the following information, e.g.:
 	},
 	[...]
 ```
+
 Add an unique feed name (no spaces, no special chars) and make the required changes: adapt at least the URL, the regex, the chain and the description for a new feed.  
 Please note: the flag field is optional, it's a space separated list of options: supported are 'gz' as an archive format, 'dup' to opt out the feed from the deduplication process, protocols 'tcp' or 'udp' with port numbers/port ranges for destination port limitations.  
 
@@ -457,7 +482,12 @@ Whenever you encounter banIP related processing problems, please check the "Proc
 Typical symptoms:  
 * The nftables initialization failed: untick the 'Auto Detection' option in the 'General Settings' config section and set the required options manually  
 * A blocklist feed does not work: maybe a temporary server problem or the download URL has been changed. In the latter case, just use the Custom Feed Editor to point this feed to a new URL  
+
 To get much more processing information, please enable "Verbose Debug Logging" and restart banIP.  
+
+In case of a nft processing error, banIP creates an error directory (by default '/tmp/banIP-error') with the faulty nft load files.  
+For further troubleshooting, you can try to load such an error file manually to determine the exact cause of the error, e.g.: 'nft -f error.file.nft'.  
+
 
 Whenever you encounter firewall problems, enable the logging of certain chains in the "Log Settings" config section, restart banIP and check the "Firewall Log" tab.  
 Typical symptoms:  
@@ -465,13 +495,16 @@ Typical symptoms:
 * A feed (e.g. doh) interrupts almost all client connections: check the feed table above for reference and limit the feed to a certain chain in the "Feed/Set Settings" config section  
 * The allowlist doesn't free a certain IP/MAC address: check the current content of the allowlist with the "Set Survey" under the "Set Reporting" tab to make sure that the desired IP/MAC is listed - if not, reload banIP  
 
+<a id="support"></a>
 ## Support
 Please join the banIP discussion in this [forum thread](https://forum.openwrt.org/t/banip-support-thread/16985) or contact me by mail <dev@brenken.org>  
 If you want to report an error, please describe it in as much detail as possible - with (debug) logs, the current banIP status, your banIP configuration, etc.  
 
+<a id="removal"></a>
 ## Removal
 Stop all banIP related services with _/etc/init.d/banip stop_ and remove the banip package if necessary.
 
+<a id="donations"></a>
 ## Donations
 You like this project - is there a way to donate? Generally speaking "No" - I have a well-paying full-time job and my OpenWrt projects are just a hobby of mine in my spare time.  
 
