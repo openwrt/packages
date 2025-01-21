@@ -1,0 +1,29 @@
+--- a/sapi/apache2handler/config.m4
++++ b/sapi/apache2handler/config.m4
+@@ -32,11 +32,11 @@ if test "$PHP_APXS2" != "no"; then
+   fi
+ 
+   APXS_INCLUDEDIR=$($APXS -q INCLUDEDIR)
+-  APXS_HTTPD=$($APXS -q SBINDIR)/$($APXS -q TARGET)
+-  AS_IF([test ! -x "$APXS_HTTPD"], [AC_MSG_ERROR(m4_text_wrap([
+-    $APXS_HTTPD executable not found. Please, install Apache HTTP Server
+-    command-line utility.
+-  ]))])
++#  APXS_HTTPD=$($APXS -q SBINDIR)/$($APXS -q TARGET)
++#  AS_IF([test ! -x "$APXS_HTTPD"], [AC_MSG_ERROR(m4_text_wrap([
++#    $APXS_HTTPD executable not found. Please, install Apache HTTP Server
++#    command-line utility.
++#  ]))])
+ 
+   APXS_CFLAGS=$($APXS -q CFLAGS)
+   APU_BINDIR=$($APXS -q APU_BINDIR)
+@@ -120,7 +120,8 @@ if test "$PHP_APXS2" != "no"; then
+       -DZEND_ENABLE_STATIC_TSRMLS_CACHE=1
+     ])
+ 
+-  AS_IF([$APXS_HTTPD -V 2>/dev/null | grep 'threaded:.*yes' >/dev/null 2>&1], [
++#  AS_IF([$APXS_HTTPD -V 2>/dev/null | grep 'threaded:.*yes' >/dev/null 2>&1], [
++  AS_IF([false], [
+     APACHE_THREADED_MPM=yes
+     enable_zts=yes
+   ], [APACHE_THREADED_MPM=no])
