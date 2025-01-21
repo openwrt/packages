@@ -47,7 +47,7 @@ r1: initial revision
 +++ b/ext/date/config0.m4
 @@ -4,6 +4,19 @@ AC_CHECK_HEADERS([io.h])
  dnl Check for strtoll, atoll
- AC_CHECK_FUNCS(strtoll atoll)
+ AC_CHECK_FUNCS([strtoll atoll])
  
 +PHP_ARG_WITH(system-tzdata, for use of system timezone data,
 +[  --with-system-tzdata[=DIR]      to specify use of system timezone data],

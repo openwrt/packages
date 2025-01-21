@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
-PKG_VERSION:=8.3.14
+PKG_VERSION:=8.4.5
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
@@ -16,7 +16,7 @@ PKG_CPE_ID:=cpe:/a:php:php
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.php.net/distributions/
-PKG_HASH:=58b4cb9019bf70c0cbcdb814c7df79b9065059d14cf7dbf48d971f8e56ae9be7
+PKG_HASH:=0d3270bbce4d9ec617befce52458b763fd461d475f1fe2ed878bb8573faed327
 
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=no-mips16
@@ -28,7 +28,7 @@ PHP8_MODULES= \
 	exif \
 	fileinfo filter ftp \
 	gettext gd gmp \
-	iconv imap intl \
+	iconv intl \
 	ldap \
 	mbstring mysqli mysqlnd \
 	opcache openssl \
@@ -288,15 +288,6 @@ else
   CONFIGURE_ARGS+= --without-iconv
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-imap),)
-  CONFIGURE_ARGS+= \
-		--with-imap=shared,"$(STAGING_DIR)/usr" \
-		--with-kerberos=no \
-		--with-imap-ssl="$(STAGING_DIR)/usr"
-else
-  CONFIGURE_ARGS+= --without-imap
-endif
-
 ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-intl),)
   CONFIGURE_ARGS+= --enable-intl=shared
 else
@@ -337,7 +328,7 @@ else
   CONFIGURE_ARGS+= --disable-opcache
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-openssl)$(CONFIG_PACKAGE_php8-mod-ftp)$(CONFIG_PACKAGE_php8-mod-imap)$(CONFIG_PACKAGE_php8-mod-snmp),)
+ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-openssl)$(CONFIG_PACKAGE_php8-mod-ftp)$(CONFIG_PACKAGE_php8-mod-snmp),)
   CONFIGURE_ARGS+= \
 	--with-openssl=shared \
 	--with-kerberos=no \
@@ -651,7 +642,6 @@ $(eval $(call BuildModule,gd,GD graphics,+PACKAGE_php8-mod-gd:libgd-full))
 $(eval $(call BuildModule,gettext,Gettext,+PACKAGE_php8-mod-gettext:libintl-full))
 $(eval $(call BuildModule,gmp,GMP,+PACKAGE_php8-mod-gmp:libgmp))
 $(eval $(call BuildModule,iconv,iConv,$(ICONV_DEPENDS)))
-$(eval $(call BuildModule,imap,IMAP,+PACKAGE_php8-mod-imap:libopenssl +PACKAGE_libpam:libpam +PACKAGE_php8-mod-imap:uw-imap))
 $(eval $(call BuildModule,intl,Internationalization Functions,+PACKAGE_php8-mod-intl:icu +PHP8_FULLICUDATA:icu-full-data))
 $(eval $(call BuildModule,ldap,LDAP,+PACKAGE_php8-mod-ldap:libopenldap +PACKAGE_php8-mod-ldap:libsasl2))
 $(eval $(call BuildModule,mbstring,MBString,+PACKAGE_php8-mod-mbstring:oniguruma))
