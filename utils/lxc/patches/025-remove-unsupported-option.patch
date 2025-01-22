@@ -1,9 +1,14 @@
 --- a/templates/lxc-download.in
 +++ b/templates/lxc-download.in
-@@ -380,26 +380,10 @@ if tar --version | grep -sq "bsdtar"; th
-     IS_BSD_TAR="true"
- fi
+@@ -375,32 +375,7 @@ fi
+ # Unpack the rootfs
+ echo "Unpacking the rootfs"
  
+-IS_BSD_TAR="false"
+-if tar --version | grep -sq "bsdtar"; then
+-    IS_BSD_TAR="true"
+-fi
+-
 -EXCLUDES=""
 -excludelist=$(relevant_file excludes)
 -if [ -f "${excludelist}" ]; then
@@ -20,12 +25,12 @@
 -# is to use a function wrapper, but the latter can't be used here as the args
 -# are dynamic. We thus need to ignore the warning brought by shellcheck.
 -# shellcheck disable=SC2086
- if [ "${IS_BSD_TAR}" = "true" ]; then
+-if [ "${IS_BSD_TAR}" = "true" ]; then
 -  tar ${EXCLUDES} --numeric-owner -xpJf "${LXC_CACHE_PATH}/rootfs.tar.xz" -C "${LXC_ROOTFS}"
-+  tar --numeric-owner -xpJf "${LXC_CACHE_PATH}/rootfs.tar.xz" -C "${LXC_ROOTFS}"
- else
+-else
 -  tar --anchored ${EXCLUDES} --numeric-owner --xattrs-include='*' -xpJf "${LXC_CACHE_PATH}/rootfs.tar.xz" -C "${LXC_ROOTFS}"
-+  tar --numeric-owner --xattrs-include='*' -xpJf "${LXC_CACHE_PATH}/rootfs.tar.xz" -C "${LXC_ROOTFS}"
- fi
+-fi
++tar --absolute-names --numeric-owner --xattrs-include='*' -xpJf "${LXC_CACHE_PATH}/rootfs.tar.xz" -C "${LXC_ROOTFS}"
  
  mkdir -p "${LXC_ROOTFS}/dev/pts/"
+ 
