@@ -1,6 +1,6 @@
 --- a/deps/uv/uv.gyp
 +++ b/deps/uv/uv.gyp
-@@ -155,6 +155,7 @@
+@@ -156,6 +156,7 @@
        'target_name': 'libuv',
        'toolsets': ['host', 'target'],
        'type': '<(uv_library)',
