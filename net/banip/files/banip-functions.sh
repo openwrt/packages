@@ -231,9 +231,9 @@ f_log() {
 
 	if [ -n "${log_msg}" ] && { [ "${class}" != "debug" ] || [ "${ban_debug}" = "1" ]; }; then
 		if [ -x "${ban_logcmd}" ]; then
-			"${ban_logcmd}" -p "${class}" -t "banIP-${ban_ver}[${$}]" "${log_msg::512}"
+			"${ban_logcmd}" -p "${class}" -t "banIP-${ban_ver}[${$}]" "${log_msg::256}"
 		else
-			printf "%s %s %s\n" "${class}" "banIP-${ban_ver}[${$}]" "${log_msg::512}"
+			printf "%s %s %s\n" "${class}" "banIP-${ban_ver}[${$}]" "${log_msg::256}"
 		fi
 	fi
 	if [ "${class}" = "err" ] || [ "${class}" = "emerg" ]; then
@@ -608,20 +608,24 @@ f_etag() {
 # load file in nftset
 #
 f_nftload() {
-	local cnt="1" max_cnt="${ban_nftretry:-"5"}" feed_rc="0" file="${1}" errmsg="${2}"
+	local cnt="1" max_cnt="${ban_nftretry:-"5"}" load_rc="4" load_log="" file="${1}" errmsg="${2}"
 
-	while ! "${ban_nftcmd}" -f "${file}" >/dev/null 2>&1; do
-		if [ "${cnt}" = "${max_cnt}" ]; then
+	while [ "${load_rc}" != "0" ]; do
+		load_log="$("${ban_nftcmd}" -f "${file}" 2>&1)"
+		load_rc="${?}"
+		if [ "${load_rc}" = "0" ]; then
+			break
+		elif [ "${cnt}" = "${max_cnt}" ]; then
 			[ ! -d "${ban_errordir}" ] && f_mkdir "${ban_errordir}"
 			"${ban_catcmd}" "${file}" 2>/dev/null >"${ban_errordir}/err.${file##*/}"
-			f_log "info" "${errmsg} ("${ban_errordir}/err.${file##*/}")"
-			feed_rc="4"
+			f_log "info" "${errmsg}, ${load_log::256}"
 			break
 		fi
 		cnt="$((cnt + 1))"
 	done
-	f_log "debug" "f_nftload   ::: file: ${file##*/}, cnt: ${cnt}, max_cnt: ${max_cnt}"
-	return "${feed_rc}"
+
+	f_log "debug" "f_nftload   ::: file: ${file##*/}, load_rc: ${load_rc}, cnt: ${cnt}, max_cnt: ${max_cnt}"
+	return "${load_rc}"
 }
 
 # build initial nft file with base table, chains and rules
