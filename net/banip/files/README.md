@@ -98,19 +98,21 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * Procd based init system support (start/stop/restart/reload/status/report/search/survey/lookup)
 * Procd network interface trigger support
 * Add new or edit existing banIP feeds on your own with the LuCI integrated custom feed editor
-* Supports destination port & protocol limitations for external feeds (see the feed list above). To change the default assignments just use the feed editor
+* Supports destination port & protocol limitations for external feeds (see the feed list above). To change the default assignments just use the custom feed editor
 * Supports allowing / blocking of certain VLAN forwards
 * Provides an option to transfer logging events on remote servers via cgi interface
 
 <a id="prerequisites"></a>
 ## Prerequisites
-* **[OpenWrt](https://openwrt.org)**, latest stable release or a snapshot with nft/firewall 4 support
+* **[OpenWrt](https://openwrt.org)**, latest stable release 24.x or a development snapshot with nft/firewall 4 support
 * A download utility with SSL support: 'aria2c', 'curl', full 'wget' or 'uclient-fetch' with one of the 'libustream-*' SSL libraries, the latter one doesn't provide support for ETag HTTP header
 * A certificate store like 'ca-bundle', as banIP checks the validity of the SSL certificates of all download sites by default
-* For E-Mail notifications you need to install and setup the additional 'msmtp' package  
+* For E-Mail notifications you need to install and setup the additional 'msmtp' package
 
 **Please note:**
 * Devices with less than 256MB of RAM are **_not_** supported
+* Latest banIP 1.5.x does **_not_** support OpenWrt 23.x because the kernel and the nft library are outdated (use former banIP 1.0.x instead)
+* Any previous custom feeds file of banIP 1.0.x must be cleared and it's recommended to start with a fresh banIP default config
 
 <a id="installation-and-usage"></a>
 ## Installation and Usage
@@ -278,7 +280,7 @@ Available commands:
 root@blackhole:~# /etc/init.d/banip status
 ::: banIP runtime information
   + status            : active (nft: ✔, monitor: ✔)
-  + version           : 1.5.0-r1
+  + version           : 1.5.0-r3
   + element_count     : 95820
   + active_feeds      : cinsscore.v4, country.v6, blocklist.v4, allowlist.v4MAC, allowlist.v6MAC, allowlist.v4, allowlist.v6, country.v4, debl.v4, debl.v6, doh.v4, doh.v6, turris.v4, threat.v4, blocklist.v4MAC, blocklist.v6MAC, blocklist.v6
   + active_devices    : wan: pppoe-wan / wan-if: wan, wan_6 / vlan-allow: - / vlan-block: -
@@ -287,7 +289,7 @@ root@blackhole:~# /etc/init.d/banip status
   + run_info          : base: /mnt/data/banIP, backup: /mnt/data/banIP/backup, report: /mnt/data/banIP/report, error: /mnt/data/banIP/error
   + run_flags         : auto: ✔, proto (4/6): ✔/✔, log (pre/in/out): ✘/✘/✘, count: ✔, dedup: ✔, split: ✘, custom feed: ✘, allowed only: ✘
   + last_run          : mode: reload, period: 0m 49s, memory: 1388 MB available, 4760 KB max. used, cores: 4, log: logread, fetch: uclient-fetch
-  + system_info       : 2025-01-19 17:10:42, Bananapi BPI-R3, mediatek/filogic, OpenWrt SNAPSHOT r28616-7924acdd63 
+  + system_info       : 2025-01-22 19:10:42, Bananapi BPI-R3, mediatek/filogic, OpenWrt SNAPSHOT r28616-7924acdd63 
 ```
 
 **banIP search information**  
@@ -331,11 +333,10 @@ root@blackhole:~# /etc/init.d/banip status
 **Recommendation for low memory systems**  
 nftables supports the atomic loading of firewall rules (incl. elements), which is cool but unfortunately is also very memory intensive. To reduce the memory pressure on low memory systems (i.e. those with 256-512MB RAM), you should optimize your configuration with the following options:  
 
-* point 'ban_basedir', 'ban_reportdir' and 'ban_backupdir' to an external usb drive
+* point 'ban_basedir', 'ban_reportdir', 'ban_backupdir' and 'ban_errordir' to an external usb drive or ssd
 * set 'ban_cores' to '1' (only useful on a multicore system) to force sequential feed processing
 * set 'ban_splitsize' e.g. to '1024' to split the load of an external Set after every 1024 lines/elements
-* set 'ban_reportelements' to '0' to disable the CPU intensive counting of Set elements
-* set 'ban_nftcount' to '0' to disable element counter creation on Set level
+* set 'ban_nftcount' to '0' to deactivate the CPU-intensive creation of counter elements at Set level
 
 **Sensible choice of blocklists**  
 The following feeds are just my personal recommendation as an initial setup:  
@@ -475,7 +476,7 @@ A valid JSON source object contains the following information, e.g.:
 ```
 
 Add an unique feed name (no spaces, no special chars) and make the required changes: adapt at least the URL, the regex, the chain and the description for a new feed.  
-Please note: the flag field is optional, it's a space separated list of options: supported are 'gz' as an archive format, 'dup' to opt out the feed from the deduplication process, protocols 'tcp' or 'udp' with port numbers/port ranges for destination port limitations.  
+Please note: the flag field is optional, it's a space separated list of options: supported are 'gz' as an archive format and protocols 'tcp' or 'udp' with port numbers/port ranges for destination port limitations.  
 
 **Debug options**  
 Whenever you encounter banIP related processing problems, please check the "Processing Log" tab.  
@@ -487,7 +488,6 @@ To get much more processing information, please enable "Verbose Debug Logging" a
 
 In case of a nft processing error, banIP creates an error directory (by default '/tmp/banIP-error') with the faulty nft load files.  
 For further troubleshooting, you can try to load such an error file manually to determine the exact cause of the error, e.g.: 'nft -f error.file.nft'.  
-
 
 Whenever you encounter firewall problems, enable the logging of certain chains in the "Log Settings" config section, restart banIP and check the "Firewall Log" tab.  
 Typical symptoms:  
