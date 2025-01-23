@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hev-socks5-server
-PKG_VERSION:=2.6.9
+PKG_VERSION:=2.7.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/heiher/hev-socks5-server/releases/download/$(PKG_VERSION)
-PKG_HASH:=40b4c0df7d1982f56aecce0b51091111d81e08ee7def83920a23284fdaf91e84
+PKG_HASH:=8a7d2156e3f2e694e17a63408f6aa7a073f88677ce0fd4ae95438e3fd2bc88af
 
 PKG_MAINTAINER:=Ray Wang <r@hev.cc>
 PKG_LICENSE:=MIT
