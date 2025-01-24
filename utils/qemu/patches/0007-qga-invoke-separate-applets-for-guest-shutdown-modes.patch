@@ -35,12 +35,13 @@ https://gitlab.alpinelinux.org/alpine/aports/commit/76b81b486480fd9c3294cd420bcf
      } else {
          error_setg(errp,
                     "mode is invalid (valid values are: halt|powerdown|reboot");
-@@ -258,8 +262,12 @@ void qmp_guest_shutdown(const char *mode
+@@ -258,8 +262,13 @@ void qmp_guest_shutdown(const char *mode
  
      ga_run_command(argv, NULL, "shutdown", &local_err);
      if (local_err) {
 -        error_propagate(errp, local_err);
 -        return;
++        error_free_or_abort(&local_err);
 +        const char *fallback_argv[] = {fallback_cmd, (char *) NULL};
 +        ga_run_command(fallback_argv, NULL, fallback_cmd, &local_err);
 +        if (local_err) {
