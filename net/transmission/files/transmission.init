@@ -128,10 +128,11 @@ transmission() {
 			watch_dir_enabled rpc_host_whitelist_enabled
 
 		append_params_quotes "$cfg" \
-			blocklist_url bind_address_ipv4 bind_address_ipv6 download_dir incomplete_dir \
+			blocklist_url bind_address_ipv4 download_dir incomplete_dir \
 			peer_congestion_algorithm peer_socket_tos rpc_bind_address rpc_password rpc_url \
 			rpc_username rpc_host_whitelist rpc_whitelist script_torrent_done_filename watch_dir
 
+			echo '"bind-address-ipv6": "",'
 			echo "\"invalid-key\": false"
 			echo "}"
 
