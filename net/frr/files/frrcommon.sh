@@ -341,7 +341,7 @@ if [ -z "$FRR_PATHSPACE" ]; then
 	load_old_config "/etc/sysconfig/frr"
 fi
 
-if { declare -p watchfrr_options 2>/dev/null || true; } | grep -q '^declare \-a'; then
+if { declare -p watchfrr_options 2>/dev/null || true; } | grep -q '^declare -a'; then
 	log_warning_msg "watchfrr_options contains a bash array value." \
 		"The configured value is intentionally ignored since it is likely wrong." \
 		"Please remove or fix the setting."
