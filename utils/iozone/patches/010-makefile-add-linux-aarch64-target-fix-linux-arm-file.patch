@@ -1,0 +1,79 @@
+From a6550c24bda7d4d43414d764ea797c1e587daf1e Mon Sep 17 00:00:00 2001
+From: John Audia <therealgraysky AT proton DOT me>
+Date: Sat, 13 Jun 2026 11:50:32 -0400
+Subject: [PATCH] makefile: add linux-aarch64 target, fix linux-arm fileop
+ cross-compile
+
+The linux-arm path is the only build that compiles fileop with $(GCC)
+(hardcoded host gcc) instead of $(CC). Cross-builds override CC but not
+GCC, so fileop is built for the host and the cross link fails, while
+iozone and pit_server build fine.
+
+Add a dedicated linux-aarch64 target ($(CC) throughout, no -m64; 64-bit
+is auto-detected via __LP64__), and switch fileop_linux-arm.o to $(CC).
+---
+ src/current/makefile | 32 +++++++++++++++++++++++++++++++-
+ 1 file changed, 31 insertions(+), 1 deletion(-)
+
+--- a/src/current/makefile
++++ b/src/current/makefile
+@@ -55,6 +55,7 @@ all:
+ 	@echo "        ->   IRIX64               (64bit)   <-"
+ 	@echo "        ->   linux                (32bit)   <-"
+ 	@echo "        ->   linux-arm            (32bit)   <-"
++	@echo "        ->   linux-aarch64        (64bit)   <-"
+ 	@echo "        ->   linux-AMD64          (64bit)   <-"
+ 	@echo "        ->   linux-ia64           (64bit)   <-"
+ 	@echo "        ->   linux-powerpc        (32bit)   <-"
+@@ -223,6 +224,16 @@ linux-arm:	iozone_linux-arm.o  libbif.o
+ 	$(CC) -O3 -Dlinux fileop_linux-arm.o -o fileop
+ 	$(CC) -O3 -Dlinux pit_server.o -o pit_server
+ #
++# GNU 'C' compiler Linux build for 64-bit ARM (aarch64) with threads,
++# largefiles, async I/O. 64-bit mode is auto-detected from __LP64__ in
++# iozone.c, so no -m64 flag is used (aarch64 toolchains reject it).
++#
++linux-aarch64:	iozone_linux-aarch64.o  libbif.o libasync.o fileop_linux-aarch64.o pit_server.o
++	$(CC) -O3 $(LDFLAGS) iozone_linux-aarch64.o libbif.o libasync.o \
++		-lrt -lpthread -o iozone
++	$(CC) -O3 -Dlinux fileop_linux-aarch64.o -o fileop
++	$(CC) -O3 -Dlinux pit_server.o -o pit_server
++#
+ # GNU 'C' or Clang compiler Linux build with threads, largefiles, async I/O
+ #
+ 
+@@ -993,7 +1004,13 @@ fileop_linux-arm.o:  fileop.c
+ 	@echo ""
+ 	@echo "Building fileop for Linux-arm"
+ 	@echo ""
+-	$(GCC) -c -O3 $(CFLAGS) fileop.c -o fileop_linux-arm.o
++	$(CC) -c -O3 $(CFLAGS) fileop.c -o fileop_linux-arm.o
++
++fileop_linux-aarch64.o:  fileop.c
++	@echo ""
++	@echo "Building fileop for Linux-aarch64"
++	@echo ""
++	$(CC) -c -O3 $(CFLAGS) fileop.c -o fileop_linux-aarch64.o
+ 
+ fileop_android.o:  fileop.c
+ 	@echo ""
+@@ -1048,6 +1065,19 @@ iozone_linux-arm.o:	iozone.c libbif.c li
+ 	$(CC) -c -O3 -Dunix -DHAVE_ANSIC_C -DASYNC_IO -D_LARGEFILE64_SOURCE \
+ 		-DSHARED_MEM -Dlinux $(CFLAGS) libbif.c -o libbif.o
+ 	$(CC) -c -O3 -Dunix -Dlinux -DHAVE_ANSIC_C -DASYNC_IO \
++		-D_LARGEFILE64_SOURCE $(CFLAGS) libasync.c  -o libasync.o
++
++iozone_linux-aarch64.o:	iozone.c libbif.c libasync.c
++	@echo ""
++	@echo "Building iozone for Linux-aarch64"
++	@echo ""
++	$(CC) -c -O3 -Dunix -DHAVE_ANSIC_C -DASYNC_IO -DHAVE_PREAD \
++		-DNAME='"linux-aarch64"' -DSHARED_MEM \
++		-Dlinux -D_LARGEFILE64_SOURCE $(CFLAGS) iozone.c \
++		-o iozone_linux-aarch64.o
++	$(CC) -c -O3 -Dunix -DHAVE_ANSIC_C -DASYNC_IO -D_LARGEFILE64_SOURCE \
++		-DSHARED_MEM -Dlinux $(CFLAGS) libbif.c -o libbif.o
++	$(CC) -c -O3 -Dunix -Dlinux -DHAVE_ANSIC_C -DASYNC_IO \
+ 		-D_LARGEFILE64_SOURCE $(CFLAGS) libasync.c  -o libasync.o
+ 
+ iozone_android.o:	iozone.c libbif.c libasync.c
