@@ -1,0 +1,31 @@
+#!/bin/sh /etc/rc.common
+
+USE_PROCD=1
+
+START=95
+STOP=01
+
+add_arg() {
+	procd_append_param command "$1"
+}
+
+start_service() {
+	config_load prometheus-node-exporter
+
+	procd_open_instance
+
+	procd_set_param command /usr/bin/prometheus-node-exporter
+	procd_add_jail prometheus-node-exporter.main procfs sysfs ronly
+	procd_set_param user nobody
+	procd_set_param group nogroup
+	procd_set_param no_new_privs 1
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	config_list_foreach "main" args add_arg
+
+	procd_close_instance
+}
+
+service_triggers() {
+	procd_add_reload_trigger prometheus-node-exporter
+}
