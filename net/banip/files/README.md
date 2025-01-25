@@ -15,57 +15,57 @@ IP address blocking is commonly used to protect against brute force attacks, pre
   * LAN-FWD chain applies to local packets going out to the internet (not your router)  
   The listed standard assignments can be changed to your needs under the 'Feed/Set Settings' config tab.  
 
-| Feed                | Focus                          | Inbound | Outbound | Proto/Port   | Information                                                  |
-| :------------------ | :----------------------------- | :-----: | :------: | :----------: | :----------------------------------------------------------- |
-| adaway              | adaway IPs                     |         |    x     | tcp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
-| adguard             | adguard IPs                    |         |    x     | tcp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
-| adguardtrackers     | adguardtracker IPs             |         |    x     | tcp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
-| antipopads          | antipopads IPs                 |         |    x     | tcp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
-| asn                 | ASN segments                   |    x    |          |              | [Link](https://asn.ipinfo.app)                               |
-| backscatterer       | backscatterer IPs              |    x    |          |              | [Link](https://www.uceprotect.net/en/index.php)              |
-| becyber             | malicious attacker IPs         |    x    |          |              | [Link](https://github.com/duggytuxy/malicious_ip_addresses)  |
-| binarydefense       | binary defense banlist         |    x    |          |              | [Link](https://iplists.firehol.org/?ipset=bds_atif)          |
-| bogon               | bogon prefixes                 |    x    |          |              | [Link](https://team-cymru.com)                               |
-| bruteforceblock     | bruteforceblocker IPs          |    x    |          |              | [Link](https://danger.rulez.sk/index.php/bruteforceblocker/) |
-| country             | country blocks                 |    x    |          |              | [Link](https://www.ipdeny.com/ipblocks)                      |
-| cinsscore           | suspicious attacker IPs        |    x    |          |              | [Link](https://cinsscore.com/#list)                          |
-| debl                | fail2ban IP blacklist          |    x    |          |              | [Link](https://www.blocklist.de)                             |
-| doh                 | public DoH-Provider            |         |    x     | tcp: 80, 443 | [Link](https://github.com/dibdot/DoH-IP-blocklists)          |
-| drop                | spamhaus drop compilation      |    x    |          |              | [Link](https://www.spamhaus.org)                             |
-| dshield             | dshield IP blocklist           |    x    |          |              | [Link](https://www.dshield.org)                              |
-| etcompromised       | ET compromised hosts           |    x    |          |              | [Link](https://iplists.firehol.org/?ipset=et_compromised)    |
-| feodo               | feodo tracker                  |    x    |          |              | [Link](https://feodotracker.abuse.ch)                        |
-| firehol1            | firehol level 1 compilation    |    x    |          |              | [Link](https://iplists.firehol.org/?ipset=firehol_level1)    |
-| firehol2            | firehol level 2 compilation    |    x    |          |              | [Link](https://iplists.firehol.org/?ipset=firehol_level2)    |
-| firehol3            | firehol level 3 compilation    |    x    |          |              | [Link](https://iplists.firehol.org/?ipset=firehol_level3)    |
-| firehol4            | firehol level 4 compilation    |    x    |          |              | [Link](https://iplists.firehol.org/?ipset=firehol_level4)    |
-| greensnow           | suspicious server IPs          |    x    |          |              | [Link](https://greensnow.co)                                 |
-| hagezi              | Threat IP blocklist            |         |    x     | tcp: 80, 443 | [Link](https://github.com/hagezi/dns-blocklists)             |
-| ipblackhole         | blackhole IPs                  |    x    |          |              | [Link](https://github.com/BlackHoleMonster/IP-BlackHole)     |
-| ipsum               | malicious IPs                  |    x    |          |              | [Link](https://github.com/stamparm/ipsum)                    |
-| ipthreat            | hacker and botnet TPs          |    x    |          |              | [Link](https://ipthreat.net)                                 |
-| myip                | real-time IP blocklist         |    x    |          |              | [Link](https://myip.ms)                                      |
-| nixspam             | iX spam protection             |    x    |          |              | [Link](http://www.nixspam.org)                               |
-| oisdbig             | OISD-big IPs                   |         |    x     | tcp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
-| oisdnsfw            | OISD-nsfw IPs                  |         |    x     | tcp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
-| oisdsmall           | OISD-small IPs                 |         |    x     | tcp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
-| pallebone           | curated IP blocklist           |    x    |          |              | [Link](https://github.com/pallebone/StrictBlockPAllebone)    |
-| proxy               | open proxies                   |    x    |          |              | [Link](https://iplists.firehol.org/?ipset=proxylists)        |
-| stevenblack         | stevenblack IPs                |         |    x     | tcp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
-| threat              | emerging threats               |    x    |          |              | [Link](https://rules.emergingthreats.net)                    |
-| threatview          | malicious IPs                  |    x    |          |              | [Link](https://threatview.io)                                |
-| tor                 | tor exit nodes                 |    x    |          |              | [Link](https://www.dan.me.uk)                                |
-| turris              | turris sentinel blocklist      |    x    |          |              | [Link](https://view.sentinel.turris.cz)                      |
-| uceprotect1         | spam protection level 1        |    x    |          |              | [Link](https://www.uceprotect.net/en/index.php)              |
-| uceprotect2         | spam protection level 2        |    x    |          |              | [Link](https://www.uceprotect.net/en/index.php)              |
-| uceprotect3         | spam protection level 3        |    x    |          |              | [Link](https://www.uceprotect.net/en/index.php)              |
-| urlhaus             | urlhaus IDS IPs                |    x    |          |              | [Link](https://urlhaus.abuse.ch)                             |
-| urlvir              | malware related IPs            |    x    |          |              | [Link](https://iplists.firehol.org/?ipset=urlvir)            |
-| webclient           | malware related IPs            |    x    |          |              | [Link](https://iplists.firehol.org/?ipset=firehol_webclient) |
-| voip                | VoIP fraud blocklist           |    x    |          |              | [Link](https://voipbl.org)                                   |
-| vpn                 | vpn IPs                        |    x    |          |              | [Link](https://github.com/X4BNet/lists_vpn)                  |
-| vpndc               | vpn datacenter IPs             |    x    |          |              | [Link](https://github.com/X4BNet/lists_vpn)                  |
-| yoyo                | yoyo IPs                       |         |    x     | tcp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
+| Feed                | Focus                          | Inbound | Outbound | Proto/Port        | Information                                                  |
+| :------------------ | :----------------------------- | :-----: | :------: | :---------------: | :----------------------------------------------------------- |
+| adaway              | adaway IPs                     |         |    x     | tcp, udp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
+| adguard             | adguard IPs                    |         |    x     | tcp, udp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
+| adguardtrackers     | adguardtracker IPs             |         |    x     | tcp, udp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
+| antipopads          | antipopads IPs                 |         |    x     | tcp, udp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
+| asn                 | ASN segments                   |    x    |          |                   | [Link](https://asn.ipinfo.app)                               |
+| backscatterer       | backscatterer IPs              |    x    |          |                   | [Link](https://www.uceprotect.net/en/index.php)              |
+| becyber             | malicious attacker IPs         |    x    |          |                   | [Link](https://github.com/duggytuxy/malicious_ip_addresses)  |
+| binarydefense       | binary defense banlist         |    x    |          |                   | [Link](https://iplists.firehol.org/?ipset=bds_atif)          |
+| bogon               | bogon prefixes                 |    x    |          |                   | [Link](https://team-cymru.com)                               |
+| bruteforceblock     | bruteforceblocker IPs          |    x    |          |                   | [Link](https://danger.rulez.sk/index.php/bruteforceblocker/) |
+| country             | country blocks                 |    x    |          |                   | [Link](https://www.ipdeny.com/ipblocks)                      |
+| cinsscore           | suspicious attacker IPs        |    x    |          |                   | [Link](https://cinsscore.com/#list)                          |
+| debl                | fail2ban IP blacklist          |    x    |          |                   | [Link](https://www.blocklist.de)                             |
+| doh                 | public DoH-Provider            |         |    x     | tcp, udp: 80, 443 | [Link](https://github.com/dibdot/DoH-IP-blocklists)          |
+| drop                | spamhaus drop compilation      |    x    |          |                   | [Link](https://www.spamhaus.org)                             |
+| dshield             | dshield IP blocklist           |    x    |          |                   | [Link](https://www.dshield.org)                              |
+| etcompromised       | ET compromised hosts           |    x    |          |                   | [Link](https://iplists.firehol.org/?ipset=et_compromised)    |
+| feodo               | feodo tracker                  |    x    |          |                   | [Link](https://feodotracker.abuse.ch)                        |
+| firehol1            | firehol level 1 compilation    |    x    |          |                   | [Link](https://iplists.firehol.org/?ipset=firehol_level1)    |
+| firehol2            | firehol level 2 compilation    |    x    |          |                   | [Link](https://iplists.firehol.org/?ipset=firehol_level2)    |
+| firehol3            | firehol level 3 compilation    |    x    |          |                   | [Link](https://iplists.firehol.org/?ipset=firehol_level3)    |
+| firehol4            | firehol level 4 compilation    |    x    |          |                   | [Link](https://iplists.firehol.org/?ipset=firehol_level4)    |
+| greensnow           | suspicious server IPs          |    x    |          |                   | [Link](https://greensnow.co)                                 |
+| hagezi              | Threat IP blocklist            |         |    x     | tcp, udp: 80, 443 | [Link](https://github.com/hagezi/dns-blocklists)             |
+| ipblackhole         | blackhole IPs                  |    x    |          |                   | [Link](https://github.com/BlackHoleMonster/IP-BlackHole)     |
+| ipsum               | malicious IPs                  |    x    |          |                   | [Link](https://github.com/stamparm/ipsum)                    |
+| ipthreat            | hacker and botnet TPs          |    x    |          |                   | [Link](https://ipthreat.net)                                 |
+| myip                | real-time IP blocklist         |    x    |          |                   | [Link](https://myip.ms)                                      |
+| nixspam             | iX spam protection             |    x    |          |                   | [Link](http://www.nixspam.org)                               |
+| oisdbig             | OISD-big IPs                   |         |    x     | tcp, udp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
+| oisdnsfw            | OISD-nsfw IPs                  |         |    x     | tcp, udp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
+| oisdsmall           | OISD-small IPs                 |         |    x     | tcp, udp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
+| pallebone           | curated IP blocklist           |    x    |          |                   | [Link](https://github.com/pallebone/StrictBlockPAllebone)    |
+| proxy               | open proxies                   |    x    |          |                   | [Link](https://iplists.firehol.org/?ipset=proxylists)        |
+| stevenblack         | stevenblack IPs                |         |    x     | tcp, udp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
+| threat              | emerging threats               |    x    |          |                   | [Link](https://rules.emergingthreats.net)                    |
+| threatview          | malicious IPs                  |    x    |          |                   | [Link](https://threatview.io)                                |
+| tor                 | tor exit nodes                 |    x    |          |                   | [Link](https://www.dan.me.uk)                                |
+| turris              | turris sentinel blocklist      |    x    |          |                   | [Link](https://view.sentinel.turris.cz)                      |
+| uceprotect1         | spam protection level 1        |    x    |          |                   | [Link](https://www.uceprotect.net/en/index.php)              |
+| uceprotect2         | spam protection level 2        |    x    |          |                   | [Link](https://www.uceprotect.net/en/index.php)              |
+| uceprotect3         | spam protection level 3        |    x    |          |                   | [Link](https://www.uceprotect.net/en/index.php)              |
+| urlhaus             | urlhaus IDS IPs                |    x    |          |                   | [Link](https://urlhaus.abuse.ch)                             |
+| urlvir              | malware related IPs            |    x    |          |                   | [Link](https://iplists.firehol.org/?ipset=urlvir)            |
+| webclient           | malware related IPs            |    x    |          |                   | [Link](https://iplists.firehol.org/?ipset=firehol_webclient) |
+| voip                | VoIP fraud blocklist           |    x    |          |                   | [Link](https://voipbl.org)                                   |
+| vpn                 | vpn IPs                        |    x    |          |                   | [Link](https://github.com/X4BNet/lists_vpn)                  |
+| vpndc               | vpn datacenter IPs             |    x    |          |                   | [Link](https://github.com/X4BNet/lists_vpn)                  |
+| yoyo                | yoyo IPs                       |         |    x     | tcp, udp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
 
 * Zero-conf like automatic installation & setup, usually no manual changes needed
 * All Sets are handled in a separate nft table/namespace 'banIP'
@@ -261,8 +261,8 @@ Available commands:
                          |              |                       |                       |                       |  185.242.224.0(p)     
     debl_v4              | 13646        | ON: 0                 | -                     | -                     | -                     
     debl_v6              | 131          | ON: 0                 | -                     | -                     | -                     
-    doh_v6               | 1218         | -                     | ON: 0                 | tcp: 80, 443          | -                     
-    doh_v4               | 1756         | -                     | ON: 0                 | tcp: 80, 443          | -                     
+    doh_v6               | 1218         | -                     | ON: 0                 | tcp, udp: 80, 443     | -                     
+    doh_v4               | 1756         | -                     | ON: 0                 | tcp, udp: 80, 443     | -                     
     threat_v4            | 943          | ON: 2                 | -                     | -                     | 45.142.193.0(p), 141.98.
                          |              |                       |                       |                       | 10.0(p)               
     turris_v4            | 8017         | ON: 1                 | -                     | -                     | 78.128.113.38         
