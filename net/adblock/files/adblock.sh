@@ -1,6 +1,6 @@
 #!/bin/sh
 # dns based ad/abuse domain blocking
-# Copyright (c) 2015-2024 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2015-2025 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # (s)hellcheck exceptions
@@ -254,7 +254,7 @@ f_dns() {
 	fi
 
 	if [ -z "${adb_dns}" ]; then
-		utils="knot-resolver bind-server unbound-daemon dnsmasq-full dnsmasq-dhcpv6 dnsmasq"
+		utils="knot-resolver bind-server unbound-daemon smartdns dnsmasq-full dnsmasq-dhcpv6 dnsmasq"
 		for util in ${utils}; do
 			if printf "%s" "${adb_packages}" | "${adb_jsoncmd}" -ql1 -e "@.packages[\"${util}\"]" >/dev/null 2>&1; then
 				case "${util}" in
@@ -332,6 +332,17 @@ f_dns() {
 			adb_dnsallow="${adb_dnsallow:-"${adb_awkcmd} '{print \"\"\$0\" CNAME rpz-passthru.\\n*.\"\$0\" CNAME rpz-passthru.\"}'"}"
 			adb_dnssafesearch="${adb_dnssafesearch:-"${adb_awkcmd} -v item=\"\$item\" '{type=\"AAAA\";if(match(item,/^([0-9]{1,3}\.){3}[0-9]{1,3}$/)){type=\"A\"}}{print \"\"\$0\" \"type\" \"item\"\"}'"}"
 			adb_dnsstop="${adb_dnsstop:-"* CNAME ."}"
+			;;
+		"smartdns")
+			adb_dnscachecmd="-"
+			adb_dnsinstance="${adb_dnsinstance:-"0"}"
+			adb_dnsuser="${adb_dnsuser:-"root"}"
+			adb_dnsdir="${adb_dnsdir:-"/tmp/smartdns"}"
+			adb_dnsheader="${adb_dnsheader:-""}"
+			adb_dnsdeny="${adb_dnsdeny:-"${adb_awkcmd} '{print \"address /\"\$0\"/#\"}'"}"
+			adb_dnsallow="${adb_dnsallow:-"${adb_awkcmd} '{print \"address /\"\$0\"/-\"}'"}"
+			adb_dnssafesearch="${adb_dnssafesearch:-"${adb_awkcmd} -v item=\"\$item\" '{print \"cname /\"\$0\"/\"item\"\"}'"}"
+			adb_dnsstop="${adb_dnsstop:-"0"}"
 			;;
 		"raw")
 			adb_dnscachecmd="-"
@@ -501,23 +512,32 @@ f_count() {
 # set external config options
 #
 f_extconf() {
-	local config config_dir config_file section zone port fwcfg
+	local config config_option section zone port fwcfg
 
 	case "${adb_dns}" in
 		"dnsmasq")
 			config="dhcp"
-			config_dir="$(uci_get dhcp "@dnsmasq[${adb_dnsinstance}]" confdir | "${adb_grepcmd}" -Fo "${adb_dnsdir}")"
-			if [ "${adb_enabled}" = "1" ] && [ -z "${config_dir}" ]; then
+			config_option="$(uci_get ${config} "@dnsmasq[${adb_dnsinstance}]" confdir | "${adb_grepcmd}" -Fo "${adb_dnsdir}")"
+			if [ "${adb_enabled}" = "1" ] && [ -z "${config_option}" ]; then
 				uci_set dhcp "@dnsmasq[${adb_dnsinstance}]" confdir "${adb_dnsdir}" 2>/dev/null
 			fi
 			;;
 		"kresd")
 			config="resolver"
-			config_file="$(uci_get resolver kresd rpz_file | "${adb_grepcmd}" -Fo "${adb_dnsdir}/${adb_dnsfile}")"
-			if [ "${adb_enabled}" = "1" ] && [ -z "${config_file}" ]; then
+			config_option="$(uci_get ${config} kresd rpz_file | "${adb_grepcmd}" -Fo "${adb_dnsdir}/${adb_dnsfile}")"
+			if [ "${adb_enabled}" = "1" ] && [ -z "${config_option}" ]; then
 				uci -q add_list resolver.kresd.rpz_file="${adb_dnsdir}/${adb_dnsfile}"
-			elif [ "${adb_enabled}" = "0" ] && [ -n "${config_file}" ]; then
+			elif [ "${adb_enabled}" = "0" ] && [ -n "${config_option}" ]; then
 				uci -q del_list resolver.kresd.rpz_file="${adb_dnsdir}/${adb_dnsfile}"
+			fi
+			;;
+		"smartdns")
+			config="smartdns"
+			config_option="$(uci_get ${config} smartdns conf_files | "${adb_grepcmd}" -Fo "${adb_dnsdir}/${adb_dnsfile}")"
+			if [ "${adb_enabled}" = "1" ] && [ -z "${config_option}" ]; then
+				uci -q add_list smartdns.@smartdns[${adb_dnsinstance}].conf_files="${adb_dnsdir}/${adb_dnsfile}"
+			elif [ "${adb_enabled}" = "0" ] && [ -n "${config_option}" ]; then
+				uci -q del_list smartdns.@smartdns[${adb_dnsinstance}].conf_files="${adb_dnsdir}/${adb_dnsfile}"
 			fi
 			;;
 	esac
@@ -594,13 +614,13 @@ f_dnsup() {
 		fi
 	fi
 	if [ "${restart_rc}" = "0" ]; then
-		rset="/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower(\$1)}"
+		rset="/^(([[:alnum:]_-]{1,63}\\.)+[[:alnum:]-]+|[[:alnum:]-]+)([[:space:]]|$)/{print tolower(\$1)}"
 		while [ "${cnt}" -le "${adb_dnstimeout}" ]; do
 			dns_service="$("${adb_ubuscmd}" -S call service list "{\"name\":\"${adb_dns}\"}")"
 			dns_up="$(printf "%s" "${dns_service}" | "${adb_jsoncmd}" -l1 -e "@[\"${adb_dns}\"].instances.*.running")"
 			dns_pid="$(printf "%s" "${dns_service}" | "${adb_jsoncmd}" -l1 -e "@[\"${adb_dns}\"].instances.*.pid")"
 			if [ "${dns_up}" = "true" ] && [ -n "${dns_pid}" ] && ! ls "/proc/${dns_pid}/fd/${adb_dnsdir}/${adb_dnsfile}" >/dev/null 2>&1; then
-				if [ -x "${adb_lookupcmd}" ] && [ -n "$(printf "%s" "${adb_lookupdomain}" | "${adb_awkcmd}" "${rset}")" ]; then
+				if [ -x "${adb_lookupcmd}" ] && [ "${adb_lookupdomain}" != "false" ] && [ -n "$(printf "%s" "${adb_lookupdomain}" | "${adb_awkcmd}" "${rset}")" ]; then
 					if "${adb_lookupcmd}" "${adb_lookupdomain}" >/dev/null 2>&1; then
 						out_rc="0"
 						break
@@ -630,7 +650,7 @@ f_dnsup() {
 # backup/restore/remove blocklists
 #
 f_list() {
-	local hold file rset item array safe_url safe_ips safe_cname safe_domains ip out_rc file_name mode="${1}" src_name="${2:-"${src_name}"}" in_rc="${src_rc:-0}" cnt ffiles="-maxdepth 1 -name ${adb_dnsprefix}.*.gz"
+	local hold file rset item array safe_url safe_ips safe_cname safe_domains ip out_rc file_name cnt mode="${1}" src_name="${2:-"${src_name}"}" in_rc="${src_rc:-0}" use_cname="0" ffiles="-maxdepth 1 -name ${adb_dnsprefix}.*.gz"
 
 	case "${mode}" in
 		"iplist")
@@ -661,7 +681,7 @@ f_list() {
 			src_name="${mode}"
 			if [ "${src_name}" = "blacklist" ] && [ -f "${adb_blacklist}" ]; then
 				file_name="${adb_tmpfile}.${src_name}"
-				rset="/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower(\$1)}"
+				rset="/^(([[:alnum:]_-]{1,63}\\.)+[[:alnum:]-]+|[[:alnum:]-]+)([[:space:]]|$)/{print tolower(\$1)}"
 				"${adb_awkcmd}" "${rset}" "${adb_blacklist}" >"${adb_tmpdir}/tmp.raw.${src_name}"
 				if [ -s "${adb_whitelist}" ]; then
 					"${adb_awkcmd}" 'NR==FNR{member[$1];next}!($1 in member)' "${adb_whitelist}" "${adb_tmpdir}/tmp.raw.${src_name}" >"${adb_tmpdir}/tmp.deduplicate.${src_name}"
@@ -673,12 +693,11 @@ f_list() {
 				out_rc="${?}"
 			elif [ "${src_name}" = "whitelist" ] && [ -f "${adb_whitelist}" ]; then
 				file_name="${adb_tmpdir}/tmp.raw.${src_name}"
-				rset="/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower(\$1)}"
-				printf "%s\n" "${adb_lookupdomain}" | "${adb_awkcmd}" "${rset}" >"${file_name}"
+				[ "${adb_lookupdomain}" != "false" ] && printf "%s\n" "${adb_lookupdomain}" | "${adb_awkcmd}" "${rset}" >"${file_name}"
+				rset="/^(([[:alnum:]_-]{1,63}\\.)+[[:alnum:]-]+|[[:alnum:]-]+)([[:space:]]|$)/{print tolower(\$1)}"
 				"${adb_awkcmd}" "${rset}" "${adb_whitelist}" >>"${file_name}"
 				out_rc="${?}"
 				if [ "${out_rc}" = "0" ]; then
-					rset="/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower(\$1)}"
 					"${adb_awkcmd}" "${rset}" "${adb_tmpdir}/tmp.raw.${src_name}" >"${adb_tmpdir}/tmp.rem.${src_name}"
 					out_rc="${?}"
 					if [ "${out_rc}" = "0" ] && [ "${adb_dnsallow}" != "1" ]; then
@@ -696,66 +715,39 @@ f_list() {
 			;;
 		"safesearch")
 			file_name="${adb_tmpdir}/tmp.safesearch.${src_name}"
+			if [ "${adb_dns}" = "named" ] || [ "${adb_dns}" = "smartdns" ]; then
+				use_cname="1"
+			fi
 			case "${src_name}" in
 				"google")
 					rset="/^\\.([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{printf \"%s\n%s\n\",tolower(\"www\"\$1),tolower(substr(\$1,2,length(\$1)))}"
 					safe_url="https://www.google.com/supported_domains"
 					safe_cname="forcesafesearch.google.com"
-					safe_domains="${adb_tmpdir}/tmp.load.safesearch.${src_name}"
 					if [ "${adb_backup}" = "1" ] && [ -s "${adb_backupdir}/safesearch.${src_name}.gz" ]; then
-						"${adb_zcatcmd}" "${adb_backupdir}/safesearch.${src_name}.gz" >"${safe_domains}"
-						out_rc="${?}"
+						"${adb_zcatcmd}" "${adb_backupdir}/safesearch.${src_name}.gz" >"${adb_tmpdir}/tmp.load.safesearch.${src_name}"
 					else
-						"${adb_fetchutil}" ${adb_fetchparm} "${safe_domains}" "${safe_url}" 2>/dev/null
-						out_rc="${?}"
-						if [ "${adb_backup}" = "1" ] && [ "${out_rc}" = "0" ]; then
-							"${adb_gzipcmd}" -cf "${safe_domains}" >"${adb_backupdir}/safesearch.${src_name}.gz"
-							out_rc="${?}"
+						"${adb_fetchutil}" ${adb_fetchparm} "${adb_tmpdir}/tmp.load.safesearch.${src_name}" "${safe_url}" 2>/dev/null
+						if [ "${adb_backup}" = "1" ] && [ -s "${adb_tmpdir}/tmp.load.safesearch.${src_name}" ]; then
+							"${adb_gzipcmd}" -cf "${adb_tmpdir}/tmp.load.safesearch.${src_name}" >"${adb_backupdir}/safesearch.${src_name}.gz"
 						fi
 					fi
-					if [ "${out_rc}" = "0" ]; then
-						if [ -x "${adb_lookupcmd}" ]; then
-							safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awkcmd}" '/^Address[ 0-9]*: /{ORS=" ";print $NF}')"
-							[ -n "${safe_ips}" ] && "${adb_awkcmd}" "${rset}" "${safe_domains}" >"${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
-						fi
-						out_rc="${?}"
-					fi
+					safe_domains="$("${adb_awkcmd}" "${rset}" "${adb_tmpdir}/tmp.load.safesearch.${src_name}")"
 					;;
 				"bing")
 					safe_cname="strict.bing.com"
 					safe_domains="www.bing.com"
-					if [ -x "${adb_lookupcmd}" ]; then
-						safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awkcmd}" '/^Address[ 0-9]*: /{ORS=" ";print $NF}')"
-						[ -n "${safe_ips}" ] && printf "%s\n" ${safe_domains} >"${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
-					fi
-					out_rc="${?}"
 					;;
 				"duckduckgo")
 					safe_cname="safe.duckduckgo.com"
 					safe_domains="duckduckgo.com"
-					if [ -x "${adb_lookupcmd}" ]; then
-						safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awkcmd}" '/^Address[ 0-9]*: /{ORS=" ";print $NF}')"
-						[ -n "${safe_ips}" ] && printf "%s\n" ${safe_domains} >"${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
-					fi
-					out_rc="${?}"
 					;;
 				"pixabay")
 					safe_cname="safesearch.pixabay.com"
 					safe_domains="pixabay.com"
-					if [ -x "${adb_lookupcmd}" ]; then
-						safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awkcmd}" '/^Address[ 0-9]*: /{ORS=" ";print $NF}')"
-						[ -n "${safe_ips}" ] && printf "%s\n" ${safe_domains} >"${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
-					fi
-					out_rc="${?}"
 					;;
 				"yandex")
 					safe_cname="familysearch.yandex.ru"
 					safe_domains="ya.ru yandex.ru yandex.com yandex.com.tr yandex.ua yandex.by yandex.ee yandex.lt yandex.lv yandex.md yandex.uz yandex.tm yandex.tj yandex.az yandex.kz"
-					if [ -x "${adb_lookupcmd}" ]; then
-						safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awkcmd}" '/^Address[ 0-9]*: /{ORS=" ";print $NF}')"
-						[ -n "${safe_ips}" ] && printf "%s\n" ${safe_domains} >"${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
-					fi
-					out_rc="${?}"
 					;;
 				"youtube")
 					if [ "${adb_safesearchmod}" = "0" ]; then
@@ -764,16 +756,19 @@ f_list() {
 						safe_cname="restrictmoderate.youtube.com"
 					fi
 					safe_domains="www.youtube.com m.youtube.com youtubei.googleapis.com youtube.googleapis.com www.youtube-nocookie.com"
-					if [ -x "${adb_lookupcmd}" ]; then
-						safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awkcmd}" '/^Address[ 0-9]*: /{ORS=" ";print $NF}')"
-						[ -n "${safe_ips}" ] && printf "%s\n" ${safe_domains} >"${adb_tmpdir}/tmp.raw.safesearch.${src_name}"
-					fi
-					out_rc="${?}"
 					;;
 			esac
-			if [ "${out_rc}" = "0" ] && [ -s "${adb_tmpdir}/tmp.raw.safesearch.${src_name}" ]; then
+			if [ -n "${safe_domains}" ] && [ -n "${safe_cname}" ]; then
+				if [ -x "${adb_lookupcmd}" ] && [ "${use_cname}" = "0" ]; then
+					safe_ips="$("${adb_lookupcmd}" "${safe_cname}" 2>/dev/null | "${adb_awkcmd}" '/^Address[ 0-9]*: /{ORS=" ";print $NF}')"
+				fi
+				if [ -n "${safe_ips}" ] || [ "${use_cname}" = "1" ]; then
+					printf "%s\n" ${safe_domains} >"${adb_tmpdir}/tmp.raw.safesearch.${src_name}"	
+					[ "${use_cname}" = "1" ] &&	array="${safe_cname}" || array="${safe_ips}"
+				fi
+			fi
+			if [ -s "${adb_tmpdir}/tmp.raw.safesearch.${src_name}" ]; then
 				: >"${file_name}"
-				[ "${adb_dns}" = "named" ] && array="${safe_cname}" || array="${safe_ips}"
 				for item in ${array}; do
 					if ! eval "${adb_dnssafesearch}" "${adb_tmpdir}/tmp.raw.safesearch.${src_name}" >>"${file_name}"; then
 						: >"${file_name}"
@@ -921,43 +916,49 @@ f_switch() {
 f_query() {
 	local search result prefix suffix field query_start query_end query_timeout=30 domain="${1}" tld="${1#*.}"
 
-	if [ -z "${domain}" ] || [ "${domain}" = "${tld}" ]; then
+	if [ -z "${domain}" ]; then
 		printf "%s\n" "::: invalid input, please submit a single (sub-)domain :::"
 	else
 		case "${adb_dns}" in
 			"dnsmasq")
-				prefix=".*[\\/\\.]"
-				suffix="(\\/)"
+				prefix="local=.*[\\/\\.]"
+				suffix="\\/"
 				field="2"
 				;;
 			"unbound")
-				prefix=".*[\"\\.]"
-				suffix="(always_nxdomain)"
+				prefix="local-zone: .*[\"\\.]"
+				suffix="\" always_nxdomain"
 				field="3"
 				;;
 			"named")
-				prefix="[^\\*].*[\\.]"
-				suffix="( \\.)"
+				prefix=""
+				suffix=" CNAME \\."
 				field="1"
 				;;
 			"kresd")
-				prefix="[^\\*].*[\\.]"
-				suffix="( \\.)"
+				prefix=""
+				suffix=" CNAME \\."
 				field="1"
 				;;
+			"smartdns")
+				prefix="address .*.*[\\/\\.]"
+				suffix="\\/#"
+				field="3"
+				;;
 			"raw")
-				prefix=".*[\\.]"
+				prefix=""
 				suffix=""
 				field="1"
 				;;
 		esac
 		query_start="$(date "+%s")"
-		while [ "${domain}" != "${tld}" ]; do
+		while :; do
 			search="${domain//[+*~%\$&\"\']/}"
 			search="${search//./\\.}"
-			result="$("${adb_awkcmd}" -F '/|\"|\t| ' "/^(${search}|${prefix}+${search}.*${suffix})$/{i++;if(i<=9){printf \"  + %s\n\",\$${field}}else if(i==10){printf \"  + %s\n\",\"[...]\";exit}}" "${adb_dnsdir}/${adb_dnsfile}")"
+			result="$("${adb_awkcmd}" -F '/|\"|\t| ' "/^(${prefix}${search}${suffix})$/{i++;if(i<=9){printf \"  + %s\n\",\$${field}}else if(i==10){printf \"  + %s\n\",\"[...]\";exit}}" "${adb_dnsdir}/${adb_dnsfile}")"
 			printf "%s\n%s\n%s\n" ":::" "::: domain '${domain}' in active blocklist" ":::"
 			printf "%s\n\n" "${result:-"  - no match"}"
+			[ "${domain}" = "${tld}" ] && break
 			domain="${tld}"
 			tld="${domain#*.}"
 		done

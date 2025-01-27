@@ -48,7 +48,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | reg_it              |         | S    | reg_italy        | [Link](https://easylist.to)                                                       |
 | reg_jp              |         | S    | reg_japan        | [Link](https://github.com/k2jp/abp-japanese-filters)                              |
 | reg_kr              |         | S    | reg_korea        | [Link](https://github.com/List-KR/List-KR)                                        |
-| reg_nl              |         | S    | reg_lithuania    | [Link](https://easylist.to)                                                       |
+| reg_lt              |         | S    | reg_lithuania    | [Link](https://easylist.to)                                                       |
 | reg_nl              |         | S    | reg_netherlands  | [Link](https://easylist.to)                                                       |
 | reg_pl              |         | M    | reg_poland       | [Link](https://kadantiscam.netlify.com)                                           |
 | reg_ro              |         | S    | reg_romania      | [Link](https://easylist.to)                                                       |
@@ -75,7 +75,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     • <b>VAR</b> (50k-900k) variable size depending on the selection.
 * Zero-conf like automatic installation & setup, usually no manual changes needed
 * Simple but yet powerful adblock engine: adblock does not use error prone external iptables rulesets, http pixel server instances and things like that
-* Supports five different DNS backend formats: dnsmasq, unbound, named (bind), kresd or raw (e.g. used by dnscrypt-proxy)
+* Supports six different DNS backend formats: dnsmasq, unbound, named (bind), kresd, smartdns or raw (e.g. used by dnscrypt-proxy)
 * Supports four different SSL-enabled download utilities: uclient-fetch, wget, curl or aria2c
 * Supports SafeSearch for google, bing, duckduckgo, yandex, youtube and pixabay
 * Supports RPZ-trigger 'RPZ-CLIENT-IP' to always allow/deny certain DNS clients based on their IP address (currently only supported by bind dns backend)
@@ -220,6 +220,9 @@ and at the end of the file add:
 **Change the DNS backend to 'kresd':**
 Adblock deposits the final blocklist 'adb_list.overall' in '/etc/kresd', no further configuration needed.
 <b>Please note:</b> The knot-resolver (kresd) is only available on Turris devices and does not support the SafeSearch functionality yet.
+
+**Change the DNS backend to 'smartdns':**
+No further configuration is needed, adblock deposits the final blocklist 'adb_list.overall' in '/tmp/smartdns' by default.
 
 **Use restrictive jail modes:**
 You can enable a restrictive 'adb_list.jail' to block access to all domains except those listed in the whitelist file. Usually this list will be generated as an additional list for guest or kidsafe configurations (for a separate dns server instance). If the jail directory points to your primary dns directory, adblock enables the restrictive jail mode automatically (jail mode only).
