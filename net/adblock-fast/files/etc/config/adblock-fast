@@ -78,6 +78,13 @@ config file_url
 	option enabled '0'
 
 config file_url
+	option name 'CERT Polska - Dangerous Websites'
+	option url 'https://hole.cert.pl/domains/v2/domains.txt'
+	option size '731479'
+	option action 'block'
+	option enabled '0'
+
+config file_url
 	option name 'Kboghdady - YouTube Ads DNS'
 	option url 'https://cdn.jsdelivr.net/gh/kboghdady/youTube_ads_4_pi-hole/black.list'
 	option size '553006'
