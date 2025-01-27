@@ -1,4 +1,4 @@
-From a71cca137eb33f659354ce0ebda4951cb26485df Mon Sep 17 00:00:00 2001
+From d8ab290c67d1df2de8e4be0cca2f4e64aeb7817e Mon Sep 17 00:00:00 2001
 From: Christian Marangi <ansuelsmth@gmail.com>
 Date: Mon, 6 Nov 2023 22:43:59 +0100
 Subject: [PATCH] core: convert project to PCRE2
@@ -20,24 +20,23 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
  cmake/create_pkg_config.cmake                 |   4 +-
  cmake/include_libraries.cmake                 |   2 +-
  configure_cmake.sh                            |  16 +-
+ doc/reference/snort_reference.text            |  60 +--
  lua/balanced.lua                              |   2 +-
  lua/max_detect.lua                            |   6 +-
  lua/security.lua                              |   4 +-
  snort.pc.in                                   |   4 +-
  src/CMakeLists.txt                            |   4 +-
- src/detection/detection_module.cc             |  48 +--
+ src/detection/detection_module.cc             |  48 +-
  src/detection/detection_options.cc            |   6 +-
  src/ips_options/ips_options.cc                |   4 +-
- src/ips_options/ips_pcre.cc                   | 391 ++++++++----------
+ src/ips_options/ips_pcre.cc                   | 411 ++++++++----------
+ src/main/process.cc                           |   8 +-
  src/main/shell.cc                             |   9 +-
  src/main/snort_config.h                       |  26 +-
  .../appid/lua_detector_api.cc                 |  62 +--
  src/parser/parse_rule.cc                      |   4 +-
  src/parser/parse_stream.cc                    |   2 +-
  src/search_engines/test/hyperscan_test.cc     |   2 +-
- src/utils/stats.cc                            |   6 +-
- src/utils/stats.h                             |   6 +-
- src/utils/util.cc                             |   8 +-
  tools/snort2lua/config_states/config_api.cc   |  12 +-
  .../config_states/config_no_option.cc         |  14 +-
  .../config_states/config_one_int_option.cc    |  24 +-
@@ -45,7 +44,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
  tools/snort2lua/rule_states/rule_api.cc       |   4 +-
  .../{rule_pcre.cc => rule_pcre2.cc}           |  40 +-
  .../snort2lua/rule_states/rule_sd_pattern.cc  |   4 +-
- 31 files changed, 393 insertions(+), 404 deletions(-)
+ 30 files changed, 427 insertions(+), 438 deletions(-)
  delete mode 100644 cmake/FindPCRE.cmake
  create mode 100644 cmake/FindPCRE2.cmake
  rename tools/snort2lua/rule_states/{rule_pcre.cc => rule_pcre2.cc} (80%)
@@ -155,7 +154,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
 +)
 --- a/cmake/create_pkg_config.cmake
 +++ b/cmake/create_pkg_config.cmake
-@@ -72,8 +72,8 @@ if(PCAP_INCLUDE_DIR)
+@@ -78,8 +78,8 @@ if(PCAP_INCLUDE_DIR)
      set(PCAP_CPPFLAGS "-I${PCAP_INCLUDE_DIR}")
  endif()
  
@@ -179,7 +178,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
      find_package(CppUTest REQUIRED)
 --- a/configure_cmake.sh
 +++ b/configure_cmake.sh
-@@ -90,10 +90,10 @@ Optional Packages:
+@@ -91,10 +91,10 @@ Optional Packages:
                              luajit include directory
      --with-luajit-libraries=DIR
                              luajit library directory
@@ -194,7 +193,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
      --with-dnet-includes=DIR
                              libdnet include directory
      --with-dnet-libraries=DIR
-@@ -417,11 +417,11 @@ while [ $# -ne 0 ]; do
+@@ -421,11 +421,11 @@ while [ $# -ne 0 ]; do
          --with-luajit-libraries=*)
              append_cache_entry LUAJIT_LIBRARIES_DIR_HINT PATH $optarg
              ;;
@@ -210,6 +209,174 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
              ;;
          --with-dnet-includes=*)
              append_cache_entry DNET_INCLUDE_DIR_HINT PATH $optarg
+--- a/doc/reference/snort_reference.text
++++ b/doc/reference/snort_reference.text
+@@ -257,7 +257,7 @@ Table of Contents
+     7.92. modbus_unit
+     7.93. msg
+     7.94. mss
+-    7.95. pcre
++    7.95. pcre2
+     7.96. pkt_data
+     7.97. pkt_num
+     7.98. priority
+@@ -600,15 +600,15 @@ Configuration:
+     offload fast pattern search (defaults to disabled) { 0:max32 }
+   * int detection.offload_threads = 0: maximum number of simultaneous
+     offloads (defaults to disabled) { 0:max32 }
+-  * bool detection.pcre_enable = true: enable pcre pattern matching
+-  * int detection.pcre_match_limit = 1500: limit pcre backtracking, 0
++  * bool detection.pcre2_enable = true: enable pcre2 pattern matching
++  * int detection.pcre2_match_limit = 1500: limit pcre2 backtracking, 0
+     = off { 0:max32 }
+-  * int detection.pcre_match_limit_recursion = 1500: limit pcre stack
++  * int detection.pcre2_match_limit_recursion = 1500: limit pcre2 stack
+     consumption, 0 = off { 0:max32 }
+-  * bool detection.pcre_override = true: enable pcre match limit
++  * bool detection.pcre2_override = true: enable pcre2 match limit
+     overrides when pattern matching (ie ignore /O)
+-  * bool detection.pcre_to_regex = false: enable the use of regex
+-    instead of pcre for compatible expressions
++  * bool detection.pcre2_to_regex = false: enable the use of regex
++    instead of pcre2 for compatible expressions
+   * bool detection.enable_address_anomaly_checks = false: enable
+     check and alerting of address anomalies
+   * bool detection.enable_strict_reduction = false: enable strict
+@@ -8213,11 +8213,11 @@ Configuration:
+     }
+ 
+ 
+-7.95. pcre
++7.95. pcre2
+ 
+ --------------
+ 
+-Help: rule option for matching payload data with pcre
++Help: rule option for matching payload data with pcre2
+ 
+ Type: ips_option
+ 
+@@ -8225,15 +8225,15 @@ Usage: detect
+ 
+ Configuration:
+ 
+-  * string pcre.~re: Snort regular expression
++  * string pcre2.~re: Snort regular expression
+ 
+ Peg counts:
+ 
+-  * pcre.pcre_match_limit: total number of times pcre hit the match
++  * pcre2.pcre2_match_limit: total number of times pcre2 hit the match
+     limit (sum)
+-  * pcre.pcre_recursion_limit: total number of times pcre hit the
++  * pcre2.pcre2_recursion_limit: total number of times pcre2 hit the
+     recursion limit (sum)
+-  * pcre.pcre_error: total number of times pcre returns error (sum)
++  * pcre2.pcre2_error: total number of times pcre2 returns error (sum)
+ 
+ 
+ 7.96. pkt_data
+@@ -8311,7 +8311,7 @@ Configuration:
+ --------------
+ 
+ Help: rule option for matching payload data with hyperscan regex;
+-uses pcre syntax
++uses pcre2 syntax
+ 
+ Type: ips_option
+ 
+@@ -9162,7 +9162,7 @@ locations, you can use these options:
+   * --with-pkg-libraries: specify the directory containing the
+     package libraries.
+ 
+-These can be used for pcap, luajit, pcre, dnet, daq, lzma, openssl,
++These can be used for pcap, luajit, pcre2, dnet, daq, lzma, openssl,
+ iconv, and hyperscan packages. For more information on these
+ libraries see the Getting Started section of the manual.
+ 
+@@ -9769,15 +9769,15 @@ libraries see the Getting Started sectio
+     offload fast pattern search (defaults to disabled) { 0:max32 }
+   * int detection.offload_threads = 0: maximum number of simultaneous
+     offloads (defaults to disabled) { 0:max32 }
+-  * bool detection.pcre_enable = true: enable pcre pattern matching
+-  * int detection.pcre_match_limit = 1500: limit pcre backtracking, 0
++  * bool detection.pcre2_enable = true: enable pcre2 pattern matching
++  * int detection.pcre2_match_limit = 1500: limit pcre2 backtracking, 0
+     = off { 0:max32 }
+-  * int detection.pcre_match_limit_recursion = 1500: limit pcre stack
++  * int detection.pcre2_match_limit_recursion = 1500: limit pcre2 stack
+     consumption, 0 = off { 0:max32 }
+-  * bool detection.pcre_override = true: enable pcre match limit
++  * bool detection.pcre2_override = true: enable pcre2 match limit
+     overrides when pattern matching (ie ignore /O)
+-  * bool detection.pcre_to_regex = false: enable the use of regex
+-    instead of pcre for compatible expressions
++  * bool detection.pcre2_to_regex = false: enable the use of regex
++    instead of pcre2 for compatible expressions
+   * string detection.service_extension[].extend_to
+     [].extend_to_service: service to extend to
+   * string detection.service_extension[].service: service to perform
+@@ -10536,7 +10536,7 @@ libraries see the Getting Started sectio
+     that determined packet verdict
+   * enum packet_tracer.output = console: select where to send packet
+     trace { console | file }
+-  * string pcre.~re: Snort regular expression
++  * string pcre2.~re: Snort regular expression
+   * bool perf_monitor.base = true: enable base statistics
+   * bool perf_monitor.cpu = false: enable cpu statistics
+   * bool perf_monitor.flow = false: enable traffic statistics
+@@ -12367,10 +12367,10 @@ libraries see the Getting Started sectio
+     translation errors (sum)
+   * payload_injector.http_injects: total number of http injections
+     (sum)
+-  * pcre.pcre_error: total number of times pcre returns error (sum)
+-  * pcre.pcre_match_limit: total number of times pcre hit the match
++  * pcre2.pcre2_error: total number of times pcre2 returns error (sum)
++  * pcre2.pcre2_match_limit: total number of times pcre2 hit the match
+     limit (sum)
+-  * pcre.pcre_recursion_limit: total number of times pcre hit the
++  * pcre2.pcre2_recursion_limit: total number of times pcre2 hit the
+     recursion limit (sum)
+   * perf_monitor.flow_tracker_creates: total number of flow trackers
+     created (sum)
+@@ -16585,8 +16585,8 @@ and are not applicable elsewhere.
+   * pass (ips_action): manage the counters for the pass action
+   * payload_injector (basic): payload injection utility
+   * pbb (codec): support for 802.1ah protocol
+-  * pcre (ips_option): rule option for matching payload data with
+-    pcre
++  * pcre2 (ips_option): rule option for matching payload data with
++    pcre2
+   * perf_monitor (inspector): performance monitoring and flow
+     statistics collection
+   * pgm (codec): support for pragmatic general multicast
+@@ -16610,7 +16610,7 @@ and are not applicable elsewhere.
+     identification system
+   * references (basic): define reference systems used in rules
+   * regex (ips_option): rule option for matching payload data with
+-    hyperscan regex; uses pcre syntax
++    hyperscan regex; uses pcre2 syntax
+   * reject (ips_action): manage the data and the counters for the
+     reject action
+   * rem (ips_option): rule option to convey an arbitrary comment in
+@@ -17009,7 +17009,7 @@ and are not applicable elsewhere.
+   * ips_option::msg: rule option summarizing rule purpose output with
+     events
+   * ips_option::mss: detection for TCP maximum segment size
+-  * ips_option::pcre: rule option for matching payload data with pcre
++  * ips_option::pcre2: rule option for matching payload data with pcre2
+   * ips_option::pkt_data: rule option to set the detection cursor to
+     the normalized packet data
+   * ips_option::pkt_num: alert on raw packet number
+@@ -17019,7 +17019,7 @@ and are not applicable elsewhere.
+   * ips_option::reference: rule option to indicate relevant attack
+     identification system
+   * ips_option::regex: rule option for matching payload data with
+-    hyperscan regex; uses pcre syntax
++    hyperscan regex; uses pcre2 syntax
+   * ips_option::rem: rule option to convey an arbitrary comment in
+     the rule body
+   * ips_option::replace: rule option to overwrite payload data; use
 --- a/lua/balanced.lua
 +++ b/lua/balanced.lua
 @@ -5,7 +5,7 @@
@@ -295,7 +462,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
  
 --- a/src/detection/detection_module.cc
 +++ b/src/detection/detection_module.cc
-@@ -96,21 +96,21 @@ static const Parameter detection_params[
+@@ -98,21 +98,21 @@ static const Parameter detection_params[
      { "offload_threads", Parameter::PT_INT, "0:max32", "0",
        "maximum number of simultaneous offloads (defaults to disabled)" },
  
@@ -327,7 +494,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
  #endif
  
      { "enable_address_anomaly_checks", Parameter::PT_BOOL, nullptr, "false",
-@@ -221,13 +221,13 @@ bool DetectionModule::set(const char*, V
+@@ -222,13 +222,13 @@ bool DetectionModule::set(const char*, V
      else if ( v.is("offload_threads") )
          sc->offload_threads = v.get_uint32();
  
@@ -346,7 +513,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
      {
          // Cap the pcre recursion limit to not exceed the stack size.
          //
-@@ -252,21 +252,21 @@ bool DetectionModule::set(const char*, V
+@@ -253,21 +253,21 @@ bool DetectionModule::set(const char*, V
          if (max_rec < 0)
              max_rec = 0;
  
@@ -359,7 +526,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
 -            LogMessage("Capping pcre_match_limit_recursion to %ld, thread stack_size %ld.\n",
 -                sc->pcre_match_limit_recursion, thread_stack_size);
 +            sc->pcre2_match_limit_recursion = max_rec;
-+            LogMessage("Capping pcre2_match_limit_recursion to %ld, thread stack_size %llu.\n",
++            LogMessage("Capping pcre2_match_limit_recursion to %ld, thread stack_size %ld.\n",
 +                sc->pcre2_match_limit_recursion, thread_stack_size);
          }
      }
@@ -379,7 +546,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
      else if ( v.is("enable_address_anomaly_checks") )
 --- a/src/detection/detection_options.cc
 +++ b/src/detection/detection_options.cc
-@@ -595,7 +595,7 @@ int detection_option_node_evaluate(
+@@ -594,7 +594,7 @@ int detection_option_node_evaluate(
                              {
                                  if ( !child_node->is_relative )
                                  {
@@ -388,7 +555,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
                                      // to check again.  Only increment result once.
                                      // Should hit this condition on first loop iteration.
                                      if ( loop_count == 1 )
-@@ -661,10 +661,10 @@ int detection_option_node_evaluate(
+@@ -660,10 +660,10 @@ int detection_option_node_evaluate(
                  }
  
                  // If all children branches matched, we don't need to reeval any of
@@ -403,24 +570,24 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
                  if ( result == node->num_children )
 --- a/src/ips_options/ips_options.cc
 +++ b/src/ips_options/ips_options.cc
-@@ -72,7 +72,7 @@ extern const BaseApi* ips_ip_proto[];
- extern const BaseApi* ips_isdataat[];
- extern const BaseApi* ips_itype[];
- extern const BaseApi* ips_msg[];
--extern const BaseApi* ips_pcre[];
-+extern const BaseApi* ips_pcre2[];
- extern const BaseApi* ips_priority[];
- extern const BaseApi* ips_raw_data[];
- extern const BaseApi* ips_rem[];
-@@ -146,7 +146,7 @@ void load_ips_options()
-     PluginManager::load_plugins(ips_isdataat);
-     PluginManager::load_plugins(ips_itype);
-     PluginManager::load_plugins(ips_msg);
+@@ -30,7 +30,7 @@ using namespace snort;
+ // these have various dependencies:
+ extern const BaseApi* ips_detection_filter[]; // perf stats 
+ extern const BaseApi* ips_flowbits[];         // public methods like flowbits_setter
+-extern const BaseApi* ips_pcre[];             // FIXIT-L called directly from parser
++extern const BaseApi* ips_pcre2[];            // FIXIT-L called directly from parser
+ extern const BaseApi* ips_replace[];          // needs snort::SFDAQ::can_replace
+ extern const BaseApi* ips_so[];               // needs SO manager
+ extern const BaseApi* ips_vba_data[];         // FIXIT-L some trace dependency
+@@ -97,7 +97,7 @@ void load_ips_options()
+ {
+     PluginManager::load_plugins(ips_detection_filter);
+     PluginManager::load_plugins(ips_flowbits);
 -    PluginManager::load_plugins(ips_pcre);
 +    PluginManager::load_plugins(ips_pcre2);
-     PluginManager::load_plugins(ips_priority);
-     PluginManager::load_plugins(ips_raw_data);
-     PluginManager::load_plugins(ips_rem);
+     PluginManager::load_plugins(ips_replace);
+     PluginManager::load_plugins(ips_so);
+     PluginManager::load_plugins(ips_vba_data);
 --- a/src/ips_options/ips_pcre.cc
 +++ b/src/ips_options/ips_pcre.cc
 @@ -23,7 +23,8 @@
@@ -433,7 +600,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
  
  #include <cassert>
  
-@@ -43,33 +44,31 @@
+@@ -46,35 +47,33 @@
  
  using namespace snort;
  
@@ -465,6 +632,8 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
 +#define s_name "pcre2"
  #define mod_regex_name "regex"
  
+ void show_pcre_counts();
+ 
 -struct PcreData
 +struct Pcre2Data
  {
@@ -476,15 +645,80 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
      int options;        /* sp_pcre specific options (relative & inverse) */
      char* expression;
  };
-@@ -83,36 +82,32 @@ struct PcreData
+@@ -88,82 +87,78 @@ struct PcreData
  // by verify; search uses the value in snort conf
  static int s_ovector_max = -1;
  
 -static unsigned scratch_index;
 -static ScratchAllocator* scratcher = nullptr;
--
--static THREAD_LOCAL ProfileStats pcrePerfStats;
 +static THREAD_LOCAL ProfileStats pcre2PerfStats;
+ 
+-static THREAD_LOCAL ProfileStats pcrePerfStats;
+-
+-struct PcreCounts
++struct Pcre2Counts
+ {
+-    unsigned pcre_rules;
++    unsigned pcre2_rules;
+ #ifdef HAVE_HYPERSCAN
+-    unsigned pcre_to_hyper;
++    unsigned pcre2_to_hyper;
+ #endif
+-    unsigned pcre_native;
++    unsigned pcre2_native;
+ };
+ 
+-PcreCounts pcre_counts;
++Pcre2Counts pcre2_counts;
+ 
+ void show_pcre_counts()
+ {
+-    if (pcre_counts.pcre_rules == 0)
++    if (pcre2_counts.pcre2_rules == 0)
+         return;
+ 
+-    LogLabel("pcre counts");
+-    LogCount("pcre_rules", pcre_counts.pcre_rules);
++    LogLabel("pcre2 counts");
++    LogCount("pcre2_rules", pcre2_counts.pcre2_rules);
+ #ifdef HAVE_HYPERSCAN
+-    LogCount("pcre_to_hyper", pcre_counts.pcre_to_hyper);
++    LogCount("pcre2_to_hyper", pcre2_counts.pcre2_to_hyper);
+ #endif
+-    LogCount("pcre_native", pcre_counts.pcre_native);
++    LogCount("pcre2_native", pcre2_counts.pcre2_native);
+ }
+ 
+ //-------------------------------------------------------------------------
+ // stats foo
+ //-------------------------------------------------------------------------
+ 
+-struct PcreStats
++struct Pcre2Stats
+ {
+-    PegCount pcre_match_limit;
+-    PegCount pcre_recursion_limit;
+-    PegCount pcre_error;
++    PegCount pcre2_match_limit;
++    PegCount pcre2_recursion_limit;
++    PegCount pcre2_error;
+ };
+ 
+-const PegInfo pcre_pegs[] =
++const PegInfo pcre2_pegs[] =
+ {
+-    { CountType::SUM, "pcre_match_limit", "total number of times pcre hit the match limit" },
+-    { CountType::SUM, "pcre_recursion_limit", "total number of times pcre hit the recursion limit" },
+-    { CountType::SUM, "pcre_error", "total number of times pcre returns error" },
++    { CountType::SUM, "pcre2_match_limit", "total number of times pcre2 hit the match limit" },
++    { CountType::SUM, "pcre2_recursion_limit", "total number of times pcre2 hit the recursion limit" },
++    { CountType::SUM, "pcre2_error", "total number of times pcre2 returns error" },
+ 
+     { CountType::END, nullptr, nullptr }
+ };
+ 
+-THREAD_LOCAL PcreStats pcre_stats;
++THREAD_LOCAL Pcre2Stats pcre2_stats;
  
  //-------------------------------------------------------------------------
  // implementation foo
@@ -520,7 +754,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
      switch (rc)
      {
      /* pcre_fullinfo fails for the following:
-@@ -127,40 +122,41 @@ static void pcre_check_anchored(PcreData
+@@ -178,40 +173,41 @@ static void pcre_check_anchored(PcreData
          /* This is the success code */
          break;
  
@@ -574,7 +808,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
      int compile_flags = 0;
  
      if (data == nullptr)
-@@ -180,7 +176,7 @@ static void pcre_parse(const SnortConfig
+@@ -231,7 +227,7 @@ static void pcre_parse(const SnortConfig
  
      if (*re == '!')
      {
@@ -583,7 +817,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
          re++;
          while (isspace((int)*re))
              re++;
-@@ -212,7 +208,7 @@ static void pcre_parse(const SnortConfig
+@@ -263,7 +259,7 @@ static void pcre_parse(const SnortConfig
      else if (*re != delimit)
          goto syntax;
  
@@ -592,7 +826,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
  
      /* find ending delimiter, trim delimit chars */
      opts = strrchr(re, delimit);
-@@ -230,25 +226,25 @@ static void pcre_parse(const SnortConfig
+@@ -281,25 +277,25 @@ static void pcre_parse(const SnortConfig
      {
          switch (*opts)
          {
@@ -629,7 +863,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
              break;
  
          default:
-@@ -259,71 +255,68 @@ static void pcre_parse(const SnortConfig
+@@ -310,71 +306,68 @@ static void pcre_parse(const SnortConfig
      }
  
      /* now compile the re */
@@ -734,7 +968,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
  
      snort_free(free_me);
      return;
-@@ -332,40 +325,44 @@ syntax:
+@@ -383,40 +376,44 @@ syntax:
      snort_free(free_me);
  
      // ensure integrity from parse error to fatal error
@@ -772,7 +1006,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
 -    assert(ss[scratch_index]);
 +    match_data = pcre2_match_data_create(p->context->conf->pcre2_ovector_size, NULL);
 +    if (match_data == nullptr) {
-+        pc.pcre2_error++;
++        pcre2_stats.pcre2_error++;
 +        return false;
 +    }
  
@@ -796,7 +1030,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
  
      if (result >= 0)
      {
-@@ -390,34 +387,37 @@ static bool pcre_search(
+@@ -441,34 +438,37 @@ static bool pcre_search(
           * and a single int for scratch space.
           */
  
@@ -812,21 +1046,21 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
 -    else if (result == PCRE_ERROR_MATCHLIMIT)
 +    else if (result == PCRE2_ERROR_MATCHLIMIT)
      {
--        pc.pcre_match_limit++;
-+        pc.pcre2_match_limit++;
+-        pcre_stats.pcre_match_limit++;
++        pcre2_stats.pcre2_match_limit++;
          matched = false;
      }
 -    else if (result == PCRE_ERROR_RECURSIONLIMIT)
 +    else if (result == PCRE2_ERROR_RECURSIONLIMIT)
      {
--        pc.pcre_recursion_limit++;
-+        pc.pcre2_recursion_limit++;
+-        pcre_stats.pcre_recursion_limit++;
++        pcre2_stats.pcre2_recursion_limit++;
          matched = false;
      }
      else
      {
--        pc.pcre_error++;
-+        pc.pcre2_error++;
+-        pcre_stats.pcre_error++;
++        pcre2_stats.pcre2_error++;
          return false;
      }
  
@@ -842,7 +1076,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
      return matched;
  }
  
-@@ -425,14 +425,14 @@ static bool pcre_search(
+@@ -476,14 +476,14 @@ static bool pcre_search(
  // class methods
  //-------------------------------------------------------------------------
  
@@ -860,9 +1094,9 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
  
      uint32_t hash() const override;
      bool operator==(const IpsOption&) const override;
-@@ -446,17 +446,17 @@ public:
+@@ -497,17 +497,17 @@ public:
      EvalStatus eval(Cursor&, Packet*) override;
-     bool retry(Cursor&, const Cursor&) override;
+     bool retry(Cursor&) override;
  
 -    PcreData* get_data()
 +    Pcre2Data* get_data()
@@ -882,7 +1116,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
  {
      if ( !config )
          return;
-@@ -464,21 +464,16 @@ PcreOption::~PcreOption()
+@@ -515,21 +515,16 @@ PcreOption::~PcreOption()
      if ( config->expression )
          snort_free(config->expression);
  
@@ -908,7 +1142,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
  {
      uint32_t a = 0, b = 0, c = 0;
      int expression_len = strlen(config->expression);
-@@ -532,14 +527,14 @@ uint32_t PcreOption::hash() const
+@@ -583,14 +578,14 @@ uint32_t PcreOption::hash() const
      return c;
  }
  
@@ -927,7 +1161,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
  
      if (( strcmp(left->expression, right->expression) == 0) &&
          ( left->options == right->options))
-@@ -550,13 +545,13 @@ bool PcreOption::operator==(const IpsOpt
+@@ -601,13 +596,13 @@ bool PcreOption::operator==(const IpsOpt
      return false;
  }
  
@@ -945,7 +1179,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
          return NO_MATCH;
  
      unsigned pos = c.get_delta();
-@@ -570,7 +565,7 @@ IpsOption::EvalStatus PcreOption::eval(C
+@@ -621,7 +616,7 @@ IpsOption::EvalStatus PcreOption::eval(C
  
      int found_offset = -1; // where is the ending location of the pattern
  
@@ -954,7 +1188,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
      {
          if ( found_offset > 0 )
          {
-@@ -585,17 +580,17 @@ IpsOption::EvalStatus PcreOption::eval(C
+@@ -636,17 +631,17 @@ IpsOption::EvalStatus PcreOption::eval(C
  }
  
  // we always advance by found_offset so no adjustments to cursor are done
@@ -971,47 +1205,13 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
 +// using content, but more advanced pcre2 won't work for the relative /
  // overlap case.
  
--bool PcreOption::retry(Cursor&, const Cursor&)
-+bool Pcre2Option::retry(Cursor&, const Cursor&)
+-bool PcreOption::retry(Cursor&)
++bool Pcre2Option::retry(Cursor&)
  {
      if ((config->options & (SNORT_PCRE_INVERT | SNORT_PCRE_ANCHORED)))
      {
-@@ -616,46 +611,43 @@ static const Parameter s_params[] =
-     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+@@ -668,22 +663,19 @@ static const Parameter s_params[] =
  };
- 
--struct PcreStats
-+struct Pcre2Stats
- {
--    PegCount pcre_rules;
-+    PegCount pcre2_rules;
- #ifdef HAVE_HYPERSCAN
--    PegCount pcre_to_hyper;
-+    PegCount pcre2_to_hyper;
- #endif
--    PegCount pcre_native;
--    PegCount pcre_negated;
-+    PegCount pcre2_native;
-+    PegCount pcre2_negated;
- };
- 
- const PegInfo pcre_pegs[] =
- {
--    { CountType::SUM, "pcre_rules", "total rules processed with pcre option" },
-+    { CountType::SUM, "pcre2_rules", "total rules processed with pcre2 option" },
- #ifdef HAVE_HYPERSCAN
--    { CountType::SUM, "pcre_to_hyper", "total pcre rules by hyperscan engine" },
-+    { CountType::SUM, "pcre2_to_hyper", "total pcre2 rules by hyperscan engine" },
- #endif
--    { CountType::SUM, "pcre_native", "total pcre rules compiled by pcre engine" },
--    { CountType::SUM, "pcre_negated", "total pcre rules using negation syntax" },
-+    { CountType::SUM, "pcre2_native", "total pcre2 rules compiled by pcre engine" },
-+    { CountType::SUM, "pcre2_negated", "total pcre2 rules using negation syntax" },
-     { CountType::END, nullptr, nullptr }
- };
- 
--PcreStats pcre_stats;
-+Pcre2Stats pcre2_stats;
  
  #define s_help \
 -    "rule option for matching payload data with pcre"
@@ -1037,7 +1237,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
      }
  
  #ifdef HAVE_HYPERSCAN
-@@ -665,12 +657,12 @@ public:
+@@ -693,12 +685,12 @@ public:
      bool end(const char*, int, SnortConfig*) override;
  
      ProfileStats* get_profile() const override
@@ -1050,9 +1250,9 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
 -    PcreData* get_data();
 +    Pcre2Data* get_data();
  
-     bool global_stats() const override
-     { return true; }
-@@ -682,31 +674,28 @@ public:
+     Usage get_usage() const override
+     { return DETECT; }
+@@ -707,31 +699,28 @@ public:
      { return mod_regex; }
  
  private:
@@ -1075,8 +1275,9 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
  }
  
 -const PegInfo* PcreModule::get_pegs() const
+-{ return pcre_pegs; }
 +const PegInfo* Pcre2Module::get_pegs() const
- { return pcre_pegs; }
++{ return pcre2_pegs; }
  
 -PegCount* PcreModule::get_counts() const
 -{ return (PegCount*)&pcre_stats; }
@@ -1092,7 +1293,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
      {
          if ( !mod_regex )
              mod_regex = ModuleManager::get_module(mod_regex_name);
-@@ -718,7 +707,7 @@ bool PcreModule::begin(const char* name,
+@@ -743,7 +732,7 @@ bool PcreModule::begin(const char* name,
  }
  #endif
  
@@ -1101,7 +1302,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
  {
      assert(v.is("~re"));
      re = v.get_string();
-@@ -729,50 +718,28 @@ bool PcreModule::set(const char* name, V
+@@ -754,50 +743,28 @@ bool PcreModule::set(const char* name, V
      return true;
  }
  
@@ -1159,7 +1360,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
  }
  
  //-------------------------------------------------------------------------
-@@ -780,21 +747,21 @@ void PcreModule::scratch_cleanup(SnortCo
+@@ -805,21 +772,21 @@ void PcreModule::scratch_cleanup(SnortCo
  //-------------------------------------------------------------------------
  
  static Module* mod_ctor()
@@ -1169,31 +1370,31 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
  static void mod_dtor(Module* m)
  { delete m; }
  
--static IpsOption* pcre_ctor(Module* p, OptTreeNode* otn)
-+static IpsOption* pcre2_ctor(Module* p, OptTreeNode* otn)
+-static IpsOption* pcre_ctor(Module* p, IpsInfo& info)
++static IpsOption* pcre2_ctor(Module* p, IpsInfo& info)
  {
--    pcre_stats.pcre_rules++;
+-    pcre_counts.pcre_rules++;
 -    PcreModule* m = (PcreModule*)p;
-+    pcre2_stats.pcre2_rules++;
++    pcre2_counts.pcre2_rules++;
 +    Pcre2Module* m = (Pcre2Module*)p;
  
  #ifdef HAVE_HYPERSCAN
      Module* mod_regex = m->get_mod_regex();
      if ( mod_regex )
      {
--        pcre_stats.pcre_to_hyper++;
-+        pcre2_stats.pcre2_to_hyper++;
+-        pcre_counts.pcre_to_hyper++;
++        pcre2_counts.pcre2_to_hyper++;
          const IpsApi* opt_api = IpsManager::get_option_api(mod_regex_name);
-         return opt_api->ctor(mod_regex, otn);
+         return opt_api->ctor(mod_regex, info);
      }
-@@ -803,16 +770,16 @@ static IpsOption* pcre_ctor(Module* p, O
-     UNUSED(otn);
+@@ -828,16 +795,16 @@ static IpsOption* pcre_ctor(Module* p, I
+     UNUSED(info);
  #endif
      {
--        pcre_stats.pcre_native++;
+-        pcre_counts.pcre_native++;
 -        PcreData* d = m->get_data();
 -        return new PcreOption(d);
-+        pcre2_stats.pcre2_native++;
++        pcre2_counts.pcre2_native++;
 +        Pcre2Data* d = m->get_data();
 +        return new Pcre2Option(d);
      }
@@ -1208,7 +1409,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
  {
      {
          PT_IPS_OPTION,
-@@ -832,17 +799,17 @@ static const IpsApi pcre_api =
+@@ -857,17 +824,17 @@ static const IpsApi pcre_api =
      nullptr,
      nullptr,
      nullptr,
@@ -1230,6 +1431,41 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
 +    &pcre2_api.base,
      nullptr
  };
+--- a/src/main/process.cc
++++ b/src/main/process.cc
+@@ -27,7 +27,8 @@
+ #include <luajit.h>
+ #include <openssl/crypto.h>
+ #include <pcap.h>
+-#include <pcre.h>
++#define PCRE2_CODE_UNIT_WIDTH 8
++#include <pcre2.h>
+ #include <pwd.h>
+ #include <sys/file.h>
+ #include <sys/resource.h>
+@@ -675,10 +676,13 @@ void StoreSnortInfoStrings()
+ 
+ int DisplayBanner()
+ {
++    PCRE2_UCHAR pcre2_version[32];
+     const char* ljv = LUAJIT_VERSION;
+     while ( *ljv && !isdigit(*ljv) )
+         ++ljv;
+ 
++    pcre2_config(PCRE2_CONFIG_VERSION, pcre2_version);
++
+     LogMessage("\n");
+     LogMessage("   ,,_     -*> Snort++ <*-\n");
+ #ifdef BUILD
+@@ -707,7 +711,7 @@ int DisplayBanner()
+     LogMessage("           Using LZMA version %s\n", lzma_version_string());
+ #endif
+     LogMessage("           Using %s\n", OpenSSL_version(SSLEAY_VERSION));
+-    LogMessage("           Using PCRE version %s\n", pcre_version());
++    LogMessage("           Using PCRE2 version %s\n", pcre2_version);
+     LogMessage("           Using ZLIB version %s\n", zlib_version);
+ 
+     LogMessage("\n");
 --- a/src/main/shell.cc
 +++ b/src/main/shell.cc
 @@ -29,7 +29,8 @@
@@ -1271,7 +1507,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
      vs.push_back(hs_version());
 --- a/src/main/snort_config.h
 +++ b/src/main/snort_config.h
-@@ -60,7 +60,7 @@ enum RunFlag
+@@ -59,7 +59,7 @@ enum RunFlag
      RUN_FLAG__PCAP_SHOW           = 0x00001000,
      RUN_FLAG__SHOW_FILE_CODES     = 0x00002000,
      RUN_FLAG__PAUSE               = 0x00004000,
@@ -1280,7 +1516,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
  
      RUN_FLAG__DUMP_RULE_STATE     = 0x00010000,
      RUN_FLAG__DUMP_RULE_DEPS      = 0x00020000,
-@@ -214,13 +214,13 @@ public:
+@@ -213,13 +213,13 @@ public:
  
      //------------------------------------------------------
      // detection module stuff
@@ -1299,7 +1535,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
  
      uint32_t run_flags = 0;
  
-@@ -228,7 +228,7 @@ public:
+@@ -227,7 +227,7 @@ public:
      unsigned offload_threads = 0;    // disabled
  
      bool hyperscan_literals = false;
@@ -1308,7 +1544,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
  
      bool global_rule_state = false;
      bool global_default_rule_state = true;
-@@ -600,8 +600,8 @@ public:
+@@ -594,8 +594,8 @@ public:
      bool alert_before_pass() const
      { return run_flags & RUN_FLAG__ALERT_BEFORE_PASS; }
  
@@ -1319,7 +1555,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
  
      bool conf_error_out() const
      { return run_flags & RUN_FLAG__CONF_ERROR_OUT; }
-@@ -616,11 +616,11 @@ public:
+@@ -610,11 +610,11 @@ public:
      uint8_t new_ttl() const
      { return get_network_policy()->new_ttl; }
  
@@ -1347,7 +1583,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
  #include <unordered_map>
  
  #include "detection/fp_config.h"
-@@ -714,7 +715,7 @@ static int detector_get_packet_direction
+@@ -712,7 +713,7 @@ static int detector_get_packet_direction
      return 1;
  }
  
@@ -1356,7 +1592,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
   * can also be performed.
   *
   * @param Lua_State* - Lua state variable.
-@@ -723,41 +724,50 @@ static int detector_get_packet_direction
+@@ -721,41 +722,50 @@ static int detector_get_packet_direction
   * @return matchedStrings/stack - matched strings are pushed on stack starting with group 0.
   *     There may be 0 or more strings.
   */
@@ -1425,7 +1661,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
  
      if (rc >= 0)
      {
-@@ -771,10 +781,11 @@ static int detector_get_pcre_groups(lua_
+@@ -769,10 +779,11 @@ static int detector_get_pcre_groups(lua_
          if (!lua_checkstack(L, rc))
          {
              appid_log(lsd->ldp.pkt, TRACE_WARNING_LEVEL, "Cannot grow Lua stack by %d slots to hold "
@@ -1438,7 +1674,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
          for (int i = 0; i < rc; i++)
          {
              lua_pushlstring(L, (const char*)lsd->ldp.data + ovector[2*i], ovector[2*i+1] -
-@@ -784,12 +795,13 @@ static int detector_get_pcre_groups(lua_
+@@ -782,12 +793,13 @@ static int detector_get_pcre_groups(lua_
      else
      {
          // log errors except no matches
@@ -1455,7 +1691,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
      return rc;
  }
  
-@@ -3229,7 +3241,7 @@ static const luaL_Reg detector_methods[]
+@@ -3361,7 +3373,7 @@ static const luaL_Reg detector_methods[]
      { "getPacketSize",            detector_get_packet_size },
      { "getPacketDir",             detector_get_packet_direction },
      { "matchSimplePattern",       detector_memcmp },
@@ -1492,7 +1728,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
      else if ( s == "regex" || s == "sd_pattern" )
 --- a/src/search_engines/test/hyperscan_test.cc
 +++ b/src/search_engines/test/hyperscan_test.cc
-@@ -223,7 +223,7 @@ TEST(mpse_hs_match, regex)
+@@ -217,7 +217,7 @@ TEST(mpse_hs_match, regex)
      CHECK(hits == 3);
  }
  
@@ -1501,71 +1737,6 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
  {
      Mpse::PatternDescriptor desc;
  
---- a/src/utils/stats.cc
-+++ b/src/utils/stats.cc
-@@ -227,9 +227,9 @@ const PegInfo pc_names[] =
-     { CountType::SUM, "offload_fallback", "fast pattern offload search fallback attempts" },
-     { CountType::SUM, "offload_failures", "fast pattern offload search failures" },
-     { CountType::SUM, "offload_suspends", "fast pattern search suspends due to offload context chains" },
--    { CountType::SUM, "pcre_match_limit", "total number of times pcre hit the match limit" },
--    { CountType::SUM, "pcre_recursion_limit", "total number of times pcre hit the recursion limit" },
--    { CountType::SUM, "pcre_error", "total number of times pcre returns error" },
-+    { CountType::SUM, "pcre2_match_limit", "total number of times pcre2 hit the match limit" },
-+    { CountType::SUM, "pcre2_recursion_limit", "total number of times pcre2 hit the recursion limit" },
-+    { CountType::SUM, "pcre2_error", "total number of times pcre2 returns error" },
-     { CountType::SUM, "cont_creations", "total number of continuations created" },
-     { CountType::SUM, "cont_recalls", "total number of continuations recalled" },
-     { CountType::SUM, "cont_flows", "total number of flows using continuation" },
---- a/src/utils/stats.h
-+++ b/src/utils/stats.h
-@@ -60,9 +60,9 @@ struct PacketCount
-     PegCount offload_fallback;
-     PegCount offload_failures;
-     PegCount offload_suspends;
--    PegCount pcre_match_limit;
--    PegCount pcre_recursion_limit;
--    PegCount pcre_error;
-+    PegCount pcre2_match_limit;
-+    PegCount pcre2_recursion_limit;
-+    PegCount pcre2_error;
-     PegCount cont_creations;
-     PegCount cont_recalls;
-     PegCount cont_flows;
---- a/src/utils/util.cc
-+++ b/src/utils/util.cc
-@@ -30,7 +30,8 @@
- #include <netdb.h>
- #include <openssl/crypto.h>
- #include <pcap.h>
--#include <pcre.h>
-+#define PCRE2_CODE_UNIT_WIDTH 8
-+#include <pcre2.h>
- #include <pwd.h>
- #include <sys/file.h>
- #include <sys/resource.h>
-@@ -105,10 +106,13 @@ void StoreSnortInfoStrings()
- 
- int DisplayBanner()
- {
-+    PCRE2_UCHAR pcre2_version[32];
-     const char* ljv = LUAJIT_VERSION;
-     while ( *ljv && !isdigit(*ljv) )
-         ++ljv;
- 
-+    pcre2_config(PCRE2_CONFIG_VERSION, pcre2_version);
-+
-     LogMessage("\n");
-     LogMessage("   ,,_     -*> Snort++ <*-\n");
- #ifdef BUILD
-@@ -125,7 +129,7 @@ int DisplayBanner()
-     LogMessage("           Using LuaJIT version %s\n", ljv);
-     LogMessage("           Using %s\n", OpenSSL_version(SSLEAY_VERSION));
-     LogMessage("           Using %s\n", pcap_lib_version());
--    LogMessage("           Using PCRE version %s\n", pcre_version());
-+    LogMessage("           Using PCRE version %s\n", pcre2_version);
-     LogMessage("           Using ZLIB version %s\n", zlib_version);
- #ifdef HAVE_HYPERSCAN
-     LogMessage("           Using Hyperscan version %s\n", hs_version());
 --- a/tools/snort2lua/config_states/config_api.cc
 +++ b/tools/snort2lua/config_states/config_api.cc
 @@ -105,13 +105,13 @@ extern const ConvertMap* min_ttl_map;
