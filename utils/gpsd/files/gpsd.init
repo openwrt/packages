@@ -6,6 +6,8 @@ USE_PROCD=1
 PROG=/usr/sbin/gpsd
 NAME=gpsd
 
+LOG_LEVEL="0"
+
 validate_section_gpsd()
 {
 	uci_load_validate gpsd gpsd "$1" "$2" \
@@ -29,6 +31,7 @@ gpsd_instance()
 
 	[ "$listen_globally" -ne 0 ] && procd_append_param command -G
 	procd_append_param command -S "$port"
+	procd_append_param command -D "$LOG_LEVEL"
 	procd_append_param command -F /var/run/gpsd.sock
 	procd_append_param command "$device"
 	procd_set_param respawn
