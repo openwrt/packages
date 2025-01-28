@@ -134,10 +134,11 @@ append_bootstrap() {
 }
 
 boot() {
-#	ubus -t 30 wait_for network.interface 2>/dev/null
-	rc_procd start_service 'on_boot' && service_started 'on_boot'
-	if ! is_resolver_working; then
-		hdp_boot_flag=1
+	ubus -t 30 wait_for network.interface 2>/dev/null
+	hdp_boot_flag=1
+	if is_resolver_working; then
+		rc_procd start_service 'on_boot' && service_started 'on_boot'
+	else
 		rc_procd stop_service 'on_failed_health_check' && service_stopped 'on_failed_health_check'
 	fi
 }
@@ -169,7 +170,7 @@ start_instance() {
 		config_load 'dhcp'
 		config_foreach dnsmasq_doh_server 'dnsmasq' 'add' "${listen_addr}" "${listen_port}"
 		config_foreach dnsmasq_instance_append_force_dns_port 'dnsmasq'
-	elif is_alnum "$dnsmasq_config_update"; then
+	elif [ -n "$dnsmasq_config_update" ]; then
 		for i in $dnsmasq_config_update; do
 			dnsmasq_doh_server "@dnsmasq[$i]" 'add' "${listen_addr}" "${listen_port}" || \
 				dnsmasq_doh_server "${i}" 'add' "${listen_addr}" "${listen_port}"
@@ -320,7 +321,7 @@ service_triggers() {
 			wan6="${wan6:-wan6}"
 		fi
 		output "Setting trigger${wan6:+s} for $wan ${wan6:+$wan6 }"
-		for i in $wan $wan6; do
+		for i in "$wan" "$wan6"; do
 			procd_add_interface_trigger "interface.*" "$i" "/etc/init.d/${packageName}" restart 'on_interface_trigger' && output_ok || output_fail
 		done
 		output '\n'

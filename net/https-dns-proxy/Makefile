@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=https-dns-proxy
-PKG_VERSION:=2025.05.11
-PKG_RELEASE:=1
+PKG_VERSION:=2023.12.26
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/aarond10/https_dns_proxy/
