@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=https-dns-proxy
 PKG_VERSION:=2023.12.26
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/aarond10/https_dns_proxy/
@@ -18,7 +18,7 @@ include $(INCLUDE_DIR)/cmake.mk
 
 TARGET_CFLAGS += $(FPIC)
 TARGET_LDFLAGS += -Wl,--gc-sections
-CMAKE_OPTIONS += -DCLANG_TIDY_EXE= -DSW_VERSION=$(PKG_VERSION)-$(PKG_RELEASE)
+CMAKE_OPTIONS += -DCLANG_TIDY_EXE= -DSW_VERSION=$(PKG_VERSION)-r$(PKG_RELEASE)
 
 CONFIGURE_ARGS += \
 	$(if $(CONFIG_LIBCURL_OPENSSL),--with-openssl="$(STAGING_DIR)/usr",--without-openssl) \
@@ -30,7 +30,6 @@ define Package/https-dns-proxy
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=DNS Over HTTPS Proxy
-	SUBMENU:=IP Addresses and Names
 	URL:=https://github.com/stangri/https-dns-proxy/
 	DEPENDS:=+libcares +libcurl +libev +ca-bundle +jsonfilter +resolveip
 	DEPENDS+=+!BUSYBOX_DEFAULT_GREP:grep
@@ -53,7 +52,7 @@ define Package/https-dns-proxy/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/https_dns_proxy $(1)/usr/sbin/https-dns-proxy
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/etc/init.d/https-dns-proxy $(1)/etc/init.d/https-dns-proxy
-	$(SED) "s|^\(readonly PKG_VERSION\).*|\1='$(PKG_VERSION)-$(PKG_RELEASE)'|" $(1)/etc/init.d/https-dns-proxy
+	$(SED) "s|^\(readonly PKG_VERSION\).*|\1='$(PKG_VERSION)-r$(PKG_RELEASE)'|" $(1)/etc/init.d/https-dns-proxy
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/etc/config/https-dns-proxy $(1)/etc/config/https-dns-proxy
 	$(INSTALL_DIR) $(1)/etc/uci-defaults/
