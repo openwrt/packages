@@ -24,7 +24,7 @@ Workaround to build until upstream bug is fixed[1].
  endif()
 --- a/config.cmake.h.in
 +++ b/config.cmake.h.in
-@@ -124,7 +124,6 @@
+@@ -127,7 +127,6 @@
  
  /* hyperscan available */
  #cmakedefine HAVE_HYPERSCAN 1
