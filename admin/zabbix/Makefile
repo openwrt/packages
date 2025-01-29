@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
-PKG_VERSION:=7.0.0
+PKG_VERSION:=7.2.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.zabbix.com/zabbix/sources/stable/$(basename $(PKG_VERSION))/ \
 	https://cdn.zabbix.com/zabbix/sources/oldstable/$(basename $(PKG_VERSION))/
-PKG_HASH:=520641483223f680ef6e685284b556ba34a496d886a38dc3bca085cde21031b1
+PKG_HASH:=4d7c7a8dc6a7d333466e7dcc0440e009ab5b7b394cacb4b3291bf693575bd673
 
 PKG_MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
 PKG_LICENSE:=AGPL-3.0-only
@@ -276,9 +276,6 @@ endif
 ifeq ($(BUILD_VARIANT),gnutls)
 	CONFIGURE_ARGS+= --with-gnutls="$(STAGING_DIR)/usr"
 endif
-
-CONFIGURE_VARS += \
-	ac_cv_header_sys_sysinfo_h=no
 
 MAKE_FLAGS += ARCH="linux"
 
