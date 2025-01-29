@@ -3,13 +3,13 @@
 @@ -713,6 +713,11 @@ AC_CACHE_CHECK([whether clock_boottime a
    ]
  )
- 
+
 +# For the iwinfo plugin
 +AC_CHECK_LIB([iwinfo], [iwinfo_backend],
 +    [with_iwinfo="yes"],
 +    [with_iwinfo="no (libiwinfo not found)"]
 +)
- 
+
  #
  # Checks for typedefs, structures, and compiler characteristics.
 @@ -6619,6 +6624,7 @@ plugin_ipmi="no"
@@ -55,9 +55,9 @@
  @BUILD_PLUGIN_LOAD_TRUE@@BUILD_PLUGIN_LOAD_TRUE@LoadPlugin load
  #@BUILD_PLUGIN_LPAR_TRUE@LoadPlugin lpar
 @@ -897,6 +898,12 @@
- #	IgnoreSelected true
+ #      IgnoreSelected true
  #</Plugin>
- 
+
 +#<Plugin iwinfo>
 +#   Interface "ath0"
 +#   Interface "ra0"
@@ -65,14 +65,14 @@
 +#</Plugin>
 +
  #<Plugin java>
- #	JVMArg "-verbose:jni"
- #	JVMArg "-Djava.class.path=@prefix@/share/collectd/java/collectd-api.jar"
+ #      JVMArg "-verbose:jni"
+ #      JVMArg "-Djava.class.path=@prefix@/share/collectd/java/collectd-api.jar"
 --- a/src/collectd.conf.pod
 +++ b/src/collectd.conf.pod
 @@ -4343,6 +4343,27 @@ and all other interrupts are collected.
- 
+
  =back
- 
+
 +=head2 Plugin C<iwinfo>
 +
 +=over 4
@@ -95,11 +95,11 @@
 +=back
 +
  =head2 Plugin C<java>
- 
+
  The I<Java> plugin makes it possible to write extensions for collectd in Java.
 --- /dev/null
 +++ b/src/iwinfo.c
-@@ -0,0 +1,150 @@
+@@ -0,0 +1,187 @@
 +/**
 + * collectd - src/iwinfo.c
 + * Copyright (C) 2011  Jo-Philipp Wich
@@ -129,8 +129,8 @@
 +#define PROCNETDEV "/proc/net/dev"
 +
 +static const char *config_keys[] = {
-+	"Interface",
-+	"IgnoreSelected"
++       "Interface",
++       "IgnoreSelected"
 +};
 +static int config_keys_num = STATIC_ARRAY_SIZE (config_keys);
 +
@@ -138,121 +138,169 @@
 +
 +static int iwinfo_config(const char *key, const char *value)
 +{
-+	if (ignorelist == NULL)
-+		ignorelist = ignorelist_create(1);
++       if (ignorelist == NULL)
++               ignorelist = ignorelist_create(1);
 +
-+	if (ignorelist == NULL)
-+		return 1;
++       if (ignorelist == NULL)
++               return 1;
 +
-+	if (strcasecmp(key, "Interface") == 0)
-+		ignorelist_add(ignorelist, value);
-+	else if (strcasecmp(key, "IgnoreSelected") == 0)
-+		ignorelist_set_invert(ignorelist, IS_TRUE(value) ? 0 : 1);
-+	else
-+		return -1;
++       if (strcasecmp(key, "Interface") == 0)
++               ignorelist_add(ignorelist, value);
++       else if (strcasecmp(key, "IgnoreSelected") == 0)
++               ignorelist_set_invert(ignorelist, IS_TRUE(value) ? 0 : 1);
++       else
++               return -1;
 +
-+	return 0;
++       return 0;
++}
++
++static void iwinfo_submit_assoc(const char *ifname, const char *type, const char *bssid, int value)
++{
++       value_t values[1];
++       value_list_t vl = VALUE_LIST_INIT;
++
++       values[0].gauge = value;
++
++       vl.values = values;
++       vl.values_len = 1;
++
++       sstrncpy(vl.host, hostname_g, sizeof(vl.host));
++       sstrncpy(vl.plugin, "iwinfo", sizeof(vl.plugin));
++       sstrncpy(vl.plugin_instance, ifname, sizeof(vl.plugin_instance));
++       sstrncpy(vl.type, type, sizeof(vl.type));
++       sstrncpy(vl.type_instance, bssid, sizeof(vl.type_instance));
++
++       plugin_dispatch_values(&vl);
 +}
 +
 +static void iwinfo_submit(const char *ifname, const char *type, int value)
 +{
-+	value_t values[1];
-+	value_list_t vl = VALUE_LIST_INIT;
++       value_t values[1];
++       value_list_t vl = VALUE_LIST_INIT;
 +
-+	values[0].gauge = value;
++       values[0].gauge = value;
 +
-+	vl.values = values;
-+	vl.values_len = 1;
++       vl.values = values;
++       vl.values_len = 1;
 +
-+	sstrncpy(vl.host, hostname_g, sizeof(vl.host));
-+	sstrncpy(vl.plugin, "iwinfo", sizeof(vl.plugin));
-+	sstrncpy(vl.plugin_instance, ifname, sizeof(vl.plugin_instance));
-+	sstrncpy(vl.type, type, sizeof(vl.type));
-+	/*sstrncpy(vl.type_instance, "", sizeof(vl.type_instance));*/
++       sstrncpy(vl.host, hostname_g, sizeof(vl.host));
++       sstrncpy(vl.plugin, "iwinfo", sizeof(vl.plugin));
++       sstrncpy(vl.plugin_instance, ifname, sizeof(vl.plugin_instance));
++       sstrncpy(vl.type, type, sizeof(vl.type));
 +
-+	plugin_dispatch_values(&vl);
++       plugin_dispatch_values(&vl);
++
 +}
 +
 +static void iwinfo_process(const char *ifname)
 +{
-+	int val;
-+	char buf[IWINFO_BUFSIZE];
-+	const struct iwinfo_ops *iw = iwinfo_backend(ifname);
++       int val;
++       char buf[IWINFO_BUFSIZE];
++       const struct iwinfo_ops *iw = iwinfo_backend(ifname);
++        struct iwinfo_assoclist_entry *e;
++        char assoc_bssid[18];
 +
-+	/* does appear to be a wifi iface */
-+	if (iw)
-+	{
-+		if (iw->bitrate(ifname, &val))
-+			val = 0;
-+		iwinfo_submit(ifname, "bitrate", val * 1000);
++       /* does appear to be a wifi iface */
++       if (iw)
++       {
++               if (iw->bitrate(ifname, &val))
++                       val = 0;
++               iwinfo_submit(ifname, "bitrate", val * 1000);
 +
-+		if (iw->signal(ifname, &val))
-+			val = 0;
-+		iwinfo_submit(ifname, "signal_power", val);
++               if (iw->signal(ifname, &val))
++                       val = 0;
++               iwinfo_submit(ifname, "signal_power", val);
 +
-+		if (iw->noise(ifname, &val))
-+			val = 0;
-+		iwinfo_submit(ifname, "signal_noise", val);
++               if (iw->noise(ifname, &val))
++                       val = 0;
++               iwinfo_submit(ifname, "signal_noise", val);
 +
-+		if (iw->quality(ifname, &val))
-+			val = 0;
-+		iwinfo_submit(ifname, "signal_quality", val);
++               if (iw->quality(ifname, &val))
++                       val = 0;
++               iwinfo_submit(ifname, "signal_quality", val);
 +
-+		if (iw->assoclist(ifname, buf, &val))
-+			val = 0;
-+		iwinfo_submit(ifname, "stations",
-+		              val / sizeof(struct iwinfo_assoclist_entry));
-+	}
++               if (iw->assoclist(ifname, buf, &val))
++                       val = 0;
++               iwinfo_submit(ifname, "stations",
++                             val / sizeof(struct iwinfo_assoclist_entry));
 +
-+	iwinfo_finish();
++                for (int i = 0; i < val; i += sizeof(struct iwinfo_assoclist_entry)) {
++                       e = (struct iwinfo_assoclist_entry *) &buf[i];
++                       snprintf(assoc_bssid, sizeof(assoc_bssid), "%02X:%02X:%02X:%02X:%02X:%02X",
++                              e->mac[0], e->mac[1], e->mac[2], e->mac[3], e->mac[4], e->mac[5]);
++                       iwinfo_submit_assoc(ifname, "signal_power", assoc_bssid, e->signal);
++                       iwinfo_submit_assoc(ifname, "signal_noise", assoc_bssid, e->noise);
++                       iwinfo_submit_assoc(ifname, "assoc_rx_packets", assoc_bssid, e->rx_packets);
++                       iwinfo_submit_assoc(ifname, "assoc_tx_packets", assoc_bssid, e->tx_packets);
++                       if (e->rx_rate.rate > 0) {
++                              iwinfo_submit_assoc(ifname, "assoc_rx_rate", assoc_bssid, e->rx_rate.rate);
++                       }
++                       if (e->tx_rate.rate > 0) {
++                              iwinfo_submit_assoc(ifname, "assoc_tx_rate", assoc_bssid, e->tx_rate.rate);
++                       }
++                }
++       }
++
++       iwinfo_finish();
 +}
 +
 +static int iwinfo_read(void)
 +{
-+	char line[1024];
-+	char ifname[128];
-+	FILE *f;
++       char line[1024];
++       char ifname[128];
++       FILE *f;
 +
-+	f = fopen(PROCNETDEV, "r");
-+	if (f == NULL)
-+	{
-+		char err[1024];
-+		WARNING("iwinfo: Unable to open " PROCNETDEV ": %s",
-+		        sstrerror(errno, err, sizeof(err)));
-+		return -1;
-+	}
++       f = fopen(PROCNETDEV, "r");
++       if (f == NULL)
++       {
++               char err[1024];
++               WARNING("iwinfo: Unable to open " PROCNETDEV ": %s",
++                       sstrerror(errno, err, sizeof(err)));
++               return -1;
++       }
 +
-+	while (fgets(line, sizeof(line), f))
-+	{
-+		if (!strchr(line, ':'))
-+			continue;
++       while (fgets(line, sizeof(line), f))
++       {
++               if (!strchr(line, ':'))
++                       continue;
 +
-+		if (!sscanf(line, " %127[^:]", ifname))
-+			continue;
++               if (!sscanf(line, " %127[^:]", ifname))
++                       continue;
 +
-+		if (ignorelist_match(ignorelist, ifname))
-+			continue;
++               if (ignorelist_match(ignorelist, ifname))
++                       continue;
 +
-+		if (strstr(ifname, "mon.") || strstr(ifname, ".sta") ||
-+		    strstr(ifname, "tmp.") || strstr(ifname, "wifi"))
-+			continue;
++               if (strstr(ifname, "mon.") || strstr(ifname, ".sta") ||
++                   strstr(ifname, "tmp.") || strstr(ifname, "wifi"))
++                       continue;
 +
-+		iwinfo_process(ifname);
-+	}
++               iwinfo_process(ifname);
++       }
 +
-+	fclose(f);
++       fclose(f);
 +
-+	return 0;
++       return 0;
 +}
 +
 +void module_register(void)
 +{
-+	plugin_register_config("iwinfo", iwinfo_config, config_keys, config_keys_num);
-+	plugin_register_read("iwinfo", iwinfo_read);
++       plugin_register_config("iwinfo", iwinfo_config, config_keys, config_keys_num);
++       plugin_register_read("iwinfo", iwinfo_read);
 +}
 --- a/src/types.db
 +++ b/src/types.db
-@@ -308,6 +308,7 @@ snr                     value:GAUGE:0:U
+@@ -253,6 +253,10 @@ serial_octets           rx:DERIVE:0:U, t
+ signal_noise            value:GAUGE:U:0
+ signal_power            value:GAUGE:U:0
+ signal_quality          value:GAUGE:0:U
++assoc_tx_packets        value:DERIVE:0:U
++assoc_rx_packets        value:DERIVE:0:U
++assoc_tx_rate           value:DERIVE:0:U
++assoc_rx_rate           value:DERIVE:0:U
+ slurm_job_state         value:GAUGE:0:U
+ slurm_node_state        value:GAUGE:0:U
+ slurm_backfilled_jobs   value:DERIVE:0:U
+@@ -308,6 +312,7 @@ snr                     value:GAUGE:0:U
  spam_check              value:GAUGE:0:U
  spam_score              value:GAUGE:U:U
  spl                     value:GAUGE:U:U
@@ -265,7 +313,7 @@
 @@ -1246,6 +1246,14 @@ irq_la_LDFLAGS = $(PLUGIN_LDFLAGS)
  irq_la_LIBADD = libignorelist.la
  endif
- 
+
 +if BUILD_PLUGIN_IWINFO
 +pkglib_LTLIBRARIES += iwinfo.la
 +iwinfo_la_SOURCES = src/iwinfo.c
