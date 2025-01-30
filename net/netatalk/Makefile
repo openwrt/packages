@@ -169,6 +169,7 @@ define Package/netatalk-small/install
 	$(INSTALL_DIR) $(1)/usr/lib/netatalk
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libatalk.so* $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/netatalk/*.so $(1)/usr/lib/netatalk/
@@ -176,6 +177,7 @@ define Package/netatalk-small/install
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/afp.conf $(1)/etc/
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/extmap.conf $(1)/etc/
 	$(INSTALL_BIN) ./files/afpd.init $(1)/etc/init.d/afpd
+	$(INSTALL_DATA) ./files/afpd.conf $(1)/etc/config/afpd
 endef
 
 define Package/netatalk/install
@@ -183,6 +185,16 @@ define Package/netatalk/install
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/atalkd.conf $(1)/etc/
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/macipgw.conf $(1)/etc/
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/papd.conf $(1)/etc/
+	$(INSTALL_BIN) ./files/atalkd.init $(1)/etc/init.d/atalkd
+	$(INSTALL_BIN) ./files/macipgw.init $(1)/etc/init.d/macipgw
+	$(INSTALL_BIN) ./files/timelord.init $(1)/etc/init.d/timelord
+	$(INSTALL_BIN) ./files/a2boot.init $(1)/etc/init.d/a2boot
+	$(INSTALL_BIN) ./files/papd.init $(1)/etc/init.d/papd
+	$(INSTALL_DATA) ./files/atalkd.conf $(1)/etc/config/atalkd
+	$(INSTALL_DATA) ./files/macipgw.conf $(1)/etc/config/macipgw
+	$(INSTALL_DATA) ./files/timelord.conf $(1)/etc/config/timelord
+	$(INSTALL_DATA) ./files/a2boot.conf $(1)/etc/config/a2boot
+	$(INSTALL_DATA) ./files/papd.conf $(1)/etc/config/papd
 endef
 
 define Package/netatalk-full/install
@@ -190,6 +202,16 @@ define Package/netatalk-full/install
 	$(if $(PACKAGE_NETATALK_APPLETALK),$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/atalkd.conf $(1)/etc/,)
 	$(if $(PACKAGE_NETATALK_APPLETALK),$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/macipgw.conf $(1)/etc/,)
 	$(if $(PACKAGE_NETATALK_APPLETALK),$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/papd.conf $(1)/etc/,)
+	$(if $(PACKAGE_NETATALK_APPLETALK),$(INSTALL_BIN) ./files/atalkd.init $(1)/etc/init.d/atalkd,)
+	$(if $(PACKAGE_NETATALK_APPLETALK),$(INSTALL_BIN) ./files/macipgw.init $(1)/etc/init.d/macipgw,)
+	$(if $(PACKAGE_NETATALK_APPLETALK),$(INSTALL_BIN) ./files/timelord.init $(1)/etc/init.d/timelord,)
+	$(if $(PACKAGE_NETATALK_APPLETALK),$(INSTALL_BIN) ./files/a2boot.init $(1)/etc/init.d/a2boot,)
+	$(if $(PACKAGE_NETATALK_APPLETALK),$(INSTALL_BIN) ./files/papd.init $(1)/etc/init.d/papd,)
+	$(if $(PACKAGE_NETATALK_APPLETALK),$(INSTALL_DATA) ./files/atalkd.conf $(1)/etc/config/atalkd,)
+	$(if $(PACKAGE_NETATALK_APPLETALK),$(INSTALL_DATA) ./files/macipgw.conf $(1)/etc/config/macipgw,)
+	$(if $(PACKAGE_NETATALK_APPLETALK),$(INSTALL_DATA) ./files/timelord.conf $(1)/etc/config/timelord,)
+	$(if $(PACKAGE_NETATALK_APPLETALK),$(INSTALL_DATA) ./files/a2boot.conf $(1)/etc/config/a2boot,)
+	$(if $(PACKAGE_NETATALK_APPLETALK),$(INSTALL_DATA) ./files/papd.conf $(1)/etc/config/papd,)
 endef
 
 $(eval $(call BuildPackage,netatalk-small))
