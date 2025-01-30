@@ -1,0 +1,26 @@
+#!/bin/sh /etc/rc.common
+
+START=94
+
+USE_PROCD=1
+PROG=/usr/sbin/macipgw
+
+start_service() {
+	config_load macipgw
+
+	config_get disabled macipgw disabled '0'
+	[ "$disabled" = "0" ] || { 
+		logger -p info -t macipgw "Disabled by config" && exit 
+	}
+	config_get network macipgw network 127.0.0.1
+	config_get netmask macipgw netmask 255.255.255.0
+	config_get nameserver macipgw nameserver
+	[ -z "$nameserver" ] || nameserver="-n $nameserver"
+	config_get zone macipgw zone
+	[ -z "$zone" ] || zone="-z $zone"
+
+	procd_open_instance
+	procd_set_param command $PROG -d 0x1 $zone $nameserver $network $netmask
+	procd_set_param respawn
+	procd_close_instance
+}
