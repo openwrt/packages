@@ -49,3 +49,12 @@ service_triggers() {
 	procd_add_reload_trigger "$NAME"
 	procd_add_validation validate_section_gpsd
 }
+
+service_started() {
+	local enabled
+
+	enabled="$(uci_get gpsd core enabled 0)"
+	[ "$enabled" = "0" ] && return
+
+	env -i ACTION="STARTED" /sbin/hotplug-call gpsd
+}
