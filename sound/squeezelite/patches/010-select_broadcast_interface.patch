@@ -8,7 +8,7 @@
  		   "  -m <mac addr>\t\tSet mac address, format: ab:cd:ef:12:34:56\n"
  		   "  -M <modelname>\tSet the squeezelite player model name sent to the server (default: " MODEL_NAME_STRING ")\n"
  		   "  -n <name>\t\tSet the player name\n"
-@@ -304,6 +305,8 @@ int main(int argc, char **argv) {
+@@ -307,6 +308,8 @@ int main(int argc, char **argv) {
  	extern bool user_rates;
  	char *logfile = NULL;
  	u8_t mac[6];
@@ -17,7 +17,7 @@
  	unsigned stream_buf_size = STREAMBUF_SIZE;
  	unsigned output_buf_size = 0; // set later
  	unsigned rates[MAX_SUPPORTED_SAMPLERATES] = { 0 };
-@@ -344,6 +347,7 @@ int main(int argc, char **argv) {
+@@ -347,6 +350,7 @@ int main(int argc, char **argv) {
  
  	int maxSampleRate = 0;
  
@@ -25,7 +25,7 @@
  	char *optarg = NULL;
  	int optind = 1;
  	int i;
-@@ -351,8 +355,6 @@ int main(int argc, char **argv) {
+@@ -354,8 +358,6 @@ int main(int argc, char **argv) {
  #define MAXCMDLINE 512
  	char cmdline[MAXCMDLINE] = "";
  
@@ -34,7 +34,7 @@
  	for (i = 0; i < argc && (strlen(argv[i]) + strlen(cmdline) + 2 < MAXCMDLINE); i++) {
  		strcat(cmdline, argv[i]);
  		strcat(cmdline, " ");
-@@ -360,7 +362,7 @@ int main(int argc, char **argv) {
+@@ -363,7 +365,7 @@ int main(int argc, char **argv) {
  
  	while (optind < argc && strlen(argv[optind]) >= 2 && argv[optind][0] == '-') {
  		char *opt = argv[optind] + 1;
@@ -43,7 +43,7 @@
  #if ALSA
  				   "UVO"
  #endif
-@@ -454,6 +456,9 @@ int main(int argc, char **argv) {
+@@ -457,6 +459,9 @@ int main(int argc, char **argv) {
  		case 'f':
  			logfile = optarg;
  			break;
@@ -53,7 +53,7 @@
  		case 'm':
  			{
  				int byte = 0;
-@@ -767,6 +772,11 @@ int main(int argc, char **argv) {
+@@ -774,6 +779,11 @@ int main(int argc, char **argv) {
  	winsock_init();
  #endif
  
@@ -65,7 +65,7 @@
  	stream_init(log_stream, stream_buf_size);
  
  	if (!strcmp(output_device, "-")) {
-@@ -813,7 +823,7 @@ int main(int argc, char **argv) {
+@@ -820,7 +830,7 @@ int main(int argc, char **argv) {
  		exit(1);
  	}
  
@@ -85,7 +85,7 @@
  	#define BASE_CAP "Model=squeezelite,AccuratePlayPoints=1,HasDigitalOut=1,HasPolarityInversion=1,Balance=1,Firmware=" VERSION
  	#define SSL_CAP "CanHTTPS=1"
  	const char *base_cap;
-@@ -768,7 +768,7 @@ void wake_controller(void) {
+@@ -773,7 +773,7 @@ void wake_controller(void) {
  	wake_signal(wake_e);
  }
  
@@ -94,7 +94,7 @@
  	struct sockaddr_in d;
  	struct sockaddr_in s;
  	char *buf;
-@@ -785,7 +785,7 @@ in_addr_t discover_server(char *default_
+@@ -790,7 +790,7 @@ in_addr_t discover_server(char *default_
  	memset(&d, 0, sizeof(d));
  	d.sin_family = AF_INET;
  	d.sin_port = htons(PORT);
@@ -103,7 +103,7 @@
  
  	pollinfo.fd = disc_sock;
  	pollinfo.events = POLLIN;
-@@ -820,7 +820,7 @@ in_addr_t discover_server(char *default_
+@@ -825,7 +825,7 @@ in_addr_t discover_server(char *default_
  #define FIXED_CAP_LEN 256
  #define VAR_CAP_LEN   128
  
@@ -112,7 +112,7 @@
  	struct sockaddr_in serv_addr;
  	static char fixed_cap[FIXED_CAP_LEN], var_cap[VAR_CAP_LEN] = "";
  	bool reconnect = false;
-@@ -841,7 +841,7 @@ void slimproto(log_level level, char *se
+@@ -846,7 +846,7 @@ void slimproto(log_level level, char *se
  	}
  
  	if (!slimproto_ip) {
@@ -121,7 +121,7 @@
  	}
  
  	if (!slimproto_port) {
-@@ -926,7 +926,7 @@ void slimproto(log_level level, char *se
+@@ -931,7 +931,7 @@ void slimproto(log_level level, char *se
  
  			// rediscover server if it was not set at startup
  			if (!server && ++failed_connect > 5) {
@@ -132,7 +132,7 @@
  		} else {
 --- a/squeezelite.h
 +++ b/squeezelite.h
-@@ -463,7 +463,7 @@ char* strcasestr(const char *haystack, c
+@@ -474,7 +474,7 @@ char* strcasestr(const char *haystack, c
  
  char *next_param(char *src, char c);
  u32_t gettime_ms(void);
@@ -141,7 +141,7 @@
  void set_nonblock(sockfd s);
  void set_recvbufsize(sockfd s);
  int connect_timeout(sockfd sock, const struct sockaddr *addr, socklen_t addrlen, int timeout);
-@@ -521,7 +521,7 @@ void buf_init(struct buffer *buf, size_t
+@@ -533,7 +533,7 @@ void buf_init(struct buffer *buf, size_t
  void buf_destroy(struct buffer *buf);
  
  // slimproto.c
