@@ -60,8 +60,8 @@ create_backup() {
 
 create_key() {
 	local username
-	local probe_key=/etc/atlas/probe_key
-	local probe_pub_key=/etc/atlas/probe_key.pub
+	local probe_key="/etc/atlas/probe_key"
+	local probe_pub_key="/etc/atlas/probe_key.pub"
 
 	config_load atlas
 
@@ -82,19 +82,28 @@ create_key() {
 		exit 1
 	fi
 
-	if [ -n "$(which ssh-keygen)" ]; then
-		ssh-keygen -t rsa -b 2048 -f $probe_key -N ""
-		sed -i "s/ \S*$/ "$username"/" $probe_pub_key
-	elif [ -n "$(which dropbearkey)" ] && [ -n "$(which dropbearconvert)" ]; then
+	local sshkeygen=$(which ssh-keygen)
+	local sshkeygenlink=""
+	if [ -n "$sshkeygen" ]; then
+		sshkeygenlink=$(readlink "$sshkeygen")
+	fi
+	
+	#Check for dropbear "ssh-keygen" alias
+	if [ -n "$sshkeygen" ] && [ -z "$sshkeygenlink" ]; then
+		ssh-keygen -t rsa -b 2048 -f "$probe_key" -N ""
+		sed -i "s/ \S*$/ "$username"/" "$probe_pub_key"
+	elif [ -n "$(which dropbearkey)" ] && [ -n "$(which dropbearconvert)" ]; then 
 		local public_key
+		local probe_key_filename="/etc/atlas/probe_key_dropbear"
 
-		public_key="$(dropbearkey -t rsa -f /etc/atlas/probe_key_dropbear -s 2048 | sed -n 2p)"
+		public_key="$(dropbearkey -t rsa -f "$probe_key_filename" -s 2048 | sed -n 2p)"
 		public_key="$(echo "$public_key" | sed "s/ \S*$/ "$username"/")"
 		echo $public_key > $probe_pub_key
-		dropbearconvert dropbear openssh /etc/atlas/probe_key_dropbear $probe_key
-		rm /etc/atlas/probe_key_dropbear
+		dropbearconvert dropbear openssh "$probe_key_filename" "$probe_key"
+		rm "$probe_key_filename"
 	else
-		print_msg "Can't find a way to generate key."
+		print_msg "Can't generate a key."
+		print_msg "Either \"openssh-keygen\" or \"dropbear and dropbearconvert\" packages must be installed."
 		exit 1
 	fi
 
@@ -107,7 +116,7 @@ create_key() {
 	chgrp atlas $probe_key $probe_pub_key
 	chmod 644 $probe_key $probe_pub_key
 
-	print_msg "Key generated successfully. Use the get_key command to show the public key and get instruction on how to register your probe."
+	print_msg "Key generated successfully! Use the get_key command to show the public key and get instruction on how to register your probe."
 }
 
 log() {
