@@ -1,0 +1,66 @@
+From a50ed3006e8152eb2cf20e9f92f088ecc18081b0 Mon Sep 17 00:00:00 2001
+From: Tobias Brunner <tobias@strongswan.org>
+Date: Wed, 29 Jan 2025 17:23:31 +0100
+Subject: [PATCH 3/3] dhcp: Add option to bind the receive socket to a
+ different interface
+
+This can be useful if the DHCP server runs on the same server. On Linux,
+the response is then sent via `lo`, so packets won't be received if both
+sockets are bound to e.g. a bridge interface.
+---
+ conf/plugins/dhcp.opt                    | 10 ++++++++++
+ src/libcharon/plugins/dhcp/dhcp_socket.c | 13 ++++++++-----
+ 2 files changed, 18 insertions(+), 5 deletions(-)
+
+--- a/conf/plugins/dhcp.opt
++++ b/conf/plugins/dhcp.opt
+@@ -36,3 +36,13 @@ charon.plugins.dhcp.interface
+ 	Interface name the plugin uses for address allocation. The default is to
+ 	bind to any (0.0.0.0) and let the system decide which way to route the
+ 	packets to the DHCP server.
++
++charon.plugins.dhcp.interface_receive = charon.plugins.dhcp.interface
++	Interface name the plugin uses to bind its receive socket.
++
++	Interface name the plugin uses to bind its receive socket. The default is
++	to use the same interface as the send socket. Set it to the empty string
++	to avoid binding the receive socket to any interface while the send socket
++	is bound to one. If the	server runs on the same host and the send socket is
++	bound to an interface, it might be necessary to set this to `lo` or the
++	empty string.
+--- a/src/libcharon/plugins/dhcp/dhcp_socket.c
++++ b/src/libcharon/plugins/dhcp/dhcp_socket.c
+@@ -716,7 +716,7 @@ dhcp_socket_t *dhcp_socket_create()
+ 		},
+ 	};
+ 	socklen_t addr_len;
+-	char *iface;
++	char *iface, *iface_receive;
+ 	int on = 1, rcvbuf = 0;
+ 
+ #if !defined(__APPLE__) && !defined(__FreeBSD__)
+@@ -809,8 +809,11 @@ dhcp_socket_t *dhcp_socket_create()
+ 	this->dst = host_create_from_string(lib->settings->get_str(lib->settings,
+ 								"%s.plugins.dhcp.server", "255.255.255.255",
+ 								lib->ns), DHCP_SERVER_PORT);
+-	iface = lib->settings->get_str(lib->settings, "%s.plugins.dhcp.interface",
+-								   NULL, lib->ns);
++	iface = lib->settings->get_str(lib->settings,
++								"%s.plugins.dhcp.interface", NULL, lib->ns);
++	iface_receive = lib->settings->get_str(lib->settings,
++								"%s.plugins.dhcp.interface_receive", NULL,
++								lib->ns) ?: iface;
+ 	if (!this->dst)
+ 	{
+ 		DBG1(DBG_CFG, "configured DHCP server address invalid");
+@@ -873,8 +876,8 @@ dhcp_socket_t *dhcp_socket_create()
+ 		return NULL;
+ 	}
+ 
+-	this->pf_handler = pf_handler_create("DHCP", iface, receive_dhcp, this,
+-										 &dhcp_filter);
++	this->pf_handler = pf_handler_create("DHCP", iface_receive, receive_dhcp,
++										 this, &dhcp_filter);
+ 	if (!this->pf_handler)
+ 	{
+ 		destroy(this);
