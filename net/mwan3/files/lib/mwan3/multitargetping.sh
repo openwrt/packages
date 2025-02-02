@@ -1,5 +1,5 @@
 #!/bin/bash
-debugging=true
+debugging=false
 
 #80.81.194.152 amazon@de-cix https://www.peeringdb.com/ix/31 80.81.195.168 akamai
 #Todo use actual track_ips set by user in config
