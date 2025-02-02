@@ -66,7 +66,7 @@ get_ping_command() {
 
 validate_track_method() {
 	case "$1" in
-		ping)
+		ping|multitargetping)
 			PING=$(get_ping_command)
 			if [ $? -ne 0 ]; then
 				LOG warn "Missing ping. Please enable BUSYBOX_DEFAULT_PING and recompile busybox or install iputils-ping package."
@@ -264,7 +264,7 @@ main() {
 		[ $STARTED -eq 0 ] && { sleep $MAX_SLEEP & SLEEP_PID=$!; wait; }
 		unset SLEEP_PID
 		sleep_time=$interval
-		for track_ip in $track_ips; do
+		for track_ip in $track_ips; do # multitargetping only needs one track_ip set which is actually not used, so 127.0.0.1 would work
 			if [ $host_up_count -lt $reliability ]; then
 				case "$track_method" in
 					ping)
@@ -286,6 +286,12 @@ main() {
 								latency="$(sed $TRACK_OUTPUT -ne 's%\(rtt\|round-trip\).* = [^/]*/\([0-9]\+\).*%\2%p')"
 							fi
 						fi
+					;;
+					multitargetping)
+							WRAP /lib/mwan3/multitargetping.sh $DEVICE &> /dev/null &  # or use INTERFACE ? whats the difference?
+							TRACK_PID=$!
+							wait $TRACK_PID
+							result=$?
 					;;
 					arping)
 						WRAP arping -I $DEVICE -c $count -w $timeout -q $track_ip &> /dev/null &
