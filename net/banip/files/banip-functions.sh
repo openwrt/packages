@@ -861,7 +861,7 @@ f_down() {
 		table_json="$("${ban_nftcmd}" -tja list table inet banIP 2>/dev/null)"
 		{
 			for chain in _inbound _outbound; do
-				for expr in 0 1; do
+				for expr in 0 1 2; do
 					handle="$(printf "%s\n" "${table_json}" | "${ban_jsoncmd}" -ql1 -e "@.nftables[@.rule.chain=\"${chain}\"][@.expr[${expr}].match.right=\"@${feed}\"].handle")"
 					[ -n "${handle}" ] && printf "%s\n" "delete rule inet banIP ${chain} handle ${handle}"
 				done
@@ -1291,7 +1291,7 @@ f_rmset() {
 				[ -z "${del_set}" ] && del_set="${feed}" || del_set="${del_set}, ${feed}"
 				rm -f "${ban_backupdir}/banIP.${feed}.gz"
 				for chain in _inbound _outbound; do
-					for expr in 0 1; do
+					for expr in 0 1 2; do
 						handle="$(printf "%s\n" "${table_json}" | "${ban_jsoncmd}" -ql1 -e "@.nftables[@.rule.chain=\"${chain}\"][@.expr[${expr}].match.right=\"@${feed}\"].handle")"
 						[ -n "${handle}" ] && printf "%s\n" "delete rule inet banIP ${chain} handle ${handle}"
 					done
@@ -1737,7 +1737,7 @@ f_survey() {
 		printf "%s\n%s\n%s\n" ":::" "::: no valid survey input" ":::"
 		return
 	fi
-	set_elements="$("${ban_nftcmd}" -j list set inet banIP "${input}" 2>/dev/null | "${ban_jsoncmd}" -qe '@.nftables[*].set.elem[*].elem.val')"
+	set_elements="$("${ban_nftcmd}" -j list set inet banIP "${input}" 2>/dev/null | "${ban_jsoncmd}" -qe '@.nftables[*].set.elem[*]')"
 	printf "%s\n%s\n%s\n" ":::" "::: banIP Survey" ":::"
 	printf "    %s\n" "List of elements in the Set '${input}' on $(date "+%Y-%m-%d %H:%M:%S")"
 	printf "    %s\n" "---"
