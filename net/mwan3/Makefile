@@ -92,6 +92,10 @@ define Package/mwan3/install
 		$(1)/lib/mwan3/
 	$(INSTALL_DATA) ./files/lib/mwan3/mwan3.sh \
 		$(1)/lib/mwan3/
+	$(INSTALL_DATA) ./files/lib/mwan3/multitargetping.sh \
+		$(1)/lib/mwan3/
+	$(INSTALL_DATA) ./files/lib/mwan3/timeout.sh \
+		$(1)/lib/mwan3/
 
 	$(INSTALL_DIR) $(1)/usr/libexec/rpcd
 	$(INSTALL_BIN) ./files/usr/libexec/rpcd/mwan3 \
