@@ -287,6 +287,25 @@ static_routes() {
 	done
 }
 
+interface_up_down_delays() {
+	local device
+	local down_delay
+	local up_delay
+	local line
+
+	config_get device "$1" device
+	config_get down_delay "$1" down_delay
+	config_get up_delay "$1" up_delay
+
+	[ -z "$device" ] && return
+	[ -z "$down_delay" ] && return
+
+	line="${device} ${down_delay}"
+	[ -z "$up_delay" ] || line="${line} ${up_delay}"
+
+	printf '%b%s\n' "$INDENT_1" "$line" >> "$KEEPALIVED_CONF"
+}
+
 # Count 'vrrp_instance' with the given name ; called by vrrp_instance_check()
 vrrp_instance_name_count() {
 	local name
@@ -611,6 +630,10 @@ process_config() {
 
 	config_section_open "static_routes"
 	config_foreach_wrapper static_routes
+	config_section_close
+
+	config_section_open "interface_up_down_delays"
+	config_foreach_wrapper interface_up_down_delays
 	config_section_close
 
 	config_foreach_wrapper vrrp_script
