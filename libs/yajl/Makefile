@@ -24,6 +24,7 @@ PKG_CPE_ID:=cpe:/a:yajl_project:yajl
 CMAKE_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/cmake.mk
 
 define Package/yajl
@@ -47,3 +48,4 @@ define Package/yajl/install
 endef
 
 $(eval $(call BuildPackage,yajl))
+$(eval $(call HostBuild))
