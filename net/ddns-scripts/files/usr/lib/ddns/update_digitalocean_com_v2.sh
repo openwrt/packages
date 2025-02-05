@@ -24,6 +24,7 @@
 json_init
 json_add_string name "$username"
 json_add_string data "$__IP"
+[ $use_ipv6 -ne 0 ] && json_add_string type "AAAA" || json_add_string type "A"
 
 __STATUS=$(curl -Ss -X PUT "https://api.digitalocean.com/v2/domains/${domain}/records/${param_opt}" \
 	-H "Authorization: Bearer ${password}" \
