@@ -1,0 +1,6 @@
+{
+	"name": "tb.netassist.ua",
+	"ipv4": {
+		"url": "https://tb.netassist.ua/autochangeip.php?l=[USERNAME]&p=[PASSWORD]&ip=[IP]"
+	}
+}
