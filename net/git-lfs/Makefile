@@ -32,6 +32,7 @@ define Package/git-lfs
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Git Large File Storage
+  SUBMENU:=Version Control Systems
   URL:=https://git-lfs.com
   DEPENDS:=$(GO_ARCH_DEPENDS) +git
 endef

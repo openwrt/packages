@@ -1,0 +1,34 @@
+From 3c70b9a4900aab74c7643007e2b8127f9d016ed7 Mon Sep 17 00:00:00 2001
+From: Aleksey Vasilenko <aleksey.vasilenko@gmail.com>
+Date: Thu, 12 Sep 2024 17:08:36 +0300
+Subject: [PATCH] switch to tikv-jemallocator
+
+---
+ Cargo.toml          | 4 ++--
+ crates/core/main.rs | 2 +-
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -59,8 +59,8 @@ serde_json = "1.0.23"
+ termcolor = "1.1.0"
+ textwrap = { version = "0.16.0", default-features = false }
+ 
+-[target.'cfg(all(target_env = "musl", target_pointer_width = "64"))'.dependencies.jemallocator]
+-version = "0.5.0"
++[target.'cfg(all(target_env = "musl", target_pointer_width = "64"))'.dependencies.tikv-jemallocator]
++version = "0.6.0"
+ 
+ [dev-dependencies]
+ serde = "1.0.77"
+--- a/crates/core/main.rs
++++ b/crates/core/main.rs
+@@ -37,7 +37,7 @@ mod search;
+ // i686.
+ #[cfg(all(target_env = "musl", target_pointer_width = "64"))]
+ #[global_allocator]
+-static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
++static ALLOC: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
+ 
+ /// Then, as it was, then again it will be.
+ fn main() -> ExitCode {

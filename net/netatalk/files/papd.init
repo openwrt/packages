@@ -1,0 +1,88 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2010-2025 OpenWrt.org
+
+START=82
+STOP=10
+USE_PROCD=1
+PROG='/usr/sbin/papd'
+
+# Config file, contents and status
+default_config="/etc/papd.conf"
+papd_config=''
+papd_error=0
+
+# Log tag
+log_tag='papd-init'
+
+NL=$'\n'
+
+generate_config() {
+	# Setup section
+	config_file=''
+	config_overwrite=''
+
+	parse_printer() {
+		local section="$1"
+		local _buffer=''
+		local _value
+		local _printer=''
+		local _disabled=1
+		config_get _printer "$section" "name"
+		append _buffer "$_printer: "
+		[ -n "$_printer" ] || { 
+			papd_error=1 && logger -p err -t "$log_tag" "Missing printer name for printer $section"
+		}
+		config_get _disabled "$section" 'disabled' '1'
+		config_get _value "$section" 'am'
+		[ -z "$_value" ] || append _buffer " :am=$_value:"
+		config_get _value "$section" 'au'
+		[ -z "$_value" ] || append _buffer " :au=$_value:"
+		config_get _value "$section" 'co'
+		[ -z "$_value" ] || append _buffer " :co=$_value:"
+		config_get _value "$section" 'fo'
+		[ -z "$_value" ] || append _buffer " :fo=$_value:"
+		config_get _value "$section" 'op'
+		[ -z "$_value" ] || append _buffer " :op=$_value:"
+		config_get _value "$section" 'pa'
+		[ -z "$_value" ] || append _buffer " :pa=$_value:"
+		config_get _value "$section" 'pd'
+		[ -z "$_value" ] || append _buffer " :pd=$_value:"
+		config_get _value "$section" 'pr'
+		[ -z "$_value" ] || append _buffer " :pr=$_value:"
+		config_get _value "$section" 'sp'
+		[ -z "$_value" ] || append _buffer " :sp=$_value:"
+		config_get _value "$section" 'ca'
+		[ -z "$_value" ] || append _buffer " :ca=$_value:"
+		[ "$_disabled" == '1' ] || papd_config="$papd_config$_buffer$NL$NL"
+	}
+
+	config_load papd
+
+	config_get disabled papd disabled '0'
+	if [ "$disabled" = "1" ] ; then 
+		logger -p info -t $log_tag "Disabled by config"
+		exit 
+	fi
+	config_get config_file papd config_file "$default_config"
+	config_get config_overwrite papd config_overwrite
+	if [ "$config_overwrite" == "1" ] ; then
+		config_foreach parse_printer printer
+		mkdir -p `dirname "$config_file"`
+		echo "$papd_config" > "$config_file"
+		logger -p info -t $log_tag "Configuration written to $config_file"
+	else
+		logger -p info -t $log_tag 'Configuration not modified - papd:config_overwrite=0 or missing'
+	fi
+}
+
+start_service() {
+	generate_config
+
+	[ "$papd_error" == "0" ] || exit
+
+	procd_open_instance
+	procd_set_param command $PROG -d -f "$config_file"
+	procd_set_param file "$config_file"
+	procd_set_param respawn
+	procd_close_instance
+}

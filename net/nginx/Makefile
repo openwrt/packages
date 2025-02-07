@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
 PKG_VERSION:=1.26.1
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nginx.org/download/
@@ -37,7 +37,8 @@ PKG_MOD_EXTRA := \
 	brotli \
 	headers-more \
 	ts \
-	ubus
+	ubus \
+	njs
 # official and 3rd-party modules
 PKG_MOD_ALL := \
 	$(PKG_MOD_EXTRA) \
@@ -97,8 +98,7 @@ define Package/nginx/default
   TITLE:=Nginx web server
   URL:=http://nginx.org/
   DEPENDS:=+libopenssl +libpthread
-  # TODO: add PROVIDES when removing nginx
-  # PROVIDES:=nginx
+  PROVIDES:=nginx
 endef
 
 define Package/nginx/description
@@ -117,7 +117,7 @@ define Package/nginx-ssl
   DEPENDS+= +NGINX_PCRE:libpcre2 \
 	+NGINX_PCRE:nginx-ssl-util +!NGINX_PCRE:nginx-ssl-util-nopcre \
 	+NGINX_HTTP_GZIP:zlib +NGINX_DAV:libxml2
-  EXTRA_DEPENDS:=nginx-ssl-util$(if $(CONFIG_NGINX_PCRE),,-nopcre) (>=1.5-1) (<2)
+  EXTRA_DEPENDS:=nginx-ssl-util$(if $(CONFIG_NGINX_PCRE),,-nopcre) (>=1.5-r1)
   CONFLICTS:=nginx-full
 endef
 
@@ -165,7 +165,7 @@ define Package/nginx-full
   $(Package/nginx/default)
   TITLE += with ALL config selected
   DEPENDS+=+libpcre2 +nginx-ssl-util +zlib +libxml2
-  EXTRA_DEPENDS:=nginx-ssl-util (>=1.5-1) (<2)
+  EXTRA_DEPENDS:=nginx-ssl-util (>=1.5-r1)
   VARIANT:=full
   PROVIDES += nginx-ssl
 endef
@@ -212,10 +212,9 @@ define Package/nginx-mod-luci/install
 endef
 
 define Download/nginx-mod-geoip2
-  SOURCE_DATE:=2020-01-22
-  VERSION:=1cabd8a1f68ea3998f94e9f3504431970f848fbf
-  URL:=https://github.com/leev/ngx_http_geoip2_module.git
-  MIRROR_HASH:=f3d2a1af5c34812b5a34453457ba6a4d8093c92085aa7f76c46a1c4185c9735c
+  VERSION:=3.4
+  URL:=https://github.com/leev/ngx_http_geoip2_module
+  MIRROR_HASH:=22d67e35067faed200ea398581dd0dc9d599bc6ab4c0ea2034a1ea55666fdc1d
   PROTO:=git
 endef
 
@@ -253,7 +252,6 @@ define Download/nginx-mod-headers-more
   MIRROR_HASH:=569abadc137b5b52bdcc33b00aa21f6d266cb84fb891795da2c4e101c4898abe
   PROTO:=git
 endef
-
 
 define Download/nginx-mod-brotli
   SOURCE_DATE:=2020-04-23
@@ -324,6 +322,14 @@ define Download/nginx-mod-ubus
   VERSION:=b2d7260dcb428b2fb65540edb28d7538602b4a26
   URL:=https://github.com/Ansuel/nginx-ubus-module.git
   MIRROR_HASH:=515bb9d355ad80916f594046a45c190a68fb6554d6795a54ca15cab8bdd12fda
+  PROTO:=git
+endef
+
+define Download/nginx-mod-njs
+  SOURCE_DATE:=2024-10-03
+  VERSION:=c5a29a7af8894ee1ec44ebda71ef0ea1f2a31af6
+  URL:=https://github.com/nginx/njs.git
+  MIRROR_HASH:=69bc424d4bfd8b7a0a70feeb4787ff8b503ac893fb730f07f3244e35fde876e4
   PROTO:=git
 endef
 
@@ -413,7 +419,8 @@ ifneq ($(CONFIG_PACKAGE_nginx-mod-lua),)
 					LUAJIT_LIB=$(STAGING_DIR)/usr/lib
 endif
 
-CONFIGURE_VARS += CONFIG_BIG_ENDIAN=$(CONFIG_BIG_ENDIAN)
+CONFIGURE_VARS += LIBXML2_INC=$(STAGING_DIR)/usr/include/libxml2 \
+			CONFIG_BIG_ENDIAN=$(CONFIG_BIG_ENDIAN)
 
 CONFIGURE_ARGS += \
 	--crossbuild=Linux::$(ARCH) \
@@ -473,7 +480,8 @@ CONFIGURE_ARGS += \
 	$(if $(CONFIG_PACKAGE_nginx-mod-stream),--with-stream=dynamic --with-stream_ssl_module --with-stream_ssl_preread_module) \
 	$(if $(call IsEnabled,NGINX_STREAM_REAL_IP),--with-stream_realip_module) \
 	$(if $(CONFIG_PACKAGE_nginx-mod-naxsi),--add-dynamic-module=$(PKG_BUILD_DIR)/nginx-mod-naxsi/naxsi_src) \
-	$(foreach m,$(filter-out lua-resty-core lua-resty-lrucache naxsi,$(PKG_MOD_EXTRA)), \
+	$(if $(CONFIG_PACKAGE_nginx-mod-njs),--add-dynamic-module=$(PKG_BUILD_DIR)/nginx-mod-njs/nginx) \
+	$(foreach m,$(filter-out lua-resty-core lua-resty-lrucache naxsi njs,$(PKG_MOD_EXTRA)), \
 		$(if $(CONFIG_PACKAGE_nginx-mod-$(m)),--add-dynamic-module=$(PKG_BUILD_DIR)/nginx-mod-$(m)))
 
 $(eval $(call BuildPackage,nginx-ssl))
@@ -501,31 +509,5 @@ $(eval $(call BuildModule,naxsi,,ngx_http_naxsi, \
 	Enable NAXSI module.))
 $(eval $(call BuildModule,geoip2,+@NGINX_STREAM_CORE_MODULE +nginx-mod-stream +libmaxminddb,ngx_http_geoip2 ngx_stream_geoip2, \
 	Enable MaxMind GeoIP2 module.))
-
-# TODO: remove after a transition period (together with pkg nginx-util):
-# It is for smoothly substituting nginx and nginx-mod-luci-ssl (by nginx-ssl
-# respectively nginx-mod-luci). Add above commented PROVIDES when removing.
-
-define Package/nginx
-  TITLE:=Dummy package for transition when upgrading.
-  DEPENDS:=+nginx-ssl
-  PKGARCH:=all
-endef
-
-define Package/nginx/install
-	$(INSTALL_DIR) $(1)/usr/bin
-endef
-
-$(eval $(call BuildPackage,nginx))
-
-define Package/nginx-mod-luci-ssl
-  TITLE:=Dummy package for transition when upgrading.
-  DEPENDS:=+nginx-mod-luci
-  PKGARCH:=all
-endef
-
-define Package/nginx-mod-luci-ssl/install
-	$(INSTALL_DIR) $(1)/usr/bin
-endef
-
-$(eval $(call BuildPackage,nginx-mod-luci-ssl))
+$(eval $(call BuildModule,njs,+zlib +libxml2 +libxslt +libpcre2,ngx_http_js, \
+	Enable NJS module.))

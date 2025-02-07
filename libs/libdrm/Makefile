@@ -1,4 +1,4 @@
-# Copyright (C) 2007-2016 OpenWrt.org
+# Copyright (C) 2007-2024 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -6,54 +6,147 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libdrm
-PKG_VERSION:=2.4.120
-PKG_RELEASE:=1
+PKG_VERSION:=2.4.123
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://dri.freedesktop.org/libdrm
-PKG_HASH:=3bf55363f76c7250946441ab51d3a6cc0ae518055c0ff017324ab76cdefb327a
+PKG_HASH:=a2b98567a149a74b0f50e91e825f9c0315d86e7be9b74394dae8b298caadb79e
 
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 
 PKG_CONFIG_DEPENDS:= \
-	CONFIG_LIBDRM_INTEL \
-	CONFIG_LIBDRM_NOUVEAU \
-	CONFIG_LIBDRM_RADEON
+	CONFIG_PACKAGE_libdrm-amdgpu \
+	CONFIG_PACKAGE_libdrm-etnaviv \
+	CONFIG_PACKAGE_libdrm-intel \
+	CONFIG_PACKAGE_libdrm-nouveau \
+	CONFIG_PACKAGE_libdrm-omap \
+	CONFIG_PACKAGE_libdrm-radeon \
+	CONFIG_PACKAGE_libdrm-tegra
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/meson.mk
 
-define Package/libdrm
+define Package/libdrm/Default
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+LIBDRM_INTEL:libpciaccess
+  SUBMENU:=Video
   TITLE:=libdrm
   URL:=https://dri.freedesktop.org/
 endef
 
-define Package/libdrm/description
+define Package/libdrm/description/Default
   LIBDRM is the cross-driver middleware which allows user-space applications
   (such as Mesa and 2D drivers) to communicate with the Kernel by the means
   of the DRI protocol.
 endef
 
-define Package/libdrm/config
-	source "$(SOURCE)/Config.in"
+define Package/libdrm
+$(call Package/libdrm/Default)
+  TITLE+= common library
+endef
+
+define Package/libdrm/description
+$(call Package/libdrm/description/Default)
+endef
+
+define Package/libdrm-amdgpu
+$(call Package/libdrm/Default)
+  TITLE+= for AMD GPUs
+  DEPENDS:=+libdrm
+endef
+
+define Package/libdrm-amdgpu/description
+$(call Package/libdrm/description/Default)
+
+This package provides the library with functions for AMD GPUs.
+endef
+
+define Package/libdrm-etnaviv
+$(call Package/libdrm/Default)
+  TITLE+= for Vivante GPUs
+  DEPENDS:=+libdrm @(arm||aarch64||mips||mipsel||mips64||mips64el||riscv64)
+endef
+
+define Package/libdrm-etnaviv/description
+$(call Package/libdrm/description/Default)
+
+This package provides the library with functions for Vivante GPUs.
+endef
+
+define Package/libdrm-intel
+$(call Package/libdrm/Default)
+  TITLE+= for Intel integrated GPUs
+  DEPENDS:=+libdrm +libpciaccess @(i386||i686||x86_64)
+endef
+
+define Package/libdrm-intel/description
+$(call Package/libdrm/description/Default)
+
+This package provides the library with functions for GPUs integrated into Intel's CPUs.
+endef
+
+define Package/libdrm-nouveau
+$(call Package/libdrm/Default)
+  TITLE+= for nVidia GPUs
+  DEPENDS:=+libdrm
+endef
+
+define Package/libdrm-nouveau/description
+$(call Package/libdrm/description/Default)
+
+This package provides the library with functions for nVidia GPUs.
+endef
+
+define Package/libdrm-omap
+$(call Package/libdrm/Default)
+  TITLE+= for TI OMAP SoCs
+  DEPENDS:=+libdrm @(arm||aarch64)
+endef
+
+define Package/libdrm-omap/description
+$(call Package/libdrm/description/Default)
+
+This package provides the library with functions for TI OMAP SoCs.
+endef
+
+define Package/libdrm-radeon
+$(call Package/libdrm/Default)
+  TITLE+= for AMD/ATI Radeon GPUs
+  DEPENDS:=+libdrm
+endef
+
+define Package/libdrm-radeon/description
+$(call Package/libdrm/description/Default)
+
+This package provides the library with functions for AMD/ATI Radeon GPUs.
+endef
+
+define Package/libdrm-tegra
+$(call Package/libdrm/Default)
+  TITLE+= for nVidia Tegra SoCs
+  DEPENDS:=+libdrm @(arm||aarch64)
+endef
+
+define Package/libdrm-tegra/description
+$(call Package/libdrm/description/Default)
+
+This package provides the library with functions for nVidia Tegra SoCs.
 endef
 
 MESON_ARGS += \
-	-Dintel=$(if $(CONFIG_LIBDRM_INTEL),en,dis)abled \
-	-Dradeon=$(if $(CONFIG_LIBDRM_RADEON),en,dis)abled \
-	-Damdgpu=disabled \
-	-Dnouveau=$(if $(CONFIG_LIBDRM_NOUVEAU),en,dis)abled \
+	-Dintel=$(if $(CONFIG_PACKAGE_libdrm-intel),en,dis)abled \
+	-Damdgpu=$(if $(CONFIG_PACKAGE_libdrm-amdgpu),en,dis)abled \
+	-Dnouveau=$(if $(CONFIG_PACKAGE_libdrm-nouveau),en,dis)abled \
 	-Dvmwgfx=disabled \
-	-Domap=disabled \
+	-Domap=$(if $(CONFIG_PACKAGE_libdrm-omap),en,dis)abled  \
 	-Dexynos=disabled \
 	-Dfreedreno=disabled \
-	-Dtegra=disabled \
-	-Dvc4=disabled \
-	-Detnaviv=disabled \
+	-Dradeon=$(if $(CONFIG_PACKAGE_libdrm-radeon),en,dis)abled \
+	-Dtegra=$(if $(CONFIG_PACKAGE_libdrm-tegra),en,dis)abled \
+	-Dvc4=$(if $(CONFIG_arm)$(CONFIG_aarch64),en,dis)abled \
+	-Detnaviv=$(if $(CONFIG_PACKAGE_libdrm-etnaviv),en,dis)abled  \
 	-Dcairo-tests=disabled \
 	-Dman-pages=disabled \
 	-Dvalgrind=disabled \
@@ -72,7 +165,51 @@ endef
 
 define Package/libdrm/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib*.so.* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdrm.so.* $(1)/usr/lib/
+endef
+
+define Package/libdrm-amdgpu/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdrm_amdgpu.so.* $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/share/libdrm
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/libdrm/amdgpu.ids $(1)/usr/share/libdrm
+endef
+
+define Package/libdrm-etnaviv/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdrm_etnaviv.so.* $(1)/usr/lib/
+endef
+
+define Package/libdrm-intel/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdrm_intel.so.* $(1)/usr/lib/
+endef
+
+define Package/libdrm-nouveau/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdrm_nouveau.so.* $(1)/usr/lib/
+endef
+
+define Package/libdrm-omap/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdrm_omap.so.* $(1)/usr/lib/
+endef
+
+define Package/libdrm-radeon/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdrm_radeon.so.* $(1)/usr/lib/
+endef
+
+define Package/libdrm-tegra/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdrm_tegra.so.* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,libdrm))
+$(eval $(call BuildPackage,libdrm-amdgpu))
+$(eval $(call BuildPackage,libdrm-etnaviv))
+$(eval $(call BuildPackage,libdrm-intel))
+$(eval $(call BuildPackage,libdrm-nouveau))
+$(eval $(call BuildPackage,libdrm-omap))
+$(eval $(call BuildPackage,libdrm-radeon))
+$(eval $(call BuildPackage,libdrm-tegra))

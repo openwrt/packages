@@ -200,9 +200,7 @@ created packages and runs a script called `test.sh` located next to the package
 Makefile. The script is executed with the two arguments `PKG_NAME` and
 `PKG_VERSION`. The `PKG_NAME` can be used to distinguish package variants, e.g.
 `foobar` vs. `foobar-full`. The `PKG_VERSION` can be used for a trivial test
-checking if `foobar --version` prints the correct version. `PKG_VERSION` is the
-OpenWrt version and therefore includes the `PKG_RELEASE`, which isn't usually
-part of the running programs version.
+checking if `foobar --version` prints the correct version.
 
 The following snippet shows a script that tests different binaries depending on
 what IPK package was installed. The `gpsd` Makefile produces both a `gpsd` and

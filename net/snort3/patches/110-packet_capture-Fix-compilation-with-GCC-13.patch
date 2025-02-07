@@ -18,5 +18,5 @@ src/network_inspectors/packet_capture/packet_capture.h:25:54: error: 'int16_t' d
  #include <string>
 +#include <cstdint>
  
- void packet_capture_enable(const std::string&, const int16_t g = -1, const std::string& t = "");
+ void packet_capture_enable(const std::string&, const int16_t g = -1, const std::string& t = "", const bool ci = true);
  void packet_capture_disable();

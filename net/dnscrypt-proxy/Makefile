@@ -33,6 +33,7 @@ define Package/dnscrypt-proxy/Default
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=IP Addresses and Names
+  TITLE:=DNSCrypt-Proxy by Dyne, not actively maintained
   URL:=https://github.com/dyne/dnscrypt-proxy
 endef
 

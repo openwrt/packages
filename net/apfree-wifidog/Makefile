@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apfree-wifidog
-PKG_VERSION:=7.07.2018
+PKG_VERSION:=7.10.2082
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/liudf0716/$(PKG_NAME)/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=228770ed320133c7ba0f5f27b35c61a45293a1127529f530c44f8810c1f5965e
+PKG_HASH:=2b7b22221852732f2511e991bef5d135132a8cc50f3d612eaee77d74c51bc501
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Dengfeng Liu <liudf0716@gmail.com>
@@ -27,7 +27,7 @@ define Package/apfree-wifidog
   SUBMENU:=Captive Portals
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+zlib +libjson-c +libevent2 +libevent2-openssl +libuci +openssl-util +libnetfilter-queue
+  DEPENDS:=+zlib +libjson-c +libevent2 +libevent2-openssl +libuci +openssl-util +libnetfilter-queue +conntrack +libmosquitto
   TITLE:=Apfree's wireless captive portal solution
   URL:=https://github.com/liudf0716/apfree_wifidog
 endef
@@ -60,6 +60,7 @@ define Package/apfree-wifidog/install
 	$(INSTALL_BIN) ./files/wifidogx.init $(1)/etc/init.d/wifidogx
 	$(INSTALL_DIR) $(1)/etc/config
 	$(CP) ./files/wifidogx.conf $(1)/etc/config/wifidogx
+	$(INSTALL_DIR) $(1)/etc/wifidogx
 endef
 
 $(eval $(call BuildPackage,apfree-wifidog))

@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=squid
-PKG_VERSION:=6.10
+PKG_VERSION:=6.11
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www2.pl.squid-cache.org/Versions/v6/ \
 	http://www.squid-cache.org/Versions/v6/
-PKG_HASH:=0b07b187e723f04770dd25beb89aec12030a158696aa8892d87c8b26853408a7
+PKG_HASH:=b6e60c08429314287925331b3da6c03b7d3c35b7e03319f78edb8bad6fc68899
 
 PKG_MAINTAINER:=Marko Ratkaj <markoratkaj@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later

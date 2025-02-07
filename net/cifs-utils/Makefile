@@ -30,6 +30,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/cifsmount
   SECTION:=net
   CATEGORY:=Network
+  SUBMENU:=Filesystem
   DEPENDS:=+kmod-fs-cifs
   TITLE:=CIFS mount
   URL:=https://wiki.samba.org/index.php/LinuxCIFS_utils

@@ -17,7 +17,7 @@ PKG_SOURCE_URL:=@SF/lzmautils
 PKG_HASH:=e12aa03cbd200597bd4ce11d97be2d09a6e6d39a9311ce72c91ac7deacde3171
 
 PKG_MAINTAINER:=
-PKG_LICENSE:=Public-Domain LGPL-2.1-or-later GPL-2.0-or-later GPL-3.0-or-later
+PKG_LICENSE:=Public-Domain LGPL-2.1-or-later 0BSD
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:tukaani:xz
 

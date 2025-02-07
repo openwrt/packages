@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mdns-repeater
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=https://github.com/kennylevinsen/mdns-repeater.git
 PKG_SOURCE_PROTO=git
@@ -24,6 +24,7 @@ define Package/mdns-repeater
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Multicast DNS repeater for Linux
+  SUBMENU:=IP Addresses and Names
   URL:=https://github.com/kennylevinsen/mdns-repeater
 endef
 

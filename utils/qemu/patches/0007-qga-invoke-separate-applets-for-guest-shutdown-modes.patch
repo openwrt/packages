@@ -13,15 +13,15 @@ https://gitlab.alpinelinux.org/alpine/aports/commit/76b81b486480fd9c3294cd420bcf
 
 --- a/qga/commands-posix.c
 +++ b/qga/commands-posix.c
-@@ -79,6 +79,7 @@ static void ga_wait_child(pid_t pid, int
+@@ -217,6 +217,7 @@ out:
  void qmp_guest_shutdown(const char *mode, Error **errp)
  {
      const char *shutdown_flag;
 +    const char *fallback_cmd = NULL;
      Error *local_err = NULL;
-     pid_t pid;
-     int status;
-@@ -100,10 +101,13 @@ void qmp_guest_shutdown(const char *mode
+ 
+ #ifdef CONFIG_SOLARIS
+@@ -236,10 +237,13 @@ void qmp_guest_shutdown(const char *mode
      slog("guest-shutdown called, mode: %s", mode);
      if (!mode || strcmp(mode, "powerdown") == 0) {
          shutdown_flag = powerdown_flag;
@@ -35,11 +35,18 @@ https://gitlab.alpinelinux.org/alpine/aports/commit/76b81b486480fd9c3294cd420bcf
      } else {
          error_setg(errp,
                     "mode is invalid (valid values are: halt|powerdown|reboot");
-@@ -128,6 +132,7 @@ void qmp_guest_shutdown(const char *mode
-         execl("/sbin/shutdown", "shutdown", "-h", shutdown_flag, "+0",
-                "hypervisor initiated shutdown", (char *)NULL);
- #endif
-+        execl(fallback_cmd, fallback_cmd, (char*)NULL);
-         _exit(EXIT_FAILURE);
-     } else if (pid < 0) {
-         error_setg_errno(errp, errno, "failed to create child process");
+@@ -258,8 +262,12 @@ void qmp_guest_shutdown(const char *mode
+ 
+     ga_run_command(argv, NULL, "shutdown", &local_err);
+     if (local_err) {
+-        error_propagate(errp, local_err);
+-        return;
++        const char *fallback_argv[] = {fallback_cmd, (char *) NULL};
++        ga_run_command(fallback_argv, NULL, fallback_cmd, &local_err);
++        if (local_err) {
++            error_propagate(errp, local_err);
++            return;
++        }
+     }
+ 
+     /* succeeded */

@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gperftools
-PKG_VERSION:=2.15
+PKG_VERSION:=2.16
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/gperftools/gperftools/tar.gz/$(PKG_NAME)-$(PKG_VERSION)?
-PKG_HASH:=3918ff2e21bb3dbb5a801e1daf55fb20421906f7c42fbb482bede7bdc15dfd2e
+PKG_HASH:=737be182b4e42f5c7f595da2a7aa59ce0489a73d336d0d16847f2aa52d5221b4
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_MAINTAINER:=John Audia <therealgraysky@proton.me>
@@ -58,8 +58,6 @@ define Build/InstallDev
 endef
 
 define Package/gperftools-headers/install
-	$(INSTALL_DIR) $(1)/usr/include/google
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/include/google/tcmalloc.h $(1)/usr/include/google
 	$(INSTALL_DIR) $(1)/usr/include/gperftools
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/include/gperftools/tcmalloc.h $(1)/usr/include/gperftools
 endef

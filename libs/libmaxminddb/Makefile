@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmaxminddb
-PKG_VERSION:=1.10.0
-PKG_RELEASE=1
+PKG_VERSION:=1.11.0
+PKG_RELEASE=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/maxmind/libmaxminddb/releases/download/$(PKG_VERSION)
-PKG_HASH:=5e6db72df423ae225bfe8897069f6def40faa8931f456b99d79b8b4d664c6671
+PKG_HASH:=b2eea79a96fed77ad4d6c39ec34fed83d45fcb75a31c58956813d58dcf30b19f
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=Apache-2.0
@@ -45,6 +45,8 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libmaxminddb.so* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libmaxminddb.pc $(1)/usr/lib/pkgconfig
+	$(SED) 's,libdir=lib,libdir=$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/libmaxminddb.pc
+	$(SED) 's,includedir=include,includedir=$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/libmaxminddb.pc
 endef
 
 define Package/libmaxminddb/install

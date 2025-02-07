@@ -1,10 +1,11 @@
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -1,6 +1,6 @@
+@@ -4,7 +4,7 @@
+ 
  ACLOCAL_AMFLAGS=-I m4
  
 -SUBDIRS = include src doc tests extras
 +SUBDIRS = include src
  
- dist_doc_DATA = LICENSE \
- 		README.md
+ dist_doc_DATA = \
+ 	LICENSE.md \

@@ -11,7 +11,7 @@ NGINX_UTIL="/usr/bin/nginx-util"
 UCI_CONF_TEMPLATE="/etc/nginx/uci.conf.template"
 LATEST_UCI_CONF_VERSION="1.2"
 
-eval $("${NGINX_UTIL}" get_env)
+[ -f "${NGINX_UTIL}" ] && eval $("${NGINX_UTIL}" get_env)
 
 CONF=""
 
@@ -75,6 +75,53 @@ nginx_init() {
 	logger -t "nginx_init" -p "daemon.info" "using ${CONF} (the test is ok)"
 }
 
+add_mdns() {
+	local cfg="$1"
+	local port enabled service
+
+	config_get enabled "$cfg" enabled
+	config_get port "$cfg" listen
+
+	port=$(echo "$port" | head -n1 | awk '{print $1;}')
+
+
+	if [ "$enabled" != "0" ] && [ "$enabled" != "false" ] && [ -n "$port" ]; then
+		case "$port" in
+			"80")
+				service="http"
+				;;
+			"8080")
+				service="http-alt"
+				;;
+			"443")
+				service="https"
+				;;
+			"8443")
+				service="pcsync-https"
+				;;
+			*)
+				service="custom-http-$port"
+				;;
+		esac
+
+		procd_add_mdns_service "$service" "tcp" "$port" "daemon=nginx"
+	fi
+}
+
+configure_mdns() {
+	local mdns="$(uci -q get nginx.global.mdns)"
+
+	if [ "$mdns" = "1" ] || [ "$mdns" = "true" ]; then
+		procd_open_data
+		json_add_object "mdns"
+
+		config_load nginx
+		config_foreach add_mdns server
+
+		json_close_object
+		procd_close_data
+	fi
+}
 
 start_service() {
 	nginx_init
@@ -86,6 +133,9 @@ start_service() {
 	procd_set_param file "${CONF}" "${CONF_DIR}*.crt" "${CONF_DIR}*.key" \
 		"${CONF_DIR}*.conf" "${CONF_DIR}*.locations"
 	procd_set_param respawn
+
+	configure_mdns
+
 	procd_close_instance
 }
 

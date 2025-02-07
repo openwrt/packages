@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libpng
-PKG_VERSION:=1.6.43
-PKG_RELEASE:=1
+PKG_VERSION:=1.6.44
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/libpng
-PKG_HASH:=6a5ca0652392a2d7c9db2ae5b40210843c0bbc081cbd410825ab00cc59f14a6c
+PKG_HASH:=60c4da1d5b7f0aa8d158da48e8f8afa9773c1c8baa5d21974df61f1886b8ce8e
 
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 PKG_LICENSE:=Libpng GPL-2.0-or-later BSD-3-Clause
@@ -36,12 +36,19 @@ CMAKE_OPTIONS += \
 	-DPNG_TOOLS=OFF \
 	-DPNG_TESTS=OFF \
 	-DPNG_FRAMEWORK=OFF \
-	-DPNG_HARDWARE_OPTIMIZATIONS=O$(if $(findstring powerpc,$(CONFIG_ARCH))$(findstring mips,$(CONFIG_ARCH)),FF,N) \
+	-DPNG_HARDWARE_OPTIMIZATIONS=ON \
 	-DPNG_ARM_NEON=$(if $(or $(findstring aarch64,$(CONFIG_ARCH)),$(findstring neon,$(CONFIG_CPU_TYPE))),on,off) \
+	-DPNG_LOONGARCH_LSX=off \
+	-DPNG_MIPS_MMI=off \
+	-DPNG_MIPS_MSA=off \
+	-DPNG_POWERPC_VSX=off \
 	-Dld-version-script=OFF
 
 define Build/InstallDev
 	$(call Build/InstallDev/cmake,$(1))
+ifdef CONFIG_DEBUG
+	$(LN) libpng16d.so $(1)/usr/lib/libpng16.so
+endif
 	$(SED) 's,^\(prefix\|exec_prefix\)=.*,\1=$(STAGING_DIR)/usr,g' $(1)/usr/bin/libpng{,16}-config
 	$(SED) '/^includedir=/s|/usr|$$$${prefix}|' $(1)/usr/bin/libpng{,16}-config
 	$(SED) '/^libdir=/s|/usr|$$$${prefix}|' $(1)/usr/bin/libpng{,16}-config
@@ -55,7 +62,10 @@ endef
 
 define Package/libpng/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpng16.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpng16$(if $(CONFIG_DEBUG),d).so* $(1)/usr/lib/
+ifdef CONFIG_DEBUG
+	$(LN) libpng16d.so $(1)/usr/lib/libpng16.so
+endif
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpng.so $(1)/usr/lib/
 endef
 

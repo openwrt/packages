@@ -21,6 +21,11 @@ PKG_BUILD_FLAGS:=gc-sections
 PKG_MAINTAINER:=Nicholas Smith <nicholas@nbembedded.com>
 PKG_CPE_ID:=cpe:/a:libqmi_project:libqmi
 
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_LIBQMI_COLLECTION_FULL \
+	CONFIG_LIBQMI_COLLECTION_BASIC \
+	CONFIG_LIBQMI_COLLECTION_MINIMAL
+
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/meson.mk

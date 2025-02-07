@@ -15,7 +15,7 @@ Signed-off-by: Michal Vasilek <michal.vasilek@nic.cz>
 
 --- a/utils/aa-unconfined
 +++ b/utils/aa-unconfined
-@@ -116,7 +116,7 @@ def read_proc_current(filename):
+@@ -125,7 +125,7 @@ def escape_special_chars(data):
  pids = set()
  if paranoid:
      pids = get_all_pids()

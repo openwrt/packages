@@ -431,7 +431,7 @@ expose-iroutes = true
 #   4 http
 #   8 sensitive
 #   9 TLS
-log-level = 3
+#log-level = 2
 
 # This option will enable the X-CSTP-Client-Bypass-Protocol (disabled by default).
 # If the server has not configured an IPv6 or IPv4 address pool, enabling this option

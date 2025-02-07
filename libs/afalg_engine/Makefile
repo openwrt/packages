@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=afalg_engine
-PKG_VERSION:=1.2.0-beta.1
-PKG_RELEASE:=5
+PKG_VERSION:=1.2.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/cotequeiroz/afalg_engine/archive/v$(PKG_VERSION)
-PKG_HASH:=6f0da98a3c12eaf50331ac7cd81f7b8800abf54b96fd73bd3e37cc50fd3d2ba8
+PKG_HASH:=3f0f6ee9ea7a5ea9c668ec16f8c492aa024a82dca78d0fbe30fd256f9da95d65
 
 PKG_MAINTAINER:=Eneas U de Queiroz <cotequeiroz@gmail.com>
 PKG_LICENSE:=Apache-2.0

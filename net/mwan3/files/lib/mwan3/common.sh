@@ -61,20 +61,18 @@ mwan3_get_src_ip()
 	unset "$1"
 	config_get family "$interface" family ipv4
 	if [ "$family" = "ipv4" ]; then
-		addr_cmd_1='network_get_ipaddr'
-		addr_cmd_2='false'
+		addr_cmd='network_get_ipaddr'
 		default_ip="0.0.0.0"
 		sed_str='s/ *inet \([^ \/]*\).*/\1/;T; pq'
 		IP="$IP4"
 	elif [ "$family" = "ipv6" ]; then
-		addr_cmd_1='network_get_preferred_ipaddr6'
-		addr_cmd_2='network_get_ipaddr6'
+		addr_cmd='network_get_ipaddr6'
 		default_ip="::"
 		sed_str='s/ *inet6 \([^ \/]*\).* scope.*/\1/;T; pq'
 		IP="$IP6"
 	fi
 
-	$addr_cmd_1 _src_ip "$true_iface" 2>&1 || $addr_cmd_2 _src_ip "$true_iface"
+	$addr_cmd _src_ip "$true_iface"
 	if [ -z "$_src_ip" ]; then
 		network_get_device device $true_iface
 		_src_ip=$($IP address ls dev $device 2>/dev/null | sed -ne "$sed_str")

@@ -41,7 +41,6 @@ init_yaml() {
 	local chain6_name
 	local retry_initial_connect
 
-	config_get set_only $section set_only '1'
 	config_get hook_priority $section priority "4"
 	config_get update_frequency $section update_frequency '10s'
 	config_get log_level $section log_level 'info'
@@ -101,13 +100,13 @@ init_yaml() {
 	nftables:
 	  ipv4:
 	    enabled: bool($ipv4)
-	    set-only: bool($set_only)
+	    set-only: false
 	    table: $TABLE
 	    chain: $chain_name
 	    priority: $hook_priority
 	  ipv6:
 	    enabled: bool($ipv6)
-	    set-only: bool($set_only)
+	    set-only: false
 	    table: $TABLE6
 	    chain: $chain6_name
 	    priority: $hook_priority
@@ -178,11 +177,13 @@ init_nftables() {
 
 		if [ "$filter_input" -eq "1" ] ; then
 			nft add chain ip "$TABLE" $chain_name-input "{ type filter hook input priority $hook_priority; policy accept; }"
-			nft add rule ip "$TABLE" $chain_name-input iifname { $interface } ct state new ip saddr @crowdsec-blacklists ${log_term} counter $deny_action
+			nft add rule ip "$TABLE" $chain_name-input ct state established,related accept
+			nft add rule ip "$TABLE" $chain_name-input iifname != { $interface } accept
 		fi
 		if [ "$filter_forward" -eq "1" ] ; then
 			nft add chain ip "$TABLE" $chain_name-forward "{ type filter hook forward priority $hook_priority; policy accept; }"
-			nft add rule ip "$TABLE" $chain_name-forward iifname { $interface } ct state new ip daddr != 224.0.0.0/4 ip saddr @crowdsec-blacklists ${log_term} counter $deny_action
+			nft add rule ip "$TABLE" $chain_name-forward ct state established,related accept
+			nft add rule ip "$TABLE" $chain_name-forward iifname != { $interface } accept
 		fi
 	fi
 
@@ -193,11 +194,13 @@ init_nftables() {
 
 		if [ "$filter_input" -eq "1" ] ; then
 			nft add chain ip6 "$TABLE6" $chain6_name-input "{ type filter hook input priority $hook_priority; policy accept; }"
-			nft add rule ip6 "$TABLE6" $chain6_name-input iifname { $interface } ct state new ip6 saddr @crowdsec6-blacklists ${log_term} counter $deny_action
+			nft add rule ip6 "$TABLE6" $chain6_name-input ct state established,related accept
+			nft add rule ip6 "$TABLE6" $chain6_name-input iifname != { $interface } accept
 		fi
 		if [ "$filter_forward" -eq "1" ] ; then
 			nft add chain ip6 "$TABLE6" $chain6_name-forward "{ type filter hook forward priority $hook_priority; policy accept; }"
-			nft add rule ip6 "$TABLE6" $chain6_name-forward iifname { $interface } ct state new ip6 saddr @crowdsec6-blacklists ${log_term} counter $deny_action
+			nft add rule ip6 "$TABLE6" $chain6_name-forward ct state established,related accept
+			nft add rule ip6 "$TABLE6" $chain6_name-forward iifname != { $interface } accept
 		fi
 	fi
 }
@@ -208,14 +211,11 @@ run_bouncer() {
 
 	local enabled
 	config_get_bool enabled $section enabled 0
-	config_get_bool set_only $section set_only 1
 
 	if [ "$enabled" -eq "1" ] ; then
 
 		init_yaml "$section"
-		if [ "$set_only" -eq "1" ] ; then
-			init_nftables "$section"
-		fi
+		init_nftables "$section"
 
 		procd_open_instance
 		procd_set_param command "$PROG" -c "$VARCONFIG"

@@ -36,6 +36,19 @@ define Package/shared-mime-info/description
 	The shared-mime-info package contains a database of MIME types and their file extensions.
 endef
 
+MESON_ARG += \
+	-Dbuild-tests=false \
+	-Dupdate-mimedb=false \
+	-Dbuild-tools=true \
+	-Dbuild-translations=false
+
+define Build/InstallDev
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(CP) \
+		$(PKG_INSTALL_DIR)/usr/share/pkgconfig/shared-mime-info.pc \
+		$(1)/usr/lib/pkgconfig/
+endef
+
 define Package/shared-mime-info/install
 	$(INSTALL_DIR) $(1)/usr/bin/
 	$(CP) \
@@ -45,12 +58,10 @@ define Package/shared-mime-info/install
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/share/* \
 		$(1)/usr/share/
-endef
-
-define Package/shared-mime-info/postinst
-#!/bin/sh
-
-update-mime-database /usr/share/mime/
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_DATA) \
+		./files/shared-mime-info.defaults \
+		$(1)/etc/uci-defaults/90-shared-mime-info
 endef
 
 $(eval $(call BuildPackage,shared-mime-info))

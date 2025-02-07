@@ -2,12 +2,15 @@
 # Copyright (C) 2020 OpenWrt.org
 
 START=95
-PIDFILE=/tmp/run/atftpd.pid
 
-start() {
+USE_PROCD=1
+BIN=atftpd
+
+start_service() {
 	local enable
 	local srv
 	local port
+	local mdns
 
 	config_load atftpd
 
@@ -16,10 +19,11 @@ start() {
 
 	config_get srv service path "/srv/tftp"
 	config_get port service port 69
+	config_get mdns service mdns 0
 
-	atftpd --pidfile $PIDFILE --user root.root --port $port --daemon $srv
-}
-
-stop() {
-	kill $(cat $PIDFILE)
+	procd_open_instance
+	procd_set_param command $BIN "--no-fork" "--daemon" "--user" "root.root" "--port" "$port" "$srv"
+	[ "${mdns}" -ne 0 ] && procd_add_mdns "tftp" "udp" "$port" "daemon=atftpd"
+	procd_set_param respawn
+	procd_close_instance
 }

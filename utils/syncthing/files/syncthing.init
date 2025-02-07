@@ -48,7 +48,7 @@ start_service() {
 	local enabled=0
 	local gui_address="http://0.0.0.0:8384"
 	local home="/etc/syncthing"
-	local logfile="/etc/syncthing/syncthing.log"
+	local logfile="/var/log/syncthing.log"
 	local macprocs=0
 	local nice=0
 	local user="syncthing"

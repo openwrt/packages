@@ -1,0 +1,31 @@
+From ec02787ae7c5b6e906ab50bcebcd676d4219c812 Mon Sep 17 00:00:00 2001
+From: Moritz Warning <moritzwarning@web.de>
+Date: Tue, 17 Sep 2024 14:17:08 +0200
+Subject: [PATCH 1/5] fix miniupnpc natpmp include path
+
+---
+ make-linux.mk | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+--- a/make-linux.mk
++++ b/make-linux.mk
+@@ -26,8 +26,8 @@ TIMESTAMP=$(shell date +"%Y%m%d%H%M")
+ # otherwise build into binary as done on Mac and Windows.
+ ONE_OBJS+=osdep/PortMapper.o
+ override DEFS+=-DZT_USE_MINIUPNPC
+-MINIUPNPC_IS_NEW_ENOUGH=$(shell grep -sqr '.*define.*MINIUPNPC_VERSION.*"2..*"' /usr/include/miniupnpc/miniupnpc.h && echo 1)
+-#MINIUPNPC_IS_NEW_ENOUGH=$(shell grep -sqr '.*define.*MINIUPNPC_VERSION.*"2.."' /usr/include/miniupnpc/miniupnpc.h && echo 1)
++MINIUPNPC_IS_NEW_ENOUGH=$(shell grep -sqr '.*define.*MINIUPNPC_VERSION.*"2..*"' $(STAGING_DIR)/usr/include/miniupnpc/miniupnpc.h && echo 1)
++#MINIUPNPC_IS_NEW_ENOUGH=$(shell grep -sqr '.*define.*MINIUPNPC_VERSION.*"2.."' $(STAGING_DIR)/usr/include/miniupnpc/miniupnpc.h && echo 1)
+ ifeq ($(MINIUPNPC_IS_NEW_ENOUGH),1)
+ 	override DEFS+=-DZT_USE_SYSTEM_MINIUPNPC
+ 	LDLIBS+=-lminiupnpc
+@@ -35,7 +35,7 @@ else
+ 	override DEFS+=-DMINIUPNP_STATICLIB -DMINIUPNPC_SET_SOCKET_TIMEOUT -DMINIUPNPC_GET_SRC_ADDR -D_BSD_SOURCE -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -DOS_STRING="\"Linux\"" -DMINIUPNPC_VERSION_STRING="\"2.0\"" -DUPNP_VERSION_STRING="\"UPnP/1.1\"" -DENABLE_STRNATPMPERR
+ 	ONE_OBJS+=ext/miniupnpc/connecthostport.o ext/miniupnpc/igd_desc_parse.o ext/miniupnpc/minisoap.o ext/miniupnpc/minissdpc.o ext/miniupnpc/miniupnpc.o ext/miniupnpc/miniwget.o ext/miniupnpc/minixml.o ext/miniupnpc/portlistingparse.o ext/miniupnpc/receivedata.o ext/miniupnpc/upnpcommands.o ext/miniupnpc/upnpdev.o ext/miniupnpc/upnperrors.o ext/miniupnpc/upnpreplyparse.o
+ endif
+-ifeq ($(wildcard /usr/include/natpmp.h),)
++ifeq ($(wildcard $(STAGING_DIR)/usr/include/natpmp.h),)
+ 	ONE_OBJS+=ext/libnatpmp/natpmp.o ext/libnatpmp/getgateway.o
+ else
+ 	LDLIBS+=-lnatpmp

@@ -25,6 +25,7 @@ start_service() {
 	procd_set_param command /usr/sbin/ModemManager-wrapper
 	procd_append_param command --log-level="$LOG_LEVEL"
 	[ "$LOG_LEVEL" = "DEBUG" ] && procd_append_param command --debug
+	[ "$LOG_LEVEL" = "DEBUG" ] && procd_append_param command --log-file "/var/log/mm.log"
 	procd_set_param respawn "${respawn_threshold:-3600}" "${respawn_timeout:-5}" "${respawn_retry:-5}"
 	procd_set_param pidfile "${MODEMMANAGER_PID_FILE}"
 	procd_close_instance

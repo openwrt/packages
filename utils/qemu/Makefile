@@ -9,10 +9,10 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qemu
-PKG_VERSION:=9.0.2
+PKG_VERSION:=9.1.2
 PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=a8c3f596aece96da3b00cafb74baafa0d14515eafb8ed1ee3f7f5c2d0ebf02b6
+PKG_HASH:=19fd9d7535a54d6e044e186402aa3b3b1bdfa87c392ec8884855592c8510c96f
 PKG_SOURCE_URL:=https://download.qemu.org/
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=LICENSE tcg/LICENSE
@@ -24,11 +24,13 @@ PKG_INSTALL:=1
 PKG_BUILD_FLAGS:=no-mips16
 
 PKG_BUILD_DEPENDS+=spice-protocol
+PKG_BUILD_DEPENDS+=python3/host
 
 include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/package.mk
+include ../../lang/python/python3-host.mk
 
-QEMU_DEPS_IN_GUEST := @(TARGET_x86_64||TARGET_armsr||TARGET_malta)
+QEMU_DEPS_IN_GUEST := @(TARGET_x86||TARGET_x86_64||TARGET_armsr||TARGET_malta)
 QEMU_DEPS_IN_HOST := @(TARGET_x86_64||TARGET_armsr_armv8||TARGET_sunxi)
 QEMU_DEPS_IN_HOST += +libstdcpp
 QEMU_DEPS_IN_HOST += $(ICONV_DEPENDS)
@@ -361,7 +363,6 @@ CONFIGURE_ARGS +=			\
 CONFIGURE_ARGS +=			\
 	--enable-coroutine-pool		\
 	--enable-crypto-afalg		\
-	--enable-live-block-migration	\
 	--enable-membarrier		\
 	--enable-replication		\
 	--enable-lto			\
@@ -414,7 +415,6 @@ CONFIGURE_ARGS +=			\
 	--disable-numa			\
 	--disable-opengl		\
 	--disable-plugins		\
-	--disable-pvrdma		\
 	--disable-qom-cast-debug	\
 	--disable-rbd			\
 	--disable-rdma			\

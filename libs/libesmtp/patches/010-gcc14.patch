@@ -1,0 +1,27 @@
+--- a/smtp-api.c
++++ b/smtp-api.c
+@@ -22,6 +22,10 @@
+ 
+ #include <config.h>
+ 
++#ifndef _GNU_SOURCE
++#define _GNU_SOURCE
++#endif
++
+ #include <stdarg.h>
+ #include <string.h>
+ #include <stdlib.h>
+--- a/smtp-tls.c
++++ b/smtp-tls.c
+@@ -47,6 +47,11 @@
+ 
+ /* This stuff doesn't belong here */
+ /* vvvvvvvvvvv */
++
++#ifndef _GNU_SOURCE
++#define _GNU_SOURCE
++#endif
++
+ #include <sys/types.h>
+ #include <sys/stat.h>
+ #include <unistd.h>

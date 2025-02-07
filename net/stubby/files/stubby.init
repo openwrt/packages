@@ -11,6 +11,7 @@ stubby_config_dir="/var/etc/stubby"
 stubby_config="$stubby_config_dir/stubby.yml"
 stubby_pid_file="/var/run/stubby.pid"
 stubby_manual_config="/etc/stubby/stubby.yml"
+stubby_default_appdata_dir="/var/lib/stubby"
 
 boot()
 {
@@ -49,7 +50,7 @@ generate_config()
     config_get round_robin "global" round_robin_upstreams "1"
     echo "round_robin_upstreams: $round_robin"
 
-    config_get appdata_dir "global" appdata_dir "/var/lib/stubby"
+    config_get appdata_dir "global" appdata_dir "$stubby_default_appdata_dir"
     echo "appdata_dir: \"$appdata_dir\""
 
     config_get trust_anchors_backoff_time "global" trust_anchors_backoff_time "2500"
@@ -211,6 +212,7 @@ start_service() {
     local manual
     local log_level
     local command_line_arguments
+    local appdata_dir
 
     mkdir -p "$stubby_config_dir"
 
@@ -227,6 +229,14 @@ start_service() {
     fi
     chown stubby:stubby "$stubby_config"
     chmod 0400 "$stubby_config"
+
+    config_get appdata_dir "global" appdata_dir "$stubby_default_appdata_dir"
+    if [ -n "$appdata_dir" ]; then
+        if mkdir -p "$appdata_dir"; then
+            chown stubby:stubby "$appdata_dir"
+            chmod 0700 "$appdata_dir"
+        fi
+    fi
 
     config_get command_line_arguments "global" command_line_arguments ""
 

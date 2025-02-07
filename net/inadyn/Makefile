@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=inadyn
-PKG_VERSION:=2.11.0
+PKG_VERSION:=2.12.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/troglobit/inadyn/releases/download/v$(PKG_VERSION)
-PKG_HASH:=9c8b2a425acb9681564e9fc25a319f2109c7d2ebe1ffe99b06d4a722efb6ecba
+PKG_HASH:=e64c4386b6f42bbace589b847f22823a755b59f14a277a5f556fef0d99069245
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0-or-later
@@ -46,6 +46,8 @@ CONFIGURE_ARGS += \
 	--disable-static \
 	--enable-openssl \
 	--with-pic
+
+TARGET_CFLAGS += -D_GNU_SOURCE
 
 define Package/inadyn/install
 	$(INSTALL_DIR) $(1)/usr/sbin

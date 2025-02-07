@@ -1,13 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=restic-rest-server
-PKG_VERSION:=0.12.1
+PKG_VERSION:=0.13.0
 PKG_RELEASE:=1
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/rest-server-$(PKG_VERSION)
 PKG_SOURCE:=rest-server-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/restic/rest-server/tar.gz/v${PKG_VERSION}?
-PKG_HASH:=cfbeb4a66cac6fc36b1cb11256f06c6e4fcc7a28c2ef590550adf1c199b9aa4b
+PKG_HASH:=bc2f57f07fc7affa7d419b8034f2bb7638c14976505966c93f7d75e90ad0d460
 
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=LICENSE

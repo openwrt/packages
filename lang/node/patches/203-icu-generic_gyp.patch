@@ -16,7 +16,7 @@
              'include_dirs': [
                '<(icu_path)/source/i18n',
              ],
-@@ -200,6 +202,7 @@
+@@ -223,6 +225,7 @@
                # full data - no trim needed
                'sources': [ '<(SHARED_INTERMEDIATE_DIR)/icudt<(icu_ver_major)_dat.<(icu_asm_ext)' ],
                'dependencies': [ 'genccode#host', 'icupkg#host', 'icu_implementation#host', 'icu_uconfig' ],
@@ -24,7 +24,7 @@
                'include_dirs': [
                  '<(icu_path)/source/common',
                ],
-@@ -284,6 +287,7 @@
+@@ -307,6 +310,7 @@
                # This file contains the small ICU data
                'sources': [ '<(SHARED_INTERMEDIATE_DIR)/icusmdt<(icu_ver_major)_dat.<(icu_asm_ext)' ],
                # for umachine.h
@@ -32,7 +32,7 @@
                'include_dirs': [
                  '<(icu_path)/source/common',
                ],
-@@ -300,6 +304,7 @@
+@@ -323,6 +327,7 @@
        'sources': [
          '<@(icu_src_stubdata)'
        ],
@@ -40,7 +40,7 @@
        'include_dirs': [
          '<(icu_path)/source/common',
        ],
-@@ -339,6 +344,7 @@
+@@ -362,6 +367,7 @@
            '_XOPEN_SOURCE_EXTENDED=0',
          ]}],
        ],
@@ -48,7 +48,7 @@
        'include_dirs': [
          '<(icu_path)/source/common',
        ],
-@@ -348,6 +354,7 @@
+@@ -371,6 +377,7 @@
        'cflags_c': ['-std=c99'],
        'export_dependent_settings': [ 'icu_uconfig', 'icu_uconfig_target' ],
        'direct_dependent_settings': {
@@ -56,7 +56,7 @@
          'include_dirs': [
            '<(icu_path)/source/common',
          ],
-@@ -378,6 +385,7 @@
+@@ -401,6 +408,7 @@
          '<(icu_path)/source/tools/toolutil/dbgutil.cpp',
          '<(icu_path)/source/tools/toolutil/dbgutil.h',
        ],
@@ -64,7 +64,7 @@
        'include_dirs': [
          '<(icu_path)/source/common',
          '<(icu_path)/source/i18n',
-@@ -397,6 +405,7 @@
+@@ -420,6 +428,7 @@
          }]
        ],
        'direct_dependent_settings': {
@@ -72,7 +72,7 @@
          'include_dirs': [
            '<(icu_path)/source/common',
            '<(icu_path)/source/i18n',
-@@ -418,6 +427,7 @@
+@@ -441,6 +450,7 @@
        'target_name': 'genrb',
        'type': 'executable',
        'toolsets': [ 'host' ],
@@ -80,7 +80,7 @@
        'dependencies': [ 'icutools', 'icu_implementation' ],
        'sources': [
          '<@(icu_src_genrb)'
-@@ -440,6 +450,7 @@
+@@ -463,6 +473,7 @@
        'target_name': 'iculslocs',
        'toolsets': [ 'host' ],
        'type': 'executable',
@@ -88,7 +88,7 @@
        'dependencies': [ 'icutools' ],
        'sources': [
          'iculslocs.cc',
-@@ -458,6 +469,7 @@
+@@ -481,6 +492,7 @@
        'target_name': 'icupkg',
        'toolsets': [ 'host' ],
        'type': 'executable',
@@ -96,7 +96,7 @@
        'dependencies': [ 'icutools' ],
        'sources': [
          '<@(icu_src_icupkg)',
-@@ -475,6 +487,7 @@
+@@ -498,6 +510,7 @@
        'target_name': 'genccode',
        'toolsets': [ 'host' ],
        'type': 'executable',

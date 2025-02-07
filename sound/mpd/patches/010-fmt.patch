@@ -1,0 +1,20 @@
+--- a/src/client/Response.hxx
++++ b/src/client/Response.hxx
+@@ -83,7 +83,7 @@ public:
+ 	template<typename S, typename... Args>
+ 	bool Fmt(const S &format_str, Args&&... args) noexcept {
+ #if FMT_VERSION >= 90000
+-		return VFmt(format_str,
++		return VFmt(fmt::format_string<Args...>(format_str),
+ 			    fmt::make_format_args(args...));
+ #elif FMT_VERSION >= 70000
+ 		return VFmt(fmt::to_string_view(format_str),
+@@ -113,7 +113,7 @@ public:
+ 	void FmtError(enum ack code,
+ 		      const S &format_str, Args&&... args) noexcept {
+ #if FMT_VERSION >= 90000
+-		return VFmtError(code, format_str,
++		return VFmtError(code, fmt::format_string<Args...>(format_str),
+ 				 fmt::make_format_args(args...));
+ #elif FMT_VERSION >= 70000
+ 		return VFmtError(code, fmt::to_string_view(format_str),

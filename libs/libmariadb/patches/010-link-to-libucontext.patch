@@ -12,18 +12,18 @@ providing these system calls on platforms not supporting them out of
 the box - like musl based platforms.
 --- a/libmariadb/CMakeLists.txt
 +++ b/libmariadb/CMakeLists.txt
-@@ -417,7 +417,7 @@ ELSE()
+@@ -458,7 +458,7 @@ ELSE()
    SET_TARGET_PROPERTIES(libmariadb PROPERTIES LINKER_LANGUAGE C)
  ENDIF()
  
--TARGET_LINK_LIBRARIES(libmariadb LINK_PRIVATE ${SYSTEM_LIBS})
-+TARGET_LINK_LIBRARIES(libmariadb LINK_PRIVATE ${SYSTEM_LIBS} ${LIBUCONTEXT_POSIX} ${LIBUCONTEXT})
+-TARGET_LINK_LIBRARIES(libmariadb LINK_PRIVATE ${SYSTEM_LIBS} ${CRYPTO_LIBS})
++TARGET_LINK_LIBRARIES(libmariadb LINK_PRIVATE ${SYSTEM_LIBS} ${CRYPTO_LIBS} ${LIBUCONTEXT_POSIX} ${LIBUCONTEXT})
  
  SIGN_TARGET(libmariadb)
  
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -230,6 +230,14 @@ IF(UNIX)
+@@ -251,6 +251,14 @@ IF(UNIX)
    SEARCH_LIBRARY(LIBPTHREAD pthread_getspecific "pthread;pthreads")
    SEARCH_LIBRARY(LIBNSL gethostbyname_r "nsl_r;nsl")
    SEARCH_LIBRARY(LIBSOCKET setsockopt socket)
@@ -36,8 +36,8 @@ the box - like musl based platforms.
 +    UNSET(LIBUCONTEXT_POSIX)
 +  ENDIF()
    FIND_PACKAGE(Threads)
-   SET(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${LIBNSL} ${LIBBIND} ${LIBICONV} ${LIBZ}
-     ${LIBSOCKET} ${CMAKE_DL_LIBS} ${LIBM} ${LIBPTHREAD})
+   SET(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${LIBNSL} ${LIBBIND} ${LIBICONV} ${ZLIB_LIBRARY} 
+       ${LIBSOCKET} ${CMAKE_DL_LIBS} ${LIBM} ${LIBPTHREAD})
 --- a/include/ma_config.h.in
 +++ b/include/ma_config.h.in
 @@ -28,6 +28,7 @@
@@ -50,7 +50,7 @@ the box - like musl based platforms.
   * function definitions - processed in LibmysqlFunctions.txt 
 --- a/include/ma_context.h
 +++ b/include/ma_context.h
-@@ -31,7 +31,7 @@
+@@ -32,7 +32,7 @@
  #define MY_CONTEXT_USE_X86_64_GCC_ASM
  #elif defined(__GNUC__) && __GNUC__ >= 3 && defined(__i386__)
  #define MY_CONTEXT_USE_I386_GCC_ASM

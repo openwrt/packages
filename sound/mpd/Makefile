@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpd
-PKG_VERSION:=0.23.15
-PKG_RELEASE:=2
+PKG_VERSION:=0.23.16
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.musicpd.org/download/mpd/0.23
-PKG_HASH:=550132239ad1acf82ccf8905b56cc13dc2c81a4489b96fba7731b3049907661a
+PKG_HASH:=9668e36df80de485683c962d02845bf314d8a08e6141af7afeff76401e32b2c1
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0-or-later
@@ -22,7 +22,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_BUILD_PATENTED \
 	CONFIG_IPV6 \
 
-PKG_BUILD_FLAGS:=no-mips16 no-lto
+PKG_BUILD_FLAGS:=no-mips16
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -101,6 +101,7 @@ define Package/mpd-avahi-service/conffiles
 endef
 
 MESON_ARGS += \
+	-Db_lto=true \
 	-Ddocumentation=disabled \
 	-Dhtml_manual=false \
 	-Dmanpages=false \

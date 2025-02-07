@@ -78,7 +78,6 @@ odhcpd_zonedata() {
       fi
     fi
 
-
     case $longconf in
     freshstart)
       awk -v conffile=$UB_DHCP_CONF -v pipefile=$dns_ls_new \
@@ -129,22 +128,11 @@ odhcpd_zonedata() {
 
 ##############################################################################
 
-UB_ODHPCD_LOCK=/tmp/unbound_odhcpd.lock
+UB_ODHCPD_LOCK=/var/lock/unbound_odhcpd.lock
 
-if [ ! -f $UB_ODHPCD_LOCK ] ; then
-  # imperfect but it should avoid collisions
-  touch $UB_ODHPCD_LOCK
+exec 1000>$UB_ODHCPD_LOCK
+if flock -x -n 1000 ; then
   odhcpd_zonedata
-  rm -f $UB_ODHPCD_LOCK
-
-else
-  UB_ODHCPD_LOCK_AGE=$(( $( date +%s ) - $( date -r $UB_ODHPCD_LOCK +%s ) ))
-
-  if [ $UB_ODHCPD_LOCK_AGE -gt 100 ] ; then
-    # unlock because something likely broke but do not write this time through
-    rm -f $UB_ODHPCD_LOCK
-  fi
 fi
 
 ##############################################################################
-

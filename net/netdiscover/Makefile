@@ -8,14 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netdiscover
-PKG_VERSION:=0.3-pre-beta7
+PKG_REAL_VERSION:=0.3-pre-beta7
+PKG_VERSION:=0.3_beta7
 PKG_RELEASE:=2
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-LINUXONLY.tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_REAL_VERSION)-LINUXONLY.tar.gz
 PKG_SOURCE_URL:=@SF/netdiscover
 PKG_HASH:=01c6e090c3b06e374005f7efcead3b5b2f63f47bfb94383c1dbde9abcf1cd8aa
 PKG_MAINTAINER:=Mislav Novakovic <mislav.novakovic@sartura.hr>
 PKG_LICENSE:=GPL-2.0
+
+PKG_BUILD_DIR :=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_REAL_VERSION)
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

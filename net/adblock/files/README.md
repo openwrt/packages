@@ -20,6 +20,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | antipopads          |         | L    | compilation      | [Link](https://github.com/AdroitAdorKhan/antipopads-re)                           |
 | anudeep             |         | M    | compilation      | [Link](https://github.com/anudeepND/blacklist)                                    |
 | bitcoin             |         | S    | mining           | [Link](https://github.com/hoshsadiq/adblock-nocoin-list)                          |
+| certpl              |         | L    | phishing         | [Link](https://cert.pl/en/warning-list/)                                          |
 | cpbl                |         | XL   | compilation      | [Link](https://github.com/bongochong/CombinedPrivacyBlockLists)                   |
 | disconnect          |         | S    | general          | [Link](https://disconnect.me)                                                     |
 | doh_blocklist       |         | S    | doh_server       | [Link](https://github.com/dibdot/DoH-IP-blocklists)                               |
@@ -33,6 +34,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | notracking          |         | XL   | tracking         | [Link](https://github.com/notracking/hosts-blocklists)                            |
 | oisd_big            |         | XXL  | general          | [Link](https://oisd.nl)                                                           |
 | oisd_nsfw           |         | XXL  | porn             | [Link](https://oisd.nl)                                                           |
+| oisd_nsfw_small     |         | M    | porn             | [Link](https://oisd.nl)                                                           |
 | oisd_small          |         | L    | general          | [Link](https://oisd.nl)                                                           |
 | openphish           |         | S    | phishing         | [Link](https://openphish.com)                                                     |
 | phishing_army       |         | S    | phishing         | [Link](https://phishing.army)                                                     |
@@ -46,6 +48,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | reg_it              |         | S    | reg_italy        | [Link](https://easylist.to)                                                       |
 | reg_jp              |         | S    | reg_japan        | [Link](https://github.com/k2jp/abp-japanese-filters)                              |
 | reg_kr              |         | S    | reg_korea        | [Link](https://github.com/List-KR/List-KR)                                        |
+| reg_lt              |         | S    | reg_lithuania    | [Link](https://easylist.to)                                                       |
 | reg_nl              |         | S    | reg_netherlands  | [Link](https://easylist.to)                                                       |
 | reg_pl              |         | M    | reg_poland       | [Link](https://kadantiscam.netlify.com)                                           |
 | reg_ro              |         | S    | reg_romania      | [Link](https://easylist.to)                                                       |
@@ -72,7 +75,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
     • <b>VAR</b> (50k-900k) variable size depending on the selection.
 * Zero-conf like automatic installation & setup, usually no manual changes needed
 * Simple but yet powerful adblock engine: adblock does not use error prone external iptables rulesets, http pixel server instances and things like that
-* Supports five different DNS backend formats: dnsmasq, unbound, named (bind), kresd or raw (e.g. used by dnscrypt-proxy)
+* Supports six different DNS backend formats: dnsmasq, unbound, named (bind), kresd, smartdns or raw (e.g. used by dnscrypt-proxy)
 * Supports four different SSL-enabled download utilities: uclient-fetch, wget, curl or aria2c
 * Supports SafeSearch for google, bing, duckduckgo, yandex, youtube and pixabay
 * Supports RPZ-trigger 'RPZ-CLIENT-IP' to always allow/deny certain DNS clients based on their IP address (currently only supported by bind dns backend)
@@ -177,6 +180,7 @@ Available commands:
 | adb_repchunksize   | 1                                  | report chunk size used by tcpdump in MB                                                        |
 | adb_represolve     | 0, disabled                        | resolve reporting IP addresses using reverse DNS (PTR) lookups                                 |
 | adb_backup         | 1, enabled                         | set to 0 to disable the backup function                                                        |
+| adb_tld            | 1, enabled                         | set to 0 to disable the top level domain compression (tld) function                            |
 | adb_backupdir      | /tmp                               | path for adblock backups                                                                       |
 | adb_tmpbase        | /tmp                               | path for all adblock related runtime operations, e.g. downloading, sorting, merging etc.       |
 | adb_safesearch     | 0, disabled                        | set to 1 to enforce SafeSearch for google, bing, duckduckgo, yandex, youtube and pixabay       |
@@ -216,6 +220,9 @@ and at the end of the file add:
 **Change the DNS backend to 'kresd':**
 Adblock deposits the final blocklist 'adb_list.overall' in '/etc/kresd', no further configuration needed.
 <b>Please note:</b> The knot-resolver (kresd) is only available on Turris devices and does not support the SafeSearch functionality yet.
+
+**Change the DNS backend to 'smartdns':**
+No further configuration is needed, adblock deposits the final blocklist 'adb_list.overall' in '/tmp/smartdns' by default.
 
 **Use restrictive jail modes:**
 You can enable a restrictive 'adb_list.jail' to block access to all domains except those listed in the whitelist file. Usually this list will be generated as an additional list for guest or kidsafe configurations (for a separate dns server instance). If the jail directory points to your primary dns directory, adblock enables the restrictive jail mode automatically (jail mode only).
@@ -257,17 +264,16 @@ To get the status in the CLI, just call _/etc/init.d/adblock status_ or _/etc/in
 ~#@blackhole:~# /etc/init.d/adblock status
 ::: adblock runtime information
   + adblock_status  : enabled
-  + adblock_version : 4.1.4
-  + blocked_domains : 268355
-  + active_sources  : adaway, adguard, adguard_tracking, android_tracking, bitcoin, disconnect, firetv_tracking, games_t
-                      racking, hblock, oisd_basic, phishing_army, smarttv_tracking, stopforumspam, wally3k, winspy, yoyo
-  + dns_backend     : unbound (unbound-control), /var/lib/unbound
-  + run_utils       : download: /usr/bin/curl, sort: /usr/libexec/sort-coreutils, awk: /bin/busybox
-  + run_ifaces      : trigger: wan, report: br-lan
-  + run_directories : base: /tmp, backup: /mnt/data/adblock-Backup, report: /mnt/data/adblock-Report, jail: /tmp
-  + run_flags       : backup: ✔, flush: ✘, force: ✔, search: ✘, report: ✔, mail: ✔, jail: ✘
-  + last_run        : restart, 3m 17s, 249/73/68, 2022-09-10T13:43:07+02:00
-  + system          : ASUS RT-AX53U, OpenWrt SNAPSHOT r20535-2ca5602864
+  + adblock_version : 4.2.3-r1
+  + blocked_domains : 785573
+  + active_sources  : adguard, doh_blocklist, hagezi, winspy
+  + dns_backend     : dnsmasq (-), /tmp/dnsmasq.d
+  + run_utils       : download: /usr/bin/curl, sort: /usr/libexec/sort-coreutils, awk: /usr/bin/gawk
+  + run_ifaces      : trigger: trm_wwan, report: br-lan
+  + run_directories : base: /tmp, backup: /tmp/adblock-Backup, report: /tmp/adblock-Report, jail: /tmp
+  + run_flags       : backup: ✔, tld: ✔, force: ✔, flush: ✘, search: ✘, report: ✔, mail: ✘, jail: ✘
+  + last_run        : reload, 1m 3s, 650 MB available, 1664 KB max. used, 2024-11-23T18:11:41+01:00
+  + system          : OpenWrt One, mediatek/filogic, OpenWrt SNAPSHOT r28034-ca53f2d430
 </code></pre>
 The 'last\_run' line includes the used start type, the run duration, the memory footprint after DNS backend loading (total/free/available) and the date/time of the last run.
 

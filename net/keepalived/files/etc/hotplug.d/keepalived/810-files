@@ -15,4 +15,7 @@ add_sync_file /etc/shinit
 add_sync_file /etc/sysctl.conf
 add_sync_file /tmp/dhcp.leases
 
+# uncomment the following line and add /etc/hotplug.d/keepalived to sysupgrade.conf or keepalived configuration in order to enable hotplug scripts sync
+# add_sync_file /etc/hotplug.d/keepalived
+
 keepalived_hotplug

@@ -5,14 +5,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openwisp-config
-PKG_VERSION:=1.0.1
-PKG_RELEASE:=3
+PKG_VERSION:=1.1.0
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Federico Capoano <f.capoano@openwisp.io>
 PKG_LICENSE:=GPL-3.0-or-later
 
 PKG_SOURCE_URL:=https://github.com/openwisp/openwisp-config.git
-PKG_MIRROR_HASH:=14d65c0aa092b5815bcc3b53c26784a069adf783d3e2c6f5f13a4d62024e5620
+PKG_MIRROR_HASH:=c78dc17353c642a6f998531f18e20f0651f946d665506a000308e77c02324a79
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
 
@@ -38,6 +38,7 @@ endef
 
 define Package/openwisp-config/conffiles
 /etc/config/openwisp
+/etc/openwisp/
 endef
 
 define Package/openwisp-config/install
@@ -45,16 +46,16 @@ define Package/openwisp-config/install
 		$(1)/usr/sbin \
 		$(1)/etc/init.d \
 		$(1)/etc/config \
-		$(1)/etc/openwisp \
+		$(1)/usr/lib/openwisp-config \
 		$(1)/usr/lib/lua/openwisp
 
 	$(INSTALL_BIN) \
 		$(PKG_BUILD_DIR)/openwisp-config/files/openwisp.agent \
-		$(1)/usr/sbin/openwisp_config
+		$(1)/usr/sbin/openwisp-config
 
 	$(INSTALL_BIN) \
 		$(PKG_BUILD_DIR)/openwisp-config/files/openwisp.init \
-		$(1)/etc/init.d/openwisp_config
+		$(1)/etc/init.d/openwisp-config
 
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/openwisp-config/files/openwisp.config \
 		$(1)/etc/config/openwisp
@@ -95,7 +96,11 @@ define Package/openwisp-config/install
 		$(PKG_BUILD_DIR)/openwisp-config/files/sbin/openwisp-get-address.lua \
 		$(1)/usr/sbin/openwisp-get-address
 
-	$(CP) $(PKG_BUILD_DIR)/VERSION $(1)/etc/openwisp/
+	$(INSTALL_BIN) \
+		$(PKG_BUILD_DIR)/openwisp-config/files/sbin/openwisp-get-random-number.lua \
+		$(1)/usr/sbin/openwisp-get-random-number
+
+	$(CP) $(PKG_BUILD_DIR)/VERSION $(1)/usr/lib/openwisp-config/
 endef
 
 $(eval $(call BuildPackage,openwisp-config))

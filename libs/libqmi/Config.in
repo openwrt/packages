@@ -19,9 +19,11 @@ choice
 
 	config LIBQMI_COLLECTION_MINIMAL
 		depends on !MODEMMANAGER_WITH_QMI
+		depends on !FWUPD_PLUGIN_MODEMMANAGER
 		bool "minimal"
 
 	config LIBQMI_COLLECTION_BASIC
+		depends on !FWUPD_PLUGIN_MODEMMANAGER
 		bool "basic (default)"
 
 	config LIBQMI_COLLECTION_FULL

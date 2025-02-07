@@ -20,7 +20,7 @@
 	}
 
 	[ -x /etc/mwan3.user ] || chmod 755 /etc/mwan3.user
-	env -i ACTION="$ACTION" INTERFACE="$INTERFACE" DEVICE="$DEVICE" /etc/mwan3.user
+	env -i ACTION="$ACTION" INTERFACE="$INTERFACE" DEVICE="$DEVICE" /etc/mwan3.user 1000>&-
 }
 
 exit 0

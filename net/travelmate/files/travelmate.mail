@@ -18,11 +18,14 @@ trm_mailreceiver="$(uci_get travelmate global trm_mailreceiver)"
 trm_mailprofile="$(uci_get travelmate global trm_mailprofile "trm_notify")"
 trm_mailsender="$(uci_get travelmate global trm_mailsender "no-reply@travelmate")"
 trm_rtfile="$(uci_get travelmate global trm_rtfile "/tmp/trm_runtime.json")"
-trm_mailpgm="$(command -v msmtp)"
+trm_mailcmd="$(command -v msmtp)"
+trm_ubuscmd="$(command -v ubus)"
+trm_jsoncmd="$(command -v jsonfilter)"
 trm_logger="$(command -v logger)"
+trm_ver="$("${trm_ubuscmd}" -S call rpc-sys packagelist '{ "all": true }' 2>/dev/null | "${trm_jsoncmd}" -ql1 -e '@.packages.travelmate')"
 
 if [ -z "${trm_mailreceiver}" ]; then
-	"${trm_logger}" -p "err" -t "trm-mail [${$}]" "please set the mail receiver with the 'trm_mailreceiver' option" 2>/dev/null
+	"${trm_logger}" -p "err" -t "trm-${trm_ver}[${$}]" "please set the mail receiver with the 'trm_mailreceiver' option" 2>/dev/null
 	exit 1
 fi
 
@@ -50,5 +53,5 @@ trm_mailtext="${trm_mailtext}</pre></body></html>"
 
 # send mail
 #
-printf "%b" "${trm_mailhead}${trm_mailtext}" 2>/dev/null | "${trm_mailpgm}" ${debug} -a "${trm_mailprofile}" "${trm_mailreceiver}" >/dev/null 2>&1
-"${trm_logger}" -p "info" -t "trm-mail [${$}]" "mail sent to '${trm_mailreceiver}' with rc '${?}'" 2>/dev/null
+printf "%b" "${trm_mailhead}${trm_mailtext}" 2>/dev/null | "${trm_mailcmd}" ${debug} -a "${trm_mailprofile}" "${trm_mailreceiver}" >/dev/null 2>&1
+"${trm_logger}" -p "info" -t "trm-${trm_ver}[${$}]" "mail sent to '${trm_mailreceiver}' with rc '${?}'" 2>/dev/null

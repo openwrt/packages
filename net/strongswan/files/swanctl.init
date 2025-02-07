@@ -421,6 +421,21 @@ config_pool() {
 	swanctl_xappend1 "}"
 }
 
+config_mschapv2_secret() {
+	local conf="$1"
+
+	local id
+	local secret
+
+	config_get id "$conf" id
+	config_get secret "$conf" secret
+
+	swanctl_xappend1 "eap-${conf} {"
+	swanctl_xappend2 "id = $id"
+	swanctl_xappend2 "secret = $secret"
+	swanctl_xappend1 "}"
+}
+
 config_remote() {
 	local conf="$1"
 
@@ -445,6 +460,7 @@ config_remote() {
 	local rekeytime
 	local remote_ca_certs
 	local pools
+	local eap_id
 
 	config_get_bool enabled "$conf" enabled 0
 	[ $enabled -eq 0 ] && return
@@ -466,6 +482,8 @@ config_remote() {
 	config_get ca_cert "$conf" ca_cert ""
 	config_get rekeytime "$conf" rekeytime
 	config_get overtime "$conf" overtime
+	config_get send_cert "$conf" send_cert
+	config_get eap_id "$conf" eap_id "%any"
 
 	config_list_foreach "$conf" local_sourceip append_var local_sourceip ","
 	config_list_foreach "$conf" remote_ca_certs append_var remote_ca_certs ","
@@ -525,11 +543,14 @@ config_remote() {
 	[ -n "$fragmentation" ] && swanctl_xappend2 "fragmentation = $fragmentation"
 	[ -n "$pools" ] && swanctl_xappend2 "pools = $pools"
 
+	local local_auth_method="$auth_method"
+	[ "$auth_method" = "eap-mschapv2" ] && local_auth_method="pubkey"
+
 	swanctl_xappend2 "local {"
-	swanctl_xappend3 "auth = $auth_method"
+	swanctl_xappend3 "auth = $local_auth_method"
 
 	[ -n "$local_identifier" ] && swanctl_xappend3 "id = \"$local_identifier\""
-	[ "$auth_method" = pubkey ] && [ -n "$local_cert" ] && \
+	[ "$local_auth_method" = pubkey ] && [ -n "$local_cert" ] && \
 	    swanctl_xappend3 "certs = $local_cert"
 	swanctl_xappend2 "}"
 
@@ -537,6 +558,7 @@ config_remote() {
 	swanctl_xappend3 "auth = $auth_method"
 	[ -n "$remote_identifier" ] && swanctl_xappend3 "id = \"$remote_identifier\""
 	[ -n "$remote_ca_certs" ] && swanctl_xappend3 "cacerts = \"$remote_ca_certs\""
+	[ "$auth_method" = eap-mschapv2 ] && swanctl_xappend3 "eap_id = $eap_id"
 	swanctl_xappend2 "}"
 
 	swanctl_xappend2 "children {"
@@ -559,6 +581,8 @@ config_remote() {
 		keyexchange=
 		;;
 	esac
+
+	[ -n "$send_cert" ] && swanctl_xappend2 "send_cert = $send_cert"
 
 	[ $mobike -eq 1 ] && swanctl_xappend2 "mobike = yes" || swanctl_xappend2 "mobike = no"
 
@@ -603,13 +627,12 @@ config_remote() {
 		fi
 		swanctl_xappend1 "}"
 		swanctl_xappend0 "}"
+	elif [ "$auth_method" = eap-mschapv2 ]; then
+		# EAP-MSCHAPv2 secrets are handled in config_mschapv2_secrets globally
+		:  # empty command
 	else
 		fatal "AuthenticationMode $auth_mode not supported"
 	fi
-
-	swanctl_xappend0 "pools {"
-	config_list_foreach "$conf" pools config_pool
-	swanctl_xappend0 "}"
 
 	swanctl_xappend0 ""
 }
@@ -686,6 +709,17 @@ prepare_env() {
 	config_load ipsec
 	config_foreach config_ipsec ipsec
 	config_foreach config_remote remote
+	
+	swanctl_xappend0 "# Global config"
+	swanctl_xappend0 ""
+	
+	swanctl_xappend0 "pools {"
+	config_foreach config_pool pools
+	swanctl_xappend0 "}"
+
+	swanctl_xappend0 "secrets {"
+	config_foreach config_mschapv2_secret mschapv2_secrets
+	swanctl_xappend0 "}"
 
 	do_postamble
 }

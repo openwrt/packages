@@ -1,6 +1,6 @@
 --- a/scripts/mysqld_safe.sh
 +++ b/scripts/mysqld_safe.sh
-@@ -247,7 +247,7 @@ wsrep_recover_position() {
+@@ -253,7 +253,7 @@ wsrep_recover_position() {
      return 1
    fi
  
@@ -9,7 +9,7 @@
  
    local wr_options="--disable-log-error  --pid-file='$wr_pidfile'"
  
-@@ -669,7 +669,7 @@ then
+@@ -675,7 +675,7 @@ then
          * ) err_log="$DATADIR/$err_log" ;;
        esac
      else
@@ -18,7 +18,7 @@
      fi
    fi
  
-@@ -755,7 +755,7 @@ fi
+@@ -761,7 +761,7 @@ fi
  
  if test -z "$pid_file"
  then

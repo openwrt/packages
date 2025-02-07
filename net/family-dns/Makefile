@@ -17,6 +17,7 @@ define Package/family-dns
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=Family DNS
+	SUBMENU:=IP Addresses and Names
 	PKGARCH:=all
 endef
 

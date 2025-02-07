@@ -1,0 +1,20 @@
+--- a/include/mptcpd/private/sockaddr.h
++++ b/include/mptcpd/private/sockaddr.h
+@@ -18,6 +18,17 @@
+ 
+ #include <mptcpd/export.h>
+ 
++#ifndef __bswap_constant_32
++#define __bswap_constant_32(x)					\
++  ((((x) & 0xff000000u) >> 24) | (((x) & 0x00ff0000u) >> 8)	\
++   | (((x) & 0x0000ff00u) << 8) | (((x) & 0x000000ffu) << 24))
++#endif
++
++#ifndef __bswap_constant_16
++#define __bswap_constant_16(x)					\
++  ((__uint16_t) ((((x) >> 8) & 0xff) | (((x) & 0xff) << 8)))
++#endif
++
+ /**
+  * @name Swap host ordered bytes in an integer to network byte order.
+  *

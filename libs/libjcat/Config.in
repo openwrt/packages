@@ -1,0 +1,22 @@
+menu "Select libjcat options"
+	depends on PACKAGE_libjcat
+
+config LIBJCAT_GPG
+	bool "GPG"
+	default y
+	help
+	  Compile libjcat with GPG support
+
+config LIBJCAT_PKCS7
+	bool "PKCS #7"
+	default y
+	help
+	  Compile libjcat with PKCS #7 support
+
+config LIBJCAT_ED25519
+	bool "ed25519"
+	default n
+	help
+	  Compile libjcat with ed25519 support
+
+endmenu

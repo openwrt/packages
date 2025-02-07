@@ -31,23 +31,27 @@ _service() {
 	[ ! -x "$rc" ] && return
 
 	case $1 in
-		start) $rc running || $rc start ;;
-		stop) $rc running && $rc stop ;;
+		start) _service_running_check "$rc" || $rc start ;;
+		stop) _service_running_check "$rc" && $rc stop ;;
 		reload)
-			if $rc running; then
+			if _service_running_check "$rc"; then
 				$rc reload
 			else
 				$rc start
 			fi
 			;;
 		restart)
-			if $rc running; then
+			if _service_running_check "$rc"; then
 				$rc restart
 			else
 				$rc start
 			fi
 			;;
 	esac
+}
+
+_service_running_check() {
+	skip_running_check || "$1" running
 }
 
 _start_service() {
@@ -78,7 +82,18 @@ is_sync_file() {
 	list_contains SYNC_FILES_LIST "$1"
 }
 
-set_update_target() {
+is_sync_file_in_folder() {
+ 	local f="$1"
+	while [ "$f" != "" ]; do
+		f="${f%/*}"
+		if list_contains SYNC_FILES_LIST "$f"; then
+			return 0
+		fi
+	done
+	return 1
+}
+
+_set_update_target() {
 	set_var UPDATE_TARGET "${1:-1}"
 }
 
@@ -86,8 +101,8 @@ get_update_target() {
 	get_var UPDATE_TARGET
 }
 
-unset_update_target() {
-	set_var UPDATE_TARGET
+set_disable_update_target() {
+	_set_update_target 0
 }
 
 is_update_target() {
@@ -158,8 +173,20 @@ backup_and_stop() {
 	get_var_flag NOTIFY_BACKUP_STOP 1
 }
 
+set_skip_running_check() {
+	set_var NOTIFY_SKIP_RUNNING 1
+}
+
+skip_running_check() {
+	get_var_flag NOTIFY_SKIP_RUNNING
+}
+
+_set_reload_if_sync() {
+	set_var NOTIFY_SYNC_RELOAD "${1:-0}"
+}
+
 set_reload_if_sync() {
-	set_var NOTIFY_SYNC_RELOAD "${1:-1}"
+	_set_reload_if_sync 1
 }
 
 get_reload_if_sync() {
@@ -211,7 +238,7 @@ _notify_sync() {
 		return
 	fi
 
-	is_sync_file "$RSYNC_TARGET" || return
+	is_sync_file "$RSYNC_TARGET" || is_sync_file_in_folder "$RSYNC_TARGET" || return
 
 	if ! cp -a "$RSYNC_SOURCE" "$RSYNC_TARGET"; then
 		log_err "can not copy $RSYNC_SOURCE => $RSYNC_TARGET"
@@ -245,8 +272,8 @@ keepalived_hotplug() {
 	[ -z "$(get_fault_cb)" ] && set_fault_cb _notify_fault
 	[ -z "$(get_sync_cb)" ] && set_sync_cb _notify_sync
 
-	[ -z "$(get_update_target)" ] && set_update_target "$@"
-	[ -z "$(get_reload_if_sync)" ] && set_reload_if_sync "$@"
+	[ -z "$(get_update_target)" ] && _set_update_target "$@"
+	[ -z "$(get_reload_if_sync)" ] && _set_reload_if_sync "$@"
 
 	case $ACTION in
 		NOTIFY_MASTER) call_cb "$(get_master_cb)" ;;

@@ -91,6 +91,12 @@ validate_track_method() {
 				return 1
 			}
 			;;
+		nslookup)
+			command -v nslookup 1>/dev/null 2>&1 || {
+				LOG warn "Missing nslookup. Please install busybox package."
+				return 1
+			}
+			;;
 		*)
 			LOG warn "Unsupported tracking method: $track_method"
 			return 2
@@ -278,7 +284,7 @@ main() {
 							TRACK_PID=$!
 							wait $TRACK_PID
 							ping_status=$?
-							loss="$(sed $TRACK_OUTPUT -ne 's/.*\([0-9]\+\)% packet loss.*/\1/p')"
+							loss="$(sed $TRACK_OUTPUT -ne 's/.* \([0-9]\+\)% packet loss.*/\1/p')"
 							if [ "$ping_status" -ne 0 ] || [ "$loss" -eq 100 ]; then
 								latency=999999
 								loss=100
@@ -294,20 +300,44 @@ main() {
 						result=$?
 					;;
 					httping)
-						if [ "$httping_ssl" -eq 1 ]; then
-							WRAP httping -c $count -t $timeout -q "https://$track_ip" &> /dev/null &
+						if [ $check_quality -eq 0 ]; then
+							if [ "$httping_ssl" -eq 1 ]; then
+								WRAP httping -c $count -t $timeout -q "https://$track_ip" &> /dev/null &
+							else
+								WRAP httping -c $count -t $timeout -q "http://$track_ip" &> /dev/null &
+							fi
+							TRACK_PID=$!
+							wait $TRACK_PID
+							result=$?
 						else
-							WRAP httping -c $count -t $timeout -q "http://$track_ip" &> /dev/null &
+							if [ "$httping_ssl" -eq 1 ]; then
+								WRAP httping -c $count -t $timeout "https://$track_ip" 2> /dev/null > $TRACK_OUTPUT &
+							else
+								WRAP httping -c $count -t $timeout "http://$track_ip" 2> /dev/null > $TRACK_OUTPUT &
+							fi
+							TRACK_PID=$!
+							wait $TRACK_PID
+							ping_status=$?
+							loss="$(sed $TRACK_OUTPUT -ne 's/.* \([0-9]\+\).*% failed.*/\1/p')"
+							if [ "$ping_status" -ne 0 ] || [ "$loss" -eq 100 ]; then
+								latency=999999
+								loss=100
+							else
+								latency="$(sed $TRACK_OUTPUT -ne 's%\(rtt\|round-trip\).* = [^/]*/\([0-9]\+\).*%\2%p')"
+							fi
 						fi
+					;;
+					nping-*)
+						WRAP nping -${FAMILY#ipv} -c $count $track_ip --${track_method#nping-} > $TRACK_OUTPUT &
+						TRACK_PID=$!
+						wait $TRACK_PID
+						result=$(grep Lost $TRACK_OUTPUT | awk '{print $12}')
+					;;
+					nslookup)
+						WRAP nslookup www.google.com $track_ip > $TRACK_OUTPUT &
 						TRACK_PID=$!
 						wait $TRACK_PID
 						result=$?
-					;;
-					nping-*)
-						WRAP nping -c $count $track_ip --${FAMILY#nping-} > $TRACK_OUTPUT &
-						TRACK_PID=$!
-						wait $TRACK_PID
-						result=$(grep $TRACK_OUTPUT Lost | awk '{print $12}')
 					;;
 				esac
 				do_log=""

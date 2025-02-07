@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-good
-PKG_VERSION:=1.24.4
+PKG_VERSION:=1.24.10
 PKG_RELEASE:=1
 
 PKG_SOURCE:=gst-plugins-good-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gst-plugins-good/
-PKG_HASH:=023096d661cf58cde3e0dcdbf56897bf588830232358c305f3e15fd63e116626
+PKG_HASH:=fce748fa66d7a8ee1fb261489e59d01e3fa787623d6d5c35068416fe7cd0acb3
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-good-$(PKG_VERSION)
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
@@ -170,6 +170,7 @@ MESON_ARGS += \
 	\
 	-Dximagesrc=disabled \
 	-Dv4l2=$(if $(CONFIG_PACKAGE_gst1-mod-video4linux2),en,dis)abled \
+	-Dv4l2-gudev=disabled \
 	-Dexamples=disabled \
 	-Dtests=disabled \
 	-Dnls=enabled \

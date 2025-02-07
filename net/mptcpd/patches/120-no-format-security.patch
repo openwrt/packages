@@ -1,0 +1,11 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -321,7 +321,7 @@ AS_IF([test "x$enable_stack_protection"
+ # Format string vulnerabilities
+ # -Wformat=2 implies:
+ #    -Wformat -Wformat-nonliteral -Wformat-security -Wformat-y2k
+-AX_APPEND_COMPILE_FLAGS([-Wformat=2])
++# AX_APPEND_COMPILE_FLAGS([-Wformat=2])
+ 
+ # Position Independent Execution (PIE)
+ AX_APPEND_COMPILE_FLAGS([-fPIE], [EXECUTABLE_CFLAGS])

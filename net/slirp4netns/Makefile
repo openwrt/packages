@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=slirp4netns
-PKG_VERSION:=1.2.3
+PKG_VERSION:=1.3.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/rootless-containers/slirp4netns/archive/v$(PKG_VERSION)
-PKG_HASH:=acce648fab8fe5f113c41a8fd6d20177708519b4ddaa60f845e1998a17b22ca5
+PKG_HASH:=a3b7c7b593b279c46d25a48b583371ab762968e98b6a46457d8d52a755852eb9
 
 PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later

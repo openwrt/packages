@@ -1,0 +1,19 @@
+From 60336ceecbd1cda73aa26dd44cfdaf2e31a046e1 Mon Sep 17 00:00:00 2001
+From: Tobias Brunner <tobias@strongswan.org>
+Date: Fri, 4 Oct 2024 11:23:28 +0200
+Subject: [PATCH] wolfssl: Don't undef PARSE_ERROR as headers included later
+ might refer to it
+
+---
+ src/libstrongswan/plugins/wolfssl/wolfssl_common.h | 2 --
+ 1 file changed, 2 deletions(-)
+
+--- a/src/libstrongswan/plugins/wolfssl/wolfssl_common.h
++++ b/src/libstrongswan/plugins/wolfssl/wolfssl_common.h
+@@ -78,6 +78,4 @@ typedef union {
+ } wolfssl_ed_key;
+ #endif /* HAVE_ED25519 || HAVE_ED448 */
+ 
+-#undef PARSE_ERROR
+-
+ #endif /* WOLFSSL_PLUGIN_COMMON_H_ */

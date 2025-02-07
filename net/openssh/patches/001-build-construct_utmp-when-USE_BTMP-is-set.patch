@@ -1,0 +1,30 @@
+From 76a618d2842c34c16cd21a4efc7230e2f459008d Mon Sep 17 00:00:00 2001
+From: Damien Miller <djm@mindrot.org>
+Date: Wed, 25 Sep 2024 11:13:05 +1000
+Subject: [PATCH] build construct_utmp() when USE_BTMP is set
+
+Fixes compile error on Void Linux/Musl
+---
+ loginrec.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/loginrec.c
++++ b/loginrec.c
+@@ -614,7 +614,7 @@ line_abbrevname(char *dst, const char *s
+  ** into account.
+  **/
+ 
+-#if defined(USE_UTMP) || defined (USE_WTMP) || defined (USE_LOGIN)
++#if defined(USE_BTMP) || defined(USE_UTMP) || defined (USE_WTMP) || defined (USE_LOGIN)
+ 
+ /* build the utmp structure */
+ void
+@@ -698,7 +698,7 @@ construct_utmp(struct logininfo *li,
+ 	}
+ # endif
+ }
+-#endif /* USE_UTMP || USE_WTMP || USE_LOGIN */
++#endif /* USE_BTMP || USE_UTMP || USE_WTMP || USE_LOGIN */
+ 
+ /**
+  ** utmpx utility functions

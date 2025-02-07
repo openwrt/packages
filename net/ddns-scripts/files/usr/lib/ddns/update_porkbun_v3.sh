@@ -62,7 +62,7 @@ function api_call() {
 	response=$($CURL --data "$2" "$url")
 	write_log 7 "API response JSON payload: $response"
 	echo "$response"
-
+}
 
 # Check Porkbun API response status
 function json_check_status() {
@@ -130,6 +130,7 @@ function edit_record() {
 	local request response
 	json_init
 	json_authenticate
+	json_add_string "name" "$__SUBDOMAIN"
 	json_add_string "type" "$__TYPE"
 	json_add_string "content" "$__ADDR"
 	request=$(json_dump)

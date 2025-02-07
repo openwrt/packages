@@ -1,12 +1,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luajit2
-PKG_VERSION:=2.1-20240626
+PKG_SOURCE_DATE:=2024-11-13
+PKG_VERSION:=2.1.$(subst -,.,$(PKG_SOURCE_DATE))
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/openresty/luajit2/archive/refs/tags/v$(PKG_VERSION).tar.gz?
-PKG_HASH:=1e53822a1105df216b9657ccb0293a152ac5afd875abc848453bfa353ca8181b
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/openresty/luajit2
+PKG_SOURCE_VERSION:=098183d9d24b8942a26dcc720fe8725b287ec77f
+PKG_MIRROR_HASH:=a177f59e47ce45b84fe51c736121d03c39dd3273a6aac0c429d16cc8448deb5c
 
 PKG_MAINTAINER:=Javier Marcet <javier@marcet.info>
 PKG_LICENSE:=MIT

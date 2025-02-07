@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -74,6 +74,21 @@ AM_SILENT_RULES
+@@ -76,6 +76,21 @@ AM_SILENT_RULES
  AC_CANONICAL_HOST
  AB_INIT
  
