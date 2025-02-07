@@ -1,0 +1,22 @@
+diff --git a/src/pjs/types.hpp b/src/pjs/types.hpp
+index 47514e58..874066eb 100644
+--- a/src/pjs/types.hpp
++++ b/src/pjs/types.hpp
+@@ -1228,14 +1228,14 @@ private:
+     std::function<void(Object*, int, const Value&)> seti;
+   };
+ 
+-  thread_local static Ref<Class> m_c;
++  static Ref<Class> m_c;
+   thread_local static InitData* m_init_data;
+ };
+ 
+ template<class T>
+ Class* class_of() { return ClassDef<T>::get(); }
+ 
+-template<class T> thread_local Ref<Class> ClassDef<T>::m_c;
++template<class T> Ref<Class> ClassDef<T>::m_c;
+ template<class T> thread_local typename ClassDef<T>::InitData* ClassDef<T>::m_init_data = nullptr;
+ 
+ template<class T>
+
