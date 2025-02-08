@@ -1,68 +1,86 @@
 #!/usr/bin/ruby -Eutf-8
 # encoding: utf-8
 #
+# -*- mode: ruby -*-
+# vi: set tabstop=8 shiftwidth=8 noexpandtab:
+#
+#
 # Find dependencies between ruby packages
 #
 # Must run inside a openwrt with all *ruby* packages installed
 #
+#
+$debug=$stderr
+$info=$stderr
+$error=$stderr
+
+#$debug=File.open("/dev/null")
 
 require "rbconfig"
-
 RUBY_SIMPLE_VERSION = RUBY_VERSION.split(".")[0..1].join(".")
 failed = false
 
-puts "Loading all installed gems (unstable after external gems are instaled/update)"
+$info.puts "Loading all installed gems (unstable after external gems are instaled/update)"
 require 'rubygems'
 Gem::Specification.collect{ |g| g.name.downcase }.uniq.each {|g| gem g }
 
-puts "Looking for installed ruby packages..."
-packages=`opkg list-installed '*ruby*' | cut -d' ' -f 1`.split("\n")
-
-puts "Looking for packages files..."
-package_files=Hash.new { |h,k| h[k]=[] }
-packages.each do
-	|pkg|
-	files=`opkg files "#{pkg}" | sed -e 1d`.split("\n")
-	package_files[pkg]=files if files
+$info.puts "Looking for installed ruby packages (and its files)..."
+packages = []
+package_files = {}
+package_depends = {}
+packages_json=`apk info --format json --contents --depends --match url 'http://www.ruby-lang.org/'`
+require "json"
+JSON.parse(packages_json).each do |pkg|
+  next if not pkg["contents"]
+  packages << pkg["name"]
+  package_files[pkg["name"]] = pkg["contents"].map() {|file| "/#{file}" }
+  package_depends[pkg["name"]] = pkg["depends"].reject{|dep| dep =~ /^lib/ or dep == "ruby" }
 end
 # Fake enc/utf_16 to dummy enc:
 package_files["ruby-enc"]+=[RbConfig::CONFIG["rubylibdir"] + "/enc/utf_16.rb" ]
 
-require_regex=/^ *require ["']([^"']+)["'].*/
-require_regex_ignore=/^ *require ([a-zA-Z\$]|["']\$|.*\/$|.*#.*|.*\.$)/
+# These are Encodings that does not require extra files
+builtin_enc=[
+	Encoding.find("ASCII-8BIT"),
+	Encoding.find("UTF-8"),
+	Encoding.find("UTF-7"),
+	Encoding.find("US-ASCII"),
+]
+
+# List of requires that can be simply ignored, normally because they are conditional
+# requirements or to break loops
 require_ignore=%w{
 	bundler
 	capistrano/version
-	coverage/helpers
 	dbm
 	ffi
 	fiber
-	foo
 	gettext/mo
 	gettext/po_parser
 	graphviz
 	iconv
 	java
+	json/truffle_ruby/generator
 	jruby
-	json/pure
 	minitest/proveit
+	nkf.jar
 	open3/jruby_windows
+	parser
 	prism/prism
 	profile
+	psych_jars
 	racc/cparse-jruby.jar
-	repl_type_completor
+	ruby_parser
 	rubygems/defaults/operating_system
 	rubygems/net/http
 	rubygems/timeout
 	sorted_set
 	stackprof
-	thread
 	tracer
 	uconv
 	webrick
 	webrick/https
 	win32api
-	win32ole
 	win32/resolv
 	win32/sspi
 	xml/encoding-ja
@@ -71,111 +89,255 @@ require_ignore=%w{
 	xmlparser
 	xmlscan/scanner
 }
+# Keep track of which of these ignores really matters
+require_ignore_that_matched={}
 
-matched_ignored={}
+files_ignore=%w{
+	extconf.rb
+}
 
-builtin_enc=[
-	Encoding.find("ASCII-8BIT"),
-	Encoding.find("UTF-8"),
-	Encoding.find("UTF-7"),
-	Encoding.find("US-ASCII"),
-]
+# The digestor that parsers the ruby source code for requires or use of Encodings
+require "ripper"
+def parse_requires_ripper(source)
+	requires = []
+	encodings = []
 
-puts "Looking for requires in files..."
+	ast = Ripper.sexp(source)
+	stack = [ast]
+
+	until stack.empty?
+		node = stack.pop
+		next unless node.is_a?(Array)
+
+		case node[0]
+		when :command
+			req = nil
+			case node[1][1]
+			when "require"
+				#[:command, [:@ident, "require", [3, 0]], [:args_add_block, [[:string_literal, [:string_content, [:@tstring_content, "pathname", [3, 9]]]]], false]]
+				#[:command, [:@ident, "require", [3, 0]], [:args_add_block, [[:string_literal, [:string_content, [:@tstring_content, "rbconfig", [3, 9]]]]], false]]
+				#[:command, [:@ident, "require", [3, 0]], [:args_add_block, [[:string_literal, [:string_content, [:@tstring_content, "rubygems/dependency", [3, 9]]]]], false]]
+				# Only accepts requires with only a literal strings (without embeded expressions)
+				req = node[2][1][0][1][1][1] if node[2][1][0][1][1][0] == :@tstring_content and node[2][1][0][1].length == 2 rescue nil
+				requires << req if req
+			end
+
+			# node = [:command, [:@ident, "pp", [ln,col]], [:args_add_block, ...]]
+			if node[1][0] == :@ident && node[1][1] == "pp"
+				requires << "pp"
+			end
+
+		when :command_call
+			req = nil
+			# node = [:command_call, receiver, [:@period, ".", [ln,col]], [:@ident, "require", [ln,col]], args]
+			if node[3][1] == "require"
+				# Only accepts requires with only a literal strings (without embedded expressions)
+				args = node[4] rescue nil
+				if args && args[1] && args[1][0] && args[1][0][1] && args[1][0][1][1][0] == :@tstring_content && args[1][0][1].length == 2
+					req = args[1][0][1][1][1] rescue nil
+					requires << req if req
+				end
+			end			
+		# The args in Encoding.find (if a string constant) should also requires the encoding (but,in practice,
+		# there is no case for it current ruby code
+		when :const_path_ref
+			# [:const_path_ref, [:var_ref, [:@const, "Encoding", [136, 9]]], [:@const, "US_ASCII", [136, 19]]]
+			if node[1][0]=:const_ref and node[1][1][1] == "Encoding" and node[2][0] = :@const
+				enc = node[2][1]
+
+				enc = eval("Encoding::#{enc}")
+				encodings << enc if enc.kind_of? Encoding
+
+				# The builtin encodings do not populate Encoding::XXX constants
+				requires << "enc/encdb"
+			end
+
+			node.each do |child|
+				stack << child if child.is_a?(Array)
+			end
+
+		when :method_add_arg
+			# Detects fcall :pp => [:method_add_arg, [:fcall, [:@ident, "pp", [1,0]]], ...]
+			if node[1][0] == :fcall && node[1][1][0] == :@ident && node[1][1][1] == "pp"
+				requires << "pp"
+			end
+
+			# Detects Kernel.pp => [:method_add_arg, [:call, [:var_ref, [:@const, "Kernel", [1,0]]], :".", [:@ident, "pp", [1,8]]], ...]
+			if node[1][0] == :call &&
+			   node[1][1][0] == :var_ref && node[1][1][1][1] == "Kernel" &&
+			   node[1][3][0] == :@ident && node[1][3][1] == "pp"
+				requires << "pp"
+			end
+		end
+
+		node.each do |child|
+			stack << child if child.is_a?(Array)
+		end
+	end
+
+	return requires, encodings
+end
+
+require "prism"
+def parse_requires_prism(source)
+	requires  = []
+	encodings = []
+
+	result = Prism.parse(source)
+	stack  = [result.value] # root node
+
+	until stack.empty?
+		node = stack.pop
+		next unless node.is_a?(Prism::Node)
+
+		case node
+		when Prism::CallNode
+			# e.g. `require "foo"`
+			if node.name == :require && node.arguments&.arguments&.size == 1
+				arg = node.arguments.arguments.first
+				if arg.is_a?(Prism::StringNode)
+					requires << arg.unescaped
+				end
+			end
+
+			# Detects Kernel.pp or pp(...)
+			if node.name == :pp
+				if node.receiver.nil? # just `pp(...)`
+					requires << "pp"
+				elsif node.receiver.is_a?(Prism::ConstantReadNode) && node.receiver.name == :Kernel
+					requires << "pp"
+				end
+			end
+
+		when Prism::ConstantPathNode
+			# e.g. Encoding::US_ASCII
+			if node.parent.is_a?(Prism::ConstantReadNode) &&
+			   node.parent.name == :Encoding &&
+			   node.child.is_a?(Prism::ConstantReadNode)
+
+				enc = node.child.name.to_s
+				begin
+					enc_obj = Encoding.const_get(enc)
+					encodings << enc_obj if enc_obj.is_a?(Encoding)
+					requires << "enc/encdb"
+				rescue NameError
+					# ignore if unknown
+				end
+			end
+
+
+			# e.g. ::Encoding::XXX
+			if node.parent.is_a?(Prism::ConstantPathNode) &&
+			   node.parent.child.is_a?(Prism::ConstantReadNode) &&
+			   node.parent.child.name == :Encoding &&
+			   node.child.is_a?(Prism::ConstantReadNode)
+
+				enc = node.child.name.to_s
+				begin
+					enc_obj = Encoding.const_get(enc)
+					encodings << enc_obj if enc_obj.is_a?(Encoding)
+					requires << "enc/encdb"
+				rescue NameError
+				end
+			end
+		end
+
+		# Recurse through children
+		node.child_nodes.compact.each do |child|
+			stack << child
+		end
+	end
+
+	[requires, encodings]
+end
+
+# Now check what each files in packages needs
+$info.puts "Looking for requires in files..."
 files_requires=Hash.new { |h,k| h[k]=[] }
 packages.each do
-        |pkg|
+	|pkg|
+	$debug.puts "Checking pkg #{pkg}..."
+
 	package_files[pkg].each do
 		|file|
-		next if not File.file?(file)
+		next if not File.file?(file) or not File.readable?(file)
 
-		if not file =~ /.rb$/
-			if File.executable?(file)
-				magic=`head -c50 '#{file}' | head -1`
-				begin
-					if not magic =~ /ruby/
-						next
-					end
-				rescue
-					next
-				end
-			else
-				next
-			end
+		next if files_ignore.include?(file) or files_ignore.include?(file.sub(/.*\//,""))
+
+		#file = "/usr/lib/ruby/3.4/bundler/rubygems_ext.rb"
+		#file = "/usr/lib/ruby/3.4/openssl/buffering.rb"
+		#file = "/usr/lib/ruby/3.4/unicode_normalize/normalize.rb"
+		#file = "/usr/lib/ruby/3.4/rdoc/encoding.rb"
+		#file = "/usr/lib/ruby/3.4/bundler.rb"
+		#file = "/usr/lib/ruby/3.4/bundler/rubygems_ext.rb"
+		#file = "/usr/lib/ruby/gems/3.4/gems/debug-1.11.0/lib/debug/server.rb"
+
+		f = File.open(file,"r")
+		line1 = f.gets()
+
+		if not file =~ /\.rb$/
+			next if not File.executable?(file)
+			next if not line1[0..1] == "#!"
+			next if not line1 =~ /^#!.*ruby/
+			$debug.puts "File #{pkg}:#{file} is a ruby script"
 		end
-		#puts "Checking #{file}..."
-		File.open(file, "r") do
-			|f|
-			lineno=0
-			while line=f.gets() do
-				lineno+=1; encs=[]; requires=[]; need_encdb=false
+		# Ignore the shebang if present
+		line1 = f.gets() if line1 =~ /#!.*ruby/
 
-				line=line.chomp.gsub!(/^[[:blank:]]*/,"")
+		# Rewind to parse it all again
+		f.rewind()
 
-				case line
-				when /^#.*coding *:/
-					if lineno <= 2
-						enc=line.sub(/.*coding *: */,"").sub(/ .*/,"")
-						encs << Encoding.find(enc)
-					end
-				end
-				line.gsub!(/#.*/,"")
-				case line
-				when "__END__"
-					break
-				when /^require /
-					#puts "#{file}:#{line}"
-					if require_regex_ignore =~ line
-						puts "Ignoring #{line} at #{file}:#{lineno} (REGEX)..."
-						next
-					end
-					if not require_regex =~ line
-						puts "Unknown require: '#{line}' at file #{file}:#{lineno} and it did not match #{require_regex_ignore}"
-						failed=true
-					end
-					require=line.gsub(require_regex,"\\1")
-					require.gsub!(/\.(so|rb)$/,"")
+		#$debug.puts "Checking file #{pkg}:#{file}..."
+		requires, encodings = parse_requires_prism(f.read)
+		#requires2, encodings2 = parse_requires_ripper(f.read)
+		#if requires != requires2 or encodings != encodings2
+		#	p pkg
+		#	p file
+		#	pp requires, encodings
+		#	pp requires2, encodings2
+		#	exit
+		#end
 
-					if require_ignore.include?(require)
-						puts "Ignoring #{line} at #{file}:#{lineno} (STR)..."
-                                                matched_ignored[require]=1
-						next
-					end
+		requires.reject! {|req| require_ignore_that_matched[req]=1 if require_ignore.include?(req) }
+		# Relative paths are always internal
+		requires.reject! {|req| req =~ /^\./ }
 
-					files_requires[file] += [require]
-
-				when /Encoding::/
-					encs=line.scan(/Encoding::[[:alnum:]_]+/).collect {|enc| eval(enc) }.select {|enc| enc.kind_of? Encoding }
-					need_encdb=true
-				end
-
-				next if encs.empty?
-				required_encs = (encs - builtin_enc).collect {|enc| "enc/#{enc.name.downcase.gsub("-","_")}" }
-				required_encs << "enc/encdb" if need_encdb
-
-				files_requires[file] += required_encs
-			end
+		# get the magic encoding if present
+		if line1 =~ /^#\s*(en)?coding\s*[:=]\s*([a-zA-Z0-9_\-]+)\n/i
+			encodings << Encoding.find($2)
 		end
+
+		# ignore buildin encodings
+		encodings -= builtin_enc
+
+		# convert encodings to requires
+		requires += encodings.collect {|enc| "enc/#{enc.name.downcase.gsub("-","_")}" }
+		requires << "enc/encdb" if not encodings.empty?
+
+		files_requires[file] = requires
 	end
 end
 exit(1) if failed
 
-missed_ignored = (require_ignore - matched_ignored.keys).sort.join(",")
+# Check which require_ignore arr not in use
+missed_ignored = (require_ignore - require_ignore_that_matched.keys).sort.join(",")
 if not missed_ignored.empty?
-    puts "These 'require_ignore' didn't match anything: ",(require_ignore - matched_ignored.keys).sort.join(","),""
+	$error.puts "These 'require_ignore' didn't match anything: ",(require_ignore - require_ignore_that_matched.keys).sort.join(","),""
 end
 
-# From ruby source: grep -E 'rb_require' -R . | grep -E '\.c:.*rb_require.*'
 # Add dependencies of ruby files from ruby lib.so
 package_files.each do |(pkg,files)| files.each do |file|
 	case file
 	when /\/nkf\.so$/    ; files_requires[file]=files_requires[file] + ["enc/encdb"]
-	when /\/objspace\.so$/; files_requires[file]=files_requires[file] + ["tempfile"] 	# dump_output from ext/objspace/objspace_dump.c
-	when /\/openssl\.so$/; files_requires[file]=files_requires[file] + ["digest"] 		# Init_ossl_digest from ext/openssl/ossl_digest.c
+	when /\/json\/ext\/generator\.so$/ ; files_requires[file]=files_requires[file] + ["enc/encdb"]
+	when /\/json\/ext\/parser\.so$/ ; files_requires[file]=files_requires[file] + ["enc/encdb"]
+	when /\/nkf\.so$/    ; files_requires[file]=files_requires[file] + ["enc/encdb"]
+	when /\/objspace\.so$/; files_requires[file]=files_requires[file] + ["tempfile"]	# dump_output from ext/objspace/objspace_dump.c
+	when /\/openssl\.so$/; files_requires[file]=files_requires[file] + ["digest"]		# Init_ossl_digest from ext/openssl/ossl_digest.c
 	end
 end; end
 
-puts "Grouping package requirements per package"
+$info.puts "Grouping package requirements per package"
 package_requires_files = Hash.new{|h,k| h[k] = Hash.new { |h2,k2| h2[k2] = [] } }
 package_files.each do |(pkg,files)|
 	package_requires_files[pkg]
@@ -189,7 +351,7 @@ end
 # For optional require or for breaking cycle dependencies
 weak_dependency=Hash.new { |h,k| h[k]=[] }
 weak_dependency.merge!({
-	"ruby-irb"      =>%w{ruby-rdoc ruby-readline ruby-debug}, # irb/cmd/help.rb irb/cmd/debug.rb,3.2/irb/cmd/debug.rb 
+	"ruby-irb"      =>%w{ruby-rdoc ruby-readline ruby-debug}, # irb/cmd/help.rb irb/cmd/debug.rb,3.2/irb/cmd/debug.rb
 	"ruby-gems"     =>%w{ruby-bundler ruby-rdoc},             # rubygems.rb rubygems/server.rb rdoc/rubygems_hook
 	"ruby-racc"     =>%w{ruby-gems},			  # /usr/bin/racc*
 	"ruby-rake"     =>%w{ruby-gems ruby-debug},               # /usr/bin/rake gems/3.3/gems/rake-13.1.0/lib/rake/application.rb
@@ -198,58 +360,72 @@ weak_dependency.merge!({
 	"ruby-net-http" =>%w{ruby-open-uri}			  # net/http/status.rb
 })
 
-puts "Looking for package dependencies..."
-package_provides = {}
+# Identify which files a package requires
+$info.puts "Looking for package dependencies..."
+provided_by = {}
+package_provides = Hash[package_files.map() {|(pkg,files)| [pkg,files.map() {|file| file.sub(/\.(so|rb)$/,"")}]}]
 package_dependencies = Hash.new { |h,k| h[k]=[] }
 package_requires_files.each do
 	|(pkg,requires_files)|
 
 	requires_files.each do
 		|(require,files)|
-		if package_provides.include?(require)
-			found = package_provides[require]
-		else
-			found = package_files.detect {|(pkg,files)| files.detect {|file| $:.detect {|path| "#{path}/#{require}" == file.gsub(/\.(so|rb)$/,"") } } }
+
+		found = provided_by[require]
+		if not found
+			# local dir or in search path are acceptables
+			#search_paths = (files.map() {|file| file.sub(/\/[^\/]+$/,"") } + $:).uniq
+			search_files = $:.map() {|path| "#{path}/#{require.sub(/\.(so|rb)$/,"")}" }
+
+			found = package_provides.detect {|(_pkg,_files)| not (_files & search_files).empty? }
+
 			if not found
-				$stderr.puts "#{pkg}: Nothing provides #{require} for #{files.collect {|file| file.sub("/usr/lib/ruby/","") }.join(",")}"
+				$error.puts "#{pkg}: Nothing provides #{require} for #{files.collect {|file| file.sub("/usr/lib/ruby/","") }.join(",")}"
 				failed = true
 				next
 			end
 			found = found.first
-			package_provides[require] = found
+			provided_by[require] = found
 		end
+
 		if weak_dependency[pkg].include?(found)
-                        puts "#{pkg}: #{found} provides #{require} (weak depedendency ignored) for #{files.collect {|file| file.sub("/usr/lib/ruby/","") }.join(",")}"
+			$debug.puts "#{pkg}: #{found} provides #{require} (weak depedendency ignored) for #{files.collect {|file| file.sub("/usr/lib/ruby/","") }.join(",")}"
 		else
-			puts "#{pkg}: #{found} provides #{require} for #{files.collect {|file| file.sub("/usr/lib/ruby/","") }.join(",")}"
+			$debug.puts "#{pkg}: #{found} provides #{require} for #{files.collect {|file| file.sub("/usr/lib/ruby/","") }.join(",")}"
 			package_dependencies[pkg] += [found]
 		end
 	end
+	#break if pkg =~ /ruby-bundler.*/
 end
 if failed
-	puts "There is some missing requirements not mapped to files in packages."
-	puts "Please, fix the missing files or ignore them on require_ignore var"
+	$error.puts "There is some missing requirements not mapped to files in packages."
+	$error.puts "Please, fix the missing files or ignore them on require_ignore var"
 	exit(1)
 end
+
 # Remove self dependency
 package_dependencies = Hash[package_dependencies.collect {|(pkg,deps)| [pkg,package_dependencies[pkg]=deps.uniq.sort - [pkg]]}]
 package_dependencies.default = []
 
-puts "Expanding dependencies..."
+# Add explicity dependency
+package_dependencies["ruby-enc-extra"]+=["ruby-enc"]
+
+# Expanding dependencies, including the depedencies from required packages
+$info.puts "Expanding dependencies..."
 begin
 	changed=false
 	package_dependencies.each do
 		|(pkg,deps)|
 		next if deps.empty?
-		deps.each {|dep| puts "#{pkg}: #{dep} also depends on #{pkg}" if package_dependencies[dep].include?(pkg) }
+		deps.each {|dep| $info.puts "#{pkg}: #{dep} also depends on #{pkg}" if package_dependencies[dep].include?(pkg) }
 		deps_new = deps.collect {|dep| [dep] + package_dependencies[dep] }.inject([],:+).uniq.sort
 		if not deps == deps_new
-			puts "#{pkg}: {deps.join(",")} (OLD)"
-			puts "#{pkg}: #{deps_new.join(",")} (NEW)"
+			$debug.puts "#{pkg}: #{deps.join(",")} (OLD)"
+			$debug.puts "#{pkg}: #{deps_new.join(",")} (NEW)"
 			package_dependencies[pkg]=deps_new
 
 			if deps_new.include?(pkg)
-				$stderr.puts "#{pkg}: Circular dependency detected (#1)!"
+				$error.puts "#{pkg}: Circular dependency detected (#1)!"
 				exit 1
 			end
 			changed=true
@@ -257,17 +433,17 @@ begin
 	end
 end if not changed
 
-puts "Removing redundant dependencies..."
+$info.puts "Removing redundant dependencies..."
 package_dependencies.each do
 	|(pkg,deps)|
 	package_dependencies[pkg]=deps.uniq - [pkg]
 end
 
-puts "Checking for mutual dependencies..."
+$info.puts "Checking for mutual dependencies..."
 package_dependencies.each do
 	|(pkg,deps)|
 	if deps.include? pkg
-		$stderr.puts "#{pkg}: Circular dependency detected (#2)!"
+		$error.puts "#{pkg}: Circular dependency detected (#2)!"
 		failed = true
 	end
 end
@@ -280,11 +456,11 @@ package_dependencies.each do
 
 	# Ignore dependencies that are already required by another dependency
 	deps_clean = deps.reject {|dep_suspect| deps.detect {|dep_provider|
-			if package_dependencies[dep_provider].include?(dep_suspect)
-				puts "#{pkg}: #{dep_suspect} is already required by #{dep_provider}"
-				true
-			end
-		 } }
+		if package_dependencies[dep_provider].include?(dep_suspect)
+			$info.puts "#{pkg}: #{dep_suspect} is already required by #{dep_provider}"
+			true
+		end
+	}}
 
 	if not deps==deps_clean
 		puts "before: #{deps.join(",")}"
@@ -294,22 +470,18 @@ package_dependencies.each do
 end
 package_dependencies=package_dependencies2
 
-puts "Checking current packages dependencies..."
+$info.puts "Checking current packages dependencies..."
 ok=true
 package_dependencies.each do
 	|(pkg,deps)|
-	current_deps=`opkg depends #{pkg} | sed -r -e '1d;s/^[[:blank:]]*//'`.split("\n")
-	current_deps.reject!{|dep| dep =~ /^lib/ }
-	current_deps -= ["ruby"]
-
-	extra_dep = current_deps - deps
-	$stderr.puts "Package #{pkg} does not need to depend on #{extra_dep.join(" ")} " if not extra_dep.empty?
-	missing_dep = deps - current_deps
-	$stderr.puts "Package #{pkg} needs to depend on #{missing_dep.join(" ")} " if not missing_dep.empty?
+	extra_dep = package_depends[pkg] - deps
+	$info.puts "Package #{pkg} does not need to depend on #{extra_dep.join(" ")} " if not extra_dep.empty?
+	missing_dep = deps - package_depends[pkg]
+	$info.puts "Package #{pkg} needs to depend on #{missing_dep.join(" ")} " if not missing_dep.empty?
 
 	if not extra_dep.empty? or not missing_dep.empty?
-		$stderr.puts "define Package/#{pkg}"
-		$stderr.puts "  DEPENDS:=ruby#{([""] +deps).join(" +")}"
+		puts "define Package/#{pkg}"
+		puts "  DEPENDS:=ruby#{([""] +deps).join(" +")}"
 		ok=false
 	end
 end

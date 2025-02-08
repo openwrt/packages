@@ -31,14 +31,19 @@ function list_staging_files {
 		-not -name "*.doc" \
 		-not -name "*.md" \
 		-not -name "*.txt" \
+		-not -name "BSDL" \
+		-not -name "COPYING" \
 		-not -name "*.travis.yml" \
+		-not -name "Rakefile" \
+		-not -path "*/ext/java/*" \
+		-not -name "gem.build_complete" \
 		-not -regex ".*/usr/lib/ruby/gems/[^/]*/gems/[^/]*/benchmark/.*" \
 		-not -regex ".*/usr/lib/ruby/gems/[^/]*/gems/[^/]*/evaluation/.*" \
 		-not -regex ".*/usr/lib/ruby/gems/[^/]*/gems/[^/]*/sample/.*" \
 		-not -regex ".*/usr/lib/ruby/gems/[^/]*/gems/[^/]*/test/.*" \
 		-not -regex ".*/usr/lib/ruby/gems/[^/]*/gems/[^/]*/doc/.*" \
 		-not -type d \
-		-print | sort
+		-print | sort | sed -e 's,^\./,/,'
 }
 
 function list_ipkg_files {
@@ -47,17 +52,28 @@ function list_ipkg_files {
 	done | sort -u | grep -v ./usr/lib/ruby/ruby...-bin
 }
 
+function list_apk_file {
+	local pkg
+	$HOST_STAGING_DIR/bin/apk adbdump --allow-untrusted "$@" |
+	sed -e '/|$/{N;s/|\n *//}' |
+	awk '/^  - name: / { dir=$3 } /^      - name:/ { printf "%s/%s\n", dir, $3}' |
+	grep -v ^lib/apk/packages | sort -u | sed -e 's,^,/,' | grep -v /usr/lib/ruby/ruby...-bin
+
+}
+
 
 
 set -e
 : ${1:?First arg is staging_dir}
 : ${2:?Second and following args are ruby ipkg packages}
 STAGING_DIR=$1; shift
+HOST_STAGING_DIR=$STAGING_DIR/../host
 (cd "$STAGING_DIR" )
 if ! [ -e "$1" ]; then
 	echo "$1 does not exist!"
 	exit 1
 fi
 printf '%-62s %-62s\n' "Installed in Staging" "From Packages Files"
-diff -d -y <(list_staging_files "$STAGING_DIR") <(list_ipkg_files "$@") -W $COLUMNS
+#diff -d -y <(list_staging_files "$STAGING_DIR") <(list_ipkg_files "$@") -W $COLUMNS
+diff -d -y <(list_staging_files "$STAGING_DIR") <(list_apk_file "$@") -W $COLUMNS
 
