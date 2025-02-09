@@ -1,0 +1,20 @@
+#!/bin/sh
+
+. /lib/functions.sh
+
+upgrade_to_retry_max_count() {
+	local service=$1
+	local retry_count retry_max_count
+
+	config_get retry_max_count $service retry_max_count
+	config_get retry_count $service retry_count
+	if [ -z "$retry_max_count" ] && [ -n "$retry_count" ]; then
+		uci_set ddns $service retry_max_count $retry_count
+		uci_commit ddns
+	fi
+}
+
+config_load ddns
+config_foreach upgrade_to_retry_max_count service
+
+exit 0
