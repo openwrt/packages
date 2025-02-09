@@ -54,7 +54,7 @@ start_service() {
 	fi
 	[ -n "${_DNS}" ] && procd_append_param command -DNS "${_DNS}"
 	if [ -n "${_VPN_name}" ]; then
-		local gateway="$(uci -q get network."${_VPN_name}".addresses | cut -d '/' -f1)"
+		local gateway="$(ip r | grep -v via | grep "dev ${_VPN_name} " | grep src | awk '{print $NF}')"
 		procd_append_param command -gateway "$gateway"
 	fi
 
