@@ -89,6 +89,7 @@ define Build/InstallDev
 endef
 
 define Build/Install
+	$(RM) -f $(PKG_INSTALL_DIR)
 	$(call Py3Build/Install)
 endef
 
