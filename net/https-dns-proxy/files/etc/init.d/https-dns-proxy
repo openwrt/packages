@@ -134,10 +134,9 @@ append_bootstrap() {
 
 boot() {
 	ubus -t 30 wait_for network.interface 2>/dev/null
-	hdp_boot_flag=1
-	if is_resolver_working; then
-		rc_procd start_service 'on_boot' && service_started 'on_boot'
-	else
+	rc_procd start_service 'on_boot' && service_started 'on_boot'
+	if ! is_resolver_working; then
+		hdp_boot_flag=1
 		rc_procd stop_service 'on_failed_health_check' && service_stopped 'on_failed_health_check'
 	fi
 }
@@ -320,7 +319,7 @@ service_triggers() {
 			wan6="${wan6:-wan6}"
 		fi
 		output "Setting trigger${wan6:+s} for $wan ${wan6:+$wan6 }"
-		for i in "$wan" "$wan6"; do
+		for i in $wan $wan6; do
 			procd_add_interface_trigger "interface.*" "$i" "/etc/init.d/${packageName}" restart 'on_interface_trigger' && output_ok || output_fail
 		done
 		output '\n'
