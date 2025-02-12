@@ -605,10 +605,10 @@ load_network() {
 
 	case "$param" in
 		on_boot|on_start)
-			[ -n "$wanIface4" ] && output 2 "Using wan interface (${param}): $wanIface4 \n"
-			[ -n "$wanGW4" ] && output 2 "Found wan gateway (${param}): $wanGW4 \n"
-			[ -n "$wanIface6" ] && output 2 "Using wan6 interface (${param}): $wanIface6 \n"
-			[ -n "$wanGW6" ] && output 2 "Found wan6 gateway (${param}): $wanGW6 \n"
+			[ -n "$wanIface4" ] && output 2 "Using wan interface (${param}): $wanIface4 $__OK__\n"
+			[ -n "$wanGW4" ] && output 2 "Found wan gateway (${param}): $wanGW4 $__OK__\n"
+			[ -n "$wanIface6" ] && output 2 "Using wan6 interface (${param}): $wanIface6 $__OK__\n"
+			[ -n "$wanGW6" ] && output 2 "Found wan6 gateway (${param}): $wanGW6 $__OK__\n"
 		;;
 	esac
 	wanGW="${wanGW4:-$wanGW6}"
@@ -1761,7 +1761,7 @@ process_interface() {
 		return 0
 	fi
 
-	if is_wg_server "$iface"; then
+	if is_wg_server "$iface" && ! is_ignored_interface "$iface"; then
 		local disabled listen_port
 		disabled="$(uci_get 'network' "$iface" 'disabled')"
 		listen_port="$(uci_get 'network' "$iface" 'listen_port')"
@@ -1964,7 +1964,7 @@ user_file_process() {
 
 boot() {
 	nft_file 'delete'
-	ubus -t 30 wait_for network.interface 2>/dev/null
+#	ubus -t 30 wait_for network.interface 2>/dev/null
 	pbr_boot_flag=1
 	rc_procd start_service 'on_boot' && service_started 'on_boot'
 }
@@ -2151,6 +2151,7 @@ service_started() {
 	fi
 }
 
+# shellcheck disable=SC2015
 service_triggers() {
 	local n
 	load_environment 'on_triggers'
@@ -2162,16 +2163,18 @@ service_triggers() {
 		load_validate_include
 	procd_close_validate
 	if [ -n "$pbr_boot_flag" ]; then
-		output "Setting triggers (on_boot) "
-# shellcheck disable=SC2015
+		output "Setting trigger (on_boot) "
 		procd_add_raw_trigger "interface.*.up" 5000 "/etc/init.d/${packageName}" start && output_okn || output_failn
 	else
 		procd_open_trigger
 			procd_add_config_trigger "config.change" 'openvpn' "/etc/init.d/${packageName}" reload 'on_openvpn_change'
 			procd_add_config_trigger "config.change" "${packageName}" "/etc/init.d/${packageName}" reload
-			for n in $ifacesSupported; do 
-				procd_add_interface_trigger "interface.*" "$n" "/etc/init.d/${packageName}" on_interface_reload "$n"
+			output 1 "Setting interface triggers "
+			for n in $ifacesSupported; do
+				output 2 "Setting interface trigger for $n "
+				procd_add_interface_trigger "interface.*" "$n" "/etc/init.d/${packageName}" on_interface_reload "$n" && output_ok || output_fail
 			done
+			output '\n'
 		procd_close_trigger
 	fi
 	if [ "$serviceStartTrigger" = 'on_start' ]; then
