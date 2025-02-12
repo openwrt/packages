@@ -70,7 +70,7 @@ dnspod_transfer() {
 			return 1
 		fi
 		__CNT=$(($__CNT + 1))
-		[ $retry_count -gt 0 -a $__CNT -gt $retry_count ] && write_log 14 "Transfer failed after $retry_count retries"
+		[ $retry_max_count -gt 0 -a $__CNT -gt $retry_max_count ] && write_log 14 "Transfer failed after $retry_max_count retries"
 		write_log 4 "Transfer failed - $__CNT Try again in $RETRY_SECONDS seconds"
 		sleep $RETRY_SECONDS &
 		PID_SLEEP=$!
