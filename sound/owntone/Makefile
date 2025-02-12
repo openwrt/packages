@@ -8,12 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=owntone
-PKG_VERSION:=28.8
+PKG_VERSION:=28.11
 PKG_RELEASE:=1
 
+# Release
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/owntone/owntone-server/releases/download/$(PKG_VERSION)/
-PKG_HASH:=ebaee52ae617f08c41859522ba0a839d1865dcac7d6c0eb9e3fee81caf8fd47c
+PKG_HASH:=98538566a993638ec569fc44ea2c7a7fcb5dd925c47b84b64ac2d63fc8b056b8
 
 PKG_FIXUP:=autoreconf
 PKG_BUILD_FLAGS:=no-mips16
@@ -33,7 +34,7 @@ TITLE:=iTunes (DAAP) server for Apple Remote and AirPlay
 URL:=https://github.com/owntone/owntone-server
 DEPENDS:=+libgpg-error +libgcrypt +libgdbm +zlib +libexpat +libunistring \
 	+libevent2 +libevent2-pthreads +libdaemon +confuse +alsa-lib +libffmpeg-full \
-	+mxml +libavahi-client +sqlite3-cli +libplist +libcurl +libjson-c \
+	+libxml2 +libavahi-client +sqlite3-cli +libplist +libcurl +libjson-c \
 	+libprotobuf-c +libgnutls +libsodium +libwebsockets +libuuid $(ICONV_DEPENDS)
 endef
 
