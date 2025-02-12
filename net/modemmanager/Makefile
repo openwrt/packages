@@ -153,9 +153,13 @@ define Package/modemmanager/install
 	$(INSTALL_DATA) ./files/etc/hotplug.d/wwan/25-modemmanager-wwan \
 		$(1)/etc/hotplug.d/wwan
 
+ifeq ($(CONFIG_MODEMMANAGER_WITH_NETIFD),y)
 	$(INSTALL_DIR) $(1)/lib/netifd/proto
 	$(INSTALL_BIN) ./files/lib/netifd/proto/modemmanager.sh \
 		$(1)/lib/netifd/proto
+else
+	$(SED) '/\/lib\/netifd\/netifd-proto.sh/d' $(1)/usr/share/ModemManager/modemmanager.common
+endif
 endef
 
 define Package/modemmanager-rpcd/install
