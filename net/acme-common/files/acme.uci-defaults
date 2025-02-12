@@ -4,7 +4,7 @@
 # Create a symlink to webroot
 if [ -d /www/ ] && [ ! -L /www/.well-known/acme-challenge ] && [ ! -d /www/.well-known/acme-challenge/ ]; then
 	mkdir -p /www/.well-known/
-	ln -s /var/run/acme/challenge/ /www/.well-known/acme-challenge
+	ln -s /var/run/acme/challenge/.well-known/acme-challenge /www/.well-known/acme-challenge
 fi
 
 # migrate deprecated opts
