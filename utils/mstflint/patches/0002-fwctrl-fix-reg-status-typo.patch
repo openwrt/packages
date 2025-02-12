@@ -1,0 +1,40 @@
+From 873c1822521b0524571ba54f4ce5d565fbf59c1f Mon Sep 17 00:00:00 2001
+From: Til Kaiser <mail@tk154.de>
+Date: Fri, 7 Feb 2025 14:42:25 +0100
+Subject: [PATCH 2/3] fwctrl: fix reg status typo
+
+There is the following build error:
+
+fwctrl.c: In function 'fwctl_control_access_register':
+fwctrl.c:197:66: error: incompatible type for argument 1 of 'm_err2str'
+  197 |                       reg_id, cmd_status, *reg_status, m_err2str(status));
+      |                                                                  ^~~~~~
+      |                                                                  |
+      |                                                                  void *
+../include/mtcr_ul/fwctrl_ioctl.h:47:81: note: in definition of macro 'FWCTL_DEBUG_PRINT'
+   47 |         printf("%s: %s %d: " format, FWCTL_ENV_VAR_DEBUG, __func__, __LINE__, ##arg); \
+      |                                                                                 ^~~
+In file included from fwctrl.c:43:
+../include/mtcr_ul/mtcr.h:173:30: note: expected 'MError' but argument is of type 'void *'
+  173 | const char* m_err2str(MError status);
+      |                       ~~~~~~~^~~~~~
+
+Looking at the format string, this seems to be just a typo,
+so fix that to the correct variable name.
+
+Signed-off-by: Til Kaiser <mail@tk154.de>
+---
+ mtcr_ul/fwctrl.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/mtcr_ul/fwctrl.c
++++ b/mtcr_ul/fwctrl.c
+@@ -194,7 +194,7 @@ int fwctl_control_access_register(int
+     }
+ 
+     FWCTL_DEBUG_PRINT(mf, "register id = 0x%x, command status = 0x%x, reg status code: 0x%x, reg status: %s\n",
+-                      reg_id, cmd_status, *reg_status, m_err2str(status));
++                      reg_id, cmd_status, *reg_status, m_err2str(*reg_status));
+ out:
+     free(out);
+     free(in);
