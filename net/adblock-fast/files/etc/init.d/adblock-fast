@@ -1,5 +1,5 @@
 #!/bin/sh /etc/rc.common
-# Copyright 2023 MOSSDeF, Stan Grishin (stangri@melmac.ca)
+# Copyright 2023-2025 MOSSDeF, Stan Grishin (stangri@melmac.ca)
 # shellcheck disable=SC3043
 
 # shellcheck disable=SC2034
@@ -124,6 +124,7 @@ load_environment_flag=
 allowed_url=
 blocked_url=
 fw4_restart_flag=
+adbf_boot_flag=
 
 # shellcheck disable=SC1091
 . /lib/functions.sh
@@ -1214,7 +1215,7 @@ process_file_url() {
 		local type="$1" file="$2"
 		case "$type" in
 			hosts)
-				sed -i '/# Title: StevenBlack/,/# Start StevenBlack/d' "$file"
+				sed -i '/# Title: StevenBlack/,/# Custom host records are listed here/d' "$file"
 #				sed -i -E '/^(.*)[\t ](local|localhost|localhost.localdomain)$/d;/^255.255.255.255[\t ]broadcasthost$/d;/^0.0.0.0[\t ]0.0.0.0$/d' "$file"
 #				sed -i -E '/^(.*)[\t ](ip6-localhost|ip6-loopback|ip6-localnet|ip6-mcastprefix|ip6-allnodes|ip6-allrouters|ip6-allhosts)/d' "$file"
 			;;
@@ -1960,6 +1961,7 @@ adb_start() {
 	local action status error message stats p iface
 	local param="$1" validation_result="$3"
 
+	[ -n "$adbf_boot_flag" ] && return 0
 	load_environment "$validation_result" "$param" || return 1
 
 	status="$(json get 'status')"
@@ -2256,13 +2258,9 @@ adb_pause() {
 
 allow() { load_validate_config 'config' adb_allow "'$*'"; }
 boot() {
-	local procd_boot_delay
 	ubus -t 30 wait_for network.interface 2>/dev/null
-	config_load "$packageName"
-	config_get procd_boot_delay 'config' 'procd_boot_delay' '0'
-# shellcheck disable=SC2154
-	{ is_integer "$procd_boot_delay" && sleep "$procd_boot_delay"; \
-		rc_procd start_service 'on_boot' && service_started 'on_boot'; } &
+	adbf_boot_flag=1
+	rc_procd start_service 'on_boot' && service_started 'on_boot'
 }
 check() { load_validate_config 'config' adb_check "'$*'"; }
 check_lists() { load_validate_config 'config' adb_check_lists "'$*'"; }
@@ -2295,22 +2293,30 @@ reload_service() { rc_procd start_service 'restart'; }
 restart_service() { rc_procd start_service 'restart'; }
 service_started() { is_fw4_restart_needed && procd_set_config_changed firewall; }
 service_stopped() { is_fw4_restart_needed && procd_set_config_changed firewall; }
+# shellcheck disable=SC2015
 service_triggers() {
 	local wan wan6 i
 	local procd_trigger_wan6
-	config_load "$packageName"
-	config_get_bool procd_trigger_wan6 'config' 'procd_trigger_wan6' '0'
-	network_flush_cache
-	network_find_wan wan
-	wan="${wan:-wan}"
-	if [ "$procd_trigger_wan6" -ne '0' ]; then
-		network_find_wan6 wan6
-		wan6="${wan6:-wan6}"
+	if [ -n "$adbf_boot_flag" ]; then
+		output "Setting trigger (on_boot) "
+		procd_add_raw_trigger "interface.*.up" 5000 "/etc/init.d/${packageName}" start && output_okn || output_failn
+	else
+		config_load "$packageName"
+		config_get_bool procd_trigger_wan6 'config' 'procd_trigger_wan6' '0'
+		network_flush_cache
+		network_find_wan wan
+		wan="${wan:-wan}"
+		if [ "$procd_trigger_wan6" -ne '0' ]; then
+			network_find_wan6 wan6
+			wan6="${wan6:-wan6}"
+		fi
+		output "Setting trigger${wan6:+s} for $wan ${wan6:+$wan6 }"
+		for i in "$wan" "$wan6"; do
+			procd_add_interface_trigger "interface.*" "$i" "/etc/init.d/${packageName}" start && output_ok || output_fail
+		done
+		output '\n'
+		procd_add_config_trigger "config.change" "$packageName" "/etc/init.d/${packageName}" reload
 	fi
-	for i in "$wan" "$wan6"; do
-		[ -n "$i" ] && procd_add_interface_trigger "interface.*" "$i" "/etc/init.d/${packageName}" start
-	done
-	procd_add_config_trigger "config.change" "$packageName" "/etc/init.d/${packageName}" reload
 }
 sizes() { load_validate_config 'config' adb_sizes "''"; }
 start_service() { 

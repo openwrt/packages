@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
-PKG_VERSION:=11.4.3
+PKG_VERSION:=11.4.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL := https://archive.mariadb.org/$(PKG_NAME)-$(PKG_VERSION)/source
 
-PKG_HASH:=6f0017b9901bb1897de0eed21caef9ffa9d66ef559345a0d8a6f011308413ece
+PKG_HASH:=96fbd2e6e93fb7e8b373eea75d85b6fea57c0e111a02090cbbefed52599dc77b
 PKG_MAINTAINER:=Michal Hrusecky <Michal@Hrusecky.net>
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING THIRDPARTY

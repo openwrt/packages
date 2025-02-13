@@ -8,6 +8,11 @@
 #	- at: net/ddns-scripts/files/usr/lib/ddns/update_cloudflare_com_v4.sh
 # - github.com/nixonli/ddns-scripts_dnspod for "update_dnspod_cn.sh"
 #
+# v1.2.0:
+#   - Migrate retry_count to retry_max_count
+#   - Fix signature expiration during retries
+# v1.1.0: Publish script
+#
 # 2024 FriesI23 <FriesI23@outlook.com>
 #
 # API documentation at https://cloud.tencent.com/document/api/1427/84627
@@ -42,6 +47,11 @@ local __URLHOST="dnspod.tencentcloudapi.com"
 local __URLBASE="https://$__URLHOST"
 local __METHOD="POST"
 local __CONTENT_TYPE="application/json"
+local __RETRY_COUNT=${retry_count:-$retry_max_count}
+
+# Build base command to use
+local __PRGBASE="$CURL -RsS -o $DATFILE --stderr $ERRFILE"
+local __PRGEXTA=""
 
 # split __HOST __DOMAIN from $domain
 # given data:
@@ -58,6 +68,7 @@ tencentcloud_transfer() {
 	local __ERR __CODE
 
 	while :; do
+		__RUNPROG="$__PRGBASE $($__PRGEXTA)"
 		write_log 7 "#> $__RUNPROG"
 		eval "$__RUNPROG"
 		__ERR=$? # save communication error
@@ -83,11 +94,11 @@ tencentcloud_transfer() {
 		}
 
 		__CNT=$(($__CNT + 1)) # increment error counter
-		# if error count > retry_count leave here
-		[ $retry_count -gt 0 -a $__CNT -gt $retry_count ] &&
-			write_log 14 "Transfer failed after $retry_count retries"
+		# if error count > __RETRY_COUNT leave here
+		[ $__RETRY_COUNT -gt 0 -a $__CNT -gt $__RETRY_COUNT ] &&
+			write_log 14 "Transfer failed after $__RETRY_COUNT retries"
 
-		write_log 4 "Transfer failed - retry $__CNT/$retry_count in $RETRY_SECONDS seconds"
+		write_log 4 "Transfer failed - retry $__CNT/$__RETRY_COUNT in $RETRY_SECONDS seconds"
 		sleep $RETRY_SECONDS &
 		PID_SLEEP=$!
 		wait $PID_SLEEP # enable trap-handler
@@ -106,14 +117,11 @@ tencentcloud_transfer() {
 	return 0
 }
 
-# Build base command to use
-__PRGBASE="$CURL -RsS -o $DATFILE --stderr $ERRFILE"
-
 # force network/interface-device to use for communication
 if [ -n "$bind_network" ]; then
 	local __DEVICE
-	network_get_physdev __DEVICE $bind_network ||
-		write_log 13 "Can not detect local device using 'network_get_physdev $bind_network' - Error: '$?'"
+	network_get_device __DEVICE $bind_network ||
+		write_log 13 "Can not detect local device using 'network_get_device $bind_network' - Error: '$?'"
 	write_log 7 "Force communication via device '$__DEVICE'"
 	__PRGBASE="$__PRGBASE --interface $__DEVICE"
 fi
@@ -298,7 +306,7 @@ if [ -n "$record_id" ]; then
 	__RECID="$record_id"
 else
 	# read record id for A or AAAA record of host.domain.TLD
-	__RUNPROG="$__PRGBASE $(build_describe_record_list_request_param)"
+	__PRGEXTA="build_describe_record_list_request_param"
 	# extract zone id
 	tencentcloud_transfer || return 1
 	__RECID=$(grep -o '"RecordId":[[:space:]]*[0-9]*' $DATFILE | grep -o '[0-9]*' | head -1)
@@ -335,11 +343,11 @@ __DATA=$(grep -o '"Value":\s*"[^"]*' $DATFILE | grep -o '[^"]*$' | head -1)
 
 if [ -z "$__RECID" ]; then
 	# create new record if record id not found
-	__RUNPROG="$__PRGBASE $(build_create_record_request_param $__IP $__RECLINE)"
+	__PRGEXTA="build_create_record_request_param $__IP $__RECLINE"
 	tencentcloud_transfer || return 1
 	return 0
 fi
 
-__RUNPROG="$__PRGBASE $(build_modify_record_request_param $__IP $__RECLINE $__RECID)"
+__PRGEXTA="build_modify_record_request_param $__IP $__RECLINE $__RECID"
 tencentcloud_transfer || return 1
 return

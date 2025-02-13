@@ -44,11 +44,10 @@ ha_sync_send() {
 	config_get sync_list "$cfg" sync_list
 
 	for sync_file in $sync_list $(sysupgrade -l); do
-		[ -f "$sync_file" ] && {
-			dir="${sync_file%/*}"
-			list_contains files_list "${sync_file}" || append files_list "${sync_file}"
-		}
+		[ -f "$sync_file" ] && dir="${sync_file%/*}"
 		[ -d "$sync_file" ] && dir="${sync_file}"
+
+		list_contains files_list "${sync_file}" || append files_list "${sync_file}"
 		list_contains dirs_list "${sync_dir}${dir}" || append dirs_list "${sync_dir}${dir}"
 	done
 

@@ -8,6 +8,8 @@ APDU_DEBUG="$(uci_get lpac global apdu_debug 0)"
 HTTP_BACKEND="$(uci_get lpac global http_backend curl)"
 HTTP_DEBUG="$(uci_get lpac global http_debug 0)"
 
+CUSTOM_ISD_R_AID="$(uci_get lpac global custom_isd_r_aid A0000005591010FFFFFFFF8900000100)"
+
 export LPAC_HTTP="$HTTP_BACKEND"
 if [ "$HTTP_DEBUG" -eq 1 ]; then
     export LIBEUICC_DEBUG_HTTP="1"
@@ -29,5 +31,7 @@ elif [ "$APDU_BACKEND" = "uqmi" ]; then
     export LPAC_QMI_DEV="$UQMI_DEV"
     export LPAC_QMI_DEBUG="$UQMI_DEBUG"
 fi
+
+export LPAC_CUSTOM_ISD_R_AID="$CUSTOM_ISD_R_AID"
 
 /usr/lib/lpac "$@"

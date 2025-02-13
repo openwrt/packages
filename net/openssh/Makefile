@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=openssh
 PKG_REALVERSION:=9.9p1
 PKG_VERSION:=9.9_p1
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_REALVERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/ \
@@ -184,7 +184,7 @@ CONFIGURE_ARGS += \
 	--with$(if $(CONFIG_OPENSSL_ENGINE),,out)-ssl-engine \
 	--with$(if $(CONFIG_OPENSSH_LIBFIDO2),,out)-security-key-builtin \
 	--with-cflags-after=-fzero-call-used-regs=skip
-	
+
 ifeq ($(BUILD_VARIANT),with-pam)
 CONFIGURE_ARGS += \
 	--with-pam
