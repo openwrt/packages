@@ -99,14 +99,13 @@ ban_debug="0"
 f_system() {
 	local cpu core
 
-	if [ -z "${ban_dev}" ]; then
-		ban_debug="$(uci_get banip global ban_debug "0")"
-		ban_cores="$(uci_get banip global ban_cores)"
-	fi
+	ban_debug="$(uci_get banip global ban_debug "0")"
+	ban_cores="$(uci_get banip global ban_cores)"
 	ban_packages="$("${ban_ubuscmd}" -S call rpc-sys packagelist '{ "all": true }' 2>/dev/null)"
 	ban_ver="$(printf "%s" "${ban_packages}" | "${ban_jsoncmd}" -ql1 -e '@.packages.banip')"
 	ban_sysver="$("${ban_ubuscmd}" -S call system board 2>/dev/null | "${ban_jsoncmd}" -ql1 -e '@.model' -e '@.release.target' -e '@.release.distribution' -e '@.release.version' -e '@.release.revision' |
 		"${ban_awkcmd}" 'BEGIN{RS="";FS="\n"}{printf "%s, %s, %s %s %s %s",$1,$2,$3,$4,$5,$6}')"
+
 	if [ -z "${ban_cores}" ]; then
 		cpu="$("${ban_grepcmd}" -c '^processor' /proc/cpuinfo 2>/dev/null)"
 		core="$("${ban_grepcmd}" -cm1 '^core id' /proc/cpuinfo 2>/dev/null)"
@@ -608,17 +607,17 @@ f_etag() {
 # load file in nftset
 #
 f_nftload() {
-	local cnt="1" max_cnt="${ban_nftretry:-"5"}" load_rc="4" load_log="" file="${1}" errmsg="${2}"
+	local cnt="1" max_cnt="${ban_nftretry:-"5"}" load_rc="4" file="${1}" errmsg="${2}"
 
 	while [ "${load_rc}" != "0" ]; do
-		load_log="$("${ban_nftcmd}" -f "${file}" 2>&1)"
+		"${ban_nftcmd}" -f "${file}" >/dev/null 2>&1
 		load_rc="${?}"
 		if [ "${load_rc}" = "0" ]; then
 			break
 		elif [ "${cnt}" = "${max_cnt}" ]; then
 			[ ! -d "${ban_errordir}" ] && f_mkdir "${ban_errordir}"
 			"${ban_catcmd}" "${file}" 2>/dev/null >"${ban_errordir}/err.${file##*/}"
-			f_log "info" "${errmsg}, ${load_log::256}"
+			f_log "info" "${errmsg}"
 			break
 		fi
 		cnt="$((cnt + 1))"
@@ -677,7 +676,7 @@ f_nftinit() {
 		printf "%s\n" "add table inet banIP"
 		# base chains
 		#
-		printf "%s\n" "add chain inet banIP pre-routing { type filter hook prerouting priority -199; policy accept; }"
+		printf "%s\n" "add chain inet banIP pre-routing { type filter hook prerouting priority -175; policy accept; }"
 		printf "%s\n" "add chain inet banIP wan-input { type filter hook input priority ${ban_nftpriority}; policy accept; }"
 		printf "%s\n" "add chain inet banIP wan-forward { type filter hook forward priority ${ban_nftpriority}; policy accept; }"
 		printf "%s\n" "add chain inet banIP lan-forward { type filter hook forward priority ${ban_nftpriority}; policy accept; }"
@@ -1737,7 +1736,12 @@ f_survey() {
 		printf "%s\n%s\n%s\n" ":::" "::: no valid survey input" ":::"
 		return
 	fi
-	set_elements="$("${ban_nftcmd}" -j list set inet banIP "${input}" 2>/dev/null | "${ban_jsoncmd}" -qe '@.nftables[*].set.elem[*]')"
+
+	if [ "$(uci_get banip global ban_nftcount)" = "1" ]; then
+		set_elements="$("${ban_nftcmd}" -j list set inet banIP "${input}" 2>/dev/null | "${ban_jsoncmd}" -qe '@.nftables[*].set.elem[*].elem.val')"
+	else
+		set_elements="$("${ban_nftcmd}" -j list set inet banIP "${input}" 2>/dev/null | "${ban_jsoncmd}" -qe '@.nftables[*].set.elem[*]')"
+	fi
 	printf "%s\n%s\n%s\n" ":::" "::: banIP Survey" ":::"
 	printf "    %s\n" "List of elements in the Set '${input}' on $(date "+%Y-%m-%d %H:%M:%S")"
 	printf "    %s\n" "---"
@@ -1866,7 +1870,6 @@ fi
 #
 ban_awkcmd="$(f_cmd gawk awk)"
 ban_catcmd="$(f_cmd cat)"
-ban_fw4cmd="$(f_cmd fw4)"
 ban_grepcmd="$(f_cmd grep)"
 ban_jsoncmd="$(f_cmd jsonfilter)"
 ban_logcmd="$(f_cmd logger)"
