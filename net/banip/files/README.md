@@ -86,7 +86,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * Automatic blocklist backup & restore, the backups will be used in case of download errors or during startup
 * Automatically selects one of the following download utilities with ssl support: aria2c, curl, uclient-fetch or full wget
 * Provides HTTP ETag support to download only ressources that have been updated on the server side, to speed up banIP reloads and to save bandwith
-* Supports an 'allowlist only' mode, this option skips all blocklists and restricts the internet access only to specific, explicitly allowed IP segments
+* Supports an 'allowlist only' mode, this option restricts the internet access only to specific, explicitly allowed IP segments
 * Supports external allowlist URLs to reference additional IPv4/IPv6 feeds
 * Optionally always allow certain protocols/destination ports in the inbound chain
 * Deduplicate IPs accross all Sets (single IPs only, no intervals)
@@ -174,7 +174,7 @@ Available commands:
 | ban_autoblocklist       | option | 1                             | add suspicious attacker IPs and resolved domains automatically to the local blocklist (not only to the Sets)      |
 | ban_autoblocksubnet     | option | 0                             | add entire subnets to the blocklist Sets based on an additional RDAP request with the suspicious IP               |
 | ban_autoallowuplink     | option | subnet                        | limit the uplink autoallow function to: 'subnet', 'ip' or 'disable' it at all                                     |
-| ban_allowlistonly       | option | 0                             | skip all blocklists and restrict the internet access only to specific, explicitly allowed IP segments             |
+| ban_allowlistonly       | option | 0                             | restrict the internet access only to specific, explicitly allowed IP segments                                     |
 | ban_allowflag           | option | -                             | always allow certain protocols(tcp or udp) plus destination ports or port ranges, e.g.: 'tcp 80 443-445'          |
 | ban_allowurl            | list   | -                             | external allowlist feed URLs, one or more references to simple remote IP lists                                    |
 | ban_basedir             | option | /tmp                          | base working directory while banIP processing                                                                     |
@@ -370,7 +370,7 @@ Furthermore, you can reference external Allowlist URLs with additional IPv4 and 
 Both local lists also accept domain names as input to allow IP filtering based on these names. The corresponding IPs (IPv4 & IPv6) will be extracted and added to the Sets. You can also start the domain lookup separately via /etc/init.d/banip lookup at any time.
 
 **Allowlist-only mode**  
-banIP supports an "allowlist only" mode. This option skips all blocklists and restricts Internet access only to certain, explicitly permitted IP segments - and blocks access to the rest of the Internet. All IPs that are _not_ listed in the allowlist or in the external allowlist URLs are blocked. In this mode it might be useful to limit the allowlist feed to the inbound chain, to still allow outbound communication to the rest of the world.  
+banIP supports an "allowlist only" mode. This option restricts Internet access only to certain, explicitly permitted IP segments - and blocks access to the rest of the Internet. All IPs that are _not_ listed in the allowlist or in the external allowlist URLs are blocked. In this mode it might be useful to limit the allowlist feed to the inbound chain, to still allow outbound communication to the rest of the world.  
 
 **MAC/IP-binding**
 banIP supports concatenation of local MAC addresses/ranges with IPv4/IPv6 addresses, e.g. to enforce dhcp assignments or to free connected clients from outbound blocking.  
