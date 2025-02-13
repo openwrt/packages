@@ -35,6 +35,7 @@ config unbound 'ub_main'
 	list iface_trig 'wan'
 	list iface_wan 'wan'
 	#list domain_insecure 'ntp.example.com'
+	option lan_subnet_type 'both'
 
 config zone 'auth_icann'
 	# cache the root zone all at once to speed up recursion

@@ -24,6 +24,7 @@
 #   "bslaac" = boolean, use DHCPv4 MAC to find GA and ULA IPV6 SLAAC
 #   "bisolt" = boolean, format <host>.<network>.<domain>. so you can isolate
 #   "bconf"  = boolean, write conf file with pipe records
+#   "lansubtype" = both, priv, pub
 #
 ##############################################################################
 
@@ -38,26 +39,23 @@
   sub( /.*\//, "", cdr2 ) ;
   gsub( /_/, "-", hst ) ;
 
-
   if ( hst !~ /^[[:alnum:]]([-[:alnum:]]*[[:alnum:]])?$/ ) {
     # that is not a valid host name (RFC1123)
     # above replaced common error of "_" in host name with "-"
     hst = "-" ;
   }
 
-
   if ( bisolt == 1 ) {
-    # TODO: this might be better with a substituion option,
+    # TODO: this might be better with a substitution option,
     # or per DHCP pool do-not-DNS option, but its getting busy here.
     fqdn = net
     gsub( /\./, "-", fqdn ) ;
     fqdn = tolower( hst "." fqdn "." domain ) ;
-  }
-
-  else {
+  } else {
     fqdn = tolower( hst "." domain ) ;
   }
 
+  is_priv = ( adr ~ /^(10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|192\.168\.)/ || adr ~ /^fd[cd]/ ) ? "ok" : "not"
 
   if ((cls == "ipv4") && (hst != "-") && (cdr == 32) && (NF == 9)) {
     # IPV4 ; only for provided hostnames and full /32 assignments
@@ -65,6 +63,11 @@
     ptr = adr ; qpr = "" ; split( ptr, ptrarr, "." ) ;
     slaac = slaac_eui64( id ) ;
 
+    if ( lansubtype == "priv" && is_priv == "not" ) {
+      next
+    } else if ( lansubtype == "pub" && is_priv == "ok" ) {
+      next
+    }
 
     if ( bconf == 1 ) {
       x = ( "local-data: \"" fqdn ". 300 IN A " adr "\"" ) ;
@@ -72,19 +75,16 @@
       print ( x "\n" y "\n" ) > conffile ;
     }
 
-
     # always create the pipe file
     for( i=1; i<=4; i++ ) { qpr = ( ptrarr[i] "." qpr) ; }
     x = ( fqdn ". 300 IN A " adr ) ;
     y = ( qpr "in-addr.arpa. 300 IN PTR " fqdn ) ;
     print ( x "\n" y ) > pipefile ;
 
-
     if (( bslaac == 1 ) && ( slaac != 0 )) {
       # UCI option to discover IPV6 routed SLAAC addresses
       # NOT TODO - ping probe take too long when added in awk-rule loop
       cmd = ( "ip -6 --oneline route show dev " net ) ;
-
 
       while ( ( cmd | getline adr ) > 0 ) {
         if (( substr( adr, 1, 5 ) <= "fdff:" ) \
@@ -95,18 +95,21 @@
           sub( /\/.*/, "", adr ) ;
           adr = ( adr slaac ) ;
 
-
           if ( split( adr, tmp0, ":" ) > 8 ) {
             sub( "::", ":", adr ) ;
           }
 
+          if ( lansubtype == "priv" && is_priv == "not" ) {
+            next
+          } else if ( lansubtype == "pub" && is_priv == "ok" ) {
+            next
+          }
 
           if ( bconf == 1 ) {
             x = ( "local-data: \"" fqdn ". 300 IN AAAA " adr "\"" ) ;
             y = ( "local-data-ptr: \"" adr " 300 " fqdn "\"" ) ;
             print ( x "\n" y "\n" ) > conffile ;
           }
-
 
           # always create the pipe file
           qpr = ipv6_ptr( adr ) ;
@@ -116,19 +119,21 @@
         }
       }
 
-
       close( cmd ) ;
     }
-  }
-
-  else if ((cls != "ipv4") && (hst != "-") && (9 <= NF) && (NF <= 10)) {
+  } else if ((cls != "ipv4") && (hst != "-") && (9 <= NF) && (NF <= 10)) {
     if (cdr == 128) {
+      if ( lansubtype == "priv" && is_priv == "not" ) {
+        next
+      } else if ( lansubtype == "pub" && is_priv == "ok" ) {
+        next
+      }
+
       if ( bconf == 1 ) {
         x = ( "local-data: \"" fqdn ". 300 IN AAAA " adr "\"" ) ;
         y = ( "local-data-ptr: \"" adr " 300 " fqdn "\"" ) ;
         print ( x "\n" y "\n" ) > conffile ;
       }
-
 
       # only for provided hostnames and full /128 assignments
       qpr = ipv6_ptr( adr ) ;
@@ -138,12 +143,17 @@
     }
 
     if (cdr2 == 128) {
+      if ( lansubtype == "priv" && is_priv == "not" ) {
+        next
+      } else if ( lansubtype == "pub" && is_priv == "ok" ) {
+        next
+      }
+
       if ( bconf == 1 ) {
         x = ( "local-data: \"" fqdn ". 300 IN AAAA " adr2 "\"" ) ;
         y = ( "local-data-ptr: \"" adr2 " 300 " fqdn "\"" ) ;
         print ( x "\n" y "\n" ) > conffile ;
       }
-
 
       # odhcp puts GA and ULA on the same line (position 9 and 10)
       qpr2 = ipv6_ptr( adr2 ) ;
@@ -151,9 +161,7 @@
       y = ( qpr2 ". 300 IN PTR " fqdn ) ;
       print ( x "\n" y ) > pipefile ;
     }
-  }
-
-  else {
+  } else {
     # dump non-conforming lease records
   }
 }
@@ -164,17 +172,13 @@ function ipv6_ptr( ipv6, arpa, ary, end, m, n, new6, sz, start ) {
   # IPV6 colon flexibility is a challenge when creating [ptr].ip6.arpa.
   sz = split( ipv6, ary, ":" ) ; end = 9 - sz ;
 
-
   for( m=1; m<=sz; m++ ) {
     if( length(ary[m]) == 0 ) {
       for( n=1; n<=end; n++ ) { ary[m] = ( ary[m] "0000" ) ; }
-    }
-
-    else {
+    } else {
       ary[m] = substr( ( "0000" ary[m] ), length( ary[m] )+5-4 ) ;
     }
   }
-
 
   new6 = ary[1] ;
   for( m = 2; m <= sz; m++ ) { new6 = ( new6 ary[m] ) ; }
@@ -197,15 +201,11 @@ function slaac_eui64( mac,    ary, glbit, eui64 ) {
     ary[2] = sprintf( "%x", glbit ) ;
     eui64 = ( ary[1] ary[2] ary[3] ary[4] ":" ary[5] ary[6] "ff:fe" ) ;
     eui64 = ( eui64 ary[7] ary[8] ":" ary[9] ary[10]  ary[11] ary[12] ) ;
-  }
-
-  else {
+  } else {
     eui64 = 0 ;
   }
-
 
   return eui64 ;
 }
 
 ##############################################################################
-

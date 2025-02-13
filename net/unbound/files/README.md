@@ -236,6 +236,7 @@ One instance is supported currently.
 | validator | 0 | boolean | Enable DNSSEC validator module. | module: validator |
 | validator_ntp | 1 | boolean | Disable DNSSEC time checks at boot and restart when NTP locks in time. DNSSEC requires time validation and this breaks the chicken and egg. | - |
 | verbosity | 1 |  level | Logging inensity. | verbosity: |
+| lan_subnet_type| both | type | Including private address only or public address only or both for host in LAN.<br>`priv`: private address only<br>`pub`: public address only<br>`both`: both | local-data: |
 
 ### config zone
 Confingure any mix of Unbound `forward-zone:`, `stub-zone:`, or `auth-zone:` clauses. These sections are more compact than Unbound and will unroll into Unbound's configuration syntax.

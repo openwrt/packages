@@ -38,6 +38,7 @@ odhcpd_zonedata() {
   local dhcp4_slaac6=$( uci_get unbound.@unbound[0].dhcp4_slaac6 )
   local dhcp_domain=$( uci_get unbound.@unbound[0].domain )
   local dhcp_origin=$( uci_get dhcp.@odhcpd[0].leasefile )
+  local lan_subnet_type=$( uci_get unbound.ub_main.lan_subnet_type )
 
 
   if [ -f "$UB_TOTAL_CONF" ] && [ -f "$dhcp_origin" ] \
@@ -81,7 +82,7 @@ odhcpd_zonedata() {
     case $longconf in
     freshstart)
       awk -v conffile=$UB_DHCP_CONF -v pipefile=$dns_ls_new \
-          -v domain=$dhcp_domain -v bslaac=$dhcp4_slaac6 \
+          -v domain=$dhcp_domain -v bslaac=$dhcp4_slaac6 -v lansubtype=$lan_subnet_type \
           -v bisolt=0 -v bconf=1 \
           -f /usr/lib/unbound/odhcpd.awk $dhcp_ls_new
 
@@ -93,7 +94,7 @@ odhcpd_zonedata() {
 
     longtime)
       awk -v conffile=$UB_DHCP_CONF -v pipefile=$dns_ls_new \
-          -v domain=$dhcp_domain -v bslaac=$dhcp4_slaac6 \
+          -v domain=$dhcp_domain -v bslaac=$dhcp4_slaac6 -v lansubtype=$lan_subnet_type \
           -v bisolt=0 -v bconf=1 \
           -f /usr/lib/unbound/odhcpd.awk $dhcp_ls_new
 
@@ -109,7 +110,7 @@ odhcpd_zonedata() {
       # incremental add and prepare the old list for delete later
       # unbound-control can be slow so high DHCP rates cannot run a full list
       awk -v conffile=$UB_DHCP_CONF -v pipefile=$dns_ls_new \
-          -v domain=$dhcp_domain -v bslaac=$dhcp4_slaac6 \
+          -v domain=$dhcp_domain -v bslaac=$dhcp4_slaac6 -v lansubtype=$lan_subnet_type \
           -v bisolt=0 -v bconf=0 \
           -f /usr/lib/unbound/odhcpd.awk $dhcp_ls_new
 
