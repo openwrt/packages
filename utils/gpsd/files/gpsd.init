@@ -12,6 +12,7 @@ validate_section_gpsd()
 {
 	uci_load_validate gpsd gpsd "$1" "$2" \
 		'enabled:bool:1' \
+		'readonly:bool:1' \
 		'device:string' \
 		'listen_globally:bool:0' \
 		'port:port:2947'
@@ -32,6 +33,7 @@ gpsd_instance()
 	[ "$listen_globally" -ne 0 ] && procd_append_param command -G
 	procd_append_param command -S "$port"
 	procd_append_param command -D "$LOG_LEVEL"
+	[ "$readonly" = "1" ] && procd_append_param command -b
 	procd_append_param command -F /var/run/gpsd.sock
 	[ -n "$device" ] && procd_append_param command "$device"
 	procd_set_param respawn
