@@ -133,8 +133,11 @@ f_load() {
 			if [ -z "${adb_repiface}" ]; then
 				network_get_device iface "lan"
 				[ -z "${iface}" ] && network_get_physdev iface "lan"
-				[ -n "${iface}" ] && adb_repiface="${iface}"
-				[ -n "${adb_repiface}" ] && { uci_set adblock global adb_repiface "${adb_repiface}"; f_uci "adblock"; }
+				if [ -n "${iface}" ]; then
+					adb_repiface="${iface}"
+					uci_set adblock global adb_repiface "${adb_repiface}"
+					f_uci "adblock"
+				fi
 			fi
 
 			if [ -n "${adb_repiface}" ] && [ -d "${adb_reportdir}" ]; then
@@ -342,7 +345,7 @@ f_dns() {
 			adb_dnsdeny="${adb_dnsdeny:-"${adb_awkcmd} '{print \"address /\"\$0\"/#\"}'"}"
 			adb_dnsallow="${adb_dnsallow:-"${adb_awkcmd} '{print \"address /\"\$0\"/-\"}'"}"
 			adb_dnssafesearch="${adb_dnssafesearch:-"${adb_awkcmd} -v item=\"\$item\" '{print \"cname /\"\$0\"/\"item\"\"}'"}"
-			adb_dnsstop="${adb_dnsstop:-"0"}"
+			adb_dnsstop="${adb_dnsstop:-"address #"}"
 			;;
 		"raw")
 			adb_dnscachecmd="-"
@@ -461,25 +464,21 @@ f_rmdns() {
 # commit uci changes
 #
 f_uci() {
-	local change config="${1}"
+	local config="${1}"
 
 	if [ -n "${config}" ]; then
-		change="$(uci -q changes "${config}" | "${adb_awkcmd}" '{ORS=" "; print $0}')"
-		if [ -n "${change}" ]; then
-			uci_commit "${config}"
-			case "${config}" in
-				"firewall")
-					"/etc/init.d/firewall" reload >/dev/null 2>&1
-					;;
-				"resolver")
-					printf "%b" "${adb_dnsheader}" >"${adb_dnsdir}/${adb_dnsfile}"
-					f_count
-					f_jsnup "running"
-					"/etc/init.d/${adb_dns}" reload >/dev/null 2>&1
-					;;
-			esac
-		fi
-		f_log "debug" "f_uci    ::: config: ${config}, change: ${change}"
+		uci_commit "${config}"
+		case "${config}" in
+			"firewall")
+				"/etc/init.d/firewall" reload >/dev/null 2>&1
+				;;
+			"resolver")
+				printf "%b" "${adb_dnsheader}" >"${adb_dnsdir}/${adb_dnsfile}"
+				f_count
+				f_jsnup "running"
+				"/etc/init.d/${adb_dns}" reload >/dev/null 2>&1
+				;;
+		esac
 	fi
 }
 
@@ -550,16 +549,28 @@ f_extconf() {
 		for zone in ${adb_zonelist}; do
 			for port in ${adb_portlist}; do
 				if ! printf "%s" "${fwcfg}" | "${adb_grepcmd}" -q "adblock_${zone}${port}[ |\$]"; then
-					uci -q batch <<-EOC
-						set firewall."adblock_${zone}${port}"="redirect"
-						set firewall."adblock_${zone}${port}".name="Adblock DNS (${zone}, ${port})"
-						set firewall."adblock_${zone}${port}".src="${zone}"
-						set firewall."adblock_${zone}${port}".proto="tcp udp"
-						set firewall."adblock_${zone}${port}".src_dport="${port}"
-						set firewall."adblock_${zone}${port}".dest_port="${port}"
-						set firewall."adblock_${zone}${port}".target="DNAT"
-						set firewall."adblock_${zone}${port}".family="any"
-					EOC
+					if [ "${port}" = "53" ]; then
+						uci -q batch <<-EOC
+							set firewall."adblock_${zone}${port}"="redirect"
+							set firewall."adblock_${zone}${port}".name="Adblock DNS (${zone}, ${port})"
+							set firewall."adblock_${zone}${port}".src="${zone}"
+							set firewall."adblock_${zone}${port}".proto="tcp udp"
+							set firewall."adblock_${zone}${port}".src_dport="${port}"
+							set firewall."adblock_${zone}${port}".dest_port="${port}"
+							set firewall."adblock_${zone}${port}".target="DNAT"
+							set firewall."adblock_${zone}${port}".family="any"
+						EOC
+					else
+						uci -q batch <<-EOC
+							set firewall."adblock_${zone}${port}"="rule"
+							set firewall."adblock_${zone}${port}".name="Adblock DNS (${zone}, ${port})"
+							set firewall."adblock_${zone}${port}".src="${zone}"
+							set firewall."adblock_${zone}${port}".proto="tcp udp"
+							set firewall."adblock_${zone}${port}".dest_port="${port}"
+							set firewall."adblock_${zone}${port}".target="REJECT"
+							set firewall."adblock_${zone}${port}".dest="*"
+						EOC
+					fi
 				fi
 				fwcfg="${fwcfg/adblock_${zone}${port}[ |\$]/}"
 			done
@@ -1058,8 +1069,8 @@ f_log() {
 	local class="${1}" log_msg="${2}"
 
 	if [ -n "${log_msg}" ] && { [ "${class}" != "debug" ] || [ "${adb_debug}" = "1" ]; }; then
-		[ -x "${adb_loggercmd}" ] && "${adb_loggercmd}" -p "${class}" -t "adblock-${adb_ver}[${$}]" "${log_msg}" || \
-			printf "%s %s %s\n" "${class}" "adblock-${adb_ver}[${$}]" "${log_msg}"
+		[ -x "${adb_loggercmd}" ] && "${adb_loggercmd}" -p "${class}" -t "adblock-${adb_ver}[${$}]" "${log_msg::256}" || \
+			printf "%s %s %s\n" "${class}" "adblock-${adb_ver}[${$}]" "${log_msg::256}"
 		if [ "${class}" = "err" ] || [ "${class}" = "emerg" ]; then
 			[ "${adb_action}" != "mail" ] && f_rmdns
 			f_jsnup "error"
