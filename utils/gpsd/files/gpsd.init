@@ -33,7 +33,7 @@ gpsd_instance()
 	procd_append_param command -S "$port"
 	procd_append_param command -D "$LOG_LEVEL"
 	procd_append_param command -F /var/run/gpsd.sock
-	procd_append_param command "$device"
+	[ -n "$device" ] && procd_append_param command "$device"
 	procd_set_param respawn
 
 	procd_close_instance
