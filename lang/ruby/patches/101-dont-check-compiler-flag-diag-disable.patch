@@ -1,0 +1,10 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -530,7 +530,6 @@ AS_CASE(["$GCC:${warnflags+set}:${extra_
+ 		 -Wsuggest-attribute=format \
+ 		 -Wsuggest-attribute=noreturn \
+ 		 -Wunused-variable \
+-		 -diag-disable=175,188,2259 \
+ 		 $extra_warnflags \
+ 		 ; do
+ 	AS_IF([test "$particular_werror_flags" != yes], [
