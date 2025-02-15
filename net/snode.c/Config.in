@@ -1,0 +1,259 @@
+menu "Configuration"
+	depends on PACKAGE_snode.c-utils
+
+	config SNODEC_GROUP_NAME
+		string "Group name of unix group used for config/log/pid file management"
+		default snodec
+		help
+				The group name for unix group used for permission management of
+				config, log, and pid files.
+				(default: snodec)
+
+	choice
+		depends on PACKAGE_snode.c-core
+		prompt "I/O Multiplexer"
+		default SNODEC_EPOLL
+		help
+				The I/O multiplexer SNode.C will use by default.
+				Possible choices:
+				  * epoll (default)
+				  * poll
+				  * select
+
+		config SNODEC_EPOLL
+			select PACKAGE_snode.c-core-mux-epoll
+			bool "epoll"
+			help
+					If choosen SNode.C will use 'epoll' as default I/O multiplexer.
+					(overrideable with LD_PRELOAD)
+
+		config SNODEC_POLL
+			select PACKAGE_snode.c-core-mux-poll
+			bool "poll"
+			help
+					If choosen SNode.C will use 'poll' as default I/O multiplexer.
+					(override with LD_PRELOAD)
+
+		config SNODEC_SELECT
+			select PACKAGE_snode.c-core-mux-select
+			bool "select"
+			help
+					If choosen SNode.C will use 'select' as default I/O multiplexer.
+					(override with LD_PRELOAD)
+	endchoice
+
+	menu "Socket connection behavior"
+		depends on PACKAGE_snode.c-core-socket
+
+		config SNODEC_READ_BLOCKSIZE
+			int
+			prompt "Read block size in bytes"
+			default 16384
+			help
+					Read block size in bytes.
+					(default: 16384)
+
+		config SNODEC_WRITE_BLOCKSIZE
+			int
+			prompt "Write block size in bytes"
+			default 16384
+			help
+					Write block size in bytes.
+					(default: 16384)
+
+		config SNODEC_READ_TIMEOUT
+			int
+			prompt "Read inactivity timeout in seconds"
+			default 60
+			help
+					Read inactivity timeout after which a connection is aborted.
+					(default: 60, 0 = unlimited)
+
+		config SNODEC_WRITE_TIMEOUT
+			int
+			prompt "Write inactivity timeout in seconds"
+			default 60
+			help
+					Write inactivity timeout after which a connection is aborted.
+					(default: 60, 0 = unlimited)
+	endmenu
+
+	menu "Server (stream) behavior"
+		depends on PACKAGE_snode.c-core-socket-stream
+
+		config SNODEC_BACKLOG
+			int
+			default 5
+			prompt "Listen backlog"
+			help
+					Listen backlog count.
+					(default: 5)
+
+		config SNODEC_ACCEPTS_PER_TICK
+			int
+			prompt "Accepts per tick"
+			default 1
+			help
+					Maximum number of accepted connections per tick.
+					(default: 1)
+	endmenu
+
+	menu "Socket (stream) behavior"
+		depends on PACKAGE_snode.c-core-socket-stream
+
+		config SNODEC_ACCEPT_TIMEOUT
+			int
+			default 0
+			prompt "Accept inactivity timeout in seconds"
+			help
+					Accept inactivity (no new connection attempts) after which a server
+					is taken offline.
+					(default: 0, 0 = unlimited)
+
+		config SNODEC_CONNECT_TIMEOUT
+			int
+			default 10
+			prompt "Connect timeout in seconds"
+			help
+					Timeout in seconds after which a connect attempt will be aborted if the
+					connection can not be established.
+					(default: 10, 0 = unlimited)
+
+		config SNODEC_TERMINATE_TIMEOUT
+			int
+			prompt "Shutdown timeout in seconds"
+			default 1
+			help
+					Shutdown timeout after which a connection is aborted.
+					(default: 1)
+
+		menuconfig SNODEC_RECONNECT
+			bool
+			default n
+			prompt "Reconnect after disconnect"
+			help
+					Reconnect to a server if a previous connection was lost.
+					(default: n)
+
+		config SNODEC_RECONNECT_TIME
+		    depends on SNODEC_RECONNECT
+			string
+			default 1
+			prompt "Reconnect time in seconds"
+			help
+					Duration after disconnecting bevore reconnecting.
+					(default: 1)
+
+		menuconfig SNODEC_RETRY
+			bool
+			default n
+			prompt "Retry listen and connect"
+			help
+					Retry *listen* in case the socket address/port is already in use.
+					Retry *connect* in case the connection to the peer could not be established.
+					(default: n)
+
+		config SNODEC_RETRY_TIMEOUT
+		    depends on SNODEC_RETRY
+			int
+			default 1
+			prompt "Retry interval in seconds"
+			help
+					The retry interval between two connect attempts, modified with jitter and
+					exponential increase.
+					(default: 1)
+
+		config SNODEC_RETRY_TRIES
+		    depends on SNODEC_RETRY
+			int
+			default 0
+			prompt "Upper limit of retry tries"
+			help
+					The upper limit of retries to listen on an address or to connect to a peer.
+					(default: 0, 0 = unlimited)
+
+		config SNODEC_RETRY_BASE
+		    depends on SNODEC_RETRY
+			string
+			default "1.8"
+			prompt "Base of exponential increase"
+			help
+					The current retry timeout is multiplied by this value for each retry.
+					(default: 1.8)
+
+		config SNODEC_RETRY_JITTER
+		    depends on SNODEC_RETRY
+			int
+			default 0
+			prompt "Jitter of retry timeout in percent"
+			help
+					Maximum jitter in percent applied randomly to the calculated retry timeout.
+					(default: 0, 0 = disable)
+
+		config SNODEC_RETRY_LIMIT
+		    depends on SNODEC_RETRY
+			int
+			default 0
+			prompt "Upper limit of retry timeout in seconds"
+			help
+					Upper limit for the retry timeout even if the calculated timeout is greater.
+					(default: 0, 0 = unlimited)
+
+		config SNODEC_REUSE_ADDRESS
+			bool
+			default n
+			prompt "Reuse address"
+			help
+					Whether the socket address should be immediately reusable or not.
+					(default: n)
+
+		config SNODEC_REUSE_PORT
+			depends on PACKAGE_snode.c-net-in || PACKAGE_snode.c-net-in6
+			bool
+			default n
+			prompt "Reuse port (IPv4/IPv6)"
+			help
+					If selected, the port can be reused for further IPv4 or IPv6 servers.
+					Under Linux this makes it is possible to create a simple "multitasking" server.
+					(default: n)
+
+		config SNODEC_IPV6_ONLY
+			depends on PACKAGE_snode.c-net-in6
+			bool
+			default n
+			prompt "IPv6 only"
+			help
+					If selected, an IPv6 server only accepts IPv6 (single-stack) connections.
+					If not selected, IPv4 connections are also accepted (dual stack).
+					(default: n)
+
+		config SNODEC_IPV4_MAPPED
+			depends on PACKAGE_snode.c-net-in6
+			bool
+			default n
+			prompt "IPv4-mapped IPv6 addresses"
+			help
+					If selected, domain names can also be resolved to IPv4-mapped IPv6 addresses.
+					(default: n)
+	endmenu
+
+	menu "SSL/TLS behavior"
+		depends on PACKAGE_snode.c-core-socket-stream-tls
+
+		config SNODEC_TLS_INIT_TIMEOUT
+			int
+			prompt "SSL/TLS initial handshake timeout in seconds"
+			default 10
+			help
+					Maximum duration of the initial SSL/TLS handshake befor a connection is aborted.
+					(default: 10)
+
+		config SNODEC_TLS_SHUTDOWN_TIMEOUT
+			int
+			prompt "SSL/TLS teardown timeout in seconds"
+			default 2
+			help
+					Maximum duration of the SSL/TLS shutdown before a connection is aborted.
+					(default: 2)
+	endmenu
+endmenu
