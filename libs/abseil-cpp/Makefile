@@ -35,16 +35,21 @@ endef
 CMAKE_INSTALL:=1
 
 CMAKE_HOST_OPTIONS += \
-	-DCMAKE_CXX_STANDARD=14 \
+	-DABSL_PROPAGATE_CXX_STD=ON \
 	-DABSL_ENABLE_INSTALL=ON \
 	-DABSL_USE_GOOGLETEST_HEAD=OFF
 
 CMAKE_OPTIONS += \
-	-DCMAKE_CXX_STANDARD=14 \
+	-DABSL_PROPAGATE_CXX_STD=ON \
 	-DABSL_ENABLE_INSTALL=ON \
 	-DABSL_USE_GOOGLETEST_HEAD=OFF
 
 TARGET_CFLAGS += $(FPIC)
+
+define Package/abseil-cpp/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/* $(1)/usr/lib/
+endef
 
 define Build/InstallDev
 	$(call Build/InstallDev/cmake,$(1))
