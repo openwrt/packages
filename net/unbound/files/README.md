@@ -236,6 +236,7 @@ One instance is supported currently.
 | validator | 0 | boolean | Enable DNSSEC validator module. | module: validator |
 | validator_ntp | 1 | boolean | Disable DNSSEC time checks at boot and restart when NTP locks in time. DNSSEC requires time validation and this breaks the chicken and egg. | - |
 | verbosity | 1 |  level | Logging inensity. | verbosity: |
+| exclude_ipv6_ga | 0 | boolean | If exclude IPv6 global addresses from local data. | local-data: |
 
 ### config zone
 Confingure any mix of Unbound `forward-zone:`, `stub-zone:`, or `auth-zone:` clauses. These sections are more compact than Unbound and will unroll into Unbound's configuration syntax.
