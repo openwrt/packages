@@ -2,10 +2,18 @@
 uci -q get dhcp.isc_dhcpcd && exit 0
 touch /etc/config/dhcp
 
+[ -f /etc/bind/rndc.conf ] && key_secret=$(awk -F'"' '/secret/{print $2; exit;}' /etc/bind/rndc.conf)
+[ -z "$key_secret" ] && key_secret=$(rndc-confgen | awk -F'"' '/secret/{print $2; exit;}')
+
 uci batch <<EOF
 set dhcp.isc_dhcpd=isc_dhcpd
 set dhcp.isc_dhcpd.authoritative='1'
 set dhcp.isc_dhcpd.default_lease_time='3600'
 set dhcp.isc_dhcpd.max_lease_time='86400'
+set dhcp.dynamicdns=dynamicdns
+set dhcp.dynamicdns.server=127.0.0.1
+set dhcp.dynamicdns.key_algo=hmac-sha256
+set dhcp.dynamicdns.key_secret=$key_secret
+set dhcp.dynamicdns.key_name=local-dns
 commit dhcp
 EOF
