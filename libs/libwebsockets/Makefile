@@ -75,6 +75,14 @@ define Package/libwebsockets-full
 	PROVIDES:=libwebsockets libwebsockets-openssl
 endef
 
+define Package/libwebsockets-full-libevent
+	$(call Package/libwebsockets/Default)
+	TITLE += (Full - OpenSSL, libuv, plugins, CGI, libevent)
+	DEPENDS += +libopenssl +libuv +libevent2
+	VARIANT:=full-libevent
+	PROVIDES:=libwebsockets libwebsockets-openssl libwebsockets-full
+endef
+
 ifeq ($(BUILD_VARIANT),openssl)
     CMAKE_OPTIONS += -DLWS_OPENSSL_CLIENT_CERTS=/etc/ssl/certs
     CMAKE_OPTIONS += -DLWS_WITH_SSL=ON
@@ -95,6 +103,18 @@ ifeq ($(BUILD_VARIANT),full)
     CMAKE_OPTIONS += -DLWS_UNIX_SOCK=ON
 endif
 
+ifeq ($(BUILD_VARIANT),full-libevent)
+    CMAKE_OPTIONS += -DLWS_OPENSSL_CLIENT_CERTS=/etc/ssl/certs
+    CMAKE_OPTIONS += -DLWS_WITH_SSL=ON
+    CMAKE_OPTIONS += -DLWS_WITH_LIBUV=ON
+    CMAKE_OPTIONS += -DLWS_WITH_PLUGINS=ON
+    CMAKE_OPTIONS += -DLWS_WITH_SERVER_STATUS=ON
+    CMAKE_OPTIONS += -DLWS_WITH_ACCESS_LOG=ON
+    CMAKE_OPTIONS += -DLWS_WITH_CGI=ON
+    CMAKE_OPTIONS += -DLWS_UNIX_SOCK=ON
+    CMAKE_OPTIONS += -DLWS_WITH_LIBEVENT=ON
+endif
+
 define Package/libwebsockets/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libwebsockets*.so* $(1)/usr/lib/
@@ -108,6 +128,12 @@ define Package/libwebsockets-full/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libwebsockets-evlib_uv.so* $(1)/usr/lib
 endef
 
+define Package/libwebsockets-full-libevent/install
+	$(call Package/libwebsockets-full/install,$(1))
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libwebsockets-evlib_event.so* $(1)/usr/lib
+endef
+
 $(eval $(call BuildPackage,libwebsockets-openssl))
 $(eval $(call BuildPackage,libwebsockets-mbedtls))
 $(eval $(call BuildPackage,libwebsockets-full))
+$(eval $(call BuildPackage,libwebsockets-full-libevent))
