@@ -1,0 +1,30 @@
+From caf7b9abf3ddb3e48e2e97731af493bdcbdc4b59 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Karel=20Ko=C4=8D=C3=AD?= <karel.koci@nic.cz>
+Date: Wed, 19 Feb 2020 16:08:26 +0100
+Subject: [PATCH] setup.py: use darwin hack for all platforms
+
+For some reason extra_links_args are handles as -R and not -Wl,-R or
+rather -Wl,-rpath. This effectively breaks build as we use compiler to
+link and not directly linker.
+
+This is just hack as fix would be to look in to why runtime_library_dirs
+are handled in such a way.
+---
+ setup.py | 5 +----
+ 1 file changed, 1 insertion(+), 4 deletions(-)
+
+
+--- a/setup.py
++++ b/setup.py
+@@ -233,10 +233,7 @@ def _add_rpath(settings, path):
+ 
+     Implemented here because distutils runtime_library_dirs doesn't do anything on darwin
+     """
+-    if sys.platform == 'darwin':
+-        settings['extra_link_args'].extend(['-Wl,-rpath', '-Wl,%s' % path])
+-    else:
+-        settings['runtime_library_dirs'].append(path)
++    settings['extra_link_args'].extend(['-Wl,-rpath','-Wl,%s' % path])
+ 
+ 
+ def settings_from_prefix(prefix=None):
