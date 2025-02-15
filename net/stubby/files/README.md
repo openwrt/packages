@@ -1,5 +1,5 @@
 
-# Stubby for OpenWRT
+# Stubby for OpenWrt
 
 ## Stubby Description
 
@@ -8,9 +8,9 @@ an application that acts as a local DNS Privacy stub resolver (using
 DNS-over-TLS). Stubby encrypts DNS queries sent from a client machine to a DNS
 Privacy resolver increasing end user privacy.
 
-Stubby is useful on an OpenWRT device, because it can sit between the usual DNS
+Stubby is useful on an OpenWrt device, because it can sit between the usual DNS
 resolver (dnsmasq by default) and the upstream DNS resolver and be used to
-ensure that DNS traffic is encrypted between the OpenWRT device and the
+ensure that DNS traffic is encrypted between the OpenWrt device and the
 resolver.
 
 Stubby is developed by the [getdns](http://getdnsapi.net/) project.
@@ -31,7 +31,7 @@ will also install the required dependency packages, including the
 The default configuration of the package has been chosen to ensure that stubby
 should work after installation.
 
-By default, configuration of stubby is integrated with the OpenWRT UCI system
+By default, configuration of stubby is integrated with the OpenWrt UCI system
 using the file `/etc/config/stubby`. The configuration options available are
 also documented in that file. If for some reason you wish to configure stubby
 using the `/etc/stubby/stubby.yml` file, then you simply need to set `option
@@ -42,7 +42,7 @@ manual '1'` in `/etc/config/stubby` and all other settings in
 
 The default configuration ensures that stubby listens on port 5453 on the
 loopback interfaces for IPv4 and IPv6. As such, by default, stubby will respond
-only to lookups from the OpenWRT device itself.
+only to lookups from the OpenWrt device itself.
 
 By setting the listening ports to non-standard values, this allows users to keep
 the main name server daemon in place (dnsmasq/unbound/etc.) and have that name
@@ -70,14 +70,14 @@ list](https://dnsprivacy.org/wiki/display/DP/DNS+Privacy+Test+Servers).
 
 ## Integration of stubby with dnsmasq
 
-The recommended way to use stubby on an OpenWRT device is to integrate it with a
-caching resolver. The default caching resolver in OpenWRT is dnsmasq.
+The recommended way to use stubby on an OpenWrt device is to integrate it with a
+caching resolver. The default caching resolver in OpenWrt is dnsmasq.
 
 ### Set dnsmasq to send DNS requests to stubby
 
-Since dnsmasq responds to LAN DNS requests on port 53 of the OpenWRT device by
+Since dnsmasq responds to LAN DNS requests on port 53 of the OpenWrt device by
 default, all that is required is to have dnsmasq forward those requests to
-stubby which is listening on port 5453 of the OpenWRT device. To achieve this,
+stubby which is listening on port 5453 of the OpenWrt device. To achieve this,
 we need to set the `server` option in the dnsmasq configuration in the
 `/etc/config/dhcp` file to `'127.0.0.1#5453'`. We also need to tell dnsmasq not
 to use resolvers found in `/etc/resolv.conf` by setting the dnsmasq option
@@ -100,7 +100,7 @@ The same outcome can be achieved in the LUCI web interface as follows:
 
 The configuration changes in the previous section ensure that DNS queries are
 sent over TLS encrypted connections *once dnsmasq and stubby are started*. When
-the OpenWRT device is first brought up, there is a possibility that DNS queries
+the OpenWrt device is first brought up, there is a possibility that DNS queries
 can go to ISP provided DNS servers ahead of dnsmasq and stubby being active. In
 order to mitigate this leakage, it's necessary to ensure that upstream resolvers
 aren't available, and the only DNS resolver used by the system is
@@ -145,7 +145,7 @@ DNSSEC:
 Either option achieves the same outcome, and there appears to be little reason
 for choosing one over the other other than that the second option is easier to
 configure in the LUCI web interface. Both options are detailed below, and both
-require that the `dnsmasq` package on the OpenWRT device is replaced with the
+require that the `dnsmasq` package on the OpenWrt device is replaced with the
 `dnsmasq-full` package. That can be achieved by running the following command:
 
     opkg install dnsmasq-full --download-only && opkg remove dnsmasq && opkg install dnsmasq-full --cache . && rm *.ipk
