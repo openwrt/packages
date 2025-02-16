@@ -1,0 +1,79 @@
+From 9a57bd133c54a1c30724c7cadb2995c049a8775f Mon Sep 17 00:00:00 2001
+From: Glenn Strauss <gstrauss@gluelogic.com>
+Date: Wed, 12 Feb 2025 01:00:47 -0500
+Subject: [PATCH] [mod_mbedtls] limit default curves to avail curves
+
+---
+ src/mod_mbedtls.c | 54 +++++++++++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 52 insertions(+), 2 deletions(-)
+
+--- a/src/mod_mbedtls.c
++++ b/src/mod_mbedtls.c
+@@ -4103,7 +4103,32 @@ mod_mbedtls_ssl_conf_curves(server *srv,
+ 
+     const char *groups = curvelist && !buffer_is_blank(curvelist)
+       ? curvelist->ptr
+-      : "x25519:secp256r1:secp384r1:x448";
++      :
++       #if defined(MBEDTLS_ECP_DP_CURVE25519_ENABLED)
++        "x25519"
++       #endif
++       #if defined(MBEDTLS_ECP_DP_SECP256R1_ENABLED)
++        #if defined(MBEDTLS_ECP_DP_CURVE25519_ENABLED)
++        ":"
++        #endif
++        "secp256r1"
++       #endif
++       #if defined(MBEDTLS_ECP_DP_SECP384R1_ENABLED)
++        #if defined(MBEDTLS_ECP_DP_CURVE25519_ENABLED) \
++         || defined(MBEDTLS_ECP_DP_SECP256R1_ENABLED)
++        ":"
++        #endif
++        "secp384r1"
++       #endif
++       #if defined(MBEDTLS_ECP_DP_CURVE448_ENABLED)
++        #if defined(MBEDTLS_ECP_DP_CURVE25519_ENABLED) \
++         || defined(MBEDTLS_ECP_DP_SECP256R1_ENABLED)  \
++         || defined(MBEDTLS_ECP_DP_SECP384R1_ENABLED)
++        ":"
++        #endif
++        "x448"
++       #endif
++        ;
+     for (const char *e; groups; groups = e ? e+1 : NULL) {
+         const char * const n = groups;
+         e = strchr(n, ':');
+@@ -4163,7 +4188,32 @@ mod_mbedtls_ssl_conf_curves(server *srv,
+ 
+     const char *groups = curvelist && !buffer_is_blank(curvelist)
+       ? curvelist->ptr
+-      : "x25519:secp256r1:secp384r1:x448";
++      :
++       #if defined(MBEDTLS_ECP_DP_CURVE25519_ENABLED)
++        "x25519"
++       #endif
++       #if defined(MBEDTLS_ECP_DP_SECP256R1_ENABLED)
++        #if defined(MBEDTLS_ECP_DP_CURVE25519_ENABLED)
++        ":"
++        #endif
++        "secp256r1"
++       #endif
++       #if defined(MBEDTLS_ECP_DP_SECP384R1_ENABLED)
++        #if defined(MBEDTLS_ECP_DP_CURVE25519_ENABLED) \
++         || defined(MBEDTLS_ECP_DP_SECP256R1_ENABLED)
++        ":"
++        #endif
++        "secp384r1"
++       #endif
++       #if defined(MBEDTLS_ECP_DP_CURVE448_ENABLED)
++        #if defined(MBEDTLS_ECP_DP_CURVE25519_ENABLED) \
++         || defined(MBEDTLS_ECP_DP_SECP256R1_ENABLED)  \
++         || defined(MBEDTLS_ECP_DP_SECP384R1_ENABLED)
++        ":"
++        #endif
++        "x448"
++       #endif
++        ;
+     for (const char *e; groups; groups = e ? e+1 : NULL) {
+         const char * const n = groups;
+         e = strchr(n, ':');

@@ -1,0 +1,20 @@
+From 639af8a3829045f54860fabe2c4268394b7f6b42 Mon Sep 17 00:00:00 2001
+From: Glenn Strauss <gstrauss@gluelogic.com>
+Date: Fri, 31 Jan 2025 01:40:03 -0500
+Subject: [PATCH] [mod_mbedtls] fix ssl.verifyclient.ca-crl-file
+
+---
+ src/mod_mbedtls.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/src/mod_mbedtls.c
++++ b/src/mod_mbedtls.c
+@@ -557,7 +557,7 @@ mod_mbedtls_merge_config_cpv (plugin_con
+         break;
+       case 4: /* ssl.ca-crl-file */
+         if (cpv->vtype == T_CONFIG_LOCAL)
+-            pconf->ssl_ca_dn_file = cpv->v.v;
++            pconf->ssl_ca_crl_file = cpv->v.v;
+         break;
+       case 5: /* ssl.read-ahead */
+         pconf->ssl_read_ahead = (0 != cpv->v.u);
