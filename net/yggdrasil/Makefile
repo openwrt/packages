@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=yggdrasil
-PKG_VERSION:=0.5.9
+PKG_VERSION:=0.5.12
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/yggdrasil-network/yggdrasil-go/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=ed7e310292234dd871aa0f02e5e131b876a675ebad43a1785e986b0eaa8069dc
+PKG_HASH:=6504a1e4095e091e7d6f1baa36602e3258a62c5025671b61eccbf8be532c7a0b
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-go-$(PKG_VERSION)
 
 PKG_MAINTAINER:=William Fleurant <meshnet@protonmail.com>
