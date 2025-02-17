@@ -51,6 +51,7 @@ stop_service() {
 }
 
 restart() {
+	rc_procd "${adb_script}" stop
 	rc_procd start_service restart
 }
 
