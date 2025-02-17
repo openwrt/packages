@@ -21,6 +21,6 @@ start_service() {
 	[ "$user" != root ] && procd_append_param command -u "$user"
 	[ "$group" != root ] && procd_append_param command -g "$group"
 	procd_set_param file /etc/dnsdist.conf
-	procd_set_param respawn
+	procd_set_param respawn 60 0 20
 	procd_close_instance
 }
