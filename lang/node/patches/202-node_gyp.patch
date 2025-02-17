@@ -8,7 +8,7 @@
        'include_dirs': [
          'src',
          'tools/msvs/genfiles',
-@@ -1354,6 +1355,7 @@
+@@ -1334,6 +1335,7 @@
          'tools',
          'src',
        ],
