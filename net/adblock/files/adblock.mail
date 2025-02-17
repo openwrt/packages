@@ -1,6 +1,6 @@
 #!/bin/sh
 # send mail script for adblock notifications
-# Copyright (c) 2015-2024 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2015-2025 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # Please note: you have to manually install and configure the package 'msmtp' before using this script
