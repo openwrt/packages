@@ -241,9 +241,15 @@ use() {
 }
 
 case "$1" in
-	ifup|ifdown|interfaces|policies|connected|rules|status|start|stop|restart|use|internal)
+	ifup|ifdown|interfaces|policies|connected|rules|status|start|stop|restart|internal)
 		mwan3_init
 		"$@"
+	;;
+	use)
+		mwan3_init
+		"$@"
+		# Propagate mwan3 use command exit code
+		exit "$?"
 	;;
 	*)
 		help
