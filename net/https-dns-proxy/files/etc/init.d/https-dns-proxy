@@ -33,6 +33,7 @@ readonly canaryDomainsiCloud='mask.icloud.com mask-h2.icloud.com'
 hdp_boot_flag=
 
 dnsmasq_restart() { [ -x /etc/init.d/dnsmasq ] || return 1; /etc/init.d/dnsmasq restart >/dev/null 2>&1; }
+is_alnum() { case "$1" in (*[![:alnum:]_@]*|"") return 1;; esac; }
 is_fw4_restart_needed() { [ "$(uci_get "$packageName" 'config' 'force_dns' '1')" = '1' ]; }
 is_mac_address() { expr "$1" : '[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]$' >/dev/null; }
 is_ipv4() { expr "$1" : '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >/dev/null; }
@@ -133,7 +134,7 @@ append_bootstrap() {
 }
 
 boot() {
-	ubus -t 30 wait_for network.interface 2>/dev/null
+#	ubus -t 30 wait_for network.interface 2>/dev/null
 	rc_procd start_service 'on_boot' && service_started 'on_boot'
 	if ! is_resolver_working; then
 		hdp_boot_flag=1
@@ -168,7 +169,7 @@ start_instance() {
 		config_load 'dhcp'
 		config_foreach dnsmasq_doh_server 'dnsmasq' 'add' "${listen_addr}" "${listen_port}"
 		config_foreach dnsmasq_instance_append_force_dns_port 'dnsmasq'
-	elif [ -n "$dnsmasq_config_update" ]; then
+	elif is_alnum "$dnsmasq_config_update"; then
 		for i in $dnsmasq_config_update; do
 			dnsmasq_doh_server "@dnsmasq[$i]" 'add' "${listen_addr}" "${listen_port}" || \
 				dnsmasq_doh_server "${i}" 'add' "${listen_addr}" "${listen_port}"
