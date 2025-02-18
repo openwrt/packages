@@ -106,6 +106,30 @@ reload_service() {
 	start
 }
 
+extra_command "firewall" "Reload all mwan3 firewall rules"
+firewall() {
+	handle_reload() {
+		local iface="$1"
+		local device
+
+		[ "$(mwan3_get_iface_hotplug_state "$iface")" = "online" ] && {
+			network_get_device device $iface
+			mwan3_create_iface_iptables $iface $device
+		}
+	}
+
+	mwan3_init
+	mwan3_set_general_iptables
+
+	config_load mwan3
+	config_foreach handle_reload interface
+
+	mwan3_set_policies_iptables
+
+	LOG notice "Re-apply firewall rules"
+}
+
 service_triggers() {
+	procd_add_restart_service_trigger "firewall" /etc/init.d/mwan3 firewall
 	procd_add_reload_trigger 'mwan3'
 }
