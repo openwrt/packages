@@ -102,10 +102,9 @@ create_key() {
 	[ -f $PRIV_KEY_FILE ] || ln -s $probe_key $PRIV_KEY_FILE
 	[ -f $PUB_KEY_FILE ] || ln -s $probe_pub_key $PUB_KEY_FILE
 
-	#Fix permission
-	chown atlas $probe_key $probe_pub_key
-	chgrp atlas $probe_key $probe_pub_key
-	chmod 644 $probe_key $probe_pub_key
+	#Fix permissions in case keys were generated using dropbearkey/dropbearconvert
+	chmod 600 $probe_key
+	chmod 644 $probe_pub_key
 
 	print_msg "Key generated successfully. Use the get_key command to show the public key and get instruction on how to register your probe."
 }
