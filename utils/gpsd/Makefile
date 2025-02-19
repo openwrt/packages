@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gpsd
 PKG_VERSION:=3.25
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SAVANNAH/$(PKG_NAME)
@@ -144,6 +144,9 @@ define Package/gpsd/install
 
 	$(INSTALL_DIR) $(1)/etc/gpsd
 	$(INSTALL_BIN) ./files/etc/gpsd/device-hook $(1)/etc/gpsd/
+
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_DATA) ./files/etc/uci-defaults/* $(1)/etc/uci-defaults/
 endef
 
 define Package/gpsd-clients/install
