@@ -2,12 +2,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hv-tools
 PKG_VERSION:=1.0.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/NikulovE/hv-tools/
-PKG_SOURCE_VERSION:=089a8d7376404eb873860b6fcb85b409a5d385fe
-PKG_MIRROR_HASH:=0e08eea3dbb00180eb738583f6c28f95921ffcbc3ba7f7217637777e62678493
+PKG_SOURCE_VERSION:=907e3722f03cfe44ca67cfeae42b4c21f0bcaf1b
+PKG_MIRROR_HASH:=972cf2bc9d3223c67c60d200c99b562ff2764be81ba8b8958df661004aaeb4ce
 
 PKG_MAINTAINER:=Evgeniy Nikulov <nikulov@live.ru>
 PKG_LICENSE:=MIT
@@ -29,18 +29,19 @@ define Package/hv-tools/description
 endef
 
 define Build/Compile
-	$(MAKE_VARS) $(MAKE) $(MAKE_FLAGS) all -C $(PKG_BUILD_DIR)/files/tools/hv
+	$(MAKE) prepare
+	$(MAKE_VARS) $(MAKE) $(MAKE_FLAGS) all -C $(LINUX_DIR)/tools/hv
 endef
 
 define Package/hv-tools/install
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/tools/hv/hv_kvp_daemon $(1)/usr/sbin/hv_kvp_daemon
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/tools/hv/hv_vss_daemon $(1)/usr/sbin/hv_vss_daemon
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/tools/hv/hv_fcopy_daemon $(1)/usr/sbin/hv_fcopy_daemon
+	$(INSTALL_BIN) $(LINUX_DIR)/tools/hv/hv_kvp_daemon $(1)/usr/sbin/hv_kvp_daemon
+	$(INSTALL_BIN) $(LINUX_DIR)/tools/hv/hv_vss_daemon $(1)/usr/sbin/hv_vss_daemon
+	$(INSTALL_BIN) $(LINUX_DIR)/tools/hv/hv_fcopy_daemon $(1)/usr/sbin/hv_fcopy_daemon
 	
 	$(INSTALL_DIR) $(1)/usr/libexec/hypervkvpd 
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/usr/libexec/hypervkvpd/hv_get_dhcp_info.sh $(1)/usr/libexec/hypervkvpd/hv_get_dhcp_info
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/usr/libexec/hypervkvpd/hv_get_dns_info.sh $(1)/usr/libexec/hypervkvpd/hv_get_dns_info
+	$(INSTALL_BIN) $(LINUX_DIR)/tools/hv/hv_get_dhcp_info.sh $(1)/usr/libexec/hypervkvpd/hv_get_dhcp_info
+	$(INSTALL_BIN) $(LINUX_DIR)/tools/hv/hv_get_dns_info.sh $(1)/usr/libexec/hypervkvpd/hv_get_dns_info
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/usr/libexec/hypervkvpd/hv_set_ifconfig.sh $(1)/usr/libexec/hypervkvpd/hv_set_ifconfig
 	
 	$(INSTALL_DIR) $(1)/etc/init.d
