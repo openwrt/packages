@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gpsd
 PKG_VERSION:=3.25
-PKG_RELEASE:=1
+PKG_RELEASE:=7
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SAVANNAH/$(PKG_NAME)
@@ -45,6 +45,7 @@ define Package/gpsd
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=An interface daemon for GPS receivers
+  DEPENDS+= +gpsd-utils
 endef
 
 define Package/gpsd/conffiles
@@ -140,6 +141,12 @@ define Package/gpsd/install
 	$(INSTALL_BIN) ./files/gpsd.init $(1)/etc/init.d/gpsd
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/gpsd $(1)/usr/sbin/
+
+	$(INSTALL_DIR) $(1)/etc/gpsd
+	$(INSTALL_BIN) ./files/etc/gpsd/device-hook $(1)/etc/gpsd/
+
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_DATA) ./files/etc/uci-defaults/* $(1)/etc/uci-defaults/
 endef
 
 define Package/gpsd-clients/install
