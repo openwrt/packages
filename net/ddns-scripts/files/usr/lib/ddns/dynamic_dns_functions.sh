@@ -715,7 +715,7 @@ do_transfer() {
 	[ $# -ne 1 ] && write_log 12 "Error in 'do_transfer()' - wrong number of parameters"
 
 	# Use ip_network as default for bind_network if not separately specified
-	[ -z "$bind_network" ] && [ "$ip_source" = "network" ] && [ "$ip_network" ] && bind_network="$ip_network"
+	[ -z "$bind_network" ] && [ $use_network -ne 0 ] && [ "$ip_source" = "network" ] && [ "$ip_network" ] && bind_network="$ip_network"
 
 	# lets prefer GNU Wget because it does all for us - IPv4/IPv6/HTTPS/PROXY/force IP version
 	if [ -n "$WGET_SSL" ] && [ $USE_CURL -eq 0 ]; then 			# except global option use_curl is set to "1"
