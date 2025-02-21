@@ -95,7 +95,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * Provides a Set search engine for certain IPs
 * Feed parsing by fast & flexible regex rulesets
 * Minimal status & error logging to syslog, enable debug logging to receive more output
-* Procd based init system support (start/stop/restart/reload/status/report/search/survey/lookup)
+* Procd based init system support (start/stop/restart/reload/status/report/search/survey)
 * Procd network interface trigger support
 * Add new or edit existing banIP feeds on your own with the LuCI integrated custom feed editor
 * Supports destination port & protocol limitations for external feeds (see the feed list above). To change the default assignments just use the custom feed editor
@@ -143,7 +143,6 @@ Available commands:
 	report          [text|json|mail] Print banIP related Set statistics
 	search          [<IPv4 address>|<IPv6 address>] Check if an element exists in a banIP Set
 	survey          [<Set name>] List all elements of a given banIP Set
-	lookup          Lookup the IPs of domain names in the local lists and update them
 	running         Check if service is running
 	status          Service status
 	trace           Start with syscall trace
@@ -367,7 +366,7 @@ banIP supports local allow- and block-lists, MAC/IPv4/IPv6 addresses (incl. rang
 Unsuccessful login attempts or suspicious requests will be tracked and added to the local blocklist (see the 'ban_autoblocklist' option). The blocklist behaviour can be further tweaked with the 'ban_nftexpiry' option.  
 Depending on the options 'ban_autoallowlist' and 'ban_autoallowuplink' the uplink subnet or the uplink IP will be added automatically to local allowlist.  
 Furthermore, you can reference external Allowlist URLs with additional IPv4 and IPv6 feeds (see 'ban_allowurl').  
-Both local lists also accept domain names as input to allow IP filtering based on these names. The corresponding IPs (IPv4 & IPv6) will be extracted and added to the Sets. You can also start the domain lookup separately via /etc/init.d/banip lookup at any time.
+Both local lists also accept domain names as input to allow IP filtering based on these names. The corresponding IPs (IPv4 & IPv6) will be extracted and added to the Sets.  
 
 **Allowlist-only mode**  
 banIP supports an "allowlist only" mode. This option restricts Internet access only to certain, explicitly permitted IP segments - and blocks access to the rest of the Internet. All IPs that are _not_ listed in the allowlist or in the external allowlist URLs are blocked. In this mode it might be useful to limit the allowlist feed to the inbound chain, to still allow outbound communication to the rest of the world.  
