@@ -1,0 +1,121 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 2dc829d6..dd071c9c 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -117,10 +117,17 @@ if(PIPY_ZLIB)
+   set(ZLIB_LIB ${PIPY_ZLIB}/lib/${LIB_Z})
+ else()
+   if(PIPY_USE_SYSTEM_ZLIB)
+-    SET(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
++    SET(CMAKE_FIND_LIBRARY_SUFFIXES ".a")  # Look for static libraries first
+     find_package(ZLIB REQUIRED)
+-    set(ZLIB_LIB -lz)
+-  else(PIPY_USE_SYSTEM_ZLIB)
++    
++    if(ZLIB_FOUND)
++      set(ZLIB_LIB ${ZLIB_LIBRARIES})  # Use the found ZLIB static libraries
++      message(STATUS "Using system-installed static zlib")
++    else()
++      message(FATAL_ERROR "System Zlib not found. Set PIPY_USE_SYSTEM_ZLIB to OFF or install Zlib.")
++    endif()
++
++  else()  # When not using system-installed zlib
+     add_subdirectory(deps/zlib-1.3.1)
+     set(ZLIB_INC_DIR "${CMAKE_SOURCE_DIR}/deps/zlib-1.3.1" "${CMAKE_BINARY_DIR}/deps/zlib-1.3.1")
+     set(ZLIB_LIB zlibstatic)
+@@ -141,6 +148,10 @@ if(PIPY_USE_SYSTEM_OPENSSL)
+   if(OPENSSL_FOUND)
+     set(OPENSSL_INC_DIR ${OPENSSL_INCLUDE_DIR})
+     message(STATUS "Using system-installed OpenSSL")
++    
++    # Force static linking of OpenSSL if system OpenSSL is found
++    set(OPENSSL_LIBRARIES static) # Link statically
++    set(OPENSSL_USE_STATIC_LIBS ON)  # Ensure static library is used
+   else()
+     message(FATAL_ERROR "System OpenSSL not found. Set PIPY_USE_SYSTEM_OPENSSL to OFF or install OpenSSL.")
+   endif()
+@@ -203,7 +214,7 @@ else()
+   set(BROTLI_DISABLE_TESTS ON CACHE BOOL "" FORCE)
+   add_subdirectory(deps/brotli-1.0.9)
+   set(BROTLI_INC_DIR "${CMAKE_SOURCE_DIR}/deps/brotli-1.0.9/c/include")
+-  set(BROTLI_LIB brotlidec-static)
++  set(BROTLI_LIB brotlidec-static brotlicommon-static)
+ endif(PIPY_BROTLI)
+ 
+ add_definitions(
+@@ -249,8 +260,6 @@ if(NOT PIPY_USE_SYSTEM_ZLIB)
+   include_directories("${ZLIB_INC_DIR}")
+ endif()
+ 
+-add_subdirectory(test/benchmark/baseline)
+-
+ SET(PIPY_SRC
+   src/admin-link.cpp
+   src/admin-proxy.cpp
+@@ -407,13 +416,11 @@ elseif(PIPY_STATICLIB)
+   add_library(pipy STATIC ${PIPY_SRC})
+ else()
+   add_executable(pipy ${PIPY_SRC})
++  install(TARGETS pipy RUNTIME DESTINATION bin)
+ endif()
+ 
+-execute_process(
+-  COMMAND ${CMAKE_SOURCE_DIR}/generate_version_h.${EXT_SHELL} ${CMAKE_BINARY_DIR}/deps/version.h
+-  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+-)
+ 
++configure_file(${CMAKE_SOURCE_DIR}/version.h ${CMAKE_BINARY_DIR}/deps/version.h COPYONLY)
+ add_custom_target(GenVer DEPENDS ${CMAKE_BINARY_DIR}/deps/version.h)
+ 
+ add_dependencies(pipy yajl_s expat ${BROTLI_LIB} GenVer)
+@@ -457,20 +464,8 @@ endif()
+ if(PIPY_CODEBASES)
+   add_definitions(-DPIPY_USE_CODEBASES)
+ 
+-  if(NOT NODEJS_EXECUTABLE)
+-    message(FATAL_ERROR "Nodejs installation not found.")
+-  endif()
+-
+-  add_custom_command(
+-    OUTPUT ${CMAKE_BINARY_DIR}/deps/codebases.tar.gz.h
+-    COMMAND ${NODEJS_EXECUTABLE}
+-    ARGS pack-codebases.js ${CMAKE_BINARY_DIR}/deps/codebases.tar.gz.h ${PIPY_CUSTOM_CODEBASES}
+-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/gui
+-    DEPENDS gui/pack-codebases.js ${CMAKE_SOURCE_DIR}/tutorial ${CMAKE_SOURCE_DIR}/samples
+-  )
+-
++  configure_file(${CMAKE_SOURCE_DIR}/codebases.tar.gz.h ${CMAKE_BINARY_DIR}/deps/codebases.tar.gz.h COPYONLY)
+   add_custom_target(PackCodebases DEPENDS ${CMAKE_BINARY_DIR}/deps/codebases.tar.gz.h)
+-  add_dependencies(pipy PackCodebases)
+ endif()
+ 
+ if(PIPY_DEFAULT_OPTIONS)
+@@ -526,6 +521,27 @@ else()
+   target_link_libraries(pipy ${OPENSSL_LIB_DIR}/${LIB_SSL} ${OPENSSL_LIB_DIR}/${LIB_CRYPTO})
+ endif()
+ 
++if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
++    message(STATUS "Detected GCC compiler")
++
++    if(CMAKE_SYSTEM_PROCESSOR STREQUAL "mips" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "mipsel")
++        message(STATUS "Forcing linking with libatomic for MIPS architectures")
++        target_link_libraries(pipy atomic)
++    else()
++        include(CheckLibraryExists)
++        check_library_exists(atomic atomic_load "" LIBATOMIC_NEEDED)
++
++        if(LIBATOMIC_NEEDED)
++            message(STATUS "Linking libatomic as it is required by GCC on this platform")
++            target_link_libraries(pipy atomic)
++        else()
++            message(STATUS "Libatomic not required on this platform")
++        endif()
++    endif()
++endif()
++
++
++
+ if(WIN32)
+   target_link_libraries(pipy crypt32 userenv)
+ elseif(ANDROID)
+
