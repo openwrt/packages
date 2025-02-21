@@ -290,10 +290,10 @@ define Download/nginx-mod-ts
 endef
 
 define Download/nginx-mod-naxsi
-  SOURCE_DATE:=2022-09-14
-  SOURCE_VERSION:=d714f1636ea49a9a9f4f06dba14aee003e970834
-  URL:=https://github.com/nbs-system/naxsi.git
-  MIRROR_HASH:=b0cef5fbf842f283eb5f0686ddd1afcd07d83abd7027c8cfb3e84a2223a34797
+  SOURCE_DATE:=2025-01-05
+  SOURCE_VERSION:=b61ba37b3666b386c7a6d83fbcdf6ca3377395a1
+  URL:=https://github.com/wargio/naxsi.git
+  MIRROR_HASH:=2b8bf06f8e4cee95e287158c193c4930deab097bf1491c03a95dd8b0c2682d4c
   PROTO:=git
 endef
 
@@ -356,7 +356,7 @@ $(foreach m,$(PKG_MOD_EXTRA),$(eval $(call Module/Download,$(m))))
 
 define Module/nginx-mod-naxsi/install
 	$(INSTALL_DIR) $(1)/etc/nginx
-	$(INSTALL_CONF) $(PKG_BUILD_DIR)/nginx-mod-naxsi/naxsi_config/naxsi_core.rules $(1)/etc/nginx
+	$(INSTALL_CONF) $(PKG_BUILD_DIR)/nginx-mod-naxsi/naxsi_rules/naxsi_core.rules $(1)/etc/nginx
 endef
 
 define Quilt/Refresh/Package
