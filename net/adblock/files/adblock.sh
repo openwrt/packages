@@ -23,7 +23,6 @@ adb_trigger=""
 adb_triggerdelay="5"
 adb_backup="1"
 adb_mail="0"
-adb_mailcnt="0"
 adb_jail="0"
 adb_tld="1"
 adb_dns=""
@@ -1011,7 +1010,7 @@ f_jsnup() {
 	fi
 	mem_free="$("${adb_awkcmd}" '/^MemAvailable/{printf "%.2f", $2/1024}' "/proc/meminfo" 2>/dev/null)"
 	mem_max="$("${adb_awkcmd}" '/^VmHWM/{printf "%.2f", $2/1024}' "/proc/${$}/status" 2>/dev/null)"
-	adb_cnt="$("${adb_awkcmd}" -v cnt="${adb_cnt}" 'BEGIN{res="";pos=0;for(i=length(cnt);i>0;i--){res=substr(cnt,i,1)res;pos++;if(pos==3&&i>1){res="."res;pos=0;}}; printf"%s",res}')"
+	adb_cnt="$("${adb_awkcmd}" -v cnt="${adb_cnt}" 'BEGIN{res="";pos=0;for(i=length(cnt);i>0;i--){res=substr(cnt,i,1)res;pos++;if(pos==3&&i>1){res=" "res;pos=0;}}; printf"%s",res}')"
 
 	case "${status}" in
 		"enabled" | "error")
@@ -1063,8 +1062,7 @@ f_jsnup() {
 	json_add_string "system" "${adb_sysver}"
 	json_dump >"${adb_rtfile}"
 
-	if [ "${adb_mail}" = "1" ] && [ -x "${adb_mailservice}" ] &&
-		[ "${status}" = "enabled" ] && [ "${adb_cnt}" -le "${adb_mailcnt}" ]; then
+	if [ "${adb_mail}" = "1" ] && [ -x "${adb_mailservice}" ] && [ "${status}" = "enabled" ]; then
 		"${adb_mailservice}" >/dev/null 2>&1
 	fi
 }
