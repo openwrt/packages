@@ -191,7 +191,6 @@ Available commands:
 | adb_mailsender     | no-reply@adblock                   | sender address for adblock notification E-Mails                                                |
 | adb_mailtopic      | adblock&nbsp;notification          | topic for adblock notification E-Mails                                                         |
 | adb_mailprofile    | adb_notify                         | mail profile used in 'msmtp' for adblock notification E-Mails                                  |
-| adb_mailcnt        | 0                                  | minimum domain count to trigger E-Mail notifications                                           |
 | adb_jail           | 0                                  | set to 1 to enable the additional, restrictive 'adb_list.jail' creation                        |
 | adb_jaildir        | /tmp                               | path for the generated jail list                                                               |
 
