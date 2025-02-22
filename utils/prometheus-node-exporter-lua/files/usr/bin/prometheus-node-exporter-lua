@@ -8,6 +8,10 @@
 
 socket = require("socket")
 
+-- get configs
+
+local omit_zero_values = os.getenv("OMIT_ZERO_VALUES") == "1"
+
 -- Parsing
 
 function space_split(s)
@@ -22,7 +26,7 @@ function get_contents(filename)
   local f = io.open(filename, "rb")
   local contents = ""
   if f then
-    contents = f:read "*a"
+    contents = f:read("*a")
     f:close()
   end
 
@@ -34,8 +38,8 @@ end
 function print_metric(metric, labels, value)
   local label_string = ""
   if labels then
-    for label,value in pairs(labels) do
-      label_string =  label_string .. label .. '="' .. value .. '",'
+    for label, value in pairs(labels) do
+      label_string = label_string .. label .. '="' .. value .. '",'
     end
     label_string = "{" .. string.sub(label_string, 1, -2) .. "}"
   end
@@ -45,7 +49,9 @@ end
 function metric(name, mtype, labels, value)
   output("# TYPE " .. name .. " " .. mtype)
   local outputter = function(labels, value)
-    print_metric(name, labels, value)
+    if not (omit_zero_values and tonumber(value) == 0) then
+      print_metric(name, labels, value)
+    end
   end
   if value then
     outputter(labels, value)
@@ -67,10 +73,10 @@ end
 function run_all_collectors(collectors)
   local metric_duration = metric("node_scrape_collector_duration_seconds", "gauge")
   local metric_success = metric("node_scrape_collector_success", "gauge")
-  for _,cname in pairs(collectors) do
+  for _, cname in pairs(collectors) do
     if col_mods[cname] ~= nil then
       local duration, success = timed_scrape(col_mods[cname])
-      local labels = {collector=cname}
+      local labels = { collector = cname }
       metric_duration(labels, duration)
       metric_success(labels, success)
     end
@@ -80,7 +86,7 @@ end
 -- Web server-specific functions
 
 function handle_request(env)
-  if env.PATH_INFO ~= '/metrics' then
+  if env.PATH_INFO ~= "/metrics" then
     uhttpd.send("Status: 404 Not Found\r\n")
     uhttpd.send("Server: lua-metrics\r\n")
     uhttpd.send("Content-Type: text/plain\r\n\r\n")
@@ -91,7 +97,7 @@ function handle_request(env)
     uhttpd.send("Content-Type: text/plain; version=0.0.4\r\n\r\n")
     local cols = {}
     for c in env.QUERY_STRING:gmatch("collect[^=]*=([^&]+)") do
-      cols[#cols+1] = c
+      cols[#cols + 1] = c
     end
     if #cols == 0 then
       cols = col_names
@@ -107,12 +113,14 @@ col_names = {}
 ls_fd = io.popen("ls -1 /usr/lib/lua/prometheus-collectors/*.lua")
 for c in ls_fd:lines() do
   c = c:match("([^/]+)%.lua$")
-  col_mods[c] = require('prometheus-collectors.'..c)
-  col_names[#col_names+1] = c
+  col_mods[c] = require("prometheus-collectors." .. c)
+  col_names[#col_names + 1] = c
 end
 ls_fd:close()
 
-output = function (str) uhttpd.send(str.."\n") end
+output = function(str)
+  uhttpd.send(str .. "\n")
+end
 
 if arg ~= nil then
   output = print
