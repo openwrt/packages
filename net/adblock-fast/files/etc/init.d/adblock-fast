@@ -638,7 +638,7 @@ detect_file_type() {
 		echo 'dnsmasq2'
 	elif grep -q '^address=' "$file"; then
 		echo 'dnsmasq3'
-	elif grep -q '^0\.0\.0\.0' "$file" || grep -q '^127\.0\.0\.1' "$file"; then
+	elif grep -q -e '^0\.0\.0\.0\s' -e '^127\.0\.0\.1\s' "$file"; then
 		echo 'hosts'
 	elif [ -n "$(sed "$domainsFilter" "$file" | head -1)" ]; then
 		echo 'domains'
@@ -2258,7 +2258,7 @@ adb_pause() {
 
 allow() { load_validate_config 'config' adb_allow "'$*'"; }
 boot() {
-	ubus -t 30 wait_for network.interface 2>/dev/null
+#	ubus -t 30 wait_for network.interface 2>/dev/null
 	adbf_boot_flag=1
 	rc_procd start_service 'on_boot' && service_started 'on_boot'
 }
@@ -2311,7 +2311,7 @@ service_triggers() {
 			wan6="${wan6:-wan6}"
 		fi
 		output "Setting trigger${wan6:+s} for $wan ${wan6:+$wan6 }"
-		for i in "$wan" "$wan6"; do
+		for i in $wan $wan6; do
 			procd_add_interface_trigger "interface.*" "$i" "/etc/init.d/${packageName}" start && output_ok || output_fail
 		done
 		output '\n'
