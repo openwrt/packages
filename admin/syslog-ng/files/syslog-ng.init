@@ -5,6 +5,11 @@ START=50
 
 USE_PROCD=1
 
+boot() {
+	ubus -t 60 wait_for network.interface.loopback 2>/dev/null
+	start $@
+}
+
 start_service() {
 	[ -f /etc/syslog-ng.conf ] || return 1
 	procd_open_instance
