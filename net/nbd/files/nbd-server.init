@@ -53,6 +53,10 @@ config_handle_generic() {
 	append_val_bool allowlist "$cfg"
 	append_val_str includedir "$cfg"
 	append_val_bool oldstyle "$cfg"
+	append_val_str max_threads "$cfg"
+	append_val_bool splice "$cfg"
+	append_val_str unixsock "$cfg"
+	append_val_bool duallisten "$cfg"
 
 	config_get_bool SERVICE_ENABLED "$cfg" enabled 0
 }
@@ -81,6 +85,13 @@ config_handle_share() {
 	append_val_str virtstyle "$cfg"
 	append_val_str port "$cfg" oldstyle_port
 	append_val_str listenaddr "$cfg" oldstyle_listenaddr
+	append_val_str cowdir "$cfg"
+	append_val_bool treefiles "$cfg"
+	append_val_bool sdp "$cfg"
+	append_val_bool temporary "$cfg"
+	append_val_str transactionlog "$cfg"
+	append_val_bool trim "$cfg"
+	append_val_str waitfile "$cfg"
 }
 
 start_instance() {
