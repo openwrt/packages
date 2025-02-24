@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=net-snmp
 PKG_VERSION:=5.9.4
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/net-snmp
@@ -37,12 +37,32 @@ define Package/net-snmp/Default/description
 endef
 
 
-define Package/libnetsnmp
+define Package/net-snmp
 $(call Package/net-snmp/Default)
+  TITLE:= Open source SNMP package - without Openssl
+  DEPENDS:= \
+	    +libnetsnmp \
+	    +snmpd \
+	    +snmp-mibs \
+	    +snmptrapd \
+	    +snmp-utils
+  VARIANT:=nossl
+  DEFAULT_VARIANT:=1
+  PROVIDES:=net-snmp
+endef
+
+define Package/libnetsnmp/Default
+$(call Package/net-snmp/Default)
+  TITLE:=Open source SNMP implementation (libraries)
   SECTION:=libs
   CATEGORY:=Libraries
   DEPENDS:=+libnl-tiny +libpci +libpcre2
-  TITLE:=Open source SNMP implementation (libraries)
+endef
+
+define Package/libnetsnmp
+$(call Package/libnetsnmp/Default)
+  PROVIDES:=libnetsnmp
+  VARIANT:=nossl
 endef
 
 define Package/libnetsnmp/description
@@ -64,13 +84,20 @@ $(call Package/net-snmp/Default/description)
 endef
 
 
-define Package/snmp-utils
+define Package/snmp-utils/Default
 $(call Package/net-snmp/Default)
-  DEPENDS:=+libnetsnmp
   TITLE:=Open source SNMP implementation (utilities)
 endef
 
-define Package/snmp-utils/description
+define Package/snmp-utils
+$(call Package/snmp-utils/Default)
+  DEPENDS:=+libnetsnmp
+  VARIANT:=nossl
+  TITLE+= - without Openssl
+endef
+
+
+define Package/snmp-utils/description/Default
 $(call Package/net-snmp/Default/description)
  .
  This package contains SNMP client utilities:
@@ -82,11 +109,15 @@ $(call Package/net-snmp/Default/description)
    - snmpwalk
 endef
 
+Package/snmp-utils/description = $(Package/snmp-utils/descripition/Default)
+
 
 define Package/snmpd
 $(call Package/net-snmp/Default)
   DEPENDS:=+libnetsnmp
+  VARIANT:=nossl
   TITLE:=Open source SNMP implementation (daemon)
+  PROVIDES:=snmpd
 endef
 
 define Package/snmpd/description
@@ -104,17 +135,27 @@ $(call Package/net-snmp/Default)
 endef
 
 
-define Package/snmptrapd
+define Package/snmptrapd/Default
 $(call Package/net-snmp/Default)
-  DEPENDS:=+libnetsnmp
   TITLE:=Open source SNMP implementation (notification receiver)
 endef
 
-define Package/snmptrapd/description
+define Package/snmptrapd
+$(call Package/snmptrapd/Default)
+  DEPENDS:=+libnetsnmp
+  VARIANT:=nossl
+  TITLE+= - without Openssl
+endef
+
+
+define Package/snmptrapd/description/Default
 $(call Package/net-snmp/Default/description)
  .
  This package contains the SNMP notification receiver.
 endef
+
+
+Package/snmptrapd/description = $(Package/snmpdtrapd/description/Default)
 
 
 SNMP_MIB_MODULES_INCLUDED = \
@@ -261,9 +302,14 @@ define Package/snmp-utils/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/snmp{get,set,status,test,trap,walk} $(1)/usr/bin/
 endef
 
-define Package/snmpd/conffiles
+$(call Package/snmp-utils/install,$(1))
+endef
+
+define Package/snmpd/conffiles/Default
 /etc/config/snmpd
 endef
+
+Package/snmpd/conffiles = $(Package/snmpd/conffiles/Default)
 
 define Package/snmpd/install
 	$(INSTALL_DIR) $(1)/etc/config
@@ -291,3 +337,4 @@ $(eval $(call BuildPackage,snmp-utils))
 $(eval $(call BuildPackage,snmpd))
 $(eval $(call BuildPackage,snmpd-static))
 $(eval $(call BuildPackage,snmptrapd))
+$(eval $(call BuildPackage,net-snmp))
