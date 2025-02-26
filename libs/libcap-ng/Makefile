@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libcap-ng
 PKG_VERSION:=0.8.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://people.redhat.com/sgrubb/libcap-ng
@@ -26,6 +26,7 @@ PKG_FIXUP:=autoreconf
 PKG_BUILD_FLAGS:=lto
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 
 define Package/libcap-ng/Default
   TITLE:=POSIX capabilities library
@@ -65,6 +66,16 @@ CONFIGURE_ARGS += \
     --without-python \
     --without-python3
 
+HOST_CONFIGURE_VARS += \
+    ac_cv_prog_swig_found=no
+
+HOST_CONFIGURE_ARGS += \
+    --prefix=$(STAGING_DIR_HOSTPKG)/usr \
+    --without-python \
+    --without-python3
+
+HOST_PKG_BUILD_FLAGS:=lto
+
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/*.h $(1)/usr/include/
@@ -75,6 +86,10 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/share/aclocal
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/aclocal/cap-ng.m4\
 	 $(1)/usr/share/aclocal
+endef
+
+define Host/Install
+  $(call Host/Install/Default, install PREFIX=$(STAGING_DIR_HOSTPKG)/usr)
 endef
 
 define Package/libcap-ng/install
@@ -89,3 +104,4 @@ endef
 
 $(eval $(call BuildPackage,libcap-ng))
 $(eval $(call BuildPackage,libcap-ng-bin))
+$(eval $(call HostBuild))
