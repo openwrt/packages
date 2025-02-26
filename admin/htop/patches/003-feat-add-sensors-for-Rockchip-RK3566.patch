@@ -1,0 +1,39 @@
+From 1eab0a5b1f58ed893a44e87243cc5d9a236f639f Mon Sep 17 00:00:00 2001
+From: KholkinDmitrii <62114481+KholkinDmitrii@users.noreply.github.com>
+Date: Wed, 9 Oct 2024 12:46:51 +0200
+Subject: [PATCH] feat: add sensors for Rockchip RK3566
+
+---
+ linux/LibSensors.c | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+--- a/linux/LibSensors.c
++++ b/linux/LibSensors.c
+@@ -143,6 +143,8 @@ static int tempDriverPriority(const sens
+       { "bigcore0_thermal",   0 },
+       { "bigcore1_thermal",   0 },
+       { "bigcore2_thermal",   0 },
++      /* Rockchip RK3566 */
++      { "soc_thermal",        0 },
+       /* Low priority drivers */
+       { "acpitz",             1 },
+    };
+@@ -241,6 +243,18 @@ void LibSensors_getCPUTemperatures(CPUDa
+                continue;
+             }
+          }
++
++         /* Rockchip RK3566 */
++         if (existingCPUs == 4) {
++            if (String_eq(chip->prefix, "soc_thermal")) {
++               data[1] = temp;
++               data[2] = temp;
++               data[3] = temp;
++               data[4] = temp;
++               coreTempCount += 4;
++               continue;
++            }
++         }
+ 
+          /* If already set, e.g. Ryzen reporting platform temperature for each die, use the bigger one */
+          if (isNaN(data[tempID])) {
