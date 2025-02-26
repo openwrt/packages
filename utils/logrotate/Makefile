@@ -18,7 +18,7 @@ PKG_HASH:=42b4080ee99c9fb6a7d12d8e787637d057a635194e25971997eebbe8d5e57618
 PKG_MAINTAINER:=Christian Beier <cb@shoutrlabs.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
-PKG_CPE_ID:=cpe:/a:gentoo:logrotate
+PKG_CPE_ID:=cpe:/a:logrotate_project:logrotate
 
 include $(INCLUDE_DIR)/package.mk
 
