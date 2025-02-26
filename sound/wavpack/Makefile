@@ -11,6 +11,7 @@ PKG_HASH:=e81510fd9ec5f309f58d5de83e9af6c95e267a13753d7e0bbfe7b91273a88bee
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=BSD-3c
 PKG_LICENSE_FILES:=COPYING LICENSE
+PKG_CPE_ID:=cpe:/a:wavpack:wavpack
 
 CMAKE_INSTALL:=1
 
