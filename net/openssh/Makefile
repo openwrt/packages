@@ -18,7 +18,7 @@ PKG_HASH:=dd8bd002a379b5d499dfb050dd1fa9af8029e80461f4bb6c523c49973f5a39f3
 
 PKG_LICENSE:=BSD ISC
 PKG_LICENSE_FILES:=LICENCE
-PKG_CPE_ID:=cpe:/a:openssh:openssh
+PKG_CPE_ID:=cpe:/a:openbsd:openssh
 
 #While bumping new version, make sure that it works without it, so it can be removed.
 PKG_FIXUP:=autoreconf
