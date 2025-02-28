@@ -1,45 +1,41 @@
 --- a/ext/gd/config.m4
 +++ b/ext/gd/config.m4
-@@ -152,7 +152,7 @@ AC_DEFUN([PHP_GD_CHECK_FORMAT],[
-   LIBS="${LIBS} ${GD_SHARED_LIBADD}"
-   old_CFLAGS="${CFLAGS}"
-   CFLAGS="${CFLAGS} ${GDLIB_CFLAGS}"
--  AC_MSG_CHECKING([for working gdImageCreateFrom$1 in libgd])
-+  AC_MSG_CHECKING([for gdImageCreateFrom$1 in libgd (OpenWrt build config based)])
-   AC_LANG_PUSH([C])
-   AC_RUN_IFELSE([AC_LANG_SOURCE([
+@@ -154,7 +154,7 @@ LIBS="${LIBS} ${GD_SHARED_LIBADD}"
+ old_CFLAGS="${CFLAGS}"
+ CFLAGS="${CFLAGS} ${GDLIB_CFLAGS}"
+ AC_LANG_PUSH([C])
+-AC_CACHE_CHECK([for working gdImageCreateFrom$1 in libgd], [php_var],
++AC_CACHE_CHECK([for working gdImageCreateFrom$1 in libgd (OpenWrt build config based)], [php_var],
+   [AC_RUN_IFELSE([AC_LANG_SOURCE([
  #include <stdio.h>
-@@ -179,7 +179,10 @@ int main(int argc, char** argv) {
-   ],[
-     AC_MSG_RESULT([no])
-   ],[
--    AC_MSG_RESULT([no])
-+    AC_MSG_RESULT([$3])
-+    m4_if([$3],[yes],[
-+      AC_DEFINE($2, 1, [Does gdImageCreateFrom$1 work?])
-+    ])
-   ])
-   AC_LANG_POP([C])
-   CFLAGS="${old_CFLAGS}"
-@@ -187,13 +190,14 @@ int main(int argc, char** argv) {
+ #include <unistd.h>
+@@ -177,7 +177,7 @@ int main(int argc, char** argv) {
+ }])],
+   [AS_VAR_SET([php_var], [yes])],
+   [AS_VAR_SET([php_var], [no])],
+-  [AS_VAR_SET([php_var], [no])])])
++  [AS_VAR_SET([php_var], [$3])])])
+ AS_VAR_IF([php_var], [yes], [$2])
+ AC_LANG_POP([C])
+ CFLAGS="${old_CFLAGS}"
+@@ -186,13 +186,13 @@ AS_VAR_POPDEF([php_var])
  ])
  
  AC_DEFUN([PHP_GD_CHECK_VERSION],[
--  PHP_GD_CHECK_FORMAT([Png],  [HAVE_GD_PNG])
--  PHP_GD_CHECK_FORMAT([Avif], [HAVE_GD_AVIF])
--  PHP_GD_CHECK_FORMAT([Webp], [HAVE_GD_WEBP])
--  PHP_GD_CHECK_FORMAT([Jpeg], [HAVE_GD_JPG])
--  PHP_GD_CHECK_FORMAT([Xpm],  [HAVE_GD_XPM])
--  PHP_GD_CHECK_FORMAT([Bmp],  [HAVE_GD_BMP])
--  PHP_GD_CHECK_FORMAT([Tga],  [HAVE_GD_TGA])
-+  dnl The 3rd parameter is OpenWrt specific default derived from libgd build
-+  PHP_GD_CHECK_FORMAT([Png],  [HAVE_GD_PNG],  [yes])
-+  PHP_GD_CHECK_FORMAT([Avif], [HAVE_GD_AVIF], [no])
-+  PHP_GD_CHECK_FORMAT([Webp], [HAVE_GD_WEBP], [yes])
-+  PHP_GD_CHECK_FORMAT([Jpeg], [HAVE_GD_JPG],  [yes])
-+  PHP_GD_CHECK_FORMAT([Xpm],  [HAVE_GD_XPM],  [no])
-+  PHP_GD_CHECK_FORMAT([Bmp],  [HAVE_GD_BMP],  [no])
-+  PHP_GD_CHECK_FORMAT([Tga],  [HAVE_GD_TGA],  [no])
-   PHP_CHECK_LIBRARY(gd, gdFontCacheShutdown,           [AC_DEFINE(HAVE_GD_FREETYPE,          1, [ ])], [], [ $GD_SHARED_LIBADD ])
-   PHP_CHECK_LIBRARY(gd, gdVersionString,               [AC_DEFINE(HAVE_GD_LIBVERSION,        1, [ ])], [], [ $GD_SHARED_LIBADD ])
-   PHP_CHECK_LIBRARY(gd, gdImageGetInterpolationMethod, [AC_DEFINE(HAVE_GD_GET_INTERPOLATION, 1, [ ])], [], [ $GD_SHARED_LIBADD ])
+-  PHP_GD_CHECK_FORMAT([Png],  [AC_DEFINE([HAVE_GD_PNG], [1])])
+-  PHP_GD_CHECK_FORMAT([Avif], [AC_DEFINE([HAVE_GD_AVIF], [1])])
+-  PHP_GD_CHECK_FORMAT([Webp], [AC_DEFINE([HAVE_GD_WEBP], [1])])
+-  PHP_GD_CHECK_FORMAT([Jpeg], [AC_DEFINE([HAVE_GD_JPG], [1])])
+-  PHP_GD_CHECK_FORMAT([Xpm],  [AC_DEFINE([HAVE_GD_XPM], [1])])
+-  PHP_GD_CHECK_FORMAT([Bmp],  [AC_DEFINE([HAVE_GD_BMP], [1])])
+-  PHP_GD_CHECK_FORMAT([Tga],  [AC_DEFINE([HAVE_GD_TGA], [1])])
++  PHP_GD_CHECK_FORMAT([Png],  [AC_DEFINE([HAVE_GD_PNG], [1])],  [yes])
++  PHP_GD_CHECK_FORMAT([Avif], [AC_DEFINE([HAVE_GD_AVIF], [1])], [no])
++  PHP_GD_CHECK_FORMAT([Webp], [AC_DEFINE([HAVE_GD_WEBP], [1])], [yes])
++  PHP_GD_CHECK_FORMAT([Jpeg], [AC_DEFINE([HAVE_GD_JPG], [1])],  [yes])
++  PHP_GD_CHECK_FORMAT([Xpm],  [AC_DEFINE([HAVE_GD_XPM], [1])],  [no])
++  PHP_GD_CHECK_FORMAT([Bmp],  [AC_DEFINE([HAVE_GD_BMP], [1])],  [no])
++  PHP_GD_CHECK_FORMAT([Tga],  [AC_DEFINE([HAVE_GD_TGA], [1])],  [no])
+   PHP_CHECK_LIBRARY([gd], [gdFontCacheShutdown],
+     [AC_DEFINE([HAVE_GD_FREETYPE], [1])],
+     [],
