@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mini_snmpd
 PKG_VERSION:=1.6
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_MAINTAINER:=Marcin Jurkowski <marcin1j@gmail.com>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
@@ -17,7 +17,7 @@ PKG_CPE_ID:=cpe:/a:minisnmpd_project:minisnmpd
 
 PKG_SOURCE:=mini-snmpd-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/troglobit/mini-snmpd/tar.gz/v$(PKG_VERSION)?
-PKG_BUILD_DIR:=$(BUILD_DIR)/mini-snmpd-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/mini-snmpd-$(PKG_VERSION)
 PKG_HASH:=de00c475a3c70c56f3ee97cd683cb71009d3521d60b1f589c5a91b4671ede9f3
 
 PKG_FIXUP:=autoreconf
@@ -40,6 +40,24 @@ define Package/mini_snmpd
 # openwrt requires init script runtime dependencies be defined for make menuconfig
 # (e.g busybox sysntpd)
   DEPENDS:=+jsonfilter +ubus +procd +ubox
+  VARIANT:=default
+  CONFLICTS:=mini_snmpd-16 mini_snmpd-52
+endef
+
+define Package/mini_snmpd-16
+  $(call Package/mini_snmpd)
+  TITLE+= (16 ports)
+  PROVIDES:=mini_snmpd
+  VARIANT:=16
+  CONFLICTS:=mini_snmpd-52
+endef
+
+define Package/mini_snmpd-52
+  $(call Package/mini_snmpd)
+  TITLE+= (52 ports)
+  PROVIDES:=mini_snmpd
+  VARIANT:=52
+  CONFLICTS:=
 endef
 
 CONFIGURE_ARGS+= \
@@ -48,6 +66,10 @@ CONFIGURE_ARGS+= \
 # Configure weirdness - Disabled by default, explicitately disabling turns feature on!
 #     --disable-debug \
 #	--disable-demo - Upstream Github Issue #4 Fixed 20160707
+
+ifneq ($(BUILD_VARIANT),default)
+	CONFIGURE_ARGS += --with-interfaces=$(BUILD_VARIANT)
+endif
 
 define Package/mini_snmpd/install
 	$(INSTALL_DIR) $(1)/usr/sbin
@@ -58,8 +80,16 @@ define Package/mini_snmpd/install
 	$(INSTALL_BIN) ./files/mini_snmpd.init $(1)/etc/init.d/mini_snmpd
 endef
 
+Package/mini_snmpd-16/install=$(Package/mini_snmpd/install)
+Package/mini_snmpd-52/install=$(Package/mini_snmpd/install)
+
 define Package/mini_snmpd/conffiles
 /etc/config/mini_snmpd
 endef
 
+Package/mini_snmpd-16/conffiles=$(Package/mini_snmpd/conffiles)
+Package/mini_snmpd-52/conffiles=$(Package/mini_snmpd/conffiles)
+
 $(eval $(call BuildPackage,mini_snmpd))
+$(eval $(call BuildPackage,mini_snmpd-16))
+$(eval $(call BuildPackage,mini_snmpd-52))
