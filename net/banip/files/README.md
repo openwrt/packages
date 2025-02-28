@@ -163,7 +163,7 @@ Available commands:
 | ban_logreadfile         | option | /var/log/messages             | alternative location for parsing a log file via tail, to deactivate the standard parsing via logread              |
 | ban_autodetect          | option | 1                             | auto-detect wan interfaces, devices and subnets                                                                   |
 | ban_debug               | option | 0                             | enable banIP related debug logging                                                                                |
-| ban_icmplimit           | option | 10                            | threshold in number of packets to detect icmp DoS in prerouting chain. A value of '0' disables this safeguard     |
+| ban_icmplimit           | option | 25                            | threshold in number of packets to detect icmp DoS in prerouting chain. A value of '0' disables this safeguard     |
 | ban_synlimit            | option | 10                            | threshold in number of packets to detect syn DoS in prerouting chain. A value of '0' disables this safeguard      |
 | ban_udplimit            | option | 100                           | threshold in number of packets to detect udp DoS in prerouting chain. A value of '0' disables this safeguard      |
 | ban_logprerouting       | option | 0                             | log supsicious packets in the prerouting chain                                                                    |
@@ -276,19 +276,19 @@ Available commands:
 **banIP runtime information**  
 
 ```
-root@blackhole:~# /etc/init.d/banip status
+~# /etc/init.d/banip status
 ::: banIP runtime information
   + status            : active (nft: ✔, monitor: ✔)
-  + version           : 1.5.0-r3
-  + element_count     : 95820
-  + active_feeds      : cinsscore.v4, country.v6, blocklist.v4, allowlist.v4MAC, allowlist.v6MAC, allowlist.v4, allowlist.v6, country.v4, debl.v4, debl.v6, doh.v4, doh.v6, turris.v4, threat.v4, blocklist.v4MAC, blocklist.v6MAC, blocklist.v6
+  + version           : 1.5.3-r1
+  + element_count     : 96 031 (chains: 7, sets: 18, rules: 46)
+  + active_feeds      : allowlist.v4MAC, allowlist.v6MAC, allowlist.v4, allowlist.v6, cinsscore.v4, country.v6, debl.v4, doh.v6, debl.v6, doh.v4, turris.v6, country.v4, threat.v4, turris.v4, blocklist.v4MAC, blocklist.v6MAC, blocklist.v4, blocklist.v6
   + active_devices    : wan: pppoe-wan / wan-if: wan, wan_6 / vlan-allow: - / vlan-block: -
   + active_uplink     : 91.61.217.158, 2001:fc:37ff:f64:b513:16dd:6903:7710
   + nft_info          : ver: 1.1.1-r1, priority: -100, policy: performance, loglevel: warn, expiry: 2h, limit (icmp/syn/udp): 10/10/100
   + run_info          : base: /mnt/data/banIP, backup: /mnt/data/banIP/backup, report: /mnt/data/banIP/report, error: /mnt/data/banIP/error
   + run_flags         : auto: ✔, proto (4/6): ✔/✔, log (pre/in/out): ✘/✘/✘, count: ✔, dedup: ✔, split: ✘, custom feed: ✘, allowed only: ✘
-  + last_run          : mode: reload, period: 0m 49s, memory: 1388 MB available, 4760 KB max. used, cores: 4, log: logread, fetch: uclient-fetch
-  + system_info       : 2025-01-22 19:10:42, Bananapi BPI-R3, mediatek/filogic, OpenWrt SNAPSHOT r28616-7924acdd63 
+  + last_run          : mode: restart, duration: 0m 19s, memory: 1331.10 MB available, 1.75 MB max. used, cores: 4, log: logread, fetch: curl
+  + system_info       : 2025-02-28 13:29:29, Bananapi BPI-R3, mediatek/filogic, OpenWrt SNAPSHOT r28906-d6977ab33a 
 ```
 
 **banIP search information**  
@@ -478,12 +478,10 @@ Add an unique feed name (no spaces, no special chars) and make the required chan
 Please note: the flag field is optional, it's a space separated list of options: supported are 'gz' as an archive format and protocols 'tcp' or 'udp' with port numbers/port ranges for destination port limitations.  
 
 **Debug options**  
-Whenever you encounter banIP related processing problems, please check the "Processing Log" tab.  
+Whenever you encounter banIP related processing problems, please enable "Verbose Debug Logging", restart banIP and check the "Processing Log" tab.  
 Typical symptoms:  
-* The nftables initialization failed: untick the 'Auto Detection' option in the 'General Settings' config section and set the required options manually  
+* The nftables initialization failed: untick the 'Auto Detection' option in the 'General Settings' config section and set the required device and tools options manually  
 * A blocklist feed does not work: maybe a temporary server problem or the download URL has been changed. In the latter case, just use the Custom Feed Editor to point this feed to a new URL  
-
-To get much more processing information, please enable "Verbose Debug Logging" and restart banIP.  
 
 In case of a nft processing error, banIP creates an error directory (by default '/tmp/banIP-error') with the faulty nft load files.  
 For further troubleshooting, you can try to load such an error file manually to determine the exact cause of the error, e.g.: 'nft -f error.file.nft'.  
@@ -491,7 +489,7 @@ For further troubleshooting, you can try to load such an error file manually to 
 Whenever you encounter firewall problems, enable the logging of certain chains in the "Log Settings" config section, restart banIP and check the "Firewall Log" tab.  
 Typical symptoms:  
 * A feed blocks a legit IP: disable the entire feed or add this IP to your local allowlist and reload banIP  
-* A feed (e.g. doh) interrupts almost all client connections: check the feed table above for reference and limit the feed to a certain chain in the "Feed/Set Settings" config section  
+* A feed (e.g. doh) interrupts almost all client connections: check the feed table above for reference and reset the feed to the defaults in the "Feed/Set Settings" config tab section  
 * The allowlist doesn't free a certain IP/MAC address: check the current content of the allowlist with the "Set Survey" under the "Set Reporting" tab to make sure that the desired IP/MAC is listed - if not, reload banIP  
 
 <a id="support"></a>
