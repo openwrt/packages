@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=yajl
 PKG_VERSION:=2.1.0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/lloyd/yajl
@@ -24,6 +24,7 @@ PKG_CPE_ID:=cpe:/a:yajl_project:yajl
 CMAKE_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/cmake.mk
 
 define Package/yajl
@@ -46,4 +47,10 @@ define Package/yajl/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libyajl.so* $(1)/usr/lib/
 endef
 
+define Host/Install
+	$(call Host/Install/Default)
+	mv $(1)/share/pkgconfig/yajl.pc $(1)/lib/pkgconfig/yajl.pc
+endef
+
 $(eval $(call BuildPackage,yajl))
+$(eval $(call HostBuild))
