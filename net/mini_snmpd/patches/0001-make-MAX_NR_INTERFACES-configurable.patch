@@ -25,15 +25,15 @@ Signed-off-by: Bjørn Mork <bjorn@mork.no>
  AC_ARG_ENABLE(debug,
     AS_HELP_STRING([--enable-debug], [Enable developer debug mode, disabled by default]),
     	[enable_debug=$enableval], [enable_debug=no])
-@@ -52,6 +56,7 @@ AC_ARG_ENABLE(ipv6,
-    AS_HELP_STRING([--disable-ipv6], [Disable IPv6 support, enabled by default]),
-    	[enable_ipv6=$enableval], [enable_ipv6=yes])
+@@ -56,6 +60,7 @@ AC_ARG_ENABLE(ethtool,
+    AS_HELP_STRING([--enable-ethtool], [Enable ethtool interface stats, disabled by default]),
+    	[enable_ethtool=$enableval], [enable_ethtool=no])
  
 +
  ### Enable features ###########################################################################
  AS_IF([test "x$with_vendor" != "xno"],[
  	AS_IF([test "x$vendor" = "xyes"],[
-@@ -65,6 +70,8 @@ AS_IF([test "x$with_config" != "xno"], [
+@@ -69,6 +74,8 @@ AS_IF([test "x$with_config" != "xno"], [
  	PKG_CHECK_MODULES([confuse], [libconfuse >= 2.7])])
  AM_CONDITIONAL([HAVE_CONFUSE], [test "x$with_config" != "xno"])
  
@@ -42,22 +42,22 @@ Signed-off-by: Bjørn Mork <bjorn@mork.no>
  AS_IF([test "x$enable_debug" = "xyes"],[
     AC_DEFINE(DEBUG, 1, [Define to enable debug mode.])])
  
-@@ -74,6 +81,7 @@ AS_IF([test "x$enable_demo" = "xyes"],[
- AS_IF([test "x$enable_ipv6" != "xno"],[
-    AC_DEFINE(CONFIG_ENABLE_IPV6, 1, [Define to enable IPv6 support.])])
+@@ -81,6 +88,7 @@ AS_IF([test "x$enable_ipv6" != "xno"],[
+ AS_IF([test "x$enable_ethtool" != "xno"],[
+    AC_DEFINE(CONFIG_ENABLE_ETHTOOL, 1, [Define to enable ethtool stats.])])
  
 +
  # Check where to install the systemd .service file
  AS_IF([test "x$with_systemd" = "xyes" -o "x$with_systemd" = "xauto"], [
       def_systemd=$($PKG_CONFIG --variable=systemdsystemunitdir systemd)
-@@ -122,6 +130,7 @@ cat <<EOF
+@@ -129,6 +137,7 @@ cat <<EOF
    vendor OID........: $vendor
    ipv6..............: $enable_ipv6
    mini-snmpd.conf...: $with_config
 +  max interfaces....: $with_interfaces
    demo mode.........: $enable_demo
    systemd...........: $with_systemd
- 
+   ethtool stats.....: $enable_ethtool
 --- a/mini-snmpd.h
 +++ b/mini-snmpd.h
 @@ -38,7 +38,6 @@
