@@ -7,11 +7,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nfs-kernel-server
-PKG_VERSION:=2.6.2
-PKG_RELEASE:=4
-PKG_HASH:=26d46448982252e9e2c8346d10cf13e1143e7089c866f53e25db3359f3e9493c
+PKG_VERSION:=2.8.2
+PKG_RELEASE:=1
+PKG_HASH:=a39bbea76ac0ab9e6e8699caf3c308b6b310c20d458e8fa8606196d358e7fb15
 
-PKG_SOURCE_URL:=@SF/nfs
+PKG_SOURCE_URL:=@KERNEL/linux/utils/nfs-utils/$(PKG_VERSION)
 PKG_SOURCE:=nfs-utils-$(PKG_VERSION).tar.xz
 
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/nfs-utils-$(PKG_VERSION)
@@ -32,9 +32,8 @@ define Package/nfs-kernel-server/Default
 	SECTION:=net
 	CATEGORY:=Network
 	SUBMENU:=Filesystem
-	DEPENDS:=+libblkid +libuuid +libtirpc
+	DEPENDS:=+libblkid +libuuid +libtirpc +lsqlite3 +libxml2 +libnl
 	URL:=http://nfs.sourceforge.net/
-	MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 endef
 
 define Package/nfs-kernel-server
@@ -72,7 +71,6 @@ define Package/nfs-utils/Default
 	CATEGORY:=Utilities
 	DEPENDS+= +NFS_KERNEL_SERVER_V4:libkeyutils +NFS_KERNEL_SERVER_V4:libdevmapper
 	URL:=http://nfs.sourceforge.net/
-	MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 endef
 
 define Package/nfs-utils
@@ -115,7 +113,8 @@ CONFIGURE_ARGS += \
 	--enable-static \
 	--with-rpcgen=internal \
 	$(if $(CONFIG_NFS_KERNEL_SERVER_V4),--enable,--disable)-nfsv4 \
-	$(if $(CONFIG_NFS_KERNEL_SERVER_V4),--enable,--disable)-nfsv41
+	$(if $(CONFIG_NFS_KERNEL_SERVER_V4),--enable,--disable)-nfsv41 \
+	$(if $(CONFIG_NFS_KERNEL_SERVER_V4),--enable,--disable)-nfsv42
 
 ifeq ($(CONFIG_IPV6),n)
 	CONFIGURE_ARGS += --disable-ipv6
@@ -142,7 +141,10 @@ HOST_CONFIGURE_ARGS += \
 	--disable-gss \
 	--disable-nfsv4 \
 	--disable-nfsv41 \
+	--disable-nfsrahead \
+	--disable-nfsdctl \
 	--without-tcp-wrappers \
+	--disable-junction \
 	--with-rpcgen=internal
 
 HOST_CONFIGURE_VARS += \
@@ -158,6 +160,7 @@ HOST_CONFIGURE_VARS += \
 	ac_cv_func_getrpcbynumber=yes \
 	ac_cv_func_getrpcbynumber_r=yes \
 	enable_ipv6=no \
+	enable_nfsdctl=no \
 	GSSGLUE_CFLAGS=" " \
 	GSSGLUE_LIBS=" " \
 	RPCSECGSS_CFLAGS=" " \
