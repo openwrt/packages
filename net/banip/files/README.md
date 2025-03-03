@@ -354,7 +354,7 @@ LuCI     : 'luci: failed login'
 sshd1    : 'error: maximum authentication attempts exceeded'
 sshd2    : 'sshd.*Connection closed by.*\[preauth\]'
 asterisk : 'SecurityEvent=\"InvalidAccountID\".*RemoteAddress='
-nginx    : 'received a suspicious remote IP '\''.*'\'''
+nginx    : 'received a suspicious remote IP .*'
 openvpn  : 'TLS Error: could not determine wrapping from \[AF_INET\]'
 AdGuard  : 'AdGuardHome.*\[error\].*/control/login: from ip'
 ```
