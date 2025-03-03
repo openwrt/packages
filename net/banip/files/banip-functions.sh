@@ -267,7 +267,14 @@ f_conf() {
 			local append option="${1}" value="${2//\"/\\\"}"
 
 			eval "append=\"\${${option}}\""
-			eval "${option}=\"${append}${value} \""
+			case "${option}" in
+				"ban_logterm")
+					eval "${option}=\"${append}${value}\\|\""
+					;;
+				*)
+					eval "${option}=\"${append}${value} \""
+					;;
+			esac
 		}
 	}
 	config_load banip
