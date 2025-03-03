@@ -1,0 +1,58 @@
+--- a/netfilter_nft/nftnlrdr.c
++++ b/netfilter_nft/nftnlrdr.c
+@@ -316,8 +316,11 @@ delete_redirect_and_filter_rules(unsigne
+ 	d_printf(("delete_redirect_and_filter_rules(%d %d)\n", eport, proto));
+ 	refresh_nft_cache_redirect();
+ 
+-	// Delete Redirect Rule
++	// Delete Redirect Rule  eport => iaddr:iport
+ 	LIST_FOREACH(p, &head_redirect, entry) {
++		d_printf(("redirect src %08x:%hu dst %08x:%hu nat %08x:%hu proto=%d  type=%d nat_type=%d\n",
++		          p->saddr, p->sport, p->daddr, p->dport, p->nat_addr, p->nat_port, p->proto,
++		          p->type, p->nat_type));
+ 		if (p->dport == eport && p->proto == proto &&
+ 		    (p->type == RULE_NAT && p->nat_type == NFT_NAT_DNAT)) {
+ 			iaddr = p->nat_addr;
+@@ -332,10 +335,13 @@ delete_redirect_and_filter_rules(unsigne
+ 
+ 	if (iaddr != 0 && iport != 0) {
+ 		refresh_nft_cache_filter();
+-		// Delete Forward Rule
++		// Delete Forward Rule  on iaddr:iport
+ 		LIST_FOREACH(p, &head_filter, entry) {
+-			if (p->nat_port == iport &&
+-				p->nat_addr == iaddr && p->type == RULE_FILTER) {
++			d_printf(("filter   src %08x:%hu dst %08x:%hu nat %08x:%hu proto=%d  type=%d nat_type=%d\n",
++			          p->saddr, p->sport, p->daddr, p->dport, p->nat_addr, p->nat_port, p->proto,
++			          p->type, p->nat_type));
++			if (p->dport == iport && p->daddr == iaddr && p->proto == proto
++			    && p->type == RULE_FILTER) {
+ 				r = rule_del_handle(p);
+ 				/* Todo: send bulk request */
+ 				nft_send_rule(r, NFT_MSG_DELRULE, RULE_CHAIN_FILTER);
+--- a/netfilter_nft/nftnlrdr_misc.c
++++ b/netfilter_nft/nftnlrdr_misc.c
+@@ -283,6 +283,9 @@ parse_rule_nat(struct nftnl_expr *e, rul
+ 	r->family = nftnl_expr_get_u32(e, NFTNL_EXPR_NAT_FAMILY);
+ 	addr_min_reg = nftnl_expr_get_u32(e, NFTNL_EXPR_NAT_REG_ADDR_MIN);
+ 	addr_max_reg = nftnl_expr_get_u32(e, NFTNL_EXPR_NAT_REG_ADDR_MAX);
++	/* see expr_add_nat() :
++	 * NFTNL_EXPR_NAT_REG_PROTO_MIN/NFTNL_EXPR_NAT_REG_PROTO_MAX is used
++	 * for destination port */
+ 	proto_min_reg = nftnl_expr_get_u32(e, NFTNL_EXPR_NAT_REG_PROTO_MIN);
+ 	proto_max_reg = nftnl_expr_get_u32(e, NFTNL_EXPR_NAT_REG_PROTO_MAX);
+ 
+@@ -300,10 +303,10 @@ parse_rule_nat(struct nftnl_expr *e, rul
+ 	}
+ 	reg_val_ptr = get_reg_val_ptr(r, addr_min_reg);
+ 	if (reg_val_ptr != NULL) {
++		/* destination address */
+ 		r->nat_addr = (in_addr_t)*reg_val_ptr;
+-		if (proto_min_reg == NFT_REG_1) {
+-			r->nat_port = proto_min_val;
+-		}
++		/* destination port */
++		r->nat_port = proto_min_val;
+ 	} else {
+ 		syslog(LOG_ERR, "%s: invalid addr_min_reg %u", "parse_rule_nat", addr_min_reg);
+ 	}
