@@ -146,6 +146,16 @@ config service "myddns"
 	option param_opt ""
 
 	###########
+	# use network interface when communicating with your DDNS provider.
+	# forcing the network interface causes problems when communicating to DDNS
+	# provider IPv4-only hosts via IPv6-only interfaces.
+	# setting this to 0 disables the following arguments:
+	#  GNU Wget: "--bind-address"
+	#  cURL: "--interface"
+	# default: "1"	use network interface
+	option use_network "1"
+
+	###########
 	# use HTTPS for secure communication with you DDNS provider
 	# personally found some providers having problems when not sending
 	# updates via HTTPS. You must not specify "https://" in update_url.
