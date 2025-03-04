@@ -1,0 +1,11 @@
+{
+	"name": "ydns.io",
+	"ipv4": {
+		"url": "https://[USERNAME]:[PASSWORD]@ydns.io/api/v1/update/?host=[DOMAIN]&ip=[IP]",
+		"answer": "good|nochg"
+	},
+	"ipv6": {
+		"url": "https://[USERNAME]:[PASSWORD]@ydns.io/api/v1/update/?host=[DOMAIN]&ip=[IP]",
+		"answer": "good|nochg"
+	}
+}

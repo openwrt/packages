@@ -109,7 +109,7 @@ define HostPython3/PipInstall
 		$(HOST_PYTHON3_PIP_VARS) \
 		$(HOST_PYTHON3_PIP) \
 			install \
-			--no-binary :all: \
+			$(if $(findstring Darwin,$(HOST_OS)),,--no-binary :all:) \
 			--progress-bar off \
 			--require-hashes \
 			$(1) \

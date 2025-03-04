@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=modemmanager
 PKG_VERSION:=1.22.0
-PKG_RELEASE:=20
+PKG_RELEASE:=21
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://gitlab.freedesktop.org/mobile-broadband/ModemManager.git
@@ -153,9 +153,11 @@ define Package/modemmanager/install
 	$(INSTALL_DATA) ./files/etc/hotplug.d/wwan/25-modemmanager-wwan \
 		$(1)/etc/hotplug.d/wwan
 
+ifeq ($(CONFIG_MODEMMANAGER_WITH_NETIFD),y)
 	$(INSTALL_DIR) $(1)/lib/netifd/proto
 	$(INSTALL_BIN) ./files/lib/netifd/proto/modemmanager.sh \
 		$(1)/lib/netifd/proto
+endif
 endef
 
 define Package/modemmanager-rpcd/install

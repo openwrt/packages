@@ -1,0 +1,45 @@
+From f55b83fdbda8bbe65f27395fe55d75f6e9e845f2 Mon Sep 17 00:00:00 2001
+From: Daniel Alder <daald@users.noreply.github.com>
+Date: Wed, 13 Dec 2023 00:59:12 +0100
+Subject: [PATCH 3/5] Improve df
+
+Before, there were 1+n calls of df where n is the number of output values. I introduced some script magic to use the values from the
+first call. Motivation was, there was a very complex sed call which failed to process some of my df output lines. The new code is much
+safer.
+
+Actually, the original problem obviously was that the sed regex didn't cover capital letters which I had in my mountpoints.
+---
+ plugins/df | 16 +++++++---------
+ 1 file changed, 7 insertions(+), 9 deletions(-)
+
+--- a/plugins/df
++++ b/plugins/df
+@@ -4,21 +4,19 @@ graph_args --upper-limit 100 -l 0
+ graph_vlabel %
+ graph_category disk
+ graph_info This graph shows disk usage on the machine."
+-  for PART in $(df -PT | grep '^/' | grep -vwE "$DF_IGNORE_FILESYSTEM_REGEX" | sed '/\/[a-z0-9]*$/!d;s/.* \([a-z0-9\/]\{1,\}\)$/\1/g')
++  df -PT | grep '^/' | grep -vwE "$DF_IGNORE_FILESYSTEM_REGEX" | while read dev type blocks used avail pct mp
+   do
+-    PINFO=$(df -P "$PART" | tail -1);
+-    PNAME=$(clean_fieldname "$(echo "$PINFO" | cut -d " " -f 1)")
+-    echo "$PNAME.label $PART"
+-    echo "$PNAME.info $PNAME -> $PART"
++    PNAME=$(clean_fieldname "$dev")
++    echo "$PNAME.label $mp"
++    echo "$PNAME.info $dev -> $mp"
+     echo "$PNAME.warning 92"
+     echo "$PNAME.critical 98"
+   done
+ }
+ fetch_df() {
+-  for PART in $(df -PT | grep '^/' | grep -vwE "$DF_IGNORE_FILESYSTEM_REGEX" | sed '/\/[a-z0-9]*$/!d;s/.* \([a-z0-9\/]\{1,\}\)$/\1/g')
++  df -PT | grep '^/' | grep -vwE "$DF_IGNORE_FILESYSTEM_REGEX" | while read dev type blocks used avail pct mp
+   do
+-    PINFO=$(df -P "$PART" | tail -1);
+-    PNAME=$(clean_fieldname "$(echo "$PINFO" | cut -d " " -f 1)")
+-    echo "$PNAME.value" "$(echo "$PINFO" | sed -e 's/\%//g' -e 's/  */ /g' | cut -d " " -f 5)"
++    PNAME=$(clean_fieldname "$dev")
++    echo "$PNAME.value" "${pct%\%}"
+   done
+ }

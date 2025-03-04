@@ -1,0 +1,14 @@
+#!/bin/sh
+
+gps_log() {
+	local level="$1"; shift
+
+	[ "$level" = "debug" ] && return
+	logger -p "daemon.${level}" -t "gpsd(debug)[$$]" "hotplug: $*"
+}
+
+main() {
+	gps_log info "$(env)"
+}
+
+main "$@"

@@ -2,12 +2,165 @@
 # Copyright (C) 2006-2011 OpenWrt.org
 
 START=50
+USE_PROCD=1
+BIN="/usr/sbin/vsftpd"
 
-start() {
-	mkdir -m 0755 -p /var/run/vsftpd
-	service_start /usr/sbin/vsftpd
+. /lib/functions.sh
+
+PORT=21
+OUTPUT_CONF="/var/etc/vsftpd.conf"
+readonly DEFAULT_SECURE_CHROOT="/var/run/vsftpd"
+readonly TEMP_OUTPUT_CONF="/var/etc/vsftpd.conf.tmp"
+
+write_conf() {
+	local key="$1"
+	local value="$2"
+
+	if [ -n "$key" ] && [ -n "$value" ]; then
+		echo "$key=$value" >> "$TEMP_OUTPUT_CONF"
+	fi
 }
 
-stop() {
-	service_stop /usr/sbin/vsftpd
+write_conf_bool() {
+	local key="$1"
+	local value="$2"
+
+	if  [ "$value" = "1" ]; then
+		write_conf "$key" "YES"
+	else
+		write_conf "$key" "NO"
+	fi
+}
+
+validate_vsftpd_section() {
+	uci_load_validate vsftpd global "$1" "$2" \
+		'listen:bool:1' \
+		'listen_ipv6:bool:0' \
+		'listen_port:port' \
+		'anonymous_enable:bool:0' \
+		'anon_root:directory' \
+		'local_enable:bool:1' \
+		'local_root:directory' \
+		'write_enable:bool:1' \
+		'local_umask:uinteger:022' \
+		'check_shell:bool:0' \
+		'dirmessage_enable:bool:1' \
+		'secure_chroot_dir:directory' \
+		'ftpd_banner:string' \
+		'session_support:bool:0' \
+		'syslog_enable:bool' \
+		'userlist_enable:bool' \
+		'userlist_deny:bool' \
+		'userlist_file:file' \
+		'xferlog_enable:bool' \
+		'xferlog_file:file' \
+		'xferlog_std_format:bool' \
+		'ssl_enable:bool' \
+		'allow_anon_ssl:bool' \
+		'force_local_data_ssl:bool' \
+		'force_local_logins_ssl:bool' \
+		'ssl_tlsv1:bool' \
+		'ssl_sslv2:bool' \
+		'ssl_sslv3:bool' \
+		'rsa_cert_file:file' \
+		'rsa_private_key_file:file'
+}
+
+setup_vsftpd() {
+	local section="$1"
+	local validation_result="$2"
+
+	if [ "$validation_result" != "0" ]; then
+		echo "Validation failed for section: $section"
+		return 1
+	fi
+
+	# Clean up
+	rm -rf "$TEMP_OUTPUT_CONF"  # Clear temporary file
+	touch "$TEMP_OUTPUT_CONF"
+
+	# always run in foreground
+	write_conf_bool "background" "0"
+
+	[ -n "$listen" ] && write_conf_bool "listen" "$listen"
+	[ -n "$listen_ipv6" ] && write_conf_bool "listen_ipv6" "$listen_ipv6"
+	[ -n "$anonymous_enable" ] && write_conf_bool "anonymous_enable" "$anonymous_enable"
+	[ -n "$local_enable" ] && write_conf_bool "local_enable" "$local_enable"
+	[ -n "$write_enable" ] && write_conf_bool "write_enable" "$write_enable"
+	[ -n "$check_shell" ] && write_conf_bool "check_shell" "$check_shell"
+	[ -n "$dirmessage_enable" ] && write_conf_bool "dirmessage_enable" "$dirmessage_enable"
+	[ -n "$session_support" ] && write_conf_bool "session_support" "$session_support"
+	[ -n "$syslog_enable" ] && write_conf_bool "syslog_enable" "$syslog_enable"
+	[ -n "$userlist_enable" ] && write_conf_bool "userlist_enable" "$userlist_enable"
+	[ -n "$userlist_deny" ] && write_conf_bool "userlist_deny" "$userlist_deny"
+	[ -n "$xferlog_enable" ] && write_conf_bool "xferlog_enable" "$xferlog_enable"
+	[ -n "$xferlog_std_format" ] && write_conf_bool "xferlog_std_format" "$xferlog_std_format"
+	[ -n "$ssl_enable" ] && write_conf_bool "ssl_enable" "$ssl_enable"
+	[ -n "$allow_anon_ssl" ] && write_conf_bool "allow_anon_ssl" "$allow_anon_ssl"
+	[ -n "$force_local_data_ssl" ] && write_conf_bool "force_local_data_ssl" "$force_local_data_ssl"
+	[ -n "$force_local_logins_ssl" ] && write_conf_bool "force_local_logins_ssl" "$force_local_logins_ssl"
+	[ -n "$ssl_tlsv1" ] && write_conf_bool "ssl_tlsv1" "$ssl_tlsv1"
+	[ -n "$ssl_sslv2" ] && write_conf_bool "ssl_sslv2" "$ssl_sslv2"
+	[ -n "$ssl_sslv3" ] && write_conf_bool "ssl_sslv3" "$ssl_sslv3"
+
+	[ -n "$anon_root" ] && write_conf "anon_root" "$anon_root"
+	[ -n "$ftpd_banner" ] && write_conf "ftpd_banner" "$ftpd_banner"
+	[ -n "$listen_port" ] && { write_conf "listen_port" "$listen_port"; PORT="$listen_port"; }
+	[ -n "$local_umask" ] && write_conf "local_umask" "$local_umask"
+	[ -n "$local_root" ] && write_conf "local_root" "$local_root"
+	[ -n "$rsa_cert_file" ] && write_conf "rsa_cert_file" "$rsa_cert_file"
+	[ -n "$rsa_private_key_file" ] && write_conf "rsa_private_key_file" "$rsa_private_key_file"
+	[ -n "$userlist_file" ] && write_conf "userlist_file" "$userlist_file"
+	[ -n "$xferlog_file" ] && write_conf "xferlog_file" "$xferlog_file"
+
+	if [ -n "$secure_chroot_dir" ] && [ "$secure_chroot_dir" != "$DEFAULT_SECURE_CHROOT" ]; then
+		# remove the DEFAULT_SECURE_CHROOT directory
+		# it is not needed now
+		rm -rf "$DEFAULT_SECURE_CHROOT"
+		write_conf "secure_chroot_dir" "$secure_chroot_dir"
+	fi
+
+	# move temporary file to the main configuration file
+	mv "$TEMP_OUTPUT_CONF" "$OUTPUT_CONF"
+}
+
+start_service() {
+	local disabled mdns conf_file
+
+	# Load UCI configuration for vsftpd
+	config_load vsftpd
+
+	# if disabled, just return
+	config_get_bool disabled global disabled 0
+	if [ "${disabled}" -eq 1 ]; then
+		return
+	fi
+
+	# clean and create the default chroot directory
+	rm -rf "$DEFAULT_SECURE_CHROOT"
+	mkdir -m 0755 -p "$DEFAULT_SECURE_CHROOT"
+	chown root:root "$DEFAULT_SECURE_CHROOT"
+
+	config_get conf_file global conf_file ""
+	if [ -n "$conf_file" ]; then 
+		# use user defined conf file instead of UCI
+		OUTPUT_CONF="$conf_file"
+	else
+		# Process the global configuration
+		config_foreach validate_vsftpd_section global setup_vsftpd
+	fi
+
+	procd_open_instance "vsftpd"
+
+	config_get_bool mdns global mdns 0
+	[ "${mdns}" -eq 1 ] && procd_add_mdns "ftp" "tcp" "$PORT" "daemon=vsftpd"
+
+	procd_set_param command "$BIN" "$OUTPUT_CONF"
+	procd_set_param respawn
+	procd_close_instance
+}
+
+service_triggers() {
+	procd_add_reload_trigger "vsftpd"
+	procd_add_validation validate_vsftpd_section
 }

@@ -37,7 +37,7 @@ start_service() {
 		procd_set_param pidfile "${adb_pidfile}"
 		procd_set_param nice "$(uci_get adblock global adb_nice "0")"
 		procd_set_param stdout 0
-		procd_set_param stderr 0
+		procd_set_param stderr 1
 		procd_close_instance
 	fi
 }
@@ -51,6 +51,7 @@ stop_service() {
 }
 
 restart() {
+	rc_procd "${adb_script}" stop
 	rc_procd start_service restart
 }
 

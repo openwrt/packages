@@ -1,5 +1,5 @@
 #!/bin/sh /etc/rc.common
-# Copyright 2023 MOSSDeF, Stan Grishin (stangri@melmac.ca)
+# Copyright 2023-2025 MOSSDeF, Stan Grishin (stangri@melmac.ca)
 # shellcheck disable=SC3043
 
 # shellcheck disable=SC2034
@@ -124,6 +124,7 @@ load_environment_flag=
 allowed_url=
 blocked_url=
 fw4_restart_flag=
+adbf_boot_flag=
 
 # shellcheck disable=SC1091
 . /lib/functions.sh
@@ -378,7 +379,7 @@ print_json_string() { json_init; json_add_string "$1" "$2"; json_dump; json_clea
 sanitize_dir() { [ -d "$(readlink -fn "$1")" ] && readlink -fn "$1"; }
 smartdns_restart() { /etc/init.d/smartdns restart >/dev/null 2>&1; }
 str_contains() { test "$1" != "$(str_replace "$1" "$2" '')"; }
-str_contains_word() { echo "$1" | grep -q -w "$2"; }
+str_contains_word() { echo "$1" | grep -qw "$2"; }
 str_first_word() { echo "${1%% *}"; }
 # shellcheck disable=SC2018,SC2019
 str_to_lower() { echo "$1" | tr 'A-Z' 'a-z'; }
@@ -637,7 +638,7 @@ detect_file_type() {
 		echo 'dnsmasq2'
 	elif grep -q '^address=' "$file"; then
 		echo 'dnsmasq3'
-	elif grep -q '^0\.0\.0\.0' "$file" || grep -q '^127\.0\.0\.1' "$file"; then
+	elif grep -q -e '^0\.0\.0\.0\s' -e '^127\.0\.0\.1\s' "$file"; then
 		echo 'hosts'
 	elif [ -n "$(sed "$domainsFilter" "$file" | head -1)" ]; then
 		echo 'domains'
@@ -846,6 +847,7 @@ resolver() {
 	_dnsmasq_instance_config() {
 		local cfg="$1" param="$2" confdir confdirFile
 		[ -s "/etc/config/dhcp" ] || return 0
+		[ -n "$(uci_get dhcp "$cfg")" ] || return 1
 		case "$param" in
 			dnsmasq.addnhosts)
 				if [ "$(uci_get 'dhcp' "$cfg" 'serversfile')" = "$dnsmasqServersFile" ]; then
@@ -880,10 +882,19 @@ resolver() {
 			;;
 		esac
 	}
+# shellcheck disable=SC2317
+	_dnsmasq_instance_append_force_dns_port() {
+		local cfg="$1" instance_port
+		[ -s "/etc/config/dhcp" ] || return 0
+		[ -n "$(uci_get 'dhcp' "$cfg")" ] || return 1
+		config_get instance_port "$cfg" 'port' '53'
+		str_contains_word "$force_dns_port" "$instance_port" || force_dns_port="${force_dns_port:+$force_dns_port }${instance_port}"
+	}
 # shellcheck disable=SC2016,SC2317
 	_dnsmasq_instance_init() {
 		local cfg="$1" param="$2" confdir confdirFile
 		[ -s "/etc/config/dhcp" ] || return 0
+		[ -n "$(uci_get 'dhcp' "$cfg")" ] || return 1
 		case "$param" in
 			dnsmasq.conf|dnsmasq.ipset|dnsmasq.nftset)
 				if grep -q 'config_get dnsmasqconfdir "$cfg" confdir "/tmp/dnsmasq${cfg:+.$cfg}.d"' '/etc/init.d/dnsmasq'; then
@@ -898,8 +909,16 @@ resolver() {
 			;;
 		esac
 	}
+	_smartdns_instance_append_force_dns_port() {
+		[ -s "/etc/config/smartdns" ] || return 0
+		[ -n "$(uci_get 'smartdns' "$cfg")" ] || return 1
+		local cfg="$1" instance_port
+		config_get instance_port "$cfg" 'port' '53'
+		str_contains_word "$force_dns_port" "$instance_port" || force_dns_port="${force_dns_port:+$force_dns_port }${instance_port}"
+	}
 	_smartdns_instance_config() {
 		[ -s "/etc/config/smartdns" ] || return 0
+		[ -n "$(uci_get 'smartdns' "$cfg")" ] || return 1
 		local cfg="$1" param="$2"
 		case "$param" in
 			cleanup)
@@ -924,6 +943,14 @@ resolver() {
 				uci_add_list_if_new 'smartdns' "$cfg" 'conf_files' "$outputConfig"
 			;;
 		esac
+	}
+# shellcheck disable=SC2317
+	_unbound_instance_append_force_dns_port() {
+		[ -s "/etc/config/unbound" ] || return 0
+		[ -n "$(uci_get 'unbound' "$cfg")" ] || return 1
+		local cfg="$1" instance_port
+		config_get instance_port "$cfg" 'listen_port' '53'
+		str_contains_word "$force_dns_port" "$instance_port" || force_dns_port="${force_dns_port:+$force_dns_port }${instance_port}"
 	}
 	
 	local param output_text i
@@ -975,17 +1002,21 @@ resolver() {
 			config_load 'dhcp'
 			if [ "$dnsmasq_instance" = "*" ]; then
 				config_foreach _dnsmasq_instance_config 'dnsmasq' "$dns"
+				config_foreach _dnsmasq_instance_append_force_dns_port 'dnsmasq'
 			elif [ -n "$dnsmasq_instance" ]; then
 				for i in $dnsmasq_instance; do
 					_dnsmasq_instance_config "@dnsmasq[$i]" "$dns" || _dnsmasq_instance_config "$i" "$dns"
+					_dnsmasq_instance_append_force_dns_port "@dnsmasq[$i]" || _dnsmasq_instance_append_force_dns_port "$i"
 				done
 			fi
 			config_load 'smartdns'
 			if [ "$smartdns_instance" = "*" ]; then
 				config_foreach _smartdns_instance_config 'smartdns' "$dns"
+				config_foreach _smartdns_instance_append_force_dns_port 'smartdns'
 			elif [ -n "$smartdns_instance" ]; then
 				for i in $smartdns_instance; do
 					_smartdns_instance_config "@smartdns[$i]" "$dns" || _smartdns_instance_config "$i" "$dns"
+					_smartdns_instance_append_force_dns_port "@smartdns[$i]" || _smartdns_instance_append_force_dns_port "$i"
 				done
 			fi
 
@@ -1184,7 +1215,7 @@ process_file_url() {
 		local type="$1" file="$2"
 		case "$type" in
 			hosts)
-				sed -i '/# Title: StevenBlack/,/# Start StevenBlack/d' "$file"
+				sed -i '/# Title: StevenBlack/,/# Custom host records are listed here/d' "$file"
 #				sed -i -E '/^(.*)[\t ](local|localhost|localhost.localdomain)$/d;/^255.255.255.255[\t ]broadcasthost$/d;/^0.0.0.0[\t ]0.0.0.0$/d' "$file"
 #				sed -i -E '/^(.*)[\t ](ip6-localhost|ip6-loopback|ip6-localnet|ip6-mcastprefix|ip6-allnodes|ip6-allrouters|ip6-allhosts)/d' "$file"
 			;;
@@ -1927,9 +1958,10 @@ adb_sizes() {
 
 # shellcheck disable=SC2120
 adb_start() {
-	local action status error message stats c iface
+	local action status error message stats p iface
 	local param="$1" validation_result="$3"
 
+	[ -n "$adbf_boot_flag" ] && return 0
 	load_environment "$validation_result" "$param" || return 1
 
 	status="$(json get 'status')"
@@ -2061,29 +2093,29 @@ adb_start() {
 	json_add_array firewall
 	if [ "$force_dns" -ne '0' ]; then
 # shellcheck disable=SC3060
-		for c in ${force_dns_port/,/ }; do
-			if netstat -tuln | grep LISTEN | grep ":${c}" >/dev/null 2>&1; then
+		for p in ${force_dns_port/,/ }; do
+			if netstat -tuln | grep LISTEN | grep ":${p}" >/dev/null 2>&1; then
 				for iface in $force_dns_interface; do
-					json_add_object ""
-					json_add_string type redirect
-					json_add_string target DNAT
+					json_add_object ''
+					json_add_string type 'redirect'
+					json_add_string target 'DNAT'
 					json_add_string src "$iface"
-					json_add_string proto "tcp udp"
-					json_add_string src_dport "$c"
-					json_add_string dest_port "$c"
-					json_add_string family any
-					json_add_boolean reflection 0
+					json_add_string proto 'tcp udp'
+					json_add_string src_dport '53'
+					json_add_string dest_port "$p"
+					json_add_string family 'any'
+					json_add_boolean reflection '0'
 					json_close_object
 				done
 			else
 				for iface in $force_dns_interface; do
-					json_add_object ""
-					json_add_string type rule
+					json_add_object ''
+					json_add_string type 'rule'
 					json_add_string src "$iface"
-					json_add_string dest "*"
-					json_add_string proto "tcp udp"
-					json_add_string dest_port "$c"
-					json_add_string target REJECT
+					json_add_string dest '*'
+					json_add_string proto 'tcp udp'
+					json_add_string dest_port "$p"
+					json_add_string target 'REJECT'
 					json_close_object
 				done
 			fi
@@ -2091,55 +2123,55 @@ adb_start() {
 	fi
 	case "$dns" in
 		dnsmasq.ipset|smartdns.ipset)
-			json_add_object ""
-			json_add_string type ipset
-			json_add_string name adb
-			json_add_string match dest_net
-			json_add_string storage hash
+			json_add_object ''
+			json_add_string type 'ipset'
+			json_add_string name 'adb'
+			json_add_string match 'dest_net'
+			json_add_string storage 'hash'
 			json_close_object
 			for iface in $force_dns_interface; do
-				json_add_object ""
-				json_add_string type rule
-				json_add_string ipset adb
+				json_add_object ''
+				json_add_string type 'rule'
+				json_add_string ipset 'adb'
 				json_add_string src "$iface"
-				json_add_string dest "*"
-				json_add_string proto "tcp udp"
-				json_add_string target REJECT
+				json_add_string dest '*'
+				json_add_string proto 'tcp udp'
+				json_add_string target 'REJECT'
 				json_close_object
 			done
 		;;
 		dnsmasq.nftset|smartdns.nftset)
-			json_add_object ""
-			json_add_string type ipset
-			json_add_string name adb4
-			json_add_string family 4
-			json_add_string match dest_net
+			json_add_object ''
+			json_add_string type 'ipset'
+			json_add_string name 'adb4'
+			json_add_string family '4'
+			json_add_string match 'dest_net'
 			json_close_object
 			for iface in $force_dns_interface; do
-				json_add_object ""
-				json_add_string type rule
-				json_add_string ipset adb4
+				json_add_object ''
+				json_add_string type 'rule'
+				json_add_string ipset 'adb4'
 				json_add_string src "$iface"
-				json_add_string dest "*"
-				json_add_string proto "tcp udp"
-				json_add_string target REJECT
+				json_add_string dest '*'
+				json_add_string proto 'tcp udp'
+				json_add_string target 'REJECT'
 				json_close_object
 			done
 			if [ "$ipv6_enabled" -ne '0' ]; then
-				json_add_object ""
-				json_add_string type ipset
-				json_add_string name adb6
-				json_add_string family 6
-				json_add_string match dest_net
+				json_add_object ''
+				json_add_string type 'ipset'
+				json_add_string name 'adb6'
+				json_add_string family '6'
+				json_add_string match 'dest_net'
 				json_close_object
 				for iface in $force_dns_interface; do
-					json_add_object ""
-					json_add_string type rule
-					json_add_string ipset adb6
+					json_add_object ''
+					json_add_string type 'rule'
+					json_add_string ipset 'adb6'
 					json_add_string src "$iface"
-					json_add_string dest "*"
-					json_add_string proto "tcp udp"
-					json_add_string target REJECT
+					json_add_string dest '*'
+					json_add_string proto 'tcp udp'
+					json_add_string target 'REJECT'
 					json_close_object
 				done
 			fi
@@ -2226,13 +2258,9 @@ adb_pause() {
 
 allow() { load_validate_config 'config' adb_allow "'$*'"; }
 boot() {
-	local procd_boot_delay
-	ubus -t 30 wait_for network.interface 2>/dev/null
-	config_load "$packageName"
-	config_get procd_boot_delay 'config' 'procd_boot_delay' '0'
-# shellcheck disable=SC2154
-	{ is_integer "$procd_boot_delay" && sleep "$procd_boot_delay"; \
-		rc_procd start_service 'on_boot' && service_started 'on_boot'; } &
+#	ubus -t 30 wait_for network.interface 2>/dev/null
+	adbf_boot_flag=1
+	rc_procd start_service 'on_boot' && service_started 'on_boot'
 }
 check() { load_validate_config 'config' adb_check "'$*'"; }
 check_lists() { load_validate_config 'config' adb_check_lists "'$*'"; }
@@ -2265,22 +2293,30 @@ reload_service() { rc_procd start_service 'restart'; }
 restart_service() { rc_procd start_service 'restart'; }
 service_started() { is_fw4_restart_needed && procd_set_config_changed firewall; }
 service_stopped() { is_fw4_restart_needed && procd_set_config_changed firewall; }
+# shellcheck disable=SC2015
 service_triggers() {
 	local wan wan6 i
 	local procd_trigger_wan6
-	config_load "$packageName"
-	config_get_bool procd_trigger_wan6 'config' 'procd_trigger_wan6' '0'
-	network_flush_cache
-	network_find_wan wan
-	wan="${wan:-wan}"
-	if [ "$procd_trigger_wan6" -ne '0' ]; then
-		network_find_wan6 wan6
-		wan6="${wan6:-wan6}"
+	if [ -n "$adbf_boot_flag" ]; then
+		output "Setting trigger (on_boot) "
+		procd_add_raw_trigger "interface.*.up" 5000 "/etc/init.d/${packageName}" start && output_okn || output_failn
+	else
+		config_load "$packageName"
+		config_get_bool procd_trigger_wan6 'config' 'procd_trigger_wan6' '0'
+		network_flush_cache
+		network_find_wan wan
+		wan="${wan:-wan}"
+		if [ "$procd_trigger_wan6" -ne '0' ]; then
+			network_find_wan6 wan6
+			wan6="${wan6:-wan6}"
+		fi
+		output "Setting trigger${wan6:+s} for $wan ${wan6:+$wan6 }"
+		for i in $wan $wan6; do
+			procd_add_interface_trigger "interface.*" "$i" "/etc/init.d/${packageName}" start && output_ok || output_fail
+		done
+		output '\n'
+		procd_add_config_trigger "config.change" "$packageName" "/etc/init.d/${packageName}" reload
 	fi
-	for i in "$wan" "$wan6"; do
-		[ -n "$i" ] && procd_add_interface_trigger "interface.*" "$i" "/etc/init.d/${packageName}" start
-	done
-	procd_add_config_trigger "config.change" "$packageName" "/etc/init.d/${packageName}" reload
 }
 sizes() { load_validate_config 'config' adb_sizes "''"; }
 start_service() { 

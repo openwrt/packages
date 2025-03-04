@@ -3,12 +3,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lpac
-PKG_VERSION:=2.1.0
-PKG_RELEASE:=2
+PKG_VERSION:=2.2.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/estkme-group/lpac/tar.gz/refs/tags/v$(PKG_VERSION)?
-PKG_HASH:=532c5daef6888fe91b0838e8e23bf23ea2f5f39cbb755c008676b9cdfbd833fb
+PKG_HASH:=3d87080a625b10430eebb82f89e2d24e16a84a8435a9c40b3718fd88c82028ba
 
 PKG_MAINTAINER:=David Bauer <david.bauer@uniberg.com>
 PKG_LICENSE:=AGPL-3.0-only LGPL-2.0-only
