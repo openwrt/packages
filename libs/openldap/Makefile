@@ -8,14 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openldap
-PKG_VERSION:=2.6.3
-PKG_RELEASE:=1
+PKG_VERSION:=2.6.9
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
-PKG_SOURCE_URL:=https://gpl.savoirfairelinux.net/pub/mirrors/openldap/openldap-release/ \
-	https://mirror.eu.oneandone.net/software/openldap/openldap-release/ \
+PKG_SOURCE_URL:=https://mirror.eu.oneandone.net/software/openldap/openldap-release/ \
 	https://www.openldap.org/software/download/OpenLDAP/openldap-release/
-PKG_HASH:=d2a2a1d71df3d77396b1c16ad7502e674df446e06072b0e5a4e941c3d06c0d46
+PKG_HASH:=2cb7dc73e9c8340dff0d99357fbaa578abf30cc6619f0521972c555681e6b2ff
 PKG_LICENSE:=OLDAP-2.8
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:openldap:openldap
@@ -95,14 +94,12 @@ TARGET_CFLAGS += $(FPIC) -lpthread \
 	-DURANDOM_DEVICE=\\\"/dev/urandom\\\"
 
 CONFIGURE_ARGS += \
-	--enable-shared \
-	--enable-static \
 	--enable-dynamic \
 	--enable-syslog \
 	--with-cyrus-sasl \
 	--with-threads \
 	--with-tls \
-	--with-yielding_select="yes" \
+	--with-yielding-select="yes" \
 	--enable-null \
 	--disable-relay
 

@@ -18,7 +18,7 @@
  		       "terminated by a newline character.\n"));
  
    do
-@@ -195,7 +195,7 @@ main (int argc, char *argv[])
+@@ -199,7 +199,7 @@ main (int argc, char *argv[])
  	  if (feof (stdin))
  	    break;
  
@@ -27,7 +27,7 @@
  	}
  
        if (strlen (line) > 0)
-@@ -213,7 +213,7 @@ main (int argc, char *argv[])
+@@ -217,7 +217,7 @@ main (int argc, char *argv[])
  	  if (!q)
  	    {
  	      free (p);
@@ -36,7 +36,7 @@
  		     _("could not convert from UTF-8 to UCS-4"));
  	    }
  
-@@ -238,7 +238,7 @@ main (int argc, char *argv[])
+@@ -242,7 +242,7 @@ main (int argc, char *argv[])
  	  if (!q)
  	    {
  	      free (r);
@@ -45,7 +45,7 @@
  		     _("could not convert from UTF-8 to UCS-4"));
  	    }
  
-@@ -275,7 +275,7 @@ main (int argc, char *argv[])
+@@ -279,7 +279,7 @@ main (int argc, char *argv[])
  	  q = stringprep_utf8_to_ucs4 (p, -1, &len);
  	  free (p);
  	  if (!q)
@@ -54,7 +54,7 @@
  		   _("could not convert from UTF-8 to UCS-4"));
  
  	  if (args_info.debug_given)
-@@ -334,7 +334,7 @@ main (int argc, char *argv[])
+@@ -338,7 +338,7 @@ main (int argc, char *argv[])
  	  r = stringprep_ucs4_to_utf8 (q, -1, NULL, NULL);
  	  free (q);
  	  if (!r)
@@ -63,7 +63,7 @@
  		   _("could not convert from UCS-4 to UTF-8"));
  
  	  p = stringprep_utf8_to_locale (r);
-@@ -358,7 +358,7 @@ main (int argc, char *argv[])
+@@ -362,7 +362,7 @@ main (int argc, char *argv[])
  	  q = stringprep_utf8_to_ucs4 (p, -1, NULL);
  	  free (p);
  	  if (!q)
@@ -72,7 +72,7 @@
  		   _("could not convert from UCS-4 to UTF-8"));
  
  	  if (args_info.debug_given)
-@@ -436,7 +436,7 @@ main (int argc, char *argv[])
+@@ -440,7 +440,7 @@ main (int argc, char *argv[])
  	  if (!q)
  	    {
  	      free (p);
@@ -81,7 +81,7 @@
  		     _("could not convert from UCS-4 to UTF-8"));
  	    }
  
-@@ -492,7 +492,7 @@ main (int argc, char *argv[])
+@@ -496,7 +496,7 @@ main (int argc, char *argv[])
  	  r = stringprep_ucs4_to_utf8 (q, -1, NULL, NULL);
  	  free (q);
  	  if (!r)
@@ -90,7 +90,7 @@
  		   _("could not convert from UTF-8 to UCS-4"));
  
  	  p = stringprep_utf8_to_locale (r);
-@@ -521,7 +521,7 @@ main (int argc, char *argv[])
+@@ -525,7 +525,7 @@ main (int argc, char *argv[])
  	      if (!q)
  		{
  		  free (p);
@@ -99,7 +99,7 @@
  			 _("could not convert from UTF-8 to UCS-4"));
  		}
  
-@@ -535,7 +535,7 @@ main (int argc, char *argv[])
+@@ -539,7 +539,7 @@ main (int argc, char *argv[])
  	  r = stringprep_utf8_nfkc_normalize (p, -1);
  	  free (p);
  	  if (!r)
@@ -108,7 +108,7 @@
  
  	  if (args_info.debug_given)
  	    {
-@@ -545,7 +545,7 @@ main (int argc, char *argv[])
+@@ -549,7 +549,7 @@ main (int argc, char *argv[])
  	      if (!q)
  		{
  		  free (r);

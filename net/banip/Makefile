@@ -1,13 +1,11 @@
-#
-# banIP - ban incoming and outgoing ip addresses/subnets via sets in nftables
-# Copyright (c) 2018-2023 Dirk Brenken (dev@brenken.org)
+# banIP - ban incoming and outgoing IPs via named nftables Sets
+# Copyright (c) 2018-2025 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
-#
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=banip
-PKG_VERSION:=0.8.2
+PKG_VERSION:=1.5.3
 PKG_RELEASE:=2
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
@@ -17,13 +15,13 @@ include $(INCLUDE_DIR)/package.mk
 define Package/banip
 	SECTION:=net
 	CATEGORY:=Network
-	TITLE:=banIP blocks IP addresses via named nftables sets
-	DEPENDS:=+jshn +jsonfilter +firewall4 +ca-bundle +logd +rpcd +rpcd-mod-rpcsys
+	TITLE:=banIP blocks IPs via named nftables Sets
+	DEPENDS:=+jshn +jsonfilter +firewall4 +ca-bundle +rpcd +rpcd-mod-rpcsys
 	PKGARCH:=all
 endef
 
 define Package/banip/description
-banIP blocks IP addresses via named nftables sets.
+banIP blocks IPs via named nftables Sets.
 banIP supports many IP blocklist feeds and provides a log service to block suspicious IPs in realtime.
 Please see https://github.com/openwrt/packages/blob/master/net/banip/files/README.md for further information.
 
@@ -33,6 +31,7 @@ define Package/banip/conffiles
 /etc/config/banip
 /etc/banip/banip.allowlist
 /etc/banip/banip.blocklist
+/etc/banip/banip.custom.feeds
 endef
 
 define Build/Prepare
@@ -63,6 +62,10 @@ define Package/banip/install
 	$(INSTALL_CONF) ./files/banip.blocklist $(1)/etc/banip
 	$(INSTALL_CONF) ./files/banip.countries $(1)/etc/banip
 	$(INSTALL_CONF) ./files/banip.feeds $(1)/etc/banip
+	$(INSTALL_CONF) ./files/banip.custom.feeds $(1)/etc/banip
+
+	$(INSTALL_DIR) $(1)/www/cgi-bin
+	$(INSTALL_BIN) ./files/banip.cgi $(1)/www/cgi-bin/banip
 endef
 
 $(eval $(call BuildPackage,banip))

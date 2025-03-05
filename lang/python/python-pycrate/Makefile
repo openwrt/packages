@@ -4,16 +4,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pycrate
-PKG_VERSION:=0.5.5
+PKG_VERSION:=0.6.0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/P1sec/pycrate/archive/refs/tags/$(PKG_VERSION).tar.gz?
-PKG_HASH:=73072234359cdc11d7c6790c367d5565fdaea284a07df882b8b5295f2a4f83d1
+PYPI_NAME:=pycrate
+PKG_HASH:=b49738c02a3f93ba9f76c0dac82b689a5341882814b36c714e9600e9f560daf7
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/pycrate-$(PKG_VERSION)
-
-PKG_LICENSE:=LGPL-2.1
+PKG_LICENSE:=LGPL-2.1-or-later
+PKG_LICENSE_FILES:=license.txt
 PKG_MAINTAINER:=David Bauer <mail@david-bauer.net>
 
 include ../pypi.mk
@@ -21,10 +19,10 @@ include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
 define Package/python3-pycrate
-  SECTION:=lang-python
+  SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
-  TITLE:=python3-pycrate
+  TITLE:=A software suite to handle various data formats
   URL:=https://github.com/P1sec/pycrate
   DEPENDS:=+python3-light
 endef

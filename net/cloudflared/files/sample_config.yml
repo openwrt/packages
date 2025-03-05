@@ -1,3 +1,9 @@
-url: http://localhost:8000
-tunnel: <Tunnel-UUID>
-credentials-file: /etc/cloudflared/<Tunnel-UUID>.json
+#tunnel: <Tunnel-UUID>
+#credentials-file: /etc/cloudflared/<Tunnel-UUID>.json
+#
+#ingress:
+#  - hostname: luci.example.com
+#    service: http://localhost:80
+#  - hostname: ssh.example.com
+#    service: ssh://localhost:22
+#  - service: http_status:404

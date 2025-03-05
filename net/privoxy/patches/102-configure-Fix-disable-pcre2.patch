@@ -1,0 +1,30 @@
+From 7fb978c74a8a46bd105d9f0ced92a4be0c9647e6 Mon Sep 17 00:00:00 2001
+From: Fabian Keil <fk@fabiankeil.de>
+Date: Sun, 27 Aug 2023 12:13:48 +0200
+Subject: [PATCH] configure: Fix --disable-pcre2
+
+Previously it would result in neither pcre library being detected:
+
+    checking for getnameinfo... (cached) yes
+    configure: WARNING: Ignoring pcre2 even if it's available
+    test: =: unexpected operator
+    Enabling support for client-specific tags.
+    checking for zlibVersion in -lz... (cached) yes
+    Enabling compression support.
+    test: =: unexpected operator
+    test: =: unexpected operator
+    configure: error: Detected neither pcre2 nor pcre library.
+---
+ configure.in | 1 +
+ 1 file changed, 1 insertion(+)
+
+--- a/configure.in
++++ b/configure.in
+@@ -872,6 +872,7 @@ if test $enableval2 = yes; then
+ else
+   AC_MSG_WARN([Ignoring pcre2 even if it's available])
+   try_pcre2=no
++  have_pcre2=no
+ fi
+ 
+ if test $try_pcre2 != no; then

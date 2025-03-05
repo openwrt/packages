@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nano
-PKG_VERSION:=7.2
+PKG_VERSION:=8.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/nano
-PKG_HASH:=86f3442768bd2873cec693f83cdf80b4b444ad3cc14760b74361474fc87a4526
+PKG_HASH:=551b717b2e28f7e90f749323686a1b5bbbd84cfa1390604d854a3ca3778f111e
 
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
@@ -138,8 +138,9 @@ endef
 define Package/nano-full/install
 	$(call Package/nano/install,$1)
 	$(INSTALL_DIR) $(1)/etc $(1)/usr/share/nano
-	$(INSTALL_CONF) ./files/nanorc $(1)/etc/nanorc
+	$(INSTALL_DATA) ./files/nanorc $(1)/etc/nanorc
 	$(INSTALL_DATA) ./files/uci.nanorc $(1)/usr/share/nano
+	$(INSTALL_DATA) ./files/ucode.nanorc $(1)/usr/share/nano
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/nano/* $(1)/usr/share/nano
 endef
 

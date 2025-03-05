@@ -1,4 +1,10 @@
 #!/bin/sh
+#
+# Copyright (C) 2020, 2022 Jeffery To
+#
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+#
 
 nl="
 "
@@ -114,7 +120,7 @@ build() {
 	if [ "$GO_GO_GENERATE" = 1 ]; then
 		log "Calling go generate"
 		# shellcheck disable=SC2086
-		GOOS='' GOARCH='' GO386='' GOARM='' GOMIPS='' GOMIPS64='' \
+		GOOS='' GOARCH='' GO386='' GOARM='' GOARM64='' GOMIPS='' GOMIPS64='' GORISCV64=''\
 		go generate -v $targets
 		log
 	fi

@@ -1,0 +1,11 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -508,6 +508,8 @@ DEFAULT_VALGRINDFLAGS='-q --error-exitco
+ 
+ gl_VALGRIND_TESTS_DEFAULT_NO
+ 
++gl_LIBUNISTRING_OPTIONAL
++
+ dnl Note that g*l_INIT are run after we check for library capabilities,
+ dnl to prevent issues from caching lib dependencies. See discussion
+ dnl in https://bugs.gentoo.org/show_bug.cgi?id=494940 and

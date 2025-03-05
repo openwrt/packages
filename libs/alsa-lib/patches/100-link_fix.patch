@@ -1,6 +1,6 @@
 --- a/src/Makefile.in
 +++ b/src/Makefile.in
-@@ -491,7 +491,7 @@ clean-libLTLIBRARIES:
+@@ -497,7 +497,7 @@ clean-libLTLIBRARIES:
  	}
  
  libasound.la: $(libasound_la_OBJECTS) $(libasound_la_DEPENDENCIES) $(EXTRA_libasound_la_DEPENDENCIES) 

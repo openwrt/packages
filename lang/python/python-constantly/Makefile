@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018 OpenWrt.org
+# Copyright (C) 2018, 2023 Jeffery To
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,15 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-constantly
-PKG_VERSION:=15.1.0
-PKG_RELEASE:=2
+PKG_VERSION:=23.10.4
+PKG_RELEASE:=1
 
 PYPI_NAME:=constantly
-PKG_HASH:=586372eb92059873e29eba4f9dec8381541b4d3834660707faf8ba59146dfc35
+PKG_HASH:=aa92b70a33e2ac0bb33cd745eb61776594dc48764b06c35e0efd050b7f1c7cbd
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
+
+PKG_BUILD_DEPENDS:=python-versioneer/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

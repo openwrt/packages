@@ -1,4 +1,0 @@
-#!/bin/sh
-
-/etc/init.d/miniupnpd enabled && /etc/init.d/miniupnpd restart
-exit 0

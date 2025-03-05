@@ -16,9 +16,11 @@ PKG_SOURCE_URL:=https://github.com/$(PKG_NAME)/$(PKG_NAME)/releases/download/gd-
 PKG_HASH:=3fe822ece20796060af63b7c60acb151e5844204d289da0ce08f8fdf131e5a61
 
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
-PKG_LICENSE:=MIT
+PKG_LICENSE:=GD
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:libgd:libgd
+
+PKG_BUILD_FLAGS:=lto
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -77,7 +79,7 @@ define Package/libgd/config
 	endif
 endef
 
-TARGET_CFLAGS += $(FPIC) -ffunction-sections -fdata-sections -flto
+TARGET_CFLAGS += $(FPIC) -ffunction-sections -fdata-sections
 
 CMAKE_OPTIONS += \
 	-DENABLE_FONTCONFIG=OFF \

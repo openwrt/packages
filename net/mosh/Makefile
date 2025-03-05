@@ -22,12 +22,14 @@ PKG_LICENSE_FILES:=COPYING
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=protobuf/host
+PKG_BUILD_FLAGS:=gc-sections lto
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/mosh/Default
-  SECTION:=utils
-  CATEGORY:=Utilities
+  SECTION:=net
+  CATEGORY:=Network
+  SUBMENU:=SSH
   TITLE:=Mosh mobile shell
   DEPENDS:=+libncursesw +libopenssl +protobuf
   URL:=https://mosh.org/
@@ -95,8 +97,8 @@ CONFIGURE_ARGS += \
 CONFIGURE_VARS += \
 	ac_cv_have_decl_ffs=yes
 
-TARGET_CXXFLAGS += -ffunction-sections -fdata-sections -flto -std=c++11
-TARGET_LDFLAGS += -Wl,--gc-sections -lncurses
+TARGET_CXXFLAGS += -std=c++11
+TARGET_LDFLAGS += -lncurses
 
 define Package/mosh-client/install
 	$(INSTALL_DIR) $(1)/usr/bin

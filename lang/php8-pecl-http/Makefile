@@ -8,13 +8,13 @@ include $(TOPDIR)/rules.mk
 PECL_NAME:=pecl_http
 PECL_LONGNAME:=Extended HTTP Support
 
-PKG_VERSION:=4.2.3
-PKG_RELEASE:=2
-PKG_HASH:=fa2ab558fc8f0928a10f35c0f566f7c4a1d32e727bd3a96579e4c28482ee9d6a
+PKG_VERSION:=4.2.6
+PKG_RELEASE:=1
+PKG_HASH:=cd33230050b3f7c5ddb6f4383ce2a81f0bcdb934432029eec72ebf0f942b876d
 
 PKG_NAME:=php8-pecl-http
 PKG_SOURCE:=$(PECL_NAME)-$(PKG_VERSION).tgz
-PKG_SOURCE_URL:=http://pecl.php.net/get/
+PKG_SOURCE_URL:=https://pecl.php.net/get/
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 

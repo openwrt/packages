@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sqlite
-PKG_VERSION:=3410100
+PKG_VERSION:=3460100
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-autoconf-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://www.sqlite.org/2023/
-PKG_HASH:=4dadfbeab9f8e16c695d4fbbc51c16b2f77fb97ff4c1c3d139919dfc038c9e33
+PKG_SOURCE_URL:=https://www.sqlite.org/2024/
+PKG_HASH:=67d3fe6d268e6eaddcae3727fce58fcc8e9c53869bdd07a0c61e38ddf2965071
 
 PKG_CPE_ID:=cpe:/a:sqlite:sqlite
 PKG_LICENSE:=PUBLICDOMAIN
@@ -42,7 +42,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/sqlite3/Default
   SUBMENU:=Database
   TITLE:=SQLite (v3.x) database engine
-  URL:=http://www.sqlite.org/
+  URL:=https://www.sqlite.org/
 endef
 
 define Package/sqlite3/Default/description

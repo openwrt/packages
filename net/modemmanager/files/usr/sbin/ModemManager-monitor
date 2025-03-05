@@ -1,0 +1,155 @@
+#!/bin/sh
+
+. /lib/functions.sh
+. /lib/netifd/netifd-proto.sh
+. /usr/share/ModemManager/modemmanager.common
+
+trap_with_arg() {
+	func="$1" ; shift
+	for sig ; do
+		# shellcheck disable=SC2064
+		trap "$func $sig" "$sig"
+	done
+}
+
+func_trap() {
+	local monitor_cache_line object
+
+	logger "ModemManager-monitor[$$]" "Sending signal ${1} ..."
+
+	# Set all configured logical interfaces to unavailable
+	while IFS= read -r monitor_cache_line; do
+		object=$(echo "${monitor_cache_line}" | awk '{print $1}')
+		mm_monitor_cache_remove "$object"
+	done < ${MODEMMANAGER_MONITOR_CACHE}
+
+	kill "-${1}" "$CHILD" 2>/dev/null
+}
+
+mm_monitor_get_sysfspath() {
+	local object="$1"
+
+	# If no monitor cache file, we're done
+	[ -f "${MODEMMANAGER_MONITOR_CACHE}" ] || return
+
+	awk -v object="${object}" '!/^#/ && $0 ~ object { print $2 }' "${MODEMMANAGER_MONITOR_CACHE}"
+}
+
+mm_monitor_cache_remove() {
+	local object="$1"
+
+	local device cfg
+
+	device=$(mm_monitor_get_sysfspath "${object}")
+
+	cfg=$(mm_get_modem_config "${device}")
+	if [ -n "${cfg}" ]; then
+		mm_log "debug" "interface '${cfg}' set '${device}' state unavailable"
+		proto_set_available "${cfg}" 0
+	fi
+
+	mm_log "debug" "delete object '$object' from monitore cache"
+
+	# On monitor remove event, remove old events from cache
+	# Also substitute object path '/org/freedesktop/ModemManager1/Modem/<number>'
+	# all '/' with '\/' to make sed happy with shell expansion
+	sed -i "/${object//\//\\/}/d" "${MODEMMANAGER_MONITOR_CACHE}"
+}
+
+mm_monitor_cache_add() {
+	local object="$1"
+	local modemstatus device sysfspath cfg
+
+	modemstatus="$(mmcli --modem="${object}" --output-keyvalue)"
+
+	device=$(modemmanager_get_field "${modemstatus}" "modem.generic.device")
+	[ -n "${device}" ] || {
+		mm_log "err" "No 'device' for object '$object' not found..."
+		return 1
+	}
+
+	sysfspath=$(modemmanager_get_field "${modemstatus}" "modem.generic.physdev")
+	[ -n "${sysfspath}" ] || {
+		mm_log "err" "No 'sysfspath' for object '$object' not found..."
+		return 2
+	}
+
+	mm_log "debug" "add object '$object' to monitore cache (device=${device},sysfspath=${sysfspath})"
+
+	# On monitor add event, store event details in cache (if not exists yet)
+	grep -qs "${sysfspath}" "${MODEMMANAGER_MONITOR_CACHE}" || \
+		echo "${object} ${device} ${sysfspath}" >> "${MODEMMANAGER_MONITOR_CACHE}"
+
+	cfg=$(mm_get_modem_config "${device}")
+	if [ -n "${cfg}" ]; then
+		mm_log "info" "interface '${cfg}' set '${device}' state available"
+		proto_set_available "${cfg}" 1
+	fi
+}
+
+mm_monitor_cache_del() {
+	local object="$1"
+
+	mm_monitor_cache_remove "$object"
+}
+
+mm_monitor_cache() {
+	local line="$1"
+	local event object modemstatus device pyhsdev
+
+	event="$(echo "$line" | cut -d " " -f 1)"
+	object="$(echo "$line" | cut -d " " -f 2)"
+
+	case "$event" in
+		"(+)")
+			mm_monitor_cache_add "$object"
+			;;
+		"(-)")
+			mm_monitor_cache_del "$object"
+			;;
+	esac
+}
+
+main() {
+
+	local n=60
+	local step=1
+	local mmrunning=0
+
+	trap_with_arg func_trap INT TERM KILL
+
+	mkdir -p "${MODEMMANAGER_RUNDIR}"
+	chmod 0755 "${MODEMMANAGER_RUNDIR}"
+
+	# Wait for ModemManager to be available in the bus
+	while [ $n -ge 0 ]; do
+		sleep $step
+		mm_log "info" "Checking if ModemManager is available..."
+
+		if ! /usr/bin/mmcli -L >/dev/null 2>&1; then
+			mm_log "info" "ModemManager not yet available (count=${n})"
+		else
+			mmrunning=1
+			break
+		fi
+		n=$((n-step))
+	done
+
+	[ ${mmrunning} -eq 1 ] || {
+		mm_log "error" "couldn't report initial kernel events: ModemManager not running"
+		return
+	}
+
+	/usr/bin/mmcli -M | {
+		local line
+		while read -r line; do
+			mm_log "debug" "Monitor cache line: ${line}"
+			mm_monitor_cache "$line"
+		done
+	} &
+	CHILD="$!"
+
+	wait $CHILD
+}
+
+main "$@"

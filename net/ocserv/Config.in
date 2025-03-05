@@ -16,12 +16,12 @@ config OCSERV_RADIUS
 	bool "enable radius authentication"
 	default n
 
+config OCSERV_LIBOATH
+	bool "enable OTP"
+	default n
+
 config OCSERV_PROTOBUF
 	bool "use external libprotobuf"
-	default y
-
-config OCSERV_HTTP_PARSER
-	bool "use external libhttp-parser"
 	default y
 
 endmenu

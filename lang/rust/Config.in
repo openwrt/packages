@@ -1,95 +1,15 @@
-# Rust Language Options
-menu "Compiler Options"
-	visible if PACKAGE_rust
+menu "Configuration options (for developers)"
 
-	config RUST_DEBUG
-		bool "Enables Debugging Environment (--enable-debug)"
+config RUST_SCCACHE
+	bool "Use sccache"
+	help
+	  Shared compilation cache; see https://github.com/mozilla/sccache
 
-	config RUST_DOCS
-		bool "Build standard library documentation (--enable-docs)"
-
-	config RUST_COMPILER_DOCS
-		bool "Build compiler documentation (--enable-compiler-docs)"
-
-	config RUST_OPTIMIZE_TESTS
-		bool "Build tests with optimizations (--enable-optimized-tests)"
-
-	config RUST_PARALLEL
-		bool "Build with multi-threaded support (--enable-parallel-compiler)"
-
-	config RUST_VERBOSE_TESTS
-		bool "Enable verbose output when running tests (--enable-verbose-tests)"
-
-	config RUST_CCACHE
-		bool "Build with ccache enabled (--enable-ccache)"
-
-	config RUST_LLVM_STATIC
-		bool "Statically link to libstdc++ to LLVM (--enable-llvm-static-stdccp)"
-
-	config RUST_LLVM_SHARED
-		bool "Prefer shared linking to LLVM (--enable-llvm-link-shared)"
-
-	config RUST_CODEGEN_TESTS
-		bool "Run the src/test/codegen tests (--enable-codegen-tests)"
-
-	config RUST_OPTION_CHECKING
-		bool "Complain about unrecognized options in this configure script (--enable-option-checking)"
-		default y
-
-	config RUST_ENABLE_NINJA
-		bool "Build LLVM using the Ninja generator (--enable-ninja)"
-		default y
-
-	config RUST_LOCKED_DEPS
-		bool "Force Cargo.lock to be up to date (--enable-locked-deps)"
-
-	config RUST_VENDOR
-		bool "Enable usage of vendored Rust crates (--enable-vendor)"
-
-	config RUST_SANITIZERS
-		bool "Build the sanitizer runtimes (asan, lsan, msan, tsan) (--enable-sanitizers)"
-
-	config RUST_DIST_SRC
-		bool "When building tarballs enables building a source tarball (--enable-dist-src)"
-
-	config RUST_CARGO_NATIVE_STATIC
-		bool "Build static native libraries in Cargo (--enable-cargo-native-static)"
-
-	config RUST_PROFILER
-		bool "Build the profiler runtime (--enable-profiler)"
-
-	config RUST_FULL_TOOLS
-		bool "Build all tools (--enable-full-tools)"
-
-	config RUST_MISSING_TOOLS
-		bool "Allow failures when building tools (--enable-missing-tools)"
-		default y
-
-	config RUST_USE_LIBCXX
-		bool "Build LLVM with libc++ (--enable-use-libcxx)"
-
-	config RUST_CONTROL_FLOW_GUARD
-		bool "Enable Control Flow Guard (--enable-control-flow-guard)"
-
-	config RUST_OPTIMIZE_LLVM
-		bool "Build optimized LLVM (--enable-optimize-llvm)"
-		default y
-
-	config RUST_LLVM_ASSERTIONS
-		bool "Build LLVM with assertions (--enable-llvm-assertions)"
-
-	config RUST_DEBUG_ASSERTIONS
-		bool "Build with debugging assertions (--enable-debug-assertions)"
-
-	config RUST_LLVM_RELEASE_DEBUGINFO
-		bool "Build LLVM with debugger metadata (--enable-llvm-release-debuginfo)"
-
-	config RUST_MANAGE_SUBMODULES
-		bool "Let the build manage the git submodules (--enable-manage-submodules)"
-		default y
-
-	config RUST_FULL_BOOTSTRAP
-		bool "Full Bootstrap - Build three compilers instead of two (--enable-full-bootstrap)"
+config RUST_SCCACHE_DIR
+	string "Set sccache directory" if RUST_SCCACHE
+	default ""
+	help
+	  Store sccache in this directory.
+	  If not set, uses './.sccache'
 
 endmenu
-

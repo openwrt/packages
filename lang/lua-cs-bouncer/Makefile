@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=lua-cs-bouncer
 PKG_SOURCE_DATE:=2022-01-18
 PKG_SOURCE_VERSION:=e0f68b1265c386715c1d6ab79fe9063c0a9e3d3a
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/crowdsecurity/$(PKG_NAME)/tar.gz/$(PKG_SOURCE_VERSION)?

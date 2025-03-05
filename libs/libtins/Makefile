@@ -8,18 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libtins
-PKG_VERSION:=4.4
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=4.5
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/mfontanini/libtins/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=ff0121b4ec070407e29720c801b7e1a972042300d37560a62c57abadc9635634
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+PKG_SOURCE_URL:=https://github.com/mfontanini/libtins
+PKG_MIRROR_HASH:=85c5a15beca56552ba3f33e10f2a82ee4c47be2b3334d163304362188a37b13a
 
 PKG_MAINTAINER:= Steven Hessing <steven.hessing@gmail.com>
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=LICENSE
 
 CMAKE_INSTALL:=1
+PKG_BUILD_FLAGS:=gc-sections lto
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -52,8 +54,7 @@ CMAKE_OPTIONS += \
 	-DLIBTINS_ENABLE_TCP_STREAM_CUSTOM_DATA=$(if $(CONFIG_LIBTINS_ENABLE_TCP_STREAM_CUSTOM_DATA),ON,OFF) \
 	-DLIBTINS_ENABLE_WPA2=$(if $(CONFIG_LIBTINS_ENABLE_WPA2),ON,OFF)
 
-TARGET_CXXFLAGS += -ffunction-sections -fdata-sections -flto
-TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
+TARGET_LDFLAGS += -Wl,--as-needed
 
 define Package/libtins/install
 	$(INSTALL_DIR) $(1)/usr/lib

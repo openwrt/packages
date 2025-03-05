@@ -1,0 +1,17 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+
+USE_PROCD=1
+PROG=/usr/bin/go2rtc
+USER=go2rtc
+GROUP=go2rtc
+
+start_service() {
+	procd_open_instance
+	procd_set_param command "$PROG" -config /etc/go2rtc.yaml
+	procd_set_param user "$USER"
+	procd_set_param group "$GROUP"
+	procd_set_param respawn
+	procd_close_instance
+}

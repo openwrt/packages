@@ -7,16 +7,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtl_433
-PKG_VERSION:=21.12
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=23.11
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/merbanan/rtl_433/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=b362ef3410adec64aee7ad8e6d4d74875f1b3d59ef6fb4856e96adc03876dc65
+PKG_HASH:=1260c58400bf35832ac1b76cb3cccf3dc1335ffa2416909c63c7d7060c74663b
 
 PKG_MAINTAINER:=Jasper Scholte <NightNL@outlook.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:rtl_433_project:rtl_433
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk

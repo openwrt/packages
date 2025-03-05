@@ -1,5 +1,5 @@
---- a/ts2phc_slave.c
-+++ b/ts2phc_slave.c
+--- a/ts2phc_pps_sink.c
++++ b/ts2phc_pps_sink.c
 @@ -4,6 +4,9 @@
   * @note Copyright (C) 2019 Balint Ferencz <fernya@sch.bme.hu>
   * @note SPDX-License-Identifier: GPL-2.0+

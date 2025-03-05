@@ -75,7 +75,7 @@ mwan3_rtmon_route_handle()
 
 	if [ "$route_line" = "$1" ]; then
 		action="replace"
-		$IPS -! add mwan3_connected_${route_family##ip} ${route_line%% *}
+		$IPS -! add mwan3_connected_${route_family} ${route_line%% *}
 	else
 		action="del"
 		mwan3_set_connected_${route_family}
@@ -94,6 +94,13 @@ mwan3_rtmon_route_handle()
 		return
 	fi
 	route_line=$(echo "$route_line" | sed -ne "$MWAN3_ROUTE_LINE_EXP")
+
+	if [ "$action" = "del" ]; then
+		if mwan3_get_routes | grep -qxF "$route_line"; then
+			LOG debug "deleted but route still exists - $route_line"
+			return
+		fi
+	fi
 
 	handle_route() {
 		local error

@@ -159,7 +159,7 @@ class message {
             both = keys;
         }
         both = concat(std::move(both), std::move(key_filter)...);
-        return std::move(message{msg, std::move(both)});
+        return message{msg, std::move(both)};
     }
 
     inline ~message() = default;

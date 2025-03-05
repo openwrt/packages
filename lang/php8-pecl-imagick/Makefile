@@ -14,12 +14,13 @@ PKG_HASH:=5a364354109029d224bcbb2e82e15b248be9b641227f45e63425c06531792d3e
 
 PKG_NAME:=php8-pecl-imagick
 PKG_SOURCE:=$(PECL_NAME)-$(PKG_VERSION).tgz
-PKG_SOURCE_URL:=http://pecl.php.net/get/
+PKG_SOURCE_URL:=https://pecl.php.net/get/
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
 PKG_LICENSE:=PHP-3.01
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:php:imagick
 
 PKG_BUILD_DEPENDS:=php8
 PKG_BUILD_DIR:=$(BUILD_DIR)/pecl-php8/$(PECL_NAME)-$(PKG_VERSION)

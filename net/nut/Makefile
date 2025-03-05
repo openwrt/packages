@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nut
-PKG_VERSION:=2.8.0
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=2.8.1
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.networkupstools.org/source/2.8/
-PKG_HASH:=c3e5a708da797b7c70b653d37b1206a000fcb503b85519fe4cdf6353f792bfe5
+PKG_HASH:=7da48ee23b1f0d8d72560bb0af84f5c5ae4dbe35452b84cb49840132e47f099c
 PKG_LICENSE:=GPL-2.0-or-later GPL-3.0-or-later GPL-1.0-or-later Artistic-1.0-Perl
 PKG_LICENSE_FILES:=LICENSE-GPL2 LICENSE-GPL3 COPYING
 PKG_FIXUP:=autoreconf
@@ -545,7 +545,9 @@ CONFIGURE_ARGS += \
 	--$(if $(CONFIG_NUT_SSL),with,without)-ssl $(if $(CONFIG_NUT_SSL),--with-openssl) \
 	--without-libltdl \
 	--without-macosx_ups \
+	--without-nut_monitor \
 	--with-statepath=/var/run/nut \
+	--with-pidpath=/var/run \
 	--with-drvpath=/lib/nut \
 	--with-user=root \
 	--with-group=root \

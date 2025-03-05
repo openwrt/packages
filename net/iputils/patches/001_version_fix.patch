@@ -1,15 +1,15 @@
 Description: set a static version string rather than discern it from git
 --- a/meson.build
 +++ b/meson.build
-@@ -19,6 +19,7 @@ add_project_arguments(
+@@ -20,6 +20,7 @@ add_project_arguments(
  
  conf = configuration_data()
  conf.set_quoted('PACKAGE_NAME', meson.project_name())
 +conf.set('VCS_TAG', meson.project_version())
- conf.set('_GNU_SOURCE', 1, description : 'Enable GNU extensions on systems that have them.')
  
  build_arping = get_option('BUILD_ARPING')
-@@ -208,10 +209,10 @@ foreach h : [
+ build_clockdiff = get_option('BUILD_CLOCKDIFF')
+@@ -149,10 +150,10 @@ foreach h : [
  	endif
  endforeach
  

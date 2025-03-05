@@ -1,6 +1,6 @@
 --- a/parser/Makefile
 +++ b/parser/Makefile
-@@ -351,7 +351,7 @@ install-redhat:
+@@ -361,7 +361,7 @@ install-redhat:
  	install -m 755 rc.apparmor.$(subst install-,,$@) $(DESTDIR)/etc/init.d/apparmor
  
  .PHONY: install-suse
@@ -9,7 +9,7 @@
  	install -m 755 -d $(SBINDIR)
  	ln -sf service $(SBINDIR)/rcapparmor
  
-@@ -414,14 +414,6 @@ install-indep: indep
+@@ -425,14 +425,6 @@ install-indep: indep
  	$(MAKE) -C po install NAME=${NAME} DESTDIR=${DESTDIR}
  	$(MAKE) install_manpages DESTDIR=${DESTDIR}
  

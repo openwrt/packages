@@ -1,0 +1,22 @@
+From a198bcd457abd04f2e22812ff3a37246aa564614 Mon Sep 17 00:00:00 2001
+From: Alex Kiernan <alex.kiernan@gmail.com>
+Date: Mon, 5 Dec 2022 15:14:12 +0000
+Subject: [PATCH 2/6] make: Set libdns_sd.so soname correctly
+
+Upstream-Status: Pending
+Signed-off-by: Alex Kiernan <alex.kiernan@gmail.com>
+---
+ mDNSPosix/Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/mDNSPosix/Makefile
++++ b/mDNSPosix/Makefile
+@@ -276,7 +276,7 @@ libdns_sd: setup $(BUILDDIR)/libdns_sd.$
+ CLIENTLIBOBJS = $(OBJDIR)/dnssd_clientlib.c.so.o $(OBJDIR)/dnssd_clientstub.c.so.o $(OBJDIR)/dnssd_ipc.c.so.o $(OBJDIR)/dnssd_errstring.c.so.o
+ 
+ $(BUILDDIR)/libdns_sd.$(LDSUFFIX): $(CLIENTLIBOBJS)
+-	$(LD) $(SOOPTS) $(LINKOPTS) -o $@ $+
++	$(LD) $(SOOPTS) $(LINKOPTS) -Wl,-soname,libdns_sd.$(LDSUFFIX).1 -o $@ $+
+ 	$(STRIP) $@
+ 
+ Clients: setup libdns_sd ../Clients/build/dns-sd

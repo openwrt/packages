@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=grep
-PKG_VERSION:=3.8
-PKG_RELEASE:=2
+PKG_VERSION:=3.11
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/grep
-PKG_HASH:=498d7cc1b4fb081904d87343febb73475cf771e424fb7e6141aff66013abc382
+PKG_HASH:=1db2aedde89d0dea42b16d9528f894c8d15dae4e190b59aecc78f5a951276eab
 
 PKG_MAINTAINER:=Julen Landa Alustiza <julen@zokormazo.info>
 PKG_LICENSE:=GPL-3.0-or-later

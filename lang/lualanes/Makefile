@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lualanes
-PKG_VERSION:=3.13.0
-PKG_RELEASE:=2
+PKG_VERSION:=3.16.3
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/LuaLanes/lanes/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=53a17d7ee11f17ca0543ae5aa640208dcb62d37862a0d0ea450455fae12c8ff1
+PKG_HASH:=22cfa836de4be14fe588b9cd34e936d6f61ec6f4096d8ae30d4ec35855d9608f
 PKG_BUILD_DIR:=$(BUILD_DIR)/lanes-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Vladimir Malyutin <first-leon@yandex.ru>
@@ -35,7 +35,7 @@ define Package/lualanes
 endef
 
 define Package/lualanes/description
- Lua Lanes is a Lua extension library providing the possibility to run
+Lua Lanes is a Lua extension library providing the possibility to run
 multiple Lua states in parallel. It is intended to be used for optimizing
 performance on multicore CPU's and to study ways to make Lua programs
 naturally parallel to begin with.

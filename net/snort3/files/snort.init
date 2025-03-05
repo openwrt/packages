@@ -1,36 +1,58 @@
 #!/bin/sh /etc/rc.common
+# shellcheck disable=SC2039  # "local" not defined in POSIX sh
 
 START=99
 STOP=10
 
 USE_PROCD=1
 PROG=/usr/bin/snort
+MGR=/usr/bin/snort-mgr
 
 validate_snort_section() {
+	$MGR -q check || return 1
 	uci_validate_section snort snort "${1}" \
+		'enabled:bool:0' \
+		'manual:bool:1' \
 		'config_dir:string' \
 		'interface:string'
 }
 
 start_service() {
-	local config_file interface
+	# If you wish to use application-managed PID file:
+	# output.logdir, in the snort lua config, determines the PID file location.
+	# Add '--create-pidfile' to the 'command', below.
 
-	validate_snort_section snort || {
-		echo "validation failed"
-		return 1
-	}
+        local enabled
+	local manual
+	local config_dir
+	local interface
+
+        validate_snort_section snort || {
+                echo "Validation failed, try 'snort-mgr check'."
+                return 1
+        }
+
+	[ "$enabled" = 0 ] && return
 
 	procd_open_instance
-	procd_set_param command $PROG -q -i "$interface" -c "${config_dir%/}/snort.lua" --tweaks local
-	procd_set_param env SNORT_LUA_PATH="$config_dir"
-	procd_set_param file $CONFIGFILE
+	if [ "$manual" = 0 ]; then
+		local config_file=$($MGR setup)
+		procd_set_param command "$PROG" -q -c "${config_file}"
+	else
+		procd_set_param command $PROG -q -i "$interface" -c "${config_dir%/}/snort.lua" --tweaks local
+		procd_set_param env SNORT_LUA_PATH="$config_dir"
+		procd_set_param file $CONFIGFILE
+	fi
 	procd_set_param respawn
+	procd_set_param stdout 0
+	procd_set_param stderr 1
 	procd_close_instance
 }
 
 stop_service()
 {
-	service_stop ${PROG}
+	service_stop "$PROG"
+	$MGR teardown
 }
 
 service_triggers()

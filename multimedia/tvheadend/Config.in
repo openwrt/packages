@@ -36,11 +36,6 @@ choice
     help
       Use internal POSIX Regular Expressions.
       Note that not all EPG parsers will work with POSIX RegEx.
-  config TVHEADEND_REGEX_PCRE
-    bool "PCRE (libpcre)"
-    select PACKAGE_libpcre
-    help
-      Use more advanced Perl-Compatible Regular Expressions, provided by libpcre.
   config TVHEADEND_REGEX_PCRE2
     bool "PCRE2 (libpcre2)"
     select PACKAGE_libpcre2

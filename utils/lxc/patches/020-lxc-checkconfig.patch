@@ -1,20 +1,19 @@
 --- a/src/lxc/cmd/lxc-checkconfig.in
 +++ b/src/lxc/cmd/lxc-checkconfig.in
-@@ -4,6 +4,17 @@
+@@ -7,6 +7,16 @@ export LANGUAGE=en
  # Allow environment variables to override config
- : ${CONFIG:=/proc/config.gz}
- : ${MODNAME:=configs}
+ : "${CONFIG:=/proc/config.gz}"
+ : "${MODNAME:=configs}"
 +: ${ZGREP:=zgrep}
 +: ${GUNZIP:=gunzip}
 +
 +if [ -z $(command -v $ZGREP) ] && ! [ -z $(command -v $GUNZIP) ] && [ -x $(command -v $GUNZIP) ] &&  [ -f $CONFIG ] && [ "$CONFIG" == "/proc/config.gz" ] ; then
++  CONFIG_NEW="/tmp/config-$(uname -r)"
++  $GUNZIP -c $CONFIG > $CONFIG_NEW
++  CONFIG=$CONFIG_NEW
 +
-+	CONFIG_NEW="/tmp/config-$(uname -r)"
-+	$GUNZIP -c $CONFIG > $CONFIG_NEW
-+	CONFIG=$CONFIG_NEW
-+
-+	GREP=grep
++  GREP=grep
 +fi
  
- CAT="cat"
+ GREP="grep"
  

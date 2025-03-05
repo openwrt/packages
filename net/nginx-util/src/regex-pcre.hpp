@@ -1,7 +1,9 @@
 #ifndef __REGEXP_PCRE_HPP
 #define __REGEXP_PCRE_HPP
 
-#include <pcre.h>
+#define PCRE2_CODE_UNIT_WIDTH 8
+
+#include <pcre2.h>
 #include <array>
 #include <stdexcept>
 #include <string>
@@ -65,11 +67,9 @@ class regex {
   private:
     int errcode = 0;
 
-    const char* errptr = nullptr;
+    PCRE2_SIZE erroffset = 0;
 
-    int erroffset = 0;
-
-    pcre* const re = nullptr;
+    pcre2_code* const re = nullptr;
 
     static const std::array<regex_constants::error_type, 86> errcode_pcre2regex;
 
@@ -89,10 +89,18 @@ class regex {
     explicit regex(const std::string& str) : regex(str.c_str()) {}
 
     explicit regex(const char* const str)
-        : re{pcre_compile2(str, 0, &errcode, &errptr, &erroffset, nullptr)}
+        : re{pcre2_compile((PCRE2_SPTR)str, PCRE2_ZERO_TERMINATED, 0, &errcode, &erroffset, nullptr)}
     {
         if (re == nullptr) {
-            std::string what = std::string("regex error: ") + errptr + '\n';
+            std::vector<PCRE2_UCHAR> buffer(256);
+            int errlen;
+
+            errlen = pcre2_get_error_message(errcode, buffer.data(), buffer.size());
+            if (errlen < 0)
+                throw regex_error(errcode_pcre2regex.at(errlen));
+
+            std::string what = std::string("regex error: ") +
+                std::string(buffer.data(), buffer.data() + errlen) + '\n';
             what += "    '" + std::string{str} + "'\n";
             what += "     " + std::string(erroffset, ' ') + '^';
 
@@ -103,11 +111,11 @@ class regex {
     ~regex()
     {
         if (re != nullptr) {
-            pcre_free(re);
+            pcre2_code_free(re);
         }
     }
 
-    inline auto operator()() const -> const pcre*
+    inline auto operator()() const -> const pcre2_code*
     {
         return re;
     }
@@ -124,7 +132,7 @@ class smatch {
 
     std::string::const_iterator end;
 
-    std::vector<int> vec{};
+    std::vector<PCRE2_SIZE> vec{};
 
     int n = 0;
 
@@ -187,11 +195,19 @@ auto regex_search(std::string::const_iterator begin,
 
 inline auto regex_search(const std::string& subj, const regex& rgx)
 {
+    pcre2_match_data *match_data;
+
     if (rgx() == nullptr) {
         throw std::runtime_error("regex_search error: no regex given");
     }
+
+    match_data = pcre2_match_data_create_from_pattern(rgx(), NULL);
+
     int n =
-        pcre_exec(rgx(), nullptr, subj.c_str(), static_cast<int>(subj.length()), 0, 0, nullptr, 0);
+        pcre2_match(rgx(), (PCRE2_SPTR)subj.c_str(), static_cast<int>(subj.length()), 0, 0, match_data, nullptr);
+
+    pcre2_match_data_free(match_data);
+
     return n >= 0;
 }
 
@@ -205,18 +221,28 @@ auto regex_search(const std::string::const_iterator begin,
     }
 
     int sz = 0;
-    pcre_fullinfo(rgx(), nullptr, PCRE_INFO_CAPTURECOUNT, &sz);
+    pcre2_pattern_info(rgx(), PCRE2_INFO_CAPTURECOUNT, &sz);
     sz = 3 * (sz + 1);
 
     match.vec.reserve(sz);
 
     const char* subj = &*begin;
-    int len = static_cast<int>(&*end - subj);
+    int n, len = static_cast<int>(&*end - subj);
+    unsigned int ov_count;
+    PCRE2_SIZE *ov;
 
     match.begin = begin;
     match.end = end;
 
-    match.n = pcre_exec(rgx(), nullptr, subj, len, 0, 0, &match.vec[0], sz);
+    pcre2_match_data *match_data = pcre2_match_data_create(sz, NULL);
+    n = pcre2_match(rgx(), (PCRE2_SPTR)subj, len, 0, 0, match_data, NULL);
+    ov = pcre2_get_ovector_pointer(match_data);
+    ov_count = pcre2_get_ovector_count(match_data);
+
+    match.vec.assign(ov, ov + ov_count);
+    match.n = n;
+
+    pcre2_match_data_free(match_data);
 
     if (match.n < 0) {
         return false;

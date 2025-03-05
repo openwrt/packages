@@ -7,16 +7,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=minizip-ng
-PKG_VERSION:=3.0.4
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=4.0.7
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/zlib-ng/minizip-ng/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=2ab219f651901a337a7d3c268128711b80330a99ea36bdc528c76b591a624c3c
+PKG_HASH:=a87f1f734f97095fe1ef0018217c149d53d0f78438bcb77af38adc21dff2dfbc
 
 PKG_MAINTAINER:=David Woodhouse <dwmw2@infradead.org>
 PKG_LICENSE:=Zlib
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:zlib-ng:minizip-ng
+
+PKG_BUILD_FLAGS:=lto
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -26,7 +29,6 @@ CMAKE_OPTIONS += \
 	-DINSTALL_INC_DIR=/usr/include/minizip \
 	-DBUILD_SHARED_LIBS=ON \
 	-DMZ_BZIP2=OFF \
-	-DMZ_COMPAT=ON \
 	-DMZ_ICONV=OFF \
 	-DMZ_LIBBSD=OFF \
 	-DMZ_LZMA=OFF \
@@ -39,7 +41,7 @@ define Package/minizip
   SECTION:=libs
   CATEGORY:=Libraries
   DEPENDS:=+zlib
-  URL:=https://github.com/nmoinvaz/minizip
+  URL:=https://github.com/zlib-ng/minizip-ng
 endef
 
 define Package/minizip-dev
@@ -58,8 +60,6 @@ define Package/minizip/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libminizip.so.* $(1)/usr/lib/
 endef
-
-TARGET_CXXFLAGS += -flto
 
 define Build/InstallDev
 	$(call Build/InstallDev/cmake,$(1))

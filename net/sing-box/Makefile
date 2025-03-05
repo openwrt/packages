@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sing-box
-PKG_VERSION:=1.1.6
+PKG_VERSION:=1.11.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/SagerNet/sing-box/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=2fdf93fd49c9375cd14b2fe2e2163cbad4b65d0cfa422c592855e7810036ef56
+PKG_HASH:=51b189549395c132dce781e1c70315e4bb8386c207e171c07124759b45481d97
 
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=LICENSE
@@ -14,10 +14,12 @@ PKG_MAINTAINER:=Van Waholtz <brvphoenix@gmail.com>
 
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16
 
 GO_PKG:=github.com/sagernet/sing-box
 GO_PKG_BUILD_PKG:=$(GO_PKG)/cmd/sing-box
+
+GO_PKG_LDFLAGS_X:=$(GO_PKG)/constant.Version=$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
@@ -33,7 +35,7 @@ endef
 
 define Package/sing-box/description
   Sing-box is a universal proxy platform which supports hysteria, SOCKS, Shadowsocks,
-  ShadowsocksR, ShadowTLS, Tor, trojan, VLess, VMess, WireGuard and so on.
+  ShadowTLS, Tor, trojan, VLess, VMess, WireGuard and so on.
 endef
 
 define Package/sing-box/config
@@ -47,8 +49,12 @@ define Package/sing-box/config
 			bool "Build with Clash API support"
 			default y
 
+		config SINGBOX_WITH_DHCP
+			bool "Build with DHCP support, see DHCP DNS transport."
+
 		config SINGBOX_WITH_ECH
 			bool "Build with TLS ECH extension support for TLS outbound"
+			default y
 
 		config SINGBOX_WITH_EMBEDDED_TOR
 			bool "Build with embedded Tor support"
@@ -60,15 +66,13 @@ define Package/sing-box/config
 			bool "Build with gVisor support"
 			default y
 
-		config SINGBOX_WITH_LWIP
-			bool "Build with LWIP Tun stack support"
-
 		config SINGBOX_WITH_QUIC
 			bool "Build with QUIC support"
 			default y
 
-		config SINGBOX_WITH_SHADOWSOCKSR
-			bool "Build with ShadowsocksR support"
+		config SINGBOX_WITH_REALITY_SERVER
+			bool "Build with reality TLS server support, see TLS."
+			default y
 
 		config SINGBOX_WITH_UTLS
 			bool "Build with uTLS support for TLS outbound"
@@ -86,13 +90,13 @@ endef
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_SINGBOX_WITH_ACME \
 	CONFIG_SINGBOX_WITH_CLASH_API \
+	CONFIG_SINGBOX_WITH_DHCP \
 	CONFIG_SINGBOX_WITH_ECH \
 	CONFIG_SINGBOX_WITH_EMBEDDED_TOR \
 	CONFIG_SINGBOX_WITH_GRPC \
 	CONFIG_SINGBOX_WITH_GVISOR \
-	CONFIG_SINGBOX_WITH_LWIP \
 	CONFIG_SINGBOX_WITH_QUIC \
-	CONFIG_SINGBOX_WITH_SHADOWSOCKSR \
+	CONFIG_SINGBOX_WITH_REALITY_SERVER \
 	CONFIG_SINGBOX_WITH_UTLS \
 	CONFIG_SINGBOX_WITH_V2RAY_API \
 	CONFIG_SINGBOX_WITH_WIREGUARD
@@ -100,13 +104,13 @@ PKG_CONFIG_DEPENDS:= \
 GO_PKG_TAGS:=$(subst $(space),$(comma),$(strip \
 	$(if $(CONFIG_SINGBOX_WITH_ACME),with_acme) \
 	$(if $(CONFIG_SINGBOX_WITH_CLASH_API),with_clash_api) \
+	$(if $(CONFIG_SINGBOX_WITH_DHCP),with_dhcp) \
 	$(if $(CONFIG_SINGBOX_WITH_ECH),with_ech) \
 	$(if $(CONFIG_SINGBOX_WITH_EMBEDDED_TOR),with_embedded_tor) \
 	$(if $(CONFIG_SINGBOX_WITH_GRPC),with_grpc) \
 	$(if $(CONFIG_SINGBOX_WITH_GVISOR),with_gvisor) \
-	$(if $(CONFIG_SINGBOX_WITH_LWIP),with_lwip) \
 	$(if $(CONFIG_SINGBOX_WITH_QUIC),with_quic) \
-	$(if $(CONFIG_SINGBOX_WITH_SHADOWSOCKSR),with_shadowsocksr) \
+	$(if $(CONFIG_SINGBOX_WITH_REALITY_SERVER),with_reality_server) \
 	$(if $(CONFIG_SINGBOX_WITH_UTLS),with_utls) \
 	$(if $(CONFIG_SINGBOX_WITH_V2RAY_API),with_v2ray_api) \
 	$(if $(CONFIG_SINGBOX_WITH_WIREGUARD),with_wireguard) \

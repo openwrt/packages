@@ -17,4 +17,4 @@ which is now not propagated in OpenWrt meson host package.
 +##endif
  gnutls = dependency('gnutls')
  luajit = dependency('luajit')
- # NOTE avoid using link_args for luajit due to a macOS issue
+ message('------------------------------')

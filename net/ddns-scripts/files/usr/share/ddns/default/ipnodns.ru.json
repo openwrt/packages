@@ -1,0 +1,7 @@
+{
+	"name": "ipnodns.ru",
+	"ipv4": {
+		"url": "https://ipnodns.ru/cgi-bin/dyndns.cgi?login=[USERNAME]&secret=[PASSWORD]",
+		"answer": "ok"
+	}
+}

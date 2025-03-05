@@ -1,0 +1,38 @@
+From e73b93ea9ad1f3e980bd78ed3ebf65dedbb598a2 Mon Sep 17 00:00:00 2001
+From: Fabian Keil <fk@fabiankeil.de>
+Date: Sun, 27 Aug 2023 12:26:02 +0200
+Subject: [PATCH] pcre2 compile_pattern(): Actually pass the anchored pattern
+ to pcre2_compile()
+
+Previously the un-anchoring pattern was compiled resulting
+in incorrect matches.
+
+For example requests to:
+
+    https://www.privoxy.org/user-manual/config.html
+
+were redirected because of the default.action section:
+
+    {+redirect{http://config.privoxy.org/}}
+    # Sticky Actions = +redirect{http://config.privoxy.org/}
+    # URL = http://www.privoxy.org/config
+    # Redirected URL = http://www.privoxy.org/config
+    # Redirect Destination = http://config.privoxy.org/
+    .privoxy.org/config
+
+As the path pattern is left-anchored it should not match.
+---
+ urlmatch.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/urlmatch.c
++++ b/urlmatch.c
+@@ -666,7 +666,7 @@ static jb_err compile_pattern(const char
+ 
+    snprintf(rebuf, rebuf_size, fmt, pattern);
+ 
+-   *regex = pcre2_compile((const unsigned char *)pattern,
++   *regex = pcre2_compile((const unsigned char *)rebuf,
+       PCRE2_ZERO_TERMINATED, PCRE2_CASELESS, &errcode,
+       &error_offset, NULL);
+    if (*regex == NULL)

@@ -1,5 +1,7 @@
 #!/bin/sh
 
+. /usr/share/ModemManager/modemmanager.common
+
 trap_with_arg() {
 	func="$1" ; shift
 	for sig ; do
@@ -14,13 +16,10 @@ func_trap() {
 }
 
 main() {
-	. /usr/share/ModemManager/modemmanager.common
-
 	trap_with_arg func_trap INT TERM KILL
 
 	mkdir -p "${MODEMMANAGER_RUNDIR}"
 	chmod 0755 "${MODEMMANAGER_RUNDIR}"
-	mm_cleanup_interfaces
 
 	/usr/sbin/ModemManager "$@" 1>/dev/null 2>/dev/null &
 	CHILD="$!"

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2016-2018 OpenWrt.org
+# Copyright (C) 2015, 2018-2020, 2023 Jeffery To
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,15 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-service-identity
-PKG_VERSION:=18.1.0
-PKG_RELEASE:=2
+PKG_VERSION:=23.1.0
+PKG_RELEASE:=1
 
-PYPI_NAME:=service_identity
-PKG_HASH:=0858a54aabc5b459d1aafa8a518ed2081a285087f349fe3e55197989232e2e2d
+PYPI_NAME:=service-identity
+PYPI_SOURCE_NAME:=service_identity
+PKG_HASH:=ecb33cd96307755041e978ab14f8b14e13b40f1fbd525a4dc78f46d2b986431d
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
+
+PKG_BUILD_DEPENDS:=python-hatchling/host python-hatch-vcs/host python-hatch-fancy-pypi-readme/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

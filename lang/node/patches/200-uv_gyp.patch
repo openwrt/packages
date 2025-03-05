@@ -1,0 +1,10 @@
+--- a/deps/uv/uv.gyp
++++ b/deps/uv/uv.gyp
+@@ -156,6 +156,7 @@
+       'target_name': 'libuv',
+       'toolsets': ['host', 'target'],
+       'type': '<(uv_library)',
++      'include_dirs!': [ '<!@(echo "$STAGING_DIR"/usr/include)' ],
+       'include_dirs': [
+         'include',
+         'src/',

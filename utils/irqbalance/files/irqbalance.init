@@ -16,22 +16,36 @@ start_service() {
 	config_get_bool enabled irqbalance enabled 0
 	[ "$enabled" -gt 0 ] || return 0
 
-	# 2 is the default
 	config_get deepestcache irqbalance deepestcache 2
-
-	# 10 is the default
 	config_get interval irqbalance interval 10
+	config_get banned_cpulist irqbalance banned_cpulist ''
+	config_get debug irqbalance debug 0
 
-	# A list of IRQ's to ignore
-	banirq=""
+	procd_open_instance "irqbalance"
+	if [ -n "$banned_cpulist" ]; then
+		procd_set_param env IRQBALANCE_BANNED_CPULIST="$banned_cpulist"
+	fi
+
+	procd_add_jail_mount_rw /proc
+	procd_set_param command /usr/sbin/irqbalance
+	procd_append_param command -f
+	procd_append_param command "-c $deepestcache"
+	procd_append_param command "-t $interval"
+
+	# add banned IRQs
 	handle_banirq_value()
 	{
-		banirq="$banirq -i $1"
+		procd_append_param command "-i $1"
 	}
 	config_list_foreach irqbalance banirq handle_banirq_value
 
-	procd_open_instance "irqbalance"
-	procd_set_param command /usr/sbin/irqbalance -f -c "$deepestcache" -t "$interval" "$banirq"
+	# debug
+	if [ "$debug" -gt 0 ]; then
+		procd_append_param command -d
+		procd_set_param stdout 1
+	fi
+	procd_set_param stderr 1
+
 	procd_set_param respawn
 	procd_close_instance
 }

@@ -72,7 +72,7 @@ IPV6_REGEX="\(\([0-9A-Fa-f]\{1,4\}:\)\{1,\}\)\(\([0-9A-Fa-f]\{1,4\}\)\{0,1\}\)\(
 SHELL_ESCAPE="[\"\'\`\$\!();><{}?|\[\]\*\\\\]"
 
 # dns character set. "-" must be the last character
-DNS_CHARSET="[@a-zA-Z0-9._-]"
+DNS_CHARSET="[@a-zA-Z0-9.:_-]"
 
 # domains can have * for wildcard. "-" must be the last character
 DNS_CHARSET_DOMAIN="[@a-zA-Z0-9._*-]"
@@ -547,8 +547,11 @@ verify_host_port() {
 			return 2
 		}
 		# extract IP address
-		if [ -n "$BIND_HOST" -o -n "$KNOT_HOST" ]; then	# use BIND host or Knot host if installed
+		if [ -n "$BIND_HOST" ]; then	# use BIND host if installed
 			__IPV4="$(awk -F "address " '/has address/ {print $2; exit}' "$DATFILE")"
+			__IPV6="$(awk -F "address " '/has IPv6/ {print $2; exit}' "$DATFILE")"
+		elif [ -n "$KNOT_HOST" ]; then	# use Knot host if installed
+			__IPV4="$(awk -F "address " '/has IPv4/ {print $2; exit}' "$DATFILE")"
 			__IPV6="$(awk -F "address " '/has IPv6/ {print $2; exit}' "$DATFILE")"
 		elif [ -n "$DRILL" ]; then	# use drill if installed
 			__IPV4="$(awk '/^'"$__HOST"'/ {print $5}' "$DATFILE" | grep -m 1 -o "$IPV4_REGEX")"

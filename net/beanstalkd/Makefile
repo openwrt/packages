@@ -1,20 +1,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=beanstalkd
-PKG_VERSION:=1.9
-PKG_RELEASE:=2
+PKG_VERSION:=1.13
+PKG_RELEASE:=1
 
-# for now, build from latest commit since releases are infrequent and
-# useful fixes trickle in...
-PKG_SOURCE_URL:=https://github.com/kr/beanstalkd.git
-PKG_SOURCE_VERSION:=b7b4a6a14b7e8d096dc8cbc255b23be17a228cbb
+PKG_SOURCE_URL:=https://github.com/beanstalkd/$(PKG_NAME)/archive/refs/tags
+PKG_SOURCE_VERSION:=1.13
 
-PKG_SOURCE_PROTO:=git
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-v$(PKG_VERSION)
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.xz
-PKG_MIRROR_HASH:=6d5155ab347b731640495b1f0df6a4a849e84194d2ef0c2ec6af3879ee1aca2c
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE:=$(PKG_NAME)-v$(PKG_SOURCE_VERSION).tar.gz
+PKG_SOURCE_URL_FILE:=v$(PKG_SOURCE_VERSION).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-v$(PKG_VERSION)
-PKG_HASH:=6d5155ab347b731640495b1f0df6a4a849e84194d2ef0c2ec6af3879ee1aca2c
+PKG_HASH:=26292dcdc0a7011d2f8ad968612f2cd8b2ef07687224876015399ae85e9e5263
 
 PKG_MAINTAINER:=Philip Prindeville <philipp@redfish-solutions.com>
 PKG_LICENSE:=MIT

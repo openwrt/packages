@@ -19,7 +19,7 @@ PKG_BUILD_DIR=$(BUILD_DIR)/lrzsz-990823
 PKG_MAINTAINER:=Hsing-Wang Liao <kuoruan@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
-PKG_CPE_ID:=cpe:/a:lrzsz_project
+PKG_CPE_ID:=cpe:/a:lrzsz_project:lrzsz
 
 PKG_INSTALL:=1
 
@@ -39,13 +39,6 @@ define Package/lrzsz/description
   These programs use error correcting protocols ({z,x,y}modem) to send
   (sz, sx, sb) and receive (rz, rx, rb) files over a dial-in serial port
   from a variety of programs running under various operating systems.
-endef
-
-# to stop automake from running, the bundled autohell crap is too old
-define Build/Configure
-	touch $(PKG_BUILD_DIR)/*
-	touch $(PKG_BUILD_DIR)/*/*
-	$(call Build/Configure/Default)
 endef
 
 define Package/lrzsz/install

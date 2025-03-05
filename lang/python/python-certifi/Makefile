@@ -6,34 +6,40 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-certifi
-PKG_VERSION:=2022.9.24
-PKG_RELEASE:=1
+PKG_VERSION:=2024.2.2
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Eneas U de Queiroz <cotequeiroz@gmail.com>
 PKG_LICENSE:=MPL-2.0
 PKG_LICENSE_FILES:=LICENSE
 
 PYPI_NAME:=certifi
-PKG_HASH:=0d9c601124e5a6ba9712dbc60d9c53c21e34f5f641fe83002317394311bdce14
+PKG_HASH:=0569859f95fc761b18b45ef421b1290a0f65f147e92a1e5eb3e635f9a5e4e66f
+
+HOST_BUILD_DEPENDS:=python3/host python-build/host python-installer/host python-wheel/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 include ../python3-package.mk
+include ../python3-host-build.mk
 
 define Package/python3-certifi
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Python package for Mozilla's CA Bundle
-  URL:=http://certifi.io/
+  URL:=https://github.com/certifi/python-certifi
   DEPENDS:=+python3-light +python3-urllib
 endef
 
 define Package/python3-certifi/description
-  Certifi is a carefully curated collection of Root Certificates for validating the
-  trustworthiness of SSL certificates while verifying the identity of TLS hosts.
+Certifi provides Mozilla's carefully curated collection of Root
+Certificates for validating the trustworthiness of SSL certificates
+while verifying the identity of TLS hosts.
 endef
 
 $(eval $(call Py3Package,python3-certifi))
 $(eval $(call BuildPackage,python3-certifi))
 $(eval $(call BuildPackage,python3-certifi-src))
+$(eval $(call HostBuild))

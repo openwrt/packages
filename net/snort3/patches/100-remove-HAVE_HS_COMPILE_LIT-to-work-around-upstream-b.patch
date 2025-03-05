@@ -1,0 +1,34 @@
+From bf87399e720ec5e5adf9d74a17d86781b1e41428 Mon Sep 17 00:00:00 2001
+From: graysky <therealgraysky@proton.me>
+Date: Mon, 8 Jan 2024 13:00:28 -0500
+Subject: [PATCH] Hack: fix build with hyperscan
+
+Workaround to build until upstream bug is fixed[1].
+
+1. https://github.com/intel/hyperscan/issues/388
+
+---
+ cmake/sanity_checks.cmake | 1 -
+ config.cmake.h.in         | 1 -
+ 2 files changed, 2 deletions(-)
+
+--- a/cmake/sanity_checks.cmake
++++ b/cmake/sanity_checks.cmake
+@@ -136,7 +136,6 @@ if (HS_FOUND)
+         cmake_push_check_state(RESET)
+         set(CMAKE_REQUIRED_INCLUDES ${HS_INCLUDE_DIRS})
+         set(CMAKE_REQUIRED_LIBRARIES ${HS_LIBRARIES})
+-        check_function_exists(hs_compile_lit HAVE_HS_COMPILE_LIT)
+         cmake_pop_check_state()
+     endif()
+ endif()
+--- a/config.cmake.h.in
++++ b/config.cmake.h.in
+@@ -127,7 +127,6 @@
+ 
+ /* hyperscan available */
+ #cmakedefine HAVE_HYPERSCAN 1
+-#cmakedefine HAVE_HS_COMPILE_LIT 1
+ 
+ /* iconv available */
+ #cmakedefine HAVE_ICONV 1

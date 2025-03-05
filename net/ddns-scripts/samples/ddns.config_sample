@@ -271,7 +271,7 @@ config service "myddns"
 	# a network to use for communication.
 	# should use option ip_source "web" (see above)
 	# Needs GNU Wget (with SSL support) or cURL to be installed.
-	# GNU Wget will use IP address and cURL the physical device 
+	# GNU Wget will use IP address and cURL the physical device
 	# of the given network
 	# default: none
 #	option bind_network "wan7"
@@ -304,10 +304,10 @@ config service "myddns"
 
 	###########
 	# if error happen on detecting, sending or updating the
-	# script will retry the relevant action for retry_count times
+	# script will retry the relevant action for retry_max_count times
 	# before stopping script execution.
 	# default: 5
-	option retry_count '5'
+	option retry_max_count '5'
 
 	###########
 	# if error happen on detecting, sending or updating the

@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libusbmuxd
-PKG_VERSION:=2.0.2
+PKG_VERSION:=2.1.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=https://www.libimobiledevice.org/downloads
-PKG_HASH:=cc6a808553da4efa9fa5638be256d5ae020498795d9d260d280b87074e799b20
+PKG_SOURCE_URL:=https://github.com/libimobiledevice/libusbmuxd/releases/download/$(PKG_VERSION)
+PKG_HASH:=c35bf68f8e248434957bd5b234c389b02206a06ecd9303a7fb931ed7a5636b16
 
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_CPE_ID:=cpe:/a:libimobiledevice:libusbmuxd
@@ -42,7 +42,7 @@ define Package/libusbmuxd
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE+= library
-  DEPENDS:=+libplist +libpthread +libxml2 +zlib
+  DEPENDS:=+libplist +libimobiledevice-glue +libpthread +libxml2 +zlib
   PKG_LICENSE:=LGPL-2.1-or-later
   PKG_LICENSE_FILES:=COPYING
 endef

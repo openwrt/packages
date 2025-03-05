@@ -1,0 +1,10 @@
+# This is a minimal example configuration file for ser2net. For a version with
+# detailed comments and all possible configuration directives, please visit:
+# https://github.com/cminyard/ser2net/blob/master/ser2net.yaml
+#
+# On OpenWrt/LEDE systems, this configuration serves as a base configuration.
+# During boot of the system, the UCI configuration file /etc/config/ser2net is
+# parsed and converted to additional configuration lines which are _appended_
+# to this file. The ser2net daemon is then started with the combined
+# configuration file /tmp/ser2net.yaml.
+

@@ -3,12 +3,21 @@ as a dependency.
 
 --- a/pcsc_scan.c
 +++ b/pcsc_scan.c
-@@ -294,7 +294,7 @@ static void initialize_options(options_t
- #if defined(WIN32) || defined(__APPLE__)
- 	options->analyse_atr = False;
+@@ -283,7 +283,7 @@ static void initialize_options(options_t
+ {
+ 	options->pname = pname;
+ #if defined(ATR_PARSER)
+-	options->analyse_atr = true;
++	options->analyse_atr = false;
  #else
--	options->analyse_atr = True;
-+	options->analyse_atr = False;
+ 	options->analyse_atr = false;
+ #define ATR_PARSER ""
+@@ -302,7 +302,7 @@ static void initialize_options(options_t
+ #ifdef WIN32
+ #define OPTIONS OPTIONS_BASE
+ #else
+-#define OPTIONS OPTIONS_BASE "n"
++#define OPTIONS OPTIONS_BASE
  #endif
- 	options->stress_card = False;
- 	options->maxtime = 0;
+ 
+ static void print_version(void)

@@ -11,11 +11,12 @@ CLAMD_CONFIGFILE="/tmp/clamav/clamd.conf"
 validate_clamav_section() {
 	uci_load_validate clamav clamav "$1" "$2" \
 		'clamd_config_file:string' \
-		'LogFile:string' \
-		'LogFileMaxSize:string' \
 		'LogVerbose:string' \
-		'ExtendedDetectionInfo:string' \
 		'LogTime:string' \
+		'Debug:string' \
+		'LogSyslog:string' \
+		'LogFacility:string' \
+		'ExtendedDetectionInfo:string' \
 		'OfficialDatabaseOnly:string' \
 		'StreamMinPort:uinteger' \
 		'StreamMaxPort:uinteger' \
@@ -63,11 +64,12 @@ start_clamav_instance() {
 	ln -sf "$clamd_config_file" "$CLAMD_CONFIGFILE"
 
 	{
-	echo "LogFile " "$LogFile"
-	echo "LogFileMaxSize " "$LogFileMaxSize"
 	echo "LogVerbose " "$LogVerbose"
-	echo "ExtendedDetectionInfo " "$ExtendedDetectionInfo"
 	echo "LogTime " "$LogTime"
+	echo "Debug " "$Debug"
+	echo "LogSyslog " "$LogSyslog"
+	echo "LogFacility " "$LogFacility"
+	echo "ExtendedDetectionInfo " "$ExtendedDetectionInfo"
 	echo "OfficialDatabaseOnly " "$OfficialDatabaseOnly"
 	echo "StreamMinPort " "$StreamMinPort"
 	echo "StreamMaxPort " "$StreamMaxPort"

@@ -23,6 +23,8 @@ init_yaml() {
 
 	local section="$1"
 
+	local set_only
+	local hook_priority
 	local update_frequency
 	local log_level
 	local api_url
@@ -35,9 +37,11 @@ init_yaml() {
 	local log_max_backups
 	local log_max_age
 	local ipv4
-	local input_chain_name
-	local input6_chain_name
+	local chain_name
+	local chain6_name
+	local retry_initial_connect
 
+	config_get hook_priority $section priority "4"
 	config_get update_frequency $section update_frequency '10s'
 	config_get log_level $section log_level 'info'
 	config_get api_url $section api_url "http://127.0.0.1:8080"
@@ -50,8 +54,9 @@ init_yaml() {
 	config_get log_max_backups $section log_max_backups '3'
 	config_get log_max_age $section log_max_age '30'
 	config_get_bool ipv4 $section ipv4 '1'
-	config_get input_chain_name $section input_chain_name "input"
-	config_get input6_chain_name $section input6_chain_name "input"
+	config_get chain_name $section chain_name "crowdsec-chain"
+	config_get chain6_name $section chain6_name "crowdsec6-chain"
+	config_get_bool retry_initial_connect $section retry_initial_connect '1'
 
 	# Create tmp dir & permissions if needed
 	if [ ! -d "${VARCONFIGDIR}" ]; then
@@ -72,6 +77,7 @@ init_yaml() {
 	log_max_age: $log_max_age
 	api_url: $api_url
 	api_key: $api_key
+	retry_initial_connect: bool($retry_initial_connect)
 	insecure_skip_verify: true
 	disable_ipv6: boolnot($ipv6)
 	deny_action: $deny_action
@@ -94,17 +100,22 @@ init_yaml() {
 	nftables:
 	  ipv4:
 	    enabled: bool($ipv4)
-	    set-only: true
+	    set-only: false
 	    table: $TABLE
-	    chain: $input_chain_name
+	    chain: $chain_name
+	    priority: $hook_priority
 	  ipv6:
 	    enabled: bool($ipv6)
-	    set-only: true
+	    set-only: false
 	    table: $TABLE6
-	    chain: $input6_chain_name
+	    chain: $chain6_name
+	    priority: $hook_priority
+	nftables_hooks:
+	  - input
+	  - forward
 	# packet filter
 	pf:
-	  # an empty disables the anchor
+	  # an empty string disables the anchor
 	  anchor_name: ""
 	prometheus:
 	  enabled: false
@@ -124,7 +135,7 @@ init_nftables() {
 
 	local section="$1"
 
-	local priority
+	local hook_priority
 	local deny_action
 	local deny_log
 	local log_prefix
@@ -132,14 +143,12 @@ init_nftables() {
 	local ipv6
 	local filter_input
 	local filter_forward
-	local input_chain_name
-	local forward_chain_name
-	local input6_chain_name
-	local forward6_chain_name
+	local chain_name
+	local chain6_name
 	local interface
 	local log_term=""
 
-	config_get priority $section priority "4"
+	config_get hook_priority $section priority "4"
 	config_get deny_action $section deny_action "drop"
 	config_get_bool deny_log $section deny_log '0'
 	config_get log_prefix $section log_prefix "crowdsec: "
@@ -147,10 +156,8 @@ init_nftables() {
 	config_get_bool ipv6 $section ipv6 '1'
 	config_get_bool filter_input $section filter_input '1'
 	config_get_bool filter_forward $section filter_forward '1'
-	config_get input_chain_name $section input_chain_name "input"
-	config_get forward_chain_name $section forward_chain_name "forward"
-	config_get input6_chain_name $section input6_chain_name "input"
-	config_get forward6_chain_name $section forward6_chain_name "forward"
+	config_get chain_name $section chain_name "crowdsec-chain"
+	config_get chain6_name $section chain6_name "crowdsec6-chain"
 	config_get interface $section interface 'eth1'
 
 	if [ "$deny_log" -eq "1" ] ; then
@@ -169,12 +176,14 @@ init_nftables() {
 		nft add set ip crowdsec crowdsec-blacklists '{ type ipv4_addr; flags timeout; }'
 
 		if [ "$filter_input" -eq "1" ] ; then
-			nft add chain ip "$TABLE" $input_chain_name "{ type filter hook input priority $priority; policy accept; }"
-			nft add rule ip "$TABLE" $input_chain_name iifname { $interface } ct state new ip saddr @crowdsec-blacklists ${log_term} counter $deny_action
+			nft add chain ip "$TABLE" $chain_name-input "{ type filter hook input priority $hook_priority; policy accept; }"
+			nft add rule ip "$TABLE" $chain_name-input ct state established,related accept
+			nft add rule ip "$TABLE" $chain_name-input iifname != { $interface } accept
 		fi
 		if [ "$filter_forward" -eq "1" ] ; then
-			nft add chain ip "$TABLE" $forward_chain_name "{ type filter hook forward priority $priority; policy accept; }"
-			nft add rule ip "$TABLE" $forward_chain_name iifname { $interface } ct state new ip saddr @crowdsec-blacklists ${log_term} counter $deny_action
+			nft add chain ip "$TABLE" $chain_name-forward "{ type filter hook forward priority $hook_priority; policy accept; }"
+			nft add rule ip "$TABLE" $chain_name-forward ct state established,related accept
+			nft add rule ip "$TABLE" $chain_name-forward iifname != { $interface } accept
 		fi
 	fi
 
@@ -184,12 +193,14 @@ init_nftables() {
 		nft add set ip6 crowdsec6 crowdsec6-blacklists '{ type ipv6_addr; flags timeout; }'
 
 		if [ "$filter_input" -eq "1" ] ; then
-			nft add chain ip6 "$TABLE6" $input6_chain_name "{ type filter hook input priority $priority; policy accept; }"
-			nft add rule ip6 "$TABLE6" $input6_chain_name iifname { $interface } ct state new ip6 saddr @crowdsec6-blacklists ${log_term} counter $deny_action
+			nft add chain ip6 "$TABLE6" $chain6_name-input "{ type filter hook input priority $hook_priority; policy accept; }"
+			nft add rule ip6 "$TABLE6" $chain6_name-input ct state established,related accept
+			nft add rule ip6 "$TABLE6" $chain6_name-input iifname != { $interface } accept
 		fi
 		if [ "$filter_forward" -eq "1" ] ; then
-			nft add chain ip6 "$TABLE6" $forward6_chain_name "{ type filter hook forward priority $priority; policy accept; }"
-			nft add rule ip6 "$TABLE6" $forward6_chain_name iifname { $interface } ct state new ip6 saddr @crowdsec6-blacklists ${log_term} counter $deny_action
+			nft add chain ip6 "$TABLE6" $chain6_name-forward "{ type filter hook forward priority $hook_priority; policy accept; }"
+			nft add rule ip6 "$TABLE6" $chain6_name-forward ct state established,related accept
+			nft add rule ip6 "$TABLE6" $chain6_name-forward iifname != { $interface } accept
 		fi
 	fi
 }
@@ -210,6 +221,13 @@ run_bouncer() {
 		procd_set_param command "$PROG" -c "$VARCONFIG"
 		procd_set_param stdout 1
 		procd_set_param stderr 1
+		procd_set_param nice 10
+		if [ -x "/sbin/ujail" ]; then
+			procd_add_jail cs-bouncer log
+			procd_add_jail_mount $VARCONFIG
+			procd_add_jail_mount_rw /var/log/
+			procd_set_param no_new_privs 1
+		fi
 		procd_close_instance
 	fi
 }
@@ -227,5 +245,3 @@ service_stopped() {
 	nft delete table ip crowdsec 2>/dev/null
 	nft delete table ip6 crowdsec6 2>/dev/null
 }
-
-

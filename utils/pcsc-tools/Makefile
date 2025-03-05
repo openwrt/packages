@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pcsc-tools
-PKG_VERSION:=1.6.1
+PKG_VERSION:=1.7.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://ludovic.rousseau.free.fr/softwares/pcsc-tools
-PKG_HASH:=86fb756adfd18958d05af61e53c7503d4c46f0700677e6d0688dd4360eb53150
+PKG_SOURCE_URL:=https://pcsc-tools.apdu.fr
+PKG_HASH:=0d024b589e15d79eac8506cd67df7b53cf91e9e6a493c8319f33cd29b5f36426
 
-PKG_MAINTAINER:=
+PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
@@ -29,7 +29,7 @@ define Package/pcsc-tools
   CATEGORY:=Utilities
   DEPENDS:=+libpcsclite
   TITLE:=pcsc-tools
-  URL:=http://ludovic.rousseau.free.fr/softwares/pcsc-tools/
+  URL:=https://pcsc-tools.apdu.fr/
 endef
 
 define Package/pcsc-tools/description

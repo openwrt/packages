@@ -1,5 +1,4 @@
 #
-# Copyright (C) 2018 Sebastian Kemper <sebastian_ml@gmx.net>
 # Copyright (C) 2021 Michal Hrusecky <michal@hrusecky.net>
 #
 # This is free software, licensed under the GNU General Public License v2.
@@ -9,20 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
-PKG_VERSION:=10.9.3
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=11.4.4
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL := https://archive.mariadb.org/$(PKG_NAME)-$(PKG_VERSION)/source
 
-PKG_HASH:=9a1e229972fcccc8270e633f68d3fb824da151dcf4f53da1df8d947aca876bee
+PKG_HASH:=96fbd2e6e93fb7e8b373eea75d85b6fea57c0e111a02090cbbefed52599dc77b
 PKG_MAINTAINER:=Michal Hrusecky <Michal@Hrusecky.net>
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING THIRDPARTY
 
 PKG_CPE_ID:=cpe:/a:mariadb:mariadb
 
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16
 
 HOST_BUILD_DEPENDS:=libxml2/host
 # Without libevent2 tests/async_queries sporadically fails on the bots
@@ -178,6 +177,10 @@ MARIADB_COMMON_DEPENDS := \
 # ignore them.
 TARGET_CFLAGS+=$(TARGET_CPPFLAGS)
 
+ifneq ($(CONFIG_USE_MUSL),)
+  TARGET_CFLAGS += -D_LARGEFILE64_SOURCE
+endif
+
 define Package/mariadb/disable/engine
 	echo > $(1)/storage/$(2)/CMakeLists.txt
 endef
@@ -316,6 +319,9 @@ CMAKE_OPTIONS += -DSTACK_DIRECTION=-1
 # Make it explicit that we are cross-compiling
 CMAKE_OPTIONS += -DCMAKE_CROSSCOMPILING=1
 
+# Apply workaround to pass LIBFMT check when cross-compiling
+CMAKE_OPTIONS += -DHAVE_SYSTEM_LIBFMT_EXITCODE=0
+
 # Explicitly disable dtrace to avoid detection of a host version
 CMAKE_OPTIONS += -DENABLE_DTRACE=0
 
@@ -431,11 +437,12 @@ endef
 
 define Host/Install
 	$(SED) 's|$(HOST_BUILD_DIR)|$(STAGING_DIR_HOSTPKG)/share/mariadb|' $(HOST_BUILD_DIR)/import_executables.cmake
-	$(INSTALL_DIR) $(1)/share/mariadb/{dbug,extra,scripts,sql}
+	$(INSTALL_DIR) $(1)/share/mariadb/{dbug,extra,scripts,sql,strings}
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/dbug/factorial $(1)/share/mariadb/dbug
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/extra/comp_err $(1)/share/mariadb/extra
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/scripts/comp_sql $(1)/share/mariadb/scripts
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/sql/{gen_lex_hash,gen_lex_token} $(1)/share/mariadb/sql
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/strings/uca-dump $(1)/share/mariadb/strings
 	$(INSTALL_DATA) $(HOST_BUILD_DIR)/import_executables.cmake $(1)/share/mariadb
 endef
 

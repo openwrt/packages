@@ -44,7 +44,7 @@ Signed-off-by: Khem Raj <raj.khem@gmail.com>
  #endif
 --- a/src/util/sys_defs.h
 +++ b/src/util/sys_defs.h
-@@ -1509,7 +1509,7 @@ extern int setsid(void);
+@@ -1519,7 +1519,7 @@ extern int setsid(void);
  #endif
  
  #ifndef HAS_CLOSEFROM
@@ -53,7 +53,7 @@ Signed-off-by: Khem Raj <raj.khem@gmail.com>
  
  #endif
  
-@@ -1563,7 +1563,7 @@ typedef int pid_t;
+@@ -1573,7 +1573,7 @@ typedef int pid_t;
  
   /*
    * Clang-style attribute tests.
@@ -62,7 +62,7 @@ Signed-off-by: Khem Raj <raj.khem@gmail.com>
    * XXX Without the unconditional test below, gcc 4.6 will barf on ``elif
    * defined(__clang__) && __has_attribute(__whatever__)'' with error message
    * ``missing binary operator before token "("''.
-@@ -1577,7 +1577,7 @@ typedef int pid_t;
+@@ -1587,7 +1587,7 @@ typedef int pid_t;
    * warn for missing initializations and other trouble. However, OPENSTEP4
    * gcc 2.7.x cannot handle this so we define this only if NORETURN isn't
    * already defined above.
@@ -71,7 +71,7 @@ Signed-off-by: Khem Raj <raj.khem@gmail.com>
    * Data point: gcc 2.7.2 has __attribute__ (Wietse Venema) but gcc 2.6.3 does
    * not (Clive Jones). So we'll set the threshold at 2.7.
    */
-@@ -1653,12 +1653,12 @@ typedef int pid_t;
+@@ -1663,12 +1663,12 @@ typedef int pid_t;
    * write to output parameters (for example, stat- or scanf-like functions)
    * or from functions that have other useful side effects (for example,
    * fseek- or rename-like functions).
@@ -86,7 +86,7 @@ Signed-off-by: Khem Raj <raj.khem@gmail.com>
    * XXX Prepending "(void)" won't shut up GCC. Clang behaves as expected.
    */
  #if ((__GNUC__ == 3 && __GNUC_MINOR__ >= 4) || __GNUC__ > 3)
-@@ -1747,7 +1747,7 @@ typedef const char *CONST_CHAR_STAR;
+@@ -1749,7 +1749,7 @@ typedef const char *CONST_CHAR_STAR;
    * Safety. On some systems, ctype.h misbehaves with non-ASCII or negative
    * characters. More importantly, Postfix uses the ISXXX() macros to ensure
    * protocol compliance, so we have to rule out non-ASCII characters.

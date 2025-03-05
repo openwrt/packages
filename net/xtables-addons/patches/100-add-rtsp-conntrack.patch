@@ -1725,7 +1725,7 @@
 +module_exit(fini);
 --- a/extensions/Kbuild
 +++ b/extensions/Kbuild
-@@ -27,6 +27,7 @@ obj-${build_lscan}       += xt_lscan.o
+@@ -28,6 +28,7 @@ obj-${build_lscan}       += xt_lscan.o
  obj-${build_pknock}      += pknock/
  obj-${build_psd}         += xt_psd.o
  obj-${build_quota2}      += xt_quota2.o
@@ -1735,7 +1735,7 @@
  -include ${M}/Kbuild.*
 --- a/mconfig
 +++ b/mconfig
-@@ -23,3 +23,4 @@ build_lscan=m
+@@ -24,3 +24,4 @@ build_lscan=m
  build_pknock=m
  build_psd=m
  build_quota2=m

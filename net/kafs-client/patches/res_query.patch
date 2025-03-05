@@ -1,0 +1,64 @@
+Hackishly cut out res_nquery for res_query.  Surely there's a better way.
+
+--- a/src/lib_dns_lookup.c
++++ b/src/lib_dns_lookup.c
+@@ -312,13 +312,13 @@ static int dns_query_AFSDB(struct kafs_s
+ 	ns_msg	handle;			/* handle for response message */
+ 	union {
+ 		HEADER hdr;
+-		u_char buf[NS_PACKETSZ];
++		unsigned char buf[NS_PACKETSZ];
+ 	} response;		/* response buffers */
+ 
+ 	verbose("Get AFSDB RR for cell name:'%s'", cell_name);
+ 
+ 	/* query the dns for an AFSDB resource record */
+-	response_len = res_nquery(&ctx->res,
++	response_len = res_query( // &ctx->res,
+ 				  cell_name,
+ 				  ns_c_in,
+ 				  ns_t_afsdb,
+@@ -473,7 +473,7 @@ static int dns_query_SRV(struct kafs_ser
+ 	ns_msg	handle;			/* handle for response message */
+ 	union {
+ 		HEADER hdr;
+-		u_char buf[NS_PACKETSZ];
++		unsigned char buf[NS_PACKETSZ];
+ 	} response;
+ 	enum dns_payload_protocol_type protocol;
+ 	char name[1024];
+@@ -483,7 +483,7 @@ static int dns_query_SRV(struct kafs_ser
+ 
+ 	verbose("Get SRV RR for name:'%s'", name);
+ 
+-	response_len = res_nquery(&ctx->res,
++	response_len = res_query( // &ctx->res,
+ 				  name,
+ 				  ns_c_in,
+ 				  ns_t_srv,
+--- a/src/lib_object.c
++++ b/src/lib_object.c
+@@ -23,11 +23,13 @@
+ int kafs_init_lookup_context(struct kafs_lookup_context *ctx)
+ {
+ 	memset(&ctx->res, 0, sizeof(ctx->res));
++#if 0
+ 	if (res_ninit(&ctx->res) < 0) {
+ 		ctx->report.bad_error = true;
+ 		ctx->report.error("%m");
+ 		return -1;
+ 	}
++#endif
+ 	return 0;
+ }
+ 
+@@ -36,7 +38,9 @@ int kafs_init_lookup_context(struct kafs
+  */
+ void kafs_clear_lookup_context(struct kafs_lookup_context *ctx)
+ {
++#if 0
+ 	res_nclose(&ctx->res);
++#endif
+ }
+ 
+ /*

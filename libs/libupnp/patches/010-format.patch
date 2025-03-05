@@ -1,0 +1,47 @@
+From 155eb2a6dea9489e3d206bfe6ef6612cb93becc4 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Sat, 29 Jun 2024 16:59:10 -0700
+Subject: [PATCH] fix 32-bit format warnings
+
+Seems this PRIzu takes size_t, not unsigned long.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ upnp/src/gena/gena_device.c              | 2 +-
+ upnp/src/genlib/net/http/httpreadwrite.c | 7 ++-----
+ 2 files changed, 3 insertions(+), 6 deletions(-)
+
+--- a/upnp/src/gena/gena_device.c
++++ b/upnp/src/gena/gena_device.c
+@@ -449,7 +449,7 @@ static char *AllocGenaHeaders(
+ 		"%s%s%" PRIzu "%s%s%s",
+ 		HEADER_LINE_1,
+ 		HEADER_LINE_2A,
+-		(unsigned long)strlen(propertySet) + 2,
++		strlen(propertySet) + 2,
+ 		HEADER_LINE_2B,
+ 		HEADER_LINE_3,
+ 		HEADER_LINE_4);
+--- a/upnp/src/genlib/net/http/httpreadwrite.c
++++ b/upnp/src/genlib/net/http/httpreadwrite.c
+@@ -626,7 +626,7 @@ int http_SendMessage(SOCKINFO *info, int
+ 					rc = snprintf(Chunk_Header,
+ 						sizeof(Chunk_Header),
+ 						"%" PRIzx "\r\n",
+-						(unsigned long)num_read);
++						num_read);
+ 					if (rc < 0 ||
+ 						(unsigned int)rc >=
+ 							sizeof(Chunk_Header)) {
+@@ -1765,10 +1765,7 @@ int http_MakeMessage(membuffer *buf,
+ 		} else if (c == 'd') {
+ 			/* integer */
+ 			num = (size_t)va_arg(argp, int);
+-			rc = snprintf(tempbuf,
+-				sizeof(tempbuf),
+-				"%" PRIzu,
+-				(unsigned long)num);
++			rc = snprintf(tempbuf, sizeof(tempbuf), "%" PRIzu, num);
+ 			if (rc < 0 || (unsigned int)rc >= sizeof(tempbuf) ||
+ 				membuffer_append(buf, tempbuf, strlen(tempbuf)))
+ 				goto error_handler;

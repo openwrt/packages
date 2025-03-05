@@ -8,16 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=procps-ng
-PKG_VERSION:=3.3.16
-PKG_RELEASE:=3
+PKG_VERSION:=4.0.4
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/procps-ng
-PKG_HASH:=925eacd65dedcf9c98eb94e8978bbfb63f5de37294cc1047d81462ed477a20af
+PKG_HASH:=22870d6feb2478adb617ce4f09a787addaf2d260c5a8aa7b17d889a962c5e42e
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING COPYING.LIB
+PKG_CPE_ID:=cpe:/a:procps-ng_project:procps-ng
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -93,7 +94,7 @@ MAKE_FLAGS += \
 
 define Package/procps-ng/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libprocps.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libproc2.so* $(1)/usr/lib/
 endef
 
 define Build/InstallDev

@@ -23,12 +23,14 @@ PKG_CPE_ID:=cpe:/a:samba:cifs-utils
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+PKG_BUILD_FLAGS:=lto
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/cifsmount
   SECTION:=net
   CATEGORY:=Network
+  SUBMENU:=Filesystem
   DEPENDS:=+kmod-fs-cifs
   TITLE:=CIFS mount
   URL:=https://wiki.samba.org/index.php/LinuxCIFS_utils
@@ -57,7 +59,7 @@ CONFIGURE_ARGS += \
 CONFIGURE_ARGS += \
 	ac_cv_lib_cap_ng_capng_clear=no
 
-TARGET_CFLAGS += $(FPIC) -ffunction-sections -flto
+TARGET_CFLAGS += $(FPIC) -ffunction-sections
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 
 define Build/InstallDev

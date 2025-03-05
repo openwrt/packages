@@ -8,12 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=opensc
-PKG_VERSION:=0.22.0
-PKG_RELEASE:=$(AUTORELEASE)
-PKG_HASH:=8d4e5347195ebea332be585df61dcc470331c26969e4b0447c851fb0844c7186
+PKG_VERSION:=0.25.1
+PKG_RELEASE:=1
+PKG_HASH:=23cbaae8bd7c8eb589b68c0a961dfb0d02007bea3165a3fc5efe2621d549b37b
 
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:opensc_project:opensc
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_SOURCE_URL:=https://github.com/OpenSC/OpenSC/releases/download/$(PKG_VERSION)/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -107,13 +108,19 @@ TOOLS:= \
 	cardos-tool \
 	cryptoflex-tool \
 	dnie-tool \
+	dtrust-tool \
+	egk-tool \
 	eidenv \
+	gids-tool \
+	goid-tool \
 	iasecc-tool \
 	netkey-tool \
 	openpgp-tool \
-	opensc-tool \
+	opensc-asn1 \
 	opensc-explorer:+libncurses:+libreadline \
+	opensc-tool \
 	piv-tool \
+	pkcs11-register \
 	pkcs11-tool \
 	pkcs15-crypt \
 	pkcs15-init \
@@ -129,7 +136,7 @@ PROFILES:= \
 	entersafe \
 	epass2003 \
 	flex \
-	gpk \
+	gids \
 	ias_adele_admin1 \
 	ias_adele_admin2 \
 	ias_adele_common \
@@ -137,20 +144,18 @@ PROFILES:= \
 	iasecc_generic_oberthur \
 	iasecc_generic_pki \
 	iasecc \
-	incrypto34 \
-	jcop \
-	miocos \
+	isoApplet \
 	muscle \
 	myeid \
 	oberthur \
 	openpgp \
 	pkcs15 \
 	rutoken_ecp \
+	rutoken_lite \
 	rutoken \
 	sc-hsm \
 	setcos \
-	starcos \
-	westcos
+	starcos
 
 $(foreach file,$(TOOLS),$(eval $(call ToolGen,$(file))))
 $(foreach file,$(PROFILES),$(eval $(call ProfileGen,$(file))))

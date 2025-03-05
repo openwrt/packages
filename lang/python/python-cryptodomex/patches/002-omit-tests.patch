@@ -1,6 +1,6 @@
 --- a/setup.py
 +++ b/setup.py
-@@ -275,6 +275,9 @@ package_data = {
+@@ -276,6 +276,9 @@ package_data = {
      "Crypto.Util" : [ "*.pyi" ],
  }
  

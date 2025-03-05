@@ -1,0 +1,11 @@
+--- a/kernel/pf_ring.c
++++ b/kernel/pf_ring.c
+@@ -3903,7 +3903,7 @@ static int hash_pkt_cluster(ring_cluster
+       break;
+     }
+     /* else, fall through, because it's like 2-tuple for non-TCP packets */
+-
++    fallthrough;
+   case cluster_per_flow_2_tuple:
+   case cluster_per_inner_flow_2_tuple:
+     flags |= mask_2_tuple;

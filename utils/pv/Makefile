@@ -16,6 +16,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://www.ivarch.com/programs/sources
 PKG_HASH:=608ef935f7a377e1439c181c4fc188d247da10d51a19ef79bcdee5043b0973f1
 PKG_LICENSE:=Artistic-2.0
+PKG_LICENSE_FILES:=doc/COPYING
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 
 PKG_INSTALL:=1

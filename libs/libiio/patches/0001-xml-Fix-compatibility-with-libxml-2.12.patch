@@ -1,0 +1,27 @@
+From bb688d04294dda45e68dfaf13e3bc1187841e52a Mon Sep 17 00:00:00 2001
+From: Jan Tojnar <jtojnar@gmail.com>
+Date: Sun, 10 Dec 2023 21:52:05 +0100
+Subject: [PATCH] xml: Fix compatibility with libxml 2.12
+
+libxml 2.12.0 reorganized includes, resulting in the following no longer being in scope:
+
+- XML_PARSE_DTDVALID
+- xmlReadMemory
+- xmlReadFile
+- xmlCleanupParser
+
+Signed-off-by: Jan Tojnar <jtojnar@gmail.com>
+---
+ xml.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+--- a/xml.c
++++ b/xml.c
+@@ -10,6 +10,7 @@
+ #include "iio-private.h"
+ 
+ #include <errno.h>
++#include <libxml/parser.h>
+ #include <libxml/tree.h>
+ #include <string.h>
+ 

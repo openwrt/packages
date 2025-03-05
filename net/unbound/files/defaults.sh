@@ -30,6 +30,7 @@ UB_ZONE_CONF=$UB_VARDIR/zone.conf.tmp
 UB_CTRL_CONF=$UB_VARDIR/ctrl.conf.tmp
 UB_SRVMASQ_CONF=$UB_VARDIR/dnsmasq_srv.conf.tmp
 UB_EXTMASQ_CONF=$UB_VARDIR/dnsmasq_ext.conf.tmp
+UB_RPZCNAME_CONF=$UB_VARDIR/unbound_rpz_cname.conf
 
 # conf as found
 UB_TOTAL_CONF=$UB_VARDIR/unbound.conf

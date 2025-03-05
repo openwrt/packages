@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=i2c-tools
 PKG_VERSION:=4.3
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/software/utils/i2c-tools
@@ -18,6 +18,7 @@ PKG_HASH:=1f899e43603184fac32f34d72498fc737952dbc9c97a8dd9467fadfdf4600cf9
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-2.0-or-later LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING COPYING.LGPL
+PKG_CPE_ID:=cpe:/a:i2c-tools_project:i2c-tools
 
 PKG_BUILD_PARALLEL:=1
 PYTHON3_PKG_BUILD:=0
@@ -67,8 +68,9 @@ define Package/python3-smbus/description
  This package contain the Python3 bindings for Linux SMBus access through i2c-dev.
 endef
 
-PYTHON3_PKG_SETUP_ARGS:=
-PYTHON3_PKG_SETUP_DIR:=py-smbus
+PYTHON3_PKG_BUILD_PATH:=py-smbus
+PYTHON3_PKG_WHEEL_NAME:=smbus
+PYTHON3_PKG_WHEEL_VERSION:=1.1
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
@@ -84,6 +86,10 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include $(1)/usr/lib
 	$(CP) $(PKG_BUILD_DIR)/include/i2c $(1)/usr/include/
 	$(CP) $(PKG_BUILD_DIR)/lib/libi2c.{a,so*} $(1)/usr/lib/
+endef
+
+define Build/Install
+	$(call Py3Build/Install)
 endef
 
 define Package/libi2c/install

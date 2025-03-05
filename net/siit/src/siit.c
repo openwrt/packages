@@ -985,10 +985,10 @@ static int ip6_ip4(char *src, int len, char *dst, int include_flag)
 static int ip4_fragment(struct sk_buff *skb, int len, int hdr_len, struct net_device *dev, struct ethhdr *eth_h)
 {
 	struct sk_buff *skb2 = NULL;       /* pointer to new struct sk_buff for transleded packet */
-	char buff[FRAG_BUFF_SIZE+hdr_len]; /* buffer to form new fragment packet */
+	char *buff; /* buffer to form new fragment packet */
 	char *cur_ptr = skb->data+hdr_len; /* pointter to current packet data with len = frag_len */
 	struct iphdr *ih4 = (struct iphdr *) skb->data;
-	struct iphdr *new_ih4 = (struct iphdr *) buff; /* point to new IPv4 hdr */
+	struct iphdr *new_ih4; /* point to new IPv4 hdr */
 	struct ethhdr *new_eth_h;   /* point to ether hdr, need to set hard header data in fragment */
 	int data_len = len - hdr_len; /* origin packet data len */
 	int rest_len = data_len;    /* rest data to fragment */
@@ -999,6 +999,8 @@ static int ip4_fragment(struct sk_buff *skb, int len, int hdr_len, struct net_de
 	__u16 frag_offset = 0;      /* fragment offset */
 	unsigned int csum;
 	unsigned short udp_len;
+	int ret = 0;
+
 
 #ifdef SIIT_DEBUG
 	printk("siit: it's DF == 0 and result IPv6 packet will be > 1280\n");
@@ -1034,6 +1036,14 @@ static int ip4_fragment(struct sk_buff *skb, int len, int hdr_len, struct net_de
 	frag_offset = ntohs(ih4->frag_off) & IP_OFFSET;
 
 	new_id = ih4->id;
+
+	buff = kcalloc(FRAG_BUFF_SIZE+hdr_len, sizeof(*buff), GFP_KERNEL);
+	if (!buff) {
+		printk("siit: Failed to allocate buf\n");
+		return -1;
+	}
+
+	new_ih4 = (struct iphdr *) buff;
 
 	while(1) {
 		if (rest_len <= FRAG_BUFF_SIZE) {
@@ -1072,7 +1082,8 @@ static int ip4_fragment(struct sk_buff *skb, int len, int hdr_len, struct net_de
 		if (!skb2) {
 			printk(KERN_DEBUG "%s: alloc_skb failure - packet dropped.\n", dev->name);
 			dev_kfree_skb(skb2);
-			return -1;
+			ret = -1;
+			goto exit;
 		}
 		/* allocate skb->data portion for IP header len, fragment data len and ether header len
 		 * and copy to head ether header from origin skb
@@ -1094,7 +1105,8 @@ static int ip4_fragment(struct sk_buff *skb, int len, int hdr_len, struct net_de
 		/* call translation function */
 		if ( ip4_ip6(buff, frag_len+hdr_len, skb2->data, 0) == -1) {
 			dev_kfree_skb(skb2);
-			return -1;
+			ret = -1;
+			goto exit;
 		}
 
 		/*
@@ -1123,7 +1135,9 @@ static int ip4_fragment(struct sk_buff *skb, int len, int hdr_len, struct net_de
 		frag_offset = (frag_offset*8 + frag_len)/8;
 	}
 
-	return 0;
+exit:
+	kfree(buff);
+	return ret;
 }
 /*
  * Transmit a packet (called by the kernel)
@@ -1156,7 +1170,6 @@ static int siit_xmit(struct sk_buff *skb, struct net_device *dev)
 	int len;                    /* original packets length */
 	int new_packet_len;
 	int skb_delta = 0;          /* delta size for allocate new skb */
-	char new_packet_buff[2048];
 
 	/* Check pointer to sk_buff and device structs */
 	if (skb == NULL || dev == NULL)
@@ -1303,6 +1316,14 @@ static int siit_xmit(struct sk_buff *skb, struct net_device *dev)
 	 * IPv6 paket
 	 */
 	else if (ntohs(skb->protocol) == ETH_P_IPV6) {
+		char *new_packet_buff;
+
+		new_packet_buff = kcalloc(2048, sizeof(*new_packet_buff), GFP_KERNEL);
+		if (!new_packet_buff) {
+			printk(KERN_DEBUG "%s: alloc new_packet_buff failure, packet dropped.\n", dev->name);
+			siit_stats(dev)->rx_dropped++;
+			goto end;
+		}
 
 #ifdef SIIT_DEBUG
 		siit_print_dump(skb->data, sizeof(struct ipv6hdr), "siit: (in) ip6_hdr dump");
@@ -1315,6 +1336,7 @@ static int siit_xmit(struct sk_buff *skb, struct net_device *dev)
 		{
 			PDEBUG("siit_xmit(): error translation ipv6->ipv4, packet dropped.\n");
 			siit_stats(dev)->rx_dropped++;
+			kfree(new_packet_buff);
 			goto end;
 		}
 
@@ -1323,6 +1345,7 @@ static int siit_xmit(struct sk_buff *skb, struct net_device *dev)
 		if (!skb2) {
 			printk(KERN_DEBUG "%s: alloc_skb failure, packet dropped.\n", dev->name);
 			siit_stats(dev)->rx_dropped++;
+			kfree(new_packet_buff);
 			goto end;
 		}
 		memcpy(skb_put(skb2, new_packet_len + dev->hard_header_len), (char *)eth_h, dev->hard_header_len);

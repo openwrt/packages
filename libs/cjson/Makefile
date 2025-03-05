@@ -3,12 +3,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cJSON
-PKG_VERSION:=1.7.15
-PKG_RELEASE:=3
+PKG_VERSION:=1.7.17
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/DaveGamble/cJSON/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=5308fd4bd90cef7aa060558514de6a1a4a0819974a26e6ed13973c5f624c24b2
+PKG_HASH:=c91d1eeb7175c50d49f6ba2a25e69b46bd05cffb798382c19bfb202e467ec51c
 
 PKG_MAINTAINER:=Karl Palsson <karlp@etactica.com>
 PKG_LICENSE:=MIT

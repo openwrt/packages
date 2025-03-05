@@ -1,0 +1,18 @@
+commit 79f969979f2ac7ed73dbc2682a53c95ff84adb1a
+Author: Philip Prindeville <philipp@redfish-solutions.com>
+Date:   Sat Aug 3 10:19:05 2024 -0600
+
+    [3533] do filename munging with variable expansions
+
+--- a/src/bin/keactrl/keactrl.in
++++ b/src/bin/keactrl/keactrl.in
+@@ -112,7 +112,8 @@ get_pid_from_file() {
+ 
+     # Extract the name portion (from last slash to last dot) of the config file name.
+     local conf_name
+-    conf_name=$(basename -- "${kea_config_file}" | rev | cut -f2- -d'.' | rev)
++    conf_name=${kea_config_file##*/}
++    conf_name=${conf_name%.*}
+ 
+     # Default the directory to --localstatedir / run
+     local pid_file_dir

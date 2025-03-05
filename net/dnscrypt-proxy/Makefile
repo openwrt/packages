@@ -14,7 +14,7 @@ PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/dyne/dnscrypt-proxy
-PKG_MIRROR_HASH:=c5c074f52732f14f026002bc48bdffcf0b212092de5798120209b2e6b65fc3e6
+PKG_MIRROR_HASH:=0733dfa25b97840dd7ffc1b72db203476e4b02b2c00af2418955380a70c2e361
 
 PKG_MAINTAINER:=Damiano Renfer <x9w2n7xnu@relay.firefox.com>
 PKG_LICENSE:=ISC
@@ -23,6 +23,7 @@ PKG_LICENSE_FILES:=COPYING
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+PKG_BUILD_FLAGS:=gc-sections
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_DNSCRYPT_ENABLE_PLUGINS
 
@@ -32,6 +33,7 @@ define Package/dnscrypt-proxy/Default
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=IP Addresses and Names
+  TITLE:=DNSCrypt-Proxy by Dyne, not actively maintained
   URL:=https://github.com/dyne/dnscrypt-proxy
 endef
 
@@ -84,12 +86,7 @@ define Build/Configure
 endef
 
 TARGET_CFLAGS += \
-	-fomit-frame-pointer \
-	-fdata-sections \
-	-ffunction-sections
-
-TARGET_LDFLAGS += \
-	-Wl,-gc-sections
+	-fomit-frame-pointer
 
 MAKE_FLAGS += \
 	CFLAGS="$(TARGET_CFLAGS)" \

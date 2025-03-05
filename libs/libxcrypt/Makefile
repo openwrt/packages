@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libxcrypt
-PKG_VERSION:=4.4.33
+PKG_VERSION:=4.4.36
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/besser82/libxcrypt/releases/download/v$(PKG_VERSION)
-PKG_HASH:=e87acf9c652c573a4713d5582159f98f305d56ed5f754ce64f57d4194d6b3a6f
+PKG_HASH:=e5e1f4caee0a01de2aee26e3138807d6d3ca2b8e67287966d1fefd65e1fd8943
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=LGPL-2.1-or-later

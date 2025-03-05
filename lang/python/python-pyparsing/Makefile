@@ -9,15 +9,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pyparsing
-PKG_VERSION:=2.4.7
-PKG_RELEASE:=2
+PKG_VERSION:=3.1.1
+PKG_RELEASE:=1
 
 PYPI_NAME:=pyparsing
-PKG_HASH:=c203ec8783bf771a155b207279b9bccb8dea02d8f0c9e5f8ead507bc3246ecc1
+PKG_HASH:=ede28a1a32462f5a9705e07aea48001a08f7cf81a021585011deba701581a0db
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
+
+PKG_BUILD_DEPENDS:=python-flit-core/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -27,7 +29,7 @@ define Package/python3-pyparsing
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
-  TITLE:=Library for constructing grammar directly in python
+  TITLE:=Define and execute parsing grammars
   URL:=https://github.com/pyparsing/pyparsing/
   DEPENDS:=+python3-light
 endef

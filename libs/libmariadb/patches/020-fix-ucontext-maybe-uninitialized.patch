@@ -1,0 +1,12 @@
+--- a/libmariadb/ma_context.c
++++ b/libmariadb/ma_context.c
+@@ -92,6 +92,9 @@ my_context_spawn(struct my_context *c, v
+ {
+   int err;
+   union pass_void_ptr_as_2_int u;
++  // Avoid 'may be used uninitialized' error on 32-bit systems
++  // upstream issue: https://jira.mariadb.org/browse/CONC-725
++  u.a[1] = 0;
+ 
+   err= getcontext(&c->spawned_context);
+   if (err)

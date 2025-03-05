@@ -1,0 +1,44 @@
+From deb3a2c51f32e0d2741be11a492e727129f770e2 Mon Sep 17 00:00:00 2001
+From: Nate Karstens <nate.karstens@garmin.com>
+Date: Wed, 28 Jun 2017 17:30:00 -0500
+Subject: [PATCH 3/8] Track interface socket family
+
+Tracks the socket family associated with the interface.
+
+Upstream-Status: Submitted [dts@apple.com]
+
+Signed-off-by: Nate Karstens <nate.karstens@garmin.com>
+Signed-off-by: Alex Kiernan <alex.kiernan@gmail.com>
+---
+ mDNSPosix/mDNSPosix.c | 1 +
+ mDNSPosix/mDNSPosix.h | 2 ++
+ 2 files changed, 3 insertions(+)
+
+--- a/mDNSPosix/mDNSPosix.c
++++ b/mDNSPosix/mDNSPosix.c
+@@ -1415,6 +1415,7 @@ mDNSlocal int SetupOneInterface(mDNS *co
+         // Set up the extra fields in PosixNetworkInterface.
+         assert(intf->intfName != NULL);         // intf->intfName already set up above
+         intf->index                = intfIndex;
++        intf->sa_family            = intfAddr->sa_family;
+         intf->multicastSocket4     = -1;
+ #if HAVE_IPV6
+         intf->multicastSocket6     = -1;
+--- a/mDNSPosix/mDNSPosix.h
++++ b/mDNSPosix/mDNSPosix.h
+@@ -19,6 +19,7 @@
+ #define __mDNSPlatformPosix_h
+ 
+ #include <signal.h>
++#include <sys/socket.h>
+ #include <sys/time.h>
+ 
+ #ifdef  __cplusplus
+@@ -40,6 +41,7 @@ struct PosixNetworkInterface
+     char *                  intfName;
+     PosixNetworkInterface * aliasIntf;
+     int index;
++    sa_family_t sa_family;
+     int multicastSocket4;
+ #if HAVE_IPV6
+     int multicastSocket6;

@@ -6,13 +6,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mdns-repeater
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=https://github.com/kennylevinsen/mdns-repeater.git
 PKG_SOURCE_PROTO=git
 PKG_SOURCE_DATE:=2020-05-03
 PKG_SOURCE_VERSION:=921d8850e988d0bd8d60899d933c4ad3094d73ca
-PKG_MIRROR_HASH:=11c1988d42ec36945516697be93a6f7f7155535a432af61bcf61ef4a19fec439
+PKG_MIRROR_HASH:=19997460a7eb9816b0c13328ce02331fac532dab549d602e35d671d5f481bfee
 
 PKG_MAINTAINER:=Alexander Koenig <alex@lisas.de>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -24,6 +24,7 @@ define Package/mdns-repeater
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Multicast DNS repeater for Linux
+  SUBMENU:=IP Addresses and Names
   URL:=https://github.com/kennylevinsen/mdns-repeater
 endef
 

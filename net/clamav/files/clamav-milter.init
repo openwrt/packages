@@ -15,7 +15,6 @@ validate_clamav_milter_section() {
 		'PidFile:string' \
 		'User:string' \
 		'MilterSocketGroup:string' \
-		'AllowSupplementaryGroups:string' \
 		'ReadTimeout:uinteger' \
 		'OnClean:string' \
 		'OnInfected:string' \
@@ -24,6 +23,7 @@ validate_clamav_milter_section() {
 		'LogVerbose:string' \
 		'LogTime:string' \
 		'LogSyslog:string' \
+		'Debug:string' \
 		'LogFacility:string' \
 		'LogInfected:string' \
 		'LogClean:string' \
@@ -55,7 +55,6 @@ start_clamav_milter_instance() {
 	echo "PidFile " "$PidFile"
 	echo "User " "$User"
 	echo "MilterSocketGroup " "$MilterSocketGroup"
-	echo "AllowSupplementaryGroups " "$AllowSupplementaryGroups"
 	echo "ReadTimeout " "$ReadTimeout"
 	echo "OnClean " "$OnClean"
 	echo "OnInfected " "$OnInfected"
@@ -64,6 +63,7 @@ start_clamav_milter_instance() {
 	echo "LogVerbose " "$LogVerbose"
 	echo "LogTime " "$LogTime"
 	echo "LogSyslog " "$LogSyslog"
+	echo "Debug " "$Debug"
 	echo "LogFacility " "$LogFacility"
 	echo "LogInfected " "$LogInfected"
 	echo "LogClean " "$LogClean"

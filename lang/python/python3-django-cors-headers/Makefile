@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=django-cors-headers
 PKG_VERSION:=3.10.0
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=2
 
 PYPI_NAME:=django-cors-headers
 PKG_HASH:=cd6f4360f5246569c149dc1c40c907c191f1ec45551e10d2a2e2e68512652f78

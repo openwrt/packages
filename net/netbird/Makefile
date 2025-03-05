@@ -1,24 +1,24 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netbird
-PKG_VERSION:=0.14.3
+PKG_VERSION:=0.37.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/netbirdio/netbird/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=ce56a0419cea1296f4b61d1ecb04e5f812805538e17f5211c5f05ed2b5b98dbc
+PKG_HASH:=8ef1eae6732df65c9ee06b381f9e121e4740e6e8d53119b0ba8572934105a70d
 
-PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
+PKG_MAINTAINER:=Wesley Gimenes <wehagy@proton.me>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16
 
 GO_PKG:=github.com/netbirdio/netbird
 GO_PKG_BUILD_PKG:=$(GO_PKG)/client
-GO_PKG_LDFLAGS_X:=$(GO_PKG)/client/system.version=$(PKG_VERSION)
+GO_PKG_LDFLAGS_X:=$(GO_PKG)/version.version=$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
@@ -29,15 +29,19 @@ define Package/netbird
   SUBMENU:=VPN
   TITLE:=Connect your devices into a single secure private WireGuard®-based mesh network
   URL:=https://netbird.io
-  DEPENDS:=$(GO_ARCH_DEPENDS)
+  DEPENDS:=$(GO_ARCH_DEPENDS) +kmod-wireguard
 endef
 
 define Package/netbird/description
-  NetBird is an open-source VPN management platform built on top of WireGuard® making it easy to create 
+  NetBird is an open-source VPN management platform built on top of WireGuard® making it easy to create
   secure private networks for your organization or home.
 
-  It requires zero configuration effort leaving behind the hassle of opening ports, complex firewall rules, VPN 
+  It requires zero configuration effort leaving behind the hassle of opening ports, complex firewall rules, VPN
   gateways, and so forth.
+endef
+
+define Package/netbird/conffiles
+/etc/netbird/config.json
 endef
 
 define Package/netbird/install

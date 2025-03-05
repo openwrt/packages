@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015-2018 OpenWrt.org
+# Copyright (C) 2015-2016, 2018-2021, 2023 Jeffery To
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pyopenssl
-PKG_VERSION:=21.0.0
+PKG_VERSION:=23.3.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=pyOpenSSL
-PKG_HASH:=5e2d8c5e46d0d865ae933bef5230090bdaf5506281e9eec60fa250ee80600cb3
+PKG_HASH:=6b2cba5cc46e822750ec3e5a81ee12819850b11303630d575e98108a079c2b12
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
@@ -31,8 +31,8 @@ define Package/python3-pyopenssl
   URL:=https://pyopenssl.org/
   DEPENDS:= \
       +python3-light \
-      +python3-cryptography \
-      +python3-six
+      +python3-openssl \
+      +python3-cryptography
 endef
 
 define Package/python3-pyopenssl/description

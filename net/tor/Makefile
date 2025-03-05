@@ -8,21 +8,23 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tor
-PKG_VERSION:=0.4.7.13
+PKG_VERSION:=0.4.8.12
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://dist.torproject.org/ \
 	https://archive.torproject.org/tor-package-archive
-PKG_HASH:=2079172cce034556f110048e26083ce9bea751f3154b0ad2809751815b11ea9d
+PKG_HASH:=ca7cc735d98e3747b58f2f3cc14f804dd789fa0fb333a84dcb6bd70adbb8c874
 PKG_MAINTAINER:=Hauke Mehrtens <hauke@hauke-m.de> \
 		Peter Wagner <tripolar@gmx.at>
+PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:torproject:tor
 
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
+PKG_BUILD_FLAGS:=gc-sections lto
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -140,10 +142,7 @@ ifeq ($(BUILD_VARIANT),basic)
 endif
 
 
-TARGET_CFLAGS += -ffunction-sections -fdata-sections -flto \
-	$(if $(CONFIG_OPENSSL_ENGINE),,-DDISABLE_ENGINES)
-
-TARGET_LDFLAGS += -Wl,--gc-sections -flto
+TARGET_CFLAGS += $(if $(CONFIG_OPENSSL_ENGINE),,-DDISABLE_ENGINES)
 
 CONFIGURE_VARS += \
 	CROSS_COMPILE="yes" \

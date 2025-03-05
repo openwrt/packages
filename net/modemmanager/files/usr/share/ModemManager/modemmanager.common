@@ -1,0 +1,280 @@
+#!/bin/sh
+# Copyright (C) 2016 Velocloud Inc
+# Copyright (C) 2016 Aleksander Morgado <aleksander@aleksander.es>
+
+################################################################################
+
+. /lib/functions.sh
+
+################################################################################
+# Runtime state
+
+MODEMMANAGER_RUNDIR="/var/run/modemmanager"
+MODEMMANAGER_PID_FILE="${MODEMMANAGER_RUNDIR}/modemmanager.pid"
+MODEMMANAGER_CDCWDM_CACHE="${MODEMMANAGER_RUNDIR}/cdcwdm.cache"
+MODEMMANAGER_MONITOR_CACHE="${MODEMMANAGER_RUNDIR}/monitor.cache"
+MODEMMANAGER_EVENTS_CACHE="${MODEMMANAGER_RUNDIR}/events.cache"
+
+################################################################################
+# Common logging
+
+mm_log() {
+	local level="$1"; shift
+
+	[ "${level}" = "debug" ] && return
+	logger -p "daemon.${level}" -t "ModemManager[$$]" "hotplug: $*"
+}
+
+################################################################################
+# Receives as input argument the full sysfs path of the device
+# Returns the physical device sysfs path
+#
+# NOTE: this method only works when the device exists, i.e. it cannot be used
+# on removal hotplug events
+
+mm_find_physdev_sysfs_path() {
+	local tmp_path="$1"
+
+	while true; do
+		tmp_path=$(dirname "${tmp_path}")
+
+		# avoid infinite loops iterating
+		[ -z "${tmp_path}" ] || [ "${tmp_path}" = "/" ] && return
+
+		# For USB devices, the physical device will be that with a idVendor
+		# and idProduct pair of files
+		[ -f "${tmp_path}"/idVendor ] && [ -f "${tmp_path}"/idProduct ] && {
+			tmp_path=$(readlink -f "$tmp_path")
+			echo "${tmp_path}"
+			return
+		}
+
+		# For PCI devices, the physical device will be that with a vendor
+		# and device pair of files
+		[ -f "${tmp_path}"/vendor ] && [ -f "${tmp_path}"/device ] && {
+			tmp_path=$(readlink -f "$tmp_path")
+			echo "${tmp_path}"
+			return
+		}
+	done
+}
+
+################################################################################
+
+# Returns the cdc-wdm name retrieved from sysfs
+mm_track_cdcwdm() {
+	local wwan="$1"
+	local cdcwdm
+
+	cdcwdm=$(ls "/sys/class/net/${wwan}/device/usbmisc/")
+	[ -n "${cdcwdm}" ] || return
+
+	# We have to cache it for later, as we won't be able to get the
+	# associated cdc-wdm device on a remove event
+	echo "${wwan} ${cdcwdm}" >> "${MODEMMANAGER_CDCWDM_CACHE}"
+
+	echo "${cdcwdm}"
+}
+
+# Returns the cdc-wdm name retrieved from the cache
+mm_untrack_cdcwdm() {
+	local wwan="$1"
+	local cdcwdm
+
+	# Look for the cached associated cdc-wdm device
+	[ -f "${MODEMMANAGER_CDCWDM_CACHE}" ] || return
+
+	cdcwdm=$(awk -v wwan="${wwan}" '!/^#/ && $0 ~ wwan { print $2 }' "${MODEMMANAGER_CDCWDM_CACHE}")
+	[ -n "${cdcwdm}" ] || return
+
+	# Remove from cache
+	sed -i "/${wwan} ${cdcwdm}/d" "${MODEMMANAGER_CDCWDM_CACHE}"
+
+	echo "${cdcwdm}"
+}
+
+# Callback for config_foreach()
+mm_get_modem_config_foreach_cb() {
+	local cfg="$1"
+	local sysfspath="$2"
+
+	local dev
+	dev=$(uci_get network "${cfg}" device)
+	[ "${dev}" = "${sysfspath}" ] || return 0
+
+	echo "${cfg}"
+}
+
+# Returns the name of the interface configured for this device
+mm_get_modem_config() {
+	local sysfspath="$1"
+
+	# Look for configuration for the given sysfs path
+	config_load network
+	config_foreach mm_get_modem_config_foreach_cb interface "${sysfspath}"
+}
+
+################################################################################
+# Event reporting
+
+# Receives as input the action, the device name and the subsystem
+mm_report_event() {
+	local action="$1"
+	local name="$2"
+	local subsystem="$3"
+	local sysfspath="$4"
+
+	# Do not save virtual devices
+	local virtual result
+	virtual="$(echo "$sysfspath" | cut -d'/' -f4)"
+	[ "$virtual" = "virtual" ] && {
+		mm_log "debug" "sysfspath is a virtual device ($sysfspath)"
+		case "$name" in
+			"qmapmux"*)
+				mm_log "debug" "rmnet netdevice $name"
+				;;
+			"qmimux"*)
+				mm_log "debug" "qmi_wwan qmap netdevice $name"
+				;;
+			"mbimmux"*)
+				mm_log "debug" "mbim vlan netdevice $name"
+				;;
+			*)
+				return
+				;;
+		esac
+	}
+
+	# Track/untrack events in cache
+	case "${action}" in
+		"add")
+			# On add events, store event details in cache (if not exists yet)
+			grep -qs "${name},${subsystem}" "${MODEMMANAGER_EVENTS_CACHE}" || \
+				echo "${action},${name},${subsystem},${sysfspath}" >> "${MODEMMANAGER_EVENTS_CACHE}"
+			;;
+		"remove")
+			# On remove events, remove old events from cache (match by subsystem+name)
+			sed -i "/${name},${subsystem}/d" "${MODEMMANAGER_EVENTS_CACHE}"
+			;;
+	esac
+
+	# Report the event
+	mm_log "debug" "Report event: action=${action}, name=${name}, subsystem=${subsystem}"
+	result=$(mmcli --report-kernel-event="action=${action},name=${name},subsystem=${subsystem}" 2>&1)
+	if [ "$?" -ne "0" ]; then
+		mm_log "error" "Couldn't report kernel event: ${result}"
+	fi
+}
+
+mm_report_event_from_cache_line() {
+	local event_line="$1"
+
+	local action name subsystem sysfspath
+	action=$(echo "${event_line}" | awk -F ',' '{ print $1 }')
+	name=$(echo "${event_line}" | awk -F ',' '{ print $2 }')
+	subsystem=$(echo "${event_line}" | awk -F ',' '{ print $3 }')
+	sysfspath=$(echo "${event_line}" | awk -F ',' '{ print $4 }')
+
+	mm_log "debug" "cached event found: action=${action}, name=${name}, subsystem=${subsystem}, sysfspath=${sysfspath}"
+	mm_report_event "${action}" "${name}" "${subsystem}" "${sysfspath}"
+}
+
+mm_report_events_from_cache() {
+	local n=60
+	local step=1
+	local mmrunning=0
+
+	# Wait for ModemManager to be available in the bus
+	while [ $n -ge 0 ]; do
+		sleep $step
+		mm_log "info" "checking if ModemManager is available..."
+
+		if ! mmcli -L >/dev/null 2>&1
+		then
+			mm_log "info" "ModemManager not yet available"
+		else
+			mmrunning=1
+			break
+		fi
+		n=$((n-step))
+	done
+
+	[ ${mmrunning} -eq 1 ] || {
+		mm_log "error" "couldn't report initial kernel events: ModemManager not running"
+		return
+	}
+
+	# Remove the sysfs cache
+	rm -f "${MODEMMANAGER_SYSFS_CACHE}"
+
+	# Report cached kernel events
+	while IFS= read -r event_line; do
+		mm_report_event_from_cache_line "${event_line}"
+	done < ${MODEMMANAGER_EVENTS_CACHE}
+}
+
+# This method expects as first argument a list of key-value pairs, as returned by mmcli --output-keyvalue
+# The second argument must be exactly the name of the field to read
+#
+# Sample output:
+#     $ mmcli -m 0 -K
+#     modem.dbus-path                                 : /org/freedesktop/ModemManager1/Modem/0
+#     modem.generic.device-identifier                 : ed6eff2e3e0f90463da1c2a755b2acacd1335752
+#     modem.generic.manufacturer                      : Dell Inc.
+#     modem.generic.model                             : DW5821e Snapdragon X20 LTE
+#     modem.generic.revision                          : T77W968.F1.0.0.4.0.GC.009\n026
+#     modem.generic.carrier-configuration             : GCF
+#     modem.generic.carrier-configuration-revision    : 08E00009
+#     modem.generic.hardware-revision                 : DW5821e Snapdragon X20 LTE
+#     ....
+modemmanager_get_field() {
+	local list=$1
+	local field=$2
+	local value=""
+
+	[ -z "${list}" ] || [ -z "${field}" ] && return
+
+	# there is always at least a whitespace after each key, and we use that as part of the
+	# key matching we do (e.g. to avoid getting 'modem.generic.state-failed-reason' as a result
+	# when grepping for 'modem.generic.state'.
+	line=$(echo "${list}" | grep "${field} ")
+	value=$(echo ${line#*:})
+
+	# not found?
+	[ -n "${value}" ] || return 2
+
+	# only print value if set
+	[ "${value}" != "--" ] && echo "${value}"
+	return 0
+}
+
+# build a comma-separated list of values from the list
+modemmanager_get_multivalue_field() {
+	local list=$1
+	local field=$2
+	local value=""
+	local length idx item
+
+	[ -z "${list}" ] || [ -z "${field}" ] && return
+
+	length=$(modemmanager_get_field "${list}" "${field}.length")
+	[ -n "${length}" ] || return 0
+	[ "$length" -ge 1 ] || return 0
+
+	idx=1
+	while [ $idx -le "$length" ]; do
+		item=$(modemmanager_get_field "${list}" "${field}.value\[$idx\]")
+		[ -n "${item}" ] && [ "${item}" != "--" ] && {
+			[ -n "${value}" ] && value="${value}, "
+			value="${value}${item}"
+		}
+		idx=$((idx + 1))
+	done
+
+	# nothing built?
+	[ -n "${value}" ] || return 2
+
+	# only print value if set
+	echo "${value}"
+	return 0
+}

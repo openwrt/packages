@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=erlang
-PKG_VERSION:=24.2
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=27.0.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=otp_src_$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:= http://www.erlang.org/download/
-PKG_HASH:=af0f1928dcd16cd5746feeca8325811865578bf1a110a443d353ea3e509e6d41
+PKG_SOURCE_URL:=https://github.com/erlang/otp/releases/download/OTP-$(PKG_VERSION)
+PKG_HASH:=26d894e2f0dda9d13560af08ea589afc01569df6b5486e565beb5accb99c9cf4
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE.txt
@@ -21,8 +21,10 @@ PKG_MAINTAINER:=Arnaud Sautaux <arnaud.sautaux@infoteam.ch>
 PKG_CPE_ID:=cpe:/a:erlang:erlang
 
 PKG_BUILD_DEPENDS:=erlang/host openssl
-PKG_USE_MIPS16:=0
 PKG_ASLR_PIE:=0
+
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_KERNEL_TRANSPARENT_HUGEPAGE
 
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/otp_src_$(PKG_VERSION)
 PKG_BUILD_DIR:=$(BUILD_DIR)/otp_src_$(PKG_VERSION)
@@ -35,7 +37,7 @@ define Package/erlang/Default
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Erlang/OTP programming language
-  URL:=http://www.erlang.org/
+  URL:=https://www.erlang.org/
 endef
 
 define Package/erlang/Default/description
@@ -47,7 +49,7 @@ endef
 define Package/erlang
 $(call Package/erlang/Default)
   DEPENDS+= +libncurses +librt +zlib +libstdcpp
-  PROVIDES:= erlang-erts=12.2 erlang-kernel=8.2 erlang-sasl=4.1.1 erlang-stdlib=3.17
+  PROVIDES:= erlang-erts=15.0.1 erlang-kernel=10.0.1 erlang-sasl=4.2.2 erlang-stdlib=6.0.1
 endef
 
 define Package/erlang/description
@@ -61,7 +63,7 @@ endef
 define Package/erlang-asn1
 $(call Package/erlang/Default)
   TITLE:=Abstract Syntax Notation One (ASN.1) support
-  VERSION:=5.0.17
+  VERSION:=5.3
   DEPENDS+= +erlang +erlang-syntax-tools
 endef
 
@@ -76,7 +78,7 @@ endef
 define Package/erlang-compiler
 $(call Package/erlang/Default)
   TITLE:=Byte code compiler
-  VERSION:=8.0.4
+  VERSION:=8.5.1
   DEPENDS+= +erlang
 endef
 
@@ -91,7 +93,7 @@ endef
 define Package/erlang-crypto
 $(call Package/erlang/Default)
   TITLE:=Cryptography support
-  VERSION:=5.0.5
+  VERSION:=5.5
   DEPENDS+= +erlang +libopenssl
 endef
 
@@ -106,7 +108,7 @@ endef
 define Package/erlang-inets
 $(call Package/erlang/Default)
   TITLE:=Internet clients and servers
-  VERSION:=7.5
+  VERSION:=9.2
   DEPENDS+= +erlang
 endef
 
@@ -122,7 +124,7 @@ endef
 define Package/erlang-mnesia
 $(call Package/erlang/Default)
   TITLE:=Distributed database
-  VERSION:=4.20.1
+  VERSION:=4.23.2
   DEPENDS+= +erlang
 endef
 
@@ -139,7 +141,7 @@ endef
 define Package/erlang-runtime-tools
 $(call Package/erlang/Default)
   TITLE:=Low-profile debugging/tracing tools
-  VERSION:=1.17
+  VERSION:=2.1
   DEPENDS+= +erlang
 endef
 
@@ -154,7 +156,7 @@ endef
 define Package/erlang-snmp
 $(call Package/erlang/Default)
   TITLE:=Simple Network Management Protocol (SNMP) support
-  VERSION:=5.11
+  VERSION:=5.16
   DEPENDS+= +erlang +erlang-asn1
 endef
 
@@ -170,7 +172,7 @@ endef
 define Package/erlang-public-key
 $(call Package/erlang/Default)
   TITLE:=Public Key support
-  VERSION:=1.11.3
+  VERSION:=1.16.1
   DEPENDS+= +erlang +erlang-crypto +erlang-asn1
 endef
 
@@ -184,7 +186,7 @@ endef
 define Package/erlang-ssh
 $(call Package/erlang/Default)
   TITLE:=Secure Shell (SSH) support
-  VERSION:=4.13
+  VERSION:=5.2.1
   DEPENDS+= +erlang +erlang-crypto
 endef
 
@@ -199,7 +201,7 @@ endef
 define Package/erlang-ssl
 $(call Package/erlang/Default)
   TITLE:=Secure Sockets Layer (SSL) support
-  VERSION:=10.6
+  VERSION:=11.2.1
   DEPENDS+= +erlang +erlang-crypto
 endef
 
@@ -214,7 +216,7 @@ endef
 define Package/erlang-syntax-tools
 $(call Package/erlang/Default)
   TITLE:=Abstract Erlang syntax trees handling support
-  VERSION:=2.6
+  VERSION:=3.2
   DEPENDS+= +erlang
 endef
 
@@ -229,7 +231,7 @@ endef
 define Package/erlang-tools
 $(call Package/erlang/Default)
   TITLE:=Erlang tools support
-  VERSION:=3.5.2
+  VERSION:=4.0
   DEPENDS+= +erlang
 endef
 
@@ -243,7 +245,7 @@ endef
 define Package/erlang-reltool
 $(call Package/erlang/Default)
   TITLE:=Erlang reltool support
-  VERSION:=0.9
+  VERSION:=1.0.1
   DEPENDS+= +erlang
 endef
 
@@ -257,7 +259,7 @@ endef
 define Package/erlang-erl-interface
 $(call Package/erlang/Default)
   TITLE:=Erlang erl_interface support
-  VERSION:=5.1
+  VERSION:=5.5.2
   DEPENDS+= +erlang
 endef
 
@@ -270,7 +272,7 @@ endef
 define Package/erlang-os_mon
 $(call Package/erlang/Default)
   TITLE:=Erlang OS Monitoring Application
-  VERSION:=2.7.1
+  VERSION:=2.10
   DEPENDS+= +erlang
 endef
 
@@ -286,7 +288,7 @@ endef
 define Package/erlang-xmerl
 $(call Package/erlang/Default)
   TITLE:=Erlang XML export
-  VERSION:=1.3.28
+  VERSION:=2.0
   DEPENDS+= +erlang
 endef
 
@@ -297,30 +299,28 @@ $(call Package/erlang/Default/description)
 endef
 
 # Host
-# host-compile is done with LibreSSL provided by OpenWrt tools/libressl
-
-HOST_CFLAGS += \
-        -DHAS_EVP_PKEY_CTX \
-        -DHAVE_EVP_CIPHER_CTX_COPY
 
 HOST_CONFIGURE_ARGS += \
+	--without-wx \
 	--with-ssl="$(STAGING_DIR_HOST)" \
-	--disable-hipe \
-	--disable-pgo \
-	--disable-smp-support \
 	--without-javac
 
 # Target
 
 CONFIGURE_ARGS += \
-	--disable-hipe \
-	--disable-smp-support \
 	--without-javac \
 	--enable-dynamic-ssl-lib
+
+## Override incorrect THP detection by configure script
+ERTS_THP=no
+ifeq ($(CONFIG_KERNEL_TRANSPARENT_HUGEPAGE),y)
+	ERTS_THP=yes
+endif
 
 CONFIGURE_VARS += \
 	SHLIB_LD="$(TARGET_CC)" \
 	TARGET_ARCH="$(TARGET_ARCH)" \
+	erts_cv_linux_thp=$(ERTS_THP) \
 	ac_cv_func_mmap_fixed_mapped=yes \
 	ac_cv_path_WX_CONFIG_PATH=no \
 	erl_xcomp_getaddrinfo=no \
@@ -343,7 +343,7 @@ define Package/erlang/install
 		$(CP) $(PKG_INSTALL_DIR)/usr/bin/$$$$f $(1)/usr/bin/ ; \
 	done
 	$(INSTALL_DIR) $(1)/usr/lib/erlang/bin
-	for f in erl erlc escript run_erl start start.boot start.script start_clean.boot start_erl start_sasl.boot to_erl; do \
+	for f in epmd erl erlc escript run_erl start start.boot start.script start_clean.boot start_erl start_sasl.boot no_dot_erlang.boot to_erl; do \
 		$(CP) $(PKG_INSTALL_DIR)/usr/lib/erlang/bin/$$$$f $(1)/usr/lib/erlang/bin/ ; \
 	done
 	$(INSTALL_DIR) $(1)/usr/lib/erlang/lib
@@ -408,4 +408,3 @@ $(eval $(call BuildModule,reltool,reltool))
 $(eval $(call BuildModule,erl-interface,erl_interface))
 $(eval $(call BuildModule,os_mon,os_mon))
 $(eval $(call BuildModule,xmerl,xmerl))
-

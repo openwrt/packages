@@ -1,0 +1,183 @@
+#!/bin/sh
+
+. /lib/functions.sh
+. /usr/share/libubox/jshn.sh
+
+RPC_SCRIPTS=/usr/libexec/libreswan/rpc
+
+[ -d $RPC_SCRIPTS ] && include $RPC_SCRIPTS
+
+IPSEC_TRAFFIC_STATES="/tmp/ipsec_traffic.$$"
+IPSEC_TUNNEL_STATUS="/tmp/ipsec_status.$$"
+
+__function__() {
+    type "$1" > /dev/null 2>&1
+}
+
+foreach_extra() {
+	local file obj
+
+	[ ! -d $RPC_SCRIPTS ] && return
+
+	for file in $RPC_SCRIPTS/*; do
+		obj="${file##*/}"
+		$1 "${obj%%.*}"
+	done
+}
+
+get_index() {
+	[ $# -lt 2 ] && return 1
+
+	local var=$1
+	local str=$2
+	local ele
+	local i=1
+
+	eval "val=\"\${$var}\""
+
+	for ele in ${val}; do
+		if [[ "$ele" = "$str" ]]; then
+			echo "$i"
+			return 0
+		fi
+		i="$((i+1))"
+	done
+
+	return 1
+}
+
+phase1_established() {
+	grep -q "\"${1%/*}\/.*(IKE SA established)\|\"${1%/*}\/.*(established IKE SA)" "$IPSEC_TUNNEL_STATUS"
+}
+
+phase2_established() {
+	grep -q "\"$1\".*(IPsec SA established)\|\"$1\".*(established Child SA)" "$IPSEC_TUNNEL_STATUS"
+}
+
+add_tunnel_object() {
+	local id="$1"
+	local leftsubnets rightsubnets right ctime active_right
+	local phase1=0 phase2=0 add_time inBytes outBytes
+
+	config_get right "$id" right
+	config_get leftsubnets "$id" leftsubnets
+	config_get rightsubnets "$id" rightsubnets
+
+	if [ -z "$right" ] || [ "$right" = "%any" ] || [ "$right" == "0.0.0.0" ]; then
+		active_right=$(awk -F'[: ]' '{ if ( $4 ~ "'"$id/"'") {print $5; exit 0};}' "$IPSEC_TUNNEL_STATUS")
+	fi
+
+	for lsubnet in $leftsubnets; do
+		lidx=$(get_index leftsubnets $lsubnet)
+		for rsubnet in $rightsubnets; do
+			ridx=$(get_index rightsubnets $rsubnet)
+			tid="${id}/${lidx}x${ridx}"
+
+			eval $(awk -F, '{if ($1 ~ "'"$tid"'" ) {printf("%s %s %s", $3, $4, $5)};}' "$IPSEC_TRAFFIC_STATES")
+			json_add_object tunnels
+			json_add_string name "$id"
+			json_add_string right "$right${active_right:+ (${active_right})}"
+			json_add_string leftsubnet "$lsubnet"
+			json_add_string rightsubnet "$rsubnet"
+			json_add_int tx "$outBytes"
+			json_add_int rx "$inBytes"
+
+			phase1_established "$tid" && phase1=1
+			phase2_established "$tid" && phase2=1
+
+			json_add_boolean phase1 "$phase1"
+			json_add_boolean phase2 "$phase2"
+
+			if [ "$phase1" = "1" ] && [ "$phase2" = "1" ]; then
+				ctime="$(date +%s)"
+				json_add_boolean connected 1
+				json_add_int uptime "$((ctime - add_time))"
+			else
+				json_add_boolean connected 0
+				json_add_int uptime 0
+			fi
+
+			json_close_object
+		done
+	done
+}
+
+generate_libreswan_states() {
+	ipsec trafficstatus  > "$IPSEC_TRAFFIC_STATES"
+	ipsec status > "$IPSEC_TUNNEL_STATUS"
+}
+
+clean_libreswan_states() {
+	return
+	rm -f "$IPSEC_TRAFFIC_STATES" "$IPSEC_TUNNEL_STATUS"
+}
+
+libreswan_status() {
+	config_load libreswan
+
+	generate_libreswan_states
+
+	json_init
+	json_add_array tunnels
+	config_foreach add_tunnel_object tunnel
+	json_close_array
+	json_dump
+
+	clean_libreswan_states
+}
+
+call_extra() {
+	if __function__ "$1"; then
+		$1
+	else
+		json_init
+		json_add_string error "invalid call $1"
+		json_dump
+	fi
+}
+
+call_method() {
+	case "$1" in
+		status)
+			libreswan_status
+			;;
+		*)
+			call_extra $1
+			;;
+	esac
+}
+
+list_extra() {
+	if __function__ "${1}_help"; then
+		${1}_help
+	else
+		json_add_object "$1"
+		json_close_object
+	fi
+}
+
+list_methods() {
+	local file
+
+	json_init
+
+	json_add_object status
+	json_close_object
+
+	foreach_extra list_extra ${1}
+
+	json_dump
+}
+
+main () {
+	case "$1" in
+		list)
+			list_methods
+			;;
+		call)
+			call_method $2
+			;;
+	esac
+}
+
+main "$@"

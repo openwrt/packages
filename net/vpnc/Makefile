@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/streambinder/vpnc
-PKG_MIRROR_HASH:=9626828c6dec6b579a71571c884b02518c2977288bcb3c729135143bb7798d90
+PKG_MIRROR_HASH:=228dae3ec92316e7f0870b137bb4dc659c3dbdbd566990d5ecdaa878e63571eb
 
 PKG_MAINTAINER:=Daniel Gimpelevich <daniel@gimpelevich.san-francisco.ca.us>
 PKG_LICENSE:=GPL-3.0-or-later

@@ -188,7 +188,8 @@ config globals 'globals'
 
 #config plugin 'tcpconns'
 #	option enable '0'
-#	list ListeningPort '0'
+#	option ListeningPorts '0'
+#	option AllPortsSummary '0'
 #	list LocalPort '22'
 #	list LocalPort '80'
 
@@ -220,3 +221,12 @@ config globals 'globals'
 #config write_http_node
 #	option name 'foo'
 #	option URL 'http://example.org/post-collectd'
+#
+#config plugin 'mqtt'
+#	option enable '1'
+#
+#config mqtt_block
+#	option name 'foo'
+#	option blocktype 'Subscribe'
+#	option Host 'localhost'
+#	option Topic 'collectd/#'

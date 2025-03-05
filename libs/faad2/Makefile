@@ -6,23 +6,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=faad2
-PKG_RELEASE:=1
+PKG_VERSION:=2.11.1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=2.10.1
+PKG_SOURCE_VERSION:=$(PKG_VERSION)
 PKG_SOURCE_URL:=https://github.com/knik0/faad2
-PKG_MIRROR_HASH:=8a42cbc5833bd3c076f92363f0cbbcf6f848231c59b2f17dbe5d151cb8684fe1
+PKG_MIRROR_HASH:=8dfc89b418293a91c0fc0d11013205449669ce973f5e951500c1e11e3ac61970
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:audiocoding:freeware_advanced_audio_decoder_2
 
-PKG_FIXUP:=autoreconf
-PKG_INSTALL:=1
-PKG_BUILD_PARALLEL:=1
-
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/faad2/Default
   URL:=http://www.audiocoding.com/faad2.html
@@ -62,7 +60,7 @@ $(call Package/faad2/Default/description)
 endef
 
 TARGET_CFLAGS += \
-	$(if $(CONFIG_BUILD_PATENTED),,-DLC_ONLY_DECODER) \
+	$(if $(CONFIG_BUILD_PATENTED),,-DLC_ONLY_DECODER -DDISABLE_SBR) \
 	$(if $(CONFIG_SOFT_FLOAT),-DFIXED_POINT)
 
 CONFIGURE_ARGS += \
@@ -74,7 +72,7 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/*.h $(1)/usr/include
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libfaad.{a,so*} $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libfaad.so* $(1)/usr/lib/
 endef
 
 define Package/faad2/install

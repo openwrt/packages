@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2020 Jeffery To
+# Copyright (C) 2018-2022 Jeffery To
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -215,7 +215,8 @@ GO_PKG_BUILD_VARS= \
 	GOPATH="$(GO_PKG_BUILD_DIR)" \
 	GOCACHE="$(GO_BUILD_CACHE_DIR)" \
 	GOMODCACHE="$(GO_MOD_CACHE_DIR)" \
-	GOENV=off
+	GOENV=off \
+	GOTOOLCHAIN=local
 
 GO_PKG_VARS= \
 	$(GO_PKG_TARGET_VARS) \

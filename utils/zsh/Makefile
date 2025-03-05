@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zsh
 PKG_VERSION:=5.9
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/zsh
@@ -18,10 +18,20 @@ PKG_HASH:=9b8d1ecedd5b5e81fbf1918e876752a7dd948e05c1a0dba10ab863842d45acd5
 PKG_MAINTAINER:=Vadim A. Misbakh-Soloviov <openwrt-zsh@mva.name>
 PKG_LICENSE:=ZSH
 PKG_LICENSE_FILES:=LICENCE
-PKG_CPE_ID:=cpe:/a:zsh_project:zsh
+PKG_CPE_ID:=cpe:/a:zsh:zsh
 
+PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PKG_BUILD_FLAGS:=gc-sections lto
+
+# zsh include custom macro in the default aclocal.m4
+# When autoreconf PKG_FIXUP is used, if PKG_REMOVE_FILES
+# is not defined, it's set to remove the file aclocak.m4
+# by default resulting in problem with the custom macro
+# AC_PROG_LN
+# To prevent this, declare empty PKG_REMOVE_FILES
+PKG_REMOVE_FILES:=
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -30,7 +40,7 @@ define Package/zsh
   CATEGORY:=Utilities
   SUBMENU:=Shells
   TITLE:=The Z shell
-  DEPENDS:=+libcap +libncurses +libncursesw +libpcre +librt
+  DEPENDS:=+libcap +libncurses +libncursesw +libpcre2 +librt
   URL:=https://www.zsh.org/
 endef
 
@@ -82,8 +92,8 @@ define Build/Configure
 	$(MAKE) -C $(PKG_BUILD_DIR) DESTDIR="$(PKG_INSTALL_DIR)" prep
 endef
 
-TARGET_CFLAGS += $(FPIC) -ffunction-sections -fdata-sections -flto
-TARGET_LDFLAGS += $(FPIC) -Wl,--gc-sections -flto
+TARGET_CFLAGS += $(FPIC)
+TARGET_LDFLAGS += $(FPIC)
 
 define Package/zsh/postinst
 #!/bin/sh

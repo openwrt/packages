@@ -1,0 +1,19 @@
+--- a/setup.py
++++ b/setup.py
+@@ -844,16 +844,9 @@ class PyBuildExt(build_ext):
+                         add_dir_to_list(dir_list, directory)
+ 
+     def configure_compiler(self):
+-        # Ensure that /usr/local is always used, but the local build
+-        # directories (i.e. '.' and 'Include') must be first.  See issue
+-        # 10520.
+-        if not CROSS_COMPILING:
+-            add_dir_to_list(self.compiler.library_dirs, '/usr/local/lib')
+-            add_dir_to_list(self.compiler.include_dirs, '/usr/local/include')
+         # only change this for cross builds for 3.3, issues on Mageia
+         if CROSS_COMPILING:
+             self.add_cross_compiling_paths()
+-        self.add_multiarch_paths()
+         self.add_ldflags_cppflags()
+ 
+     def init_inc_lib_dirs(self):

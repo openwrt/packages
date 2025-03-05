@@ -1,6 +1,6 @@
 --- /dev/null
 +++ b/agent/mibgroup/ieee802dot11.c
-@@ -0,0 +1,4915 @@
+@@ -0,0 +1,4916 @@
 +/****************************************************************************
 +*                                                                           *
 +*  File Name:           ieee802dot11.c                                      *
@@ -30,6 +30,7 @@
 +#include <net-snmp/agent/net-snmp-agent-includes.h>
 +#include "ieee802dot11.h"
 +#include "iwlib.h"
++#include "util_funcs/header_generic.h"
 +
 +/****************************************************************************
 +*                                Defines                                    *
@@ -3973,7 +3974,7 @@
 +  rc = ioctl ( skfd, SIOCGIFHWADDR, &ifr );
 +  if ( rc >= 0 ) {
 +
-+    sprintf ( MACAddress, "%02X:%02X:%02X:%02X:%02X:%02X\0", 
++    sprintf ( MACAddress, "%02X:%02X:%02X:%02X:%02X:%02X", 
 +                 ( UCHAR ) ifr.ifr_hwaddr.sa_data[0], ( UCHAR ) ifr.ifr_hwaddr.sa_data[1], 
 +                 ( UCHAR ) ifr.ifr_hwaddr.sa_data[2], ( UCHAR ) ifr.ifr_hwaddr.sa_data[3], 
 +                 ( UCHAR ) ifr.ifr_hwaddr.sa_data[4], ( UCHAR ) ifr.ifr_hwaddr.sa_data[5] );
@@ -3996,83 +3997,83 @@
 +
 +    if ( hasChanged (( char * ) &nSc, sizeof ( nSc ))) {
 +      nSc.ifIndex = ifIndex;
-+      sprintf ( nSc.UID, "%04d\0", nSc.ifIndex );
++      sprintf ( nSc.UID, "%04ld", nSc.ifIndex );
 +      strcpy ( nSc.ifName, ifName );
 +      addList (( char * ) &scList, ( char * ) &nSc, sizeof ( nSc ));
 +    }
 +
 +    if ( hasChanged (( char * ) &nPr, sizeof ( nPr ))) {
 +      nPr.ifIndex = ifIndex;
-+      sprintf ( nPr.UID, "%04d\0", nPr.ifIndex );
++      sprintf ( nPr.UID, "%04ld", nPr.ifIndex );
 +      strcpy ( nPr.ifName, ifName );
 +      addList (( char * ) &prList, ( char * ) &nPr, sizeof ( nPr ));
 +    }
 +
 +    if ( hasChanged (( char * ) &nOp, sizeof ( nOp ))) {
 +      nOp.ifIndex = ifIndex;
-+      sprintf ( nOp.UID, "%04d\0", nOp.ifIndex );
++      sprintf ( nOp.UID, "%04ld", nOp.ifIndex );
 +      strcpy ( nOp.ifName, ifName );
 +      addList (( char * ) &opList, ( char * ) &nOp, sizeof ( nOp ));
 +    }
 +
 +    if ( hasChanged (( char * ) &nCo, sizeof ( nCo ))) {
 +      nCo.ifIndex = ifIndex;
-+      sprintf ( nCo.UID, "%04d\0", nCo.ifIndex );
++      sprintf ( nCo.UID, "%04ld", nCo.ifIndex );
 +      strcpy ( nCo.ifName, ifName );
 +      addList (( char * ) &coList, ( char * ) &nCo, sizeof ( nCo ));
 +    }
 +
 +    if ( hasChanged (( char * ) &nRi, sizeof ( nRi ))) {
 +      nRi.ifIndex = ifIndex;
-+      sprintf ( nRi.UID, "%04d\0", nRi.ifIndex );
++      sprintf ( nRi.UID, "%04ld", nRi.ifIndex );
 +      strcpy ( nRi.ifName, ifName );
 +      addList (( char * ) &riList, ( char * ) &nRi, sizeof ( nRi ));
 +    }
 +
 +    if ( hasChanged (( char * ) &nPo, sizeof ( nPo ))) {
 +      nPo.ifIndex = ifIndex;
-+      sprintf ( nPo.UID, "%04d\0", nPo.ifIndex );
++      sprintf ( nPo.UID, "%04ld", nPo.ifIndex );
 +      strcpy ( nPo.ifName, ifName );
 +      addList (( char * ) &poList, ( char * ) &nPo, sizeof ( nPo ));
 +    }
 +
 +    if ( hasChanged (( char * ) &nPa, sizeof ( nPa ))) {
 +      nPa.ifIndex = ifIndex;
-+      sprintf ( nPa.UID, "%04d\0", nPa.ifIndex );
++      sprintf ( nPa.UID, "%04ld", nPa.ifIndex );
 +      strcpy ( nPa.ifName, ifName );
 +      addList (( char * ) &paList, ( char * ) &nPa, sizeof ( nPa ));
 +    }
 +
 +    if ( hasChanged (( char * ) &nPt, sizeof ( nPt ))) {
 +      nPt.ifIndex = ifIndex;
-+      sprintf ( nPt.UID, "%04d\0", nPt.ifIndex );
++      sprintf ( nPt.UID, "%04ld", nPt.ifIndex );
 +      strcpy ( nPt.ifName, ifName );
 +      addList (( char * ) &ptList, ( char * ) &nPt, sizeof ( nPt ));
 +    }
 +
 +    if ( hasChanged (( char * ) &nPf, sizeof ( nPf ))) {
 +      nPf.ifIndex = ifIndex;
-+      sprintf ( nPf.UID, "%04d\0", nPf.ifIndex );
++      sprintf ( nPf.UID, "%04ld", nPf.ifIndex );
 +      strcpy ( nPf.ifName, ifName );
 +      addList (( char * ) &pfList, ( char * ) &nPf, sizeof ( nPf ));
 +    }
 +
 +    if ( hasChanged (( char * ) &nPd, sizeof ( nPd ))) {
 +      nPd.ifIndex = ifIndex;
-+      sprintf ( nPd.UID, "%04d\0", nPd.ifIndex );
++      sprintf ( nPd.UID, "%04ld", nPd.ifIndex );
 +      strcpy ( nPd.ifName, ifName );
 +      addList (( char * ) &pdList, ( char * ) &nPd, sizeof ( nPd ));
 +    }
 +
 +    if ( hasChanged (( char * ) &nPi, sizeof ( nPi ))) {
 +      nPi.ifIndex = ifIndex;
-+      sprintf ( nPi.UID, "%04d\0", nPi.ifIndex );
++      sprintf ( nPi.UID, "%04ld", nPi.ifIndex );
 +      strcpy ( nPi.ifName, ifName );
 +      addList (( char * ) &piList, ( char * ) &nPi, sizeof ( nPi ));
 +    }
 +  }
 +
-+//printf ( "%s - ifIndex: %d ifName: %s UID: %s\n", 
++//printf ( "%s - ifIndex: %ld ifName: %s UID: %s\n", 
 +//         "load80211Structs() - HASCHANGED", ifIndex, ifName, nSc.UID );
 +}
 +
@@ -4163,7 +4164,7 @@
 +  nAa.ifIndex = ifIndex;
 +  nAa.authenticationAlgorithmsIndex = 1;            // index number one
 +  nAa.authenticationAlgorithm = 1;                  // 1 => open key
-+  sprintf ( nAa.UID, "%04d%04d\0", nAa.ifIndex, nAa.authenticationAlgorithmsIndex );
++  sprintf ( nAa.UID, "%04ld%04ld", nAa.ifIndex, nAa.authenticationAlgorithmsIndex );
 +  nAa.authenticationAlgorithmsEnable = 1;           // enabled by default
 +  if ( ( wi->has_key                        ) &&
 +       ( wi->key_size  != 0                 ) &&
@@ -4176,7 +4177,7 @@
 +  nAa.ifIndex = ifIndex;
 +  nAa.authenticationAlgorithmsIndex = 2;            // index number 2
 +  nAa.authenticationAlgorithm = 2;                  // 2 => shared key
-+  sprintf ( nAa.UID, "%04d%04d\0", nAa.ifIndex, nAa.authenticationAlgorithmsIndex );
++  sprintf ( nAa.UID, "%04ld%04ld", nAa.ifIndex, nAa.authenticationAlgorithmsIndex );
 +  nAa.authenticationAlgorithmsEnable = 2;
 +  if ( ( wi->has_key                        ) &&
 +       ( wi->key_size  != 0                 ) &&
@@ -4190,7 +4191,7 @@
 +      nDf.haveWEPDefaultKeyValue = TRUE;
 +      nDf.ifIndex = ifIndex;
 +      nDf.WEPDefaultKeyIndex = i + 1;               // index number
-+      sprintf ( nDf.UID, "%04d%04d\0", nDf.ifIndex, nDf.WEPDefaultKeyIndex );
++      sprintf ( nDf.UID, "%04ld%04ld", nDf.ifIndex, nDf.WEPDefaultKeyIndex );
 +      if ( wep[i].haveKey )
 +        strcpy ( nDf.WEPDefaultKeyValue, "*****" );
 +      else
@@ -4255,7 +4256,7 @@
 +      nRt.supportedDataRatesTxIndex = i + 1;
 +      nRt.supportedDataRatesTxValue = wi->range.bitrate[i] / 500000L;
 +      nRt.haveSupportedDataRatesTxValue = TRUE;
-+      sprintf ( nRt.UID, "%04d%04d\0", nRt.ifIndex, nRt.supportedDataRatesTxIndex );
++      sprintf ( nRt.UID, "%04ld%04ld", nRt.ifIndex, nRt.supportedDataRatesTxIndex );
 +      strcpy ( nRt.ifName, ifName );
 +      addList (( char * ) &rtList, ( char * ) &nRt, sizeof ( nRt ));
 +    }
@@ -4268,7 +4269,7 @@
 +      nRr.supportedDataRatesRxIndex = i + 1;
 +      nRr.supportedDataRatesRxValue = wi->range.bitrate[i] / 500000L;
 +      nRr.haveSupportedDataRatesRxValue = TRUE;
-+      sprintf ( nRr.UID, "%04d%04d\0", nRr.ifIndex, nRr.supportedDataRatesRxIndex );
++      sprintf ( nRr.UID, "%04ld%04ld", nRr.ifIndex, nRr.supportedDataRatesRxIndex );
 +      strcpy ( nRr.ifName, ifName );
 +      addList (( char * ) &rrList, ( char * ) &nRr, sizeof ( nRr ));
 +    }
@@ -4441,22 +4442,22 @@
 +          s = bfr;
 +          s = strchr ( s, ':' ); s++;             /* Skip ethX:   */
 +          s = strtok ( s, " " );                  /* ' ' => '\0'  */
-+          sscanf ( s, "%X", &wi->stats.status ); // status 
++          sscanf ( s, "%hX", &wi->stats.status ); // status 
 +
 +          s = strtok ( NULL, " " );               // link quality
 +          if ( strchr ( s, '.' ) != NULL )
 +            wi->stats.qual.updated |= 1;
-+          sscanf ( s, "%d", &wi->stats.qual.qual );
++          sscanf ( s, "%hhd", &wi->stats.qual.qual );
 +
 +          s = strtok ( NULL, " " );               // signal level
 +          if ( strchr ( s,'.' ) != NULL )
 +            wi->stats.qual.updated |= 2;
-+          sscanf ( s, "%d", &wi->stats.qual.level );
++          sscanf ( s, "%hhd", &wi->stats.qual.level );
 +
 +          s = strtok ( NULL, " " );               // noise level
 +          if ( strchr ( s, '.' ) != NULL )
 +            wi->stats.qual.updated += 4;
-+          sscanf ( s, "%d", &wi->stats.qual.noise );
++          sscanf ( s, "%hhd", &wi->stats.qual.noise );
 +
 +          s = strtok ( NULL, " " ); sscanf ( s, "%d", &wi->stats.discard.nwid     );
 +          s = strtok ( NULL, " " ); sscanf ( s, "%d", &wi->stats.discard.code     );
@@ -4562,12 +4563,12 @@
 +    printf ( "%s %s\n", "SIOCGIWFREQ", " ===> no info.freq support" );
 +
 +  if ( info.has_sens )
-+    printf ( "%s sens: %d\n", "SIOCGIWSENS", info.sens );
++    printf ( "%s sens: %" PRIdPTR "\n", "SIOCGIWSENS", *(intptr_t *)&info.sens );
 +  else
 +    printf ( "%s %s\n", "SIOCGIWSENS", " ===> no info.sens support" );
 +
 +  if ( info.has_key ) {
-+    printf ( "%s key_size: %d key_flags: %d wepCurrentKey: %d\n", 
++    printf ( "%s key_size: %d key_flags: %d wepCurrentKey: %ld\n", 
 +              "SIOCGIWENCODE", info.key_size, info.key_flags, wepCurrentKey );
 +    printf ( "%s MODE: %d DISABLED: %d INDEX: %d OPEN: %d RESTRICTED: %d NOKEY: %d TEMP: %d\n",
 +              "SIOCGIWENCODE",                           info.key_flags & IW_ENCODE_MODE,
@@ -4580,7 +4581,7 @@
 +
 +  for ( i = 0; i < MAX_WEP_KEYS; i++ ) {
 +    if ( wep[i].haveKey )
-+      printf ( "%s wep[%d].len: %d wep[%d].key: %s\n", 
++      printf ( "%s wep[%d].len: %ld wep[%d].key: %s\n", 
 +                "SIOCGIWENCODE", i, wep[i].len, i, wep[i].key );
 +  }
 +
@@ -4594,19 +4595,19 @@
 +    printf ( "%s %s\n", "SIOCGIWAP", " ===> no ap_addr information" );
 +
 +  if ( info.has_bitrate )
-+    printf ( "%s bitrate: %d value: %d fixed: %d disabled: %d flags: %d\n", 
-+              "SIOCGIWRATE", info.bitrate, info.bitrate.value, info.bitrate.fixed, 
++    printf ( "%s bitrate: %" PRIdPTR " value: %d fixed: %d disabled: %d flags: %d\n", 
++              "SIOCGIWRATE", *(intptr_t *)&info.bitrate, info.bitrate.value, info.bitrate.fixed, 
 +                             info.bitrate.disabled, info.bitrate.flags );
 +  else
 +    printf ( "%s %s\n", "SIOCGIWRATE", " ===> no info.bitrate support" );
 +
 +  if ( info.has_rts )
-+    printf ( "%s rts: %d\n", "SIOCGIWRTS", info.rts );
++    printf ( "%s rts: %" PRIdPTR "\n", "SIOCGIWRTS", *(intptr_t *)&info.rts );
 +  else
 +    printf ( "%s %s\n", "SIOCGIWRTS", " ===> no info.rts support" );
 +
 +  if ( info.has_frag )
-+    printf ( "%s frag: %d\n", "SIOCGIWFRAG", info.frag );
++    printf ( "%s frag: %" PRIdPTR "\n", "SIOCGIWFRAG", *(intptr_t *)&info.frag );
 +  else
 +    printf ( "%s %s\n", "SIOCGIWFRAG", " ===> no info.frag support" );
 +
@@ -4616,7 +4617,7 @@
 +    printf ( "%s %s\n", "SIOCGIWMODE", " ===> no info.mode support" );
 +
 +  if ( info.has_power ) {
-+    printf ( "%s power: %d\n", "SIOCGIWPOWER", info.power );
++    printf ( "%s power: %" PRIdPTR "\n", "SIOCGIWPOWER", *(intptr_t *)&info.power );
 +    printf ( "%s disabled: %d MIN: %d MAX: %d TIMEOUT: %d RELATIVE: %d\n",
 +              "SIOCGIWPOWER",
 +              info.power.disabled                  ? 1:0, 
@@ -4636,7 +4637,7 @@
 +    printf ( "%s %s\n", "SIOCGIWPOWER", " ===> no info.power support" );
 +
 +  if ( info.has_retry )
-+    printf ( "%s retry: %d\n", "SIOCGIWRETRY", info.retry );
++    printf ( "%s retry: %" PRIdPTR "\n", "SIOCGIWRETRY", *(intptr_t *)&info.retry );
 +  else
 +    printf ( "%s %s\n", "SIOCGIWRETRY", " ===> no info.retry support" );
 +
@@ -4700,12 +4701,12 @@
 +addList ( char *l, char *data, int len  )
 +{
 +  char uid[256];
-+  LIST_HEAD ( , avNode ) *list;       
++  avList_t *list;       
 +
 +  // NOTE: this assumes the UID is at the beginning of the 
 +  //       data structure and that UIDs are strings
 +  
-+  list = ( LIST_HEAD ( , avNode ) * ) l;            // NOTE: don't know how to get 
++  list = ( avList_t * ) l;            // NOTE: don't know how to get 
 +  strcpy ( uid, data );                             //  rid of compiler warning on
 +                                                    //  LISTHEAD typecast
 +  // create a new node and the data that goes in it
@@ -4787,9 +4788,9 @@
 +****************************************************************************/
 +static void flushList ( char *l )
 +{
-+  LIST_HEAD ( , avNode ) *list;
++  avList_t *list;
 +  
-+  list = ( LIST_HEAD ( , avNode ) * ) l;    // NOTE: don't know how to get 
++  list = ( avList_t * ) l;    // NOTE: don't know how to get 
 +  while ( !LIST_EMPTY ( list )) {           //  rid of compiler warning on
 +    np = LIST_FIRST ( list );               //  LISTHEAD typecast
 +    if ( np->data )
@@ -4918,7 +4919,7 @@
 +
 --- /dev/null
 +++ b/agent/mibgroup/ieee802dot11.h
-@@ -0,0 +1,730 @@
+@@ -0,0 +1,732 @@
 +/****************************************************************************
 +*                                                                           *
 +*  File Name:           ieee802dot11.h                                      *
@@ -5024,7 +5025,7 @@
 +/****************************************************************************
 +*                           Linked List Structure                           *
 +****************************************************************************/
-+static struct avNode {  
++struct avNode {  
 +  LIST_ENTRY ( avNode ) nodes; 
 +  char *data;                                 // pointer to data
 +};
@@ -5648,10 +5649,12 @@
 +WriteMethod write_dot11SupportedRxAntenna;
 +WriteMethod write_dot11DiversitySelectionRx;
 +
++void shutdown_ieee802dot11 ( void );
++
 +#endif /* _MIBGROUP_IEEE802DOT11_H */
 --- /dev/null
 +++ b/agent/mibgroup/iwlib.h
-@@ -0,0 +1,502 @@
+@@ -0,0 +1,509 @@
 +/*
 + *	Wireless Tools
 + *
@@ -5683,6 +5686,9 @@
 +#include <unistd.h>
 +#include <netdb.h>		/* gethostbyname, getnetbyname */
 +#include <net/ethernet.h>	/* struct ether_addr */
++#ifdef HAVE_NET_IF_H
++#include <net/if.h>
++#endif
 +#include <sys/time.h>		/* struct timeval */
 +#include <unistd.h>
 +
@@ -5738,6 +5744,10 @@
 +      && LINUX_VERSION_CODE >= KERNEL_VERSION(2,0,0) \
 +      && LINUX_VERSION_CODE < KERNEL_VERSION(2,1,0)
 +#define LIBC5_HEADERS
++
++/* Musl */
++#elif !defined(__GLIBC__) && LINUX_VERSION_CODE >= KERNEL_VERSION(3,0,0)
++#define GENERIC_HEADERS
 +
 +/* Unsupported combination */
 +#else

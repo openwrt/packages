@@ -17,10 +17,10 @@ include ./openvswitch.mk
 #
 PKG_NAME:=openvswitch
 PKG_VERSION:=$(ovs_version)
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.openvswitch.org/releases/
-PKG_HASH:=e03bfab7ca82d81a7d3a36de4f390a3b5210e3f39657671f922877cd4ea6dc73
+PKG_HASH:=e1b3fa472676626853f22d63f959e5ad061e1bf57e1bbd444d0ed88f947ef8b1
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
@@ -28,7 +28,7 @@ PKG_CPE_ID:=cpe:/a:openvswitch:openvswitch
 
 PKG_BUILD_DIR:=$(ovs_builddir)
 PKG_BUILD_DEPENDS+=python3/host
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16 lto
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -251,6 +251,7 @@ CONFIGURE_ARGS+= \
 CONFIGURE_VARS += \
 	$(if $(CONFIG_OPENVSWITCH_WITH_LIBUNBOUND),,ac_cv_lib_unbound_ub_ctx_create=no) \
 	ovs_cv_flake8=no \
+	ovs_cv_groff=no \
 	ovs_cv_python3=$(PYTHON3) \
 	ovs_cv_python3_host=$(HOST_PYTHON3_BIN) \
 	SPHINXBUILD=none \
@@ -267,7 +268,7 @@ ifneq ($(ovs_intree_kmod_enabled),)
   endif
 endif
 
-TARGET_CFLAGS += -flto -std=gnu99
+TARGET_CFLAGS += -std=gnu99
 MAKE_VARS += PYTHONPATH="$(HOST_PYTHON3PATH)"
 
 export OVS_KERNEL_MAKE_FLAGS=$(KERNEL_MAKE_FLAGS)

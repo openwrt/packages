@@ -1,6 +1,6 @@
 --- a/makedefs
 +++ b/makedefs
-@@ -215,7 +215,7 @@ error() {
+@@ -233,7 +233,7 @@ ARFL=rv
  
  case $# in
   # Officially supported usage.
@@ -9,7 +9,7 @@
      RELEASE=`(uname -r) 2>/dev/null`
      # No ${x%%y} support in Solaris 11 /bin/sh
      RELEASE_MAJOR=`expr "$RELEASE" : '\([0-9]*\)'` || exit 1
-@@ -242,6 +242,15 @@ case "$SYSTEM" in
+@@ -247,6 +247,15 @@ case $# in
  esac
  
  case "$SYSTEM.$RELEASE" in

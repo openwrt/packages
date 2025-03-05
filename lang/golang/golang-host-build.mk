@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020 Jeffery To
+# Copyright (C) 2020, 2022 Jeffery To
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.

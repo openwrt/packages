@@ -15,11 +15,11 @@ link tests to fail due to a stray "no" word getting passed to the linker.
 Signed-off-by: Jo-Philipp Wich <jo@mein.io>
 --- a/configure.d/config_os_libs2
 +++ b/configure.d/config_os_libs2
-@@ -247,14 +247,22 @@ if test "x$with_nl" != "xno"; then
-         )
- 
+@@ -252,14 +252,22 @@ if test "x$with_nl" != "xno"; then
+     case $target_os in
+     linux*) # Check for libnl (linux)
          netsnmp_save_CPPFLAGS="$CPPFLAGS"
--        CPPFLAGS="${LIBNL3_CFLAGS} $CPPFLAGS"
+-        CPPFLAGS="${LIBNL3_CFLAGS} ${LIBNLROUTE3_CFLAGS} $CPPFLAGS"
 -        NETSNMP_SEARCH_LIBS(nl_connect, nl-3,
 -            [AC_CHECK_HEADERS(netlink/netlink.h)
 -            EXTERNAL_MIBGROUP_INCLUDES="$EXTERNAL_MIBGROUP_INCLUDES ${LIBNL3_CFLAGS}"],

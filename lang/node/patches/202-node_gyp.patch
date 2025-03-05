@@ -1,0 +1,18 @@
+--- a/node.gyp
++++ b/node.gyp
+@@ -1138,6 +1138,7 @@
+       'includes': [
+         'node.gypi'
+       ],
++      'libraries!':[ '-licui18n', '-licuuc', '-licudata', '-lcrypto', '-lssl', '-lz', '-lhttp_parser', '-luv', '-lnghttp2', '-lcares' ],
+       'include_dirs': [
+         'src',
+         'tools/msvs/genfiles',
+@@ -1334,6 +1335,7 @@
+         'tools',
+         'src',
+       ],
++      'libraries!':[ '-licui18n', '-licuuc', '-licudata', '-lcrypto', '-lssl', '-lz', '-lhttp_parser', '-luv', '-lnghttp2', '-lcares' ],
+       'sources': [
+         'tools/js2c.cc',
+         'tools/executable_wrapper.h',

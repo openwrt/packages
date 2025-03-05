@@ -21,7 +21,7 @@ PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16
 
 include $(INCLUDE_DIR)/package.mk
 

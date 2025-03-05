@@ -44,7 +44,7 @@ domain_ptr_ip6() {
   y = $0 ;
   ct_start = length(y) - 32 + CIDR ;
   for(i=ct_start; i>0; i--) { x = (x substr(y,i,1)) ; } ;
-  gsub(/./,"&\.",x) ;
+  gsub(/./,"&.",x) ;
   x = (x "ip6.arpa") ;
   print x }'
 }
@@ -65,7 +65,7 @@ host_ptr_ip6() {
   ct_start = length(y);
   for(i=ct_start; i>0; i--) { x = (x substr(y,i,1)) ; } ;
   sub(/[0-9]+\//,"",x) ;
-  gsub(/./,"&\.",x) ;
+  gsub(/./,"&.",x) ;
   x = (x "ip6.arpa") ;
   print x }'
 }
@@ -80,8 +80,8 @@ domain_ptr_ip4() {
   CIDR = (CIDR / 8) ;
   dtxt = $0 ;
   sub(/\/.*/,"",dtxt) ;
-  split(dtxt, dtxt, ".") ;
-  for(i=1; i<=CIDR; i++) { x = (dtxt[i] "." x) ; }
+  split(dtxt, dtxtarr, ".") ;
+  for(i=1; i<=CIDR; i++) { x = (dtxtarr[i] "." x) ; }
   x = (x "in-addr.arpa") ;
   print x }'
 }

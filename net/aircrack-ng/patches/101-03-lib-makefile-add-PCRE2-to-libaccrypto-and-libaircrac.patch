@@ -1,0 +1,37 @@
+From 0be8f0d7d8e4a09ea5687bcec6690876b4161a0e Mon Sep 17 00:00:00 2001
+From: Andras Gemes <andrasgemes@outlook.com>
+Date: Mon, 23 Jan 2023 10:46:26 +0100
+Subject: [PATCH 3/6] lib/makefile: add PCRE2 to libaccrypto and libaircrack
+
+---
+ lib/Makefile.inc | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+--- a/lib/Makefile.inc
++++ b/lib/Makefile.inc
+@@ -65,8 +65,8 @@ SRC_CRYPTO	+=	%D%/crypto/sha1-git.c
+ endif
+ 
+ libaccrypto_la_SOURCES	= $(SRC_CRYPTO)
+-libaccrypto_la_CFLAGS		= $(COMMON_CFLAGS) $(PCRE_CFLAGS)
+-libaccrypto_la_LIBADD		= $(PCRE_LIBS) $(LIBAIRCRACK_OSDEP_LIBS) $(CRYPTO_LDFLAGS) $(CRYPTO_LIBS)
++libaccrypto_la_CFLAGS		= $(COMMON_CFLAGS) $(PCRE_CFLAGS) $(PCRE2_CFLAGS)
++libaccrypto_la_LIBADD		= $(PCRE_LIBS) $(PCRE2_LIBS) $(LIBAIRCRACK_OSDEP_LIBS) $(CRYPTO_LDFLAGS) $(CRYPTO_LIBS)
+ 
+ libcowpatty_la_SOURCES = $(SRC_COW)
+ libcowpatty_la_CFLAGS = $(COMMON_CFLAGS) $(LIBCOW_CFLAGS)
+@@ -121,12 +121,12 @@ SRC_LIBAC += %D%/libac/support/strlcpy.c
+ endif
+ 
+ libaircrack_la_SOURCES	= $(SRC_LIBAC) $(TRAMPOLINE) $(CPUSET)
+-libaircrack_la_CFLAGS		= $(COMMON_CFLAGS) $(PCRE_CFLAGS) \
++libaircrack_la_CFLAGS		= $(COMMON_CFLAGS) $(PCRE_CFLAGS) $(PCRE2_CFLAGS) \
+ 													"-DLIBAIRCRACK_CE_WPA_PATH=\"$(LIBAIRCRACK_CE_WPA_PATH)\"" \
+ 													"-DABS_TOP_SRCDIR=\"$(abs_top_srcdir)\"" \
+ 													"-DABS_TOP_BUILDDIR=\"$(abs_top_builddir)\"" \
+ 													"-DLIBDIR=\"$(libdir)\""
+-libaircrack_la_LIBADD		= $(COMMON_LDADD) $(LIBAIRCRACK_OSDEP_LIBS) $(PCRE_LIBS) $(CRYPTO_LDFLAGS) $(CRYPTO_LIBS)
++libaircrack_la_LIBADD		= $(COMMON_LDADD) $(LIBAIRCRACK_OSDEP_LIBS) $(PCRE_LIBS) $(PCRE2_LIBS) $(CRYPTO_LDFLAGS) $(CRYPTO_LIBS)
+ 
+ if CYGWIN
+ libaircrack_la_LIBADD += -lshlwapi

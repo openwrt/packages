@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=transmission
-PKG_VERSION:=4.0.2
+PKG_VERSION:=4.0.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/transmission/transmission/releases/download/$(PKG_VERSION)/
-PKG_HASH:=39bf7a104a722805a9dc089cdaaffe33bf90b82230a7ea7f340cae59f00a2ee8
+PKG_HASH:=2a38fe6d8a23991680b691c277a335f8875bdeca2b97c6b26b598bc9c7b0c45f
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -21,8 +21,9 @@ PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:transmissionbt:transmission
 
 PKG_INSTALL:=1
-PKG_BUILD_DEPENDS:=libb64 node/host
+PKG_BUILD_DEPENDS:=libb64
 PKG_BUILD_PARALLEL:=1
+PKG_BUILD_FLAGS:=gc-sections lto
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_LIBCURL_GNUTLS \
 	CONFIG_LIBCURL_MBEDTLS \
@@ -33,6 +34,7 @@ PKG_CONFIG_DEPENDS:= \
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 include $(INCLUDE_DIR)/package-seccomp.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/transmission/template
   SUBMENU:=BitTorrent
@@ -43,7 +45,7 @@ define Package/transmission/template
   DEPENDS:=+libatomic +libcurl +libdeflate +libdht +libevent2 \
 	   +libevent2-pthreads +libminiupnpc +libnatpmp +libpthread +libpsl \
 	   +librt +libutp +zlib +LIBCURL_NOSSL:libmbedtls \
-	   +LIBCURL_GNUTLS:libmbedtls
+	   +LIBCURL_GNUTLS:libmbedtls +LIBCURL_MBEDTLS:libmbedtls
 endef
 
 define Package/transmission-daemon
@@ -91,8 +93,8 @@ define Package/transmission-daemon/conffiles
 /etc/config/transmission
 endef
 
-TARGET_CFLAGS += -ffunction-sections -fdata-sections -flto -DHAVE_SIZE_T -latomic
-TARGET_LDFLAGS += -Wl,--gc-sections -Wl,--as-needed
+TARGET_CFLAGS += -DHAVE_SIZE_T -latomic
+TARGET_LDFLAGS += -Wl,--as-needed
 
 CMAKE_OPTIONS += \
 	-DENABLE_CLI:BOOL=YES \

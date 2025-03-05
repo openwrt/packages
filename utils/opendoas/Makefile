@@ -2,14 +2,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=opendoas
 PKG_VERSION:=6.8.2
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/Duncaen/OpenDoas/releases/download/v$(PKG_VERSION)
 PKG_HASH:=4e98828056d6266bd8f2c93e6ecf12a63a71dbfd70a5ea99ccd4ab6d0745adf0
 
 PKG_MAINTAINER:=Michal Vasilek <michal.vasilek@nic.cz>
-PKG_LICENSE:=ISC, BSD-3-Clause
+PKG_LICENSE:=ISC BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_INSTALL:=1

@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -42,7 +42,7 @@ regular_CFLAGS="-Wall -Waggregate-return
+@@ -41,7 +41,7 @@ regular_CFLAGS="-Wall -Waggregate-return
  
  AS_IF([test -n "$kbuilddir"], [
  	AC_MSG_CHECKING([kernel version that we will build against])

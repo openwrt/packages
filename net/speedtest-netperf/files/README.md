@@ -11,7 +11,7 @@ The `speedtest-netperf` package provides a convenient means of on-device network
 
 3. **CPU Usage:**  Observing CPU usage under network load gives insight into whether the router is CPU-bound, or if there is CPU "headroom" to support even higher network throughput. In addition to managing network traffic, a router actively running a speed test will also use CPU cycles to generate network load, and measuring this distinct CPU usage also helps gauge its impact.
 
-**Note:** _The `speedtest-netperf.sh` script uses servers and network bandwidth that are provided by generous volunteers (not some wealthy "big company"). Feel free to use the script to test your SQM configuration or troubleshoot network and latency problems. Continuous or high rate use of this script may result in denied access. Happy testing!_
+**Note:** _The `speedtest-netperf.sh` script uses servers and network bandwidth that are provided by generous volunteers. Feel free to use the script to test your SQM configuration or troubleshoot network and latency problems, but be warned that continuous or high-rate use of the servers may result in denied access. Happy testing!_
 
 
 ## Theory of Operation
@@ -23,6 +23,8 @@ The script operates in two distict modes for network loading: *sequential* and *
 Sequential mode is preferred when measuring peak upload and download speeds for SQM configuration or testing ISP speed claims, because the measurements are unimpacted by traffic in the opposite direction.
 
 Concurrent mode places greater stress on the network, and can expose additional latency problems. It provides a more realistic estimate of expected bidirectional throughput. However, the download and upload speeds reported may be considerably lower than your line's rated speed. This is not a bug, nor is it a problem with your internet connection. It's because the ACK (acknowledge) messages sent back to the sender may consume a significant fraction of a link's capacity (as much as 50% with highly asymmetric links, e.g 15:1 or 20:1).
+
+The script also supports measuring latency when idle as a baseline prior to measuring under network load. This allows better determination of induced latency under load, a critical bufferbloat parameter. The CPU details can also be used to verify idle conditions or examine CPU frequency against ping variations and jitter (e.g. tracing high jitter to occasional low CPU frequency operation).
 
 After running `speedtest-netperf.sh`, if latency is seen to increase much during the data transfers, then other network activity, such as voice or video chat, gaming, and general interactive usage will likely suffer. Gamers will see this as frustrating lag when someone else uses the network, Skype and FaceTime users will see dropouts or freezes, and VOIP service may be unusable.
 
@@ -42,9 +44,9 @@ opkg install speedtest-netperf_1.0.0-1_all.ipk
 
 ## Usage
 
-The speedtest-netperf.sh script measures throughput, latency and CPU usage during file transfers. To invoke it:
+The speedtest-netperf.sh script measures throughput, latency and CPU usage during file transfers and when idle. To invoke it:
 
-    speedtest-netperf.sh [-4 | -6] [-H netperf-server] [-t duration] [-p host-to-ping] [-n simultaneous-streams ] [-s | -c]
+    speedtest-netperf.sh [-4 | -6] [-H netperf-server] [-t duration] [-p host-to-ping] [-n simultaneous-streams ] [-s | -c [duration] ] [ -i [duration] ]
 
 Options, if present, are:
 
@@ -52,11 +54,12 @@ Options, if present, are:
     -H | --host:       DNS or Address of a netperf server (default - netperf.bufferbloat.net)
                        Alternate servers are netperf-east (US, east coast),
                        netperf-west (US, California), and netperf-eu (Denmark).
-    -t | --time:       Duration for how long each direction's test should run - (default - 60 seconds)
-    -p | --ping:       Host to ping to measure latency (default - gstatic.com)
+    -t | --time:       Duration for how long each direction's test should run - (default - 30 seconds)
+    -p | --ping:       Host to ping to measure latency (default - one.one.one.one)
     -n | --number:     Number of simultaneous sessions (default - 5 sessions)
-    -s | --sequential: Sequential download/upload (default - sequential)
-    -c | --concurrent: Concurrent download/upload
+    -s | --sequential: Sequential download/upload (default - disabled)
+    -c | --concurrent: Concurrent download/upload (default - disabled)
+    -i | --idle:       Measure idle latency before speed test (default - disabled)
 
 The primary script output shows download and upload speeds, together with the percent packet loss, and a summary of latencies, including min, max, average, median, and 10th and 90th percentiles so you can get a sense of the distribution.
 
@@ -69,7 +72,7 @@ Notice also that the activation of SQM requires greater CPU, but that in both ca
 
 ```
 [Sequential Test: NO SQM, POOR LATENCY]                       [Sequential Test: WITH SQM, GOOD LATENCY]
-# speedtest-netperf.sh                                        # speedtest-netperf.sh
+# speedtest-netperf.sh --sequential                           # speedtest-netperf.sh --sequential
 [date/time] Starting speedtest for 60 seconds per transfer    [date/time] Starting speedtest for 60 seconds per transfer
 session. Measure speed to netperf.bufferbloat.net (IPv4)      session. Measure speed to netperf.bufferbloat.net (IPv4)
 while pinging gstatic.com. Download and upload sessions are   while pinging gstatic.com. Download and upload sessions are

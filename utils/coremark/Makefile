@@ -22,7 +22,7 @@ PKG_MAINTAINER:=Lim Guo Wei <limguowei@gmail.com> \
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE.md
 
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16 lto
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -59,8 +59,6 @@ define Package/coremark/config
 		help
 			Number of threads to run in parallel
 endef
-
-TARGET_CFLAGS += -flto
 
 ifeq ($(CONFIG_COREMARK_OPTIMIZE_O3),y)
 	TARGET_CFLAGS := $(filter-out -O%,$(TARGET_CFLAGS)) -O3

@@ -69,9 +69,5 @@ boot() {
 		mount -t cgroup -o rw,nosuid,nodev,noexec,relatime,none,name=systemd cgroup /sys/fs/cgroup/systemd
 	fi
 
-	if [ ! -d /run ]; then
-		ln -s /var/run /run
-	fi
-
 	start
 }

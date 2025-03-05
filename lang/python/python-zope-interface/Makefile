@@ -1,5 +1,6 @@
 #
-# Copyright (C) 2006-2011, 2015-2018 OpenWrt.org
+# Copyright (C) 2006-2011 OpenWrt.org
+# Copyright (C) 2015-2016, 2018-2021, 2023 Jeffery To
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,11 +9,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-zope-interface
-PKG_VERSION:=5.4.0
+PKG_VERSION:=6.1
 PKG_RELEASE:=1
 
 PYPI_NAME:=zope.interface
-PKG_HASH:=5dba5f530fec3f0988d83b78cc591b58c0b6eb8431a85edd1569a0539a8a5a0e
+PKG_HASH:=2fdc7ccbd6eb6b7df5353012fbed6c3c5d04ceaca0038f75e601060e95345309
 
 PKG_LICENSE:=ZPL-2.1
 PKG_LICENSE_FILES:=LICENSE.txt
@@ -28,7 +29,7 @@ define Package/python3-zope-interface
   SUBMENU:=Python
   TITLE:=Interfaces for Python
   URL:=https://github.com/zopefoundation/zope.interface
-  DEPENDS:=+python3-light
+  DEPENDS:=+python3-light +python3-logging
 endef
 
 define Package/python3-zope-interface/description

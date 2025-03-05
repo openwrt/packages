@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2015-2017 Ted Hess <thess@kitschensync.net>
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -8,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pianod
-PKG_VERSION:=174.09
+PKG_VERSION:=174.11
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=https://github.com/thess/pianod-sc/releases/download/$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=744c833ee17a7c95068c6925f4301f342bcad838ad8e48b40a19fd6739533eac
+PKG_HASH:=55e914ce6e3eb753b5a66cc915ffed29ec405c8913d16495a20409c3d73d8e33
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 

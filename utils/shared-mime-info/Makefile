@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shared-mime-info
-PKG_VERSION:=2.1
+PKG_VERSION:=2.4
 PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
@@ -16,7 +16,9 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE:=shared-mime-info-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://gitlab.freedesktop.org/xdg/$(PKG_NAME)/-/archive/$(PKG_VERSION)
-PKG_HASH:=37df6475da31a8b5fc63a54ba0770a3eefa0a708b778cb6366dccee96393cb60
+PKG_HASH:=32dc32ae39ff1c1bf8434dd3b36770b48538a1772bc0298509d034f057005992
+
+PKG_BUILD_DEPENDS:=gettext-full/host
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -25,13 +27,26 @@ include $(INCLUDE_DIR)/meson.mk
 define Package/shared-mime-info
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+glib2 +libxml2
+  DEPENDS:=+glib2 +libxml2 +libstdcpp
   TITLE:=MIME-type information
   URL:=https://freedesktop.org/wiki/Software/shared-mime-info/
 endef
 
 define Package/shared-mime-info/description
 	The shared-mime-info package contains a database of MIME types and their file extensions.
+endef
+
+MESON_ARG += \
+	-Dbuild-tests=false \
+	-Dupdate-mimedb=false \
+	-Dbuild-tools=true \
+	-Dbuild-translations=false
+
+define Build/InstallDev
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(CP) \
+		$(PKG_INSTALL_DIR)/usr/share/pkgconfig/shared-mime-info.pc \
+		$(1)/usr/lib/pkgconfig/
 endef
 
 define Package/shared-mime-info/install
@@ -43,12 +58,10 @@ define Package/shared-mime-info/install
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/share/* \
 		$(1)/usr/share/
-endef
-
-define Package/shared-mime-info/postinst
-#!/bin/sh
-
-update-mime-database /usr/share/mime/
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_DATA) \
+		./files/shared-mime-info.defaults \
+		$(1)/etc/uci-defaults/90-shared-mime-info
 endef
 
 $(eval $(call BuildPackage,shared-mime-info))

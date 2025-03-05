@@ -1,0 +1,36 @@
+--- a/conserver/consent.c
++++ b/conserver/consent.c
+@@ -1269,7 +1269,7 @@ AddrsMatch(char *addr1, char *addr2)
+ {
+ #if USE_IPV6
+     int error, ret = 0;
+-    struct addrinfo *ai1, *ai2, hints;
++    struct addrinfo *ai1, *ai2, *rp1, *rp2, hints;
+ #else
+     /* so, since we might use inet_addr, we're going to use
+      * (in_addr_t)(-1) as a sign of an invalid ip address.
+@@ -1307,17 +1307,19 @@ AddrsMatch(char *addr1, char *addr2)
+ 	goto done;
+     }
+ 
+-    for (; ai1 != NULL; ai1 = ai1->ai_next) {
+-	for (; ai2 != NULL; ai2 = ai2->ai_next) {
+-	    if (ai1->ai_addr->sa_family != ai2->ai_addr->sa_family)
++    rp1 = ai1;
++    rp2 = ai2;
++    for (; rp1 != NULL; rp1 = rp1->ai_next) {
++	for (; rp2 != NULL; rp2 = rp2->ai_next) {
++	    if (rp1->ai_addr->sa_family != rp2->ai_addr->sa_family)
+ 		continue;
+ 
+ 	    if (
+ # if HAVE_MEMCMP
+-		   memcmp(&ai1->ai_addr, &ai2->ai_addr,
++		   memcmp(&rp1->ai_addr, &rp2->ai_addr,
+ 			  sizeof(struct sockaddr_storage))
+ # else
+-		   bcmp(&ai1->ai_addr, &ai2->ai_addr,
++		   bcmp(&rp1->ai_addr, &rp2->ai_addr,
+ 			sizeof(struct sockaddr_storage))
+ # endif
+ 		   == 0) {

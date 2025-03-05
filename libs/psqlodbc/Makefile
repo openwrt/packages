@@ -23,7 +23,7 @@ PKG_INSTALL:=1
 include $(INCLUDE_DIR)/package.mk
 
 CONFIGURE_ARGS += \
-	--with-unixodbc=$(STAGING_DIR_HOST)/bin/odbc_config \
+	--with-unixodbc=$(STAGING_DIR)/host/bin/odbc_config \
 	--with-libpq=$(STAGING_DIR)/usr
 
 define Package/psqlodbc/Default

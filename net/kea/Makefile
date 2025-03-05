@@ -9,18 +9,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kea
-PKG_VERSION:=2.0.3
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=2.6.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://ftp.isc.org/isc/kea/$(PKG_VERSION)
-PKG_HASH:=d642907374d17480ebe4df805b363dc9e230a955475a9f3e04a076b52d5c43ec
+PKG_HASH:=207ceae33eb3b81ec4e6ac5605249a85b93779333b62aadf39e489f11dbcdc8d
 
-PKG_MAINTAINER:=BangLang Huang<banglang.huang@foxmail.com>, Rosy Song<rosysong@rosinson.com>
+PKG_MAINTAINER:=BangLang Huang <banglang.huang@foxmail.com>, Rosy Song <rosysong@rosinson.com>
 PKG_LICENSE:=MPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
 PKG_BUILD_PARALLEL:=1
+PKG_BUILD_FLAGS:=gc-sections
 
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
@@ -204,12 +205,10 @@ CONFIGURE_VARS += \
 
 TARGET_CXXFLAGS += \
 	$(FPIC) \
-	-fdata-sections \
-	-ffunction-sections \
 	-std=c++17
 
 TARGET_LDFLAGS += \
-	-Wl,--gc-sections,--as-needed
+	-Wl,--as-needed
 
 define Package/kea-libs/install
 	$(INSTALL_DIR) $(1)/usr/lib
