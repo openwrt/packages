@@ -20,7 +20,7 @@ adb_script="/usr/bin/adblock.sh"
 adb_pidfile="/var/run/adblock.pid"
 
 [ "${action}" = "boot" ] && "${adb_init}" running && exit 0
-[ -s "${adb_pidfile}" ] && { [ "${action}" = "start" ] || [ "${action}" = "stop" ] || [ "${action}" = "restart" ] || [ "${action}" = "reload" ] || [ "${action}" = "report" ] || [ "${action}" = "suspend" ] || [ "${action}" = "resume" ] || [ "${action}" = "query" ] || { [ "${action}" = "list" ] && [ -n "${1}" ]; }; } && exit 1
+[ -s "${adb_pidfile}" ] && ! { [ "${action}" = "start" ] || [ "${action}" = "stop" ] || [ "${action}" = "restart" ] || [ "${action}" = "reload" ] || [ "${action}" = "report" ] || [ "${action}" = "suspend" ] || [ "${action}" = "resume" ] || [ "${action}" = "query" ] || { [ "${action}" = "list" ] && [ -n "${1}" ]; }; } && exit 1
 
 boot() {
 	: >"${adb_pidfile}"
