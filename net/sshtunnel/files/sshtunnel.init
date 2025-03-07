@@ -42,7 +42,8 @@ validate_server_section() {
 		'StrictHostKeyChecking:or("yes", "no", "accept-new"):accept-new' \
 		'TCPKeepAlive:or("yes", "no")' \
 		'VerifyHostKeyDNS:or("yes", "no")' \
-		'ProxyCommand:string(1)'
+		'ProxyCommand:string(1)' \
+		'disable:or("yes", "no")'
 }
 
 validate_tunnelR_section() {
@@ -196,6 +197,10 @@ load_server() {
 	procd_set_param command "$PROG" $ARGS
 	# ProxyCommand must be quoted
 	[ -n "$ProxyCommand" ] && procd_append_param command -o "ProxyCommand=$ProxyCommand"
+
+	if [ "$disable" == "yes" ]; then
+		return 1
+	fi
 
 	procd_set_param stdout 1
 	procd_set_param stderr 1
