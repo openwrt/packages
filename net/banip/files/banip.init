@@ -52,7 +52,7 @@ start_service() {
 		procd_set_param nice "$(uci_get banip global ban_nicelimit "0")"
 		procd_set_param limits nofile="$(uci_get banip global ban_filelimit "1024")"
 		procd_set_param stdout 0
-		procd_set_param stderr 0
+		procd_set_param stderr 1
 		procd_close_instance
 	else
 		f_log "err" "banIP service autostart is disabled"

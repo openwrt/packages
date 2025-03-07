@@ -94,15 +94,15 @@ for feed in allowlist ${ban_feed} blocklist; do
 				f_down "${feed}.${asn}" "4" "${feed_url_4}" "${feed_rule_4}" "${feed_chain:-"in"}" "${feed_flag}"
 			done
 		else
-			(f_down "${feed}" "4" "${feed_url_4}" "${feed_rule_4}" "${feed_chain:-"in"}" "${feed_flag}") &
-		fi
-		if [ "${feed_url_4}" = "${feed_url_6}" ]; then
-			feed_url_6="local"
-			wait -n
-		else
-			hold="$((cnt % ban_cores))"
-			[ "${hold}" = "0" ] && wait -n
-			cnt="$((cnt + 1))"
+			if [ "${feed_url_4}" = "${feed_url_6}" ]; then
+				feed_url_6="local"
+				f_down "${feed}" "4" "${feed_url_4}" "${feed_rule_4}" "${feed_chain:-"in"}" "${feed_flag}"
+			else
+				(f_down "${feed}" "4" "${feed_url_4}" "${feed_rule_4}" "${feed_chain:-"in"}" "${feed_flag}") &
+				hold="$((cnt % ban_cores))"
+				[ "${hold}" = "0" ] && wait -n
+				cnt="$((cnt + 1))"
+			fi
 		fi
 	fi
 	if [ "${ban_protov6}" = "1" ] && [ -n "${feed_url_6}" ] && [ -n "${feed_rule_6}" ]; then
@@ -116,10 +116,10 @@ for feed in allowlist ${ban_feed} blocklist; do
 			done
 		else
 			(f_down "${feed}" "6" "${feed_url_6}" "${feed_rule_6}" "${feed_chain:-"in"}" "${feed_flag}") &
+			cnt="$((cnt + 1))"
+			hold="$((cnt % ban_cores))"
+			[ "${hold}" = "0" ] && wait -n
 		fi
-		cnt="$((cnt + 1))"
-		hold="$((cnt % ban_cores))"
-		[ "${hold}" = "0" ] && wait -n
 	fi
 done
 f_rmset

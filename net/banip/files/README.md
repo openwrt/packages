@@ -279,16 +279,16 @@ Available commands:
 ~# /etc/init.d/banip status
 ::: banIP runtime information
   + status            : active (nft: ✔, monitor: ✔)
-  + version           : 1.5.3-r1
-  + element_count     : 96 031 (chains: 7, sets: 18, rules: 46)
-  + active_feeds      : allowlist.v4MAC, allowlist.v6MAC, allowlist.v4, allowlist.v6, cinsscore.v4, country.v6, debl.v4, doh.v6, debl.v6, doh.v4, turris.v6, country.v4, threat.v4, turris.v4, blocklist.v4MAC, blocklist.v6MAC, blocklist.v4, blocklist.v6
+  + version           : 1.5.3-r3
+  + element_count     : 91 763 (chains: 7, sets: 18, rules: 46)
+  + active_feeds      : allowlist.v4MAC, allowlist.v6MAC, allowlist.v4, allowlist.v6, cinsscore.v4, debl.v4, debl.v6, doh.v6, doh.v4, threat.v4, turris.v4, country.v4, turris.v6, country.v6, blocklist.v4MAC, blocklist.v6MAC, blocklist.v4, blocklist.v6
   + active_devices    : wan: pppoe-wan / wan-if: wan, wan_6 / vlan-allow: - / vlan-block: -
   + active_uplink     : 91.61.217.158, 2001:fc:37ff:f64:b513:16dd:6903:7710
-  + nft_info          : ver: 1.1.1-r1, priority: -100, policy: performance, loglevel: warn, expiry: 2h, limit (icmp/syn/udp): 10/10/100
+  + nft_info          : ver: 1.1.1-r1, priority: -100, policy: performance, loglevel: warn, expiry: 2h, limit (icmp/syn/udp): 25/10/100
   + run_info          : base: /mnt/data/banIP, backup: /mnt/data/banIP/backup, report: /mnt/data/banIP/report, error: /mnt/data/banIP/error
   + run_flags         : auto: ✔, proto (4/6): ✔/✔, log (pre/in/out): ✘/✘/✘, count: ✔, dedup: ✔, split: ✘, custom feed: ✘, allowed only: ✘
-  + last_run          : mode: restart, duration: 0m 19s, memory: 1331.10 MB available, 1.75 MB max. used, cores: 4, log: logread, fetch: curl
-  + system_info       : 2025-02-28 13:29:29, Bananapi BPI-R3, mediatek/filogic, OpenWrt SNAPSHOT r28906-d6977ab33a 
+  + last_run          : 2025-03-07 13:08:56, duration: 1m 12s, mode: reload, memory: 1325.18 MB available, 1.88 MB max. used
+  + system_info       : cores: 4, log: logread, fetch: curl, Bananapi BPI-R3, mediatek/filogic, OpenWrt SNAPSHOT r28926-9a7192c08e 
 ```
 
 **banIP search information**  
