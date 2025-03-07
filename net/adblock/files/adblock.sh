@@ -32,7 +32,7 @@ adb_locallist="blacklist whitelist iplist"
 adb_tmpbase="/tmp"
 adb_backupdir="${adb_tmpbase}/adblock-Backup"
 adb_reportdir="${adb_tmpbase}/adblock-Report"
-adb_jaildir="/tmp"
+adb_jaildir=""
 adb_pidfile="/var/run/adblock.pid"
 adb_blacklist="/etc/adblock/adblock.blacklist"
 adb_whitelist="/etc/adblock/adblock.whitelist"
@@ -154,11 +154,7 @@ f_load() {
 # check & set environment
 #
 f_env() {
-	local mem_free
-
 	adb_starttime="$(date "+%s")"
-	mem_free="$("${adb_awkcmd}" '/^MemAvailable/{printf "%s",int($2/1000)}' "/proc/meminfo" 2>/dev/null)"
-
 	f_log "info" "adblock instance started ::: action: ${adb_action}, priority: ${adb_nice:-"0"}, pid: ${$}"
 	f_jsnup "running"
 	f_extconf
@@ -214,8 +210,9 @@ f_char() {
 # load dns backend config
 #
 f_dns() {
-	local util utils dns_section dns_info
+	local util utils dns_section dns_info mem_free
 
+	mem_free="$("${adb_awkcmd}" '/^MemAvailable/{printf "%s",int($2/1000)}' "/proc/meminfo" 2>/dev/null)"
 	if [ "${adb_action}" = "start" ] && [ -z "${adb_trigger}" ]; then
 		sleep ${adb_triggerdelay}
 	fi
@@ -325,7 +322,7 @@ f_dns() {
 			adb_dnscachecmd="-"
 			adb_dnsinstance="${adb_dnsinstance:-"0"}"
 			adb_dnsuser="${adb_dnsuser:-"root"}"
-			adb_dnsdir="${adb_dnsdir:-"/tmp"}"
+			adb_dnsdir="${adb_dnsdir}"
 			adb_dnsheader="${adb_dnsheader:-""}"
 			adb_dnsdeny="${adb_dnsdeny:-"0"}"
 			adb_dnsallow="${adb_dnsallow:-"1"}"
@@ -335,8 +332,8 @@ f_dns() {
 	esac
 
 	if [ "${adb_action}" != "stop" ]; then
-		[ ! -d "${adb_dnsdir}" ] && mkdir -p "${adb_dnsdir}"
-		[ "${adb_jail}" = "1" ] && [ ! -d "${adb_jaildir}" ] && mkdir -p "${adb_jaildir}"
+		[ ! -d "${adb_dnsdir}" ] && mkdir -p "${adb_dnsdir:-"/tmp"}"
+		[ "${adb_jail}" = "1" ] && [ ! -d "${adb_jaildir}" ] && mkdir -p "${adb_jaildir:-"/tmp"}"
 		[ "${adb_backup}" = "1" ] && [ ! -d "${adb_backupdir}" ] && mkdir -p "${adb_backupdir}"
 		if [ "${adb_dnsflush}" = "1" ] || [ "${mem_free}" -lt "64" ]; then
 			printf "%b" "${adb_dnsheader}" >"${adb_dnsdir}/${adb_dnsfile}"
