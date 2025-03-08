@@ -1,0 +1,22 @@
+From 589b0691e59f761ccb05ddb8e1124991440db2c7 Mon Sep 17 00:00:00 2001
+From: Andrew Tridgell <andrew@tridgell.net>
+Date: Thu, 14 Nov 2024 09:57:08 +1100
+Subject: [PATCH] prevent information leak off the stack
+
+prevent leak of uninitialised stack data in hash_search
+---
+ match.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+--- a/match.c
++++ b/match.c
+@@ -147,6 +147,9 @@ static void hash_search(int f,struct sum
+ 	int more;
+ 	schar *map;
+ 
++	// prevent possible memory leaks
++	memset(sum2, 0, sizeof sum2);
++
+ 	/* want_i is used to encourage adjacent matches, allowing the RLL
+ 	 * coding of the output to work more efficiently. */
+ 	want_i = 0;

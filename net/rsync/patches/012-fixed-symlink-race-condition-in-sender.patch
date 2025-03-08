@@ -1,0 +1,164 @@
+From 0590b09d9a34ae72741b91ec0708a820650198b0 Mon Sep 17 00:00:00 2001
+From: Andrew Tridgell <andrew@tridgell.net>
+Date: Wed, 18 Dec 2024 08:59:42 +1100
+Subject: [PATCH] fixed symlink race condition in sender
+
+when we open a file that we don't expect to be a symlink use
+O_NOFOLLOW to prevent a race condition where an attacker could change
+a file between being a normal file and a symlink
+---
+ checksum.c  |  2 +-
+ flist.c     |  2 +-
+ generator.c |  4 ++--
+ receiver.c  |  2 +-
+ sender.c    |  2 +-
+ syscall.c   | 20 ++++++++++++++++++++
+ t_unsafe.c  |  3 +++
+ tls.c       |  3 +++
+ trimslash.c |  2 ++
+ util1.c     |  2 +-
+ 10 files changed, 35 insertions(+), 7 deletions(-)
+
+--- a/checksum.c
++++ b/checksum.c
+@@ -405,7 +405,7 @@ void file_checksum(const char *fname, co
+ 	int32 remainder;
+ 	int fd;
+ 
+-	fd = do_open(fname, O_RDONLY, 0);
++	fd = do_open_checklinks(fname);
+ 	if (fd == -1) {
+ 		memset(sum, 0, file_sum_len);
+ 		return;
+--- a/flist.c
++++ b/flist.c
+@@ -1390,7 +1390,7 @@ struct file_struct *make_file(const char
+ 
+ 	if (copy_devices && am_sender && IS_DEVICE(st.st_mode)) {
+ 		if (st.st_size == 0) {
+-			int fd = do_open(fname, O_RDONLY, 0);
++			int fd = do_open_checklinks(fname);
+ 			if (fd >= 0) {
+ 				st.st_size = get_device_size(fd, fname);
+ 				close(fd);
+--- a/generator.c
++++ b/generator.c
+@@ -1798,7 +1798,7 @@ static void recv_generator(char *fname,
+ 
+ 	if (write_devices && IS_DEVICE(sx.st.st_mode) && sx.st.st_size == 0) {
+ 		/* This early open into fd skips the regular open below. */
+-		if ((fd = do_open(fnamecmp, O_RDONLY, 0)) >= 0)
++		if ((fd = do_open_nofollow(fnamecmp, O_RDONLY)) >= 0)
+ 			real_sx.st.st_size = sx.st.st_size = get_device_size(fd, fnamecmp);
+ 	}
+ 
+@@ -1867,7 +1867,7 @@ static void recv_generator(char *fname,
+ 	}
+ 
+ 	/* open the file */
+-	if (fd < 0 && (fd = do_open(fnamecmp, O_RDONLY, 0)) < 0) {
++	if (fd < 0 && (fd = do_open_checklinks(fnamecmp)) < 0) {
+ 		rsyserr(FERROR, errno, "failed to open %s, continuing",
+ 			full_fname(fnamecmp));
+ 	  pretend_missing:
+--- a/receiver.c
++++ b/receiver.c
+@@ -775,7 +775,7 @@ int recv_files(int f_in, int f_out, char
+ 			if (fnamecmp != fname) {
+ 				fnamecmp = fname;
+ 				fnamecmp_type = FNAMECMP_FNAME;
+-				fd1 = do_open(fnamecmp, O_RDONLY, 0);
++				fd1 = do_open_nofollow(fnamecmp, O_RDONLY);
+ 			}
+ 
+ 			if (fd1 == -1 && basis_dir[0]) {
+--- a/sender.c
++++ b/sender.c
+@@ -350,7 +350,7 @@ void send_files(int f_in, int f_out)
+ 			exit_cleanup(RERR_PROTOCOL);
+ 		}
+ 
+-		fd = do_open(fname, O_RDONLY, 0);
++		fd = do_open_checklinks(fname);
+ 		if (fd == -1) {
+ 			if (errno == ENOENT) {
+ 				enum logcode c = am_daemon && protocol_version < 28 ? FERROR : FWARNING;
+--- a/syscall.c
++++ b/syscall.c
+@@ -45,6 +45,8 @@ extern int preallocate_files;
+ extern int preserve_perms;
+ extern int preserve_executability;
+ extern int open_noatime;
++extern int copy_links;
++extern int copy_unsafe_links;
+ 
+ #ifndef S_BLKSIZE
+ # if defined hpux || defined __hpux__ || defined __hpux
+@@ -793,3 +795,21 @@ cleanup:
+ 	return retfd;
+ #endif // O_NOFOLLOW, O_DIRECTORY
+ }
++
++/*
++  varient of do_open/do_open_nofollow which does do_open() if the
++  copy_links or copy_unsafe_links options are set and does
++  do_open_nofollow() otherwise
++
++  This is used to prevent a race condition where an attacker could be
++  switching a file between being a symlink and being a normal file
++
++  The open is always done with O_RDONLY flags
++ */
++int do_open_checklinks(const char *pathname)
++{
++	if (copy_links || copy_unsafe_links) {
++		return do_open(pathname, O_RDONLY, 0);
++	}
++	return do_open_nofollow(pathname, O_RDONLY);
++}
+--- a/t_unsafe.c
++++ b/t_unsafe.c
+@@ -28,6 +28,9 @@ int am_root = 0;
+ int am_sender = 1;
+ int read_only = 0;
+ int list_only = 0;
++int copy_links = 0;
++int copy_unsafe_links = 0;
++
+ short info_levels[COUNT_INFO], debug_levels[COUNT_DEBUG];
+ 
+ int
+--- a/tls.c
++++ b/tls.c
+@@ -49,6 +49,9 @@ int list_only = 0;
+ int link_times = 0;
+ int link_owner = 0;
+ int nsec_times = 0;
++int safe_symlinks = 0;
++int copy_links = 0;
++int copy_unsafe_links = 0;
+ 
+ #ifdef SUPPORT_XATTRS
+ 
+--- a/trimslash.c
++++ b/trimslash.c
+@@ -26,6 +26,8 @@ int am_root = 0;
+ int am_sender = 1;
+ int read_only = 1;
+ int list_only = 0;
++int copy_links = 0;
++int copy_unsafe_links = 0;
+ 
+ int
+ main(int argc, char **argv)
+--- a/util1.c
++++ b/util1.c
+@@ -365,7 +365,7 @@ int copy_file(const char *source, const
+ 	int len;   /* Number of bytes read into `buf'. */
+ 	OFF_T prealloc_len = 0, offset = 0;
+ 
+-	if ((ifd = do_open(source, O_RDONLY, 0)) < 0) {
++	if ((ifd = do_open_nofollow(source, O_RDONLY)) < 0) {
+ 		int save_errno = errno;
+ 		rsyserr(FERROR_XFER, errno, "open %s", full_fname(source));
+ 		errno = save_errno;
