@@ -1,0 +1,21 @@
+From 536ae3f4efbcd95bee1f9794bbeceb50ba5f0dba Mon Sep 17 00:00:00 2001
+From: Andrew Tridgell <andrew@tridgell.net>
+Date: Tue, 10 Dec 2024 13:34:01 +1100
+Subject: [PATCH] raise protocol version to 32
+
+make it easier to spot unpatched servers
+---
+ rsync.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/rsync.h
++++ b/rsync.h
+@@ -111,7 +111,7 @@
+ 
+ /* Update this if you make incompatible changes and ALSO update the
+  * SUBPROTOCOL_VERSION if it is not a final (official) release. */
+-#define PROTOCOL_VERSION 31
++#define PROTOCOL_VERSION 32
+ 
+ /* This is used when working on a new protocol version or for any unofficial
+  * protocol tweaks.  It should be a non-zero value for each pre-release repo
