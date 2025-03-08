@@ -78,10 +78,10 @@ CONFIGURE_ARGS+= \
 	--sysconfdir=/etc/chrony \
 	--prefix=/usr \
 	--chronyrundir=/var/run/chrony \
-	$(if $(findstring normal,$(BUILD_VARIANT)),--disable-nts,--enable,nts) \
+	$(if $(findstring normal,$(BUILD_VARIANT)),--disable-nts) \
 	--disable-readline \
 	--disable-rtc \
-	--disable-sechash \
+	$(if $(findstring normal,$(BUILD_VARIANT)),--disable-sechash) \
 	--with-user=chrony
 
 CONFIGURE_VARS+=CPPFLAGS=-DNDEBUG
