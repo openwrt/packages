@@ -1,3 +1,7 @@
+location =/ {
+	return 301 /cgi-bin/luci/;
+}
+
 location /cgi-bin/luci {
 		index  index.html;
 		include uwsgi_params;
