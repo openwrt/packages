@@ -2,26 +2,109 @@
 # Copyright (C) 2006-2011 OpenWrt.org
 
 START=50
+USE_PROCD=1
 
 start_instance () {
 	local section="$1"
+	local complain="$2"
+
+	local enable
+	local enabled
+	local address
+	local password
+	local tunnelip
+	local tld
+	local port
+	local devname
+	local mtu
+	local user
+	local chroot
+	local dnsport
+	local externalip
+	local checkip
+
+	if [ $complain ] && ! /sbin/uci get "iodined.$section" >/dev/null 2>&1; then
+		>&2 echo "Invalid section name / not found: $section"
+		return 1
+	fi
+
+	config_get_bool enable "$section" 'enable' 1
+	config_get_bool enabled "$section" 'enabled' 1
+
+	if [ $enable -eq 0 ] || [ $enabled -eq 0 ]; then
+		[ "$complain" ] && >&2 echo "Section is disabled: $section"
+		return 1
+	fi
+
 	config_get address  "$section" 'address'
 	config_get password "$section" 'password'
 	config_get tunnelip "$section" 'tunnelip'
 	config_get tld      "$section" 'tld'
 	config_get port     "$section" 'port'
-	
-	test -n "$address" || address='0.0.0.0'
-	test -n "$port" || port='53'
+	config_get devname  "$section" 'devname'
+	config_get mtu      "$section" 'mtu'
+	config_get user     "$section" 'user'
+	config_get chroot   "$section" 'chroot'
+	config_get dnsport  "$section" 'dnsport'
+	config_get externalip   "$section" 'externalip'
+	config_get_bool checkip "$section" 'checkip' 0
 
-	service_start /usr/sbin/iodined -l "$address" -P "$password" -p "$port" "$tunnelip" "$tld"
+	# Check for minimal config - would otherwise cause silent fail
+	if [ -z "$password" ] || [ -z "$tld" ]; then
+		>&2 echo "TLD or password missing in config section: $section"
+		return 1
+	fi
+	if [ -z "$tunnelip" ] && [ -z "$devname" ]; then
+		>&2 echo "At least one of 'tunnelip' | 'devname' must be configured in section: $section"
+		return 1
+	fi
+
+	# warn accidential edge case
+	if [ -z "$tunnelip" ] && [ -n "$mtu" ]; then
+		>&2 echo "Invalid configuration: 'mtu' without 'tunnelip' in section: $section"
+		return 1
+	fi
+
+	procd_open_instance "$section"
+	procd_set_param command /usr/sbin/iodined -f
+	procd_set_param stderr 1
+	procd_set_param respawn
+
+	procd_append_param command -P "$password"
+	[ -n "$address"	   ] && procd_append_param command -l "$address"
+	[ -n "$port"	   ] && procd_append_param command -p "$port"
+	[ -n "$devname"	   ] && procd_append_param command -d "$devname"
+	[ -n "$mtu"	   ] && procd_append_param command -m "$mtu"
+	[ -n "$user"	   ] && procd_append_param command -u "$user"
+	[ -n "$chroot"	   ] && procd_append_param command -t "$chroot"
+	[ -n "$dnsport"	   ] && procd_append_param command -b "$dnsport"
+	[ -n "$externalip" ] && procd_append_param command -n "$externalip"
+	[ $checkip -eq 0   ] && procd_append_param command -c
+
+	if [ -z "$tunnelip" ] && [ -z "$mtu" ]; then
+		# assuming preconfigured $devname interface. do not try to configure.
+		procd_append_param command -s
+
+		# in this case, tunnel_ip argument is ignored, yet required to start.
+		tunnelip='127.0.0.53'
+	fi
+
+	procd_append_param command "$tunnelip" "$tld" 
+	procd_close_instance
 }
 
-start() {
+start_service() {
+	local instance="$1"
+
 	config_load 'iodined'
-	config_foreach start_instance 'iodined'
+
+	if [ -n "$instance" ]; then
+		start_instance "$instance" complain
+	else
+		config_foreach start_instance 'iodined'
+	fi
 }
 
-stop() {
-	service_stop /usr/sbin/iodined
+service_triggers() {
+	procd_add_reload_trigger iodined
 }
