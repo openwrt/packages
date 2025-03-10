@@ -1,0 +1,4 @@
+config mezoura 'main'
+	option exporter_port '9999'
+	option exporter '1'
+	list interface 'lan'
