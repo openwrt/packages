@@ -119,14 +119,14 @@ _<details><summary>Example</summary>_
 On OpenWrt, if installed via an ipk package: `opkg uninstall <geoip-shell|geoip-shell-iptables>`
 
 ## **Pre-requisites**
-- **Linux**. Tested on Debian-like systems and on OPENWRT, should work on any desktop/server distribution and possibly on some other embedded distributions.
+- **Linux**. Tested on Debian-like systems and on OpenWrt, should work on any desktop/server distribution and possibly on some other embedded distributions.
 - **POSIX-compliant shell**. Works on most relatively modern shells, including **bash**, **dash**, **ksh93**, **yash** and **ash** (including Busybox **ash**). Likely works on **mksh** and **lksh**. Other flavors of **ksh** may or may not work _(please let me know if you try them)_. Does **not** work on **tcsh** and **zsh**.
 
 - **nftables** - firewall management utility. Supports nftables 1.0.2 and higher (may work with earlier versions but I do not test with them).
 - OR **iptables** - firewall management utility. Should work with any relatively modern version.
 - for **iptables**, requires the **ipset** utility - install it using your distribution's package manager
 - standard Unix utilities including **tr**, **cut**, **sort**, **wc**, **awk**, **sed**, **grep**, **pgrep**, **pidof** and **logger** which are included with every server/desktop linux distribution (and with OpenWrt). Both GNU and non-GNU versions are supported, including BusyBox implementation.
-- **wget** or **curl** or **uclient-fetch** (OpenWRT-specific utility).
+- **wget** or **curl** or **uclient-fetch** (OpenWrt-specific utility).
 - for the autoupdate functionality, requires the **cron** service to be enabled.
 
 ## **Notes**
