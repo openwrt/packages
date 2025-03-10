@@ -1,0 +1,9 @@
+{
+        "user": "dnsdist",
+        "access": {
+                "dhcp": {
+                        "methods": [ "ipv4leases", "ipv6leases" ]
+                }
+        },
+        "subscribe": [ "dhcp" ]
+}
