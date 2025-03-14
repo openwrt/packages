@@ -1,0 +1,70 @@
+From 60e685bd74bca45a4be9528d97f5a2edcc954e7f Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Bj=C3=B8rn=20Mork?= <bjorn@mork.no>
+Date: Thu, 22 Sep 2022 11:49:42 +0200
+Subject: [PATCH] make MAX_NR_INTERFACES configurable
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Bjørn Mork <bjorn@mork.no>
+---
+ configure.ac | 9 +++++++++
+ mini-snmpd.h | 1 -
+ 2 files changed, 9 insertions(+), 1 deletion(-)
+
+--- a/configure.ac
++++ b/configure.ac
+@@ -40,6 +40,10 @@ AC_ARG_WITH(systemd,
+      [AS_HELP_STRING([--with-systemd=DIR], [Directory for systemd service files])],,
+      [with_systemd=auto])
+ 
++AC_ARG_WITH(interfaces,
++   AS_HELP_STRING([--with-interfaces=NUM], [Support NUM interfaces, default: 8]),
++	[with_interfaces=$withval], [with_interfaces="8"])
++
+ AC_ARG_ENABLE(debug,
+    AS_HELP_STRING([--enable-debug], [Enable developer debug mode, disabled by default]),
+    	[enable_debug=$enableval], [enable_debug=no])
+@@ -56,6 +60,7 @@ AC_ARG_ENABLE(ethtool,
+    AS_HELP_STRING([--enable-ethtool], [Enable ethtool interface stats, disabled by default]),
+    	[enable_ethtool=$enableval], [enable_ethtool=no])
+ 
++
+ ### Enable features ###########################################################################
+ AS_IF([test "x$with_vendor" != "xno"],[
+ 	AS_IF([test "x$vendor" = "xyes"],[
+@@ -69,6 +74,8 @@ AS_IF([test "x$with_config" != "xno"], [
+ 	PKG_CHECK_MODULES([confuse], [libconfuse >= 2.7])])
+ AM_CONDITIONAL([HAVE_CONFUSE], [test "x$with_config" != "xno"])
+ 
++AC_DEFINE_UNQUOTED(MAX_NR_INTERFACES, $with_interfaces, [Max Number of Interfaces])
++
+ AS_IF([test "x$enable_debug" = "xyes"],[
+    AC_DEFINE(DEBUG, 1, [Define to enable debug mode.])])
+ 
+@@ -81,6 +88,7 @@ AS_IF([test "x$enable_ipv6" != "xno"],[
+ AS_IF([test "x$enable_ethtool" != "xno"],[
+    AC_DEFINE(CONFIG_ENABLE_ETHTOOL, 1, [Define to enable ethtool stats.])])
+ 
++
+ # Check where to install the systemd .service file
+ AS_IF([test "x$with_systemd" = "xyes" -o "x$with_systemd" = "xauto"], [
+      def_systemd=$($PKG_CONFIG --variable=systemdsystemunitdir systemd)
+@@ -129,6 +137,7 @@ cat <<EOF
+   vendor OID........: $vendor
+   ipv6..............: $enable_ipv6
+   mini-snmpd.conf...: $with_config
++  max interfaces....: $with_interfaces
+   demo mode.........: $enable_demo
+   systemd...........: $with_systemd
+   ethtool stats.....: $enable_ethtool
+--- a/mini-snmpd.h
++++ b/mini-snmpd.h
+@@ -38,7 +38,6 @@
+ #define MAX_NR_OIDS                                     20
+ #define MAX_NR_SUBIDS                                   20
+ #define MAX_NR_DISKS                                    4
+-#define MAX_NR_INTERFACES                               8
+ #define MAX_NR_VALUES                                   2048
+ 
+ #define MAX_PACKET_SIZE                                 2048
