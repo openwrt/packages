@@ -103,6 +103,11 @@ define Package/lxc-unprivileged/install
 	$(INSTALL_DATA) ./files/lxc-unprivileged.defaults $(1)/etc/uci-defaults/lxc-unprivileged
 endef
 
+define Package/lxc-unprivileged/conffiles
+/etc/subgid
+/etc/subuid
+endef
+
 define Package/lxc/config
   source "$(SOURCE)/Config.in"
 endef
