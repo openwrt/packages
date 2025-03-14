@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=htop
 PKG_VERSION:=3.4.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/htop-dev/htop/tar.gz/$(PKG_VERSION)?
@@ -55,6 +55,8 @@ define Package/htop/config
 			Users wanting this functionality need to
 			install libsensors.
 endef
+
+export CURSES_LIBS=-lncurses
 
 CONFIGURE_ARGS += \
 	--$(if $(CONFIG_HTOP_LMSENSORS),en,dis)able-sensors \
