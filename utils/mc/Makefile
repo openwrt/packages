@@ -13,7 +13,7 @@ PKG_LICENSE:=GPL-3.0-or-later
 PKG_CPE_ID:=cpe:/a:midnight_commander:midnight_commander
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://ftp.midnight-commander.org/
+PKG_SOURCE_URL:=https://ftp.osuosl.org/pub/midnightcommander/
 PKG_HASH:=4ddc83d1ede9af2363b3eab987f54b87cf6619324110ce2d3a0e70944d1359fe
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf gettext-version
@@ -37,7 +37,7 @@ define Package/mc
   CATEGORY:=Utilities
   DEPENDS:=+glib2 +libncurses +libmount +libe2p +MC_VFS:libssh2 $(ICONV_DEPENDS)
   TITLE:=Midnight Commander - a powerful visual file manager
-  URL:=https://www.midnight-commander.org/
+  URL:=https://midnight-commander.org
   MENU:=1
 endef
 
@@ -127,7 +127,7 @@ endef
 
 define Package/mc-skins
   TITLE:=Midnight Commander - a powerful visual file manager - skins
-  URL:=https://www.midnight-commander.org/
+  URL:=https://midnight-commander.org
   SECTION:=utils
   CATEGORY:=Utilities
   DEPENDS:=+mc
