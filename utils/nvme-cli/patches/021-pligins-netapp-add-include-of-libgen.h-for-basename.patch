@@ -1,0 +1,26 @@
+From ac4818952c872ba465a2d0f48634f9a79aae064f Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Daniel=20N=C3=A9ri?= <dne+commits@rb67.eu>
+Date: Mon, 11 Nov 2024 22:34:57 +0100
+Subject: [PATCH] plugins/netapp: add include of libgen.h for basename(3)
+ prototype
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Fixes build with musl libc.
+
+Signed-off-by: Daniel Néri <dne+commits@rb67.eu>
+---
+ plugins/netapp/netapp-nvme.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+--- a/plugins/netapp/netapp-nvme.c
++++ b/plugins/netapp/netapp-nvme.c
+@@ -22,6 +22,7 @@
+ #include <unistd.h>
+ #include <errno.h>
+ #include <string.h>
++#include <libgen.h>
+ 
+ #include "common.h"
+ #include "nvme.h"
