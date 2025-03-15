@@ -1,0 +1,44 @@
+I don't think musl has the ability to read the locale of the build system
+so in order to fix the following build error, just set it with this commit.
+
+../nvme-print.c: In function 'is_temperature_fahrenheit':
+../nvme-print.c:805:19: error: 'LC_MEASUREMENT' undeclared (first use in this function)
+  805 |         setlocale(LC_MEASUREMENT, "");
+      |                   ^~~~~~~~~~~~~~
+../nvme-print.c:805:19: note: each undeclared identifier is reported only once for each function it appears in
+---
+ nvme-print.c                 | 11 +++++++----
+ plugins/netapp/netapp-nvme.c |  1 +
+ 2 files changed, 8 insertions(+), 4 deletions(-)
+
+--- a/nvme-print.c
++++ b/nvme-print.c
+@@ -802,11 +802,14 @@ static bool is_temperature_fahrenheit(vo
+ 	const char *locale, *underscore;
+ 	char country[3] = { 0 };
+ 
+-	setlocale(LC_MEASUREMENT, "");
+-	locale = setlocale(LC_MEASUREMENT, NULL);
++	setlocale(LC_ALL, "");
++	locale = getenv("LANG");
+ 
+-	if (!locale || strlen(locale) < 2)
+-		return false;
++	if (!locale || strlen(locale) < 2) {
++		locale = getenv("LC_ALL");
++		if (!locale || strlen(locale) < 2)
++			return false;
++		}
+ 
+ 	underscore = strchr(locale, '_');
+ 	if (underscore && strlen(underscore) >= 3)
+--- a/plugins/netapp/netapp-nvme.c
++++ b/plugins/netapp/netapp-nvme.c
+@@ -22,6 +22,7 @@
+ #include <unistd.h>
+ #include <errno.h>
+ #include <string.h>
++#include <libgen.h>
+ 
+ #include "common.h"
+ #include "nvme.h"
