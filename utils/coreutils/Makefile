@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=coreutils
 PKG_VERSION:=9.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/coreutils
@@ -95,7 +95,7 @@ endef
 define GenPlugin
  define Package/$(1)
    $(call Package/coreutils/Default)
-   DEPENDS:=coreutils $(DEPENDS_$(2))
+   DEPENDS:=+coreutils $(DEPENDS_$(2))
    TITLE:=Utility $(2) from the GNU core utilities
    ALTERNATIVES:=$(ALTS_$(2))
  endef
