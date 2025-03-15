@@ -38,7 +38,12 @@ odhcpd_zonedata() {
   local dhcp4_slaac6=$( uci_get unbound.@unbound[0].dhcp4_slaac6 )
   local dhcp_domain=$( uci_get unbound.@unbound[0].domain )
   local dhcp_origin=$( uci_get dhcp.@odhcpd[0].leasefile )
+  local exclude_ipv6_ga=$( uci_get unbound.@unbound[0].exclude_ipv6_ga )
 
+  if [ "$exclude_ipv6_ga" != "0" ] && [ "$exclude_ipv6_ga" != "1" ]; then
+    logger -t unbound -s "invalid exclude_ipv6_ga value, using default (0)"
+    exclude_ipv6_ga=0
+  fi
 
   if [ -f "$UB_TOTAL_CONF" ] && [ -f "$dhcp_origin" ] \
   && [ "$dhcp_link" = "odhcpd" ] && [ -n "$dhcp_domain" ] ; then
@@ -48,7 +53,6 @@ odhcpd_zonedata() {
     local dns_ls_new=$UB_VARDIR/dhcp_dns.new
     local dns_ls_old=$UB_VARDIR/dhcp_dns.old
     local dhcp_ls_new=$UB_VARDIR/dhcp_lease.new
-
 
     if [ ! -f $UB_DHCP_CONF ] || [ ! -f $dns_ls_old ] ; then
       # no old files laying around
@@ -60,7 +64,6 @@ odhcpd_zonedata() {
       # incremental at high load or full refresh about each 5 minutes
       dateconf=$(( $( date +%s ) - $( date -r $UB_DHCP_CONF +%s ) ))
       dateoldf=$(( $( date +%s ) - $( date -r $dns_ls_old +%s ) ))
-
 
       if [ $dateconf -gt 300 ] ; then
         touch $dns_ls_old
@@ -82,7 +85,7 @@ odhcpd_zonedata() {
     freshstart)
       awk -v conffile=$UB_DHCP_CONF -v pipefile=$dns_ls_new \
           -v domain=$dhcp_domain -v bslaac=$dhcp4_slaac6 \
-          -v bisolt=0 -v bconf=1 \
+          -v bisolt=0 -v bconf=1 -v exclude_ipv6_ga=$exclude_ipv6_ga \
           -f /usr/lib/unbound/odhcpd.awk $dhcp_ls_new
 
       cp $dns_ls_new $dns_ls_add
@@ -94,7 +97,7 @@ odhcpd_zonedata() {
     longtime)
       awk -v conffile=$UB_DHCP_CONF -v pipefile=$dns_ls_new \
           -v domain=$dhcp_domain -v bslaac=$dhcp4_slaac6 \
-          -v bisolt=0 -v bconf=1 \
+          -v bisolt=0 -v bconf=1 -v exclude_ipv6_ga=$exclude_ipv6_ga \
           -f /usr/lib/unbound/odhcpd.awk $dhcp_ls_new
 
       awk '{ print $1 }' $dns_ls_old | sort | uniq > $dns_ls_del
@@ -110,7 +113,7 @@ odhcpd_zonedata() {
       # unbound-control can be slow so high DHCP rates cannot run a full list
       awk -v conffile=$UB_DHCP_CONF -v pipefile=$dns_ls_new \
           -v domain=$dhcp_domain -v bslaac=$dhcp4_slaac6 \
-          -v bisolt=0 -v bconf=0 \
+          -v bisolt=0 -v bconf=0 -v exclude_ipv6_ga=$exclude_ipv6_ga \
           -f /usr/lib/unbound/odhcpd.awk $dhcp_ls_new
 
       sort $dns_ls_new $dns_ls_old $dns_ls_old | uniq -u > $dns_ls_add
@@ -136,3 +139,4 @@ if flock -x -n 1000 ; then
 fi
 
 ##############################################################################
+
