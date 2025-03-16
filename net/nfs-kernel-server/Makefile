@@ -25,6 +25,8 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_IPV6 \
 	CONFIG_NFS_KERNEL_SERVER_V4
 
+PKG_FIXUP:=patch-libtool
+
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
 
@@ -32,7 +34,7 @@ define Package/nfs-kernel-server/Default
 	SECTION:=net
 	CATEGORY:=Network
 	SUBMENU:=Filesystem
-	DEPENDS:=+libblkid +libuuid +libtirpc +lsqlite3 +libxml2 +libnl
+	DEPENDS:=+libblkid +libuuid +libtirpc +lsqlite3 +libxml2 +libnl +libevent2-core
 	URL:=http://nfs.sourceforge.net/
 endef
 
