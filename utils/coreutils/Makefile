@@ -82,7 +82,6 @@ endef
 
 define Package/coreutils
   $(call Package/coreutils/Default)
-  TITLE:=The GNU core utilities
   MENU:=1
 endef
 
