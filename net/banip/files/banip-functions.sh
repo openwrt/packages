@@ -828,33 +828,23 @@ f_down() {
 			etag_rc="0"
 			case "${feed%%.*}" in
 				"country")
-					if [ "${ban_countrysplit}" = "0" ]; then
-						for country in ${ban_country}; do
-							f_etag "${feed}" "${feed_url}${country}-aggregated.zone" ".${country}"
-							rc="${?}"
-							etag_rc="$((etag_rc + rc))"
-							[ "${rc}" = "4" ] && break
-						done
-					else
+					if [ "${ban_countrysplit}" = "1" ]; then
 						country="${feed%.*}"
 						country="${country#*.}"
 						f_etag "${feed}" "${feed_url}${country}-aggregated.zone" ".${country}"
 						etag_rc="${?}"
+					else
+						etag_rc="4"
 					fi
 					;;
 				"asn")
-					if [ "${ban_asnsplit}" = "0" ]; then
-						for asn in ${ban_asn}; do
-							f_etag "${feed}" "${feed_url}AS${asn}" ".${asn}"
-							rc="${?}"
-							etag_rc="$((etag_rc + rc))"
-							[ "${rc}" = "4" ] && break
-						done
-					else
+					if [ "${ban_asnsplit}" = "1" ]; then
 						asn="${feed%.*}"
 						asn="${asn#*.}"
 						f_etag "${feed}" "${feed_url}AS${asn}" ".${asn}"
 						etag_rc="${?}"
+					else
+						etag_rc="4"
 					fi
 					;;
 				*)
@@ -1007,7 +997,7 @@ f_down() {
 							feed_rc="${?}"
 						fi
 					else
-						f_log "info" "download for feed '${feed%%.*}/${country}' failed"
+						f_log "info" "download for feed '${feed}/${country}' failed"
 					fi
 				done
 				: >"${tmp_raw}"
@@ -1031,7 +1021,7 @@ f_down() {
 							feed_rc="${?}"
 						fi
 					else
-						f_log "info" "download for feed '${feed%%.*}/${asn}' failed"
+						f_log "info" "download for feed '${feed}/${asn}' failed"
 					fi
 				done
 				: >"${tmp_raw}"
@@ -1290,7 +1280,7 @@ f_genstatus() {
 			end_time="$(date "+%s")"
 			duration="$(((end_time - ban_starttime) / 60))m $(((end_time - ban_starttime) % 60))s"
 		fi
-		runtime="mode: ${ban_action:-"-"}, duration: ${duration:-"-"}, memory: ${mem_free} MB available, ${mem_max} MB max. used, cores: ${ban_cores}, log: ${ban_logreadcmd##*/}, fetch: ${ban_fetchcmd##*/}"
+		runtime="$(date "+%Y-%m-%d %H:%M:%S"), duration: ${duration:-"-"}, mode: ${ban_action:-"-"}, memory: ${mem_free} MB available, ${mem_max} MB max. used"
 	fi
 	[ -s "${ban_customfeedfile}" ] && custom_feed="1"
 	[ "${ban_splitsize:-"0"}" -gt "0" ] && split="1"
@@ -1335,7 +1325,7 @@ f_genstatus() {
 	json_add_string "run_info" "base: ${ban_basedir}, backup: ${ban_backupdir}, report: ${ban_reportdir}, error: ${ban_errordir}"
 	json_add_string "run_flags" "auto: $(f_char ${ban_autodetect}), proto (4/6): $(f_char ${ban_protov4})/$(f_char ${ban_protov6}), log (pre/in/out): $(f_char ${ban_logprerouting})/$(f_char ${ban_loginbound})/$(f_char ${ban_logoutbound}), count: $(f_char ${ban_nftcount}), dedup: $(f_char ${ban_deduplicate}), split: $(f_char ${split}), custom feed: $(f_char ${custom_feed}), allowed only: $(f_char ${ban_allowlistonly})"
 	json_add_string "last_run" "${runtime:-"-"}"
-	json_add_string "system_info" "$(date "+%Y-%m-%d %H:%M:%S"), ${ban_sysver}"
+	json_add_string "system_info" "cores: ${ban_cores}, log: ${ban_logreadcmd##*/}, fetch: ${ban_fetchcmd##*/}, ${ban_sysver}"
 	json_dump >"${ban_rtfile}"
 }
 
