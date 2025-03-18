@@ -175,4 +175,7 @@ config LIBCURL_NTLM
 	depends on LIBCURL_CRYPTO_AUTH && !LIBCURL_NOSSL
 	default n
 
+config LIBCURL_HTTP_AUTH
+	bool "Enable HTTP authentication support"
+	default n
 endif
