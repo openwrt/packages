@@ -308,7 +308,7 @@ define Package/ddns-scripts-one
 	DEPENDS:=ddns-scripts +curl
 endef
 
-define Package/ddns-scrtips-one/description
+define Package/ddns-scripts-one/description
 	Dynamic DNS Client scripts extension for 'one.com'.
 	It requires:
 	'option username' to be a valid Email for one.com Control Panel
