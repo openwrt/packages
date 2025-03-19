@@ -1,0 +1,9 @@
+{
+	"name": "Scaleway DNS",
+	"ipv4": {
+		"url": "update_scaleway_com.sh"
+	},
+	"ipv6": {
+		"url": "update_scaleway_com.sh"
+	}
+}
