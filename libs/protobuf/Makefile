@@ -26,6 +26,8 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/cmake.mk
 
+TAR_OPTIONS+= --no-same-owner
+
 define Package/protobuf/Default
   SECTION:=libs
   CATEGORY:=Libraries
