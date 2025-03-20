@@ -17,6 +17,9 @@ MM_BLACKHOLE=""
 
 MMX_UNREACHABLE=""
 MM_UNREACHABLE=""
+
+MMX_UNKNOWN_WAN=""
+MM_UNKNOWN_WAN=""
 MAX_SLEEP=$(((1<<31)-1))
 
 command -v ip6tables > /dev/null
@@ -147,11 +150,13 @@ mwan3_init()
 	mmdefault=$(((1<<bitcnt)-1))
 	MM_BLACKHOLE=$((mmdefault-2))
 	MM_UNREACHABLE=$((mmdefault-1))
+	MM_UNKNOWN_WAN=$((mmdefault-3))
 
 	# MMX_DEFAULT should equal MMX_MASK
 	MMX_DEFAULT=$(mwan3_id2mask mmdefault MMX_MASK)
 	MMX_BLACKHOLE=$(mwan3_id2mask MM_BLACKHOLE MMX_MASK)
 	MMX_UNREACHABLE=$(mwan3_id2mask MM_UNREACHABLE MMX_MASK)
+	MMX_UNKNOWN_WAN=$(mwan3_id2mask MM_UNKNOWN_WAN MMX_MASK)
 }
 
 # maps the 1st parameter so it only uses the bits allowed by the bitmask (2nd parameter)
