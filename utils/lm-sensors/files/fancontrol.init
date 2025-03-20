@@ -1,0 +1,160 @@
+#!/bin/sh /etc/rc.common
+
+START=97
+USE_PROCD=1
+
+NAME=fancontrol
+PROG=/usr/sbin/$NAME
+
+CONF_DIR=/var/etc
+CONF_FILE=$CONF_DIR/$NAME
+
+create_config() {
+	echo "INTERVAL=$INTERVAL"
+	echo "DEVPATH=$DEVPATH"
+	echo "DEVNAME=$DEVNAME"
+	echo "FCTEMPS=$FCTEMPS"
+
+	[ -n "$FCFANS" ] && \
+		echo "FCFANS=$FCFANS"
+
+	echo "MINTEMP=$MINTEMP"
+	echo "MAXTEMP=$MAXTEMP"
+	echo "MINSTART=$MINSTART"
+	echo "MINSTOP=$MINSTOP"
+
+	[ -n "$MINPWM" ] && \
+		echo "MINPWM=$MINPWM"
+
+	[ -n "$MAXPWM" ] && \
+		echo "MAXPWM=$MAXPWM"
+
+	[ -n "$AVERAGE" ] && \
+		echo "AVERAGE=$AVERAGE"
+
+	return 0
+}
+
+parse_device() {
+	local config="$1"
+	local name path
+
+	config_get name "$config" "name"
+	if [ -z "$name" ]; then
+		echo "Missing device name for $config"
+		return
+	fi
+
+	config_get path "$config" "path"
+	if [ -z "$path" ]; then
+		echo "Missing device path for $name"
+		return
+	fi
+
+	append DEVNAME "$config=$name"
+	append DEVPATH "$config=$path"
+}
+
+parse_control() {
+	local config="$1"
+	local pwm temp fan
+	local min_temp max_temp
+	local min_start min_stop
+	local min_pwm max_pwm
+	local average disabled
+
+	config_get_bool disabled "$config" "disabled" 0
+	[ $disabled -eq 1 ] && return
+
+	config_get pwm "$config" "pwm"
+	if [ -z "$pwm" ]; then
+		echo "Missing PWM file for $config"
+		return
+	fi
+
+	config_get temp "$config" "temp"
+	if [ -z "$temp" ]; then
+		echo "Missing temperature file for $pwm"
+		return
+	fi
+
+	config_get min_temp "$config" "min_temp"
+	if [ -z "$min_temp" ]; then
+		echo "Missing minimum temperature for $pwm"
+		return
+	fi
+
+	config_get max_temp "$config" "max_temp"
+	if [ -z "$max_temp" ]; then
+		echo "Missing maximum temperature for $pwm"
+		return
+	fi
+
+	config_get min_start "$config" "min_start"
+	if [ -z "$min_start" ]; then
+		echo "Missing PWM fan start value for $pwm"
+		return
+	fi
+
+	config_get min_stop "$config" "min_stop"
+	if [ -z "$min_stop" ]; then
+		echo "Missing PWM fan stop value for $pwm"
+		return
+	fi
+
+	config_get fan "$config" "fan"
+	config_get min_pwm "$config" "min_pwm"
+	config_get max_pwm "$config" "max_pwm"
+	config_get average "$config" "average"
+
+	append FCTEMPS  "$pwm=$temp"
+	append MINTEMP  "$pwm=$min_temp"
+	append MAXTEMP  "$pwm=$max_temp"
+	append MINSTART "$pwm=$min_start"
+	append MINSTOP  "$pwm=$min_stop"
+
+	[ -n "$fan" ]     && append FCFANS  "$pwm=$fan"
+	[ -n "$min_pwm" ] && append MINPWM  "$pwm=$min_pwm"
+	[ -n "$max_pwm" ] && append MAXPWM  "$pwm=$max_pwm"
+	[ -n "$average" ] && append AVERAGE "$pwm=$average"
+}
+
+parse_config() {
+	config_get INTERVAL "common" "interval"
+	if [ -z "$INTERVAL" ]; then
+		echo "Missing interval in common section"
+		return 1
+	fi
+
+	config_foreach parse_device "device"
+	if [ -z "$DEVNAME" ]; then
+		echo "At least one device section is required"
+		return 1
+	fi
+
+	config_foreach parse_control "control"
+	if [ -z "$FCTEMPS" ]; then
+		echo "At least one control section is required"
+		return 1
+	fi
+
+	mkdir -p $CONF_DIR
+	create_config > $CONF_FILE || return 1
+
+	return 0
+}
+
+start_service() {
+	local disabled
+	config_load $NAME
+
+	config_get_bool disabled "common" "disabled" 0
+	[ $disabled -eq 1 ] && return 0
+
+	parse_config || return 1
+
+	procd_open_instance
+	procd_set_param command $PROG $CONF_FILE
+	procd_set_param file $CONF_FILE
+	procd_close_instance
+}
