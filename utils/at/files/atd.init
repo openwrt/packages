@@ -1,20 +1,22 @@
 #!/bin/sh /etc/rc.common
 # Copyright (C) 2015 OpenWrt.org
 
-START=50
+START=99
 
 USE_PROCD=1
 
 start_service() {
-	[ -d /var/spool/cron/atjobs ] || {
-		mkdir -m 0755 -p /var/spool/cron/atjobs
-		touch /var/spool/cron/atjobs/.SEQ
-		chown -R nobody:nogroup /var/spool/cron/atjobs
-	}
-	[ -d /var/spool/cron/atspool ] || {
-		mkdir -m 0755 -p /var/spool/cron/atspool
-		chown -R nobody:nogroup /var/spool/cron/atspool
-	}
+        [ -d /var/spool/cron/atjobs ] || {
+                mkdir -m 0755 -p /etc/cron/atjobs
+                ln -s /etc/cron/atjobs /var/spool/cron/ 2>/dev/null
+                touch /var/spool/cron/atjobs/.SEQ
+                chown -R nobody:nogroup /var/spool/cron/atjobs
+        }
+        [ -d /var/spool/cron/atspool ] || {
+                mkdir -m 0755 -p /etc/cron/atspool
+                ln -s /etc/cron/atspool /var/spool/cron/ 2>/dev/null
+                chown -R nobody:nogroup /var/spool/cron/atspool
+        }
 	procd_open_instance
 
 	procd_set_param command /usr/sbin/atd -f
