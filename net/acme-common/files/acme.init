@@ -160,6 +160,6 @@ service_triggers() {
 }
 
 boot() {
-        mkdir -p "$CHALLENGE_DIR"
-        return 0
+	mkdir -p "$CHALLENGE_DIR"
+	start "$@"
 }
