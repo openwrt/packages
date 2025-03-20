@@ -1,0 +1,20 @@
+--- a/extensions/xt_DNETMAP.c
++++ b/extensions/xt_DNETMAP.c
+@@ -20,7 +20,7 @@
+ 
+ #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+ #include <linux/module.h>
+-#ifdef CONFIG_NF_NAT
++#if defined(CONFIG_NF_NAT) || defined(CONFIG_NF_NAT_MODULE)
+ #include <linux/inet.h>
+ #include <linux/ip.h>
+ #include <linux/netdevice.h>
+@@ -915,7 +915,7 @@ static void __exit dnetmap_tg_exit(void)
+ 	xt_unregister_target(&dnetmap_tg_reg);
+ 	unregister_pernet_subsys(&dnetmap_net_ops);
+ }
+-#else /* CONFIG_NF_NAT */
++#else /* CONFIG_NF_NAT || CONFIG_NF_NAT_MODULE */
+ static int __init dnetmap_tg_init(void)
+ {
+ 	pr_err("CONFIG_NF_NAT is not available in your kernel, hence this module cannot function.");
