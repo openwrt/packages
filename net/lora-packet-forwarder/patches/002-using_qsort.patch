@@ -1,0 +1,50 @@
+Index: packet_forwarder-4.0.1/lora_pkt_fwd/src/jitqueue.c
+===================================================================
+--- packet_forwarder-4.0.1.orig/lora_pkt_fwd/src/jitqueue.c
++++ packet_forwarder-4.0.1/lora_pkt_fwd/src/jitqueue.c
+@@ -16,8 +16,7 @@ Maintainer: Michael Coracin
+ /* -------------------------------------------------------------------------- */
+ /* --- DEPENDANCIES --------------------------------------------------------- */
+ 
+-#define _GNU_SOURCE     /* needed for qsort_r to be defined */
+-#include <stdlib.h>     /* qsort_r */
++#include <stdlib.h>
+ #include <stdio.h>      /* printf, fprintf, snprintf, fopen, fputs */
+ #include <string.h>     /* memset, memcpy */
+ #include <pthread.h>
+@@ -91,32 +90,27 @@ void jit_queue_init(struct jit_queue_s *
+     pthread_mutex_unlock(&mx_jit_queue);
+ }
+ 
+-int compare(const void *a, const void *b, void *arg)
++int compare(const void *a, const void *b)
+ {
+     struct jit_node_s *p = (struct jit_node_s *)a;
+     struct jit_node_s *q = (struct jit_node_s *)b;
+-    int *counter = (int *)arg;
+     int p_count, q_count;
+ 
+     p_count = p->pkt.count_us;
+     q_count = q->pkt.count_us;
+ 
+-    if (p_count > q_count)
+-        *counter = *counter + 1;
+-
+     return p_count - q_count;
+ }
+ 
+ void jit_sort_queue(struct jit_queue_s *queue) {
+-    int counter = 0;
+ 
+     if (queue->num_pkt == 0) {
+         return;
+     }
+ 
+     MSG_DEBUG(DEBUG_JIT, "sorting queue in ascending order packet timestamp - queue size:%u\n", queue->num_pkt);
+-    qsort_r(queue->nodes, queue->num_pkt, sizeof(queue->nodes[0]), compare, &counter);
+-    MSG_DEBUG(DEBUG_JIT, "sorting queue done - swapped:%d\n", counter);
++    qsort(queue->nodes, queue->num_pkt, sizeof(queue->nodes[0]), compare);
++    MSG_DEBUG(DEBUG_JIT, "sorting queue done - swapped\n");
+ }
+ 
+ bool jit_collision_test(uint32_t p1_count_us, uint32_t p1_pre_delay, uint32_t p1_post_delay, uint32_t p2_count_us, uint32_t p2_pre_delay, uint32_t p2_post_delay) {
