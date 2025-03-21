@@ -150,6 +150,14 @@ service_started() {
 	echo "Certificate renewal enabled via cron. To renew now, run '/etc/init.d/acme renew'."
 }
 
+stop_service() {
+	sed -i '\|/etc/init.d/acme|d' /etc/crontabs/root
+}
+
+service_stopped() {
+	echo "Certificate renewal is disabled."
+}
+
 service_triggers() {
 	procd_add_config_trigger config.change acme \
 		/etc/init.d/acme renew
