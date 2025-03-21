@@ -149,6 +149,10 @@ start_service() {
 	}
 }
 
+stop_service() {
+	sed -i '\|/etc/init.d/acme|d' /etc/crontabs/root
+}
+
 service_triggers() {
 	procd_add_config_trigger config.change acme \
 		/etc/init.d/acme renew
