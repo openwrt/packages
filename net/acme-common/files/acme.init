@@ -155,12 +155,6 @@ service_triggers() {
 }
 
 renew() {
-	exec 200>$run_dir/lock
-	if ! flock -n 200; then
-		log err "Another ACME instance is already running."
-		exit 1
-	fi
-
 	trap cleanup EXIT
 
 	config_load acme
