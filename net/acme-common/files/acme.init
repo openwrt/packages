@@ -16,9 +16,6 @@ extra_command "renew" "Start a certificate renew"
 
 cleanup() {
 	log debug "cleaning up"
-	if [ -e $run_dir/lock ]; then
-		rm $run_dir/lock
-	fi
 	if [ "$NFT_HANDLE" ]; then
 		# $NFT_HANDLE contains the string 'handle XX' so pass it unquoted to nft
 		nft delete rule inet fw4 input $NFT_HANDLE
@@ -159,12 +156,6 @@ service_triggers() {
 }
 
 renew() {
-	exec 200>$run_dir/lock
-	if ! flock -n 200; then
-		log err "Another ACME instance is already running."
-		exit 1
-	fi
-
 	trap cleanup EXIT
 
 	config_load acme
