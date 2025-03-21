@@ -1,3 +1,3 @@
 #!/bin/sh
 
-antiblock | grep "AntiBlock started $PKG_VERSION"
+antiblock | grep "AntiBlock $PKG_VERSION"
