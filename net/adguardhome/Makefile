@@ -6,20 +6,24 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adguardhome
-PKG_VERSION:=0.107.58
+PKG_VERSION:=0.107.59
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/AdguardTeam/AdGuardHome/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=da6a52764090d8350d55bc14b957ec6afdee0bd21b34b010796e220bde5e9186
+PKG_HASH:=b8bbc2d16394770520da4febd000e66d6df5839a230abea4d160f117bf3f11ed
 PKG_BUILD_DIR:=$(BUILD_DIR)/AdGuardHome-$(PKG_VERSION)
+
+FRONTEND_DEST:=$(PKG_NAME)-frontend-$(PKG_VERSION).tar.gz
+FRONTEND_URL:=https://github.com/AdguardTeam/AdGuardHome/releases/download/v$(PKG_VERSION)/
+FRONTEND_HASH:=955051153aafdc924a7a4b05307628bd91b3b22c68c8f3e3c49a8b44e052c285
 
 PKG_LICENSE:=GPL-3.0-only
 PKG_LICENSE_FILES:=LICENSE.txt
 PKG_CPE_ID:=cpe:/a:adguard:adguardhome
 PKG_MAINTAINER:=Dobroslaw Kijowski <dobo90@gmail.com>
 
-PKG_BUILD_DEPENDS:=golang/host node/host
+PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=no-mips16
 
@@ -54,13 +58,17 @@ define Package/adguardhome/description
 Free and open source, powerful network-wide ads and trackers blocking DNS server.
 endef
 
-define Build/Compile
-	( \
-		pushd $(PKG_BUILD_DIR) ; \
-		make js-deps js-build ; \
-		popd ; \
-		$(call GoPackage/Build/Compile) ; \
-	)
+define Download/adguardhome-frontend
+	URL:=$(FRONTEND_URL)
+	URL_FILE:=AdGuardHome_frontend.tar.gz
+	FILE:=$(FRONTEND_DEST)
+	HASH:=$(FRONTEND_HASH)
+endef
+
+define Build/Prepare
+	$(call Build/Prepare/Default)
+
+	gzip -dc $(DL_DIR)/$(FRONTEND_DEST) | $(HOST_TAR) -C $(PKG_BUILD_DIR)/ $(TAR_OPTIONS)
 endef
 
 define Package/adguardhome/install
@@ -72,5 +80,6 @@ define Package/adguardhome/install
 	$(INSTALL_DATA) ./files/adguardhome.config $(1)/etc/config/adguardhome
 endef
 
+$(eval $(call Download,adguardhome-frontend))
 $(eval $(call GoBinPackage,adguardhome))
 $(eval $(call BuildPackage,adguardhome))
