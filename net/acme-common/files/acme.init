@@ -12,6 +12,8 @@ LOG_TAG=acme
 # shellcheck source=net/acme/files/functions.sh
 . "$IPKG_INSTROOT/usr/lib/acme/functions.sh"
 
+extra_command "renew" "Start a certificate renew"
+
 cleanup() {
 	log debug "cleaning up"
 	if [ -e $run_dir/lock ]; then
@@ -140,6 +142,23 @@ load_globals() {
 
 start_service() {
 	mkdir -p $run_dir
+	mkdir -p "$CHALLENGE_DIR"
+
+	grep -q '/etc/init.d/acme' /etc/crontabs/root 2>/dev/null || {
+		echo "0 0 * * * /etc/init.d/acme renew" >>/etc/crontabs/root
+	}
+}
+
+service_started() {
+	echo "Certificate renewal enabled via cron. To renew now, run '/etc/init.d/acme renew'."
+}
+
+service_triggers() {
+	procd_add_config_trigger config.change acme \
+		/etc/init.d/acme renew
+}
+
+renew() {
 	exec 200>$run_dir/lock
 	if ! flock -n 200; then
 		log err "Another ACME instance is already running."
@@ -152,14 +171,4 @@ start_service() {
 	config_foreach load_globals acme
 
 	config_foreach get_cert cert
-}
-
-service_triggers() {
-	procd_add_config_trigger config.change acme \
-		/etc/init.d/acme start
-}
-
-boot() {
-        mkdir -p "$CHALLENGE_DIR"
-        return 0
 }
