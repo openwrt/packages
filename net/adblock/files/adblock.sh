@@ -669,9 +669,14 @@ f_list() {
 						else
 							"${adb_catcmd}" "${adb_tmpdir}/tmp.raw.${src_name}" >"${adb_tmpdir}/tmp.deduplicate.${src_name}"
 						fi
-						"${adb_awkcmd}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' "${adb_tmpdir}/tmp.deduplicate.${src_name}" >"${adb_tmpdir}/tmp.raw.${src_name}"
-						"${adb_sortcmd}" ${adb_srtopts} -u "${adb_tmpdir}/tmp.raw.${src_name}" 2>/dev/null >"${file_name}"
-						out_rc="${?}"
+						if [ "${adb_tld}" = "1" ]; then
+							"${adb_awkcmd}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' "${adb_tmpdir}/tmp.deduplicate.${src_name}" |
+								"${adb_sortcmd}" ${adb_srtopts} -u >"${file_name}"
+							out_rc="${?}"
+						else
+							"${adb_sortcmd}" ${adb_srtopts} -u "${adb_tmpdir}/tmp.deduplicate.${src_name}" 2>/dev/null >"${file_name}"
+							out_rc="${?}"
+						fi
 					fi
 					;;	
 				"whitelist")
@@ -943,8 +948,14 @@ f_query() {
 			for file in "${adb_backupdir}/${adb_dnsprefix}".*.gz "${adb_blacklist}" "${adb_whitelist}"; do
 				suffix="${file##*.}"
 				if [ "${suffix}" = "gz" ]; then
-					"${adb_zcatcmd}" "${file}" 2>/dev/null |
-						"${adb_awkcmd}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' | "${adb_awkcmd}" -v f="${file##*/}" "BEGIN{rc=1};/^($search|.*\\.${search})$/{i++;if(i<=3){printf \"  + %-30s%s\n\",f,\$1;rc=0}else if(i==4){printf \"  + %-30s%s\n\",f,\"[...]\"}};END{exit rc}"
+					if [ "${adb_tld}" = "1" ]; then
+						"${adb_zcatcmd}" "${file}" 2>/dev/null |
+							"${adb_awkcmd}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' |
+							"${adb_awkcmd}" -v f="${file##*/}" "BEGIN{rc=1};/^($search|.*\\.${search})$/{i++;if(i<=3){printf \"  + %-30s%s\n\",f,\$1;rc=0}else if(i==4){printf \"  + %-30s%s\n\",f,\"[...]\"}};END{exit rc}"
+					else
+						"${adb_zcatcmd}" "${file}" 2>/dev/null |
+							"${adb_awkcmd}" -v f="${file##*/}" "BEGIN{rc=1};/^($search|.*\\.${search})$/{i++;if(i<=3){printf \"  + %-30s%s\n\",f,\$1;rc=0}else if(i==4){printf \"  + %-30s%s\n\",f,\"[...]\"}};END{exit rc}"
+					fi
 				else
 					"${adb_awkcmd}" -v f="${file##*/}" "BEGIN{rc=1};/^($search|.*\\.${search})$/{i++;if(i<=3){printf \"  + %-30s%s\n\",f,\$1;rc=0}else if(i==4){printf \"  + %-30s%s\n\",f,\"[...]\"}};END{exit rc}" "${file}"
 				fi
@@ -1066,8 +1077,7 @@ f_main() {
 		(
 			f_list "${entry}" "${entry}"
 		) &
-		hold="$((cnt % adb_cores))"
-		[ "${hold}" = "0" ] && wait -n
+		[ "${cnt}" -gt "${adb_cores}" ] && wait -n
 		cnt="$((cnt + 1))"
 	done
 
@@ -1098,8 +1108,7 @@ f_main() {
 			(
 				f_list safesearch "${entry}"
 			) &
-			hold="$((cnt % adb_cores))"
-			[ "${hold}" = "0" ] && wait -n
+			[ "${cnt}" -gt "${adb_cores}" ] && wait -n
 			cnt="$((cnt + 1))"
 		done
 	fi
@@ -1160,10 +1169,16 @@ f_main() {
 						f_log "info" "download of '${src_name}' failed, url: ${src_url}, rule: ${src_rset:-"-"}, categories: ${src_cat:-"-"}, rc: ${src_rc}"
 					fi
 					if [ "${src_rc}" = "0" ] && [ -s "${src_tmpload}" ]; then
-						"${adb_awkcmd}" "${src_rset}" "${src_tmpload}" | "${adb_sedcmd}" "s/\r//g" |
-							"${adb_awkcmd}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' |
-							"${adb_sortcmd}" ${adb_srtopts} -u 2>/dev/null >"${src_tmpfile}"
-						src_rc="${?}"
+						if [ "${adb_tld}" = "1" ]; then
+							"${adb_awkcmd}" "${src_rset}" "${src_tmpload}" | "${adb_sedcmd}" "s/\r//g" |
+								"${adb_awkcmd}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' |
+								"${adb_sortcmd}" ${adb_srtopts} -u 2>/dev/null >"${src_tmpfile}"
+							src_rc="${?}"
+						else
+							"${adb_awkcmd}" "${src_rset}" "${src_tmpload}" | "${adb_sedcmd}" "s/\r//g" |
+								"${adb_sortcmd}" ${adb_srtopts} -u 2>/dev/null >"${src_tmpfile}"
+							src_rc="${?}"
+						fi
 						if [ "${src_rc}" = "0" ] && [ -s "${src_tmpfile}" ]; then
 							f_list download
 							[ "${adb_backup}" = "1" ] && f_list backup
@@ -1205,10 +1220,16 @@ f_main() {
 					fi
 				done
 				if [ "${src_rc}" = "0" ] && [ -s "${src_tmpload}" ]; then
-					"${adb_awkcmd}" "${src_rset}" "${src_tmpload}" | "${adb_sedcmd}" "s/\r//g" |
-						"${adb_awkcmd}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' |
-						"${adb_sortcmd}" ${adb_srtopts} -u >"${src_tmpfile}"
-					src_rc="${?}"
+					if [ "${adb_tld}" = "1" ]; then
+						"${adb_awkcmd}" "${src_rset}" "${src_tmpload}" | "${adb_sedcmd}" "s/\r//g" |
+							"${adb_awkcmd}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' |
+							"${adb_sortcmd}" ${adb_srtopts} -u >"${src_tmpfile}"
+						src_rc="${?}"
+					else
+						"${adb_awkcmd}" "${src_rset}" "${src_tmpload}" | "${adb_sedcmd}" "s/\r//g" |
+							"${adb_sortcmd}" ${adb_srtopts} -u >"${src_tmpfile}"
+						src_rc="${?}"
+					fi
 					if [ "${src_rc}" = "0" ] && [ -s "${src_tmpfile}" ]; then
 						f_list download
 						[ "${adb_backup}" = "1" ] && f_list backup
@@ -1223,8 +1244,7 @@ f_main() {
 				fi
 			) &
 		fi
-		hold="$((cnt % adb_cores))"
-		[ "${hold}" = "0" ] && wait -n
+		[ "${cnt}" -gt "${adb_cores}" ] && wait -n
 		cnt="$((cnt + 1))"
 	done
 	wait
@@ -1250,7 +1270,7 @@ f_main() {
 # trace dns queries via tcpdump and prepare a report
 #
 f_report() {
-	local report_raw report_txt content status total start end start_date start_time end_date end_time blocked percent top_list top array item index hold ports value key key_list cnt="0" resolve="-nn" action="${1}" top_count="${2:-"10"}" res_count="${3:-"50"}" search="${4:-"+"}"
+	local report_raw report_txt content status total start end start_date start_time end_date end_time blocked percent top_list top array item index ports value key key_list cnt="0" resolve="-nn" action="${1}" top_count="${2:-"10"}" res_count="${3:-"50"}" search="${4:-"+"}"
 
 	report_raw="${adb_reportdir}/adb_report.raw"
 	report_srt="${adb_reportdir}/adb_report.srt"
@@ -1289,8 +1309,7 @@ f_report() {
 								printf "%08d\t%s\t%s\t%s\t%-25s\t%s\n",$7,type,$1,substr($2,1,8),$4,domain}' >>"${report_raw}"
 				fi
 			) &
-			hold="$((cnt % adb_cores))"
-			[ "${hold}" = "0" ] && wait -n
+			[ "${cnt}" -gt "${adb_cores}" ] && wait -n
 			cnt="$((cnt + 1))"
 		done
 		wait

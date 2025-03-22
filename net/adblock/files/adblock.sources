@@ -48,13 +48,6 @@
 		"focus": "compilation",
 		"descurl": "https://github.com/privacy-protection-tools/anti-AD/blob/master/README.md"
 	},
-	"antipopads": {
-		"url": "https://raw.githubusercontent.com/AdroitAdorKhan/antipopads-re/master/formats/domains.txt",
-		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
-		"size": "L",
-		"focus": "compilation",
-		"descurl": "https://github.com/AdroitAdorKhan/antipopads-re"
-	},
 	"anudeep": {
 		"url": "https://raw.githubusercontent.com/anudeepND/blacklist/master/adservers.txt",
 		"rule": "/^0\\.0\\.0\\.0[[:space:]]+([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($2)}",
@@ -110,6 +103,27 @@
 		"size": "M",
 		"focus": "tracking",
 		"descurl": "https://easylist.to"
+	},
+	"energized_blu": {
+		"url": "https://energized.pro/blu/domains.txt",
+		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
+		"size": "XL",
+		"focus": "compilation",
+		"descurl": "https://energized.pro"
+	},
+	"energized_spark": {
+		"url": "https://energized.pro/spark/domains.txt",
+		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
+		"size": "L",
+		"focus": "compilation",
+		"descurl": "https://energized.pro"
+	},
+	"energized_ultimate": {
+		"url": "https://energized.pro/ultimate/domains.txt",
+		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
+		"size": "XXL",
+		"focus": "compilation",
+		"descurl": "https://energized.pro"
 	},
 	"firetv_tracking": {
 		"url": "https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/AmazonFireTV.txt",
