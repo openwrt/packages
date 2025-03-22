@@ -1,0 +1,36 @@
+From fac530682b68bc8fbc44a5e5b106aa39abd2fe87 Mon Sep 17 00:00:00 2001
+From: Glenn Strauss <gstrauss@gluelogic.com>
+Date: Wed, 12 Feb 2025 00:44:42 -0500
+Subject: [PATCH] [mod_wolfssl] limit default curves to avail curves
+
+---
+ src/mod_wolfssl.c | 18 +++++++++++++++++-
+ 1 file changed, 17 insertions(+), 1 deletion(-)
+
+--- a/src/mod_wolfssl.c
++++ b/src/mod_wolfssl.c
+@@ -2022,7 +2022,23 @@ mod_openssl_ssl_conf_curves(server *srv,
+      */
+     const char *groups = ssl_ec_curve && !buffer_is_blank(ssl_ec_curve)
+       ? ssl_ec_curve->ptr
+-      : "X25519:P-256:P-384:X448";
++      :
++       #ifdef HAVE_CURVE25519
++        "X25519"
++       #endif
++       #ifdef HAVE_ECC
++        #if defined(HAVE_CURVE25519)
++        ":"
++        #endif
++        "P-256:P-384"
++       #endif
++       #ifdef HAVE_CURVE448
++        #if defined(HAVE_CURVE25519) || defined(HAVE_ECC)
++        ":"
++        #endif
++        "X448"
++       #endif
++        ;
+     if (WOLFSSL_SUCCESS != wolfSSL_CTX_set1_curves_list(s->ssl_ctx, groups)) {
+         log_error(srv->errh, __FILE__, __LINE__,
+           "SSL: Unknown to set groups %s", groups);
