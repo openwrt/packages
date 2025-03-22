@@ -1,14 +1,27 @@
 
-#config antiblock 'config'
-	#option enabled '0'
-	#At least one parameters needs to be filled:
-		#option url 'https://antifilter.download/list/domains.lst'
-		#option file '/root/domains'
-	#Required parameters:
-		#option listen '192.168.1.1:5053'
-		#option DNS '1.1.1.1:53'
-		#option VPN_name 'VPN'
-	#Optional parameters:
-		#option log '1'
-		#option stat '1'
-		#option output '/tmp/antiblock'
+#config main 'config'
+#Required parameters:
+	#option enabled       '0'
+#Optional parameters:
+	#option log			  '1'
+	#option stat		  '1'
+	#option output		  '/test/'
+	#list blacklist 	  'x.x.x.x/xx'
+	#list blacklist 	  'x.x.x.x/xx'
+
+#It is necessary to enter from 1 to 32 values:
+#config route
+	#option gateway       'gateway1'
+	#option domains_path  'https://test1.com'
+
+#config route
+	#option gateway       'gateway2'
+	#option domains_path  '/test1.txt'
+
+#config route
+	#option gateway       'gateway2'
+	#option domains_path  '/test2.txt'
+
+#config route
+	#option gateway       'gateway1'
+	#option domains_path  'https://test2.com'

@@ -17,7 +17,6 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | android_tracking    |         | S    | tracking         | [Link](https://github.com/Perflyst/PiHoleBlocklist)                               |
 | andryou             |         | L    | compilation      | [Link](https://gitlab.com/andryou/block/-/blob/master/readme.md)                  |
 | anti_ad             |         | L    | compilation      | [Link](https://github.com/privacy-protection-tools/anti-AD/blob/master/README.md) |
-| antipopads          |         | L    | compilation      | [Link](https://github.com/AdroitAdorKhan/antipopads-re)                           |
 | anudeep             |         | M    | compilation      | [Link](https://github.com/anudeepND/blacklist)                                    |
 | bitcoin             |         | S    | mining           | [Link](https://github.com/hoshsadiq/adblock-nocoin-list)                          |
 | certpl              |         | L    | phishing         | [Link](https://cert.pl/en/warning-list/)                                          |
@@ -26,6 +25,9 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | doh_blocklist       |         | S    | doh_server       | [Link](https://github.com/dibdot/DoH-IP-blocklists)                               |
 | easylist            |         | M    | compilation      | [Link](https://easylist.to)                                                       |
 | easyprivacy         |         | M    | tracking         | [Link](https://easylist.to)                                                       |
+| energized_blu       |         | XL   | compilation      | [Link](https://energized.pro)                                                     |
+| energized_spark     |         | L    | compilation      | [Link](https://energized.pro)                                                     |
+| energized_ultimate  |         | XXL  | compilation      | [Link](https://energized.pro)                                                     |
 | firetv_tracking     |         | S    | tracking         | [Link](https://github.com/Perflyst/PiHoleBlocklist)                               |
 | games_tracking      |         | S    | tracking         | [Link](https://www.gameindustry.eu)                                               |
 | hagezi              |         | VAR  | compilation      | [Link](https://github.com/hagezi/dns-blocklists)                                  |
