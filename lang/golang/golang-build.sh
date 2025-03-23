@@ -99,6 +99,21 @@ configure() {
 }
 
 build() {
+	if [ -n "$GO_BIN_VERSION" ]; then
+		# shellcheck disable=SC3010
+		if  [[ ! "$GO_BIN_VERSION" =~ ^[0-9]{1}.[0-9]{1,2}$ ]]; then
+			log_error "GO_BIN_VERSION is not a valid go MAJOR.MINOR version: $GO_BIN_VERSION"
+			exit 1
+		elif [ ! -f "$(which "go${GO_BIN_VERSION}")" ]; then
+			log_error "go${GO_BIN_VERSION} not found."
+			exit 1
+		else
+			log "Using $("go${GO_BIN_VERSION}" version) from $(which "go${GO_BIN_VERSION}")"
+		fi
+	else
+		log "Using host $(go version) from $(which go)"
+	fi
+
 	# shellcheck disable=SC2039
 	local modargs pattern targets retval
 
@@ -111,7 +126,7 @@ build() {
 
 	log "Finding targets"
 	# shellcheck disable=SC2086
-	targets="$(go list $modargs $GO_BUILD_PKG)"
+	targets="$("go${GO_BIN_VERSION}" list $modargs $GO_BUILD_PKG)"
 	for pattern in $GO_EXCLUDES; do
 		targets="$(printf '%s\n' "$targets" | grep -v "$pattern")"
 	done
@@ -121,7 +136,7 @@ build() {
 		log "Calling go generate"
 		# shellcheck disable=SC2086
 		GOOS='' GOARCH='' GO386='' GOARM='' GOARM64='' GOMIPS='' GOMIPS64='' GORISCV64=''\
-		go generate -v $targets
+		"go${GO_BIN_VERSION}" generate -v $targets
 		log
 	fi
 
@@ -132,7 +147,7 @@ build() {
 	log "Building targets"
 	mkdir -p "$GO_BUILD_DIR/bin" "$GO_BUILD_CACHE_DIR"
 	# shellcheck disable=SC2086
-	go install $modargs "$@" $targets
+	"go${GO_BIN_VERSION}" install $modargs "$@" $targets
 	retval="$?"
 	log
 
