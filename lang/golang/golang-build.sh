@@ -111,7 +111,7 @@ build() {
 
 	log "Finding targets"
 	# shellcheck disable=SC2086
-	targets="$(go list $modargs $GO_BUILD_PKG)"
+	targets="$(go${GO_BIN_VERSION} list $modargs $GO_BUILD_PKG)"
 	for pattern in $GO_EXCLUDES; do
 		targets="$(printf '%s\n' "$targets" | grep -v "$pattern")"
 	done
@@ -121,7 +121,7 @@ build() {
 		log "Calling go generate"
 		# shellcheck disable=SC2086
 		GOOS='' GOARCH='' GO386='' GOARM='' GOARM64='' GOMIPS='' GOMIPS64='' GORISCV64=''\
-		go generate -v $targets
+		go${GO_BIN_VERSION} generate -v $targets
 		log
 	fi
 
@@ -132,7 +132,7 @@ build() {
 	log "Building targets"
 	mkdir -p "$GO_BUILD_DIR/bin" "$GO_BUILD_CACHE_DIR"
 	# shellcheck disable=SC2086
-	go install $modargs "$@" $targets
+	go${GO_BIN_VERSION} install $modargs "$@" $targets
 	retval="$?"
 	log
 
