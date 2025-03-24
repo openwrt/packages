@@ -4,8 +4,8 @@ USE_PROCD=1
 START=99
 
 prog_name="antiblock"
-blacklist_folder="/tmp/$prog_name"
-blacklist_file="$blacklist_folder/blacklist"
+tmp_folder="/tmp/$prog_name"
+blacklist_file="$tmp_folder/blacklist"
 
 routes_parse() {
 	local _config="$1"
@@ -20,7 +20,7 @@ routes_parse() {
 }
 
 blacklist_parse() {
-	[ "${_blacklist_count}" -eq "0" ] && mkdir -p $blacklist_folder && >$blacklist_file
+	[ "${_blacklist_count}" -eq "0" ] && mkdir -p $tmp_folder && >$blacklist_file
 	_blacklist_count=$(expr "${_blacklist_count}" + 1)
 	echo "$1" >>$blacklist_file
 }
@@ -34,12 +34,10 @@ start_service() {
 
 	echo "AntiBlock start"
 
-	local _output
 	local _log
 	local _stat
 	local _test
 
-	config_get _output "config" "output"
 	config_get_bool _log "config" "log" "0"
 	config_get_bool _stat "config" "stat" "0"
 	config_get_bool _test "config" "test" "0"
@@ -59,10 +57,10 @@ start_service() {
 	_listen="$(uci -q get network.lan.ipaddr):53"
 	procd_append_param command -l "${_listen}"
 
-	[ -n "${_output}" ] && mkdir -p "${_output}" && procd_append_param command -o "${_output}"
+	procd_append_param command -o "$tmp_folder"
 	[ "${_blacklist_count}" -ne "0" ] && procd_append_param command -b "$blacklist_file"
-	[ "${_log}" -ne "0" ] && procd_append_param command --log
-	[ "${_stat}" -ne "0" ] && procd_append_param command --stat
+	[ "${_log}" -ne "0" ] && mkdir -p $tmp_folder && procd_append_param command --log
+	[ "${_stat}" -ne "0" ] && mkdir -p $tmp_folder && procd_append_param command --stat
 	[ "${_test}" -ne "0" ] && procd_append_param command --test
 
 	procd_close_instance
