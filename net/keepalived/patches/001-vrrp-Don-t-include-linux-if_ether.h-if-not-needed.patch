@@ -1,0 +1,31 @@
+From f129c588f7c8a66e595d8ae96a43d585018e79cd Mon Sep 17 00:00:00 2001
+From: Quentin Armitage <quentin@armitage.org.uk>
+Date: Thu, 7 Nov 2024 11:09:43 +0000
+Subject: [PATCH] vrrp: Don't include <linux/if_ether.h> if not needed
+
+The musl headers do not allow including both <linux/if_ether.h> and
+<net/ethernet.h> since they both define struct ethhdr.
+
+It is likely that we do not need to include <linux/if_ether.h> at all
+since with both glibc and musl including  <net/ethernet.h> is sufficient,
+but removing <linux/if_ether.h> is for another day.
+
+Signed-off-by: Quentin Armitage <quentin@armitage.org.uk>
+---
+ keepalived/vrrp/vrrp.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+--- a/keepalived/vrrp/vrrp.c
++++ b/keepalived/vrrp/vrrp.c
+@@ -40,8 +40,10 @@
+ #include <netinet/ip6.h>
+ #include <stdint.h>
+ #include <net/if_arp.h>
+-#include <linux/if_ether.h>
+ #include <net/ethernet.h>
++#if !defined ETH_HLEN || !defined ETH_ZLEN
++#include <linux/if_ether.h>		/* This may not be needed at all - try removing and see if any issues raised */
++#endif
+ #ifdef _NETWORK_TIMESTAMP_
+ #include <linux/net_tstamp.h>
+ #endif
