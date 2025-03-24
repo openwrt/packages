@@ -5,7 +5,6 @@
 #Optional parameters:
 	#option log			  '1'
 	#option stat		  '1'
-	#option output		  '/test/'
 	#list blacklist 	  'x.x.x.x/xx'
 	#list blacklist 	  'x.x.x.x/xx'
 
