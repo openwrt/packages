@@ -242,6 +242,71 @@ snmpd_sink_add() {
 	echo "$section $host$port $community" >> $CONFIGFILE
 }
 
+snmpd_snmpv3_add() {
+	local cfg="$1"
+	local cfg2="$2"
+
+	local version
+	local username
+	local auth_type
+	local auth_pass
+	local privacy_type
+	local privacy_pass
+	local allow_write
+	local oid
+
+	config_get version "$cfg2" snmp_version
+	if [ "$version" != "v1/v2c/v3" ] && [ "$version" != "v3" ]; then
+		echo "skipping section '$cfg' wrong 'snmp_version=$version' configured"
+		return 0
+	fi
+
+	config_get username "$cfg" username
+	[ -n "$username" ] || {
+		echo "skipping section '$cfg' 'username' missing"
+		return 0
+	}
+
+	config_get auth_pass "$cfg" auth_pass
+	config_get oid "$cfg" RestrictedOID
+	config_get_bool allow_write "$cfg" allow_write 0
+	local useraccess="rouser"
+	[ "$allow_write" -eq 1 ] && useraccess="rwuser"
+
+	if [ -z "$auth_pass" ]; then
+		echo "createUser $username" >> "$CONFIGFILE"
+		echo "$useraccess $username noauth $oid" >> "$CONFIGFILE"
+		return
+	fi
+
+	[ "${#auth_pass}" -lt 8 ] && {
+		echo "skipping section '$cfg' 'auth_pass' requires a min length of 8"
+		return 0
+	}
+
+	config_get auth_type "$cfg" auth_type
+	[ -z "$auth_type" ] && {
+		echo "skipping section '$cfg' 'auth_type' missing"
+		return 0
+	}
+
+	config_get privacy_type "$cfg" privacy_type
+	config_get privacy_pass "$cfg" privacy_pass
+	if [ -n "$privacy_type" ] && [ -n "$privacy_pass" ]; then
+
+		[ "${#privacy_pass}" -lt 8 ] && {
+			echo "skipping section '$cfg' 'privacy_pass' requires a min length of 8"
+			return 0
+		}
+
+		echo "createUser $username $auth_type \"$auth_pass\" $privacy_type \"$privacy_pass\"" >> "$CONFIGFILE"
+		echo "$useraccess $username priv $oid" >> "$CONFIGFILE"
+	else
+		echo "createUser $username $auth_type \"$auth_pass\"" >> "$CONFIGFILE"
+		echo "$useraccess $username auth $oid" >> "$CONFIGFILE"
+	fi
+}
+
 append_parm() {
 	local section="$1"
 	local option="$2"
@@ -319,9 +384,10 @@ start_service() {
 	append_authtrapenable authtrapenable enable authtrapenable
 	append_parm v1trapaddress host v1trapaddress
 	append_parm trapsess trapsess trapsess
+	config_foreach snmpd_snmpv3_add v3 general
 
 	procd_set_param command $PROG -Lf /dev/null -f -r
-	procd_set_param file $CONFIGFILE
+	procd_append_param command -C -c "$CONFIGFILE"
 	procd_set_param respawn
 
 	for iface in $(ls /sys/class/net 2>/dev/null); do
