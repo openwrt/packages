@@ -333,7 +333,6 @@ define Package/snmpd-nossl/install
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DATA) ./files/snmpd.conf $(1)/etc/config/snmpd
 	$(INSTALL_DIR) $(1)/etc/snmp
-	$(LN) /var/run/snmpd.conf $(1)/etc/snmp/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/snmpd.init $(1)/etc/init.d/snmpd
 	$(INSTALL_DIR) $(1)/usr/sbin
