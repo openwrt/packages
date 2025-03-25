@@ -349,6 +349,48 @@ snmpd_setup_fw_rules() {
 	HANDLED_SNMP_ZONES="$HANDLED_SNMP_ZONES $zone"
 }
 
+snmpd_configure_logging() {
+	local cfg="$1"
+	local log_syslog
+	local log_syslog_facility
+	local log_file
+	local log_file_priority
+
+	config_get_bool log_syslog "$cfg" log_syslog 0
+
+	# d - LOG_DAEMON,
+	# u - LOG_USER,
+	# 0-7 - LOG_LOCAL0 through LOG_LOCAL7.
+
+	# 0 or ! - LOG_EMERG
+	# 1 or a - LOG_ALERT
+	# 2 or c - LOG_CRIT
+	# 3 or e - LOG_ERR
+	# 4 or w - LOG_WARN
+	# 5 or n - LOG_NOTICE
+	# 6 or i - LOG_INFO
+	# 7 or d - LOG_DEBUG
+
+	if [ $log_syslog -eq 1 ]; then
+		config_get log_syslog_facility "$cfg" log_syslog_facility "d"
+
+		procd_append_param command -Ls "${log_syslog_facility}"
+	fi
+
+	config_get log_file "$cfg" log_file
+
+	if [ -n "$log_file" ]; then
+		config_get log_file_priority "$cfg" log_file_priority "i"
+
+		mkdir -p "$(dirname "${log_file}")"
+		procd_append_param command -LF "${log_file_priority} ${log_file}"
+	fi
+
+	if [ "$log_syslog" -eq 0 ] && [ -z "$log_file" ]; then
+		procd_append_param command -Lf /dev/null
+	fi
+}
+
 start_service() {
 	[ -f "$CONFIGFILE" ] && rm -f "$CONFIGFILE"
 
@@ -386,8 +428,9 @@ start_service() {
 	append_parm trapsess trapsess trapsess
 	config_foreach snmpd_snmpv3_add v3 general
 
-	procd_set_param command $PROG -Lf /dev/null -f -r
+	procd_set_param command $PROG -f -r
 	procd_append_param command -C -c "$CONFIGFILE"
+	config_foreach snmpd_configure_logging log
 	procd_set_param respawn
 
 	for iface in $(ls /sys/class/net 2>/dev/null); do
