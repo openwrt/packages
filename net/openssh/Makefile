@@ -25,10 +25,6 @@ PKG_CPE_ID:=cpe:/a:openssh:openssh
 #While bumping new version, make sure that it works without it, so it can be removed.
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=
-PKG_CONFIG_DEPENDS := \
-	CONFIG_OPENSSH_LIBFIDO2
-
-PKG_BUILD_DEPENDS += OPENSSH_LIBFIDO2:libfido2
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -92,14 +88,10 @@ endef
 
 define Package/openssh-server
 	$(call Package/openssh/Default)
-	DEPENDS+= +libopenssl +zlib +openssh-keygen +OPENSSH_LIBFIDO2:libfido2
+	DEPENDS+= +libopenssl +zlib +openssh-keygen
 	TITLE+= server
 	USERID:=sshd=22:sshd=22
 	VARIANT:=without-pam
-endef
-
-define Package/openssh-server/config
-	source "$(SOURCE)/Config.in"
 endef
 
 define Package/openssh-server/description
@@ -182,7 +174,6 @@ CONFIGURE_ARGS += \
 	--without-kerberos5 \
 	--with-stackprotect \
 	--with$(if $(CONFIG_OPENSSL_ENGINE),,out)-ssl-engine \
-	--with$(if $(CONFIG_OPENSSH_LIBFIDO2),,out)-security-key-builtin \
 	--with-cflags-after=-fzero-call-used-regs=skip
 
 ifeq ($(BUILD_VARIANT),with-pam)
