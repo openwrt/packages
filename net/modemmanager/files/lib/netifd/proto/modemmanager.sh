@@ -684,6 +684,10 @@ proto_modemmanager_setup() {
 				modemmanager_set_allowed_mode "$device" \
 					"$interface" "5g"
 				;;
+			"any")
+				modemmanager_set_allowed_mode "$device" \
+					"$interface" "any"
+				;;
 			*)
 				modemmanager_set_preferred_mode "$device" \
 					"$interface" "${allowedmode}" "${preferredmode}"
