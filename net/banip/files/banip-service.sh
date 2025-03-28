@@ -53,7 +53,6 @@ for feed in allowlist ${ban_feed} blocklist; do
 	#
 	if [ "${feed}" = "allowlist" ] || [ "${feed}" = "blocklist" ]; then
 		for proto in 4MAC 6MAC 4 6; do
-			[ "${feed}" = "blocklist" ] && wait
 			f_down "${feed}" "${proto}" "-" "-" "inout"
 		done
 		continue
@@ -99,8 +98,7 @@ for feed in allowlist ${ban_feed} blocklist; do
 				f_down "${feed}" "4" "${feed_url_4}" "${feed_rule_4}" "${feed_chain:-"in"}" "${feed_flag}"
 			else
 				(f_down "${feed}" "4" "${feed_url_4}" "${feed_rule_4}" "${feed_chain:-"in"}" "${feed_flag}") &
-				hold="$((cnt % ban_cores))"
-				[ "${hold}" = "0" ] && wait -n
+				[ "${cnt}" -gt "${ban_cores}" ] && wait -n
 				cnt="$((cnt + 1))"
 			fi
 		fi
@@ -116,12 +114,12 @@ for feed in allowlist ${ban_feed} blocklist; do
 			done
 		else
 			(f_down "${feed}" "6" "${feed_url_6}" "${feed_rule_6}" "${feed_chain:-"in"}" "${feed_flag}") &
+			[ "${cnt}" -gt "${ban_cores}" ] && wait -n
 			cnt="$((cnt + 1))"
-			hold="$((cnt % ban_cores))"
-			[ "${hold}" = "0" ] && wait -n
 		fi
 	fi
 done
+wait
 f_rmset
 f_rmdir "${ban_tmpdir}"
 f_genstatus "active"
@@ -132,8 +130,7 @@ f_log "info" "start banIP domain lookup"
 cnt="1"
 for list in allowlist blocklist; do
 	(f_lookup "${list}") &
-	hold="$((cnt % ban_cores))"
-	[ "${hold}" = "0" ] && wait -n
+	[ "${cnt}" -gt "${ban_cores}" ] && wait -n
 	cnt="$((cnt + 1))"
 done
 wait
