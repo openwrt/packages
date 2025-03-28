@@ -17,10 +17,6 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 
 | Feed                | Focus                          | Inbound | Outbound | Proto/Port        | Information                                                  |
 | :------------------ | :----------------------------- | :-----: | :------: | :---------------: | :----------------------------------------------------------- |
-| adaway              | adaway IPs                     |         |    x     | tcp, udp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
-| adguard             | adguard IPs                    |         |    x     | tcp, udp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
-| adguardtrackers     | adguardtracker IPs             |         |    x     | tcp, udp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
-| antipopads          | antipopads IPs                 |         |    x     | tcp, udp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
 | asn                 | ASN segments                   |    x    |          |                   | [Link](https://asn.ipinfo.app)                               |
 | backscatterer       | backscatterer IPs              |    x    |          |                   | [Link](https://www.uceprotect.net/en/index.php)              |
 | becyber             | malicious attacker IPs         |    x    |          |                   | [Link](https://github.com/duggytuxy/malicious_ip_addresses)  |
@@ -46,12 +42,8 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 | ipthreat            | hacker and botnet TPs          |    x    |          |                   | [Link](https://ipthreat.net)                                 |
 | myip                | real-time IP blocklist         |    x    |          |                   | [Link](https://myip.ms)                                      |
 | nixspam             | iX spam protection             |    x    |          |                   | [Link](http://www.nixspam.org)                               |
-| oisdbig             | OISD-big IPs                   |         |    x     | tcp, udp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
-| oisdnsfw            | OISD-nsfw IPs                  |         |    x     | tcp, udp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
-| oisdsmall           | OISD-small IPs                 |         |    x     | tcp, udp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
 | pallebone           | curated IP blocklist           |    x    |          |                   | [Link](https://github.com/pallebone/StrictBlockPAllebone)    |
 | proxy               | open proxies                   |    x    |          |                   | [Link](https://iplists.firehol.org/?ipset=proxylists)        |
-| stevenblack         | stevenblack IPs                |         |    x     | tcp, udp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
 | threat              | emerging threats               |    x    |          |                   | [Link](https://rules.emergingthreats.net)                    |
 | threatview          | malicious IPs                  |    x    |          |                   | [Link](https://threatview.io)                                |
 | tor                 | tor exit nodes                 |    x    |          |                   | [Link](https://www.dan.me.uk)                                |
@@ -65,7 +57,6 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 | voip                | VoIP fraud blocklist           |    x    |          |                   | [Link](https://voipbl.org)                                   |
 | vpn                 | vpn IPs                        |    x    |          |                   | [Link](https://github.com/X4BNet/lists_vpn)                  |
 | vpndc               | vpn datacenter IPs             |    x    |          |                   | [Link](https://github.com/X4BNet/lists_vpn)                  |
-| yoyo                | yoyo IPs                       |         |    x     | tcp, udp: 80, 443 | [Link](https://github.com/dibdot/banIP-IP-blocklists)        |
 
 * Zero-conf like automatic installation & setup, usually no manual changes needed
 * All Sets are handled in a separate nft table/namespace 'banIP'
@@ -84,18 +75,18 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 * Fast feed processing as they are handled in parallel as background jobs (on capable multi-core hardware)
 * Per feed it can be defined whether the inbound chain (wan-input, wan-forward) or the outbound chain (lan-forward) should be blocked
 * Automatic blocklist backup & restore, the backups will be used in case of download errors or during startup
-* Automatically selects one of the following download utilities with ssl support: aria2c, curl, uclient-fetch or full wget
+* Automatically selects one of the following download utilities with ssl support: curl, uclient-fetch or full wget
 * Provides HTTP ETag support to download only ressources that have been updated on the server side, to speed up banIP reloads and to save bandwith
 * Supports an 'allowlist only' mode, this option restricts the internet access only to specific, explicitly allowed IP segments
 * Supports external allowlist URLs to reference additional IPv4/IPv6 feeds
 * Optionally always allow certain protocols/destination ports in the inbound chain
 * Deduplicate IPs accross all Sets (single IPs only, no intervals)
 * Provides comprehensive runtime information
-* Provides a detailed Set report
+* Provides a detailed Set report, incl. a map that shows the geolocation of your own uplink addresses (in green) and the location of potential attackers (in red)
 * Provides a Set search engine for certain IPs
 * Feed parsing by fast & flexible regex rulesets
 * Minimal status & error logging to syslog, enable debug logging to receive more output
-* Procd based init system support (start/stop/restart/reload/status/report/search/survey)
+* Procd based init system support (start/stop/restart/reload/status/report/search/content)
 * Procd network interface trigger support
 * Add new or edit existing banIP feeds on your own with the LuCI integrated custom feed editor
 * Supports destination port & protocol limitations for external feeds (see the feed list above). To change the default assignments just use the custom feed editor
@@ -105,7 +96,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 <a id="prerequisites"></a>
 ## Prerequisites
 * **[OpenWrt](https://openwrt.org)**, latest stable release 24.x or a development snapshot with nft/firewall 4 support
-* A download utility with SSL support: 'aria2c', 'curl', full 'wget' or 'uclient-fetch' with one of the 'libustream-*' SSL libraries, the latter one doesn't provide support for ETag HTTP header
+* A download utility with SSL support: 'curl', full 'wget' or 'uclient-fetch' with one of the 'libustream-*' SSL libraries, the latter one doesn't provide support for ETag HTTP header
 * A certificate store like 'ca-bundle', as banIP checks the validity of the SSL certificates of all download sites by default
 * For E-Mail notifications you need to install and setup the additional 'msmtp' package
 
@@ -142,7 +133,7 @@ Available commands:
 	enabled         Check if service is started on boot
 	report          [text|json|mail] Print banIP related Set statistics
 	search          [<IPv4 address>|<IPv6 address>] Check if an element exists in a banIP Set
-	survey          [<Set name>] List all elements of a given banIP Set
+	content         [<Set name>] List all elements of a given banIP Set
 	running         Check if service is running
 	status          Service status
 	trace           Start with syscall trace
@@ -198,6 +189,7 @@ Available commands:
 | ban_nftexpiry           | option | -                             | expiry time for auto added blocklist members, e.g. '5m', '2h' or '1d'                                             |
 | ban_nftretry            | option | 5                             | number of Set load attempts in case of an error                                                                   |
 | ban_nftcount            | option | 0                             | enable nft counter for every Set element                                                                          |
+| ban_map                 | option | 0                             | enable a GeoIP Map with suspicious Set elements                                                                   |
 | ban_feed                | list   | -                             | external download feeds, e.g. 'yoyo', 'doh', 'country' or 'talos' (see feed table)                                |
 | ban_asn                 | list   | -                             | ASNs for the 'asn' feed, e.g.'32934'                                                                              |
 | ban_asnsplit            | option | -                             | the selected ASNs are stored in separate Sets                                                                     |
@@ -210,7 +202,7 @@ Available commands:
 | ban_feedinout           | list   | -                             | set the selected feeds to the inbound and outbound chain (lan-forward)                                            |
 | ban_feedreset           | list   | -                             | override the default feed configuration and remove existing port/protocol limitations                             |
 | ban_feedcomplete        | list   | -                             | opt out the selected feeds from the deduplication process                                                         |
-| ban_fetchcmd            | option | - / autodetect                | 'uclient-fetch', 'wget', 'curl' or 'aria2c'                                                                       |
+| ban_fetchcmd            | option | - / autodetect                | 'uclient-fetch', 'wget' or 'curl'                                                                                 |
 | ban_fetchparm           | option | - / autodetect                | set the config options for the selected download utility                                                          |
 | ban_fetchretry          | option | 5                             | number of download attempts in case of an error (not supported by uclient-fetch)                                  |
 | ban_fetchinsecure       | option | 0                             | don't check SSL server certificates during download                                                               |
@@ -279,16 +271,16 @@ Available commands:
 ~# /etc/init.d/banip status
 ::: banIP runtime information
   + status            : active (nft: ✔, monitor: ✔)
-  + version           : 1.5.3-r3
-  + element_count     : 91 763 (chains: 7, sets: 18, rules: 46)
-  + active_feeds      : allowlist.v4MAC, allowlist.v6MAC, allowlist.v4, allowlist.v6, cinsscore.v4, debl.v4, debl.v6, doh.v6, doh.v4, threat.v4, turris.v4, country.v4, turris.v6, country.v6, blocklist.v4MAC, blocklist.v6MAC, blocklist.v4, blocklist.v6
+  + version           : 1.5.5-r1
+  + element_count     : 92 615 (chains: 7, sets: 18, rules: 46)
+  + active_feeds      : allowlist.v4MAC, allowlist.v6MAC, allowlist.v4, allowlist.v6, cinsscore.v4, debl.v4, country.v6, debl.v6, doh.v4, doh.v6, threat.v4, turris.v4, turris.v6, blocklist.v4MAC, blocklist.v6MAC, blocklist.v4, blocklist.v6, country.v4
   + active_devices    : wan: pppoe-wan / wan-if: wan, wan_6 / vlan-allow: - / vlan-block: -
   + active_uplink     : 91.61.217.158, 2001:fc:37ff:f64:b513:16dd:6903:7710
   + nft_info          : ver: 1.1.1-r1, priority: -100, policy: performance, loglevel: warn, expiry: 2h, limit (icmp/syn/udp): 25/10/100
   + run_info          : base: /mnt/data/banIP, backup: /mnt/data/banIP/backup, report: /mnt/data/banIP/report, error: /mnt/data/banIP/error
-  + run_flags         : auto: ✔, proto (4/6): ✔/✔, log (pre/in/out): ✘/✘/✘, count: ✔, dedup: ✔, split: ✘, custom feed: ✘, allowed only: ✘
-  + last_run          : 2025-03-07 13:08:56, duration: 1m 12s, mode: reload, memory: 1325.18 MB available, 1.88 MB max. used
-  + system_info       : cores: 4, log: logread, fetch: curl, Bananapi BPI-R3, mediatek/filogic, OpenWrt SNAPSHOT r28926-9a7192c08e 
+  + run_flags         : auto: ✘, proto (4/6): ✔/✔, log (pre/in/out): ✘/✘/✘, count: ✔, dedup: ✔, split: ✘, custom feed: ✘, allowed only: ✘
+  + last_run          : 2025-03-27 21:54:29, mode: restart, duration: 0m 21s, memory: 1281.87 MB available, 2.00 MB max. used
+  + system_info       : cores: 4, log: logread, fetch: curl, Bananapi BPI-R3, mediatek/filogic, OpenWrt SNAPSHOT r29070-8d1fe32c2c 
 ```
 
 **banIP search information**  
@@ -304,14 +296,14 @@ Available commands:
     IP found in Set 'doh.v4'
 ```
 
-**banIP survey information**  
+**banIP Set content information**  
 
 ```
-~# /etc/init.d/banip survey doh.v4
+~# /etc/init.d/banip content doh.v4
 :::
-::: banIP Survey
+::: banIP Set Content
 :::
-    List of elements in the Set 'doh.v4' on 2025-01-13 22:35:57
+    List elements of the Set 'doh.v4' on 2025-01-13 22:35:57
     ---
 { "range": [ "1.0.0.1", "1.0.0.3" ] }
 { "range": [ "1.1.1.1", "1.1.1.3" ] }
@@ -335,7 +327,7 @@ nftables supports the atomic loading of firewall rules (incl. elements), which i
 * point 'ban_basedir', 'ban_reportdir', 'ban_backupdir' and 'ban_errordir' to an external usb drive or ssd
 * set 'ban_cores' to '1' (only useful on a multicore system) to force sequential feed processing
 * set 'ban_splitsize' e.g. to '1024' to split the load of an external Set after every 1024 lines/elements
-* set 'ban_nftcount' to '0' to deactivate the CPU-intensive creation of counter elements at Set level
+* set 'ban_nftcount' to '0' to deactivate the CPU- and memory-intensive creation of counter elements at Set level
 
 **Sensible choice of blocklists**  
 The following feeds are just my personal recommendation as an initial setup:  
@@ -397,6 +389,18 @@ C8:C2:9B:F7:80:12 192.168.1.10                     => this will be populated to 
 C8:C2:9B:F7:80:12                                  => this will be populated to v6MAC-Set with the IP-wildcard ::/0
 ```
 
+**Set reporting, enable the GeoIP Map**  
+In addition to a tabular overview banIP reporting includes a GeoIP map in a modal popup window/iframe that shows the geolocation of your own uplink addresses (in green) and the locations of potential attackers (in red). To enable the GeoIP Map set the following options (in "Feed/Set Settings" config tab):  
+
+    * set 'ban_nftcount' to '1' to enable the nft counter for every Set element
+    * set 'ban_map' to '1' to include the external components listed below and activate the GeoIP map
+
+To make this work, banIP uses the following external components:  
+* [Leaflet](https://leafletjs.com/) is a lightweight open-source JavaScript library for interactive maps
+* [OpenStreetMap](https://www.openstreetmap.org/) provides the map data under an open-source license
+* [CARTO basemap styles](https://github.com/CartoDB/basemap-styles) based on [OpenMapTiles](https://openmaptiles.org/schema)
+* The free and quite fast [IP Geolocation API](https://ip-api.com/) to resolve the required IP/geolocation information
+
 **CGI interface to receive remote logging events**  
 banIP ships a basic cgi interface in '/www/cgi-bin/banip' to receive remote logging events (disabled by default). The cgi interface evaluates logging events via GET or POST request (see examples below). To enable the cgi interface set the following options:  
 
@@ -414,7 +418,6 @@ Please note: for security reasons use this cgi interface only internally and onl
 By default banIP uses the following pre-configured download options:
 
 ```
-    * aria2c: --timeout=20 --retry-wait=10 --max-tries=5 --max-file-not-found=5 --allow-overwrite=true --auto-file-renaming=false --log-level=warn --dir=/ -o
     * curl: --connect-timeout 20 --retry-delay 10 --retry 5 --retry-all-errors --fail --silent --show-error --location -o
     * wget: --no-cache --no-cookies --timeout=20 --waitretry=10 --tries=5 --retry-connrefused --max-redirect=0 -O
     * uclient-fetch: --timeout=20 -O
@@ -462,14 +465,14 @@ A valid JSON source object contains the following information, e.g.:
 
 ```
 	[...]
-	"stevenblack":{
-		"url_4": "https://raw.githubusercontent.com/dibdot/banIP-IP-blocklists/main/stevenblack-ipv4.txt",
-		"url_6": "https://raw.githubusercontent.com/dibdot/banIP-IP-blocklists/main/stevenblack-ipv6.txt",
+	"doh":{
+		"url_4": "https://raw.githubusercontent.com/dibdot/DoH-IP-blocklists/master/doh-ipv4.txt",
+		"url_6": "https://raw.githubusercontent.com/dibdot/DoH-IP-blocklists/master/doh-ipv6.txt",
 		"rule_4": "/^127\\./{next}/^(([1-9][0-9]{0,2}\\.){1}([0-9]{1,3}\\.){2}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\\/(1?[0-9]|2?[0-9]|3?[0-2]))?)[[:space:]]/{printf \"%s,\\n\",$1}",
 		"rule_6": "/^(([0-9A-f]{0,4}:){1,7}[0-9A-f]{0,4}:?(\\/(1?[0-2][0-8]|[0-9][0-9]))?)[[:space:]]/{printf \"%s,\\n\",$1}",
 		"chain": "out",
-		"descr": "stevenblack IPs",
-		"flag": "tcp 80 443"
+		"descr": "public DoH-Provider",
+		"flag": "tcp udp 80 443"
 	},
 	[...]
 ```
@@ -490,7 +493,7 @@ Whenever you encounter firewall problems, enable the logging of certain chains i
 Typical symptoms:  
 * A feed blocks a legit IP: disable the entire feed or add this IP to your local allowlist and reload banIP  
 * A feed (e.g. doh) interrupts almost all client connections: check the feed table above for reference and reset the feed to the defaults in the "Feed/Set Settings" config tab section  
-* The allowlist doesn't free a certain IP/MAC address: check the current content of the allowlist with the "Set Survey" under the "Set Reporting" tab to make sure that the desired IP/MAC is listed - if not, reload banIP  
+* The allowlist doesn't free a certain IP/MAC address: check the current content of the allowlist with the "Set Content" under the "Set Reporting" tab to make sure that the desired IP/MAC is listed - if not, reload banIP  
 
 <a id="support"></a>
 ## Support
