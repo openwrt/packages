@@ -1,0 +1,31 @@
+#!/bin/sh
+
+CONFIG_DIR=/etc/adguardhome
+OLD_CONFIG_FILE=$(uci get adguardhome.config.config)
+OLD_CONFIG_FILE=${OLD_CONFIG_FILE:-/etc/adguardhome.yaml}
+NEW_CONFIG_FILE="$CONFIG_DIR/adguardhome.yaml"
+
+[ -d "$CONFIG_DIR" ] || mkdir -m 0700 -p "$CONFIG_DIR"
+
+if [ -f "$OLD_CONFIG_FILE" ] && [ "$OLD_CONFIG_FILE" != "$NEW_CONFIG_FILE" ]; then
+	if service adguardhome running; then
+		service adguardhome stop
+	fi
+
+	mv "$OLD_CONFIG_FILE" "$NEW_CONFIG_FILE"
+	uci set adguardhome.config.config="$NEW_CONFIG_FILE"
+
+	cert_path=$(grep certificate_path: "$NEW_CONFIG_FILE" | xargs | cut -d' ' -f2-)
+	private_key_path=$(grep private_key_path: "$NEW_CONFIG_FILE" | xargs | cut -d' ' -f2-)
+
+	uci add_list adguardhome.config.jail_mount="$cert_path"
+	uci add_list adguardhome.config.jail_mount="$private_key_path"
+
+	uci commit adguardhome
+fi
+
+chown -R adguardhome:adguardhome "$CONFIG_DIR"
+
+if ! service adguardhome running; then
+	service adguardhome start
+fi
