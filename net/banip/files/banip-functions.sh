@@ -324,7 +324,7 @@ f_actual() {
 # get fetch utility
 #
 f_getfetch() {
-	local util utils insecure
+	local util utils insecure update="0"
 
 	ban_fetchcmd="$(command -v "${ban_fetchcmd}")"
 	if { [ "${ban_autodetect}" = "1" ] && [ -z "${ban_fetchcmd}" ]; } || [ ! -x "${ban_fetchcmd}" ]; then
@@ -340,6 +340,7 @@ f_getfetch() {
 						;;
 				esac
 				if [ -x "$(command -v "${util}")" ]; then
+					update="1"
 					ban_fetchcmd="$(command -v "${util}")"
 					uci_set banip global ban_fetchcmd "${util}"
 					uci_commit "banip"
@@ -373,7 +374,7 @@ f_getfetch() {
 			;;
 	esac
 
-	f_log "debug" "f_getfetch  ::: auto: ${ban_autodetect}, cmd: ${ban_fetchcmd:-"-"}, fetch_parm: ${ban_fetchparm:-"-"}, rdap_parm: ${ban_rdapparm:-"-"}, etag_parm: ${ban_etagparm:-"-"}, , geo_parm: ${ban_geoparm:-"-"}"
+	f_log "debug" "f_getfetch  ::: auto/update: ${ban_autodetect}/${update}, cmd: ${ban_fetchcmd:-"-"}"
 }
 
 # get wan interfaces
@@ -1277,7 +1278,7 @@ f_genstatus() {
 			end_time="$(date "+%s")"
 			duration="$(((end_time - ban_starttime) / 60))m $(((end_time - ban_starttime) % 60))s"
 		fi
-		runtime="$(date "+%Y-%m-%d %H:%M:%S"), mode: ${ban_action:-"-"}, duration: ${duration:-"-"}, memory: ${mem_free} MB available, ${mem_max} MB max. used"
+		runtime="$(date "+%Y-%m-%d %H:%M:%S"), duration: ${duration:-"-"}, mode: ${ban_action:-"-"}, memory: ${mem_free} MB available, ${mem_max} MB max. used"
 	fi
 	[ -s "${ban_customfeedfile}" ] && custom_feed="1"
 	[ "${ban_splitsize:-"0"}" -gt "0" ] && split="1"
@@ -1417,7 +1418,6 @@ f_report() {
 	local quantity chunk map_jsn chain set_elements set_json sum_setelements sum_synflood sum_udpflood sum_icmpflood sum_ctinvalid sum_tcpinvalid output="${1}"
 
 	f_conf
-	f_getfetch
 	f_mkdir "${ban_reportdir}"
 	report_jsn="${ban_reportdir}/ban_report.jsn"
 	report_txt="${ban_reportdir}/ban_report.txt"
@@ -1577,6 +1577,7 @@ f_report() {
 	#
 	if [ "${ban_nftcount}" = "1" ] && [ "${ban_map}" = "1" ] && [ "${output}" = "json" ] && [ -s "${report_jsn}" ]; then
 		cnt="1"
+		f_getfetch
 		json_init
 		if json_load_file "${ban_rtfile}" >/dev/null 2>&1; then
 			json_get_values jsnval "active_uplink" >/dev/null 2>&1
@@ -1729,7 +1730,7 @@ f_report() {
 				printf "[%s]]\n" "${jsn}"
 			else
 				jsn="$("${ban_catcmd}" ${report_jsn})"
-				printf "%s\n" "${jsn}"
+				printf "[%s]\n" "${jsn}"
 			fi
 			;;
 		"mail")
