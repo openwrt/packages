@@ -12,7 +12,7 @@ local info = {}
 
 function mm_get_modem_bearer(index)
 
-	local command = string.format("/usr/bin/mmcli --bearer=%s --output-json 2>/dev/null", index)
+	local command = string.format("/usr/bin/mmcli --bearer=%s --timeout=10 --output-json 2>/dev/null", index)
 
 	local handle = io.popen(command)
 	local output = handle:read("*a")
@@ -31,7 +31,7 @@ end
 
 function mm_get_modem_sim(index)
 
-	local command = string.format("/usr/bin/mmcli --sim=%s --output-json 2>/dev/null", index)
+	local command = string.format("/usr/bin/mmcli --sim=%s --timeout=10 --output-json 2>/dev/null", index)
 
 	local handle = io.popen(command)
 	local output = handle:read("*a")
@@ -50,7 +50,7 @@ end
 
 function mm_get_modem_signal(modem)
 
-	local command = string.format("/usr/bin/mmcli --modem=%s --signal-get --output-json 2>/dev/null", modem)
+	local command = string.format("/usr/bin/mmcli --modem=%s --signal-get --timeout=10 --output-json 2>/dev/null", modem)
 
 	local handle = io.popen(command)
 	local output = handle:read("*a")
@@ -69,7 +69,7 @@ end
 
 function mm_get_modem_location(modem)
 
-	local command = string.format("/usr/bin/mmcli --modem=%s --location-get --output-json 2>/dev/null", modem)
+	local command = string.format("/usr/bin/mmcli --modem=%s --location-get --timeout=10 --output-json 2>/dev/null", modem)
 
 	local handle = io.popen(command)
 	local output = handle:read("*a")
@@ -88,7 +88,7 @@ end
 
 function mm_get_modem_status(modem)
 
-	local command = string.format("/usr/bin/mmcli --modem=%s --output-json 2>/dev/null", modem)
+	local command = string.format("/usr/bin/mmcli --modem=%s --timeout=10 --output-json 2>/dev/null", modem)
 
 	local handle = io.popen(command)
 	local output = handle:read("*a")
@@ -145,7 +145,7 @@ end
 
 function aquire_data_modemmanager()
 
-	local command = string.format("/usr/bin/mmcli --list-modems --output-json 2>/dev/null")
+	local command = string.format("/usr/bin/mmcli --list-modems --timeout=10 --output-json 2>/dev/null")
 
 	local handle = io.popen(command)
 	local output = handle:read("*a")
