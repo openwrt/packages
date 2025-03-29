@@ -119,6 +119,16 @@ include $(GO_INCLUDE_DIR)/golang-values.mk
 #   '$(call GoPackage/Package/Install/Bin,dest_dir)'.
 #
 #   e.g. GO_PKG_INSTALL_BIN_PATH:=/sbin
+#
+#
+# GO_BIN_VERSION - Go version string, default empty
+#
+#   Go version that will be used to build the project. The binaries for this
+#   version are fetched by GoPackage/GoBin/Install, installed into
+#   staging_dir/hostpkg/lib/gobin-$GO_BIN_VERSION and symlinked into
+#   staging_dir/hostpkg/bin/go$GO_BIN_VERSION.
+#
+#   e.g. GO_BIN_VERSION:=1.24.1
 
 # Credit for this package build process (GoPackage/Build/Configure and
 # GoPackage/Build/Compile) belong to Debian's dh-golang completely.
@@ -181,6 +191,7 @@ endef
 
 GO_PKG_BUILD_CONFIG_VARS= \
 	GO_PKG="$(strip $(GO_PKG))" \
+	GO_BIN_VERSION="$(strip $(GO_BIN_VERSION))" \
 	GO_INSTALL_EXTRA="$(strip $(GO_PKG_INSTALL_EXTRA))" \
 	GO_INSTALL_ALL="$(strip $(GO_PKG_INSTALL_ALL))" \
 	GO_SOURCE_ONLY="$(strip $(GO_PKG_SOURCE_ONLY))" \
@@ -252,6 +263,31 @@ GO_PKG_INSTALL_ARGS= \
 	$(if $(strip $(GO_PKG_CUSTOM_LDFLAGS)),-ldflags "$(GO_PKG_CUSTOM_LDFLAGS) $(GO_PKG_DEFAULT_LDFLAGS)") \
 	$(if $(strip $(GO_PKG_TAGS)),-tags "$(GO_PKG_TAGS)")
 
+define GoPackage/GoBin/GetHash
+	$(strip $(foreach item,$(GO_BIN_HASHES),$(if $(filter $(1)=%,$(item)),$(subst $(1)=,,$(item)))))
+endef
+
+define Download/gobin
+	URL:=$(GO_BIN_SOURCE_URL)
+	FILE:=$(GO_BIN_SOURCE)
+	HASH:=$(call GoPackage/GoBin/GetHash,$(GO_BIN_VERSION).$(GO_BIN_OS_ARCH))
+endef
+
+define GoPackage/GoBin/Install
+	$(eval $(call Download,gobin))
+
+	rm -f $(STAGING_DIR_HOSTPKG)/bin/go$(GO_BIN_VERSION)
+	rm -f $(STAGING_DIR_HOSTPKG)/bin/gofmt$(GO_BIN_VERSION)
+	rm -rf $(GO_BIN_LIB_DIR)
+
+	$(INSTALL_DIR) $(GO_BIN_LIB_DIR)
+	$(TAR) xvf $(DL_DIR)/$(GO_BIN_SOURCE) -C $(GO_BIN_LIB_DIR) --strip-components=1
+	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/bin
+
+	$(LN) $(GO_BIN_LIB_DIR)/bin/go $(STAGING_DIR_HOSTPKG)/bin/go$(GO_BIN_VERSION)
+	$(LN) $(GO_BIN_LIB_DIR)/bin/gofmt $(STAGING_DIR_HOSTPKG)/bin/gofmt$(GO_BIN_VERSION)
+endef
+
 define GoPackage/Build/Configure
 	$(GO_GENERAL_BUILD_CONFIG_VARS) \
 	$(GO_PKG_BUILD_CONFIG_VARS) \
@@ -295,6 +331,11 @@ ifneq ($(strip $(GO_PKG)),)
     PKG_CONFIG_DEPENDS+=CONFIG_GOLANG_SPECTRE
   endif
 
+  ifneq ($(GO_BIN_VERSION),)
+    ifeq ($(wildcard $(STAGING_DIR_HOSTPKG)/bin/go$(GO_BIN_VERSION)),)
+      Hooks/Configure/Pre+=GoPackage/GoBin/Install
+    endif
+  endif
   Build/Configure=$(call GoPackage/Build/Configure)
   Build/Compile=$(call GoPackage/Build/Compile)
   Hooks/Compile/Post+=Go/CacheCleanup

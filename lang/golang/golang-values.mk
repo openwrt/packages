@@ -146,6 +146,7 @@ GO_HOST_ARCH:=$(call go_arch,$(subst \
   armv7l,arm,$(subst \
   i686,i386,$(HOST_ARCH)))))
 GO_HOST_OS_ARCH:=$(GO_HOST_OS)_$(GO_HOST_ARCH)
+GO_BIN_OS_ARCH:=$(GO_HOST_OS)-$(GO_HOST_ARCH)
 
 ifeq ($(GO_OS_ARCH),$(GO_HOST_OS_ARCH))
   GO_HOST_TARGET_SAME:=1
@@ -270,3 +271,20 @@ define Go/CacheCleanup
 	$(GO_GENERAL_BUILD_CONFIG_VARS) \
 	$(SHELL) $(GO_INCLUDE_DIR)/golang-build.sh cache_cleanup
 endef
+
+GO_BIN_LIB_DIR:=$(STAGING_DIR_HOSTPKG)/lib/gobin-$(GO_BIN_VERSION)
+
+GO_BIN_SOURCE:=go$(GO_BIN_VERSION).$(GO_BIN_OS_ARCH).tar.gz
+GO_BIN_SOURCE_URL:=https://go.dev/ \
+                   https://dl.google.com/go/ \
+                   https://golang.google.cn/dl/ \
+                   https://mirrors.nju.edu.cn/golang/ \
+                   https://mirrors.ustc.edu.cn/golang/
+
+# SHA256 hashes can be looked up at https://go.dev/dl/
+GO_BIN_HASHES:=1.22.12.linux-amd64=4fa4f869b0f7fc6bb1eb2660e74657fbf04cdd290b5aef905585c86051b34d43 \
+               1.22.12.linux-arm64=fd017e647ec28525e86ae8203236e0653242722a7436929b1f775744e26278e7 \
+               1.23.7.linux-amd64=4741525e69841f2e22f9992af25df0c1112b07501f61f741c12c6389fcb119f3 \
+               1.23.7.linux-arm64=597acbd0505250d4d98c4c83adf201562a8c812cbcd7b341689a07087a87a541 \
+               1.24.1.linux-amd64=cb2396bae64183cdccf81a9a6df0aea3bce9511fc21469fb89a0c00470088073 \
+               1.24.1.linux-arm64=8df5750ffc0281017fb6070fba450f5d22b600a02081dceef47966ffaf36a3af
