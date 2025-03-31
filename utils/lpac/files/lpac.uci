@@ -12,3 +12,7 @@ config at at
 config uqmi uqmi
 	option		device		'/dev/cdc-wdm0'
 	option		debug		'0'
+
+config mbim mbim
+	option		device		'/dev/cdc-wdm0'
+	option		proxy		'1'
