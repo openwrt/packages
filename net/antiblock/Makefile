@@ -2,12 +2,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=antiblock
 PKG_VERSION:=2.1.2
-PKG_RELEASE:=2
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/karen07/antiblock
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_MIRROR_HASH:=18b04ab99744160e91d032edc55bb171a9717cdd200a494d7af9fa3c9f0fdb48
+PKG_MIRROR_HASH:=d9e86dea43ab19b5ca6887a8c444bac0fa7b3a6e4c9976ac50817cdd11dd9d4b
 
 PKG_MAINTAINER:=Khachatryan Karen <karen0734@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
