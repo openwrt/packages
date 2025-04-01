@@ -276,7 +276,7 @@ define Package/ddns-scripts-scaleway
   DEPENDS:=ddns-scripts +curl
 endef
 
-define Package/ddns-scripts-scaleway
+define Package/ddns-scripts-scaleway/description
   Dynamic DNS Client scripts extension for Scaleway.
   Parameters:
   'option username'  The zone in which the RR is to be set
