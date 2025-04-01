@@ -210,7 +210,7 @@ stop_section_processes() {
 
 	[ -e "$__PIDFILE" ] && {
 		__PID=$(cat $__PIDFILE)
-		ps | grep "^[\t ]*$__PID" >/dev/null 2>&1 && kill $__PID || __PID=0	# terminate it
+		busybox ps | grep "^[\t ]*$__PID" >/dev/null 2>&1 && kill $__PID || __PID=0	# terminate it
 	}
 	[ $__PID -eq 0 ] # report if process was running
 }
