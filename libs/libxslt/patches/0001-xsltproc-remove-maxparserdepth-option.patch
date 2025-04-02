@@ -1,0 +1,56 @@
+From 75967fc0121eca03c8a85db5f4df17390a08eabf Mon Sep 17 00:00:00 2001
+From: Mike Dalessio <mike.dalessio@gmail.com>
+Date: Wed, 3 Jan 2024 09:57:24 -0500
+Subject: [PATCH] xsltproc: remove maxparserdepth option
+
+libxml2 commit a2cc7f5f removed the ability to dynamically set the max
+parser depth.
+
+Upstream-Status: Backport [v1.1.40]
+Signed-off-by: Petr Štetiar <ynezz@true.cz> [backport]
+---
+ xsltproc/xsltproc.c | 19 -------------------
+ 1 file changed, 19 deletions(-)
+
+--- a/xsltproc/xsltproc.c
++++ b/xsltproc/xsltproc.c
+@@ -474,7 +474,6 @@ static void usage(const char *name) {
+     printf("\t--noout: do not dump the result\n");
+     printf("\t--maxdepth val : increase the maximum depth (default %d)\n", xsltMaxDepth);
+     printf("\t--maxvars val : increase the maximum variables (default %d)\n", xsltMaxVars);
+-    printf("\t--maxparserdepth val : increase the maximum parser depth\n");
+     printf("\t--huge: relax any hardcoded limit from the parser\n");
+     printf("\t             fixes \"parser error : internal error: Huge input lookup\"\n");
+     printf("\t--seed-rand val : initialize pseudo random number generator with specific seed\n");
+@@ -718,20 +717,6 @@ main(int argc, char **argv)
+                 if (value > 0)
+                     xsltMaxVars = value;
+             }
+-        } else if ((!strcmp(argv[i], "-maxparserdepth")) ||
+-                   (!strcmp(argv[i], "--maxparserdepth"))) {
+-            int value;
+-
+-            i++;
+-            if (i == argc) {
+-                fprintf(stderr, "XML maxparserdepth value not specified!\n");
+-                return (2);
+-            }
+-
+-            if (sscanf(argv[i], "%d", &value) == 1) {
+-                if (value > 0)
+-                    xmlParserMaxDepth = value;
+-            }
+         } else if ((!strcmp(argv[i], "-huge")) ||
+                    (!strcmp(argv[i], "--huge"))) {
+             options |= XML_PARSE_HUGE;
+@@ -780,10 +765,6 @@ main(int argc, char **argv)
+             (!strcmp(argv[i], "--maxvars"))) {
+             i++;
+             continue;
+-        } else if ((!strcmp(argv[i], "-maxparserdepth")) ||
+-            (!strcmp(argv[i], "--maxparserdepth"))) {
+-            i++;
+-            continue;
+         } else if ((!strcmp(argv[i], "-seed-rand")) ||
+             (!strcmp(argv[i], "--seed-rand"))) {
+             i++;
