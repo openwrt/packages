@@ -1,0 +1,87 @@
+#!/bin/sh /etc/rc.common
+
+START=95
+STOP=10
+
+EXTRA_COMMANDS="configure"
+EXTRA_HELP="        configure       Configure service parameters"
+
+start() {
+	default_addr="44.127.254.254"
+	if [ "$(uci get network.amprlan.ipaddr)" = "$default_addr" ] || \
+		[ "$(uci get network.amprwan.ipaddr)" = "$default_addr" ]; then
+
+		cat <<-EOF
+		ampr-ripd is not fully configured.
+		You must run /etc/init.d/ampr-ripd configure.
+		EOF
+
+		exit 1
+	fi
+	if [ ! -d /var/lib/ampr-ripd ]; then
+		mkdir -p /var/lib/ampr-ripd
+	fi
+	ip tunnel change ttl 64 mode ipip tunl0
+	ip link set dev tunl0 up
+	ifconfig tunl0 mtu 1480
+	tunnet=$(uci -q get ampr-ripd.network.tunnet)
+	/usr/sbin/ampr-ripd -s -r -t 44 -i tunl0 -a "$tunnet"
+}
+
+stop() {
+	ifconfig tunl0 down
+	killall ampr-ripd
+}
+
+configure() {
+	if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ]; then
+		cat <<-EOF
+
+		Usage: /etc/init.d/ampr-ripd configure [amprhost] [amprmask] [amprnet]
+
+		       amprhost is the 44 net address assigned to your OpenWrt host
+		       amprmask is the full netmask of your AMPR assigned network
+		       amprnet is the network number of your AMPR assigned network 
+
+		   Eg. /etc/init.d/ampr-ripd configure 44.127.254.1 255.255.255.0 44.127.254.0
+		EOF
+		exit 1
+	fi
+	amprhost=$1
+	amprmask=$2
+	amprnet=$3
+
+	cat <<-EOF
+	Configuring ampr-ripd with values:
+
+	amprhost=$amprhost
+	amprmask=$amprmask
+	amprnet=$amprnet
+	EOF
+
+	tunnet=$amprnet/$amprmask
+	uci set ampr-ripd.network.tunnet="$tunnet"
+	uci commit ampr-ripd
+	uci set network.amprlan.ipaddr="$amprhost"
+	uci set network.amprlan.netmask="$amprmask"
+	uci set network.amprwan.ipaddr="$amprhost"
+	uci set network.amprwan.netmask="$amprmask"
+	for i in $(seq 0 -1 -99); do
+		if [ ! -z $(uci -q get network.@rule[$i].src) ] && \
+			[ "$(uci get network.@rule[$i].lookup)" = "44" ] && \
+			[ "$(uci get network.@rule[$i].priority)" = "45" ]; then
+				uci set network.@rule[$i].src="$tunnet"
+				break
+		fi
+	done
+	uci commit network
+
+	cat <<-EOF
+
+	Now, do the following:
+	/etc/init.d/ampr-ripd restart
+	/etc/init.d/network restart
+	EOF
+
+	exit 0
+}
