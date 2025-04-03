@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ipmitool
 PKG_VERSION:=1.8.19
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://codeberg.org/IPMITool/ipmitool
@@ -53,6 +53,7 @@ CONFIGURE_ARGS += \
 	--disable-intf-free \
 	--enable-intf-open \
 	--enable-intf-imb \
-	--enable-ipmishell
+	--enable-ipmishell \
+	--disable-registry-download
 
 $(eval $(call BuildPackage,ipmitool))
