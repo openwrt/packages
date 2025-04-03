@@ -4,8 +4,8 @@
  
  	capacity = le64_to_cpu(smart->raw_ns.nsze) * lba;
  
--	snprintf(tempbuff, sizeof(tempbuff), "log;%s;%lu;%s;%s;%-.*s;", smart->raw_ctrl.sn, smart->time_stamp, smart->path,
-+	snprintf(tempbuff, sizeof(tempbuff), "log;%s;%" PRId64 ";%s;%s;%-.*s;", smart->raw_ctrl.sn, smart->time_stamp, smart->path,
- 		smart->raw_ctrl.mn, (int)sizeof(smart->raw_ctrl.fr), smart->raw_ctrl.fr);
- 	strcpy(text, tempbuff);
- 	snprintf(tempbuff, sizeof(tempbuff), "Capacity;%lf;", capacity / 1000000000);
+-	snprintf(tempbuff, sizeof(tempbuff), "log;%s;%llu;%s;%s;%-.*s;", smart->raw_ctrl.sn,
++	snprintf(tempbuff, sizeof(tempbuff), "log;%s;%" PRId64 ";%s;%s;%-.*s;", smart->raw_ctrl.sn,
+ 		 (unsigned long long)smart->time_stamp, smart->path,
+ 		 smart->raw_ctrl.mn, (int)sizeof(smart->raw_ctrl.fr),
+ 		 smart->raw_ctrl.fr);
