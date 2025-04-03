@@ -1,0 +1,33 @@
+#!/bin/sh /etc/rc.common
+
+START=95
+STOP=10
+
+if [ -f /etc/ampr-ripd.conf ]; then
+   source /etc/ampr-ripd.conf
+else
+   echo /etc/ampr-ripd.conf not found!  Exiting...
+   exit 1
+fi
+
+if [ ! -d /var/lib/ampr-ripd ]; then
+   mkdir -p /var/lib/ampr-ripd
+fi
+
+start() {
+   ip tunnel change ttl 64 mode ipip tunl0
+   ip link set dev tunl0 up
+   ifconfig tunl0 mtu 1480
+   /usr/sbin/ampr-ripd -s -r -t 44 -i tunl0 -a $TUNNET
+}
+
+stop() {
+   ifconfig tunl0 down
+   killall ampr-ripd
+}
+
+restart() {
+   stop "$@"
+   sleep 1
+   start "$@"
+}
