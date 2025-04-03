@@ -1,0 +1,15 @@
+--- ampr-ripd-2.4/Makefile	2017-05-29 01:50:48.000000000 -0400
++++ ampr-ripd-2.4-fixed/Makefile	2025-04-14 16:12:00.866115043 -0400
+@@ -4,7 +4,6 @@
+ 
+ BASEDIR = /usr
+ SBINDIR = $(BASEDIR)/sbin
+-MANDIR = $(BASEDIR)/share/man/man1
+ SCACHEDIR = /var/lib/ampr-ripd
+ 
+ # no need to run ampr-ripd as root
+@@ -38,4 +37,3 @@
+ 	strip ampr-ripd
+ 	install -m 755 -o $(OWN) -g $(GRP) -d          $(SCACHEDIR)
+ 	install -m 755 -o $(OWN) -g $(GRP) ampr-ripd   $(SBINDIR)
+-	install -m 644 -o $(OWN) -g $(GRP) ampr-ripd.1 $(MANDIR)

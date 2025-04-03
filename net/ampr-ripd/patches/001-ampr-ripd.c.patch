@@ -1,0 +1,12 @@
+--- ampr-ripd-2.4/ampr-ripd.c	2017-08-14 21:43:56.000000000 -0400
++++ ampr-ripd-2.4-fixed/ampr-ripd.c  2025-04-14 16:13:15.419838311 -0400
+@@ -113,6 +113,9 @@
+  *                           Improved command line handling
+  */
+ 
++#define _GNU_SOURCE
++#define IPPORT_ROUTESERVER    520
++
+ #include <stdlib.h>
+ #include <stdio.h>
+ #include <unistd.h>
