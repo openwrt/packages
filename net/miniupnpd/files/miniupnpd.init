@@ -87,7 +87,7 @@ upnpd() {
 	config_get presentation_url config presentation_url
 	config_get upnp_lease_file config upnp_lease_file
 	config_get ipv6_disable config ipv6_disable 0
-	config_get_bool secure_mode config secure_mode 1
+	config_get_bool allow_third_party_mapping config allow_third_party_mapping 0
 	config_get upnp_igd_compat config upnp_igd_compat igdv1
 
 	local conf ifname ifname6
@@ -136,10 +136,11 @@ upnpd() {
 		config_load "upnpd"
 		upnpd_write_bool enable_pcp_pmp 1
 		upnpd_write_bool enable_upnp 1
-		upnpd_write_bool secure_mode 1
-		if [ "$secure_mode" = "0" ]; then
+		if [ "$allow_third_party_mapping" = "1" ]; then
+		  echo "secure_mode=no"
 		  echo "pcp_allow_thirdparty=yes"
 		else
+		  echo "secure_mode=yes"
 		  echo "pcp_allow_thirdparty=no"
 		fi
 		if [ "$upnp_igd_compat" = "igdv1" ]; then
