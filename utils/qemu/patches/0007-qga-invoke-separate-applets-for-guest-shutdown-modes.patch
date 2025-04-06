@@ -13,7 +13,7 @@ https://gitlab.alpinelinux.org/alpine/aports/commit/76b81b486480fd9c3294cd420bcf
 
 --- a/qga/commands-posix.c
 +++ b/qga/commands-posix.c
-@@ -217,6 +217,7 @@ out:
+@@ -216,6 +216,7 @@ out:
  void qmp_guest_shutdown(const char *mode, Error **errp)
  {
      const char *shutdown_flag;
@@ -21,7 +21,7 @@ https://gitlab.alpinelinux.org/alpine/aports/commit/76b81b486480fd9c3294cd420bcf
      Error *local_err = NULL;
  
  #ifdef CONFIG_SOLARIS
-@@ -236,10 +237,13 @@ void qmp_guest_shutdown(const char *mode
+@@ -235,10 +236,13 @@ void qmp_guest_shutdown(const char *mode
      slog("guest-shutdown called, mode: %s", mode);
      if (!mode || strcmp(mode, "powerdown") == 0) {
          shutdown_flag = powerdown_flag;
@@ -35,7 +35,7 @@ https://gitlab.alpinelinux.org/alpine/aports/commit/76b81b486480fd9c3294cd420bcf
      } else {
          error_setg(errp,
                     "mode is invalid (valid values are: halt|powerdown|reboot");
-@@ -258,8 +262,12 @@ void qmp_guest_shutdown(const char *mode
+@@ -257,8 +261,12 @@ void qmp_guest_shutdown(const char *mode
  
      ga_run_command(argv, NULL, "shutdown", &local_err);
      if (local_err) {
