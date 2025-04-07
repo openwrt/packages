@@ -157,6 +157,7 @@ FFMPEG_MINI_PROTOCOLS:= \
 	file
 
 FFMPEG_AUDIO_DECODERS:= \
+	aac \
 	ac3 \
 	adpcm_* \
 	alac \
@@ -176,6 +177,7 @@ FFMPEG_AUDIO_DECODERS:= \
 	zlib \
 
 FFMPEG_AUDIO_DEMUXERS:= \
+	aac \
 	ac3 \
 	aiff \
 	amr \
@@ -196,6 +198,12 @@ FFMPEG_AUDIO_DEMUXERS:= \
 	sdp \
 	wav \
 	wv \
+
+FFMPEG_AUDIO_PARSERS:= \
+        aac \
+        flac \
+        ac3 \
+        mpegaudio \
 
 FFMPEG_AUDIO_PROTOCOLS:= \
 	file http icecast rtp tcp udp
@@ -602,11 +610,11 @@ ifeq ($(BUILD_VARIANT),audio-dec)
 	--disable-programs \
 	--disable-avfilter \
 	--disable-postproc \
-	--disable-swresample \
 	--disable-swscale \
 	--disable-everything \
 	$(call FFMPEG_ENABLE,decoder,$(FFMPEG_AUDIO_DECODERS)) \
 	$(call FFMPEG_ENABLE,demuxer,$(FFMPEG_AUDIO_DEMUXERS)) \
+	$(call FFMPEG_ENABLE,parser,$(FFMPEG_AUDIO_PARSERS)) \
 	$(call FFMPEG_ENABLE,protocol,$(FFMPEG_AUDIO_PROTOCOLS)) \
 	--disable-decoder=pcm_bluray,pcm_dvd
 endif
@@ -695,7 +703,14 @@ define Build/InstallDev/mini
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/lib{avcodec,avformat,avutil}.pc $(1)/usr/lib/pkgconfig/
 endef
 
-Build/InstallDev/audio-dec = $(Build/InstallDev/custom)
+define Build/InstallDev/audio-dec
+	$(INSTALL_DIR) $(1)/usr/include
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/lib{avcodec,avformat,avutil,swresample} $(1)/usr/include/
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avcodec,avformat,avutil,swresample}.{a,so*} $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/lib{avcodec,avformat,avutil,swresample}.pc $(1)/usr/lib/pkgconfig/
+endef
 
 # XXX: attempt at installing "best" dev files available
 ifeq ($(BUILD_VARIANT),custom)
@@ -765,7 +780,10 @@ define Package/libffmpeg-mini/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avcodec,avformat,avutil}.so.* $(1)/usr/lib/
 endef
 
-Package/libffmpeg-audio-dec/install = $(Package/libffmpeg-custom/install)
+define Package/libffmpeg-audio-dec/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avcodec,avformat,avutil,swresample}.so.* $(1)/usr/lib/
+endef
 
 $(eval $(call BuildPackage,ffmpeg))
 $(eval $(call BuildPackage,ffprobe))
