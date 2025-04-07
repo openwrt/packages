@@ -18,7 +18,7 @@ validate_section_ttyd()
 		'gid:uinteger' \
 		'signal:uinteger' \
 		'url_arg:bool' \
-		'readonly:bool' \
+		'readonly:bool:0' \
 		'client_option:list(string)' \
 		'terminal_type:string' \
 		'check_origin:bool' \
@@ -53,7 +53,7 @@ ttyd_instance()
 	}
 
 	[ "$url_arg" = 0 ] && url_arg=""
-	[ "$readonly" = 0 ] && readonly=""
+	[ "$readonly" = 0 ] && readonly="-W"
 	[ "$check_origin" = 0 ] && check_origin=""
 	[ "$once" = 0 ] && once=""
 	[ "$ipv6" = 0 ] && ipv6=""
@@ -68,7 +68,7 @@ ttyd_instance()
 		${gid:+-g $gid} \
 		${signal:+-s $signal} \
 		${url_arg:+-a} \
-		${readonly:+-R} \
+		${readonly:-} \
 		${terminal_type:+-T $terminal_type} \
 		${check_origin:+-O} \
 		${max_clients:+-m $max_clients} \
