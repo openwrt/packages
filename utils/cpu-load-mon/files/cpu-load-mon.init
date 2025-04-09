@@ -1,0 +1,21 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+STOP=01
+USE_PROCD=1
+
+start_service() {
+	procd_open_instance
+	config_load "cpu-load-mon"
+	local val
+	config_get val "stats_path" ""
+	if [ -n "$val" ]; then procd_set_param env CPU_LOAD_STATS_PATH="$val"; fi
+	if [ ! -d /var/run ]; then mkdir -p /var/run; fi
+	if [ ! -x /run ]; then ln -s /var/run /run; fi
+	config_get val "stats_interval_sec" "60"
+	procd_set_param command /bin/sh -ec "while true; do awk -f /usr/libexec/cpu-load-stats-log.awk; sleep ${val}; done"
+	procd_set_param term_timeout 1
+	procd_set_param respawn 180 10 10
+	procd_close_instance
+}
+
