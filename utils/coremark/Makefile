@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=coremark
 PKG_SOURCE_DATE:=2023-01-25
 PKG_SOURCE_VERSION:=d5fad6bd094899101a4e5fd53af7298160ced6ab
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/eembc/coremark/tar.gz/$(PKG_SOURCE_VERSION)?
