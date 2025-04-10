@@ -1,0 +1,259 @@
+From cb164439c19a192378ddec3a69e2e499932b4ac2 Mon Sep 17 00:00:00 2001
+From: Glenn Strauss <gstrauss@gluelogic.com>
+Date: Thu, 10 Apr 2025 08:08:27 -0400
+Subject: [PATCH] Revert "[TLS] modify TLS defaults to MinProtocol TLSv1.3"
+
+(for backport)
+
+This reverts commit 09bfb8d5777c00a751adb24e2c20212be67432f2.
+
+Signed-off-by: Glenn Strauss <gstrauss@gluelogic.com>
+---
+ src/mod_gnutls.c  | 19 ++++---------------
+ src/mod_mbedtls.c | 16 ----------------
+ src/mod_nss.c     | 16 +++-------------
+ src/mod_openssl.c | 10 +++-------
+ src/mod_wolfssl.c | 24 +++---------------------
+ 5 files changed, 13 insertions(+), 72 deletions(-)
+
+--- a/src/mod_gnutls.c
++++ b/src/mod_gnutls.c
+@@ -2181,7 +2181,7 @@ network_init_ssl (server *srv, plugin_co
+      * GnuTLS by concatenating into a single priority string */
+ 
+     buffer *b = srv->tmp_buf;
+-    if (NULL == s->priority_base) s->priority_base = "SECURE:%PROFILE_MEDIUM";
++    if (NULL == s->priority_base) s->priority_base = "SECURE";
+     buffer_copy_string_len(b, s->priority_base, strlen(s->priority_base));
+     if (!buffer_is_blank(&s->priority_str)) {
+         buffer_append_char(b, ':');
+@@ -3935,13 +3935,8 @@ mod_gnutls_ssl_conf_curves(server *srv,
+ static int
+ mod_gnutls_ssl_conf_proto_val (server *srv, const buffer *b, int max)
+ {
+-    /* gnutls 3.6.3 (July 2018) added enum to define GNUTLS_TLS1_3 */
+-    #if GNUTLS_VERSION_NUMBER < 0x030603
+-    #define GNUTLS_TLS1_3 GNUTLS_TLS1_2
+-    #endif
+-
+-    if (NULL == b) /* default: min TLSv1.3, max TLSv1.3 */
+-        return GNUTLS_TLS1_3;
++    if (NULL == b) /* default: min TLSv1.2, max TLSv1.3 */
++        return max ? GNUTLS_TLS1_3 : GNUTLS_TLS1_2;
+     else if (buffer_eq_icase_slen(b, CONST_STR_LEN("None"))) /*"disable" limit*/
+         return max ? GNUTLS_TLS1_3 : GNUTLS_TLS1_0;
+     else if (buffer_eq_icase_slen(b, CONST_STR_LEN("TLSv1.0")))
+@@ -3963,11 +3958,7 @@ mod_gnutls_ssl_conf_proto_val (server *s
+                       "GnuTLS: ssl.openssl.ssl-conf-cmd %s %s invalid; ignored",
+                       max ? "MaxProtocol" : "MinProtocol", b->ptr);
+     }
+-    return GNUTLS_TLS1_3;
+-
+-    #if GNUTLS_VERSION_NUMBER < 0x030603
+-    #undef GNUTLS_TLS1_3
+-    #endif
++    return max ? GNUTLS_TLS1_3 : GNUTLS_TLS1_2;
+ }
+ 
+ 
+@@ -3997,11 +3988,9 @@ mod_gnutls_ssl_conf_proto (server *srv,
+         if (x < GNUTLS_TLS1_2) break;
+         buffer_append_string_len(b, CONST_STR_LEN("+VERS-TLS1.2:"));
+         __attribute_fallthrough__
+-     #if GNUTLS_VERSION_NUMBER >= 0x030603
+       case GNUTLS_TLS1_3:
+         if (x < GNUTLS_TLS1_3) break;
+         buffer_append_string_len(b, CONST_STR_LEN("+VERS-TLS1.3:"));
+         break;
+-     #endif
+     }
+ }
+--- a/src/mod_mbedtls.c
++++ b/src/mod_mbedtls.c
+@@ -4737,8 +4737,6 @@ mod_mbedtls_ssl_conf_dhparameters(server
+ static void
+ mod_mbedtls_ssl_conf_proto (server *srv, plugin_config_socket *s, const buffer *b, int max)
+ {
+-    /* note: mbedtls does not support TLSv1.3 well on the server-side
+-     * until well into the mbedtls 3.x branch: e.g. mbedtls 3.6.1 */
+     int v = MBEDTLS_SSL_MINOR_VERSION_3; /* default: TLS v1.2 */
+     if (NULL == b) /* default: min TLSv1.2, max TLSv1.3 */
+       #ifdef MBEDTLS_SSL_MINOR_VERSION_4
+@@ -4811,20 +4809,9 @@ mod_mbedtls_ssl_conf_proto (server *srv,
+ static void
+ mod_mbedtls_ssl_conf_proto (server *srv, plugin_config_socket *s, const buffer *b, int max)
+ {
+-  #ifndef MBEDTLS_SSL_PROTO_TLS1_3 /* use TLSv1.2 if TLSv1.3 not avail */
+-  #define MBEDTLS_SSL_VERSION_TLS1_3 MBEDTLS_SSL_VERSION_TLS1_2
+-  #endif
+-  #if MBEDTLS_VERSION_NUMBER >= 0x03060100 /* mbedtls 3.6.1 */
+-    /* note: mbedtls does not support TLSv1.3 well on the server-side
+-     * until well into the mbedtls 3.x branch: e.g. mbedtls 3.6.1 */
+-    int v = MBEDTLS_SSL_VERSION_TLS1_3; /* default: TLS v1.3 */
+-    if (NULL == b) /* default: min TLSv1.3, max TLSv1.3 */
+-        v = MBEDTLS_SSL_VERSION_TLS1_3;
+-  #else
+     int v = MBEDTLS_SSL_VERSION_TLS1_2; /* default: TLS v1.2 */
+     if (NULL == b) /* default: min TLSv1.2, max TLSv1.3 */
+         v = max ? MBEDTLS_SSL_VERSION_TLS1_3 : MBEDTLS_SSL_VERSION_TLS1_2;
+-  #endif
+     else if (buffer_eq_icase_slen(b, CONST_STR_LEN("None"))) /*"disable" limit*/
+         v = max ? MBEDTLS_SSL_VERSION_TLS1_3 : MBEDTLS_SSL_VERSION_TLS1_2;
+     else if (buffer_eq_icase_slen(b, CONST_STR_LEN("TLSv1.2")))
+@@ -4846,9 +4833,6 @@ mod_mbedtls_ssl_conf_proto (server *srv,
+             return;
+         }
+     }
+-  #ifndef MBEDTLS_SSL_PROTO_TLS1_3
+-  #undef MBEDTLS_SSL_VERSION_TLS1_3
+-  #endif
+ 
+     max
+       ? mbedtls_ssl_conf_max_tls_version(s->ssl_ctx, v)
+--- a/src/mod_nss.c
++++ b/src/mod_nss.c
+@@ -2785,9 +2785,7 @@ http_cgi_ssl_env (request_st * const r,
+     size_t n;
+     const char *s = NULL;
+     switch (inf.protocolVersion) {
+-     #ifdef SSL_LIBRARY_VERSION_TLS_1_3
+       case SSL_LIBRARY_VERSION_TLS_1_3: s="TLSv1.3";n=sizeof("TLSv1.3")-1;break;
+-     #endif
+       case SSL_LIBRARY_VERSION_TLS_1_2: s="TLSv1.2";n=sizeof("TLSv1.2")-1;break;
+       case SSL_LIBRARY_VERSION_TLS_1_1: s="TLSv1.1";n=sizeof("TLSv1.1")-1;break;
+       case SSL_LIBRARY_VERSION_TLS_1_0: s="TLSv1.0";n=sizeof("TLSv1.0")-1;break;
+@@ -3120,13 +3118,9 @@ mod_nss_ssl_conf_curves(server *srv, plu
+ static PRUint16
+ mod_nss_ssl_conf_proto_val (server *srv, const buffer *b, int max)
+ {
+-    #ifndef SSL_LIBRARY_VERSION_TLS_1_3 /* use TLSv1.2 if TLSv1.3 not avail */
+-    #define SSL_LIBRARY_VERSION_TLS_1_3 SSL_LIBRARY_VERSION_TLS_1_2
+-    #endif
+-
+     /* use of SSL v3 should be avoided, and SSL v2 is not supported here */
+-    if (NULL == b) /* default: min TLSv1.3, max TLSv1.3 */
+-        return SSL_LIBRARY_VERSION_TLS_1_3;
++    if (NULL == b) /* default: min TLSv1.2, max TLSv1.3 */
++        return max ? SSL_LIBRARY_VERSION_TLS_1_3 : SSL_LIBRARY_VERSION_TLS_1_2;
+     else if (buffer_eq_icase_slen(b, CONST_STR_LEN("None"))) /*"disable" limit*/
+         return max ? SSL_LIBRARY_VERSION_TLS_1_3 : SSL_LIBRARY_VERSION_TLS_1_0;
+     else if (buffer_eq_icase_slen(b, CONST_STR_LEN("TLSv1.0")))
+@@ -3148,11 +3142,7 @@ mod_nss_ssl_conf_proto_val (server *srv,
+                       "NSS: ssl.openssl.ssl-conf-cmd %s %s invalid; ignored",
+                       max ? "MaxProtocol" : "MinProtocol", b->ptr);
+     }
+-    return SSL_LIBRARY_VERSION_TLS_1_3;
+-
+-    #if SSL_LIBRARY_VERSION_TLS_1_3 == SSL_LIBRARY_VERSION_TLS_1_2
+-    #undef SSL_LIBRARY_VERSION_TLS_1_3
+-    #endif
++    return max ? SSL_LIBRARY_VERSION_TLS_1_3 : SSL_LIBRARY_VERSION_TLS_1_2;
+ }
+ 
+ 
+--- a/src/mod_openssl.c
++++ b/src/mod_openssl.c
+@@ -3583,11 +3583,7 @@ network_init_ssl (server *srv, plugin_co
+       #if OPENSSL_VERSION_NUMBER >= 0x10100000L \
+        || defined(BORINGSSL_API_VERSION) \
+        || defined(LIBRESSL_VERSION_NUMBER)
+-       #ifdef TLS1_3_VERSION
+-        if (!SSL_CTX_set_min_proto_version(s->ssl_ctx, TLS1_3_VERSION))
+-       #else
+         if (!SSL_CTX_set_min_proto_version(s->ssl_ctx, TLS1_2_VERSION))
+-       #endif
+             return -1;
+       #endif
+ 
+@@ -5207,9 +5203,9 @@ int mod_openssl_plugin_init (plugin *p)
+ static int
+ mod_openssl_ssl_conf_proto_val (server *srv, const buffer *b, int max)
+ {
+-    if (NULL == b) /* default: min TLSv1.3 (if supported), max TLSv1.3 */
++    if (NULL == b) /* default: min TLSv1.2, max TLSv1.3 */
+       #ifdef TLS1_3_VERSION
+-        return TLS1_3_VERSION;
++        return max ? TLS1_3_VERSION : TLS1_2_VERSION;
+       #else
+         return TLS1_2_VERSION;
+       #endif
+@@ -5244,7 +5240,7 @@ mod_openssl_ssl_conf_proto_val (server *
+                       max ? "MaxProtocol" : "MinProtocol", b->ptr);
+     }
+   #ifdef TLS1_3_VERSION
+-    return TLS1_3_VERSION;
++    return max ? TLS1_3_VERSION : TLS1_2_VERSION;
+   #else
+     return TLS1_2_VERSION;
+   #endif
+--- a/src/mod_wolfssl.c
++++ b/src/mod_wolfssl.c
+@@ -1247,14 +1247,12 @@ ssl_info_callback (const SSL *ssl, int w
+         /* SSL_version() is valid after initial handshake completed */
+         SSL *ssl_nonconst;
+         *(const SSL **)&ssl_nonconst = ssl;
+-      #ifdef WOLFSSL_TLS13
+         if (wolfSSL_GetVersion(ssl_nonconst) >= WOLFSSL_TLSV1_3) {
+             /* https://wiki.openssl.org/index.php/TLS1.3
+              * "Renegotiation is not possible in a TLSv1.3 connection" */
+             handler_ctx *hctx = (handler_ctx *) SSL_get_app_data(ssl);
+             hctx->renegotiations = -1;
+         }
+-      #endif
+     }
+ }
+ 
+@@ -2537,15 +2535,9 @@ network_init_ssl (server *srv, plugin_co
+        #endif
+       #endif
+ 
+-      #ifdef WOLFSSL_TLS13
+-        if (wolfSSL_CTX_SetMinVersion(s->ssl_ctx, WOLFSSL_TLSV1_3)
+-               != WOLFSSL_SUCCESS)
+-            return -1;
+-      #else
+         if (wolfSSL_CTX_SetMinVersion(s->ssl_ctx, WOLFSSL_TLSV1_2)
+                != WOLFSSL_SUCCESS)
+             return -1;
+-      #endif
+ 
+         if (s->ssl_conf_cmd && s->ssl_conf_cmd->used) {
+             if (0 != mod_openssl_ssl_conf_cmd(srv, s)) return -1;
+@@ -3953,12 +3945,8 @@ int mod_wolfssl_plugin_init (plugin *p)
+ static int
+ mod_openssl_ssl_conf_proto_val (server *srv, const buffer *b, int max)
+ {
+-    #ifndef WOLFSSL_TLS13 /* use TLSv1.2 if TLSv1.3 not avail */
+-    #define WOLFSSL_TLSV1_3 WOLFSSL_TLSV1_2
+-    #endif
+-
+-    if (NULL == b) /* default: min TLSv1.3, max TLSv1.3 */
+-        return WOLFSSL_TLSV1_3;
++    if (NULL == b) /* default: min TLSv1.2, max TLSv1.3 */
++        return max ? WOLFSSL_TLSV1_3 : WOLFSSL_TLSV1_2;
+     else if (buffer_eq_icase_slen(b, CONST_STR_LEN("None"))) /*"disable" limit*/
+         return max ? WOLFSSL_TLSV1_3 : WOLFSSL_TLSV1;
+     else if (buffer_eq_icase_slen(b, CONST_STR_LEN("TLSv1.0")))
+@@ -3980,11 +3968,7 @@ mod_openssl_ssl_conf_proto_val (server *
+                       "SSL: ssl.openssl.ssl-conf-cmd %s %s invalid; ignored",
+                       max ? "MaxProtocol" : "MinProtocol", b->ptr);
+     }
+-    return WOLFSSL_TLSV1_3;
+-
+-    #ifndef WOLFSSL_TLS13
+-    #undef WOLFSSL_TLSV1_3
+-    #endif
++    return max ? WOLFSSL_TLSV1_3 : WOLFSSL_TLSV1_2;
+ }
+ 
+ 
+@@ -4127,9 +4111,7 @@ mod_openssl_ssl_conf_cmd (server *srv, p
+           case WOLFSSL_TLSV1_2:
+             wolfSSL_CTX_set_options(s->ssl_ctx, WOLFSSL_OP_NO_TLSv1_3);
+             __attribute_fallthrough__
+-         #ifdef WOLFSSL_TLS13
+           case WOLFSSL_TLSV1_3:
+-         #endif
+           default:
+             break;
+         }
