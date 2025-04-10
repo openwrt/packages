@@ -1,4 +1,4 @@
-#
+# dns based ad/abuse domain blocking
 # Copyright (c) 2015-2025 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 #
@@ -6,8 +6,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adblock
-PKG_VERSION:=4.2.7
-PKG_RELEASE:=3
+PKG_VERSION:=4.4.0
+PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
 
@@ -16,22 +16,23 @@ include $(INCLUDE_DIR)/package.mk
 define Package/adblock
 	SECTION:=net
 	CATEGORY:=Network
-	TITLE:=Powerful adblock script to block ad/abuse domains by using DNS
+	TITLE:=adblock blocks ad/abuse domains by using DNS
 	DEPENDS:=+jshn +jsonfilter +coreutils +coreutils-sort +gawk +ca-bundle +rpcd +rpcd-mod-rpcsys
 	PKGARCH:=all
 endef
 
 define Package/adblock/description
-Powerful adblock solution to block ad/abuse domains via dnsmasq, unbound, named, smartdns or kresd.
-The script supports many domain blacklist sites plus manual black- and whitelist overrides.
+adblock blocks ad/abuse domains via dnsmasq, unbound, named, smartdns or kresd.
+adblock supports many domain blocklist sites plus local block- and allowlist overrides.
 Please see https://github.com/openwrt/packages/blob/master/net/adblock/files/README.md for further information.
 
 endef
 
 define Package/adblock/conffiles
 /etc/config/adblock
-/etc/adblock/adblock.whitelist
-/etc/adblock/adblock.blacklist
+/etc/adblock/adblock.allowlist
+/etc/adblock/adblock.blocklist
+/etc/adblock/adblock.custom.feeds
 endef
 
 define Build/Prepare
@@ -55,11 +56,11 @@ define Package/adblock/install
 
 	$(INSTALL_DIR) $(1)/etc/adblock
 	$(INSTALL_BIN) ./files/adblock.mail $(1)/etc/adblock
-	$(INSTALL_CONF) ./files/adblock.blacklist $(1)/etc/adblock
-	$(INSTALL_CONF) ./files/adblock.whitelist $(1)/etc/adblock
+	$(INSTALL_CONF) ./files/adblock.allowlist $(1)/etc/adblock
+	$(INSTALL_CONF) ./files/adblock.blocklist $(1)/etc/adblock
 	$(INSTALL_CONF) ./files/adblock.categories $(1)/etc/adblock
-	$(INSTALL_CONF) ./files/adblock.sources $(1)/etc/adblock
-	gzip -9n $(1)/etc/adblock/adblock.sources
+	$(INSTALL_CONF) ./files/adblock.feeds $(1)/etc/adblock
+	$(INSTALL_CONF) ./files/adblock.custom.feeds $(1)/etc/adblock
 endef
 
 $(eval $(call BuildPackage,adblock))
