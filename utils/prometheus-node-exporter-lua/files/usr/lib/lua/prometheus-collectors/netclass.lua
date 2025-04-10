@@ -33,7 +33,7 @@ local function get_metric(device, metric_node_network)
   local ifalias = load(device, "ifalias")
   metric_node_network.info({device = device, address = address, broadcast = broadcast, duplex = duplex, operstate = operstate, ifalias = ifalias}, 1)
   local speed = load(device, "speed")
-  if speed ~= nil and tonumber(speed) >= 0 then
+  if speed ~= nil and #speed > 0 and tonumber(speed) >= 0 then
     metric_node_network.speed_bytes({device = device}, tonumber(speed)*1000*1000/8)
   end
   local file_to_metric = {
@@ -56,7 +56,7 @@ local function get_metric(device, metric_node_network)
   }
   for file, metric in pairs(file_to_metric) do
     local value = load(device, file)
-    if value ~= nil then
+    if value ~= nil and #speed > 0 then
       metric_node_network[metric]({device = device}, tonumber(value))
     end
   end
