@@ -11,6 +11,8 @@ start_service() {
 	chown nobody /var/cache/netdata
 	mkdir -m 0755 -p /var/lib/netdata
 	chown nobody /var/lib/netdata
+	mkdir -m 0755 -p /var/lib/netdata/cloud.d
+	chown nobody /var/lib/netdata/cloud.d
 	mkdir -m 0755 -p /var/log/netdata
 	chown nobody /var/log/netdata
 	procd_open_instance
