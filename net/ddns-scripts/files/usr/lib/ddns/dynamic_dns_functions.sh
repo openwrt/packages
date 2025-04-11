@@ -551,37 +551,50 @@ verify_host_port() {
 	fi
 }
 
-# verify given DNS server if connectable
+# Verify whether a given DNS server is reachable
 # $1	DNS server to verify
 verify_dns() {
-	local __ERR=255	# last error buffer
-	local __CNT=0	# error counter
+	local err attempt
+	err=255   # Last error code
+	attempt=0 # Retry attempt counter
 
-	[ $# -ne 1 ] && write_log 12 "Error calling 'verify_dns()' - wrong number of parameters"
-	write_log 7 "Verify DNS server '$1'"
+	[ "$#" -ne 1 ] && { write_log 12 "Error: 'verify_dns()' requires exactly 1 argument."; return 1; }
 
-	while [ $__ERR -ne 0 ]; do
-		# DNS uses port 53
-		verify_host_port "$1" "53"
-		__ERR=$?
-		if [ -n "$LUCI_HELPER" ]; then	# no retry if called by LuCI helper script
-			return $__ERR
-		elif [ $__ERR -ne 0 -a $VERBOSE -gt 1 ]; then	# VERBOSE > 1 then NO retry
-			write_log 4 "Verify DNS server '$1' failed - Verbose Mode: $VERBOSE - NO retry on error"
-			return $__ERR
-		elif [ $__ERR -ne 0 ]; then
-			__CNT=$(( $__CNT + 1 ))	# increment error counter
-			# if error count > retry_max_count leave here
-			[ $retry_max_count -gt 0 -a $__CNT -gt $retry_max_count ] && \
-				write_log 14 "Verify DNS server '$1' failed after $retry_max_count retries"
+	local dns_server="$1"
+	write_log 7 "Verifying DNS server: '$dns_server'"
 
-			write_log 4 "Verify DNS server '$1' failed - retry $__CNT/$retry_max_count in $RETRY_SECONDS seconds"
-			sleep $RETRY_SECONDS &
-			PID_SLEEP=$!
-			wait $PID_SLEEP	# enable trap-handler
-			PID_SLEEP=0
+	while [ "$err" -ne 0 ]; do
+		# Check connectivity to the DNS server on port 53
+		verify_host_port "$dns_server" "53"
+		err=$?
+
+		# Exit immediately if called by LuCI helper script
+		[ -n "$LUCI_HELPER" ] && return "$err"
+
+		if [ "$err" -ne 0 ]; then
+			# If in verbose mode and connection fails, do not retry
+			if [ "$VERBOSE" -gt 1 ]; then
+				write_log 4 "Verification failed for DNS server '$dns_server' - Verbose Mode: $VERBOSE - No retries."
+				return "$err"
+			fi
+
+			# Increment attempt counter and handle retry
+			attempt=$((attempt + 1))
+
+			# If max retries are exceeded, exit with failure
+			if [ "$retry_max_count" -gt 0 ] && [ "$attempt" -gt "$retry_max_count" ]; then
+				write_log 14 "Verification failed for DNS server '$dns_server' after $retry_max_count retries."
+				return "$err"
+			fi
+
+			# Log the retry attempt and wait before retrying
+			write_log 4 "Verification failed for DNS server '$dns_server' - Retry $attempt/$retry_max_count in $RETRY_SECONDS seconds."
+			sleep "$RETRY_SECONDS" &
+			wait $!  # Enable trap handler during sleep
 		fi
 	done
+
+	# Return success if the loop exits without errors
 	return 0
 }
 
