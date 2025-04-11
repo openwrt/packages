@@ -598,7 +598,7 @@ verify_dns() {
 	return 0
 }
 
-# analyze and verify given proxy string
+# analyse and verify given proxy string
 # $1	Proxy-String to verify
 verify_proxy() {
 	#	complete entry		user:password@host:port
@@ -606,49 +606,62 @@ verify_proxy() {
 	#	host and port only	host:port
 	#	host only		host		ERROR unsupported
 	#	IPv4 address instead of host	123.234.234.123
-	#	IPv6 address instead of host	[xxxx:....:xxxx]	in square bracket
-	local __TMP __HOST __PORT
-	local __ERR=255	# last error buffer
-	local __CNT=0	# error counter
+	#	IPv6 address instead of host	[xxxx:....:xxxx]	in square brackets
+	# local user password
+	local host port rest error_count err_code
+
+	err_code=255	# last error buffer
+	error_count=0	# error counter
 
 	[ $# -ne 1 ] && write_log 12 "Error calling 'verify_proxy()' - wrong number of parameters"
 	write_log 7 "Verify Proxy server 'http://$1'"
 
-	# try to split user:password "@" host:port
-	__TMP=$(echo $1 | awk -F "@" '{print $2}')
-	# no "@" found - only host:port is given
-	[ -z "$__TMP" ] && __TMP="$1"
-	# now lets check for IPv6 address
-	__HOST=$(echo $__TMP | grep -m 1 -o "$IPV6_REGEX")
-	# IPv6 host address found read port
-	if [ -n "$__HOST" ]; then
-		# IPv6 split at "]:"
-		__PORT=$(echo $__TMP | awk -F "]:" '{print $2}')
+	if [ "${1#*'@'}" != "$1" ]; then
+		# Format: user:password@host:port or user:password@[ipv6]:port
+		# user="${1%%:*}" # currently unused
+		# rest="${1#*:}"
+		# password="${rest%%@*}" # currently unused
+
+		# Extract the host:port part
+		rest="${rest#*@}"
 	else
-		__HOST=$(echo $__TMP | awk -F ":" '{print $1}')
-		__PORT=$(echo $__TMP | awk -F ":" '{print $2}')
+		# Format: host:port or [ipv6]:port
+		rest="$1"
+	fi
+
+	if [ "${rest#*'['}" != "$rest" ]; then
+		# Format: [ipv6]:port
+		host="${rest%%]*}"
+		host="${host#[}"  # Remove the leading '['
+
+		port="${rest##*:}"
+	else
+		host="${rest%%:*}"
+		port="${rest#*:}"
 	fi
 	# No Port detected - EXITING
-	[ -z "$__PORT" ] && {
+	[ -z "$port" ] && {
 		[ -n "$LUCI_HELPER" ] && return 5
 		write_log 14 "Invalid Proxy server Error '5' - proxy port missing"
 	}
 
-	while [ $__ERR -gt 0 ]; do
-		verify_host_port "$__HOST" "$__PORT"
-		__ERR=$?
-		if [ -n "$LUCI_HELPER" ]; then	# no retry if called by LuCI helper script
-			return $__ERR
-		elif [ $__ERR -gt 0 -a $VERBOSE -gt 1 ]; then	# VERBOSE > 1 then NO retry
-			write_log 4 "Verify Proxy server '$1' failed - Verbose Mode: $VERBOSE - NO retry on error"
-			return $__ERR
-		elif [ $__ERR -gt 0 ]; then
-			__CNT=$(( $__CNT + 1 ))	# increment error counter
+	while [ "$err_code" -gt 0 ]; do
+		verify_host_port "$host" "$port"
+		err_code=$?
+		[ -n "$LUCI_HELPER" ] && return "$err_code"	# no retry if called by LuCI helper script
+
+		if [ "$err_code" -gt 0 ]; then
+			[ "$VERBOSE" -gt 1 ] && {
+				write_log 4 "Verify Proxy server '$1' failed - Verbose Mode: $VERBOSE - NO retry on error"
+				return "$err_code"				
+			}
+
+			error_count=$(( error_count + 1 ))
 			# if error count > retry_max_count leave here
-			[ $retry_max_count -gt 0 -a $__CNT -gt $retry_max_count ] && \
+			[ "$retry_max_count" -gt 0 ] && [ $error_count -gt "$retry_max_count" ] && \
 				write_log 14 "Verify Proxy server '$1' failed after $retry_max_count retries"
 
-			write_log 4 "Verify Proxy server '$1' failed - retry $__CNT/$retry_max_count in $RETRY_SECONDS seconds"
+			write_log 4 "Verify Proxy server '$1' failed - retry $error_count/$retry_max_count in $RETRY_SECONDS seconds"
 			sleep $RETRY_SECONDS &
 			PID_SLEEP=$!
 			wait $PID_SLEEP	# enable trap-handler
