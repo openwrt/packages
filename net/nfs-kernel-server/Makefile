@@ -7,9 +7,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nfs-kernel-server
-PKG_VERSION:=2.8.2
+PKG_VERSION:=2.8.3
 PKG_RELEASE:=1
-PKG_HASH:=a39bbea76ac0ab9e6e8699caf3c308b6b310c20d458e8fa8606196d358e7fb15
+PKG_HASH:=11e7c5847a8423a72931c865bd9296e7fd56ff270a795a849183900961711725
 
 PKG_SOURCE_URL:=@KERNEL/linux/utils/nfs-utils/$(PKG_VERSION)
 PKG_SOURCE:=nfs-utils-$(PKG_VERSION).tar.xz
@@ -166,7 +166,11 @@ HOST_CONFIGURE_VARS += \
 	RPCSECGSS_CFLAGS=" " \
 	RPCSECGSS_LIBS=" " \
 	CONFIG_SQLITE3_TRUE="\#" \
-	CONFIG_NFSDCLD_TRUE="\#"
+	CONFIG_NFSDCLD_TRUE="\#" \
+	ac_cv_lib_event_core_event_base_dispatch=yes \
+	ac_cv_header_event2_event_h=yes \
+	c_cv_lib_sqlite3_sqlite3_libversion_number=yes \
+	libsqlite3_cv_is_recent=yes
 
 define Host/Compile
 	$(MAKE) -C $(HOST_BUILD_DIR)/tools/rpcgen all
