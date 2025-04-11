@@ -1,0 +1,11 @@
+--- a/upnpsoap.c
++++ b/upnpsoap.c
+@@ -1673,7 +1673,7 @@ PinholeVerification(struct upnphttp * h,
+ 		strncpy(clientaddr_str, "*ERROR*", sizeof(clientaddr_str));
+ 	}
+ 
+-	if(memcmp(&h->clientaddr_v6, &result_ip, sizeof(struct in6_addr)) != 0)
++	if(GETFLAG(SECUREMODEMASK) && (memcmp(&h->clientaddr_v6, &result_ip, sizeof(struct in6_addr)) != 0))
+ 	{
+ 		syslog(LOG_INFO, "%s: Client %s tried to access pinhole for internal %s and is not authorized",
+ 		       "PinholeVerification", clientaddr_str, int_ip);
