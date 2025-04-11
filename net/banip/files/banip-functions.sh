@@ -536,25 +536,32 @@ f_getelements() {
 # handle etag http header
 #
 f_etag() {
-	local http_head http_code etag_id etag_rc out_rc="4" feed="${1}" feed_url="${2}" feed_suffix="${3}"
+	local http_head http_code etag_id etag_cnt out_rc="4" feed="${1}" feed_url="${2}" feed_suffix="${3}" feed_cnt="${4:-"1"}"
 
 	if [ -n "${ban_etagparm}" ]; then
 		[ ! -f "${ban_backupdir}/banIP.etag" ] && : >"${ban_backupdir}/banIP.etag"
 		http_head="$("${ban_fetchcmd}" ${ban_etagparm} "${feed_url}" 2>&1)"
 		http_code="$(printf "%s" "${http_head}" | "${ban_awkcmd}" 'tolower($0)~/^http\/[0123\.]+ /{printf "%s",$2}')"
 		etag_id="$(printf "%s" "${http_head}" | "${ban_awkcmd}" 'tolower($0)~/^[[:space:]]*etag: /{gsub("\"","");printf "%s",$2}')"
-		etag_rc="${?}"
-
-		if [ "${http_code}" = "404" ] || { [ "${etag_rc}" = "0" ] && [ -n "${etag_id}" ] && "${ban_grepcmd}" -q "^${feed}${feed_suffix}[[:space:]]\+${etag_id}\$" "${ban_backupdir}/banIP.etag"; }; then
+		if [ -z "${etag_id}" ]; then
+			etag_id="$(printf "%s" "${http_head}" | "${ban_awkcmd}" 'tolower($0)~/^[[:space:]]*last-modified: /{gsub(/[Ll]ast-[Mm]odified:|[[:space:]]|,|:/,"");printf "%s\n",$1}')"
+		fi
+		etag_cnt="$("${ban_grepcmd}" -c "^${feed}" "${ban_backupdir}/banIP.etag")"
+		if [ "${http_code}" = "200" ] && [ "${etag_cnt}" = "${feed_cnt}" ] && [ -n "${etag_id}" ] &&
+			"${ban_grepcmd}" -q "^${feed}${feed_suffix}[[:space:]]\+${etag_id}\$" "${ban_backupdir}/banIP.etag"; then
 			out_rc="0"
-		elif [ "${etag_rc}" = "0" ] && [ -n "${etag_id}" ] && ! "${ban_grepcmd}" -q "^${feed}${feed_suffix}[[:space:]]\+${etag_id}\$" "${ban_backupdir}/banIP.etag"; then
-			"${ban_sedcmd}" -i "/^${feed}${feed_suffix}/d" "${ban_backupdir}/banIP.etag"
-			printf "%-20s%s\n" "${feed}${feed_suffix}" "${etag_id}" >>"${ban_backupdir}/banIP.etag"
+		elif [ -n "${etag_id}" ]; then
+			if [ "${feed_cnt}" -lt "${etag_cnt}" ]; then
+				"${ban_sedcmd}" -i "/^${feed}/d" "${ban_backupdir}/banIP.etag"
+			else
+				"${ban_sedcmd}" -i "/^${feed}${feed_suffix}/d" "${ban_backupdir}/banIP.etag"
+			fi
+			printf "%-50s%s\n" "${feed}${feed_suffix}" "${etag_id}" >>"${ban_backupdir}/banIP.etag"
 			out_rc="2"
 		fi
 	fi
 
-	f_log "debug" "f_etag      ::: feed: ${feed}, suffix: ${feed_suffix:-"-"}, http_code: ${http_code:-"-"}, etag_id: ${etag_id:-"-"} , etag_rc: ${etag_rc:-"-"}, rc: ${out_rc}"
+	f_log "debug" "f_etag      ::: feed: ${feed}, suffix: ${feed_suffix:-"-"}, http_code: ${http_code:-"-"}, feed/etag: ${feed_cnt}/${etag_cnt:-"0"}, rc: ${out_rc}"
 	return "${out_rc}"
 }
 
@@ -705,8 +712,8 @@ f_nftinit() {
 # handle downloads
 #
 f_down() {
-	local log_inbound log_outbound start_ts end_ts tmp_raw tmp_load tmp_file split_file table_json handle rc etag_rc element_count flag
-	local expr cnt_set cnt_dl restore_rc feed_direction feed_policy feed_rc feed_comp feed_complete feed_target feed_dport chain
+	local log_inbound log_outbound start_ts end_ts tmp_raw tmp_load tmp_file split_file table_json handle etag_rc etag_cnt element_count
+	local expr cnt_set cnt_dl restore_rc feed_direction feed_policy feed_rc feed_comp feed_complete feed_target feed_dport chain flag
 	local tmp_proto tmp_port asn country feed="${1}" proto="${2}" feed_url="${3}" feed_rule="${4}" feed_chain="${5}" feed_flag="${6}"
 
 	start_ts="$(date +%s)"
@@ -832,7 +839,13 @@ f_down() {
 						f_etag "${feed}" "${feed_url}${country}-aggregated.zone" ".${country}"
 						etag_rc="${?}"
 					else
-						etag_rc="4"
+						etag_rc="0"
+						etag_cnt="$(printf "%s" "${ban_country}" | "${ban_wccmd}" -w)"
+						for country in ${ban_country}; do
+							if ! f_etag "${feed}" "${feed_url}${country}-aggregated.zone" ".${country}" "${etag_cnt}"; then
+								etag_rc="$((etag_rc + 1))"
+							fi
+						done
 					fi
 					;;
 				"asn")
@@ -842,7 +855,13 @@ f_down() {
 						f_etag "${feed}" "${feed_url}AS${asn}" ".${asn}"
 						etag_rc="${?}"
 					else
-						etag_rc="4"
+						etag_rc="0"
+						etag_cnt="$(printf "%s" "${ban_asn}" | "${ban_wccmd}" -w)"
+						for asn in ${ban_asn}; do
+							if ! f_etag "${feed}" "${feed_url}AS${asn}" ".${asn}" "${etag_cnt}"; then
+								etag_rc="$((etag_rc + 1))"
+							fi
+						done
 					fi
 					;;
 				*)
@@ -1257,10 +1276,9 @@ f_rmset() {
 # generate status information
 #
 f_genstatus() {
-	local mem_free mem_max nft_ver chain_cnt set_cnt rule_cnt object end_time duration table table_sets element_cnt="0" custom_feed="0" split="0" status="${1}"
+	local mem_free nft_ver chain_cnt set_cnt rule_cnt object end_time duration table table_sets element_cnt="0" custom_feed="0" split="0" status="${1}"
 
 	mem_free="$("${ban_awkcmd}" '/^MemAvailable/{printf "%.2f", $2/1024}' "/proc/meminfo" 2>/dev/null)"
-	mem_max="$("${ban_awkcmd}" '/^VmHWM/{printf "%.2f", $2/1024}' /proc/${$}/status 2>/dev/null)"
 	nft_ver="$(printf "%s" "${ban_packages}" | "${ban_jsoncmd}" -ql1 -e '@.packages["nftables-json"]')"
 
 	[ -z "${ban_dev}" ] && f_conf
@@ -1278,7 +1296,7 @@ f_genstatus() {
 			end_time="$(date "+%s")"
 			duration="$(((end_time - ban_starttime) / 60))m $(((end_time - ban_starttime) % 60))s"
 		fi
-		runtime="$(date "+%Y-%m-%d %H:%M:%S"), duration: ${duration:-"-"}, mode: ${ban_action:-"-"}, memory: ${mem_free} MB available, ${mem_max} MB max. used"
+		runtime="mode: ${ban_action:-"-"}, $(date "+%Y-%m-%d %H:%M:%S"), duration: ${duration:-"-"}, memory: ${mem_free} MB available"
 	fi
 	[ -s "${ban_customfeedfile}" ] && custom_feed="1"
 	[ "${ban_splitsize:-"0"}" -gt "0" ] && split="1"
@@ -1602,7 +1620,7 @@ f_report() {
 						json_select "${item}"
 						json_get_keys set_details
 						for detail in ${set_details}; do
-							if [ "${detail}"="set_elements" ]; then
+							if [ "${detail}" = "set_elements" ]; then
 								json_get_values jsnval "${detail}" >/dev/null 2>&1
 								jsnval="\"${jsnval// /\", \"}\""
 							fi
@@ -1743,7 +1761,7 @@ f_report() {
 # Set search
 #
 f_search() {
-	local item table_sets ip proto hold cnt result="/var/run/banIP.search" input="${1}"
+	local item table_sets ip proto cnt result="/var/run/banIP.search" input="${1}"
 
 	if [ -n "${input}" ]; then
 		ip="$(printf "%s" "${input}" | "${ban_awkcmd}" 'BEGIN{RS="(([1-9][0-9]{0,2}\\.){1}([0-9]{1,3}\\.){2}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\\/(1?[0-9]|2?[0-9]|3?[0-2]))?[[:space:]]*$)"}{printf "%s",RT}')"

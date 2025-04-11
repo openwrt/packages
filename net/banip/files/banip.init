@@ -108,7 +108,4 @@ service_triggers() {
 	for iface in ${trigger}; do
 		procd_add_interface_trigger "interface.*.up" "${iface}" "${ban_init}" start
 	done
-
-	PROCD_RELOAD_DELAY="$((2 * 1000))"
-	procd_add_reload_trigger banip
 }
