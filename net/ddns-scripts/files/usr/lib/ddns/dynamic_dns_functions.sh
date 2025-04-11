@@ -37,7 +37,6 @@ UPDFILE=""		# store UPTIME of last update
 DATFILE=""		# save stdout data of WGet and other external programs called
 ERRFILE=""		# save stderr output of WGet and other external programs called
 IPFILE=""		# store registered IP for read by LuCI status
-TLDFILE=/usr/share/public_suffix_list.dat.gz	# TLD file used by split_FQDN
 
 CHECK_SECONDS=0		# calculated seconds out of given
 FORCE_SECONDS=0		# interval and unit
@@ -1151,78 +1150,6 @@ trap_handler() {
 	# remove trap handling settings and send kill to myself
 	trap - 0 1 2 3 15
 	[ $1 -gt 0 ] && kill -$1 $$
-}
-
-split_FQDN() {
-	# $1	FQDN to split
-	# $2	name of variable to store TLD
-	# $3	name of variable to store (reg)Domain
-	# $4	name of variable to store Host/Subdomain
-
-	[ $# -ne 4 ] && write_log 12 "Error calling 'split_FQDN()' - wrong number of parameters"
-	[ -z "$1"  ] && write_log 12 "Error calling 'split_FQDN()' - missing FQDN to split"
-	[ -f $TLDFILE ] || write_log 12 "Error calling 'split_FQDN()' - missing file '$TLDFILE'"
-
-	local _HOST _FDOM _CTLD _FTLD
-	local _SET="$@"					# save given function parameters
-
-	local _PAR=$(echo "$1" | tr [A-Z] [a-z] | tr "." " ")	# to lower and replace DOT with SPACE
-	set -- $_PAR					# set new as function parameters
-	_PAR=""						# clear variable for later reuse
-	while [ -n "$1" ] ; do				# as long we have parameters
-		_PAR="$1 $_PAR"				# invert order of parameters
-		shift
-	done
-	set -- $_PAR					# use new as function parameters
-	_PAR=""						# clear variable
-
-	while [ -n "$1" ] ; do				# as long we have parameters
-		if [ -z "$_CTLD" ]; then 		# first loop
-			_CTLD="$1"			# CURRENT TLD to look at
-			shift
-		else
-			_CTLD="$1.$_CTLD"		# Next TLD to look at
-			shift
-		fi
-		# check if TLD exact match in tld_names.dat, save TLD
-		zcat $TLDFILE | grep -E "^$_CTLD$" >/dev/null 2>&1 && {
-			_FTLD="$_CTLD"		# save found
-			_FDOM="$1"		# save domain next step might be invalid
-			continue
-		}
-		# check if match any "*" in tld_names.dat,
-		zcat $TLDFILE | grep -E "^\*.$_CTLD$" >/dev/null 2>&1 && {
-			[ -z "$1" ] && break	# no more data break
-			# check if next level TLD match excludes "!" in tld_names.dat
-			if zcat $TLDFILE | grep -E "^!$1.$_CTLD$" >/dev/null 2>&1 ; then
-				_FTLD="$_CTLD"	# Yes
-			else
-				_FTLD="$1.$_CTLD"
-				shift
-			fi
-			_FDOM="$1"; shift
-		}
-		[ -n "$_FTLD" ] && break	# we have something valid, break
-	done
-
-	# the leftover parameters are the HOST/SUBDOMAIN
-	while [ -n "$1" ]; do
-		_HOST="$1 $_HOST"		# remember we need to invert
-		shift
-	done
-	_HOST=$(echo $_HOST | tr " " ".")	# insert DOT
-
-	set -- $_SET				# set back parameters from function call
-	[ -n "$_FTLD" ] && {
-		eval "$2=$_FTLD"		# set TLD
-		eval "$3=$_FDOM"		# set registrable domain
-		eval "$4=$_HOST"		# set HOST/SUBDOMAIN
-		return 0
-	}
-	eval "$2=''"		# clear TLD
-	eval "$3=''"		# clear registrable domain
-	eval "$4=''"		# clear HOST/SUBDOMAIN
-	return 1
 }
 
 expand_ipv6() {
