@@ -11,7 +11,7 @@
 # using following options from /etc/config/ddns
 # option username  - huaweicloud Access Key Id
 # option password  - huaweicloud Secret Access Key，AK、SK documentation from https://support.huaweicloud.com/devg-apisign/api-sign-provide-aksk.html
-# option domain    - "hostname@yourdomain.TLD"	# syntax changed to remove split_FQDN() function and tld_names.dat.gz
+# option domain    - "hostname@yourdomain.TLD"
 # 
 
 # Check inputs
