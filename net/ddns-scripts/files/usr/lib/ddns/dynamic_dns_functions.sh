@@ -190,7 +190,7 @@ start_daemon_for_all_ddns_sections()
 	for section_id in $sections; do
 		config_get configured_if "$section_id" interface "wan"
 		[ -z "$event_if" ] || [ "$configured_if" = "$event_if" ] || continue
-		/usr/lib/ddns/dynamic_dns_updater.sh -v "$VERBOSE" -S "$section_id" -- start
+		/usr/lib/ddns/dynamic_dns_updater.sh -v "$VERBOSE" -S "$section_id" -- start &
 	done
 }
 
