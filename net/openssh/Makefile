@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=openssh
 PKG_REALVERSION:=9.9p2
 PKG_VERSION:=9.9_p2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_REALVERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/ \
@@ -25,10 +25,6 @@ PKG_CPE_ID:=cpe:/a:openssh:openssh
 #While bumping new version, make sure that it works without it, so it can be removed.
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=
-PKG_CONFIG_DEPENDS := \
-	CONFIG_OPENSSH_LIBFIDO2
-
-PKG_BUILD_DEPENDS += OPENSSH_LIBFIDO2:libfido2
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -92,14 +88,10 @@ endef
 
 define Package/openssh-server
 	$(call Package/openssh/Default)
-	DEPENDS+= +libopenssl +zlib +openssh-keygen +OPENSSH_LIBFIDO2:libfido2
+	DEPENDS+= +libopenssl +zlib +openssh-keygen
 	TITLE+= server
 	USERID:=sshd=22:sshd=22
 	VARIANT:=without-pam
-endef
-
-define Package/openssh-server/config
-	source "$(SOURCE)/Config.in"
 endef
 
 define Package/openssh-server/description
@@ -167,6 +159,18 @@ define Package/openssh-sftp-avahi-service/conffiles
 /etc/avahi/services/sftp-ssh.service
 endef
 
+define Package/openssh-sk-helper
+	$(call Package/openssh/Default)
+	DEPENDS+= +libopenssl +zlib +libfido2
+	TITLE+= helper for FIDO U2F and FIDO2 hardware token support
+endef
+
+define Package/openssh-sk-helper/description
+OpenSSH helper that can be used by openssh-client, openssh-sftp-client,
+and openssh-keygen to access `ecdsa_sk` and `ed25519_sk keys
+provided by a FIDO U2F or FIDO2 hardware token over USB.
+endef
+
 CONFIGURE_ARGS += \
 	--sysconfdir=/etc/ssh \
 	--with-privsep-user=sshd \
@@ -182,7 +186,7 @@ CONFIGURE_ARGS += \
 	--without-kerberos5 \
 	--with-stackprotect \
 	--with$(if $(CONFIG_OPENSSL_ENGINE),,out)-ssl-engine \
-	--with$(if $(CONFIG_OPENSSH_LIBFIDO2),,out)-security-key-builtin \
+	--with$(if $(CONFIG_PACKAGE_openssh-sk-helper),,out)-security-key-builtin \
 	--with-cflags-after=-fzero-call-used-regs=skip
 
 ifeq ($(BUILD_VARIANT),with-pam)
@@ -227,6 +231,11 @@ endef
 define Package/openssh-keygen/install
 	$(INSTALL_DIR) $(1)/usr/libexec
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ssh-keygen $(1)/usr/libexec/ssh-keygen-openssh
+endef
+
+define Package/openssh-sk-helper/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/ssh-sk-helper $(1)/usr/lib/
 endef
 
 define Package/openssh-server/install
@@ -274,6 +283,7 @@ $(eval $(call BuildPackage,openssh-client))
 $(eval $(call BuildPackage,openssh-moduli))
 $(eval $(call BuildPackage,openssh-client-utils))
 $(eval $(call BuildPackage,openssh-keygen))
+$(eval $(call BuildPackage,openssh-sk-helper))
 $(eval $(call BuildPackage,openssh-server))
 $(eval $(call BuildPackage,openssh-server-pam))
 $(eval $(call BuildPackage,openssh-sftp-client))
