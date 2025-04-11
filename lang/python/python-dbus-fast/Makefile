@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-dbus-fast
-PKG_VERSION:=2.21.1
+PKG_VERSION:=2.44.1
 PKG_RELEASE:=1
 
 PYPI_NAME:=dbus-fast
 PYPI_SOURCE_NAME:=dbus_fast
-PKG_HASH:=87b852d2005f1d59399ca51c5f3538f28a4742d739d7abe82b7ae8d01d8a5d02
+PKG_HASH:=b027e96c39ed5622bb54d811dcdbbe9d9d6edec3454808a85a1ceb1867d9e25c
 
 PKG_MAINTAINER:=Quintin Hill <stuff@quintin.me.uk>
 PKG_LICENSE:=MIT
