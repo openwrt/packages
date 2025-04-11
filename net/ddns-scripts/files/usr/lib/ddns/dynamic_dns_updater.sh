@@ -23,7 +23,7 @@ Usage:
 
 Commands:
 start                Start SECTION or NETWORK or all
-stop                 Stop NETWORK or all
+stop                 Stop SECTION or NETWORK or all
 
 Parameters:
  -n NETWORK          Start/Stop sections in background monitoring NETWORK, force VERBOSE=0
@@ -92,7 +92,7 @@ case "$1" in
 		fi
 		exit 1
 		;;
-	reload)
+	kill)
 		killall dynamic_dns_updater.sh 2>/dev/null
 		exit $?
 		;;
