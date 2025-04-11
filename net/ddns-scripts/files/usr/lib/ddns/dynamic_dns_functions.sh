@@ -86,6 +86,7 @@ KNOT_HOST=$(command -v khost)
 DRILL=$(command -v drill)
 HOSTIP=$(command -v hostip)
 NSLOOKUP=$(command -v nslookup)
+RESOLVEIP=$(command -v resolveip)
 
 # Transfer Programs
 WGET=$(command -v wget)
@@ -487,117 +488,66 @@ sanitize_variable() {
 	fi
 }
 
-# verify given host and port is connectable
-# $1	Host/IP to verify
-# $2	Port to verify
+# Verify host and port connectivity
+# $1: Host/IP
+# $2: Port
 verify_host_port() {
-	local __HOST=$1
-	local __PORT=$2
-	local __NC=$(command -v nc)
-	local __NCEXT=$($(command -v nc) --help 2>&1 | grep "\-w" 2>/dev/null)	# busybox nc compiled with extensions
-	local __IP __IPV4 __IPV6 __RUNPROG __PROG __ERR
 	# return codes
 	# 1	system specific error
 	# 2	nslookup/host error
 	# 3	nc (netcat) error
 	# 4	unmatched IP version
+	local host port ipv4 ipv6 nc_cmd err_code
+	host=$1
+	port=$2
+	nc_cmd=$(command -v nc)
+	err_code=0
 
-	[ $# -ne 2 ] && write_log 12 "Error calling 'verify_host_port()' - wrong number of parameters"
+	# Validate input parameters
+	[ $# -ne 2 ] && { write_log 12 "Error: verify_host_port() requires exactly 2 arguments"; return 1; }
 
-	# check if ip or FQDN was given
-	__IPV4=$(echo $__HOST | grep -m 1 -o "$IPV4_REGEX$")	# do not detect ip in 0.0.0.0.example.com
-	__IPV6=$(echo $__HOST | grep -m 1 -o "$IPV6_REGEX")
-	# if FQDN given get IP address
-	[ -z "$__IPV4" -a -z "$__IPV6" ] && {
-		if [ -n "$BIND_HOST" ]; then	# use BIND host if installed
-			__PROG="BIND host"
-			__RUNPROG="$BIND_HOST $__HOST >$DATFILE 2>$ERRFILE"
-		elif [ -n "$KNOT_HOST" ]; then	# use Knot host if installed
-			__PROG="Knot host"
-			__RUNPROG="$KNOT_HOST $__HOST >$DATFILE 2>$ERRFILE"
-		elif [ -n "$DRILL" ]; then	# use drill if installed
-			__PROG="drill"
-			__RUNPROG="$DRILL -V0 $__HOST A >$DATFILE 2>$ERRFILE"			# IPv4
-			__RUNPROG="$__RUNPROG; $DRILL -V0 $__HOST AAAA >>$DATFILE 2>>$ERRFILE"	# IPv6
-		elif [ -n "$HOSTIP" ]; then	# use hostip if installed
-			__PROG="hostip"
-			__RUNPROG="$HOSTIP $__HOST >$DATFILE 2>$ERRFILE"			# IPv4
-			__RUNPROG="$__RUNPROG; $HOSTIP -6 $__HOST >>$DATFILE 2>>$ERRFILE"	# IPv6
-		else	# use BusyBox nslookup
-			__PROG="BusyBox nslookup"
-			__RUNPROG="$NSLOOKUP $__HOST >$DATFILE 2>$ERRFILE"
-		fi
-		write_log 7 "#> $__RUNPROG"
-		eval $__RUNPROG
-		__ERR=$?
-		# command error
-		[ $__ERR -gt 0 ] && {
-			write_log 3 "DNS Resolver Error - $__PROG Error '$__ERR'"
-			write_log 7 "$(cat $ERRFILE)"
-			return 2
-		}
-		# extract IP address
-		if [ -n "$BIND_HOST" ]; then	# use BIND host if installed
-			__IPV4="$(awk -F "address " '/has address/ {print $2; exit}' "$DATFILE")"
-			__IPV6="$(awk -F "address " '/has IPv6/ {print $2; exit}' "$DATFILE")"
-		elif [ -n "$KNOT_HOST" ]; then	# use Knot host if installed
-			__IPV4="$(awk -F "address " '/has IPv4/ {print $2; exit}' "$DATFILE")"
-			__IPV6="$(awk -F "address " '/has IPv6/ {print $2; exit}' "$DATFILE")"
-		elif [ -n "$DRILL" ]; then	# use drill if installed
-			__IPV4="$(awk '/^'"$__HOST"'/ {print $5}' "$DATFILE" | grep -m 1 -o "$IPV4_REGEX")"
-			__IPV6="$(awk '/^'"$__HOST"'/ {print $5}' "$DATFILE" | grep -m 1 -o "$IPV6_REGEX")"
-		elif [ -n "$HOSTIP" ]; then	# use hostip if installed
-			__IPV4="$(grep -m 1 -o "$IPV4_REGEX" "$DATFILE")"
-			__IPV6="$(grep -m 1 -o "$IPV6_REGEX" "$DATFILE")"
-		else	# use BusyBox nslookup
-			__IPV4="$(sed -ne "/^Name:/,\$ { s/^Address[0-9 ]\{0,\}: \($IPV4_REGEX\).*$/\\1/p }" "$DATFILE")"
-			__IPV6="$(sed -ne "/^Name:/,\$ { s/^Address[0-9 ]\{0,\}: \($IPV6_REGEX\).*$/\\1/p }" "$DATFILE")"
-		fi
-	}
+	# Resolve IP address
+	ipv4=$("$RESOLVEIP" -4 "$host")
+	ipv6=$("$RESOLVEIP" -6 "$host")
+	if [ -z "$ipv4" ] && [ -z "$ipv6" ]; then
+		write_log 3 "Failed to resolve any IPv4/6 for host: $host"
+		return 2
+	fi
 
-	# check IP version if forced
-	if [ $force_ipversion -ne 0 ]; then
-		__ERR=0
-		[ $use_ipv6 -eq 0 -a -z "$__IPV4" ] && __ERR=4
-		[ $use_ipv6 -eq 1 -a -z "$__IPV6" ] && __ERR=6
-		[ $__ERR -gt 0 ] && {
-			[ -n "$LUCI_HELPER" ] && return 4
-			write_log 14 "Verify host Error '4' - Forced IP Version IPv$__ERR don't match"
+	# check for forced IP version inconsistency
+	if [ "$force_ipversion" != 0 ]; then 
+		[ "$use_ipv6" = 0 ] && [ -z "$ipv4" ] && err_code=4
+		[ "$use_ipv6" = 1 ] && [ -z "$ipv6" ] && err_code=6
+		[ $err_code -gt 0 ] && {
+			[ -n "$LUCI_HELPER" ] && write_log 14 "Error: verify_host_port(): no usable IP for the IP family that was forced"
+			return 4
 		}
 	fi
 
-	# verify nc command
-	# busybox nc compiled without -l option "NO OPT l!" -> critical error
-	$__NC --help 2>&1 | grep -i "NO OPT l!" >/dev/null 2>&1 && \
-		write_log 12 "Busybox nc (netcat) compiled without '-l' option, error 'NO OPT l!'"
-	# busybox nc compiled with extensions
-	$__NC --help 2>&1 | grep "\-w" >/dev/null 2>&1 && __NCEXT="TRUE"
+	# Check connectivity using nc
+	if [ -n "$nc_cmd" ]; then
+		write_log 7 "#> $RESOLVEIP"
+		if [ -n "$ipv4" ]; then
+			timeout 3 "$nc_cmd" "$ipv4" "$port" >/dev/null 2>&1
+		else
+			timeout 3 "$nc_cmd" "$ipv6" "$port" >/dev/null 2>&1
+		fi
+		err_code=$?
+		if [ $err_code -eq 0 ]; then
 
-	# connectivity test
-	# run busybox nc to HOST PORT
-	# busybox might be compiled with "FEATURE_PREFER_IPV4_ADDRESS=n"
-	# then nc will try to connect via IPv6 if there is any IPv6 available on any host interface
-	# not worrying, if there is an IPv6 wan address
-	# so if not "force_ipversion" to use_ipv6 then connect test via ipv4, if available
-	[ $force_ipversion -ne 0 -a $use_ipv6 -ne 0 -o -z "$__IPV4" ] && __IP=$__IPV6 || __IP=$__IPV4
+			write_log 7 "Successfully connected to $host:$port"
+			return 0
 
-	if [ -n "$__NCEXT" ]; then	# BusyBox nc compiled with extensions (timeout support)
-		__RUNPROG="$__NC -w 1 $__IP $__PORT </dev/null >$DATFILE 2>$ERRFILE"
-		write_log 7 "#> $__RUNPROG"
-		eval $__RUNPROG
-		__ERR=$?
-		[ $__ERR -eq 0 ] && return 0
-		write_log 3 "Connect error - BusyBox nc (netcat) Error '$__ERR'"
-		write_log 7 "$(cat $ERRFILE)"
-		return 3
-	else		# nc compiled without extensions (no timeout support)
-		__RUNPROG="timeout 2 -- $__NC $__IP $__PORT </dev/null >$DATFILE 2>$ERRFILE"
-		write_log 7 "#> $__RUNPROG"
-		eval $__RUNPROG
-		__ERR=$?
-		[ $__ERR -eq 0 ] && return 0
-		write_log 3 "Connect error - BusyBox nc (netcat) timeout Error '$__ERR'"
-		return 3
+		else
+
+			write_log 3 "DNS Resolver Error - $RESOLVEIP (Error: $err_code)"
+			write_log 7 "$(cat "$ERRFILE")"
+			return 3
+
+		fi
+	else
+		write_log 3 "Netcat (nc) command not found."
+		return 1
 	fi
 }
 
