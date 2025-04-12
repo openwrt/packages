@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openssh
-PKG_REALVERSION:=9.9p2
-PKG_VERSION:=9.9_p2
-PKG_RELEASE:=2
+PKG_REALVERSION:=10.0p1
+PKG_VERSION:=10.0_p1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_REALVERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/ \
 		https://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable/
-PKG_HASH:=91aadb603e08cc285eddf965e1199d02585fa94d994d6cae5b41e1721e215673
+PKG_HASH:=021a2e709a0edf4250b1256bd5a9e500411a90dddabea830ed59cef90eb9d85c
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(if $(BUILD_VARIANT),$(PKG_NAME)-$(BUILD_VARIANT)/)$(PKG_NAME)-$(PKG_REALVERSION)
 
 PKG_LICENSE:=BSD ISC
@@ -249,6 +249,7 @@ define Package/openssh-server/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/sshd $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/sshd-auth $(1)/usr/lib/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/sshd-session $(1)/usr/lib/
 endef
 
