@@ -314,7 +314,7 @@ f_dns() {
 			adb_dnscachecmd="-"
 			adb_dnsinstance="${adb_dnsinstance:-"0"}"
 			adb_dnsuser="${adb_dnsuser:-"root"}"
-			adb_dnsdir="${adb_dnsdir}"
+			adb_dnsdir="${adb_dnsdir:-"/tmp"}"
 			adb_dnsheader="${adb_dnsheader:-""}"
 			adb_dnsdeny="${adb_dnsdeny:-"0"}"
 			adb_dnsallow="${adb_dnsallow:-"1"}"
@@ -474,22 +474,36 @@ f_count() {
 # set external config options
 #
 f_extconf() {
-	local config config_option section zone port fwcfg
+	local config section zone port fwcfg
 
 	case "${adb_dns}" in
+		"dnsmasq")
+			config="dhcp"
+			if [ "${adb_dnsshift}" = "1" ] &&
+				! uci_get ${config} @dnsmasq[${adb_dnsinstance}] addnmount | "${adb_grepcmd}" -q "${adb_backupdir}"; then
+				uci -q add_list ${config}.@dnsmasq[${adb_dnsinstance}].addnmount="${adb_backupdir}"
+			elif [ "${adb_dnsshift}" = "0" ] &&
+				uci_get ${config} @dnsmasq[${adb_dnsinstance}] addnmount | "${adb_grepcmd}" -q "${adb_backupdir}"; then
+				uci -q del_list ${config}.@dnsmasq[${adb_dnsinstance}].addnmount="${adb_backupdir}"
+			fi
+			;;
 		"kresd")
 			config="resolver"
-			if [ "${adb_enabled}" = "1" ] && ! uci_get ${config} kresd rpz_file >/dev/null 2>&1; then
+			if [ "${adb_enabled}" = "1" ] &&
+				! uci_get ${config} kresd rpz_file | "${adb_grepcmd}" -q "${adb_finaldir}/${adb_dnsfile}"; then
 				uci -q add_list ${config}.kresd.rpz_file="${adb_finaldir}/${adb_dnsfile}"
-			elif [ "${adb_enabled}" = "0" ] && [ -n "${config_option}" ]; then
+			elif [ "${adb_enabled}" = "0" ] &&
+				uci_get ${config} kresd rpz_file | "${adb_grepcmd}" -q "${adb_finaldir}/${adb_dnsfile}"; then
 				uci -q del_list ${config}.kresd.rpz_file="${adb_finaldir}/${adb_dnsfile}"
 			fi
 			;;
 		"smartdns")
 			config="smartdns"
-			if [ "${adb_enabled}" = "1" ] && ! uci_get ${config} @${config}[${adb_dnsinstance}] conf_files >/dev/null 2>&1; then
+			if [ "${adb_enabled}" = "1" ] &&
+				! uci_get ${config} @${config}[${adb_dnsinstance}] conf_files | "${adb_grepcmd}" -q "${adb_finaldir}/${adb_dnsfile}"; then
 				uci -q add_list ${config}.@${config}[${adb_dnsinstance}].conf_files="${adb_finaldir}/${adb_dnsfile}"
-			elif [ "${adb_enabled}" = "0" ] && [ -n "${config_option}" ]; then
+			elif [ "${adb_enabled}" = "0" ] &&
+				uci_get ${config} @${config}[${adb_dnsinstance}] conf_files | "${adb_grepcmd}" -q "${adb_finaldir}/${adb_dnsfile}"; then
 				uci -q del_list ${config}.@${config}[${adb_dnsinstance}].conf_files="${adb_finaldir}/${adb_dnsfile}"
 			fi
 			;;
@@ -569,15 +583,6 @@ f_dnsup() {
 						restart_rc="${?}"
 					fi
 					;;
-				"dnsmasq")
-					if [ "${adb_dnsshift}" = "1" ] &&
-						! uci_get dhcp @dnsmasq[${adb_dnsinstance}] addnmount >/dev/null 2>&1; then
-						uci -q add_list dhcp.@dnsmasq[${adb_dnsinstance}].addnmount="${adb_backupdir}"
-					fi
-					"/etc/init.d/${adb_dns}" restart >/dev/null 2>&1
-					restart_rc="${?}"
-					uci -q revert dhcp
-					;;
 				*)
 					"/etc/init.d/${adb_dns}" restart >/dev/null 2>&1
 					restart_rc="${?}"
@@ -631,9 +636,9 @@ f_etag() {
 		if [ "${feed_cnt}" -lt "${etag_cnt}" ]; then
 			"${adb_sedcmd}" -i "/^${feed}/d" "${adb_backupdir}/adblock.etag"
 		else
-			"${adb_sedcmd}" -i "/^${feed}${feed_suffix}/d" "${adb_backupdir}/adblock.etag"
+			"${adb_sedcmd}" -i "/^${feed}${feed_suffix//\//\\/}/d" "${adb_backupdir}/adblock.etag"
 		fi
-		printf "%-50s%s\n" "${feed}${feed_suffix}" "${etag_id}" >>"${adb_backupdir}/adblock.etag"
+		printf "%-80s%s\n" "${feed}${feed_suffix}" "${etag_id}" >>"${adb_backupdir}/adblock.etag"
 		out_rc="2"
 	fi
 
@@ -1200,18 +1205,18 @@ f_main() {
 				fi
 				# etag handling on reload
 				#
-				etag_rc="0"
-				src_cnt="$(printf "%s" "${src_cat}" | "${adb_wccmd}" -w)"
-				for suffix in ${src_cat}; do
-					if [ -n "${adb_etagparm}" ] && [ "${adb_action}" = "reload" ]; then
+				if [ -n "${adb_etagparm}" ] && [ "${adb_action}" = "reload" ]; then
+					etag_rc="0"
+					src_cnt="$(printf "%s" "${src_cat}" | "${adb_wccmd}" -w)"
+					for suffix in ${src_cat}; do
 						if ! f_etag "${src_name}" "${src_url}" "${suffix}" "${src_cnt}"; then
 							etag_rc="$(( etag_rc + 1))"
 						fi
-					fi
-				done
-				if [ "${etag_rc}" = "0" ];then
-					if f_list restore; then
-						continue
+					done
+					if [ "${etag_rc}" = "0" ];then
+						if f_list restore; then
+							continue
+						fi
 					fi
 				fi
 				# normal download
@@ -1224,8 +1229,6 @@ f_main() {
 						: >"${src_tmpcat}"
 					fi
 				done
-				# list preparation
-				#
 				f_list prepare
 			) &
 		else
@@ -1270,8 +1273,6 @@ f_main() {
 					"${adb_fetchcmd}" ${adb_fetchparm} "${src_tmpload}" "${src_url}" >/dev/null 2>&1
 					src_rc="${?}"
 				fi
-				# list preparation
-				#
 				f_list prepare
 			) &
 		fi
