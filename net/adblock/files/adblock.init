@@ -17,8 +17,16 @@ adb_init="/etc/init.d/adblock"
 adb_script="/usr/bin/adblock.sh"
 adb_pidfile="/var/run/adblock.pid"
 
-[ "${action}" = "boot" ] && "${adb_init}" running && exit 0
-[ -s "${adb_pidfile}" ] && { [ "${action}" = "start" ] || [ "${action}" = "stop" ] || [ "${action}" = "restart" ] || [ "${action}" = "reload" ] || [ "${action}" = "report" ] || [ "${action}" = "suspend" ] || [ "${action}" = "resume" ] || [ "${action}" = "query" ]; } && exit 1
+if [ -z "${IPKG_INSTROOT}" ]; then
+	if [ "${action}" = "boot" ] && "${adb_init}" running; then
+		exit 0
+	elif [ -s "${adb_pidfile}" ] &&
+		{ [ "${action}" = "start" ] || [ "${action}" = "stop" ] || [ "${action}" = "restart" ] ||
+		[ "${action}" = "reload" ] || [ "${action}" = "report" ] || [ "${action}" = "suspend" ] ||
+		[ "${action}" = "resume" ] || [ "${action}" = "query" ]; }; then
+		exit 1
+	fi
+fi
 
 boot() {
 	: >"${adb_pidfile}"

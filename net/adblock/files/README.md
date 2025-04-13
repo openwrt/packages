@@ -91,8 +91,8 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * Provides a 'DNS Shift', where the generated final DNS blocklist is moved to the backup directory and only a soft link to this file is set in memory. As long as your backup directory is located on an external drive, you should activate this option to save disk space.
 * Source parsing by fast & flexible regex rulesets, all rules and feed information are placed in an external JSON file ('/etc/adblock/adblock.feeds')
 * Overall duplicate removal in generated blocklist file 'adb_list.overall'
+* Additional local allowlist for manual overrides, located in '/etc/adblock/adblock.allowlist' (only exact matches).
 * Additional local blocklist for manual overrides, located in '/etc/adblock/adblock.blocklist'
-* Additional local allowlist for manual overrides, located in '/etc/adblock/adblock.allowlist'
 * Quality checks during blocklist update to ensure a reliable DNS backend service
 * Minimal status & error logging to syslog, enable debug logging to receive more output
 * Procd based init system support ('start', 'stop', 'restart', 'reload', 'enable', 'disable', 'running', 'status', 'suspend',  'resume', 'query', 'report')
@@ -101,11 +101,11 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * Provides comprehensive runtime information
 * Provides a detailed DNS Query Report with DNS related information about client requests, top (blocked) domains and more
 * Provides a powerful query function to quickly find blocked (sub-)domains, e.g. to allow certain domains
-* Includes an option to generate an additional, restrictive 'adb_list.jail' to block access to all domains except those listed in the whitelist file. You can use this restrictive blocklist manually e.g. for guest wifi or kidsafe configurations
+* Includes an option to generate an additional, restrictive 'adb_list.jail' to block access to all domains except those listed in the allowlist file. You can use this restrictive blocklist manually e.g. for guest wifi or kidsafe configurations
 * Includes an option to force DNS requests to the local resolver
 * Automatic blocklist backup & restore, these backups will be used in case of download errors and during startup
 * Send notification E-Mails, see example configuration below
-* Add new adblock feeds on your own, see example below
+* Add new adblock feeds on your own with the 'Custom Feed Editor' in LuCI or via CLI, see example below
 * Strong LuCI support, all relevant options are exposed to the web frontend
 
 <a id="prerequisites"></a>
@@ -126,7 +126,6 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * Install 'adblock' (_opkg install adblock_). The adblock service is enabled by default
 * Install the LuCI companion package 'luci-app-adblock' (_opkg install luci-app-adblock_)
 * It's strongly recommended to use the LuCI frontend to easily configure all aspects of adblock, the application is located in LuCI under the 'Services' menu
-* Update from a former adblock version is easy. During the update a backup is made of the old configuration '/etc/config/adblock-backup' and replaced by the new config - that's all
 
 <a id="adblock-cli-interface"></a>
 ## Adblock CLI interface
@@ -175,25 +174,24 @@ Available commands:
 | adb_dnstimeout     | 10                                 | timeout in seconds to wait for a successful DNS backend restart                                |
 | adb_dnsinstance    | 0, first instance                  | set to the relevant dns backend instance used by adblock (dnsmasq only)                        |
 | adb_dnsflush       | 0, disabled                        | set to 1 to flush the DNS Cache before & after adblock processing                              |
-| adb_dnsallow       | -, not set                         | set to 1 to disable selective DNS whitelisting (RPZ-PASSTHRU)                                  |
-| adb_lookupdomain   | example.com                        | external domain to check for a successful DNS backend restart or 'false' to disable this check |
+| adb_lookupdomain   | localhost                          | domain to check for a successful DNS backend restart                                           |
 | adb_portlist       | 53 853 5353                        | space separated list of firewall ports which should be redirected locally                      |
 | adb_report         | 0, disabled                        | set to 1 to enable the background tcpdump gathering process for reporting                      |
-| adb_reportdir      | /tmp                               | path for DNS related report files                                                              |
+| adb_reportdir      | /tmp/adblock-report                | path for DNS related report files                                                              |
 | adb_repiface       | -, auto-detected                   | name of the reporting interface or 'any' used by tcpdump                                       |
 | adb_replisten      | 53                                 | space separated list of reporting port(s) used by tcpdump                                      |
 | adb_repchunkcnt    | 5                                  | report chunk count used by tcpdump                                                             |
 | adb_repchunksize   | 1                                  | report chunk size used by tcpdump in MB                                                        |
 | adb_represolve     | 0, disabled                        | resolve reporting IP addresses using reverse DNS (PTR) lookups                                 |
 | adb_tld            | 1, enabled                         | set to 0 to disable the top level domain compression (tld) function                            |
-| adb_backupdir      | /tmp                               | path for adblock backups                                                                       |
+| adb_backupdir      | /tmp/adblock-backup                | path for adblock backups                                                                       |
 | adb_tmpbase        | /tmp                               | path for all adblock related runtime operations, e.g. downloading, sorting, merging etc.       |
 | adb_safesearch     | 0, disabled                        | enforce SafeSearch for google, bing, brave, duckduckgo, yandex, youtube and pixabay            |
 | adb_safesearchlist | -, not set                         | Limit SafeSearch to certain provider (see above)                                               |
 | adb_mail           | 0, disabled                        | set to 1 to enable notification E-Mails in case of a processing errors                         |
 | adb_mailreceiver   | -, not set                         | receiver address for adblock notification E-Mails                                              |
 | adb_mailsender     | no-reply@adblock                   | sender address for adblock notification E-Mails                                                |
-| adb_mailtopic      | adblock&nbsp;notification          | topic for adblock notification E-Mails                                                         |
+| adb_mailtopic      | adblock notification               | topic for adblock notification E-Mails                                                         |
 | adb_mailprofile    | adb_notify                         | mail profile used in 'msmtp' for adblock notification E-Mails                                  |
 | adb_jail           | 0                                  | set to 1 to enable the additional, restrictive 'adb_list.jail' creation                        |
 | adb_jaildir        | /tmp                               | path for the generated jail list                                                               |
@@ -230,7 +228,7 @@ Adblock deposits the final blocklist 'adb_list.overall' in '/etc/kresd', no furt
 No further configuration is needed, adblock deposits the final blocklist 'adb_list.overall' in '/tmp/smartdns' by default.
 
 **Use restrictive jail modes:**
-You can enable a restrictive 'adb_list.jail' to block access to all domains except those listed in the whitelist file. Usually this list will be generated as an additional list for guest or kidsafe configurations (for a separate dns server instance). If the jail directory points to your primary dns directory, adblock enables the restrictive jail mode automatically (jail mode only).
+You can enable a restrictive 'adb_list.jail' to block access to all domains except those listed in the allowlist file. Usually this list will be generated as an additional list for guest or kidsafe configurations (for a separate dns server instance). If the jail directory points to your primary dns directory, adblock enables the restrictive jail mode automatically (jail mode only).
 
 **Manually override the download options:**
 By default adblock uses the following pre-configured download options:
