@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=external-protocol
 PKG_VERSION:=20231119
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
 
@@ -12,6 +12,7 @@ define Package/external-protocol
   SECTION:=net
   CATEGORY:=Network
   TITLE:=externally managed protocol
+  DEPENDS:=+ip
   PKGARCH:=all
 endef
 
