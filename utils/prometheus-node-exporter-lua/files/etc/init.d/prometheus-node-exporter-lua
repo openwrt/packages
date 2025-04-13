@@ -19,13 +19,13 @@ start_service() {
 	config_get port "main" listen_port 9100
 
 	[ "$interface" = "*" ] || {
-		network_get_ipaddr  bind4 "$interface"
+		network_get_ipaddr bind4 "$interface"
 		network_get_ipaddr6 bind6 "$interface"
 		[ -n "$bind4$bind6" ] || {
 			_log "defering start until listen interface $interface becomes ready"
 			return 0
 		}
-    }
+	}
 
 	procd_open_instance
 
@@ -46,8 +46,7 @@ start_service() {
 	procd_close_instance
 }
 
-service_triggers()
-{
+service_triggers() {
 	local interface
 
 	procd_add_reload_trigger "prometheus-node-exporter-lua"
