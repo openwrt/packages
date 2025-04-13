@@ -29,7 +29,6 @@ unexport \
   GOOS \
   GOPATH \
   GOROOT \
-  GOTOOLCHAIN \
   GOTMPDIR \
   GOWORK
 # Unmodified:
@@ -38,6 +37,7 @@ unexport \
 #   GOPROXY
 #   GONOPROXY
 #   GOSUMDB
+#   GOTOOLCHAIN
 #   GONOSUMDB
 #   GOVCS
 
