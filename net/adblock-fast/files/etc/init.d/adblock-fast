@@ -26,6 +26,7 @@ readonly packageName='adblock-fast'
 readonly PKG_VERSION='dev-test'
 readonly packageCompat='4'
 readonly serviceName="$packageName $PKG_VERSION"
+readonly packageMemoryThreshold='33554432'
 readonly packageConfigFile="/etc/config/${packageName}"
 readonly dnsmasqAddnhostsFile="/var/run/${packageName}/dnsmasq.addnhosts"
 readonly dnsmasqAddnhostsCache="/var/run/${packageName}/dnsmasq.addnhosts.cache"
@@ -362,9 +363,18 @@ is_running() {
 	fi
 }
 ipset() { "$ipset" "$@" >/dev/null 2>&1; }
-get_ram_available() { ubus call system info | jsonfilter -e '@.memory.available'; }
-get_ram_free() { ubus call system info | jsonfilter -e '@.memory.free'; }
-get_ram_total() { ubus call system info | jsonfilter -e '@.memory.total'; }
+get_mem_available() {
+	local ram swap
+	ram="$( ubus call system info | jsonfilter -e '@.memory.available' )"
+	swap="$( ubus call system info | jsonfilter -e '@.swap.free' )"
+	echo "$((ram + swap))";
+}
+get_mem_total() {
+	local ram swap
+	ram="$( ubus call system info | jsonfilter -e '@.memory.total' )"
+	swap="$( ubus call system info | jsonfilter -e '@.swap.total' )"
+	echo "$((ram + swap))";
+}
 led_on(){ if [ -n "${1}" ] && [ -e "${1}/trigger" ]; then echo 'default-on' > "${1}/trigger" 2>&1; fi; }
 led_off(){ if [ -n "${1}" ] &&  [ -e "${1}/trigger" ]; then echo 'none' > "${1}/trigger" 2>&1; fi; }
 logger() { /usr/bin/logger -t "$packageName" "$@"; }
@@ -1305,7 +1315,7 @@ download_dnsmasq_file() {
 	json set status 'statusDownloading'
 
 	rm -f "$A_TMP" "$B_TMP" "$SED_TMP" "$outputFile" "$outputCache" "$outputGzip"
-	if [ "$(get_ram_available)" -lt 32 ]; then
+	if [ "$(get_mem_available)" -lt "$packageMemoryThreshold" ]; then
 		output 3 'Low free memory, restarting resolver '
 		if resolver 'quiet_restart'; then
 			output_okn
@@ -1360,7 +1370,7 @@ download_lists() {
 			[ -n "$size" ] && total_sizes=$((total_sizes+size))
 		}
 		local i free_mem total_sizes
-		free_mem="$(get_ram_available)"
+		free_mem="$(get_mem_available)"
 		if [ -z "$free_mem" ]; then
 			json add warnning 'warningFreeRamCheckFail'
 			output "${_WARNING_}: $(get_text 'warningFreeRamCheckFail')!\n"
@@ -1384,7 +1394,7 @@ download_lists() {
 	json set status 'statusDownloading'
 
 	rm -f "$A_TMP" "$B_TMP" "$SED_TMP" "$outputFile" "$outputCache" "$outputGzip"
-	if [ "$(get_ram_total)" -lt 33554432 ]; then
+	if [ "$(get_mem_total)" -lt "$packageMemoryThreshold" ]; then
 		output 3 'Low free memory, restarting resolver '
 		if resolver 'quiet_restart'; then
 			output_okn
@@ -1420,13 +1430,14 @@ download_lists() {
 
 	append_newline "$B_TMP"
 	for hf in $blocked_domain $canaryDomains; do
-		printf "%s\n" "$(echo "$hf" | sed "$domainsFilter")" >> "$B_TMP"
+		[ -n "$hf" ] && printf "%s\n" "$(echo "$hf" | sed "$domainsFilter")" >> "$B_TMP"
 	done
 	sed -i '/^[[:space:]]*$/d' "$B_TMP"
 	[ ! -s "$B_TMP" ] && return 1
 
-	allowed_domain="${allowed_domain}
-$(sed '/^[[:space:]]*$/d' "$A_TMP")"
+	local allowed_domains_from_dl
+	allowed_domains_from_dl="$(sed '/^[[:space:]]*$/d' "$A_TMP")"
+	allowed_domain="${allowed_domain}${allowed_domains_from_dl:+ $allowed_domains_from_dl}"
 
 	output 1 'Processing downloads '
 	output 2 'Sorting combined list '
@@ -1493,7 +1504,7 @@ $(sed '/^[[:space:]]*$/d' "$A_TMP")"
 	esac
 
 	if [ -n "$allowed_domain" ]; then
-		output 2 'Removing allowed domains from combined list'
+		output 2 'Removing allowed domains from combined list '
 		json set message "$(get_text 'statusProcessing'): allowing domains"
 		for hf in ${allowed_domain}; do
 			hf="$(echo "$hf" | sed 's/\./\\./g')"
