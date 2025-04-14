@@ -11,6 +11,7 @@ PYPI_SOURCE_NAME:=yt_dlp
 PKG_MAINTAINER:=Michal Vasilek <michal.vasilek@nic.cz>
 PKG_LICENSE:=Unlicense
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:yt-dlp_project:yt-dlp
 
 PKG_BUILD_DEPENDS:=python-hatchling/host
 
