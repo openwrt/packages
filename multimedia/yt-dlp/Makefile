@@ -1,14 +1,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=yt-dlp
-PKG_VERSION:=2024.7.9
+PKG_VERSION:=2025.3.31
 PKG_RELEASE:=1
 
 PYPI_NAME:=yt-dlp
-PKG_HASH:=e19f00f9e55e90bca1c94bcaf809aa33e51634be9f0de2df84a72d3206934f94
+PKG_HASH:=1bfe0e660d1a70a09e27b2d58f92e30b1e2e362cc487829f2f824346ae49fb91
 PYPI_SOURCE_NAME:=yt_dlp
 
-PKG_MAINTAINER:=Michal Vasilek <michal.vasilek@nic.cz>
+PKG_MAINTAINER:=George Sapkin <george@sapk.in>
 PKG_LICENSE:=Unlicense
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:yt-dlp_project:yt-dlp
