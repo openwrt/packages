@@ -87,6 +87,7 @@ DRILL=$(command -v drill)
 HOSTIP=$(command -v hostip)
 NSLOOKUP=$(command -v nslookup)
 RESOLVEIP=$(command -v resolveip)
+jsonfilter=$(command -v jsonfilter)
 
 # Transfer Programs
 WGET=$(command -v wget)
@@ -882,149 +883,79 @@ send_update() {
 
 get_current_ip () {
 	# $1	Name of Variable to store current IP
-	local __CNT=0	# error counter
-	local __RUNPROG __DATA __URL __ERR
+	local ip_var data retries
+	ip_var="$1"
+	data=""
+	retries=0
 
-	[ $# -ne 1 ] && write_log 12 "Error calling 'get_current_ip()' - wrong number of parameters"
-	write_log 7 "Detect current IP on '$ip_source'"
+	# Validate input
+	if [ -z "$ip_var" ]; then
+		write_log 12 "get_current_ip: Missing variable name for IP storage"
+		return 1
+	fi
 
-	while : ; do
-		if [ -n "$ip_network" -a "$ip_source" = "network" ]; then
-			# set correct program
-			network_flush_cache	# force re-read data from ubus
-			[ $use_ipv6 -eq 0 ] && __RUNPROG="network_get_ipaddr" \
-					    || __RUNPROG="network_get_ipaddr6"
-			eval "$__RUNPROG __DATA $ip_network" || \
-				write_log 13 "Can not detect current IP using $__RUNPROG '$ip_network' - Error: '$?'"
-			[ -n "$__DATA" ] && write_log 7 "Current IP '$__DATA' detected on network '$ip_network'"
-		elif [ -n "$ip_interface" -a "$ip_source" = "interface" ]; then
-			local __DATA4=""; local __DATA6=""
-			if [ -n "$(command -v ip)" ]; then		# ip program installed
-				write_log 7 "#> ip -o addr show dev $ip_interface scope global >$DATFILE 2>$ERRFILE"
-				ip -o addr show dev $ip_interface scope global >$DATFILE 2>$ERRFILE
-				__ERR=$?
-				if [ $__ERR -eq 0 ]; then
-					# DATFILE (sample)
-					# 10: l2tp-inet: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1456 qdisc fq_codel state UNKNOWN qlen 3\    link/ppp
-					# 10: l2tp-inet    inet 95.30.176.51 peer 95.30.176.1/32 scope global l2tp-inet\       valid_lft forever preferred_lft forever
-					# 5: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP qlen 1000\    link/ether 08:00:27:d0:10:32 brd ff:ff:ff:ff:ff:ff
-					# 5: eth1    inet 172.27.10.128/24 brd 172.27.10.255 scope global eth1\       valid_lft forever preferred_lft forever
-					# 5: eth1    inet 172.55.55.155/24 brd 172.27.10.255 scope global eth1\       valid_lft 12345sec preferred_lft 12345sec
-					# 5: eth1    inet6 2002:b0c7:f326::806b:c629:b8b9:433/128 scope global dynamic \       valid_lft 8026sec preferred_lft 8026sec
-					# 5: eth1    inet6 fd43:5368:6f6d:6500:806b:c629:b8b9:433/128 scope global dynamic \       valid_lft 8026sec preferred_lft 8026sec
-					# 5: eth1    inet6 fd43:5368:6f6d:6500:a00:27ff:fed0:1032/64 scope global dynamic \       valid_lft 14352sec preferred_lft 14352sec
-					# 5: eth1    inet6 2002:b0c7:f326::a00:27ff:fed0:1032/64 scope global dynamic \       valid_lft 14352sec preferred_lft 14352sec
+	write_log 7 "Detecting current IP using source: $ip_source"
 
-					#    remove      remove     remove      replace     replace
-					#     link     inet6 fxxx    sec      forever=>-1   / => ' ' to separate subnet from ip
-					sed "/link/d; /inet6 f/d; s/sec//g; s/forever/-1/g; s/\// /g" $DATFILE | \
-						awk '{ print $3" "$4" "$NF }' > $ERRFILE	# temp reuse ERRFILE
-					# we only need    inet?   IP  prefered time
-
-					local __TIME4=0;  local __TIME6=0
-					local __TYP __ADR __TIME
-					while read __TYP __ADR __TIME; do
-						__TIME=${__TIME:-0}	# supress shell errors on last (empty) line of DATFILE
-						#    IPversion       no "-1" record stored - now "-1" record or new time > oldtime
-						[ "$__TYP" = "inet6" -a $__TIME6 -ge 0 -a \( $__TIME -lt 0 -o $__TIME -gt $__TIME6 \) ] && {
-							__DATA6="$__ADR"
-							__TIME6="$__TIME"
-						}
-						[ "$__TYP" = "inet" -a $__TIME4 -ge 0 -a \( $__TIME -lt 0 -o $__TIME -gt $__TIME4 \) ] && {
-							__DATA4="$__ADR"
-							__TIME4="$__TIME"
-						}
-					done < $ERRFILE
-				else
-					write_log 3 "ip Error: '$__ERR'"
-					write_log 7 "$(cat $ERRFILE)"		# report error
-				fi
-			else					# use deprecated ifconfig
-				write_log 7 "#> ifconfig $ip_interface >$DATFILE 2>$ERRFILE"
-				ifconfig $ip_interface >$DATFILE 2>$ERRFILE
-				__ERR=$?
-				if [ $__ERR -eq 0 ]; then
-					__DATA4=$(awk '
-						/inet addr:/ {	# Filter IPv4
-						#   inet addr:192.168.1.1  Bcast:192.168.1.255  Mask:255.255.255.0
-						$1="";		# remove inet
-						$3="";		# remove Bcast: ...
-						$4="";		# remove Mask: ...
-						FS=":";		# separator ":"
-						$0=$0;		# reread to activate separator
-						$1="";		# remove addr
-						FS=" ";		# set back separator to default " "
-						$0=$0;		# reread to activate separator (remove whitespaces)
-						print $1;	# print IPv4 addr
-						}' $DATFILE
-					)
-					__DATA6=$(awk '
-						/inet6/ && /: [0-9a-eA-E]/ {	# Filter IPv6 exclude fxxx
-						#   inet6 addr: 2001:db8::xxxx:xxxx/32 Scope:Global
-						FS="/";		# separator "/"
-						$0=$0;		# reread to activate separator
-						$2="";		# remove everything behind "/"
-						FS=" ";		# set back separator to default " "
-						$0=$0;		# reread to activate separator
-						print $3;	# print IPv6 addr
-						}' $DATFILE
-					)
-				else
-					write_log 3 "ifconfig Error: '$__ERR'"
-					write_log 7 "$(cat $ERRFILE)"		# report error
-				fi
-			fi
-			[ $use_ipv6 -eq 0 ] && __DATA="$__DATA4" || __DATA="$__DATA6"
-			[ -n "$__DATA" ] && write_log 7 "Current IP '$__DATA' detected on interface '$ip_interface'"
-		elif [ -n "$ip_script" -a "$ip_source" = "script" ]; then
-			write_log 7 "#> $ip_script >$DATFILE 2>$ERRFILE"
-			eval $ip_script >$DATFILE 2>$ERRFILE
-			__ERR=$?
-			if [ $__ERR -eq 0 ]; then
-				__DATA=$(cat $DATFILE)
-				[ -n "$__DATA" ] && write_log 7 "Current IP '$__DATA' detected via script '$ip_script'"
-			else
-				write_log 3 "$ip_script Error: '$__ERR'"
-				write_log 7 "$(cat $ERRFILE)"		# report error
-			fi
-		elif [ -n "$ip_url" -a "$ip_source" = "web" ]; then
+	while :; do
+		case "$ip_source" in
+		"network")
+			network_flush_cache
+			[ -z "$ip_network" ] && { write_log 12 "get_current_ip: 'ip_network' not set for source 'network'"; return 2; }
+			[ "$use_ipv6" -eq 0 ] && network_get_ipaddr  data "$ip_network" 2>/dev/null
+			[ "$use_ipv6" -eq 1 ] && network_get_ipaddr6 data "$ip_network" 2>/dev/null
+			[ -n "$data" ] && write_log 7 "Current IP '$data' detected on network '$ip_network'"
+			;;
+		"interface")
+			[ -z "$ip_interface" ] && { write_log 12 "get_current_ip: 'ip_interface' not set for source 'interface'"; return 2; }
+			# Test for alias interfaces e.g. "@wan6"; get the effective layer 3 interface
+			[ "${ip_interface#*'@'}" != "$ip_interface" ] && network_get_device ip_interface "$ip_interface"
+			write_log 7 "#> ip -o -br -js addr show dev '$ip_interface' scope global | $jsonfilter -e '@[0].addr_info[0].local'"
+			[ "$use_ipv6" -eq 0 ] && data=$(ip -o -4 -br -js addr show dev "$ip_interface" scope global | "$jsonfilter" -e '@[0].addr_info[0].local')
+			[ "$use_ipv6" -eq 1 ] && data=$(ip -o -6 -br -js addr show dev "$ip_interface" scope global | "$jsonfilter" -e '@[0].addr_info[0].local')
+			[ -n "$data" ] && write_log 7 "Current IP '$data' detected on interface '$ip_interface'"
+			;;
+		"script")
+			[ -z "$ip_script" ] && { write_log 12 "get_current_ip: 'ip_script' not set for source 'script'"; return 2; }
+			write_log 7 "#> $ip_script >'$DATFILE' 2>'$ERRFILE'"
+			data=$(eval "$ip_script" 2>"$ERRFILE")
+			[ -n "$data" ] && write_log 7 "Current IP '$data' detected via script '$ip_script'"
+			;;
+		"web")
+			[ -z "$ip_url" ] && { write_log 12 "get_current_ip: 'ip_url' not set for source 'web'"; return 2; }
 			do_transfer "$ip_url"
-			# use correct regular expression
-			[ $use_ipv6 -eq 0 ] \
-				&& __DATA=$(grep -m 1 -o "$IPV4_REGEX" $DATFILE) \
-				|| __DATA=$(grep -m 1 -o "$IPV6_REGEX" $DATFILE)
-			[ -n "$__DATA" ] && write_log 7 "Current IP '$__DATA' detected on web at '$ip_url'"
-		else
-			write_log 12 "Error in 'get_current_ip()' - unhandled ip_source '$ip_source'"
-		fi
-		# valid data found return here
-		[ -n "$__DATA" ] && {
-			eval "$1=\"$__DATA\""
+			# bug: do_transfer does not output to DATFILE
+			read -r data < "$DATFILE"
+			[ -n "$data" ] && write_log 7 "Current IP '$data' detected via web at '$ip_url'"
+			;;
+		*)
+			write_log 12 "get_current_ip: Unsupported source '$ip_source'"
+			return 3
+			;;
+		esac
+
+		# Check if valid IP was found
+		if [ -n "$data" ]; then
+			eval "$1=\"$data\""
+			write_log 7 "Detected IP: $data"
 			return 0
-		}
+		fi
 
 		[ -n "$LUCI_HELPER" ] && return 1	# no retry if called by LuCI helper script
+		[ $VERBOSE -gt 1 ] && write_log 4 "Verbose Mode: $VERBOSE - NO retry on error" && return 1;
 
-		write_log 7 "Data detected:"
-		write_log 7 "$(cat $DATFILE)"
+		# Retry logic
+		retries=$((retries + 1))
+		if [ "$retry_max_count" -gt 0 ] && [ "$retries" -ge "$retry_max_count" ]; then
+			write_log 14 "get_current_ip: Failed to detect IP after $retry_max_count retries"
+			return 4
+		fi
 
-		[ $VERBOSE -gt 1 ] && {
-			# VERBOSE > 1 then NO retry
-			write_log 4 "Get current IP via '$ip_source' failed - Verbose Mode: $VERBOSE - NO retry on error"
-			return 1
-		}
-
-		__CNT=$(( $__CNT + 1 ))	# increment error counter
-		# if error count > retry_max_count leave here
-		[ $retry_max_count -gt 0 -a $__CNT -gt $retry_max_count ] && \
-			write_log 14 "Get current IP via '$ip_source' failed after $retry_max_count retries"
-		write_log 4 "Get current IP via '$ip_source' failed - retry $__CNT/$retry_max_count in $RETRY_SECONDS seconds"
-		sleep $RETRY_SECONDS &
+		write_log 4 "Retrying IP detection ($retries/$retry_max_count) in $RETRY_SECONDS seconds..."
+		sleep "$RETRY_SECONDS" &
 		PID_SLEEP=$!
 		wait $PID_SLEEP	# enable trap-handler
 		PID_SLEEP=0
 	done
-	# we should never come here there must be a programming error
 	write_log 12 "Error in 'get_current_ip()' - program coding error"
 }
 
