@@ -104,6 +104,8 @@ endif
 
 TARGET_LDFLAGS += -L$(STAGING_DIR)/usr/lib/libevent
 
+HOST_LDFLAGS += -L$(STAGING_DIR)/usr/lib/libevent -L$(STAGING_DIR)/usr/lib/libevent2-core
+
 CONFIGURE_ARGS += \
 	--disable-caps \
 	--disable-gss \
