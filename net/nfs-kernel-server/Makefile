@@ -103,7 +103,7 @@ ifneq ($(CONFIG_USE_MUSL),)
 endif
 
 TARGET_LDFLAGS += -L$(STAGING_DIR)/usr/lib/libevent
-
+HOST_CFLAGS+="-I$(STAGING_DIR)/usr/lib/libevent/include"
 HOST_LDFLAGS += -L$(STAGING_DIR)/usr/lib/libevent -L$(STAGING_DIR)/usr/lib/libevent2-core
 
 CONFIGURE_ARGS += \
@@ -155,6 +155,7 @@ HOST_CONFIGURE_VARS += \
 	ac_cv_lib_nfsidmap_nfs4_init_name_mapping=yes \
 	ac_cv_lib_blkid_blkid_get_library_version=yes \
 	ac_cv_header_event_h=yes \
+	ac_cv_header_event2_event_h=yes \
 	ac_cv_header_nfsidmap_h=yes \
 	ac_cv_header_blkid_blkid_h=yes \
 	ac_cv_lib_resolv___res_querydomain=yes \
