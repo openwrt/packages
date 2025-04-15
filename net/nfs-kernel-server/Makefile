@@ -32,7 +32,7 @@ define Package/nfs-kernel-server/Default
 	SECTION:=net
 	CATEGORY:=Network
 	SUBMENU:=Filesystem
-	DEPENDS:=+libblkid +libuuid +libtirpc +lsqlite3 +libxml2 +libnl
+	DEPENDS:=+libblkid +libuuid +libtirpc +lsqlite3 +libxml2 +libnl +libevent2
 	URL:=http://nfs.sourceforge.net/
 endef
 
