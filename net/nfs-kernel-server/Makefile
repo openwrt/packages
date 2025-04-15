@@ -151,6 +151,7 @@ HOST_CONFIGURE_ARGS += \
 
 HOST_CONFIGURE_VARS += \
 	ac_cv_lib_event_event_dispatch=yes \
+	ac_cv_lib_event_core_event_base_dispatch=yes \
 	ac_cv_lib_nfsidmap_nfs4_init_name_mapping=yes \
 	ac_cv_lib_blkid_blkid_get_library_version=yes \
 	ac_cv_header_event_h=yes \
