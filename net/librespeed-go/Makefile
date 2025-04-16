@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=librespeed-go
 PKG_VERSION:=1.1.5
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/librespeed/speedtest-go/tar.gz/v$(PKG_VERSION)?
@@ -47,6 +47,7 @@ endef
 
 define Package/librespeed-go/conffiles
 /etc/librespeed-go
+/etc/config/librespeed-go
 endef
 
 define Build/Prepare
