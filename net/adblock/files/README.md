@@ -14,14 +14,14 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | :------------------ | :-----: | :--- | :--------------- | :-------------------------------------------------------------------------------- |
 | 1Hosts              |         | VAR  | compilation      | [Link](https://github.com/badmojr/1Hosts)                                         |
 | adaway              |         | S    | mobile           | [Link](https://github.com/AdAway/adaway.github.io)                                |
-| adguard             | x       | L    | general          | [Link](https://adguard.com)                                                       |
-| adguard_tracking    |         | L    | tracking         | [Link](https://github.com/AdguardTeam/cname-trackers)                             |
+| adguard             |    x    | L    | general          | [Link](https://adguard.com)                                                       |
+| adguard_tracking    |    x    | L    | tracking         | [Link](https://github.com/AdguardTeam/cname-trackers)                             |
 | android_tracking    |         | S    | tracking         | [Link](https://github.com/Perflyst/PiHoleBlocklist)                               |
 | andryou             |         | L    | compilation      | [Link](https://gitlab.com/andryou/block/-/blob/master/readme.md)                  |
 | anti_ad             |         | L    | compilation      | [Link](https://github.com/privacy-protection-tools/anti-AD/blob/master/README.md) |
 | anudeep             |         | M    | compilation      | [Link](https://github.com/anudeepND/blacklist)                                    |
 | bitcoin             |         | S    | mining           | [Link](https://github.com/hoshsadiq/adblock-nocoin-list)                          |
-| certpl              |         | L    | phishing         | [Link](https://cert.pl/en/warning-list/)                                          |
+| certpl              |    x    | L    | phishing         | [Link](https://cert.pl/en/warning-list/)                                          |
 | cpbl                |         | XL   | compilation      | [Link](https://github.com/bongochong/CombinedPrivacyBlockLists)                   |
 | disconnect          |         | S    | general          | [Link](https://disconnect.me)                                                     |
 | doh_blocklist       |         | S    | doh_server       | [Link](https://github.com/dibdot/DoH-IP-blocklists)                               |
@@ -95,7 +95,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * Additional local blocklist for manual overrides, located in '/etc/adblock/adblock.blocklist'
 * Quality checks during blocklist update to ensure a reliable DNS backend service
 * Minimal status & error logging to syslog, enable debug logging to receive more output
-* Procd based init system support ('start', 'stop', 'restart', 'reload', 'enable', 'disable', 'running', 'status', 'suspend',  'resume', 'query', 'report')
+* Procd based init system support ('start', 'stop', 'restart', 'reload', 'enable', 'disable', 'running', 'status', 'suspend', 'resume', 'query', 'report')
 * Auto-Startup via procd network interface trigger or via classic time based startup
 * Suspend & Resume adblock temporarily without blocklist re-processing
 * Provides comprehensive runtime information
@@ -110,26 +110,27 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 
 <a id="prerequisites"></a>
 ## Prerequisites
-* [OpenWrt](https://openwrt.org), tested with the stable release series and with the latest snapshot releases.  
-  <b>Please note:</b> Devices with less than 128 MByte RAM are _not_ supported!  
-  <b>Please note:</b> For performance reasons, adblock depends on gnu awk (gawk) by default.  
-  If you insist to use the slow busybox awk implementation, remove the gawk package afterwards (_opkg remove gawk --force-depends_) or install adblock without any dependency checks/installation (_opkg install adblock --nodeps_). Both installation variants are officially unsupported.  
-* A usual setup with an enabled DNS backend at minimum - dumb AP modes without a working DNS backend are _not_ supported
+* **[OpenWrt](https://openwrt.org)**, latest stable release 24.x or a development snapshot
+* A usual setup with a working DNS backend
 * A download utility with SSL support: 'wget', 'uclient-fetch' with one of the 'libustream-*' ssl libraries or 'curl' is required
 * A certificate store such as 'ca-bundle' or 'ca-certificates', as adblock checks the validity of the SSL certificates of all download sites by default
-* Optional E-Mail notification support: for E-Mail notifications you need to install the additional 'msmtp' package
-* Optional DNS Query Report support: for DNS reporting you need to install the additional package 'tcpdump-mini' or 'tcpdump'
+* For E-Mail notifications you need to install and setup the additional 'msmtp' package
+* For DNS reporting you need to install the additional package 'tcpdump-mini' or 'tcpdump'
+
+**Please note:**
+* Devices with less than 128MB of RAM are **_not_** supported
+* For performance reasons, adblock depends on gnu sort and gawk
 
 <a id="installation-and-usage"></a>
 ## Installation & Usage
-* Update your local opkg repository (_opkg update_)
-* Install 'adblock' (_opkg install adblock_). The adblock service is enabled by default
-* Install the LuCI companion package 'luci-app-adblock' (_opkg install luci-app-adblock_)
+* Update your local opkg/apk repository
+* Install the LuCI companion package 'luci-app-adblock' which also installs the main 'adblock' package as a dependency
 * It's strongly recommended to use the LuCI frontend to easily configure all aspects of adblock, the application is located in LuCI under the 'Services' menu
+* It's also recommended to configure at least a 'Startup Trigger Interface' to depend on WAN ifup events during boot or restart of your router
 
 <a id="adblock-cli-interface"></a>
 ## Adblock CLI interface
-* All important adblock functions are accessible via CLI as well.
+* The most important adblock functions are accessible via CLI as well.
 
 ```
 ~# /etc/init.d/adblock 
@@ -162,14 +163,14 @@ Available commands:
 | adb_enabled        | 1, enabled                         | set to 0 to disable the adblock service                                                        |
 | adb_feedfile       | /etc/adblock/adblock.feeds         | full path to the used adblock feed file                                                        |
 | adb_dns            | -, auto-detected                   | 'dnsmasq', 'unbound', 'named', 'kresd', 'smartdns' or 'raw'                                    |
-| adb_fetchutil      | -, auto-detected                   | 'uclient-fetch', 'wget' or 'curl'                                                              |
+| adb_fetchcmd       | -, auto-detected                   | 'uclient-fetch', 'wget' or 'curl'                                                              |
 | adb_fetchparm      | -, auto-detected                   | manually override the config options for the selected download utility                         |
 | adb_fetchinsecure  | 0, disabled                        | don't check SSL server certificates during download                                            |
 | adb_trigger        | -, not set                         | trigger network interface or 'not set' to use a time-based startup                             |
 | adb_triggerdelay   | 2                                  | additional trigger delay in seconds before adblock processing begins                           |
 | adb_debug          | 0, disabled                        | set to 1 to enable the debug output                                                            |
 | adb_nice           | 0, standard prio.                  | valid nice level range 0-19 of the adblock processes                                           |
-| adb_forcedns       | 0, disabled                        | set to 1 to force DNS requests to the local resolver                                           |
+| adb_dnsforce       | 0, disabled                        | set to 1 to force DNS requests to the local resolver                                           |
 | adb_dnsdir         | -, auto-detected                   | path for the generated blocklist file 'adb_list.overall'                                       |
 | adb_dnstimeout     | 10                                 | timeout in seconds to wait for a successful DNS backend restart                                |
 | adb_dnsinstance    | 0, first instance                  | set to the relevant dns backend instance used by adblock (dnsmasq only)                        |
@@ -198,6 +199,7 @@ Available commands:
 
 <a id="examples"></a>
 ## Examples
+
 **Change the DNS backend to 'unbound':**
 No further configuration is needed, adblock deposits the final blocklist 'adb_list.overall' in '/var/lib/unbound' by default.
 To preserve the DNS cache after adblock processing please install the additional package 'unbound-control'.
@@ -221,8 +223,7 @@ and at the end of the file add:
 ```
 
 **Change the DNS backend to 'kresd':**
-Adblock deposits the final blocklist 'adb_list.overall' in '/etc/kresd', no further configuration needed.
-<b>Please note:</b> The knot-resolver (kresd) is only available on Turris devices and does not support the SafeSearch functionality yet.
+Adblock deposits the final blocklist 'adb_list.overall' in '/tmp/kresd', no further configuration needed.
 
 **Change the DNS backend to 'smartdns':**
 No further configuration is needed, adblock deposits the final blocklist 'adb_list.overall' in '/tmp/smartdns' by default.
@@ -258,6 +259,14 @@ user            dev.adblock
 password        xxx
 </code></pre>
 Finally enable E-Mail support and add a valid E-Mail receiver address in LuCI.
+
+**Send status E-Mails and update the adblock lists via cron job**  
+For a regular, automatic status mailing and update of the used lists on a daily basis set up a cron job, e.g.
+
+```
+55 03 * * * /etc/init.d/adblock report mail
+00 04 * * * /etc/init.d/adblock reload
+```
 
 **Service status output:**
 In LuCI you'll see the realtime status in the 'Runtime' section on the overview page.
