@@ -8,10 +8,6 @@
 # set (s)hellcheck exceptions
 # shellcheck disable=all
 
-LC_ALL=C
-PATH="/usr/sbin:/usr/bin:/sbin:/bin"
-
-[ -r "/lib/functions.sh" ] && . "/lib/functions.sh"
 [ -r "/usr/bin/adblock.sh" ] && . "/usr/bin/adblock.sh" "mail"
 
 adb_debug="$(uci_get adblock global adb_debug "0")"
@@ -27,7 +23,7 @@ adb_mailhead="From: ${adb_mailsender}\nTo: ${adb_mailreceiver}\nSubject: ${adb_m
 
 # info preparation
 #
-sys_info="$("${adb_stringscmd}" /etc/banner 2>/dev/null; "${adb_ubuscmd}" call system board | "${adb_awkcmd}" 'BEGIN{FS="[{}\"]"}{if($2=="kernel"||$2=="hostname"||$2=="system"||$2=="model"||$2=="description")printf "  + %-12s: %s\n",$2,$4}' 2>/dev/null)"
+sys_info="$("${adb_catcmd}" /etc/banner 2>/dev/null; "${adb_ubuscmd}" call system board | "${adb_awkcmd}" 'BEGIN{FS="[{}\"]"}{if($2=="kernel"||$2=="hostname"||$2=="system"||$2=="model"||$2=="description")printf "  + %-12s: %s\n",$2,$4}' 2>/dev/null)"
 adb_info="$(/etc/init.d/adblock status 2>/dev/null)"
 rep_info="${1}"
 if [ -x "${adb_logreadcmd}" ]; then
