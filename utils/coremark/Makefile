@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=coremark
 PKG_SOURCE_DATE:=2023-01-25
 PKG_SOURCE_VERSION:=d5fad6bd094899101a4e5fd53af7298160ced6ab
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/eembc/coremark/tar.gz/$(PKG_SOURCE_VERSION)?
@@ -70,8 +70,8 @@ endif
 
 define Build/Compile
 	$(SED) 's|EXE = .exe|EXE =|' $(PKG_BUILD_DIR)/posix/core_portme.mak
-	mkdir $(PKG_BUILD_DIR)/$(ARCH)
-	$(CP) -r $(PKG_BUILD_DIR)/linux/* $(PKG_BUILD_DIR)/$(ARCH)
+	mkdir -p $(PKG_BUILD_DIR)/$(ARCH)
+	$(CP) $(PKG_BUILD_DIR)/linux/* $(PKG_BUILD_DIR)/$(ARCH)/
 	$(MAKE) -C $(PKG_BUILD_DIR) PORT_DIR=$(ARCH) $(MAKE_FLAGS) \
 		PORT_CFLAGS="$(TARGET_CFLAGS)" XCFLAGS="$(EXTRA_CFLAGS)" compile
 endef
