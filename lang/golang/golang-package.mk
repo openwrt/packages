@@ -119,6 +119,20 @@ include $(GO_INCLUDE_DIR)/golang-values.mk
 #   '$(call GoPackage/Package/Install/Bin,dest_dir)'.
 #
 #   e.g. GO_PKG_INSTALL_BIN_PATH:=/sbin
+#
+#
+# GO_BIN_VERSION - Go version string in the format of MAJOR.MINOR, default empty
+#
+#   Go version that will be used to build the project. The actual version is
+#   looked up based on GO_BIN_VERSION and current platform from GO_BIN_HASHES
+#   defined in golang-values.mk and stored in GO_BIN_FULL_VERSION. The binaries
+#   for that version are fetched by GoPackage/GoBin/Install, installed into
+#   staging_dir/hostpkg/lib/gobin-$GO_BIN_VERSION and symlinked into
+#   staging_dir/hostpkg/bin/go$GO_BIN_VERSION.
+#
+#   golang/host must be unset from PKG_BUILD_DEPENDS when GO_BIN_VERSION is used
+#
+#   e.g. GO_BIN_VERSION:=1.24
 
 # Credit for this package build process (GoPackage/Build/Configure and
 # GoPackage/Build/Compile) belong to Debian's dh-golang completely.
@@ -181,6 +195,7 @@ endef
 
 GO_PKG_BUILD_CONFIG_VARS= \
 	GO_PKG="$(strip $(GO_PKG))" \
+	GO_BIN_VERSION="$(strip $(GO_BIN_VERSION))" \
 	GO_INSTALL_EXTRA="$(strip $(GO_PKG_INSTALL_EXTRA))" \
 	GO_INSTALL_ALL="$(strip $(GO_PKG_INSTALL_ALL))" \
 	GO_SOURCE_ONLY="$(strip $(GO_PKG_SOURCE_ONLY))" \
@@ -252,6 +267,71 @@ GO_PKG_INSTALL_ARGS= \
 	$(if $(strip $(GO_PKG_CUSTOM_LDFLAGS)),-ldflags "$(GO_PKG_CUSTOM_LDFLAGS) $(GO_PKG_DEFAULT_LDFLAGS)") \
 	$(if $(strip $(GO_PKG_TAGS)),-tags "$(GO_PKG_TAGS)")
 
+# $(1) go MAJOR.MINOR version prefix
+# $(2) OS-ARCH
+define GoPackage/GoBin/GetVersionHash
+$(strip \
+	$(lastword \
+		$(foreach item,$(GO_BIN_HASHES), \
+			$(if $(shell [[ $(item) =~ $(subst .,\.,$(1))\.[0-9]+\.$(2)= ]] && echo $(item)), \
+				$(item) \
+			) \
+		) \
+	) \
+)
+endef
+
+# $(1) go MAJOR.MINOR version prefix
+# $(2) OS-ARCH
+define GoPackage/GoBin/GetVersion
+$(strip \
+	$(subst .$(2),, \
+		$(firstword \
+			$(subst =, ,$(call GoPackage/GoBin/GetVersionHash,$(1),$(2))) \
+		) \
+	) \
+)
+endef
+
+# $(1) go MAJOR.MINOR version prefix
+# $(2) OS-ARCH
+define GoPackage/GoBin/GetHash
+$(strip \
+	$(lastword \
+		$(subst =, , \
+			$(call GoPackage/GoBin/GetVersionHash,$(1),$(2)) \
+		) \
+	) \
+)
+endef
+
+# $(1) go MAJOR.MINOR version prefix
+# $(2) go MAJOR.MINOR.PATCH version
+define GoPackage/GoBin/IsCurrent
+$(shell "$(STAGING_DIR_HOSTPKG)/bin/go$(1)" version 2>/dev/null | grep -o "go$(2)")
+endef
+
+define Download/gobin
+	URL:=$(GO_BIN_SOURCE_URL)
+	FILE:=$(GO_BIN_SOURCE)
+	HASH:=$(GO_BIN_HASH)
+endef
+
+define GoPackage/GoBin/Install
+	$(eval $(call Download,gobin))
+
+	rm -f $(STAGING_DIR_HOSTPKG)/bin/go$(GO_BIN_VERSION)
+	rm -f $(STAGING_DIR_HOSTPKG)/bin/gofmt$(GO_BIN_VERSION)
+	rm -rf $(GO_BIN_LIB_DIR)
+
+	$(INSTALL_DIR) $(GO_BIN_LIB_DIR)
+	$(TAR) xvf $(DL_DIR)/$(GO_BIN_SOURCE) -C $(GO_BIN_LIB_DIR) --strip-components=1
+
+	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/bin
+	$(LN) ../lib/gobin-$(GO_BIN_VERSION)/bin/go $(STAGING_DIR_HOSTPKG)/bin/go$(GO_BIN_VERSION)
+	$(LN) ../lib/gobin-$(GO_BIN_VERSION)/bin/gofmt $(STAGING_DIR_HOSTPKG)/bin/gofmt$(GO_BIN_VERSION)
+endef
+
 define GoPackage/Build/Configure
 	$(GO_GENERAL_BUILD_CONFIG_VARS) \
 	$(GO_PKG_BUILD_CONFIG_VARS) \
@@ -295,6 +375,22 @@ ifneq ($(strip $(GO_PKG)),)
     PKG_CONFIG_DEPENDS+=CONFIG_GOLANG_SPECTRE
   endif
 
+  ifneq ($(GO_BIN_VERSION),)
+    GO_BIN_FULL_VERSION=$(call GoPackage/GoBin/GetVersion,$(GO_BIN_VERSION),$(GO_BIN_OS_ARCH))
+    ifeq ($(GO_BIN_FULL_VERSION),)
+      $(error $(PKG_NAME) requested go $(GO_BIN_VERSION), but no matching version found.)
+    endif
+
+    GO_BIN_HASH=$(call GoPackage/GoBin/GetHash,$(GO_BIN_VERSION),$(GO_BIN_OS_ARCH))
+    GO_BIN_SOURCE=go$(GO_BIN_FULL_VERSION).$(GO_BIN_OS_ARCH).tar.gz
+    GO_BIN_LIB_DIR=$(STAGING_DIR_HOSTPKG)/lib/gobin-$(GO_BIN_VERSION)
+
+    $(info $(PKG_NAME) requested go $(GO_BIN_VERSION), matched to go $(GO_BIN_FULL_VERSION).)
+
+    ifeq ($(call GoPackage/GoBin/IsCurrent,$(GO_BIN_VERSION),$(GO_BIN_FULL_VERSION)),)
+      Hooks/Configure/Pre+=GoPackage/GoBin/Install
+    endif
+  endif
   Build/Configure=$(call GoPackage/Build/Configure)
   Build/Compile=$(call GoPackage/Build/Compile)
   Hooks/Compile/Post+=Go/CacheCleanup
