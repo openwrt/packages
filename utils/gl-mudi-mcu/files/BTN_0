@@ -1,0 +1,15 @@
+#!/bin/sh
+
+/etc/init.d/gl-mudi-mcu running || exit 0
+
+if [ "${ACTION}" = "pressed" ]; then
+    /usr/bin/gl-mudi-mcu "Turn on Wi-Fi"
+elif [ "${ACTION}" = "released" ]; then
+    /usr/bin/gl-mudi-mcu "Turn off Wi-Fi"
+fi
+
+TYPE="switch"
+
+. /etc/rc.button/rfkill
+
+return 0
