@@ -20,7 +20,7 @@ define Package/realtek-poe
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Realtek PoE Switch Port daemon
-  DEPENDS:=@TARGET_realtek +libubox +libubus +libuci
+  DEPENDS:=+libubox +libubus +libuci
 endef
 
 define Package/realtek-poe/install
