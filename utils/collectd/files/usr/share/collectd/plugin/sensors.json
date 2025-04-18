@@ -1,6 +1,7 @@
 {
 	"bool": [
-		"IgnoreSelected"
+		"IgnoreSelected",
+		"UseLabels"
 	],
 	"list": [
 		"Sensor"
