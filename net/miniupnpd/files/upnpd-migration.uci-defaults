@@ -1,0 +1,111 @@
+#!/bin/sh
+
+# Remove clean_ruleset_interval and clean_ruleset_threshold as not standard/working
+uci -q batch 2>/dev/null <<-EOF
+	delete upnpd.config.clean_ruleset_interval
+	delete upnpd.config.clean_ruleset_threshold
+	commit upnpd
+EOF
+
+# Rename enable_nat_pmp to enable_pcp_pmp as upstream
+if uci get upnpd.config.enable_natpmp 2>/dev/null; then
+	enable_pcp_pmp="$(uci get upnpd.config.enable_natpmp 2>/dev/null || echo 1)"
+	uci -q batch 2>/dev/null <<-EOF
+		set upnpd.config.enable_pcp_pmp="$enable_pcp_pmp"
+		delete upnpd.config.enable_natpmp
+		commit upnpd
+	EOF
+fi
+
+# Convert download/upload to kbit/s and rename to *_kbps and set default to interface link speed
+if uci get upnpd.config.download 2>/dev/null || uci get upnpd.config.upload 2>/dev/null; then
+	download="$(uci get upnpd.config.download 2>/dev/null || echo 1024)"
+	if [ "$download" != "1024" ]; then
+		download_kbps="$((download * 8 * 1000 / 1024))"
+		uci -q set upnpd.config.download_kbps="$download_kbps" 2>/dev/null
+	fi
+	upload="$(uci get upnpd.config.upload 2>/dev/null || echo 512)"
+	if [ "$upload" != "512" ]; then
+		upload_kbps="$((upload * 8 * 1000 / 1024))"
+		uci -q set upnpd.config.upload_kbps="$upload_kbps" 2>/dev/null
+	fi
+	uci -q batch 2>/dev/null <<-EOF
+		delete upnpd.config.download
+		delete upnpd.config.upload
+		commit upnpd
+	EOF
+fi
+
+# Convert igdv1 (boolean) to upnp_igd_compat (string) with value igdv1
+if uci get upnpd.config.igdv1 2>/dev/null; then
+	if [ "$(uci get upnpd.config.igdv1 2>/dev/null || echo 1)" = "1" ]; then
+		upnp_igd_compat=igdv1
+	else
+		upnp_igd_compat=igdv2
+	fi
+	uci -q batch 2>/dev/null <<-EOF
+		set upnpd.config.upnp_igd_compat="$upnp_igd_compat"
+		delete upnpd.config.igdv1
+		commit upnpd
+	EOF
+fi
+
+# Rename and invert secure_mode to allow_third_party_mapping
+if uci get upnpd.config.secure_mode 2>/dev/null; then
+	if [ "$(uci get upnpd.config.secure_mode 2>/dev/null || echo 1)" = "0" ]; then
+		allow_third_party_mapping=1
+	else
+		allow_third_party_mapping=0
+	fi
+	uci -q batch 2>/dev/null <<-EOF
+		set upnpd.config.allow_third_party_mapping="$allow_third_party_mapping"
+		delete upnpd.config.secure_mode
+		commit upnpd
+	EOF
+fi
+
+# Remove SOAP/HTTP port if UCI default
+if [ "$(uci get upnpd.config.port 2>/dev/null)" = "5000" ]; then
+	uci -q batch 2>/dev/null <<-EOF
+		delete upnpd.config.port
+		commit upnpd
+	EOF
+fi
+
+# Remove STUN port if UCI default
+if [ "$(uci get upnpd.config.stun_port 2>/dev/null)" = "3478" ]; then
+	uci -q batch 2>/dev/null <<-EOF
+		delete upnpd.config.stun_port
+		commit upnpd
+	EOF
+fi
+
+# Update access control list defaults with new deny by default
+if [ "$(uci get upnpd.@perm_rule[0].action)" = "allow" ] &&
+[ "$(uci get upnpd.@perm_rule[0].ext_ports)" = "1024-65535" ] &&
+[ "$(uci get upnpd.@perm_rule[0].int_addr)" = "0.0.0.0/0" ] &&
+[ "$(uci get upnpd.@perm_rule[0].int_ports)" = "1024-65535" ] &&
+[ "$(uci get upnpd.@perm_rule[1].action)" = "deny" ] &&
+[ "$(uci get upnpd.@perm_rule[1].ext_ports)" = "0-65535" ] &&
+[ "$(uci get upnpd.@perm_rule[1].int_addr)" = "0.0.0.0/0" ] &&
+[ "$(uci get upnpd.@perm_rule[1].int_ports)" = "0-65535" ] &&
+[ "$(uci get upnpd.@perm_rule[2] 2>/dev/null)" != "perm_rule" ] ||
+[ "$(uci get upnpd.@perm_rule[0] 2>/dev/null)" != "perm_rule" ]; then
+	uci -q batch 2>/dev/null <<-EOF
+		set upnpd.@perm_rule[0]=perm_rule
+		set upnpd.@perm_rule[0].action='allow'
+		set upnpd.@perm_rule[0].ext_ports='1024-65535'
+		set upnpd.@perm_rule[0].int_addr='0.0.0.0/0'
+		set upnpd.@perm_rule[0].int_ports='1024-65535'
+		set upnpd.@perm_rule[0].comment='Allow high ports'
+		set upnpd.@perm_rule[1]=perm_rule
+		set upnpd.@perm_rule[1].action='deny'
+		set upnpd.@perm_rule[1].ext_ports='1-1023'
+		set upnpd.@perm_rule[1].int_addr='0.0.0.0/0'
+		set upnpd.@perm_rule[1].int_ports='1-1023'
+		set upnpd.@perm_rule[1].comment='Low ports'
+		commit upnpd
+	EOF
+fi
+
+exit 0
