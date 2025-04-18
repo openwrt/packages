@@ -43,7 +43,7 @@
  
 --- a/src/lundump.h
 +++ b/src/lundump.h
-@@ -30,7 +30,7 @@
+@@ -29,7 +29,7 @@
  LUAI_FUNC LClosure* luaU_undump (lua_State* L, ZIO* Z, const char* name);
  
  /* dump one chunk; from ldump.c */
