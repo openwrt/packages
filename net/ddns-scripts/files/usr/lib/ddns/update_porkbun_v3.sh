@@ -59,9 +59,9 @@ function api_call() {
 	url="$__API/$1"
 	write_log 7 "API endpoint URL: $url"
 	write_log 7 "API request JSON payload: $2"
-	response=$($CURL --data "$2" "$url")
-	write_log 7 "API response JSON payload: $response"
-	echo "$response"
+	response="$("$CURL" -s -X POST "$url" -H "Content-Type: application/json" --data "$2" -o "$DATFILE" 2>"$ERRFILE")"
+	write_log 7 "API response JSON payload: $(cat "$DATFILE")"
+	echo "$(cat "$DATFILE")"
 }
 
 # Check Porkbun API response status
