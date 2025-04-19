@@ -1,0 +1,91 @@
+##############################################################################
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 2 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# Copyright (C) 2025 Dan Srebnick (K2IE)
+#
+##############################################################################
+
+# Check to see if network.amprlan.ipaddr and network.amprwan.ipaddr exist.
+# If so, no need to apply defaults.
+
+if [ -z $(uci -q get network.amprlan.ipaddr) ] & \
+   [ -z $(uci -q get network.amprwan.ipaddr) ]; then
+
+echo Installing default routing rules...
+r=$(uci add network rule)
+uci set network.$r.dest='44.0.0.0/9'
+uci set network.$r.lookup='44'
+uci set network.$r.priority='44'
+r=$(uci add network rule)
+uci set network.$r.dest='44.128.0.0/10'
+uci set network.$r.lookup='44'
+uci set network.$r.priority='44'
+r=$(uci add network rule)
+uci set network.$r.src='44.127.254.0/24'
+uci set network.$r.lookup='44'
+uci set network.$r.priority='45'
+
+echo Installing default network interfaces...
+uci set network.amprlan=interface
+uci set network.amprlan.proto='static'
+uci set network.amprlan.device='br-lan'
+uci set network.amprlan.force_link='0'
+uci set network.amprlan.ipaddr='44.127.254.254'
+uci set network.amprlan.netmask='255.255.255.0'
+uci set network.amprlan.defaultroute='0'
+uci set network.amprlan.ip4table='44'
+uci set network.amprlan.delegate='0'
+uci set network.amprwan=interface
+uci set network.amprwan.device='tunl0'
+uci set network.amprwan.proto='static'
+uci set network.amprwan.ipaddr='44.127.254.254'
+uci set network.amprwan.netmask='255.255.255.0'
+uci commit network
+
+echo Installing default firewall zones...
+z=$(uci add firewall zone)
+uci set firewall.$z.name='amprlan'
+uci set firewall.$z.network='amprlan'
+z=$(uci add firewall zone)
+uci set firewall.$z.name='amprwan'
+uci set firewall.$z.network='amprwan'
+z=$(uci add firewall forwarding)
+uci set firewall.$z.src='amprlan'
+uci set firewall.$z.dest='amprwan'
+uci commit firewall
+
+echo Installing default firewall rules...
+f=$(uci add firewall rule)
+uci set firewall.$f.name='ipip'
+uci set firewall.$f.proto='ipencap'
+uci set firewall.$f.src='wan'
+uci set firewall.$f.target='ACCEPT'
+uci set firewall.$f.family='ipv4'
+uci set firewall.$f.icmp_type='echo-request'
+f=$(uci add firewall rule)
+uci set firewall.$f.name='Net 44 ICMP Echo Request'
+uci set firewall.$f.proto='icmp'
+uci set firewall.$f.src='amprwan'
+uci set firewall.$f.dest='amprlan'
+uci set firewall.$f.target='ACCEPT'
+uci set firewall.$f.family='ipv4'
+uci set firewall.$f.icmp_type='echo-request'
+f=$(uci add firewall rule)
+uci set firewall.$f.name='Net 44 Router ICMP'
+uci set firewall.$f.proto='icmp'
+uci set firewall.$f.src='amprwan'
+uci set firewall.$f.target='ACCEPT'
+uci set firewall.$f.family='ipv4'
+uci set firewall.$f.icmp_type='echo-request'
+uci commit firewall
+
+fi
+exit
