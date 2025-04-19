@@ -119,6 +119,16 @@ include $(GO_INCLUDE_DIR)/golang-values.mk
 #   '$(call GoPackage/Package/Install/Bin,dest_dir)'.
 #
 #   e.g. GO_PKG_INSTALL_BIN_PATH:=/sbin
+#
+#
+# GOTOOLCHAIN - use a specific go toolchain version, default local
+#
+#   Force the use of a specific go toolchain version. Setting this to
+#   version+auto means to use the specified version by default but allow
+#   upgrades to newer versions as well. Lets host go automatically download the
+#   missing versions.
+#
+#   e.g. GOTOOLCHAIN=go1.24.2
 
 # Credit for this package build process (GoPackage/Build/Configure and
 # GoPackage/Build/Compile) belong to Debian's dh-golang completely.
@@ -211,12 +221,13 @@ GO_PKG_TARGET_VARS= \
 	CGO_CXXFLAGS="$(filter-out $(GO_CFLAGS_TO_REMOVE),$(TARGET_CXXFLAGS))" \
 	CGO_LDFLAGS="$(TARGET_LDFLAGS)"
 
+GOTOOLCHAIN?=local
 GO_PKG_BUILD_VARS= \
 	GOPATH="$(GO_PKG_BUILD_DIR)" \
 	GOCACHE="$(GO_BUILD_CACHE_DIR)" \
 	GOMODCACHE="$(GO_MOD_CACHE_DIR)" \
 	GOENV=off \
-	GOTOOLCHAIN=local
+	GOTOOLCHAIN=$(GOTOOLCHAIN)
 
 GO_PKG_VARS= \
 	$(GO_PKG_TARGET_VARS) \
