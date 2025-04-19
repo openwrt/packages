@@ -30,9 +30,6 @@
 	## map unknow users to guest
 	map to guest = Bad User
 
-	## allow client access to accounts that have null passwords. 
-	null passwords = yes
-
 	## The old plaintext passdb backend. Some Samba features will not work if this passdb backend is used. (NOTE: enabled for size reasons)
 	## (tdbsam,smbpasswd,ldapsam)
 	passdb backend = smbpasswd
