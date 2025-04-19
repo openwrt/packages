@@ -120,13 +120,15 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 **Please note:**
 * Devices with less than 128MB of RAM are **_not_** supported
 * For performance reasons, adblock depends on gnu sort and gawk
+* Before update from former adblock releases please make a backup of your local allow- and blocklists. In the latest adblock 4.4.x these lists have been renamed to '/etc/adblock/adblock.allowlist' and '/etc/adblock/adblock.blocklist'. There is no automatic content transition to the new files.
+* The uci configuration of adblock is automatically migrated during package installation via the uci-defaults mechanism using a housekeeping script
 
 <a id="installation-and-usage"></a>
 ## Installation & Usage
-* Update your local opkg/apk repository
+* Make a backup and update your local opkg/apk repository
 * Install the LuCI companion package 'luci-app-adblock' which also installs the main 'adblock' package as a dependency
 * It's strongly recommended to use the LuCI frontend to easily configure all aspects of adblock, the application is located in LuCI under the 'Services' menu
-* It's also recommended to configure at least a 'Startup Trigger Interface' to depend on WAN ifup events during boot or restart of your router
+* It is also strongly recommended to configure a ‘Startup Trigger Interface’ to ensure automatic adblock startup on WAN-ifup events during boot or reboot of your router
 
 <a id="adblock-cli-interface"></a>
 ## Adblock CLI interface
@@ -260,12 +262,18 @@ password        xxx
 </code></pre>
 Finally enable E-Mail support and add a valid E-Mail receiver address in LuCI.
 
-**Send status E-Mails and update the adblock lists via cron job**  
-For a regular, automatic status mailing and update of the used lists on a daily basis set up a cron job, e.g.
+**Automatic feed updates and status reports via E-Mail**  
+For a regular, automatic update of the used feeds or other regular adblock activities set up a cron job, e.g.:
 
 ```
-55 03 * * * /etc/init.d/adblock report mail
+# update the feeds every morning at 4 o'clock
 00 04 * * * /etc/init.d/adblock reload
+
+# send a report E-Mail every morning at 3 o'clock
+00 03 * * * /etc/init.d/adblock report mail
+
+# update the feeds every hour
+0 */1 * * * /etc/init.d/adblock reload
 ```
 
 **Service status output:**
@@ -289,7 +297,7 @@ To get the status in the CLI, just call _/etc/init.d/adblock status_ or _/etc/in
 ```
 
 **Change/add adblock feeds**  
-The adblock default blocklist feeds are stored in an external JSON file '/etc/adblock/adblock.feeds'. All custom changes should be stored in an external JSON file '/etc/adblock/adblock.custom.feeds' (empty by default). It's recommended to use the LuCI based Custom Feed Editor to make changes to this file.  
+The adblock blocklist feeds are stored in an external JSON file '/etc/adblock/adblock.feeds'. All custom changes should be stored in an external JSON file '/etc/adblock/adblock.custom.feeds' (empty by default). It's recommended to use the LuCI based Custom Feed Editor to make changes to this file.  
 A valid JSON source object contains the following information, e.g.:
 
 ```

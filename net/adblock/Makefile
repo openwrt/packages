@@ -6,8 +6,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adblock
-PKG_VERSION:=4.4.0
-PKG_RELEASE:=3
+PKG_VERSION:=4.4.1
+PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
 
@@ -23,7 +23,7 @@ endef
 
 define Package/adblock/description
 adblock blocks ad/abuse domains via dnsmasq, unbound, named, smartdns or kresd.
-adblock supports many domain blocklist sites plus local block- and allowlist overrides.
+adblock consumes a minimum of memory, is very fast and supports many domain blocklist sites plus local block- and allowlist overrides.
 Please see https://github.com/openwrt/packages/blob/master/net/adblock/files/README.md for further information.
 
 endef
@@ -61,6 +61,9 @@ define Package/adblock/install
 	$(INSTALL_CONF) ./files/adblock.categories $(1)/etc/adblock
 	$(INSTALL_CONF) ./files/adblock.feeds $(1)/etc/adblock
 	$(INSTALL_CONF) ./files/adblock.custom.feeds $(1)/etc/adblock
+
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/95-adblock-housekeeping $(1)/etc/uci-defaults
 endef
 
 $(eval $(call BuildPackage,adblock))
