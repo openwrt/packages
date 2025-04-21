@@ -341,6 +341,7 @@ aria2_start() {
 		procd_set_param user "$user"
 
 	procd_add_jail "$NAME.$section" log
+	procd_add_jail_mount "/usr/lib/ossl-modules"
 	procd_add_jail_mount "$ca_certificate" "$certificate" "$rpc_certificate" "$rpc_private_key"
 	procd_add_jail_mount_rw "$dir" "$config_dir" "$log"
 	procd_close_instance
