@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=jq
 PKG_VERSION:=1.7.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/jqlang/jq/releases/download/$(PKG_NAME)-$(PKG_VERSION)
@@ -27,22 +27,50 @@ include $(INCLUDE_DIR)/package.mk
 CONFIGURE_ARGS+= \
 	--disable-docs \
 	--disable-valgrind \
-	--without-oniguruma
 
-define Package/jq
+define Package/jq/Default
   SECTION:=utils
   CATEGORY:=Utilities
-  TITLE:=Lightweight and flexible command-line JSON processor.
+  TITLE:=Lightweight and flexible command-line JSON processor
   URL:=https://jqlang.github.io/jq/
+  PROVIDES:=jq
+endef
+
+define Package/jq
+  $(Package/jq/Default)
+  TITLE+= without regex support.
+  VARIANT:=noregex
+  DEFAULT_VARIANT:=1
 endef
 
 define Package/jq/description
-	Lightweight and flexible command-line JSON processor.
+  Lightweight and flexible command-line JSON processor.
+  This package was compiled without ONIGURUMA regex libary. match/test/sub and related functions are not available. 
 endef
 
-define Package/jq/install
+define Package/jq-full
+  $(Package/jq/Default)
+  TITLE+= with regex support.
+  VARIANT:=regex
+  DEPENDS+=+oniguruma
+endef
+
+define Package/jq-full/description
+  Lightweight and flexible command-line JSON processor.
+  This package was compiled with ONIGURUMA regex libary and has full regex support.
+endef
+
+ifeq ($(BUILD_VARIANT),noregex)
+	CONFIGURE_ARGS += --without-oniguruma
+endif
+
+define Package/jq/install/Default
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
 endef
 
+Package/jq/install = $(Package/jq/install/Default)
+Package/jq-full/install = $(Package/jq/install/Default)
+
 $(eval $(call BuildPackage,jq))
+$(eval $(call BuildPackage,jq-full))
