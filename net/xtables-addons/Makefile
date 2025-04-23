@@ -8,7 +8,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=xtables-addons
 PKG_VERSION:=3.27
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_HASH:=e47ea8febe73c12ecab09d2c93578c5dc72d76f17fdf673397758f519cce6828
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
@@ -195,10 +195,20 @@ define Package/iptgeoip/install
 endef
 
 
+define KernelPackage/nf-nathelper-rtsp
+  SUBMENU:=Netfilter Extensions
+  TITLE:=Conntrack and NAT for rtsp
+  DEPENDS:=+kmod-nf-conntrack +kmod-nf-nat
+  FILES:=$(PKG_BUILD_DIR)/extensions/rtsp/nf_conntrack_rtsp.$(LINUX_KMOD_SUFFIX) \
+    $(PKG_BUILD_DIR)/extensions/rtsp/nf_nat_rtsp.$(LINUX_KMOD_SUFFIX)
+  AUTOLOAD:=$(call AutoProbe,nf_conntrack_rtsp nf_nat_rtsp)
+  PROVIDES:=kmod-ipt-nathelper-rtsp
+endef
+
+
 #$(eval $(call BuildTemplate,SUFFIX,DESCRIPTION,EXTENSION,MODULE,PRIORITY,DEPENDS))
 
 $(eval $(call BuildTemplate,compat-xtables,API compatibilty layer,,compat_xtables,+IPV6:kmod-ip6tables))
-$(eval $(call BuildTemplate,nathelper-rtsp,RTSP Conntrack and NAT,,rtsp/nf_conntrack_rtsp rtsp/nf_nat_rtsp,+kmod-ipt-conntrack-extra +kmod-ipt-nat))
 
 $(eval $(call BuildTemplate,account,ACCOUNT,xt_ACCOUNT,ACCOUNT/xt_ACCOUNT,+kmod-ipt-compat-xtables))
 $(eval $(call BuildTemplate,asn,asn,xt_asn,xt_asn,))
@@ -226,3 +236,4 @@ $(eval $(call BuildTemplate,tarpit,TARPIT,xt_TARPIT,xt_TARPIT,+kmod-ipt-compat-x
 $(eval $(call BuildPackage,iptaccount))
 $(eval $(call BuildPackage,iptasn))
 $(eval $(call BuildPackage,iptgeoip))
+$(eval $(call KernelPackage,nf-nathelper-rtsp))
