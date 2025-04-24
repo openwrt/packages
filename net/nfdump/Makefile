@@ -16,6 +16,7 @@ PKG_HASH:=0545b792e81f5edd51a2fdfbfcc4eac7ba8087005811ab41c34bfac4d78fe926
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:nfdump_project:nfdump
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

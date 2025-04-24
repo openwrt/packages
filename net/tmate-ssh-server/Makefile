@@ -11,6 +11,7 @@ PKG_HASH:=68602496ca6a17ea80f5be53eba047897ac714c7cdfcb3bcdc12c56b8f3c3b45
 PKG_LICENSE:=ISC
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Paul Spooren <mail@aparcar.org>
+PKG_CPE_ID:=cpe:/a:tmate:tmate-ssh-server
 
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1

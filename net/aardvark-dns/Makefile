@@ -11,6 +11,7 @@ PKG_HASH:=3e95b363f89a945ee6e63f51051f9eb982bdc469bf8e727b5d7adca676789750
 PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:containers:aardvark-dns
 
 PKG_BUILD_DEPENDS:=rust/host
 PKG_BUILD_PARALLEL:=1
