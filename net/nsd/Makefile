@@ -18,6 +18,7 @@ PKG_HASH:=3f60a3a13ec3f68e84bfa7e19daff663c82bcf1de96e4f53f2246525e773a27a
 PKG_MAINTAINER:=Vasilis Tsiligiannis <acinonyx@openwrt.gr>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:nlnetlabs:name_server_daemon
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
