@@ -10,6 +10,7 @@ PKG_HASH:=7e4487d320ac31558563424189435d396ddf77953bb23111a17a3d1487b5794a
 
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 PKG_LICENSE:=GPL-2.0-only
+PKG_CPE_ID:=cpe:/a:setserial_project:setserial
 
 include $(INCLUDE_DIR)/package.mk
 
