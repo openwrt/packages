@@ -11,6 +11,7 @@ PKG_HASH:=7c42d56fac126929a6a85dbc73ff1db2411d04f104fae9bdea51305663a83fd0
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:facebook:zstandard
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/meson.mk

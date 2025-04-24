@@ -17,6 +17,8 @@ PKG_MIRROR_HASH:=a60c79ca40d1a73639d4c1bba3431ca630ab1d670ab06307e8442b69cfaf0cc
 PKG_MAINTAINER:=Martin Schneider <martschneider@google.com>
 PKG_LICENSE:=OpenSSL ISC
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:google:boringssl
+
 PKG_BUILD_DEPENDS:=golang/host
 
 include $(INCLUDE_DIR)/package.mk
