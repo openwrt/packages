@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=glib2
 PKG_VERSION:=2.82.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=glib-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNOME/glib/$(basename $(PKG_VERSION))
@@ -95,7 +95,7 @@ define Build/InstallDev
 
 	$(CP) \
 		$(PKG_INSTALL_DIR)/usr/lib/*.{so*,a} \
-		$(1)/usr/lib/
+		$(1)/usr/lib/ || :
 
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(INSTALL_DATA) \
