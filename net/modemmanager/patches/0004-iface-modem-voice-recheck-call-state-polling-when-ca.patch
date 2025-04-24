@@ -1,0 +1,54 @@
+From 92e666e1c92c205e896552604e717d5b39528ae3 Mon Sep 17 00:00:00 2001
+From: Dan Williams <dan@ioncontrol.co>
+Date: Sat, 12 Apr 2025 23:04:38 -0500
+Subject: [PATCH] iface-modem-voice: recheck call state polling when call is
+ started
+
+When an outgoing call is created and added to the call list its state
+is UNKNOWN. The call list emits the ADDED signal which MMIfaceModemVoice
+listens for to check whether to begin polling call state.
+
+But since UNKNOWN is not an in-progress call state polling isn't started.
+And nothing was rechecking whether to start polling when the call state
+changed to something other than UNKNOWN.
+
+Do that so that we can track call progress as it dials out and is
+answered.
+
+Signed-off-by: Dan Williams <dan@ioncontrol.co>
+---
+ src/mm-iface-modem-voice.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+--- a/src/mm-iface-modem-voice.c
++++ b/src/mm-iface-modem-voice.c
+@@ -32,6 +32,10 @@ static GQuark in_call_event_context_quar
+ 
+ G_DEFINE_INTERFACE (MMIfaceModemVoice, mm_iface_modem_voice, MM_TYPE_IFACE_MODEM)
+ 
++static void setup_call_list_polling (MMCallList        *call_list,
++                                     const gchar       *call_path_added,
++                                     MMIfaceModemVoice *self);
++
+ /*****************************************************************************/
+ 
+ void
+@@ -1781,6 +1785,7 @@ typedef enum {
+     IN_CALL_SETUP_STEP_FIRST,
+     IN_CALL_SETUP_STEP_UNSOLICITED_EVENTS,
+     IN_CALL_SETUP_STEP_AUDIO_CHANNEL,
++    IN_CALL_SETUP_STEP_CHECK_POLLING,
+     IN_CALL_SETUP_STEP_LAST,
+ } InCallSetupStep;
+ 
+@@ -1908,6 +1913,10 @@ in_call_setup_context_step (GTask *task)
+         }
+         ctx->step++;
+         /* fall-through */
++    case IN_CALL_SETUP_STEP_CHECK_POLLING:
++        setup_call_list_polling (NULL, NULL, self);
++        ctx->step++;
++        /* fall-through */
+     case IN_CALL_SETUP_STEP_LAST:
+         g_task_return_boolean (task, TRUE);
+         g_object_unref (task);
