@@ -1,0 +1,22 @@
+--- a/write_buildcustomize.pl
++++ b/write_buildcustomize.pl
+@@ -3,7 +3,7 @@
+ use strict;
+ 
+ my $osname = $^O;
+-my $file = 'lib/buildcustomize.pl';
++my $file = './lib/buildcustomize.pl';
+ 
+ if ( @ARGV % 2 ) {
+     my $dir = shift;
+--- a/configpm
++++ b/configpm
+@@ -129,7 +129,7 @@ if ($Opts{chdir}) {
+ my ($Config_SH, $Config_PM, $Config_heavy, $Config_POD);
+ my $Glossary = 'Porting/Glossary';
+ 
+-$Config_PM = "lib/Config.pm";
++$Config_PM = "./lib/Config.pm";
+ $Config_POD = "lib/Config.pod";
+ $Config_SH = "config.sh";
+ 
