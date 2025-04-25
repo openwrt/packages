@@ -11,13 +11,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=boost
-PKG_VERSION:=1.87.0
-PKG_SOURCE_VERSION:=1_87_0
+PKG_VERSION:=1.88.0
+PKG_SOURCE_VERSION:=1_88_0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_SOURCE_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)/$(PKG_NAME)/$(PKG_VERSION) https://boostorg.jfrog.io/artifactory/main/release/$(PKG_VERSION)/source/
-PKG_HASH:=af57be25cb4c4f4b413ed692fe378affb4352ea50fbe294a11ef548f4d527d89
+PKG_HASH:=46d9d2c06637b219270877c9e16155cbd015b6dc84349af064c088e9b5b12f7b
 
 PKG_MAINTAINER:=Carlos M. Ferreira <carlosmf.pt@gmail.com>
 PKG_LICENSE:=BSL-1.0
@@ -42,7 +42,7 @@ define Package/boost/Default
 endef
 
 define Package/boost/description
-This package provides the Boost v1.87.0 libraries.
+This package provides the Boost v1.88.0 libraries.
 Boost is a set of free, peer-reviewed, portable C++ source libraries.
 
 This package provides the following run-time libraries:
@@ -80,7 +80,7 @@ This package provides the following run-time libraries:
  - wave
 
 There are many more header-only libraries supported by Boost.
-See more at http://www.boost.org/doc/libs/1_87_0/
+See more at http://www.boost.org/doc/libs/1_88_0/
 endef
 
 PKG_BUILD_DEPENDS:=boost/host
@@ -348,10 +348,10 @@ $(eval $(call DefineBoostLibrary,date_time))
 #$(eval $(call DefineBoostLibrary,exception,,))
 $(eval $(call DefineBoostLibrary,fiber,coroutine filesystem,,!boost-fiber-exclude))
 $(eval $(call DefineBoostLibrary,filesystem,system atomic))
-$(eval $(call DefineBoostLibrary,graph,regex))
+$(eval $(call DefineBoostLibrary,graph))
 $(eval $(call DefineBoostLibrary,iostreams,system random regex,,,zlib liblzma libbz2 libzstd))
 $(eval $(call DefineBoostLibrary,json,container))
-$(eval $(call DefineBoostLibrary,locale,system chrono thread,,,icu))
+$(eval $(call DefineBoostLibrary,locale,system chrono thread charconv,,,icu))
 $(eval $(call DefineBoostLibrary,log,system chrono date_time thread filesystem regex))
 $(eval $(call DefineBoostLibrary,math, container random system))
 #$(eval $(call DefineBoostLibrary,mpi,,)) # OpenMPI does no exist in OpenWRT at this time.
@@ -368,7 +368,7 @@ $(eval $(call DefineBoostLibrary,thread,system chrono atomic))
 $(eval $(call DefineBoostLibrary,timer,chrono))
 $(eval $(call DefineBoostLibrary,type_erasure,chrono system thread))
 $(eval $(call DefineBoostLibrary,url, system))
-$(eval $(call DefineBoostLibrary,wave,date_time thread filesystem container serialization))
+$(eval $(call DefineBoostLibrary,wave,date_time thread filesystem container serialization regex))
 
 include $(INCLUDE_DIR)/host-build.mk
 
