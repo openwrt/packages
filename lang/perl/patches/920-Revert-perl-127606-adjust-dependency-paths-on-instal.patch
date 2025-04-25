@@ -42,10 +42,10 @@ Signed-off-by: Georgi Valkov <gvalkov@gmail.com>
 -	;;
 -esac
 -
- $spitshell >>$Makefile <<!GROK!THIS!
- # Macros to invoke a copy of our fully operational perl during the build.
- PERL_EXE = perl\$(EXE_EXT)
-@@ -1045,20 +1029,6 @@ $(PERL_EXE): $& $(perlmain_dep) $(LIBPER
+ case "$usecrosscompile$perl" in
+ define?*)
+ 	$spitshell >>$Makefile <<!GROK!THIS!
+@@ -1056,20 +1040,6 @@ $(PERL_EXE): $& $(perlmain_dep) $(LIBPER
  	$(SHRPENV) $(CC) -o perl $(CLDFLAGS) $(CCDLFLAGS) $(perlmain_objs) $(LLIBPERL) $(static_ext) `cat ext.libs` $(libs)
  !NO!SUBS!
          ;;
