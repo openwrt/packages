@@ -1,8 +1,8 @@
 --- a/src/Makefile.am
 +++ b/src/Makefile.am
-@@ -49,13 +49,6 @@ pkcs11_la_LIBADD = $(libp11_la_OBJECTS)
- pkcs11_la_LDFLAGS = $(AM_LDFLAGS) -module -shared -shrext $(SHARED_EXT) \
- 	-avoid-version -export-symbols "$(srcdir)/pkcs11.exports"
+@@ -56,13 +56,6 @@ libpkcs11_la_SOURCES = $(pkcs11_la_SOURC
+ libpkcs11_la_CFLAGS = $(pkcs11_la_CFLAGS)
+ libpkcs11_la_LIBADD = $(pkcs11_la_LIBADD)
  
 -# OpenSSL older than 1.1.0 expected libpkcs11.so instead of pkcs11.so
 -check-local: $(LTLIBRARIES)
@@ -16,7 +16,7 @@
  mylibdir=$(libdir)
 --- a/src/Makefile.in
 +++ b/src/Makefile.in
-@@ -911,7 +911,7 @@ distdir-am: $(DISTFILES)
+@@ -965,7 +965,7 @@ distdir-am: $(DISTFILES)
  	  fi; \
  	done
  check-am: all-am
@@ -24,8 +24,8 @@
 +	$(MAKE) $(AM_MAKEFLAGS)
  check: check-am
  all-am: Makefile $(LTLIBRARIES) $(DATA) $(HEADERS) config.h
- installdirs:
-@@ -1000,7 +1000,7 @@ install-dvi-am:
+ install-enginesexecLTLIBRARIES: install-libLTLIBRARIES
+@@ -1060,7 +1060,7 @@ install-dvi-am:
  
  install-exec-am: install-enginesexecLTLIBRARIES install-libLTLIBRARIES
  	@$(NORMAL_INSTALL)
@@ -34,7 +34,7 @@
  install-html: install-html-am
  
  install-html-am:
-@@ -1063,14 +1063,14 @@ uninstall-am: uninstall-enginesexecLTLIB
+@@ -1127,14 +1127,14 @@ uninstall-am: uninstall-enginesexecLTLIB
  .MAKE: all check-am install-am install-exec-am install-strip
  
  .PHONY: CTAGS GTAGS TAGS all all-am am--depfiles check check-am \
