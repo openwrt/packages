@@ -396,6 +396,9 @@ endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-snmp),)
   CONFIGURE_ARGS+= --with-snmp=shared,"$(STAGING_DIR)/usr"
+  CONFIGURE_VARS+= \
+    ac_cv_have_decl_usmHMAC192SHA256AuthProtocol=no \
+    ac_cv_have_decl_usmHMAC384SHA512AuthProtocol=no
 else
   CONFIGURE_ARGS+= --without-snmp
 endif
