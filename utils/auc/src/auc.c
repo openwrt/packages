@@ -1893,7 +1893,7 @@ int main(int args, char *argv[]) {
 	running_branch = get_current_branch();
 	running_revision = revision_from_version_code(revision);
 	if (!running_branch)
-		fprintf(stderr, "WARNING: cannot determing currently running branch.\n");
+		fprintf(stderr, "WARNING: cannot determine currently running branch.\n");
 
 	target_version = select_branch(cmd_target_branch, cmd_target_version);
 	if (!target_version) {
