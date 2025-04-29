@@ -469,7 +469,8 @@ get_url_filesize() {
 	is_present 'curl' || return 0
 	size_command='curl --silent --insecure --fail --head --request GET'
 #	size="$($size_command "$url" | grep -Po '^[cC]ontent-[lL]ength: \K\w+')"
-	size="$($size_command "$url" | grep -Eo '^[cC]ontent-[lL]ength: (.*)' | awk '{print $2}')"
+# shellcheck disable=SC1017
+	size="$($size_command "$url" | awk -F": " '{IGNORECASE=1}/content-length/ {gsub(/\r/, ""); print $2}' )"
 # shellcheck disable=SC3037
 	echo -en "$size"
 }
