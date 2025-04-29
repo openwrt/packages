@@ -11,6 +11,7 @@ RTCDEVICE=/dev/rtc0
 
 handle_source() {
 	local cfg=$1 sourcetype=$2 disabled hostname minpoll maxpoll iburst nts
+	local prefer xleave maxdelay mindelay maxsamples minsamples port ntsport maxsources
 
 	config_get_bool disabled "$cfg" disabled 0
 	[ "$disabled" = "1" ] && return
@@ -21,12 +22,30 @@ handle_source() {
 	config_get maxpoll "$cfg" maxpoll
 	config_get_bool iburst "$cfg" iburst 0
 	config_get_bool nts "$cfg" nts 0
+	config_get_bool prefer "$cfg" prefer 0
+	config_get_bool xleave "$cfg" xleave 0
+	config_get maxdelay "$cfg" maxdelay
+	config_get mindelay "$cfg" mindelay
+	config_get maxsamples "$cfg" maxsamples
+	config_get minsamples "$cfg" minsamples
+	config_get port "$cfg" port
+	config_get ntsport "$cfg" ntsport
+	config_get maxsources "$cfg" maxsources
 	echo $(
 		echo $sourcetype $hostname
 		[ -n "$minpoll" ] && echo minpoll $minpoll
 		[ -n "$maxpoll" ] && echo maxpoll $maxpoll
 		[ "$iburst" = "1" ] && echo iburst
 		[ "$nts" = "1" ] && echo nts
+		[ "$prefer" = "1" ] && echo prefer
+		[ "$xleave" = "1" ] && echo xleave
+		[ -n "$maxdelay" ] && echo maxdelay $maxdelay
+		[ -n "$mindelay" ] && echo mindelay $mindelay
+		[ -n "$maxsamples" ] && echo maxsamples "$maxsamples"
+		[ -n "$minsamples" ] && echo minsamples "$minsamples"
+		[ -n "$port" ] && [ "$nts" = "0" ] && echo port $port
+		[ -n "$ntsport" ] && [ "$nts" = "1" ] && echo ntsport $ntsport
+		[ -n "$maxsources" ] && [ "$cfg" = "pool" ] && echo maxsources $maxsources
 	)
 }
 
@@ -35,19 +54,21 @@ handle_allow() {
 
 	network_find_wan wan_iface true
 	network_find_wan6 wan6_iface true
-	config_get iface "$cfg" interface
+	config_get ifaces "$cfg" interface
 
-	if [ "$wan_iface" = "$iface" ]; then
-		echo allow 0/0
-	elif [ "$wan6_iface" = "$iface" ]; then
-		echo allow ::/0
-	else
-		network_get_subnets subnets $iface
-		network_get_subnets6 subnets6 $iface
-		for subnet in $subnets $subnets6; do
-			echo allow $subnet
-		done
-	fi
+	for iface in $ifaces; do
+		if [ "$wan_iface" = "$iface" ]; then
+			echo allow 0/0
+		elif [ "$wan6_iface" = "$iface" ]; then
+			echo allow ::/0
+		else
+			network_get_subnets subnets $iface
+			network_get_subnets6 subnets6 $iface
+			for subnet in $subnets $subnets6; do
+				echo allow $subnet
+			done
+		fi
+	done
 }
 
 handle_makestep() {
@@ -60,7 +81,7 @@ handle_makestep() {
 }
 
 handle_nts() {
-	local cfg=$1 threshold limit
+	local cfg=$1 rtccheck systemcerts trustedcerts
 
 	config_get_bool rtccheck "$cfg" rtccheck 0
 	config_get_bool systemcerts "$cfg" systemcerts 1
@@ -69,6 +90,31 @@ handle_nts() {
 	[ "$rtccheck" = "1" ] && ! [ -c $RTCDEVICE ] && echo nocerttimecheck 1
 	[ "$systemcerts" = "0" ] && echo nosystemcert
 	[ -n "$trustedcerts" ] && echo ntstrustedcerts "$trustedcerts"
+}
+
+handle_smoothtime() {
+	local cfg=$1 maxppm maxwander leaponly suffix
+	config_get maxppm "$cfg" maxppm
+	config_get maxwander "$cfg" maxwander
+	config_get_bool leaponly "$cfg" leaponly 0
+	[ "$leaponly" = "1" ] && suffix=leaponly
+	[ -n "$maxppm" ] && [ -n "$maxwander" ] && echo smoothtime "$maxppm" "$maxwander" "$suffix"
+}
+
+handle_systemclock() {
+	# system clock specific settings
+	local cfg=$1 precision leapsecmode
+	config_get precision "$cfg" precision
+	config_get leapsecmode "$cfg" leapsecmode
+	[ -n "$precision" ] && echo clockprecision "$precision"
+	[ -n "$leapsecmode" ] && echo clockleapsecmode "$leapsecmode"
+}
+
+handle_logging() {
+	local cfg=$1 logchange
+
+	config_get logchange "$cfg" logchange
+	[ -n "$logchange" ] && echo logchange "$logchange"
 }
 
 start_service() {
@@ -93,6 +139,9 @@ start_service() {
 		config_foreach handle_source peer peer
 		config_foreach handle_allow allow
 		config_foreach handle_makestep makestep
+		config_foreach handle_smoothtime smoothtime
+		config_foreach handle_systemclock systemclock
 		config_foreach handle_nts nts
+		config_foreach handle_logging logging
 	) > $INCLUDEFILE
 }
