@@ -546,17 +546,17 @@ f_etag() {
 		if [ -z "${etag_id}" ]; then
 			etag_id="$(printf "%s" "${http_head}" | "${ban_awkcmd}" 'tolower($0)~/^[[:space:]]*last-modified: /{gsub(/[Ll]ast-[Mm]odified:|[[:space:]]|,|:/,"");printf "%s\n",$1}')"
 		fi
-		etag_cnt="$("${ban_grepcmd}" -c "^${feed}" "${ban_backupdir}/banIP.etag")"
+		etag_cnt="$("${ban_grepcmd}" -c "^${feed} " "${ban_backupdir}/banIP.etag")"
 		if [ "${http_code}" = "200" ] && [ "${etag_cnt}" = "${feed_cnt}" ] && [ -n "${etag_id}" ] &&
-			"${ban_grepcmd}" -q "^${feed}${feed_suffix}[[:space:]]\+${etag_id}\$" "${ban_backupdir}/banIP.etag"; then
+			"${ban_grepcmd}" -q "^${feed} ${feed_suffix}[[:space:]]\+${etag_id}\$" "${ban_backupdir}/banIP.etag"; then
 			out_rc="0"
 		elif [ -n "${etag_id}" ]; then
 			if [ "${feed_cnt}" -lt "${etag_cnt}" ]; then
-				"${ban_sedcmd}" -i "/^${feed}/d" "${ban_backupdir}/banIP.etag"
+				"${ban_sedcmd}" -i "/^${feed} /d" "${ban_backupdir}/banIP.etag"
 			else
-				"${ban_sedcmd}" -i "/^${feed}${feed_suffix}/d" "${ban_backupdir}/banIP.etag"
+				"${ban_sedcmd}" -i "/^${feed} ${feed_suffix//\//\\/}/d" "${ban_backupdir}/banIP.etag"
 			fi
-			printf "%-50s%s\n" "${feed}${feed_suffix}" "${etag_id}" >>"${ban_backupdir}/banIP.etag"
+			printf "%-50s%s\n" "${feed} ${feed_suffix}" "${etag_id}" >>"${ban_backupdir}/banIP.etag"
 			out_rc="2"
 		fi
 	fi
@@ -1162,7 +1162,7 @@ f_down() {
 			if [ "${feed_rc}" = "0" ]; then
 				for split_file in "${tmp_file}".*; do
 					if [ -s "${split_file}" ]; then
-						"${ban_sedcmd}" -i "1 i #!${ban_nftcmd} -f\nadd element inet banIP "${feed}" { " "${split_file}"
+						"${ban_sedcmd}" -i "1 i #!${ban_nftcmd} -f\nadd element inet banIP ${feed} { " "${split_file}"
 						printf "%s\n" "}" >>"${split_file}"
 						# load split file to nftset
 						#
@@ -1371,7 +1371,7 @@ f_getstatus() {
 			else
 				json_get_var value "${key}" >/dev/null 2>&1
 				if [ "${key}" = "status" ]; then
-					[ "${value}" = "active" ] && value="${value} ($(f_actual))" || value="${value}"
+					[ "${value}" = "active" ] && value="${value} ($(f_actual))"
 				fi
 			fi
 			if [ "${key}" != "wan_interfaces" ] && [ "${key}" != "vlan_allow" ] && [ "${key}" != "vlan_block" ]; then
