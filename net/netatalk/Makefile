@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netatalk
-PKG_VERSION:=4.1.1
+PKG_VERSION:=4.2.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/netatalk
-PKG_HASH:=2c8d312245b39a8b734ac9a8eb45110bc03de3088928e574310a990d3b800241
+PKG_HASH:=8f772804ce4322a4e8fb159528209450927e9df067daa5cc02ab59b35f4b450c
 
 PKG_MAINTAINER:=Antonio Pastor <antonio.pastor@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -31,7 +31,7 @@ define Package/netatalk/Default
   TITLE:=Apple Filing Protocol
   PROVIDES:=netatalk
   URL:=http://netatalk.sourceforge.net
-  DEPENDS:=+libevent2 +libdb47 +libgcrypt
+  DEPENDS:=+libevent2 +libdb47 +libgcrypt +iniparser
 endef
 
 define Package/netatalk-small
@@ -97,7 +97,6 @@ MESON_ARGS += \
 	-Dwith-bdb-path="$(STAGING_DIR)/usr/" \
 	-Dwith-unicode-data-path="$(STAGING_DIR_HOST)/share/gnulib/tests/uniname/" \
 	-Dwith-libgcrypt-path="$(STAGING_DIR)/usr/" \
-	$(if $(CONFIG_SHADOW_PASSWORDS),-Dwith-shadow=true,-Dwith-shadow=false) \
 	-Dwith-afpstats=false \
 	-Dwith-cups=false \
 	-Dwith-quota=false \
@@ -108,8 +107,6 @@ MESON_ARGS += \
 	-Dwith-dtrace=false \
 	-Dwith-debug=false \
 	-Dwith-shell-check=false \
-	-Dwith-readmes=false \
-	-Dwith-manual=none \
 	-Dwith-init-style=none \
 
 ifeq ($(BUILD_VARIANT),small)
