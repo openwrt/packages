@@ -1,0 +1,18 @@
+--- a/acinclude.m4
++++ b/acinclude.m4
+@@ -953,6 +953,7 @@ changequote(<<, >>)dnl
+ #include <stdio.h>
+ #include <sys/types.h>
+ #include <signal.h>
++#include <stdlib>
+ 
+ int main(int argc, char *argv[])
+ {
+@@ -1001,6 +1002,7 @@ changequote(<<, >>)dnl
+ #include <stdio.h>
+ #include <sys/types.h>
+ #include <unistd.h>
++#include <stdlib.h>
+ int main(int argc, char *argv[])
+ {
+     FILE *fp;
