@@ -1,0 +1,11 @@
+--- a/libntp/machines.c
++++ b/libntp/machines.c
+@@ -477,7 +477,7 @@ ntp_set_tod(
+ #endif /* HAVE_SETTIMEOFDAY */
+ #ifdef HAVE_STIME
+ 	if (rc && (SET_TOD_STIME == tod || !tod)) {
+-		long tp = tvp->tv_sec;
++		time_t tp = tvp->tv_sec;
+ 
+ 		errno = 0;
+ 		rc = stime(&tp); /* lie as bad as SysVR4 */
