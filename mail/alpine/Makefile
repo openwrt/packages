@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=alpine
 PKG_VERSION:=2.25
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://alpineapp.email/alpine/release/src/Old
@@ -69,6 +69,7 @@ CONFIGURE_ARGS += \
 	--without-tcl \
 	--without-ldap \
 	--without-krb5 \
+	--without-ntlm \
 	--with-system-pinerc=/etc/pine.conf \
 	--with-system-fixed-pinerc=/etc/pine.conf.fixed \
 	--with-supplied-regex \
@@ -79,11 +80,12 @@ CONFIGURE_ARGS += \
 	$(if $(CONFIG_IPV6),--with,--without)-ipv6
 
 CONFIGURE_VARS += \
+	ac_cv_func_qsort_argtype=void \
 	top_builddir=$(PKG_BUILD_DIR)
 
 ifeq ($(BUILD_VARIANT),ssl)
 	CONFIGURE_ARGS += \
-		--with-ssl-include-dir=$(STAGING_DIR)/usr/include/openssl/. \
+		--with-ssl-include-dir=$(STAGING_DIR)/usr/include \
 		--with-ssl-lib-dir=$(STAGING_DIR)/usr/lib
 else
 	CONFIGURE_ARGS += \
