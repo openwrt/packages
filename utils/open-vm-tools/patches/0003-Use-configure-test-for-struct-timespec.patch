@@ -14,7 +14,7 @@ Signed-off-by: Natanael Copa <ncopa@alpinelinux.org>
 
 --- a/configure.ac
 +++ b/configure.ac
-@@ -1451,6 +1451,7 @@ AC_TYPE_OFF_T
+@@ -1393,6 +1393,7 @@ AC_TYPE_OFF_T
  AC_TYPE_PID_T
  AC_TYPE_SIZE_T
  AC_CHECK_MEMBERS([struct stat.st_rdev])
