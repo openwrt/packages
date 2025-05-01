@@ -18,7 +18,7 @@ Signed-off-by: Bjørn Mork <bjorn@mork.no>
 
 --- a/configure.ac
 +++ b/configure.ac
-@@ -749,11 +749,8 @@ AC_ARG_WITH([random-device],
+@@ -763,11 +763,8 @@ AC_ARG_WITH([random-device],
             ])
  AC_MSG_RESULT([${ac_with_random_device=yes}])
  
