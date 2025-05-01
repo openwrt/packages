@@ -22,7 +22,7 @@ include ../../lang/python/python3-package.mk
 define Package/yt-dlp
   SECTION:=multimedia
   CATEGORY:=Multimedia
-  TITLE:=Utility to download videos from YouTube.com
+  TITLE:=A feature-rich command-line audio/video downloader
   URL:=https://github.com/yt-dlp/yt-dlp
   PROVIDES:=youtube-dl
   DEPENDS:= \
@@ -40,9 +40,8 @@ define Package/yt-dlp
 endef
 
 define Package/yt-dlp/description
-  yt-dlp is a small command-line program to download videos
-  from YouTube.com and other video sites.
-  It requires the Python3 interpreter.
+  yt-dlp is a feature-rich command-line audio/video downloader with support for
+  thousands of sites.
 endef
 
 $(eval $(call Py3Package,yt-dlp))
