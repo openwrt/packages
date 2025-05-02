@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libtirpc
 PKG_VERSION:=1.3.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=@SF/libtirpc
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -35,7 +35,7 @@ HOST_CONFIGURE_ARGS += --disable-symvers
 endif
 
 TARGET_CFLAGS += -DGQ
-HOST_CFLAGS += -DGQ
+HOST_CFLAGS += -DGQ -std=c99
 
 define Package/libtirpc/install
 	$(INSTALL_DIR) $(1)/usr/lib
