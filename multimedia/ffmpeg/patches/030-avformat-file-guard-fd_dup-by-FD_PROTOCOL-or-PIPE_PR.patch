@@ -1,0 +1,31 @@
+From cb9c98da16e8412046835ebc0d167a4e09909df0 Mon Sep 17 00:00:00 2001
+From: Zhao Zhili <zhilizhao@tencent.com>
+Date: Sun, 30 Jun 2024 18:33:19 +0800
+Subject: [PATCH] avformat/file: guard fd_dup by FD_PROTOCOL or PIPE_PROTOCOL
+
+fd_dup is unused when fd and pipe have been disabled. This also
+fix build error with wasi since 'dup' isn't available.
+
+Signed-off-by: Zhao Zhili <zhilizhao@tencent.com>
+---
+ libavformat/file.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+--- a/libavformat/file.c
++++ b/libavformat/file.c
+@@ -192,6 +192,7 @@ static int file_check(URLContext *h, int
+     return ret;
+ }
+ 
++#if CONFIG_FD_PROTOCOL || CONFIG_PIPE_PROTOCOL
+ static int fd_dup(URLContext *h, int oldfd)
+ {
+     int newfd;
+@@ -214,6 +215,7 @@ static int fd_dup(URLContext *h, int old
+ #endif
+     return newfd;
+ }
++#endif
+ 
+ static int file_close(URLContext *h)
+ {
