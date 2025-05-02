@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=coreutils
 PKG_VERSION:=9.6
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/coreutils
@@ -22,9 +22,6 @@ PKG_CPE_ID:=cpe:/a:gnu:coreutils
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
-ifeq ($(CONFIG_GCC_VERSION_14),y)
-	PKG_FIXUP:=autoreconf
-endif
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -133,6 +130,8 @@ CONFIGURE_ARGS += \
 	--$(if $(CONFIG_USE_MUSL),with,without)-included-regex \
 	--without-selinux \
 	--with-gmp
+
+TARGET_CFLAGS += -std=c17
 
 define Package/coreutils/install
 	true

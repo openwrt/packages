@@ -1,0 +1,91 @@
+From 2f24f10d9cf34ddce274496c4daa73f732d370c1 Mon Sep 17 00:00:00 2001
+From: Sam James <sam@gentoo.org>
+Date: Wed, 20 Dec 2023 12:32:43 +0000
+Subject: [PATCH] libavcodec: fix -Wint-conversion in vulkan
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+FIx warnings (soon to be errors in GCC 14, already so in Clang 15):
+```
+src/libavcodec/vulkan_av1.c: In function ‘vk_av1_create_params’:
+src/libavcodec/vulkan_av1.c:183:43: error: initialization of ‘long long unsigned int’ from ‘void *’ makes integer from pointer without a cast [-Wint-conversion]
+  183 |         .videoSessionParametersTemplate = NULL,
+      |                                           ^~~~
+src/libavcodec/vulkan_av1.c:183:43: note: (near initialization for ‘(anonymous).videoSessionParametersTemplate’)
+```
+
+Use Vulkan's VK_NULL_HANDLE instead of bare NULL.
+
+Fix Trac ticket #10724.
+
+Was reported downstream in Gentoo at https://bugs.gentoo.org/919067.
+
+Signed-off-by: Sam James <sam@gentoo.org>
+---
+ libavcodec/vulkan_av1.c    | 2 +-
+ libavcodec/vulkan_decode.c | 6 +++---
+ libavcodec/vulkan_h264.c   | 2 +-
+ libavcodec/vulkan_hevc.c   | 2 +-
+ libavcodec/vulkan_video.c  | 2 +-
+ 5 files changed, 7 insertions(+), 7 deletions(-)
+
+--- a/libavcodec/vulkan_av1.c
++++ b/libavcodec/vulkan_av1.c
+@@ -180,7 +180,7 @@ static int vk_av1_create_params(AVCodecC
+         .sType = VK_STRUCTURE_TYPE_VIDEO_SESSION_PARAMETERS_CREATE_INFO_KHR,
+         .pNext = &av1_params,
+         .videoSession = ctx->common.session,
+-        .videoSessionParametersTemplate = NULL,
++        .videoSessionParametersTemplate = VK_NULL_HANDLE,
+     };
+ 
+     err = ff_vk_decode_create_params(buf, avctx, ctx, &session_params_create);
+--- a/libavcodec/vulkan_decode.c
++++ b/libavcodec/vulkan_decode.c
+@@ -188,9 +188,9 @@ int ff_vk_decode_prepare_frame(FFVulkanD
+         return 0;
+ 
+     vkpic->dpb_frame     = NULL;
+-    vkpic->img_view_ref  = NULL;
+-    vkpic->img_view_out  = NULL;
+-    vkpic->img_view_dest = NULL;
++    vkpic->img_view_ref  = VK_NULL_HANDLE;
++    vkpic->img_view_out  = VK_NULL_HANDLE;
++    vkpic->img_view_dest = VK_NULL_HANDLE;
+ 
+     vkpic->destroy_image_view = vk->DestroyImageView;
+     vkpic->wait_semaphores = vk->WaitSemaphores;
+--- a/libavcodec/vulkan_h264.c
++++ b/libavcodec/vulkan_h264.c
+@@ -315,7 +315,7 @@ static int vk_h264_create_params(AVCodec
+         .sType = VK_STRUCTURE_TYPE_VIDEO_SESSION_PARAMETERS_CREATE_INFO_KHR,
+         .pNext = &h264_params,
+         .videoSession = ctx->common.session,
+-        .videoSessionParametersTemplate = NULL,
++        .videoSessionParametersTemplate = VK_NULL_HANDLE,
+     };
+ 
+     /* SPS list */
+--- a/libavcodec/vulkan_hevc.c
++++ b/libavcodec/vulkan_hevc.c
+@@ -653,7 +653,7 @@ static int vk_hevc_create_params(AVCodec
+         .sType = VK_STRUCTURE_TYPE_VIDEO_SESSION_PARAMETERS_CREATE_INFO_KHR,
+         .pNext = &h265_params,
+         .videoSession = ctx->common.session,
+-        .videoSessionParametersTemplate = NULL,
++        .videoSessionParametersTemplate = VK_NULL_HANDLE,
+     };
+ 
+     HEVCHeaderSet *hdr;
+--- a/libavcodec/vulkan_video.c
++++ b/libavcodec/vulkan_video.c
+@@ -287,7 +287,7 @@ av_cold void ff_vk_video_common_uninit(F
+     if (common->session) {
+         vk->DestroyVideoSessionKHR(s->hwctx->act_dev, common->session,
+                                    s->hwctx->alloc);
+-        common->session = NULL;
++        common->session = VK_NULL_HANDLE;
+     }
+ 
+     if (common->nb_mem && common->mem)

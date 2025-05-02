@@ -1,0 +1,16 @@
+--- a/main.c
++++ b/main.c
+@@ -965,8 +965,13 @@ int main(int argc,char **argv)
+                 }
+                 else if (strncmp("show-mime-types",option+1,9) == 0)
+                 {
++#ifdef HAVE_OPENSSL
+                     show_mime_types();
+                     rc = 0;
++#else
++                    (void) fprintf(stderr,"Error: '-show-mime-types' not available, not compiled with OpenSSL\n");
++                    rc = 1;
++#endif
+                     goto ExitProcessing;
+                 }
+ 
