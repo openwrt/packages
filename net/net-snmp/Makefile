@@ -75,7 +75,7 @@ endef
 
 define Package/libnetsnmp-nossl
 $(call Package/libnetsnmp/Default)
-  TITLE:=Open source SNMP implementation (libraries) - without Openssl
+  TITLE:=Open source SNMP libraries - without Openssl
   PROVIDES:=libnetsnmp
   VARIANT:=nossl
 endef
@@ -83,7 +83,7 @@ endef
 define Package/libnetsnmp-ssl
 $(call Package/libnetsnmp/Default)
   DEPENDS+=+libopenssl
-  TITLE:=Open source SNMP implementation (libraries) - with Openssl
+  TITLE:=Open source SNMP libraries - with Openssl
   VARIANT:=ssl
   CONFLICTS:=libnetsnmp-nossl
 endef
@@ -103,7 +103,7 @@ endef
 
 define Package/snmp-mibs
 $(call Package/net-snmp/Default)
-  TITLE:=Open source SNMP implementation (MIB-files)
+  TITLE:=Open source SNMP MIB-files
 endef
 
 
@@ -116,7 +116,7 @@ endef
 
 define Package/snmp-utils-ssl
 $(call Package/net-snmp/Default)
-  TITLE:=Open source SNMP implementation (utilities) - with Openssl
+  TITLE:=Open source SNMP utilities - with Openssl
   DEPENDS:=+libnetsnmp-ssl
   VARIANT:=ssl
   PROVIDES:=snmp-utils
@@ -126,7 +126,7 @@ endef
 
 define Package/snmp-utils-nossl
 $(call Package/net-snmp/Default)
-  TITLE:=Open source SNMP implementation (utilities) - without Openssl
+  TITLE:=Open source SNMP utilities - without Openssl
   DEPENDS:=+libnetsnmp-nossl
   VARIANT:=nossl
   PROVIDES:=snmp-utils
@@ -151,7 +151,7 @@ Package/snmp-utils-ssl/description = $(Package/snmp-utils/description/Default)
 
 define Package/snmpd-nossl
 $(call Package/net-snmp/Default)
-  TITLE:=Open source SNMP implementation (daemon)
+  TITLE:=Open source SNMP daemon
   DEPENDS:=+libnetsnmp-nossl
   VARIANT:=nossl
   PROVIDES:=snmpd
@@ -168,7 +168,7 @@ define Package/snmpd-ssl
 $(call Package/net-snmp/Default)
   DEPENDS:=+libnetsnmp-ssl
   VARIANT:=ssl
-  TITLE:=Open source SNMP implementation (daemon) with Openssl encryption
+  TITLE:=Open source SNMP daemon with Openssl
   CONFLICTS:=snmpd-nossl
 endef
 
@@ -178,7 +178,7 @@ Package/snmpd-ssl/description = $(Package/snmpd-nossl/description)
 
 define Package/snmpd-static-nossl
 $(call Package/net-snmp/Default)
-  TITLE:=Open source SNMP implementation (daemon) - without openssl
+  TITLE:=Open source SNMP daemon - without Openssl
   VARIANT:=nossl
   DEPENDS:=+snmpd-nossl
   BUILDONLY:=1
@@ -188,7 +188,7 @@ endef
 
 define Package/snmpd-static-ssl
 $(call Package/net-snmp/Default)
-  TITLE:=Open source SNMP implementation (daemon) - with openssl
+  TITLE:=Open source SNMP daemon - with Openssl
   VARIANT:=ssl
   DEPENDS:=+snmpd-ssl
   BUILDONLY:=1
@@ -199,7 +199,7 @@ endef
 
 define Package/snmptrapd-nossl
 $(call Package/net-snmp/Default)
-  TITLE:=Open source SNMP implementation (notification receiver) - without Openssl
+  TITLE:=Open source SNMP notification receiver - without Openssl
   DEPENDS:=+libnetsnmp-nossl
   VARIANT:=nossl
   PROVIDES:=snmptrapd
@@ -208,7 +208,7 @@ endef
 
 define Package/snmptrapd-ssl
 $(call Package/net-snmp/Default)
-  TITLE:=Open source SNMP implementation (notification receiver) - with Openssl
+  TITLE:=Open source SNMP notification receiver - with Openssl
   DEPENDS:=+libnetsnmp-ssl
   VARIANT:=ssl
   PROVIDES:=snmptrapd
