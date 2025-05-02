@@ -1,0 +1,23 @@
+From 9a670636c0ee7c24b70591d315524e61c709ea5a Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Fri, 2 May 2025 15:15:25 -0700
+Subject: [PATCH] avutil/tx: fix GCC memset warning
+
+The warning is that the whole array is not being cleared.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ libavutil/tx.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/libavutil/tx.c
++++ b/libavutil/tx.c
+@@ -283,7 +283,7 @@ static void reset_ctx(AVTXContext *s, in
+      * ff_tx_init_subtx() call is made. */
+     s->nb_sub = 0;
+     s->opaque = NULL;
+-    memset(s->fn, 0, sizeof(*s->fn));
++    memset(s->fn, 0, sizeof(s->fn));
+ }
+ 
+ void ff_tx_clear_ctx(AVTXContext *s)
