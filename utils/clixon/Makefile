@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=clixon
-PKG_VERSION:=7.1.0
+PKG_VERSION:=7.4.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/clicon/$(PKG_NAME)/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=8245b0b570171646694c66bb414d19deb785f0c866955c860f6e0bb06ff6bed8
+PKG_HASH:=8801625a2fc2572bb0d318227f1d6b04dfe52eae110b4919080a3fc16a9d9636
 PKG_MAINTAINER:=Olof Hagsand <olof@hagsand.se>, Philip Prindeville <philipp@redfish-solutions.com>
 
 PKG_LICENSE:=Apache-2.0
