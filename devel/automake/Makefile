@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=automake
-PKG_VERSION:=1.16.5
+PKG_VERSION:=1.17
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=@GNU/automake
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=f01d58cd6d9d77fbdca9eb4bbd5ead1988228fdb73d6f7a201f5f8d6b118b469
+PKG_HASH:=397767d4db3018dd4440825b60c64258b636eaf6bf99ac8b0897f06c89310acd
 
 PKG_MAINTAINER:=Heinrich Schuchardt <xypron.glpk@gmx.de>
 PKG_LICENSE:=GPL-2.0-or-later
