@@ -49,6 +49,9 @@ start_instance() {
 	procd_set_param command /usr/sbin/autossh ${forwarding} ${ssh}
 	procd_set_param respawn ${respawn_threshold:-3600} ${respawn_timeout:-5} ${respawn_retry:-5}
 	[ -n "$pidfile" ] && procd_set_param pidfile "$pidfile"
+	
+	#dropbear ssh seek the known_hosts file in $HOME/.ssh/known_hosts
+	procd_append_param env "HOME=/root"
 
 	[ -n "$monitorport" ] && procd_append_param env "AUTOSSH_PORT=$monitorport"
 	[ -n "$poll" ] && procd_append_param env "AUTOSSH_POLL=$poll"
