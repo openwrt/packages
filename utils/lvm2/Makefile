@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=LVM2
 PKG_VERSION:=2.03.31
 PKG_VERSION_DM:=1.02.205
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME).$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=https://sourceware.org/pub/lvm2 \
@@ -68,7 +68,7 @@ define Package/lvm2/default
   SUBMENU:=Disc
   TITLE:=The Linux Logical Volume Manager
   URL:=https://sourceware.org/lvm2/
-  DEPENDS:=+libreadline +libncurses +libaio +libnvme
+  DEPENDS:=+libreadline +libncurses +libaio
 endef
 
 define Package/lvm2
@@ -103,6 +103,7 @@ CONFIGURE_ARGS += \
 	--with-default-dm-run-dir=/var/run \
 	--with-default-run-dir=/var/run/lvm \
 	--with-default-locking-dir=/var/lock/lvm \
+	--without-libnvme \
 	--$(if $(findstring selinux,$(BUILD_VARIANT)),en,dis)able-selinux
 
 ifneq ($(shell /bin/sh -c "echo -n 'X'"),X)
