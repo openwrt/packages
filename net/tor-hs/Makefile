@@ -8,10 +8,10 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tor-hs
-PKG_VERSION:=0.0.1
-PKG_RELEASE:=3
+PKG_VERSION:=0.1.0
+PKG_RELEASE:=1
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
+PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>, Sergey Ponomarev <stokito@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
 
 include $(INCLUDE_DIR)/package.mk
@@ -20,16 +20,18 @@ define Package/tor-hs
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=IP Addresses and Names
-  TITLE:=Tor hidden service configurator
+  TITLE:=Tor onion service configurator
   DEPENDS:=+tor +rpcd
 endef
 
 define Package/tor-hs/description
-  Tor Hidden Service configurator
+  Tor Onion (Hidden) Service configurator.
+  See documentation https://openwrt.org/docs/guide-user/services/tor/hs
 endef
 
 define Package/tor-hs/conffiles
 /etc/config/tor-hs
+/etc/tor
 endef
 
 define Build/Compile
