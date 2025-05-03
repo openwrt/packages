@@ -31,7 +31,7 @@ adb_tmpbase="/tmp"
 adb_finaldir=""
 adb_backupdir="/tmp/adblock-backup"
 adb_reportdir="/tmp/adblock-report"
-adb_jaildir=""
+adb_jaildir="/tmp"
 adb_pidfile="/var/run/adblock.pid"
 adb_allowlist="/etc/adblock/adblock.allowlist"
 adb_blocklist="/etc/adblock/adblock.blocklist"
@@ -50,7 +50,7 @@ adb_repchunkcnt="5"
 adb_repchunksize="1"
 adb_represolve="0"
 adb_lookupdomain="localhost"
-adb_action="${1:-"start"}"
+adb_action="${1}"
 adb_packages=""
 adb_cnt=""
 
@@ -202,35 +202,35 @@ f_char() {
 # load dns backend config
 #
 f_dns() {
-	local util utils dns_section dns_info mem_free dir
+	local dns dns_list dns_section dns_info free_mem dir
 
-	mem_free="$("${adb_awkcmd}" '/^MemAvailable/{printf "%s",int($2/1000)}' "/proc/meminfo" 2>/dev/null)"
-	if [ "${adb_action}" = "start" ] && [ -z "${adb_trigger}" ]; then
-		sleep ${adb_triggerdelay}
+	free_mem="$("${adb_awkcmd}" '/^MemAvailable/{printf "%s",int($2/1000)}' "/proc/meminfo" 2>/dev/null)"
+	if [ "${adb_action}" = "boot" ] && [ -z "${adb_trigger}" ]; then
+		sleep ${adb_triggerdelay:-"5"}
 	fi
 
 	if [ -z "${adb_dns}" ]; then
-		utils="knot-resolver bind-server unbound-daemon smartdns dnsmasq-full dnsmasq-dhcpv6 dnsmasq"
-		for util in ${utils}; do
-			if printf "%s" "${adb_packages}" | "${adb_jsoncmd}" -ql1 -e "@.packages[\"${util}\"]" >/dev/null 2>&1; then
-				case "${util}" in
+		dns_list="knot-resolver bind-server unbound-daemon smartdns dnsmasq-full dnsmasq-dhcpv6 dnsmasq"
+		for dns in ${dns_list}; do
+			if printf "%s" "${adb_packages}" | "${adb_jsoncmd}" -ql1 -e "@.packages[\"${dns}\"]" >/dev/null 2>&1; then
+				case "${dns}" in
 					"knot-resolver")
-						util="kresd"
+						dns="kresd"
 						;;
 					"bind-server")
-						util="named"
+						dns="named"
 						;;
 					"unbound-daemon")
-						util="unbound"
+						dns="unbound"
 						;;
 					"dnsmasq-full" | "dnsmasq-dhcpv6")
-						util="dnsmasq"
+						dns="dnsmasq"
 						;;
 				esac
 
-				if [ -x "$(command -v "${util}")" ]; then
-					adb_dns="${util}"
-					uci_set adblock global adb_dns "${util}"
+				if [ -x "$(command -v "${dns}")" ]; then
+					adb_dns="${dns}"
+					uci_set adblock global adb_dns "${dns}"
 					f_uci "adblock"
 					break
 				fi
@@ -332,7 +332,7 @@ f_dns() {
 		for dir in "${adb_dnsdir:-"/tmp"}" "${adb_backupdir:-"/tmp"}" "${adb_jaildir:-"/tmp"}"; do
 			[ ! -d "${dir}" ] && mkdir -p "${dir}"
 		done
-		if [ "${adb_dnsflush}" = "1" ] || [ "${mem_free}" -lt "64" ]; then
+		if [ "${adb_dnsflush}" = "1" ] || [ "${free_mem}" -lt "64" ]; then
 			printf "%b" "${adb_dnsheader}" >"${adb_finaldir}/${adb_dnsfile}"
 			f_dnsup
 		elif [ ! -f "${adb_finaldir}/${adb_dnsfile}" ]; then
@@ -346,26 +346,26 @@ f_dns() {
 # load fetch utility
 #
 f_fetch() {
-	local util utils insecure update="0"
+	local fetch fetch_list insecure update="0"
 
 	adb_fetchcmd="$(command -v "${adb_fetchcmd}")"
 	if [ ! -x "${adb_fetchcmd}" ]; then
-		utils="curl wget-ssl libustream-openssl libustream-wolfssl libustream-mbedtls"
-		for util in ${utils}; do
-			if printf "%s" "${adb_packages}" | "${adb_jsoncmd}" -ql1 -e "@.packages[\"${util}\"]" >/dev/null 2>&1; then
-				case "${util}" in
+		fetch_list="curl wget-ssl libustream-openssl libustream-wolfssl libustream-mbedtls"
+		for fetch in ${fetch_list}; do
+			if printf "%s" "${adb_packages}" | "${adb_jsoncmd}" -ql1 -e "@.packages[\"${fetch}\"]" >/dev/null 2>&1; then
+				case "${fetch}" in
 					"wget-ssl")
-						util="wget"
+						fetch="wget"
 						;;
 					"libustream-openssl" | "libustream-wolfssl" | "libustream-mbedtls")
-						util="uclient-fetch"
+						fetch="uclient-fetch"
 						;;
 				esac
 
-				if [ -x "$(command -v "${util}")" ]; then
+				if [ -x "$(command -v "${fetch}")" ]; then
 					update="1"
-					adb_fetchcmd="$(command -v "${util}")"
-					uci_set adblock global adb_fetchcmd "${util}"
+					adb_fetchcmd="$(command -v "${fetch}")"
+					uci_set adblock global adb_fetchcmd "${fetch}"
 					f_uci "adblock"
 					break
 				fi
@@ -709,10 +709,9 @@ f_list() {
 						out_rc="${?}"
 						eval "${adb_dnsallow}" "${adb_tmpdir}/tmp.raw.${src_name}" >"${adb_tmpdir}/tmp.add.${src_name}"
 						if [ "${adb_jail}" = "1" ] && [ "${adb_dnsstop}" != "0" ]; then
-							rm -f "${adb_jaildir}/${adb_dnsjail}"
-							[ -n "${adb_dnsheader}" ] && printf "%b" "${adb_dnsheader}" >>"${adb_jaildir}/${adb_dnsjail}"
-							"${adb_catcmd}" "${adb_tmpdir}/tmp.add.${src_name}" >>"${adb_jaildir}/${adb_dnsjail}"
-							printf "%b\n" "${adb_dnsstop}" >>"${adb_jaildir}/${adb_dnsjail}"
+							printf "%b" "${adb_dnsheader}" >"${adb_tmpdir}/${adb_dnsjail}"
+							"${adb_catcmd}" "${adb_tmpdir}/tmp.add.${src_name}" >>"${adb_tmpdir}/${adb_dnsjail}"
+							printf "%b\n" "${adb_dnsstop}" >>"${adb_tmpdir}/${adb_dnsjail}"
 						fi
 					fi
 					;;
@@ -793,7 +792,7 @@ f_list() {
 				out_rc="${?}"
 				if [ "${out_rc}" = "0" ] && [ -s "${src_tmpfile}" ]; then
 					f_list backup
-				elif [ "${adb_action}" != "start" ]; then
+				elif [ "${adb_action}" != "boot" ] && [ "${adb_action}" != "start" ]; then
 					f_log "info" "preparation of '${src_name}' failed, rc: ${src_rc}"
 					f_list restore
 					out_rc="${?}"
@@ -801,7 +800,7 @@ f_list() {
 				fi
 			else
 				f_log "info" "download of '${src_name}' failed, url: ${src_url}, rule: ${src_rset:-"-"}, categories: ${src_cat:-"-"}, rc: ${src_rc}"
-				if [ "${adb_action}" != "start" ]; then
+				if [ "${adb_action}" != "boot" ] && [ "${adb_action}" != "start" ]; then
 					f_list restore
 					out_rc="${?}"
 				fi
@@ -830,7 +829,8 @@ f_list() {
 			else
 				out_rc=4
 			fi
-			if [ "${adb_action}" != "start" ] && [ "${adb_action}" != "restart" ] && [ "${adb_action}" != "resume" ] && [ -n "${src_name}" ] && [ "${out_rc}" != "0" ]; then
+			if [ "${adb_action}" != "boot" ] && [ "${adb_action}" != "start" ] && [ "${adb_action}" != "restart" ] &&
+				[ "${adb_action}" != "resume" ] && [ -n "${src_name}" ] && [ "${out_rc}" != "0" ]; then
 				adb_feed="${adb_feed/${src_name}}"
 			fi
 			;;
@@ -1026,16 +1026,31 @@ f_query() {
 # update runtime information
 #
 f_jsnup() {
-	local pids object feeds end_time runtime utils mem_dns mem_free status="${1:-"enabled"}"
+	local pids object feeds end_time runtime utils dns dns_ver dns_mem free_mem status="${1:-"enabled"}"
 
 	if [ -n "${adb_dnspid}" ]; then
 		pids="$("${adb_pgrepcmd}" -P "${adb_dnspid}" 2>/dev/null)"
 		for pid in ${adb_dnspid} ${pids}; do
-			mem_dns="$((mem_dns + $("${adb_awkcmd}" '/^VmSize/{printf "%s", $2}' "/proc/${pid}/status" 2>/dev/null)))"
+			dns_mem="$((dns_mem + $("${adb_awkcmd}" '/^VmSize/{printf "%s", $2}' "/proc/${pid}/status" 2>/dev/null)))"
 		done
-		mem_dns="$("${adb_awkcmd}" -v mem="${mem_dns}" 'BEGIN{printf "%.2f", mem/1024}' 2>/dev/null)"
+		case "${adb_dns}" in
+			"kresd")
+				dns="knot-resolver"
+				;;
+			"named")
+				dns="bind-server"
+				;;
+			"unbound")
+				dns="unbound-daemon"
+				;;
+			"dnsmasq")
+				dns="dnsmasq\", \"dnsmasq-full\", \"dnsmasq-dhcpv6"
+				;;
+		esac
+		dns_ver="$(printf "%s" "${adb_packages}" | "${adb_jsoncmd}" -ql1 -e "@.packages[\"${dns:-"${adb_dns}"}\"]")"
+		dns_mem="$("${adb_awkcmd}" -v mem="${dns_mem}" 'BEGIN{printf "%.2f", mem/1024}' 2>/dev/null)"
 	fi
-	mem_free="$("${adb_awkcmd}" '/^MemAvailable/{printf "%.2f", $2/1024}' "/proc/meminfo" 2>/dev/null)"
+	free_mem="$("${adb_awkcmd}" '/^MemAvailable/{printf "%.2f", $2/1024}' "/proc/meminfo" 2>/dev/null)"
 	adb_cnt="$("${adb_awkcmd}" -v cnt="${adb_cnt}" 'BEGIN{res="";pos=0;for(i=length(cnt);i>0;i--){res=substr(cnt,i,1)res;pos++;if(pos==3&&i>1){res=" "res;pos=0;}}; printf"%s",res}')"
 
 	case "${status}" in
@@ -1044,10 +1059,7 @@ f_jsnup() {
 				end_time="$(date "+%s")"
 				duration="$(((end_time - adb_starttime) / 60))m $(((end_time - adb_starttime) % 60))s"
 			fi
-			runtime="mode: ${adb_action}, $(date -Iseconds), duration: ${duration:-"-"}, ${mem_free:-0} MB available"
-			;;
-		"error"|"stopped")
-			adb_cnt="0"
+			runtime="mode: ${adb_action}, $(date -Iseconds), duration: ${duration:-"-"}, ${free_mem:-0} MB available"
 			;;
 		"resume")
 			status="enabled"
@@ -1055,6 +1067,9 @@ f_jsnup() {
 		"suspend")
 			adb_cnt="0"
 			status="paused"
+			;;
+		*)
+			adb_cnt="0"
 			;;
 	esac
 
@@ -1083,10 +1098,10 @@ f_jsnup() {
 		json_add_string "${object}" "${object}"
 	done
 	json_close_array
-	json_add_string "dns_backend" "${adb_dns:-"-"} (${adb_dnscachecmd##*/}), ${adb_finaldir:-"-"}, ${mem_dns:-"0"} MB"
+	json_add_string "dns_backend" "${adb_dns:-"-"} (${dns_ver:-"-"}), ${adb_finaldir:-"-"}, ${dns_mem:-"0"} MB"
 	json_add_string "run_utils" "${utils:-"-"}"
 	json_add_string "run_ifaces" "trigger: ${adb_trigger:-"-"}, report: ${adb_repiface:-"-"}"
-	json_add_string "run_directories" "base: ${adb_tmpbase}, backup: ${adb_backupdir}, report: ${adb_reportdir}, jail: ${adb_jaildir:-"-"}"
+	json_add_string "run_directories" "base: ${adb_tmpbase}, dns: ${adb_dnsdir}, backup: ${adb_backupdir}, report: ${adb_reportdir}, jail: ${adb_jaildir:-"-"}"
 	json_add_string "run_flags" "shift: $(f_char ${adb_dnsshift}), force: $(f_char ${adb_dnsforce}), flush: $(f_char ${adb_dnsflush}), tld: $(f_char ${adb_tld}), search: $(f_char ${adb_safesearch}), report: $(f_char ${adb_report}), mail: $(f_char ${adb_mail}), jail: $(f_char ${adb_jail})"
 	json_add_string "last_run" "${runtime:-"-"}"
 	json_add_string "system_info" "${adb_sysver}"
@@ -1130,22 +1145,32 @@ f_main() {
 	done
 	wait
 
-	if [ "${adb_dns}" != "raw" ] && [ "${adb_jail}" = "1" ] && [ "${adb_jaildir}" = "${adb_dnsdir}" ]; then
-		printf "%b" "${adb_dnsheader}" >"${adb_finaldir}/${adb_dnsfile}"
-		chown "${adb_dnsuser}" "${adb_jaildir}/${adb_dnsjail}" 2>/dev/null
-		if f_dnsup; then
-			if [ "${adb_action}" != "resume" ]; then
-				f_jsnup "enabled"
+	# jail mode preparation
+	#
+	if [ "${adb_jail}" = "1" ] && [ "${adb_dnsstop}" != "0" ]; then
+		if [ "${adb_jaildir}" = "${adb_dnsdir}" ]; then
+			"${adb_catcmd}" "${adb_tmpdir}/${adb_dnsjail}" >"${adb_finaldir}/${adb_dnsfile}"
+			chown "${adb_dnsuser}" "${adb_finaldir}/${adb_dnsfile}" 2>/dev/null
+			if [ "${adb_dnsshift}" = "1" ] && [ ! -L "${adb_dnsdir}/${adb_dnsfile}" ]; then
+				ln -fs "${adb_finaldir}/${adb_dnsfile}" "${adb_dnsdir}/${adb_dnsfile}"
+			elif [ "${adb_dnsshift}" = "0" ] && [ -s "${adb_backupdir}/${adb_dnsfile}" ]; then
+				rm -f "${adb_backupdir}/${adb_dnsfile}"
 			fi
-			f_log "info" "restrictive jail mode enabled successfully (${adb_sysver})"
+			if f_dnsup; then
+				if [ "${adb_action}" != "resume" ]; then
+					f_jsnup "enabled"
+				fi
+				f_log "info" "restrictive jail mode enabled successfully (${adb_sysver})"
+			else
+				f_log "err" "dns backend restart in jail mode failed"
+			fi
+			f_rmtemp
+			return
 		else
-			f_log "err" "dns backend restart in jail mode failed"
+			"${adb_catcmd}" "${adb_tmpdir}/${adb_dnsjail}" >"${adb_jaildir}/${adb_dnsjail}"
+			chown "${adb_dnsuser}" "${adb_jaildir}/${adb_dnsjail}" 2>/dev/null
+			f_log "info" "additional restrictive jail blocklist placed in ${adb_jaildir}"
 		fi
-		f_rmtemp
-		return
-	elif [ -f "${adb_finaldir}/${adb_dnsjail}" ]; then
-		rm -f "${adb_finaldir}/${adb_dnsjail}"
-		f_dnsup
 	fi
 
 	# safe search preparation
@@ -1510,7 +1535,7 @@ case "${adb_action}" in
 	"query")
 		f_query "${2}"
 		;;
-	"start" | "reload")
+	"boot" | "start" | "reload")
 		f_env
 		f_main
 		;;
