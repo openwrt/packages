@@ -25,11 +25,11 @@ local line_vars = {
 	},
 	{
 		name = "satn",
-		type = "snr"
+		type = "gauge"
 	},
 	{
 		name = "latn",
-		type = "snr"
+		type = "gauge"
 	},
 	{
 		name = "attndr",
@@ -59,11 +59,27 @@ local errors = {
 		type = "errors"
 	},
 	{
+		name = "rx_uncorrected_protected",
+		type = "errors"
+	},
+	{
 		name = "rx_retransmitted",
 		type = "errors"
 	},
 	{
+		name = "rx_corrected",
+		type = "errors"
+	},
+	{
 		name = "tx_retransmitted",
+		type = "errors"
+	},
+	{
+		name = "crc_p",
+		type = "errors"
+	},
+	{
+		name = "crcp_p",
 		type = "errors"
 	}
 }
@@ -105,11 +121,13 @@ end
 local function get_values(hostname, variables, metrics, direction)
 	for _, information in pairs(variables) do
 		local name = information["name"]
+		local type = information["type"]
 
 		if metrics and metrics[name] ~= nil then
 			local value = metrics[name]
+
 			local metric = build_metric(name, direction)
-			if information["type"] == "bool" then
+			if type == "bool" then
 				if metrics[name] == true then
 					value = 1
 				else
@@ -120,7 +138,7 @@ local function get_values(hostname, variables, metrics, direction)
 			local t = {
 				host = host,
 				plugin = 'dsl',
-				type = information["type"],
+				type = type,
 				type_instance = metric,
 				values = {value}
 			}
