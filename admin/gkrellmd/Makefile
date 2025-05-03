@@ -26,7 +26,7 @@ include $(INCLUDE_DIR)/nls.mk
 define Package/gkrellmd
   SECTION:=admin
   CATEGORY:=Administration
-  DEPENDS:=+glib2
+  DEPENDS:=+glib2-core +glib2-gmodule +glib2-gthread
   TITLE:=The GNU Krell Monitors Server
   URL:=http://gkrellm.net/
 endef
