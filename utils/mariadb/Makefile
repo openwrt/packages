@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
-PKG_VERSION:=11.4.4
-PKG_RELEASE:=2
+PKG_VERSION:=11.4.7
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL := https://archive.mariadb.org/$(PKG_NAME)-$(PKG_VERSION)/source
 
-PKG_HASH:=96fbd2e6e93fb7e8b373eea75d85b6fea57c0e111a02090cbbefed52599dc77b
+PKG_HASH:=bf20687ca12fa7efda8df89cab1f2a661288cea41acf8f53189b69d5294347d0
 PKG_MAINTAINER:=Michal Hrusecky <Michal@Hrusecky.net>
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING THIRDPARTY
@@ -307,15 +307,6 @@ endef
 # We won't need unit tests
 CMAKE_OPTIONS += -DWITH_UNIT_TESTS=0
 
-# This value is determined automatically during straight compile by compiling
-# and running a test code. You cannot do that during cross-compile. However the
-# stack grows downward in most if not all modern systems. The only exception
-# according to buildroot is PA-RISC which is not supported by OpenWrt as far as
-# I know. Therefore it makes sense to hardcode the value. If an arch is added
-# the stack of which grows up one should expect unpredictable behavior at run
-# time.
-CMAKE_OPTIONS += -DSTACK_DIRECTION=-1
-
 # Make it explicit that we are cross-compiling
 CMAKE_OPTIONS += -DCMAKE_CROSSCOMPILING=1
 
@@ -337,6 +328,7 @@ CMAKE_OPTIONS += -DWITHOUT_SERVER=OFF -DPLUGIN_AUTH_SOCKET=STATIC
 endif
 
 CMAKE_OPTIONS += \
+	-DCMAKE_DISABLE_FIND_PACKAGE_URING=$(if $(CONFIG_KERNEL_IO_URING),OFF,ON) \
 	-DCONNECT_WITH_JDBC=NO \
 	-DCONNECT_WITH_LIBXML2=system \
 	-DCONNECT_WITH_MONGO=NO \
@@ -361,10 +353,11 @@ CMAKE_OPTIONS += \
 	-DINSTALL_SQLBENCHDIR="" \
 	-DINSTALL_SUPPORTFILESDIR=share/mariadb \
 	-DINSTALL_UNIX_ADDRDIR=$(MARIADB_SOCKET) \
+	-DHOSTNAME="uci get system.@system[0].hostname" \
 	-DMYSQL_DATADIR=/srv/mysql \
 	-DMYSQL_UNIX_ADDR=$(MARIADB_SOCKET) \
+	-DSEMODULE_PACKAGE_EXECUTABLE=NOT-FOUND \
 	-DSKIP_TESTS=ON \
-	-DWITH_DEBUG=OFF \
 	-DWITH_EMBEDDED_SERVER=OFF \
 	-DWITH_INNODB_BZIP2=OFF \
 	-DWITH_INNODB_LZ4=OFF \
