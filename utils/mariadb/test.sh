@@ -1,7 +1,6 @@
 #!/bin/sh
 
 # shellcheck disable=SC1090
-. "$CI_HELPER"
 
 check_version() {
 	bin="$1"
@@ -10,12 +9,14 @@ check_version() {
 
 	if [ -x "$bin" ]; then
 		if "$bin" --version | grep " $ver-MariaDB"; then
-			success "MariaDB $com is in version $2"
+			echo "MariaDB $com is in version $2"
 		else
-			err_die "MariaDB $com seems to be in wrong version"
+			echo "MariaDB $com seems to be in wrong version"
+			exit 1
 		fi
 	else
-		err_die "Can't find $com server binary"
+		echo "Can't find $com server binary"
+		exit 1
 	fi
 }
 

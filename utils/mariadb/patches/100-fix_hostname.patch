@@ -1,11 +1,48 @@
---- a/scripts/mysql_install_db.sh
-+++ b/scripts/mysql_install_db.sh
-@@ -431,7 +431,7 @@ fi
+From 31e842be99ef85346d334975c18e13666ff2d63d Mon Sep 17 00:00:00 2001
+From: Daniel Black <daniel@mariadb.org>
+Date: Wed, 15 Jan 2025 09:18:12 +1100
+Subject: [PATCH] MDEV-35850 make HOSTNAME a cmake configure variable
+
+As seen with openwrt and some other distros, the
+determination of hostname can sometime need alternate
+commmands.
+
+This provides a cmake option HOSTNAME for non-windows machines
+for the mariadb-install-db and mariadbd-safe scripts
+and the support-files init scripts..
+---
+ CMakeLists.txt               | 1 +
+ scripts/CMakeLists.txt       | 1 -
+ support-files/CMakeLists.txt | 1 -
+ 3 files changed, 1 insertion(+), 2 deletions(-)
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -379,6 +379,7 @@ IF(WIN32)
+ ELSE()
+   SET(DEFAULT_MYSQL_HOME ${CMAKE_INSTALL_PREFIX})
+   SET(SHAREDIR ${INSTALL_MYSQLSHAREDIRABS})
++  SET(HOSTNAME "uname -n" CACHE STRING "Command for determining hostname")
+ ENDIF()
  
+ SET(DEFAULT_BASEDIR "${DEFAULT_MYSQL_HOME}")
+--- a/scripts/CMakeLists.txt
++++ b/scripts/CMakeLists.txt
+@@ -177,7 +177,6 @@ ELSE()
+   SET(CHECK_PID "kill -s SIGCONT $PID  > /dev/null 2> /dev/null")
+ ENDIF()
  
- # Try to determine the hostname
--hostname=`@HOSTNAME@`
-+hostname=`cat /proc/sys/kernel/hostname`
+-SET(HOSTNAME "uname -n")
+ SET(MYSQLD_USER "mysql")
+ SET(MYSQLD_GROUP "mysql")
+ ENDIF(UNIX)
+--- a/support-files/CMakeLists.txt
++++ b/support-files/CMakeLists.txt
+@@ -31,7 +31,6 @@ ELSE()
+   SET(MYSQLD_USER "mysql")
+   SET(MYSQLD_GROUP "mysql")
+   SET(ini_file_extension "cnf")
+-  SET(HOSTNAME "uname -n")
  
- # Check if hostname is valid
- if test "$do_resolve" -eq 1
+   # Define directly here, as cmake/install_layout.cmake has no LOGDIR to be inherited
+   SET(su_user "su mysql mysql")
