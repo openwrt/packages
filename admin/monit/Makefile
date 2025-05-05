@@ -8,20 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=monit
-PKG_VERSION:=5.34.0
+PKG_VERSION:=5.34.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://bitbucket.org/tildeslash/monit/downloads/
-PKG_HASH:=37f514cd8973bbce104cb8517ff3fc504052a083703eee0d0e873db26b919820
+PKG_HASH:=669d8b95ddec124d1444ba5264f67fdeae8e90e53b2929719f4750fc5ff3ba60
 
 PKG_MAINTAINER:=Yaroslav Petrov <info@lank.me>
 PKG_LICENSE:=AGPL-3.0
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:tildeslash:monit
-
-PKG_INSTALL:=1
-PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -93,7 +90,7 @@ define Package/monit/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/monit.init $(1)/etc/init.d/monit
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/monit $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/monit $(1)/usr/bin/
 endef
 
 Package/monit-nossl/conffiles = $(Package/monit/conffiles)
