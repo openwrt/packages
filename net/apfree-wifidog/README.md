@@ -3,9 +3,9 @@
 
 [![license][1]][2]
 [![PRs Welcome][3]][4]
-[![Issue Welcome][5]][6]
+[![Issues Welcome][5]][6]
 [![Release Version][7]][8]
-[![OpenWRT][11]][12]
+[![OpenWrt][11]][12]
 [![Join the QQ Group][15]][16]
 
 
@@ -17,7 +17,7 @@
 [6]: https://github.com/liudf0716/apfree_wifidog/issues/new
 [7]: https://img.shields.io/badge/release-3.11.1716-red.svg?style=plastic
 [8]: https://github.com/liudf0716/apfree_wifidog/releases
-[11]: https://img.shields.io/badge/Platform-%20OpenWRT%7C%20LEDE%20-brightgreen.svg?style=plastic
+[11]: https://img.shields.io/badge/Platform-%20OpenWrt%7C%20LEDE%20-brightgreen.svg?style=plastic
 [12]: https://github.com/KunTengRom/kunteng-lede-17.01.4
 [13]: https://img.shields.io/badge/KunTeng-Inside-blue.svg?style=plastic
 [14]: https://www.kunteng.org.cn
@@ -26,7 +26,7 @@
 
 ## ApFree WiFiDog: A high performance captive portal solution for HTTP(s)
 
-ApFree WiFiDog is a high performance captive portal solution for HTTP(s), which mainly used in ([LEDE](https://github.com/lede-project/source)&[Openwrt](https://github.com/openwrt/openwrt)) platform. 
+ApFree WiFiDog is a high performance captive portal solution for HTTP(s), which mainly used in ([LEDE](https://github.com/lede-project/source) & [OpenWrt](https://github.com/openwrt/openwrt)) platform. 
 
 
 **[中文介绍](https://github.com/liudf0716/apfree_wifidog/blob/master/README_ZH.md)**
@@ -37,7 +37,7 @@ In fact, the title should be why we choose apfree-wifidog, the reason was the fo
 
 >  Stable
 
-apfree-wifidog was widely used in tens of thousands device, which were running in business scene. In order to improve its stable, we rewrite all iptables rule by api instead of fork call, which will easily cause deadlock in multithread-fork running environment. we also re-write the code and replace libhttpd (which unmaitained for years) with libevent
+apfree-wifidog was widely used in tens of thousands device, which were running in business scene. In order to improve its stable, we rewrite all iptables rule by api instead of fork call, which will easily cause deadlock in multithread-fork running environment. we also re-write the code and replace libhttpd (which is unmaintained for years) with libevent
 
 > Performance
 
@@ -54,9 +54,9 @@ apfree-wifidog support mac temporary-pass, ip,domain,pan-domain,white-mac,black-
 
 > MQTT support
 
-by enable mqtt support, u can remotely deliver such as trusted ip, domian and pan-domain rules to apfree wifidog 
+by enable mqtt support, u can remotely deliver such as trusted ip, domain and pan-domain rules to apfree wifidog 
 
-> Compitable with wifidog protocol
+> Compilable with wifidog protocol
 
 u don't need to modify your wifidog authentication server to adapt apfree-wifidog; if u have pression on server-side, apfree wifidog's improved protocol can greatly relieve it, which disabled by default
 
@@ -91,7 +91,7 @@ config wifidog
 
 ### How to support https redirect
 
-In order to support https redirect, apfree-wifidog need x509 pem cert and private key, u can generate youself like this:
+In order to support https redirect, apfree-wifidog need x509 pem cert and private key, u can generate yourself like this:
 
 ```
 PX5G_BIN="/usr/sbin/px5g"
