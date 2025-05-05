@@ -23,6 +23,12 @@ write_upstream() {
 	config_get target "$1" target
 	[ -n "$target" ] && target=' "'"$target"'"'
 
+	[ "$type" = "socks4" ] && [ -n "$via" ] && \
+		echo "upstream socks4 $via$target"
+
+	[ "$type" = "socks5" ] && [ -n "$via" ] && \
+		echo "upstream socks5 $via$target"
+
 	[ "$type" = "proxy" ] && [ -n "$via" ] && \
 		echo "upstream http $via$target"
 
