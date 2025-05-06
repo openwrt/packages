@@ -399,6 +399,8 @@ start_service() {
 	config_get_bool snmp_enabled general enabled 1
 	[ "$snmp_enabled" -eq 0 ] && return
 
+	local pid_file="/var/run/snmpd.pid"
+
 	procd_open_instance
 
 	config_foreach snmpd_agent_add agent
@@ -428,7 +430,7 @@ start_service() {
 	append_parm trapsess trapsess trapsess
 	config_foreach snmpd_snmpv3_add v3 general
 
-	procd_set_param command $PROG -f -r
+	procd_set_param command $PROG -f -r -p "$pid_file"
 	procd_append_param command -C -c "$CONFIGFILE"
 	config_foreach snmpd_configure_logging log
 	procd_set_param respawn
