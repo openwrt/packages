@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=abseil-cpp
 PKG_VERSION:=20240722.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/abseil/abseil-cpp/releases/download/$(PKG_VERSION)
@@ -35,16 +35,21 @@ endef
 CMAKE_INSTALL:=1
 
 CMAKE_HOST_OPTIONS += \
-	-DCMAKE_CXX_STANDARD=14 \
+	-DABSL_PROPAGATE_CXX_STD=ON \
 	-DABSL_ENABLE_INSTALL=ON \
 	-DABSL_USE_GOOGLETEST_HEAD=OFF
 
 CMAKE_OPTIONS += \
-	-DCMAKE_CXX_STANDARD=14 \
+	-DABSL_PROPAGATE_CXX_STD=ON \
 	-DABSL_ENABLE_INSTALL=ON \
 	-DABSL_USE_GOOGLETEST_HEAD=OFF
 
 TARGET_CFLAGS += $(FPIC)
+
+define Package/abseil-cpp/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/*.a $(1)/usr/lib/
+endef
 
 define Build/InstallDev
 	$(call Build/InstallDev/cmake,$(1))
