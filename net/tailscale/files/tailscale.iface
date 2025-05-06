@@ -1,0 +1,8 @@
+#!/bin/sh
+
+tailscale_enable="$(uci get tailscale.settings.enabled)"
+
+[ "$ACTION" = ifup -o "$ACTION" = ifupdate ] || exit 0
+[ "$ACTION" = ifupdate -a -z "$IFUPDATE_ADDRESSES" -a -z "$IFUPDATE_DATA" ] && exit 0
+[ "$tailscale_enable" -eq "1" ] || exit 0
+/etc/init.d/tailscale start > /tmp/tailscale.log 2>&1 &
