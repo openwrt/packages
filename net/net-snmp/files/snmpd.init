@@ -5,6 +5,7 @@ START=99
 
 USE_PROCD=1
 PROG="/usr/sbin/snmpd"
+NAME="snmpd"
 
 CONFIGFILE="/var/run/snmpd.conf"
 
@@ -410,6 +411,8 @@ start_service() {
 
 	config_get_bool snmp_enabled general enabled 1
 	[ "$snmp_enabled" -eq 0 ] && return
+
+	local pid_file="/var/run/${NAME}.pid"
 
 	procd_open_instance
 
