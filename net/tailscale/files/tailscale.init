@@ -22,7 +22,7 @@ section_enabled() {
 	[ $enabled -gt 0 ]
 }
 
-tailscale_helper() {
+configure_service() {
 	local cfg="$1"
 	local accept_routes hostname accept_dns advertise_exit_node exit_node advertise_routes disable_snat_subnet_routes subnet_routes access flags login_server authkey std_out std_err
 
@@ -104,7 +104,7 @@ start_instance() {
 	procd_set_param stderr "$std_err"
 	procd_close_instance
 
-	tailscale_helper "$cfg"
+	configure_service "$cfg"
 }
 
 start_service() {
