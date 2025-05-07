@@ -18,6 +18,7 @@ PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:scapy:scapy
+HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=./host-pip-requirements.txt
 
 include ../../lang/python/pypi.mk
 include $(INCLUDE_DIR)/package.mk
