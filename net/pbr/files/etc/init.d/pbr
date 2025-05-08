@@ -178,8 +178,11 @@ pbr_get_gateway6() {
 filter_options() {
 	local opt="$1" values="$2" v _ret
 	for v in $values; do
-		str_contains "$opt" _negative && { is_negation "$v" || continue; }
-		eval "is_$opt" "${v#!}" || continue
+		if str_contains "$opt" '_negative'; then
+			is_negated "$v" || continue
+			opt="${opt/_negative}"
+		fi
+		eval "is_$opt" "${v/\!}" || continue
 		_ret="${_ret:+$_ret }$v"
 	done
 	echo "$_ret"
@@ -230,7 +233,7 @@ is_list() { str_contains "$1" ',' || str_contains "$1" ' '; }
 is_lan() { local d; network_get_device d "$1"; str_contains "$procd_lan_device" "$d"; }
 is_l2tp() { local p; network_get_protocol p "$1"; [ "${p:0:4}" = "l2tp" ]; }
 is_mac_address() { expr "$1" : '[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]$' >/dev/null; }
-is_negation() { [ "${1:0:1}" = '!' ]; }
+is_negated() { [ "${1:0:1}" = '!' ]; }
 is_netifd_table() { grep -q "ip.table.*$1" /etc/config/network; }
 is_netifd_table_interface() { local iface="$1"; [ "$(uci_get 'network' "$iface" 'ip4table')" = "${packageName}_${iface%6}" ]; }
 is_oc() { local p; network_get_protocol p "$1"; [ "${p:0:11}" = "openconnect" ]; }
@@ -605,10 +608,10 @@ load_network() {
 
 	case "$param" in
 		on_boot|on_start)
-			[ -n "$wanIface4" ] && output 2 "Using wan interface (${param}): $wanIface4 $__OK__\n"
-			[ -n "$wanGW4" ] && output 2 "Found wan gateway (${param}): $wanGW4 $__OK__\n"
-			[ -n "$wanIface6" ] && output 2 "Using wan6 interface (${param}): $wanIface6 $__OK__\n"
-			[ -n "$wanGW6" ] && output 2 "Found wan6 gateway (${param}): $wanGW6 $__OK__\n"
+			[ -n "$wanIface4" ] && output 2 "Using uplink${wanIface6:+ IPv4} interface (${param}): $wanIface4 $__OK__\n"
+			[ -n "$wanGW4" ] && output 2 "Found uplink${wanIface6:+ IPv4} gateway (${param}): $wanGW4 $__OK__\n"
+			[ -n "$wanIface6" ] && output 2 "Using uplink IPv6 interface (${param}): $wanIface6 $__OK__\n"
+			[ -n "$wanGW6" ] && output 2 "Found uplink IPv6 gateway (${param}): $wanGW6 $__OK__\n"
 		;;
 	esac
 	wanGW="${wanGW4:-$wanGW6}"
