@@ -83,11 +83,17 @@ define Package/syncthing/description
 endef
 
 define Package/stdiscosrv/description
-  Relay server for syncthing
+  Syncthing relies on a discovery server to find peers on the internet.
+  Anyone can run a discovery server and point Syncthing installations to
+  it. The Syncthing project also maintains a global cluster for public
+  use.
 endef
 
 define Package/strelaysrv/description
-  Relay server for syncthing
+  Syncthing relies on a network of community-contributed relay servers.
+  Anyone can run a relay server, and it will automatically join the relay
+  pool and be available to Syncthing users. The current list of relays can
+  be found at https://relays.syncthing.net/.
 endef
 
 define SyncthingInstall
