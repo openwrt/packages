@@ -32,7 +32,7 @@ config COOVACHILLI_JSONINTERFACE
 
 choice
 	prompt "SSL library"
-	default COOVACHILLI_NOSSL
+	default COOVACHILLI_WOLFSSL
 
 config COOVACHILLI_NOSSL
 	bool "No SSL support"
