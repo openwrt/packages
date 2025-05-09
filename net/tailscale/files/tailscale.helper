@@ -57,10 +57,10 @@ if [ -z "$(uci -q get network.tailscale)" ]; then
 			uci add_list network.ts_lan.ports=$port || revert_exit "Failed to add port $port."
 		done
 	else
-		ts_ip=$(tailscale ip -4)
 		[ -n "$(uci batch <<-EOF 2>&1
 			set network.tailscale.proto='static'
-			set network.tailscale.ipaddr=$ts_ip
+			set network.tailscale.ipaddr=$(tailscale ip -4)
+			add_list network.tailscale.ip6addr=$(tailscale ip -6)
 			set network.tailscale.netmask='255.0.0.0'
 			set network.tailscale.device=$ts0
 		EOF
