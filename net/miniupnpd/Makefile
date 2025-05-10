@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=miniupnpd
-PKG_VERSION:=2.3.7
+PKG_VERSION:=2.3.8
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=https://miniupnp.tuxfamily.org/files
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=fbdd5501039730f04a8420ea2f8f54b7df63f9f04cde2dc67fa7371e80477bbe
+PKG_HASH:=c148ab300fe46a8ebdebd2a488328233c261d8176cfa86f96c4adea7848cb488
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=BSD-3-Clause
@@ -80,7 +80,8 @@ CONFIGURE_ARGS = \
 	--portinuse \
 	--firewall=$(BUILD_VARIANT) \
 	--disable-fork \
-	--regex
+	--regex \
+	--disable-pppconn
 
 TARGET_CFLAGS += $(FPIC)
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
@@ -94,8 +95,10 @@ define Package/miniupnpd/install/Default
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/miniupnpd $(1)/usr/sbin/miniupnpd
 	$(INSTALL_BIN) ./files/miniupnpd.init $(1)/etc/init.d/miniupnpd
+	$(INSTALL_BIN) ./files/upnpd-migration.uci-defaults $(1)/etc/uci-defaults/90-miniupnpd
 	$(INSTALL_CONF) ./files/upnpd.config $(1)/etc/config/upnpd
 	$(INSTALL_DATA) ./files/miniupnpd.hotplug $(1)/etc/hotplug.d/iface/50-miniupnpd
 endef
