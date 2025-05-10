@@ -18,6 +18,7 @@ PKG_MIRROR_HASH:=c62c20215a3d4352ee75bb8b6ae0d661534c4c4e6a5f9622d8d2306a9c15be3
 
 PKG_MAINTAINER:=Matthias Schiffer <mschiffer@universe-factory.net>
 PKG_LICENSE_FILES:=COPYRIGHT
+PKG_CPE_ID:=cpe:/a:ecdsautils_project:ecdsautils
 
 CMAKE_INSTALL:=1
 
