@@ -75,10 +75,11 @@ define Package/sqlite3-cli
   SECTION:=utils
   CATEGORY:=Utilities
   DEPENDS := \
-	  +libsqlite3 \
-	  +SQLITE3_LIBEDIT:libedit \
-	  +SQLITE3_READLINE:libreadline \
-	  +SQLITE3_READLINE:libncursesw
+    +libsqlite3 \
+    +SQLITE3_LIBEDIT:libedit \
+    +SQLITE3_READLINE:libreadline \
+    +SQLITE3_READLINE:libncursesw
+  EXTRA_DEPENDS:=libsqlite3 (=$(PKG_VERSION)-r$(PKG_RELEASE))
   TITLE+= (cli)
 endef
 
