@@ -1,0 +1,147 @@
+#!/bin/sh
+
+# Copyright (C) 2025 asvow
+# SPDX-License-Identifier: GPL-3.0-only
+
+# Error handling function
+revert_exit() {
+	logger -p daemon.err -t tailscale_helper "$(date '+%Y/%m/%d %H:%M:%S') $1"
+	uci revert dhcp && uci revert network && uci revert firewall
+	/etc/init.d/tailscale stop
+	exit 1
+}
+
+# Execute tailscale up command
+/usr/sbin/tailscale up --reset "$@" || revert_exit "tailscale up failed."
+
+# Use flock to acquire an exclusive lock
+LOCK_FILE="/var/lock/tailscale.lock"
+exec 9> "$LOCK_FILE"
+flock -xn 9 || { revert_exit "Failed to acquire lock on $LOCK_FILE"; }
+trap 'rm -f "$LOCK_FILE"; exit' INT TERM EXIT
+
+# Wait for Tailscale IPv4 address
+count=0
+while [ -z "$(ifconfig | grep 'tailscale' | awk '{print $1}')" ] || [ -z "$(tailscale ip -4)" ]; do
+	sleep 2
+	count=$((count + 1))
+	[ "${count}" -ge 5 ] && revert_exit "Failed to get Tailscale IPv4 address after 5 attempts."
+done
+
+# Configure Tailscale MagicDNS
+if [ "$ACCEPT_DNS" = "1" ]; then
+	MagicDNSSuffix=$(tailscale status --json | awk -F'"' '/"MagicDNSSuffix"/ {last=$(NF-1)} END {print last}')
+	target_address="/$MagicDNSSuffix/100.100.100.100"
+	index=$(uci show dhcp | grep 'dhcp.@dnsmasq\[[0-9]\+\]=dnsmasq' | grep -o '[0-9]\+')
+	for i in $index; do
+		if ! uci get dhcp.@dnsmasq[$i].address 2>/dev/null | grep -qxF "$target_address"; then
+			uci add_list "dhcp.@dnsmasq[$i].address=$target_address" || revert_exit "Failed to add DNS address."
+		fi
+	done
+fi
+
+# Configure network interface for Tailscale
+ts0=$(ifconfig | grep 'tailscale' | awk '{print $1}')
+if [ -z "$(uci -q get network.tailscale)" ]; then
+	uci set network.tailscale='interface'
+	if [ "$ts0" = *$'\n'* ]; then
+		[ -n "$(uci batch <<-EOF 2>&1
+			set network.ts_lan='device'
+			set network.ts_lan.type='bridge'
+			set network.ts_lan.name='ts-lan'
+			set network.tailscale.proto='none'
+			set network.tailscale.device='ts-lan'
+		EOF
+		)" ] && revert_exit "Failed to configure network interface for Tailscale."
+		for port in "${ts0}"; do
+			uci add_list network.ts_lan.ports=$port || revert_exit "Failed to add port $port."
+		done
+	else
+		[ -n "$(uci batch <<-EOF 2>&1
+			set network.tailscale.proto='static'
+			set network.tailscale.ipaddr=$(tailscale ip -4)
+			add_list network.tailscale.ip6addr=$(tailscale ip -6)
+			set network.tailscale.netmask='255.0.0.0'
+			set network.tailscale.device=$ts0
+		EOF
+		)" ] && revert_exit "Failed to configure network interface for Tailscale."
+	fi
+fi
+
+# Configure exit node firewall rules
+if [ -n "$EXIT_NODE" ]; then
+	uci set firewall.@defaults[0].forward='REJECT' || revert_exit "Failed to set default forward policy to REJECT."
+	# Find the LAN to WAN forwarding rule index
+	index=$(uci show firewall | grep "firewall.@forwarding\[[0-9]\+\]\.src='lan'" -B 1 -A 1 | grep "firewall.@forwarding\[[0-9]\+\]\.dest='wan'" | grep -o '[0-9]\+')
+	[ -n "$index" ] && uci set firewall.@forwarding[$index].enabled='0' || revert_exit "Failed to disable forwarding rule."
+fi
+
+# Configure subnet routes for site to site
+if [ -n "$SUBNET_ROUTES" ]; then
+	i=1
+	ts_ip=$(tailscale ip -4)
+	for route in $SUBNET_ROUTES; do
+		[ -n "$(uci batch <<-EOF 2>&1
+			set network.ts_subnet$i='route'
+			set network.ts_subnet$i.interface='tailscale'
+			set network.ts_subnet$i.target=$route
+			set network.ts_subnet$i.gateway=$ts_ip
+		EOF
+		)" ] && revert_exit "Failed to configure subnet routes for site to site."
+		let i++
+	done
+fi
+
+# Configure firewall zone and rules
+if [ -n "$ACCESS" ]; then
+	[ -n "$(uci batch <<-EOF 2>&1
+		set firewall.tszone='zone'
+		set firewall.tszone.input='ACCEPT'
+		set firewall.tszone.output='ACCEPT'
+		set firewall.tszone.forward='ACCEPT'
+		set firewall.tszone.masq='1'
+		set firewall.tszone.mtu_fix='1'
+		set firewall.tszone.name='tailscale'
+		set firewall.tszone.network='tailscale'
+	EOF
+	)" ] && revert_exit "Failed to create firewall zone and forwarding rules for Tailscale."
+fi
+
+# Configure specific firewall forwarding rules between Tailscale, LAN, and WAN
+if [ "${ACCESS//ts_ac_lan/}" != "$ACCESS" ]; then
+	[ -n "$(uci batch <<-EOF 2>&1
+		set firewall.ts_ac_lan=forwarding
+		set firewall.ts_ac_lan.dest='lan'
+		set firewall.ts_ac_lan.src='tailscale'
+	EOF
+	)" ] && revert_exit "Failed to configure ts_ac_lan firewall forwarding rules."
+fi
+if [ "${ACCESS//ts_ac_wan/}" != "$ACCESS" ]; then
+	[ -n "$(uci batch <<-EOF 2>&1
+		set firewall.ts_ac_wan=forwarding
+		set firewall.ts_ac_wan.dest='wan'
+		set firewall.ts_ac_wan.src='tailscale'
+	EOF
+	)" ] && revert_exit "Failed to configure ts_ac_wan firewall forwarding rules."
+fi
+if [ "${ACCESS//lan_ac_ts/}" != "$ACCESS" ]; then
+	[ -n "$(uci batch <<-EOF 2>&1
+		set firewall.lan_ac_ts=forwarding
+		set firewall.lan_ac_ts.dest='tailscale'
+		set firewall.lan_ac_ts.src='lan'
+	EOF
+	)" ] && revert_exit "Failed to configure lan_ac_ts firewall forwarding rules."
+fi
+if [ "${ACCESS//wan_ac_ts/}" != "$ACCESS" ]; then
+	[ -n "$(uci batch <<-EOF 2>&1
+		set firewall.wan_ac_ts=forwarding
+		set firewall.wan_ac_ts.dest='tailscale'
+		set firewall.wan_ac_ts.src='wan'
+	EOF
+	)" ] && revert_exit "Failed to configure wan_ac_ts firewall forwarding rules."
+fi
+
+# Commit configuration changes and reload service
+[ -n "$(uci changes dhcp)" ] && uci commit dhcp && /etc/init.d/dnsmasq reload
+[ -n "$(uci changes network)" ] && uci commit network && /etc/init.d/network reload
+[ -n "$(uci changes firewall)" ] && uci commit firewall && /etc/init.d/firewall reload

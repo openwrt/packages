@@ -4,44 +4,156 @@
 # Copyright (C) 2021 CZ.NIC z.s.p.o. (https://www.nic.cz/)
 # SPDX-License-Identifier: Apache-2.0
 
+START=90
+
 USE_PROCD=1
-START=80
+
+PROG=/usr/sbin/tailscale_helper
+PROGD=/usr/sbin/tailscaled
+CONFIG_PATH=/var/lib/tailscale
+
+service_triggers() {
+	procd_add_reload_trigger "tailscale"
+	procd_add_interface_trigger "interface.*.up" wan /etc/init.d/tailscale reload
+}
+
+section_enabled() {
+	config_get_bool enabled "$1" 'enabled' 0
+	[ $enabled -gt 0 ]
+}
+
+configure_service() {
+	local cfg="$1"
+	local accept_routes hostname accept_dns advertise_exit_node exit_node advertise_routes disable_snat_subnet_routes subnet_routes access flags login_server authkey std_out std_err
+
+	config_get_bool accept_routes $cfg 'accept_routes'
+	config_get hostname $cfg 'hostname'
+	config_get_bool accept_dns $cfg 'accept_dns'
+	config_get_bool advertise_exit_node $cfg 'advertise_exit_node'
+	config_get exit_node $cfg 'exit_node'
+	config_get advertise_routes $cfg 'advertise_routes'
+	config_get_bool disable_snat_subnet_routes $cfg 'disable_snat_subnet_routes'
+	config_get subnet_routes $cfg 'subnet_routes'
+	config_get access $cfg 'access'
+	config_get flags $cfg 'flags'
+	config_get login_server $cfg 'login_server'
+	config_get authkey $cfg 'authkey'
+	config_get_bool std_out $cfg 'log_stdout'
+	config_get_bool std_err $cfg 'log_stderr'
+
+	procd_open_instance
+	procd_set_param command $PROG
+
+	[ "$accept_routes" = "1" ] && procd_append_param command --accept-routes=true
+	[ -n "$hostname" ] && procd_append_param command --hostname="$hostname"
+	[ "$accept_dns" = "0" ] && procd_append_param command --accept-dns=false
+	[ "$advertise_exit_node" = "1" ] && procd_append_param command --advertise-exit-node
+	[ -n "$exit_node" ] && {
+		procd_append_param command --exit-node="$exit_node"
+		procd_append_param command --exit-node-allow-lan-access=true
+	}
+	[ -n "$advertise_routes" ] && procd_append_param command --advertise-routes="$(echo $advertise_routes | tr ' ' ',')"
+	[ "$disable_snat_subnet_routes" = "1" ] && procd_append_param command --snat-subnet-routes=false
+	[ -n "$flags" ] && procd_append_param command $flags
+	[ -n "$login_server" ] && procd_append_param command --login-server="$login_server"
+	[ -n "$authkey" ] && procd_append_param command --authkey="$authkey"
+
+	procd_set_param env \
+		ACCEPT_DNS="$accept_dns" \
+		EXIT_NODE="$exit_node" \
+		SUBNET_ROUTES="$subnet_routes" \
+		ACCESS="$access"
+
+	procd_set_param respawn
+	procd_set_param stdout "$std_out"
+	procd_set_param stderr "$std_err"
+	procd_close_instance
+}
+
+start_instance() {
+	local cfg="$1"
+	local port config_path fw_mode std_out std_err state_file
+
+	if ! section_enabled "$cfg"; then
+		echo "disabled in /etc/config/tailscale"
+		return 1
+	fi
+
+	config_get port $cfg 'port'
+	config_get config_path $cfg 'config_path'
+	config_get fw_mode $cfg 'fw_mode'
+	config_get_bool std_out $cfg 'log_stdout'
+	config_get_bool std_err $cfg 'log_stderr'
+
+	[ -d $config_path ] || mkdir -p $config_path
+	[ -d $CONFIG_PATH ] || mkdir -p $CONFIG_PATH
+	state_file="$config_path/tailscaled.state"
+	
+	/usr/sbin/tailscaled --cleanup
+
+	procd_open_instance
+	procd_set_param command $PROGD
+
+	[ -n "$port" ] && procd_append_param command --port "$port"
+	[ -n "$state_file" ] && procd_append_param command --state "$state_file"
+
+	procd_set_param env TS_DEBUG_FIREWALL_MODE="$fw_mode"
+	
+	procd_set_param respawn
+	procd_set_param stdout "$std_out"
+	procd_set_param stderr "$std_err"
+	procd_close_instance
+
+	configure_service "$cfg"
+}
 
 start_service() {
-  local state_file
-  local port
-  local std_err std_out
+	config_load 'tailscale'
+	config_foreach start_instance 'tailscale'
+}
 
-  config_load tailscale
-  config_get_bool std_out "settings" log_stdout 1
-  config_get_bool std_err "settings" log_stderr 1
-  config_get port "settings" port 41641
-  config_get state_file "settings" state_file /etc/tailscale/tailscaled.state
-  config_get fw_mode "settings" fw_mode nftables
+stop_instance() {
+	local cfg="$1"
 
-  /usr/sbin/tailscaled --cleanup
+	# Remove dnsmasq settings
+	MagicDNSSuffix=$(tailscale status --json | awk -F'"' '/"MagicDNSSuffix"/ {last=$(NF-1)} END {print last}')
+	for suffix in $(uci show dhcp | grep -E "address=.*/${MagicDNSSuffix}/" | sed "s/'//g"); do
+		uci -q del_list $suffix
+	done
+ 
+	# Remove network settings
+	uci -q delete network.tailscale
+	uci -q delete network.ts_lan
+	for route in $(uci show network | grep 'network.ts_subnet[0-9]\+=route' | grep -o 'network.ts_subnet[0-9]\+'); do
+		uci -q delete $route
+	done
+	
+	# Remove firewall settings
+	index=$(uci show firewall | grep "firewall.@forwarding\[[0-9]\+\]\.src='lan'" -B 1 -A 1 | grep "firewall.@forwarding\[[0-9]\+\]\.dest='wan'" | grep -o '[0-9]\+')
+	uci -q delete firewall.@forwarding[$index].enabled
+	uci -q delete firewall.tszone
+	uci -q delete firewall.ts_ac_lan
+	uci -q delete firewall.ts_ac_wan
+	uci -q delete firewall.lan_ac_ts
+	uci -q delete firewall.wan_ac_ts
+	
+	# Commit configuration changes and reload service
+	[ -n "$(uci changes dhcp)" ] && uci commit dhcp && /etc/init.d/dnsmasq reload
+	[ -n "$(uci changes network)" ] && uci commit network && /etc/init.d/network reload
+	[ -n "$(uci changes firewall)" ] && uci commit firewall && /etc/init.d/firewall reload
 
-  procd_open_instance
-  procd_set_param command /usr/sbin/tailscaled
+	/usr/sbin/tailscaled --cleanup
 
-  # Starting with v1.48.1 ENV variable is required to enable use of iptables / nftables.
-  # Use nftables by default - can be changed to 'iptables' in tailscale config
-  procd_set_param env TS_DEBUG_FIREWALL_MODE="$fw_mode"
-
-  # Set the port to listen on for incoming VPN packets.
-  # Remote nodes will automatically be informed about the new port number,
-  # but you might want to configure this in order to set external firewall
-  # settings.
-  procd_append_param command --port "$port"
-  procd_append_param command --state "$state_file"
-
-  procd_set_param respawn
-  procd_set_param stdout "$std_out"
-  procd_set_param stderr "$std_err"
-
-  procd_close_instance
+	# Remove existing link or folder
+	rm -rf "$CONFIG_PATH"
 }
 
 stop_service() {
-  /usr/sbin/tailscaled --cleanup
+	config_load 'tailscale'
+	config_foreach stop_instance 'tailscale'
+}
+
+reload_service() {
+	stop
+	start
 }
