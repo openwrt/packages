@@ -1,0 +1,27 @@
+From e83951ed64dc79378cbf90dbaa6eb3f3bf261f5f Mon Sep 17 00:00:00 2001
+From: John Audia <therealgraysky@proton.me>
+Date: Sun, 11 May 2025 13:43:28 -0400
+Subject: [PATCH] use miniperl not perl
+
+To avoid the following build error caused by using the wrong Perl bin,
+use ./miniperl (which was built for the target during the early
+compilation stages) instead of the system's perl command.
+
+LD_LIBRARY_PATH=/scratch/union/build_dir/target-x86_64_musl/perl/perl-5.40.0 perl -f pod/buildtoc -q
+perl: error while loading shared libraries: /usr/lib/libc.so: invalid ELF header
+
+---
+ Makefile.SH | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/Makefile.SH
++++ b/Makefile.SH
+@@ -1126,7 +1126,7 @@ uni.data: $(MINIPERL_EXE) $(CONFIGPM) li
+ # But also this ensures that all extensions are built before we try to scan
+ # them, which picks up Devel::PPPort's documentation.
+ pod/perltoc.pod: $(perltoc_pod_prereqs) $(PERL_EXE) $(ext) pod/buildtoc
+-	$(RUN_PERL) -f pod/buildtoc -q
++	$(MINIPERL) -f pod/buildtoc -q
+ 
+ pod/perlapi.pod: pod/perlintern.pod
+ 
