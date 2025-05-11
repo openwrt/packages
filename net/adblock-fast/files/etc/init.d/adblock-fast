@@ -1471,7 +1471,7 @@ download_lists() {
 	# shellcheck disable=SC2016
 			if $awk -F "." '{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' "$A_TMP" > "$B_TMP"; then
 				if sort "$B_TMP" > "$A_TMP"; then
-					if $awk '{if(NR=1){tld=$NF};while(getline){if($NF!~tld"\\."){print tld;tld=$NF}}print tld}' "$A_TMP" > "$B_TMP"; then
+					if $awk '{ if (NR == 1) { tld = $NF; } else { if ($NF !~ tld "\\.") { results[++count] = tld; print tld; tld = $NF; } } } END { results[++count] = tld; for (i = 1; i <= count; i++) {print results[i];} }' "$A_TMP" > "$B_TMP"; then
 						if $awk -F "." '{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' "$B_TMP" > "$A_TMP"; then
 							if sort -u "$A_TMP" > "$B_TMP"; then
 								output_ok
