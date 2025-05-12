@@ -30,7 +30,7 @@ Signed-off-by: Georgi Valkov <gvalkov@gmail.com>
  		;;
  	cygwin*)
  		shrpldflags="$shrpldflags -Wl,--out-implib=libperl.dll.a"
-@@ -353,14 +345,6 @@ MANIFEST_SRT = MANIFEST.srt
+@@ -359,14 +351,6 @@ MANIFEST_SRT = MANIFEST.srt
  
  !GROK!THIS!
  
@@ -45,7 +45,7 @@ Signed-off-by: Georgi Valkov <gvalkov@gmail.com>
  case "$usecrosscompile$perl" in
  define?*)
  	$spitshell >>$Makefile <<!GROK!THIS!
-@@ -1056,20 +1040,6 @@ $(PERL_EXE): $& $(perlmain_dep) $(LIBPER
+@@ -1062,20 +1046,6 @@ $(PERL_EXE): $& $(perlmain_dep) $(LIBPER
  	$(SHRPENV) $(CC) -o perl $(CLDFLAGS) $(CCDLFLAGS) $(perlmain_objs) $(LLIBPERL) $(static_ext) `cat ext.libs` $(libs)
  !NO!SUBS!
          ;;
