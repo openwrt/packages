@@ -59,4 +59,9 @@ if PACKAGE_rsyslog
 		default n
 		help
 		  Enable input file module in rsyslog
+	config RSYSLOG_mmnormalize
+		bool "Enable mmnormalize module support"
+		default n
+		help
+		  Enable mmnormalize module in rsyslog
 endif
