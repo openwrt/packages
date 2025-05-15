@@ -61,8 +61,7 @@ endef
 # 2: extension/module display name used in package title/description
 # 3: list of extensions to package
 # 4: list of modules to package
-# 5: module load priority
-# 6: module depends
+# 5: module depends
 define BuildTemplate
 
  ifneq ($(3),)
@@ -206,7 +205,7 @@ define KernelPackage/nf-nathelper-rtsp
 endef
 
 
-#$(eval $(call BuildTemplate,SUFFIX,DESCRIPTION,EXTENSION,MODULE,PRIORITY,DEPENDS))
+#$(eval $(call BuildTemplate,SUFFIX,DESCRIPTION,EXTENSION,MODULE,DEPENDS))
 
 $(eval $(call BuildTemplate,compat-xtables,API compatibilty layer,,compat_xtables,+IPV6:kmod-ip6tables))
 
