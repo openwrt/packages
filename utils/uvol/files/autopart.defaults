@@ -91,12 +91,22 @@ lvm_init() {
 }
 
 autopart_init() {
-	local diskdev
+	local fitpart diskdev
 	local lvmpart
 	local diskserial diskhash
 
-	export_bootdevice && export_partdevice diskdev 0
-
+	if [ -e "/lib/upgrade/fit.sh" ]; then
+		. /lib/upgrade/fit.sh
+		export_fitblk_bootdev
+		if [ "$EMMC_KERN_DEV" ]; then
+			for fitpart in /sys/class/block/*/${EMMC_KERN_DEV:5}; do
+				[ -e "$fitpart" ] || continue
+				diskdev="${fitpart%/*}"
+				diskdev="${diskdev##*/}"
+			done
+		fi
+	fi
+	[ "$diskdev" ] || export_bootdevice && export_partdevice diskdev 0
 	[ "$diskdev" ] || return
 
 	[ -e "/sys/class/block/$diskdev/device/serial" ] && diskserial="$(cat "/sys/class/block/$diskdev/device/serial")"
