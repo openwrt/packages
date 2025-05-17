@@ -8,7 +8,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=xtables-addons
 PKG_VERSION:=3.27
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_HASH:=e47ea8febe73c12ecab09d2c93578c5dc72d76f17fdf673397758f519cce6828
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
@@ -61,8 +61,7 @@ endef
 # 2: extension/module display name used in package title/description
 # 3: list of extensions to package
 # 4: list of modules to package
-# 5: module load priority
-# 6: module depends
+# 5: module depends
 define BuildTemplate
 
  ifneq ($(3),)
@@ -206,7 +205,7 @@ define KernelPackage/nf-nathelper-rtsp
 endef
 
 
-#$(eval $(call BuildTemplate,SUFFIX,DESCRIPTION,EXTENSION,MODULE,PRIORITY,DEPENDS))
+#$(eval $(call BuildTemplate,SUFFIX,DESCRIPTION,EXTENSION,MODULE,DEPENDS))
 
 $(eval $(call BuildTemplate,compat-xtables,API compatibilty layer,,compat_xtables,+IPV6:kmod-ip6tables))
 
@@ -221,7 +220,7 @@ $(eval $(call BuildTemplate,fuzzy,fuzzy,xt_fuzzy,xt_fuzzy,))
 $(eval $(call BuildTemplate,geoip,geoip,xt_geoip,xt_geoip,))
 $(eval $(call BuildTemplate,iface,iface,xt_iface,xt_iface,))
 $(eval $(call BuildTemplate,ipmark,IPMARK,xt_IPMARK,xt_IPMARK,+kmod-ipt-compat-xtables))
-$(eval $(call BuildTemplate,ipp2p,IPP2P,xt_ipp2p,xt_ipp2p,+kmod-ipt-compat-xtables))
+$(eval $(call BuildTemplate,ipp2p,IPP2P,xt_ipp2p,xt_ipp2p,+kmod-ipt-compat-xtables +kmod-lib-textsearch))
 $(eval $(call BuildTemplate,ipv4options,ipv4options,xt_ipv4options,xt_ipv4options,))
 $(eval $(call BuildTemplate,length2,length2,xt_length2,xt_length2,+kmod-ipt-compat-xtables))
 $(eval $(call BuildTemplate,logmark,LOGMARK,xt_LOGMARK,xt_LOGMARK,+kmod-ipt-compat-xtables))
