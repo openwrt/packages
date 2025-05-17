@@ -18,6 +18,7 @@ PKG_HASH:=eaf4a2abfea3d05f454a8841e98332be1e1e2432744c70bb7765651ed82c3f7c
 PKG_MAINTAINER:=Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:tang_project:tang
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/meson.mk
