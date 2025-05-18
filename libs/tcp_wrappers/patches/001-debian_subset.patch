@@ -724,16 +724,13 @@
  #endif
 --- a/fix_options.c
 +++ b/fix_options.c
-@@ -35,7 +35,12 @@ struct request_info *request;
+@@ -35,7 +35,8 @@ struct request_info *request;
  #ifdef IP_OPTIONS
      unsigned char optbuf[BUFFER_SIZE / 3], *cp;
      char    lbuf[BUFFER_SIZE], *lp;
-+#if !defined(__GLIBC__)
-     int     optsize = sizeof(optbuf), ipproto;
-+#else /* __GLIBC__ */
-+    size_t  optsize = sizeof(optbuf);
+-    int     optsize = sizeof(optbuf), ipproto;
++    socklen_t  optsize = sizeof(optbuf);
 +    int     ipproto;
-+#endif /* __GLIBC__ */
      struct protoent *ip;
      int     fd = request->fd;
      unsigned int opt;
@@ -753,27 +750,21 @@
      struct sockaddr_in *sin = (struct sockaddr_in *) sa;
 --- a/socket.c
 +++ b/socket.c
-@@ -76,7 +76,11 @@ struct request_info *request;
+@@ -76,7 +76,7 @@ struct request_info *request;
  {
      static struct sockaddr_in client;
      static struct sockaddr_in server;
-+#if !defined (__GLIBC__)
-     int     len;
-+#else /* __GLIBC__ */
-+    size_t  len;
-+#endif /* __GLIBC__ */
+-    int     len;
++    socklen_t  len;
      char    buf[BUFSIZ];
      int     fd = request->fd;
  
-@@ -224,7 +228,11 @@ int     fd;
+@@ -224,7 +224,7 @@ int     fd;
  {
      char    buf[BUFSIZ];
      struct sockaddr_in sin;
-+#if !defined(__GLIBC__)
-     int     size = sizeof(sin);
-+#else /* __GLIBC__ */
-+    size_t  size = sizeof(sin);
-+#endif /* __GLIBC__ */
+-    int     size = sizeof(sin);
++    socklen_t  size = sizeof(sin);
  
      /*
       * Eat up the not-yet received datagram. Some systems insist on a
