@@ -14,11 +14,7 @@ case "$1" in
 		PHP_MOD="${1#php8-mod-}"
 		PHP_MOD="${PHP_MOD//-/_}"
 
-		if command -v opkg >/dev/null 2>&1; then
-			opkg install php8-cli
-		else
-			apk add php8-cli
-		fi
+		opkg install php8-cli
 
 		php8-cli -m | grep -i "$PHP_MOD"
 		;;
