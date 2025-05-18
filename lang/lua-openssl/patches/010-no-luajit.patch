@@ -1,6 +1,6 @@
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -8,10 +8,7 @@ option(BUILD_SHARED_LUA_OPENSSL "Shared
+@@ -12,10 +12,7 @@ endif()
  
  include(GNUInstallDirs)
  
