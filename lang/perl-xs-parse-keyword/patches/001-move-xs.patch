@@ -1,0 +1,5 @@
+diff --git a/lib/XS/Parse/Keyword.xs b/Keyword.xs
+similarity index 100%
+rename from lib/XS/Parse/Keyword.xs
+rename to Keyword.xs
+
