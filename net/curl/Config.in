@@ -28,22 +28,51 @@ comment "Supported protocols"
 config LIBCURL_DICT
 	bool "DICT protocol"
 	default n
+	help
+		DICT is a dictionary network protocol, it allows clients to ask dictionary servers about a meaning
+		or explanation for words. See RFC 2229. Dict servers and clients use TCP port 2628.
 
 config LIBCURL_FILE
 	bool "FILE protocol"
 	default y
+	help
+		FILE is not actually a network protocol. It is a URL scheme that allows you to tell curl to get a
+		file from the local file system instead of getting it over the network from a remote server.
+		See RFC 1738.
 
 config LIBCURL_FTP
 	bool "FTP / FTPS protocol"
 	default y
+	help
+		FTP stands for File Transfer Protocol and is an old (originates in the early 1970s) way to transfer
+		files back and forth between a client and a server. See RFC 959. It has been extended greatly over
+		the years. FTP servers and clients use TCP port 21 plus one more port, though the second one is
+		usually dynamically established during communication.
+
+		FTPS stands for Secure File Transfer Protocol. It follows the tradition of appending an 'S' to the
+		protocol name to signify that the protocol is done like normal FTP but with an added SSL/TLS
+		security layer. See RFC 4217.
+
+		This protocol is problematic to use through firewalls and other network equipment.
 
 config LIBCURL_GOPHER
 	bool "Gopher protocol"
 	default n
+	help
+		Designed for "distributing, searching, and retrieving documents over the Internet", Gopher is
+		somewhat of the grandfather to HTTP as HTTP has mostly taken over completely for the same use cases.
+		See RFC 1436. Gopher servers and clients use TCP port 70.
 
 config LIBCURL_HTTP
 	bool "HTTP / HTTPS protocol"
 	default y
+	help
+		The Hypertext Transfer Protocol, HTTP, is the most widely used protocol for transferring data
+		on the web and over the Internet. See RFC 9110 for general HTTP Semantics, RFC 9112 for HTTP/1.1,
+		RFC 9113 for HTTP/2 and RFC 9114 for HTTP/3. HTTP servers and clients use TCP port 80.
+
+		Secure HTTP is HTTP done over an SSL/TLS connection. See RFC 2818. HTTPS servers and clients use
+		TCP port 443, unless they speak HTTP/3 which then uses QUIC (RFC 8999) and is done over UDP.
 
 config LIBCURL_WEBSOCKETS
 	bool "WebSockets protocol"
@@ -53,28 +82,55 @@ config LIBCURL_COOKIES
 	bool "Enable Cookies support"
 	depends on LIBCURL_HTTP
 	default y
+	help
+		Cookies are name/value pairs sent by the server (using a Set-Cookie: header) to be stored in the
+		client, and are then supposed to get sent back again in requests that matches the host and path
+		requirements that were specified along with the cookie when it came from the server (using the
+		Cookie: header).
+		On the modern web of today, sites are known to sometimes use large numbers of cookies.
 
 config LIBCURL_IMAP
 	bool "IMAP / IMAPS protocol"
 	default n
+	help
+		The Internet Message Access Protocol, IMAP, is a protocol for accessing, controlling and "reading"
+		email. See RFC 3501. IMAP servers and clients use TCP port 143. Whilst connections to the server
+		start out as cleartext, SSL/TLS communication may be supported by the client explicitly requesting
+		to upgrade the connection using the STARTTLS command. See RFC 2595.
 
 config LIBCURL_LDAP
 	bool "LDAP protocol"
 	default n
+	help
+		The Lightweight Directory Access Protocol, LDAP, is a protocol for accessing and maintaining
+		distributed directory information. Basically a database lookup. See RFC 4511.
+		LDAP servers and clients use TCP port 389.
+		Select package `libopenldap`.
 
 config LIBCURL_LDAPS
 	bool "Enable LDAPS support"
 	depends on LIBCURL_LDAP && !LIBCURL_NOSSL
 	default y
+	help
+		Secure LDAP is LDAP done over an SSL/TLS connection.
+		Requires SSL backend. Select package `libopenldap`.
 
 config LIBCURL_POP3
 	bool "POP3 / POP3S protocol"
 	default n
+	help
+		The Post Office Protocol version 3 (POP3) is a protocol for retrieving email from a server.
+		See RFC 1939. POP3 servers and clients use TCP port 110. Whilst connections to the server
+		start out as cleartext, SSL/TLS communication may be supported by the client explicitly requesting
+		to upgrade the connection using the STLS command. See RFC 2595.
 
 config LIBCURL_RTSP
 	bool "RTSP protocol"
 	depends on LIBCURL_HTTP
 	default n
+	help
+		The Real Time Streaming Protocol (RTSP) is a network control protocol to control streaming media
+		servers. See RFC 2326. RTSP servers and clients use TCP and UDP port 554.
 config LIBCURL_NO_RTSP
 	string "RTSP require HTTP protocol"
 	depends on !LIBCURL_HTTP
@@ -83,11 +139,21 @@ config LIBCURL_NO_RTSP
 config LIBCURL_SSH2
 	bool "SCP / SFTP protocol"
 	default n
+	help
+		The Secure Copy (SCP) protocol is designed to copy files to and from a remote SSH server.
+		SCP servers and clients use TCP port 22.
+
+		The SSH File Transfer Protocol (SFTP) that provides file access, file transfer, and file management
+		over a reliable data stream. SFTP servers and clients use TCP port 22.
 
 config LIBCURL_SMB
 	bool "SMB protocol (CIFS)"
 	depends on LIBCURL_CRYPTO_AUTH && (LIBCURL_GNUTLS || LIBCURL_OPENSSL)
 	default n
+	help
+		The Server Message Block (SMB) protocol is also known as CIFS. It is an application-layer
+		network protocol mainly used for providing shared access to files, printers, and serial ports and
+		miscellaneous communications between nodes on a network. SMB servers and clients use TCP port 445.
 config LIBCURL_NO_SMB
 	string "SMB require 'cryptographic authentication' and either 'GnuTLS' or 'OpenSSL'"
 	depends on !LIBCURL_CRYPTO_AUTH || (!LIBCURL_GNUTLS && !LIBCURL_OPENSSL)
@@ -96,34 +162,61 @@ config LIBCURL_NO_SMB
 config LIBCURL_SMTP
 	bool "SMTP / SMTPS protocol"
 	default n
+	help
+		The Simple Mail Transfer Protocol (SMTP) is a protocol for email transmission. See RFC 5321.
+		SMTP servers and clients use TCP port 25. Whilst connections to the server start out as cleartext,
+		SSL/TLS communication may be supported by the client explicitly requesting to upgrade the connection
+		using the STARTTLS command. See RFC 3207.
+
+		Secure SMTP, is SMTP done over an SSL/TLS connection. Such connections implicitly start out using
+		SSL/TLS and as such servers and clients use TCP port 465 to communicate with each other. See RFC 8314.
 
 config LIBCURL_TELNET
 	bool "TELNET protocol"
 	default n
+	help
+		TELNET is an application layer protocol used over networks to provide a bidirectional interactive
+		text-oriented communication facility using a virtual terminal connection. See RFC 854.
+		TELNET servers and clients use TCP port 23.
 
 config LIBCURL_TFTP
 	bool "TFTP protocol"
 	default n
+	help
+		The Trivial File Transfer Protocol (TFTP) is a protocol for doing simple file transfers over UDP to
+		get a file from or put a file onto a remote host. TFTP servers and clients use UDP port 69.
 
 config LIBCURL_NGHTTP2
 	bool "HTTP2 protocol"
 	default y
+	help
+		Enables HTTP/2 protocol support. This is a library for handling
+		HTTP/2 framing and is a prerequisite for curl to support HTTP version 2.
+		Select package `libnghttp2`.
 
 config LIBCURL_NGHTTP3
 	bool "HTTP/3 protocol"
 	depends on LIBCURL_OPENSSL
 	default n
+	help
+		Enable HTTP/3 protocol support provided by nghttp3, requires OpenSSL as SSL backend.
+		Select package `libnghttp3`.
 
 config LIBCURL_NGTCP2
 	bool "QUIC protocol"
 	depends on LIBCURL_OPENSSL
 	default n
+	help
+		Enable QUIC protocol support provided by ngtcp2, requires OpenSSL as SSL backend.
+		Select package `libngtcp2`.
 
 comment "Miscellaneous"
 
 config LIBCURL_PROXY
 	bool "Enable proxy support"
 	default y
+	help
+		Enable proxy support. This allows you to use cURL behind a proxy server.
 
 config LIBCURL_CRYPTO_AUTH
 	bool "Enable cryptographic authentication"
@@ -132,24 +225,37 @@ config LIBCURL_CRYPTO_AUTH
 config LIBCURL_TLS_SRP
 	bool "Enable TLS-SRP authentication"
 	default n
+	help
+		Enable TLS-SRP - SRP (Secure Remote Password) authentication support.
 
 config LIBCURL_LIBIDN2
 	bool "Enable IDN2 support"
 	default n
+	help
+		Enable International Domain Names support.
+		curl handles International Domain Names (IDN) with the help of the libidn2 library.
+		Select package `libidn2`.
 
 config LIBCURL_THREADED_RESOLVER
 	bool "Enable threaded DNS resolver"
 	default n
 	help
-		Enable POSIX threaded asynchronous DNS resolution
+		Enable POSIX threaded asynchronous DNS resolution.
+		Select package `libpthread`.
 
 config LIBCURL_ZLIB
 	bool "Enable zlib support"
 	default n
+	help
+		Enable zlib compression algorithm support.
+		Select package `zlib`.
 
 config LIBCURL_ZSTD
 	bool "Enable zstd support"
 	default n
+	help
+		Enable zstd compression algorithm support.
+		Select package `libzstd`.
 
 config LIBCURL_UNIX_SOCKETS
 	bool "Enable unix domain socket support"
@@ -165,15 +271,25 @@ config LIBCURL_UNIX_SOCKETS
 config LIBCURL_LIBCURL_OPTION
 	bool "Enable generation of C code"
 	default n
+	help
+		Enable `--libcurl` flag.
+		The option creates a C program in the provided file name. That C program is an application that uses
+		libcurl to run the transfer you just had the curl command-line tool do. There are some exceptions
+		and it is not always a 100% match, but you might find that it can serve as an excellent inspiration
+		source for what libcurl options you want or can use and what additional arguments to provide to them.
 
 config LIBCURL_VERBOSE
 	bool "Enable verbose error strings"
 	default n
+	help
+		Enable debugging strings and error code strings, should be used for debug purposes only.
 
 config LIBCURL_NTLM
 	bool "Enable NTLM support"
 	depends on LIBCURL_CRYPTO_AUTH && !LIBCURL_NOSSL
 	default n
+	help
+		Enable NTLM support. NTLM is an HTTP authentication method.
 
 config LIBCURL_HTTP_AUTH
 	bool "Enable HTTP authentication support"
