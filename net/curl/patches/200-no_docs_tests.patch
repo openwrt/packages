@@ -1,6 +1,6 @@
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -92,7 +92,7 @@ DISTCLEANFILES = buildinfo.txt
+@@ -93,7 +93,7 @@ DISTCLEANFILES = buildinfo.txt
  bin_SCRIPTS = curl-config
  
  SUBDIRS = lib docs src scripts
@@ -9,7 +9,7 @@
  
  pkgconfigdir = $(libdir)/pkgconfig
  pkgconfig_DATA = libcurl.pc
-@@ -188,12 +188,9 @@ rpm:
+@@ -189,12 +189,9 @@ rpm:
  if BUILD_DOCS
  install-data-hook:
  	(cd include && $(MAKE) install)
