@@ -18,7 +18,7 @@ PKG_MIRROR_HASH:=bea66321c9cea53f44ace2357ca3829a77dbf5d399a09ed0798a659d682d1af
 
 PKG_MAINTAINER:=Anton Glukhov <anton.a.glukhov@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
-PKG_LICENSE_FILES:=COPYING
+PKG_LICENSE_FILES:=LICENSES/BSD-3-Clause LICENSES/GPL-2.0-only.txt LICENSES/Linux-syscall-note.txt
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
