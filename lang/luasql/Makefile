@@ -17,7 +17,7 @@ PKG_HASH:=db2458a8c8c5f3bc717e4030fe2878f1ad8d71e437ec6149c381eebad5d525c5
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=MIT
-PKG_LICENSE_FILES:=docs/us/license.html
+PKG_LICENSE_FILES:=doc/us/license.html
 
 include $(INCLUDE_DIR)/package.mk
 
