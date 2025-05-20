@@ -245,7 +245,11 @@ modemmanager_connected_method_static_ipv6() {
 	[ -n "${gateway}" ] && {
 		echo "adding default IPv6 route via ${gateway}"
 		proto_add_ipv6_route "${gateway}" "128"
-		proto_add_ipv6_route "::0" "0" "${gateway}" "" "" "${address}/${prefix}"
+		[ "$sourcefilter" = "0" ] && {
+			proto_add_ipv6_route "::0" "0" "${gateway}"
+		} || {
+			proto_add_ipv6_route "::0" "0" "${gateway}" "" "" "${address}/${prefix}"
+		}
 	}
 	[ -n "${dns1}" ] && {
 		echo "adding primary DNS at ${dns1}"
