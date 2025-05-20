@@ -16,6 +16,8 @@ PKG_SOURCE_VERSION:=$(PKG_VERSION)
 PKG_SOURCE_URL:=https://github.com/lunarmodules/luaexpat
 PKG_MIRROR_HASH:=7e370d47e947a1acfeb4d00df012f47116fe7971f5b12033e92666e37a9312a1
 
+PKG_LICENSE:=MIT
+PKG_LICENSE_FILES:=LICENCE
 PKG_CPE_ID:=cpe:/a:matthewwild:luaexpat
 
 include $(INCLUDE_DIR)/package.mk
