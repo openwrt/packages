@@ -13,8 +13,8 @@ PKG_SOURCE_URL:=https://codeload.github.com/illiliti/libudev-zero/tar.gz/$(PKG_V
 PKG_HASH:=0bd89b657d62d019598e6c7ed726ff8fed80e8ba092a83b484d66afb80b77da5
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
-PKG_LICENSE:=MIT
-PKG_LICENSE_FILES:=COPYING
+PKG_LICENSE:=ISC
+PKG_LICENSE_FILES:=LICENSE
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
