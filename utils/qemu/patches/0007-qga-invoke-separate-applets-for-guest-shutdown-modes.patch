@@ -3,7 +3,7 @@ https://gitlab.alpinelinux.org/alpine/aports/-/blob/b720d51ec844d4754dd5b2908435
 ---
 --- a/qga/commands-posix.c
 +++ b/qga/commands-posix.c
-@@ -219,43 +219,21 @@ void qmp_guest_shutdown(const char *mode
+@@ -218,43 +218,21 @@ void qmp_guest_shutdown(const char *mode
      const char *shutdown_flag;
      Error *local_err = NULL;
  

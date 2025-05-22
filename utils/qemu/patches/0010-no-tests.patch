@@ -1,6 +1,6 @@
 --- a/meson.build
 +++ b/meson.build
-@@ -3643,10 +3643,6 @@ subdir('common-user')
+@@ -3828,10 +3828,6 @@ subdir('common-user')
  subdir('bsd-user')
  subdir('linux-user')
  
@@ -9,9 +9,9 @@
 -subdir('tests/qtest/fuzz')
 -
  # accel modules
- tcg_real_module_ss = ss.source_set()
- tcg_real_module_ss.add_all(when: 'CONFIG_TCG_MODULAR', if_true: tcg_module_ss)
-@@ -4174,10 +4170,6 @@ subdir('scripts')
+ target_modules += { 'accel' : { 'qtest': qtest_module_ss }}
+ 
+@@ -4456,10 +4452,6 @@ subdir('scripts')
  subdir('tools')
  subdir('pc-bios')
  subdir('docs')
