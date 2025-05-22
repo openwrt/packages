@@ -17,7 +17,7 @@ PKG_SOURCE_URL:=https://dl.cihar.com/gammu/releases
 PKG_HASH:=d8f152314d7e4d3d643610d742845e0a016ce97c234ad4b1151574e1b09651ee
 
 PKG_MAINTAINER:=Vitaly Protsko <villy@sft.ru>
-PKG_LICENCE:=GPL-2.0-or-later
+PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
 CMAKE_INSTALL:=1
