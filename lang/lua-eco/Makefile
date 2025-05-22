@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua-eco
-PKG_VERSION:=3.9.0
+PKG_VERSION:=3.10.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL=https://github.com/zhaojh329/lua-eco/releases/download/v$(PKG_VERSION)
-PKG_HASH:=c01d228cb759bbafa5227ff7be9c0281d9970008e7b9da9d4d6d1de460b0b0bb
+PKG_HASH:=0205e0c20c4bbaa0829909b0722ac77df6f8a47d87669edaa8f79bdf87d15510
 
 PKG_MAINTAINER:=Jianhui Zhao <zhaojh329@gmail.com>
 PKG_LICENSE:=MIT
@@ -65,6 +65,7 @@ Package/lua-eco-ip=$(call Package/lua-eco/Module,ip utils,+lua-eco-netlink)
 Package/lua-eco-nl80211=$(call Package/lua-eco/Module,nl80211,+lua-eco-netlink)
 Package/lua-eco-ssh=$(call Package/lua-eco/Module,ssh,+lua-eco-socket +libssh2)
 Package/lua-eco-packet=$(call Package/lua-eco/Module,packet,+lua-eco-nl80211)
+Package/lua-eco-uci=$(call Package/lua-eco/Module,uci,+libuci)
 
 define Package/lua-eco-ssl/config
 	choice
@@ -100,7 +101,7 @@ define Package/lua-eco/install
 	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/local/lib/lua/5.4/eco/core \
 		$(1)/usr/lib $(1)/usr/local/lib/lua/5.4/eco/encoding
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/eco $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/libeco.so* $(1)/usr/lib
+	$(CP) $(PKG_BUILD_DIR)/libeco.so* $(1)/usr/lib
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bufio.so $(1)/usr/local/lib/lua/5.4/eco
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/hex.lua $(1)/usr/local/lib/lua/5.4/eco/encoding
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/{time,bufio,sys,file}.so $(1)/usr/local/lib/lua/5.4/eco/core
@@ -209,6 +210,11 @@ define Package/lua-eco-packet/install
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/packet.lua $(1)/usr/local/lib/lua/5.4/eco
 endef
 
+define Package/lua-eco-uci/install
+	$(INSTALL_DIR) $(1)/usr/local/lib/lua/5.4/eco
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/uci.so $(1)/usr/local/lib/lua/5.4/eco
+endef
+
 $(eval $(call BuildPackage,lua-eco))
 $(eval $(call BuildPackage,lua-eco-log))
 $(eval $(call BuildPackage,lua-eco-base64))
@@ -229,3 +235,4 @@ $(eval $(call BuildPackage,lua-eco-ip))
 $(eval $(call BuildPackage,lua-eco-nl80211))
 $(eval $(call BuildPackage,lua-eco-ssh))
 $(eval $(call BuildPackage,lua-eco-packet))
+$(eval $(call BuildPackage,lua-eco-uci))
