@@ -1,12 +1,12 @@
-local ubus = require "ubus"
-local bit = require "bit"
+local ubus = require("ubus")
+local bit = require("bit")
 
 local function get_wifi_hostapd_interfaces(u)
   local ubuslist = u:objects()
   local interfaces = {}
 
-  for _,net in ipairs(ubuslist) do
-    if net.find(net,"hostapd.") then
+  for _, net in ipairs(ubuslist) do
+    if net:find("^hostapd%.") then
       table.insert(interfaces, net)
     end
   end
@@ -35,15 +35,15 @@ local function scrape()
     local label_station = {
       ifname = ifname,
       freq = freq,
-      station = station
+      station = station,
     }
-    local rrm_caps_link_measurement = bit.band(bit.lshift(1, 0), vals['rrm'][1]) > 0 and 1 or 0
-    local rrm_caps_neighbor_report = bit.band(bit.lshift(1, 1), vals['rrm'][1]) > 0 and 1 or 0
-    local rrm_caps_beacon_report_passive = bit.band(bit.lshift(1, 4), vals['rrm'][1]) > 0 and 1 or 0
-    local rrm_caps_beacon_report_active = bit.band(bit.lshift(1, 5), vals['rrm'][1]) > 0 and 1 or 0
-    local rrm_caps_beacon_report_table = bit.band(bit.lshift(1, 6), vals['rrm'][1]) > 0 and 1 or 0
-    local rrm_caps_lci_measurement = bit.band(bit.lshift(1, 4), vals['rrm'][2]) > 0 and 1 or 0
-    local rrm_caps_ftm_range_report = bit.band(bit.lshift(1, 2), vals['rrm'][5]) > 0 and 1 or 0
+    local rrm_caps_link_measurement = bit.band(bit.lshift(1, 0), vals["rrm"][1]) > 0 and 1 or 0
+    local rrm_caps_neighbor_report = bit.band(bit.lshift(1, 1), vals["rrm"][1]) > 0 and 1 or 0
+    local rrm_caps_beacon_report_passive = bit.band(bit.lshift(1, 4), vals["rrm"][1]) > 0 and 1 or 0
+    local rrm_caps_beacon_report_active = bit.band(bit.lshift(1, 5), vals["rrm"][1]) > 0 and 1 or 0
+    local rrm_caps_beacon_report_table = bit.band(bit.lshift(1, 6), vals["rrm"][1]) > 0 and 1 or 0
+    local rrm_caps_lci_measurement = bit.band(bit.lshift(1, 4), vals["rrm"][2]) > 0 and 1 or 0
+    local rrm_caps_ftm_range_report = bit.band(bit.lshift(1, 2), vals["rrm"][5]) > 0 and 1 or 0
 
     metric_hostapd_ubus_station_rrm_caps_link_measurement(label_station, rrm_caps_link_measurement)
     metric_hostapd_ubus_station_rrm_caps_neighbor_report(label_station, rrm_caps_neighbor_report)
@@ -57,10 +57,10 @@ local function scrape()
 
   for _, hostapd_int in ipairs(get_wifi_hostapd_interfaces(u)) do
     local clients_call = u:call(hostapd_int, "get_clients", {})
-    local ifname = hostapd_int:gsub("hostapd.", "")
+    local ifname = hostapd_int:gsub("hostapd%.", "")
 
-    for client, client_table in pairs(clients_call['clients']) do
-      evaluate_metrics(ifname,  clients_call['freq'], client, client_table)
+    for client, client_table in pairs(clients_call["clients"]) do
+      evaluate_metrics(ifname, clients_call["freq"], client, client_table)
     end
   end
   u:close()
