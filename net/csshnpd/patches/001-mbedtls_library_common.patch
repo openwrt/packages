@@ -1,0 +1,23 @@
+Patch by Chris Swan <chris@atsign.com> for MBEDTLS failing to build on
+armsh/armv7 and armsh/armv8 targets due to:
+
+> error: array subscript 48 is outside array bounds of 'unsigned char[48]'
+> [-Werror=array-bounds=]
+
+This has been an open issue https://github.com/Mbed-TLS/mbedtls/issues/9003
+since 3 Apr 2024: "Issue Building MbedTLS 3.6.0 on Fedora"
+
+The patch below is based on the suggestion from @rany2 at
+https://github.com/Mbed-TLS/mbedtls/issues/9003#issuecomment-2108239255
+
+--- a/deps/mbedtls-src/library/common.h
++++ b/deps/mbedtls-src/library/common.h
+@@ -199,7 +199,7 @@ static inline void mbedtls_xor(unsigned
+         uint8x16_t x = veorq_u8(v1, v2);
+         vst1q_u8(r + i, x);
+     }
+-#if defined(__IAR_SYSTEMS_ICC__)
++#if defined(__IAR_SYSTEMS_ICC__) || defined(MBEDTLS_COMPILER_IS_GCC)
+     /* This if statement helps some compilers (e.g., IAR) optimise out the byte-by-byte tail case
+      * where n is a constant multiple of 16.
+      * For other compilers (e.g. recent gcc and clang) it makes no difference if n is a compile-time
