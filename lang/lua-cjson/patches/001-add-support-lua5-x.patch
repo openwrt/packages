@@ -1,0 +1,78 @@
+--- a/lua_cjson.c
++++ b/lua_cjson.c
+@@ -1227,7 +1227,10 @@ static void json_process_value(lua_State
+         lua_pushlstring(l, token->value.string, token->string_len);
+         break;;
+     case T_NUMBER:
+-        lua_pushnumber(l, token->value.number);
++        if ((lua_Integer)token->value.number == token->value.number)
++            lua_pushinteger(l, (lua_Integer)token->value.number);
++        else
++            lua_pushnumber(l, token->value.number);
+         break;;
+     case T_BOOLEAN:
+         lua_pushboolean(l, token->value.boolean);
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -15,8 +15,28 @@ if(NOT CMAKE_BUILD_TYPE)
+         FORCE)
+ endif()
+ 
+-find_package(Lua51 REQUIRED)
+-include_directories(${LUA_INCLUDE_DIR})
++if(USE_LUA54)
++    find_path(LUA54_INCLUDE_DIRS lua.h PATH_SUFFIXES lua5.4)
++    find_library(LUA54_LIBRARIES lua5.4)
++
++    if (NOT LUA54_INCLUDE_DIRS OR NOT LUA54_LIBRARIES)
++        message(FATAL_ERROR "Liblua 5.4 is required.")
++    endif()
++
++    include_directories(${LUA54_INCLUDE_DIRS})
++elseif(USE_LUA53)
++    find_path(LUA53_INCLUDE_DIRS lua.h PATH_SUFFIXES lua5.3)
++    find_library(LUA53_LIBRARIES lua5.3)
++
++    if (NOT LUA53_INCLUDE_DIRS OR NOT LUA53_LIBRARIES)
++        message(FATAL_ERROR "Liblua 5.3 is required.")
++    endif()
++
++    include_directories(${LUA53_INCLUDE_DIRS})
++else()
++    find_package(Lua51 REQUIRED)
++    include_directories(${LUA_INCLUDE_DIR})
++endif()
+ 
+ if(NOT USE_INTERNAL_FPCONV)
+     # Use libc number conversion routines (strtod(), sprintf())
+@@ -51,7 +71,14 @@ if(NOT HAVE_ISINF)
+ endif()
+ 
+ set(_MODULE_LINK "${CMAKE_THREAD_LIBS_INIT}")
+-get_filename_component(_lua_lib_dir ${LUA_LIBRARY} PATH)
++
++if(USE_LUA54)
++    get_filename_component(_lua_lib_dir ${LUA54_LIBRARIES} PATH)
++elseif(USE_LUA53)
++    get_filename_component(_lua_lib_dir ${LUA53_LIBRARIES} PATH)
++else()
++    get_filename_component(_lua_lib_dir ${LUA_LIBRARY} PATH)
++endif()
+ 
+ if(APPLE)
+     set(CMAKE_SHARED_MODULE_CREATE_C_FLAGS
+@@ -65,7 +92,13 @@ if(WIN32)
+     # Windows sprintf()/strtod() handle NaN/inf differently. Not supported.
+     add_definitions(-DDISABLE_INVALID_NUMBERS)
+ else()
+-    set(_lua_module_dir "${_lua_lib_dir}/lua/5.1")
++    if(USE_LUA54)
++        set(_lua_module_dir "${_lua_lib_dir}/lua/5.4")
++    elseif(USE_LUA53)
++        set(_lua_module_dir "${_lua_lib_dir}/lua/5.3")
++    else()
++        set(_lua_module_dir "${_lua_lib_dir}/lua/5.1")
++    endif()
+ endif()
+ 
+ add_library(cjson MODULE lua_cjson.c strbuf.c ${FPCONV_SOURCES})

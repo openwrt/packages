@@ -92,6 +92,21 @@ endef
 
 # Target perl
 define Build/Configure
+	# We don't want to pass -Ilib to host perl in the target build (as lib
+	# contains the target libraries, and files may currently be written
+	# while being imported in parallel builds). We do however need the
+	# target versions of the Config modules at the beginning of the include
+	# path for the build scripts' use.
+	#
+	# Create an alternative lib_build directory that will be added to the
+	# include path instead of lib (using hostperl-wrapper), containing only
+	# the config modules.
+	$(INSTALL_DIR) $(PKG_BUILD_DIR)/lib_build
+	ln -sf ../lib/Config.pm ../lib/Config_heavy.pl ../lib/Config_git.pl $(PKG_BUILD_DIR)/lib_build/
+
+	install -m0755 files/hostperl-wrapper $(PKG_BUILD_DIR)/hostperl-wrapper
+	sed -i "s'@HOST_PERL@'$(HOST_PERL_PREFIX)/bin/perl'g" $(PKG_BUILD_DIR)/hostperl-wrapper
+
 	$(PERL_CMD) files/perlconfig.pl -Dowrt:target_cc='$(TARGET_CC)' \
 	                                -Dowrt:gccversion=$(CONFIG_GCC_VERSION) \
 	                                -Dowrt:target_cross='$(TARGET_CROSS)' \

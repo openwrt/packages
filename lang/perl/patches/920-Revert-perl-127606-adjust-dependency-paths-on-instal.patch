@@ -30,7 +30,7 @@ Signed-off-by: Georgi Valkov <gvalkov@gmail.com>
  		;;
  	cygwin*)
  		shrpldflags="$shrpldflags -Wl,--out-implib=libperl.dll.a"
-@@ -353,14 +345,6 @@ MANIFEST_SRT = MANIFEST.srt
+@@ -359,14 +351,6 @@ MANIFEST_SRT = MANIFEST.srt
  
  !GROK!THIS!
  
@@ -42,10 +42,10 @@ Signed-off-by: Georgi Valkov <gvalkov@gmail.com>
 -	;;
 -esac
 -
- $spitshell >>$Makefile <<!GROK!THIS!
- # Macros to invoke a copy of our fully operational perl during the build.
- PERL_EXE = perl\$(EXE_EXT)
-@@ -1045,20 +1029,6 @@ $(PERL_EXE): $& $(perlmain_dep) $(LIBPER
+ case "$usecrosscompile$perl" in
+ define?*)
+ 	$spitshell >>$Makefile <<!GROK!THIS!
+@@ -1062,20 +1046,6 @@ $(PERL_EXE): $& $(perlmain_dep) $(LIBPER
  	$(SHRPENV) $(CC) -o perl $(CLDFLAGS) $(CCDLFLAGS) $(perlmain_objs) $(LLIBPERL) $(static_ext) `cat ext.libs` $(libs)
  !NO!SUBS!
          ;;

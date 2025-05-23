@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
-PKG_VERSION:=8.4.5
+PKG_VERSION:=8.4.7
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
@@ -16,7 +16,7 @@ PKG_CPE_ID:=cpe:/a:php:php
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.php.net/distributions/
-PKG_HASH:=0d3270bbce4d9ec617befce52458b763fd461d475f1fe2ed878bb8573faed327
+PKG_HASH:=e29f4c23be2816ed005aa3f06bbb8eae0f22cc133863862e893515fc841e65e3
 
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=no-mips16
@@ -396,6 +396,9 @@ endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-snmp),)
   CONFIGURE_ARGS+= --with-snmp=shared,"$(STAGING_DIR)/usr"
+  CONFIGURE_VARS+= \
+    ac_cv_have_decl_usmHMAC192SHA256AuthProtocol=no \
+    ac_cv_have_decl_usmHMAC384SHA512AuthProtocol=no
 else
   CONFIGURE_ARGS+= --without-snmp
 endif

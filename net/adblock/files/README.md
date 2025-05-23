@@ -88,7 +88,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * Supports a wide range of router modes, even AP modes are supported
 * Full IPv4 and IPv6 support
 * Provides top level domain compression ('tld compression'), this feature removes thousands of needless host entries from the blocklist and lowers the memory footprint for the DNS backend
-* Provides a 'DNS Shift', where the generated final DNS blocklist is moved to the backup directory and only a soft link to this file is set in memory. As long as your backup directory is located on an external drive, you should activate this option to save disk space.
+* Provides a 'DNS Blocklist Shift', where the generated final DNS blocklist is moved to the backup directory and only a soft link to this file is set in memory. As long as your backup directory is located on an external drive, you should activate this option to save valuable RAM.
 * Source parsing by fast & flexible regex rulesets, all rules and feed information are placed in an external JSON file ('/etc/adblock/adblock.feeds')
 * Overall duplicate removal in generated blocklist file 'adb_list.overall'
 * Additional local allowlist for manual overrides, located in '/etc/adblock/adblock.allowlist' (only exact matches).
@@ -169,12 +169,13 @@ Available commands:
 | adb_fetchparm      | -, auto-detected                   | manually override the config options for the selected download utility                         |
 | adb_fetchinsecure  | 0, disabled                        | don't check SSL server certificates during download                                            |
 | adb_trigger        | -, not set                         | trigger network interface or 'not set' to use a time-based startup                             |
-| adb_triggerdelay   | 2                                  | additional trigger delay in seconds before adblock processing begins                           |
+| adb_triggerdelay   | 5                                  | additional trigger delay in seconds before adblock processing begins                           |
 | adb_debug          | 0, disabled                        | set to 1 to enable the debug output                                                            |
 | adb_nice           | 0, standard prio.                  | valid nice level range 0-19 of the adblock processes                                           |
+| adb_dnsshift       | 0, disabled                        | shift the blocklist to the backup directory and only set a soft link to this file in memory    |
 | adb_dnsforce       | 0, disabled                        | set to 1 to force DNS requests to the local resolver                                           |
 | adb_dnsdir         | -, auto-detected                   | path for the generated blocklist file 'adb_list.overall'                                       |
-| adb_dnstimeout     | 10                                 | timeout in seconds to wait for a successful DNS backend restart                                |
+| adb_dnstimeout     | 20                                 | timeout in seconds to wait for a successful DNS backend restart                                |
 | adb_dnsinstance    | 0, first instance                  | set to the relevant dns backend instance used by adblock (dnsmasq only)                        |
 | adb_dnsflush       | 0, disabled                        | set to 1 to flush the DNS Cache before & after adblock processing                              |
 | adb_lookupdomain   | localhost                          | domain to check for a successful DNS backend restart                                           |
@@ -196,7 +197,7 @@ Available commands:
 | adb_mailsender     | no-reply@adblock                   | sender address for adblock notification E-Mails                                                |
 | adb_mailtopic      | adblock notification               | topic for adblock notification E-Mails                                                         |
 | adb_mailprofile    | adb_notify                         | mail profile used in 'msmtp' for adblock notification E-Mails                                  |
-| adb_jail           | 0                                  | set to 1 to enable the additional, restrictive 'adb_list.jail' creation                        |
+| adb_jail           | 0                                  | create the additional restrictive 'adb_list.jail'                                              |
 | adb_jaildir        | /tmp                               | path for the generated jail list                                                               |
 
 <a id="examples"></a>
@@ -230,8 +231,8 @@ Adblock deposits the final blocklist 'adb_list.overall' in '/tmp/kresd', no furt
 **Change the DNS backend to 'smartdns':**
 No further configuration is needed, adblock deposits the final blocklist 'adb_list.overall' in '/tmp/smartdns' by default.
 
-**Use restrictive jail modes:**
-You can enable a restrictive 'adb_list.jail' to block access to all domains except those listed in the allowlist file. Usually this list will be generated as an additional list for guest or kidsafe configurations (for a separate dns server instance). If the jail directory points to your primary dns directory, adblock enables the restrictive jail mode automatically (jail mode only).
+**Use the jail mode, a restrictive DNS blocklist:**
+You can enable a restrictive 'adb_list.jail' to block access to all domains except those listed in the allowlist file. Usually this list will be generated as an additional list for guest or kidsafe configurations (for a separate dns server instance). If the jail directory points to your primary dns directory, the jail blocklist replaces your default blocklist.
 
 **Manually override the download options:**
 By default adblock uses the following pre-configured download options:
@@ -281,19 +282,19 @@ In LuCI you'll see the realtime status in the 'Runtime' section on the overview 
 To get the status in the CLI, just call _/etc/init.d/adblock status_ or _/etc/init.d/adblock status\_service_:
 
 ```
-~#@blackhole:~# /etc/init.d/adblock status
+~# /etc/init.d/adblock status
 ::: adblock runtime information
   + adblock_status  : enabled
-  + adblock_version : 4.4.0-r1
-  + blocked_domains : 1 154 208
+  + adblock_version : 4.4.1-r2
+  + blocked_domains : 881 753
   + active_feeds    : 1hosts, certpl, cpbl, doh_blocklist, hagezi, winspy
-  + dns_backend     : dnsmasq (-), /mnt/data/adblock/backup, 92.87 MB
+  + dns_backend     : dnsmasq (2.92_alpha5-r1), /mnt/data/adblock/backup, 73.12 MB
   + run_utils       : download: /usr/bin/curl, sort: /usr/libexec/sort-coreutils, awk: /usr/bin/gawk
-  + run_ifaces      : trigger: trm_wwan, report: br-lan
-  + run_directories : base: /mnt/data/adblock, backup: /mnt/data/adblock/backup, report: /mnt/data/adblock/report, jail: -
+  + run_ifaces      : trigger: trm_wwan , report: br-lan
+  + run_directories : base: /mnt/data/adblock, backup: /mnt/data/adblock/backup, report: /mnt/data/adblock/report, jail: /tmp
   + run_flags       : shift: ✔, force: ✔, flush: ✘, tld: ✔, search: ✘, report: ✔, mail: ✘, jail: ✘
-  + last_run        : mode: reload, 2025-04-10T20:34:17+02:00, duration: 0m 55s, 682.52 MB available
-  + system_info     : OpenWrt One, mediatek/filogic, OpenWrt 24.10-SNAPSHOT r28584-a51b1a98e0 
+  + last_run        : mode: restart, 2025-05-03T11:43:03+02:00, duration: 0m 44s, 707.25 MB available
+  + system_info     : OpenWrt One, mediatek/filogic, OpenWrt 24.10-SNAPSHOT r28628-cc1b909a6b 
 ```
 
 **Change/add adblock feeds**  

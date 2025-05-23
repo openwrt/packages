@@ -13,7 +13,7 @@ Signed-off-by: Natanael Copa <ncopa@alpinelinux.org>
 
 --- a/configure.ac
 +++ b/configure.ac
-@@ -1461,7 +1461,17 @@ AC_C_VOLATILE
+@@ -1403,7 +1403,17 @@ AC_C_VOLATILE
  
  ### General flags / actions
  CFLAGS="$CFLAGS -Wall"

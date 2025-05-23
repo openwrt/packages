@@ -13,6 +13,7 @@ config main 'config'
 #	list force_dns_port '4434'
 #	list force_dns_port '5443'
 #	list force_dns_port '8443'
+	list procd_fw_src_interfaces 'lan'
 	option procd_trigger_wan6 '0'
 
 config https-dns-proxy

@@ -12,7 +12,7 @@ Signed-off-by: Natanael Copa <ncopa@alpinelinux.org>
 
 --- a/services/plugins/vix/vixTools.c
 +++ b/services/plugins/vix/vixTools.c
-@@ -66,7 +66,7 @@
+@@ -67,7 +67,7 @@
  #include <unistd.h>
  #endif
  

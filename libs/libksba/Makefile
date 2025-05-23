@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libksba
-PKG_VERSION:=1.6.4
+PKG_VERSION:=1.6.7
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://gnupg.org/ftp/gcrypt/$(PKG_NAME)
-PKG_HASH:=bbb43f032b9164d86c781ffe42213a83bf4f2fee91455edfa4654521b8b03b6b
+PKG_HASH:=cf72510b8ebb4eb6693eef765749d83677a03c79291a311040a5bfd79baab763
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=LGPL-3.0-or-later GPL-2.0-or-later

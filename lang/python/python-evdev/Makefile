@@ -9,14 +9,14 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=python-evdev
-PKG_VERSION:=1.9.1
+PKG_VERSION:=1.9.2
 PKG_RELEASE:=1
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_MAINTAINER:=Paulo Costa <me@paulo.costa.nom.br>, Alexandru Ardelean <ardeleanalex@gmail.com>
 
 PYPI_NAME:=evdev
-PKG_HASH:=dc640a064cb1c9fe1f8b970dc2039945a2a275d7b7ee62284bf427238abe45ee
+PKG_HASH:=5d3278892ce1f92a74d6bf888cc8525d9f68af85dbe336c95d1c87fb8f423069
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

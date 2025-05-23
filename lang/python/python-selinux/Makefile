@@ -6,13 +6,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-selinux
-PKG_VERSION:=3.6
+PKG_VERSION:=3.8.1
 PKG_RELEASE:=1
 
 SRC_NAME:=libselinux
 PKG_SOURCE:=$(SRC_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/SELinuxProject/selinux/releases/download/$(PKG_VERSION)
-PKG_HASH:=ba4e0ef34b270e7672a5e5f1b523fe2beab3a40bb33d9389f4ad3a8728f21b52
+PKG_HASH:=ec2d2789f931152d21c1db1eb4bc202ce4eccede34d9be9e360e3b45243cee2c
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)/$(SRC_NAME)-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Thomas Petazzoni <thomas.petazzoni@bootlin.com>

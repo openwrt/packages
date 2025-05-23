@@ -8,18 +8,23 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=emailrelay
-PKG_VERSION:=2.4.1
+PKG_VERSION:=2.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-src.tar.gz
 PKG_SOURCE_URL:=@SF/emailrelay/$(PKG_VERSION)
-PKG_HASH:=cff8cf5bff19fd1721cefdbd6207da67af01d2b1b4a51d147c33f4429a79766e
+PKG_HASH:=30c106ca66d75f7e6de2baf22e516024776c699ac27abdd570fbb9319053b4b9
 
 PKG_MAINTAINER:=Federico Di Marco <fededim@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
-PKG_CONFIG_DEPENDS:=CONFIG_EMAILRELAY_SUPPORT_VERBOSE_DBG CONFIG_EMAILRELAY_SSL
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_EMAILRELAY_SUPPORT_VERBOSE_DBG \
+	CONFIG_EMAILRELAY_SSL \
+	CONFIG_EMAILRELAY_SSL_MBEDTLS\
+	CONFIG_EMAILRELAY_NOSSL
+
 PKG_BUILD_FLAGS:=gc-sections lto
 
 include $(INCLUDE_DIR)/package.mk
@@ -27,41 +32,26 @@ include $(INCLUDE_DIR)/package.mk
 define Package/emailrelay
   SECTION:=mail
   CATEGORY:=Mail
-  DEPENDS:=+EMAILRELAY_SSL:libopenssl +libstdcpp
-  TITLE:=A simple SMTP proxy and MTA
-  URL:=http://emailrelay.sourceforge.net/
+  DEPENDS:=+EMAILRELAY_SSL:libopenssl +EMAILRELAY_SSL_MBEDTLS:libmbedtls +libstdcpp
+  TITLE:=E-MailRelay A lightweight email server
+  URL:=https://emailrelay.sourceforge.net/
   MENU:=1
 endef
 
 
 define Package/emailrelay/config
-config EMAILRELAY_SUPPORT_VERBOSE_DBG
-	bool "Enable support for extended logging"
-	depends on PACKAGE_emailrelay
-	default n
-	help
-	  Enables support for extended logging (must also be explicitely enabled by using command line switch --debug when starting emailrelay)
-
-config EMAILRELAY_SSL
-	bool "Enable support for OpenSSL"
-	depends on PACKAGE_emailrelay
-	default y
-	select PACKAGE_libopenssl
-	help
- 	  Builds the package with OpenSSL support (SSMTP is supported).
+	source "$(SOURCE)/Config.in"
 endef
 
 
 
 define Package/emailrelay/description
- Emailrelay is a simple SMTP proxy and store-and-forward message transfer agent (MTA).
+ E-MailRelay is a simple SMTP proxy and store-and-forward MTA with POP access to spooled messages.
 
- When running as a proxy all e-mail messages can be passed through
- a user-defined program, such as a spam filter, which can drop,
- re-address or edit messages as they pass through. When running
- as a store-and-forward MTA incoming messages are stored in a
- local spool directory, and then forwarded to the next SMTP
- server on request.
+ It can be used as a personal internet mail server with spam filtering and DNSBL connection blocking.
+ Forwarding can be to a fixed smarthost or using DNS MX routing.
+
+ External scripts can be used for address validation and e-mail message processing.
 endef
 
 
@@ -74,7 +64,6 @@ endef
 CONFIGURE_ARGS += \
 	--without-doxygen \
 	--without-man2html \
-	--without-mbedtls \
 	--without-pam \
 	--disable-bsd \
 	--disable-gui \
@@ -90,6 +79,14 @@ else
 		--without-openssl
 endif
 
+ifeq ($(CONFIG_EMAILRELAY_SSL_MBEDTLS),y)
+	CONFIGURE_ARGS += \
+		--with-mbedtls
+else
+	CONFIGURE_ARGS += \
+		--without-mbedtls
+endif
+
 ifeq ($(CONFIG_EMAILRELAY_SUPPORT_VERBOSE_DBG),y)
 	CONFIGURE_ARGS += \
 		--enable-debug=yes
@@ -100,7 +97,6 @@ TARGET_CXXFLAGS += -Wl,--as-needed
 define Package/emailrelay/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/main/emailrelay $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/main/emailrelay-filter-copy $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/main/emailrelay-passwd $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/main/emailrelay-submit $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/etc

@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=smartmontools
-PKG_VERSION:=7.4
+PKG_VERSION:=7.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/smartmontools
-PKG_HASH:=e9a61f641ff96ca95319edfb17948cd297d0cd3342736b2c49c99d4716fb993d
+PKG_HASH:=690b83ca331378da9ea0d9d61008c4b22dde391387b9bbad7f29387f2595f76e
 
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -81,7 +81,7 @@ define Package/smartd-mail/description
 endef
 
 TARGET_CXXFLAGS +=-fno-rtti
-MAKE_FLAGS +=BUILD_INFO='"(localbuild)"'
+MAKE_FLAGS +=BUILD_INFO='"(localbuild)"' V=$(if $(V),1,0)
 
 CONFIGURE_ARGS += \
 	--disable-fast-lebe \

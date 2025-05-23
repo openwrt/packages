@@ -61,7 +61,7 @@ $(call Package/fuse3/Default)
   TITLE+= (utilities)
   SUBMENU:=Filesystem
   LICENSE:=GPL-2.0-only
-  LICENSE_FILES:=COPYING
+  LICENSE_FILES:=GPL2.txt
 endef
 
 define Package/fuse3-utils/description

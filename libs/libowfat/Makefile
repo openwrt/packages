@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libowfat
-PKG_VERSION:=0.33
+PKG_VERSION:=0.34
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.fefe.de/libowfat
-PKG_HASH:=311ec8b3f4b72bb442e323fb013a98f956fa745547f2bc9456287b20d027cd7d
+PKG_HASH:=d4330d373ac9581b397bc24a22ad1f7f5d58a7fe36d9d239fe352ceffc5d304b
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
@@ -19,9 +19,6 @@ PKG_BUILD_DEPENDS += libowfat/host
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
-
-# set to 1 to enable debugging
-DEBUG=
 
 define Package/libowfat
   SECTION:=libs
@@ -40,7 +37,7 @@ LOWFAT_MAKEOPTS = $(TARGET_CONFIGURE_OPTS) \
 	CFLAGS="$(TARGET_CFLAGS) -I$(PKG_BUILD_DIR) -I$(STAGING_DIR)/usr/include" \
 	CCC="$(TARGET_CC)" \
 	CROSS="$(TARGET_CROSS)" \
-	DEBUG="$(DEBUG)" \
+	DEBUG="$(if $(CONFIG_DEBUG),1,)" \
 	VERSION="$(PKG_VERSION)" \
 	OS="Linux"
 
@@ -55,13 +52,13 @@ define Build/Compile
 endef
 
 define Host/Compile
-	$(LN) . $(HOST_BUILD_DIR)/libowfat
-	$(MAKE) -C $(HOST_BUILD_DIR) $(LOWFAT_HOST_MAKEOPTS) ent
+	$(MAKE) -C $(HOST_BUILD_DIR) $(LOWFAT_HOST_MAKEOPTS) ent json
 endef
 
 define Host/Install
 	$(INSTALL_DIR) $(STAGING_DIR_HOSTPKG)/bin
 	$(CP) $(HOST_BUILD_DIR)/ent $(STAGING_DIR_HOSTPKG)/bin/libowfat-ent
+	$(CP) $(HOST_BUILD_DIR)/json $(STAGING_DIR_HOSTPKG)/bin/libowfat-json
 endef
 
 define Build/InstallDev

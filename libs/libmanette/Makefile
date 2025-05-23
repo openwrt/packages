@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmanette
-PKG_VERSION:=0.2.9
+PKG_VERSION:=0.2.12
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNOME/$(PKG_NAME)/$(basename $(PKG_VERSION))
-PKG_HASH:=29366be5452f60a74c65fc64ffe2d74eddd4e6e6824c2cefa567a43bd92b688f
+PKG_HASH:=48b349267180f1dc34d405a9e1e90ba16f054a19ce907930e679493d911ea1d8
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=MIT
@@ -21,7 +21,7 @@ define Package/libmanette
   CATEGORY:=Libraries
   TITLE:=The simple GObject game controller library.
   URL:=https://gitlab.gnome.org/GNOME/libmanette
-  DEPENDS:=+glib2 +libgudev
+  DEPENDS:=+glib2 +libgudev +hidapi
 endef
 
 define Package/libmanette/description

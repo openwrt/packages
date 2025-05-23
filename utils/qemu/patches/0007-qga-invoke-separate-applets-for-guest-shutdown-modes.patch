@@ -1,52 +1,53 @@
-From 80ec6872aceb18c68b1cf5b6f8acd6ad667cbd4f Mon Sep 17 00:00:00 2001
-From: Yousong Zhou <yszhou4tech@gmail.com>
-Date: Thu, 17 Dec 2020 15:55:55 +0800
-Subject: [PATCH] qga: invoke separate applets for guest-shutdown modes
-
-/sbin/shutdown is not available on OpenWrt by default
-
-Origin: "main/qemu: fix shutdown from guest agent"
-https://gitlab.alpinelinux.org/alpine/aports/commit/76b81b486480fd9c3294cd420bcf2df01c27790d
+Origin: community/qemu: fix qemu-guest-agent patch
+https://gitlab.alpinelinux.org/alpine/aports/-/blob/b720d51ec844d4754dd5b29084350aa1f5c9a74d/community/qemu/guest-agent-shutdown.patch
 ---
- qga/commands-posix.c | 5 +++++
- 1 file changed, 5 insertions(+)
-
 --- a/qga/commands-posix.c
 +++ b/qga/commands-posix.c
-@@ -217,6 +217,7 @@ out:
- void qmp_guest_shutdown(const char *mode, Error **errp)
- {
+@@ -219,43 +219,21 @@ void qmp_guest_shutdown(const char *mode
      const char *shutdown_flag;
-+    const char *fallback_cmd = NULL;
      Error *local_err = NULL;
  
- #ifdef CONFIG_SOLARIS
-@@ -236,10 +237,13 @@ void qmp_guest_shutdown(const char *mode
+-#ifdef CONFIG_SOLARIS
+-    const char *powerdown_flag = "-i5";
+-    const char *halt_flag = "-i0";
+-    const char *reboot_flag = "-i6";
+-#elif defined(CONFIG_BSD)
+-    const char *powerdown_flag = "-p";
+-    const char *halt_flag = "-h";
+-    const char *reboot_flag = "-r";
+-#else
+-    const char *powerdown_flag = "-P";
+-    const char *halt_flag = "-H";
+-    const char *reboot_flag = "-r";
+-#endif
++    const char *argv[] = {NULL, NULL};
+ 
      slog("guest-shutdown called, mode: %s", mode);
      if (!mode || strcmp(mode, "powerdown") == 0) {
-         shutdown_flag = powerdown_flag;
-+        fallback_cmd = "/sbin/poweroff";
+-        shutdown_flag = powerdown_flag;
++        argv[0] = "poweroff";
      } else if (strcmp(mode, "halt") == 0) {
-         shutdown_flag = halt_flag;
-+        fallback_cmd = "/sbin/halt";
+-        shutdown_flag = halt_flag;
++        argv[0] = "halt";
      } else if (strcmp(mode, "reboot") == 0) {
-         shutdown_flag = reboot_flag;
-+        fallback_cmd = "/sbin/reboot";
+-        shutdown_flag = reboot_flag;
++        argv[0] = "reboot";
      } else {
          error_setg(errp,
                     "mode is invalid (valid values are: halt|powerdown|reboot");
-@@ -258,8 +262,12 @@ void qmp_guest_shutdown(const char *mode
- 
-     ga_run_command(argv, NULL, "shutdown", &local_err);
-     if (local_err) {
--        error_propagate(errp, local_err);
--        return;
-+        const char *fallback_argv[] = {fallback_cmd, (char *) NULL};
-+        ga_run_command(fallback_argv, NULL, fallback_cmd, &local_err);
-+        if (local_err) {
-+            error_propagate(errp, local_err);
-+            return;
-+        }
+         return;
      }
  
-     /* succeeded */
+-    const char *argv[] = {"/sbin/shutdown",
+-#ifdef CONFIG_SOLARIS
+-                          shutdown_flag, "-g0", "-y",
+-#elif defined(CONFIG_BSD)
+-                          shutdown_flag, "+0",
+-#else
+-                          "-h", shutdown_flag, "+0",
+-#endif
+-                          "hypervisor initiated shutdown", (char *) NULL};
+-
+     ga_run_command(argv, NULL, "shutdown", &local_err);
+     if (local_err) {
+         error_propagate(errp, local_err);

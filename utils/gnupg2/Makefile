@@ -8,13 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnupg
-PKG_VERSION:=2.2.39
+PKG_VERSION:=2.4.7
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://gnupg.org/ftp/gcrypt/gnupg
-PKG_HASH:=ab74db6685f026d7c0a10b527ecddecd608606a1691d15fda5d0a7f7d27e4c2f
+PKG_HASH:=7b24706e4da7e0e3b06ca068231027401f238102c41c909631349dcc3b85eb46
 
+PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING COPYING.CC0 COPYING.GPL2 COPYING.LGPL21 COPYING.LGPL3 COPYING.other
 PKG_CPE_ID:=cpe:/a:gnupg:gnupg
@@ -24,6 +25,8 @@ PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
+
+CONFIGURE_VARS += ac_cv_path_GPGRT_CONFIG="$(STAGING_DIR)/usr/bin/gpgrt-config"
 
 define Package/gnupg2/Default
   SECTION:=utils
@@ -49,6 +52,7 @@ endef
 define Package/gnupg2-dirmngr
   $(call Package/gnupg2/Default)
   TITLE:=Keyserver, CRL, and OCSP access for GnuPG (version 2)
+  DEPENDS+=+libgnutls
 endef
 
 define Package/gnupg2-utils
@@ -92,11 +96,10 @@ CONFIGURE_ARGS += \
 	--with-libassuan-prefix="$(STAGING_DIR)/usr/" \
 	--with-ksba-prefix="$(STAGING_DIR)/usr/" \
 	--with-npth-prefix="$(STAGING_DIR)/usr/" \
-	--enable-dirmngr \
+	--disable-doc \
 	--disable-bzip2 \
 	--disable-card-support \
 	--disable-ccid-driver \
-	--disable-gnutls \
 	--disable-ldap \
 	--disable-ntbtls \
 	--disable-rpath \

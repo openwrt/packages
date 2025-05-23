@@ -38,12 +38,12 @@ generate_config() {
 		}
 		config_get _value "$section" "mode"
 		[ -z "$_value" ] || append _buffer "-$_value"
+		config_get _value "$section" "phase"
+		[ -z "$_value" ] || append _buffer "-phase $_value"
 		config_get _value "$section" "net"
 		[ -z "$_value" ] || append _buffer "-net $_value"
 		config_get _value "$section" "addr"
 		[ -z "$_value" ] || append _buffer "-addr $_value"
-		config_get _value "$section" "phase"
-		[ -z "$_value" ] || append _buffer "-phase $_value"
 		atalkd_config="$atalkd_config$_buffer"
 		config_list_foreach "$section" zone handle_zone
 		atalkd_config="$atalkd_config$NL"

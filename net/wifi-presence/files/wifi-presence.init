@@ -35,7 +35,7 @@ start_service() {
         config_get hassPrefix main hassPrefix
         config_get hostapdSocks main hostapdSocks
         config_get mqttAddr main mqttAddr
-        config_get mqttID main mqttId
+        config_get mqttID main mqttID
         config_get mqttUsername main mqttUsername
         config_get mqttPassword main mqttPassword
         config_get mqttPrefix main mqttPrefix
