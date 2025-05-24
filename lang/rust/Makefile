@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rust
-PKG_VERSION:=1.85.0
+PKG_VERSION:=1.87.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=rustc-$(PKG_VERSION)-src.tar.gz
 PKG_SOURCE_URL:=https://static.rust-lang.org/dist/
-PKG_HASH:=2f4f3142ffb7c8402139cfa0796e24baaac8b9fd3f96b2deec3b94b4045c6a8a
+PKG_HASH:=149bb9fd29be592da4e87900fc68f0629a37bf6850b46339dd44434c04fd8e76
 HOST_BUILD_DIR:=$(BUILD_DIR)/host/rustc-$(PKG_VERSION)-src
 
 PKG_MAINTAINER:=Luca Barbato <lu_zero@luminem.org>
@@ -90,8 +90,7 @@ define Host/Compile
 	TARGET_CFLAGS="$(TARGET_CFLAGS)" \
 	$(PYTHON) $(HOST_BUILD_DIR)/x.py \
 		--build-dir $(HOST_BUILD_DIR)/build \
-		--config $(HOST_BUILD_DIR)/config.toml \
-		dist build-manifest cargo llvm-tools rustc rust-std rust-src
+		dist build-manifest rustc rust-std cargo llvm-tools rust-src
 endef
 
 define Host/Install
