@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bind
 PKG_VERSION:=9.20.9
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 USERID:=bind=57:bind=57
 
 PKG_MAINTAINER:=Noah Meyerhans <frodo@morgul.net>
@@ -34,10 +34,14 @@ PKG_BUILD_PARALLEL:=1
 PKG_CONFIG_DEPENDS := \
 	CONFIG_BIND_LIBJSON \
 	CONFIG_BIND_LIBXML2 \
+	CONFIG_BIND_JEMALLOC \
 	CONFIG_BIND_ENABLE_DOH \
 	CONFIG_BIND_ENABLE_GSSAPI
 
-PKG_BUILD_DEPENDS += BIND_LIBXML2:libxml2 BIND_LIBJSON:libjson-c
+PKG_BUILD_DEPENDS += \
+	BIND_LIBXML2:libxml2 \
+	BIND_LIBJSON:libjson-c \
+	BIND_JEMALLOC:libjemalloc
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -66,7 +70,8 @@ define Package/bind-libs
 	+BIND_ENABLE_GSSAPI:krb5-libs \
 	+BIND_ENABLE_GSSAPI:libcomerr \
 	+BIND_LIBXML2:libxml2 \
-	+BIND_LIBJSON:libjson-c
+	+BIND_LIBJSON:libjson-c \
+	+BIND_JEMALLOC:libjemalloc
   TITLE:=bind shared libraries
   URL:=https://www.isc.org/software/bind
 endef
@@ -168,6 +173,14 @@ ifdef CONFIG_BIND_LIBXML2
 else
 	CONFIGURE_ARGS += \
 		--with-libxml2=no
+endif
+
+ifdef CONFIG_BIND_JEMALLOC
+	CONFIGURE_ARGS += \
+		--with-jemalloc=yes
+else
+	CONFIGURE_ARGS += \
+		--without-jemalloc
 endif
 
 ifdef CONFIG_BIND_ENABLE_DOH
