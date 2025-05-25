@@ -68,6 +68,7 @@ CONFIGURE_VARS += \
 	bash_cv_job_control_missing=present \
 	bash_cv_dev_fd=whacky \
 	bash_cv_sys_named_pipes=present \
+	CFLAGS_FOR_BUILD="-std=gnu17" \
 
 # The following are some other tests that cannot run when cross-compiling
 CONFIGURE_VARS += \
