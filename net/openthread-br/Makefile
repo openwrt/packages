@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=openthread-br
 PKG_SOURCE_DATE:=2024-11-20
 PKG_SOURCE_VERSION:=bd7bc77742920eba3b3801a410c3eba3372c98bb
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=https://github.com/openthread/ot-br-posix.git
