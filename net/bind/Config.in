@@ -42,3 +42,13 @@ config BIND_ENABLE_GSSAPI
 		Disable it by default as krb5-libs is rather large.
 
 endif
+
+config BIND_JEMALLOC
+	bool
+	default n
+	prompt "Include jemalloc for heap debugging in bind-server"
+	help
+		BIND 9 allows linking against jemalloc which can provide
+		more detailed memory usage information to assist in
+		diagnosing heap utilization issues.
+
