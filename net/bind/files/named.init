@@ -13,6 +13,7 @@ named_options_file=/etc/bind/named-rndc.conf
 rndc_conf_file=/etc/bind/rndc.conf
 pid_file=/var/run/named/named.pid
 
+rundir=$(dirname $pid_file)
 logdir=/var/log/named/
 cachedir=/var/cache/bind
 libdir=/var/lib/bind
@@ -21,7 +22,7 @@ dyndir=/tmp/bind
 conf_local_file=$dyndir/named.conf.local
 
 fix_perms() {
-    for dir in $libdir $logdir $cachedir $dyndir; do
+    for dir in $rundir $libdir $logdir $cachedir $dyndir; do
 	test -e "$dir" || {
             mkdir -p "$dir"
             chgrp bind "$dir"
