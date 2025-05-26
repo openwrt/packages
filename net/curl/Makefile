@@ -69,6 +69,7 @@ PKG_CONFIG_DEPENDS:= \
   CONFIG_LIBCURL_UNIX_SOCKETS \
   CONFIG_LIBCURL_VERBOSE \
   CONFIG_LIBCURL_NTLM \
+  CONFIG_LIBCURL_DEBUG \
   $(if $(CONFIG_LIBCURL_OPENSSL), \
 	CONFIG_OPENSSL_ENGINE \
 	CONFIG_OPENSSL_WITH_COMPRESSION \
@@ -107,6 +108,10 @@ define Package/libcurl/config
 endef
 
 TARGET_CFLAGS += $(FPIC)
+ifneq (,$(CONFIG_LIBCURL_DEBUG))
+  TARGET_CFLAGS := -O0 $(patsubst -O%,,$(TARGET_CFLAGS)) -ggdb3
+  PKG_BUILD_FLAGS:=no-lto no-gc-sections
+endif
 TARGET_CPPFLAGS += $(if $(CONFIG_LIBCURL_NTLM),,-DCURL_DISABLE_NTLM)
 TARGET_LDFLAGS += -Wl,--gc-sections
 
@@ -164,6 +169,7 @@ CONFIGURE_ARGS += \
 	$(call autoconf_bool,CONFIG_LIBCURL_TLS_SRP,tls-srp) \
 	$(call autoconf_bool,CONFIG_LIBCURL_UNIX_SOCKETS,unix-sockets) \
 	$(call autoconf_bool,CONFIG_LIBCURL_VERBOSE,verbose) \
+	$(call autoconf_bool,CONFIG_LIBCURL_DEBUG,debug) \
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(2)/bin $(1)/usr/bin $(1)/usr/include $(1)/usr/lib $(1)/usr/lib/pkgconfig

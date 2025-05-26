@@ -175,4 +175,10 @@ config LIBCURL_NTLM
 	depends on LIBCURL_CRYPTO_AUTH && !LIBCURL_NOSSL
 	default n
 
+config LIBCURL_DEBUG
+	bool "Enable a debug build (for extra --verbose info"
+	default n
+	help
+		Configures curl with --enable-debug, which also outputs
+                additional helpful information when run with --verbose.
 endif
