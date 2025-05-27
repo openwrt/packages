@@ -21,7 +21,7 @@ define Package/perl-future
   SUBMENU:=Perl
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=Future - represent an operation awaiting completion in Perl
+  TITLE:=Future represents an operation awaiting completion
   URL:=https://metacpan.org/pod/Future
   DEPENDS:=perl +perlbase-essential +perlbase-b +perlbase-time +perlbase-list
 endef
