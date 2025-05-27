@@ -21,9 +21,15 @@ define Package/perl-xs-parse-keyword
   SUBMENU:=Perl
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=Perl XS functions to assist in parsing keyword syntax
+  TITLE:=XS functions to assist in parsing keyword syntax
   URL:=https://metacpan.org/pod/XS::Parse::Keyword
   DEPENDS:=perl +perlbase-essential +perlbase-xsloader
+endef
+
+define Package/perl-xs-parse-keyword/description
+  This module provides some XS functions to assist in writing syntax
+  modules that provide new Perl-visible syntax, primarily for authors
+  of keyword plugins using the PL_keyword_plugin hook mechanism.
 endef
 
 define Build/Configure
