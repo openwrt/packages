@@ -14,8 +14,6 @@ PKG_MAINTAINER:=Jens Wagner <jens@wagner2013.de>
 PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_DEPENDS:=openssl
-
 include $(INCLUDE_DIR)/package.mk
 include ../perl/perlmod.mk
 
@@ -26,6 +24,11 @@ define Package/perl-net-ssleay
   TITLE:=Perl bindings for OpenSSL and LibreSSL
   URL:=https://metacpan.org/pod/Net::SSLeay
   DEPENDS:=perl +perlbase-essential +perlbase-mime +libopenssl +zlib
+endef
+
+define Package/perl-net-ssleay/description
+  This module provides Perl bindings for libssl (an SSL/TLS API)
+  and libcrypto (a cryptography API).
 endef
 
 define Build/Configure
