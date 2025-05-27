@@ -21,9 +21,15 @@ define Package/perl-class-inspector
   SUBMENU:=Perl
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=Class::Inspector - Get information about a class and its structure [Perl]
+  TITLE:=Get information about a class and its structure
   URL:=https://metacpan.org/pod/Class::Inspector
   DEPENDS:=perl +perlbase-essential +perlbase-file +perlbase-base
+endef
+
+define Package/perl-class-inspector/description
+  Class::Inspector allows you to get information about a loaded class.
+  While most or all of this information can be found in other ways,
+  Class::Inspector provides an easier interface to this information.
 endef
 
 define Build/Configure
