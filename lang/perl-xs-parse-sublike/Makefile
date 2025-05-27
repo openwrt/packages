@@ -21,9 +21,15 @@ define Package/perl-xs-parse-sublike
   SUBMENU:=Perl
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=Perl XS functions to assist in parsing sub-like syntax
+  TITLE:=XS functions to assist in parsing sub-like syntax
   URL:=https://metacpan.org/pod/XS::Parse::Sublike
   DEPENDS:=perl +perlbase-essential +perlbase-xsloader
+endef
+
+define Package/perl-xs-parse-sublike/description
+  This module provides some XS functions to assist in writing parsers for
+  sub-like syntax, primarily for authors of keyword plugins using the
+  PL_keyword_plugin hook mechanism.
 endef
 
 define Build/Configure
