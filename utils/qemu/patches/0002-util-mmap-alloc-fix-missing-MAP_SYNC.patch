@@ -1,7 +1,7 @@
-From e1e0a76305927290d75b4aae56f1ed89d83da741 Mon Sep 17 00:00:00 2001
+From b2cd62027dbf41c3cd5354ed1a5f73c5e26b1811 Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <yszhou4tech@gmail.com>
 Date: Mon, 30 Mar 2020 12:48:58 +0800
-Subject: [PATCH] util/mmap-alloc: fix missing MAP_SYNC
+Subject: [PATCH 2/4] util/mmap-alloc: fix missing MAP_SYNC
 
 Quote musl-libc commit 9b57db3f958 ("add MAP_SYNC and
 MAP_SHARED_VALIDATE from linux v4.15")
