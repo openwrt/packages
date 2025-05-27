@@ -1,3 +1,12 @@
+From a41fe59d9ed66f807f3410408699b0b0b8afea3d Mon Sep 17 00:00:00 2001
+From: Vladimir Ermakov <vooon341@gmail.com>
+Date: Tue, 27 May 2025 09:57:50 +0200
+Subject: [PATCH 4/4] fix meson cross-build compiler sanity check
+
+---
+ configure | 1 +
+ 1 file changed, 1 insertion(+)
+
 --- a/configure
 +++ b/configure
 @@ -1845,6 +1845,7 @@ if test "$skip_meson" = no; then
