@@ -21,9 +21,15 @@ define Package/perl-future
   SUBMENU:=Perl
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=Future - represent an operation awaiting completion in Perl
+  TITLE:=Future represents an operation awaiting completion
   URL:=https://metacpan.org/pod/Future
   DEPENDS:=perl +perlbase-essential +perlbase-b +perlbase-time +perlbase-list
+endef
+
+define Package/perl-future/description
+  A Future object represents an operation that is currently in progress,
+  or has recently completed. It can be used in a variety of ways to manage
+  the flow of control, and data, through an asynchronous program.
 endef
 
 define Build/Configure
