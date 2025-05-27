@@ -14,8 +14,6 @@ PKG_MAINTAINER:=Jens Wagner <jens@wagner2013.de>
 PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_DEPENDS:=perl-xs-parse-keyword perl-xs-parse-sublike
-
 include $(INCLUDE_DIR)/package.mk
 include ../perl/perlmod.mk
 
@@ -26,6 +24,12 @@ define Package/perl-future-asyncawait
   TITLE:=Deferred subroutine syntax for futures in Perl
   URL:=https://metacpan.org/pod/Future::AsyncAwait
   DEPENDS:=perl +perl-future +perl-xs-parse-keyword +perl-xs-parse-sublike +perlbase-xsloader +perlbase-scalar
+endef
+
+define Package/perl-future-asyncawait/description
+  This module provides syntax for deferring and resuming subroutines while
+  waiting for Futures to complete.
+  The new syntax takes the form of two new keywords, async and await.
 endef
 
 define Build/Configure
