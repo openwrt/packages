@@ -10,13 +10,17 @@ blacklist_file="$tmp_folder/blacklist"
 routes_parse() {
 	local _config="$1"
 
-	local _gateway
-	local _domains_path
+	local _enabled
+	config_get_bool _enabled "${_config}" "enabled" "1"
+	if [ "${_enabled}" -eq "1" ]; then
+		local _gateway
+		local _domains_path
 
-	config_get _gateway "${_config}" gateway
-	config_get _domains_path "${_config}" domains_path
+		config_get _gateway "${_config}" gateway
+		config_get _domains_path "${_config}" domains_path
 
-	procd_append_param command -r "${_gateway} ${_domains_path}"
+		procd_append_param command -r "${_gateway} ${_domains_path}"
+	fi
 }
 
 blacklist_parse() {
