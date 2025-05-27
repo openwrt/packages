@@ -21,9 +21,14 @@ define Package/perl-struct-dumb
   SUBMENU:=Perl
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=Make simple lightweight record-like structures for Perl
+  TITLE:=Make simple lightweight record-like structures
   URL:=https://metacpan.org/pod/Struct::Dumb
   DEPENDS:=perl +perlbase-essential +perlbase-scalar
+endef
+
+define Package/perl-struct-dumb/description
+  Struct::Dumb creates record-like structure types,
+  similar to the struct keyword in C, C++ or Record in Pascal.
 endef
 
 define Build/Configure
