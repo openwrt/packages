@@ -1,14 +1,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luajit
-PKG_VERSION:=2.1.0
-PKG_REAL_VERSION:=$(PKG_VERSION)-beta3
-PKG_RELEASE:=8
+PKG_SOURCE_DATE:=2025-05-27
+PKG_REAL_VERSION=2.1
+PKG_VERSION:=$(PKG_REAL_VERSION)-$(subst -,,$(PKG_SOURCE_DATE))
+PKG_RELEASE:=1
 
-PKG_SOURCE:=LuaJIT-$(PKG_REAL_VERSION).tar.gz
-PKG_SOURCE_URL:=https://luajit.org/download
-PKG_HASH:=1ad2e34b111c802f9d0cdf019e986909123237a28c746b21295b63c9e785d9c3
-PKG_BUILD_DIR:=$(BUILD_DIR)/LuaJIT-$(PKG_REAL_VERSION)
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/LuaJIT/LuaJIT.git
+PKG_SOURCE_VERSION:=eec7a8016c3381b949b5d84583800d05897fa960
+PKG_MIRROR_HASH:=7e9021ce1a34ec3f61e64db9fb15be97130d7ebdb4b033d70a49956bc612309c
 
 PKG_MAINTAINER:=Morteza Milani <milani@pichak.co>
 PKG_LICENSE:=MIT
@@ -64,20 +65,21 @@ define Build/Compile
 endef
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include/luajit-2.1
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/luajit-2.1/*.{h,hpp} $(1)/usr/include/luajit-2.1
+	$(INSTALL_DIR) $(1)/usr/include/luajit-$(PKG_REAL_VERSION)
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/luajit-$(PKG_REAL_VERSION)/*.{h,hpp} $(1)/usr/include/luajit-$(PKG_REAL_VERSION)
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*so* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/luajit.pc $(1)/usr/lib/pkgconfig/
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/luajit-$(PKG_REAL_VERSION) $(PKG_INSTALL_DIR)/usr/bin/$(PKG_NAME)
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/luajit-$(PKG_REAL_VERSION).* $(1)/usr/bin/$(PKG_NAME)
 endef
 
 define Package/luajit/install
 	$(INSTALL_DIR) $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/luajit-$(PKG_REAL_VERSION) $(1)/usr/bin/$(PKG_NAME)
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/luajit-$(PKG_REAL_VERSION).* $(1)/usr/bin/$(PKG_NAME)
 endef
 
 define Host/Compile

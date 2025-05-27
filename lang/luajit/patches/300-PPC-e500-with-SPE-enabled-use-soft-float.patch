@@ -28,7 +28,7 @@ Signed-off-by: Šimon Bořek <simon.borek@nic.cz>
 
 --- a/src/lj_arch.h
 +++ b/src/lj_arch.h
-@@ -256,7 +256,7 @@
+@@ -296,7 +296,7 @@
  #define LJ_ARCH_NAME		"ppc"
  
  #if !defined(LJ_ARCH_HASFPU)
@@ -37,7 +37,7 @@ Signed-off-by: Šimon Bořek <simon.borek@nic.cz>
  #define LJ_ARCH_HASFPU		0
  #else
  #define LJ_ARCH_HASFPU		1
-@@ -264,7 +264,7 @@
+@@ -304,7 +304,7 @@
  #endif
  
  #if !defined(LJ_ABI_SOFTFP)
@@ -46,12 +46,13 @@ Signed-off-by: Šimon Bořek <simon.borek@nic.cz>
  #define LJ_ABI_SOFTFP		1
  #else
  #define LJ_ABI_SOFTFP		0
-@@ -442,9 +442,6 @@
- #if LJ_ARCH_PPC64
- #error "No support for PowerPC 64 bit mode (yet)"
+@@ -511,10 +511,6 @@
+ #error "No support for little-endian PPC32"
+ #undef LJ_TARGET_PPC
  #endif
 -#if defined(__NO_FPRS__) && !defined(_SOFT_FLOAT)
--#error "No support for PPC/e500 anymore (use LuaJIT 2.0)"
+-#error "No support for PPC/e500, use LuaJIT 2.0"
+-#undef LJ_TARGET_PPC
 -#endif
  #elif LJ_TARGET_MIPS32
  #if !((defined(_MIPS_SIM_ABI32) && _MIPS_SIM == _MIPS_SIM_ABI32) || (defined(_ABIO32) && _MIPS_SIM == _ABIO32))
