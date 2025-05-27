@@ -21,9 +21,14 @@ define Package/perl-file-sharedir
   SUBMENU:=Perl
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=File::ShareDir - Locate per-dist and per-module shared files [Perl]
+  TITLE:=Locate per-dist and per-module shared files
   URL:=https://metacpan.org/pod/File::ShareDir
   DEPENDS:=perl +perlbase-essential +perlbase-file +perl-class-inspector
+endef
+
+define Package/perl-file-sharedir/description
+  File::ShareDir locates shared files distributed with a Perl distribution
+  or module.
 endef
 
 define Build/Configure
