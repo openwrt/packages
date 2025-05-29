@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netavark
 PKG_VERSION:=1.9.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/containers/netavark/tar.gz/v$(PKG_VERSION)?
@@ -39,10 +39,6 @@ endef
 
 CARGO_PKG_VARS += \
 	PROTOC=$(STAGING_DIR_HOSTPKG)/bin/protoc
-
-define Build/Compile
-	$(call Build/Compile/Cargo,,--locked)
-endef
 
 define Package/netavark/install
 	$(INSTALL_DIR) $(1)/etc/config $(1)/usr/lib/podman
