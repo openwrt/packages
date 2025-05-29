@@ -21,7 +21,7 @@ define Package/perl-xs-parse-sublike
   SUBMENU:=Perl
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=Perl XS functions to assist in parsing sub-like syntax
+  TITLE:=XS functions to assist in parsing sub-like syntax
   URL:=https://metacpan.org/pod/XS::Parse::Sublike
   DEPENDS:=perl +perlbase-essential +perlbase-xsloader
 endef

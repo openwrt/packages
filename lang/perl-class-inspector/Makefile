@@ -21,7 +21,7 @@ define Package/perl-class-inspector
   SUBMENU:=Perl
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=Class::Inspector - Get information about a class and its structure [Perl]
+  TITLE:=Get information about a class and its structure
   URL:=https://metacpan.org/pod/Class::Inspector
   DEPENDS:=perl +perlbase-essential +perlbase-file +perlbase-base
 endef

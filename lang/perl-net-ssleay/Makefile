@@ -14,8 +14,6 @@ PKG_MAINTAINER:=Jens Wagner <jens@wagner2013.de>
 PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_DEPENDS:=openssl
-
 include $(INCLUDE_DIR)/package.mk
 include ../perl/perlmod.mk
 
