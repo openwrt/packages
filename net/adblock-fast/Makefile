@@ -1,12 +1,12 @@
+# SPDX-Identifier-License: AGPL-3.0-or-later
 # Copyright 2023-2025 MOSSDeF, Stan Grishin (stangri@melmac.ca).
 # TLD optimization written by Dirk Brenken (dev@brenken.org).
-# This is free software, licensed under AGPL-3.0-or-later.
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adblock-fast
 PKG_VERSION:=1.1.3
-PKG_RELEASE:=11
+PKG_RELEASE:=13
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.ca>
 PKG_LICENSE:=AGPL-3.0-or-later
 
