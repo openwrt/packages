@@ -1,0 +1,11 @@
+--- a/bogofilter/Makefile.am
++++ b/bogofilter/Makefile.am
+@@ -4,7 +4,7 @@ AUTOMAKE_OPTIONS =
+ # search path for m4 macros
+ ACLOCAL_AMFLAGS = -I m4
+ 
+-SUBDIRS = src . doc
++SUBDIRS = src .
+ SYSCONFDIR = @sysconfdir@
+ 
+ # what to build
