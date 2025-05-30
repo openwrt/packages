@@ -1,0 +1,16 @@
+--- a/bogofilter/doc/Makefile.am
++++ b/bogofilter/doc/Makefile.am
+@@ -98,13 +98,11 @@ dist-hook:
+ 	@echo 1>&2
+ 	@echo 1>&2 "You need xmlto to build bogofilter documentation."
+ 	@echo 1>&2
+-	@exit 1
+ 
+ .xml.htmlin:
+ 	@echo 1>&2
+ 	@echo 1>&2 "You need xmlto to build bogofilter documentation."
+ 	@echo 1>&2
+-	@exit 1
+ endif
+ 
+ .PHONY: check checkx
