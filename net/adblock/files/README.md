@@ -24,6 +24,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | certpl              |    x    | L    | phishing         | [Link](https://cert.pl/en/warning-list/)                                          |
 | cpbl                |         | XL   | compilation      | [Link](https://github.com/bongochong/CombinedPrivacyBlockLists)                   |
 | disconnect          |         | S    | general          | [Link](https://disconnect.me)                                                     |
+| divested            |         | XXL  | compilation      | [Link](https://divested.dev/pages/dnsbl)                                          |
 | doh_blocklist       |         | S    | doh_server       | [Link](https://github.com/dibdot/DoH-IP-blocklists)                               |
 | easylist            |         | M    | compilation      | [Link](https://easylist.to)                                                       |
 | easyprivacy         |         | M    | tracking         | [Link](https://easylist.to)                                                       |
@@ -181,6 +182,7 @@ Available commands:
 | adb_lookupdomain   | localhost                          | domain to check for a successful DNS backend restart                                           |
 | adb_portlist       | 53 853 5353                        | space separated list of firewall ports which should be redirected locally                      |
 | adb_report         | 0, disabled                        | set to 1 to enable the background tcpdump gathering process for reporting                      |
+| adb_map            | 0, disabled                        | enable a GeoIP Map with blocked domains                                                        |
 | adb_reportdir      | /tmp/adblock-report                | path for DNS related report files                                                              |
 | adb_repiface       | -, auto-detected                   | name of the reporting interface or 'any' used by tcpdump                                       |
 | adb_replisten      | 53                                 | space separated list of reporting port(s) used by tcpdump                                      |
@@ -188,8 +190,8 @@ Available commands:
 | adb_repchunksize   | 1                                  | report chunk size used by tcpdump in MB                                                        |
 | adb_represolve     | 0, disabled                        | resolve reporting IP addresses using reverse DNS (PTR) lookups                                 |
 | adb_tld            | 1, enabled                         | set to 0 to disable the top level domain compression (tld) function                            |
+| adb_basedir        | /tmp                               | path for all adblock related runtime operations, e.g. downloading, sorting, merging etc.       |
 | adb_backupdir      | /tmp/adblock-backup                | path for adblock backups                                                                       |
-| adb_tmpbase        | /tmp                               | path for all adblock related runtime operations, e.g. downloading, sorting, merging etc.       |
 | adb_safesearch     | 0, disabled                        | enforce SafeSearch for google, bing, brave, duckduckgo, yandex, youtube and pixabay            |
 | adb_safesearchlist | -, not set                         | Limit SafeSearch to certain provider (see above)                                               |
 | adb_mail           | 0, disabled                        | set to 1 to enable notification E-Mails in case of a processing errors                         |
@@ -231,16 +233,55 @@ Adblock deposits the final blocklist 'adb_list.overall' in '/tmp/kresd', no furt
 **Change the DNS backend to 'smartdns':**
 No further configuration is needed, adblock deposits the final blocklist 'adb_list.overall' in '/tmp/smartdns' by default.
 
+**Service status output:**
+In LuCI you'll see the realtime status in the 'Runtime' section on the overview page.
+To get the status in the CLI, just call _/etc/init.d/adblock status_ or _/etc/init.d/adblock status\_service_:
+
+```
+~# /etc/init.d/adblock status
+::: adblock runtime information
+  + adblock_status  : enabled
+  + adblock_version : 4.4.2-r1
+  + blocked_domains : 914 804
+  + active_feeds    : 1hosts, adguard, adguard_tracking, certpl, doh_blocklist, hagezi, stevenblack, winspy
+  + dns_backend     : unbound (1.23.0-r1), /mnt/data/adblock/backup, 355.97 MB
+  + run_ifaces      : trigger: wan , report: br-lan
+  + run_directories : base: /mnt/data/adblock, dns: /var/lib/unbound, backup: /mnt/data/adblock/backup, report: /mnt/data/adblock/report, jail: /tmp
+  + run_flags       : shift: ✔, custom feed: ✘, force: ✔, flush: ✘, tld: ✔, search: ✘, report: ✔, mail: ✔, jail: ✘
+  + last_run        : mode: restart, 2025-05-27T20:02:02+02:00, duration: 0m 26s, 1413.00 MB available
+  + system_info     : cores: 4, fetch: wget, Bananapi BPI-R3, mediatek/filogic, OpenWrt SNAPSHOT r29655-4dc10ec711 
+```
+
+<a id="best-practise-and-tweaks"></a>
+## Best practise and tweaks
+
+**Recommendation for low memory systems**  
+Adblock does use RAM by default and never writes to the flash space of the router. To reduce the memory pressure on low memory systems (i.e. those with 128-256MB RAM), you should optimize your configuration with the following options:  
+
+* point 'adb_basedir', 'adb_backupdir' and 'adb_reportdir' to an external usb drive or ssd
+* set 'adb_cores' to '1' (only useful on a multicore system) to force sequential feed processing
+* enable the 'adb_dnsshift' option to shift the blocklist to the backup directory and only set a soft link to this file in memory
+
+**Sensible choice of blocklists**  
+The following feeds are just my personal recommendation as an initial setup:  
+* 'adguard', 'adguard_tracking' and 'certpl'
+
+In total, this feed selection blocks about 100K domains. It may also be useful to include compilations like hagezi, stevenblack or oisd.  
+Please note: don't just blindly activate (too) many feeds at once, sooner or later this will lead to OOM conditions.  
+
+**DNS reporting, enable the GeoIP Map**  
+In addition to a tabular overview adblock reporting includes a GeoIP map in a modal popup window/iframe that shows the geolocation of your own uplink addresses (in green) and the locations of blocked domains in red. To enable the GeoIP Map set the following option in "Advanced Report Settings" config tab:  
+
+    * set 'adb_map' to '1' to include the external components listed below and activate the GeoIP map
+
+To make this work, adblock uses the following external components:  
+* [Leaflet](https://leafletjs.com/) is a lightweight open-source JavaScript library for interactive maps
+* [OpenStreetMap](https://www.openstreetmap.org/) provides the map data under an open-source license
+* [CARTO basemap styles](https://github.com/CartoDB/basemap-styles) based on [OpenMapTiles](https://openmaptiles.org/schema)
+* The free and quite fast [IP Geolocation API](https://ip-api.com/) to resolve the required IP/geolocation information (max. 45 blocked Domains per request)
+
 **Use the jail mode, a restrictive DNS blocklist:**
 You can enable a restrictive 'adb_list.jail' to block access to all domains except those listed in the allowlist file. Usually this list will be generated as an additional list for guest or kidsafe configurations (for a separate dns server instance). If the jail directory points to your primary dns directory, the jail blocklist replaces your default blocklist.
-
-**Manually override the download options:**
-By default adblock uses the following pre-configured download options:
-* <code>curl: --connect-timeout 20 --silent --show-error --location -o</code>
-* <code>uclient-fetch: --timeout=20 -O</code>
-* <code>wget: --no-cache --no-cookies --max-redirect=0 --timeout=20 -O</code>
-
-To override the default set 'adb_fetchparm' manually to your needs.
 
 **Enable E-Mail notification via 'msmtp':**
 To use the email notification you have to install & configure the package 'msmtp'.
@@ -275,26 +316,6 @@ For a regular, automatic update of the used feeds or other regular adblock activ
 
 # update the feeds every hour
 0 */1 * * * /etc/init.d/adblock reload
-```
-
-**Service status output:**
-In LuCI you'll see the realtime status in the 'Runtime' section on the overview page.
-To get the status in the CLI, just call _/etc/init.d/adblock status_ or _/etc/init.d/adblock status\_service_:
-
-```
-~# /etc/init.d/adblock status
-::: adblock runtime information
-  + adblock_status  : enabled
-  + adblock_version : 4.4.1-r2
-  + blocked_domains : 881 753
-  + active_feeds    : 1hosts, certpl, cpbl, doh_blocklist, hagezi, winspy
-  + dns_backend     : dnsmasq (2.92_alpha5-r1), /mnt/data/adblock/backup, 73.12 MB
-  + run_utils       : download: /usr/bin/curl, sort: /usr/libexec/sort-coreutils, awk: /usr/bin/gawk
-  + run_ifaces      : trigger: trm_wwan , report: br-lan
-  + run_directories : base: /mnt/data/adblock, backup: /mnt/data/adblock/backup, report: /mnt/data/adblock/report, jail: /tmp
-  + run_flags       : shift: ✔, force: ✔, flush: ✘, tld: ✔, search: ✘, report: ✔, mail: ✘, jail: ✘
-  + last_run        : mode: restart, 2025-05-03T11:43:03+02:00, duration: 0m 44s, 707.25 MB available
-  + system_info     : OpenWrt One, mediatek/filogic, OpenWrt 24.10-SNAPSHOT r28628-cc1b909a6b 
 ```
 
 **Change/add adblock feeds**  
