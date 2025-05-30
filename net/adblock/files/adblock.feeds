@@ -71,6 +71,12 @@
 		"size": "S",
 		"descr": "general"
 	},
+	"divested": {
+		"url": "https://divested.dev/hosts-domains-wildcards",
+		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
+		"size": "XXL",
+		"descr": "compilation"
+	},
 	"doh_blocklist": {
 		"url": "https://raw.githubusercontent.com/dibdot/DoH-IP-blocklists/master/doh-domains_overall.txt",
 		"rule": "/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower($1)}",
