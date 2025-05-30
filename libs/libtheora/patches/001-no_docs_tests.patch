@@ -1,31 +1,31 @@
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -8,7 +8,7 @@ else
+@@ -9,7 +9,7 @@ else
  EXAMPLES_DIR =
  endif
  
 -SUBDIRS = lib include doc tests m4 $(EXAMPLES_DIR)
 +SUBDIRS = lib include m4 $(EXAMPLES_DIR)
  
- 
- # we include the whole debian/ dir in EXTRA_DIST because there's a problem
+ EXTRA_DIST = \
+ 	README.md CHANGES COPYING LICENSE \
 --- a/Makefile.in
 +++ b/Makefile.in
-@@ -164,7 +164,7 @@ AUTOMAKE_OPTIONS = foreign 1.6 dist-zip
- @THEORA_ENABLE_EXAMPLES_TRUE@EXAMPLES_DIR = examples
- @THEORA_ENABLE_EXAMPLES_FALSE@EXAMPLES_DIR = 
- 
--SUBDIRS = lib include doc tests m4 $(EXAMPLES_DIR)
-+SUBDIRS = lib include m4 $(EXAMPLES_DIR)
- 
- # we include the whole debian/ dir in EXTRA_DIST because there's a problem
- # with autotools and HFS+ MacOSX file systems that caused debian/Makefile.am
-@@ -200,7 +200,7 @@ DIST_COMMON = README AUTHORS COPYING Mak
- 	missing mkinstalldirs theora-uninstalled.pc.in theora.pc.in \
- 	theoradec-uninstalled.pc.in theoradec.pc.in \
- 	theoraenc-uninstalled.pc.in theoraenc.pc.in
+@@ -191,7 +191,7 @@ am__define_uniq_tagged_files = \
+   unique=`for i in $$list; do \
+     if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
+   done | $(am__uniquify_input)`
 -DIST_SUBDIRS = lib include doc tests m4 examples
 +DIST_SUBDIRS = lib include m4 examples
- all: config.h
- 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
- 
+ am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/config.h.in \
+ 	$(srcdir)/libtheora.spec.in $(srcdir)/theora-uninstalled.pc.in \
+ 	$(srcdir)/theora.pc.in $(srcdir)/theoradec-uninstalled.pc.in \
+@@ -422,7 +422,7 @@ AUTOMAKE_OPTIONS = foreign 1.11 dist-zip
+ ACLOCAL_AMFLAGS = -I m4
+ @THEORA_ENABLE_EXAMPLES_FALSE@EXAMPLES_DIR = 
+ @THEORA_ENABLE_EXAMPLES_TRUE@EXAMPLES_DIR = examples
+-SUBDIRS = lib include doc tests m4 $(EXAMPLES_DIR)
++SUBDIRS = lib include m4 $(EXAMPLES_DIR)
+ EXTRA_DIST = \
+ 	README.md CHANGES COPYING LICENSE \
+ 	autogen.sh win32 macosx symbian SConstruct \
