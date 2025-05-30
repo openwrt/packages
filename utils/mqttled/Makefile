@@ -28,7 +28,6 @@ define Package/mqttled
 	+python3-jsonpath-ng \
 	+python3-yaml \
 	+python3-schema \
-	+python3-netifaces \
 	+python3-logging \
 	+python3-urllib \
 	+python3-asyncio \
