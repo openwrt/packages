@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=scapy
-PKG_VERSION:=2.5.0
+PKG_VERSION:=2.6.1
 PKG_RELEASE:=1
 
 PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=5b260c2b754fd8d409ba83ee7aee294ecdbb2c235f9f78fe90bc11cb6e5debc2
+PKG_HASH:=a580a4cf6bbbaf72e64e082d3ee8e5afd4e06becb21eecd24c22d1ef2da58ef3
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=GPL-2.0-only
