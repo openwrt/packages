@@ -1544,11 +1544,11 @@ f_report() {
 			;;
 		"json")
 			if [ "${adb_map}" = "1" ]; then
-				jsn="$("${adb_catcmd}" ${report_jsn} ${map_jsn})"
-				printf "[%s]]\n" "${jsn}"
+				jsn="$("${adb_catcmd}" ${report_jsn} ${map_jsn} 2>/dev/null)"
+				[ -n "${jsn}" ] && printf "[%s]]\n" "${jsn}"
 			else
-				jsn="$("${adb_catcmd}" ${report_jsn})"
-				printf "[%s]\n" "${jsn}"
+				jsn="$("${adb_catcmd}" ${report_jsn} 2>/dev/null)"
+				[ -n "${jsn}" ] && printf "[%s]\n" "${jsn}"
 			fi
 			;;
 		"mail")
