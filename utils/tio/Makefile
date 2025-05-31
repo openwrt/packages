@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tio
-PKG_VERSION:=2.7
+PKG_VERSION:=3.8
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/tio/tio/releases/download/v$(PKG_VERSION)
-PKG_HASH:=bf8fe434848c2c1b6540af0b42503c986068176ddc1a988cf02e521e7de5daa5
+PKG_HASH:=a24c69e59b53cf72a147db2566b6ff3b6a018579684caa4b16ce36614b2b68d4
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0-or-later
@@ -28,7 +28,7 @@ define Package/tio
   SUBMENU:=Terminal
   TITLE:=A simple TTY terminal I/O application
   URL:=https://tio.github.io/
-  DEPENDS:=+libinih
+  DEPENDS:=+lua +glib2
 endef
 
 define Package/tio/description
