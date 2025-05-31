@@ -1,0 +1,20 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -367,11 +367,12 @@ AM_COND_IF([BUILDNFPCAPD],
+ AX_CHECK_ZLIB([AM_CONDITIONAL(HAVEZLIB, true) readzpcap="yes"], [AM_CONDITIONAL(HAVEZLIB, false) readzpcap="no"])
+ 
+ OVS_CHECK_ATOMIC_LIBS
+-AX_PTHREAD([],AC_MSG_ERROR(No valid pthread configuration found))
+-
+-LIBS="$PTHREAD_LIBS $LIBS"
+-CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+-CC="$PTHREAD_CC"
++# Musl includes pthread functions in libc.
++# AX_PTHREAD([],AC_MSG_ERROR(No valid pthread configuration found))
++#
++# LIBS="$PTHREAD_LIBS $LIBS"
++# CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
++# CC="$PTHREAD_CC"
+ 
+ # Check for structures
+ AC_CHECK_MEMBER([struct sockaddr.sa_len],
