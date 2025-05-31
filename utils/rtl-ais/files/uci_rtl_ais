@@ -1,3 +1,0 @@
-config rtl_ais
-	option enabled	0
-	option ppm	0
