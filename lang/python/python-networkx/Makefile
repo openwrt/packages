@@ -6,11 +6,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-networkx
-PKG_VERSION:=3.3
+PKG_VERSION:=3.5
 PKG_RELEASE:=1
 
 PYPI_NAME:=networkx
-PKG_HASH:=0c127d8b2f4865f59ae9cb8aafcd60b5c70f3241ebd66f7defad7c4ab90126c9
+PKG_HASH:=d4c6f9cf81f52d69230866796b82afbccdec3db7ae4fbd1b65ea750feed50037
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.txt
