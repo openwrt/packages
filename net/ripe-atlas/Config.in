@@ -1,0 +1,26 @@
+choice RIPE_ATLAS_PROBE_TYPE
+	prompt "Probe Type"
+	default RIPE_ATLAS_PROBE_TYPE_GENERIC
+	help
+	  Select probe type to build. Set to "Generic" if unsure.
+
+config RIPE_ATLAS_PROBE_TYPE_GENERIC
+	bool "Generic"
+	help
+	  Generic software probe.
+
+config RIPE_ATLAS_PROBE_TYPE_V3
+	bool "HWProbe V3"
+	help
+	  Hardware Probe V3.
+
+config RIPE_ATLAS_PROBE_TYPE_V4
+	bool "HWProbe V4"
+	help
+	  Hardware Probe V4.
+
+config RIPE_ATLAS_PROBE_TYPE_V5
+	bool "HWProbe V5"
+	help
+	  Hardware Probe V5.
+endchoice
