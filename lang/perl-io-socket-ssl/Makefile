@@ -26,6 +26,12 @@ define Package/perl-io-socket-ssl
   DEPENDS:=perl +perlbase-autoloader +perlbase-io +perlbase-list +perl-net-ssleay
 endef
 
+define Package/perl-io-socket-ssl/description
+  IO::Socket::SSL makes using SSL/TLS much easier by wrapping the
+  functionality into the familiar IO::Socket interface and providing
+  secure defaults whenever possible.
+endef
+
 define Build/Configure
 	$(call perlmod/Configure,,)
 endef
