@@ -31,7 +31,7 @@ define Package/libwrap
   MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 endef
 
-TARGET_CFLAGS += $(FPIC) -Wall
+TARGET_CFLAGS += $(FPIC) -Wall -std=gnu17
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
