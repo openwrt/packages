@@ -26,6 +26,11 @@ define Package/perl-io-async
   DEPENDS:=perl +perlbase-essential +perlbase-file +perlbase-io +perlbase-list +perlbase-socket +perlbase-storable +perlbase-time +perlbase-encode +perlbase-experimental +perl-future +perl-struct-dumb
 endef
 
+define Package/perl-io-async/description
+  This collection of modules allows programs to be written that perform
+  asynchronous filehandle IO operations.
+endef
+
 define Build/Configure
 	$(call perlmod/Configure,,)
 endef
