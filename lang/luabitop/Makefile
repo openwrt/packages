@@ -8,15 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luabitop
-PKG_VERSION:=1.0.2
+PKG_VERSION:=1.0.3
 PKG_RELEASE:=1
 
 _BASENAME:=LuaBitOp
 
-PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 PKG_SOURCE:=$(_BASENAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://bitop.luajit.org/download/
-PKG_HASH:=1207c9293dcd52eb9dca6538d1b87352bd510f4e760938f5048433f7f272ce99
+PKG_HASH:=d514a3d2cefa76c8d11c1b9ec740d5fae316a9c9764e1e12ddea21e4982fab4b
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(_BASENAME)-$(PKG_VERSION)
 PKG_LICENSE:=MIT
 
