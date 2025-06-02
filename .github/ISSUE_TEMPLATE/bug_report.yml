@@ -1,0 +1,68 @@
+name: Package Bug Report
+description: Report an issue with a package in this repository
+title: "<package-name>: <short description>"
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # 📦 Package Details
+
+  - type: input
+    id: package-name
+    attributes:
+      label: Package Name
+      placeholder: e.g. iptables, curl, netdata
+
+  - type: input
+    id: maintainer
+    attributes:
+      label: Maintainer
+      placeholder: (@username)
+
+  - type: input
+    id: openwrt-version
+    attributes:
+      label: OpenWrt Version
+      placeholder: e.g. 23.05.2 or SNAPSHOT
+
+  - type: input
+    id: target-subtarget
+    attributes:
+      label: OpenWrt Target/Subtarget
+      placeholder: e.g. ramips/mt76x8, ath79/generic
+
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: Please list the steps that lead to the issue.
+      placeholder: |
+        1. Do this
+        2. Then this
+        3. Observe the issue
+
+        Try to avoid uploading screenshots, logs are preferred.
+
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: Actual Behaviour
+      description: What actually happened? Be as detailed as possible.
+      placeholder: A clear and concise description of what happened.
+
+  - type: markdown
+    attributes:
+      value: |
+        # ✅ Formalities
+
+        Before submitting this issue, please confirm the following:
+
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Confirmation Checklist
+      options:
+        - label: The package is maintained in this repository.
+        - label: I understand that issues related to [the base OpenWrt repository](https://github.com/openwrt/openwrt/issues) or [LuCI repository](https://github.com/openwrt/luci/issues) will be closed.
+        - label: I am reporting an issue for OpenWrt, not an unsupported fork.
