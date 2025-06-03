@@ -13,24 +13,32 @@ body:
     attributes:
       label: Package Name
       placeholder: e.g. iptables, curl, netdata
+    validations:
+      required: true
 
   - type: input
     id: maintainer
     attributes:
       label: Maintainer
       placeholder: (@username)
+    validations:
+      required: true
 
   - type: input
     id: openwrt-version
     attributes:
       label: OpenWrt Version
       placeholder: e.g. 23.05.2 or SNAPSHOT
+    validations:
+      required: true
 
   - type: input
     id: target-subtarget
     attributes:
       label: OpenWrt Target/Subtarget
       placeholder: e.g. ramips/mt76x8, ath79/generic
+    validations:
+      required: true
 
   - type: textarea
     id: steps-to-reproduce
@@ -43,6 +51,8 @@ body:
         3. Observe the issue
 
         Try to avoid uploading screenshots, logs are preferred.
+    validations:
+      required: true
 
   - type: textarea
     id: actual-behavior
@@ -50,6 +60,8 @@ body:
       label: Actual Behaviour
       description: What actually happened? Be as detailed as possible.
       placeholder: A clear and concise description of what happened.
+    validations:
+      required: true
 
   - type: markdown
     attributes:
@@ -64,5 +76,8 @@ body:
       label: Confirmation Checklist
       options:
         - label: The package is maintained in this repository.
+          required: true
         - label: I understand that issues related to [the base OpenWrt repository](https://github.com/openwrt/openwrt/issues) or [LuCI repository](https://github.com/openwrt/luci/issues) will be closed.
+          required: true
         - label: I am reporting an issue for OpenWrt, not an unsupported fork.
+          required: true
