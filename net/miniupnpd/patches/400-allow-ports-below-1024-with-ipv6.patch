@@ -1,0 +1,29 @@
+From a697ac2e523e6b9f354dcc56b6316d81e898a54d Mon Sep 17 00:00:00 2001
+From: Self-Hosting-Group
+ <155233284+Self-Hosting-Group@users.noreply.github.com>
+Date: Fri, 26 Jan 2024 00:00:00 +0000
+Subject: [PATCH] miniupnpd: Allow ports <1024 with IPv6 and UPnP IGD
+
+As with PCP. Note that there is currently no ACL for IPv6. Access is
+allowed unless IPv6 mapping is disabled entirely.
+---
+ upnpsoap.c | 8 --------
+ 1 file changed, 8 deletions(-)
+
+--- a/upnpsoap.c
++++ b/upnpsoap.c
+@@ -1692,14 +1692,6 @@ PinholeVerification(struct upnphttp * h,
+ 	}
+ #endif
+ 
+-	/* Pinhole InternalPort must be greater than or equal to 1024 */
+-	if (int_port < 1024)
+-	{
+-		syslog(LOG_INFO, "Client %s tried to access pinhole with port < 1024 and is not authorized to do it",
+-		       clientaddr_str);
+-		SoapError(h, 606, "Action not authorized");
+-		return 0;
+-	}
+ 	return 1;
+ }
+ 
