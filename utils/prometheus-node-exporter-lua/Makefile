@@ -81,6 +81,17 @@ define Package/prometheus-node-exporter-lua-dawn/install
 	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/dawn.lua $(1)/usr/lib/lua/prometheus-collectors/
 endef
 
+define Package/prometheus-node-exporter-lua-filesystem
+  $(call Package/prometheus-node-exporter-lua/Default)
+  TITLE+= (filesystem collector)
+  DEPENDS:=prometheus-node-exporter-lua +luci-lib-nixio
+endef
+
+define Package/prometheus-node-exporter-lua-filesystem/install
+	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/filesystem.lua $(1)/usr/lib/lua/prometheus-collectors/
+endef
+
 define Package/prometheus-node-exporter-lua-hostapd_stations
   $(call Package/prometheus-node-exporter-lua/Default)
   TITLE+= (hostapd_stations collector) - Requires a full hostapd / wpad build
@@ -260,6 +271,7 @@ endef
 $(eval $(call BuildPackage,prometheus-node-exporter-lua))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-bmx7))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-dawn))
+$(eval $(call BuildPackage,prometheus-node-exporter-lua-filesystem))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-hostapd_stations))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-hostapd_ubus_stations))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-hwmon))
