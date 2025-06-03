@@ -20,6 +20,9 @@ body:
     id: maintainer
     attributes:
       label: Maintainer
+      description: |
+        Check the latest package commits and/or search the repo with the example below.\
+        ```<package-name>/makefile maintainer```
       placeholder: (@username)
     validations:
       required: true
@@ -28,6 +31,9 @@ body:
     id: openwrt-version
     attributes:
       label: OpenWrt Version
+      description: |
+        If you are unsure, use the command below.\
+        ```ubus call system board | jsonfilter -e '@.release.version'```
       placeholder: e.g. 23.05.2 or SNAPSHOT
     validations:
       required: true
@@ -36,6 +42,9 @@ body:
     id: target-subtarget
     attributes:
       label: OpenWrt Target/Subtarget
+      description: |
+        If you are unsure, use the command below.\
+        ```ubus call system board | jsonfilter -e '@.release.target'```
       placeholder: e.g. ramips/mt76x8, ath79/generic
     validations:
       required: true
