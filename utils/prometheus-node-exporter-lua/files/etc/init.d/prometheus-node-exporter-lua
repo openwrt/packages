@@ -33,10 +33,55 @@ start_service() {
 	[ $keepalive -gt 0 ] && procd_append_param command -k $keepalive
 
 	if [ "$interface" = "*" ]; then
-		procd_append_param command -p $port
+		if [ "$cert_path" = "none" ] && [ "$key_path" = "none" ]; then
+			procd_append_param command -p $port
+		elif [ "$cert_path" = "none" ] && [ "$key_path" != "none" ]; then
+			procd_append_param command -p $port
+		elif [ "$cert_path" != "none" ] && [ "$key_path" = "none" ]; then
+			procd_append_param command -p $port
+		elif [ "$cert_path" != "none" ] && [ "$key_path" != "none" ]; then
+			if [ -f "$cert_path" ] && [ -f "$key_path" ]; then
+				procd_append_param command -C $cert_path -K $key_path -s $port
+			elif [ ! -f "$cert_path" ]; then
+				_log "No cert file found under path: $cert_path"
+				return 0
+			elif [ ! -f "$key_path" ]; then
+				_log "No key file found under path: $key_path"
+				return 0
+			else
+				_log "Error setting up TLS"
+				return 0
+			fi
+		else
+			procd_append_param command -p $port
+		fi
 	else
-		[ -n "$bind4" ] && procd_append_param command -p $bind4:$port
-		[ -n "$bind6" ] && procd_append_param command -p [$bind6]:$port
+		if [ "$cert_path" = "none" ] && [ "$key_path" = "none" ]; then
+			procd_append_param command -p $bind4:$port
+			procd_append_param command -p [$bind6]:$port
+		elif [ "$cert_path" = "none" ] && [ "$key_path" != "none" ]; then
+			procd_append_param command -p $bind4:$port
+			procd_append_param command -p [$bind6]:$port
+		elif [ "$cert_path" != "none" ] && [ "$key_path" = "none" ]; then
+			procd_append_param command -p $bind4:$port
+			procd_append_param command -p [$bind6]:$port
+		elif [ "$cert_path" != "none" ] && [ "$key_path" != "none" ]; then
+			if [ -f "$cert_path" ] && [ -f "$key_path" ]; then
+				procd_append_param command -C $cert_path -K $key_path -s $bind4:$port
+				procd_append_param command -C $cert_path -K $key_path -s [$bind6]:$port
+			elif [ ! -f "$cert_path" ]; then
+				_log "No cert file found under path: $cert_path"
+				return 0
+			elif [ ! -f "$key_path" ]; then
+				_log "No key file found under path: $key_path"
+				return 0
+			else
+				_log "Error setting up TLS"
+				return 0
+			fi
+		else
+			procd_append_param command -p $port
+		fi
 	fi
 
 	procd_set_param stdout 1
