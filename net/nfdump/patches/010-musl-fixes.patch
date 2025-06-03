@@ -7,8 +7,8 @@
 -AX_CHECK_ZLIB([AM_CONDITIONAL(HAVEZLIB, true) readzpcap="yes"], [AM_CONDITIONAL(HAVEZLIB, false) readzpcap="no"])
 -
  OVS_CHECK_ATOMIC_LIBS
- # Musl includes pthread functions in libc.
- # AX_PTHREAD([],AC_MSG_ERROR(No valid pthread configuration found))
+ AX_PTHREAD([],AC_MSG_ERROR(No valid pthread configuration found))
+ 
 --- a/src/nfpcapd/Makefile.am
 +++ b/src/nfpcapd/Makefile.am
 @@ -29,10 +29,4 @@ if HAVEPCAPAPPEND
