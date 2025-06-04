@@ -1,0 +1,450 @@
+From 25833c7cba432e80b10838378e9b5d9ed9662527 Mon Sep 17 00:00:00 2001
+From: Luigi 'Comio' Mantellini <luigi.mantellini@gmail.com>
+Date: Sat, 31 May 2025 18:15:28 +0200
+Subject: [PATCH] Fix build with GCC15
+
+---
+ .go_bootstrap/src/cmd/6c/cgen.c | 40 ++++++++++++++--------------
+ .go_bootstrap/src/cmd/6g/cgen.c | 46 ++++++++++++++++-----------------
+ .go_bootstrap/src/cmd/dist/a.h  |  2 ++
+ .go_bootstrap/src/cmd/gc/cplx.c |  8 +++---
+ .go_bootstrap/src/cmd/gc/go.h   | 17 +++++++-----
+ 5 files changed, 59 insertions(+), 54 deletions(-)
+
+--- a/.go_bootstrap/src/cmd/6c/cgen.c
++++ b/.go_bootstrap/src/cmd/6c/cgen.c
+@@ -58,7 +58,7 @@ cgen(Node *n, Node *nn)
+ 	l = n->left;
+ 	r = n->right;
+ 	o = n->op;
+-	
++
+ 	if(n->op == OEXREG || (nn != Z && nn->op == OEXREG)) {
+ 		gmove(n, nn);
+ 		return;
+@@ -1238,17 +1238,17 @@ lcgen(Node *n, Node *nn)
+ }
+ 
+ void
+-bcgen(Node *n, int true)
++bcgen(Node *n, int istrue)
+ {
+ 
+ 	if(n->type == T)
+ 		gbranch(OGOTO);
+ 	else
+-		boolgen(n, true, Z);
++		boolgen(n, istrue, Z);
+ }
+ 
+ void
+-boolgen(Node *n, int true, Node *nn)
++boolgen(Node *n, int istrue, Node *nn)
+ {
+ 	int o;
+ 	Prog *p1, *p2, *p3;
+@@ -1256,7 +1256,7 @@ boolgen(Node *n, int true, Node *nn)
+ 	int32 curs;
+ 
+ 	if(debug['g']) {
+-		print("boolgen %d\n", true);
++		print("boolgen %d\n", istrue);
+ 		prtree(nn, "boolgen lhs");
+ 		prtree(n, "boolgen");
+ 	}
+@@ -1267,7 +1267,7 @@ boolgen(Node *n, int true, Node *nn)
+ 
+ 	default:
+ 		o = ONE;
+-		if(true)
++		if(istrue)
+ 			o = OEQ;
+ 		/* bad, 13 is address of external that becomes constant */
+ 		if(n->addable >= INDEXED && n->addable != 13) {
+@@ -1294,7 +1294,7 @@ boolgen(Node *n, int true, Node *nn)
+ 
+ 	case OCONST:
+ 		o = vconst(n);
+-		if(!true)
++		if(!istrue)
+ 			o = !o;
+ 		gbranch(OGOTO);
+ 		if(o) {
+@@ -1306,22 +1306,22 @@ boolgen(Node *n, int true, Node *nn)
+ 
+ 	case OCOMMA:
+ 		cgen(l, Z);
+-		boolgen(r, true, nn);
++		boolgen(r, istrue, nn);
+ 		break;
+ 
+ 	case ONOT:
+-		boolgen(l, !true, nn);
++		boolgen(l, !istrue, nn);
+ 		break;
+ 
+ 	case OCOND:
+ 		bcgen(l, 1);
+ 		p1 = p;
+-		bcgen(r->left, true);
++		bcgen(r->left, istrue);
+ 		p2 = p;
+ 		gbranch(OGOTO);
+ 		patch(p1, pc);
+ 		p1 = p;
+-		bcgen(r->right, !true);
++		bcgen(r->right, !istrue);
+ 		patch(p2, pc);
+ 		p2 = p;
+ 		gbranch(OGOTO);
+@@ -1330,13 +1330,13 @@ boolgen(Node *n, int true, Node *nn)
+ 		goto com;
+ 
+ 	case OANDAND:
+-		if(!true)
++		if(!istrue)
+ 			goto caseor;
+ 
+ 	caseand:
+-		bcgen(l, true);
++		bcgen(l, istrue);
+ 		p1 = p;
+-		bcgen(r, !true);
++		bcgen(r, !istrue);
+ 		p2 = p;
+ 		patch(p1, pc);
+ 		gbranch(OGOTO);
+@@ -1344,13 +1344,13 @@ boolgen(Node *n, int true, Node *nn)
+ 		goto com;
+ 
+ 	case OOROR:
+-		if(!true)
++		if(!istrue)
+ 			goto caseand;
+ 
+ 	caseor:
+-		bcgen(l, !true);
++		bcgen(l, !istrue);
+ 		p1 = p;
+-		bcgen(r, !true);
++		bcgen(r, !istrue);
+ 		p2 = p;
+ 		gbranch(OGOTO);
+ 		patch(p1, pc);
+@@ -1368,7 +1368,7 @@ boolgen(Node *n, int true, Node *nn)
+ 	case OLO:
+ 	case OLS:
+ 		o = n->op;
+-		if(true && typefd[l->type->etype] && (o == OEQ || o == ONE)) {
++		if(istrue && typefd[l->type->etype] && (o == OEQ || o == ONE)) {
+ 			// Cannot rewrite !(l == r) into l != r with float64; it breaks NaNs.
+ 			// Jump around instead.
+ 			boolgen(n, 0, Z);
+@@ -1377,7 +1377,7 @@ boolgen(Node *n, int true, Node *nn)
+ 			patch(p1, pc);
+ 			goto com;
+ 		}
+-		if(true)
++		if(istrue)
+ 			o = comrel[relindex(o)];
+ 		if(l->complex >= FNX && r->complex >= FNX) {
+ 			regret(&nod, r, 0, 0);
+@@ -1387,7 +1387,7 @@ boolgen(Node *n, int true, Node *nn)
+ 			regfree(&nod);
+ 			nod = *n;
+ 			nod.right = &nod1;
+-			boolgen(&nod, true, nn);
++			boolgen(&nod, istrue, nn);
+ 			break;
+ 		}
+ 		if(immconst(l)) {
+--- a/.go_bootstrap/src/cmd/6g/cgen.c
++++ b/.go_bootstrap/src/cmd/6g/cgen.c
+@@ -306,7 +306,7 @@ cgen(Node *n, Node *res)
+ 		gmove(&n1, res);
+ 		regfree(&n1);
+ 		break;
+-	
++
+ 	case OITAB:
+ 		// interface table is first word of interface value
+ 		igen(nl, &n1, res);
+@@ -816,7 +816,7 @@ agen(Node *n, Node *res)
+ 		regfree(&n2);
+ 		goto ret;
+ 	}
+-		
++
+ 	if(n->addable) {
+ 		regalloc(&n1, types[tptr], res);
+ 		gins(ALEAQ, n, &n1);
+@@ -1021,10 +1021,10 @@ igen(Node *n, Node *a, Node *res)
+ 
+ /*
+  * generate:
+- *	if(n == true) goto to;
++ *	if(n == istrue) goto to;
+  */
+ void
+-bgen(Node *n, int true, int likely, Prog *to)
++bgen(Node *n, int istrue, int likely, Prog *to)
+ {
+ 	int et, a;
+ 	Node *nl, *nr, *l, *r;
+@@ -1070,7 +1070,7 @@ bgen(Node *n, int true, int likely, Prog
+ 		nodconst(&n2, n->type, 0);
+ 		gins(optoas(OCMP, n->type), &n1, &n2);
+ 		a = AJNE;
+-		if(!true)
++		if(!istrue)
+ 			a = AJEQ;
+ 		patch(gbranch(a, n->type, likely), to);
+ 		regfree(&n1);
+@@ -1078,7 +1078,7 @@ bgen(Node *n, int true, int likely, Prog
+ 
+ 	case OLITERAL:
+ 		// need to ask if it is bool?
+-		if(!true == !n->val.u.bval)
++		if(!istrue == !n->val.u.bval)
+ 			patch(gbranch(AJMP, T, likely), to);
+ 		goto ret;
+ 
+@@ -1088,33 +1088,33 @@ bgen(Node *n, int true, int likely, Prog
+ 		nodconst(&n1, n->type, 0);
+ 		gins(optoas(OCMP, n->type), n, &n1);
+ 		a = AJNE;
+-		if(!true)
++		if(!istrue)
+ 			a = AJEQ;
+ 		patch(gbranch(a, n->type, likely), to);
+ 		goto ret;
+ 
+ 	case OANDAND:
+-		if(!true)
++		if(!istrue)
+ 			goto caseor;
+ 
+ 	caseand:
+ 		p1 = gbranch(AJMP, T, 0);
+ 		p2 = gbranch(AJMP, T, 0);
+ 		patch(p1, pc);
+-		bgen(n->left, !true, -likely, p2);
+-		bgen(n->right, !true, -likely, p2);
++		bgen(n->left, !istrue, -likely, p2);
++		bgen(n->right, !istrue, -likely, p2);
+ 		p1 = gbranch(AJMP, T, 0);
+ 		patch(p1, to);
+ 		patch(p2, pc);
+ 		goto ret;
+ 
+ 	case OOROR:
+-		if(!true)
++		if(!istrue)
+ 			goto caseand;
+ 
+ 	caseor:
+-		bgen(n->left, true, likely, to);
+-		bgen(n->right, true, likely, to);
++		bgen(n->left, istrue, likely, to);
++		bgen(n->right, istrue, likely, to);
+ 		goto ret;
+ 
+ 	case OEQ:
+@@ -1137,7 +1137,7 @@ bgen(Node *n, int true, int likely, Prog
+ 	switch(n->op) {
+ 
+ 	case ONOT:
+-		bgen(nl, !true, likely, to);
++		bgen(nl, !istrue, likely, to);
+ 		goto ret;
+ 
+ 	case OEQ:
+@@ -1147,7 +1147,7 @@ bgen(Node *n, int true, int likely, Prog
+ 	case OLE:
+ 	case OGE:
+ 		a = n->op;
+-		if(!true) {
++		if(!istrue) {
+ 			if(isfloat[nr->type->etype]) {
+ 				// brcom is not valid on floats when NaN is involved.
+ 				p1 = gbranch(AJMP, T, 0);
+@@ -1160,9 +1160,9 @@ bgen(Node *n, int true, int likely, Prog
+ 				patch(gbranch(AJMP, T, 0), to);
+ 				patch(p2, pc);
+ 				goto ret;
+-			}				
++			}
+ 			a = brcom(a);
+-			true = !true;
++			istrue = !istrue;
+ 		}
+ 
+ 		// make simplest on right
+@@ -1206,7 +1206,7 @@ bgen(Node *n, int true, int likely, Prog
+ 			break;
+ 		}
+ 		if(iscomplex[nl->type->etype]) {
+-			complexbool(a, nl, nr, true, likely, to);
++			complexbool(a, nl, nr, istrue, likely, to);
+ 			break;
+ 		}
+ 
+@@ -1311,7 +1311,7 @@ stkof(Node *n)
+ 		if(isconst(n->right, CTINT))
+ 			return off + t->type->width * mpgetfix(n->right->val.u.xval);
+ 		return 1000;
+-		
++
+ 	case OCALLMETH:
+ 	case OCALLINTER:
+ 	case OCALLFUNC:
+@@ -1353,7 +1353,7 @@ sgen(Node *n, Node *ns, int64 w)
+ 
+ 	if(w < 0)
+ 		fatal("sgen copy %lld", w);
+-	
++
+ 	// If copying .args, that's all the results, so record definition sites
+ 	// for them for the liveness analysis.
+ 	if(ns->op == ONAME && strcmp(ns->sym->name, ".args") == 0)
+@@ -1364,7 +1364,7 @@ sgen(Node *n, Node *ns, int64 w)
+ 	// Avoid taking the address for simple enough types.
+ 	if(componentgen(n, ns))
+ 		return;
+-	
++
+ 	if(w == 0) {
+ 		// evaluate side effects only
+ 		regalloc(&nodr, types[tptr], N);
+@@ -1400,7 +1400,7 @@ sgen(Node *n, Node *ns, int64 w)
+ 		agenr(ns, &nodl, N);
+ 		agenr(n, &nodr, N);
+ 	}
+-	
++
+ 	nodreg(&noddi, types[tptr], D_DI);
+ 	nodreg(&nodsi, types[tptr], D_SI);
+ 	gmove(&nodl, &noddi);
+@@ -1579,7 +1579,7 @@ componentgen(Node *nr, Node *nl)
+ 			freer = 1;
+ 		}
+ 	}
+-	
++
+ 	// nl and nr are 'cadable' which basically means they are names (variables) now.
+ 	// If they are the same variable, don't generate any code, because the
+ 	// VARDEF we generate will mark the old value as dead incorrectly.
+--- a/.go_bootstrap/src/cmd/dist/a.h
++++ b/.go_bootstrap/src/cmd/dist/a.h
+@@ -2,7 +2,9 @@
+ // Use of this source code is governed by a BSD-style
+ // license that can be found in the LICENSE file.
+ 
++#if __STDC_VERSION__ < 202311L
+ typedef int bool;
++#endif
+ 
+ // The Time unit is unspecified; we just need to
+ // be able to compare whether t1 is older than t2 with t1 < t2.
+--- a/.go_bootstrap/src/cmd/gc/cplx.c
++++ b/.go_bootstrap/src/cmd/gc/cplx.c
+@@ -133,7 +133,7 @@ complexgen(Node *n, Node *res)
+ 		dump("\ncomplexgen-n", n);
+ 		dump("complexgen-res", res);
+ 	}
+-	
++
+ 	while(n->op == OCONVNOP)
+ 		n = n->left;
+ 
+@@ -271,7 +271,7 @@ complexgen(Node *n, Node *res)
+ }
+ 
+ void
+-complexbool(int op, Node *nl, Node *nr, int true, int likely, Prog *to)
++complexbool(int op, Node *nl, Node *nr, int istrue, int likely, Prog *to)
+ {
+ 	Node tnl, tnr;
+ 	Node n1, n2, n3, n4;
+@@ -321,9 +321,9 @@ complexbool(int op, Node *nl, Node *nr,
+ 	nc.type = types[TBOOL];
+ 
+ 	if(op == ONE)
+-		true = !true;
++		istrue = !istrue;
+ 
+-	bgen(&na, true, likely, to);
++	bgen(&na, istrue, likely, to);
+ }
+ 
+ void
+--- a/.go_bootstrap/src/cmd/gc/go.h
++++ b/.go_bootstrap/src/cmd/gc/go.h
+@@ -63,7 +63,7 @@ enum
+ 	ACPLX128,
+ 
+ 	BADWIDTH	= -1000000000,
+-	
++
+ 	MaxStackVarSize = 10*1024*1024,
+ };
+ 
+@@ -199,10 +199,10 @@ struct	Type
+ 
+ 	int32	maplineno;	// first use of TFORW as map key
+ 	int32	embedlineno;	// first use of TFORW as embedded type
+-	
++
+ 	// for TFORW, where to copy the eventual value to
+ 	NodeList	*copyto;
+-	
++
+ 	Node	*lastfn;	// for usefield
+ };
+ #define	T	((Type*)0)
+@@ -329,7 +329,7 @@ struct	Node
+ 
+ 	// OPACK
+ 	Pkg*	pkg;
+-	
++
+ 	// OARRAYLIT, OMAPLIT, OSTRUCTLIT.
+ 	InitPlan*	initplan;
+ 
+@@ -814,7 +814,7 @@ struct	Label
+ 	Node*	def;
+ 	NodeList*	use;
+ 	Label*	link;
+-	
++
+ 	// for use during gen
+ 	Prog*	gotopc;	// pointer to unresolved gotos
+ 	Prog*	labelpc;	// pointer to code
+@@ -1090,7 +1090,7 @@ Mpflt*	truncfltlit(Mpflt *oldv, Type *t)
+  *	cplx.c
+  */
+ void	complexadd(int op, Node *nl, Node *nr, Node *res);
+-void	complexbool(int op, Node *nl, Node *nr, int true, int likely, Prog *to);
++void	complexbool(int op, Node *nl, Node *nr, int istrue, int likely, Prog *to);
+ void	complexgen(Node *n, Node *res);
+ void	complexminus(Node *nl, Node *res);
+ void	complexmove(Node *f, Node *t);
+@@ -1376,6 +1376,9 @@ int	isnilinter(Type *t);
+ int	isptrto(Type *t, int et);
+ int	isslice(Type *t);
+ int	istype(Type *t, int et);
++#ifdef iszero
++#undef iszero
++#endif
+ int	iszero(Node *n);
+ void	linehist(char *file, int32 off, int relative);
+ NodeList*	list(NodeList *l, Node *n);
+@@ -1489,7 +1492,7 @@ EXTERN	vlong	zerosize;
+ 
+ int	anyregalloc(void);
+ void	betypeinit(void);
+-void	bgen(Node *n, int true, int likely, Prog *to);
++void	bgen(Node *n, int istrue, int likely, Prog *to);
+ void	checknil(Node*, NodeList**);
+ void	expandchecks(Prog*);
+ void	cgen(Node*, Node*);
