@@ -33,6 +33,9 @@ end
 
 function print_metric(metric, labels, value)
   local label_string = ""
+  if type(value) == "nil" then
+    return
+  end
   if labels then
     for label,value in pairs(labels) do
       label_string =  label_string .. label .. '="' .. value .. '",'
@@ -59,7 +62,7 @@ function timed_scrape(collector)
   local status, err = pcall(collector.scrape)
   if not status then
     success = 0
-    io.stderr:write(err)
+    io.stderr:write(err .. '\n')
   end
   return (socket.gettime() - start_time), success
 end
