@@ -8,13 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rng-tools
-PKG_VERSION:=6.15
-PKG_RELEASE:=2
+PKG_VERSION:=6.17
+PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/nhorman/rng-tools
-PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_MIRROR_HASH:=ed3b07062ab6d89ffd145a4df495534b9d529bebb64bc2c2e4dc266acdde181b
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/nhorman/rng-tools/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=4aa50994232da74499b60b3ebf79118e30a1943be375b7d931dcf18df5442fd3
 
 PKG_MAINTAINER:=Nathaniel Wesley Filardo <nwfilardo@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -33,7 +32,7 @@ define Package/rng-tools
   CATEGORY:=Utilities
   TITLE:=Daemon for adding entropy to kernel entropy pool
   URL:=https://github.com/nhorman/rng-tools
-  DEPENDS:=+libopenssl
+  DEPENDS:=+libopenssl +libcurl +libcap +jansson
 endef
 
 define Package/rng-tools/description
