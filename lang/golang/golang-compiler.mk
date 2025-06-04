@@ -22,6 +22,10 @@ endef
 # $(2) additional environment variables (optional)
 define GoCompiler/Default/Make
 	( \
+		pwd ; \
+		cp bootstrap-patches/010-fix-build-with-GCC15.patch $(1) ; \
+		cd $(1) ; \
+		patch -p2 -i 010-fix-build-with-GCC15.patch ; \
 		cd "$(1)/src" ; \
 		$(2) \
 		$(BASH) make.bash \
