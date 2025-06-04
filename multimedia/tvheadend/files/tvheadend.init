@@ -63,7 +63,7 @@ load_uci_config() {
 	config_get_bool ipv6 server ipv6 0
 	[ "$ipv6" -eq 1 ] && procd_append_param command --ipv6
 	config_get bindaddr server bindaddr
-	[ -z "$bindaddr" ] && bindaddr=$(uci get network.lan.ipaddr)
+	[ -z "$bindaddr" ] && bindaddr=$(uci get network.lan.ipaddr | cut -d / -f 1)
 	[ -n "$bindaddr" ] && procd_append_param command --bindaddr "$bindaddr"
 	config_get http_port server http_port
 	[ -n "$http_port" ] && procd_append_param command --http_port "$http_port"
