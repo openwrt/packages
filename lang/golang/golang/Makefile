@@ -12,7 +12,7 @@ GO_VERSION_PATCH:=3
 
 PKG_NAME:=golang
 PKG_VERSION:=$(GO_VERSION_MAJOR_MINOR)$(if $(GO_VERSION_PATCH),.$(GO_VERSION_PATCH))
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 GO_SOURCE_URLS:=https://dl.google.com/go/ \
                 https://mirrors.ustc.edu.cn/golang/ \
@@ -292,6 +292,7 @@ endef
 define Host/Compile
 	$(call GoCompiler/Bootstrap/Make, \
 		$(HOST_GO_VARS) \
+		CC="$(HOSTCC_NOCACHE) -std=gnu17" \
 	)
 
 	$(call GoCompiler/Bootstrap-1.17/Make, \
