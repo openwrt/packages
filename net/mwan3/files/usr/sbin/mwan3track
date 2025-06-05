@@ -91,6 +91,12 @@ validate_track_method() {
 				return 1
 			}
 			;;
+		nslookup)
+			command -v nslookup 1>/dev/null 2>&1 || {
+				LOG warn "Missing nslookup. Please install busybox package."
+				return 1
+			}
+			;;
 		*)
 			LOG warn "Unsupported tracking method: $track_method"
 			return 2
@@ -322,10 +328,16 @@ main() {
 						fi
 					;;
 					nping-*)
-						WRAP nping -c $count $track_ip --${FAMILY#nping-} > $TRACK_OUTPUT &
+						WRAP nping -${FAMILY#ipv} -c $count $track_ip --${track_method#nping-} > $TRACK_OUTPUT &
 						TRACK_PID=$!
 						wait $TRACK_PID
 						result=$(grep Lost $TRACK_OUTPUT | awk '{print $12}')
+					;;
+					nslookup)
+						WRAP nslookup www.google.com $track_ip > $TRACK_OUTPUT &
+						TRACK_PID=$!
+						wait $TRACK_PID
+						result=$?
 					;;
 				esac
 				do_log=""

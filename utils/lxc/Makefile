@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lxc
-PKG_VERSION:=6.0.2
+PKG_VERSION:=6.0.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://linuxcontainers.org/downloads/lxc/
-PKG_HASH:=1930aa10d892db8531d1353d15f7ebf5913e74a19e134423e4d074c07f2d6e8b
+PKG_HASH:=872d26ce8512b9f993d194816e336bf9f3ad8326f22dc24ef0f01f85599fa8b9
 
 PKG_MAINTAINER:=Marko Ratkaj <markoratkaj@gmail.com>
 PKG_LICENSE:=LGPL-2.1-or-later BSD-2-Clause GPL-2.0
@@ -50,7 +50,7 @@ LXC_SCRIPTS += \
 
 DEPENDS_APPLETS = +libpthread +libcap +liblxc
 
-DEPENDS_create = +lxc-configs +lxc-hooks +lxc-templates +flock +getopt
+DEPENDS_create = +lxc-configs +lxc-hooks +lxc-templates +flock +getopt +tar
 
 define Package/lxc/Default
   SECTION:=utils
@@ -101,6 +101,11 @@ endef
 define Package/lxc-unprivileged/install
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_DATA) ./files/lxc-unprivileged.defaults $(1)/etc/uci-defaults/lxc-unprivileged
+endef
+
+define Package/lxc-unprivileged/conffiles
+/etc/subgid
+/etc/subuid
 endef
 
 define Package/lxc/config

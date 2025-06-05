@@ -7,15 +7,15 @@
 
 include $(TOPDIR)/rules.mk
 PKG_NAME:=frr
-PKG_VERSION:=9.0.0
-PKG_RELEASE:=7
-PKG_SOURCE_DATE:=2023-08-12
+PKG_VERSION:=10.2.1
+PKG_RELEASE:=2
+PKG_SOURCE_DATE:=2025-01-29
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
-PKG_SOURCE_VERSION:=9852228d1e87bdbad13e0fed8313203f00bf26af
+PKG_SOURCE_VERSION:=05f9d44340755e5ca612e4852b710f4037254e7b
 PKG_SOURCE_URL:=https://codeload.github.com/FRRouting/frr/tar.gz/$(PKG_SOURCE_VERSION)?
 
-PKG_HASH:=6e611cd86ae9787a4b8d71411fdc38ad1fe843a839756c9c386848ffde81f6cf
+PKG_HASH:=8873e1f638fc4457a30227181e3fd26414795e63dbb11911c2e669876589f228
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_SOURCE_VERSION)
@@ -38,6 +38,7 @@ PKG_DAEMON_AVAILABLE:= \
 	pathd \
 	pbrd \
 	pimd \
+	pim6d \
 	ripd \
 	ripngd \
 	staticd \
@@ -198,9 +199,11 @@ define Package/frr/install
 	$(INSTALL_BIN) ./files/frr $(1)/etc/init.d/
 	$(INSTALL_DIR) $(1)/usr/bin $(1)/etc/frr
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/vtysh $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/mgmtd $(1)/usr/sbin/
 	$(INSTALL_CONF) ./files/vtysh.conf $(1)/etc/frr/
 	$(INSTALL_DIR) $(1)/usr/lib $(1)/etc/frr
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libfrr.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libmgmt_be_nb.so* $(1)/usr/lib/
 	$(if $(CONFIG_FRR_SNMP),$(CP) $(PKG_INSTALL_DIR)/usr/lib/libfrrsnmp.so* $(1)/usr/lib/,)
 	$(INSTALL_CONF) ./files/{frr.conf,daemons} $(1)/etc/frr/
 endef
@@ -241,6 +244,7 @@ $(eval $(call BuildDaemon,ospf6d,@IPV6))
 $(eval $(call BuildDaemon,pathd,))
 $(eval $(call BuildDaemon,pbrd,))
 $(eval $(call BuildDaemon,pimd,))
+$(eval $(call BuildDaemon,pim6d,))
 $(eval $(call BuildDaemon,ripd,))
 $(eval $(call BuildDaemon,ripngd,@IPV6))
 $(eval $(call BuildDaemon,staticd,))

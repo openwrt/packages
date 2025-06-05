@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vsftpd
 PKG_VERSION:=3.0.5
-PKG_RELEASE:=2
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://security.appspot.com/downloads/
@@ -46,6 +46,7 @@ endef
 define Package/vsftpd/conffiles
 /etc/vsftpd.conf
 /etc/vsftpd
+/etc/config/vsftpd
 endef
 
 Package/vsftpd-tls/conffiles=$(Package/vsftpd/conffiles)
@@ -92,6 +93,8 @@ define Package/vsftpd/install
 	$(INSTALL_CONF) ./files/$(PKG_NAME).conf $(1)/etc/$(PKG_NAME).conf
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/$(PKG_NAME).init $(1)/etc/init.d/$(PKG_NAME)
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/$(PKG_NAME).uci $(1)/etc/config/$(PKG_NAME)
 	$(INSTALL_DIR) $(1)/etc/vsftpd
 endef
 

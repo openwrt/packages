@@ -84,11 +84,11 @@ f_env() {
 
 		if [ "${name}" = "travelmate" ] && [ "${type}" = "global" ]; then
 			option_cb() {
-				local option="${1}" value="${2}"
+				local option="${1}" value="${2//\"/\\\"}"
 				eval "${option}=\"${value}\""
 			}
 			list_cb() {
-				local option="${1}" value="${2}"
+				local option="${1}" value="${2//\"/\\\"}"
 				if [ "${option}" = "trm_vpnifacelist" ] && ! printf "%s" "${trm_vpnifacelist}" | "${trm_grepcmd}" -q "${value}"; then
 					eval "trm_vpnifacelist=\"$(printf "%s" "${trm_vpnifacelist}") ${value}\""
 				fi

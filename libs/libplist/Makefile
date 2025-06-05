@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libplist
-PKG_VERSION:=2.4.0
+PKG_VERSION:=2.6.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://github.com/libimobiledevice/libplist/releases/download/$(PKG_VERSION)
-PKG_HASH:=3f5868ae15b117320c1ff5e71be53d29469d4696c4085f89db1975705781a7cd
+PKG_HASH:=67be9ee3169366589c92dc7c22809b90f51911dd9de22520c39c9a64fb047c9c
 
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_CPE_ID:=cpe:/a:libimobiledevice:libplist

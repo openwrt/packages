@@ -1,0 +1,63 @@
+From 00d8c36d6fdf9e8ee99b9f92a64e7e81dbfa4432 Mon Sep 17 00:00:00 2001
+From: Tobias Brunner <tobias@strongswan.org>
+Date: Thu, 30 Jan 2025 14:40:33 +0100
+Subject: [PATCH 2/3] pf-handler: Correctly bind packet socket to an interface
+
+Binding such sockets via SO_BINDTODEVICE does not work at all. Instead,
+bind() has to be used, as described in the packet(7) man page.
+---
+ src/libcharon/network/pf_handler.c | 31 +++++++++++++++++++++++++++---
+ 1 file changed, 28 insertions(+), 3 deletions(-)
+
+--- a/src/libcharon/network/pf_handler.c
++++ b/src/libcharon/network/pf_handler.c
+@@ -227,6 +227,30 @@ METHOD(pf_handler_t, destroy, void,
+ }
+ 
+ /**
++ * Bind the given packet socket to the a named device
++ */
++static bool bind_packet_socket_to_device(int fd, char *iface)
++{
++	struct sockaddr_ll addr = {
++		.sll_family = AF_PACKET,
++		.sll_ifindex = if_nametoindex(iface),
++	};
++
++	if (!addr.sll_ifindex)
++	{
++		DBG1(DBG_CFG, "unable to bind socket to '%s': not found", iface);
++		return FALSE;
++	}
++	if (bind(fd, (struct sockaddr*)&addr, sizeof(addr)) == -1)
++	{
++		DBG1(DBG_CFG, "binding socket to '%s' failed: %s",
++			 iface, strerror(errno));
++		return FALSE;
++	}
++	return TRUE;
++}
++
++/**
+  * Setup capturing via AF_PACKET socket
+  */
+ static bool setup_internal(private_pf_handler_t *this, char *iface,
+@@ -248,14 +272,15 @@ static bool setup_internal(private_pf_ha
+ 			 this->name, strerror(errno));
+ 		return FALSE;
+ 	}
+-	if (iface && !bind_to_device(this->receive, iface))
++	if (iface && iface[0] && !bind_packet_socket_to_device(this->receive, iface))
+ 	{
+ 		return FALSE;
+ 	}
+ 	lib->watcher->add(lib->watcher, this->receive, WATCHER_READ,
+ 					  receive_packet, this);
+-	DBG2(DBG_NET, "listening for %s (protocol=0x%04x) requests on fd=%d",
+-		 this->name, protocol, this->receive);
++	DBG2(DBG_NET, "listening for %s (protocol=0x%04x) requests on fd=%d bound "
++		 "to %s", this->name, protocol, this->receive,
++		 iface && iface[0] ? iface : "no interface");
+ 	return TRUE;
+ }
+ 

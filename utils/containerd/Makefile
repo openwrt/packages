@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=containerd
 PKG_VERSION:=1.7.22
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:linuxfoundation:containerd
@@ -13,7 +13,7 @@ PKG_HASH:=8c5edde741b7596af63c021429a1212bd616350ed65a7b741eeffc47e27ee9a9
 
 PKG_MAINTAINER:=Gerard Ryan <G.M0N3Y.2503@gmail.com>
 
-PKG_BUILD_DEPENDS:=golang/host
+PKG_BUILD_DEPENDS:=golang/host dockerd
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 PKG_BUILD_FLAGS:=no-mips16

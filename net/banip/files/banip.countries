@@ -1,4 +1,5 @@
 af	APNIC	Afghanistan
+ap	AFRINIC	ARIPO
 ax	RIPE	Åland Islands
 al	RIPE	Albania
 dz	AFRINIC	Algeria
@@ -28,7 +29,6 @@ bo	LACNIC	Bolivia
 bq	LACNIC	Bonaire
 ba	RIPE	Bosnia & Herzegowina
 bw	AFRINIC	Botswana
-bv	ARIN	Bouvet Island
 br	LACNIC	Brazil
 io	APNIC	British Indian Ocean Territory
 bn	APNIC	Brunei
@@ -44,7 +44,6 @@ cf	AFRINIC	Central African Republic
 td	AFRINIC	Chad
 cl	LACNIC	Chile
 cn	APNIC	China
-cx	APNIC	Christmas Island
 cc	APNIC	Cocos Islands
 co	LACNIC	Colombia
 km	AFRINIC	Comoros
@@ -70,6 +69,7 @@ er	AFRINIC	Eritrea
 ee	RIPE	Estonia
 sz	AFRINIC	Eswatini
 et	AFRINIC	Ethiopia
+eu	RIPE	European Union
 fk	LACNIC	Falkland Islands
 fo	RIPE	Faroe Islands
 fj	APNIC	Fiji
@@ -77,7 +77,6 @@ fi	RIPE	Finland
 fr	RIPE	France
 gf	LACNIC	French Guiana
 pf	APNIC	French Polynesia
-tf	APNIC	French Southern Territories
 ga	AFRINIC	Gabon
 gm	AFRINIC	Gambia
 ge	RIPE	Georgia
@@ -95,7 +94,6 @@ gn	AFRINIC	Guinea
 gw	AFRINIC	Guinea-Bissau
 gy	LACNIC	Guyana
 ht	LACNIC	Haiti
-hm	ARIN	Heard & McDonald Islands
 hn	LACNIC	Honduras
 hk	APNIC	Hong Kong
 hu	RIPE	Hungary
@@ -172,7 +170,6 @@ pg	APNIC	Papua New Guinea
 py	LACNIC	Paraguay
 pe	LACNIC	Peru
 ph	APNIC	Philippines
-pn	APNIC	Pitcairn
 pl	RIPE	Poland
 pt	RIPE	Portugal
 pr	ARIN	Puerto Rico
@@ -181,7 +178,6 @@ re	AFRINIC	Reunion
 ro	RIPE	Romania
 ru	RIPE	Russian Federation
 rw	AFRINIC	Rwanda
-sh	ARIN	Saint Helena
 bl	ARIN	Saint Barthélemy
 kn	ARIN	Saint Kitts & Nevis
 lc	ARIN	Saint Lucia
@@ -203,14 +199,12 @@ si	RIPE	Slovenia
 sb	APNIC	Solomon Islands
 so	AFRINIC	Somalia
 za	AFRINIC	South Africa
-gs	LACNIC	South Georgia
 kr	APNIC	South Korea
 ss	AFRINIC	South Sudan
 es	RIPE	Spain
 lk	APNIC	Sri Lanka
 sd	AFRINIC	Sudan
 sr	LACNIC	Suriname
-sj	RIPE	Svalbard & Jan Mayen Islands
 se	RIPE	Sweden
 ch	RIPE	Switzerland
 sy	RIPE	Syrian
@@ -243,7 +237,6 @@ vn	APNIC	Vietnam
 vg	ARIN	Virgin Islands (British)
 vi	ARIN	Virgin Islands (U.S.)
 wf	APNIC	Wallis & Futuna Islands
-eh	AFRINIC	Western Sahara
 ye	RIPE	Yemen
 zm	AFRINIC	Zambia
 zw	AFRINIC	Zimbabwe

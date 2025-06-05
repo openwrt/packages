@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=stress-ng
-PKG_VERSION:=0.18.05
+PKG_VERSION:=0.19.00
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ColinIanKing/stress-ng/tar.gz/refs/tags/V$(PKG_VERSION)?
-PKG_HASH:=b0ac75b68bb804fd3276fcb235f1b0a9567090ebd887b2ed0f8a3203f9545e11
+PKG_HASH:=7d0be69dcdad655145026f499863de01d317e87ff87acd48c3343d451540d172
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
@@ -19,6 +19,8 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+# For MIPS there is some inline assembly, and this won't compile without '-mno-mips16'
+PKG_BUILD_FLAGS:=no-mips16
 
 include $(INCLUDE_DIR)/package.mk
 

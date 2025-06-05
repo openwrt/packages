@@ -1,0 +1,58 @@
+From 2204efc2a656ae60d77a4d01c6cf8e7d6baaf030 Mon Sep 17 00:00:00 2001
+From: Andreas Rheinhardt <andreas.rheinhardt@outlook.com>
+Date: Sun, 30 Mar 2025 12:49:07 +0200
+Subject: [PATCH] avcodec/dct: Make declarations and definitions match
+
+GCC considers declarations using a parameter of pointer
+type (or equivalently a parameter using an array of unspecified
+dimensions) to be inconsistent with a declaration using
+a known-length array type and emits a -Warray-parameter warning
+for several ff_j_rev_dct* functions for this.
+
+This patch makes the declarations match the actual definitions
+to suppress these (IMO nonsensical) warnings.
+
+Signed-off-by: Andreas Rheinhardt <andreas.rheinhardt@outlook.com>
+---
+ libavcodec/dct.h     | 12 ++++++------
+ libavcodec/jrevdct.c |  4 ++--
+ 2 files changed, 8 insertions(+), 8 deletions(-)
+
+--- a/libavcodec/dct.h
++++ b/libavcodec/dct.h
+@@ -27,11 +27,11 @@
+ #include <stddef.h>
+ #include <stdint.h>
+ 
+-void ff_j_rev_dct(int16_t *data);
+-void ff_j_rev_dct4(int16_t *data);
+-void ff_j_rev_dct2(int16_t *data);
+-void ff_j_rev_dct1(int16_t *data);
+-void ff_jref_idct_put(uint8_t *dest, ptrdiff_t line_size, int16_t *block);
+-void ff_jref_idct_add(uint8_t *dest, ptrdiff_t line_size, int16_t *block);
++void ff_j_rev_dct(int16_t data[64]);
++void ff_j_rev_dct4(int16_t data[64]);
++void ff_j_rev_dct2(int16_t data[64]);
++void ff_j_rev_dct1(int16_t data[64]);
++void ff_jref_idct_put(uint8_t *dest, ptrdiff_t line_size, int16_t block[64]);
++void ff_jref_idct_add(uint8_t *dest, ptrdiff_t line_size, int16_t block[64]);
+ 
+ #endif /* AVCODEC_DCT_H */
+--- a/libavcodec/jrevdct.c
++++ b/libavcodec/jrevdct.c
+@@ -1159,13 +1159,13 @@ void ff_j_rev_dct1(DCTBLOCK data){
+ #undef FIX
+ #undef CONST_BITS
+ 
+-void ff_jref_idct_put(uint8_t *dest, ptrdiff_t line_size, int16_t *block)
++void ff_jref_idct_put(uint8_t *dest, ptrdiff_t line_size, int16_t block[64])
+ {
+     ff_j_rev_dct(block);
+     ff_put_pixels_clamped_c(block, dest, line_size);
+ }
+ 
+-void ff_jref_idct_add(uint8_t *dest, ptrdiff_t line_size, int16_t *block)
++void ff_jref_idct_add(uint8_t *dest, ptrdiff_t line_size, int16_t block[64])
+ {
+     ff_j_rev_dct(block);
+     ff_add_pixels_clamped_c(block, dest, line_size);

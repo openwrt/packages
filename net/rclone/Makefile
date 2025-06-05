@@ -6,17 +6,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rclone
-PKG_VERSION:=1.68.2
+PKG_VERSION:=1.69.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/rclone/rclone/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=6c4c1a1702633c7a8f8755a9cfb951c3ae0b7bcc2e210b92e191250b6aae2e9f
+PKG_HASH:=ff6d17d187dd23648bfd33f20ff48902f7f08d2d9231f1f11825109903356b21
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Elon Huang <elonhhuang@gmail.com> \
 		Tianling Shen <cnsztl@immortalwrt.org>
+PKG_CPE_ID:=cpe:/a:rclone:rclone
 
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1

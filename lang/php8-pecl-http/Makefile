@@ -8,9 +8,9 @@ include $(TOPDIR)/rules.mk
 PECL_NAME:=pecl_http
 PECL_LONGNAME:=Extended HTTP Support
 
-PKG_VERSION:=4.2.4
+PKG_VERSION:=4.2.6
 PKG_RELEASE:=1
-PKG_HASH:=fb1e10c2e5edfb011ff8dc2e473cdbd2bbe0127d1279dfce4d98570555ac6ded
+PKG_HASH:=cd33230050b3f7c5ddb6f4383ce2a81f0bcdb934432029eec72ebf0f942b876d
 
 PKG_NAME:=php8-pecl-http
 PKG_SOURCE:=$(PECL_NAME)-$(PKG_VERSION).tgz

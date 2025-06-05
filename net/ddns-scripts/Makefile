@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ddns-scripts
 PKG_VERSION:=2.8.2
-PKG_RELEASE:=52
+PKG_RELEASE:=72
 
 PKG_LICENSE:=GPL-2.0
 
@@ -155,6 +155,17 @@ define Package/ddns-scripts-dnspod/description
 endef
 
 
+define Package/ddns-scripts-dnspod-v3
+  $(call Package/ddns-scripts/Default)
+  TITLE:=Extension for dnspod.tencentcloudapi.com (aka: dnspod.cn) API v3
+  DEPENDS:=ddns-scripts +curl +openssl-util
+endef
+
+define Package/ddns-scripts-dnspod-v3/description
+  Dynamic DNS Client scripts extension for dnspod.tencentcloudapi.com API v3 (require curl)
+endef
+
+
 define Package/ddns-scripts-noip
   $(call Package/ddns-scripts/Default)
   TITLE:=Extension for no-ip.com
@@ -259,6 +270,20 @@ define Package/ddns-scripts-pdns/description
   'option password' to be a valid API key for the PowerDNS webserver
 endef
 
+define Package/ddns-scripts-scaleway
+  $(call Package/ddns-scripts/Default)
+  TITLE:=Extension for Scaleway DNS API
+  DEPENDS:=ddns-scripts +curl
+endef
+
+define Package/ddns-scripts-scaleway/description
+  Dynamic DNS Client scripts extension for Scaleway.
+  Parameters:
+  'option username'  The zone in which the RR is to be set
+  'option password'  The Scaleway API token with sufficient access rights
+  'option domain'    The domain to be updated
+  'option param_opt' (Optional) The TTL of the RR
+endef
 
 define Package/ddns-scripts-transip
   $(call Package/ddns-scripts/Default)
@@ -283,7 +308,7 @@ define Package/ddns-scripts-one
 	DEPENDS:=ddns-scripts +curl
 endef
 
-define Package/ddns-scrtips-one/description
+define Package/ddns-scripts-one/description
 	Dynamic DNS Client scripts extension for 'one.com'.
 	It requires:
 	'option username' to be a valid Email for one.com Control Panel
@@ -351,6 +376,10 @@ define Package/ddns-scripts/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) ./files/usr/bin/ddns.sh \
 		$(1)/usr/bin/ddns
+
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_DATA) ./files/etc/uci-defaults/50-ddns-migrate-retry-count \
+		$(1)/etc/uci-defaults/
 endef
 
 define Package/ddns-scripts/postinst
@@ -385,12 +414,14 @@ define Package/ddns-scripts-services/install
 	rm $(1)/usr/share/ddns/default/godaddy.com-v1.json
 	rm $(1)/usr/share/ddns/default/digitalocean.com-v2.json
 	rm $(1)/usr/share/ddns/default/dnspod.cn.json
+	rm $(1)/usr/share/ddns/default/dnspod.cn-v3.json
 	rm $(1)/usr/share/ddns/default/no-ip.com.json
 	rm $(1)/usr/share/ddns/default/bind-nsupdate.json
 	rm $(1)/usr/share/ddns/default/route53-v1.json
 	rm $(1)/usr/share/ddns/default/cnkuai.cn.json
 	rm $(1)/usr/share/ddns/default/gandi.net.json
 	rm $(1)/usr/share/ddns/default/pdns.json
+	rm $(1)/usr/share/ddns/default/scaleway.com.json
 	rm $(1)/usr/share/ddns/default/transip.nl.json
 	rm $(1)/usr/share/ddns/default/ns1.com.json
 	rm $(1)/usr/share/ddns/default/one.com.json
@@ -541,6 +572,25 @@ exit 0
 endef
 
 
+define Package/ddns-scripts-dnspod-v3/install
+	$(INSTALL_DIR) $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_dnspod_cn_v3.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/dnspod.cn-v3.json \
+		$(1)/usr/share/ddns/default/
+endef
+
+define Package/ddns-scripts-dnspod-v3/prerm
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
+endef
+
+
 define Package/ddns-scripts-noip/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_no-ip_com.sh \
@@ -674,6 +724,25 @@ exit 0
 endef
 
 
+define Package/ddns-scripts-scaleway/install
+	$(INSTALL_DIR) $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_scaleway_com.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/scaleway.com.json \
+		$(1)/usr/share/ddns/default
+endef
+
+define Package/ddns-scripts-scaleway/prerm
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
+endef
+
+
 define Package/ddns-scripts-transip/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
 	$(INSTALL_BIN) ./files/usr/lib/ddns/update_transip_nl.sh \
@@ -760,12 +829,14 @@ $(eval $(call BuildPackage,ddns-scripts-freedns))
 $(eval $(call BuildPackage,ddns-scripts-godaddy))
 $(eval $(call BuildPackage,ddns-scripts-digitalocean))
 $(eval $(call BuildPackage,ddns-scripts-dnspod))
+$(eval $(call BuildPackage,ddns-scripts-dnspod-v3))
 $(eval $(call BuildPackage,ddns-scripts-noip))
 $(eval $(call BuildPackage,ddns-scripts-nsupdate))
 $(eval $(call BuildPackage,ddns-scripts-route53))
 $(eval $(call BuildPackage,ddns-scripts-cnkuai))
 $(eval $(call BuildPackage,ddns-scripts-gandi))
 $(eval $(call BuildPackage,ddns-scripts-pdns))
+$(eval $(call BuildPackage,ddns-scripts-scaleway))
 $(eval $(call BuildPackage,ddns-scripts-transip))
 $(eval $(call BuildPackage,ddns-scripts-ns1))
 $(eval $(call BuildPackage,ddns-scripts-one))

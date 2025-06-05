@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-ugly
-PKG_VERSION:=1.24.8
+PKG_VERSION:=1.24.12
 PKG_RELEASE:=1
 
 PKG_SOURCE:=gst-plugins-ugly-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gst-plugins-ugly
-PKG_HASH:=3dfc12bf0b766682b7d6e1e29a404b55e2375ba172d11900179738ae89b7a2d5
+PKG_HASH:=19ed6eef4ea1a742234fb35e2cdb107168595a4dd409a9fac0b7a16543eee78b
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-ugly-$(PKG_VERSION)
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \

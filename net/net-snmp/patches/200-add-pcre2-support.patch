@@ -211,7 +211,7 @@ Subject: [PATCH] add pcre2 support
 +#ifdef HAVE_PCRE2_H
 +#define PCRE2_CODE_UNIT_WIDTH 8
 +#include <pcre2.h>
-+#elifdef HAVE_PCRE_H
++#elif defined(HAVE_PCRE_H)
  #include <pcre.h>
  #endif
  
@@ -262,7 +262,7 @@ Subject: [PATCH] add pcre2 support
 +                if ((*procp)->regexp.regex_ptr == NULL) {
 +                    config_perror(pcre2_error_msg);
 +                }
-+#elifdef HAVE_PCRE_H
++#elif defined(HAVE_PCRE_H)
                  const char *pcre_error;
                  int pcre_error_offset;
  

@@ -66,7 +66,7 @@ endef
 define Package/libdrm-etnaviv
 $(call Package/libdrm/Default)
   TITLE+= for Vivante GPUs
-  DEPENDS:=+libdrm @(arm||aarch64||mips||mipsel||mips64||mips64el)
+  DEPENDS:=+libdrm @(arm||aarch64||mips||mipsel||mips64||mips64el||riscv64)
 endef
 
 define Package/libdrm-etnaviv/description
@@ -78,8 +78,7 @@ endef
 define Package/libdrm-intel
 $(call Package/libdrm/Default)
   TITLE+= for Intel integrated GPUs
-  DEPENDS:=+libdrm +libpciaccess @(x86||x86_64)
-
+  DEPENDS:=+libdrm +libpciaccess @(i386||i686||x86_64)
 endef
 
 define Package/libdrm-intel/description

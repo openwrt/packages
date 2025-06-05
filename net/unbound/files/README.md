@@ -208,6 +208,7 @@ One instance is supported currently.
 | dns64_prefix | 64:ff9b::/96 | subnet | DNS64 RFC6052 IPv4 in IPv6 well known prefix. | dns64-prefix: |
 | dhcp_link | none | program | Link to a DHCP server with supported scripts. See HOW TO above. | local-zone: local-data: forward-zone: |
 | dhcp4_slaac6 | 0 | boolean | Infer SLAAC IE64 IPv6 addresses from DHCPv4 MAC in DHCP link scripts. | - |
+| exclude_ipv6_ga | 0 | boolean | If exclude IPv6 global addresses from local data. | local-data: |
 | domain | lan | domain | This will suffix DHCP host records and be the default search domain. | local-zone: |
 | domain_insecure | (empty) | domain | **List** domains that you wish to skip DNSSEC. It is one way around NTP chicken and egg. Your DHCP domains are automatically included. | domain-insecure: |
 | domain_type | static | state | This allows you to lock down or allow forwarding of the local zone.<br>`static`: no forwarding like dnsmasq default<br>`refuse`: answer overtly with REFUSED<br>`deny`: covertly drop all queries<br>`transparent`: may continue forwarding or recusion | local-zone: |

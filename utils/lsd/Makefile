@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lsd
-PKG_VERSION:=1.1.1
+PKG_VERSION:=1.1.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/lsd-rs/lsd/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=7933e196bf7b164ea8879078f8a8e87381e0c49f71867e0036c82916199aba61
+PKG_HASH:=120935c7e98f9b64488fde39987154a6a5b2236cb65ae847917012adf5e122d1
 
 PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
 PKG_LICENSE:=Apache-2.0

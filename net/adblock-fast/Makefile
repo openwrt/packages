@@ -1,12 +1,12 @@
-# Copyright 2023-2024 MOSSDeF, Stan Grishin (stangri@melmac.ca).
+# SPDX-Identifier-License: AGPL-3.0-or-later
+# Copyright 2023-2025 MOSSDeF, Stan Grishin (stangri@melmac.ca).
 # TLD optimization written by Dirk Brenken (dev@brenken.org).
-# This is free software, licensed under AGPL-3.0-or-later.
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adblock-fast
-PKG_VERSION:=1.1.2
-PKG_RELEASE:=16
+PKG_VERSION:=1.1.3
+PKG_RELEASE:=13
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.ca>
 PKG_LICENSE:=AGPL-3.0-or-later
 
@@ -46,7 +46,7 @@ endef
 define Package/adblock-fast/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/etc/init.d/adblock-fast $(1)/etc/init.d/adblock-fast
-	$(SED) "s|^\(readonly PKG_VERSION\).*|\1='$(PKG_VERSION)-$(PKG_RELEASE)'|" $(1)/etc/init.d/adblock-fast
+	$(SED) "s|^\(readonly PKG_VERSION\).*|\1='$(PKG_VERSION)-r$(PKG_RELEASE)'|" $(1)/etc/init.d/adblock-fast
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/etc/config/adblock-fast $(1)/etc/config/adblock-fast
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
@@ -54,25 +54,25 @@ define Package/adblock-fast/install
 endef
 
 define Package/adblock-fast/postinst
-	#!/bin/sh
-	# check if we are on real system
-	if [ -z "$${IPKG_INSTROOT}" ]; then
-		/etc/init.d/adblock-fast enable
-	fi
-	exit 0
+#!/bin/sh
+# check if we are on real system
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/adblock-fast enable
+fi
+exit 0
 endef
 
 define Package/adblock-fast/prerm
-	#!/bin/sh
-	# check if we are on real system
-	if [ -z "$${IPKG_INSTROOT}" ]; then
-		echo -n "Stopping adblock-fast service... "
-		{ /etc/init.d/adblock-fast stop && \
-		  /etc/init.d/adblock-fast killcache; } >/dev/null 2>&1 && echo "OK" || echo "FAIL"
-		echo -n "Removing rc.d symlink for adblock-fast... "
-		/etc/init.d/adblock-fast disable >/dev/null 2>&1 && echo "OK" || echo "FAIL"
-	fi
-	exit 0
+#!/bin/sh
+# check if we are on real system
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	echo -n "Stopping adblock-fast service... "
+	{ /etc/init.d/adblock-fast stop && \
+	  /etc/init.d/adblock-fast killcache; } >/dev/null 2>&1 && echo "OK" || echo "FAIL"
+	echo -n "Removing rc.d symlink for adblock-fast... "
+	/etc/init.d/adblock-fast disable >/dev/null 2>&1 && echo "OK" || echo "FAIL"
+fi
+exit 0
 endef
 
 $(eval $(call BuildPackage,adblock-fast))

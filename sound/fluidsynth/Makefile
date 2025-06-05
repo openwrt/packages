@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fluidsynth
-PKG_VERSION:=2.4.0
+PKG_VERSION:=2.4.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/FluidSynth/fluidsynth/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=fd4d216a3030abc56a339985ab0506328660cd77b2d71dd98c240c58c03d8f7f
+PKG_HASH:=2d2a5ca35bbb3f3fd241ef388a0cb3ae5755ebbb78121c7869f02b021d694810
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=LGPL-2.1
@@ -44,6 +44,7 @@ CMAKE_OPTIONS += \
 	-Denable-waveout=off \
 	-Denable-winmidi=off \
 	-Denable-sdl2=off \
+	-Denable-sdl3=off \
 	-Denable-pulseaudio=off \
 	-Denable-pipewire=off \
 	-Denable-readline=off \

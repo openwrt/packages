@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=strongswan
 PKG_VERSION:=5.9.14
-PKG_RELEASE:=5
+PKG_RELEASE:=9
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://download.strongswan.org/ https://download2.strongswan.org/
@@ -462,6 +462,10 @@ define BuildPlugin
 	$(call Plugin/$(1)/install,$$(1))
   endef
 
+  define Package/strongswan-mod-$(1)/conffiles
+/etc/strongswan.d/charon/$(1).conf
+endef
+
   $$(eval $$(call BuildPackage,strongswan-mod-$(1)))
 endef
 
@@ -523,6 +527,11 @@ define Package/strongswan-charon/install
 	$(INSTALL_DIR) $(1)/usr/lib/ipsec
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/ipsec/charon $(1)/usr/lib/ipsec/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ipsec/libcharon.so.* $(1)/usr/lib/ipsec/
+endef
+
+define Package/strongswan-charon/conffiles
+/etc/strongswan.d/charon.conf
+/etc/strongswan.d/charon-logging.conf
 endef
 
 define Package/strongswan-charon-cmd/install
@@ -736,7 +745,7 @@ $(eval $(call BuildPlugin,sqlite,SQLite database interface,+strongswan-mod-sql +
 $(eval $(call BuildPlugin,sshkey,SSH key decoding,))
 $(eval $(call BuildPlugin,stroke,Stroke,+strongswan-charon +strongswan-ipsec))
 $(eval $(call BuildPlugin,test-vectors,crypto test vectors,))
-$(eval $(call BuildPlugin,uci,UCI config interface,+PACKAGE_strongswan-mod-uci:libuci))
+$(eval $(call BuildPlugin,uci,UCI config interface,+PACKAGE_strongswan-mod-uci:libuci @BROKEN))
 $(eval $(call BuildPlugin,unity,Cisco Unity extension,))
 $(eval $(call BuildPlugin,updown,updown firewall,+iptables +IPV6:ip6tables +iptables-mod-ipsec +kmod-ipt-ipsec))
 $(eval $(call BuildPlugin,vici,Versatile IKE Configuration Interface,))

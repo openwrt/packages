@@ -17,7 +17,7 @@ PKG_HASH:=0550350666d427c74daeb85d5ac7bb353acba5f76956395995311a9c6f063289
 
 PKG_MAINTAINER:=Val Kulkov <val.kulkov@gmail.com>
 PKG_LICENSE:=FTL GPL-2.0-only MIT ZLIB GPL-3.0-or-later
-PKG_LICENSE_FILES:=docs/LICENSE.TXT docs/FTL.TXT docs/GPLv2.TXT src/bdf/README src/pcf/README src/gzip/zlib.h builds/unix/config.sub builds/unix/config.guess builds/unix/libtool 
+PKG_LICENSE_FILES:=LICENSE.TXT docs/FTL.TXT docs/GPLv2.TXT src/bdf/README src/pcf/README src/gzip/zlib.h builds/unix/config.sub builds/unix/config.guess
 PKG_CPE_ID:=cpe:/a:freetype:freetype
 
 include $(INCLUDE_DIR)/package.mk

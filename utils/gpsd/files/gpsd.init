@@ -6,17 +6,22 @@ USE_PROCD=1
 PROG=/usr/sbin/gpsd
 NAME=gpsd
 
+LOG_LEVEL="0"
+
 validate_section_gpsd()
 {
 	uci_load_validate gpsd gpsd "$1" "$2" \
 		'enabled:bool:1' \
-		'device:string' \
+		'readonly:bool:1' \
+		'devices:list(string)' \
 		'listen_globally:bool:0' \
 		'port:port:2947'
 }
 
 gpsd_instance()
 {
+	local device
+
 	[ "$2" = 0 ] || {
 		echo "validation failed"
 		return 1
@@ -29,7 +34,12 @@ gpsd_instance()
 
 	[ "$listen_globally" -ne 0 ] && procd_append_param command -G
 	procd_append_param command -S "$port"
-	procd_append_param command "$device"
+	procd_append_param command -D "$LOG_LEVEL"
+	[ "$readonly" = "1" ] && procd_append_param command -b
+	procd_append_param command -F /var/run/gpsd.sock
+	for device in $devices; do
+		procd_append_param command "$device"
+	done
 	procd_set_param respawn
 
 	procd_close_instance
@@ -44,4 +54,13 @@ start_service()
 service_triggers() {
 	procd_add_reload_trigger "$NAME"
 	procd_add_validation validate_section_gpsd
+}
+
+service_started() {
+	local enabled
+
+	enabled="$(uci_get gpsd core enabled 0)"
+	[ "$enabled" = "0" ] && return
+
+	env -i ACTION="STARTED" /sbin/hotplug-call gpsd
 }

@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libarchive
-PKG_VERSION:=3.7.4
+PKG_VERSION:=3.7.9
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.libarchive.org/downloads
-PKG_HASH:=f887755c434a736a609cbd28d87ddbfbe9d6a3bb5b703c22c02f6af80a802735
+PKG_HASH:=ed8b5732e4cd6e30fae909fb945cad8ff9cb7be5c6cdaa3944ec96e4a200c04c
 
 PKG_MAINTAINER:=Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
 PKG_LICENSE:=BSD-2-Clause

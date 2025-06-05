@@ -4,8 +4,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pbr
-PKG_VERSION:=1.1.7
-PKG_RELEASE:=47
+PKG_VERSION:=1.1.8
+PKG_RELEASE:=16
 PKG_LICENSE:=AGPL-3.0-or-later
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.ca>
 
@@ -70,7 +70,7 @@ endef
 define Package/pbr/default/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/etc/init.d/pbr $(1)/etc/init.d/pbr
-	$(SED) "s|^\(readonly PKG_VERSION\).*|\1='$(PKG_VERSION)-$(PKG_RELEASE)'|" $(1)/etc/init.d/pbr
+	$(SED) "s|^\(readonly PKG_VERSION\).*|\1='$(PKG_VERSION)-r$(PKG_RELEASE)'|" $(1)/etc/init.d/pbr
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/etc/config/pbr $(1)/etc/config/pbr
 	$(INSTALL_DIR) $(1)/usr/share/pbr
@@ -97,95 +97,95 @@ $(call Package/pbr/default/install,$(1))
 endef
 
 define Package/pbr/postinst
-	#!/bin/sh
-	# check if we are on real system
-	if [ -z "$${IPKG_INSTROOT}" ]; then
-		chmod -x /etc/init.d/pbr || true
-		fw4 -q reload || true
-		chmod +x /etc/init.d/pbr || true
-		echo -n "Installing rc.d symlink for pbr... "
-		/etc/init.d/pbr enable && echo "OK" || echo "FAIL"
-	fi
-	exit 0
+#!/bin/sh
+# check if we are on real system
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	chmod -x /etc/init.d/pbr || true
+	fw4 -q reload || true
+	chmod +x /etc/init.d/pbr || true
+	echo -n "Installing rc.d symlink for pbr... "
+	/etc/init.d/pbr enable && echo "OK" || echo "FAIL"
+fi
+exit 0
 endef
 
 define Package/pbr/prerm
-	#!/bin/sh
-	# check if we are on real system
-	if [ -z "$${IPKG_INSTROOT}" ]; then
-		uci -q delete firewall.pbr || true
-		echo -n "Stopping pbr service... "
-		/etc/init.d/pbr stop quiet >/dev/null 2>&1 && echo "OK" || echo "FAIL"
-		echo -n "Removing rc.d symlink for pbr... "
-		/etc/init.d/pbr disable && echo "OK" || echo "FAIL"
-	fi
-	exit 0
+#!/bin/sh
+# check if we are on real system
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	uci -q delete firewall.pbr || true
+	echo -n "Stopping pbr service... "
+	/etc/init.d/pbr stop quiet >/dev/null 2>&1 && echo "OK" || echo "FAIL"
+	echo -n "Removing rc.d symlink for pbr... "
+	/etc/init.d/pbr disable && echo "OK" || echo "FAIL"
+fi
+exit 0
 endef
 
 define Package/pbr/postrm
-	#!/bin/sh
-	# check if we are on real system
-	if [ -z "$${IPKG_INSTROOT}" ]; then
-		fw4 -q reload || true
-	fi
-	exit 0
+#!/bin/sh
+# check if we are on real system
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	fw4 -q reload || true
+fi
+exit 0
 endef
 
 define Package/pbr-netifd/postinst
-	#!/bin/sh
-	# check if we are on real system
-	if [ -z "$${IPKG_INSTROOT}" ]; then
-		chmod -x /etc/init.d/pbr || true
-		fw4 -q reload || true
-		chmod +x /etc/init.d/pbr || true
-		echo -n "Installing rc.d symlink for pbr-netifd... "
-		/etc/init.d/pbr enable && echo "OK" || echo "FAIL"
-	fi
-	exit 0
+#!/bin/sh
+# check if we are on real system
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	chmod -x /etc/init.d/pbr || true
+	fw4 -q reload || true
+	chmod +x /etc/init.d/pbr || true
+	echo -n "Installing rc.d symlink for pbr-netifd... "
+	/etc/init.d/pbr enable && echo "OK" || echo "FAIL"
+fi
+exit 0
 endef
 
 define Package/pbr-netifd/prerm
-	#!/bin/sh
-	# check if we are on real system
-	if [ -z "$${IPKG_INSTROOT}" ]; then
-		uci -q delete firewall.pbr || true
-		echo -n "Stopping pbr-netifd service... "
-		/etc/init.d/pbr stop quiet >/dev/null 2>&1 && echo "OK" || echo "FAIL"
-		echo -n "Removing rc.d symlink for pbr... "
-		/etc/init.d/pbr disable && echo "OK" || echo "FAIL"
-		echo -n "Cleaning up /etc/iproute2/rt_tables... "
-		if sed -i '/pbr_/d' /etc/iproute2/rt_tables; then
-			echo "OK"
-		else
-			echo "FAIL"
-		fi
-		echo -n "Cleaning up /etc/config/network... "
-		uci -q delete 'network.pbr_default' || true
-		uci -q delete 'network.pbr_default6' || true
-		uci commit network || true
-		if sed -i '/ip.table.*pbr_/d' /etc/config/network; then
-			echo "OK"
-		else
-			echo "FAIL"
-		fi
-		echo -n "Restarting Network... "
-		if /etc/init.d/network restart >/dev/null 2>&1; then
-			echo "OK"
-		else
-			echo "FAIL"
-		fi
+#!/bin/sh
+# check if we are on real system
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	uci -q delete firewall.pbr || true
+	echo -n "Stopping pbr-netifd service... "
+	/etc/init.d/pbr stop quiet >/dev/null 2>&1 && echo "OK" || echo "FAIL"
+	echo -n "Removing rc.d symlink for pbr... "
+	/etc/init.d/pbr disable && echo "OK" || echo "FAIL"
+	echo -n "Cleaning up /etc/iproute2/rt_tables... "
+	if sed -i '/pbr_/d' /etc/iproute2/rt_tables; then
+		echo "OK"
+	else
+		echo "FAIL"
 	fi
-	exit 0
+	echo -n "Cleaning up /etc/config/network... "
+	uci -q delete 'network.pbr_default' || true
+	uci -q delete 'network.pbr_default6' || true
+	uci commit network || true
+	if sed -i '/ip.table.*pbr_/d' /etc/config/network; then
+		echo "OK"
+	else
+		echo "FAIL"
+	fi
+	echo -n "Restarting Network... "
+	if /etc/init.d/network restart >/dev/null 2>&1; then
+		echo "OK"
+	else
+		echo "FAIL"
+	fi
+fi
+exit 0
 endef
 
 define Package/pbr-netifd/postrm
-	#!/bin/sh
-	# check if we are on real system
-	if [ -z "$${IPKG_INSTROOT}" ]; then
-		fw4 -q reload || true
-	fi
-	exit 0
+#!/bin/sh
+# check if we are on real system
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	fw4 -q reload || true
+fi
+exit 0
 endef
 
 $(eval $(call BuildPackage,pbr))
-$(eval $(call BuildPackage,pbr-netifd))
+# $(eval $(call BuildPackage,pbr-netifd))

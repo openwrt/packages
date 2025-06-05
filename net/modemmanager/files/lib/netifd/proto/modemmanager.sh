@@ -245,7 +245,11 @@ modemmanager_connected_method_static_ipv6() {
 	[ -n "${gateway}" ] && {
 		echo "adding default IPv6 route via ${gateway}"
 		proto_add_ipv6_route "${gateway}" "128"
-		proto_add_ipv6_route "::0" "0" "${gateway}" "" "" "${address}/${prefix}"
+		[ "$sourcefilter" = "0" ] && {
+			proto_add_ipv6_route "::0" "0" "${gateway}"
+		} || {
+			proto_add_ipv6_route "::0" "0" "${gateway}" "" "" "${address}/${prefix}"
+		}
 	}
 	[ -n "${dns1}" ] && {
 		echo "adding primary DNS at ${dns1}"
@@ -684,6 +688,10 @@ proto_modemmanager_setup() {
 				modemmanager_set_allowed_mode "$device" \
 					"$interface" "5g"
 				;;
+			"any")
+				modemmanager_set_allowed_mode "$device" \
+					"$interface" "any"
+				;;
 			*)
 				modemmanager_set_preferred_mode "$device" \
 					"$interface" "${allowedmode}" "${preferredmode}"
@@ -869,8 +877,17 @@ proto_modemmanager_teardown() {
 	mmcli --modem="${device}" --simple-disconnect ||
 		proto_notify_error "${interface}" DISCONNECT_FAILED
 
-	# disable
-	mmcli --modem="${device}" --disable
+	# reading variable from var state which was set in
+	# '/usr/lib/ModemManager/connection.d/10-report-down'
+	# because of a reconnect event.
+	# The modem therefore does not need to be disabled.
+	local disable="$(uci_get_state network "$interface" disable_modem "1")"
+	if [ "${disable}" -eq 0 ]; then
+		echo "Skipping modem disable"
+		uci_revert_state network "${interface}" disable_modem
+	else
+		mmcli --modem="${device}" --disable
+	fi
 
 	# low power, only if requested
 	[ "${lowpower:-0}" -lt 1 ] ||

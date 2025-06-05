@@ -9,54 +9,6 @@ else
 	printf "%b: pbr init.d file (%s) not found! \n" '\033[0;31mERROR\033[0m' "$pbrFunctionsFile"
 fi
 
-# shellcheck disable=SC2317
-pbr_iface_setup() {
-	local iface="${1}" tid
-	if is_supported_interface "${iface}"; then
-		output "Setting up ${packageName} routing tables for ${iface} "
-		tid="$(get_rt_tables_next_id)"
-		if ! grep -q "$tid ${ipTablePrefix}_${iface%6}" "$rtTablesFile"; then
-			sed -i "/${ipTablePrefix}_${iface%6}/d" "$rtTablesFile"
-			echo "$tid ${ipTablePrefix}_${iface%6}" >> "$rtTablesFile"
-			sync
-		fi
-		uci_set 'network' "${iface}" 'ip4table' "${ipTablePrefix}_${iface%6}"
-		uci_set 'network' "${iface}" 'ip6table' "${ipTablePrefix}_${iface%6}"
-		output_okbn
-	fi
-}
-
-pbr_default_route_setup() {
-	local iface iface6
-	iface="$(uci_get 'pbr' 'config' 'procd_wan_interface')"
-	iface6="$(uci_get 'pbr' 'config' 'procd_wan6_interface')"
-	[ -z "$iface" ] && { network_flush_cache; network_find_wan iface; }
-	[ -z "$iface6" ] && { network_flush_cache; network_find_wan6 iface6; }
-	output "Setting up ${packageName} default route for ${iface:-wan} "
-	uci -q delete network.default || true # remove manual default route
-	uci -q delete network.pbr_default || true
-	uci_add network rule pbr_default
-	uci_set network pbr_default lookup "pbr_${iface:-wan}"
-	uci_set network pbr_default priority "40000"
-	output_okbn
-	output "Setting up ${packageName} default route for ${iface6:-wan6} "
-	uci -q delete network.default6 || true # remove manual default route
-	uci -q delete network.pbr_default6 || true
-	uci_add network rule6 pbr_default6
-	uci_set network pbr_default6 lookup "pbr_${iface6:-wan6}"
-	uci_set network pbr_default6 priority "40000"
-	output_okbn
-}
-
-sed -i "/${ipTablePrefix}_/d" "$rtTablesFile"
-sync
-config_load 'network'
-config_foreach pbr_iface_setup 'interface'
-pbr_default_route_setup
-uci_commit 'network'
-sync
-output "Restarting network... "
-/etc/init.d/network restart
-output_okn
+setup_netifd 'on_install'
 
 exit 0

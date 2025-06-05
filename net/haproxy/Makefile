@@ -10,12 +10,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=haproxy
-PKG_VERSION:=3.0.6
+PKG_VERSION:=3.0.10
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.haproxy.org/download/3.0/src
-PKG_HASH:=cf1bf58b5bc79c48db7b01667596ffd98343adb29a41096f075f00a8f90a7335
+PKG_HASH:=d1508670b6fd5839c669a0a916842f0d3d3d0b578bb351a2a74a1de3d929ce26
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>, \
 		Christian Lachner <gladiac@gmail.com>
@@ -46,7 +46,7 @@ endef
 define Package/haproxy
   $(call Package/haproxy/Default)
   TITLE+=with SSL support
-  DEPENDS+= +libpcre2 +libltdl +zlib +libpthread +liblua5.3 +libopenssl +libncurses +libreadline +libatomic
+  DEPENDS+= +libpcre2 +libltdl +zlib +libpthread +liblua5.4 +libopenssl +libncurses +libreadline +libatomic
   VARIANT:=ssl
 endef
 
@@ -59,7 +59,7 @@ define Package/haproxy-nossl
   $(call Package/haproxy/Default)
   TITLE+=without SSL support
   VARIANT:=nossl
-  DEPENDS+= +libpcre2 +libltdl +zlib +libpthread +liblua5.3 +libatomic
+  DEPENDS+= +libpcre2 +libltdl +zlib +libpthread +liblua5.4 +libatomic
   CONFLICTS:=haproxy
 endef
 
@@ -92,7 +92,7 @@ define Build/Compile
 		DESTDIR="$(PKG_INSTALL_DIR)" \
 		CC="$(TARGET_CC)" \
 		PCREDIR="$(STAGING_DIR)/usr/" \
-		USE_LUA=1 LUA_LIB_NAME="lua5.3" LUA_INC="$(STAGING_DIR)/usr/include/lua5.3" LUA_LIB="$(STAGING_DIR)/usr/lib" \
+		USE_LUA=1 LUA_LIB_NAME="lua5.4" LUA_INC="$(STAGING_DIR)/usr/include/lua5.4" LUA_LIB="$(STAGING_DIR)/usr/lib" \
 		SMALL_OPTS="-DBUFSIZE=16384 -DMAXREWRITE=1030 -DSYSTEM_MAXCONN=165530" \
 		USE_ZLIB=1 USE_PCRE2=1 USE_PCRE2_JIT=1 USE_PTHREAD_PSHARED=1 USE_LIBATOMIC=1 USE_PROMEX=1 \
 		VERSION="$(PKG_VERSION)" SUBVERS="-$(PKG_RELEASE)" \

@@ -8,18 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libffi
-PKG_VERSION:=3.4.6
+PKG_VERSION:=3.4.7
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/libffi/libffi/releases/download/v$(PKG_VERSION)
-PKG_HASH:=b0dea9df23c863a7a50e825440f3ebffabd65df1497108e5d437747843895a4e
+PKG_HASH:=138607dee268bdecf374adf9144c00e839e38541f75f24a1fcf18b78fda48b2d
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:libffi_project:libffi
 
-PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=no-mips16

@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dockerd
 PKG_VERSION:=27.3.1
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
@@ -71,7 +71,7 @@ define EnsureVendoredVersion
 		DEP_VER=$$$$( grep --only-matching --perl-regexp '(?<=PKG_VERSION:=)(.*)' "$(1)" ); \
 		VEN_VER=$$$$( grep --only-matching --perl-regexp '(?<=_VERSION:=v)(.*)(?=})' "$(PKG_BUILD_DIR)/hack/dockerfile/install/$(2)" ); \
 		if [ "$$$${VEN_VER}" != "$$$${DEP_VER}" ]; then \
-			echo "ERROR: Expected 'PKG_VERSION:=$$$${VEN_VER}' in '$(1)', found 'PKG_VERSION:=$$$${DEP_VER}'"; \
+			echo "ERROR: $(PKG_NAME) Expected 'PKG_VERSION:=$$$${VEN_VER}' in '$(1)', found 'PKG_VERSION:=$$$${DEP_VER}'"; \
 			exit 1; \
 		fi \
 	)

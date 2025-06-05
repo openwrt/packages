@@ -85,7 +85,7 @@ hcloud_transfer() {
 		"https://$reqUrl"
 
 	if [ $? -ne 0 ]; then
-		write_log 14 "rest api error"
+		write_log 4 "rest api error"
 	fi
 }
 
@@ -93,8 +93,10 @@ get_zone() {
 	local resp=`hcloud_transfer GET /v2/zones "name=$__DOMAIN.&search_mode=equal" ""`
 	__ZONE_ID=`printf "%s" $resp |  grep -Eo '"id":"[a-z0-9]+"' | cut -d':' -f2 | tr -d '"'`
 	if [ "$__ZONE_ID" = "" ]; then
-		write_log 14 "error, no zone"
+		write_log 4 "query zone error [$resp]"
+		return 1
 	fi
+	return 0
 }
 
 upd_record() {
@@ -104,8 +106,10 @@ upd_record() {
 	if [ ! "$recordId" = "" ]; then
 		write_log 7 "upd [$recordId] success [$__TYPE] [$__IP]"
 	else
-		write_log 14 "upd ecord error [$resp]"
+		write_log 4 "upd ecord error [$resp]"
+		return 1
 	fi
+	return 0
 }
 
 add_record() {
@@ -115,8 +119,10 @@ add_record() {
 	if [ ! "$recordId" = "" ]; then
 		write_log 7 "add [$recordId] success [$__TYPE] [$__IP]"
 	else
-		write_log 14 "add record error [$resp]"
+		write_log 4 "add record error [$resp]"
+		return 1
 	fi
+	return 0
 }
 
 # Get DNS record
@@ -137,16 +143,18 @@ get_record() {
 	return $ret
 }
 
-get_zone
+get_zone || return 1
 get_record
 
 ret=$?
 if [ $ret -eq 0 ]; then
 	write_log 7 "nochg [$__IP]"
 fi
+
 if [ $ret -eq 1 ]; then
 	add_record
 fi
+
 if [ $ret -eq 2 ]; then
 	upd_record
 fi

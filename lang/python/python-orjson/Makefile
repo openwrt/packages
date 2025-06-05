@@ -1,11 +1,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-orjson
-PKG_VERSION:=3.10.0
+PKG_VERSION:=3.10.12
 PKG_RELEASE:=1
 
 PYPI_NAME:=orjson
-PKG_HASH:=ba4d8cac5f2e2cff36bea6b6481cdb92b38c202bcec603d6f5ff91960595a1ed
+PKG_HASH:=0a78bbda3aea0f9f079057ee1ee8a1ecf790d4f1af88dd67493c6b8ee52506ff
 
 PKG_MAINTAINER:=Timothy Ace <openwrt@timothyace.com>
 PKG_LICENSE:=Apache-2.0 MIT

@@ -128,9 +128,9 @@ start_service() {
 
 	# This must be set at last, all other options set after this will be ignored
 	is_enabled "hosts" "enabled" && {
-		append_param "--hosts-file-enabled" "true"
+		append_param "--hosts-file-enabled=true"
 		config_list_foreach "hosts" "hosts_files" "append_param '--hosts-files'"
-	} || append_param "--hosts-file-enabled" "false"
+	} || append_param "--hosts-file-enabled=false"
 
 	procd_set_param respawn
 	procd_set_param stdout 1
