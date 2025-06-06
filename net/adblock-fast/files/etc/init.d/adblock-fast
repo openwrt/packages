@@ -18,7 +18,7 @@ if type extra_command 1>/dev/null 2>&1; then
 	extra_command 'killcache' 'Delete all cached files'
 	extra_command 'pause' 'Pauses AdBlocking for specified number of seconds (default: 60)'
 	extra_command 'show_blocklist' 'List currently blocked domains'
-	extra_command 'sizes' 'Displays the file-sizes of enabled block-lists'
+	extra_command 'sizes' 'Displays the file-sizes of configured block-lists'
 	extra_command 'version' 'Show version information'
 fi
 
@@ -88,7 +88,7 @@ readonly runningConfigFile="/dev/shm/${packageName}.config"
 readonly runningErrorFile="/dev/shm/${packageName}.error"
 readonly runningStatusFile="/dev/shm/${packageName}.status"
 readonly hostsFilter='/localhost/d;/^#/d;/^[^0-9]/d;s/^0\.0\.0\.0.//;s/^127\.0\.0\.1.//;s/[[:space:]]*#.*$//;s/[[:cntrl:]]$//;s/[[:space:]]//g;/[`~!@#\$%\^&\*()=+;:"'\'',<>?/\|[{}]/d;/]/d;/\./!d;/^$/d;/[^[:alnum:]_.-]/d;'
-readonly domainsFilter='/^#/d;s/[[:space:]]*#.*$//;s/[[:space:]]*$//;s/[[:cntrl:]]$//;/[[:space:]]/d;/[`~!@#\$%\^&\*()=+;:"'\'',<>?/\|[{}]/d;/]/d;/^$/d;/[^[:alnum:]_.-]/d;'
+readonly domainsFilter='/^#/d;s/[[:space:]]*#.*|[[:space:]]*$|[[:cntrl:]]$//g;/^[[:space:]]*$/d;/^[^[:alnum:]._-]|[`~!@#\$%\^&\*()=+;:"'"'"',<>?/\|{}]/d'
 readonly adBlockPlusFilter='/^#/d;/^!/d;s/[[:space:]]*#.*$//;s/^||//;s/\^$//;s/[[:space:]]*$//;s/[[:cntrl:]]$//;/[[:space:]]/d;/[`~!@#\$%\^&\*()=+;:"'\'',<>?/\|[{}]/d;/]/d;/\./!d;/^$/d;/[^[:alnum:]_.-]/d;'
 readonly dnsmasqFileFilter='\|^server=/[[:alnum:]_.-].*/|!d;s|server=/||;s|/.*$||'
 readonly dnsmasq2FileFilter='\|^local=/[[:alnum:]_.-].*/|!d;s|local=/||;s|/.*$||'
@@ -464,14 +464,21 @@ get_local_filesize() {
 }
 
 get_url_filesize() {
-	local url="$1" size size_command
+	local url="$1" size size_command timeout_sec=2
 	[ -n "$url" ] || return 0
-	is_present 'curl' || return 0
-	size_command='curl --silent --insecure --fail --head --request GET'
-#	size="$($size_command "$url" | grep -Po '^[cC]ontent-[lL]ength: \K\w+')"
-# shellcheck disable=SC1017
-	size="$($size_command "$url" | awk -F": " '{IGNORECASE=1}/content-length/ {gsub(/\r/, ""); print $2}' )"
-# shellcheck disable=SC3037
+        if is_present 'curl'; then
+                # shellcheck disable=SC1017
+                size_command='curl --silent --insecure --fail --head --request GET'
+                size="$($size_command --connect-timeout $timeout_sec "$url" | awk -F": " '{IGNORECASE=1}/content-length/ {gsub(/\r/, ""); print $2}' )"
+        fi
+
+        # Check if size is empty and fallback to uclient-fetch if necessary
+        if [ -z "$size" ] && is_present 'uclient-fetch' ; then
+                # shellcheck disable=SC1017
+                size_command='uclient-fetch --spider'
+                size="$($size_command --timeout $timeout_sec "$url" -O /dev/null 2>&1 | sed -n '/^Download/ s/.*(\([0-9]*\) bytes).*/\1/p')"
+        fi
+	# shellcheck disable=SC3037
 	echo -en "$size"
 }
 
