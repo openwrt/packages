@@ -1,0 +1,12 @@
+diff -ur a/module/Makefile b/module/Makefile
+--- a/module/Makefile	2020-04-28 11:31:23
++++ b/module/Makefile	2025-05-29 09:20:28
+@@ -7,7 +7,7 @@
+ 
+ $(MYMODULE).ko: $(MYMODULE).c 
+ 		echo start the make
+-		make -C $(KERNDIR) M=$(THISDIR) modules
++		$(MAKE) -C $(KERNDIR) M=$(THISDIR) modules
+ 
+ clean:
+ 	rm -f *.o *.ko
