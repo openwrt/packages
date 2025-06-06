@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=db
 PKG_VERSION:=5.3.28
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.oracle.com/berkeley-db/
@@ -65,7 +65,7 @@ CONFIGURE_ARGS += \
 	--disable-debug \
 	$(if $(CONFIG_PACKAGE_libdb47xx),--enable-cxx,--disable-cxx)
 
-TARGET_CFLAGS += $(FPIC)
+TARGET_CFLAGS += $(FPIC) -std=gnu17
 
 define Build/Compile
 	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR)/build_unix \
