@@ -52,7 +52,8 @@ PKG_AUTOMAKE_PATHS:=$(MAKE_PATH)
 
 CONFIGURE_ARGS += \
 	--with-database=sqlite3 \
-	--with-included-gsl
+	--with-included-gsl \
+	--disable-documentation
 
 define Package/bogofilter/conffiles
 /etc/bogofilter.cf
