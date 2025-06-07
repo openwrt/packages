@@ -7,6 +7,7 @@
 
 include $(TOPDIR)/rules.mk
 
+# Don't forget to add the new version to GO_BIN_HASHES in golang-values.mk
 GO_VERSION_MAJOR_MINOR:=1.24
 GO_VERSION_PATCH:=3
 
