@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=liborcania
-PKG_VERSION:=2.3.0
-PKG_RELEASE:=2
+PKG_VERSION:=2.3.3
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/babelouest/orcania/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=b1b5550523164eca0f59099e843177684c5017c6088284123880cffd4c6dbbde
+PKG_HASH:=e26947f7622acf3660b71fb8018ee791c97376530ab6c4a00e4aa2775e052626
 
 PKG_MAINTAINER:=Toni Uhlig <matzeton@googlemail.com>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -34,6 +34,10 @@ endef
 define Package/liborcania/description
   Potluck with different functions for different purposes that can be shared among C programs.
 endef
+
+CMAKE_OPTIONS += \
+	-DWITH_STRSTR=ON \
+	-DCMAKE_BUILD_TYPE=Release
 
 define Package/liborcania/install
 	$(INSTALL_DIR) $(1)/usr/lib
