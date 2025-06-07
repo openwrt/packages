@@ -8,19 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vim
-PKG_VERSION:=9.0
+PKG_VERSION:=9.1.1431
+VIMVER=91
 PKG_RELEASE:=1
-VIMVER:=90
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://ftp.vim.org/pub/vim/unix
-PKG_HASH:=a6456bc154999d83d0c20d968ac7ba6e7df0d02f3cb6427fb248660bacfb336e
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/vim/vim/tar.gz/refs/tags/v$(PKG_VERSION)?
+PKG_HASH:=fdc2bdcd44dc71ca68ec9c1547296106f5cb4129c205f0a41b3c2d7e22a9600f
 PKG_MAINTAINER:=Marko Ratkaj <markoratkaj@gmail.com>
 PKG_LICENSE:=Vim
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:vim:vim
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)$(VIMVER)
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -223,7 +222,7 @@ endef
 define Package/vim-fuller/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/vim_big $(1)/usr/bin/vim
-	$(INSTALL_DIR) $(1)/usr/share/vim
+	$(INSTALL_DIR) $(1)/usr/share/vim/vim$(VIMVER)/pack/dist/opt/netrw
 	$(LN) vim $(1)/usr/bin/vimdiff
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/vim/vim$(VIMVER) $(1)/usr/share/vim
 	$(INSTALL_CONF) ./files/vimrc.full $(1)/usr/share/vim/vimrc
