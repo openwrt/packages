@@ -1,0 +1,22 @@
+From 45131e0c7c084409aa52d1b7f7408d9d5fecb72e Mon Sep 17 00:00:00 2001
+From: Self-Hosting-Group
+ <155233284+Self-Hosting-Group@users.noreply.github.com>
+Date: Mon, 1 Jan 2024 00:00:00 +0000
+Subject: [PATCH] miniupnpd: Apply `secure_mode` config to IPv6 as well
+
+With IPv6 and UPnP IGD it could not be disabled before
+---
+ upnpsoap.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/upnpsoap.c
++++ b/upnpsoap.c
+@@ -1677,7 +1677,7 @@ PinholeVerification(struct upnphttp * h,
+ 		strncpy(clientaddr_str, "*ERROR*", sizeof(clientaddr_str));
+ 	}
+ 
+-	if(memcmp(&h->clientaddr_v6, &result_ip, sizeof(struct in6_addr)) != 0)
++	if(GETFLAG(SECUREMODEMASK) && (memcmp(&h->clientaddr_v6, &result_ip, sizeof(struct in6_addr)) != 0))
+ 	{
+ 		syslog(LOG_INFO, "%s: Client %s tried to access pinhole for internal %s and is not authorized",
+ 		       "PinholeVerification", clientaddr_str, int_ip);
