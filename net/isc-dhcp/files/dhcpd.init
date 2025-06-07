@@ -110,7 +110,7 @@ typeof() {
 /^(true|false)$/		{ print "bool\n"; next; }
 /^\d+$/				{ print "integer\n"; next; }
 /^"[^"]*"$/			{ print "string\n"; next; }
-/^[0-9a-fA-F]{2,2}(:[0-9a-fA-F]{2,2})*$/	{ print "string\n"; next; }
+/^[0-9a-fA-F]{2,2}(:[0-9a-fA-F]{2,2})*$/	{ print "hexstring\n"; next; }
 				{ print "other\n"; next; }
 '
 }
@@ -190,7 +190,7 @@ append_dhcp_options() {
 	for value in $values; do
 		# detect type of $value and quote if necessary
 		case $(typeof "$value") in
-		ip|bool|integer|string)
+		ip|bool|integer|string|hexstring)
 			;;
 		other)
 			value="\"$value\""
