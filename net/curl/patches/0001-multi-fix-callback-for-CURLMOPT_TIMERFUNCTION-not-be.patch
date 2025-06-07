@@ -1,0 +1,34 @@
+From 407deeaaa346119ab570540f11987830b0dcdf82 Mon Sep 17 00:00:00 2001
+From: Vladislavs Sokurenko <vladislavs.sokurenko@gmail.com>
+Date: Fri, 22 Nov 2024 17:00:14 +0200
+Subject: [PATCH] multi: fix callback for `CURLMOPT_TIMERFUNCTION` not being
+ called again when...
+
+Issue is reproducible for me if I have made request with multi handle,
+then I make request that will take very long and then I make request
+that should be fast again, however what happens it is that it seems
+to think that timeout was not changed and it makes it not call initial
+`CURLMOPT_TIMERFUNCTION`.
+
+Closes #15627
+---
+ lib/multi.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+--- a/lib/multi.c
++++ b/lib/multi.c
+@@ -3225,6 +3225,14 @@ static CURLMcode multi_socket(struct Cur
+       }
+     }
+   }
++  else {
++    /* Asked to run due to time-out. Clear the 'last_expire_ts' variable to
++       force Curl_update_timer() to trigger a callback to the app again even
++       if the same timeout is still the one to run after this call. That
++       handles the case when the application asks libcurl to run the timeout
++       prematurely. */
++    memset(&multi->last_expire_ts, 0, sizeof(multi->last_expire_ts));
++  }
+ 
+   result = multi_run_expired(&mrc);
+   if(result)
