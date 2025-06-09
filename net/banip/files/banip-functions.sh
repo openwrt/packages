@@ -1500,8 +1500,8 @@ f_report() {
 					set_dport="${set_proto}: $(f_trim "${set_dport}")"
 				fi
 				if [ "${ban_nftcount}" = "1" ]; then
-					set_elements="$(printf "%s" "${set_json}" | "${ban_jsoncmd}" -qe '@.nftables[*].set.elem[*][@.counter.packets>0].val' |
-						"${ban_awkcmd}" -F '[ ,]' '{ORS=" ";if($2=="\"range\":")printf"%s, ",$4;else if($2=="\"prefix\":")printf"%s, ",$5;else printf"\"%s\", ",$1}')"
+					set_elements="$(printf "%s" "${set_json}" | "${ban_jsoncmd}" -l50 -qe '@.nftables[*].set.elem[*][@.counter.packets>0].val' |
+						"${ban_awkcmd}" -F '[ ,]' '{ORS=" ";if($2=="\"range\":"||$2=="\"concat\":")printf"%s, ",$4;else if($2=="\"prefix\":")printf"%s, ",$5;else printf"\"%s\", ",$1}')"
 				fi
 				if [ -n "${set_cntinbound}" ]; then
 					set_inbound="ON"
@@ -1611,7 +1611,7 @@ f_report() {
 					} >>"${map_jsn}"
 				fi
 			fi
-			if [ -s "${map_jsn}" ] && [ "$("${ban_catcmd}" "${map_jsn}")" != ",[{}" ]; then
+			if [ -s "${map_jsn}" ]; then
 				json_init
 				if json_load_file "${report_jsn}" >/dev/null 2>&1; then
 					json_select "sets" >/dev/null 2>&1
@@ -1635,14 +1635,14 @@ f_report() {
 										quantity="$((quantity + 1))"
 										if [ "${quantity}" -eq "100" ]; then
 											"${ban_fetchcmd}" ${ban_geoparm} "[ ${chunk%%?} ]" "${ban_geourl}" 2>/dev/null |
-												"${ban_jsoncmd}" -qe '@[*&&@.status="success"]' | "${ban_awkcmd}" -v feed="${item}" '{printf ",{\"%s\": %s}\n",feed,$0}' >>"${map_jsn}"
+												"${ban_jsoncmd}" -qe '@[*&&@.status="success"]' | "${ban_awkcmd}" -v feed="${item//_v/.v}" '{printf ",{\"%s\": %s}\n",feed,$0}' >>"${map_jsn}"
 											chunk=""
 											quantity="0"
 										fi
 									done
 									if [ "${quantity}" -gt "0" ]; then
 										"${ban_fetchcmd}" ${ban_geoparm} "[ ${chunk} ]" "${ban_geourl}" 2>/dev/null |
-											"${ban_jsoncmd}" -qe '@[*&&@.status="success"]' | "${ban_awkcmd}" -v feed="${item}" '{printf ",{\"%s\": %s}\n",feed,$0}' >>"${map_jsn}"
+											"${ban_jsoncmd}" -qe '@[*&&@.status="success"]' | "${ban_awkcmd}" -v feed="${item//_v/.v}" '{printf ",{\"%s\": %s}\n",feed,$0}' >>"${map_jsn}"
 									fi
 								) &
 								[ "${cnt}" -gt "${ban_cores}" ] && wait -n
@@ -1693,10 +1693,10 @@ f_report() {
 					json_get_keys table_sets >/dev/null 2>&1
 					table_sets="$(printf "%s\n" ${table_sets} | "${ban_sortcmd}")"
 					if [ -n "${table_sets}" ]; then
-						printf "%-25s%-15s%-24s%-24s%-24s%-24s\n" "    Set" "| Count   " "| Inbound (packets)" "| Outbound (packets)" "| Port/Protocol      " "| Elements           "
+						printf "%-25s%-15s%-24s%-24s%-24s%-24s\n" "    Set" "| Count   " "| Inbound (packets)" "| Outbound (packets)" "| Port/Protocol      " "| Elements (max. 50) "
 						printf "%s\n" "    ---------------------+--------------+-----------------------+-----------------------+-----------------------+------------------------"
 						for item in ${table_sets}; do
-							printf "    %-21s" "${item}"
+							printf "    %-21s" "${item//_v/.v}"
 							json_select "${item}"
 							json_get_keys set_details
 							for detail in ${set_details}; do
@@ -1810,7 +1810,7 @@ f_search() {
 # Set content
 #
 f_content() {
-	local set_raw set_elements input="${1}"
+	local set_raw set_elements input="${1}" filter="${2}"
 
 	if [ -z "${input}" ]; then
 		printf "%s\n%s\n%s\n" ":::" "::: no valid Set input" ":::"
@@ -1819,7 +1819,13 @@ f_content() {
 	set_raw="$("${ban_nftcmd}" -j list set inet banIP "${input}" 2>/dev/null)"
 
 	if [ "$(uci_get banip global ban_nftcount)" = "1" ]; then
-		set_elements="$(printf "%s" "${set_raw}" | "${ban_jsoncmd}" -qe '@.nftables[*].set.elem[*].elem.val')"
+		if [ "${filter}" = "true" ]; then
+			set_elements="$(printf "%s" "${set_raw}" | "${ban_jsoncmd}" -qe '@.nftables[*].set.elem[*][@.counter.packets>0].*' |
+				"${ban_awkcmd}" 'NR%2==1{ip=$0;next}BEGIN{FS="[:,{}\"]+"}{print ip ", packets: "$4 }')"
+		else
+			set_elements="$(printf "%s" "${set_raw}" | "${ban_jsoncmd}" -qe '@.nftables[*].set.elem[*].elem["val","counter"]' |
+				"${ban_awkcmd}" 'NR%2==1{ip=$0;next}BEGIN{FS="[:,{}\"]+"}{print ip ", packets: "$4 }')"
+		fi
 	else
 		set_elements="$(printf "%s" "${set_raw}" | "${ban_jsoncmd}" -qe '@.nftables[*].set.elem[*]')"
 	fi

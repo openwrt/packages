@@ -133,7 +133,7 @@ Available commands:
 	enabled         Check if service is started on boot
 	report          [text|json|mail] Print banIP related Set statistics
 	search          [<IPv4 address>|<IPv6 address>] Check if an element exists in a banIP Set
-	content         [<Set name>] List all elements of a given banIP Set
+	content         [<Set name>] [true|false] Listing of all or only elements with hits of a given banIP Set
 	running         Check if service is running
 	status          Service status
 	trace           Start with syscall trace
@@ -225,44 +225,114 @@ Available commands:
 :::
 ::: banIP Set Statistics
 :::
-    Timestamp: 2025-01-13 22:08:39
+    Timestamp: 2025-06-08 23:24:54
     ------------------------------
     blocked syn-flood packets  : 0
     blocked udp-flood packets  : 0
     blocked icmp-flood packets : 0
-    blocked invalid ct packets : 1
+    blocked invalid ct packets : 133
     blocked invalid tcp packets: 0
     ---
     auto-added IPs to allowlist: 0
     auto-added IPs to blocklist: 0
 
-    Set                  | Count        | Inbound (packets)     | Outbound (packets)    | Port/Protocol         | Elements              
+    Set                  | Count        | Inbound (packets)     | Outbound (packets)    | Port/Protocol         | Elements (max. 50)    
     ---------------------+--------------+-----------------------+-----------------------+-----------------------+------------------------
-    allowlist_v4MAC      | 0            | -                     | ON: 0                 | -                     | -                     
-    allowlist_v6MAC      | 0            | -                     | ON: 0                 | -                     | -                     
-    allowlist_v4         | 1            | ON: 0                 | ON: 0                 | -                     | -                     
-    allowlist_v6         | 2            | ON: 0                 | ON: 0                 | -                     | -                     
-    cinsscore_v4         | 11984        | ON: 5                 | -                     | -                     | 66.240.205.34, 137.184.2
-                         |              |                       |                       |                       | 4.204, 185.224.3.227, 18
-                         |              |                       |                       |                       | 9.179.109.68, 193.200.78
-                         |              |                       |                       |                       | .3                    
-    country_v6           | 22188        | ON: 0                 | -                     | -                     | -                     
-    country_v4           | 34925        | ON: 3                 | -                     | -                     | 43.255.244.0(r), 205.210
-                         |              |                       |                       |                       | .31.0(r), 222.16.0.0(r),
-                         |              |                       |                       |                       |  185.242.224.0(p)     
-    debl_v4              | 13646        | ON: 0                 | -                     | -                     | -                     
-    debl_v6              | 131          | ON: 0                 | -                     | -                     | -                     
-    doh_v6               | 1218         | -                     | ON: 0                 | tcp, udp: 80, 443     | -                     
-    doh_v4               | 1756         | -                     | ON: 0                 | tcp, udp: 80, 443     | -                     
-    threat_v4            | 943          | ON: 2                 | -                     | -                     | 45.142.193.0(p), 141.98.
-                         |              |                       |                       |                       | 10.0(p)               
-    turris_v4            | 8017         | ON: 1                 | -                     | -                     | 78.128.113.38         
-    blocklist_v4MAC      | 0            | -                     | ON: 0                 | -                     | -                     
-    blocklist_v6MAC      | 0            | -                     | ON: 0                 | -                     | -                     
-    blocklist_v4         | 0            | ON: 0                 | ON: 0                 | -                     | -                     
-    blocklist_v6         | 0            | ON: 0                 | ON: 0                 | -                     | -                     
+    allowlist.v4         | 1            | ON: 0                 | ON: 0                 | -                     |                       
+    allowlist.v4MAC      | 1            | -                     | ON: 177               | -                     | 65:34:31:1f:a5:b1     
+    allowlist.v6         | 1            | ON: 0                 | ON: 0                 | -                     |                       
+    allowlist.v6MAC      | 1            | -                     | ON: 264               | -                     | 65:34:31:1f:a5:b1     
+    blocklist.v4         | 2            | ON: 0                 | ON: 0                 | -                     |                       
+    blocklist.v4MAC      | 0            | -                     | ON: 0                 | -                     |                       
+    blocklist.v6         | 0            | ON: 0                 | ON: 0                 | -                     |                       
+    blocklist.v6MAC      | 0            | -                     | ON: 0                 | -                     |                       
+    cinsscore.v4         | 11498        | ON: 444               | -                     | -                     | 3.92.139.143, 5.39.61.11
+                         |              |                       |                       |                       | 8, 8.137.54.171, 8.211.4
+                         |              |                       |                       |                       | 7.67, 8.219.147.10, 8.21
+                         |              |                       |                       |                       | 9.159.103, 8.219.206.212
+                         |              |                       |                       |                       | , 8.221.142.130, 8.222.1
+                         |              |                       |                       |                       | 60.62, 8.222.187.153, 18
+                         |              |                       |                       |                       | .212.38.183, 20.14.75.2,
+                         |              |                       |                       |                       |  20.15.164.37, 20.15.200
+                         |              |                       |                       |                       | .1, 20.46.231.114, 20.64
+                         |              |                       |                       |                       | .106.91, 20.65.193.0, 20
+                         |              |                       |                       |                       | .65.194.143, 20.80.83.86
+                         |              |                       |                       |                       | , 20.98.164.46, 20.118.3
+                         |              |                       |                       |                       | 2.59, 20.118.217.162, 20
+                         |              |                       |                       |                       | .118.217.181, 20.163.76.
+                         |              |                       |                       |                       | 6, 20.168.7.168, 20.168.
+                         |              |                       |                       |                       | 122.52, 20.168.122.88, 3
+                         |              |                       |                       |                       | 1.14.32.4, 34.147.75.236
+                         |              |                       |                       |                       | , 34.207.164.186, 35.203
+                         |              |                       |                       |                       | .210.7, 35.203.210.43, 3
+                         |              |                       |                       |                       | 5.203.210.90, 35.203.210
+                         |              |                       |                       |                       | .128, 35.203.210.141, 35
+                         |              |                       |                       |                       | .203.210.196, 35.203.210
+                         |              |                       |                       |                       | .213, 35.203.210.243, 35
+                         |              |                       |                       |                       | .203.211.3, 35.203.211.3
+                         |              |                       |                       |                       | 4, 35.203.211.76, 35.203
+                         |              |                       |                       |                       | .211.123, 35.203.211.156
+                         |              |                       |                       |                       | , 35.203.211.162, 35.203
+                         |              |                       |                       |                       | .211.175, 35.203.211.206
+                         |              |                       |                       |                       | , 35.203.211.242, 40.90.
+                         |              |                       |                       |                       | 235.65, 40.124.173.90, 4
+                         |              |                       |                       |                       | 2.112.20.235          
+    country.v4           | 36432        | ON: 221               | -                     | -                     | 15.236.0.0, 24.56.0.0, 2
+                         |              |                       |                       |                       | 7.34.232.0, 27.148.0.0, 
+                         |              |                       |                       |                       | 32.0.0.0, 36.96.0.0, 37.
+                         |              |                       |                       |                       | 254.0.0, 42.63.0.0, 43.1
+                         |              |                       |                       |                       | 76.0.0, 45.150.236.0, 46
+                         |              |                       |                       |                       | .100.0.0, 47.56.0.0, 51.
+                         |              |                       |                       |                       | 254.0.0, 57.101.0.0, 58.
+                         |              |                       |                       |                       | 192.0.0, 59.88.0.0, 59.1
+                         |              |                       |                       |                       | 72.0.0, 64.59.224.0, 64.
+                         |              |                       |                       |                       | 226.64.0, 68.183.0.0, 71
+                         |              |                       |                       |                       | .20.0.0, 83.239.0.0, 84.
+                         |              |                       |                       |                       | 22.128.0, 87.103.128.0, 
+                         |              |                       |                       |                       | 91.196.148.0, 94.253.0.0
+                         |              |                       |                       |                       | , 95.144.0.0, 100.0.0.0,
+                         |              |                       |                       |                       |  103.141.110.0, 103.203.
+                         |              |                       |                       |                       | 56.0, 104.248.0.0, 110.5
+                         |              |                       |                       |                       | .128.0, 113.62.0.0, 116.
+                         |              |                       |                       |                       | 95.0.0, 117.122.0.0, 118
+                         |              |                       |                       |                       | .139.192.0, 119.161.120.
+                         |              |                       |                       |                       | 0, 120.52.0.0, 123.4.0.0
+                         |              |                       |                       |                       | , 125.64.0.0, 129.79.0.0
+                         |              |                       |                       |                       | , 129.144.0.0, 134.209.0
+                         |              |                       |                       |                       | .0, 138.67.0.0, 147.182.
+                         |              |                       |                       |                       | 0.0, 147.185.108.0, 150.
+                         |              |                       |                       |                       | 107.176.0, 152.32.128.0,
+                         |              |                       |                       |                       |  157.245.0.0, 159.59.0.0
+    country.v6           | 23665        | ON: 0                 | -                     | -                     |                       
+    debl.v4              | 13147        | ON: 19                | -                     | -                     | 54.37.81.238, 57.129.64.
+                         |              |                       |                       |                       | 237, 78.153.140.224, 87.
+                         |              |                       |                       |                       | 255.194.135, 91.196.152.
+                         |              |                       |                       |                       | 3, 93.123.109.230, 111.6
+                         |              |                       |                       |                       | 7.199.209, 141.98.11.147
+                         |              |                       |                       |                       | , 147.185.132.58, 176.65
+                         |              |                       |                       |                       | .148.10, 194.0.234.19, 2
+                         |              |                       |                       |                       | 05.210.31.65          
+    debl.v6              | 136          | ON: 0                 | -                     | -                     |                       
+    doh.v4               | 1727         | -                     | ON: 2233              | tcp, udp: 53, 80, 443 | 8.8.8.8               
+    doh.v6               | 1217         | -                     | ON: 0                 | tcp, udp: 53, 80, 443 |                       
+    hagezi.v4            | 35287        | -                     | ON: 0                 | tcp, udp: 80, 443     |                       
+    threat.v4            | 1041         | ON: 107               | -                     | -                     | 45.135.193.0, 45.153.34.
+                         |              |                       |                       |                       | 0, 80.94.95.0, 83.222.19
+                         |              |                       |                       |                       | 0.0, 87.121.84.0, 141.98
+                         |              |                       |                       |                       | .10.0, 176.65.137.0, 176
+                         |              |                       |                       |                       | .65.148.0, 196.251.69.0,
+                         |              |                       |                       |                       |  196.251.83.0, 204.76.20
+                         |              |                       |                       |                       | 3.0, 213.209.143.0    
+    turris.v4            | 4553         | ON: 131               | -                     | -                     | 74.50.211.178, 109.205.2
+                         |              |                       |                       |                       | 13.115, 109.205.213.123,
+                         |              |                       |                       |                       |  109.205.213.248, 109.20
+                         |              |                       |                       |                       | 5.213.250, 109.205.213.2
+                         |              |                       |                       |                       | 52, 122.222.152.65, 186.
+                         |              |                       |                       |                       | 91.25.141, 190.203.106.1
+                         |              |                       |                       |                       | 13, 200.123.238.20    
+    turris.v6            | 44           | ON: 0                 | -                     | -                     |                       
     ---------------------+--------------+-----------------------+-----------------------+-----------------------+------------------------
-    17                   | 94811        | 11 (11)               | 10 (0)                | 2                     | 12                    
+    19                   | 128753       | 12 (922)              | 11 (2674)             | 8                     | 137                   
 ```
 
 **banIP runtime information**  
@@ -271,16 +341,16 @@ Available commands:
 ~# /etc/init.d/banip status
 ::: banIP runtime information
   + status            : active (nft: ✔, monitor: ✔)
-  + version           : 1.5.5-r1
-  + element_count     : 92 615 (chains: 7, sets: 18, rules: 46)
-  + active_feeds      : allowlist.v4MAC, allowlist.v6MAC, allowlist.v4, allowlist.v6, cinsscore.v4, debl.v4, country.v6, debl.v6, doh.v4, doh.v6, threat.v4, turris.v4, turris.v6, blocklist.v4MAC, blocklist.v6MAC, blocklist.v4, blocklist.v6, country.v4
+  + version           : 1.5.6-r4
+  + element_count     : 128 751 (chains: 7, sets: 19, rules: 47)
+  + active_feeds      : allowlist.v4MAC, allowlist.v6MAC, allowlist.v4, allowlist.v6, cinsscore.v4, debl.v4, country.v6, debl.v6, doh.v4, doh.v6, country.v4, threat.v4, hagezi.v4, turris.v4, turris.v6, blocklist.v4MAC, blocklist.v6MAC, blocklist.v4, blocklist.v6
   + active_devices    : wan: pppoe-wan / wan-if: wan, wan_6 / vlan-allow: - / vlan-block: -
-  + active_uplink     : 91.61.217.158, 2001:fc:37ff:f64:b513:16dd:6903:7710
+  + active_uplink     : 91.61.111.35, 2004:fc:45fe:678:c890:e2a3:c729:dc13
   + nft_info          : ver: 1.1.1-r1, priority: -100, policy: performance, loglevel: warn, expiry: 2h, limit (icmp/syn/udp): 25/10/100
   + run_info          : base: /mnt/data/banIP, backup: /mnt/data/banIP/backup, report: /mnt/data/banIP/report, error: /mnt/data/banIP/error
-  + run_flags         : auto: ✘, proto (4/6): ✔/✔, log (pre/in/out): ✘/✘/✘, count: ✔, dedup: ✔, split: ✘, custom feed: ✘, allowed only: ✘
-  + last_run          : 2025-03-27 21:54:29, mode: restart, duration: 0m 21s, memory: 1281.87 MB available, 2.00 MB max. used
-  + system_info       : cores: 4, log: logread, fetch: curl, Bananapi BPI-R3, mediatek/filogic, OpenWrt SNAPSHOT r29070-8d1fe32c2c 
+  + run_flags         : auto: ✔, proto (4/6): ✔/✔, log (pre/in/out): ✘/✘/✔, count: ✔, dedup: ✔, split: ✘, custom feed: ✔, allowed only: ✘
+  + last_run          : mode: restart, 2025-06-08 21:11:21, duration: 0m 22s, memory: 1310.16 MB available
+  + system_info       : cores: 4, log: logread, fetch: curl, Bananapi BPI-R3, mediatek/filogic, OpenWrt SNAPSHOT r29955-8b24289a52 
 ```
 
 **banIP search information**  
@@ -297,26 +367,48 @@ Available commands:
 ```
 
 **banIP Set content information**  
+List all elements of a given Set with hit counters, e.g.:  
 
 ```
-~# /etc/init.d/banip content doh.v4
+~# /etc/init.d/banip content turris.v4
 :::
 ::: banIP Set Content
 :::
-    List elements of the Set 'doh.v4' on 2025-01-13 22:35:57
+    List elements of the Set 'turris.v4' on 2025-06-08 23:28:55
     ---
-{ "range": [ "1.0.0.1", "1.0.0.3" ] }
-{ "range": [ "1.1.1.1", "1.1.1.3" ] }
-1.236.250.173
-2.58.59.12
-2.135.147.99
-3.9.180.22
-3.10.65.124
-3.15.159.180
-3.33.139.32
-3.33.242.199
-3.34.32.82
+1.4.228.135, packets:  0
+1.23.16.3, packets:  0
+1.33.35.42, packets:  0
+1.33.231.132, packets:  0
+1.34.29.158, packets:  0
+1.34.231.106, packets:  0
+1.52.91.174, packets:  0
+1.64.149.142, packets:  0
+1.69.243.13, packets:  0
+1.70.139.250, packets:  0
+1.70.171.246, packets:  0
+1.82.191.114, packets:  0
 [...]
+```
+
+List only elements with hits of a given Set with hit counters, e.g.:  
+```
+~# /etc/init.d/banip content turris.v4 true
+:::
+::: banIP Set Content
+:::
+    List elements of the Set 'turris.v4' on 2025-06-08 23:30:59
+    ---
+74.50.211.178, packets:  1
+109.205.213.115, packets:  18
+109.205.213.123, packets:  35
+109.205.213.248, packets:  29
+109.205.213.250, packets:  20
+109.205.213.252, packets:  30
+122.222.152.65, packets:  1
+186.91.25.141, packets:  2
+190.203.106.113, packets:  2
+200.123.238.20, packets:  1
 ```
 
 <a id="best-practise-and-tweaks"></a>
