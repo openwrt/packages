@@ -11,7 +11,7 @@ USE_PROCD=1
 
 extra_command "report" "[text|json|mail] Print banIP related Set statistics"
 extra_command "search" "[<IPv4 address>|<IPv6 address>] Check if an element exists in a banIP Set"
-extra_command "content" "[<Set name>] List all elements of a given banIP Set"
+extra_command "content" "[<Set name>] [true|false] Listing of all or only elements with hits of a given banIP Set"
 
 ban_init="/etc/init.d/banip"
 ban_service="/usr/bin/banip-service.sh"
@@ -95,7 +95,7 @@ search() {
 }
 
 content() {
-	f_content "${1}"
+	f_content "${1}" "${2:-"false"}"
 }
 
 service_triggers() {
