@@ -1,0 +1,25 @@
+Description: Use INT2PTR to map objects to Cyrus SASL pointers
+Author: Russ Allbery <rra@debian.org>
+Reviewed-by: gregor herrmann <gregoa@debian.org>
+Last-Update: 2023-10-25
+
+Rather than directly casting the IV to the target pointer, use
+Perl's standard INT2PTR macro.  This shouldn't change the resulting
+code, but it will suppress build warnings and make it easier to
+spot real build issues.
+
+Note:
+(libauthen-sasl-xs-perl is the successor of libauthen-sasl-cyrus-perl)
+[gregor 2023-10-25]
+
+--- a/typemap
++++ b/typemap
+@@ -6,7 +6,7 @@ INPUT
+ T_PTROBJ_SPECIAL
+ 	if (sv_derived_from($arg, \"${(my $ntt=$ntype)=~s/_/::/g; \$ntt}\")) {
+ 		IV tmp = SvIV((SV*)SvRV($arg));
+-		$var = ($type) tmp;
++		$var = INT2PTR($type, tmp);
+ 	}
+ 	else
+ 		croak(\"$var is not of type ${(my $ntt=$ntype)=~s /_/::/g;\$ntt}\")

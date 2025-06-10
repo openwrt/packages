@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-authen-sasl-xs
 PKG_VERSION:=1.00
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_NAME:=Authen-SASL-XS
 PKG_SOURCE_URL:=http://www.cpan.org/authors/id/G/GB/GBARR/
@@ -17,7 +17,7 @@ PKG_SOURCE:=$(PKG_SOURCE_NAME)-$(PKG_VERSION).tar.gz
 PKG_HASH:=1b0eaa0e7ac3a45857147d837e3d34c80c6eca1d9fdcb826a213c2a105454234
 
 PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
-PKG_MAINTAINER:=Philip Prindeville <philipp@redfish-solutions.com>
+PKG_MAINTAINER:=Philip Prindeville <philipp@redfish-solutions.com>, Jens Wagner <jens@wagner2013.de>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/$(PKG_SOURCE_NAME)-$(PKG_VERSION)
 
@@ -30,8 +30,13 @@ define Package/perl-authen-sasl-xs
   CATEGORY:=Languages
   TITLE:=Authen::XS hooks into libsasl.
   URL:=http://search.cpan.org/dist/$(PKG_SOURCE_NAME)/
-  # DEPENDS:=perl +perl-authen-sasl +libsasl2 +perl-devel-checklib/host
-  DEPENDS:=perl +perl-authen-sasl +libsasl2
+  DEPENDS:=perl +perlbase-dynaloader +perl-authen-sasl +libsasl2
+endef
+
+define Package/perl-authen-sasl-xs/description
+  SASL is a generic mechanism for authentication used by several
+  network protocols. Authen::SASL::XS provides an implementation
+  framework that all protocols should be able to share.
 endef
 
 define Build/Configure
@@ -43,7 +48,7 @@ define Build/Compile
 endef
 
 define Package/perl-authen-sasl-xs/install
-	$(call perlmod/Install,$(1),Authen)
+	$(call perlmod/Install,$(1),Authen auto/Authen)
 endef
 
 
