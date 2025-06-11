@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=linuxptp
 PKG_VERSION:=4.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=https://downloads.nwtime.org/linuxptp/
@@ -38,6 +38,10 @@ define Package/linuxptp/description
  computers.
 endef
 
+define Package/linuxptp/conffiles
+/etc/config/linuxptp
+endef
+
 EXTRA_CFLAGS += -DHAVE_CLOCK_ADJTIME -DHAVE_POSIX_SPAWN -DHAVE_ONESTEP_SYNC
 
 MAKE_VARS += \
@@ -45,8 +49,25 @@ MAKE_VARS += \
 	KBUILD_OUTPUT="$(LINUX_DIR)" \
 	NO_AUTODETECT_SAD_MAC_LIB="y"
 
+# separate compile step for helper utility
+define Build/Compile/sysclock-discipline-check
+	$(TARGET_CC) $(TARGET_CFLAGS) -o $(PKG_BUILD_DIR)/sysclock-discipline-check $(CURDIR)/files/sysclock-discipline-check.c $(TARGET_LDFLAGS)
+endef
+
+# override/extend the default Build/Compile
+define Build/Compile
+	$(call Build/Compile/Default)
+	$(call Build/Compile/sysclock-discipline-check)
+endef
+
 define Package/linuxptp/install
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_DATA) $(CURDIR)/files/linuxptp.config $(1)/etc/config/linuxptp
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) $(CURDIR)/files/phc2sys.init $(1)/etc/init.d/phc2sys
+	$(INSTALL_BIN) $(CURDIR)/files/ptp4l.init $(1)/etc/init.d/ptp4l
 	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/sysclock-discipline-check $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/hwstamp_ctl $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/phc2sys $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/phc_ctl $(1)/usr/sbin/
