@@ -10,9 +10,9 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/libimobiledevice/ifuse.git
-PKG_SOURCE_DATE:=2023-01-06
-PKG_SOURCE_VERSION:=814a0e38050850937debd697fcfe6eca3de1b66f
-PKG_MIRROR_HASH:=702eb5f850eca4bb7e5ec82f25026d0a2240041e7c0f614322608ed238ebb789
+PKG_SOURCE_DATE:=2024-12-02
+PKG_SOURCE_VERSION:=bbf2838a474c287e28ed6d348ee252ddaeb9aab0
+PKG_MIRROR_HASH:=b9bfd08c62cbb1dc8e36c1d8713be03149d87dbd6adc8aef952b7209c9c97a24
 
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -31,7 +31,7 @@ define Package/ifuse
   SUBMENU:=libimobiledevice
   TITLE:=Fuse filesystem access to iOS devices
   URL:=https://www.libimobiledevice.org/
-  DEPENDS:=+fuse-utils +libimobiledevice
+  DEPENDS:=+fuse3-utils +libimobiledevice
 endef
 
 define Package/ifuse/description
