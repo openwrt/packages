@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=net-snmp
 PKG_VERSION:=5.9.4
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/net-snmp
@@ -37,11 +37,32 @@ define Package/net-snmp/Default/description
 endef
 
 
-define Package/libnetsnmp
+define Package/net-snmp-nossl
 $(call Package/net-snmp/Default)
+  TITLE:= Open source SNMP package
+  DEPENDS:= \
+	    +libnetsnmp \
+	    +snmpd \
+	    +snmp-mibs \
+	    +snmptrapd \
+	    +snmp-utils
+  VARIANT:=nossl
+  PROVIDES:=net-snmp
+endef
+
+
+define Package/net-snmp-ssl
+$(call Package/net-snmp-nossl)
+  TITLE+= - with Openssl
+  VARIANT:=ssl
+  CONFLICTS:=net-snmp-nossl
+endef
+
+define Package/libnetsnmp
+ $(call Package/net-snmp/Default)
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libnl-tiny +libpci +libpcre2
+  DEPENDS:=+libnl-tiny +libpci +libpcre2 +PACKAGE_net-snmp-ssl:libopenssl
   TITLE:=Open source SNMP implementation (libraries)
 endef
 
@@ -69,6 +90,7 @@ $(call Package/net-snmp/Default)
   DEPENDS:=+libnetsnmp
   TITLE:=Open source SNMP implementation (utilities)
 endef
+
 
 define Package/snmp-utils/description
 $(call Package/net-snmp/Default/description)
@@ -206,7 +228,6 @@ CONFIGURE_ARGS += \
 	--with-mib-modules="$(SNMP_MIB_MODULES_INCLUDED)" \
 	--with-out-transports="$(SNMP_TRANSPORTS_EXCLUDED)" \
 	--with-transports="$(SNMP_TRANSPORTS_INCLUDED)" \
-	--without-openssl \
 	--without-libwrap \
 	--without-mysql \
 	--without-rpm \
@@ -216,7 +237,7 @@ CONFIGURE_ARGS += \
 	 $(call autoconf_bool,CONFIG_IPV6,ipv6) \
 	--disable-perl-cc-checks \
 	--disable-embedded-perl \
-	--without-perl-modules
+	--without-perl-modules \
 
 CONFIGURE_VARS += \
 	ac_cv_header_netlink_netlink_h=yes \
@@ -224,6 +245,12 @@ CONFIGURE_VARS += \
 
 ifeq ($(CONFIG_IPV6),y)
 SNMP_TRANSPORTS_INCLUDED+= UDPIPv6
+endif
+
+ifeq ($(BUILD_VARIANT),ssl)
+CONFIGURE_ARGS+= --with-openssl="$(STAGING_DIR)/usr"
+else
+CONFIGURE_ARGS+= --without-openssl
 endif
 
 define Build/Compile
@@ -291,3 +318,5 @@ $(eval $(call BuildPackage,snmp-utils))
 $(eval $(call BuildPackage,snmpd))
 $(eval $(call BuildPackage,snmpd-static))
 $(eval $(call BuildPackage,snmptrapd))
+$(eval $(call BuildPackage,net-snmp-nossl))
+$(eval $(call BuildPackage,net-snmp-ssl))
