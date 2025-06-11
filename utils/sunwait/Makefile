@@ -5,7 +5,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sunwait
 PKG_VERSION:=0.9.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/risacher/sunwait/tar.gz/$(PKG_VERSION)?
@@ -29,16 +29,6 @@ endef
 define Package/sunwait/description
 	Calculate sunrise and sunset, as well as civil, nautical, and astronomical twilights. 
 	Has features that make it useful for home automation tasks.
-endef
-
-define Build/Compile
-	$(TARGET_CC) $(TARGET_CPPFLAGS) -o $(PKG_BUILD_DIR)/sunwait.o -c $(PKG_BUILD_DIR)/sunwait.c
-	$(TARGET_CC) $(TARGET_CPPFLAGS) -o $(PKG_BUILD_DIR)/sunriset.o -c $(PKG_BUILD_DIR)/sunriset.c
-	$(TARGET_CC) $(TARGET_CPPFLAGS) -o $(PKG_BUILD_DIR)/print.o -c $(PKG_BUILD_DIR)/print.c
-	$(TARGET_CC) $(TARGET_LDFLAGS) -o $(PKG_BUILD_DIR)/$1 $(PKG_BUILD_DIR)/sunwait.o $(PKG_BUILD_DIR)/sunriset.o $(PKG_BUILD_DIR)/print.o -lm
-endef
-
-define Build/Configure
 endef
 
 define Package/sunwait/install
