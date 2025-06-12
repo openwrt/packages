@@ -13,7 +13,7 @@
 # using following options from /etc/config/ddns
 # option username  - your cloudflare e-mail
 # option password  - cloudflare api key, you can get it from cloudflare.com/my-account/
-# option domain    - "hostname@yourdomain.TLD"	# syntax changed to remove split_FQDN() function and tld_names.dat.gz
+# option domain    - "hostname@yourdomain.TLD"
 #
 # The proxy status would not be changed by this script. Please change it in Cloudflare dashboard manually.
 #
