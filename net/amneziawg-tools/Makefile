@@ -35,9 +35,7 @@ define Package/amneziawg-tools
   DEPENDS:= \
 	  +!BUSYBOX_CONFIG_IP:ip \
 	  +!BUSYBOX_CONFIG_FEATURE_IP_LINK:ip \
-	  +kmod-amneziawg \
-	  +ip-full \
-	  +ip-tiny
+	  +kmod-amneziawg
 endef
 
 define Package/amneziawg-tools/description
