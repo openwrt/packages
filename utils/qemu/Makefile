@@ -9,10 +9,10 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qemu
-PKG_VERSION:=9.1.3
+PKG_VERSION:=10.0.2
 PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=480a77a0ed13a9b39415f639aa020b4eb0d7cc5a52569510dfd830b3af1bac89
+PKG_HASH:=ef786f2398cb5184600f69aef4d5d691efd44576a3cff4126d38d4c6fec87759
 PKG_SOURCE_URL:=https://download.qemu.org/
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=LICENSE tcg/LICENSE
@@ -419,7 +419,11 @@ CONFIGURE_ARGS +=			\
 	--disable-rbd			\
 	--disable-rdma			\
 	--disable-rutabaga-gfx          \
-	--disable-sanitizers		\
+	--disable-asan			\
+	--disable-tsan			\
+	--disable-ubsan			\
+	--disable-fuzzing		\
+	--disable-safe-stack		\
 	--$(if $(CONFIG_QEMU_SECCOMP),enable,disable)-seccomp		\
 	--disable-smartcard		\
 	--disable-snappy		\
