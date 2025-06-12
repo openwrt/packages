@@ -31,7 +31,7 @@ define Package/amneziawg-tools
   CATEGORY:=Network
   SUBMENU:=VPN
   URL:=https://amnezia.org/
-  TITLE:=AmneziaWG userspace control program (amneziawg)
+  TITLE:=AmneziaWG userspace control program
   DEPENDS:= \
 	  +!BUSYBOX_CONFIG_IP:ip \
 	  +!BUSYBOX_CONFIG_FEATURE_IP_LINK:ip \
