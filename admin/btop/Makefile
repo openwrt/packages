@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=btop
 PKG_VERSION:=1.4.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL=https://codeload.github.com/aristocratos/btop/tar.gz/v$(PKG_VERSION)?
@@ -47,6 +47,8 @@ define Package/btop/install
 
 	$(INSTALL_DIR) $(1)/etc/profile.d
 	$(CP) $(CURDIR)/files/btop.sh $(1)/etc/profile.d/
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(CP) $(CURDIR)/files/btop.uci $(1)/etc/uci-defaults/90-btop-migrate-alias
 endef
 
 $(eval $(call BuildPackage,btop))
