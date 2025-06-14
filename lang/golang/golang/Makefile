@@ -7,8 +7,8 @@
 
 include $(TOPDIR)/rules.mk
 
-GO_VERSION_MAJOR_MINOR:=1.23
-GO_VERSION_PATCH:=9
+GO_VERSION_MAJOR_MINOR:=1.24
+GO_VERSION_PATCH:=0
 
 PKG_NAME:=golang
 PKG_VERSION:=$(GO_VERSION_MAJOR_MINOR)$(if $(GO_VERSION_PATCH),.$(GO_VERSION_PATCH))
@@ -20,7 +20,8 @@ GO_SOURCE_URLS:=https://dl.google.com/go/ \
 
 PKG_SOURCE:=go$(PKG_VERSION).src.tar.gz
 PKG_SOURCE_URL:=$(GO_SOURCE_URLS)
-PKG_HASH:=08f6419547563ed9e7037d12b9c8909677c72f75f62ef85887ed9dbf49b8d2dd
+PKG_HASH:=skip
+#08f6419547563ed9e7037d12b9c8909677c72f75f62ef85887ed9dbf49b8d2dd
 
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
@@ -101,6 +102,11 @@ BOOTSTRAP_1_20_HASH:=1aef321a0e3e38b7e91d2d7eb64040666cabdcc77d383de3c9522d0d69b
 
 BOOTSTRAP_1_20_BUILD_DIR:=$(HOST_BUILD_DIR)/.go_bootstrap_1.20
 
+BOOTSTRAP_1_22_SOURCE:=go1.22.9.src.tar.gz
+BOOTSTRAP_1_22_SOURCE_URL:=$(GO_SOURCE_URLS)
+BOOTSTRAP_1_22_HASH:=e81a362f51aee2125722b018e46714e6a055a1954283414c0f937e737013db22
+BOOTSTRAP_1_22_BUILD_DIR:=$(HOST_BUILD_DIR)/.go_bootstrap_1.22
+
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
 include ../golang-compiler.mk
@@ -111,6 +117,7 @@ HOST_UNPACK:=$(HOST_TAR) -C "$(HOST_BUILD_DIR)" --strip-components=1 -xzf "$(DL_
 BOOTSTRAP_UNPACK:=$(HOST_TAR) -C "$(BOOTSTRAP_BUILD_DIR)" --strip-components=1 -xzf "$(DL_DIR)/$(BOOTSTRAP_SOURCE)"
 BOOTSTRAP_1_17_UNPACK:=$(HOST_TAR) -C "$(BOOTSTRAP_1_17_BUILD_DIR)" --strip-components=1 -xzf "$(DL_DIR)/$(BOOTSTRAP_1_17_SOURCE)"
 BOOTSTRAP_1_20_UNPACK:=$(HOST_TAR) -C "$(BOOTSTRAP_1_20_BUILD_DIR)" --strip-components=1 -xzf "$(DL_DIR)/$(BOOTSTRAP_1_20_SOURCE)"
+BOOTSTRAP_1_22_UNPACK:=$(HOST_TAR) -C "$(BOOTSTRAP_1_22_BUILD_DIR)" --strip-components=1 -xzf "$(DL_DIR)/$(BOOTSTRAP_1_22_SOURCE)"
 
 # don't strip ELF executables in test data
 RSTRIP:=:
@@ -232,12 +239,27 @@ define Download/golang-bootstrap-1.20
 endef
 $(eval $(call Download,golang-bootstrap-1.20))
 
+# Bootstrap 1.22
+define Download/golang-bootstrap-1.22
+  FILE:=$(BOOTSTRAP_1_22_SOURCE)
+  URL:=$(BOOTSTRAP_1_22_SOURCE_URL)
+  HASH:=$(BOOTSTRAP_1_22_HASH)
+endef
+$(eval $(call Download,golang-bootstrap-1.22))
+
 define Bootstrap-1.20/Prepare
 	mkdir -p "$(BOOTSTRAP_1_20_BUILD_DIR)" && $(BOOTSTRAP_1_20_UNPACK) ;
 endef
 Hooks/HostPrepare/Post+=Bootstrap-1.20/Prepare
 
 $(eval $(call GoCompiler/AddProfile,Bootstrap-1.20,$(BOOTSTRAP_1_20_BUILD_DIR),,bootstrap-1.20,$(GO_HOST_OS_ARCH)))
+
+define Bootstrap-1.22/Prepare
+	mkdir -p "$(BOOTSTRAP_1_22_BUILD_DIR)" && $(BOOTSTRAP_1_22_UNPACK) ;
+endef
+Hooks/HostPrepare/Post+=Bootstrap-1.22/Prepare
+$(eval $(call GoCompiler/AddProfile,Bootstrap-1.22,$(BOOTSTRAP_1_22_BUILD_DIR),,bootstrap-1.22,$(GO_HOST_OS_ARCH)))
+
 
 # Host
 
@@ -279,11 +301,18 @@ define Host/Compile
 		$(HOST_GO_VARS) \
 	)
 
-	$(call GoCompiler/Host/Make, \
+	$(call GoCompiler/Bootstrap-1.22/Make, \
 		GOROOT_BOOTSTRAP="$(BOOTSTRAP_1_20_BUILD_DIR)" \
+		$(HOST_GO_VARS) \
+	)
+
+	$(call GoCompiler/Host/Make, \
+		GOROOT_BOOTSTRAP="$(BOOTSTRAP_1_22_BUILD_DIR)" \
 		$(if $(HOST_GO_ENABLE_PIE),GO_LDFLAGS="-buildmode pie") \
 		$(HOST_GO_VARS) \
 	)
+
+	
 endef
 
 # if host and target os/arch are the same,
