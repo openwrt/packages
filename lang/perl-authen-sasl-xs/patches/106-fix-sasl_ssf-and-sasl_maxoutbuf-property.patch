@@ -1,0 +1,23 @@
+From: Niko Tyni <ntyni@debian.org>
+Date: Mon, 5 Aug 2024 16:50:56 +0100
+X-Dgit-Generated: 1.00-2 fe76997d50267530dd5a5f73995d11987547ac4d
+Subject: Fix SASL_SSF and SASL_MAXOUTBUF property handling
+
+sasl_getprop() returns a pointer which needs to be dereferenced to get
+the actual value.
+
+Bug-Debian: https://bugs.debian.org/1075146
+
+---
+
+--- a/XS.xs
++++ b/XS.xs
+@@ -1883,7 +1883,7 @@ PPCODE:
+ 			break;
+ 			case SASL_SSF:
+ 			case SASL_MAXOUTBUF:
+-				XPUSHi((long int)value);
++				XPUSHi(*((IV *)value));
+ 			break;
+ #ifdef SASL2
+ 			case SASL_IPLOCALPORT:
