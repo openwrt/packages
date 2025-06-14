@@ -7,15 +7,15 @@
 
 include $(TOPDIR)/rules.mk
 PKG_NAME:=frr
-PKG_VERSION:=10.2.1
-PKG_RELEASE:=2
-PKG_SOURCE_DATE:=2025-01-29
+PKG_VERSION:=10.3.1
+PKG_RELEASE:=1
+PKG_SOURCE_DATE:=2025-06-08
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
-PKG_SOURCE_VERSION:=05f9d44340755e5ca612e4852b710f4037254e7b
+PKG_SOURCE_VERSION:=44789ae469c30896d8b13b30bd429c01a4b0d96e
 PKG_SOURCE_URL:=https://codeload.github.com/FRRouting/frr/tar.gz/$(PKG_SOURCE_VERSION)?
 
-PKG_HASH:=8873e1f638fc4457a30227181e3fd26414795e63dbb11911c2e669876589f228
+PKG_HASH:=b4c341be50dc76a3b96727dc41310745171e0d9affb137b8894d14f6eb6e226a
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_SOURCE_VERSION)
@@ -132,7 +132,7 @@ define BuildDaemon
 ifeq ($(1),bgpd)
 	KCONFIG:=CONFIG_TCP_MD5SIG=y
 endif
-	DEPENDS+=$(2)
+	DEPENDS+=$(2) +frr-watchfrr +frr-zebra
     endef
 #	if [ "$(1)" == "bfdd" ]; then \
 #	export HAVE_BFDD == 1 ; fi
