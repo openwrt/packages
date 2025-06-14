@@ -9,4 +9,4 @@
 +#ifdef LINUX
  #endif
  
- #if defined(SCO) || defined(UNIXWARE) || defined(SNI) || defined(NCR) || defined(NEC)
+ #if defined(NCR)
