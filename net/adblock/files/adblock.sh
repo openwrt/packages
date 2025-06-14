@@ -1222,7 +1222,6 @@ f_main() {
 		src_tmpload="${adb_tmpload}.${src_name}.load"
 		src_tmparchive="${adb_tmpload}.${src_name}.archive"
 		src_tmpfile="${adb_tmpfile}.${src_name}"
-
 		src_rc=4
 
 		# basic pre-checks
