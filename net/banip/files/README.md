@@ -109,11 +109,12 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 ## Installation and Usage
 * Update your local opkg/apk repository
 * Install the LuCI companion package 'luci-app-banip' which also installs the main 'banip' package as a dependency
+* Enable the banIP system service (System -> Startup) and enable banIP itself (banIP -> General Settings)
 * It's strongly recommended to use the LuCI frontend to easily configure all aspects of banIP, the application is located in LuCI under the 'Services' menu
 * It's also recommended to configure a 'Reload Trigger Interface' to depend on your WAN ifup events during boot or restart of your router
 * To be able to use banIP in a meaningful way, you must activate the service and possibly also activate a few blocklist feeds
 * If you're using a complex network setup, e.g. special tunnel interfaces, than untick the 'Auto Detection' option under the 'General Settings' tab and set the required options manually
-* Start the service with '/etc/init.d/banip start' and check everything is working by running '/etc/init.d/banip status' and also check the 'Firewall Log' and 'Processing Log' tabs
+* Start the service with '/etc/init.d/banip start' and check everything is working by running '/etc/init.d/banip status', also check the 'Processing Log' tab
 
 <a id="banip-cli-interface"></a>
 ## banIP CLI interface
@@ -482,6 +483,7 @@ C8:C2:9B:F7:80:12                                  => this will be populated to 
 ```
 
 **Set reporting, enable the GeoIP Map**  
+banIP includes a powerful reporting tool on the Set Reporting tab which shows the latest NFT banIP Set statistics. To get the latest statistics always press the "Refresh" button.  
 In addition to a tabular overview banIP reporting includes a GeoIP map in a modal popup window/iframe that shows the geolocation of your own uplink addresses (in green) and the locations of potential attackers (in red). To enable the GeoIP Map set the following options (in "Feed/Set Settings" config tab):  
 
     * set 'ban_nftcount' to '1' to enable the nft counter for every Set element
