@@ -24,7 +24,7 @@ Signed-off-by: Mingli Yu <Mingli.Yu@windriver.com>
 
 --- a/nspr/lib/ds/Makefile.in
 +++ b/nspr/lib/ds/Makefile.in
-@@ -110,13 +110,7 @@ GARBAGE += $(TINC)
+@@ -104,13 +104,7 @@ GARBAGE += $(TINC)
  
  $(TINC):
  	@$(MAKE_OBJDIR)
@@ -41,7 +41,7 @@ Signed-off-by: Mingli Yu <Mingli.Yu@windriver.com>
  $(OBJDIR)/plvrsion.$(OBJ_SUFFIX): plvrsion.c $(TINC)
 --- a/nspr/lib/libc/src/Makefile.in
 +++ b/nspr/lib/libc/src/Makefile.in
-@@ -112,13 +112,7 @@ GARBAGE += $(TINC)
+@@ -106,13 +106,7 @@ GARBAGE += $(TINC)
  
  $(TINC):
  	@$(MAKE_OBJDIR)
@@ -58,7 +58,7 @@ Signed-off-by: Mingli Yu <Mingli.Yu@windriver.com>
  $(OBJDIR)/plvrsion.$(OBJ_SUFFIX): plvrsion.c $(TINC)
 --- a/nspr/lib/prstreams/Makefile.in
 +++ b/nspr/lib/prstreams/Makefile.in
-@@ -110,13 +110,7 @@ endif
+@@ -102,13 +102,7 @@ endif
  
  $(TINC):
  	@$(MAKE_OBJDIR)
@@ -75,7 +75,7 @@ Signed-off-by: Mingli Yu <Mingli.Yu@windriver.com>
  $(OBJDIR)/plvrsion.$(OBJ_SUFFIX): plvrsion.c $(TINC)
 --- a/nspr/pr/src/Makefile.in
 +++ b/nspr/pr/src/Makefile.in
-@@ -306,13 +306,7 @@ GARBAGE += $(TINC)
+@@ -291,13 +291,7 @@ GARBAGE += $(TINC)
  
  $(TINC):
  	@$(MAKE_OBJDIR)
