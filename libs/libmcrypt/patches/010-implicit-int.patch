@@ -1,0 +1,48 @@
+Add return and argument types to fake prototypes in mcrypt_symb.c.
+This avoids build failures with future compilers that do not support
+implicit function declarations.
+
+Also fix a minor type error in the perminit calls in the Triple DES
+implementation.
+
+Submitted upstream: <https://sourceforge.net/p/mcrypt/patches/15/>
+
+--- a/lib/Makefile.am
++++ b/lib/Makefile.am
+@@ -23,8 +23,8 @@ mcrypt_symb.c: mcrypt_internal.h
+ 	@echo "/* This is automatically created. Don't touch... */" >> mcrypt_symb.c
+ 	@echo "" >> mcrypt_symb.c
+ 	-@for i in $(EXTRA_ALGOS); do \
+-		if test -f ../modules/algorithms/$$i.c; then cat ../modules/algorithms/$$i.c 2>/dev/null|grep define|grep LTX|awk '{print "extern "$$3"();";}' >> mcrypt_symb.c 2>/dev/null; fi; \
+-		if test -f ../modules/modes/$$i.c; then cat ../modules/modes/$$i.c 2>/dev/null|grep define|grep LTX|awk '{print "extern "$$3"();";}' >> mcrypt_symb.c 2>/dev/null; fi; \
++		if test -f ../modules/algorithms/$$i.c; then cat ../modules/algorithms/$$i.c 2>/dev/null|grep define|grep LTX|awk '{print "extern void "$$3"(void);";}' >> mcrypt_symb.c 2>/dev/null; fi; \
++		if test -f ../modules/modes/$$i.c; then cat ../modules/modes/$$i.c 2>/dev/null|grep define|grep LTX|awk '{print "extern void "$$3"(void);";}' >> mcrypt_symb.c 2>/dev/null; fi; \
+ 	done
+ 	@echo "" >> mcrypt_symb.c
+ 	@echo "const mcrypt_preloaded mps[] = {" >> mcrypt_symb.c
+--- a/lib/Makefile.in
++++ b/lib/Makefile.in
+@@ -561,8 +561,8 @@ mcrypt_symb.c: mcrypt_internal.h
+ 	@echo "/* This is automatically created. Don't touch... */" >> mcrypt_symb.c
+ 	@echo "" >> mcrypt_symb.c
+ 	-@for i in $(EXTRA_ALGOS); do \
+-		if test -f ../modules/algorithms/$$i.c; then cat ../modules/algorithms/$$i.c 2>/dev/null|grep define|grep LTX|awk '{print "extern "$$3"();";}' >> mcrypt_symb.c 2>/dev/null; fi; \
+-		if test -f ../modules/modes/$$i.c; then cat ../modules/modes/$$i.c 2>/dev/null|grep define|grep LTX|awk '{print "extern "$$3"();";}' >> mcrypt_symb.c 2>/dev/null; fi; \
++		if test -f ../modules/algorithms/$$i.c; then cat ../modules/algorithms/$$i.c 2>/dev/null|grep define|grep LTX|awk '{print "extern void "$$3"(void);";}' >> mcrypt_symb.c 2>/dev/null; fi; \
++		if test -f ../modules/modes/$$i.c; then cat ../modules/modes/$$i.c 2>/dev/null|grep define|grep LTX|awk '{print "extern void "$$3"(void);";}' >> mcrypt_symb.c 2>/dev/null; fi; \
+ 	done
+ 	@echo "" >> mcrypt_symb.c
+ 	@echo "const mcrypt_preloaded mps[] = {" >> mcrypt_symb.c
+--- a/modules/algorithms/tripledes.c
++++ b/modules/algorithms/tripledes.c
+@@ -199,8 +199,8 @@ static int _mcrypt_desinit(TRIPLEDES_KEY
+ 	spinit(key, 0);
+ 	spinit(key, 1);
+ 	spinit(key, 2);
+-	perminit(&key->iperm, ip);
+-	perminit(&key->fperm, fp);
++	perminit(key->iperm, ip);
++	perminit(key->fperm, fp);
+ 
+ 
+ 	return 0;
