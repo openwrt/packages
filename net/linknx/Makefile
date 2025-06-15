@@ -19,7 +19,7 @@ PKG_MAINTAINER:=Othmar Truniger <github@truniger.ch>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_DEPENDS:=USE_UCLIBC:argp-standalone USE_MUSL:argp-standalone
+PKG_BUILD_DEPENDS:=USE_MUSL:argp-standalone
 PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
