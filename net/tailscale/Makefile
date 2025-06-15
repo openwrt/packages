@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tailscale
-PKG_VERSION:=1.84.0
+PKG_VERSION:=1.84.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/tailscale/tailscale/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=cbb0eb69643a30a10d583bb68fff09720c23c39d6109f3f6390b34aed77db47b
+PKG_HASH:=32673e5552e1176f1028a6a90a4c892d2475c92d1e952ca16156dc523d14d914
 
 PKG_MAINTAINER:=Zephyr Lykos <self@mochaa.ws>, \
 		Sandro Jäckel <sandro.jaeckel@gmail.com>
