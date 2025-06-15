@@ -1,0 +1,31 @@
+From: Georgi Valkov <gvalkov@gmail.com>
+Date: Thu, 12 Jun 2025 07:36:14 +0300
+Subject: [PATCH] fuse_signals.c: fix build warning when HAVE_BACKTRACE is
+ undefined
+
+BT_STACK_SZ and backtrace_buffer are not used when
+HAVE_BACKTRACE is undefined. Wrap them in #ifdef
+to avoid a build warning:
+
+../lib/fuse_signals.c:31:14: warning: 'backtrace_buffer' defined but not used [-Wunused-variable]
+   31 | static void *backtrace_buffer[BT_STACK_SZ];
+      |              ^~~~~~~~~~~~~~~~
+
+Signed-off-by: Georgi Valkov <gvalkov@gmail.com>
+---
+ lib/fuse_signals.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+--- a/lib/fuse_signals.c
++++ b/lib/fuse_signals.c
+@@ -27,8 +27,10 @@ static int ignore_sigs[] = { SIGPIPE};
+ static int fail_sigs[] = { SIGILL, SIGTRAP, SIGABRT, SIGBUS, SIGFPE, SIGSEGV };
+ static struct fuse_session *fuse_instance;
+ 
++#ifdef HAVE_BACKTRACE
+ #define BT_STACK_SZ (1024 * 1024)
+ static void *backtrace_buffer[BT_STACK_SZ];
++#endif
+ 
+ static void dump_stack(void)
+ {
