@@ -1,0 +1,17 @@
+{
+	"bounding": [
+		"CAP_NET_RAW", "CAP_SETUID"
+	],
+	"effective": [
+		"CAP_NET_RAW", "CAP_SETUID"
+	],
+	"ambient": [
+		"CAP_NET_RAW", "CAP_SETUID"
+	],
+	"permitted": [
+		"CAP_NET_RAW", "CAP_SETUID"
+	],
+	"inheritable": [
+		"CAP_NET_RAW", "CAP_SETUID"
+	]
+}
