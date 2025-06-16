@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nano
-PKG_VERSION:=8.4
+PKG_VERSION:=8.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/nano
-PKG_HASH:=5ad29222bbd55624d87ea677928b3106a743114d6c6f9b41f36c97be2a8e628d
+PKG_HASH:=000b011d339c141af9646d43288f54325ff5c6e8d39d6e482b787bbc6654c26a
 
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
@@ -117,8 +117,6 @@ endif
 
 CONFIGURE_VARS += \
 	ac_cv_header_regex_h=no \
-	ac_cv_func_strcasecmp=no \
-	ac_cv_func_strncasecmp=no
 
 define Package/nano-plus/conffiles
 /etc/nanorc
