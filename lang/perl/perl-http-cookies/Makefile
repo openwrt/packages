@@ -1,48 +1,46 @@
-#
-# Copyright (C) 2015 OpenWrt.org
-#
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
-#
-
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-http-cookies
-PKG_VERSION:=6.08
+PKG_VERSION:=6.11
 PKG_RELEASE:=1
 
-PKG_SOURCE:=HTTP-Cookies-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://cpan.metacpan.org/authors/id/O/OA/OALDERS
-PKG_HASH:=49ebb73576eb41063c04bc079477df094496deec805ae033f3be338c23c3af59
-PKG_BUILD_DIR:=$(BUILD_DIR)/perl/HTTP-Cookies-$(PKG_VERSION)
+METACPAN_NAME:=HTTP-Cookies
+METACPAN_AUTHOR:=OALDERS
+PKG_HASH:=8c9a541a4a39f6c0c7e3d0b700b05dfdb830bd490a1b1942a7dedd1b50d9a8c8
 
-PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
+PKG_MAINTAINER:=Jens Wagner <jens@wagner2013.de>
 PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
 PKG_LICENSE_FILES:=LICENSE
 
+include ../metacpan.mk
 include $(INCLUDE_DIR)/package.mk
-include ../perl/perlmod.mk
+include ../perlmod.mk
 
 define Package/perl-http-cookies
   SUBMENU:=Perl
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=HTTP cookie jars
-  URL:=https://search.cpan.org/dist/HTTP-Cookies/
-  DEPENDS:=perl +perl-http-date +perl-http-message +perlbase-essential +perlbase-time
+  URL:=https://metacpan.org/pod/HTTP::Cookies
+  DEPENDS:=perl +perlbase-essential +perlbase-time +perl-http-date +perl-http-message
+endef
+
+define Package/perl-http-cookies/description
+  This class is for objects that represent a database
+  of all the HTTP cookies that a given LWP::UserAgent
+  object knows about.
 endef
 
 define Build/Configure
-        $(call perlmod/Configure,,)
+    $(call perlmod/Configure,,)
 endef
 
 define Build/Compile
-        $(call perlmod/Compile,,)
+    $(call perlmod/Compile,,)
 endef
 
 define Package/perl-http-cookies/install
-        $(call perlmod/Install,$(1),HTTP auto/HTTP)
+    $(call perlmod/Install,$(1),HTTP)
 endef
-
 
 $(eval $(call BuildPackage,perl-http-cookies))
