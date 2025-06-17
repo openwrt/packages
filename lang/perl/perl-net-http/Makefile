@@ -1,48 +1,44 @@
-#
-# Copyright (C) 2015 OpenWrt.org
-#
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
-#
-
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-net-http
-PKG_VERSION:=6.19
+PKG_VERSION:=6.23
 PKG_RELEASE:=1
 
-PKG_SOURCE:=Net-HTTP-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://cpan.metacpan.org/authors/id/O/OA/OALDERS
-PKG_HASH:=52b76ec13959522cae64d965f15da3d99dcb445eddd85d2ce4e4f4df385b2fc4
-PKG_BUILD_DIR:=$(BUILD_DIR)/perl/Net-HTTP-$(PKG_VERSION)
+METACPAN_NAME:=Net-HTTP
+METACPAN_AUTHOR:=OALDERS
+PKG_HASH:=0d65c09dd6c8589b2ae1118174d3c1a61703b6ecfc14a3442a8c74af65e0c94e
 
-PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
+PKG_MAINTAINER:=Jens Wagner <jens@wagner2013.de>
 PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
 PKG_LICENSE_FILES:=LICENSE
 
+include ../metacpan.mk
 include $(INCLUDE_DIR)/package.mk
-include ../perl/perlmod.mk
+include ../perlmod.mk
 
 define Package/perl-net-http
   SUBMENU:=Perl
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Low-level HTTP connection (client)
-  URL:=https://search.cpan.org/dist/Net-HTTP/
-  DEPENDS:=perl +perl-uri +perlbase-compress +perlbase-essential +perlbase-io
+  URL:=https://metacpan.org/pod/Net::HTTP
+  DEPENDS:=perl +perlbase-compress +perlbase-essential +perlbase-io +perl-uri
+endef
+
+define Package/perl-net-http/description
+  The Net::HTTP class is a low-level HTTP client.
 endef
 
 define Build/Configure
-        $(call perlmod/Configure,,)
+    $(call perlmod/Configure,,)
 endef
 
 define Build/Compile
-        $(call perlmod/Compile,,)
+    $(call perlmod/Compile,,)
 endef
 
 define Package/perl-net-http/install
-        $(call perlmod/Install,$(1),Net auto/Net)
+    $(call perlmod/Install,$(1),Net)
 endef
-
 
 $(eval $(call BuildPackage,perl-net-http))
