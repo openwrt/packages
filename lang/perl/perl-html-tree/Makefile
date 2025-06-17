@@ -1,35 +1,33 @@
-#
-# Copyright (C) 2014 OpenWrt.org
-#
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
-#
-
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-html-tree
-PKG_VERSION:=3.23
-PKG_RELEASE:=5
+PKG_VERSION:=5.07
+PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=https://www.cpan.org/authors/id/P/PE/PETEK/
-PKG_SOURCE:=HTML-Tree-$(PKG_VERSION).tar.gz
-PKG_HASH:=f5175acf262f3710dce899796ea3e353049939400b100706d03df2f08803c8de
+METACPAN_NAME:=HTML-Tree
+METACPAN_AUTHOR:=KENTNL
+PKG_HASH:=f0374db84731c204b86c1d5b90975fef0d30a86bd9def919343e554e31a9dbbf
 
+PKG_MAINTAINER:=Jens Wagner <jens@wagner2013.de>
 PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
-PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
+PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/perl/HTML-Tree-$(PKG_VERSION)
-
+include ../metacpan.mk
 include $(INCLUDE_DIR)/package.mk
-include ../perl/perlmod.mk
+include ../perlmod.mk
 
 define Package/perl-html-tree
   SUBMENU:=Perl
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=Represent and create HTML syntax trees
-  URL:=http://search.cpan.org/dist/HTML-Tree/
-  DEPENDS:=perl +perl-html-parser +perl-html-tagset +perlbase-essential +perlbase-integer
+  TITLE:=Build and scan parse-trees of HTML
+  URL:=https://metacpan.org/pod/HTML::Tree
+  DEPENDS:=perl +perlbase-essential +perlbase-integer +perlbase-scalar +perl-html-parser +perl-html-tagset
+endef
+
+define Package/perl-html-tree/description
+  HTML-Tree is a suite of Perl modules for making
+  parse trees out of HTML source.
 endef
 
 define Build/Configure
@@ -43,6 +41,5 @@ endef
 define Package/perl-html-tree/install
 	$(call perlmod/Install,$(1),HTML)
 endef
-
 
 $(eval $(call BuildPackage,perl-html-tree))
