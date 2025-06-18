@@ -155,6 +155,14 @@ conf_rule_add() {
 	echo "$action $ext_start${ext_end:+-}$ext_end $int_addr $int_start${int_end:+-}$int_end # $comment"
 }
 
+echo_yesno() {
+	[ "$1" -eq "1" ] && echo yes || echo no
+}
+
+echo_yesno_inverse() {
+	[ "$1" -eq "1" ] && echo no || echo yes
+}
+
 upnpd_write_bool() {
 	local opt="$1"
 	local def="${2:-0}"
@@ -249,13 +257,8 @@ upnpd() {
 		config_load "upnpd"
 		upnpd_write_bool enable_pcp_natpmp 1 enable_pcp_pmp
 		upnpd_write_bool enable_upnp 1
-		if [ "$allow_third_party_mapping" = "1" ]; then
-			echo "secure_mode=no"
-			echo "pcp_allow_thirdparty=yes"
-		else
-			echo "secure_mode=yes"
-			echo "pcp_allow_thirdparty=no"
-		fi
+		echo "secure_mode=$(echo_yesno_inverse $allow_third_party_mapping)"
+		echo "pcp_allow_thirdparty=$(echo_yesno $allow_third_party_mapping)"
 		if [ "$upnp_igd_compat" = "igdv1" ]; then
 			echo "force_igd_desc_v1=yes"
 		else
