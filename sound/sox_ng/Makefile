@@ -46,6 +46,7 @@ CONFIGURE_ARGS += \
 		--without-libltdl \
 		--with-flac \
 		--without-ladspa \
+		--without-speexdsp \
 		--without-png \
 		--without-sndfile \
 		--with-opus \
