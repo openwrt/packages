@@ -84,6 +84,8 @@ CONFIGURE_ARGS+= \
 	--enable-job-control \
 	--enable-readline
 
+TARGET_CFLAGS += -std=gnu17
+
 define Package/bash/postinst
 #!/bin/sh
 grep -q bash "$${IPKG_INSTROOT}/etc/shells" || {
@@ -100,3 +102,4 @@ define Package/bash/install
 endef
 
 $(eval $(call BuildPackage,bash))
+
