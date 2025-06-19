@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libreswan
-PKG_VERSION:=4.12
-PKG_RELEASE:=3
+PKG_VERSION:=5.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.libreswan.org/
-PKG_HASH:=ae85abe415f7becf4b6a2b9897e1712f27e5aac9c35dfbdddbcce0ad7dfd99f7
+PKG_HASH:=c382bbd838c239f8d4c4e9cc320f3abf34f7b08e71d9e78ed029a96d963940ce
 
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -101,8 +101,8 @@ MAKE_FLAGS+= \
     USE_SECCOMP=false\
     USE_XFRM_INTERFACE_IFLA_HEADER=false \
     PREFIX="/usr" \
-    FINALRUNDIR="/var/run/pluto" \
-    FINALNSSDIR="/etc/ipsec.d" \
+    RUNDIR="/var/run/pluto" \
+    NSSDIR="/etc/ipsec.d" \
     DEFAULT_DNSSEC_ROOTKEY_FILE=/etc/unbound/root.key \
     MODPROBEARGS="-q" \
     OSDEP=linux \
@@ -118,6 +118,7 @@ endef
 
 define Build/Compile
 	$(call Build/Compile/Default,all)
+#	$(call Build/Compile/Default,base)
 endef
 
 define Package/libreswan/install
