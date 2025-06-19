@@ -79,7 +79,6 @@ start_service() {
 		json_add_array firewall
 			json_add_object ""
 			json_add_string type rule
-			json_add_string name "Allow-access-dufs-at-$listen_port"
 			json_add_string src "*"
 			json_add_string dest_port "$listen_port"
 			json_add_string proto tcp
@@ -90,14 +89,6 @@ start_service() {
 	fi
 
 	procd_close_instance
-}
-
-service_started() {
-	procd_set_config_changed firewall
-}
-
-service_stopped() {
-	procd_set_config_changed firewall
 }
 
 service_triggers() {
