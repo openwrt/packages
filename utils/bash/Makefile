@@ -84,6 +84,9 @@ CONFIGURE_ARGS+= \
 	--enable-job-control \
 	--enable-readline
 
+# Use gnu89 standard to compile with modern GCC
+TARGET_CFLAGS += -std=gnu89
+
 define Package/bash/postinst
 #!/bin/sh
 grep -q bash "$${IPKG_INSTROOT}/etc/shells" || {
@@ -100,3 +103,4 @@ define Package/bash/install
 endef
 
 $(eval $(call BuildPackage,bash))
+
