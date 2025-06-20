@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netifyd
 PKG_VERSION:=4.4.7
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_MAINTAINER:=Darryl Sokoloski <darryl@egloo.ca>
 PKG_LICENSE:=GPL-3.0-or-later
 
@@ -32,7 +32,7 @@ define Package/netifyd
   CATEGORY:=Network
   TITLE:=Netify Agent
   URL:=http://www.netify.ai/
-  DEPENDS:=+ca-bundle +libatomic +libcurl +libmnl +libnetfilter-conntrack +libpcap +zlib +libpthread @!USE_UCLIBC
+  DEPENDS:=+ca-bundle +libatomic +libcurl +libmnl +libnetfilter-conntrack +libpcap +zlib +libpthread
   # Explicitly depend on libstdcpp rather than $(CXX_DEPENDS).  At the moment
   # std::unordered_map is only available via libstdcpp which is required for
   # performance reasons.
