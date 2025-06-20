@@ -1,0 +1,75 @@
+From bbed78899e275d5b89774cb8e14e3a3ce0c14484 Mon Sep 17 00:00:00 2001
+From: Self-Hosting-Group
+ <155233284+Self-Hosting-Group@users.noreply.github.com>
+Date: Mon, 12 May 2025 00:00:00 +0000
+Subject: [PATCH] miniupnpd: Clearer / less redundant protocol labels in
+ description
+
+---
+ natpmp.c    | 7 ++-----
+ pcpserver.c | 2 +-
+ upnpsoap.c  | 8 +++++++-
+ 3 files changed, 10 insertions(+), 7 deletions(-)
+
+--- a/natpmp.c
++++ b/natpmp.c
+@@ -332,7 +332,6 @@ void ProcessIncomingNATPMPPacket(int s,
+ 			} else { /* iport > 0 && lifetime > 0 */
+ 				unsigned short eport_first = 0;
+ 				int any_eport_allowed = 0;
+-				char desc[64];
+ 				if(eport==0)	/* if no suggested external port, use same a internal port */
+ 					eport = iport;
+ 				while(resp[3] == 0) {
+@@ -388,14 +387,12 @@ void ProcessIncomingNATPMPPacket(int s,
+ 					}
+ 					/* do the redirection */
+ 					timestamp = upnp_time() + lifetime;
+-					snprintf(desc, sizeof(desc), "NAT-PMP %hu %s",
+-					         eport, proto_itoa(proto));
+ 					/* TODO : check return code */
+ 					if(upnp_redirect_internal(NULL, eport, senderaddrstr,
+-					                          iport, proto, desc,
++					                          iport, proto, "NAT-PMP",
+ 					                          timestamp) < 0) {
+ 						syslog(LOG_ERR, "Failed to add NAT-PMP %hu %s->%s:%hu '%s'",
+-						       eport, proto_itoa(proto), senderaddrstr, iport, desc);
++						       eport, proto_itoa(proto), senderaddrstr, iport, "NAT-PMP");
+ 						resp[3] = 3;  /* Failure */
+ 					}
+ 					break;
+--- a/pcpserver.c
++++ b/pcpserver.c
+@@ -1244,7 +1244,7 @@ static int ValidatePCPMsg(pcp_info_t *pc
+ 	case PCP_OPCODE_MAP:
+ 	case PCP_OPCODE_PEER:
+ 		snprintf(pcp_msg_info->desc, sizeof(pcp_msg_info->desc),
+-			 "PCP %s %08x%08x%08x",
++			 "PCP %s nonce %08x%08x%08x",
+ 			 getPCPOpCodeStr(pcp_msg_info->opcode),
+ 			 pcp_msg_info->nonce[0],
+ 			 pcp_msg_info->nonce[1], pcp_msg_info->nonce[2]);
+--- a/upnpsoap.c
++++ b/upnpsoap.c
+@@ -61,6 +61,12 @@ void hide_pcp_nonce(char * desc)
+ 	/* skip the op code */
+ 	while (*desc >= 'A' && *desc <= 'Z') desc++;
+ 	if (*desc++ != ' ') return;
++	if (*desc++ != 'n') return;
++	if (*desc++ != 'o') return;
++	if (*desc++ != 'n') return;
++	if (*desc++ != 'c') return;
++	if (*desc++ != 'e') return;
++	if (*desc++ != ' ') return;
+ 	for (i = 0; i < 24; i++) {
+ 		if (desc[i] == '\0') return;
+ 		desc[i] = 'x';	/* replace nonce with 'x' characters */
+@@ -1849,7 +1855,7 @@ AddPinhole(struct upnphttp * h, const ch
+ 	 * InternalClient and Protocol are the same than an existing pinhole,
+ 	 * but LeaseTime is different, the device MUST extend the existing
+ 	 * pinhole's lease time and return the UniqueID of the existing pinhole. */
+-	r = upnp_add_inboundpinhole(rem_host, rport, int_ip, iport, proto, "IGD2 pinhole", ltime, &uid);
++	r = upnp_add_inboundpinhole(rem_host, rport, int_ip, iport, proto, "UPnP IGDv2 IPv6", ltime, &uid);
+ 
+ 	switch(r)
+ 	{
