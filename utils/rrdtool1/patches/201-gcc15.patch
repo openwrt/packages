@@ -1,0 +1,26 @@
+--- a/src/getopt.c
++++ b/src/getopt.c
+@@ -34,6 +34,10 @@
+ #include <config.h>
+ #endif
+ 
++#ifndef __GNU_LIBRARY__
++#define __GNU_LIBRARY__
++#endif
++
+ #if !defined (__STDC__) || !__STDC__
+ /* This is a separate conditional since some stdc systems
+    reject `defined (const)'.  */
+--- a/src/getopt.h
++++ b/src/getopt.h
+@@ -26,6 +26,10 @@
+ extern "C" {
+ #endif
+ 
++#ifndef __GNU_LIBRARY__
++#define __GNU_LIBRARY__
++#endif
++
+ /* For communication from `getopt' to the caller.
+    When `getopt' finds an option that takes an argument,
+    the argument value is returned here.
