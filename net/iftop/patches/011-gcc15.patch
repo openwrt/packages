@@ -1,0 +1,35 @@
+From 13fb68e15ee1851172975c02e8e844d90aa3ed89 Mon Sep 17 00:00:00 2001
+From: Til Kaiser <mail@tk154.de>
+Date: Fri, 20 Jun 2025 16:55:58 +0200
+Subject: [PATCH] Fix compilation with GCC 15
+
+Currently, building with GCC 15 fails with the following error:
+iftop.c: In function 'main':
+iftop.c:823:5: error: too many arguments to function 'read_config'; expected 0, have 2
+  823 |     read_config(options.config_file, options.config_file_specified);
+      |     ^~~~~~~~~~~ ~~~~~~~~~~~~~~~~~~~
+In file included from iftop.c:50:
+cfgfile.h:16:5: note: declared here
+   16 | int read_config();
+      |     ^~~~~~~~~~~
+
+This patch fixes the parameter signature of read_config() inside
+cfgfile.h to match the signature inside cfgfile.c.
+
+Signed-off-by: Til Kaiser <mail@tk154.de>
+[Upstream status: sent to iftop-users@lists.beasts.org]
+---
+ cfgfile.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/cfgfile.h
++++ b/cfgfile.h
+@@ -13,7 +13,7 @@ typedef struct {
+     int value;
+ } config_enumeration_type;
+ 
+-int read_config();
++int read_config(char *file, int whinge_on_error);
+ 
+ char *config_get_string(const char *directive);
+ int config_get_bool(const char *directive);
