@@ -5,6 +5,5 @@ menu "Configuration"
 
 config RADCLI_TLS
 	bool "enable TLS support"
-	default y
 
 endmenu
