@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rrdtool1
 PKG_VERSION:=1.0.50
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/rrdtool-$(PKG_VERSION)
 PKG_SOURCE:=rrdtool-$(PKG_VERSION).tar.gz
