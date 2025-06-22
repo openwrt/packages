@@ -26,7 +26,7 @@ define Build/Prepare
 	$(CP) $(LINUX_DIR)/drivers/net/wireguard/*.c $(PKG_BUILD_DIR)
 	$(CP) $(LINUX_DIR)/drivers/net/wireguard/*.h $(PKG_BUILD_DIR)
 	$(CP) $(LINUX_DIR)/drivers/net/wireguard/selftest $(PKG_BUILD_DIR)/
-	$(INSTALL_DIR) $(PKG_BUILD_DIR)/uapi
+	$(MKDIR) $(PKG_BUILD_DIR)/uapi
 	$(CP) $(LINUX_DIR)/include/uapi/linux/wireguard.h $(PKG_BUILD_DIR)/uapi/
 	for patch in `ls files/*`; do \
 		patch -d $(PKG_BUILD_DIR)/ -F3 -t -p0 -i "$$$$(pwd)/$$$${patch}"; \
