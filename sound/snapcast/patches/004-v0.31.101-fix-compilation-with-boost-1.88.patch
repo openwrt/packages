@@ -1,0 +1,60 @@
+From 901b79a213b139c35ff689c05aff01d29610a8d4 Mon Sep 17 00:00:00 2001
+From: Tobias Hochwallner <tobster@gmx.at>
+Date: Wed, 7 May 2025 22:42:07 +0200
+Subject: Build failure with boost 1.88.0 #1367
+ 1. [tobster] fix compilation errors by including the deprecated boost process v1 APIs
+ 2. [badaix] Define BOOST_PROCESS_VERSION=1 globally
+
+---
+ client/player/player.cpp               | 6 +++++-
+ server/streamreader/stream_control.hpp | 8 +++++---
+ 2 files changed, 10 insertions(+), 4 deletions(-)
+
+--- a/client/player/player.cpp
++++ b/client/player/player.cpp
+@@ -34,10 +34,17 @@
+ #pragma GCC diagnostic ignored "-Wmissing-braces"
+ #pragma GCC diagnostic ignored "-Wnarrowing"
+ #pragma GCC diagnostic ignored "-Wc++11-narrowing"
++#if BOOST_VERSION >= 108800
++#include <boost/process/v1/args.hpp>
++#include <boost/process/v1/async.hpp>
++#include <boost/process/v1/child.hpp>
++#include <boost/process/v1/exe.hpp>
++#else
+ #include <boost/process/args.hpp>
+ #include <boost/process/async.hpp>
+ #include <boost/process/child.hpp>
+ #include <boost/process/exe.hpp>
++#endif
+ #pragma GCC diagnostic pop
+ #endif
+ 
+--- a/server/streamreader/stream_control.hpp
++++ b/server/streamreader/stream_control.hpp
+@@ -32,7 +32,13 @@
+ #pragma GCC diagnostic ignored "-Wnarrowing"
+ #pragma GCC diagnostic ignored "-Wc++11-narrowing"
+ #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
++#if BOOST_VERSION >= 108800
++#include <boost/process/v1/io.hpp>
++#include <boost/process/v1/start_dir.hpp>
++#include <boost/process/v1/system.hpp>
++#else
+ #include <boost/process.hpp>
++#endif
+ #pragma GCC diagnostic pop
+ #include <boost/asio/any_io_executor.hpp>
+ 
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -318,7 +318,8 @@ else()
+   add_compile_definitions(HAS_TREMOR)
+ endif()
+ 
+-add_compile_definitions(BOOST_ERROR_CODE_HEADER_ONLY BOOST_ASIO_NO_TS_EXECUTORS)
++add_compile_definitions(BOOST_ERROR_CODE_HEADER_ONLY BOOST_ASIO_NO_TS_EXECUTORS
++                        BOOST_PROCESS_VERSION=1)
+ 
+ if(WIN32)
+   include(FindPackageHandleStandardArgs)
