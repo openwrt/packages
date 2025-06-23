@@ -1,5 +1,3 @@
-#!/usr/bin/lua
-
 local fs = require "nixio.fs"
 
 local function rtrim(s)
