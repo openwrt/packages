@@ -19,12 +19,16 @@ local netdevsubstat = {
 }
 
 local pattern = "([^%s:]+):%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)%s+(%d+)"
+local pattern_unused = "([^%s:]+):%s+0%s+0%s+0%s+0%s+0%s+0%s+0%s+0%s+0%s+0%s+0%s+0%s+0%s+0%s+0%s+0$"
+
+local skip_unused_interfaces = os.getenv("PNEL_SKIP_UNUSED_INTERFACES") == "1"
 
 local function scrape()
   local nds_table = {}
   for line in io.lines("/proc/net/dev") do
     local t = {string.match(line, pattern)}
-    if #t == 17 then
+    local skip = skip_unused_interfaces and string.match(line, pattern_unused)
+    if #t == 17 and not skip then
       nds_table[t[1]] = t
     end
   end
