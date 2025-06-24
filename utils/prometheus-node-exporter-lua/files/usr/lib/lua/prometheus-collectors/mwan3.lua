@@ -2,7 +2,7 @@ local ubus = require "ubus"
 
 local function scrape()
     local u = ubus.connect()
-    local status = u:call("mwan3", "status", {})
+    local status = u:call("mwan3", "status", {section="interfaces"})
     if status == nil then
         error("Could not get mwan3 status")
     end
