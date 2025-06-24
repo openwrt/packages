@@ -4,8 +4,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=prometheus-node-exporter-lua
-PKG_VERSION:=2025.06.23
-PKG_RELEASE:=6
+PKG_VERSION:=2025.06.24
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
 PKG_LICENSE:=Apache-2.0
