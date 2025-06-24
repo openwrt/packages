@@ -150,58 +150,55 @@ conf_rule_add() {
 	upnpd_get_port_range "ext" "$cfg" ext_ports "1-65535" # external ports: x, x-y, x:y
 	config_get int_addr "$cfg" int_addr "0.0.0.0/0"       # ip or network and subnet mask (internal)
 	upnpd_get_port_range "int" "$cfg" int_ports "1-65535" # internal ports: x, x-y, x:y or range
-	config_get comment "$cfg" comment "Unnamed ACL entry"		      # comment
+	config_get comment "$cfg" comment "Unnamed ACL entry" # comment
 
 	echo "$action $ext_start${ext_end:+-}$ext_end $int_addr $int_start${int_end:+-}$int_end # $comment"
 }
 
-upnpd_write_bool() {
-	local opt="$1"
-	local def="${2:-0}"
-	local alt="${3:-$opt}"
-	local val
+echo_yesno() {
+	[ "$1" -eq "1" ] && echo yes || echo no
+}
 
-	config_get_bool val config "$opt" "$def"
-	if [ "$val" -eq 0 ]; then
-		echo "$alt=no"
-	else
-		echo "$alt=yes"
-	fi
+echo_yesno_inverse() {
+	[ "$1" -eq "1" ] && echo no || echo yes
 }
 
 upnpd() {
 	config_load "upnpd"
-	local external_iface external_iface6 external_zone external_ip internal_iface
-	local upload_kbps download_kbps log_output port config_file serial_number model_number
-	local use_stun stun_host stun_port uuid notify_interval presentation_url
-	local upnp_lease_file ipv6_disable
-
 	local enabled
 	config_get_bool enabled config enabled 0
 	[ "$enabled" -eq 0 ] && return 1
 
+	local external_iface external_iface6 external_zone external_ip internal_iface
+	local enable_upnp enable_pcp_pmp use_stun stun_host allow_third_party_mapping ipv6_disable log_output upnp_lease_file config_file
+	local upnp_igd_compat port notify_interval download_kbps upload_kbps presentation_url uuid model_number serial_number system_uptime
+	# Interfaces
 	config_get external_iface config external_iface
 	config_get external_iface6 config external_iface6
 	config_get external_zone config external_zone
 	config_get external_ip config external_ip
 	config_get internal_iface config internal_iface
-	config_get port config port 5000
-	config_get upload_kbps config upload_kbps
-	config_get download_kbps config download_kbps
-	config_get_bool log_output config log_output 0
-	config_get config_file config config_file
-	config_get serial_number config serial_number
-	config_get model_number config model_number
-	config_get uuid config uuid
+	# Daemon
+	config_get_bool enable_upnp config enable_upnp 1
+	config_get_bool enable_pcp_natpmp config enable_pcp_natpmp 1
 	config_get use_stun config use_stun 0
 	config_get stun_host config stun_host stun.nextcloud.com
-	config_get stun_port config stun_port
-	config_get notify_interval config notify_interval
-	config_get presentation_url config presentation_url
-	config_get upnp_lease_file config upnp_lease_file /var/run/miniupnpd.leases
-	config_get ipv6_disable config ipv6_disable 0
 	config_get_bool allow_third_party_mapping config allow_third_party_mapping 0
+	config_get_bool ipv6_disable config ipv6_disable 0
+	config_get_bool log_output config log_output 0
+	config_get upnp_lease_file config upnp_lease_file /var/run/miniupnpd.leases
+	config_get config_file config config_file
+	# UPnP IGD
 	config_get upnp_igd_compat config upnp_igd_compat igdv1
+	config_get port config port 5000
+	config_get notify_interval config notify_interval
+	config_get download_kbps config download_kbps
+	config_get upload_kbps config upload_kbps
+	config_get presentation_url config presentation_url
+	config_get uuid config uuid
+	config_get model_number config model_number
+	config_get serial_number config serial_number
+	config_get_bool system_uptime config system_uptime 1
 
 	local conf ifname ifname6
 
@@ -246,23 +243,17 @@ upnpd() {
 			network_get_device device "$iface" && echo "listening_ip=$device"
 		done
 
-		config_load "upnpd"
-		upnpd_write_bool enable_pcp_natpmp 1 enable_pcp_pmp
-		upnpd_write_bool enable_upnp 1
-		if [ "$allow_third_party_mapping" = "1" ]; then
-			echo "secure_mode=no"
-			echo "pcp_allow_thirdparty=yes"
-		else
-			echo "secure_mode=yes"
-			echo "pcp_allow_thirdparty=no"
-		fi
+		echo "enable_upnp=$(echo_yesno $enable_upnp)"
+		echo "enable_pcp_pmp=$(echo_yesno $enable_pcp_natpmp)"
+		echo "secure_mode=$(echo_yesno_inverse $allow_third_party_mapping)"
+		echo "pcp_allow_thirdparty=$(echo_yesno $allow_third_party_mapping)"
 		if [ "$upnp_igd_compat" = "igdv1" ]; then
 			echo "force_igd_desc_v1=yes"
 		else
 			echo "force_igd_desc_v1=no"
 		fi
-		upnpd_write_bool system_uptime 1
-		upnpd_write_bool ipv6_disable $ipv6_disable
+		echo "system_uptime=$(echo_yesno $system_uptime)"
+		echo "ipv6_disable=$(echo_yesno $ipv6_disable)"
 
 		[ "$use_stun" = "0" ] || {
 			[ "$use_stun" = "1" ] && echo "ext_perform_stun=yes"
