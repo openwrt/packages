@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=espeak
 PKG_VERSION:=1.48.04
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-source.zip
 PKG_SOURCE_URL:=@SF/espeak

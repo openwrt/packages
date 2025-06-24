@@ -1,5 +1,3 @@
-#!/usr/bin/lua
-
 local json = require "cjson"
 
 local function interpret_suffix(rate)

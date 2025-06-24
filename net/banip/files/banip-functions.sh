@@ -873,10 +873,11 @@ f_down() {
 		if [ "${etag_rc}" = "0" ] || [ "${ban_action}" != "reload" ] || [ "${feed_url}" = "local" ]; then
 			if [ "${feed%%.*}" = "allowlist" ] && [ ! -f "${tmp_allow}" ]; then
 				f_restore "allowlist" "-" "${tmp_allow}" "${etag_rc}"
+				restore_rc="${?}"
 			else
 				f_restore "${feed}" "${feed_url}" "${tmp_load}" "${etag_rc}"
+				restore_rc="${?}"
 			fi
-			restore_rc="${?}"
 			feed_rc="${restore_rc}"
 		fi
 	fi
@@ -1618,6 +1619,7 @@ f_report() {
 					json_get_keys table_sets >/dev/null 2>&1
 					if [ -n "${table_sets}" ]; then
 						for item in ${table_sets}; do
+							[ "${item%%_*}" = "allowlist" ] && continue
 							json_select "${item}"
 							json_get_keys set_details
 							for detail in ${set_details}; do
