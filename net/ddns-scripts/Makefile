@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ddns-scripts
 PKG_VERSION:=2.8.2
-PKG_RELEASE:=72
+PKG_RELEASE:=73
 
 PKG_LICENSE:=GPL-2.0
 
@@ -25,7 +25,7 @@ endef
 define Package/ddns-scripts
   $(call Package/ddns-scripts/Default)
   TITLE:=Dynamic DNS Client scripts (with IPv6 support)
-  DEPENDS:=+ddns-scripts-services
+  DEPENDS:=+ddns-scripts-services +resolveip +ip
 endef
 
 define Package/ddns-scripts/description
