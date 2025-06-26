@@ -116,10 +116,9 @@ smb_add_share()
 		if [ "$force_root" -eq 1 ]; then
 			printf "\tforce user = %s\n" "root"
 			printf "\tforce group = %s\n" "root"
-		else
-			[ -n "$users" ] && printf "\tvalid users = %s\n" "$users"
 		fi
 
+		[ -n "$users" ] && printf "\tvalid users = %s\n" "$users"
 		[ -n "$create_mask" ] && printf "\tcreate mask = %s\n" "$create_mask"
 		[ -n "$dir_mask" ] && printf "\tdirectory mask = %s\n" "$dir_mask"
 		[ -n "$force_create_mode" ] && printf "\tforce create mode = %s\n" "$force_create_mode"
