@@ -45,7 +45,7 @@ config_get_bool enabled $INTERFACE 'enabled' '0'
 
 config_get initial_state $INTERFACE initial_state "online"
 if [ "$initial_state" = "offline" ]; then
-	status=$(cat $MWAN3TRACK_STATUS_DIR/$INTERFACE/STATUS 2>/dev/null || echo unknown)
+	readfile status $MWAN3TRACK_STATUS_DIR/$INTERFACE/STATUS 2>/dev/null || status="unknown"
 	[ "$status" = "online" ] || status=offline
 else
 	status=online
