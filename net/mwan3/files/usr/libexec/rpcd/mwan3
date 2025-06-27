@@ -67,21 +67,21 @@ report_policies_v6() {
 
 get_age() {
 	local time_p time_u
-	iface="$1"
+	iface="$2"
 	readfile time_p "$MWAN3TRACK_STATUS_DIR/${iface}/TIME"
 	[ -z "${time_p}" ] || {
-		time_n="$(get_uptime)"
-		echo $((time_n-time_p))
+		get_uptime time_n
+		export -n "$1=$((time_n-time_p))"
 	}
 }
 
 get_offline_time() {
 	local time_n time_d iface
-	iface="$1"
+	iface="$2"
 	readfile time_d "$MWAN3TRACK_STATUS_DIR/${iface}/OFFLINE"
 	[ -z "${time_d}" ] || [ "${time_d}" = "0" ] || {
-		time_n="$(get_uptime)"
-		echo $((time_n-time_d))
+		get_uptime time_n
+		export -n "$1=$((time_n-time_d))"
 	}
 }
 
@@ -98,11 +98,11 @@ get_mwan3_status() {
 		return
 	fi
 
-	track_status="$(mwan3_get_mwan3track_status "$1")"
+	mwan3_get_mwan3track_status track_status "$1"
 	[ "$track_status" = "active" ] && running="1"
-	age=$(get_age "$iface")
-	online=$(get_online_time "$iface")
-	offline=$(get_offline_time "$iface")
+	get_age age "$iface"
+	get_online_time online "$iface"
+	get_offline_time offline "$iface"
 
 	config_get_bool enabled "$iface" enabled 0
 
