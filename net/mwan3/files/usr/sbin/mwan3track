@@ -111,7 +111,8 @@ validate_wrap() {
 }
 
 disconnected() {
-	local status="$(cat ${MWAN3TRACK_STATUS_DIR}/${INTERFACE}/STATUS)"
+	local status
+	readfile status ${MWAN3TRACK_STATUS_DIR}/${INTERFACE}/STATUS
 
 	STATUS='offline'
 	echo "offline" > $MWAN3TRACK_STATUS_DIR/$INTERFACE/STATUS

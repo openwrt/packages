@@ -68,7 +68,7 @@ report_policies_v6() {
 get_age() {
 	local time_p time_u
 	iface="$1"
-	time_p="$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/TIME")"
+	readfile time_p "$MWAN3TRACK_STATUS_DIR/${iface}/TIME"
 	[ -z "${time_p}" ] || {
 		time_n="$(get_uptime)"
 		echo $((time_n-time_p))
@@ -78,7 +78,7 @@ get_age() {
 get_offline_time() {
 	local time_n time_d iface
 	iface="$1"
-	time_d="$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/OFFLINE")"
+	readfile time_d "$MWAN3TRACK_STATUS_DIR/${iface}/OFFLINE"
 	[ -z "${time_d}" ] || [ "${time_d}" = "0" ] || {
 		time_n="$(get_uptime)"
 		echo $((time_n-time_d))
@@ -92,7 +92,7 @@ get_mwan3_status() {
 	local age=0
 	local online=0
 	local offline=0
-	local enabled time_p time_n time_u time_d status track_status up uptime
+	local enabled time_p time_n time_u time_d status track_status up uptime temp
 
 	if [ "${iface}" != "${iface_select}" ] && [ "${iface_select}" != "" ]; then
 		return
@@ -109,7 +109,7 @@ get_mwan3_status() {
 	if [ -f "$MWAN3TRACK_STATUS_DIR/${iface}/STATUS" ]; then
 		network_get_uptime uptime "$iface"
 		network_is_up "$iface" && up="1"
-		status="$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/STATUS")"
+		readfile status "$MWAN3TRACK_STATUS_DIR/${iface}/STATUS"
 	else
 		uptime=0
 		up=0
@@ -121,9 +121,12 @@ get_mwan3_status() {
 	json_add_int online "${online}"
 	json_add_int offline "${offline}"
 	json_add_int uptime "${uptime}"
-	json_add_int "score" "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/SCORE")"
-	json_add_int "lost" "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/LOST")"
-	json_add_int "turn" "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/TURN")"
+	readfile temp "$MWAN3TRACK_STATUS_DIR/${iface}/SCORE"
+	json_add_int "score" "$temp"
+	readfile temp "$MWAN3TRACK_STATUS_DIR/${iface}/LOST"
+	json_add_int "lost" "$temp"
+	readfile temp "$MWAN3TRACK_STATUS_DIR/${iface}/TURN"
+	json_add_int "turn" "$temp"
 	json_add_string "status" "${status}"
 	json_add_boolean "enabled" "${enabled}"
 	json_add_boolean "running" "${running}"
@@ -136,9 +139,12 @@ get_mwan3_status() {
 		track="${file#*/TRACK_}"
 		json_add_object
 		json_add_string ip "${track}"
-		json_add_string status "$(cat "${file}")"
-		json_add_int latency "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/LATENCY_${track}")"
-		json_add_int packetloss "$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/LOSS_${track}")"
+		readfile temp "${file}"
+		json_add_string status "$temp"
+		readfile temp "$MWAN3TRACK_STATUS_DIR/${iface}/LATENCY_${track}"
+		json_add_int latency "$temp"
+		readfile temp "$MWAN3TRACK_STATUS_DIR/${iface}/LOSS_${track}"
+		json_add_int packetloss "$temp"
 		json_close_object
 	done
 	json_close_array
