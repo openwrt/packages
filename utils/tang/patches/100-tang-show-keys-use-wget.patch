@@ -1,5 +1,3 @@
-diff --git a/src/tang-show-keys b/src/tang-show-keys
-index 0c33c3a..4b64bda 100755
 --- a/src/tang-show-keys
 +++ b/src/tang-show-keys
 @@ -25,9 +25,9 @@ if [ $# -gt 1 ]; then
