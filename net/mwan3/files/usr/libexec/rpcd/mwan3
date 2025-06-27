@@ -108,7 +108,7 @@ get_mwan3_status() {
 
 	if [ -f "$MWAN3TRACK_STATUS_DIR/${iface}/STATUS" ]; then
 		network_get_uptime uptime "$iface"
-		network_is_up "$iface" && up="1"
+		[ -n "$uptime" ] && up=1 || up=0
 		readfile status "$MWAN3TRACK_STATUS_DIR/${iface}/STATUS"
 	else
 		uptime=0
