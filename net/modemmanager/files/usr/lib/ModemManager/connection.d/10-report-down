@@ -32,7 +32,6 @@ IFUP=$(ifstatus "${CFG}" | jsonfilter -e "@.up")
 
 [ "${IFUP}" = "true" ] && {
 	mm_log "info" "Reconnecting '${CFG}' on '${STATE}' event"
-	uci_toggle_state network "${CFG}" disable_modem "0"
 	ubus call network.interface down "{ 'interface': '${CFG}'}"
 	ubus call network.interface up "{ 'interface': '${CFG}'}"
 }
