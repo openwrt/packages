@@ -94,7 +94,7 @@ readfile() {
 
 mwan3_get_mwan3track_status()
 {
-	local interface=$1
+	local interface=$2
 	local track_ips pid cmdline started
 	mwan3_list_track_ips()
 	{
@@ -103,29 +103,29 @@ mwan3_get_mwan3track_status()
 	config_list_foreach "$interface" track_ip mwan3_list_track_ips
 
 	if [ -z "$track_ips" ]; then
-		echo "disabled"
+		export -n "$1=disabled"
 		return
 	fi
 	readfile pid $MWAN3TRACK_STATUS_DIR/$interface/PID 2>/dev/null
 	if [ -z "$pid" ]; then
-		echo "down"
+		export -n "$1=down"
 		return
 	fi
 	readfile cmdline /proc/$pid/cmdline 2>/dev/null
 	if [ $cmdline != "/bin/sh/usr/sbin/mwan3track${interface}" ]; then
-		echo "down"
+		export -n "$1=down"
 		return
 	fi
 	readfile started $MWAN3TRACK_STATUS_DIR/$interface/STARTED
 	case "$started" in
 		0)
-			echo "paused"
+			export -n "$1=paused"
 			;;
 		1)
-			echo "active"
+			export -n "$1=active"
 			;;
 		*)
-			echo "down"
+			export -n "$1=down"
 			;;
 	esac
 }
@@ -208,17 +208,21 @@ mwan3_count_one_bits()
 }
 
 get_uptime() {
-	local uptime
-	readfile uptime /proc/uptime
-	echo "${uptime%%.*}"
+	local _tmp
+	readfile _tmp /proc/uptime
+	if [ $# -eq 0 ]; then
+		echo "${_tmp%%.*}"
+	else
+		export -n "$1=${_tmp%%.*}"
+	fi
 }
 
 get_online_time() {
 	local time_n time_u iface
-	iface="$1"
+	iface="$2"
 	readfile time_u "$MWAN3TRACK_STATUS_DIR/${iface}/ONLINE" 2>/dev/null
 	[ -z "${time_u}" ] || [ "${time_u}" = "0" ] || {
-		time_n="$(get_uptime)"
-		echo $((time_n-time_u))
+		get_uptime time_n
+		export -n "$1=$((time_n-time_u))"
 	}
 }
