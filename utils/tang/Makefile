@@ -18,6 +18,7 @@ PKG_HASH:=04263ed1cc98d60cab29fe47f908921b7b1aa4d6da5f9de2fcbe543773b75886
 PKG_MAINTAINER:=Tibor Dudlák <tibor.dudlak@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:tang_project:tang
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/meson.mk

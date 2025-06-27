@@ -18,6 +18,7 @@ PKG_HASH:=658a150982f6740bb4128e6dd81188eaa1212ca0bf689b83c2093bb518ecf776
 PKG_MAINTAINER:=Antti Seppälä <a.seppala@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:alpine_project:alpine
 
 PKG_INSTALL:=1
 

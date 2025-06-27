@@ -20,6 +20,7 @@ PKG_HASH:=da14b415c61d53747a991f12d6209367ef826a13dc6bf4eeaf5d88760294c3a2
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=GPL-3.0-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:nic:knot_resolver
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/meson.mk
