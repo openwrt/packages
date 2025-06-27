@@ -86,30 +86,48 @@ mwan3_get_src_ip()
 	export "$1=$_src_ip"
 }
 
+readfile() {
+	[ -f "$2" ] || return 1
+	# read returns 1 on EOF
+	read -d'\0' $1 <"$2" || :
+}
+
 mwan3_get_mwan3track_status()
 {
+	local INTERFACE=$1
 	local track_ips pid
 	mwan3_list_track_ips()
 	{
 		track_ips="$1 $track_ips"
 	}
-	config_list_foreach "$1" track_ip mwan3_list_track_ips
+	config_list_foreach "$INTERFACE" track_ip mwan3_list_track_ips
 
-	if [ -n "$track_ips" ]; then
-		pid="$(pgrep -f "mwan3track $1$")"
-		if [ -n "$pid" ]; then
-			if [ "$(cat /proc/"$(pgrep -P $pid)"/cmdline)" = "sleep${MAX_SLEEP}" ]; then
-				tracking="paused"
-			else
-				tracking="active"
-			fi
-		else
-			tracking="down"
-		fi
-	else
-		tracking="disabled"
+	if [ -z "$track_ips" ]; then
+		echo "disabled"
+		return
 	fi
-	echo "$tracking"
+	readfile PID $MWAN3TRACK_STATUS_DIR/$INTERFACE/PID 2>/dev/null
+	if [ -z "$PID" ]; then
+		echo "down"
+		return
+	fi
+	readfile CMDLINE /proc/$PID/cmdline 2>/dev/null
+	if [ $CMDLINE != "/bin/sh/usr/sbin/mwan3track$INTERFACE" ]; then
+		echo "down"
+		return
+	fi
+	readfile STARTED $MWAN3TRACK_STATUS_DIR/$INTERFACE/STARTED
+	case "$STARTED" in
+		0)
+			echo "paused"
+			;;
+		1)
+			echo "active"
+			;;
+		*)
+			echo "down"
+			;;
+	esac
 }
 
 mwan3_init()

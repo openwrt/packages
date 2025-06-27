@@ -36,7 +36,7 @@ if_up() {
 	LOG info "Detect ifup event on interface ${INTERFACE} (${DEVICE})"
 	IFDOWN_EVENT=0
 	IFUP_EVENT=1
-	STARTED=1
+	started
 	stop_subprocs
 }
 
@@ -164,7 +164,7 @@ connecting() {
 disabled() {
 	STATUS='disabled'
 	echo "disabled" > $MWAN3TRACK_STATUS_DIR/$INTERFACE/STATUS
-	STARTED=0
+	stopped
 }
 
 firstconnect() {
@@ -187,12 +187,22 @@ firstconnect() {
 
 	LOG debug "firstconnect: called on $INTERFACE/$true_iface ($DEVICE). Status is $STATUS. SRC_IP is $SRC_IP"
 
-	STARTED=1
+	started
 	if [ "$STATUS" = "offline" ]; then
 		disconnected 1
 	else
 		connected 1
 	fi
+}
+
+stopped() {
+	STARTED=0
+	echo 0 > $MWAN3TRACK_STATUS_DIR/$INTERFACE/STARTED
+}
+
+started() {
+	STARTED=1
+	echo 1 > $MWAN3TRACK_STATUS_DIR/$INTERFACE/STARTED
 }
 
 update_status() {
@@ -214,12 +224,12 @@ main() {
 
 	INTERFACE=$1
 	STATUS=""
-	STARTED=0
+	mkdir -p $MWAN3TRACK_STATUS_DIR/$INTERFACE
+	echo $$ > $MWAN3TRACK_STATUS_DIR/$INTERFACE/PID
+	stopped
 	TRACK_OUTPUT=$MWAN3TRACK_STATUS_DIR/$INTERFACE/TRACK_OUTPUT
 
 	mwan3_init
-
-	mkdir -p $MWAN3TRACK_STATUS_DIR/$INTERFACE
 
 	trap clean_up TERM
 	trap if_down USR1
