@@ -14,6 +14,7 @@ PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
+include $(INCLUDE_DIR)/nls.mk
 
 CMAKE_INSTALL:=1
 
@@ -62,7 +63,7 @@ define Package/libfluidsynth
   CATEGORY:=Sound
   TITLE:=A SoundFont Synthesizer
   URL:=https://www.fluidsynth.org
-  DEPENDS:=+alsa-lib +glib2 +libsndfile +libstdcpp
+  DEPENDS:=$(INTL_DEPENDS) +alsa-lib +glib2 +libsndfile +libstdcpp
 endef
 
 define Package/libfluidsynth/description

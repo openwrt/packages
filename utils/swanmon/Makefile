@@ -24,12 +24,13 @@ PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/swanmon
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=strongSwan monitoring tool
-  DEPENDS:=+davici +glib2 +libjson-c
+  DEPENDS:=$(INTL_DEPENDS) +davici +glib2 +libjson-c
 endef
 
 define Package/swanmon/description
