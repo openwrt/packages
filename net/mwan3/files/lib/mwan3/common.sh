@@ -141,7 +141,7 @@ mwan3_init()
 
 	# mwan3's MARKing mask (at least 3 bits should be set)
 	if [ -e "${MWAN3_STATUS_DIR}/mmx_mask" ]; then
-		MMX_MASK=$(cat "${MWAN3_STATUS_DIR}/mmx_mask")
+		readfile MMX_MASK "${MWAN3_STATUS_DIR}/mmx_mask"
 		MWAN3_INTERFACE_MAX=$(uci_get_state mwan3 globals iface_max)
 	else
 		config_get MMX_MASK globals mmx_mask '0x3F00'
@@ -208,14 +208,15 @@ mwan3_count_one_bits()
 }
 
 get_uptime() {
-	local uptime=$(cat /proc/uptime)
+	local uptime
+	readfile uptime /proc/uptime
 	echo "${uptime%%.*}"
 }
 
 get_online_time() {
 	local time_n time_u iface
 	iface="$1"
-	time_u="$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/ONLINE" 2>/dev/null)"
+	readfile time_u "$MWAN3TRACK_STATUS_DIR/${iface}/ONLINE" 2>/dev/null
 	[ -z "${time_u}" ] || [ "${time_u}" = "0" ] || {
 		time_n="$(get_uptime)"
 		echo $((time_n-time_u))
