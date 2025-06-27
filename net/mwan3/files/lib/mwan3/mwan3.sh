@@ -1108,7 +1108,7 @@ mwan3_report_iface_status()
 	fi
 
 	if [ "$status" = "online" ]; then
-		online=$(get_online_time "$1")
+		get_online_time online "$1"
 		network_get_uptime uptime "$1"
 		online="$(printf '%02dh:%02dm:%02ds\n' $((online/3600)) $((online%3600/60)) $((online%60)))"
 		uptime="$(printf '%02dh:%02dm:%02ds\n' $((uptime/3600)) $((uptime%3600/60)) $((uptime%60)))"
@@ -1128,7 +1128,7 @@ mwan3_report_iface_status()
 		[ "$result" = "0" ] && result=""
 	fi
 
-	tracking="$(mwan3_get_mwan3track_status $1)"
+	mwan3_get_mwan3track_status tracking $1
 	if [ -n "$result" ]; then
 		echo " interface $1 is $status and tracking is $tracking ($result)"
 	else
