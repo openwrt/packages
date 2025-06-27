@@ -1,0 +1,10 @@
+--- a/Makefile.PL
++++ b/Makefile.PL
+@@ -16,6 +16,7 @@ my $module = join '/', 'lib', split /::/
+ my $author = ['Dick Franks', 'Olaf Kolkman'];
+ $author = join ', ', @$author if $ExtUtils::MakeMaker::VERSION < 6.58;
+ 
++$ENV{OPENSSL_PREFIX} = $ENV{STAGING_DIR_HOST};
+ 
+ # See perldoc ExtUtils::MakeMaker for details of how to influence
+ # the contents of the Makefile that is written.
