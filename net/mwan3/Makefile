@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mwan3
-PKG_VERSION:=2.11.19
-PKG_RELEASE:=5
+PKG_VERSION:=2.12.0
+PKG_RELEASE:=1
 PKG_MAINTAINER:=Florian Eckert <fe@dev.tdt.de>, \
 		Aaron Goodman <aaronjg@alumni.stanford.edu>
 PKG_LICENSE:=GPL-2.0
@@ -91,9 +91,9 @@ define Package/mwan3/install
 	$(INSTALL_DATA) ./files/lib/mwan3/mwan3.sh \
 		$(1)/lib/mwan3/
 
-	$(INSTALL_DIR) $(1)/usr/libexec/rpcd
-	$(INSTALL_BIN) ./files/usr/libexec/rpcd/mwan3 \
-		$(1)/usr/libexec/rpcd/
+	$(INSTALL_DIR) $(1)/usr/share/rpcd/ucode/
+	$(INSTALL_BIN) ./files/usr/share/rpcd/ucode/mwan3 \
+		$(1)/usr/share/rpcd/ucode/
 
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) ./files/usr/sbin/mwan3 \
