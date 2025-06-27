@@ -877,14 +877,11 @@ proto_modemmanager_teardown() {
 	mmcli --modem="${device}" --simple-disconnect ||
 		proto_notify_error "${interface}" DISCONNECT_FAILED
 
-	# reading variable from var state which was set in
-	# '/usr/lib/ModemManager/connection.d/10-report-down'
-	# because of a reconnect event.
-	# The modem therefore does not need to be disabled.
-	local disable="$(uci_get_state network "$interface" disable_modem "1")"
+	# Variable is set to '1' if modem should be disabled on ifdown,
+	# otherwise it stays connected.
+	local disable="$(uci_get network "$interface" disable_modem "1")"
 	if [ "${disable}" -eq 0 ]; then
 		echo "Skipping modem disable"
-		uci_revert_state network "${interface}" disable_modem
 	else
 		mmcli --modem="${device}" --disable
 	fi
