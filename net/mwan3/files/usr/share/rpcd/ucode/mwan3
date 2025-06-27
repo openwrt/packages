@@ -1,0 +1,202 @@
+'use strict';
+
+import { popen, readfile } from 'fs';
+import { cursor } from 'uci';
+
+const ubus = require('ubus').connect();
+
+function get_str_raw(iface, property) {
+	return readfile(sprintf('/var/run/mwan3track/%s/%s', iface, property));
+}
+
+function get_str(iface, property) {
+	return rtrim(get_str_raw(iface, property), '\n');
+}
+
+function get_int(iface, property) {
+	return int(get_str(iface, property));
+}
+
+function get_uptime() {
+	return int(split(readfile('/proc/uptime'), '.', 2)[0]);
+}
+
+function get_x_time(uptime, iface, property) {
+	let t = get_int(iface, property);
+	if (t > 0) {
+		t = uptime - t;
+	}
+	return t;
+}
+
+function ucibool(val) {
+	switch (val) {
+		case 'yes':
+		case 'on':
+		case 'true':
+		case 'enabled':
+			return true;
+		default:
+			return !!int(val);
+	}
+}
+
+function get_mwan3track_status(iface, uci_track_ips, procd) {
+	if (length(uci_track_ips) == 0) {
+		return 'disabled';
+	}
+	if (procd?.[sprintf('track_%s', iface)]?.running) {
+		const started = get_str(iface, 'STARTED');
+		switch (started) {
+			case '0':
+				return 'paused';
+			case '1':
+				return 'active';
+			default:
+				return 'down';
+		}
+	}
+	return 'down';
+}
+
+const connected_check_cmd = {
+	'4': 'iptables -t mangle -w -S mwan3_connected_ipv4',
+	'6': 'ip6tables -t mangle -w -S mwan3_connected_ipv6',
+};
+const ipset_save_re = regexp('^add mwan3_connected_ipv[46] (.*)\n$');
+
+function get_connected_ips(version) {
+	const check = popen(connected_check_cmd[version], 'r');
+	check.read('all');
+	if (check.close() != 0) {
+		return [];
+	}
+	const ipset = popen(sprintf('ipset -o save list mwan3_connected_ipv%s', version), 'r');
+	const ips = [];
+	for (let line = ipset.read('line'); length(line); line = ipset.read('line')) {
+		const m = match(line, ipset_save_re);
+		if (length(m) == 2) {
+			push(ips, m[1]);
+		}
+	}
+	ipset.close();
+	return ips;
+}
+
+const policies_cmd = {
+	'4': 'iptables -t mangle -w -S',
+	'6': 'ip6tables -t mangle -w -S'
+};
+const policies_re = regexp('^-A mwan3_policy_([^ ]+) .*?--comment "([^"]+)"');
+
+function get_policies(version) {
+	const ipt = popen(policies_cmd[version], 'r');
+	const policies = {};
+	for (let line = ipt.read('line'); length(line); line = ipt.read('line')) {
+		const m = match(line, policies_re);
+		if (m == null) {
+			continue;
+		}
+		const policy = m[1];
+		if (!exists(policies, policy)) {
+			policies[policy] = [];
+		}
+		const intfw = split(m[2], ' ', 3);
+		const weight = int(intfw[1]);
+		const total = int(intfw[2]);
+		if (weight >= 0 && total > 0) {
+			push(policies[policy], {
+				'interface': intfw[0],
+				'percent': weight / total * 100,
+			})
+		}
+	}
+	ipt.close();
+	return policies;
+}
+
+function interfaces_status(request) {
+	const uci = cursor();
+	const procd = ubus.call('service', 'list', { 'name': 'mwan3' })?.mwan3?.instances;
+	const interfaces = {};
+	uci.foreach('mwan3', 'interface', intf => {
+		const ifname = intf['.name'];
+		if (request.args.interface != null && request.args.interface != ifname) {
+			return;
+		}
+		const netstatus = ubus.call(sprintf('network.interface.%s', ifname), 'status', {});
+		const uptime = get_uptime();
+		const uci_track_ips = intf['track_ip'];
+		const track_status = get_mwan3track_status(ifname, uci_track_ips, procd);
+		const track_ips = [];
+		for (let ip in uci_track_ips) {
+			push(track_ips, {
+				'ip': ip,
+				'status': get_str(ifname, sprintf('TRACK_%s', ip)) || 'unknown',
+				'latency': get_int(ifname, sprintf('LATENCY_%s', ip)),
+				'packetloss': get_int(ifname, sprintf('LOSS_%s', ip)),
+			});
+		}
+		interfaces[ifname] = {
+			'age': get_x_time(uptime, ifname, 'TIME'),
+			'online': get_x_time(uptime, ifname, 'ONLINE'),
+			'offline': get_x_time(uptime, ifname, 'OFFLINE'),
+			'uptime': netstatus.uptime || 0,
+			'score': get_int(ifname, 'SCORE'),
+			'lost': get_int(ifname, 'LOST'),
+			'turn': get_int(ifname, 'TURN'),
+			'status': get_str(ifname, 'STATUS') || 'unknown',
+			'enabled': ucibool(intf['enabled']),
+			'running': track_status == 'active',
+			'tracking': track_status,
+			'up': netstatus.up,
+			'track_ip': track_ips,
+		};
+	});
+	return interfaces;
+}
+
+const methods = {
+	status: {
+		args: {
+			section: 'section',
+			interface: 'interface'
+		},
+		call: function (request) {
+			switch (request.args.section) {
+				case 'connected':
+					return {
+						'connected': {
+							'ipv4': get_connected_ips('4'),
+							'ipv6': get_connected_ips('6'),
+						},
+					};
+				case 'policies':
+					return {
+						'policies': {
+							'ipv4': get_policies('4'),
+							'ipv6': get_policies('6'),
+						},
+					};
+				case 'interfaces':
+					return {
+						'interfaces': interfaces_status(request),
+					};
+				default:
+					return {
+						'interfaces': interfaces_status(request),
+						'connected': {
+							'ipv4': get_connected_ips('4'),
+							'ipv6': get_connected_ips('6'),
+						},
+						'policies': {
+							'ipv4': get_policies('4'),
+							'ipv6': get_policies('6'),
+						},
+					};
+			}
+		}
+	}
+};
+
+return { 'mwan3': methods };
