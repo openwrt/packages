@@ -11,8 +11,8 @@ IFDOWN_EVENT=0
 IFUP_EVENT=0
 
 stop_subprocs() {
-	[ -n "$SLEEP_PID" ] && kill "$SLEEP_PID" && unset SLEEP_PID
-	[ -n "$TRACK_PID" ] && kill "$TRACK_PID" && unset TRACK_PID
+	local killpids="$(jobs -p)"
+	[ -n "$killpids" ] && kill $killpids
 }
 
 WRAP() {
@@ -267,8 +267,10 @@ main() {
 
 	firstconnect
 	while true; do
-		[ $STARTED -eq 0 ] && { sleep $MAX_SLEEP & SLEEP_PID=$!; wait; }
-		unset SLEEP_PID
+		[ $STARTED -eq 0 ] && {
+			sleep $MAX_SLEEP &
+			wait $!
+		}
 		sleep_time=$interval
 		for track_ip in $track_ips; do
 			if [ $host_up_count -lt $reliability ]; then
@@ -276,13 +278,11 @@ main() {
 					ping)
 						if [ $check_quality -eq 0 ]; then
 							WRAP $PING -n -c $count -W $timeout -s $size -t $max_ttl -q $track_ip &> /dev/null &
-							TRACK_PID=$!
-							wait $TRACK_PID
+							wait $!
 							result=$?
 						else
 							WRAP $PING -n -c $count -W $timeout -s $size -t $max_ttl -q $track_ip 2>/dev/null > $TRACK_OUTPUT &
-							TRACK_PID=$!
-							wait $TRACK_PID
+							wait $!
 							ping_status=$?
 							loss="$(sed $TRACK_OUTPUT -ne 's/.* \([0-9]\+\)% packet loss.*/\1/p')"
 							if [ "$ping_status" -ne 0 ] || [ "$loss" -eq 100 ]; then
@@ -295,8 +295,7 @@ main() {
 					;;
 					arping)
 						WRAP arping -I $DEVICE -c $count -w $timeout -q $track_ip &> /dev/null &
-						TRACK_PID=$!
-						wait $TRACK_PID
+						wait $!
 						result=$?
 					;;
 					httping)
@@ -306,8 +305,7 @@ main() {
 							else
 								WRAP httping -c $count -t $timeout -q "http://$track_ip" &> /dev/null &
 							fi
-							TRACK_PID=$!
-							wait $TRACK_PID
+							wait $!
 							result=$?
 						else
 							if [ "$httping_ssl" -eq 1 ]; then
@@ -315,8 +313,7 @@ main() {
 							else
 								WRAP httping -c $count -t $timeout "http://$track_ip" 2> /dev/null > $TRACK_OUTPUT &
 							fi
-							TRACK_PID=$!
-							wait $TRACK_PID
+							wait $!
 							ping_status=$?
 							loss="$(sed $TRACK_OUTPUT -ne 's/.* \([0-9]\+\).*% failed.*/\1/p')"
 							if [ "$ping_status" -ne 0 ] || [ "$loss" -eq 100 ]; then
@@ -329,14 +326,12 @@ main() {
 					;;
 					nping-*)
 						WRAP nping -${FAMILY#ipv} -c $count $track_ip --${track_method#nping-} > $TRACK_OUTPUT &
-						TRACK_PID=$!
-						wait $TRACK_PID
+						wait $!
 						result=$(grep Lost $TRACK_OUTPUT | awk '{print $12}')
 					;;
 					nslookup)
 						WRAP nslookup www.google.com $track_ip > $TRACK_OUTPUT &
-						TRACK_PID=$!
-						wait $TRACK_PID
+						wait $!
 						result=$?
 					;;
 				esac
@@ -421,9 +416,7 @@ main() {
 		host_up_count=0
 		if [ "${IFDOWN_EVENT}" -eq 0 ] && [ "${IFUP_EVENT}" -eq 0 ]; then
 			sleep "${sleep_time}" &
-			SLEEP_PID=$!
-			wait
-			unset SLEEP_PID
+			wait $!
 		fi
 
 		if [ "${IFDOWN_EVENT}" -eq 1 ]; then
