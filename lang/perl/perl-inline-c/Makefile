@@ -26,7 +26,7 @@ PKG_BUILD_DEPENDS:=perl-inline/host perl-parse-recdescent/host perl-file-sharedi
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
-include ../perl/perlmod.mk
+include ../perlmod.mk
 
 define Package/perl-inline-c
   SUBMENU:=Perl
