@@ -21,7 +21,7 @@ PKG_MAINTAINER:=Paul Oranje <por@xs4all.nl>
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/Device-SerialPort-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
-include ../perl/perlmod.mk
+include ../perlmod.mk
 
 define Package/perl-device-serialport
   SUBMENU:=Perl
