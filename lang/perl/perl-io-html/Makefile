@@ -21,7 +21,7 @@ PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/IO-HTML-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
-include ../perl/perlmod.mk
+include ../perlmod.mk
 
 define Package/perl-io-html
   SUBMENU:=Perl
