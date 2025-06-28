@@ -22,7 +22,7 @@ PKG_MAINTAINER:=Philip Prindeville <philipp@redfish-solutions.com>, Jens Wagner 
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/$(PKG_SOURCE_NAME)-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
-include ../perl/perlmod.mk
+include ../perlmod.mk
 
 define Package/perl-authen-sasl-xs
   SUBMENU:=Perl
