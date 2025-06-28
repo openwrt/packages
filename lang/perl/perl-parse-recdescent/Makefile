@@ -24,7 +24,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/perl/Parse-RecDescent-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
-include ../perl/perlmod.mk
+include ../perlmod.mk
 
 define Package/perl-parse-recdescent
   SUBMENU:=Perl
