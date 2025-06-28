@@ -18,7 +18,7 @@ PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
 PKG_BUILD_DIR:=$(BUILD_DIR)/perl/File-Next-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
-include ../perl/perlmod.mk
+include ../perlmod.mk
 
 define Package/perl-file-next
   SUBMENU:=Perl
