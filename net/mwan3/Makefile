@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mwan3
-PKG_VERSION:=2.11.8
-PKG_RELEASE:=2
+PKG_VERSION:=2.11.9
+PKG_RELEASE:=1
 PKG_MAINTAINER:=Florian Eckert <fe@dev.tdt.de>, \
 		Aaron Goodman <aaronjg@alumni.stanford.edu>
 PKG_LICENSE:=GPL-2.0
@@ -28,7 +28,9 @@ define Package/mwan3
      +IPV6:ip6tables \
      +iptables-mod-conntrack-extra \
      +iptables-mod-ipopt \
-     +jshn
+     +jshn \
+	 +coreutils-date \
+	 +coreutils-sleep
    TITLE:=Multiwan hotplug script with connection tracking support
    MAINTAINER:=Florian Eckert <fe@dev.tdt.de>
    PKGARCH:=all
@@ -89,6 +91,10 @@ define Package/mwan3/install
 	$(INSTALL_DATA) ./files/lib/mwan3/common.sh \
 		$(1)/lib/mwan3/
 	$(INSTALL_DATA) ./files/lib/mwan3/mwan3.sh \
+		$(1)/lib/mwan3/
+	$(INSTALL_DATA) ./files/lib/mwan3/multitargetping.sh \
+		$(1)/lib/mwan3/
+	$(INSTALL_DATA) ./files/lib/mwan3/timeout.sh \
 		$(1)/lib/mwan3/
 
 	$(INSTALL_DIR) $(1)/usr/libexec/rpcd
