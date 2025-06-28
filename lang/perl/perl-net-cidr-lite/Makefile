@@ -20,7 +20,7 @@ PKG_MAINTAINER:=Philip Prindeville <philipp@redfish-solutions.com>
 PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
 
 include $(INCLUDE_DIR)/package.mk
-include ../perl/perlmod.mk
+include ../perlmod.mk
 
 define Package/perl-net-cidr-lite
   SUBMENU:=Perl
