@@ -25,7 +25,7 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_LEAVE_COMMENTS:=1
 
 include $(INCLUDE_DIR)/package.mk
-include ../perl/perlmod.mk
+include ../perlmod.mk
 
 define Package/perl-cgi
   SUBMENU:=Perl
