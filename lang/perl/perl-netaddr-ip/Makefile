@@ -19,7 +19,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/perl/NetAddr-IP-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
-include ../perl/perlmod.mk
+include ../perlmod.mk
 
 define Package/perl-netaddr-ip
   SUBMENU:=Perl
