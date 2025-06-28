@@ -58,6 +58,14 @@ for feed in allowlist ${ban_feed} blocklist; do
 		continue
 	fi
 
+	# skip external feeds in allowlistonly mode
+	#
+	if [ "${ban_allowlistonly}" = "1" ] &&
+		! printf "%s" "${ban_feedin}" | "${ban_grepcmd}" -q "allowlist" &&
+		! printf "%s" "${ban_feedout}" | "${ban_grepcmd}" -q "allowlist"; then
+		continue
+	fi
+
 	# external feeds (parallel processing on multicore hardware)
 	#
 	if ! json_select "${feed}" >/dev/null 2>&1; then

@@ -9,23 +9,28 @@ export LC_ALL=C
 export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 
 config="banip"
-old_options="ban_loginput ban_logforwardwan ban_logforwardlan ban_blockinput ban_blockforwardwan ban_blockforwardlan"
+old_options="ban_loginput ban_logforwardwan ban_logforwardlan ban_blockinput ban_blockforwardwan ban_blockforwardlan ban_blocktype ban_blockpolicy"
 
 for option in ${old_options}; do
-	if uci -q get ${config}.global.${option} >/dev/null 2>&1; then
-		old_values="$(uci -q get "${config}.global.${option}")"
-		for value in ${old_values}; do
-			case "${option}" in
-				"ban_loginput" | "ban_logforwardwan")
-					uci -q set "${config}".global.ban_loginbound="${value}"
-				;;
-				"ban_logforwardlan")
-					uci -q set "${config}".global.ban_logoutbound="${value}"
-				;;
-			esac
-		done
-		uci -q delete "${config}.global.${option}"
-	fi
+	old_values="$(uci -q get "${config}.global.${option}" 2>/dev/null)"
+	for value in ${old_values}; do
+		case "${option}" in
+			"ban_loginput" | "ban_logforwardwan")
+				uci -q set "${config}".global.ban_loginbound="${value}"
+			;;
+			"ban_logforwardlan")
+				uci -q set "${config}".global.ban_logoutbound="${value}"
+			;;
+			"ban_blockpolicy")
+				if printf "%s" "${old_values}" | grep -qw "input\|forwardwan\|forwardlan"; then
+					break
+				else
+					continue 2
+				fi
+			;;
+		esac
+	done
+	uci -q delete "${config}.global.${option}"
 done
 [ -n "$(uci -q changes "${config}")" ] && uci -q commit "${config}"
 exit 0
