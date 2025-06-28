@@ -19,7 +19,7 @@ PKG_INSTALL:=1
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
-include ../perl/perlmod.mk
+include ../perlmod.mk
 
 CONFIGURE_PATH:=spamc
 
