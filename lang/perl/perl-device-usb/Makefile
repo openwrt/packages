@@ -22,7 +22,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/perl/Device-USB-$(PKG_VERSION)
 PKG_BUILD_DEPENDS:=perl-inline-c/host
 
 include $(INCLUDE_DIR)/package.mk
-include ../perl/perlmod.mk
+include ../perlmod.mk
 
 define Package/perl-device-usb
   SUBMENU:=Perl
