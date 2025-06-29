@@ -43,31 +43,35 @@ start_service() {
 	# Options with default value different with the syncthing should be defined explicitly here
 	local enabled=0
 	local listen=":8443"
-	local cert="/etc/stdiscosrv/cert.pem"
-	local key="/etc/stdiscosrv/key.pem"
-	local db_dir="/etc/stdiscosrv/discovery.db"
+	local conf_dir="/etc/stdiscosrv"
+	local cert="$conf_dir/cert.pem"
+	local key="$conf_dir/key.pem"
+	local db_dir="$conf_dir/discovery.db"
 	local nice=0
+	local user="syncthing"
 
 	config_load "stdiscosrv"
 
 	[ "$enabled" -gt 0 ] || return 0
 
+	local group=$(id -gn $user)
+
 	[ -d "$db_dir" ] || mkdir -p "$db_dir"
-	[ -d "$db_dir" ] && chown -R nobody:nogroup "$db_dir"
+	[ -d "$conf_dir" ] && chown -R "$user":"$group" "$conf_dir"
 
 	config_get nice stdiscosrv nice "0"
 
 	procd_open_instance
 	procd_set_param command "$PROG"
-	procd_append_param command -listen="$listen"
-	procd_append_param command -db-dir="$db_dir"
-	procd_append_param command -cert="$cert"
-	procd_append_param command -key="$key"
+	procd_append_param command --listen="$listen"
+	procd_append_param command --db-dir="$db_dir"
+	procd_append_param command --cert="$cert"
+	procd_append_param command --key="$key"
 	[ -z "$extra_args" ] || procd_append_param command "$extra_args"
 
 	procd_set_param nice "$nice"
 	procd_set_param term_timeout 15
-	procd_set_param user "nobody"
+	procd_set_param user "$user"
 	procd_set_param respawn
 	procd_set_param stdout 1
 	procd_set_param stderr 1
