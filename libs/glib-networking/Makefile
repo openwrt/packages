@@ -15,6 +15,7 @@ PKG_CPE_ID:=cpe:/a:gnome:glib-networking
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/meson.mk
+include $(INCLUDE_DIR)/nls.mk
 
 MESON_ARGS += \
 	-Dgnutls=enabled \
@@ -28,7 +29,7 @@ MESON_ARGS += \
 define Package/libgio-gnutls
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+glib2 +libgnutls
+  DEPENDS:=$(INTL_DEPENDS) +glib2 +libgnutls
   TITLE:=GLib2 GIO GNUTLS module
   URL:=http://www.gnome.org/
 endef
@@ -40,7 +41,7 @@ endef
 define Package/libgio-openssl
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+glib2 +libopenssl
+  DEPENDS:=$(INTL_DEPENDS) +glib2 +libopenssl
   TITLE:=GLib2 GIO OpenSSL module
   URL:=http://www.gnome.org/
 endef
@@ -52,7 +53,7 @@ endef
 define Package/libgio-environmentproxy
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+glib2
+  DEPENDS:=$(INTL_DEPENDS) +glib2
   TITLE:=GLib2 GIO environmentproxy module
   URL:=http://www.gnome.org/
 endef
