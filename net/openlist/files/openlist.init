@@ -3,8 +3,8 @@
 USE_PROCD=1
 START=99
 
-CONF="alist"
-PROG="/usr/bin/alist"
+CONF="openlist"
+PROG="/usr/bin/openlist"
 CONF_DIR="/etc/$CONF"
 RUN_DIR="/var/run/$CONF"
 
@@ -71,7 +71,7 @@ start_service() {
 	json_add_string "bleve_dir" "$CONF_DIR/bleve"
 	json_add_object "log"
 		uci_json_add_boolean "enable" "log_enable" "1"
-		json_add_string "name" "$RUN_DIR/log/alist.log"
+		json_add_string "name" "$RUN_DIR/log/openlist.log"
 		uci_json_add_int "max_size" "log_max_size" "5"
 		uci_json_add_int "max_backups" "log_max_backups" "1"
 		uci_json_add_int "max_age" "log_max_age" "15"
