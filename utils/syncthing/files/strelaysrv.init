@@ -44,13 +44,16 @@ start_service() {
 	local enabled=0
 	local keys="/etc/strelaysrv"
 	local nice=0
+	local user="syncthing"
 
 	config_load "strelaysrv"
 
 	[ "$enabled" -gt 0 ] || return 0
 
+	local group=$(id -gn $user)
+
 	[ -d "$keys" ] || mkdir -p "$keys"
-	[ -d "$keys" ] && chown -R nobody:nogroup "$keys"
+	[ -d "$keys" ] && chown -R "$user":"$group" "$keys"
 
 	config_get nice strelaysrv nice "0"
 
@@ -65,7 +68,7 @@ start_service() {
 
 	procd_set_param nice "$nice"
 	procd_set_param term_timeout 15
-	procd_set_param user "nobody"
+	procd_set_param user "$user"
 	procd_set_param respawn
 	procd_set_param stdout 1
 	procd_set_param stderr 1
