@@ -71,6 +71,10 @@ endef
 TARGET=linux-musl
 ENABLE_LUA:=y
 
+ifeq ($(CONFIG_USE_GLIBC),y)
+	TARGET=linux-glibc
+endif
+
 ifeq ($(BUILD_VARIANT),ssl)
 	ADDON+=USE_OPENSSL=1
 	ADDON+=ADDLIB="-lcrypto -lm"
