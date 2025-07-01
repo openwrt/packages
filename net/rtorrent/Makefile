@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtorrent
-PKG_VERSION:=0.15.3
+PKG_VERSION:=0.15.5
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/rakshasa/rtorrent
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_MIRROR_HASH:=e28a07ff147128369b187e4893a5e2918fec1f0e2d4808ed5a3b95aa9e62d45a
+PKG_MIRROR_HASH:=77dc339aa5a2c10d490db7e732d8ff61f2a6cc736eb5224b641c27abbf74e03a
 
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
