@@ -22,6 +22,11 @@ PKG_LICENSE:=GPL-3.0-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:nic:knot_resolver
 
+PKG_CONFIG_DEPENDS := \
+	CONFIG_KNOT_RESOLVER_DNSTAP
+
+PKG_BUILD_DEPENDS += KNOT_RESOLVER_DNSTAP:libprotobuf
+
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/meson.mk
 
@@ -41,8 +46,8 @@ define Package/knot-resolver
     +libstdcpp \
     +libnghttp2 \
     +lmdb \
-    PACKAGE_knot-resolver_dnstap:libfstrm \
-    PACKAGE_knot-resolver_dnstap:libprotobuf-c
+    KNOT_RESOLVER_DNSTAP:libfstrm \
+    KNOT_RESOLVER_DNSTAP:libprotobuf-c
   USERID:=kresd=3536:kresd=3536
 endef
 
@@ -56,7 +61,7 @@ define Package/knot-resolver/config
 endef
 
 MESON_ARGS+= \
-	$(if $(CONFIG_PACKAGE_knot-resolver_dnstap), -Ddnstap=enabled,-Ddnstap=disabled) \
+	$(if $(CONFIG_KNOT_RESOLVER_DNSTAP), -Ddnstap=enabled,-Ddnstap=disabled) \
 	-Dcapng=disabled \
 	-Dclient=disabled \
 	-Dconfig_tests=disabled \
