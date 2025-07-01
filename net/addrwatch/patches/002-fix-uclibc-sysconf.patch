@@ -1,3 +1,14 @@
+From 951b6940f4cf14a4a1712e9b874e3a9c5e32befc Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Sun, 8 Mar 2020 03:44:53 -0700
+Subject: [PATCH] Use compile-time macro HOST_NAME_MAX instead of run-time via
+ sysconf
+
+This seems to be more portable for non-standard libcs.
+---
+ src/addrwatch.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
 --- a/src/addrwatch.c
 +++ b/src/addrwatch.c
 @@ -501,7 +501,7 @@ int main(int argc, char *argv[])
