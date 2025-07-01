@@ -1,0 +1,13 @@
+#!/bin/sh
+
+if [ -d "/etc/alist" ]; then
+	mv -f "/etc/alist" "/etc/openlist"
+fi
+
+if [ -f "/etc/config/alist" ]; then
+	mv -f "/etc/config/alist" "/etc/config/openlist"
+	uci -q set openlist.config=openlist
+	uci -q commit openlist
+fi
+
+exit 0

@@ -1,0 +1,61 @@
+From 3e7a53edd1ffc948e1f46b3493e0c0381e437980 Mon Sep 17 00:00:00 2001
+From: Vladimir Ermakov <vooon341@gmail.com>
+Date: Tue, 27 May 2025 09:53:37 +0200
+Subject: [PATCH 3/4] qga: invoke separate applets for guest shutdown modes
+
+Origin: community/qemu: fix qemu-guest-agent patch
+https://gitlab.alpinelinux.org/alpine/aports/-/blob/b720d51ec844d4754dd5b29084350aa1f5c9a74d/community/qemu/guest-agent-shutdown.patch
+---
+ qga/commands-posix.c | 30 ++++--------------------------
+ 1 file changed, 4 insertions(+), 26 deletions(-)
+
+--- a/qga/commands-posix.c
++++ b/qga/commands-posix.c
+@@ -218,43 +218,21 @@ void qmp_guest_shutdown(const char *mode
+     const char *shutdown_flag;
+     Error *local_err = NULL;
+ 
+-#ifdef CONFIG_SOLARIS
+-    const char *powerdown_flag = "-i5";
+-    const char *halt_flag = "-i0";
+-    const char *reboot_flag = "-i6";
+-#elif defined(CONFIG_BSD)
+-    const char *powerdown_flag = "-p";
+-    const char *halt_flag = "-h";
+-    const char *reboot_flag = "-r";
+-#else
+-    const char *powerdown_flag = "-P";
+-    const char *halt_flag = "-H";
+-    const char *reboot_flag = "-r";
+-#endif
++    const char *argv[] = {NULL, NULL};
+ 
+     slog("guest-shutdown called, mode: %s", mode);
+     if (!mode || strcmp(mode, "powerdown") == 0) {
+-        shutdown_flag = powerdown_flag;
++        argv[0] = "poweroff";
+     } else if (strcmp(mode, "halt") == 0) {
+-        shutdown_flag = halt_flag;
++        argv[0] = "halt";
+     } else if (strcmp(mode, "reboot") == 0) {
+-        shutdown_flag = reboot_flag;
++        argv[0] = "reboot";
+     } else {
+         error_setg(errp,
+                    "mode is invalid (valid values are: halt|powerdown|reboot");
+         return;
+     }
+ 
+-    const char *argv[] = {"/sbin/shutdown",
+-#ifdef CONFIG_SOLARIS
+-                          shutdown_flag, "-g0", "-y",
+-#elif defined(CONFIG_BSD)
+-                          shutdown_flag, "+0",
+-#else
+-                          "-h", shutdown_flag, "+0",
+-#endif
+-                          "hypervisor initiated shutdown", (char *) NULL};
+-
+     ga_run_command(argv, NULL, "shutdown", &local_err);
+     if (local_err) {
+         error_propagate(errp, local_err);
