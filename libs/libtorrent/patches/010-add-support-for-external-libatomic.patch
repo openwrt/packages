@@ -7,68 +7,22 @@ Needed on some 32-bit platforms where 64-bit atomics are provided by
 libatomic.
 
 Signed-off-by: Rosen Penev <rosenp@gmail.com>
----
- configure.ac            |  3 ++-
- scripts/check_atomic.m4 | 46 +++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 49 insertions(+), 1 deletion(-)
- create mode 100644 scripts/check_atomic.m4
-
---- a/configure.ac
-+++ b/configure.ac
-@@ -79,13 +79,14 @@ AC_ARG_ENABLE(execinfo,
-   ])
- 
- AX_PTHREAD
-+CHECK_ATOMIC
- 
- PKG_CHECK_MODULES([CPPUNIT], [cppunit],, [no_cppunit="yes"])
- PKG_CHECK_MODULES([ZLIB], [zlib])
- 
- CFLAGS="$PTHREAD_CFLAGS $ZLIB_CFLAGS $CFLAGS"
- CXXFLAGS="$PTHREAD_CFLAGS $ZLIB_CFLAGS $CXXFLAGS"
--LIBS="$PTHREAD_LIBS $ZLIB_LIBS $LIBS"
-+LIBS="$ATOMIC_LIBS $PTHREAD_LIBS $ZLIB_LIBS $LIBS"
- 
- TORRENT_CHECK_OPENSSL
- 
---- /dev/null
+----
+--- a/scripts/check_atomic.m4
 +++ b/scripts/check_atomic.m4
-@@ -0,0 +1,38 @@
-+# Some versions of gcc/libstdc++ require linking with -latomic if
-+# using the C++ atomic library.
-+
-+# Copyright (c) 2015-2016 Tim Kosse <tim.kosse@filezilla-project.org>
-+
-+# Copying and distribution of this file, with or without modification, are
-+# permitted in any medium without royalty provided the copyright notice
-+# and this notice are preserved. This file is offered as-is, without any
-+# warranty.
-+
-+m4_define([_CHECK_ATOMIC_testbody], [[
-+  #include <atomic>
-+  #include <cstdint>
-+
-+  int main() {
-+    std::atomic<int64_t> a{};
-+
-+    int64_t v = 5;
-+    int64_t r = a.fetch_add(v);
-+    return static_cast<int>(r);
-+  }
-+]])
-+
-+AC_DEFUN([CHECK_ATOMIC], [
-+
-+  AC_LANG_PUSH(C++)
-+
-+  AC_MSG_CHECKING([whether std::atomic can be used without link library])
-+
-+  AC_LINK_IFELSE([AC_LANG_SOURCE([_CHECK_ATOMIC_testbody])],[
-+      AC_MSG_RESULT([yes])
-+    ],[
-+      ATOMIC_LIBS=-latomic
-+    ])
-+
-+  AC_LANG_POP
-+  AC_SUBST([ATOMIC_LIBS])
-+])
+@@ -30,15 +30,7 @@ AC_DEFUN([CHECK_ATOMIC], [
+   AC_LINK_IFELSE([AC_LANG_SOURCE([_CHECK_ATOMIC_testbody])],[
+       AC_MSG_RESULT([yes])
+     ],[
+-      AC_MSG_RESULT([no])
+       ATOMIC_LIBS=-latomic
+-      AC_MSG_CHECKING([whether std::atomic needs -latomic])
+-      AC_LINK_IFELSE([AC_LANG_SOURCE([_CHECK_ATOMIC_testbody])],[
+-          AC_MSG_RESULT([yes])
+-        ],[
+-          AC_MSG_RESULT([no])
+-          AC_MSG_FAILURE([cannot figure out how to use std::atomic])
+-        ])
+     ])
+ 
+   AC_LANG_POP
