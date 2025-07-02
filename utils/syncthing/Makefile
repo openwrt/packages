@@ -10,7 +10,7 @@ PKG_HASH:=7b29b2bb1fb85adf6f3baf120ff725a19b06ed13b95011fe67dd952349e0e212
 
 PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/$(PKG_NAME)
 
-PKG_MAINTAINER:=Paul Spooren <mail@aparcar.org>, Van Waholtz <brvphoenix@gmail.com>
+PKG_MAINTAINER:=Van Waholtz <brvphoenix@gmail.com>, George Sapkin <george@sapk.in>
 PKG_LICENSE:=MPL-2.0
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:syncthing:syncthing
