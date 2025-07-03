@@ -49,6 +49,55 @@ handle_source() {
 	)
 }
 
+handle_refclock() {
+	local cfg=$1 delay device driver lock maxpoll minpoll noselect offset path precision prefer refid stratum unit 
+
+	config_get_bool enabled "$cfg" enabled 0
+	[ "$enabled" = "0" ] && return
+	config_get driver "$cfg" driver
+	[ -z "$driver" ] && return
+	config_get device "$cfg" device
+	config_get path "$cfg" path
+	config_get delay "$cfg" delay
+	config_get offset "$cfg" offset
+	config_get stratum "$cfg" stratum
+	config_get refid "$cfg" refid "REFCLK"
+	config_get precision "$cfg" precision
+	config_get_bool prefer "$cfg" prefer 0
+	config_get lock "$cfg" lock
+	config_get minpoll "$cfg" minpoll
+	config_get maxpoll "$cfg" maxpoll
+	config_get_bool noselect "$cfg" noselect 0
+
+	if [ "$driver" = "SHM" ]; then
+		config_get unit "$cfg" unit
+	elif [ "$driver" = "PPS" ] || [ "$driver" = "PHC" ]; then
+		if ! [ -n "$device" ] && ! [ -n "$path" ]; then
+			logger -t chronyd-init "refclock driver $driver in UCI missing either device or path"
+			return
+		fi
+	else
+		logger -t chronyd-init "Unknown refclock driver in UCI: $driver"
+		return
+	fi
+
+	echo $(
+		echo refclock $driver
+		[ "$driver" = "SHM" ] && [ -n "unit" ] && echo "$unit"
+		( [ "$driver" = "PPS" ] || [ "$driver" = "PHC" ] ) && ( [ -n "$device" ] || [ -n "$path" ] ) && echo $device $path
+		[ -n "$delay" ] && echo delay $delay
+		[ -n "$offset" ] && echo offset $offset
+		[ -n "$stratum" ] && echo stratum $stratum
+		[ -n "$refid" ] && echo refid $refid
+		[ -n "$precision" ] && echo precision $precision
+		[ "$prefer" = "1" ] && echo prefer
+		[ -n "$lock" ] && echo lock $lock
+		[ "$minpoll" = "1" ] && echo minpoll $minpoll
+		[ "$maxpoll" = "1" ] && echo maxpoll $maxpoll
+		[ "$noselect" = "1" ] && echo noselect
+	)
+}
+
 handle_allow() {
 	local cfg=$1 iface wan_iface wan6_iface subnet subnets subnets6
 
@@ -68,6 +117,11 @@ handle_allow() {
 				echo allow $subnet
 			done
 		fi
+	done
+
+	config_get subnets "$cfg" subnet
+	for subnet in $subnets; do
+		echo allow $subnet
 	done
 }
 
@@ -137,6 +191,7 @@ start_service() {
 		config_foreach handle_source server server
 		config_foreach handle_source pool pool
 		config_foreach handle_source peer peer
+		config_foreach handle_refclock refclock
 		config_foreach handle_allow allow
 		config_foreach handle_makestep makestep
 		config_foreach handle_smoothtime smoothtime
