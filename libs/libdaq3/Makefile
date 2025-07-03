@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libdaq3
-PKG_VERSION:=3.0.19
+PKG_VERSION:=3.0.20
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
@@ -18,7 +18,7 @@ PKG_LICENSE_FILES:=COPYING LICENSE
 
 PKG_SOURCE:=libdaq-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/snort3/libdaq/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=28d026de46f8206b1a74dd6bf7de10ca19d7a7c95a463744b9f79e51958e5889
+PKG_HASH:=42730cb427695d4049deaa667623036b3915eaa651bcb91493ca450f06bb36b3
 PKG_BUILD_DIR:=$(BUILD_DIR)/libdaq-$(PKG_VERSION)
 
 PKG_FIXUP:=autoreconf
