@@ -46,6 +46,7 @@ endef
 define Package/dante/default
   TITLE:=Dante SOCKS
   URL:=http://www.inet.no/dante/
+  DEPENDS:= +USE_GLIBC:libcrypt-compat
 endef
 
 define Package/dante/default/description
