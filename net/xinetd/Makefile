@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xinetd
 PKG_VERSION:=2.3.15
-PKG_RELEASE:=16
+PKG_RELEASE:=17
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=$(PKG_NAME)-2-3-15
@@ -30,6 +30,7 @@ define Package/xinetd
   CATEGORY:=Network
   TITLE:=A powerful and secure super-server
   URL:=https://github.com/xinetd-org
+  DEPENDS:= +USE_GLIBC:libcrypt-compat
 endef
 
 define Package/xinetd/description
