@@ -20,6 +20,7 @@ define Package/libdht
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Kademlia Distributed Hash Table (DHT) library
+  DEPENDS:= +USE_GLIBC:libcrypt-compat
 endef
 
 define Build/InstallDev
