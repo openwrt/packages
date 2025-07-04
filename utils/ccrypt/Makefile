@@ -27,6 +27,7 @@ define Package/ccrypt
   SUBMENU:=Encryption
   TITLE:=utility for encrypting/decrypting files and streams
   URL:=http://ccrypt.sourceforge.net/
+  DEPENDS:= +USE_GLIBC:libcrypt-compat
 endef
 
 CONFIGURE_ARGS += --disable-emacs
