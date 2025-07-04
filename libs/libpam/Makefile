@@ -32,6 +32,7 @@ define Package/libpam
   CATEGORY:=Libraries
   TITLE:=the Linux-PAM libraries and modules.
   URL:=http://www.kernel.org/pub/linux/libs/pam
+  DEPENDS:= +USE_GLIBC:libcrypt-compat
 endef
 
 define Package/libpam/description
