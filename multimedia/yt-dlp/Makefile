@@ -10,6 +10,7 @@ PKG_HASH:=a11862e57721b0a0f0883dfeb5a4d79ba213a2d4c45e1880e9fd70f8e6570c38
 PKG_MAINTAINER:=Michal Vasilek <michal.vasilek@nic.cz>
 PKG_LICENSE:=Unlicense
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:yt-dlp_project:yt-dlp
 
 include ../../lang/python/pypi.mk
 include $(INCLUDE_DIR)/package.mk

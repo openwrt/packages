@@ -20,6 +20,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)_$(PKG_VERSION).linux
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 PKG_LICENSE:=lsof
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:lsof_project:lsof
 
 include $(INCLUDE_DIR)/package.mk
 

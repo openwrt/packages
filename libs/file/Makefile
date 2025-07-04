@@ -19,6 +19,7 @@ PKG_HASH:=3751c7fba8dbc831cb8d7cc8aff21035459b8ce5155ef8b0880a27d028475f3b
 PKG_MAINTAINER:=Marko Ratkaj <markoratkaj@gmail.com>
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:file_project:file
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
