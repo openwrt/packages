@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luaposix
 PKG_VERSION:=36.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=https://codeload.github.com/$(PKG_NAME)/$(PKG_NAME)/tar.gz/v$(PKG_VERSION)?
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -26,7 +26,7 @@ define Package/luaposix
   CATEGORY:=Languages
   TITLE:=POSIX binding for LuaJIT, Lua 5.1, 5.2 and 5.3
   URL:=https://github.com/luaposix/luaposix
-  DEPENDS:=+lua +lua-bit32
+  DEPENDS:= +USE_GLIBC:libcrypt-compat +lua +lua-bit32
 endef
 
 define Package/luaposix/description
