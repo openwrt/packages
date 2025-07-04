@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=sudo
 PKG_REALVERSION:=1.9.17p1
 PKG_VERSION:=$(subst p,_p,$(PKG_REALVERSION))
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_REALVERSION).tar.gz
 PKG_SOURCE_URL:=https://www.sudo.ws/dist
@@ -34,6 +34,7 @@ define Package/sudo
   CATEGORY:=Administration
   TITLE:=Delegate authority to run commands
   URL:=https://www.sudo.ws/
+  DEPENDS:= +USE_GLIBC:libcrypt-compat
 endef
 
 define Package/sudo/description
