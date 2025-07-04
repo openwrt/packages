@@ -37,7 +37,7 @@ define Package/tcsh
   CATEGORY:=Utilities
   SUBMENU:=Shells
   TITLE:=Enhanced Berkeley UNIX C shell
-  DEPENDS:=+libncurses $(ICONV_DEPENDS)
+  DEPENDS:= +USE_GLIBC:libcrypt-compat +libncurses $(ICONV_DEPENDS)
   URL:=https://www.tcsh.org/
 endef
 
