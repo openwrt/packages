@@ -1,8 +1,8 @@
 --- a/src/Makefile.am
 +++ b/src/Makefile.am
-@@ -56,13 +56,6 @@ libpkcs11_la_SOURCES = $(pkcs11_la_SOURC
- libpkcs11_la_CFLAGS = $(pkcs11_la_CFLAGS)
+@@ -66,16 +66,6 @@ libpkcs11_la_CFLAGS = $(pkcs11_la_CFLAGS
  libpkcs11_la_LIBADD = $(pkcs11_la_LIBADD)
+ endif
  
 -# OpenSSL older than 1.1.0 expected libpkcs11.so instead of pkcs11.so
 -check-local: $(LTLIBRARIES)
@@ -10,13 +10,16 @@
 -
 -install-exec-hook:
 -	cd '$(DESTDIR)$(enginesexecdir)' && $(LN_S) -f pkcs11$(SHARED_EXT) libpkcs11$(SHARED_EXT)
+-if LIBP11_OSSL_PROVIDER
+-	cd '$(DESTDIR)$(providersexecdir)' && $(LN_S) -f pkcs11prov$(SHARED_EXT) libpkcs11$(SHARED_EXT)
+-endif
 -
  if WIN32
  # def file required for MS users to build library
  mylibdir=$(libdir)
 --- a/src/Makefile.in
 +++ b/src/Makefile.in
-@@ -965,7 +965,7 @@ distdir-am: $(DISTFILES)
+@@ -1057,7 +1057,7 @@ distdir-am: $(DISTFILES)
  	  fi; \
  	done
  check-am: all-am
@@ -25,29 +28,35 @@
  check: check-am
  all-am: Makefile $(LTLIBRARIES) $(DATA) $(HEADERS) config.h
  install-enginesexecLTLIBRARIES: install-libLTLIBRARIES
-@@ -1060,7 +1060,7 @@ install-dvi-am:
- 
- install-exec-am: install-enginesexecLTLIBRARIES install-libLTLIBRARIES
+@@ -1158,7 +1158,7 @@ install-dvi-am:
+ install-exec-am: install-enginesexecLTLIBRARIES install-libLTLIBRARIES \
+ 	install-providersexecLTLIBRARIES
  	@$(NORMAL_INSTALL)
 -	$(MAKE) $(AM_MAKEFLAGS) install-exec-hook
 +	$(MAKE) $(AM_MAKEFLAGS)
  install-html: install-html-am
  
  install-html-am:
-@@ -1127,14 +1127,14 @@ uninstall-am: uninstall-enginesexecLTLIB
+@@ -1228,7 +1228,7 @@ uninstall-am: uninstall-enginesexecLTLIB
  .MAKE: all check-am install-am install-exec-am install-strip
  
  .PHONY: CTAGS GTAGS TAGS all all-am am--depfiles check check-am \
 -	check-local clean clean-enginesexecLTLIBRARIES clean-generic \
 +	clean clean-enginesexecLTLIBRARIES clean-generic \
- 	clean-libLTLIBRARIES clean-libtool cscopelist-am ctags \
- 	ctags-am distclean distclean-compile distclean-generic \
- 	distclean-hdr distclean-libtool distclean-tags distdir dvi \
- 	dvi-am html html-am info info-am install install-am \
- 	install-data install-data-am install-dvi install-dvi-am \
- 	install-enginesexecLTLIBRARIES install-exec install-exec-am \
--	install-exec-hook install-html install-html-am \
-+	install-html install-html-am \
- 	install-includeHEADERS install-info install-info-am \
- 	install-libLTLIBRARIES install-man install-mylibDATA \
- 	install-pdf install-pdf-am install-pkgconfigDATA install-ps \
+ 	clean-libLTLIBRARIES clean-libtool \
+ 	clean-providersexecLTLIBRARIES cscopelist-am ctags ctags-am \
+ 	distclean distclean-compile distclean-generic distclean-hdr \
+@@ -1253,13 +1253,6 @@ uninstall-am: uninstall-enginesexecLTLIB
+ 
+ 	$(srcdir)/config.h.in $(srcdir)/config.h.in~
+ 
+-# OpenSSL older than 1.1.0 expected libpkcs11.so instead of pkcs11.so
+-check-local: $(LTLIBRARIES)
+-	cd .libs && $(LN_S) -f pkcs11$(SHARED_EXT) libpkcs11$(SHARED_EXT)
+-
+-install-exec-hook:
+-	cd '$(DESTDIR)$(enginesexecdir)' && $(LN_S) -f pkcs11$(SHARED_EXT) libpkcs11$(SHARED_EXT)
+-@LIBP11_OSSL_PROVIDER_TRUE@	cd '$(DESTDIR)$(providersexecdir)' && $(LN_S) -f pkcs11prov$(SHARED_EXT) libpkcs11$(SHARED_EXT)
+ @WIN32_TRUE@.libs/@WIN_LIBPREFIX@p11-@LIBP11_LT_OLDEST@.dll.def:	libp11.la
+ .rc.lo:
+ 	$(LTRCCOMPILE) -i "$<" -o "$@"
