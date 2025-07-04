@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tcsh
 PKG_VERSION:=6.22.04
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
@@ -37,7 +37,7 @@ define Package/tcsh
   CATEGORY:=Utilities
   SUBMENU:=Shells
   TITLE:=Enhanced Berkeley UNIX C shell
-  DEPENDS:=+libncurses $(ICONV_DEPENDS)
+  DEPENDS:= +USE_GLIBC:libcrypt-compat +libncurses $(ICONV_DEPENDS)
   URL:=https://www.tcsh.org/
 endef
 
