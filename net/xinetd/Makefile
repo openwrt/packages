@@ -30,6 +30,7 @@ define Package/xinetd
   CATEGORY:=Network
   TITLE:=A powerful and secure super-server
   URL:=https://github.com/xinetd-org
+  DEPENDS:= +USE_GLIBC:libcrypt-compat
 endef
 
 define Package/xinetd/description

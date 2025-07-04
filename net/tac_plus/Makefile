@@ -40,6 +40,7 @@ endef
 define Package/tac_plus
 $(call Package/tac_plus/Default)
 	TITLE+= (without PAM support)
+	DEPENDS:= +USE_GLIBC:libcrypt-compat
 	VARIANT:=without-pam
 endef
 

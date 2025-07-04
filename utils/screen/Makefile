@@ -29,7 +29,7 @@ define Package/screen
   SECTION:=utils
   CATEGORY:=Utilities
   SUBMENU:=Terminal
-  DEPENDS:=+libncurses
+  DEPENDS:= +USE_GLIBC:libcrypt-compat +libncurses
   TITLE:=Full-screen terminal window manager
   URL:=https://www.gnu.org/software/screen/
 endef

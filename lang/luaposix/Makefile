@@ -26,7 +26,7 @@ define Package/luaposix
   CATEGORY:=Languages
   TITLE:=POSIX binding for LuaJIT, Lua 5.1, 5.2 and 5.3
   URL:=https://github.com/luaposix/luaposix
-  DEPENDS:=+lua +lua-bit32
+  DEPENDS:= +USE_GLIBC:libcrypt-compat +lua +lua-bit32
 endef
 
 define Package/luaposix/description
