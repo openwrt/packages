@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=screen
 PKG_VERSION:=4.9.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/screen
@@ -29,7 +29,7 @@ define Package/screen
   SECTION:=utils
   CATEGORY:=Utilities
   SUBMENU:=Terminal
-  DEPENDS:=+libncurses
+  DEPENDS:= +USE_GLIBC:libcrypt-compat +libncurses
   TITLE:=Full-screen terminal window manager
   URL:=https://www.gnu.org/software/screen/
 endef
