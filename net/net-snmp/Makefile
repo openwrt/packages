@@ -96,14 +96,6 @@ $(call Package/net-snmp/Default/description)
 endef
 
 
-define Package/snmpd-static
-$(call Package/net-snmp/Default)
-  DEPENDS:=+snmpd
-  TITLE:=Open source SNMP implementation (daemon)
-  BUILDONLY:=1
-endef
-
-
 define Package/snmptrapd
 $(call Package/net-snmp/Default)
   DEPENDS:=+libnetsnmp
@@ -191,7 +183,6 @@ TARGET_CPPFLAGS += -I$(STAGING_DIR)/usr/include/libnl-tiny
 CONFIGURE_ARGS += \
 	--enable-mfd-rewrites \
 	--enable-shared \
-	--enable-static \
 	--with-endianness=$(if $(CONFIG_BIG_ENDIAN),big,little) \
 	--with-logfile=/var/log/snmpd.log \
 	--with-persistent-directory=/usr/lib/snmp/ \
@@ -289,5 +280,4 @@ $(eval $(call BuildPackage,libnetsnmp))
 $(eval $(call BuildPackage,snmp-mibs))
 $(eval $(call BuildPackage,snmp-utils))
 $(eval $(call BuildPackage,snmpd))
-$(eval $(call BuildPackage,snmpd-static))
 $(eval $(call BuildPackage,snmptrapd))
