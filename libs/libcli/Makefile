@@ -25,6 +25,7 @@ define Package/libcli
   CATEGORY:=Libraries
   TITLE:=libcli
   URL:=https://dparrish.com/link/libcli
+  DEPENDS:= +USE_GLIBC:libcrypt-compat
 endef
 
 define Package/libcli/description
