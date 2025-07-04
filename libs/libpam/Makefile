@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libpam
 PKG_VERSION:=1.7.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=Linux-PAM-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/linux-pam/linux-pam/releases/download/v$(PKG_VERSION)
@@ -33,6 +33,7 @@ define Package/libpam
   CATEGORY:=Libraries
   TITLE:=the Linux-PAM libraries and modules.
   URL:=http://www.kernel.org/pub/linux/libs/pam
+  DEPENDS:= +USE_GLIBC:libcrypt-compat
 endef
 
 define Package/libpam/description
