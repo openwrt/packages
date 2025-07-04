@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=v4l-utils
-PKG_VERSION:=1.28.0
+PKG_VERSION:=1.30.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.linuxtv.org/downloads/v4l-utils
-PKG_HASH:=fcb1ac1f22c1673e932b1779384f61cd6b7dd76e0e500bfb57e7a598588980b4
+PKG_HASH:=c1cf549c2ec3cf39eb5ec7bf15731349e61b26a21b5e963922db422333bae197
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
@@ -75,8 +75,20 @@ define Package/v4l-utils/description
   This package contains the video4linux utilities.
 endef
 
+define Package/edid-decode
+  $(call Package/libv4l/Default)
+  SECTION:=utils
+  CATEGORY:=Utilities
+  TITLE:=EDID decode
+  DEPENDS:=+libstdcpp
+endef
+
+define Package/edid-decode/description
+ Display EDID decoder application
+endef
+
 MESON_ARGS += \
-	-Db_lto=true \
+	-Db_lto=false \
 	-Ddefault_library=both \
 	-Dbpf=disabled \
 	-Dgconv=disabled \
@@ -84,7 +96,7 @@ MESON_ARGS += \
 	-Dlibdvbv5=disabled \
 	-Dqv4l2=disabled \
 	-Dqvidcap=disabled \
-	-Dv4l-utils=$(if $(CONFIG_PACKAGE_v4l-utils),true,false) \
+	-Dv4l-utils=$(if $(CONFIG_PACKAGE_v4l-utils)$(CONFIG_PACKAGE_edid-decode),true,false) \
 	-Ddoxygen-doc=disabled
 
 TARGET_LDFLAGS += -Wl,--gc-sections
@@ -117,5 +129,11 @@ define Package/v4l-utils/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/cec-{compliance,ctl,follower} $(1)/usr/bin/
 endef
 
+define Package/edid-decode/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/edid-decode $(1)/usr/bin/
+endef
+
 $(eval $(call BuildPackage,libv4l))
 $(eval $(call BuildPackage,v4l-utils))
+$(eval $(call BuildPackage,edid-decode))
