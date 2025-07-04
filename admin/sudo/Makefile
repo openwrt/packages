@@ -34,6 +34,7 @@ define Package/sudo
   CATEGORY:=Administration
   TITLE:=Delegate authority to run commands
   URL:=https://www.sudo.ws/
+  DEPENDS:= +USE_GLIBC:libcrypt-compat
 endef
 
 define Package/sudo/description
