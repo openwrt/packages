@@ -6,6 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libcli
 PKG_VERSION:=1.10.7
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=V$(PKG_VERSION)
@@ -25,6 +26,7 @@ define Package/libcli
   CATEGORY:=Libraries
   TITLE:=libcli
   URL:=https://dparrish.com/link/libcli
+  DEPENDS:= +USE_GLIBC:libcrypt-compat
 endef
 
 define Package/libcli/description
