@@ -1,5 +1,0 @@
-.:5353 {
-  log
-  #whoami
-  wgsd coredns.lan. vpn_wg
-}
