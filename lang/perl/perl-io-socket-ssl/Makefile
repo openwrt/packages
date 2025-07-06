@@ -1,19 +1,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-io-socket-ssl
-PKG_VERSION:=2.090
+PKG_VERSION:=2.094
 PKG_RELEASE:=1
 
-PKG_SOURCE_NAME:=IO-Socket-SSL
-PKG_SOURCE_URL:=https://cpan.metacpan.org/authors/id/S/SU/SULLR
-PKG_SOURCE:=$(PKG_SOURCE_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=fdda17888df9f88251b62856f17fcac8f144858c72d7e01d1c4b437d23383d97
-PKG_BUILD_DIR:=$(BUILD_DIR)/perl/$(PKG_SOURCE_NAME)-$(PKG_VERSION)
+METACPAN_NAME:=IO-Socket-SSL
+METACPAN_AUTHOR:=SULLR
+PKG_HASH:=b2446889cb5e20545d782c4676da1b235673a81c181689aaae2492589d84bf02
 
 PKG_MAINTAINER:=Jens Wagner <jens@wagner2013.de>
 PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
 PKG_LICENSE_FILES:=LICENSE
 
+include ../metacpan.mk
 include $(INCLUDE_DIR)/package.mk
 include ../perlmod.mk
 
@@ -45,4 +44,3 @@ define Package/perl-io-socket-ssl/install
 endef
 
 $(eval $(call BuildPackage,perl-io-socket-ssl))
-
