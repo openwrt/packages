@@ -28,7 +28,7 @@ include $(INCLUDE_DIR)/nls.mk
 define Package/alpine/Default
   SECTION:=mail
   CATEGORY:=Mail
-  DEPENDS:=+libopenssl +libncurses +libpthread +libpam $(ICONV_DEPENDS) $(INTL_DEPENDS)
+  DEPENDS:= +USE_GLIBC:libcrypt-compat +libopenssl +libncurses +libpthread +libpam $(ICONV_DEPENDS) $(INTL_DEPENDS)
   TITLE:=Alternatively Licensed Program for Internet News and Email
   URL:=http://alpine.x10host.com/alpine/
 endef
