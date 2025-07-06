@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=alpine
 PKG_VERSION:=2.25
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://alpineapp.email/alpine/release/src/Old
@@ -28,7 +28,7 @@ include $(INCLUDE_DIR)/nls.mk
 define Package/alpine/Default
   SECTION:=mail
   CATEGORY:=Mail
-  DEPENDS:=+libopenssl +libncurses +libpthread +libpam $(ICONV_DEPENDS) $(INTL_DEPENDS)
+  DEPENDS:= +USE_GLIBC:libcrypt-compat +libopenssl +libncurses +libpthread +libpam $(ICONV_DEPENDS) $(INTL_DEPENDS)
   TITLE:=Alternatively Licensed Program for Internet News and Email
   URL:=http://alpine.x10host.com/alpine/
 endef
