@@ -1,0 +1,129 @@
+ decode.c   | 12 ++++++------
+ encode.c   |  2 +-
+ unixpk.c   |  4 ++--
+ uudecode.c |  8 ++++----
+ 4 files changed, 13 insertions(+), 13 deletions(-)
+
+--- a/decode.c
++++ b/decode.c
+@@ -652,7 +652,7 @@ int handlePartial(struct part *inpart, c
+ 	sprintf(buf, "%sCT", dir);
+ 	partfile = os_createnewfile(buf);
+ 	if (!partfile) {
+-	    os_perror(buf);
++	    perror(buf);
+ 	    goto ignore;
+ 	}
+ 	fprintf(partfile, "%d\n", nparts);
+@@ -685,7 +685,7 @@ int handlePartial(struct part *inpart, c
+     sprintf(buf, "%s%d", dir, thispart);
+     partfile = os_createnewfile(buf);
+     if (!partfile) {
+-	os_perror(buf);
++	perror(buf);
+ 	goto ignore;
+     }
+ 
+@@ -759,14 +759,14 @@ int handlePartial(struct part *inpart, c
+     sprintf(buf, "%sFULL", dir);
+     outfile = os_createnewfile(buf);
+     if (!outfile) {
+-	os_perror(buf);
++	perror(buf);
+ 	return 1;
+     }
+     for (i=1; i<=nparts; i++) {
+ 	sprintf(buf, "%s%d", dir, i);
+ 	partfile = fopen(buf, "r");
+ 	if (!partfile) {
+-	    os_perror(buf);
++	    perror(buf);
+ 	    return 1;
+ 	}
+ 	while (fgets(buf, sizeof(buf), partfile)) {
+@@ -784,7 +784,7 @@ int handlePartial(struct part *inpart, c
+     sprintf(buf, "%sFULL", dir);
+     outfile = fopen(buf, "r");
+     if (!outfile) {
+-	os_perror(buf);
++	perror(buf);
+ 	return 1;
+     }
+     outpart = part_init(outfile);
+@@ -885,7 +885,7 @@ int handleText(struct part *inpart, enum
+ 
+     descfile = os_createnewfile(TEMPFILENAME);
+     if (!descfile) {
+-	os_perror(TEMPFILENAME);
++	perror(TEMPFILENAME);
+ 	ignoreMessage(inpart);
+ 	return 1;
+     }
+--- a/encode.c
++++ b/encode.c
+@@ -117,7 +117,7 @@ int encode(FILE *infile, FILE *applefile
+ 	    outfile = os_createnewfile(buf);
+ 	}
+ 	if (!outfile) {
+-	    os_perror(buf);
++	    perror(buf);
+             return 1;
+         }
+ 	
+--- a/unixpk.c
++++ b/unixpk.c
+@@ -175,14 +175,14 @@ int main(int argc, char **argv)
+ 
+     infile = fopen(fname, "r");
+     if (!infile) {
+-	os_perror(fname);
++	perror(fname);
+ 	exit(1);
+     }
+ 
+     if (descfname) {
+ 	descfile = fopen(descfname, "r");
+ 	if (!descfile) {
+-	    os_perror(descfname);
++	    perror(descfname);
+ 	    exit(1);
+ 	}
+     }
+--- a/uudecode.c
++++ b/uudecode.c
+@@ -441,7 +441,7 @@ saveUuFile(struct part *inpart, char *fn
+     sprintf(buf, "%s%d", dir, part);
+     partfile = os_createnewfile(buf);
+         if (!partfile) {
+-	os_perror(buf);
++	perror(buf);
+ 	return 1;
+     }
+     if (firstline) fputs(firstline, partfile);
+@@ -454,7 +454,7 @@ saveUuFile(struct part *inpart, char *fn
+ 	    sprintf(buf, "%sCT", dir);
+ 	    partfile = os_createnewfile(buf);
+ 	    if (!partfile) {
+-		os_perror(buf);
++		perror(buf);
+ 	    }
+ 	    else {
+ 		fprintf(partfile, "%d\n", nparts);
+@@ -658,7 +658,7 @@ static FILE *startDescFile(char *fname)
+ 
+     descfile = os_createnewfile(buf);
+     if (!descfile) {
+-	os_perror(buf);
++	perror(buf);
+ 	return 0;
+     }
+     return descfile;
+@@ -706,7 +706,7 @@ uudecodefiles(char *dir, int nparts)
+ 	sprintf(buf, "%s%d", dir, part);
+ 	infile = fopen(buf, "r");
+ 	if (!infile) {
+-	    os_perror(buf);
++	    perror(buf);
+ 	    if (outfile) fclose(outfile);
+ 	    remove(TEMPFILENAME);
+ 	    return 1;

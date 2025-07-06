@@ -9,13 +9,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mpack
 PKG_VERSION:=1.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=NLPL
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://fossies.org/linux/misc/old
 PKG_HASH:=274108bb3a39982a4efc14fb3a65298e66c8e71367c3dabf49338162d207a94c
 
+PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
