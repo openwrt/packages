@@ -64,7 +64,7 @@ endef
 define Package/samba4-libs
   $(call Package/samba4/Default)
   TITLE+= libs
-  DEPENDS:= +libtirpc +libreadline +libpopt +libcap +zlib +libgnutls +libtasn1 +libuuid +libopenssl +libpthread +KERNEL_IO_URING:liburing \
+  DEPENDS:= +USE_GLIBC:libcrypt-compat +libtirpc +libreadline +libpopt +libcap +zlib +libgnutls +libtasn1 +libuuid +libopenssl +libpthread +KERNEL_IO_URING:liburing \
 	+PACKAGE_icu:icu \
 	+PACKAGE_libpam:libpam \
 	+SAMBA4_SERVER_VFS:attr \
