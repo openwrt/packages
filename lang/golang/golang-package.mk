@@ -203,7 +203,7 @@ GO_PKG_TARGET_VARS= \
 	GOMIPS="$(GO_MIPS)" \
 	GOMIPS64="$(GO_MIPS64)" \
 	GOPPC64="$(GO_PPC64)" \
-	CGO_ENABLED=1 \
+	CGO_ENABLED=$(if $(GO_PPC64),0,1) \
 	CC="$(TARGET_CC)" \
 	CXX="$(TARGET_CXX)" \
 	CGO_CFLAGS="$(filter-out $(GO_CFLAGS_TO_REMOVE),$(TARGET_CFLAGS))" \
@@ -230,8 +230,10 @@ GO_PKG_DEFAULT_ASMFLAGS= \
 
 GO_PKG_DEFAULT_LDFLAGS= \
 	-buildid '$(SOURCE_DATE_EPOCH)' \
-	-linkmode external \
-	-extldflags '$(patsubst -z%,-Wl$(comma)-z$(comma)%,$(TARGET_LDFLAGS))'
+	$(if $(GO_PPC64),, \
+		-linkmode external \
+		-extldflags '$(patsubst -z%,-Wl$(comma)-z$(comma)%,$(TARGET_LDFLAGS))' \
+	)
 
 GO_PKG_CUSTOM_LDFLAGS= \
 	$(GO_PKG_LDFLAGS) \
