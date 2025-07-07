@@ -1,0 +1,32 @@
+From d9852bd5b76ca65f283929e803b87343942ecb1f Mon Sep 17 00:00:00 2001
+From: Konstantin Demin <rockdrilla@gmail.com>
+Date: Tue, 1 Jul 2025 14:35:36 +0200
+Subject: setproject: fix openat() call
+
+It looks like that openat() call was copy-pasted from above fstatat() call.
+However, manpage for openat() doesn't mention AT_SYMLINK_NOFOLLOW.
+Furthermore, AT_SYMLINK_NOFOLLOW constant value (0x100) sometimes (!) clashes
+with O_CREAT constant value which is defined as 0100 (0x40) OR 0x100 (yes, two
+different values for the same constant appear in headers). This produces build
+errors when fortifying defines (-D_FORTIFY_SOURCE) are in effect (e.g. with
+glibc 2.41). In order to keep correct behavior, use O_NOFOLLOW instead of
+AT_SYMLINK_NOFOLLOW.
+
+Fixes: e61d46c65899ced9599c93a6128f19d8759fcad8
+Signed-off-by: Konstantin Demin <rockdrilla@gmail.com>
+Signed-off-by: Jan Kara <jack@suse.cz>
+---
+ setproject.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/setproject.c
++++ b/setproject.c
+@@ -73,7 +73,7 @@ static void setproject_recurse(int dirfd
+ 		if (!S_ISDIR(st.st_mode) && !S_ISREG(st.st_mode))
+ 			continue;
+ 
+-		int fd = openat(dirfd, d->d_name, AT_SYMLINK_NOFOLLOW);
++		int fd = openat(dirfd, d->d_name, O_NOFOLLOW);
+ 		if (fd < 0) {
+ 			errstr(_("error opening %s: %m"), d->d_name);
+ 			errno = 0;
