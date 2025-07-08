@@ -14,6 +14,13 @@
 # option username  - your cloudflare e-mail
 # option password  - cloudflare api key, you can get it from cloudflare.com/my-account/
 # option domain    - "hostname@yourdomain.TLD"
+# option param_opt - (Optional) key=value pairs that are separated by space
+#                    if duplicate keys found, only the last occurrence will be used
+#                    example: "zone_id=123456789 dns_record_id=987654321"
+#                    current supported keys:
+#                    1. zone_id (API: GET https://api.cloudflare.com/client/v4/zones)
+#                       note: zone_id must be specified if dns_record_id is specified
+#                    2. dns_record_id (API: GET https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records)
 #
 # The proxy status would not be changed by this script. Please change it in Cloudflare dashboard manually.
 #
@@ -25,6 +32,31 @@
 [ -z "$username" ] && write_log 14 "Service section not configured correctly! Missing key as 'username'"
 [ -z "$password" ] && write_log 14 "Service section not configured correctly! Missing secret as 'password'"
 [ $use_https -eq 0 ] && use_https=1	# force HTTPS
+
+# parse param_opt
+if [ -n "$param_opt" ]; then
+	for pair in $param_opt; do
+		case $pair in
+		zone_id=*)
+			zone_id=${pair#*=}
+			write_log 7 "User defined zone_id: $zone_id"
+			;;
+		dns_record_id=*)
+			dns_record_id=${pair#*=}
+			write_log 7 "User defined dns_record_id: $dns_record_id"
+			;;
+		*)
+			# Ignore others
+			;;
+		esac
+	done
+fi
+
+# If dns_record_id is specified, zone_id must also be specified
+if [ -n "$dns_record_id" ] && [ -z "$zone_id" ]; then
+	write_log 4 "zone_id cannot be empty if dns_record_id is specified"
+	return 127
+fi
 
 # used variables
 local __HOST __DOMAIN __TYPE __URLBASE __PRGBASE __RUNPROG __DATA __IPV6 __ZONEID __RECID
@@ -140,14 +172,20 @@ else
 fi
 __PRGBASE="$__PRGBASE --header 'Content-Type: application/json' "
 
+# read zone id for registered domain.TLD
+__RUNPROG="$__PRGBASE --request GET '$__URLBASE/zones?name=$__DOMAIN'"
+cloudflare_transfer || return 1
+
 if [ -n "$zone_id" ]; then
-	__ZONEID="$zone_id"
+	# validate user defined zone id
+	__ZONEID=$(jsonfilter -i $DATFILE -e "@.result[@.id='$zone_id'].id")
+	[ -z "$__ZONEID" ] && {
+		write_log 4 "Invalid user defined zone_id for domain.tld: '$__DOMAIN'"
+		return 127
+	}
 else
-	# read zone id for registered domain.TLD
-	__RUNPROG="$__PRGBASE --request GET '$__URLBASE/zones?name=$__DOMAIN'"
-	cloudflare_transfer || return 1
 	# extract zone id
-	__ZONEID=$(grep -o '"id":\s*"[^"]*' $DATFILE | grep -o '[^"]*$' | head -1)
+	__ZONEID=$(jsonfilter -i $DATFILE -e "@.result.*.id" | head -1)
 	[ -z "$__ZONEID" ] && {
 		write_log 4 "Could not detect 'zone id' for domain.tld: '$__DOMAIN'"
 		return 127
@@ -157,12 +195,29 @@ fi
 # read record id for A or AAAA record of host.domain.TLD
 __RUNPROG="$__PRGBASE --request GET '$__URLBASE/zones/$__ZONEID/dns_records?name=$__HOST&type=$__TYPE'"
 cloudflare_transfer || return 1
-# extract record id
-__RECID=$(grep -o '"id":\s*"[^"]*' $DATFILE | grep -o '[^"]*$' | head -1)
-[ -z "$__RECID" ] && {
-	write_log 4 "Could not detect 'record id' for host.domain.tld: '$__HOST'"
-	return 127
-}
+
+if [ -n "$dns_record_id" ]; then
+	# validate user defined record id
+	__RECID=$(jsonfilter -i $DATFILE -e "@.result[@.id='$dns_record_id'].id")
+	[ -z "$__RECID" ] && {
+		write_log 4 "Invalid user defined dns_record_id for host.domain.tld: '$__HOST'"
+		return 127
+	}
+else
+	# extract record id
+	__RECID=$(jsonfilter -i $DATFILE -e "@.result.*.id" | head -1)
+	[ -z "$__RECID" ] && {
+		write_log 4 "Could not detect 'record id' for host.domain.tld: '$__HOST'"
+		return 127
+	}
+fi
+
+# If dns_record_id is specified, grab the stored IP for that specific record
+# So that the IP checking behavior below works even for domains with multiple IPs
+if [ -n "$dns_record_id" ]; then
+	__RUNPROG="$__PRGBASE --request GET '$__URLBASE/zones/$__ZONEID/dns_records/$__RECID'"
+	cloudflare_transfer || return 1
+fi
 
 # extract current stored IP
 __DATA=$(grep -o '"content":\s*"[^"]*' $DATFILE | grep -o '[^"]*$' | head -1)
