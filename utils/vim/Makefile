@@ -8,13 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vim
-PKG_VERSION:=9.0
+PKG_VERSION:=9.1
 PKG_RELEASE:=1
-VIMVER:=90
+VIMVER:=91
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://ftp.vim.org/pub/vim/unix
-PKG_HASH:=a6456bc154999d83d0c20d968ac7ba6e7df0d02f3cb6427fb248660bacfb336e
+PKG_SOURCE_URL:=https://www.vim.org/downloads
+PKG_HASH:=9c2d1d6763a672f6c5210a2bc4bad5a58e4eb8e8e3f293d950d9647811647ec7
+
 PKG_MAINTAINER:=Marko Ratkaj <markoratkaj@gmail.com>
 PKG_LICENSE:=Vim
 PKG_LICENSE_FILES:=LICENSE
