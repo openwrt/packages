@@ -1,0 +1,11 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -197,7 +197,7 @@ if (SKBUILD OR ${CMAKE_VERSION} VERSION_
+     find_package(PythonInterp REQUIRED)
+     find_package(PythonLibs)
+ else()
+-    find_package(Python REQUIRED COMPONENTS Interpreter Development)
++    find_package(Python COMPONENTS Interpreter Development)
+     # define variables for compatibility. refactor once older cmake unsupported
+     if (Python_FOUND)
+         set(PYTHONLIBS_FOUND ${Python_FOUND})
