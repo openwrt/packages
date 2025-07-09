@@ -8,23 +8,23 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dovecot-pigeonhole
-PKG_VERSION_PLUGIN:=0.5.21
+PKG_VERSION_PLUGIN:=2.4.0
 PKG_VERSION_DOVECOT:=$(shell make --no-print-directory -C ../dovecot/ val.PKG_VERSION V=s)
 PKG_VERSION:=$(PKG_VERSION_DOVECOT).$(PKG_VERSION_PLUGIN)
 PKG_RELEASE:=1
 
-DOVECOT_VERSION:=2.3
+DOVECOT_VERSION:=2.4
 
-PKG_SOURCE:=dovecot-$(DOVECOT_VERSION)-pigeonhole-$(PKG_VERSION_PLUGIN).tar.gz
+PKG_SOURCE:=dovecot-pigeonhole-$(PKG_VERSION_PLUGIN).tar.gz
 PKG_SOURCE_URL:=https://pigeonhole.dovecot.org/releases/$(DOVECOT_VERSION)
-PKG_HASH:=1ca71d2659076712058a72030288f150b2b076b0306453471c5261498d3ded27
+PKG_HASH:=0ed08ae163ac39a9447200fbb42d7b3b05d35e91d99818dd0f4afd7ad1dbc753
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING COPYING.LGPL
 PKG_CPE_ID:=cpe:/a:dovecot:pigeonhole
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/dovecot-$(DOVECOT_VERSION)-pigeonhole-$(PKG_VERSION_PLUGIN)
+PKG_BUILD_DIR:=$(BUILD_DIR)/dovecot-pigeonhole-$(PKG_VERSION_PLUGIN)
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
