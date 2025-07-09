@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shadow
-PKG_VERSION:=4.8.1
-PKG_RELEASE:=3
+PKG_VERSION:=4.18.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/shadow-maint/shadow/releases/download/$(PKG_VERSION)
-PKG_HASH:=a3ad4630bdc41372f02a647278a8c3514844295d36eefe68ece6c3a641c1ae62
+PKG_HASH:=add4604d3bc410344433122a819ee4154b79dd8316a56298c60417e637c07608
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=BSD-3-Clause
@@ -27,12 +27,12 @@ PKG_BUILD_DEPENDS:=libxcrypt
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
+# getsubids wants libsubid.so.5
 SHADOW_APPLETS := \
 	chage chfn chgpasswd chpasswd chsh expiry faillog gpasswd \
-	groupadd groupdel groupmems groupmod groups grpck grpconv grpunconv \
-	lastlog login logoutd newgidmap newgrp newuidmap newusers nologin \
-	passwd pwck pwconv pwunconv su \
-	useradd userdel usermod vipw
+	groupadd groupdel groupmems groupmod grpck grpconv grpunconv \
+	login logoutd newgidmap newgrp newuidmap newusers nologin \
+	passwd pwck pwconv pwunconv su useradd userdel usermod vipw
 
 CONFIGURE_ARGS += \
 	--without-audit \
@@ -101,7 +101,7 @@ Package/shadow-utils/description = $(Package/shadow/description)
 define Package/shadow-common
   $(call Package/shadow/Default)
   TITLE:=Shared definitions for the PLD Linux shadow utilities
-  DEPENDS:=$(ICONV_DEPENDS) $(INTL_DEPENDS)
+  DEPENDS:= libbsd $(ICONV_DEPENDS) $(INTL_DEPENDS)
   HIDDEN:=1
 endef
 
