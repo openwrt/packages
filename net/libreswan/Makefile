@@ -38,6 +38,7 @@ endef
 define Package/libreswan
   $(Package/libreswan/default)
   DEPENDS:= \
+	  +USE_GLIBC:libcrypt-compat \
 	  +kmod-ip-vti +IPV6:kmod-ip6-vti \
 	  +kmod-ipsec +kmod-ipsec4 +IPV6:kmod-ipsec6 \
 	  +ip-full +kmod-xfrm-interface \
