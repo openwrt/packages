@@ -22,10 +22,15 @@ PKG_CPE_ID:=cpe:/a:debian:shadow
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
-PKG_BUILD_DEPENDS:=libxcrypt
+PKG_BUILD_DEPENDS:=USE_MUSL:libxcrypt
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
+
+ifneq ($(CONFIG_USE_MUSL),)
+  #hack to get libxcrypt working
+  TARGET_LDFLAGS:=-L$(STAGING_DIR)/usr/lib/libxcrypt $(TARGET_LDFLAGS)
+endif
 
 # getsubids wants libsubid.so.5
 SHADOW_APPLETS := \
@@ -101,7 +106,7 @@ Package/shadow-utils/description = $(Package/shadow/description)
 define Package/shadow-common
   $(call Package/shadow/Default)
   TITLE:=Shared definitions for the PLD Linux shadow utilities
-  DEPENDS:= libbsd $(ICONV_DEPENDS) $(INTL_DEPENDS)
+  DEPENDS:= +USE_GLIBC:libcrypt-compat libbsd $(ICONV_DEPENDS) $(INTL_DEPENDS)
   HIDDEN:=1
 endef
 
@@ -124,9 +129,6 @@ $(foreach u,$(SHADOW_APPLETS),$(eval $(call GenPlugin,$(u))))
 define Package/shadow-common/conffiles
 /etc/login.defs
 endef
-
-#hack to get libxcrypt working
-TARGET_LDFLAGS:=-L$(STAGING_DIR)/usr/lib/libxcrypt $(TARGET_LDFLAGS)
 
 define Package/shadow-common/install
 	$(INSTALL_DIR) $(1)/etc
