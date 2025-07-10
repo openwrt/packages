@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xupnpd
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/clark15b/xupnpd
@@ -28,7 +28,7 @@ endef
 define Package/xupnpd
   SECTION:=multimedia
   CATEGORY:=Multimedia
-  DEPENDS:=+liblua +libopenssl
+  DEPENDS:= +USE_GLIBC:libcrypt-compat +liblua +libopenssl
   TITLE:=eXtensible UPnP agent
   URL:=http://xupnpd.org/
 endef
