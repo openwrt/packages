@@ -106,6 +106,68 @@ define Package/snmptrapd-nossl/description
   This package contains the notification receiver daemon (without SSL Support)
 endef
 
+
+define Package/libnetsnmp-ssl
+  $(call Package/libnetsnmp/default)
+  TITLE+= (with SSL Support)
+  VARIANT:=ssl
+  DEPENDS+= +libopenssl
+  CONFLICTS:=libnetsnmp-nossl
+endef
+
+define Package/libnetsnmp-ssl/description
+  This package contains shared libraries (with SSL Support)
+endef
+
+define Package/snmp-utils-ssl
+  $(call Package/net-snmp/Default)
+  TITLE:=net-snmp - utilities (with SSL support)
+  DEPENDS:=+libnetsnmp-ssl
+  PROVIDES:=snmp-utils
+  VARIANT:=ssl
+  CONFLICTS:=snmp-utils-nossl
+endef
+
+define Package/snmp-utils-ssl/description
+  $(call Package/net-snmp/Default/description)
+  This package contains SNMP client utilities (with SSL Support):
+    - snmpget
+    - snmpset
+    - snmpstatus
+    - snmptest
+    - snmptrap
+    - snmpwalk
+endef
+
+define Package/snmpd-ssl
+  $(call Package/net-snmp/Default)
+  TITLE:=net-snmp - daemon (with SSL Support)
+  DEPENDS:=+libnetsnmp-ssl
+  PROVIDES:=snmpd
+  VARIANT:=ssl
+  CONFLICTS:=snmpd-nossl
+endef
+
+define Package/snmpd-ssl/description
+  $(call Package/net-snmp/Default/description)
+  This package contains the snmpd daemon (with SSL Support)
+endef
+
+define Package/snmptrapd-ssl
+  $(call Package/net-snmp/Default)
+  TITLE:=net-snmp - notification receiver daemon (with SSL Support)
+  DEPENDS:=+libnetsnmp-ssl
+  PROVIDES:=snmptrapd
+  VARIANT:=ssl
+  CONFLICTS:=snmptrapd-nossl
+endef
+
+define Package/snmptrapd-ssl/description
+  $(call Package/net-snmp/Default/description)
+  This package contains the notification receiver daemon (with SSL Support)
+endef
+
+
 define Package/snmp-mibs
   $(call Package/net-snmp/Default)
   TITLE:=Open source SNMP implementation (MIB-files)
@@ -205,7 +267,6 @@ CONFIGURE_ARGS += \
 	--with-mib-modules="$(SNMP_MIB_MODULES_INCLUDED)" \
 	--with-out-transports="$(SNMP_TRANSPORTS_EXCLUDED)" \
 	--with-transports="$(SNMP_TRANSPORTS_INCLUDED)" \
-	--without-openssl \
 	--without-libwrap \
 	--without-mysql \
 	--without-rpm \
@@ -223,6 +284,12 @@ CONFIGURE_VARS += \
 
 ifeq ($(CONFIG_IPV6),y)
 SNMP_TRANSPORTS_INCLUDED+= UDPIPv6
+endif
+
+ifeq ($(BUILD_VARIANT),ssl)
+CONFIGURE_ARGS+= --with-openssl="$(STAGING_DIR)/usr"
+else
+CONFIGURE_ARGS+= --without-openssl
 endif
 
 define Build/Compile
@@ -248,16 +315,19 @@ endef
 define Package/snmpd-nossl/conffiles
 /etc/config/snmpd
 endef
+Package/snmpd-ssl/conffiles = $(Package/snmpd-nossl/conffiles)
 
 define Package/libnetsnmp-nossl/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libnetsnmp{,agent,helpers,mibs}.so.* $(1)/usr/lib/
 endef
+Package/libnetsnmp-ssl/install = $(Package/libnetsnmp-nossl/install)
 
 define Package/snmp-utils-nossl/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/snmp{get,set,status,test,trap,walk} $(1)/usr/bin/
 endef
+Package/snmp-utils-ssl/install = $(Package/snmp-utils-nossl/install)
 
 define Package/snmpd-nossl/install
 	$(INSTALL_DIR) $(1)/etc/config
@@ -269,6 +339,7 @@ define Package/snmpd-nossl/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/snmpd $(1)/usr/sbin/snmpd
 endef
+Package/snmpd-ssl/install = $(Package/snmpd-nossl/install)
 
 define Package/snmptrapd-nossl/install
 	$(INSTALL_DIR) $(1)/etc/init.d
@@ -278,6 +349,8 @@ define Package/snmptrapd-nossl/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/snmptrapd $(1)/usr/sbin/
 endef
+Package/snmptrapd-ssl/install = $(Package/snmptrapd-nossl/install)
+
 
 define Package/snmp-mibs/install
 	$(INSTALL_DIR) $(1)/usr/share/snmp/mibs
@@ -288,4 +361,10 @@ $(eval $(call BuildPackage,libnetsnmp-nossl))
 $(eval $(call BuildPackage,snmp-utils-nossl))
 $(eval $(call BuildPackage,snmpd-nossl))
 $(eval $(call BuildPackage,snmptrapd-nossl))
+
+$(eval $(call BuildPackage,libnetsnmp-ssl))
+$(eval $(call BuildPackage,snmp-utils-ssl))
+$(eval $(call BuildPackage,snmpd-ssl))
+$(eval $(call BuildPackage,snmptrapd-ssl))
+
 $(eval $(call BuildPackage,snmp-mibs))
