@@ -86,6 +86,12 @@ mwan3_get_src_ip()
 	export "$1=$_src_ip"
 }
 
+readfile() {
+	[ -f "$2" ] || return 1
+	# read returns 1 on EOF
+	read -d'\0' $1 <"$2" || :
+}
+
 mwan3_get_mwan3track_status()
 {
 	local track_ips pid
