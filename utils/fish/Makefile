@@ -5,17 +5,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fish
-PKG_VERSION:=3.7.1
+PKG_VERSION:=4.0.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/fish-shell/fish-shell/releases/download/$(PKG_VERSION)
-PKG_HASH:=614c9f5643cd0799df391395fa6bbc3649427bb839722ce3b114d3bbc1a3b250
+PKG_HASH:=6e1ecdb164285fc057b2f35acbdc20815c1623099e7bb47bbfc011120adf7e83
 
 PKG_MAINTAINER:=Curtis Jiang <jqqqqqqqqqq@gmail.com>, Hao Dong <halbertdong@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:fishshell:fish
+PKG_BUILD_DEPENDS:=rust/host
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -25,7 +27,7 @@ define Package/fish
   CATEGORY:=Utilities
   SUBMENU:=Shells
   TITLE:=A smart and user-friendly command line shell
-  DEPENDS:=+libncurses +libstdcpp +libatomic +libpcre2-32
+  DEPENDS:=+libncurses +libstdcpp +libatomic +libpcre2-32 +libpcre2
   URL:=https://fishshell.com
 endef
 
@@ -37,8 +39,11 @@ define Package/fish/description
 endef
 
 CMAKE_OPTIONS += \
+	-DCMAKE_BUILD_TYPE=Release \
+	-DFISH_USE_SYSTEM_PCRE2=ON \
 	-DBUILD_DOCS=FALSE \
-	-DWITH_GETTEXT=FALSE
+	-DWITH_GETTEXT=FALSE \
+	-Wno-dev
 
 define Package/fish/install
 	$(INSTALL_DIR) $(1)/usr/bin
