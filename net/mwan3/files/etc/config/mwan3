@@ -3,6 +3,7 @@
 
 config globals 'globals'
 	option mmx_mask '0x3F00'
+	option unknown_wan_action 'none'
 
 config interface 'wan'
 	option enabled '1'
