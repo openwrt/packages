@@ -165,18 +165,19 @@ upnpd_uci_migration() {
 }
 
 upnpd_get_port_range() {
-	local var="$1"; shift
+	local var="$1"
+	shift
 	local val
 	config_get val "$@"
 	case "$val" in
-		[0-9]*[:-][0-9]*)
-			export -n -- "${var}_start=${val%%[:-]*}"
-			export -n -- "${var}_end=${val##*[:-]}"
-			;;
-		[0-9]*)
-			export -n -- "${var}_start=$val"
-			export -n -- "${var}_end="
-			;;
+	[0-9]*[:-][0-9]*)
+		export -n -- "${var}_start=${val%%[:-]*}"
+		export -n -- "${var}_end=${val##*[:-]}"
+		;;
+	[0-9]*)
+		export -n -- "${var}_start=$val"
+		export -n -- "${var}_end="
+		;;
 	esac
 }
 
@@ -188,7 +189,7 @@ upnpd_acl_entry_add() {
 	upnpd_get_port_range "ext" "$cfg" ext_ports "1-65535" # external ports: x, x-y, x:y
 	config_get int_addr "$cfg" int_addr "0.0.0.0/0"       # ip or network and subnet mask (internal)
 	upnpd_get_port_range "int" "$cfg" int_ports "1-65535" # internal ports: x, x-y, x:y or range
-	config_get comment "$cfg" comment "No description" # description
+	config_get comment "$cfg" comment "No description"    # description
 	echo "$action $ext_start${ext_end:+-}$ext_end $int_addr $int_start${int_end:+-}$int_end # $comment"
 }
 
@@ -244,23 +245,23 @@ upnpd() {
 
 	local conf ifname ifname6
 	. /lib/functions/network.sh
-	if [ -n "$external_iface" ] ; then
+	if [ -n "$external_iface" ]; then
 		network_get_device ifname "$external_iface"
 	else
-		if [ -n "$external_zone" ] ; then
+		if [ -n "$external_zone" ]; then
 			ifname=$($FW -q zone "$external_zone" 2>/dev/null | head -1)
 		else
-			network_find_wan external_iface && \
+			network_find_wan external_iface &&
 				network_get_device ifname "$external_iface"
 		fi
 	fi
-	if [ -n "$external_iface6" ] ; then
+	if [ -n "$external_iface6" ]; then
 		network_get_device ifname6 "$external_iface6"
 	else
-		if [ -n "$external_zone" ] ; then
+		if [ -n "$external_zone" ]; then
 			ifname6=$($FW -q zone "$external_zone" 2>/dev/null | head -1)
 		else
-			network_find_wan6 external_iface6 && \
+			network_find_wan6 external_iface6 &&
 				network_get_device ifname6 "$external_iface6"
 		fi
 	fi
@@ -273,78 +274,78 @@ upnpd() {
 		mkdir -p /var/etc
 
 		{
-		# Daemon
-		echo "enable_upnp=$(echo_yesno $enable_upnp_igd)"
-		echo "enable_pcp_pmp=$(echo_yesno $enable_pcp_natpmp)"
-		[ "$use_stun" != "0" ] && {
-			[ "$use_stun" = "1" ] && echo "ext_perform_stun=yes"
-			[ "$use_stun" = "allow-filtered" ] && echo "ext_perform_stun=allow-filtered"
-			echo "ext_stun_host=$(echo $stun_host | cut -d ":" -f 1)"
-			[ "$(echo $stun_host | cut -s -d ":" -f 2)" != "" ] && echo "ext_stun_port=$(echo $stun_host | cut -s -d ":" -f 2)"
-		}
-		echo "secure_mode=$(echo_yesno_inverse $allow_third_party_mapping)"
-		echo "pcp_allow_thirdparty=$(echo_yesno $allow_third_party_mapping)"
-		echo "ipv6_disable=$(echo_yesno $ipv6_disable)"
-		echo "system_uptime=$(echo_yesno $system_uptime)"
-		touch "$lease_file" && echo "lease_file=$lease_file"
-		[ "$ipv6_disable" = "0" ] && touch "${lease_file}-ipv6" && echo "lease_file6=${lease_file}-ipv6"
-
-		# UPnP IGD
-		[ "$enable_upnp_igd" = "1" ] && {
-			[ "$upnp_igd_compat" = "igdv1" ] &&
-			echo "force_igd_desc_v1=yes" ||
-			echo "force_igd_desc_v1=no"
-			echo "http_port=$port"
-			echo "notify_interval=$notify_interval"
-			[ -n "$upnp_igd_download" ] && echo "bitrate_down=$((upnp_igd_download * 1000))"
-			[ -n "$upnp_igd_upload" ] && echo "bitrate_up=$((upnp_igd_upload * 1000))"
-			[ -n "$upnp_igd_friendly_name" ] && echo "friendly_name=$upnp_igd_friendly_name"
-			echo "model_number=$model_number"
-			echo "serial=$serial_number"
-			[ -n "$presentation_url" ] && echo "presentation_url=$presentation_url"
-			[ -z "$uuid" ] && {
-				uuid="$(cat /proc/sys/kernel/random/uuid)"
-				uci set upnpd.config.uuid="$uuid"
-				uci commit upnpd
+			# Daemon
+			echo "enable_upnp=$(echo_yesno $enable_upnp_igd)"
+			echo "enable_pcp_pmp=$(echo_yesno $enable_pcp_natpmp)"
+			[ "$use_stun" != "0" ] && {
+				[ "$use_stun" = "1" ] && echo "ext_perform_stun=yes"
+				[ "$use_stun" = "allow-filtered" ] && echo "ext_perform_stun=allow-filtered"
+				echo "ext_stun_host=$(echo $stun_host | cut -d ":" -f 1)"
+				[ "$(echo $stun_host | cut -s -d ":" -f 2)" != "" ] && echo "ext_stun_port=$(echo $stun_host | cut -s -d ":" -f 2)"
 			}
-			[ "$uuid" != "nocli" ] && echo "uuid=$uuid"
-		}
+			echo "secure_mode=$(echo_yesno_inverse $allow_third_party_mapping)"
+			echo "pcp_allow_thirdparty=$(echo_yesno $allow_third_party_mapping)"
+			echo "ipv6_disable=$(echo_yesno $ipv6_disable)"
+			echo "system_uptime=$(echo_yesno $system_uptime)"
+			touch "$lease_file" && echo "lease_file=$lease_file"
+			[ "$ipv6_disable" = "0" ] && touch "${lease_file}-ipv6" && echo "lease_file6=${lease_file}-ipv6"
 
-		# Interfaces
-		echo "ext_ifname=$ifname"
-		echo "ext_ifname6=$ifname6"
-		[ -n "$external_ip" ] && echo "ext_ip=$external_ip"
-		local iface
-		for iface in ${internal_iface:-lan}; do
-			local device
-			network_get_device device "$iface" && echo "listening_ip=$device"
-		done
+			# UPnP IGD
+			[ "$enable_upnp_igd" = "1" ] && {
+				[ "$upnp_igd_compat" = "igdv1" ] &&
+					echo "force_igd_desc_v1=yes" ||
+					echo "force_igd_desc_v1=no"
+				echo "http_port=$port"
+				echo "notify_interval=$notify_interval"
+				[ -n "$upnp_igd_download" ] && echo "bitrate_down=$((upnp_igd_download * 1000))"
+				[ -n "$upnp_igd_upload" ] && echo "bitrate_up=$((upnp_igd_upload * 1000))"
+				[ -n "$upnp_igd_friendly_name" ] && echo "friendly_name=$upnp_igd_friendly_name"
+				echo "model_number=$model_number"
+				echo "serial=$serial_number"
+				[ -n "$presentation_url" ] && echo "presentation_url=$presentation_url"
+				[ -z "$uuid" ] && {
+					uuid="$(cat /proc/sys/kernel/random/uuid)"
+					uci set upnpd.config.uuid="$uuid"
+					uci commit upnpd
+				}
+				[ "$uuid" != "nocli" ] && echo "uuid=$uuid"
+			}
 
-		# Firewall backend
-		if [ "$FW" = "fw4" ]; then
-			echo "upnp_table_name=fw4"
-			echo "upnp_nat_table_name=fw4"
-			echo "upnp_forward_chain=upnp_forward"
-			echo "upnp_nat_chain=upnp_prerouting"
-			echo "upnp_nat_postrouting_chain=upnp_postrouting"
-		fi
+			# Interfaces
+			echo "ext_ifname=$ifname"
+			echo "ext_ifname6=$ifname6"
+			[ -n "$external_ip" ] && echo "ext_ip=$external_ip"
+			local iface
+			for iface in ${internal_iface:-lan}; do
+				local device
+				network_get_device device "$iface" && echo "listening_ip=$device"
+			done
 
-		echo "# Access Control List (ACL)"
-		for unsafeport in $deny_unsafe_ports; do
-			if [ "$unsafeport" -ge "1" ] 2>/dev/null && [ "$unsafeport" -le "65535" ] 2>/dev/null ||
-				([ "$(echo $unsafeport | cut -d "-" -f 1)" -ge "1" ] 2>/dev/null &&
-					[ "$(echo $unsafeport | cut -d "-" -f 1)" -le "65535" ] 2>/dev/null &&
-					[ "$(echo $unsafeport | cut -s -d "-" -f 2)" -ge "1" ] 2>/dev/null &&
-					[ "$(echo $unsafeport | cut -s -d "-" -f 2)" -le "65535" ] 2>/dev/null); then
-					echo "deny 1-65535 0.0.0.0/0 $unsafeport # Deny unsafe client port"
-			else
-					log "Unknown port or port range ignored ($unsafeport)" daemon.warn
+			# Firewall backend
+			if [ "$FW" = "fw4" ]; then
+				echo "upnp_table_name=fw4"
+				echo "upnp_nat_table_name=fw4"
+				echo "upnp_forward_chain=upnp_forward"
+				echo "upnp_nat_chain=upnp_prerouting"
+				echo "upnp_nat_postrouting_chain=upnp_postrouting"
 			fi
-		done
-		config_foreach upnpd_acl_entry_add perm_rule
-		echo "deny 1-65535 0.0.0.0/0 1-65535 # Deny ACL by default"
 
-		} > "$tmpconf"
+			echo "# Access Control List (ACL)"
+			for unsafeport in $deny_unsafe_ports; do
+				if [ "$unsafeport" -ge "1" ] 2>/dev/null && [ "$unsafeport" -le "65535" ] 2>/dev/null ||
+					([ "$(echo $unsafeport | cut -d "-" -f 1)" -ge "1" ] 2>/dev/null &&
+						[ "$(echo $unsafeport | cut -d "-" -f 1)" -le "65535" ] 2>/dev/null &&
+						[ "$(echo $unsafeport | cut -s -d "-" -f 2)" -ge "1" ] 2>/dev/null &&
+						[ "$(echo $unsafeport | cut -s -d "-" -f 2)" -le "65535" ] 2>/dev/null); then
+					echo "deny 1-65535 0.0.0.0/0 $unsafeport # Deny unsafe client port"
+				else
+					log "Unknown port or port range ignored ($unsafeport)" daemon.warn
+				fi
+			done
+			config_foreach upnpd_acl_entry_add perm_rule
+			echo "deny 1-65535 0.0.0.0/0 1-65535 # Deny ACL by default"
+
+		} >"$tmpconf"
 	fi
 
 	if [ -n "$ifname" ]; then
