@@ -205,7 +205,11 @@ endif
 
 # Target Go
 
-GO_ARCH_DEPENDS:=@(aarch64||arm||i386||i686||loongarch64||mips||mips64||mips64el||mipsel||powerpc64||riscv64||x86_64)
+GO_ARCH_LIST:=aarch64 arm i386 i686 loongarch64 mips mips64 mips64el mipsel riscv64 x86_64
+ifneq ($(ARCH)$(CONFIG_CPU_TYPE),powerpc64"e5500")
+  GO_ARCH_LIST += powerpc64
+endif
+GO_ARCH_DEPENDS:=@($(subst $(space),||,$(strip $(GO_ARCH_LIST))))
 
 
 # ASLR/PIE
