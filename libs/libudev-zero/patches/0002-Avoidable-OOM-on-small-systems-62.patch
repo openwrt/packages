@@ -1,0 +1,163 @@
+From 5eca08d71d51074bfe7b14fcf7d89318f4f6ff47 Mon Sep 17 00:00:00 2001
+From: liamHowatt <30486941+liamHowatt@users.noreply.github.com>
+Date: Tue, 5 Dec 2023 04:15:26 -0500
+Subject: [PATCH] Avoidable OOM on small systems (#62)
+
+* bandaid fix OOM
+
+* refactor fix OOM
+
+* Makefile: remove no longer needed -pthread option
+
+* libudev.pc.in: remove threads requirement
+
+---------
+
+Co-authored-by: illiliti <illiliti@protonmail.com>
+---
+ Makefile         |  2 +-
+ libudev.pc.in    |  1 -
+ udev_enumerate.c | 65 +++++++++++-------------------------------------
+ 3 files changed, 15 insertions(+), 53 deletions(-)
+
+--- a/Makefile
++++ b/Makefile
+@@ -5,7 +5,7 @@ PREFIX = /usr/local
+ LIBDIR = ${PREFIX}/lib
+ INCLUDEDIR = ${PREFIX}/include
+ PKGCONFIGDIR = ${LIBDIR}/pkgconfig
+-XCFLAGS = ${CPPFLAGS} ${CFLAGS} -std=c99 -fPIC -pthread -D_XOPEN_SOURCE=700 \
++XCFLAGS = ${CPPFLAGS} ${CFLAGS} -std=c99 -fPIC -D_XOPEN_SOURCE=700 \
+ 		  -Wall -Wextra -Wpedantic -Wmissing-prototypes -Wstrict-prototypes \
+ 		  -Wno-unused-parameter
+ XLDFLAGS = ${LDFLAGS} -shared -Wl,-soname,libudev.so.1
+--- a/libudev.pc.in
++++ b/libudev.pc.in
+@@ -9,5 +9,4 @@ Description: Daemonless replacement for
+ Version: @VERSION@
+ URL: https://github.com/illiliti/libudev-zero
+ Libs: -L${libdir} -ludev
+-Libs.private: -pthread
+ Cflags: -I${includedir}
+--- a/udev_enumerate.c
++++ b/udev_enumerate.c
+@@ -21,7 +21,6 @@
+ #include <string.h>
+ #include <limits.h>
+ #include <fnmatch.h>
+-#include <pthread.h>
+ 
+ #include "udev.h"
+ #include "udev_list.h"
+@@ -38,13 +37,6 @@ struct udev_enumerate {
+     int refcount;
+ };
+ 
+-struct udev_enumerate_thread {
+-    struct udev_enumerate *udev_enumerate;
+-    pthread_mutex_t *mutex;
+-    char path[PATH_MAX];
+-    pthread_t thread;
+-};
+-
+ int udev_enumerate_add_match_subsystem(struct udev_enumerate *udev_enumerate, const char *subsystem)
+ {
+     return udev_enumerate ? !!udev_list_entry_add(&udev_enumerate->subsystem_match, subsystem, NULL, 0) - 1 : -1;
+@@ -231,31 +223,27 @@ static int filter_sysattr(struct udev_en
+     return 1;
+ }
+ 
+-static void *add_device(void *ptr)
++static void add_device(struct udev_enumerate *udev_enumerate, const char *path)
+ {
+-    struct udev_enumerate_thread *thread = ptr;
+     struct udev_device *udev_device;
+ 
+-    udev_device = udev_device_new_from_syspath(thread->udev_enumerate->udev, thread->path);
++    udev_device = udev_device_new_from_syspath(udev_enumerate->udev, path);
+ 
+     if (!udev_device) {
+-        return NULL;
++        return;
+     }
+ 
+-    if (!filter_subsystem(thread->udev_enumerate, udev_device) ||
+-        !filter_sysname(thread->udev_enumerate, udev_device) ||
+-        !filter_property(thread->udev_enumerate, udev_device) ||
+-        !filter_sysattr(thread->udev_enumerate, udev_device)) {
++    if (!filter_subsystem(udev_enumerate, udev_device) ||
++        !filter_sysname(udev_enumerate, udev_device) ||
++        !filter_property(udev_enumerate, udev_device) ||
++        !filter_sysattr(udev_enumerate, udev_device)) {
+         udev_device_unref(udev_device);
+-        return NULL;
++        return;
+     }
+ 
+-    pthread_mutex_lock(thread->mutex);
+-    udev_list_entry_add(&thread->udev_enumerate->devices, udev_device_get_syspath(udev_device), NULL, 0);
+-    pthread_mutex_unlock(thread->mutex);
++    udev_list_entry_add(&udev_enumerate->devices, udev_device_get_syspath(udev_device), NULL, 0);
+ 
+     udev_device_unref(udev_device);
+-    return NULL;
+ }
+ 
+ static int filter_dot(const struct dirent *de)
+@@ -265,9 +253,7 @@ static int filter_dot(const struct diren
+ 
+ static int scan_devices(struct udev_enumerate *udev_enumerate, const char *path)
+ {
+-    struct udev_enumerate_thread *thread;
+-    pthread_mutex_t mutex;
+-    int i, cnt, ret = 1;
++    int i, cnt;
+     struct dirent **de;
+ 
+     cnt = scandir(path, &de, filter_dot, NULL);
+@@ -276,41 +262,18 @@ static int scan_devices(struct udev_enum
+         return 0;
+     }
+ 
+-    thread = calloc(cnt, sizeof(*thread));
+-
+-    if (!thread) {
+-        ret = 0;
+-        goto free_de;
+-    }
+-
+-    pthread_mutex_init(&mutex, NULL);
+-
+-    for (i = 0; i < cnt; i++) {
+-        thread[i].mutex = &mutex;
+-        thread[i].udev_enumerate = udev_enumerate;
+-
+-        snprintf(thread[i].path, sizeof(thread[i].path), "%s/%s", path, de[i]->d_name);
+-
+-        if (pthread_create(&thread[i].thread, NULL, add_device, &thread[i]) != 0) {
+-            ret = 0;
+-            break;
+-        }
+-    }
+-
+     for (i = 0; i < cnt; i++) {
+-        pthread_join(thread[i].thread, NULL);
++        char device_path[PATH_MAX];
++        snprintf(device_path, sizeof(device_path), "%s/%s", path, de[i]->d_name);
++        add_device(udev_enumerate, device_path);
+     }
+ 
+-    free(thread);
+-    pthread_mutex_destroy(&mutex);
+-
+-free_de:
+     for (i = 0; i < cnt; i++) {
+         free(de[i]);
+     }
+ 
+     free(de);
+-    return ret;
++    return 1;
+ }
+ 
+ int udev_enumerate_scan_devices(struct udev_enumerate *udev_enumerate)
