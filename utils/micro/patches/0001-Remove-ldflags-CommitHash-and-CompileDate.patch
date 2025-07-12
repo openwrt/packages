@@ -1,0 +1,26 @@
+From e4fffe3ea7db5a2d15983462f3ea8ca95c46f64b Mon Sep 17 00:00:00 2001
+From: Wesley Gimenes <wehagy@proton.me>
+Date: Sat, 26 Jul 2025 19:53:01 -0300
+Subject: [PATCH] Remove ldflags CommitHash and CompileDate
+Upstream-Status: Inappropriate [remove unused ldflags in packaging]
+
+For packaging purposes, the `CommitHash` and `CompileDate` are unnecessary.
+We're already tracking the version via tags,
+and these additional ldflags complicate reproducibility.
+
+Signed-off-by: Wesley Gimenes <wehagy@proton.me>
+---
+ cmd/micro/micro.go | 2 --
+ 1 file changed, 2 deletions(-)
+
+--- a/cmd/micro/micro.go
++++ b/cmd/micro/micro.go
+@@ -97,8 +97,6 @@ func InitFlags() {
+ 	if *flagVersion {
+ 		// If -version was passed
+ 		fmt.Println("Version:", util.Version)
+-		fmt.Println("Commit hash:", util.CommitHash)
+-		fmt.Println("Compiled on", util.CompileDate)
+ 		os.Exit(0)
+ 	}
+ 
