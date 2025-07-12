@@ -88,7 +88,7 @@ endef
 
 define Package/openssh-server
 	$(call Package/openssh/Default)
-	DEPENDS+= +libopenssl +zlib +openssh-keygen
+	DEPENDS+= +USE_GLIBC:libcrypt-compat +libopenssl +zlib +openssh-keygen
 	TITLE+= server
 	USERID:=sshd=22:sshd=22
 	VARIANT:=without-pam
@@ -110,7 +110,7 @@ endef
 
 define Package/openssh-server-pam
 	$(call Package/openssh/Default)
-	DEPENDS+= +libopenssl +zlib +libpthread +openssh-keygen +libpam
+	DEPENDS+= +USE_GLIBC:libcrypt-compat +libopenssl +zlib +libpthread +openssh-keygen +libpam
 	TITLE+= server (with PAM support)
 	VARIANT:=with-pam
 	USERID:=sshd=22:sshd=22

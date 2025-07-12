@@ -31,6 +31,7 @@ define Package/haproxy/Default
   CATEGORY:=Network
   TITLE:=TCP/HTTP Load Balancer
   URL:=https://www.haproxy.org/
+  DEPENDS:= +USE_GLIBC:libcrypt-compat +libpcre2 +libltdl +zlib +libpthread +liblua5.4 +libatomic
 endef
 
 define Package/haproxy/conffiles
@@ -46,7 +47,7 @@ endef
 define Package/haproxy
   $(call Package/haproxy/Default)
   TITLE+=with SSL support
-  DEPENDS+= +libpcre2 +libltdl +zlib +libpthread +liblua5.4 +libopenssl +libncurses +libreadline +libatomic
+  DEPENDS+= +libopenssl +libncurses +libreadline
   VARIANT:=ssl
 endef
 
@@ -59,7 +60,6 @@ define Package/haproxy-nossl
   $(call Package/haproxy/Default)
   TITLE+=without SSL support
   VARIANT:=nossl
-  DEPENDS+= +libpcre2 +libltdl +zlib +libpthread +liblua5.4 +libatomic
   CONFLICTS:=haproxy
 endef
 

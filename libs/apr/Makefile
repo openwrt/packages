@@ -33,7 +33,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/libapr
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libpthread +librt +libuuid
+  DEPENDS:= +USE_GLIBC:libcrypt-compat +libpthread +librt +libuuid
   TITLE:=Apache Portable Runtime Library
   URL:=https://apr.apache.org/
 endef

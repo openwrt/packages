@@ -32,7 +32,7 @@ define Package/uw-imap
   CATEGORY:=Libraries
   TITLE:=University of Washington IMAP toolkit
   URL:=https://www.washington.edu/imap/
-  DEPENDS:=+libpthread +libopenssl
+  DEPENDS:= +USE_GLIBC:libcrypt-compat +libpthread +libopenssl
 endef
 
 define Package/uw-imap/description

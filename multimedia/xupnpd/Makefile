@@ -28,7 +28,7 @@ endef
 define Package/xupnpd
   SECTION:=multimedia
   CATEGORY:=Multimedia
-  DEPENDS:=+liblua +libopenssl
+  DEPENDS:= +USE_GLIBC:libcrypt-compat +liblua +libopenssl
   TITLE:=eXtensible UPnP agent
   URL:=http://xupnpd.org/
 endef
