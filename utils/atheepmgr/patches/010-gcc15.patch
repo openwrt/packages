@@ -1,0 +1,85 @@
+--- a/atheepmgr.h
++++ b/atheepmgr.h
+@@ -70,13 +70,6 @@
+ #define BIT(_n)				(1 << (_n))
+ #define offsetof(_type, _member)	__builtin_offsetof(_type, _member)
+ 
+-enum {
+-	false = 0,
+-	true = 1
+-};
+-
+-typedef int bool;
+-
+ #define AR_SREV_VERSION_5211		0x4
+ #define AR_SREV_REVISION_5211		0
+ #define AR_SREV_VERSION_5212		0x5
+@@ -224,7 +217,7 @@ struct eepmap {
+ 	bool (*load_blob)(struct atheepmgr *aem);
+ 	bool (*load_eeprom)(struct atheepmgr *aem);
+ 	bool (*load_otp)(struct atheepmgr *aem);
+-	int (*check_eeprom)(struct atheepmgr *aem);
++	bool (*check_eeprom)(struct atheepmgr *aem);
+ 	void (*dump[EEP_SECT_MAX])(struct atheepmgr *aem);
+ 	bool (*update_eeprom)(struct atheepmgr *aem, int param,
+ 			      const void *data);
+--- a/eep_6174.c
++++ b/eep_6174.c
+@@ -45,7 +45,7 @@ static bool eep_6174_load_blob(struct at
+ 	return true;
+ }
+ 
+-static int eep_6174_check(struct atheepmgr *aem)
++static bool eep_6174_check(struct atheepmgr *aem)
+ {
+ 	struct eep_6174_priv *emp = aem->eepmap_priv;
+ 	struct qca6174_eeprom *eep = &emp->eep;
+--- a/eep_9300.c
++++ b/eep_9300.c
+@@ -165,20 +165,20 @@ static int ar9300_check_block_len(struct
+ 	return 1;
+ }
+ 
+-static int ar9300_check_eeprom_data(const struct ar9300_eeprom *eep)
++static bool ar9300_check_eeprom_data(const struct ar9300_eeprom *eep)
+ {
+ 	uint8_t txm, rxm;
+ 
+ 	txm = eep->baseEepHeader.txrxMask >> 4;
+ 	rxm = eep->baseEepHeader.txrxMask & 0x0f;
+ 	if (txm == 0x00 || txm == 0xf || rxm == 0x0 || rxm == 0xf)
+-		return 0;
++		return false;
+ 
+ 	if (!(eep->baseEepHeader.opCapFlags.opFlags & AR5416_OPFLAGS_11A) &&
+ 	    !(eep->baseEepHeader.opCapFlags.opFlags & AR5416_OPFLAGS_11G))
+-		return 0;
++		return false;
+ 
+-	return 1;
++	return true;
+ }
+ 
+ static int ar9300_process_blocks(struct atheepmgr *aem, int cptr)
+--- a/eep_9880.c
++++ b/eep_9880.c
+@@ -243,7 +243,7 @@ exit:
+ 	return aem->eep_len != 0;
+ }
+ 
+-static int eep_9880_check(struct atheepmgr *aem)
++static bool eep_9880_check(struct atheepmgr *aem)
+ {
+ 	struct eep_9880_priv *emp = aem->eepmap_priv;
+ 	struct qca9880_eeprom *eep = &emp->eep;
+--- a/eep_9888.c
++++ b/eep_9888.c
+@@ -45,7 +45,7 @@ static bool eep_9888_load_blob(struct at
+ 	return true;
+ }
+ 
+-static int eep_9888_check(struct atheepmgr *aem)
++static bool eep_9888_check(struct atheepmgr *aem)
+ {
+ 	struct eep_9888_priv *emp = aem->eepmap_priv;
+ 	struct qca9888_eeprom *eep = &emp->eep;
