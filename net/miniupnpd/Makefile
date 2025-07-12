@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=miniupnpd
-PKG_VERSION:=2.3.7
+PKG_VERSION:=2.3.9
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=https://miniupnp.tuxfamily.org/files
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=fbdd5501039730f04a8420ea2f8f54b7df63f9f04cde2dc67fa7371e80477bbe
+PKG_HASH:=66cb3c3d697ab2bb3a61d3c48628166d6ba328d7c2dbeb95898fdf2a3202af7b
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=BSD-3-Clause
@@ -27,38 +27,38 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/version.mk
 
 define Package/miniupnpd/Default
-  SECTION:=net
-  CATEGORY:=Network
-  DEPENDS:= \
+	SECTION:=net
+	CATEGORY:=Network
+	DEPENDS:= \
 	+libcap-ng \
 	+libmnl \
 	+libuuid
-  PROVIDES:=miniupnpd
-  TITLE:=Lightweight UPnP IGD & PCP/NAT-PMP daemon
-  SUBMENU:=Firewall
-  URL:=https://miniupnp.tuxfamily.org/
+	PROVIDES:=miniupnpd
+	TITLE:=Lightweight UPnP IGD & PCP/NAT-PMP daemon
+	SUBMENU:=Firewall
+	URL:=https://miniupnp.tuxfamily.org/
 endef
 
 define Package/miniupnpd-iptables
-  $(call Package/miniupnpd/Default)
-  DEPENDS+= \
+	$(call Package/miniupnpd/Default)
+	DEPENDS+= \
 	+IPV6:ip6tables \
 	+IPV6:libip6tc \
 	+iptables \
 	+libip4tc \
 	+libnetfilter-conntrack
-  TITLE+= (iptables)
-  VARIANT:=iptables
+	TITLE+= (iptables)
+	VARIANT:=iptables
 endef
 
 define Package/miniupnpd-nftables
-  $(call Package/miniupnpd/Default)
-  DEPENDS+= \
+	$(call Package/miniupnpd/Default)
+	DEPENDS+= \
 	+libnftnl
-  TITLE+= (nftables)
-  VARIANT:=nftables
-  DEFAULT_VARIANT:=1
-  CONFLICTS:=miniupnpd-iptables
+	TITLE+= (nftables)
+	VARIANT:=nftables
+	DEFAULT_VARIANT:=1
+	CONFLICTS:=miniupnpd-iptables
 endef
 
 define Package/miniupnpd/conffiles/Default
@@ -80,6 +80,8 @@ CONFIGURE_ARGS = \
 	--portinuse \
 	--firewall=$(BUILD_VARIANT) \
 	--disable-fork \
+	--disable-pppconn \
+	--vendorcfg \
 	--regex
 
 TARGET_CFLAGS += $(FPIC)
