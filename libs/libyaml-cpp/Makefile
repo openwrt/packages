@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libyaml-cpp
-PKG_VERSION:=0.7.0
+PKG_VERSION:=0.8.0
 PKG_RELEASE:=1
 
-PKG_SOURCE:=yaml-cpp-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/jbeder/yaml-cpp/tar.gz/yaml-cpp-$(PKG_VERSION)?
-PKG_HASH:=43e6a9fcb146ad871515f0d0873947e5d497a1c9c60c58cb102a97b47208b7c3
-PKG_BUILD_DIR:=$(BUILD_DIR)/yaml-cpp-yaml-cpp-$(PKG_VERSION)
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/jbeder/yaml-cpp
+PKG_SOURCE_VERSION:=$(PKG_VERSION)
+PKG_MIRROR_HASH:=b81c7d39efa379a52c4cd7a6ee00e21b546e26284a44aa6d4b836e339c655803
 
 PKG_MAINTAINER:= Steven Hessing <steven.hessing@gmail.com>
 PKG_LICENSE:=MIT
@@ -32,7 +32,7 @@ define Package/libyaml-cpp
   TITLE:=libyaml-cpp
   URL:=https://github.com/jbeder/yaml-cpp
   DEPENDS:=+libstdcpp
-  ABI_VERSION:=0.7
+  ABI_VERSION:=0.8
 endef
 
 define Package/libyaml-cpp/description
