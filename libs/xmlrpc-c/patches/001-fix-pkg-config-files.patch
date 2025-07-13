@@ -1,6 +1,6 @@
 --- a/lib/abyss/src/Makefile
 +++ b/lib/abyss/src/Makefile
-@@ -131,13 +131,15 @@ SOCKLIB=$(SOCKETLIBOPT)
+@@ -133,13 +133,15 @@ SOCKLIB=$(SOCKETLIBOPT)
  xmlrpc_abyss.pc:
  	rm -f $@
  	@echo "Echoes to '$@' suppressed here ..."
