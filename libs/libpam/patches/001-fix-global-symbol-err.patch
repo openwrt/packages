@@ -1,0 +1,19 @@
+--- a/modules/meson.build
++++ b/modules/meson.build
+@@ -1,8 +1,14 @@
+ pam_module_map = 'modules.map'
+ pam_module_map_path = meson.current_source_dir() / pam_module_map
+ 
+-pam_module_link_deps = ['..' / pam_module_map]
+-pam_module_link_args = ['-Wl,--version-script=' + pam_module_map_path]
++if meson.get_compiler('c').get_linker_id() == 'ld.mold'
++  # mold is strict about version scripts, disable for now
++  pam_module_link_deps = []
++  pam_module_link_args = []
++else
++  pam_module_link_deps = ['..' / pam_module_map]
++  pam_module_link_args = ['-Wl,--version-script=' + pam_module_map_path]
++endif
+ 
+ subdir('pam_access')
+ subdir('pam_canonicalize_user')
