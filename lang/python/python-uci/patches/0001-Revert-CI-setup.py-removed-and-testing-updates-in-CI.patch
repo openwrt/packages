@@ -1,0 +1,75 @@
+From 24dd211a0a99e95e79f5a6b2054e60dae878410d Mon Sep 17 00:00:00 2001
+From: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Date: Tue, 15 Jul 2025 10:18:19 +0200
+Subject: [PATCH] Revert "CI: setup.py removed and testing updates in CI"
+
+This commit adds setup.py back to be compatible with OpenWrt.
+OpenWrt ships Python 3.11 and that version is using bundled
+setuptools and pip. These versions for py-uci are kinda outdated,
+because in the latest release Stepan is using ext-modules
+via pyproject.toml, which is experimental [1] and thus this
+is not present in Python 3.11.
+
+Newer Python versions such as 3.12 and 3.13 are not shipping
+bunled setuptools anymore. This needs to be reworked to
+be working with OpenWrt build system.
+
+How it is implemented right now, Python packages
+can be compiled with pyproject.toml with OpenWrt. See this PR [2],
+but as said earlier newest features from setuptools are missing.
+
+[1] https://setuptools.pypa.io/en/stable/history.html#v74-1-0
+[2] https://github.com/openwrt/packages/pull/20801
+
+This reverts commit 8a1e5c3218f16f46a25379dc2e9651fa74a7d349.
+---
+ setup.py | 43 +++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 43 insertions(+)
+ create mode 100644 setup.py
+
+--- /dev/null
++++ b/setup.py
+@@ -0,0 +1,43 @@
++import os
++from setuptools import setup
++from setuptools.extension import Extension
++
++ext_compile_args = None
++ext_link_args = None
++
++if 'COVERAGE' in os.environ:
++    ext_compile_args = ["-fprofile-arcs", "-ftest-coverage"]
++    ext_link_args = ["-fprofile-arcs"]
++
++
++with open("README.md", "r") as fh:
++    long_description = fh.read()
++
++
++setup(
++    name='pyuci',
++    version='0.10.3',
++    author='CZ.NIC z.s.p.o',
++    author_email='karel.koci@nic.cz',
++    description='Python UCI bindings',
++    long_description=long_description,
++    long_description_content_type="text/markdown",
++    url="https://gitlab.nic.cz/turris/pyuci",
++    license="MIT",
++
++    packages=['euci'],
++    ext_modules=[
++        Extension("uci", ["ucimodule.c", "pyuci.c", "pyhelper.c"],
++                  libraries=["uci"], language="c",
++                  extra_compile_args=ext_compile_args,
++                  extra_link_args=ext_link_args)
++    ],
++
++    classifiers=[
++        "Development Status :: 5 - Production/Stable",
++        "License :: OSI Approved :: MIT License",
++        "Operating System :: POSIX :: Linux",
++        "Programming Language :: Python :: 3",
++    ],
++    python_requires='>=3.7',
++)
