@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-uci
-PKG_VERSION:=0.9.0
+PKG_VERSION:=0.10.3
 PKG_RELEASE:=1
 
 PYPI_NAME:=pyuci
-PKG_HASH:=865a45d48fb5d363f1230e94fa2c5b01ae6487f02f2180b0a6f78193a70166e2
+PKG_HASH:=3b0f72ea81ed7a7999b2eb73f57a93019c0d359efaa9efb44fdf377fa09c1da6
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
