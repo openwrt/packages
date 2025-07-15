@@ -6,7 +6,7 @@ Date:   Sat Aug 3 10:19:05 2024 -0600
 
 --- a/src/bin/keactrl/keactrl.in
 +++ b/src/bin/keactrl/keactrl.in
-@@ -112,7 +112,8 @@ get_pid_from_file() {
+@@ -116,7 +116,8 @@ get_pid_from_file() {
  
      # Extract the name portion (from last slash to last dot) of the config file name.
      local conf_name
