@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nfs-kernel-server
 PKG_VERSION:=2.8.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_HASH:=11e7c5847a8423a72931c865bd9296e7fd56ff270a795a849183900961711725
 
 PKG_SOURCE_URL:=@KERNEL/linux/utils/nfs-utils/$(PKG_VERSION)
@@ -27,6 +27,7 @@ PKG_CONFIG_DEPENDS:= \
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/nfs-kernel-server/Default
 	SECTION:=net
