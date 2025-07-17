@@ -13,6 +13,7 @@ PKG_NAME:=knot-resolver
 PKG_VERSION:=5.7.4
 PKG_RELEASE:=1
 
+# some random change
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://secure.nic.cz/files/knot-resolver
 PKG_HASH:=6b6da6ecf06828041afad44dfa227781f0ae34ad183a667008509355d18bd9c8
