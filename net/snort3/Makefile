@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=snort3
 PKG_VERSION:=3.9.1.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
@@ -27,8 +27,9 @@ define Package/snort3
   SECTION:=net
   CATEGORY:=Network
   DEPENDS:= \
+	    +@!(TARGET_powerpc||TARGET_mips||TARGET_mips64||TARGET_mipsel):gperftools-runtime \
 	    +(TARGET_x86||TARGET_x86_64):hyperscan-runtime \
-	    +gperftools-runtime +libstdcpp +libdaq3 +libdnet +libopenssl +libpcap +libpcre2 \
+	    +libstdcpp +libdaq3 +libdnet +libopenssl +libpcap +libpcre2 \
 	    +libpthread +libuuid +zlib +libhwloc +libtirpc @HAS_LUAJIT_ARCH +luajit +libatomic \
 	    +kmod-nft-queue +liblzma +ucode +ucode-mod-fs +ucode-mod-uci
   TITLE:=Lightweight Network Intrusion Detection System
