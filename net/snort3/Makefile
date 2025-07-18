@@ -22,21 +22,22 @@ PKG_CPE_ID:=cpe:/a:snort:snort
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
-define Package/snort3
-  SUBMENU:=Firewall
-  SECTION:=net
-  CATEGORY:=Network
-  DEPENDS:= \
-	    +(TARGET_x86||TARGET_x86_64):hyperscan-runtime \
-	    +libstdcpp +libdaq3 +libdnet +libopenssl +libpcap +libpcre2 \
-	    +libpthread +libuuid +zlib +libhwloc +libtirpc @HAS_LUAJIT_ARCH +luajit +libatomic \
-	    +kmod-nft-queue +liblzma +ucode +ucode-mod-fs +ucode-mod-uci \
-	    $(EXTRA_DEPENDS)
 ifeq ($(filter $(ARCH),mips mips64 mipsel powerpc),)
     EXTRA_DEPENDS:=+gperftools-runtime
 else
     EXTRA_DEPENDS:=
 endif
+
+SNORT3DEPS:=+(TARGET_x86||TARGET_x86_64):hyperscan-runtime \
+    +libstdcpp +libdaq3 +libdnet +libopenssl +libpcap +libpcre2 \
+    +libpthread +libuuid +zlib +libhwloc +libtirpc @HAS_LUAJIT_ARCH +luajit +libatomic \
+    +kmod-nft-queue +liblzma +ucode +ucode-mod-fs +ucode-mod-uci $(EXTRA_DEPENDS)
+
+define Package/snort3
+  SUBMENU:=Firewall
+  SECTION:=net
+  CATEGORY:=Network
+  DEPENDS:=$(SNORT3DEPS)
   TITLE:=Lightweight Network Intrusion Detection System
   URL:=http://www.snort.org/
   MENU:=1
