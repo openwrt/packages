@@ -30,10 +30,13 @@ define Package/snort3
 	    +(TARGET_x86||TARGET_x86_64):hyperscan-runtime \
 	    +libstdcpp +libdaq3 +libdnet +libopenssl +libpcap +libpcre2 \
 	    +libpthread +libuuid +zlib +libhwloc +libtirpc @HAS_LUAJIT_ARCH +luajit +libatomic \
-	    +kmod-nft-queue +liblzma +ucode +ucode-mod-fs +ucode-mod-uci
-	ifeq ($(filter $(ARCH),mips mips64 mipsel powerpc),)
-		DEPENDS+= +gperftools-runtime
-	endif
+	    +kmod-nft-queue +liblzma +ucode +ucode-mod-fs +ucode-mod-uci \
+	    $(EXTRA_DEPENDS)
+ifeq ($(filter $(ARCH),mips mips64 mipsel powerpc),)
+    EXTRA_DEPENDS:=+gperftools-runtime
+else
+    EXTRA_DEPENDS:=
+endif
   TITLE:=Lightweight Network Intrusion Detection System
   URL:=http://www.snort.org/
   MENU:=1
