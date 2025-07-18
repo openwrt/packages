@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gstreamer1
-PKG_VERSION:=1.24.12
+PKG_VERSION:=1.26.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=gstreamer-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gstreamer
-PKG_HASH:=b3522d1b4fe174fff3b3c7f0603493e2367bd1c43f5804df15b634bd22b1036f
+PKG_HASH:=f75334a3dff497c240844304a60015145792ecc3b6b213ac19841ccbd6fdf0ad
 PKG_BUILD_DIR:=$(BUILD_DIR)/gstreamer-$(PKG_VERSION)
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
@@ -101,7 +101,7 @@ endef
 define Package/libgstreamer1
   $(call Package/gstreamer1/Default)
   TITLE+= library (core)
-  DEPENDS+= +glib2 +libpthread +libxml2
+  DEPENDS+= +glib2 +libpthread +libxml2 +(powerpc||mips||mipsel):libatomic
   HIDDEN:=1
 endef
 
