@@ -225,7 +225,7 @@
 +SUBDIRS = .
  
  AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
- AM_CPPFLAGS += $(BOOST_INCLUDES)
+ AM_CPPFLAGS += -DDEFAULT_HOOKS_PATH=\"$(libdir)/kea/hooks\"
 --- a/src/lib/http/Makefile.am
 +++ b/src/lib/http/Makefile.am
 @@ -1,4 +1,4 @@
