@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mwan3
-PKG_VERSION:=2.11.19
-PKG_RELEASE:=5
+PKG_VERSION:=2.12.0
+PKG_RELEASE:=1
 PKG_MAINTAINER:=Florian Eckert <fe@dev.tdt.de>, \
 		Aaron Goodman <aaronjg@alumni.stanford.edu>
 PKG_LICENSE:=GPL-2.0
@@ -28,6 +28,7 @@ define Package/mwan3
      +IPV6:ip6tables \
      +iptables-mod-conntrack-extra \
      +iptables-mod-ipopt \
+     +rpcd-mod-ucode \
      +jshn
    TITLE:=Multiwan hotplug script with connection tracking support
    MAINTAINER:=Florian Eckert <fe@dev.tdt.de>
@@ -47,7 +48,7 @@ endef
 
 define Package/mwan3/postinst
 #!/bin/sh
-if [ -z "$${IPKG_INSTROOT}" ] && [ -x /etc/init.d/rpcd ]; then
+if [ -z "$${IPKG_INSTROOT}" ]; then
 	/etc/init.d/rpcd restart
 fi
 exit 0
@@ -55,7 +56,7 @@ endef
 
 define Package/mwan3/postrm
 #!/bin/sh
-if [ -z "$${IPKG_INSTROOT}" ] && [ -x /etc/init.d/rpcd ]; then
+if [ -z "$${IPKG_INSTROOT}" ]; then
 	/etc/init.d/rpcd restart
 fi
 exit 0
@@ -91,9 +92,9 @@ define Package/mwan3/install
 	$(INSTALL_DATA) ./files/lib/mwan3/mwan3.sh \
 		$(1)/lib/mwan3/
 
-	$(INSTALL_DIR) $(1)/usr/libexec/rpcd
-	$(INSTALL_BIN) ./files/usr/libexec/rpcd/mwan3 \
-		$(1)/usr/libexec/rpcd/
+	$(INSTALL_DIR) $(1)/usr/share/rpcd/ucode/
+	$(INSTALL_BIN) ./files/usr/share/rpcd/ucode/mwan3 \
+		$(1)/usr/share/rpcd/ucode/
 
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) ./files/usr/sbin/mwan3 \
