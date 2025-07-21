@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-libav
-PKG_VERSION:=1.26.2
+PKG_VERSION:=1.26.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=gst-libav-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gst-libav
-PKG_HASH:=2eceba9cae4c495bb4ea134c27f010356036f1fa1972db5f54833f5f6c9f8db0
+PKG_HASH:=2be7c7272f9a5b5e4d5ef211b948fb751f7048bcc3675bbe633cef6c6df682fe
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-libav-$(PKG_VERSION)
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
