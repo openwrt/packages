@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libcoap
 PKG_VERSION:=4.3.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/obgm/libcoap/tar.gz/v$(PKG_VERSION)?
@@ -86,12 +86,15 @@ endef
 define Package/coap-client/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/coap-client $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/coap-client-notls $(1)/usr/bin/
 endef
 
 define Package/coap-server/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/coap-server $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/coap-server-notls $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/coap-rd $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/coap-rd-notls $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,libcoap))
