@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wgsd
 PKG_VERSION:=0.3.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/jwhited/wgsd/tar.gz/v$(PKG_VERSION)?
@@ -17,7 +17,7 @@ PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=no-mips16
 
 GO_PKG:=github.com/jwhited/wgsd
-GO_PKG_EXCLUDES:=test
+GO_PKG_EXCLUDES:=cmd/coredns
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
@@ -29,11 +29,6 @@ define Package/wgsd/Default
   TITLE:=WireGuard Service Discovery
   URL:=https://github.com/jwhited/wgsd
   DEPENDS:=$(GO_ARCH_DEPENDS) +kmod-wireguard
-endef
-
-define Package/wgsd-coredns
-  $(call Package/wgsd/Default)
-  TITLE+= DNS-SD server
 endef
 
 define Package/wgsd-client
@@ -50,32 +45,13 @@ define Package/wgsd/Default/description
   - NAT-to-NAT WireGuard connectivity where UDP hole punching is supported.
 endef
 
-define Package/wgsd-coredns/description
-  $(call Package/wgsd/Default/description)
-
-  CoreDNS binary.
-endef
-
 define Package/wgsd-client/description
   $(call Package/wgsd/Default/description)
 
   Client binary.
 endef
 
-define Package/wgsd-coredns/conffiles
-/etc/Corefile
-endef
-
-define Package/wgsd-coredns/install
-	$(call GoPackage/Package/Install/Bin,$(PKG_INSTALL_DIR))
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/coredns $(1)/usr/bin/wgsd-coredns
-
-	$(INSTALL_DIR) $(1)/etc/
-	$(INSTALL_CONF) $(CURDIR)/files/Corefile $(1)/etc/Corefile
-	$(INSTALL_DIR) $(1)/etc/init.d/
-	$(INSTALL_BIN) $(CURDIR)/files/wgsd-coredns.init $(1)/etc/init.d/wgsd-coredns
-endef
+GO_PKG_CUSTOM_LDFLAGS += -w -s
 
 define Package/wgsd-client/install
 	$(call GoPackage/Package/Install/Bin,$(PKG_INSTALL_DIR))
@@ -83,5 +59,4 @@ define Package/wgsd-client/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/wgsd-client $(1)/usr/bin/wgsd-client
 endef
 
-$(eval $(call BuildPackage,wgsd-coredns))
 $(eval $(call BuildPackage,wgsd-client))
