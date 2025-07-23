@@ -104,8 +104,8 @@ CONFIGURE_ARGS += \
 	--disable-x11-autolaunch \
 	--with-session-socket-dir=/tmp \
 	--with-system-socket=/var/run/dbus/system_bus_socket \
-	--with-system-pid-file=/var/run/dbus.pid \
-	--with-dbus-user=root \
+	--with-system-pid-file=/var/run/dbus/dbus.pid \
+	--with-dbus-user=dbus \
 	--without-x \
 	--enable-qt-help=no \
 	--disable-xml-docs
