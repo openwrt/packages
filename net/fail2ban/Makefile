@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fail2ban
-PKG_VERSION:=0.11.2
-PKG_RELEASE:=9
+PKG_VERSION:=1.1.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/fail2ban/fail2ban/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=383108e5f8644cefb288537950923b7520f642e7e114efb843f6e7ea9268b1e0
+PKG_HASH:=474fcc25afdaf929c74329d1e4d24420caabeea1ef2e041a267ce19269570bae
 
 PKG_MAINTAINER:=Gerald Kerma <gandalf@gk2.net>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -20,8 +20,6 @@ PKG_CPE_ID:=cpe:/a:fail2ban:fail2ban
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python3-package.mk
-
-HOST_BUILD_DEPENDS:=2to3/host
 
 define Package/fail2ban
   SECTION:=net
@@ -50,7 +48,6 @@ define Package/fail2ban/conffiles
 endef
 
 define Build/Compile
-	cd $(PKG_BUILD_DIR) && ./fail2ban-2to3
 	$(call Py3Build/Compile)
 endef
 

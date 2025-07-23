@@ -1,0 +1,19 @@
+diff --git a/config/filter.d/dropbear.conf b/config/filter.d/dropbear.conf
+index b53295559b..99f455cae3 100644
+--- a/config/filter.d/dropbear.conf
++++ b/config/filter.d/dropbear.conf
+@@ -25,9 +25,11 @@ _daemon = dropbear
+ 
+ prefregex = ^%(__prefix_line)s<F-CONTENT>(?:[Ll]ogin|[Bb]ad|[Ee]xit).+</F-CONTENT>$
+ 
+-failregex = ^[Ll]ogin attempt for nonexistent user ('.*' )?from <HOST>:\d+$
+-            ^[Bb]ad (PAM )?password attempt for .+ from <HOST>(:\d+)?$
+-            ^[Ee]xit before auth \(user '.+', \d+ fails\): Max auth tries reached - user '.+' from <HOST>:\d+\s*$
++failregex = ^[Ll]ogin attempt for nonexistent user (?:'<F-USER>.*</F-USER>' )?from <HOST>:\d+$
++            ^[Bb]ad (?:PAM )?password attempt for '<F-USER>.+</F-USER>' from <HOST>(?::\d+)?$
++            ^[Ee]xit before auth from \<?<ADDR>:\d+\>?: (?:\([^\)]*\): )?Max auth tries reached - user '<F-USER>.+</F-USER>'\s*$
++            ^[Ee]xit before auth \(user '.+', \d+ fails\): Max auth tries reached - user '<F-USER>.+</F-USER>' from <HOST>:\d+\s*$
++            ^[Ee]xit before auth from \<<HOST>(:\d+)\>
+ 
+ ignoreregex = 
+ 
