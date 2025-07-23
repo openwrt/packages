@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dbus
 PKG_VERSION:=1.14.10
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://dbus.freedesktop.org/releases/dbus
@@ -32,6 +32,7 @@ define Package/dbus/Default
   CATEGORY:=Utilities
   TITLE:=Simple interprocess messaging system
   URL:=https://dbus.freedesktop.org/
+  USERID:=dbus=91:dbus=91
 endef
 
 define Package/dbus/Default/description
@@ -147,6 +148,8 @@ define Package/dbus/install
 	$(INSTALL_BIN) ./files/dbus.init $(1)/etc/init.d/dbus
 	$(INSTALL_DIR) $(1)/usr/share/dbus-1
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/dbus-1 $(1)/usr/share/
+	$(INSTALL_DIR) $(1)/etc/capabilities
+	$(INSTALL_DATA) ./files/dbus.json $(1)/etc/capabilities
 endef
 
 define Package/dbus-utils/install
