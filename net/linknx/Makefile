@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=linknx
-PKG_VERSION:=0.0.1.38
-PKG_RELEASE:=3
+PKG_VERSION:=0.0.1.39
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-${PKG_VERSION}.tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/linknx/linknx/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=00c53776c2e871295459ede922402d8ad0208367d2364781fdb92ddafad94d3d
+PKG_HASH:=d07199875c6e3f90871308989dd7d4240b67ce971d5908cb39592690341f8d0a
 
 PKG_MAINTAINER:=Othmar Truniger <github@truniger.ch>
 PKG_LICENSE:=GPL-2.0-or-later
