@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nlbwmon
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/jow-/nlbwmon.git
@@ -26,6 +26,7 @@ define Package/nlbwmon
   CATEGORY:=Network
   DEPENDS:=+libubox +libnl-tiny +zlib +kmod-nf-conntrack-netlink
   TITLE:=OpenWrt Traffic Usage Monitor
+  USERID:=nlbwmon=109:nlbwmon=109
 endef
 
 define Package/nlbwmon/install
@@ -40,6 +41,8 @@ define Package/nlbwmon/install
 	$(INSTALL_CONF) ./files/nlbwmon.config $(1)/etc/config/nlbwmon
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
 	$(INSTALL_BIN) ./files/nlbwmon.hotplug $(1)/etc/hotplug.d/iface/30-nlbwmon
+	$(INSTALL_DIR) $(1)/etc/capabilities
+	$(INSTALL_DATA) ./files/nlbwmon.json $(1)/etc/capabilities
 endef
 
 define Package/nlbwmon/conffiles
