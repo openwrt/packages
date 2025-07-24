@@ -9,11 +9,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qemu
-PKG_VERSION:=10.0.2
+PKG_VERSION:=10.1.0
 PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=ef786f2398cb5184600f69aef4d5d691efd44576a3cff4126d38d4c6fec87759
 PKG_SOURCE_URL:=https://download.qemu.org/
+PKG_HASH:=e0517349b50ca73ebec2fa85b06050d5c463ca65c738833bd8fc1f15f180be51
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=LICENSE tcg/LICENSE
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
@@ -355,6 +355,7 @@ CONFIGURE_ARGS +=			\
 	--$(if $(CONFIG_QEMU_UI_VNC),enable,disable)-vnc			\
 	--$(if $(CONFIG_QEMU_UI_VNC_JPEG),enable,disable)-vnc-jpeg		\
 	--$(if $(CONFIG_QEMU_UI_VNC_SASL),enable,disable)-vnc-sasl		\
+	--disable-dbus-display		\
 	--disable-vte			\
 	--enable-curses			\
 	--enable-iconv			\
@@ -418,6 +419,7 @@ CONFIGURE_ARGS +=			\
 	--disable-qom-cast-debug	\
 	--disable-rbd			\
 	--disable-rdma			\
+	--disable-rust			\
 	--disable-rutabaga-gfx          \
 	--disable-asan			\
 	--disable-tsan			\
