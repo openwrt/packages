@@ -1,0 +1,10 @@
+--- a/src/Cedar/Server.c
++++ b/src/Cedar/Server.c
+@@ -10749,6 +10754,7 @@ void SiGetCurrentRegion(CEDAR *c, char *region, UINT region_size)
+ // 
+ bool SiIsEnterpriseFunctionsRestrictedOnOpenSource(CEDAR *c)
+ {
++	return false;
+ 	char region[128];
+ 	bool ret = false;
+ 	// Validate arguments
