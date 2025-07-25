@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wgsd
 PKG_VERSION:=0.3.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/jwhited/wgsd/tar.gz/v$(PKG_VERSION)?
@@ -17,7 +17,6 @@ PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=no-mips16
 
 GO_PKG:=github.com/jwhited/wgsd
-GO_PKG_EXCLUDES:=test
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
@@ -65,6 +64,8 @@ endef
 define Package/wgsd-coredns/conffiles
 /etc/Corefile
 endef
+
+GO_PKG_CUSTOM_LDFLAGS += -w -s
 
 define Package/wgsd-coredns/install
 	$(call GoPackage/Package/Install/Bin,$(PKG_INSTALL_DIR))
