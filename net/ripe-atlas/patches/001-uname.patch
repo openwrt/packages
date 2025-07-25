@@ -1,0 +1,30 @@
+From 64a088ae6c2752888966167508e1318bed047f03 Mon Sep 17 00:00:00 2001
+From: ttaiclet <ttaiclet@ripe.net>
+Date: Wed, 16 Apr 2025 18:09:56 +0200
+Subject: [PATCH] changed: uname instead of hostname for generic ssh-key
+ creation
+
+hostname is a call to uname() in most implementations, but requires
+an additional binary to be shipped. By using uname directly, no
+additional binary has to be shipped.
+
+See 'uname' in the following links:
+- https://linux.die.net/man/2/gethostname
+- https://pubs.opengroup.org/onlinepubs/7908799/xsh/sysutsname.h.html
+
+Reviewed-by: Marios Mavropoulos <mmavropoulos@ripe.net>
+---
+ bin/arch/generic/generic-ATLAS.sh.in | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/bin/arch/generic/generic-ATLAS.sh.in
++++ b/bin/arch/generic/generic-ATLAS.sh.in
+@@ -49,7 +49,7 @@ get_ether_addr
+ 
+ # Create ssh keys if they are not there yet.
+ if [ ! -f $ATLAS_SYSCONFDIR/probe_key ]; then
+-    name=$(hostname -s)
++    name=$(uname -n)
+     ssh-keygen -t rsa -P '' -C $name -f $ATLAS_SYSCONFDIR/probe_key
+     chown -R @ripe_atlas_user@:@ripe_atlas_group@ $ATLAS_SYSCONFDIR
+ fi
