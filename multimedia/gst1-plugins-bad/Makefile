@@ -329,15 +329,14 @@ define GstBuildLibrary
 endef
 
 $(eval $(call GstBuildLibrary,adaptivedemux,adaptivedemux,app uridownloader,))
-$(eval $(call GstBuildLibrary,codecs,codecs,codecparsers,))
+$(eval $(call GstBuildLibrary,basecamerabinsrc,basecamerabinsrc,app,))
 $(eval $(call GstBuildLibrary,codecparsers,codecparsers,,))
+$(eval $(call GstBuildLibrary,codecs,codecs,codecparsers,))
+$(eval $(call GstBuildLibrary,mpegts,mpegts,,))
 $(eval $(call GstBuildLibrary,photography,photography,,))
 $(eval $(call GstBuildLibrary,play,play,,))
 $(eval $(call GstBuildLibrary,player,player,play,))
-$(eval $(call GstBuildLibrary,basecamerabinsrc,basecamerabinsrc,app,))
 $(eval $(call GstBuildLibrary,uridownloader,uridownloader,,))
-$(eval $(call GstBuildLibrary,codecparsers,codecparsers,,))
-$(eval $(call GstBuildLibrary,mpegts,mpegts,,))
 $(eval $(call GstBuildLibrary,transcoder,transcoder,,))
 
 # 1: short name
@@ -429,7 +428,7 @@ $(eval $(call GstBuildPlugin,speed,speed support,audio,,))
 $(eval $(call GstBuildPlugin,subenc,subenc support,controller,,))
 $(eval $(call GstBuildPlugin,switchbin,switchbin support,,,))
 $(eval $(call GstBuildPlugin,timecode,timecode support,,,))
-$(eval $(call GstBuildPlugin,v4l2codecs,V4L2 stateless codecs support,codecparsers codecs,,))
+$(eval $(call GstBuildPlugin,v4l2codecs,V4L2 stateless codecs support,codecs,,))
 $(eval $(call GstBuildPlugin,videofiltersbad,videofiltersbad support,,,))
 $(eval $(call GstBuildPlugin,videoframe_audiolevel,videoframe_audiolevel support,,,))
 $(eval $(call GstBuildPlugin,videoparsersbad,videoparsersbad support,codecparsers,,))

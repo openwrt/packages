@@ -3,13 +3,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tayga
-PKG_VERSION:=0.9.2
-PKG_RELEASE:=5
+PKG_VERSION:=0.9.5
+PKG_RELEASE:=1
 
-PKG_SOURCE:=tayga-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://www.litech.org/tayga/
-PKG_HASH:=2b1f7927a9d2dcff9095aff3c271924b052ccfd2faca9588b277431a44f0009c
-PKG_LICENSE:=GPL-2.0
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/apalrd/tayga/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=d44cc1158f60623d1bcd245f811957a162092c8f5e725489438de12e5500ae49
+PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
 PKG_FIXUP:=autoreconf
@@ -20,8 +20,8 @@ define Package/tayga
   SECTION:=net
   CATEGORY:=Network
   DEPENDS:=+ip @IPV6 +kmod-tun
-  TITLE:=Out-of-kernel stateless NAT64 implementation for Linux
-  URL:=http://www.litech.org/tayga/
+  TITLE:=Out-of-kernel stateless NAT64 implementation
+  URL:=https://github.com/apalrd/tayga/
   MAINTAINER:=Ondrej Caletka <ondrej@caletka.cz>
 endef
 
