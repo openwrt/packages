@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libprotobuf-c
-PKG_VERSION:=1.4.1
+PKG_VERSION:=1.5.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=protobuf-c-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/protobuf-c/protobuf-c/releases/download/v$(PKG_VERSION)
-PKG_HASH:=4cc4facd508172f3e0a4d3a8736225d472418aee35b4ad053384b137b220339f
+PKG_HASH:=e2c86271873a79c92b58fef7ebf8de1aa0df4738347a8bd5d4e65a80a16d0d24
 PKG_BUILD_DIR:=$(BUILD_DIR)/protobuf-c-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/protobuf-c-$(PKG_VERSION)
 
@@ -36,6 +36,7 @@ define Package/libprotobuf-c
   TITLE:=Protocol Buffers library
   SECTION:=libs
   CATEGORY:=Libraries
+  DEPENDS:=+libatomic
   URL:=https://github.com/protobuf-c/protobuf-c
 endef
 
@@ -56,6 +57,8 @@ CMAKE_OPTIONS += \
 	-DBUILD_SHARED_LIBS=ON \
 	-DBUILD_PROTOC=OFF
 
+TARGET_LDFLAGS += -latomic
+
 define Package/libprotobuf-c/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libprotobuf-c.so* $(1)/usr/lib/
@@ -63,4 +66,3 @@ endef
 
 $(eval $(call BuildPackage,libprotobuf-c))
 $(eval $(call HostBuild))
-
