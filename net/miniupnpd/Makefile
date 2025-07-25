@@ -27,38 +27,38 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/version.mk
 
 define Package/miniupnpd/Default
-  SECTION:=net
-  CATEGORY:=Network
-  DEPENDS:= \
+	SECTION:=net
+	CATEGORY:=Network
+	DEPENDS:= \
 	+libcap-ng \
 	+libmnl \
 	+libuuid
-  PROVIDES:=miniupnpd
-  TITLE:=Lightweight UPnP IGD & PCP/NAT-PMP daemon
-  SUBMENU:=Firewall
-  URL:=https://miniupnp.tuxfamily.org/
+	PROVIDES:=miniupnpd
+	TITLE:=Lightweight UPnP IGD & PCP/NAT-PMP daemon
+	SUBMENU:=Firewall
+	URL:=https://miniupnp.tuxfamily.org/
 endef
 
 define Package/miniupnpd-iptables
-  $(call Package/miniupnpd/Default)
-  DEPENDS+= \
+	$(call Package/miniupnpd/Default)
+	DEPENDS+= \
 	+IPV6:ip6tables \
 	+IPV6:libip6tc \
 	+iptables \
 	+libip4tc \
 	+libnetfilter-conntrack
-  TITLE+= (iptables)
-  VARIANT:=iptables
+	TITLE+= (iptables)
+	VARIANT:=iptables
 endef
 
 define Package/miniupnpd-nftables
-  $(call Package/miniupnpd/Default)
-  DEPENDS+= \
+	$(call Package/miniupnpd/Default)
+	DEPENDS+= \
 	+libnftnl
-  TITLE+= (nftables)
-  VARIANT:=nftables
-  DEFAULT_VARIANT:=1
-  CONFLICTS:=miniupnpd-iptables
+	TITLE+= (nftables)
+	VARIANT:=nftables
+	DEFAULT_VARIANT:=1
+	CONFLICTS:=miniupnpd-iptables
 endef
 
 define Package/miniupnpd/conffiles/Default
