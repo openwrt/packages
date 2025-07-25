@@ -15,6 +15,7 @@ PKG_HASH:=15acf65228867d47dcab27f87af048a2f0e6ed5d347a2e68730d30ae2a3871eb
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
+PKG_CPE_ID:=cpe:/a:v2fly:v2ray-core
 
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
