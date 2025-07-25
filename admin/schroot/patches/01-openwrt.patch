@@ -75,10 +75,10 @@
  
              # Device and inode
 -            da=$(/usr/bin/stat --format="%d %i" "$1")
-+            da=$(/bin/stat --format="%d %i" "$1")
++            da=$(stat -c "%d %i" "$1")
              # This one can fail since it might not exist yet
 -            db=$(/usr/bin/stat --format="%d %i" "$2" 2>/dev/null || :)
-+            db=$(/bin/stat --format="%d %i" "$2" 2>/dev/null || :)
++            db=$(stat -c "%d %i" "$2" 2>/dev/null || :)
  
              if [ "$da" = "$db" ]; then
                  COPY="false"
@@ -98,10 +98,10 @@
  
                  # Device and inode
 -                dr=$(/usr/bin/stat --format="%d %i" "/etc/$db")
-+                dr=$(/bin/stat --format="%d %i" "/etc/$db")
++                dr=$(stat -c "%d %i" "/etc/$db")
                  # This one can fail since it might not exist yet
 -                dc=$(/usr/bin/stat --format="%d %i" "${CHROOT_PATH}/etc/$db" 2>/dev/null || :)
-+                dc=$(/bin/stat --format="%d %i" "${CHROOT_PATH}/etc/$db" 2>/dev/null || :)
++                dc=$(stat -c "%d %i" "${CHROOT_PATH}/etc/$db" 2>/dev/null || :)
  
                  # If the database inside and outside the chroot is the
                  # same, it's very likely that dup_nss would blank the
