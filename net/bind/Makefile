@@ -223,27 +223,15 @@ define Package/bind-server/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/named $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/bind
 	$(CP) \
-		./files/bind/db.0 \
-		./files/bind/db.127 \
-		./files/bind/db.255 \
-		./files/bind/db.local \
 		./files/bind/db.root \
 		./files/bind/bind.keys \
 		$(1)/etc/bind/
-	sed -e '1s/ broadcast / empty rfc1918 /' \
-		< ./files/bind/db.0 \
-		> $(1)/etc/bind/db.empty
 	$(CP) ./files/bind/named.conf.example $(1)/etc/bind/named.conf
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/named.init $(1)/etc/init.d/named
-	find $(1)/etc/bind/ -name ".svn" | xargs rm -rf
 endef
 
 define Package/bind-server/conffiles
-/etc/bind/db.0
-/etc/bind/db.127
-/etc/bind/db.255
-/etc/bind/db.local
 /etc/bind/db.root
 /etc/bind/named.conf
 endef
