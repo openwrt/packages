@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
 PKG_VERSION:=8.4.10
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 PKG_LICENSE:=PHP-3.01
@@ -190,6 +190,7 @@ CONFIGURE_ARGS+= \
 	\
 	--without-valgrind \
 	--with-external-pcre \
+	--$(if $(CONFIG_PCRE2_JIT_ENABLED),with,without)-pcre-jit \
 	--with-zlib="$(STAGING_DIR)/usr"
 
 ifeq ($(CONFIG_LIBC_USE_GLIBC),y)
@@ -499,7 +500,7 @@ CONFIGURE_VARS+= \
 	php_cv_cc_rpath="no" \
 	ac_cv_php_xml2_config_path="$(STAGING_DIR)/host/bin/xml2-config" \
 	ac_cv_u8t_decompose=yes \
-	ac_cv_have_pcre2_jit=no
+	php_cv_have_pcre2_jit=$(if $(CONFIG_PCRE2_JIT_ENABLED),yes,no)
 
 define Package/php8/conffiles
 /etc/php.ini
