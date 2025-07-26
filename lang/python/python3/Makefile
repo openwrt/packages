@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 include ../python3-version.mk
 
 PKG_NAME:=python3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_VERSION:=$(PYTHON3_VERSION).$(PYTHON3_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
@@ -96,7 +96,7 @@ endef
 define Package/python3-light
 $(call Package/python3/Default)
   TITLE+= light installation
-  DEPENDS:=+python3-base +libbz2 +zlib
+  DEPENDS:=+python3-base +libbz2 +zlib +USE_GLIBC:libcrypt-compat
 endef
 
 define Package/python3-light/config
