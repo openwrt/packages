@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=krb5
 PKG_VERSION:=1.21.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -93,6 +93,8 @@ CONFIGURE_ARGS += \
 	--disable-pkinit \
 	--with-size-optimizations \
 	--with-crypto-impl=builtin
+
+TARGET_CFLAGS += $(FPIC) -std=gnu17
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
