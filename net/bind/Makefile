@@ -79,7 +79,8 @@ endef
 define Package/bind-server
   $(call Package/bind/Default)
   TITLE+= DNS server
-  DEPENDS+= +libcap
+  DEPENDS+= +libcap \
+	+bind-rndc
 endef
 
 define Package/bind-server/config
