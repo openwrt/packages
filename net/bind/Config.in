@@ -36,10 +36,10 @@ config BIND_ENABLE_DOH
 config BIND_ENABLE_GSSAPI
 	bool
 	default n
-	prompt "Include GSSPAI support in bind"
+	prompt "Include GSSAPI support in bind"
 	help
 		BIND 9 supports GSSAPI. This depends on libcomerr and krb5-libs.
-		Disable it by default as krb5-libs is rather large.
+		Disabled by default as krb5-libs is rather large.
 
 endif
 
