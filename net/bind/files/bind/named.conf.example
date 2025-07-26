@@ -1,18 +1,7 @@
 // This is the primary configuration file for the BIND DNS server named.
 
 options {
-	directory "/tmp";
-
-	// If your ISP provided one or more IP addresses for stable 
-	// nameservers, you probably want to use them as forwarders.  
-	// Uncomment the following block, and insert the addresses replacing 
-	// the all-0's placeholder.
-
-	// forwarders {
-	// 	0.0.0.0;
-	// };
-
-	auth-nxdomain no;    # conform to RFC1035
+	directory "/var/cache/bind";
 };
 
 include "/etc/bind/named-rndc.conf";
@@ -29,21 +18,21 @@ zone "." {
 // broadcast zones as per RFC 1912
 
 zone "localhost" {
-	type master;
+	type primary;
 	file "/etc/bind/db.local";
 };
 
 zone "127.in-addr.arpa" {
-	type master;
+	type primary;
 	file "/etc/bind/db.127";
 };
 
 zone "0.in-addr.arpa" {
-	type master;
+	type primary;
 	file "/etc/bind/db.0";
 };
 
 zone "255.in-addr.arpa" {
-	type master;
+	type primary;
 	file "/etc/bind/db.255";
 };
