@@ -18,7 +18,7 @@ Signed-off-by: Daniel Néri <dne+commits@rb67.eu>
 
 --- a/nvme-print.c
 +++ b/nvme-print.c
-@@ -832,6 +832,10 @@ static bool is_fahrenheit_country(const
+@@ -835,6 +835,10 @@ static bool is_fahrenheit_country(const
  #define LC_MEASUREMENT LC_ALL
  #endif
  
