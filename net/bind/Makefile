@@ -224,7 +224,6 @@ define Package/bind-server/install
 	$(INSTALL_DIR) $(1)/etc/bind
 	$(CP) \
 		./files/bind/db.root \
-		./files/bind/bind.keys \
 		$(1)/etc/bind/
 	$(CP) ./files/bind/named.conf.example $(1)/etc/bind/named.conf
 	$(INSTALL_DIR) $(1)/etc/init.d
