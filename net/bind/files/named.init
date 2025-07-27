@@ -11,8 +11,8 @@ config_dir=/etc/bind
 run_dir=/var/run/named
 log_dir=/var/log/named
 cache_dir=/var/cache/bind
+zone_dir=$config_dir/zones
 lib_dir=/var/lib/bind
-dyn_dir=/tmp/bind
 
 config_file=$config_dir/named.conf
 config_local_file=$dyn_dir/named.conf.local
@@ -25,13 +25,18 @@ start_service() {
 	user_exists bind 57 || user_add bind 57
 	group_exists bind 57 || group_add bind 57
 
-	for dir in $run_dir $log_dir $cache_dir $lib_dir $dyn_dir; do
+	for dir in $run_dir $log_dir $cache_dir $zone_dir; do
 		if [ ! -e "$dir" ]; then
 			mkdir -p "$dir"
 		fi
 		chown bind:bind "$dir"
 		chmod 0775 "$dir"
 	done
+
+	if [ ! -e $lib_dir ]; then
+		mkdir -p $(dirname $lib_dir)
+		ln -sf $zone_dir $lib_dir
+	fi
 
 	if [ ! -s /etc/bind/rndc.key ] && [ ! -s /etc/bind/rndc.conf ]; then
 		rndc-confgen -a
