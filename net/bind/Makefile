@@ -229,8 +229,8 @@ define Package/bind-server/install
 endef
 
 define Package/bind-server/conffiles
-/etc/bind/db.root
-/etc/bind/named.conf
+/etc/bind
+/var/lib/bind
 endef
 
 define Package/bind-server-filter-aaaa/install
