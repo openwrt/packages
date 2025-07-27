@@ -9,8 +9,6 @@ START=22
 
 config_file=/etc/bind/named.conf
 config_dir=$(dirname $config_file)
-named_options_file=/etc/bind/named-rndc.conf
-rndc_conf_file=/etc/bind/rndc.conf
 pid_file=/var/run/named/named.pid
 
 rundir=$(dirname $pid_file)
@@ -51,25 +49,9 @@ start_service() {
 	chown bind.bind $runnamed
     }
 
-    local rndc_temp=$(mktemp /tmp/rndc-confgen.XXXXXX)
-
-    rndc-confgen > $rndc_temp
-
-    sed -r -n \
-	-e '/^# options \{$/,/^\};$/{ s/^/# / }' \
-	-e p \
-	-e '/^# End of rndc\.conf$/q' \
-	< $rndc_temp > $rndc_conf_file
-
-    sed -r -n \
-	-e '1,/^# End of rndc\.conf$/ { b done }' \
-	-e '/^# Use with the following in named.conf/ { p ; b done }' \
-	-e '/^# End of named\.conf$/ { p ; b done }' \
-	-e '/^# key /,$ { s/^# // ; p }' \
-	-e ': done' \
-	< $rndc_temp > $named_options_file
-
-    rm -f $rndc_temp
+    if [ ! -s /etc/bind/rndc.key ] && [ ! -s /etc/bind/rndc.conf ]; then
+        rndc-confgen -a
+    fi
 
     touch $conf_local_file
 
@@ -79,7 +61,6 @@ start_service() {
     procd_open_instance
     procd_set_param command /usr/sbin/named -u bind -f $args -c $config_file
     procd_set_param file $config_file \
-			 $named_options_file \
 			 $conf_local_file \
 			 $config_dir/db.*
     procd_set_param respawn
