@@ -222,10 +222,8 @@ define Package/bind-server/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/named $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/bind
-	$(CP) \
-		./files/bind/db.root \
-		$(1)/etc/bind/
-	$(CP) ./files/bind/named.conf.example $(1)/etc/bind/named.conf
+	$(INSTALL_DATA) ./files/bind/db.root $(1)/etc/bind
+	$(INSTALL_DATA) ./files/bind/named.conf $(1)/etc/bind
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/named.init $(1)/etc/init.d/named
 endef
