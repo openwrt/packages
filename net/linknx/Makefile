@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=linknx
 PKG_VERSION:=0.0.1.39
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-${PKG_VERSION}.tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/linknx/linknx/tar.gz/$(PKG_VERSION)?
@@ -39,6 +39,8 @@ CONFIGURE_ARGS+= \
 	--without-log4cpp \
 	--with-lua \
 	--with-libcurl \
+	--without-jsoncpp \
+	--without-cppunit \
 	--without-mysql
 
 define Package/linknx/install
