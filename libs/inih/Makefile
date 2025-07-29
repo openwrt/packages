@@ -1,13 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=inih
-PKG_VERSION:=59
+PKG_VERSION:=61
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/benhoyt/inih
 PKG_SOURCE_VERSION:=r$(PKG_VERSION)
-PKG_MIRROR_HASH:=140cd33c0f3cb0e86b3d4b9dd82c8695c47444aebeae4fcbd9b8ba4ba0063714
+PKG_MIRROR_HASH:=37dadf0ba9177b88c7c721d47bfa3be69297a05a7d8b0b5e743161e3df5a4789
 
 PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
 PKG_LICENSE:=BSD-3-Clause
