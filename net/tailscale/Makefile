@@ -22,7 +22,7 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:tailscale:tailscale
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/tailscale-$(PKG_VERSION)
-PKG_BUILD_DEPENDS:=golang/host
+PKG_BUILD_DEPENDS:=
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=no-mips16
 
@@ -31,6 +31,7 @@ GO_PKG:=\
 GO_PKG_LDFLAGS:=-X 'tailscale.com/version.longStamp=$(PKG_VERSION)-$(PKG_RELEASE) (OpenWrt)'
 GO_PKG_LDFLAGS_X:=tailscale.com/version.shortStamp=$(PKG_VERSION)
 GO_PKG_TAGS:=ts_include_cli,ts_omit_aws,ts_omit_bird,ts_omit_tap,ts_omit_kube,ts_omit_completion
+GO_BIN_VERSION:=1.24
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
