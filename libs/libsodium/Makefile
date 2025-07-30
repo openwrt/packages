@@ -55,6 +55,8 @@ menu "Configuration"
 endmenu
 endef
 
+TARGET_CFLAGS += -std=gnu17
+
 CONFIGURE_ARGS+= \
 	--disable-ssp \
 	$(if $(CONFIG_LIBSODIUM_MINIMAL),--enable,--disable)-minimal
