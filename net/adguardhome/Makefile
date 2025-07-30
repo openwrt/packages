@@ -16,6 +16,7 @@ PKG_MIRROR_HASH:=41eec797b0a721730d8564e079379aafe045c5491f27a35de679c524ba43c67
 
 PKG_LICENSE:=GPL-3.0-only
 PKG_LICENSE_FILES:=LICENSE.txt
+PKG_CPE_ID:=cpe:/a:adguard:adguardhome
 PKG_MAINTAINER:=Dobroslaw Kijowski <dobo90@gmail.com>
 
 PKG_BUILD_DEPENDS:=golang/host node/host node-yarn/host

@@ -21,7 +21,7 @@ HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)$(PKG_VERSION)
 PKG_MAINTAINER:=Joe Mistachkin <joe@mistachkin.com>
 PKG_LICENSE:=TCL
 PKG_LICENSE_FILES:=license.terms
-PKG_CPE_ID:=cpe:/a:tcl_tk:tcl_tk
+PKG_CPE_ID:=cpe:/a:tcl:tcl
 
 PKG_BUILD_DEPENDS:=HOST_OS_MACOS:fakeuname/host
 PKG_FIXUP:=autoreconf

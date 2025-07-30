@@ -17,6 +17,7 @@ PKG_HASH:=2a66ff0d8595bff8f04032165e6c936389b1e5727c3ce5a27b3e059d218db1cb
 PKG_MAINTAINER:=Valentin Kivachuk <vk18496@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:tesseract_project:tesseract
 
 CMAKE_BINARY_SUBDIR:=openwrt-build
 

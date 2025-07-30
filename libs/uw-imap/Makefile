@@ -21,6 +21,7 @@ PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE.txt
+PKG_CPE_ID:=cpe:/a:uw-imap_project:uw-imap
 
 PKG_FIXUP:=autoreconf
 
