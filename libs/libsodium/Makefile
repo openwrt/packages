@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libsodium
-PKG_VERSION:=1.0.19
+PKG_VERSION:=1.0.20
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.libsodium.org/libsodium/releases \
 		https://github.com/jedisct1/libsodium/releases/download/$(PKG_VERSION)
-PKG_HASH:=018d79fe0a045cca07331d37bd0cb57b2e838c51bc48fd837a1472e50068bbea
+PKG_HASH:=ebb65ef6ca439333c2bb41a0c1990587288da07f6c7fd07cb3a18cc18d30ce19
 
 PKG_MAINTAINER:=Damiano Renfer <x9w2n7xnu@relay.firefox.com>
 PKG_LICENSE:=ISC
