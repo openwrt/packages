@@ -1,0 +1,26 @@
+From 600879af780453bfe86e1e75f7a9f8a959982f29 Mon Sep 17 00:00:00 2001
+From: Vladimir Ermakov <vooon341@gmail.com>
+Date: Thu, 31 Jul 2025 09:36:47 +0200
+Subject: [PATCH] po: update for autoconf gettext macros 0.22
+
+Fix build error:
+```
+*** error: gettext infrastructure mismatch: using a Makefile.in.in from gettext version 0.20 but the autoconf macros are from gettext version 0.22
+```
+
+Signed-off-by: Vladimir Ermakov <vooon341@gmail.com>
+---
+ po/Makefile.in.in | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/po/Makefile.in.in
++++ b/po/Makefile.in.in
+@@ -8,7 +8,7 @@
+ # without any warranty.
+ #
+ # Origin: gettext-0.20.2
+-GETTEXT_MACRO_VERSION = 0.20
++GETTEXT_MACRO_VERSION = 0.22
+ 
+ PACKAGE = @PACKAGE@
+ VERSION = @VERSION@
