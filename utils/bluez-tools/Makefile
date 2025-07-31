@@ -26,7 +26,7 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
 define Package/bluez-tools
-  SECTION:=Utilities
+  SECTION:=utils
   CATEGORY:=Utilities
   DEPENDS:=+bluez-daemon +glib2
   TITLE:=Bluetooth tools
