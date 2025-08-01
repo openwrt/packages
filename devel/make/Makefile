@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=make
 PKG_VERSION:=4.4.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=@GNU/make
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -34,6 +34,8 @@ endef
 define Package/make/description
   The Make package contains a tool to create executables from source files.
 endef
+
+TARGET_CFLAGS += -D__GNU_LIBRARY__
 
 define Package/make/install
 	$(INSTALL_DIR) $(1)/usr/bin
