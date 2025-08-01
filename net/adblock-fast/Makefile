@@ -1,12 +1,11 @@
-# SPDX-Identifier-License: AGPL-3.0-or-later
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright 2023-2025 MOSSDeF, Stan Grishin (stangri@melmac.ca).
-# TLD optimization written by Dirk Brenken (dev@brenken.org).
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adblock-fast
-PKG_VERSION:=1.1.3
-PKG_RELEASE:=13
+PKG_VERSION:=1.1.4
+PKG_RELEASE:=4
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.ca>
 PKG_LICENSE:=AGPL-3.0-or-later
 
@@ -22,15 +21,13 @@ define Package/adblock-fast
 	DEPENDS+=+!BUSYBOX_DEFAULT_GREP:grep
 	DEPENDS+=+!BUSYBOX_DEFAULT_SED:sed
 	DEPENDS+=+!BUSYBOX_DEFAULT_SORT:coreutils-sort
-  CONFLICTS:=simple-adblock
-  PROVIDES:=simple-adblock
   PKGARCH:=all
 endef
 
 define Package/adblock-fast/description
 Fast AdBlocking script to block ad or abuse/malware domains with Dnsmasq, SmartDNS or Unbound.
 Script supports local/remote list of domains and hosts-files for both block-listing and allow-listing.
-Please see https://docs.openwrt.melmac.net/adblock-fast/ for more information.
+Please see https://docs.openwrt.melmac.ca/adblock-fast/ for more information.
 endef
 
 define Package/adblock-fast/conffiles
