@@ -34,6 +34,10 @@ config adblock-fast 'config'
 	option procd_boot_delay '0'
 	option procd_boot_wan_timeout '60'
 	option verbosity '2'
+	option heartbeat_domain 'heartbeat.melmac.ca'
+	option heartbeat_sleep_timeout '10'
+	option sanity_check '1'
+	option update_config_sizes '1'
 
 config file_url
 	option name 'Hagezi - Pro'
