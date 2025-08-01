@@ -5,4 +5,7 @@ config NFS_KERNEL_SERVER_V4
 	bool "Include support for NFSv4"
 	default y
 
+config CONFIG_NFSD_LEGACY_CLIENT_TRACKING
+	bool "Store client tracking statefully in /proc/fs/nfsd/nfsv4recoverydir"
+	default y
 endmenu
