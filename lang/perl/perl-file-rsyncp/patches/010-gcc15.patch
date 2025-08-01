@@ -1,0 +1,106 @@
+--- a/Digest/global.h
++++ b/Digest/global.h
+@@ -7,7 +7,7 @@ The following makes PROTOTYPES default t
+   been defined with C compiler flags.
+  */
+ #ifndef PROTOTYPES
+-#define PROTOTYPES 0
++#define PROTOTYPES 1
+ #endif
+ 
+ /* POINTER defines a generic pointer type */
+--- a/FileList/flist.c
++++ b/FileList/flist.c
+@@ -757,10 +757,12 @@ int u_strcmp(const char *cs1, const char
+  * XXX: This is currently the hottest function while building the file
+  * list, because building f_name()s every time is expensive.
+  **/
+-int file_compare(struct file_struct **file1, struct file_struct **file2)
++int file_compare(const void *fl1, const void *fl2)
+ {
+-    struct file_struct *f1 = *file1;
+-    struct file_struct *f2 = *file2;
++    const struct file_struct * const *file1 = fl1;
++    const struct file_struct * const *file2 = fl2;
++    const struct file_struct *f1 = *file1;
++    const struct file_struct *f2 = *file2;
+             
+     if (!f1->basename && !f2->basename)
+             return 0;
+@@ -860,8 +862,7 @@ void clean_flist(struct file_list *flist
+     if (!flist || flist->count == 0)
+         return;
+ 
+-    qsort(flist->files, flist->count,
+-        sizeof flist->files[0], (int (*)())file_compare);
++    qsort(flist->files, flist->count, sizeof flist->files[0], file_compare);
+ 
+     for (i = no_dups? 0 : flist->count; i < flist->count; i++) {
+         if (flist->files[i]->basename) {
+@@ -914,7 +915,7 @@ enum fnc_state { fnc_DIR, fnc_SLASH, fnc
+  * would do if it were operating on the joined strings.  We assume
+  * that there are no 0-length strings.
+  */
+-int f_name_cmp(struct file_struct *f1, struct file_struct *f2)
++int f_name_cmp(const struct file_struct *f1, const struct file_struct *f2)
+ {
+     int dif;
+     const uchar *c1, *c2;
+--- a/FileList/hlink.c
++++ b/FileList/hlink.c
+@@ -20,10 +20,12 @@
+ 
+ #include "rsync.h"
+ 
+-static int hlink_compare(struct file_struct **file1, struct file_struct **file2)
++static int hlink_compare(const void *fl1, const void *fl2)
+ {
+-    struct file_struct *f1 = *file1;
+-    struct file_struct *f2 = *file2;
++    const struct file_struct * const *file1 = fl1;
++    const struct file_struct * const *file2 = fl2;
++    const struct file_struct *f1 = *file1;
++    const struct file_struct *f2 = *file2;
+ 
+     if (f1->F_DEV != f2->F_DEV)
+         return (int) (f1->F_DEV > f2->F_DEV ? 1 : -1);
+@@ -126,8 +128,7 @@ void init_hard_links(struct file_list *f
+         }
+     }
+ 
+-    qsort(hlink_list, hlink_count,
+-        sizeof hlink_list[0], (int (*)()) hlink_compare);
++    qsort(hlink_list, hlink_count, sizeof hlink_list[0], hlink_compare);
+ 
+     if (!hlink_count) {
+         free(hlink_list);
+--- a/FileList/pool_alloc.c
++++ b/FileList/pool_alloc.c
+@@ -9,7 +9,7 @@ struct alloc_pool
+ 	struct pool_extent	*live;		/* current extent for
+ 						 * allocations		*/
+ 	struct pool_extent	*free;		/* unfreed extent list	*/
+-	void			(*bomb)();
++	void			(*bomb)(char*);
+ 						/* function to call if
+ 						 * malloc fails		*/
+ 	int			flags;
+--- a/FileList/proto.h
++++ b/FileList/proto.h
+@@ -62,14 +62,14 @@ void send_file_name(int f, struct file_l
+ 		    int recursive, unsigned short base_flags);
+ struct file_list *send_file_list(int f, int argc, char *argv[]);
+ struct file_list *recv_file_list(int f);
+-int file_compare(struct file_struct **file1, struct file_struct **file2);
++int file_compare(const void *fl1, const void *fl2);
+ int flist_find(struct file_list *flist, struct file_struct *f);
+ void clear_file(int i, struct file_list *flist);
+ struct file_list *flist_new(int with_hlink, char *msg, int preserve_hard_links);
+ void flist_free(struct file_list *flist);
+ int flistDecodeBytes(struct file_list *f, unsigned char *bytes, uint32 nBytes);
+ void clean_flist(struct file_list *flist, int strip_root, int no_dups);
+-int f_name_cmp(struct file_struct *f1, struct file_struct *f2);
++int f_name_cmp(const struct file_struct *f1, const struct file_struct *f2);
+ char *f_name_to(struct file_struct *f, char *fbuf);
+ char *f_name(struct file_struct *f);
+ void write_sum_head(int f, struct sum_struct *sum);
