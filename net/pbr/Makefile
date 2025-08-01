@@ -1,11 +1,11 @@
-# Copyright 2017-2024 MOSSDeF, Stan Grishin (stangri@melmac.ca).
-# This is free software, licensed under AGPL-3.0-or-later.
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright 2017-2025 MOSSDeF, Stan Grishin (stangri@melmac.ca).
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pbr
 PKG_VERSION:=1.1.8
-PKG_RELEASE:=16
+PKG_RELEASE:=32
 PKG_LICENSE:=AGPL-3.0-or-later
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.ca>
 
