@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xinetd
 PKG_VERSION:=2.3.15
-PKG_RELEASE:=17
+PKG_RELEASE:=18
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=$(PKG_NAME)-2-3-15
@@ -46,7 +46,7 @@ define Package/xinetd/conffiles
 /etc/xinetd.d
 endef
 
-TARGET_CFLAGS += -DNO_RPC
+TARGET_CFLAGS += -DNO_RPC -std=gnu11
 TARGET_CPPFLAGS += -DHAVE_RLIM_T
 
 CONFIGURE_ARGS += \
