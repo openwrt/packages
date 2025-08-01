@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unixodbc
 PKG_VERSION:=2.3.12
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=unixODBC-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.unixodbc.org
@@ -142,6 +142,8 @@ $(call Package/unixodbc/Default/description)
 
 This package provides the PostgreSQL driver for ODBC.
 endef
+
+TARGET_CFLAGS += -std=gnu11
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
