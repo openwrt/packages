@@ -1,19 +1,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rpcsvc-proto
-PKG_VERSION:=1.4.3
-PKG_RELEASE:=2
+PKG_VERSION:=1.4.4
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/thkukuk/rpcsvc-proto/releases/download/v$(PKG_VERSION)
-PKG_HASH:=69315e94430f4e79c74d43422f4a36e6259e97e67e2677b2c7d7060436bd99b1
+PKG_HASH:=81c3aa27edb5d8a18ef027081ebb984234d5b5860c65bd99d4ac8f03145a558b
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
-PKG_FIXUP:=autoreconf
 
 HOST_BUILD_DEPENDS:=gettext-full/host
 PKG_BUILD_DEPENDS:=rpcsvc-proto/host
@@ -39,7 +38,7 @@ endef
 # need to use host tool
 define Build/Prepare
 	$(Build/Prepare/Default)
-	$(SED) 's,.*/rpcgen/rpcgen,\t$(STAGING_DIR_HOSTPKG)/bin/rpcgen,' $(PKG_BUILD_DIR)/rpcsvc/Makefile.am
+	$(SED) 's,.*/rpcgen/rpcgen,\t$(STAGING_DIR_HOSTPKG)/bin/rpcgen,' $(PKG_BUILD_DIR)/rpcsvc/Makefile.in
 endef
 
 define Build/InstallDev
