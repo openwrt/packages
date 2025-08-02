@@ -7,111 +7,297 @@ USE_PROCD=1
 PROG=/usr/sbin/miniupnpd
 [ -x "$(command -v nft)" ] && FW="fw4" || FW="fw3"
 
+upnpd_uci_migration() {
+	log "Check UCI options in /etc/config/upnpd to be migrated (to v1.1) ..."
+
+	# Remove known incompatible (not CGNAT filtering test capable) STUN servers and include stun_port in stun_host
+	if uci -q get upnpd.config.stun_host | grep -q -E "stun[0-9]?.l.google.com|stun.cloudflare.com"; then
+		log "stun_host: Incompatible STUN server ($(uci -q get upnpd.config.stun_host)) found, remove to set default"
+		uci -q delete upnpd.config.stun_host
+		uci -q delete upnpd.config.stun_port
+	elif uci -q get upnpd.config.stun_port >/dev/null; then
+		if uci -q get upnpd.config.stun_host >/dev/null &&
+			[ "$(uci -q get upnpd.config.stun_port)" != "3478" ]; then
+			log "stun_port: Include stun_port in stun_host, and remove old option"
+			uci -q set upnpd.config.stun_host="$(uci -q get upnpd.config.stun_host | cut -d ":" -f 1):$(uci -q get upnpd.config.stun_port)"
+		fi
+		uci -q delete upnpd.config.stun_port
+	fi
+
+	# Migrate CGNAT option currently used in X-Wrt (force_forwarding, since 2021) to
+	# use_stun=allow-filtered to enable cross-project migration
+	if uci -q get upnpd.config.force_forwarding >/dev/null; then
+		log "force_forwarding=1 -> use_stun=allow-filtered: Migrate CGNAT option"
+		if [ "$(uci -q get upnpd.config.force_forwarding)" = "1" ]; then
+			uci -q set upnpd.config.use_stun="allow-filtered"
+		fi
+		uci -q delete upnpd.config.force_forwarding
+	fi
+
+	# Migrate secure_mode=1 -> allow_third_party_mapping=0: Invert/extend to PCP
+	if uci -q get upnpd.config.secure_mode >/dev/null; then
+		log "secure_mode=1 -> allow_third_party_mapping=0: Invert/extend to PCP"
+		if [ "$(uci -q get upnpd.config.secure_mode)" = "0" ]; then
+			uci -q set upnpd.config.allow_third_party_mapping="1"
+		else
+			uci -q set upnpd.config.allow_third_party_mapping="0"
+		fi
+		uci -q delete upnpd.config.secure_mode
+	fi
+
+	# Migrate download/upload -> upnp_igd_download/upnp_igd_upload: Convert to kbit/s
+	if uci -q get upnpd.config.download >/dev/null || uci -q get upnpd.config.upload >/dev/null; then
+		download="$(uci -q get upnpd.config.download || echo 1024)"
+		if [ "$download" != "1024" ]; then
+			log "download -> upnp_igd_download: Convert to kbit/s"
+			upnp_igd_download="$((download * 8 * 1000 / 1024))"
+			uci -q set upnpd.config.upnp_igd_download="$upnp_igd_download"
+		fi
+		upload="$(uci -q get upnpd.config.upload || echo 512)"
+		if [ "$upload" != "512" ]; then
+			log "upload -> upnp_igd_upload: Convert to kbit/s"
+			upnp_igd_upload="$((upload * 8 * 1000 / 1024))"
+			uci -q set upnpd.config.upnp_igd_upload="$upnp_igd_upload"
+		fi
+		uci -q delete upnpd.config.download
+		uci -q delete upnpd.config.upload
+	fi
+
+	# Migrate igdv1=1 -> upnp_igd_compat=igdv1: Extensible/clearer
+	if uci -q get upnpd.config.igdv1 >/dev/null; then
+		log "igdv1=1 -> upnp_igd_compat=igdv1"
+		if [ "$(uci -q get upnpd.config.igdv1)" = "1" ]; then
+			uci -q set upnpd.config.upnp_igd_compat="igdv1"
+		else
+			uci -q set upnpd.config.upnp_igd_compat="igdv2"
+		fi
+		uci -q delete upnpd.config.igdv1
+	fi
+
+	# Migrate log_output=1 -> log_output=debug: New info also allowed
+	if [ "$(uci -q get log_output=1)" = "1" ]; then
+		log "log_output=1 -> log_output=debug: New info also allowed"
+		uci -q set upnpd.config.log_output="debug"
+	fi
+
+	# Rename options for clarity, and remove some if UCI default is set for a more compact config:
+	# Rename enable_upnp -> enable_upnp_igd
+	uci -q get upnpd.config.enable_upnp >/dev/null &&
+		log "enable_upnp -> enable_upnp_igd" &&
+		uci -q rename upnpd.config.enable_upnp="enable_upnp_igd"
+	# Rename enable_natpmp -> enable_pcp_natpmp: As PCP is supported
+	uci -q get upnpd.config.enable_natpmp >/dev/null &&
+		log "enable_natpmp -> enable_pcp_natpmp" &&
+		uci -q rename upnpd.config.enable_natpmp="enable_pcp_natpmp"
+	# Rename upnp_lease_file -> lease_file: To original daemon name, and remove if UCI default
+	if uci -q get upnpd.config.upnp_lease_file >/dev/null; then
+		if [ "$(uci -q get upnpd.config.upnp_lease_file)" = "/var/run/miniupnpd.leases" ]; then
+			log "upnp_lease_file -> lease_file: Remove option as UCI default is set"
+			uci -q delete upnpd.config.upnp_lease_file
+		else
+			log "upnp_lease_file -> lease_file"
+			uci -q rename upnpd.config.upnp_lease_file="lease_file"
+		fi
+	fi
+	# Remove port if UCI default
+	[ "$(uci -q get upnpd.config.port)" = "5000" ] &&
+		log "port: Remove option as UCI default is set" &&
+		uci -q delete upnpd.config.port
+
+	# Migrate notify_interval <=900s: Remove to set minimum of 900 (default)
+	[ "$(uci -q get upnpd.config.notify_interval)" -le "900" ] 2>/dev/null &&
+		log "notify_interval <=900s: Remove to set minimum of 900 (default)" &&
+		uci -q delete upnpd.config.notify_interval
+
+	# Migrate ACL: Refresh by adding templates or create default, empty ACL is now rejected
+	if ! uci -q get upnpd.@perm_rule[2] >/dev/null &&
+		[ "$(uci -q get upnpd.@perm_rule[0].action)" = "allow" ] &&
+		[ "$(uci -q get upnpd.@perm_rule[0].int_addr)" = "0.0.0.0/0" ] &&
+		[ "$(uci -q get upnpd.@perm_rule[0].int_ports)" = "1024-65535" ] &&
+		[ "$(uci -q get upnpd.@perm_rule[0].ext_ports)" = "1024-65535" ] &&
+		[ "$(uci -q get upnpd.@perm_rule[1].action)" = "deny" ] &&
+		[ "$(uci -q get upnpd.@perm_rule[1].int_addr)" = "0.0.0.0/0" ] &&
+		[ "$(uci -q get upnpd.@perm_rule[1].int_ports)" = "0-65535" ] &&
+		[ "$(uci -q get upnpd.@perm_rule[1].ext_ports)" = "0-65535" ] ||
+		! uci -q get upnpd.@perm_rule[0] >/dev/null; then
+		# If empty ACL, create default?
+		if ! uci -q get upnpd.@perm_rule[0] >/dev/null; then
+			log "Empty ACL: Create default incl. templates, empty ACL is now rejected"
+		else
+			log "Unmodified ACL: Refresh, add templates, empty ACL is now rejected"
+			uci -q delete upnpd.@perm_rule[-1]
+			uci -q delete upnpd.@perm_rule[-1]
+		fi
+		uci -q batch >/dev/null <<-EOF
+			add upnpd perm_rule
+			add upnpd perm_rule
+			add upnpd perm_rule
+			set upnpd.@perm_rule[0].comment="Low/system ports"
+			set upnpd.@perm_rule[0].action="deny"
+			set upnpd.@perm_rule[0].int_addr="0.0.0.0/0"
+			set upnpd.@perm_rule[0].int_ports="1-1023"
+			set upnpd.@perm_rule[0].ext_ports="1-1023"
+			set upnpd.@perm_rule[1].comment="High ports (accepted by default)"
+			set upnpd.@perm_rule[1].action="allow"
+			set upnpd.@perm_rule[1].int_addr="0.0.0.0/0"
+			set upnpd.@perm_rule[1].int_ports="1024-65535"
+			set upnpd.@perm_rule[1].ext_ports="1024-65535"
+			set upnpd.@perm_rule[2].comment="All ports"
+			set upnpd.@perm_rule[2].action="deny"
+			set upnpd.@perm_rule[2].int_addr="0.0.0.0/0"
+			set upnpd.@perm_rule[2].int_ports="1-65535"
+			set upnpd.@perm_rule[2].ext_ports="1-65535"
+		EOF
+	elif [ "$(uci -q get upnpd.@perm_rule[0].comment)" != "Low/system ports" ] &&
+		[ "$(uci -q get upnpd.@perm_rule[-1].comment)" != "All ports" ]; then
+		log "Custom ACL: Keep unchanged, note that an empty ACL is now rejected"
+		acl_preset=custom
+	fi
+
+	# Migrate internal_iface to new internal_network section and set acl_preset
+	if ! uci -q get upnpd.@internal_network[0] >/dev/null; then
+		acl_preset=${acl_preset:-accept-high-ports}
+		ifnr=0
+		for interface in $(uci -q get upnpd.config.internal_iface || echo lan); do
+			log "Create internal_network section for $interface"
+			uci add upnpd internal_network >/dev/null
+			uci -q set upnpd.@internal_network[$ifnr].interface="$interface"
+			uci -q set upnpd.@internal_network[$ifnr].acl_preset="$acl_preset"
+			ifnr=$((ifnr + 1))
+		done
+		uci -q delete upnpd.config.internal_iface
+	fi
+	uci -q commit upnpd >/dev/null
+}
+
+upnpd_add_network_and_acl_preset() {
+	local cfg=$1
+	local interface acl_preset check_custom_acl
+	config_get interface $cfg interface lan
+	config_get acl_preset $cfg acl_preset accept-high-ports
+	config_get check_custom_acl $cfg check_custom_acl
+	local device subnet
+	network_get_device device $interface && echo "# Enable network $interface ($device)" && echo "listening_ip=$device"
+	network_get_subnet subnet $interface
+	if [ "$acl_preset" = "accept-high-ports" ]; then
+		echo "allow 1024-65535 $subnet 1024-65535 # Accept high ports"
+	elif [ "$acl_preset" = "accept-high-ports+web" ]; then
+		echo "allow 1024-65535 $subnet 1024-65535 # Accept high ports"
+		echo "allow 80 $subnet 80 # Accept HTTP port"
+		echo "allow 443 $subnet 443 # Accept HTTPS port"
+	elif [ "$acl_preset" = "accept-high-ports+web+dns" ]; then
+		echo "allow 1024-65535 $subnet 1024-65535 # Accept high ports"
+		echo "allow 80 $subnet 80 # Accept HTTP port"
+		echo "allow 443 $subnet 443 # Accept HTTPS port"
+		echo "allow 53 $subnet 53 # Accept DNS port (Do53)"
+		echo "allow 853 $subnet 853 # Accept DNS port (DoT/DoQ)"
+	elif [ "$acl_preset" = "accept-all-ports" ]; then
+		echo "allow 1-65535 $subnet 1-65535 # Accept all ports"
+	elif [ "$acl_preset" != "custom" ]; then
+		log "Unknown ACL preset ignored" daemon.warn
+	fi
+	if [ "$acl_preset" != "custom" ] && [ "$check_custom_acl" != "last" ]; then
+		echo "deny 1-65535 $subnet 1-65535 # Reject ACL by default"
+	fi
+}
+
 upnpd_get_port_range() {
-	local var="$1"; shift
+	local var="$1"
+	shift
 	local val
-
 	config_get val "$@"
-
 	case "$val" in
-		[0-9]*[:-][0-9]*)
-			export -n -- "${var}_start=${val%%[:-]*}"
-			export -n -- "${var}_end=${val##*[:-]}"
+	[0-9]*[:-][0-9]*)
+		export -n -- "${var}_start=${val%%[:-]*}"
+		export -n -- "${var}_end=${val##*[:-]}"
 		;;
-		[0-9]*)
-			export -n -- "${var}_start=$val"
-			export -n -- "${var}_end="
+	[0-9]*)
+		export -n -- "${var}_start=$val"
+		export -n -- "${var}_end="
 		;;
 	esac
 }
 
-conf_rule_add() {
+upnpd_add_custom_acl_entry() {
 	local cfg="$1"
-	local action int_addr
-	local ext_start ext_end int_start int_end comment
-
+	local comment action int_addr int_start int_end ext_start ext_end
+	config_get comment "$cfg" comment "No comment"        # comment
 	config_get action "$cfg" action "deny"                # allow or deny
-	upnpd_get_port_range "ext" "$cfg" ext_ports "0-65535" # external ports: x, x-y, x:y
 	config_get int_addr "$cfg" int_addr "0.0.0.0/0"       # ip or network and subnet mask (internal)
-	upnpd_get_port_range "int" "$cfg" int_ports "0-65535" # internal ports: x, x-y, x:y or range
-	config_get comment "$cfg" comment "ACL"		      # comment
-
-	# Make a single IP IP/32 so that miniupnpd.conf can use it.
-	[ "${int_addr%/*}" = "$int_addr" ] && int_addr="$int_addr/32"
-
-	echo "$action $ext_start${ext_end:+-}$ext_end $int_addr $int_start${int_end:+-}$int_end #$comment"
+	upnpd_get_port_range "int" "$cfg" int_ports "1-65535" # internal ports: x, x-y, x:y
+	upnpd_get_port_range "ext" "$cfg" ext_ports "1-65535" # external ports: x, x-y, x:y
+	echo "$action $ext_start${ext_end:+-}$ext_end $int_addr $int_start${int_end:+-}$int_end # $comment"
 }
 
-upnpd_write_bool() {
-	local opt="$1"
-	local def="${2:-0}"
-	local alt="${3:-$opt}"
-	local val
+echo_yesno() {
+	[ "$1" -eq "1" ] && echo yes || echo no
+}
 
-	config_get_bool val config "$opt" "$def"
-	if [ "$val" -eq 0 ]; then
-		echo "$alt=no"
-	else
-		echo "$alt=yes"
-	fi
+echo_yesno_inverse() {
+	[ "$1" -eq "1" ] && echo no || echo yes
+}
+
+log() {
+	logger -s -p ${2:-daemon.notice} -t "upnpd" "$1"
 }
 
 upnpd() {
 	config_load "upnpd"
-	local external_iface external_iface6 external_zone external_ip internal_iface
-	local upload download log_output port config_file serial_number model_number
-	local use_stun stun_host stun_port uuid notify_interval presentation_url
-	local upnp_lease_file clean_ruleset_threshold clean_ruleset_interval
-	local ipv6_disable
-
 	local enabled
-	config_get_bool enabled config enabled 1
-	[ "$enabled" -eq 0 ] && return 1
-
+	config_get_bool enabled config enabled 0
+	[ "$enabled" -eq 0 ] && log "Service is disabled" && return 0
+	! uci -q get upnpd.@internal_network[0].interface >/dev/null && log "No internal network interface set, not starting" daemon.err && return 0
+	# Daemon
+	local enable_upnp_igd enable_pcp_natpmp use_stun stun_host acl_reject_unsafe_ports allow_third_party_mapping ipv6_disable system_uptime log_output lease_file config_file
+	config_get_bool enable_upnp_igd config enable_upnp_igd 1
+	config_get_bool enable_pcp_natpmp config enable_pcp_natpmp 1
+	config_get use_stun config use_stun 0
+	config_get stun_host config stun_host stun.nextcloud.com
+	config_get acl_reject_unsafe_ports config acl_reject_unsafe_ports "21 23 135 137-139 445 3389"
+	config_get_bool allow_third_party_mapping config allow_third_party_mapping 0
+	config_get_bool ipv6_disable config ipv6_disable 0
+	config_get_bool system_uptime config system_uptime 1
+	config_get log_output config log_output 0
+	config_get lease_file config lease_file /var/run/miniupnpd.leases
+	config_get config_file config config_file
+	# UPnP IGD
+	local upnp_igd_compat port notify_interval upnp_igd_download upnp_igd_upload upnp_igd_friendly_name model_number serial_number presentation_url uuid
+	config_get upnp_igd_compat config upnp_igd_compat igdv1
+	config_get port config port 5000
+	config_get notify_interval config notify_interval 900
+	config_get upnp_igd_download config upnp_igd_download
+	config_get upnp_igd_upload config upnp_igd_upload
+	config_get upnp_igd_friendly_name config upnp_igd_friendly_name
+	config_get model_number config model_number
+	config_get serial_number config serial_number
+	config_get presentation_url config presentation_url
+	config_get uuid config uuid
+	# External network interfaces
+	local external_iface external_iface6 external_zone external_ip
 	config_get external_iface config external_iface
 	config_get external_iface6 config external_iface6
 	config_get external_zone config external_zone
 	config_get external_ip config external_ip
-	config_get internal_iface config internal_iface
-	config_get port config port 5000
-	config_get upload config upload
-	config_get download config download
-	config_get_bool log_output config log_output 0
-	config_get config_file config config_file
-	config_get serial_number config serial_number
-	config_get model_number config model_number
-	config_get uuid config uuid
-	config_get use_stun config use_stun 0
-	config_get stun_host config stun_host
-	config_get stun_port config stun_port
-	config_get notify_interval config notify_interval
-	config_get presentation_url config presentation_url
-	config_get upnp_lease_file config upnp_lease_file
-	config_get clean_ruleset_threshold config clean_ruleset_threshold
-	config_get clean_ruleset_interval config clean_ruleset_interval
-	config_get ipv6_disable config ipv6_disable 0
 
 	local conf ifname ifname6
-
 	. /lib/functions/network.sh
-
-	if [ -n "$external_iface" ] ; then
+	if [ -n "$external_iface" ]; then
 		network_get_device ifname "$external_iface"
 	else
-		if [ -n "$external_zone" ] ; then
+		if [ -n "$external_zone" ]; then
 			ifname=$($FW -q zone "$external_zone" 2>/dev/null | head -1)
 		else
-			network_find_wan external_iface && \
+			network_find_wan external_iface &&
 				network_get_device ifname "$external_iface"
 		fi
 	fi
-	if [ -n "$external_iface6" ] ; then
+	if [ -n "$external_iface6" ]; then
 		network_get_device ifname6 "$external_iface6"
 	else
-		if [ -n "$external_zone" ] ; then
+		if [ -n "$external_zone" ]; then
 			ifname6=$($FW -q zone "$external_zone" 2>/dev/null | head -1)
 		else
-			network_find_wan6 external_iface6 && \
+			network_find_wan6 external_iface6 &&
 				network_get_device ifname6 "$external_iface6"
 		fi
 	fi
@@ -124,82 +310,93 @@ upnpd() {
 		mkdir -p /var/etc
 
 		{
-		echo "ext_ifname=$ifname"
-		echo "ext_ifname6=$ifname6"
-		[ -n "$external_ip" ] && echo "ext_ip=$external_ip"
+			# Daemon
+			echo "enable_upnp=$(echo_yesno $enable_upnp_igd)"
+			echo "enable_pcp_pmp=$(echo_yesno $enable_pcp_natpmp)"
+			[ "$use_stun" != "0" ] && {
+				[ "$use_stun" = "1" ] && echo "ext_perform_stun=yes"
+				[ "$use_stun" = "allow-filtered" ] && echo "ext_perform_stun=allow-filtered"
+				echo "ext_stun_host=$(echo $stun_host | cut -d ":" -f 1)"
+				[ "$(echo $stun_host | cut -s -d ":" -f 2)" != "" ] && echo "ext_stun_port=$(echo $stun_host | cut -s -d ":" -f 2)"
+			}
+			echo "secure_mode=$(echo_yesno_inverse $allow_third_party_mapping)"
+			echo "pcp_allow_thirdparty=$(echo_yesno $allow_third_party_mapping)"
+			echo "ipv6_disable=$(echo_yesno $ipv6_disable)"
+			echo "system_uptime=$(echo_yesno $system_uptime)"
+			touch "$lease_file" && echo "lease_file=$lease_file"
+			[ "$ipv6_disable" = "0" ] && touch "${lease_file}-ipv6" && echo "lease_file6=${lease_file}-ipv6"
 
-		local iface
-		for iface in ${internal_iface:-lan}; do
-			local device
-			network_get_device device "$iface" && echo "listening_ip=$device"
-		done
+			# UPnP IGD
+			[ "$enable_upnp_igd" = "1" ] && {
+				[ "$upnp_igd_compat" = "igdv1" ] &&
+					echo "force_igd_desc_v1=yes" ||
+					echo "force_igd_desc_v1=no"
+				echo "http_port=$port"
+				echo "notify_interval=$notify_interval"
+				[ -n "$upnp_igd_download" ] && echo "bitrate_down=$((upnp_igd_download * 1000))"
+				[ -n "$upnp_igd_upload" ] && echo "bitrate_up=$((upnp_igd_upload * 1000))"
+				[ -n "$upnp_igd_friendly_name" ] && echo "friendly_name=$upnp_igd_friendly_name"
+				echo "model_number=$model_number"
+				echo "serial=$serial_number"
+				[ -n "$presentation_url" ] && echo "presentation_url=$presentation_url"
+				[ -z "$uuid" ] && {
+					uuid="$(cat /proc/sys/kernel/random/uuid)"
+					uci set upnpd.config.uuid="$uuid"
+					uci commit upnpd
+				}
+				[ "$uuid" != "nocli" ] && echo "uuid=$uuid"
+			}
 
-		config_load "upnpd"
-		upnpd_write_bool enable_natpmp 1
-		upnpd_write_bool enable_upnp 1
-		upnpd_write_bool secure_mode 1
-		upnpd_write_bool system_uptime 1
-		upnpd_write_bool igdv1 0 force_igd_desc_v1
-		upnpd_write_bool use_stun 0 ext_perform_stun
-		upnpd_write_bool ipv6_disable $ipv6_disable
+			# External network interfaces
+			echo "ext_ifname=$ifname"
+			echo "ext_ifname6=$ifname6"
+			[ -n "$external_ip" ] && echo "ext_ip=$external_ip"
 
-		[ "$use_stun" -eq 0 ] || {
-			[ -n "$stun_host" ] && echo "ext_stun_host=$stun_host"
-			[ -n "$stun_port" ] && echo "ext_stun_port=$stun_port"
-		}
+			# Firewall backend
+			if [ "$FW" = "fw4" ]; then
+				echo "upnp_table_name=fw4"
+				echo "upnp_nat_table_name=fw4"
+				echo "upnp_forward_chain=upnp_forward"
+				echo "upnp_nat_chain=upnp_prerouting"
+				echo "upnp_nat_postrouting_chain=upnp_postrouting"
+			fi
 
-		[ -n "$upload" ] && [ -n "$download" ] && {
-			echo "bitrate_down=$((download * 1024 * 8))"
-			echo "bitrate_up=$((upload * 1024 * 8))"
-		}
+			echo "# Internal networks / Access Control List (ACL)"
+			for unsafeport in $acl_reject_unsafe_ports; do
+				if [ "$unsafeport" -ge "1" ] 2>/dev/null && [ "$unsafeport" -le "65535" ] 2>/dev/null ||
+					([ "$(echo $unsafeport | cut -d "-" -f 1)" -ge "1" ] 2>/dev/null &&
+						[ "$(echo $unsafeport | cut -d "-" -f 1)" -le "65535" ] 2>/dev/null &&
+						[ "$(echo $unsafeport | cut -s -d "-" -f 2)" -ge "1" ] 2>/dev/null &&
+						[ "$(echo $unsafeport | cut -s -d "-" -f 2)" -le "65535" ] 2>/dev/null); then
+					echo "deny 1-65535 0.0.0.0/0 $unsafeport # Reject unsafe client port"
+				else
+					log "Unknown port or port range ($unsafeport) in acl_reject_unsafe_ports ignored" daemon.warn
+				fi
+			done
+			config_foreach upnpd_add_network_and_acl_preset internal_network
+			echo "# Custom ACL"
+			config_foreach upnpd_add_custom_acl_entry perm_rule
+			echo "deny 1-65535 0.0.0.0/0 1-65535 # Reject ACL by default"
 
-		[ -n "$upnp_lease_file" ] && touch "$upnp_lease_file" && echo "lease_file=$upnp_lease_file"
-		[ -n "$presentation_url" ] && echo "presentation_url=$presentation_url"
-		[ -n "$notify_interval" ] && echo "notify_interval=$notify_interval"
-		[ -n "$clean_ruleset_threshold" ] && echo "clean_ruleset_threshold=$clean_ruleset_threshold"
-		[ -n "$clean_ruleset_interval" ] && echo "clean_ruleset_interval=$clean_ruleset_interval"
-		[ -n "$serial_number" ] && echo "serial=$serial_number"
-		[ -n "$model_number" ] && echo "model_number=$model_number"
-		[ -n "$port" ] && echo "port=$port"
-
-		[ -z "$uuid" ] && {
-			uuid="$(cat /proc/sys/kernel/random/uuid)"
-			uci set upnpd.config.uuid="$uuid"
-			uci commit upnpd
-		}
-
-		[ "$uuid" = "nocli" ] || echo "uuid=$uuid"
-
-		config_foreach conf_rule_add perm_rule
-
-		if [ "$FW" = "fw4" ]; then
-			#When using nftables configure miniupnpd to use its own table and chains
-			echo "upnp_table_name=fw4"
-			echo "upnp_nat_table_name=fw4"
-			echo "upnp_forward_chain=upnp_forward"
-			echo "upnp_nat_chain=upnp_prerouting"
-			echo "upnp_nat_postrouting_chain=upnp_postrouting"
-		fi
-
-		} > "$tmpconf"
+		} >"$tmpconf"
 	fi
 
 	if [ -n "$ifname" ]; then
-		# start firewall
 		if [ "$FW" = "fw4" ]; then
 			nft -s -t -n list chain inet fw4 upnp_forward >/dev/null 2>&1 || fw4 reload
 		else
 			iptables -L MINIUPNPD >/dev/null 2>&1 || fw3 reload
 		fi
 	else
-		logger -t "upnp daemon" "external interface not found, not starting"
+		log "External interface not found, not starting" daemon.err
 	fi
 
 	procd_open_instance
 	procd_set_param file "$conf" "/etc/config/firewall"
 	procd_set_param command "$PROG"
 	procd_append_param command -f "$conf"
-	[ "$log_output" = "1" ] && procd_append_param command -d
+	[ "$log_output" = "info" ] && procd_append_param command -v
+	[ "$log_output" = "debug" ] && procd_append_param command -d
 	procd_close_instance
 }
 
@@ -217,6 +414,7 @@ stop_service() {
 }
 
 start_service() {
+	upnpd_uci_migration
 	config_load "upnpd"
 	config_foreach upnpd "upnpd"
 }
