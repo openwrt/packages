@@ -27,11 +27,12 @@ define Package/snort3
   SECTION:=net
   CATEGORY:=Network
   DEPENDS:= \
-	    +@!(TARGET_powerpc||TARGET_mips||TARGET_mips64||TARGET_mipsel):gperftools-runtime \
 	    +(TARGET_x86||TARGET_x86_64):hyperscan-runtime \
 	    +libstdcpp +libdaq3 +libdnet +libopenssl +libpcap +libpcre2 \
 	    +libpthread +libuuid +zlib +libhwloc +libtirpc @HAS_LUAJIT_ARCH +luajit +libatomic \
-	    +kmod-nft-queue +liblzma +ucode +ucode-mod-fs +ucode-mod-uci
+	    +kmod-nft-queue +liblzma +ucode +ucode-mod-fs +ucode-mod-uci \
+            $(if $(filter y,$(CONFIG_TARGET_mips) $(CONFIG_TARGET_mips64) $(CONFIG_TARGET_mipsel) $(CONFIG_TARGET_powerpc)),,\
+      +gperftools-runtime)
   TITLE:=Lightweight Network Intrusion Detection System
   URL:=http://www.snort.org/
   MENU:=1
