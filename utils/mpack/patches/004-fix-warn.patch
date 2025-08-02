@@ -1,0 +1,44 @@
+ unixos.c   | 8 +-------
+ unixpk.c   | 5 -----
+ unixunpk.c | 2 +-
+ 3 files changed, 2 insertions(+), 13 deletions(-)
+
+--- a/unixos.c
++++ b/unixos.c
+@@ -263,13 +263,7 @@ os_binhex(struct part *inpart, int part,
+  */
+ void os_warnMD5mismatch(void)
+ {
+-    char *warning;
+-
+-    warning = xmalloc(strlen(output_fname) + 100);
+-    sprintf(warning, "%s was corrupted in transit",
+-	    output_fname);
+-    warn(warning);
+-    free(warning);
++    fprintf(stderr, "warning: %s was corrupted in transit\n", output_fname);
+ }
+ 
+ /*
+--- a/unixpk.c
++++ b/unixpk.c
+@@ -293,8 +293,3 @@ void inews(FILE *infile)
+     perror("execl");
+     _exit(1);
+ }
+-
+-void warn(void)
+-{
+-    abort();
+-}
+--- a/unixunpk.c
++++ b/unixunpk.c
+@@ -109,7 +109,7 @@ void usage(void) {
+ 
+ void warn(char *s)
+ {
+-    fprintf(stderr, "munpack: warning: %s\n", s);
++    fprintf(stderr, "warning: %s\n", s);
+ }
+ 
+ void chat(char *s)

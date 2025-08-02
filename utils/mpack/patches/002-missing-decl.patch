@@ -1,0 +1,172 @@
+ common.h   |  1 +
+ decode.c   | 17 +++++++++++++++++
+ encode.c   |  2 ++
+ magic.c    |  1 +
+ unixos.c   |  3 +++
+ unixpk.c   |  4 ++++
+ unixunpk.c |  2 ++
+ uudecode.c | 15 +++++++++++++--
+ 8 files changed, 43 insertions(+), 2 deletions(-)
+
+--- a/common.h
++++ b/common.h
+@@ -30,6 +30,7 @@
+ #endif
+ 
+ #if defined(unix) && !defined(remove)
++#include <unistd.h>
+ #define remove unlink
+ #endif
+ 
+--- a/decode.c
++++ b/decode.c
+@@ -38,6 +38,18 @@ extern char *os_idtodir(char *id);
+ extern FILE *os_newtypedfile(char *fname, char *contentType, int flags, params contentParams);
+ extern FILE *os_createnewfile(char *fname);
+ extern char *md5contextTo64(MD5_CTX *context);
++extern void warn(char *s);
++extern int part_depth(struct part *part);
++extern int part_close(struct part *part);
++extern int handleUuencode(struct part *inpart, char *subject, int extractText);
++extern int part_ungets(char *s, struct part *part);
++extern void chat(char *s);
++extern void os_donewithdir(char *dir);
++extern int part_fill(struct part *part);
++extern int part_addboundary(struct part *part, char *boundary);
++extern int part_readboundary(struct part *part);
++extern void os_warnMD5mismatch(void);
++extern void os_closetypedfile(FILE *outfile);
+ 
+ /* The possible content transfer encodings */
+ enum encoding { enc_none, enc_qp, enc_base64 };
+@@ -50,6 +62,11 @@ char *getDispositionFilename(char *dispo
+ void from64(struct part *inpart, FILE *outfile, char **digestp, int suppressCR);
+ void fromqp(struct part *inpart, FILE *outfile, char **digestp);
+ void fromnone(struct part *inpart, FILE *outfile, char **digestp);
++int ignoreMessage(struct part *inpart);
++int handlePartial(struct part *inpart, char *headers, params contentParams, int extractText);
++int handleMultipart(struct part *inpart, char *contentType, params contentParams, int extractText);
++int handleText(struct part *inpart, enum encoding contentEncoding);
++int saveToFile(struct part *inpart, int inAppleDouble, char *contentType, params contentParams, enum encoding contentEncoding, char *contentDisposition, char *contentMD5);
+ /*
+  * Read and handle an RFC 822 message from the body-part 'inpart'.
+  */
+--- a/encode.c
++++ b/encode.c
+@@ -24,11 +24,13 @@
+  */
+ #include <stdio.h>
+ #include <string.h>
++#include <stdlib.h>
+ 
+ extern char *magic_look(FILE *infile);
+ extern char *os_genid(void);
+ extern FILE *os_createnewfile(char *fname);
+ extern char *md5digest(FILE *infile, long int *len);
++extern int to64(FILE *infile, FILE *outfile, long int limit);
+ 
+ #define NUMREFERENCES 4
+ 
+--- a/magic.c
++++ b/magic.c
+@@ -23,6 +23,7 @@
+  * SOFTWARE.
+  */
+ #include <stdio.h>
++#include <string.h>
+ 
+ /* Description of the various file formats and their magic numbers */
+ struct magic {
+--- a/unixos.c
++++ b/unixos.c
+@@ -27,6 +27,9 @@
+ #include <string.h>
+ #include <stdlib.h>
+ #include <errno.h>
++#include <time.h>
++#include <unistd.h>
++#include <sys/stat.h>
+ #include <sys/types.h>
+ #include <sys/param.h>
+ #include <netdb.h>
+--- a/unixpk.c
++++ b/unixpk.c
+@@ -26,9 +26,11 @@
+ #include <string.h>
+ #include <stdlib.h>
+ #include <errno.h>
++#include <unistd.h>
+ #include "common.h"
+ #include "version.h"
+ #include "xmalloc.h"
++#include <sys/wait.h>
+ 
+ #define MAXADDRESS 100
+ 
+@@ -39,6 +41,8 @@ void usage(void);
+ void sendmail(FILE *infile, char **addr, int start);
+ void inews(FILE *infile);
+ 
++extern int encode(FILE *infile, FILE *applefile, char *fname, FILE *descfile, char *subject, char *headers, long int maxsize, char *typeoverride, char *outfname);
++
+ int main(int argc, char **argv)
+ {
+     int opt;
+--- a/unixunpk.c
++++ b/unixunpk.c
+@@ -24,12 +24,14 @@
+  */
+ #include <stdio.h>
+ #include <stdlib.h>
++#include <unistd.h>
+ #include "version.h"
+ #include "part.h"
+ 
+ extern int optind;
+ extern char *optarg;
+ 
++extern int handleMessage(struct part *inpart, char *defaultContentType, int inAppleDouble, int extractText);
+ extern int overwrite_files;
+ extern int didchat;
+ int quiet;
+--- a/uudecode.c
++++ b/uudecode.c
+@@ -33,9 +33,21 @@
+ extern char *os_idtodir(char *id);
+ extern FILE *os_newtypedfile(char *fname, char *contentType, int flags, params contentParams);
+ extern FILE *os_createnewfile(char *fname);
++extern int os_binhex(struct part *inpart, int part, int nparts);
++extern int part_ungets(char *s, struct part *part);
++extern int handleMessage(struct part *inpart, char *defaultContentType, int inAppleDouble, int extractText);
++extern void chat(char *s);
++extern int part_close(struct part *part);
++extern void os_closetypedfile(FILE *outfile);
++extern void os_donewithdir(char *dir);
+ 
+ static FILE *startDescFile(char *fname);
+ 
++int parseSubject(char *subject, char **fnamep, int *partp, int *npartsp);
++int saveUuFile(struct part *inpart, char *fname, int part, int nparts, char *firstline);
++int descEnd(char *line);
++int uudecodefiles(char *dir, int nparts);
++void uudecodeline(char *line, FILE *outfile);
+ 
+ /* Length of a normal uuencoded line, including newline */
+ #define UULENGTH 62
+@@ -827,7 +839,7 @@ uudecodefiles(char *dir, int nparts)
+ /*
+  * Decode a uuencoded line to 'outfile'
+  */
+-int uudecodeline(char *line, FILE *outfile)
++void uudecodeline(char *line, FILE *outfile)
+ {
+     int c, len;
+ 
+@@ -846,7 +858,6 @@ int uudecodeline(char *line, FILE *outfi
+ 	}
+ 	line += 4;
+     }
+-    return;
+ }
+ 
+     
