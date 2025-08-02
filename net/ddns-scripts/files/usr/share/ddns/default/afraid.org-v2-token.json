@@ -1,9 +1,9 @@
 {
 	"name": "afraid.org-v2-token",
 	"ipv4": {
-		"url": "https://freedns.afraid.org/dynamic/update.php?[PASSWORD]&address=[IP]"
+		"url": "https://sync.afraid.org/u/[PASSWORD]/?address=[IP]"
 	},
 	"ipv6": {
-		"url": "https://freedns.afraid.org/dynamic/update.php?[PASSWORD]&address=[IP]"
+		"url": "https://v6.sync.afraid.org/u/[PASSWORD]/?address=[IP]"
 	}
 }
