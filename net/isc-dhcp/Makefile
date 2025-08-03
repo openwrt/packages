@@ -11,7 +11,7 @@ PKG_NAME:=isc-dhcp
 UPSTREAM_NAME:=dhcp
 PKG_REALVERSION:=4.4.3-P1
 PKG_VERSION:=4.4.3_p1
-PKG_RELEASE:=10
+PKG_RELEASE:=11
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -136,7 +136,10 @@ endef
 define Package/isc-dhcp-dyndns
   $(call Package/isc-dhcp/Default)
   TITLE+= server dynamic DNS dependencies (meta)
-  DEPENDS+=@(PACKAGE_isc-dhcp-server-ipv4||PACKAGE_isc-dhcp-server-ipv6) +bind-server +bind-client
+  DEPENDS+=@(PACKAGE_isc-dhcp-server-ipv4||PACKAGE_isc-dhcp-server-ipv6) \
+	+bind-server \
+	+bind-rndc \
+	+bind-client
 endef
 
 define Package/isc-dhcp-dyndns/description

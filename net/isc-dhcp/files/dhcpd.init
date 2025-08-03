@@ -11,8 +11,7 @@ PREFIX="update add"
 lease_file=/tmp/dhcpd.leases
 config_file=/tmp/run/dhcpd.conf
 
-dyndir=/tmp/bind
-conf_local_file=$dyndir/named.conf.local
+dyndir=/var/run/dhcp
 
 session_key_name=local-ddns
 session_key_file=/var/run/named/session.key
@@ -134,13 +133,55 @@ rev_str() {
 	echo "$result"
 }
 
-create_empty_zone() {
-	local zone="$1"
+write_empty_zone() {
+	local zpath
+	zpath="$1"
 
-	if [ ! -f $dyndir/db."$zone" ]; then
-		cp -p /etc/bind/db.empty $dyndir/db."$zone"
-		chmod g+w $dyndir/db."$zone"
-		chgrp bind $dyndir/db."$zone"
+	cat > "$zpath" <<\EOF
+;
+; BIND empty zone created by isc-dhcp-server
+;
+$TTL	604800
+@	IN	SOA	localhost. root.localhost. (
+			      1		; Serial
+			 604800		; Refresh
+			  86400		; Retry
+			2419200		; Expire
+			 604800 )	; Negative Cache TTL
+;
+@	IN	NS	localhost.
+EOF
+}
+
+create_empty_zone() {
+	local zone error zpath
+	zone="$1"
+	zpath="$dyndir/db.$zone"
+
+	if [ ! -d "$dyndir" ]; then
+		mkdir -p "$dyndir" || return 1
+		chown bind:bind "$dyndir" || return 1
+	fi
+
+	write_empty_zone "$zpath"
+	chown bind:bind "$zpath" || return 1
+	chmod 0664 "$zpath" || return 1
+
+	if ! error=$(rndc addzone $zone "{
+		type primary;
+		file \"$zpath\";
+		update-policy {
+			grant $session_key_name zonesub any;
+		};
+	};" 2>&1); then
+		case "$error" in
+			*"already exists"*)
+				;;
+			*)
+				logger -p info -t isc-dhcp "Failed to add zone $zone: $error"
+				return 1
+				;;
+		esac
 	fi
 }
 
@@ -523,6 +564,8 @@ general_config() {
 	[ $? -ne 0 ] && return 1
 
 	if [ $dynamicdns -eq 1 ]; then
+		rndc freeze
+
 		create_empty_zone "$domain"
 
 		local mynet
@@ -532,40 +575,7 @@ general_config() {
 			create_empty_zone "$mynet.in-addr.arpa"
 		done
 
-		local need_reload=
-
-		cp -p $conf_local_file ${conf_local_file}_
-
-		cat <<EOF > $conf_local_file
-zone "$domain" {
-	type master;
-	file "$dyndir/db.$domain";
-	update-policy {
-		grant $session_key_name zonesub any;
-	};
-};
-
-EOF
-
-		for mynet in $rfc1918_nets; do
-			mynet="$(rev_str "$mynet" ".")"
-			cat <<EOF >> $conf_local_file
-zone "$mynet.in-addr.arpa" {
-	type master;
-	file "$dyndir/db.$mynet.in-addr.arpa";
-	update-policy {
-		grant $session_key_name zonesub any;
-	};
-};
-
-EOF
-		done
-
-		cmp -s $conf_local_file ${conf_local_file}_ || need_reload=1
-		rm -f ${conf_local_file}_
-
-		[ -n "$need_reload" ] && /etc/init.d/named reload
-		sleep 1
+		rndc thaw
 
 		cat <<EOF
 ddns-domainname "$domain.";
