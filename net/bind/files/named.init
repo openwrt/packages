@@ -34,6 +34,7 @@ start_service() {
 	if [ ! -s /etc/bind/rndc.key ] && [ ! -s /etc/bind/rndc.conf ]; then
 		rndc-confgen -a
 		chown bind:bind /etc/bind/rndc.key
+		chmod 0640 /etc/bind/rndc.key
 	fi
 
 	if [ -z "$(ip -6 -o route show default)" ]; then
