@@ -141,7 +141,7 @@ function interfaces_status(request) {
 			'age': get_x_time(uptime, ifname, 'TIME'),
 			'online': get_x_time(uptime, ifname, 'ONLINE'),
 			'offline': get_x_time(uptime, ifname, 'OFFLINE'),
-			'uptime': netstatus.uptime || 0,
+			'uptime': netstatus?.uptime || 0,
 			'score': get_int(ifname, 'SCORE'),
 			'lost': get_int(ifname, 'LOST'),
 			'turn': get_int(ifname, 'TURN'),
@@ -149,7 +149,7 @@ function interfaces_status(request) {
 			'enabled': ucibool(intf['enabled']),
 			'running': track_status == 'active',
 			'tracking': track_status,
-			'up': netstatus.up,
+			'up': netstatus?.up || false,
 			'track_ip': track_ips,
 		};
 	});
