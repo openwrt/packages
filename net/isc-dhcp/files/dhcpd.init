@@ -11,8 +11,8 @@ PREFIX="update add"
 lease_file=/tmp/dhcpd.leases
 config_file=/tmp/run/dhcpd.conf
 
-dyndir=/tmp/bind
-conf_local_file=$dyndir/named.conf.local
+binddir=/tmp/bind
+conf_local_file=$binddir/named.conf.local
 
 session_key_name=local-ddns
 session_key_file=/var/run/named/session.key
@@ -137,10 +137,22 @@ rev_str() {
 create_empty_zone() {
 	local zone="$1"
 
-	if [ ! -f $dyndir/db."$zone" ]; then
-		cp -p /etc/bind/db.empty $dyndir/db."$zone"
-		chmod g+w $dyndir/db."$zone"
-		chgrp bind $dyndir/db."$zone"
+	if [ ! -f "$binddir/db.$zone" ]; then
+		cat <<__EOF__ > "$binddir/db.$zone"
+;
+; BIND dynamic update data file for $zone
+;
+\$TTL	604800
+@	IN	SOA	localhost. root.localhost. (
+			      1		; Serial
+			 604800		; Refresh
+			  86400		; Retry
+			2419200		; Expire
+			 604600 )	; Negative Cache TTL
+;
+@	IN	NS	localhost.
+__EOF__
+		chown bind:bind "$binddir/db.$zone"
 	fi
 }
 
@@ -539,7 +551,7 @@ general_config() {
 		cat <<EOF > $conf_local_file
 zone "$domain" {
 	type master;
-	file "$dyndir/db.$domain";
+	file "$binddir/db.$domain";
 	update-policy {
 		grant $session_key_name zonesub any;
 	};
@@ -552,7 +564,7 @@ EOF
 			cat <<EOF >> $conf_local_file
 zone "$mynet.in-addr.arpa" {
 	type master;
-	file "$dyndir/db.$mynet.in-addr.arpa";
+	file "$binddir/db.$mynet.in-addr.arpa";
 	update-policy {
 		grant $session_key_name zonesub any;
 	};
@@ -625,6 +637,8 @@ boot() {
 start_service() {
 	local domain dhcp_ifs authoritative dynamicdns
 
+	umask 022
+
 	if [ -n "$DHCPD_BOOT" ]; then
 		return 0
 	fi
@@ -638,7 +652,7 @@ start_service() {
 	else
 		. /lib/functions/network.sh
 
-		local dyn_file=$(mktemp -u /tmp/dhcpd.XXXXXX)
+		local dyn_file="$(mktemp -u "/tmp/nsupdate.XXXXXX")"
 
 		config_load dhcp
 
@@ -681,11 +695,10 @@ EOF
 
 			no_ipv6 && args="-4"
 
-			nsupdate -l -v $args $dyn_file
-
+			nsupdate -l -v $args "$dyn_file"
 		fi
 
-		rm -f $dyn_file
+		rm -f "$dyn_file"
 
 		[ -z "$dhcp_ifs" ] && return 0
 	fi
