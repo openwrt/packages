@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=krb5
 PKG_VERSION:=1.21.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
@@ -106,6 +106,8 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(2)/bin
 	$(LN) ../../usr/bin/krb5-config $(2)/bin/krb5-config
 endef
+
+TARGET_CFLAGS += -std=gnu11
 
 define Package/krb5-libs/install
 	$(INSTALL_DIR) $(1)/usr/lib
