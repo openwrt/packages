@@ -264,20 +264,24 @@ f_conf() {
 		option_cb() {
 			local option="${1}" value="${2//\"/\\\"}"
 
-			eval "${option}=\"${value}\""
+			if [ -d "${value}" ] || { [ ! -d "${value}" ] && [ -n "${value%%[./]*}" ]; }; then
+				eval "${option}=\"${value}\""
+			fi
 		}
 		list_cb() {
 			local append option="${1}" value="${2//\"/\\\"}"
 
-			eval "append=\"\${${option}}\""
-			case "${option}" in
-				"ban_logterm")
-					eval "${option}=\"${append}${value}\\|\""
-					;;
-				*)
-					eval "${option}=\"${append}${value} \""
-					;;
-			esac
+			if [ -d "${value}" ] || { [ ! -d "${value}" ] && [ -n "${value%%[./]*}" ]; }; then
+				eval "append=\"\${${option}}\""
+				case "${option}" in
+					"ban_logterm")
+						eval "${option}=\"${append}${value}\\|\""
+						;;
+					*)
+						eval "${option}=\"${append}${value} \""
+						;;
+				esac
+			fi
 		}
 	}
 	config_load banip
@@ -1901,7 +1905,8 @@ f_monitor() {
 					ip="${ip##* }"
 					[ -n "${ip%%::*}" ] && proto=".v6"
 				fi
-				if [ -n "${proto}" ] && ! "${ban_nftcmd}" get element inet banIP allowlist"${proto}" "{ ${ip} }" >/dev/null 2>&1 && ! "${ban_nftcmd}" get element inet banIP blocklist"${proto}" "{ ${ip} }" >/dev/null 2>&1; then
+				if [ -n "${proto}" ] && ! "${ban_nftcmd}" get element inet banIP allowlist"${proto}" "{ ${ip} }" >/dev/null 2>&1 &&
+					! "${ban_nftcmd}" get element inet banIP blocklist"${proto}" "{ ${ip} }" >/dev/null 2>&1; then
 					f_log "info" "suspicious IP '${ip}'"
 					log_raw="$(eval ${loglimit_cmd})"
 					log_count="$(printf "%s\n" "${log_raw}" | "${ban_grepcmd}" -c "suspicious IP '${ip}'")"
@@ -1922,9 +1927,11 @@ f_monitor() {
 										prefix="${idx}"
 										continue
 									else
-										cidr="${prefix}/${idx}"
-										if "${ban_nftcmd}" add element inet banIP "blocklist${proto}" { ${cidr} ${nft_expiry} } >/dev/null 2>&1; then
-											f_log "info" "add IP range '${cidr}' (source: ${rdap_info:-"n/a"} ::: expiry: ${ban_nftexpiry:-"-"}) to blocklist${proto} set"
+										if [ -n "${prefix%%::*}" ] && [ "${prefix%%.*}" != "127" ] && [ "${prefix%%.*}" != "0" ]; then
+											cidr="${prefix}/${idx}"
+											if "${ban_nftcmd}" add element inet banIP "blocklist${proto}" { ${cidr} ${nft_expiry} } >/dev/null 2>&1; then
+												f_log "info" "add IP range '${cidr}' (source: ${rdap_info:-"n/a"} ::: expiry: ${ban_nftexpiry:-"-"}) to blocklist${proto} set"
+											fi
 										fi
 										prefix=""
 									fi
