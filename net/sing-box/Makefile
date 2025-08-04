@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sing-box
-PKG_VERSION:=1.11.15
+PKG_VERSION:=1.12.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/SagerNet/sing-box/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=97d58dd873d7cf9b5e4b4aca5516568f3b2e6f5c3dbc93241c82fff5e4a609fd
+PKG_HASH:=1093254161d2dac2175a589eb0b43415b89b3e0c10bb2a09ac230f320d974c82
 
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=LICENSE
@@ -52,10 +52,6 @@ define Package/sing-box/config
 		config SINGBOX_WITH_DHCP
 			bool "Build with DHCP support, see DHCP DNS transport."
 
-		config SINGBOX_WITH_ECH
-			bool "Build with TLS ECH extension support for TLS outbound"
-			default y
-
 		config SINGBOX_WITH_EMBEDDED_TOR
 			bool "Build with embedded Tor support"
 
@@ -70,8 +66,8 @@ define Package/sing-box/config
 			bool "Build with QUIC support"
 			default y
 
-		config SINGBOX_WITH_REALITY_SERVER
-			bool "Build with reality TLS server support, see TLS."
+		config SINGBOX_WITH_TAILSCALE
+			bool "Build with Tailscale support"
 			default y
 
 		config SINGBOX_WITH_UTLS
@@ -91,12 +87,11 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_SINGBOX_WITH_ACME \
 	CONFIG_SINGBOX_WITH_CLASH_API \
 	CONFIG_SINGBOX_WITH_DHCP \
-	CONFIG_SINGBOX_WITH_ECH \
 	CONFIG_SINGBOX_WITH_EMBEDDED_TOR \
 	CONFIG_SINGBOX_WITH_GRPC \
 	CONFIG_SINGBOX_WITH_GVISOR \
 	CONFIG_SINGBOX_WITH_QUIC \
-	CONFIG_SINGBOX_WITH_REALITY_SERVER \
+	CONFIG_SINGBOX_WITH_TAILSCALE \
 	CONFIG_SINGBOX_WITH_UTLS \
 	CONFIG_SINGBOX_WITH_V2RAY_API \
 	CONFIG_SINGBOX_WITH_WIREGUARD
@@ -105,12 +100,11 @@ GO_PKG_TAGS:=$(subst $(space),$(comma),$(strip \
 	$(if $(CONFIG_SINGBOX_WITH_ACME),with_acme) \
 	$(if $(CONFIG_SINGBOX_WITH_CLASH_API),with_clash_api) \
 	$(if $(CONFIG_SINGBOX_WITH_DHCP),with_dhcp) \
-	$(if $(CONFIG_SINGBOX_WITH_ECH),with_ech) \
 	$(if $(CONFIG_SINGBOX_WITH_EMBEDDED_TOR),with_embedded_tor) \
 	$(if $(CONFIG_SINGBOX_WITH_GRPC),with_grpc) \
 	$(if $(CONFIG_SINGBOX_WITH_GVISOR),with_gvisor) \
 	$(if $(CONFIG_SINGBOX_WITH_QUIC),with_quic) \
-	$(if $(CONFIG_SINGBOX_WITH_REALITY_SERVER),with_reality_server) \
+	$(if $(CONFIG_SINGBOX_WITH_TAILSCALE),with_tailscale) \
 	$(if $(CONFIG_SINGBOX_WITH_UTLS),with_utls) \
 	$(if $(CONFIG_SINGBOX_WITH_V2RAY_API),with_v2ray_api) \
 	$(if $(CONFIG_SINGBOX_WITH_WIREGUARD),with_wireguard) \
