@@ -315,17 +315,17 @@ static_host_add() {
 	for option in ${force_send//,/ }; do
 		case "$option" in
 		hostname)
-			append extra_options "0c" "," ;;
+			append extra_options "0c" ", " ;;
 		domain-name)
-			append extra_options "0f" "," ;;
+			append extra_options "0f" ", " ;;
 		renewal-time)
-			append extra_options "3a" "," ;;
+			append extra_options "3a" ", " ;;
 		rebinding-time)
-			append extra_options "3b" "," ;;
+			append extra_options "3b" ", " ;;
 		fqdn)
-			append extra_options "51" "," ;;
+			append extra_options "51" ", " ;;
 		routes)
-			append extra_options "79" "," ;;
+			append extra_options "79" ", " ;;
 		*)
 			echo "unknown option: $option" >&2 ;;
 		esac
