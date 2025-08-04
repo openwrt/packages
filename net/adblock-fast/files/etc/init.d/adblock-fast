@@ -1140,12 +1140,24 @@ resolver() {
 		sanity)
 			[ -n "$sanity_check" ] || return 0
 			output_dns "Sanity check for $dns TLDs "
-			if ! grep -q -v '\.' "$outputFile"; then
-				output_ok
-			else
-				json add warning 'warningSanityCheckTLD' "$outputFile"
-				output_warn
-			fi
+			case "$dns" in
+				unbound.*)
+					if ! grep -v '\.' "$outputFile" | grep -q 'local-zone:'; then
+						output_ok
+					else
+						json add warning 'warningSanityCheckTLD' "$outputFile"
+						output_warn
+					fi
+					;;
+				*)
+					if ! grep -q -v '\.' "$outputFile"; then
+						output_ok
+					else
+						json add warning 'warningSanityCheckTLD' "$outputFile"
+						output_warn
+					fi
+					;;
+			esac
 			output_dns "Sanity check for $dns leading dots "
 			case "$dns" in
 				dnsmasq.*)
