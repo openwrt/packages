@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=crowdsec-firewall-bouncer
-PKG_VERSION:=0.0.33
+PKG_VERSION:=0.0.34
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/crowdsecurity/cs-firewall-bouncer/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=464955805ab85b08a3249b5bbcb6f2fce9a1ffe15768f5753fd23ea907f052ca
+PKG_HASH:=5bd62250f40fc0a05d2431f3ea1cb211d7fc4cc755b53a23585aa2cede8ff985
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
