@@ -15,6 +15,7 @@ start_service() {
 	mkdir -m 0755 -p /var/lib/dbus
 	mkdir -m 0755 -p /var/run/dbus
 	chown dbus:dbus /var/lib/dbus /var/run/dbus
+	chown -R dbus:dbus /etc/dbus-1
 
 	[ -x /usr/bin/dbus-uuidgen ] && /usr/bin/dbus-uuidgen --ensure
 
@@ -26,6 +27,7 @@ start_service() {
 	procd_set_param stdout 1
 	procd_set_param stderr 1
 	[ -x /sbin/ujail -a -e /etc/capabilities/dbus.json ] && {
+		procd_append_param command --nopidfile
 		procd_add_jail dbus
 		procd_set_param user dbus
 		procd_set_param group dbus
