@@ -459,7 +459,7 @@ json() {
 			'get')
 				case "$param" in
 					'errors'|'warnings')
-						json_select "$param" >/dev/null 2>&1
+						json_select "$param" >/dev/null 2>&1 || return
 						if [ -z "$value" ]; then
 							json_get_keys i
 						else
@@ -1140,7 +1140,7 @@ resolver() {
 		sanity)
 			[ -n "$sanity_check" ] || return 0
 			output_dns "Sanity check for $dns TLDs "
-			if ! grep -q -v '\.' "$outputFile"; then
+			if ! grep -qvE '\.|server:' "$outputFile"; then
 				output_ok
 			else
 				json add warning 'warningSanityCheckTLD' "$outputFile"
@@ -1985,7 +1985,7 @@ adb_check_tld() {
 		output "No block-list ('$outputFile') found.\n"
 		return 0
 	fi
-	c="$(grep -c -v '\.' "$outputFile")"
+	c="$(grep -cvE '\.|server:' "$outputFile")"
 	if [ "$c" -gt 0 ]; then
 		if [ "$c" -eq 1 ]; then
 			output 1 "Found 1 match for TLD in '$outputFile'.\n"
@@ -1995,7 +1995,7 @@ adb_check_tld() {
 			output 2 "[PROC] Found $c matches for TLDs in '$outputFile'.\n"
 		fi
 		if [ "$c" -le 20 ]; then
-			grep -v '\.' "$outputFile" | sed "$outputOutputFilter"
+			grep -vE '\.|server:' "$outputFile" | sed "$outputOutputFilter"
 		fi
 	else
 		output 1 "No TLD was found in current block-list ('$outputFile').\n"
