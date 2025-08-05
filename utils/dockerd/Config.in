@@ -7,18 +7,6 @@ config DOCKER_CHECK_CONFIG
 
 # These options are mostly specified by https://github.com/moby/moby/blob/master/contrib/check-config.sh
 
-config DOCKER_CGROUP_OPTIONS
-	bool "Enable available kernel support for CGroupsV1"
-	default n
-	depends on PACKAGE_dockerd
-	select KERNEL_CGROUP_DEVICE
-	select KERNEL_CGROUP_FREEZER
-	select KERNEL_NET_CLS_CGROUP
-	select KERNEL_CGROUP_NET_PRIO
-	select PACKAGE_cgroupfs-mount
-	help
-		Selects kernel options to enable CGroups V1.
-
 config DOCKER_OPTIONAL_FEATURES
 	bool "Enable optional kernel support for Docker"
 	default n
