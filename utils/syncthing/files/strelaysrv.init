@@ -13,39 +13,44 @@ config_cb() {
 	option_cb() {
 		local option="$1"
 		local value="$2"
-		case $option in
-		enabled|keys|pools|status_srv)
-			eval $option=$value
-			;;
-		_*)
-			[ "$value" = "0" ] || extra_args="$extra_args ${option//_/-}"
-			;;
-		*)
-			extra_args="$extra_args -${option//_/-}='$value'"
-			;;
-		esac
-	}
-
-	list_cb() {
-		local name="$1"
-		local value="$2"
-		[ "$name" = "_" ] && extra_args="$extra_args -${value//_/-}" || return 0
+		# Remove the leading underscore from the option name for backward
+		# compatibility
+		option="${option#_}"
+		eval $option="$value"
 	}
 }
 
 service_triggers() {
-	procd_add_reload_trigger "strelaysrv"
+	procd_add_reload_trigger 'strelaysrv'
 }
 
 start_service() {
-	local pools status_srv extra_args
-	# Options with default value different with the syncthing should be defined explicitly here
+	# Options with default value different with the syncthing should be defined
+	# explicitly here
 	local enabled=0
-	local keys="/etc/strelaysrv"
+	local debug=0
+	local ext_address=''
+	local global_rate=''
+	local keys='/etc/strelaysrv'
+	local listen=':22067'
+	local message_timeout=''
+	local nat=0
+	local nat_lease=''
+	local nat_renewal=''
+	local nat_timeout=''
+	local network_timeout=''
 	local nice=0
-	local user="syncthing"
+	local per_session_rate=''
+	local ping_interval=''
+	local pools=''
+	local pprof=0
+	local protocol=''
+	local provided_by=''
+	local status_srv=''
+	local token=''
+	local user='syncthing'
 
-	config_load "strelaysrv"
+	config_load 'strelaysrv'
 
 	[ "$enabled" -gt 0 ] || return 0
 
@@ -58,16 +63,32 @@ start_service() {
 
 	procd_open_instance
 	procd_set_param command "$PROG"
+	[ "$debug" -eq 0 ] || procd_append_param command -debug
+	[ -z "$ext_address" ] || procd_append_param command -ext-address="$ext_address"
+	[ -z "$global_rate" ] || procd_append_param command -global-rate="$global_rate"
 	procd_append_param command -keys="$keys"
-
-	# pools and status-srv are set to empty value by default
+	[ -z "$listen" ] || procd_append_param command -listen="$listen"
+	[ -z "$message_timeout" ] || procd_append_param command -message-timeout="$message_timeout"
+	[ "$nat" -eq 0 ] || procd_append_param command -nat
+	[ -z "$nat_lease" ] || procd_append_param command -nat-lease="$nat_lease"
+	[ -z "$nat_renewal" ] || procd_append_param command -nat-renewal="$nat_renewal"
+	[ -z "$nat_timeout" ] || procd_append_param command -nat-timeout="$nat_timeout"
+	[ -z "$network_timeout" ] || procd_append_param command -network-timeout="$network_timeout"
+	[ -z "$per_session_rate" ] || procd_append_param command -per-session-rate="$per_session_rate"
+	[ -z "$ping_interval" ] || procd_append_param command -ping-interval="$ping_interval"
+	# pools is set to an empty value by default
 	procd_append_param command -pools="$pools"
+	[ "$pprof" -eq 0 ] || procd_append_param command -pprof
+	[ -z "$protocol" ] || procd_append_param command -protocol="$protocol"
+	[ -z "$provided_by" ] || procd_append_param command -provided-by="$provided_by"
+	# status-srv is set to an empty value by default
 	procd_append_param command -status-srv="$status_srv"
-	[ -z "$extra_args" ] || procd_append_param command $extra_args
+	[ -z "$token" ] || procd_append_param command -token="$token"
 
 	procd_set_param nice "$nice"
 	procd_set_param term_timeout 15
 	procd_set_param user "$user"
+	procd_set_param group "$group"
 	procd_set_param respawn
 	procd_set_param stdout 1
 	procd_set_param stderr 1
