@@ -1,0 +1,35 @@
+From 2d277134c4b5c56d1c2912330aa44160af52aadf Mon Sep 17 00:00:00 2001
+From: graysky <therealgraysky AT proton DOT me>
+Date: Thu, 7 Aug 2025 02:35:01 -0400
+Subject: [PATCH] stacktrace_libgcc-inl.h: fix build for some ARM toolchains
+
+On OpenWrt when bulding for arm_cortex-a15_neon-vpfv4 or
+arm_cortex-a9_vfpv3-d16, the build errors out due to an undefined symbol
+_URC_NORMAL_STOP. This usually happens when the required header
+(typically <unwind.h>) is not included, or the toolchain's unwind
+implementation does not provide this definition.
+
+Error:
+src/stacktrace_libgcc-inl.h: In function '_Unwind_Reason_Code libgcc_backtrace_helper(_Unwind_Context*, void*)':
+src/stacktrace_libgcc-inl.h:69:12: error: '_URC_NORMAL_STOP' was not declared in this scope
+   69 |     return _URC_NORMAL_STOP;
+      |
+
+A work-around is to use URC_END_OF_STACK.
+
+Signed-off-by: graysky <therealgraysky AT proton DOT me>
+---
+ src/stacktrace_libgcc-inl.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/src/stacktrace_libgcc-inl.h
++++ b/src/stacktrace_libgcc-inl.h
+@@ -66,7 +66,7 @@ static _Unwind_Reason_Code libgcc_backtr
+   }
+ 
+   if (data->pos >= data->limit) {
+-    return _URC_NORMAL_STOP;
++    return _URC_END_OF_STACK;
+   }
+ 
+   void *ip = reinterpret_cast<void *>(_Unwind_GetIP(ctx));;
