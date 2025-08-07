@@ -1,0 +1,49 @@
+From 4eddec25d21e2bead9e179b407e7e458ffc51910 Mon Sep 17 00:00:00 2001
+From: Aki Tuomi <aki.tuomi@open-xchange.com>
+Date: Fri, 23 May 2025 11:34:41 +0300
+Subject: [PATCH 35163/35343] configure: Fix building without LDAP
+
+---
+ m4/want_ldap.m4      | 2 +-
+ src/auth/Makefile.am | 4 ++++
+ 2 files changed, 5 insertions(+), 1 deletion(-)
+
+--- a/m4/want_ldap.m4
++++ b/m4/want_ldap.m4
+@@ -57,5 +57,5 @@ AC_DEFUN([DOVECOT_WANT_LDAP], [
+   ])
+ 
+   AM_CONDITIONAL(LDAP_PLUGIN, test "$have_ldap_plugin" = "yes")
+-  AM_CONDITIONAL(HAVE_LDAP, test "$want_ldap" != "no")
++  AM_CONDITIONAL(HAVE_LDAP, test "$have_ldap" != "no")
+ ])
+--- a/src/auth/Makefile.am
++++ b/src/auth/Makefile.am
+@@ -7,9 +7,11 @@ if GSSAPI_PLUGIN
+ GSSAPI_LIB = libmech_gssapi.la
+ endif
+ 
++if HAVE_LDAP
+ if LDAP_PLUGIN
+ LDAP_LIB = libauthdb_ldap.la
+ endif
++endif
+ 
+ LUA_LIB =
+ AUTH_LUA_LIBS =
+@@ -171,6 +173,7 @@ libmech_gssapi_la_CPPFLAGS = $(AM_CPPFLA
+ libmech_gssapi_la_SOURCES = mech-gssapi.c
+ endif
+ 
++if HAVE_LDAP
+ if LDAP_PLUGIN
+ libauthdb_ldap_la_LDFLAGS = -module -avoid-version -shared
+ libauthdb_ldap_la_LIBADD = $(LIBDOVECOT_LDAP) $(LDAP_LIBS)
+@@ -179,6 +182,7 @@ libauthdb_ldap_la_SOURCES = $(ldap_sourc
+ else
+ auth_libs += $(LIBDOVECOT_LDAP)
+ endif
++endif
+ 
+ if AUTH_LUA_PLUGIN
+ libauthdb_lua_la_LDFLAGS = -module -avoid-version -shared

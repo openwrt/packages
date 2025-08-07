@@ -1,0 +1,57 @@
+Dovecot assumes that Lua defines lua_Integer to be the same
+as ptrdiff_t. This is not the case on OpenWrt, as OpenWrt
+patches Lua to instead use various types for lua_Integer
+(010-lua-5.1.3-lnum-full-260308.patch).  The result is the following
+compile error.
+
+In file included from ../../src/lib/lib.h:37,
+                 from dlua-compat.c:3:
+dlua-compat.c: In function 'lua_tointegerx':
+../../src/lib/macros.h:173:21: error: size of unnamed array is negative
+  173 |         (sizeof(char[1 - 2 * ((condition) ? 1 : 0)]) > 0 ? FALSE : FALSE)
+      |                     ^
+dlua-compat.c:99:16: note: in expansion of macro 'COMPILE_ERROR_IF_TRUE'
+   99 |         (void) COMPILE_ERROR_IF_TRUE(sizeof(lua_Integer) != sizeof(ptrdiff_t));
+      |                ^~~~~~~~~~~~~~~~~~~~~
+
+This patch modifies Dovecot to remove the ptrdiff_t equivalency check and
+uses LUA_INTEGER_MIN and LUA_INTEGER_MAX, which OpenWrt's patch defines.
+
+--- a/src/lib-lua/dlua-compat.c
++++ b/src/lib-lua/dlua-compat.c
+@@ -87,17 +87,6 @@ lua_Integer lua_tointegerx(lua_State *L,
+ 	lua_Number number;
+ 	const char *str;
+ 
+-	/*
+-	 * Unfortunately, Lua 5.1 doesn't provide MIN/MAX value macros for
+-	 * the lua_Integer type, so we hardcode the assumption that it is
+-	 * the same size as ptrdiff_t.  This matches what Lua does by
+-	 * default.
+-	 *
+-	 * If this compile-time assertion fails, don't forget to change the
+-	 * PTRDIFF_{MIN,MAX} usage below as well.
+-	 */
+-	(void) COMPILE_ERROR_IF_TRUE(sizeof(lua_Integer) != sizeof(ptrdiff_t));
+-
+ 	switch (lua_type(L, idx)) {
+ 	case LUA_TSTRING:
+ 		/* convert using str_to_long() */
+@@ -110,7 +99,7 @@ lua_Integer lua_tointegerx(lua_State *L,
+ 			if (str_to_uintmax_hex(str, &tmp) < 0)
+ 				break;
+ 
+-			*isnum_r = (tmp <= PTRDIFF_MAX) ? 1 : 0;
++			*isnum_r = (tmp <= LUA_INTEGER_MAX) ? 1 : 0;
+ 			return tmp;
+ 		} else {
+ 			/* try decimal */
+@@ -119,7 +108,7 @@ lua_Integer lua_tointegerx(lua_State *L,
+ 			if (str_to_intmax(str, &tmp) < 0)
+ 				break;
+ 
+-			*isnum_r = ((tmp >= PTRDIFF_MIN) && (tmp <= PTRDIFF_MAX)) ? 1 : 0;
++			*isnum_r = ((tmp >= LUA_INTEGER_MIN) && (tmp <= LUA_INTEGER_MAX)) ? 1 : 0;
+ 			return tmp;
+ 		}
+ 
