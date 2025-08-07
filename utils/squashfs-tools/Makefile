@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=squashfs-tools
-PKG_VERSION:=4.6.1
+PKG_VERSION:=4.7
 PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0-only
@@ -18,7 +18,7 @@ PKG_CPE_ID:=cpe:/a:squashfs-tools_project:squashfs-tools
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/plougher/squashfs-tools/tar.gz/${PKG_VERSION}?
-PKG_HASH:=94201754b36121a9f022a190c75f718441df15402df32c2b520ca331a107511c
+PKG_HASH:=f1605ef720aa0b23939a49ef4491f6e734333ccc4bda4324d330da647e105328
 
 PKG_BUILD_PARALLEL:=1
 include $(INCLUDE_DIR)/package.mk
@@ -29,7 +29,8 @@ define Package/squashfs-tools/Default
   SUBMENU:=Filesystem
   TITLE:=Tools to create and extract Squashfs filesystems
   URL:=https://github.com/plougher/squashfs-tools
-  DEPENDS += +libpthread +zlib \
+  DEPENDS += +libpthread \
+	+SQUASHFS_TOOLS_GZIP_SUPPORT:zlib \
 	+SQUASHFS_TOOLS_LZO_SUPPORT:liblzo \
 	+SQUASHFS_TOOLS_LZ4_SUPPORT:liblz4 \
 	+SQUASHFS_TOOLS_XZ_SUPPORT:liblzma \
@@ -52,21 +53,16 @@ endef
 
 Build/Configure:=
 
-ifneq ($(CONFIG_SQUASHFS_TOOLS_XZ_SUPPORT),)
-MAKE_FLAGS += XZ_SUPPORT=1
-endif
-
-ifneq ($(CONFIG_SQUASHFS_TOOLS_LZO_SUPPORT),)
-MAKE_FLAGS += LZO_SUPPORT=1
-endif
-
-ifneq ($(CONFIG_SQUASHFS_TOOLS_LZ4_SUPPORT),)
-MAKE_FLAGS += LZ4_SUPPORT=1
-endif
-
-ifneq ($(CONFIG_SQUASHFS_TOOLS_ZSTD_SUPPORT),)
-MAKE_FLAGS += ZSTD_SUPPORT=1
-endif
+MAKE_FLAGS += \
+	CONFIG=1 \
+	SMALL_READER_THREADS=4 \
+	BLOCK_READER_THREADS=4 \
+	GZIP_SUPPORT=$(if $(CONFIG_SQUASHFS_TOOLS_GZIP_SUPPORT),1,0) \
+	XZ_SUPPORT=$(if $(CONFIG_SQUASHFS_TOOLS_XZ_SUPPORT),1,0) \
+	XZ_EXTENDED_OPTIONS=$(if $(CONFIG_SQUASHFS_TOOLS_XZ_EXTENDED_SUPPORT),1,0) \
+	LZO_SUPPORT=$(if $(CONFIG_SQUASHFS_TOOLS_LZO_SUPPORT),1,0) \
+	LZ4_SUPPORT=$(if $(CONFIG_SQUASHFS_TOOLS_LZ4_SUPPORT),1,0) \
+	ZSTD_SUPPORT=$(if $(CONFIG_SQUASHFS_TOOLS_ZSTD_SUPPORT),1,0) \
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR)/squashfs-tools \
