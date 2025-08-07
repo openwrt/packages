@@ -3,12 +3,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=telegraf
-PKG_VERSION:=1.23.4
+PKG_VERSION:=1.35.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/influxdata/telegraf/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=05188b5f0c0dfa204dc6bd8429ebc5366b73e42c7bdd4f1a50fffa2a1e75616f
+PKG_HASH:=08daec0e5682e5066fac2e2d57c6d82a32e53271600cee91746868b09ad6391a
 
 PKG_MAINTAINER:=Jonathan Pagel <jonny_tischbein@systemli.org>
 PKG_LICENSE:=MIT
@@ -20,7 +20,10 @@ PKG_BUILD_FLAGS:=no-mips16
 
 GO_PKG:=github.com/influxdata/telegraf
 GO_PKG_BUILD_PKG:=github.com/influxdata/telegraf/cmd/telegraf
-GO_PKG_LDFLAGS_X:=main.version=$(PKG_VERSION)
+GO_PKG_LDFLAGS_X := \
+  github.com/influxdata/telegraf/internal.Version=$(PKG_VERSION) \
+  github.com/influxdata/telegraf/internal.Branch=HEAD \
+  github.com/influxdata/telegraf/internal.Commit=b66e5091
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
@@ -76,7 +79,7 @@ define Package/telegraf/install
 	$(call GoPackage/Package/Install/Bin,$(1))
 	$(INSTALL_DIR) $(1)/etc/init.d $(1)/etc/config
 	$(INSTALL_BIN) ./files/etc/init.d/telegraf $(1)/etc/init.d/telegraf
-	$(INSTALL_CONF) $(PKG_BUILD_DIR)/etc/telegraf.conf $(1)/etc/telegraf.conf
+	$(INSTALL_CONF) ./files/etc/telegraf.conf $(1)/etc/telegraf.conf
 endef
 
 define Package/telegraf-full/install
