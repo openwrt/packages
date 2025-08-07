@@ -629,13 +629,10 @@ proto_modemmanager_setup() {
 	}
 
 	# set initial eps bearer settings
-	[ -z "${init_epsbearer}" ] || {
+	if [ -z "${init_epsbearer}" ]; then
+		modemmanager_init_epsbearer "none" "$device" "" "$apn"
+	else
 		case "$init_epsbearer" in
-			"none")
-				connectargs=""
-				modemmanager_init_epsbearer "none" \
-					"$device" "${connectargs}" "$apn"
-				;;
 			"default")
 				cliauth=""
 				for auth in $allowedauth; do
@@ -667,7 +664,7 @@ proto_modemmanager_setup() {
 		esac
 		# check error for init_epsbearer function call
 		[ "$?" -ne "0" ] && return 1
-	}
+	fi
 
 	if [ -z "${allowedmode}" ]; then
 		modemmanager_set_allowed_mode "$device" "$interface" "any"
