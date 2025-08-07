@@ -83,6 +83,7 @@ modemmanager_connected_method_ppp_ipv4() {
 
 	proto_run_command "${interface}" /usr/sbin/pppd \
 		"${ttyname}" \
+		ifname "ppp-${interface}" \
 		115200 \
 		nodetach \
 		noaccomp \
