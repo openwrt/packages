@@ -8,23 +8,25 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dovecot-pigeonhole
-PKG_VERSION_PLUGIN:=0.5.21
+# 2.4.1-4 was oddly named. Remove -4 from PKG_VERSION_PLUGIN and all of PKG_BUILD_DIR when modifying for next version.
+PKG_VERSION_PLUGIN:=2.4.1-4
 PKG_VERSION_DOVECOT:=$(shell make --no-print-directory -C ../dovecot/ val.PKG_VERSION V=s)
 PKG_VERSION:=$(PKG_VERSION_DOVECOT).$(PKG_VERSION_PLUGIN)
 PKG_RELEASE:=1
 
-DOVECOT_VERSION:=2.3
+DOVECOT_VERSION:=2.4
 
-PKG_SOURCE:=dovecot-$(DOVECOT_VERSION)-pigeonhole-$(PKG_VERSION_PLUGIN).tar.gz
+PKG_SOURCE:=dovecot-pigeonhole-$(PKG_VERSION_PLUGIN).tar.gz
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)-4
 PKG_SOURCE_URL:=https://pigeonhole.dovecot.org/releases/$(DOVECOT_VERSION)
-PKG_HASH:=1ca71d2659076712058a72030288f150b2b076b0306453471c5261498d3ded27
+PKG_HASH:=b016b79503543f1d6047e7bc93ef6d2fb5bfc3d697cab1418c5dc488b1974e0e
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING COPYING.LGPL
 PKG_CPE_ID:=cpe:/a:dovecot:pigeonhole
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/dovecot-$(DOVECOT_VERSION)-pigeonhole-$(PKG_VERSION_PLUGIN)
+PKG_BUILD_DIR:=$(BUILD_DIR)/dovecot-pigeonhole-$(PKG_VERSION_PLUGIN)
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
