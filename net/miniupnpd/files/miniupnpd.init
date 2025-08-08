@@ -148,7 +148,7 @@ upnpd() {
 			done
 			config_foreach upnpd_add_int_network_and_acl_preset internal_network
 			echo "# Custom ACL"
-			config_foreach upnpd_add_custom_acl_entry perm_rule
+			config_foreach upnpd_add_custom_acl_entry acl_entry
 			config_foreach upnpd_add_int_network_and_acl_preset internal_network secondrun
 			echo "deny 1-65535 0.0.0.0/0 1-65535 # Reject ACL by default"
 
@@ -248,14 +248,16 @@ upnpd_add_custom_acl_entry() {
 	local cfg="$1"
 	local comment action int_addr int_start int_end ext_start ext_end desc_regex
 	config_get comment "$cfg" comment "No comment"        # comment
-	config_get action "$cfg" action                       # allow or deny
+	config_get action "$cfg" action                       # accept/reject/disabled
 	config_get int_addr "$cfg" int_addr "0.0.0.0/0"       # ip or network and subnet mask (internal)
 	upnpd_get_port_range "int" "$cfg" int_ports "1-65535" # internal ports: x, x-y, x:y
 	upnpd_get_port_range "ext" "$cfg" ext_ports "1-65535" # external ports: x, x-y, x:y
 	config_get desc_regex "$cfg" desc_regex ""            # description regex filter extension
 	[ "$desc_regex" != "" ] && desc_regex=" \"$desc_regex\""
 	[ "$action" = "disabled" ] && return 0
-	[ "$action" = "" ] && action=deny && log "Custom ACL entry with no action set, all changes via LuCI web interface reverse action" daemon.warn
+	[ "$action" = "" ] && log "Custom ACL entry with no action ignored" daemon.warn && return 0
+	[ "$action" = "accept" ] && action=allow
+	[ "$action" = "reject" ] && action=deny
 	echo "$action $ext_start${ext_end:+-}$ext_end $int_addr $int_start${int_end:+-}$int_end${desc_regex} # $comment"
 }
 
@@ -409,7 +411,7 @@ upnpd_uci_migration() {
 		[ "$(uci -q get upnpd.@perm_rule[1].int_addr)" = "0.0.0.0/0" ] &&
 		[ "$(uci -q get upnpd.@perm_rule[1].int_ports)" = "0-65535" ] &&
 		[ "$(uci -q get upnpd.@perm_rule[1].ext_ports)" = "0-65535" ] ||
-		! uci -q get upnpd.@perm_rule[0] >/dev/null; then
+		(! uci -q get upnpd.@perm_rule[0] >/dev/null && ! uci -q get upnpd.@acl_entry[0] >/dev/null); then
 		# If empty ACL, create default?
 		if ! uci -q get upnpd.@perm_rule[0] >/dev/null; then
 			log "Empty ACL: Create default incl. templates, empty ACL is now rejected"
@@ -445,7 +447,9 @@ upnpd_uci_migration() {
 			set upnpd.@perm_rule[3].ext_ports="1-65535"
 		EOF
 	elif [ "$(uci -q get upnpd.@perm_rule[0].comment)" != "High ports" ] &&
-		[ "$(uci -q get upnpd.@perm_rule[-1].comment)" != "All ports" ]; then
+		[ "$(uci -q get upnpd.@perm_rule[-1].comment)" != "All ports" ] &&
+		([ "$(uci -q get upnpd.@acl_entry[0].comment)" != "High ports" ] &&
+			[ "$(uci -q get upnpd.@acl_entry[-1].comment)" != "All ports" ]); then
 		log "Modified ACL: Keep unchanged, note that an empty ACL is now rejected"
 		acl_preset=none
 	fi
@@ -469,6 +473,37 @@ upnpd_uci_migration() {
 		uci -q rename upnpd.config="settings"
 	uci -q get upnpd.settings >/dev/null && uci -q get upnpd.config >/dev/null &&
 		log "New (settings) and old (config) UCI sections exist, which should not be the case. Remove new section manually so that the old is renamed on next start" daemon.warn
+
+	# Rename custom ACL entries (section) @perm_rule -> @acl_entry
+	if uci -q get upnpd.@perm_rule[0] >/dev/null && ! uci -q get upnpd.@acl_entry[0] >/dev/null; then
+		entrynr=0
+		while uci -q get upnpd.@perm_rule[$entrynr] >/dev/null; do
+			comment="$(uci -q get upnpd.@perm_rule[$entrynr].comment)"
+			action="$(uci -q get upnpd.@perm_rule[$entrynr].action)"
+			int_addr="$(uci -q get upnpd.@perm_rule[$entrynr].int_addr)"
+			int_ports="$(uci -q get upnpd.@perm_rule[$entrynr].int_ports)"
+			ext_ports="$(uci -q get upnpd.@perm_rule[$entrynr].ext_ports)"
+			if [ "$action" = "allow" ]; then
+				action=accept
+			elif [ "$action" = "deny" ] || [ "$action" = "" ]; then
+				action=reject
+			elif [ "$action" != "disabled" ]; then
+				log "Unknown action in custom ACL entry, disable entry" daemon.warn
+				action=disabled
+			fi
+			uci -q batch >/dev/null <<-EOF
+				add upnpd acl_entry
+				set upnpd.@acl_entry[$entrynr].comment="${comment:-unspecified}"
+				set upnpd.@acl_entry[$entrynr].action="${action}"
+				set upnpd.@acl_entry[$entrynr].int_addr="${int_addr:-0.0.0.0/0}"
+				set upnpd.@acl_entry[$entrynr].int_ports="$int_ports"
+				set upnpd.@acl_entry[$entrynr].ext_ports="$ext_ports"
+			EOF
+			entrynr=$((entrynr + 1))
+		done
+		while uci -q delete upnpd.@perm_rule[-1] >/dev/null; do :; done
+		log "Rename ($entrynr) custom ACL entries (section) @perm_rule -> @acl_entry"
+	fi
 
 	uci -q commit upnpd >/dev/null
 }
