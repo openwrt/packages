@@ -39,7 +39,6 @@ hand_window
 hash_size
 http_proxy
 http_proxy_option
-http_proxy_timeout
 ifconfig
 ifconfig_ipv6
 ifconfig_ipv6_pool
@@ -78,7 +77,6 @@ pkcs12
 plugin
 port
 port_share
-prng
 proto
 pull_filter
 push
@@ -156,7 +154,6 @@ down_pre
 duplicate_cn
 fast_io
 float
-http_proxy_retry
 ifconfig_noexec
 ifconfig_nowarn
 management_forget_disconnect
@@ -168,7 +165,6 @@ mlock
 mtu_test
 multihome
 mute_replay_warnings
-ncp_disable
 nobind
 opt_verify
 passtos
@@ -185,7 +181,6 @@ rmtun
 route_noexec
 route_nopull
 single_session
-socks_proxy_retry
 suppress_timestamps
 tcp_nodelay
 test_crypto
