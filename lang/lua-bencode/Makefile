@@ -12,7 +12,7 @@ PKG_VERSION:=2.2.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://bitbucket.org/wilhelmy/lua-bencode/downloads/
+PKG_SOURCE_URL:=https://bitbucket-archive.softwareheritage.org/new-static/cd/cd306d52-db1e-420b-adf1-58dae40a70f3/attachments/
 PKG_HASH:=25830ff3fe342c09c65995d46c4d89ad0387cc502b1a2f70f9cca2d8c7ccafdd
 
 PKG_MAINTAINER:=Lars Gierth <larsg@systemli.org>
