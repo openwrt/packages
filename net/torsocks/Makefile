@@ -39,13 +39,6 @@ define Package/torsocks/description
  It ensures that DNS requests are handled safely and explicitly rejects any traffic other than TCP from the application you're using.
 endef
 
-define Build/Configure
-	$(call Build/Configure/Default)
-ifeq ($(CONFIG_USE_UCLIBC),y)
-	find $(PKG_BUILD_DIR) -name 'Makefile' -exec sed -i 's|--param ssp-buffer-size=1 -fstack-protector-all||' \{\} \+
-endif
-endef
-
 define Package/conffiles
 /etc/tor/torsocks.conf
 endef
