@@ -146,6 +146,7 @@ GO_HOST_ARCH:=$(call go_arch,$(subst \
   armv7l,arm,$(subst \
   i686,i386,$(HOST_ARCH)))))
 GO_HOST_OS_ARCH:=$(GO_HOST_OS)_$(GO_HOST_ARCH)
+GO_BIN_OS_ARCH:=$(GO_HOST_OS)-$(GO_HOST_ARCH)
 
 ifeq ($(GO_OS_ARCH),$(GO_HOST_OS_ARCH))
   GO_HOST_TARGET_SAME:=1
@@ -270,3 +271,21 @@ define Go/CacheCleanup
 	$(GO_GENERAL_BUILD_CONFIG_VARS) \
 	$(SHELL) $(GO_INCLUDE_DIR)/golang-build.sh cache_cleanup
 endef
+
+GO_BIN_SOURCE_URL:=https://go.dev/ \
+                   https://dl.google.com/go/ \
+                   https://golang.google.cn/dl/ \
+                   https://mirrors.nju.edu.cn/golang/ \
+                   https://mirrors.ustc.edu.cn/golang/
+
+# Only one patch version per MAJOR.MINOR and platform combination should be
+# defined. Last matching version-platform key will be used in case multiple
+# match on MAJOR.MINOR prefix.
+#
+# SHA256 hashes can be looked up at https://go.dev/dl/
+GO_BIN_HASHES:=1.22.12.linux-amd64=4fa4f869b0f7fc6bb1eb2660e74657fbf04cdd290b5aef905585c86051b34d43 \
+               1.22.12.linux-arm64=fd017e647ec28525e86ae8203236e0653242722a7436929b1f775744e26278e7 \
+               1.23.9.linux-amd64=de03e45d7a076c06baaa9618d42b3b6a0561125b87f6041c6397680a71e5bb26 \
+               1.23.9.linux-arm64=3dc4dd64bdb0275e3ec65a55ecfc2597009c7c46a1b256eefab2f2172a53a602 \
+               1.24.3.linux-amd64=3333f6ea53afa971e9078895eaa4ac7204a8c6b5c68c10e6bc9a33e8e391bdd8 \
+               1.24.3.linux-arm64=a463cb59382bd7ae7d8f4c68846e73c4d589f223c589ac76871b66811ded7836
