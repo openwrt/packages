@@ -1,0 +1,46 @@
+ Makefile.am | 4 ++--
+ Makefile.in | 5 ++---
+ 2 files changed, 4 insertions(+), 5 deletions(-)
+
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -5,12 +5,12 @@ bin_PROGRAMS=mpack munpack
+ 
+ mpack_SOURCES=unixpk.c encode.c codes.c magic.c unixos.c xmalloc.c \
+ 	md5c.c
+-mpack_LDADD=@LIBOBJS@ @LIB_SOCKET@
++mpack_LDADD=@LIBOBJS@
+ 
+ munpack_SOURCES=unixunpk.c decode.c uudecode.c codes.c unixos.c \
+ 	part.c xmalloc.c md5c.c
+ 
+-munpack_LDADD=@LIBOBJS@ @LIB_SOCKET@
++munpack_LDADD=@LIBOBJS@
+ 
+ noinst_HEADERS=common.h md5.h part.h version.h xmalloc.h
+ man_MANS=mpack.1 munpack.1
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -56,7 +56,6 @@ NORMAL_UNINSTALL = :
+ PRE_UNINSTALL = :
+ POST_UNINSTALL = :
+ CC = @CC@
+-LIB_SOCKET = @LIB_SOCKET@
+ MAKEINFO = @MAKEINFO@
+ PACKAGE = @PACKAGE@
+ VERSION = @VERSION@
+@@ -68,12 +67,12 @@ bin_PROGRAMS = mpack munpack
+ 
+ mpack_SOURCES = unixpk.c encode.c codes.c magic.c unixos.c xmalloc.c 	md5c.c
+ 
+-mpack_LDADD = @LIBOBJS@ @LIB_SOCKET@
++mpack_LDADD = @LIBOBJS@
+ 
+ munpack_SOURCES = unixunpk.c decode.c uudecode.c codes.c unixos.c 	part.c xmalloc.c md5c.c
+ 
+ 
+-munpack_LDADD = @LIBOBJS@ @LIB_SOCKET@
++munpack_LDADD = @LIBOBJS@
+ 
+ noinst_HEADERS = common.h md5.h part.h version.h xmalloc.h
+ man_MANS = mpack.1 munpack.1
