@@ -2,26 +2,51 @@
 # Copyright (C) 2006-2011 OpenWrt.org
 
 START=50
+PROG=/usr/sbin/iodined
+USE_PROCD=1
+NAME=iodined
 
-start_instance () {
-	local section="$1"
-	config_get address  "$section" 'address'
-	config_get password "$section" 'password'
-	config_get tunnelip "$section" 'tunnelip'
-	config_get tld      "$section" 'tld'
-	config_get port     "$section" 'port'
-	
-	test -n "$address" || address='0.0.0.0'
-	test -n "$port" || port='53'
-
-	service_start /usr/sbin/iodined -l "$address" -P "$password" -p "$port" "$tunnelip" "$tld"
+validate_section_iodined()
+{
+	uci_load_validate iodined iodined "$1" "$2" \
+		'enable:bool:1' \
+		'address:cidr4' \
+		'password:string' \
+		'tunnelip:cidr4' \
+		'tld:string' \
+		'port:range(0,65535)' \
+		'debuglevel:range(0,6):0' \
+		'client_ip_check:bool:1'
 }
 
-start() {
-	config_load 'iodined'
-	config_foreach start_instance 'iodined'
+iodined_instance()
+{
+	[ "$2" = 0 ] || {
+		echo "validation failed"
+		return 1
+	}
+
+	[ "$enable" = "0" ] && return 1
+
+	procd_open_instance
+	procd_set_param command "$PROG" -f
+	[ -n "$address" ] && procd_append_param command -l "$address"
+	[ -n "$password" ] && procd_append_param command -P "$password"
+	[ -n "$port" ] && procd_append_param command -p "$port"
+	[ "$debuglevel" -gt 0 ] && procd_append_param command -$(printf 'D%.0s' $(seq $debuglevel))
+	[ "$client_ip_check" -eq 0 ] && procd_append_param command -c
+	procd_append_param command "$tunnelip" "$tld"
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_close_instance
 }
 
-stop() {
-	service_stop /usr/sbin/iodined
+start_service () {
+	config_load "$NAME"
+	config_foreach validate_section_iodined iodined iodined_instance
+}
+
+service_triggers() {
+	procd_add_reload_trigger "$NAME"
+	procd_add_validation validate_section_iodined
 }
