@@ -9,10 +9,10 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qemu
-PKG_VERSION:=10.0.2
+PKG_VERSION:=10.0.3
 PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=ef786f2398cb5184600f69aef4d5d691efd44576a3cff4126d38d4c6fec87759
+PKG_HASH:=5c891267b1534a774465db8b1a0dfcb0c5e6d7ecb6f71345625adf4e0889945b
 PKG_SOURCE_URL:=https://download.qemu.org/
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=LICENSE tcg/LICENSE
@@ -355,6 +355,7 @@ CONFIGURE_ARGS +=			\
 	--$(if $(CONFIG_QEMU_UI_VNC),enable,disable)-vnc			\
 	--$(if $(CONFIG_QEMU_UI_VNC_JPEG),enable,disable)-vnc-jpeg		\
 	--$(if $(CONFIG_QEMU_UI_VNC_SASL),enable,disable)-vnc-sasl		\
+	--disable-dbus-display		\
 	--disable-vte			\
 	--enable-curses			\
 	--enable-iconv			\
