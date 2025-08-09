@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dbus
 PKG_VERSION:=1.16.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://dbus.freedesktop.org/releases/dbus
@@ -86,7 +86,7 @@ MESON_ARGS += \
 	-Ddbus_user=root \
 	-Dsession_socket_dir=/tmp \
 	-Dsystem_socket=/var/run/dbus/system_bus_socket \
-	-Dsystem_pid_file=/var/run/dbus.pid \
+	-Dsystem_pid_file=/var/run/dbus/dbus.pid \
 	-Dasserts=false \
 	-Dchecks=false \
 	-Ddoxygen_docs=disabled \

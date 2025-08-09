@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libtatsu
-PKG_VERSION:=1.0.4
+PKG_VERSION:=1.0.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://github.com/libimobiledevice/libtatsu/releases/download/$(PKG_VERSION)
-PKG_HASH:=08094e58364858360e1743648581d9bad055ba3b06e398c660e481ebe0ae20b3
+PKG_HASH:=536fa228b14f156258e801a7f4d25a3a9dd91bb936bf6344e23171403c57e440
 
 PKG_MAINTAINER:=Georgi Valkov <gvalkov@gmail.com>
 PKG_LICENSE:=LGPL-2.1-or-later

@@ -1,6 +1,6 @@
 --- a/pyproject.toml
 +++ b/pyproject.toml
-@@ -138,7 +138,6 @@ ckeygen = "twisted.conch.scripts.ckeygen
+@@ -148,7 +148,6 @@ ckeygen = "twisted.conch.scripts.ckeygen
  conch = "twisted.conch.scripts.conch:run"
  mailmail = "twisted.mail.scripts.mailmail:run"
  pyhtmlizer = "twisted.scripts.htmlizer:run"

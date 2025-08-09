@@ -18,10 +18,10 @@ config_cb() {
 			eval $option=$value
 			;;
 		_*)
-			[ "$value" = "0" ] || extra_args="$extra_args -${option//_/-}"
+			[ "$value" = "0" ] || extra_args="$extra_args ${option//_/-}"
 			;;
 		*)
-			extra_args="$extra_args -${option//_/-}=$value"
+			extra_args="$extra_args -${option//_/-}='$value'"
 			;;
 		esac
 	}
@@ -29,12 +29,11 @@ config_cb() {
 	list_cb() {
 		local name="$1"
 		local value="$2"
-		[ "$name" = "_" ] && extra_args="$extra_args --${value//_/-}" || return 0
+		[ "$name" = "_" ] && extra_args="$extra_args -${value//_/-}" || return 0
 	}
 }
 
-service_triggers()
-{
+service_triggers() {
 	procd_add_reload_trigger "strelaysrv"
 }
 

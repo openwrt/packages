@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=modemmanager
 PKG_VERSION:=1.24.0
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://gitlab.freedesktop.org/mobile-broadband/ModemManager.git
@@ -125,6 +125,7 @@ define Package/modemmanager/install
 
 	$(INSTALL_DIR) $(1)/etc/dbus-1/system.d
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/dbus-1/system.d/org.freedesktop.ModemManager1.conf $(1)/etc/dbus-1/system.d
+	chmod 644 $(1)/etc/dbus-1/system.d/org.freedesktop.ModemManager1.conf
 
 	$(INSTALL_DIR) $(1)/usr/share/dbus-1/system-services
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/dbus-1/system-services/org.freedesktop.ModemManager1.service $(1)/usr/share/dbus-1/system-services
