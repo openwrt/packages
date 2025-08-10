@@ -168,7 +168,7 @@ output_okbn() { output 1 "$_OKB_\n"; output 2 "$__OKB__\n"; }
 output_fail() { output 1 "$_FAIL_"; output 2 "$__FAIL__\n"; }
 output_failn() { output 1 "$_FAIL_\n"; output 2 "$__FAIL__\n"; }
 output_error() { output "${_ERROR_} $*!\n"; }
-output_warning() { output "${_WARNING_} $*!\n"; }
+output_warning() { output "${_WARNING_} $*.\n"; }
 quiet_mode() {
 	case "$1" in
 		on) verbosity=0;;
@@ -358,65 +358,63 @@ try() {
 }
 
 get_text() {
-	local r
-	case "$1" in
-		errorConfigValidation) r="Config ($packageConfigFile) validation failure!";;
-		errorNoNft) r="Resolver set support (${resolver_set}) requires nftables, but nft binary cannot be found!";;
-		errorResolverNotSupported) r="Resolver set (${resolver_set}) is not supported on this system!";;
-		errorServiceDisabled) r="The ${packageName} service is currently disabled";;
-		errorNoWanGateway) r="The ${serviceName} service failed to discover WAN gateway!";;
-		errorNoWanInterface) r="The %s interface not found, you need to set the 'pbr.config.procd_wan_interface' option!";;
-		errorNoWanInterfaceHint) r="Refer to https://docs.openwrt.melmac.ca/pbr/#procd_wan_interface.";;
-		errorNftsetNameTooLong) r="The nft set name '%s' is longer than allowed 255 characters!";;
-		errorUnexpectedExit) r="Unexpected exit or service termination: '%s'!";;
-		errorPolicyNoSrcDest) r="Policy '%s' has no source/destination parameters!";;
-		errorPolicyNoInterface) r="Policy '%s' has no assigned interface!";;
-		errorPolicyNoDns) r="Policy '%s' has no assigned DNS!";;
-		errorPolicyProcessNoInterfaceDns) r="Interface '%s' has no assigned DNS!";;
-		errorPolicyUnknownInterface) r="Policy '%s' has an unknown interface!";;
-		errorPolicyProcessCMD) r="'%s'!";;
-		errorFailedSetup) r="Failed to set up '%s'!";;
-		errorFailedReload) r="Failed to reload '%s'!";;
-		errorUserFileNotFound) r="Custom user file '%s' not found or empty!";;
-		errorUserFileSyntax) r="Syntax error in custom user file '%s'!";;
-		errorUserFileRunning) r="Error running custom user file '%s'!";;
-		errorUserFileNoCurl) r="Use of 'curl' is detected in custom user file '%s', but 'curl' isn't installed!";;
-		errorNoGateways) r="Failed to set up any gateway!";;
-		errorResolver) r="Resolver '%s'!";;
-		errorPolicyProcessNoIpv6) r="Skipping IPv6 policy '%s' as IPv6 support is disabled!";;
-		errorPolicyProcessUnknownFwmark) r="Unknown packet mark for interface '%s'!";;
-		errorPolicyProcessMismatchFamily) r="Mismatched IP family between in policy '%s'!";;
-		errorPolicyProcessUnknownProtocol) r="Unknown protocol in policy '%s'!";;
-		errorPolicyProcessInsertionFailed) r="Insertion failed for both IPv4 and IPv6 for policy '%s'!";;
-		errorPolicyProcessInsertionFailedIpv4) r="Insertion failed for IPv4 for policy '%s'!";;
-		errorPolicyProcessUnknownEntry) r="Unknown entry in policy '%s'!";;
-		errorInterfaceRoutingEmptyValues) r="Received empty tid/mark or interface name when setting up routing!";;
-		errorFailedToResolve) r="Failed to resolve '%s'!";;
-		errorTryFailed) r="Command failed: %s";;
-		errorNftFileInstall) r="Failed to install fw4 nft file '%s'!";;
-		errorDownloadUrlNoHttps) r="Failed to download '%s', HTTPS is not supported!";;
-		errorDownloadUrl) r="Failed to download '%s'!";;
-		errorNoDownloadWithSecureReload) r="Policy '%s' refers to URL which can't be downloaded in 'secure_reload' mode!";;
-		errorFileSchemaRequiresCurl) r="The file:// schema requires curl, but it's not detected on this system!";;
-		errorIncompatibleUserFile) r="Incompatible custom user file detected '%s'!";;
-		errorDefaultFw4TableMissing) r="Default fw4 table '%s' is missing!";;
-		errorDefaultFw4ChainMissing) r="Default fw4 chain '%s' is missing!";;
-		errorRequiredBinaryMissing) r="Required binary '%s' is missing!";;
-		errorInterfaceRoutingUnknownDevType) r="Unknown IPv6 Link type for device '%s'!";;
-		errorUplinkDown) r="Uplink/WAN interface is still down, increase value of 'procd_boot_trigger_delay' option";;
-		warningInvalidOVPNConfig) r="Invalid OpenVPN config for '%s' interface.";;
-		warningResolverNotSupported) r="Resolver set (${resolver_set}) is not supported on this system.";;
-		warningPolicyProcessCMD) r="'%s'";;
-		warningTorUnsetParams) r="Please unset 'src_addr', 'src_port' and 'dest_port' for policy '%s'.";;
-		warningTorUnsetProto) r="Please unset 'proto' or set 'proto' to 'all' for policy '%s'.";;
-		warningTorUnsetChainNft) r="Please unset 'chain' or set 'chain' to 'prerouting' for policy '%s'.";;
-		warningOutdatedWebUIApp) r="The WebUI application is outdated (version %s), please update it.";;
-		warningBadNftCallsInUserFile) r="Incompatible nft calls detected in user include file, disabling fw4 nft file support.";;
-		warningDnsmasqInstanceNoConfdir) r="Dnsmasq instance '%s' targeted in settings, but it doesn't have its own confdir.";;
-		warningDhcpLanForce) r="Please set 'dhcp.%s.force=1' to speed up service start-up.";;
-		*) r="Unknown error '%s'!";;
+	local r="$1"; shift;
+	case "$r" in
+		errorConfigValidation) printf "Config (%s) validation failure" "$$packageConfigFile";;
+		errorNoNft) printf "Resolver set support (%s) requires nftables, but nft binary cannot be found" "$resolver_set";;
+		errorResolverNotSupported) printf "Resolver set (%s) is not supported on this system" "$resolver_set";;
+		errorServiceDisabled) printf "The %s service is currently disabled" "$packageName";;
+		errorNoWanGateway) printf "The %s service failed to discover WAN gateway" "$serviceName";;
+		errorNoWanInterface) printf "The %s interface not found, you need to set the 'pbr.config.procd_wan_interface' option" "$@";;
+		errorNoWanInterfaceHint) printf "Refer to %s" 'https://docs.openwrt.melmac.ca/pbr/#procd_wan_interface';;
+		errorNftsetNameTooLong) printf "The nft set name '%s' is longer than allowed 255 characters" "$@";;
+		errorUnexpectedExit) printf "Unexpected exit or service termination: '%s'" "$@";;
+		errorPolicyNoSrcDest) printf "Policy '%s' has no source/destination parameters" "$@";;
+		errorPolicyNoInterface) printf "Policy '%s' has no assigned interface" "$@";;
+		errorPolicyNoDns) printf "Policy '%s' has no assigned DNS" "$@";;
+		errorPolicyProcessNoInterfaceDns) printf "Interface '%s' has no assigned DNS" "$@";;
+		errorPolicyUnknownInterface) printf "Policy '%s' has an unknown interface" "$@";;
+		errorPolicyProcessCMD) printf "'%s'" "$@";;
+		errorFailedSetup) printf "Failed to set up '%s'" "$@";;
+		errorFailedReload) printf "Failed to reload '%s'" "$@";;
+		errorUserFileNotFound) printf "Custom user file '%s' not found or empty" "$@";;
+		errorUserFileSyntax) printf "Syntax error in custom user file '%s'" "$@";;
+		errorUserFileRunning) printf "Error running custom user file '%s'" "$@";;
+		errorUserFileNoCurl) printf "Use of 'curl' is detected in custom user file '%s', but 'curl' isn't installed" "$@";;
+		errorNoGateways) printf "Failed to set up any gateway";;
+		errorResolver) printf "Resolver '%s'" "$@";;
+		errorPolicyProcessNoIpv6) printf "Skipping IPv6 policy '%s' as IPv6 support is disabled" "$@";;
+		errorPolicyProcessUnknownFwmark) printf "Unknown packet mark for interface '%s'" "$@";;
+		errorPolicyProcessMismatchFamily) printf "Mismatched IP family between in policy '%s'" "$@";;
+		errorPolicyProcessUnknownProtocol) printf "Unknown protocol in policy '%s'" "$@";;
+		errorPolicyProcessInsertionFailed) printf "Insertion failed for both IPv4 and IPv6 for policy '%s'" "$@";;
+		errorPolicyProcessInsertionFailedIpv4) printf "Insertion failed for IPv4 for policy '%s'" "$@";;
+		errorPolicyProcessUnknownEntry) printf "Unknown entry in policy '%s'" "$@";;
+		errorInterfaceRoutingEmptyValues) printf "Received empty tid/mark or interface name when setting up routing";;
+		errorFailedToResolve) printf "Failed to resolve '%s'" "$@";;
+		errorTryFailed) printf "Command failed: %s" "$@";;
+		errorNftFileInstall) printf "Failed to install fw4 nft file '%s'" "$@";;
+		errorDownloadUrlNoHttps) printf "Failed to download '%s', HTTPS is not supported" "$@";;
+		errorDownloadUrl) printf "Failed to download '%s'" "$@";;
+		errorNoDownloadWithSecureReload) printf "Policy '%s' refers to URL which can't be downloaded in 'secure_reload' mode" "$@";;
+		errorFileSchemaRequiresCurl) printf "The file:// schema requires curl, but it's not detected on this system";;
+		errorIncompatibleUserFile) printf "Incompatible custom user file detected '%s'" "$@";;
+		errorDefaultFw4TableMissing) printf "Default fw4 table '%s' is missing" "$@";;
+		errorDefaultFw4ChainMissing) printf "Default fw4 chain '%s' is missing" "$@";;
+		errorRequiredBinaryMissing) printf "Required binary '%s' is missing" "$@";;
+		errorInterfaceRoutingUnknownDevType) printf "Unknown IPv6 Link type for device '%s'" "$@";;
+		errorUplinkDown) printf "Uplink/WAN interface is still down, increase value of 'procd_boot_trigger_delay' option";;
+		warningInvalidOVPNConfig) printf "Invalid OpenVPN config for '%s' interface" "$@";;
+		warningResolverNotSupported) printf "Resolver set (%s) is not supported on this system" "$resolver_set";;
+		warningPolicyProcessCMD) printf "'%s'" "$@";;
+		warningTorUnsetParams) printf "Please unset 'src_addr', 'src_port' and 'dest_port' for policy '%s'" "$@";;
+		warningTorUnsetProto) printf "Please unset 'proto' or set 'proto' to 'all' for policy '%s'" "$@";;
+		warningTorUnsetChainNft) printf "Please unset 'chain' or set 'chain' to 'prerouting' for policy '%s'" "$@";;
+		warningOutdatedWebUIApp) printf "The WebUI application is outdated (version %s), please update it" "$@";;
+		warningDnsmasqInstanceNoConfdir) printf "Dnsmasq instance '%s' targeted in settings, but it doesn't have its own confdir" "$@";;
+		warningDhcpLanForce) printf "Please set 'dhcp.%s.force=1' to speed up service start-up" "$@";;
+		*) printf "Unknown error/warning '%s'" "$@";;
 	esac
-	echo "$r"
 }
 
 process_url() {
@@ -572,9 +570,9 @@ load_environment() {
 	}
 	local param="$1" validation_result="$2"
 	[ -z "$load_environment_flag" ] || return 0
-	json init
 	case "$param" in
 		on_boot|on_start)
+			json init
 			output 1 "Loading environment ($param) "
 			load_package_config "$param"
 			if [ "$enabled" -eq '0' ]; then
@@ -598,6 +596,7 @@ load_environment() {
 			output 1 "$_OK_\n"
 		;;
 		on_stop)
+			json init
 			output 1 "Loading environment ($param) "
 			load_package_config "$param"
 			load_network "$param"
@@ -870,20 +869,19 @@ json() {
 	{ json_load_file "$runningStatusFile" || json_init; } >/dev/null 2>&1
 	case "$action" in
 		'get')
-			if json_select "$param" >/dev/null 2>&1; then
-				if [ -n "$value" ]; then
-					{
-					if json_select "$value"; then
-						json_get_var 'i' "${info:-code}"
-						json_select ..
-					fi
-					} >/dev/null 2>&1
-				else
-					json_get_keys i
+			json_select "$param" >/dev/null 2>&1 || return
+			if [ -n "$value" ]; then
+				{
+				if json_select "$value"; then
+					json_get_var 'i' "${info:-code}"
+					json_select ..
 				fi
-				printf "%b" "$i"
-				json_select ..
+				} >/dev/null 2>&1
+			else
+				json_get_keys i
 			fi
+			printf "%b" "$i"
+			json_select ..
 			return
 		;;
 		'add')
@@ -2020,9 +2018,13 @@ on_interface_reload() {
 start_service() {
 	local resolverStoredHash resolverNewHash i param="$1" reloadedIface k
 
-	[ -n "$pbr_boot_flag" ] && return 0
-	[ "$param" = 'on_boot' ] && return 0
+#	[ -n "$pbr_boot_flag" ] && return 0
+#	[ "$param" = 'on_boot' ] && return 0
 	load_environment "${param:-on_start}" "$(load_validate_config)" || return 1
+	if [ -n "$pbr_boot_flag" ] || [ "$param" = 'on_boot' ]; then 
+		[ -n "$wanGW" ] || return 0
+		unset pbr_boot_flag
+	fi
 
 	output "Processing environment (${param:-on_start}) "
 	is_wan_up "$param" || { output_error "$(get_text 'errorUplinkDown')";  return 1; }
@@ -2226,7 +2228,9 @@ service_triggers() {
 	procd_close_validate
 	if [ -n "$pbr_boot_flag" ] && is_integer "$procd_boot_trigger_delay"; then
 		output "Setting trigger (on_boot) "
-		procd_add_raw_trigger "interface.*.up" "$procd_boot_trigger_delay" "/etc/init.d/${packageName}" start && output_okn || output_failn
+		procd_open_trigger
+			procd_add_raw_trigger "interface.*.up" "$procd_boot_trigger_delay" "/etc/init.d/${packageName}" start && output_okn || output_failn
+		procd_close_trigger
 	else
 		procd_open_trigger
 			procd_add_config_trigger "config.change" 'openvpn' "/etc/init.d/${packageName}" reload 'on_openvpn_change'
