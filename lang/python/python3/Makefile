@@ -312,6 +312,11 @@ HOST_CONFIGURE_ARGS += \
 	--with-system-expat \
 	--without-cxx-main
 
+# ncurses and uuid have seemingly unsolvable issues with pkgconfig
+HOST_CFLAGS += \
+	-I$(STAGING_DIR_HOSTPKG)/include/ncursesw \
+	-I$(STAGING_DIR_HOST)/include/uuid
+
 define Host/Configure
 	$(SED) 's/^ENABLE_USER_SITE = None$$$$/ENABLE_USER_SITE = False/' $(HOST_BUILD_DIR)/Lib/site.py
 	$(call Host/Configure/Default)
