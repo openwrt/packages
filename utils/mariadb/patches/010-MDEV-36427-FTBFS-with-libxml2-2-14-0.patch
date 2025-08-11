@@ -1,0 +1,56 @@
+From b02ad4a6f8ea09c5cdf0a44a9ee57a60f2989f48 Mon Sep 17 00:00:00 2001
+From: Sergey Vojtovich <svojtovich@gmail.com>
+Date: Sat, 5 Apr 2025 21:06:41 +0400
+Subject: [PATCH] MDEV-36427 - FTBFS with libxml2 2.14.0
+
+Connect engine fails to build with libxml2 2.14.0.
+
+Connect engine uses "#ifndef BASE_BUFFER_SIZE" to determine if libxml2 is
+available. If libxml2 is unavailable it did redefine xmlElementType enum
+of libxml/tree.h. The reasons for this redefinition is vague, most
+probably some of these constants were used when connect was compiled with
+MSXML, while libxml2 was disabled.
+
+However BASE_BUFFER_SIZE constant was removed from libxml2 recently, as
+a result connect fails to build due to xmlElementType constants
+redefinition.
+
+Use LIBXML2_SUPPORT instead of BASE_BUFFER_SIZE for libxml2 availability
+check.
+---
+ storage/connect/plgxml.h   | 4 ++--
+ storage/connect/tabxml.cpp | 3 +++
+ 2 files changed, 5 insertions(+), 2 deletions(-)
+
+--- a/storage/connect/plgxml.h
++++ b/storage/connect/plgxml.h
+@@ -5,7 +5,7 @@
+ /******************************************************************/
+ /*  Dual XML implementation base classes defines.                 */
+ /******************************************************************/
+-#if !defined(BASE_BUFFER_SIZE)
++#ifndef LIBXML2_SUPPORT
+ enum ElementType {               // libxml2
+      XML_ELEMENT_NODE       =  1,
+      XML_ATTRIBUTE_NODE     =  2,
+@@ -28,7 +28,7 @@ enum ElementType {               // libx
+      XML_XINCLUDE_START     = 19,
+      XML_XINCLUDE_END       = 20,
+      XML_DOCB_DOCUMENT_NODE = 21};
+-#endif   // !BASE_BUFFER_SIZE
++#endif
+ 
+ //#if !defined(NODE_TYPE_LIST)
+ #ifdef NOT_USED
+--- a/storage/connect/tabxml.cpp
++++ b/storage/connect/tabxml.cpp
+@@ -25,6 +25,9 @@
+ #include <netinet/in.h>
+ #include <unistd.h>
+ //#include <ctype.h>
++#ifdef LIBXML2_SUPPORT
++#include <libxml/tree.h>
++#endif
+ #include "osutil.h"
+ #define _O_RDONLY O_RDONLY
+ #endif  // !_WIN32
