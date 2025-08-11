@@ -300,13 +300,13 @@ static_host_add() {
 	config_get dns "$cfg" "dns"
 	config_get gateway "$cfg" "gateway"
 	config_get leasetime "$cfg" "leasetime"
-	if [ -n "$leasetime" ] ; then
+	if [ -n "$leasetime" ]; then
 		leasetime="$(time2seconds "$leasetime")"
 		[ $? -ne 0 ] && return 1
 	fi
 
 	config_get hostid "$cfg" "hostid"
-	if [ -n "$hostid" ] ; then
+	if [ -n "$hostid" ]; then
 		hex_to_hostid hostid "$hostid" || return 1
 	fi
 
@@ -338,27 +338,27 @@ static_host_add() {
 
 	for mac in $macs; do
 		local secname="$name"
-		if [ $macn -gt 1 ] ; then
+		if [ $macn -gt 1 ]; then
 			secname="${name}-${mac//:}"
 		fi
 		echo "host $secname {"
 		echo " hardware ethernet $mac;"
 		echo " fixed-address $ip;"
 		echo " option host-name \"$name\";"
-		if [ $broadcast -eq 1 ] ; then
+		if [ $broadcast -eq 1 ]; then
 			echo " always-broadcast true;"
 		fi
-		if [ -n "$leasetime" ] ; then
+		if [ -n "$leasetime" ]; then
 			echo " default-lease-time $leasetime;"
 			echo " max-lease-time $leasetime;"
 		fi
-		if [ -n "$hostid" ] ; then
+		if [ -n "$hostid" ]; then
 			echo " option dhcp-client-identifier $hostid;"
 		fi
-		if [ -n "$dns" ] ; then
+		if [ -n "$dns" ]; then
 			echo " option domain-name-servers $dns;"
 		fi
-		if [ -n "$gateway" ] ; then
+		if [ -n "$gateway" ]; then
 			echo " option routers $gateway;"
 		fi
 
@@ -396,21 +396,21 @@ gen_dhcp_subnet() {
 	echo " option subnet-mask $netmask;"
 	# check for 0.0.0.0 until all active releases of ipcalc.sh omit it
 	# for small networks:
-	if [ -n "$BROADCAST" ] && [ "$BROADCAST" != "0.0.0.0" ] ; then
+	if [ -n "$BROADCAST" ] && [ "$BROADCAST" != "0.0.0.0" ]; then
 		echo " option broadcast-address $BROADCAST;"
 	fi
-	if [ $dynamicdhcp -eq 0 ] ; then
-		if [ $authoritative -eq 1 ] ; then
+	if [ $dynamicdhcp -eq 0 ]; then
+		if [ $authoritative -eq 1 ]; then
 			echo " deny unknown-clients;"
 		else
 			echo " ignore unknown-clients;"
 		fi
 	fi
-	if [ -n "$leasetime" ] ; then
+	if [ -n "$leasetime" ]; then
 		echo " default-lease-time $leasetime;"
 		echo " max-lease-time $leasetime;"
 	fi
-	if [ $defaultroute -eq 1 ] ; then
+	if [ $defaultroute -eq 1 ]; then
 		echo " option routers $gateway;"
 	fi
 	echo " option domain-name-servers $DNS;"
@@ -477,7 +477,7 @@ dhcpd_add() {
 
 	config_get netmask "$cfg" "netmask" "$NETMASK"
 	config_get leasetime "$cfg" "leasetime"
-	if [ -n "$leasetime" ] ; then
+	if [ -n "$leasetime" ]; then
 		leasetime="$(time2seconds "$leasetime")"
 		[ $? -ne 0 ] && return 1
 	fi
@@ -599,7 +599,7 @@ EOF
 		done
 	fi
 
-	if [ -n "$log_facility" ] ; then
+	if [ -n "$log_facility" ]; then
 		echo "log-facility $log_facility;"
 	fi
 	echo "default-lease-time $default_lease_time;"
@@ -625,15 +625,15 @@ boot() {
 start_service() {
 	local domain dhcp_ifs authoritative dynamicdns
 
-	if [ -n "$DHCPD_BOOT" ] ; then
+	if [ -n "$DHCPD_BOOT" ]; then
 		return 0
 	fi
 
-	if [ ! -e $lease_file ] ; then
+	if [ ! -e $lease_file ]; then
 		touch $lease_file
 	fi
 
-	if [ -e "/etc/dhcpd.conf" ] ; then
+	if [ -e "/etc/dhcpd.conf" ]; then
 		config_file="/etc/dhcpd.conf"
 	else
 		. /lib/functions/network.sh
@@ -707,13 +707,13 @@ add_interface_trigger() {
 	config_get trigger "$cfg" interface
 	config_get_bool ignore "$cfg" ignore 0
 
-	if [ -n "$trigger" -a $ignore -eq 0 ] ; then
+	if [ -n "$trigger" ] && [ $ignore -eq 0 ]; then
 		procd_add_reload_interface_trigger "$trigger"
 	fi
 }
 
 service_triggers() {
-	if [ -n "$DHCPD_BOOT" ] ; then
+	if [ -n "$DHCPD_BOOT" ]; then
 		# Make the first start robust to slow interfaces; wait a while
 		procd_add_raw_trigger "interface.*.up" 5000 /etc/init.d/dhcpd restart
 
