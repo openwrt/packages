@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=net-snmp
 PKG_VERSION:=5.9.4
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/net-snmp
@@ -43,7 +43,6 @@ define Package/libnetsnmp/default
   SUBMENU:=Networking
   DEPENDS:=+libnl-tiny +libpci +libpcre2
   TITLE:=net-snmp - client library
-  PROVIDES:=libnetsnmp
 endef
 
 
@@ -51,7 +50,9 @@ define Package/libnetsnmp-nossl
   $(call Package/libnetsnmp/default)
   TITLE+= (without SSL Support)
   VARIANT:=nossl
+  PROVIDES:=libnetsnmp
   DEFAULT_VARIANT:=1
+  CONFILTS:=libnetsnmp-ssl
 endef
 
 define Package/libnetsnmp-nossl/description
@@ -64,7 +65,6 @@ define Package/snmp-utils-nossl
   DEPENDS:=+libnetsnmp-nossl
   PROVIDES:=snmp-utils
   VARIANT:=nossl
-  DEFAULT_VARIANT:=1
 endef
 
 define Package/snmp-utils-nossl/description
@@ -84,7 +84,6 @@ define Package/snmpd-nossl
   DEPENDS:=+libnetsnmp-nossl
   PROVIDES:=snmpd
   VARIANT:=nossl
-  DEFAULT_VARIANT:=1
 endef
 
 define Package/snmpd-nossl/description
@@ -94,11 +93,10 @@ endef
 
 define Package/snmptrapd-nossl
   $(call Package/net-snmp/Default)
-  TITLE:=net-snmp - notification receiver daemon (without SSL Support)
+  TITLE:=net-snmp - notification daemon (without SSL Support)
   DEPENDS:=+libnetsnmp-nossl
   PROVIDES:=snmptrapd
   VARIANT:=nossl
-  DEFAULT_VARIANT:=1
 endef
 
 define Package/snmptrapd-nossl/description
@@ -112,7 +110,6 @@ define Package/libnetsnmp-ssl
   TITLE+= (with SSL Support)
   VARIANT:=ssl
   DEPENDS+= +libopenssl
-  CONFLICTS:=libnetsnmp-nossl
 endef
 
 define Package/libnetsnmp-ssl/description
@@ -125,7 +122,6 @@ define Package/snmp-utils-ssl
   DEPENDS:=+libnetsnmp-ssl
   PROVIDES:=snmp-utils
   VARIANT:=ssl
-  CONFLICTS:=snmp-utils-nossl
 endef
 
 define Package/snmp-utils-ssl/description
@@ -145,7 +141,6 @@ define Package/snmpd-ssl
   DEPENDS:=+libnetsnmp-ssl
   PROVIDES:=snmpd
   VARIANT:=ssl
-  CONFLICTS:=snmpd-nossl
 endef
 
 define Package/snmpd-ssl/description
@@ -155,11 +150,10 @@ endef
 
 define Package/snmptrapd-ssl
   $(call Package/net-snmp/Default)
-  TITLE:=net-snmp - notification receiver daemon (with SSL Support)
+  TITLE:=net-snmp - notification daemon (with SSL Support)
   DEPENDS:=+libnetsnmp-ssl
   PROVIDES:=snmptrapd
   VARIANT:=ssl
-  CONFLICTS:=snmptrapd-nossl
 endef
 
 define Package/snmptrapd-ssl/description
