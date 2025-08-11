@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gping
 PKG_VERSION:=1.18.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/orf/gping/tar.gz/$(PKG_NAME)-v$(PKG_VERSION)?
@@ -37,7 +37,7 @@ define Package/gping/description
   also plot the execution time of arbitrary commands.
 endef
 
-Build/Compile = $(call Build/Compile/Cargo,gping)
+Build/Compile = $(call Build/Compile/Cargo,gping,--locked)
 
 $(eval $(call RustBinPackage,gping))
 $(eval $(call BuildPackage,gping))
