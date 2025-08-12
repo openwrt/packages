@@ -11,7 +11,7 @@ PKG_NAME:=isc-dhcp
 UPSTREAM_NAME:=dhcp
 PKG_REALVERSION:=4.4.3-P1
 PKG_VERSION:=4.4.3_p1
-PKG_RELEASE:=8
+PKG_RELEASE:=9
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -189,6 +189,9 @@ ifeq ($(BUILD_VARIANT),ipv6)
 endif
 
 TARGET_CFLAGS += -fcommon
+
+# don't know why anyone is still publishing K&R-style C code
+TARGET_CFLAGS += -Wno-old-style-definition
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR)			\
