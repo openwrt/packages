@@ -936,7 +936,8 @@ get_current_ip () {
 			[ -z "$ip_url" ] && { write_log 12 "get_current_ip: 'ip_url' not set for source 'web'"; return 2; }
 			do_transfer "$ip_url"
 			# bug: do_transfer does not output to DATFILE
-			read -r data < "$DATFILE"
+			[ $use_ipv6 -eq 0 ] && data=$(grep -m 1 -o "$IPV4_REGEX" "$DATFILE")
+			[ $use_ipv6 -eq 1 ] && data=$(grep -m 1 -o "$IPV6_REGEX" "$DATFILE")
 			[ -n "$data" ] && write_log 7 "Current IP '$data' detected via web at '$ip_url'"
 			;;
 		*)

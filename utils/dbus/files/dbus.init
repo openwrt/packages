@@ -14,6 +14,7 @@ PROG=/usr/bin/dbus-daemon
 start_service() {
 	mkdir -m 0755 -p /var/lib/dbus
 	mkdir -m 0755 -p /var/run/dbus
+	chown dbus:dbus /var/lib/dbus /var/run/dbus
 
 	[ -x /usr/bin/dbus-uuidgen ] && /usr/bin/dbus-uuidgen --ensure
 
@@ -24,6 +25,12 @@ start_service() {
 	[ -n "$DEBUG" ] && procd_set_param env DBUS_VERBOSE=1
 	procd_set_param stdout 1
 	procd_set_param stderr 1
+	[ -x /sbin/ujail -a -e /etc/capabilities/dbus.json ] && {
+		procd_add_jail dbus
+		procd_set_param user dbus
+		procd_set_param group dbus
+		procd_set_param capabilities /etc/capabilities/dbus.json
+	}
 	procd_close_instance
 }
 

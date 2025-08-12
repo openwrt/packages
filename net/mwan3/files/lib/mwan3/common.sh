@@ -86,30 +86,48 @@ mwan3_get_src_ip()
 	export "$1=$_src_ip"
 }
 
+readfile() {
+	[ -f "$2" ] || return 1
+	# read returns 1 on EOF
+	read -d'\0' $1 <"$2" || :
+}
+
 mwan3_get_mwan3track_status()
 {
-	local track_ips pid
+	local interface=$2
+	local track_ips pid cmdline started
 	mwan3_list_track_ips()
 	{
 		track_ips="$1 $track_ips"
 	}
-	config_list_foreach "$1" track_ip mwan3_list_track_ips
+	config_list_foreach "$interface" track_ip mwan3_list_track_ips
 
-	if [ -n "$track_ips" ]; then
-		pid="$(pgrep -f "mwan3track $1$")"
-		if [ -n "$pid" ]; then
-			if [ "$(cat /proc/"$(pgrep -P $pid)"/cmdline)" = "sleep${MAX_SLEEP}" ]; then
-				tracking="paused"
-			else
-				tracking="active"
-			fi
-		else
-			tracking="down"
-		fi
-	else
-		tracking="disabled"
+	if [ -z "$track_ips" ]; then
+		export -n "$1=disabled"
+		return
 	fi
-	echo "$tracking"
+	readfile pid $MWAN3TRACK_STATUS_DIR/$interface/PID 2>/dev/null
+	if [ -z "$pid" ]; then
+		export -n "$1=down"
+		return
+	fi
+	readfile cmdline /proc/$pid/cmdline 2>/dev/null
+	if [ $cmdline != "/bin/sh/usr/sbin/mwan3track${interface}" ]; then
+		export -n "$1=down"
+		return
+	fi
+	readfile started $MWAN3TRACK_STATUS_DIR/$interface/STARTED
+	case "$started" in
+		0)
+			export -n "$1=paused"
+			;;
+		1)
+			export -n "$1=active"
+			;;
+		*)
+			export -n "$1=down"
+			;;
+	esac
 }
 
 mwan3_init()
@@ -123,7 +141,7 @@ mwan3_init()
 
 	# mwan3's MARKing mask (at least 3 bits should be set)
 	if [ -e "${MWAN3_STATUS_DIR}/mmx_mask" ]; then
-		MMX_MASK=$(cat "${MWAN3_STATUS_DIR}/mmx_mask")
+		readfile MMX_MASK "${MWAN3_STATUS_DIR}/mmx_mask"
 		MWAN3_INTERFACE_MAX=$(uci_get_state mwan3 globals iface_max)
 	else
 		config_get MMX_MASK globals mmx_mask '0x3F00'
@@ -190,16 +208,21 @@ mwan3_count_one_bits()
 }
 
 get_uptime() {
-	local uptime=$(cat /proc/uptime)
-	echo "${uptime%%.*}"
+	local _tmp
+	readfile _tmp /proc/uptime
+	if [ $# -eq 0 ]; then
+		echo "${_tmp%%.*}"
+	else
+		export -n "$1=${_tmp%%.*}"
+	fi
 }
 
 get_online_time() {
 	local time_n time_u iface
-	iface="$1"
-	time_u="$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/ONLINE" 2>/dev/null)"
+	iface="$2"
+	readfile time_u "$MWAN3TRACK_STATUS_DIR/${iface}/ONLINE" 2>/dev/null
 	[ -z "${time_u}" ] || [ "${time_u}" = "0" ] || {
-		time_n="$(get_uptime)"
-		echo $((time_n-time_u))
+		get_uptime time_n
+		export -n "$1=$((time_n-time_u))"
 	}
 }
