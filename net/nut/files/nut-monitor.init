@@ -46,9 +46,9 @@ nut_upsmon_conf() {
 	[ -n "$val" ] && echo "NOTIFYMSG LOWBATT \"$val\"" >> "$UPSMON_C"
 	config_get val "$cfg" fsdmsg
 	[ -n "$val" ] && echo "NOTIFYMSG FSD \"$val\"" >> "$UPSMON_C"
-	config_get val "$cfg" commokmsg
+	config_get val "$cfg" comokmsg
 	[ -n "$val" ] && echo "NOTIFYMSG COMMOK \"$val\"" >> "$UPSMON_C"
-	config_get val "$cfg" commbadmsg
+	config_get val "$cfg" combadmsg
 	[ -n "$val" ] && echo "NOTIFYMSG COMMBAD \"$val\"" >> "$UPSMON_C"
 	config_get val "$cfg" shutdownmsg
 	[ -n "$val" ] && echo "NOTIFYMSG SHUTDOWN \"$val\"" >> "$UPSMON_C"
