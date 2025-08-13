@@ -1,5 +1,7 @@
 #!/bin/sh
 
+[ "$1" = "python3-numpy" ] || exit 0
+
 EXP_VER="$2"
 
 python3 - << EOF
