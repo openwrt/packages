@@ -1,5 +1,7 @@
 #!/bin/sh
 
+[ "python3-django" = "$1" ] || exit 0
+
 GOT_VER=$(/usr/bin/django-admin version)
 [ "$GOT_VER" = "$2" ] || {
 	echo "Incorrect version: expected '$2' ; obtained '$GOT_VER'"
