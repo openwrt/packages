@@ -52,7 +52,7 @@ define Package/libnetsnmp-nossl
   VARIANT:=nossl
   PROVIDES:=libnetsnmp
   DEFAULT_VARIANT:=1
-  CONFILTS:=libnetsnmp-ssl
+  CONFLICTS:=libnetsnmp-ssl
 endef
 
 define Package/libnetsnmp-nossl/description
