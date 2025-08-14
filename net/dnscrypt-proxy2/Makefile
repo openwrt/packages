@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dnscrypt-proxy2
-PKG_VERSION:=2.1.5
+PKG_VERSION:=2.1.12
 PKG_RELEASE:=1
 
 PKG_SOURCE:=dnscrypt-proxy-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/DNSCrypt/dnscrypt-proxy/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=044c4db9a3c7bdcf886ff8f83c4b137d2fd37a65477a92bfe86bf69587ea7355
+PKG_HASH:=95fe29ed03dad0cdd34d47316ecb15c25f7ef5fab21d9ec52cbfc4743bcf5198
 PKG_BUILD_DIR:=$(BUILD_DIR)/dnscrypt-proxy-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
@@ -30,7 +30,15 @@ include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
 
 GO_MOD_ARGS:=
+GO_PKG_LDFLAGS_X:=$(GO_PKG)/constant.Version=$(PKG_VERSION)
 GO_PKG_BUILD_VARS+= GO111MODULE=off
+
+# Add the new MIPS-specific flags here, before the package definition
+ifeq ($(ARCH),mips)
+    GO_PKG_GCFLAGS += -N
+    GO_PKG_LDFLAGS += -linkmode external
+    GO_PKG_LDFLAGS_X += main.version=$(PKG_VERSION)
+endif
 
 define Package/dnscrypt-proxy2
   SECTION:=net
@@ -40,6 +48,16 @@ define Package/dnscrypt-proxy2
   URL:=https://github.com/DNSCrypt/dnscrypt-proxy
   DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle
   CONFLICTS:=dnscrypt-proxy
+endef
+
+define Build/Prepare
+        $(call Build/Prepare/Default)
+
+        # Create static directory in the build directory
+	$(INSTALL_DIR) $(GO_PKG_BUILD_DIR)/src/$(GO_PKG)/dnscrypt-proxy/static
+
+	# Copy static files from the package build directory to the Go package build directory
+	$(CP) -r $(PKG_BUILD_DIR)/dnscrypt-proxy/static/* $(GO_PKG_BUILD_DIR)/src/$(GO_PKG)/dnscrypt-proxy/static/
 endef
 
 define Package/dnscrypt-proxy2/install
