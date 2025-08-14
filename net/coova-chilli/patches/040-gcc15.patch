@@ -1,0 +1,22 @@
+--- a/src/chilli.c
++++ b/src/chilli.c
+@@ -7867,7 +7867,7 @@ int chilli_main(int argc, char **argv) {
+      */
+ 
+ #ifdef ENABLE_CHILLIQUERY
+-    cmdsock_shutdown();
++    cmdsock_shutdown(cmdsock);
+ #endif
+ 
+ #ifdef ENABLE_CHILLIREDIR
+--- a/src/chilli.h
++++ b/src/chilli.h
+@@ -266,7 +266,7 @@ int cmdsock_init(void);
+ 
+ int cmdsock_port_init(void);
+ 
+-void cmdsock_shutdown();
++void cmdsock_shutdown(int s);
+ 
+ time_t mainclock_tick(void);
+ time_t mainclock_now(void);
