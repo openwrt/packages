@@ -12,6 +12,7 @@ PKG_RELEASE:=2
 PKG_MAINTAINER:=Eneas U de Queiroz <cotequeiroz@gmail.com>
 PKG_LICENSE:=MPL-2.0
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:certifi:certifi
 
 PYPI_NAME:=certifi
 PKG_HASH:=0569859f95fc761b18b45ef421b1290a0f65f147e92a1e5eb3e635f9a5e4e66f
