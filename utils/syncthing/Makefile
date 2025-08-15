@@ -15,7 +15,7 @@ PKG_LICENSE:=MPL-2.0
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:syncthing:syncthing
 
-PKG_BUILD_DEPENDS:=golang/host
+PKG_BUILD_DEPENDS:=
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=no-mips16
 
@@ -25,6 +25,7 @@ GO_PKG_BUILD_PKG:=\
 	$(if $(CONFIG_PACKAGE_stdiscosrv),$(GO_PKG)/cmd/stdiscosrv/) \
 	$(if $(CONFIG_PACKAGE_strelaysrv),$(GO_PKG)/cmd/strelaysrv/)
 GO_PKG_INSTALL_EXTRA:=^gui/
+GO_BIN_VERSION:=1.23
 
 GO_PKG_TAGS:=noupgrade
 GO_PKG_LDFLAGS_X:=\
