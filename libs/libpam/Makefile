@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libpam
 PKG_VERSION:=1.7.1
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=Linux-PAM-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/linux-pam/linux-pam/releases/download/v$(PKG_VERSION)
@@ -22,7 +22,6 @@ PKG_LICENSE_FILES:=COPYING Copyright
 PKG_CPE_ID:=cpe:/a:linux-pam:linux-pam
 
 PKG_FIXUP:=autoreconf
-PKG_BUILD_FLAGS:=no-mold
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
