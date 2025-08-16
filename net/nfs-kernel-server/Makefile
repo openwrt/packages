@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nfs-kernel-server
 PKG_VERSION:=2.8.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_HASH:=11e7c5847a8423a72931c865bd9296e7fd56ff270a795a849183900961711725
 
 PKG_SOURCE_URL:=@KERNEL/linux/utils/nfs-utils/$(PKG_VERSION)
@@ -40,7 +40,7 @@ endef
 define Package/nfs-kernel-server
 	$(call Package/nfs-kernel-server/Default)
 	TITLE:=Kernel NFS server support
-	DEPENDS+= +kmod-fs-nfsd +kmod-fs-nfs +NFS_KERNEL_SERVER_V4:kmod-fs-nfs-v4 +rpcbind +NFS_KERNEL_SERVER_V4:nfs-utils-libs +NFS_KERNEL_SERVER_V4:libkeyutils +NFS_KERNEL_SERVER_V4:libdevmapper
+	DEPENDS+= +kmod-fs-nfsd +kmod-fs-nfs +NFS_KERNEL_SERVER_V4:kmod-fs-nfs-v4 +rpcbind +NFS_KERNEL_SERVER_V4:nfs-utils-libs +NFS_KERNEL_SERVER_V4:libkeyutils +NFS_KERNEL_SERVER_V4:libdevmapper +libevent2-core
 	USERID:=nfs:nfs
 endef
 
@@ -108,11 +108,10 @@ TARGET_LDFLAGS += -L$(STAGING_DIR)/usr/lib/libevent
 CONFIGURE_ARGS += \
 	--disable-caps \
 	--disable-gss \
-	--disable-nfsdcld \
-	--disable-nfsdcltrack \
-	--enable-shared \
 	--enable-static \
 	--with-rpcgen=internal \
+	$(if $(CONFIG_NFS_KERNEL_SERVER_V4),--enable-nfsdcld,--disable-nfsdcld) \
+	$(if $(CONFIG_NFS_KERNEL_SERVER_V4),--enable-nfsv4server,--disable-nfsv4server) \
 	$(if $(CONFIG_NFS_KERNEL_SERVER_V4),--enable,--disable)-nfsv4 \
 	$(if $(CONFIG_NFS_KERNEL_SERVER_V4),--enable,--disable)-nfsv41 \
 	$(if $(CONFIG_NFS_KERNEL_SERVER_V4),--enable,--disable)-nfsv42
@@ -124,9 +123,7 @@ endif
 CONFIGURE_VARS += \
 	libblkid_cv_is_recent=yes \
 	ac_cv_lib_resolv___res_querydomain=yes \
-	ac_cv_lib_bsd_daemon=no \
-	CONFIG_SQLITE3_TRUE="\#" \
-	CONFIG_NFSDCLD_TRUE="\#"
+	ac_cv_lib_bsd_daemon=no
 
 MAKE_FLAGS += \
 	OPT="$(TARGET_CFLAGS)" \
@@ -140,8 +137,6 @@ HOST_CFLAGS += -Dlinux \
 
 HOST_CONFIGURE_ARGS += \
 	--disable-gss \
-	--disable-nfsv4 \
-	--disable-nfsv41 \
 	--disable-nfsrahead \
 	--disable-nfsdctl \
 	--without-tcp-wrappers \
@@ -166,8 +161,6 @@ HOST_CONFIGURE_VARS += \
 	GSSGLUE_LIBS=" " \
 	RPCSECGSS_CFLAGS=" " \
 	RPCSECGSS_LIBS=" " \
-	CONFIG_SQLITE3_TRUE="\#" \
-	CONFIG_NFSDCLD_TRUE="\#" \
 	ac_cv_lib_event_core_event_base_dispatch=yes \
 	ac_cv_header_event2_event_h=yes \
 	c_cv_lib_sqlite3_sqlite3_libversion_number=yes \
@@ -191,6 +184,11 @@ define Package/nfs-kernel-server/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/nfsd/nfsd $(1)/usr/sbin/rpc.nfsd
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/mountd/mountd $(1)/usr/sbin/rpc.mountd
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/exportfs/exportfs $(1)/usr/sbin/
+	$(if $(CONFIG_NFS_KERNEL_SERVER_V4),\
+		$(INSTALL_BIN) ./files/nfsv4d.init $(1)/etc/init.d/nfsv4d
+		$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/nfsdcld/nfsdcld $(1)/usr/sbin/
+		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/rpc.idmapd $(1)/usr/sbin/
+		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/nfsv4.exportd $(1)/usr/sbin/,)
 endef
 
 define Package/nfs-kernel-server-utils/install
@@ -217,6 +215,43 @@ endef
 define Package/nfs-utils-libs/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(if $(CONFIG_NFS_KERNEL_SERVER_V4),$(CP) $(PKG_INSTALL_DIR)/usr/lib/libnfsidmap.so* $(1)/usr/lib/,)
+	$(if $(CONFIG_NFS_KERNEL_SERVER_V4),$(CP) $(PKG_INSTALL_DIR)/usr/lib/libnfsidmap/*.so $(1)/usr/lib/,)
+endef
+
+define Package/nfs-kernel-server/postinst
+#!/bin/sh
+[ -n "$${IPKG_INSTROOT}" ] || {
+	# package ships two init.d script but we
+	# only want one enabled by default
+	if [ -f /etc/rc.d/S*nfsd ]; then
+		/etc/init.d/nfsd enable
+		/etc/init.d/nfsv4d disable
+	fi
+	if [ -f /etc/rc.d/S*nfsv4d ]; then
+		/etc/init.d/nfsd disable
+		/etc/init.d/nfsv4d enable
+	fi
+}
+
+# create uci-defaults script for sysupgrade scenarios
+[ -n "$${IPKG_INSTROOT}" ] && {
+        mkdir -p "$${IPKG_INSTROOT}/etc/uci-defaults"
+        cat > "$${IPKG_INSTROOT}/etc/uci-defaults/99-nfs-kernel-server" << 'EOF'
+#!/bin/sh
+# Only one NFS service should be enabled
+if [ -f /etc/rc.d/S*nfsd ]; then
+    /etc/init.d/nfsd enable
+    /etc/init.d/nfsv4d disable
+elif [ -f /etc/rc.d/S*nfsv4d ]; then
+    /etc/init.d/nfsd disable
+    /etc/init.d/nfsv4d enable
+elif [ -f /etc/init.d/nfsd ]; then
+    /etc/init.d/nfsd enable
+    /etc/init.d/nfsv4d disable
+fi
+EOF
+        chmod +x "$${IPKG_INSTROOT}/etc/uci-defaults/99-nfs-kernel-server"
+}
 endef
 
 $(eval $(call HostBuild))
