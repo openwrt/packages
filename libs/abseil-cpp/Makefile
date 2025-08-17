@@ -5,16 +5,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=abseil-cpp
-PKG_VERSION:=20240722.0
-PKG_RELEASE:=2
+PKG_VERSION:=20240722.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/abseil/abseil-cpp/releases/download/$(PKG_VERSION)
-PKG_HASH:=f50e5ac311a81382da7fa75b97310e4b9006474f9560ac46f54a9967f07d4ae3
+PKG_HASH:=40cee67604060a7c8794d931538cb55f4d444073e556980c88b6c49bb9b19bb7
 
 PKG_MAINTAINER:=Austin Lane <vidplace7@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:abseil:common_libraries
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
