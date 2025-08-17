@@ -9,7 +9,7 @@ Subject: [PATCH] [meson] mod_webdav_min w/o deps: xml2 sqlite3 uuid
 
 --- a/src/meson.build
 +++ b/src/meson.build
-@@ -887,6 +887,16 @@ if (host_machine.system() == 'darwin')
+@@ -908,6 +908,16 @@ if (host_machine.system() == 'darwin')
  	plugin_suffix = 'so'  # use "so" instead of "dylib"
  endif
  
