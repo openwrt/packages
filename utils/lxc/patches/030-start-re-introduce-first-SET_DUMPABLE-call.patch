@@ -15,8 +15,8 @@ Signed-off-by: Stéphane Graber <stgraber@stgraber.org>
 
 --- a/src/lxc/start.c
 +++ b/src/lxc/start.c
-@@ -1125,6 +1125,11 @@ static int do_start(void *data)
- 		if (!lxc_switch_uid_gid(nsuid, nsgid))
+@@ -1130,6 +1130,11 @@ static int do_start(void *data)
+ 		if (ret < 0)
  			goto out_warn_father;
  
 +		ret = prctl(PR_SET_DUMPABLE, prctl_arg(1), prctl_arg(0),
