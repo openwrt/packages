@@ -101,7 +101,6 @@ nft_set_policy=
 nft_set_timeout=
 
 # run-time
-load_environment_flag=
 aghConfigFile='/etc/AdGuardHome/AdGuardHome.yaml'
 gatewaySummary=
 wanIface4=
@@ -569,7 +568,6 @@ load_environment() {
 		return "$_ret"
 	}
 	local param="$1" validation_result="$2"
-	[ -z "$load_environment_flag" ] || return 0
 	case "$param" in
 		on_boot|on_start)
 			json init
@@ -607,7 +605,6 @@ load_environment() {
 			load_network "$param"
 		;;
 	esac
-	load_environment_flag=1
 }
 
 # shellcheck disable=SC2317
@@ -648,7 +645,7 @@ load_network() {
 }
 
 is_wan_up() {
-	local sleepCount='1' param="$1"
+	local param="$1"
 	if [ -z "$(uci_get network "$procd_wan_interface")" ]; then
 		json add error 'errorNoWanInterface' "$procd_wan_interface"
 		json add error 'errorNoWanInterfaceHint'
@@ -864,8 +861,10 @@ cleanup_sets() {
 json() {
 	local status message stats i
 	local action="$1" param="$2" value="$3"; shift 3; local info="$*";
+	local _current_namespace="$_JSON_PREFIX"
 	[ "$param" = 'error' ] && param='errors'
 	[ "$param" = 'warning' ] && param='warnings'
+	json_set_namespace "${packageName}_"
 	{ json_load_file "$runningStatusFile" || json_init; } >/dev/null 2>&1
 	case "$action" in
 		'get')
@@ -882,6 +881,7 @@ json() {
 			fi
 			printf "%b" "$i"
 			json_select ..
+			json_set_namespace "$_current_namespace"
 			return
 		;;
 		'add')
@@ -903,6 +903,7 @@ json() {
 	mkdir -p "${runningStatusFile%/*}"
 	json_dump > "$runningStatusFile"
 	sync
+	json_set_namespace "$_current_namespace"
 }
 
 resolver() {
