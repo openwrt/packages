@@ -1,6 +1,6 @@
 --- a/kernel/pf_ring.c
 +++ b/kernel/pf_ring.c
-@@ -4713,8 +4713,8 @@ void reserve_memory(unsigned long base,
+@@ -4772,8 +4772,8 @@ void reserve_memory(unsigned long base,
  {
    struct page *page, *page_end;
  
@@ -11,7 +11,7 @@
      SetPageReserved(page);
  }
  
-@@ -4722,8 +4722,8 @@ void unreserve_memory(unsigned long base
+@@ -4781,8 +4781,8 @@ void unreserve_memory(unsigned long base
  {
    struct page *page, *page_end;
  

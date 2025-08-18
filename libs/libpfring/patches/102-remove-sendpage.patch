@@ -10,7 +10,7 @@ Change to remove .sendpage assignment, as that attribute seems to have gone away
 
 --- a/kernel/pf_ring.c
 +++ b/kernel/pf_ring.c
-@@ -8470,7 +8470,9 @@ static struct proto_ops ring_ops = {
+@@ -8529,7 +8529,9 @@ static struct proto_ops ring_ops = {
    .getname = sock_no_getname,
    .listen = sock_no_listen,
    .shutdown = sock_no_shutdown,

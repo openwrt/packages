@@ -42,7 +42,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
  /* ************************************************* */
  
  #if(LINUX_VERSION_CODE >= KERNEL_VERSION(5,6,0))
-@@ -1032,7 +1044,7 @@ pf_ring_device *pf_ring_device_name_look
+@@ -1091,7 +1103,7 @@ pf_ring_device *pf_ring_device_name_look
            so the total interface name length is 13 chars (plus \0 trailer).
            The check below is to trap this case.
           */
@@ -51,7 +51,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
         && device_net_eq(dev_ptr, net))
        return dev_ptr;
    }
-@@ -5605,15 +5617,15 @@ static int ring_bind(struct socket *sock
+@@ -5664,15 +5676,15 @@ static int ring_bind(struct socket *sock
  #ifndef RING_USE_SOCKADDR_LL
    } else if (addr_len == sizeof(struct sockaddr)) { /* Deprecated */
  
