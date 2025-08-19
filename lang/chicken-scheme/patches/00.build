@@ -1,0 +1,14 @@
+--- a/defaults.make
++++ b/defaults.make
+@@ -506,6 +506,11 @@
+ endif
+ 	$(call echo, >>, $@,#endif)
+ 	$(call echo, >>, $@,/* END OF FILE */)
++	# For OpenWRT:
++	sed -e's/\-fmacro-prefix-map[^ ]*//' $@ > $@.tmp.1
++	sed -e's/\-ldl//' $@.tmp.1 > $@.tmp.2
++	cp $@.tmp.2 $@
++	rm $@.tmp.1 $@.tmp.2
+ 
+ chicken-install.rc:
+ 	$(call echo, >, $@,/* GENERATED */)
