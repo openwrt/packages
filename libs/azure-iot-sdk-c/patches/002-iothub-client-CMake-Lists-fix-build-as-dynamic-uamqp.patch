@@ -1,0 +1,19 @@
+--- a/iothub_client/CMakeLists.txt
++++ b/iothub_client/CMakeLists.txt
+@@ -331,8 +331,6 @@ if(${use_amqp})
+         set(iothub_transport_source ${iothub_transport_source}
+             ${iothub_client_amqp_ws_transport_c_files}
+             ${iothub_client_amqp_ws_transport_h_files})
+-
+-        set(iothub_client_libs ${iothub_client_libs} uamqp)
+     endif(build_as_dynamic)
+ endif()
+ 
+@@ -432,6 +430,7 @@ if (${build_as_dynamic})
+         target_link_libraries(iothub_client_dll hsm_security_client prov_auth_client)
+     endif()
+     target_link_libraries(iothub_client_dll parson)
++    target_link_libraries(iothub_client_dll uamqp)
+ 
+     if (${CMAKE_C_COMPILER_ID} STREQUAL "GNU" OR ${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
+         target_link_libraries(iothub_client_dll
