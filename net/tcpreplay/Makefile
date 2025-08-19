@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tcpreplay
 PKG_VERSION:=4.5.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/appneta/tcpreplay/releases/download/v$(PKG_VERSION)
@@ -143,6 +143,8 @@ CONFIGURE_ARGS += \
 	--enable-dynamic-link \
 	--with-libdnet="$(STAGING_DIR)/usr" \
 	--with-libpcap="$(STAGING_DIR)/usr"
+
+TARGET_CFLAGS += -std=gnu11
 
 define tcpreplayTemplate
   define Package/$(1)/install

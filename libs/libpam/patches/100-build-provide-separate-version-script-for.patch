@@ -1,0 +1,770 @@
+From f071e05bfbb940f2979e0e2eee04e22f4c4b1794 Mon Sep 17 00:00:00 2001
+From: "Dmitry V. Levin" <ldv@strace.io>
+Date: Thu, 14 Aug 2025 08:00:00 +0000
+Subject: [PATCH] build: provide a separate version script for each module
+
+GNU ld with --no-undefined-version option issues a warning for each
+undefined symbol mentioned in the version script, and --fatal-warnings
+option turns such warnings into errors.  Other linkers, e.g. lld and
+mold, have --no-undefined-version option enabled by default.
+
+Given that different modules export different set of pam_sm_* symbols,
+the only way of resolving this issue without turning
+--no-undefined-version and --fatal-warnings options off is to provide
+a separate version script for each module.
+
+To avoid potential regressions in the future, this change also adds
+--no-undefined-version option to the linker.
+
+Resolves: https://github.com/linux-pam/linux-pam/issues/922
+---
+ meson.build                                              | 1 +
+ modules/maps/modules-account-session.map                 | 7 +++++++
+ modules/maps/modules-account.map                         | 5 +++++
+ .../modules-auth-account-password-session.map}           | 0
+ modules/maps/modules-auth-account-password.map           | 8 ++++++++
+ modules/maps/modules-auth-account-session.map            | 9 +++++++++
+ modules/maps/modules-auth-account.map                    | 7 +++++++
+ modules/maps/modules-auth-session.map                    | 8 ++++++++
+ modules/maps/modules-auth.map                            | 6 ++++++
+ modules/maps/modules-password.map                        | 5 +++++
+ modules/maps/modules-session.map                         | 6 ++++++
+ modules/meson.build                                      | 6 ------
+ modules/module-meson.build                               | 6 ++++++
+ modules/pam_access/modules.map                           | 1 +
+ modules/pam_canonicalize_user/modules.map                | 1 +
+ modules/pam_debug/modules.map                            | 1 +
+ modules/pam_deny/modules.map                             | 1 +
+ modules/pam_echo/modules.map                             | 1 +
+ modules/pam_env/modules.map                              | 1 +
+ modules/pam_exec/modules.map                             | 1 +
+ modules/pam_faildelay/modules.map                        | 1 +
+ modules/pam_faillock/modules.map                         | 1 +
+ modules/pam_filter/modules.map                           | 1 +
+ modules/pam_ftp/modules.map                              | 1 +
+ modules/pam_group/modules.map                            | 1 +
+ modules/pam_issue/modules.map                            | 1 +
+ modules/pam_keyinit/modules.map                          | 1 +
+ modules/pam_lastlog/modules.map                          | 1 +
+ modules/pam_limits/modules.map                           | 1 +
+ modules/pam_listfile/modules.map                         | 1 +
+ modules/pam_localuser/modules.map                        | 1 +
+ modules/pam_loginuid/modules.map                         | 1 +
+ modules/pam_mail/modules.map                             | 1 +
+ modules/pam_mkhomedir/modules.map                        | 1 +
+ modules/pam_motd/modules.map                             | 1 +
+ modules/pam_namespace/modules.map                        | 1 +
+ modules/pam_nologin/modules.map                          | 1 +
+ modules/pam_permit/modules.map                           | 1 +
+ modules/pam_pwhistory/modules.map                        | 1 +
+ modules/pam_rhosts/modules.map                           | 1 +
+ modules/pam_rootok/modules.map                           | 1 +
+ modules/pam_securetty/modules.map                        | 1 +
+ modules/pam_selinux/modules.map                          | 1 +
+ modules/pam_sepermit/modules.map                         | 1 +
+ modules/pam_setquota/modules.map                         | 1 +
+ modules/pam_shells/modules.map                           | 1 +
+ modules/pam_stress/modules.map                           | 1 +
+ modules/pam_succeed_if/modules.map                       | 1 +
+ modules/pam_time/modules.map                             | 1 +
+ modules/pam_timestamp/modules.map                        | 1 +
+ modules/pam_tty_audit/modules.map                        | 1 +
+ modules/pam_umask/modules.map                            | 1 +
+ modules/pam_unix/modules.map                             | 1 +
+ modules/pam_userdb/modules.map                           | 1 +
+ modules/pam_usertype/modules.map                         | 1 +
+ modules/pam_warn/modules.map                             | 1 +
+ modules/pam_wheel/modules.map                            | 1 +
+ modules/pam_xauth/modules.map                            | 1 +
+ 58 files changed, 113 insertions(+), 6 deletions(-)
+ create mode 100644 modules/maps/modules-account-session.map
+ create mode 100644 modules/maps/modules-account.map
+ rename modules/{modules.map => maps/modules-auth-account-password-session.map} (100%)
+ create mode 100644 modules/maps/modules-auth-account-password.map
+ create mode 100644 modules/maps/modules-auth-account-session.map
+ create mode 100644 modules/maps/modules-auth-account.map
+ create mode 100644 modules/maps/modules-auth-session.map
+ create mode 100644 modules/maps/modules-auth.map
+ create mode 100644 modules/maps/modules-password.map
+ create mode 100644 modules/maps/modules-session.map
+ create mode 120000 modules/pam_access/modules.map
+ create mode 120000 modules/pam_canonicalize_user/modules.map
+ create mode 120000 modules/pam_debug/modules.map
+ create mode 120000 modules/pam_deny/modules.map
+ create mode 120000 modules/pam_echo/modules.map
+ create mode 120000 modules/pam_env/modules.map
+ create mode 120000 modules/pam_exec/modules.map
+ create mode 120000 modules/pam_faildelay/modules.map
+ create mode 120000 modules/pam_faillock/modules.map
+ create mode 120000 modules/pam_filter/modules.map
+ create mode 120000 modules/pam_ftp/modules.map
+ create mode 120000 modules/pam_group/modules.map
+ create mode 120000 modules/pam_issue/modules.map
+ create mode 120000 modules/pam_keyinit/modules.map
+ create mode 120000 modules/pam_lastlog/modules.map
+ create mode 120000 modules/pam_limits/modules.map
+ create mode 120000 modules/pam_listfile/modules.map
+ create mode 120000 modules/pam_localuser/modules.map
+ create mode 120000 modules/pam_loginuid/modules.map
+ create mode 120000 modules/pam_mail/modules.map
+ create mode 120000 modules/pam_mkhomedir/modules.map
+ create mode 120000 modules/pam_motd/modules.map
+ create mode 120000 modules/pam_namespace/modules.map
+ create mode 120000 modules/pam_nologin/modules.map
+ create mode 120000 modules/pam_permit/modules.map
+ create mode 120000 modules/pam_pwhistory/modules.map
+ create mode 120000 modules/pam_rhosts/modules.map
+ create mode 120000 modules/pam_rootok/modules.map
+ create mode 120000 modules/pam_securetty/modules.map
+ create mode 120000 modules/pam_selinux/modules.map
+ create mode 120000 modules/pam_sepermit/modules.map
+ create mode 120000 modules/pam_setquota/modules.map
+ create mode 120000 modules/pam_shells/modules.map
+ create mode 120000 modules/pam_stress/modules.map
+ create mode 120000 modules/pam_succeed_if/modules.map
+ create mode 120000 modules/pam_time/modules.map
+ create mode 120000 modules/pam_timestamp/modules.map
+ create mode 120000 modules/pam_tty_audit/modules.map
+ create mode 120000 modules/pam_umask/modules.map
+ create mode 120000 modules/pam_unix/modules.map
+ create mode 120000 modules/pam_userdb/modules.map
+ create mode 120000 modules/pam_usertype/modules.map
+ create mode 120000 modules/pam_warn/modules.map
+ create mode 120000 modules/pam_wheel/modules.map
+ create mode 120000 modules/pam_xauth/modules.map
+
+--- a/meson.build
++++ b/meson.build
+@@ -150,6 +150,7 @@ add_project_link_arguments(
+   # --as-needed and --no-undefined are enabled by default
+   cc.get_supported_link_arguments([
+     '-Wl,--fatal-warnings',
++    '-Wl,--no-undefined-version',
+     '-Wl,-O1',
+   ]),
+   language: 'c')
+--- /dev/null
++++ b/modules/maps/modules-account-session.map
+@@ -0,0 +1,7 @@
++{
++  global:
++    pam_sm_acct_mgmt;
++    pam_sm_close_session;
++    pam_sm_open_session;
++  local: *;
++};
+--- /dev/null
++++ b/modules/maps/modules-account.map
+@@ -0,0 +1,5 @@
++{
++  global:
++    pam_sm_acct_mgmt;
++  local: *;
++};
+--- /dev/null
++++ b/modules/maps/modules-auth-account-password.map
+@@ -0,0 +1,8 @@
++{
++  global:
++    pam_sm_acct_mgmt;
++    pam_sm_authenticate;
++    pam_sm_chauthtok;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/maps/modules-auth-account-session.map
+@@ -0,0 +1,9 @@
++{
++  global:
++    pam_sm_acct_mgmt;
++    pam_sm_authenticate;
++    pam_sm_close_session;
++    pam_sm_open_session;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/maps/modules-auth-account.map
+@@ -0,0 +1,7 @@
++{
++  global:
++    pam_sm_acct_mgmt;
++    pam_sm_authenticate;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/maps/modules-auth-session.map
+@@ -0,0 +1,8 @@
++{
++  global:
++    pam_sm_authenticate;
++    pam_sm_close_session;
++    pam_sm_open_session;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/maps/modules-auth.map
+@@ -0,0 +1,6 @@
++{
++  global:
++    pam_sm_authenticate;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/maps/modules-password.map
+@@ -0,0 +1,5 @@
++{
++  global:
++    pam_sm_chauthtok;
++  local: *;
++};
+--- /dev/null
++++ b/modules/maps/modules-session.map
+@@ -0,0 +1,6 @@
++{
++  global:
++    pam_sm_close_session;
++    pam_sm_open_session;
++  local: *;
++};
+--- a/modules/meson.build
++++ b/modules/meson.build
+@@ -1,9 +1,3 @@
+-pam_module_map = 'modules.map'
+-pam_module_map_path = meson.current_source_dir() / pam_module_map
+-
+-pam_module_link_deps = ['..' / pam_module_map]
+-pam_module_link_args = ['-Wl,--version-script=' + pam_module_map_path]
+-
+ subdir('pam_access')
+ subdir('pam_canonicalize_user')
+ subdir('pam_debug')
+--- a/modules/module-meson.build
++++ b/modules/module-meson.build
+@@ -128,6 +128,12 @@ if module == 'pam_xauth'
+   pam_module_deps += [libselinux]
+ endif
+ 
++pam_module_map = 'modules.map'
++pam_module_map_path = meson.current_source_dir() / pam_module_map
++
++pam_module_link_deps = [pam_module_map]
++pam_module_link_args = ['-Wl,--version-script=' + pam_module_map_path]
++
+ pam_module = shared_module(
+   module,
+   name_prefix: '',
+--- /dev/null
++++ b/modules/pam_access/modules.map
+@@ -0,0 +1,10 @@
++{
++  global:
++    pam_sm_acct_mgmt;
++    pam_sm_authenticate;
++    pam_sm_chauthtok;
++    pam_sm_close_session;
++    pam_sm_open_session;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_canonicalize_user/modules.map
+@@ -0,0 +1,6 @@
++{
++  global:
++    pam_sm_authenticate;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_debug/modules.map
+@@ -0,0 +1,10 @@
++{
++  global:
++    pam_sm_acct_mgmt;
++    pam_sm_authenticate;
++    pam_sm_chauthtok;
++    pam_sm_close_session;
++    pam_sm_open_session;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_deny/modules.map
+@@ -0,0 +1,10 @@
++{
++  global:
++    pam_sm_acct_mgmt;
++    pam_sm_authenticate;
++    pam_sm_chauthtok;
++    pam_sm_close_session;
++    pam_sm_open_session;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_echo/modules.map
+@@ -0,0 +1,10 @@
++{
++  global:
++    pam_sm_acct_mgmt;
++    pam_sm_authenticate;
++    pam_sm_chauthtok;
++    pam_sm_close_session;
++    pam_sm_open_session;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_env/modules.map
+@@ -0,0 +1,10 @@
++{
++  global:
++    pam_sm_acct_mgmt;
++    pam_sm_authenticate;
++    pam_sm_chauthtok;
++    pam_sm_close_session;
++    pam_sm_open_session;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_exec/modules.map
+@@ -0,0 +1,10 @@
++{
++  global:
++    pam_sm_acct_mgmt;
++    pam_sm_authenticate;
++    pam_sm_chauthtok;
++    pam_sm_close_session;
++    pam_sm_open_session;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_faildelay/modules.map
+@@ -0,0 +1,6 @@
++{
++  global:
++    pam_sm_authenticate;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_faillock/modules.map
+@@ -0,0 +1,7 @@
++{
++  global:
++    pam_sm_acct_mgmt;
++    pam_sm_authenticate;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_filter/modules.map
+@@ -0,0 +1,10 @@
++{
++  global:
++    pam_sm_acct_mgmt;
++    pam_sm_authenticate;
++    pam_sm_chauthtok;
++    pam_sm_close_session;
++    pam_sm_open_session;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_ftp/modules.map
+@@ -0,0 +1,6 @@
++{
++  global:
++    pam_sm_authenticate;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_group/modules.map
+@@ -0,0 +1,6 @@
++{
++  global:
++    pam_sm_authenticate;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_issue/modules.map
+@@ -0,0 +1,6 @@
++{
++  global:
++    pam_sm_authenticate;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_keyinit/modules.map
+@@ -0,0 +1,8 @@
++{
++  global:
++    pam_sm_authenticate;
++    pam_sm_close_session;
++    pam_sm_open_session;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_lastlog/modules.map
+@@ -0,0 +1,9 @@
++{
++  global:
++    pam_sm_acct_mgmt;
++    pam_sm_authenticate;
++    pam_sm_close_session;
++    pam_sm_open_session;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_limits/modules.map
+@@ -0,0 +1,6 @@
++{
++  global:
++    pam_sm_close_session;
++    pam_sm_open_session;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_listfile/modules.map
+@@ -0,0 +1,10 @@
++{
++  global:
++    pam_sm_acct_mgmt;
++    pam_sm_authenticate;
++    pam_sm_chauthtok;
++    pam_sm_close_session;
++    pam_sm_open_session;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_localuser/modules.map
+@@ -0,0 +1,10 @@
++{
++  global:
++    pam_sm_acct_mgmt;
++    pam_sm_authenticate;
++    pam_sm_chauthtok;
++    pam_sm_close_session;
++    pam_sm_open_session;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_loginuid/modules.map
+@@ -0,0 +1,7 @@
++{
++  global:
++    pam_sm_acct_mgmt;
++    pam_sm_close_session;
++    pam_sm_open_session;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_mail/modules.map
+@@ -0,0 +1,8 @@
++{
++  global:
++    pam_sm_authenticate;
++    pam_sm_close_session;
++    pam_sm_open_session;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_mkhomedir/modules.map
+@@ -0,0 +1,6 @@
++{
++  global:
++    pam_sm_close_session;
++    pam_sm_open_session;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_motd/modules.map
+@@ -0,0 +1,6 @@
++{
++  global:
++    pam_sm_close_session;
++    pam_sm_open_session;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_namespace/modules.map
+@@ -0,0 +1,6 @@
++{
++  global:
++    pam_sm_close_session;
++    pam_sm_open_session;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_nologin/modules.map
+@@ -0,0 +1,7 @@
++{
++  global:
++    pam_sm_acct_mgmt;
++    pam_sm_authenticate;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_permit/modules.map
+@@ -0,0 +1,10 @@
++{
++  global:
++    pam_sm_acct_mgmt;
++    pam_sm_authenticate;
++    pam_sm_chauthtok;
++    pam_sm_close_session;
++    pam_sm_open_session;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_pwhistory/modules.map
+@@ -0,0 +1,5 @@
++{
++  global:
++    pam_sm_chauthtok;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_rhosts/modules.map
+@@ -0,0 +1,6 @@
++{
++  global:
++    pam_sm_authenticate;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_rootok/modules.map
+@@ -0,0 +1,8 @@
++{
++  global:
++    pam_sm_acct_mgmt;
++    pam_sm_authenticate;
++    pam_sm_chauthtok;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_securetty/modules.map
+@@ -0,0 +1,7 @@
++{
++  global:
++    pam_sm_acct_mgmt;
++    pam_sm_authenticate;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_selinux/modules.map
+@@ -0,0 +1,8 @@
++{
++  global:
++    pam_sm_authenticate;
++    pam_sm_close_session;
++    pam_sm_open_session;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_sepermit/modules.map
+@@ -0,0 +1,7 @@
++{
++  global:
++    pam_sm_acct_mgmt;
++    pam_sm_authenticate;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_setquota/modules.map
+@@ -0,0 +1,6 @@
++{
++  global:
++    pam_sm_close_session;
++    pam_sm_open_session;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_shells/modules.map
+@@ -0,0 +1,7 @@
++{
++  global:
++    pam_sm_acct_mgmt;
++    pam_sm_authenticate;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_stress/modules.map
+@@ -0,0 +1,10 @@
++{
++  global:
++    pam_sm_acct_mgmt;
++    pam_sm_authenticate;
++    pam_sm_chauthtok;
++    pam_sm_close_session;
++    pam_sm_open_session;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_succeed_if/modules.map
+@@ -0,0 +1,10 @@
++{
++  global:
++    pam_sm_acct_mgmt;
++    pam_sm_authenticate;
++    pam_sm_chauthtok;
++    pam_sm_close_session;
++    pam_sm_open_session;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_time/modules.map
+@@ -0,0 +1,5 @@
++{
++  global:
++    pam_sm_acct_mgmt;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_timestamp/modules.map
+@@ -0,0 +1,8 @@
++{
++  global:
++    pam_sm_authenticate;
++    pam_sm_close_session;
++    pam_sm_open_session;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_tty_audit/modules.map
+@@ -0,0 +1,6 @@
++{
++  global:
++    pam_sm_close_session;
++    pam_sm_open_session;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_umask/modules.map
+@@ -0,0 +1,6 @@
++{
++  global:
++    pam_sm_close_session;
++    pam_sm_open_session;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_unix/modules.map
+@@ -0,0 +1,10 @@
++{
++  global:
++    pam_sm_acct_mgmt;
++    pam_sm_authenticate;
++    pam_sm_chauthtok;
++    pam_sm_close_session;
++    pam_sm_open_session;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_userdb/modules.map
+@@ -0,0 +1,7 @@
++{
++  global:
++    pam_sm_acct_mgmt;
++    pam_sm_authenticate;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_usertype/modules.map
+@@ -0,0 +1,10 @@
++{
++  global:
++    pam_sm_acct_mgmt;
++    pam_sm_authenticate;
++    pam_sm_chauthtok;
++    pam_sm_close_session;
++    pam_sm_open_session;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_warn/modules.map
+@@ -0,0 +1,10 @@
++{
++  global:
++    pam_sm_acct_mgmt;
++    pam_sm_authenticate;
++    pam_sm_chauthtok;
++    pam_sm_close_session;
++    pam_sm_open_session;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_wheel/modules.map
+@@ -0,0 +1,7 @@
++{
++  global:
++    pam_sm_acct_mgmt;
++    pam_sm_authenticate;
++    pam_sm_setcred;
++  local: *;
++};
+--- /dev/null
++++ b/modules/pam_xauth/modules.map
+@@ -0,0 +1,6 @@
++{
++  global:
++    pam_sm_close_session;
++    pam_sm_open_session;
++  local: *;
++};
+--- /dev/null
++++ b/modules/maps/modules-auth-account-password-session.map
+@@ -0,0 +1,10 @@
++{
++  global:
++    pam_sm_acct_mgmt;
++    pam_sm_authenticate;
++    pam_sm_chauthtok;
++    pam_sm_close_session;
++    pam_sm_open_session;
++    pam_sm_setcred;
++  local: *;
++};
+--- a/modules/modules.map
++++ /dev/null
+@@ -1,10 +0,0 @@
+-{
+-  global:
+-    pam_sm_acct_mgmt;
+-    pam_sm_authenticate;
+-    pam_sm_chauthtok;
+-    pam_sm_close_session;
+-    pam_sm_open_session;
+-    pam_sm_setcred;
+-  local: *;
+-};

@@ -29,7 +29,9 @@ start_kea() {
 			cnf="${CONF_PATH}/kea-${name}.conf"
 			;;
 		*)
-			return 0
+			echo "Error: Invalid service name '$name'" >&2
+			return 1
+			;;
 	esac
 
 	procd_open_instance "$name"
