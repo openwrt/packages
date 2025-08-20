@@ -44,7 +44,7 @@ define Host/Compile/Cargo
 		--profile $(CARGO_HOST_PROFILE) \
 		$(if $(RUST_HOST_FEATURES),--features "$(RUST_HOST_FEATURES)") \
 		--root $(HOST_INSTALL_DIR) \
-		--path "$(HOST_BUILD_DIR)/$(if $(strip $(1)),$(strip $(1)))" \
+		--path "$(HOST_BUILD_DIR)/$(if $(strip $(1)),$(strip $(1)),$(strip $(HOST_MAKE_PATH)))" \
 		$(if $(filter --jobserver%,$(HOST_JOBS)),,-j1) \
 		$(CARGO_HOST_ARGS) \
 		$(2)
