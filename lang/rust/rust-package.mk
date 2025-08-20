@@ -45,7 +45,7 @@ define Build/Compile/Cargo
 		--profile $(CARGO_PKG_PROFILE) \
 		$(if $(strip $(RUST_PKG_FEATURES)),--features "$(strip $(RUST_PKG_FEATURES))") \
 		--root $(PKG_INSTALL_DIR) \
-		--path "$(PKG_BUILD_DIR)/$(if $(strip $(1)),$(strip $(1)))" \
+		--path "$(PKG_BUILD_DIR)/$(if $(strip $(1)),$(strip $(1)),$(strip $(MAKE_PATH)))" \
 		$(if $(filter --jobserver%,$(PKG_JOBS)),,-j1) \
 		$(CARGO_PKG_ARGS) \
 		$(2)
