@@ -40,10 +40,6 @@ define Package/dufs/conffiles
 /etc/config/dufs
 endef
 
-define Build/Compile
-	$(call Build/Compile/Cargo,,--locked)
-endef
-
 define Package/dufs/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/bin/dufs $(1)/usr/bin/
