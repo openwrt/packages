@@ -17,7 +17,7 @@ append_dns() {
 }
 
 start_instance() {
-	local cfg="$1" enabled device ifname default_lifetime
+	local cfg="$1" enabled device ifname default_lifetime valid_lifetime preferred_lifetime max_router_adv_interval min_router_adv_interval
 
 	ARGS=""
 
@@ -25,6 +25,10 @@ start_instance() {
 	config_get device $cfg 'device'
 	config_get ifname $cfg 'ifname'
 	config_get default_lifetime $cfg 'default_lifetime'
+	config_get valid_lifetime $cfg 'valid_lifetime'
+	config_get preferred_lifetime $cfg 'preferred_lifetime'
+	config_get max_router_adv_interval $cfg 'max_router_adv_interval'
+	config_get min_router_adv_interval $cfg 'min_router_adv_interval'
 
 	if [ "$enabled" != "1" ]; then
 		exit 0
@@ -51,6 +55,22 @@ start_instance() {
 
 	if [ -n "$default_lifetime" ]; then
 		ARGS="$ARGS --default-lifetime $default_lifetime"
+	fi
+
+	if [ -n "$valid_lifetime" ]; then
+		ARGS="$ARGS --valid-lifetime $valid_lifetime"
+	fi
+
+	if [ -n "$preferred_lifetime" ]; then
+		ARGS="$ARGS --preferred-lifetime $preferred_lifetime"
+	fi
+
+	if [ -n "$max_router_adv_interval" ]; then
+		ARGS="$ARGS --max-router-adv-interval $max_router_adv_interval"
+	fi
+
+	if [ -n "$min_router_adv_interval" ]; then
+		ARGS="$ARGS --min-router-adv-interval $min_router_adv_interval"
 	fi
 
 	ARGS="$ARGS -i $ifname"
