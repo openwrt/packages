@@ -27,6 +27,7 @@ PKG_BUILD_DEPENDS:=protobuf
 
 CMAKE_INSTALL:=1
 CMAKE_SOURCE_SUBDIR:=build-cmake
+CMAKE_BINARY_SUBDIR:=openwrt-build
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
@@ -46,15 +47,14 @@ define Package/libprotobuf-c/description
   internal RPC protocols and file formats.
 endef
 
-CMAKE_HOST_OPTIONS += \
-	-DBUILD_SHARED_LIBS=OFF \
-	-DCMAKE_CXX_STANDARD=11 \
-	-DCMAKE_SKIP_RPATH=OFF \
-	-DCMAKE_INSTALL_RPATH="${STAGING_DIR_HOSTPKG}/lib"
-
 CMAKE_OPTIONS += \
 	-DBUILD_SHARED_LIBS=ON \
 	-DBUILD_PROTOC=OFF
+
+define Host/Install
+	$(call Host/Install/Default)
+	$(LN) $(STAGING_DIR_HOSTPKG)/bin/protoc-gen-c $(STAGING_DIR_HOSTPKG)/bin/protoc-c
+endef
 
 define Package/libprotobuf-c/install
 	$(INSTALL_DIR) $(1)/usr/lib
