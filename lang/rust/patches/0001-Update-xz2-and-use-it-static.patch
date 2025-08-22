@@ -9,7 +9,7 @@ Subject: [PATCH] Update xz2 and use it static
 
 --- a/src/bootstrap/Cargo.toml
 +++ b/src/bootstrap/Cargo.toml
-@@ -60,7 +60,7 @@ tar = "0.4"
+@@ -55,7 +55,7 @@ tar = "0.4"
  termcolor = "1.4"
  toml = "0.5"
  walkdir = "2.4"
@@ -17,4 +17,4 @@ Subject: [PATCH] Update xz2 and use it static
 +xz2 = { version = "0.1", features = ["static"] }
  
  # Dependencies needed by the build-metrics feature
- sysinfo = { version = "0.30", default-features = false, optional = true }
+ sysinfo = { version = "0.35.0", default-features = false, optional = true, features = ["system"] }
