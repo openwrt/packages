@@ -37,7 +37,7 @@ define Package/gping/description
   also plot the execution time of arbitrary commands.
 endef
 
-Build/Compile = $(call Build/Compile/Cargo,gping,--locked)
+MAKE_PATH:=gping
 
 $(eval $(call RustBinPackage,gping))
 $(eval $(call BuildPackage,gping))
