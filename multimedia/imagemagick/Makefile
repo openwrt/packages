@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=imagemagick
-PKG_VERSION:=7.1.1.38
+PKG_VERSION:=7.1.2.1
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Aleksey Vasilenko <aleksey.vasilenko@gmail.com>
 
@@ -15,7 +15,7 @@ _PKGREV:=$(_PKGVER)-$(subst .,,$(suffix $(PKG_VERSION)))
 
 PKG_SOURCE:=ImageMagick-$(_PKGREV).tar.xz
 PKG_SOURCE_URL:=https://imagemagick.org/archive
-PKG_HASH:=48de548d4977fc226c982ca03b9d6ad8001b47d8dc142b49fdca69333bc4ad82
+PKG_HASH:=ead4b5d33efab77ec84335a0be9c34a0fa7e3693456bf05e76d3fa492ad6ebbb
 PKG_BUILD_DIR:=$(BUILD_DIR)/ImageMagick-$(_PKGREV)
 PKG_FIXUP:=autoreconf
 
@@ -32,7 +32,7 @@ define Package/imagemagick/Default
   SECTION:=multimedia
   CATEGORY:=Multimedia
   TITLE:=Image manipulation tools
-  URL:=https://www.imagemagick.org/
+  URL:=https://imagemagick.org/
 endef
 
 define Package/imagemagick
@@ -59,19 +59,20 @@ define Package/imagemagick/conffiles
 /etc/ImageMagick-7/type-apple.xml
 /etc/ImageMagick-7/type-dejavu.xml
 /etc/ImageMagick-7/type-ghostscript.xml
+/etc/ImageMagick-7/type-urw-base35-type1.xml
 /etc/ImageMagick-7/type-urw-base35.xml
 /etc/ImageMagick-7/type-windows.xml
 /etc/ImageMagick-7/type.xml
 endef
 
 CONFIGURE_ARGS += \
-	--disable-static \
+	--disable-cipher \
 	--disable-docs \
+	--disable-hdri \
+	--disable-static \
 	--enable-dependency-tracking \
 	--with-modules \
-	--disable-hdri \
 	--with-quantum-depth=8 \
-	--disable-cipher \
 	--without-bzlib \
 	--without-djvu \
 	--without-fontconfig \
@@ -84,14 +85,14 @@ CONFIGURE_ARGS += \
 	--without-magick-plus-plus \
 	--without-openexr \
 	--without-openjp2 \
+	--without-pango \
 	--without-raqm \
 	--without-raw \
 	--without-webp \
-	--without-x \
-	--without-zstd \
-	--without-pango \
 	--without-wmf \
-	--without-xml
+	--without-x \
+	--without-xml \
+	--without-zstd
 
 ## Avoid linking with libstdcpp
 TARGET_LDFLAGS+= -Wl,--as-needed
