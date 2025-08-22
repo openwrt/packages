@@ -8,7 +8,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/fatedier/frp/tar.gz/v${PKG_VERSION}?
 PKG_HASH:=c755c0aaeec3999cb259a312f3327db205a834abf0beeb6410dcdc818d9719a4
 
-PKG_MAINTAINER:=Richard Yu <yurichard3839@gmail.com>
+PKG_MAINTAINER:=
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
