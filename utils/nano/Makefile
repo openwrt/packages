@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nano
 PKG_VERSION:=8.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/nano
@@ -65,6 +65,7 @@ endef
 define Package/nano-plus/description
   nano-plus - Additional features enabled, larger size than default nano.
   (multibuffer, Unicode/UTF-8, help, justify, nanorc, some key bindings)
+  Nano set as the default EDITOR in the shell profile.
 
   $(call Package/nano/description)
 endef
@@ -73,6 +74,7 @@ define Package/nano-full/description
   nano-full - all features, including syntax highlighting (also uci),
   multibuffer, Unicode/UTF-8, nanorc, some key bindings.
   (libmagic-based file type detection is disabled)
+  Nano set as the default EDITOR in the shell profile.
 
   Example /etc/nanorc is included. nanorc documentation at
   https://www.nano-editor.org/dist/latest/nanorc.5.html
@@ -133,10 +135,12 @@ endef
 
 define Package/nano-plus/install
 	$(call Package/nano/install,$1)
+	$(INSTALL_DIR) $(1)/etc/profile.d
+	$(INSTALL_DATA) ./files/nano-default-editor.sh $(1)/etc/profile.d
 endef
 
 define Package/nano-full/install
-	$(call Package/nano/install,$1)
+	$(call Package/nano-plus/install,$1)
 	$(INSTALL_DIR) $(1)/etc $(1)/usr/share/nano
 	$(INSTALL_DATA) ./files/nanorc $(1)/etc/nanorc
 	$(INSTALL_DATA) ./files/uci.nanorc $(1)/usr/share/nano
