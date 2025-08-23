@@ -31,6 +31,7 @@ start_instance() {
 	config_get min_router_adv_interval $cfg 'min_router_adv_interval'
 
 	if [ "$enabled" != "1" ]; then
+		echo "Disabled in /etc/config/uradvd" >&2
 		exit 0
 	fi
 
