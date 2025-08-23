@@ -12,6 +12,7 @@ validate_section_fshs() {
 		'addr:string' \
 		'port:port' \
 		'tokens:string'
+		'params:string' \
 }
 
 fshs_instance() {
@@ -28,6 +29,7 @@ fshs_instance() {
 	[ -n "$tokens" ] && [ -e "$tokens" ] && {
 		procd_append_param command -a "$tokens"
 	}
+	[ -n "$params" ] && procd_append_param command ${params}
 	procd_append_param command "$addr":"$port"
 
 	procd_set_param limits core="unlimited"
