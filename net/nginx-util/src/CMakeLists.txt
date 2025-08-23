@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.30)
 
 PROJECT(nginx-util CXX)
 SET(CMAKE_CXX_STANDARD 17)
