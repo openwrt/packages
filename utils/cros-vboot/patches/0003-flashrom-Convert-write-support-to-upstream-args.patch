@@ -1,0 +1,88 @@
+From: Brian Norris <computersforpeace@gmail.com>
+Date: Wed, 16 Aug 2023 23:27:48 -0700
+Subject: [PATCH 3/3] flashrom: Convert 'write' support to upstream args
+
+Signed-off-by: Brian Norris <computersforpeace@gmail.com>
+---
+ host/lib/flashrom.c           | 6 ++++--
+ host/lib/include/subprocess.h | 8 ++++++++
+ host/lib/subprocess.c         | 7 +++++++
+ 3 files changed, 19 insertions(+), 2 deletions(-)
+
+--- a/host/lib/flashrom.c
++++ b/host/lib/flashrom.c
+@@ -87,7 +87,7 @@ static vb2_error_t write_temp_file(const
+ 
+ static vb2_error_t run_flashrom(const char *const argv[])
+ {
+-	int status = subprocess_run(argv, &subprocess_null, &subprocess_null,
++	int status = subprocess_run(argv, &subprocess_zero, &subprocess_null,
+ 				    &subprocess_null);
+ 	if (status) {
+ 		fprintf(stderr, "Flashrom invocation failed (exit status %d):",
+@@ -156,8 +156,10 @@ vb2_error_t flashrom_write(struct firmwa
+ 		"-p",
+ 		image->programmer,
+ 		"--noverify-all",
++		"--fmap",
+ 		"-w",
+-		region ? "-i" : tmpfile,
++		region ? "-" : tmpfile,
++		region ? "-i" : NULL,
+ 		region ? region_param : NULL,
+ 		NULL,
+ 	};
+--- a/host/lib/include/subprocess.h
++++ b/host/lib/include/subprocess.h
+@@ -19,6 +19,8 @@
+  *
+  * - TARGET_NULL: /dev/null, no need to describe any other fields.
+  *
++ * - TARGET_ZERO: /dev/zero, no need to describe any other fields.
++ *
+  * - TARGET_FD: file descriptor, put the fd in the fd field.
+  *
+  * - TARGET_FILE: FILE *, put the FILE pointer in the file field.
+@@ -52,6 +54,7 @@
+ struct subprocess_target {
+ 	enum {
+ 		TARGET_NULL,
++		TARGET_ZERO,
+ 		TARGET_FD,
+ 		TARGET_FILE,
+ 		TARGET_BUFFER,
+@@ -88,6 +91,11 @@ struct subprocess_target {
+ extern struct subprocess_target subprocess_null;
+ 
+ /**
++ * A convenience subprocess target which uses TARGET_ZERO.
++ */
++extern struct subprocess_target subprocess_zero;
++
++/**
+  * A convenience subprocess target which uses TARGET_FD to STDIN_FILENO.
+  */
+ extern struct subprocess_target subprocess_stdin;
+--- a/host/lib/subprocess.c
++++ b/host/lib/subprocess.c
+@@ -49,6 +49,9 @@ static int connect_process_target(struct
+ 	case TARGET_NULL:
+ 		target_fd = open("/dev/null", flags_for_fd(fd));
+ 		break;
++	case TARGET_ZERO:
++		target_fd = open("/dev/zero", flags_for_fd(fd));
++		break;
+ 	case TARGET_FD:
+ 		target_fd = target->fd;
+ 		break;
+@@ -275,6 +278,10 @@ struct subprocess_target subprocess_null
+ 	.type = TARGET_NULL,
+ };
+ 
++struct subprocess_target subprocess_zero = {
++	.type = TARGET_ZERO,
++};
++
+ struct subprocess_target subprocess_stdin = {
+ 	.type = TARGET_FD,
+ 	.fd = STDIN_FILENO,
