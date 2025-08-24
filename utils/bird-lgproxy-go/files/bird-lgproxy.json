@@ -1,0 +1,4 @@
+{
+	"bird_socket": "/var/run/bird.ctl",
+	"listen": 8179
+}
