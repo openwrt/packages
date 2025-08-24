@@ -1,26 +1,24 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2006 OpenWrt.org
+# NFSV3 init script for OpenWrt
+# Copyright (C) 2025 OpenWrt.org
 
 START=99
 STOP=60
-
 USE_PROCD=1
 
+CONFIG_FILE="/etc/config/nfsd"
 NFS_D=/var/lib/nfs
 RECOVERY_D=$NFS_D/v4recovery
 LOCK_D=/var/lib/nfs/sm
 VAR_NFS=/var/lib/nfs
 
 start_service() {
+	logger -t "nfsd" -p notice "Starting the NFSV3 daemon"
 	grep -q /proc/fs/nfsd /proc/mounts || \
 		mount -t nfsd nfsd /proc/fs/nfsd
-	mkdir -p $NFS_D
-	mkdir -p $RECOVERY_D
-	mkdir -p $LOCK_D
-	touch $NFS_D/rmtab
-
-	mkdir -p $VAR_NFS
-	chown nfs:nfs $VAR_NFS
+	mkdir -p "$NFS_D" "$RECOVERY_D" "$LOCK_D" "$VAR_NFS"
+	chown nfs:nfs "$VAR_NFS"
+	touch "$NFS_D/rmtab"
 
 	sysctl -w fs.nfs.nlm_tcpport=32777 fs.nfs.nlm_udpport=32777 > /dev/null
 
@@ -37,13 +35,12 @@ start_service() {
 }
 
 stop_service() {
-	rpc.nfsd 0 2> /dev/null
+	rpc.nfsd 0 2>/dev/null
 	/usr/sbin/exportfs -au
-	grep -q /proc/fs/nfsd /proc/mounts && \
-		umount /proc/fs/nfsd
+	grep -q /proc/fs/nfsd /proc/mounts && umount /proc/fs/nfsd
 }
 
 service_triggers() {
-	local export_dirs="$(while read mp _r ; do echo -n "$mp " ; done < /etc/exports)"
-	procd_add_reload_mount_trigger $export_dirs
+	export_dirs="$(while read -r mp _r; do echo "$mp "; done < /etc/exports)"
+	procd_add_reload_mount_trigger "$export_dirs"
 }
