@@ -1,0 +1,96 @@
+From 4016715187db5bd84c7d15ea6abcd99fd4a0a667 Mon Sep 17 00:00:00 2001
+From: sigoden <sigoden@gmail.com>
+Date: Tue, 19 Aug 2025 08:58:59 +0800
+Subject: [PATCH] fix: login btn does not work for readonly annoymous (#620)
+
+---
+ assets/index.js |  7 ++++---
+ src/server.rs   | 13 ++++++++++++-
+ tests/auth.rs   | 16 ++++++++++++++--
+ 3 files changed, 30 insertions(+), 6 deletions(-)
+
+--- a/assets/index.js
++++ b/assets/index.js
+@@ -534,7 +534,7 @@ async function setupAuth() {
+     $loginBtn.classList.remove("hidden");
+     $loginBtn.addEventListener("click", async () => {
+       try {
+-        await checkAuth();
++        await checkAuth("login");
+       } catch { }
+       location.reload();
+     });
+@@ -782,9 +782,10 @@ async function saveChange() {
+   }
+ }
+ 
+-async function checkAuth() {
++async function checkAuth(variant) {
+   if (!DATA.auth) return;
+-  const res = await fetch(baseUrl(), {
++  const qs = variant ? `?${variant}` : "";
++  const res = await fetch(baseUrl() + qs, {
+     method: "CHECKAUTH",
+   });
+   await assertResOK(res);
+--- a/src/server.rs
++++ b/src/server.rs
+@@ -211,7 +211,18 @@ impl Server {
+         }
+ 
+         if method.as_str() == "CHECKAUTH" {
+-            *res.body_mut() = body_full(user.clone().unwrap_or_default());
++            match user.clone() {
++                Some(user) => {
++                    *res.body_mut() = body_full(user);
++                }
++                None => {
++                    if has_query_flag(&query_params, "login") || !access_paths.perm().readwrite() {
++                        self.auth_reject(&mut res)?
++                    } else {
++                        *res.body_mut() = body_full("");
++                    }
++                }
++            }
+             return Ok(res);
+         } else if method.as_str() == "LOGOUT" {
+             self.auth_reject(&mut res)?;
+--- a/tests/auth.rs
++++ b/tests/auth.rs
+@@ -147,7 +147,7 @@ fn auth_no_skip_if_anonymous(
+ fn auth_check(
+     #[with(&["--auth", "user:pass@/:rw", "--auth", "user2:pass2@/", "-A"])] server: TestServer,
+ ) -> Result<(), Error> {
+-    let url = format!("{}index.html", server.url());
++    let url = format!("{}", server.url());
+     let resp = fetch!(b"CHECKAUTH", &url).send()?;
+     assert_eq!(resp.status(), 401);
+     let resp = send_with_digest_auth(fetch!(b"CHECKAUTH", &url), "user", "pass")?;
+@@ -161,7 +161,7 @@ fn auth_check(
+ fn auth_check2(
+     #[with(&["--auth", "user:pass@/:rw|user2:pass2@/", "-A"])] server: TestServer,
+ ) -> Result<(), Error> {
+-    let url = format!("{}index.html", server.url());
++    let url = format!("{}", server.url());
+     let resp = fetch!(b"CHECKAUTH", &url).send()?;
+     assert_eq!(resp.status(), 401);
+     let resp = send_with_digest_auth(fetch!(b"CHECKAUTH", &url), "user", "pass")?;
+@@ -171,6 +171,18 @@ fn auth_check2(
+     Ok(())
+ }
+ 
++#[rstest]
++fn auth_check3(
++    #[with(&["--auth", "user:pass@/:rw", "--auth", "@/dir1:rw", "-A"])] server: TestServer,
++) -> Result<(), Error> {
++    let url = format!("{}dir1/", server.url());
++    let resp = fetch!(b"CHECKAUTH", &url).send()?;
++    assert_eq!(resp.status(), 200);
++    let resp = fetch!(b"CHECKAUTH", format!("{url}?login")).send()?;
++    assert_eq!(resp.status(), 401);
++    Ok(())
++}
++
+ #[rstest]
+ fn auth_logout(
+     #[with(&["--auth", "user:pass@/:rw", "-A"])] server: TestServer,
