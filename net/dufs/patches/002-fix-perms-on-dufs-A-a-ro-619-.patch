@@ -1,0 +1,110 @@
+From f8a7873582567a85095ca9d2124b185cd3eb2ffd Mon Sep 17 00:00:00 2001
+From: sigoden <sigoden@gmail.com>
+Date: Tue, 19 Aug 2025 07:51:52 +0800
+Subject: [PATCH] fix: perms on `dufs -A -a @/:ro` (#619)
+
+---
+ src/auth.rs   |  9 ++++++---
+ src/server.rs |  4 ++--
+ tests/auth.rs | 18 ++++++++++++++++++
+ 3 files changed, 26 insertions(+), 5 deletions(-)
+
+--- a/src/auth.rs
++++ b/src/auth.rs
+@@ -30,6 +30,7 @@ lazy_static! {
+ 
+ #[derive(Debug, Clone, PartialEq)]
+ pub struct AccessControl {
++    empty: bool,
+     use_hashed_password: bool,
+     users: IndexMap<String, (String, AccessPaths)>,
+     anonymous: Option<AccessPaths>,
+@@ -38,6 +39,7 @@ pub struct AccessControl {
+ impl Default for AccessControl {
+     fn default() -> Self {
+         AccessControl {
++            empty: true,
+             use_hashed_password: false,
+             users: IndexMap::new(),
+             anonymous: Some(AccessPaths::new(AccessPerm::ReadWrite)),
+@@ -48,7 +50,7 @@ impl Default for AccessControl {
+ impl AccessControl {
+     pub fn new(raw_rules: &[&str]) -> Result<Self> {
+         if raw_rules.is_empty() {
+-            return Ok(Default::default());
++            return Ok(Self::default());
+         }
+         let new_raw_rules = split_rules(raw_rules);
+         let mut use_hashed_password = false;
+@@ -93,13 +95,14 @@ impl AccessControl {
+         }
+ 
+         Ok(Self {
++            empty: false,
+             use_hashed_password,
+             users,
+             anonymous,
+         })
+     }
+ 
+-    pub fn exist(&self) -> bool {
++    pub fn has_users(&self) -> bool {
+         !self.users.is_empty()
+     }
+ 
+@@ -111,7 +114,7 @@ impl AccessControl {
+         token: Option<&String>,
+         guard_options: bool,
+     ) -> (Option<String>, Option<AccessPaths>) {
+-        if self.users.is_empty() {
++        if self.empty {
+             return (None, Some(AccessPaths::new(AccessPerm::ReadWrite)));
+         }
+ 
+--- a/src/server.rs
++++ b/src/server.rs
+@@ -962,7 +962,7 @@ impl Server {
+             uri_prefix: self.args.uri_prefix.clone(),
+             allow_upload: self.args.allow_upload,
+             allow_delete: self.args.allow_delete,
+-            auth: self.args.auth.exist(),
++            auth: self.args.auth.has_users(),
+             user,
+             editable,
+         };
+@@ -1226,7 +1226,7 @@ impl Server {
+             allow_search: self.args.allow_search,
+             allow_archive: self.args.allow_archive,
+             dir_exists: exist,
+-            auth: self.args.auth.exist(),
++            auth: self.args.auth.has_users(),
+             user,
+             paths,
+         };
+--- a/tests/auth.rs
++++ b/tests/auth.rs
+@@ -126,6 +126,24 @@ fn auth_skip_if_no_auth_user(server: Tes
+ }
+ 
+ #[rstest]
++fn auth_no_skip_if_anonymous(
++    #[with(&["--auth", "@/:ro"])] server: TestServer,
++) -> Result<(), Error> {
++    let url = format!("{}index.html", server.url());
++    let resp = fetch!(b"GET", &url)
++        .basic_auth("user", Some("pass"))
++        .send()?;
++    assert_eq!(resp.status(), 401);
++    let resp = fetch!(b"GET", &url).send()?;
++    assert_eq!(resp.status(), 200);
++    let resp = fetch!(b"DELETE", &url)
++        .basic_auth("user", Some("pass"))
++        .send()?;
++    assert_eq!(resp.status(), 401);
++    Ok(())
++}
++
++#[rstest]
+ fn auth_check(
+     #[with(&["--auth", "user:pass@/:rw", "--auth", "user2:pass2@/", "-A"])] server: TestServer,
+ ) -> Result<(), Error> {
