@@ -1,0 +1,44 @@
+From d18643a9fe0e612e823d07cb75d36b4641033f09 Mon Sep 17 00:00:00 2001
+From: John Audia <therealgraysky@proton.me>
+Date: Sun, 24 Aug 2025 11:00:44 -0400
+Subject: [PATCH] fix cleanup_lockfiles function linkage in exportd
+
+The cleanup_lockfiles function in utils/exportd/exportd.c was declared
+as 'inline void' without a proper function prototype, causing linker
+errors during the build process:
+
+  exportd.c:(.text+0x5a): undefined reference to `cleanup_lockfiles'
+  exportd.c:(.text.startup+0x317): undefined reference to `cleanup_lockfiles'
+
+This occurred because:
+1. The inline keyword prevented the compiler from generating a callable
+   function symbol in some build configurations
+2. The function lacked a proper prototype declaration, triggering
+   -Werror=missing-prototypes
+
+The fix changes the function to:
+- Remove the 'inline' keyword to ensure symbol generation
+- Add a proper static function prototype
+- Make the function 'static' since it's only used within exportd.c
+
+This resolves both the linking error and the missing prototype warning,
+allowing exportd to build successfully in OpenWrt's cross-compilation
+environment.
+---
+ utils/exportd/exportd.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+--- a/utils/exportd/exportd.c
++++ b/utils/exportd/exportd.c
+@@ -51,9 +51,10 @@ static char shortopts[] = "d:fghs:t:liT:
+ /*
+  * Signal handlers.
+  */
++static void cleanup_lockfiles(void);
+ inline static void set_signals(void);
+ 
+-inline void
++static void
+ cleanup_lockfiles (void)
+ {
+ 	unlink(etab.lockfn);
