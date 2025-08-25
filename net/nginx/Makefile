@@ -18,7 +18,7 @@ PKG_HASH:=69ee2b237744036e61d24b836668aad3040dda461fe6f570f1787eab570c75aa
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de> \
 				Christian Marangi <ansuelsmth@gmail.com>
 PKG_LICENSE:=2-clause BSD-like license
-PKG_CPE_ID:=cpe:/a:nginx:nginx
+PKG_CPE_ID:=cpe:/a:f5:nginx_open_source
 
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
