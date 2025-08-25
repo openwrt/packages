@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-urllib3
-PKG_VERSION:=2.0.7
+PKG_VERSION:=2.3.0
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
@@ -17,10 +17,14 @@ PKG_LICENSE_FILES:=LICENSE.txt
 PKG_CPE_ID:=cpe:/a:python:urllib3
 
 PYPI_NAME:=urllib3
-PKG_HASH:=c97dfde1f7bd43a71c8d2a58e369e9b2bf692d1334ea9f9cae55add7d0dd0f84
+PKG_HASH:=f8c5449b3cf0861679ce7e0503c7b44b5ec981bec0d1d3795a07f1ba96f0204d
 
-PKG_BUILD_DEPENDS:=python-hatchling/host
-HOST_BUILD_DEPENDS:=python-hatchling/host
+PKG_BUILD_DEPENDS:= \
+	python-hatch-vcs/host \
+	python-hatchling/host
+HOST_BUILD_DEPENDS:= \
+	python-hatch-vcs/host \
+	python-hatchling/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
