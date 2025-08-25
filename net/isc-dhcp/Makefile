@@ -136,7 +136,10 @@ endef
 define Package/isc-dhcp-dyndns
   $(call Package/isc-dhcp/Default)
   TITLE+= server dynamic DNS dependencies (meta)
-  DEPENDS+=@(PACKAGE_isc-dhcp-server-ipv4||PACKAGE_isc-dhcp-server-ipv6) +bind-server +bind-client
+  DEPENDS+=@(PACKAGE_isc-dhcp-server-ipv4||PACKAGE_isc-dhcp-server-ipv6) \
+	+bind-server \
+	+bind-rndc \
+	+bind-client
 endef
 
 define Package/isc-dhcp-dyndns/description
