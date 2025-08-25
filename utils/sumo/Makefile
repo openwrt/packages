@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sumo
 PKG_VERSION:=1.23.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-src-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/sumo
@@ -27,7 +27,7 @@ define Package/sumo
   CATEGORY:=Utilities
   TITLE:=SUMO - Simulation of Urban MObility
   URL:=https://sumo.dlr.de/
-  DEPENDS:=+libxerces-c +zlib
+  DEPENDS:=+libfmt +libxerces-c +zlib
 endef
 
 define Package/sumo/description
