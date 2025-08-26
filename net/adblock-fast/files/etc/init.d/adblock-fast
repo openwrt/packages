@@ -3,7 +3,7 @@
 # shellcheck disable=SC2015,SC3023,SC3043
 
 # shellcheck disable=SC2034
-START=94
+START=50
 # shellcheck disable=SC2034
 USE_PROCD=1
 LC_ALL=C
@@ -26,7 +26,7 @@ fi
 
 readonly packageName='adblock-fast'
 readonly PKG_VERSION='dev-test'
-readonly packageCompat='7'
+readonly packageCompat='8'
 readonly serviceName="$packageName $PKG_VERSION"
 readonly packageMemoryThreshold='33554432'
 readonly packageConfigFile="/etc/config/${packageName}"
@@ -432,7 +432,8 @@ print_json_string() { json_init; json_add_string "$1" "$2"; json_dump; json_clea
 sanitize_domain() { printf '%s' "$1" | sed -E 's#^[a-z]+://##; s#/.*$##; s/:.*$//'; }
 sanitize_dir() { [ -d "$(readlink -fn "$1")" ] && readlink -fn "$1"; }
 smartdns_restart() { /etc/init.d/smartdns restart >/dev/null 2>&1; }
-str_contains() { test "$1" != "$(str_replace "$1" "$2" '')"; }
+# shellcheck disable=SC3060
+str_contains() { [ "${1//$2}" != "$1" ]; }
 str_contains_word() { echo "$1" | grep -qw "$2"; }
 str_first_word() { echo "${1%% *}"; }
 # shellcheck disable=SC2018,SC2019
@@ -455,69 +456,54 @@ json() {
 		[ "$param" = 'warning' ] && param='warnings'
 		{ json_load_file "$runningStatusFile" || json_init; } >/dev/null 2>&1
 		{ json_select 'data' || { json_add_object 'data'; json_close_object; json_select 'data'; }; } >/dev/null 2>&1
-		case "$action" in
-			'get')
-				case "$param" in
-					'errors'|'warnings')
-						json_select "$param" >/dev/null 2>&1 || return
-						if [ -z "$value" ]; then
-							json_get_keys i
-						else
-							json_select "$value" >/dev/null 2>&1
-							case "${info:-code}" in
-								'code'|'info') json_get_var 'i' "$info" >/dev/null 2>&1;;
-							esac
-						fi
-						printf "%b" "$i"
-						return
-					;;
-					'status'|'message'|'stats'|*)
-						json_get_var 'i' "$param" >/dev/null 2>&1
-						printf "%b" "$i"
-						return
-					;;
-				esac
+		case "${action}:${param}" in
+			'get:errors'|'get:warnings')
+				json_select "$param" >/dev/null 2>&1 || return
+				if [ -z "$value" ]; then
+					json_get_keys i
+				else
+					json_select "$value" >/dev/null 2>&1
+					case "${info:-code}" in
+						'code'|'info') json_get_var 'i' "$info" >/dev/null 2>&1;;
+					esac
+				fi
+				printf "%b" "$i"
+				return
 			;;
-			'add')
-				case "$param" in
-					'errors'|'warnings')
-						{ json_select "$param" || json_add_array "$param"; } >/dev/null 2>&1
-						json_add_object ""
-						json_add_string 'code' "$value"
-						json_add_string 'info' "$info"
-						json_close_object
-						json_select ..
-					;;
-					*)
-						json_add_string "$param" "$value"
-					;;
-				esac
+			get:*)
+				json_get_var 'i' "$param" >/dev/null 2>&1
+				printf "%b" "$i"
+				return
 			;;
-			'del')
-				case "$param" in
-					'all')
-						json_add_string status ''
-						json_add_string message ''
-						json_add_string stats ''
-						json_add_array errors
-						json_close_array
-						json_add_array warnings
-						json_close_array
-					;;
-					'errors'|'warnings')
-						json_add_array "$param"
-						json_close_array
-					;;
-					*)
-						json_add_string "$param" '';;
-				esac
+			'add:errors'|'add:warnings')
+				{ json_select "$param" || json_add_array "$param"; } >/dev/null 2>&1
+				json_add_object ""
+				json_add_string 'code' "$value"
+				json_add_string 'info' "$info"
+				json_close_object
+				json_select ..
 			;;
-			set)
-				case "$param" in
-					'status'|'message'|'stats')
-						json_add_string "$param" "$value"
-					;;
-				esac
+			add:*)
+				json_add_string "$param" "$value"
+			;;
+			'del:all')
+				json_add_string status ''
+				json_add_string message ''
+				json_add_string stats ''
+				json_add_array errors
+				json_close_array
+				json_add_array warnings
+				json_close_array
+			;;
+			'del:errors'|'del:warnings')
+				json_add_array "$param"
+				json_close_array
+			;;
+			del:*)
+				json_add_string "$param" ''
+			;;
+			'set:status'|'set:message'|'set:stats')
+				json_add_string "$param" "$value"
 			;;
 		esac
 		json_add_string 'version' "$PKG_VERSION"
@@ -597,73 +583,72 @@ uci_changes() {
 }
 
 get_text() {
-	local r
-	case "$1" in
-		errorConfigValidationFail) r="The $packageName config validation failed";;
-		errorServiceDisabled) r="The $packageName is currently disabled";;
+	local r="$1"; shift;
+	case "$r" in
+		errorConfigValidationFail) printf "The %s config validation failed" "$packageName";;
+		errorServiceDisabled) printf "The %s is currently disabled" "$packageName";;
 		errorNoDnsmasqIpset) 
-			r="The dnsmasq ipset support is enabled in $packageName, but dnsmasq is either not installed or installed dnsmasq does not support ipset";;
+			printf "The dnsmasq ipset support is enabled in %s, but dnsmasq is either not installed or installed dnsmasq does not support ipset" "$packageName";;
 		errorNoIpset) 
-			r="The dnsmasq ipset support is enabled in $packageName, but ipset is either not installed or installed ipset does not support 'hash:net' type";;
+			printf "The dnsmasq ipset support is enabled in %s, but ipset is either not installed or installed ipset does not support 'hash:net' type" "$packageName";;
 		errorNoDnsmasqNftset) 
-			r="The dnsmasq nft set support is enabled in $packageName, but dnsmasq is either not installed or installed dnsmasq does not support nft set";;
-		errorNoNft) r="The dnsmasq nft sets support is enabled in $packageName, but nft is not installed";;
-		errorNoWanGateway) r="The ${serviceName} failed to discover WAN gateway";;
-		errorOutputDirCreate) r="Failed to create directory for %s file";;
-		errorOutputFileCreate) r="Failed to create %s file";;
-		errorFailDNSReload) r="Failed to restart/reload DNS resolver";;
-		errorSharedMemory) r="Failed to access shared memory";;
-		errorSorting) r="Failed to sort data file";;
-		errorOptimization) r="Failed to optimize data file";;
-		errorAllowListProcessing) r="Failed to process allow-list";;
-		errorDataFileFormatting) r="Failed to format data file";;
-		errorCopyingDataFile) r="Failed to copy data file to '%s'";;
-		errorMovingDataFile) r="Failed to move data file to '%s'";;
-		errorCreatingCompressedCache) r="Failed to create compressed cache";;
-		errorRemovingTempFiles) r="Failed to remove temporary files";;
-		errorRestoreCompressedCache) r="Failed to unpack compressed cache";;
-		errorRestoreCache) r="Failed to move '$outputCache' to '$outputFile'";;
-		errorOhSnap) r="Failed to create block-list or restart DNS resolver";;
-		errorStopping) r="Failed to stop $serviceName";;
-		errorDNSReload) r="Failed to reload/restart DNS resolver";;
-		errorDownloadingConfigUpdate) r="Failed to download Config Update file";;
-		errorDownloadingList) r="Failed to download %s";;
-		errorParsingConfigUpdate) r="Failed to parse Config Update file";;
-		errorParsingList) r="Failed to parse";;
-		errorNoSSLSupport) r="No HTTPS/SSL support on device";;
-		errorCreatingDirectory) r="Failed to create output/cache/gzip file directory";;
-		errorDetectingFileType) r="Failed to detect format";;
-		errorNothingToDo) r="No blocked list URLs nor blocked-domains enabled";;
-		errorTooLittleRam) r="Free ram (%s) is not enough to process all enabled block-lists";;
-		errorCreatingBackupFile) r="Failed to create backup file %s";;
-		errorDeletingDataFile) r="Failed to delete data file %s";;
-		errorRestoringBackupFile) r="Failed to restore backup file %s";;
-		errorNoOutputFile) r="Failed to create final block-list %s";;
-		errorNoHeartbeat) r="Heartbeat domain is not accessible after resolver restart";;
+			printf "The dnsmasq nft set support is enabled in %s, but dnsmasq is either not installed or installed dnsmasq does not support nft set" "$packageName";;
+		errorNoNft) printf "The dnsmasq nft sets support is enabled in %s, but nft is not installed" "$packageName";;
+		errorNoWanGateway) printf "The %s failed to discover WAN gateway" "$serviceName";;
+		errorOutputDirCreate) printf "Failed to create directory for %s file" "$@";;
+		errorOutputFileCreate) printf "Failed to create %s file" "$@";;
+		errorFailDNSReload) printf "Failed to restart/reload DNS resolver";;
+		errorSharedMemory) printf "Failed to access shared memory";;
+		errorSorting) printf "Failed to sort data file";;
+		errorOptimization) printf "Failed to optimize data file";;
+		errorAllowListProcessing) printf "Failed to process allow-list";;
+		errorDataFileFormatting) printf "Failed to format data file";;
+		errorCopyingDataFile) printf "Failed to copy data file to '%s'" "$@";;
+		errorMovingDataFile) printf "Failed to move data file to '%s'" "$@";;
+		errorCreatingCompressedCache) printf "Failed to create compressed cache";;
+		errorRemovingTempFiles) printf "Failed to remove temporary files";;
+		errorRestoreCompressedCache) printf "Failed to unpack compressed cache";;
+		errorRestoreCache) printf "Failed to move '%s' to '%s'" "$outputCache" "$outputFile";;
+		errorOhSnap) printf "Failed to create block-list or restart DNS resolver";;
+		errorStopping) printf "Failed to stop %s" "$serviceName";;
+		errorDNSReload) printf "Failed to reload/restart DNS resolver";;
+		errorDownloadingConfigUpdate) printf "Failed to download Config Update file";;
+		errorDownloadingList) printf "Failed to download %s" "$@";;
+		errorParsingConfigUpdate) printf "Failed to parse Config Update file";;
+		errorParsingList) printf "Failed to parse";;
+		errorNoSSLSupport) printf "No HTTPS/SSL support on device";;
+		errorCreatingDirectory) printf "Failed to create output/cache/gzip file directory";;
+		errorDetectingFileType) printf "Failed to detect format";;
+		errorNothingToDo) printf "No blocked list URLs nor blocked-domains enabled";;
+		errorTooLittleRam) printf "Free ram (%s) is not enough to process all enabled block-lists" "$@";;
+		errorCreatingBackupFile) printf "Failed to create backup file %s" "$@";;
+		errorDeletingDataFile) printf "Failed to delete data file %s" "$@";;
+		errorRestoringBackupFile) printf "Failed to restore backup file %s" "$@";;
+		errorNoOutputFile) printf "Failed to create final block-list %s" "$@";;
+		errorNoHeartbeat) printf "Heartbeat domain is not accessible after resolver restart";;
 
-		statusNoInstall) r="The $serviceName is not installed or not found";;
-		statusStopped) r="Stopped";;
-		statusStarting) r="Starting";;
-		statusRestarting) r="Restarting";;
-		statusForceReloading) r="Force Reloading";;
-		statusDownloading) r="Downloading";;
-		statusProcessing) r="Processing";;
-		statusFail) r="Failed to start";;
-		statusSuccess) r="Success";;
+		statusNoInstall) printf "The %s is not installed or not found" "$serviceName";;
+		statusStopped) printf "Stopped";;
+		statusStarting) printf "Starting";;
+		statusRestarting) printf "Restarting";;
+		statusForceReloading) printf "Force Reloading";;
+		statusDownloading) printf "Downloading";;
+		statusProcessing) printf "Processing";;
+		statusFail) printf "Failed to start";;
+		statusSuccess) printf "Success";;
+		statusTriggerBootWait) printf "Waiting for trigger (on_boot)";;
+		statusTriggerStartWait) printf "Waiting for trigger (on_start)";;
 
 		warningExternalDnsmasqConfig)
-			r="Use of external dnsmasq config file detected, please set 'dns' option to 'dnsmasq.conf'";;
-		warningMissingRecommendedPackages) r="Some recommended packages are missing";;
-		warningInvalidCompressedCacheDir) r="Invalid compressed cache directory '%s'";;
-		warningFreeRamCheckFail) r="Can't detect free RAM";;
-		warningSanityCheckTLD) r="Sanity check discovered TLDs in %s";;
-		warningSanityCheckLeadingDot) r="Sanity check discovered leading dots in %s";;
+			printf "Use of external dnsmasq config file detected, please set 'dns' option to 'dnsmasq.conf'";;
+		warningMissingRecommendedPackages) printf "Some recommended packages are missing";;
+		warningInvalidCompressedCacheDir) printf "Invalid compressed cache directory '%s'" "$@";;
+		warningFreeRamCheckFail) printf "Can't detect free RAM";;
+		warningSanityCheckTLD) printf "Sanity check discovered TLDs in %s" "$@";;
+		warningSanityCheckLeadingDot) printf "Sanity check discovered leading dots in %s" "$@";;
 
-		*) r="Unknown text '$1'";;
+		*) printf "Unknown error/warning '%s'" "$@";;
 	esac
-	shift
-# shellcheck disable=SC2059
-	printf "$r" "$@"
 }
 
 load_network() {
@@ -1033,7 +1018,7 @@ resolver() {
 			;;
 		esac
 	}
-# shellcheck disable=SC2317
+# shellcheck disable=SC2317,SC2329
 	_unbound_instance_append_force_dns_port() {
 		[ -s "/etc/config/unbound" ] || return 0
 		[ -n "$(uci_get 'unbound' "$cfg")" ] || return 1
@@ -1260,6 +1245,8 @@ resolver() {
 					chown root:root "$outputFile" "$outputConfig" >/dev/null 2>/dev/null
 				;;
 				unbound.*)
+					config_load 'unbound'
+					config_foreach _unbound_instance_append_force_dns_port 'unbound'
 					chmod 660 "$outputFile"
 					chown root:unbound "$outputFile" >/dev/null 2>/dev/null
 				;;
@@ -1489,7 +1476,7 @@ download_dnsmasq_file() {
 }
 
 download_lists() {
-# shellcheck disable=SC2317
+# shellcheck disable=SC2317,SC2329
 	_ram_check() {
 		_config_calculate_sizes() {
 			local cfg="$1"
@@ -2036,7 +2023,7 @@ adb_check_leading_dot() {
 }
 
 adb_check_lists() {
-# shellcheck disable=SC2317
+# shellcheck disable=SC2317,SC2329
 	_check_list() {
 		local cfg="$1"
 		local en size url name R_TMP string c
@@ -2098,7 +2085,7 @@ adb_check_lists() {
 }
 
 adb_config_update() {
-# shellcheck disable=SC2317
+# shellcheck disable=SC2317,SC2329
 	_cleanup_missing_urls() {
 		local cfg="$1" url size
 		config_get url "$cfg" url
@@ -2152,7 +2139,7 @@ adb_show_blocklist() {
 }
 
 adb_sizes() {
-# shellcheck disable=SC2317
+# shellcheck disable=SC2329
 	_config_add_url_size() {
 		local cfg="$1" url name size
 		config_get url "$cfg" url
@@ -2178,6 +2165,9 @@ adb_sizes() {
 adb_start() {
 	local action status error message stats p iface k
 	local param="$1" validation_result="$3"
+
+	dns_set_output_values "$dns"
+	adb_file test_gzip && unset adbf_boot_flag && param='on_start'
 
 	[ -n "$adbf_boot_flag" ] && return 0
 	load_environment "$validation_result" "$param" || return 1
@@ -2543,6 +2533,7 @@ service_triggers() {
 		output 1 'Setting trigger (on_boot) '
 		output 2 '[TRIG] Setting trigger (on_boot) '
 		procd_add_raw_trigger "interface.*.up" 5000 "/etc/init.d/${packageName}" start && output_okn || output_failn
+		json set status 'statusTriggerBootWait'
 	else
 	procd_open_validate
 		load_validate_config
@@ -2563,11 +2554,12 @@ service_triggers() {
 			procd_add_interface_trigger "interface.*" "$i" "/etc/init.d/${packageName}" start && output_okn || output_failn
 		done
 		procd_add_config_trigger "config.change" "$packageName" "/etc/init.d/${packageName}" reload
+		[ -z "$(json get status)" ] && json set status 'statusTriggerStartWait'
 	fi
 }
 sizes() { load_validate_config 'config' adb_sizes "''"; }
 start_service() { 
-	load_validate_config 'config' adb_config_update "'$*'"
+	[ -n "$adbf_boot_flag" ] || load_validate_config 'config' adb_config_update "'$*'"
 	load_validate_config 'config' adb_start "'$*'"
 }
 status_service() { adb_status "$@"; }
