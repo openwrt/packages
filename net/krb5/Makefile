@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=krb5
-PKG_VERSION:=1.22
+PKG_VERSION:=1.22.1
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
@@ -19,7 +19,7 @@ PKG_CPE_ID:=cpe:/a:mit:kerberos_5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://web.mit.edu/kerberos/dist/krb5/1.22
-PKG_HASH:=652be617b4647f3c5dcac21547d47c7097101aad4e306f1778fb48e17b220ba3
+PKG_HASH:=1a8832b8cad923ebbf1394f67e2efcf41e3a49f460285a66e35adec8fa0053af
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -106,8 +106,6 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(2)/bin
 	$(LN) ../../usr/bin/krb5-config $(2)/bin/krb5-config
 endef
-
-TARGET_CFLAGS += -std=gnu11
 
 define Package/krb5-libs/install
 	$(INSTALL_DIR) $(1)/usr/lib
