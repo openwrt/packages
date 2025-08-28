@@ -17,6 +17,7 @@ PKG_HASH:=166809528b1aced0a17dc66c24492af18049f2c9420dbd0be29422029cfc3ff7
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.md
+PKG_CPE_ID:=cpe:/a:django-rest-framework:django_rest_framework
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
