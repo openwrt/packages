@@ -1,0 +1,6 @@
+
+menuentry 'Memory Tester (memtest86+)' {
+	insmod part_gpt
+	insmod ext2
+	linux16 /boot/memtest86+/memtest.bin
+}
