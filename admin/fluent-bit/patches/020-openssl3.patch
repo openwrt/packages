@@ -1,0 +1,28 @@
+--- a/src/tls/openssl.c
++++ b/src/tls/openssl.c
+@@ -199,14 +199,14 @@ static int tls_context_server_alpn_selec
+ }
+ 
+ static int tls_context_client_alpn_select_callback(SSL *ssl,
+-                                                   unsigned char **out,
++                                                   const unsigned char **out,
+                                                    unsigned char *outlen,
+                                                    const unsigned char *in,
+                                                    unsigned int inlen,
+                                                    void *arg)
+ {
+     return tls_context_server_alpn_select_callback(ssl,
+-                                                   (const unsigned char **) out,
++                                                   out,
+                                                    outlen,
+                                                    in,
+                                                    inlen,
+@@ -283,7 +283,7 @@ int tls_context_alpn_set(void *ctx_backe
+                 ctx);
+         }
+         else {
+-            SSL_CTX_set_next_proto_select_cb(
++            SSL_CTX_set_alpn_select_cb(
+                 ctx->ctx,
+                 tls_context_client_alpn_select_callback,
+                 ctx);

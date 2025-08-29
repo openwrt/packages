@@ -8,7 +8,7 @@ Fix -Wint-conversion error with gcc 14 due to musl using POSIX strerror_r.
 
 --- a/src/flb_network.c
 +++ b/src/flb_network.c
-@@ -551,9 +551,6 @@ static int net_connect_async(int fd,
+@@ -638,9 +638,6 @@ static int net_connect_async(int fd,
              }
  
              /* Connection is broken, not much to do here */
@@ -18,7 +18,7 @@ Fix -Wint-conversion error with gcc 14 due to musl using POSIX strerror_r.
              ret = strerror_r(error, so_error_buf, sizeof(so_error_buf));
              if (ret == 0) {
                  str = so_error_buf;
-@@ -562,9 +559,6 @@ static int net_connect_async(int fd,
+@@ -649,9 +646,6 @@ static int net_connect_async(int fd,
                  flb_errno();
                  return -1;
              }
