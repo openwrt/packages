@@ -23,6 +23,10 @@ PKG_CPE_ID:=cpe:/a:lm_sensors:lm_sensors
 
 PKG_BUILD_PARALLEL:=1
 
+ifneq (,$(filter mips mipsel,$(ARCH)))
+  PKG_BUILD_FLAGS:=no-lto
+endif
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/lm-sensors/Default
