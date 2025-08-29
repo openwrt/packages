@@ -83,6 +83,7 @@ ovs_kmod_openvswitch_depends:=\
 	  +IPV6:kmod-nf-conntrack6 \
 	  +kmod-nsh \
 	  +kmod-ipt-conntrack-extra \
+	  +LINUX_6_12:kmod-sched-act-sample \
 
 ovs_kmod_openvswitch_files:=$(ovs_kmod_upstream_dir)/openvswitch.ko
 $(eval $(call OvsKmodPackageTemplate,openvswitch))
