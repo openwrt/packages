@@ -8,7 +8,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=lsof
 PKG_VERSION:=4.99.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/lsof-org/lsof/releases/download/$(PKG_VERSION)
@@ -28,12 +28,11 @@ DISABLE_NLS:=
 define Package/lsof
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libtirpc
   TITLE:=LiSt Open Files - a diagnostic tool
   URL:=http://people.freebsd.org/~abe/
 endef
 
-CONFIGURE_ARGS += --without-selinux
+CONFIGURE_ARGS += --without-selinux --without-libtirpc
 
 define Package/lsof/install
 	$(INSTALL_DIR) $(1)/usr/bin
