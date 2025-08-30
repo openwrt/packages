@@ -1,0 +1,10 @@
+--- a/ufpd
++++ b/ufpd
+@@ -363,6 +363,7 @@ global.ubus_object = {
+ 	fingerprint: {
+ 		args: {
+ 			macaddr: "",
++			ubus_rpc_session: "",
+ 			weight: false,
+ 			local: false
+ 		},
