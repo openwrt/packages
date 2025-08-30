@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libtirpc
 PKG_VERSION:=1.3.7
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=@SF/libtirpc
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -27,8 +27,8 @@ define Package/libtirpc
   DEPENDS:=+libpthread
 endef
 
-CONFIGURE_ARGS += --disable-gssapi
-HOST_CONFIGURE_ARGS += --disable-gssapi --disable-shared
+CONFIGURE_ARGS += --disable-gssapi --enable-rpcdb
+HOST_CONFIGURE_ARGS += --disable-gssapi --disable-shared --enable-rpcdb
 
 ifeq ($(HOST_OS),Darwin)
 HOST_CONFIGURE_ARGS += --disable-symvers
