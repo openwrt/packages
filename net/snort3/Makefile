@@ -9,10 +9,10 @@ PKG_NAME:=snort3
 PKG_VERSION:=3.9.3.0
 PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=$(PKG_VERSION)
-PKG_SOURCE_URL:=https://github.com/snort3/snort3
-PKG_MIRROR_HASH:=aa70ac94fbae9e3080422360513b1f05f7ada14ba29d9c453f50afb8a96627f6
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/snort3/snort3/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=c7c2f7488b1a9ec5b60b9706fc3f2f3f9c0e1eb57f384e077676c452570468cf
+PKG_MIRROR_HASH:=a08b88962c144ef21a580d2a214c2c3d65bd31c7696fecc7403ef083b950a945
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>, John Audia <therealgraysky@proton.me>
 PKG_LICENSE:=GPL-2.0-only
@@ -22,16 +22,22 @@ PKG_CPE_ID:=cpe:/a:snort:snort
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
+ifeq ($(filter $(ARCH),mips mips64 mipsel powerpc),)
+    EXTRA_DEPENDS:=+gperftools-runtime
+else
+    EXTRA_DEPENDS:=
+endif
+
+SNORT3DEPS:=+(TARGET_x86||TARGET_x86_64):hyperscan-runtime \
+    +libstdcpp +libdaq3 +libdnet +libopenssl +libpcap +libpcre2 \
+    +libpthread +libuuid +zlib +libhwloc +libtirpc @HAS_LUAJIT_ARCH +luajit +libatomic \
+    +kmod-nft-queue +liblzma +ucode +ucode-mod-fs +ucode-mod-uci $(EXTRA_DEPENDS)
+
 define Package/snort3
   SUBMENU:=Firewall
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:= \
-	    +@!(TARGET_powerpc||TARGET_mips||TARGET_mips64||TARGET_mipsel):gperftools-runtime \
-	    +(TARGET_x86||TARGET_x86_64):hyperscan-runtime \
-	    +libstdcpp +libdaq3 +libdnet +libopenssl +libpcap +libpcre2 \
-	    +libpthread +libuuid +zlib +libhwloc +libtirpc @HAS_LUAJIT_ARCH +luajit +libatomic \
-	    +kmod-nft-queue +liblzma +ucode +ucode-mod-fs +ucode-mod-uci
+  DEPENDS:=$(SNORT3DEPS)
   TITLE:=Lightweight Network Intrusion Detection System
   URL:=http://www.snort.org/
   MENU:=1
