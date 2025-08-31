@@ -13,72 +13,53 @@ config_cb() {
 	option_cb() {
 		local option="$1"
 		local value="$2"
-		case $option in
-		enabled|gui_address|home|logfile|macprocs|nice|user)
-			eval $option=$value
-			;;
-		debug)
-			extra_args="$extra_args --${option//_/-}-$value"
-			;;
-		_*)
-			[ "$value" = "0" ] || extra_args="$extra_args -${option//_/-}"
-			;;
-		*)
-			extra_args="$extra_args --${option//_/-}=$value"
-			;;
-		esac
-	}
 
-	list_cb() {
-		local name="$1"
-		local value="$2"
-		[ "$name" = "_" ] && extra_args="$extra_args --${value//_/-}" || return 0
+		case $option in
+
+		# Support old option names
+		logfile)
+			option='log_file'
+			;;
+
+		esac
+
+		eval $option="$value"
 	}
 }
 
-service_triggers()
-{
-	procd_add_reload_trigger "syncthing"
+service_triggers() {
+	procd_add_reload_trigger 'syncthing'
 }
 
 start_service() {
-	local extra_args="--no-browser"
-
-	# Options with default value different with the syncthing should be defined explicitly here
+	# Options with default value different with the syncthing should be defined
+	# explicitly here
 	local enabled=0
-	local gui_address="http://0.0.0.0:8384"
-	local home="/etc/syncthing"
-	local logfile="/var/log/syncthing.log"
+	local db_delete_retention_interval=''
+	local db_maintenance_interval=''
+	local gui_address='http://0.0.0.0:8384'
+	local gui_apikey=''
+	local home='/etc/syncthing'
+	local log_file='/var/log/syncthing.log'
+	local log_level='INFO'
+	local log_max_old_files=7
+	local log_max_size=1048576
 	local macprocs=0
 	local nice=0
-	local user="syncthing"
+	local user='syncthing'
 
-	config_load "syncthing"
+	config_load 'syncthing'
 
 	local group=$(id -gn $user)
 
-	# Some of the default values below might not match the defaults
-	#   in /etc/config/syncthing: the reason is to remain backwards
-	#   compatible with the older versions of this service as it
-	#   evolves.
 	[ "$enabled" -gt 0 ] || return 0
-
-	# For backwards compatibility
-	IDX_DB=$(readlink -n "$home"/index-v0.14.0.db)
-	if [ ! -z "$IDX_DB" ]; then
-		[ -d "$IDX_DB" ] || mkdir -p "$IDX_DB"
-
-		# A separate step to handle an upgrade use case
-		[ -d "$IDX_DB" ] && chown -R $user:$group "$IDX_DB"
-	fi
 
 	[ -d "$home" ] || mkdir -p "$home"
 	# A separate step to handle an upgrade use case
 	[ -d "$home" ] && chown -R $user:$group "$home"
 
-	# Changes to "niceness"/macprocs are not picked up by "reload_config"
-	#   nor by "restart": the service has to be stopped/started
-	#   for it to take effect
+	# Changes to "niceness"/macprocs are not picked up either by reload_config
+	# or by restart: the service has to be stopped/started for it to take effect
 	if [ $macprocs -le 0 ]; then
 		# Default to the number of cores in this case
 		macprocs=$(grep -c ^processor /proc/cpuinfo)
@@ -86,16 +67,26 @@ start_service() {
 
 	procd_open_instance
 	procd_set_param command "$PROG"
-	procd_set_param env GOMAXPROCS="$macprocs" STNOUPGRADE=1
+	procd_set_param env GOMAXPROCS="$macprocs"
 	procd_append_param command serve
+	[ -z "$db_delete_retention_interval" ] || procd_append_param command --db-delete-retention-interval="$db_delete_retention_interval"
+	[ -z "$db_maintenance_interval" ] || procd_append_param command --db-maintenance-interval="$db_maintenance_interval"
 	procd_append_param command --gui-address="$gui_address"
+	[ -z "$gui_apikey" ] || procd_append_param command --gui_apikey="$gui_apikey"
 	procd_append_param command --home="$home"
-	procd_append_param command --logfile="$logfile"
-	[ -z "$extra_args" ] || procd_append_param command $extra_args
+	procd_append_param command --log-file="$log_file"
+	[ -z "$log_level" ] || procd_append_param command --log-level="$log_level"
+	[ -z "$log_max_old_files" ] || procd_append_param command --log-max-old-files="$log_max_old_files"
+	[ -z "$log_max_size" ] || procd_append_param command --log-max-size="$log_max_size"
+	procd_append_param command --no-browser
+	procd_append_param command --no-port-probing
+	procd_append_param command --no-restart
+	# The package is built with noupgrade tag so --no-upgrade is not necessary
 
 	procd_set_param nice "$nice"
 	procd_set_param term_timeout 15
 	procd_set_param user "$user"
+	procd_set_param group "$group"
 	procd_set_param respawn
 	procd_set_param stdout 0
 	procd_set_param stderr 1
