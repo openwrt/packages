@@ -31,12 +31,24 @@ define Package/sing-box
   URL:=https://sing-box.sagernet.org
   DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle +kmod-inet-diag +kmod-tun
   USERID:=sing-box=5566:sing-box=5566
+  VARIANT:=full
+  DEFAULT_VARIANT:=1
 endef
 
 define Package/sing-box/description
   Sing-box is a universal proxy platform which supports hysteria, SOCKS, Shadowsocks,
   ShadowTLS, Tor, trojan, VLess, VMess, WireGuard and so on.
 endef
+
+define Package/sing-box-tiny
+  $(Package/sing-box)
+  TITLE+=(tiny)
+  PROVIDES:=sing-box
+  VARIANT:=tiny
+  CONFLICTS:=sing-box
+endef
+
+Package/sing-box-tiny/description:=$(Package/sing-box/description)
 
 define Package/sing-box/config
 	menu "Select build options"
@@ -96,6 +108,12 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_SINGBOX_WITH_V2RAY_API \
 	CONFIG_SINGBOX_WITH_WIREGUARD
 
+ifeq ($(BUILD_VARIANT),tiny)
+ifeq ($(CONFIG_SMALL_FLASH),)
+GO_PKG_TAGS:=with_gvisor
+endif
+GO_PKG_TAGS:=$(GO_PKG_TAGS),with_quic,with_utls,with_clash_api
+else
 GO_PKG_TAGS:=$(subst $(space),$(comma),$(strip \
 	$(if $(CONFIG_SINGBOX_WITH_ACME),with_acme) \
 	$(if $(CONFIG_SINGBOX_WITH_CLASH_API),with_clash_api) \
@@ -109,11 +127,14 @@ GO_PKG_TAGS:=$(subst $(space),$(comma),$(strip \
 	$(if $(CONFIG_SINGBOX_WITH_V2RAY_API),with_v2ray_api) \
 	$(if $(CONFIG_SINGBOX_WITH_WIREGUARD),with_wireguard) \
 ))
+endif
 
 define Package/sing-box/conffiles
 /etc/config/sing-box
 /etc/sing-box/
 endef
+
+Package/sing-box-tiny/conffiles=$(Package/sing-box/conffiles)
 
 define Package/sing-box/install
 	$(INSTALL_DIR) $(1)/usr/bin/
@@ -128,4 +149,7 @@ define Package/sing-box/install
 	$(INSTALL_BIN) ./files/sing-box.init $(1)/etc/init.d/sing-box
 endef
 
+Package/sing-box-tiny/install=$(Package/sing-box/install)
+
 $(eval $(call BuildPackage,sing-box))
+$(eval $(call BuildPackage,sing-box-tiny))
