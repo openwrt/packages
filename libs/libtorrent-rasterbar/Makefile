@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libtorrent-rasterbar
 PKG_VERSION:=2.0.11
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/arvidn/libtorrent/releases/download/v$(PKG_VERSION)/
@@ -12,6 +12,7 @@ PKG_MAINTAINER:=David Yang <mmyangfl@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
 
+PKG_BUILD_DEPENDS:=boost
 PKG_CONFIG_DEPENDS:=CONFIG_PACKAGE_python3-libtorrent
 
 CMAKE_INSTALL:=1
@@ -31,7 +32,7 @@ define Package/libtorrent-rasterbar
   $(call Package/libtorrent-rasterbar/Default)
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+boost-system +libopenssl +libatomic +libstdcpp
+  DEPENDS:=+libopenssl +libatomic +libstdcpp
 endef
 
 define Package/python3-libtorrent
