@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2019 OpenWrt.org
+# Copyright (C) 2009-2025 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -21,9 +21,7 @@ PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=$(PKG_NAME)/host libevent2
 HOST_BUILD_DEPENDS:=libtirpc/host
 
-PKG_CONFIG_DEPENDS:= \
-	CONFIG_IPV6 \
-	CONFIG_NFS_KERNEL_SERVER_V4
+PKG_CONFIG_DEPENDS:=CONFIG_IPV6
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
@@ -33,63 +31,100 @@ define Package/nfs-kernel-server/Default
 	SECTION:=net
 	CATEGORY:=Network
 	SUBMENU:=Filesystem
-	DEPENDS:=+libblkid +libuuid +libtirpc +lsqlite3 +libxml2 +libnl
+	DEPENDS:=+libblkid +libuuid +libtirpc +lsqlite3 +libxml2 +libnl +libreadline
 	URL:=http://nfs.sourceforge.net/
 endef
 
-define Package/nfs-kernel-server
+define Package/nfs-utils/Default
+	SECTION:=utils
+	CATEGORY:=Utilities
+	SUBMENU:=Filesystem
+	URL:=http://nfs.sourceforge.net/
+endef
+
+define Package/nfs-kernel-server-lite
 	$(call Package/nfs-kernel-server/Default)
-	TITLE:=Kernel NFS server support
-	DEPENDS+= +kmod-fs-nfsd +kmod-fs-nfs +NFS_KERNEL_SERVER_V4:kmod-fs-nfs-v4 +rpcbind +NFS_KERNEL_SERVER_V4:nfs-utils-libs +NFS_KERNEL_SERVER_V4:libkeyutils +NFS_KERNEL_SERVER_V4:libdevmapper +libevent2-core
+	TITLE:=Kernel NFS server (Lite - NFSv3 only)
+	DEPENDS+= +nfs-utils-lite +nfs-utils-libs-lite +kmod-fs-nfsd +kmod-fs-nfs +rpcbind
+	VARIANT:=lite
+	PROVIDES:=nfs-kernel-server
 	USERID:=nfs:nfs
 endef
 
-define Package/nfs-kernel-server/description
-Kernel NFS server support
+define Package/nfs-kernel-server-lite/description
+Kernel NFS server with NFSv3 support only
 endef
 
-define Package/nfs-kernel-server/config
-	source "$(SOURCE)/Config.in"
+define Package/nfs-kernel-server-full
+	$(call Package/nfs-kernel-server/Default)
+	TITLE:=Kernel NFS server (Full - NFSv3 and NFSv4.x)
+	DEPENDS+= +nfs-utils-full +nfs-utils-libs-full +kmod-fs-nfsd +kmod-fs-nfs +rpcbind +kmod-fs-nfs-v4 +libkeyutils +libdevmapper +libevent2-core
+	CONFLICTS:=nfs-kernel-server-lite
+	VARIANT:=full
+	PROVIDES:=nfs-kernel-server
+	USERID:=nfs:nfs
+endef
+
+define Package/nfs-kernel-server-full/description
+Kernel NFS server with both NFSv3 and NFSv4.x support
+endef
+
+define Package/nfs-utils-lite
+	$(call Package/nfs-utils/Default)
+	TITLE:=NFS utils (Lite - NFSv3 only)
+	DEPENDS:=+libtirpc
+	VARIANT:=lite
+	PROVIDES:=nfs-utils
+endef
+
+define Package/nfs-utils-lite/description
+Mount/umount utilities for NFSv3
+endef
+
+define Package/nfs-utils-full
+	$(call Package/nfs-utils/Default)
+	TITLE:=NFS utils (Full - NFSv3 + NFSv4.x)
+	DEPENDS:=+libtirpc +libkeyutils +libdevmapper
+	CONFLICTS:=nfs-utils-lite
+	VARIANT:=full
+	PROVIDES:=nfs-utils
+endef
+
+define Package/nfs-utils-full/description
+Mount/umount utilities for NFSv3 and NFSv4.x
+endef
+
+define Package/nfs-utils-libs-lite
+	$(call Package/nfs-utils/Default)
+	TITLE:=Libraries from nfs-utils (Lite)
+	VARIANT:=lite
+	PROVIDES:=nfs-utils-libs
+endef
+
+define Package/nfs-utils-libs-lite/description
+Shared libraries from nfs-utils for NFSv3-only builds
+endef
+
+define Package/nfs-utils-libs-full
+	$(call Package/nfs-utils/Default)
+	TITLE:=Libraries from nfs-utils (Full)
+	CONFLICTS:=nfs-utils-libs-lite
+	VARIANT:=full
+	PROVIDES:=nfs-utils-libs
+endef
+
+define Package/nfs-utils-libs-full/description
+Shared libraries from nfs-utils for NFSv3 + NFSv4.x builds
 endef
 
 define Package/nfs-kernel-server-utils
 	$(call Package/nfs-kernel-server/Default)
 	TITLE:=NFS server utils
-	DEPENDS:=nfs-kernel-server
+	DEPENDS:=nfs-kernel-server +libtirpc
 endef
 
 define Package/nfs-kernel-server-utils/description
 NFS server utils
-endef
-
-define Package/nfs-kernel-server/conffiles
-/etc/exports
-endef
-
-define Package/nfs-utils/Default
-	$(call Package/nfs-kernel-server/Default)
-	SECTION:=utils
-	CATEGORY:=Utilities
-	DEPENDS+= +NFS_KERNEL_SERVER_V4:libkeyutils +NFS_KERNEL_SERVER_V4:libdevmapper
-	URL:=http://nfs.sourceforge.net/
-endef
-
-define Package/nfs-utils
-	$(call Package/nfs-utils/Default)
-	TITLE:=updated mount utility (includes nfs4)
-endef
-
-define Package/nfs-utils/description
-Updated mount.nfs command - allows mounting nfs4 volumes
-endef
-
-define Package/nfs-utils-libs
-	$(call Package/nfs-utils/Default)
-	TITLE:=libraries provided by nfs-utils
-endef
-
-define Package/nfs-utils-libs/description
-Libraries provided by nfs-utils
 endef
 
 TARGET_CFLAGS += -Wno-error=implicit-function-declaration \
@@ -109,15 +144,28 @@ CONFIGURE_ARGS += \
 	--disable-caps \
 	--disable-gss \
 	--enable-static \
-	--with-rpcgen=internal \
-	$(if $(CONFIG_NFS_KERNEL_SERVER_V4),--enable-nfsdcld,--disable-nfsdcld) \
-	$(if $(CONFIG_NFS_KERNEL_SERVER_V4),--enable-nfsv4server,--disable-nfsv4server) \
-	$(if $(CONFIG_NFS_KERNEL_SERVER_V4),--enable,--disable)-nfsv4 \
-	$(if $(CONFIG_NFS_KERNEL_SERVER_V4),--enable,--disable)-nfsv41 \
-	$(if $(CONFIG_NFS_KERNEL_SERVER_V4),--enable,--disable)-nfsv42
+	--with-rpcgen=internal
 
 ifeq ($(CONFIG_IPV6),n)
 	CONFIGURE_ARGS += --disable-ipv6
+endif
+
+ifeq ($(BUILD_VARIANT),lite)
+	CONFIGURE_ARGS += \
+	--disable-nfsdcld \
+	--disable-nfsv4server \
+	--disable-nfsv4 \
+	--disable-nfsv41 \
+	--disable-nfsv42
+endif
+
+ifeq ($(BUILD_VARIANT),full)
+	CONFIGURE_ARGS += \
+	--enable-nfsdcld \
+	--enable-nfsv4server \
+	--enable-nfsv4 \
+	--enable-nfsv41 \
+	--enable-nfsv42
 endif
 
 CONFIGURE_VARS += \
@@ -175,7 +223,15 @@ define Host/Install
 	$(INSTALL_BIN) $(HOST_BUILD_DIR)/tools/rpcgen/rpcgen $(STAGING_DIR_HOSTPKG)/bin/rpcgen
 endef
 
-define Package/nfs-kernel-server/install
+define Package/nfs-kernel-server-lite/conffiles
+/etc/exports
+endef
+
+define Package/nfs-kernel-server-full/conffiles
+/etc/exports
+endef
+
+define Package/nfs-kernel-server-lite/install
 	$(INSTALL_DIR) $(1)/etc/init.d $(1)/usr/sbin
 	$(INSTALL_DATA) ./files/nfsd.exports $(1)/etc/exports
 	$(INSTALL_BIN) ./files/nfsd.init $(1)/etc/init.d/nfsd
@@ -184,11 +240,20 @@ define Package/nfs-kernel-server/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/nfsd/nfsd $(1)/usr/sbin/rpc.nfsd
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/mountd/mountd $(1)/usr/sbin/rpc.mountd
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/exportfs/exportfs $(1)/usr/sbin/
-	$(if $(CONFIG_NFS_KERNEL_SERVER_V4),\
-		$(INSTALL_BIN) ./files/nfsv4d.init $(1)/etc/init.d/nfsv4d
-		$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/nfsdcld/nfsdcld $(1)/usr/sbin/
-		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/rpc.idmapd $(1)/usr/sbin/
-		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/nfsv4.exportd $(1)/usr/sbin/,)
+endef
+
+define Package/nfs-kernel-server-full/install
+	$(INSTALL_DIR) $(1)/etc/init.d $(1)/usr/sbin
+	$(INSTALL_DATA) ./files/nfsv4d.exports $(1)/etc/exports
+	$(INSTALL_BIN) ./files/nfsd.init $(1)/etc/init.d/nfsd
+	$(INSTALL_BIN) ./files/nfsv4d.init $(1)/etc/init.d/nfsv4d
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/statd/sm-notify $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/statd/statd $(1)/usr/sbin/rpc.statd
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/nfsd/nfsd $(1)/usr/sbin/rpc.nfsd
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/exportfs/exportfs $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/nfsdcld/nfsdcld $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/rpc.idmapd $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/nfsv4.exportd $(1)/usr/sbin/
 endef
 
 define Package/nfs-kernel-server-utils/install
@@ -206,28 +271,38 @@ define Package/nfs-utils/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libnfsidmap.pc $(1)/usr/lib/pkgconfig/
 endef
 
-define Package/nfs-utils/install
+define Package/nfs-utils-lite/install
+	$(INSTALL_DIR) $(1)/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/sbin/mount.nfs $(1)/sbin/
+	(cd $(1)/sbin; ln -sf mount.nfs umount.nfs)
+endef
+
+define Package/nfs-utils-full/install
 	$(INSTALL_DIR) $(1)/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/sbin/mount.nfs $(1)/sbin/
 	(cd $(1)/sbin; ln -sf mount.nfs mount.nfs4; ln -sf mount.nfs umount.nfs; ln -sf mount.nfs umount.nfs4)
 endef
 
-define Package/nfs-utils-libs/install
+define Package/nfs-utils-libs-lite/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(if $(CONFIG_NFS_KERNEL_SERVER_V4),$(CP) $(PKG_INSTALL_DIR)/usr/lib/libnfsidmap.so* $(1)/usr/lib/,)
-	$(if $(CONFIG_NFS_KERNEL_SERVER_V4),$(CP) $(PKG_INSTALL_DIR)/usr/lib/libnfsidmap/*.so $(1)/usr/lib/,)
 endef
 
-define Package/nfs-kernel-server/postinst
+define Package/nfs-utils-libs-full/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libnfsidmap.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libnfsidmap/*.so $(1)/usr/lib/
+endef
+
+define Package/nfs-kernel-server-full/postinst
 #!/bin/sh
 [ -n "$${IPKG_INSTROOT}" ] || {
-	# package ships two init.d script but only one should be enabled by default
-	if [ -n "$(find /etc/rc.d -maxdepth 1 -name 'S*nfsd' -type f -print)" ]; then
-		/etc/init.d/nfsd enable; /etc/init.d/nfsv4d disable
-	fi
-	if [ -n "$(find /etc/rc.d -maxdepth 1 -name 'S*nfsv4d' -type f -print)" ]; then
-		/etc/init.d/nfsd disable; /etc/init.d/nfsv4d enable
-	fi
+        # the full variant ships two init.d script but only one should be enabled by default
+        if [ -n "$(find /etc/rc.d -maxdepth 1 -name 'S*nfsd' -type f -print)" ]; then
+                /etc/init.d/nfsd enable; /etc/init.d/nfsv4d disable
+        fi
+        if [ -n "$(find /etc/rc.d -maxdepth 1 -name 'S*nfsv4d' -type f -print)" ]; then
+                /etc/init.d/nfsd disable; /etc/init.d/nfsv4d enable
+        fi
 }
 
 # create uci-defaults script for sysupgrade scenarios
@@ -253,7 +328,10 @@ EOF
 endef
 
 $(eval $(call HostBuild))
-$(eval $(call BuildPackage,nfs-utils))
-$(eval $(call BuildPackage,nfs-utils-libs))
-$(eval $(call BuildPackage,nfs-kernel-server))
+$(eval $(call BuildPackage,nfs-utils-libs-lite))
+$(eval $(call BuildPackage,nfs-utils-libs-full))
+$(eval $(call BuildPackage,nfs-utils-lite))
+$(eval $(call BuildPackage,nfs-utils-full))
 $(eval $(call BuildPackage,nfs-kernel-server-utils))
+$(eval $(call BuildPackage,nfs-kernel-server-lite))
+$(eval $(call BuildPackage,nfs-kernel-server-full))
