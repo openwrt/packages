@@ -224,17 +224,20 @@ define Host/Install
 endef
 
 define Package/nfs-kernel-server-lite/conffiles
+/etc/config/nfsd
 /etc/exports
 endef
 
 define Package/nfs-kernel-server-full/conffiles
+/etc/config/nfsd
 /etc/exports
 endef
 
 define Package/nfs-kernel-server-lite/install
-	$(INSTALL_DIR) $(1)/etc/init.d $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/etc/init.d $(1)/etc/config $(1)/usr/sbin
 	$(INSTALL_DATA) ./files/nfsd.exports $(1)/etc/exports
-	$(INSTALL_BIN) ./files/nfsd.init $(1)/etc/init.d/nfsd
+	$(INSTALL_DATA) ./files/nfsd.config $(1)/etc/config/nfsd
+	$(INSTALL_BIN) ./files/nfsd.unified.init $(1)/etc/init.d/nfsd
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/statd/sm-notify $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/statd/statd $(1)/usr/sbin/rpc.statd
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/nfsd/nfsd $(1)/usr/sbin/rpc.nfsd
@@ -243,10 +246,10 @@ define Package/nfs-kernel-server-lite/install
 endef
 
 define Package/nfs-kernel-server-full/install
-	$(INSTALL_DIR) $(1)/etc/init.d $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/etc/init.d $(1)/etc/config $(1)/usr/sbin
 	$(INSTALL_DATA) ./files/nfsv4d.exports $(1)/etc/exports
-	$(INSTALL_BIN) ./files/nfsd.init $(1)/etc/init.d/nfsd
-	$(INSTALL_BIN) ./files/nfsv4d.init $(1)/etc/init.d/nfsv4d
+	$(INSTALL_DATA) ./files/nfsd.config $(1)/etc/config/nfsd
+	$(INSTALL_BIN) ./files/nfsd.unified.init $(1)/etc/init.d/nfsd
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/statd/sm-notify $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/statd/statd $(1)/usr/sbin/rpc.statd
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/utils/nfsd/nfsd $(1)/usr/sbin/rpc.nfsd
@@ -291,40 +294,6 @@ define Package/nfs-utils-libs-full/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libnfsidmap.so* $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libnfsidmap/*.so $(1)/usr/lib/
-endef
-
-define Package/nfs-kernel-server-full/postinst
-#!/bin/sh
-[ -n "$${IPKG_INSTROOT}" ] || {
-        # the full variant ships two init.d script but only one should be enabled by default
-        if [ -n "$(find /etc/rc.d -maxdepth 1 -name 'S*nfsd' -type f -print)" ]; then
-                /etc/init.d/nfsd enable; /etc/init.d/nfsv4d disable
-        fi
-        if [ -n "$(find /etc/rc.d -maxdepth 1 -name 'S*nfsv4d' -type f -print)" ]; then
-                /etc/init.d/nfsd disable; /etc/init.d/nfsv4d enable
-        fi
-}
-
-# create uci-defaults script for sysupgrade scenarios
-[ -n "$${IPKG_INSTROOT}" ] && {
-        mkdir -p "$${IPKG_INSTROOT}/etc/uci-defaults"
-        cat > "$${IPKG_INSTROOT}/etc/uci-defaults/99-nfs-kernel-server" << 'EOF'
-#!/bin/sh
-# Only one NFS service should be enabled
-nfs3() { /etc/init.d/nfsd enable; /etc/init.d/nfsv4d disable; }
-nfs4() { /etc/init.d/nfsd disable; /etc/init.d/nfsv4d enable; }
-if [ -n "$(find /etc/rc.d -maxdepth 1 -name 'S*nfsd' -type f -print)" ]; then
-  nfs3
-elif [ -n "$(find /etc/rc.d -maxdepth 1 -name 'S*nfsv4d' -type f -print)" ]; then
-  nfs4
-elif [ -f /etc/exports ] && grep -v '^#' /etc/exports | grep -q 'fsid='; then
-  nfs4
-elif [ -f /etc/exports ]; then
-  nfs3
-fi
-EOF
-        chmod +x "$${IPKG_INSTROOT}/etc/uci-defaults/99-nfs-kernel-server"
-}
 endef
 
 $(eval $(call HostBuild))
