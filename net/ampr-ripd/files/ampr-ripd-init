@@ -3,8 +3,7 @@
 START=95
 STOP=10
 
-EXTRA_COMMANDS="configure"
-EXTRA_HELP="        configure       Configure service parameters"
+extra_command "configure" "Configure service parameters"
 
 start() {
 	default_addr="44.127.254.254"
@@ -66,12 +65,9 @@ configure() {
 	uci set network.amprlan.netmask="$amprmask"
 	uci set network.amprwan.ipaddr="$amprhost"
 	uci set network.amprwan.netmask="$amprmask"
-	for i in $(seq 0 -1 -99); do
-		if [ ! -z $(uci -q get network.@rule[$i].src) ] && \
-			[ "$(uci get network.@rule[$i].lookup)" = "44" ] && \
-			[ "$(uci get network.@rule[$i].priority)" = "45" ]; then
-				uci set network.@rule[$i].src="$tunnet"
-				break
+	for i in $(uci show network | awk -F= "/@rule/ && /lookup='44'/ {split(\$1, conf, /[.=]/); print conf[2]}"); do
+		if [ "$(uci -q get "network.$i.priority")" = "45" ]; then
+			uci set "network.$i.src=$tunnet"
 		fi
 	done
 	uci commit network
