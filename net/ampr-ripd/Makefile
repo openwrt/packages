@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ampr-ripd
 PKG_VERSION:=2.4.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=https://yo2loj.ro/hamprojects
@@ -24,7 +24,8 @@ define Package/ampr-ripd
 endef
 
 define Package/ampr-ripd/description
-  Routing daemon written in C similar to Hessu's rip44d including optional resending of RIPv2 broadcasts for router injection.
+  Routing daemon written in C similar to Hessu's rip44d including
+  optional resending of RIPv2 broadcasts for router injection.
 endef
 
 CONFIGURE_VARS+= \
@@ -48,48 +49,39 @@ define Package/ampr-ripd/postrm
 [ -z "$${IPKG_INSTROOT}" ] || exit 0
 
 echo "Removing firewall rules..."
-for i in $$(seq 99 -1 0); do
-   if [ $$(uci -q get firewall.@rule[$$i]) ]; then
-      name=$$(uci get firewall.@rule[$$i].name)
-      if [ "$$name" = "Net 44 ICMP Echo Request" ] \
-         || [ "$$name" = "Net 44 Router ICMP" ]    \
-         || [ "$$name" = "ipip" ]; then
-         uci del firewall.@rule[$$i]
-      fi
-   fi
-done
+uci show firewall | grep "@rule" \
+   | awk -F= '/name='\''(Net 44 ICMP Echo Request|Net 44 Router ICMP|ipip)'\''/ {split($$1, conf, /\./); print conf[2]}' \
+   | sort -r \
+   | while read i; do
+      uci del firewall.$$i
+   done
 uci commit firewall
 
 echo "Removing network rules..."
-for i in $$(seq 99 -1 0); do
-   if [ $$(uci -q get network.@rule[$$i]) ]; then
-      lookup=$$(uci get network.@rule[$$i].lookup)
-      if [ "$$lookup" = "44" ]; then
-         uci del network.@rule[$$i]
-      fi
-   fi
-done
+uci show network \
+   | awk -F= '/lookup='\''44'\''/ {split($$1, conf, /\./); print conf[2]}' \
+   | sort -r \
+   | while read i; do
+      uci del network.$$i
+   done
 uci commit network
 
 echo "Removing firewall zone forwarding rules..."
-for i in $$(seq 99 -1 0); do
-   if [ $$(uci -q get firewall.@forwarding[$$i]) ]; then
-      name=$$(uci get firewall.@forwarding[$$i].src)
-      if [ "$$name" = "amprlan" ] || [ "$$name" = "amprwan" ]; then
-         uci del firewall.@forwarding[$$i]
-      fi
-   fi
-done
+uci show firewall | grep "@forwarding" \
+   | awk -F= '/src='\''(amprwan|amprlan)'\''/ {split($$1, conf, /\./); print conf[2]}' \
+   | sort -r \
+   | while read i; do
+      uci del firewall.$$i
+   done
+uci commit firewall
 
 echo "Removing firewall zones..."
-for i in $$(seq 99 -1 0); do
-   if [ $$(uci -q get firewall.@zone[$$i]) ]; then
-      name=$$(uci get firewall.@zone[$$i].name)
-      if [ "$$name" = "amprlan" ] || [ "$$name" = "amprwan" ]; then
-         uci del firewall.@zone[$$i]
-      fi
-   fi
-done
+uci show firewall | grep "@zone" \
+   | awk -F= '/name='\''(amprwan|amprlan)'\''/ {split($$1, conf, /\./); print conf[2]}' \
+   | sort -r \
+   | while read i; do
+      uci del firewall.$$i
+   done
 uci commit firewall
 
 echo "Removing network interfaces..."
