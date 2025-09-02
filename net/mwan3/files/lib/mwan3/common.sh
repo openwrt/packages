@@ -63,12 +63,12 @@ mwan3_get_src_ip()
 	if [ "$family" = "ipv4" ]; then
 		addr_cmd='network_get_ipaddr'
 		default_ip="0.0.0.0"
-		sed_str='s/ *inet \([^ \/]*\).*/\1/;T; pq'
+		sed_str='s/ *inet \([^ \/]*\).*/\1/;T;p;q'
 		IP="$IP4"
 	elif [ "$family" = "ipv6" ]; then
 		addr_cmd='network_get_ipaddr6'
 		default_ip="::"
-		sed_str='s/ *inet6 \([^ \/]*\).* scope.*/\1/;T; pq'
+		sed_str='s/ *inet6 \([^ \/]*\).* scope.*/\1/;T;p;q'
 		IP="$IP6"
 	fi
 
