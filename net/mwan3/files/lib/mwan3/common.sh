@@ -74,8 +74,33 @@ mwan3_get_src_ip()
 
 	$addr_cmd _src_ip "$true_iface"
 	if [ -z "$_src_ip" ]; then
-		network_get_device device $true_iface
-		_src_ip=$($IP address ls dev $device 2>/dev/null | sed -ne "$sed_str")
+		if [ "$family" = "ipv6" ]; then
+			# on IPv6-PD interfaces (like PPPoE interfaces) we don't
+			# have a real address, just a prefix, that can be delegated
+			# to interfaces, because using :: (the fallback above) or
+			# the local address (fe80:... which will be returned from
+			# the sed_str expression defined above) will not work
+			# (reliably, if at all) try to find an address which we can
+			# use instead
+			network_get_prefix6 _src_ip "$true_iface"
+			if [ -n "$_src_ip" ]; then
+				# got a prefix like 2001:xxxx:yyyy::/48, clean it up to
+				# only contain the prefix -> 2001:xxxx:yyyy
+				_src_ip=$(echo "$_src_ip" | sed -e 's;:*/.*$;;')
+				# find an interface with a delegated address, and use
+				# it, this would be sth like 2001:xxxx:yyyy:zzzz:...
+				# we just select the first address that matches the prefix
+				# NOTE: is there a better/more reliable way to get a
+				#       usable address to use as source for pings here?
+				local pfx_sed
+				pfx_sed='s/ *inet6 \('"$_src_ip"':[0-6a-f:]\+\).* scope.*/\1/'
+				_src_ip=$($IP address ls | sed -ne "${pfx_sed};T;p;q")
+			fi
+		fi
+		if [ -z "$_src_ip" ]; then
+			network_get_device device $true_iface
+			_src_ip=$($IP address ls dev $device 2>/dev/null | sed -ne "$sed_str")
+		fi
 		if [ -n "$_src_ip" ]; then
 			LOG warn "no src $family address found from netifd for interface '$true_iface' dev '$device' guessing $_src_ip"
 		else
