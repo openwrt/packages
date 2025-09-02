@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=domoticz
 PKG_VERSION:=2023.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/domoticz/domoticz/tar.gz/$(PKG_VERSION)?
@@ -20,7 +20,7 @@ PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=License.txt
 PKG_CPE_ID:=cpe:/a:domoticz:domoticz
 
-PKG_BUILD_DEPENDS:=python3 minizip cereal
+PKG_BUILD_DEPENDS:=python3 minizip cereal boost
 PKG_BUILD_FLAGS:=no-mips16 lto
 
 include $(INCLUDE_DIR)/package.mk
@@ -35,7 +35,6 @@ define Package/domoticz
   DEPENDS:= \
 	+boost \
 	+boost-date_time \
-	+boost-system \
 	+boost-thread \
 	+jsoncpp \
 	+libcurl \
