@@ -24,8 +24,8 @@ include $(INCLUDE_DIR)/cmake.mk
 ifeq ($(filter $(ARCH),mips mips64 mipsel powerpc),)
   EXTRA_DEPENDS += +gperftools-runtime
 endif
-ifeq ($(filter $(ARCH),x86_64),$(ARCH))
-  EXTRA_DEPENDS += +hyperscan-runtime
+ifeq ($(filter $(ARCH),x86_64 aarch64),$(ARCH))
+  EXTRA_DEPENDS += +vectorscan-runtime
   CMAKE_OPTIONS += -DHS_INCLUDE_DIRS=$(STAGING_DIR)/usr/include/hs
 endif
 
