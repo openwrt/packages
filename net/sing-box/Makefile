@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sing-box
 PKG_VERSION:=1.12.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/SagerNet/sing-box/tar.gz/v$(PKG_VERSION)?
@@ -24,13 +24,18 @@ GO_PKG_LDFLAGS_X:=$(GO_PKG)/constant.Version=$(PKG_VERSION)
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
 
-define Package/sing-box
+define Package/sing-box-default
   TITLE:=The universal proxy platform
   SECTION:=net
   CATEGORY:=Network
   URL:=https://sing-box.sagernet.org
   DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle +kmod-inet-diag +kmod-tun
   USERID:=sing-box=5566:sing-box=5566
+endef
+
+define Package/sing-box
+  $(Package/sing-box-default)
+  TITLE+= (full)
   VARIANT:=full
   DEFAULT_VARIANT:=1
 endef
@@ -41,8 +46,8 @@ define Package/sing-box/description
 endef
 
 define Package/sing-box-tiny
-  $(Package/sing-box)
-  TITLE+=(tiny)
+  $(Package/sing-box-default)
+  TITLE+= (tiny)
   PROVIDES:=sing-box
   VARIANT:=tiny
   CONFLICTS:=sing-box
