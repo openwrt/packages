@@ -74,6 +74,11 @@ start_service() {
 	procd_add_jail_mount_rw "$config_dir"
 	procd_add_jail_mount_rw "$work_dir"
 
+	# acme cert folders should be made readable with chown
+	# or by using setfacl from the acl package, e.g.,
+	# by having a line like this in /etc/crontabs/root:
+	# @reboot setfacl -R -m g:adguardhome:r-x /etc/acme/example.com_ecc
+	[ -d '/etc/acme' ] && procd_add_jail_mount /etc/acme
 	procd_add_jail_mount /etc/hosts
 	procd_add_jail_mount /etc/ssl/certs
 	config_list_foreach config jail_mount procd_add_jail_mount
