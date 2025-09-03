@@ -1,0 +1,18 @@
+--- a/include/config.h
++++ b/include/config.h
+@@ -46,6 +46,7 @@
+ #define PID_PATH    "/var/run/port-mirroring.pid"
+ 
+ // program-wide configuration settings and variables
++#pragma pack(push, 1)
+ struct pm_cfg
+ {
+     char        *cfg_file;              /* path to configuration file       */
+@@ -61,6 +62,7 @@ struct pm_cfg
+     time_t      init_time;              /* used to check for timeouts       */
+     int         packet_count;           /* number of packets processed      */
+ };
++#pragma pack(pop)
+ 
+ void find_cfg(struct pm_cfg *cfg);
+ char * printMACStr(const char *mac);
