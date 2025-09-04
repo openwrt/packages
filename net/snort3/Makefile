@@ -22,16 +22,23 @@ PKG_CPE_ID:=cpe:/a:snort:snort
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
+ifeq ($(filter $(ARCH),mips mips64 mipsel powerpc),)
+  EXTRA_DEPENDS += +gperftools-runtime
+endif
+ifeq ($(filter $(ARCH),x86_64 aarch64),$(ARCH))
+  EXTRA_DEPENDS += +vectorscan-runtime
+  CMAKE_OPTIONS += -DHS_INCLUDE_DIRS=$(STAGING_DIR)/usr/include/hs
+endif
+
+SNORT3DEPS:=+libstdcpp +libdaq3 +libdnet +libopenssl +libpcap +libpcre2 \
+    +libpthread +libuuid +zlib +libhwloc +libtirpc @HAS_LUAJIT_ARCH +luajit +libatomic \
+    +kmod-nft-queue +liblzma +ucode +ucode-mod-fs +ucode-mod-uci $(EXTRA_DEPENDS)
+
 define Package/snort3
   SUBMENU:=Firewall
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:= \
-	+@!(TARGET_powerpc||TARGET_mips||TARGET_mips64||TARGET_mipsel):gperftools-runtime \
-	+(TARGET_x86||TARGET_x86_64||TARGET_aarch64||TARGET_aarch64_generic||TARGET_aarch64_cortex-a53||TARGET_aarch64_cortex-a72||TARGET_aarch64_cortex-a710||TARGET_aarch64_cortex-x1||TARGET_bcm27xx_bcm2711||TARGET_bcm27xx_bcm2712||TARGET_rockchip_armv8||TARGET_mediatek_mt7622||TARGET_ipq807x||TARGET_layerscape_armv8||TARGET_qcom_ipq60xx):vectorscan-runtime \
-	+libstdcpp +libdaq3 +libdnet +libopenssl +libpcap +libpcre2 +libpthread +libuuid \
-	+zlib +libhwloc +libtirpc @HAS_LUAJIT_ARCH +luajit +libatomic \
-	+kmod-nft-queue +liblzma +ucode +ucode-mod-fs +ucode-mod-uci
+  DEPENDS:=$(SNORT3DEPS)
   TITLE:=Lightweight Network Intrusion Detection System
   URL:=http://www.snort.org/
   MENU:=1
@@ -44,11 +51,6 @@ define Package/snort3/description
   analysis and pattern matching in order to detect anomalies, misuse and
   attacks.
 endef
-
-# Hyperscan only builds for x86
-ifdef CONFIG_TARGET_x86_64
-	CMAKE_OPTIONS += -DHS_INCLUDE_DIRS=$(STAGING_DIR)/usr/include/hs
-endif
 
 CMAKE_OPTIONS += \
 	-DUSE_TIRPC:BOOL=YES \
