@@ -32,6 +32,7 @@ MESON_ARGS += \
 	-Dman=false \
 	-Dapparmor=false \
 	-Dselinux=false \
+	-Ddistrosysconfdir=/etc/default \
 	-Dseccomp=$(if $(CONFIG_LXC_SECCOMP),true,false) \
 	-Dexamples=false \
 	-Db_pie=true \
