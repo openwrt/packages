@@ -27,7 +27,7 @@ define Package/sumo
   CATEGORY:=Utilities
   TITLE:=SUMO - Simulation of Urban MObility
   URL:=https://sumo.dlr.de/
-  DEPENDS:=+libxerces-c +zlib
+  DEPENDS:=+libfmt +libxerces-c +zlib
 endef
 
 define Package/sumo/description
