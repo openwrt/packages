@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=i2pd
 PKG_VERSION:=2.55.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_BUILD_PARALLEL:=1
 
 PKG_SOURCE_PROTO:=git
@@ -29,8 +29,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/i2pd
 	SECTION:=net
 	CATEGORY:=Network
-	DEPENDS:=+libopenssl +boost +boost-system \
-	         +boost-program_options +libatomic +zlib
+	DEPENDS:=+libopenssl +boost +boost-program_options +libatomic +zlib
 	TITLE:=full-featured C++ implementation of I2P client
 	URL:=https://github.com/PurpleI2P/i2pd
 	USERID:=i2pd:i2pd
