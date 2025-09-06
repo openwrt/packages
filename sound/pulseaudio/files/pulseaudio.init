@@ -23,7 +23,7 @@ start_service() {
 	chmod 664 /dev/snd/* /dev/mixer /dev/dsp
 
 	procd_open_instance
-	procd_set_param command $PROG --system --disallow-exit --disallow-module-loading --disable-shm --exit-idle-time=-1 --realtime=false
+	procd_set_param command $PROG --system --disallow-exit --disable-shm --exit-idle-time=-1 --realtime=false
 	procd_close_instance
 }
 
