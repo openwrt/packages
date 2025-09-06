@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=snort3
 PKG_VERSION:=3.9.3.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
@@ -39,6 +39,7 @@ define Package/snort3
   SECTION:=net
   CATEGORY:=Network
   DEPENDS:=$(SNORT3DEPS)
+  USERID:=snort=975:snort=975
   TITLE:=Lightweight Network Intrusion Detection System
   URL:=http://www.snort.org/
   MENU:=1
@@ -140,6 +141,8 @@ define Package/snort3/install
 	$(INSTALL_CONF) \
 		./files/snort.config \
 		$(1)/etc/config/snort
+	$(INSTALL_DIR) $(1)/etc/capabilities
+	$(INSTALL_DATA) ./files/snort.json $(1)/etc/capabilities
 	
 	sed \
 		-i \
