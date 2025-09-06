@@ -38,15 +38,28 @@ start_service() {
 	if [ "$manual" = 0 ]; then
 		local config_file=$($MGR setup)
 		procd_set_param command "$PROG" -q -c "${config_file}"
+		jail
 	else
 		procd_set_param command $PROG -q -i "$interface" -c "${config_dir%/}/snort.lua" --tweaks local
 		procd_set_param env SNORT_LUA_PATH="$config_dir"
 		procd_set_param file $CONFIGFILE
+		jail
 	fi
 	procd_set_param respawn
 	procd_set_param stdout 0
 	procd_set_param stderr 1
 	procd_close_instance
+}
+
+jail()
+{
+	[ -x /sbin/ujail -a -e /etc/capabilities/snort.json ] && {
+		procd_add_jail snort
+		procd_set_param capabilities /etc/capabilities/snort.json
+		procd_set_param user snort
+		procd_set_param group snort
+		procd_set_param no_new_privs 1
+	}
 }
 
 stop_service()
