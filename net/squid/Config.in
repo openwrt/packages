@@ -85,6 +85,4 @@ if PACKAGE_squid
 		bool "Use libxml2 - Gnome XML library"
 		default n
 
-	comment "Additional tools"
-
 endif
