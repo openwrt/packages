@@ -78,67 +78,33 @@ endef
 
 define Package/snort3/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) \
-		$(PKG_INSTALL_DIR)/usr/bin/snort  \
-		$(1)/usr/bin/
-
-	$(INSTALL_BIN) \
-		$(PKG_INSTALL_DIR)/usr/bin/snort2lua  \
-		$(1)/usr/bin/
-
-	$(INSTALL_BIN) \
-		$(PKG_INSTALL_DIR)/usr/bin/u2{boat,spewfoo} \
-		$(1)/usr/bin/
-
-	$(INSTALL_BIN) \
-		./files/snort-{mgr,rules} \
-		$(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/snort $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/snort2lua $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/u2{boat,spewfoo} $(1)/usr/bin/
+	$(INSTALL_BIN) ./files/snort-{mgr,rules} $(1)/usr/bin/
 
 	$(INSTALL_DIR) $(1)/usr/lib/snort
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/snort/daq/daq_hext.so \
-		$(1)/usr/lib/snort/
-
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/lib/snort/daq/daq_file.so \
-		$(1)/usr/lib/snort/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/snort/daq/daq_{hext,file}.so $(1)/usr/lib/snort/
 
 	$(INSTALL_DIR) $(1)/usr/share/lua
-	$(CP) \
-		$(PKG_INSTALL_DIR)/usr/include/snort/lua/snort_plugin.lua \
-		$(1)/usr/share/lua/
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/snort/lua/snort_plugin.lua $(1)/usr/share/lua/
 
 	$(INSTALL_DIR) $(1)/usr/share/snort
-	$(INSTALL_CONF) \
-		./files/main.uc \
-		$(1)/usr/share/snort/
+	$(INSTALL_CONF) ./files/main.uc $(1)/usr/share/snort/
 
 	$(INSTALL_DIR) $(1)/usr/share/snort/templates
-	$(INSTALL_CONF) \
-		./files/nftables.uc \
-		$(1)/usr/share/snort/templates/
-	$(INSTALL_CONF) \
-		./files/snort.uc \
-		$(1)/usr/share/snort/templates/
+	$(INSTALL_CONF) ./files/{nftables,snort}.uc $(1)/usr/share/snort/templates/
 
 	$(INSTALL_DIR) $(1)/etc/snort/{rules,lists,builtin_rules,so_rules}
 
-	$(INSTALL_CONF) \
-		$(PKG_INSTALL_DIR)/usr/etc/snort/*.lua \
-		$(1)/etc/snort
-	$(INSTALL_CONF) \
-		$(PKG_INSTALL_DIR)/usr/etc/snort/file_magic.rules \
-		$(1)/etc/snort
+	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/usr/etc/snort/*.lua $(1)/etc/snort
+	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/usr/etc/snort/file_magic.rules $(1)/etc/snort
 
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) \
-		./files/snort.init \
-		$(1)/etc/init.d/snort
+	$(INSTALL_BIN) ./files/snort.init $(1)/etc/init.d/snort
 
 	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_CONF) \
-		./files/snort.config \
-		$(1)/etc/config/snort
+	$(INSTALL_CONF) ./files/snort.config $(1)/etc/config/snort
 	
 	sed \
 		-i \
