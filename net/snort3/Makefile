@@ -105,22 +105,6 @@ define Package/snort3/install
 
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/snort.config $(1)/etc/config/snort
-	
-	sed \
-		-i \
-		-e "/^-- HOME_NET and EXTERNAL_NET/ i -- The values for the two variables HOME_NET and EXTERNAL_NET have been" \
-		-e "/^-- HOME_NET and EXTERNAL_NET/ i -- moved to /etc/config/snort, so do not modify them here without good" \
-		-e "/^-- HOME_NET and EXTERNAL_NET/ i -- reason.\n" \
-		-e 's/^\(HOME_NET\s\+=\)/--\1/g' \
-		-e 's/^\(EXTERNAL_NET\s\+=\)/--\1/g' \
-		$(1)/etc/snort/snort.lua
-	sed \
-		-i -e "s/^\\(RULE_PATH\\s\\+=\\).*/\\1 'rules'/g" \
-		-e "s/^\\(BUILTIN_RULE_PATH\\s\\+=\\).*/\\1 'builtin_rules'/g" \
-		-e "s/^\\(PLUGIN_RULE_PATH\\s\\+=\\).*/\\1 'so_rules'/g" \
-		-e "s/^\\(WHITE_LIST_PATH\\s\\+=\\).*/\\1 'lists'/g" \
-		-e "s/^\\(BLACK_LIST_PATH\\s\\+=\\).*/\\1 'lists'/g" \
-		$(1)/etc/snort/snort_defaults.lua
 endef
 
 $(eval $(call BuildPackage,snort3))
