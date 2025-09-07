@@ -1,0 +1,43 @@
+--- a/lua/snort.lua
++++ b/lua/snort.lua
+@@ -19,13 +19,17 @@
+ -- 1. configure defaults
+ ---------------------------------------------------------------------------
+ 
++-- The values for the two variables HOME_NET and EXTERNAL_NET have been
++-- moved to /etc/config/snort, so do not modify them here without good
++-- reason.
++
+ -- HOME_NET and EXTERNAL_NET must be set now
+ -- setup the network addresses you are protecting
+-HOME_NET = 'any'
++--HOME_NET = 'any'
+ 
+ -- set up the external network addresses.
+ -- (leave as "any" in most situations)
+-EXTERNAL_NET = 'any'
++--EXTERNAL_NET = 'any'
+ 
+ include 'snort_defaults.lua'
+ 
+--- a/lua/snort_defaults.lua
++++ b/lua/snort_defaults.lua
+@@ -19,13 +19,13 @@
+ ---------------------------------------------------------------------------
+ 
+ -- Path to your rules files (this can be a relative path)
+-RULE_PATH = '../rules'
+-BUILTIN_RULE_PATH = '../builtin_rules'
+-PLUGIN_RULE_PATH = '../so_rules'
++RULE_PATH = 'rules'
++BUILTIN_RULE_PATH = 'builtin_rules'
++PLUGIN_RULE_PATH = 'so_rules'
+ 
+ -- If you are using reputation preprocessor set these
+-WHITE_LIST_PATH = '../lists'
+-BLACK_LIST_PATH = '../lists'
++WHITE_LIST_PATH = 'lists'
++BLACK_LIST_PATH = 'lists'
+ 
+ ---------------------------------------------------------------------------
+ -- default networks - used in Talos rules
