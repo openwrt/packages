@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=avahi
 PKG_VERSION:=0.8
-PKG_RELEASE:=9
+PKG_RELEASE:=10
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/lathiat/avahi/releases/download/v$(PKG_VERSION) \
@@ -32,6 +32,7 @@ define Package/avahi/Default
   CATEGORY:=Network
   TITLE:=An mDNS/DNS-SD implementation
   URL:=http://www.avahi.org/
+  USERID:=avahi=105:avahi=105
 endef
 
 define Package/avahi/Default/description
@@ -95,7 +96,6 @@ define Package/avahi-nodbus-daemon
   SUBMENU:=IP Addresses and Names
   DEPENDS:=+libavahi-nodbus-support +libexpat +librt +libdaemon
   TITLE+= (daemon)
-  USERID:=avahi=105:avahi=105
 endef
 
 define Package/avahi-daemon/description
@@ -270,11 +270,11 @@ CONFIGURE_ARGS += \
 	--disable-tests \
 	--with-xml=expat \
 	--with-distro=none \
-	--with-avahi-user=nobody \
-	--with-avahi-group=nogroup \
-	--with-avahi-priv-access-group=nogroup \
-	--with-autoipd-user=nobody \
-	--with-autoipd-group=nogroup
+	--with-avahi-user=avahi \
+	--with-avahi-group=avahi \
+	--with-avahi-priv-access-group=avahi \
+	--with-autoipd-user=avahi \
+	--with-autoipd-group=avahi
 
 ifeq ($(BUILD_VARIANT),dbus)
 CONFIGURE_ARGS += \
