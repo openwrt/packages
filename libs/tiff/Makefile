@@ -17,7 +17,7 @@ PKG_HASH:=67160e3457365ab96c5b3286a0903aa6e78bdc44c4bc737d2e486bcecb6ba976
 
 PKG_MAINTAINER:=Jiri Slachta <jiri@slachta.eu>
 PKG_LICENSE:=libtiff
-PKG_LICENSE_FILES:=COPYRIGHT
+PKG_LICENSE_FILES:=LICENSE.md
 PKG_CPE_ID:=cpe:/a:libtiff:libtiff
 
 include $(INCLUDE_DIR)/package.mk
