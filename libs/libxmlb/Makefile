@@ -8,18 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libxmlb
-PKG_VERSION:=0.3.19
+PKG_VERSION:=0.3.23
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/hughsie/libxmlb/releases/download/$(PKG_VERSION)
-PKG_HASH:=0a3ec258b12dbf10e5fe840b2421c84137eb7cc1b09c3de6210f3f7d51733733
+PKG_HASH:=ab86eb2073592448a4e0263ab56e222de092c0a3964b66a8d696cac071c8ee3c
 
 PKG_MAINTAINER:=Lukas Voegl <lvoegl@tdt.de>
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=LICENSE
-
-PKG_BUILD_DEPENDS:=glib2/host
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -45,12 +43,11 @@ define Package/libxmlb/config
 endef
 
 MESON_ARGS += \
-	-Db_lto=true \
 	-Dgtkdoc=false \
 	-Dintrospection=false \
 	-Dtests=false \
-	-Dcli=false \
 	-Dstemmer=false \
+	-Dcli=$(if $(CONFIG_LIBXMLB_CLI),true,false) \
 	-Dlzma=$(if $(CONFIG_LIBXMLB_LZMA),enabled,disabled) \
 	-Dzstd=$(if $(CONFIG_LIBXMLB_ZSTD),enabled,disabled)
 
@@ -71,6 +68,10 @@ endef
 define Package/libxmlb/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libxmlb.so* $(1)/usr/lib
+
+	$(if $(CONFIG_LIBXMLB_CLI), \
+		$(INSTALL_DIR) $(1)/usr/bin; \
+		$(CP) $(PKG_INSTALL_DIR)/usr/bin/xb-tool $(1)/usr/bin)
 endef
 
 $(eval $(call BuildPackage,libxmlb))
