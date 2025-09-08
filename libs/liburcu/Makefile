@@ -13,8 +13,8 @@ PKG_VERSION:=0.15.3
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Daniel Salzman <daniel.salzman@nic.cz>
-PKG_LICENSE:=LGPL-2.1-or-later GPL-2.0-or-later MIT
-PKG_LICENSE_FILES:=lgpl-2.1.txt gpl-2.0.txt lgpl-relicensing.txt
+PKG_LICENSE:=LGPL-2.1-or-later GPL-2.0-only MIT
+PKG_LICENSE_FILES:=LICENCES/LGPL-2.1-or-later.txt LICENSES/GPL-2.0-only.txt LICENSES/MIT.txt lgpl-relicensing.md LICENSE.md
 
 PKG_SOURCE:=userspace-rcu-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://lttng.org/files/urcu/
