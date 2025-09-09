@@ -1,0 +1,18 @@
+--- a/src/ucode.c
++++ b/src/ucode.c
+@@ -110,13 +110,13 @@ __reader_get_value(uc_vm_t *vm, struct u
+ 		if (type == UHT_HASHTBL)
+ 			ucv_object_add(val, hash_key, ucv_boolean_new(true));
+ 		uht_for_each(r, iter, attr)
+-			ucv_object_add(val, iter.key, ucv_get(__reader_get_value(vm, r, iter.val, dump)));
++			ucv_object_add(val, iter.key, __reader_get_value(vm, r, iter.val, dump));
+ 		return val;
+ 	case UHT_ARRAY:
+ 		val = ucv_array_new(vm);
+ 		i = 0;
+ 		uht_for_each(r, iter, attr)
+-			ucv_array_set(val, i++, ucv_get(__reader_get_value(vm, r, iter.val, dump)));
++			ucv_array_set(val, i++, __reader_get_value(vm, r, iter.val, dump));
+ 		return val;
+ 	}
+ 
