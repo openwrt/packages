@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tiff
 PKG_VERSION:=4.7.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.osgeo.org/libtiff
@@ -17,7 +17,7 @@ PKG_HASH:=67160e3457365ab96c5b3286a0903aa6e78bdc44c4bc737d2e486bcecb6ba976
 
 PKG_MAINTAINER:=Jiri Slachta <jiri@slachta.eu>
 PKG_LICENSE:=libtiff
-PKG_LICENSE_FILES:=COPYRIGHT
+PKG_LICENSE_FILES:=LICENSE.md
 PKG_CPE_ID:=cpe:/a:libtiff:libtiff
 
 include $(INCLUDE_DIR)/package.mk
