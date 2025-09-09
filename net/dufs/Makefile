@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dufs
-PKG_VERSION:=0.44.0
-PKG_RELEASE:=2
+PKG_VERSION:=0.45.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/sigoden/dufs/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=940fe767946699bdecb9be24700f9abe5a08e913ff7edf1a5388c8a540ff1e0f
+PKG_HASH:=62aa2cadd77e1bd9d96c77cbd832a53ffc364301c549001bf8fd9d023cbd8ab1
 
 PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
 PKG_LICENSE:=Apache-2.0 MIT
