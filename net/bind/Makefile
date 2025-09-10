@@ -75,49 +75,49 @@ endef
 
 define Package/bind-check
   $(call Package/bind/Default)
-  TITLE+= administration tools (named-checkconf and named-checkzone only)
+  TITLE+= tools (named-checkconf, named-checkzone)
 endef
 
 define Package/bind-client
   $(call Package/bind/Default)
-  TITLE+= dynamic DNS client
+  TITLE+= tools (nsupdate)
 endef
 
 define Package/bind-ddns-confgen
   $(call Package/bind/Default)
-  TITLE+= administration tools (ddns-confgen and tsig-keygen only)
+  TITLE+= tools (ddns-confgen, tsig-keygen)
 endef
 
 define Package/bind-delv
   $(call Package/bind/Default)
-  TITLE+= administration tools (delv only)
+  TITLE+= tools (delv)
 endef
 
 define Package/bind-dig
   $(call Package/bind/Default)
-  TITLE+= DNS excavation tool
+  TITLE+= tools (dig)
 endef
 
 define Package/bind-dnssec
   $(call Package/bind/Default)
-  TITLE+= administration tools (dnssec-keygen, dnssec-settime and dnssec-signzone only)
+  TITLE+= tools (dnssec-keygen, dnssec-settime, dnssec-signzone)
 endef
 
 define Package/bind-host
   $(call Package/bind/Default)
-  TITLE+= simple DNS client
+  TITLE+= tools (host)
 endef
 
 define Package/bind-nslookup
   $(call Package/bind/Default)
-  TITLE+= nslookup utility
+  TITLE+= tools (nslookup)
   ALTERNATIVES:= \
 	  200:/usr/bin/nslookup:/usr/libexec/nslookup-bind
 endef
 
 define Package/bind-rndc
   $(call Package/bind/Default)
-  TITLE+= administration tools (rndc and rndc-confgen only)
+  TITLE+= tools (rndc, rndc-confgen)
 endef
 
 define Package/bind-server
