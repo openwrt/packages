@@ -131,10 +131,6 @@ define Package/bind-server
   PROVIDES:=bind-server-filter-aaaa
 endef
 
-define Package/bind-server/config
-	source "$(SOURCE)/Config.in"
-endef
-
 define Package/bind-tools
   $(call Package/bind/Default)
   TITLE+= administration tools (all)
@@ -156,6 +152,12 @@ define Package/bind-tools
 	bind-host (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
 	bind-nslookup (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
 	bind-rndc (=$(PKG_VERSION)-r$(PKG_RELEASE))
+endef
+
+define Package/bind-tools/config
+	# These options don't actually relate to bind-tools, they are generic.
+	# Putting them here makes sure they end up at the end of the menu.
+	source "$(SOURCE)/Config.in"
 endef
 
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed \
