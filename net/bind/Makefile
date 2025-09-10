@@ -94,6 +94,7 @@ define Package/bind-tools
   TITLE+= administration tools (all)
 	DEPENDS:= \
 	+bind-check \
+	+bind-delv \
 	+bind-dig \
 	+bind-nslookup \
 	+bind-dnssec \
@@ -110,6 +111,11 @@ endef
 define Package/bind-check
   $(call Package/bind/Default)
   TITLE+= administration tools (named-checkconf and named-checkzone only)
+endef
+
+define Package/bind-delv
+  $(call Package/bind/Default)
+  TITLE+= administration tools (delv only)
 endef
 
 define Package/bind-dnssec
@@ -217,7 +223,7 @@ define Package/bind-client/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/nsupdate $(1)/usr/bin/
 endef
 
-define Package/bind-tools/install
+define Package/bind-delv/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/delv $(1)/usr/bin/
 endef
@@ -268,6 +274,7 @@ $(eval $(call BuildPackage,bind-client))
 $(eval $(call BuildPackage,bind-tools))
 $(eval $(call BuildPackage,bind-rndc))
 $(eval $(call BuildPackage,bind-check))
+$(eval $(call BuildPackage,bind-delv))
 $(eval $(call BuildPackage,bind-dnssec))
 $(eval $(call BuildPackage,bind-host))
 $(eval $(call BuildPackage,bind-dig))
