@@ -29,21 +29,41 @@ PKG_BUILD_FLAGS:=no-mips16
 PKG_BUILD_PARALLEL:=1
 
 PKG_CONFIG_DEPENDS := \
-	CONFIG_BIND_LIBJSON \
-	CONFIG_BIND_LIBXML2 \
-	CONFIG_BIND_JEMALLOC \
 	CONFIG_BIND_ENABLE_DOH \
-	CONFIG_BIND_ENABLE_GSSAPI
+	CONFIG_BIND_ENABLE_GSSAPI \
+	CONFIG_BIND_JEMALLOC \
+	CONFIG_BIND_LIBJSON \
+	CONFIG_BIND_LIBXML2
 
 PKG_BUILD_DEPENDS += \
-	BIND_LIBXML2:libxml2 \
+	BIND_JEMALLOC:libjemalloc \
 	BIND_LIBJSON:libjson-c \
-	BIND_JEMALLOC:libjemalloc
+	BIND_LIBXML2:libxml2
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
 DISABLE_NLS:=
+
+define Package/bind-libs
+  SECTION:=libs
+  CATEGORY:=Libraries
+  DEPENDS:= \
+	$(ATOMIC64_DEPENDS) \
+	+libopenssl \
+	+libpthread \
+	+libuv \
+	+liburcu \
+	+zlib \
+	+BIND_ENABLE_DOH:libnghttp2 \
+	+BIND_ENABLE_GSSAPI:krb5-libs \
+	+BIND_ENABLE_GSSAPI:libcomerr \
+	+BIND_JEMALLOC:libjemalloc \
+	+BIND_LIBJSON:libjson-c \
+	+BIND_LIBXML2:libxml2
+  TITLE:=bind shared libraries
+  URL:=https://www.isc.org/software/bind
+endef
 
 define Package/bind/Default
   SECTION:=net
@@ -55,23 +75,51 @@ define Package/bind/Default
   SUBMENU:=IP Addresses and Names
 endef
 
-define Package/bind-libs
-  SECTION:=libs
-  CATEGORY:=Libraries
-  DEPENDS:=+libopenssl \
-	+zlib \
-	+libpthread \
-	$(ATOMIC64_DEPENDS) \
-	+libuv \
-	+liburcu \
-	+BIND_ENABLE_DOH:libnghttp2 \
-	+BIND_ENABLE_GSSAPI:krb5-libs \
-	+BIND_ENABLE_GSSAPI:libcomerr \
-	+BIND_LIBXML2:libxml2 \
-	+BIND_LIBJSON:libjson-c \
-	+BIND_JEMALLOC:libjemalloc
-  TITLE:=bind shared libraries
-  URL:=https://www.isc.org/software/bind
+define Package/bind-check
+  $(call Package/bind/Default)
+  TITLE+= administration tools (named-checkconf and named-checkzone only)
+endef
+
+define Package/bind-client
+  $(call Package/bind/Default)
+  TITLE+= dynamic DNS client
+endef
+
+define Package/bind-ddns-confgen
+  $(call Package/bind/Default)
+  TITLE+= administration tools (ddns-confgen and tsig-keygen only)
+endef
+
+define Package/bind-delv
+  $(call Package/bind/Default)
+  TITLE+= administration tools (delv only)
+endef
+
+define Package/bind-dig
+  $(call Package/bind/Default)
+  TITLE+= DNS excavation tool
+endef
+
+define Package/bind-dnssec
+  $(call Package/bind/Default)
+  TITLE+= administration tools (dnssec-keygen, dnssec-settime and dnssec-signzone only)
+endef
+
+define Package/bind-host
+  $(call Package/bind/Default)
+  TITLE+= simple DNS client
+endef
+
+define Package/bind-nslookup
+  $(call Package/bind/Default)
+  TITLE+= nslookup utility
+  ALTERNATIVES:= \
+	  200:/usr/bin/nslookup:/usr/libexec/nslookup-bind
+endef
+
+define Package/bind-rndc
+  $(call Package/bind/Default)
+  TITLE+= administration tools (rndc and rndc-confgen only)
 endef
 
 define Package/bind-server
@@ -87,74 +135,27 @@ define Package/bind-server/config
 	source "$(SOURCE)/Config.in"
 endef
 
-define Package/bind-client
-  $(call Package/bind/Default)
-  TITLE+= dynamic DNS client
-endef
-
 define Package/bind-tools
   $(call Package/bind/Default)
   TITLE+= administration tools (all)
   DEPENDS:= \
 	+bind-check \
+	+bind-ddns-confgen \
 	+bind-delv \
 	+bind-dig \
-	+bind-nslookup \
 	+bind-dnssec \
 	+bind-host \
-	+bind-rndc \
-	+bind-ddns-confgen
+	+bind-nslookup \
+	+bind-rndc
   EXTRA_DEPENDS:= \
 	bind-check (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
+	bind-ddns-confgen (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
 	bind-delv (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
 	bind-dig (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
-	bind-nslookup (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
 	bind-dnssec (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
 	bind-host (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
-	bind-rndc (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
-	bind-ddns-confgen (=$(PKG_VERSION)-r$(PKG_RELEASE))
-endef
-
-define Package/bind-rndc
-  $(call Package/bind/Default)
-  TITLE+= administration tools (rndc and rndc-confgen only)
-endef
-
-define Package/bind-check
-  $(call Package/bind/Default)
-  TITLE+= administration tools (named-checkconf and named-checkzone only)
-endef
-
-define Package/bind-delv
-  $(call Package/bind/Default)
-  TITLE+= administration tools (delv only)
-endef
-
-define Package/bind-dnssec
-  $(call Package/bind/Default)
-  TITLE+= administration tools (dnssec-keygen, dnssec-settime and dnssec-signzone only)
-endef
-
-define Package/bind-host
-  $(call Package/bind/Default)
-  TITLE+= simple DNS client
-endef
-
-define Package/bind-dig
-  $(call Package/bind/Default)
-  TITLE+= DNS excavation tool
-endef
-
-define Package/bind-nslookup
-  $(call Package/bind/Default)
-  TITLE+= nslookup utility
-  ALTERNATIVES:= \
-	  200:/usr/bin/nslookup:/usr/libexec/nslookup-bind
-endef
-
-define Package/bind-ddns-confgen
-  $(call Package/bind/Default)
-  TITLE+= administration tools (ddns-confgen and tsig-keygen only)
+	bind-nslookup (=$(PKG_VERSION)-r$(PKG_RELEASE)), \
+	bind-rndc (=$(PKG_VERSION)-r$(PKG_RELEASE))
 endef
 
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed \
@@ -213,6 +214,56 @@ define Package/bind-libs/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so* $(1)/usr/lib
 endef
 
+define Package/bind-check/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/named-checkconf $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/named-checkzone $(1)/usr/bin/
+endef
+
+define Package/bind-client/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/nsupdate $(1)/usr/bin/
+endef
+
+define Package/bind-ddns-confgen/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/ddns-confgen $(1)/usr/sbin/ddns-confgen
+	$(LN) -s ddns-confgen $(1)/usr/sbin/tsig-keygen
+endef
+
+define Package/bind-delv/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/delv $(1)/usr/bin/
+endef
+
+define Package/bind-dig/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dig $(1)/usr/bin/
+endef
+
+define Package/bind-dnssec/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dnssec-keygen $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dnssec-settime $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dnssec-signzone $(1)/usr/bin/
+endef
+
+define Package/bind-host/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/host $(1)/usr/bin/
+endef
+
+define Package/bind-nslookup/install
+	$(INSTALL_DIR) $(1)/usr/libexec
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/nslookup $(1)/usr/libexec/nslookup-bind
+endef
+
+define Package/bind-rndc/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/rndc $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/rndc-confgen $(1)/usr/sbin/
+endef
+
 define Package/bind-server/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/named $(1)/usr/sbin/
@@ -230,69 +281,19 @@ define Package/bind-server/conffiles
 /etc/bind
 endef
 
-define Package/bind-client/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/nsupdate $(1)/usr/bin/
-endef
-
 define Package/bind-tools/install
 	true
 endef
 
-define Package/bind-delv/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/delv $(1)/usr/bin/
-endef
-
-define Package/bind-rndc/install
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/rndc $(1)/usr/sbin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/rndc-confgen $(1)/usr/sbin/
-endef
-
-define Package/bind-check/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/named-checkconf $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/named-checkzone $(1)/usr/bin/
-endef
-
-define Package/bind-dnssec/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dnssec-keygen $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dnssec-settime $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dnssec-signzone $(1)/usr/bin/
-endef
-
-define Package/bind-host/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/host $(1)/usr/bin/
-endef
-
-define Package/bind-dig/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dig $(1)/usr/bin/
-endef
-
-define Package/bind-nslookup/install
-	$(INSTALL_DIR) $(1)/usr/libexec
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/nslookup $(1)/usr/libexec/nslookup-bind
-endef
-
-define Package/bind-ddns-confgen/install
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/ddns-confgen $(1)/usr/sbin/ddns-confgen
-	$(LN) -s ddns-confgen $(1)/usr/sbin/tsig-keygen
-endef
-
 $(eval $(call BuildPackage,bind-libs))
-$(eval $(call BuildPackage,bind-server))
-$(eval $(call BuildPackage,bind-client))
-$(eval $(call BuildPackage,bind-tools))
-$(eval $(call BuildPackage,bind-rndc))
 $(eval $(call BuildPackage,bind-check))
+$(eval $(call BuildPackage,bind-client))
+$(eval $(call BuildPackage,bind-ddns-confgen))
 $(eval $(call BuildPackage,bind-delv))
+$(eval $(call BuildPackage,bind-dig))
 $(eval $(call BuildPackage,bind-dnssec))
 $(eval $(call BuildPackage,bind-host))
-$(eval $(call BuildPackage,bind-dig))
 $(eval $(call BuildPackage,bind-nslookup))
-$(eval $(call BuildPackage,bind-ddns-confgen))
+$(eval $(call BuildPackage,bind-rndc))
+$(eval $(call BuildPackage,bind-server))
+$(eval $(call BuildPackage,bind-tools))
