@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=snort3
 PKG_VERSION:=3.9.6.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/snort3/snort3/tar.gz/$(PKG_VERSION)?
@@ -28,8 +28,9 @@ define Package/snort3
   DEPENDS:=+libstdcpp +libdaq3 +libdnet +libopenssl +libpcap +libpcre2 \
     +libpthread +libuuid +zlib +libhwloc +USE_MUSL:libtirpc @HAS_LUAJIT_ARCH +luajit +libatomic \
     +kmod-nft-queue +liblzma +ucode +ucode-mod-fs +ucode-mod-uci \
-    +PACKAGE_gperftools-runtime:gperftools-runtime \
-    +PACKAGE_hyperscan-runtime:hyperscan-runtime
+    +PACKAGE_gperftools:gperftools \
+    +PACKAGE_vectorscan:vectorscan
+  USERID:=snort=975:snort=975
   TITLE:=Lightweight Network Intrusion Detection System
   URL:=http://www.snort.org/
   MENU:=1
