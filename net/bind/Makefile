@@ -127,10 +127,6 @@ define Package/bind-server
 	+bind-rndc
 endef
 
-define Package/bind-server/config
-	source "$(SOURCE)/Config.in"
-endef
-
 define Package/bind-tools
   $(call Package/bind/Default)
   TITLE+= administration tools (all)
@@ -143,6 +139,12 @@ define Package/bind-tools
 	+bind-host \
 	+bind-rndc \
 	+bind-ddns-confgen
+endef
+
+define Package/bind-tools/config
+	# These options don't actually relate to bind-tools, they are generic.
+	# Putting them here makes sure they end up at the end of the menu.
+	source "$(SOURCE)/Config.in"
 endef
 
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed \
