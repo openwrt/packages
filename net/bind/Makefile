@@ -74,7 +74,7 @@ endef
 define Package/bind/Default
   SECTION:=net
   CATEGORY:=Network
-  SUBMENU:=IP Addresses and Names
+  SUBMENU:=BIND
   TITLE:=bind
   URL:=https://www.isc.org/software/bind
   VARIANT:=without-gssapi
