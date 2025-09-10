@@ -84,12 +84,6 @@ define Package/bind-server/config
 	source "$(SOURCE)/Config.in"
 endef
 
-define Package/bind-server-filter-aaaa
-  $(call Package/bind-server)
-  DEPENDS:=bind-server
-  TITLE+= filter AAAA plugin
-endef
-
 define Package/bind-client
   $(call Package/bind/Default)
   TITLE+= dynamic DNS client
@@ -209,15 +203,13 @@ define Package/bind-server/install
 	$(INSTALL_DATA) ./files/bind/named.conf $(1)/etc/bind
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/named.init $(1)/etc/init.d/named
+	$(INSTALL_DIR) $(1)/usr/lib/bind
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/bind/filter-a.so $(1)/usr/lib/bind
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/bind/filter-aaaa.so $(1)/usr/lib/bind
 endef
 
 define Package/bind-server/conffiles
 /etc/bind
-endef
-
-define Package/bind-server-filter-aaaa/install
-	$(INSTALL_DIR) $(1)/usr/lib/bind
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/bind/filter-aaaa.so $(1)/usr/lib/bind
 endef
 
 define Package/bind-client/install
@@ -272,7 +264,6 @@ endef
 
 $(eval $(call BuildPackage,bind-libs))
 $(eval $(call BuildPackage,bind-server))
-$(eval $(call BuildPackage,bind-server-filter-aaaa))
 $(eval $(call BuildPackage,bind-client))
 $(eval $(call BuildPackage,bind-tools))
 $(eval $(call BuildPackage,bind-rndc))
