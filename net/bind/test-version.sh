@@ -2,7 +2,7 @@
 
 # shellcheck shell=busybox
 
-case "$PKG_NAME" in
+case "${PKG_NAME%-gssapi}" in
 bind-check)
 	named-checkconf -v 2>&1 | grep -F "$PKG_VERSION"
 	named-checkzone -v 2>&1 | grep -F "$PKG_VERSION"
