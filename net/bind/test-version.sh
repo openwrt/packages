@@ -12,6 +12,10 @@ bind-client)
 	nsupdate -V 2>&1 | grep -F "$PKG_VERSION"
 	;;
 
+bind-delv)
+	delv -v 2>&1 | grep -F "$PKG_VERSION"
+	;;
+
 bind-dig)
 	dig -v 2>&1 | grep -F "$PKG_VERSION"
 	;;
@@ -38,12 +42,9 @@ bind-server)
 	named -v 2>&1 | grep -F "$PKG_VERSION"
 	;;
 
-bind-tools)
-	delv -v 2>&1 | grep -F "$PKG_VERSION"
-	;;
-
 bind-ddns-confgen|\
-bind-libs)
+bind-libs|\
+bind-tools)
 	exit 0
 	;;
 
