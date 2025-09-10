@@ -1,4 +1,4 @@
-if PACKAGE_bind-server
+if PACKAGE_bind-server || PACKAGE_bind-server-gssapi
 
 config BIND_LIBJSON
 	bool
@@ -21,7 +21,7 @@ config BIND_LIBXML2
 		libxml2 package to be installed as well.
 endif
 
-if PACKAGE_bind-libs
+if PACKAGE_bind-libs || PACKAGE_bind-libs-gssapi
 
 config BIND_ENABLE_DOH
 	bool
@@ -32,14 +32,6 @@ config BIND_ENABLE_DOH
 		default.  This requires linking against libnghttp2.
 		You can disable DoHTTPS if you do not need it or need
 		to avoid the additional library dependency.
-
-config BIND_ENABLE_GSSAPI
-	bool
-	default n
-	prompt "Include GSSAPI support in bind"
-	help
-		BIND 9 supports GSSAPI. This depends on libcomerr and krb5-libs.
-		Disabled by default as krb5-libs is rather large.
 
 endif
 
