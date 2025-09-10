@@ -43,8 +43,7 @@ bind-tools)
 	;;
 
 bind-ddns-confgen|\
-bind-libs|\
-bind-server-filter-aaaa)
+bind-libs)
 	exit 0
 	;;
 
