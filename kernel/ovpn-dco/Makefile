@@ -10,7 +10,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=ovpn-dco
 PKG_VERSION:=0.2.20241216
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL=https://codeload.github.com/OpenVPN/ovpn-dco/tar.gz/v$(PKG_VERSION)?
@@ -25,7 +25,9 @@ include $(INCLUDE_DIR)/package.mk
 define KernelPackage/ovpn-dco-v2
   SUBMENU:=Network Support
   TITLE:=OpenVPN data channel offload
-  DEPENDS:=+kmod-crypto-aead +kmod-udptunnel4 +IPV6:kmod-udptunnel6
+  DEPENDS:= \
+	+kmod-udptunnel4 +IPV6:kmod-udptunnel6 \
+	+kmod-crypto-chacha20poly1305 +kmod-crypto-lib-chacha20 +kmod-crypto-lib-poly1305
   FILES:=$(PKG_BUILD_DIR)/drivers/net/ovpn-dco/ovpn-dco-v2.ko
   AUTOLOAD:=$(call AutoLoad,30,ovpn-dco-v2)
 endef
