@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sane-backends
-PKG_VERSION:=1.3.1
+PKG_VERSION:=1.4.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://gitlab.com/sane-project/backends/uploads/83bdbb6c9a115184c2d48f1fdc6847db/
-PKG_HASH:=aa82f76f409b88f8ea9793d4771fce01254d9b6549ec84d6295b8f59a3879a0c
+PKG_SOURCE_URL:=https://gitlab.com/-/project/429008/uploads/843c156420e211859e974f78f64c3ea3/
+PKG_HASH:=f99205c903dfe2fb8990f0c531232c9a00ec9c2c66ac7cb0ce50b4af9f407a72
 
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
 PKG_LICENSE:=GPL-2.0 GPL-2.0-or-later
