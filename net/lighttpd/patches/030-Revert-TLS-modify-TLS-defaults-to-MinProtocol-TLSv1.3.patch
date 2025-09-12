@@ -18,7 +18,7 @@ Signed-off-by: Glenn Strauss <gstrauss@gluelogic.com>
 
 --- a/src/mod_gnutls.c
 +++ b/src/mod_gnutls.c
-@@ -2181,7 +2181,7 @@ network_init_ssl (server *srv, plugin_co
+@@ -2184,7 +2184,7 @@ network_init_ssl (server *srv, plugin_co
       * GnuTLS by concatenating into a single priority string */
  
      buffer *b = srv->tmp_buf;
@@ -27,7 +27,7 @@ Signed-off-by: Glenn Strauss <gstrauss@gluelogic.com>
      buffer_copy_string_len(b, s->priority_base, strlen(s->priority_base));
      if (!buffer_is_blank(&s->priority_str)) {
          buffer_append_char(b, ':');
-@@ -3935,13 +3935,8 @@ mod_gnutls_ssl_conf_curves(server *srv,
+@@ -3943,13 +3943,8 @@ mod_gnutls_ssl_conf_curves(server *srv,
  static int
  mod_gnutls_ssl_conf_proto_val (server *srv, const buffer *b, int max)
  {
@@ -43,7 +43,7 @@ Signed-off-by: Glenn Strauss <gstrauss@gluelogic.com>
      else if (buffer_eq_icase_slen(b, CONST_STR_LEN("None"))) /*"disable" limit*/
          return max ? GNUTLS_TLS1_3 : GNUTLS_TLS1_0;
      else if (buffer_eq_icase_slen(b, CONST_STR_LEN("TLSv1.0")))
-@@ -3963,11 +3958,7 @@ mod_gnutls_ssl_conf_proto_val (server *s
+@@ -3971,11 +3966,7 @@ mod_gnutls_ssl_conf_proto_val (server *s
                        "GnuTLS: ssl.openssl.ssl-conf-cmd %s %s invalid; ignored",
                        max ? "MaxProtocol" : "MinProtocol", b->ptr);
      }
@@ -56,7 +56,7 @@ Signed-off-by: Glenn Strauss <gstrauss@gluelogic.com>
  }
  
  
-@@ -3997,11 +3988,9 @@ mod_gnutls_ssl_conf_proto (server *srv,
+@@ -4005,11 +3996,9 @@ mod_gnutls_ssl_conf_proto (server *srv,
          if (x < GNUTLS_TLS1_2) break;
          buffer_append_string_len(b, CONST_STR_LEN("+VERS-TLS1.2:"));
          __attribute_fallthrough__
@@ -70,7 +70,7 @@ Signed-off-by: Glenn Strauss <gstrauss@gluelogic.com>
  }
 --- a/src/mod_mbedtls.c
 +++ b/src/mod_mbedtls.c
-@@ -4737,8 +4737,6 @@ mod_mbedtls_ssl_conf_dhparameters(server
+@@ -4858,8 +4858,6 @@ mod_mbedtls_ssl_conf_dhparameters(server
  static void
  mod_mbedtls_ssl_conf_proto (server *srv, plugin_config_socket *s, const buffer *b, int max)
  {
@@ -79,7 +79,7 @@ Signed-off-by: Glenn Strauss <gstrauss@gluelogic.com>
      int v = MBEDTLS_SSL_MINOR_VERSION_3; /* default: TLS v1.2 */
      if (NULL == b) /* default: min TLSv1.2, max TLSv1.3 */
        #ifdef MBEDTLS_SSL_MINOR_VERSION_4
-@@ -4811,20 +4809,9 @@ mod_mbedtls_ssl_conf_proto (server *srv,
+@@ -4932,20 +4930,9 @@ mod_mbedtls_ssl_conf_proto (server *srv,
  static void
  mod_mbedtls_ssl_conf_proto (server *srv, plugin_config_socket *s, const buffer *b, int max)
  {
@@ -100,7 +100,7 @@ Signed-off-by: Glenn Strauss <gstrauss@gluelogic.com>
      else if (buffer_eq_icase_slen(b, CONST_STR_LEN("None"))) /*"disable" limit*/
          v = max ? MBEDTLS_SSL_VERSION_TLS1_3 : MBEDTLS_SSL_VERSION_TLS1_2;
      else if (buffer_eq_icase_slen(b, CONST_STR_LEN("TLSv1.2")))
-@@ -4846,9 +4833,6 @@ mod_mbedtls_ssl_conf_proto (server *srv,
+@@ -4967,9 +4954,6 @@ mod_mbedtls_ssl_conf_proto (server *srv,
              return;
          }
      }
@@ -112,7 +112,7 @@ Signed-off-by: Glenn Strauss <gstrauss@gluelogic.com>
        ? mbedtls_ssl_conf_max_tls_version(s->ssl_ctx, v)
 --- a/src/mod_nss.c
 +++ b/src/mod_nss.c
-@@ -2785,9 +2785,7 @@ http_cgi_ssl_env (request_st * const r,
+@@ -2784,9 +2784,7 @@ http_cgi_ssl_env (request_st * const r,
      size_t n;
      const char *s = NULL;
      switch (inf.protocolVersion) {
@@ -122,7 +122,7 @@ Signed-off-by: Glenn Strauss <gstrauss@gluelogic.com>
        case SSL_LIBRARY_VERSION_TLS_1_2: s="TLSv1.2";n=sizeof("TLSv1.2")-1;break;
        case SSL_LIBRARY_VERSION_TLS_1_1: s="TLSv1.1";n=sizeof("TLSv1.1")-1;break;
        case SSL_LIBRARY_VERSION_TLS_1_0: s="TLSv1.0";n=sizeof("TLSv1.0")-1;break;
-@@ -3120,13 +3118,9 @@ mod_nss_ssl_conf_curves(server *srv, plu
+@@ -3119,13 +3117,9 @@ mod_nss_ssl_conf_curves(server *srv, plu
  static PRUint16
  mod_nss_ssl_conf_proto_val (server *srv, const buffer *b, int max)
  {
@@ -138,7 +138,7 @@ Signed-off-by: Glenn Strauss <gstrauss@gluelogic.com>
      else if (buffer_eq_icase_slen(b, CONST_STR_LEN("None"))) /*"disable" limit*/
          return max ? SSL_LIBRARY_VERSION_TLS_1_3 : SSL_LIBRARY_VERSION_TLS_1_0;
      else if (buffer_eq_icase_slen(b, CONST_STR_LEN("TLSv1.0")))
-@@ -3148,11 +3142,7 @@ mod_nss_ssl_conf_proto_val (server *srv,
+@@ -3147,11 +3141,7 @@ mod_nss_ssl_conf_proto_val (server *srv,
                        "NSS: ssl.openssl.ssl-conf-cmd %s %s invalid; ignored",
                        max ? "MaxProtocol" : "MinProtocol", b->ptr);
      }
@@ -153,7 +153,7 @@ Signed-off-by: Glenn Strauss <gstrauss@gluelogic.com>
  
 --- a/src/mod_openssl.c
 +++ b/src/mod_openssl.c
-@@ -3583,11 +3583,7 @@ network_init_ssl (server *srv, plugin_co
+@@ -3648,11 +3648,7 @@ network_init_ssl (server *srv, plugin_co
        #if OPENSSL_VERSION_NUMBER >= 0x10100000L \
         || defined(BORINGSSL_API_VERSION) \
         || defined(LIBRESSL_VERSION_NUMBER)
@@ -165,7 +165,7 @@ Signed-off-by: Glenn Strauss <gstrauss@gluelogic.com>
              return -1;
        #endif
  
-@@ -5207,9 +5203,9 @@ int mod_openssl_plugin_init (plugin *p)
+@@ -5259,9 +5255,9 @@ int mod_openssl_plugin_init (plugin *p)
  static int
  mod_openssl_ssl_conf_proto_val (server *srv, const buffer *b, int max)
  {
@@ -177,7 +177,7 @@ Signed-off-by: Glenn Strauss <gstrauss@gluelogic.com>
        #else
          return TLS1_2_VERSION;
        #endif
-@@ -5244,7 +5240,7 @@ mod_openssl_ssl_conf_proto_val (server *
+@@ -5296,7 +5292,7 @@ mod_openssl_ssl_conf_proto_val (server *
                        max ? "MaxProtocol" : "MinProtocol", b->ptr);
      }
    #ifdef TLS1_3_VERSION
@@ -188,7 +188,7 @@ Signed-off-by: Glenn Strauss <gstrauss@gluelogic.com>
    #endif
 --- a/src/mod_wolfssl.c
 +++ b/src/mod_wolfssl.c
-@@ -1247,14 +1247,12 @@ ssl_info_callback (const SSL *ssl, int w
+@@ -1293,14 +1293,12 @@ ssl_info_callback (const SSL *ssl, int w
          /* SSL_version() is valid after initial handshake completed */
          SSL *ssl_nonconst;
          *(const SSL **)&ssl_nonconst = ssl;
@@ -203,7 +203,7 @@ Signed-off-by: Glenn Strauss <gstrauss@gluelogic.com>
      }
  }
  
-@@ -2537,15 +2535,9 @@ network_init_ssl (server *srv, plugin_co
+@@ -2572,15 +2570,9 @@ network_init_ssl (server *srv, plugin_co
         #endif
        #endif
  
@@ -219,7 +219,7 @@ Signed-off-by: Glenn Strauss <gstrauss@gluelogic.com>
  
          if (s->ssl_conf_cmd && s->ssl_conf_cmd->used) {
              if (0 != mod_openssl_ssl_conf_cmd(srv, s)) return -1;
-@@ -3953,12 +3945,8 @@ int mod_wolfssl_plugin_init (plugin *p)
+@@ -3970,12 +3962,8 @@ int mod_wolfssl_plugin_init (plugin *p)
  static int
  mod_openssl_ssl_conf_proto_val (server *srv, const buffer *b, int max)
  {
@@ -234,7 +234,7 @@ Signed-off-by: Glenn Strauss <gstrauss@gluelogic.com>
      else if (buffer_eq_icase_slen(b, CONST_STR_LEN("None"))) /*"disable" limit*/
          return max ? WOLFSSL_TLSV1_3 : WOLFSSL_TLSV1;
      else if (buffer_eq_icase_slen(b, CONST_STR_LEN("TLSv1.0")))
-@@ -3980,11 +3968,7 @@ mod_openssl_ssl_conf_proto_val (server *
+@@ -3997,11 +3985,7 @@ mod_openssl_ssl_conf_proto_val (server *
                        "SSL: ssl.openssl.ssl-conf-cmd %s %s invalid; ignored",
                        max ? "MaxProtocol" : "MinProtocol", b->ptr);
      }
@@ -247,7 +247,7 @@ Signed-off-by: Glenn Strauss <gstrauss@gluelogic.com>
  }
  
  
-@@ -4127,9 +4111,7 @@ mod_openssl_ssl_conf_cmd (server *srv, p
+@@ -4144,9 +4128,7 @@ mod_openssl_ssl_conf_cmd (server *srv, p
            case WOLFSSL_TLSV1_2:
              wolfSSL_CTX_set_options(s->ssl_ctx, WOLFSSL_OP_NO_TLSv1_3);
              __attribute_fallthrough__
