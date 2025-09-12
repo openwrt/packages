@@ -9,12 +9,16 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=ovpn-dco
-PKG_VERSION:=0.2.20241216
+PKG_VERSION:=2025071800
+PKG_VERSION_PREFIX:=net-6.16.0-rc6
+PKG_VERSION_FULL:=$(PKG_VERSION_PREFIX)-$(PKG_VERSION)
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL=https://codeload.github.com/OpenVPN/ovpn-dco/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=0b30b8973b362b80a05f278ae217f01a2a2417e16e9c68c486960275a55306cc
+PKG_SOURCE_URL=https://codeload.github.com/OpenVPN/ovpn-backports/tar.gz/ovpn-net-next/$(PKG_VERSION_FULL)?
+PKG_HASH:=8b893dd093a5549b34f8375e594024a0d4e2ab5f833c955e7aec1077c1ece754
+PKG_BUILD_DIR:=$(KERNEL_BUILD_DIR)/ovpn-backports-ovpn-net-next-$(PKG_VERSION_FULL)
+PKG_BUILD_PARALLEL:=1
 
 PKG_MAINTAINER:=Jianhui Zhao <zhaojh329@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
@@ -22,15 +26,15 @@ PKG_LICENSE:=GPL-2.0-only
 
 include $(INCLUDE_DIR)/package.mk
 
-define KernelPackage/ovpn-dco-v2
+define KernelPackage/ovpn
   SUBMENU:=Network Support
   TITLE:=OpenVPN data channel offload
   DEPENDS:=+kmod-crypto-aead +kmod-udptunnel4 +IPV6:kmod-udptunnel6
-  FILES:=$(PKG_BUILD_DIR)/drivers/net/ovpn-dco/ovpn-dco-v2.ko
-  AUTOLOAD:=$(call AutoLoad,30,ovpn-dco-v2)
+  FILES:=$(PKG_BUILD_DIR)/drivers/net/ovpn/ovpn.ko
+  AUTOLOAD:=$(call AutoLoad,30,ovpn)
 endef
 
-define KernelPackage/ovpn-dco-v2/description
+define KernelPackage/ovpn/description
   This module enhances the performance of the OpenVPN userspace software
   by offloading the data channel processing to kernelspace.
 endef
@@ -42,20 +46,19 @@ NOSTDINC_FLAGS += \
 	-include $(PKG_BUILD_DIR)/linux-compat.h
 
 EXTRA_KCONFIG:= \
-	CONFIG_OVPN_DCO_V2=m
+	CONFIG_OVPN=m
 
-PKG_EXTMOD_SUBDIRS = drivers/net/ovpn-dco
+PKG_EXTMOD_SUBDIRS = drivers/net/ovpn
 
 MAKE_OPTS:= \
-	$(KERNEL_MAKE_FLAGS) \
-	M="$(PKG_BUILD_DIR)/drivers/net/ovpn-dco" \
+	M="$(PKG_BUILD_DIR)/$(PKG_EXTMOD_SUBDIRS)" \
 	NOSTDINC_FLAGS="$(NOSTDINC_FLAGS)" \
 	$(EXTRA_KCONFIG)
 
 define Build/Compile
-	$(MAKE) -C "$(LINUX_DIR)" \
+	+$(KERNEL_MAKE) $(PKG_JOBS) \
 		$(MAKE_OPTS) \
 		modules
 endef
 
-$(eval $(call KernelPackage,ovpn-dco-v2))
+$(eval $(call KernelPackage,ovpn))
