@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=snort3
 PKG_VERSION:=3.9.5.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/snort3/snort3/tar.gz/$(PKG_VERSION)?
@@ -24,8 +24,8 @@ include $(INCLUDE_DIR)/cmake.mk
 ifeq ($(filter $(ARCH),mips mips64 mipsel powerpc),)
   EXTRA_DEPENDS += +gperftools-runtime
 endif
-ifeq ($(filter $(ARCH),x86_64),$(ARCH))
-  EXTRA_DEPENDS += +hyperscan-runtime
+ifeq ($(filter $(ARCH),x86_64 aarch64),$(ARCH))
+  EXTRA_DEPENDS += +vectorscan-runtime
   CMAKE_OPTIONS += -DHS_INCLUDE_DIRS=$(STAGING_DIR)/usr/include/hs
 endif
 
