@@ -276,6 +276,8 @@ define Package/kea-uci/install
 	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/init.d
 	$(INSTALL_CONF) ./files/kea.config $(1)/etc/config/kea
 	$(INSTALL_BIN) ./files/kea.init $(1)/etc/init.d/kea
+	$(INSTALL_DIR) $(1)/usr/lib/kea/importers
+	$(INSTALL_BIN) ./files/dhcp4.sh $(1)/usr/lib/kea/importers/
 endef
 
 define Package/kea-uci/conffiles
