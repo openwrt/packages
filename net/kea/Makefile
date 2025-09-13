@@ -86,7 +86,7 @@ endef
 define Package/kea-dhcp4
 	$(call Package/kea/Default)
 	TITLE+=DHCP Server v4
-	DEPENDS:=+kea-libs
+	DEPENDS:=+kea-libs +bind-server +bind-rndc +bind-client
 endef
 define Package/kea-dhcp4/description
     The DHCPv4 server process. This process responds to DHCPv4 queries from clients.
