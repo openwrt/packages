@@ -1,6 +1,6 @@
-From 8e89af98ac00b1c9c019865faca7479fa0de6084 Mon Sep 17 00:00:00 2001
+From f781df4a2c4f5a7b5877dd6fed95316c8a9ad58c Mon Sep 17 00:00:00 2001
 From: Moritz Warning <moritzwarning@web.de>
-Date: Tue, 17 Sep 2024 21:26:08 +0200
+Date: Fri, 12 Sep 2025 11:17:47 +0200
 Subject: [PATCH 5/5] remove noexecstack
 
 ---
@@ -9,7 +9,7 @@ Subject: [PATCH 5/5] remove noexecstack
 
 --- a/make-linux.mk
 +++ b/make-linux.mk
-@@ -364,7 +364,7 @@ endif
+@@ -394,7 +394,7 @@ endif
  #override CXXFLAGS+=-fPIC -fPIE
  
  # Non-executable stack
