@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua-eco
-PKG_VERSION:=3.11.0
+PKG_VERSION:=3.12.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL=https://github.com/zhaojh329/lua-eco/releases/download/v$(PKG_VERSION)
-PKG_HASH:=81d260935fa391fb52b9659e21aaada52482a1894782d9781911ff0fe8e3ab33
+PKG_HASH:=c2d05740069ad9e78c1cbc9eeb2e71fb2da0aeb35b77863d20b3d8c50b5ff42e
 
 PKG_MAINTAINER:=Jianhui Zhao <zhaojh329@gmail.com>
 PKG_LICENSE:=MIT
@@ -66,6 +66,7 @@ Package/lua-eco-nl80211=$(call Package/lua-eco/Module,nl80211,+lua-eco-netlink)
 Package/lua-eco-ssh=$(call Package/lua-eco/Module,ssh,+lua-eco-socket +libssh2)
 Package/lua-eco-packet=$(call Package/lua-eco/Module,packet,+lua-eco-nl80211)
 Package/lua-eco-uci=$(call Package/lua-eco/Module,uci,+libuci)
+Package/lua-eco-shared=$(call Package/lua-eco/Module,shared,+lua-eco-socket)
 
 define Package/lua-eco-ssl/config
 	choice
@@ -215,6 +216,11 @@ define Package/lua-eco-uci/install
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/uci.so $(1)/usr/local/lib/lua/5.4/eco
 endef
 
+define Package/lua-eco-shared/install
+	$(INSTALL_DIR) $(1)/usr/local/lib/lua/5.4/eco
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/shared.lua $(1)/usr/local/lib/lua/5.4/eco
+endef
+
 $(eval $(call BuildPackage,lua-eco))
 $(eval $(call BuildPackage,lua-eco-log))
 $(eval $(call BuildPackage,lua-eco-base64))
@@ -236,3 +242,4 @@ $(eval $(call BuildPackage,lua-eco-nl80211))
 $(eval $(call BuildPackage,lua-eco-ssh))
 $(eval $(call BuildPackage,lua-eco-packet))
 $(eval $(call BuildPackage,lua-eco-uci))
+$(eval $(call BuildPackage,lua-eco-shared))
