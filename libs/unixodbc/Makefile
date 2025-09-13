@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=unixodbc
 PKG_VERSION:=2.3.12
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=unixODBC-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.unixodbc.org
@@ -24,6 +24,7 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/unixODBC-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR)/host/unixODBC-$(PKG_VERSION)
 
 PKG_INSTALL:=1
+PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
 
 HOST_BUILD_DEPENDS:=unixodbc
