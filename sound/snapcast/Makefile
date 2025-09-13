@@ -20,6 +20,8 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
 CMAKE_OPTIONS += -DBUILD_TESTS=OFF
+CMAKE_OPTIONS += -DBUILD_WITH_PULSE=OFF
+CMAKE_OPTIONS += -DBUILD_WITH_AVAHI=OFF
 
 define Package/snapcast/Default
   SECTION:=sound
