@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kea
 PKG_VERSION:=3.0.2
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ftp.isc.org/isc/kea/$(PKG_VERSION)
@@ -82,7 +82,7 @@ endef
 define Package/kea-dhcp4
 	$(call Package/kea/Default)
 	TITLE+=DHCP Server v4
-	DEPENDS:=+kea-libs
+	DEPENDS:=+kea-libs +bind-server +bind-rndc +bind-client
 endef
 define Package/kea-dhcp4/description
     The DHCPv4 server process. This process responds to DHCPv4 queries from clients.
