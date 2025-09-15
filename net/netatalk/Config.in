@@ -1,35 +1,49 @@
 if PACKAGE_netatalk-full
 
-        config PACKAGE_NETATALK_APPLETALK
-                bool "Enable AppleTalk support."
-                default y
+	config PACKAGE_NETATALK_APPLETALK
+		bool "Enable AppleTalk support."
+		default y
 
-        config PACKAGE_NETATALK_ZEROCONF
-                bool "Enable Zeroconf support."
-                default y
+	config PACKAGE_NETATALK_ZEROCONF
+		bool "Enable Zeroconf support."
+		default y
 
-        config PACKAGE_NETATALK_ACLS
-                bool "Enable ACL support."
-                default y
+	config PACKAGE_NETATALK_ACLS
+		bool "Enable ACL support."
+		default y
 
-        config PACKAGE_NETATALK_PAM
-                bool "Enable PAM support."
-                default y
+	config PACKAGE_NETATALK_PAM
+		bool "Enable PAM support."
+		default y
 
-        config PACKAGE_NETATALK_LDAP
-                bool "Enable LDAP support."
-                default y
+	config PACKAGE_NETATALK_LDAP
+		bool "Enable LDAP support."
+		default y
 
-        config PACKAGE_NETATALK_ICONV
-                bool "Use libiconv features."
-                default y
+	config PACKAGE_NETATALK_ICONV
+		bool "Use libiconv features."
+		default y
 
-        config PACKAGE_NETATALK_KERBEROS
-                bool "Enable kerberos support."
-                default y
+	config PACKAGE_NETATALK_KERBEROS
+		bool "Enable kerberos support."
+		default y
 
-        config PACKAGE_NETATALK_LIBWRAP
-                bool "Enable TCP wrappers."
-                default y
+	config PACKAGE_NETATALK_LIBWRAP
+		bool "Enable TCP wrappers."
+		default y
+
+	choice
+		prompt "CNID backends"
+		default PACKAGE_NETATALK_BOTHBACK
+
+		config PACKAGE_NETATALK_DBDBACK
+			bool "dbd"
+
+		config PACKAGE_NETATALK_SQLITEBACK
+			bool "sqlite"
+
+		config PACKAGE_NETATALK_BOTHBACK
+			bool "dbd,sqlite"
+	endchoice
 
 endif
