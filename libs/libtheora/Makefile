@@ -42,14 +42,15 @@ features supported by the decoder to improve over what is
 is possible with VP3.
 endef
 
-define Build/Configure
-	$(call Build/Configure/Default, \
-		--disable-examples \
-		--disable-oggtest \
-		--disable-vorbistest \
-		--disable-sdltest \
-	)
-endef
+CONFIGURE_ARGS += \
+	--disable-examples \
+	--disable-oggtest \
+	--disable-vorbistest \
+	--disable-sdltest
+
+ifneq ($(findstring armeb,$(CONFIG_ARCH)),)
+CONFIGURE_ARGS += --disable-asm
+endif
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/theora/

@@ -22,7 +22,7 @@
  
 --- a/nss/coreconf/arch.mk
 +++ b/nss/coreconf/arch.mk
-@@ -284,7 +284,7 @@ else
+@@ -223,7 +223,7 @@ else
      OBJDIR_NAME_COMPILER = $(COMPILER_TAG)
  endif
  OBJDIR_NAME_BASE = $(OS_TARGET)$(OS_RELEASE)$(CPU_TAG)$(OBJDIR_NAME_COMPILER)$(LIBC_TAG)$(IMPL_STRATEGY)$(OBJDIR_TAG)

@@ -1,0 +1,40 @@
+From 03e6da41ba5d588fe072465589a64def3dc4d82b Mon Sep 17 00:00:00 2001
+From: OpenWrt community <openwrt-devel@lists.openwrt.org>
+Date: Mon, 30 Oct 2023 14:44:08 +0100
+Subject: [PATCH] fix: heap-based buffer overflow in the test_compr_eb
+ function
+
+https://nvd.nist.gov/vuln/detail/CVE-2014-8140
+
+CVE: CVE-2014-8140
+---
+ extract.c | 13 ++++++++++---
+ 1 file changed, 10 insertions(+), 3 deletions(-)
+
+diff --git a/extract.c b/extract.c
+index df0fa1c..ec31e60 100644
+--- a/extract.c
++++ b/extract.c
+@@ -2232,10 +2232,17 @@ static int test_compr_eb(__G__ eb, eb_size, compr_offset, test_uc_ebdata)
+     if (compr_offset < 4)                /* field is not compressed: */
+         return PK_OK;                    /* do nothing and signal OK */
+ 
++    /* Return no/bad-data error status if any problem is found:
++     *    1. eb_size is too small to hold the uncompressed size
++     *       (eb_ucsize).  (Else extract eb_ucsize.)
++     *    2. eb_ucsize is zero (invalid).  2014-12-04 SMS.
++     *    3. eb_ucsize is positive, but eb_size is too small to hold
++     *       the compressed data header.
++     */
+     if ((eb_size < (EB_UCSIZE_P + 4)) ||
+-        ((eb_ucsize = makelong(eb+(EB_HEADSIZE+EB_UCSIZE_P))) > 0L &&
+-         eb_size <= (compr_offset + EB_CMPRHEADLEN)))
+-        return IZ_EF_TRUNC;               /* no compressed data! */
++     ((eb_ucsize = makelong( eb+ (EB_HEADSIZE+ EB_UCSIZE_P))) == 0L) ||
++     ((eb_ucsize > 0L) && (eb_size <= (compr_offset + EB_CMPRHEADLEN))))
++        return IZ_EF_TRUNC;             /* no/bad compressed data! */
+ 
+     if (
+ #ifdef INT_16BIT
+-- 
+

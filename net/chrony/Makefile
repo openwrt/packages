@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=chrony
-PKG_VERSION:=4.6.1
-PKG_RELEASE:=2
+PKG_VERSION:=4.8
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://chrony-project.org/releases/
-PKG_HASH:=571ff73fbf0ae3097f0604eca2e00b1d8bb2e91affe1a3494785ff21d6199c5c
+PKG_HASH:=33ea8eb2a4daeaa506e8fcafd5d6d89027ed6f2f0609645c6f149b560d301706
 
 PKG_MAINTAINER:=Miroslav Lichvar <mlichvar0@gmail.com>
 PKG_LICENSE:=GPL-2.0
@@ -82,6 +82,7 @@ CONFIGURE_ARGS+= \
 	--disable-readline \
 	--disable-rtc \
 	$(if $(findstring normal,$(BUILD_VARIANT)),--disable-sechash) \
+	--with-chronyc-user=chrony \
 	--with-user=chrony
 
 CONFIGURE_VARS+=CPPFLAGS=-DNDEBUG

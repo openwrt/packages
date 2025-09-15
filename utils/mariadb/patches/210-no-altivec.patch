@@ -1,21 +1,11 @@
 --- a/mysys/CMakeLists.txt
 +++ b/mysys/CMakeLists.txt
-@@ -138,7 +138,7 @@ ELSEIF(CMAKE_SYSTEM_PROCESSOR MATCHES "a
-   ENDIF()
- ENDIF()
- 
--IF(CMAKE_SYSTEM_PROCESSOR MATCHES "ppc64|powerpc64" OR CMAKE_SYSTEM_NAME MATCHES AIX)
-+IF(FALSE)
+@@ -142,7 +142,7 @@ ENDIF()
+ IF(CMAKE_SYSTEM_PROCESSOR MATCHES "ppc64|powerpc64" OR CMAKE_SYSTEM_NAME MATCHES AIX)
    SET(MYSYS_SOURCES ${MYSYS_SOURCES} crc32/crc32_ppc64.c crc32/crc32c_ppc.c)
    SET_SOURCE_FILES_PROPERTIES(crc32/crc32_ppc64.c crc32/crc32c_ppc.c PROPERTIES
-         COMPILE_FLAGS "${COMPILE_FLAGS} -maltivec -mvsx -mpower8-vector -mcrypto -mpower8-vector")
---- a/mysys/crc32ieee.cc
-+++ b/mysys/crc32ieee.cc
-@@ -51,7 +51,6 @@ static my_crc32_t init_crc32()
- static const my_crc32_t my_checksum_func= init_crc32();
- 
- #ifdef __powerpc64__
--# error "my_checksum() is defined in mysys/crc32/crc32_ppc64.c"
- #endif
- extern "C"
- uint32 my_checksum(uint32 crc, const void *data, size_t len)
+-        COMPILE_FLAGS "${COMPILE_FLAGS} -maltivec -mvsx -mpower8-vector -mcrypto -mpower8-vector")
++        COMPILE_FLAGS "${COMPILE_FLAGS} -mvsx -mcrypto")
+   ADD_DEFINITIONS(-DHAVE_POWER8 -DHAS_ALTIVEC)
+ ELSE()
+   SET (MYSYS_SOURCES ${MYSYS_SOURCES} crc32ieee.cc)

@@ -74,11 +74,11 @@ guidelines:
 ### Commits in your pull-requests should
 
 - Have a useful commit subject prefixed with the package name (E.g.: `foopkg:
-  Add libzot dependency`).
+  add libzot dependency`).
 - Include Signed-off-by tag in the commit comments.  See: [Sign your
   work](https://openwrt.org/submitting-patches#sign_your_work)
-- Author and sign-off must match and be a real name or known identity and
-  a real email address. GitHub private email addresses will not be accepted.
+- Author and sign-off must match and be a real name and real email address.
+  GitHub private email addresses will not be accepted.
 - Follow all [Submission Guidelines](https://openwrt.org/submitting-patches#submission_guidelines)
   requirements, including maximum characters per line.
 

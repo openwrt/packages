@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-bad
-PKG_VERSION:=1.24.12
+PKG_VERSION:=1.26.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=gst-plugins-bad-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gst-plugins-bad/
-PKG_HASH:=3d386af3d1dbd1a06c74a6251250c269b481e703f0e3255ba89ef6c1e063afea
+PKG_HASH:=33dba95ed3933b742e4eac22063cdb81e14d54dc4cdd354a0000517273012661
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-bad-$(PKG_VERSION)
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
@@ -251,7 +251,7 @@ MESON_ARGS += \
 	-Dzxing=disabled \
 	-Dwpe=disabled \
 	-Dmagicleap=disabled \
-	-Dv4l2codecs=disabled \
+	$(call GST_COND_SELECT,v4l2codecs) \
 	\
 	$(call GST_COND_SELECT,hls) \
 	-Dhls-crypto=nettle \
@@ -329,13 +329,14 @@ define GstBuildLibrary
 endef
 
 $(eval $(call GstBuildLibrary,adaptivedemux,adaptivedemux,app uridownloader,))
+$(eval $(call GstBuildLibrary,basecamerabinsrc,basecamerabinsrc,app,))
+$(eval $(call GstBuildLibrary,codecparsers,codecparsers,,))
+$(eval $(call GstBuildLibrary,codecs,codecs,codecparsers,))
+$(eval $(call GstBuildLibrary,mpegts,mpegts,,))
 $(eval $(call GstBuildLibrary,photography,photography,,))
 $(eval $(call GstBuildLibrary,play,play,,))
 $(eval $(call GstBuildLibrary,player,player,play,))
-$(eval $(call GstBuildLibrary,basecamerabinsrc,basecamerabinsrc,app,))
 $(eval $(call GstBuildLibrary,uridownloader,uridownloader,,))
-$(eval $(call GstBuildLibrary,codecparsers,codecparsers,,))
-$(eval $(call GstBuildLibrary,mpegts,mpegts,,))
 $(eval $(call GstBuildLibrary,transcoder,transcoder,,))
 
 # 1: short name
@@ -427,6 +428,7 @@ $(eval $(call GstBuildPlugin,speed,speed support,audio,,))
 $(eval $(call GstBuildPlugin,subenc,subenc support,controller,,))
 $(eval $(call GstBuildPlugin,switchbin,switchbin support,,,))
 $(eval $(call GstBuildPlugin,timecode,timecode support,,,))
+$(eval $(call GstBuildPlugin,v4l2codecs,V4L2 stateless codecs support,codecs,,))
 $(eval $(call GstBuildPlugin,videofiltersbad,videofiltersbad support,,,))
 $(eval $(call GstBuildPlugin,videoframe_audiolevel,videoframe_audiolevel support,,,))
 $(eval $(call GstBuildPlugin,videoparsersbad,videoparsersbad support,codecparsers,,))

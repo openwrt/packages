@@ -14,12 +14,13 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
 
 --- a/libtorrent.pc.in
 +++ b/libtorrent.pc.in
-@@ -6,6 +6,6 @@ includedir=@includedir@
+@@ -6,7 +6,6 @@ includedir=@includedir@
  Name: libtorrent
  Description: A BitTorrent library
  Version: @VERSION@
+-Requires.private: zlib, libcrypto
 -Libs: -L${libdir} -ltorrent
--Libs.Private: -lz
+-Libs.private: @PTHREAD_LIBS@ @ATOMIC_LIBS@
 +Requires: zlib, libcrypto
-+Libs: -L${libdir} -ltorrent @ATOMIC_LIBS@
++Libs: -L${libdir} -ltorrent @PTHREAD_LIBS@ @ATOMIC_LIBS@
  Cflags: -I${includedir}

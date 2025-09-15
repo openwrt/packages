@@ -1,6 +1,6 @@
 --- a/kernel/pf_ring.c
 +++ b/kernel/pf_ring.c
-@@ -3903,7 +3903,7 @@ static int hash_pkt_cluster(ring_cluster
+@@ -3962,7 +3962,7 @@ static int hash_pkt_cluster(ring_cluster
        break;
      }
      /* else, fall through, because it's like 2-tuple for non-TCP packets */

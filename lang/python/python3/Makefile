@@ -11,12 +11,12 @@ include $(TOPDIR)/rules.mk
 include ../python3-version.mk
 
 PKG_NAME:=python3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_VERSION:=$(PYTHON3_VERSION).$(PYTHON3_VERSION_MICRO)
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.python.org/ftp/python/$(PKG_VERSION)
-PKG_HASH:=07a4356e912900e61a15cb0949a06c4a05012e213ecd6b4e84d0f67aabbee372
+PKG_HASH:=8fb5f9fbc7609fa822cb31549884575db7fd9657cbffb89510b5d7975963a83a
 
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=Python-2.0.1 0BSD
@@ -96,7 +96,7 @@ endef
 define Package/python3-light
 $(call Package/python3/Default)
   TITLE+= light installation
-  DEPENDS:=+python3-base +libbz2 +zlib
+  DEPENDS:=+python3-base +libbz2 +zlib +USE_GLIBC:libcrypt-compat
 endef
 
 define Package/python3-light/config
@@ -311,6 +311,11 @@ HOST_CONFIGURE_ARGS += \
 	--with-ssl-default-suites=openssl \
 	--with-system-expat \
 	--without-cxx-main
+
+# ncurses and uuid have seemingly unsolvable issues with pkgconfig
+HOST_CFLAGS += \
+	-I$(STAGING_DIR_HOSTPKG)/include/ncursesw \
+	-I$(STAGING_DIR_HOST)/include/uuid
 
 define Host/Configure
 	$(SED) 's/^ENABLE_USER_SITE = None$$$$/ENABLE_USER_SITE = False/' $(HOST_BUILD_DIR)/Lib/site.py

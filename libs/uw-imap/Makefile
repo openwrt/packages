@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=uw-imap
 PKG_VERSION:=2007f
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=imap-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
@@ -32,7 +32,7 @@ define Package/uw-imap
   CATEGORY:=Libraries
   TITLE:=University of Washington IMAP toolkit
   URL:=https://www.washington.edu/imap/
-  DEPENDS:=+libpthread +libopenssl
+  DEPENDS:= +USE_GLIBC:libcrypt-compat +libpthread +libopenssl
 endef
 
 define Package/uw-imap/description

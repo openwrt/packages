@@ -1,0 +1,41 @@
+From bbeb7ad51c1edb7ab3cf63f30a21e9bb383b7994 Mon Sep 17 00:00:00 2001
+From: Matt <smattie@users.noreply.github.com>
+Date: Tue, 13 Feb 2024 11:20:52 +0000
+Subject: [PATCH] Fixes incorrect detection of touchpads (#66)
+
+Some touchpad drivers (such as applespi) claim to have both EV_ABS and EV_REL
+capabilities. These touchpads are then reported as mice by libudev-zero.
+---
+ udev_device.c | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
+
+--- a/udev_device.c
++++ b/udev_device.c
+@@ -458,13 +458,7 @@ static void set_properties_from_evdev(st
+         udev_list_entry_add(&udev_device->properties, "ID_INPUT_SWITCH", "1", 0);
+     }
+ 
+-    if (test_bit(ev_bits, EV_REL)) {
+-        if (test_bit(rel_bits, REL_Y) && test_bit(rel_bits, REL_X) &&
+-            test_bit(key_bits, BTN_MOUSE)) {
+-            udev_list_entry_add(&udev_device->properties, "ID_INPUT_MOUSE", "1", 0);
+-        }
+-    }
+-    else if (test_bit(ev_bits, EV_ABS)) {
++    if (test_bit(ev_bits, EV_ABS)) {
+         if (test_bit(key_bits, BTN_SELECT) || test_bit(key_bits, BTN_TR) ||
+             test_bit(key_bits, BTN_START) || test_bit(key_bits, BTN_TL)) {
+             if (test_bit(key_bits, BTN_TOUCH)) {
+@@ -494,6 +488,12 @@ static void set_properties_from_evdev(st
+             }
+         }
+     }
++    else if (test_bit(ev_bits, EV_REL)) {
++        if (test_bit(rel_bits, REL_Y) && test_bit(rel_bits, REL_X) &&
++            test_bit(key_bits, BTN_MOUSE)) {
++            udev_list_entry_add(&udev_device->properties, "ID_INPUT_MOUSE", "1", 0);
++        }
++    }
+ 
+     if (!test_bit(ev_bits, EV_KEY)) {
+         return;

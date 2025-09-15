@@ -15,6 +15,7 @@ PKG_CPE_ID:=cpe:/a:gnome:glib-networking
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/meson.mk
+include $(INCLUDE_DIR)/nls.mk
 
 MESON_ARGS += \
 	-Dgnutls=enabled \

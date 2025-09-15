@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-requests
-PKG_VERSION:=2.32.3
-PKG_RELEASE:=2
+PKG_VERSION:=2.32.4
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=Apache-2.0
@@ -17,7 +17,7 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:python:requests
 
 PYPI_NAME:=requests
-PKG_HASH:=55365417734eb18255590a9ff9eb97e9e1da868d4ccd6402399eaf68af20a760
+PKG_HASH:=27d0316682c8a29834d3264820024b62a36942083d52caf2f14c0591336d3422
 
 HOST_BUILD_DEPENDS:= \
   python-chardet/host \

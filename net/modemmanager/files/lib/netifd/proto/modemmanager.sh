@@ -83,6 +83,7 @@ modemmanager_connected_method_ppp_ipv4() {
 
 	proto_run_command "${interface}" /usr/sbin/pppd \
 		"${ttyname}" \
+		ifname "ppp-${interface}" \
 		115200 \
 		nodetach \
 		noaccomp \
@@ -628,13 +629,10 @@ proto_modemmanager_setup() {
 	}
 
 	# set initial eps bearer settings
-	[ -z "${init_epsbearer}" ] || {
+	if [ -z "${init_epsbearer}" ]; then
+		modemmanager_init_epsbearer "none" "$device" "" "$apn"
+	else
 		case "$init_epsbearer" in
-			"none")
-				connectargs=""
-				modemmanager_init_epsbearer "none" \
-					"$device" "${connectargs}" "$apn"
-				;;
 			"default")
 				cliauth=""
 				for auth in $allowedauth; do
@@ -666,7 +664,7 @@ proto_modemmanager_setup() {
 		esac
 		# check error for init_epsbearer function call
 		[ "$?" -ne "0" ] && return 1
-	}
+	fi
 
 	if [ -z "${allowedmode}" ]; then
 		modemmanager_set_allowed_mode "$device" "$interface" "any"
@@ -877,14 +875,11 @@ proto_modemmanager_teardown() {
 	mmcli --modem="${device}" --simple-disconnect ||
 		proto_notify_error "${interface}" DISCONNECT_FAILED
 
-	# reading variable from var state which was set in
-	# '/usr/lib/ModemManager/connection.d/10-report-down'
-	# because of a reconnect event.
-	# The modem therefore does not need to be disabled.
-	local disable="$(uci_get_state network "$interface" disable_modem "1")"
+	# Variable is set to '1' if modem should be disabled on ifdown,
+	# otherwise it stays connected.
+	local disable="$(uci_get network "$interface" disable_modem "1")"
 	if [ "${disable}" -eq 0 ]; then
 		echo "Skipping modem disable"
-		uci_revert_state network "${interface}" disable_modem
 	else
 		mmcli --modem="${device}" --disable
 	fi

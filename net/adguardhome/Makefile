@@ -6,17 +6,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adguardhome
-PKG_VERSION:=0.107.61
+PKG_VERSION:=0.107.65
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/AdguardTeam/AdGuardHome/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=da0cc5f3d1bd0e374bfd72dfb1846c7f0b1a172f176d20526da5eb57631b9521
+PKG_HASH:=b770007696de88ab4de0008502002a4966a30aca88c9b030c142183a1c2a5830
 PKG_BUILD_DIR:=$(BUILD_DIR)/AdGuardHome-$(PKG_VERSION)
 
 FRONTEND_DEST:=$(PKG_NAME)-frontend-$(PKG_VERSION).tar.gz
 FRONTEND_URL:=https://github.com/AdguardTeam/AdGuardHome/releases/download/v$(PKG_VERSION)/
-FRONTEND_HASH:=69ff3444f06d9c872f38af5b1a90bfd2438bb278fc7aa654f2e72d92835aee7b
+FRONTEND_HASH:=e838234d8391a23f86b32a26a5c68112a975c7ee83b79646f0597c001f6cab3f
 
 PKG_LICENSE:=GPL-3.0-only
 PKG_LICENSE_FILES:=LICENSE.txt
@@ -46,10 +46,11 @@ define Package/adguardhome
 	TITLE:=Network-wide ads and trackers blocking DNS server
 	URL:=https://github.com/AdguardTeam/AdGuardHome
 	DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle
+	USERID:=adguardhome=853:adguardhome=853
 endef
 
 define Package/adguardhome/conffiles
-/etc/adguardhome.yaml
+/etc/adguardhome/adguardhome.yaml
 /etc/config/adguardhome
 endef
 
@@ -72,14 +73,20 @@ endef
 
 define Package/adguardhome/install
 	$(call GoPackage/Package/Install/Bin,$(1))
+	$(INSTALL_DIR) $(1)/etc/capabilities
+	$(INSTALL_CONF) ./files/adguardhome.json $(1)/etc/capabilities/adguardhome.json
+
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/adguardhome.config $(1)/etc/config/adguardhome
+
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/adguardhome.init $(1)/etc/init.d/adguardhome
 
-	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_DATA) ./files/adguardhome.config $(1)/etc/config/adguardhome
-
 	$(INSTALL_DIR) $(1)/etc/sysctl.d
 	$(INSTALL_CONF) ./files/adguardhome.sysctl $(1)/etc/sysctl.d/50-adguardhome.conf
+
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/adguardhome.defaults $(1)/etc/uci-defaults/adguardhome
 endef
 
 $(eval $(call Download,adguardhome-frontend))

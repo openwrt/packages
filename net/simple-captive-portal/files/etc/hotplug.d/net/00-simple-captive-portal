@@ -1,0 +1,5 @@
+INTF=$(uci -q get simple-captive-portal.main.interface)
+
+if [ "$ACTION" = add -a "$DEVICENAME" == "$INTF" ]; then
+    /etc/init.d/simple-captive-portal firewall
+fi

@@ -34,7 +34,7 @@
  
 --- a/tools/lvmcmdline.c
 +++ b/tools/lvmcmdline.c
-@@ -3386,6 +3386,7 @@ int lvm_split(char *str, int *argc, char
+@@ -3404,6 +3404,7 @@ int lvm_split(char *str, int *argc, char
  /* Make sure we have always valid filedescriptors 0,1,2 */
  static int _check_standard_fds(void)
  {
@@ -42,7 +42,7 @@
  	int err = is_valid_fd(STDERR_FILENO);
  
  	if (!is_valid_fd(STDIN_FILENO) &&
-@@ -3412,6 +3413,12 @@ static int _check_standard_fds(void)
+@@ -3430,6 +3431,12 @@ static int _check_standard_fds(void)
  		       strerror(errno));
  		return 0;
  	}

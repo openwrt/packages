@@ -1,6 +1,12 @@
 menu "Select libjcat options"
 	depends on PACKAGE_libjcat
 
+config LIBJCAT_CLI
+	bool "Command-line tool"
+	default n
+	help
+	  Compile and install the libjcat cli tool
+
 config LIBJCAT_GPG
 	bool "GPG"
 	default y
@@ -15,7 +21,7 @@ config LIBJCAT_PKCS7
 
 config LIBJCAT_ED25519
 	bool "ed25519"
-	default n
+	default y
 	help
 	  Compile libjcat with ed25519 support
 

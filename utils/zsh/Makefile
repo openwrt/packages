@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zsh
 PKG_VERSION:=5.9
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/zsh
@@ -66,6 +66,8 @@ define Build/Configure
 		--enable-fndir=$(CONFIGURE_PREFIX)/share/zsh/$(PKG_VERSION)/functions \
 		--enable-site-fndir=$(CONFIGURE_PREFIX)/share/zsh/site-functions \
 		--enable-function-subdirs \
+		--enable-etcdir=/etc/zsh \
+		--enable-zprofile=/etc/zsh/zprofile \
 		--with-tcsetpgrp \
 		--with-term-lib="ncursesw", \
 		zsh_cv_shared_environ=yes \
@@ -109,12 +111,14 @@ endef
 define Package/zsh/install
 	$(INSTALL_DIR) $(1)/bin
 	$(INSTALL_DIR) $(1)/$(CONFIGURE_PREFIX)/bin
+	$(INSTALL_DIR) $(1)/etc/zsh
 	$(INSTALL_DIR) $(1)/$(CONFIGURE_PREFIX)/share/zsh/$(PKG_VERSION)
 	$(INSTALL_DIR) $(1)/$(CONFIGURE_PREFIX)/lib/zsh/$(PKG_VERSION)/zsh
 	$(INSTALL_DIR) $(1)/$(CONFIGURE_PREFIX)/lib/zsh/$(PKG_VERSION)/zsh/net
 	$(INSTALL_DIR) $(1)/$(CONFIGURE_PREFIX)/lib/zsh/$(PKG_VERSION)/zsh/param
 
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/$(CONFIGURE_PREFIX)/bin/zsh $(1)/$(CONFIGURE_PREFIX)/bin/
+	$(INSTALL_DATA) ./files/zprofile $(1)/etc/zsh
 	$(CP) $(PKG_INSTALL_DIR)/$(CONFIGURE_PREFIX)/share/zsh/$(PKG_VERSION)/* $(1)/$(CONFIGURE_PREFIX)/share/zsh/$(PKG_VERSION)/
 	$(CP) $(PKG_INSTALL_DIR)/$(CONFIGURE_PREFIX)/lib/zsh/$(PKG_VERSION)/zsh/* $(1)/$(CONFIGURE_PREFIX)/lib/zsh/$(PKG_VERSION)/zsh/
 	$(CP) $(PKG_INSTALL_DIR)/$(CONFIGURE_PREFIX)/lib/zsh/$(PKG_VERSION)/zsh/net/* $(1)/$(CONFIGURE_PREFIX)/lib/zsh/$(PKG_VERSION)/zsh/net/
