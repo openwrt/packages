@@ -1,6 +1,6 @@
 #!/bin/sh
 # travelmate, a wlan connection manager for travel router
-# Copyright (c) 2016-2024 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2016-2025 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # set (s)hellcheck exceptions
@@ -624,7 +624,7 @@ f_addsta() {
 f_net() {
 	local err_msg raw json_raw html_raw html_cp js_cp json_ec json_rc json_cp json_ed result="net nok"
 
-	raw="$("${trm_fetchcmd}" --user-agent "${trm_useragent}" --referer "http://www.example.com" --header "Cache-Control: no-cache, no-store, must-revalidate, max-age=0" --write-out "%{json}" --silent --max-time $((trm_maxwait / 6)) "${trm_captiveurl}")"
+	raw="$("${trm_fetchcmd}" --user-agent "${trm_useragent}" --referer "http://www.example.com" --header "Cache-Control: no-cache, no-store, must-revalidate, max-age=0" --write-out "%{json}" --silent --retry 5 --max-time $((trm_maxwait / 6)) "${trm_captiveurl}")"
 	json_raw="${raw#*\{}"
 	html_raw="${raw%%\{*}"
 	if [ -n "${json_raw}" ]; then
@@ -916,7 +916,6 @@ f_main() {
 		for radio in ${trm_radiolist}; do
 			if ! printf "%s" "${trm_stalist}" | "${trm_grepcmd}" -q "\\-${radio}"; then
 				if [ "${trm_autoadd}" = "0" ]; then
-					f_log "info" "no enabled station on radio '${radio}'"
 					continue
 				fi
 			fi
