@@ -2167,9 +2167,15 @@ adb_start() {
 	local param="$1" validation_result="$3"
 
 	dns_set_output_values "$dns"
-	adb_file test_gzip && unset adbf_boot_flag && param='on_start'
-
-	[ -n "$adbf_boot_flag" ] && return 0
+	if [ "$action" = 'on_boot' ] || [ -n "$adbf_boot_flag" ]; then
+		if adb_file test_gzip; then
+			unset adbf_boot_flag
+			action='on_start'
+			param='on_start'
+		else
+			return 0
+		fi
+	fi
 	load_environment "$validation_result" "$param" || return 1
 
 	status="$(json get status)"
