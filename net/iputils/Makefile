@@ -19,7 +19,7 @@ PKG_HASH:=1ff0c762578d5b0c1c5fbbd081f80f3137ba4f115e5854a4439e36449343bfdb
 PKG_MAINTAINER:=Noah Meyerhans <frodo@morgul.net>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
-PKG_CPE_ID:=cpe:/a:iputils_project:iputils
+PKG_CPE_ID:=cpe:/a:iputils:iputils
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/meson.mk
