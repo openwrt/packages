@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=keepalived
-PKG_VERSION:=2.3.2
-PKG_RELEASE:=1
+PKG_VERSION:=2.3.3
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.keepalived.org/software
-PKG_HASH:=77f4a22e5a23fa8e49b8916acdfb584c864e72905a2f1de2a7f62ed40a896160
+PKG_HASH:=2288c5c7609fa452782b7acefa19acce742d0204dc17f54d36da46b10f8b590c
 
 PKG_CPE_ID:=cpe:/a:keepalived:keepalived
 PKG_LICENSE:=GPL-2.0-or-later
@@ -84,6 +84,7 @@ endef
 
 CONFIGURE_ARGS+= \
 	--enable-json \
+	--enable-reproducible-build \
 	--with-init=SYSV \
 	--disable-track-process \
 	--runstatedir="/var/run"
@@ -216,6 +217,8 @@ endif
 	$(INSTALL_DIR) $(1)/etc/keepalived
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/keepalived/keepalived.conf.sample \
 		$(1)/etc/keepalived/keepalived.conf
+	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/keepalived/keepalived.config-opts \
+		$(1)/etc/keepalived/
 
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/etc/uci-defaults/keepalived \

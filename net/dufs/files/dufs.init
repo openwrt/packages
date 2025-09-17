@@ -1,0 +1,96 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2024-2025 Tianling Shen <cnsztl@immortalwrt.org>
+
+START=99
+USE_PROCD=1
+
+CONF="dufs"
+PROG="/usr/bin/dufs"
+
+is_enabled() {
+	local enabled
+	config_get_bool enabled "$1" "$2" "${3:-0}"
+	if [ "$enabled" -eq "1" ]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+append_param() {
+	procd_append_param command "$1" $2
+}
+
+append_param_arg() {
+	local value
+	config_get value "$1" "$2" $3
+	[ -n "$value" ] && append_param "--${2//_/-}" "$value"
+}
+
+append_param_bool() {
+	is_enabled "$1" "$2" && append_param "--${2//_/-}"
+}
+
+start_service() {
+	config_load "$CONF"
+
+	is_enabled "config" "enabled" || return 1
+
+	procd_open_instance "$CONF"
+	procd_set_param command "$PROG"
+
+	append_param_arg "config" "bind"
+	append_param_arg "config" "port" "5000"
+	append_param_arg "config" "path_prefix"
+	append_param_arg "config" "tls_cert"
+	append_param_arg "config" "tls_key"
+	append_param_bool "config" "enable_cors"
+
+	local auth_roles hidden
+	config_get auth_roles "config" "auth"
+	config_get hidden "config" "hidden"
+	[ -z "$auth_roles" ] || config_list_foreach "config" "auth" "append_param '--auth'"
+	[ -z "$hidden" ] || config_list_foreach "config" "hidden" "append_param '--hidden'"
+
+	append_param_bool "config" "render_index"
+	append_param_bool "config" "render_try_index" "1"
+
+	append_param_bool "config" "allow_all"
+	append_param_bool "config" "allow_upload"
+	append_param_bool "config" "allow_delete"
+	append_param_bool "config" "allow_search"
+	append_param_bool "config" "allow_symlink"
+	append_param_bool "config" "allow_archive"
+	append_param_arg "config" "compress"
+
+	local serve_path
+	config_get serve_path "config" "serve_path" "/mnt"
+	append_param "$serve_path"
+
+	procd_set_param limits core="unlimited"
+	procd_set_param limits nofile="1000000 1000000"
+	procd_set_param respawn
+	procd_set_param stderr 1
+
+	if is_enabled "config" "internet"; then
+		local listen_port
+		config_get listen_port "config" "port" "5000"
+		procd_open_data
+		json_add_array firewall
+			json_add_object ""
+			json_add_string type rule
+			json_add_string src "*"
+			json_add_string dest_port "$listen_port"
+			json_add_string proto tcp
+			json_add_string target ACCEPT
+			json_close_object
+		json_close_array
+		procd_close_data
+	fi
+
+	procd_close_instance
+}
+
+service_triggers() {
+	procd_add_reload_trigger "$CONF"
+}

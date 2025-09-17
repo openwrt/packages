@@ -5,28 +5,22 @@ STOP=52
 
 USE_PROCD=1
 
-TORRC_FILE=/etc/tor/torrc_generated # file with torrc config
-HS_DIR_PATH=/etc/tor/hidden_service #hidden service directory path
+TORRC_FILE=/var/run/tor/torrc_generated # file with torrc config
+HS_DIR_PATH=/etc/tor/hidden_service # onion services directory
 TOR_USER=tor
-
-clean_hs() {
-	local name=""
-}
 
 config_tor() {
 	local restart_tor update_config
-	config_get_bool restart_tor "common" RestartTor
-	config_get_bool update_config "common" UpdateTorConf
+	config_get_bool restart_tor common RestartTor
+	config_get_bool update_config common UpdateTorConf
 
 	tail_conf=$(uci show tor.conf.tail_include 2>/dev/null)
 	head_conf=$(uci show tor.conf.head_include 2>/dev/null)
-	echo "tail_conf $tail_conf"
 
 	if [ "$update_config" = "1" ]; then
 		if [ -n "$(echo $tail_conf | grep $TORRC_FILE)" ] || [ -n "$(echo $head_conf | grep $TORRC_FILE)" ]; then
 			echo "Info. Not updating tor configuration"
 		else
-			#uci add_list
 			echo "Info. Updating tor configuration"
 			uci add_list tor.conf.tail_include="$TORRC_FILE"
 			uci commit tor
@@ -42,11 +36,10 @@ handle_hs_ports_conf() {
 	local public_port local_port
 	local value="$1"
 	local ipv4="$2"
-	local name="$3"
 
-	public_port=$(echo "$value"|awk -F';' '{print $1}')
-	local_port=$(echo "$value"|awk -F';' '{print $2}')
-	echo "HiddenServicePort $public_port $ipv4:$local_port">>$TORRC_FILE
+	public_port="${value#*;}"
+	local_port="${value%;*}"
+	echo "HiddenServicePort $public_port $ipv4:$local_port" >> "$TORRC_FILE"
 }
 
 parse_hs_conf() {
@@ -54,20 +47,20 @@ parse_hs_conf() {
 	local config="$1"
 
 	config_get name "$config" Name
-	config_get description "$config" Description
-
+	[ -z "$name" ] && return 0
 	config_get_bool enable_hs "$config" Enabled 0
 	config_get ipv4 "$config" IPv4
 
 	if [ "$enable_hs" = "1" ]; then
-		mkdir -p "$HS_DIR_PATH/$name"
-		chown "$TOR_USER":"$TOR_USER" "$HS_DIR_PATH/"
-		chown "$TOR_USER:$TOR_USER" "$HS_DIR_PATH/$name"
-		chmod 700 "$HS_DIR_PATH/"
-		chmod 700 "$HS_DIR_PATH/$name/"
+		if [ ! -d "$HS_DIR_PATH/$name" ]; then
+			echo "New onion service dir is $HS_DIR_PATH/$name"
+			mkdir -p -m 700 "$HS_DIR_PATH/"
+			mkdir -m 700 "$HS_DIR_PATH/$name"
+			chown -R "$TOR_USER:$TOR_USER" "$HS_DIR_PATH/"
+		fi
 
-		echo "HiddenServiceDir $HS_DIR_PATH/$name" >>$TORRC_FILE
-		config_list_foreach "$config" PublicLocalPort handle_hs_ports_conf "$ipv4" "$name"
+		echo "HiddenServiceDir $HS_DIR_PATH/$name" >> "$TORRC_FILE"
+		config_list_foreach "$config" PublicLocalPort handle_hs_ports_conf "$ipv4"
 	fi
 }
 
@@ -75,15 +68,16 @@ parse_hs_conf_hooks() {
 	local name hook_script enable_hs hostname_file
 	local config="$1"
 
-	config_get enable_hs "$config" Enabled 0
-	config_get hook_script "$config" HookScript
 	config_get name "$config" Name
+	[ -z "$name" ] && return 0
+	config_get_bool enable_hs "$config" Enabled 0
+	config_get hook_script "$config" HookScript
 
-	hostname="$HS_DIR_PATH/$name/hostname"
+	hostname_file="$HS_DIR_PATH/$name/hostname"
 
 	# check if we should run hook_script
-	if [ "$enable_hs" = "true" ] && [ -x "$hook_script" ] && [ -f "$hostname" ] ; then
-		hostname_uri=$(cat "$hostname")
+	if [ "$enable_hs" = "1" ] && [ -x "$hook_script" ] && [ -f "$hostname_file" ]; then
+		hostname_uri=$(cat "$hostname_file")
 		# call hook script
 		$hook_script "--update-onion" "$hostname_uri"
 	fi
@@ -91,26 +85,48 @@ parse_hs_conf_hooks() {
 
 parse_common_conf() {
 	local hs_dir generated_config
-	config_get generated_config "common" GenConf
-	config_get hs_dir "common" HSDir
+	config_get generated_config common GenConf
+	config_get hs_dir common HSDir
 	[ -n "$hs_dir" ] && HS_DIR_PATH="$hs_dir"
 	[ -n "$generated_config" ] && TORRC_FILE="$generated_config"
 }
 
 start_service() {
+	# create runtime dir
+	mkdir -p -m 700 /var/run/tor
+	chown -R "$TOR_USER:$TOR_USER" /var/run/tor
 	config_load tor-hs
-	# clean config
-	echo "" > $TORRC_FILE # clean config
-
+	validate_common_section || {
+		echo "validation failed"
+		return 1
+	}
 	# load common config
 	parse_common_conf
-
+	# clean config
+	echo -n "" > "$TORRC_FILE"
+	chown "$TOR_USER:$TOR_USER" "$TORRC_FILE"
 	# load hs service
-	config_foreach parse_hs_conf hidden-service
-
+	config_foreach validate_hidden_service_section hidden-service parse_hs_conf
 	# update tor config
 	config_tor
-
 	# load and run tor-hs hooks
 	config_foreach parse_hs_conf_hooks hidden-service
+}
+
+validate_common_section() {
+	uci_validate_section tor-hs tor-hs common \
+		'GenConf:string:/var/run/tor/torrc_generated' \
+		'HSDir:string:/etc/tor/hidden_service' \
+		'RestartTor:bool:1' \
+		'UpdateTorConf:bool:1'
+}
+
+validate_hidden_service_section() {
+	uci_load_validate tor-hs hidden-service "$1" "$2" \
+		'Name:string(1)' \
+		'Description:string' \
+		'Enabled:bool:0' \
+		'IPv4:host:127.0.0.1' \
+		'PublicLocalPort:list(string)' \
+		'HookScript:string'
 }

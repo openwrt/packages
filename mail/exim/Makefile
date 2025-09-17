@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=exim
 PKG_VERSION:=4.98.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ftp.exim.org/pub/exim/exim4/
@@ -45,7 +45,7 @@ LOOKUPS:= \
 define Package/exim/Default
   SECTION:=mail
   CATEGORY:=Mail
-  DEPENDS:=+libdb47 +libpcre2 $(ICONV_DEPENDS) +BUILD_NLS:libidn2 +BUILD_NLS:libidn
+  DEPENDS:= +USE_GLIBC:libcrypt-compat +libdb47 +libpcre2 $(ICONV_DEPENDS) +BUILD_NLS:libidn2 +BUILD_NLS:libidn
   TITLE:=Exim message transfer agent
   URL:=http://www.exim.org/
   USERID:=exim=42:exim=42

@@ -8,19 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sqlite
-PKG_VERSION:=3460100
+PKG_VERSION:=3.50.4
+PKG_SRC_VERSION:=3500400
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-autoconf-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://www.sqlite.org/2024/
-PKG_HASH:=67d3fe6d268e6eaddcae3727fce58fcc8e9c53869bdd07a0c61e38ddf2965071
+PKG_SOURCE:=$(PKG_NAME)-autoconf-$(PKG_SRC_VERSION).tar.gz
+PKG_SOURCE_URL:=https://www.sqlite.org/2025/
+PKG_HASH:=a3db587a1b92ee5ddac2f66b3edb41b26f9c867275782d46c3a088977d6a5b18
 
 PKG_CPE_ID:=cpe:/a:sqlite:sqlite
 PKG_LICENSE:=PUBLICDOMAIN
 PKG_LICENSE_FILES:=
 PKG_MAINTAINER:=
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-autoconf-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-autoconf-$(PKG_SRC_VERSION)
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -74,10 +75,11 @@ define Package/sqlite3-cli
   SECTION:=utils
   CATEGORY:=Utilities
   DEPENDS := \
-	  +libsqlite3 \
-	  +SQLITE3_LIBEDIT:libedit \
-	  +SQLITE3_READLINE:libreadline \
-	  +SQLITE3_READLINE:libncursesw
+    +libsqlite3 \
+    +SQLITE3_LIBEDIT:libedit \
+    +SQLITE3_READLINE:libreadline \
+    +SQLITE3_READLINE:libncursesw
+  EXTRA_DEPENDS:=libsqlite3 (=$(PKG_VERSION)-r$(PKG_RELEASE))
   TITLE+= (cli)
 endef
 
@@ -99,13 +101,15 @@ TARGET_CFLAGS += \
 	$(if $(CONFIG_SQLITE3_BATCH_ATOMIC_WRITE),-DSQLITE_ENABLE_BATCH_ATOMIC_WRITE) \
 	$(if $(CONFIG_SQLITE3_COLUMN_METADATA),-DSQLITE_ENABLE_COLUMN_METADATA)
 
-CONFIGURE_ARGS += \
+CONFIGURE_ARGS := \
+	$(filter-out --target=% $(DISABLE_IPV6) $(DISABLE_NLS),$(CONFIGURE_ARGS)) \
 	--disable-debug \
 	--disable-static-shell \
 	--enable-shared \
 	--enable-static \
 	--enable-threadsafe \
-	$(if $(CONFIG_SQLITE3_DYNAMIC_EXTENSIONS),--enable-dynamic-extensions,--disable-dynamic-extensions) \
+	--soname=legacy \
+	$(if $(CONFIG_SQLITE3_DYNAMIC_EXTENSIONS),--enable-load-extension,--disable-load-extension) \
 	$(if $(CONFIG_SQLITE3_FTS3),--enable-fts3,--disable-fts3) \
 	$(if $(CONFIG_SQLITE3_FTS4),--enable-fts4,--disable-fts4) \
 	$(if $(CONFIG_SQLITE3_FTS5),--enable-fts5,--disable-fts5) \
@@ -130,7 +134,7 @@ endef
 
 define Package/libsqlite3/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libsqlite3.so.$(ABI_VERSION)* $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libsqlite3.so* $(1)/usr/lib
 endef
 
 define Package/sqlite3-cli/install

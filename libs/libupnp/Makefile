@@ -11,7 +11,7 @@ PKG_HASH:=16a7cee93ce2868ae63ab1a8164dc7de43577c59983b9f61293a310d6888dceb
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
-PKG_CPE_ID:=cpe:/a:libupnp_project:libupnp
+PKG_CPE_ID:=cpe:/a:pupnp_project:pupnp
 
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_libupnp-sample \

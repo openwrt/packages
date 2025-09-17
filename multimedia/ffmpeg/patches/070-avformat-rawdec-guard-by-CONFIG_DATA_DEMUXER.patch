@@ -1,0 +1,30 @@
+From 22baff53be0f830a1607af2b60e50605eb732ec4 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Fri, 2 May 2025 15:21:13 -0700
+Subject: [PATCH] avformat/rawdec: guard by CONFIG_DATA_DEMUXER
+
+Otherwise raw_data_read_header becomes an unused static function.
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ libavformat/rawdec.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+--- a/libavformat/rawdec.c
++++ b/libavformat/rawdec.c
+@@ -102,6 +102,7 @@ int ff_raw_subtitle_read_header(AVFormat
+     return 0;
+ }
+ 
++#if CONFIG_DATA_DEMUXER
+ static int raw_data_read_header(AVFormatContext *s)
+ {
+     AVStream *st = avformat_new_stream(s, NULL);
+@@ -112,6 +113,7 @@ static int raw_data_read_header(AVFormat
+     st->start_time = 0;
+     return 0;
+ }
++#endif
+ 
+ /* Note: Do not forget to add new entries to the Makefile as well. */
+ 

@@ -1,0 +1,38 @@
+From 2e856c62e68c9f53c232a9d74a210385ab6a3702 Mon Sep 17 00:00:00 2001
+From: OpenWrt community <openwrt-devel@lists.openwrt.org>
+Date: Mon, 30 Oct 2023 14:52:11 +0100
+Subject: [PATCH] fix: buffer overflow in the list_files function
+
+https://nvd.nist.gov/vuln/detail/CVE-2014-9913
+
+CVE: CVE-2014-9913
+---
+ list.c | 13 ++++++++++++-
+ 1 file changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/list.c b/list.c
+index 15e0011..3a3d1cd 100644
+--- a/list.c
++++ b/list.c
+@@ -339,7 +339,18 @@ int list_files(__G)    /* return PK-type error code */
+                 G.crec.compression_method == ENHDEFLATED) {
+                 methbuf[5] = dtype[(G.crec.general_purpose_bit_flag>>1) & 3];
+             } else if (methnum >= NUM_METHODS) {
+-                sprintf(&methbuf[4], "%03u", G.crec.compression_method);
++                /* 2013-02-26 SMS.
++                 * http://sourceforge.net/p/infozip/bugs/27/  CVE-2014-9913.
++                 * Unexpectedly large compression methods overflow
++                 * &methbuf[].  Use the old, three-digit decimal format
++                 * for values which fit.  Otherwise, sacrifice the
++                 * colon, and use four-digit hexadecimal.
++                 */
++                if (G.crec.compression_method <= 999) {
++                    sprintf( &methbuf[ 4], "%03u", G.crec.compression_method);
++                } else {
++                    sprintf( &methbuf[ 3], "%04X", G.crec.compression_method);
++                }
+             }
+ 
+ #if 0       /* GRR/Euro:  add this? */
+-- 
+

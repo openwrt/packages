@@ -9,13 +9,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=LVM2
-PKG_VERSION:=2.03.25
-PKG_VERSION_DM:=1.02.199
+PKG_VERSION:=2.03.33
+PKG_VERSION_DM:=1.02.207
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME).$(PKG_VERSION).tgz
-PKG_SOURCE_URL:=https://sourceware.org/pub/lvm2
-PKG_HASH:=4bea6fd2e5af9cdb3e27b48b4efa8d89210d9bfa13df900e092e404720a59b1d
+PKG_SOURCE_URL:=https://sourceware.org/pub/lvm2 \
+                https://www.mirrorservice.org/sites/sourceware.org/pub/lvm2
+
+PKG_HASH:=be4babd8a986d73279f1e75fbb1d33cb41559b75c2063611781bfeb8c2def139
 PKG_BUILD_DIR:=$(BUILD_DIR)/lvm2-$(BUILD_VARIANT)/$(PKG_NAME).$(PKG_VERSION)
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
@@ -101,6 +103,7 @@ CONFIGURE_ARGS += \
 	--with-default-dm-run-dir=/var/run \
 	--with-default-run-dir=/var/run/lvm \
 	--with-default-locking-dir=/var/lock/lvm \
+	--without-libnvme \
 	--$(if $(findstring selinux,$(BUILD_VARIANT)),en,dis)able-selinux
 
 ifneq ($(shell /bin/sh -c "echo -n 'X'"),X)

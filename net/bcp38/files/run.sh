@@ -85,7 +85,7 @@ setup_chains()
 	nft add chain "$FAMILY" "$TABLE" "$CHAIN" 2>/dev/null
 	nft flush chain "$FAMILY" "$TABLE" "$CHAIN" 2>/dev/null
 
-	nft add rule "$FAMILY" "$TABLE" "$CHAIN" udp dport {67,68} udp sport {67,68} counter return comment \"always accept DHCP traffic\"
+	nft add rule "$FAMILY" "$TABLE" "$CHAIN" udp sport . udp dport { 68 . 67, 67 . 68 } counter return comment \"always accept DHCP traffic\"
 	nft add rule "$FAMILY" "$TABLE" "$CHAIN" oifname $interface ip daddr @"$MATCHSET" ip daddr != @"$NOMATCHSET" counter reject with icmp type host-unreachable
 	nft add rule "$FAMILY" "$TABLE" "$CHAIN" iifname $interface ip saddr @"$MATCHSET" ip saddr != @"$NOMATCHSET" counter drop
 

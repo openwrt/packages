@@ -1,0 +1,48 @@
+From a811ea6af5296b89ee7c2a358dd4ffd2584429f4 Mon Sep 17 00:00:00 2001
+From: "mark.yang" <mark.yang@lge.com>
+Date: Wed, 2 Apr 2025 11:00:27 +0900
+Subject: [PATCH] fix bool reserved word error in gcc 15
+
+* Fix build error with gcc-15.0.1
+  http://errors.yoctoproject.org/Errors/Details/850147/
+    srcdir/lib/util/include/bool.h:13:5: error: cannot use keyword 'false' as enumeration constant
+    13 |     false = 0,
+        |     ^~~~~
+    srcdir/lib/util/include/bool.h:13:5: note: 'false' is a keyword with '-std=c23' onwards
+    srcdir/lib/util/include/bool.h:15:3: error: expected ';', identifier or '(' before 'bool'
+    15 | } bool;
+        |   ^~~~
+    srcdir/lib/util/include/bool.h:15:3: warning: useless type name in empty declaration
+    In file included from sleep.c:2:
+    srcdir/lib/util/include/bool.h:13:5: error: cannot use keyword 'false' as enumeration constant
+    13 |     false = 0,
+        |     ^~~~~
+    srcdir/lib/util/include/bool.h:13:5: note: 'false' is a keyword with '-std=c23' onwards
+    srcdir/lib/util/include/bool.h:15:3: error: expected ';', identifier or '(' before 'bool'
+    15 | } bool;
+        |   ^~~~
+
+  gcc-15 switched to -std=c23 by default.
+  https://gcc.gnu.org/git/?p=gcc.git;a=commitdiff;h=55e3bd376b2214e200fa76d12b67ff259b06c212
+
+Upstream-Status: Submitted [https://sourceforge.net/p/xmlrpc-c/discussion/131628/thread/70e626d73a]
+Signed-off-by: mark.yang <mark.yang@lge.com>
+---
+ stable/lib/util/include/bool.h | 2 ++
+ 1 file changed, 2 insertions(+)
+
+--- a/lib/util/include/bool.h
++++ b/lib/util/include/bool.h
+@@ -9,10 +9,12 @@
+ /* At least the GNU compiler defines __bool_true_false_are_defined */
+ #ifndef __bool_true_false_are_defined
+ #define __bool_true_false_are_defined
++#if defined __STDC__ && defined __STDC_VERSION__ && __STDC_VERSION__ <= 201710L
+ typedef enum {
+     false = 0,
+     true = 1
+ } bool;
+ #endif
+ #endif
++#endif
+ 

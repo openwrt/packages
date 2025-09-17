@@ -12,12 +12,12 @@
  ifeq ($(MOZ_UNICODE),1)
 --- a/nspr/config/Makefile.in
 +++ b/nspr/config/Makefile.in
-@@ -30,7 +30,7 @@ CSRCS	= now.c
+@@ -28,7 +28,7 @@ include $(topsrcdir)/config/config.mk
  
- # This version hasn't been ported for us; the one in mozilla/config has
- ifneq ($(OS_ARCH),OS2)
+ CSRCS	= now.c
+ 
 -CSRCS  += nsinstall.c
 +#CSRCS  += nsinstall.c
-  
  PLSRCS	= nfspwd.pl
- endif
+ 
+ ifeq (,$(CROSS_COMPILE)$(filter-out WINNT,$(OS_ARCH)))

@@ -264,20 +264,24 @@ f_conf() {
 		option_cb() {
 			local option="${1}" value="${2//\"/\\\"}"
 
-			eval "${option}=\"${value}\""
+			if [ -d "${value}" ] || { [ ! -d "${value}" ] && [ -n "${value%%[./]*}" ]; }; then
+				eval "${option}=\"${value}\""
+			fi
 		}
 		list_cb() {
 			local append option="${1}" value="${2//\"/\\\"}"
 
-			eval "append=\"\${${option}}\""
-			case "${option}" in
-				"ban_logterm")
-					eval "${option}=\"${append}${value}\\|\""
-					;;
-				*)
-					eval "${option}=\"${append}${value} \""
-					;;
-			esac
+			if [ -d "${value}" ] || { [ ! -d "${value}" ] && [ -n "${value%%[./]*}" ]; }; then
+				eval "append=\"\${${option}}\""
+				case "${option}" in
+					"ban_logterm")
+						eval "${option}=\"${append}${value}\\|\""
+						;;
+					*)
+						eval "${option}=\"${append}${value} \""
+						;;
+				esac
+			fi
 		}
 	}
 	config_load banip
@@ -324,25 +328,25 @@ f_actual() {
 # get fetch utility
 #
 f_getfetch() {
-	local util utils insecure update="0"
+	local fetch fetch_list insecure update="0"
 
 	ban_fetchcmd="$(command -v "${ban_fetchcmd}")"
 	if { [ "${ban_autodetect}" = "1" ] && [ -z "${ban_fetchcmd}" ]; } || [ ! -x "${ban_fetchcmd}" ]; then
-		utils="curl wget-ssl libustream-openssl libustream-wolfssl libustream-mbedtls"
-		for util in ${utils}; do
-			if printf "%s" "${ban_packages}" | "${ban_jsoncmd}" -ql1 -e "@.packages[\"${util}\"]" >/dev/null 2>&1; then
-				case "${util}" in
+		fetch_list="curl wget-ssl libustream-openssl libustream-wolfssl libustream-mbedtls"
+		for fetch in ${fetch_list}; do
+			if printf "%s" "${ban_packages}" | "${ban_grepcmd}" -q "\"${fetch}"; then
+				case "${fetch}" in
 					"wget-ssl")
-						util="wget"
+						fetch="wget"
 						;;
 					"libustream-openssl" | "libustream-wolfssl" | "libustream-mbedtls")
-						util="uclient-fetch"
+						fetch="uclient-fetch"
 						;;
 				esac
-				if [ -x "$(command -v "${util}")" ]; then
+				if [ -x "$(command -v "${fetch}")" ]; then
 					update="1"
-					ban_fetchcmd="$(command -v "${util}")"
-					uci_set banip global ban_fetchcmd "${util}"
+					ban_fetchcmd="$(command -v "${fetch}")"
+					uci_set banip global ban_fetchcmd "${fetch}"
 					uci_commit "banip"
 					break
 				fi
@@ -536,25 +540,32 @@ f_getelements() {
 # handle etag http header
 #
 f_etag() {
-	local http_head http_code etag_id etag_rc out_rc="4" feed="${1}" feed_url="${2}" feed_suffix="${3}"
+	local http_head http_code etag_id etag_cnt out_rc="4" feed="${1}" feed_url="${2}" feed_suffix="${3}" feed_cnt="${4:-"1"}"
 
 	if [ -n "${ban_etagparm}" ]; then
 		[ ! -f "${ban_backupdir}/banIP.etag" ] && : >"${ban_backupdir}/banIP.etag"
 		http_head="$("${ban_fetchcmd}" ${ban_etagparm} "${feed_url}" 2>&1)"
 		http_code="$(printf "%s" "${http_head}" | "${ban_awkcmd}" 'tolower($0)~/^http\/[0123\.]+ /{printf "%s",$2}')"
 		etag_id="$(printf "%s" "${http_head}" | "${ban_awkcmd}" 'tolower($0)~/^[[:space:]]*etag: /{gsub("\"","");printf "%s",$2}')"
-		etag_rc="${?}"
-
-		if [ "${http_code}" = "404" ] || { [ "${etag_rc}" = "0" ] && [ -n "${etag_id}" ] && "${ban_grepcmd}" -q "^${feed}${feed_suffix}[[:space:]]\+${etag_id}\$" "${ban_backupdir}/banIP.etag"; }; then
+		if [ -z "${etag_id}" ]; then
+			etag_id="$(printf "%s" "${http_head}" | "${ban_awkcmd}" 'tolower($0)~/^[[:space:]]*last-modified: /{gsub(/[Ll]ast-[Mm]odified:|[[:space:]]|,|:/,"");printf "%s\n",$1}')"
+		fi
+		etag_cnt="$("${ban_grepcmd}" -c "^${feed} " "${ban_backupdir}/banIP.etag")"
+		if [ "${http_code}" = "200" ] && [ "${etag_cnt}" = "${feed_cnt}" ] && [ -n "${etag_id}" ] &&
+			"${ban_grepcmd}" -q "^${feed} ${feed_suffix}[[:space:]]\+${etag_id}\$" "${ban_backupdir}/banIP.etag"; then
 			out_rc="0"
-		elif [ "${etag_rc}" = "0" ] && [ -n "${etag_id}" ] && ! "${ban_grepcmd}" -q "^${feed}${feed_suffix}[[:space:]]\+${etag_id}\$" "${ban_backupdir}/banIP.etag"; then
-			"${ban_sedcmd}" -i "/^${feed}${feed_suffix}/d" "${ban_backupdir}/banIP.etag"
-			printf "%-20s%s\n" "${feed}${feed_suffix}" "${etag_id}" >>"${ban_backupdir}/banIP.etag"
+		elif [ -n "${etag_id}" ]; then
+			if [ "${feed_cnt}" -lt "${etag_cnt}" ]; then
+				"${ban_sedcmd}" -i "/^${feed} /d" "${ban_backupdir}/banIP.etag"
+			else
+				"${ban_sedcmd}" -i "/^${feed} ${feed_suffix//\//\\/}/d" "${ban_backupdir}/banIP.etag"
+			fi
+			printf "%-50s%s\n" "${feed} ${feed_suffix}" "${etag_id}" >>"${ban_backupdir}/banIP.etag"
 			out_rc="2"
 		fi
 	fi
 
-	f_log "debug" "f_etag      ::: feed: ${feed}, suffix: ${feed_suffix:-"-"}, http_code: ${http_code:-"-"}, etag_id: ${etag_id:-"-"} , etag_rc: ${etag_rc:-"-"}, rc: ${out_rc}"
+	f_log "debug" "f_etag      ::: feed: ${feed}, suffix: ${feed_suffix:-"-"}, http_code: ${http_code:-"-"}, feed/etag: ${feed_cnt}/${etag_cnt:-"0"}, rc: ${out_rc}"
 	return "${out_rc}"
 }
 
@@ -613,11 +624,11 @@ f_nftinit() {
 	fi
 
 	if [ "${ban_logprerouting}" = "1" ]; then
-		log_icmp="log level ${ban_nftloglevel} prefix \"banIP/pre-icmp/drop: \""
-		log_syn="log level ${ban_nftloglevel} prefix \"banIP/pre-syn/drop: \""
-		log_udp="log level ${ban_nftloglevel} prefix \"banIP/pre-udp/drop: \""
-		log_tcp="log level ${ban_nftloglevel} prefix \"banIP/pre-tcp/drop: \""
-		log_ct="log level ${ban_nftloglevel} prefix \"banIP/pre-ct/drop: \""
+		log_icmp="log level ${ban_nftloglevel} prefix \"banIP/pre-icmp/drop: \" limit rate 10/second"
+		log_syn="log level ${ban_nftloglevel} prefix \"banIP/pre-syn/drop: \" limit rate 10/second"
+		log_udp="log level ${ban_nftloglevel} prefix \"banIP/pre-udp/drop: \" limit rate 10/second"
+		log_tcp="log level ${ban_nftloglevel} prefix \"banIP/pre-tcp/drop: \" limit rate 10/second"
+		log_ct="log level ${ban_nftloglevel} prefix \"banIP/pre-ct/drop: \" limit rate 10/second"
 	fi
 
 	{
@@ -670,8 +681,7 @@ f_nftinit() {
 		printf "%s\n" "add rule inet banIP wan-input ct state established,related counter accept"
 		printf "%s\n" "add rule inet banIP wan-input meta nfproto ipv4 udp sport 67-68 udp dport 67-68 counter accept"
 		printf "%s\n" "add rule inet banIP wan-input meta nfproto ipv6 udp sport 547 udp dport 546 counter accept"
-		printf "%s\n" "add rule inet banIP wan-input meta nfproto ipv6 icmpv6 type { nd-neighbor-advert, nd-neighbor-solicit, nd-router-advert} ip6 hoplimit 1 counter accept"
-		printf "%s\n" "add rule inet banIP wan-input meta nfproto ipv6 icmpv6 type { nd-neighbor-advert, nd-neighbor-solicit, nd-router-advert} ip6 hoplimit 255 counter accept"
+		printf "%s\n" "add rule inet banIP wan-input meta nfproto ipv6 icmpv6 type { nd-neighbor-solicit, nd-neighbor-advert, nd-router-advert } ip6 hoplimit 255 counter accept"
 		[ -n "${allow_dport}" ] && printf "%s\n" "add rule inet banIP wan-input ${allow_dport} counter accept"
 		[ "${ban_loginbound}" = "1" ] && printf "%s\n" "add rule inet banIP wan-input meta mark set 1 counter jump _inbound" || printf "%s\n" "add rule inet banIP wan-input counter jump _inbound"
 
@@ -705,8 +715,8 @@ f_nftinit() {
 # handle downloads
 #
 f_down() {
-	local log_inbound log_outbound start_ts end_ts tmp_raw tmp_load tmp_file split_file table_json handle rc etag_rc element_count flag
-	local expr cnt_set cnt_dl restore_rc feed_direction feed_policy feed_rc feed_comp feed_complete feed_target feed_dport chain
+	local log_inbound log_outbound start_ts end_ts tmp_raw tmp_load tmp_file split_file table_json handle etag_rc etag_cnt element_count
+	local expr cnt_set cnt_dl restore_rc feed_direction feed_policy feed_rc feed_comp feed_complete feed_target feed_dport chain flag
 	local tmp_proto tmp_port asn country feed="${1}" proto="${2}" feed_url="${3}" feed_rule="${4}" feed_chain="${5}" feed_flag="${6}"
 
 	start_ts="$(date +%s)"
@@ -721,8 +731,8 @@ f_down() {
 
 	# set log target
 	#
-	[ "${ban_loginbound}" = "1" ] && log_inbound="log level ${ban_nftloglevel} prefix \"banIP/inbound/${ban_blockpolicy}/${feed}: \""
-	[ "${ban_logoutbound}" = "1" ] && log_outbound="log level ${ban_nftloglevel} prefix \"banIP/outbound/reject/${feed}: \""
+	[ "${ban_loginbound}" = "1" ] && log_inbound="log level ${ban_nftloglevel} prefix \"banIP/inbound/${ban_blockpolicy}/${feed}: \" limit rate 10/second"
+	[ "${ban_logoutbound}" = "1" ] && log_outbound="log level ${ban_nftloglevel} prefix \"banIP/outbound/reject/${feed}: \" limit rate 10/second"
 
 	# set feed target
 	#
@@ -832,7 +842,13 @@ f_down() {
 						f_etag "${feed}" "${feed_url}${country}-aggregated.zone" ".${country}"
 						etag_rc="${?}"
 					else
-						etag_rc="4"
+						etag_rc="0"
+						etag_cnt="$(printf "%s" "${ban_country}" | "${ban_wccmd}" -w)"
+						for country in ${ban_country}; do
+							if ! f_etag "${feed}" "${feed_url}${country}-aggregated.zone" ".${country}" "${etag_cnt}"; then
+								etag_rc="$((etag_rc + 1))"
+							fi
+						done
 					fi
 					;;
 				"asn")
@@ -842,7 +858,13 @@ f_down() {
 						f_etag "${feed}" "${feed_url}AS${asn}" ".${asn}"
 						etag_rc="${?}"
 					else
-						etag_rc="4"
+						etag_rc="0"
+						etag_cnt="$(printf "%s" "${ban_asn}" | "${ban_wccmd}" -w)"
+						for asn in ${ban_asn}; do
+							if ! f_etag "${feed}" "${feed_url}AS${asn}" ".${asn}" "${etag_cnt}"; then
+								etag_rc="$((etag_rc + 1))"
+							fi
+						done
 					fi
 					;;
 				*)
@@ -854,10 +876,11 @@ f_down() {
 		if [ "${etag_rc}" = "0" ] || [ "${ban_action}" != "reload" ] || [ "${feed_url}" = "local" ]; then
 			if [ "${feed%%.*}" = "allowlist" ] && [ ! -f "${tmp_allow}" ]; then
 				f_restore "allowlist" "-" "${tmp_allow}" "${etag_rc}"
+				restore_rc="${?}"
 			else
 				f_restore "${feed}" "${feed_url}" "${tmp_load}" "${etag_rc}"
+				restore_rc="${?}"
 			fi
-			restore_rc="${?}"
 			feed_rc="${restore_rc}"
 		fi
 	fi
@@ -1143,7 +1166,7 @@ f_down() {
 			if [ "${feed_rc}" = "0" ]; then
 				for split_file in "${tmp_file}".*; do
 					if [ -s "${split_file}" ]; then
-						"${ban_sedcmd}" -i "1 i #!${ban_nftcmd} -f\nadd element inet banIP "${feed}" { " "${split_file}"
+						"${ban_sedcmd}" -i "1 i #!${ban_nftcmd} -f\nadd element inet banIP ${feed} { " "${split_file}"
 						printf "%s\n" "}" >>"${split_file}"
 						# load split file to nftset
 						#
@@ -1209,7 +1232,10 @@ f_rmset() {
 			if ! printf "%s" "allowlist blocklist ${ban_feed}" | "${ban_grepcmd}" -q "${feed%.*}" ||
 				! printf "%s" "allowlist blocklist ${feedlist}" | "${ban_grepcmd}" -q "${feed%.*}" ||
 				{ [ "${feed%.*}" = "country" ] && [ "${ban_countrysplit}" = "1" ]; } ||
-				{ [ "${feed%.*}" = "asn" ] && [ "${ban_asnsplit}" = "1" ]; }; then
+				{ [ "${feed%.*}" = "asn" ] && [ "${ban_asnsplit}" = "1" ]; } ||
+				{ [ "${feed%.*}" != "allowlist" ] && [ "${feed%.*}" != "blocklist" ] && [ "${ban_allowlistonly}" = "1" ] &&
+					! printf "%s" "${ban_feedin}" | "${ban_grepcmd}" -q "allowlist" &&
+					! printf "%s" "${ban_feedout}" | "${ban_grepcmd}" -q "allowlist"; }; then
 				case "${feed%%.*}" in
 					"country")
 						country="${feed%.*}"
@@ -1257,10 +1283,9 @@ f_rmset() {
 # generate status information
 #
 f_genstatus() {
-	local mem_free mem_max nft_ver chain_cnt set_cnt rule_cnt object end_time duration table table_sets element_cnt="0" custom_feed="0" split="0" status="${1}"
+	local mem_free nft_ver chain_cnt set_cnt rule_cnt object end_time duration table table_sets element_cnt="0" custom_feed="0" split="0" status="${1}"
 
 	mem_free="$("${ban_awkcmd}" '/^MemAvailable/{printf "%.2f", $2/1024}' "/proc/meminfo" 2>/dev/null)"
-	mem_max="$("${ban_awkcmd}" '/^VmHWM/{printf "%.2f", $2/1024}' /proc/${$}/status 2>/dev/null)"
 	nft_ver="$(printf "%s" "${ban_packages}" | "${ban_jsoncmd}" -ql1 -e '@.packages["nftables-json"]')"
 
 	[ -z "${ban_dev}" ] && f_conf
@@ -1278,7 +1303,7 @@ f_genstatus() {
 			end_time="$(date "+%s")"
 			duration="$(((end_time - ban_starttime) / 60))m $(((end_time - ban_starttime) % 60))s"
 		fi
-		runtime="$(date "+%Y-%m-%d %H:%M:%S"), duration: ${duration:-"-"}, mode: ${ban_action:-"-"}, memory: ${mem_free} MB available, ${mem_max} MB max. used"
+		runtime="mode: ${ban_action:-"-"}, $(date "+%Y-%m-%d %H:%M:%S"), duration: ${duration:-"-"}, memory: ${mem_free} MB available"
 	fi
 	[ -s "${ban_customfeedfile}" ] && custom_feed="1"
 	[ "${ban_splitsize:-"0"}" -gt "0" ] && split="1"
@@ -1353,7 +1378,7 @@ f_getstatus() {
 			else
 				json_get_var value "${key}" >/dev/null 2>&1
 				if [ "${key}" = "status" ]; then
-					[ "${value}" = "active" ] && value="${value} ($(f_actual))" || value="${value}"
+					[ "${value}" = "active" ] && value="${value} ($(f_actual))"
 				fi
 			fi
 			if [ "${key}" != "wan_interfaces" ] && [ "${key}" != "vlan_allow" ] && [ "${key}" != "vlan_block" ]; then
@@ -1423,297 +1448,300 @@ f_report() {
 	report_txt="${ban_reportdir}/ban_report.txt"
 	map_jsn="${ban_reportdir}/ban_map.jsn"
 
-	# json output preparation
-	#
-	: >"${report_jsn}"
-	: >"${map_jsn}"
-	table_json="$("${ban_nftcmd}" -tj list table inet banIP 2>/dev/null)"
-	table_sets="$(printf "%s" "${table_json}" | "${ban_jsoncmd}" -qe '@.nftables[@.set.family="inet"].set.name')"
-	sum_sets="0"
-	sum_cntelements="0"
-	sum_setinbound="0"
-	sum_setoutbound="0"
-	sum_cntinbound="0"
-	sum_cntoutbound="0"
-	sum_setports="0"
-	sum_setelements="0"
-	sum_synflood="$(printf "%s" "${table_json}" | "${ban_jsoncmd}" -qe '@.nftables[@.counter.name="cnt_synflood"].*.packets')"
-	sum_udpflood="$(printf "%s" "${table_json}" | "${ban_jsoncmd}" -qe '@.nftables[@.counter.name="cnt_udpflood"].*.packets')"
-	sum_icmpflood="$(printf "%s" "${table_json}" | "${ban_jsoncmd}" -qe '@.nftables[@.counter.name="cnt_icmpflood"].*.packets')"
-	sum_ctinvalid="$(printf "%s" "${table_json}" | "${ban_jsoncmd}" -qe '@.nftables[@.counter.name="cnt_ctinvalid"].*.packets')"
-	sum_tcpinvalid="$(printf "%s" "${table_json}" | "${ban_jsoncmd}" -qe '@.nftables[@.counter.name="cnt_tcpinvalid"].*.packets')"
-	timestamp="$(date "+%Y-%m-%d %H:%M:%S")"
+	if [ "${output}" != "json" ]; then
+		# json output preparation
+		#
+		: >"${report_jsn}"
+		: >"${map_jsn}"
+		table_json="$("${ban_nftcmd}" -tj list table inet banIP 2>/dev/null)"
+		table_sets="$(printf "%s" "${table_json}" | "${ban_jsoncmd}" -qe '@.nftables[@.set.family="inet"].set.name')"
+		sum_sets="0"
+		sum_cntelements="0"
+		sum_setinbound="0"
+		sum_setoutbound="0"
+		sum_cntinbound="0"
+		sum_cntoutbound="0"
+		sum_setports="0"
+		sum_setelements="0"
+		sum_synflood="$(printf "%s" "${table_json}" | "${ban_jsoncmd}" -qe '@.nftables[@.counter.name="cnt_synflood"].*.packets')"
+		sum_udpflood="$(printf "%s" "${table_json}" | "${ban_jsoncmd}" -qe '@.nftables[@.counter.name="cnt_udpflood"].*.packets')"
+		sum_icmpflood="$(printf "%s" "${table_json}" | "${ban_jsoncmd}" -qe '@.nftables[@.counter.name="cnt_icmpflood"].*.packets')"
+		sum_ctinvalid="$(printf "%s" "${table_json}" | "${ban_jsoncmd}" -qe '@.nftables[@.counter.name="cnt_ctinvalid"].*.packets')"
+		sum_tcpinvalid="$(printf "%s" "${table_json}" | "${ban_jsoncmd}" -qe '@.nftables[@.counter.name="cnt_tcpinvalid"].*.packets')"
+		timestamp="$(date "+%Y-%m-%d %H:%M:%S")"
 
-	cnt="1"
-	for item in ${table_sets}; do
-		(
-			set_json="$("${ban_nftcmd}" -j list set inet banIP "${item}" 2>/dev/null)"
-			set_cnt="$(printf "%s" "${set_json}" | "${ban_jsoncmd}" -qe '@.nftables[*].set.elem[*]' | "${ban_wccmd}" -l 2>/dev/null)"
-			set_cntinbound=""
-			set_cntoutbound=""
-			set_inbound=""
-			set_outbound=""
-			set_proto=""
-			set_dport=""
-			set_elements=""
-			for chain in _inbound _outbound; do
-				for expr in 0 1 2; do
-					if [ "${chain}" = "_inbound" ] && [ -z "${set_cntinbound}" ]; then
-						set_cntinbound="$(printf "%s" "${table_json}" | "${ban_jsoncmd}" -ql1 -e "@.nftables[@.rule.chain=\"${chain}\"][@.expr[${expr}].match.right=\"@${item}\"].expr[*].counter.packets")"
-					elif [ "${chain}" = "_outbound" ] && [ -z "${set_cntoutbound}" ]; then
-						set_cntoutbound="$(printf "%s" "${table_json}" | "${ban_jsoncmd}" -ql1 -e "@.nftables[@.rule.chain=\"${chain}\"][@.expr[${expr}].match.right=\"@${item}\"].expr[*].counter.packets")"
-					fi
-					[ -z "${set_proto}" ] && set_proto="$(printf "%s" "${table_json}" | "${ban_jsoncmd}" -ql1 -e "@.nftables[@.rule.chain=\"${chain}\"][@.expr[2].match.right=\"@${item}\"].expr[0].match.right.set")"
-					[ -z "${set_proto}" ] && set_proto="$(printf "%s" "${table_json}" | "${ban_jsoncmd}" -ql1 -e "@.nftables[@.rule.chain=\"${chain}\"][@.expr[1].match.right=\"@${item}\"].expr[0].match.left.payload.protocol")"
-					[ -z "${set_dport}" ] && set_dport="$(printf "%s" "${table_json}" | "${ban_jsoncmd}" -ql1 -e "@.nftables[@.rule.chain=\"${chain}\"][@.expr[2].match.right=\"@${item}\"].expr[1].match.right.set")"
-					[ -z "${set_dport}" ] && set_dport="$(printf "%s" "${table_json}" | "${ban_jsoncmd}" -ql1 -e "@.nftables[@.rule.chain=\"${chain}\"][@.expr[2].match.right=\"@${item}\"].expr[1].match.right")"
-					[ -z "${set_dport}" ] && set_dport="$(printf "%s" "${table_json}" | "${ban_jsoncmd}" -ql1 -e "@.nftables[@.rule.chain=\"${chain}\"][@.expr[1].match.right=\"@${item}\"].expr[0].match.right.set")"
-					[ -z "${set_dport}" ] && set_dport="$(printf "%s" "${table_json}" | "${ban_jsoncmd}" -ql1 -e "@.nftables[@.rule.chain=\"${chain}\"][@.expr[1].match.right=\"@${item}\"].expr[0].match.right")"
-				done
-			done
-			if [ -n "${set_proto}" ] && [ -n "${set_dport}" ]; then
-				set_proto="${set_proto//[\{\}\":]/}"
-				set_proto="${set_proto#\[ *}"
-				set_proto="${set_proto%* \]}"
-				set_dport="${set_dport//[\{\}\":]/}"
-				set_dport="${set_dport#\[ *}"
-				set_dport="${set_dport%* \]}"
-				set_dport="${set_proto}: $(f_trim "${set_dport}")"
-			fi
-			if [ "${ban_nftcount}" = "1" ]; then
-				set_elements="$(printf "%s" "${set_json}" | "${ban_jsoncmd}" -qe '@.nftables[*].set.elem[*][@.counter.packets>0].val' |
-					"${ban_awkcmd}" -F '[ ,]' '{ORS=" ";if($2=="\"range\":")printf"%s, ",$4;else if($2=="\"prefix\":")printf"%s, ",$5;else printf"\"%s\", ",$1}')"
-			fi
-			if [ -n "${set_cntinbound}" ]; then
-				set_inbound="ON"
-			else
-				set_inbound="-"
-				set_cntinbound=""
-			fi
-			if [ -n "${set_cntoutbound}" ]; then
-				set_outbound="ON"
-			else
-				set_outbound="-"
-				set_cntoutbound=""
-			fi
-			if [ "${cnt}" = "1" ]; then
-				printf "%s\n" "{ \"sets\":{ \"${item}\":{ \"cnt_elements\": \"${set_cnt}\", \"cnt_inbound\": \"${set_cntinbound}\", \"inbound\": \"${set_inbound}\", \"cnt_outbound\": \"${set_cntoutbound}\", \"outbound\": \"${set_outbound}\", \"port\": \"${set_dport:-"-"}\", \"set_elements\": [ ${set_elements%%??} ] }" >>"${report_jsn}"
-			else
-				printf "%s\n" ", \"${item}\":{ \"cnt_elements\": \"${set_cnt}\", \"cnt_inbound\": \"${set_cntinbound}\", \"inbound\": \"${set_inbound}\", \"cnt_outbound\": \"${set_cntoutbound}\", \"outbound\": \"${set_outbound}\", \"port\": \"${set_dport:-"-"}\", \"set_elements\": [ ${set_elements%%??} ] }" >>"${report_jsn}"
-			fi
-		) &
-		[ "${cnt}" -eq "1" ] || [ "${cnt}" -gt "${ban_cores}" ] && wait -n
-		cnt="$((cnt + 1))"
-	done
-	wait
-	printf "\n%s\n" "} }" >>"${report_jsn}"
-
-	# add sum statistics
-	#
-	json_init
-	if json_load_file "${report_jsn}" >/dev/null 2>&1; then
-		json_select "sets" >/dev/null 2>&1
-		json_get_keys table_sets >/dev/null 2>&1
-		if [ -n "${table_sets}" ]; then
-			for item in ${table_sets}; do
-				sum_sets="$((sum_sets + 1))"
-				json_select "${item}"
-				json_get_keys set_details
-				for detail in ${set_details}; do
-					case "${detail}" in
-						"cnt_elements")
-							json_get_var jsnval "${detail}" >/dev/null 2>&1
-							sum_cntelements="$((sum_cntelements + jsnval))"
-							;;
-						"set_elements")
-							json_get_values jsnval "${detail}" >/dev/null 2>&1
-							if [ -n "${jsnval}" ]; then
-								jsnval="$(printf "%s" "${jsnval}" | "${ban_wccmd}" -w)"
-								sum_setelements="$((sum_setelements + jsnval))"
-							fi
-							;;
-						"inbound")
-							json_get_var jsnval "${detail}" >/dev/null 2>&1
-							if [ "${jsnval}" = "ON" ]; then
-								sum_setinbound="$((sum_setinbound + 1))"
-							fi
-							;;
-						"outbound")
-							json_get_var jsnval "${detail}" >/dev/null 2>&1
-							if [ "${jsnval}" = "ON" ]; then
-								sum_setoutbound="$((sum_setoutbound + 1))"
-							fi
-							;;
-						"cnt_inbound")
-							json_get_var jsnval "${detail}" >/dev/null 2>&1
-							if [ -n "${jsnval}" ]; then
-								sum_cntinbound="$((sum_cntinbound + jsnval))"
-							fi
-							;;
-						"cnt_outbound")
-							json_get_var jsnval "${detail}" >/dev/null 2>&1
-							if [ -n "${jsnval}" ]; then
-								sum_cntoutbound="$((sum_cntoutbound + jsnval))"
-							fi
-							;;
-						"port")
-							json_get_var jsnval "${detail}" >/dev/null 2>&1
-							if [ "${jsnval}" != "-" ]; then
-								jsnval="${jsnval//[^0-9 ]/}"
-								jsnval="$(printf "%s" "${jsnval}" | "${ban_wccmd}" -w)"
-								sum_setports="$((sum_setports + jsnval))"
-							fi
-							;;
-					esac
-				done
-				json_select ".."
-			done
-			"${ban_sedcmd}" -i ':a;$!N;1,1ba;P;$d;D' "${report_jsn}"
-			printf "%s\n" "}, \"timestamp\": \"${timestamp}\", \"autoadd_allow\": \"$("${ban_grepcmd}" -c "added on ${timestamp% *}" "${ban_allowlist}")\", \"autoadd_block\": \"$("${ban_grepcmd}" -c "added on ${timestamp% *}" "${ban_blocklist}")\", \"sum_synflood\": \"${sum_synflood}\", \"sum_udpflood\": \"${sum_udpflood}\", \"sum_icmpflood\": \"${sum_icmpflood}\", \"sum_ctinvalid\": \"${sum_ctinvalid}\", \"sum_tcpinvalid\": \"${sum_tcpinvalid}\", \"sum_sets\": \"${sum_sets}\", \"sum_setinbound\": \"${sum_setinbound}\", \"sum_setoutbound\": \"${sum_setoutbound}\", \"sum_cntelements\": \"${sum_cntelements}\", \"sum_cntinbound\": \"${sum_cntinbound}\", \"sum_cntoutbound\": \"${sum_cntoutbound}\", \"sum_setports\": \"${sum_setports}\", \"sum_setelements\": \"${sum_setelements}\" }" >>"${report_jsn}"
-		fi
-	fi
-
-	# retrieve/prepare map data
-	#
-	if [ "${ban_nftcount}" = "1" ] && [ "${ban_map}" = "1" ] && [ "${output}" = "json" ] && [ -s "${report_jsn}" ]; then
 		cnt="1"
-		f_getfetch
-		json_init
-		if json_load_file "${ban_rtfile}" >/dev/null 2>&1; then
-			json_get_values jsnval "active_uplink" >/dev/null 2>&1
-			jsnval="${jsnval//\/[0-9][0-9]/}"
-			jsnval="${jsnval//\/[0-9]/}"
-			jsnval="\"${jsnval// /\", \"}\""
-			if [ "${jsnval}" != '""' ]; then
-				{
-					printf "%s" ",[{}"
-					"${ban_fetchcmd}" ${ban_geoparm} "[ ${jsnval} ]" "${ban_geourl}" 2>/dev/null |
-						"${ban_jsoncmd}" -qe '@[*&&@.status="success"]' | "${ban_awkcmd}" -v feed="homeIP" '{printf ",{\"%s\": %s}\n",feed,$0}'
-				} >>"${map_jsn}"
-			fi
-		fi
-		if [ -s "${map_jsn}" ] && [ "$("${ban_catcmd}" "${map_jsn}")" != ",[{}" ]; then
-			json_init
-			if json_load_file "${report_jsn}" >/dev/null 2>&1; then
-				json_select "sets" >/dev/null 2>&1
-				json_get_keys table_sets >/dev/null 2>&1
-				if [ -n "${table_sets}" ]; then
-					for item in ${table_sets}; do
-						json_select "${item}"
-						json_get_keys set_details
-						for detail in ${set_details}; do
-							if [ "${detail}"="set_elements" ]; then
-								json_get_values jsnval "${detail}" >/dev/null 2>&1
-								jsnval="\"${jsnval// /\", \"}\""
-							fi
-						done
-						if [ "${jsnval}" != '""' ]; then
-							quantity="0"
-							chunk=""
-							(
-								for ip in ${jsnval}; do
-									chunk="${chunk} ${ip}"
-									quantity="$((quantity + 1))"
-									if [ "${quantity}" -eq "100" ]; then
-										"${ban_fetchcmd}" ${ban_geoparm} "[ ${chunk%%?} ]" "${ban_geourl}" 2>/dev/null |
-											"${ban_jsoncmd}" -qe '@[*&&@.status="success"]' | "${ban_awkcmd}" -v feed="${item}" '{printf ",{\"%s\": %s}\n",feed,$0}' >>"${map_jsn}"
-										chunk=""
-										quantity="0"
-									fi
-								done
-								if [ "${quantity}" -gt "0" ]; then
-									"${ban_fetchcmd}" ${ban_geoparm} "[ ${chunk} ]" "${ban_geourl}" 2>/dev/null |
-										"${ban_jsoncmd}" -qe '@[*&&@.status="success"]' | "${ban_awkcmd}" -v feed="${item}" '{printf ",{\"%s\": %s}\n",feed,$0}' >>"${map_jsn}"
-								fi
-							) &
-							[ "${cnt}" -gt "${ban_cores}" ] && wait -n
-							cnt="$((cnt + 1))"
+		for item in ${table_sets}; do
+			(
+				set_json="$("${ban_nftcmd}" -j list set inet banIP "${item}" 2>/dev/null)"
+				set_cnt="$(printf "%s" "${set_json}" | "${ban_jsoncmd}" -qe '@.nftables[*].set.elem[*]' | "${ban_wccmd}" -l 2>/dev/null)"
+				set_cntinbound=""
+				set_cntoutbound=""
+				set_inbound=""
+				set_outbound=""
+				set_proto=""
+				set_dport=""
+				set_elements=""
+				for chain in _inbound _outbound; do
+					for expr in 0 1 2; do
+						if [ "${chain}" = "_inbound" ] && [ -z "${set_cntinbound}" ]; then
+							set_cntinbound="$(printf "%s" "${table_json}" | "${ban_jsoncmd}" -ql1 -e "@.nftables[@.rule.chain=\"${chain}\"][@.expr[${expr}].match.right=\"@${item}\"].expr[*].counter.packets")"
+						elif [ "${chain}" = "_outbound" ] && [ -z "${set_cntoutbound}" ]; then
+							set_cntoutbound="$(printf "%s" "${table_json}" | "${ban_jsoncmd}" -ql1 -e "@.nftables[@.rule.chain=\"${chain}\"][@.expr[${expr}].match.right=\"@${item}\"].expr[*].counter.packets")"
 						fi
-						json_select ".."
+						[ -z "${set_proto}" ] && set_proto="$(printf "%s" "${table_json}" | "${ban_jsoncmd}" -ql1 -e "@.nftables[@.rule.chain=\"${chain}\"][@.expr[2].match.right=\"@${item}\"].expr[0].match.right.set")"
+						[ -z "${set_proto}" ] && set_proto="$(printf "%s" "${table_json}" | "${ban_jsoncmd}" -ql1 -e "@.nftables[@.rule.chain=\"${chain}\"][@.expr[1].match.right=\"@${item}\"].expr[0].match.left.payload.protocol")"
+						[ -z "${set_dport}" ] && set_dport="$(printf "%s" "${table_json}" | "${ban_jsoncmd}" -ql1 -e "@.nftables[@.rule.chain=\"${chain}\"][@.expr[2].match.right=\"@${item}\"].expr[1].match.right.set")"
+						[ -z "${set_dport}" ] && set_dport="$(printf "%s" "${table_json}" | "${ban_jsoncmd}" -ql1 -e "@.nftables[@.rule.chain=\"${chain}\"][@.expr[2].match.right=\"@${item}\"].expr[1].match.right")"
+						[ -z "${set_dport}" ] && set_dport="$(printf "%s" "${table_json}" | "${ban_jsoncmd}" -ql1 -e "@.nftables[@.rule.chain=\"${chain}\"][@.expr[1].match.right=\"@${item}\"].expr[0].match.right.set")"
+						[ -z "${set_dport}" ] && set_dport="$(printf "%s" "${table_json}" | "${ban_jsoncmd}" -ql1 -e "@.nftables[@.rule.chain=\"${chain}\"][@.expr[1].match.right=\"@${item}\"].expr[0].match.right")"
 					done
-					wait
+				done
+				if [ -n "${set_proto}" ] && [ -n "${set_dport}" ]; then
+					set_proto="${set_proto//[\{\}\":]/}"
+					set_proto="${set_proto#\[ *}"
+					set_proto="${set_proto%* \]}"
+					set_dport="${set_dport//[\{\}\":]/}"
+					set_dport="${set_dport#\[ *}"
+					set_dport="${set_dport%* \]}"
+					set_dport="${set_proto}: $(f_trim "${set_dport}")"
 				fi
-			fi
-		fi
-	fi
+				if [ "${ban_nftcount}" = "1" ]; then
+					set_elements="$(printf "%s" "${set_json}" | "${ban_jsoncmd}" -l50 -qe '@.nftables[*].set.elem[*][@.counter.packets>0].val' |
+						"${ban_awkcmd}" -F '[ ,]' '{ORS=" ";if($2=="\"range\":"||$2=="\"concat\":")printf"%s, ",$4;else if($2=="\"prefix\":")printf"%s, ",$5;else printf"\"%s\", ",$1}')"
+				fi
+				if [ -n "${set_cntinbound}" ]; then
+					set_inbound="ON"
+				else
+					set_inbound="-"
+					set_cntinbound=""
+				fi
+				if [ -n "${set_cntoutbound}" ]; then
+					set_outbound="ON"
+				else
+					set_outbound="-"
+					set_cntoutbound=""
+				fi
+				if [ "${cnt}" = "1" ]; then
+					printf "%s\n" "{ \"sets\":{ \"${item}\":{ \"cnt_elements\": \"${set_cnt}\", \"cnt_inbound\": \"${set_cntinbound}\", \"inbound\": \"${set_inbound}\", \"cnt_outbound\": \"${set_cntoutbound}\", \"outbound\": \"${set_outbound}\", \"port\": \"${set_dport:-"-"}\", \"set_elements\": [ ${set_elements%%??} ] }" >>"${report_jsn}"
+				else
+					printf "%s\n" ", \"${item}\":{ \"cnt_elements\": \"${set_cnt}\", \"cnt_inbound\": \"${set_cntinbound}\", \"inbound\": \"${set_inbound}\", \"cnt_outbound\": \"${set_cntoutbound}\", \"outbound\": \"${set_outbound}\", \"port\": \"${set_dport:-"-"}\", \"set_elements\": [ ${set_elements%%??} ] }" >>"${report_jsn}"
+				fi
+			) &
+			[ "${cnt}" -eq "1" ] || [ "${cnt}" -gt "${ban_cores}" ] && wait -n
+			cnt="$((cnt + 1))"
+		done
+		wait
+		printf "\n%s\n" "} }" >>"${report_jsn}"
 
-	# text output preparation
-	#
-	if [ "${output}" != "json" ] && [ -s "${report_jsn}" ]; then
+		# add sum statistics
+		#
 		json_init
 		if json_load_file "${report_jsn}" >/dev/null 2>&1; then
-			json_get_var timestamp "timestamp" >/dev/null 2>&1
-			json_get_var autoadd_allow "autoadd_allow" >/dev/null 2>&1
-			json_get_var autoadd_block "autoadd_block" >/dev/null 2>&1
-			json_get_var sum_synflood "sum_synflood" >/dev/null 2>&1
-			json_get_var sum_udpflood "sum_udpflood" >/dev/null 2>&1
-			json_get_var sum_icmpflood "sum_icmpflood" >/dev/null 2>&1
-			json_get_var sum_ctinvalid "sum_ctinvalid" >/dev/null 2>&1
-			json_get_var sum_tcpinvalid "sum_tcpinvalid" >/dev/null 2>&1
-			json_get_var sum_sets "sum_sets" >/dev/null 2>&1
-			json_get_var sum_setinbound "sum_setinbound" >/dev/null 2>&1
-			json_get_var sum_setoutbound "sum_setoutbound" >/dev/null 2>&1
-			json_get_var sum_cntelements "sum_cntelements" >/dev/null 2>&1
-			json_get_var sum_cntinbound "sum_cntinbound" >/dev/null 2>&1
-			json_get_var sum_cntoutbound "sum_cntoutbound" >/dev/null 2>&1
-			json_get_var sum_setports "sum_setports" >/dev/null 2>&1
-			json_get_var sum_setelements "sum_setelements" >/dev/null 2>&1
-			{
-				printf "%s\n%s\n%s\n" ":::" "::: banIP Set Statistics" ":::"
-				printf "%s\n" "    Timestamp: ${timestamp}"
-				printf "%s\n" "    ------------------------------"
-				printf "%s\n" "    blocked syn-flood packets  : ${sum_synflood}"
-				printf "%s\n" "    blocked udp-flood packets  : ${sum_udpflood}"
-				printf "%s\n" "    blocked icmp-flood packets : ${sum_icmpflood}"
-				printf "%s\n" "    blocked invalid ct packets : ${sum_ctinvalid}"
-				printf "%s\n" "    blocked invalid tcp packets: ${sum_tcpinvalid}"
-				printf "%s\n" "    ---"
-				printf "%s\n" "    auto-added IPs to allowlist: ${autoadd_allow}"
-				printf "%s\n\n" "    auto-added IPs to blocklist: ${autoadd_block}"
-				json_select "sets" >/dev/null 2>&1
-				json_get_keys table_sets >/dev/null 2>&1
-				table_sets="$(printf "%s\n" ${table_sets} | "${ban_sortcmd}")"
-				if [ -n "${table_sets}" ]; then
-					printf "%-25s%-15s%-24s%-24s%-24s%-24s\n" "    Set" "| Count   " "| Inbound (packets)" "| Outbound (packets)" "| Port/Protocol      " "| Elements           "
-					printf "%s\n" "    ---------------------+--------------+-----------------------+-----------------------+-----------------------+------------------------"
-					for item in ${table_sets}; do
-						printf "    %-21s" "${item}"
-						json_select "${item}"
-						json_get_keys set_details
-						for detail in ${set_details}; do
-							case "${detail}" in
-								"cnt_elements")
-									json_get_var jsnval "${detail}" >/dev/null 2>&1
-									printf "%-15s" "| ${jsnval}"
-									;;
-								"cnt_inbound" | "cnt_outbound")
-									json_get_var jsnval "${detail}" >/dev/null 2>&1
-									[ -n "${jsnval}" ] && tmp_val=": ${jsnval}"
-									;;
-								"set_elements")
-									json_get_values jsnval "${detail}" >/dev/null 2>&1
-									jsnval="${jsnval// /, }"
-									printf "%-24s" "| ${jsnval:0:24}"
-									jsnval="${jsnval:24}"
-									while [ -n "${jsnval}" ]; do
-										printf "\n%-25s%-15s%-24s%-24s%-24s%-24s" "" "|" "|" "|" "|" "| ${jsnval:0:24}"
-										jsnval="${jsnval:24}"
-									done
-									;;
-								*)
-									json_get_var jsnval "${detail}" >/dev/null 2>&1
-									printf "%-24s" "| ${jsnval}${tmp_val}"
-									tmp_val=""
-									;;
-							esac
-						done
-						printf "\n"
-						json_select ".."
+			json_select "sets" >/dev/null 2>&1
+			json_get_keys table_sets >/dev/null 2>&1
+			if [ -n "${table_sets}" ]; then
+				for item in ${table_sets}; do
+					sum_sets="$((sum_sets + 1))"
+					json_select "${item}"
+					json_get_keys set_details
+					for detail in ${set_details}; do
+						case "${detail}" in
+							"cnt_elements")
+								json_get_var jsnval "${detail}" >/dev/null 2>&1
+								sum_cntelements="$((sum_cntelements + jsnval))"
+								;;
+							"set_elements")
+								json_get_values jsnval "${detail}" >/dev/null 2>&1
+								if [ -n "${jsnval}" ]; then
+									jsnval="$(printf "%s" "${jsnval}" | "${ban_wccmd}" -w)"
+									sum_setelements="$((sum_setelements + jsnval))"
+								fi
+								;;
+							"inbound")
+								json_get_var jsnval "${detail}" >/dev/null 2>&1
+								if [ "${jsnval}" = "ON" ]; then
+									sum_setinbound="$((sum_setinbound + 1))"
+								fi
+								;;
+							"outbound")
+								json_get_var jsnval "${detail}" >/dev/null 2>&1
+								if [ "${jsnval}" = "ON" ]; then
+									sum_setoutbound="$((sum_setoutbound + 1))"
+								fi
+								;;
+							"cnt_inbound")
+								json_get_var jsnval "${detail}" >/dev/null 2>&1
+								if [ -n "${jsnval}" ]; then
+									sum_cntinbound="$((sum_cntinbound + jsnval))"
+								fi
+								;;
+							"cnt_outbound")
+								json_get_var jsnval "${detail}" >/dev/null 2>&1
+								if [ -n "${jsnval}" ]; then
+									sum_cntoutbound="$((sum_cntoutbound + jsnval))"
+								fi
+								;;
+							"port")
+								json_get_var jsnval "${detail}" >/dev/null 2>&1
+								if [ "${jsnval}" != "-" ]; then
+									jsnval="${jsnval//[^0-9 ]/}"
+									jsnval="$(printf "%s" "${jsnval}" | "${ban_wccmd}" -w)"
+									sum_setports="$((sum_setports + jsnval))"
+								fi
+								;;
+						esac
 					done
-					printf "%s\n" "    ---------------------+--------------+-----------------------+-----------------------+-----------------------+------------------------"
-					printf "%-25s%-15s%-24s%-24s%-24s%-24s\n" "    ${sum_sets}" "| ${sum_cntelements}" "| ${sum_setinbound} (${sum_cntinbound})" "| ${sum_setoutbound} (${sum_cntoutbound})" "| ${sum_setports}" "| ${sum_setelements}"
+					json_select ".."
+				done
+				"${ban_sedcmd}" -i ':a;$!N;1,1ba;P;$d;D' "${report_jsn}"
+				printf "%s\n" "}, \"timestamp\": \"${timestamp}\", \"autoadd_allow\": \"$("${ban_grepcmd}" -c "added on ${timestamp% *}" "${ban_allowlist}")\", \"autoadd_block\": \"$("${ban_grepcmd}" -c "added on ${timestamp% *}" "${ban_blocklist}")\", \"sum_synflood\": \"${sum_synflood}\", \"sum_udpflood\": \"${sum_udpflood}\", \"sum_icmpflood\": \"${sum_icmpflood}\", \"sum_ctinvalid\": \"${sum_ctinvalid}\", \"sum_tcpinvalid\": \"${sum_tcpinvalid}\", \"sum_sets\": \"${sum_sets}\", \"sum_setinbound\": \"${sum_setinbound}\", \"sum_setoutbound\": \"${sum_setoutbound}\", \"sum_cntelements\": \"${sum_cntelements}\", \"sum_cntinbound\": \"${sum_cntinbound}\", \"sum_cntoutbound\": \"${sum_cntoutbound}\", \"sum_setports\": \"${sum_setports}\", \"sum_setelements\": \"${sum_setelements}\" }" >>"${report_jsn}"
+			fi
+		fi
+
+		# retrieve/prepare map data
+		#
+		if [ "${ban_nftcount}" = "1" ] && [ "${ban_map}" = "1" ] && [ -s "${report_jsn}" ]; then
+			cnt="1"
+			f_getfetch
+			json_init
+			if json_load_file "${ban_rtfile}" >/dev/null 2>&1; then
+				json_get_values jsnval "active_uplink" >/dev/null 2>&1
+				jsnval="${jsnval//\/[0-9][0-9]/}"
+				jsnval="${jsnval//\/[0-9]/}"
+				jsnval="\"${jsnval// /\", \"}\""
+				if [ "${jsnval}" != '""' ]; then
+					{
+						printf "%s" ",[{}"
+						"${ban_fetchcmd}" ${ban_geoparm} "[ ${jsnval} ]" "${ban_geourl}" 2>/dev/null |
+							"${ban_jsoncmd}" -qe '@[*&&@.status="success"]' | "${ban_awkcmd}" -v feed="homeIP" '{printf ",{\"%s\": %s}\n",feed,$0}'
+					} >>"${map_jsn}"
 				fi
-			} >>"${report_txt}"
+			fi
+			if [ -s "${map_jsn}" ]; then
+				json_init
+				if json_load_file "${report_jsn}" >/dev/null 2>&1; then
+					json_select "sets" >/dev/null 2>&1
+					json_get_keys table_sets >/dev/null 2>&1
+					if [ -n "${table_sets}" ]; then
+						for item in ${table_sets}; do
+							[ "${item%%_*}" = "allowlist" ] && continue
+							json_select "${item}"
+							json_get_keys set_details
+							for detail in ${set_details}; do
+								if [ "${detail}" = "set_elements" ]; then
+									json_get_values jsnval "${detail}" >/dev/null 2>&1
+									jsnval="\"${jsnval// /\", \"}\""
+								fi
+							done
+							if [ "${jsnval}" != '""' ]; then
+								quantity="0"
+								chunk=""
+								(
+									for ip in ${jsnval}; do
+										chunk="${chunk} ${ip}"
+										quantity="$((quantity + 1))"
+										if [ "${quantity}" -eq "100" ]; then
+											"${ban_fetchcmd}" ${ban_geoparm} "[ ${chunk%%?} ]" "${ban_geourl}" 2>/dev/null |
+												"${ban_jsoncmd}" -qe '@[*&&@.status="success"]' | "${ban_awkcmd}" -v feed="${item//_v/.v}" '{printf ",{\"%s\": %s}\n",feed,$0}' >>"${map_jsn}"
+											chunk=""
+											quantity="0"
+										fi
+									done
+									if [ "${quantity}" -gt "0" ]; then
+										"${ban_fetchcmd}" ${ban_geoparm} "[ ${chunk} ]" "${ban_geourl}" 2>/dev/null |
+											"${ban_jsoncmd}" -qe '@[*&&@.status="success"]' | "${ban_awkcmd}" -v feed="${item//_v/.v}" '{printf ",{\"%s\": %s}\n",feed,$0}' >>"${map_jsn}"
+									fi
+								) &
+								[ "${cnt}" -gt "${ban_cores}" ] && wait -n
+								cnt="$((cnt + 1))"
+							fi
+							json_select ".."
+						done
+						wait
+					fi
+				fi
+			fi
+		fi
+
+		# text output preparation
+		#
+		if [ "${output}" != "json" ] && [ -s "${report_jsn}" ]; then
+			json_init
+			if json_load_file "${report_jsn}" >/dev/null 2>&1; then
+				json_get_var timestamp "timestamp" >/dev/null 2>&1
+				json_get_var autoadd_allow "autoadd_allow" >/dev/null 2>&1
+				json_get_var autoadd_block "autoadd_block" >/dev/null 2>&1
+				json_get_var sum_synflood "sum_synflood" >/dev/null 2>&1
+				json_get_var sum_udpflood "sum_udpflood" >/dev/null 2>&1
+				json_get_var sum_icmpflood "sum_icmpflood" >/dev/null 2>&1
+				json_get_var sum_ctinvalid "sum_ctinvalid" >/dev/null 2>&1
+				json_get_var sum_tcpinvalid "sum_tcpinvalid" >/dev/null 2>&1
+				json_get_var sum_sets "sum_sets" >/dev/null 2>&1
+				json_get_var sum_setinbound "sum_setinbound" >/dev/null 2>&1
+				json_get_var sum_setoutbound "sum_setoutbound" >/dev/null 2>&1
+				json_get_var sum_cntelements "sum_cntelements" >/dev/null 2>&1
+				json_get_var sum_cntinbound "sum_cntinbound" >/dev/null 2>&1
+				json_get_var sum_cntoutbound "sum_cntoutbound" >/dev/null 2>&1
+				json_get_var sum_setports "sum_setports" >/dev/null 2>&1
+				json_get_var sum_setelements "sum_setelements" >/dev/null 2>&1
+				{
+					printf "%s\n%s\n%s\n" ":::" "::: banIP Set Statistics" ":::"
+					printf "%s\n" "    Timestamp: ${timestamp}"
+					printf "%s\n" "    ------------------------------"
+					printf "%s\n" "    blocked syn-flood packets  : ${sum_synflood}"
+					printf "%s\n" "    blocked udp-flood packets  : ${sum_udpflood}"
+					printf "%s\n" "    blocked icmp-flood packets : ${sum_icmpflood}"
+					printf "%s\n" "    blocked invalid ct packets : ${sum_ctinvalid}"
+					printf "%s\n" "    blocked invalid tcp packets: ${sum_tcpinvalid}"
+					printf "%s\n" "    ---"
+					printf "%s\n" "    auto-added IPs to allowlist: ${autoadd_allow}"
+					printf "%s\n\n" "    auto-added IPs to blocklist: ${autoadd_block}"
+					json_select "sets" >/dev/null 2>&1
+					json_get_keys table_sets >/dev/null 2>&1
+					table_sets="$(printf "%s\n" ${table_sets} | "${ban_sortcmd}")"
+					if [ -n "${table_sets}" ]; then
+						printf "%-25s%-15s%-24s%-24s%-24s%-24s\n" "    Set" "| Count   " "| Inbound (packets)" "| Outbound (packets)" "| Port/Protocol      " "| Elements (max. 50) "
+						printf "%s\n" "    ---------------------+--------------+-----------------------+-----------------------+-----------------------+------------------------"
+						for item in ${table_sets}; do
+							printf "    %-21s" "${item//_v/.v}"
+							json_select "${item}"
+							json_get_keys set_details
+							for detail in ${set_details}; do
+								case "${detail}" in
+									"cnt_elements")
+										json_get_var jsnval "${detail}" >/dev/null 2>&1
+										printf "%-15s" "| ${jsnval}"
+										;;
+									"cnt_inbound" | "cnt_outbound")
+										json_get_var jsnval "${detail}" >/dev/null 2>&1
+										[ -n "${jsnval}" ] && tmp_val=": ${jsnval}"
+										;;
+									"set_elements")
+										json_get_values jsnval "${detail}" >/dev/null 2>&1
+										jsnval="${jsnval// /, }"
+										printf "%-24s" "| ${jsnval:0:24}"
+										jsnval="${jsnval:24}"
+										while [ -n "${jsnval}" ]; do
+											printf "\n%-25s%-15s%-24s%-24s%-24s%-24s" "" "|" "|" "|" "|" "| ${jsnval:0:24}"
+											jsnval="${jsnval:24}"
+										done
+										;;
+									*)
+										json_get_var jsnval "${detail}" >/dev/null 2>&1
+										printf "%-24s" "| ${jsnval}${tmp_val}"
+										tmp_val=""
+										;;
+								esac
+							done
+							printf "\n"
+							json_select ".."
+						done
+						printf "%s\n" "    ---------------------+--------------+-----------------------+-----------------------+-----------------------+------------------------"
+						printf "%-25s%-15s%-24s%-24s%-24s%-24s\n" "    ${sum_sets}" "| ${sum_cntelements}" "| ${sum_setinbound} (${sum_cntinbound})" "| ${sum_setoutbound} (${sum_cntoutbound})" "| ${sum_setports}" "| ${sum_setelements}"
+					fi
+				} >>"${report_txt}"
+			fi
 		fi
 	fi
 
@@ -1726,11 +1754,11 @@ f_report() {
 			;;
 		"json")
 			if [ "${ban_nftcount}" = "1" ] && [ "${ban_map}" = "1" ]; then
-				jsn="$("${ban_catcmd}" ${report_jsn} ${map_jsn})"
-				printf "[%s]]\n" "${jsn}"
+				jsn="$("${ban_catcmd}" ${report_jsn} ${map_jsn} 2>/dev/null)"
+				[ -n "${jsn}" ] && printf "[%s]]\n" "${jsn}"
 			else
-				jsn="$("${ban_catcmd}" ${report_jsn})"
-				printf "[%s]\n" "${jsn}"
+				jsn="$("${ban_catcmd}" ${report_jsn} 2>/dev/null)"
+				[ -n "${jsn}" ] && printf "[%s]\n" "${jsn}"
 			fi
 			;;
 		"mail")
@@ -1743,7 +1771,7 @@ f_report() {
 # Set search
 #
 f_search() {
-	local item table_sets ip proto hold cnt result="/var/run/banIP.search" input="${1}"
+	local item table_sets ip proto cnt result="/var/run/banIP.search" input="${1}"
 
 	if [ -n "${input}" ]; then
 		ip="$(printf "%s" "${input}" | "${ban_awkcmd}" 'BEGIN{RS="(([1-9][0-9]{0,2}\\.){1}([0-9]{1,3}\\.){2}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(\\/(1?[0-9]|2?[0-9]|3?[0-2]))?[[:space:]]*$)"}{printf "%s",RT}')"
@@ -1790,7 +1818,7 @@ f_search() {
 # Set content
 #
 f_content() {
-	local set_raw set_elements input="${1}"
+	local set_raw set_elements input="${1}" filter="${2}"
 
 	if [ -z "${input}" ]; then
 		printf "%s\n%s\n%s\n" ":::" "::: no valid Set input" ":::"
@@ -1799,7 +1827,13 @@ f_content() {
 	set_raw="$("${ban_nftcmd}" -j list set inet banIP "${input}" 2>/dev/null)"
 
 	if [ "$(uci_get banip global ban_nftcount)" = "1" ]; then
-		set_elements="$(printf "%s" "${set_raw}" | "${ban_jsoncmd}" -qe '@.nftables[*].set.elem[*].elem.val')"
+		if [ "${filter}" = "true" ]; then
+			set_elements="$(printf "%s" "${set_raw}" | "${ban_jsoncmd}" -qe '@.nftables[*].set.elem[*][@.counter.packets>0].*' |
+				"${ban_awkcmd}" 'NR%2==1{ip=$0;next}BEGIN{FS="[:,{}\"]+"}{print ip ", packets: "$4 }')"
+		else
+			set_elements="$(printf "%s" "${set_raw}" | "${ban_jsoncmd}" -qe '@.nftables[*].set.elem[*].elem["val","counter"]' |
+				"${ban_awkcmd}" 'NR%2==1{ip=$0;next}BEGIN{FS="[:,{}\"]+"}{print ip ", packets: "$4 }')"
+		fi
 	else
 		set_elements="$(printf "%s" "${set_raw}" | "${ban_jsoncmd}" -qe '@.nftables[*].set.elem[*]')"
 	fi
@@ -1871,7 +1905,8 @@ f_monitor() {
 					ip="${ip##* }"
 					[ -n "${ip%%::*}" ] && proto=".v6"
 				fi
-				if [ -n "${proto}" ] && ! "${ban_nftcmd}" get element inet banIP allowlist"${proto}" "{ ${ip} }" >/dev/null 2>&1 && ! "${ban_nftcmd}" get element inet banIP blocklist"${proto}" "{ ${ip} }" >/dev/null 2>&1; then
+				if [ -n "${proto}" ] && ! "${ban_nftcmd}" get element inet banIP allowlist"${proto}" "{ ${ip} }" >/dev/null 2>&1 &&
+					! "${ban_nftcmd}" get element inet banIP blocklist"${proto}" "{ ${ip} }" >/dev/null 2>&1; then
 					f_log "info" "suspicious IP '${ip}'"
 					log_raw="$(eval ${loglimit_cmd})"
 					log_count="$(printf "%s\n" "${log_raw}" | "${ban_grepcmd}" -c "suspicious IP '${ip}'")"
@@ -1892,9 +1927,11 @@ f_monitor() {
 										prefix="${idx}"
 										continue
 									else
-										cidr="${prefix}/${idx}"
-										if "${ban_nftcmd}" add element inet banIP "blocklist${proto}" { ${cidr} ${nft_expiry} } >/dev/null 2>&1; then
-											f_log "info" "add IP range '${cidr}' (source: ${rdap_info:-"n/a"} ::: expiry: ${ban_nftexpiry:-"-"}) to blocklist${proto} set"
+										if [ -n "${prefix%%::*}" ] && [ "${prefix%%.*}" != "127" ] && [ "${prefix%%.*}" != "0" ]; then
+											cidr="${prefix}/${idx}"
+											if "${ban_nftcmd}" add element inet banIP "blocklist${proto}" { ${cidr} ${nft_expiry} } >/dev/null 2>&1; then
+												f_log "info" "add IP range '${cidr}' (source: ${rdap_info:-"n/a"} ::: expiry: ${ban_nftexpiry:-"-"}) to blocklist${proto} set"
+											fi
 										fi
 										prefix=""
 									fi

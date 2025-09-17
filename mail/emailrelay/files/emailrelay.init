@@ -6,44 +6,102 @@ USE_PROCD=1
 PROG=/usr/bin/emailrelay
 NAME=emailrelay
 
+handle_dnsbl() {
+	procd_append_param command --dnsbl "$1"
+}
+
+handle_filter() {
+	procd_append_param command --filter "$1"
+}
+
+handle_client_filter() {
+	procd_append_param command --client-filter "$1"
+}
+
+handle_interface() {
+	procd_append_param command --interface "$2=$1"
+}
+
 
 emailrelay_instance()
 {
-	local enabled mode port remote_clients server_tls server_auth extra_cmdline smarthost client_tls client_auth address_verifier domain anonymous
+	procd_open_instance
+	procd_set_param command "$PROG" --no-daemon
+
+	local enabled mode port remote_clients  \
+		anonymous domain address_verifier spool_dir delivery_dir \
+		server_auth server_tls server_tls_required server_tls_key server_tls_certificate server_tls_verify \
+		client_auth client_tls client_tls_required client_tls_key client_tls_certificate client_tls_verify \
+		smarthost smtp_client_interface \
+		pop pop_port pop_auth pop_by_name \
+		extra_cmdline
 
 	config_get_bool enabled "$1" enabled
+	[ "$enabled" = 0 ] && return 1
 	config_get mode "$1" mode
 	config_get port "$1" port
 	config_get_bool remote_clients "$1" remote_clients
-	config_get server_tls "$1" server_tls
+	config_list_foreach "$1" dnsbl handle_dnsbl
+	config_get_bool server_tls "$1" server_tls
+	config_get_bool server_tls_required "$1" server_tls_required
+	config_get server_tls_key "$1" server_tls_key
+	config_get server_tls_certificate "$1" server_tls_certificate
+	config_get server_tls_verify "$1" server_tls_verify
 	config_get server_auth "$1" server_auth
+	config_list_foreach "$1" filter handle_filter
 	config_get extra_cmdline "$1" extra_cmdline
+	config_list_foreach "$1" smtp_server_interface handle_interface "smtp"
 	config_get smarthost "$1" smarthost
+	config_get smtp_client_interface "$1" smtp_client_interface
 	config_get_bool client_tls "$1" client_tls
+	config_get_bool client_tls_required "$1" client_tls_required
+	config_get client_tls_key "$1" client_tls_key
+	config_get client_tls_certificate "$1" client_tls_certificate
+	config_get client_tls_verify "$1" client_tls_verify
 	config_get client_auth "$1" client_auth
 	config_get address_verifier "$1" address_verifier
 	config_get domain "$1" domain
 	config_get_bool anonymous "$1" anonymous
+	config_list_foreach "$1" client_filter handle_client_filter
+	config_get spool_dir "$1" spool_dir
+	config_get delivery_dir "$1" delivery_dir
+	config_get_bool pop "$1" pop
+	config_get pop_port "$1" pop_port
+	config_get pop_auth "$1" pop_auth
+	config_get_bool pop_by_name "$1" pop_by_name
+	config_list_foreach "$1" pop_server_interface handle_interface "pop"
 
-	[ "$enabled" = 0 ] && return 1
-
-	procd_open_instance
-	procd_set_param command "$PROG" --no-daemon
 
 	case "$mode" in
+		"client"|\
 		"server"|\
 		"proxy")
 			procd_append_param command "--as-${mode}"
 			[ -n "$smarthost" ] && procd_append_param command "$smarthost"
 			[ -n "$port" ] && procd_append_param command --port "$port"
 			[ "$remote_clients" = 1 ] && procd_append_param command --remote-clients
-			[ -n "$server_tls" ] && procd_append_param command --server-tls "$server_tls"
+			[ "$server_tls" = 1 ] && procd_append_param command --server-tls
+			[ "$server_tls_required" = 1 ] && procd_append_param command --server-tls-required
+			[ -n "$server_tls_key" ] && procd_append_param command --server-tls-certificate "$server_tls_key"
+			[ -n "$server_tls_certificate" ] && procd_append_param command --server-tls-certificate "$server_tls_certificate"
+			[ -n "$server_tls_verify" ] && procd_append_param command --server-tls-verify "$server_tls_verify"
 			[ -n "$server_auth" ] && procd_append_param command --server-auth "$server_auth"
 			[ "$client_tls" = 1 ] && procd_append_param command --client-tls
+			[ "$client_tls_required" = 1 ] && procd_append_param command --client-tls-required
+			[ -n "$client_tls_key" ] && procd_append_param command --client-tls-certificate "$client_tls_key"
+			[ -n "$client_tls_certificate" ] && procd_append_param command --client-tls-certificate "$client_tls_certificate"
+			[ -n "$client_tls_verify" ] && procd_append_param command --client-tls-verify "$client_tls_verify"
 			[ -n "$client_auth" ] && procd_append_param command --client-auth "$client_auth"
+			[ -n "$smtp_client_interface" ] && procd_append_param command --client-interface "$smtp_client_interface"
 			[ -n "$address_verifier" ] && procd_append_param command --address-verifier "$address_verifier"
 			[ -n "$domain" ] && procd_append_param command --domain "$domain"
 			[ "$anonymous" = 1 ] && procd_append_param command --anonymous
+			[ "$pop" = 1 ] && procd_append_param command --pop
+			[ -n "$pop_port" ] && procd_append_param command --pop-port "$pop_port"
+			[ -n "$pop_auth" ] && procd_append_param command --pop-auth "$pop_auth"
+			[ "$pop_by_name" = 1 ] && procd_append_param command --pop-by-name
+			[ -n "$spool_dir" ] && procd_append_param command --spool-dir "$spool_dir"
+			[ -n "$delivery_dir" ] && procd_append_param command --delivery-dir "$delivery_dir"
 			;;
 		"cmdline")
 			# empty by intention (just append extra_cmdline)
@@ -55,7 +113,10 @@ emailrelay_instance()
 	esac
 
 	[ -n "$extra_cmdline" ] && procd_append_param command $extra_cmdline
+	procd_append_param command --forward-to-some
 
+	mkdir -p "${spool_dir:-/var/spool/emailrelay}"
+	mkdir -p "${delivery_dir:-/var/spool/emailrelay/in}"
 	procd_set_param respawn
 
 	procd_close_instance
@@ -64,8 +125,6 @@ emailrelay_instance()
 
 start_service()
 {
-	[ ! -d /var/spool/emailrelay ] && mkdir -p /var/spool/emailrelay
-
 	config_load "${NAME}"
 	config_foreach emailrelay_instance emailrelay
 }

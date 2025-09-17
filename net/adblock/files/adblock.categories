@@ -18,6 +18,7 @@ hag;gambling;gambling-onlydomains.txt
 hag;gambling.medium;gambling.medium-onlydomains.txt
 hag;gambling.mini;gambling.mini-onlydomains.txt
 hag;hoster;hoster-onlydomains.txt
+hag;nsfw;nsfw-onlydomains.txt
 hag;tracker.amazon;native.amazon-onlydomains.txt
 hag;tracker.apple;native.apple-onlydomains.txt
 hag;tracker.huawei;native.huawei-onlydomains.txt

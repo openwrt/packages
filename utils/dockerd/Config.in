@@ -15,7 +15,6 @@ config DOCKER_CGROUP_OPTIONS
 	select KERNEL_CGROUP_FREEZER
 	select KERNEL_NET_CLS_CGROUP
 	select KERNEL_CGROUP_NET_PRIO
-	select PACKAGE_cgroupfs-mount
 	help
 		Selects kernel options to enable CGroups V1.
 

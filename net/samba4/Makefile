@@ -2,8 +2,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=samba
-PKG_VERSION:=4.18.8
-PKG_RELEASE:=1
+PKG_VERSION:=4.22.3
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
@@ -13,7 +13,7 @@ PKG_SOURCE_URL:= \
 		http://www.nic.funet.fi/index/samba/pub/samba/stable/ \
 		http://samba.mirror.bit.nl/samba/ftp/stable/ \
 		https://download.samba.org/pub/samba/stable/
-PKG_HASH:=4fb87bceaeb01d832a59046c197a044b7e8e8000581548b5d577a6cda03344d1
+PKG_HASH:=8fd7092629a3596d935cd7567d934979f94272918ec3affd0cc807934ecf22ba
 
 PKG_BUILD_FLAGS:=gc-sections
 
@@ -64,7 +64,8 @@ endef
 define Package/samba4-libs
   $(call Package/samba4/Default)
   TITLE+= libs
-  DEPENDS:= +libtirpc +libreadline +libpopt +libcap +zlib +libgnutls +libtasn1 +libuuid +libopenssl +libpthread +KERNEL_IO_URING:liburing \
+  DEPENDS:= +USE_GLIBC:libcrypt-compat +libtirpc +libreadline +libpopt +libcap +zlib +libgnutls +libtasn1 +libuuid +libopenssl +libpthread +KERNEL_IO_URING:liburing \
+	+PACKAGE_icu:icu \
 	+PACKAGE_libpam:libpam \
 	+SAMBA4_SERVER_VFS:attr \
 	+SAMBA4_SERVER_AVAHI:libavahi-client \
@@ -128,7 +129,7 @@ define Package/samba4-utils/description
   Utilities collection
 endef
 
-TARGET_CFLAGS += $(FPIC)
+TARGET_CFLAGS += $(FPIC) -std=gnu17
 TARGET_LDFLAGS += -Wl,--as-needed
 # dont mess with sambas private rpath!
 RSTRIP:=:
@@ -216,14 +217,6 @@ HOST_CONFIGURE_ARGS += \
 HOST_CONFIGURE_ARGS += --disable-avahi --without-quotas --without-acl-support --without-winbind \
 	--without-ad-dc --without-json --without-libarchive --disable-python --nopyc --nopyo \
 	--without-ads --without-ldap --without-ldb-lmdb
-
-# Optional AES-NI support - https://lists.samba.org/archive/samba-technical/2017-September/122738.html
-# Support for Nettle wasn't comitted
-ifdef CONFIG_TARGET_x86_64
-	CONFIGURE_ARGS += --accel-aes=intelaesni
-else
-	CONFIGURE_ARGS += --accel-aes=none
-endif
 
 CONFIGURE_ARGS += \
 		--with-lockdir=/var/lock \
@@ -371,6 +364,7 @@ define Build/Configure
 	echo 'Checking uname version type: "$(VERSION_DIST) Linux-$(LINUX_VERSION) $(shell date +%Y-%m-%d)"' >> $(PKG_BUILD_DIR)/cross-answers.txt
 	# NOTE: special answers for freeBSD/CircleCI
 	echo 'checking for clnt_create(): OK' >> $(PKG_BUILD_DIR)/cross-answers.txt
+	echo 'Checking whether fcntl supports setting/getting hints: OK' >> $(PKG_BUILD_DIR)/cross-answers.txt
 	$(call Build/Configure/Default)
 endef
 

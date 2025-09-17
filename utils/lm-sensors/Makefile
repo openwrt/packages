@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lm-sensors
-PKG_VERSION:=3.6.0
-PKG_RELEASE:=1
+PKG_VERSION:=3.6.2
+PKG_RELEASE:=3
 
 PKG_VERSION_SUBST=$(subst .,-,$(PKG_VERSION))
-PKG_SOURCE_URL:=https://codeload.github.com/lm-sensors/lm-sensors/tar.gz/V$(PKG_VERSION_SUBST)?
+PKG_SOURCE_URL:=https://codeload.github.com/hramrach/lm-sensors/tar.gz/V$(PKG_VERSION_SUBST)?
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=0591f9fa0339f0d15e75326d0365871c2d4e2ed8aa1ff759b3a55d3734b7d197
+PKG_HASH:=c6a0587e565778a40d88891928bf8943f27d353f382d5b745a997d635978a8f0
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION_SUBST)
 
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
@@ -74,6 +74,7 @@ endef
 define Package/lm-sensors/conffiles
 /etc/sensors.conf
 /etc/sensors3.conf
+/etc/sensors.d
 endef
 
 define Build/Compile
@@ -105,10 +106,8 @@ endef
 define Package/lm-sensors/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/prog/sensors/sensors $(1)/usr/sbin
-ifeq ($(ARCH),i386)
-	$(INSTALL_DIR) $(1)/etc
-	$(INSTALL_CONF) ./files/sensors.conf $(1)/etc/sensors.conf
-endif
+	$(INSTALL_DIR) $(1)/etc/sensors.d
+	$(INSTALL_CONF) ./files/custom.conf $(1)/etc/sensors.d/custom.conf
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/lm-sensors.init $(1)/etc/init.d/lm-sensors
 endef

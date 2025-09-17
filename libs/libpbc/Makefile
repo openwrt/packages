@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libpbc
-PKG_VERSION:=0.5.14
-PKG_RELEASE:=2
+PKG_VERSION:=1.0.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=pbc-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://crypto.stanford.edu/pbc/files/
-PKG_HASH:=772527404117587560080241cedaf441e5cac3269009cdde4c588a1dce4c23d2
+PKG_HASH:=18275a367283077bafe35f443200499e3b19c4a3754953da2a1b2f0d6b5922dc
 PKG_BUILD_DIR:=$(BUILD_DIR)/pbc-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>

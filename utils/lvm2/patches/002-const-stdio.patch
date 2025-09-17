@@ -1,6 +1,6 @@
 --- a/lib/commands/toolcontext.c
 +++ b/lib/commands/toolcontext.c
-@@ -1660,6 +1660,7 @@ struct cmd_context *create_toolcontext(u
+@@ -1669,6 +1669,7 @@ struct cmd_context *create_toolcontext(u
  	/* FIXME Make this configurable? */
  	reset_lvm_errno(1);
  
@@ -8,7 +8,7 @@
  	/* Set in/out stream buffering before glibc */
  	if (set_buffering
  	    && !cmd->running_on_valgrind /* Skipping within valgrind execution. */
-@@ -1704,6 +1705,7 @@ struct cmd_context *create_toolcontext(u
+@@ -1713,6 +1714,7 @@ struct cmd_context *create_toolcontext(u
  	} else if (!set_buffering)
  		/* Without buffering, must not use stdin/stdout */
  		init_silent(1);
@@ -16,7 +16,7 @@
  
  	/*
  	 * Environment variable LVM_SYSTEM_DIR overrides this below.
-@@ -2038,6 +2040,7 @@ void destroy_toolcontext(struct cmd_cont
+@@ -2047,6 +2049,7 @@ void destroy_toolcontext(struct cmd_cont
  	if (cmd->cft_def_hash)
  		dm_hash_destroy(cmd->cft_def_hash);
  
@@ -24,7 +24,7 @@
  	if (!cmd->running_on_valgrind && cmd->linebuffer) {
  		int flags;
  		/* Reset stream buffering to defaults */
-@@ -2061,6 +2064,7 @@ void destroy_toolcontext(struct cmd_cont
+@@ -2070,6 +2073,7 @@ void destroy_toolcontext(struct cmd_cont
  
  		free(cmd->linebuffer);
  	}
@@ -34,7 +34,7 @@
  
 --- a/tools/lvmcmdline.c
 +++ b/tools/lvmcmdline.c
-@@ -3375,6 +3375,7 @@ int lvm_split(char *str, int *argc, char
+@@ -3404,6 +3404,7 @@ int lvm_split(char *str, int *argc, char
  /* Make sure we have always valid filedescriptors 0,1,2 */
  static int _check_standard_fds(void)
  {
@@ -42,7 +42,7 @@
  	int err = is_valid_fd(STDERR_FILENO);
  
  	if (!is_valid_fd(STDIN_FILENO) &&
-@@ -3401,6 +3402,12 @@ static int _check_standard_fds(void)
+@@ -3430,6 +3431,12 @@ static int _check_standard_fds(void)
  		       strerror(errno));
  		return 0;
  	}

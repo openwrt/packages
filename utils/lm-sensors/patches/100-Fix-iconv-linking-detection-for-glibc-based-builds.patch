@@ -1,0 +1,62 @@
+From 2c14facc904d531ae9ae98705322916668793784 Mon Sep 17 00:00:00 2001
+From: graysky <therealgraysky AT proton DOT me>
+Date: Sat, 16 Aug 2025 07:01:21 -0400
+Subject: [PATCH] Fix iconv linking detection for glibc-based builds
+
+The current iconv detection checks if libiconv.so exists via ldconfig,
+but fails on glibc systems where iconv is built into libc and doesn't
+require separate linking. This causes build failures:
+
+  ld: cannot find -liconv: No such file or directory
+
+Replace the ldconfig check with a compile test that actually verifies
+if iconv functions are available without additional libraries. This
+correctly detects glibc's built-in iconv while still linking -liconv
+on musl/uclibc systems that need it.
+
+Fixes build on glibc-based systems including OpenWrt glibc targets.
+---
+ Makefile               | 17 +++++++++++++++++
+ prog/sensors/Module.mk |  5 ++++-
+ 2 files changed, 21 insertions(+), 1 deletion(-)
+
+--- a/Makefile
++++ b/Makefile
+@@ -171,6 +171,23 @@ LIBCFLAGS := -fpic -D_REENTRANT $(ALL_CF
+ 
+ ALL_LDFLAGS := $(LDFLAGS)
+ 
++# Determine iconv linking requirements
++# glibc has built-in iconv, other libc implementations may need -liconv
++ifndef LIBICONV
++  ICONV_TEST := $(shell printf '%s\n' \
++    '#include <iconv.h>' \
++    'int main() { iconv_t cd = iconv_open("UTF-8", "ASCII"); return 0; }' \
++    | $(CC) $(ALL_CPPFLAGS) -x c - -o /tmp/lm_sensors_iconv_test 2>/dev/null && echo "builtin" || echo "external")
++
++  ifeq ($(ICONV_TEST),builtin)
++    LIBICONV :=
++  else
++    LIBICONV := -liconv
++  endif
++
++  $(shell rm -f /tmp/lm_sensors_iconv_test)
++endif
++
+ EXLDFLAGS := -Wl,-rpath,$(LIBDIR) $(ALL_LDFLAGS)
+ 
+ .PHONY: all user clean install user_install uninstall user_uninstall
+--- a/prog/sensors/Module.mk
++++ b/prog/sensors/Module.mk
+@@ -39,7 +39,10 @@ REMOVESENSORSBIN := $(patsubst $(MODULE_
+ REMOVESENSORSMAN := $(patsubst $(MODULE_DIR)/%,$(DESTDIR)$(PROGSENSORSMAN1DIR)/%,$(PROGSENSORSMAN1FILES))
+ REMOVESENSORSZSH := $(patsubst $(MODULE_DIR)/%,$(DESTDIR)$(ZSHCOMPDIR)/%,$(PROGSENSORSZSHCOMPFILES))
+ 
+-LIBICONV := $(shell if /sbin/ldconfig -p | grep -q '/libiconv\.so$$' ; then echo \-liconv; else echo; fi)
++LIBICONV := $(shell printf '%s\n' \
++  '#include <iconv.h>' \
++  'int main() { iconv_t cd = iconv_open("UTF-8", "ASCII"); return 0; }' \
++  | $(CC) $(ALL_CPPFLAGS) -x c - 2>/dev/null && echo || echo \-liconv)
+ 
+ $(PROGSENSORSTARGETS): $(PROGSENSORSSOURCES:.c=.ro) lib/$(LIBDEP_FOR_PROGS)
+ 	$(CC) $(EXLDFLAGS) -o $@ $(PROGSENSORSSOURCES:.c=.ro) $(LIBICONV) -Llib -lsensors -lm

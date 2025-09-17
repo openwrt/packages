@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua-cjson
 PKG_VERSION:=2.1.0
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 PKG_MAINTAINER:=Dirk Chang <dirk@kooiot.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
@@ -46,13 +46,19 @@ define Package/lua-cjson-lua5.3
   VARIANT:=lua-53
 endef
 
+define Package/lua-cjson-lua5.4
+  $(Package/lua-cjson/default)
+  DEPENDS+=+liblua5.4
+  VARIANT:=lua-54
+endef
+
 define Package/lua-cjson/default/description
   Lua CJSON is a fast JSON encoding/parsing module for Lua.
 endef
 
-define Package/lua-cjson-5.3/description
-  Lua5.3 CJSON is a fast JSON encoding/parsing module for Lua.
-endef
+Package/lua-cjson/description = $(Package/lua-cjson/default/description)
+Package/lua-cjson-lua5.3/description = $(Package/lua-cjson/default/description)
+Package/lua-cjson-lua5.4/description = $(Package/lua-cjson/default/description)
 
 CMAKE_OPTIONS += \
 	-DUSE_LUA=ON
@@ -62,6 +68,10 @@ CMAKE_HOST_OPTIONS += \
 
 ifeq ($(BUILD_VARIANT),lua-53)
   CMAKE_OPTIONS += -DUSE_LUA53=ON
+endif
+
+ifeq ($(BUILD_VARIANT),lua-54)
+  CMAKE_OPTIONS += -DUSE_LUA54=ON
 endif
 
 define Package/lua-cjson/install
@@ -77,6 +87,12 @@ define Package/lua-cjson-lua5.3/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cjson.so $(1)/usr/local/lib/lua/5.3
 endef
 
+define Package/lua-cjson-lua5.4/install
+	$(INSTALL_DIR) $(1)/usr/local/lib/lua/5.4
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/cjson.so $(1)/usr/local/lib/lua/5.4
+endef
+
 $(eval $(call HostBuild))
 $(eval $(call BuildPackage,lua-cjson))
 $(eval $(call BuildPackage,lua-cjson-lua5.3))
+$(eval $(call BuildPackage,lua-cjson-lua5.4))

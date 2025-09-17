@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mstflint
-PKG_VERSION:=4.31.0
+PKG_VERSION:=4.33.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-1.tar.gz
 PKG_SOURCE_URL:=https://github.com/Mellanox/$(PKG_NAME)/releases/download/v$(PKG_VERSION)-1
-PKG_SOURCE_DATE:=2025-02-06
-PKG_HASH:=c0152414e7580a18925c7707ebe2cb659d3a1ed7b80015a35bea4d723b64f8e7
+PKG_SOURCE_DATE:=2025-08-14
+PKG_HASH:=103cdc6230bf3579a40e9dd1c998180bc45b053fbbaec2f16a7f2cd96772481f
 
 PKG_MAINTAINER:=Til Kaiser <mail@tk154.de>
 PKG_LICENSE:=GPL-2.0-only
@@ -25,9 +25,10 @@ PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/mstflint
-  SECTION:=Utilities
+  SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Mellanox Firmware Burning and Diagnostics Tools
   URL:=https://github.com/Mellanox/mstflint
@@ -110,16 +111,19 @@ define Package/mstflint/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstarchive $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstconfig $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstcongestion $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstdevices_info $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstflint $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstfwctrl $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstfwmanager $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstlink $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstmcra $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstmget_temp $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstmread $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstmtserver $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstmwrite $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstreg $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstregdump $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/msttokengenerator $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mstvpd $(1)/usr/bin/
 
 	$(INSTALL_DIR) $(1)/usr/share/mstflint
