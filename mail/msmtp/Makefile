@@ -98,14 +98,24 @@ $(call Package/msmtp/Default/description)
  This package contains the msmtp queue scripts.
 endef
 
+define Package/msmtpd
+$(call Package/msmtp/Default)
+  TITLE:=Minimal SMTP server
+endef
+
+define Package/msmtpd/description
+ Msmtpd is a minimal SMTP server that pipes mails to msmtp or some other
+ program for delivery. It can be used with system services that expect
+ an SMTP server on the local host.
+endef
+
 CONFIGURE_ARGS += \
 	--disable-rpath \
 	--without-libintl-prefix \
 	--without-libgsasl \
 	--without-libidn \
 	--without-libsecret \
-	--without-macosx-keyring \
-	--without-msmtpd
+	--without-macosx-keyring
 
 ifeq ($(BUILD_VARIANT),ssl)
 	CONFIGURE_ARGS += --with-tls=gnutls
@@ -134,7 +144,13 @@ define Package/msmtp-queue/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/scripts/msmtpqueue/msmtp-{en,list,run}queue.sh $(1)/usr/bin/
 endef
 
+define Package/msmtpd/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/msmtpd $(1)/usr/bin/
+endef
+
 $(eval $(call BuildPackage,msmtp))
 $(eval $(call BuildPackage,msmtp-nossl))
 $(eval $(call BuildPackage,msmtp-queue))
 $(eval $(call BuildPackage,msmtp-mta))
+$(eval $(call BuildPackage,msmtpd))
