@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sendmail
-PKG_VERSION:=8.16.1
-PKG_RELEASE:=2
+PKG_VERSION:=8.18.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME).$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=ftp://ftp.sendmail.org/pub/sendmail
-PKG_HASH:=7886d5dc4b436b86175f32b5b9c7305c80787749847e2909bf99123ecc4e64ba
+PKG_HASH:=cbf1f309c38e4806f7cf3ead24260f17d1fe8fb63256d13edb3cdd1a098f0770
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
 PKG_LICENSE:=Sendmail
@@ -127,4 +127,3 @@ endef
 
 $(eval $(call BuildPackage,libmilter-sendmail))
 #$(eval $(call BuildPackage,sendmail))
-
