@@ -33,7 +33,7 @@ start_service() {
 	done
 
 	if [ ! -e $lib_dir ]; then
-		mkdir -p $(dirname $lib_dir)
+		mkdir -p "$(dirname $lib_dir)"
 		ln -sf $zone_dir $lib_dir
 	fi
 
@@ -43,14 +43,8 @@ start_service() {
 		chmod 0640 /etc/bind/rndc.key
 	fi
 
-	if [ -z "$(ip -6 -o route show default)" ]; then
-		args="-4"
-	else
-		args=""
-	fi
-
 	procd_open_instance
-	procd_set_param command /usr/sbin/named -u bind -f $args -c $config_file
+	procd_set_param command /usr/sbin/named -u bind -f -c $config_file
 	procd_set_param file $config_file $config_dir/db.*
 	procd_set_param respawn
 	procd_close_instance
