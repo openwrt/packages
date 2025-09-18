@@ -1,7 +1,7 @@
-From d6197554b3f52ee9d8d81374141aa82014b4fc7b Mon Sep 17 00:00:00 2001
+From 3c4f6d71dde297be573e28d3027e2ce51c82c238 Mon Sep 17 00:00:00 2001
 From: Moritz Warning <moritzwarning@web.de>
-Date: Tue, 17 Sep 2024 15:38:34 +0200
-Subject: [PATCH 4/5] add missing libatomic
+Date: Fri, 12 Sep 2025 11:15:43 +0200
+Subject: [PATCH 4/6] add missing libatomic
 
 ---
  make-linux.mk | 2 +-

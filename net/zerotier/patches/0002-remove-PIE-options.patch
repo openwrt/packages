@@ -1,7 +1,7 @@
-From 81a632c99b581790344729ad327eb473c4c05260 Mon Sep 17 00:00:00 2001
+From 43993df3a98d1f832b7596cd528249cb3534ed88 Mon Sep 17 00:00:00 2001
 From: Moritz Warning <moritzwarning@web.de>
-Date: Tue, 17 Sep 2024 15:36:36 +0200
-Subject: [PATCH 2/5] remove PIE options
+Date: Fri, 12 Sep 2025 11:12:27 +0200
+Subject: [PATCH 2/6] remove PIE options
 
 ---
  make-linux.mk | 6 +++---
@@ -9,7 +9,7 @@ Subject: [PATCH 2/5] remove PIE options
 
 --- a/make-linux.mk
 +++ b/make-linux.mk
-@@ -333,7 +333,7 @@ ifeq ($(ZT_CONTROLLER),1)
+@@ -359,7 +359,7 @@ ifeq ($(ZT_CONTROLLER),1)
  endif
  
  # ARM32 hell -- use conservative CFLAGS
@@ -18,7 +18,7 @@ Subject: [PATCH 2/5] remove PIE options
  	ifeq ($(shell if [ -e /usr/bin/dpkg ]; then dpkg --print-architecture; fi),armel)
  		override CFLAGS+=-march=armv5t -mfloat-abi=soft -msoft-float -mno-unaligned-access -marm
  		override CXXFLAGS+=-march=armv5t -mfloat-abi=soft -msoft-float -mno-unaligned-access -marm
-@@ -360,8 +360,8 @@ ifeq ($(ZT_USE_ARM32_NEON_ASM_CRYPTO),1)
+@@ -390,8 +390,8 @@ ifeq ($(ZT_USE_ARM32_NEON_ASM_CRYPTO),1)
  endif
  
  # Position Independence
