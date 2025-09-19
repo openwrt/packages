@@ -1,0 +1,148 @@
+#!/bin/sh /etc/rc.common
+START=60
+STOP=01
+USE_PROCD=1
+MAINU=root
+MEASU=root
+GROUP=ripe-atlas
+
+validate_config()
+{
+	uci_load_validate 'ripe-atlas' 'ripe-atlas' "${1}" "${2}" \
+		'enabled:uinteger:1' \
+		'log_console:uinteger:0' \
+		'mode:string:prod' \
+		'rxtx_report:uinteger:0'
+}
+
+create_dir()
+{
+	local user
+	local group
+	local mode
+	local dir
+
+	user="${1}"
+	shift
+	group="${1}"
+	shift
+	mode="${1}"
+	shift
+
+	while [ -n "${1}" ]; do
+		ent="${1}"
+		mkdir -p /${ent}
+		chown ${user}:${group} /${ent}
+		chmod ${mode} /${ent}
+		shift
+	done
+}
+
+setup_environment()
+{
+	create_dir ${MEASU} ${GROUP} 0775 \
+		/var/run/ripe-atlas/pids \
+		/var/run/ripe-atlas/status
+	create_dir ${MEASU} ${GROUP} 2775 \
+		/var/spool/ripe-atlas/crons \
+		/var/spool/ripe-atlas/crons/main \
+		/var/spool/ripe-atlas/crons/2 \
+		/var/spool/ripe-atlas/crons/3 \
+		/var/spool/ripe-atlas/crons/4 \
+		/var/spool/ripe-atlas/crons/5 \
+		/var/spool/ripe-atlas/crons/6 \
+		/var/spool/ripe-atlas/crons/7 \
+		/var/spool/ripe-atlas/crons/8 \
+		/var/spool/ripe-atlas/crons/9 \
+		/var/spool/ripe-atlas/crons/10 \
+		/var/spool/ripe-atlas/crons/11 \
+		/var/spool/ripe-atlas/crons/12 \
+		/var/spool/ripe-atlas/crons/13 \
+		/var/spool/ripe-atlas/crons/14 \
+		/var/spool/ripe-atlas/crons/15 \
+		/var/spool/ripe-atlas/crons/16 \
+		/var/spool/ripe-atlas/crons/17 \
+		/var/spool/ripe-atlas/crons/18 \
+		/var/spool/ripe-atlas/crons/19 \
+		/var/spool/ripe-atlas/crons/20 \
+		/var/spool/ripe-atlas/data \
+		/var/spool/ripe-atlas/data/new \
+		/var/spool/ripe-atlas/data/oneoff \
+		/var/spool/ripe-atlas/data/out \
+		/var/spool/ripe-atlas/data/out/ooq \
+		/var/spool/ripe-atlas/data/out/ooq10
+}
+
+start_instance()
+{
+	local cfg=/etc/ripe-atlas/config.txt
+	local mod=/etc/ripe-atlas/mode
+
+	if [ ${2} -ne 0 ]; then
+		echo 'validation failed'
+		return 1
+	fi
+
+	if [ ${enabled} -eq 0 ]; then
+		return 1
+	fi
+
+	rm -f /etc/ripe-atlas/reg_servers.sh
+	case "${mode}" in
+		test|dev|prod)
+			;;
+		*)
+			return 1
+			;;
+	esac
+
+	echo 'Starting RIPE Atlas'
+	setup_environment
+	echo 1>/dev/null 2> "${mod}"
+	echo 1>/dev/null 2> "${cfg}"
+
+	if [ ${rxtx_report} -ne 0 ]; then
+		echo 'RXTXRPT=yes' >> "${cfg}"
+	fi
+	echo "${mode}" > "${mod}"
+
+	procd_open_instance
+	procd_set_param command /usr/sbin/ripe-atlas
+	procd_set_param user ${MAINU}
+	procd_set_param group ${GROUP}
+	procd_set_param stdout ${log_console}
+	procd_set_param stderr ${log_console}
+	procd_set_param respawn
+	if [ -x /sbin/ujail ]; then
+		procd_add_jail ripe-atlas
+		procd_append_param capabilities /usr/share/ripe-atlas/capabilities.json
+	fi
+	procd_close_instance
+
+	return 0
+}
+
+start_service()
+{
+	config_load 'ripe-atlas'
+	config_foreach validate_config 'ripe-atlas' start_instance
+}
+
+stop_service()
+{
+	local pids
+	local pid
+
+	for pid in $(find /proc -type d -maxdepth 1 -group ${GROUP} -print); do
+		pids="${pid##*/} ${pids}"
+	done
+
+	if [ -n "${pids}" ]; then
+		kill ${pids} 1>/dev/null 2>&1
+	fi
+}
+
+service_triggers()
+{
+	procd_add_validation validate_config
+}
