@@ -250,14 +250,16 @@ upnpd_add_custom_acl_entry() {
 	local cfg="$1"
 	local comment action int_addr int_start int_end ext_start ext_end desc_regex
 	config_get comment "$cfg" comment "No comment"        # comment
-	config_get action "$cfg" action                       # allow/deny/disabled
+	config_get action "$cfg" action                       # accept/reject/disabled
 	config_get int_addr "$cfg" int_addr "0.0.0.0/0"       # ip or network and subnet mask (internal)
 	upnpd_get_port_range "int" "$cfg" int_ports "1-65535" # internal ports: x, x-y, x:y
 	upnpd_get_port_range "ext" "$cfg" ext_ports "1-65535" # external ports: x, x-y, x:y
 	config_get desc_regex "$cfg" desc_regex               # description regex filter extension
 	[ "$desc_regex" != "" ] && desc_regex=" \"$desc_regex\""
 	[ "$action" = "disabled" ] && return 0
-	[ "$action" = "" ] && action=deny && log "Custom ACL entry with no action set, all changes via LuCI web interface reverse action" daemon.warn
+	[ "$action" = "" ] && log "Custom ACL entry with no action ignored" daemon.warn && return 0
+	[ "$action" = "accept" ] && action=allow
+	[ "$action" = "reject" ] && action=deny
 	echo "$action $ext_start${ext_end:+-}$ext_end $int_addr $int_start${int_end:+-}$int_end${desc_regex} # $comment"
 }
 
@@ -426,7 +428,7 @@ upnpd_uci_migration() {
 			add upnpd perm_rule
 			add upnpd perm_rule
 			set upnpd.@perm_rule[0].comment="High ports"
-			set upnpd.@perm_rule[0].action="allow"
+			set upnpd.@perm_rule[0].action="accept"
 			set upnpd.@perm_rule[0].int_addr="0.0.0.0/0"
 			set upnpd.@perm_rule[0].int_ports="1024-65535"
 			set upnpd.@perm_rule[0].ext_ports="1024-65535"
@@ -450,6 +452,23 @@ upnpd_uci_migration() {
 		[ "$(uci -q get upnpd.@perm_rule[-1].comment)" != "All ports" ]; then
 		log "Modified ACL: Keep unchanged, note that an empty ACL is now rejected"
 		acl_preset=none
+		# To avoid adding inverted custom ACL actions when updating via LuCI, ensure any missing are set (previously: UCI != LuCI defaults)
+		# and update allow/deny -> accept/reject
+		entrynr=0
+		while uci -q get upnpd.@perm_rule[$entrynr] >/dev/null; do
+			action="$(uci -q get upnpd.@perm_rule[$entrynr].action)"
+			if [ "$action" = "accept" ] || [ "$action" = "reject" ] || [ "$action" = "disabled" ]; then
+				break
+			elif [ "$action" = "" ]; then
+				log "Add missing custom ACL entry action"
+				uci -q set upnpd.@perm_rule[$entrynr].action="reject"
+			elif [ "$action" = "allow" ]; then
+				uci -q set upnpd.@perm_rule[$entrynr].action="accept"
+			elif [ "$action" = "deny" ]; then
+				uci -q set upnpd.@perm_rule[$entrynr].action="reject"
+			fi
+			entrynr=$((entrynr + 1))
+		done
 	fi
 
 	# Migrate internal_iface to new internal_network section and set ACL preset
