@@ -1,3 +1,4 @@
+#!/bin/sh
 ##############################################################################
 #
 # This program is free software; you can redistribute it and/or modify
@@ -13,8 +14,23 @@
 #
 ##############################################################################
 
+. /lib/functions.sh
+
+# Convert deprecated 'tunnet' option into separate
+# amprnet and amprmask options
+config_load ampr-ripd
+config_get tunnet network tunnet
+if [ -n "$tunnet" ]; then
+   amprnet=$(echo "$tunnet" | cut -d "/" -f 1)
+   amprmask=$(echo "$tunnet" | cut -d "/" -f 2)
+   uci set ampr-ripd.network.amprnet="$amprnet"
+   uci set ampr-ripd.network.amprmask="$amprmask"
+   uci del ampr-ripd.network.tunnet
+   uci commit ampr-ripd
+fi
+
 # Check to see if network.amprlan.ipaddr and network.amprwan.ipaddr exist.
-# If so, no need to apply defaults.
+# If so, no need to apply network and firewall defaults.
 
 if [ -z "$(uci -q get network.amprlan.ipaddr)" ] && \
    [ -z "$(uci -q get network.amprwan.ipaddr)" ]; then
@@ -109,4 +125,17 @@ commit firewall
 EOI
 
 fi
+
+# create amprhost if migrating config from 'tunnet' option
+if [ -n "$tunnet" ]; then
+   uci set ampr-ripd.network.amprhost=$(uci get network.amprwan.ipaddr)
+fi
+
+# If enabled does not exist default to 1
+config_get_bool enabled network enabled
+if [ -z "$enabled" ]; then
+   uci set ampr-ripd.network.enabled='1'
+fi
+uci commit ampr-ripd
+
 exit
