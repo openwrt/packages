@@ -4,8 +4,7 @@
 START=85
 STOP=10
 USE_PROCD=1
-PROG_afpd='/usr/sbin/afpd'
-PROG_cnid='/usr/sbin/cnid_metad'
+PROG_netatalk='/usr/sbin/netatalk'
 
 # Default config file location
 config_file='/etc/afp.conf'
@@ -185,16 +184,9 @@ start_service() {
 
 	generate_config
 
-	# afpd
 	procd_open_instance
-	procd_set_param command $PROG_afpd -d -F $config_file
+	procd_set_param command $PROG_netatalk -d -F $config_file
 	procd_set_param file $config_file
-	procd_set_param respawn
-	procd_close_instance
-
-	# cnid
-	procd_open_instance
-	procd_set_param command $PROG_cnid -d -F $config_file
 	procd_set_param respawn
 	procd_close_instance
 }
