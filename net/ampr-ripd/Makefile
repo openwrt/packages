@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ampr-ripd
 PKG_VERSION:=2.4.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=https://yo2loj.ro/hamprojects
@@ -41,6 +41,22 @@ define Package/ampr-ripd/install
 	$(INSTALL_DATA) ./files/99-ampr-ripd $(1)/etc/uci-defaults/99-ampr-ripd
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/ampr-ripd-config $(1)/etc/config/ampr-ripd
+endef
+
+define Package/ampr-ripd/preinst
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+   cp /etc/config/ampr-ripd /tmp/ampr-ripd.bak
+fi
+exit 0
+endef
+
+define Package/ampr-ripd/postinst
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ] && [ -f /tmp/ampr-ripd.bak ]; then
+   mv /tmp/ampr-ripd.bak /etc/config/ampr-ripd
+fi
+exit 0
 endef
 
 define Package/ampr-ripd/postrm
