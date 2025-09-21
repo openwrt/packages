@@ -196,6 +196,12 @@ endef
 BOOTSTRAP_ROOT_DIR:=$(call qstrip,$(CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT))
 
 ifeq ($(BOOTSTRAP_ROOT_DIR),)
+ifneq ($(shell go version 2>/dev/null | sed -E '/^go version .+/!d'),)
+  BOOTSTRAP_ROOT_DIR:=$(shell command -v go)
+endif
+endif
+
+ifeq ($(BOOTSTRAP_ROOT_DIR),)
   BOOTSTRAP_ROOT_DIR:=$(BOOTSTRAP_BUILD_DIR)
 
   define Download/golang-bootstrap
