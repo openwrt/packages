@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=snort3
 PKG_VERSION:=3.9.5.0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/snort3/snort3/tar.gz/$(PKG_VERSION)?
@@ -21,23 +21,44 @@ PKG_CPE_ID:=cpe:/a:snort:snort
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
-ifeq ($(filter $(ARCH),mips mips64 mipsel powerpc),)
-  EXTRA_DEPENDS += +gperftools-runtime
-endif
-ifeq ($(filter $(ARCH),x86_64 aarch64),$(ARCH))
-  EXTRA_DEPENDS += +vectorscan-runtime
-  CMAKE_OPTIONS += -DHS_INCLUDE_DIRS=$(STAGING_DIR)/usr/include/hs
-endif
-
 SNORT3DEPS:=+libstdcpp +libdaq3 +libdnet +libopenssl +libpcap +libpcre2 \
     +libpthread +libuuid +zlib +libhwloc +libtirpc @HAS_LUAJIT_ARCH +luajit +libatomic \
-    +kmod-nft-queue +liblzma +ucode +ucode-mod-fs +ucode-mod-uci $(EXTRA_DEPENDS)
+    +kmod-nft-queue +liblzma +ucode +ucode-mod-fs +ucode-mod-uci
+
+ifeq ($(filter $(ARCH),mips mips64 mipsel powerpc),)
+  SNORT3DEPS += +gperftools-runtime
+  CMAKE_OPTIONS += -DENABLE_TCMALLOC=ON \
+		   -DTCMALLOC_LIBRARIES=$(STAGING_DIR)/usr/lib/libtcmalloc.so
+
+endif
+
+ifeq ($(filter $(ARCH),x86_64 aarch64),$(ARCH))
+  CMAKE_OPTIONS += -DHS_INCLUDE_DIRS=$(STAGING_DIR)/usr/include/hs
+endif
 
 define Package/snort3
   SUBMENU:=Firewall
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=$(SNORT3DEPS)
+  DEPENDS:=$(SNORT3DEPS) \
+	+TARGET_x86:vectorscan-runtime \
+	+TARGET_bcm4908:vectorscan-runtime \
+	+TARGET_qualcommax:vectorscan-runtime \
+	+TARGET_qualcommbe:vectorscan-runtime \
+	+TARGET_bcm27xx_bcm2710:vectorscan-runtime \
+	+TARGET_bcm27xx_bcm2711:vectorscan-runtime \
+	+TARGET_bcm27xx_bcm2712:vectorscan-runtime \
+	+TARGET_armsr_armv8:vectorscan-runtime \
+	+TARGET_airoha_an7581:vectorscan-runtime \
+	+TARGET_imx_cortexa53:vectorscan-runtime \
+	+TARGET_layerscape_armv8_64b:vectorscan-runtime \
+	+TARGET_mediatek_filogic:vectorscan-runtime \
+	+TARGET_mediatek_mt7622:vectorscan-runtime \
+	+TARGET_mvebu_cortexa53:vectorscan-runtime \
+	+TARGET_mvebu_cortexa72:vectorscan-runtime \
+	+TARGET_rockchip_armv8:vectorscan-runtime \
+	+TARGET_sunxi_cortex53:vectorscan-runtime
+
   TITLE:=Lightweight Network Intrusion Detection System
   URL:=http://www.snort.org/
   MENU:=1
@@ -64,8 +85,6 @@ CMAKE_OPTIONS += \
 	-DMAKE_PDF_DOC:BOOL=NO \
 	-DMAKE_TEXT_DOC:BOOL=NO \
 	-DHAVE_LIBUNWIND=OFF \
-	-DENABLE_TCMALLOC=ON \
-	-DTCMALLOC_LIBRARIES=$(STAGING_DIR)/usr/lib/libtcmalloc.so \
 	-DHAVE_LZMA=ON
 
 TARGET_CFLAGS  += -I$(STAGING_DIR)/usr/include/daq3 -I$(STAGING_DIR)/usr/include/tirpc
