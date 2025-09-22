@@ -1,7 +1,8 @@
 --- a/tests/libzscanner/test_zscanner.in
 +++ b/tests/libzscanner/test_zscanner.in
-@@ -1,15 +1,14 @@
- #!/bin/sh
+@@ -3,16 +3,15 @@
+ # SPDX-License-Identifier: GPL-2.0-or-later
+ # For more information, see <https://www.knot-dns.cz/>
  
 -SOURCE=@top_srcdir@/tests/libzscanner
 -BUILD=@top_builddir@/tests/libzscanner
