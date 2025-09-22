@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pyserial
 PKG_VERSION:=3.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=pyserial
 PKG_HASH:=3c77e014170dfffbd816e6ffc205e9842efb10be9f58ec16d3e8675b4925cddb
@@ -18,9 +18,13 @@ PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.txt
 PKG_MAINTAINER:=Micke Prag <micke.prag@telldus.se>
 
+HOST_BUILD_DEPENDS:=python3/host python-build/host python-installer/host python-wheel/host
+
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 include ../python3-package.mk
+include ../python3-host-build.mk
 
 define Package/python3-pyserial
   SECTION:=lang
@@ -41,3 +45,4 @@ endef
 $(eval $(call Py3Package,python3-pyserial))
 $(eval $(call BuildPackage,python3-pyserial))
 $(eval $(call BuildPackage,python3-pyserial-src))
+$(eval $(call HostBuild))
