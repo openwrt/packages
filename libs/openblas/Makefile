@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=OpenBLAS
 PKG_VERSION:=0.3.30
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=OpenBLAS-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/OpenMathLib/OpenBLAS/releases/download/v$(PKG_VERSION)/
