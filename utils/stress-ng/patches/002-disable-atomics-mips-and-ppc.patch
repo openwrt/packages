@@ -13,7 +13,7 @@
   *	get next row to be computed, will wrap around. Wrap arounds
 --- a/stress-misaligned.c
 +++ b/stress-misaligned.c
-@@ -51,6 +51,10 @@
+@@ -52,6 +52,10 @@
  #undef HAVE_ATOMIC
  #endif
  
