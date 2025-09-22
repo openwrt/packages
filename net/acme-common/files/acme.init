@@ -36,15 +36,15 @@ load_options() {
 	if [ -z "$staging" ]; then
 		config_get_bool staging "$section" use_staging 0
 	fi
-	export staging
+	procd_append_param env staging="$staging"
 	config_get calias "$section" calias
-	export calias
+	procd_append_param env calias="$calias"
 	config_get dalias "$section" dalias
-	export dalias
+	procd_append_param env dalias="$dalias"
 	config_get domains "$section" domains
-	export domains
+	procd_append_param env domains="$domains"
 	main_domain="$(first_arg $domains)"
-	export main_domain
+	procd_append_param env main_domain="$main_domain"
 	config_get keylength "$section" keylength
 	if [ "$keylength" ]; then
 		log warn "Option \"keylength\" is deprecated, please use key_type (e.g., ec256, rsa2048) instead."
@@ -55,49 +55,18 @@ load_options() {
 	else
 		config_get key_type "$section" key_type ec256
 	fi
-	export key_type
-	config_get dns "$section" dns
-	export dns
+	procd_append_param env key_type="$key_type"
 	config_get acme_server "$section" acme_server
-	export acme_server
+	procd_append_param env acme_server="$acme_server"
 	config_get days "$section" days
-	export days
-	config_get standalone "$section" standalone
-	[ -n "$standalone" ] && log warn "Option \"standalone\" is deprecated."
+	procd_append_param env days="$days"
 	config_get dns_wait "$section" dns_wait
-	export dns_wait
+	procd_append_param env dns_wait="$dns_wait"
 	config_get webroot "$section" webroot
 	if [ "$webroot" ]; then
 		log warn "Option \"webroot\" is deprecated, please remove it and change your web server's config so it serves ACME challenge requests from $CHALLENGE_DIR."
 		CHALLENGE_DIR=$webroot
 	fi
-
-	config_get validation_method "$section" validation_method
-	# if validation_method isn't set then guess it
-	if [ -z "$validation_method" ]; then
-		if [ -n "$dns" ]; then
-			validation_method="dns"
-		elif [ "$standalone" = 1 ]; then
-			validation_method="standalone"
-		else
-			validation_method="webroot"
-		fi
-		log warn "Please set \"option validation_method $validation_method\"."
-	fi
-	export validation_method
-
-	case "$validation_method" in
-	standalone)
-		config_get listen_port "$section" listen_port 80
-		;;
-	alpn)
-		config_get listen_port "$section" listen_port 443
-		;;
-	*)
-		config_get listen_port "$section" listen_port
-		;;
-	esac
-	export listen_port
 }
 
 first_arg() {
@@ -110,11 +79,39 @@ get_cert() {
 	config_get_bool enabled "$section" enabled 1
 	[ "$enabled" = 1 ] || return
 
-	load_options "$section"
+	# load `listen_port` here rather than in `load_options` so we can
+	# return early without leaving a dangling `procd_open_instance`; the
+	# check requires loading `validation_method` as well, which in turn
+	# requires loading `dns` and `standalone`
+	config_get validation_method "$section" validation_method
+	config_get dns "$section" dns
+	config_get standalone "$section" standalone
+	[ -n "$standalone" ] && log warn "Option \"standalone\" is deprecated."
+	# if validation_method isn't set then guess it
+	if [ -z "$validation_method" ]; then
+		if [ -n "$dns" ]; then
+			validation_method="dns"
+		elif [ "$standalone" = 1 ]; then
+			validation_method="standalone"
+		else
+			validation_method="webroot"
+		fi
+		log warn "Please set \"option validation_method $validation_method\"."
+	fi
 	if [ "$validation_method" = "webroot" ]; then
 		mkdir -p "$CHALLENGE_DIR"
 	fi
-
+	case "$validation_method" in
+	standalone)
+		config_get listen_port "$section" listen_port 80
+		;;
+	alpn)
+		config_get listen_port "$section" listen_port 443
+		;;
+	*)
+		config_get listen_port "$section" listen_port
+		;;
+	esac
 	if [ "$listen_port" != "$LAST_LISTEN_PORT" ]; then
 		delete_nft_rule
 
@@ -128,15 +125,27 @@ get_cert() {
 		LAST_LISTEN_PORT="$listen_port"
 	fi
 
+	procd_open_instance "$section"
+	procd_set_param command "$HOOK" get
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_set_param env CHALLENGE_DIR="$CHALLENGE_DIR" CERT_DIR="$CERT_DIR"
+	procd_append_param env account_email="$account_email" state_dir="$state_dir" debug="$debug"
+	procd_append_param env dns="$dns" validation_method="$validation_method" listen_port="$listen_port"
+
+	load_options "$section"
+
 	load_credentials() {
-		eval export "$1"
+		eval procd_append_param env "$1"
 	}
 	config_list_foreach "$section" credentials load_credentials
 
-	"$HOOK" get
+	procd_close_instance
 }
 
 load_globals() {
+	[ -z "$account_email" ] || return 1  # only read the first acme section
+
 	section=$1
 
 	config_get account_email "$section" account_email
@@ -157,15 +166,9 @@ load_globals() {
 
 	config_get_bool debug "$section" debug 0
 	export debug
-
-	# only look for the first acme section
-	return 1
 }
 
 start_service() {
-	mkdir -p $run_dir
-	mkdir -p "$CHALLENGE_DIR"
-
 	grep -q '/etc/init.d/acme' /etc/crontabs/root 2>/dev/null || {
 		echo "0 0 * * * /etc/init.d/acme renew" >>/etc/crontabs/root
 	}
@@ -188,11 +191,15 @@ service_triggers() {
 		/etc/init.d/acme renew
 }
 
-renew() {
+load_and_run() {
 	trap cleanup EXIT
 
 	config_load acme
 	config_foreach load_globals acme
 
 	config_foreach get_cert cert
+}
+
+renew() {
+	rc_procd load_and_run
 }
