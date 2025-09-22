@@ -67,7 +67,7 @@ get)
 		else
 			set -- "$@" --renew --home "$state_dir" -d "$main_domain"
 			log info "$ACME $*"
-			trap '$NOTIFY renew-failed;exit 1' INT
+			trap 'log err "Renew failed: SIGINT";$NOTIFY renew-failed;exit 1' INT
 			$ACME "$@"
 			status=$?
 			trap - INT
@@ -141,7 +141,7 @@ get)
 	set -- "$@" --issue --home "$state_dir"
 
 	log info "$ACME $*"
-	trap '$NOTIFY issue-failed;exit 1' INT
+	trap 'log err "Issue failed: SIGINT";$NOTIFY issue-failed;exit 1' INT
 	"$ACME" "$@" \
 		--pre-hook "$NOTIFY prepare" \
 		--renew-hook "$NOTIFY renewed"
