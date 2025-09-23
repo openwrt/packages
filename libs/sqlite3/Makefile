@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=sqlite
 PKG_VERSION:=3.50.4
 PKG_SRC_VERSION:=3500400
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-autoconf-$(PKG_SRC_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.sqlite.org/2025/
@@ -33,6 +33,7 @@ PKG_CONFIG_DEPENDS := \
 	CONFIG_SQLITE3_FTS3 \
 	CONFIG_SQLITE3_FTS4 \
 	CONFIG_SQLITE3_FTS5 \
+	CONFIG_SQLITE3_LINENOISE \
 	CONFIG_SQLITE3_LIBEDIT \
 	CONFIG_SQLITE3_READLINE \
 	CONFIG_SQLITE3_RTREE \
@@ -77,8 +78,7 @@ define Package/sqlite3-cli
   DEPENDS := \
     +libsqlite3 \
     +SQLITE3_LIBEDIT:libedit \
-    +SQLITE3_READLINE:libreadline \
-    +SQLITE3_READLINE:libncursesw
+    +SQLITE3_READLINE:libreadline
   EXTRA_DEPENDS:=libsqlite3 (=$(PKG_VERSION)-r$(PKG_RELEASE))
   TITLE+= (cli)
 endef
@@ -94,12 +94,32 @@ define Package/sqlite3-cli/config
   source "$(SOURCE)/Config-cli.in"
 endef
 
+ifeq ($(CONFIG_SQLITE3_LINENOISE),y)
+LINENOISE_COMMIT:=880b94130ffa5f8236392392b447ff2234b11983
+LINENOISE_FILE:=linenoise-$(LINENOISE_COMMIT).tar.xz
+define Download/linenoise
+  PROTO:=git
+  URL:=https://github.com/antirez/linenoise.git
+  SOURCE_VERSION:=$(LINENOISE_COMMIT)
+  MIRROR_HASH:=8258cc2316899ee6b422d7308496f130e60dbe4a803b26ee12583cd7bf8d6c2f
+  FILE:=$(LINENOISE_FILE)
+  SUBDIR:=linenoise
+endef
+$(eval $(call Download,linenoise))
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	xz -dc $(DL_DIR)/$(LINENOISE_FILE) | $(HOST_TAR) -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
+endef
+endif
+
 TARGET_CFLAGS += \
 	-DHAVE_ISNAN \
 	-DHAVE_MALLOC_USABLE_SIZE \
 	-DSQLITE_ENABLE_UNLOCK_NOTIFY \
 	$(if $(CONFIG_SQLITE3_BATCH_ATOMIC_WRITE),-DSQLITE_ENABLE_BATCH_ATOMIC_WRITE) \
-	$(if $(CONFIG_SQLITE3_COLUMN_METADATA),-DSQLITE_ENABLE_COLUMN_METADATA)
+	$(if $(CONFIG_SQLITE3_COLUMN_METADATA),-DSQLITE_ENABLE_COLUMN_METADATA) \
+	-DHAVE_EDITLINE=$(if $(CONFIG_SQLITE3_LIBEDIT),1,0) \
+	-DHAVE_READLINE=$(if $(CONFIG_SQLITE3_READLINE),1,0)
 
 CONFIGURE_ARGS := \
 	$(filter-out --target=% $(DISABLE_IPV6) $(DISABLE_NLS),$(CONFIGURE_ARGS)) \
@@ -117,9 +137,11 @@ CONFIGURE_ARGS := \
 	$(if $(CONFIG_SQLITE3_SESSION),--enable-session,--disable-session)
 
 ifeq ($(CONFIG_SQLITE3_LIBEDIT),y)
-CONFIGURE_ARGS+=--disable-readline
+CONFIGURE_ARGS+=--editline --with-readline-header=$(STAGING_DIR)/usr/include/editline/readline.h
 else ifeq ($(CONFIG_SQLITE3_READLINE),y)
-CONFIGURE_ARGS+=--disable-editline
+CONFIGURE_ARGS+=--readline --with-readline-header=$(STAGING_DIR)/usr/include/readline/readline.h
+else ifeq ($(CONFIG_SQLITE3_LINENOISE),y)
+CONFIGURE_ARGS+=--with-linenoise=./linenoise
 else
 CONFIGURE_ARGS+=--disable-editline --disable-readline
 endif
