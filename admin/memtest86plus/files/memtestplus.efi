@@ -1,0 +1,7 @@
+
+menuentry 'Memory Tester (memtest86+) for EFI' {
+	insmod part_gpt
+	insmod fat
+	insmod chain
+	chainloader /boot/memtest86+/memtest.efi
+}
