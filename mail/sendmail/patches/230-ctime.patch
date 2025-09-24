@@ -1,0 +1,13 @@
+Bug: https://bugs.gentoo.org/945726
+
+--- a/mailstats/mailstats.c
++++ b/mailstats/mailstats.c
+@@ -65,7 +65,7 @@ main(argc, argv)
+ 	char sfilebuf[MAXPATHLEN];
+ 	char buf[MAXLINE];
+ 	struct statistics stats;
+-	extern char *ctime();
++	extern char *ctime(const time_t *);
+ 	extern char *optarg;
+ 	extern int optind;
+ # define MSOPTS "cC:f:opP"

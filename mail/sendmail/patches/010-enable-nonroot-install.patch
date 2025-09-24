@@ -87,7 +87,16 @@
  bldFINISH
 --- a/sendmail/Makefile.m4
 +++ b/sendmail/Makefile.m4
-@@ -68,7 +68,7 @@ ifdef(`confNO_STATISTICS_INSTALL',, `bld
+@@ -55,8 +55,6 @@ ${DESTDIR}${MSPQ}:
+ 	@echo "You must have set up a new user ${MSPQOWN} and a new group ${GBINGRP}"
+ 	@echo "as explained in sendmail/SECURITY."
+ 	mkdir -p ${DESTDIR}${MSPQ}
+-	chown ${MSPQOWN} ${DESTDIR}${MSPQ}
+-	chgrp ${GBINGRP} ${DESTDIR}${MSPQ}
+ 	chmod 0770 ${DESTDIR}${MSPQ}
+ 
+ divert(0)
+@@ -68,7 +66,7 @@ ifdef(`confNO_STATISTICS_INSTALL',, `bld
  divert(bldTARGETS_SECTION)
  
  install-set-user-id: bldCURRENT_PRODUCT ifdef(`confNO_HELPFILE_INSTALL',, `install-hf') ifdef(`confNO_STATISTICS_INSTALL',, `install-st') ifdef(`confNO_MAN_BUILD',, `install-docs')
@@ -96,7 +105,7 @@
  	for i in ${sendmailTARGET_LINKS}; do \
  		rm -f $$i; \
  		${LN} ${LNOPTS} ${M`'BINDIR}/sendmail $$i; \
-@@ -76,7 +76,7 @@ install-set-user-id: bldCURRENT_PRODUCT
+@@ -76,7 +74,7 @@ install-set-user-id: bldCURRENT_PRODUCT
  
  define(`confMTA_LINKS', `${DESTDIR}${UBINDIR}/newaliases ${DESTDIR}${UBINDIR}/mailq ${DESTDIR}${UBINDIR}/hoststat ${DESTDIR}${UBINDIR}/purgestat')
  install-sm-mta: bldCURRENT_PRODUCT
@@ -105,7 +114,7 @@
  	for i in confMTA_LINKS; do \
  		rm -f $$i; \
  		${LN} ${LNOPTS} ${M`'BINDIR}/sm-mta $$i; \
-@@ -84,14 +84,14 @@ install-sm-mta: bldCURRENT_PRODUCT
+@@ -84,14 +82,14 @@ install-sm-mta: bldCURRENT_PRODUCT
  
  install-hf:
  	if [ ! -d ${DESTDIR}${HFDIR} ]; then mkdir -p ${DESTDIR}${HFDIR}; else :; fi

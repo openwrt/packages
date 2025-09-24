@@ -1,25 +1,25 @@
-From a8cb9d188fabe750821661b5e34e9be467846283 Mon Sep 17 00:00:00 2001
+From 102ea404b6ee0099c43e8058366b19ce92c4e4c7 Mon Sep 17 00:00:00 2001
 From: Moritz Warning <moritzwarning@web.de>
-Date: Mon, 3 Mar 2025 23:26:42 +0100
-Subject: [PATCH] add support for miniupnpc 2.2.8
+Date: Thu, 18 Sep 2025 23:21:53 +0200
+Subject: [PATCH 6/6] add support for miniupnpc 2.2.8
 
-Signed-off-by: Moritz Warning <moritzwarning@web.de>
 ---
- osdep/PortMapper.cpp | 5 +++++
- 1 file changed, 5 insertions(+)
+ osdep/PortMapper.cpp | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
 --- a/osdep/PortMapper.cpp
 +++ b/osdep/PortMapper.cpp
-@@ -230,7 +230,12 @@ public:
- 					OSUtils::ztsnprintf(inport,sizeof(inport),"%d",localPort);
+@@ -222,7 +222,13 @@ class PortMapperImpl {
+ 					OSUtils::ztsnprintf(inport, sizeof(inport), "%d", localPort);
  
  					int foundValidIGD = 0;
++
 +#if MINIUPNPC_API_VERSION < 18
- 					if ((foundValidIGD = UPNP_GetValidIGD(devlist,&urls,&data,lanaddr,sizeof(lanaddr)))&&(lanaddr[0])) {
+ 					if ((foundValidIGD = UPNP_GetValidIGD(devlist, &urls, &data, lanaddr, sizeof(lanaddr))) && (lanaddr[0])) {
 +#else
-+					if ((foundValidIGD = UPNP_GetValidIGD(devlist,&urls,&data,lanaddr,sizeof(lanaddr),NULL,0))&&(lanaddr[0])) {
++					if ((foundValidIGD = UPNP_GetValidIGD(devlist, &urls, &data, lanaddr, sizeof(lanaddr), NULL, 0)) && (lanaddr[0])) {
 +#endif
 +
  #ifdef ZT_PORTMAPPER_TRACE
-                         PM_TRACE("PortMapper: UPnP: my LAN IP address: %s" ZT_EOL_S,lanaddr);
+ 						PM_TRACE("PortMapper: UPnP: my LAN IP address: %s" ZT_EOL_S, lanaddr);
  #endif

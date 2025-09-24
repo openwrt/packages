@@ -1,0 +1,41 @@
+From cb6c4392a562e9b04299949bcfbd1fd9e5872c68 Mon Sep 17 00:00:00 2001
+From: Martin Kroeker <martin@ruby.chemie.uni-freiburg.de>
+Date: Wed, 10 Sep 2025 22:44:14 +0200
+Subject: [PATCH] Make GEMM3M parameters available on 32bit X86-GENERIC
+
+---
+ param.h | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+--- a/param.h
++++ b/param.h
+@@ -4046,8 +4046,6 @@ Until then, just keep it different than
+ #define CGEMM_DEFAULT_UNROLL_N 2
+ #define ZGEMM_DEFAULT_UNROLL_N 2
+ #define XGEMM_DEFAULT_UNROLL_N 1
+-#define CGEMM3M_DEFAULT_UNROLL_N 2
+-#define ZGEMM3M_DEFAULT_UNROLL_N 2
+ 
+ #ifdef ARCH_X86
+ #define SGEMM_DEFAULT_UNROLL_M 2
+@@ -4063,8 +4061,11 @@ Until then, just keep it different than
+ #define CGEMM_DEFAULT_UNROLL_M 2
+ #define ZGEMM_DEFAULT_UNROLL_M 2
+ #define XGEMM_DEFAULT_UNROLL_M 1
++#endif
+ #define CGEMM3M_DEFAULT_UNROLL_M 2
+ #define ZGEMM3M_DEFAULT_UNROLL_M 2
++#define CGEMM3M_DEFAULT_UNROLL_N 2
++#define ZGEMM3M_DEFAULT_UNROLL_N 2
+ #define CGEMM3M_DEFAULT_P 448
+ #define ZGEMM3M_DEFAULT_P 224
+ #define XGEMM3M_DEFAULT_P 112
+@@ -4075,7 +4076,7 @@ Until then, just keep it different than
+ #define ZGEMM3M_DEFAULT_R 12288
+ #define XGEMM3M_DEFAULT_R 12288
+ 
+-#endif
++
+ 
+ #ifdef ARCH_MIPS
+ #define SGEMM_DEFAULT_P  128

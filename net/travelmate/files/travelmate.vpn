@@ -1,12 +1,10 @@
 #!/bin/sh
 # vpn handler called by travelmate
-# Copyright (c) 2020-2023 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2020-2025 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # set (s)hellcheck exceptions
 # shellcheck disable=all
-
-# Please note: you have to setup the package 'wireguard' or 'openvpn' before using this script
 
 . "/lib/functions.sh"
 
@@ -30,7 +28,7 @@ trm_vpnfile="/var/state/travelmate.vpn"
 f_net() {
 	local json_rc
 
-	json_rc="$(${trm_fetch} --user-agent "${trm_useragent}" --referer "http://www.example.com" --header "Cache-Control: no-cache, no-store, must-revalidate, max-age=0" --write-out "%{response_code}" --silent --output /dev/null --max-time $((trm_maxwait / 6)) "${trm_captiveurl}")"
+	json_rc="$(${trm_fetch} --user-agent "${trm_useragent}" --referer "http://www.example.com" --header "Cache-Control: no-cache, no-store, must-revalidate, max-age=0" --write-out "%{response_code}" --silent --retry 5 --output /dev/null --max-time $((trm_maxwait / 6)) "${trm_captiveurl}")"
 	if [ "${json_rc}" = "200" ] || [ "${json_rc}" = "204" ]; then
 		json_rc="net ok"
 	fi

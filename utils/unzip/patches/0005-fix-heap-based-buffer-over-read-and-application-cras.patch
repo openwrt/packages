@@ -1,0 +1,37 @@
+From adc07e8e4ef9ff263c89d6e8f32ab5222e1a45a0 Mon Sep 17 00:00:00 2001
+From: OpenWrt community <openwrt-devel@lists.openwrt.org>
+Date: Mon, 30 Oct 2023 14:48:38 +0100
+Subject: [PATCH] fix: heap-based buffer over-read and application crash
+
+https://nvd.nist.gov/vuln/detail/CVE-2015-7696
+
+CVE: CVE-2015-7696
+---
+ crypt.c | 12 +++++++++++-
+ 1 file changed, 11 insertions(+), 1 deletion(-)
+
+diff --git a/crypt.c b/crypt.c
+index 784e411..a8975f2 100644
+--- a/crypt.c
++++ b/crypt.c
+@@ -465,7 +465,17 @@ int decrypt(__G__ passwrd)
+     GLOBAL(pInfo->encrypted) = FALSE;
+     defer_leftover_input(__G);
+     for (n = 0; n < RAND_HEAD_LEN; n++) {
+-        b = NEXTBYTE;
++        /* 2012-11-23 SMS.  (OUSPG report.)
++         * Quit early if compressed size < HEAD_LEN.  The resulting
++         * error message ("unable to get password") could be improved,
++         * but it's better than trying to read nonexistent data, and
++         * then continuing with a negative G.csize.  (See
++         * fileio.c:readbyte()).
++         */
++        if ((b = NEXTBYTE) == (ush)EOF)
++        {
++            return PK_ERR;
++        }
+         h[n] = (uch)b;
+         Trace((stdout, " (%02x)", h[n]));
+     }
+-- 
+

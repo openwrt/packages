@@ -15,7 +15,7 @@ Signed-off-by: Khem Raj <raj.khem@gmail.com>
 
 --- a/vm_dump.c
 +++ b/vm_dump.c
-@@ -39,6 +39,15 @@
+@@ -40,6 +40,15 @@
  
  #define MAX_POSBUF 128
  

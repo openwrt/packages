@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libjpeg-turbo
-PKG_VERSION:=3.0.3
+PKG_VERSION:=3.1.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/libjpeg-turbo/libjpeg-turbo/releases/download/$(PKG_VERSION)
-PKG_HASH:=343e789069fc7afbcdfe44dbba7dbbf45afa98a15150e079a38e60e44578865d
+PKG_HASH:=aadc97ea91f6ef078b0ae3a62bba69e008d9a7db19b34e4ac973b19b71b4217c
 
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_LICENSE:=BSD-3-Clause IJG zlib

@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nghttp3
-PKG_VERSION:=1.5.0
+PKG_VERSION:=1.11.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/ngtcp2/nghttp3/releases/download/v$(PKG_VERSION)/
-PKG_HASH:=8c00e3910ea2ad1218dafebcf8dd2ffdf030c992d9ceb65834d29e5e5278dd0d
+PKG_HASH:=27d084518f06d78279b050cc9cdff2418f80fb753da019427ce853cec920f33f
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
@@ -25,7 +25,7 @@ define Package/libnghttp3
 endef
 
 define Package/libnghttp3/description
-nghttp3 is a thin HTTP/3 layer over an underlying QUIC stack.
+HTTP/3 library written in C.
 endef
 
 CMAKE_OPTIONS += -DENABLE_LIB_ONLY=ON
@@ -38,7 +38,7 @@ endef
 
 define Package/libnghttp3/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libnghttp3.so* $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libnghttp3.so* $(1)/usr/lib
 endef
 
 $(eval $(call BuildPackage,libnghttp3))
