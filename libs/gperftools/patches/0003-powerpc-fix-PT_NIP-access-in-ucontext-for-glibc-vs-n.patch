@@ -1,0 +1,34 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Date: Tue, 23 Sep 2025 18:40:37 +0200
+Subject: [PATCH] powerpc: fix PT_NIP access in ucontext for glibc vs non-glibc
+
+The layout of ucontext_t differs between glibc and some
+other C libraries. Specifically, the instruction pointer (PT_NIP) is
+accessed through:
+
+  uc.uc_mcontext.uc_regs->gregs[PT_NIP]   (glibc)
+  uc.uc_mcontext.gregs[PT_NIP]            (non-glibc)
+
+Without this distinction, builds on non-glibc systems fail with
+invalid field access errors.
+
+Based on https://gcc.gnu.org/cgit/gcc/commit/?id=6a4e9934545c112eef5eb7248636baa96cbfd2c0
+---
+ src/stacktrace_powerpc-linux-inl.h | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+--- a/src/stacktrace_powerpc-linux-inl.h
++++ b/src/stacktrace_powerpc-linux-inl.h
+@@ -207,7 +207,11 @@ static int GET_STACK_TRACE_OR_FRAMES {
+           ucontext_t uc;
+           // We don't care about the rest, since IP value is at 'uc' field.A
+         } *sigframe = reinterpret_cast<rt_signal_frame_32*>(current);
++#if defined(__GLIBC__)
+         result[n] = (void*) sigframe->uc.uc_mcontext.uc_regs->gregs[PT_NIP];
++#else
++        result[n] = (void*) sigframe->uc.uc_mcontext.gregs[PT_NIP];
++#endif
+       }
+ #endif
+ 

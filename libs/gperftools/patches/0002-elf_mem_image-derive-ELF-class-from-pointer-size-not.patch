@@ -1,0 +1,37 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Date: Wed, 24 Sep 2025 10:57:08 +0200
+Subject: [PATCH] elf_mem_image: derive ELF class from pointer size, not
+ __WORDSIZE
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+__WORDSIZE is a non-standard glibc macro that musl does not expose
+through the headers included here, so the build fails on musl-based
+systems:
+
+  src/base/elf_mem_image.cc:95:18: error: '__WORDSIZE' was not declared in this scope
+     95 | typedef ElfClass<__WORDSIZE> CurrentElfClass;
+        |                  ^~~~~~~~~~
+
+This code is ELF-only, where the pointer size can be assumed to be the
+word size, so compute the ELF class from sizeof(void*) instead of
+relying on a libc-specific macro.
+
+Co-authored-by: Karel Kočí <cynerd@email.cz>
+---
+ src/base/elf_mem_image.cc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/src/base/elf_mem_image.cc
++++ b/src/base/elf_mem_image.cc
+@@ -92,7 +92,7 @@ template <> class ElfClass<64> {
+   }
+ };
+ 
+-typedef ElfClass<__WORDSIZE> CurrentElfClass;
++typedef ElfClass<sizeof(void*) * 8> CurrentElfClass;
+ 
+ // Extract an element from one of the ELF tables, cast it to desired type.
+ // This is just a simple arithmetic and a glorified cast.
