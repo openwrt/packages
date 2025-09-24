@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vectorscan
 PKG_VERSION:=5.4.12
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/VectorCamp/vectorscan/tar.gz/$(PKG_NAME)/$(PKG_VERSION)?
@@ -24,7 +24,7 @@ PKG_BUILD_DEPENDS:=ragel/host python3/host boost/host
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
-DEPENDS_COMMON:=@(x86_64||aarch64)
+DEPENDS_COMMON:=@(aarch64||arm||i386||i686||x86_64)
 
 # With at least version 5.4.12, Neon/ASIMD is required for Arm support
 ifeq ($(CONFIG_CPU_NEON),)
