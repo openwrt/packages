@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gperftools
 PKG_VERSION:=2.17.2
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/gperftools/gperftools/tar.gz/$(PKG_NAME)-$(PKG_VERSION)?
@@ -27,7 +27,7 @@ define Package/gperftools
   CATEGORY:=Libraries
   TITLE:=Gperftools Runtime
   URL:=https://github.com/gperftools/gperftools
-  DEPENDS:=+PACKAGE_libunwind:libunwind +libstdcpp @!(powerpc)
+  DEPENDS:=+PACKAGE_libunwind:libunwind +libstdcpp
   ABI_VERSION:=4
 endef
 
