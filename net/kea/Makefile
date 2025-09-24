@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kea
 PKG_VERSION:=2.6.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://ftp.isc.org/isc/kea/$(PKG_VERSION)
@@ -194,6 +194,7 @@ endef
 
 CONFIGURE_ARGS += \
 	--with-boost-include="$(STAGING_DIR)/usr" \
+	--with-boost-lib-dir="$(STAGING_DIR)/usr" \
 	--with-log4cplus="$(STAGING_DIR)/usr" \
 	--with-openssl="$(STAGING_DIR)/usr" \
 	--without-pic \
