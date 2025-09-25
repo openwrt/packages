@@ -1,0 +1,25 @@
+From e1e8a763086efd91b3b167ec238c10d46c6e6a31 Mon Sep 17 00:00:00 2001
+From: Daniel Salzman <daniel.salzman@nic.cz>
+Date: Fri, 26 Sep 2025 14:46:20 +0200
+Subject: [PATCH] configure: fix linking with libhiredis if --disable-redis
+
+---
+ configure.ac | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
+
+--- a/configure.ac
++++ b/configure.ac
+@@ -264,11 +264,9 @@ AC_ARG_ENABLE([redis],
+    AS_HELP_STRING([--enable-redis=auto|yes|no], [enable Redis support [default=auto]]),
+    [], [enable_redis=auto])
+ 
+-PKG_CHECK_MODULES([hiredis], [hiredis], [have_hiredis=yes], [have_hiredis=no])
+-
+ AS_CASE([$enable_redis],
+-   [auto], [AS_IF([test "$have_hiredis" = "yes"], [enable_redis=yes], [enable_redis=no])],
+-   [yes],  [AS_IF([test "$have_hiredis" = "yes"], [enable_redis=yes], [AC_MSG_ERROR([libhiredis not available])])],
++   [auto], [PKG_CHECK_MODULES([hiredis], [hiredis], [enable_redis=yes], [enable_redis=no])],
++   [yes],  [PKG_CHECK_MODULES([hiredis], [hiredis], [enable_redis=yes], [AC_MSG_ERROR([libhiredis not available])])],
+    [no], [],
+    [*], [AC_MSG_ERROR([Invalid value of --enable-redis.])]
+ )
