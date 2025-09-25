@@ -1,7 +1,7 @@
-From bb8b2d421a971fadd6bf08a1656d212e0103a583 Mon Sep 17 00:00:00 2001
+From 31d5d570825fc38a210d1e59789270324a9b0398 Mon Sep 17 00:00:00 2001
 From: Vladimir Ermakov <vooon341@gmail.com>
 Date: Fri, 30 May 2025 16:57:51 +0200
-Subject: [PATCH 1/6] v4l2: drop codegen file to be able to build with CGO=0
+Subject: [PATCH 1/2] v4l2: drop codegen file to be able to build with CGO=0
 
 Signed-off-by: Vladimir Ermakov <vooon341@gmail.com>
 ---
