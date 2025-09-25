@@ -4,7 +4,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=snapcast
 PKG_VERSION:=0.28.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/badaix/snapcast.git
@@ -84,9 +84,9 @@ define Package/snapserver/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/snapserver.init $(1)/etc/init.d/snapserver
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/server/etc/snapserver.conf $(1)/etc/snapserver.conf
+	$(SED) 's/.*doc_root *=/#doc_root =/' $(1)/etc/snapserver.conf
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/snapserver.conf $(1)/etc/config/snapserver
-
 endef
 
 define Package/snapclient/install
