@@ -157,6 +157,7 @@ CONFIGURE_ARGS += 			\
 	--enable-dbus=libdbus           \
 	--enable-quic			\
 	--disable-fastparser		\
+	--disable-redis			\
 	--without-libidn		\
 	--with-libnghttp2=no		\
 	--with-rundir=/var/run/knot	\
