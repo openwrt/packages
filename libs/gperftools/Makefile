@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gperftools
 PKG_VERSION:=2.17.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/gperftools/gperftools/tar.gz/$(PKG_NAME)-$(PKG_VERSION)?
@@ -34,7 +34,7 @@ define Package/gperftools-runtime
   CATEGORY:=Libraries
   TITLE:=Gperftools Runtime
   URL:=https://github.com/gperftools/gperftools
-  DEPENDS:= +libunwind +libstdcpp @!(powerpc)
+  DEPENDS:=+PACKAGE_libunwind:libunwind +libstdcpp @!(powerpc)
 endef
 
 define Package/gperftools-headers/description
@@ -49,7 +49,7 @@ endef
 
 CONFIGURE_ARGS += \
 	--enable-frame-pointers \
-	--enable-libunwind \
+	$(if $(CONFIG_PACKAGE_libunwind),--enable-libunwind,--disable-libunwind) \
 	--disable-deprecated-pprof
 
 define Build/InstallDev
