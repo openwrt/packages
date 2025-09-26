@@ -24,8 +24,6 @@ PKG_BUILD_DEPENDS:=ragel/host python3/host boost/host
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
-DEPENDS_COMMON:=@(x86_64||aarch64)
-
 # With at least version 5.4.12, Neon/ASIMD is required for Arm support
 ifeq ($(CONFIG_CPU_NEON),)
   PKG_BUILD_FLAGS := skip
@@ -48,7 +46,7 @@ define Package/vectorscan-headers
   SECTION:=libs
   TITLE:=Vectorscan Headers
   URL:=https://github.com/VectorCamp/vectorscan
-  DEPENDS:= $(DEPENDS_COMMON)
+  DEPENDS:=@(x86_64||aarch64)
 endef
 
 define Package/vectorscan-runtime
@@ -56,7 +54,7 @@ define Package/vectorscan-runtime
   SECTION:=libs
   TITLE:=Vectorscan Runtime
   URL:=https://github.com/VectorCamp/vectorscan
-  DEPENDS:= +libstdcpp +libsqlite3 $(DEPENDS_COMMON)
+  DEPENDS:= +libstdcpp +libsqlite3 @(x86_64||aarch64)
 endef
 
 define Package/vectorscan-headers/description
