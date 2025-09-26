@@ -125,6 +125,9 @@ get)
 	"standalone")
 		set -- "$@" --standalone --listen-v6
 		;;
+	"alpn")
+		set -- "$@" --alpn --listen-v6
+		;;
 	"webroot")
 		mkdir -p "$CHALLENGE_DIR"
 		set -- "$@" --webroot "$CHALLENGE_DIR"
