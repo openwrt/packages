@@ -34,7 +34,7 @@ define Package/gperftools-runtime
   CATEGORY:=Libraries
   TITLE:=Gperftools Runtime
   URL:=https://github.com/gperftools/gperftools
-  DEPENDS:=+PACKAGE_libunwind:libunwind +libstdcpp @!(powerpc)
+  DEPENDS:= +libunwind +libstdcpp @!(powerpc)
 endef
 
 define Package/gperftools-headers/description
