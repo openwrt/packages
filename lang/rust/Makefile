@@ -104,5 +104,11 @@ define Host/Install
 	)
 endef
 
+define Host/Prepare
+	$(call Host/Prepare/Default)
+	find $(HOST_BUILD_DIR)/vendor -name '*.orig' -delete || true
+endef
+
+
 $(eval $(call HostBuild))
 $(eval $(call BuildPackage,rust))
