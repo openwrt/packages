@@ -7,6 +7,16 @@ extra_command "configure" "Configure service parameters"
 
 start() {
 	default_addr="44.127.254.254"
+	# tunnet is no longer used, convert if present
+	if [ -n "$(uci -q get ampr-ripd.network.tunnet)" ]; then
+		tunnet="$(uci get ampr-ripd.network.tunnet)"
+		amprnet=$(echo $tunnet | cut -d "/" -f 1)
+		amprmask=$(echo $tunnet | cut -d "/" -f 2)
+		uci set ampr-ripd.network.amprnet="$amprnet"
+		uci set ampr-ripd.network.amprmask="$amprmask"
+		uci del ampr-ripd.network.tunnet
+		uci commit ampr-ripd
+	fi
 	if [ "$(uci get network.amprlan.ipaddr)" = "$default_addr" ] || \
 		[ "$(uci get network.amprwan.ipaddr)" = "$default_addr" ]; then
 
@@ -23,8 +33,9 @@ start() {
 	ip tunnel change ttl 64 mode ipip tunl0
 	ip link set dev tunl0 up
 	ifconfig tunl0 mtu 1480
-	tunnet=$(uci -q get ampr-ripd.network.tunnet)
-	/usr/sbin/ampr-ripd -s -r -t 44 -i tunl0 -a "$tunnet"
+	amprnet=$(uci -q get ampr-ripd.network.amprnet)
+	amprmask=$(uci -q get ampr-ripd.network.amprmask)
+	/usr/sbin/ampr-ripd -s -r -t 44 -i tunl0 -a "$amprnet/$amprmask"
 }
 
 stop() {
@@ -58,8 +69,9 @@ configure() {
 	amprnet=$amprnet
 	EOF
 
-	tunnet=$amprnet/$amprmask
-	uci set ampr-ripd.network.tunnet="$tunnet"
+	uci set ampr-ripd.network.amprhost="$amprhost"
+	uci set ampr-ripd.network.amprmask="$amprmask"
+	uci set ampr-ripd.network.amprnet="$amprnet"
 	uci commit ampr-ripd
 	uci set network.amprlan.ipaddr="$amprhost"
 	uci set network.amprlan.netmask="$amprmask"
@@ -67,7 +79,7 @@ configure() {
 	uci set network.amprwan.netmask="$amprmask"
 	for i in $(uci show network | awk -F= "/@rule/ && /lookup='44'/ {split(\$1, conf, /[.=]/); print conf[2]}"); do
 		if [ "$(uci -q get "network.$i.priority")" = "45" ]; then
-			uci set "network.$i.src=$tunnet"
+			uci set "network.$i.src=$amprnet/$amprmask"
 		fi
 	done
 	uci commit network
