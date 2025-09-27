@@ -38,6 +38,7 @@ define Package/snort3
   SECTION:=net
   CATEGORY:=Network
   DEPENDS:=$(SNORT3DEPS)
+  USERID:=snort=975:snort=975
   TITLE:=Lightweight Network Intrusion Detection System
   URL:=http://www.snort.org/
   MENU:=1
