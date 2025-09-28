@@ -43,6 +43,14 @@ start_service() {
 		procd_set_param env SNORT_LUA_PATH="$config_dir"
 		procd_set_param file $CONFIGFILE
 	fi
+	[ -x /sbin/ujail -a -e /etc/capabilities/snort.json ] && {
+		chown -R snort:snort "$config_dir"
+		procd_add_jail snort
+		procd_set_param capabilities /etc/capabilities/snort.json
+		procd_set_param user snort
+		procd_set_param group snort
+		procd_set_param no_new_privs 1
+	}
 	procd_set_param respawn
 	procd_set_param stdout 0
 	procd_set_param stderr 1
