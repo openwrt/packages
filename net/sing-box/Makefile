@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sing-box
-PKG_VERSION:=1.12.0
-PKG_RELEASE:=1
+PKG_VERSION:=1.12.4
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/SagerNet/sing-box/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=1093254161d2dac2175a589eb0b43415b89b3e0c10bb2a09ac230f320d974c82
+PKG_HASH:=9a14ffa04fee1a1091ca1995a45f3e3feee460bddff0a72da2febc05a05b2660
 
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=LICENSE
@@ -24,7 +24,7 @@ GO_PKG_LDFLAGS_X:=$(GO_PKG)/constant.Version=$(PKG_VERSION)
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
 
-define Package/sing-box
+define Package/sing-box-default
   TITLE:=The universal proxy platform
   SECTION:=net
   CATEGORY:=Network
@@ -33,10 +33,27 @@ define Package/sing-box
   USERID:=sing-box=5566:sing-box=5566
 endef
 
+define Package/sing-box
+  $(Package/sing-box-default)
+  TITLE+= (full)
+  VARIANT:=full
+  DEFAULT_VARIANT:=1
+endef
+
 define Package/sing-box/description
   Sing-box is a universal proxy platform which supports hysteria, SOCKS, Shadowsocks,
   ShadowTLS, Tor, trojan, VLess, VMess, WireGuard and so on.
 endef
+
+define Package/sing-box-tiny
+  $(Package/sing-box-default)
+  TITLE+= (tiny)
+  PROVIDES:=sing-box
+  VARIANT:=tiny
+  CONFLICTS:=sing-box
+endef
+
+Package/sing-box-tiny/description:=$(Package/sing-box/description)
 
 define Package/sing-box/config
 	menu "Select build options"
@@ -96,6 +113,12 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_SINGBOX_WITH_V2RAY_API \
 	CONFIG_SINGBOX_WITH_WIREGUARD
 
+ifeq ($(BUILD_VARIANT),tiny)
+ifeq ($(CONFIG_SMALL_FLASH),)
+GO_PKG_TAGS:=with_gvisor
+endif
+GO_PKG_TAGS:=$(GO_PKG_TAGS),with_quic,with_utls,with_clash_api
+else
 GO_PKG_TAGS:=$(subst $(space),$(comma),$(strip \
 	$(if $(CONFIG_SINGBOX_WITH_ACME),with_acme) \
 	$(if $(CONFIG_SINGBOX_WITH_CLASH_API),with_clash_api) \
@@ -109,11 +132,14 @@ GO_PKG_TAGS:=$(subst $(space),$(comma),$(strip \
 	$(if $(CONFIG_SINGBOX_WITH_V2RAY_API),with_v2ray_api) \
 	$(if $(CONFIG_SINGBOX_WITH_WIREGUARD),with_wireguard) \
 ))
+endif
 
 define Package/sing-box/conffiles
 /etc/config/sing-box
 /etc/sing-box/
 endef
+
+Package/sing-box-tiny/conffiles=$(Package/sing-box/conffiles)
 
 define Package/sing-box/install
 	$(INSTALL_DIR) $(1)/usr/bin/
@@ -128,4 +154,7 @@ define Package/sing-box/install
 	$(INSTALL_BIN) ./files/sing-box.init $(1)/etc/init.d/sing-box
 endef
 
+Package/sing-box-tiny/install=$(Package/sing-box/install)
+
 $(eval $(call BuildPackage,sing-box))
+$(eval $(call BuildPackage,sing-box-tiny))
