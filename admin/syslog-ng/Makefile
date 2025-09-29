@@ -34,7 +34,7 @@ define Package/syslog-ng
   CATEGORY:=Administration
   TITLE:=A powerful syslog daemon
   URL:=https://www.syslog-ng.com/products/open-source-log-management/
-  DEPENDS:=+libpcre2 +glib2 +libopenssl +libpthread +librt +libdbi +libjson-c +libcurl +libuuid +SYSLOGNG_LOGROTATE:logrotate +LIBCURL_ZLIB:zlib
+  DEPENDS:=+libpcre2 +glib2 +libopenssl +libpthread +librt +libdbi +libjson-c +libcurl +libuuid +SYSLOGNG_LOGROTATE:logrotate +LIBCURL_ZLIB:zlib +libunwind
   ALTERNATIVES:=300:/sbin/logread:/usr/libexec/logread.sh
 endef
 
