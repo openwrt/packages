@@ -13,7 +13,8 @@ LOG_TAG=acme
 # shellcheck source=net/acme/files/functions.sh
 . "$IPKG_INSTROOT/usr/lib/acme/functions.sh"
 
-extra_command "renew" "Start a certificate renew"
+extra_command "abort" "Abort running certificate issuances/renewals"
+extra_command "renew" "Run certificate issuances/renewals"
 
 delete_nft_rule() {
 	if [ "$NFT_HANDLE" ]; then
@@ -136,6 +137,7 @@ get_cert() {
 	load_options "$section"
 
 	load_credentials() {
+		# use `eval` to correctly strip quotes around credential values
 		eval procd_append_param env "$1"
 	}
 	config_list_foreach "$section" credentials load_credentials
@@ -175,15 +177,20 @@ start_service() {
 }
 
 service_started() {
-	echo "Certificate renewal enabled via cron. To renew now, run '/etc/init.d/acme renew'."
+	echo 'Nightly certificate renewal enabled. To renew now, run `service acme renew`.'
 }
 
 stop_service() {
 	sed -i '\|/etc/init.d/acme|d' /etc/crontabs/root
+	running && stop_aborted="Running certificate renewal(s) aborted and a"
 }
 
 service_stopped() {
-	echo "Certificate renewal is disabled."
+	if enabled; then
+		untilboot=' until next boot. To disable permanently, run `service acme disable`'
+	fi
+	echo "${stop_aborted:-A}utomatic nightly renewal disabled$untilboot."
+	echo 'To re-enable nightly renewal, run `service acme start`. To issue/renew now, run `service acme renew`.'
 }
 
 service_triggers() {
@@ -201,5 +208,21 @@ load_and_run() {
 }
 
 renew() {
+	echo "Starting certificate issuance/renewal in the background; see system log for progress."
+	echo 'Issuances/renewals can be aborted with `service acme abort`.'
 	rc_procd load_and_run
+}
+
+abort() {
+	procd_lock
+	if running "$@"; then
+		procd_kill "$(basename ${basescript:-$initscript})" "$1"
+		echo "Aborting certificate issuance(s)/renewal(s); see system log for confirmation."
+	elif [ -z "$1" ]; then
+		echo "No certificate issuances/renewals running to abort!"
+		exit 1
+	else
+		echo "No certificate issuance/renewal \"$1\" running to abort!"
+		exit 1
+	fi
 }
