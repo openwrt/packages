@@ -125,9 +125,15 @@ get)
 		;;
 	"standalone")
 		set -- "$@" --standalone --listen-v6
+		if [ "$httpport" ]; then
+			set -- "$@" --httpport "$httpport"
+		fi
 		;;
 	"alpn")
 		set -- "$@" --alpn --listen-v6
+		if [ "$tlsport" ]; then
+			set -- "$@" --tlsport "$tlsport"
+		fi
 		;;
 	"webroot")
 		mkdir -p "$CHALLENGE_DIR"
