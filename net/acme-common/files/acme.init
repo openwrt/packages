@@ -12,7 +12,7 @@ LOG_TAG=acme
 # shellcheck source=net/acme/files/functions.sh
 . "$IPKG_INSTROOT/usr/lib/acme/functions.sh"
 
-extra_command "renew" "Start a certificate renew"
+extra_command "renew" "Run certificate issuances/renewals"
 
 cleanup() {
 	log debug "cleaning up"
@@ -159,7 +159,7 @@ stop_service() {
 }
 
 service_stopped() {
-	echo "Certificate renewal is disabled."
+	echo "Certificate renewal is stopped."
 }
 
 service_triggers() {
@@ -177,5 +177,7 @@ load_and_run() {
 }
 
 renew() {
+	echo "Starting certificate issuance/renewal in the background; see system log for progress."
+	echo "Issuances/renewals can be aborted with `service acme stop` or `service acme restart`."
 	rc_procd load_and_run
 }
