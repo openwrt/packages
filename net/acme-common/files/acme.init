@@ -50,14 +50,10 @@ load_options() {
 		config_get key_type "$section" key_type ec256
 	fi
 	procd_append_param env key_type="$key_type"
-	config_get dns "$section" dns
-	procd_append_param env dns="$dns"
 	config_get acme_server "$section" acme_server
 	procd_append_param env acme_server="$acme_server"
 	config_get days "$section" days
 	procd_append_param env days="$days"
-	config_get standalone "$section" standalone
-	[ -n "$standalone" ] && log warn "Option \"standalone\" is deprecated."
 	config_get dns_wait "$section" dns_wait
 	procd_append_param env dns_wait="$dns_wait"
 	config_get webroot "$section" webroot
@@ -65,8 +61,25 @@ load_options() {
 		log warn "Option \"webroot\" is deprecated, please remove it and change your web server's config so it serves ACME challenge requests from $CHALLENGE_DIR."
 		CHALLENGE_DIR=$webroot
 	fi
+}
 
+first_arg() {
+	echo "$1"
+}
+
+get_cert() {
+	section=$1
+
+	config_get_bool enabled "$section" enabled 1
+	[ "$enabled" = 1 ] || return
+
+	# load `validation_method` here rather than in `load_options` so we can
+	# return early without leaving a dangling `procd_open_instance`; the
+	# check requires loading `dns` and `standalone` as well
 	config_get validation_method "$section" validation_method
+	config_get dns "$section" dns
+	config_get standalone "$section" standalone
+	[ -n "$standalone" ] && log warn "Option \"standalone\" is deprecated."
 	# if validation_method isn't set then guess it
 	if [ -z "$validation_method" ]; then
 		if [ -n "$dns" ]; then
@@ -78,36 +91,25 @@ load_options() {
 		fi
 		log warn "Please set \"option validation_method $validation_method\"."
 	fi
-	procd_append_param env validation_method="$validation_method"
-}
-
-first_arg() {
-	echo "$1"
-}
-
-get_cert() {
-	section=$1
-
-	procd_open_instance "$section"
-	procd_set_param command "$HOOK" get
-	procd_set_param env CHALLENGE_DIR="$CHALLENGE_DIR" CERT_DIR="$CERT_DIR"
-	procd_append_param env account_email="$account_email" state_dir="$state_dir" debug="$debug"
-	procd_set_param stderr 1
-
-	config_get_bool enabled "$section" enabled 1
-	[ "$enabled" = 1 ] || return
-
-	load_options "$section"
 	if [ "$validation_method" = "webroot" ]; then
 		mkdir -p "$CHALLENGE_DIR"
 	fi
-
 	if [ "$validation_method" = "standalone" ] && [ -z "$NFT_HANDLE" ]; then
 		if ! NFT_HANDLE=$(nft -a -e insert rule inet fw4 input tcp dport 80 counter accept comment ACME | grep -o 'handle [0-9]\+'); then
 			return 1
 		fi
 		log debug "added nft rule: $NFT_HANDLE"
 	fi
+
+	procd_open_instance "$section"
+	procd_set_param command "$HOOK" get
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_set_param env CHALLENGE_DIR="$CHALLENGE_DIR" CERT_DIR="$CERT_DIR"
+	procd_append_param env account_email="$account_email" state_dir="$state_dir" debug="$debug"
+	procd_append_param env dns="$dns" validation_method="$validation_method"
+
+	load_options "$section"
 
 	load_credentials() {
 		eval procd_append_param env "$1"
@@ -143,9 +145,6 @@ load_globals() {
 }
 
 start_service() {
-	mkdir -p $run_dir
-	mkdir -p "$CHALLENGE_DIR"
-
 	grep -q '/etc/init.d/acme' /etc/crontabs/root 2>/dev/null || {
 		echo "0 0 * * * /etc/init.d/acme renew" >>/etc/crontabs/root
 	}
