@@ -58,6 +58,7 @@ get)
 
 	log info "Running ACME for $main_domain with validation_method $validation_method"
 
+	staging_moved=0
 	if [ -e "$domain_dir" ]; then
 		if [ "$staging" = 0 ] && grep -q "acme-staging" "$domain_dir/$main_domain.conf"; then
 			mv "$domain_dir" "$domain_dir.staging"
