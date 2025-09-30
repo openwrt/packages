@@ -67,10 +67,12 @@ get)
 		else
 			set -- "$@" --renew --home "$state_dir" -d "$main_domain"
 			log info "$ACME $*"
-			trap 'log err "Renew failed: SIGINT";$NOTIFY renew-failed;exit 1' INT
-			$ACME "$@"
+			trap 'kill -TERM "$child";wait "$child" 2> /dev/null;log info "Renewal aborted: $main_domain";$NOTIFY renew-failed;exit 1' TERM
+			$ACME "$@" &
+			child=$!
+			wait "$child"
 			status=$?
-			trap - INT
+			trap - TERM
 
 			case $status in
 			0)
@@ -138,12 +140,14 @@ get)
 	set -- "$@" --issue --home "$state_dir"
 
 	log info "$ACME $*"
-	trap 'log err "Issue failed: SIGINT";$NOTIFY issue-failed;exit 1' INT
+	trap 'kill -TERM "$child";wait "$child" 2> /dev/null;log info "Issuance aborted: $main_domain";$NOTIFY issue-failed;exit 1' TERM
 	"$ACME" "$@" \
 		--pre-hook "$NOTIFY prepare" \
-		--renew-hook "$NOTIFY renewed"
+		--renew-hook "$NOTIFY renewed" &
+	child=$!
+	wait "$child"
 	status=$?
-	trap - INT
+	trap - TERM
 
 	case $status in
 	0)
