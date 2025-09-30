@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kea
 PKG_VERSION:=2.6.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://ftp.isc.org/isc/kea/$(PKG_VERSION)
@@ -86,7 +86,7 @@ endef
 define Package/kea-dhcp4
 	$(call Package/kea/Default)
 	TITLE+=DHCP Server v4
-	DEPENDS:=+kea-libs
+	DEPENDS:=+kea-libs +bind-server +bind-rndc +bind-client
 endef
 define Package/kea-dhcp4/description
     The DHCPv4 server process. This process responds to DHCPv4 queries from clients.
@@ -194,6 +194,7 @@ endef
 
 CONFIGURE_ARGS += \
 	--with-boost-include="$(STAGING_DIR)/usr" \
+	--with-boost-lib-dir="$(STAGING_DIR)/usr" \
 	--with-log4cplus="$(STAGING_DIR)/usr" \
 	--with-openssl="$(STAGING_DIR)/usr" \
 	--without-pic \
@@ -275,6 +276,8 @@ define Package/kea-uci/install
 	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/init.d
 	$(INSTALL_CONF) ./files/kea.config $(1)/etc/config/kea
 	$(INSTALL_BIN) ./files/kea.init $(1)/etc/init.d/kea
+	$(INSTALL_DIR) $(1)/usr/lib/kea/importers
+	$(INSTALL_BIN) ./files/dhcp4.sh $(1)/usr/lib/kea/importers/
 endef
 
 define Package/kea-uci/conffiles
