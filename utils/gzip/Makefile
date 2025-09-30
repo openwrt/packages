@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gzip
-PKG_VERSION:=1.13
+PKG_VERSION:=1.14
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/gzip
-PKG_HASH:=7454eb6935db17c6655576c2e1b0fabefd38b4d0936e0f87f48cd062ce91a057
+PKG_HASH:=01a7b881bd220bfdf615f97b8718f80bdfd3f6add385b993dcf6efd14e8c0ac6
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_CPE_ID:=cpe:/a:gnu:gzip
 
@@ -39,6 +39,9 @@ define Package/gzip/description
 	gzip (GNU zip) is a compression utility designed to be a \
 	replacement for compress.
 endef
+
+
+TARGET_CFLAGS += -std=gnu17
 
 CONFIGURE_VARS += \
 	gl_cv_func_getopt_gnu=yes \
