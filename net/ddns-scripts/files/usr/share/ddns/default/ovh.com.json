@@ -1,11 +1,9 @@
 {
 	"name": "ovh.com",
 	"ipv4": {
-		"url": "https://[USERNAME]:[PASSWORD]@dns.eu.ovhapis.com/nic/update?system=dyndns&hostname=[DOMAIN]&myip=[IP]",
-		"answer": "good|nochg"
+		"url": "update_ovh_com.sh"
 	},
 	"ipv6": {
-		"url": "https://[USERNAME]:[PASSWORD]@dns.eu.ovhapis.com/nic/update?system=dyndns&hostname=[DOMAIN]&myip=[IP]",
-		"answer": "good|nochg"
+		"url": "update_ovh_com.sh"
 	}
 }
