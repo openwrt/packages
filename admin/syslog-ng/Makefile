@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=syslog-ng
-PKG_VERSION:=4.10.0
+PKG_VERSION:=4.10.1
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
@@ -11,7 +11,7 @@ PKG_CPE_ID:=cpe:/a:oneidentity:syslog-ng
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/syslog-ng/syslog-ng/releases/download/$(PKG_NAME)-$(PKG_VERSION)/
-PKG_HASH:=219fbdb1685b6fa61674712f21c7b46e5e09b2533518c57689eaa827f57b1609
+PKG_HASH:=dea90cf1dc4b8674ff191e0032f9dabc24b291abfd7f110fd092ae5f21cde5d7
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
