@@ -7,38 +7,6 @@ USE_PROCD=1
 PROG=/usr/sbin/miniupnpd
 [ -x "$(command -v nft)" ] && FW="fw4" || FW="fw3"
 
-upnpd_get_port_range() {
-	local var="$1"; shift
-	local val
-	config_get val "$@"
-	case "$val" in
-		[0-9]*[:-][0-9]*)
-			export -n -- "${var}_start=${val%%[:-]*}"
-			export -n -- "${var}_end=${val##*[:-]}"
-			;;
-		[0-9]*)
-			export -n -- "${var}_start=$val"
-			export -n -- "${var}_end="
-			;;
-	esac
-}
-
-upnpd_add_custom_acl_entry() {
-	local cfg="$1"
-	local comment action int_addr int_start int_end ext_start ext_end desc_filter
-	config_get comment "$cfg" comment "No comment"        # comment
-	config_get action "$cfg" action                       # allow/deny/disabled
-	config_get int_addr "$cfg" int_addr "0.0.0.0/0"       # IPv4 or network and subnet mask (internal)
-	upnpd_get_port_range "int" "$cfg" int_ports "1-65535" # internal ports: x, x-y, x:y
-	upnpd_get_port_range "ext" "$cfg" ext_ports "1-65535" # external ports: x, x-y, x:y
-	config_get desc_filter "$cfg" desc_filter             # description regex filter (must be built in)
-	[ "$action" = "disabled" ] && return 0
-	[ "$action" = "" ] && action=deny && log "Custom ACL entry with no action set, changes via LuCI web interface invert action" daemon.warn
-	[ "$desc_filter" != "" ] && desc_filter=" \"$desc_filter\""
-
-	echo "$action $ext_start${ext_end:+-}$ext_end $int_addr $int_start${int_end:+-}$int_end${desc_filter} # $comment"
-}
-
 upnpd() {
 	config_load "upnpd"
 	local enabled
@@ -213,6 +181,12 @@ upnpd() {
 	procd_close_instance
 }
 
+start_service() {
+	upnpd_uci_migration
+	config_load "upnpd"
+	config_foreach upnpd "upnpd"
+}
+
 stop_service() {
 	if [ "$FW" = "fw3" ]; then
 		iptables -t nat -F MINIUPNPD 2>/dev/null
@@ -224,12 +198,6 @@ stop_service() {
 		nft flush chain inet fw4 upnp_prerouting 2>/dev/null
 		nft flush chain inet fw4 upnp_postrouting 2>/dev/null
 	fi
-}
-
-start_service() {
-	upnpd_uci_migration
-	config_load "upnpd"
-	config_foreach upnpd "upnpd"
 }
 
 service_triggers() {
@@ -281,6 +249,38 @@ upnpd_add_int_network_and_acl_preset() {
 	if [ "$acl_preset" != "" ] && [ "$acl_check_custom" = "" ]; then
 		echo "deny 1-65535 $subnet 1-65535 # Reject ACL by default on $interface"
 	fi
+}
+
+upnpd_add_custom_acl_entry() {
+	local cfg="$1"
+	local comment action int_addr int_start int_end ext_start ext_end desc_filter
+	config_get comment "$cfg" comment "No comment"        # comment
+	config_get action "$cfg" action                       # allow/deny/disabled
+	config_get int_addr "$cfg" int_addr "0.0.0.0/0"       # IPv4 or network and subnet mask (internal)
+	upnpd_get_port_range "int" "$cfg" int_ports "1-65535" # internal ports: x, x-y, x:y
+	upnpd_get_port_range "ext" "$cfg" ext_ports "1-65535" # external ports: x, x-y, x:y
+	config_get desc_filter "$cfg" desc_filter             # description regex filter (must be built in)
+	[ "$action" = "disabled" ] && return 0
+	[ "$action" = "" ] && action=deny && log "Custom ACL entry with no action set, changes via LuCI web interface invert action" daemon.warn
+	[ "$desc_filter" != "" ] && desc_filter=" \"$desc_filter\""
+
+	echo "$action $ext_start${ext_end:+-}$ext_end $int_addr $int_start${int_end:+-}$int_end${desc_filter} # $comment"
+}
+
+upnpd_get_port_range() {
+	local var="$1"; shift
+	local val
+	config_get val "$@"
+	case "$val" in
+		[0-9]*[:-][0-9]*)
+			export -n -- "${var}_start=${val%%[:-]*}"
+			export -n -- "${var}_end=${val##*[:-]}"
+			;;
+		[0-9]*)
+			export -n -- "${var}_start=$val"
+			export -n -- "${var}_end="
+			;;
+	esac
 }
 
 upnpd_uci_migration() {
