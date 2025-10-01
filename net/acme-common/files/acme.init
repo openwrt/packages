@@ -5,6 +5,7 @@ USE_PROCD=1
 run_dir=/var/run/acme
 export CHALLENGE_DIR=$run_dir/challenge
 export CERT_DIR=/etc/ssl/acme
+LAST_LISTEN_PORT=
 NFT_HANDLE=
 HOOK=/usr/lib/acme/hook
 LOG_TAG=acme
@@ -14,12 +15,17 @@ LOG_TAG=acme
 
 extra_command "renew" "Start a certificate renew"
 
-cleanup() {
-	log debug "cleaning up"
+delete_nft_rule() {
 	if [ "$NFT_HANDLE" ]; then
 		# $NFT_HANDLE contains the string 'handle XX' so pass it unquoted to nft
 		nft delete rule inet fw4 input $NFT_HANDLE
+		NFT_HANDLE=
 	fi
+}
+
+cleanup() {
+	log debug "cleaning up"
+	delete_nft_rule
 }
 
 load_options() {
@@ -79,6 +85,19 @@ load_options() {
 		log warn "Please set \"option validation_method $validation_method\"."
 	fi
 	export validation_method
+
+	case "$validation_method" in
+	standalone)
+		config_get listen_port "$section" listen_port 80
+		;;
+	alpn)
+		config_get listen_port "$section" listen_port 443
+		;;
+	*)
+		config_get listen_port "$section" listen_port
+		;;
+	esac
+	export listen_port
 }
 
 first_arg() {
@@ -96,11 +115,17 @@ get_cert() {
 		mkdir -p "$CHALLENGE_DIR"
 	fi
 
-	if [ "$validation_method" = "standalone" ] && [ -z "$NFT_HANDLE" ]; then
-		if ! NFT_HANDLE=$(nft -a -e insert rule inet fw4 input tcp dport 80 counter accept comment ACME | grep -o 'handle [0-9]\+'); then
-			return 1
+	if [ "$listen_port" != "$LAST_LISTEN_PORT" ]; then
+		delete_nft_rule
+
+		if [ "$listen_port" ]; then
+			if ! NFT_HANDLE=$(nft -a -e insert rule inet fw4 input tcp dport "$listen_port" counter accept comment ACME | grep -o 'handle [0-9]\+'); then
+				return 1
+			fi
+			log debug "added nft rule: $NFT_HANDLE"
 		fi
-		log debug "added nft rule: $NFT_HANDLE"
+
+		LAST_LISTEN_PORT="$listen_port"
 	fi
 
 	load_credentials() {
