@@ -124,10 +124,10 @@ get)
 		fi
 		;;
 	"standalone")
-		set -- "$@" --standalone --listen-v6
+		set -- "$@" --standalone --listen-v6 --httpport "$listen_port"
 		;;
 	"alpn")
-		set -- "$@" --alpn --listen-v6
+		set -- "$@" --alpn --listen-v6 --tlsport "$listen_port"
 		;;
 	"webroot")
 		mkdir -p "$CHALLENGE_DIR"
