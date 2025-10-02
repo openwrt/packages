@@ -58,6 +58,7 @@ get)
 
 	log info "Running ACME for $main_domain with validation_method $validation_method"
 
+	staging_moved=0
 	if [ -e "$domain_dir" ]; then
 		if [ "$staging" = 0 ] && grep -q "acme-staging" "$domain_dir/$main_domain.conf"; then
 			mv "$domain_dir" "$domain_dir.staging"
@@ -66,10 +67,12 @@ get)
 		else
 			set -- "$@" --renew --home "$state_dir" -d "$main_domain"
 			log info "$ACME $*"
-			trap '$NOTIFY renew-failed;exit 1' INT
-			$ACME "$@"
+			trap 'kill -TERM "$child";wait "$child" 2> /dev/null;log info "Renewal aborted: $main_domain";$NOTIFY renew-failed;exit 1' TERM
+			$ACME "$@" &
+			child=$!
+			wait "$child"
 			status=$?
-			trap - INT
+			trap - TERM
 
 			case $status in
 			0)
@@ -140,12 +143,14 @@ get)
 	set -- "$@" --issue --home "$state_dir"
 
 	log info "$ACME $*"
-	trap '$NOTIFY issue-failed;exit 1' INT
+	trap 'kill -TERM "$child";wait "$child" 2> /dev/null;log info "Issuance aborted: $main_domain";$NOTIFY issue-failed;exit 1' TERM
 	"$ACME" "$@" \
 		--pre-hook "$NOTIFY prepare" \
-		--renew-hook "$NOTIFY renewed"
+		--renew-hook "$NOTIFY renewed" &
+	child=$!
+	wait "$child"
 	status=$?
-	trap - INT
+	trap - TERM
 
 	case $status in
 	0)
