@@ -5,9 +5,9 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=https://github.com/freifunk-gluon/uradvd.git
-PKG_SOURCE_DATE:=2025-08-16
-PKG_SOURCE_VERSION:=b37524dfb0292c425fd61f5bffb3101fb1979264
-PKG_MIRROR_HASH:=1f681e2baf6f9b825668aeed9c075f532db509d7d1848e76f3e8101acf2bd476
+PKG_SOURCE_VERSION:=1e64364d323acb8c71285a6fb85d384334e7007d
+PKG_MIRROR_HASH:=f16519b85332c03c3147f7eaecdc656186d5ae530b0ad550b48a42f39d40acc7
+PKG_VERSION:=26~$(call version_abbrev,$(PKG_SOURCE_VERSION))
 
 PKG_MAINTAINER:=Moritz Warning <moritzwarning@web.de>
 PKG_LICENSE:=BSD-2-Clause
@@ -23,6 +23,10 @@ endef
 
 define Package/uradvd/description
 	 Advertise an IPv6 prefix/route via SLAAC.
+endef
+
+define Build/Compile
+	$(call Build/Compile/Default,VERSION=r$(subst ~,-,$(PKG_VERSION)))
 endef
 
 define Package/uradvd/install
