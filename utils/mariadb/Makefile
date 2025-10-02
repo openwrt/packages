@@ -264,8 +264,8 @@ define Package/mariadb-server-base
   $(call Package/mariadb/Default)
   DEPENDS:= \
 	  $(MARIADB_COMMON_DEPENDS) \
-	  +!KERNEL_IO_URING:libaio \
 	  +KERNEL_IO_URING:liburing \
+	  +libaio \
 	  +liblzma \
 	  +libpcre2 \
 	  +resolveip \
