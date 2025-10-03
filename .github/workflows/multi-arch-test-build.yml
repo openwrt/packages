@@ -1,9 +1,14 @@
-name: Feeds Package Test Build
+name: Test and Build
 
 on:
   pull_request:
 
 jobs:
+  formalities:
+    name: Test Formalities
+    uses: openwrt/actions-shared-workflows/.github/workflows/formal.yml@main
+
   build:
     name: Feeds Package Test Build
+    needs: formalities
     uses: openwrt/actions-shared-workflows/.github/workflows/multi-arch-test-build.yml@main
