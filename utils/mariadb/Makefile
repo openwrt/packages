@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021 Michal Hrusecky <michal@hrusecky.net>
+# Copyright (C) 2025 Michal Hrusecky <michal@hrusecky.net>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
 PKG_VERSION:=11.4.8
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL := https://archive.mariadb.org/$(PKG_NAME)-$(PKG_VERSION)/source
@@ -263,8 +263,8 @@ define Package/mariadb-server-base
   $(call Package/mariadb/Default)
   DEPENDS:= \
 	  $(MARIADB_COMMON_DEPENDS) \
-	  +!KERNEL_IO_URING:libaio \
 	  +KERNEL_IO_URING:liburing \
+	  +libaio \
 	  +liblzma \
 	  +libpcre2 \
 	  +resolveip \
