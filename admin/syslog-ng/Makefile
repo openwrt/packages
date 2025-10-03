@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=syslog-ng
 PKG_VERSION:=4.10.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=LGPL-2.1-or-later GPL-2.0-or-later
@@ -21,7 +21,8 @@ PKG_BUILD_DEPENDS:= \
 
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_IPV6 \
-	CONFIG_LIBCURL_ZLIB
+	CONFIG_LIBCURL_ZLIB \
+	CONFIG_KERNEL_IO_URING
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -34,7 +35,7 @@ define Package/syslog-ng
   CATEGORY:=Administration
   TITLE:=A powerful syslog daemon
   URL:=https://www.syslog-ng.com/products/open-source-log-management/
-  DEPENDS:=+libpcre2 +glib2 +libopenssl +libpthread +librt +libdbi +libjson-c +libcurl +libuuid +SYSLOGNG_LOGROTATE:logrotate +LIBCURL_ZLIB:zlib
+  DEPENDS:=+libpcre2 +glib2 +libopenssl +libpthread +librt +libdbi +libjson-c +libcurl +libuuid +SYSLOGNG_LOGROTATE:logrotate +LIBCURL_ZLIB:zlib +KERNEL_IO_URING:liburing
   ALTERNATIVES:=300:/sbin/logread:/usr/libexec/logread.sh
 endef
 
@@ -106,6 +107,11 @@ CONFIGURE_ARGS +=  \
 	--disable-java-modules \
 	--with-librabbitmq-client=no \
 	--with-mongoc=no
+
+ifdef CONFIG_KERNEL_IO_URING
+  TARGET_CPPFLAGS += -I$(STAGING_DIR)/usr/include
+  TARGET_LDFLAGS += -L$(STAGING_DIR)/usr/lib -luring
+endif
 
 CONFIGURE_VARS += \
 	$(if $(CONFIG_HOST_OS_MACOS),PATH=$(FAKEUNAME_PATH):$(PATH)) \
