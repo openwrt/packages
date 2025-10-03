@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=snort3
 PKG_VERSION:=3.9.5.0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/snort3/snort3/tar.gz/$(PKG_VERSION)?
@@ -21,23 +21,15 @@ PKG_CPE_ID:=cpe:/a:snort:snort
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
-ifeq ($(filter $(ARCH),mips mips64 mipsel powerpc),)
-  EXTRA_DEPENDS += +gperftools-runtime
-endif
-ifeq ($(filter $(ARCH),x86_64 aarch64),$(ARCH))
-  EXTRA_DEPENDS += +vectorscan-runtime
-  CMAKE_OPTIONS += -DHS_INCLUDE_DIRS=$(STAGING_DIR)/usr/include/hs
-endif
-
-SNORT3DEPS:=+libstdcpp +libdaq3 +libdnet +libopenssl +libpcap +libpcre2 \
-    +libpthread +libuuid +zlib +libhwloc +libtirpc @HAS_LUAJIT_ARCH +luajit +libatomic \
-    +kmod-nft-queue +liblzma +ucode +ucode-mod-fs +ucode-mod-uci $(EXTRA_DEPENDS)
-
 define Package/snort3
   SUBMENU:=Firewall
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=$(SNORT3DEPS)
+  DEPENDS:=+libstdcpp +libdaq3 +libdnet +libopenssl +libpcap +libpcre2 \
+    +libpthread +libuuid +zlib +libhwloc +libtirpc @HAS_LUAJIT_ARCH +luajit +libatomic \
+    +kmod-nft-queue +liblzma +ucode +ucode-mod-fs +ucode-mod-uci \
+    +PACKAGE_gperftools-runtime:gperftools-runtime \
+    +PACKAGE_vectorscan-runtime:vectorscan-runtime
   TITLE:=Lightweight Network Intrusion Detection System
   URL:=http://www.snort.org/
   MENU:=1
@@ -64,9 +56,25 @@ CMAKE_OPTIONS += \
 	-DMAKE_PDF_DOC:BOOL=NO \
 	-DMAKE_TEXT_DOC:BOOL=NO \
 	-DHAVE_LIBUNWIND=OFF \
-	-DENABLE_TCMALLOC=ON \
-	-DTCMALLOC_LIBRARIES=$(STAGING_DIR)/usr/lib/libtcmalloc.so \
 	-DHAVE_LZMA=ON
+
+ifneq ($(findstring powerpc,$(CONFIG_ARCH))$(findstring mips,$(CONFIG_ARCH)),)
+  CMAKE_OPTIONS += \
+	-DENABLE_TCMALLOC=OFF
+else
+  CMAKE_OPTIONS += \
+	-DENABLE_TCMALLOC=ON \
+	-DTCMALLOC_LIBRARIES=$(STAGING_DIR)/usr/lib/libtcmalloc.so
+endif
+
+ifneq ($(findstring x86_64,$(CONFIG_ARCH))$(findstring aarch64,$(CONFIG_ARCH)),)
+  CMAKE_OPTIONS += \
+	-DENABLE_HYPERSCAN=ON \
+	-DHS_INCLUDE_DIRS=$(STAGING_DIR)/usr/include/hs
+else
+  CMAKE_OPTIONS += \
+	-DENABLE_HYPERSCAN=OFF
+endif
 
 TARGET_CFLAGS  += -I$(STAGING_DIR)/usr/include/daq3 -I$(STAGING_DIR)/usr/include/tirpc
 TARGET_LDFLAGS += -L$(STAGING_DIR)/usr/lib/daq3 -ltirpc
