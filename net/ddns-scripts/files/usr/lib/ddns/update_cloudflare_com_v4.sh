@@ -6,13 +6,15 @@
 #.based on Ben Kulbertis cloudflare-update-record.sh found at http://gist.github.com/benkulbertis
 #.and on George Johnson's cf-ddns.sh found at https://github.com/gstuartj/cf-ddns.sh
 #.2016-2018 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
-# CloudFlare API documentation at https://api.cloudflare.com/
+# CloudFlare API documentation, section DNS at https://developers.cloudflare.com/api/resources/dns/
 #
 # This script is parsed by dynamic_dns_functions.sh inside send_update() function
 #
 # using following options from /etc/config/ddns
-# option username  - your cloudflare e-mail
-# option password  - cloudflare api key, you can get it from cloudflare.com/my-account/
+# option username  - "Bearer" or your Cloudflare e-mail, depending on the type of credentials used
+#                    for API Token, use "Bearer"; otherwise, with Global API Key, use your Cloudflare e-mail
+# option password  - Your API Token or your Global API Key, you can create/get either at
+#                    https://dash.cloudflare.com/profile/api-tokens
 # option domain    - "hostname@yourdomain.TLD"
 # option param_opt - (Optional) key=value pairs that are separated by space
 #                    if duplicate keys found, only the last occurrence will be used
