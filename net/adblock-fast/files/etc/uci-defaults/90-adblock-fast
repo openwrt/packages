@@ -158,15 +158,15 @@ if [ -s "/etc/config/${packageName}-opkg" ] && ! grep -q 'option name' "/etc/con
 fi
 
 # migrate to 1.2.0
-oldval="$(uci_get "$packageName" config debug)"
+oldval="$(uci_get "$packageName" 'config' 'debug')"
 if [ -n "$oldval" ]; then
-	uci_set "$packageName" config debug_init_script "$oldval"
-	uci_remove "$packageName" config debug
+	uci_set "$packageName" 'config' 'debug_init_script' "$oldval"
+	uci_remove "$packageName" 'config' 'debug'
 fi
-oldval="$(uci_get "$packageName" config proc_debug)"
+oldval="$(uci_get "$packageName" 'config' 'proc_debug')"
 if [ -n "$oldval" ]; then
-	uci_set "$packageName" config debug_performance "$oldval"
-	uci_remove "$packageName" config proc_debug
+	uci_set "$packageName" 'config' 'debug_performance' "$oldval"
+	uci_remove "$packageName" 'config' 'proc_debug'
 fi
 
 uci_changes "$packageName" && uci_commit "$packageName"
