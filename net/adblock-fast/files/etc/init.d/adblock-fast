@@ -8,6 +8,8 @@ START=20
 USE_PROCD=1
 LC_ALL=C
 
+[ -n "${IPKG_INSTROOT}" ] && return 0
+
 if type extra_command 1>/dev/null 2>&1; then
 	extra_command 'allow' 'Allows domain in current block-list and config'
 	extra_command 'check' 'Checks if specified domain is found in current block-list'
@@ -676,16 +678,16 @@ get_text() {
 		errorNoHeartbeat) printf "Heartbeat domain is not accessible after resolver restart";;
 
 		statusNoInstall) printf "The %s is not installed or not found" "$serviceName";;
-		statusStopped) printf "Stopped";;
-		statusStarting) printf "Starting";;
-		statusRestarting) printf "Restarting";;
-		statusForceReloading) printf "Force Reloading";;
-		statusDownloading) printf "Downloading";;
-		statusProcessing) printf "Processing";;
-		statusFail) printf "Failed to start";;
-		statusSuccess) printf "Success";;
-		statusTriggerBootWait) printf "Waiting for trigger (on_boot)";;
-		statusTriggerStartWait) printf "Waiting for trigger (on_start)";;
+		statusStopped) printf "stopped";;
+		statusStarting) printf "starting";;
+		statusRestarting) printf "restarting";;
+		statusForceReloading) printf "force-reloading";;
+		statusDownloading) printf "downloading";;
+		statusProcessing) printf "processing";;
+		statusFail) printf "failed to start";;
+		statusSuccess) printf "success";;
+		statusTriggerBootWait) printf "waiting for trigger (on_boot)";;
+		statusTriggerStartWait) printf "waiting for trigger (on_start)";;
 
 		warningExternalDnsmasqConfig)
 			printf "Use of external dnsmasq config file detected, please set 'dns' option to 'dnsmasq.conf'";;
@@ -742,7 +744,8 @@ load_network() {
 		sleep 1
 	done
 	json add error 'errorNoWanGateway'
-	output_error "$(get_text 'errorNoWanGateway')"; return 1;
+	output_error "$(get_text 'errorNoWanGateway')"
+	return 1
 }
 
 detect_file_type() {
@@ -794,7 +797,7 @@ load_package_config() {
 	config_get      force_dns_port           'config' 'force_dns_port'          '53 853'
 	config_get      heartbeat_domain         'config' 'heartbeat_domain'        'heartbeat.melmac.ca'
 	config_get      heartbeat_sleep_timeout  'config' 'heartbeat_sleep_timeout' '10'
-	config_get      led                      'config' 'led'                     'led'
+	config_get      led                      'config' 'led'                     
 	config_get      pause_timeout            'config' 'pause_timeout'           '20'
 	config_get      procd_boot_wan_timeout   'config' 'procd_boot_wan_timeout'  '60'
 	config_get      smartdns_instance        'config' 'smartdns_instance'       '*'
@@ -808,8 +811,12 @@ load_package_config() {
 	[ "$debug_init_script" = '1' ]       || unset debug_init_script
 	[ "$debug_performance" = '1' ]       || unset debug_performance
 	[ "$enabled" = '1' ]                 || unset enabled
+	[ "$force_dns" = '1' ]               || unset force_dns
 	[ "$ipv6_enabled" = '1' ]            || unset ipv6_enabled
+	[ "$parallel_downloads" = '1' ]      || unset parallel_downloads
 	[ "$procd_trigger_wan6" = '1' ]      || unset procd_trigger_wan6
+	[ "$sanity_check" = '1' ]            || unset sanity_check
+	[ "$update_config_sizes" = '1' ]     || unset update_config_sizes
 
 	dns_set_output_values "$dns"
 	[ "$heartbeat_domain" = '-' ] && unset heartbeat_domain || heartbeat_domain="$(sanitize_domain "$heartbeat_domain")"
@@ -996,7 +1003,6 @@ load_environment() {
 		if ! mkdir -p "${i%/*}"; then
 			if [ "$param" != 'quiet' ]; then
 				json add error 'errorOutputDirCreate' "$i"
-				output_error "$(get_text 'errorOutputDirCreate' "$i")"
 			fi
 		fi
 	done
@@ -1180,7 +1186,6 @@ resolver() {
 			if ! adb_file 'test'; then
 				json set status 'statusFail'
 				json add error 'errorOutputFileCreate' "$outputFile"
-				output_error "$(get_text 'errorOutputFileCreate' "$outputFile")"
 				return 1
 			fi
 			output 1 "Cycling $resolver_name "
@@ -1223,7 +1228,6 @@ resolver() {
 				output_fail
 				json set status 'statusFail'
 				json add error 'errorDNSReload'
-				output_error "$(get_text 'errorDNSReload')"
 				return 1
 			fi
 		;;
@@ -1282,7 +1286,6 @@ resolver() {
 			output_fail
 			json set status 'statusFail'
 			json add error 'errorNoHeartbeat'
-			output_error "$(get_text 'errorNoHeartbeat')"
 			return 1
 		;;
 		revert)
@@ -1299,7 +1302,6 @@ resolver() {
 				output_fail
 				json set status 'statusFail'
 				json add error 'errorDNSReload'
-				output_error "$(get_text 'errorDNSReload')"
 				return 1
 			fi
 		;;
@@ -1324,7 +1326,6 @@ resolver() {
 					else
 						json set status 'statusFail'
 						json add error 'errorNoOutputFile' "$outputFile"
-						output_error "$(get_text 'errorNoOutputFile' "$outputFile")"
 						return 1
 					fi
 				;;
@@ -1379,6 +1380,7 @@ adb_file() {
 			return $?
 		;;
 		create_gzip)
+			[ -s "$outputFile" ] || return 1
 			rm -f "$outputGzip" >/dev/null 2>/dev/null
 			R_TMP="$(mktemp -q -t "${packageName}_tmp.XXXXXXXX")"
 			if gzip < "$outputFile" > "$R_TMP"; then
@@ -1409,10 +1411,8 @@ adb_file() {
 process_file_url_wrapper() {
 	if [ "$2" != '0' ]; then
 		json add error 'errorConfigValidationFail'
-		output_error "$(get_text 'errorConfigValidationFail')"
-		output "Please check if the '$packageConfigFile' contains correct values for config options."
 	fi
-	if [ "$parallel_downloads" -gt 0 ]; then
+	if [ -n "$parallel_downloads" ]; then
 		process_file_url "$1" &
 	else
 		process_file_url "$1"
@@ -1557,7 +1557,6 @@ download_lists() {
 		config_foreach _config_calculate_sizes 'file_url'
 		if [ $((free_mem)) -lt $((total_sizes * 2)) ]; then
 			json add error 'errorTooLittleRam' "$free_mem"
-			output_error "$(get_text 'errorTooLittleRam' "$free_mem")"
 			return 1
 		else
 			return 0
@@ -1922,7 +1921,6 @@ start_service() {
 				output_okn
 			else
 				output_failn
-				json add error 'errorRestoreCompressedCache'
 				output_error "$(get_text 'errorRestoreCompressedCache')"
 				action='download'
 			fi
@@ -1938,7 +1936,6 @@ start_service() {
 				resolver 'on_start'
 			else
 				output_failn
-				json add error 'errorRestoreCache'
 				output_error "$(get_text 'errorRestoreCache')"
 				action='download'
 			fi
@@ -1949,7 +1946,6 @@ start_service() {
 		if [ -z "$blocked_url" ] && [ -z "$blocked_domain" ]; then
 			json set status 'statusFail'
 			json add error 'errorNothingToDo'
-			output_error "$(get_text 'errorNothingToDo')"
 		else
 			if ! adb_file 'test' || adb_file 'test_cache' || adb_file 'test_gzip'; then
 				output 1 "Force-reloading $serviceName...\n"
@@ -2135,7 +2131,22 @@ status_service() {
 	else
 		[ -n "$status" ] && status="$(get_text "$status")"
 		status="${status}${status:+${message:+: $message}}"
-		[ -n "$status" ] && output "$serviceName $status!\n"
+		case "$(adb_file 'test_cache'; echo $?:$(adb_file 'test_gzip'; echo $?))" in
+			"0:0")
+				message="cache file and compressed cache file found"
+				;;
+			"0:1")
+				message="cache file found"
+				;;
+			"1:0")
+				message="compressed cache file found"
+				;;
+			*)
+				unset message
+				;;
+		esac
+		status="${status}${status:+${message:+ ($message)}}"
+	[ -n "$status" ] && output "$serviceName $status.\n"
 	fi
 	[ "$param" != 'quiet' ] || return 0
 	if [ -n "$error" ]; then
@@ -2219,7 +2230,7 @@ service_triggers() {
 
 service_started() {
 	local start_time end_time elapsed step_title
-	if [ -n "$compressed_cache" ] && ! adb_file 'test_gzip'; then
+	if [ -n "$compressed_cache" ] && ! adb_file 'test_gzip' && adb_file 'test'; then
 		start_time=$(date +%s)
 		step_title="Creating ${dns} compressed cache"
 		output 1 "${step_title} "
@@ -2526,7 +2537,7 @@ check_lists() {
 	return 0
 }
 
-dl() { rc_procd start_service 'download'; }
+dl() { rc_procd start_service 'download' && service_started 'download'; }
 
 killcache() {
 	load_package_config
