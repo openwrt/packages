@@ -1,0 +1,32 @@
+--- a/server/etc/snapweb/index.html
++++ b/server/etc/snapweb/index.html
+@@ -33,25 +33,19 @@
+ <body>
+   <h1>Snapweb Placeholder</h1>
+   <p>
+-    This is a placeholder for <a href="https://github.com/badaix/snapweb/releases">Snapweb</a>, a web based control client and player for Snapcast.<br>
++    This is a placeholder for <a href="https://github.com/badaix/snapweb">Snapweb</a>, a web based control client and player for Snapcast.<br>
+     To install Snapweb, please follow these steps:
+   <ol>
+     <li>Download Snapweb on the <a href="https://github.com/badaix/snapweb/releases">Snapweb release page</a>. You can
+-      either download
+-      <ul>
+-        <li><b>snapweb.zip</b> and extract it on your Snapcast server machine, e.g. into
++      download
++     <b>snapweb.zip</b> and extract it on your Snapcast server machine, e.g. into
+           <tt>/usr/share/snapserver/snapweb</tt> or
+-        </li>
+-        <li><b>snapweb_x.y.z-1_all.deb</b> and install it with <tt>sudo apt install ./snapweb_x.y.z-1_all.deb</tt> to
+-          <tt>/usr/share/snapweb</tt>
+-        </li>
+-      </ul>
+     </li>
+     <li>Configure the document root (<tt>doc_root</tt>, see below) in the snapserver configuration file
+       <tt>snapserver.conf</tt> &mdash; usually
+       located in <tt>/etc/snapserver.conf</tt> &mdash; to the location where snapweb is extracted or installed.
+     </li>
+-    <li>Restart Snapserver to activate the changes: <tt>sudo service snapserver restart</tt></li>
++    <li>Restart Snapserver to activate the changes: <tt>service snapserver restart</tt></li>
+   </ol>
+   </p>
+   <pre>
