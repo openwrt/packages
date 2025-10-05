@@ -41,6 +41,14 @@ define Package/snort3/description
   and packet logging on IP networks.  It utilizes a combination of protocol
   analysis and pattern matching in order to detect anomalies, misuse and
   attacks.
+
+  Note:
+    When compiling from source, and if your target supports them, optionally
+    enable runtime dependencies for improved performance:
+      - gperftools
+      - vectorscan
+    These are not enabled by default and must be manually selected in menuconfig
+    to take advantage of their benefits.
 endef
 
 CMAKE_OPTIONS += \
