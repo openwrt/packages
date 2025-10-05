@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=snort3
 PKG_VERSION:=3.9.5.0
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/snort3/snort3/tar.gz/$(PKG_VERSION)?
@@ -41,6 +41,14 @@ define Package/snort3/description
   and packet logging on IP networks.  It utilizes a combination of protocol
   analysis and pattern matching in order to detect anomalies, misuse and
   attacks.
+
+  Note:
+    When compiling from source, and if your target supports them, optionally
+    enable runtime dependencies for improved performance:
+      - gperftools-runtime
+      - vectorscan-runtime
+    These are not enabled by default and must be manually selected in menuconfig
+    to take advantage of their benefits.
 endef
 
 CMAKE_OPTIONS += \
