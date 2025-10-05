@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=snort3
 PKG_VERSION:=3.9.5.0
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/snort3/snort3/tar.gz/$(PKG_VERSION)?
@@ -26,7 +26,7 @@ define Package/snort3
   SECTION:=net
   CATEGORY:=Network
   DEPENDS:=+libstdcpp +libdaq3 +libdnet +libopenssl +libpcap +libpcre2 \
-    +libpthread +libuuid +zlib +libhwloc +libtirpc @HAS_LUAJIT_ARCH +luajit +libatomic \
+    +libpthread +libuuid +zlib +libhwloc +USE_MUSL:libtirpc @HAS_LUAJIT_ARCH +luajit +libatomic \
     +kmod-nft-queue +liblzma +ucode +ucode-mod-fs +ucode-mod-uci \
     +PACKAGE_gperftools-runtime:gperftools-runtime \
     +PACKAGE_vectorscan-runtime:vectorscan-runtime
@@ -44,7 +44,7 @@ define Package/snort3/description
 endef
 
 CMAKE_OPTIONS += \
-	-DUSE_TIRPC:BOOL=YES \
+	-DUSE_TIRPC=$(if $(CONFIG_USE_MUSL),ON,OFF) \
 	-DENABLE_STATIC_DAQ:BOOL=NO \
 	-DDAQ_INCLUDE_DIR=$(STAGING_DIR)/usr/include/daq3 \
 	-DDAQ_LIBRARIES_DIR_HINT:PATH=$(STAGING_DIR)/usr/lib/daq3 \
@@ -76,8 +76,7 @@ else
 	-DENABLE_HYPERSCAN=OFF
 endif
 
-TARGET_CFLAGS  += -I$(STAGING_DIR)/usr/include/daq3 -I$(STAGING_DIR)/usr/include/tirpc
-TARGET_LDFLAGS += -L$(STAGING_DIR)/usr/lib/daq3 -ltirpc
+TARGET_CFLAGS += -I$(STAGING_DIR)/usr/include/daq3
 
 define Package/snort3/conffiles
 /etc/config/snort
