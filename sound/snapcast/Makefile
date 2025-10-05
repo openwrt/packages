@@ -27,7 +27,7 @@ define Package/snapcast/Default
   SECTION:=sound
   CATEGORY:=Sound
   TITLE:=Synchronous multiroom audio player
-  DEPENDS:=+AUDIO_SUPPORT:alsa-lib +libavahi-client +libatomic +libogg +libflac +libopus +boost +libsoxr
+  DEPENDS:=+AUDIO_SUPPORT:alsa-lib +libexpat +libatomic +libogg +libflac +libopus +boost +libsoxr
   URL:=https://github.com/badaix/snapcast
 endef
 
