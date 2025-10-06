@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
-PKG_VERSION:=11.4.8
-PKG_RELEASE:=2
+PKG_VERSION:=11.8.3
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL := https://archive.mariadb.org/$(PKG_NAME)-$(PKG_VERSION)/source
 
-PKG_HASH:=52fa4dca2c5f80afc1667d523a27c06176d98532298a6b0c31ed73505f49e15c
+PKG_HASH:=1014a85c768de8f9e9c6d4bf0b42617f3b1588be1ad371f71674ea32b87119c0
 PKG_MAINTAINER:=Michal Hrusecky <Michal@Hrusecky.net>
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING THIRDPARTY
@@ -230,7 +230,10 @@ endef
 define Package/mariadb-client-extra
   $(call Package/mariadb/Default)
   TITLE:=MariaDB database client extra
-  DEPENDS:=mariadb-client
+  DEPENDS:=mariadb-client \
+	  +KERNEL_IO_URING:liburing \
+	  +libaio \
+	  +libpcre2
 endef
 
 define Package/mariadb-client-extra/description
