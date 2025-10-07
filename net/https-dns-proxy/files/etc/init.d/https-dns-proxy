@@ -3,13 +3,13 @@
 # shellcheck disable=SC1091,SC3043,SC3060
 
 # shellcheck disable=SC2034
-START=90
+START=20
 # shellcheck disable=SC2034
 STOP=15
 # shellcheck disable=SC2034
 USE_PROCD=1
 
-[ -n "${IPKG_INSTROOT}" ] && return 0
+[ -n "${IPKG_INSTROOT}" ] && exit 0
 
 if type extra_command 1>/dev/null 2>&1; then
 	extra_command 'version' 'Show version information'
@@ -30,15 +30,74 @@ readonly DEFAULT_BOOTSTRAP="${BOOTSTRAP_CF},${BOOTSTRAP_GOOGLE}"
 readonly canaryDomainsMozilla='use-application-dns.net'
 readonly canaryDomainsiCloud='mask.icloud.com mask-h2.icloud.com'
 
+# Silence "Command failed: Not found" for redundant procd service delete calls
+__UBUS_BIN="$(command -v ubus || echo /bin/ubus)"
+ubus() {
+	if [ "$1" = "call" ] && [ "$2" = "service" ] && [ "$3" = "delete" ]; then
+		"$__UBUS_BIN" "$@" >/dev/null 2>&1 || true
+	else
+		"$__UBUS_BIN" "$@"
+	fi
+}
+
 hdp_boot_flag=
 
-dnsmasq_restart() { [ -x /etc/init.d/dnsmasq ] || return 1; /etc/init.d/dnsmasq restart >/dev/null 2>&1; }
-is_alnum() { case "$1" in (*[![:alnum:]_@]*|"") return 1;; esac; }
+# package global config variables
+canary_domains_icloud=
+canary_domains_mozilla=
+dnsmasq_config_update=
+force_dns=
+force_dns_port=
+force_dns_src_interface=
+procd_trigger_wan6=
+global_listen_addr=
+global_tcp_client_limit=
+global_polling_interval=
+global_proxy_server=
+global_force_http1=
+global_force_http3=
+global_force_ipv6=
+global_max_idle_time=
+global_conn_loss_time=
+global_ca_certs_file=
+global_user=
+global_group=
+global_verbosity=
+global_logfile=
+global_statistic_interval=
+global_log_limit=
+
+dnsmasq_restart() { /etc/init.d/dnsmasq restart >/dev/null 2>&1; }
+is_alnum() { case "$1" in (*[![:alnum:]_\ @]*|"") return 1;; esac; }
 is_fw4_restart_needed() { [ "$(uci_get "$packageName" 'config' 'force_dns' '1')" = '1' ]; }
 is_mac_address() { expr "$1" : '[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]:[0-9A-F][0-9A-F]$' >/dev/null; }
+is_integer() { case "$1" in ''|*[!0-9]*) return 1;; esac; [ "$1" -ge 1 ] && [ "$1" -le 65535 ] || return 1; return 0; }
 is_ipv4() { expr "$1" : '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >/dev/null; }
 is_ipv6() { ! is_mac_address "$1" && str_contains "$1" ":"; }
-is_resolver_working() { resolveip -t 3 one.one.one.one >/dev/null 2>&1; }
+is_port_listening() {
+	local hex
+	is_integer "$1" || return 1
+	hex="$(printf '%04X' "$1")"
+	# TCP: state 0A == LISTEN
+	if awk -v h="$hex" 'NR>1{split($2,a,":"); if (toupper(a[2])==h && $4=="0A") {found=1}} END{exit found?0:1}' /proc/net/tcp /proc/net/tcp6 2>/dev/null; then
+		return 0
+	fi
+	# UDP: presence indicates a bound socket
+	if awk -v h="$hex" 'NR>1{split($2,a,":"); if (toupper(a[2])==h) {found=1}} END{exit found?0:1}' /proc/net/udp /proc/net/udp6 2>/dev/null; then
+		return 0
+	fi
+	return 1
+}
+is_resolver_working() { 
+	local heartbeat_domain heartbeat_sleep_timeout heartbeat_wait_timeout
+	config_load "$packageName"
+	config_get heartbeat_domain        'config' 'heartbeat_domain'        'heartbeat.melmac.ca'
+	config_get heartbeat_sleep_timeout 'config' 'heartbeat_sleep_timeout' '10'
+	config_get heartbeat_wait_timeout  'config' 'heartbeat_wait_timeout'  '30'
+	[ "$heartbeat_domain" = '-' ] && return 0
+	is_integer "$heartbeat_sleep_timeout" && sleep "$heartbeat_sleep_timeout"
+	resolveip -t "$heartbeat_wait_timeout" "$heartbeat_domain" >/dev/null 2>&1
+}
 output() {
 	[ -z "$verbosity" ] && verbosity="$(uci_get "$packageName" 'config' 'verbosity' '1')"
 	[ "$#" -ne '1' ] && {
@@ -55,7 +114,7 @@ output_ok() { output "$_OK_"; }
 output_okn() { output "${_OK_}\\n"; }
 output_fail() { output "$_FAIL_"; }
 output_failn() { output "${_FAIL_}\\n"; }
-str_contains() { [ -n "$1" ] &&[ -n "$2" ] && [ "${1//$2}" != "$1" ]; }
+str_contains() { [ "${1//$2}" != "$1" ]; }
 str_contains_word() { echo "$1" | grep -qw "$2"; }
 uci_add_list_if_new() {
 	local PACKAGE="$1"
@@ -73,7 +132,8 @@ uci_changes() {
 	local PACKAGE="$1"
 	local CONFIG="$2"
 	local OPTION="$3"
-	/sbin/uci ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} changes "$PACKAGE${CONFIG:+.$CONFIG}${OPTION:+.$OPTION}"
+	[ -s "${UCI_CONFIG_DIR:-/etc/config/}${PACKAGE}" ] && \
+	[ -n "$(/sbin/uci ${UCI_CONFIG_DIR:+-c $UCI_CONFIG_DIR} changes "$PACKAGE${CONFIG:+.$CONFIG}${OPTION:+.$OPTION}")" ]
 }
 version() { echo "$PKG_VERSION"; }
 
@@ -94,12 +154,13 @@ append_parm() {
 	local option="$2"
 	local switch="$3"
 	local default="$4"
+	local skip_value="$5"
 	local _loctmp
 	config_get _loctmp "$section" "$option" "$default"
-	[ -n "$_loctmp" ] && xappend "$switch $_loctmp"
+	[ -n "$_loctmp" ] && [ "$_loctmp" != "$skip_value" ] && xappend "$switch $_loctmp"
 }
 
-append_counter() {
+append_cnt() {
 	local section="$1"
 	local option="$2"
 	local switch="$3"
@@ -112,7 +173,7 @@ append_counter() {
 	done
 }
 
-append_bootstrap() {
+append_boot() {
 	local section="$1"
 	local option="$2"
 	local switch="$3"
@@ -123,48 +184,84 @@ append_bootstrap() {
 	[ -z "$_loctmp" ] && return 0
 	IFS=" ,"
 	for i in $_loctmp; do
-		if { [ "$ipv6_resolvers_only" -eq 0 ] && is_ipv4 "$i"; } || \
-			{ [ "$ipv6_resolvers_only" -ne 0 ] && is_ipv6 "$i"; }; then
+		if { [ -z "$force_ipv6" ] && is_ipv4 "$i"; } || \
+			{ [ -n "$force_ipv6" ] && is_ipv6 "$i"; }; then
 			[ -z "$_newtmp" ] && _newtmp="$i" || _newtmp="${_newtmp},${i}"
 		fi
 	done
 	IFS="$_old_ifs"
 	[ -n "$_newtmp" ] && xappend "$switch $_newtmp"
-	[ "$ipv6_resolvers_only" -eq 0 ] && xappend '-4'
+	[ -z "$force_ipv6" ] && xappend '-4'
 }
 
 boot() {
-#	ubus -t 30 wait_for network.interface 2>/dev/null
 	rc_procd start_service 'on_boot' && service_started 'on_boot'
-	if ! is_resolver_working; then
-		hdp_boot_flag=1
-		rc_procd stop_service 'on_failed_health_check' && service_stopped 'on_failed_health_check'
-	fi
+}
+
+load_package_config() {
+	local param="$1"
+	config_load "$packageName"
+	config_load "$packageName"
+	config_get_bool canary_domains_icloud  'config' 'canary_domains_icloud' '1'
+	config_get_bool canary_domains_mozilla 'config' 'canary_domains_mozilla' '1'
+	config_get_bool force_dns              'config' 'force_dns' '1'
+	config_get_bool procd_trigger_wan6     'config' 'procd_trigger_wan6' '0'
+	config_get_bool global_force_http1     'config' 'force_http1' '0'
+	config_get_bool global_force_http3     'config' 'force_http3' '0'
+	config_get_bool global_force_ipv6      'config' 'global_force_ipv6_resolvers' '0'
+	config_get dnsmasq_config_update       'config' 'dnsmasq_config_update' '*'
+	config_get force_dns_port              'config' 'force_dns_port' '53 853'
+	config_get force_dns_src_interface     'config' 'force_dns_src_interface' 'lan'
+	config_get global_listen_addr          'config' 'listen_addr' '127.0.0.1'
+	config_get global_tcp_client_limit     'config' 'tcp_client_limit' '20'
+	config_get global_polling_interval     'config' 'polling_interval' '120'
+	config_get global_proxy_server         'config' 'proxy_server'
+	config_get global_max_idle_time        'config' 'max_idle_time' '118'
+	config_get global_conn_loss_time       'config' 'conn_loss_time' '15'
+	config_get global_ca_certs_file        'config' 'ca_certs_file'
+	config_get global_user                 'config' 'user' 'nobody'
+	config_get global_group                'config' 'group' 'nogroup'
+	config_get global_verbosity            'config' 'verbosity' '0'
+	config_get global_logfile              'config' 'logfile'
+	config_get global_statistic_interval   'config' 'statistic_interval' '0'
+	config_get global_log_limit            'config' 'log_limit' '0'
+	[ "$canary_domains_icloud" = '1' ]  && canaryDomains="${canaryDomains:+$canaryDomains }${canaryDomainsiCloud}"
+	[ "$canary_domains_mozilla" = '1' ] && canaryDomains="${canaryDomains:+$canaryDomains }${canaryDomainsMozilla}"
+	[ "$force_dns" = '1' ]              || unset force_dns
+	[ "$procd_trigger_wan6" = '1' ]     || unset procd_trigger_wan6
 }
 
 start_instance() {
 	local cfg="$1" param="$2"
 	local PROG_param
-	local listen_addr listen_port ipv6_resolvers_only p url iface
+	local listen_addr listen_port force_ipv6 p url iface
 
-	config_get url "$cfg" 'resolver_url'
-	config_get_bool ipv6_resolvers_only "$cfg" 'use_ipv6_resolvers_only' '0'
-	append_parm "$cfg" 'resolver_url' '-r'
-	append_parm "$cfg" 'listen_addr' '-a' '127.0.0.1'
-	append_parm "$cfg" 'listen_port' '-p' "$port"
-	append_parm "$cfg" 'dscp_codepoint' '-c'
-	append_bootstrap "$cfg" 'bootstrap_dns' '-b' "$DEFAULT_BOOTSTRAP"
-	append_parm "$cfg" 'user' '-u' 'nobody'
-	append_parm "$cfg" 'group' '-g' 'nogroup'
-	append_parm "$cfg" 'ca_certs_file' '-C'
-	append_parm "$cfg" 'polling_interval' '-i'
-	append_parm "$cfg" 'proxy_server' '-t'
-	append_parm "$cfg" 'logfile' '-l'
-	append_bool "$cfg" 'use_http1' '-x'
-	append_counter "$cfg" 'verbosity' '-v' '0'
+	config_get url             "$cfg" 'resolver_url'
+	config_get listen_addr     "$cfg" 'listen_addr' "$global_listen_addr"
+	config_get listen_port     "$cfg" 'listen_port' "$port"
+	config_get_bool force_ipv6 "$cfg" 'force_ipv6_resolvers' "$global_force_ipv6"
+	[ "$force_ipv6" = '1' ] || unset force_ipv6
 
-	config_get listen_addr "$cfg" 'listen_addr' '127.0.0.1'
-	config_get listen_port "$cfg" 'listen_port' "$port"
+	append_parm "$cfg" 'resolver_url'       '-r'
+	append_parm "$cfg" 'listen_addr'        '-a' "$global_listen_addr"        '127.0.0.1'
+	append_parm "$cfg" 'listen_port'        '-p' "$port"
+	append_boot "$cfg" 'bootstrap_dns'      '-b' "$DEFAULT_BOOTSTRAP"
+	append_parm "$cfg" 'dscp_codepoint'     '-c'
+	append_parm "$cfg" 'tcp_client_limit'   '-T' "$global_tcp_client_limit"   '20'
+	append_parm "$cfg" 'polling_interval'   '-i' "$global_polling_interval"   '120'
+	append_parm "$cfg" 'proxy_server'       '-t' "$global_proxy_server"
+	append_bool "$cfg" 'force_http1'        '-x' "$global_force_http1"
+	append_bool "$cfg" 'force_http3'        '-q' "$global_force_http3"
+	append_parm "$cfg" 'max_idle_time'      '-m' "$global_max_idle_time"      '118'
+	append_parm "$cfg" 'conn_loss_time'     '-L' "$global_conn_loss_time"     '15'
+	append_parm "$cfg" 'ca_certs_file'      '-C' "$global_ca_certs_file"
+	append_parm "$cfg" 'user'               '-u' "$global_user"
+	append_parm "$cfg" 'group'              '-g' "$global_group"
+	append_parm "$cfg" 'logfile'            '-l' "$global_logfile"
+	append_parm "$cfg" 'statistic_interval' '-s' "$global_statistic_interval" '0'
+	append_parm "$cfg" 'log_limit'          '-F' "$global_log_limit"          '0'
+	append_cnt  "$cfg" 'verbosity'          '-v' "$global_verbosity"
+
 	if [ "$dnsmasq_config_update" = '*' ]; then
 		config_load 'dhcp'
 		config_foreach dnsmasq_doh_server 'dnsmasq' 'add' "${listen_addr}" "${listen_port}"
@@ -186,13 +283,13 @@ start_instance() {
 	procd_set_param respawn
 	procd_open_data
 	json_add_object mdns
-		procd_add_mdns_service "$packageName" 'udp' "$port" "DNS over HTTPS proxy"
+		procd_add_mdns_service "$packageName" 'udp' "$listen_port" "DNS over HTTPS proxy"
 	json_close_object
-	if [ "$force_dns" -ne '0' ]; then
+	if [ -n "$force_dns" ]; then
 		json_add_array firewall
-		for iface in ${procd_fw_src_interfaces/,/ }; do
-			for p in ${force_dns_port/,/ }; do
-				if netstat -tuln | grep 'LISTEN' | grep ":${p}" >/dev/null 2>&1 || [ "$p" = '53' ]; then
+		for iface in ${force_dns_src_interface//,/ }; do
+			for p in ${force_dns_port//,/ }; do
+				if is_port_listening "$p"; then
 					json_add_object ''
 					json_add_string type 'redirect'
 					json_add_string target 'DNAT'
@@ -216,7 +313,7 @@ start_instance() {
 			done
 		done
 		json_close_array
-		force_dns='0'
+		unset force_dns
 	fi
 	procd_close_data
 	procd_close_instance
@@ -232,30 +329,19 @@ start_instance() {
 
 start_service() {
 	local param="$1"
-	local canaryDomains canary_domains_icloud canary_domains_mozilla
-	local dnsmasq_config_update force_dns force_dns_port 
-	local procd_fw_src_interfaces
+	local canaryDomains
+	local force_dns="$force_dns"
 	local port=5053
 
+	[ "$param" = 'on_boot' ] && hdp_boot_flag='true' && return 0
+
 	output "Starting $serviceName instances ${param:+$param }"
-	config_load "$packageName"
-	config_get_bool canary_domains_icloud  'config' 'canary_domains_icloud' '1'
-	config_get_bool canary_domains_mozilla 'config' 'canary_domains_mozilla' '1'
-	config_get_bool force_dns          'config' 'force_dns' '1'
-	config_get dnsmasq_config_update   'config' 'dnsmasq_config_update' '*'
-	config_get force_dns_port          'config' 'force_dns_port' '53 853'
-	config_get procd_fw_src_interfaces 'config' 'procd_fw_src_interfaces' 'lan'
-	if [ "$canary_domains_icloud" -ne 0 ]; then
-		canaryDomains="${canaryDomains:+$canaryDomains }${canaryDomainsiCloud}"
-	fi
-	if [ "$canary_domains_mozilla" -ne 0 ]; then
-		canaryDomains="${canaryDomains:+$canaryDomains }${canaryDomainsMozilla}"
-	fi
+	load_package_config "$param"
 	dhcp_backup 'create'
 	config_load "$packageName"
 	config_foreach start_instance "$packageName" "$param"
 	output "\\n"
-	if [ -n "$(uci_changes dhcp)" ]; then
+	if uci_changes 'dhcp'; then
 		output "Updating dnsmasq config "
 		if uci_commit 'dhcp'; then
 			output_okn
@@ -274,63 +360,53 @@ start_service() {
 			fi
 		;;
 	esac
+#	if ! is_resolver_working; then
+#		rc_procd stop_service 'on_failed_health_check' && service_stopped 'on_failed_health_check'
+#	fi
 }
 
 stop_service() {
 	local param="$1"
-	local canaryDomains canary_domains_icloud canary_domains_mozilla
-	local dnsmasq_config_update
-	local s=0
+	local canaryDomains
+	local _error=
 	output "Stopping $serviceName ${param:+$param }"
-	config_load "$packageName"
-	config_get dnsmasq_config_update        'config' 'dnsmasq_config_update' '*'
-	config_get_bool canary_domains_icloud   'config' 'canary_domains_icloud' '1'
-	config_get_bool canary_domains_mozilla  'config' 'canary_domains_mozilla' '1'
-	if [ "$canary_domains_icloud" -ne 0 ]; then
-		canaryDomains="${canaryDomains:+$canaryDomains }${canaryDomainsiCloud}"
-	fi
-	if [ "$canary_domains_mozilla" -ne 0 ]; then
-		canaryDomains="${canaryDomains:+$canaryDomains }${canaryDomainsMozilla}"
-	fi
+	load_package_config "$param"
 	dhcp_backup 'restore'
-	if [ -n "$(uci_changes dhcp)" ]; then
+	if uci_changes 'dhcp'; then
 		uci_commit 'dhcp'
-		dnsmasq_restart || s=1
+		dnsmasq_restart || _error=1
 	fi
 # shellcheck disable=SC2015
-	[ "$s" = '0' ] && output_okn || output_failn
+	[ -z "$_error" ] && output_okn || output_failn
 }
 
 # shellcheck disable=SC2015
 service_triggers() {
 	local wan wan6 i
-	local procd_trigger_wan6
 	if [ -n "$hdp_boot_flag" ]; then
 		output "Setting trigger (on_boot) "
-		procd_add_raw_trigger "interface.*.up" 5000 "/etc/init.d/${packageName}" restart 'on_interface_up' && output_okn || output_failn
+		procd_add_raw_trigger "interface.*.up" 5000 "/etc/init.d/${packageName}" reload 'on_interface_up' && output_okn || output_failn
 	else
-		config_load "$packageName"
-		config_get_bool procd_trigger_wan6 'config' 'procd_trigger_wan6' '0'
-		. /lib/functions/network.sh
+		. "${IPKG_INSTROOT}/lib/functions/network.sh"
 		network_flush_cache
 		network_find_wan wan
 		wan="${wan:-wan}"
-		if [ "$procd_trigger_wan6" -ne 0 ]; then
+		if [ -n "$procd_trigger_wan6" ]; then
 			network_find_wan6 wan6
 			wan6="${wan6:-wan6}"
 		fi
 		output "Setting trigger${wan6:+s} for $wan ${wan6:+$wan6 }"
 		for i in $wan $wan6; do
-			procd_add_interface_trigger "interface.*" "$i" "/etc/init.d/${packageName}" restart 'on_interface_trigger' && output_ok || output_fail
+			procd_add_interface_trigger "interface.*" "$i" "/etc/init.d/${packageName}" reload 'on_interface_trigger' && output_ok || output_fail
 		done
 		output '\n'
 		procd_add_config_trigger "config.change" "$packageName" "/etc/init.d/${packageName}" reload 'on_config_change'
 	fi
 }
 
-service_started() { is_fw4_restart_needed && procd_set_config_changed firewall; }
-service_stopped() { is_fw4_restart_needed && procd_set_config_changed firewall; }
-restart() { procd_send_signal "$packageName"; rc_procd start_service "$*"; }
+service_started() { [ -n "$force_dns" ] && procd_set_config_changed firewall; }
+service_stopped() { [ -n "$force_dns" ] && procd_set_config_changed firewall; }
+restart() { reload "$@"; }
 
 dnsmasq_instance_append_force_dns_port() {
 	local cfg="$1" instance_port
@@ -343,7 +419,7 @@ dnsmasq_doh_server() {
 	local cfg="$1" param="$2" address="${3:-127.0.0.1}" port="$4" i
 	case "$param" in
 		add)
-			if [ "$force_dns" -ne 0 ]; then
+			if [ -n "$force_dns" ]; then
 				for i in $canaryDomains; do
 					uci_add_list_if_new 'dhcp' "$cfg" 'server' "/${i}/"
 				done
