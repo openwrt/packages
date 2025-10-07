@@ -1,0 +1,87 @@
+#!/bin/sh
+# When using pbr with dnsmasq's nft set support, a domain-based policy will not take effect until
+# the remote domain name has been resolved by dnsmasq. Resolve all domain names in pbr policies in advance.
+
+(
+	timeout_nft='10'
+	timeout_dnsmasq='20'
+	pipe_ubus="/tmp/pipe.ubus.$$"
+	pipe_nslookup="/tmp/pipe.nslookup.$$"
+	log_abort='domain names in policies not resolved'
+
+	# shellcheck disable=SC2154
+	output()
+	{
+		msg="$*"
+		msg=$(printf '%b' "$msg" | sed 's/\x1b\[[0-9;]*m//g')
+		logger -t "$packageName [$$]" "$(printf '%b' "$msg")"
+	}
+
+	nft_ready()
+	{
+		while ! /usr/sbin/nft list sets 'inet' | grep -q "pbr"; do
+			[ "$timeout_nft" -eq '0' ] && {
+				output "Pbr's nft sets not found, $log_abort $__FAIL__"
+				return 1
+			}
+			sleep '1' && timeout_nft=$((timeout_nft - 1))
+		done
+	}
+
+	run_nslookup()
+	{
+		output=$(nslookup "$1" 127.0.0.1) && { echo '0' > "$pipe_nslookup"; return; }
+		reason=$(printf '%s' "$output" | grep -Eo -m 1 'NXDOMAIN|SERVFAIL|timed out') && \
+		output "$_WARNING_ Lookup failed for $domain ($reason)"
+		echo '1' > "$pipe_nslookup"
+	}
+
+	# shellcheck disable=SC2162
+	nslookup_tracker()
+	{
+		while read ec; do
+			entries=$((entries + 1))
+			[ "$ec" -eq '1' ] && errors=$((errors + 1))
+		done < "$pipe_nslookup"
+
+		output "Finished resolving $entries domain names in policies (${errors:-0} failed) $__OK__"
+	}
+
+	[ -n "$resolverSetSupported" ] || {
+		output "Resolver set support disabled, $log_abort $__FAIL__"
+		exit
+	}
+	mkfifo "$pipe_ubus"
+	mkfifo "$pipe_nslookup"
+	ubus listen -m 'ubus.object.add' > "$pipe_ubus" & ubus_listen_pid=$!
+
+	# shellcheck disable=SC3045
+	while read -t "$timeout_dnsmasq" -r event; do
+		echo "$event" | grep -q "dnsmasq.dns" || continue
+		dnsmasq_restarted='1'
+		# shellcheck disable=SC2154
+		[ -f "$packageDnsmasqFile" ] || {
+			output "File $packageDnsmasqFile not found, $log_abort $__FAIL__"
+			break
+		}
+		nft_ready || break
+		nslookup_tracker & exec 3>"$pipe_nslookup"
+
+		(
+			output "Resolving domain names in policies..."
+			while IFS='/' read -r _ domain _; do
+				[ -n "$domain" ] && run_nslookup "$domain" &
+				entries=$((entries + 1))
+			done < "$packageDnsmasqFile"
+			wait
+		)
+
+		exec 3>&-
+		break
+	done < "$pipe_ubus"
+
+	[ -n "$dnsmasq_restarted" ] || output "Dnsmasq hasn't restarted, $log_abort $__FAIL__"
+	kill "$ubus_listen_pid"
+	rm "$pipe_ubus"
+	rm "$pipe_nslookup"
+) &

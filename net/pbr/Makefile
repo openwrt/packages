@@ -4,8 +4,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pbr
-PKG_VERSION:=1.1.8
-PKG_RELEASE:=36
+PKG_VERSION:=1.2.0
+PKG_RELEASE:=2
 PKG_LICENSE:=AGPL-3.0-or-later
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.ca>
 
@@ -75,7 +75,7 @@ define Package/pbr/default/install
 	$(INSTALL_CONF) ./files/etc/config/pbr $(1)/etc/config/pbr
 	$(INSTALL_DIR) $(1)/usr/share/pbr
 	$(INSTALL_DATA) ./files/usr/share/pbr/.keep $(1)/usr/share/pbr/.keep
-	$(INSTALL_DATA) ./files/usr/share/pbr/firewall.include $(1)/usr/share/pbr/firewall.include
+	$(INSTALL_DATA) ./files/usr/share/pbr/pbr.user.dnsprefetch $(1)/usr/share/pbr/pbr.user.dnsprefetch
 	$(INSTALL_DATA) ./files/usr/share/pbr/pbr.user.aws $(1)/usr/share/pbr/pbr.user.aws
 	$(INSTALL_DATA) ./files/usr/share/pbr/pbr.user.netflix $(1)/usr/share/pbr/pbr.user.netflix
 	$(INSTALL_DIR) $(1)/usr/share/nftables.d
@@ -113,7 +113,6 @@ define Package/pbr/prerm
 #!/bin/sh
 # check if we are on real system
 if [ -z "$${IPKG_INSTROOT}" ]; then
-	uci -q delete firewall.pbr || true
 	echo -n "Stopping pbr service... "
 	/etc/init.d/pbr stop quiet >/dev/null 2>&1 && echo "OK" || echo "FAIL"
 	echo -n "Removing rc.d symlink for pbr... "
@@ -148,7 +147,6 @@ define Package/pbr-netifd/prerm
 #!/bin/sh
 # check if we are on real system
 if [ -z "$${IPKG_INSTROOT}" ]; then
-	uci -q delete firewall.pbr || true
 	echo -n "Stopping pbr-netifd service... "
 	/etc/init.d/pbr stop quiet >/dev/null 2>&1 && echo "OK" || echo "FAIL"
 	echo -n "Removing rc.d symlink for pbr... "

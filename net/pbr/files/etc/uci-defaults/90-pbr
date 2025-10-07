@@ -9,28 +9,6 @@ else
 	printf "%b: pbr init.d file (%s) not found! \n" '\033[0;31mERROR\033[0m' "$pbrFunctionsFile"
 fi
 
-# Transition from vpn-policy-routing
-if [ -s '/etc/config/vpn-policy-routing' ] && [ ! -s '/etc/config/pbr-opkg' ] \
-	&& [ "$(uci_get pbr config enabled)" = '0' ]; then
-	if [ -x '/etc/init.d/vpn-policy-routing' ]; then
-		output "Stopping and disabling vpn-policy-routing."
-		if /etc/init.d/vpn-policy-routing stop \
-			&& /etc/init.d/vpn-policy-routing disable; then
-			output_okn
-		else
-			output_failn
-		fi
-	fi
-	output "Migrating vpn-policy-routing config file."
-	if mv '/etc/config/pbr' '/etc/config/pbr-opkg' \
-		&& sed 's/vpn-policy-routing/pbr/g' /etc/config/vpn-policy-routing > /etc/config/pbr \
-		&& uci_set vpn-policy-routing config enabled 0 && uci_commit vpn-policy-routing; then
-		output_okn
-	else
-		output_failn
-	fi
-fi
-
 # Transition from older versions of pbr
 sed -i "s/resolver_ipset/resolver_set/g" /etc/config/pbr
 sed -i "s/iptables_rule_option/rule_create_option/g" /etc/config/pbr
@@ -43,22 +21,14 @@ sed -i "s/option fw_mask '0x\(.*\)'/option fw_mask '\1'/g" /etc/config/pbr
 sed -i "s/option wan_mark '0x\(.*\)'/option wan_mark '\1'/g" /etc/config/pbr
 sed -i "s|option path '/etc/pbr/|option path '/usr/share/pbr/|g" /etc/config/pbr
 sed -i "/procd_lan_interface/d" /etc/config/pbr
-
-# add firewall include file to fw4 config
-# shellcheck source=../../usr/share/pbr/firewall.include
-if [ -s '/usr/share/pbr/firewall.include' ]; then
-uci -q batch <<-EOT
-	delete firewall.pbr
-	set firewall.pbr='include'
-	set firewall.pbr.fw4_compatible='1'
-	set firewall.pbr.type='script'
-	set firewall.pbr.path='/usr/share/pbr/firewall.include'
-	commit firewall
-EOT
-fi
+sed -i "s|procd_lan_device|lan_device|g" /etc/config/pbr
+sed -i "s|procd_wan_interface|uplink_interface|g" /etc/config/pbr
+sed -i "s|procd_wan6_interface|uplink_interface6|g" /etc/config/pbr
+sed -i "s|wan_ip_rules_priority|uplink_ip_rules_priority|g" /etc/config/pbr
+sed -i "s|wan_mark|uplink_mark|g" /etc/config/pbr
 
 # Transition from pre-1.1.7 versions
-# shellcheck disable=SC2317
+# shellcheck disable=SC2317,SC2329
 _remove_wg_server_client() {
 	local path
 	config_get path "$1" 'path'
