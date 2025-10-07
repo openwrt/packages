@@ -17,6 +17,7 @@ proto_l2tp_init_config() {
 	proto_config_add_int "mtu"
 	proto_config_add_int "checkup_interval"
 	proto_config_add_string "server"
+	proto_config_add_string "hostname"
 	available=1
 	no_device=1
 	no_proto_task=1
@@ -26,9 +27,9 @@ proto_l2tp_init_config() {
 proto_l2tp_setup() {
 	local interface="$1"
 	local optfile="/tmp/l2tp/options.${interface}"
-	local ip serv_addr server host
+	local ip serv_addr server host hostname
 
-	json_get_var server server
+	json_get_vars server hostname
 	host="${server%:*}"
 	for ip in $(resolveip -t 5 "$host"); do
 		( proto_add_host_dependency "$interface" "$ip" )
@@ -40,6 +41,8 @@ proto_l2tp_setup() {
 		proto_setup_failed "$interface"
 		exit 1
 	}
+
+	hostname="${hostname:+hostname=$hostname}"
 
 	# Start and wait for xl2tpd
 	if [ ! -p /var/run/xl2tpd/l2tp-control -o -z "$(pidof xl2tpd)" ]; then
@@ -88,7 +91,7 @@ $mtu
 $pppd_options
 EOF
 
-	xl2tpd-control add-lac l2tp-${interface} pppoptfile=${optfile} lns=${server} || {
+	xl2tpd-control add-lac l2tp-${interface} pppoptfile=${optfile} lns=${server} ${hostname} || {
 		echo "xl2tpd-control: Add l2tp-$interface failed" >&2
 		proto_setup_failed "$interface"
 		exit 1
