@@ -1,5 +1,4 @@
 config pbr 'config'
-	option debug_dnsmasq '0'
 	option enabled '0'
 	option verbosity '2'
 	option strict_enforcement '1'
@@ -7,7 +6,6 @@ config pbr 'config'
 	list resolver_instance '*'
 	option ipv6_enabled '0'
 	list ignored_interface 'vpnserver'
-	option boot_timeout '30'
 	option rule_create_option 'add'
 	option procd_boot_trigger_delay '5000'
 	option procd_reload_delay '1'
@@ -25,6 +23,10 @@ config pbr 'config'
 	list webui_supported_protocol 'udp'
 	list webui_supported_protocol 'tcp udp'
 	list webui_supported_protocol 'icmp'
+
+config include
+	option path '/usr/share/pbr/pbr.user.dnsprefetch'
+	option enabled '0'
 
 config include
 	option path '/usr/share/pbr/pbr.user.aws'
