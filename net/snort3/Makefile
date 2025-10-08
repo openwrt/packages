@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=snort3
 PKG_VERSION:=3.9.5.0
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/snort3/snort3/tar.gz/$(PKG_VERSION)?
@@ -56,25 +56,10 @@ CMAKE_OPTIONS += \
 	-DMAKE_PDF_DOC:BOOL=NO \
 	-DMAKE_TEXT_DOC:BOOL=NO \
 	-DHAVE_LIBUNWIND=OFF \
-	-DHAVE_LZMA=ON
-
-ifneq ($(findstring powerpc,$(CONFIG_ARCH))$(findstring mips,$(CONFIG_ARCH)),)
-  CMAKE_OPTIONS += \
-	-DENABLE_TCMALLOC=OFF
-else
-  CMAKE_OPTIONS += \
-	-DENABLE_TCMALLOC=ON \
-	-DTCMALLOC_LIBRARIES=$(STAGING_DIR)/usr/lib/libtcmalloc.so
-endif
-
-ifneq ($(findstring x86_64,$(CONFIG_ARCH))$(findstring aarch64,$(CONFIG_ARCH)),)
-  CMAKE_OPTIONS += \
-	-DENABLE_HYPERSCAN=ON \
-	-DHS_INCLUDE_DIRS=$(STAGING_DIR)/usr/include/hs
-else
-  CMAKE_OPTIONS += \
-	-DENABLE_HYPERSCAN=OFF
-endif
+	-DHAVE_LZMA=ON \
+	-DENABLE_TCMALLOC=$(if $(CONFIG_PACKAGE_gperftools-runtime),ON,OFF) \
+	-DENABLE_HYPERSCAN=$(if $(CONFIG_PACKAGE_vectorscan-runtime),ON,OFF) \
+	$(if $(CONFIG_PACKAGE_vectorscan-runtime),-DHS_INCLUDE_DIRS=$(STAGING_DIR)/usr/include/hs)
 
 TARGET_CFLAGS += -I$(STAGING_DIR)/usr/include/daq3
 
