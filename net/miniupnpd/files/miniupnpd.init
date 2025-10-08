@@ -52,49 +52,51 @@ echo_yesno_opt_inverse() {
 
 upnpd() {
 	config_load "upnpd"
-	local external_iface external_iface6 external_zone external_ip internal_iface
-	local upnp_igd_upload upnp_igd_download log_output upnp_igd_http_port config_file serial_number model_number
-	local allow_cgnat_use stun_host uuid notify_interval presentation_url
-	local lease_file ipv6_disable
-	local enabled_protocols allow_third_party_mapping system_uptime upnp_igd_compat
-	local acl_preset acl_check_custom acl_reject_unsafe_ports upnp_igd_friendly_name
-
 	local enabled
 	config_get_bool enabled config enabled 0
 	[ "$enabled" -eq 0 ] && log "Service disabled" && return 0
 
+	# Daemon
+	local enabled_protocols acl_preset acl_check_custom acl_reject_unsafe_ports allow_cgnat_use stun_host allow_third_party_mapping ipv6_disable system_uptime log_output lease_file config_file
+	config_get enabled_protocols config enabled_protocols all
+	config_get acl_preset config acl_preset
+	config_get acl_check_custom config acl_check_custom
+	config_get acl_reject_unsafe_ports config acl_reject_unsafe_ports "21 23 135 137-139 445 3389"
+	config_get allow_cgnat_use config allow_cgnat_use 0
+	config_get stun_host config stun_host stun.nextcloud.com
+	config_get allow_third_party_mapping config allow_third_party_mapping 0
+	config_get_bool ipv6_disable config ipv6_disable 0
+	config_get_bool system_uptime config system_uptime 1
+	config_get log_output config log_output
+	config_get lease_file config lease_file /var/run/miniupnpd.leases
+	config_get config_file config config_file
+
+	# UPnP IGD
+	local upnp_igd_compat upnp_igd_download upnp_igd_upload upnp_igd_friendly_name model_number serial_number presentation_url uuid upnp_igd_http_port notify_interval
+	config_get upnp_igd_compat config upnp_igd_compat igdv1
+	config_get upnp_igd_download config upnp_igd_download
+	config_get upnp_igd_upload config upnp_igd_upload
+	config_get upnp_igd_friendly_name config upnp_igd_friendly_name
+	config_get model_number config model_number
+	config_get serial_number config serial_number
+	config_get presentation_url config presentation_url
+	config_get uuid config uuid
+	config_get upnp_igd_http_port config upnp_igd_http_port 5000
+	config_get notify_interval config notify_interval
+
+	# External network interface
+	local external_iface external_iface6 external_zone external_ip
 	config_get external_iface config external_iface
 	config_get external_iface6 config external_iface6
 	config_get external_zone config external_zone
 	config_get external_ip config external_ip
+
+	# Internal network interfaces
+	local internal_iface
 	config_get internal_iface config internal_iface lan
-	config_get upnp_igd_http_port config upnp_igd_http_port 5000
-	config_get upnp_igd_upload config upnp_igd_upload
-	config_get upnp_igd_download config upnp_igd_download
-	config_get log_output config log_output
-	config_get config_file config config_file
-	config_get serial_number config serial_number
-	config_get model_number config model_number
-	config_get uuid config uuid
-	config_get allow_cgnat_use config allow_cgnat_use 0
-	config_get stun_host config stun_host stun.nextcloud.com
-	config_get notify_interval config notify_interval
-	config_get presentation_url config presentation_url
-	config_get lease_file config lease_file /var/run/miniupnpd.leases
-	config_get_bool ipv6_disable config ipv6_disable 0
-	config_get enabled_protocols config enabled_protocols all
-	config_get allow_third_party_mapping config allow_third_party_mapping 0
-	config_get_bool system_uptime config system_uptime 1
-	config_get upnp_igd_compat config upnp_igd_compat igdv1
-	config_get acl_preset config acl_preset
-	config_get acl_check_custom config acl_check_custom
-	config_get acl_reject_unsafe_ports config acl_reject_unsafe_ports "21 23 135 137-139 445 3389"
-	config_get upnp_igd_friendly_name config upnp_igd_friendly_name
 
 	local conf ifname ifname6
-
 	. /lib/functions/network.sh
-
 	if [ -n "$external_iface" ] ; then
 		network_get_device ifname "$external_iface"
 	else
@@ -125,25 +127,9 @@ upnpd() {
 		[ "$ifname" = "" ] && log "External network interface not found, not starting" daemon.err && return 0
 
 		{
-		echo "ext_ifname=$ifname"
-		[ -n "$ifname6" ] && [ "$ifname" != "$ifname6" ] && echo "ext_ifname6=$ifname6"
-		[ -n "$external_ip" ] && echo "ext_ip=$external_ip"
-
-		local iface
-		for iface in $internal_iface; do
-			local device
-			network_get_device device "$iface" && echo "# Enable internal network $iface ($device)" && echo "listening_ip=$device"
-		done
-
+		echo "# Daemon"
 		{ [ "$enabled_protocols" = "upnp-igd" ] || [ "$enabled_protocols" = "all" ]; } && echo "enable_upnp=yes" || echo "enable_upnp=no"
 		{ [ "$enabled_protocols" = "pcp+nat-pmp" ] || [ "$enabled_protocols" = "all" ]; } && echo "enable_pcp_pmp=yes" || echo "enable_pcp_pmp=no"
-		{ [ "$allow_third_party_mapping" = "0" ] || [ "$allow_third_party_mapping" = "1" ]; } &&
-			echo_yesno_opt_inverse secure_mode "$allow_third_party_mapping" &&
-			echo_yesno_opt pcp_allow_thirdparty "$allow_third_party_mapping"
-		[ "$allow_third_party_mapping" = "upnp-igd" ] && echo "secure_mode=no" && echo "pcp_allow_thirdparty=no"
-		[ "$allow_third_party_mapping" = "pcp" ] && echo "secure_mode=yes" && echo "pcp_allow_thirdparty=yes"
-		echo_yesno_opt system_uptime "$system_uptime"
-		[ "$upnp_igd_compat" = "igdv1" ] && echo "force_igd_desc_v1=yes" || echo "force_igd_desc_v1=no"
 		# Only use STUN when necessary with a private/CGNAT external IPv4
 		local extipv4 extipv4private
 		network_get_ipaddr extipv4 "$ifname"
@@ -159,36 +145,55 @@ upnpd() {
 			echo "ext_stun_host=${stun_host%%:*}"
 			[ "${stun_host%%:*}" != "${stun_host##*:}" ] && echo "ext_stun_port=${stun_host##*:}"
 		fi
+		{ [ "$allow_third_party_mapping" = "0" ] || [ "$allow_third_party_mapping" = "1" ]; } &&
+			echo_yesno_opt_inverse secure_mode "$allow_third_party_mapping" &&
+			echo_yesno_opt pcp_allow_thirdparty "$allow_third_party_mapping"
+		[ "$allow_third_party_mapping" = "upnp-igd" ] && echo "secure_mode=no" && echo "pcp_allow_thirdparty=no"
+		[ "$allow_third_party_mapping" = "pcp" ] && echo "secure_mode=yes" && echo "pcp_allow_thirdparty=yes"
 		echo_yesno_opt ipv6_disable "$ipv6_disable"
-
-		[ -n "$upnp_igd_download" ] && echo "bitrate_down=$((upnp_igd_download * 1000))"
-		[ -n "$upnp_igd_upload" ] && echo "bitrate_up=$((upnp_igd_upload * 1000))"
-
+		echo_yesno_opt system_uptime "$system_uptime"
 		touch "$lease_file" && echo "lease_file=$lease_file"
 		[ "$ipv6_disable" = "0" ] && touch "${lease_file}-ipv6" && echo "lease_file6=${lease_file}-ipv6"
-		[ -n "$upnp_igd_friendly_name" ] && echo "friendly_name=$upnp_igd_friendly_name"
-		[ -n "$presentation_url" ] && echo "presentation_url=$presentation_url"
-		[ -n "$notify_interval" ] && echo "notify_interval=$notify_interval"
-		echo "serial=$serial_number"
-		echo "model_number=$model_number"
-		echo "http_port=$upnp_igd_http_port"
 
-		[ -z "$uuid" ] && {
-			uuid="$(cat /proc/sys/kernel/random/uuid)"
-			uci set upnpd.config.uuid="$uuid"
-			uci commit upnpd
-		}
-
-		[ "$uuid" != "nocli" ] && echo "uuid=$uuid"
+		if [ "$enabled_protocols" = "upnp-igd" ] || [ "$enabled_protocols" = "all" ]; then
+			echo "# UPnP IGD"
+			[ "$upnp_igd_compat" = "igdv1" ] && echo "force_igd_desc_v1=yes" || echo "force_igd_desc_v1=no"
+			[ -n "$upnp_igd_download" ] && echo "bitrate_down=$((upnp_igd_download * 1000))"
+			[ -n "$upnp_igd_upload" ] && echo "bitrate_up=$((upnp_igd_upload * 1000))"
+			[ -n "$upnp_igd_friendly_name" ] && echo "friendly_name=$upnp_igd_friendly_name"
+			echo "model_number=$model_number"
+			echo "serial=$serial_number"
+			[ -n "$presentation_url" ] && echo "presentation_url=$presentation_url"
+			[ -z "$uuid" ] && {
+				uuid="$(cat /proc/sys/kernel/random/uuid)"
+				uci set upnpd.config.uuid="$uuid"
+				uci commit upnpd
+			}
+			[ "$uuid" != "nocli" ] && echo "uuid=$uuid"
+			echo "http_port=$upnp_igd_http_port"
+			[ -n "$notify_interval" ] && echo "notify_interval=$notify_interval"
+		fi
 
 		if [ "$FW" = "fw4" ]; then
-			#When using nftables configure miniupnpd to use its own table and chains
+			echo "# Firewall backend"
 			echo "upnp_table_name=fw4"
 			echo "upnp_nat_table_name=fw4"
 			echo "upnp_forward_chain=upnp_forward"
 			echo "upnp_nat_chain=upnp_prerouting"
 			echo "upnp_nat_postrouting_chain=upnp_postrouting"
 		fi
+
+		echo "# External network interface"
+		echo "ext_ifname=$ifname"
+		[ -n "$ifname6" ] && [ "$ifname" != "$ifname6" ] && echo "ext_ifname6=$ifname6"
+		[ -n "$external_ip" ] && echo "ext_ip=$external_ip"
+
+		# Internal network interfaces
+		local iface
+		for iface in $internal_iface; do
+			local device
+			network_get_device device "$iface" && echo "# Enable internal network $iface ($device)" && echo "listening_ip=$device"
+		done
 
 		echo "# ACL: Reject unsafe client ports first"
 		local unsafeport
@@ -239,7 +244,6 @@ upnpd() {
 	fi
 
 	if [ -n "$ifname" ]; then
-		# start firewall
 		if [ "$FW" = "fw4" ]; then
 			nft -s -t -n list chain inet fw4 upnp_forward >/dev/null 2>&1 || fw4 reload
 		else
