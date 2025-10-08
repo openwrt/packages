@@ -54,23 +54,23 @@ upnpd() {
 
 	local conf ifname ifname6
 	. /lib/functions/network.sh
-	if [ -n "$external_iface" ] ; then
+	if [ -n "$external_iface" ]; then
 		network_get_device ifname "$external_iface"
 	else
-		if [ -n "$external_zone" ] ; then
+		if [ -n "$external_zone" ]; then
 			ifname=$($FW -q zone "$external_zone" 2>/dev/null | head -1)
 		else
-			network_find_wan external_iface && \
+			network_find_wan external_iface &&
 				network_get_device ifname "$external_iface"
 		fi
 	fi
-	if [ -n "$external_iface6" ] ; then
+	if [ -n "$external_iface6" ]; then
 		network_get_device ifname6 "$external_iface6"
 	else
-		if [ -n "$external_zone" ] ; then
+		if [ -n "$external_zone" ]; then
 			ifname6=$($FW -q zone "$external_zone" 2>/dev/null | head -1)
 		else
-			network_find_wan6 external_iface6 && \
+			network_find_wan6 external_iface6 &&
 				network_get_device ifname6 "$external_iface6"
 		fi
 	fi
@@ -84,120 +84,121 @@ upnpd() {
 		[ "$ifname" = "" ] && log "External network interface not found, not starting" daemon.err && return 0
 
 		{
-		echo "# Daemon"
-		{ [ "$enabled_protocols" = "upnp-igd" ] || [ "$enabled_protocols" = "all" ]; } && echo "enable_upnp=yes" || echo "enable_upnp=no"
-		{ [ "$enabled_protocols" = "pcp+nat-pmp" ] || [ "$enabled_protocols" = "all" ]; } && echo "enable_pcp_pmp=yes" || echo "enable_pcp_pmp=no"
-		# Only use STUN when necessary with a private/CGNAT external IPv4
-		local extipv4 extipv4private
-		network_get_ipaddr extipv4 "$ifname"
-		case "$extipv4" in 10.* | 172.1[6-9].* | 172.2[0-9].* | 172.3[0-1].* | 192.168.* | 100.6[4-9].* | 100.[7-9][0-9].* | 100.1[0-1][0-9].* | 100.12[0-7].*)
-			extipv4private=1
-			;;
-		esac
-		if [ "$extipv4private" = "1" ] && [ "$allow_cgnat_use" != "0" ] && [ "$external_ip" = "" ]; then
-			[ "$allow_cgnat_use" = "1" ] && echo "ext_perform_stun=yes"
-			[ "$allow_cgnat_use" = "allow-filtered" ] && echo "ext_perform_stun=allow-filtered"
-			# Commented out as using allow-filtered returns a public IPv4, which is required by some clients, and it is also valid
-			# [ "$allow_cgnat_use" = "allow-private-ext-ipv4" ] && external_ip=203.1.2.3
-			echo "ext_stun_host=${stun_host%%:*}"
-			[ "${stun_host%%:*}" != "${stun_host##*:}" ] && echo "ext_stun_port=${stun_host##*:}"
-		fi
-		{ [ "$allow_third_party_mapping" = "0" ] || [ "$allow_third_party_mapping" = "1" ]; } &&
-			echo_yesno_opt_inverse secure_mode "$allow_third_party_mapping" &&
-			echo_yesno_opt pcp_allow_thirdparty "$allow_third_party_mapping"
-		[ "$allow_third_party_mapping" = "upnp-igd" ] && echo "secure_mode=no" && echo "pcp_allow_thirdparty=no"
-		[ "$allow_third_party_mapping" = "pcp" ] && echo "secure_mode=yes" && echo "pcp_allow_thirdparty=yes"
-		echo_yesno_opt ipv6_disable "$ipv6_disable"
-		echo_yesno_opt system_uptime "$system_uptime"
-		touch "$lease_file" && echo "lease_file=$lease_file"
-		[ "$ipv6_disable" = "0" ] && touch "${lease_file}-ipv6" && echo "lease_file6=${lease_file}-ipv6"
-
-		if [ "$enabled_protocols" = "upnp-igd" ] || [ "$enabled_protocols" = "all" ]; then
-			echo "# UPnP IGD"
-			[ "$upnp_igd_compat" = "igdv1" ] && echo "force_igd_desc_v1=yes" || echo "force_igd_desc_v1=no"
-			[ -n "$upnp_igd_download" ] && echo "bitrate_down=$((upnp_igd_download * 1000))"
-			[ -n "$upnp_igd_upload" ] && echo "bitrate_up=$((upnp_igd_upload * 1000))"
-			[ -n "$upnp_igd_friendly_name" ] && echo "friendly_name=$upnp_igd_friendly_name"
-			echo "model_number=$model_number"
-			echo "serial=$serial_number"
-			[ -n "$presentation_url" ] && echo "presentation_url=$presentation_url"
-			[ -z "$uuid" ] && {
-				uuid="$(cat /proc/sys/kernel/random/uuid)"
-				uci set upnpd.config.uuid="$uuid"
-				uci commit upnpd
-			}
-			[ "$uuid" != "nocli" ] && echo "uuid=$uuid"
-			echo "http_port=$upnp_igd_http_port"
-			[ -n "$notify_interval" ] && echo "notify_interval=$notify_interval"
-		fi
-
-		if [ "$FW" = "fw4" ]; then
-			echo "# Firewall backend"
-			echo "upnp_table_name=fw4"
-			echo "upnp_nat_table_name=fw4"
-			echo "upnp_forward_chain=upnp_forward"
-			echo "upnp_nat_chain=upnp_prerouting"
-			echo "upnp_nat_postrouting_chain=upnp_postrouting"
-		fi
-
-		echo "# External network interface"
-		echo "ext_ifname=$ifname"
-		[ -n "$ifname6" ] && [ "$ifname" != "$ifname6" ] && echo "ext_ifname6=$ifname6"
-		[ -n "$external_ip" ] && echo "ext_ip=$external_ip"
-
-		# Internal network interfaces
-		local iface
-		for iface in $internal_iface; do
-			local device
-			network_get_device device "$iface" && echo "# Enable internal network $iface ($device)" && echo "listening_ip=$device"
-		done
-
-		echo "# ACL: Reject unsafe client ports first"
-		local unsafeport
-		for unsafeport in $acl_reject_unsafe_ports; do
-			if [ "$unsafeport" -ge "1" ] 2>/dev/null && [ "$unsafeport" -le "65535" ] 2>/dev/null ||
-				{ [ "${unsafeport%%-*}" -ge "1" ] 2>/dev/null &&
-					[ "${unsafeport%%-*}" -le "65535" ] 2>/dev/null &&
-					[ "${unsafeport##*-}" -ge "1" ] 2>/dev/null &&
-					[ "${unsafeport##*-}" -le "65535" ] 2>/dev/null &&
-					[ "${unsafeport##*-}" -ge "${unsafeport%%-*}" ] 2>/dev/null
-				}; then
-				echo "deny 1-65535 0.0.0.0/0 $unsafeport # Reject unsafe client port"
-			else
-				log "Unknown port or port range ($unsafeport) in acl_reject_unsafe_ports ignored" daemon.warn
+			echo "# Daemon"
+			{ [ "$enabled_protocols" = "upnp-igd" ] || [ "$enabled_protocols" = "all" ]; } && echo "enable_upnp=yes" || echo "enable_upnp=no"
+			{ [ "$enabled_protocols" = "pcp+nat-pmp" ] || [ "$enabled_protocols" = "all" ]; } && echo "enable_pcp_pmp=yes" || echo "enable_pcp_pmp=no"
+			# Only use STUN when necessary with a private/CGNAT external IPv4
+			local extipv4 extipv4private
+			network_get_ipaddr extipv4 "$ifname"
+			case "$extipv4" in 10.* | 172.1[6-9].* | 172.2[0-9].* | 172.3[0-1].* | 192.168.* | 100.6[4-9].* | 100.[7-9][0-9].* | 100.1[0-1][0-9].* | 100.12[0-7].*)
+				extipv4private=1
+				;;
+			esac
+			if [ "$extipv4private" = "1" ] && [ "$allow_cgnat_use" != "0" ] && [ "$external_ip" = "" ]; then
+				[ "$allow_cgnat_use" = "1" ] && echo "ext_perform_stun=yes"
+				[ "$allow_cgnat_use" = "allow-filtered" ] && echo "ext_perform_stun=allow-filtered"
+				# Commented out as using allow-filtered returns a public IPv4, which is required by some clients, and it is also valid
+				# [ "$allow_cgnat_use" = "allow-private-ext-ipv4" ] && external_ip=203.1.2.3
+				echo "ext_stun_host=${stun_host%%:*}"
+				[ "${stun_host%%:*}" != "${stun_host##*:}" ] && echo "ext_stun_port=${stun_host##*:}"
 			fi
-		done
-		[ "$acl_preset" = "" ] || [ "$acl_check_custom" = "first" ] &&
-			echo "# ACL: Check custom ACL entries" && config_foreach conf_rule_add perm_rule
-		if [ "$acl_preset" != "" ]; then
-			echo "# ACL: Add entries for preset $acl_preset${acl_check_custom:+ and check custom ACL $acl_check_custom}"
+			{ [ "$allow_third_party_mapping" = "0" ] || [ "$allow_third_party_mapping" = "1" ]; } &&
+				echo_yesno_opt_inverse secure_mode "$allow_third_party_mapping" &&
+				echo_yesno_opt pcp_allow_thirdparty "$allow_third_party_mapping"
+			[ "$allow_third_party_mapping" = "upnp-igd" ] && echo "secure_mode=no" && echo "pcp_allow_thirdparty=no"
+			[ "$allow_third_party_mapping" = "pcp" ] && echo "secure_mode=yes" && echo "pcp_allow_thirdparty=yes"
+			echo_yesno_opt ipv6_disable "$ipv6_disable"
+			echo_yesno_opt system_uptime "$system_uptime"
+			touch "$lease_file" && echo "lease_file=$lease_file"
+			[ "$ipv6_disable" = "0" ] && touch "${lease_file}-ipv6" && echo "lease_file6=${lease_file}-ipv6"
+
+			if [ "$enabled_protocols" = "upnp-igd" ] || [ "$enabled_protocols" = "all" ]; then
+				echo "# UPnP IGD"
+				[ "$upnp_igd_compat" = "igdv1" ] && echo "force_igd_desc_v1=yes" || echo "force_igd_desc_v1=no"
+				[ -n "$upnp_igd_download" ] && echo "bitrate_down=$((upnp_igd_download * 1000))"
+				[ -n "$upnp_igd_upload" ] && echo "bitrate_up=$((upnp_igd_upload * 1000))"
+				[ -n "$upnp_igd_friendly_name" ] && echo "friendly_name=$upnp_igd_friendly_name"
+				echo "model_number=$model_number"
+				echo "serial=$serial_number"
+				[ -n "$presentation_url" ] && echo "presentation_url=$presentation_url"
+				[ -z "$uuid" ] && {
+					uuid="$(cat /proc/sys/kernel/random/uuid)"
+					uci set upnpd.config.uuid="$uuid"
+					uci commit upnpd
+				}
+				[ "$uuid" != "nocli" ] && echo "uuid=$uuid"
+				echo "http_port=$upnp_igd_http_port"
+				[ -n "$notify_interval" ] && echo "notify_interval=$notify_interval"
+			fi
+
+			if [ "$FW" = "fw4" ]; then
+				echo "# Firewall backend"
+				echo "upnp_table_name=fw4"
+				echo "upnp_nat_table_name=fw4"
+				echo "upnp_forward_chain=upnp_forward"
+				echo "upnp_nat_chain=upnp_prerouting"
+				echo "upnp_nat_postrouting_chain=upnp_postrouting"
+			fi
+
+			echo "# External network interface"
+			echo "ext_ifname=$ifname"
+			[ -n "$ifname6" ] && [ "$ifname" != "$ifname6" ] && echo "ext_ifname6=$ifname6"
+			[ -n "$external_ip" ] && echo "ext_ip=$external_ip"
+
+			# Internal network interfaces
+			local iface
 			for iface in $internal_iface; do
-				local device subnet
-				network_get_device device "$iface"
-				network_get_subnet subnet "$iface"
-				if [ "$acl_preset" = "accept-high-ports" ]; then
-					echo "allow 1024-65535 $subnet 1024-65535 # Accept high ports on $iface"
-				elif [ "$acl_preset" = "accept-high-ports+web" ]; then
-					echo "allow 1024-65535 $subnet 1024-65535 # Accept high ports on $iface"
-					echo "allow 80 $subnet 80 # Accept HTTP port on $iface"
-					echo "allow 443 $subnet 443 # Accept HTTPS port on $iface"
-				elif [ "$acl_preset" = "accept-high-ports+web+dns" ]; then
-					echo "allow 1024-65535 $subnet 1024-65535 # Accept high ports on $iface"
-					echo "allow 80 $subnet 80 # Accept HTTP port on $iface"
-					echo "allow 443 $subnet 443 # Accept HTTPS port on $iface"
-					echo "allow 53 $subnet 53 # Accept DNS port (Do53) on $iface"
-					echo "allow 853 $subnet 853 # Accept DNS port (DoT/DoQ) on $iface"
-				elif [ "$acl_preset" = "accept-all-ports" ]; then
-					echo "allow 1-65535 $subnet 1-65535 # Accept all ports on $iface"
+				local device
+				network_get_device device "$iface" && echo "# Enable internal network $iface ($device)" && echo "listening_ip=$device"
+			done
+
+			echo "# ACL: Reject unsafe client ports first"
+			local unsafeport
+			for unsafeport in $acl_reject_unsafe_ports; do
+				if [ "$unsafeport" -ge "1" ] 2>/dev/null && [ "$unsafeport" -le "65535" ] 2>/dev/null ||
+					{
+						[ "${unsafeport%%-*}" -ge "1" ] 2>/dev/null &&
+							[ "${unsafeport%%-*}" -le "65535" ] 2>/dev/null &&
+							[ "${unsafeport##*-}" -ge "1" ] 2>/dev/null &&
+							[ "${unsafeport##*-}" -le "65535" ] 2>/dev/null &&
+							[ "${unsafeport##*-}" -ge "${unsafeport%%-*}" ] 2>/dev/null
+					}; then
+					echo "deny 1-65535 0.0.0.0/0 $unsafeport # Reject unsafe client port"
 				else
-					log "Unknown ACL preset ignored" daemon.warn
+					log "Unknown port or port range ($unsafeport) in acl_reject_unsafe_ports ignored" daemon.warn
 				fi
 			done
-		fi
-		echo "# ACL: Reject ACL by default last"
-		echo "deny 1-65535 0.0.0.0/0 1-65535 # Reject ACL by default"
+			[ "$acl_preset" = "" ] || [ "$acl_check_custom" = "first" ] &&
+				echo "# ACL: Check custom ACL entries" && config_foreach conf_rule_add perm_rule
+			if [ "$acl_preset" != "" ]; then
+				echo "# ACL: Add entries for preset $acl_preset${acl_check_custom:+ and check custom ACL $acl_check_custom}"
+				for iface in $internal_iface; do
+					local device subnet
+					network_get_device device "$iface"
+					network_get_subnet subnet "$iface"
+					if [ "$acl_preset" = "accept-high-ports" ]; then
+						echo "allow 1024-65535 $subnet 1024-65535 # Accept high ports on $iface"
+					elif [ "$acl_preset" = "accept-high-ports+web" ]; then
+						echo "allow 1024-65535 $subnet 1024-65535 # Accept high ports on $iface"
+						echo "allow 80 $subnet 80 # Accept HTTP port on $iface"
+						echo "allow 443 $subnet 443 # Accept HTTPS port on $iface"
+					elif [ "$acl_preset" = "accept-high-ports+web+dns" ]; then
+						echo "allow 1024-65535 $subnet 1024-65535 # Accept high ports on $iface"
+						echo "allow 80 $subnet 80 # Accept HTTP port on $iface"
+						echo "allow 443 $subnet 443 # Accept HTTPS port on $iface"
+						echo "allow 53 $subnet 53 # Accept DNS port (Do53) on $iface"
+						echo "allow 853 $subnet 853 # Accept DNS port (DoT/DoQ) on $iface"
+					elif [ "$acl_preset" = "accept-all-ports" ]; then
+						echo "allow 1-65535 $subnet 1-65535 # Accept all ports on $iface"
+					else
+						log "Unknown ACL preset ignored" daemon.warn
+					fi
+				done
+			fi
+			echo "# ACL: Reject ACL by default last"
+			echo "deny 1-65535 0.0.0.0/0 1-65535 # Reject ACL by default"
 
-		} > "$tmpconf"
+		} >"$tmpconf"
 	fi
 
 	if [ -n "$ifname" ]; then
@@ -253,19 +254,20 @@ echo_yesno_opt_inverse() {
 }
 
 upnpd_get_port_range() {
-	local var="$1"; shift
+	local var="$1"
+	shift
 	local val
 
 	config_get val "$@"
 
 	case "$val" in
-		[0-9]*[:-][0-9]*)
-			export -n -- "${var}_start=${val%%[:-]*}"
-			export -n -- "${var}_end=${val##*[:-]}"
+	[0-9]*[:-][0-9]*)
+		export -n -- "${var}_start=${val%%[:-]*}"
+		export -n -- "${var}_end=${val##*[:-]}"
 		;;
-		[0-9]*)
-			export -n -- "${var}_start=$val"
-			export -n -- "${var}_end="
+	[0-9]*)
+		export -n -- "${var}_start=$val"
+		export -n -- "${var}_end="
 		;;
 	esac
 }
@@ -279,7 +281,7 @@ conf_rule_add() {
 	upnpd_get_port_range "ext" "$cfg" ext_ports "0-65535" # external ports: x, x-y, x:y
 	config_get int_addr "$cfg" int_addr "0.0.0.0/0"       # ip or network and subnet mask (internal)
 	upnpd_get_port_range "int" "$cfg" int_ports "0-65535" # internal ports: x, x-y, x:y or range
-	config_get comment "$cfg" comment "ACL"		      # comment
+	config_get comment "$cfg" comment "ACL"               # comment
 
 	# Make a single IP IP/32 so that miniupnpd.conf can use it.
 	[ "${int_addr%/*}" = "$int_addr" ] && int_addr="$int_addr/32"
