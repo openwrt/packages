@@ -1,13 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=coredns
-PKG_VERSION:=1.12.4
+PKG_VERSION:=1.13.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/coredns/coredns.git
-PKG_MIRROR_HASH:=b8ab07b0e2384744afcd7f9e98e8ebfeeb0924e23fe541356017f07410e670e1
+PKG_MIRROR_HASH:=a3cd3f4882197044861093d68274289b94a59c2b0d0dbb9666f64f7be21876c1
 PKG_SOURCE_VERSION:=v${PKG_VERSION}
 
 PKG_LICENSE:=Apache-2.0
@@ -78,6 +78,7 @@ define Build/Configure
 	$(call configure-plugin,$(CONFIG_COREDNS_PLUGIN_ETCD),etcd,etcd)
 	$(call configure-plugin,$(CONFIG_COREDNS_PLUGIN_GRPC),grpc,grpc)
 	$(call configure-plugin,$(CONFIG_COREDNS_PLUGIN_ON),on,github.com/coredns/caddy/onevent)
+	$(call configure-plugin,$(CONFIG_COREDNS_PLUGIN_NOMAD),nomad,nomad)
 	$(call configure-plugin,$(CONFIG_COREDNS_PLUGIN_WGSD),wgsd,github.com/jwhited/wgsd)
 
 	cd $(PKG_BUILD_DIR); \

@@ -44,6 +44,10 @@ config COREDNS_PLUGIN_ON
 	bool "On event plugin"
 	default n
 
+config COREDNS_PLUGIN_NOMAD
+	bool "Nomad plugin"
+	default n
+
 config COREDNS_PLUGIN_WGSD
 	bool "WireGuard Service Discovery plugin"
 	default y if PACKAGE_wgsd-coredns
