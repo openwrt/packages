@@ -1,1 +1,1 @@
-jump upnp_forward comment "Hook into miniupnpd forwarding chain";
+ct status dnat accept comment "Permit miniupnpd forwarding"
