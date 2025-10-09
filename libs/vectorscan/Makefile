@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vectorscan
 PKG_VERSION:=5.4.12
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/VectorCamp/vectorscan/tar.gz/$(PKG_NAME)/$(PKG_VERSION)?
@@ -41,30 +41,19 @@ else
 	CMAKE_OPTIONS += -DFAT_RUNTIME=OFF -DBUILD_BENCHMARKS=OFF
 endif
 
-define Package/vectorscan-headers
-  CATEGORY:=Libraries
+define Package/vectorscan
   SECTION:=libs
-  TITLE:=Vectorscan Headers
-  URL:=https://github.com/VectorCamp/vectorscan
-  DEPENDS:=@(x86_64||aarch64)
-endef
-
-define Package/vectorscan-runtime
   CATEGORY:=Libraries
-  SECTION:=libs
   TITLE:=Vectorscan Runtime
   URL:=https://github.com/VectorCamp/vectorscan
   DEPENDS:= +libstdcpp +libsqlite3 @(x86_64||aarch64)
+  ABI_VERSION:=5
 endef
 
-define Package/vectorscan-headers/description
-  This package contains the headers for Vectorscan.
-  A fork of Intel's Hyperscan, modified to run on more platforms.
-endef
-
-define Package/vectorscan-runtime/description
-  This package contains the shared objects for Vectorscan.
-  A fork of Intel's Hyperscan, modified to run on more platforms.
+define Package/vectorscan/description
+  Vectorscan is a portable fork of Intel's Hyperscan, a high-performance
+  multiple regex matching library. It provides a streaming and block-based
+  regex matcher with support for large pattern sets.
 endef
 
 define Build/InstallDev
@@ -76,15 +65,9 @@ define Build/InstallDev
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/libhs.pc $(1)/usr/lib/pkgconfig/libhs.pc
 endef
 
-define Package/vectorscan-headers/install
-	$(INSTALL_DIR) $(1)/usr/include/hs
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/include/hs/*.h $(1)/usr/include/hs/
-endef
-
-define Package/vectorscan-runtime/install
+define Package/vectorscan/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libhs* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libhs.so* $(1)/usr/lib/
 endef
 
-$(eval $(call BuildPackage,vectorscan-headers))
-$(eval $(call BuildPackage,vectorscan-runtime))
+$(eval $(call BuildPackage,vectorscan))
