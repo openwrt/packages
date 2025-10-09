@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=snort3
 PKG_VERSION:=3.9.5.0
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/snort3/snort3/tar.gz/$(PKG_VERSION)?
@@ -28,8 +28,8 @@ define Package/snort3
   DEPENDS:=+libstdcpp +libdaq3 +libdnet +libopenssl +libpcap +libpcre2 \
     +libpthread +libuuid +zlib +libhwloc +USE_MUSL:libtirpc @HAS_LUAJIT_ARCH +luajit +libatomic \
     +kmod-nft-queue +liblzma +ucode +ucode-mod-fs +ucode-mod-uci \
-    +PACKAGE_gperftools-runtime:gperftools-runtime \
-    +PACKAGE_vectorscan-runtime:vectorscan-runtime
+    +PACKAGE_gperftools:gperftools \
+    +PACKAGE_vectorscan:vectorscan
   TITLE:=Lightweight Network Intrusion Detection System
   URL:=http://www.snort.org/
   MENU:=1
@@ -57,8 +57,8 @@ CMAKE_OPTIONS += \
 	-DMAKE_TEXT_DOC:BOOL=NO \
 	-DHAVE_LIBUNWIND=OFF \
 	-DHAVE_LZMA=ON \
-	-DENABLE_TCMALLOC=$(if $(CONFIG_PACKAGE_gperftools-runtime),ON,OFF) \
-	-DENABLE_HYPERSCAN=$(if $(CONFIG_PACKAGE_vectorscan-runtime),ON,OFF) \
+	-DENABLE_TCMALLOC=$(if $(CONFIG_PACKAGE_gperftools),ON,OFF) \
+	-DENABLE_HYPERSCAN=$(if $(CONFIG_PACKAGE_vectorscan),ON,OFF) \
 	$(if $(CONFIG_PACKAGE_vectorscan-runtime),-DHS_INCLUDE_DIRS=$(STAGING_DIR)/usr/include/hs)
 
 TARGET_CFLAGS += -I$(STAGING_DIR)/usr/include/daq3
