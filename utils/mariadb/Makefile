@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021 Michal Hrusecky <michal@hrusecky.net>
+# Copyright (C) 2025 Michal Hrusecky <michal@hrusecky.net>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mariadb
-PKG_VERSION:=11.4.7
+PKG_VERSION:=11.8.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL := https://archive.mariadb.org/$(PKG_NAME)-$(PKG_VERSION)/source
 
-PKG_HASH:=bf20687ca12fa7efda8df89cab1f2a661288cea41acf8f53189b69d5294347d0
+PKG_HASH:=1014a85c768de8f9e9c6d4bf0b42617f3b1588be1ad371f71674ea32b87119c0
 PKG_MAINTAINER:=Michal Hrusecky <Michal@Hrusecky.net>
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING THIRDPARTY
@@ -230,7 +230,10 @@ endef
 define Package/mariadb-client-extra
   $(call Package/mariadb/Default)
   TITLE:=MariaDB database client extra
-  DEPENDS:=mariadb-client
+  DEPENDS:=mariadb-client \
+	  +KERNEL_IO_URING:liburing \
+	  +libaio \
+	  +libpcre2
 endef
 
 define Package/mariadb-client-extra/description
@@ -263,8 +266,8 @@ define Package/mariadb-server-base
   $(call Package/mariadb/Default)
   DEPENDS:= \
 	  $(MARIADB_COMMON_DEPENDS) \
-	  +!KERNEL_IO_URING:libaio \
 	  +KERNEL_IO_URING:liburing \
+	  +libaio \
 	  +liblzma \
 	  +libpcre2 \
 	  +resolveip \

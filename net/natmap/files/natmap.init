@@ -21,12 +21,17 @@ validate_section_natmap() {
 		'family:string' \
 		'udp_mode:bool:0' \
 		'interface:string' \
-		'interval:uinteger' \
-		'stun_server:host' \
-		'http_server:host' \
+		'interval:and(uinteger, min(1))' \
+		'stun_cycle:uinteger' \
+		'stun_server:string' \
+		'http_server:string' \
+		'fwmark:string' \
 		'port:or(port,portrange)' \
+		'port_random:bool:0' \
 		'forward_target:host' \
 		'forward_port:port' \
+		'forward_timeout:and(uinteger, min(1))' \
+		'forward_congestion:string' \
 		'notify_script:file' \
 		'log_stdout:bool:1' \
 		'log_stderr:bool:1'
@@ -43,9 +48,11 @@ natmap_instance() {
 	procd_open_instance "$1"
 	procd_set_param command "$PROG" \
 		${interval:+-k "$interval"} \
+		${stun_cycle:+-c "$stun_cycle"} \
 		${stun_server:+-s "$stun_server"} \
 		${http_server:+-h "$http_server"} \
-		${port:+-b "$port"} \
+		${fwmark:+-f "$fwmark"} \
+		${port:+-b "$([ "$port_random" = 1 ] && echo ${port/-/\~} || echo $port)"} \
 
 	[ "${family}" = ipv4 ] && procd_append_param command -4
 	[ "${family}" = ipv6 ] && procd_append_param command -6
@@ -60,6 +67,8 @@ natmap_instance() {
 	}
 
 	[ -n "${forward_target}" ] && procd_append_param command -t "$forward_target" -p "$forward_port"
+	[ -n "${forward_timeout}" ] && procd_append_param command -T "$forward_timeout"
+	[ -n "${forward_congestion}" ] && procd_append_param command -C "$forward_congestion"
 
 	[ -n "${notify_script}" ] && procd_set_param env "NOTIFY_SCRIPT=${notify_script}"
 	procd_append_param command -e /usr/lib/natmap/update.sh

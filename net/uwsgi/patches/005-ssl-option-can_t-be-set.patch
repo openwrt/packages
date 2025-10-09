@@ -12,7 +12,7 @@ Given the changeset which introduced this option with the ssl-enable3 option whi
 
 --- a/core/uwsgi.c
 +++ b/core/uwsgi.c
-@@ -678,7 +678,7 @@ static struct uwsgi_option uwsgi_base_op
+@@ -679,7 +679,7 @@ static struct uwsgi_option uwsgi_base_op
  	{"ssl-enable3", no_argument, 0, "enable SSLv3 (insecure)", uwsgi_opt_true, &uwsgi.sslv3, 0},
  	{"ssl-enable-sslv3", no_argument, 0, "enable SSLv3 (insecure)", uwsgi_opt_true, &uwsgi.sslv3, 0},
  	{"ssl-enable-tlsv1", no_argument, 0, "enable TLSv1 (insecure)", uwsgi_opt_true, &uwsgi.tlsv1, 0},

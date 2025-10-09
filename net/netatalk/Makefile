@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netatalk
-PKG_VERSION:=4.2.2
-PKG_RELEASE:=1
+PKG_VERSION:=4.3.2
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/netatalk
-PKG_HASH:=8f772804ce4322a4e8fb159528209450927e9df067daa5cc02ab59b35f4b450c
+PKG_HASH:=2977b4fd113182f0cc183337ba23d5701fb2be4e0dfcec7ee575b4d73a738d3a
 
 PKG_MAINTAINER:=Antonio Pastor <antonio.pastor@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -59,7 +59,9 @@ define Package/netatalk-full
     +PACKAGE_NETATALK_LDAP:libopenldap \
     +PACKAGE_NETATALK_ICONV:libiconv-full \
     +PACKAGE_NETATALK_KERBEROS:krb5-libs \
-    +PACKAGE_NETATALK_LIBWRAP:libwrap
+    +PACKAGE_NETATALK_LIBWRAP:libwrap \
+    +PACKAGE_NETATALK_SQLITEBACK:libsqlite3 \
+    +PACKAGE_NETATALK_BOTHBACK:libsqlite3
   MENU:=1
 endef
 
@@ -87,13 +89,10 @@ define Package/netatalk-full/description
 endef
 
 define Package/netatalk-full/config
-        source "$(SOURCE)/Config.in"
+	source "$(SOURCE)/Config.in"
 endef
 
 MESON_ARGS += \
-	-Dwith-cnid-default-backend=dbd \
-	-Dwith-cnid-dbd-backend=true \
-	-Dwith-cnid-mysql-backend=false \
 	-Dwith-bdb-path="$(STAGING_DIR)/usr/" \
 	-Dwith-unicode-data-path="$(STAGING_DIR_HOST)/share/gnulib/tests/uniname/" \
 	-Dwith-libgcrypt-path="$(STAGING_DIR)/usr/" \
@@ -111,6 +110,8 @@ MESON_ARGS += \
 
 ifeq ($(BUILD_VARIANT),small)
 MESON_ARGS += \
+	-Dwith-cnid-default-backend=dbd \
+	-Dwith-cnid-backends=dbd \
 	-Dwith-appletalk=false \
 	-Dwith-zeroconf=false \
 	-Dwith-acls=false \
@@ -125,6 +126,8 @@ endif
 
 ifeq ($(BUILD_VARIANT),appletalk)
 MESON_ARGS += \
+	-Dwith-cnid-default-backend=dbd \
+	-Dwith-cnid-backends=dbd \
 	-Dwith-appletalk=true \
 	-Dwith-zeroconf=false \
 	-Dwith-acls=false \
@@ -150,15 +153,43 @@ MESON_ARGS += \
 	-Dwith-krbV-uam=$(if $(CONFIG_PACKAGE_NETATALK_KERBEROS),true,false) \
 	-Dwith-tcp-wrappers=$(if $(CONFIG_PACKAGE_NETATALK_LIBWRAP),true,false) \
 
+ifdef CONFIG_PACKAGE_NETATALK_DBDBACK
+MESON_ARGS += \
+	-Dwith-cnid-default-backend=dbd \
+	-Dwith-cnid-backends=dbd
 endif
+ifdef CONFIG_PACKAGE_NETATALK_SQLITEBACK
+MESON_ARGS += \
+	-Dwith-cnid-default-backend=sqlite \
+	-Dwith-cnid-backends=sqlite
+endif
+ifdef CONFIG_PACKAGE_NETATALK_BOTHBACK
+MESON_ARGS += \
+	-Dwith-cnid-default-backend=dbd \
+	-Dwith-cnid-backends=dbd,sqlite
+endif
+endif
+
+define Package/netatalk-small/conffiles
+/etc/afp.conf
+/etc/extmap.conf
+/etc/netatalk/
+/etc/config/afpd
+endef
 
 define Package/netatalk/conffiles
 /etc/afp.conf
 /etc/extmap.conf
 /etc/netatalk/
-/etc/atalkd.conf
-/etc/macipgw.conf
+/etc/config/afpd
+/etc/config/atalkd
+/etc/config/a2boot
+/etc/config/macipgw
+/etc/config/papd
+/etc/config/timelord
 endef
+
+Package/netatalk-full/conffiles = $(Package/netatalk/conffiles)
 
 define Package/netatalk-small/install
 	$(INSTALL_DIR) $(1)/usr/bin
@@ -169,16 +200,17 @@ define Package/netatalk-small/install
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libatalk.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libbstring.so* $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/netatalk/*.so $(1)/usr/lib/netatalk/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/* $(1)/usr/sbin/
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/afp.conf $(1)/etc/
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/extmap.conf $(1)/etc/
 	$(INSTALL_BIN) ./files/afpd.init $(1)/etc/init.d/afpd
-	$(INSTALL_DATA) ./files/afpd.conf $(1)/etc/config/afpd
+	$(INSTALL_CONF) ./files/afpd.conf $(1)/etc/config/afpd
 endef
 
 define Package/netatalk/install
-        $(call Package/netatalk-small/install,$(1))
+	$(call Package/netatalk-small/install,$(1))
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/atalkd.conf $(1)/etc/
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/macipgw.conf $(1)/etc/
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/papd.conf $(1)/etc/
@@ -187,28 +219,28 @@ define Package/netatalk/install
 	$(INSTALL_BIN) ./files/timelord.init $(1)/etc/init.d/timelord
 	$(INSTALL_BIN) ./files/a2boot.init $(1)/etc/init.d/a2boot
 	$(INSTALL_BIN) ./files/papd.init $(1)/etc/init.d/papd
-	$(INSTALL_DATA) ./files/atalkd.conf $(1)/etc/config/atalkd
-	$(INSTALL_DATA) ./files/macipgw.conf $(1)/etc/config/macipgw
-	$(INSTALL_DATA) ./files/timelord.conf $(1)/etc/config/timelord
-	$(INSTALL_DATA) ./files/a2boot.conf $(1)/etc/config/a2boot
-	$(INSTALL_DATA) ./files/papd.conf $(1)/etc/config/papd
+	$(INSTALL_CONF) ./files/atalkd.conf $(1)/etc/config/atalkd
+	$(INSTALL_CONF) ./files/macipgw.conf $(1)/etc/config/macipgw
+	$(INSTALL_CONF) ./files/timelord.conf $(1)/etc/config/timelord
+	$(INSTALL_CONF) ./files/a2boot.conf $(1)/etc/config/a2boot
+	$(INSTALL_CONF) ./files/papd.conf $(1)/etc/config/papd
 endef
 
 define Package/netatalk-full/install
-        $(call Package/netatalk-small/install,$(1))
-	$(if $(PACKAGE_NETATALK_APPLETALK),$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/atalkd.conf $(1)/etc/,)
-	$(if $(PACKAGE_NETATALK_APPLETALK),$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/macipgw.conf $(1)/etc/,)
-	$(if $(PACKAGE_NETATALK_APPLETALK),$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/papd.conf $(1)/etc/,)
-	$(if $(PACKAGE_NETATALK_APPLETALK),$(INSTALL_BIN) ./files/atalkd.init $(1)/etc/init.d/atalkd,)
-	$(if $(PACKAGE_NETATALK_APPLETALK),$(INSTALL_BIN) ./files/macipgw.init $(1)/etc/init.d/macipgw,)
-	$(if $(PACKAGE_NETATALK_APPLETALK),$(INSTALL_BIN) ./files/timelord.init $(1)/etc/init.d/timelord,)
-	$(if $(PACKAGE_NETATALK_APPLETALK),$(INSTALL_BIN) ./files/a2boot.init $(1)/etc/init.d/a2boot,)
-	$(if $(PACKAGE_NETATALK_APPLETALK),$(INSTALL_BIN) ./files/papd.init $(1)/etc/init.d/papd,)
-	$(if $(PACKAGE_NETATALK_APPLETALK),$(INSTALL_DATA) ./files/atalkd.conf $(1)/etc/config/atalkd,)
-	$(if $(PACKAGE_NETATALK_APPLETALK),$(INSTALL_DATA) ./files/macipgw.conf $(1)/etc/config/macipgw,)
-	$(if $(PACKAGE_NETATALK_APPLETALK),$(INSTALL_DATA) ./files/timelord.conf $(1)/etc/config/timelord,)
-	$(if $(PACKAGE_NETATALK_APPLETALK),$(INSTALL_DATA) ./files/a2boot.conf $(1)/etc/config/a2boot,)
-	$(if $(PACKAGE_NETATALK_APPLETALK),$(INSTALL_DATA) ./files/papd.conf $(1)/etc/config/papd,)
+	$(call Package/netatalk-small/install,$(1))
+	$(if $(CONFIG_PACKAGE_NETATALK_APPLETALK),$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/atalkd.conf $(1)/etc/,)
+	$(if $(CONFIG_PACKAGE_NETATALK_APPLETALK),$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/macipgw.conf $(1)/etc/,)
+	$(if $(CONFIG_PACKAGE_NETATALK_APPLETALK),$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/papd.conf $(1)/etc/,)
+	$(if $(CONFIG_PACKAGE_NETATALK_APPLETALK),$(INSTALL_BIN) ./files/atalkd.init $(1)/etc/init.d/atalkd,)
+	$(if $(CONFIG_PACKAGE_NETATALK_APPLETALK),$(INSTALL_BIN) ./files/macipgw.init $(1)/etc/init.d/macipgw,)
+	$(if $(CONFIG_PACKAGE_NETATALK_APPLETALK),$(INSTALL_BIN) ./files/timelord.init $(1)/etc/init.d/timelord,)
+	$(if $(CONFIG_PACKAGE_NETATALK_APPLETALK),$(INSTALL_BIN) ./files/a2boot.init $(1)/etc/init.d/a2boot,)
+	$(if $(CONFIG_PACKAGE_NETATALK_APPLETALK),$(INSTALL_BIN) ./files/papd.init $(1)/etc/init.d/papd,)
+	$(if $(CONFIG_PACKAGE_NETATALK_APPLETALK),$(INSTALL_CONF) ./files/atalkd.conf $(1)/etc/config/atalkd,)
+	$(if $(CONFIG_PACKAGE_NETATALK_APPLETALK),$(INSTALL_CONF) ./files/macipgw.conf $(1)/etc/config/macipgw,)
+	$(if $(CONFIG_PACKAGE_NETATALK_APPLETALK),$(INSTALL_CONF) ./files/timelord.conf $(1)/etc/config/timelord,)
+	$(if $(CONFIG_PACKAGE_NETATALK_APPLETALK),$(INSTALL_CONF) ./files/a2boot.conf $(1)/etc/config/a2boot,)
+	$(if $(CONFIG_PACKAGE_NETATALK_APPLETALK),$(INSTALL_CONF) ./files/papd.conf $(1)/etc/config/papd,)
 endef
 
 $(eval $(call BuildPackage,netatalk-small))

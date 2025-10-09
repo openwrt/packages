@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=umurmur
-PKG_VERSION:=0.2.20
-PKG_RELEASE:=2
+PKG_VERSION:=0.3.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/umurmur/umurmur/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=b7b2978c3197aef0a6531f1cf0ee1aebb32a55ad8bda43064ce3a944edbcac83
+PKG_SOURCE_URL:=https://codeload.github.com/umurmur/umurmur/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=8327dd0b2c5bd187a38d098295e896a6b85d698c9268205bcb27f6244f760a73
 
 PKG_MAINTAINER:=Martin Johansson <martin@fatbob.nu>
 PKG_LICENSE:=BSD-3-Clause
@@ -65,8 +65,8 @@ endef
 Package/umurmur-mbedtls/conffiles = $(Package/umurmur-openssl/conffiles)
 
 define Package/umurmur-openssl/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/umurmurd $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/umurmurd $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/openwrt/files/umurmur.conf $(1)/etc/
 	$(INSTALL_DIR) $(1)/etc/init.d
@@ -78,10 +78,10 @@ Package/umurmur-mbedtls/install = $(Package/umurmur-openssl/install)
 
 CMAKE_OPTIONS += \
 	-DLIBCONFIG_INCLUDE_DIR="$(STAGING_DIR)/usr/include" \
-	-DLIBCONFIG_LIBRARIES="$(STAGING_DIR)/usr/lib" \
+	-DLIBCONFIG_LIBRARIES="$(STAGING_DIR)/usr/lib/libconfig.so" \
 	-DLIBCONFIG_LIB_DIR="$(STAGING_DIR)/usr/lib" \
 	-DPROTOBUFC_INCLUDE_DIR="$(STAGING_DIR)/usr/include" \
-	-DPROTOBUFC_LIBRARIES="$(STAGING_DIR)/usr/lib" \
+	-DPROTOBUFC_LIBRARIES="$(STAGING_DIR)/usr/lib/libprotobuf-c.so" \
 	-DPROTOBUFC_LIB_DIR="$(STAGING_DIR)/usr/lib"
 
 ifeq ($(BUILD_VARIANT),openssl)
