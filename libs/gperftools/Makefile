@@ -55,6 +55,8 @@ CONFIGURE_ARGS += \
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libtcmalloc.so* $(1)/usr/lib/
+	$(INSTALL_DIR) $(1)/usr/include/gperftools
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/gperftools/*.h $(1)/usr/include/gperftools/
 endef
 
 define Package/gperftools-headers/install
