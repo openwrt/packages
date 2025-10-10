@@ -9,8 +9,6 @@ STOP=15
 # shellcheck disable=SC2034
 USE_PROCD=1
 
-[ -n "${IPKG_INSTROOT}" ] && exit 0
-
 if type extra_command 1>/dev/null 2>&1; then
 	extra_command 'version' 'Show version information'
 else
