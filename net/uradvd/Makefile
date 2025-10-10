@@ -27,7 +27,7 @@ endef
 
 define Package/uradvd/install
 	$(INSTALL_DIR) $(1)/etc/config/
-	$(INSTALL_DATA) ./files/uradvd.config $(1)/etc/config/uradvd
+	$(INSTALL_CONF) ./files/uradvd.config $(1)/etc/config/uradvd
 	$(INSTALL_DIR) $(1)/etc/init.d/
 	$(INSTALL_BIN) ./files/uradvd.init $(1)/etc/init.d/uradvd
 	$(INSTALL_DIR) $(1)/usr/sbin
