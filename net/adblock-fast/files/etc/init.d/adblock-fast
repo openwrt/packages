@@ -8,8 +8,6 @@ START=20
 USE_PROCD=1
 LC_ALL=C
 
-[ -n "${IPKG_INSTROOT}" ] && return 0
-
 if type extra_command 1>/dev/null 2>&1; then
 	extra_command 'allow' 'Allows domain in current block-list and config'
 	extra_command 'check' 'Checks if specified domain is found in current block-list'
@@ -1839,6 +1837,7 @@ adb_config_update() {
 	load_dl_command
 	label="${config_update_url##*//}"
 	label="${label%%/*}";
+	[ -n "$enabled" ] || return 0
 	[ -n "$config_update_enabled" ] || return 0
 
 	if [ "$param" != 'download' ]; then
