@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=umurmur
 PKG_VERSION:=0.3.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/umurmur/umurmur/tar.gz/v$(PKG_VERSION)?
@@ -89,7 +89,7 @@ CMAKE_OPTIONS += -DSSL=openssl
 else
 CMAKE_OPTIONS += -DSSL=mbedtls \
 	-DMBEDTLS_INCLUDE_DIR="$(STAGING_DIR)/usr/include/mbedtls" \
-	-DMBEDTLS_LIBRARIES="$(STAGING_DIR)/usr/lib" \
+	-DMBEDTLS_LIBRARIES="$(STAGING_DIR)/usr/lib/libmbedtls.so" \
 	-DMBEDTLS_LIB_DIR="$(STAGING_DIR)/usr/lib"
 endif
 
