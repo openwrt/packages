@@ -1,18 +1,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dockerd
-PKG_VERSION:=27.3.1
-PKG_RELEASE:=4
+PKG_VERSION:=29.3.0
+PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:mobyproject:moby
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_GIT_URL:=github.com/moby/moby
-PKG_GIT_REF:=v$(PKG_VERSION)
+PKG_GIT_REF:=docker-v$(PKG_VERSION)
 PKG_SOURCE_URL:=https://codeload.$(PKG_GIT_URL)/tar.gz/$(PKG_GIT_REF)?
-PKG_HASH:=d18208d9e0b6421307342cdef266193984c97c87177b9262b1113e6e9e7e020e
-PKG_GIT_SHORT_COMMIT:=41ca978 # SHA1 used within the docker executables
+PKG_HASH:=ac591291294da599e824f91d6a21a43bf93503b8ab608faa198899b3f973d7c5
+PKG_GIT_SHORT_COMMIT:=83bca51 # SHA1 used within the docker executables
 
 PKG_MAINTAINER:=Gerard Ryan <G.M0N3Y.2503@gmail.com>
 
@@ -65,27 +65,13 @@ TAR_OPTIONS:=--strip-components 1 $(TAR_OPTIONS)
 TAR_CMD=$(HOST_TAR) -C $(1) $(TAR_OPTIONS)
 TARGET_LDFLAGS += $(if $(CONFIG_USE_GLIBC),-lc -lgcc_eh)
 
-# $(1) = path to dependent package 'Makefile'
-# $(2) = relevant dependency '.installer' file
+# $(1) = OpenWrt dependent PKG_NAME
 define EnsureVendoredVersion
 	( \
-		DEP_VER=$$$$( grep --only-matching --perl-regexp '(?<=PKG_VERSION:=)(.*)' "$(1)" ); \
-		VEN_VER=$$$$( grep --only-matching --perl-regexp '(?<=_VERSION:=v)(.*)(?=})' "$(PKG_BUILD_DIR)/hack/dockerfile/install/$(2)" ); \
+		DEP_VER=$$$$( grep --only-matching --perl-regexp '(?<=PKG_VERSION:=)(.*)' "../$(1)/Makefile" ); \
+		VEN_VER=$$$$( grep --only-matching --perl-regexp '(?<=$(call toupper,$(1))_VERSION=v)(.*)' "$(PKG_BUILD_DIR)/Dockerfile" ); \
 		if [ "$$$${VEN_VER}" != "$$$${DEP_VER}" ]; then \
 			echo "ERROR: $(PKG_NAME) Expected 'PKG_VERSION:=$$$${VEN_VER}' in '$(1)', found 'PKG_VERSION:=$$$${DEP_VER}'"; \
-			exit 1; \
-		fi \
-	)
-endef
-
-# $(1) = path to dependent package 'Makefile'
-# $(2) = relevant dependency '.installer' file
-define EnsureVendoredCommit
-	( \
-		DEP_VER=$$$$( grep --only-matching --perl-regexp '(?<=PKG_SOURCE_VERSION:=)(.*)' "$(1)" ); \
-		VEN_VER=$$$$( grep --only-matching --perl-regexp '(?<=_COMMIT:=)(.*)(?=})' "$(PKG_BUILD_DIR)/hack/dockerfile/install/$(2)" ); \
-		if [ "$$$${VEN_VER}" != "$$$${DEP_VER}" ]; then \
-			echo "ERROR: Expected 'PKG_SOURCE_VERSION:=$$$${VEN_VER}' in '$(1)', found 'PKG_SOURCE_VERSION:=$$$${DEP_VER}'"; \
 			exit 1; \
 		fi \
 	)
@@ -95,9 +81,9 @@ define Build/Prepare
 	$(Build/Prepare/Default)
 
 	# Verify dependencies are the vendored version
-	$(call EnsureVendoredVersion,../containerd/Makefile,containerd.installer)
-	$(call EnsureVendoredVersion,../runc/Makefile,runc.installer)
-	$(call EnsureVendoredVersion,../tini/Makefile,tini.installer)
+	$(call EnsureVendoredVersion,containerd)
+	$(call EnsureVendoredVersion,runc)
+	$(call EnsureVendoredVersion,tini)
 
 	# Verify CLI is the same version
 	( \
