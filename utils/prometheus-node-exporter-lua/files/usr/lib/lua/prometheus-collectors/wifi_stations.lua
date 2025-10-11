@@ -23,6 +23,10 @@ local function scrape()
   local u = ubus.connect()
   local status = u:call("network.wireless", "status", {})
 
+  if not status then
+    return
+  end
+  
   for dev, dev_table in pairs(status) do
     for _, intf in ipairs(dev_table['interfaces']) do
       local ifname = intf['ifname']
