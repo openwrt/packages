@@ -15,7 +15,7 @@
              ${public_chroot_facet_cc_sources})
  target_link_libraries(sbuild
                        PRIVATE
-+		        Intl::Intl
++                        Intl::Intl
                          ${CMAKE_THREAD_LIBS_INIT}
                          ${PAM_LIBRARY}
                          ${UUID_LIBRARY}
