@@ -8,7 +8,7 @@ appdata_dir: "/var/lib/stubby"
 tls_authentication: GETDNS_AUTHENTICATION_REQUIRED
 tls_query_padding_blocksize: 128
 edns_client_subnet_private: 1
-idle_timeout: 10000
+idle_timeout: 9000
 listen_addresses:
   - 127.0.0.1@5453
   - 0::1@5453
