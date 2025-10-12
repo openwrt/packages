@@ -7,20 +7,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hamlib
-PKG_VERSION:=4.5.4
-PKG_RELEASE:=2
+PKG_VERSION:=4.6.5
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/hamlib
-PKG_HASH:=b1aea97d6093990b77d5dc4bde6b9ca06183ddb7e24da7e2367a2acc957b7ac2
+PKG_HASH:=90d6f1dba59417c00f8f4545131c7efd31930cd0e178598980a8210425e3852e
 
 PKG_MAINTAINER:=Vasilis Tsiligiannis <acinonyx@openwrt.gr>
-PKG_LICENSE:=GPLv2
+PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
 
-PKG_FIXUP:=autoreconf
-PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -86,10 +85,8 @@ CONFIGURE_ARGS+= \
 	--disable-winradio \
 	--without-readline \
 	--without-cxx-binding \
+	--with-libusb \
 	--with-pic \
-
-CONFIGURE_VARS+= \
-	LIBUSB_LIBS="-lusb-1.0" \
 
 define Package/hamlib/install
 	$(INSTALL_DIR) $(1)/usr/bin
