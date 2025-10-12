@@ -1,0 +1,8 @@
+if [ -f '/etc/umurmur.conf' ]; then
+  [ -f '/etc/umurmur/umurmur.conf' ] && mv /etc/umurmur/umurmur.conf{,.apk-new}
+  mv /etc/umurmur.conf /etc/umurmur/umurmur.conf
+fi
+
+chown -r umurmur:umurmur /etc/umurmur
+chmod -r 0660 /etc/umurmur
+chmod 770 /etc/umurmur
