@@ -1,6 +1,6 @@
 --- a/configure.in
 +++ b/configure.in
-@@ -632,14 +632,14 @@ if test "$class_driver" = "no" && test "
+@@ -634,14 +634,14 @@ if test "$class_driver" = "no" && test "
     fi
  fi
  
@@ -18,7 +18,7 @@
     then
     echo $FLAGS
     fi
-@@ -668,7 +668,7 @@ if test "$class_driver" = "no" && test "
+@@ -687,7 +687,7 @@ if test "$class_driver" = "no" && test "
     AS_IF([test "x$FOUND_HEADER" != "xyes"],
            [AC_MSG_ERROR([cannot find python-devel support], 6)])
  fi
