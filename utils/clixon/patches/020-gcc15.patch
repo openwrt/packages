@@ -1,0 +1,173 @@
+--- a/apps/cli/cli_generate.c
++++ b/apps/cli/cli_generate.c
+@@ -1749,7 +1749,7 @@ cli_autocli_gen_cache(clixon_handle h,
+                         clixon_err(OE_UNIX, 0, "fwrite(%s) eof",
+                                    filename);
+                     else
+-                        clixon_err(OE_UNIX, 0, "fwrite(%s) %lu != %lu",
++                        clixon_err(OE_UNIX, 0, "fwrite(%s) %zu != %zu",
+                                    filename, len, cbuf_len(cb));
+                     goto done;
+                 }
+@@ -1768,7 +1768,7 @@ cli_autocli_gen_cache(clixon_handle h,
+             }
+             len = fread(str, 1, fstat.st_size, f);
+             if (len != fstat.st_size){
+-                clixon_err(OE_UNIX, errno, "fread %lu != %lu", len, fstat.st_size);
++                clixon_err(OE_UNIX, errno, "fread %zu != %zu", len, fstat.st_size);
+                 goto done;
+             }
+             if (cbuf_append_str(cb, str) < 0){
+--- a/apps/cli/cli_show.c
++++ b/apps/cli/cli_show.c
+@@ -2040,8 +2040,8 @@ cli_show_statistics(clixon_handle h,
+     uint64_t    tnr0;
+     uint64_t    tnr = 0;
+     size_t      sz;
+-    size_t      tsz0;
+-    size_t      tsz = 0;
++    uint64_t    tsz0;
++    uint64_t    tsz = 0;
+     yang_stmt  *ymounts;
+     yang_stmt  *ydomain;
+     yang_stmt  *yspec;
+@@ -2108,7 +2108,7 @@ cli_show_statistics(clixon_handle h,
+                 tnr += nr;
+                 tsz += sz;
+                 if (detail) {
+-                    cligen_output(stdout, "YANG-%s-%s-size: %" PRIu64 "\n", domain, name, sz);
++                    cligen_output(stdout, "YANG-%s-%s-size: %zu\n", domain, name, sz);
+                     cligen_output(stdout, "YANG-%s-%s-nr: %" PRIu64 "\n", domain, name, nr);
+                 }
+                 else{
+@@ -2143,7 +2143,7 @@ cli_show_statistics(clixon_handle h,
+             tnr += nr;
+             tsz += sz;
+             if (detail){
+-                cligen_output(stdout, "CLIspec-%s-size: %" PRIu64 "\n", cligen_ph_name_get(ph), sz);
++                cligen_output(stdout, "CLIspec-%s-size: %zu\n", cligen_ph_name_get(ph), sz);
+                 cligen_output(stdout, "CLIspec-%s-nr: %" PRIu64 "\n", cligen_ph_name_get(ph), nr);
+             }
+         }
+@@ -2192,7 +2192,7 @@ cli_show_statistics(clixon_handle h,
+                 while ((x = xml_child_each(xp, x, CX_ELMNT)) != NULL) {
+                     if (strcmp(xml_name(x), "datastore") != 0)
+                         continue;
+-                    parse_uint64(xml_find_body(x, "size"), &sz, NULL);
++                    parse_uint64(xml_find_body(x, "size"), (uint64_t*)&sz, NULL);
+                     tsz += sz;
+                     name = xml_find_body(x, "name");
+                     translatenumber(sz, &u64, &unit);
+@@ -2217,7 +2217,7 @@ cli_show_statistics(clixon_handle h,
+                         continue;
+                     if ((name = xml_find_body(x, "name")) == NULL)
+                         continue;
+-                    parse_uint64(xml_find_body(x, "size"), &sz, NULL);
++                    parse_uint64(xml_find_body(x, "size"), (uint64_t*)&sz, NULL);
+                     tsz += sz;
+                     translatenumber(sz, &u64, &unit);
+                     if (strlen(name) > 25){
+--- a/apps/netconf/netconf_main.c
++++ b/apps/netconf/netconf_main.c
+@@ -468,7 +468,7 @@ netconf_input_cb(int   s,
+                                &eom) < 0)
+             goto done;
+         if (eom == 0){ /* frame not complete */
+-            clixon_debug(CLIXON_DBG_NETCONF | CLIXON_DBG_DETAIL, "frame: %lu", cbuf_len(cbmsg));
++            clixon_debug(CLIXON_DBG_NETCONF | CLIXON_DBG_DETAIL, "frame: %zu", cbuf_len(cbmsg));
+             /* Extra data to read, save data and continue on next round */
+             if (clicon_hash_add(cdat, NETCONF_FRAME_MSG, &cbmsg, sizeof(cbmsg)) == NULL)
+                 goto done;
+@@ -478,7 +478,7 @@ netconf_input_cb(int   s,
+         if (clixon_debug_detail())
+             clixon_debug(CLIXON_DBG_MSG | CLIXON_DBG_DETAIL, "Recv ext: %s", cbuf_get(cbmsg));
+         else
+-            clixon_debug(CLIXON_DBG_MSG, "Recv ext len: %lu", cbuf_len(cbmsg));
++            clixon_debug(CLIXON_DBG_MSG, "Recv ext len: %zu", cbuf_len(cbmsg));
+         if ((ret = netconf_input_frame2(cbmsg, YB_RPC, yspec, &xtop, &xerr)) < 0)
+             goto done;
+         cbuf_reset(cbmsg);
+--- a/lib/src/clixon_json.c
++++ b/lib/src/clixon_json.c
+@@ -1702,7 +1702,7 @@ clixon_json_parse_file(FILE      *fp,
+             break;
+         }
+         else {
+-            clixon_err(OE_JSON, errno, "fread sz=%lu", sz);
++            clixon_err(OE_JSON, errno, "fread sz=%zu", sz);
+             goto done;
+         }
+         if (len >= jsonbuflen-1){ /* Space: one for the null character */
+--- a/lib/src/clixon_netconf_input.c
++++ b/lib/src/clixon_netconf_input.c
+@@ -155,7 +155,7 @@ netconf_input_read2(int            s,
+         if (len == 0)
+             break;
+     } /* read */
+-    clixon_debug(CLIXON_DBG_DEFAULT | CLIXON_DBG_DETAIL, "len:%ld", len);
++    clixon_debug(CLIXON_DBG_DEFAULT | CLIXON_DBG_DETAIL, "len:%zd", len);
+     if (len == 0){  /* EOF */
+         clixon_debug(CLIXON_DBG_DEFAULT | CLIXON_DBG_DETAIL, "len==0, closing");
+         *eof = 1;
+--- a/lib/src/clixon_text_syntax.c
++++ b/lib/src/clixon_text_syntax.c
+@@ -1303,7 +1303,7 @@ clixon_text_syntax_parse_file(FILE
+             break;
+         }
+         else {
+-            clixon_err(OE_XML, 0, "fread %lu", sz);
++            clixon_err(OE_XML, 0, "fread %zu", sz);
+             goto done;
+         }
+         if (len >= textbuflen-1){ /* Space: one for the null character */
+--- a/lib/src/clixon_validate_minmax.c
++++ b/lib/src/clixon_validate_minmax.c
+@@ -1075,7 +1075,7 @@ xml_duplicate_detect1(cxobj  *xt,
+         case Y_CONTAINER:
+         case Y_LEAF:
+             if (vlen > 0 && slen0 != 0){ /* Sanity check */
+-                clixon_err(OE_YANG, 0, "Container vector mismatch %lu != 0", slen0);
++                clixon_err(OE_YANG, 0, "Container vector mismatch %zu != 0", slen0);
+                 goto done;
+             }
+             if ((vec = realloc(vec, (vlen+1)*sizeof(*vec))) == NULL){
+@@ -1094,7 +1094,7 @@ xml_duplicate_detect1(cxobj  *xt,
+             if ((clen = cvec_len(cvk)) == 0)
+                 continue;
+             if (vlen > 0 && slen0 != clen){ /* Sanity check */
+-                clixon_err(OE_YANG, 0, "List key vector mismatch %lu != %lu", slen0, clen);
++                clixon_err(OE_YANG, 0, "List key vector mismatch %zu != %zu", slen0, clen);
+                 goto done;
+             }
+             if ((vec = realloc(vec, (vlen+1)*sizeof(*vec))) == NULL){
+@@ -1136,7 +1136,7 @@ xml_duplicate_detect1(cxobj  *xt,
+             break;
+         case Y_LEAF_LIST:
+             if (vlen > 0 && slen0 != 1){ /* Sanity check */
+-                clixon_err(OE_YANG, 0, "Leaf-list key vector mismatch %lu != 1", slen0);
++                clixon_err(OE_YANG, 0, "Leaf-list key vector mismatch %zu != 1", slen0);
+                 goto done;
+             }
+             if ((vec = realloc(vec, (vlen+1)*sizeof(struct vec_order))) == NULL){
+--- a/lib/src/clixon_xml_io.c
++++ b/lib/src/clixon_xml_io.c
+@@ -1038,7 +1038,7 @@ clixon_xml_parse_file(FILE      *fp,
+             break;
+         }
+         else {
+-            clixon_err(OE_XML, 0, "fread %lu", sz);
++            clixon_err(OE_XML, 0, "fread %zu", sz);
+             goto done;
+         }
+         if (len >= xmlbuflen-1){ /* Space: one for the null character */
+--- a/lib/src/clixon_yang_parse_lib.c
++++ b/lib/src/clixon_yang_parse_lib.c
+@@ -962,7 +962,7 @@ yang_parse_file(FILE       *fp,
+             buf[i++] = (char)(c&0xff);
+         }
+         else {
+-            clixon_err(OE_XML, errno, "fread %lu", sz);
++            clixon_err(OE_XML, errno, "fread %zu", sz);
+             goto done;
+         }
+     } /* read a line */
