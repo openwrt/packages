@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=travelmate
-PKG_VERSION:=2.1.4
+PKG_VERSION:=2.2.0
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
@@ -17,12 +17,12 @@ define Package/travelmate
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=A wlan connection manager for travel router
-	DEPENDS:=+iwinfo +jshn +jsonfilter +curl +ca-bundle +rpcd +rpcd-mod-rpcsys
+	DEPENDS:=+iw +ip +jshn +jsonfilter +curl +ca-bundle +rpcd +rpcd-mod-rpcsys
 	PKGARCH:=all
 endef
 
 define Package/travelmate/description
-A wlan connection manager for travel routers.
+A wlan connection manager for travel router.
 Please see https://github.com/openwrt/packages/blob/master/net/travelmate/files/README.md for further information.
 
 endef

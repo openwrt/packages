@@ -61,11 +61,11 @@ automatically (re)connnects to configured APs/hotspots as they become available.
 * [OpenWrt](https://openwrt.org), tested/compatible with current stable 23.x and latest OpenWrt snapshot
 * The `luci-app-travelmate` ensures these packages are present:
   * 'dnsmasq' as dns backend
-  * 'iwinfo' for wlan scanning
+  * 'iw' for wlan scanning
   * 'curl' for connection checking and all kinds of captive portal magic,
      e.g. cp detection and auto-logins
   * a 'wpad' variant to support various WPA encrypted networks
-    (WEP-based uplinks are no longer supported!)* optional: 'qrencode' for AP QR code support
+    (WEP-based uplinks are no longer supported!)
 * optional: 'wireguard' or 'openvpn' for vpn client connections
 * optional: 'msmtp' to send out Travelmate related status messages via email
 
@@ -101,6 +101,7 @@ automatically (re)connnects to configured APs/hotspots as they become available.
 | trm_debug          | 0, disabled                        | set to 1 to get the full debug output (logread -e "trm-")                                             |
 | trm_iface          | -, not set                         | uplink- and procd trigger network interface, configured by the 'Interface Wizard'                     |
 | trm_radio          | -, not set                         | restrict travelmate to a single radio or change the overall scanning order ('radio1 radio0')          |
+| trm_scanmode       | -, active                          | send active probe requests or passively listen for beacon frames with 'passive'                       |
 | trm_captive        | 1, enabled                         | check the internet availability and handle captive portal redirections                                |
 | trm_netcheck       | 0, disabled                        | treat missing internet availability as an error                                                       |
 | trm_proactive      | 1, enabled                         | proactively scan and switch to a higher prioritized uplink, despite of an already existing connection |
@@ -120,10 +121,10 @@ automatically (re)connnects to configured APs/hotspots as they become available.
 | trm_mailsender     | no-reply@travelmate                | e-mail sender address for travelmate notifications                                                    |
 | trm_mailtopic      | travelmate connection to '<sta>'   | topic for travelmate notification E-Mails                                                             |
 | trm_mailprofile    | trm_notify                         | profile used by 'msmtp' for travelmate notification E-Mails                                           |
+| trm_vpn            | 0, disabled                        | VPN connections will be managed by travelmate                                                         |
 | trm_stdvpnservice  | -, not set                         | standard vpn service which will be automatically added to new STA profiles                            |
 | trm_stdvpniface    | -, not set                         | standard vpn interface which will be automatically added to new STA profiles                          |
   
-
 * per uplink exist an additional 'uplink' section in the travelmate config, with the following options:  
 
 | Option             | Default                            | Description/Valid Values                                                                              |
