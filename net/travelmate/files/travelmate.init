@@ -1,5 +1,5 @@
 #!/bin/sh /etc/rc.common
-# Copyright (c) 2016-2024 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2016-2025 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # set (s)hellcheck exceptions
@@ -9,7 +9,6 @@ START=25
 USE_PROCD=1
 
 extra_command "scan" "[<radio>|<ifname>] Scan for available nearby uplinks"
-extra_command "assoc" "[<radio>|<ifname>] Get MAC adresses of associated wlan stations"
 extra_command "setup" "[<iface>] [<zone>] [<metric>] Setup the travelmate uplink interface, by default 'trm_wwan' with firewall zone 'wan' and metric '100'"
 
 trm_init="/etc/init.d/travelmate"
@@ -34,7 +33,7 @@ start_service() {
 		procd_set_param pidfile "${trm_pidfile}"
 		procd_set_param nice "$(uci_get travelmate global trm_nice "0")"
 		procd_set_param stdout 0
-		procd_set_param stderr 0
+		procd_set_param stderr 1
 		procd_close_instance
 	fi
 }
@@ -77,25 +76,39 @@ status_service() {
 }
 
 scan() {
-	local result radio="${1}"
+	local scan_dev scan_mode radio_num radio_phy radio="${1}"
 
 	: > "${trm_scanfile}"
-	if [ -z "${radio}" ]; then
-		radio="$(ubus -S call network.wireless status 2>/dev/null | jsonfilter -q -l1 -e '@[@.up=true].interfaces[0].ifname')"
+	scan_dev="$(ubus -S call network.wireless status 2>/dev/null | jsonfilter -ql1 -e "@.${radio}.interfaces[0].ifname")"
+	if [ -z "${scan_dev}" ]; then
+		radio_num="${radio//[a-z]/}"
+		radio_phy="phy#${radio_num}"
+		scan_dev="$(iw dev 2>/dev/null | awk -v iw_phy="${radio_phy}" '{if($0==iw_phy){inside=1;next}if(inside&&/^phy#/){exit}if(inside&&$1=="Interface"){print $2;exit}}')"
+		if [ -z "${scan_dev}" ]; then
+			if iw phy "phy${radio_num}" interface add "trmscan${radio_num}" type managed >/dev/null 2>&1; then
+				if ip link set "trmscan${radio_num}" up >/dev/null 2>&1; then
+					scan_dev="trmscan${radio_num}"
+				fi
+			fi
+		fi
 	fi
-	result="$(iwinfo "${radio}" scan 2>/dev/null |
-		awk 'BEGIN{FS="[[:space:]]"}/Address:/{var1=$NF}/ESSID:/{var2="";
-		for(i=12;i<=NF;i++)if(var2==""){var2=$i}else{var2=var2" "$i}}/Channel:/{var3=$NF}/Quality:/{split($NF,var0,"/")}/Encryption:/{var4="";
-		for(j=12;j<=NF;j++)if(var4==""){var4=$j}else{var4=var4" "$j};printf "    %-11i%-10s%-35s%-20s%s\n",(var0[1]*100/var0[2]),var3,var2,var1,var4}' |
-		sort -rn)"
-	printf "::: %s\n:::\n" "Available nearby uplinks on '${radio}'"
-	if [ -n "${result}" ]; then
-		printf "%s\n" "${result}" > "${trm_scanfile}"
-		printf "%-15s%-10s%-35s%-20s%s\n" "    Strength" "Channel" "ESSID" "BSSID" "Encryption"
-		printf "%s\n" "    --------------------------------------------------------------------------------------"
-		printf "%s\n" "${result}"
-	else
-		printf "%s\n" "::: Empty resultset"
+	if [ -n "${scan_dev}" ]; then
+		scan_mode="$(uci_get travelmate global trm_scanmode "active")"
+		[ "${scan_mode}" != "passive" ] && scan_mode=""
+		printf "%b\n" "$(iw "${scan_dev}" scan ${scan_mode} 2>/dev/null |
+			awk '/^BSS /{if(bssid!=""){if(ssid=="")ssid="unknown";printf "%3s %3s %17s %s %s %10s %30s %s\n",signal,channel,bssid,rsn,wpa,cipher,auth,ssid};signal="";channel="";rsn="-";wpa="-";cipher="-";auth="-";bssid=toupper(substr($2,1,17))}
+			/signal:/{signal=2*($2 + 100)}
+			/SSID:/{$1="";sub(/^ /,"",$0);ssid=$0}
+			/freq:/{channel=int($2);if(channel>=2400&&channel<=2500)channel=int((channel-2407)/5);else if(channel>=4900&&channel<=5900)channel=int((channel-5000)/5);else if(channel>=5925&&channel<=7125)channel=int(((channel-5950)/5)+1)}
+			/WPA:/{wpa="+"}
+			/RSN:/{rsn="+"}
+			/Group cipher:/{cipher=$4}
+			/Authentication suites:/{auth="";for(i=4;i<=NF;i++){auth=auth (i==4?"":",")$i}}
+			END{if(bssid!=""){if(ssid=="")ssid="unknown";printf "%3s %3s %17s %s %s %10s %30s %s\n",signal,channel,bssid,rsn,wpa,cipher,auth,ssid}}' | sort -rn)" > "${trm_scanfile}"
+	fi
+	if [ -n "${radio_phy}" ] && [ -n "${radio_num}" ]; then
+		ip link set "trmscan${radio_num}" down >/dev/null 2>&1
+		iw dev "trmscan${radio_num}" del >/dev/null 2>&1
 	fi
 }
 
@@ -108,7 +121,7 @@ setup() {
 	metric="${metric//[^0-9]/}"
 
 	if [ -n "${iface}" ] && [ "${iface}" = "${input}" ]; then
-		printf "%s\n" "The uplink interface '${input}' has been already configured"
+		return 1
 	elif [ -n "${input}" ]; then
 		if [ -n "${iface}" ]; then
 			uci -q batch <<-EOC
@@ -160,24 +173,6 @@ setup() {
 		/etc/init.d/network reload >/dev/null 2>&1
 		/etc/init.d/firewall reload >/dev/null 2>&1
 		"${trm_init}" restart
-	fi
-}
-
-assoc() {
-	local result radio="${1}"
-
-	if [ -z "${radio}" ]; then
-		radio="$(ubus -S call network.wireless status 2>/dev/null | jsonfilter -q -l1 -e '@[@.*.*.config.mode="ap"].interfaces[0].ifname')"
-	fi
-	result="$(iwinfo "${radio}" assoc 2>/dev/null | awk '/^[A-Z0-9:]+/{printf "    %s\n",$1}')"
-	printf "%s\n" "::: Associated wlan stations on '${radio}'"
-	printf "%s\n" ":::"
-	if [ -n "${result}" ]; then
-		printf "%s\n" "    MAC addresses"
-		printf "%s\n" "    -----------------"
-		printf "%s\n" "${result}"
-	else
-		printf "%s\n" "::: Empty resultset"
 	fi
 }
 
