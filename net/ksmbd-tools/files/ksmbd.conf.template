@@ -7,3 +7,4 @@
 	ipc timeout = 20
 	deadtime = 15
 	map to guest = Bad User
+	server signing = auto
