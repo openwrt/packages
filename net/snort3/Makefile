@@ -59,7 +59,7 @@ CMAKE_OPTIONS += \
 	-DHAVE_LZMA=ON \
 	-DENABLE_TCMALLOC=$(if $(CONFIG_PACKAGE_gperftools),ON,OFF) \
 	-DENABLE_HYPERSCAN=$(if $(CONFIG_PACKAGE_vectorscan),ON,OFF) \
-	$(if $(CONFIG_PACKAGE_vectorscan-runtime),-DHS_INCLUDE_DIRS=$(STAGING_DIR)/usr/include/hs)
+	$(if $(CONFIG_PACKAGE_vectorscan),-DHS_INCLUDE_DIRS=$(STAGING_DIR)/usr/include/hs)
 
 TARGET_CFLAGS += -I$(STAGING_DIR)/usr/include/daq3
 
