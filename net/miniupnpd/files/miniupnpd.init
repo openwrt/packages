@@ -7,48 +7,6 @@ USE_PROCD=1
 PROG=/usr/sbin/miniupnpd
 [ -x "$(command -v nft)" ] && FW="fw4" || FW="fw3"
 
-upnpd_get_port_range() {
-	local var="$1"; shift
-	local val
-
-	config_get val "$@"
-
-	case "$val" in
-		[0-9]*[:-][0-9]*)
-			export -n -- "${var}_start=${val%%[:-]*}"
-			export -n -- "${var}_end=${val##*[:-]}"
-		;;
-		[0-9]*)
-			export -n -- "${var}_start=$val"
-			export -n -- "${var}_end="
-		;;
-	esac
-}
-
-conf_rule_add() {
-	local cfg="$1"
-	local action int_addr
-	local ext_start ext_end int_start int_end comment
-	config_get action "$cfg" action "deny"                # allow or deny
-	upnpd_get_port_range "ext" "$cfg" ext_ports "0-65535" # external ports: x, x-y, x:y
-	config_get int_addr "$cfg" int_addr "0.0.0.0/0"       # ip or network and subnet mask (internal)
-	upnpd_get_port_range "int" "$cfg" int_ports "0-65535" # internal ports: x, x-y, x:y or range
-	config_get comment "$cfg" comment "ACL"		      # comment
-
-	# Make a single IP IP/32 so that miniupnpd.conf can use it.
-	[ "${int_addr%/*}" = "$int_addr" ] && int_addr="$int_addr/32"
-
-	echo "$action $ext_start${ext_end:+-}$ext_end $int_addr $int_start${int_end:+-}$int_end #$comment"
-}
-
-echo_yesno_opt() {
-	[ "$2" = "1" ] && echo "$1=yes" || echo "$1=no"
-}
-
-echo_yesno_opt_inverse() {
-	[ "$2" = "1" ] && echo "$1=no" || echo "$1=yes"
-}
-
 upnpd() {
 	config_load "upnpd"
 	local enabled
@@ -224,6 +182,12 @@ upnpd() {
 	procd_close_instance
 }
 
+start_service() {
+	upnpd_uci_migration
+	config_load "upnpd"
+	config_foreach upnpd "upnpd"
+}
+
 stop_service() {
 	if [ "$FW" = "fw3" ]; then
 		iptables -t nat -F MINIUPNPD 2>/dev/null
@@ -237,18 +201,38 @@ stop_service() {
 	fi
 }
 
-start_service() {
-	upnpd_uci_migration
-	config_load "upnpd"
-	config_foreach upnpd "upnpd"
-}
-
 service_triggers() {
 	procd_add_reload_trigger "upnpd"
 }
 
 log() {
 	logger -s -p "${2:-daemon.notice}" -t "upnpd" "$1" || echo "upnpd: $1" >&2
+}
+
+echo_yesno_opt() {
+	[ "$2" = "1" ] && echo "$1=yes" || echo "$1=no"
+}
+
+echo_yesno_opt_inverse() {
+	[ "$2" = "1" ] && echo "$1=no" || echo "$1=yes"
+}
+
+upnpd_get_port_range() {
+	local var="$1"; shift
+	local val
+
+	config_get val "$@"
+
+	case "$val" in
+		[0-9]*[:-][0-9]*)
+			export -n -- "${var}_start=${val%%[:-]*}"
+			export -n -- "${var}_end=${val##*[:-]}"
+		;;
+		[0-9]*)
+			export -n -- "${var}_start=$val"
+			export -n -- "${var}_end="
+		;;
+	esac
 }
 
 upnpd_add_int_network_and_acl_preset() {
@@ -281,6 +265,22 @@ upnpd_add_int_network_and_acl_preset() {
 	elif [ "$acl_preset" != "" ]; then
 		log "Invalid preset ($acl_preset) ignored" daemon.warn
 	fi
+}
+
+conf_rule_add() {
+	local cfg="$1"
+	local action int_addr
+	local ext_start ext_end int_start int_end comment
+	config_get action "$cfg" action "deny"                # allow or deny
+	upnpd_get_port_range "ext" "$cfg" ext_ports "0-65535" # external ports: x, x-y, x:y
+	config_get int_addr "$cfg" int_addr "0.0.0.0/0"       # ip or network and subnet mask (internal)
+	upnpd_get_port_range "int" "$cfg" int_ports "0-65535" # internal ports: x, x-y, x:y or range
+	config_get comment "$cfg" comment "ACL"		      # comment
+
+	# Make a single IP IP/32 so that miniupnpd.conf can use it.
+	[ "${int_addr%/*}" = "$int_addr" ] && int_addr="$int_addr/32"
+
+	echo "$action $ext_start${ext_end:+-}$ext_end $int_addr $int_start${int_end:+-}$int_end #$comment"
 }
 
 upnpd_uci_migration() {
