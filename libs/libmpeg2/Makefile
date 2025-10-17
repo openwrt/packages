@@ -9,13 +9,15 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmpeg2
 PKG_VERSION:=0.5.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=libmpeg2-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://libmpeg2.sourceforge.net/files/
+PKG_SOURCE_URL:=https://download.videolan.org/contrib/libmpeg2
 PKG_HASH:=dee22e893cb5fc2b2b6ebd60b88478ab8556cb3b93f9a0d7ce8f3b61851871d4
+PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -24,7 +26,6 @@ define Package/libmpeg2
   CATEGORY:=Libraries
   TITLE:=MPEG-1 & -2 decoding library
   URL:=http://libmpeg2.sourceforge.net/
-  MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 endef
 
 define Package/libmpeg2/decription
@@ -34,6 +35,8 @@ endef
 CONFIGURE_ARGS += \
 	--disable-sdl \
 	--without-x \
+
+TARGET_CFLAGS += -D__GNU_LIBRARY__
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
