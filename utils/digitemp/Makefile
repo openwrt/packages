@@ -11,14 +11,16 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=digitemp
 PKG_VERSION:=3.7.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/bcl/digitemp/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=683df4ab5cc53a45fe4f860c698f148d34bcca91b3e0568a342f32d64d12ba24
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/bcl/digitemp
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+PKG_MIRROR_HASH:=4b2a3f074c98a56e1816d760ecf5f26fb2293b26a8bda362d86627c3ddc8b318
 
 PKG_MAINTAINER:=Jasper Scholte <NightNL@outlook.com>
 PKG_LICENSE:=GPL-2.0-or-later
+PKG_LICENSE_FILES:=COPYING
 
 include $(INCLUDE_DIR)/package.mk
 
