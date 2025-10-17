@@ -14,6 +14,8 @@ config interface 'MYVPN'
 	option authgroup 'DEFAULT'
 	# usergroup option, if required by some servers
 	# option usergroup 'USERGROUP'
+	# useragent option used connecting to the server
+	# option useragent 'AnyConnect'
 
 	# Reconnect after a temporary network down time (in seconds)
 	#option reconnect_timeout '30'
