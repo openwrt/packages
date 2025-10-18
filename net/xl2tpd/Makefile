@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xl2tpd
 PKG_VERSION:=1.3.18
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=LICENSE
@@ -61,6 +61,7 @@ ifneq (0,0)
 endif
 
 define Package/xl2tpd/conffiles
+/etc/config/xl2tp
 /etc/xl2tpd/xl2tpd.conf
 /etc/xl2tpd/xl2tp-secrets
 /etc/ppp/options.xl2tpd
@@ -73,6 +74,10 @@ define Package/xl2tpd/install
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/xl2tpd.init $(1)/etc/init.d/xl2tpd
+
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/xl2tp.config \
+		$(1)/etc/config/xl2tp
 
 	$(INSTALL_DIR) $(1)/etc/xl2tpd
 	$(INSTALL_DATA) ./files/xl2tpd.conf $(1)/etc/xl2tpd/
