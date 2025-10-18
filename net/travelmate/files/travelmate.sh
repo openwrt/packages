@@ -12,6 +12,7 @@ export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
 trm_enabled="0"
 trm_debug="0"
 trm_iface=""
+trm_laniface=""
 trm_captive="1"
 trm_proactive="0"
 trm_vpn="0"
@@ -132,7 +133,7 @@ f_env() {
 		config_load network
 		config_foreach f_getvpn "interface"
 	fi
-	f_log "debug" "f_env     ::: auto_sta: ${trm_opensta:-"-"}, sys_ver: ${trm_sysver}"
+	f_log "debug" "f_env     ::: fetch: ${trm_fetchcmd}, sys_ver: ${trm_sysver}"
 }
 
 # trim helper function
@@ -165,7 +166,7 @@ f_wifi() {
 
 	"${trm_wificmd}" reload
 	for radio in ${trm_radiolist}; do
-		while true; do
+		while :; do
 			if [ "${timeout}" -ge "${trm_maxwait}" ]; then
 				break 2
 			fi
@@ -346,7 +347,7 @@ f_ctrack() {
 			fi
 		fi
 	fi
-	f_log "debug" "f_ctrack  ::: action: ${action:-"-"}, uplink_config: ${trm_uplinkcfg:-"-"}"
+	f_log "debug" "f_ctrack  ::: uplink_config: ${trm_uplinkcfg:-"-"}, action: ${action:-"-"}"
 }
 
 # get openvpn information
@@ -449,7 +450,7 @@ f_getcfg() {
 		fi
 		cnt="$((cnt + 1))"
 	done
-	f_log "debug" "f_getcfg  ::: status: ${status}, section: ${section}, uplink_config: ${trm_uplinkcfg:-"-"}"
+	f_log "debug" "f_getcfg  ::: uplink_config: ${trm_uplinkcfg:-"-"}"
 }
 
 # get travelmate option value in 'uplink' sections
@@ -461,7 +462,7 @@ f_getval() {
 		result="$(uci_get "travelmate" "${trm_uplinkcfg}" "${t_option}")"
 		printf "%s" "${result}"
 	fi
-	f_log "debug" "f_getval  ::: option: ${t_option:-"-"}, result: ${result:-"-"}, uplink_config: ${trm_uplinkcfg:-"-"}"
+	f_log "debug" "f_getval  ::: uplink_config: ${trm_uplinkcfg:-"-"}, option: ${t_option:-"-"}, result: ${result:-"-"}"
 }
 
 # set 'wifi-device' sections
@@ -539,7 +540,24 @@ f_setif() {
 			trm_stalist="$(f_trim "${trm_stalist} ${section}-${radio}")"
 		fi
 	fi
-	f_log "debug" "f_setif   ::: enabled: ${enabled}, section: ${section}, active_sta: ${trm_activesta:-"-"}, uplink_config: ${trm_uplinkcfg:-"-"}"
+	f_log "debug" "f_setif   ::: uplink_config: ${trm_uplinkcfg:-"-"}, section: ${section}, enabled: ${enabled}, active_sta: ${trm_activesta:-"-"}"
+}
+
+# check router/uplink subnet
+#
+f_subnet() {
+	local lan lan_net wan wan_net
+
+	network_flush_cache
+	network_get_subnet wan "${trm_iface:-"trm_wwan"}"
+	[ -n "${wan}" ] && wan_net="$("${trm_ipcalccmd}" "${wan}" | "${trm_awkcmd}" 'BEGIN{FS="="}/NETWORK/{printf "%s",$2}')"
+	network_get_subnet lan "${trm_laniface:-"lan"}"
+	[ -n "${lan}" ] && lan_net="$("${trm_ipcalccmd}" "${lan}" | "${trm_awkcmd}" 'BEGIN{FS="="}/NETWORK/{printf "%s",$2}')"
+	if [ -n "${lan_net}" ] && [ -n "${wan_net}" ] && [ "${lan_net}" = "${wan_net}" ]; then
+		f_log "info" "uplink network '${wan_net}' conflicts with router LAN network, please adjust your network settings"
+	fi
+	printf "%s" "${wan_net:-"-"} (lan: ${lan_net:-"-"})"
+	f_log "debug" "f_subnet  ::: lan_net: ${lan_net:-"-"}, wan_net: ${wan_net:-"-"}"
 }
 
 # add open uplinks
@@ -648,7 +666,7 @@ f_net() {
 		fi
 	fi
 	printf "%s" "${result}"
-	f_log "debug" "f_net     ::: fetch: ${trm_fetchcmd}, timeout: $((trm_maxwait / 6)), cp (json/html/js): ${json_cp:-"-"}/${html_cp:-"-"}/${js_cp:-"-"}, result: ${result}, error (rc/msg): ${json_ec}/${err_msg:-"-"}, url: ${trm_captiveurl}"
+	f_log "debug" "f_net     ::: timeout: $((trm_maxwait / 6)), cp (json/html/js): ${json_cp:-"-"}/${html_cp:-"-"}/${js_cp:-"-"}, result: ${result}, error (rc/msg): ${json_ec}/${err_msg:-"-"}, url: ${trm_captiveurl}"
 }
 
 # check interface status
@@ -721,7 +739,7 @@ f_check() {
 						if [ "${trm_ifstatus}" = "true" ]; then
 							result="$(f_net)"
 							if [ "${trm_captive}" = "1" ]; then
-								while true; do
+								while :; do
 									cp_domain="$(printf "%s" "${result}" | "${trm_awkcmd}" -F '['\''| ]' '/^net cp/{printf "%s",$4}')"
 									if [ -x "/etc/init.d/dnsmasq" ] && [ -f "/etc/config/dhcp" ] &&
 										[ -n "${cp_domain}" ] && ! uci_get "dhcp" "@dnsmasq[0]" "rebind_domain" | "${trm_grepcmd}" -q "${cp_domain}"; then
@@ -843,6 +861,7 @@ f_jsnup() {
 	json_add_string "station_id" "${sta_radio:-"-"}/${sta_essid:-"-"}/${sta_bssid:-"-"}"
 	json_add_string "station_mac" "${sta_mac:-"-"}"
 	json_add_string "station_interfaces" "${sta_iface:-"-"}, ${vpn_iface:-"-"}"
+	json_add_string "station_subnet" "$(f_subnet)"
 	json_add_string "run_flags" "scan: ${trm_scanmode}, captive: $(f_char ${trm_captive}), proactive: $(f_char ${trm_proactive}), netcheck: $(f_char ${trm_netcheck}), autoadd: $(f_char ${trm_autoadd}), randomize: $(f_char ${trm_randomize})"
 	json_add_string "ext_hooks" "ntp: $(f_char ${ntp_done}), vpn: $(f_char ${vpn_done}), mail: $(f_char ${mail_done})"
 	json_add_string "last_run" "${last_date}"
@@ -1083,6 +1102,7 @@ trm_fetchcmd="$(f_cmd curl)"
 trm_ipcmd="$(f_cmd ip)"
 trm_iwcmd="$(f_cmd iw)"
 trm_wpacmd="$(f_cmd wpa_supplicant)"
+trm_ipcalccmd="$(f_cmd ipcalc.sh)"
 
 # get travelmate version
 #
@@ -1096,7 +1116,7 @@ fi
 
 # control travelmate actions
 #
-while true; do
+while :; do
 	if [ "${trm_action}" = "stop" ]; then
 		if [ -s "${trm_pidfile}" ]; then
 			f_log "info" "travelmate instance stopped ::: action: ${trm_action}, pid: $(cat ${trm_pidfile} 2>/dev/null)"
@@ -1110,7 +1130,7 @@ while true; do
 		f_main
 		trm_action=""
 	fi
-	while true; do
+	while :; do
 		sleep "${trm_timeout}" 0
 		rc="${?}"
 		if [ "${rc}" != "0" ]; then
