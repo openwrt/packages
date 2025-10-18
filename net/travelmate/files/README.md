@@ -24,29 +24,20 @@ automatically (re)connnects to configured APs/hotspots as they become available.
 
 ## Main Benefits and Features
 
-* Easy setup from LuCI web interface
-  with **Interface Wizard** and **Wireless Station manager**
-* Display a QR code to
-  transfer the wireless credentials to your mobile devices
+* Easy setup from LuCI web interface with **Interface Wizard** and **Wireless Station manager**
+* Display a QR code to transfer the wireless credentials to your mobile devices
 * Fast uplink connections
 * Supports routers with multiple radios in any order
-* Supports all kinds of uplinks, including hidden and enterprise uplinks.
-  (WEP-based uplinks are no longer supported)
-* Continuously checks the existing uplink quality,
-  e.g. for conditional uplink (dis)connections
+* Supports all kinds of uplinks, including hidden and enterprise uplinks (WEP-based uplinks are no longer supported).
+* Continuously checks the existing uplink quality, e.g. for conditional uplink (dis)connections
 * Automatically add open uplinks to your wireless config, e.g. hotel captive portals
-* Captive portal detection with a
-  'heartbeat' function to keep the uplink connection up and running
-* Captive portal hook for auto-login configured via uci/LuCI.
-  Use an external script for
-  captive portal auto-logins (see example below)
-* VPN hook supports 'wireguard' or 'openvpn' client
-  setups to handle VPN (re)connections automatically
-* Email hook via 'msmtp' sends notification e-mails
-  after every successful uplink connect
-* Proactively scan and switch to a higher priority uplink,
-  replacing an existing connection
+* Captive portal detection with a 'heartbeat' function to keep the uplink connection up and running
+* Captive portal hook for auto-login configured via uci/LuCI. Use an external script for captive portal auto-logins (see example below)
+* VPN hook supports 'wireguard' or 'openvpn' client setups to handle VPN (re)connections automatically
+* Email hook via 'msmtp' sends notification e-mails after every successful uplink connect
+* Proactively scan and switch to a higher priority uplink, replacing an existing connection
 * Connection tracking logs start and end date of an uplink connection
+* Check router subnet vs. uplink subnet, to show conflicts with router LAN network
 * Automatically disable the uplink after n minutes, e.g. for timed connections
 * Automatically (re)enable the uplink after n minutes, e.g. after failed login attempts
 * (Optional) Generate a random unicast MAC address for each uplink connection
@@ -100,11 +91,12 @@ automatically (re)connnects to configured APs/hotspots as they become available.
 | trm_enabled        | 0, disabled                        | set to 1 to enable the travelmate service (this will be done by the Interface Wizard as well!)        |
 | trm_debug          | 0, disabled                        | set to 1 to get the full debug output (logread -e "trm-")                                             |
 | trm_iface          | -, not set                         | uplink- and procd trigger network interface, configured by the 'Interface Wizard'                     |
+| trm_laniface       | -, lan                             | logical LAN network interface, default is 'lan'                                                       |
 | trm_radio          | -, not set                         | restrict travelmate to a single radio or change the overall scanning order ('radio1 radio0')          |
 | trm_scanmode       | -, active                          | send active probe requests or passively listen for beacon frames with 'passive'                       |
 | trm_captive        | 1, enabled                         | check the internet availability and handle captive portal redirections                                |
 | trm_netcheck       | 0, disabled                        | treat missing internet availability as an error                                                       |
-| trm_proactive      | 1, enabled                         | proactively scan and switch to a higher prioritized uplink, despite of an already existing connection |
+| trm_proactive      | 0, disabled                        | proactively scan and switch to a higher prioritized uplink, despite of an already existing connection |
 | trm_autoadd        | 0, disabled                        | automatically add open uplinks like hotel captive portals to your wireless config                     |
 | trm_randomize      | 0, disabled                        | generate a random unicast MAC address for each uplink connection                                      |
 | trm_triggerdelay   | 2                                  | additional trigger delay in seconds before travelmate processing begins                               |
@@ -113,7 +105,7 @@ automatically (re)connnects to configured APs/hotspots as they become available.
 | trm_maxwait        | 30                                 | how long should travelmate wait for a successful wlan uplink connection                               |
 | trm_timeout        | 60                                 | overall retry timeout in seconds                                                                      |
 | trm_maxautoadd     | 5                                  | limit the max. number of automatically added open uplinks. To disable this limitation set it to '0'   |
-| trm_captiveurl     | http://detectportal.firefox.com    | pre-configured provider URLs that will be used for connectivity- and captive portal checks            |
+| trm_captiveurl     | http://detectportal.firefox.com    | custom/pre-configured provider URLs that will be used for connectivity- and captive portal checks     |
 | trm_useragent      | Mozilla/5.0 ...                    | pre-configured user agents that will be used for connectivity- and captive portal checks              |
 | trm_nice           | 0, normal priority                 | change the priority of the travelmate background processing                                           |
 | trm_mail           | 0, disabled                        | sends notification e-mails after every succesful uplink connect                                       |
@@ -210,16 +202,16 @@ Hopefully more scripts for different captive portals will be provided by the com
 <pre><code>
 root@2go:~# /etc/init.d/travelmate status
 ::: travelmate runtime information
-  + travelmate_status  : connected (net ok/51)
-  + travelmate_version : 2.1.1
-  + station_id         : radio0/403 Forbidden/00:0C:46:24:50:00
-  + station_mac        : 94:83:C4:24:0E:4F
-  + station_interfaces : trm_wwan, wg0
-  + wpa_flags          : sae: ✔, owe: ✔, eap: ✔, suiteb192: ✔
-  + run_flags          : captive: ✔, proactive: ✔, netcheck: ✘, autoadd: ✘, randomize: ✔
-  + ext_hooks          : ntp: ✔, vpn: ✔, mail: ✘
-  + last_run           : 2023.10.21-14:29:14
-  + system             : GL.iNet GL-A1300, OpenWrt SNAPSHOT r24187-bb8fd41f9a
+  + travelmate_status  : connected (net ok/96)
+  + travelmate_version : 2.2.1-r1
+  + station_id         : radio0/GlutenfreiVerbunden/-
+  + station_mac        : 1E:24:62:C3:2E:4B
+  + station_interfaces : trm_wwan, -
+  + station_subnet     : 10.168.20.0 (lan: 10.168.1.0)
+  + run_flags          : scan: passive, captive: ✔, proactive: ✔, netcheck: ✘, autoadd: ✘, randomize: ✔
+  + ext_hooks          : ntp: ✔, vpn: ✘, mail: ✘
+  + last_run           : 2025.10.18-21:03:41
+  + system             : Cudy TR3000 v1, mediatek/filogic, OpenWrt SNAPSHOT r31445-2a44808374 
 </code></pre>
 
 To debug travelmate runtime problems, please always enable the 'trm\_debug' flag, restart Travelmate and check the system log afterwards (_logread -e "trm-"_)
