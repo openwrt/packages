@@ -98,6 +98,7 @@ automatically (re)connnects to configured APs/hotspots as they become available.
 | trm_netcheck       | 0, disabled                        | treat missing internet availability as an error                                                       |
 | trm_proactive      | 0, disabled                        | proactively scan and switch to a higher prioritized uplink, despite of an already existing connection |
 | trm_autoadd        | 0, disabled                        | automatically add open uplinks like hotel captive portals to your wireless config                     |
+| trm_ssidfilter     | -, not set                         | list of SSID patterns for filtering/skipping specific open uplinks, e.g. 'Chromecast*'                |
 | trm_randomize      | 0, disabled                        | generate a random unicast MAC address for each uplink connection                                      |
 | trm_triggerdelay   | 2                                  | additional trigger delay in seconds before travelmate processing begins                               |
 | trm_maxretry       | 3                                  | retry limit to connect to an uplink                                                                   |
@@ -117,6 +118,7 @@ automatically (re)connnects to configured APs/hotspots as they become available.
 | trm_stdvpnservice  | -, not set                         | standard vpn service which will be automatically added to new STA profiles                            |
 | trm_stdvpniface    | -, not set                         | standard vpn interface which will be automatically added to new STA profiles                          |
   
+
 * per uplink exist an additional 'uplink' section in the travelmate config, with the following options:  
 
 | Option             | Default                            | Description/Valid Values                                                                              |

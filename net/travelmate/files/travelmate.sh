@@ -30,6 +30,7 @@ trm_timeout="60"
 trm_radio=""
 trm_scanmode="active"
 trm_connection=""
+trm_ssidfilter=""
 trm_ovpninfolist=""
 trm_vpnifacelist=""
 trm_vpninfolist=""
@@ -73,7 +74,7 @@ f_env() {
 		return
 	fi
 
-	unset trm_stalist trm_radiolist trm_uplinklist trm_vpnifacelist trm_uplinkcfg trm_activesta trm_opensta
+	unset trm_stalist trm_radiolist trm_uplinklist trm_vpnifacelist trm_uplinkcfg trm_activesta trm_opensta trm_ssidfilter
 
 	trm_sysver="$("${trm_ubuscmd}" -S call system board 2>/dev/null | "${trm_jsoncmd}" -ql1 -e '@.model' -e '@.release.target' -e '@.release.distribution' -e '@.release.version' -e '@.release.revision' |
 		"${trm_awkcmd}" 'BEGIN{RS="";FS="\n"}{printf "%s, %s, %s %s %s %s",$1,$2,$3,$4,$5,$6}')"
@@ -90,6 +91,8 @@ f_env() {
 				local option="${1}" value="${2//\"/\\\"}"
 				if [ "${option}" = "trm_vpnifacelist" ] && ! printf "%s" "${trm_vpnifacelist}" | "${trm_grepcmd}" -q "${value}"; then
 					eval "trm_vpnifacelist=\"$(printf "%s" "${trm_vpnifacelist}") ${value}\""
+				elif [ "${option}" = "trm_ssidfilter" ] && ! printf "%s" "${trm_ssidfilter}" | "${trm_grepcmd}" -q "${value}"; then
+					eval "trm_ssidfilter=\"$(printf "%s" "${trm_ssidfilter}") ${value}\""
 				fi
 			}
 		elif [ "${name}" = "uplink" ]; then
@@ -188,7 +191,7 @@ f_wifi() {
 		sleep "$((trm_maxwait / 6))"
 		timeout="$((timeout + (trm_maxwait / 6)))"
 	fi
-	f_log "debug" "f_wifi    ::: radio_list: ${trm_radiolist}, radio: ${radio}, timeout: ${timeout}"
+	f_log "debug" "f_wifi    ::: radio_list: ${trm_radiolist}, ssid_filter: ${trm_ssidfilter:-""}, radio: ${radio}, timeout: ${timeout}"
 }
 
 # vpn helper function
@@ -563,8 +566,16 @@ f_subnet() {
 # add open uplinks
 #
 f_addsta() {
-	local wifi_cfg trm_cfg new_uplink="1" offset="1" radio="${1}" essid="${2}"
+	local pattern wifi_cfg trm_cfg new_uplink="1" offset="1" radio="${1}" essid="${2}"
 
+	for pattern in ${trm_ssidfilter}; do
+		case "${essid}" in
+			${pattern})
+				f_log "info" "skipping blacklisted open uplink '${radio}/${essid}'"
+				return 0
+				;;
+		esac
+	done
 	if [ "${trm_maxautoadd}" = "0" ] || [ "${trm_opensta:-0}" -lt "${trm_maxautoadd}" ]; then
 		config_cb() {
 			local type="${1}" name="${2}"
@@ -979,11 +990,11 @@ f_main() {
 					if [ -n "${scan_dev}" ]; then
 						[ "${trm_scanmode}" != "passive" ] && scan_mode=""
 						scan_list="$(printf "%b" "$("${trm_iwcmd}" "${scan_dev}" scan ${scan_mode} 2>/dev/null |
-							"${trm_awkcmd}" '/^BSS /{if(bssid!=""){if(ssid=="")ssid="unknown";printf "%s %s %s %s %s\n",signal,rsn,wpa,bssid,ssid};bssid=toupper(substr($2,1,17));ssid="";signal="";rsn="+";wpa="+"}
+							"${trm_awkcmd}" '/^BSS /{if(bssid!=""){if(ssid=="")ssid="unknown";printf "%s %s %s %s %s\n",signal,rsn,wpa,bssid,ssid};bssid=toupper(substr($2,1,17));ssid="";signal="";rsn="-";wpa="-"}
 							/signal:/{signal=2*($2 + 100)}
 							/SSID:/{$1="";sub(/^ /,"",$0);ssid="\""$0"\""}
-							/WPA:/{wpa="-"}
-							/RSN:/{rsn="-"}
+							/WPA:/{wpa="+"}
+							/RSN:/{rsn="+"}
 							END{if(bssid!=""){if(ssid=="")ssid="unknown";printf "%s %s %s %s %s\n",signal,rsn,wpa,bssid,ssid}}' | "${trm_sortcmd}" -rn)")"
 						f_log "debug" "f_main-6  ::: radio: ${radio}, scan_device: ${scan_dev}, scan_mode: ${trm_scanmode:-"active"}, scan_cnt: $(printf "%s" "${scan_list}" | "${trm_grepcmd}" -c "^")"
 					fi
