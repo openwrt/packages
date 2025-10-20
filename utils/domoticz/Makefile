@@ -8,19 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=domoticz
-PKG_VERSION:=2023.2
-PKG_RELEASE:=2
+PKG_VERSION:=2025.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/domoticz/domoticz/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=32bcf49df8c80c470352e63004a82d9601b90ccf406096099656250a4515ac28
+PKG_HASH:=fd016f4ffe419e8d559bc0a7f9de5ec4fcaf485fc9d1464c8e8221102b13f589
 
 PKG_MAINTAINER:=David Woodhouse <dwmw2@infradead.org>
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=License.txt
 PKG_CPE_ID:=cpe:/a:domoticz:domoticz
 
-PKG_BUILD_DEPENDS:=python3 minizip cereal boost
+PKG_BUILD_DEPENDS:=python3 minizip cereal boost jwt-cpp
 PKG_BUILD_FLAGS:=no-mips16 lto
 
 include $(INCLUDE_DIR)/package.mk
@@ -65,6 +65,7 @@ CMAKE_OPTIONS += \
 	-DUSE_BUILTIN_JSONCPP=no \
 	-DUSE_BUILTIN_MINIZIP=no \
 	-DUSE_BUILTIN_LIBFMT=no \
+	-DUSE_BUILTIN_JWTCPP=no \
 	-DUSE_LUA_STATIC=no \
 	-DUSE_STATIC_BOOST=no \
 	-DUSE_STATIC_LIBSTDCXX=no \
