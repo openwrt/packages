@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=umurmur
 PKG_VERSION:=0.3.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/umurmur/umurmur/tar.gz/v$(PKG_VERSION)?
@@ -59,19 +59,20 @@ define Package/umurmur-mbedtls/description
 endef
 
 define Package/umurmur-openssl/conffiles
-/etc/umurmur.conf
+/etc/umurmur/umurmur.conf
 endef
 
 Package/umurmur-mbedtls/conffiles = $(Package/umurmur-openssl/conffiles)
 
 define Package/umurmur-openssl/install
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/umurmurd $(1)/usr/sbin/
-	$(INSTALL_DIR) $(1)/etc
-	$(INSTALL_CONF) $(PKG_BUILD_DIR)/openwrt/files/umurmur.conf $(1)/etc/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/umurmurd $(1)/usr/sbin/umurmurd
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/openwrt/files/umurmur.init $(1)/etc/init.d/umurmur
+	$(INSTALL_BIN) $(CURDIR)/files/umurmur.init $(1)/etc/init.d/umurmur
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_CONF) $(CURDIR)/files/umurmur.defaults $(1)/etc/uci-defaults/99-umurmur
 	$(INSTALL_DIR) $(1)/etc/umurmur
+	$(INSTALL_CONF) $(PKG_BUILD_DIR)/umurmur.conf.example $(1)/etc/umurmur/umurmur.conf
 endef
 
 Package/umurmur-mbedtls/install = $(Package/umurmur-openssl/install)

@@ -1,0 +1,13 @@
+if [ -f '/etc/umurmur.conf' ]; then
+  if [ -f '/etc/umurmur/umurmur.conf' ]; then
+    echo 'Both old and new config for umurmur detected.'
+    echo 'Will move: /etc/umurmur/umurmur.conf -> /etc/umurmur/umurmur.conf.old'
+    echo 'Will move: /etc/umurmur.conf -> /etc/umurmur/umurmur.conf'
+    mv /etc/umurmur/umurmur.conf{,.old}
+  fi
+  mv /etc/umurmur.conf /etc/umurmur/umurmur.conf
+fi
+
+chown -r umurmur:umurmur /etc/umurmur
+chmod -r 0660 /etc/umurmur
+chmod 770 /etc/umurmur
