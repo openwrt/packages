@@ -191,7 +191,7 @@ f_wifi() {
 		sleep "$((trm_maxwait / 6))"
 		timeout="$((timeout + (trm_maxwait / 6)))"
 	fi
-	f_log "debug" "f_wifi    ::: radio_list: ${trm_radiolist}, ssid_filter: ${trm_ssidfilter:-""}, radio: ${radio}, timeout: ${timeout}"
+	f_log "debug" "f_wifi    ::: radio_list: ${trm_radiolist}, ssid_filter: ${trm_ssidfilter:-"-"}, radio: ${radio}, timeout: ${timeout}"
 }
 
 # vpn helper function
@@ -571,7 +571,7 @@ f_addsta() {
 	for pattern in ${trm_ssidfilter}; do
 		case "${essid}" in
 			${pattern})
-				f_log "info" "skipping blacklisted open uplink '${radio}/${essid}'"
+				f_log "info" "open uplink filtered out '${radio}/${essid}/${pattern}'"
 				return 0
 				;;
 		esac
