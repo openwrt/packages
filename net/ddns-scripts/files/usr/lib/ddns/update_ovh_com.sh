@@ -12,7 +12,7 @@
 http_basic_encoding() {
 	local user="$1"
 	local password="$2"
-	echo "${user}:${password}" | openssl base64 
+	printf "${user}:${password}" | openssl base64 -in /dev/stdin
 }
 
 [ -z "$domain" ] && write_log 14 "Service section not configured correctly! Missing domain name as 'Domain'"
