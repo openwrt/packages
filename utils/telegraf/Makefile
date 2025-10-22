@@ -115,7 +115,8 @@ define Package/telegraf/install
 	$(call GoPackage/Package/Install/Bin,$(1))
 	$(INSTALL_DIR) $(1)/etc/init.d $(1)/etc/config
 	$(INSTALL_BIN) ./files/etc/init.d/telegraf $(1)/etc/init.d/telegraf
-	$(INSTALL_CONF) ./files/etc/telegraf.conf $(1)/etc/telegraf.conf
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/etc/uci-defaults/90-telegraf $(1)/etc/uci-defaults/90-telegraf
 endef
 
 define Package/telegraf-full/install
