@@ -5,11 +5,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bigclown-gateway
-PKG_VERSION:=1.16.2
-PKG_RELEASE:=3
+PKG_VERSION:=1.17.0
+PKG_RELEASE:=1
 
 PYPI_NAME:=bcg
-PKG_HASH:=ce7f27f372551c0beb3f8929af2d779417d9dcd0feaa2fa2dc49e87b1416c536
+PKG_HASH:=38a423952160e8cd468157af4a1fecec9f9c903de3309da277164ac14a421c58
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com> 
 PKG_LICENSE:=MIT
