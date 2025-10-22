@@ -105,10 +105,6 @@ endef
 
 Package/telegraf-full/conffiles = $(Package/telegraf/conffiles)
 
-define Build/Prepare
-	$(call Build/Prepare/Default)
-endef
-
 ifeq ($(BUILD_VARIANT),small)
 	GO_PKG_TAGS:=$(TELEGRAF_SMALL_PLUGINS)
 else
