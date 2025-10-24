@@ -1,0 +1,61 @@
+From b7f824f613a0da3e6cefc5dc558ff597eb6545b4 Mon Sep 17 00:00:00 2001
+From: Nick Wellnhofer <wellnhofer@aevum.de>
+Date: Thu, 21 Sep 2023 02:29:50 +0200
+Subject: [PATCH] build: Add missing includes
+
+---
+ libexslt/crypto.c    | 1 +
+ libexslt/date.c      | 1 +
+ libxslt/extensions.c | 2 ++
+ libxslt/xsltlocale.c | 1 +
+ tests/runtest.c      | 1 +
+ 5 files changed, 6 insertions(+)
+
+--- a/libexslt/crypto.c
++++ b/libexslt/crypto.c
+@@ -7,6 +7,7 @@
+ #include <libxml/parser.h>
+ #include <libxml/encoding.h>
+ #include <libxml/uri.h>
++#include <libxml/threads.h>
+ 
+ #include <libxslt/xsltutils.h>
+ #include <libxslt/xsltInternals.h>
+--- a/libexslt/date.c
++++ b/libexslt/date.c
+@@ -38,6 +38,7 @@
+ 
+ #include "exslt.h"
+ 
++#include <stdlib.h>
+ #include <string.h>
+ #include <limits.h>
+ #include <errno.h>
+--- a/libxslt/extensions.c
++++ b/libxslt/extensions.c
+@@ -12,6 +12,7 @@
+ #define IN_LIBXSLT
+ #include "libxslt.h"
+ 
++#include <stdlib.h>
+ #include <string.h>
+ #include <limits.h>
+ 
+@@ -26,6 +27,7 @@
+ #endif
+ #include <libxml/list.h>
+ #include <libxml/xmlIO.h>
++#include <libxml/threads.h>
+ #include "xslt.h"
+ #include "xsltInternals.h"
+ #include "xsltutils.h"
+--- a/libxslt/xsltlocale.c
++++ b/libxslt/xsltlocale.c
+@@ -15,6 +15,7 @@
+ 
+ #include <string.h>
+ #include <libxml/xmlmemory.h>
++#include <libxml/threads.h>
+ 
+ #include "xsltlocale.h"
+ #include "xsltutils.h"
