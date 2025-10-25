@@ -1,0 +1,37 @@
+From 5fcc15c913ce577ce61ff9fa1f8beffbf0107418 Mon Sep 17 00:00:00 2001
+From: Yu Pengda <yupengda@geedgenetworks.com>
+Date: Tue, 16 Sep 2025 11:46:23 +0800
+Subject: [PATCH] fix c23 new keyword `bool`
+
+---
+ lib/src/clixon_xpath_function.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+--- a/lib/src/clixon_xpath_function.c
++++ b/lib/src/clixon_xpath_function.c
+@@ -1262,7 +1262,7 @@ xp_function_boolean(xp_ctx            *x
+     int         retval = -1;
+     xp_ctx     *xr = NULL;
+     xp_ctx     *xr0 = NULL;
+-    int         bool;
++    int         flag;
+ 
+     if (xs == NULL || xs->xs_c0 == NULL){
+         clixon_err(OE_XML, EINVAL, "not expects but did not get one argument");
+@@ -1270,14 +1270,14 @@ xp_function_boolean(xp_ctx            *x
+     }
+     if (xp_eval(xc, xs->xs_c0, nsc, localonly, &xr0) < 0)
+         goto done;
+-    bool = ctx2boolean(xr0);
++    flag = ctx2boolean(xr0);
+     if ((xr = malloc(sizeof(*xr))) == NULL){
+         clixon_err(OE_UNIX, errno, "malloc");
+         goto done;
+     }
+     memset(xr, 0, sizeof(*xr));
+     xr->xc_type = XT_BOOL;
+-    xr->xc_bool = bool;
++    xr->xc_bool = flag;
+     *xrp = xr;
+     retval = 0;
+  done:
