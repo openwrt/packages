@@ -9,23 +9,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kea
-PKG_VERSION:=2.6.4
-PKG_RELEASE:=3
+PKG_VERSION:=3.0.1
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ftp.isc.org/isc/kea/$(PKG_VERSION)
-PKG_HASH:=6806405e4d559abc10febd2c273dc6e2bc6ac42767afa5ca20b118ffba84a671
+PKG_HASH:=ec84fec4bb7f6b9d15a82e755a571e9348eb4d6fbc62bb3f6f1296cd7a24c566
 
 PKG_MAINTAINER:=BangLang Huang <banglang.huang@foxmail.com>, Rosy Song <rosysong@rosinson.com>
 PKG_LICENSE:=MPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
-PKG_FIXUP:=autoreconf
-PKG_INSTALL:=1
-PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=gc-sections
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/meson.mk
 
 define Package/kea/Default
   SECTION:=net
@@ -190,24 +188,11 @@ endef
 
 ###### *************************************************************************
 
-CONFIGURE_ARGS += \
-	--enable-boost-headers-only \
-	--with-boost-include="$(STAGING_DIR)/usr" \
-	--with-log4cplus="$(STAGING_DIR)/usr" \
-	--with-openssl="$(STAGING_DIR)/usr" \
-	--without-pic \
-	$(if $(CONFIG_PACKAGE_kea-perfdhcp),--enable-perfdhcp,) \
-	$(if $(CONFIG_PACKAGE_kea-shell),--enable-shell,)
-
-CONFIGURE_VARS += \
-	cross_compiling="yes"
-
-TARGET_CXXFLAGS += \
-	$(FPIC) \
-	-std=c++17
-
-TARGET_LDFLAGS += \
-	-Wl,--as-needed
+MESON_ARGS += \
+	-Dkrb5=disabled \
+	-Dmysql=disabled \
+	-Dnetconf=disabled \
+	-Dpostgresql=disabled
 
 define Package/kea-libs/install
 	$(INSTALL_DIR) $(1)/usr/lib
