@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-uci
 PKG_VERSION:=0.10.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=pyuci
 PKG_HASH:=3b0f72ea81ed7a7999b2eb73f57a93019c0d359efaa9efb44fdf377fa09c1da6
