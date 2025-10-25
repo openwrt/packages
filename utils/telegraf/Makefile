@@ -3,12 +3,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=telegraf
-PKG_VERSION:=1.36.2
+PKG_VERSION:=1.36.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/influxdata/telegraf/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=f4d0f3c430a0a8a9f8888c6e6038f8ce58111c1f3bbf222799ed965df94afdca
+PKG_HASH:=bbf1ff269da3c55101d171fedae8f74b20a00b3e33823ac9eddbe248bf4fc76b
 
 PKG_MAINTAINER:=Niklas Thorild <niklas@thorild.se>
 PKG_LICENSE:=MIT
@@ -23,7 +23,7 @@ GO_PKG_BUILD_PKG:=github.com/influxdata/telegraf/cmd/telegraf
 GO_PKG_LDFLAGS_X := \
   github.com/influxdata/telegraf/internal.Version=$(PKG_VERSION) \
   github.com/influxdata/telegraf/internal.Branch=HEAD \
-  github.com/influxdata/telegraf/internal.Commit=8bdd0265
+  github.com/influxdata/telegraf/internal.Commit=70e4469a
 
 ifeq ($(CONFIG_mips)$(CONFIG_mipsel),y)
   TARGET_LDFLAGS += -static
@@ -105,10 +105,6 @@ endef
 
 Package/telegraf-full/conffiles = $(Package/telegraf/conffiles)
 
-define Build/Prepare
-	$(call Build/Prepare/Default)
-endef
-
 ifeq ($(BUILD_VARIANT),small)
 	GO_PKG_TAGS:=$(TELEGRAF_SMALL_PLUGINS)
 else
@@ -119,7 +115,8 @@ define Package/telegraf/install
 	$(call GoPackage/Package/Install/Bin,$(1))
 	$(INSTALL_DIR) $(1)/etc/init.d $(1)/etc/config
 	$(INSTALL_BIN) ./files/etc/init.d/telegraf $(1)/etc/init.d/telegraf
-	$(INSTALL_CONF) ./files/etc/telegraf.conf $(1)/etc/telegraf.conf
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/etc/uci-defaults/90-telegraf $(1)/etc/uci-defaults/90-telegraf
 endef
 
 define Package/telegraf-full/install
