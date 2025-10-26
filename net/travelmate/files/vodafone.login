@@ -19,6 +19,13 @@ trm_captiveurl="$(uci_get travelmate global trm_captiveurl "http://detectportal.
 trm_maxwait="$(uci_get travelmate global trm_maxwait "30")"
 trm_fetch="$(command -v curl)"
 
+# add trm_iface as a source of all fetch calls.
+trm_iface="$(uci_get travelmate global trm_iface "")"
+if [ "${trm_iface}" != "" ]; then
+	trm_device="$(ifstatus "${trm_iface}" | jsonfilter -q -l1 -e '@.device')"
+	[ "${trm_device}" != "" ] && trm_fetch="${trm_fetch} --interface ${trm_device} "
+fi
+
 # get sid
 #
 redirect_url="$(${trm_fetch} --user-agent "${trm_useragent}" --referer "http://www.example.com" --connect-timeout $((trm_maxwait / 6)) --write-out "%{redirect_url}" --silent --show-error --output /dev/null "${trm_captiveurl}")"
@@ -27,25 +34,26 @@ sid="$(printf "%s" "${redirect_url}" 2>/dev/null | awk 'BEGIN{FS="[=&]"}{printf 
 
 # get session
 #
-raw_html="$("${trm_fetch}" --user-agent "${trm_useragent}" --referer "http://${trm_domain}/portal/?sid=${sid}" --silent --connect-timeout $((trm_maxwait / 6)) "https://${trm_domain}/api/v4/session?sid=${sid}")"
+raw_html="$( ${trm_fetch} --user-agent "${trm_useragent}" --referer "${redirect_url}" --silent --connect-timeout $((trm_maxwait / 6)) "https://${trm_domain}/api/v4/session?sid=${sid}")"
+
 session="$(printf "%s" "${raw_html}" 2>/dev/null | jsonfilter -q -l1 -e '@.session')"
 [ -z "${session}" ] && exit 2
 
 ids="$(printf "%s" "${raw_html}" 2>/dev/null | jsonfilter -q -e '@.loginProfiles[*].id' | sort -n | awk '{ORS=" ";print $0}')"
 for id in ${ids}; do
 	if [ "${id}" = "4" ]; then
-		login_id="4"
+		login_id="${id}"
 		access_type="csc-community"
-		account_type="csc"
+		account_type="wifi" # "csc"
 		break
 	fi
 done
 [ -z "${login_id}" ] && exit 3
 
 # final login request
-#
 if [ "${login_id}" = "4" ] && [ -n "${username}" ] && [ -n "${password}" ]; then
-	raw_html="$("${trm_fetch}" --user-agent "${trm_useragent}" --referer "http://${trm_domain}/portal/?sid=${sid}" --silent --connect-timeout $((trm_maxwait / 6)) --data "loginProfile=${login_id}&accessType=${access_type}&accountType=${account_type}&password=${password}&session=${session}&username=${username}" "https://${trm_domain}/api/v4/login?sid=${sid}")"
+	raw_html="$( ${trm_fetch} --user-agent "${trm_useragent}" --referer "https://${trm_domain}/portal/?sid=${sid}" --silent --connect-timeout $((trm_maxwait / 6)) --data "loginProfile=${login_id}&accessType=${access_type}&accountType=${account_type}&password=${password}&session=${session}&username=${username}&acceptTerms=true" "https://${trm_domain}/api/v5/login?sid=${sid}")"
 fi
+
 success="$(printf "%s" "${raw_html}" 2>/dev/null | jsonfilter -q -l1 -e '@.success')"
 [ "${success}" = "true" ] && exit 0 || exit 255

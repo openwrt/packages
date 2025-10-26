@@ -47,6 +47,13 @@ trm_captiveurl="$(uci_get travelmate global trm_captiveurl "http://detectportal.
 trm_maxwait="$(uci_get travelmate global trm_maxwait "30")"
 trm_fetch="$(command -v curl) --connect-timeout $((trm_maxwait / 6)) --silent"
 
+# add trm_iface as a source of all fetch calls.
+trm_iface="$(uci_get travelmate global trm_iface "")"
+if [ "${trm_iface}" != "" ]; then
+	trm_device="$(ifstatus "${trm_iface}" | jsonfilter -q -l1 -e '@.device')"
+	[ "${trm_device}" != "" ] && trm_fetch="${trm_fetch} --interface ${trm_device} "
+fi
+
 raw_html="$(${trm_fetch} --show-error "${trm_captiveurl}")"
 
 if [ $? -ne 0 ];

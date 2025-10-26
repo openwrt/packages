@@ -641,9 +641,16 @@ f_addsta() {
 # check net status
 #
 f_net() {
-	local err_msg raw json_raw html_raw html_cp js_cp json_ec json_rc json_cp json_ed result="net nok"
+	local err_msg raw json_raw html_raw html_cp js_cp json_ec json_rc json_cp json_ed result="net nok" fetchcmd device
 
-	raw="$("${trm_fetchcmd}" --user-agent "${trm_useragent}" --referer "http://www.example.com" --header "Cache-Control: no-cache, no-store, must-revalidate, max-age=0" --write-out "%{json}" --silent --retry $((trm_maxwait / 6)) --max-time $((trm_maxwait / 6)) "${trm_captiveurl}")"
+	fetchcmd=${trm_fetchcmd}
+	if [ "${trm_iface}" != "" ]; then
+		device="$(ifstatus "${trm_iface}" | ${trm_jsoncmd} -q -l1 -e '@.device')"
+		[ "${device}" != "" ] && fetchcmd="${fetchcmd} --interface ${device} "
+	fi
+
+	raw="$( ${fetchcmd} --user-agent "${trm_useragent}" --referer "http://www.example.com" --header "Cache-Control: no-cache, no-store, must-revalidate, max-age=0" --write-out "%{json}" --silent --retry $((trm_maxwait / 6)) --max-time $((trm_maxwait / 6)) "${trm_captiveurl}")"
+
 	json_raw="${raw#*\{}"
 	html_raw="${raw%%\{*}"
 	if [ -n "${json_raw}" ]; then

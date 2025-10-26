@@ -23,14 +23,21 @@ trm_useragent="$(uci_get travelmate global trm_useragent "Mozilla/5.0 (Linux x86
 trm_maxwait="$(uci_get travelmate global trm_maxwait "30")"
 trm_fetch="$(command -v curl)"
 
+# add trm_iface as a source of all fetch calls.
+trm_iface="$(uci_get travelmate global trm_iface "")"
+if [ "${trm_iface}" != "" ]; then
+	trm_device="$(ifstatus "${trm_iface}" | jsonfilter -q -l1 -e '@.device')"
+	[ "${trm_device}" != "" ] && trm_fetch="${trm_fetch} --interface ${trm_device} "
+fi
+
 # get security token
 #
-"${trm_fetch}" --user-agent "${trm_useragent}" --referer "http://www.example.com" --connect-timeout $((trm_maxwait / 6)) --cookie-jar "/tmp/${trm_domain}.cookie" --silent --show-error --output /dev/null "https://${trm_domain}/en/"
+${trm_fetch} --user-agent "${trm_useragent}" --referer "http://www.example.com" --connect-timeout $((trm_maxwait / 6)) --cookie-jar "/tmp/${trm_domain}.cookie" --silent --show-error --output /dev/null "https://${trm_domain}/en/"
 sec_token="$(awk '/csrf/{print $7}' "/tmp/${trm_domain}.cookie" 2>/dev/null)"
 rm -f "/tmp/${trm_domain}.cookie"
 [ -z "${sec_token}" ] && exit 2
 
 # final post request
 #
-raw_html="$("${trm_fetch}" --user-agent "${trm_useragent}" --connect-timeout $((trm_maxwait / 6)) --header "Cookie: csrf=${sec_token}" --data "login=true&CSRFToken=${sec_token}" --silent --show-error "https://${trm_domain}/en/")"
+raw_html="$( ${trm_fetch} --user-agent "${trm_useragent}" --connect-timeout $((trm_maxwait / 6)) --header "Cookie: csrf=${sec_token}" --data "login=true&CSRFToken=${sec_token}" --silent --show-error "https://${trm_domain}/en/")"
 [ -z "${raw_html}" ] && exit 0 || exit 255
