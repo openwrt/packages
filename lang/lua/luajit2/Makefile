@@ -3,7 +3,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=luajit2
 PKG_SOURCE_DATE:=2025-10-30
 PKG_VERSION:=2.1.$(subst -,.,$(PKG_SOURCE_DATE))
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/openresty/luajit2
