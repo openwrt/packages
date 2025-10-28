@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=go2rtc
-PKG_VERSION:=1.9.9
+PKG_VERSION:=1.9.11
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/AlexxIT/go2rtc/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=0afb5a9f0cdbd696193288197cfb5ebf44d085f631e7326cc0465026fe3b9196
+PKG_HASH:=678ef106fd794a63587f6d55673ac138dde9ad79d96398a1bc8a13836058143b
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
@@ -37,6 +37,7 @@ endef
 
 define Package/go2rtc/conffiles
 /etc/go2rtc.yaml
+/etc/config/go2rtc
 endef
 
 define Package/go2rtc/install
@@ -46,6 +47,10 @@ define Package/go2rtc/install
 	$(INSTALL_CONF) $(CURDIR)/files/go2rtc.yaml $(1)/etc/go2rtc.yaml
 	$(INSTALL_DIR) $(1)/etc/init.d/
 	$(INSTALL_BIN) $(CURDIR)/files/go2rtc.init $(1)/etc/init.d/go2rtc
+	$(INSTALL_DIR) $(1)/etc/capabilities/
+	$(INSTALL_DATA) $(CURDIR)/files/go2rtc.json $(1)/etc/capabilities/go2rtc.json
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) $(CURDIR)/files/go2rtc.conf $(1)/etc/config/go2rtc
 endef
 
 $(eval $(call BuildPackage,go2rtc))
