@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=syslog-ng
 PKG_VERSION:=4.10.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=LGPL-2.1-or-later GPL-2.0-or-later
@@ -34,7 +34,7 @@ define Package/syslog-ng
   CATEGORY:=Administration
   TITLE:=A powerful syslog daemon
   URL:=https://www.syslog-ng.com/products/open-source-log-management/
-  DEPENDS:=+libpcre2 +glib2 +libopenssl +libpthread +librt +libdbi +libjson-c +libcurl +libuuid +SYSLOGNG_LOGROTATE:logrotate +LIBCURL_ZLIB:zlib
+  DEPENDS:=+libpcre2 +glib2 +libopenssl +libpthread +librt +libdbi +libjson-c +libcurl +libuuid +ivykis +SYSLOGNG_LOGROTATE:logrotate +LIBCURL_ZLIB:zlib
   ALTERNATIVES:=300:/sbin/logread:/usr/libexec/logread.sh
 endef
 
@@ -91,6 +91,7 @@ CONFIGURE_ARGS +=  \
 	--disable-sql \
 	--disable-linux-caps \
 	--with-jsonc=system \
+	--with-ivykis=system \
 	--enable-cpp=no \
 	--disable-example-modules \
 	--enable-json=yes \
