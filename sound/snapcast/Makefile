@@ -19,9 +19,10 @@ PKG_CPE_ID:=cpe:/a:badaix:snapcast
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
-CMAKE_OPTIONS += -DBUILD_TESTS=OFF
-CMAKE_OPTIONS += -DBUILD_WITH_PULSE=OFF
-CMAKE_OPTIONS += -DBUILD_WITH_AVAHI=OFF
+CMAKE_OPTIONS += \
+	-DBUILD_TESTS=OFF \
+	-DBUILD_WITH_AVAHI=OFF \
+	-DBUILD_WITH_PULSE=OFF
 
 define Package/snapcast/Default
   SECTION:=sound
