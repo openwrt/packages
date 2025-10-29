@@ -40,6 +40,7 @@ define Package/chrony
 $(call Package/chrony/Default)
   TITLE+= (without NTS)
   VARIANT:=normal
+  DEFAULT_VARIANT:=1
   CONFLICTS:=chrony-nts
 endef
 
@@ -48,6 +49,7 @@ $(call Package/chrony/Default)
   TITLE+= (with NTS)
   DEPENDS+= +PACKAGE_chrony-nts:libgnutls +PACKAGE_chrony-nts:ca-bundle
   VARIANT:=with-nts
+  PROVIDES:=chrony
 endef
 
 define Package/chrony/description
