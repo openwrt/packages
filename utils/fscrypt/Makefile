@@ -50,6 +50,7 @@ endef
 
 define Package/fscrypt/conffiles
 /etc/fscrypt.conf
+/.fscrypt/
 endef
 
 $(eval $(call GoBinPackage,fscrypt))
