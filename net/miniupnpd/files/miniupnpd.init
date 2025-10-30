@@ -90,6 +90,7 @@ upnpd() {
 	config_get clean_ruleset_threshold config clean_ruleset_threshold
 	config_get clean_ruleset_interval config clean_ruleset_interval
 	config_get ipv6_disable config ipv6_disable 0
+	config_get force config force 0
 
 	local conf ifname ifname6
 
@@ -140,10 +141,11 @@ upnpd() {
 		upnpd_write_bool secure_mode 1
 		upnpd_write_bool system_uptime 1
 		upnpd_write_bool igdv1 0 force_igd_desc_v1
-		upnpd_write_bool use_stun 0 ext_perform_stun
+		upnpd_write_bool force 0 ext_allow_private_ipv4
 		upnpd_write_bool ipv6_disable $ipv6_disable
 
 		[ "$use_stun" -eq 0 ] || {
+			[ "$force" -eq 0 ] && echo "ext_perform_stun=yes" || echo "ext_perform_stun=allow-filtered"
 			[ -n "$stun_host" ] && echo "ext_stun_host=$stun_host"
 			[ -n "$stun_port" ] && echo "ext_stun_port=$stun_port"
 		}
