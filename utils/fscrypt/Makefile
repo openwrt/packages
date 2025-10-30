@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fscrypt
 PKG_VERSION:=0.3.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/google/fscrypt/tar.gz/v$(PKG_VERSION)?
@@ -50,6 +50,7 @@ endef
 
 define Package/fscrypt/conffiles
 /etc/fscrypt.conf
+/.fscrypt/
 endef
 
 $(eval $(call GoBinPackage,fscrypt))
