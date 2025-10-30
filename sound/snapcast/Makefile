@@ -3,13 +3,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=snapcast
-PKG_VERSION:=0.28.0
-PKG_RELEASE:=2
+PKG_VERSION:=0.34.0
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/badaix/snapcast.git
+PKG_SOURCE_URL:=https://github.com/snapcast/snapcast.git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_MIRROR_HASH=288325fc8b134502adb522711c18210794734675684cf5d8eba8a0a82778f6c9
+PKG_MIRROR_HASH=b47c44e208708cbfd6fb89b5874ed05ffa165b959904ccc11b03073bf9b55b0a
 
 PKG_MAINTAINER:=Szabolcs Hubai <szab.hu@gmail.com>, David Andreoletti <david@andreoletti.net>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -23,14 +23,18 @@ CMAKE_OPTIONS += \
 	-DBUILD_TESTS=OFF \
 	-DBUILD_WITH_ALSA=ON \
 	-DBUILD_WITH_AVAHI=OFF \
-	-DBUILD_WITH_PULSE=OFF
+	-DBUILD_WITH_JACK=OFF \
+	-DBUILD_WITH_PIPEWIRE=OFF \
+	-DBUILD_WITH_PULSE=OFF \
+	-DBUILD_WITH_SSL=OFF \
+	-DBUILD_WITH_TREMOR=ON
 
 define Package/snapcast/Default
   SECTION:=sound
   CATEGORY:=Sound
   TITLE:=Synchronous multiroom audio player
   DEPENDS:=+alsa-lib +libexpat +libatomic +libogg +libflac +libopus +boost +libsoxr
-  URL:=https://github.com/badaix/snapcast
+  URL:=https://github.com/snapcast/snapcast
 endef
 
 define Package/snapcast/Default/description
