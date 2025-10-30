@@ -68,9 +68,9 @@ define Package/umurmur-openssl/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/umurmurd $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/umurmur/
-	$(INSTALL_CONF) $(PKG_BUILD_DIR)/openwrt/files/umurmur.conf $(1)/etc/umurmur/
+	$(INSTALL_CONF) $(PKG_BUILD_DIR)/umurmur.conf.example $(1)/etc/umurmur/umurmur.conf
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/openwrt/files/umurmur.init $(1)/etc/init.d/umurmur
+	$(INSTALL_BIN) ./files/umurmur.init $(1)/etc/init.d/umurmur
 endef
 
 Package/umurmur-mbedtls/install = $(Package/umurmur-openssl/install)
