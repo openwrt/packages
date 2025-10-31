@@ -10,6 +10,30 @@ START=19
 # stops before networking stops
 STOP=89
 
+config_cb() {
+	[ $# -eq 0 ] && return
+
+	option_cb() {
+		local option="$1"
+		local value="$2"
+
+		case $option in
+
+		# Support old option names
+		config)
+			option='config_file'
+			;;
+
+		workdir)
+			option='work_dir'
+			;;
+
+		esac
+
+		eval $option="$value"
+	}
+}
+
 boot() {
 	ADGUARDHOME_BOOT=1
 	start "$@"
@@ -21,27 +45,19 @@ start_service() {
 		return 0
 	fi
 
-	local config_file
-	local group
-	local pid_file
-	local user
-	local verbose
-	local work_dir
+	local config_file='/etc/adguardhome/adguardhome.yaml'
+	local group='adguardhome'
+	local user='adguardhome'
+	local verbose=0
+	local work_dir='/var/lib/adguardhome'
 
-	config_load adguardhome
-	config_get config_file config config "/etc/adguardhome/adguardhome.yaml"
-	config_get work_dir config workdir "/var/lib/adguardhome"
-	config_get pid_file config pidfile "/run/adguardhome.pid"
-	config_get_bool verbose config verbose
-
-	config_get user config user adguardhome
-	config_get group config group adguardhome
+	config_load 'adguardhome'
 
 	local config_dir
 	config_dir=$(dirname "$config_file")
 	if [ "$config_dir" = '/etc' ]; then
 		echo "AdGuard Home config must be stored in its own directory, and not in /etc" >&2
-		exit 1
+		return 1
 	fi
 	mkdir -m 0700 -p "$config_dir"
 	chown -R "$user":"$group" "$config_dir"
@@ -53,12 +69,12 @@ start_service() {
 
 	procd_set_param command "$PROG"
 	procd_append_param command --config "$config_file"
-	procd_append_param command --work-dir "$work_dir"
 	procd_append_param command --logfile syslog
 	procd_append_param command --no-check-update
-	[ "$verbose" = 1 ] && procd_append_param command --verbose
+	[ "$verbose" = 1 ] && \
+		procd_append_param command --verbose
+	procd_append_param command --work-dir "$work_dir"
 
-	procd_set_param pidfile "$pid_file"
 	procd_set_param stdout 1
 	procd_set_param stderr 1
 	procd_set_param user "$user"
