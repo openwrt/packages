@@ -21,6 +21,10 @@ config_cb() {
 			option='log_file'
 			;;
 
+		macprocs)
+			option='maxprocs'
+			;;
+
 		esac
 
 		eval $option="$value"
@@ -44,7 +48,7 @@ start_service() {
 	local log_level='INFO'
 	local log_max_old_files=7
 	local log_max_size=1048576
-	local macprocs=0
+	local maxprocs=0
 	local nice=0
 	local user='syncthing'
 
@@ -58,16 +62,16 @@ start_service() {
 	# A separate step to handle an upgrade use case
 	[ -d "$home" ] && chown -R $user:$group "$home"
 
-	# Changes to "niceness"/macprocs are not picked up either by reload_config
+	# Changes to "niceness"/maxprocs are not picked up either by reload_config
 	# or by restart: the service has to be stopped/started for it to take effect
-	if [ $macprocs -le 0 ]; then
+	if [ $maxprocs -le 0 ]; then
 		# Default to the number of cores in this case
-		macprocs=$(grep -c ^processor /proc/cpuinfo)
+		maxprocs=$(grep -c ^processor /proc/cpuinfo)
 	fi
 
 	procd_open_instance
 	procd_set_param command "$PROG"
-	procd_set_param env GOMAXPROCS="$macprocs"
+	procd_set_param env GOMAXPROCS="$maxprocs"
 	procd_append_param command serve
 	[ -z "$db_delete_retention_interval" ] || \
 		procd_append_param command --db-delete-retention-interval="$db_delete_retention_interval"
