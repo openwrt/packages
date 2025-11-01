@@ -54,7 +54,7 @@ start_service() {
 
 	[ "$enabled" -gt 0 ] || return 0
 
-	[ -d "$home" ] || mkdir -p "$home"
+	mkdir -p "$home"
 	# A separate step to handle an upgrade use case
 	[ -d "$home" ] && chown -R $user:$group "$home"
 
@@ -69,15 +69,21 @@ start_service() {
 	procd_set_param command "$PROG"
 	procd_set_param env GOMAXPROCS="$macprocs"
 	procd_append_param command serve
-	[ -z "$db_delete_retention_interval" ] || procd_append_param command --db-delete-retention-interval="$db_delete_retention_interval"
-	[ -z "$db_maintenance_interval" ] || procd_append_param command --db-maintenance-interval="$db_maintenance_interval"
+	[ -z "$db_delete_retention_interval" ] || \
+		procd_append_param command --db-delete-retention-interval="$db_delete_retention_interval"
+	[ -z "$db_maintenance_interval" ] || \
+		procd_append_param command --db-maintenance-interval="$db_maintenance_interval"
 	procd_append_param command --gui-address="$gui_address"
-	[ -z "$gui_apikey" ] || procd_append_param command --gui_apikey="$gui_apikey"
+	[ -z "$gui_apikey" ] || \
+		procd_append_param command --gui_apikey="$gui_apikey"
 	procd_append_param command --home="$home"
 	procd_append_param command --log-file="$log_file"
-	[ -z "$log_level" ] || procd_append_param command --log-level="$log_level"
-	[ -z "$log_max_old_files" ] || procd_append_param command --log-max-old-files="$log_max_old_files"
-	[ -z "$log_max_size" ] || procd_append_param command --log-max-size="$log_max_size"
+	[ -z "$log_level" ] || \
+		procd_append_param command --log-level="$log_level"
+	[ -z "$log_max_old_files" ] || \
+		procd_append_param command --log-max-old-files="$log_max_old_files"
+	[ -z "$log_max_size" ] || \
+		procd_append_param command --log-max-size="$log_max_size"
 	procd_append_param command --no-browser
 	procd_append_param command --no-port-probing
 	procd_append_param command --no-restart
