@@ -550,8 +550,7 @@ config_remote() {
 	[ -n "$pools" ] && swanctl_xappend2 "pools = $pools"
 
 	local local_auth_method="$auth_method"
-	[ "$auth_method" = "eap-mschapv2" ] && local_auth_method="pubkey"
-	[ "$auth_method" = "eap-tls" ] && local_auth_method="pubkey"
+	[ "$auth_method" = "eap-mschapv2" ] || [ "$auth_method" = "eap-tls" ] && local_auth_method="pubkey"
 
 	swanctl_xappend2 "local {"
 	swanctl_xappend3 "auth = $local_auth_method"
@@ -565,8 +564,7 @@ config_remote() {
 	swanctl_xappend3 "auth = $auth_method"
 	[ -n "$remote_identifier" ] && swanctl_xappend3 "id = \"$remote_identifier\""
 	[ -n "$remote_ca_certs" ] && swanctl_xappend3 "cacerts = \"$remote_ca_certs\""
-	[ "$auth_method" = eap-mschapv2 ] && swanctl_xappend3 "eap_id = $eap_id"
-	[ "$auth_method" = eap-tls ] && swanctl_xappend3 "eap_id = $eap_id"
+	[ "$auth_method" = "eap-mschapv2" ] || [ "$auth_method" = "eap-tls" ] && swanctl_xappend3 "eap_id = $eap_id"
 	swanctl_xappend2 "}"
 
 	swanctl_xappend2 "children {"
