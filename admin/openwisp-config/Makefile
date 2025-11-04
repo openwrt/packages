@@ -5,14 +5,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openwisp-config
-PKG_VERSION:=1.1.0
-PKG_RELEASE:=2
+PKG_VERSION:=1.2.0
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Federico Capoano <f.capoano@openwisp.io>
 PKG_LICENSE:=GPL-3.0-or-later
 
 PKG_SOURCE_URL:=https://github.com/openwisp/openwisp-config.git
-PKG_MIRROR_HASH:=c78dc17353c642a6f998531f18e20f0651f946d665506a000308e77c02324a79
+PKG_MIRROR_HASH:=30258c3ef4895fbf6e4fed8caee9d0dfbf05aebebd52604d75febac1a11d78bd
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
 
@@ -47,7 +47,8 @@ define Package/openwisp-config/install
 		$(1)/etc/init.d \
 		$(1)/etc/config \
 		$(1)/usr/lib/openwisp-config \
-		$(1)/usr/lib/lua/openwisp
+		$(1)/usr/lib/lua/openwisp \
+		$(1)/etc/hotplug.d/iface
 
 	$(INSTALL_BIN) \
 		$(PKG_BUILD_DIR)/openwisp-config/files/openwisp.agent \
@@ -59,6 +60,9 @@ define Package/openwisp-config/install
 
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/openwisp-config/files/openwisp.config \
 		$(1)/etc/config/openwisp
+
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/openwisp-config/files/openwisp.hotplug \
+		$(1)/etc/hotplug.d/iface/90-openwisp-config
 
 	$(INSTALL_BIN) \
 		$(PKG_BUILD_DIR)/openwisp-config/files/sbin/openwisp-reload-config \
