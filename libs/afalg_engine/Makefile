@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=afalg_engine
-PKG_VERSION:=1.2.1
+PKG_VERSION:=1.2.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/cotequeiroz/afalg_engine/archive/v$(PKG_VERSION)
-PKG_HASH:=3f0f6ee9ea7a5ea9c668ec16f8c492aa024a82dca78d0fbe30fd256f9da95d65
+PKG_HASH:=6fe451cf37b0c9911445e46bfe96926aad5dc486c9cb81ecf7b87bb3ffff1c1a
 
 PKG_MAINTAINER:=Eneas U de Queiroz <cotequeiroz@gmail.com>
 PKG_LICENSE:=Apache-2.0
@@ -26,6 +26,8 @@ PKG_CONFIG_DEPENDS:= \
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 include $(INCLUDE_DIR)/openssl-module.mk
+
+TARGET_CFLAGS += -Wno-deprecated-declarations
 
 $(eval $(call Package/openssl/add-engine,afalg,libopenssl-afalg_sync))
 define Package/libopenssl-afalg_sync
