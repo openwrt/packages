@@ -1,3 +1,11 @@
+# https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/do-more-with-tunnels/local-management/configuration-file/
+
+# NOTICE
+# Cloudflare recommends setting up a remotely-managed tunnel.
+# Remotely-managed configurations are stored on Cloudflare,
+# which allows you to manage the tunnel from any machine
+# using the dashboard, API, or Terraform.
+
 #tunnel: <Tunnel-UUID>
 #credentials-file: /etc/cloudflared/<Tunnel-UUID>.json
 #
