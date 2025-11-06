@@ -1,0 +1,23 @@
+From e5a43c4657c0e9720cb345c69cb92d6576527db5 Mon Sep 17 00:00:00 2001
+From: Andrew Sim <andrewsimz@gmail.com>
+Date: Thu, 6 Nov 2025 18:30:19 +0100
+Subject: [PATCH] libid3tag: require cmake >= 3.10 due to removed legacy
+ support
+
+Signed-off-by: Andrew Sim <andrewsimz@gmail.com>
+---
+ libs/libid3tag/patches/001-cmake-version.patch | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+ create mode 100644 libs/libid3tag/patches/001-cmake-version.patch
+
+--- /dev/null
++++ b/libs/libid3tag/patches/001-cmake-version.patch
+@@ -0,0 +1,8 @@
++--- a/CMakeLists.txt
+++++ b/CMakeLists.txt
++@@ -1,4 +1,4 @@
++-cmake_minimum_required(VERSION 3.1.0)
+++cmake_minimum_required(VERSION 3.10)
++ project(id3tag VERSION 0.16.3)
++ 
++ option(BUILD_SHARED_LIBS "Build dynamic library" ON)
