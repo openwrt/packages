@@ -76,9 +76,8 @@ status_service() {
 }
 
 scan() {
-	local scan_dev scan_mode radio_num radio_phy radio="${1}"
+	local result scan_dev scan_mode radio_num radio_phy radio="${1}"
 
-	: > "${trm_scanfile}"
 	scan_dev="$(ubus -S call network.wireless status 2>/dev/null | jsonfilter -ql1 -e "@.${radio}.interfaces[0].ifname")"
 	if [ -z "${scan_dev}" ]; then
 		radio_num="${radio//[a-z]/}"
@@ -95,16 +94,19 @@ scan() {
 	if [ -n "${scan_dev}" ]; then
 		scan_mode="$(uci_get travelmate global trm_scanmode "active")"
 		[ "${scan_mode}" != "passive" ] && scan_mode=""
-		printf "%b\n" "$(iw "${scan_dev}" scan ${scan_mode} 2>/dev/null |
+		result="$(iw dev "${scan_dev}" scan ${scan_mode} 2>/dev/null |
 			awk '/^BSS /{if(bssid!=""){if(ssid=="")ssid="unknown";printf "%3s %3s %17s %s %s %10s %30s %s\n",signal,channel,bssid,rsn,wpa,cipher,auth,ssid};signal="";channel="";rsn="-";wpa="-";cipher="-";auth="-";bssid=toupper(substr($2,1,17))}
-			/signal:/{signal=2*($2 + 100)}
+			/signal:/{signal=(2*($2+100)>100 ? 100 : 2*($2+100))}
 			/SSID:/{$1="";sub(/^ /,"",$0);ssid=$0}
 			/freq:/{channel=int($2);if(channel>=2400&&channel<=2500)channel=int((channel-2407)/5);else if(channel>=4900&&channel<=5900)channel=int((channel-5000)/5);else if(channel>=5925&&channel<=7125)channel=int(((channel-5950)/5)+1)}
 			/WPA:/{wpa="+"}
 			/RSN:/{rsn="+"}
 			/Group cipher:/{cipher=$4}
 			/Authentication suites:/{auth="";for(i=4;i<=NF;i++){auth=auth (i==4?"":",")$i}}
-			END{if(bssid!=""){if(ssid=="")ssid="unknown";printf "%3s %3s %17s %s %s %10s %30s %s\n",signal,channel,bssid,rsn,wpa,cipher,auth,ssid}}' | sort -rn)" > "${trm_scanfile}"
+			END{if(bssid!=""){if(ssid=="")ssid="unknown";printf "%3s %3s %17s %s %s %10s %30s %s\n",signal,channel,bssid,rsn,wpa,cipher,auth,ssid}}' | sort -rn)"
+		printf "%b\n" "${result}" > "${trm_scanfile}"
+	else
+		: > "${trm_scanfile}"
 	fi
 	if [ -n "${radio_phy}" ] && [ -n "${radio_num}" ]; then
 		ip link set "trmscan${radio_num}" down >/dev/null 2>&1
