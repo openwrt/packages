@@ -84,6 +84,7 @@ start_service() {
 	procd_set_param group "$group"
 	procd_set_param capabilities /etc/capabilities/adguardhome.json
 	procd_set_param no_new_privs 1
+	procd_set_param respawn
 
 	# log is needed for logging to syslog instead of stdout
 	# procfs is needed to readlink /proc/self/exe
