@@ -5,11 +5,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-maturin
-PKG_VERSION:=1.3.0
+PKG_VERSION:=1.9.6
 PKG_RELEASE:=1
 
 PYPI_NAME:=maturin
-PKG_HASH:=f6c69bc7ae147a5effd55587447b35cab1ceb726ba244d08698bc7518b8688ac
+PKG_HASH:=2c2ae37144811d365509889ed7220b0598487f1278c2441829c3abf56cc6324a
 
 PKG_MAINTAINER:=Luca Barbato <lu_zero@luminem.org>
 PKG_LICENSE:=Apache-2.0 MIT
@@ -17,6 +17,7 @@ PKG_LICENSE_FILES:=license-apache license-mit
 
 HOST_BUILD_DEPENDS:= \
 	python3/host \
+	python-setuptools/host \
 	python-build/host \
 	python-installer/host \
 	python-wheel/host \
