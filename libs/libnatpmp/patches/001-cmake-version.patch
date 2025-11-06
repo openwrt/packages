@@ -1,0 +1,24 @@
+From b9e4705b71c92eb7b918d085e4db436e25ef122d Mon Sep 17 00:00:00 2001
+From: Andrew Sim <andrewsimz@gmail.com>
+Date: Thu, 6 Nov 2025 18:27:22 +0100
+Subject: [PATCH] libnatpmp: require cmake >= 3.10 due to removed legacy
+ support
+
+Signed-off-by: Andrew Sim <andrewsimz@gmail.com>
+---
+ libs/libnatpmp/patches/001-cmake-version.patch | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+ create mode 100644 libs/libnatpmp/patches/001-cmake-version.patch
+
+--- /dev/null
++++ b/libs/libnatpmp/patches/001-cmake-version.patch
+@@ -0,0 +1,9 @@
++--- /CMakeLists.txt
+++++ /CMakeLists.txt
++@@ -1,4 +1,4 @@
++-cmake_minimum_required(VERSION 2.8.12)
+++cmake_minimum_required(VERSION 3.10)
++ 
++ if(POLICY CMP0048)
++ 	cmake_policy(SET CMP0048 NEW)
++
