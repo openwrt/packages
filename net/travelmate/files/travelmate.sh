@@ -989,9 +989,9 @@ f_main() {
 					fi
 					if [ -n "${scan_dev}" ]; then
 						[ "${trm_scanmode}" != "passive" ] && scan_mode=""
-						scan_list="$(printf "%b" "$("${trm_iwcmd}" "${scan_dev}" scan ${scan_mode} 2>/dev/null |
+						scan_list="$(printf "%b" "$("${trm_iwcmd}" dev "${scan_dev}" scan ${scan_mode} 2>/dev/null |
 							"${trm_awkcmd}" '/^BSS /{if(bssid!=""){if(ssid=="")ssid="unknown";printf "%s %s %s %s %s\n",signal,rsn,wpa,bssid,ssid};bssid=toupper(substr($2,1,17));ssid="";signal="";rsn="-";wpa="-"}
-							/signal:/{signal=2*($2 + 100)}
+							/signal:/{signal=(2*($2+100)>100 ? 100 : 2*($2+100))}
 							/SSID:/{$1="";sub(/^ /,"",$0);ssid="\""$0"\""}
 							/WPA:/{wpa="+"}
 							/RSN:/{rsn="+"}
