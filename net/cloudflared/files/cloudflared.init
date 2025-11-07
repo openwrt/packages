@@ -28,16 +28,6 @@ start_service() {
 	procd_append_param command "--no-autoupdate"
 	procd_append_param command "run"
 
-	config_get token "config" "token"
-	if [ -n "$token" ]; then
-		# Remotely-managed tunnel (recommended by Cloudflare)
-		procd_append_param command "--token" "$token"
-	else
-		# Locally-managed tunnels
-		append_param_arg "config" "/etc/cloudflared/config.yml"
-		append_param_arg "origincert" "/etc/cloudflared/cert.pem"
-	fi
-
 	append_param_arg "edge_bind_address"
 	append_param_arg "edge_ip_version"
 	append_param_arg "grace_period"
@@ -48,6 +38,20 @@ start_service() {
 	append_param_arg "metrics"
 	append_param_arg "loglevel"
 	append_param_arg "logfile"
+
+	config_get token "config" "token"
+	if [ -z "$token" ]; then
+		# Locally-managed tunnels
+		append_param_arg "config" "/etc/cloudflared/config.yml"
+		append_param_arg "origincert" "/etc/cloudflared/cert.pem"
+	fi
+
+	procd_append_param command "run"
+
+	if [ -n "$token" ]; then
+		# Remotely-managed tunnel (recommended by Cloudflare)
+		procd_append_param command "--token" "$token"
+	fi
 
 	procd_set_param respawn
 	procd_set_param stderr 1
