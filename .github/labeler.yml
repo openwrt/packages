@@ -1,0 +1,7 @@
+# branches
+"OpenWrt 23.05 (end of support)":
+- base-branch:
+  - "openwrt-23.05"
+"OpenWrt 24.10":
+- base-branch:
+  - "openwrt-24.10"
