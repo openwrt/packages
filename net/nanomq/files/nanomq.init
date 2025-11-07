@@ -1,0 +1,17 @@
+#!/bin/sh /etc/rc.common
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# Copyright (C) 2025 Andrew Yong <me@ndoo.sg>
+
+START=95
+STOP=10
+
+USE_PROCD=1
+PROG=/usr/bin/nanomq
+CONFIGFILE=/etc/nanomq.conf
+
+start_service() {
+	procd_open_instance
+	procd_set_param command "$PROG" start --conf "$CONFIGFILE"
+	procd_close_instance
+}
