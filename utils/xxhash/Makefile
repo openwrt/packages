@@ -11,13 +11,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xxhash
-PKG_VERSION:=0.8.2
-PKG_RELEASE:=2
+PKG_VERSION:=0.8.3
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 PKG_SOURCE_URL:=https://github.com/Cyan4973/xxHash
-PKG_MIRROR_HASH:=0602a12e9ecd009f97a2a845fb5e46af69a60f96547952e5b00228f33bed5cdd
+PKG_MIRROR_HASH:=573f8b8ca3b6c2be412f4b68ee0a82f43c32f59607981a8b68f9c8985d979fe1
 
 # The source for the library (xxhash.c and xxhash.h) is BSD
 # The source for the command line tool (xxhsum.c) is GPLv2+
