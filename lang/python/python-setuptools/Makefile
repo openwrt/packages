@@ -19,9 +19,18 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 CPE_ID:=cpe:/a:python:setuptools
 
+HOST_BUILD_DEPENDS:= \
+        python3/host \
+        python-build/host \
+        python-installer/host \
+        python-wheel/host \
+        python-packaging/host
+
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 include ../python3-package.mk
+include ../python3-host-build.mk
 
 define Package/python3-setuptools/Default
   SECTION:=lang
@@ -80,3 +89,5 @@ $(eval $(call BuildPackage,python3-setuptools))
 
 $(eval $(call BuildPackage,python3-pkg-resources-src))
 $(eval $(call BuildPackage,python3-setuptools-src))
+
+$(eval $(call HostBuild))
