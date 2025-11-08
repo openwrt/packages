@@ -19,7 +19,7 @@ PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-upstream-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/uacme-upstream-$(PKG_VERSION)
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
@@ -46,7 +46,7 @@ define Package/uacme
   $(call Package/uacme/Default)
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libcurl +LIBCURL_WOLFSSL:libmbedtls
+  DEPENDS:=+libcurl +LIBCURL_WOLFSSL:libmbedtls +acme-common
   TITLE:=lightweight client for ACMEv2
   Menu:=1
 endef
@@ -100,30 +100,24 @@ define Package/uacme/install
 	$(INSTALL_DIR) \
 	 $(1)/usr/sbin \
 	 $(1)/etc/acme \
-	 $(1)/etc/config \
-	 $(1)/etc/init.d \
-	 $(1)/usr/share/uacme
+	 $(1)/usr/share/uacme \
+	 $(1)/usr/lib/acme/client
 
+	$(INSTALL_BIN) ./files/hook.sh $(1)/usr/lib/acme/hook
+	$(INSTALL_BIN) ./files/dnschalhook.sh $(1)/usr/lib/acme/client/dnschalhook.sh
+	$(INSTALL_BIN) ./files/httpchalhook.sh $(1)/usr/lib/acme/client/httpchalhook.sh
+	$(INSTALL_BIN) ./files/dnsapi_helper.sh $(1)/usr/lib/acme/client/dnsapi_helper.sh
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/uacme $(1)/usr/sbin/uacme
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/share/uacme/uacme.sh $(1)/usr/share/uacme/
-	$(SED) '/^CHALLENGE_PATH=/d' $(1)/usr/share/uacme/uacme.sh
-	$(INSTALL_CONF) ./files/acme.config $(1)/etc/config/acme
-	$(INSTALL_BIN) ./files/run.sh $(1)/usr/share/uacme/run-uacme
-	$(INSTALL_BIN) ./files/acme.init $(1)/etc/init.d/acme
 endef
 
 define Package/uacme-ualpn/install
 	$(INSTALL_DIR) \
 	 $(1)/usr/sbin \
-	 $(1)/usr/share/uacme
+	 $(1)/usr/share/uacme \
+	 $(1)/usr/lib/acme/client
 
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ualpn $(1)/usr/sbin/ualpn
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ualpn.sh $(1)/usr/share/uacme/
-endef
-
-define Package/uacme/prerm
-#!/bin/sh
-sed -i '/\/etc\/init\.d\/acme start/d' /etc/crontabs/root
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ualpn.sh $(1)/usr/lib/acme/client/ualpn.sh
 endef
 
 $(eval $(call BuildPackage,uacme))
