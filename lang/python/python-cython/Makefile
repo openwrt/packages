@@ -20,7 +20,13 @@ PKG_LICENSE_FILES:=LICENSE.txt
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
 PKG_HOST_ONLY:=1
-HOST_BUILD_DEPENDS:=python3/host python-build/host python-installer/host python-wheel/host
+HOST_BUILD_DEPENDS:= \
+        python3/host \
+        python-build/host \
+        python-installer/host \
+        python-wheel/host \
+        python-setuptools/host \
+        python-packaging/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
