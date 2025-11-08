@@ -1,9 +1,0 @@
---- a/pyproject.toml
-+++ b/pyproject.toml
-@@ -1,5 +1,5 @@
- [build-system]
--requires = ["Cython>=3.0.11, < 3.1.0", "setuptools", "wheel"]
-+requires = ["Cython>=3.0.10", "setuptools", "wheel"]
- 
- [tool.cibuildwheel]
- build-verbosity = 1
