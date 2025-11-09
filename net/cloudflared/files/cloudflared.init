@@ -26,7 +26,6 @@ start_service() {
 	procd_open_instance "$CONF"
 	procd_set_param command "$PROG" "tunnel"
 	procd_append_param command "--no-autoupdate"
-	procd_append_param command "run"
 
 	append_param_arg "edge_bind_address"
 	append_param_arg "edge_ip_version"
