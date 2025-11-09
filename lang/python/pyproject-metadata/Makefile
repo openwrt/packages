@@ -1,17 +1,23 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pyproject-metadata
-PKG_VERSION:=0.7.1
+PKG_VERSION:=0.9.1
 PKG_RELEASE:=1
 
 PYPI_NAME:=pyproject-metadata
-PKG_HASH:=0a94f18b108b9b21f3a26a3d541f056c34edcb17dc872a144a15618fed7aef67
+PYPI_SOURCE_NAME:=pyproject_metadata
+PKG_HASH:=b8b2253dd1b7062b78cf949a115f02ba7fa4114aabe63fa10528e9e1a954a816
 
 PKG_MAINTAINER:=Andy Syam <privasisource@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
-HOST_BUILD_DEPENDS:=python3/host python-build/host python-installer/host python-wheel/host
+HOST_BUILD_DEPENDS:= \
+	python3/host \
+	python-setuptools/host \
+	python-build/host \
+	python-installer/host \
+	python-wheel/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
