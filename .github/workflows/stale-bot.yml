@@ -1,0 +1,30 @@
+name: Mark and close stale issues and PRs
+
+on:
+  schedule:
+    # Run once a day at 05:30
+    - cron: '30 5 * * *'
+
+permissions:
+  actions: write
+  # BUG: required due to an bug in the stale action:
+  #      https://github.com/actions/stale/issues/840#issuecomment-2195082494
+  issues: read
+  pull-requests: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-slim
+    steps:
+      - name: Mark and close PRs with formality issues
+        uses: actions/stale@v10
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          stale-pr-message: |
+            This PR is stale because it has been open for 14 days with no activity and has the "not following guidelines" label.
+            It will be closed if no further activity occurs within 14 days.
+          close-pr-message: 'This PR was closed because it has been marked stale for 14 days with no activity.'
+          days-before-stale: 14
+          days-before-close: 14
+          only-labels: 'not following guidelines'
+          stale-pr-label: 'stale'
