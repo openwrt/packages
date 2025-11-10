@@ -1,0 +1,22 @@
+From b8fda15c50575ad7f1086fc8b0561b98e65c9c1e Mon Sep 17 00:00:00 2001
+From: user <user@linuxorg.org>
+Date: Wed, 18 Dec 2024 21:36:23 +0800
+Subject: [PATCH] fix start serverIdx in pingList when some servers are down
+
+---
+ speedtest/speedtest.go | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+--- a/speedtest/speedtest.go
++++ b/speedtest/speedtest.go
+@@ -321,6 +321,10 @@ func SpeedTest(c *cli.Context) error {
+ 
+ 		// get the fastest server's index in the `servers` array
+ 		var serverIdx int
++		for serverIdx = range pingList {
++			break
++		}
++
+ 		for idx, ping := range pingList {
+ 			if ping > 0 && ping <= pingList[serverIdx] {
+ 				serverIdx = idx
