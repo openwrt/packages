@@ -7,19 +7,18 @@
 
 include $(TOPDIR)/rules.mk
 PKG_NAME:=frr
-PKG_VERSION:=10.3.1
+PKG_VERSION:=10.4.1
 PKG_RELEASE:=1
-PKG_SOURCE_DATE:=2025-06-08
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
-PKG_SOURCE_VERSION:=44789ae469c30896d8b13b30bd429c01a4b0d96e
-PKG_SOURCE_URL:=https://codeload.github.com/FRRouting/frr/tar.gz/$(PKG_SOURCE_VERSION)?
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/FRRouting/frr/tar.gz/$(PKG_NAME)-$(PKG_VERSION)?
+PKG_HASH:=8e4003eaba168626c5ea7a6735f2c85c87b04214e6f8c8f2715b21f8ae40970b
 
-PKG_HASH:=b4c341be50dc76a3b96727dc41310745171e0d9affb137b8894d14f6eb6e226a
+
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_SOURCE_VERSION)
-HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)-$(PKG_SOURCE_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_NAME)-$(PKG_VERSION)
+HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)-$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_LICENSE:=GPL-2.0-only LGPL-2.1-only
 PKG_CPE_ID:=cpe:/a:ffrouting:ffrouting
@@ -215,8 +214,9 @@ define Package/frr-watchfrr/install
 endef
 
 define Package/frr-zebra/install
-	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/usr/sbin $(1)/usr/lib
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/zebra $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/libmlag_pb.so* $(1)/usr/lib/
 endef
 
 define Package/frr-pythontools/install
