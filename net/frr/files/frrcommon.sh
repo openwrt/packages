@@ -35,7 +35,7 @@ FRR_DEFAULT_PROFILE="traditional" # traditional / datacenter
 # - keep zebra first
 # - watchfrr does NOT belong in this list
 
-DAEMONS="zebra mgmtd bgpd ripd ripngd ospfd ospf6d isisd babeld pimd pim6d ldpd nhrpd eigrpd sharpd pbrd staticd bfdd fabricd vrrpd pathd"
+DAEMONS="mgmtd zebra bgpd ripd ripngd ospfd ospf6d isisd babeld pimd pim6d ldpd nhrpd eigrpd sharpd pbrd staticd bfdd fabricd vrrpd pathd"
 
 RELOAD_SCRIPT="$D_PATH/frr-reload.py"
 
