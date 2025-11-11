@@ -21,8 +21,6 @@ CPE_ID:=cpe:/a:python:setuptools
 
 HOST_BUILD_DEPENDS:= \
         python3/host \
-        python-build/host \
-        python-installer/host \
         python-wheel/host \
         python-packaging/host
 
