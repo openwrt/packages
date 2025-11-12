@@ -1,11 +1,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=yt-dlp
-PKG_VERSION:=2025.10.22
+PKG_VERSION:=2025.11.12
 PKG_RELEASE:=1
 
 PYPI_NAME:=yt-dlp
-PKG_HASH:=db2d48133222b1d9508c6de757859c24b5cefb9568cf68ccad85dac20b07f77b
+PKG_HASH:=5f0795a6b8fc57a5c23332d67d6c6acf819a0b46b91a6324bae29414fa97f052
 PYPI_SOURCE_NAME:=yt_dlp
 
 PKG_MAINTAINER:=George Sapkin <george@sapk.in>
@@ -36,12 +36,27 @@ define Package/yt-dlp
     +python3-sqlite3 \
     +python3-urllib \
     +python3-uuid \
-    +python3-xml
+    +python3-xml \
+    +quickjs
 endef
 
 define Package/yt-dlp/description
   yt-dlp is a feature-rich command-line audio/video downloader with support for
   thousands of sites.
+endef
+
+define Package/yt-dlp/conffiles
+/etc/yt-dlp.conf
+endef
+
+define Py3Package/yt-dlp/install
+	if [ -d $(PKG_INSTALL_DIR)/usr/bin ]; then \
+		$(INSTALL_DIR) $(1)/usr/bin ; \
+		$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/ ; \
+	fi
+
+	$(INSTALL_DIR) $(1)/etc
+	$(INSTALL_CONF) ./files/yt-dlp.conf $(1)/etc/yt-dlp.conf
 endef
 
 $(eval $(call Py3Package,yt-dlp))
