@@ -526,13 +526,6 @@ modemmanager_init_epsbearer() {
 	local connectargs="$3"
 	local apn="$4"
 
-	[ "$eps" != 'none' ] && [ -z "${apn}" ] && {
-		echo "No '$eps' init eps bearer apn configured"
-		proto_notify_error "${interface}" MM_INIT_EPS_BEARER_APN_NOT_CONFIGURED
-		proto_block_restart "${interface}"
-		return 1
-	}
-
 	if [ "$eps" = "none" ]; then
 		echo "Deleting inital EPS bearer..."
 	else
