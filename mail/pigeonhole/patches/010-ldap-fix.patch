@@ -1,0 +1,28 @@
+From b37322a8d338bf999bc9774154dce79c4857d622 Mon Sep 17 00:00:00 2001
+From: Aki Tuomi <aki.tuomi@open-xchange.com>
+Date: Mon, 26 May 2025 09:12:52 +0300
+Subject: [PATCH 0982/1000] sieve-ldap-storage: Only include LDAP when it's
+ used
+
+---
+ src/lib-sieve/storage/ldap/sieve-ldap-storage.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/src/lib-sieve/storage/ldap/sieve-ldap-storage.c
++++ b/src/lib-sieve/storage/ldap/sieve-ldap-storage.c
+@@ -3,7 +3,6 @@
+ 
+ #include "lib.h"
+ #include "settings.h"
+-#include "ldap-utils.h"
+ #include "iostream-ssl.h"
+ 
+ #include "sieve-common.h"
+@@ -13,6 +12,7 @@
+ 
+ #if defined(SIEVE_BUILTIN_LDAP) || defined(PLUGIN_BUILD)
+ 
++#include "ldap-utils.h"
+ #include "sieve-error.h"
+ 
+ #ifndef PLUGIN_BUILD
