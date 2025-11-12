@@ -1,0 +1,22 @@
+From 0ebb4c8a10075a782ec439924f272f780c228b3d Mon Sep 17 00:00:00 2001
+From: Joe Bloggs <alpha@omega.org>
+Date: Wed, 12 Nov 2025 04:13:38 +0100
+Subject: [PATCH] cmake
+
+---
+ CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 67cc962..3b7247a 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-cmake_minimum_required(VERSION 3.5)
++cmake_minimum_required(VERSION 3.31)
+ 
+ project(can-utils LANGUAGES C)
+ 
+-- 
+2.51.1
+

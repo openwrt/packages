@@ -8,13 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=canutils
-PKG_VERSION:=2023.03
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_SOURCE_URL:=https://github.com/linux-can/can-utils
-PKG_MIRROR_HASH:=bea66321c9cea53f44ace2357ca3829a77dbf5d399a09ed0798a659d682d1afa
+PKG_SOURCE_VERSION:=e9ea9d11688dedc930e593784c887786d510390f
+PKG_SOURCE_URL:=https://github.com/linux-can/can-utils.git
+PKG_MIRROR_HASH:=4961390aed63a61646c7555aa41fb75c072d5383d59d2cf980841973b4bc80e1
 
 PKG_MAINTAINER:=Anton Glukhov <anton.a.glukhov@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
