@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=czmq
-PKG_VERSION:=4.2.1
-PKG_RELEASE:=2
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/zeromq/czmq/releases/download/v$(PKG_VERSION)/
-PKG_HASH:=5d720a204c2a58645d6f7643af15d563a712dad98c9d32c1ed913377daa6ac39
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_VERSION:=f22f6572fdf63d344e022b956a137ce084fa5d8b
+PKG_SOURCE_URL:=https://github.com/zeromq/czmq.git
+PKG_MIRROR_HASH:=bd1dbfd4431b53671557a10cc13765dfe388a38fd04c2d53638d34c76be2c9fb
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=MPL-2.0
@@ -30,7 +30,7 @@ define Package/czmq
   TITLE:=CZMQ High-level C binding for ZeroMQ
   URL:=http://czmq.zeromq.org
   ABI_VERSION:=4
-  DEPENDS:=+libzmq +libuuid +libmicrohttpd +liblz4 +libcurl
+  DEPENDS:=+libzmq +libuuid +libmicrohttpd +liblz4 +libcurl +libpthread
 endef
 
 define Package/czmq/description
@@ -42,6 +42,8 @@ CMAKE_OPTIONS += \
 	-DBUILD_TESTING=OFF \
 	-DCMAKECONFIG_INSTALL_DIR=lib/cmake/czmq \
 	-DENABLE_DRAFTS=OFF
+
+TARGET_CFLAGS += -D_GNU_SOURCE
 
 define Package/czmq/install
 	$(INSTALL_DIR) $(1)/usr/bin
