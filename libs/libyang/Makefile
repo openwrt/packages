@@ -31,7 +31,7 @@ define Package/libyang
   CATEGORY:=Libraries
   TITLE:=YANG data modeling language library
   URL:=https://github.com/CESNET/libyang
-  DEPENDS:=+libpcre2 +libpthread
+  DEPENDS:=+libpcre2 +libpthread +libxxhash
 endef
 
 define Package/yanglint
