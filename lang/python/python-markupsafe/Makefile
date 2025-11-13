@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-markupsafe
 PKG_VERSION:=3.0.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=MarkupSafe
 PYPI_SOURCE_NAME:=markupsafe
@@ -16,6 +16,7 @@ PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.rst
 
+PKG_BUILD_DEPENDS:=python3/host python-setuptools/host
 HOST_BUILD_DEPENDS:= \
 	python3/host \
 	python-setuptools/host \
