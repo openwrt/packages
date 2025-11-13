@@ -15,8 +15,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://dist.torproject.org/ \
 	https://archive.torproject.org/tor-package-archive
 PKG_HASH:=1bb22328cdd1ee948647bfced571efa78c12fc5064187b41d5254085b5282fa7
-PKG_MAINTAINER:=Hauke Mehrtens <hauke@hauke-m.de> \
-		Peter Wagner <tripolar@gmx.at>
+PKG_MAINTAINER:=Rui Salvaterra <rsalvaterra@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:torproject:tor
