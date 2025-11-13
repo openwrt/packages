@@ -1,15 +1,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luv
-PKG_REAL_VERSION:=1.40.0-0
+PKG_REAL_VERSION:=1.51.0-1
 PKG_VERSION:=$(subst -,.,$(PKG_REAL_VERSION))
-PKG_RELEASE:=2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_REAL_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/luvit/luv/releases/download/$(PKG_REAL_VERSION)
-PKG_HASH:=24473a081c3928eec2a352369cbafda97059574f4a4276861274473e7c7d17a0
+PKG_HASH:=dc706d9141c185bdce08b6fc8a9d4df05c3ac3676809ee4e9e37e1553d821237
 
-PKG_BUILD_DIR :=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_REAL_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_REAL_VERSION)
 
 PKG_MAINTAINER:=Morteza Milani <milani@pichak.co>
 PKG_LICENSE:=Apache-2.0
@@ -55,7 +55,7 @@ endef
 
 define Package/luv/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libluv.so.1.40.0 $(1)/usr/lib/lua/luv.so
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libluv.so.1.51.0 $(1)/usr/lib/lua/luv.so
 endef
 
 
