@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mc
-PKG_VERSION:=4.8.32
+PKG_VERSION:=4.8.33
 PKG_RELEASE:=1
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-3.0-or-later
@@ -14,7 +14,7 @@ PKG_CPE_ID:=cpe:/a:midnight_commander:midnight_commander
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ftp.osuosl.org/pub/midnightcommander/
-PKG_HASH:=4ddc83d1ede9af2363b3eab987f54b87cf6619324110ce2d3a0e70944d1359fe
+PKG_HASH:=cae149d42f844e5185d8c81d7db3913a8fa214c65f852200a9d896b468af164c
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf gettext-version
 PKG_BUILD_DEPENDS:=MC_VFS:libtirpc
