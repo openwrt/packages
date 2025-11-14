@@ -82,9 +82,8 @@ create_key() {
 		exit 1
 	fi
 
-	if [ -n "$(which ssh-keygen)" ]; then
-		ssh-keygen -t rsa -b 2048 -f $probe_key -N ""
-		sed -i "s/ \S*$/ "$username"/" $probe_pub_key
+	if [ -f /usr/libexec/ssh-keygen-openssh -a -x /usr/libexec/ssh-keygen-openssh ]; then
+		/usr/libexec/ssh-keygen-openssh -t rsa -b 4096 -f $probe_key -N "" -c "$username"
 	elif [ -n "$(which dropbearkey)" ] && [ -n "$(which dropbearconvert)" ]; then
 		local public_key
 
