@@ -1,7 +1,7 @@
 #!/bin/sh
 
 test_afalg_engine() {
-	opkg install openssl-util
+	apk add openssl-util
 	openssl engine -t -c -v -pre DUMP_INFO afalg
 }
 
