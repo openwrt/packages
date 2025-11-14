@@ -92,7 +92,8 @@ automatically (re)connnects to configured APs/hotspots as they become available.
 | trm_debug          | 0, disabled                        | set to 1 to get the full debug output (logread -e "trm-")                                             |
 | trm_iface          | -, not set                         | uplink- and procd trigger network interface, configured by the 'Interface Wizard'                     |
 | trm_laniface       | -, lan                             | logical LAN network interface, default is 'lan'                                                       |
-| trm_radio          | -, not set                         | restrict travelmate to a single radio or change the overall scanning order ('radio1 radio0')          |
+| trm_radio          | -, not set                         | restrict travelmate to certain radio(s)                                                               |
+| trm_revradio       | 0, disabled                        | change the radio processing order, e.g. 'radio1 radio0'                                               |
 | trm_scanmode       | -, active                          | send active probe requests or passively listen for beacon frames with 'passive'                       |
 | trm_captive        | 1, enabled                         | check the internet availability and handle captive portal redirections                                |
 | trm_netcheck       | 0, disabled                        | treat missing internet availability as an error                                                       |

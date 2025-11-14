@@ -28,6 +28,7 @@ trm_maxwait="30"
 trm_maxautoadd="5"
 trm_timeout="60"
 trm_radio=""
+trm_revradio="0"
 trm_scanmode="active"
 trm_connection=""
 trm_ssidfilter=""
@@ -475,7 +476,7 @@ f_setdev() {
 
 	if { [ -z "${trm_radio}" ] && ! printf "%s" "${trm_radiolist}" | "${trm_grepcmd}" -q "${radio}"; } ||
 		{ [ -n "${trm_radio}" ] && printf "%s" "${trm_radio}" | "${trm_grepcmd}" -q "${radio}"; }; then
-		if [ -n "${trm_radio}" ] && [ "${trm_radio}" = "radio1 radio0" ]; then
+		if [ "${trm_revradio}" = "1" ]; then
 			trm_radiolist="$(f_trim "${radio} ${trm_radiolist}")"
 		else
 			trm_radiolist="$(f_trim "${trm_radiolist} ${radio}")"
@@ -485,7 +486,7 @@ f_setdev() {
 			uci_set wireless "${radio}" "disabled" "0"
 		fi
 	fi
-	f_log "debug" "f_setdev  ::: radio: ${radio:-"-"}, radio_conf: ${trm_radio:-"-"}, radio_list: ${trm_radiolist:-"-"}, disabled: ${disabled:-"-"}"
+	f_log "debug" "f_setdev  ::: device: ${radio:-"-"}, radio: ${trm_radio:-"-"}, radio_list: ${trm_radiolist:-"-"}, disabled: ${disabled:-"-"}"
 }
 
 # set 'wifi-iface' sections
@@ -732,11 +733,15 @@ f_check() {
 			else
 				ifname="$(printf "%s" "${dev_status}" | "${trm_jsoncmd}" -ql1 -e '@.*.interfaces[@.config.mode="sta"].ifname')"
 				if [ -n "${ifname}" ] && [ "${enabled}" = "1" ]; then
-					trm_ifquality="$("${trm_iwcmd}" dev "${ifname}" link 2>/dev/null | "${trm_awkcmd}" '/signal: /{printf "%s",2*($2+100)}')"
+					trm_ifquality="$("${trm_iwcmd}" dev "${ifname}" link 2>/dev/null | "${trm_awkcmd}" '/signal:/ {val=2*($2+100); printf "%s", (val>100 ? 100 : val)}')"
 					if [ -z "${trm_ifquality}" ]; then
 						trm_ifstatus="$("${trm_ubuscmd}" -S call network.interface dump 2>/dev/null | "${trm_jsoncmd}" -ql1 -e "@.interface[@.device=\"${ifname}\"].up")"
 						if { [ -n "${trm_connection}" ] && [ "${trm_ifstatus}" = "false" ]; } || [ "${wait_time}" -eq "${trm_maxwait}" ]; then
-							f_log "info" "no signal from uplink"
+							if [ -n "${trm_connection}" ] && [ "${trm_ifstatus}" = "false" ]; then
+								f_log "info" "no signal from uplink"
+							else
+								f_log "info" "uplink connection could not be established after ${trm_maxwait} seconds"
+							fi
 							f_vpn "disable"
 							trm_connection=""
 							trm_ifstatus="${status}"
@@ -824,7 +829,7 @@ f_check() {
 			break
 		fi
 	done
-	f_log "debug" "f_check   ::: mode: ${mode}, name: ${ifname:-"-"}, status: ${trm_ifstatus}, enabled: ${enabled}, connection: ${trm_connection:-"-"}, wait: ${wait_time}, max_wait: ${trm_maxwait}, min_quality: ${trm_minquality}, captive: ${trm_captive}, netcheck: ${trm_netcheck}"
+	f_log "debug" "f_check   ::: mode: ${mode}, name: ${ifname:-"-"}, status: ${trm_ifstatus}, enabled: ${enabled}, connection: ${trm_connection:-"-"}, wait: ${wait_time}, max_wait: ${trm_maxwait}, min_quality/quality: ${trm_minquality}/${trm_ifquality:-"-"}, captive: ${trm_captive}, netcheck: ${trm_netcheck}"
 }
 
 # update runtime information
@@ -974,37 +979,28 @@ f_main() {
 					f_log "debug" "f_main-5  ::: sta_radio: ${sta_radio}, sta_essid: \"${sta_essid}\", sta_bssid: ${sta_bssid:-"-"}"
 				fi
 				if [ -z "${scan_list}" ]; then
-					scan_dev="$("${trm_ubuscmd}" -S call network.wireless status 2>/dev/null | "${trm_jsoncmd}" -ql1 -e "@.${radio}.interfaces[0].ifname")"
+					radio_num="${radio//[a-z]/}"
+					radio_phy="phy${radio_num}"
+					[ "${trm_scanmode}" != "passive" ] && scan_mode=""
+
+					scan_dev="$("${trm_iwcmd}" dev | "${trm_awkcmd}" -v phy="${radio_phy}" '/Interface/{iface=$2} /type/{if(($2=="AP"||$2=="managed")&&iface ~ "^"phy"-"){printf"%s",iface;exit}}')"
 					if [ -z "${scan_dev}" ]; then
-						radio_num="${radio//[a-z]/}"
-						radio_phy="phy#${radio_num}"
-						scan_dev="$("${trm_iwcmd}" dev 2>/dev/null | "${trm_awkcmd}" -v iw_phy="${radio_phy}" '{if($0==iw_phy){inside=1;next}if(inside&&/^phy#/){exit}if(inside&&$1=="Interface"){print $2;exit}}')"
-						if [ -z "${scan_dev}" ]; then
-							if "${trm_iwcmd}" phy "phy${radio_num}" interface add "trmscan${radio_num}" type managed >/dev/null 2>&1; then
-								if "${trm_ipcmd}" link set "trmscan${radio_num}" up >/dev/null 2>&1; then
-									scan_dev="trmscan${radio_num}"
-								fi
-							fi
-						fi
+						"${trm_iwcmd}" phy "${radio_phy}" interface add "trmscan${radio_num}" type managed >/dev/null 2>&1
+						"${trm_ipcmd}" link set "trmscan${radio_num}" up >/dev/null 2>&1
+						scan_dev="trmscan${radio_num}"
 					fi
-					if [ -n "${scan_dev}" ]; then
-						[ "${trm_scanmode}" != "passive" ] && scan_mode=""
-						scan_list="$(printf "%b" "$("${trm_iwcmd}" dev "${scan_dev}" scan ${scan_mode} 2>/dev/null |
-							"${trm_awkcmd}" '/^BSS /{if(bssid!=""){if(ssid=="")ssid="unknown";printf "%s %s %s %s %s\n",signal,rsn,wpa,bssid,ssid};bssid=toupper(substr($2,1,17));ssid="";signal="";rsn="-";wpa="-"}
-							/signal:/{signal=(2*($2+100)>100 ? 100 : 2*($2+100))}
-							/SSID:/{$1="";sub(/^ /,"",$0);ssid="\""$0"\""}
-							/WPA:/{wpa="+"}
-							/RSN:/{rsn="+"}
-							END{if(bssid!=""){if(ssid=="")ssid="unknown";printf "%s %s %s %s %s\n",signal,rsn,wpa,bssid,ssid}}' | "${trm_sortcmd}" -rn)")"
-						f_log "debug" "f_main-6  ::: radio: ${radio}, scan_device: ${scan_dev}, scan_mode: ${trm_scanmode:-"active"}, scan_cnt: $(printf "%s" "${scan_list}" | "${trm_grepcmd}" -c "^")"
-					fi
-					if [ -n "${radio_phy}" ] && [ -n "${radio_num}" ]; then
+					scan_list="$(printf "%b" "$("${trm_iwcmd}" dev "${scan_dev}" scan ${scan_mode} 2>/dev/null |
+						"${trm_awkcmd}" '/^BSS /{if(bssid!=""){if(ssid=="")ssid="unknown";printf "%s %s %s %s %s\n",signal,rsn,wpa,bssid,ssid};bssid=toupper(substr($2,1,17));ssid="";signal="";rsn="-";wpa="-"}
+						/signal:/{signal=(2*($2+100)>100 ? 100 : 2*($2+100))}
+						/SSID:/{$1="";sub(/^ /,"",$0);ssid="\""$0"\""}
+						/WPA:/{wpa="+"}
+						/RSN:/{rsn="+"}
+						END{if(bssid!=""){if(ssid=="")ssid="unknown";printf "%s %s %s %s %s\n",signal,rsn,wpa,bssid,ssid}}' | "${trm_sortcmd}" -rn)")"
+					f_log "debug" "f_main-6  ::: radio: ${radio}, scan_device: ${scan_dev}, scan_mode: ${trm_scanmode:-"active"}, scan_cnt: $(printf "%s" "${scan_list}" | "${trm_grepcmd}" -c "^")"
+
+					if [ "${scan_dev}" = "trmscan${radio_num}" ]; then
 						"${trm_ipcmd}" link set "trmscan${radio_num}" down >/dev/null 2>&1
 						"${trm_iwcmd}" dev "trmscan${radio_num}" del >/dev/null 2>&1
-					fi
-					if [ -z "${scan_dev}" ]; then
-						f_log "info" "no scan device on '${radio}'"
-						continue 2
 					fi
 					if [ -z "${scan_list}" ]; then
 						f_log "info" "no scan results on '${radio}'"
