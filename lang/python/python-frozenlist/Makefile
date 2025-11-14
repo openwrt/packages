@@ -12,8 +12,7 @@ PKG_VERSION:=1.8.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=frozenlist
-PKG_BUILD_DEPENDS:=python-setuptools/host
-PKG_BUILD_DEPENDS:= python-expandvars/host
+PKG_BUILD_DEPENDS:=python-setuptools/host python-expandvars/host
 PKG_HASH:=3ede829ed8d842f6cd48fc7081d7a41001a56f1f38603f9d49bf3020d59a31ad
 
 PKG_LICENSE:=Apache-2.0
