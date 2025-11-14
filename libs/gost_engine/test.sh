@@ -50,7 +50,6 @@ run_cipher_test() {
 
 case "$1" in
 	libopenssl-gost_engine)
-		opkg install openssl-util
 		run_md_test \
 			md_gost12_256 \
 			012345678901234567890123456789012345678901234567890123456789012 \
