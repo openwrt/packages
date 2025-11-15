@@ -1,0 +1,17 @@
+From e81f2b5f9ad8ca61df7142f6eaae6e67e79be50f Mon Sep 17 00:00:00 2001
+From: Michal Vasko <mvasko@cesnet.cz>
+Date: Wed, 31 Jan 2024 09:44:41 +0100
+Subject: [PATCH] build UPDATE set max cmake version
+
+---
+ CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-cmake_minimum_required(VERSION 2.8.12)
++cmake_minimum_required(VERSION 2.8.12...3.28.1)
+ 
+ project(sysrepo)
+ set(SYSREPO_DESC "YANG-based system repository for all-around configuration management.")
