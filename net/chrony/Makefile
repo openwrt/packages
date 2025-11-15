@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=chrony
 PKG_VERSION:=4.8
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://chrony-project.org/releases/
@@ -40,7 +40,9 @@ define Package/chrony
 $(call Package/chrony/Default)
   TITLE+= (without NTS)
   VARIANT:=normal
+  DEFAULT_VARIANT:=1
   CONFLICTS:=chrony-nts
+  PROVIDES:=chrony
 endef
 
 define Package/chrony-nts
@@ -48,6 +50,7 @@ $(call Package/chrony/Default)
   TITLE+= (with NTS)
   DEPENDS+= +PACKAGE_chrony-nts:libgnutls +PACKAGE_chrony-nts:ca-bundle
   VARIANT:=with-nts
+  PROVIDES:=chrony
 endef
 
 define Package/chrony/description
