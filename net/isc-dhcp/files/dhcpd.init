@@ -318,7 +318,7 @@ static_srvhost_add() {
 	config_get weight "$cfg" "weight"
 	[ -n "$weight" ] || return 0
 
-	update "$srv.$domain." IN SRV "$priority" "$weight" "$port" "$target.$domain"
+	update "$srv.$domain." IN SRV "$priority" "$weight" "$port" "$target.$domain."
 }
 
 static_srvhosts() {
