@@ -699,7 +699,7 @@ f_list() {
 			;;
 		"blocklist" | "allowlist")
 			src_name="${mode}"
-			rset="/^([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{print tolower(\$1)}"
+			rset="/^(([[:alnum:]_-]{1,63}\\.)*[[:alnum:]-]{2,63}([[:space:]]|$))/{print tolower(\$1)}"
 			case "${src_name}" in
 				"blocklist")
 					if [ -f "${adb_blocklist}" ]; then
@@ -723,7 +723,7 @@ f_list() {
 				"allowlist")
 					if [ -f "${adb_allowlist}" ] && [ "${adb_dnsallow}" != "0" ]; then
 						file_name="${adb_tmpdir}/tmp.raw.${src_name}"
-						printf "%s\n" "${adb_lookupdomain}" | "${adb_awkcmd}" "${rset}" >"${file_name}"
+						[ "${adb_lookupdomain}" != "localhost" ] && printf "%s\n" "${adb_lookupdomain}" | "${adb_awkcmd}" "${rset}" >"${file_name}"
 						"${adb_awkcmd}" "${rset}" "${adb_allowlist}" >>"${file_name}"
 						"${adb_awkcmd}" "${rset}" "${file_name}" >"${adb_tmpdir}/tmp.rem.${src_name}"
 						eval "${adb_dnsallow}" "${file_name}" >"${adb_tmpdir}/tmp.add.${src_name}"
@@ -744,7 +744,7 @@ f_list() {
 			fi
 			case "${src_name}" in
 				"google")
-					rset="/^\\.([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+([[:space:]]|$)/{printf \"%s\n%s\n\",tolower(\"www\"\$1),tolower(substr(\$1,2,length(\$1)))}"
+					rset="/^(\\.([[:alnum:]_-]{1,63}\\.)*[[:alnum:]-]{2,63}([[:space:]]|$))/{printf \"%s\n%s\n\",tolower(\"www\"\$1),tolower(substr(\$1,2,length(\$1)))}"
 					safe_url="https://www.google.com/supported_domains"
 					safe_cname="forcesafesearch.google.com"
 					if [ -s "${adb_backupdir}/safesearch.${src_name}.gz" ]; then
@@ -878,8 +878,8 @@ f_list() {
 			file_name="${adb_finaldir}/${adb_dnsfile}"
 			rm -f "${file_name}"
 			[ -n "${adb_dnsheader}" ] && printf "%b" "${adb_dnsheader}" >>"${file_name}"
-			[ -s "${adb_tmpdir}/tmp.add.iplist" ] && "${adb_catcmd}" "${adb_tmpdir}/tmp.add.iplist" >>"${file_name}"
-			[ -s "${adb_tmpdir}/tmp.add.allowlist" ] && "${adb_catcmd}" "${adb_tmpdir}/tmp.add.allowlist" >>"${file_name}"
+			[ -s "${adb_tmpdir}/tmp.add.iplist" ] && "${adb_sortcmd}" ${adb_srtopts} -u "${adb_tmpdir}/tmp.add.iplist" >>"${file_name}"
+			[ -s "${adb_tmpdir}/tmp.add.allowlist" ] && "${adb_sortcmd}" ${adb_srtopts} -u "${adb_tmpdir}/tmp.add.allowlist" >>"${file_name}"
 			[ "${adb_safesearch}" = "1" ] && "${adb_catcmd}" "${adb_tmpdir}/tmp.safesearch."* 2>/dev/null >>"${file_name}"
 			if [ "${adb_dnsdeny}" != "0" ]; then
 				eval "${adb_dnsdeny}" "${adb_tmpdir}/${adb_dnsfile}" >>"${file_name}"
@@ -1150,7 +1150,7 @@ f_log() {
 # main function for blocklist processing
 #
 f_main() {
-	local src_tmpload src_tmpfile src_name src_rset src_url src_cat src_item src_list src_entries src_suffix src_rc entry cnt
+	local src_tmpload src_tmpfile src_name src_domain src_rset src_url src_cat src_item src_list src_entries src_suffix src_rc entry cnt
 
 	# allow- and blocklist preparation
 	#
@@ -1215,6 +1215,9 @@ f_main() {
 			adb_feed="${adb_feed/${src_name}/}"
 			continue
 		fi
+
+		# get feed information
+		#
 		json_get_var src_url "url" >/dev/null 2>&1
 		json_get_var src_rset "rule" >/dev/null 2>&1
 		json_select ..
@@ -1229,6 +1232,15 @@ f_main() {
 		if [ -z "${src_url}" ] || [ -z "${src_rset}" ]; then
 			f_list remove
 			continue
+		fi
+
+		# add domains of active feed URLs to the allowlist
+		#
+		src_domain="${src_url#*://}"
+		src_domain="${src_domain%%/*}"
+		if [ -n "${src_domain}" ] && [ "${adb_dnsallow}" != "0" ] && ! "${adb_grepcmd}" -qxF "${src_domain}" "${adb_tmpdir}/tmp.raw.allowlist"; then
+			printf "%s\n" "${src_domain}" >>"${adb_tmpdir}/tmp.raw.allowlist"
+			eval "${adb_dnsallow}" "${adb_tmpdir}/tmp.raw.allowlist" >>"${adb_tmpdir}/tmp.add.allowlist"
 		fi
 
 		# download queue processing
@@ -1465,7 +1477,7 @@ f_report() {
 						json_get_keys details >/dev/null 2>&1
 						json_get_var rc "rc" >/dev/null 2>&1
 						json_get_var domain "domain" >/dev/null 2>&1
-						if [ "${rc}" = "NX" ] && ! "${adb_catcmd}" "${map_jsn}" 2>/dev/null | "${adb_grepcmd}" -q "${domain}"; then
+						if [ "${rc}" = "NX" ] && ! "${adb_catcmd}" "${map_jsn}" 2>/dev/null | "${adb_grepcmd}" -qxF "${domain}"; then
 							(
 								"${adb_fetchcmd}" ${adb_geoparm} "${adb_geourl}/${domain}" 2>/dev/null |
 									"${adb_awkcmd}" -v feed="${domain}" '{printf ",{\"%s\": %s}\n",feed,$0}' >>"${map_jsn}"
