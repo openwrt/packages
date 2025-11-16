@@ -1,0 +1,24 @@
+From 2bd359f858530a36ed4c63d14c4d044cd743d9b1 Mon Sep 17 00:00:00 2001
+From: Hauke Mehrtens <hauke@hauke-m.de>
+Date: Sun, 9 Nov 2025 15:17:32 +0100
+Subject: build: require CMake >= 3.10 due to dropped legacy support
+
+CMake version 4.0 and later require minimum version of 3.5 or later.
+Update to minimum version 3.10 which is the last not deprecated minimum
+version.
+
+CMake 3.10 was released in November 2017 and is included in Ubuntu 18.04.
+
+Signed-off-by: Hauke Mehrtens <hauke@hauke-m.de>
+---
+ src/CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-cmake_minimum_required(VERSION 2.6)
++cmake_minimum_required(VERSION 3.10)
+ 
+ PROJECT(realtek-poe C)
+ ADD_DEFINITIONS(-Os -ggdb -Wextra -Wall -Werror --std=gnu99 -Wmissing-declarations -Wno-unused-parameter)
