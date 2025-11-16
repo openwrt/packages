@@ -1,4 +1,4 @@
-From bc955c0d82c81e70e7855657e504a1ce743efe88 Mon Sep 17 00:00:00 2001
+From fefa11f4761df732c02eb30e620a2a135b0eb4a3 Mon Sep 17 00:00:00 2001
 From: Vladimir Ermakov <vooon341@gmail.com>
 Date: Thu, 25 Sep 2025 12:50:56 +0200
 Subject: [PATCH 2/2] alsa: drop codegen file to be able to build with CGO=0
