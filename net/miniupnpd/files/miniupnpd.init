@@ -9,6 +9,7 @@ PROG=/usr/sbin/miniupnpd
 
 start_service() {
 	upnpd_uci_migration
+
 	config_load "upnpd"
 	local enabled config_file log_output conf
 	config_get enabled settings enabled 0
@@ -18,6 +19,7 @@ start_service() {
 		log "Service disabled, UCI enabled is not set"
 		return 1
 	fi
+
 	if [ -n "$config_file" ]; then
 		conf="$config_file"
 	else
@@ -26,6 +28,7 @@ start_service() {
 		mkdir -p /var/etc
 		upnpd_generate_config "$tmpconf" || return 1
 	fi
+
 	if [ "$FW" = "fw4" ]; then
 		nft -s -t -n list chain inet fw4 upnp_forward >/dev/null 2>&1 || fw4 reload
 	else
