@@ -1,0 +1,67 @@
+--- a/cpp/src/Driver.cpp
++++ b/cpp/src/Driver.cpp
+@@ -6981,6 +6981,8 @@ bool Driver::setHttpClient(Internal::i_H
+ 
+ bool Driver::startConfigDownload(uint16 _manufacturerId, uint16 _productType, uint16 _productId, string configfile, uint8 node)
+ {
++	// Download server no longer exists - project unmaintained
++	return false;
+ 	Internal::HttpDownload *download = new Internal::HttpDownload();
+ 	std::stringstream ss;
+ 	ss << std::hex << std::setw(4) << std::setfill('0') << _productId << ".";
+@@ -6997,6 +6999,8 @@ bool Driver::startConfigDownload(uint16
+ 
+ bool Driver::startMFSDownload(string configfile)
+ {
++	// Download server no longer exists - project unmaintained
++	return false;
+ 	Internal::HttpDownload *download = new Internal::HttpDownload();
+ 	download->url = "http://download.db.openzwave.com/mfs.xml";
+ 	download->filename = configfile;
+@@ -7009,6 +7013,8 @@ bool Driver::startMFSDownload(string con
+ 
+ bool Driver::startDownload(string target, string file)
+ {
++	// Download server no longer exists - project unmaintained
++	return false;
+ 	Internal::HttpDownload *download = new Internal::HttpDownload();
+ 	download->url = "http://download.db.openzwave.com/" + file;
+ 	download->filename = target;
+--- a/cpp/src/ManufacturerSpecificDB.cpp
++++ b/cpp/src/ManufacturerSpecificDB.cpp
+@@ -330,10 +330,7 @@ namespace OpenZWave
+ 							}
+ 							else
+ 							{
+-								Log::Write(LogLevel_Warning, "Can't download file %s", path.c_str());
+-								Notification* notification = new Notification(Notification::Type_UserAlerts);
+-								notification->SetUserAlertNotification(Notification::Alert_ConfigFileDownloadFailed);
+-								driver->QueueNotification(notification);
++								// Silently ignore - download server no longer exists
+ 							}
+ 						}
+ 						else if (iter != m_downloading.end())
+@@ -510,10 +507,7 @@ namespace OpenZWave
+ 			}
+ 			else
+ 			{
+-				Log::Write(LogLevel_Warning, "Can't download Config file %s", node->getConfigPath().c_str());
+-				Notification* notification = new Notification(Notification::Type_UserAlerts);
+-				notification->SetUserAlertNotification(Notification::Alert_ConfigFileDownloadFailed);
+-				driver->QueueNotification(notification);
++				// Silently ignore - download server no longer exists
+ 			}
+ 			checkInitialized();
+ 			return ret;
+@@ -532,10 +526,7 @@ namespace OpenZWave
+ 			}
+ 			else
+ 			{
+-				Log::Write(LogLevel_Warning, "Can't download ManufacturerSpecifix.xml Config file");
+-				Notification* notification = new Notification(Notification::Type_UserAlerts);
+-				notification->SetUserAlertNotification(Notification::Alert_ConfigFileDownloadFailed);
+-				driver->QueueNotification(notification);
++				// Silently ignore - download server no longer exists
+ 			}
+ 
+ 			checkInitialized();
