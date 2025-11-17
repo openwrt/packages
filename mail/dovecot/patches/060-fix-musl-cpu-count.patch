@@ -1,0 +1,13 @@
+See https://github.com/dovecot/core/pull/244.
+
+--- a/src/lib/cpu-count.c
++++ b/src/lib/cpu-count.c
+@@ -3,6 +3,8 @@
+ 
+ #ifdef HAVE_SCHED_H
+ #  define __USE_GNU
++/* _GNU_SOURCE: for musl's sched.h to expose cpuset/CPU_* */
++#  define _GNU_SOURCE
+ #  include <sched.h>
+ #  ifdef HAVE_SYS_CPUSET_H
+ #    include <sys/cpuset.h>
