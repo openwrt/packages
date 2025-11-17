@@ -9,7 +9,8 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vim
 PKG_VERSION:=9.1
-PKG_RELEASE:=1
+PKG_XXD_VERSION:=2023.10.25
+PKG_RELEASE:=2
 VIMVER:=91
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
@@ -71,6 +72,7 @@ define Package/xxd
   CATEGORY:=Utilities
   TITLE:=make a hexdump or do the reverse
   URL:=http://www.vim.org/
+  VERSION:=$(PKG_XXD_VERSION)
 endef
 
 define Package/vim-full/conffiles
