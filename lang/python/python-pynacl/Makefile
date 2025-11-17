@@ -11,7 +11,11 @@ PKG_MAINTAINER:=Javier Marcet <javier@marcet.info>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_DEPENDS:=python3-setuptools/host libffi/host python-cffi/host  # cffi>=1.4.1
+PKG_BUILD_DEPENDS:= \
+	python3/host \
+	python-setuptools/host \
+	libffi/host \
+	python-cffi/host  # cffi>=1.4.1
 
 PYTHON3_PKG_BUILD_VARS:=SODIUM_INSTALL=system
 
