@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=i2c-tools
 PKG_VERSION:=4.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/software/utils/i2c-tools
@@ -22,6 +22,7 @@ PKG_CPE_ID:=cpe:/a:i2c-tools_project:i2c-tools
 
 PKG_BUILD_PARALLEL:=1
 PYTHON3_PKG_BUILD:=0
+PKG_BUILD_DEPENDS:=python-setuptools/host
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python3-package.mk
