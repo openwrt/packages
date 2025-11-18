@@ -82,10 +82,12 @@ define Package/avahi-dbus-daemon
   $(call Package/avahi/Default)
   PROVIDES:=avahi-daemon
   VARIANT:=dbus
+  DEFAULT_VARIANT:=1
   SUBMENU:=IP Addresses and Names
   DEPENDS:=+libavahi-dbus-support +libexpat +librt +libdaemon
   TITLE+= (daemon)
   USERID:=avahi=105:avahi=105
+  CONFLICTS:=libavahi-nodbus-support
 endef
 
 define Package/avahi-nodbus-daemon
@@ -167,8 +169,10 @@ endef
 define Package/libavahi-dbus-support
   $(call Package/libavahi/Default)
   VARIANT:=dbus
-  DEPENDS:=+dbus
+  DEFAULT_VARIANT:=1
+  DEPENDS:=+PACKAGE_libavahi-dbus-support:dbus
   TITLE+= (D-Bus support)
+  CONFLICTS:=libavahi-nodbus-support
 endef
 
 define Package/libavahi-nodbus-support
@@ -207,6 +211,7 @@ define Package/libavahi-client
   VARIANT:=dbus
   DEPENDS:=+avahi-dbus-daemon
   TITLE+= (libavahi-client library)
+  CONFLICTS:=libavahi-nodbus-support
 endef
 
 define Package/libavahi-client/description
@@ -224,6 +229,7 @@ define Package/avahi-utils
   VARIANT:=dbus
   DEPENDS:=+libavahi-client +libgdbm
   TITLE+= (utilities)
+  CONFLICTS:=libavahi-nodbus-support
 endef
 
 define Package/avahi-utils/description
