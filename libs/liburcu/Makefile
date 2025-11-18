@@ -9,8 +9,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=liburcu
-PKG_VERSION:=0.15.3
-PKG_RELEASE:=2
+PKG_VERSION:=0.15.5
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Daniel Salzman <daniel.salzman@nic.cz>
 PKG_LICENSE:=LGPL-2.1-only LGPL-2.1-or-later GPL-2.0-or-later-with-Autoconf-exception-2.0 \
@@ -21,7 +21,7 @@ PKG_LICENSE_FILES:=LICENSES/LGPL-2.1-only.txt LICENSES/LGPL-2.1-or-later.txt LIC
 
 PKG_SOURCE:=userspace-rcu-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://lttng.org/files/urcu/
-PKG_HASH:=26687ec84e3e114759454c884a08abeaf79dec09b041895ddf4c45ec150acb6d
+PKG_HASH:=b2f787a8a83512c32599e71cdabcc5131464947b82014896bd11413b2d782de1
 PKG_BUILD_DIR:=$(BUILD_DIR)/userspace-rcu-$(PKG_VERSION)
 
 PKG_FIXUP:=autoreconf
