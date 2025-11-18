@@ -26,7 +26,7 @@ $(eval $(call Package/openssl/add-provider,oqsprovider))
 define Package/libopenssl-oqsprovider
   $(call Package/openssl/module/Default)
   TITLE:=Open Quantum Safe provider for OpenSSL (3.x)
-  DEPENDS+=+liboqs
+  DEPENDS:=+libopenssl +liboqs
   URL:=https://openquantumsafe.org/
 endef
 
