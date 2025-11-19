@@ -17,7 +17,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/CESNET/Netopeer2/tar.gz/v$(PKG_VERSION)?
 PKG_HASH:=dedae40419cfddd09c1be7bb536b3a762ec8dcd568c2bfe803c0f6789a5ca834
 
-PKG_MAINTAINER:=Jakov Smolic <jakov.smolic@sartura.hr>
+PKG_MAINTAINER:=
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES=LICENSE
 
