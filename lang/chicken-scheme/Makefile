@@ -1,17 +1,17 @@
-# Copyright (C) 2019-2020 Jerônimo Cordoni Pellegrini <j_p@aleph0.info>
+# Copyright (C) 2019-2025, Jerônimo Pellegrini <j_p@aleph0.info>
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=chicken-scheme
-PKG_VERSION:=5.2.0
-PKG_RELEASE:=3
+PKG_VERSION:=5.4.0
+PKG_RELEASE:=1
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/chicken-$(PKG_VERSION)
 PKG_SOURCE:=chicken-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://code.call-cc.org/releases/$(PKG_VERSION)/
-PKG_HASH:=819149c8ce7303a9b381d3fdc1d5765c5f9ac4dee6f627d1652f47966a8780fa
+PKG_HASH:=3c5d4aa61c1167bf6d9bf9eaf891da7630ba9f5f3c15bf09515a7039bfcdec5f
 PKG_MAINTAINER:=Jeronimo Pellegrini <j_p@aleph0.info>
 
 PKG_LICENSE:=BSD-3-Clause
