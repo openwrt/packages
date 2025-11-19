@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libndpi
-PKG_VERSION:=4.8
+PKG_VERSION:=5.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ntop/nDPI/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=8f6235ba672d4ac8e4cbebb5611bc712a74587d9d53a649f483e4bcca5b80e58
+PKG_HASH:=22ddfe6b59c12a5f3d0515774676d25c7bd77471a576f8c0d61ace5e88edccff
 PKG_BUILD_DIR:=$(BUILD_DIR)/nDPI-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Banglang Huang <banglang.huang@foxmail.com>, Toni Uhlig <matzeton@googlemail.com>
