@@ -5,7 +5,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=prometheus-node-exporter-lua
 PKG_VERSION:=2025.07.15
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
 PKG_LICENSE:=Apache-2.0
@@ -79,6 +79,17 @@ endef
 define Package/prometheus-node-exporter-lua-dawn/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
 	$(INSTALL_DATA) ./files/usr/lib/lua/prometheus-collectors/dawn.lua $(1)/usr/lib/lua/prometheus-collectors/
+endef
+
+define Package/prometheus-node-exporter-lua-filesystem
+  $(call Package/prometheus-node-exporter-lua/Default)
+  TITLE+= (filesystem collector)
+  DEPENDS:=prometheus-node-exporter-lua +luci-lib-nixio
+endef
+
+define Package/prometheus-node-exporter-lua-filesystem/install
+	$(INSTALL_DIR) $(1)/usr/lib/lua/prometheus-collectors
+	$(INSTALL_BIN) ./files/usr/lib/lua/prometheus-collectors/filesystem.lua $(1)/usr/lib/lua/prometheus-collectors/
 endef
 
 define Package/prometheus-node-exporter-lua-hostapd_stations
@@ -282,6 +293,7 @@ endef
 $(eval $(call BuildPackage,prometheus-node-exporter-lua))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-bmx7))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-dawn))
+$(eval $(call BuildPackage,prometheus-node-exporter-lua-filesystem))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-hostapd_stations))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-hostapd_ubus_stations))
 $(eval $(call BuildPackage,prometheus-node-exporter-lua-hwmon))
