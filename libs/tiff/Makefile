@@ -20,6 +20,7 @@ PKG_LICENSE:=libtiff
 PKG_LICENSE_FILES:=LICENSE.md
 PKG_CPE_ID:=cpe:/a:libtiff:libtiff
 
+include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
@@ -45,6 +46,18 @@ $(call Package/tiff/Default)
   TITLE+= utilities
   DEPENDS:=+libtiff +libstdcpp
 endef
+
+CMAKE_HOST_OPTIONS += \
+	-DCMAKE_REQUIRED_LIBRARIES="-lm" \
+	-Dld-version-script=OFF \
+	-Dold-jpeg=OFF \
+	-Djbig=OFF \
+	-Dlzma=OFF \
+	-Dzstd=OFF \
+	-Dwebp=OFF \
+	-Djpeg12=OFF \
+	-Dcxx=OFF \
+	-Dlibdeflate=OFF
 
 CMAKE_OPTIONS += \
 	-Dld-version-script=OFF \
@@ -73,5 +86,6 @@ define Package/tiff-utils/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
 endef
 
+$(eval $(call HostBuild))
 $(eval $(call BuildPackage,libtiff))
 $(eval $(call BuildPackage,tiff-utils))
