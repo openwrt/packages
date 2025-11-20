@@ -35,8 +35,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/tar
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+PACKAGE_TAR_POSIX_ACL:libacl +PACKAGE_TAR_XATTR:libattr +PACKAGE_TAR_BZIP2:bzip2
-  EXTRA_DEPENDS:=$(if $(CONFIG_PACKAGE_TAR_XZ),xz)
+  DEPENDS:=+PACKAGE_TAR_POSIX_ACL:libacl +PACKAGE_TAR_XATTR:libattr +PACKAGE_TAR_BZIP2:bzip2 +PACKAGE_TAR_XZ:xz
   TITLE:=GNU tar
   URL:=https://www.gnu.org/software/tar/
   MENU:=1
