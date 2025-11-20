@@ -19,7 +19,7 @@ define Package/airos-dfs-reset
   CATEGORY:=Utilities
   TITLE:=Companion app for Ubiquity AirOS to help with DFS
   PKGARCH:=all
-  EXTRA_DEPENDS:=dropbear
+  DEPENDS:=dropbear
 endef
 
 define Package/airos-dfs-reset/description
