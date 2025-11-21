@@ -45,7 +45,11 @@ adb_mailtext="${adb_mailtext}</pre></body></html>"
 #
 if [ -x "${adb_mailcmd}" ]; then
 	printf "%b" "${adb_mailhead}${adb_mailtext}" 2>/dev/null | "${adb_mailcmd}" ${debug} -a "${adb_mailprofile}" "${adb_mailreceiver}" >/dev/null 2>&1
-	f_log "info" "mail sent to '${adb_mailreceiver}' with rc '${?}'"
+	if [ "${?}" = "0" ]; then
+		f_log "info" "mail successfully sent to '${adb_mailreceiver}'"
+	else
+		f_log "err" "failed to send mail to '${adb_mailreceiver}' with rc '${?}'"
+	fi
 else
 	f_log "err" "msmtp mail daemon not found"
 fi

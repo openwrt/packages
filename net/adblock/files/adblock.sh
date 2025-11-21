@@ -85,7 +85,8 @@ f_load() {
 	local bg_pid iface port ports cpu core
 
 	adb_packages="$("${adb_ubuscmd}" -S call rpc-sys packagelist '{ "all": true }' 2>/dev/null)"
-	adb_ver="$(printf "%s" "${adb_packages}" | "${adb_jsoncmd}" -ql1 -e '@.packages.adblock')"
+	adb_bver="$(printf "%s" "${adb_packages}" | "${adb_jsoncmd}" -ql1 -e '@.packages.adblock')"
+	adb_fver="$(printf "%s" "${adb_packages}" | "${adb_jsoncmd}" -ql1 -e '@.packages["luci-app-adblock"]')"
 	adb_sysver="$("${adb_ubuscmd}" -S call system board 2>/dev/null |
 		"${adb_jsoncmd}" -ql1 -e '@.model' -e '@.release.target' -e '@.release.distribution' -e '@.release.version' -e '@.release.revision' |
 		"${adb_awkcmd}" 'BEGIN{RS="";FS="\n"}{printf "%s, %s, %s %s %s %s",$1,$2,$3,$4,$5,$6}')"
@@ -699,7 +700,7 @@ f_list() {
 			;;
 		"blocklist" | "allowlist")
 			src_name="${mode}"
-			rset="/^(([[:alnum:]_-]{1,63}\\.)*[[:alnum:]-]{2,63}([[:space:]]|$))/{print tolower(\$1)}"
+			rset="/^(([[:alnum:]_-]{1,63}\\.)*[[:alpha:]][[:alnum:]-]{2,63}([[:space:]]|$))/{print tolower(\$1)}"
 			case "${src_name}" in
 				"blocklist")
 					if [ -f "${adb_blocklist}" ]; then
@@ -708,7 +709,7 @@ f_list() {
 						if [ -s "${adb_allowlist}" ]; then
 							"${adb_awkcmd}" 'NR==FNR{member[$1];next}!($1 in member)' "${adb_allowlist}" "${adb_tmpdir}/tmp.raw.${src_name}" >"${adb_tmpdir}/tmp.deduplicate.${src_name}"
 						else
-							"${adb_catcmd}" "${adb_tmpdir}/tmp.raw.${src_name}" >"${adb_tmpdir}/tmp.deduplicate.${src_name}"
+							"${adb_mvcmd}" -f "${adb_tmpdir}/tmp.raw.${src_name}" "${adb_tmpdir}/tmp.deduplicate.${src_name}"
 						fi
 						if [ "${adb_tld}" = "1" ]; then
 							"${adb_awkcmd}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' "${adb_tmpdir}/tmp.deduplicate.${src_name}" |
@@ -907,16 +908,15 @@ f_tld() {
 	local cnt_tld cnt_rem source="${1}" temp_tld="${1}.tld"
 
 	if "${adb_awkcmd}" '{if(NR==1){tld=$NF};while(getline){if(index($NF,tld".")==0){print tld;tld=$NF}}print tld}' "${source}" |
-		"${adb_awkcmd}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' >"${temp_tld}"; then
+		"${adb_awkcmd}" 'BEGIN{FS="."}{out=$NF;for(i=NF-1;i>=1;i--)out=out"."$i;print out}' >"${temp_tld}"; then
 		[ "${adb_debug}" = "1" ] && cnt_tld="$(f_count tld "${temp_tld}" "var")"
 		if [ -s "${adb_tmpdir}/tmp.rem.allowlist" ]; then
-			"${adb_awkcmd}" 'NR==FNR{del[$0];next};!($0 in del)' "${adb_tmpdir}/tmp.rem.allowlist" "${temp_tld}" >"${source}"
+			"${adb_awkcmd}" 'NR==FNR{del[$0];next}!($0 in del)' "${adb_tmpdir}/tmp.rem.allowlist" "${temp_tld}" > "${source}"
 			[ "${adb_debug}" = "1" ] && cnt_rem="$(f_count tld "${source}" "var")"
 		else
-			"${adb_catcmd}" "${temp_tld}" >"${source}"
+			"${adb_mvcmd}" -f "${temp_tld}" "${source}"
 		fi
 	fi
-	: >"${temp_tld}"
 
 	f_log "debug" "f_tld    ::: name: -, cnt: ${adb_cnt:-"-"}, cnt_tld: ${cnt_tld:-"-"}, cnt_rem: ${cnt_rem:-"-"}"
 }
@@ -1111,7 +1111,8 @@ f_jsnup() {
 	json_init
 	json_load_file "${adb_rtfile}" >/dev/null 2>&1
 	json_add_string "adblock_status" "${status}"
-	json_add_string "adblock_version" "${adb_ver}"
+	json_add_string "frontend_ver" "${adb_fver}"
+	json_add_string "backend_ver" "${adb_bver}"
 	json_add_string "blocked_domains" "${adb_cnt:-"0"}"
 	json_add_array "active_feeds"
 	for object in ${feeds:-"-"}; do
@@ -1137,8 +1138,8 @@ f_log() {
 	local class="${1}" log_msg="${2}"
 
 	if [ -n "${log_msg}" ] && { [ "${class}" != "debug" ] || [ "${adb_debug}" = "1" ]; }; then
-		[ -x "${adb_loggercmd}" ] && "${adb_loggercmd}" -p "${class}" -t "adblock-${adb_ver}[${$}]" "${log_msg::256}" ||
-			printf "%s %s %s\n" "${class}" "adblock-${adb_ver}[${$}]" "${log_msg::256}"
+		[ -x "${adb_loggercmd}" ] && "${adb_loggercmd}" -p "${class}" -t "adblock-${adb_bver}[${$}]" "${log_msg::256}" ||
+			printf "%s %s %s\n" "${class}" "adblock-${adb_bver}[${$}]" "${log_msg::256}"
 		if [ "${class}" = "err" ] || [ "${class}" = "emerg" ]; then
 			[ "${adb_action}" != "mail" ] && f_rmdns
 			f_jsnup "error"
@@ -1168,7 +1169,7 @@ f_main() {
 	#
 	if [ "${adb_jail}" = "1" ] && [ "${adb_dnsstop}" != "0" ]; then
 		if [ "${adb_jaildir}" = "${adb_dnsdir}" ]; then
-			"${adb_catcmd}" "${adb_tmpdir}/${adb_dnsjail}" >"${adb_finaldir}/${adb_dnsfile}"
+			"${adb_mvcmd}" -f "${adb_tmpdir}/${adb_dnsjail}" "${adb_finaldir}/${adb_dnsfile}"
 			chown "${adb_dnsuser}" "${adb_finaldir}/${adb_dnsfile}" 2>/dev/null
 			if [ "${adb_dnsshift}" = "1" ] && [ ! -L "${adb_dnsdir}/${adb_dnsfile}" ]; then
 				ln -fs "${adb_finaldir}/${adb_dnsfile}" "${adb_dnsdir}/${adb_dnsfile}"
@@ -1186,7 +1187,7 @@ f_main() {
 			f_rmtemp
 			return
 		else
-			"${adb_catcmd}" "${adb_tmpdir}/${adb_dnsjail}" >"${adb_jaildir}/${adb_dnsjail}"
+			"${adb_mvcmd}" -f "${adb_tmpdir}/${adb_dnsjail}" "${adb_jaildir}/${adb_dnsjail}"
 			chown "${adb_dnsuser}" "${adb_jaildir}/${adb_dnsjail}" 2>/dev/null
 			f_log "info" "additional restrictive jail blocklist placed in ${adb_jaildir}"
 		fi
@@ -1582,6 +1583,7 @@ fi
 # reference required system utilities
 #
 adb_wccmd="$(f_cmd wc)"
+adb_mvcmd="$(f_cmd mv)"
 adb_catcmd="$(f_cmd cat)"
 adb_zcatcmd="$(f_cmd zcat)"
 adb_awkcmd="$(f_cmd gawk awk)"
