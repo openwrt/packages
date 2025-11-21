@@ -13,7 +13,6 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | Feed                | Enabled | Size | Focus            | Information                                                                       |
 | :------------------ | :-----: | :--- | :--------------- | :-------------------------------------------------------------------------------- |
 | 1Hosts              |         | VAR  | compilation      | [Link](https://github.com/badmojr/1Hosts)                                         |
-| adaway              |         | S    | mobile           | [Link](https://github.com/AdAway/adaway.github.io)                                |
 | adguard             |    x    | L    | general          | [Link](https://adguard.com)                                                       |
 | adguard_tracking    |    x    | L    | tracking         | [Link](https://github.com/AdguardTeam/cname-trackers)                             |
 | android_tracking    |         | S    | tracking         | [Link](https://github.com/Perflyst/PiHoleBlocklist)                               |
@@ -26,40 +25,15 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | disconnect          |         | S    | general          | [Link](https://disconnect.me)                                                     |
 | divested            |         | XXL  | compilation      | [Link](https://divested.dev/pages/dnsbl)                                          |
 | doh_blocklist       |         | S    | doh_server       | [Link](https://github.com/dibdot/DoH-IP-blocklists)                               |
-| easylist            |         | M    | compilation      | [Link](https://easylist.to)                                                       |
-| easyprivacy         |         | M    | tracking         | [Link](https://easylist.to)                                                       |
-| energized_blu       |         | XL   | compilation      | [Link](https://energized.pro)                                                     |
-| energized_spark     |         | L    | compilation      | [Link](https://energized.pro)                                                     |
-| energized_ultimate  |         | XXL  | compilation      | [Link](https://energized.pro)                                                     |
 | firetv_tracking     |         | S    | tracking         | [Link](https://github.com/Perflyst/PiHoleBlocklist)                               |
 | games_tracking      |         | S    | tracking         | [Link](https://www.gameindustry.eu)                                               |
 | hagezi              |         | VAR  | compilation      | [Link](https://github.com/hagezi/dns-blocklists)                                  |
 | hblock              |         | XL   | compilation      | [Link](https://hblock.molinero.dev)                                               |
-| lightswitch05       |         | XL   | compilation      | [Link](https://github.com/lightswitch05/hosts)                                    |
-| notracking          |         | XL   | tracking         | [Link](https://github.com/notracking/hosts-blocklists)                            |
 | oisd_big            |         | XXL  | general          | [Link](https://oisd.nl)                                                           |
 | oisd_nsfw           |         | XXL  | porn             | [Link](https://oisd.nl)                                                           |
 | oisd_nsfw_small     |         | M    | porn             | [Link](https://oisd.nl)                                                           |
 | oisd_small          |         | L    | general          | [Link](https://oisd.nl)                                                           |
-| openphish           |         | S    | phishing         | [Link](https://openphish.com)                                                     |
 | phishing_army       |         | S    | phishing         | [Link](https://phishing.army)                                                     |
-| reg_cn              |         | S    | reg_china        | [Link](https://easylist.to)                                                       |
-| reg_cz              |         | S    | reg_czech+slovak | [Link](https://easylist.to)                                                       |
-| reg_de              |         | S    | reg_germany      | [Link](https://easylist.to)                                                       |
-| reg_es              |         | S    | reg_espania      | [Link](https://easylist.to)                                                       |
-| reg_fi              |         | S    | reg_finland      | [Link](https://github.com/finnish-easylist-addition)                              |
-| reg_fr              |         | M    | reg_france       | [Link](https://forums.lanik.us/viewforum.php?f=91)                                |
-| reg_id              |         | S    | reg_indonesia    | [Link](https://easylist.to)                                                       |
-| reg_it              |         | S    | reg_italy        | [Link](https://easylist.to)                                                       |
-| reg_jp              |         | S    | reg_japan        | [Link](https://github.com/k2jp/abp-japanese-filters)                              |
-| reg_kr              |         | S    | reg_korea        | [Link](https://github.com/List-KR/List-KR)                                        |
-| reg_lt              |         | S    | reg_lithuania    | [Link](https://easylist.to)                                                       |
-| reg_nl              |         | S    | reg_netherlands  | [Link](https://easylist.to)                                                       |
-| reg_pl              |         | M    | reg_poland       | [Link](https://kadantiscam.netlify.com)                                           |
-| reg_ro              |         | S    | reg_romania      | [Link](https://easylist.to)                                                       |
-| reg_ru              |         | S    | reg_russia       | [Link](https://easylist.to)                                                       |
-| reg_se              |         | S    | reg_sweden       | [Link](https://github.com/lassekongo83/Frellwits-filter-lists)                    |
-| reg_vn              |         | S    | reg_vietnam      | [Link](https://bigdargon.github.io/hostsVN)                                       |
 | smarttv_tracking    |         | S    | tracking         | [Link](https://github.com/Perflyst/PiHoleBlocklist)                               |
 | spam404             |         | S    | general          | [Link](https://github.com/Dawsey21)                                               |
 | stevenblack         |         | VAR  | compilation      | [Link](https://github.com/StevenBlack/hosts)                                      |
@@ -67,7 +41,6 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 | utcapitole          |         | VAR  | general          | [Link](https://dsi.ut-capitole.fr/blacklists/index_en.php)                        |
 | wally3k             |         | S    | compilation      | [Link](https://firebog.net/about)                                                 |
 | whocares            |         | M    | general          | [Link](https://someonewhocares.org)                                               |
-| winhelp             |         | S    | general          | [Link](https://winhelp2002.mvps.org)                                              |
 | winspy              |         | S    | win_telemetry    | [Link](https://github.com/crazy-max/WindowsSpyBlocker)                            |
 | yoyo                |         | S    | general          | [Link](https://pgl.yoyo.org/adservers)                                            |
 

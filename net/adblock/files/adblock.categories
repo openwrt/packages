@@ -75,6 +75,7 @@ stb;porn-social;alternates/porn-social-only/hosts
 stb;social;alternates/social-only/hosts
 utc;adult
 utc;agressif
+utc;ai
 utc;arjel
 utc;associations_religieuses
 utc;astrology
@@ -95,9 +96,11 @@ utc;dialer
 utc;doh
 utc;download
 utc;drogue
+utc;dynamic-dns
 utc;educational_games
 utc;examen_pix
 utc;exceptions_liste_bu
+utc;fakenews
 utc;filehosting
 utc;financial
 utc;forums
@@ -120,6 +123,7 @@ utc;radio
 utc;reaffected
 utc;redirector
 utc;remote-control
+utc;residential-proxies
 utc;sect
 utc;sexual_education
 utc;shopping
@@ -132,7 +136,9 @@ utc;strict_redirector
 utc;strong_redirector
 utc;translation
 utc;tricheur
+utc;tricheur_pix
 utc;update
 utc;vpn
 utc;warez
+utc;webhosting
 utc;webmail
