@@ -18,6 +18,7 @@ PKG_HASH:=1a195adacd6188d3b71c476e7b21706fef7f3663ab1fb138652e8da49a9ec556
 PKG_MAINTAINER:=Anton Glukhov <anton.a.glukhov@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later BSD-2-Clause
 PKG_LICENSE_FILES:=COPYING LICENSE.GPL LICENSE.BSD
+PKG_CPE_ID:=cpe:/a:libcoap:libcoap
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

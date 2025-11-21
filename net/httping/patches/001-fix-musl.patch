@@ -1,0 +1,14 @@
+--- a/main.c
++++ b/main.c
+@@ -33,6 +33,11 @@
+ #include <ncurses.h>
+ #endif
+ 
++// musl has no this constant
++#ifndef TCPI_OPT_SYN_DATA
++#define TCPI_OPT_SYN_DATA 32
++#endif
++
+ #include "gen.h"
+ #include "help.h"
+ #include "colors.h"

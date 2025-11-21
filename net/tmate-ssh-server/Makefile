@@ -1,16 +1,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tmate-ssh-server
-PKG_VERSION:=511fd2bd852464e76824279609a34ee93fe148a4
-PKG_RELEASE:=2
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/tmate-io/tmate-ssh-server/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=68602496ca6a17ea80f5be53eba047897ac714c7cdfcb3bcdc12c56b8f3c3b45
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/tmate-io/tmate-ssh-server.git
+PKG_SOURCE_DATE:=2023-06-02
+PKG_SOURCE_VERSION:=d7334ee4c3c8036c27fb35c7a24df3a88a15676b
+PKG_MIRROR_HASH:=e8fe9749766049c15242a85b51866d279f190186ada70e8900f4ae61e81d3886
 
 PKG_LICENSE:=ISC
 PKG_LICENSE_FILES:=COPYING
-PKG_MAINTAINER:=Paul Spooren <mail@aparcar.org>
+PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
+PKG_CPE_ID:=cpe:/a:tmate:tmate-ssh-server
 
 PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1

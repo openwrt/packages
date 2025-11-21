@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xfrpc
-PKG_VERSION:=2.6.633
+PKG_VERSION:=4.04.856
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/liudf0716/xfrpc.git
+PKG_SOURCE_URL:=https://github.com/liudf0716/xfrpc
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
-PKG_MIRROR_HASH:=b9d5c2f8dd0d323169a824bb59d65bcc27fe6e0564c6aede5b966220b99ccc7b
+PKG_MIRROR_HASH:=6015d9e92652594eea6349421158cace65b5994e8eb30612a6f8f0e5baf1b2ce
 
 PKG_MAINTAINER:=Dengfeng Liu <liudf0716@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later

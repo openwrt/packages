@@ -1,0 +1,40 @@
+From 3793b1748ad151c8043dee1db198fffa3dbb5a67 Mon Sep 17 00:00:00 2001
+From: Georgi Valkov <gvalkov@gmail.com>
+Date: Sun, 15 Jun 2025 15:34:57 +0300
+Subject: [PATCH] mount_util.c: check if utab exists before update
+
+Do not attempt to update /run/mount/utab if it doesn't exist.
+Note: if this path ever changes, utab updates will break.
+
+Fixes the following error when mounting iPhone using ifuse:
+ifuse /mnt --container com.httpstorm.httpstorm
+mount: mounting ifuse on /mnt failed: Invalid argument
+
+On OpenWRT by default mount-utils is not installed and utab
+does not exist. /bin/mount is a symlink to /bin/busybox and
+does not support updating of utab. If mount-utils is installed:
+/run/mount/ exists, but does not contain utab.
+The mount-utils instance is under /usr/bin/mount, so a hard-coded
+call to /bin/mount will still fail. Using /usr/bin/mount succeeds
+but does not create utab.
+
+[1] https://github.com/libfuse/libfuse/pull/1247
+
+Signed-off-by: Georgi Valkov <gvalkov@gmail.com>
+---
+ lib/mount_util.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+--- a/lib/mount_util.c
++++ b/lib/mount_util.c
+@@ -75,6 +75,10 @@ static int mtab_needs_update(const char
+ 
+ 		if (err == EROFS)
+ 			return 0;
++
++		res = access("/run/mount/utab", F_OK);
++		if (res == -1)
++			return 0;
+ 	}
+ 
+ 	return 1;

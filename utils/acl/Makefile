@@ -8,19 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=acl
-PKG_VERSION:=2.3.1
+PKG_VERSION:=2.3.2
 PKG_RELEASE:=2
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://git.savannah.nongnu.org/cgit/acl.git/snapshot
-PKG_HASH:=8cad1182cc5703c3e8bf7a220fc267f146246f088d1ba5dd72d8b02736deedcc
-PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=@SAVANNAH/acl
+PKG_HASH:=97203a72cae99ab89a067fe2210c1cbf052bc492b479eca7d226d9830883b0bd
 
+PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
 PKG_LICENSE:=LGPL-2.1 GPL-2.0
 PKG_LICENSE_FILES:=doc/COPYING doc/COPYING.LGPL
+PKG_CPE_ID:=cpe:/a:acl_project:acl
 
 PKG_INSTALL:=1
-PKG_FIXUP:=autoreconf
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 

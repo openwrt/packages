@@ -1,0 +1,180 @@
+From f3f371deb376478176866fd770fbcf9bc0d0609f Mon Sep 17 00:00:00 2001
+From: Oliver Kiddle <opk@zsh.org>
+Date: Sat, 13 May 2023 00:56:48 +0200
+Subject: [PATCH] 51728: assign pcre named capture groups to a hash
+
+---
+ ChangeLog           |  3 +++
+ Doc/Zsh/mod_pcre.yo | 10 ++++++----
+ Src/Modules/pcre.c  | 43 +++++++++++++++++++++++++++++++++----------
+ Test/V07pcre.ztst   | 14 ++++++++++++++
+ 4 files changed, 56 insertions(+), 14 deletions(-)
+
+# diff --git a/ChangeLog b/ChangeLog
+# index 285b73b2c..2835a9405 100644
+# --- a/ChangeLog
+# +++ b/ChangeLog
+# @@ -1,5 +1,8 @@
+#  2023-05-13  Oliver Kiddle  <opk@zsh.org>
+ 
+# +	* 51728: Doc/Zsh/mod_pcre.yo, Src/Modules/pcre.c,
+# +	Test/V07pcre.ztst: assign pcre named capture groups to a hash
+# +
+#  	* 51723: Src/Modules/pcre.c, Test/V07pcre.ztst, configure.ac:
+#  	migrate pcre module to pcre2
+ 
+--- a/Doc/Zsh/mod_pcre.yo
++++ b/Doc/Zsh/mod_pcre.yo
+@@ -20,12 +20,12 @@ including those that indicate newline.
+ )
+ findex(pcre_study)
+ item(tt(pcre_study))(
+-Studies the previously-compiled PCRE which may result in faster
+-matching.
++Requests JIT compilation for the previously-compiled PCRE which
++may result in faster matching.
+ )
+ findex(pcre_match)
+ item(tt(pcre_match) [ tt(-v) var(var) ] [ tt(-a) var(arr) ] \
+-[ tt(-n) var(offset) ] [ tt(-b) ] var(string))(
++[ tt(-A) var(assoc) ] [ tt(-n) var(offset) ] [ tt(-b) ] var(string))(
+ Returns successfully if tt(string) matches the previously-compiled
+ PCRE.
+ 
+@@ -36,7 +36,9 @@ substrings, unless the tt(-a) option is
+ case it will set the array var(arr).  Similarly, the variable
+ tt(MATCH) will be set to the entire matched portion of the
+ string, unless the tt(-v) option is given, in which case the variable
+-var(var) will be set.
++var(var) will be set. Furthermore, any named captures will
++be stored in the associative array tt(.pcre.match) unless an
++alternative is given with tt(-A).
+ No variables are altered if there is no successful match.
+ A tt(-n) option starts searching for a match from the
+ byte var(offset) position in var(string).  If the tt(-b) option is given,
+--- a/Src/Modules/pcre.c
++++ b/Src/Modules/pcre.c
+@@ -129,14 +129,17 @@ bin_pcre_study(char *nam, UNUSED(char **
+ }
+ 
+ static int
+-zpcre_get_substrings(char *arg, pcre2_match_data *mdata, int captured_count,
+-	char *matchvar, char *substravar, int want_offset_pair,
+-	int matchedinarr, int want_begin_end)
++zpcre_get_substrings(pcre2_code *pat, char *arg, pcre2_match_data *mdata,
++	int captured_count, char *matchvar, char *substravar, char *namedassoc,
++	int want_offset_pair, int matchedinarr, int want_begin_end)
+ {
+     PCRE2_SIZE *ovec;
+     char *match_all, **matches;
+     char offset_all[50];
+     int capture_start = 1;
++    int vec_off;
++    PCRE2_SPTR ntable; /* table of named captures */
++    uint32_t ncount, nsize;
+ 
+     if (matchedinarr) {
+ 	/* bash-style ovec[0] entire-matched string in the array */
+@@ -174,7 +177,7 @@ zpcre_get_substrings(char *arg, pcre2_ma
+ 	if (substravar &&
+ 	    (!want_begin_end || nelem)) {
+ 	    char **x;
+-	    int vec_off, i;
++	    int i;
+ 	    matches = x = (char **) zalloc(sizeof(char *) * (captured_count+1-capture_start));
+ 	    for (i = capture_start; i < captured_count; i++) {
+ 		vec_off = 2*i;
+@@ -184,6 +187,23 @@ zpcre_get_substrings(char *arg, pcre2_ma
+ 	    setaparam(substravar, matches);
+ 	}
+ 
++	if (!pcre2_pattern_info(pat, PCRE2_INFO_NAMECOUNT, &ncount) && ncount
++		&& !pcre2_pattern_info(pat, PCRE2_INFO_NAMEENTRYSIZE, &nsize)
++		&& !pcre2_pattern_info(pat, PCRE2_INFO_NAMETABLE, &ntable))
++	{
++	    char **hash, **hashptr;
++	    uint32_t nidx;
++	    hashptr = hash = (char **)zshcalloc((ncount+1)*2*sizeof(char *));
++	    for (nidx = 0; nidx < ncount; nidx++) {
++		vec_off = (ntable[nsize * nidx] << 9) + 2 * ntable[nsize * nidx + 1];
++		/* would metafy the key but pcre limits characters in the name */
++		*hashptr++ = ztrdup((char *) ntable + nsize * nidx + 2);
++		*hashptr++ = metafy(arg + ovec[vec_off],
++			ovec[vec_off+1]-ovec[vec_off], META_DUP);
++	    }
++	    sethparam(namedassoc, hash);
++	}
++
+ 	if (want_begin_end) {
+ 	    /*
+ 	     * cond-infix rather than builtin; also not bash; so we set a bunch
+@@ -286,6 +306,7 @@ bin_pcre_match(char *nam, char **args, O
+     char *matched_portion = NULL;
+     char *plaintext = NULL;
+     char *receptacle = NULL;
++    char *named = ".pcre.match";
+     int return_value = 1;
+     /* The subject length and offset start are both int values in pcre_exec */
+     int subject_len;
+@@ -305,6 +326,9 @@ bin_pcre_match(char *nam, char **args, O
+     if(OPT_HASARG(ops,c='v')) {
+ 	matched_portion = OPT_ARG(ops,c);
+     }
++    if (OPT_HASARG(ops, c='A')) {
++	named = OPT_ARG(ops, c);
++    }
+     if(OPT_HASARG(ops,c='n')) { /* The offset position to start the search, in bytes. */
+ 	if ((offset_start = getposint(OPT_ARG(ops,c), nam)) < 0)
+ 	    return 1;
+@@ -326,8 +350,8 @@ bin_pcre_match(char *nam, char **args, O
+     if (ret==0) return_value = 0;
+     else if (ret == PCRE2_ERROR_NOMATCH) /* no match */;
+     else if (ret>0) {
+-	zpcre_get_substrings(plaintext, pcre_mdata, ret, matched_portion, receptacle,
+-			     want_offset_pair, 0, 0);
++	zpcre_get_substrings(pcre_pattern, plaintext, pcre_mdata, ret, matched_portion,
++		receptacle, named, want_offset_pair, 0, 0);
+ 	return_value = 0;
+     }
+     else {
+@@ -405,9 +429,8 @@ cond_pcre_match(char **a, int id)
+ 		    break;
+ 		}
+                 else if (r>0) {
+-		    zpcre_get_substrings(lhstr_plain, pcre_mdata, r, svar, avar, 0,
+-					 isset(BASHREMATCH),
+-					 !isset(BASHREMATCH));
++		    zpcre_get_substrings(pcre_pat, lhstr_plain, pcre_mdata, r, svar, avar,
++			    ".pcre.match", 0, isset(BASHREMATCH), !isset(BASHREMATCH));
+ 		    return_value = 1;
+ 		    break;
+ 		}
+@@ -443,7 +466,7 @@ static struct conddef cotab[] = {
+ 
+ static struct builtin bintab[] = {
+     BUILTIN("pcre_compile", 0, bin_pcre_compile, 1, 1, 0, "aimxs",  NULL),
+-    BUILTIN("pcre_match",   0, bin_pcre_match,   1, 1, 0, "a:v:n:b",    NULL),
++    BUILTIN("pcre_match",   0, bin_pcre_match,   1, 1, 0, "A:a:v:n:b",    NULL),
+     BUILTIN("pcre_study",   0, bin_pcre_study,   0, 0, 0, NULL,    NULL)
+ };
+ 
+--- a/Test/V07pcre.ztst
++++ b/Test/V07pcre.ztst
+@@ -194,3 +194,17 @@
+   [[ abc =~ 'a(d*)bc' ]] && print "$#MATCH; $#match; ${#match[1]}"
+ 0:empty capture
+ >3; 1; 0
++
++  [[ category/name-12345 =~ '(?x)^
++    (?<category> [^/]* ) /
++    (?<package>
++      (?<name> \w+ ) -
++      (?<version> \d+ ))$' ]]
++  typeset -p1 .pcre.match
++0:named captures
++>typeset -g -A .pcre.match=(
++>  [category]=category
++>  [name]=name
++>  [package]=name-12345
++>  [version]=12345
++>)

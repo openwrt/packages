@@ -5,24 +5,26 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=v4l2camera
-PKG_VERSION:=0.1.8
-PKG_RELEASE:=1
+PKG_VERSION:=0.2.1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/mpromonet/v4l2camera
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_MIRROR_HASH:=3e10898db18d8b36ab41ebc9fa5cb37928e5bb4043a5a8bb1257724ee71f41ff
+PKG_MIRROR_HASH:=34a412bcee8b917fb04b8e5ccb08db9129c3f7972ea89cf17f11aa78358311dc
 
 UI_FILE:=v4l2camera-ui-$(PKG_VERSION).tgz
-UI_HASH:=9a03905fde298abe028e01ba575006a5bff5182ed3d45da01eace045cfef2f82
+UI_HASH:=30dde9617a67595068110d3cee3a3ed0ca03f60c07ba9e0925b3cf51d699ab84
 
-LIVE555_VERSION:=2023.01.19
-LIVE555_HASH:=a7c64913f7f7007c5fdc29ea811e3ca781f262271b3e42afdd4bc1041d86fa99
+LIVE555_VERSION:=2024.08.01
+LIVE555_HASH:=839ab7437d01e629f8094ea1ec8c7a7bb504c7deed9edfc9e17ac34f9a1a193f
 LIVE555_FILE:=live.$(LIVE555_VERSION).tar.gz
 
 PKG_MAINTAINER:=Michel Promonet<michel.promonet@free.fr>
 PKG_LICENSE:=Unlicense
 PKG_LICENSE_FILES:=LICENCE
+
+PKG_BUILD_FLAGS:=gc-sections lto
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -33,7 +35,7 @@ define Package/v4l2camera
   SECTION:=multimedia
   CATEGORY:=Multimedia
   TITLE:=v4l2camera
-  DEPENDS:=+libstdcpp 
+  DEPENDS:=+libstdcpp +alsa-lib
   URL:=https://github.com/mpromonet/v4l2camera
 endef
 
@@ -57,6 +59,8 @@ define Download/ui
 	FILE:=$(UI_FILE)
 	HASH:=$(UI_HASH)
 endef
+
+TARGET_LDFLAGS += -lasound
 
 define Build/Prepare
 	# download live555

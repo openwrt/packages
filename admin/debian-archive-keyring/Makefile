@@ -2,12 +2,12 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=debian-archive-keyring
-PKG_VERSION:=2021.1.1
+PKG_VERSION:=2023.4
+PKG_HASH:=6e93a87b9e50bd81518880ec07a62f95d7d8452f4aa703f5b0a3076439f1022c
 PKG_RELEASE:=1
 
-PKG_SOURCE:=debian-archive-keyring_2021.1.1_all.deb
-PKG_SOURCE_URL:=http://ftp.debian.org/debian/pool/main/d/debian-archive-keyring/
-PKG_HASH:=56beca470dcd9b6d7e6c3c9e9d702101e01e9467e62810a8c357bd7b9c26251d
+PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION)_all.deb
+PKG_SOURCE_URL:=https://ftp.debian.org/debian/pool/main/d/$(PKG_NAME)/
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>

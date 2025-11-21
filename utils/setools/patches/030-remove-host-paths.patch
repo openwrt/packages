@@ -1,6 +1,6 @@
 --- a/setup.py
 +++ b/setup.py
-@@ -79,7 +79,7 @@ class QtHelpCommand(Command):
+@@ -11,7 +11,7 @@ import os.path
  
  
  # Library linkage

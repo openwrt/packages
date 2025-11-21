@@ -1,0 +1,37 @@
+From 4664b8dd3bc124c27b160720113339c1da97c2c4 Mon Sep 17 00:00:00 2001
+From: Khem Raj <raj.khem@gmail.com>
+Date: Mon, 20 May 2024 17:50:51 -0700
+Subject: [PATCH] nbd-client: Fix build on musl + gcc14
+
+GCC-14 has promoted incompatible-pointer-types warning into error which is
+now flagged especially with when building on musl
+
+Fixes following error
+
+| ../nbd-3.26.1/nbd-client.c: In function 'openunix':
+| ../nbd-3.26.1/nbd-client.c:345:27: error: passing argument 2 of 'connect' from incompatible pointer type [-Wincompatible-pointer-types]
+|   345 |         if (connect(sock, &un_addr, sizeof(un_addr)) == -1) {
+|       |                           ^~~~~~~~
+|       |                           |
+|       |                           struct sockaddr_un *
+| In file included from ../nbd-3.26.1/nbd-client.c:25:
+| /mnt/b/yoe/master/build/tmp/work/core2-64-yoe-linux-musl/nbd/3.26.1/recipe-sysroot/usr/include/sys/socket.h:386:19: note: expected 'const struct sockaddr *' but argument is of type 'struct sockaddr_un *'
+|   386 | int connect (int, const struct sockaddr *, socklen_t);
+|       |                   ^~~~~~~~~~~~~~~~~~~~~~~
+
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
+---
+ nbd-client.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/nbd-client.c
++++ b/nbd-client.c
+@@ -341,7 +341,7 @@ int openunix(const char *path) {
+ 		return -1;
+ 	};
+ 
+-	if (connect(sock, &un_addr, sizeof(un_addr)) == -1) {
++	if (connect(sock, (struct sockaddr*)&un_addr, sizeof(un_addr)) == -1) {
+ 		err_nonfatal("CONNECT failed");
+ 		close(sock);
+ 		return -1;

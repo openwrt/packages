@@ -1,6 +1,6 @@
 --- a/lib/shell.c
 +++ b/lib/shell.c
-@@ -68,6 +68,8 @@ mc_shell_get_installed_in_system (void)
+@@ -70,6 +70,8 @@ mc_shell_get_installed_in_system (void)
          mc_shell->path = g_strdup ("/bin/bash");
      else if (access ("/bin/ash", X_OK) == 0)
          mc_shell->path = g_strdup ("/bin/ash");
@@ -9,7 +9,7 @@
      else if (access ("/bin/dash", X_OK) == 0)
          mc_shell->path = g_strdup ("/bin/dash");
      else if (access ("/bin/busybox", X_OK) == 0)
-@@ -149,6 +151,12 @@ mc_shell_recognize_real_path (mc_shell_t
+@@ -151,6 +153,12 @@ mc_shell_recognize_real_path (mc_shell_t
          mc_shell->type = SHELL_ZSH;
          mc_shell->name = "zsh";
      }
@@ -34,7 +34,7 @@
      SHELL_FISH
 --- a/src/subshell/common.c
 +++ b/src/subshell/common.c
-@@ -378,6 +378,11 @@ init_subshell_child (const char *pty_nam
+@@ -380,6 +380,11 @@ init_subshell_child (const char *pty_nam
          }
          break;
  
@@ -46,7 +46,7 @@
          /* TODO: Find a way to pass initfile to TCSH and FISH */
      case SHELL_TCSH:
      case SHELL_FISH:
-@@ -427,6 +432,7 @@ init_subshell_child (const char *pty_nam
+@@ -429,6 +434,7 @@ init_subshell_child (const char *pty_nam
  
      case SHELL_ASH_BUSYBOX:
      case SHELL_DASH:
@@ -54,7 +54,7 @@
      case SHELL_TCSH:
      case SHELL_FISH:
          execl (mc_global.shell->path, mc_global.shell->path, (char *) NULL);
-@@ -1091,6 +1097,10 @@ init_subshell_precmd (char *precmd, size
+@@ -1094,6 +1100,10 @@ init_subshell_precmd (char *precmd, size
                      "PS1='\\u@\\h:\\w\\$ '\n", command_buffer_pipe[WRITE],
                      command_buffer_pipe[WRITE], subshell_pipe[WRITE]);
          break;

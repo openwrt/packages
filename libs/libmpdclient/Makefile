@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmpdclient
-PKG_VERSION:=2.20
-PKG_RELEASE:=2
+PKG_VERSION:=2.22
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.musicpd.org/download/libmpdclient/2
-PKG_HASH:=18793f68e939c3301e34d8fcadea1f7daa24143941263cecadb80126194e277d
+PKG_HASH:=eac15b82b5ba5ed0648af580221eb74657394f7fe768e966d9e9ebb27435429f
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=BSD-3-Clause

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
+# Copyright (C) 2022-2025 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=librespeed-cli
-PKG_VERSION:=1.0.10
-PKG_RELEASE:=3
+PKG_VERSION:=1.0.12
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/librespeed/speedtest-cli/tar.gz/v${PKG_VERSION}?
-PKG_HASH:=904ec84f41714d5a7ab778534d332219cd254fdd0f97cc33ebb3540d31fb802c
+PKG_HASH:=2813ff49a8bc99687e70599212e05f0d995cd7f685e1202e80eea4ff58767301
 
 PKG_MAINTAINER:=Michal Vasilek <michal.vasilek@nic.cz>
 PKG_LICENSE:=LGPL-3.0-only

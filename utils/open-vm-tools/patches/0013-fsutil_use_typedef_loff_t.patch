@@ -11,7 +11,7 @@ Subject: [PATCH] use off64_t instead of loff_t
 
 --- a/vmhgfs-fuse/file.c
 +++ b/vmhgfs-fuse/file.c
-@@ -547,7 +547,7 @@ static int
+@@ -548,7 +548,7 @@ static int
  HgfsDoRead(HgfsHandle handle,  // IN:  Handle for this file
             char *buf,          // OUT: Buffer to copy data into
             size_t count,       // IN:  Number of bytes to read
@@ -20,7 +20,7 @@ Subject: [PATCH] use off64_t instead of loff_t
  {
     HgfsReq *req;
     HgfsOp opUsed;
-@@ -708,11 +708,11 @@ ssize_t
+@@ -709,11 +709,11 @@ ssize_t
  HgfsRead(struct fuse_file_info *fi,  // IN:  File info struct
           char  *buf,                 // OUT: User buffer to copy data into
           size_t count,               // IN:  Number of bytes to read
@@ -34,7 +34,7 @@ Subject: [PATCH] use off64_t instead of loff_t
     size_t nextCount, remainingCount = count;
     uint32 maxIOSize = HgfsMaxIOSize();
  
-@@ -769,7 +769,7 @@ static int
+@@ -770,7 +770,7 @@ static int
  HgfsDoWrite(HgfsHandle handle,       // IN: Handle for the file
              const char *buf,         // IN: Buffer containing data
              size_t count,            // IN: Number of bytes to write
@@ -43,7 +43,7 @@ Subject: [PATCH] use off64_t instead of loff_t
  {
     HgfsReq *req;
     int result = 0;
-@@ -893,11 +893,11 @@ ssize_t
+@@ -894,11 +894,11 @@ ssize_t
  HgfsWrite(struct fuse_file_info *fi,  // IN: File info structure
           const char  *buf,            // OUT: User buffer to copy data into
           size_t count,                // IN:  Number of bytes to read

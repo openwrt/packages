@@ -1,24 +1,26 @@
-local ubus = require "ubus"
-local bit32 = require "bit32"
+local ubus = require("ubus")
+local bit32 = require("bit32")
 
 local function get_wifi_interfaces()
   local conn = ubus.connect()
   local ubuslist = conn:objects()
   local interfaces = {}
 
-  for _,net in ipairs(ubuslist) do
-    if net.find(net,"hostapd.") then
-      local ifname = net:gsub("hostapd.", "")
-      table.insert(interfaces, ifname);
+  for _, net in ipairs(ubuslist) do
+    if net:find("^hostapd%.") then
+      local ifname = net:gsub("hostapd%.", "")
+      table.insert(interfaces, ifname)
     end
   end
   conn:close()
-  return interfaces;
+  return interfaces
 end
 
 local function is_ubus_interface(ubus_interfaces, interface)
-  for i=1,#ubus_interfaces do
-    if ubus_interfaces[i] == interface then return true end
+  for i = 1, #ubus_interfaces do
+    if ubus_interfaces[i] == interface then
+      return true
+    end
   end
   return false
 end
@@ -30,13 +32,10 @@ local function get_wifi_interface_labels()
   local ubus_interfaces = get_wifi_interfaces()
 
   for _, dev_table in pairs(status) do
-    for _, intf in ipairs(dev_table['interfaces']) do
-      local cfg = intf['config']
-
-      if is_ubus_interface(ubus_interfaces, cfg['ifname']) then
-
+    for _, intf in ipairs(dev_table["interfaces"]) do
+      if is_ubus_interface(ubus_interfaces, intf["ifname"]) then
         -- Migrate this to ubus interface once it exposes all interesting labels
-        local handle = io.popen("hostapd_cli -i " .. cfg['ifname'] .." status")
+        local handle = io.popen("hostapd_cli -i " .. intf["ifname"] .. " status")
         local hostapd_status = handle:read("*a")
         handle:close()
 
@@ -50,7 +49,7 @@ local function get_wifi_interface_labels()
             hostapd["channel"] = value
           -- hostapd gives us all bss on the relevant phy, find the one we're interested in
           elseif string.match(name, "bss%[%d%]") then
-            if value == cfg['ifname'] then
+            if value == intf["ifname"] then
               bss_idx = tonumber(string.match(name, "bss%[(%d)%]"))
             end
           elseif bss_idx >= 0 then
@@ -63,12 +62,12 @@ local function get_wifi_interface_labels()
         end
 
         local labels = {
-          vif = cfg['ifname'],
-          ssid = hostapd['ssid'],
-          bssid = hostapd['bssid'],
-          encryption = cfg['encryption'], -- In a mixed scenario it would be good to know if A or B was used
-          frequency = hostapd['freq'],
-          channel = hostapd['channel'],
+          vif = intf["ifname"],
+          ssid = hostapd["ssid"],
+          bssid = hostapd["bssid"],
+          encryption = intf["config"]["encryption"], -- In a mixed scenario it would be good to know if A or B was used
+          frequency = hostapd["freq"],
+          channel = hostapd["channel"],
         }
 
         table.insert(interfaces, labels)
@@ -125,7 +124,7 @@ local function scrape()
       metric_hostapd_station_flag_short_preamble(labels, flags["SHORT_PREAMBLE"] and 1 or 0)
 
       metric_hostapd_station_flag_ht(labels, flags["HT"] and 1 or 0)
-      metric_hostapd_station_flag_vht(labels, flags["VHT"]and 1 or 0)
+      metric_hostapd_station_flag_vht(labels, flags["VHT"] and 1 or 0)
       metric_hostapd_station_flag_he(labels, flags["HE"] and 1 or 0)
 
       metric_hostapd_station_flag_wmm(labels, flags["WMM"] and 1 or 0)
@@ -166,8 +165,8 @@ local function scrape()
   end
 
   for _, labels in ipairs(get_wifi_interface_labels()) do
-    local vif = labels['vif']
-    local handle = io.popen("hostapd_cli -i " .. vif .." all_sta")
+    local vif = labels["vif"]
+    local handle = io.popen("hostapd_cli -i " .. vif .. " all_sta")
     local all_sta = handle:read("*a")
     handle:close()
 

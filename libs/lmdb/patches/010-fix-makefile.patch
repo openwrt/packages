@@ -8,7 +8,7 @@
  
  ########################################################################
  
-@@ -86,10 +87,10 @@ midl.o: midl.c midl.h
+@@ -87,10 +88,10 @@ midl.o: midl.c midl.h
  	$(CC) $(CFLAGS) $(CPPFLAGS) -c midl.c
  
  mdb.lo: mdb.c lmdb.h midl.h

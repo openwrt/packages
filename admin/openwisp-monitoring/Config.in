@@ -1,0 +1,10 @@
+menu "netjson-monitoring Configuration"
+	depends on PACKAGE_netjson-monitoring
+
+config NETJSON_MONITORING_IWINFO
+	bool "Enable rpcd-mod-iwinfo"
+	default y
+	help
+	  Whether to include the rpcd-mod-iwinfo dependency (enabled by default).
+
+endmenu

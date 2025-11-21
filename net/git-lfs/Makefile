@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=git-lfs
-PKG_VERSION:=3.0.1
+PKG_VERSION:=3.5.1
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/git-lfs/git-lfs/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=ea47feff8cf10855393dd20f22a7168c462043c7a654a5fd0546af0a9d28a3a2
+PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://github.com/git-lfs/git-lfs/releases/download/v$(PKG_VERSION)
+PKG_HASH:=fc19c7316e80a6ef674aa4e1863561c1263cd4ce0588b9989e4be9461664d752
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=MIT
@@ -32,7 +32,8 @@ define Package/git-lfs
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Git Large File Storage
-  URL:=https://git-lfs.github.com
+  SUBMENU:=Version Control Systems
+  URL:=https://git-lfs.com
   DEPENDS:=$(GO_ARCH_DEPENDS) +git
 endef
 

@@ -1,21 +1,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=catatonit
-PKG_VERSION:=0.1.7
+PKG_VERSION:=0.2.0
 PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/openSUSE/catatonit.git
-PKG_SOURCE_DATE:=2022-03-07
-PKG_SOURCE_VERSION:=d8d72fea155c144ed3bf298a35a1aba5625a5656
-PKG_MIRROR_HASH:=5dfec105de2b1e674db55e12007aa66cf67769d38e3f294fbca54fc3e9b78674
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/openSUSE/catatonit/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=d0cf1feffdc89c9fb52af20fc10127887a408bbd99e0424558d182b310a3dc92
 
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
 PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
-PKG_LICENSE:=GPL-3.0-or-later
+PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
 include $(INCLUDE_DIR)/package.mk

@@ -1,16 +1,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libcgroup
-PKG_VERSION:=0.41
-PKG_RELEASE:=3
+PKG_VERSION:=2.0.3
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=@SF/libcg
-PKG_HASH:=e4e38bdc7ef70645ce33740ddcca051248d56b53283c0dc6d404e17706f6fb51
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://github.com/libcgroup/libcgroup/releases/download/v$(PKG_VERSION)
+PKG_HASH:=b29b5704de3d0fadf199fe4e17eeeaecba7f0dd1b85569c96eec37c7672e3026
 
 PKG_MAINTAINER:=Daniel Danzberger <daniel@dd-wrt.com>
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:libcgroup_project:libcgroup
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

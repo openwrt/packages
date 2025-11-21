@@ -1,0 +1,20 @@
+--- a/CSV_XS.xs
++++ b/CSV_XS.xs
+@@ -1235,14 +1235,14 @@ static void cx_ErrorDiag (pTHX_ csv_t *c
+     SV **svp;
+ 
+     if ((svp = hv_fetchs (csv->self, "_ERROR_DIAG", FALSE)) && *svp) {
+-	if (SvIOK (*svp)) (void)fprintf (stderr, "ERR: %d\n", SvIV (*svp));
++	if (SvIOK (*svp)) (void)fprintf (stderr, "ERR: %ld\n", SvIV (*svp));
+ 	if (SvPOK (*svp)) (void)fprintf (stderr, "ERR: %s\n", SvPV_nolen (*svp));
+ 	}
+     if ((svp = hv_fetchs (csv->self, "_ERROR_POS", FALSE)) && *svp) {
+-	if (SvIOK (*svp)) (void)fprintf (stderr, "POS: %d\n", SvIV (*svp));
++	if (SvIOK (*svp)) (void)fprintf (stderr, "POS: %ld\n", SvIV (*svp));
+ 	}
+     if ((svp = hv_fetchs (csv->self, "_ERROR_FLD", FALSE)) && *svp) {
+-	if (SvIOK (*svp)) (void)fprintf (stderr, "FLD: %d\n", SvIV (*svp));
++	if (SvIOK (*svp)) (void)fprintf (stderr, "FLD: %ld\n", SvIV (*svp));
+ 	}
+     } /* ErrorDiag */
+ 

@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=znc
-PKG_VERSION:=1.8.2
-PKG_RELEASE:=6
+PKG_VERSION:=1.10.1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://znc.in/releases \
 		https://znc.in/releases/archive
-PKG_HASH:=ff238aae3f2ae0e44e683c4aee17dc8e4fdd261ca9379d83b48a7d422488de0d
+PKG_HASH:=4e6e76851dbf2606185972b53ec5decad68fe53b63a56e4df8b8b3c0a6c46800
 
 PKG_MAINTAINER:=Jonas Gorski <jonas.gorski@gmail.com>
 PKG_LICENSE:=Apache-2.0
@@ -58,6 +58,8 @@ endef
 define Package/znc/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/znc $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/usr/lib/znc
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/znc/corecaps.so $(1)/usr/lib/znc/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/znc.init $(1)/etc/init.d/znc
 	$(INSTALL_DIR) $(1)/etc/config
@@ -157,9 +159,9 @@ define playback
 endef
 
 define Download/znc-playback
-  VERSION:=8dd128bfe2b24b2cc6a9ea2e2d28bfaa28d2a833
+  SOURCE_VERSION:=8dd128bfe2b24b2cc6a9ea2e2d28bfaa28d2a833
   SUBDIR:=znc-mod-playback
-  FILE:=znc-playback-$$(VERSION).tar.xz
+  FILE:=znc-playback-$$(SOURCE_VERSION).tar.xz
   URL:=https://github.com/jpnurmi/znc-playback.git
   MIRROR_HASH:=ac89d69048d62c5b15f39cc0d357a111ce4053816062e7bc1e553392b36fbd71
   PROTO:=git
@@ -193,9 +195,9 @@ define push
 endef
 
 define Download/znc-push
-  VERSION:=23d84678de2696e0b1f51aa5074764d29a98d37b
+  SOURCE_VERSION:=23d84678de2696e0b1f51aa5074764d29a98d37b
   SUBDIR:=znc-mod-push
-  FILE:=znc-push-$$(VERSION).tar.xz
+  FILE:=znc-push-$$(SOURCE_VERSION).tar.xz
   URL:=https://github.com/amyreese/znc-push.git
   MIRROR_HASH:=b1ec076ee8a37b8ff8cb530852d7639fbfce3df4a963cae29375056382020394
   PROTO:=git
@@ -346,14 +348,15 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
 CMAKE_OPTIONS += \
-	-DWANT_ICU=O$(if $(CONFIG_ZNC_ICU),N,FF) \
+	-DWANT_ARGON=OFF \
 	-DWANT_I18N=OFF \
+	-DWANT_ICU=O$(if $(CONFIG_ZNC_ICU),N,FF) \
 	-DWANT_CYRUS=OFF \
-	-DWANT_PERL=OFF \
-	-DWANT_SYSTEMD=OFF \
-	-DWANT_PYTHON=OFF \
 	-DWANT_OPENSSL=ON \
+	-DWANT_PERL=OFF \
+	-DWANT_PYTHON=OFF \
 	-DWANT_SWIG=OFF \
+	-DWANT_SYSTEMD=OFF \
 	-DWANT_TCL=OFF \
 	-DWANT_ZLIB=ON
 

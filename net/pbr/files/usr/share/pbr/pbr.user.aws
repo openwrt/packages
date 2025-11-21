@@ -1,33 +1,30 @@
 #!/bin/sh
-# This file is heavily based on code from https://github.com/Xentrk/netflix-vpn-bypass/blob/master/IPSET_Netflix.sh
-
-TARGET_SET='pbr_wan_4_dst_ip_user'
-TARGET_IPSET='pbr_wan_4_dst_net_user'
+# shellcheck disable=SC2015,SC3003,SC3060
+TARGET_URL='https://ip-ranges.amazonaws.com/ip-ranges.json'
+TARGET_DL_FILE='/var/pbr_tmp_aws_ip_ranges.gz'
 TARGET_TABLE='inet fw4'
-TARGET_URL="https://ip-ranges.amazonaws.com/ip-ranges.json"
-TARGET_DL_FILE="/var/pbr_tmp_aws_ip_ranges"
-TARGET_NFT_FILE="/var/pbr_tmp_aws_ip_ranges.nft"
-[ -z "$nft" ] && nft="$(command -v nft)"
+TARGET_INTERFACE='wan'
+
 _ret=1
 
-if [ ! -s "$TARGET_DL_FILE" ]; then
-	uclient-fetch --no-check-certificate -qO- "$TARGET_URL" 2>/dev/null | grep "ip_prefix" | sed 's/^.*\"ip_prefix\": \"//; s/\",//' > "$TARGET_DL_FILE"
-fi
+mkdir -p "${TARGET_DL_FILE%/*}"
 
-if [ -s "$TARGET_DL_FILE" ]; then
-	if ipset -q list "$TARGET_IPSET" >/dev/null 2>&1; then
-		if awk -v ipset="$TARGET_IPSET" '{print "add " ipset " " $1}' "$TARGET_DL_FILE" | ipset restore -!; then
-			_ret=0
-		fi
-	elif [ -n "$nft" ] && [ -x "$nft" ] && "$nft" list set "$TARGET_TABLE" "$TARGET_SET" >/dev/null 2>&1; then
-		printf "add element %s %s { " "$TARGET_TABLE" "$TARGET_SET" > "$TARGET_NFT_FILE"
-		awk '{printf $1 ", "}' "$TARGET_DL_FILE" >> "$TARGET_NFT_FILE"
-		printf " } " >> "$TARGET_NFT_FILE"
-		if "$nft" -f "$TARGET_NFT_FILE"; then
-			rm -f "$TARGET_NFT_FILE"
-			_ret=0
-		fi
-	fi
-fi
+[ -s "$TARGET_DL_FILE" ] || \
+	uclient-fetch --no-check-certificate -qO- "$TARGET_URL" | \
+		gzip > "$TARGET_DL_FILE"
+
+[ -s "$TARGET_DL_FILE" ] || return 1
+
+[ "$(uci get pbr.config.ipv6_enabled)" = "1" ] && vers="4 6" || vers="4"
+for ver in $vers;do
+	case "$ver" in
+		4) search='@.prefixes[*].ip_prefix';;
+		6) search='@.ipv6_prefixes[*].ipv6_prefix';;
+	esac
+	params="$(zcat "$TARGET_DL_FILE" | jsonfilter -e "$search")"
+	[ -n "$params" ] && _ret=0 || continue
+	nftset="pbr_${TARGET_INTERFACE}_${ver}_dst_ip_user"
+	nft "add element $TARGET_TABLE $nftset { ${params//$'\n'/, } }" || _ret=1
+done
 
 return $_ret

@@ -1,6 +1,33 @@
 --- a/GNUmakefile
 +++ b/GNUmakefile
-@@ -368,6 +368,8 @@ socket_accept4.o socket_accept6.o socket
+@@ -25,7 +25,7 @@ CROSS=
+ #CROSS=i686-mingw-
+ CC?=gcc
+ AR?=ar
+-RANLIB?=ranlib
++RANLIB?=$(CROSS)ranlib
+ CCC=$(CROSS)$(CC)
+ WERROR=
+ WARN=-W -Wall -Wextra $(WERROR)
+@@ -1174,7 +1174,7 @@ $(IO_OBJS) $(CDB_OBJS) $(CRITBIT_OBJS)
+ 
+ libowfat.a: $(ALL_OBJS)
+ 	$(CROSS)$(AR) cru $@ $(ALL_OBJS)
+-	-$(CROSS)$(RANLIB) $@
++	-$(RANLIB) $@
+ 
+ CFLAGS+=-I.
+ CFLAGS_OPT+=-I.
+@@ -1187,7 +1187,7 @@ CFLAGS_OPT+=-I.
+ 
+ %.a:
+ 	$(CROSS)$(AR) cru $@ $^
+-	-$(CROSS)$(RANLIB) $@
++	-$(RANLIB) $@
+ 
+ t: t.o libowfat.a libsocket
+ 	$(DIET) $(CCC) -g -o $@ t.o libowfat.a `cat libsocket` -lpthread $(LDFLAGS)
+@@ -1366,6 +1366,8 @@ socket_accept4.o socket_accept6.o socket
  socket_local6.o socket_recv4.o socket_recv6.o socket_remote4.o \
  socket_remote6.o socket_accept4_flags.o socket_accept6_flags.o: havesl.h
  
@@ -9,8 +36,19 @@
  dns_nd6.o fmt_xlong.o scan_xlong.o fmt_ip6_flat.o $(TEXTCODE_OBJS): haveinline.h
  
  iob_send.o scan_ip6if.o: havealloca.h
-@@ -397,7 +399,7 @@ update:
- 	dl -n http://www.w3.org/TR/html5/entities.json
+@@ -1390,8 +1392,8 @@ Makefile: GNUmakefile dep libdep
+ srcdirs=$(subst :, ,$(VPATH))
+ srcfiles=$(foreach dir,$(srcdirs),$(wildcard $(dir)/*.c))
+ 
+-compile_commands.json.tmpl: json
+-	./json $(srcfiles) > $@
++compile_commands.json.tmpl:
++	libowfat-json $(srcfiles) > $@
+ 
+ compile_commands.json: compile_commands.json.tmpl
+ 	sed -e 's#"@"#"$(PWD)"#' < $< > $@
+@@ -1410,7 +1412,7 @@ update:
+ 	dl -n https://html.spec.whatwg.org/entities.json
  
  entities.h: entities.json ent
 -	./ent

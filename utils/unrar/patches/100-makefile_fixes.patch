@@ -5,10 +5,10 @@
  
  # Linux using GCC
 -CXX=c++
--CXXFLAGS=-O2 -Wno-logical-op-parentheses -Wno-switch -Wno-dangling-else
+-CXXFLAGS=-march=native -O2 -std=c++11 -Wno-logical-op-parentheses -Wno-switch -Wno-dangling-else
 -LIBFLAGS=-fPIC
 +CXX?=c++
-+CXXFLAGS?=-O2 -Wno-logical-op-parentheses -Wno-switch -Wno-dangling-else
++CXXFLAGS?=-march=native -O2 -std=c++11 -Wno-logical-op-parentheses -Wno-switch -Wno-dangling-else
 +LIBFLAGS?=-fPIC
  DEFINES=-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -DRAR_SMP
 -STRIP=strip
@@ -20,9 +20,9 @@
 +LDFLAGS?=-lpthread
 +DESTDIR?=/usr
  
- # Linux using LCC
- #CXX=lcc
-@@ -167,7 +167,7 @@ uninstall-unrar:
+ ##########################
+ 
+@@ -69,7 +69,7 @@ uninstall-unrar:
  			rm -f $(DESTDIR)/bin/unrar
  
  install-lib:

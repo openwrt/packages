@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=python-jsonpath-ng
 PKG_VERSION:=1.5.3
 PKG_RELEASE:=1
-PKG_MAINTAINER:=Karel Kočí <cynerd@email.cz>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com> 
 
 PYPI_NAME:=jsonpath-ng
 PKG_HASH:=a273b182a82c1256daab86a313b937059261b5c5f8c4fa3fc38b882b344dd567

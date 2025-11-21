@@ -7,8 +7,14 @@
 
 define Package/python3-uuid
 $(call Package/python3/Default)
-  TITLE:=Python $(PYTHON3_VERSION) UUID module
+  TITLE+= uuid module
   DEPENDS:=+python3-light +libuuid
+endef
+
+define Package/python3-uuid/description
+$(call Package/python3/Default/description)
+
+This package contains the uuid module.
 endef
 
 $(eval $(call Py3BasePackage,python3-uuid, \

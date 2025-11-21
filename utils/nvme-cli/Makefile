@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nvme-cli
-PKG_VERSION:=2.5
+PKG_VERSION:=2.15
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/linux-nvme/nvme-cli/archive/refs/tags/v$(PKG_VERSION)
-PKG_HASH:=e84bdba276aadcddda8cf5d412e934cc5673af15132ea02180deb5d06af73146
+PKG_HASH:=93282c426f22dd1ea6d172dec8af043c4e9ff80189becfbbb5378fe1ca0a74ad
 
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=LICENSE

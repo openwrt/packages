@@ -18,6 +18,7 @@ PKG_HASH:=108362d29668d25cf7b0cadc63b15a4c1cfc0dbc71adc151b33c5fe7dece939a
 PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:gentoo:pax-utils
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/meson.mk

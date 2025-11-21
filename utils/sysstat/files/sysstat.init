@@ -13,7 +13,6 @@ validate_sysstat_section() {
 		'log_history:uinteger' \
 		'compressafter:uinteger' \
 		'sadc_options:string' \
-		'sa_dir:string' \
 		'zip:string' \
 		'enabled:string'
 }
@@ -30,7 +29,6 @@ start_sysstat_instance() {
 		echo "HISTORY=$log_history"
 		echo "COMPRESSAFTER=$compressafter"
 		echo "SADC_OPTIONS=\"$sadc_options\""
-		echo "SA_DIR=\"$sa_dir\""
 		echo "ZIP=\"$zip\""
 		echo "ENABLED=\"$enabled\""
 	} > $SYSSTAT_CFG

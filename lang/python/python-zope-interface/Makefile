@@ -9,11 +9,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-zope-interface
-PKG_VERSION:=6.0
+PKG_VERSION:=6.1
 PKG_RELEASE:=1
 
 PYPI_NAME:=zope.interface
-PKG_HASH:=aab584725afd10c710b8f1e6e208dbee2d0ad009f57d674cb9d1b3964037275d
+PKG_HASH:=2fdc7ccbd6eb6b7df5353012fbed6c3c5d04ceaca0038f75e601060e95345309
 
 PKG_LICENSE:=ZPL-2.1
 PKG_LICENSE_FILES:=LICENSE.txt
@@ -29,7 +29,7 @@ define Package/python3-zope-interface
   SUBMENU:=Python
   TITLE:=Interfaces for Python
   URL:=https://github.com/zopefoundation/zope.interface
-  DEPENDS:=+python3-light
+  DEPENDS:=+python3-light +python3-logging
 endef
 
 define Package/python3-zope-interface/description

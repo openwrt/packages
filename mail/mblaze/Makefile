@@ -12,7 +12,7 @@ PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 PKG_MAINTAINER:=Michal Vasilek <michal.vasilek@nic.cz>
-PKG_LICENSE:=Public Domain, MIT
+PKG_LICENSE:=Public-Domain MIT
 PKG_LICENSE_FILES:=COPYING
 
 include $(INCLUDE_DIR)/package.mk

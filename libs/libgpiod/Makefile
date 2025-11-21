@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libgpiod
-PKG_VERSION:=1.6.4
+PKG_VERSION:=2.1.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/software/libs/libgpiod/
-PKG_HASH:=7b146e12f28fbca3df7557f176eb778c5ccf952ca464698dba8a61b2e1e3f9b5
+PKG_HASH:=2be4c0b03e995d236c0e476e14aeb475d7b431dd1439609b6d65c540f91eaf58
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -26,17 +26,24 @@ PYTHON3_PKG_BUILD:=0
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python3-package.mk
 
+ifneq ($(CONFIG_PACKAGE_libgpiodcxx),)
+CONFIGURE_ARGS += --enable-bindings-cxx
+else
+CONFIGURE_ARGS += --disable-bindings-cxx
+endif
+
 ifneq ($(CONFIG_PACKAGE_gpiod-tools),)
 CONFIGURE_ARGS += --enable-tools
 endif
 
-ifneq ($(CONFIG_PACKAGE_python3-gpiod),)
-CONFIGURE_ARGS += --enable-bindings-python
-CONFIGURE_VARS += \
-	PYTHON="$(STAGING_DIR_HOSTPKG)/bin/$(PYTHON3)" \
-	PYTHON_CPPFLAGS="$(shell $(STAGING_DIR)/host/bin/$(PYTHON3)-config --includes)" \
-	PYTHON_LIBS="$(shell $(STAGING_DIR)/host/bin/$(PYTHON3)-config --libs)"
-endif
+PYTHON3_PKG_WHEEL_NAME:=gpiod
+PYTHON3_PKG_WHEEL_VERSION:=2.0.1
+
+PYTHON3_PKG_SETUP_DIR:=bindings/python
+PYTHON3_PKG_SETUP_VARS += LINK_SYSTEM_LIBGPIOD=1
+
+TARGET_CPPFLAGS += -I$(PKG_BUILD_DIR)/include
+TARGET_LDFLAGS += -L$(PKG_BUILD_DIR)/lib/.libs
 
 define Package/libgpiod
   SECTION:=libs
@@ -44,8 +51,7 @@ define Package/libgpiod
   URL:=https://git.kernel.org/pub/scm/libs/libgpiod/libgpiod.git
   TITLE:=Library for interacting with Linux's GPIO character device
   KCONFIG:= \
-    CONFIG_GPIO_CDEV=y \
-    CONFIG_GPIO_CDEV_V1=y
+    CONFIG_GPIO_CDEV=y
   DEPENDS:=@GPIO_SUPPORT
 endef
 
@@ -66,6 +72,18 @@ define Package/gpiod-tools/description
   (gpiod stands for GPIO device).
 endef
 
+define Package/libgpiodcxx
+  SECTION:=libs
+  CATEGORY:=Libraries
+  URL:=https://git.kernel.org/pub/scm/libs/libgpiod/libgpiod.git
+  TITLE:=C++ binding for libgpiod
+  DEPENDS:=+libstdcpp +libgpiod
+endef
+
+define Package/libgpiodcxx/description
+  This package contains the C++ binding for libgpiod.
+endef
+
 define Package/python3-gpiod
   SECTION:=lang
   CATEGORY:=Languages
@@ -79,6 +97,27 @@ define Package/python3-gpiod/description
   This package contains the Python bindings for libgpiod.
 endef
 
+define Build/Configure
+	$(call Build/Configure/Default)
+    ifneq ($(CONFIG_PACKAGE_python3-gpiod),)
+	$(call Py3Build/Configure)
+    endif
+endef
+
+define Build/Compile
+	$(call Build/Compile/Default)
+    ifneq ($(CONFIG_PACKAGE_python3-gpiod),)
+	$(call Py3Build/Compile)
+    endif
+endef
+
+define Build/Install
+	$(call Build/Install/Default)
+    ifneq ($(CONFIG_PACKAGE_python3-gpiod),)
+	$(call Py3Build/Install/Default)
+    endif
+endef
+
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/gpiod.h $(1)/usr/include/
@@ -88,6 +127,20 @@ define Build/InstallDev
 
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libgpiod.pc $(1)/usr/lib/pkgconfig/
+
+    ifneq ($(CONFIG_PACKAGE_libgpiodcxx),)
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/gpiodcxx $(1)/usr/include/
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/gpiod.hpp $(1)/usr/include/
+
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgpiodcxx.{so*,a} $(1)/usr/lib/
+
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libgpiodcxx.pc $(1)/usr/lib/pkgconfig/
+    endif
+
+    ifneq ($(CONFIG_PACKAGE_python3-gpiod),)
+	$(INSTALL_DIR) $(1)$(PYTHON3_PKG_DIR)
+	$(CP) $(PKG_INSTALL_DIR)$(PYTHON3_PKG_DIR)/* $(1)$(PYTHON3_PKG_DIR)
+    endif
 endef
 
 define Package/libgpiod/install
@@ -95,16 +148,23 @@ define Package/libgpiod/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgpiod.so.* $(1)/usr/lib/
 endef
 
+define Package/libgpiodcxx/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgpiodcxx.so.* $(1)/usr/lib/
+endef
+
 define Package/gpiod-tools/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
 endef
 
-define Package/python3-gpiod/install
-	$(INSTALL_DIR) $(1)/$(PYTHON3_PKG_DIR)
-	$(CP) $(PKG_INSTALL_DIR)/$(PYTHON3_PKG_DIR)/gpiod.so $(1)/$(PYTHON3_PKG_DIR)
+define Py3Package/python3-gpiod/install
+	# this empty define prevent installing tools from /usr/bin
 endef
 
 $(eval $(call BuildPackage,libgpiod))
+$(eval $(call BuildPackage,libgpiodcxx))
 $(eval $(call BuildPackage,gpiod-tools))
+$(eval $(call Py3Package,python3-gpiod))
 $(eval $(call BuildPackage,python3-gpiod))
+$(eval $(call BuildPackage,python3-gpiod-src))

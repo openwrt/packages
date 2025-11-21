@@ -56,10 +56,9 @@ start_instance() {
 		append_num "$cfg" port "port"
 		append_num "$cfg" udp_port_base "udp_port_base"
 		append_num "$cfg" udp_port_range "udp_port_range"
-		append_str "$cfg" statistics "statistics"
 		append_num "$cfg" drift "drift"
+		append_num "$cfg" drift_tolerance_in_seconds "drift_tolerance_in_seconds"
 		append_num "$cfg" resync_threshold "resync_threshold"
-		append_num "$cfg" log_verbosity "log_verbosity"
 		append_str "$cfg" ignore_volume_control "ignore_volume_control"
 		append_num "$cfg" volume_range_db "volume_range_db"
 		append_str "$cfg" regtype "regtype"
@@ -83,6 +82,10 @@ start_instance() {
 		printf "{\n"
 		append_str "$cfg" sesctl_run_before_play_begins "run_this_before_play_begins"
 		append_str "$cfg" sesctl_run_after_play_ends "run_this_after_play_ends"
+		append_str "$cfg" sesctl_run_before_entering_active_state "run_this_before_entering_active_state"
+		append_str "$cfg" sesctl_run_after_exiting_active_state "run_this_after_exiting_active_state"
+		append_str "$cfg" sesctl_run_if_an_unfixable_error_is_detected "run_this_if_an_unfixable_error_is_detected"
+		append_str "$cfg" sesctl_run_when_volume_is_set "run_this_when_volume_is_set"
 		append_str "$cfg" sesctl_wait_for_completion "wait_for_completion"
 		append_str "$cfg" sesctl_session_interruption "allow_session_interruption"
 		append_num "$cfg" sesctl_session_timeout "session_timeout"
@@ -93,6 +96,7 @@ start_instance() {
 		printf "{\n"
 		append_str "$cfg" alsa_output_device "output_device"
 		append_str "$cfg" alsa_mixer_control_name "mixer_control_name"
+		append_num "$cfg" alsa_mixer_control_index "mixer_control_index"
 		append_str "$cfg" alsa_mixer_device "mixer_device"
 		append_num "$cfg" alsa_latency_offset "audio_backend_latency_offset"
 		append_num "$cfg" alsa_buffer_length "audio_backend_buffer_desired_length"
@@ -116,11 +120,37 @@ start_instance() {
 		append_num "$cfg" stdout_buffer_length "audio_backend_buffer_desired_length"
 		printf "};\n\n"
 
+		# MQTT
+		printf "mqtt =\n"
+		printf "{\n"
+		append_str "$cfg" mqtt_enabled "enabled"
+		append_str "$cfg" mqtt_hostname "hostname"
+		append_num "$cfg" mqtt_port "port"
+		append_str "$cfg" mqtt_username "username"
+		append_str "$cfg" mqtt_password "password"
+		append_str "$cfg" mqtt_topic "topic"
+		append_str "$cfg" mqtt_publish_raw "publish_raw"
+		append_str "$cfg" mqtt_publish_parsed "publish_parsed"
+		append_str "$cfg" mqtt_publish_cover "publish_cover"
+		append_str "$cfg" mqtt_enable_remote "enable_remote"
+		printf "};\n\n"
+
 		# AO audio back end
 		printf "ao =\n"
 		printf "{\n"
 		append_num "$cfg" ao_latency_offset "audio_backend_latency_offset"
 		append_num "$cfg" ao_buffer_length "audio_backend_buffer_desired_length"
+		printf "};\n\n"
+
+		# Diagnostics
+		config_get log_verbosity "$cfg" log_verbosity
+		config_get statistics "$cfg" statistics
+
+		printf "diagnostics =\n"
+		printf "{\n"
+		append_str "$cfg" diagnostics_statistics "statistics" "${statistics}"
+		append_str "$cfg" diagnostics_log_output_to "log_output_to"
+		append_num "$cfg" diagnostics_log_verbosity "log_verbosity" "${log_verbosity}"
 		printf "};\n\n"
 	} > "$conf_file"
 

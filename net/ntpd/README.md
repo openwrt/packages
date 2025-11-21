@@ -36,7 +36,7 @@ The parameter(s) `server` enumerate a list of servers to be used for
 reference NTP servers by the local daemon.  At least one is required,
 and two or more are recommended (unless you have an extremely available
 local server).  They should be picked to be geographically divergent,
-and preferrably reachable via different network carriers to protect
+and preferably reachable via different network carriers to protect
 against network partitions, etc.  They should also be high-quality
 time providers (i.e. having stable, accurate clock sources).
 
@@ -71,10 +71,10 @@ As a result, the NTP servers that your ISP may point you at are
 often of unknown/unverified quality, and you use them at your own
 risk.
 
-Early millenial versions of Windows (2000, XP, etc) used NTP only
+Early millennial versions of Windows (2000, XP, etc) used NTP only
 to _initially set_ the clock to approximately 100ms accuracy (and
-not maintain sychronization), so the bar wasn't set very high.
-Since then, requirements for higher-qualty timekeeping have
+not maintain synchronization), so the bar wasn't set very high.
+Since then, requirements for higher-quality timekeeping have
 arisen (e.g. multi-master SQL database replication), but most ISPs
 have not kept up with the needs of their users.
 

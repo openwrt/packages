@@ -1,0 +1,197 @@
+From 8fed2be3d5b83949fabb2bdf39d6de4f24d2e68f Mon Sep 17 00:00:00 2001
+From: Christian Marangi <ansuelsmth@gmail.com>
+Date: Mon, 30 Oct 2023 18:10:51 +0100
+Subject: [PATCH] Move from PCRE to PCRE2
+
+Move from PCRE to PCRE2. PCRE is EOL and won't receive any security
+updates anymore. Convert to PCRE2 by converting any function PCRE2 new
+API.
+
+Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
+---
+ configure.ac                                | 18 ++++----
+ src/lib/ndpi_utils.c                        | 46 ++++++++++-----------
+ src/lib/third_party/include/rce_injection.h |  6 +--
+ tests/do.sh.in                              |  4 +-
+ 4 files changed, 37 insertions(+), 37 deletions(-)
+
+--- a/configure.ac
++++ b/configure.ac
+@@ -359,14 +359,14 @@ AS_IF([test "${with_local_libgcrypt+set}
+   AC_DEFINE_UNQUOTED(USE_HOST_LIBGCRYPT, 1, [Use locally installed libgcrypt instead of builtin gcrypt-light])
+ ])
+ 
+-dnl> PCRE
+-PCRE_ENABLED=0
+-AC_ARG_WITH(pcre, AS_HELP_STRING([--with-pcre], [Enable nDPI build with libpcre]))
+-if test "${with_pcre+set}" = set; then :
+-  AC_CHECK_LIB(pcre, pcre_compile, AC_DEFINE_UNQUOTED(HAVE_PCRE, 1, [libpcre(-dev) is present]))
+-  if test "x$ac_cv_lib_pcre_pcre_compile" = xyes; then :
+-    ADDITIONAL_LIBS="${ADDITIONAL_LIBS} -lpcre"
+-    PCRE_ENABLED=1
++dnl> PCRE2
++PCRE2_ENABLED=0
++AC_ARG_WITH(pcre2, AS_HELP_STRING([--with-pcre2], [Enable nDPI build with libpcre2]))
++if test "${with_pcre2+set}" = set; then :
++  AC_CHECK_LIB(pcre2-8, pcre2_compile_8, AC_DEFINE_UNQUOTED(HAVE_PCRE2, 1, [libpcre2(-dev) is present]))
++  if test "x$ac_cv_lib_pcre2_8_pcre2_compile_8" = xyes; then :
++    ADDITIONAL_LIBS="${ADDITIONAL_LIBS} -lpcre2-8"
++    PCRE2_ENABLED=1
+   fi
+ fi
+ 
+@@ -420,7 +420,7 @@ AC_SUBST(GPROF_CFLAGS)
+ AC_SUBST(GPROF_LIBS)
+ AC_SUBST(GPROF_ENABLED)
+ AC_SUBST(USE_HOST_LIBGCRYPT)
+-AC_SUBST(PCRE_ENABLED)
++AC_SUBST(PCRE2_ENABLED)
+ AC_SUBST(NBPF_ENABLED)
+ AC_SUBST(HANDLE_TLS_SIGS)
+ AC_SUBST(DISABLE_NPCAP)
+--- a/src/lib/ndpi_utils.c
++++ b/src/lib/ndpi_utils.c
+@@ -62,12 +62,12 @@
+ 
+ // #define DEBUG_REASSEMBLY
+ 
+-#ifdef HAVE_PCRE
+-#include <pcre.h>
++#ifdef HAVE_PCRE2
++#define PCRE2_CODE_UNIT_WIDTH 8
++#include <pcre2.h>
+ 
+-struct pcre_struct {
+-  pcre *compiled;
+-  pcre_extra *optimized;
++struct pcre2_struct {
++  pcre2_code *compiled;
+ };
+ #endif
+ 
+@@ -1712,18 +1712,19 @@ static int ndpi_is_xss_injection(char* q
+ 
+ /* ********************************** */
+ 
+-#ifdef HAVE_PCRE
++#ifdef HAVE_PCRE2
+ 
+ static void ndpi_compile_rce_regex() {
+-  const char *pcreErrorStr = NULL;
+-  int pcreErrorOffset;
++  PCRE2_UCHAR pcreErrorStr[128];
++  PCRE2_SIZE pcreErrorOffset;
++  int pcreErrorCode;
+ 
+   for(int i = 0; i < N_RCE_REGEX; i++) {
+-    comp_rx[i] = (struct pcre_struct*)ndpi_malloc(sizeof(struct pcre_struct));
++    comp_rx[i] = (struct pcre2_struct*)ndpi_malloc(sizeof(struct pcre2_struct));
+ 
+-    comp_rx[i]->compiled = pcre_compile(rce_regex[i], 0, &pcreErrorStr,
++    comp_rx[i]->compiled = pcre2_compile((PCRE2_SPTR)rce_regex[i], PCRE2_ZERO_TERMINATED, 0, &pcreErrorCode,
+                                         &pcreErrorOffset, NULL);
+-
++    pcre2_get_error_message(pcreErrorCode, pcreErrorStr, 128);
+     if(comp_rx[i]->compiled == NULL) {
+ #ifdef DEBUG
+       NDPI_LOG_ERR(ndpi_str, "ERROR: Could not compile '%s': %s\n", rce_regex[i],
+@@ -1733,17 +1734,16 @@ static void ndpi_compile_rce_regex() {
+       continue;
+     }
+ 
+-    comp_rx[i]->optimized = pcre_study(comp_rx[i]->compiled, 0, &pcreErrorStr);
++    pcreErrorCode = pcre2_jit_compile(comp_rx[i]->compiled, PCRE2_JIT_COMPLETE);
+ 
+ #ifdef DEBUG
+-    if(pcreErrorStr != NULL) {
+-      NDPI_LOG_ERR(ndpi_str, "ERROR: Could not study '%s': %s\n", rce_regex[i],
++    if(pcreErrorCode < 0) {
++      pcre2_get_error_message(pcreErrorCode, pcreErrorStr, 128);
++      NDPI_LOG_ERR(ndpi_str, "ERROR: Could not jit compile '%s': %s\n", rce_regex[i],
+                    pcreErrorStr);
+     }
+ #endif
+   }
+-
+-  ndpi_free((void *)pcreErrorStr);
+ }
+ 
+ static int ndpi_is_rce_injection(char* query) {
+@@ -1752,17 +1752,17 @@ static int ndpi_is_rce_injection(char* q
+     initialized_comp_rx = 1;
+   }
+ 
++  pcre2_match_data *pcreMatchData;
+   int pcreExecRet;
+-  int subStrVec[30];
+ 
+   for(int i = 0; i < N_RCE_REGEX; i++) {
+     unsigned int length = strlen(query);
+ 
+-    pcreExecRet = pcre_exec(comp_rx[i]->compiled,
+-                            comp_rx[i]->optimized,
+-                            query, length, 0, 0, subStrVec, 30);
+-
+-    if(pcreExecRet >= 0) {
++    pcreMatchData = pcre2_match_data_create_from_pattern(comp_rx[i]->compiled, NULL);
++    pcreExecRet = pcre2_match(comp_rx[i]->compiled,
++                            (PCRE2_SPTR)query, length, 0, 0, pcreMatchData, NULL);
++    pcre2_match_data_free(pcreMatchData);
++    if(pcreExecRet > 0) {
+       return 1;
+     }
+ #ifdef DEBUG
+@@ -1852,7 +1852,7 @@ ndpi_risk_enum ndpi_validate_url(char *u
+ 	    rc = NDPI_URL_POSSIBLE_XSS;
+ 	  else if(ndpi_is_sql_injection(decoded))
+ 	    rc = NDPI_URL_POSSIBLE_SQL_INJECTION;
+-#ifdef HAVE_PCRE
++#ifdef HAVE_PCRE2
+ 	  else if(ndpi_is_rce_injection(decoded))
+ 	    rc = NDPI_URL_POSSIBLE_RCE_INJECTION;
+ #endif
+--- a/src/lib/third_party/include/rce_injection.h
++++ b/src/lib/third_party/include/rce_injection.h
+@@ -1,4 +1,4 @@
+-#ifdef HAVE_PCRE
++#ifdef HAVE_PCRE2
+ 
+ #ifndef NDPI_RCE_H
+ #define NDPI_RCE_H
+@@ -8,7 +8,7 @@
+ #define N_RCE_REGEX 7
+ 
+ /* Compiled regex */
+-static struct pcre_struct *comp_rx[N_RCE_REGEX];
++static struct pcre2_struct *comp_rx[N_RCE_REGEX];
+ 
+ static unsigned int initialized_comp_rx = 0;
+ 
+@@ -615,4 +615,4 @@ static const char *pwsh_commands[] = {
+   "-PSConsoleFile"
+ };
+ 
+-#endif //HAVE_PCRE
+\ No newline at end of file
++#endif //HAVE_PCRE2
+\ No newline at end of file
+--- a/tests/do.sh.in
++++ b/tests/do.sh.in
+@@ -26,7 +26,7 @@ CMD_COLORDIFF="$(which colordiff)"
+ 
+ EXE_SUFFIX=@EXE_SUFFIX@
+ GPROF_ENABLED=@GPROF_ENABLED@
+-PCRE_ENABLED=@PCRE_ENABLED@
++PCRE2_ENABLED=@PCRE2_ENABLED@
+ PCRE_PCAPS="WebattackRCE.pcap"
+ NBPF_ENABLED=@NBPF_ENABLED@
+ NBPF_PCAPS="h323-overflow.pcap"
+@@ -84,7 +84,7 @@ check_results() {
+ 		[ $SKIP_PCAP = 1 ] && continue
+ 	    fi
+ 	    SKIP_PCAP=0
+-	    if [ $PCRE_ENABLED -eq 0 ]; then
++	    if [ $PCRE2_ENABLED -eq 0 ]; then
+ 	      for p in $PCRE_PCAPS; do
+ 	        if [ $f = $p ]; then
+ 	          SKIP_PCAP=1

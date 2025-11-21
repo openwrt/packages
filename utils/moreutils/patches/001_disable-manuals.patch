@@ -9,13 +9,13 @@
  
  clean:
  	rm -f $(BINS) $(MANS) dump.c errnos.h errno.o \
-@@ -28,9 +28,6 @@ install:
+@@ -33,9 +33,6 @@ install:
  	$(INSTALL_BIN) $(BINS) $(DESTDIR)$(PREFIX)/bin
  	install $(PERLSCRIPTS) $(DESTDIR)$(PREFIX)/bin
  
 -	mkdir -p $(DESTDIR)$(PREFIX)/share/man/man1
--	install $(MANS) $(DESTDIR)$(PREFIX)/share/man/man1
+-	install -m 644 $(MANS) $(DESTDIR)$(PREFIX)/share/man/man1
 -
- check: isutf8
- 	./is_utf8/test.sh
- 
+ uninstall:
+ 	for i in $(BINS) $(PERLSCRIPTS); do rm -f $(DESTDIR)$(PREFIX)/bin/$$i; done
+ 	for i in $(MANS); do rm -f $(DESTDIR)$(PREFIX)/share/man/man1/$$i; done

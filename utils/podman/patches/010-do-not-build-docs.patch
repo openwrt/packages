@@ -1,6 +1,6 @@
 --- a/Makefile
 +++ b/Makefile
-@@ -209,7 +209,7 @@ GV_SHA=aab0ac9367fc5142f5857c36ac2352bcb
+@@ -230,7 +230,7 @@ GV_VERSION=v0.7.4
  default: all
  
  .PHONY: all
@@ -9,7 +9,7 @@
  
  .PHONY: binaries
  ifeq ($(shell uname -s),FreeBSD)
-@@ -790,7 +790,7 @@ package-install: package  ## Install rpm
+@@ -853,7 +853,7 @@ rpm-install: package  ## Install rpm pac
  	/usr/bin/podman info  # will catch a broken conmon
  
  .PHONY: install

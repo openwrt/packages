@@ -2,15 +2,16 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cni-plugins
 PKG_VERSION:=1.1.1
-PKG_RELEASE:=1
-PKG_LICENSE:=Apache-2.0
-PKG_LICENSE_FILES:=LICENSE
+PKG_RELEASE:=2
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/containernetworking/plugins/archive/v$(PKG_VERSION)
-PKG_HASH:=c86c44877c47f69cd23611e22029ab26b613f620195b76b3ec20f589367a7962
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+PKG_SOURCE_URL:=https://github.com/containernetworking/plugins
+PKG_MIRROR_HASH:=4372700fa1fb159235586432800f228d92246d13571f5a29aa9bc58291eac6d9
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>, Paul Spooren <mail@aparcar.org>
+PKG_LICENSE:=Apache-2.0
+PKG_LICENSE_FILES:=LICENSE
 
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
@@ -23,8 +24,6 @@ GO_PKG_BUILD_PKG:=github.com/containernetworking/plugins/plugins/main/... \
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
-
-PKG_UNPACK:=$(HOST_TAR) -C "$(PKG_BUILD_DIR)" --strip-components=1 -xzf "$(DL_DIR)/$(PKG_SOURCE)"
 
 define Package/cni-plugins
   SECTION:=utils

@@ -2,10 +2,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-asgiref
 PKG_VERSION:=3.7.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=asgiref
 PKG_HASH:=9e0ce3aa93a819ba5b45120216b23878cf6e8525eb3848653452b4192b92afed
+
+PKG_BUILD_DEPENDS:=python-setuptools/host
 
 PKG_MAINTAINER:=Peter Stadler <peter.stadler@student.uibk.ac.at>
 PKG_LICENSE:=BSD-3-Clause

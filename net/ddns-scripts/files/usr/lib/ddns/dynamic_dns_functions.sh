@@ -37,7 +37,6 @@ UPDFILE=""		# store UPTIME of last update
 DATFILE=""		# save stdout data of WGet and other external programs called
 ERRFILE=""		# save stderr output of WGet and other external programs called
 IPFILE=""		# store registered IP for read by LuCI status
-TLDFILE=/usr/share/public_suffix_list.dat.gz	# TLD file used by split_FQDN
 
 CHECK_SECONDS=0		# calculated seconds out of given
 FORCE_SECONDS=0		# interval and unit
@@ -72,7 +71,7 @@ IPV6_REGEX="\(\([0-9A-Fa-f]\{1,4\}:\)\{1,\}\)\(\([0-9A-Fa-f]\{1,4\}\)\{0,1\}\)\(
 SHELL_ESCAPE="[\"\'\`\$\!();><{}?|\[\]\*\\\\]"
 
 # dns character set. "-" must be the last character
-DNS_CHARSET="[@a-zA-Z0-9._-]"
+DNS_CHARSET="[@a-zA-Z0-9.:_-]"
 
 # domains can have * for wildcard. "-" must be the last character
 DNS_CHARSET_DOMAIN="[@a-zA-Z0-9._*-]"
@@ -86,6 +85,8 @@ KNOT_HOST=$(command -v khost)
 DRILL=$(command -v drill)
 HOSTIP=$(command -v hostip)
 NSLOOKUP=$(command -v nslookup)
+RESOLVEIP=$(command -v resolveip)
+jsonfilter=$(command -v jsonfilter)
 
 # Transfer Programs
 WGET=$(command -v wget)
@@ -129,35 +130,34 @@ USE_CURL=$(uci -q get ddns.global.use_curl) || USE_CURL=0	# read config
 # $1 = ddns, $2 = SECTION_ID
 load_all_config_options()
 {
-	local __PKGNAME="$1"
-	local __SECTIONID="$2"
-	local __VAR
-	local __ALL_OPTION_VARIABLES=""
+	local pkg_name section_id tmp_var all_opt_vars
+	pkg_name="$1"
+	section_id="$2"
 
-	# this callback loads all the variables in the __SECTIONID section when we do
+	# this callback loads all the variables in the $section_id section when we do
 	# config_load. We need to redefine the option_cb for different sections
 	# so that the active one isn't still active after we're done with it.  For reference
 	# the $1 variable is the name of the option and $2 is the name of the section
 	config_cb()
 	{
-		if [ ."$2" = ."$__SECTIONID" ]; then
+		if [ ."$2" = ."$section_id" ]; then
 			option_cb()
 			{
-				__ALL_OPTION_VARIABLES="$__ALL_OPTION_VARIABLES $1"
+				all_opt_vars="$all_opt_vars $1"
 			}
 		else
 			option_cb() { return 0; }
 		fi
 	}
 
-	config_load "$__PKGNAME"
+	config_load "$pkg_name"
 
 	# Given SECTION_ID not found so no data, so return 1
-	[ -z "$__ALL_OPTION_VARIABLES" ] && return 1
+	[ -z "$all_opt_vars" ] && return 1
 
-	for __VAR in $__ALL_OPTION_VARIABLES
+	for tmp_var in $all_opt_vars
 	do
-		config_get "$__VAR" "$__SECTIONID" "$__VAR"
+		config_get "$tmp_var" "$section_id" "$tmp_var"
 	done
 	return 0
 }
@@ -184,35 +184,28 @@ load_all_service_sections() {
 # and by /etc/init.d/ddns start
 start_daemon_for_all_ddns_sections()
 {
-	local __EVENTIF="$1"
-	local __SECTIONS=""
-	local __SECTIONID=""
-	local __IFACE=""
+	local event_if sections section_id configured_if
+	event_if="$1"
 
-	load_all_service_sections __SECTIONS
-	for __SECTIONID in $__SECTIONS; do
-		config_get __IFACE "$__SECTIONID" interface "wan"
-		[ -z "$__EVENTIF" -o "$__IFACE" = "$__EVENTIF" ] || continue
-		if [ $VERBOSE -eq 0 ]; then	# start in background
-			/usr/lib/ddns/dynamic_dns_updater.sh -v 0 -S "$__SECTIONID" -- start &
-		else
-			/usr/lib/ddns/dynamic_dns_updater.sh -v "$VERBOSE" -S "$__SECTIONID" -- start
-		fi
+	load_all_service_sections sections
+	for section_id in $sections; do
+		config_get configured_if "$section_id" interface "wan"
+		[ -z "$event_if" ] || [ "$configured_if" = "$event_if" ] || continue
+		/usr/lib/ddns/dynamic_dns_updater.sh -v "$VERBOSE" -S "$section_id" -- start &
 	done
 }
 
 # stop sections process incl. childs (sleeps)
 # $1 = section
 stop_section_processes() {
-	local __PID=0
-	local __PIDFILE="$ddns_rundir/$1.pid"
-	[ $# -ne 1 ] && write_log 12 "Error calling 'stop_section_processes()' - wrong number of parameters"
+	local pid_file
+	pid_file="$ddns_rundir/$1.pid"
+	[ $# -ne 1 ] && write_log 12 "Error: 'stop_section_processes()' requires exactly one parameter"
 
-	[ -e "$__PIDFILE" ] && {
-		__PID=$(cat $__PIDFILE)
-		ps | grep "^[\t ]*$__PID" >/dev/null 2>&1 && kill $__PID || __PID=0	# terminate it
+	[ -e "$pid_file" ] && {
+		xargs kill < "$pid_file" 2>/dev/null && return 1
 	}
-	[ $__PID -eq 0 ] # report if process was running
+	return 0 # nothing killed
 }
 
 # stop updater script for all defines sections or only for one given
@@ -221,16 +214,14 @@ stop_section_processes() {
 # and by /etc/init.d/ddns stop
 # needed because we also need to kill "sleep" child processes
 stop_daemon_for_all_ddns_sections() {
-	local __EVENTIF="$1"
-	local __SECTIONS=""
-	local __SECTIONID=""
-	local __IFACE=""
+	local event_if sections section_id configured_if
+	event_if="$1"
 
-	load_all_service_sections __SECTIONS
-	for __SECTIONID in $__SECTIONS;	do
-		config_get __IFACE "$__SECTIONID" interface "wan"
-		[ -z "$__EVENTIF" -o "$__IFACE" = "$__EVENTIF" ] || continue
-		stop_section_processes "$__SECTIONID"
+	load_all_service_sections sections
+	for section_id in $sections;	do
+		config_get configured_if "$section_id" interface "wan"
+		[ -z "$event_if" ] || [ "$configured_if" = "$event_if" ] || continue
+		stop_section_processes "$section_id"
 	done
 }
 
@@ -497,152 +488,117 @@ sanitize_variable() {
 	fi
 }
 
-# verify given host and port is connectable
-# $1	Host/IP to verify
-# $2	Port to verify
+# Verify host and port connectivity
+# $1: Host/IP
+# $2: Port
 verify_host_port() {
-	local __HOST=$1
-	local __PORT=$2
-	local __NC=$(command -v nc)
-	local __NCEXT=$($(command -v nc) --help 2>&1 | grep "\-w" 2>/dev/null)	# busybox nc compiled with extensions
-	local __IP __IPV4 __IPV6 __RUNPROG __PROG __ERR
 	# return codes
 	# 1	system specific error
 	# 2	nslookup/host error
 	# 3	nc (netcat) error
 	# 4	unmatched IP version
+	local host port ipv4 ipv6 nc_cmd err_code
+	host=$1
+	port=$2
+	nc_cmd=$(command -v nc)
+	err_code=0
 
-	[ $# -ne 2 ] && write_log 12 "Error calling 'verify_host_port()' - wrong number of parameters"
+	# Validate input parameters
+	[ $# -ne 2 ] && { write_log 12 "Error: verify_host_port() requires exactly 2 arguments"; return 1; }
 
-	# check if ip or FQDN was given
-	__IPV4=$(echo $__HOST | grep -m 1 -o "$IPV4_REGEX$")	# do not detect ip in 0.0.0.0.example.com
-	__IPV6=$(echo $__HOST | grep -m 1 -o "$IPV6_REGEX")
-	# if FQDN given get IP address
-	[ -z "$__IPV4" -a -z "$__IPV6" ] && {
-		if [ -n "$BIND_HOST" ]; then	# use BIND host if installed
-			__PROG="BIND host"
-			__RUNPROG="$BIND_HOST $__HOST >$DATFILE 2>$ERRFILE"
-		elif [ -n "$KNOT_HOST" ]; then	# use Knot host if installed
-			__PROG="Knot host"
-			__RUNPROG="$KNOT_HOST $__HOST >$DATFILE 2>$ERRFILE"
-		elif [ -n "$DRILL" ]; then	# use drill if installed
-			__PROG="drill"
-			__RUNPROG="$DRILL -V0 $__HOST A >$DATFILE 2>$ERRFILE"			# IPv4
-			__RUNPROG="$__RUNPROG; $DRILL -V0 $__HOST AAAA >>$DATFILE 2>>$ERRFILE"	# IPv6
-		elif [ -n "$HOSTIP" ]; then	# use hostip if installed
-			__PROG="hostip"
-			__RUNPROG="$HOSTIP $__HOST >$DATFILE 2>$ERRFILE"			# IPv4
-			__RUNPROG="$__RUNPROG; $HOSTIP -6 $__HOST >>$DATFILE 2>>$ERRFILE"	# IPv6
-		else	# use BusyBox nslookup
-			__PROG="BusyBox nslookup"
-			__RUNPROG="$NSLOOKUP $__HOST >$DATFILE 2>$ERRFILE"
-		fi
-		write_log 7 "#> $__RUNPROG"
-		eval $__RUNPROG
-		__ERR=$?
-		# command error
-		[ $__ERR -gt 0 ] && {
-			write_log 3 "DNS Resolver Error - $__PROG Error '$__ERR'"
-			write_log 7 "$(cat $ERRFILE)"
-			return 2
-		}
-		# extract IP address
-		if [ -n "$BIND_HOST" -o -n "$KNOT_HOST" ]; then	# use BIND host or Knot host if installed
-			__IPV4="$(awk -F "address " '/has address/ {print $2; exit}' "$DATFILE")"
-			__IPV6="$(awk -F "address " '/has IPv6/ {print $2; exit}' "$DATFILE")"
-		elif [ -n "$DRILL" ]; then	# use drill if installed
-			__IPV4="$(awk '/^'"$__HOST"'/ {print $5}' "$DATFILE" | grep -m 1 -o "$IPV4_REGEX")"
-			__IPV6="$(awk '/^'"$__HOST"'/ {print $5}' "$DATFILE" | grep -m 1 -o "$IPV6_REGEX")"
-		elif [ -n "$HOSTIP" ]; then	# use hostip if installed
-			__IPV4="$(grep -m 1 -o "$IPV4_REGEX" "$DATFILE")"
-			__IPV6="$(grep -m 1 -o "$IPV6_REGEX" "$DATFILE")"
-		else	# use BusyBox nslookup
-			__IPV4="$(sed -ne "/^Name:/,\$ { s/^Address[0-9 ]\{0,\}: \($IPV4_REGEX\).*$/\\1/p }" "$DATFILE")"
-			__IPV6="$(sed -ne "/^Name:/,\$ { s/^Address[0-9 ]\{0,\}: \($IPV6_REGEX\).*$/\\1/p }" "$DATFILE")"
-		fi
-	}
+	# Resolve IP address
+	ipv4=$("$RESOLVEIP" -4 "$host")
+	ipv6=$("$RESOLVEIP" -6 "$host")
+	if [ -z "$ipv4" ] && [ -z "$ipv6" ]; then
+		write_log 3 "Failed to resolve any IPv4/6 for host: $host"
+		return 2
+	fi
 
-	# check IP version if forced
-	if [ $force_ipversion -ne 0 ]; then
-		__ERR=0
-		[ $use_ipv6 -eq 0 -a -z "$__IPV4" ] && __ERR=4
-		[ $use_ipv6 -eq 1 -a -z "$__IPV6" ] && __ERR=6
-		[ $__ERR -gt 0 ] && {
-			[ -n "$LUCI_HELPER" ] && return 4
-			write_log 14 "Verify host Error '4' - Forced IP Version IPv$__ERR don't match"
+	# check for forced IP version inconsistency
+	if [ "$force_ipversion" != 0 ]; then 
+		[ "$use_ipv6" = 0 ] && [ -z "$ipv4" ] && err_code=4
+		[ "$use_ipv6" = 1 ] && [ -z "$ipv6" ] && err_code=6
+		[ $err_code -gt 0 ] && {
+			[ -n "$LUCI_HELPER" ] && write_log 14 "Error: verify_host_port(): no usable IP for the IP family that was forced"
+			return 4
 		}
 	fi
 
-	# verify nc command
-	# busybox nc compiled without -l option "NO OPT l!" -> critical error
-	$__NC --help 2>&1 | grep -i "NO OPT l!" >/dev/null 2>&1 && \
-		write_log 12 "Busybox nc (netcat) compiled without '-l' option, error 'NO OPT l!'"
-	# busybox nc compiled with extensions
-	$__NC --help 2>&1 | grep "\-w" >/dev/null 2>&1 && __NCEXT="TRUE"
+	# Check connectivity using nc
+	if [ -n "$nc_cmd" ]; then
+		write_log 7 "#> $RESOLVEIP"
+		if [ -n "$ipv4" ]; then
+			timeout 3 "$nc_cmd" "$ipv4" "$port" >/dev/null 2>&1
+		else
+			timeout 3 "$nc_cmd" "$ipv6" "$port" >/dev/null 2>&1
+		fi
+		err_code=$?
+		if [ $err_code -eq 0 ]; then
 
-	# connectivity test
-	# run busybox nc to HOST PORT
-	# busybox might be compiled with "FEATURE_PREFER_IPV4_ADDRESS=n"
-	# then nc will try to connect via IPv6 if there is any IPv6 available on any host interface
-	# not worrying, if there is an IPv6 wan address
-	# so if not "force_ipversion" to use_ipv6 then connect test via ipv4, if available
-	[ $force_ipversion -ne 0 -a $use_ipv6 -ne 0 -o -z "$__IPV4" ] && __IP=$__IPV6 || __IP=$__IPV4
+			write_log 7 "Successfully connected to $host:$port"
+			return 0
 
-	if [ -n "$__NCEXT" ]; then	# BusyBox nc compiled with extensions (timeout support)
-		__RUNPROG="$__NC -w 1 $__IP $__PORT </dev/null >$DATFILE 2>$ERRFILE"
-		write_log 7 "#> $__RUNPROG"
-		eval $__RUNPROG
-		__ERR=$?
-		[ $__ERR -eq 0 ] && return 0
-		write_log 3 "Connect error - BusyBox nc (netcat) Error '$__ERR'"
-		write_log 7 "$(cat $ERRFILE)"
-		return 3
-	else		# nc compiled without extensions (no timeout support)
-		__RUNPROG="timeout 2 -- $__NC $__IP $__PORT </dev/null >$DATFILE 2>$ERRFILE"
-		write_log 7 "#> $__RUNPROG"
-		eval $__RUNPROG
-		__ERR=$?
-		[ $__ERR -eq 0 ] && return 0
-		write_log 3 "Connect error - BusyBox nc (netcat) timeout Error '$__ERR'"
-		return 3
+		else
+
+			write_log 3 "DNS Resolver Error - $RESOLVEIP (Error: $err_code)"
+			write_log 7 "$(cat "$ERRFILE")"
+			return 3
+
+		fi
+	else
+		write_log 3 "Netcat (nc) command not found."
+		return 1
 	fi
 }
 
-# verify given DNS server if connectable
+# Verify whether a given DNS server is reachable
 # $1	DNS server to verify
 verify_dns() {
-	local __ERR=255	# last error buffer
-	local __CNT=0	# error counter
+	local err attempt
+	err=255   # Last error code
+	attempt=0 # Retry attempt counter
 
-	[ $# -ne 1 ] && write_log 12 "Error calling 'verify_dns()' - wrong number of parameters"
-	write_log 7 "Verify DNS server '$1'"
+	[ "$#" -ne 1 ] && { write_log 12 "Error: 'verify_dns()' requires exactly 1 argument."; return 1; }
 
-	while [ $__ERR -ne 0 ]; do
-		# DNS uses port 53
-		verify_host_port "$1" "53"
-		__ERR=$?
-		if [ -n "$LUCI_HELPER" ]; then	# no retry if called by LuCI helper script
-			return $__ERR
-		elif [ $__ERR -ne 0 -a $VERBOSE -gt 1 ]; then	# VERBOSE > 1 then NO retry
-			write_log 4 "Verify DNS server '$1' failed - Verbose Mode: $VERBOSE - NO retry on error"
-			return $__ERR
-		elif [ $__ERR -ne 0 ]; then
-			__CNT=$(( $__CNT + 1 ))	# increment error counter
-			# if error count > retry_max_count leave here
-			[ $retry_max_count -gt 0 -a $__CNT -gt $retry_max_count ] && \
-				write_log 14 "Verify DNS server '$1' failed after $retry_max_count retries"
+	local dns_server="$1"
+	write_log 7 "Verifying DNS server: '$dns_server'"
 
-			write_log 4 "Verify DNS server '$1' failed - retry $__CNT/$retry_max_count in $RETRY_SECONDS seconds"
-			sleep $RETRY_SECONDS &
-			PID_SLEEP=$!
-			wait $PID_SLEEP	# enable trap-handler
-			PID_SLEEP=0
+	while [ "$err" -ne 0 ]; do
+		# Check connectivity to the DNS server on port 53
+		verify_host_port "$dns_server" "53"
+		err=$?
+
+		# Exit immediately if called by LuCI helper script
+		[ -n "$LUCI_HELPER" ] && return "$err"
+
+		if [ "$err" -ne 0 ]; then
+			# If in verbose mode and connection fails, do not retry
+			if [ "$VERBOSE" -gt 1 ]; then
+				write_log 4 "Verification failed for DNS server '$dns_server' - Verbose Mode: $VERBOSE - No retries."
+				return "$err"
+			fi
+
+			# Increment attempt counter and handle retry
+			attempt=$((attempt + 1))
+
+			# If max retries are exceeded, exit with failure
+			if [ "$retry_max_count" -gt 0 ] && [ "$attempt" -gt "$retry_max_count" ]; then
+				write_log 14 "Verification failed for DNS server '$dns_server' after $retry_max_count retries."
+				return "$err"
+			fi
+
+			# Log the retry attempt and wait before retrying
+			write_log 4 "Verification failed for DNS server '$dns_server' - Retry $attempt/$retry_max_count in $RETRY_SECONDS seconds."
+			sleep "$RETRY_SECONDS" &
+			wait $!  # Enable trap handler during sleep
 		fi
 	done
+
+	# Return success if the loop exits without errors
 	return 0
 }
 
-# analyze and verify given proxy string
+# analyse and verify given proxy string
 # $1	Proxy-String to verify
 verify_proxy() {
 	#	complete entry		user:password@host:port
@@ -650,49 +606,62 @@ verify_proxy() {
 	#	host and port only	host:port
 	#	host only		host		ERROR unsupported
 	#	IPv4 address instead of host	123.234.234.123
-	#	IPv6 address instead of host	[xxxx:....:xxxx]	in square bracket
-	local __TMP __HOST __PORT
-	local __ERR=255	# last error buffer
-	local __CNT=0	# error counter
+	#	IPv6 address instead of host	[xxxx:....:xxxx]	in square brackets
+	# local user password
+	local host port rest error_count err_code
+
+	err_code=255	# last error buffer
+	error_count=0	# error counter
 
 	[ $# -ne 1 ] && write_log 12 "Error calling 'verify_proxy()' - wrong number of parameters"
 	write_log 7 "Verify Proxy server 'http://$1'"
 
-	# try to split user:password "@" host:port
-	__TMP=$(echo $1 | awk -F "@" '{print $2}')
-	# no "@" found - only host:port is given
-	[ -z "$__TMP" ] && __TMP="$1"
-	# now lets check for IPv6 address
-	__HOST=$(echo $__TMP | grep -m 1 -o "$IPV6_REGEX")
-	# IPv6 host address found read port
-	if [ -n "$__HOST" ]; then
-		# IPv6 split at "]:"
-		__PORT=$(echo $__TMP | awk -F "]:" '{print $2}')
+	if [ "${1#*'@'}" != "$1" ]; then
+		# Format: user:password@host:port or user:password@[ipv6]:port
+		# user="${1%%:*}" # currently unused
+		# rest="${1#*:}"
+		# password="${rest%%@*}" # currently unused
+
+		# Extract the host:port part
+		rest="${rest#*@}"
 	else
-		__HOST=$(echo $__TMP | awk -F ":" '{print $1}')
-		__PORT=$(echo $__TMP | awk -F ":" '{print $2}')
+		# Format: host:port or [ipv6]:port
+		rest="$1"
+	fi
+
+	if [ "${rest#*'['}" != "$rest" ]; then
+		# Format: [ipv6]:port
+		host="${rest%%]*}"
+		host="${host#[}"  # Remove the leading '['
+
+		port="${rest##*:}"
+	else
+		host="${rest%%:*}"
+		port="${rest#*:}"
 	fi
 	# No Port detected - EXITING
-	[ -z "$__PORT" ] && {
+	[ -z "$port" ] && {
 		[ -n "$LUCI_HELPER" ] && return 5
 		write_log 14 "Invalid Proxy server Error '5' - proxy port missing"
 	}
 
-	while [ $__ERR -gt 0 ]; do
-		verify_host_port "$__HOST" "$__PORT"
-		__ERR=$?
-		if [ -n "$LUCI_HELPER" ]; then	# no retry if called by LuCI helper script
-			return $__ERR
-		elif [ $__ERR -gt 0 -a $VERBOSE -gt 1 ]; then	# VERBOSE > 1 then NO retry
-			write_log 4 "Verify Proxy server '$1' failed - Verbose Mode: $VERBOSE - NO retry on error"
-			return $__ERR
-		elif [ $__ERR -gt 0 ]; then
-			__CNT=$(( $__CNT + 1 ))	# increment error counter
+	while [ "$err_code" -gt 0 ]; do
+		verify_host_port "$host" "$port"
+		err_code=$?
+		[ -n "$LUCI_HELPER" ] && return "$err_code"	# no retry if called by LuCI helper script
+
+		if [ "$err_code" -gt 0 ]; then
+			[ "$VERBOSE" -gt 1 ] && {
+				write_log 4 "Verify Proxy server '$1' failed - Verbose Mode: $VERBOSE - NO retry on error"
+				return "$err_code"				
+			}
+
+			error_count=$(( error_count + 1 ))
 			# if error count > retry_max_count leave here
-			[ $retry_max_count -gt 0 -a $__CNT -gt $retry_max_count ] && \
+			[ "$retry_max_count" -gt 0 ] && [ $error_count -gt "$retry_max_count" ] && \
 				write_log 14 "Verify Proxy server '$1' failed after $retry_max_count retries"
 
-			write_log 4 "Verify Proxy server '$1' failed - retry $__CNT/$retry_max_count in $RETRY_SECONDS seconds"
+			write_log 4 "Verify Proxy server '$1' failed - retry $error_count/$retry_max_count in $RETRY_SECONDS seconds"
 			sleep $RETRY_SECONDS &
 			PID_SLEEP=$!
 			wait $PID_SLEEP	# enable trap-handler
@@ -926,149 +895,80 @@ send_update() {
 
 get_current_ip () {
 	# $1	Name of Variable to store current IP
-	local __CNT=0	# error counter
-	local __RUNPROG __DATA __URL __ERR
+	local ip_var data retries
+	ip_var="$1"
+	data=""
+	retries=0
 
-	[ $# -ne 1 ] && write_log 12 "Error calling 'get_current_ip()' - wrong number of parameters"
-	write_log 7 "Detect current IP on '$ip_source'"
+	# Validate input
+	if [ -z "$ip_var" ]; then
+		write_log 12 "get_current_ip: Missing variable name for IP storage"
+		return 1
+	fi
 
-	while : ; do
-		if [ -n "$ip_network" -a "$ip_source" = "network" ]; then
-			# set correct program
-			network_flush_cache	# force re-read data from ubus
-			[ $use_ipv6 -eq 0 ] && __RUNPROG="network_get_ipaddr" \
-					    || __RUNPROG="network_get_ipaddr6"
-			eval "$__RUNPROG __DATA $ip_network" || \
-				write_log 13 "Can not detect current IP using $__RUNPROG '$ip_network' - Error: '$?'"
-			[ -n "$__DATA" ] && write_log 7 "Current IP '$__DATA' detected on network '$ip_network'"
-		elif [ -n "$ip_interface" -a "$ip_source" = "interface" ]; then
-			local __DATA4=""; local __DATA6=""
-			if [ -n "$(command -v ip)" ]; then		# ip program installed
-				write_log 7 "#> ip -o addr show dev $ip_interface scope global >$DATFILE 2>$ERRFILE"
-				ip -o addr show dev $ip_interface scope global >$DATFILE 2>$ERRFILE
-				__ERR=$?
-				if [ $__ERR -eq 0 ]; then
-					# DATFILE (sample)
-					# 10: l2tp-inet: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1456 qdisc fq_codel state UNKNOWN qlen 3\    link/ppp
-					# 10: l2tp-inet    inet 95.30.176.51 peer 95.30.176.1/32 scope global l2tp-inet\       valid_lft forever preferred_lft forever
-					# 5: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP qlen 1000\    link/ether 08:00:27:d0:10:32 brd ff:ff:ff:ff:ff:ff
-					# 5: eth1    inet 172.27.10.128/24 brd 172.27.10.255 scope global eth1\       valid_lft forever preferred_lft forever
-					# 5: eth1    inet 172.55.55.155/24 brd 172.27.10.255 scope global eth1\       valid_lft 12345sec preferred_lft 12345sec
-					# 5: eth1    inet6 2002:b0c7:f326::806b:c629:b8b9:433/128 scope global dynamic \       valid_lft 8026sec preferred_lft 8026sec
-					# 5: eth1    inet6 fd43:5368:6f6d:6500:806b:c629:b8b9:433/128 scope global dynamic \       valid_lft 8026sec preferred_lft 8026sec
-					# 5: eth1    inet6 fd43:5368:6f6d:6500:a00:27ff:fed0:1032/64 scope global dynamic \       valid_lft 14352sec preferred_lft 14352sec
-					# 5: eth1    inet6 2002:b0c7:f326::a00:27ff:fed0:1032/64 scope global dynamic \       valid_lft 14352sec preferred_lft 14352sec
+	write_log 7 "Detecting current IP using source: $ip_source"
 
-					#    remove      remove     remove      replace     replace
-					#     link     inet6 fxxx    sec      forever=>-1   / => ' ' to separate subnet from ip
-					sed "/link/d; /inet6 f/d; s/sec//g; s/forever/-1/g; s/\// /g" $DATFILE | \
-						awk '{ print $3" "$4" "$NF }' > $ERRFILE	# temp reuse ERRFILE
-					# we only need    inet?   IP  prefered time
-
-					local __TIME4=0;  local __TIME6=0
-					local __TYP __ADR __TIME
-					while read __TYP __ADR __TIME; do
-						__TIME=${__TIME:-0}	# supress shell errors on last (empty) line of DATFILE
-						#    IPversion       no "-1" record stored - now "-1" record or new time > oldtime
-						[ "$__TYP" = "inet6" -a $__TIME6 -ge 0 -a \( $__TIME -lt 0 -o $__TIME -gt $__TIME6 \) ] && {
-							__DATA6="$__ADR"
-							__TIME6="$__TIME"
-						}
-						[ "$__TYP" = "inet" -a $__TIME4 -ge 0 -a \( $__TIME -lt 0 -o $__TIME -gt $__TIME4 \) ] && {
-							__DATA4="$__ADR"
-							__TIME4="$__TIME"
-						}
-					done < $ERRFILE
-				else
-					write_log 3 "ip Error: '$__ERR'"
-					write_log 7 "$(cat $ERRFILE)"		# report error
-				fi
-			else					# use deprecated ifconfig
-				write_log 7 "#> ifconfig $ip_interface >$DATFILE 2>$ERRFILE"
-				ifconfig $ip_interface >$DATFILE 2>$ERRFILE
-				__ERR=$?
-				if [ $__ERR -eq 0 ]; then
-					__DATA4=$(awk '
-						/inet addr:/ {	# Filter IPv4
-						#   inet addr:192.168.1.1  Bcast:192.168.1.255  Mask:255.255.255.0
-						$1="";		# remove inet
-						$3="";		# remove Bcast: ...
-						$4="";		# remove Mask: ...
-						FS=":";		# separator ":"
-						$0=$0;		# reread to activate separator
-						$1="";		# remove addr
-						FS=" ";		# set back separator to default " "
-						$0=$0;		# reread to activate separator (remove whitespaces)
-						print $1;	# print IPv4 addr
-						}' $DATFILE
-					)
-					__DATA6=$(awk '
-						/inet6/ && /: [0-9a-eA-E]/ {	# Filter IPv6 exclude fxxx
-						#   inet6 addr: 2001:db8::xxxx:xxxx/32 Scope:Global
-						FS="/";		# separator "/"
-						$0=$0;		# reread to activate separator
-						$2="";		# remove everything behind "/"
-						FS=" ";		# set back separator to default " "
-						$0=$0;		# reread to activate separator
-						print $3;	# print IPv6 addr
-						}' $DATFILE
-					)
-				else
-					write_log 3 "ifconfig Error: '$__ERR'"
-					write_log 7 "$(cat $ERRFILE)"		# report error
-				fi
-			fi
-			[ $use_ipv6 -eq 0 ] && __DATA="$__DATA4" || __DATA="$__DATA6"
-			[ -n "$__DATA" ] && write_log 7 "Current IP '$__DATA' detected on interface '$ip_interface'"
-		elif [ -n "$ip_script" -a "$ip_source" = "script" ]; then
-			write_log 7 "#> $ip_script >$DATFILE 2>$ERRFILE"
-			eval $ip_script >$DATFILE 2>$ERRFILE
-			__ERR=$?
-			if [ $__ERR -eq 0 ]; then
-				__DATA=$(cat $DATFILE)
-				[ -n "$__DATA" ] && write_log 7 "Current IP '$__DATA' detected via script '$ip_script'"
-			else
-				write_log 3 "$ip_script Error: '$__ERR'"
-				write_log 7 "$(cat $ERRFILE)"		# report error
-			fi
-		elif [ -n "$ip_url" -a "$ip_source" = "web" ]; then
+	while :; do
+		case "$ip_source" in
+		"network")
+			network_flush_cache
+			[ -z "$ip_network" ] && { write_log 12 "get_current_ip: 'ip_network' not set for source 'network'"; return 2; }
+			[ "$use_ipv6" -eq 0 ] && network_get_ipaddr  data "$ip_network" 2>/dev/null
+			[ "$use_ipv6" -eq 1 ] && network_get_ipaddr6 data "$ip_network" 2>/dev/null
+			[ -n "$data" ] && write_log 7 "Current IP '$data' detected on network '$ip_network'"
+			;;
+		"interface")
+			[ -z "$ip_interface" ] && { write_log 12 "get_current_ip: 'ip_interface' not set for source 'interface'"; return 2; }
+			# Test for alias interfaces e.g. "@wan6"; get the effective layer 3 interface
+			[ "${ip_interface#*'@'}" != "$ip_interface" ] && network_get_device ip_interface "$ip_interface"
+			write_log 7 "#> ip -o -br -js addr show dev '$ip_interface' scope global | $jsonfilter -e '@[0].addr_info[0].local'"
+			[ "$use_ipv6" -eq 0 ] && data=$(ip -o -4 -br -js addr show dev "$ip_interface" scope global | "$jsonfilter" -e '@[0].addr_info[0].local')
+			[ "$use_ipv6" -eq 1 ] && data=$(ip -o -6 -br -js addr show dev "$ip_interface" scope global | "$jsonfilter" -e '@[0].addr_info[0].local')
+			[ -n "$data" ] && write_log 7 "Current IP '$data' detected on interface '$ip_interface'"
+			;;
+		"script")
+			[ -z "$ip_script" ] && { write_log 12 "get_current_ip: 'ip_script' not set for source 'script'"; return 2; }
+			write_log 7 "#> $ip_script >'$DATFILE' 2>'$ERRFILE'"
+			data=$(eval "$ip_script" 2>"$ERRFILE")
+			[ -n "$data" ] && write_log 7 "Current IP '$data' detected via script '$ip_script'"
+			;;
+		"web")
+			[ -z "$ip_url" ] && { write_log 12 "get_current_ip: 'ip_url' not set for source 'web'"; return 2; }
 			do_transfer "$ip_url"
-			# use correct regular expression
-			[ $use_ipv6 -eq 0 ] \
-				&& __DATA=$(grep -m 1 -o "$IPV4_REGEX" $DATFILE) \
-				|| __DATA=$(grep -m 1 -o "$IPV6_REGEX" $DATFILE)
-			[ -n "$__DATA" ] && write_log 7 "Current IP '$__DATA' detected on web at '$ip_url'"
-		else
-			write_log 12 "Error in 'get_current_ip()' - unhandled ip_source '$ip_source'"
-		fi
-		# valid data found return here
-		[ -n "$__DATA" ] && {
-			eval "$1=\"$__DATA\""
+			# bug: do_transfer does not output to DATFILE
+			[ $use_ipv6 -eq 0 ] && data=$(grep -m 1 -o "$IPV4_REGEX" "$DATFILE")
+			[ $use_ipv6 -eq 1 ] && data=$(grep -m 1 -o "$IPV6_REGEX" "$DATFILE")
+			[ -n "$data" ] && write_log 7 "Current IP '$data' detected via web at '$ip_url'"
+			;;
+		*)
+			write_log 12 "get_current_ip: Unsupported source '$ip_source'"
+			return 3
+			;;
+		esac
+
+		# Check if valid IP was found
+		if [ -n "$data" ]; then
+			eval "$1=\"$data\""
+			write_log 7 "Detected IP: $data"
 			return 0
-		}
+		fi
 
 		[ -n "$LUCI_HELPER" ] && return 1	# no retry if called by LuCI helper script
+		[ $VERBOSE -gt 1 ] && write_log 4 "Verbose Mode: $VERBOSE - NO retry on error" && return 1;
 
-		write_log 7 "Data detected:"
-		write_log 7 "$(cat $DATFILE)"
+		# Retry logic
+		retries=$((retries + 1))
+		if [ "$retry_max_count" -gt 0 ] && [ "$retries" -ge "$retry_max_count" ]; then
+			write_log 14 "get_current_ip: Failed to detect IP after $retry_max_count retries"
+			return 4
+		fi
 
-		[ $VERBOSE -gt 1 ] && {
-			# VERBOSE > 1 then NO retry
-			write_log 4 "Get current IP via '$ip_source' failed - Verbose Mode: $VERBOSE - NO retry on error"
-			return 1
-		}
-
-		__CNT=$(( $__CNT + 1 ))	# increment error counter
-		# if error count > retry_max_count leave here
-		[ $retry_max_count -gt 0 -a $__CNT -gt $retry_max_count ] && \
-			write_log 14 "Get current IP via '$ip_source' failed after $retry_max_count retries"
-		write_log 4 "Get current IP via '$ip_source' failed - retry $__CNT/$retry_max_count in $RETRY_SECONDS seconds"
-		sleep $RETRY_SECONDS &
+		write_log 4 "Retrying IP detection ($retries/$retry_max_count) in $RETRY_SECONDS seconds..."
+		sleep "$RETRY_SECONDS" &
 		PID_SLEEP=$!
 		wait $PID_SLEEP	# enable trap-handler
 		PID_SLEEP=0
 	done
-	# we should never come here there must be a programming error
 	write_log 12 "Error in 'get_current_ip()' - program coding error"
 }
 
@@ -1217,9 +1117,9 @@ get_registered_ip() {
 
 get_uptime() {
 	# $1	Variable to store result in
-	[ $# -ne 1 ] && write_log 12 "Error calling 'verify_host_port()' - wrong number of parameters"
-	local __UPTIME=$(cat /proc/uptime)
-	eval "$1=\"${__UPTIME%%.*}\""
+	[ $# -ne 1 ] && write_log 12 "Error calling 'get_uptime()' - requires exactly 1 argument."
+	read -r uptime < /proc/uptime
+	eval "$1=\"${uptime%%.*}\""
 }
 
 trap_handler() {
@@ -1264,78 +1164,6 @@ trap_handler() {
 	# remove trap handling settings and send kill to myself
 	trap - 0 1 2 3 15
 	[ $1 -gt 0 ] && kill -$1 $$
-}
-
-split_FQDN() {
-	# $1	FQDN to split
-	# $2	name of variable to store TLD
-	# $3	name of variable to store (reg)Domain
-	# $4	name of variable to store Host/Subdomain
-
-	[ $# -ne 4 ] && write_log 12 "Error calling 'split_FQDN()' - wrong number of parameters"
-	[ -z "$1"  ] && write_log 12 "Error calling 'split_FQDN()' - missing FQDN to split"
-	[ -f $TLDFILE ] || write_log 12 "Error calling 'split_FQDN()' - missing file '$TLDFILE'"
-
-	local _HOST _FDOM _CTLD _FTLD
-	local _SET="$@"					# save given function parameters
-
-	local _PAR=$(echo "$1" | tr [A-Z] [a-z] | tr "." " ")	# to lower and replace DOT with SPACE
-	set -- $_PAR					# set new as function parameters
-	_PAR=""						# clear variable for later reuse
-	while [ -n "$1" ] ; do				# as long we have parameters
-		_PAR="$1 $_PAR"				# invert order of parameters
-		shift
-	done
-	set -- $_PAR					# use new as function parameters
-	_PAR=""						# clear variable
-
-	while [ -n "$1" ] ; do				# as long we have parameters
-		if [ -z "$_CTLD" ]; then 		# first loop
-			_CTLD="$1"			# CURRENT TLD to look at
-			shift
-		else
-			_CTLD="$1.$_CTLD"		# Next TLD to look at
-			shift
-		fi
-		# check if TLD exact match in tld_names.dat, save TLD
-		zcat $TLDFILE | grep -E "^$_CTLD$" >/dev/null 2>&1 && {
-			_FTLD="$_CTLD"		# save found
-			_FDOM="$1"		# save domain next step might be invalid
-			continue
-		}
-		# check if match any "*" in tld_names.dat,
-		zcat $TLDFILE | grep -E "^\*.$_CTLD$" >/dev/null 2>&1 && {
-			[ -z "$1" ] && break	# no more data break
-			# check if next level TLD match excludes "!" in tld_names.dat
-			if zcat $TLDFILE | grep -E "^!$1.$_CTLD$" >/dev/null 2>&1 ; then
-				_FTLD="$_CTLD"	# Yes
-			else
-				_FTLD="$1.$_CTLD"
-				shift
-			fi
-			_FDOM="$1"; shift
-		}
-		[ -n "$_FTLD" ] && break	# we have something valid, break
-	done
-
-	# the leftover parameters are the HOST/SUBDOMAIN
-	while [ -n "$1" ]; do
-		_HOST="$1 $_HOST"		# remember we need to invert
-		shift
-	done
-	_HOST=$(echo $_HOST | tr " " ".")	# insert DOT
-
-	set -- $_SET				# set back parameters from function call
-	[ -n "$_FTLD" ] && {
-		eval "$2=$_FTLD"		# set TLD
-		eval "$3=$_FDOM"		# set registrable domain
-		eval "$4=$_HOST"		# set HOST/SUBDOMAIN
-		return 0
-	}
-	eval "$2=''"		# clear TLD
-	eval "$3=''"		# clear registrable domain
-	eval "$4=''"		# clear HOST/SUBDOMAIN
-	return 1
 }
 
 expand_ipv6() {

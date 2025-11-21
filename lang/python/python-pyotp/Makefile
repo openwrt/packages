@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PYPI_NAME:=pyotp
 PKG_HASH:=346b6642e0dbdde3b4ff5a930b664ca82abfa116356ed48cc42c7d6590d36f63
 
-PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 

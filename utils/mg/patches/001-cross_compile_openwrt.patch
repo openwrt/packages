@@ -168,7 +168,7 @@
 -    ;;
 -esac
 +# OpenWrt
-+libs='-lncurses -lpcreposix -lutil'
++libs='-lncurses -lpcre2-posix -lutil'
 +cflags="$cflags -D_GNU_SOURCE -D__dead=\"__attribute__((__noreturn__))\" -Dst_mtimespec=st_mtim"
  
  cat << EOF > config.h

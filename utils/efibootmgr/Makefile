@@ -2,13 +2,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=efibootmgr
 PKG_VERSION:=18
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/rhboot/efibootmgr.git
 PKG_SOURCE_DATE:=2022-11-12
 PKG_SOURCE_VERSION:=1904f9cd5a48207d49e393ac8de824f54ccfb697
-PKG_MIRROR_HASH:=0355e00bb54d468ecbaa106aa703dd389f2f2f4c7b7afb78a258cec10d75f78d
+PKG_MIRROR_HASH:=24053efe63aa62c711cdc770aaeb7079b95f5bf807f1725d1b2193f2e2683962
 
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING
@@ -23,7 +23,7 @@ define Package/efibootmgr
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Application to modify the EFI Boot Manager
-  DEPENDS:=@TARGET_x86_64 +efivar +libpopt
+  DEPENDS:=@(TARGET_x86_64||TARGET_armsr_armv8) +efivar +libpopt
   URL:=https://github.com/rhboot/efibootmgr
 endef
 

@@ -1,0 +1,8 @@
+#!/bin/sh
+# Generates default telegraf.conf if it doesn't already exist
+
+[ -f /etc/telegraf.conf ] && exit 0
+
+/usr/bin/telegraf config create > /etc/telegraf.conf
+
+exit 0

@@ -8,17 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libsamplerate
-PKG_VERSION:=0.1.9
+PKG_VERSION:=0.2.2
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.mega-nerd.com/SRC/
-PKG_HASH:=0a7eb168e2f21353fb6d84da152e4512126f7dc48ccb0be80578c565413444c1
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=https://github.com/libsndfile/libsamplerate/releases/download/$(PKG_VERSION)
+PKG_HASH:=3258da280511d24b49d6b08615bbe824d0cacc9842b0e4caf11c52cf2b043893
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 
-PKG_LICENSE:=GPL-2.0
+PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:libsamplerate_project:libsamplerate
 
 PKG_INSTALL:=1
 
@@ -29,7 +30,7 @@ define Package/libsamplerate
   CATEGORY:=Libraries
   DEPENDS:=+libsndfile
   TITLE:=Sample Rate Converter
-  URL:=http://www.mega-nerd.com/SRC/index.html
+  URL:=https://libsndfile.github.io/libsamplerate/
 endef
 
 define Package/libsamplerate/description

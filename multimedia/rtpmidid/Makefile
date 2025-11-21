@@ -1,19 +1,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtpmidid
-PKG_RELEASE:=1
+PKG_VERSION:=23.12
+PKG_RELEASE:=2
 
-PKG_SOURCE_DATE:=2022-07-07
-PKG_SOURCE_VERSION:=eab5cd80c5326c1b3720736442e1c2f7e2fa50d7
-PKG_HASH:=b1bd7a28449bffb8e4cec3410c6e60a09abbfd19e84aed73c3d95c89c4d26a07
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/davidmoreno/rtpmidid
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+PKG_MIRROR_HASH:=e787ce013fdc148c50b625a1c7d8adf99d9fee2a81d91e734af75828ed597099
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_DATE).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/davidmoreno/rtpmidid/tar.gz/$(PKG_SOURCE_VERSION)?
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_SOURCE_VERSION)
-
+PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-3.0-or-later LGPL-2.1-or-later
 PKG_LICENSE_FILES:=LICENSE.md LICENSE-lib.txt LICENSE-daemon.txt
-PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk

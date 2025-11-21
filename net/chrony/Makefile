@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=chrony
-PKG_VERSION:=4.4
+PKG_VERSION:=4.8
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://chrony-project.org/releases/
-PKG_HASH:=eafb07e6daf92b142200f478856dfed6efc9ea2d146eeded5edcb09b93127088
+PKG_HASH:=33ea8eb2a4daeaa506e8fcafd5d6d89027ed6f2f0609645c6f149b560d301706
 
 PKG_MAINTAINER:=Miroslav Lichvar <mlichvar0@gmail.com>
 PKG_LICENSE:=GPL-2.0
@@ -54,9 +54,15 @@ define Package/chrony/description
 	An NTP client and server designed to perform well in a wide range
 	of conditions. It can synchronize the system clock with NTP servers,
 	reference clocks, and manual input using wristwatch and keyboard.
+	This package does NOT include NTS support.
 endef
 
-Package/chrony-nts/description = $(Package/chrony/description)
+define Package/chrony-nts/description
+	An NTP client and server designed to perform well in a wide range
+	of conditions. It can synchronize the system clock with NTP servers,
+	reference clocks, and manual input using wristwatch and keyboard.
+	This package includes NTS support.
+endef
 
 define Package/chrony/conffiles
 /etc/chrony/chrony.conf
@@ -72,10 +78,11 @@ CONFIGURE_ARGS+= \
 	--sysconfdir=/etc/chrony \
 	--prefix=/usr \
 	--chronyrundir=/var/run/chrony \
-	$(if $(findstring normal,$(BUILD_VARIANT)),--disable-nts,--enable,nts) \
+	$(if $(findstring normal,$(BUILD_VARIANT)),--disable-nts) \
 	--disable-readline \
 	--disable-rtc \
-	--disable-sechash \
+	$(if $(findstring normal,$(BUILD_VARIANT)),--disable-sechash) \
+	--with-chronyc-user=chrony \
 	--with-user=chrony
 
 CONFIGURE_VARS+=CPPFLAGS=-DNDEBUG
@@ -85,6 +92,7 @@ define Package/chrony/install
 	$(INSTALL_DIR) $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/chronyd $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/chronyc $(1)/usr/bin
+	$(INSTALL_BIN) ./files/chrony.ntp-hotplug $(1)/usr/sbin/chrony-hotplug
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_DIR) $(1)/etc/chrony

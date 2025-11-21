@@ -12,7 +12,7 @@ PKG_MAINTAINER:=Marc Egerton <foxtrot@realloc.me>
 PKG_LICENSE:=GPL-3.0-or-later
 
 PKG_SOURCE:=fakepop_11.tar.gz
-PKG_SOURCE_URL:=http://deb.debian.org/debian/pool/main/f/fakepop/
+PKG_SOURCE_URL:=https://deb.debian.org/debian/pool/main/f/fakepop/
 PKG_HASH:=9756259ade152f8dac78174019b4145b4e07738631055c34bc04e64f865393e7
 # Downloaded .tar.gz contains "fakepop-10" instead of "fakepop-11"...
 PKG_BUILD_DIR:=$(BUILD_DIR)/fakepop-10

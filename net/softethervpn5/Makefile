@@ -3,15 +3,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=softethervpn5
-PKG_VERSION:=5.02.5180
-PKG_RELEASE:=3
+PKG_VERSION:=5.2.5188
+PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE_URL:=https://github.com/SoftEtherVPN/SoftEtherVPN/releases/download/$(PKG_VERSION)/
 PKG_SOURCE:=SoftEtherVPN-$(PKG_VERSION).tar.xz
-PKG_HASH:=b5649a8ea3cc6477325e09e2248ef708d434ee3b2251eb8764bcfc15fb1de456
+PKG_HASH:=e89278e7edd7e137bd521851b42c2bf9ce4e5cae2489db406588d3388646b147
 
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/SoftEtherVPN-$(PKG_VERSION)
 PKG_BUILD_DIR:=$(BUILD_DIR)/SoftEtherVPN-$(PKG_VERSION)
@@ -83,7 +83,12 @@ export USE_MUSL=YES
 # BUG: outdated host/include/elf.h
 HOST_CFLAGS += $(FPIC) -DAT_HWCAP2=26
 TARGET_CFLAGS += $(FPIC)
-CMAKE_OPTIONS += -DICONV_LIB_PATH="$(ICONV_PREFIX)/lib"
+CMAKE_HOST_OPTIONS += \
+	-DCURSES_CURSES_LIBRARY=$(STAGING_DIR_HOSTPKG)/lib/libncursesw.a \
+	-DCURSES_INCLUDE_PATH=$(STAGING_DIR_HOSTPKG)/include
+CMAKE_OPTIONS += \
+	-DOQS_ENABLE=OFF \
+	-DICONV_LIB_PATH="$(ICONV_PREFIX)/lib"
 
 # static build for host (hamcorebuilder), avoid -fpic on ncurses/host and shared libs can't be found on host
 define Host/Prepare

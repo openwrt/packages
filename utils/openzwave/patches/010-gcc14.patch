@@ -1,0 +1,11 @@
+--- a/cpp/src/command_classes/AssociationCommandConfiguration.cpp
++++ b/cpp/src/command_classes/AssociationCommandConfiguration.cpp
+@@ -183,7 +183,7 @@ namespace OpenZWave
+ 					if (Node* node = GetNodeUnsafe())
+ 					{
+ 						Group* group = node->GetGroup(groupIdx);
+-						if ( NULL == group)
++						if (group)
+ 						{
+ 							if (firstReports)
+ 							{

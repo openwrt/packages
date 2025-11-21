@@ -8,13 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=acpica-unix
-PKG_VERSION:=20230628
+PKG_VERSION:=20240321
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_CAT:=gzip -dc
-PKG_SOURCE_URL:=https://acpica.org/sites/$(patsubst %-unix,%,$(PKG_NAME))/files/
-PKG_HASH:=86876a745e3d224dcfd222ed3de465b47559e85811df2db9820ef09a9dff5cce
+PKG_SOURCE_URL:=https://downloadmirror.intel.com/819451
+PKG_HASH:=54a299487925fd3e0551c95f9d5cee4f4984930273983eff67aa5cd46f8f338b
 PKG_MAINTAINER:=Philip Prindeville <philipp@redfish-solutions.com>
 
 PKG_LICENSE:=GPL-2.0
@@ -22,6 +21,7 @@ PKG_LICENSE:=GPL-2.0
 PKG_FORTIFY_SOURCE:=0
 PKG_BUILD_PARALLEL:=1
 
+include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
 
 define Package/acpica-unix
@@ -43,6 +43,25 @@ endef
 define Build/Configure
 endef
 
+define Host/Install
+	$(INSTALL_DIR) $(STAGING_DIR_HOST)/usr/bin
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/generate/unix/bin/{acpibin,acpidump} \
+		$(STAGING_DIR_HOST)/usr/bin/
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/generate/unix/bin/{acpiexamples,acpiexec} \
+		$(STAGING_DIR_HOST)/usr/bin/
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/generate/unix/bin/{acpihelp,acpisrc} \
+		$(STAGING_DIR_HOST)/usr/bin/
+	$(INSTALL_BIN) $(HOST_BUILD_DIR)/generate/unix/bin/{acpixtract,iasl} \
+		$(STAGING_DIR_HOST)/usr/bin/
+endef
+
+define Host/Clean
+	$(RM) $(STAGING_DIR_HOST)/usr/bin/{acpibin,acpidump}
+	$(RM) $(STAGING_DIR_HOST)/usr/bin/{acpiexamples,acpiexec}
+	$(RM) $(STAGING_DIR_HOST)/usr/bin/{acpihelp,acpisrc}
+	$(RM) $(STAGING_DIR_HOST)/usr/bin/{acpixtract,iasl}
+endef
+
 MAKE_VARS += HOST=_LINUX
 
 MAKE_PATH:=generate/unix
@@ -55,3 +74,4 @@ define Package/acpica-unix/install
 endef
 
 $(eval $(call BuildPackage,acpica-unix))
+$(eval $(call HostBuild))

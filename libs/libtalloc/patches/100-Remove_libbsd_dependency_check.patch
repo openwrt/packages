@@ -1,6 +1,6 @@
 --- a/lib/replace/wscript
 +++ b/lib/replace/wscript
-@@ -429,22 +429,13 @@ def configure(conf):
+@@ -441,33 +441,13 @@ def configure(conf):
  
      conf.CHECK_FUNCS('prctl dirname basename')
  
@@ -16,6 +16,17 @@
 -        if conf.CHECK_FUNCS_IN('strlcpy strlcat', 'bsd', headers='bsd/string.h',
 -                               checklibc=True):
 -            strlcpy_in_bsd = True
+-    elif conf.env.enable_fuzzing:
+-        # Just to complicate it more, some versions of Honggfuzz have
+-        # got strlcpy and strlcat in libc, but not in <string.h>
+-        # (unless it is there coincidentally, on a BSD). Therefore we
+-        # can't use CHECK_FUNCS alone to decide whether to add the
+-        # headers to replace.h.
+-        #
+-        # As this is only known to happen on a fuzzing compiler, we'll
+-        # skip the check when not in fuzzing mode.
+-        conf.CHECK_HEADERS('bsd/string.h')
+-
 -    if not conf.CHECK_FUNCS('getpeereid'):
 -        conf.CHECK_FUNCS_IN('getpeereid', 'bsd', headers='sys/types.h bsd/unistd.h')
 -    if not conf.CHECK_FUNCS_IN('setproctitle', 'setproctitle', headers='setproctitle.h'):
@@ -29,7 +40,7 @@
  
      conf.CHECK_CODE('''
                  struct ucred cred;
-@@ -827,9 +818,6 @@ syscall(SYS_copy_file_range,0,NULL,0,NUL
+@@ -850,9 +830,6 @@ syscall(SYS_copy_file_range,0,NULL,0,NUL
  
      # look for a method of finding the list of network interfaces
      for method in ['HAVE_IFACE_GETIFADDRS', 'HAVE_IFACE_AIX', 'HAVE_IFACE_IFCONF', 'HAVE_IFACE_IFREQ']:
@@ -39,7 +50,7 @@
          if conf.CHECK_CODE('''
                             #define %s 1
                             #define NO_CONFIG_H 1
-@@ -842,7 +830,7 @@ syscall(SYS_copy_file_range,0,NULL,0,NUL
+@@ -865,7 +842,7 @@ syscall(SYS_copy_file_range,0,NULL,0,NUL
                             #include "tests/getifaddrs.c"
                             ''' % method,
                             method,
@@ -48,7 +59,7 @@
                             addmain=False,
                             execute=True):
              break
-@@ -890,7 +878,6 @@ def build(bld):
+@@ -913,7 +890,6 @@ def build(bld):
                  break
  
      extra_libs = ''

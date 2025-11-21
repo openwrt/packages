@@ -20,6 +20,24 @@ Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
  
  ALL_LOCAL =
  BUILT_SOURCES =
+@@ -148,7 +148,7 @@ ro_shell = printf '\043 Generated automa
+ 
+ SUFFIXES += .in
+ .in:
+-	$(AM_V_GEN)PYTHONPATH=$$PYTHONPATH$(psep)$(srcdir)/python $(PYTHON3) $(srcdir)/build-aux/soexpand.py -I$(srcdir) < $< | \
++	$(AM_V_GEN)$(run_python) $(srcdir)/build-aux/soexpand.py -I$(srcdir) < $< | \
+ 	  $(PYTHON3) $(srcdir)/build-aux/dpdkstrip.py $(DPDKSTRIP_FLAGS) | \
+ 	  sed \
+ 	    -e 's,[@]PKIDIR[@],$(PKIDIR),g' \
+@@ -415,7 +415,7 @@ CLEANFILES += flake8-check
+ 
+ -include manpages.mk
+ manpages.mk: $(MAN_ROOTS) build-aux/sodepends.py python/ovs_build_helpers/soutil.py
+-	@PYTHONPATH=$$PYTHONPATH$(psep)$(srcdir)/python $(PYTHON3) $(srcdir)/build-aux/sodepends.py -I. -I$(srcdir) $(MAN_ROOTS) >$(@F).tmp
++	@$(run_python) $(srcdir)/build-aux/sodepends.py -I. -I$(srcdir) $(MAN_ROOTS) >$(@F).tmp
+ 	@if cmp -s $(@F).tmp $@; then \
+ 	  touch $@; \
+ 	  rm -f $(@F).tmp; \
 --- a/m4/openvswitch.m4
 +++ b/m4/openvswitch.m4
 @@ -400,6 +400,8 @@ else:

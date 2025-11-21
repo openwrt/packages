@@ -14,7 +14,7 @@ PKG_RELEASE:=1
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/blocktrron/zyxel-reset.git
 PKG_SOURCE_VERSION:=e1def7b5f117c206afe15aa57ca7433eb972d5d1
-PKG_MIRROR_HASH:=dc02f6afc5d083a7a62ec51b35b352595ef6c99a8192facb1bff7b7f90cec06a
+PKG_MIRROR_HASH:=e841ad610a1842dcfa9fdb3652b3130bdc377a1e2a670f42d9df073249d6d985
 
 PKG_MAINTAINER:=David Bauer <mail@david-bauer.net>
 PKG_LICENSE:=GPL-2.0-only

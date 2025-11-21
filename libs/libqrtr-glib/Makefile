@@ -14,7 +14,7 @@ PKG_RELEASE:=3
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://gitlab.freedesktop.org/mobile-broadband/libqrtr-glib.git
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
-PKG_MIRROR_HASH:=ffb918edf96581d4ba310bd1e975297e9a7006a7e26f37934afde462585125f2
+PKG_MIRROR_HASH:=483e17daa7ad17928d53a11fa3bed6201f3a94ce16cfd0b5bff39941de14d115
 
 PKG_BUILD_FLAGS:=gc-sections
 

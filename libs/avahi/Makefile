@@ -1,6 +1,4 @@
 #
-# Copyright (C) 2007-2016 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
@@ -9,14 +7,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=avahi
 PKG_VERSION:=0.8
-PKG_RELEASE:=8
+PKG_RELEASE:=10
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/lathiat/avahi/releases/download/v$(PKG_VERSION) \
+PKG_SOURCE_URL:=https://github.com/avahi/avahi/releases/download/v$(PKG_VERSION) \
 		https://avahi.org/download
 PKG_HASH:=060309d7a333d38d951bc27598c677af1796934dbd98e1024e7ad8de798fedda
 
-PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
+PKG_MAINTAINER:=
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:avahi:avahi
@@ -67,6 +65,7 @@ define Package/avahi-autoipd
   SUBMENU:=IP Addresses and Names
   DEPENDS:=+libdaemon
   TITLE:=IPv4LL network address configuration daemon
+  USERID:=avahi=105:avahi=105
 endef
 
 define Package/avahi-autoipd/description
@@ -86,6 +85,7 @@ define Package/avahi-dbus-daemon
   SUBMENU:=IP Addresses and Names
   DEPENDS:=+libavahi-dbus-support +libexpat +librt +libdaemon
   TITLE+= (daemon)
+  USERID:=avahi=105:avahi=105
 endef
 
 define Package/avahi-nodbus-daemon
@@ -153,6 +153,7 @@ define Package/avahi-dnsconfd
   SUBMENU:=IP Addresses and Names
   DEPENDS:=+libavahi +libdaemon +libpthread
   TITLE:=A Unicast DNS server using avahi-daemon
+  USERID:=avahi=105:avahi=105
 endef
 
 define Package/avahi-dnsconfd/description
@@ -217,23 +218,6 @@ $(call Package/avahi/Default/description)
  For more information please see the avahi documentation.
 endef
 
-define Package/libavahi-compat-libdnssd
-  $(call Package/avahi/Default)
-  SECTION:=libs
-  CATEGORY:=Libraries
-  VARIANT:=dbus
-  DEPENDS:=+libavahi-client
-  TITLE+= (libdnssd)
-endef
-
-define Package/libavahi-compat-libdnssd/description
-$(call Package/avahi/Default/description)
- .
- This packages adds the libavahi-compat-libdnssd library.
- It also automatically adds the required libavahi-client package.
- For more information please see the avahi documentation.
-endef
-
 define Package/avahi-utils
   $(call Package/avahi/Default)
   SUBMENU:=IP Addresses and Names
@@ -287,17 +271,13 @@ CONFIGURE_ARGS += \
 	--disable-tests \
 	--with-xml=expat \
 	--with-distro=none \
-	--with-avahi-user=nobody \
-	--with-avahi-group=nogroup \
-	--with-avahi-priv-access-group=nogroup \
-	--with-autoipd-user=nobody \
-	--with-autoipd-group=nogroup
+	--with-avahi-user=avahi \
+	--with-avahi-group=avahi \
+	--with-avahi-priv-access-group=avahi \
+	--with-autoipd-user=avahi \
+	--with-autoipd-group=avahi
 
 ifeq ($(BUILD_VARIANT),dbus)
-ifneq ($(CONFIG_PACKAGE_libavahi-compat-libdnssd),)
-CONFIGURE_ARGS += \
-	--enable-compat-libdns_sd
-endif
 CONFIGURE_ARGS += \
 	--enable-dbus
 else
@@ -314,11 +294,6 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/* $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libavahi-* $(1)/usr/lib/
-ifneq ($(CONFIG_PACKAGE_libavahi-compat-libdnssd),)
-ifeq ($(BUILD_VARIANT),dbus)
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdns_sd* $(1)/usr/lib/
-endif
-endif
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/* $(1)/usr/lib/pkgconfig/
 endef
@@ -339,11 +314,6 @@ Package/libavahi-nodbus-support/install=$(Package/libavahi/install)
 define Package/libavahi-client/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libavahi-client.so.* $(1)/usr/lib/
-endef
-
-define Package/libavahi-compat-libdnssd/install
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libdns_sd.so* $(1)/usr/lib/
 endef
 
 define Package/avahi-utils/install
@@ -393,7 +363,6 @@ define Package/avahi-dnsconfd/install
 endef
 
 $(eval $(call BuildPackage,libavahi-client))
-$(eval $(call BuildPackage,libavahi-compat-libdnssd))
 $(eval $(call BuildPackage,avahi-utils))
 $(eval $(call BuildPackage,libavahi-dbus-support))
 $(eval $(call BuildPackage,libavahi-nodbus-support))

@@ -19,6 +19,7 @@ PKG_HASH:=a61d8be4f1a1405c60c8ef38d544f0c18c05b33b9b07e5b4b31033536165e60e
 PKG_MAINTAINER:=Nikolay Martynov <mar.kolya@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:kernel:bridge-utils
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

@@ -45,6 +45,45 @@ let get_uevent_major_minor = function(file) {
 };
 
 // adapted from /lib/upgrade/common.sh
+let fitblk_get_bootdev = function(void) {
+	let rootdisk_handle = fs.open("/sys/firmware/devicetree/base/chosen/rootdisk", "r");
+	if (!rootdisk_handle)
+		return null;
+
+	// read rootdisk handle
+	let rootdisk = rootdisk_handle.read("all");
+	rootdisk_handle.close();
+
+	// find all block device handle sysfs files
+	let handles = fs.glob('/sys/class/block/*/of_node/phandle');
+	let mtd_handles = fs.glob('/sys/class/block/*/device/of_node/phandle');
+	// concat array of both globs
+	for (let mtddev in mtd_handles)
+		push(handles, mtddev);
+
+	for (let dev in handles) {
+		let bdev_handle = fs.open(dev, "r");
+		if (!bdev_handle)
+			continue;
+
+		let bdev = bdev_handle.read("all");
+		bdev_handle.close();
+
+		if ( bdev != rootdisk )
+			continue;
+
+		let path = split(dev, '/');
+		let pe = length(path) - 3;
+		if (path[pe] == "device")
+			--pe;
+
+		return path[pe];
+	}
+
+	return null;
+};
+
+// adapted from /lib/upgrade/common.sh
 let get_bootdev = function(void) {
 	let rootpart = cmdline_get_var("root");
 	let uevent = null;
@@ -100,6 +139,8 @@ let get_bootdev = function(void) {
 				break;
 			}
 		}
+	} else if (rootpart == "/dev/fit0") {
+		uevent = sprintf("/sys/class/block/%s/../uevent", fitblk_get_bootdev());
 	} else if (wildcard(rootpart, "/dev/*")) {
 		uevent = sprintf("/sys/class/block/%s/../uevent", split(rootpart, '/')[-1]);
 	}

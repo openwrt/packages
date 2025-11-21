@@ -6,15 +6,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libextractor
-PKG_VERSION:=1.11
-PKG_RELEASE:=3
+PKG_VERSION:=1.13
+PKG_RELEASE:=2
 
 # ToDo:
 # - package missing optional dependencies: libexiv2, gsf, librpm, smf, tidy
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/$(PKG_NAME)
-PKG_HASH:=16f633ab8746a38547c4a1da3f4591192b0825ad83c4336f0575b85843d8bd8f
+PKG_HASH:=bb8f312c51d202572243f113c6b62d8210301ab30cbaee604f9837d878cdf755
 
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
@@ -57,14 +57,12 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
 CONFIGURE_ARGS += \
-	--disable-ffmpeg \
 	--disable-glibtest \
 	--disable-gsf \
 	--disable-rpath \
 	--with$(if $(CONFIG_PACKAGE_libextractor-plugin-gstreamer),,out)-gstreamer
 
-CONFIGURE_VARS += \
-	ac_cv_lib_jpeg_jpeg_mem_src=yes
+TARGET_CFLAGS += -D__GNU_LIBRARY__
 
 define Package/libextractor
 	SECTION:=libs

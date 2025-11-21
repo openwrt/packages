@@ -1,6 +1,6 @@
 --- a/conf/main.cf
 +++ b/conf/main.cf
-@@ -40,43 +40,8 @@ compatibility_level = 2
+@@ -44,43 +44,8 @@ compatibility_level = 3.8
  #
  #soft_bounce = no
  
@@ -44,7 +44,7 @@
  # The default_privs parameter specifies the default rights used by
  # the local delivery agent for delivery to external file or command.
  # These rights are used in the absence of a recipient user context.
-@@ -632,45 +597,4 @@ debugger_command =
+@@ -641,45 +606,4 @@ debugger_command =
  #	-dmS $process_name gdb $daemon_directory/$process_name
  #	$process_id & sleep 1
  

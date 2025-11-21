@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-hatch-vcs
-PKG_VERSION:=0.3.0
+PKG_VERSION:=0.5.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=hatch-vcs
 PYPI_SOURCE_NAME:=hatch_vcs
-PKG_HASH:=cec5107cfce482c67f8bc96f18bbc320c9aa0d068180e14ad317bbee5a153fee
+PKG_HASH:=0395fa126940340215090c344a2bf4e2a77bcbe7daab16f41b37b98c95809ff9
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.txt
@@ -22,6 +22,7 @@ PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 PKG_HOST_ONLY:=1
 HOST_BUILD_DEPENDS:= \
 	python3/host \
+	python-setuptools/host \
 	python-build/host \
 	python-installer/host \
 	python-hatchling/host \

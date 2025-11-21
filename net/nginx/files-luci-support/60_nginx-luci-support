@@ -12,11 +12,8 @@ location /ubus {
 EOT
 	fi
 
-        if [ ! -f "/etc/nginx/module.d/luci.module" ]; then
-		cat <<EOT >> /etc/nginx/module.d/luci.module
-load_module /usr/lib/nginx/modules/ngx_http_ubus_module.so;
-EOT
-	fi
+        # Drop old reference of luci.module as we migrated to a more automatic approach
+        [ -f "/etc/nginx/module.d/luci.module" ] && rm /etc/nginx/module.d/luci.module
 fi
 
 grep -q /var/run/ubus.sock /etc/nginx/conf.d/luci.locations &&

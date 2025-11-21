@@ -1,8 +1,8 @@
 --- a/cpan/podlators/Makefile.PL
 +++ b/cpan/podlators/Makefile.PL
-@@ -18,6 +18,19 @@ use Config;
- use ExtUtils::MakeMaker;
- use File::Spec;
+@@ -39,6 +39,19 @@ sub dist_version {
+     die "$0: cannot find version in lib/Pod/Man.pm\n";
+ }
  
 +foreach (glob('scripts/pod*.PL')) {
 +    # The various pod*.PL extractors change directory. Doing that with relative
@@ -20,7 +20,7 @@
  # Generate full paths for scripts distributed in the bin directory.  Appends
  # the .com extension to scripts on VMS, unless they already have the .PL
  # extension.
-@@ -28,7 +41,7 @@ use File::Spec;
+@@ -49,7 +62,7 @@ sub dist_version {
  #          (Scalar) Space-separated relative paths from top of distribution
  sub scripts {
      my (@scripts) = @_;
@@ -29,7 +29,7 @@
      if ($^O eq 'VMS') {
          @paths = map { m{ [.] PL \z }xms ? $_ : $_ . '.com' } @paths;
      }
-@@ -77,8 +90,8 @@ my %metadata = (
+@@ -101,8 +114,8 @@ my %metadata = (
  
      # Override the files that generate section 1 man pages.
      MAN1PODS => {

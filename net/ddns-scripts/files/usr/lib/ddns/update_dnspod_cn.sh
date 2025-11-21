@@ -28,7 +28,7 @@ build_command() {
 	# bind host/IP
 	if [ -n "$bind_network" ]; then
 		local __DEVICE
-		network_get_physdev __DEVICE $bind_network || write_log 13 "Can not detect local device using 'network_get_physdev $bind_network' - Error: '$?'"
+		network_get_device __DEVICE $bind_network || write_log 13 "Can not detect local device using 'network_get_device $bind_network' - Error: '$?'"
 		write_log 7 "Force communication via device '$__DEVICE'"
 		__CMDBASE="$__CMDBASE --interface $__DEVICE"
 	fi
@@ -70,7 +70,7 @@ dnspod_transfer() {
 			return 1
 		fi
 		__CNT=$(($__CNT + 1))
-		[ $retry_count -gt 0 -a $__CNT -gt $retry_count ] && write_log 14 "Transfer failed after $retry_count retries"
+		[ $retry_max_count -gt 0 -a $__CNT -gt $retry_max_count ] && write_log 14 "Transfer failed after $retry_max_count retries"
 		write_log 4 "Transfer failed - $__CNT Try again in $RETRY_SECONDS seconds"
 		sleep $RETRY_SECONDS &
 		PID_SLEEP=$!

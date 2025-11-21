@@ -1,22 +1,27 @@
 # banIP mail template/include - ban incoming and outgoing IPs via named nftables Sets
-# Copyright (c) 2018-2023 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2018-2025 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # info preparation
 #
-local banip_info report_info log_info system_info mail_text
+local banip_info report_info log_info system_info mail_text logread_cmd
 
-banip_info="$(/etc/init.d/banip status 2>/dev/null | awk '{NR=1;max=140;if(length($0)>max+1)while($0){if(NR==1){print substr($0,1,max)}else{print substr($0,1,max)}{$0=substr($0,max+1);NR=NR+1}}else print}')"
-report_info="$(cat ${ban_reportdir}/ban_report.txt 2>/dev/null)"
-log_info="$("${ban_logreadcmd}" -l 100 -e "banIP/" 2>/dev/null | awk '{NR=1;max=140;if(length($0)>max+1)while($0){if(NR==1){print substr($0,1,max)}else{print substr($0,1,max)}{$0=substr($0,max+1);NR=NR+1}}else print}')"
-system_info="$(
-	strings /etc/banner 2>/dev/null
-	ubus call system board | awk 'BEGIN{FS="[{}\"]"}{if($2=="kernel"||$2=="hostname"||$2=="system"||$2=="model"||$2=="description")printf "  + %-12s: %s\n",$2,$4}'
-)"
+if [ -f "${ban_logreadfile}" ]; then
+	logread_cmd="${ban_logreadcmd} -qn ${ban_loglimit} ${ban_logreadfile} 2>/dev/null | ${ban_grepcmd} -e \"banIP/\" 2>/dev/null"
+elif printf "%s" "${ban_packages}" | "${ban_grepcmd}" -q '"logd'; then
+	logread_cmd="${ban_logreadcmd} -l ${ban_loglimit} -e "banIP/" 2>/dev/null"
+fi
+
+banip_info="$(/etc/init.d/banip status 2>/dev/null)"
+report_info="$("${ban_catcmd}" "${ban_reportdir}/ban_report.txt" 2>/dev/null)"
+log_info="$(${logread_cmd})"
+system_info="$(strings /etc/banner 2>/dev/null
+	"${ban_ubuscmd}" call system board |
+	"${ban_awkcmd}" 'BEGIN{FS="[{}\"]"}{if($2=="kernel"||$2=="hostname"||$2=="system"||$2=="model"||$2=="description")printf "  + %-12s: %s\n",$2,$4}')"
 
 # content header
 #
-mail_text="$(printf "%s\n" "<html><body><pre style='display:block;font-family:monospace;font-size:1rem;padding:20;background-color:#f3eee5;white-space:pre'>")"
+mail_text="$(printf "%s\n" "<html><body><pre style='font-family:monospace;padding:20;background-color:#f3eee5;white-space:pre-wrap;overflow-x:auto;' >")"
 
 # content body
 #

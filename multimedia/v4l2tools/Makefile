@@ -11,7 +11,7 @@ PKG_RELEASE:=2
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/mpromonet/v4l2tools.git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_MIRROR_HASH:=8cb932b0aa3b273155e7814479b7bfc102b65912ca6d8537123916c514ba9ffd
+PKG_MIRROR_HASH:=f50aa7de73d86f99b07dcf9db3e92d58996afcf0a79492b4be331fccf8bb4abc
 
 PKG_MAINTAINER:=Michel Promonet<michel.promonet@free.fr>
 PKG_LICENSE:=Unlicense

@@ -16,12 +16,12 @@ http://www.openwall.com/lists/musl/2017/12/04/3
 
 --- a/src/osflags
 +++ b/src/osflags
-@@ -27,7 +27,7 @@ cflags)
- 			echo '-Dsocklen_t=int';
+@@ -32,7 +32,7 @@ cflags)
+ 			echo '-D__APPLE_USE_RFC_3542';
  		;;
  		Linux)
 -			FLAGS="-D_GNU_SOURCE"
 +			FLAGS="-D_GNU_SOURCE -include endian.h"
  			echo $FLAGS;
  		;;
- 	esac
+ 		GNU/kFreeBSD|GNU)

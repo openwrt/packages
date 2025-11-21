@@ -26,7 +26,7 @@ Signed-off-by: Hauke Mehrtens <hauke@hauke-m.de>
  };
  
 -void _init(void)
-+void __attribute__ ((constructor)) xtables_init(void)
++void __attribute__ ((constructor)) libxt_coova_init(void)
  {
  	xtables_register_match(&coova_mt_reg);
  	xtables_register_match(&coova_mt6_reg);

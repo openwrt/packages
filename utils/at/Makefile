@@ -8,14 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=at
-PKG_VERSION:=3.2.2
+PKG_VERSION:=3.2.5
 PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=https://salsa.debian.org/debian/at.git
-PKG_SOURCE_VERSION:=release/3.2.2
-PKG_MIRROR_HASH=93f7f99c4242dbc5218907981e32f74ddb5e09c5b7922617c8d84c16920f488d
+PKG_SOURCE:=at_$(PKG_VERSION).orig.tar.gz
+PKG_SOURCE_URL:=http://software.calhariz.com/at
+PKG_HASH:=bb066b389d7c9bb9d84a35738032b85c30cba7d949f758192adc72c9477fd3b8
 
 PKG_MAINTAINER:=Phil Eichinger <phil@zankapfel.net>
 PKG_LICENSE:=GPL-2.0-or-later GPL-3.0-or-later ISC
@@ -28,7 +26,7 @@ define Package/at
   CATEGORY:=Utilities
   DEPENDS:=+libelf
   TITLE:=Delayed job execution and batch processing
-  URL:=http://packages.debian.org/stable/at
+  URL:=https://salsa.debian.org/debian/at
 endef
 
 define Package/at/description

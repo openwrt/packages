@@ -1,0 +1,14 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -12,10 +12,7 @@ endif()
+ 
+ include(GNUInstallDirs)
+ 
+-find_package(LuaJIT)
+-if(NOT LUAJIT_FOUND)
+-    find_package(Lua REQUIRED)
+-endif()
++find_package(Lua REQUIRED)
+ find_package(OpenSSL REQUIRED)
+ 
+ set(CMAKE_THREAD_PREFER_PTHREAD TRUE)

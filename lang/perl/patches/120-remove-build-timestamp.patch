@@ -1,8 +1,8 @@
 --- a/perl.c
 +++ b/perl.c
-@@ -1987,16 +1987,6 @@ S_Internals_V(pTHX_ CV *cv)
+@@ -2092,16 +2092,6 @@ S_Internals_V(pTHX_ CV *cv)
      PUSHs(Perl_newSVpvn_flags(aTHX_ non_bincompat_options,
- 			      sizeof(non_bincompat_options) - 1, SVs_TEMP));
+                               sizeof(non_bincompat_options) - 1, SVs_TEMP));
  
 -#ifndef PERL_BUILD_DATE
 -#  ifdef __DATE__
@@ -16,4 +16,4 @@
 -
  #ifdef PERL_BUILD_DATE
      PUSHs(Perl_newSVpvn_flags(aTHX_
- 			      STR_WITH_LEN("Compiled at " PERL_BUILD_DATE),
+                               STR_WITH_LEN("Compiled at " PERL_BUILD_DATE),

@@ -1,17 +1,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libupnp
-PKG_VERSION:=1.14.12
-PKG_RELEASE:=1
+PKG_VERSION:=1.14.18
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/pupnp
-PKG_HASH:=091c80aada1e939c2294245c122be2f5e337cc932af7f7d40504751680b5b5ac
+PKG_HASH:=16a7cee93ce2868ae63ab1a8164dc7de43577c59983b9f61293a310d6888dceb
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
-PKG_CPE_ID:=cpe:/a:libupnp_project:libupnp
+PKG_CPE_ID:=cpe:/a:pupnp_project:pupnp
 
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_libupnp-sample \
@@ -54,7 +54,7 @@ CMAKE_OPTIONS += \
 	-DBUILD_TESTING=OFF \
 	-Dclient=ON \
 	-Ddevice=ON \
-	-Dwebserver=OFF \
+	-Dwebserver=ON \
 	-Dssdp=ON \
 	-Doptssdp=OFF \
 	-Dsoap=ON \

@@ -16,7 +16,7 @@ start_instance() {
 
 	local enabled
 	config_get_bool enabled "$1" 'enabled' 0
-	[ "$enabled" ] || return
+	[ "$enabled" -gt 0 ] || return
 
 	local input
 	config_get input "$s" 'input'

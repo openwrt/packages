@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libsoxr
 PKG_VERSION:=0.1.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_URL:=@SF/project/soxr/
 PKG_SOURCE:=soxr-$(PKG_VERSION)-Source.tar.xz

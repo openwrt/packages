@@ -1,0 +1,41 @@
+From 41636c8e356afe5c79c7023d93e68e423204d099 Mon Sep 17 00:00:00 2001
+From: Johannes Altmanninger <aclopte@gmail.com>
+Date: Fri, 17 Oct 2025 14:58:55 +0200
+Subject: [PATCH] Fix build on Linux/MIPS
+
+Fixes #11965
+---
+ CHANGELOG.rst |  2 ++
+ src/signal.rs | 10 +++++++++-
+ 2 files changed, 11 insertions(+), 1 deletion(-)
+
+--- a/CHANGELOG.rst
++++ b/CHANGELOG.rst
+@@ -556,6 +556,8 @@ Other improvements
+ 
+ For distributors
+ ----------------
++- Fixed build on MIPS machines (:issue:`11965`).
++- Fixed broken universal variables on Cygwin (:issue:`11948`).
+ 
+ fish has been ported to Rust. This means a significant change in dependencies, which are listed in the README. In short, Rust 1.70 or greater is required, and a C++ compiler is no longer needed (although a C compiler is still required, for some C glue code and the tests).
+ 
+--- a/src/signal.rs
++++ b/src/signal.rs
+@@ -417,7 +417,15 @@ const SIGNAL_TABLE : &[LookupEntry] = &[
+     #[cfg(any(apple, bsd))]
+     signal_entry!(SIGINFO, SIGINFO_DESC),
+ 
+-    #[cfg(target_os = "linux")]
++    #[cfg(all(
++        target_os = "linux",
++        not(any(
++            target_arch = "mips",
++            target_arch = "mips32r6",
++            target_arch = "mips64",
++            target_arch = "mips64r6",
++        ))
++    ))]
+     signal_entry!(SIGSTKFLT, SIGSTKFLT_DESC),
+ 
+     #[cfg(target_os = "linux")]

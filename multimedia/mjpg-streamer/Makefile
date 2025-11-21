@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mjpg-streamer
 PKG_VERSION:=1.0.0
-PKG_RELEASE:=5
+PKG_RELEASE:=7
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/jacksonliam/mjpg-streamer/tar.gz/v$(PKG_VERSION)?
@@ -19,7 +19,7 @@ PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_UNPACK=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip=2 -xf $(DL_DIR)/$(PKG_SOURCE)
-PKG_BUILD_DEPENDS:=MJPG_STREAMER_V4L2:libv4l zmq protobuf-c/host
+PKG_BUILD_DEPENDS:=MJPG_STREAMER_V4L2:v4l-utils zmq protobuf-c/host
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk

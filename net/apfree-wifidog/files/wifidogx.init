@@ -1,89 +1,165 @@
 #!/bin/sh /etc/rc.common
 # Copyright (C) 2018 Dengfeng Liu
 
-. /lib/functions/network.sh
-
 START=99
-
 USE_PROCD=1
 NAME=wifidogx
-PROG=/usr/bin/${NAME}
-CONFIGFILE=/tmp/wifidogx.conf
+PROG="/usr/bin/${NAME}"
+CONFIGFILE="/tmp/wifidogx.conf"
 
-service_trigger() {
-	procd_add_reload_trigger ${NAME}
+handle_gateway() {
+	local section="$1"
+	local gateway_name gateway_channel gateway_id
+
+	config_get gateway_name "$section" gateway_name
+	config_get gateway_channel "$section" gateway_channel
+	config_get gateway_id "$section" gateway_id
+
+	if [ -z "$gateway_name" ] || [ -z "$gateway_channel" ]; then
+		echo "gateway_name and gateway_channel are required for $section" >&2
+		return
+	fi
+
+	# Get gateway_id from gateway_name if not set
+	if [ -z "$gateway_id" ]; then
+		gateway_id=$(ifconfig "$gateway_name" | awk '/HWaddr/ {print toupper($5)}' | tr -d ':')
+		if [ -z "$gateway_id" ]; then
+			echo "Failed to get gateway_id for $gateway_name" >&2
+			return
+		fi
+		uci set wifidogx."$section".gateway_id="$gateway_id"
+		uci commit wifidogx
+	fi
+
+	printf "GatewaySetting { 
+		GatewayInterface %s
+		GatewayChannel %s
+		GatewayID %s
+	}\n" "$gateway_name" "$gateway_channel" "$gateway_id" >> "$CONFIGFILE"
+}
+
+add_white_list_entries() {
+	local list_type="$1"
+	local uci_field="$2"
+	local target_variable="$3"
+
+	list_type=$(uci get wifidogx.common."$list_type")
+	for group in $list_type; do
+		group_list=$(uci get wifidogx."$group"."$uci_field")
+		if [ -n "$group_list" ]; then
+			eval "$target_variable=\"\${$target_variable} \$group_list\""
+		fi
+	done
+}
+
+prepare_common_settings() {
+	printf "CheckInterval %s\nClientTimeout %s\nJsFilter %s\nWiredPassed %s\nBypassAppleCNA %s\nEnableDNSForward %s\n" \
+		"$check_interval" "$client_timeout" "$js_filter" "$wired_passed" "$apple_cna" "$enable_dns_forward" >> "$CONFIGFILE"
+
+	[ -n "$trusted_domains" ] && printf "TrustedDomains %s\n" "$(echo "$trusted_domains" | tr ' ' ',')" >> "$CONFIGFILE"
+	[ -n "$trusted_macs" ] && printf "TrustedMACList %s\n" "$(echo "$trusted_macs" | tr ' ' ',')" >> "$CONFIGFILE"
+	[ -n "$trusted_wildcard_domains" ] && printf "TrustedPanDomains %s\n" "$(echo "$trusted_wildcard_domains" | tr ' ' ',')" >> "$CONFIGFILE"
+}
+
+prepare_auth_server_settings() {
+	case "$auth_server_mode" in
+	cloud)
+		printf "DeviceID %s\nAuthServer {\n\tHostname %s\n\tHTTPPort %s\n\tPath %s\n}\n" \
+			"$device_id" "$auth_server_hostname" "$auth_server_port" "$auth_server_path" >> "$CONFIGFILE"
+        
+		case "$long_conn_mode" in
+		ws|wss)
+			ws_hostname="${ws_server_hostname:-$auth_server_hostname}"
+			ws_port="${ws_server_port:-$auth_server_port}"
+			ws_ssl=$([ "$long_conn_mode" = "wss" ] && echo 1 || echo 0)
+			printf "WebSocket {\n\tWSServer %s\n\tWSServerPort %s\n\tWSServerPath %s\n\tWSServerSSL %s\n}\n" \
+				"$ws_hostname" "$ws_port" "$ws_server_path" "$ws_ssl" >> "$CONFIGFILE"
+			;;
+		mqtt)
+			mqtt_hostname="${mqtt_server_hostname:-$auth_server_hostname}"
+			mqtt_port="${mqtt_server_port:-1883}"
+			printf "MQTT {\n\tMQTTHost %s\n\tMQTTPort %s\n\tMQTTUsername %s\n\tMQTTPassword %s\n}\n" \
+				"$mqtt_hostname" "$mqtt_port" "${mqtt_username:-}" "${mqtt_password:-}" >> "$CONFIGFILE"
+			;;
+		esac
+			;;
+	local)
+		[ -n "$auth_server_offline_file" ] && printf "AuthServerOfflineFile %s\n" "$auth_server_offline_file" >> "$CONFIGFILE"
+		[ -n "$local_portal" ] && printf "LocalPortal %s\n" "$local_portal" >> "$CONFIGFILE"
+		;;
+	esac
+}
+
+prepare_external_interface() {
+	[ -z "$external_interface" ] && echo "No ExternalInterface " >&2 && return
+	local external_interface_name
+	external_interface_name=$(uci get network."$external_interface".device)
+	[ -z "$external_interface_name" ] && echo "Failed to get device name for $external_interface" >&2 && return
+  
+	printf "ExternalInterface %s\n" "$external_interface_name" >> "$CONFIGFILE"
 }
 
 prepare_wifidog_conf() {
-
-	[ -f ${CONFIGFILE} ] && rm -f ${CONFIGFILE}
-
-	network_get_device external_interface wan
-
-	uci_validate_section ${NAME} ${NAME} common \
+	[ -f "$CONFIGFILE" ] && rm -f "$CONFIGFILE"
+	local long_conn_mode_value='"ws", "wss", "mqtt", "none"'
+	local auth_server_mode_value='"cloud", "local"'
+    
+	uci_validate_section "$NAME" "$NAME" common \
 		'enabled:bool:0' \
-		'gateway_id:string' \
-		'gateway_interface:string:br-lan' \
-		'external_interface:string:external_interface' \
+		"auth_server_mode:or($auth_server_mode_value)" \
+		'log_level:integer:7' \
+		'device_id:string' \
 		'auth_server_hostname:string' \
 		'auth_server_port:port:443' \
 		'auth_server_path:string:/wifidog/' \
 		'check_interval:integer:60' \
 		'client_timeout:integer:5' \
-		'js_filter:bool:1' \
 		'wired_passed:bool:1' \
 		'apple_cna:bool:0' \
-		'js_filter:bool:1' 
+		'trusted_domains:list(host)' \
+		'trusted_wildcard_domains:list(string)' \
+		'trusted_macs:list(string)' \
+		'app_white_list:list(string)' \
+		'mac_white_list:list(string)' \
+		'wildcard_white_list:list(string)' \
+		'enable_dns_forward:bool:1' \
+		"long_conn_mode:or($long_conn_mode_value)" \
+		'ws_server_hostname:string' \
+		'ws_server_port:port:80' \
+		'ws_server_path:string:/ws/wifidogx' \
+		'mqtt_server_hostname:string' \
+		'mqtt_server_port:port:1883' \
+		'mqtt_username:string' \
+		'mqtt_password:string' \
+		'js_filter:bool:1' \
+		'auth_server_offline_file:string' \
+		'local_portal:string' \
+		'external_interface:string'
 
-	# if gateway_id is not set, get it from br-lan
-	if [ -z "$gateway_id" ]; then
-		gateway_id=$(sed -e 's/://g' /sys/class/net/${gateway_interface}/address)
-		# uci add gateway_id to config file
-		uci set ${NAME}.common.gateway_id=$gateway_id
-		uci commit ${NAME}
-	fi
-	
-	# set above variables to config file
-	echo "GatewayID $gateway_id" > ${CONFIGFILE}
-	echo "GatewayInterface $gateway_interface" >> ${CONFIGFILE}
-	echo "ExternalInterface $external_interface" >> ${CONFIGFILE}
-	echo "AuthServer {
-	Hostname $auth_server_hostname
-	HTTPPort $auth_server_port
-	Path $auth_server_path
-}" >> ${CONFIGFILE}
-	echo "CheckInterval $check_interval" >> ${CONFIGFILE}
-	echo "ClientTimeout $client_timeout" >> ${CONFIGFILE}
-	echo "JsFilter $js_filter" >> ${CONFIGFILE}
-	echo "WiredPassed $wired_passed" >> ${CONFIGFILE}
-	echo "BypassAppleCNA $apple_cna" >> ${CONFIGFILE}
-}
+	[ -n "$app_white_list" ] && add_white_list_entries "app_white_list" "domain_name" "trusted_domains"
+	[ -n "$mac_white_list" ] && add_white_list_entries "mac_white_list" "mac_address" "trusted_macs"
+	[ -n "$wildcard_white_list" ] && add_white_list_entries "wildcard_white_list" "wildcard_domain" "trusted_wildcard_domains"
 
-init_config() {
-
-	prepare_wifidog_conf 
-
-	if [ ! -f ${CONFIGFILE} ]; then
-		echo "no wifidogx.conf, exit..." >&2
-		exit
-	fi
+	prepare_external_interface
+	prepare_auth_server_settings
+	config_foreach handle_gateway gateway
+	prepare_common_settings
 }
 
 start_service() {
-	config_load $NAME
+	config_load "$NAME"
 
-	init_config
+	prepare_wifidog_conf
 
-	[ "$enabled" -eq 0 ] && {
+	if [ "$enabled" -eq 0 ]; then
 		echo "wifidogx is disabled, exit..." >&2
-		exit 0
-	}
+		return
+	fi
 
 	procd_open_instance
-	# -f: run in foreground
-	procd_set_param command $PROG -c $CONFIGFILE -f -d 0
-	procd_set_param respawn # respawn automatically if something died
-	procd_set_param file $CONFIGFILE
+	procd_set_param command "$PROG" -c "$CONFIGFILE" -s -f -d "$log_level"
+	procd_set_param respawn
+	procd_set_param file /etc/config/wifidogx
 	procd_close_instance
 }
 
@@ -92,6 +168,12 @@ status_service() {
 }
 
 reload_service() {
-	stop 
+	stop
 	start
+}
+
+service_triggers() {
+	procd_add_reload_trigger "wifidogx" "firewall"
+	procd_add_interface_trigger "interface.*.up" "wan" /etc/init.d/wifidogx reload
+	procd_add_interface_trigger "interface.*.up" "wan6" /etc/init.d/wifidogx reload
 }

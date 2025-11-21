@@ -18,7 +18,7 @@ include $(INCLUDE_DIR)/package.mk
 include ../python3-package.mk
 
 define Package/python3-crcmod
-  SECTION:=lang-python
+  SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
   TITLE:=python3-crcmod

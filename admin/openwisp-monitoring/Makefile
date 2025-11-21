@@ -5,16 +5,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openwisp-monitoring
-PKG_RELEASE:=2
+PKG_VERSION:=0.3.0
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Federico Capoano <support@openwisp.io>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=LICENSE
 
+PKG_CONFIG_DEPENDS:=CONFIG_NETJSON_MONITORING_IWINFO
+
 PKG_SOURCE_URL:=https://github.com/openwisp/openwrt-openwisp-monitoring.git
-PKG_MIRROR_HASH:=ce2ed94d24f68c58320ca700a088471368e1097754be23ad6053842cf0aaa97e
+PKG_MIRROR_HASH:=a7778b0de1b560abf5bf5b8e6e45313fe58309a66438f3c9e043adc8f0248c04
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=0.1.1
+PKG_SOURCE_VERSION:=$(PKG_VERSION)
 PKGARCH:=all
 
 include $(INCLUDE_DIR)/package.mk
@@ -29,12 +32,17 @@ define Package/openwisp-monitoring
 endef
 
 define Package/netjson-monitoring
-  TITLE:=NetJson Monitoring
+  TITLE:=NetJSON Monitoring
   CATEGORY:=Administration
   SECTION:=admin
   SUBMENU:=openwisp
-  DEPENDS:=+libubus-lua +lua-cjson +rpcd +rpcd-mod-iwinfo
+  DEPENDS:=+libubus-lua +lua-cjson +rpcd
+  DEPENDS+=+NETJSON_MONITORING_IWINFO:rpcd-mod-iwinfo
   URL:=http://openwisp.org
+endef
+
+define Package/netjson-monitoring/config
+  source "$(SOURCE)/Config.in"
 endef
 
 define Build/Compile
@@ -49,7 +57,7 @@ define Package/netjson-monitoring/install
 		$(1)/usr/sbin \
 		$(1)/usr/libexec \
 		$(1)/usr/lib/lua/openwisp-monitoring \
-		$(1)/etc/openwisp-monitoring
+		$(1)/usr/lib/openwisp-monitoring
 
 	$(INSTALL_BIN) \
 		$(PKG_BUILD_DIR)/openwisp-monitoring/files/sbin/netjson-monitoring.lua \
@@ -87,7 +95,12 @@ define Package/netjson-monitoring/install
 		$(PKG_BUILD_DIR)/openwisp-monitoring/files/lib/openwisp-monitoring/wifi.lua \
 		$(1)/usr/lib/lua/openwisp-monitoring/wifi.lua
 
-	$(CP) $(PKG_BUILD_DIR)/VERSION $(1)/etc/openwisp-monitoring/
+# Iwinfo is enabled by default unless specified otherwise
+ifeq ($(CONFIG_NETJSON_MONITORING_IWINFO), y)
+	$(CP) $(PKG_BUILD_DIR)/openwisp-monitoring/files/lib/openwisp-monitoring/iwinfo.lua $(1)/usr/lib/lua/openwisp-monitoring/iwinfo.lua
+endif
+
+	$(CP) $(PKG_BUILD_DIR)/VERSION $(1)/usr/lib/openwisp-monitoring/
 
 endef
 
@@ -96,7 +109,8 @@ define Package/openwisp-monitoring/install
 		$(1)/usr/sbin \
 		$(1)/etc/init.d \
 		$(1)/etc/config \
-		$(1)/etc/openwisp-monitoring
+		$(1)/usr/lib/openwisp-monitoring \
+		$(1)/etc/hotplug.d/openwisp
 
 	$(INSTALL_BIN) \
 		$(PKG_BUILD_DIR)/openwisp-monitoring/files/monitoring.agent \
@@ -105,6 +119,10 @@ define Package/openwisp-monitoring/install
 	$(INSTALL_BIN) \
 		$(PKG_BUILD_DIR)/openwisp-monitoring/files/monitoring.init \
 		$(1)/etc/init.d/openwisp-monitoring
+
+	$(INSTALL_BIN) \
+		$(PKG_BUILD_DIR)/openwisp-monitoring/files/openwisp-monitoring.hotplug \
+		$(1)/etc/hotplug.d/openwisp/openwisp-monitoring
 
 	$(INSTALL_CONF) \
 		$(PKG_BUILD_DIR)/openwisp-monitoring/files/monitoring.config \

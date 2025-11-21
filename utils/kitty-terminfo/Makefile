@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kitty-terminfo
-PKG_VERSION:=0.24.4
-PKG_RELEASE:=2
+PKG_VERSION:=0.35.2
+PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-3.0-only
 
 PKG_SOURCE:=kitty-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/kovidgoyal/kitty/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=e6619b635b5c9d6cebbba631a2175659698068ce1cd946732dc440b0f1c12ab3
+PKG_HASH:=35ecf63999a056ff691abab94a6f82328f4e432c8e229a69d02c25466be4398f
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/kitty-$(PKG_VERSION)
 

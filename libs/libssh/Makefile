@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libssh
-PKG_VERSION:=0.10.4
+PKG_VERSION:=0.11.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://www.libssh.org/files/0.10/
-PKG_HASH:=07392c54ab61476288d1c1f0a7c557b50211797ad00c34c3af2bbc4dbc4bd97d
+PKG_SOURCE_URL:=https://www.libssh.org/files/0.11/
+PKG_HASH:=7d8a1361bb094ec3f511964e78a5a4dba689b5986e112afabe4f4d0d6c6125c3
 
-PKG_MAINTAINER:=Mislav Novakovic <mislav.novakovic@sartura.hr>
+PKG_MAINTAINER:=
 PKG_LICENSE:=LGPL-2.1-or-later BSD-2-Clause
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:libssh:libssh
@@ -32,7 +32,7 @@ define Package/libssh
   CATEGORY:=Libraries
   URL:=$(PKG_SOURCE_URL)
   TITLE:=SSH library
-  DEPENDS:=+libpthread +librt +zlib +libopenssl
+  DEPENDS:=+libpthread +librt +zlib +libmbedtls
 endef
 
 define Package/libssh/description
@@ -46,6 +46,7 @@ CMAKE_OPTIONS += \
 	-DHAVE_TERMIOS_H=1 \
 	-DWITH_EXAMPLES:BOOL=OFF \
 	-DWITH_GCRYPT:BOOL=OFF \
+	-DWITH_MBEDTLS:BOOL=ON \
 	-DWITH_GSSAPI:BOOL=OFF \
 	-DWITH_LIBZ:BOOL=ON \
 	-DWITH_NACL:BOOL=OFF \
@@ -59,6 +60,12 @@ CMAKE_OPTIONS += \
 	-UWITH_STACK_PROTECTOR_STRONG \
 	-DWITH_STACK_PROTECTOR_STRONG=0 \
 	-DHAVE_WORDS_BIGENDIAN=$(if $(CONFIG_BIG_ENDIAN),1,0)
+
+define Build/InstallDev
+	$(call Build/InstallDev/cmake,$(1))
+	$(SED) 's,/usr/include,$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/libssh.pc
+	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/libssh.pc
+endef
 
 define Package/libssh/install
 	$(INSTALL_DIR) $(1)/usr/lib

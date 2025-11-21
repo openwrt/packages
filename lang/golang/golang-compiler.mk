@@ -19,14 +19,11 @@ define GoCompiler/Default/CheckHost
 endef
 
 # $(1) source go root
-# $(2) destination prefix
-# $(3) go version id
-# $(4) additional environment variables (optional)
+# $(2) additional environment variables (optional)
 define GoCompiler/Default/Make
 	( \
 		cd "$(1)/src" ; \
-		$(if $(2),GOROOT_FINAL="$(2)/lib/go-$(3)") \
-		$(4) \
+		$(2) \
 		$(BASH) make.bash \
 		$(if $(findstring s,$(OPENWRT_VERBOSE)),-v) \
 		--no-banner \
@@ -156,7 +153,7 @@ define GoCompiler/AddProfile
 
   # $$(1) additional environment variables (optional)
   define GoCompiler/$(1)/Make
-	$$(call GoCompiler/Default/Make,$(2),$(3),$(4),$$(1))
+	$$(call GoCompiler/Default/Make,$(2),$$(1))
   endef
 
   # $$(1) override install prefix (optional)

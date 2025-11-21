@@ -4,10 +4,10 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=parted
 PKG_VERSION:=3.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://ftp.gnu.org/gnu/parted/
+PKG_SOURCE_URL:=https://ftp.gnu.org/gnu/parted/
 PKG_HASH:=3b43dbe33cca0f9a18601ebab56b7852b128ec1a3df3a9b30ccde5e73359e612
 
 PKG_BUILD_PARALLEL:=1
@@ -15,6 +15,7 @@ PKG_INSTALL:=1
 
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:parted_project:parted
 PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
 
 PKG_CONFIG_DEPENDS:= \

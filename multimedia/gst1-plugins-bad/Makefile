@@ -8,18 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-bad
-PKG_VERSION:=1.22.3
+PKG_VERSION:=1.26.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=gst-plugins-bad-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://gstreamer.freedesktop.org/src/gst-plugins-bad/
-PKG_HASH:=e1798fee2d86127f0637481c607f983293bf0fd81aad70a5c7b47205af3621d8
+PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gst-plugins-bad/
+PKG_HASH:=33dba95ed3933b742e4eac22063cdb81e14d54dc4cdd354a0000517273012661
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-bad-$(PKG_VERSION)
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
 		Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=LGPL-2.1-or-later GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING.LIB COPYING
+PKG_CPE_ID:=cpe:/a:freedesktop:gst-plugins-bad
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -158,7 +159,7 @@ MESON_ARGS += \
 	-Dy4m=$(if $(CONFIG_PACKAGE_gst1-mod-y4mdec),en,dis)abled \
 	\
 	-Dopencv=disabled \
-	-Dwayland=disabled \
+	-Dwayland=$(if $(CONFIG_PACKAGE_libgst1gl),en,dis)abled \
 	-Dx11=disabled \
 	\
 	-Daom=disabled \
@@ -190,13 +191,12 @@ MESON_ARGS += \
 	-Dfdkaac=disabled \
 	-Dflite=disabled \
 	-Dfluidsynth=disabled \
-	-Dgl=disabled \
+	-Dgl=$(if $(CONFIG_PACKAGE_libgst1gl),en,dis)abled \
 	-Dgme=disabled \
 	-Dgpl=enabled \
 	-Dgsm=disabled \
 	-Dipcpipeline=disabled \
 	-Diqa=disabled \
-	-Dkate=disabled \
 	-Dkms=disabled \
 	-Dladspa=disabled \
 	-Dlibde265=disabled \
@@ -218,6 +218,7 @@ MESON_ARGS += \
 	-Dopenni2=disabled \
 	-Dopensles=disabled \
 	-Dopus=$(if $(CONFIG_PACKAGE_gst1-mod-opusparse),en,dis)abled \
+	-Dqsv=$(if $(CONFIG_i386)$(CONFIG_i686)$(CONFIG_x86_64),en,dis)abled \
 	-Dresindvd=disabled \
 	-Drsvg=disabled \
 	-Drtmp=disabled \
@@ -228,7 +229,7 @@ MESON_ARGS += \
 	$(call GST_COND_SELECT,sndfile) \
 	-Dsoundtouch=disabled \
 	-Dspandsp=disabled \
-	-Dsrt=disabled \
+	$(call GST_COND_SELECT,srt) \
 	-Dsrtp=disabled \
 	-Dteletext=disabled \
 	-Dtinyalsa=disabled \
@@ -250,7 +251,7 @@ MESON_ARGS += \
 	-Dzxing=disabled \
 	-Dwpe=disabled \
 	-Dmagicleap=disabled \
-	-Dv4l2codecs=disabled \
+	$(call GST_COND_SELECT,v4l2codecs) \
 	\
 	$(call GST_COND_SELECT,hls) \
 	-Dhls-crypto=nettle \
@@ -263,6 +264,32 @@ MESON_ARGS += \
 	-Dglib-checks=disabled \
 	-Dextra-checks=disabled \
 	-Ddoc=disabled
+
+define Build/InstallDev
+	$(INSTALL_DIR) $(1)/usr/include/gstreamer-$(GST_VERSION)
+	( cd $(PKG_INSTALL_DIR); $(CP) \
+		./usr/include/gstreamer-$(GST_VERSION)/* \
+		$(1)/usr/include/gstreamer-$(GST_VERSION)/ \
+	)
+	$(INSTALL_DIR) $(1)/usr/lib
+	( cd $(PKG_INSTALL_DIR); $(CP) \
+		./usr/lib/libgst*-$(GST_VERSION).so* \
+		$(1)/usr/lib/ \
+	)
+	if [ -d $(PKG_INSTALL_DIR)/usr/lib/gstreamer-$(GST_VERSION)/ ]; then \
+		$(INSTALL_DIR) $(1)/usr/lib/gstreamer-$(GST_VERSION); \
+		( cd $(PKG_INSTALL_DIR); $(FIND) \
+			./usr/lib/gstreamer-$(GST_VERSION)/ -name libgst*.so -print0 | \
+			xargs --null --no-run-if-empty $(CP) \
+			--target-directory=$(1)/usr/lib/gstreamer-$(GST_VERSION)/ \
+		) \
+	fi
+	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
+	( cd $(PKG_INSTALL_DIR); $(CP) \
+		./usr/lib/pkgconfig/gstreamer*-$(GST_VERSION).pc \
+		$(1)/usr/lib/pkgconfig/ \
+	)
+endef
 
 define Package/gst1-plugins-bad/install
 	/bin/true
@@ -302,11 +329,15 @@ define GstBuildLibrary
 endef
 
 $(eval $(call GstBuildLibrary,adaptivedemux,adaptivedemux,app uridownloader,))
-$(eval $(call GstBuildLibrary,photography,photography,,))
 $(eval $(call GstBuildLibrary,basecamerabinsrc,basecamerabinsrc,app,))
-$(eval $(call GstBuildLibrary,uridownloader,uridownloader,,))
 $(eval $(call GstBuildLibrary,codecparsers,codecparsers,,))
+$(eval $(call GstBuildLibrary,codecs,codecs,codecparsers,))
 $(eval $(call GstBuildLibrary,mpegts,mpegts,,))
+$(eval $(call GstBuildLibrary,photography,photography,,))
+$(eval $(call GstBuildLibrary,play,play,,))
+$(eval $(call GstBuildLibrary,player,player,play,))
+$(eval $(call GstBuildLibrary,uridownloader,uridownloader,,))
+$(eval $(call GstBuildLibrary,transcoder,transcoder,,))
 
 # 1: short name
 # 2: description
@@ -397,9 +428,10 @@ $(eval $(call GstBuildPlugin,speed,speed support,audio,,))
 $(eval $(call GstBuildPlugin,subenc,subenc support,controller,,))
 $(eval $(call GstBuildPlugin,switchbin,switchbin support,,,))
 $(eval $(call GstBuildPlugin,timecode,timecode support,,,))
+$(eval $(call GstBuildPlugin,v4l2codecs,V4L2 stateless codecs support,codecs,,))
 $(eval $(call GstBuildPlugin,videofiltersbad,videofiltersbad support,,,))
 $(eval $(call GstBuildPlugin,videoframe_audiolevel,videoframe_audiolevel support,,,))
-#$(eval $(call GstBuildPlugin,videoparsersbad,videoparsersbad support,,,))
+$(eval $(call GstBuildPlugin,videoparsersbad,videoparsersbad support,codecparsers,,))
 $(eval $(call GstBuildPlugin,videosignal,videosignal support,,,))
 $(eval $(call GstBuildPlugin,vmnc,vmnc support,,,))
 $(eval $(call GstBuildPlugin,y4mdec,y4mdec support,,,))
@@ -415,6 +447,7 @@ $(eval $(call GstBuildPlugin,opusparse,OPUS streams library,pbutils,,+libopus))
 $(eval $(call GstBuildPlugin,sbc,sbc support,audio,,+sbc))
 $(eval $(call GstBuildPlugin,shm,POSIX shared memory source and sink,,,+librt))
 $(eval $(call GstBuildPlugin,sndfile,sndfile support,audio,,+libsndfile))
+$(eval $(call GstBuildPlugin,srt,srt support,,,+srt))
 #$(eval $(call GstBuildPlugin,srtp,srtp support,rtp,,+libsrtp))
 $(eval $(call GstBuildPlugin,webp,webp support,,,+libwebp))
 #$(eval $(call GstBuildPlugin,yadif,yadif support,,,))

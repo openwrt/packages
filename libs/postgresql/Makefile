@@ -5,8 +5,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postgresql
-PKG_VERSION:=15.3
-PKG_RELEASE:=1
+PKG_VERSION:=17.5
+PKG_RELEASE:=2
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=PostgreSQL
 PKG_CPE_ID:=cpe:/a:postgresql:postgresql
@@ -17,7 +17,7 @@ PKG_SOURCE_URL:=\
 	http://ftp.postgresql.org/pub/source/v$(PKG_VERSION) \
 	ftp://ftp.postgresql.org/pub/source/v$(PKG_VERSION)
 
-PKG_HASH:=ffc7d4891f00ffbf5c3f4eab7fbbced8460b8c0ee63c5a5167133b9e6599d932
+PKG_HASH:=fcb7ab38e23b264d1902cb25e6adafb4525a6ebcbd015434aeef9eda80f528d8
 
 PKG_BUILD_FLAGS:=no-mips16
 PKG_FIXUP:=autoreconf
@@ -121,15 +121,6 @@ PGSQL_CONFIG_VARS:= \
 	ac_cv_file__dev_urandom="/dev/urandom" \
 	ZIC=zic
 
-ifeq ($(CONFIG_USE_UCLIBC),y)
-# PostgreSQL does not build against uClibc with locales
-# enabled, due to an uClibc bug, see
-# http://lists.uclibc.org/pipermail/uclibc/2014-April/048326.html
-# so overwrite automatic detection and disable locale support
-PGSQL_CONFIG_VARS+= \
-		pgac_cv_type_locale_t=no
-endif
-
 TARGET_CONFIGURE_OPTS+=$(PGSQL_CONFIG_VARS)
 
 HOST_CONFIGURE_ARGS += \
@@ -137,6 +128,7 @@ HOST_CONFIGURE_ARGS += \
 			--disable-rpath \
 			--without-bonjour \
 			--without-gssapi \
+			--without-icu \
 			--without-ldap \
 			--without-openssl \
 			--without-pam \
@@ -153,6 +145,7 @@ CONFIGURE_ARGS += \
 			--disable-rpath \
 			--without-bonjour \
 			--without-gssapi \
+			--without-icu \
 			--without-ldap \
 			--without-openssl \
 			--without-pam \

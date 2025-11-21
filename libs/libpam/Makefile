@@ -8,56 +8,49 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libpam
-PKG_VERSION:=1.5.2
-PKG_RELEASE:=1
+PKG_VERSION:=1.7.1
+PKG_RELEASE:=4
 
 PKG_SOURCE:=Linux-PAM-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/linux-pam/linux-pam/releases/download/v$(PKG_VERSION)
-PKG_HASH:=e4ec7131a91da44512574268f493c6d8ca105c87091691b8e9b56ca685d4f94d
+PKG_HASH:=21dbcec6e01dd578f14789eac9024a18941e6f2702a05cf91b28c232eeb26ab0
 PKG_BUILD_DIR:=$(BUILD_DIR)/Linux-PAM-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>
 PKG_LICENSE:=BSD-3c GPL
 PKG_LICENSE_FILES:=COPYING Copyright
-PKG_CPE_ID:=cpe:/a:kernel:linux-pam
+PKG_CPE_ID:=cpe:/a:linux-pam:linux-pam
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/meson.mk
 
 define Package/libpam
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=the Linux-PAM libraries and modules.
   URL:=http://www.kernel.org/pub/linux/libs/pam
+  DEPENDS:= +USE_GLIBC:libcrypt-compat
 endef
 
 define Package/libpam/description
 	The Linux-PAM Pluggable Authentication Modules.
 endef
 
-CONFIGURE_ARGS += \
-	--enable-pamlocking \
-	--enable-shared \
-	--enable-static \
-	--disable-audit \
-	--disable-cracklib \
-	--disable-db \
-	--disable-debug \
-	--disable-doc \
-	--disable-econf \
-	--disable-lckpwdf \
-	--disable-nis \
-	--disable-prelude \
-	--disable-regenerate-docu \
-	--disable-rpath \
-	--disable-selinux \
-	--disable-Werror \
-	--with-gnu-ld \
-	--without-mailspool \
-	--without-xauth
+MESON_ARGS += \
+	-Dpamlocking=true \
+	-Daudit=disabled \
+	-Ddocs=disabled \
+	-Deconf=disabled \
+	-Dlckpwdf=false \
+	-Dnis=disabled \
+	-Dselinux=disabled \
+	-Dmailspool=disabled \
+	-Ddb=db \
+	-Dxauth=disabled
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include

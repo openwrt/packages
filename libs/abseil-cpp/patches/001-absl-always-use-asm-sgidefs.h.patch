@@ -1,0 +1,34 @@
+# From https://git.openembedded.org/meta-openembedded/tree/meta-oe/recipes-devtools/abseil-cpp
+From 11faa06436fdeb0c9948080a11f9a99d3b5ba16c Mon Sep 17 00:00:00 2001
+From: Khem Raj <raj.khem@gmail.com>
+Date: Thu, 9 Apr 2020 13:06:27 -0700
+Subject: [PATCH] absl: always use <asm/sgidefs.h>
+
+Fixes mips/musl build, since sgidefs.h is not present on all C libraries
+but on linux asm/sgidefs.h is there and contains same definitions, using
+that makes it portable.
+
+Upstream-Status: Pending
+
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
+---
+ absl/base/internal/direct_mmap.h | 6 +-----
+ 1 file changed, 1 insertion(+), 5 deletions(-)
+
+--- a/absl/base/internal/direct_mmap.h
++++ b/absl/base/internal/direct_mmap.h
+@@ -41,13 +41,9 @@
+ 
+ #ifdef __mips__
+ // Include definitions of the ABI currently in use.
+-#if defined(__BIONIC__) || !defined(__GLIBC__)
+-// Android doesn't have sgidefs.h, but does have asm/sgidefs.h, which has the
++// bionic/musl C libs don't have sgidefs.h, but do have asm/sgidefs.h, which has the
+ // definitions we need.
+ #include <asm/sgidefs.h>
+-#else
+-#include <sgidefs.h>
+-#endif  // __BIONIC__ || !__GLIBC__
+ #endif  // __mips__
+ 
+ // SYS_mmap and SYS_munmap are not defined in Android.

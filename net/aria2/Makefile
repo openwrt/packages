@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=aria2
-PKG_VERSION:=1.36.0
-PKG_RELEASE:=2
+PKG_VERSION:=1.37.0
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/aria2/aria2/releases/download/release-$(PKG_VERSION)/
-PKG_HASH:=58d1e7608c12404f0229a3d9a4953d0d00c18040504498b483305bcb3de907a5
+PKG_HASH:=60a420ad7085eb616cb6e2bdf0a7206d68ff3d37fb5a956dc44242eb2f79b66b
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=gc-sections lto
@@ -21,7 +21,7 @@ PKG_MAINTAINER:=Imre Kaloz <kaloz@openwrt.org>, \
 	Hsing-Wang Liao <kuoruan@gmail.com>
 PKG_LICENSE:=GPLv2
 PKG_LICENSE_FILES:=COPYING
-PKG_CPE_ID:=cpe:/a:tatsuhiro_tsujikawa:aria2
+PKG_CPE_ID:=cpe:/a:aria2_project:aria2
 
 PKG_CONFIG_DEPENDS := \
 	CONFIG_ARIA2_NOSSL \
@@ -43,6 +43,15 @@ PKG_CONFIG_DEPENDS := \
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
+define Package/aria2-openssl
+  SECTION:=net
+  CATEGORY:=Network
+  SUBMENU:=File Transfer
+  TITLE:=lightweight download utility (OpenSSL dependencies)
+  DEPENDS:=+libopenssl +libopenssl-legacy
+  HIDDEN:=1
+endef
+
 define Package/aria2/config
   source "$(SOURCE)/Config.in"
 endef
@@ -53,7 +62,7 @@ define Package/aria2
   SUBMENU:=File Transfer
   TITLE:=lightweight download utility
   URL:=https://aria2.github.io/
-  DEPENDS:=+zlib +libstdcpp +ARIA2_OPENSSL:libopenssl +ARIA2_GNUTLS:libgnutls \
+  DEPENDS:=+zlib +libstdcpp +ARIA2_OPENSSL:aria2-openssl +ARIA2_GNUTLS:libgnutls \
 	+ARIA2_NETTLE:libnettle +ARIA2_LIBGCRYPT:libgcrypt +ARIA2_GMP:libgmp \
 	+ARIA2_LIBXML2:libxml2 +ARIA2_EXPAT:libexpat +ARIA2_SFTP:libssh2 \
 	+ARIA2_ASYNC_DNS:libcares +ARIA2_COOKIE:libsqlite3
@@ -99,4 +108,9 @@ define Package/aria2/install
 	$(INSTALL_CONF) ./files/aria2.conf $(1)/etc/config/aria2
 endef
 
+define Package/aria2-openssl/install
+	true
+endef
+
 $(eval $(call BuildPackage,aria2))
+$(eval $(call BuildPackage,aria2-openssl))

@@ -1,16 +1,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libjpeg-turbo
-PKG_VERSION:=2.1.4
-PKG_RELEASE:=2
+PKG_VERSION:=3.1.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=@SF/$(PKG_NAME)
-PKG_HASH:=d3ed26a1131a13686dfca4935e520eb7c90ae76fbc45d98bb50a8dc86230342b
+PKG_SOURCE_URL:=https://github.com/libjpeg-turbo/libjpeg-turbo/releases/download/$(PKG_VERSION)
+PKG_HASH:=aadc97ea91f6ef078b0ae3a62bba69e008d9a7db19b34e4ac973b19b71b4217c
 
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_LICENSE:=BSD-3-Clause IJG zlib
 PKG_LICENSE_FILES:=LICENSE.md
+PKG_CPE_ID:=cpe:/a:libjpeg-turbo:libjpeg-turbo
 
 # Allows ASM compilation for speed
 PKG_BUILD_FLAGS:=no-mips16
@@ -50,16 +51,6 @@ define Package/libjpeg-turbo-utils/description
 endef
 
 CMAKE_OPTIONS += \
-	-DENABLE_SHARED=ON \
-	-DENABLE_STATIC=ON \
-	-DREQUIRE_SIMD=OFF \
-	-DWITH_12BIT=OFF \
-	-DWITH_ARITH_DEC=OFF \
-	-DWITH_ARITH_ENC=OFF \
-	-DWITH_JAVA=OFF \
-	-DWITH_JPEG7=OFF \
-	-DWITH_JPEG8=OFF \
-	-DWITH_MEM_SRCDST=ON \
 	-DWITH_SIMD=O$(if $(findstring mips,$(CONFIG_ARCH)),FF,N) \
 	-DWITH_TURBOJPEG=OFF
 

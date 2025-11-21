@@ -70,6 +70,7 @@ mssfix
 mtu_disc
 mute
 nice
+peer_fingerprint
 ping
 ping_exit
 ping_restart
@@ -149,6 +150,7 @@ client
 client_to_client
 comp_noadapt
 disable
+disable_dco
 disable_occ
 down_pre
 duplicate_cn

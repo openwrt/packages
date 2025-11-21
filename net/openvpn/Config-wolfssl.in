@@ -44,7 +44,8 @@ config OPENVPN_wolfssl_ENABLE_IPROUTE2
 config OPENVPN_wolfssl_ENABLE_DCO
 	depends on !OPENVPN_wolfssl_ENABLE_IPROUTE2
 	bool "Enable support for data channel offload"
-	default n if OPENVPN_openssl_ENABLE_IPROUTE2
+	default y if !OPENVPN_wolfssl_ENABLE_IPROUTE2
+	select WOLFSSL_HAS_OPENVPN
 	help
 	  enable data channel offload support
 	  using the ovpn-dco-v2 kernel module

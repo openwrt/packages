@@ -1,0 +1,5 @@
+#!/bin/sh
+
+grep -q "utf-force" "/etc/profile.d/btop.sh" && sed -i "s,utf-force,force-utf,g" "/etc/profile.d/btop.sh"
+
+exit 0

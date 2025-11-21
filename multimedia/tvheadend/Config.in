@@ -9,6 +9,14 @@ config TVHEADEND_OPTIMIZE_SPEED
     Optimize tvheadend for speed instead of size. This option adds -O3 and LTO (Link Time Optimization).
     Note: No benchmarks were performed when this option was added. Speed improvements (if any) are not known.
 
+config TVHEADEND_MEMORYINFO
+  bool "Memory info"
+  depends on PACKAGE_tvheadend
+  default n
+  help
+    Add htsmsg/htsmsg_field to Memory Information Entries tab.
+    Note: impacts performance.
+
 config TVHEADEND_TRACE
   bool "Low level debug trace"
   depends on PACKAGE_tvheadend
@@ -19,6 +27,22 @@ config TVHEADEND_TRACE
     Note: Selecting this option does not automatically enable trace logging.
     It only includes support for --trace command line option and GUI.
 
+choice
+  prompt "Regular Expression"
+  depends on PACKAGE_tvheadend
+  default TVHEADEND_REGEX_PCRE2
+  config TVHEADEND_REGEX_POSIX
+    bool "POSIX (internal)"
+    help
+      Use internal POSIX Regular Expressions.
+      Note: Some EPG parsers will not work with POSIX RegEx.
+  config TVHEADEND_REGEX_PCRE2
+    bool "PCRE2 (libpcre2)"
+    select PACKAGE_libpcre2
+    help
+      Use more advanced Perl-Compatible Regular Expressions, provided by libpcre2.
+endchoice
+
 config TVHEADEND_AVAHI_SUPPORT
   bool "Avahi client"
   depends on PACKAGE_tvheadend
@@ -28,37 +52,28 @@ config TVHEADEND_AVAHI_SUPPORT
     Enables the opensource implementation of Apple's zero configuration protocol.
     Tvheadend will advertise itself on the network using this protocol.
 
-choice
-  prompt "Regular Expression"
+config TVHEADEND_TIMESHIFT
+  bool "Timeshift"
   depends on PACKAGE_tvheadend
-  config TVHEADEND_REGEX_POSIX
-    bool "POSIX (internal)"
-    help
-      Use internal POSIX Regular Expressions.
-      Note that not all EPG parsers will work with POSIX RegEx.
-  config TVHEADEND_REGEX_PCRE
-    bool "PCRE (libpcre)"
-    select PACKAGE_libpcre
-    help
-      Use more advanced Perl-Compatible Regular Expressions, provided by libpcre.
-  config TVHEADEND_REGEX_PCRE2
-    bool "PCRE2 (libpcre2)"
-    select PACKAGE_libpcre2
-    help
-      Use more advanced Perl-Compatible Regular Expressions, provided by libpcre2.
-endchoice
-
-config TVHEADEND_IMAGECACHE
-  bool "Image cache"
-  depends on PACKAGE_tvheadend
-  default n
+  default y
   help
-    Support caching TV station logos and other images on disk.
-    Note: Activating disk cache will increase fash memory wear.
-    Selecting this option does not automatically enable disk caching. It only includes support for it.
+    Allow continuous recording of a selected TV channel in a circular memory or file buffer,
+    and allow clients playing that live TV channel to pause/rewind/replay/ffwd within the limits of the buffer.
+    Note: Timeshift must be supported by the clients too.
+    Note: Timeshift recording is continuous. It must be stopped manually. Recording on flash-based storage is NOT recommended!
 
 comment "Input & output support"
   depends on PACKAGE_tvheadend
+
+# BUG in tvheadend. Can't be disabled.
+#config TVHEADEND_TSFILE
+#  bool "ts file streaming"
+#  depends on PACKAGE_tvheadend
+#  default n
+#  help
+#    Support creation of a virtual TV network that streams from a file.
+#    This is done manually with --tsfile_tuners <no> and --tsfile <file> command line arguments
+#    and is not supported by OpenWrt tvheadend configuration and startup script.
 
 config TVHEADEND_LINUXDVB_SUPPORT
   bool "DVB tuners"
@@ -66,14 +81,14 @@ config TVHEADEND_LINUXDVB_SUPPORT
   default y
   help
     Include support for DVB tuners.
-    Note: Kernel driver(s) and firmware must also be installed.
+    Note: Kernel driver(s) and firmware must also be installed. These are not available as OpenWrt packages.
 
 config TVHEADEND_DVBSCAN_SUPPORT
   bool "Include DVB-scan tables"
   depends on TVHEADEND_LINUXDVB_SUPPORT
   default TVHEADEND_LINUXDVB_SUPPORT
   help
-    Download and include DVB scan tables.
+    Download and include DVB scan tables into the package.
 
 config TVHEADEND_IPTV
   bool "IPTV client"
@@ -102,9 +117,35 @@ config TVHEADEND_HDHOMERUN_CLIENT
   default y
   help
     Include HDHomeRun client.
-    HDHomeRun is a network-attached, digital television tuner box.
+    HDHomeRun is a network-attached digital television tuner box.
 
-comment "SoftCAM (Software Conditional Access Module)"
+config TVHEADEND_HDHOMERUN_SERVER
+  bool "HDHomeRun server emulation"
+  depends on PACKAGE_tvheadend
+  default y
+  help
+    Support emulating a HDHomeRun device (live TV only).
+    HDHomeRun is a network-attached digital television tuner box.
+    This option will allow tvheadend to act as a server and stream live TV to HDHomeRun clients.
+
+comment "Hardware descrambling"
+  depends on PACKAGE_tvheadend
+
+config TVHEADEND_DVB_DDCI
+  bool "DVB CI cards from Digital Devices"
+  depends on PACKAGE_tvheadend
+  depends on TVHEADEND_LINUXDVB_SUPPORT
+  default n
+  help
+    Support DVB CI (Common Interface) adapter cards from Digital Devices.
+    Note: Kernel drivers are required for the adapter cards. These are not available as OpenWrt packages.
+    Note: Not tested due to lack of hardware.
+
+comment "Software descrambling and some codecs are only available with BUILD_PATENTED."
+  depends on PACKAGE_tvheadend
+  depends on !BUILD_PATENTED
+
+comment "Software descrambling, SoftCAM (Software Conditional Access Module)"
   depends on PACKAGE_tvheadend
   depends on BUILD_PATENTED
 
@@ -115,7 +156,7 @@ config TVHEADEND_CSA
   select PACKAGE_libdvbcsa
   default n
   help
-    Support decoding CSA (Common Scrambling Algorithm). Uses libdvbcsa package.
+    Support CSA (Common Scrambling Algorithm). Uses libdvbcsa package.
 
 config TVHEADEND_CONSTCW
   bool "CCW"
@@ -125,11 +166,11 @@ config TVHEADEND_CONSTCW
     Support Constant Control Word.
 
 config TVHEADEND_CAPMT
-  bool "CWC capmt client"
+  bool "capmt client"
   depends on TVHEADEND_CSA
   default n
   help
-    Support Control Word Client capmt (Linux Network DVBAPI) protocol.
+    Support capmt (Linux Network DVBAPI) protocol.
 
 config TVHEADEND_NEWCAMD
   bool "CWC newcamd client"
@@ -142,10 +183,6 @@ config TVHEADEND_CCCAM
   bool "CCCam client"
   depends on TVHEADEND_CSA
   default n
-
-comment "DVB descrambling and some codecs are only available with BUILD_PATENTED."
-  depends on PACKAGE_tvheadend
-  depends on !BUILD_PATENTED
 
 ## Transcoding | Uncomment these options.
 ##comment "Transcoding and codecs"

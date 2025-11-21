@@ -1,6 +1,6 @@
 --- a/src/pcm/pcm_shm.c
 +++ b/src/pcm/pcm_shm.c
-@@ -45,6 +45,14 @@
+@@ -46,6 +46,14 @@
  #include <netdb.h>
  #include "aserver.h"
  

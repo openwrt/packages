@@ -1,0 +1,24 @@
+#!/bin/sh
+# shellcheck disable=SC2015,SC3037,SC3043
+
+readonly pbrFunctionsFile='/etc/init.d/pbr'
+if [ -s "$pbrFunctionsFile" ]; then
+# shellcheck source=../../etc/init.d/pbr
+	. "$pbrFunctionsFile"
+else
+	printf "%b: pbr init.d file (%s) not found! \n" '\033[0;31mERROR\033[0m' "$pbrFunctionsFile"
+fi
+
+# Transition resolver_set depending on dnsmasq support
+if [ "$(uci_get pbr config resolver_set)" != 'dnsmasq.nftset' ]; then
+	if check_dnsmasq_nftset; then
+		output "Setting resolver_set to 'dnsmasq.nftset'... "
+		uci_set pbr config resolver_set 'dnsmasq.nftset' && output_okn || output_failn
+	else
+		output "Setting resolver_set to 'none'... "
+		uci_set pbr config resolver_set 'none' && output_okn || output_failn
+	fi
+	uci_commit pbr
+fi
+
+exit 0

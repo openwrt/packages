@@ -1,9 +1,0 @@
-#!/bin/sh /etc/rc.common
-
-START=99
-
-start() {
-	[ -d /var/GeoIP ] || {
-		mkdir -p /var/GeoIP
-	}
-}

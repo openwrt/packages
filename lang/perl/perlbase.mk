@@ -51,20 +51,6 @@ endef
 $(eval $(call BuildPackage,perlbase-archive))
 
 
-define Package/perlbase-arybase
-$(call Package/perlbase-template)
-TITLE:=arybase perl module
-DEPENDS+=+perlbase-xsloader
-endef
-
-define Package/perlbase-arybase/install
-$(call perlmod/Install,$(1),arybase.pm auto/arybase,)
-$(call perlmod/InstallBaseTests,$(1),ext/arybase/t)
-endef
-
-$(eval $(call BuildPackage,perlbase-arybase))
-
-
 define Package/perlbase-attribute
 $(call Package/perlbase-template)
 TITLE:=Attribute perl module
@@ -154,7 +140,7 @@ endef
 
 define Package/perlbase-b/install
 $(call perlmod/Install,$(1),B B.pm auto/B,)
-$(call perlmod/InstallBaseTests,$(1),cpan/B-Debug/t ext/B/t lib/B/Deparse-core.t lib/B/Deparse-subclass.t lib/B/Deparse.t)
+$(call perlmod/InstallBaseTests,$(1),ext/B/t lib/B/Deparse-core.t lib/B/Deparse-subclass.t lib/B/Deparse.t)
 endef
 
 $(eval $(call BuildPackage,perlbase-b))
@@ -235,7 +221,7 @@ TITLE:=bytes perl module
 endef
 
 define Package/perlbase-bytes/install
-$(call perlmod/Install,$(1),bytes.pm bytes_heavy.pl,)
+$(call perlmod/Install,$(1),bytes.pm,)
 $(call perlmod/InstallBaseTests,$(1),lib/bytes.t)
 endef
 
@@ -419,7 +405,6 @@ endef
 define Package/perlbase-digest/install
 $(call perlmod/Install,$(1),Digest Digest.pm auto/Digest,)
 $(call perlmod/InstallBaseTests,$(1),cpan/Digest-MD5/MD5.xs cpan/Digest-MD5/t cpan/Digest-SHA/t cpan/Digest/t)
-	$(INSTALL_DIR) $(1)/$(PERL_TESTSDIR)/cpan/Digest-SHA/src
 endef
 
 $(eval $(call BuildPackage,perlbase-digest))
@@ -557,9 +542,9 @@ DEPENDS+=+perlbase-config
 endef
 
 define Package/perlbase-essential/install
-$(call perlmod/Install,$(1),Carp Carp.pm Exporter Exporter.pm constant.pm deprecate.pm lib.pm locale.pm overload.pm overloading.pm parent.pm strict.pm subs.pm vars.pm warnings warnings.pm,)
+$(call perlmod/Install,$(1),Carp Carp.pm Exporter Exporter.pm constant.pm deprecate.pm lib.pm builtin.pm locale.pm overload.pm overloading.pm parent.pm strict.pm subs.pm vars.pm vmsish.pm warnings warnings.pm,)
 $(call perlmod/Install/NoStrip,$(1),overload/numbers.pm,)
-$(call perlmod/InstallBaseTests,$(1),cpan/parent/t dist/Carp/t dist/Exporter/t dist/constant/t dist/lib/t lib/locale.t lib/overload.t lib/overload64.t lib/overloading.t lib/strict.t lib/subs.t lib/vars.t lib/vars_carp.t lib/warnings.t)
+$(call perlmod/InstallBaseTests,$(1),cpan/parent/t dist/Carp/t dist/Exporter/t dist/constant/t dist/lib/t lib/builtin.t lib/locale.t lib/overload.t lib/overload64.t lib/overloading.t lib/strict.t lib/subs.t lib/vars.t lib/vars_carp.t lib/vmsish.t lib/warnings.t)
 endef
 
 $(eval $(call BuildPackage,perlbase-essential))
@@ -572,7 +557,7 @@ DEPENDS+=+perlbase-essential +perlbase-feature +perlbase-version
 endef
 
 define Package/perlbase-experimental/install
-$(call perlmod/Install,$(1),experimental.pm,)
+$(call perlmod/Install,$(1),experimental.pm stable.pm,)
 $(call perlmod/InstallBaseTests,$(1),cpan/experimental/t)
 endef
 
@@ -582,7 +567,7 @@ $(eval $(call BuildPackage,perlbase-experimental))
 define Package/perlbase-extutils
 $(call Package/perlbase-template)
 TITLE:=ExtUtils perl module
-DEPENDS+=+perlbase-autosplit +perlbase-base +perlbase-config +perlbase-cwd +perlbase-dirhandle +perlbase-encode +perlbase-essential +perlbase-file +perlbase-io +perlbase-ipc +perlbase-ostype +perlbase-symbol +perlbase-text
+DEPENDS+=+perlbase-autosplit +perlbase-base +perlbase-config +perlbase-cwd +perlbase-dirhandle +perlbase-encode +perlbase-essential +perlbase-file +perlbase-io +perlbase-ipc +perlbase-ostype +perlbase-symbol +perlbase-text +perlbase-version
 endef
 
 define Package/perlbase-extutils/install
@@ -725,7 +710,7 @@ endef
 
 define Package/perlbase-findbin/install
 $(call perlmod/Install,$(1),FindBin.pm,)
-$(call perlmod/InstallBaseTests,$(1),lib/FindBin.t)
+$(call perlmod/InstallBaseTests,$(1),dist/FindBin/t)
 endef
 
 $(eval $(call BuildPackage,perlbase-findbin))
@@ -905,7 +890,7 @@ endef
 
 define Package/perlbase-locale/install
 $(call perlmod/Install,$(1),Locale,Locale/Constants.pod Locale/Country.pod Locale/Currency.pod Locale/Language.pod Locale/Maketext.pod Locale/Maketext/TPJ13.pod Locale/Script.pod)
-$(call perlmod/InstallBaseTests,$(1),cpan/Locale-Codes/t cpan/Locale-Maketext-Simple/t dist/Locale-Maketext/t)
+$(call perlmod/InstallBaseTests,$(1),cpan/Locale-Maketext-Simple/t dist/Locale-Maketext/t)
 endef
 
 $(eval $(call BuildPackage,perlbase-locale))
@@ -919,7 +904,7 @@ endef
 
 define Package/perlbase-math/install
 $(call perlmod/Install,$(1),Math auto/Math,)
-$(call perlmod/InstallBaseTests,$(1),cpan/Math-Complex/t cpan/Math-BigInt-FastCalc/t cpan/Math-BigInt/t cpan/Math-BigRat/t)
+$(call perlmod/InstallBaseTests,$(1),cpan/Math-BigInt-FastCalc/t cpan/Math-BigInt/t cpan/Math-BigRat/t)
 endef
 
 $(eval $(call BuildPackage,perlbase-math))
@@ -1142,7 +1127,7 @@ endef
 define Package/perlbase-pod/install
 $(call perlmod/Install,$(1),Pod,Pod/Usage.pm)
 $(call perlmod/Install/NoStrip,$(1),Pod/Usage.pm,)
-$(call perlmod/InstallBaseTests,$(1),cpan/Pod-Checker/t cpan/Pod-Escapes/t cpan/Pod-Parser/lib cpan/Pod-Parser/scripts cpan/Pod-Parser/t cpan/Pod-Perldoc/t cpan/Pod-Simple/t cpan/Pod-Usage/scripts cpan/Pod-Usage/t cpan/podlators/t ext/Pod-Functions/Functions.pm ext/Pod-Functions/t ext/Pod-Html/t lib/Pod/t)
+$(call perlmod/InstallBaseTests,$(1),cpan/Pod-Checker/t cpan/Pod-Escapes/t cpan/Pod-Perldoc/t cpan/Pod-Simple/t cpan/Pod-Usage/scripts cpan/Pod-Usage/t cpan/podlators/t ext/Pod-Functions/Functions.pm ext/Pod-Functions/t ext/Pod-Html/t lib/Pod/t)
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/pod2man $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/pod2text $(1)/usr/bin/
@@ -1202,7 +1187,6 @@ endef
 define Package/perlbase-scalar/install
 $(call perlmod/Install,$(1),Scalar Sub,)
 $(call perlmod/InstallBaseTests,$(1),cpan/Scalar-List-Utils/t)
-	$(INSTALL_DIR) $(1)/$(PERL_TESTSDIR)/cpan/Scalar-List-Utils/blib
 endef
 
 $(eval $(call BuildPackage,perlbase-scalar))
@@ -1382,7 +1366,7 @@ DEPENDS+=+perlbase-base +perlbase-config +perlbase-essential +perlbase-io +perlb
 endef
 
 define Package/perlbase-test/install
-$(call perlmod/Install,$(1),Test Test.pm ok.pm,Test/Builder.pm Test/Harness/TAP.pod Test/More.pm Test/Tutorial.pod)
+$(call perlmod/Install,$(1),Test Test2 Test.pm Test2.pm ok.pm,Test/Builder.pm Test/More.pm Test/Tutorial.pod Test2/Transition.pod)
 $(call perlmod/Install/NoStrip,$(1),Test/Builder.pm Test/More.pm,)
 $(call perlmod/InstallBaseTests,$(1),cpan/Test-Harness/t cpan/Test-Simple/t dist/Test/t)
 	$(INSTALL_DIR) $(1)/usr/bin
@@ -1441,7 +1425,7 @@ DEPENDS+=+perlbase-essential +perlbase-fcntl +perlbase-xsloader
 endef
 
 define Package/perlbase-tie/install
-$(call perlmod/Install,$(1),Tie auto/Tie,)
+$(call perlmod/Install,$(1),Tie,)
 $(call perlmod/InstallBaseTests,$(1),cpan/Tie-RefHash/t dist/Tie-File/t ext/Tie-Hash-NamedCapture/t ext/Tie-Memoize/lib/Tie/Memoize.pm ext/Tie-Memoize/t lib/Tie/Array/push.t lib/Tie/Array/splice.t lib/Tie/Array/std.t lib/Tie/Array/stdpush.t lib/Tie/ExtraHash.t lib/Tie/Handle/stdhandle.t lib/Tie/Handle/stdhandle_from_handle.t lib/Tie/Hash.t lib/Tie/Scalar.t lib/Tie/SubstrHash.t)
 endef
 
@@ -1522,7 +1506,7 @@ DEPENDS+=+perlbase-essential +perlbase-re +perlbase-unicore
 endef
 
 define Package/perlbase-utf8/install
-$(call perlmod/Install,$(1),utf8.pm utf8_heavy.pl,)
+$(call perlmod/Install,$(1),utf8.pm,)
 $(call perlmod/InstallBaseTests,$(1),lib/utf8.t)
 endef
 

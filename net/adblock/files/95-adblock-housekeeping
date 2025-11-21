@@ -1,0 +1,72 @@
+#!/bin/sh
+# Copyright (c) 2015-2025 Dirk Brenken (dev@brenken.org)
+# This is free software, licensed under the GNU General Public License v3.
+
+# (s)hellcheck exceptions
+# shellcheck disable=all
+
+export LC_ALL=C
+export PATH="/usr/sbin:/usr/bin:/sbin:/bin"
+
+config="adblock"
+old_options="adb_sources adb_forcedns adb_fetchutil adb_hag_sources adb_hst_sources adb_stb_sources adb_utc_sources \
+	adb_maxqueue adb_backup adb_dnsfilereset adb_tmpbase adb_mailcnt adb_safesearchmod adb_srcfile adb_srcarc adb_nice \
+	adb_hag_feed"
+
+for option in ${old_options}; do
+	inplace="0"
+	if uci -q get ${config}.global.${option} >/dev/null 2>&1; then
+		old_values="$(uci -q get ${config}.global.${option})"
+		for value in ${old_values}; do
+			case "${option}" in
+				"adb_sources")
+					if ! uci -q get ${config}.global.adb_feed | grep -q "${value}"; then
+						uci -q add_list ${config}.global.adb_feed="${value}"
+					fi
+				;;
+				"adb_hag_sources")
+					if ! uci -q get ${config}.global.adb_hag_feed | grep -q "${value}"; then
+						uci -q add_list ${config}.global.adb_hag_feed="${value}"
+					fi
+				;;
+				"adb_hst_sources")
+					if ! uci -q get ${config}.global.adb_hst_feed | grep -q "${value}"; then
+						uci -q add_list ${config}.global.adb_hst_feed="${value}"
+					fi
+				;;
+				"adb_stb_sources")
+					if ! uci -q get ${config}.global.adb_stb_feed | grep -q "${value}"; then
+						uci -q add_list ${config}.global.adb_stb_feed="${value}"
+					fi
+				;;
+				"adb_utc_sources")
+					if ! uci -q get ${config}.global.adb_utc_feed | grep -q "${value}"; then
+						uci -q add_list ${config}.global.adb_utc_feed="${value}"
+					fi
+				;;
+				"adb_forcedns")
+					uci -q set ${config}.global.adb_dnsforce="${value}"
+				;;
+				"adb_fetchutil")
+					uci -q set ${config}.global.adb_fetchcmd="${value}"
+				;;
+				"adb_tmpbase")
+					uci -q set ${config}.global.adb_basedir="${value}"
+				;;
+				"adb_nice")
+					uci -q set ${config}.global.adb_nicelimit="${value}"
+				;;
+				"adb_hag_feed")
+					inplace="1"
+					if ! printf "%s" "${value}" | grep -qE "^(wildcard/|domains/)"; then
+						uci -q del_list ${config}.global.adb_hag_feed="${value}"
+						uci -q add_list ${config}.global.adb_hag_feed="wildcard/${value}"
+					fi
+				;;
+			esac
+		done
+		[ "${inplace}" = "0" ] && uci -q delete ${config}.global.${option}
+	fi
+done
+[ -n "$(uci -q changes ${config})" ] && uci -q commit ${config}
+exit 0

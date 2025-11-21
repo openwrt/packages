@@ -5,20 +5,24 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-jinja2
-PKG_VERSION:=3.1.2
+PKG_VERSION:=3.1.6
 PKG_RELEASE:=1
 
 PYPI_NAME:=Jinja2
-PKG_HASH:=31351a702a408a9e7595a8fc6150fc3f43bb6bf7e319770cbc0db9df9437e852
+PYPI_SOURCE_NAME:=jinja2
+PKG_HASH:=0137fb05990d35f1275a587e9aee6d56da821fc83491a0fb838183be43f66d6d
 
 PKG_MAINTAINER:=Michal Vasilek <michal.vasilek@nic.cz>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.rst
 PKG_CPE_ID:=cpe:/a:pocoo:jinja2
+HOST_BUILD_DEPENDS:= python-markupsafe/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 include ../python3-package.mk
+include ../python3-host-build.mk
 
 define Package/python3-jinja2
   SECTION:=lang
@@ -43,3 +47,4 @@ endef
 $(eval $(call Py3Package,python3-jinja2))
 $(eval $(call BuildPackage,python3-jinja2))
 $(eval $(call BuildPackage,python3-jinja2-src))
+$(eval $(call HostBuild))

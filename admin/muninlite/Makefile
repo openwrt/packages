@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=muninlite
 PKG_VERSION:=2.1.2
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/munin-monitoring/$(PKG_NAME)/releases/download/$(PKG_VERSION)/
@@ -37,12 +37,14 @@ endef
 define Package/muninlite/install
 	$(INSTALL_DIR) $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/muninlite $(1)/usr/sbin/
+	$(INSTALL_DIR) $(1)/etc/munin/plugins
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/muninlite.conf $(1)/etc/munin/
 	$(INSTALL_DIR) $(1)/etc/xinetd.d
 	$(INSTALL_DATA) ./files/etc/xinetd.d/muninlite $(1)/etc/xinetd.d/
-	$(INSTALL_DIR) $(1)/etc/munin/plugins
 endef
 
 define Package/muninlite/conffiles
+/etc/munin/
 /etc/xinetd.d/muninlite
 endef
 

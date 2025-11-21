@@ -14,7 +14,8 @@ PKG_RELEASE:=2
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://dist.schmorp.de/libev/Attic/
 PKG_HASH:=507eb7b8d1015fbec5b935f34ebed15bf346bed04a11ab82b8eee848c4205aea
-PKG_LICENSE:=BSD-2-Clause
+PKG_LICENSE:=BSD-2-Clause or GPL-2.0-or-later
+PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Karl Palsson <karlp@tweak.net.au>
 
 PKG_BUILD_PARALLEL:=1

@@ -147,7 +147,7 @@ start_service() {
 
 	# Migration from old versions
 	# shellcheck disable=SC2154
- 	if [ "$(cat "$datadir"/.version 2> /dev/null)" \!= "$version" ] && [ "$autoupgrade" -gt 0 ]; then
+	if [ "$(cat "$datadir"/.version 2> /dev/null)" \!= "$version" ] && [ "$autoupgrade" -gt 0 ]; then
 		# Check for correct owner
 		local owner="$(stat --format %U:%G "$datadir" 2> /dev/null)"
 		if [ -n "$owner" ] && [ "$owner" != "$my_user:$my_group" ]; then
@@ -155,34 +155,34 @@ start_service() {
 		fi
 
 		# Start upgrade instance without credentials
- 		sudo -u "$my_user" mysqld --skip-networking --skip-grant-tables --socket=/tmp/mysql_upgrade.sock &
+		sudo -u "$my_user" mysqld --skip-networking --skip-grant-tables --socket=/tmp/mysql_upgrade.sock &
 		PID="$!"
- 		i=0
+		i=0
 		# Wait for upgrade instance of db to start
- 		while [ "$i" -lt 15 ] && test \! -S /tmp/mysql_upgrade.sock; do
- 			sleep 1
- 			i="$((i + 1))"
- 		done
- 		[ -S /tmp/mysql_upgrade.sock ] || {
+		while [ "$i" -lt 15 ] && test \! -S /tmp/mysql_upgrade.sock; do
+			sleep 1
+			i="$((i + 1))"
+		done
+		[ -S /tmp/mysql_upgrade.sock ] || {
 			$LOGGER "Failed to start upgrading instance of MariaDB."
 			exit 1
 		}
 		# Upgrade the database
- 		mysql_upgrade --upgrade-system-tables --socket=/tmp/mysql_upgrade.sock
- 		echo "$version" > "$datadir"/.version
+		mysql_upgrade --upgrade-system-tables --socket=/tmp/mysql_upgrade.sock
+		echo "$version" > "$datadir"/.version
 		# Stop the upgrade instance
- 		kill "$PID"
- 		i=0
- 		while [ "$i" -lt 60 ] && grep -q mysql "/proc/$PID/cmdline"; do
- 			sleep 1
- 			[ "$i" -lt 30 ] || kill "$PID"
- 			i="$((i + 1))"
- 		done
+		kill "$PID"
+		i=0
+		while [ "$i" -lt 60 ] && grep -q mysql "/proc/$PID/cmdline"; do
+			sleep 1
+			[ "$i" -lt 30 ] || kill "$PID"
+			i="$((i + 1))"
+		done
 		# Use force
- 		if grep -q mysql "/proc/$PID/cmdline"; then
- 			kill -9 "$PID"
- 		fi
- 	fi
+		if grep -q mysql "/proc/$PID/cmdline"; then
+			kill -9 "$PID"
+		fi
+	fi
 
 	# Start daemon
 	procd_open_instance

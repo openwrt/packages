@@ -24,10 +24,10 @@ write_upstream() {
 	[ -n "$target" ] && target=' "'"$target"'"'
 
 	[ "$type" = "proxy" ] && [ -n "$via" ] && \
-		echo "upstream $via$target"
+		echo "upstream http $via$target"
 
 	[ "$type" = "reject" ] && [ -n "$target" ] && \
-		echo "no upstream$target"
+		echo "upstream none$target"
 }
 
 proxy_atom() {

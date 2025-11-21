@@ -1,6 +1,6 @@
 --- a/source4/lib/messaging/messaging.c
 +++ b/source4/lib/messaging/messaging.c
-@@ -526,7 +526,7 @@ static struct imessaging_context *imessa
+@@ -537,7 +537,7 @@ static struct imessaging_context *imessa
  		goto fail;
  	}
  

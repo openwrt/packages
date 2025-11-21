@@ -1,12 +1,12 @@
 #ifndef _PX5G_OPENSSL_HPP
 #define _PX5G_OPENSSL_HPP
 
-// #define OPENSSL_API_COMPAT 0x10102000L
 #include <fcntl.h>
 #include <openssl/bn.h>
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
+#include <openssl/evp.h>
 #include <unistd.h>
 #include <memory>
 #include <stdexcept>
@@ -22,7 +22,7 @@ auto checkend(const std::string& crtpath, time_t seconds = 0, bool use_pem = tru
 
 auto gen_eckey(int curve) -> EVP_PKEY_ptr;
 
-auto gen_rsakey(int keysize, BN_ULONG exponent = RSA_F4) -> EVP_PKEY_ptr;
+auto gen_rsakey(int keysize) -> EVP_PKEY_ptr;
 
 void write_key(const EVP_PKEY_ptr& pkey, const std::string& keypath = "", bool use_pem = true);
 
@@ -88,42 +88,63 @@ auto gen_eckey(const int curve) -> EVP_PKEY_ptr
     }
 
     EC_GROUP_set_asn1_flag(group, OPENSSL_EC_NAMED_CURVE);
-
     EC_GROUP_set_point_conversion_form(group, POINT_CONVERSION_UNCOMPRESSED);
 
-    auto* eckey = EC_KEY_new();
+    EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, nullptr);
 
-    if (eckey != nullptr) {
-        if ((EC_KEY_set_group(eckey, group) == 0) || (EC_KEY_generate_key(eckey) == 0)) {
-            EC_KEY_free(eckey);
-            eckey = nullptr;
-        }
+    if (!ctx || !EVP_PKEY_paramgen_init(ctx)) {
+        EC_GROUP_free(group);
+        if (ctx) EVP_PKEY_CTX_free(ctx);
+        throw std::runtime_error("gen_eckey error: could not initialize paramgen");
     }
 
+    if (EVP_PKEY_CTX_set_ec_paramgen_curve_nid(ctx, curve) <= 0) {
+        EVP_PKEY_CTX_free(ctx);
+        EC_GROUP_free(group);
+        std::string errmsg{"gen_eckey error: cannot set curve nid\n"};
+        ERR_print_errors_cb(print_error, &errmsg);
+        throw std::runtime_error(errmsg);
+    }
+
+    EVP_PKEY* params = nullptr;
+    if (EVP_PKEY_paramgen(ctx, &params) <= 0) {
+        EVP_PKEY_CTX_free(ctx);
+        EC_GROUP_free(group);
+        std::string errmsg{"gen_eckey error: cannot generate parameters\n"};
+        ERR_print_errors_cb(print_error, &errmsg);
+        throw std::runtime_error(errmsg);
+    }
+
+    EVP_PKEY_CTX_free(ctx);
+
+    std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)> params_ptr(params, EVP_PKEY_free);
+
+    EVP_PKEY_CTX* key_gen_ctx = EVP_PKEY_CTX_new(params, nullptr);
+
+    if (!key_gen_ctx || EVP_PKEY_keygen_init(key_gen_ctx) <= 0) {
+        EC_GROUP_free(group);
+        if (key_gen_ctx) EVP_PKEY_CTX_free(key_gen_ctx);
+        std::string errmsg{"gen_eckey error: cannot initialize key generation context\n"};
+        ERR_print_errors_cb(print_error, &errmsg);
+        throw std::runtime_error(errmsg);
+    }
+
+    EVP_PKEY* pkey = nullptr;
+    if (EVP_PKEY_keygen(key_gen_ctx, &pkey) <= 0) {
+        EVP_PKEY_CTX_free(key_gen_ctx);
+        EC_GROUP_free(group);
+        std::string errmsg{"gen_eckey error: cannot generate key pair\n"};
+        ERR_print_errors_cb(print_error, &errmsg);
+        throw std::runtime_error(errmsg);
+    }
+
+    EVP_PKEY_CTX_free(key_gen_ctx);
     EC_GROUP_free(group);
 
-    if (eckey == nullptr) {
-        std::string errmsg{"gen_eckey error: cannot build key with curve id "};
-        errmsg += std::to_string(curve) + "\n";
-        ERR_print_errors_cb(print_error, &errmsg);
-        throw std::runtime_error(errmsg);
-    }
-
-    EVP_PKEY_ptr pkey{EVP_PKEY_new(), ::EVP_PKEY_free};
-
-    // EVP_PKEY_assign_EC_KEY is a macro casting eckey to char *:
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-cstyle-cast)
-    if (!EVP_PKEY_assign_EC_KEY(pkey.get(), eckey)) {
-        EC_KEY_free(eckey);
-        std::string errmsg{"gen_eckey error: cannot assign EC key to EVP\n"};
-        ERR_print_errors_cb(print_error, &errmsg);
-        throw std::runtime_error(errmsg);
-    }
-
-    return pkey;
+    return EVP_PKEY_ptr{pkey, EVP_PKEY_free};
 }
 
-auto gen_rsakey(const int keysize, const BN_ULONG exponent) -> EVP_PKEY_ptr
+auto gen_rsakey(const int keysize) -> EVP_PKEY_ptr
 {
     if (keysize < rsa_min_modulus_bits || keysize > OPENSSL_RSA_MAX_MODULUS_BITS) {
         std::string errmsg{"gen_rsakey error: RSA keysize ("};
@@ -131,42 +152,12 @@ auto gen_rsakey(const int keysize, const BN_ULONG exponent) -> EVP_PKEY_ptr
         errmsg += std::to_string(OPENSSL_RSA_MAX_MODULUS_BITS) + "]";
         throw std::runtime_error(errmsg);
     }
-    auto* bignum = BN_new();
 
-    if (bignum == nullptr) {
-        std::string errmsg{"gen_rsakey error: cannot get big number struct\n"};
-        ERR_print_errors_cb(print_error, &errmsg);
-        throw std::runtime_error(errmsg);
-    }
+    EVP_PKEY_ptr pkey = {EVP_RSA_gen(keysize), EVP_PKEY_free};
 
-    auto* rsa = RSA_new();
-
-    if (rsa != nullptr) {
-        if ((BN_set_word(bignum, exponent) == 0) ||
-            (RSA_generate_key_ex(rsa, keysize, bignum, nullptr) == 0))
-        {
-            RSA_free(rsa);
-            rsa = nullptr;
-        }
-    }
-
-    BN_free(bignum);
-
-    if (rsa == nullptr) {
-        std::string errmsg{"gen_rsakey error: cannot create RSA key with size"};
-        errmsg += std::to_string(keysize) + " and exponent ";
-        errmsg += std::to_string(exponent) + "\n";
-        ERR_print_errors_cb(print_error, &errmsg);
-        throw std::runtime_error(errmsg);
-    }
-
-    EVP_PKEY_ptr pkey{EVP_PKEY_new(), ::EVP_PKEY_free};
-
-    // EVP_PKEY_assign_RSA is a macro casting rsa to char *:
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-cstyle-cast)
-    if (!EVP_PKEY_assign_RSA(pkey.get(), rsa)) {
-        RSA_free(rsa);
-        std::string errmsg{"gen_rsakey error: cannot assign RSA key to EVP\n"};
+    if (!pkey)  {
+        std::string errmsg{"gen_rsakey error: unable to generate RSA key with size: "};
+        errmsg += std::to_string(keysize);
         ERR_print_errors_cb(print_error, &errmsg);
         throw std::runtime_error(errmsg);
     }
@@ -179,31 +170,10 @@ void write_key(const EVP_PKEY_ptr& pkey, const std::string& keypath, const bool 
     BIO* bio = nullptr;
 
     if (keypath.empty()) {
-        bio = _BIO_new_fp(stdout, use_pem);
+        bio = BIO_new_fp(stdout, BIO_NOCLOSE);
     }
-
-    else {  // BIO_new_file(keypath.c_str(), (use_pem ? "w" : "wb") );
-
-        static constexpr auto mask = 0600;
-        // auto fd = open(keypath.c_str(), O_WRONLY | O_CREAT | O_TRUNC, mask);
-        // creat has no cloexec, alt. triggers cppcoreguidelines-pro-type-vararg
-        // NOLINTNEXTLINE(android-cloexec-creat)
-        auto fd = creat(keypath.c_str(), mask);  // the same without va_args.
-
-        if (fd >= 0) {
-            auto* fp = fdopen(fd, (use_pem ? "w" : "wb"));
-
-            if (fp != nullptr) {
-                bio = _BIO_new_fp(fp, use_pem, true);
-                if (bio == nullptr) {
-                    // NOLINTNEXTLINE(cppcoreguidelines-owning-memory) fp owns fd:
-                    fclose(fp);
-                }
-            }
-            else {
-                close(fd);
-            }
-        }
+    else {
+        bio = BIO_new_file(keypath.c_str(), use_pem ? "w" : "wb");
     }
 
     if (bio == nullptr) {
@@ -214,35 +184,28 @@ void write_key(const EVP_PKEY_ptr& pkey, const std::string& keypath, const bool 
         throw std::runtime_error(errmsg);
     }
 
-    int len = 0;
-
-    auto* key = pkey.get();
-    switch (EVP_PKEY_base_id(key)) {  // use same format as px5g:
-        case EVP_PKEY_EC:
-            len = use_pem ? PEM_write_bio_ECPrivateKey(bio, EVP_PKEY_get0_EC_KEY(key), nullptr,
-                                                       nullptr, 0, nullptr, nullptr)
-                          : i2d_ECPrivateKey_bio(bio, EVP_PKEY_get0_EC_KEY(key));
-            break;
-        case EVP_PKEY_RSA:
-            len = use_pem ? PEM_write_bio_RSAPrivateKey(bio, EVP_PKEY_get0_RSA(key), nullptr,
-                                                        nullptr, 0, nullptr, nullptr)
-                          : i2d_RSAPrivateKey_bio(bio, EVP_PKEY_get0_RSA(key));
-            break;
-        default:
-            len = use_pem
-                      ? PEM_write_bio_PrivateKey(bio, key, nullptr, nullptr, 0, nullptr, nullptr)
-                      : i2d_PrivateKey_bio(bio, key);
+    if (use_pem) {
+        if (PEM_write_bio_PrivateKey(bio, pkey.get(), nullptr, nullptr, 0, nullptr, nullptr) != 1) {
+            BIO_free_all(bio);
+            std::string errmsg{"write_key error: cannot write EVP pkey to "};
+            errmsg += keypath.empty() ? "stdout" : keypath;
+            errmsg += "\n";
+            ERR_print_errors_cb(print_error, &errmsg);
+            throw std::runtime_error(errmsg);
+        }
+    }
+    else {
+        if (i2d_PrivateKey_bio(bio, pkey.get()) != 1) {
+            BIO_free_all(bio);
+            std::string errmsg{"write_key error: cannot write EVP pkey to "};
+            errmsg += keypath.empty() ? "stdout" : keypath;
+            errmsg += "\n";
+            ERR_print_errors_cb(print_error, &errmsg);
+            throw std::runtime_error(errmsg);
+        }
     }
 
     BIO_free_all(bio);
-
-    if (len == 0) {
-        std::string errmsg{"write_key error: cannot write EVP pkey to "};
-        errmsg += keypath.empty() ? "stdout" : keypath;
-        errmsg += "\n";
-        ERR_print_errors_cb(print_error, &errmsg);
-        throw std::runtime_error(errmsg);
-    }
 }
 
 auto subject2name(const std::string& subject) -> X509_NAME_ptr
@@ -251,7 +214,7 @@ auto subject2name(const std::string& subject) -> X509_NAME_ptr
         throw std::runtime_error("subject2name errror: not starting with /");
     }
 
-    X509_NAME_ptr name = {X509_NAME_new(), ::X509_NAME_free};
+    X509_NAME_ptr name = {X509_NAME_new(), X509_NAME_free};
 
     if (!name) {
         std::string errmsg{"subject2name error: cannot create X509 name \n"};

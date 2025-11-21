@@ -1,6 +1,6 @@
 --- a/src/openvpn/ssl_openssl.c
 +++ b/src/openvpn/ssl_openssl.c
-@@ -1351,7 +1351,7 @@ err:
+@@ -1347,7 +1347,7 @@ err:
      return 0;
  }
  
@@ -9,7 +9,7 @@
  
  /* called when EC_KEY is destroyed */
  static void
-@@ -1512,7 +1512,7 @@ tls_ctx_use_management_external_key(stru
+@@ -1508,7 +1508,7 @@ tls_ctx_use_management_external_key(stru
              goto cleanup;
          }
      }

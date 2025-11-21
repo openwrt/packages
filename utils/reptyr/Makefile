@@ -9,7 +9,7 @@ PKG_SOURCE_URL:=https://github.com/nelhage/reptyr/archive/
 PKG_HASH:=c6ffbc34a511ac00d072219bda30699e51f2f4eb483cbae9e32e981d49e8b380
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_NAME)-$(PKG_VERSION)
 
-PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
 

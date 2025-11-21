@@ -7,8 +7,14 @@
 
 define Package/python3-urllib
 $(call Package/python3/Default)
-  TITLE:=Python $(PYTHON3_VERSION) URL library module
+  TITLE+= URL handling modules
   DEPENDS:=+python3-light +python3-email
+endef
+
+define Package/python3-urllib/description
+$(call Package/python3/Default/description)
+
+This package contains the URL handling modules.
 endef
 
 $(eval $(call Py3BasePackage,python3-urllib, \

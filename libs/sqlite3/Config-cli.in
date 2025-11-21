@@ -3,17 +3,22 @@ menu "Configuration"
 
 choice
 	prompt "Select command-line editing support"
-	default SQLITE3_LIBEDIT
+	default SQLITE3_LINENOISE
+
+	config SQLITE3_LINENOISE
+	bool "linenoise"
+	help
+	  Build with linenoise. This is the default. Adds ~12k compared to the "none" variant
 
 	config SQLITE3_LIBEDIT
 	bool "libedit"
 	help
-	  Link against libedit. This is the default.
+	  Link against libedit. Adds 4k + ~192k for libedit + ~341k for ncurses
 
 	config SQLITE3_READLINE
 	bool "readline"
 	help
-	  Link against GNU readline.
+	  Link against GNU readline. Adds 4k + ~333k for readline + ~341k for ncurses
 
 	config SQLITE3_READLINE_NONE
 	bool "none"

@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=make
-PKG_VERSION:=4.3
-PKG_RELEASE:=1
+PKG_VERSION:=4.4.1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=@GNU/make
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=e05fdde47c5f7ca45cb697e973894ff4f5d79e13b750ed57d7b66d8defc78e19
+PKG_HASH:=dd16fb1d67bfab79a72f5e8390735c49e3e8e70b4945a15ab1f81ddb78658fb3
 
 PKG_MAINTAINER:=Heinrich Schuchardt <xypron.glpk@gmx.de>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -34,6 +34,8 @@ endef
 define Package/make/description
   The Make package contains a tool to create executables from source files.
 endef
+
+TARGET_CFLAGS += -D__GNU_LIBRARY__
 
 define Package/make/install
 	$(INSTALL_DIR) $(1)/usr/bin

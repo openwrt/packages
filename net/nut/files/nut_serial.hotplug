@@ -28,7 +28,7 @@ nut_on_hotplug_add() {
 
 [ "$ACTION" = "add" ] && [ -n "$DEVNAME" ] && {
 	# On add of a serial port with name ttyUSB*
-	[ -z "${DEVNAME%ttyUSB*}" ] && nut_on_hutplug_add
+	[ -z "${DEVNAME%ttyUSB*}" ] && nut_on_hotplug_add
 	# On add of a serial port with name ttyAMA*
-	[ -z "${DEVNAME%ttyAMA*}" ] && nut_on_hutplug_add
+	[ -z "${DEVNAME%ttyAMA*}" ] && nut_on_hotplug_add
 }

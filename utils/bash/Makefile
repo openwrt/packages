@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bash
-PKG_VERSION:=5.2.15
+PKG_VERSION:=5.2.37
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/bash
-PKG_HASH:=13720965b5f4fc3a0d4b61dd37e7565c741da9a5be24edc2ae00182fc1b3588c
+PKG_HASH:=9599b22ecd1d5787ad7d3b7bf0c59f312b3396d1e281175dd1f8a4014da621ff
 
 PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -31,7 +31,7 @@ define Package/bash
   SUBMENU:=Shells
   TITLE:=The GNU Bourne Again SHell
   DEPENDS:=+libncurses +libreadline
-  URL:=http://www.gnu.org/software/bash/
+  URL:=https://www.gnu.org/software/bash/
 endef
 
 define Package/bash/description
@@ -68,6 +68,7 @@ CONFIGURE_VARS += \
 	bash_cv_job_control_missing=present \
 	bash_cv_dev_fd=whacky \
 	bash_cv_sys_named_pipes=present \
+	CFLAGS_FOR_BUILD="-std=gnu17" \
 
 # The following are some other tests that cannot run when cross-compiling
 CONFIGURE_VARS += \
@@ -82,6 +83,8 @@ CONFIGURE_ARGS+= \
 	--enable-direxpand-default \
 	--enable-job-control \
 	--enable-readline
+
+TARGET_CFLAGS += -std=gnu17
 
 define Package/bash/postinst
 #!/bin/sh
@@ -99,3 +102,4 @@ define Package/bash/install
 endef
 
 $(eval $(call BuildPackage,bash))
+

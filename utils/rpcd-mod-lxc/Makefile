@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rpcd-mod-lxc
-PKG_RELEASE=20201208
+PKG_RELEASE=20250823
 
 PKG_LICENSE:=ISC
 

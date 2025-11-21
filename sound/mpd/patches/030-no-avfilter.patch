@@ -11,4 +11,4 @@
 -endif
  conf.set('HAVE_LIBAVFILTER', libavfilter_dep.found())
  
- if not enable_ffmpeg
+ if not libavutil_dep.found()

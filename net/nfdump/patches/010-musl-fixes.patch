@@ -1,0 +1,24 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -364,8 +364,6 @@ AM_COND_IF([BUILDNFPCAPD],
+ 		[AM_CONDITIONAL(BSDBPF, false) AM_CONDITIONAL(TPACKETV3, false) AM_CONDITIONAL(PLAINPCAP, false)],
+ )
+ 
+-AX_CHECK_ZLIB([AM_CONDITIONAL(HAVEZLIB, true) readzpcap="yes"], [AM_CONDITIONAL(HAVEZLIB, false) readzpcap="no"])
+-
+ OVS_CHECK_ATOMIC_LIBS
+ AX_PTHREAD([],AC_MSG_ERROR(No valid pthread configuration found))
+ 
+--- a/src/nfpcapd/Makefile.am
++++ b/src/nfpcapd/Makefile.am
+@@ -29,10 +29,4 @@ if HAVEPCAPAPPEND
+ AM_CPPFLAGS += -DHAVEPCAPAPPEND
+ endif
+ 
+-if HAVEZLIB 
+-AM_CPPFLAGS += -DHAVEZLIB
+-nfpcapd_SOURCES += pcap_gzip.c pcap_gzip.h
+-nfpcapd_LDADD += -lz
+-endif
+-
+ CLEANFILES = *.gch

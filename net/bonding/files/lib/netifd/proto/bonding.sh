@@ -193,15 +193,8 @@ proto_bonding_setup() {
 
 	proto_init_update "$link" 1
 
-	# For static configuration we _MUST_ have an IP address
-	[ -z "$ipaddr" ] && {
-		echo "$cfg" "No local IP address defined"
-		proto_notify_error "$cfg" INVALID_LOCAL_ADDRESS
-		proto_block_restart "$cfg"
-		return
-	}
-
-	proto_add_ipv4_address "$ipaddr" "$netmask"
+	# If ipaddr is configured, configure the ip to the interface
+	[ -n "$ipaddr" ] && proto_add_ipv4_address "$ipaddr" "$netmask"
 
 	proto_send_update "$cfg"
 }

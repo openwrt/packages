@@ -10,7 +10,7 @@
  
 --- a/lib/file/fileIOPosix.c
 +++ b/lib/file/fileIOPosix.c
-@@ -1746,7 +1746,7 @@ FileIOPreadvInternal(
+@@ -1747,7 +1747,7 @@ FileIOPreadvInternal(
         * the library horizon this can go away.
         */
        /* coverity[func_conv] */
@@ -19,7 +19,7 @@
           fret = FileIOPreadvCoalesced(fd, entries, numEntries, offset,
                                        totalSize, &bytesRead);
           break;
-@@ -1887,7 +1887,7 @@ FileIOPwritevInternal(
+@@ -1888,7 +1888,7 @@ FileIOPwritevInternal(
         * the library horizon this can go away.
         */
        /* coverity[func_conv] */
@@ -58,7 +58,7 @@
     /*
 --- a/services/plugins/gdp/gdpPlugin.c
 +++ b/services/plugins/gdp/gdpPlugin.c
-@@ -32,7 +32,7 @@
+@@ -33,7 +33,7 @@
  #include <sys/types.h>
  #include <sys/socket.h>
  #include <sys/eventfd.h>

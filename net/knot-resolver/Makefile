@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015-2021 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
+# Copyright (C) 2015-2024 CZ.NIC, z. s. p. o. (https://www.nic.cz/)
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -10,16 +10,17 @@ PKG_RELRO_FULL:=0
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=knot-resolver
-PKG_VERSION:=5.5.3
+PKG_VERSION:=5.7.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://secure.nic.cz/files/knot-resolver
-PKG_HASH:=a38f57c68b7d237d662784d8406e6098aad66a148f44dcf498d1e9664c5fed2d
+PKG_HASH:=500ccd3a560300e547b8dc5aaff322f7c8e2e7d6f0d7ef5f36e59cb60504d674
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=GPL-3.0-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:nic:knot_resolver
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/meson.mk
@@ -28,13 +29,13 @@ define Package/knot-resolver
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=IP Addresses and Names
-  TITLE:=Knot DNS Resolver
+  TITLE:=Knot Resolver
   URL:=https://www.knot-resolver.cz
   DEPENDS=\
     +knot-libs \
     +knot-libzscanner \
     +libuv \
-    +luajit \
+    @HAS_LUAJIT_ARCH +luajit \
     +luasec \
     +luasocket \
     +libstdcpp \
@@ -59,14 +60,14 @@ MESON_ARGS+= \
 	-Dcapng=disabled \
 	-Dclient=disabled \
 	-Dconfig_tests=disabled \
-	-Ddnstap=disabled \
 	-Ddoc=disabled \
 	-Dinstall_kresd_conf=disabled \
 	-Dinstall_root_keys=disabled \
 	-Dkeyfile_default=/etc/knot-resolver/root.keys \
 	-Dprefix=/usr \
 	-Dunit_tests=disabled \
-	-Dutils=disabled
+	-Dutils=disabled \
+	-Dmalloc=disabled
 
 define Package/knot-resolver/install
 	$(INSTALL_DIR) $(1)/usr/sbin

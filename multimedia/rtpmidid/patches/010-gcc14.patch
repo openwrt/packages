@@ -1,0 +1,39 @@
+--- a/include/rtpmidid/signal.hpp
++++ b/include/rtpmidid/signal.hpp
+@@ -24,6 +24,7 @@
+ #include <cstdint>
+ #include <functional>
+ #include <map>
++#include <memory>
+ 
+ // #define DEBUG0 DEBUG
+ #define DEBUG0(...)
+@@ -171,4 +172,4 @@ public:
+   }
+ #undef DEBUG0
+ };
+-} // namespace rtpmidid
+\ No newline at end of file
++} // namespace rtpmidid
+--- a/lib/mdns_rtpmidi.cpp
++++ b/lib/mdns_rtpmidi.cpp
+@@ -28,6 +28,8 @@
+ #include <avahi-common/error.h>
+ #include <avahi-common/malloc.h>
+ 
++#include <algorithm>
++
+ struct AvahiTimeout {
+   rtpmidid::poller_t::timer_t timer_id;
+   void *userdata;
+--- a/lib/poller.cpp
++++ b/lib/poller.cpp
+@@ -21,6 +21,8 @@
+ #include <sys/epoll.h>
+ #include <unistd.h>
+ 
++#include <algorithm>
++
+ #include <rtpmidid/exceptions.hpp>
+ #include <rtpmidid/logger.hpp>
+ #include <rtpmidid/poller.hpp>

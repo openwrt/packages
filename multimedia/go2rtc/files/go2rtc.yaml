@@ -1,0 +1,25 @@
+# See also: https://github.com/AlexxIT/go2rtc/blob/master/README.md
+---
+
+log:
+  level: info  # default level
+  # api: trace
+  # exec: debug
+  # ngrok: info
+  # rtsp: warn
+  # streams: error
+  # webrtc: fatal
+
+api:
+  listen: "127.0.0.1:1984"
+
+rtsp:
+  listen: "127.0.0.1:8554"
+
+webrtc:
+  listen: ":8555"  # external TCP/UDP port
+
+ffmpeg:
+  bin: /usr/bin/ffmpeg  # path to ffmpeg binary
+
+streams: {}

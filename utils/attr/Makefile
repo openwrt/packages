@@ -8,16 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=attr
-PKG_VERSION:=2.5.1
-PKG_RELEASE:=1
+PKG_VERSION:=2.5.2
+PKG_RELEASE:=3
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://git.savannah.nongnu.org/cgit/attr.git/snapshot
-PKG_HASH:=69991b2fc5fe7917d996b05d5d4fe3c44d074c9d806dd263b14a42fab57bfc2f
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE_URL:=@SAVANNAH/attr
+PKG_HASH:=f2e97b0ab7ce293681ab701915766190d607a1dba7fae8a718138150b700a70b
 
 PKG_MAINTAINER:=Maxim Storchak <m.storchak@gmail.com>
+PKG_CPE_ID:=cpe:/a:attr_project:attr
 
-PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 

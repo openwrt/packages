@@ -4,8 +4,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sockread
-PKG_VERSION:=1.0
-PKG_RELEASE:=2
+PKG_VERSION:=1.1
+PKG_RELEASE:=1
 PKG_LICENSE:=CC0-1.0
 
 include $(INCLUDE_DIR)/package.mk
@@ -13,13 +13,12 @@ include $(INCLUDE_DIR)/package.mk
 define Package/sockread
 	SECTION:=utils
 	CATEGORY:=Utilities
-	TITLE:=sockread
+	TITLE:=Unix domain sockets utility
 	MAINTAINER:=Moritz Warning <moritzwarning@web.de>
 endef
 
 define Package/sockread/description
-	sockread writes and reads data from a Unix domain socket
-	represented as a special file on the file system.
+	Command line utility to read and write to Unix domain sockets.
 endef
 
 define Build/Prepare

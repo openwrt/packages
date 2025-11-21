@@ -26,7 +26,7 @@ if [ -z "${GIT_DIR}" ]; then
 fi
 
 clean_up() {
-	rm --force --recursive "${GIT_DIR}"
+	rm -rf "${GIT_DIR}"
 }
 trap clean_up EXIT
 
@@ -39,7 +39,7 @@ git init --quiet "${GIT_DIR}"
 
 		if git fetch --depth 1 origin "${GIT_REF}"; then
 			git checkout --detach FETCH_HEAD --
-			git rev-parse --short HEAD
+			git rev-parse --short=7 HEAD
 			break
 		fi
 

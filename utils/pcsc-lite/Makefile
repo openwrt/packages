@@ -8,21 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pcsc-lite
-PKG_VERSION:=1.9.9
+PKG_VERSION:=2.3.3
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://pcsclite.apdu.fr/files/
-PKG_HASH:=cbcc3b34c61f53291cecc0d831423c94d437b188eb2b97b7febc08de1c914e8a
+PKG_HASH:=cdff7d7153a0b37aa74e26dfec89ec7dc5c5286aa21b91b903e38739d227e8e7
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:muscle:pcsc-lite
 
-PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/meson.mk
 
 define Package/pcsc-lite/Default
   TITLE:=Access a smart card using SCard API (PC/SC)
@@ -66,19 +66,20 @@ endef
 TARGET_CFLAGS += $(FPIC)
 TARGET_LDFLAGS += -lpthread
 
-CONFIGURE_ARGS += \
-	--disable-libudev \
-	--disable-libsystemd \
-	--enable-libusb \
-	--enable-static \
-	--enable-ipcdir=/var/run/pcscd \
-	--enable-usbdropdir=/usr/lib/pcsc/drivers
+MESON_ARGS += \
+	-Dlibudev=false \
+	-Dlibsystemd=false \
+	-Dlibusb=true \
+	-Dpolkit=false \
+	-Dipcdir='/var/run/pcscd' \
+	-Dusbdropdir='/usr/lib/pcsc/drivers'
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/PCSC
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/PCSC/* $(1)/usr/include/PCSC/
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpcsclite.{a,so*} $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpcsclite_real.so* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libpcsclite.pc $(1)/usr/lib/pkgconfig/
 endef
@@ -86,6 +87,7 @@ endef
 define Package/libpcsclite/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpcsclite.so.* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libpcsclite_real.so.* $(1)/usr/lib/
 endef
 
 define Package/pcscd/conffiles

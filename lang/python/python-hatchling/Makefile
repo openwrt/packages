@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-hatchling
-PKG_VERSION:=1.18.0
+PKG_VERSION:=1.27.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=hatchling
-PKG_HASH:=50e99c3110ce0afc3f7bdbadff1c71c17758e476731c27607940cfa6686489ca
+PKG_HASH:=971c296d9819abb3811112fc52c7a9751c8d381898f36533bb16f9791e941fd6
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.txt
@@ -22,6 +22,7 @@ PKG_HOST_ONLY:=1
 HOST_BUILD_DEPENDS:= \
 	python3/host \
 	python-build/host \
+	python-setuptools/host \
 	python-installer/host \
 	python-editables/host \
 	python-packaging/host \

@@ -1,0 +1,14 @@
+--- a/dcwlinux/include/rapidjson/document.h
++++ b/dcwlinux/include/rapidjson/document.h
+@@ -314,9 +314,9 @@ struct GenericStringRef {
+     GenericStringRef(const CharType* str, SizeType len)
+         : s(str), length(len) { RAPIDJSON_ASSERT(s != 0); }
+ 
+-    GenericStringRef(const GenericStringRef& rhs) : s(rhs.s), length(rhs.length) {}
++    GenericStringRef(const GenericStringRef& rhs) = default;
+ 
+-    GenericStringRef& operator=(const GenericStringRef& rhs) { s = rhs.s; length = rhs.length; }
++    GenericStringRef& operator=(const GenericStringRef& rhs) = default;
+ 
+     //! implicit conversion to plain CharType pointer
+     operator const Ch *() const { return s; }
