@@ -37,6 +37,7 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 | firehol4            | firehol level 4 compilation    |    x    |          |                   | [Link](https://iplists.firehol.org/?ipset=firehol_level4)    |
 | greensnow           | suspicious server IPs          |    x    |          |                   | [Link](https://greensnow.co)                                 |
 | hagezi              | Threat IP blocklist            |         |    x     | tcp, udp: 80, 443 | [Link](https://github.com/hagezi/dns-blocklists)             |
+| ipexdbl             | Threat IP blocklist            |         |    x     |                   | [Link](https://raw.githubusercontent.com/ZEROF/ipextractor/main/ipexdbl.txt)             |
 | ipblackhole         | blackhole IPs                  |    x    |          |                   | [Link](https://github.com/BlackHoleMonster/IP-BlackHole)     |
 | ipsum               | malicious IPs                  |    x    |          |                   | [Link](https://github.com/stamparm/ipsum)                    |
 | ipthreat            | hacker and botnet TPs          |    x    |          |                   | [Link](https://ipthreat.net)                                 |
