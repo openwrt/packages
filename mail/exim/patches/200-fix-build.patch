@@ -1,6 +1,6 @@
 --- a/src/exim.c
 +++ b/src/exim.c
-@@ -647,13 +647,15 @@ exim_nullstd(void)
+@@ -660,13 +660,15 @@ exim_nullstd(void)
  {
  int devnull = -1;
  struct stat statbuf;
@@ -12,7 +12,7 @@
      {
 -    if (devnull < 0) devnull = open("/dev/null", O_RDWR);
 +    if (devnull < 0) devnull = open(devnullpath, O_RDWR);
-     if (devnull < 0) log_write(0, LOG_MAIN|LOG_PANIC_DIE, "%s",
+     if (devnull < 0) log_write_die(0, LOG_MAIN, "%s",
 -      string_open_failed("/dev/null", NULL));
 +      string_open_failed("%s", devnullpath));
      if (devnull != i) (void)dup2(devnull, i);
@@ -20,7 +20,7 @@
    }
 --- a/src/local_scan.h
 +++ b/src/local_scan.h
-@@ -27,6 +27,7 @@ store.c
+@@ -29,6 +29,7 @@ store.c
  settings, and the store functions. */
  
  #include <stdarg.h>
