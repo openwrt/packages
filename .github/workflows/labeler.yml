@@ -1,0 +1,20 @@
+name: 'Pull Request Labeler'
+on:
+  - pull_request_target
+
+permissions:
+  contents: read
+
+jobs:
+  labeler:
+    permissions:
+      contents: read
+      pull-requests: write
+
+    name: Pull Request Labeler
+    runs-on: ubuntu-slim
+    steps:
+      - uses: actions/labeler@v6
+        with:
+          repo-token: '${{ secrets.GITHUB_TOKEN }}'
+          sync-labels: true
