@@ -61,13 +61,3 @@ stop() {
 		done
 	fi
 }
-
-#Export systemd cgroups
-boot() {
-	if [ ! -d /sys/fs/cgroup/systemd ]; then
-		mkdir -p /sys/fs/cgroup/systemd
-		mount -t cgroup -o rw,nosuid,nodev,noexec,relatime,none,name=systemd cgroup /sys/fs/cgroup/systemd
-	fi
-
-	start
-}
