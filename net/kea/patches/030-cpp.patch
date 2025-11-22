@@ -1,6 +1,6 @@
 --- a/meson.build
 +++ b/meson.build
-@@ -300,7 +300,6 @@ endif
+@@ -304,7 +304,6 @@ endif
  # Google Test
  GTEST_DEP = dependency(
      'gtest',
@@ -8,7 +8,7 @@
      required: FUZZ_OPT.enabled() or TESTS_OPT.enabled(),
  )
  
-@@ -363,167 +362,80 @@ conf_data.set('HAVE_PGSQL', POSTGRESQL_D
+@@ -367,167 +366,80 @@ conf_data.set('HAVE_PGSQL', POSTGRESQL_D
  
  #### Compiler Checks
  
@@ -197,7 +197,7 @@
      have_afl = true
  endif
  conf_data.set('HAVE_AFL', have_afl)
-@@ -534,22 +446,22 @@ if GTEST_DEP.found()
+@@ -538,22 +450,22 @@ if GTEST_DEP.found()
      if GTEST_DEP.type_name() == 'internal'
          conf_data.set('HAVE_CREATE_UNIFIED_DIFF', true)
      else
@@ -224,7 +224,7 @@
  endif
  
  #### Other checks.
-@@ -753,7 +665,7 @@ if result.returncode() == 0
+@@ -759,7 +671,7 @@ if result.returncode() == 0
  else
      report_conf_data.set('CXX_VERSION', 'unknown')
  endif
@@ -233,7 +233,7 @@
  compile_args += cpp_args_opt
  report_conf_data.set('CXX_ARGS', ' '.join(compile_args))
  report_conf_data.set('LD_ID', cpp.get_linker_id())
-@@ -762,29 +674,25 @@ report_conf_data.set('LD_ARGS', ' '.join
+@@ -768,29 +680,25 @@ report_conf_data.set('LD_ARGS', ' '.join
  report_conf_data.set('PYTHON_PATH', PYTHON.full_path())
  report_conf_data.set('PYTHON_VERSION', PYTHON.version())
  report_conf_data.set('PKGPYTHONDIR', PKGPYTHONDIR)
@@ -268,7 +268,7 @@
      if version == 'unknown'
          version = 'unknown version'
      endif
-@@ -792,31 +700,23 @@ if CRYPTO_DEP.name() == botan.name()
+@@ -798,31 +706,23 @@ if CRYPTO_DEP.name() == botan.name()
  elif CRYPTO_DEP.name() == openssl.name()
      report_conf_data.set('CRYPTO_NAME', 'OpenSSL')
      report_conf_data.set('SPACES', '              ')
@@ -304,7 +304,7 @@
  if version == 'unknown'
      version = 'unknown version'
  endif
-@@ -1091,13 +991,6 @@ pkg.generate(
+@@ -1097,13 +997,6 @@ pkg.generate(
  
  #### More Custom Targets
  
