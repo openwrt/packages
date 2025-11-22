@@ -16,7 +16,7 @@ define Package/ubnt-manager
   CATEGORY:=Utilities
   TITLE:=Managment app for Ubiquiti devices
   PKGARCH:=all
-  EXTRA_DEPENDS:=dropbear
+  DEPENDS:=dropbear
 endef
 
 define Package/ubnt-manager/description
