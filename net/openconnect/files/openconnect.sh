@@ -38,6 +38,7 @@ proto_openconnect_init_config() {
 	proto_config_add_string "proxy"
 	proto_config_add_array 'form_entry:regex("[^:]+:[^=]+=.*")'
 	proto_config_add_string "script"
+	proto_config_add_string "useragent"
 	no_device=1
 	available=1
 }
@@ -75,6 +76,7 @@ proto_openconnect_setup() {
 		usergroup \
 		username \
 		script \
+		useragent \
 
 	ifname="vpn-$config"
 
@@ -159,6 +161,7 @@ proto_openconnect_setup() {
 	[ -n "$csd_wrapper" ] && [ -x "$csd_wrapper" ] && append_args "--csd-wrapper=$csd_wrapper"
 	[ -n "$proxy" ] && append_args "--proxy=$proxy"
 	[ -n "$reconnect_timeout" ] && append_args "--reconnect-timeout=$reconnect_timeout"
+	[ -n "$useragent" ] && append_args "--useragent=$useragent"
 
 	json_for_each_item proto_openconnect_add_form_entry form_entry
 
