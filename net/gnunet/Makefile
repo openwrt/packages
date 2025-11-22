@@ -3,7 +3,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=gnunet
 
 PKG_VERSION:=0.25.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/gnunet
 PKG_HASH:=21336c16cd57f91f9d5fd5359482d9151a7cdf0d6396f8b61828c17ccc668f5c
@@ -261,7 +261,7 @@ LIBEXEC_messenger:=service-messenger
 CONF_messenger:=messenger
 PLUGIN_messenger:=gnsrecord_messenger
 
-DEPENDS_reclaim:=+gnunet-gns +gnunet-sqlite +libpbc +libgabe +jansson
+DEPENDS_reclaim:=+gnunet-gns +gnunet-sqlite +jansson
 BIN_reclaim:=did reclaim
 LIB_reclaim:=consensus did reclaim secretsharing
 LIBEXEC_reclaim:=service-consensus service-reclaim service-secretsharing
