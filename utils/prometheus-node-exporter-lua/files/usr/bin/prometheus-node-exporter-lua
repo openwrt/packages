@@ -8,6 +8,10 @@
 
 socket = require("socket")
 
+-- get configs
+
+local omit_zero_values = os.getenv("OMIT_ZERO_VALUES") == "1"
+
 -- Parsing
 
 function space_split(s)
@@ -50,8 +54,12 @@ end
 
 function metric(name, mtype, labels, value)
   out:write("# TYPE ", name, " ", mtype, "\n")
+  -- omit_zero_vales config supress time series always being zero
+  local printall = not (mtype == "counter" and omit_zero_values)
   local outputter = function(labels, value)
-    print_metric(name, labels, value)
+    if printall or tonumber(value) ~= 0 then
+      print_metric(name, labels, value)
+    end
   end
   if value then
     outputter(labels, value)

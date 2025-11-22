@@ -11,7 +11,7 @@ _log() {
 start_service() {
 	. /lib/functions/network.sh
 
-	local interface port listenflag cert key bind4 bind6
+	local interface port listenflag cert key bind4 bind6 omit_zero_values
 
 	config_load prometheus-node-exporter-lua.main
 	config_get keepalive "main" http_keepalive 70
@@ -19,6 +19,7 @@ start_service() {
 	config_get port "main" listen_port 9100
 	config_get cert "main" cert
 	config_get key "main" key
+	config_get omit_zero_values "main" omit_zero_values 0
 
 	[ "$interface" = "*" ] || {
 		network_get_ipaddr  bind4 "$interface"
@@ -30,6 +31,8 @@ start_service() {
 	}
 
 	procd_open_instance
+
+	[ "$omit_zero_values" -eq 1 ] && procd_set_param env OMIT_ZERO_VALUES=1
 
 	procd_set_param command /usr/sbin/uhttpd -f -c /dev/null -l / -L /usr/bin/prometheus-node-exporter-lua
 	[ $keepalive -gt 0 ] && procd_append_param command -k $keepalive
