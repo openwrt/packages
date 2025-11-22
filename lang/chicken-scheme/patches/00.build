@@ -1,0 +1,27 @@
+From: Jeronimo Pellegrini <j_p@aleph0.info>
+Date: 2025-11-20
+Subject: Patch description - fix Chicken Scheme compiler behavior
+
+Chicken is a Scheme interpreter and compiler. csi is the interpreter,
+and csc is the compiler, which translates Scheme into C and calls gcc.
+
+What this patch does is to remove -fmacro-prefix-map and -ldl in the
+strings that are passed to gcc when the Scheme compiler runs. Without 
+that, the compiler will not run on the router.
+
+Signed-off-by: Jeronimo Pellegrini <j_p@aleph0.info>
+
+--- a/defaults.make
++++ b/defaults.make
+@@ -506,6 +506,11 @@ else
+ endif
+ 	$(call echo, >>, $@,#endif)
+ 	$(call echo, >>, $@,/* END OF FILE */)
++	# For OpenWRT:
++	sed -e's/\-fmacro-prefix-map[^ ]*//' $@ > $@.tmp.1
++	sed -e's/\-ldl//' $@.tmp.1 > $@.tmp.2
++	cp $@.tmp.2 $@
++	rm $@.tmp.1 $@.tmp.2
+ 
+ chicken-install.rc:
+ 	$(call echo, >, $@,/* GENERATED */)
