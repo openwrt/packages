@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-unidecode
-PKG_VERSION:=1.3.6
+PKG_VERSION:=1.4.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=Unidecode
-PKG_HASH:=fed09cf0be8cf415b391642c2a5addfc72194407caee4f98719e40ec2a72b830
+PKG_HASH:=ce35985008338b676573023acc382d62c264f307c8f7963733405add37ea2b23
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
