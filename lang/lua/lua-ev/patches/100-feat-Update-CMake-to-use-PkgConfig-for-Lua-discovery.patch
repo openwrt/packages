@@ -1,0 +1,214 @@
+From 17a35476a7eb4f8974c983b4887bbdef27e96375 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Mat=C4=9Bj=20Cepl?= <mcepl@cepl.eu>
+Date: Fri, 10 Oct 2025 15:48:31 +0200
+Subject: [PATCH] feat: Update CMake to use PkgConfig for Lua discovery
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Refactor the CMake build system to leverage PkgConfig for
+locating Lua libraries and headers, improving compatibility and
+simplifying the build process.
+
+- Removed the custom cmake/Modules/FindLua5X.cmake module.
+- Updated CMakeLists.txt to use find_package(PkgConfig) and
+  pkg_check_modules(LUA REQUIRED lua).
+- Changed CMAKE_MINIMUM_REQUIRED to version 3.10.
+- Replaced INCLUDE_DIRECTORIES with TARGET_INCLUDE_DIRECTORIES
+  for cmod_ev.
+- Modified lua_ev.c, lua_ev.h, obj_lua_ev.c, and watcher_lua_ev.c
+  to make version, traceback, obj_index, and push_objs functions
+  non-static, allowing them to be properly linked and used after
+  the CMake changes.
+- Adjusted assertions in watcher_lua_ev.c for clarity and
+  consistency.
+
+Fixes: https://github.com/brimworks/lua-ev/issues/24
+Signed-off-by: Matěj Cepl <mcepl@cepl.eu>
+---
+ CMakeLists.txt                | 11 ++++++---
+ cmake/Modules/FindLua5X.cmake | 46 -----------------------------------
+ lua_ev.c                      |  4 +--
+ lua_ev.h                      |  8 +++---
+ obj_lua_ev.c                  |  4 +--
+ watcher_lua_ev.c              | 11 +++------
+ 6 files changed, 18 insertions(+), 66 deletions(-)
+ delete mode 100644 cmake/Modules/FindLua5X.cmake
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -7,8 +7,8 @@
+ # Please note that the package source code is licensed under its own
+ # license.
+ 
++CMAKE_MINIMUM_REQUIRED (VERSION 3.10)
+ PROJECT(lua-ev C)
+-CMAKE_MINIMUM_REQUIRED (VERSION 2.6)
+ 
+ # Basic configurations
+   SET(INSTALL_CMOD share/lua/cmod CACHE PATH "Directory to install Lua binary modules (configure lua via LUA_CPATH)")
+@@ -16,6 +16,11 @@ CMAKE_MINIMUM_REQUIRED (VERSION 2.6)
+ 
+ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+ 
++# Find lua using PkgConfig
++find_package(PkgConfig REQUIRED)
++pkg_check_modules(LUA REQUIRED lua)
++# / Find lua using PkgConfig
++
+ # Find libev
+   FIND_LIBRARY (LIBEV_LIBRARY NAMES ev)
+   FIND_PATH (LIBEV_INCLUDE_DIR ev.h
+@@ -25,17 +30,15 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_S
+   FIND_PACKAGE_HANDLE_STANDARD_ARGS(libev  DEFAULT_MSG  LIBEV_LIBRARY LIBEV_INCLUDE_DIR)
+ # / Find libarchive
+ 
+-# Find lua
+-  FIND_PACKAGE(Lua5X REQUIRED)
+ # / Find lua
+ 
+ # Define how to build ev.so:
+-  INCLUDE_DIRECTORIES(${LIBEV_INCLUDE_DIR} ${LUA_INCLUDE_DIR})
+   ADD_LIBRARY(cmod_ev MODULE
+     lua_ev.c
+     )
+   SET_TARGET_PROPERTIES(cmod_ev PROPERTIES PREFIX "")
+   SET_TARGET_PROPERTIES(cmod_ev PROPERTIES OUTPUT_NAME ev)
++  TARGET_INCLUDE_DIRECTORIES(cmod_ev PRIVATE ${LIBEV_INCLUDE_DIR} ${LUA_INCLUDE_DIRS})
+   TARGET_LINK_LIBRARIES(cmod_ev ${LUA_LIBRARIES} ${LIBEV_LIBRARY})
+ # / build ev.so
+ 
+--- a/cmake/Modules/FindLua5X.cmake
++++ /dev/null
+@@ -1,46 +0,0 @@
+-
+-find_path(LUA_INCLUDE_DIR lua.h
+-	HINTS
+-	$ENV{LUA_DIR}
+-	PATH_SUFFIXES include include/lua include/lua53 include/lua5.3 include/lua52 include/lua5.2 include/lua51 include/lua5.1
+-	PATHS
+-	~/Library/Frameworks
+-	/Library/Frameworks
+-	/usr/local
+-	/usr
+-	/sw
+-	/opt/local
+-	/opt/csw
+-	/opt
+-)
+-
+-find_library(LUA_LIBRARY
+-	NAMES lua lua53 lua5.3 lua52 lua5.2 lua-5.2 lua51 lua5.1 luajit-5.1 luajit51 luajit5.1
+-	HINTS
+-	$ENV{LUA_DIR}
+-	PATH_SUFFIXES lib64 lib
+-	PATHS
+-	~/Library/Frameworks
+-	/Library/Frameworks
+-	/usr/local
+-	/usr
+-	/sw
+-	/opt/local
+-	/opt/csw
+-	/opt
+-)
+-
+-if(LUA_LIBRARY)
+-	if(UNIX AND NOT APPLE)
+-		find_library(LUA_MATH_LIBRARY m)
+-		set( LUA_LIBRARIES "${LUA_LIBRARY};${LUA_MATH_LIBRARY}" CACHE STRING "Lua Libraries")
+-	else(UNIX AND NOT APPLE)
+-		set( LUA_LIBRARIES "${LUA_LIBRARY}" CACHE STRING "Lua Libraries")
+-	endif(UNIX AND NOT APPLE)
+-endif(LUA_LIBRARY)
+-
+-include(FindPackageHandleStandardArgs)
+-
+-find_package_handle_standard_args(Lua5X DEFAULT_MSG LUA_LIBRARIES LUA_INCLUDE_DIR)
+-
+-mark_as_advanced(LUA_INCLUDE_DIR LUA_LIBRARIES LUA_LIBRARY LUA_MATH_LIBRARY)
+--- a/lua_ev.c
++++ b/lua_ev.c
+@@ -131,7 +131,7 @@ LUALIB_API int luaopen_ev(lua_State *L)
+  *
+  * [+2, -0, -]
+  */
+-static int version(lua_State *L) {
++int version(lua_State *L) {
+     lua_pushnumber(L, ev_version_major());
+     lua_pushnumber(L, ev_version_minor());
+     return 2;
+@@ -141,7 +141,7 @@ static int version(lua_State *L) {
+  * Taken from lua.c out of the lua source distribution.  Use this
+  * function when doing lua_pcall().
+  */
+-static int traceback(lua_State *L) {
++int traceback(lua_State *L) {
+     if ( !lua_isstring(L, 1) ) return 1;
+ 
+     lua_getglobal(L, "debug");
+--- a/lua_ev.h
++++ b/lua_ev.h
+@@ -100,8 +100,8 @@
+ /**
+  * Generic functions:
+  */
+-static int               version(lua_State *L);
+-static int               traceback(lua_State *L);
++int               version(lua_State *L);
++int               traceback(lua_State *L);
+ 
+ /**
+  * Loop functions:
+@@ -131,9 +131,9 @@ static void              create_obj_regi
+ static int               obj_count(lua_State *L);
+ static void*             obj_new(lua_State* L, size_t size, const char* tname);
+ static int               obj_newindex(lua_State *L);
+-static int               obj_index(lua_State *L);
++int               obj_index(lua_State *L);
+ 
+-static int               push_objs(lua_State* L, void** objs);
++int               push_objs(lua_State* L, void** objs);
+ 
+ /**
+  * Watcher functions:
+--- a/obj_lua_ev.c
++++ b/obj_lua_ev.c
+@@ -96,7 +96,7 @@ static int obj_newindex(lua_State *L) {
+  *
+  * [-0, +1, ?]
+  */
+-static int obj_index(lua_State *L) {
++int obj_index(lua_State *L) {
+     if ( lua_getmetatable(L, 1) ) {
+         lua_pushvalue(L, 2);
+         lua_gettable(L, -2);
+@@ -139,7 +139,7 @@ static void register_obj(lua_State*L, in
+  *
+  * [-0, +objs_len, m]
+  */
+-static int push_objs(lua_State* L, void** objs) {
++int push_objs(lua_State* L, void** objs) {
+     int obj_count = 0;
+     int registry_i;
+     void** cur;
+--- a/watcher_lua_ev.c
++++ b/watcher_lua_ev.c
+@@ -132,14 +132,9 @@ static void* watcher_new(lua_State* L, s
+ static void watcher_cb(struct ev_loop *loop, void *watcher, int revents) {
+     lua_State* L       = ev_userdata(loop);
+     void*      objs[3] = { loop, watcher, NULL };
+-    int        result;
+-
+-    lua_pushcfunction(L, traceback);
+-
+-    result = lua_checkstack(L, 5);
+-    assert(result != 0 /* able to allocate enough space on lua stack */);
+-    result = push_objs(L, objs);
+-    assert(result == 2 /* pushed two objects on the lua stack */);
++    (void)objs;
++    assert(lua_checkstack(L, 5) != 0 /* able to allocate enough space on lua stack */);
++    assert(push_objs(L, objs) == 2 /* pushed two objects on the lua stack */);
+     assert(!lua_isnil(L, -2) /* the loop obj was resolved */);
+     assert(!lua_isnil(L, -1) /* the watcher obj was resolved */);
+ 
