@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libnetconf2
-PKG_VERSION:=2.0.24
+PKG_VERSION:=3.7.10
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/CESNET/libnetconf2/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=78ffa0bd85823abd321a1dbb09c1ead36612f2a12049638a14bb081567f86ade
+PKG_HASH:=7146932ea4fc8e12b9152e23e18e46699174c531ef1e0fc351b05fcd12295a81
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=BSD-3-Clause
@@ -29,7 +29,7 @@ define Package/libnetconf2
   CATEGORY:=Libraries
   TITLE:=NETCONF library
   URL:=https://github.com/CESNET/libnetconf2
-  DEPENDS:= +libyang +libssh +libopenssl +libpthread
+  DEPENDS:= +libyang +libcurl +libssh +libopenssl +libpthread
 endef
 
 define Package/libnetconf2/description
