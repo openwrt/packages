@@ -1,0 +1,20 @@
+From d2159e48a6e45f58a4fef652de5785112056ee23 Mon Sep 17 00:00:00 2001
+From: Michel Promonet <michel.promonet@free.fr>
+Date: Sun, 29 Dec 2024 15:21:56 +0100
+Subject: [PATCH] replace exec_program with exec_process
+
+---
+ v4l2rtspserver/CMakeLists.txt | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+--- a/v4l2rtspserver/CMakeLists.txt
++++ b/v4l2rtspserver/CMakeLists.txt
+@@ -117,7 +117,7 @@ if (ALSA)
+ endif()
+ 
+ # libv4l2cpp
+-EXEC_PROGRAM("git submodule update --init")
++execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init)
+ add_subdirectory(libv4l2cpp EXCLUDE_FROM_ALL)
+ target_include_directories(libv4l2rtspserver PUBLIC libv4l2cpp/inc)
+ target_link_libraries (libv4l2rtspserver PUBLIC libv4l2cpp ${LIBRARIES}) 

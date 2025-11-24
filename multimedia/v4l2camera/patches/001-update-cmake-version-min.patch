@@ -1,0 +1,17 @@
+From 8e13b8df40af5d48a05775f851b7900b5f87e9ad Mon Sep 17 00:00:00 2001
+From: Michel Promonet <michel.promonet@free.fr>
+Date: Sun, 29 Dec 2024 15:20:34 +0100
+Subject: [PATCH] update cmake version min
+
+---
+ v4l2rtspserver/libv4l2cpp/CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/v4l2rtspserver/libv4l2cpp/CMakeLists.txt
++++ b/v4l2rtspserver/libv4l2cpp/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-cmake_minimum_required(VERSION 3.0)
++cmake_minimum_required(VERSION 3.5)
+ 
+ # set project name from current directory
+ get_filename_component(BASENAME ${CMAKE_CURRENT_LIST_DIR} NAME)
