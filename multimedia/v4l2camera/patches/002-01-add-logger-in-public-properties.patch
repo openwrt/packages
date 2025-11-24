@@ -1,0 +1,55 @@
+From d912aab90cfc907903a6801801b3f4badefb1cfd Mon Sep 17 00:00:00 2001
+From: Michel Promonet <michel.promonet@free.fr>
+Date: Sat, 21 Sep 2024 22:05:03 +0200
+Subject: [PATCH] add logger in public properties
+
+---
+ v4l2rtspserver/CMakeLists.txt | 26 +++++++++++++-------------
+ 2 files changed, 14 insertions(+), 14 deletions(-)
+
+--- a/v4l2rtspserver/CMakeLists.txt
++++ b/v4l2rtspserver/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-cmake_minimum_required(VERSION 3.0)
++cmake_minimum_required(VERSION 3.5)
+ 
+ project(v4l2rtspserver)
+ 
+@@ -48,18 +48,6 @@ find_package (Threads)
+ target_link_libraries (${PROJECT_NAME} Threads::Threads) 
+ 
+ 
+-# LOG4CPP
+-if (LOG4CPP) 
+-    find_library(LOG4CPP_LIBRARY NAMES log4cpp)
+-    if (LOG4CPP_LIBRARY)
+-        message(STATUS "Log4Cpp available ${LOG4CPP_LIBRARY}")
+-        add_definitions(-DHAVE_LOG4CPP)
+-        target_link_libraries(${PROJECT_NAME} "${LOG4CPP_LIBRARY}")
+-        
+-        SET(CPACK_DEBIAN_PACKAGE_DEPENDS ${CPACK_DEBIAN_PACKAGE_DEPENDS}liblog4cpp5v5,)
+-    endif ()
+-endif ()
+-
+ # openssl ?
+ if (WITH_SSL)
+   find_package(OpenSSL QUIET)
+@@ -104,6 +92,18 @@ if (OpenSSL_FOUND)
+     set(LIBRARIES ${LIBRARIES} ${OPENSSL_LIBRARIES})
+ endif ()
+ 
++# LOG4CPP
++if (LOG4CPP) 
++    find_library(LOG4CPP_LIBRARY NAMES log4cpp)
++    if (LOG4CPP_LIBRARY)
++        message(STATUS "Log4Cpp available ${LOG4CPP_LIBRARY}")
++        target_compile_definitions(libv4l2rtspserver PUBLIC HAVE_LOG4CPP)
++        target_link_libraries(libv4l2rtspserver PUBLIC "${LOG4CPP_LIBRARY}")
++        
++        SET(CPACK_DEBIAN_PACKAGE_DEPENDS ${CPACK_DEBIAN_PACKAGE_DEPENDS}liblog4cpp5v5,)
++    endif ()
++endif ()
++
+ #ALSA
+ if (ALSA)
+     find_package(ALSA QUIET)
