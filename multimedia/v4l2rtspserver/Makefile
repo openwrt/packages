@@ -7,14 +7,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=v4l2rtspserver
-PKG_VERSION:=0.3.11
-PKG_RELEASE:=10
+PKG_VERSION:=0.3.12
+PKG_RELEASE:=1
 
 #cannot use codeload as this uses submodules
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/mpromonet/v4l2rtspserver
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_MIRROR_HASH:=3f205fa879a9bc7c6aa0785214badb7d4f4724ef914d172c426e64f18bc5de27
+PKG_MIRROR_HASH:=445facb458ed6f59c319246e8244f8353ab64f053e08e56380edc1aed0806a7d
 
 PKG_BUILD_FLAGS:=gc-sections lto
 
