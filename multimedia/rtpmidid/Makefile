@@ -1,13 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtpmidid
-PKG_VERSION:=23.12
-PKG_RELEASE:=2
+PKG_VERSION:=24.12
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/davidmoreno/rtpmidid
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_MIRROR_HASH:=e787ce013fdc148c50b625a1c7d8adf99d9fee2a81d91e734af75828ed597099
+PKG_MIRROR_HASH:=f302061c147833d6c5fe06aa0f8220185e6a29e4840355f26be231c618bc3334
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-3.0-or-later LGPL-2.1-or-later
@@ -15,6 +15,12 @@ PKG_LICENSE_FILES:=LICENSE.md LICENSE-lib.txt LICENSE-daemon.txt
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
+
+# There seems to be problem with c++20 str format and constexpr.
+# Force c++17 and libfmt and re-evaluate at the next release.
+CMAKE_OPTIONS += \
+	-DCPP_VERSION=17 \
+	-DUSE_FMT=ON
 
 define Package/rtpmidid
   SECTION:=sound
