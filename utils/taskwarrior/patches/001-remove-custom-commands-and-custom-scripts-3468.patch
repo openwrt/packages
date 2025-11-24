@@ -1,0 +1,121 @@
+From 236a5f0bf19d1d1df504301543073d3782e02fb7 Mon Sep 17 00:00:00 2001
+From: Felix Schurk <75752337+felixschurk@users.noreply.github.com>
+Date: Wed, 29 May 2024 00:27:09 +0200
+Subject: [PATCH] remove custom commands and custom scripts (#3468)
+
+Fixes #3462.
+---
+ CMakeLists.txt               | 17 ------------
+ scripts/reproduce-dockerfile | 34 -----------------------
+ scripts/review-dockerfile    | 54 ------------------------------------
+ 3 files changed, 105 deletions(-)
+ delete mode 100644 scripts/reproduce-dockerfile
+ delete mode 100644 scripts/review-dockerfile
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -165,18 +165,6 @@ foreach (doc_FILE ${doc_FILES})
+   install (FILES ${doc_FILE}  DESTINATION ${TASK_DOCDIR})
+ endforeach (doc_FILE)
+ 
+-add_custom_command(OUTPUT run-review
+-    COMMAND docker build -q --build-arg PR=$(PR) --build-arg LIBPR=$(LIBPR) -t taskwarrior-review:$(PR)s$(LIBPR) - < scripts/review-dockerfile
+-    COMMAND docker run --rm --memory 1g --hostname pr-$(PR)s$(LIBPR) -it taskwarrior-review:$(PR)s$(LIBPR) bash || :
+-)
+-add_custom_target(review DEPENDS run-review)
+-
+-add_custom_command(OUTPUT run-reproduce
+-    COMMAND docker build -q --build-arg RELEASE=$(RELEASE) -t taskwarrior-reproduce:$(RELEASE) - < scripts/reproduce-dockerfile
+-    COMMAND docker run --rm --memory 1g --hostname tw-$(RELEASE) -it taskwarrior-reproduce:$(RELEASE) bash || :
+-)
+-add_custom_target(reproduce DEPENDS run-reproduce)
+-
+ # ---
+ 
+ set (CPACK_SOURCE_GENERATOR "TGZ")
+--- a/scripts/reproduce-dockerfile
++++ /dev/null
+@@ -1,34 +0,0 @@
+-# Dockerfile for containers to perform PR review in
+-# Use with make as follows: make RELEASE=v2.5.1 reproduce
+-
+-FROM centos:8
+-
+-RUN dnf update -y
+-RUN yum install epel-release -y
+-RUN dnf install python38 vim git gcc gcc-c++ cmake make gnutls-devel libuuid-devel libfaketime sudo man gdb -y
+-
+-RUN useradd warrior
+-RUN echo warrior ALL=NOPASSWD:ALL > /etc/sudoers.d/warrior
+-
+-USER warrior
+-WORKDIR /home/warrior/
+-
+-# Setup taskwarrior
+-# The purpose is to speed up subsequent re-installs due to Docker layer caching
+-RUN git clone https://github.com/GothenburgBitFactory/taskwarrior.git
+-WORKDIR /home/warrior/taskwarrior/
+-RUN git submodule init
+-
+-# Install the given release
+-ARG RELEASE
+-RUN git checkout $RELEASE
+-RUN git submodule update --init
+-RUN cmake -DCMAKE_BUILD_TYPE=debug .
+-RUN make -j8
+-RUN sudo make install
+-
+-# Set the PS1 variable
+-ENV PS1="[\u@\H \W]\$ "
+-
+-WORKDIR /home/warrior
+-RUN task rc.confirmation=0 _ids || :  # Generate default taskrc
+--- a/scripts/review-dockerfile
++++ /dev/null
+@@ -1,46 +0,0 @@
+-# Dockerfile for containers to perform PR review in
+-# Use with make as follows: make PR=1234 review
+-
+-FROM centos:8
+-
+-RUN dnf update -y
+-RUN yum install epel-release -y
+-RUN dnf install python38 git gcc gcc-c++ cmake make gnutls-devel libuuid-devel libfaketime sudo man -y
+-
+-RUN useradd warrior
+-RUN echo warrior ALL=NOPASSWD:ALL > /etc/sudoers.d/warrior
+-
+-USER warrior
+-WORKDIR /home/warrior/
+-
+-# Setup taskwarrior
+-# The purpose is to speed up subsequent re-installs due to Docker layer caching
+-RUN git clone https://github.com/GothenburgBitFactory/taskwarrior.git
+-WORKDIR /home/warrior/taskwarrior/
+-RUN git submodule init
+-RUN git submodule update
+-RUN cmake -DCMAKE_BUILD_TYPE=debug .
+-RUN make -j8
+-RUN sudo make install
+-
+-# Use specified PR's branch, if provided
+-ARG PR
+-RUN if [[ ! -z $PR ]]; then \
+-      git fetch origin refs/pull/${PR}/head:pr-${PR}; \
+-      git checkout pr-${PR}; fi
+-
+-# Use specified libshared PR's branch, if provided
+-ARG LIBPR
+-WORKDIR /home/warrior/taskwarrior/src/libshared/
+-RUN if [[ ! -z $LIBPR ]]; then \
+-      git fetch origin refs/pull/${LIBPR}/head:libpr-${LIBPR}; \
+-      git checkout libpr-${LIBPR}; fi
+-
+-# Install taskwarrior
+-WORKDIR /home/warrior/taskwarrior/
+-RUN cmake -DCMAKE_BUILD_TYPE=debug .
+-RUN make -j8
+-RUN sudo make install
+-
+-WORKDIR /home/warrior
+-RUN task rc.confirmation=0 _ids || :  # Generate default taskrc
