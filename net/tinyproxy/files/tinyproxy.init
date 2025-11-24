@@ -132,6 +132,7 @@ start_proxy() {
 	proxy_list "$1" Allow
 
 	proxy_string "$1" ViaProxyName
+	proxy_flag "$1" DisableViaHeader Yes No
 	proxy_string "$1" Filter
 
 	proxy_flag "$1" FilterURLs
