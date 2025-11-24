@@ -444,6 +444,9 @@ f_rmdns() {
 	printf "%b" "${adb_dnsheader}" >"${adb_finaldir}/${adb_dnsfile}"
 	f_dnsup
 	f_rmtemp
+	if [ "${adb_action}" = "stop" ] || [ "${adb_enabled}" = "0" ]; then
+		"${adb_findcmd}" "${adb_backupdir}" -maxdepth 1 -type f -name '*.gz' -exec rm -f {} +
+	fi
 }
 
 # commit uci changes
@@ -700,7 +703,7 @@ f_list() {
 			;;
 		"blocklist" | "allowlist")
 			src_name="${mode}"
-			rset="/^(([[:alnum:]_-]{1,63}\\.)*[[:alpha:]][[:alnum:]-]{2,63}([[:space:]]|$))/{print tolower(\$1)}"
+			rset="/^(([[:alnum:]_-]{1,63}\.)*[[:alpha:]][[:alnum:]-]{1,62}([[:space:]]|$))/{print tolower(\$1)}"
 			case "${src_name}" in
 				"blocklist")
 					if [ -f "${adb_blocklist}" ]; then
@@ -1022,7 +1025,7 @@ f_query() {
 				suffix="${file##*.}"
 				if [ "${suffix}" = "gz" ]; then
 					"${adb_zcatcmd}" "${file}" 2>/dev/null |
-						{ [ "${adb_tld}" = "1" ] && "${adb_awkcmd}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' || :"${adb_catcmd}"; } |
+						{ [ "${adb_tld}" = "1" ] && "${adb_awkcmd}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' || "${adb_catcmd}"; } |
 						"${adb_awkcmd}" -v f="${file##*/}" "BEGIN{rc=1};/^($search|.*\\.${search})$/{i++;if(i<=3){printf \"  + %-30s%s\n\",f,\$1;rc=0}else if(i==4){printf \"  + %-30s%s\n\",f,\"[...]\"}};END{exit rc}"
 					rc="${?}"
 				else
