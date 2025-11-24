@@ -4,13 +4,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openthread-br
-PKG_SOURCE_DATE:=2024-11-20
-PKG_SOURCE_VERSION:=bd7bc77742920eba3b3801a410c3eba3372c98bb
-PKG_RELEASE:=2
+PKG_SOURCE_DATE:=2025-06-12
+PKG_SOURCE_VERSION:=2f3c799c7463c8f674754e65c53f78bc0bbcbd58
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=https://github.com/openthread/ot-br-posix.git
-PKG_MIRROR_HASH:=ca4352e527e38de26c8c4242ced5899e6fd1e4fea57d0dc4b2a6bd433e6b14b6
+PKG_MIRROR_HASH:=fae1c7c88102f88bac32f8ee25e044b9a8781eef6b9acef39388e1e11a44a195
 
 PKG_MAINTAINER:=Stijn Tintel <stijn@linux-ipv6.be>
 PKG_LICENSE:=BSD-3-Clause
@@ -35,6 +35,7 @@ define Package/openthread-br
 	+kmod-tun \
 	+libblobmsg-json \
 	+libjson-c \
+	+cJSON \
 	+libncurses \
 	+libnetfilter-queue \
 	+libreadline \
