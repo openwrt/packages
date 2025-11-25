@@ -1,0 +1,18 @@
+From 1b4c77df1dbf99f9acce02b51264cdb32a298146 Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Mon, 24 Nov 2025 08:33:13 -0800
+Subject: [PATCH] fix compilation with newer CMake
+
+less than 3.5 is not supported anymore.
+---
+ CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-cmake_minimum_required(VERSION 3.0)
++cmake_minimum_required(VERSION 3.10)
+ 
+ project(rtty C)
+ 
