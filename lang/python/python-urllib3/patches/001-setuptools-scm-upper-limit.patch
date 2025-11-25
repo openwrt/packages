@@ -1,0 +1,24 @@
+From ea61320386d57d5654307fb19314c1bb17ceb0e8 Mon Sep 17 00:00:00 2001
+From: Trevor Gamblin <tgamblin@baylibre.com>
+Date: Mon, 22 Sep 2025 10:37:58 -0400
+Subject: [PATCH] pyproject.toml: change setuptools-scm upper limit
+
+setuptools-scm version 9.2.0 is now available, so change the upper limit
+specified in dependencies.
+
+Signed-off-by: Trevor Gamblin <tgamblin@baylibre.com>
+
+Backport to v2.5.0 for OpenWrt
+
+Signed-off-by: Austin Lane <vidplace7@gmail.com>
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -1,7 +1,7 @@
+ # This file is protected via CODEOWNERS
+ 
+ [build-system]
+-requires = ["hatchling>=1.6.0,<2", "hatch-vcs>=0.4.0,<0.6.0", "setuptools-scm>=8,<9"]
++requires = ["hatchling>=1.6.0,<2", "hatch-vcs>=0.4.0,<0.6.0", "setuptools-scm>=8,<10"]
+ build-backend = "hatchling.build"
+ 
+ [project]
