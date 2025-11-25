@@ -3,3 +3,4 @@ config simple-captive-portal main
         #option port_redirect 8888
         #option port_portal 8889
         #option timeout 86400
+        #list exempt '01:23:45:67:89:0A'
