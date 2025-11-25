@@ -24,6 +24,9 @@ CMAKE_INSTALL:=1
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
+CMAKE_OPTIONS += \
+	-DENABLE_PAM=OFF
+
 define Package/libnetconf2
   SECTION:=libs
   CATEGORY:=Libraries
