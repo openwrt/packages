@@ -1,0 +1,107 @@
+include $(TOPDIR)/rules.mk
+
+PKG_NAME:=fastfetch
+PKG_VERSION:=2.64.2
+PKG_RELEASE:=1
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/fastfetch-cli/fastfetch/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=28db81d6568f28281d9aab9e88d5a4c7892d519c54b8739eef17953cce6802d0
+
+PKG_MAINTAINER:=Valeriy Kosikhin <vkosikhin@gmail.com>
+PKG_LICENSE:=MIT
+PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:fastfetch-cli:fastfetch
+
+PKG_BUILD_DEPENDS:=elfutils
+
+include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/cmake.mk
+
+define Package/fastfetch
+  SECTION:=utils
+  CATEGORY:=Utilities
+  TITLE:=Neofetch-like system information tool
+  URL:=https://github.com/fastfetch-cli/fastfetch/
+endef
+
+define Package/fastfetch/description
+  Fastfetch is a Neofetch-like tool for fetching system information
+  and displaying it in a visually-appealing way.
+endef
+
+CMAKE_OPTIONS += \
+	-DCMAKE_BUILD_TYPE=MinSizeRel \
+	-DCMAKE_C_FLAGS="-fno-unwind-tables -fno-asynchronous-unwind-tables" \
+	-DCMAKE_EXE_LINKER_FLAGS="-Wl,--strip-all" \
+	-DBUILD_FLASHFETCH=OFF \
+	-DBUILD_TESTS=OFF \
+	-DIS_MUSL=ON \
+	-DSET_TWEAK=OFF \
+	-DENABLE_VULKAN=OFF \
+	-DENABLE_WAYLAND=OFF \
+	-DENABLE_XCB_RANDR=OFF \
+	-DENABLE_XRANDR=OFF \
+	-DENABLE_DRM=OFF \
+	-DENABLE_VA=OFF \
+	-DENABLE_VDPAU=OFF \
+	-DENABLE_DRM_AMDGPU=OFF \
+	-DENABLE_GIO=OFF \
+	-DENABLE_DCONF=OFF \
+	-DENABLE_EET=OFF \
+	-DENABLE_DBUS=OFF \
+	-DENABLE_SQLITE3=OFF \
+	-DENABLE_RPM=OFF \
+	-DENABLE_IMAGEMAGICK7=OFF \
+	-DENABLE_IMAGEMAGICK6=OFF \
+	-DENABLE_CHAFA=OFF \
+	-DENABLE_EGL=OFF \
+	-DENABLE_GLX=OFF \
+	-DENABLE_OPENCL=OFF \
+	-DENABLE_PULSE=OFF \
+	-DENABLE_DDCUTIL=OFF \
+	-DENABLE_ZLIB=OFF \
+	-DENABLE_QUICKJS=OFF \
+	-DENABLE_LIBZFS=OFF \
+	-DENABLE_WCWIDTH=OFF \
+	-DMODULE_DISABLE_BLUETOOTH=ON \
+	-DMODULE_DISABLE_BLUETOOTHRADIO=ON \
+	-DMODULE_DISABLE_BRIGHTNESS=ON \
+	-DMODULE_DISABLE_CODEC=ON \
+	-DMODULE_DISABLE_CURSOR=ON \
+	-DMODULE_DISABLE_DE=ON \
+	-DMODULE_DISABLE_DISPLAY=ON \
+	-DMODULE_DISABLE_FONT=ON \
+	-DMODULE_DISABLE_GAMEPAD=ON \
+	-DMODULE_DISABLE_ICONS=ON \
+	-DMODULE_DISABLE_KEYBOARD=ON \
+	-DMODULE_DISABLE_LM=ON \
+	-DMODULE_DISABLE_MEDIA=ON \
+	-DMODULE_DISABLE_MONITOR=ON \
+	-DMODULE_DISABLE_MOUSE=ON \
+	-DMODULE_DISABLE_OPENCL=ON \
+	-DMODULE_DISABLE_OPENGL=ON \
+	-DMODULE_DISABLE_PLAYER=ON \
+	-DMODULE_DISABLE_SOUND=ON \
+	-DMODULE_DISABLE_TERMINAL=ON \
+	-DMODULE_DISABLE_TERMINALFONT=ON \
+	-DMODULE_DISABLE_TERMINALSIZE=ON \
+	-DMODULE_DISABLE_TERMINALTHEME=ON \
+	-DMODULE_DISABLE_THEME=ON \
+	-DMODULE_DISABLE_VULKAN=ON \
+	-DMODULE_DISABLE_WALLPAPER=ON \
+	-DMODULE_DISABLE_WM=ON \
+	-DMODULE_DISABLE_WMTHEME=ON \
+	-DMODULE_DISABLE_ZPOOL=ON
+
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	find $(PKG_BUILD_DIR)/src/logo/ascii/[a-z]/ -type f ! -name 'openwrt*.txt' -delete
+endef
+
+define Package/fastfetch/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/fastfetch $(1)/usr/bin
+endef
+
+$(eval $(call BuildPackage,fastfetch))
