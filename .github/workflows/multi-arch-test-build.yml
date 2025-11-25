@@ -7,6 +7,8 @@ jobs:
   formalities:
     name: Test Formalities
     uses: openwrt/actions-shared-workflows/.github/workflows/formal.yml@main
+    with:
+      post_comment: true
 
   label_formality_status:
     name: Add formality check labels
