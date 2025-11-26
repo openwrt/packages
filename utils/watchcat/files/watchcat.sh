@@ -188,6 +188,7 @@ watchcat_ping() {
 	ping_frequency_interval="$4"
 	ping_size="$5"
 	address_family="$6"
+	iface="$7"
 
 	time_now="$(cat /proc/uptime)"
 	time_now="${time_now%%.*}"
@@ -252,8 +253,8 @@ periodic_reboot)
 	watchcat_periodic "$2" "$3"
 	;;
 ping_reboot)
-	# args from init script: period forcedelay pinghosts pingperiod pingsize addressfamily
-	watchcat_ping "$2" "$3" "$4" "$5" "$6" "$7"
+	# args from init script: period forcedelay pinghosts pingperiod pingsize addressfamily interface
+	watchcat_ping "$2" "$3" "$4" "$5" "$6" "$7" "$8"
 	;;
 restart_iface)
 	# args from init script: period pinghosts pingperiod pingsize interface mmifacename unlockbands addressfamily
