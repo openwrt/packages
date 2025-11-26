@@ -55,7 +55,7 @@ CMAKE_OPTIONS += \
 
 define Package/netopeer2-server/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/netopeer2-server $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/netopeer2-server $(1)/usr/bin/
 
 	$(INSTALL_DIR) $(1)/etc/sysrepo/yang
 	$(INSTALL_DIR) $(1)/etc/netopeer2/modules
