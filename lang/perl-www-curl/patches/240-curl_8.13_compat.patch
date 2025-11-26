@@ -1,0 +1,11 @@
+--- a/Makefile.PL
++++ b/Makefile.PL
+@@ -127,7 +127,7 @@ if (!defined($curl_h)) {
+     close H;
+ 
+     for my $e (sort @syms) {
+-       if($e =~ /(OBSOLETE|^CURL_EXTERN|^CURL_STRICTER\z|^CURL_DID_MEMORY_FUNC_TYPEDEFS\z|_LAST\z|_LASTENTRY\z|^CURLINC_|^CURL_WIN32\z|^CURL_DEPRECATED\z|^CURL_IGNORE_DEPRECATION\z|^CURLOPTDEPRECATED\z|^CURLOPT\z)/) {
++       if($e =~ /(OBSOLETE|^CURL_EXTERN|^CURL_STRICTER\z|^CURL_DID_MEMORY_FUNC_TYPEDEFS\z|_LAST\z|_LASTENTRY\z|^CURLINC_|^CURL_WIN32\z|^CURL_DEPRECATED\z|^CURL_IGNORE_DEPRECATION\z|^CURLOPTDEPRECATED\z|^CURLOPT\z|^CURL_HAS_DECLSPEC_ATTRIBUTE\z)/) {
+           next;
+        }
+        my ($group) = $e =~ m/^([^_]+_)/;
