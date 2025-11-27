@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-setuptools
 PKG_VERSION:=80.9.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=setuptools
 PKG_HASH:=f36b47402ecde768dbfafc46e8e4207b4360c654f1f3bb84475f0a28628fb19c
@@ -17,7 +17,7 @@ PKG_HASH:=f36b47402ecde768dbfafc46e8e4207b4360c654f1f3bb84475f0a28628fb19c
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
-CPE_ID:=cpe:/a:python:setuptools
+PKG_CPE_ID:=cpe:/a:python:setuptools
 
 HOST_BUILD_DEPENDS:= \
         python3/host \
