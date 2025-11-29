@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shairport-sync
 PKG_VERSION:=4.3.6
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/mikebrady/shairport-sync/tar.gz/$(PKG_VERSION)?
@@ -29,7 +29,7 @@ define Package/shairport-sync/default
   SECTION:=sound
   CATEGORY:=Sound
   TITLE:=AirPlay compatible audio player
-  DEPENDS:=@AUDIO_SUPPORT +libpthread +alsa-lib +libconfig +libdaemon +libpopt +libplist +libsodium +libgcrypt +libffmpeg-full +libuuid +nqptp +libmosquitto
+  DEPENDS:=@AUDIO_SUPPORT +libpthread +alsa-lib +libconfig +libdaemon +libpopt +libmosquitto
   PROVIDES:=shairport-sync
   URL:=https://github.com/mikebrady/shairport-sync
 endef
@@ -37,7 +37,7 @@ endef
 define Package/shairport-sync-openssl
   $(Package/shairport-sync/default)
   TITLE+= (openssl)
-  DEPENDS+= +libopenssl +libavahi-client +libsoxr
+  DEPENDS+= +libopenssl +libavahi-client +libsoxr +libplist +libsodium +libgcrypt +libffmpeg-full +libuuid +nqptp
   VARIANT:=openssl
 endef
 
@@ -73,18 +73,24 @@ define Package/shairport-sync-mini/description
   $(Package/shairport-sync/default/description)
 
   Minimal version uses mbed TLS and does not include libsoxr and avahi support.
+  Only supports classic AirPlay aka AirPlay 1.
+endef
+
+define Package/shairport-sync-mbedtls/description
+  $(Package/shairport-sync/default/description)
+
+  mbed TLS version only supports classic AirPlay aka AirPlay 1.
 endef
 
 CONFIGURE_ARGS += \
 	--with-alsa \
 	--with-libdaemon \
-	--with-airplay-2 \
 	--with-pipe \
 	--with-mqtt-client \
 	--with-metadata
 
 ifeq ($(BUILD_VARIANT),openssl)
-  CONFIGURE_ARGS+= --with-ssl=openssl
+  CONFIGURE_ARGS+= --with-ssl=openssl --with-airplay-2
 endif
 
 ifeq ($(BUILD_VARIANT),mbedtls)
