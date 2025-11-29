@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=freeradius3
 PKG_VERSION:=3.2.7
 PKG_VERSION_UNDERSCORE:=$(subst .,_,${PKG_VERSION})
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=freeradius-server-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/FreeRADIUS/freeradius-server/releases/download/release_$(PKG_VERSION_UNDERSCORE)/
@@ -708,16 +708,6 @@ define Package/freeradius3-mod-wimax/conffiles
 /etc/freeradius3/mods-available/wimax
 endef
 
-define Package/freeradius3-mod-yubikey
-  $(call Package/freeradius3/Default)
-  DEPENDS:=freeradius3 +libyubikey +ykclient
-  TITLE:=Yubikey Authentication
-endef
-
-define Package/freeradius3-mod-yubikey/conffiles
-/etc/freeradius3/mods-available/yubikey
-endef
-
 define Package/freeradius3-utils
   $(call Package/freeradius3/Default)
   DEPENDS:=+freeradius3-common
@@ -759,6 +749,7 @@ CONFIGURE_ARGS+= \
 	--without-rlm_sql_freetds \
 	--without-rlm_sql_iodbc \
 	--without-rlm_sql_oracle \
+	--without-rlm_yubikey \
 
 CONFIGURE_LIBS+= -latomic
 
@@ -962,15 +953,6 @@ else
   CONFIGURE_ARGS+= --without-rlm_unix
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-yubikey),)
-  CONFIGURE_ARGS+= \
-		--with-rlm_yubikey \
-		--with-rlm_yubikey-include-dir="$(STAGING_DIR)/usr/include" \
-		--with-rlm_yubikey-lib-dir="$(STAGING_DIR)/usr/lib"
-else
-  CONFIGURE_ARGS+= --without-rlm_yubikey
-endif
-
 ifeq ($(CONFIG_USE_GLIBC),y)
   TARGET_CFLAGS+= -DLIBBSD_OVERLAY -I$(STAGING_DIR)/usr/include/bsd \
 	-D_RPC_NETDB_H
@@ -1138,5 +1120,4 @@ $(eval $(call BuildPlugin,freeradius3-mod-unix,rlm_unix,))
 $(eval $(call BuildPlugin,freeradius3-mod-unpack,rlm_unpack,))
 $(eval $(call BuildPlugin,freeradius3-mod-utf8,rlm_utf8,))
 $(eval $(call BuildPlugin,freeradius3-mod-wimax,rlm_wimax,))
-$(eval $(call BuildPlugin,freeradius3-mod-yubikey,rlm_yubikey,))
 $(eval $(call BuildPackage,freeradius3-utils))
