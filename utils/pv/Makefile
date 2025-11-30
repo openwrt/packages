@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pv
 PKG_VERSION:=1.9.31
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.ivarch.com/programs/sources
@@ -28,6 +28,7 @@ define Package/pv
   CATEGORY:=Utilities
   TITLE:=Shell pipeline element to meter data passing through
   URL:=https://www.ivarch.com/programs/pv.shtml
+  DEPENDS:=+libncursesw
 endef
 
 define Package/pv/description
@@ -37,6 +38,8 @@ define Package/pv/description
  through, how long it has taken, how near to completion it is, and an
  estimate of how long it will be until completion.
 endef
+
+CONFIGURE_ARGS += --with-ncurses
 
 define Package/pv/install
 	$(INSTALL_DIR) $(1)/usr/bin
