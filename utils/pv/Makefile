@@ -17,7 +17,7 @@ PKG_SOURCE_URL:=https://www.ivarch.com/programs/sources
 PKG_HASH:=a35e92ec4ac0e8f380e8e840088167ae01014bfa008a3a9d6506b848079daedf
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=docs/COPYING
-PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
+PKG_MAINTAINER:=
 
 PKG_INSTALL:=1
 
