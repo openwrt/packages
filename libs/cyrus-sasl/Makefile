@@ -37,7 +37,7 @@ endef
 
 define Package/libsasl2
   $(call Package/libsasl2/Default)
-  DEPENDS:=+libopenssl
+  DEPENDS:=+USE_GLIBC:libcrypt-compat +libopenssl
   TITLE+= (libraries)
 endef
 
