@@ -137,11 +137,11 @@ write_empty_zone() {
 	local zpath
 	zpath="$1"
 
-	cat > "$zpath" <<\EOF
+	cat > "$zpath" <<EOF
 ;
-; BIND empty zone created by isc-dhcp-server
+; BIND empty zone created by isc-dhcp-server at $(date)
 ;
-$TTL	604800
+\$TTL	604800
 @	IN	SOA	localhost. root.localhost. (
 			      1		; Serial
 			 604800		; Refresh
@@ -167,7 +167,7 @@ create_empty_zone() {
 	chown bind:bind "$zpath" || return 1
 	chmod 0664 "$zpath" || return 1
 
-	if ! error=$(rndc addzone $zone "{
+	if ! error=$(rndc modzone $zone "{
 		type primary;
 		file \"$zpath\";
 		update-policy {
