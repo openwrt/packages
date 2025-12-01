@@ -652,9 +652,9 @@ f_nftinit() {
 		printf "%s\n" "add chain inet banIP _reject"
 		# flood chains
 		#
-		printf "%s\n" "add chain inet banIP _icmpflood"
-		printf "%s\n" "add chain inet banIP _udpflood"
-		printf "%s\n" "add chain inet banIP _synflood"
+		[ "${ban_icmplimit}" -gt "0" ] && printf "%s\n" "add chain inet banIP _icmpflood"
+		[ "${ban_udplimit}" -gt "0" ] && printf "%s\n" "add chain inet banIP _udpflood"
+		[ "${ban_synlimit}" -gt "0" ] && printf "%s\n" "add chain inet banIP _synflood"
 		# named counter
 		#
 		printf "%s\n" "add counter inet banIP cnt_icmpflood"
@@ -666,12 +666,18 @@ f_nftinit() {
 		# default flood chains rules
 		#
 		#
-		[ -n "${log_icmp}" ] && printf "%s\n" "add rule inet banIP _icmpflood ${log_icmp}"
-		printf "%s\n" "add rule inet banIP _icmpflood counter name cnt_icmpflood drop"
-		[ -n "${log_udp}" ] && printf "%s\n" "add rule inet banIP _udpflood ${log_udp}"
-		printf "%s\n" "add rule inet banIP _udpflood counter name cnt_udpflood drop"
-		[ -n "${log_syn}" ] && printf "%s\n" "add rule inet banIP _synflood ${log_syn}"
-		printf "%s\n" "add rule inet banIP _synflood counter name cnt_synflood drop"
+		if [ "${ban_icmplimit}" -gt "0" ]; then
+			[ -n "${log_icmp}" ] && printf "%s\n" "add rule inet banIP _icmpflood ${log_icmp}"
+			printf "%s\n" "add rule inet banIP _icmpflood counter name cnt_icmpflood drop"
+		fi
+		if [ "${ban_udplimit}" -gt "0" ]; then
+			[ -n "${log_udp}" ] && printf "%s\n" "add rule inet banIP _udpflood ${log_udp}"
+			printf "%s\n" "add rule inet banIP _udpflood counter name cnt_udpflood drop"
+		fi
+		if [ "${ban_synlimit}" -gt "0" ]; then
+			[ -n "${log_syn}" ] && printf "%s\n" "add rule inet banIP _synflood ${log_syn}"
+			printf "%s\n" "add rule inet banIP _synflood counter name cnt_synflood drop"
+		fi
 
 		# default reject chain rules
 		#
