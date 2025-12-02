@@ -9,6 +9,7 @@ PKG_VERSION:=3.1.2
 PKG_RELEASE:=1
 
 PYPI_NAME:=Jinja2
+PYPI_SOURCE_NAME:=jinja2
 PKG_HASH:=31351a702a408a9e7595a8fc6150fc3f43bb6bf7e319770cbc0db9df9437e852
 
 PKG_MAINTAINER:=Michal Vasilek <michal.vasilek@nic.cz>

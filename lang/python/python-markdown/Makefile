@@ -12,6 +12,7 @@ PKG_VERSION:=3.4.4
 PKG_RELEASE:=1
 
 PYPI_NAME:=Markdown
+PYPI_SOURCE_NAME:=markdown
 PKG_HASH:=225c6123522495d4119a90b3a3ba31a1e87a70369e03f14799ea9c0d7183a3d6
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
