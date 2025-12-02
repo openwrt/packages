@@ -20,6 +20,10 @@ reload_service() {
 	rndc -q reload
 }
 
+stop_service() {
+	rndc stop
+}
+
 start_service() {
 	user_exists bind 57 || user_add bind 57
 	group_exists bind 57 || group_add bind 57
