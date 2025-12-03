@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pynacl
-PKG_VERSION:=1.5.0
-PKG_RELEASE:=3
+PKG_VERSION:=1.6.0
+PKG_RELEASE:=1
 
 PYPI_NAME:=PyNaCl
 PYPI_SOURCE_NAME:=pynacl
-PKG_HASH:=8ac7448f09ab85811607bdd21ec2464495ac8b7c66d146bf545b0f08fb9220ba
+PKG_HASH:=cb36deafe6e2bce3b286e5d1f3e1c246e0ccdb8808ddb4550bb2792f2df298f2
 
 PKG_MAINTAINER:=Javier Marcet <javier@marcet.info>
 PKG_LICENSE:=Apache-2.0
