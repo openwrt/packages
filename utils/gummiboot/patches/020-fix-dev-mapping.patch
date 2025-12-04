@@ -1,6 +1,14 @@
 --- a/src/setup/setup.c
 +++ b/src/setup/setup.c
-@@ -83,6 +83,9 @@ static int verify_esp(const char *p, uin
+@@ -24,6 +24,7 @@
+ #include <getopt.h>
+ #include <errno.h>
+ #include <stdlib.h>
++#include <libgen.h>
+ #include <assert.h>
+ #include <sys/statfs.h>
+ #include <sys/stat.h>
+@@ -83,6 +84,9 @@ static int verify_esp(const char *p, uin
          blkid_probe b = NULL;
          int r;
          const char *v;
@@ -10,7 +18,7 @@
  
          if (statfs(p, &sfs) < 0) {
                  fprintf(stderr, "Failed to check file system type of %s: %m\n", p);
-@@ -122,24 +125,38 @@ static int verify_esp(const char *p, uin
+@@ -122,24 +126,38 @@ static int verify_esp(const char *p, uin
                  return -ENODEV;
          }
  
