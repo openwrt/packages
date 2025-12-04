@@ -3,6 +3,10 @@ name: Test and Build
 on:
   pull_request:
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   formalities:
     name: Test Formalities
