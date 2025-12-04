@@ -233,7 +233,7 @@ snmpd_sink_add() {
 	local host
 
 	config_get host "$cfg" host
-	[ -n "section" -a -n "$host" ] || return 0
+	[ -n "$section" -a -n "$host" ] || return 0
 	# optional community
 	config_get community "$cfg" community
 	# optional port
