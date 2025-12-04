@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sqlite
-PKG_VERSION:=3510000
+PKG_VERSION:=3510100
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-autoconf-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.sqlite.org/2025/
-PKG_HASH:=42e26dfdd96aa2e6b1b1be5c88b0887f9959093f650d693cb02eb9c36d146ca5
+PKG_HASH:=4f2445cd70479724d32ad015ec7fd37fbb6f6130013bd4bfbc80c32beb42b7e0
 
 PKG_CPE_ID:=cpe:/a:sqlite:sqlite
 PKG_LICENSE:=blessing
