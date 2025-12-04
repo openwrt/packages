@@ -26,7 +26,8 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 | country             | country blocks                 |    x    |          |                   | [Link](https://www.ipdeny.com/ipblocks)                      |
 | cinsscore           | suspicious attacker IPs        |    x    |          |                   | [Link](https://cinsscore.com/#list)                          |
 | debl                | fail2ban IP blacklist          |    x    |          |                   | [Link](https://www.blocklist.de)                             |
-| doh                 | public DoH-Provider            |         |    x     | tcp, udp: 80, 443 | [Link](https://github.com/dibdot/DoH-IP-blocklists)          |
+| dns                 | public DNS-Server              |         |    x     | tcp, udp: 53, 853 | [Link](https://public-dns.info)                              |
+| doh                 | public DoH-Server              |         |    x     | tcp, udp: 80, 443 | [Link](https://github.com/dibdot/DoH-IP-blocklists)          |
 | drop                | spamhaus drop compilation      |    x    |          |                   | [Link](https://www.spamhaus.org)                             |
 | dshield             | dshield IP blocklist           |    x    |          |                   | [Link](https://www.dshield.org)                              |
 | etcompromised       | ET compromised hosts           |    x    |          |                   | [Link](https://iplists.firehol.org/?ipset=et_compromised)    |
@@ -95,14 +96,14 @@ IP address blocking is commonly used to protect against brute force attacks, pre
 
 <a id="prerequisites"></a>
 ## Prerequisites
-* **[OpenWrt](https://openwrt.org)**, latest stable release 24.x or a development snapshot with nft/firewall 4 support
+* **[OpenWrt](https://openwrt.org)**, latest stable release or a development snapshot with nft/firewall 4 support
 * A download utility with SSL support: 'curl', full 'wget' or 'uclient-fetch' with one of the 'libustream-*' SSL libraries, the latter one doesn't provide support for ETag HTTP header
 * A certificate store like 'ca-bundle', as banIP checks the validity of the SSL certificates of all download sites by default
 * For E-Mail notifications you need to install and setup the additional 'msmtp' package
 
 **Please note:**
 * Devices with less than 256MB of RAM are **_not_** supported
-* Latest banIP 1.5.x does **_not_** support OpenWrt 23.x because the kernel and the nft library are outdated (use former banIP 1.0.x instead)
+* Latest banIP does **_not_** support OpenWrt 23.x because the kernel and the nft library are outdated (use former banIP 1.0.x instead)
 * Any previous custom feeds file of banIP 1.0.x must be cleared and it's recommended to start with a fresh banIP default config
 
 <a id="installation-and-usage"></a>
@@ -339,19 +340,19 @@ Available commands:
 **banIP runtime information**  
 
 ```
-~# /etc/init.d/banip status
 ::: banIP runtime information
   + status            : active (nft: ✔, monitor: ✔)
-  + version           : 1.5.6-r4
-  + element_count     : 128 751 (chains: 7, sets: 19, rules: 47)
-  + active_feeds      : allowlist.v4MAC, allowlist.v6MAC, allowlist.v4, allowlist.v6, cinsscore.v4, debl.v4, country.v6, debl.v6, doh.v4, doh.v6, country.v4, threat.v4, hagezi.v4, turris.v4, turris.v6, blocklist.v4MAC, blocklist.v6MAC, blocklist.v4, blocklist.v6
+  + frontend_ver      : 1.6.0-r1
+  + backend_ver       : 1.6.0-r1
+  + element_count     : 223 563 (chains: 7, sets: 22, rules: 75)
+  + active_feeds      : allowlist.v4MAC, allowlist.v6MAC, allowlist.v4, allowlist.v6, cinsscore.v4, debl.v4, country.v6, debl.v6, country.v4, dns.v4, dns.v6, doh.v4, doh.v6, firehol1.v4, hagezi.v4, threat.v4, turris.v4, turris.v6, blocklist.v4MAC, blocklist.v6MAC, blocklist.v4, blocklist.v6
   + active_devices    : wan: pppoe-wan / wan-if: wan, wan_6 / vlan-allow: - / vlan-block: -
-  + active_uplink     : 91.61.111.35, 2004:fc:45fe:678:c890:e2a3:c729:dc13
-  + nft_info          : ver: 1.1.1-r1, priority: -100, policy: performance, loglevel: warn, expiry: 2h, limit (icmp/syn/udp): 25/10/100
+  + active_uplink     : 5.73.187.13, 2a04:5700:104:c65a:dc41:4131:409:227c
+  + nft_info          : ver: 1.1.5-r1, priority: -100, policy: performance, loglevel: warn, expiry: 2h, limit (icmp/syn/udp): 25/10/100
   + run_info          : base: /mnt/data/banIP, backup: /mnt/data/banIP/backup, report: /mnt/data/banIP/report, error: /mnt/data/banIP/error
-  + run_flags         : auto: ✔, proto (4/6): ✔/✔, log (pre/in/out): ✘/✘/✔, count: ✔, dedup: ✔, split: ✘, custom feed: ✔, allowed only: ✘
-  + last_run          : mode: restart, 2025-06-08 21:11:21, duration: 0m 22s, memory: 1310.16 MB available
-  + system_info       : cores: 4, log: logread, fetch: curl, Bananapi BPI-R3, mediatek/filogic, OpenWrt SNAPSHOT r29955-8b24289a52 
+  + run_flags         : auto: ✔, proto (4/6): ✔/✔, log (pre/in/out): ✔/✔/✔, count: ✔, dedup: ✔, split: ✘, custom feed: ✘, allowed only: ✘
+  + last_run          : mode: restart, 2025-12-04 10:00:41, duration: 0m 48s, memory: 1361.54 MB available
+  + system_info       : cores: 4, log: logread, fetch: curl, Bananapi BPI-R3, mediatek/filogic, OpenWrt SNAPSHOT r32101-28cc1c368c 
 ```
 
 **banIP search information**  
