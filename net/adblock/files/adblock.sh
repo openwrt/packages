@@ -703,7 +703,7 @@ f_list() {
 			;;
 		"blocklist" | "allowlist")
 			src_name="${mode}"
-			rset="/^(([[:alnum:]_-]{1,63}\.)*[[:alpha:]][[:alnum:]-]{1,62}([[:space:]]|$))/{print tolower(\$1)}"
+			rset="/^(([[:alnum:]_-]{1,63}\\.)*[[:alpha:]][[:alnum:]-]{1,62}([[:space:]]|$))/{print tolower(\$1)}"
 			case "${src_name}" in
 				"blocklist")
 					if [ -f "${adb_blocklist}" ]; then
@@ -927,14 +927,14 @@ f_tld() {
 # suspend/resume adblock processing
 #
 f_switch() {
-	local status entry done="false" mode="${1}"
+	local status done="false" mode="${1}"
 
 	json_init
 	json_load_file "${adb_rtfile}" >/dev/null 2>&1
 	json_select "data" >/dev/null 2>&1
 	json_get_var status "adblock_status"
 	f_env
-	if [ "${mode}" = "suspend" ] && [ "${status}" = "enabled" ]; then
+	if [ "${status}" = "enabled" ] && [ "${mode}" = "suspend" ]; then
 		if [ "${adb_dnsshift}" = "0" ] && [ -f "${adb_finaldir}/${adb_dnsfile}" ]; then
 			mv -f "${adb_finaldir}/${adb_dnsfile}" "${adb_backupdir}/${adb_dnsfile}"
 			printf "%b" "${adb_dnsheader}" >"${adb_finaldir}/${adb_dnsfile}"
@@ -944,14 +944,14 @@ f_switch() {
 			printf "%b" "${adb_dnsheader}" >"${adb_dnsdir}/${adb_dnsfile}"
 			done="true"
 		fi
-	elif [ "${mode}" = "resume" ] && [ "${status}" = "paused" ]; then
+	elif [ "${status}" = "paused" ] && [ "${mode}" = "resume" ]; then
 		if [ "${adb_dnsshift}" = "0" ] && [ -f "${adb_backupdir}/${adb_dnsfile}" ]; then
 			mv -f "${adb_backupdir}/${adb_dnsfile}" "${adb_finaldir}/${adb_dnsfile}"
-			f_count "resume" "${adb_finaldir}/${adb_dnsfile}"
+			f_count "switch" "${adb_finaldir}/${adb_dnsfile}"
 			done="true"
 		elif [ "${adb_dnsshift}" = "1" ] && [ ! -L "${adb_finaldir}/${adb_dnsfile}" ]; then
 			ln -fs "${adb_finaldir}/${adb_dnsfile}" "${adb_dnsdir}/${adb_dnsfile}"
-			f_count "resume" "${adb_finaldir}/${adb_dnsfile}"
+			f_count "switch" "${adb_finaldir}/${adb_dnsfile}"
 			done="true"
 		fi
 	fi
@@ -959,11 +959,11 @@ f_switch() {
 		f_dnsup
 		f_jsnup "${mode}"
 		f_log "info" "${mode} adblock service"
-		f_rmtemp
 	else
-		f_jsnup "stopped"
-		f_rmdns
+		f_count "switch" "${adb_finaldir}/${adb_dnsfile}"
+		f_jsnup "${status}"
 	fi
+	f_rmtemp
 }
 
 # query blocklist for certain (sub-)domains
