@@ -1,0 +1,38 @@
+name: Test Formalities
+
+on:
+  pull_request_target:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  formalities:
+    name: Test Formalities
+    uses: openwrt/actions-shared-workflows/.github/workflows/formal.yml@main
+    with:
+      post_comment: true
+
+  label_formality_status:
+    name: Add Formality Check Labels
+    runs-on: ubuntu-slim
+    needs: formalities
+    if: always()
+
+    steps:
+      - name: Add 'not following guidelines' label
+        if: needs.formalities.result == 'failure'
+        uses: buildsville/add-remove-label@v2.0.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          labels: "not following guidelines"
+          type: add
+
+      - name: Remove 'not following guidelines' label
+        if: needs.formalities.result == 'success'
+        uses: buildsville/add-remove-label@v2.0.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          labels: "not following guidelines"
+          type: remove
