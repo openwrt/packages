@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=atlas-sw-probe
 PKG_VERSION:=5080
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/RIPE-NCC/ripe-atlas-software-probe.git
@@ -30,7 +30,7 @@ define Package/atlas-sw-probe
   CATEGORY:=Network
   TITLE:=RIPE Atlas software probe
   URL:=https://atlas.ripe.net/about/probes/
-  DEPENDS:=+atlas-probe +PACKAGE_dropbear:dropbearconvert
+  DEPENDS:=+atlas-probe +openssh-keygen
 endef
 
 define Package/atlas-sw-probe/description
