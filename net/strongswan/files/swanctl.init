@@ -464,6 +464,7 @@ config_remote() {
 	local send_certreq
 	local remote_ca_certs
 	local pools
+	local aggressive
 	local eap_id
 
 	config_get_bool enabled "$conf" enabled 0
@@ -487,6 +488,7 @@ config_remote() {
 	config_get ca_cert "$conf" ca_cert ""
 	config_get rekeytime "$conf" rekeytime
 	config_get overtime "$conf" overtime
+	config_get aggressive "$1" aggressive ""
 	config_get send_cert "$conf" send_cert
 	config_get_bool send_certreq "$conf" send_certreq 1
 	config_get eap_id "$conf" eap_id "%any"
@@ -508,6 +510,17 @@ config_remote() {
 		fragmentation=
 		;;
 	esac
+
+	if [ "$keyexchange" = "ikev1" ]; then
+		case "$aggressive" in
+		yes|no|"")
+			;;
+		*)
+			fatal "aggressive value $aggressive invalid"
+			aggressive=""
+			;;
+		esac
+	fi
 
 	[ "$gateway" = "any" ] && remote_gateway="%any" || remote_gateway="$gateway"
 
@@ -548,6 +561,7 @@ config_remote() {
 	[ -n "$local_sourceip" ] && swanctl_xappend2 "vips = $local_sourceip"
 	[ -n "$fragmentation" ] && swanctl_xappend2 "fragmentation = $fragmentation"
 	[ -n "$pools" ] && swanctl_xappend2 "pools = $pools"
+	[ -n "$aggressive" ] && swanctl_xappend2 "aggressive = $aggressive"
 
 	local local_auth_method="$auth_method"
 	[ "$auth_method" = "eap-mschapv2" ] && local_auth_method="pubkey"
