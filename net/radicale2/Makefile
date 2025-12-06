@@ -12,6 +12,7 @@ PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:radicale:radicale
 
 PYPI_NAME:=Radicale
+PYPI_SOURCE_NAME:=radicale
 PKG_HASH:=8fd07806e3e4f873b63838dfee69bf0283216943df6051cf80a22f11d7a7eda4
 
 include ../../lang/python/pypi.mk
