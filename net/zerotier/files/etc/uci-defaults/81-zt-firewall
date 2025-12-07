@@ -1,0 +1,30 @@
+#!/bin/sh
+
+FW_PATH="/var/run/zerotier-one/_fw4"
+
+uci -q batch <<-EOF > "/dev/null"
+	delete firewall.zerotier_input
+	set firewall.zerotier_input="include"
+	set firewall.zerotier_input.type="nftables"
+	set firewall.zerotier_input.path="$FW_PATH/input.nft"
+	set firewall.zerotier_input.position="chain-pre"
+	set firewall.zerotier_input.chain="input"
+
+	delete firewall.zerotier_srcnat
+	set firewall.zerotier_srcnat="include"
+	set firewall.zerotier_srcnat.type="nftables"
+	set firewall.zerotier_srcnat.path="$FW_PATH/srcnat.nft"
+	set firewall.zerotier_srcnat.position="chain-pre"
+	set firewall.zerotier_srcnat.chain="srcnat"
+
+	delete firewall.zerotier_forward
+	set firewall.zerotier_forward="include"
+	set firewall.zerotier_forward.type="nftables"
+	set firewall.zerotier_forward.path="$FW_PATH/forward.nft"
+	set firewall.zerotier_forward.position="chain-pre"
+	set firewall.zerotier_forward.chain="forward"
+
+	commit firewall
+EOF
+
+exit 0

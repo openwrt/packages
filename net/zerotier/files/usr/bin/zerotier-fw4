@@ -1,0 +1,77 @@
+#!/bin/sh
+
+FW_PATH="/var/run/zerotier-one/_fw4"
+[ -d "$FW_PATH" ] || mkdir -p "$FW_PATH"
+
+while getopts "i:s" arg; do
+	case "$arg" in
+	i)
+		iface="$OPTARG"
+		[ -n "$iface" ] || continue
+
+		network_id="$(zerotier-cli -j listnetworks | jsonfilter -qe "@[@.portDeviceName=\"$iface\"].nwid")"
+		[ -n "$network_id" ] || continue
+
+		network_cfg="$(uci show "zerotier" | awk "/$network_id/ && !found {split(\$0, conf, /[.=]/); print conf[2]; found=1}")"
+		[ -n "$network_cfg" ] || continue
+
+		if [ "$(uci -q get zerotier."$network_cfg".fw_allow_input)" = "1" ]; then
+			grep -q "$iface" "$FW_PATH/input.nft" 2>"/dev/null" && continue
+			rule="iifname $iface counter accept comment \"!fw4: Accept ZeroTier input $iface\""
+			echo "$rule" >> "$FW_PATH/input.nft"
+			nft insert rule inet fw4 input "$rule"
+		fi
+
+		if [ "$(uci -q get zerotier."$network_cfg".fw_allow_forward)" = "1" ]; then
+			grep -q "$iface" "$FW_PATH/forward.nft" 2>"/dev/null" && continue
+			fwd_ifaces="$(uci -q get zerotier."$network_cfg".fw_forward_ifaces)"
+			rule="iifname $iface counter accept comment \"!fw4: Accept ZeroTier input forward $iface\""
+			[ -n "$fwd_ifaces" ] && rule="oifname { ${fwd_ifaces// /, } } $rule"
+			echo "$rule" >> "$FW_PATH/forward.nft"
+			nft insert rule inet fw4 forward "$rule"
+
+			rule="oifname $iface counter accept comment \"!fw4: Accept ZeroTier output forward $iface\""
+			[ -n "$fwd_ifaces" ] && rule="iifname { ${fwd_ifaces// /, } } $rule"
+			echo "$rule" >> "$FW_PATH/forward.nft"
+			nft insert rule inet fw4 forward "$rule"
+		fi
+
+		if [ "$(uci -q get zerotier."$network_cfg".fw_allow_masq)" = "1" ]; then
+			grep -q "$iface" "$FW_PATH/srcnat.nft" 2>"/dev/null" && continue
+			masq_ifaces="$(uci -q get zerotier."$network_cfg".fw_masq_ifaces)"
+			rule="oifname $iface counter masquerade comment \"!fw4: Masquerade ZeroTier traffic $iface\""
+			[ -n "$masq_ifaces" ] && rule="iifname { ${masq_ifaces// /, } } $rule"
+			echo "$rule" >> "$FW_PATH/srcnat.nft"
+			nft insert rule inet fw4 srcnat "$rule"
+		fi
+		;;
+	s)
+		[ "$(uci -q get zerotier.global.fw_allow_input)" = "1" ] || continue
+
+		wait=0
+		until [ "$wait" -ge "10" ]; do
+			zerotier_info="$(zerotier-cli -j info | jsonfilter -qe "@.config.settings")"
+			[ -n "$zerotier_info" ] && break
+			sleep 2s
+			wait="$(( wait +2 ))"
+		done
+		[ -n "$zerotier_info" ] || continue
+
+		for pp in "primaryPort" "secondaryPort"; do
+			pport="$(echo "$zerotier_info" | jsonfilter -qe "@.$pp")"
+			[ -z "$pport" ] && continue
+			grep -q "$pport" "$FW_PATH/input.nft" 2>"/dev/null" && continue
+			network="udp"
+			[ "$pp" = "primaryPort" ] && network="$network, tcp"
+			echo "meta l4proto { $network } th dport $pport counter accept comment \"!fw4: Accept ZeroTier input $pport ($pp)\"" >> "$FW_PATH/input.nft"
+			nft insert rule inet fw4 "input meta l4proto { $network } th dport $pport counter accept comment \"!fw4: Accept ZeroTier input $pport ($pp)\""
+		done
+		;;
+	*)
+		echo "Usage: $0 -i <interface> | -s"
+		echo "  -i <interface> : Generate rules for the specified interface"
+		echo "  -s             : Generate rules for the zerotier service"
+		exit 1
+		;;
+	esac
+done

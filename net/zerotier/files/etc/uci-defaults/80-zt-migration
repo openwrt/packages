@@ -1,0 +1,37 @@
+#!/bin/sh
+
+# Convert the join list into networks
+nets=$(uci -q get zerotier.@zerotier[0].join)
+
+if [ -n "$nets" ]; then
+	nat="$(uci -q get zerotier.@zerotier[0].nat)"
+
+	for net in ${nets}; do
+		sid="$(uci add zerotier network)"
+		uci set zerotier."${sid}".id="${net}"
+		uci set zerotier."${sid}".fw_allow_input="${nat}"
+		uci set zerotier."${sid}".fw_allow_forward="${nat}"
+		uci set zerotier."${sid}".fw_allow_masq="${nat}"
+	done
+	uci delete zerotier.@zerotier[0].join
+
+	# Rename local conf (only if defined)
+	uci -q rename zerotier.@zerotier[0].local_conf='local_conf_path'
+
+	# Rename nat
+	uci -q rename zerotier.@zerotier[0].nat='fw_allow_input'
+
+	# Rename configuration to global
+	uci rename zerotier.@zerotier[0]='global'
+
+	# Set default config path
+	uci set zerotier.global.config_path='/etc/zerotier'
+
+	# Commit all changes
+	uci commit zerotier
+
+	# Move to new config path
+	[ -d "/etc/config/zero" ] && mv "/etc/config/zero" "/etc/zerotier"
+fi
+
+exit 0
