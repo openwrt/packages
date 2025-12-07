@@ -21,6 +21,7 @@ include $(INCLUDE_DIR)/cmake.mk
 
 CMAKE_OPTIONS += \
 	-DBUILD_TESTS=OFF \
+	-DBUILD_WITH_ALSA=ON \
 	-DBUILD_WITH_AVAHI=OFF \
 	-DBUILD_WITH_PULSE=OFF
 
@@ -28,7 +29,7 @@ define Package/snapcast/Default
   SECTION:=sound
   CATEGORY:=Sound
   TITLE:=Synchronous multiroom audio player
-  DEPENDS:=+AUDIO_SUPPORT:alsa-lib +libexpat +libatomic +libogg +libflac +libopus +boost +libsoxr
+  DEPENDS:=+alsa-lib +libexpat +libatomic +libogg +libflac +libopus +boost +libsoxr
   URL:=https://github.com/badaix/snapcast
 endef
 
