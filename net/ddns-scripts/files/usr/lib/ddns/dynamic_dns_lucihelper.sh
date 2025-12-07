@@ -149,7 +149,7 @@ case "$1" in
 	start)
 		[ -z "$SECTION" ] &&  usage_err "command 'start': 'SECTION' not set"
 		if [ "$VERBOSE" -eq 0 ]; then	# start in background
-			"$DDNSPRG" -v 0 -S "$SECTION" -- start &
+			("$DDNSPRG" -v 0 -S "$SECTION" -- start >/dev/null 2>&1 &)
 		else
 			"$DDNSPRG" -v "$VERBOSE" -S "$SECTION" -- start
 		fi
@@ -160,7 +160,7 @@ case "$1" in
 	restart)
 		"$DDNSPRG" -- stop
 		sleep 1
-		"$DDNSPRG" -- start
+		"$DDNSPRG" -- start >/dev/null 2>&1
 		;;
 	stop)
 		if [ -n "$SECTION" ]; then
