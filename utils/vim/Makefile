@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=vim
 PKG_VERSION:=9.1.1918
 PKG_XXD_VERSION:=2025.08.24
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 VIMVER:=91
 
 PKG_SOURCE_PROTO:=git
@@ -126,7 +126,8 @@ CONFIGURE_ARGS += \
 	--disable-libsodium \
 	--disable-selinux \
 	--with-tlib=ncurses \
-	--with-compiledby="non-existent-hostname-compiled"
+	--with-compiledby="non-existent-hostname-compiled" \
+	--with-wayland=no
 
 CONFIGURE_VARS += \
 	ac_cv_header_elf_h=no \
