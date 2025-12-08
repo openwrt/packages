@@ -10,15 +10,15 @@ else
 fi
 
 # Transition resolver_set depending on dnsmasq support
-if [ "$(uci_get pbr config resolver_set)" != 'dnsmasq.nftset' ]; then
+if [ "$(uci_get "$packageName" 'config' 'resolver_set')" != 'dnsmasq.nftset' ]; then
 	if check_dnsmasq_nftset; then
 		output "Setting resolver_set to 'dnsmasq.nftset'... "
-		uci_set pbr config resolver_set 'dnsmasq.nftset' && output_okn || output_failn
+		uci_set "$packageName" 'config' 'resolver_set' 'dnsmasq.nftset' && output_okn || output_failn
 	else
 		output "Setting resolver_set to 'none'... "
-		uci_set pbr config resolver_set 'none' && output_okn || output_failn
+		uci_set "$packageName" 'config' 'resolver_set' 'none' && output_okn || output_failn
 	fi
-	uci_commit pbr
+	uci_commit "$packageName"
 fi
 
 exit 0
