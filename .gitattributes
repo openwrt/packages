@@ -1,0 +1,14 @@
+文件路径：.gitattributes
+
+文件内容：
+# 保持 ZeroTier init 脚本的可执行权限
+net/zerotier/files/etc/init.d/zerotier text eol=lf
+net/zerotier/files/etc/init.d/zerotier -crlf
+
+# 所有 init.d 脚本保持可执行
+net/zerotier/files/etc/init.d/* text eol=lf
+net/zerotier/files/etc/init.d/* -crlf
+
+# 所有脚本文件
+*.sh text eol=lf
+*.sh -crlf
