@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-babel
 PKG_VERSION:=2.17.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=babel
 PKG_HASH:=0c54cffb19f690cdcc52a3b50bcbf71e07a808d1c80d549f2459b9d2cf0afb9d
@@ -40,7 +40,6 @@ define Package/python3-babel
   URL:=https://babel.pocoo.org/
   DEPENDS:= \
     +python3-decimal \
-    +python3-distutils \
     +python3-email \
     +python3-light \
     +python3-logging \
