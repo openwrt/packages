@@ -1,5 +1,9 @@
 #!/bin/sh /etc/rc.common
-
+# -*- mode: shell-script; sh-indentation: 2; sh-basic-offset: 2; -*-
+#
+# ZeroTier init script for OpenWrt
+# License: GPL
+#
 START=90
 
 USE_PROCD=1
