@@ -9,6 +9,10 @@ else
 	printf "%b: pbr init.d file (%s) not found! \n" '\033[0;31mERROR\033[0m' "$pbrFunctionsFile"
 fi
 
-setup_netifd 'on_install'
+if netifd 'check'; then
+	rc_procd stop_service 'on_netifd_install'
+	netifd 'install'
+	rc_procd start_service 'on_netifd_install'
+fi
 
 exit 0

@@ -4,8 +4,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pbr
-PKG_VERSION:=1.2.0
-PKG_RELEASE:=2
+PKG_VERSION:=1.2.1
+PKG_RELEASE:=35
 PKG_LICENSE:=AGPL-3.0-or-later
 PKG_MAINTAINER:=Stan Grishin <stangri@melmac.ca>
 
@@ -81,28 +81,29 @@ define Package/pbr/default/install
 	$(INSTALL_DIR) $(1)/usr/share/nftables.d
 	$(CP) ./files/usr/share/nftables.d/* $(1)/usr/share/nftables.d/
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN)  ./files/etc/uci-defaults/90-pbr $(1)/etc/uci-defaults/90-pbr
+	$(INSTALL_BIN) ./files/etc/uci-defaults/90-pbr $(1)/etc/uci-defaults/90-pbr
+	$(INSTALL_BIN) ./files/etc/uci-defaults/91-pbr-nft $(1)/etc/uci-defaults/91-pbr-nft
+	$(INSTALL_BIN) ./files/etc/uci-defaults/99-pbr-version $(1)/etc/uci-defaults/99-pbr-version
 endef
 
 define Package/pbr/install
 $(call Package/pbr/default/install,$(1))
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN)  ./files/etc/uci-defaults/91-pbr-nft $(1)/etc/uci-defaults/91-pbr-nft
 endef
 
 define Package/pbr-netifd/install
 $(call Package/pbr/default/install,$(1))
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN)  ./files/etc/uci-defaults/91-pbr-netifd $(1)/etc/uci-defaults/91-pbr-netifd
 endef
+#	$(INSTALL_BIN)  ./files/etc/uci-defaults/91-pbr-netifd $(1)/etc/uci-defaults/91-pbr-netifd
 
 define Package/pbr/postinst
 #!/bin/sh
 # check if we are on real system
 if [ -z "$${IPKG_INSTROOT}" ]; then
-	chmod -x /etc/init.d/pbr || true
-	fw4 -q reload || true
-	chmod +x /etc/init.d/pbr || true
+	/etc/init.d/pbr netifd check && { 
+		echo -n "Reinstalling pbr netifd integration... "
+		/etc/init.d/pbr netifd install >/dev/null 2>&1 && echo "OK" || echo "FAIL"
+	} 
 	echo -n "Installing rc.d symlink for pbr... "
 	/etc/init.d/pbr enable && echo "OK" || echo "FAIL"
 fi
@@ -114,9 +115,13 @@ define Package/pbr/prerm
 # check if we are on real system
 if [ -z "$${IPKG_INSTROOT}" ]; then
 	echo -n "Stopping pbr service... "
-	/etc/init.d/pbr stop quiet >/dev/null 2>&1 && echo "OK" || echo "FAIL"
+	/etc/init.d/pbr stop >/dev/null 2>&1 && echo "OK" || echo "FAIL"
 	echo -n "Removing rc.d symlink for pbr... "
 	/etc/init.d/pbr disable && echo "OK" || echo "FAIL"
+	/etc/init.d/pbr netifd check && { 
+		echo -n "Uninstalling pbr netifd integration... "
+		/etc/init.d/pbr netifd uninstall >/dev/null 2>&1 && echo "OK" || echo "FAIL"
+	} 
 fi
 exit 0
 endef
@@ -134,10 +139,9 @@ define Package/pbr-netifd/postinst
 #!/bin/sh
 # check if we are on real system
 if [ -z "$${IPKG_INSTROOT}" ]; then
-	chmod -x /etc/init.d/pbr || true
-	fw4 -q reload || true
-	chmod +x /etc/init.d/pbr || true
-	echo -n "Installing rc.d symlink for pbr-netifd... "
+	echo -n "Installing pbr integration with netifd... "
+	/etc/init.d/pbr netifd check && /etc/init.d/pbr netifd install >/dev/null 2>&1 && echo "OK" || echo "FAIL"
+	echo -n "Installing rc.d symlink for pbr... "
 	/etc/init.d/pbr enable && echo "OK" || echo "FAIL"
 fi
 exit 0
@@ -147,31 +151,12 @@ define Package/pbr-netifd/prerm
 #!/bin/sh
 # check if we are on real system
 if [ -z "$${IPKG_INSTROOT}" ]; then
-	echo -n "Stopping pbr-netifd service... "
-	/etc/init.d/pbr stop quiet >/dev/null 2>&1 && echo "OK" || echo "FAIL"
+	echo -n "Stopping pbr service... "
+	/etc/init.d/pbr stop >/dev/null 2>&1 && echo "OK" || echo "FAIL"
 	echo -n "Removing rc.d symlink for pbr... "
 	/etc/init.d/pbr disable && echo "OK" || echo "FAIL"
-	echo -n "Cleaning up /etc/iproute2/rt_tables... "
-	if sed -i '/pbr_/d' /etc/iproute2/rt_tables; then
-		echo "OK"
-	else
-		echo "FAIL"
-	fi
-	echo -n "Cleaning up /etc/config/network... "
-	uci -q delete 'network.pbr_default' || true
-	uci -q delete 'network.pbr_default6' || true
-	uci commit network || true
-	if sed -i '/ip.table.*pbr_/d' /etc/config/network; then
-		echo "OK"
-	else
-		echo "FAIL"
-	fi
-	echo -n "Restarting Network... "
-	if /etc/init.d/network restart >/dev/null 2>&1; then
-		echo "OK"
-	else
-		echo "FAIL"
-	fi
+	echo -n "Uninstalling pbr integration with netifd... "
+	/etc/init.d/pbr netifd check && /etc/init.d/pbr netifd uninstall >/dev/null 2>&1 && echo "OK" || echo "FAIL"
 fi
 exit 0
 endef
