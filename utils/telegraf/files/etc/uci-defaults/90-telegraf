@@ -3,6 +3,6 @@
 
 [ -f /etc/telegraf.conf ] && exit 0
 
-/usr/bin/telegraf config create > /etc/telegraf.conf
+HOME=/root /usr/bin/telegraf config create > /etc/telegraf.conf
 
 exit 0
