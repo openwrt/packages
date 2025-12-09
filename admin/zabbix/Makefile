@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
 PKG_VERSION:=7.0.12
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.zabbix.com/zabbix/sources/stable/$(basename $(PKG_VERSION))/ \
@@ -334,6 +334,8 @@ Package/zabbix-agentd-gnutls/conffiles = $(Package/zabbix-agentd/conffiles)
 
 define Package/zabbix-server/conffiles
 /etc/zabbix_server.conf
+/etc/config/zabbix_server
+/etc/sysctl.d/90-zabbix-discovery-workers.conf
 endef
 Package/zabbix-server-openssl/conffiles = $(Package/zabbix-server/conffiles)
 Package/zabbix-server-gnutls/conffiles = $(Package/zabbix-server/conffiles)
@@ -422,6 +424,12 @@ Package/zabbix-get-gnutls/install = $(Package/zabbix-get/install)
 define Package/zabbix-server/install
 	$(call Package/zabbix/install/sbin,$(1),server)
 	$(call Package/zabbix/install/etc,$(1),server)
+	$(call Package/zabbix/install/init.d,$(1),server)
+
+	$(INSTALL_DIR) $(1)/etc/sysctl.d
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/zabbix-discovery-workers.conf.sysctl $(1)/etc/sysctl.d/90-zabbix-discovery-workers.conf
+	$(INSTALL_CONF) files/zabbix_server.config $(1)/etc/config/zabbix_server
 endef
 Package/zabbix-server-openssl/install = $(Package/zabbix-server/install)
 Package/zabbix-server-gnutls/install = $(Package/zabbix-server/install)
