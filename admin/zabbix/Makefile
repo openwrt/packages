@@ -194,6 +194,7 @@ define Package/zabbix-server-frontend
     +php8-mod-gd \
     +php8-mod-bcmath \
     +php8-mod-ctype \
+    +php8-mod-filter \
     +php8-mod-xmlreader \
     +php8-mod-xmlwriter \
     +php8-mod-session \
