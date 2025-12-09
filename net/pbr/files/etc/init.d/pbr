@@ -286,10 +286,11 @@ is_supported_protocol(){ grep -qi "^${1:--}" /etc/protocols;}
 is_pptp() { local p; network_get_protocol p "$1"; [ "${p:0:4}" = "pptp" ]; }
 is_softether() { local d; network_get_device d "$1"; [ "${d:0:4}" = "vpn_" ]; }
 is_supported_interface() { { is_lan "$1" || is_disabled_interface "$1"; } && return 1; str_contains_word "$supported_interface" "$1" || { ! is_ignored_interface "$1" && { is_wan "$1" || is_wan6 "$1" || is_tunnel "$1"; }; } || is_ignore_target "$1" || is_xray "$1"; }
+is_netbird() { local d; network_get_device d "$1"; [ "${d:0:2}" = "wt" ]; }
 is_tailscale() { local d; network_get_device d "$1"; [ "${d:0:9}" = "tailscale" ]; }
 is_tor() { [ "$(str_to_lower "$1")" = "tor" ]; }
 is_tor_running() { ! is_ignored_interface 'tor' && [ -s "$torConfigFile" ] && str_contains "$(ubus call service list "{ 'name': 'tor' }" | jsonfilter -e '@.tor.instances.*.running')" 'true' && return 0 || return 1; }
-is_tunnel() { is_dslite "$1" || is_l2tp "$1" || is_oc "$1" || is_ovpn "$1" || is_pptp "$1" || is_softether "$1" || is_tailscale "$1" || is_tor "$1" || is_wg "$1"; }
+is_tunnel() { is_dslite "$1" || is_l2tp "$1" || is_oc "$1" || is_ovpn "$1" || is_pptp "$1" || is_softether "$1" || is_netbird "$1" || is_tailscale "$1" || is_tor "$1" || is_wg "$1"; }
 is_url() { is_url_file "$1" || is_url_dl "$1"; }
 is_url_dl() { is_url_ftp "$1" || is_url_http "$1" || is_url_https "$1"; }
 is_url_file() { [ "$1" != "${1#file://}" ]; }
