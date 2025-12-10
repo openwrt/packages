@@ -54,6 +54,40 @@ get_ping_family_flag() {
 	echo $family
 }
 
+get_iface_or_ip() {
+    ifname="$1"
+    family="$2"
+    ipaddr=""
+
+    case "$ifname" in
+        @*)
+            alias="${ifname#@}"
+
+            case "$family" in
+                ipv4)
+                    ipaddr="$(ifstatus "$alias" | jsonfilter -e '@["ipv4-address"][0].address')"
+                    ;;
+                ipv6)
+                    ipaddr="$(ifstatus "$alias" | jsonfilter -e '@["ipv6-address"][0].address')"
+                    [ -z "$ipaddr" ] && ipaddr="$(ifstatus "$alias" | jsonfilter -e '@["ipv6-prefix-assignment"][0]["local-address"].address')"
+                    ;;
+                any|*)
+                    ipaddr="$(get_iface_or_ip "$ifname" ipv4)"
+                    [ -z "$ipaddr" ] && ipaddr="$(get_iface_or_ip "$ifname" ipv6)"
+                    [ -z "$ipaddr" ] && ipaddr="$alias" #Last Ditch
+                    ;;
+            esac
+
+            echo "$ipaddr"
+            ;;
+        *)
+            # normal interface, just return it
+            echo "$ifname"
+            ;;
+    esac
+}
+
+
 reboot_now() {
 	reboot &
 
@@ -102,7 +136,7 @@ watchcat_monitor_network() {
 	ping_hosts="$2"
 	ping_frequency_interval="$3"
 	ping_size="$4"
-	iface="$5"
+	iface_or_alias="$5"
 	mm_iface_name="$6"
 	mm_iface_unlock_bands="$7"
 	address_family="$8"
@@ -133,6 +167,8 @@ watchcat_monitor_network() {
 		time_now="$(cat /proc/uptime)"
 		time_now="${time_now%%.*}"
 		time_lastcheck="$time_now"
+
+		iface="$(get_iface_or_ip "$iface_or_alias" "$address_family")"
 
 		for host in $ping_hosts; do
 			if [ "$iface" != "" ]; then
