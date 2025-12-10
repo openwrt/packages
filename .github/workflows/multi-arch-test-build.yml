@@ -11,33 +11,6 @@ jobs:
   formalities:
     name: Test Formalities
     uses: openwrt/actions-shared-workflows/.github/workflows/formal.yml@main
-    with:
-      post_comment: true
-
-  label_formality_status:
-    name: Add formality check labels
-    runs-on: ubuntu-slim
-    needs: formalities
-    if: always()
-    permissions:
-      pull-requests: write
-
-    steps:
-      - name: Add 'not following guidelines' label
-        if: needs.formalities.result == 'failure'
-        uses: buildsville/add-remove-label@v2.0.1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          labels: "not following guidelines"
-          type: add
-
-      - name: Remove 'not following guidelines' label
-        if: needs.formalities.result == 'success'
-        uses: buildsville/add-remove-label@v2.0.1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          labels: "not following guidelines"
-          type: remove
 
   build:
     name: Feeds Package Test Build
