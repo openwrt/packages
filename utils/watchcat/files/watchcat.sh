@@ -83,8 +83,7 @@ watchcat_restart_modemmanager_iface() {
 
 watchcat_restart_network_iface() {
 	logger -p daemon.info -t "watchcat[$$]" "Restarting network interface: \"$1\"."
-	ip link set "$1" down
-	ip link set "$1" up
+	ifup "$1"
 }
 
 watchcat_run_script() {
