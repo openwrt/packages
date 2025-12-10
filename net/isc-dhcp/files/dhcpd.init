@@ -154,7 +154,7 @@ EOF
 }
 
 create_empty_zone() {
-	local zone error zpath
+	local zone error zpath command
 	zone="$1"
 	zpath="$dyndir/db.$zone"
 
@@ -167,7 +167,15 @@ create_empty_zone() {
 	chown bind:bind "$zpath" || return 1
 	chmod 0664 "$zpath" || return 1
 
-	if ! error=$(rndc modzone $zone "{
+	# if the zone doesn't exist, we need to add it, otherwise we need to
+	# create it.
+	if ! rndc zonestatus $zone >/dev/null 2>&1; then
+		command="addzone"
+	else
+		command="modzone"
+	fi
+
+	if ! error=$(rndc $command $zone "{
 		type primary;
 		file \"$zpath\";
 		update-policy {
