@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=erlang
-PKG_VERSION:=28.0.3
+PKG_VERSION:=28.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=otp_src_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/erlang/otp/releases/download/OTP-$(PKG_VERSION)
-PKG_HASH:=0cdf3b44e327439ea6677e61e06f28a0f82ea080af2dcbd665bc5a945b167012
+PKG_HASH:=1956ad6584678b631ab4f9b8aebe2dac037cd7401abb44564a01134ff0ac5bed
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE.txt
@@ -35,13 +35,15 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/erlang/config
 config ERLANG_JIT
-    bool
-    depends on (x86_64||aarch64)
-    default y
+	depends on PACKAGE_erlang
+	depends on (x86_64||aarch64)
+	bool
+	default y
 
 config ERLANG_SCTP
-    bool "SCTP protocol support"
-    default n
+	depends on PACKAGE_erlang && IPV6
+	bool "SCTP protocol support"
+	default n
 endef
 
 ## Host
@@ -78,7 +80,7 @@ endef
 
 define Package/erlang
 $(call Package/erlang/Default)
-  DEPENDS+= +libncurses +librt +zlib +ERLANG_SCTP:libsctp +ERLANG_JIT:libstdcpp
+  DEPENDS:= +libncurses +librt +zlib +(IPV6&&ERLANG_SCTP):libsctp +ERLANG_JIT:libstdcpp
   PROVIDES:= erlang-erts erlang-kernel erlang-stdlib
 endef
 
