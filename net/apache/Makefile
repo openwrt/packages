@@ -155,7 +155,7 @@ endef
 define Package/apache-utils
 $(call Package/apache/Default)
   TITLE:=Apache utilities
-  DEPENDS:=apache
+  DEPENDS:=+libapr +libaprutil +libuuid
 endef
 
 define Package/apache-utils/description
@@ -341,7 +341,8 @@ define Package/apache-suexec/install
 endef
 
 define Package/apache-utils/install
-	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin
 	$(INSTALL_BIN) \
 		$(PKG_INSTALL_DIR)/usr/sbin/{checkgid,envvars*,htcacheclean,rotatelogs} \
 									$(1)/usr/sbin
