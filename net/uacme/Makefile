@@ -58,6 +58,12 @@ define Package/uacme-ualpn
   URL:=https://github.com/ndilieto/uacme
 endef
 
+define Package/uacme-dnsapi-adapter
+  $(call Package/uacme/Default)
+  DEPENDS:= +uacme +acme-acmesh-dnsapi +curl
+  TITLE:=adapter script for use acme.sh dnsapi with uacme
+endef
+
 define Package/uacme/Default/description
   lightweight client for the RFC8555 ACMEv2 protocol, written in plain C code
   with minimal dependencies (libcurl and one of GnuTLS, OpenSSL or mbedTLS).
@@ -104,9 +110,7 @@ define Package/uacme/install
 	 $(1)/usr/lib/acme/client
 
 	$(INSTALL_BIN) ./files/hook.sh $(1)/usr/lib/acme/hook
-	$(INSTALL_BIN) ./files/dnschalhook.sh $(1)/usr/lib/acme/client/dnschalhook.sh
 	$(INSTALL_BIN) ./files/httpchalhook.sh $(1)/usr/lib/acme/client/httpchalhook.sh
-	$(INSTALL_BIN) ./files/dnsapi_helper.sh $(1)/usr/lib/acme/client/dnsapi_helper.sh
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/uacme $(1)/usr/sbin/uacme
 endef
 
@@ -118,6 +122,14 @@ define Package/uacme-ualpn/install
 
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ualpn $(1)/usr/sbin/ualpn
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ualpn.sh $(1)/usr/lib/acme/client/ualpn.sh
+endef
+
+define Package/uacme-dnsapi-adapter/install
+	$(INSTALL_DIR) \
+	 $(1)/usr/lib/acme/client
+
+  $(INSTALL_BIN) ./files/dnschalhook.sh $(1)/usr/lib/acme/client/dnschalhook.sh
+  $(INSTALL_BIN) ./files/dnsapi_helper.sh $(1)/usr/lib/acme/client/dnsapi_helper.sh
 endef
 
 $(eval $(call BuildPackage,uacme))
