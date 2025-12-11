@@ -257,7 +257,7 @@ pbr_get_gateway4() {
 }
 pbr_get_gateway6() {
 	local iface="$2" dev="$3" gw
-	[ "$iface" = "$uplink_interface" ] && iface="$uplink_interface6"  
+	[ "$iface" = "$uplink_interface" ] && iface="$uplink_interface6"
 	network_get_gateway6 gw "$iface" true
 	if [ -z "$gw" ] || [ "$gw" = '::/0' ] || [ "$gw" = '::0/0' ] || [ "$gw" = '::' ]; then
 		gw="$(ip -6 a list dev "$dev" 2>/dev/null | grep inet6 | grep 'scope global' | awk '{print $2}')"
@@ -813,7 +813,7 @@ nft_file() {
 		;;
 		create)
 			rm -f "$nftTempFile" "$nftPermFile"
-			for i in "$nftTempFile" "$nftPermFile"; do 
+			for i in "$nftTempFile" "$nftPermFile"; do
 				mkdir -p "${i%/*}"
 			done
 			{ echo '#!/usr/sbin/nft -f'; echo ''; } > "$nftTempFile"
@@ -847,7 +847,7 @@ nft_file() {
 		;;
 		netifd_create)
 			rm -f "$nftTempFile" "$nftNetifdPermFile"
-			for i in "$nftTempFile" "$nftNetifdPermFile"; do 
+			for i in "$nftTempFile" "$nftNetifdPermFile"; do
 				mkdir -p "${i%/*}"
 			done
 			{ echo '#!/usr/sbin/nft -f'; echo ''; } > "$nftTempFile"
@@ -884,7 +884,7 @@ nftset() {
 	nftset4="${nftPrefix}${iface:+_$iface}_4${target:+_$target}${type:+_$type}${uid:+_$uid}"
 	nftset6="${nftPrefix}${iface:+_$iface}_6${target:+_$target}${type:+_$type}${uid:+_$uid}"
 
-	if [ "${#nftset4}" -gt '255' ]; then 
+	if [ "${#nftset4}" -gt '255' ]; then
 		json add error 'errorNftsetNameTooLong' "$nftset4"
 		return 1
 	fi
@@ -998,7 +998,7 @@ nftset() {
 	fi
 }
 
-cleanup_rt_tables() { 
+cleanup_rt_tables() {
 	local i
 # shellcheck disable=SC2013
 	for i in $(grep -oh "${ipTablePrefix}_.*" "$rtTablesFile"); do
@@ -1204,7 +1204,7 @@ resolver() {
 				;;
 				compare_hash)
 					[ -z "$resolverSetSupported" ] && return 1
-					uci_changes 'dhcp' && uci_commit 'dhcp' 
+					uci_changes 'dhcp' && uci_commit 'dhcp'
 					local resolverNewHash
 					if [ -s "$packageDnsmasqFile" ]; then
 						resolverNewHash="$(md5sum "$packageDnsmasqFile" | awk '{ print $1; }')"
@@ -1238,8 +1238,8 @@ netifd() {
 		local iface="$1" action="${2:-install}"
 		local rt_name="${ipTablePrefix}_${iface%6}"
 
-		uci_remove 'network' "${rt_name}_ipv4" 2>/dev/null
-		uci_remove 'network' "${rt_name}_ipv6" 2>/dev/null
+		uci_remove 'network' 'rule' "${rt_name}_ipv4"  2>/dev/null
+		uci_remove 'network' 'rule6' "${rt_name}_ipv6" 2>/dev/null
 
 		if [ -n "$netifd_strict_enforcement" ] && str_contains "$netifd_interface_local" "$iface"; then
 			if [ -n "$netifd_interface_default" ]; then
@@ -1275,7 +1275,7 @@ netifd() {
 					uci_set 'network' "${rt_name}_ipv4" 'lookup' "${rt_name}"
 					uci_set 'network' "${rt_name}_ipv4" 'mark' "${mark}"
 					uci_set 'network' "${rt_name}_ipv4" 'mask' "${fw_mask}"
-					if [ -n "$ipv6_enabled"]; then
+					if [ -n "$ipv6_enabled" ]; then
 						uci_add 'network' 'rule6' "${rt_name}_ipv6"
 						uci_set 'network' "${rt_name}_ipv6" 'priority' "${priority}"
 						uci_set 'network' "${rt_name}_ipv6" 'lookup' "${rt_name}"
@@ -1408,7 +1408,7 @@ dns_policy_routing() {
 	fi
 
 	if { is_ipv4 "$(str_first_word "$src_addr")" && [ -z "$dest_dns_ipv4" ]; } || \
-		{ is_ipv6 "$(str_first_word "$src_addr")" && [ -z "$dest_dns_ipv6" ]; }; then 
+		{ is_ipv6 "$(str_first_word "$src_addr")" && [ -z "$dest_dns_ipv6" ]; }; then
 		processPolicyError='true'
 		json add error 'errorPolicyProcessMismatchFamily' "${name}: '$src_addr' '$dest_dns':'$dest_dns_port'"
 		return 1
@@ -1531,14 +1531,14 @@ policy_routing() {
 	fi
 
 	# TODO: implement actual family mismatch check on lists
-#	if is_family_mismatch "$src_addr" "$dest_addr"; then 
+#	if is_family_mismatch "$src_addr" "$dest_addr"; then
 #		processPolicyError='true'
 #		json add error 'errorPolicyProcessMismatchFamily' "${name}: '$src_addr' '$dest_addr'"
 #		return 1
 #	fi
 
 	if [ -z "$proto" ]; then
-		if [ -n "${src_port}${dest_port}" ]; then 
+		if [ -n "${src_port}${dest_port}" ]; then
 			proto='tcp udp'
 		else
 			proto='all'
@@ -1594,7 +1594,7 @@ policy_routing() {
 			fi
 		fi
 
-		if [ -n "$dest_addr" ]; then 
+		if [ -n "$dest_addr" ]; then
 			if [ "${dest_addr:0:1}" = "!" ]; then
 				negation='!='; value="${dest_addr//\!}"; nftset_suffix='_neg';
 			else
@@ -1917,7 +1917,7 @@ interface_routing() {
 				}
 				try ip -4 rule replace fwmark "${mark}/${fw_mask}" table "$tid" priority "$priority" || ipv4_error=1
 			fi
-			try nft add chain inet "$nftTable" "${nftPrefix}_mark_${mark}" || ipv4_error=1 
+			try nft add chain inet "$nftTable" "${nftPrefix}_mark_${mark}" || ipv4_error=1
 			try nft add rule inet "$nftTable" "${nftPrefix}_mark_${mark} ${nftRuleParams} meta mark set (meta mark & ${fw_maskXor}) | ${mark}" || ipv4_error=1
 			try nft add rule inet "$nftTable" "${nftPrefix}_mark_${mark} return" || ipv4_error=1
 			if [ -n "$ipv6_enabled" ]; then
@@ -2085,7 +2085,7 @@ process_interface() {
 		return 0
 	fi
 
-	if [ "$iface" = 'tor' ]; then 
+	if [ "$iface" = 'tor' ]; then
 		case "$action" in
 			create|reload|reload_interface)
 				torDnsPort="$(get_tor_dns_port)"
@@ -2320,7 +2320,7 @@ boot() {
 	rc_procd start_service 'on_boot' && service_started 'on_boot'
 }
 
-on_interface_reload() { 
+on_interface_reload() {
 	if [ ! -e "$packageLockFile" ]; then
 		logger -t "$packageName" "Reload on interface change aborted: service is stopped."
 		return 0
@@ -2570,7 +2570,7 @@ stop_service() {
 		output_okn
 	else
 		output_failn
-	fi 
+	fi
 	output 1 'Resetting interfaces '
 	config_load 'network'
 	config_foreach process_interface 'interface' 'destroy'
