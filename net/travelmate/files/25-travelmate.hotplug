@@ -1,0 +1,18 @@
+#!/bin/sh
+# ntp hotplug script for travelmate
+# Copyright (c) 2020-2025 Dirk Brenken (dev@brenken.org)
+# This is free software, licensed under the GNU General Public License v3.
+
+# set (s)hellcheck exceptions
+# shellcheck disable=all
+
+trm_init="/etc/init.d/travelmate"
+trm_funlib="/usr/lib/travelmate-functions.sh"
+trm_ntplock="/var/lock/travelmate.ntp.lock"
+
+if mkdir "${trm_ntplock}" 2>/dev/null; then
+	if [ "${ACTION}" = "stratum" ] && "${trm_init}" enabled; then
+		. "${trm_funlib}"
+		f_log "info" "get ntp time sync"
+	fi
+fi

@@ -1,22 +1,19 @@
-#
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
-#
+# SPDX-License-Identifier: GPL-2.0-only
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=adguardhome
-PKG_VERSION:=0.107.69
-PKG_RELEASE:=2
+PKG_VERSION:=0.107.71
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/AdguardTeam/AdGuardHome/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=65f95054bdb4efbfba446b708e7e2a1a36365ddbabcb7236daab1a44a83d06bc
+PKG_HASH:=f3dde5da6ba48270ac25bd2f501c4ce1af54ddeef93fcd84ef3a8270cec9539f
 PKG_BUILD_DIR:=$(BUILD_DIR)/AdGuardHome-$(PKG_VERSION)
 
 FRONTEND_DEST:=$(PKG_NAME)-frontend-$(PKG_VERSION).tar.gz
 FRONTEND_URL:=https://github.com/AdguardTeam/AdGuardHome/releases/download/v$(PKG_VERSION)/
-FRONTEND_HASH:=8414ebbbba860f92d60d3ae3d591229e025f02bb0d2c5f87581df4b569ac3cce
+FRONTEND_HASH:=51b229a5dff010c17bd8894bbf4291907e93708c366801e32181be7f37dd4488
 
 PKG_LICENSE:=GPL-3.0-only
 PKG_LICENSE_FILES:=LICENSE.txt

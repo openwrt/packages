@@ -5,8 +5,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=banip
-PKG_VERSION:=1.5.6
-PKG_RELEASE:=7
+PKG_VERSION:=1.6.0
+PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
 
@@ -16,7 +16,7 @@ define Package/banip
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=banIP blocks IPs via named nftables Sets
-	DEPENDS:=+jshn +jsonfilter +firewall4 +ca-bundle +rpcd +rpcd-mod-rpcsys
+	DEPENDS:=+jshn +jsonfilter +firewall4 +gawk +ca-bundle +rpcd +rpcd-mod-rpcsys
 	PKGARCH:=all
 endef
 

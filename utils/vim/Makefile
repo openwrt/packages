@@ -8,20 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vim
-PKG_VERSION:=9.1
-PKG_RELEASE:=1
+PKG_VERSION:=9.1.1918
+PKG_XXD_VERSION:=2025.08.24
+PKG_RELEASE:=2
 VIMVER:=91
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=https://www.vim.org/downloads
-PKG_HASH:=9c2d1d6763a672f6c5210a2bc4bad5a58e4eb8e8e3f293d950d9647811647ec7
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/vim/vim.git
+PKG_SOURCE_VERSION=v$(PKG_VERSION)
+PKG_MIRROR_HASH:=51c2d2492d884c879c61b1451f4690f221b2dbccacfe3ddf8abde4d6fcc5e2bf
 
 PKG_MAINTAINER:=Marko Ratkaj <markoratkaj@gmail.com>
 PKG_LICENSE:=Vim
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:vim:vim
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)$(VIMVER)
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -48,7 +49,6 @@ define Package/vim-full
   CONFLICTS:=vim
 endef
 
-
 define Package/vim-fuller
   $(call Package/vim/Default)
   TITLE+= (Big)
@@ -71,6 +71,7 @@ define Package/xxd
   CATEGORY:=Utilities
   TITLE:=make a hexdump or do the reverse
   URL:=http://www.vim.org/
+  VERSION:=$(PKG_XXD_VERSION)
 endef
 
 define Package/vim-full/conffiles
@@ -92,7 +93,6 @@ define Package/vim-full/description
  Vim is an almost compatible version of the UNIX editor Vi.
  (Normal build)
 endef
-
 
 define Package/vim-fuller/description
  Vim is an almost compatible version of the UNIX editor Vi.
@@ -126,7 +126,8 @@ CONFIGURE_ARGS += \
 	--disable-libsodium \
 	--disable-selinux \
 	--with-tlib=ncurses \
-	--with-compiledby="non-existent-hostname-compiled"
+	--with-compiledby="non-existent-hostname-compiled" \
+	--with-wayland=no
 
 CONFIGURE_VARS += \
 	ac_cv_header_elf_h=no \
@@ -181,8 +182,6 @@ define Build/Compile/vim-fuller
 endef
 endif
 
-
-
 ifneq ($(CONFIG_PACKAGE_xxd),)
 define Build/Compile/xxd
 	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) \
@@ -220,7 +219,6 @@ define Package/vim-full/install
 	$(INSTALL_CONF) ./files/vimrc.full $(1)/usr/share/vim/vimrc
 endef
 
-
 define Package/vim-fuller/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/vim_big $(1)/usr/bin/vim
@@ -229,8 +227,6 @@ define Package/vim-fuller/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/vim/vim$(VIMVER) $(1)/usr/share/vim
 	$(INSTALL_CONF) ./files/vimrc.full $(1)/usr/share/vim/vimrc
 endef
-
-
 
 define Package/vim-runtime/install
 	$(CP) $(PKG_INSTALL_DIR)/* $(1)
