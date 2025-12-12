@@ -1,0 +1,26 @@
+--- a/stress-fractal.c
++++ b/stress-fractal.c
+@@ -90,6 +90,10 @@ static void stress_fractal_deinit(void)
+ 	}
+ }
+ 
++#if (defined(STRESS_ARCH_MIPS) || defined(STRESS_ARCH_PPC64) || defined(STRESS_ARCH_PPC))
++#undef HAVE_ATOMIC_FETCH_ADD
++#endif
++
+ /*
+  *  stress_fractal_get_row()
+  *	get next row to be computed, will wrap around. Wrap arounds
+--- a/stress-misaligned.c
++++ b/stress-misaligned.c
+@@ -52,6 +52,10 @@
+ #undef HAVE_ATOMIC
+ #endif
+ 
++#if (defined(STRESS_ARCH_MIPS) || defined(STRESS_ARCH_PPC64) || defined(STRESS_ARCH_PPC))
++#undef HAVE_ATOMIC
++#endif
++
+ #if defined(HAVE_LIB_RT) &&		\
+     defined(HAVE_TIMER_CREATE) &&	\
+     defined(HAVE_TIMER_DELETE) &&	\

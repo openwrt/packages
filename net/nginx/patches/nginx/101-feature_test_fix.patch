@@ -5,7 +5,7 @@
      ngx_feature="C compiler"
      ngx_feature_name=
 -    ngx_feature_run=yes
-+    ngx_feature_run=
++    ngx_feature_run=no
      ngx_feature_incs=
      ngx_feature_path=
      ngx_feature_libs=
@@ -76,9 +76,18 @@
  ngx_feature_incs="#include <sys/prctl.h>"
  ngx_feature_path=
  ngx_feature_libs=
+@@ -186,7 +186,7 @@ ngx_feature_test="if (prctl(PR_SET_DUMPA
+ 
+ ngx_feature="prctl(PR_SET_KEEPCAPS)"
+ ngx_feature_name="NGX_HAVE_PR_SET_KEEPCAPS"
+-ngx_feature_run=yes
++ngx_feature_run=no
+ ngx_feature_incs="#include <sys/prctl.h>"
+ ngx_feature_path=
+ ngx_feature_libs=
 --- a/auto/unix
 +++ b/auto/unix
-@@ -805,7 +805,7 @@ ngx_feature_test="void *p; p = memalign(
+@@ -853,7 +853,7 @@ ngx_feature_test="void *p; p = memalign(
  
  ngx_feature="mmap(MAP_ANON|MAP_SHARED)"
  ngx_feature_name="NGX_HAVE_MAP_ANON"
@@ -87,7 +96,7 @@
  ngx_feature_incs="#include <sys/mman.h>"
  ngx_feature_path=
  ngx_feature_libs=
-@@ -818,7 +818,7 @@ ngx_feature_test="void *p;
+@@ -866,7 +866,7 @@ ngx_feature_test="void *p;
  
  ngx_feature='mmap("/dev/zero", MAP_SHARED)'
  ngx_feature_name="NGX_HAVE_MAP_DEVZERO"
@@ -96,7 +105,7 @@
  ngx_feature_incs="#include <sys/mman.h>
                    #include <sys/stat.h>
                    #include <fcntl.h>"
-@@ -833,7 +833,7 @@ ngx_feature_test='void *p; int  fd;
+@@ -881,7 +881,7 @@ ngx_feature_test='void *p; int  fd;
  
  ngx_feature="System V shared memory"
  ngx_feature_name="NGX_HAVE_SYSVSHM"
@@ -105,7 +114,7 @@
  ngx_feature_incs="#include <sys/ipc.h>
                    #include <sys/shm.h>"
  ngx_feature_path=
-@@ -847,7 +847,7 @@ ngx_feature_test="int  id;
+@@ -895,7 +895,7 @@ ngx_feature_test="int  id;
  
  ngx_feature="POSIX semaphores"
  ngx_feature_name="NGX_HAVE_POSIX_SEM"

@@ -19,4 +19,3 @@ boot() {
 service_triggers() {
 	procd_add_raw_trigger "mount.ready" 200 /etc/init.d/uvol start
 }
-

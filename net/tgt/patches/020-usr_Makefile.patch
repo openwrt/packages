@@ -14,16 +14,26 @@
  CFLAGS += -DUSE_TIMERFD
  endif
  
-@@ -25,7 +25,7 @@ ifneq ($(SD_NOTIFY),)
+@@ -25,11 +25,17 @@ ifneq ($(SD_NOTIFY),)
  CFLAGS += -DUSE_SYSTEMD
  endif
  
 -ifneq ($(shell test -e /usr/include/sys/eventfd.h && test -e /usr/include/libaio.h && echo 1),)
++ifeq ($(WITHOUT_AIO),)
 +ifneq ($(shell test -n $(shell find $(STAGING_DIR)/usr/include -name "eventfd.h" | head -n1) && test -n $(shell find $(STAGING_DIR)/usr/include -name "libaio.h" | head -n1) && echo 1),)
  CFLAGS += -DUSE_EVENTFD
  TGTD_OBJS += bs_aio.o
  LIBS += -laio
-@@ -55,7 +55,7 @@ ifneq ($(SD_NOTIFY),)
+ endif
++endif
++
++ifeq ($(WITHOUT_SHEEPDOG),)
++TGTD_OBJS += bs_sheepdog.o
++endif
+ 
+ ifneq ($(ISCSI_RDMA),)
+ TGTD_OBJS += iscsi/iser.o iscsi/iser_text.o
+@@ -56,11 +62,11 @@ ifneq ($(SD_NOTIFY),)
  LIBS += -lsystemd
  endif
  
@@ -32,7 +42,12 @@
  TGTD_OBJS += tgtd.o mgmt.o target.o scsi.o log.o driver.o util.o work.o \
  		concat_buf.o parser.o spc.o sbc.o mmc.o osd.o scc.o smc.o \
  		ssc.o libssc.o bs_rdwr.o bs_ssc.o \
-@@ -82,14 +82,6 @@ tgtadm: $(TGTADM_OBJS)
+-		bs_null.o bs_sg.o bs.o libcrc32c.o bs_sheepdog.o
++		bs_null.o bs_sg.o bs.o libcrc32c.o
+ 
+ TGTD_DEP = $(TGTD_OBJS:.o=.d)
+ 
+@@ -83,14 +89,6 @@ tgtadm: $(TGTADM_OBJS)
  
  -include $(TGTADM_DEP)
  

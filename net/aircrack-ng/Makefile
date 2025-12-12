@@ -8,18 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=aircrack-ng
-PKG_VERSION:=1.6
-PKG_RELEASE:=3
+PKG_VERSION:=1.7
+PKG_RELEASE:=1
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:aircrack-ng:aircrack-ng
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://download.aircrack-ng.org/
-PKG_HASH:=4f0bfd486efc6ea7229f7fbc54340ff8b2094a0d73e9f617e0a39f878999a247
+PKG_HASH:=05a704e3c8f7792a17315080a21214a4448fd2452c1b0dd5226a3a55f90b58c3
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PKG_BUILD_FLAGS:=gc-sections
 
 PKG_MAINTAINER:=Rick Farina <zerochaos@gentoo.org>
 
@@ -39,7 +40,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/aircrack-ng
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+AIRCRACK_NG_HWLOC:libhwloc +libpcap +libpcre +libpthread +libstdcpp
+  DEPENDS:=+AIRCRACK_NG_HWLOC:libhwloc +libpcap +libpcre2 +libpthread +libstdcpp
   DEPENDS += +AIRCRACK_NG_OPENSSL:libopenssl
   DEPENDS += +AIRCRACK_NG_GCRYPT:libgcrypt
   DEPENDS += +AIRCRACK_NG_SQLITE3:libsqlite3
@@ -82,6 +83,7 @@ CONFIGURE_ARGS += \
 	--with-libpcap-include=$(STAGING_DIR)/usr/include \
 	--with-libpcap-lib=$(STAGING_DIR)/usr/lib \
 	--without-opt \
+	--with-libbsd=no \
 	\
 	PYTHON=$(PYTHON) \
 	\
@@ -90,14 +92,11 @@ CONFIGURE_ARGS += \
 	$(if $(CONFIG_AIRCRACK_NG_HWLOC),--enable-hwloc,--disable-hwloc) \
 	$(if $(CONFIG_AIRCRACK_NG_SQLITE3),--with-sqlite3=$(STAGING_DIR)/usr,--without-sqlite3)
 
-TARGET_CFLAGS += -Wall -Wextra -ffunction-sections -fdata-sections -fcommon
+TARGET_CFLAGS += -Wall -Wextra -fcommon
 
 ifeq ($(CONFIG_AIRCRACK_NG_OPTIMIZE_SPEED),y)
 	TARGET_CFLAGS := $(filter-out -O%,$(TARGET_CFLAGS)) -O3
 endif
-
-TARGET_LDFLAGS+= \
-	-Wl,--gc-sections
 
 define Package/aircrack-ng/install
 	$(INSTALL_DIR) $(1)/usr/bin

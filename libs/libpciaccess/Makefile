@@ -6,32 +6,31 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libpciaccess
-PKG_VERSION:=0.16
+PKG_VERSION:=0.18.1
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=https://www.x.org/releases/individual/lib/
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_HASH:=214c9d0d884fdd7375ec8da8dcb91a8d3169f263294c9a90c575bf1938b9f489
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_HASH:=4af43444b38adb5545d0ed1c2ce46d9608cc47b31c2387fc5181656765a6fa76
 
 PKG_MAINTAINER:= Lucian Cristian <lucian.cristian@gmail.com>
+PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/meson.mk
 
 define Package/libpciaccess
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Generic PCI access library
-  URL:=https://xorg.freedesktop.org/
+  URL:=https://gitlab.freedesktop.org/xorg/lib/libpciaccess
 endef
 
-CONFIGURE_ARGS += \
-	--prefix=/usr
-
-TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
+MESON_ARGS += -Dzlib=disabled
 
 define Build/InstallDev
 	$(INSTALL_DIR) \

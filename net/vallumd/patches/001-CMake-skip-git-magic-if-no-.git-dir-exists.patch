@@ -1,0 +1,78 @@
+From b70137d0cc62be7f43816a3ba33b7c3e6a2fbd4e Mon Sep 17 00:00:00 2001
+From: Stijn Tintel <stijn@linux-ipv6.be>
+Date: Fri, 18 Nov 2022 09:19:02 +0200
+Subject: [PATCH] CMake: skip git magic if no .git dir exists
+
+The checks to fail CMake if git describe isn't working break build when
+building from source tarballs.
+
+Test if there is a git directory, and completely skip the git magic if
+not.
+
+Fixes: f42e7beec46e ("CI: add explicit clone to fetch tags")
+Signed-off-by: Stijn Tintel <stijn@linux-ipv6.be>
+---
+ CMakeLists.txt | 51 +++++++++++++++++++++++++-------------------------
+ 1 file changed, 26 insertions(+), 25 deletions(-)
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -9,35 +9,36 @@ set (VERSION_MAJOR 0)
+ set (VERSION_MINOR 2)
+ set (VERSION_PATCH 2)
+ 
+-execute_process(COMMAND git describe --tags --dirty
+-		OUTPUT_VARIABLE GIT_DESCRIBE
+-		OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+-execute_process(COMMAND git describe --abbrev=0
+-                OUTPUT_VARIABLE GIT_LAST_TAG
+-                OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
++if (EXISTS .git/)
++    execute_process(COMMAND git describe --tags --dirty
++            OUTPUT_VARIABLE GIT_DESCRIBE
++            OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
++    execute_process(COMMAND git describe --abbrev=0
++                    OUTPUT_VARIABLE GIT_LAST_TAG
++                    OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+ 
+-string(LENGTH "${GIT_DESCRIBE}" GIT_DESCRIBE_LEN)
+-string(LENGTH "${GIT_LAST_TAG}" GIT_LAST_TAG_LEN)
++    string(LENGTH "${GIT_DESCRIBE}" GIT_DESCRIBE_LEN)
++    string(LENGTH "${GIT_LAST_TAG}" GIT_LAST_TAG_LEN)
+ 
+-if (GIT_DESCRIBE_LEN EQUAL 0 OR GIT_LAST_TAG_LEN EQUAL 0)
+-    message(FATAL_ERROR "git describe output empty")
+-endif ()
++    if (GIT_DESCRIBE_LEN EQUAL 0 OR GIT_LAST_TAG_LEN EQUAL 0)
++        message(FATAL_ERROR "git describe output empty")
++    endif ()
+ 
+-string(REGEX REPLACE "^${GIT_LAST_TAG}-" "" GIT_DESCRIBE_NOTAG "${GIT_DESCRIBE}")
++    string(REGEX REPLACE "^${GIT_LAST_TAG}-" "" GIT_DESCRIBE_NOTAG "${GIT_DESCRIBE}")
+ 
+-if (NOT "${GIT_DESCRIBE}" STREQUAL "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
+-    if ("${GIT_LAST_TAG}" VERSION_LESS
+-        "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
+-        string(REGEX REPLACE "^${GIT_LAST_TAG}-"
+-                "" VERSION_TWEAK "0-pre-${GIT_DESCRIBE_NOTAG}")
+-    else ()
+-	string(REGEX REPLACE
+-		"^${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}-"
+-		"" VERSION_TWEAK "${GIT_DESCRIBE}")
++    if (NOT "${GIT_DESCRIBE}" STREQUAL "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
++        if ("${GIT_LAST_TAG}" VERSION_LESS
++            "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
++            string(REGEX REPLACE "^${GIT_LAST_TAG}-"
++                    "" VERSION_TWEAK "0-pre-${GIT_DESCRIBE_NOTAG}")
++        else ()
++        string(REGEX REPLACE
++            "^${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}-"
++            "" VERSION_TWEAK "${GIT_DESCRIBE}")
++        endif ()
+     endif ()
+ endif ()
+ 
+-
+ configure_file (
+   "${PROJECT_SOURCE_DIR}/src/config.h.in"
+   "${PROJECT_BINARY_DIR}/config.h"

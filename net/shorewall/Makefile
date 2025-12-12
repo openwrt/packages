@@ -14,7 +14,7 @@ PKG_BUGFIX_MAJOR_VERSION:=8
 PKG_BUGFIX_MINOR_VERSION:=
 PKG_VERSION:=$(PKG_MAJOR_MINOR_VERSION).$(PKG_BUGFIX_MAJOR_VERSION)$(PKG_BUGFIX_MINOR_VERSION)
 PKG_DIRECTORY:=$(PKG_MAJOR_MINOR_VERSION).$(PKG_BUGFIX_MAJOR_VERSION)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_URL:=http://shorewall.org/pub/shorewall/$(PKG_MAJOR_MINOR_VERSION)/shorewall-$(PKG_DIRECTORY)/ \
 	http://slovakia.shorewall.net/pub/shorewall/$(PKG_MAJOR_MINOR_VERSION)/shorewall-$(PKG_DIRECTORY)/ \
@@ -23,11 +23,16 @@ PKG_SOURCE_URL:=http://shorewall.org/pub/shorewall/$(PKG_MAJOR_MINOR_VERSION)/sh
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_HASH:=fbb5ab492ed372eaaf02817cc730f82c49a81c5a5f5cee4bc8f1bce846f2306d
 
+PKG_BUILD_DEPENDS:=HOST_OS_MACOS:fakeuname/host
+
 PKG_MAINTAINER:=Willem van den Akker <wvdakker@wilsoft.nl>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
 include $(INCLUDE_DIR)/package.mk
+ifeq ($(CONFIG_HOST_OS_MACOS),y)
+    include ../../utils/fakeuname/fakeuname.mk
+endif
 
 define Package/shorewall
     SECTION:=devel
@@ -54,8 +59,19 @@ endef
 CONFIGURE_ARGS += \
 	vendor=openwrt
 
+# MacOS bash is too old for shorewall, use OpenWrt host tools/bash built for macos hosts
+# use fakeuname to avoid 'if `uname` is Darwin' checks
+MACOS_ENV := \
+	PATH=$(FAKEUNAME_PATH):$(TARGET_PATH_PKG) \
+	$(BASH)
+
+CONFIGURE_VARS += \
+	$(if $(CONFIG_HOST_OS_MACOS),$(MACOS_ENV))
+
 define Build/Compile
-	DESTDIR=$(PKG_INSTALL_DIR) $(PKG_BUILD_DIR)/install.sh
+	DESTDIR=$(PKG_INSTALL_DIR) \
+	$(if $(CONFIG_HOST_OS_MACOS),$(MACOS_ENV)) \
+	$(PKG_BUILD_DIR)/install.sh
 endef
 
 define Package/shorewall/conffiles

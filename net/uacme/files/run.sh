@@ -8,6 +8,7 @@
 #
 # Initial Author: Toke Høiland-Jørgensen <toke@toke.dk>
 # Adapted for uacme: Lucian Cristian <lucian.cristian@gmail.com>
+# Adapted for custom CA and TLS-ALPN-01: Peter Putzer <openwrt@mundschenk.at>
 
 CHECK_CRON=$1
 
@@ -37,7 +38,10 @@ NGINX_WEBSERVER=0
 UPDATE_NGINX=0
 UPDATE_UHTTPD=0
 UPDATE_HAPROXY=0
+FW_RULE=
 USER_CLEANUP=
+ACME_URL=
+ACME_STAGING_URL=
 
 . /lib/functions.sh
 
@@ -135,24 +139,30 @@ pre_checks()
 	esac
     done
 
-    iptables -I input_rule -p tcp --dport 80 -j ACCEPT -m comment --comment "ACME" || return 1
-    debug "v4 input_rule: $(iptables -nvL input_rule)"
-    if [ -e "/usr/sbin/ip6tables" ]; then
-	ip6tables -I input_rule -p tcp --dport 80 -j ACCEPT -m comment --comment "ACME" || return 1
-	debug "v6 input_rule: $(ip6tables -nvL input_rule)"
-    fi
+    FW_RULE=$(uci add firewall rule) || return 1
+    uci set firewall."$FW_RULE".name='uacme: temporarily allow incoming http'
+    uci set firewall."$FW_RULE".enabled='1'
+    uci set firewall."$FW_RULE".target='ACCEPT'
+    uci set firewall."$FW_RULE".src='wan'
+    uci set firewall."$FW_RULE".proto='tcp'
+    uci set firewall."$FW_RULE".dest_port='80'
+    uci commit firewall
+    /etc/init.d/firewall reload
+
+    debug "added firewall rule: $FW_RULE"
     return 0
 }
 
 post_checks()
 {
     log "Running post checks (cleanup)."
-    # The comment ensures we only touch our own rules. If no rules exist, that
-    # is fine, so hide any errors
-    iptables -D input_rule -p tcp --dport 80 -j ACCEPT -m comment --comment "ACME" 2>/dev/null
-    if [ -e "/usr/sbin/ip6tables" ]; then
-	ip6tables -D input_rule -p tcp --dport 80 -j ACCEPT -m comment --comment "ACME" 2>/dev/null
+    # $FW_RULE contains the string to identify firewall rule created earlier
+    if [ -n "$FW_RULE" ]; then
+	uci delete firewall."$FW_RULE"
+	uci commit firewall
+	/etc/init.d/firewall reload
     fi
+
     if [ -e /etc/init.d/uhttpd ] && [ "$UPDATE_UHTTPD" -eq 1 ]; then
 	uci commit uhttpd
 	/etc/init.d/uhttpd reload
@@ -213,6 +223,7 @@ issue_cert()
     local failed_dir
     local webroot
     local dns
+    local tls
     local user_setup
     local user_cleanup
     local ret
@@ -230,6 +241,7 @@ issue_cert()
     config_get keylength "$section" keylength
     config_get webroot "$section" webroot
     config_get dns "$section" dns
+    config_get tls "$section" tls
     config_get user_setup "$section" user_setup
     config_get user_cleanup "$section" user_cleanup
 
@@ -242,15 +254,26 @@ issue_cert()
 
     if [ "$APP" = "uacme" ]; then
 	[ "$DEBUG" -eq "1" ] && debug="--verbose --verbose"
+	[ "$tls" -eq "1" ] && HPROGRAM=/usr/share/uacme/ualpn.sh
     elif [ "$APP" = "acme" ]; then
 	[ "$DEBUG" -eq "1" ] && acme_args="$acme_args --debug"
     fi
     if [ "$use_staging" -eq "1" ]; then
 	STATE_DIR="$STAGING_STATE_DIR";
-	staging="--staging";
+
+	# Check if we should use a custom stagin URL
+        if [ "$APP" = "uacme" -a -n "$ACME_STAGING_URL" ]; then
+        	ACME="$ACME --acme-url $ACME_STAGING_URL"
+	else
+		staging="--staging";
+	fi
     else
 	STATE_DIR="$PRODUCTION_STATE_DIR";
 	staging="";
+
+	if [ "$APP" = "uacme" -a -n "$ACME_URL" ]; then
+		ACME="$ACME --acme-url $ACME_URL"
+	fi
     fi
 
     set -- $domains
@@ -260,7 +283,7 @@ issue_cert()
 	log "Running user-provided setup script from $user_setup."
 	"$user_setup" "$main_domain" || return 2
     else
-	[ -n "$webroot" ] || [ -n "$dns" ] || pre_checks "$main_domain" || return 2
+	[ -n "$webroot" ] || [ -n "$dns" ] || [ -n "$tls" ] || pre_checks "$main_domain" || return 2
     fi
 
     log "Running $APP for $main_domain"
@@ -314,6 +337,13 @@ issue_cert()
 	    log "Using dns mode, dns-01 is not wrapped yet"
 	    return 2
 #	    uacme_args="$uacme_args --dns $dns"
+	fi
+    elif [ -n "$tls" ]; then
+	if [ "$APP" = "uacme" ]; then
+            log "Using TLS mode"
+	else
+            log "TLS not supported by $APP"
+            return 2
 	fi
     elif [ -z "$webroot" ]; then
 	if [ "$APP" = "acme" ]; then
@@ -479,6 +509,8 @@ load_vars()
     STAGING_STATE_DIR=$PRODUCTION_STATE_DIR/staging
     ACCOUNT_EMAIL=$(config_get "$section" account_email)
     DEBUG=$(config_get "$section" debug)
+    ACME_URL=$(config_get "$section" acme_url)
+    ACME_STAGING_URL=$(config_get "$section" acme_staging_url)
 }
 
 if [ -z "$INCLUDE_ONLY" ]; then

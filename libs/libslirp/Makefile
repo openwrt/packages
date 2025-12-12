@@ -1,20 +1,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libslirp
-PKG_VERSION:=4.6.1
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=4.7.0
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://gitlab.freedesktop.org/slirp/$(PKG_NAME)/-/archive/v$(PKG_VERSION)
-PKG_HASH:=69ad4df0123742a29cc783b35de34771ed74d085482470df6313b6abeb799b11
-
-PKG_INSTALL:=1
-PKG_BUILD_PARALLEL:=1
+PKG_HASH:=9398f0ec5a581d4e1cd6856b88ae83927e458d643788c3391a39e61b75db3d3b
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-v$(PKG_VERSION)
 
 PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmailcom>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:libslirp_project:libslirp
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/meson.mk

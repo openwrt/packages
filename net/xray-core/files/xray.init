@@ -10,8 +10,8 @@ start_service() {
 	config_load "$CONF"
 
 	local enabled
-	config_get enabled "enabled" "enabled" "0"
-	[ "$enabled" -eq "0" ] && exit 1
+	config_get_bool enabled "enabled" "enabled" "0"
+	[ "$enabled" -eq "1" ] || return 1
 
 	local confdir
 	local conffiles
@@ -39,6 +39,8 @@ start_service() {
 	procd_set_param env XRAY_LOCATION_ASSET="$datadir"
 	procd_set_param file $conffiles
 
+	procd_set_param limits core="unlimited"
+	procd_set_param limits nofile="1000000 1000000"
 	procd_set_param stdout 1
 	procd_set_param stderr 1
 	procd_set_param respawn

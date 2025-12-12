@@ -14,12 +14,12 @@ Signed-off-by: Eneas U de Queiroz <cotequeiroz@gmail.com>
 
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -57,7 +57,7 @@ if ENABLE_DOC
+@@ -48,7 +48,7 @@ if ENABLE_DOC
  SUBDIRS += doc
  endif
  
--ACLOCAL_AMFLAGS = -I m4 -I src/libopts/m4 -I src/gl/m4 -I lib/unistring/m4 --install
-+ACLOCAL_AMFLAGS = -I m4 -I src/libopts/m4 -I src/gl/m4 -I lib/unistring/m4
+-ACLOCAL_AMFLAGS = -I m4 -I src/gl/m4 -I lib/unistring/m4 --install
++ACLOCAL_AMFLAGS = -I m4 -I src/gl/m4 -I lib/unistring/m4
  
- EXTRA_DIST = cfg.mk maint.mk CONTRIBUTING.md README.md LICENSE AUTHORS NEWS \
- 	ChangeLog THANKS INSTALL.md RELEASES.md
+ EXTRA_DIST = cfg.mk maint.mk CONTRIBUTING.md README.md COPYING.LESSERv2 COPYING AUTHORS NEWS \
+ 	ChangeLog THANKS INSTALL.md RELEASES.md .mailmap

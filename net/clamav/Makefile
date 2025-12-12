@@ -8,28 +8,32 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=clamav
-PKG_VERSION:=0.104.2
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=1.4.3
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.clamav.net/downloads/production/
-PKG_HASH:=3e45e46d9aaeb3a6956ed30376237ab7c4cd9573bc0f5d6fc15c588d30978d9d
+PKG_HASH:=d874cabf3d4765b35b518ef535658a1e6ec74802006a1d613f9f124aa1343210
 
-PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr> \
+PKG_MAINTAINER:=Marko Ratkaj <markoratkaj@gmail.com> \
 		Lucian Cristian <lucian.cristian@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING*
 PKG_CPE_ID:=cpe:/a:clamav:clamav
 
-PKG_BUILD_DEPENDS:=ncurses
+PKG_BUILD_DEPENDS:=ncurses rust/host
+PKG_BUILD_FLAGS:=gc-sections lto
 
 include $(INCLUDE_DIR)/package.mk
+include ../../lang/rust/rust-values.mk
 include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/cmake.mk
 
 define Package/clamav/Default
   SECTION:=net
-  DEPENDS:=+check +libstdcpp +libpthread +zlib +libbz2 +libxml2 +libcurl +libjson-c +libmilter-sendmail +libopenssl +libltdl +libpcre2 $(ICONV_DEPENDS)
+  DEPENDS:=+check +libstdcpp +libpthread +zlib +libbz2 +libxml2 \
+    +libcurl +libjson-c +libmilter-sendmail +libopenssl +libltdl \
+    +libpcre2 $(ICONV_DEPENDS) $(RUST_ARCH_DEPENDS)
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
   TITLE:=ClamAV
@@ -56,7 +60,6 @@ define Package/freshclam/description
 endef
 
 CMAKE_OPTIONS += \
-	-DENABLE_MILTER=ON \
 	-DHAVE_ATTRIB_PACKED=ON \
 	-DHAVE_ATTRIB_ALIGNED=ON \
 	-Dtest_run_result=ON \
@@ -65,17 +68,16 @@ CMAKE_OPTIONS += \
 	-DCLAMAV_GROUP=nogroup \
 	-DMMAP_FOR_CROSSCOMPILING=ON \
 	-DENABLE_CLAMONACC=ON \
-	-DENABLE_DOCS=OFF \
-	-DENABLE_DOXYGEN=OFF \
+	-DENABLE_MAN_PAGES=OFF \
+	-DENABLE_TESTS=OFF \
 	-DENABLE_EXAMPLES=OFF \
 	-DENABLE_UNRAR=OFF \
 	-DENABLE_SYSTEMD=OFF \
-	-DIconv_INCLUDE_DIR=$(ICONV_PREFIX)/include \
-	-DIconv_LIBRARY=$(ICONV_PREFIX)/lib/libiconv.$(if $(ICONV_FULL),so,a) \
+	-DRUST_COMPILER_TARGET=$(RUSTC_TARGET_ARCH) \
 	-DHAVE_SYSTEM_LFS_FTS=O$(if $(CONFIG_USE_GLIBC),N,FF)
 
-TARGET_CXXFLAGS += -ffunction-sections -fdata-sections -fno-rtti -flto
-TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
+TARGET_CXXFLAGS += -fno-rtti
+TARGET_LDFLAGS += -Wl,--as-needed
 
 define Package/clamav/conffiles
 /etc/config/clamav

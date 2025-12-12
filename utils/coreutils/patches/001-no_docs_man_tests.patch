@@ -9,8 +9,8 @@
  
  EXTRA_DIST =				\
    .mailmap				\
-@@ -210,6 +210,3 @@ AM_CPPFLAGS = -Ilib -I$(top_srcdir)/lib
- 
+@@ -211,6 +211,3 @@ AM_CPPFLAGS = -Ilib -I$(top_srcdir)/lib
+ include $(top_srcdir)/gl/local.mk
  include $(top_srcdir)/lib/local.mk
  include $(top_srcdir)/src/local.mk
 -include $(top_srcdir)/doc/local.mk
@@ -18,7 +18,7 @@
 -include $(top_srcdir)/tests/local.mk
 --- a/Makefile.in
 +++ b/Makefile.in
-@@ -3156,11 +3156,7 @@ RECURSIVE_TARGETS = all-recursive check-
+@@ -4400,11 +4400,7 @@ RECURSIVE_TARGETS = all-recursive check-
  	install-ps-recursive install-recursive installcheck-recursive \
  	installdirs-recursive pdf-recursive ps-recursive \
  	tags-recursive uninstall-recursive
@@ -31,63 +31,63 @@
  am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
  am__vpath_adj = case $$p in \
      $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
-@@ -3411,11 +3407,11 @@ am__DIST_COMMON = $(doc_coreutils_TEXINF
+@@ -4654,11 +4650,10 @@ am__DIST_COMMON = $(doc_coreutils_TEXINF
  	$(top_srcdir)/build-aux/missing \
  	$(top_srcdir)/build-aux/test-driver \
  	$(top_srcdir)/build-aux/texinfo.tex \
 -	$(top_srcdir)/build-aux/ylwrap $(top_srcdir)/doc/local.mk \
 +	$(top_srcdir)/build-aux/ylwrap \
- 	$(top_srcdir)/lib/alloca.c $(top_srcdir)/lib/config.hin \
--	$(top_srcdir)/lib/local.mk $(top_srcdir)/man/local.mk \
+ 	$(top_srcdir)/gl/local.mk $(top_srcdir)/lib/alloca.c \
+-	$(top_srcdir)/lib/config.hin $(top_srcdir)/lib/local.mk \
+-	$(top_srcdir)/man/local.mk $(top_srcdir)/src/local.mk \
+-	$(top_srcdir)/src/single-binary.mk \
 +	$(top_srcdir)/lib/local.mk \
- 	$(top_srcdir)/src/local.mk $(top_srcdir)/src/single-binary.mk \
--	$(top_srcdir)/tests/local.mk ABOUT-NLS AUTHORS COPYING \
-+	ABOUT-NLS AUTHORS COPYING \
- 	ChangeLog INSTALL NEWS README THANKS TODO build-aux/ar-lib \
- 	build-aux/compile build-aux/config.guess \
- 	build-aux/config.rpath build-aux/config.sub build-aux/depcomp \
-@@ -3516,7 +3512,7 @@ EOVERFLOW_HIDDEN = @EOVERFLOW_HIDDEN@
- EOVERFLOW_VALUE = @EOVERFLOW_VALUE@
- ERRNO_H = @ERRNO_H@
++	$(top_srcdir)/src/local.mk \
+ 	$(top_srcdir)/tests/local.mk ABOUT-NLS AUTHORS COPYING \
+ 	ChangeLog INSTALL NEWS README THANKS TODO build-aux/compile \
+ 	build-aux/config.guess build-aux/config.rpath \
+@@ -4781,7 +4776,7 @@ ERRNO_H = @ERRNO_H@
+ ETAGS = @ETAGS@
+ EUIDACCESS_LIBGEN = @EUIDACCESS_LIBGEN@
  EXEEXT = @EXEEXT@
 -EXTRA_MANS = @EXTRA_MANS@
 +EXTRA_MANS =
+ FDATASYNC_LIB = @FDATASYNC_LIB@
+ FILE_HAS_ACL_LIB = @FILE_HAS_ACL_LIB@
  FLOAT_H = @FLOAT_H@
- FNMATCH_H = @FNMATCH_H@
- GETADDRINFO_LIB = @GETADDRINFO_LIB@
-@@ -4961,7 +4957,7 @@ libexecdir = @libexecdir@
- lispdir = @lispdir@
- localedir = @localedir@
+@@ -6824,7 +6819,7 @@ localedir_c_make = @localedir_c_make@
  localstatedir = @localstatedir@
+ localstatedir_c = @localstatedir_c@
+ localstatedir_c_make = @localstatedir_c_make@
 -man1_MANS = @man1_MANS@
 +man1_MANS =
  mandir = @mandir@
- mkdir_p = @mkdir_p@
- oldincludedir = @oldincludedir@
-@@ -4984,7 +4980,7 @@ top_build_prefix = @top_build_prefix@
+ mandir_c = @mandir_c@
+ mandir_c_make = @mandir_c_make@
+@@ -6873,7 +6868,7 @@ top_build_prefix = @top_build_prefix@
  top_builddir = @top_builddir@
  top_srcdir = @top_srcdir@
  ALL_RECURSIVE_TARGETS = distcheck-hook check-root
 -SUBDIRS = po . gnulib-tests
 +SUBDIRS = po
- 
- #if GNU_MAKE
- #	[nicer features that work only with GNU Make]
-@@ -7030,7 +7026,7 @@ all: $(BUILT_SOURCES)
+ EXTRA_DIST = .mailmap .prev-version .version .vg-suppressions \
+ 	README-install THANKS.in THANKS-to-translators THANKStt.in \
+ 	bootstrap bootstrap.conf build-aux/gen-lists-of-programs.sh \
+@@ -9197,7 +9192,7 @@ all: $(BUILT_SOURCES)
  .SUFFIXES: .1 .c .dvi .log .o .obj .pl .pl$(EXEEXT) .ps .sh .sh$(EXEEXT) .trs .x .xpl .xpl$(EXEEXT) .y
  am--refresh: Makefile
  	@:
--$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am $(top_srcdir)/lib/local.mk $(srcdir)/lib/gnulib.mk $(top_srcdir)/src/local.mk $(srcdir)/src/cu-progs.mk $(top_srcdir)/src/single-binary.mk $(top_srcdir)/doc/local.mk $(top_srcdir)/man/local.mk $(top_srcdir)/tests/local.mk $(am__configure_deps)
-+$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am $(top_srcdir)/lib/local.mk $(srcdir)/lib/gnulib.mk $(top_srcdir)/src/local.mk $(srcdir)/src/cu-progs.mk $(top_srcdir)/src/single-binary.mk $(am__configure_deps)
+-$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am $(top_srcdir)/gl/local.mk $(top_srcdir)/lib/local.mk $(srcdir)/lib/gnulib.mk $(top_srcdir)/src/local.mk $(srcdir)/src/cu-progs.mk $(top_srcdir)/src/single-binary.mk $(top_srcdir)/doc/local.mk $(top_srcdir)/man/local.mk $(top_srcdir)/tests/local.mk $(am__configure_deps)
++$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am $(top_srcdir)/gl/local.mk $(top_srcdir)/lib/local.mk $(srcdir)/lib/gnulib.mk $(top_srcdir)/src/local.mk $(srcdir)/src/cu-progs.mk $(top_srcdir)/src/single-binary.mk $(am__configure_deps)
  	@for dep in $?; do \
  	  case '$(am__configure_deps)' in \
  	    *$$dep*) \
-@@ -7052,7 +7048,7 @@ Makefile: $(srcdir)/Makefile.in $(top_bu
+@@ -9219,7 +9214,7 @@ Makefile: $(srcdir)/Makefile.in $(top_bu
  	    echo ' cd $(top_builddir) && $(SHELL) ./config.status $@ $(am__maybe_remake_depfiles)'; \
  	    cd $(top_builddir) && $(SHELL) ./config.status $@ $(am__maybe_remake_depfiles);; \
  	esac;
--$(top_srcdir)/lib/local.mk $(srcdir)/lib/gnulib.mk $(top_srcdir)/src/local.mk $(srcdir)/src/cu-progs.mk $(top_srcdir)/src/single-binary.mk $(top_srcdir)/doc/local.mk $(top_srcdir)/man/local.mk $(top_srcdir)/tests/local.mk $(am__empty):
-+$(top_srcdir)/lib/local.mk $(srcdir)/lib/gnulib.mk $(top_srcdir)/src/local.mk $(srcdir)/src/cu-progs.mk $(top_srcdir)/src/single-binary.mk $(am__empty):
+-$(top_srcdir)/gl/local.mk $(top_srcdir)/lib/local.mk $(srcdir)/lib/gnulib.mk $(top_srcdir)/src/local.mk $(srcdir)/src/cu-progs.mk $(top_srcdir)/src/single-binary.mk $(top_srcdir)/doc/local.mk $(top_srcdir)/man/local.mk $(top_srcdir)/tests/local.mk $(am__empty):
++$(top_srcdir)/gl/local.mk $(top_srcdir)/lib/local.mk $(srcdir)/lib/gnulib.mk $(top_srcdir)/src/local.mk $(srcdir)/src/cu-progs.mk $(top_srcdir)/src/single-binary.mk $(am__empty):
  
  $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
  	$(SHELL) ./config.status --recheck

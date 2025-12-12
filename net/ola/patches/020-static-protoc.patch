@@ -1,0 +1,11 @@
+--- a/config/ola.m4
++++ b/config/ola.m4
+@@ -84,7 +84,7 @@ else
+       [],
+       AC_MSG_ERROR([Cannot find the protoc header files]))
+   SAVED_LIBS=$LIBS
+-  LIBS="$LIBS -lprotoc"
++  LIBS="$LIBS -lprotoc -lprotobuf"
+   AC_LINK_IFELSE(
+     [AC_LANG_PROGRAM([#include <google/protobuf/compiler/command_line_interface.h>],
+       [google::protobuf::compiler::CommandLineInterface cli])],

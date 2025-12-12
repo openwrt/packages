@@ -1,0 +1,19 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-CMAKE_MINIMUM_REQUIRED(VERSION 2.8.1)
++CMAKE_MINIMUM_REQUIRED(VERSION 3.10)
+ PROJECT(libtins)
+ 
+ OPTION(LIBTINS_BUILD_EXAMPLES "Build examples" ON)
+--- a/cmake/Modules/CheckCXXFeatures.cmake
++++ b/cmake/Modules/CheckCXXFeatures.cmake
+@@ -50,7 +50,7 @@ if (NOT CMAKE_CXX_COMPILER_LOADED)
+     message(FATAL_ERROR "CheckCXX11Features modules only works if language CXX is enabled")
+ endif ()
+ 
+-cmake_minimum_required(VERSION 2.8.3)
++cmake_minimum_required(VERSION 3.10)
+ 
+ #
+ ### Check for needed compiler flags

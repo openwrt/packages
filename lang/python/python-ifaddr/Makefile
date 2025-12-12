@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-ifaddr
-PKG_VERSION:=0.1.7
+PKG_VERSION:=0.2.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=ifaddr
-PKG_HASH:=1f9e8a6ca6f16db5a37d3356f07b6e52344f6f9f7e806d618537731669eb1a94
+PKG_HASH:=cc0cbfcaabf765d44595825fb96a99bb12c79716b73b44330ea38ee2b0c4aed4
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=MIT
@@ -26,7 +26,7 @@ define Package/python3-ifaddr
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
-  TITLE:=Enumerate IP addresses on network adapters
+  TITLE:=Network interface and IP address enumeration library
   URL:=https://github.com/pydron/ifaddr
   DEPENDS:= \
 	+python3-light \
@@ -34,7 +34,8 @@ define Package/python3-ifaddr
 endef
 
 define Package/python3-ifaddr/description
-  ifaddr is a small Python library that allows you to find all the IPv4 and IPv6 addresses of the computer.
+ifaddr is a small Python library that allows you to find all the
+Ethernet and IP addresses of the computer.
 endef
 
 $(eval $(call Py3Package,python3-ifaddr))

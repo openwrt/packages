@@ -1,0 +1,28 @@
+From a7c525191aa725f4ebb7b489cdd7dd854a4e42fb Mon Sep 17 00:00:00 2001
+From: Uwe Ohse <uwe@ohse.de>
+Date: Sun, 1 Mar 2020 22:35:28 +0000
+Subject: [PATCH] may-be-security-fix: avoid possible underflow
+
+Fixes: CVE-2018-10195
+
+[a.heider: mention CVE in commit message]
+---
+ src/zm.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+--- a/src/zm.c
++++ b/src/zm.c
+@@ -432,10 +432,11 @@ zsdata(const char *buf, size_t length, i
+ 	VPRINTF(3,("zsdata: %lu %s", (unsigned long) length, 
+ 		Zendnames[(frameend-ZCRCE)&3]));
+ 	crc = 0;
+-	do {
++	while (length>0) {
+ 		zsendline(*buf); crc = updcrc((0377 & *buf), crc);
+ 		buf++;
+-	} while (--length>0);
++		length--;
++	}
+ 	xsendline(ZDLE); xsendline(frameend);
+ 	crc = updcrc(frameend, crc);
+ 

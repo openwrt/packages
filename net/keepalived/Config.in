@@ -66,9 +66,28 @@ config KEEPALIVED_IPTABLES
 	depends on KEEPALIVED_VRRP
 	bool
 	default y
+	select KEEPALIVED_IP6TABLES
 	prompt "Enable iptables for VIP filtering"
 	help
 		Builds support for using iptables/ipsets for filtering packets
+		to VIPs
+
+config KEEPALIVED_IP6TABLES
+	depends on KEEPALIVED_VRRP && KEEPALIVED_IPTABLES && IPV6
+	bool
+	default y
+	prompt "Enable ip6tables for VIP filtering"
+	help
+		Builds support for using ip6tables/ipsets for filtering packets
+		to VIPs
+
+config KEEPALIVED_NFTABLES
+	depends on KEEPALIVED_VRRP
+	bool
+	default y
+	prompt "Enable nftables for VIP filtering"
+	help
+		Builds support for using nftables for filtering packets
 		to VIPs
 
 config KEEPALIVED_SNMP_VRRP
@@ -110,14 +129,6 @@ config KEEPALIVED_DBUS
 	prompt "Enable DBus support"
 	help
 		Builds support for using DBus with VRRP
-
-config KEEPALIVED_JSON
-	depends on KEEPALIVED_VRRP
-	bool
-	default n
-	prompt "Enable JSON support with VRRP"
-	help
-		Builds support for using JSON output for VRRP
 
 config KEEPALIVED_VRRP_AUTH
 	depends on KEEPALIVED_VRRP

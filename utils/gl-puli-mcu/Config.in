@@ -1,0 +1,12 @@
+choice
+    depends on PACKAGE_gl-puli-mcu
+
+    prompt "GL.iNet target"
+    default GL_PULI_MCU_XE300
+
+    config GL_PULI_MCU_XE300
+            bool "GL.iNet XE300 (Puli)"
+
+    config GL_PULI_MCU_XE3000
+            bool "GL.iNet XE3000 (Puli AX)"
+endchoice

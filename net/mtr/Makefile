@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mtr
-PKG_VERSION:=0.94
-PKG_RELEASE:=1
+PKG_VERSION:=0.95
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://www.bitwizard.nl/mtr/files
-PKG_HASH:=cb5ffc803d136f7136b49b950abbc2a27d2a5ba62195de5b70f8ef9f0fcf2791
+PKG_SOURCE_URL:=https://codeload.github.com/traviscross/mtr/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=12490fb660ba5fb34df8c06a0f62b4f9cbd11a584fc3f6eceda0a99124e8596f
 
 PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -22,16 +22,41 @@ PKG_CPE_ID:=cpe:/a:matt_kimball_and_roger_wolff:mtr
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+PKG_FIXUP:=autoreconf
+PKG_BUILD_FLAGS:=gc-sections
+
+CONFIGURE_ARGS += \
+	--without-gtk \
+	$(call autoconf_bool,CONFIG_IPV6,ipv6)
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/mtr
-  SECTION:=net
-  CATEGORY:=Network
-  DEPENDS:=+libncurses
-  TITLE:=Full screen ncurses traceroute tool
-  URL:=https://www.bitwizard.nl/mtr/
+define Package/mtr/Default
+	SECTION:=net
+	CATEGORY:=Network
+	DEPENDS:=+libncurses
+	TITLE:=Full screen ncurses traceroute tool
+	URL:=https://www.bitwizard.nl/mtr/
+	PROVIDES:=mtr
 endef
+
+define Package/mtr-nojson
+	$(Package/mtr/Default)
+	TITLE+= Without JSON
+	VARIANT:=nojson
+	DEFAULT_VARIANT:=1
+endef
+
+define Package/mtr-json
+	$(Package/mtr/Default)
+	TITLE+= With JSON
+	VARIANT:=json
+	DEPENDS+=+jansson
+endef
+
+ifeq ($(BUILD_VARIANT),nojson)
+	CONFIGURE_ARGS += --without-jansson
+endif
 
 define Package/mtr/description
 	mtr combines the functionality of the 'traceroute' and 'ping' programs
@@ -44,20 +69,18 @@ define Package/mtr/description
 	running statistics about each machine.
 endef
 
-TARGET_CFLAGS += -ffunction-sections -fdata-sections
-TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
-
-CONFIGURE_ARGS += \
-	--without-gtk \
-	--without-jansson \
-	$(call autoconf_bool,CONFIG_IPV6,ipv6)
+TARGET_LDFLAGS += -Wl,--as-needed
 
 CONFIGURE_VARS += ac_cv_lib_cap_cap_set_proc=no
 
-define Package/mtr/install
+define Package/mtr/install/Default
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/mtr $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/mtr-packet $(1)/usr/sbin/
 endef
 
-$(eval $(call BuildPackage,mtr))
+Package/mtr-nojson/install = $(Package/mtr/install/Default)
+Package/mtr-json/install = $(Package/mtr/install/Default)
+
+$(eval $(call BuildPackage,mtr-nojson))
+$(eval $(call BuildPackage,mtr-json))

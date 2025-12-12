@@ -10,11 +10,11 @@ Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
 
 --- a/configure.ac
 +++ b/configure.ac
-@@ -130,7 +130,6 @@ OVS_CHECK_LINUX_HOST
+@@ -131,7 +131,6 @@ OVS_CHECK_LINUX_HOST
  OVS_LIBTOOL_VERSIONS
  OVS_CHECK_CXX
  AX_FUNC_POSIX_MEMALIGN
 -OVN_CHECK_UNBOUND
+ OVS_CHECK_DDLOG_FAST_BUILD
  
  OVS_CHECK_INCLUDE_NEXT([stdio.h string.h])
- AC_CONFIG_FILES([lib/libovn.sym])

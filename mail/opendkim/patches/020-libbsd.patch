@@ -1,0 +1,2143 @@
+From f45f7d220e44477c2bc7d04735086e3d703f4b7f Mon Sep 17 00:00:00 2001
+From: Guilherme Janczak <guilherme.janczak@yandex.com>
+Date: Mon, 2 May 2022 13:42:48 +0000
+Subject: [PATCH] use transparent strlcpy/strlcat fallback
+
+Using _libbsd-overlay_ through pkg-config allows accessing
+`strlcpy`/`strlcat` by including `<string.h>`, just like on BSD. This
+simplifies compatibility code massively.
+---
+ INSTALL                       |  10 ++-
+ README                        |   6 +-
+ configure.ac                  | 127 +++++++++-------------------------
+ libopendkim/Makefile.am       |   4 +-
+ libopendkim/dkim-cache.c      |  10 ---
+ libopendkim/dkim-canon.c      |  16 +----
+ libopendkim/dkim-keys.c       |  16 +----
+ libopendkim/dkim-test.c       |  12 +---
+ libopendkim/dkim.c            |  46 +++++-------
+ libopendkim/tests/t-test122.c |  10 ---
+ libopendkim/tests/t-test123.c |  10 ---
+ libopendkim/tests/t-test127.c |  10 ---
+ libopendkim/tests/t-test131.c |  10 ---
+ libopendkim/tests/t-test136.c |  10 ---
+ libopendkim/tests/t-test142.c |  10 ---
+ libopendkim/tests/t-test153.c |  10 ---
+ libopendkim/tests/t-test42.c  |  10 ---
+ libopendkim/tests/t-test55.c  |  10 ---
+ libopendkim/tests/t-test56.c  |  10 ---
+ libopendkim/tests/t-test57.c  |  10 ---
+ libopendkim/tests/t-test73.c  |  12 +---
+ libopendkim/tests/t-test84.c  |  10 ---
+ libopendkim/tests/t-test88.c  |  10 ---
+ libopendkim/util.c            |  12 +---
+ miltertest/Makefile.am        |   4 +-
+ miltertest/miltertest.c       |  40 ++++-------
+ opendkim/Makefile.am          |   4 +-
+ opendkim/config.c             |  12 +---
+ opendkim/flowrate.c           |  10 ---
+ opendkim/opendkim-ar.c        |  12 +---
+ opendkim/opendkim-db.c        |  62 +++++++----------
+ opendkim/opendkim-spam.c      |  10 ---
+ opendkim/opendkim-testkey.c   |  10 ---
+ opendkim/opendkim.c           | 106 +++++++++++++---------------
+ opendkim/reputation.c         |  14 +---
+ opendkim/stats.c              |  10 ---
+ opendkim/test.c               |  12 +---
+ opendkim/util.c               |  12 +---
+ reprrd/reprrd.c               |  13 ++--
+ stats/Makefile.am             |   4 +-
+ stats/opendkim-importstats.c  |  10 ---
+ 41 files changed, 177 insertions(+), 569 deletions(-)
+
+--- a/INSTALL
++++ b/INSTALL
+@@ -50,7 +50,7 @@ doesn't find it, you will need to specif
+ --with-db-libdir
+ --with-db-lib
+ 		These provide a finer control over the location of BerkeleyDB
+-		include, library path and libary name where the default 
++		include, library path and libary name where the default
+ 		locations of --with-db are not enough.
+ 
+ --with-domain	Specifies the local domain name in use.  Used only for
+@@ -129,9 +129,9 @@ doesn't find it, you will need to specif
+ 		/usr directories will be searched for the required includes
+ 		and libraries.
+ 
+---with-unbound	Location of the Unbound DNSSEC capable asynchronous resolver 
++--with-unbound	Location of the Unbound DNSSEC capable asynchronous resolver
+ 		library and include file.
+-                
++
+ 
+ 
+ FEATURES
+@@ -210,6 +210,10 @@ Steps to compiling the library and the m
+     system.
+ 	./configure
+ 
++    Note: When creating a package, pass `--without-libbsd` to the configure
++    script. If it fails, the program depends on either of libbsd or libobsd
++    in your system.
++
+ (5) Compile the package.
+ 	make
+ 
+--- a/README
++++ b/README
+@@ -59,8 +59,8 @@ o sendmail v8.13.0 (or later), or Postfi
+ 
+ o Access to a working nameserver (required only for signature verification).
+ 
+-o On Linux systems, either libbsd (BSD compatibility library) or some other
+-  library that provides strlcat() and strlcpy().
++o If `./configure --without-libbsd` fails, either of libbsd or libobsd are
++  required. This happens on glibc, for instance.
+ 
+ o If you wish to interface the filter with SQL databases, or store statistical
+   information in a database, OpenDBX v1.3.7 or later is required.
+@@ -229,7 +229,7 @@ Other OpenDKIM issues:
+ 
+  Report any bugs to the email address opendkim-users@lists.opendkim.org or to
+  the sourceforge issue trackers accessible at:
+- 
++
+  https://sourceforge.net/p/opendkim/_list/tickets
+ 
+ 
+--- a/configure.ac
++++ b/configure.ac
+@@ -2,7 +2,7 @@
+ # Process this file with autoconf to produce a configure script.
+ #
+ # Copyright (c) 2009-2015, The Trusted Domain Project.  All rights reserved.
+-# 
++#
+ 
+ #
+ # Setup
+@@ -47,13 +47,13 @@ AC_CONFIG_MACRO_DIR([m4])
+ 
+ #
+ # Hexadecimal version, for use in generating dkim.h
+-# 
++#
+ HEX_VERSION=$(printf %08x $(( ((VERSION_RELEASE << 8 | VERSION_MAJOR_REV) << 8 | VERSION_MINOR_REV) << 8| VERSION_PATCH )))
+ AC_SUBST([HEX_VERSION])
+ 
+ #
+ # library version, passed to libtool
+-# 
++#
+ LIBOPENDKIM_VERSION_INFO=$(printf %d:%d:%d LIBVERSION_CURRENT LIBVERSION_REVISION LIBVERSION_AGE)
+ AC_SUBST([LIBOPENDKIM_VERSION_INFO])
+ 
+@@ -130,11 +130,11 @@ AC_CHECK_TYPES([useconds_t])
+ # See if libopendkim will need -lresolv
+ #
+ dnscheck='
+-#include "confdefs.h" 
++#include "confdefs.h"
+ #include <sys/types.h>
+ #include <netinet/in.h>
+ #include <arpa/nameser.h>
+-#include <resolv.h> 
++#include <resolv.h>
+ int main() {
+ res_mkquery (0, 0, 0, 0, 0, 0, 0, 0, 0);
+ dn_expand (0, 0, 0, 0, 0);
+@@ -165,7 +165,7 @@ $dnscheck
+ 	LIBS="$saved_LIBS"
+ ])
+ AC_SUBST([LIBRESOLV])
+- 
++
+ #
+ # Checks for header files
+ #
+@@ -196,78 +196,17 @@ AC_FUNC_REALLOC
+ 
+ AC_CHECK_FUNCS([dup2 endpwent getcwd gethostname gethostbyname getaddrinfo gethostbyname2 gettimeofday isascii memchr memmove memset regcomp select socket strcasecmp strchr strdup strerror strncasecmp strrchr strstr strtol strtoul strtoull realpath strsep])
+ 
+-bsdstrl_h_found="no"
+-strl_found="no"
+-libstrl_found="no"
+-strl_h_found="no"
+-
+-AC_CHECK_HEADERS([bsd/string.h], [bsdstrl_h_found="yes"])
+-
+-AC_CHECK_FUNCS([strlcat strlcpy], [strl_found="yes"],
+-               [
+-		saved_LIBS="$LIBS"
+-		LIBS="$outer_LIBS"
+-		AC_SEARCH_LIBS([strlcat],
+-		               [bsd strl],
+-		               [libstrl_found="yes"],
+-		               [strl_found="no"])
+-		AC_SEARCH_LIBS([strlcpy],
+-		               [bsd strl],
+-		               [libstrl_found="yes"],
+-		               [strl_found="no"])
+-		STRL_LIBS="$LIBS"
+-		LIBS="$saved_LIBS"
+-               ])
+-
+-if test x"$libstrl_found" = x"yes"
+-then
+-	LIBS="$LIBS $STRL_LIBS"
+-fi
+-
+-# we need something above to have worked
+-if test x"$strl_found" != x"yes" -a x"$libstrl_found" != x"yes"
+-then
+-	AC_MSG_ERROR(no strlcpy/strlcat found)
+-fi
+-
+-AC_CHECK_HEADERS([strl.h], [strl_h_found="yes"])
+-if test x"$strl_h_found" != x"yes"
+-then
+-	strldirs="/usr/local/include /usr/include"
+-
+-	for d in $strldirs
+-	do
+-		AC_MSG_CHECKING([for strl.h in $d/strl])
+-		if test -f $d/strl/strl.h
+-		then
+-			unset ac_cv_header_strl_h
+-			saved_CPPFLAGS="$CPPFLAGS"
+-			CPPFLAGS="$CPPFLAGS -I$d/strl"
+-			AC_CHECK_HEADERS([strl.h], [strl_h_found="yes"])
+-			CPPFLAGS="$saved_CPPFLAGS"
+-		fi
+-
+-		if test x"$strl_h_found" = x"yes"
+-		then
+-			CPPFLAGS="$CPPFLAGS -I$d/strl"
+-			break
+-		fi
+-	done
+-fi
+-
+-# we need to include <strl.h> if an installed strl.h was found and no
+-# bsd/string.h was found
+-if test x"$strl_h_found" = x"yes" -a x"$bsdstrl_h_found" = x"no"
+-then
+-	AC_DEFINE([USE_STRL_H], 1,
+-	          [Define to 1 if you need to include <strl.h> to get the `strlcat()' and `strlcpy()' functions.])
+-fi
+-
+-if test x"$bsdstrl_h_found" = x"yes"
+-then
+-	AC_DEFINE([USE_BSD_H], 1,
+-	          [Define to 1 if you need to include <bsd/string.h> to get the `strlcat()' and `strlcpy()' functions.])
+-fi
++AC_ARG_WITH([libbsd], AS_HELP_STRING([--without-libbsd],
++                                     [Error when BSD functions are not found]))
++AC_CHECK_FUNCS([strlcpy strlcat],, [LIBBSD_NEEDED=yes])
++AS_IF([test "x$LIBBSD_NEEDED" = "xyes"], [
++      AS_IF([test "x$with_libbsd" = "xno"], [
++            AC_MSG_ERROR([BSD functions not found and --without-libbsd was used])
++      ])
++      PKG_CHECK_MODULES([LIBBSD], [libbsd-overlay],,
++				        [AC_MSG_ERROR([BSD functions not found,
++                                       libbsd is required])])
++])
+ 
+ #
+ # Checks for structure members
+@@ -446,7 +385,7 @@ fi
+ 
+ #
+ # test coverage/profiling stuff
+-# 
++#
+ AC_ARG_ENABLE([codecoverage],
+ 	AS_HELP_STRING([--enable-codecoverage],
+ 	               [include code coverage/profiling code]))
+@@ -574,7 +513,7 @@ AM_CONDITIONAL(GPROF_FILENAMES, test x"$
+ 
+ #
+ # opendkim
+-# 
++#
+ AC_ARG_ENABLE([filter],
+               AS_HELP_STRING([--disable-filter],
+                              [do not compile the opendkim filter]),
+@@ -732,7 +671,7 @@ then
+ 
+ 		#if GNUTLS_VERSION_NUMBER < 0x020b07
+ 		# error GnuTLS 2.11.7 or later required
+-		#endif 
++		#endif
+ 		int main()
+ 		{
+ 			return 0;
+@@ -1009,7 +948,7 @@ AC_SUBST(LIBMILTER_LIBS)
+ 
+ #
+ # librrd
+-# 
++#
+ AC_ARG_WITH([librrd],
+             AS_HELP_STRING([--with-librrd],
+                            [location of librrd includes and library]),
+@@ -1023,7 +962,7 @@ fi
+ 
+ if test \( x"$librrdpath" = x"auto" -o x"$librrdpath" = x"yes" \) -a x"$PKG_CONFIG" != x""
+ then
+-	PKG_CHECK_MODULES([RRDTOOL], [librrd], 
++	PKG_CHECK_MODULES([RRDTOOL], [librrd],
+ 	                  [
+                           	librrd_found="yes"
+ 	                  ],
+@@ -1085,7 +1024,7 @@ AC_SUBST(RRDTOOL_LIBS)
+ 
+ #
+ # libmemcached
+-# 
++#
+ AC_ARG_WITH([libmemcached],
+             AS_HELP_STRING([--with-libmemcached],
+                            [location of libmemcached includes and library]),
+@@ -1095,7 +1034,7 @@ libmemcache_found="no"
+ 
+ if test \( x"$libmcdpath" = x"auto" -o x"$libmcdpath" = x"yes" \) -a x"$PKG_CONFIG" != x""
+ then
+-	PKG_CHECK_MODULES([LIBMEMCACHED], [libmemcached >= 0.36], 
++	PKG_CHECK_MODULES([LIBMEMCACHED], [libmemcached >= 0.36],
+ 	                  [
+                           	libmemcache_found="yes"
+ 	                  	LIBMEMCACHED_INCDIRS="$LIBMEMCACHED_CFLAGS"
+@@ -1159,7 +1098,7 @@ main()
+ 	return 0;
+ }
+ 		])],
+-		AC_MSG_RESULT([ok]), 
++		AC_MSG_RESULT([ok]),
+ 		AC_MSG_ERROR([libmemcached version 0.36 or later required]))
+ fi
+ 
+@@ -1383,7 +1322,7 @@ if test \(  x"$trepath" = x"auto" -o x"$
+ then
+         PKG_CHECK_MODULES([LIBTRE], [tre >= 0.8.0], [tre_found="yes"],
+ 	[
+-        	PKG_CHECK_MODULES([LIBTRE], [tre >= 0.7.5], 
++        	PKG_CHECK_MODULES([LIBTRE], [tre >= 0.7.5],
+ 		[
+ 			tre_found="yes"
+ 			AC_DEFINE([TRE_PRE_080], 1,
+@@ -1626,7 +1565,7 @@ main()
+ 	return 0;
+ }
+ 				])],
+-				AC_MSG_RESULT([ok]), 
++				AC_MSG_RESULT([ok]),
+ 				AC_MSG_ERROR([Lua version 5.1 or later required]))
+ 	CPPFLAGS="$saved_CPPFLAGS"
+ 	AC_DEFINE([USE_LUA], 1, [support for Lua scripting])
+@@ -1836,7 +1775,7 @@ main()
+ 	return 0;
+ }
+ 				])],
+-				AC_MSG_RESULT([ok]), 
++				AC_MSG_RESULT([ok]),
+ 				AC_MSG_ERROR([OpenLDAP version 2.1.3 or later required]))
+ 	CPPFLAGS="$saved_CPPFLAGS"
+ 	AC_DEFINE([USE_LDAP], 1, [OpenLDAP support for datasets enabled])
+@@ -2086,7 +2025,7 @@ fi
+ 
+ #
+ # reputation requires libjansson
+-# 
++#
+ 
+ AC_ARG_WITH([libjansson],
+             AS_HELP_STRING([--with-libjansson],
+@@ -2418,7 +2357,7 @@ AC_DEFINE_UNQUOTED([LIBOPENDKIM_FEATURE_
+ 
+ #
+ # setup for testing
+-# 
++#
+ 
+ AC_ARG_ENABLE([live-testing],
+               AS_HELP_STRING([--disable-live-testing],
+@@ -2428,7 +2367,7 @@ AM_CONDITIONAL(LIVE_TESTS, test x"$live_
+ 
+ #
+ # specify test socket
+-# 
++#
+ 
+ AC_ARG_WITH([test-socket],
+             AS_HELP_STRING([--with-test-socket],
+@@ -2535,7 +2474,7 @@ AC_SUBST(LIBERL_LIBS)
+ 
+ CPPFLAGS="$CPPFLAGS -DCONFIG_BASE=\\\"$sysconfdir\\\""
+ 
+-test "x$prefix" = xNONE && prefix=$ac_default_prefix 
++test "x$prefix" = xNONE && prefix=$ac_default_prefix
+ SYSCONFDIR=`eval echo "$sysconfdir"`
+ AC_SUBST([SYSCONFDIR])
+ 
+@@ -2645,7 +2584,7 @@ AC_OUTPUT([	Makefile
+ 		miltertest/Makefile
+ 		opendkim/Makefile opendkim/opendkim.8 opendkim/opendkim-genkey
+ 			opendkim/opendkim-genkey.8 opendkim/opendkim-genzone.8
+-			opendkim/opendkim-lua.3 
++			opendkim/opendkim-lua.3
+ 			opendkim/opendkim-testkey.8 opendkim/opendkim-stats.8
+ 			opendkim/opendkim-testmsg.8 opendkim/opendkim.conf.5
+ 			opendkim/opendkim.conf.simple
+--- a/libopendkim/Makefile.am
++++ b/libopendkim/Makefile.am
+@@ -9,9 +9,9 @@ LDADD = ./libopendkim.la
+ 
+ lib_LTLIBRARIES = libopendkim.la
+ libopendkim_la_SOURCES = base32.c base64.c dkim-atps.c dkim-cache.c dkim-canon.c dkim-dns.c dkim-keys.c dkim-mailparse.c dkim-report.c dkim-tables.c dkim-test.c dkim-util.c dkim.c util.c base64.h dkim-cache.h dkim-canon.h dkim-dns.h dkim-internal.h dkim-keys.h dkim-mailparse.h dkim-report.h dkim-tables.h dkim-test.h dkim-types.h dkim-util.h dkim.h util.h
+-libopendkim_la_CPPFLAGS = $(LIBCRYPTO_CPPFLAGS)
++libopendkim_la_CPPFLAGS = $(LIBCRYPTO_CPPFLAGS) $(LIBBSD_CFLAGS)
+ libopendkim_la_CFLAGS = $(LIBCRYPTO_INCDIRS) $(LIBOPENDKIM_INC) $(COV_CFLAGS)
+-libopendkim_la_LDFLAGS = -no-undefined  $(LIBCRYPTO_LIBDIRS) $(COV_LDFLAGS) -version-info $(LIBOPENDKIM_VERSION_INFO)
++libopendkim_la_LDFLAGS = -no-undefined  $(LIBCRYPTO_LIBDIRS) $(COV_LDFLAGS) -version-info $(LIBOPENDKIM_VERSION_INFO) $(LIBBSD_LIBS)
+ libopendkim_la_LIBADD = $(LIBOPENDKIM_LIBS) $(LIBCRYPTO_LDADD) $(COV_LIBADD)
+ if !ALL_SYMBOLS
+ libopendkim_la_DEPENDENCIES = symbols.map
+--- a/libopendkim/dkim-cache.c
++++ b/libopendkim/dkim-cache.c
+@@ -29,16 +29,6 @@
+ #include "dkim-internal.h"
+ #include "dkim-cache.h"
+ 
+-/* libbsd if found */
+-#ifdef USE_BSD_H
+-# include <bsd/string.h>
+-#endif /* USE_BSD_H */
+-
+-/* libstrl if needed */
+-#ifdef USE_STRL_H
+-# include <strl.h>
+-#endif /* USE_STRL_H */
+-
+ /* limits, macros, etc. */
+ #define	BUFRSZ			1024
+ #define DB_MODE			(S_IRUSR|S_IWUSR)
+--- a/libopendkim/dkim-canon.c
++++ b/libopendkim/dkim-canon.c
+@@ -45,16 +45,6 @@
+ #include "dkim-util.h"
+ #include "util.h"
+ 
+-/* libbsd if found */
+-#ifdef USE_BSD_H
+-# include <bsd/string.h>
+-#endif /* USE_BSD_H */
+-
+-/* libstrl if needed */
+-#ifdef USE_STRL_H
+-# include <strl.h>
+-#endif /* USE_STRL_H */
+-
+ /* definitions */
+ #define	CRLF	(u_char *) "\r\n"
+ #define	SP	(u_char *) " "
+@@ -379,7 +369,7 @@ dkim_canon_header_string(struct dkim_dst
+ 
+ 				tmp = tmpbuf;
+ 			}
+-			
++
+ 			if (*p == ':')
+ 			{
+ 				p++;
+@@ -681,7 +671,7 @@ dkim_canon_init(DKIM *dkim, _Bool tmp, _
+ 				DKIM_FREE(dkim, sha);
+ 				return DKIM_STAT_INTERNAL;
+ 			}
+-				
++
+ 			if (tmp)
+ 			{
+ 				status = dkim_tmpfile(dkim, &fd, keep);
+@@ -1512,7 +1502,7 @@ dkim_canon_signature(DKIM *dkim, struct
+ 		tmphdr.hdr_next = NULL;
+ 		if (cur->canon_canon == DKIM_CANON_RELAXED)
+ 			dkim_lowerhdr(tmphdr.hdr_text);
+-		
++
+ 		/* canonicalize the signature */
+ 		status = dkim_canon_header(dkim, cur, &tmphdr, FALSE);
+ 		if (status != DKIM_STAT_OK)
+--- a/libopendkim/dkim-keys.c
++++ b/libopendkim/dkim-keys.c
+@@ -29,16 +29,6 @@
+ #include "dkim-test.h"
+ #include "util.h"
+ 
+-/* libbsd if found */
+-#ifdef USE_BSD_H
+-# include <bsd/string.h>
+-#endif /* USE_BSD_H */
+-
+-/* libstrl if needed */
+-#ifdef USE_STRL_H
+-# include <strl.h>
+-#endif /* USE_STRL_H */
+-
+ /* prototypes */
+ extern void dkim_error __P((DKIM *, const char *, ...));
+ 
+@@ -156,7 +146,7 @@ dkim_get_key_dns(DKIM *dkim, DKIM_SIGINF
+ 			dkim_error(dkim, "'%s' query failed", qname);
+ 			return DKIM_STAT_KEYFAIL;
+ 		}
+-	
++
+ 		if (lib->dkiml_dns_callback == NULL)
+ 		{
+ 			timeout.tv_sec = dkim->dkim_timeout;
+@@ -240,7 +230,7 @@ dkim_get_key_dns(DKIM *dkim, DKIM_SIGINF
+ 		/* copy it first */
+ 		(void) dn_expand((unsigned char *) &ansbuf, eom, cp,
+ 		                 (char *) qname, sizeof qname);
+- 
++
+ 		if ((n = dn_skipname(cp, eom)) < 0)
+ 		{
+ 			dkim_error(dkim, "'%s' reply corrupt", qname);
+@@ -420,7 +410,7 @@ dkim_get_key_dns(DKIM *dkim, DKIM_SIGINF
+ **  	and must be set prior to use of this function.  Failing to do
+ **  	so will cause this function to return DKIM_STAT_KEYFAIL every time.
+ **  	The file should contain lines of the form:
+-** 
++**
+ **  		<selector>._domainkey.<domain> <space> key-data
+ **
+ **  	Case matching on the left is case-sensitive, but libopendkim already
+--- a/libopendkim/dkim-test.c
++++ b/libopendkim/dkim-test.c
+@@ -36,16 +36,6 @@
+ #include "dkim-util.h"
+ #include "dkim-test.h"
+ 
+-/* libbsd if found */
+-#ifdef USE_BSD_H
+-# include <bsd/string.h>
+-#endif /* USE_BSD_H */
+-
+-/* libstrl if needed */
+-#ifdef USE_STRL_H
+-# include <strl.h>
+-#endif /* USE_STRL_H */
+-
+ /* definitions */
+ #define	TESTTTL			300
+ #define MAXPACKET		8192
+@@ -443,7 +433,7 @@ dkim_test_key(DKIM_LIB *lib, char *selec
+ 			}
+ 			return -1;
+ 		}
+-	
++
+ 		rsa->rsa_keysize = RSA_size(rsa->rsa_rsa);
+ 		rsa->rsa_pad = RSA_PKCS1_PADDING;
+ 
+--- a/libopendkim/dkim.c
++++ b/libopendkim/dkim.c
+@@ -91,16 +91,6 @@
+ #include "util.h"
+ #include "base64.h"
+ 
+-/* libbsd if found */
+-#ifdef USE_BSD_H
+-# include <bsd/string.h>
+-#endif /* USE_BSD_H */
+-
+-/* libstrl if needed */
+-#ifdef USE_STRL_H
+-# include <strl.h>
+-#endif /* USE_STRL_H */
+-
+ /* prototypes */
+ void dkim_error __P((DKIM *, const char *, ...));
+ 
+@@ -264,7 +254,7 @@ const u_char *dkim_required_signhdrs[] =
+ /* ========================= PRIVATE SECTION ========================= */
+ 
+ /*
+-**  DKIM_SET_FREE -- destroy a DKIM_SET 
++**  DKIM_SET_FREE -- destroy a DKIM_SET
+ **
+ **  Parameters:
+ **  	dkim -- DKIM context
+@@ -744,7 +734,7 @@ dkim_process_set(DKIM *dkim, dkim_set_t
+ 			}
+ 		}
+ 		break;
+-		
++
+ 	  case DKIM_SETTYPE_SIGNATURE:
+ 		/* make sure required stuff is here */
+ 		if (dkim_param_get(set, (u_char *) "s") == NULL ||
+@@ -881,7 +871,7 @@ dkim_process_set(DKIM *dkim, dkim_set_t
+ 		}
+ 
+ 		break;
+-			
++
+ 	  default:
+ 		assert(0);
+ 	}
+@@ -1081,7 +1071,7 @@ dkim_privkey_load(DKIM *dkim)
+ 	}
+ #endif /* USE_GNUTLS */
+ 
+-#ifdef USE_GNUTLS 
++#ifdef USE_GNUTLS
+ 	status = gnutls_x509_privkey_init(&rsa->rsa_key);
+ 	if (status != GNUTLS_E_SUCCESS)
+ 	{
+@@ -2386,7 +2376,7 @@ dkim_gensighdr(DKIM *dkim, DKIM_SIGINFO
+ 		format = "v=%s;%sa=%s;%sc=%s/%s;%sd=%s;%ss=%s;%st=%llu";
+ 	else if (sizeof(sig->sig_timestamp) == sizeof(unsigned long))
+ 		format = "v=%s;%sa=%s;%sc=%s/%s;%sd=%s;%ss=%s;%st=%lu";
+-	else 
++	else
+ 		format = "v=%s;%sa=%s;%sc=%s/%s;%sd=%s;%ss=%s;%st=%u";
+ 
+ 	(void) dkim_dstring_printf(dstr, format,
+@@ -3141,7 +3131,7 @@ dkim_headercheck(DKIM *dkim)
+ 
+ /*
+ **  DKIM_EOH_SIGN -- declare end-of-headers; prepare for signing
+-** 
++**
+ **  Parameters:
+ **  	dkim -- DKIM handle
+ **
+@@ -3289,7 +3279,7 @@ dkim_eoh_sign(DKIM *dkim)
+ 
+ /*
+ **  DKIM_EOH_VERIFY -- declare end-of-headers; set up verification
+-** 
++**
+ **  Parameters:
+ **  	dkim -- DKIM handle
+ **
+@@ -4273,7 +4263,7 @@ dkim_init(void *(*caller_mallocf)(void *
+ 	libhandle->dkiml_skipre = FALSE;
+ 	libhandle->dkiml_malloc = caller_mallocf;
+ 	libhandle->dkiml_free = caller_freef;
+-	strlcpy((char *) libhandle->dkiml_tmpdir, (char *) td, 
++	strlcpy((char *) libhandle->dkiml_tmpdir, (char *) td,
+ 	        sizeof libhandle->dkiml_tmpdir);
+ 	libhandle->dkiml_flags = DKIM_LIBFLAGS_DEFAULT;
+ 	libhandle->dkiml_timeout = DEFTIMEOUT;
+@@ -4305,7 +4295,7 @@ dkim_init(void *(*caller_mallocf)(void *
+ 	libhandle->dkiml_dns_start = dkim_res_query;
+ 	libhandle->dkiml_dns_cancel = dkim_res_cancel;
+ 	libhandle->dkiml_dns_waitreply = dkim_res_waitreply;
+-	
++
+ #define FEATURE_INDEX(x)	((x) / (8 * sizeof(u_int)))
+ #define FEATURE_OFFSET(x)	((x) % (8 * sizeof(u_int)))
+ #define FEATURE_ADD(lib,x)	(lib)->dkiml_flist[FEATURE_INDEX((x))] |= (1 << FEATURE_OFFSET(x))
+@@ -4369,7 +4359,7 @@ dkim_close(DKIM_LIB *lib)
+ 
+ 	if (lib->dkiml_skipre)
+ 		(void) regfree(&lib->dkiml_skiphdrre);
+-	
++
+ 	if (lib->dkiml_signre)
+ 		(void) regfree(&lib->dkiml_hdrre);
+ 
+@@ -4386,7 +4376,7 @@ dkim_close(DKIM_LIB *lib)
+ 
+ 	if (lib->dkiml_dns_close != NULL && lib->dkiml_dns_service != NULL)
+ 		lib->dkiml_dns_close(lib->dkiml_dns_service);
+-	
++
+ 	free((void *) lib);
+ 
+ #ifndef USE_GNUTLS
+@@ -6206,7 +6196,7 @@ dkim_header(DKIM *dkim, u_char *hdr, siz
+ 
+ /*
+ **  DKIM_EOH -- declare end-of-headers
+-** 
++**
+ **  Parameters:
+ **  	dkim -- DKIM handle
+ **
+@@ -6449,7 +6439,7 @@ dkim_chunk(DKIM *dkim, u_char *buf, size
+ 				dkim->dkim_chunksm = 0;
+ 			}
+ 			break;
+-			
++
+ 		  case 2:
+ 			if (DKIM_ISLWSP(*p))
+ 			{
+@@ -6479,7 +6469,7 @@ dkim_chunk(DKIM *dkim, u_char *buf, size
+ 				break;
+ 			}
+ 			/* FALLTHROUGH */
+-				
++
+ 		  case 3:
+ 			if (*p == '\n')
+ 			{
+@@ -6898,7 +6888,7 @@ dkim_getsighdr_d(DKIM *dkim, size_t init
+ 						                  n);
+ 						x += n;
+ 						len += n;
+-						
++
+ 					}
+ 				}
+ 				else
+@@ -7015,7 +7005,7 @@ dkim_sig_hdrsigned(DKIM_SIGINFO *sig, u_
+ 			if (c1 == NULL)
+ 			{
+ 				start = hdrlist;
+-				len = c2 - start; 
++				len = c2 - start;
+ 			}
+ 			else
+ 			{
+@@ -7087,7 +7077,7 @@ dkim_sig_setdnssec(DKIM_SIGINFO *sig, in
+ {
+ 	assert(sig != NULL);
+ 
+-	switch (dnssec_status) 
++	switch (dnssec_status)
+ 	{
+ 	  case DKIM_DNSSEC_BOGUS:
+ 	  case DKIM_DNSSEC_INSECURE:
+@@ -8923,7 +8913,7 @@ dkim_add_querymethod(DKIM *dkim, const c
+ 		           strlen(type) + 1);
+ 		return DKIM_STAT_NORESOURCE;
+ 	}
+-		
++
+ 	if (options != NULL)
+ 	{
+ 		q->qm_options = dkim_strdup(dkim, tmp, 0);
+--- a/libopendkim/tests/t-test122.c
++++ b/libopendkim/tests/t-test122.c
+@@ -22,16 +22,6 @@
+ #include "../dkim.h"
+ #include "t-testdata.h"
+ 
+-/* libbsd if found */
+-#ifdef USE_BSD_H
+-# include <bsd/string.h>
+-#endif /* USE_BSD_H */
+-
+-/* libstrl if needed */
+-#ifdef USE_STRL_H
+-# include <strl.h>
+-#endif /* USE_STRL_H */
+-
+ #define	MAXHEADER	4096
+ 
+ #define	GIBBERISHLEN	(sizeof(GIBBERISH) - 1)
+--- a/libopendkim/tests/t-test123.c
++++ b/libopendkim/tests/t-test123.c
+@@ -22,16 +22,6 @@
+ #include "../dkim.h"
+ #include "t-testdata.h"
+ 
+-/* libbsd if found */
+-#ifdef USE_BSD_H
+-# include <bsd/string.h>
+-#endif /* USE_BSD_H */
+-
+-/* libstrl if needed */
+-#ifdef USE_STRL_H
+-# include <strl.h>
+-#endif /* USE_STRL_H */
+-
+ #define	MAXHEADER	4096
+ 
+ #define	GIBBERISHLEN	(sizeof(GIBBERISH) - 1)
+--- a/libopendkim/tests/t-test127.c
++++ b/libopendkim/tests/t-test127.c
+@@ -22,16 +22,6 @@
+ #include "../dkim.h"
+ #include "t-testdata.h"
+ 
+-/* libbsd if found */
+-#ifdef USE_BSD_H
+-# include <bsd/string.h>
+-#endif /* USE_BSD_H */
+-
+-/* libstrl if needed */
+-#ifdef USE_STRL_H
+-# include <strl.h>
+-#endif /* USE_STRL_H */
+-
+ #define	MAXHEADER	4096
+ 
+ #define	MAXMSGSIZE	16384
+--- a/libopendkim/tests/t-test131.c
++++ b/libopendkim/tests/t-test131.c
+@@ -23,16 +23,6 @@
+ #include "../dkim.h"
+ #include "t-testdata.h"
+ 
+-/* libbsd if found */
+-#ifdef USE_BSD_H
+-# include <bsd/string.h>
+-#endif /* USE_BSD_H */
+-
+-/* libstrl if needed */
+-#ifdef USE_STRL_H
+-# include <strl.h>
+-#endif /* USE_STRL_H */
+-
+ #define	MAXHEADER	4096
+ 
+ #define	NULLBH		"bh=47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU="
+--- a/libopendkim/tests/t-test136.c
++++ b/libopendkim/tests/t-test136.c
+@@ -22,16 +22,6 @@
+ #include "../dkim.h"
+ #include "t-testdata.h"
+ 
+-/* libbsd if found */
+-#ifdef USE_BSD_H
+-# include <bsd/string.h>
+-#endif /* USE_BSD_H */
+-
+-/* libstrl if needed */
+-#ifdef USE_STRL_H
+-# include <strl.h>
+-#endif /* USE_STRL_H */
+-
+ #define	MAXHEADER	4096
+ 
+ #define SIG2 "v=1; a=rsa-sha1; c=relaxed/relaxed; d=example.com; s=test;\r\n\tt=1172620939; bh=Z9ONHHsBrKN0pbfrOu025VfbdR4=;\r\n\th=Received:Received:Received:From:To:Date:Subject:Message-ID;\r\n\tb=Jf+j2RDZRkpIF1KaL5ByhHFPWj5RMeX5764IVlwIc11equjQND51K9FfL5pyjXvwj\r\n\t FoFPW0PGJb3liej6iDDEHgYpXR4p5qqlGx/C1Q9gf/MQN/Xlkv6ZXgR38QnWAfZxh5\r\n\t N1f5xUg+SJb5yBDoXklG62IRdia1Hq9MuiGumrGM="
+--- a/libopendkim/tests/t-test142.c
++++ b/libopendkim/tests/t-test142.c
+@@ -22,16 +22,6 @@
+ #include "../dkim.h"
+ #include "t-testdata.h"
+ 
+-/* libbsd if found */
+-#ifdef USE_BSD_H
+-# include <bsd/string.h>
+-#endif /* USE_BSD_H */
+-
+-/* libstrl if needed */
+-#ifdef USE_STRL_H
+-# include <strl.h>
+-#endif /* USE_STRL_H */
+-
+ #define	MAXHEADER	4096
+ #define	MAXMSGSIZE	16384
+ 
+--- a/libopendkim/tests/t-test153.c
++++ b/libopendkim/tests/t-test153.c
+@@ -18,16 +18,6 @@
+ # include <gnutls/gnutls.h>
+ #endif /* USE_GNUTLS */
+ 
+-/* libbsd if found */
+-#ifdef USE_BSD_H
+-# include <bsd/string.h>
+-#endif /* USE_BSD_H */
+-
+-/* libstrl if needed */
+-#ifdef USE_STRL_H
+-# include <strl.h>
+-#endif /* USE_STRL_H */
+-
+ /* libopendkim includes */
+ #include "../dkim.h"
+ #include "t-testdata.h"
+--- a/libopendkim/tests/t-test42.c
++++ b/libopendkim/tests/t-test42.c
+@@ -26,16 +26,6 @@
+ #include "../dkim.h"
+ #include "t-testdata.h"
+ 
+-/* libbsd if found */
+-#ifdef USE_BSD_H
+-# include <bsd/string.h>
+-#endif /* USE_BSD_H */
+-
+-/* libstrl if needed */
+-#ifdef USE_STRL_H
+-# include <strl.h>
+-#endif /* USE_STRL_H */
+-
+ #define	MAXHEADER	4096
+ 
+ #define SIG2 "v=1; a=rsa-sha256; c=simple/simple; d=example.com; s=test;\r\n\tt=1172620939; bh=yHBAX+3IwxTZIynBuB/5tlsBInJq9n8qz5fgAycHi80=;\r\n\th=Received:Received:Received:From:To:Date:Subject:Message-ID; b=Y3y\r\n\tVeA3WZdCZl1sGuOZNC3BBRhtGCOExkZdw5xQoGPvSX/q6AC1SAJvOUWOri95AZAUGs0\r\n\t/bIDzzt23ei9jc+rptlavrl/5ijMrl6ShmvkACk6It62KPkJcDpoGfi5AZkrfX1Ou/z\r\n\tqGg5xJX86Kqd7FgNolMg7PbfyWliK2Yb84="
+--- a/libopendkim/tests/t-test55.c
++++ b/libopendkim/tests/t-test55.c
+@@ -22,16 +22,6 @@
+ #include "../dkim.h"
+ #include "t-testdata.h"
+ 
+-/* libbsd if found */
+-#ifdef USE_BSD_H
+-# include <bsd/string.h>
+-#endif /* USE_BSD_H */
+-
+-/* libstrl if needed */
+-#ifdef USE_STRL_H
+-# include <strl.h>
+-#endif /* USE_STRL_H */
+-
+ #define	MAXHEADER	4096
+ 
+ #define	GIBBERISHLEN	(sizeof(GIBBERISH) - 1)
+--- a/libopendkim/tests/t-test56.c
++++ b/libopendkim/tests/t-test56.c
+@@ -22,16 +22,6 @@
+ #include "../dkim.h"
+ #include "t-testdata.h"
+ 
+-/* libbsd if found */
+-#ifdef USE_BSD_H
+-# include <bsd/string.h>
+-#endif /* USE_BSD_H */
+-
+-/* libstrl if needed */
+-#ifdef USE_STRL_H
+-# include <strl.h>
+-#endif /* USE_STRL_H */
+-
+ #define	MAXHEADER	4096
+ 
+ #define	GIBBERISHLEN	(sizeof(GIBBERISH) - 1)
+--- a/libopendkim/tests/t-test57.c
++++ b/libopendkim/tests/t-test57.c
+@@ -24,16 +24,6 @@
+ #include "../dkim.h"
+ #include "t-testdata.h"
+ 
+-/* libbsd if found */
+-#ifdef USE_BSD_H
+-# include <bsd/string.h>
+-#endif /* USE_BSD_H */
+-
+-/* libstrl if needed */
+-#ifdef USE_STRL_H
+-# include <strl.h>
+-#endif /* USE_STRL_H */
+-
+ #define	MAXHEADER	4096
+ 
+ #define SIG2 "v=1; a=rsa-sha256; c=relaxed/simple; d=example.com; s=test;\r\n\tt=1172620939; bh=TRy6u0KYixKENCPL95G1Y1uwclQ9rWthX6rFgE7gWb8=;\r\n\th=Received:Received:Received:From:To:Date:Subject:Message-ID;\r\n\tb=aMDMwcz08Na0zYLrEZnUMBUipMh3blE+pWiBSvX+t2ynaDUGTqd27xuR5JddL9y1T\r\n\t 6h0LkUMIcijsPBWa1WWfKL23QceksV75Y1/Tt6gmVi3SdVAoJbbZImrOaAQ3YQAn64\r\n\t dp1vI0Z8gSashYlwy+7gtmVSLAj/fpcAF6yNDPuE="
+--- a/libopendkim/tests/t-test73.c
++++ b/libopendkim/tests/t-test73.c
+@@ -27,16 +27,6 @@
+ #include "../dkim.h"
+ #include "t-testdata.h"
+ 
+-/* libbsd if found */
+-#ifdef USE_BSD_H
+-# include <bsd/string.h>
+-#endif /* USE_BSD_H */
+-
+-/* libstrl if needed */
+-#ifdef USE_STRL_H
+-# include <strl.h>
+-#endif /* USE_STRL_H */
+-
+ #define	BUFRSZ		1024
+ #define	MAXADDRESS	256
+ #define	MAXHEADER	4096
+@@ -85,7 +75,7 @@ stub_dns_waitreply(void *srv, void *qh,
+ 
+ 	memset(&newhdr, '\0', sizeof newhdr);
+ 	memset(&dnptrs, '\0', sizeof dnptrs);
+-		
++
+ 	newhdr.qdcount = htons(1);
+ 	newhdr.ancount = htons(1);
+ 	newhdr.rcode = NOERROR;
+--- a/libopendkim/tests/t-test84.c
++++ b/libopendkim/tests/t-test84.c
+@@ -26,16 +26,6 @@
+ #include "../dkim.h"
+ #include "t-testdata.h"
+ 
+-/* libbsd if found */
+-#ifdef USE_BSD_H
+-# include <bsd/string.h>
+-#endif /* USE_BSD_H */
+-
+-/* libstrl if needed */
+-#ifdef USE_STRL_H
+-# include <strl.h>
+-#endif /* USE_STRL_H */
+-
+ #define	MAXHEADER	4096
+ 
+ #define	SIG1 "v=1; a=rsa-sha256; c=relaxed/simple; d=sendmail.com; s=test; t=1172620939; i=@eng.sendmail.com; bh=yHBAX+3IwxTZIynBuB/5tlsBInJq9n8qz5fgAycHi80=; h=Received:Received:Received:From:To:Date:Subject:Message-ID; b=r5DyHh4oxZcCBcIzpKTnEk6yvWDI9g9DI+UUIwl2ZAcZ6P0BbsOQ8MEjmUdwlZitqoFLa25/Re8/rC5kHasOb3vs0T37vkasoTb1rGR7y/bcMnY4hRkPAyC7NoLoTjneJMTQ/WQYnZe3DJ8lVuDRYvY9BeV2EjH8kiGsa9QttiA="
+--- a/libopendkim/tests/t-test88.c
++++ b/libopendkim/tests/t-test88.c
+@@ -22,16 +22,6 @@
+ #include "../dkim.h"
+ #include "t-testdata.h"
+ 
+-/* libbsd if found */
+-#ifdef USE_BSD_H
+-# include <bsd/string.h>
+-#endif /* USE_BSD_H */
+-
+-/* libstrl if needed */
+-#ifdef USE_STRL_H
+-# include <strl.h>
+-#endif /* USE_STRL_H */
+-
+ #define	MAXHEADER	4096
+ 
+ #define	MAXMSGSIZE	16384
+--- a/libopendkim/util.c
++++ b/libopendkim/util.c
+@@ -27,16 +27,6 @@
+ #include "dkim-internal.h"
+ #include "util.h"
+ 
+-/* libbsd if found */
+-#ifdef USE_BSD_H
+-# include <bsd/string.h>
+-#endif /* USE_BSD_H */
+-
+-/* libstrl if needed */
+-#ifdef USE_STRL_H
+-# include <strl.h>
+-#endif /* USE_STRL_H */
+-
+ #if defined(__RES) && (__RES >= 19940415)
+ # define RES_UNC_T		char *
+ #else /* __RES && __RES >= 19940415 */
+@@ -198,7 +188,7 @@ dkim_lowerhdr(unsigned char *str)
+ 
+ /*
+ **  DKIM_HEXCHAR -- translate a hexadecimal character
+-**  
++**
+ **  Parameters:
+ **  	c -- character to translate
+ **
+--- a/miltertest/Makefile.am
++++ b/miltertest/Makefile.am
+@@ -10,8 +10,8 @@ if LUA
+ bin_PROGRAMS = miltertest
+ 
+ miltertest_SOURCES = miltertest.c
+-miltertest_CPPFLAGS = -I$(srcdir)/../libopendkim $(LIBMILTER_INCDIRS) $(LIBLUA_INCDIRS)
+-miltertest_LDFLAGS = ../libopendkim/libopendkim.la $(LIBLUA_LIBDIRS)
++miltertest_CPPFLAGS = -I$(srcdir)/../libopendkim $(LIBMILTER_INCDIRS) $(LIBLUA_INCDIRS) $(LIBBSD_CFLAGS)
++miltertest_LDFLAGS = ../libopendkim/libopendkim.la $(LIBLUA_LIBDIRS) $(LIBBSD_LIBS)
+ miltertest_LDADD = $(LIBLUA_LIBS) $(LIBNSL_LIBS)
+ 
+ man_MANS = miltertest.8
+--- a/miltertest/miltertest.c
++++ b/miltertest/miltertest.c
+@@ -37,16 +37,6 @@
+ /* libopendkim includes */
+ #include <dkim.h>
+ 
+-/* libbsd if found */
+-#ifdef USE_BSD_H
+-# include <bsd/string.h>
+-#endif /* USE_BSD_H */
+-
+-/* libstrl if needed */
+-#ifdef USE_STRL_H
+-# include <strl.h>
+-#endif /* USE_STRL_H */
+-
+ /* Lua includes */
+ #include <lua.h>
+ #include <lualib.h>
+@@ -410,7 +400,7 @@ mt_eom_request(struct mt_context *ctx, c
+ **  	cmd -- milter command received (returned)
+ ** 	buf -- where to write data
+ **  	buflen -- bytes available at "buf" (updated)
+-** 
++**
+ **  Return value:
+ **  	TRUE iff successful.
+ */
+@@ -618,7 +608,7 @@ mt_assert_state(struct mt_context *ctx,
+ 			if (verbose > 0)
+ 			{
+ 				fprintf(stdout,
+-				        "%s: filter returned status %d to option negotiation on fd %d\n", 
++				        "%s: filter returned status %d to option negotiation on fd %d\n",
+ 				        progname, rcmd, ctx->ctx_fd);
+ 			}
+ 
+@@ -679,7 +669,7 @@ mt_assert_state(struct mt_context *ctx,
+ 				if (verbose > 0)
+ 				{
+ 					fprintf(stdout,
+-					        "%s: filter returned status %d to connection information on fd %d\n", 
++					        "%s: filter returned status %d to connection information on fd %d\n",
+ 					        progname, rcmd, ctx->ctx_fd);
+ 				}
+ 
+@@ -722,7 +712,7 @@ mt_assert_state(struct mt_context *ctx,
+ 				if (verbose > 0)
+ 				{
+ 					fprintf(stdout,
+-					        "%s: filter returned status %d to HELO on fd %d\n", 
++					        "%s: filter returned status %d to HELO on fd %d\n",
+ 					        progname, rcmd, ctx->ctx_fd);
+ 				}
+ 
+@@ -765,7 +755,7 @@ mt_assert_state(struct mt_context *ctx,
+ 				if (verbose > 0)
+ 				{
+ 					fprintf(stdout,
+-					        "%s: filter returned status %d to MAIL on fd %d\n", 
++					        "%s: filter returned status %d to MAIL on fd %d\n",
+ 					        progname, rcmd, ctx->ctx_fd);
+ 				}
+ 
+@@ -808,7 +798,7 @@ mt_assert_state(struct mt_context *ctx,
+ 				if (verbose > 0)
+ 				{
+ 					fprintf(stdout,
+-					        "%s: filter returned status %d to RCPT on fd %d\n", 
++					        "%s: filter returned status %d to RCPT on fd %d\n",
+ 					        progname, rcmd, ctx->ctx_fd);
+ 				}
+ 
+@@ -848,7 +838,7 @@ mt_assert_state(struct mt_context *ctx,
+ 				if (verbose > 0)
+ 				{
+ 					fprintf(stdout,
+-					        "%s: filter returned status %d to DATA on fd %d\n", 
++					        "%s: filter returned status %d to DATA on fd %d\n",
+ 					        progname, rcmd, ctx->ctx_fd);
+ 				}
+ 
+@@ -894,7 +884,7 @@ mt_assert_state(struct mt_context *ctx,
+ 				if (verbose > 0)
+ 				{
+ 					fprintf(stdout,
+-					        "%s: filter returned status %d to header on fd %d\n", 
++					        "%s: filter returned status %d to header on fd %d\n",
+ 					        progname, rcmd, ctx->ctx_fd);
+ 				}
+ 
+@@ -933,10 +923,10 @@ mt_assert_state(struct mt_context *ctx,
+ 				if (verbose > 0)
+ 				{
+ 					fprintf(stdout,
+-					        "%s: filter returned status %d to EOH on fd %d\n", 
++					        "%s: filter returned status %d to EOH on fd %d\n",
+ 					        progname, rcmd, ctx->ctx_fd);
+ 				}
+-	
++
+ 				ctx->ctx_state = STATE_DEAD;
+ 			}
+ 		}
+@@ -973,10 +963,10 @@ mt_assert_state(struct mt_context *ctx,
+ 				if (verbose > 0)
+ 				{
+ 					fprintf(stdout,
+-					        "%s: filter returned status %d to body on fd %d\n", 
++					        "%s: filter returned status %d to body on fd %d\n",
+ 					        progname, rcmd, ctx->ctx_fd);
+ 				}
+-	
++
+ 				ctx->ctx_state = STATE_DEAD;
+ 			}
+ 		}
+@@ -1623,7 +1613,7 @@ mt_disconnect(lua_State *l)
+ {
+ 	_Bool polite = TRUE;
+ 	int top;
+-	
++
+ 	struct mt_context *ctx;
+ 
+ 	assert(l != NULL);
+@@ -1820,7 +1810,7 @@ mt_negotiate(lua_State *l)
+ 		if (verbose > 0)
+ 		{
+ 			fprintf(stdout,
+-			        "%s: filter returned status %d to option negotiation on fd %d\n", 
++			        "%s: filter returned status %d to option negotiation on fd %d\n",
+ 			        progname, rcmd, ctx->ctx_fd);
+ 		}
+ 
+@@ -3828,7 +3818,7 @@ mt_getheader(lua_State *l)
+ 
+ /*
+ **  USAGE -- print usage message
+-** 
++**
+ **  Parameters:
+ **  	Not now.  Maybe later.
+ **
+--- a/opendkim/Makefile.am
++++ b/opendkim/Makefile.am
+@@ -25,8 +25,8 @@ sbin_PROGRAMS += opendkim
+ opendkim_SOURCES = opendkim.c opendkim.h opendkim-ar.c opendkim-ar.h opendkim-arf.c opendkim-arf.h opendkim-config.h opendkim-crypto.c opendkim-crypto.h opendkim-db.c opendkim-db.h opendkim-dns.c opendkim-dns.h opendkim-lua.c opendkim-lua.h config.c config.h flowrate.c flowrate.h reputation.c reputation.h stats.c stats.h test.c test.h util.c util.h
+ opendkim_CC = $(PTHREAD_CC)
+ opendkim_CFLAGS = $(PTHREAD_CFLAGS) $(LIBCRYPTO_CFLAGS) $(COV_CFLAGS)
+-opendkim_CPPFLAGS = -I$(srcdir)/../libopendkim $(LIBCRYPTO_CPPFLAGS)
+-opendkim_LDFLAGS = $(LIBCRYPTO_LIBDIRS) $(LIBMILTER_LIBDIRS) $(PTHREAD_CFLAGS) $(COV_LDFLAGS)
++opendkim_CPPFLAGS = -I$(srcdir)/../libopendkim $(LIBCRYPTO_CPPFLAGS) $(LIBBSD_CFLAGS)
++opendkim_LDFLAGS = $(LIBCRYPTO_LIBDIRS) $(LIBMILTER_LIBDIRS) $(PTHREAD_CFLAGS) $(COV_LDFLAGS) $(LIBBSD_LIBS)
+ opendkim_LDADD = ../libopendkim/libopendkim.la $(LIBMILTER_LIBS) $(LIBCRYPTO_LIBS) $(PTHREAD_LIBS) $(COV_LIBADD) $(LIBRESOLV)
+ if USE_DB_OPENDKIM
+ opendkim_CPPFLAGS += $(LIBDB_INCDIRS)
+--- a/opendkim/config.c
++++ b/opendkim/config.c
+@@ -22,16 +22,6 @@
+ /* libopendkim includes */
+ #include <dkim.h>
+ 
+-/* libbsd if found */
+-#ifdef USE_BSD_H
+-# include <bsd/string.h>
+-#endif /* USE_BSD_H */
+-
+-/* libstrl if needed */
+-#ifdef USE_STRL_H
+-# include <strl.h>
+-#endif /* USE_STRL_H */
+-
+ /* opendkim includes */
+ #include "config.h"
+ 
+@@ -304,7 +294,7 @@ config_load_level(char *file, struct con
+ 						size_t newlen;
+ 
+ 						oldlen = strlen(*deprecated);
+-						newlen = oldlen + 2 + 
++						newlen = oldlen + 2 +
+ 						         strlen(def[n].cd_name);
+ 						new = realloc(*deprecated,
+ 						              newlen);
+--- a/opendkim/flowrate.c
++++ b/opendkim/flowrate.c
+@@ -16,16 +16,6 @@
+ #include <string.h>
+ #include <stdlib.h>
+ 
+-/* libbsd if found */
+-#ifdef USE_BSD_H
+-# include <bsd/string.h>
+-#endif /* USE_BSD_H */
+-
+-/* libstrl if needed */
+-#ifdef USE_STRL_H
+-# include <strl.h>
+-#endif /* USE_STRL_H */
+-
+ /* opendkim includes */
+ #include "flowrate.h"
+ #include "opendkim.h"
+--- a/opendkim/opendkim-ar.c
++++ b/opendkim/opendkim-ar.c
+@@ -21,16 +21,6 @@
+ # include <sysexits.h>
+ #endif /* ARTEST */
+ 
+-/* libbsd if found */
+-#ifdef USE_BSD_H
+-# include <bsd/string.h>
+-#endif /* USE_BSD_H */
+-
+-/* libstrl if needed */
+-#ifdef USE_STRL_H
+-# include <strl.h>
+-#endif /* USE_STRL_H */
+-
+ /* opendkim includes */
+ #include "opendkim-ar.h"
+ 
+@@ -377,7 +367,7 @@ ares_dedup(struct authres *ar, int n)
+ **  	hdr -- NULL-terminated contents of an Authentication-Results:
+ **  	       header field
+ **  	ar -- a pointer to a (struct authres) loaded by values after parsing
+-**  
++**
+ **  Return value:
+ **  	0 on success, -1 on failure.
+ */
+--- a/opendkim/opendkim-db.c
++++ b/opendkim/opendkim-db.c
+@@ -36,16 +36,6 @@
+ /* libopendkim includes */
+ #include <dkim.h>
+ 
+-/* libbsd if found */
+-#ifdef USE_BSD_H
+-# include <bsd/string.h>
+-#endif /* USE_BSD_H */
+-
+-/* libstrl if needed */
+-#ifdef USE_STRL_H
+-# include <strl.h>
+-#endif /* USE_STRL_H */
+-
+ /* repute includes */
+ #ifdef _FFR_REPUTATION
+ # include <repute.h>
+@@ -854,7 +844,7 @@ dkimf_db_datasplit(char *buf, size_t buf
+ **
+ **  Notes:
+ **  	Expands "$d" and "$D" as defined in opendkim.conf(5).
+-** 
++**
+ **  	Should report overflows.
+ */
+ 
+@@ -1002,7 +992,7 @@ dkimf_db_list_free(struct dkimf_db_list
+ 		list = next;
+ 	}
+ }
+-		
++
+ /*
+ **  DKIMF_DB_RELIST_FREE -- destroy a linked regex list
+ **
+@@ -1312,7 +1302,7 @@ dkimf_db_open_sql(struct dkimf_db_dsn *d
+ **
+ **  Parameters:
+ **  	db -- DKIMF_DB handle
+-** 
++**
+ **  Return value:
+ **  	A DKIMF_DB_TYPE_* constant.
+ */
+@@ -2174,7 +2164,7 @@ dkimf_db_open(DKIMF_DB *db, char *name,
+ 			}
+ 
+ 			assert(key != NULL);
+-			
++
+ 			if (value != NULL &&
+ 			    (new->db_flags & DKIMF_DB_FLAG_VALLIST) != 0)
+ 			{
+@@ -2230,7 +2220,7 @@ dkimf_db_open(DKIMF_DB *db, char *name,
+ 						list = newl;
+ 					else
+ 						next->db_list_next = newl;
+-	
++
+ 					next = newl;
+ 					n++;
+ 				}
+@@ -2536,7 +2526,7 @@ dkimf_db_open(DKIMF_DB *db, char *name,
+ 		/*
+ 		**  General format of a DSN:
+ 		**  <backend>://[user[:pwd]@][port+]host/dbase[/key=val[?...]]
+-		**  
++		**
+ 		**  "table", "keycol" and "datacol" will be set in one of the
+ 		**  key-value pairs.  "filter" is optional.
+ 		*/
+@@ -2763,7 +2753,7 @@ dkimf_db_open(DKIMF_DB *db, char *name,
+ 				free(new);
+ 				return -1;
+ 			}
+-	
++
+ 			new->db_iflags |= DKIMF_DB_IFLAG_RECONNECT;
+ 			odbx = NULL;
+ 		}
+@@ -2858,10 +2848,10 @@ dkimf_db_open(DKIMF_DB *db, char *name,
+ 		**  General format of an LDAP specification:
+ 		**  scheme://host[:port][/dn[?attrs[?scope[?filter[?exts]]]]]
+ 		**  (see RFC4516)
+-		**  
++		**
+ 		**  "bindpass", "authmech" and "usetls" will be set in
+ 		**  other config values.
+-		**  
++		**
+ 		**  Take the descriptive values (e.g. attributes) from the
+ 		**  first one.
+ 		*/
+@@ -3063,7 +3053,7 @@ dkimf_db_open(DKIMF_DB *db, char *name,
+ 		close(fd);
+ 
+ 		/* try to compile it */
+-		if (dkimf_lua_db_hook(tmp, 0, NULL, &lres, 
++		if (dkimf_lua_db_hook(tmp, 0, NULL, &lres,
+ 		                      (void *) &lua->lua_script,
+ 		                      &lua->lua_scriptlen) != 0)
+ 		{
+@@ -3707,12 +3697,12 @@ dkimf_db_delete(DKIMF_DB db, void *buf,
+ 	assert(buf != NULL);
+ 
+ 	if (db->db_type == DKIMF_DB_TYPE_FILE ||
+-	    db->db_type == DKIMF_DB_TYPE_CSL || 
+-	    db->db_type == DKIMF_DB_TYPE_DSN || 
+-	    db->db_type == DKIMF_DB_TYPE_LDAP || 
+-	    db->db_type == DKIMF_DB_TYPE_LUA || 
+-	    db->db_type == DKIMF_DB_TYPE_MEMCACHE || 
+-	    db->db_type == DKIMF_DB_TYPE_REPUTE || 
++	    db->db_type == DKIMF_DB_TYPE_CSL ||
++	    db->db_type == DKIMF_DB_TYPE_DSN ||
++	    db->db_type == DKIMF_DB_TYPE_LDAP ||
++	    db->db_type == DKIMF_DB_TYPE_LUA ||
++	    db->db_type == DKIMF_DB_TYPE_MEMCACHE ||
++	    db->db_type == DKIMF_DB_TYPE_REPUTE ||
+ 	    db->db_type == DKIMF_DB_TYPE_REFILE ||
+ 	    db->db_type == DKIMF_DB_TYPE_ERLANG)
+ 		return EINVAL;
+@@ -3865,11 +3855,11 @@ dkimf_db_put(DKIMF_DB db, void *buf, siz
+ 	assert(outbuf != NULL);
+ 
+ 	if (db->db_type == DKIMF_DB_TYPE_FILE ||
+-	    db->db_type == DKIMF_DB_TYPE_CSL || 
+-	    db->db_type == DKIMF_DB_TYPE_DSN || 
+-	    db->db_type == DKIMF_DB_TYPE_LDAP || 
+-	    db->db_type == DKIMF_DB_TYPE_LUA || 
+-	    db->db_type == DKIMF_DB_TYPE_REPUTE || 
++	    db->db_type == DKIMF_DB_TYPE_CSL ||
++	    db->db_type == DKIMF_DB_TYPE_DSN ||
++	    db->db_type == DKIMF_DB_TYPE_LDAP ||
++	    db->db_type == DKIMF_DB_TYPE_LUA ||
++	    db->db_type == DKIMF_DB_TYPE_REPUTE ||
+ 	    db->db_type == DKIMF_DB_TYPE_REFILE)
+ 		return EINVAL;
+ 
+@@ -5114,7 +5104,7 @@ dkimf_db_get(DKIMF_DB db, void *buf, siz
+ 		key = (char *) db->db_data;
+ 
+ 		snprintf(query, sizeof query, "%s:%s", key, (char *) buf);
+-		
++
+ 		out = memcached_get(mcs, query, strlen(query), &vlen,
+ 		                    &flags, &ret);
+ 
+@@ -5600,7 +5590,7 @@ dkimf_db_close(DKIMF_DB db)
+ 
+ 				first = FALSE;
+ 			}
+-			
++
+ 			(void) dkimf_db_close(ldap->ldap_cache);
+ 		}
+ #  endif /* USE_DB */
+@@ -5983,7 +5973,7 @@ dkimf_db_walk(DKIMF_DB db, _Bool first,
+ 			(void) odbx_result_finish(result);
+ 			result = NULL;
+ 		}
+-		
++
+ 		/* run a query and start results cursor if needed */
+ 		if (result == NULL)
+ 		{
+@@ -6234,7 +6224,7 @@ dkimf_db_walk(DKIMF_DB db, _Bool first,
+ 			if (ldap->ldap_descr->lud_attrs[c] == NULL)
+ 				noattrs = TRUE;
+ 
+-			if (noattrs) 
++			if (noattrs)
+ 			{
+ 				if ((req[c].dbdata_flags & DKIMF_DB_DATA_OPTIONAL) == 0)
+ 					status = -1;
+@@ -6439,7 +6429,7 @@ dkimf_db_walk(DKIMF_DB db, _Bool first,
+ **  	db -- a DKIMF_DB handle
+ **  	a -- array (returned)
+ **  	base -- base array
+-** 
++**
+ **  Return value:
+ **  	Length of the created array, or -1 on error/empty.
+ */
+--- a/opendkim/opendkim-spam.c
++++ b/opendkim/opendkim-spam.c
+@@ -25,16 +25,6 @@
+ # include <odbx.h>
+ #endif /* USE_ODBX */
+ 
+-/* libbsd if found */
+-#ifdef USE_BSD_H
+-# include <bsd/string.h>
+-#endif /* USE_BSD_H */
+-
+-/* libstrl if needed */
+-#ifdef USE_STRL_H
+-# include <strl.h>
+-#endif /* USE_STRL_H */
+-
+ /* opendkim includes */
+ #include "config.h"
+ #include "stats.h"
+--- a/opendkim/opendkim-testkey.c
++++ b/opendkim/opendkim-testkey.c
+@@ -36,16 +36,6 @@
+ #include <dkim.h>
+ #include <dkim-test.h>
+ 
+-/* libbsd if found */
+-#ifdef USE_BSD_H
+-# include <bsd/string.h>
+-#endif /* USE_BSD_H */
+-
+-/* libstrl if needed */
+-#ifdef USE_STRL_H
+-# include <strl.h>
+-#endif /* USE_STRL_H */
+-
+ /* opendkim includes */
+ #include "opendkim-db.h"
+ #include "opendkim-dns.h"
+--- a/opendkim/opendkim.c
++++ b/opendkim/opendkim.c
+@@ -92,16 +92,6 @@
+ # include "vbr.h"
+ #endif /* _FFR_VBR */
+ 
+-/* libbsd if found */
+-#ifdef USE_BSD_H
+-# include <bsd/string.h>
+-#endif /* USE_BSD_H */
+-
+-/* libstrl if needed */
+-#ifdef USE_STRL_H
+-# include <strl.h>
+-#endif /* USE_STRL_H */
+-
+ #ifdef _FFR_REPUTATION
+ /* reputation includes */
+ # include <repute.h>
+@@ -803,7 +793,7 @@ pthread_mutex_t pwdb_lock;			/* passwd/g
+ **  	An sfsistat.
+ */
+ 
+-sfsistat 
++sfsistat
+ smfi_insheader(SMFICTX *ctx, int idx, char *hname, char *hvalue)
+ {
+ 	assert(ctx != NULL);
+@@ -1413,7 +1403,7 @@ dkimf_xs_rblcheck(lua_State *l)
+ 	ctx = (SMFICTX *) lua_touserdata(l, 1);
+ 	if (ctx != NULL)
+ 		cc = (struct connctx *) dkimf_getpriv(ctx);
+-		
++
+ 	query = lua_tostring(l, 2);
+ 	qroot = lua_tostring(l, 3);
+ 	if (lua_gettop(l) == 4)
+@@ -2715,7 +2705,7 @@ dkimf_xs_rcptcount(lua_State *l)
+ 	dfc = cc->cctx_msg;
+ 
+ 	rcnt = 0;
+-	
++
+ 	for (addr = dfc->mctx_rcptlist; addr != NULL; addr = addr->a_next)
+ 		rcnt++;
+ 
+@@ -2767,7 +2757,7 @@ dkimf_xs_rcpt(lua_State *l)
+ 		lua_pushstring(l, "dkimf_xs_rcpt");
+ 		return 1;
+ 	}
+-	
++
+ 	cc = (struct connctx *) dkimf_getpriv(ctx);
+ 	dfc = cc->cctx_msg;
+ 
+@@ -3090,7 +3080,7 @@ dkimf_xs_getsigarray(lua_State *l)
+ 	{
+ 		lua_pushnil(l);
+ 	}
+-	
++
+ 	return 1;
+ }
+ 
+@@ -3156,7 +3146,7 @@ dkimf_xs_getsigcount(lua_State *l)
+ 	{
+ 		lua_pushnumber(l, 1);
+ 	}
+-	
++
+ 	return 1;
+ }
+ 
+@@ -4762,7 +4752,7 @@ dkimf_securefile(const char *path, ino_t
+ 			return status;
+ 
+ 		if (partial[1] != '\0')
+-			strlcat(partial, "/", sizeof partial); 
++			strlcat(partial, "/", sizeof partial);
+ 	}
+ 
+ 	return 1;
+@@ -4818,7 +4808,7 @@ dkimf_securefile(const char *path, ino_t
+ 
+ 		pthread_mutex_unlock(&pwdb_lock);
+ 	}
+-		
++
+ 	/* guess we're okay... */
+ 	*ino = s.st_ino;
+ 	return 1;
+@@ -6208,7 +6198,7 @@ dkimf_config_load(struct config *data, s
+ 		{
+ 			if (strcmp(str, "HOSTNAME") == 0)
+ 				conf->conf_authservid = strdup(myhostname);
+-			else	
++			else
+ 				conf->conf_authservid = strdup(str);
+ 		}
+ 
+@@ -6317,7 +6307,7 @@ dkimf_config_load(struct config *data, s
+ 
+ #ifdef	_FFR_IDENTITY_HEADER
+ 		(void) config_get(data, "IdentityHeader",
+-				  &conf->conf_identityhdr, 
++				  &conf->conf_identityhdr,
+ 				  sizeof conf->conf_identityhdr);
+ 
+ 		(void) config_get(data, "IdentityHeaderRemove",
+@@ -6991,7 +6981,7 @@ dkimf_config_load(struct config *data, s
+ 		char *dberr = NULL;
+ 
+ 		status = dkimf_db_open(&conf->conf_peerdb, str,
+-		                       (dbflags | 
++		                       (dbflags |
+ 		                        DKIMF_DB_FLAG_ICASE |
+ 		                        DKIMF_DB_FLAG_READONLY),
+ 		                       NULL, &dberr);
+@@ -7010,7 +7000,7 @@ dkimf_config_load(struct config *data, s
+ 
+ 		status = dkimf_db_open(&conf->conf_testdnsdb,
+ 		                       conf->conf_testdnsdata,
+-		                       (dbflags | 
++		                       (dbflags |
+ 		                        DKIMF_DB_FLAG_ICASE |
+ 		                        DKIMF_DB_FLAG_READONLY),
+ 		                       NULL, &dberr);
+@@ -7038,7 +7028,7 @@ dkimf_config_load(struct config *data, s
+ 		char *dberr = NULL;
+ 
+ 		status = dkimf_db_open(&conf->conf_internal, str,
+-		                       (dbflags | 
++		                       (dbflags |
+ 		                        DKIMF_DB_FLAG_ICASE |
+ 		                        DKIMF_DB_FLAG_READONLY),
+ 		                       NULL, &dberr);
+@@ -7055,7 +7045,7 @@ dkimf_config_load(struct config *data, s
+ 		char *dberr = NULL;
+ 
+ 		status = dkimf_db_open(&conf->conf_internal, DEFINTERNAL,
+-		                       (dbflags | 
++		                       (dbflags |
+ 		                        DKIMF_DB_FLAG_ICASE |
+ 		                        DKIMF_DB_FLAG_READONLY),
+ 		                       NULL, &dberr);
+@@ -7084,7 +7074,7 @@ dkimf_config_load(struct config *data, s
+ 		char *dberr = NULL;
+ 
+ 		status = dkimf_db_open(&conf->conf_exignore, str,
+-		                       (dbflags | 
++		                       (dbflags |
+ 		                        DKIMF_DB_FLAG_ICASE |
+ 		                        DKIMF_DB_FLAG_READONLY),
+ 		                       NULL, &dberr);
+@@ -7112,7 +7102,7 @@ dkimf_config_load(struct config *data, s
+ 		char *dberr = NULL;
+ 
+ 		status = dkimf_db_open(&conf->conf_exemptdb, str,
+-		                       (dbflags | 
++		                       (dbflags |
+ 		                        DKIMF_DB_FLAG_ICASE |
+ 		                        DKIMF_DB_FLAG_READONLY),
+ 		                       NULL, &dberr);
+@@ -7134,7 +7124,7 @@ dkimf_config_load(struct config *data, s
+ 		char *dberr = NULL;
+ 
+ 		status = dkimf_db_open(&conf->conf_bldb, str,
+-		                       (dbflags | 
++		                       (dbflags |
+ 		                        DKIMF_DB_FLAG_ICASE |
+ 		                        DKIMF_DB_FLAG_READONLY),
+ 		                       NULL, &dberr);
+@@ -7155,7 +7145,7 @@ dkimf_config_load(struct config *data, s
+ 		char *dberr = NULL;
+ 
+ 		status = dkimf_db_open(&conf->conf_signhdrsdb, str,
+-		                       (dbflags | 
++		                       (dbflags |
+ 		                        DKIMF_DB_FLAG_ICASE |
+ 		                        DKIMF_DB_FLAG_READONLY),
+ 		                       NULL, &dberr);
+@@ -7176,7 +7166,7 @@ dkimf_config_load(struct config *data, s
+ 		char *dberr = NULL;
+ 
+ 		status = dkimf_db_open(&conf->conf_remardb, str,
+-		                       (dbflags | 
++		                       (dbflags |
+ 		                        DKIMF_DB_FLAG_ICASE |
+ 		                        DKIMF_DB_FLAG_READONLY),
+ 		                       NULL, &dberr);
+@@ -7211,7 +7201,7 @@ dkimf_config_load(struct config *data, s
+ 		char *dberr = NULL;
+ 
+ 		status = dkimf_db_open(&conf->conf_atpsdb, str,
+-		                       (dbflags | 
++		                       (dbflags |
+ 		                        DKIMF_DB_FLAG_ICASE |
+ 		                        DKIMF_DB_FLAG_READONLY),
+ 		                       NULL, &dberr);
+@@ -7233,7 +7223,7 @@ dkimf_config_load(struct config *data, s
+ 		char *dberr = NULL;
+ 
+ 		status = dkimf_db_open(&conf->conf_dontsigntodb, str,
+-		                       (dbflags | 
++		                       (dbflags |
+ 		                        DKIMF_DB_FLAG_ICASE |
+ 		                        DKIMF_DB_FLAG_READONLY),
+ 		                       NULL, &dberr);
+@@ -8179,7 +8169,7 @@ dkimf_config_load(struct config *data, s
+ 
+ 				saveerrno = errno;
+ 
+-				syslog(LOG_ERR, "malloc(): %s", 
++				syslog(LOG_ERR, "malloc(): %s",
+ 				       strerror(errno));
+ 
+ 				errno = saveerrno;
+@@ -8299,7 +8289,7 @@ dkimf_config_load(struct config *data, s
+ 			char signer[BUFRSZ + 1];
+ 
+ 			dbd[0].dbdata_flags = 0;
+-			
++
+ 			memset(keyname, '\0', sizeof keyname);
+ 
+ 			dbd[0].dbdata_buffer = keyname;
+@@ -8324,7 +8314,7 @@ dkimf_config_load(struct config *data, s
+ 				dbd[2].dbdata_buflen = sizeof keydata - 1;
+ 				dbd[2].dbdata_flags = DKIMF_DB_DATA_BINARY;
+ 
+-				if (dkimf_db_get(conf->conf_keytabledb,	
++				if (dkimf_db_get(conf->conf_keytabledb,
+ 				                 keyname, strlen(keyname),
+ 				                 dbd, 3, &found) != 0 ||
+ 				    !found ||
+@@ -8437,7 +8427,7 @@ dkimf_dns_init(DKIM_LIB *lib, struct dki
+ 		{
+ 			if (err != NULL)
+ 				*err = "failed to add resolver configuration file";
+-	
++
+ 			return FALSE;
+ 		}
+ 	}
+@@ -9247,7 +9237,7 @@ dkimf_cleanup(SMFICTX *ctx)
+ 			while (cur != NULL)
+ 			{
+ 				next = cur->se_next;
+-	
++
+ 				free(cur);
+ 
+ 				cur = next;
+@@ -10261,7 +10251,7 @@ dkimf_sigreport(connctx cc, struct dkimf
+ 				syslog(LOG_ERR, "%s: fdopen(): %s",
+ 				       dfc->mctx_jobid, strerror(errno));
+ 			}
+-	
++
+ 			close(fd);
+ 			return;
+ 		}
+@@ -10276,7 +10266,7 @@ dkimf_sigreport(connctx cc, struct dkimf
+ 				syslog(LOG_ERR, "%s: popen(): %s",
+ 				       dfc->mctx_jobid, strerror(errno));
+ 			}
+-	
++
+ 			return;
+ 		}
+ 	}
+@@ -11362,7 +11352,7 @@ mlfi_header(SMFICTX *ctx, char *headerf,
+ 		**  feed to the canonicalization algorithms the headers
+ 		**  exactly as the MTA will modify them, so verification
+ 		**  should still work.
+-		**  
++		**
+ 		**  This is based on experimentation and on reading
+ 		**  sendmail/headers.c, and may require more tweaking before
+ 		**  it's precisely right.  There are other munges the
+@@ -11433,7 +11423,7 @@ mlfi_header(SMFICTX *ctx, char *headerf,
+ 
+ 			return SMFIS_TEMPFAIL;
+ 		}
+-	
++
+ 		for (rep = conf->conf_replist;
+ 		     rep != NULL;
+ 		     rep = rep->repl_next)
+@@ -11629,7 +11619,7 @@ mlfi_eoh(SMFICTX *ctx)
+ 		if (from == NULL && !didfrom)
+ 			from = dkimf_findheader(dfc, "from", 0);
+ 	}
+-  
++
+   	if (from != NULL)
+ 		dkimf_dstring_copy(addr, from->hdr_val);
+ 
+@@ -12140,7 +12130,7 @@ mlfi_eoh(SMFICTX *ctx)
+ 
+ 	/* still no key selected; check the signing table (if any) */
+ 	if (originok && dfc->mctx_srhead == NULL &&
+-	    (user != NULL && dfc->mctx_domain[0] != '\0') && 
++	    (user != NULL && dfc->mctx_domain[0] != '\0') &&
+ #ifdef _FFR_LUA_ONLY_SIGNING
+ 	    !conf->conf_luasigning &&
+ #endif /* _FFR_LUA_ONLY_SIGNING */
+@@ -12299,7 +12289,7 @@ mlfi_eoh(SMFICTX *ctx)
+ 	*/
+ 
+ 	/* signing requests with signing mode disabled */
+-	if (dfc->mctx_srhead != NULL && 
++	if (dfc->mctx_srhead != NULL &&
+ 	    (conf->conf_mode & DKIMF_MODE_SIGNER) == 0)
+ 		return SMFIS_ACCEPT;
+ 
+@@ -12619,7 +12609,7 @@ mlfi_eoh(SMFICTX *ctx)
+ 					idset = TRUE;
+ 				}
+ 			}
+-		
++
+ 			if (!idset && conf->conf_dolog)
+ 			{
+ 				syslog(LOG_INFO,
+@@ -12629,7 +12619,7 @@ mlfi_eoh(SMFICTX *ctx)
+ 			}
+ 		}
+ #endif /* _FFR_IDENTITY_HEADER */
+-				
++
+ 		if (!idset)
+ 		{
+ 			snprintf((char *) identity, sizeof identity, "@%s",
+@@ -12803,7 +12793,7 @@ mlfi_eoh(SMFICTX *ctx)
+ 
+ 			/* set the VBR transaction type */
+ 			(void) vbr_settype(dfc->mctx_vbr, (u_char *) vbr_type);
+-	
++
+ 			/* set the VBR certifier list */
+ 			(void) vbr_setcert(dfc->mctx_vbr, (u_char *) vbr_cert);
+ 
+@@ -12915,7 +12905,7 @@ mlfi_eoh(SMFICTX *ctx)
+ 
+ #ifdef _FFR_IDENTITY_HEADER
+ 		if (conf->conf_identityhdr != NULL &&
+-		    conf->conf_rmidentityhdr && 
++		    conf->conf_rmidentityhdr &&
+ 		    dfc->mctx_srhead != NULL &&
+ 		    strcasecmp(conf->conf_identityhdr, hdr->hdr_hdr) == 0)
+ 			continue;
+@@ -12942,7 +12932,7 @@ mlfi_eoh(SMFICTX *ctx)
+ #ifdef _FFR_REPUTATION
+ 		/* check for spam flag */
+ 		if (conf->conf_repspamcheck != NULL &&
+-		    regexec(&conf->conf_repspamre, 
++		    regexec(&conf->conf_repspamre,
+ 		            dkimf_dstring_get(dfc->mctx_tmpstr),
+ 		            0, NULL, 0) == 0)
+ 			dfc->mctx_spam = TRUE;
+@@ -13340,7 +13330,7 @@ mlfi_eom(SMFICTX *ctx)
+ 	    dfc->mctx_srhead != NULL)
+ 	{
+ 		struct Header *hdr;
+-		
++
+ 		hdr = dkimf_findheader(dfc, conf->conf_identityhdr, 0);
+ 		if (hdr != NULL)
+ 		{
+@@ -13357,7 +13347,7 @@ mlfi_eom(SMFICTX *ctx)
+ 		}
+ 	}
+ #endif /* _FFR_IDENTITY_HEADER */
+-					
++
+ 	/* log something if the message was multiply signed */
+ 	if (dfc->mctx_dkimv != NULL && conf->conf_dolog)
+ 	{
+@@ -13482,7 +13472,7 @@ mlfi_eom(SMFICTX *ctx)
+ 				slash = strchr((char *) ares->ares_host, '/');
+ 				if (slash != NULL)
+ 					*slash = '\0';
+-					
++
+ 				if (conf->conf_remardb != NULL)
+ 				{
+ 					status = dkimf_db_get(conf->conf_remardb,
+@@ -13790,7 +13780,7 @@ mlfi_eom(SMFICTX *ctx)
+ 					fclose(f);
+ 				}
+ 			}
+-		}	
++		}
+ 
+ 		if (dfc->mctx_status == DKIMF_STATUS_GOOD)
+ 		{
+@@ -14576,7 +14566,7 @@ mlfi_eom(SMFICTX *ctx)
+ 				vbr_certifier = NULL;
+ 				vbr_vouchers = NULL;
+ 				vbr_type = NULL;
+-	
++
+ 				/* break out the VBR-Info header contents */
+ 				strlcpy(tmp, vbr_header->hdr_val, sizeof tmp);
+ 				for (p = strtok_r(tmp, ";", &sctx);
+@@ -14624,7 +14614,7 @@ mlfi_eom(SMFICTX *ctx)
+ 						vbr_vouchers = (char *) value;
+ 					}
+ 				}
+-			
++
+ 				/* confirm a valid signature was there */
+ 				if (dfc->mctx_dkimv != NULL &&
+ 				    dkim_getsiglist(dfc->mctx_dkimv,
+@@ -14646,7 +14636,7 @@ mlfi_eom(SMFICTX *ctx)
+ 						}
+ 					}
+ 				}
+-				
++
+ 				if (vbr_validsig)
+ 				{
+ 					/* use accessors to set parsed values */
+@@ -14656,7 +14646,7 @@ mlfi_eom(SMFICTX *ctx)
+ 					            (u_char *) vbr_type);
+ 					vbr_setdomain(dfc->mctx_vbr,
+ 					              (u_char *) vbr_domain);
+-		
++
+ 					/* attempt the query */
+ 					vbr_status = vbr_query(dfc->mctx_vbr,
+ 					                       (u_char **) &vbr_result,
+@@ -14739,7 +14729,7 @@ mlfi_eom(SMFICTX *ctx)
+ 						        vbr_certifier,
+ 						        sizeof header);
+ 					}
+-		
++
+ 					if (dkimf_insheader(ctx, 1,
+ 					                    AUTHRESULTSHDR,
+ 					                    (char *) header) == MI_FAILURE)
+@@ -15827,7 +15817,7 @@ main(int argc, char **argv)
+ 				        progname, query);
+ 				return EX_USAGE;
+ 			}
+-	
++
+ 			result = (char **) malloc(sizeof(char *) * n);
+ 			if (result == NULL)
+ 			{
+--- a/opendkim/reputation.c
++++ b/opendkim/reputation.c
+@@ -21,16 +21,6 @@
+ /* libopendkim includes */
+ #include <dkim.h>
+ 
+-/* libbsd if found */
+-#ifdef USE_BSD_H
+-# include <bsd/string.h>
+-#endif /* USE_BSD_H */
+-
+-/* libstrl if needed */
+-#ifdef USE_STRL_H
+-# include <strl.h>
+-#endif /* USE_STRL_H */
+-
+ /* opendkim includes */
+ #include "reputation.h"
+ #include "opendkim.h"
+@@ -223,7 +213,7 @@ dkimf_rep_check(DKIMF_REP rep, DKIM_SIGI
+ 	if (rep->rep_lastflush + rep->rep_ttl < now)
+ 	{
+ 		f = TRUE;
+-		
++
+ 		req[0].dbdata_buffer = (void *) &when;
+ 		req[0].dbdata_buflen = sizeof when;
+ 		req[0].dbdata_flags = DKIMF_DB_DATA_BINARY;
+@@ -341,7 +331,7 @@ dkimf_rep_check(DKIMF_REP rep, DKIM_SIGI
+ 			strlcpy(domain, DKIMF_REP_LOWTIME, sizeof domain);
+ 			dlen = strlen(domain);
+ 		}
+-		
++
+ 		f = FALSE;
+ 
+ 		/* get the total message limit */
+--- a/opendkim/stats.c
++++ b/opendkim/stats.c
+@@ -40,16 +40,6 @@
+ /* libopendkim includes */
+ #include <dkim.h>
+ 
+-/* libbsd if found */
+-#ifdef USE_BSD_H
+-# include <bsd/string.h>
+-#endif /* USE_BSD_H */
+-
+-/* libstrl if needed */
+-#ifdef USE_STRL_H
+-# include <strl.h>
+-#endif /* USE_STRL_H */
+-
+ /* opendkim includes */
+ #include "stats.h"
+ #include "util.h"
+--- a/opendkim/test.c
++++ b/opendkim/test.c
+@@ -21,16 +21,6 @@
+ #include "build-config.h"
+ #include <dkim.h>
+ 
+-/* libbsd if found */
+-#ifdef USE_BSD_H
+-# include <bsd/string.h>
+-#endif /* USE_BSD_H */
+-
+-/* libstrl if needed */
+-#ifdef USE_STRL_H
+-# include <strl.h>
+-#endif /* USE_STRL_H */
+-
+ /* libmilter includes */
+ #include <libmilter/mfapi.h>
+ 
+@@ -712,7 +702,7 @@ dkimf_testfile(DKIM_LIB *libopendkim, st
+ #ifdef USE_UNBOUND
+ 					char *dnssec;
+ 					int dnsseccode = DKIM_DNSSEC_UNKNOWN;
+-				
++
+ 					dnsseccode = dkim_sig_getdnssec(sig);
+ 
+ 					switch (dnsseccode)
+--- a/opendkim/util.c
++++ b/opendkim/util.c
+@@ -46,16 +46,6 @@
+ # endif /* SOLARIS <= 20600 */
+ #endif /* SOLARIS */
+ 
+-/* libbsd if found */
+-#ifdef USE_BSD_H
+-# include <bsd/string.h>
+-#endif /* USE_BSD_H */
+-
+-/* libstrl if needed */
+-#ifdef USE_STRL_H
+-# include <strl.h>
+-#endif /* USE_STRL_H */
+-
+ /* opendkim includes */
+ #include "opendkim.h"
+ #include "util.h"
+@@ -217,7 +207,7 @@ static unsigned char alphabet[64] = "ABC
+ 
+ /*
+ **  DKIMF_ISBLANK -- return TRUE iff a string contains only whitespace
+-**  
++**
+ **  Parameters:
+ **  	str -- string to check
+ **
+--- a/reprrd/reprrd.c
++++ b/reprrd/reprrd.c
+@@ -22,11 +22,6 @@
+ /* libreprrd includes */
+ #include "reprrd.h"
+ 
+-/* libstrl if needed */
+-#ifdef USE_STRL_H
+-# include <strl.h>
+-#endif /* USE_STRL_H */
+-
+ /* data types */
+ struct reprrd_handle
+ {
+@@ -250,7 +245,7 @@ reprrd_query(REPRRD r, const char *domai
+ 		end = now;
+ 		start = last_update - 1;
+ 		step = REPRRD_STEP;
+-	
++
+ 		reprrd_mkpath(path, sizeof path, r, domain,
+ 		              REPRRD_TYPE_MESSAGES);
+ 
+@@ -287,7 +282,7 @@ reprrd_query(REPRRD r, const char *domai
+ 		end = now;
+ 		start = last_update - 1;
+ 		step = REPRRD_STEP;
+-	
++
+ 		rrd_clear_error();
+ 		status = rrd_fetch_r(path, REPRRD_CF_AVERAGE, &start, &end,
+ 		                     &step, &ds_cnt, &ds_names, &data);
+@@ -324,7 +319,7 @@ reprrd_query(REPRRD r, const char *domai
+ 		end = now;
+ 		start = last_update - 1;
+ 		step = REPRRD_STEP;
+-	
++
+ 		reprrd_mkpath(path, sizeof path, r, domain, REPRRD_TYPE_SPAM);
+ 
+ 		rrd_clear_error();
+@@ -407,7 +402,7 @@ reprrd_query(REPRRD r, const char *domai
+ 		end = now;
+ 		start = now - REPRRD_STEP * REPRRD_BACKSTEPS;
+ 		step = REPRRD_STEP;
+-	
++
+ 		rrd_clear_error();
+ 		status = rrd_fetch_r(path, REPRRD_CF_FAILURES, &start, &end,
+ 		                     &step, &ds_cnt, &ds_names, &data);
+--- a/stats/Makefile.am
++++ b/stats/Makefile.am
+@@ -14,9 +14,9 @@ if USE_ODBX
+ sbin_PROGRAMS = opendkim-importstats
+ 
+ opendkim_importstats_SOURCES = opendkim-importstats.c
+-opendkim_importstats_CPPFLAGS = $(LIBODBX_CPPFLAGS) -I$(srcdir)/../libopendkim -I$(srcdir)/../opendkim
++opendkim_importstats_CPPFLAGS = $(LIBODBX_CPPFLAGS) -I$(srcdir)/../libopendkim -I$(srcdir)/../opendkim $(LIBBSD_CFLAGS)
+ opendkim_importstats_CFLAGS = $(LIBODBX_CFLAGS) $(COV_CFLAGS)
+-opendkim_importstats_LDFLAGS = $(LIBODBX_LDFLAGS) $(COV_LDFLAGS)
++opendkim_importstats_LDFLAGS = $(LIBODBX_LDFLAGS) $(COV_LDFLAGS) $(LIBBSD_LIBS)
+ opendkim_importstats_LDADD = $(LIBODBX_LIBS) $(LIBDL_LIBS) $(COV_LIBADD)
+ 
+ man_MANS += opendkim-importstats.8
+--- a/stats/opendkim-importstats.c
++++ b/stats/opendkim-importstats.c
+@@ -23,16 +23,6 @@
+ /* OpenDKIM includes */
+ #include "stats.h"
+ 
+-/* libbsd if found */
+-#ifdef USE_BSD_H
+-# include <bsd/string.h>
+-#endif /* USE_BSD_H */
+-
+-/* libstrl if needed */
+-#ifdef USE_STRL_H
+-# include <strl.h>
+-#endif /* USE_STRL_H */
+-
+ /* libodbx includes */
+ #ifdef USE_ODBX
+ # include <odbx.h>

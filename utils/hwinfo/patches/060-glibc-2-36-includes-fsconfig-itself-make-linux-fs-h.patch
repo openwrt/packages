@@ -1,0 +1,22 @@
+From f73524aa60c50695a38c0dad222ffe60d094a857 Mon Sep 17 00:00:00 2001
+From: Steffen Winterfeldt <wfeldt@opensuse.org>
+Date: Tue, 9 Aug 2022 12:54:58 +0200
+Subject: [PATCH] glibc 2.36+ includes fsconfig itself, make linux/fs.h
+ inclusion conditional (bsc#1202213)
+
+---
+ src/hd/hd.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+--- a/src/hd/hd.c
++++ b/src/hd/hd.c
+@@ -23,7 +23,9 @@
+ #include <linux/hdreg.h>
+ #define _LINUX_AUDIT_H_
+ #define _LINUX_PRIO_TREE_H
++#ifndef FSCONFIG_SET_FLAG
+ #include <linux/fs.h>
++#endif
+ 
+ /**
+  * @defgroup libhdBUSint Bus scanning code

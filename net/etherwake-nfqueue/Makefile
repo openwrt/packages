@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=etherwake-nfqueue
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/mister-benjamin/etherwake-nfqueue.git
 PKG_SOURCE_DATE:=2019-09-28
 PKG_SOURCE_VERSION:=f71c269b58585e93575fa3e9fcc1793806fb3080
-PKG_MIRROR_HASH:=4960dc592abc4ca06504c92ca09fc736c678353df0dcc32d4081e17b137a9164
+PKG_MIRROR_HASH:=91e5247608a6e6d925345f9827aeea167ea6ee22ae453b4779cce6f718a061dd
 
 PKG_MAINTAINER:=Mister Benjamin <144dbspl@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -25,7 +25,7 @@ include $(INCLUDE_DIR)/cmake.mk
 define Package/etherwake-nfqueue
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libnetfilter-queue +iptables-mod-nfqueue
+  DEPENDS:=+libnetfilter-queue +nftables +kmod-nft-queue
   TITLE:=Wake up computers on netfilter match
   URL:=https://github.com/mister-benjamin/etherwake-nfqueue
 endef

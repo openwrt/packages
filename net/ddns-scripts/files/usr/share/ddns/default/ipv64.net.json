@@ -1,0 +1,11 @@
+{
+	"name": "ipv64.net",
+	"ipv4": {
+		"url": "http://ipv64.net/nic/update?domain=[DOMAIN]&key=[PASSWORD]&ip=[IP]",
+		"answer": "good|nochg"
+	},
+	"ipv6": {
+		"url": "http://ipv64.net/nic/update?domain=[DOMAIN]&key=[PASSWORD]&ipv6=[IP]",
+		"answer": "good|nochg"
+	}
+}

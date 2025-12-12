@@ -34,7 +34,7 @@ Last-Update: 2014-10-09
 +#include "syscall-parisc.h"
 +#elif defined(__mips__)
 +#include "syscall-mips.h"
- #elif defined(__aarch64__) || defined(__riscv)
+ #elif defined(__aarch64__) || defined(__loongarch__) || defined(__riscv)
  #include "syscall-generic.h"
  #else
 --- /dev/null
@@ -96,7 +96,7 @@ Last-Update: 2014-10-09
 +#endif /* _MIPS_SIM == _MIPS_SIM_NABI32 */
 --- a/src/libaio.h
 +++ b/src/libaio.h
-@@ -72,6 +72,7 @@ typedef enum io_iocb_cmd {
+@@ -74,6 +74,7 @@ typedef enum io_iocb_cmd {
  
  /* big endian, 64 bits */
  #elif defined(__powerpc64__) || defined(__s390x__) || \

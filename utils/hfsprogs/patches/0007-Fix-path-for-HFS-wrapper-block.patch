@@ -10,8 +10,8 @@ systems (since it is arch independent).
 
 --- a/newfs_hfs.tproj/makehfs.c
 +++ b/newfs_hfs.tproj/makehfs.c
-@@ -70,7 +70,7 @@ extern Boolean _CFStringGetFileSystemRep
- #include "readme.h"
+@@ -86,7 +86,7 @@ extern Boolean _CFStringGetFileSystemRep
+ #include "newfs_hfs.h"
  
  
 -#define HFS_BOOT_DATA	"/usr/share/misc/hfsbootdata"

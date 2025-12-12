@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=conmon
-PKG_VERSION:=2.0.32
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=2.1.12
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/containers/$(PKG_NAME)/archive/v$(PKG_VERSION)
-PKG_HASH:=0ffd17a185322779d14d9a64c39120900f1e0cc3297b18679a933f5f6ba06a75
+PKG_SOURCE_URL:=https://github.com/containers/conmon/archive/v$(PKG_VERSION)
+PKG_HASH:=842f0b5614281f7e35eec2a4e35f9f7b9834819aa58ecdad8d0ff6a84f6796a6
 
 PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
 PKG_LICENSE:=Apache-2.0

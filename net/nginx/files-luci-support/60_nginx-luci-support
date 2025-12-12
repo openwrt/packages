@@ -1,6 +1,6 @@
 #!/bin/sh
 
-if nginx -V 2>&1 | grep -q ubus; then
+if nginx -V 2>&1 | grep -q ubus && [ -f /usr/lib/nginx/modules/ngx_http_ubus_module.so ]; then
 	if [ -z "$(cat /etc/nginx/conf.d/luci.locations | grep ubus)" ]; then
 		cat <<EOT >> /etc/nginx/conf.d/luci.locations
 
@@ -11,6 +11,9 @@ location /ubus {
 }
 EOT
 	fi
+
+        # Drop old reference of luci.module as we migrated to a more automatic approach
+        [ -f "/etc/nginx/module.d/luci.module" ] && rm /etc/nginx/module.d/luci.module
 fi
 
 grep -q /var/run/ubus.sock /etc/nginx/conf.d/luci.locations &&

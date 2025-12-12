@@ -1,0 +1,20 @@
+--- a/src/openvpn/crypto_openssl.c
++++ b/src/openvpn/crypto_openssl.c
+@@ -49,7 +49,7 @@
+ #include <openssl/rand.h>
+ #include <openssl/ssl.h>
+ 
+-#if (OPENSSL_VERSION_NUMBER >= 0x10100000L) && !defined(LIBRESSL_VERSION_NUMBER)
++#if (OPENSSL_VERSION_NUMBER >= 0x10100000L) && !defined(ENABLE_CRYPTO_WOLFSSL) && !defined(LIBRESSL_VERSION_NUMBER)
+ #include <openssl/kdf.h>
+ #endif
+ #if OPENSSL_VERSION_NUMBER >= 0x30000000L
+@@ -1398,7 +1398,7 @@ memcmp_constant_time(const void *a, cons
+     return CRYPTO_memcmp(a, b, size);
+ }
+ 
+-#if (OPENSSL_VERSION_NUMBER >= 0x10100000L) && !defined(LIBRESSL_VERSION_NUMBER)
++#if (OPENSSL_VERSION_NUMBER >= 0x10100000L) && !defined(ENABLE_CRYPTO_WOLFSSL) && !defined(LIBRESSL_VERSION_NUMBER)
+ bool
+ ssl_tls1_PRF(const uint8_t *seed, int seed_len, const uint8_t *secret,
+              int secret_len, uint8_t *output, int output_len)

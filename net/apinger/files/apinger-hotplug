@@ -1,0 +1,22 @@
+#!/bin/sh
+
+usage_help()
+{
+	echo "$0 <action> <instance> <target> <srcip> <target_desc> <alarm> <alarmtype> <reason> <send> <recieved> <loss> <delay> <timestamp>"
+}
+
+export ACTION=$1
+export INSTANCE=$2
+export APINGER_TARGET=$3
+export APINGER_SRCIP=$4
+export APINGER_TARGET_ID=$5
+export APINGER_ALARM=$6
+export APINGER_ALARM_TYPE=$7
+export APINGER_ALARM_MESSAGE=$8
+export APINGER_PROBES_SENT=$9
+export APINGER_PROBES_RECEIVED=${10}
+export APINGER_LOSS=${11}
+export APINGER_DELAY=${12}
+export APINGER_TIMESTAMP=${13}
+
+exec /sbin/hotplug-call apinger $@

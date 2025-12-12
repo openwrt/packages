@@ -1,0 +1,89 @@
+From 37be74afa0e49749796591cd6f3c87536a8e8c3f Mon Sep 17 00:00:00 2001
+From: Lukas Zeller <luz@plan44.ch>
+Date: Sat, 4 Jun 2022 19:27:07 +0200
+Subject: [PATCH 1/2] Fix to work ok with 64 bit time_t (time64)
+
+In several places, time_t arguments were formatted using the "%d"
+format specifier, which is not compatible with 64bit time_t
+(as for example in musl >=1.2.0)
+
+This commit now uses "%lld" with an explicit cast of the
+arguments to long long. The cast ensures that the code is still
+safe to compile with 32 bit time_t (but introduces a slight
+performance penalty in that case).
+---
+ libpagekite/pklogging.c | 10 +++++-----
+ libpagekite/pkmanager.c |  8 ++++----
+ libpagekite/pkproto.c   |  4 ++--
+ 3 files changed, 11 insertions(+), 11 deletions(-)
+
+--- a/libpagekite/pklogging.c
++++ b/libpagekite/pklogging.c
+@@ -208,9 +208,9 @@ void pk_dump_conn(char* prefix, struct p
+   if (conn->sockfd < 0) return;
+ 
+   pk_log(PK_LOG_MANAGER_DEBUG, "%s/sockfd: %d", prefix, conn->sockfd);
+-  pk_log(PK_LOG_MANAGER_DEBUG, "%s/activity: %x (%ds ago)", prefix,
+-                               conn->activity,
+-                               pk_time(0) - conn->activity);
++  pk_log(PK_LOG_MANAGER_DEBUG, "%s/activity: %llx (%llds ago)", prefix,
++                               (long long)conn->activity,
++                               (long long)(pk_time(0) - conn->activity));
+   pk_log(PK_LOG_MANAGER_DEBUG, "%s/read_bytes: %d", prefix, conn->read_bytes);
+   pk_log(PK_LOG_MANAGER_DEBUG, "%s/read_kb: %d", prefix, conn->read_kb);
+   pk_log(PK_LOG_MANAGER_DEBUG, "%s/sent_kb: %d", prefix, conn->sent_kb);
+@@ -281,8 +281,8 @@ void pk_dump_state(struct pk_manager* pk
+   pk_log(LL, "pk_manager/kite_max: %d", pkm->kite_max);
+   pk_log(LL, "pk_manager/tunnel_max: %d", pkm->tunnel_max);
+   pk_log(LL, "pk_manager/be_conn_max: %d", pkm->be_conn_max);
+-  pk_log(LL, "pk_manager/last_world_update: %x", pkm->last_world_update);
+-  pk_log(LL, "pk_manager/next_tick: %d", pkm->next_tick);
++  pk_log(LL, "pk_manager/last_world_update: %llx", (long long)pkm->last_world_update);
++  pk_log(LL, "pk_manager/next_tick: %lld", (long long)pkm->next_tick);
+   pk_log(LL, "pk_manager/enable_timer: %d", 0 < pkm->enable_timer);
+   pk_log(LL, "pk_manager/fancy_pagekite_net_rejection_url: %s", pkm->fancy_pagekite_net_rejection_url);
+   pk_log(LL, "pk_manager/want_spare_frontends: %d", pkm->want_spare_frontends);
+--- a/libpagekite/pkmanager.c
++++ b/libpagekite/pkmanager.c
+@@ -1070,8 +1070,8 @@ static void pkm_tick_cb(EV_P_ ev_async*
+     pkm->timer.repeat = pkm->next_tick;
+     ev_timer_again(pkm->loop, &(pkm->timer));
+     pk_log(PK_LOG_MANAGER_INFO,
+-           "Tick!  [repeating=%s, next=%d, status=%d, tunnels=%d, v=%s]",
+-           pkm->enable_timer ? "yes" : "no", pkm->next_tick,
++           "Tick!  [repeating=%s, next=%lld, status=%d, tunnels=%d, v=%s]",
++           pkm->enable_timer ? "yes" : "no", (long long)pkm->next_tick,
+            pkm->status, pk_state.live_tunnels, PK_VERSION);
+ 
+     /* We slow down exponentially by default... */
+@@ -1122,8 +1122,8 @@ static void pkm_tick_cb(EV_P_ ev_async*
+           fe->last_ping = now;
+           pkc_write(&(fe->conn), ping, pingsize);
+           pk_log(PK_LOG_TUNNEL_DATA,
+-              "%d: Sent PING (idle=%ds>%ds)",
+-              fe->conn.sockfd, now - fe->conn.activity, now - inactive);
++              "%d: Sent PING (idle=%llds>%llds)",
++              fe->conn.sockfd, (long long)(now - fe->conn.activity), (long long)(now - inactive));
+           next_tick = 1 + pkm->housekeeping_interval_min;
+         }
+       }
+--- a/libpagekite/pkproto.c
++++ b/libpagekite/pkproto.c
+@@ -577,7 +577,7 @@ int pk_make_salt(char* salt) {
+ char* pk_sign(const char* token, const char* secret, time_t ts,
+               const char* payload, int length, char *buffer)
+ {
+-  char tbuffer[128], tsbuf[16], scratch[10240];
++  char tbuffer[128], tsbuf[32], scratch[10240];
+ 
+   PK_TRACE_FUNCTION;
+ 
+@@ -606,7 +606,7 @@ char* pk_sign(const char* token, const c
+ 
+   /* Optionally embed a timestamp to the resolution of 10 minutes */
+   if (ts > 0) {
+-    sprintf(tsbuf, "%lx", ts / 600);
++    sprintf(tsbuf, "%llx", (long long)(ts / 600));
+     buffer[0] = 't';
+   }
+   else tsbuf[0] = '\0';

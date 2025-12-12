@@ -1,0 +1,40 @@
+--- a/tools/build.py
++++ b/tools/build.py
+@@ -289,7 +289,7 @@ def _update_index_package_metadata(index
+     index_package_json["path"] = package_path
+ 
+ 
+-def build(output_path, hash_prefix_len, mpy_cross_path):
++def build(output_path, unix_ffi, hash_prefix_len, mpy_cross_path):
+     import manifestfile
+     import mpy_cross
+ 
+@@ -315,7 +315,10 @@ def build(output_path, hash_prefix_len,
+ 
+     # For now, don't process unix-ffi. In the future this can be extended to
+     # allow a way to request unix-ffi packages via mip.
+-    lib_dirs = ["micropython", "python-stdlib", "python-ecosys"]
++    lib_dirs = ["unix-ffi"] if unix_ffi else ["micropython", "python-stdlib", "python-ecosys"]
++
++    if unix_ffi:
++        manifestfile.BASE_LIBRARY_NAMES = ("unix-ffi",) + manifestfile.BASE_LIBRARY_NAMES
+ 
+     mpy_version, _mpy_sub_version = mpy_cross.mpy_version(mpy_cross=mpy_cross_path)
+     mpy_version = str(mpy_version)
+@@ -446,6 +449,7 @@ def main():
+ 
+     cmd_parser = argparse.ArgumentParser(description="Compile micropython-lib for serving to mip.")
+     cmd_parser.add_argument("--output", required=True, help="output directory")
++    cmd_parser.add_argument("--unix-ffi", action="store_true", help="process unix-ffi packages")
+     cmd_parser.add_argument("--hash-prefix", default=8, type=int, help="hash prefix length")
+     cmd_parser.add_argument("--mpy-cross", default=None, help="optional path to mpy-cross binary")
+     cmd_parser.add_argument("--micropython", default=None, help="path to micropython repo")
+@@ -455,7 +459,7 @@ def main():
+         sys.path.append(os.path.join(args.micropython, "tools"))  # for manifestfile
+         sys.path.append(os.path.join(args.micropython, "mpy-cross"))  # for mpy_cross
+ 
+-    build(args.output, hash_prefix_len=max(4, args.hash_prefix), mpy_cross_path=args.mpy_cross)
++    build(args.output, args.unix_ffi, hash_prefix_len=max(4, args.hash_prefix), mpy_cross_path=args.mpy_cross)
+ 
+ 
+ if __name__ == "__main__":

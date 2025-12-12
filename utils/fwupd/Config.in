@@ -1,0 +1,64 @@
+menu "Select fwupd options"
+	depends on PACKAGE_fwupd-libs
+
+config FWUPD_FIRMWARE_PACKAGER
+	bool "firmware packager"
+	default n
+	help
+	  Compile fwupd with firmware packager
+
+config FWUPD_HSI
+	bool "Host Security ID"
+	default n
+	help
+	  Compile fwupd with HSI support
+
+config FWUPD_LVFS
+	bool "LVFS remote"
+	default y
+	help
+	  Compile and install LVFS remote
+
+config FWUPD_CBOR
+	bool "CBOR"
+	default n
+	help
+	  Compile fwupd with cbor protocol support
+
+config FWUPD_LZMA
+	bool "LZMA"
+	default n
+	help
+	  Compile fwupd with LZMA support
+
+config FWUPD_CURL
+	bool "curl"
+	default n
+	help
+	  Compile fwupd with curl support
+
+config FWUPD_LIBARCHIVE
+	bool "libarchive"
+	default y
+	help
+	  Compile fwupd with libarchive support
+
+config FWUPD_LIBDRM
+	bool "libdrm"
+	default n
+	help
+	  Compile fwupd with libdrm support
+
+config FWUPD_PLUGIN_MODEMMANAGER
+	bool "ModemManager plugin"
+	default y
+	help
+	  Compile fwupd with ModemManager plugin
+
+config FWUPD_PLUGIN_FASTBOOT
+	bool "fastboot plugin"
+	default y
+	help
+	  Compile fwupd with fastboot plugin
+
+endmenu

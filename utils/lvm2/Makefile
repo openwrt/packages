@@ -9,12 +9,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=LVM2
-PKG_VERSION:=2.03.14
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=2.03.33
+PKG_VERSION_DM:=1.02.207
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME).$(PKG_VERSION).tgz
-PKG_SOURCE_URL:=https://sourceware.org/pub/lvm2
-PKG_HASH:=4a63bc8a084a8ae3c7bc5e6530cac264139d218575c64416c8b99e3fe039a05c
+PKG_SOURCE_URL:=https://sourceware.org/pub/lvm2 \
+                https://www.mirrorservice.org/sites/sourceware.org/pub/lvm2
+
+PKG_HASH:=be4babd8a986d73279f1e75fbb1d33cb41559b75c2063611781bfeb8c2def139
 PKG_BUILD_DIR:=$(BUILD_DIR)/lvm2-$(BUILD_VARIANT)/$(PKG_NAME).$(PKG_VERSION)
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
@@ -31,6 +34,7 @@ define Package/libdevmapper/Default
   CATEGORY:=Libraries
   TITLE:=The Linux Kernel Device Mapper userspace library
   URL:=https://sourceware.org/dm/
+  VERSION:=$(PKG_VERSION_DM)
   DEPENDS:=+kmod-dm +libpthread +libuuid +librt +libblkid
 endef
 
@@ -64,7 +68,7 @@ define Package/lvm2/default
   SUBMENU:=Disc
   TITLE:=The Linux Logical Volume Manager
   URL:=https://sourceware.org/lvm2/
-  DEPENDS:=+libreadline +libncurses +libaio
+  DEPENDS:=+libaio
 endef
 
 define Package/lvm2
@@ -99,6 +103,9 @@ CONFIGURE_ARGS += \
 	--with-default-dm-run-dir=/var/run \
 	--with-default-run-dir=/var/run/lvm \
 	--with-default-locking-dir=/var/lock/lvm \
+	--without-libnvme \
+	--disable-readline \
+	--disable-libedit \
 	--$(if $(findstring selinux,$(BUILD_VARIANT)),en,dis)able-selinux
 
 ifneq ($(shell /bin/sh -c "echo -n 'X'"),X)
@@ -146,7 +153,7 @@ define Package/lvm2/install
 	$(INSTALL_BIN) ./files/lvm2.init $(1)/etc/init.d/lvm2
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/block
 	$(INSTALL_DATA) ./files/lvm2.hotplug $(1)/etc/hotplug.d/block/20-lvm2
-	$(FIND) $(PKG_INSTALL_DIR)/usr/sbin/ -type l -exec $(CP) -a {} $(1)/sbin/ \;
+	$(FIND) $(PKG_INSTALL_DIR)/usr/sbin/ -type l -print0 | xargs -0 -r $(CP) -a -t $(1)/sbin/
 endef
 
 Package/lvm2-selinux/install = $(Package/lvm2/install)

@@ -6,15 +6,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mc
-PKG_VERSION:=4.8.27
-PKG_RELEASE:=3
+PKG_VERSION:=4.8.33
+PKG_RELEASE:=1
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_CPE_ID:=cpe:/a:midnight_commander:midnight_commander
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://ftp.midnight-commander.org/
-PKG_HASH:=31be59225ffa9920816e9a8b3be0ab225a16d19e4faf46890f25bdffa02a4ff4
+PKG_SOURCE_URL:=https://ftp.osuosl.org/pub/midnightcommander/
+PKG_HASH:=cae149d42f844e5185d8c81d7db3913a8fa214c65f852200a9d896b468af164c
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf gettext-version
 PKG_BUILD_DEPENDS:=MC_VFS:libtirpc
@@ -35,9 +35,9 @@ include $(INCLUDE_DIR)/nls.mk
 define Package/mc
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+glib2 +libncurses +libmount +MC_VFS:libssh2 $(ICONV_DEPENDS)
+  DEPENDS:=+glib2 +libncurses +libmount +libe2p +MC_VFS:libssh2 $(ICONV_DEPENDS)
   TITLE:=Midnight Commander - a powerful visual file manager
-  URL:=https://www.midnight-commander.org/
+  URL:=https://midnight-commander.org
   MENU:=1
 endef
 
@@ -57,7 +57,6 @@ CONFIGURE_ARGS += \
 	--enable-silent-rules \
 	--disable-tests \
 	--disable-doxygen-doc \
-	--with-homedir=/etc/mc \
 	--with-screen=ncurses \
 	--without-x \
 
@@ -99,7 +98,7 @@ define Package/mc/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/mc $(1)/usr/bin
 	$(INSTALL_DIR) $(1)/etc/mc
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/mc.charsets $(1)/etc/mc
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/mc.ext $(1)/etc/mc
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/mc.ext.ini $(1)/etc/mc
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/mc.default.keymap $(1)/etc/mc/mc.keymap
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/misc/filehighlight.ini $(1)/etc/mc
 	$(INSTALL_DIR) $(1)/usr/share/mc/help
@@ -128,7 +127,7 @@ endef
 
 define Package/mc-skins
   TITLE:=Midnight Commander - a powerful visual file manager - skins
-  URL:=https://www.midnight-commander.org/
+  URL:=https://midnight-commander.org
   SECTION:=utils
   CATEGORY:=Utilities
   DEPENDS:=+mc

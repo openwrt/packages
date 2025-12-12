@@ -1,0 +1,64 @@
+From 5e122c8adabb3305dd7524a24ec296bb8d1b7cac Mon Sep 17 00:00:00 2001
+From: Rosen Penev <rosenp@gmail.com>
+Date: Tue, 19 Jul 2022 01:07:57 -0700
+Subject: [PATCH] add meson
+
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
+---
+ meson.build       | 34 ++++++++++++++++++++++++++++++++++
+ meson_options.txt | 11 +++++++++++
+ 2 files changed, 45 insertions(+)
+ create mode 100644 meson.build
+ create mode 100644 meson_options.txt
+
+--- /dev/null
++++ b/meson.build
+@@ -0,0 +1,34 @@
++project('crelay', 'c', version : '0.14.1')
++
++hidapi_dep = dependency('hidapi-libusb', required: get_option('hidapi'))
++ftdi_dep = dependency('libftdi1', required: get_option('sainsmart'))
++libusb_dep = dependency('libusb-1.0', required: get_option('conrad'))
++
++sources = files(
++  'src/config.c',
++  'src/crelay.c',
++  'src/relay_drv.c',
++  'src/relay_drv_gpio.c',
++)
++
++if hidapi_dep.found()
++  add_project_arguments('-DDRV_HIDAPI', language: 'c')
++  add_project_arguments('-DDRV_SAINSMART16', language: 'c')
++  sources += files('src/relay_drv_hidapi.c', 'src/relay_drv_sainsmart16.c',)
++endif
++
++if ftdi_dep.found()
++  add_project_arguments('-DDRV_SAINSMART', language: 'c')
++  sources += files('src/relay_drv_sainsmart.c')
++endif
++
++if libusb_dep.found()
++  add_project_arguments('-DDRV_CONRAD', language: 'c')
++  sources += files('src/relay_drv_conrad.c')
++endif
++
++executable('crelay',
++  sources,
++  dependencies: [ hidapi_dep, ftdi_dep, libusb_dep ],
++  install: true,
++)
+--- /dev/null
++++ b/meson_options.txt
+@@ -0,0 +1,11 @@
++option('hidapi', type : 'feature',
++  description: 'Enable HIDAPI driver',
++)
++
++option('sainsmart', type : 'feature',
++  description: 'Enable SAINSMART driver',
++)
++
++option('conrad', type : 'feature',
++  description: 'Enable CONRAD driver',
++)

@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mosh
-PKG_VERSION:=1.3.2
-PKG_RELEASE:=2
+PKG_VERSION:=1.4.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://mosh.org/
-PKG_HASH:=da600573dfa827d88ce114e0fed30210689381bbdcff543c931e4d6a2e851216
+PKG_HASH:=872e4b134e5df29c8933dff12350785054d2fd2839b5ae6b5587b14db1465ddd
 
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -22,12 +22,14 @@ PKG_LICENSE_FILES:=COPYING
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=protobuf/host
+PKG_BUILD_FLAGS:=gc-sections lto
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/mosh/Default
-  SECTION:=utils
-  CATEGORY:=Utilities
+  SECTION:=net
+  CATEGORY:=Network
+  SUBMENU:=SSH
   TITLE:=Mosh mobile shell
   DEPENDS:=+libncursesw +libopenssl +protobuf
   URL:=https://mosh.org/
@@ -49,19 +51,20 @@ $(call Package/mosh/Default)
  DEPENDS:= \
     +mosh-client \
     +mosh-server \
-    +perlbase-essential \
-    +perlbase-socket \
-    +perlbase-xsloader \
-    +perlbase-getopt \
-    +perlbase-errno \
-    +perlbase-config \
-    +perlbase-io \
-    +perlbase-symbol \
-    +perlbase-selectsaver \
-    +perlbase-posix \
     +perlbase-autoloader \
+    +perlbase-config \
+    +perlbase-errno \
+    +perlbase-essential \
     +perlbase-fcntl \
-    +perlbase-tie
+    +perlbase-getopt \
+    +perlbase-io \
+    +perlbase-posix \
+    +perlbase-selectsaver \
+    +perlbase-socket \
+    +perlbase-symbol \
+    +perlbase-text \
+    +perlbase-tie \
+    +perlbase-xsloader
 endef
 
 
@@ -94,8 +97,8 @@ CONFIGURE_ARGS += \
 CONFIGURE_VARS += \
 	ac_cv_have_decl_ffs=yes
 
-TARGET_CXXFLAGS += -ffunction-sections -fdata-sections -flto -std=c++11
-TARGET_LDFLAGS += -Wl,--gc-sections -lncurses
+TARGET_CXXFLAGS += -std=c++11
+TARGET_LDFLAGS += -lncurses
 
 define Package/mosh-client/install
 	$(INSTALL_DIR) $(1)/usr/bin

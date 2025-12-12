@@ -1,20 +1,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=compose
-PKG_VERSION:=2.2.3
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=2.40.3
+PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_SOURCE:=v$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/docker/compose/tar.gz/v${PKG_VERSION}?
-PKG_HASH:=22210187e73732edd9fc02f122ea61481806c703af7b73d0a7351f2e8ed7c0b8
+PKG_HASH:=5ee988a7d9e00ffa2d166a50f4cda0e13622f2220f1ffa6aff353f33cf40e37e
 
 PKG_MAINTAINER:=Javier Marcet <javier@marcet.info>
 
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16
 
 GO_PKG:=github.com/docker/compose/v2
 GO_PKG_BUILD_PKG:=github.com/docker/compose/v2/cmd

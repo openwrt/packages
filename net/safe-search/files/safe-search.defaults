@@ -5,6 +5,8 @@
 #
 uci del_list dhcp.@dnsmasq[0].addnhosts=/etc/safe-search/enabled
 uci add_list dhcp.@dnsmasq[0].addnhosts=/etc/safe-search/enabled
+uci del_list dhcp.@dnsmasq[0].addn_mount=/etc/safe-search/available
+uci add_list dhcp.@dnsmasq[0].addn_mount=/etc/safe-search/available
 uci commit dhcp
 
 /usr/sbin/safe-search-maintenance

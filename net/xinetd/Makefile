@@ -9,11 +9,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xinetd
 PKG_VERSION:=2.3.15
-PKG_RELEASE:=13
+PKG_RELEASE:=18
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/xinetd-org/xinetd/archive
-PKG_HASH:=bf4e060411c75605e4dcbdf2ac57c6bd9e1904470a2f91e01ba31b50a80a5be3
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_VERSION:=$(PKG_NAME)-2-3-15
+PKG_SOURCE_URL:=https://github.com/xinetd-org/xinetd
+PKG_MIRROR_HASH:=f2fc2c6decb2334848c277915e10dee7463aacd1411d61c953ff908aaad8d275
 
 PKG_MAINTAINER:=Florian Eckert <fe@dev.tdt.de>
 PKG_LICENSE:=xinetd
@@ -29,6 +30,7 @@ define Package/xinetd
   CATEGORY:=Network
   TITLE:=A powerful and secure super-server
   URL:=https://github.com/xinetd-org
+  DEPENDS:= +USE_GLIBC:libcrypt-compat
 endef
 
 define Package/xinetd/description
@@ -44,7 +46,7 @@ define Package/xinetd/conffiles
 /etc/xinetd.d
 endef
 
-TARGET_CFLAGS += -DNO_RPC
+TARGET_CFLAGS += -DNO_RPC -std=gnu11
 TARGET_CPPFLAGS += -DHAVE_RLIM_T
 
 CONFIGURE_ARGS += \

@@ -8,21 +8,24 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sudo
-PKG_VERSION:=1.9.9
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_REALVERSION:=1.9.17p2
+PKG_VERSION:=$(subst p,_p,$(PKG_REALVERSION))
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_REALVERSION).tar.gz
 PKG_SOURCE_URL:=https://www.sudo.ws/dist
-PKG_HASH:=6d6ee863a3bc26c87661093a74ec63e10fd031ceba714642d21636dfe25e3e00
+PKG_HASH:=4a38a1ab3adb1199257edc2a7c4a2bd714665eb605b04368843b06dada2cfcfb
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_REALVERSION)
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 
 PKG_LICENSE:=ISC
-PKG_LICENSE_FILES:=doc/LICENSE
-PKG_CPE_ID:=cpe:/a:todd_miller:sudo
+PKG_LICENSE_FILES:=LICENSE.md
+PKG_CPE_ID:=cpe:/a:sudo_project:sudo
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+PKG_BUILD_FLAGS:=no-mips16
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -31,6 +34,7 @@ define Package/sudo
   CATEGORY:=Administration
   TITLE:=Delegate authority to run commands
   URL:=https://www.sudo.ws/
+  DEPENDS:= +USE_GLIBC:libcrypt-compat
 endef
 
 define Package/sudo/description

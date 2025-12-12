@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=slide-switch
-PKG_VERSION:=0.9.7
+PKG_VERSION:=1.0.0
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/jefferyto/openwrt-slide-switch.git
-PKG_MIRROR_HASH:=a0bba3e952179d96667be293a230b2ad26b3bfdd7b01962116f2c99428696bc5
+PKG_MIRROR_HASH:=3c1604b78c92172f1f219a92bcab52ae1d6fe440b40b6dd7cfa23456d499d3a5
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
 
 PKG_BUILD_PARALLEL:=1
@@ -40,6 +40,10 @@ slide-switch translates slide switch position changes into normal button
 presses and releases for OpenWrt devices.
 endef
 
+define Package/slide-switch/conffiles
+/etc/slide-switch/switch-data.json
+endef
+
 define Package/slide-switch/install
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/button
 	$(INSTALL_DATA) \
@@ -48,7 +52,8 @@ define Package/slide-switch/install
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) \
-		$(PKG_INSTALL_DIR)/etc/init.d/zzz-slide-switch \
+		$(PKG_INSTALL_DIR)/etc/init.d/slide-switch \
+		$(PKG_INSTALL_DIR)/etc/init.d/zzz-slide-switch-update \
 		$(1)/etc/init.d
 
 	$(INSTALL_DIR) $(1)/usr/sbin
@@ -61,14 +66,6 @@ define Package/slide-switch/install
 		$(PKG_INSTALL_DIR)/usr/share/slide-switch/functions.sh \
 		$(PKG_INSTALL_DIR)/usr/share/slide-switch/switch-data.json \
 		$(1)/usr/share/slide-switch
-endef
-
-define Package/slide-switch/postinst
-[ -n "$$IPKG_INSTROOT" ] || /usr/sbin/slide-switch clean
-endef
-
-define Package/slide-switch/prerm
-[ -n "$$IPKG_INSTROOT" ] || /usr/sbin/slide-switch clean
 endef
 
 $(eval $(call BuildPackage,slide-switch))

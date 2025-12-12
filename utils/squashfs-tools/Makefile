@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=squashfs-tools
-PKG_VERSION:=4.5
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=4.7.2
+PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
-PKG_CPE_ID:=cpe:/a:phillip_lougher:squashfs
+PKG_CPE_ID:=cpe:/a:squashfs-tools_project:squashfs-tools
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/plougher/squashfs-tools/tar.gz/${PKG_VERSION}?
-PKG_HASH:=b9e16188e6dc1857fe312633920f7d71cc36b0162eb50f3ecb1f0040f02edddd
+PKG_HASH:=4672b5c47d9418d3a5ae5b243defc6d9eae8275b9771022247c6a6082c815914
 
 PKG_BUILD_PARALLEL:=1
 include $(INCLUDE_DIR)/package.mk
@@ -29,7 +29,8 @@ define Package/squashfs-tools/Default
   SUBMENU:=Filesystem
   TITLE:=Tools to create and extract Squashfs filesystems
   URL:=https://github.com/plougher/squashfs-tools
-  DEPENDS += +libpthread +zlib \
+  DEPENDS += +libpthread \
+	+SQUASHFS_TOOLS_GZIP_SUPPORT:zlib \
 	+SQUASHFS_TOOLS_LZO_SUPPORT:liblzo \
 	+SQUASHFS_TOOLS_LZ4_SUPPORT:liblz4 \
 	+SQUASHFS_TOOLS_XZ_SUPPORT:liblzma \
@@ -53,23 +54,15 @@ endef
 Build/Configure:=
 
 MAKE_FLAGS += \
-	XATTR_SUPPORT=
-
-ifneq ($(CONFIG_SQUASHFS_TOOLS_XZ_SUPPORT),)
-MAKE_FLAGS += XZ_SUPPORT=1
-endif
-
-ifneq ($(CONFIG_SQUASHFS_TOOLS_LZO_SUPPORT),)
-MAKE_FLAGS += LZO_SUPPORT=1
-endif
-
-ifneq ($(CONFIG_SQUASHFS_TOOLS_LZ4_SUPPORT),)
-MAKE_FLAGS += LZ4_SUPPORT=1
-endif
-
-ifneq ($(CONFIG_SQUASHFS_TOOLS_ZSTD_SUPPORT),)
-MAKE_FLAGS += ZSTD_SUPPORT=1
-endif
+	CONFIG=1 \
+	SMALL_READER_THREADS=4 \
+	BLOCK_READER_THREADS=4 \
+	GZIP_SUPPORT=$(if $(CONFIG_SQUASHFS_TOOLS_GZIP_SUPPORT),1,0) \
+	XZ_SUPPORT=$(if $(CONFIG_SQUASHFS_TOOLS_XZ_SUPPORT),1,0) \
+	XZ_EXTENDED_OPTIONS=$(if $(CONFIG_SQUASHFS_TOOLS_XZ_EXTENDED_SUPPORT),1,0) \
+	LZO_SUPPORT=$(if $(CONFIG_SQUASHFS_TOOLS_LZO_SUPPORT),1,0) \
+	LZ4_SUPPORT=$(if $(CONFIG_SQUASHFS_TOOLS_LZ4_SUPPORT),1,0) \
+	ZSTD_SUPPORT=$(if $(CONFIG_SQUASHFS_TOOLS_ZSTD_SUPPORT),1,0) \
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR)/squashfs-tools \

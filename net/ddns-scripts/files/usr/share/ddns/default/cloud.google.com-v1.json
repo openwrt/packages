@@ -1,0 +1,10 @@
+{
+	"name": "cloud.google.com-v1",
+	"ipv4": {
+		"url": "update_gcp_v1.sh"
+	},
+	"ipv6": {
+		"url": "update_gcp_v1.sh"
+	}
+}
+

@@ -8,16 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libradcli
-PKG_VERSION:=1.2.11
+PKG_VERSION:=1.3.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=radcli-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/radcli/radcli/releases/download/$(PKG_VERSION)
-PKG_HASH:=b6210e4c7deae235bb8c4e9df20c4f82c8bc2bda6d6214d50c5667660ab38548
+PKG_HASH:=20ddc8429d5912dfa2e71fafc93881844ce98e898c041b1dd7f757b9ddc8fcfd
 PKG_BUILD_DIR:=$(BUILD_DIR)/radcli-$(PKG_VERSION)
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+
+PKG_CONFIG_DEPENDS := CONFIG_RADCLI_TLS
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -35,6 +37,10 @@ define Package/libradcli/decription
   approach is to allow writing RADIUS-aware application in less than 50 lines
   of C code. It was based originally on freeradius-client and is source 
   compatible with it.
+endef
+
+define Package/libradcli/config
+        source "$(SOURCE)/Config.in"
 endef
 
 CONFIGURE_ARGS+= \

@@ -8,21 +8,23 @@ include $(TOPDIR)/rules.mk
 PECL_NAME:=imagick
 PECL_LONGNAME:=Image Processing (ImageMagick binding)
 
-PKG_VERSION:=3.5.1
+PKG_VERSION:=3.8.0_rc2
+PKG_REALVERSION:=3.8.0RC2
 PKG_RELEASE:=1
-PKG_HASH:=243ff2094edcacb2ae46ee3a4d9f38a60a4f26a6a71f59023b6198cbed0f7f81
+PKG_HASH:=2e6fa5f0c3c786771d52a8d0c5f32dcac965d3e3b47fb63b354f4e83630108a9
 
 PKG_NAME:=php8-pecl-imagick
-PKG_SOURCE:=$(PECL_NAME)-$(PKG_VERSION).tgz
-PKG_SOURCE_URL:=http://pecl.php.net/get/
+PKG_SOURCE:=$(PECL_NAME)-$(PKG_REALVERSION).tgz
+PKG_SOURCE_URL:=https://pecl.php.net/get/
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
 PKG_LICENSE:=PHP-3.01
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:php:imagick
 
 PKG_BUILD_DEPENDS:=php8
-PKG_BUILD_DIR:=$(BUILD_DIR)/pecl-php8/$(PECL_NAME)-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/pecl-php8/$(PECL_NAME)-$(PKG_REALVERSION)
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk

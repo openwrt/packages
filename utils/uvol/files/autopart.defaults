@@ -56,23 +56,14 @@ part_fixup() {
 
 get_free_area() {
 	local found=
-	sfdisk -q -F "$1" 2>/dev/null | while read -r start end sectors size; do
+	sfdisk --bytes -q -F "$1" 2>/dev/null | while read -r start end sectors size; do
 		case $start in
 		*"Unpartitioned"* | *"Units:"* | *"Sector"* | *"Start"* )
 			continue
 			;;
 		[0-9]*)
-			case "$size" in
-				*"M")
-					[ "${size%%M}" -lt 100 ] && continue
-					;;
-				*"G" | *"T")
-					;;
-				*"k" | *"b")
-					continue
-					;;
-			esac
-			[ "$found" ] || echo "start=$start, size=$((end - start))"
+			[ "$size" -lt $((100 * 1024 * 1024)) ] && continue
+			[ "$found" ] || echo "start=$start, size=$sectors"
 			found=1
 			;;
 		esac
@@ -100,12 +91,22 @@ lvm_init() {
 }
 
 autopart_init() {
-	local diskdev
+	local fitpart diskdev
 	local lvmpart
 	local diskserial diskhash
 
-	export_bootdevice && export_partdevice diskdev 0
-
+	if [ -e "/lib/upgrade/fit.sh" ]; then
+		. /lib/upgrade/fit.sh
+		export_fitblk_bootdev
+		if [ "$EMMC_KERN_DEV" ]; then
+			for fitpart in /sys/class/block/*/${EMMC_KERN_DEV:5}; do
+				[ -e "$fitpart" ] || continue
+				diskdev="${fitpart%/*}"
+				diskdev="${diskdev##*/}"
+			done
+		fi
+	fi
+	[ "$diskdev" ] || export_bootdevice && export_partdevice diskdev 0
 	[ "$diskdev" ] || return
 
 	[ -e "/sys/class/block/$diskdev/device/serial" ] && diskserial="$(cat "/sys/class/block/$diskdev/device/serial")"

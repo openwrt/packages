@@ -5,6 +5,7 @@ START=94
 STOP=15
 USE_PROCD=1
 PROG=/usr/sbin/miniupnpd
+[ -x "$(command -v nft)" ] && FW="fw4" || FW="fw3"
 
 upnpd_get_port_range() {
 	local var="$1"; shift
@@ -98,7 +99,7 @@ upnpd() {
 		network_get_device ifname "$external_iface"
 	else
 		if [ -n "$external_zone" ] ; then
-			ifname=$(fw3 -q zone "$external_zone" 2>/dev/null | head -1)
+			ifname=$($FW -q zone "$external_zone" 2>/dev/null | head -1)
 		else
 			network_find_wan external_iface && \
 				network_get_device ifname "$external_iface"
@@ -108,7 +109,7 @@ upnpd() {
 		network_get_device ifname6 "$external_iface6"
 	else
 		if [ -n "$external_zone" ] ; then
-			ifname6=$(fw3 -q zone "$external_zone" 2>/dev/null | head -1)
+			ifname6=$($FW -q zone "$external_zone" 2>/dev/null | head -1)
 		else
 			network_find_wan6 external_iface6 && \
 				network_get_device ifname6 "$external_iface6"
@@ -171,17 +172,31 @@ upnpd() {
 
 		config_foreach conf_rule_add perm_rule
 
+		if [ "$FW" = "fw4" ]; then
+			#When using nftables configure miniupnpd to use its own table and chains
+			echo "upnp_table_name=fw4"
+			echo "upnp_nat_table_name=fw4"
+			echo "upnp_forward_chain=upnp_forward"
+			echo "upnp_nat_chain=upnp_prerouting"
+			echo "upnp_nat_postrouting_chain=upnp_postrouting"
+		fi
+
 		} > "$tmpconf"
 	fi
 
 	if [ -n "$ifname" ]; then
 		# start firewall
-		iptables -L MINIUPNPD >/dev/null 2>&1 || fw3 reload
+		if [ "$FW" = "fw4" ]; then
+			nft -s -t -n list chain inet fw4 upnp_forward >/dev/null 2>&1 || fw4 reload
+		else
+			iptables -L MINIUPNPD >/dev/null 2>&1 || fw3 reload
+		fi
 	else
 		logger -t "upnp daemon" "external interface not found, not starting"
 	fi
 
 	procd_open_instance
+	procd_set_param file "$conf" "/etc/config/firewall"
 	procd_set_param command "$PROG"
 	procd_append_param command -f "$conf"
 	[ "$log_output" = "1" ] && procd_append_param command -d
@@ -189,11 +204,16 @@ upnpd() {
 }
 
 stop_service() {
-	iptables -t nat -F MINIUPNPD 2>/dev/null
-	iptables -t nat -F MINIUPNPD-POSTROUTING 2>/dev/null
-	iptables -t filter -F MINIUPNPD 2>/dev/null
-
-	[ -x /usr/sbin/ip6tables ] && ip6tables -t filter -F MINIUPNPD 2>/dev/null
+	if [ "$FW" = "fw3" ]; then
+		iptables -t nat -F MINIUPNPD 2>/dev/null
+		iptables -t nat -F MINIUPNPD-POSTROUTING 2>/dev/null
+		iptables -t filter -F MINIUPNPD 2>/dev/null
+		[ -x /usr/sbin/ip6tables ] && ip6tables -t filter -F MINIUPNPD 2>/dev/null
+	else
+		nft flush chain inet fw4 upnp_forward 2>/dev/null
+		nft flush chain inet fw4 upnp_prerouting 2>/dev/null
+		nft flush chain inet fw4 upnp_postrouting 2>/dev/null
+	fi
 }
 
 start_service() {

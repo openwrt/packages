@@ -8,19 +8,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=powertop
-PKG_VERSION:=2.10
-PKG_RELEASE:=5
+PKG_VERSION:=2.15
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://01.org/sites/default/files/downloads/
-PKG_HASH:=d3b7459eaba7d01c8841dd33a3b4d369416c01e9bd8951b0d88234cf18fe4a75
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+PKG_SOURCE_URL:=https://github.com/fenrus75/powertop
+PKG_MIRROR_HASH:=cdff63ce2678c69239608e6944e342408abcf4de76134477c362d16b3a366b93
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-v$(PKG_VERSION)
 PKG_MAINTAINER:=Lucian Cristain <lucian.cristian@gmail.com>
-PKG_LICENSE:=GPL-2.0
+PKG_LICENSE:=GPL-2.0-only
+PKG_LICENSE_FILES:=COPYING
 
-PKG_BUILD_PARALLEL:=1
+PKG_FIXUP:=autoreconf gettext-version
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
+PKG_BUILD_DEPENDS:=gettext-full/host
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -39,9 +42,7 @@ define Package/powertop/description
 endef
 
 TARGET_LDFLAGS += \
-	$(if $(INTL_FULL),-lintl) \
-	$(if $(CONFIG_USE_GLIBC),-lm) \
-	$(if $(CONFIG_USE_GLIBC),-lpthread)
+	$(if $(INTL_FULL),-lintl)
 
 define Package/powertop/install
 	$(INSTALL_DIR) $(1)/usr/sbin

@@ -1,0 +1,10 @@
+--- a/networking/telnetd.c
++++ b/networking/telnetd.c
+@@ -133,6 +133,7 @@
+ #include <string.h>
+ #include <unistd.h>
+ #include <linux/reboot.h>
++#include <sys/reboot.h>
+ 
+ #define LOGIN_PREFIX	"Atlas probe, see http://atlas.ripe.net/\r\n\r\n"
+ #define LOGIN_PROMPT	" login: "

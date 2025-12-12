@@ -28,7 +28,8 @@ validate_lun_section() {
 		'scsi_sn:string' \
 		'sense_format:range(0, 1)' \
 		'vendor_id:string' \
-		'rotation_rate:uinteger'
+		'rotation_rate:uinteger' \
+		'thin_provisioning:bool:0'
 }
 
 handle_lun() {
@@ -55,9 +56,20 @@ handle_lun() {
 		bsoflags="--bsoflags $bsoflags"
 	fi
 
+	if [ "$thin_provisioning" -eq 1 ]; then
+		[ "$type" = disk ] || {
+			$logger "Thin provisioning is supported only for the 'disk' type" 
+			return 1
+		}
+		[ "$bstype" = rdwr ] || {
+			$logger "Thin provisioning is supported onfy for the 'rdwr' bstype"
+			return 1
+		}
+	fi
+
 	blocksize=${blocksize+--blocksize=$blocksize}
 	local params='' i
-	for i in mode_page product_id product_rev readonly removable scsi_id scsi_sn sense_format vendor_id rotation_rate; do
+	for i in mode_page product_id product_rev readonly removable scsi_id scsi_sn sense_format vendor_id rotation_rate thin_provisioning; do
 		eval params=\${$i+$i=\$$i,}\$params
 	done
 

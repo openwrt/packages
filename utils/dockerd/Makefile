@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dockerd
-PKG_VERSION:=20.10.12
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=27.3.1
+PKG_RELEASE:=4
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
@@ -10,14 +10,14 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_GIT_URL:=github.com/moby/moby
 PKG_GIT_REF:=v$(PKG_VERSION)
 PKG_SOURCE_URL:=https://codeload.$(PKG_GIT_URL)/tar.gz/$(PKG_GIT_REF)?
-PKG_HASH:=a8ee80d31c7b74f687a837cd2a8570578f118179fba0844c5ee88f90fe180155
-PKG_GIT_SHORT_COMMIT:=459d0df # SHA1 used within the docker executables
+PKG_HASH:=d18208d9e0b6421307342cdef266193984c97c87177b9262b1113e6e9e7e020e
+PKG_GIT_SHORT_COMMIT:=41ca978 # SHA1 used within the docker executables
 
 PKG_MAINTAINER:=Gerard Ryan <G.M0N3Y.2503@gmail.com>
 
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16
 
 GO_PKG:=github.com/docker/docker
 
@@ -33,9 +33,21 @@ define Package/dockerd
   CATEGORY:=Utilities
   TITLE:=Docker Community Edition Daemon
   URL:=https://www.docker.com/
-  DEPENDS:=$(GO_ARCH_DEPENDS) +btrfs-progs +ca-certificates +containerd +libdevmapper +libnetwork +tini \
-           +KERNEL_SECCOMP:libseccomp +iptables-mod-extra +kmod-br-netfilter +kmod-ikconfig +kmod-nf-conntrack-netlink +kmod-nf-ipvs \
-           +kmod-nf-nat +kmod-veth
+  DEPENDS:=$(GO_ARCH_DEPENDS) \
+    +ca-certificates \
+    +containerd \
+    +iptables \
+    +iptables-mod-extra \
+    +IPV6:ip6tables \
+    +IPV6:kmod-ipt-nat6 \
+    +KERNEL_SECCOMP:libseccomp \
+    +kmod-ipt-nat \
+    +kmod-ipt-physdev \
+    +kmod-nf-ipvs \
+    +kmod-veth \
+    +tini \
+    +uci-firewall \
+    @!(mips||mips64||mipsel)
   USERID:=docker:docker
   MENU:=1
 endef
@@ -48,13 +60,26 @@ define Package/dockerd/description
 The Docker CE Engine.
 endef
 
-GO_PKG_BUILD_VARS += GO111MODULE=auto
 TAR_OPTIONS:=--strip-components 1 $(TAR_OPTIONS)
 TAR_CMD=$(HOST_TAR) -C $(1) $(TAR_OPTIONS)
+TARGET_LDFLAGS += $(if $(CONFIG_USE_GLIBC),-lc -lgcc_eh)
 
 # $(1) = path to dependent package 'Makefile'
 # $(2) = relevant dependency '.installer' file
 define EnsureVendoredVersion
+	( \
+		DEP_VER=$$$$( grep --only-matching --perl-regexp '(?<=PKG_VERSION:=)(.*)' "$(1)" ); \
+		VEN_VER=$$$$( grep --only-matching --perl-regexp '(?<=_VERSION:=v)(.*)(?=})' "$(PKG_BUILD_DIR)/hack/dockerfile/install/$(2)" ); \
+		if [ "$$$${VEN_VER}" != "$$$${DEP_VER}" ]; then \
+			echo "ERROR: $(PKG_NAME) Expected 'PKG_VERSION:=$$$${VEN_VER}' in '$(1)', found 'PKG_VERSION:=$$$${DEP_VER}'"; \
+			exit 1; \
+		fi \
+	)
+endef
+
+# $(1) = path to dependent package 'Makefile'
+# $(2) = relevant dependency '.installer' file
+define EnsureVendoredCommit
 	( \
 		DEP_VER=$$$$( grep --only-matching --perl-regexp '(?<=PKG_SOURCE_VERSION:=)(.*)' "$(1)" ); \
 		VEN_VER=$$$$( grep --only-matching --perl-regexp '(?<=_COMMIT:=)(.*)(?=})' "$(PKG_BUILD_DIR)/hack/dockerfile/install/$(2)" ); \
@@ -70,7 +95,6 @@ define Build/Prepare
 
 	# Verify dependencies are the vendored version
 	$(call EnsureVendoredVersion,../containerd/Makefile,containerd.installer)
-	$(call EnsureVendoredVersion,../libnetwork/Makefile,proxy.installer)
 	$(call EnsureVendoredVersion,../runc/Makefile,runc.installer)
 	$(call EnsureVendoredVersion,../tini/Makefile,tini.installer)
 
@@ -116,10 +140,14 @@ endef
 define Package/dockerd/install
 	$(INSTALL_DIR) $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bundles/binary-daemon/dockerd $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bundles/binary-daemon/docker-proxy $(1)/usr/bin/
 
 	$(INSTALL_DIR) $(1)/opt/docker/
+
+  ifeq ($(CONFIG_DOCKER_CHECK_CONFIG),y)
 	$(INSTALL_DIR) $(1)/usr/share/docker/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/contrib/check-config.sh $(1)/usr/share/docker/
+  endif
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/dockerd.init $(1)/etc/init.d/dockerd

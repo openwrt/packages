@@ -26,6 +26,7 @@ Commands:
  start               start given SECTION
  reload              force running ddns processes to reload changed configuration
  restart             restart all ddns processes
+ stop                stop given SECTION
 
 Parameters:
  -6                  => use_ipv6=1          (default 0)
@@ -39,7 +40,7 @@ Parameters:
  -s SCRIPT           => ip_script=SCRIPT; ip_source="script"
  -t                  => force_dnstcp=1      (default 0)
  -u URL              => ip_url=URL; ip_source="web"
- -S SECTION          SECTION to start
+ -S SECTION          SECTION to [start|stop]
 
  -h                  => show this help and exit
  -L                  => use_logfile=1    (default 0)
@@ -137,29 +138,38 @@ case "$1" in
 		if [ "$ip_source" = "web" -o  "$ip_source" = "script" ]; then
 			# we wait only 3 seconds for an
 			# answer from "web" or "script"
-			write_log 7 "-----> timeout 3 -- get_local_ip IP"
-			timeout 3 -- get_local_ip IP
+			write_log 7 "-----> timeout 3 -- get_current_ip IP"
+			timeout 3 -- get_current_ip IP
 		else
-			write_log 7 "-----> get_local_ip IP"
-			get_local_ip IP
+			write_log 7 "-----> get_current_ip IP"
+			get_current_ip IP
 		fi
 		__RET=$?
 		;;
 	start)
 		[ -z "$SECTION" ] &&  usage_err "command 'start': 'SECTION' not set"
-		if [ $VERBOSE -eq 0 ]; then	# start in background
-			$DDNSPRG -v 0 -S $SECTION -- start &
+		if [ "$VERBOSE" -eq 0 ]; then	# start in background
+			"$DDNSPRG" -v 0 -S "$SECTION" -- start &
 		else
-			$DDNSPRG -v $VERBOSE -S $SECTION -- start
+			"$DDNSPRG" -v "$VERBOSE" -S "$SECTION" -- start
 		fi
 		;;
 	reload)
-		$DDNSPRG -- reload
+		"$DDNSPRG" -- reload
 		;;
 	restart)
-		$DDNSPRG -- stop
+		"$DDNSPRG" -- stop
 		sleep 1
-		$DDNSPRG -- start
+		"$DDNSPRG" -- start
+		;;
+	stop)
+		if [ -n "$SECTION" ]; then
+			# section stop
+			"$DDNSPRG" -S "$SECTION" -- stop
+		else
+			# global stop
+			"$DDNSPRG" -- stop
+		fi
 		;;
 	*)
 		__RET=255
@@ -167,6 +177,6 @@ case "$1" in
 esac
 
 # remove out and err file
-[ -f $DATFILE ] && rm -f $DATFILE
-[ -f $ERRFILE ] && rm -f $ERRFILE
+[ -f "$DATFILE" ] && rm -f "$DATFILE"
+[ -f "$ERRFILE" ] && rm -f "$ERRFILE"
 return $__RET

@@ -8,12 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tree
+PKG_VERSION:=2.2.1
 PKG_RELEASE:=1
-PKG_VERSION:=1.8.0
-PKG_SOURCE_URL:=http://mama.indstate.edu/users/ice/tree/src
-PKG_HASH:=715d5d4b434321ce74706d0dd067505bb60c5ea83b5f0b3655dae40aa6f9b7c2
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/Old-Man-Programmer/$(PKG_NAME)/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=5caddcbca805131ff590b126d3218019882e4ca10bc9eb490bba51c05b9b3b75
+
 PKG_MAINTAINER:=Banglang Huang <banglang.huang@foxmail.com>
 
 include $(INCLUDE_DIR)/package.mk

@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=git
-PKG_VERSION:=2.34.1
+PKG_VERSION:=2.50.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/software/scm/git/
-PKG_HASH:=3a0755dd1cfab71a24dd96df3498c29cd0acd13b04f3d08bf933e81286db802c
+PKG_HASH:=7e3e6c36decbd8f1eedd14d42db6674be03671c2204864befa2a41756c5c8fc4
 
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
@@ -22,6 +22,10 @@ PKG_CPE_ID:=cpe:/a:git-scm:git
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+
+ifeq ($(CONFIG_USE_LTO),y)
+	PKG_FORTIFY_SOURCE:=0
+endif
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -97,14 +101,15 @@ MAKE_FLAGS := \
 	NO_TCLTK="YesPlease" \
 	NO_INSTALL_HARDLINKS="yes" \
 	gitwebdir="/www/cgi-bin" \
-	GITWEB_JS="/gitweb/gitweb.js" \
-	GITWEB_CSS="/gitweb/gitweb.css" \
-	GITWEB_LOGO="/gitweb/gitweb-logo.png" \
-	GITWEB_FAVICON="/gitweb/gitweb-favicon.png" \
 	uname_S="Linux" \
 
 CONFIGURE_ARGS += \
 	--without-iconv \
+
+CONFIGURE_VARS += \
+	ac_cv_fread_reads_directories=yes \
+	ac_cv_snprintf_returns_bogus=yes \
+	ac_cv_sane_mode_bits=no
 
 define Build/Configure
 	$(MAKE) -C $(PKG_BUILD_DIR) \
@@ -136,8 +141,8 @@ define Package/git/install
 		usr/lib/git-core \
 		usr/share/git-core/templates \
 	) | ( cd $(1); $(TAR) -xf - )
-	ln $(1)/usr/lib/git-core/git $(1)/usr/bin/git
-	ln $(1)/usr/lib/git-core/git-shell $(1)/usr/bin/git-shell
+	$(LN) ../lib/git-core/git $(1)/usr/bin/git
+	$(LN) ../lib/git-core/git-shell $(1)/usr/bin/git-shell
 endef
 
 define Package/git-http/install
@@ -153,6 +158,11 @@ endef
 define Package/git-gitweb/install
 	$(INSTALL_DIR) $(1)/www/cgi-bin $(1)/www/gitweb
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/www/cgi-bin/gitweb.cgi $(1)/www/cgi-bin/
+	# work around https://lore.kernel.org/git/80eb3972-4960-5727-ce86-acc3a4425fd4@nic.cz/T/#u
+	$(SED) 's,^our @stylesheets .*,our @stylesheets = ("/gitweb/gitweb.css");,' $(1)/www/cgi-bin/gitweb.cgi
+	$(SED) 's,^our $$$$logo .*,our $$$$logo = "/gitweb/git-logo.png";,' $(1)/www/cgi-bin/gitweb.cgi
+	$(SED) 's,^our $$$$favicon .*,our $$$$favicon = "/gitweb/git-favicon.png";,' $(1)/www/cgi-bin/gitweb.cgi
+	$(SED) 's,^our $$$$javascript .*,our $$$$javascript = "/gitweb/gitweb.js";,' $(1)/www/cgi-bin/gitweb.cgi
 	$(CP) $(PKG_INSTALL_DIR)/www/cgi-bin/static/* $(1)/www/gitweb/
 endef
 

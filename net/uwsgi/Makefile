@@ -1,17 +1,27 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=uwsgi
-PKG_VERSION:=2.0.20
+PKG_VERSION:=2.0.30
 PKG_RELEASE:=1
 
-PYPI_NAME:=uwsgi
-PKG_HASH:=88ab9867d8973d8ae84719cf233b7dafc54326fcaec89683c3f9f77c002cdff9
-PKG_BUILD_DEPENDS:=python3/host
-PYTHON3_PKG_BUILD:=0
+PYPI_NAME:=uWSGI
+PYPI_SOURCE_NAME:=uwsgi
+PKG_HASH:=c12aa652124f062ac216077da59f6d247bd7ef938234445881552e58afb1eb5f
 
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Ansuel Smith <ansuelsmth@gmail.com>
+PKG_CPE_ID:=cpe:/a:unbit:uwsgi
+PKG_MAINTAINER:=Christian Marangi <ansuelsmth@gmail.com>
+
+PKG_BUILD_DEPENDS:=python3/host
+PYTHON3_PKG_BUILD:=0
+
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_PACKAGE_uwsgi-logfile-plugin \
+	CONFIG_PACKAGE_uwsgi-syslog-plugin \
+	CONFIG_PACKAGE_uwsgi-cgi-plugin \
+	CONFIG_PACKAGE_uwsgi-python3-plugin \
+	CONFIG_PACKAGE_uwsgi-luci-support
 
 include ../../lang/python/pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -25,8 +35,7 @@ define Package/uwsgi
   SUBMENU:=Web Servers/Proxies
   TITLE:=The uWSGI server
   URL:=https://uwsgi-docs.readthedocs.io/en/latest/
-  DEPENDS:=+libpcre +libcap +libuuid
-  MENU:=1
+  DEPENDS:=+libpcre2 +libcap +libuuid
 endef
 
 define Package/uwsgi-logfile-plugin
@@ -35,7 +44,6 @@ define Package/uwsgi-logfile-plugin
   SUBMENU:=Web Servers/Proxies
   TITLE:=The Logfile plugin for the uWSGI server
   DEPENDS:=uwsgi
-  MDEPENDS:=uwsgi
 endef
 
 define Package/uwsgi-syslog-plugin
@@ -44,7 +52,6 @@ define Package/uwsgi-syslog-plugin
   SUBMENU:=Web Servers/Proxies
   TITLE:=The Syslog plugin for the uWSGI server
   DEPENDS:=uwsgi
-  MDEPENDS:=uwsgi
 endef
 
 define Package/uwsgi-cgi-plugin
@@ -53,7 +60,6 @@ define Package/uwsgi-cgi-plugin
   SUBMENU:=Web Servers/Proxies
   TITLE:=The CGI plugin for the uWSGI server
   DEPENDS:=uwsgi
-  MDEPENDS:=uwsgi
 endef
 
 define Package/uwsgi-python3-plugin
@@ -62,7 +68,6 @@ define Package/uwsgi-python3-plugin
   SUBMENU:=Web Servers/Proxies
   TITLE:=The Python3 plugin for the uWSGI server
   DEPENDS:=uwsgi +python3-light
-  MDEPENDS:=uwsgi
 endef
 
 define Package/uwsgi-luci-support
@@ -71,7 +76,6 @@ define Package/uwsgi-luci-support
   SUBMENU:=Web Servers/Proxies
   TITLE:=Support files for LuCI on Nginx
   DEPENDS:=uwsgi +uwsgi-syslog-plugin +uwsgi-cgi-plugin
-  MDEPENDS:=uwsgi
 endef
 
 define Package/uwsgi/description
@@ -98,23 +102,35 @@ define Package/uwsgi-luci-support/description
 	Support files for LuCI on Nginx
 endef
 
-MAKE_VARS+=\
+MAKE_VARS+= \
 	CPP=$(TARGET_CROSS)cpp \
-	PYTHON=$(STAGING_DIR_HOSTPKG)/bin/python3 \
 	LINUX_UNAME_VERSION=$(LINUX_UNAME_VERSION)
 
+MAKE_FLAGS+= PROFILE=openwrt
+
 define Build/Compile
-	$(call Build/Compile/Default,PROFILE=openwrt)
-	$(call Build/Compile/Default,plugin.logfile PROFILE=openwrt)
-	$(call Build/Compile/Default,plugin.syslog PROFILE=openwrt)
-	$(call Build/Compile/Default,plugin.cgi PROFILE=openwrt)
+	$(call Build/Compile/Default)
+
+  ifneq ($(CONFIG_PACKAGE_uwsgi-logfile-plugin),)
+	$(call Build/Compile/Default,plugin.logfile)
+  endif
+
+  ifneq ($(CONFIG_PACKAGE_uwsgi-syslog-plugin),)
+	$(call Build/Compile/Default,plugin.syslog)
+  endif
+
+  ifneq ($(CONFIG_PACKAGE_uwsgi-cgi-plugin),)
+	$(call Build/Compile/Default,plugin.cgi)
+  endif
+
+  ifneq ($(CONFIG_PACKAGE_uwsgi-python3-plugin),)
 	$(call Python3/Run, \
 		$(PKG_BUILD_DIR), \
 		uwsgiconfig.py --plugin plugins/python openwrt, \
-		CPP="$(TARGET_CROSS)cpp" \
-		LINUX_UNAME_VERSION=$(LINUX_UNAME_VERSION) \
+		$(MAKE_VARS) \
 		CFLAGS="$(TARGET_CPPFLAGS) -I$(PYTHON3_INC_DIR) $(TARGET_CFLAGS)" \
 	)
+  endif
 endef
 
 define Package/uwsgi/install

@@ -1,7 +1,7 @@
 --- a/Makefile
 +++ b/Makefile
-@@ -35,7 +35,7 @@ ABI_VERSION=.3
- PREFIX=/usr/local
+@@ -36,7 +36,7 @@ PREFIX=/usr/local
+ BINDIR=$(PREFIX)/bin
  SBINDIR=$(PREFIX)/sbin
  SHAREDIR=$(PREFIX)/share
 -IDSDIR=$(SHAREDIR)

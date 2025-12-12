@@ -1,12 +1,17 @@
+#
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+#
+
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libulfius
-PKG_VERSION:=2.7.3
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=2.7.15
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/babelouest/ulfius/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=a20f575b3e81924c4ddb72c4ccdced134b5756a86b017f4a38b51608610628c5
+PKG_HASH:=19cf789b2af1919b69f77c7701237bfc318a9781ec657b68fd4b6ffa9d53f111
 
 PKG_MAINTAINER:=Toni Uhlig <matzeton@googlemail.com>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -42,21 +47,12 @@ $(call Package/libulfius/default)
   PROVIDES:=libulfius
 endef
 
-define Package/libulfius-$(BUILD_VARIANT)/install
-	$(INSTALL_DIR) $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libulfius.so.* \
-		$(1)/usr/lib/
-endef
-
 CMAKE_OPTIONS += \
-	-DDOWNLOAD_DEPENDENCIES=OFF \
+	-D_GNU_SOURCE=ON \
 	-DBUILD_WEBSOCKET=OFF \
-	-DSEARCH_ORCANIA_U=ON \
 	-DWITH_CURL=ON \
 	-DWITH_JANSSON=OFF \
-	-DWITH_STRSTR=ON \
 	-DWITH_YDER=OFF \
-	-DSEARCH_YDER=OFF \
 	-DCMAKE_BUILD_TYPE=Release
 
 ifeq ($(BUILD_VARIANT),gnutls)
@@ -64,6 +60,14 @@ ifeq ($(BUILD_VARIANT),gnutls)
 else
 	CMAKE_OPTIONS += -DWITH_GNUTLS=OFF
 endif
+
+define Package/libulfius/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libulfius.so* $(1)/usr/lib/
+endef
+
+Package/libulfius-nossl/install = $(Package/libulfius/install)
+Package/libulfius-gnutls/install = $(Package/libulfius/install)
 
 $(eval $(call BuildPackage,libulfius-gnutls))
 $(eval $(call BuildPackage,libulfius-nossl))

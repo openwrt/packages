@@ -1,6 +1,7 @@
 {
 	"bool": [
-		"ListeningPorts"
+		"ListeningPorts",
+		"AllPortsSummary"
 	],
 	"list": [
 		"LocalPort",

@@ -1,0 +1,17 @@
+## Syntax highlighting for OpenWrt uci config files.
+
+syntax uci "/etc/config/*"
+comment "#"
+
+# Keywords
+color green "\<(package|config|option|list)\>"
+
+# Comments.
+color cyan "(^|[[:blank:]])#.*"
+
+# Strings.
+color yellow ""([^"\]|\\.)*"|'([^'\]|\\.)*'"
+
+# Trailing whitespace.
+color ,green "[[:space:]]+$"
+

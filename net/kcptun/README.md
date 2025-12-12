@@ -26,6 +26,7 @@ Every section has a `disabled` option to temporarily turn off the instance.
 | keepalive | integer | --keepalive | seconds between heartbeats (default: 10) |
 | snmplog | string | --snmplog | collect snmp to file, aware of timeformat in golang, like: ./snmp-20060102.log |
 | snmpperiod | integer | --snmpperiod | snmp collect period, in seconds (default: 60) |
+| tcp | boolean | --tcp | to emulate a TCP connection(linux), need root privilege |
 | quiet | boolean | --quiet | suppress the 'stream open/close' messages |
 | gogc | integer |  | set GOGC environment variable, see [Memory Control](https://github.com/xtaci/kcptun#memory-control). |
 | syslog | boolean |  | redirect logs to syslog when set to 1, implemented by [procd](https://openwrt.org/docs/guide-developer/procd-init-scripts#service_parameters). (default: 0) |

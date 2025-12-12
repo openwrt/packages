@@ -7,8 +7,4 @@
 		/etc/init.d/autossh start
 	}
 
-	[ "$ACTION" = "ifdown" ] && {
-		/etc/init.d/autossh stop
-	}
-
 }

@@ -1,0 +1,21 @@
+Fix the following compilation errors
+
+ic/ovn-ic.c: In function 'main':
+ic/ovn-ic.c:689:5: warning: 'ls' may be used uninitialized in this function [-Wmaybe-uninitialized]
+  689 |     nbrec_logical_switch_update_ports_addvalue(ls, lsp);
+      |     ^
+ic/ovn-ic.c:430:40: note: 'ls' was declared here
+  430 |     const struct nbrec_logical_switch *ls;
+      |                                        ^
+
+--- a/ic/ovn-ic.c
++++ b/ic/ovn-ic.c
+@@ -433,7 +433,7 @@ find_ts_in_nb(struct ic_context *ctx, ch
+         nbrec_logical_switch_index_init_row(ctx->nbrec_ls_by_name);
+     nbrec_logical_switch_index_set_name(key, ts_name);
+ 
+-    const struct nbrec_logical_switch *ls;
++    const struct nbrec_logical_switch *ls = NULL;
+     bool found = false;
+     NBREC_LOGICAL_SWITCH_FOR_EACH_EQUAL (ls, key, ctx->nbrec_ls_by_name) {
+         const char *ls_ts_name = smap_get(&ls->other_config, "interconn-ts");

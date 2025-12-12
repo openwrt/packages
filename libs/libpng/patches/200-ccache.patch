@@ -1,14 +1,14 @@
---- a/scripts/genout.cmake.in
-+++ b/scripts/genout.cmake.in
-@@ -14,6 +14,7 @@ set(BINDIR "@CMAKE_CURRENT_BINARY_DIR@")
- 
+--- a/scripts/cmake/genout.cmake.in
++++ b/scripts/cmake/genout.cmake.in
+@@ -19,6 +19,7 @@ set(BINDIR "@CMAKE_CURRENT_BINARY_DIR@")
+ set(APPLE "@APPLE@")
  set(AWK "@AWK@")
  set(CMAKE_C_COMPILER "@CMAKE_C_COMPILER@")
 +set(CMAKE_C_COMPILER_ARG1 "@CMAKE_C_COMPILER_ARG1@")
  set(CMAKE_C_FLAGS @CMAKE_C_FLAGS@)
+ set(CMAKE_SYSROOT @CMAKE_SYSROOT@)
  set(INCDIR "@CMAKE_CURRENT_BINARY_DIR@")
- set(PNG_PREFIX "@PNG_PREFIX@")
-@@ -58,7 +59,7 @@ if ("${INPUTEXT}" STREQUAL ".c" AND "${O
+@@ -68,7 +69,7 @@ if(INPUTEXT STREQUAL ".c" AND OUTPUTEXT
      set(PNG_PREFIX_DEF "-DPNG_PREFIX=${PNG_PREFIX}")
    endif()
  

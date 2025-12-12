@@ -8,20 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=giflib
-PKG_VERSION:=5.2.1
-PKG_RELEASE:=1
+PKG_VERSION:=5.2.2
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/giflib
-PKG_HASH:=31da5562f44c5f15d63340a09a4fd62b48c45620cd302f77a6d9acf0077879bd
+PKG_HASH:=be7ffbd057cadebe2aa144542fd90c6838c6a083b5e8a9048b8ee3b66b29d5fb
 
-PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:giflib_project:giflib
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+PKG_BUILD_FLAGS:=gc-sections
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -49,13 +49,19 @@ define Package/giflib-utils/description
   These are the utilities that come with giflib.
 endef
 
-TARGET_CFLAGS += -ffunction-sections -fdata-sections $(FPIC)
-TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
+TARGET_CFLAGS += $(FPIC)
+TARGET_LDFLAGS += -Wl,--as-needed
 
 MAKE_FLAGS += \
 	CFLAGS="$(TARGET_CFLAGS)" \
 	LDFLAGS="$(TARGET_LDFLAGS)" \
 	PREFIX=$(CONFIGURE_PREFIX)
+
+## Avoid 'convert' invocation during the build
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	touch $(PKG_BUILD_DIR)/doc/giflib-logo.gif
+endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/{lib,include}

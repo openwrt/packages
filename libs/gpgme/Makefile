@@ -1,16 +1,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gpgme
-PKG_VERSION:=1.16.0
-PKG_RELEASE:=2
+PKG_VERSION:=1.24.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://gnupg.org/ftp/gcrypt/$(PKG_NAME)
-PKG_HASH:=6c8cc4aedb10d5d4c905894ba1d850544619ee765606ac43df7405865de29ed0
+PKG_HASH:=e11b1a0e361777e9e55f48a03d89096e2abf08c63d84b7017cfe1dce06639581
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
-PKG_LICENSE:=GPL-3.0-or-later
+PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:gnu:gpgme
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
@@ -51,6 +52,10 @@ CONFIGURE_ARGS += \
 	--disable-gpgsm-test \
 	--disable-g13-test \
 	--enable-languages="cpp"
+
+ifneq ($(CONFIG_USE_MUSL),)
+  TARGET_CFLAGS += -D_LARGEFILE64_SOURCE
+endif
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/gpgme++

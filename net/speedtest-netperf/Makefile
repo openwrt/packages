@@ -1,12 +1,12 @@
 #
-# Copyright (c) 2018 Tony Ambardar
+# Copyright (c) 2018-2024 Tony Ambardar
 # This is free software, licensed under the GNU General Public License v2.
 #
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=speedtest-netperf
-PKG_VERSION:=1.0.0
+PKG_VERSION:=1.1.0
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Tony Ambardar <itugrok@yahoo.com>

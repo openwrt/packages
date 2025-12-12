@@ -7,7 +7,7 @@ PKG_RELEASE:=1
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://gitlab.hhi.fraunhofer.de/wn-ina/ovsd
 PKG_SOURCE_VERSION:=3a03476e2fececed3752ba4e68c92e71160c7db1
-PKG_MIRROR_HASH:=306e0cfa675299260142831e7a16c77e6e9e52ad7067bf20362f06af4faad69c
+PKG_MIRROR_HASH:=8e67b1b5d99fa79f407f0a572861bc3963b7c77ecc8b1cf16c22fbecaa2e2763
 
 PKG_MAINTAINER:=Arne Kappen <akappen@inet.tu-berlin.de>
 PKG_LICENSE:=GPL-2.0-only

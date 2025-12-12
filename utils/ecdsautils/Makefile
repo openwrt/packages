@@ -8,16 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ecdsautils
-PKG_VERSION:=0.3.2.20160630
+PKG_VERSION:=0.4.2
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/freifunk-gluon/ecdsautils
-PKG_SOURCE_VERSION:=07538893fb6c2a9539678c45f9dbbf1e4f222b46
-PKG_MIRROR_HASH:=397395a471c0b5af1a173666ba21a5bedb4c3423a6e37c545c3627bed73dcb76
+PKG_SOURCE_VERSION:=1b53b726f3dcc01e386060b7aba06bf69e1e0c41
+PKG_MIRROR_HASH:=c62c20215a3d4352ee75bb8b6ae0d661534c4c4e6a5f9622d8d2306a9c15be35
 
 PKG_MAINTAINER:=Matthias Schiffer <mschiffer@universe-factory.net>
 PKG_LICENSE_FILES:=COPYRIGHT
+PKG_CPE_ID:=cpe:/a:ecdsautils_project:ecdsautils
 
 CMAKE_INSTALL:=1
 
@@ -29,7 +30,7 @@ define Package/libecdsautil
   CATEGORY:=Libraries
   DEPENDS:=+libuecc
   TITLE:=ECDSA library
-  URL:=https://github.com/tcatm/ecdsautils
+  URL:=https://github.com/freifunk-gluon/ecdsautils
   LICENSE:=MIT
 endef
 
@@ -38,7 +39,7 @@ define Package/ecdsautils
   CATEGORY:=Utilities
   DEPENDS:=+libecdsautil +libuecc
   TITLE:=ECDSA Utilities
-  URL:=https://github.com/tcatm/ecdsautils
+  URL:=https://github.com/freifunk-gluon/ecdsautils
   LICENSE:=BSD-2-Clause
 endef
 

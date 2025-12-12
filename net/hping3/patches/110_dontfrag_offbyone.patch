@@ -1,0 +1,16 @@
+Subject: Off-by-one error with --dontfrag
+Author: Christian Mock <cm@coretec.at>
+Bugs-Debian: http://bugs.debian.org/537704
+Last-Update: 2009-09-04
+
+--- a/sendip_handler.c
++++ b/sendip_handler.c
+@@ -19,7 +19,7 @@ void send_ip_handler(char *packet, unsig
+ {
+ 	ip_optlen = ip_opt_build(ip_opt);
+ 
+-	if (!opt_fragment && (size+ip_optlen+20 >= h_if_mtu))
++	if (!opt_fragment && (size+ip_optlen+20 > h_if_mtu))
+ 	{
+ 		/* auto-activate fragmentation */
+ 		virtual_mtu = h_if_mtu-20;

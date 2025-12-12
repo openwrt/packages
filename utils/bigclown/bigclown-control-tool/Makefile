@@ -6,12 +6,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bigclown-control-tool
 PKG_VERSION:=0.2.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PYPI_NAME:=bch
 PKG_HASH:=4cd73b92757fce7275a4744baed411c867af2e671c521b90d6690b2320851d58
 
-PKG_MAINTAINER:=Karel Kočí <cynerd@email.cz>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com> 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
@@ -30,8 +30,7 @@ define Package/bigclown-control-tool
     +python3-click-log \
     +python3-paho-mqtt \
     +python3-pyserial \
-    +python3-yaml \
-    +python3-simplejson
+    +python3-yaml
 endef
 
 $(eval $(call Py3Package,bigclown-control-tool))

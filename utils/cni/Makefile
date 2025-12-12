@@ -1,20 +1,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cni
-PKG_VERSION:=1.0.1
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=1.1.2
+PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/containernetworking/$(PKG_NAME)/archive/v$(PKG_VERSION)
-PKG_HASH:=0e5376f70fb36c26935ddfb90b0da69736592ba8b577fbfb904750034c053d3b
+PKG_HASH:=7d4bcaf83acdd54b3dc216f7aa5b5e1b32cb797d9c6af601a2c26b97470ed743
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>, Paul Spooren <mail@aparcar.org>, Oskari Rauta <oskari.rauta@gmail.com>
 
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16
 
 GO_PKG:=github.com/containernetworking/cni/
 GO_PKG_BUILD_PKG:=github.com/containernetworking/cni/cnitool
@@ -22,7 +22,6 @@ GO_PKG_BUILD_PKG:=github.com/containernetworking/cni/cnitool
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
 
-PKG_USE_MIPS16:=0
 GO_PKG_BUILD_VARS += GO111MODULE=auto
 
 define Package/cni

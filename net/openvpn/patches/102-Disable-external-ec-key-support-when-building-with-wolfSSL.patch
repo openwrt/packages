@@ -1,0 +1,20 @@
+--- a/src/openvpn/ssl_openssl.c
++++ b/src/openvpn/ssl_openssl.c
+@@ -1347,7 +1347,7 @@ err:
+     return 0;
+ }
+ 
+-#if OPENSSL_VERSION_NUMBER > 0x10100000L && !defined(OPENSSL_NO_EC)
++#if OPENSSL_VERSION_NUMBER > 0x10100000L && !defined(OPENSSL_NO_EC) && !defined(ENABLE_CRYPTO_WOLFSSL)
+ 
+ /* called when EC_KEY is destroyed */
+ static void
+@@ -1508,7 +1508,7 @@ tls_ctx_use_management_external_key(stru
+             goto cleanup;
+         }
+     }
+-#if (OPENSSL_VERSION_NUMBER > 0x10100000L) && !defined(OPENSSL_NO_EC)
++#if (OPENSSL_VERSION_NUMBER > 0x10100000L) && !defined(OPENSSL_NO_EC) && !defined(ENABLE_CRYPTO_WOLFSSL)
+ #if OPENSSL_VERSION_NUMBER < 0x30000000L
+     else if (EVP_PKEY_id(pkey) == EVP_PKEY_EC)
+ #else /* OPENSSL_VERSION_NUMBER < 0x30000000L */

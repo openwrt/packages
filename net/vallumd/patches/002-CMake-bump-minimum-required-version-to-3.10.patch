@@ -1,0 +1,63 @@
+From d95b30a08a968e533fbfd2757ec6a1b2283d3706 Mon Sep 17 00:00:00 2001
+From: Stijn Tintel <stijn@linux-ipv6.be>
+Date: Sat, 15 Nov 2025 11:21:49 +0200
+Subject: [PATCH] CMake: bump minimum required version to 3.10
+
+This was requested to fix build breakage in OpenWrt buildbot. Update the
+CentOS/RHEL installation instructions and CI to install cmake3.
+
+Signed-off-by: Stijn Tintel <stijn@linux-ipv6.be>
+---
+ .woodpecker/build.yml | 6 +++---
+ CMakeLists.txt        | 2 +-
+ README.md             | 6 +++---
+ 3 files changed, 7 insertions(+), 7 deletions(-)
+
+--- a/.woodpecker/build.yml
++++ b/.woodpecker/build.yml
+@@ -49,9 +49,9 @@ pipeline:
+     image: ${distro}:${distro_version}
+     commands:
+       - yum -y install epel-release
+-      - yum -y install cmake ipset-devel make mosquitto-devel openssl-devel pkgconfig '@Development Tools'
+-      - cmake .
+-      - cpack -G RPM
++      - yum -y install cmake3 ipset-devel make mosquitto-devel openssl-devel pkgconfig '@Development Tools'
++      - cmake3 .
++      - cpack3 -G RPM
+       - yum -y localinstall ./build/*.rpm
+     when:
+       event: push
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,7 +1,7 @@
+ # SPDX-License-Identifier: GPL-3.0 */
+ # Copyright (C) 2017-2021  Stijn Tintel <stijn@linux-ipv6.be>
+ 
+-cmake_minimum_required(VERSION 2.8.12)
++cmake_minimum_required(VERSION 3.10)
+ 
+ project(vallumd C)
+ 
+--- a/README.md
++++ b/README.md
+@@ -51,7 +51,7 @@ Make sure you have the EPEL repository e
+ 
+ #### CentOS 7 dependencies
+ ```
+-sudo yum -y install cmake ipset-devel mosquitto-devel openssl-devel pkgconfig '@Development Tools'
++sudo yum -y install cmake3 ipset-devel mosquitto-devel openssl-devel pkgconfig '@Development Tools'
+ ```
+ 
+ #### Common
+@@ -59,8 +59,8 @@ You can now generate an RPM package with
+ ```
+ git clone https://codeberg.org/stintel/vallumd.git
+ cd vallumd
+-cmake .
+-cpack -G RPM
++cmake3 .
++cpack3 -G RPM
+ 
+ sudo yum -y localinstall build/*.rpm
+ ```

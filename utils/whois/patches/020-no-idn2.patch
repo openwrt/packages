@@ -1,6 +1,6 @@
 --- a/Makefile
 +++ b/Makefile
-@@ -42,14 +42,6 @@ ifdef HAVE_LIBIDN
+@@ -43,14 +43,6 @@ ifdef HAVE_LIBIDN
  $(error Please fix your build system to stop defining HAVE_LIBIDN!)
  endif
  

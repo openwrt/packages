@@ -9,18 +9,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=log4cplus
-PKG_VERSION:=2.0.7
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=2.1.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)
-PKG_HASH:=8f74a0a5920ba044b24e2ebeb0f1e5e36d85d5c23ed48d9fe328882b16130db8
+PKG_HASH:=a1d8e67a207f90a9dd4f82b28a1f3ac6dead5a80c2bed071277a9e865698a82b
 
 PKG_MAINTAINER:=BangLang Huang <banglang.huang@foxmail.com>, Rosy Song <rosysong@rosinson.com>
 PKG_LICENSE:=BSD-2-Clause Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
 CMAKE_INSTALL:=1
+PKG_BUILD_FLAGS:=lto
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
@@ -50,7 +51,6 @@ OPTIONS:= \
 CMAKE_HOST_OPTIONS += $(OPTIONS) -DBUILD_SHARED_LIBS=OFF
 CMAKE_OPTIONS += $(OPTIONS) -DBUILD_SHARED_LIBS=ON
 
-TARGET_CFLAGS += -flto
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 
 define Package/log4cplus/install

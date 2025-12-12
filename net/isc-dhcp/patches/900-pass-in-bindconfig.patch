@@ -1,0 +1,16 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -660,6 +660,13 @@ else
+ 	BINDCONFIG="$BINDCONFIG --with-randomdev=$use_randomdev"
+ fi
+ 
++AC_ARG_ENABLE(backtrace,
++	AS_HELP_STRING([--enable-backtrace], [use libunwind backtracing (default is yes)]),
++	want_backtrace="$enableval", want_backtrace="yes")
++if test "$want_backtrace" = "no"; then
++	BINDCONFIG="$BINDCONFIG --disable-backtrace"
++fi
++
+ BINDIOMUX="--disable-kqueue --disable-epoll --disable-devpoll"
+ # check kqueue/epoll/devpoll alternative to select
+ AC_ARG_ENABLE(kqueue,

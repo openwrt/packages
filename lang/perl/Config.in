@@ -3,7 +3,7 @@ menu "Configuration"
 
 config PERL_THREADS
     bool "Enable threading support"
-    default y if (mips || mipsel || i386 || i686 || x86_64 || armeb || arm)
+    default y if (mips || mipsel || i386 || i686 || x86_64 || armeb || arm || aarch64)
     default n
 
 config PERL_TESTS

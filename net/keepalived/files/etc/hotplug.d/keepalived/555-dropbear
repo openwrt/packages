@@ -1,0 +1,15 @@
+#!/bin/sh
+
+# shellcheck source=/dev/null
+. /lib/functions/keepalived/hotplug.sh
+
+set_service_name dropbear
+
+set_reload_if_backup
+set_reload_if_sync
+
+add_sync_file /etc/config/dropbear
+add_sync_file /etc/dropbear/dropbear_ed25519_host_key
+add_sync_file /etc/dropbear/dropbear_rsa_host_key
+
+keepalived_hotplug

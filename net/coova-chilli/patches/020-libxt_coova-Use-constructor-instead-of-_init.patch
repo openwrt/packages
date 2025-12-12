@@ -1,0 +1,32 @@
+From 0fc37619574e697ae1ec6d1040f8a07670605f12 Mon Sep 17 00:00:00 2001
+From: Hauke Mehrtens <hauke@hauke-m.de>
+Date: Mon, 15 Aug 2022 15:19:34 +0200
+Subject: [PATCH] libxt_coova: Use constructor instead of _init()
+
+The _init() function collides with a _init() function in crti.o.
+This results in the following error in OpenWrt:
+arc-openwrt-linux-gnu/bin/ld: libxt_coova.o: in function `_init':
+/lib/gcc/arc-openwrt-linux-gnu/11.3.0/crti.o:(.init+0x4): first defined here
+collect2: error: ld returned 1 exit status
+make[7]: *** [Makefile:22: libxt_coova.so] Error 1
+
+Fix this by suing a constructor attribute instead. This function will
+still be called after the shared library was loaded.
+
+Fixes: #553
+Signed-off-by: Hauke Mehrtens <hauke@hauke-m.de>
+---
+ src/linux/libxt_coova.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/src/linux/libxt_coova.c
++++ b/src/linux/libxt_coova.c
+@@ -126,7 +126,7 @@ static struct xtables_match coova_mt6_re
+ 	.extra_opts    = coova_opts,
+ };
+ 
+-void _init(void)
++void __attribute__ ((constructor)) libxt_coova_init(void)
+ {
+ 	xtables_register_match(&coova_mt_reg);
+ 	xtables_register_match(&coova_mt6_reg);

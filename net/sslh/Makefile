@@ -8,16 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sslh
-PKG_VERSION:=v1.21c
+PKG_VERSION:=2.1.2
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://rutschle.net/tech/sslh/
-PKG_HASH:=3bfe783726f82c1f5a4be630ddc494ebb08dbb69980662cd7ffdeb7bc9e1e706
+PKG_HASH:=dce8e1a77f48017b5164486084f000d9f20de2d54d293385aec18d606f9c61d9
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-v$(PKG_VERSION)
 
 PKG_MAINTAINER:=Jonathan McCrohan <jmccrohan@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:sslh_project:sslh
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -26,8 +28,17 @@ define Package/sslh
   CATEGORY:=Network
   SUBMENU:=Routing and Redirection
   TITLE:=SSL/SSH multiplexer
-  DEPENDS:=+libconfig +libcap +USE_UCLIBC:libpcre +USE_MUSL:libpcre
+  DEPENDS:=+libconfig +libcap +libpcre2
   URL:=https://rutschle.net/tech/sslh/README.html
+endef
+
+define Package/sslh/config
+    config SSLH_SELECT
+        bool "Use sslh-select"
+        depends on PACKAGE_sslh
+        help
+            Use sslh-select instead of sslh-fork.
+        default n
 endef
 
 define Package/sslh/conffiles
@@ -36,12 +47,25 @@ define Package/sslh/conffiles
 endef
 
 MAKE_FLAGS += \
-  USELIBCAP=1 \
-  $(if $(CONFIG_USE_GLIBC),USELIBPCRE=,USELIBPCRE=1)
+  USELIBCAP=1
+
+define Build/Compile
+
+ifeq ($(CONFIG_SSLH_SELECT),y)
+	$(call Build/Compile/Default,sslh-select)
+else
+	$(call Build/Compile/Default,sslh-fork)
+endif
+
+endef
 
 define Package/sslh/install
 	$(INSTALL_DIR) $(1)/usr/sbin
+ifeq ($(CONFIG_SSLH_SELECT),y)
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/sslh-select $(1)/usr/sbin/sslh
+else
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/sslh-fork $(1)/usr/sbin/sslh
+endif
 	$(INSTALL_DIR) $(1)/etc/init.d/
 	$(INSTALL_BIN) files/$(PKG_NAME).init $(1)/etc/init.d/$(PKG_NAME)
 	$(INSTALL_DIR) $(1)/etc/config

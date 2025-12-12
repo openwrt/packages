@@ -62,7 +62,7 @@
 +SHELL = @SHELL@
 +
  SRCS = config.c context.c info.c ldapmap.c map.c params.c rule.c \
- 	session.c subst.c var.c xmap.c \
+ 	session.c subst.c var.c xmap.c escapemap.c \
  	parse.c rewrite.c
 --- a/libraries/Makefile.in
 +++ b/libraries/Makefile.in

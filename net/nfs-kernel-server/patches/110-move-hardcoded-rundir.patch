@@ -3,7 +3,7 @@
 @@ -64,7 +64,7 @@
  #define EVENT_BUFSIZE (1024 * EVENT_SIZE)
  
- #define RPCPIPE_DIR	"/var/lib/nfs/rpc_pipefs"
+ #define RPCPIPE_DIR	NFS_STATEDIR "/rpc_pipefs"
 -#define PID_FILE	"/run/blkmapd.pid"
 +#define PID_FILE	"/tmp/run/blkmapd.pid"
  

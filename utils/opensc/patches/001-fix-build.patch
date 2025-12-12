@@ -1,0 +1,36 @@
+--- a/src/libopensc/pkcs15-din-66291.c
++++ b/src/libopensc/pkcs15-din-66291.c
+@@ -23,12 +23,12 @@
+ #include <config.h>
+ #endif
+ 
++#include <stdlib.h>
++#include <string.h>
+ #include "internal.h"
+ #include "common/compat_strlcpy.h"
+ #include "log.h"
+ #include "pkcs15.h"
+-#include <stdlib.h>
+-#include <string.h>
+ 
+ static const unsigned char aid_CIA[] = {0xE8, 0x28, 0xBD, 0x08, 0x0F,
+     0xA0, 0x00, 0x00, 0x01, 0x67, 0x45, 0x53, 0x49, 0x47, 0x4E};
+--- a/src/libopensc/pkcs15-starcos-esign.c
++++ b/src/libopensc/pkcs15-starcos-esign.c
+@@ -23,14 +23,14 @@
+ #include <config.h>
+ #endif
+ 
++#include <stdlib.h>
++#include <string.h>
+ #include "common/compat_strlcpy.h"
+ #include "internal.h"
+ #include "log.h"
+ #include "pkcs15.h"
+ #include "cards.h"
+ 
+-#include <stdlib.h>
+-#include <string.h>
+ 
+ /* compile time option: define ENABLE_ESIGN_ISSUER_CONTAINERS to enable containers holding the issuer certificates */
+ 

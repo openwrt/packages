@@ -1,20 +1,24 @@
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -195,7 +195,7 @@ CLEANFILES = $(VC6_LIBDSP) $(VC6_SRCDSP)
+@@ -88,7 +88,7 @@ DISTCLEANFILES = buildinfo.txt
  bin_SCRIPTS = curl-config
  
- SUBDIRS = lib src
--DIST_SUBDIRS = $(SUBDIRS) tests packages scripts include docs
+ SUBDIRS = lib docs src scripts
+-DIST_SUBDIRS = $(SUBDIRS) tests packages include docs
 +DIST_SUBDIRS = $(SUBDIRS) packages include
  
  pkgconfigdir = $(libdir)/pkgconfig
  pkgconfig_DATA = libcurl.pc
-@@ -309,8 +309,6 @@ cygwinbin:
- # We extend the standard install with a custom hook:
+@@ -184,12 +184,9 @@ rpm:
+ if BUILD_DOCS
  install-data-hook:
  	(cd include && $(MAKE) install)
 -	(cd docs && $(MAKE) install)
 -	(cd docs/libcurl && $(MAKE) install)
+ else
+ install-data-hook:
+ 	(cd include && $(MAKE) install)
+-	(cd docs && $(MAKE) install)
+ endif
  
  # We extend the standard uninstall with a custom hook:
- uninstall-hook:

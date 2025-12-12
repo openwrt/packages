@@ -10,14 +10,13 @@ PKG_VERSION:=3.26.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=totem-pl-parser-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://download.gnome.org/sources/totem-pl-parser/3.26/
+PKG_SOURCE_URL:=@GNOME/totem-pl-parser/$(basename $(PKG_VERSION))
 PKG_HASH:=c0df0f68d5cf9d7da43c81c7f13f11158358368f98c22d47722f3bd04bd3ac1c
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=LGPL-2-or-later
 PKG_LICENSE_FILES:=COPYING.LIB
 
-PKG_INSTALL:=1
 PKG_BUILD_DEPENDS:=glib2/host
 
 include $(INCLUDE_DIR)/package.mk
@@ -27,7 +26,7 @@ include $(INCLUDE_DIR)/meson.mk
 define Package/totem-pl-parser
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+glib2 +libxml2
+  DEPENDS:=+glib2 +libxml2 +shared-mime-info
   TITLE:=totem-pl-parser
   URL:=https://gitlab.gnome.org/GNOME/totem-pl-parser
 endef
@@ -36,7 +35,9 @@ define Package/totem-pl-parser/decription
   totem-pl-parser is a simple GObject-based library to parse a host of playlist formats
 endef
 
-MESON_ARGS += -Dintrospection=false
+MESON_ARGS += -Dintrospection=false \
+              -Denable-libarchive=no \
+              -Denable-libgcrypt=no
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/

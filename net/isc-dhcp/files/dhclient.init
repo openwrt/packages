@@ -8,23 +8,23 @@ pid_file=/var/run/dhclient.pid
 script_file=/usr/sbin/dhclient-script
 
 start() {
-	/usr/sbin/dhclient -q -nw -cf $config_file -lf $lease_file -pf $pid_file -sf $script_file `/sbin/uci get network.wan.ifname`
-	
-	if [ $? -ne 0 ]; then
-		return 1
-	fi
+	local ifname
+
+	. /lib/functions/network.sh
+
+	network_get_device ifname "wan" || return 1
+
+	/usr/sbin/dhclient -q -nw -cf $config_file -lf $lease_file -pf $pid_file -sf $script_file $ifname
+
+	[ $? -eq 0 ] || return 1
 }
 
 stop() {
-	if [ ! -e $pid_file ]; then
-		return 1
-	fi
+	[ -e $pid_file ] || return 1
 
-	kill -9 `cat $pid_file`
+	kill -9 $(cat $pid_file)
 
-	if [ $? -ne 0 ]; then
-		return 1
-	fi
+	[ $? -eq 0 ] || return 1
 
 	rm $pid_file
 }

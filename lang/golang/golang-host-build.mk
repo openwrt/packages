@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020 Jeffery To
+# Copyright (C) 2020, 2022 Jeffery To
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -107,10 +107,10 @@ GO_HOST_CUSTOM_LDFLAGS= \
 GO_HOST_INSTALL_ARGS= \
 	-v \
 	-ldflags "all=$(GO_HOST_DEFAULT_LDFLAGS)" \
-	$(if $(filter $(GO_HOST_ENABLE_PIE),1),-buildmode pie) \
-	$(if $(GO_HOST_GCFLAGS),-gcflags "$(GO_HOST_GCFLAGS)") \
-	$(if $(GO_HOST_CUSTOM_LDFLAGS),-ldflags "$(GO_HOST_CUSTOM_LDFLAGS) $(GO_HOST_DEFAULT_LDFLAGS)") \
-	$(if $(GO_HOST_TAGS),-tags "$(GO_HOST_TAGS)")
+	$(if $(GO_HOST_ENABLE_PIE),-buildmode pie) \
+	$(if $(strip $(GO_HOST_GCFLAGS)),-gcflags "$(GO_HOST_GCFLAGS)") \
+	$(if $(strip $(GO_HOST_CUSTOM_LDFLAGS)),-ldflags "$(GO_HOST_CUSTOM_LDFLAGS) $(GO_HOST_DEFAULT_LDFLAGS)") \
+	$(if $(strip $(GO_HOST_TAGS)),-tags "$(GO_HOST_TAGS)")
 
 define GoHost/Host/Configure
 	$(GO_GENERAL_BUILD_CONFIG_VARS) \

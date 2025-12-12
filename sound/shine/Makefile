@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shine
 PKG_VERSION:=3.1.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/toots/shine/releases/download/$(PKG_VERSION)/
@@ -21,7 +21,7 @@ PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16
 
 include $(INCLUDE_DIR)/package.mk
 

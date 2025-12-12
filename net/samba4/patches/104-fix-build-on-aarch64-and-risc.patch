@@ -1,0 +1,11 @@
+--- a/lib/ldb/tests/test_ldb_comparison_fold.c
++++ b/lib/ldb/tests/test_ldb_comparison_fold.c
+@@ -52,7 +52,7 @@ struct ranked_value {
+ 	int rank;
+ };
+ 
+-#define STR_VAL(s, r) { { discard_const(s), sizeof(s) - 1 }, r}
++#define STR_VAL(s, r) { { (void *)s, sizeof(s) - 1 }, r}
+ 
+ static const struct ranked_value values_common[] = {
+ 	STR_VAL("", 0),

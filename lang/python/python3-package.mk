@@ -20,7 +20,7 @@ PYTHON3:=python$(PYTHON3_VERSION)
 
 PYTHON3PATH:=$(PYTHON3_LIB_DIR):$(STAGING_DIR)/$(PYTHON3_PKG_DIR):$(PKG_INSTALL_DIR)/$(PYTHON3_PKG_DIR)
 
--include $(PYTHON3_LIB_DIR)/config-$(PYTHON3_VERSION)/Makefile-vars
+-include $(PYTHON3_LIB_DIR)/openwrt/Makefile-vars
 
 # These configure args are needed in detection of path to Python header files
 # using autotools.
@@ -39,13 +39,15 @@ PYTHON3_VARS = \
 	CPPFLAGS="$(TARGET_CPPFLAGS) -I$(PYTHON3_INC_DIR)" \
 	LDFLAGS="$(TARGET_LDFLAGS) -lpython$(PYTHON3_VERSION)" \
 	_PYTHON_HOST_PLATFORM="$(_PYTHON_HOST_PLATFORM)" \
-	__PYVENV_LAUNCHER__="/usr/bin/$(PYTHON3)" \
+	_PYTHON_SYSCONFIGDATA_NAME="_sysconfigdata_$(ABIFLAGS)_$(MACHDEP)_$(MULTIARCH)" \
 	PYTHONPATH="$(PYTHON3PATH)" \
 	PYTHONDONTWRITEBYTECODE=1 \
-	PYTHONOPTIMIZE="" \
 	_python_sysroot="$(STAGING_DIR)" \
 	_python_prefix="/usr" \
-	_python_exec_prefix="/usr"
+	_python_exec_prefix="/usr" \
+	$(CARGO_PKG_CONFIG_VARS) \
+	PYO3_CROSS_LIB_DIR="$(PYTHON3_LIB_DIR)" \
+	SETUPTOOLS_RUST_CARGO_PROFILE="$(CARGO_PKG_PROFILE)"
 
 # $(1) => directory of python script
 # $(2) => python script and its arguments
@@ -55,17 +57,6 @@ define Python3/Run
 	$(PYTHON3_VARS) \
 	$(3) \
 	$(HOST_PYTHON3_BIN) $(2)
-endef
-
-# $(1) => build subdir
-# $(2) => additional arguments to setup.py
-# $(3) => additional variables
-define Python3/ModSetup
-	$(INSTALL_DIR) $(PKG_INSTALL_DIR)/$(PYTHON3_PKG_DIR)
-	$(call Python3/Run, \
-		$(PKG_BUILD_DIR)/$(strip $(1)), \
-		setup.py $(2), \
-		$(3))
 endef
 
 define Python3/FixShebang
@@ -189,10 +180,26 @@ endef
 
 # Py3Build
 
-PYTHON3_PKG_SETUP_DIR ?=
-PYTHON3_PKG_SETUP_GLOBAL_ARGS ?=
-PYTHON3_PKG_SETUP_ARGS ?= --single-version-externally-managed
-PYTHON3_PKG_SETUP_VARS ?=
+PYTHON3_PKG_BUILD?=1
+PYTHON3_PKG_FORCE_DISTUTILS_SETUP?=
+
+PYTHON3_PKG_SETUP_DIR?=
+PYTHON3_PKG_SETUP_GLOBAL_ARGS?=
+PYTHON3_PKG_SETUP_ARGS?=--single-version-externally-managed
+PYTHON3_PKG_SETUP_VARS?=
+
+PYTHON3_PKG_BUILD_CONFIG_SETTINGS?=
+PYTHON3_PKG_BUILD_VARS?=$(PYTHON3_PKG_SETUP_VARS)
+PYTHON3_PKG_BUILD_ARGS?=
+PYTHON3_PKG_BUILD_PATH?=$(PYTHON3_PKG_SETUP_DIR)
+
+PYTHON3_PKG_INSTALL_VARS?=
+
+PYTHON3_PKG_WHEEL_NAME?=$(subst -,_,$(if $(PYPI_SOURCE_NAME),$(PYPI_SOURCE_NAME),$(PKG_NAME)))
+PYTHON3_PKG_WHEEL_VERSION?=$(PKG_VERSION)
+
+PYTHON3_PKG_BUILD_DIR?=$(PKG_BUILD_DIR)/$(PYTHON3_PKG_BUILD_PATH)
+
 
 PYTHON3_PKG_HOST_PIP_INSTALL_ARGS = \
 	$(foreach req,$(HOST_PYTHON3_PACKAGE_BUILD_DEPENDS), \
@@ -206,32 +213,76 @@ endef
 
 ifneq ($(strip $(PYPI_NAME)),)
 define Py3Build/CheckHostPipVersionMatch
-	if grep -q "$(PYPI_NAME)==" $(python3_mk_path)host-pip-requirements/*.txt ; then \
-		if ! grep -q "$(PYPI_NAME)==$(PKG_VERSION)" $(python3_mk_path)host-pip-requirements/*.txt ; then \
-			printf "\nPlease update version of $(PYPI_NAME) to $(PKG_VERSION) in 'host-pip-requirements'/\n\n" ; \
-			exit 1 ; \
+	if [ -d "$(python3_mk_path)host-pip-requirements" ] && \
+			[ -n "$$$$($(FIND) $(python3_mk_path)host-pip-requirements -maxdepth 1 -mindepth 1 -name '*.txt' -print -quit 2>/dev/null)" ]; then \
+		if grep -q "$(PYPI_NAME)==" $(python3_mk_path)host-pip-requirements/*.txt ; then \
+			if ! grep -q "$(PYPI_NAME)==$(PKG_VERSION)" $(python3_mk_path)host-pip-requirements/*.txt ; then \
+				printf "\nPlease update version of $(PYPI_NAME) to $(PKG_VERSION) in 'host-pip-requirements'/\n\n" ; \
+				exit 1 ; \
+			fi \
 		fi \
 	fi
 endef
 endif
 
-define Py3Build/Compile/Default
+define Py3Build/InstallBuildDepends
 	$(if $(PYTHON3_PKG_HOST_PIP_INSTALL_ARGS), \
 		$(call HostPython3/PipInstall,$(PYTHON3_PKG_HOST_PIP_INSTALL_ARGS)) \
 	)
-	$(call Python3/ModSetup, \
-		$(PYTHON3_PKG_SETUP_DIR), \
-		$(PYTHON3_PKG_SETUP_GLOBAL_ARGS) \
-		install --prefix="/usr" --root="$(PKG_INSTALL_DIR)" \
-		$(PYTHON3_PKG_SETUP_ARGS), \
+endef
+
+define Py3Build/Compile/Distutils
+	$(call Py3Build/InstallBuildDepends)
+	$(INSTALL_DIR) $(PKG_INSTALL_DIR)/$(PYTHON3_PKG_DIR)
+	$(call Python3/Run, \
+		$(PKG_BUILD_DIR)/$(strip $(PYTHON3_PKG_SETUP_DIR)), \
+		setup.py \
+			$(PYTHON3_PKG_SETUP_GLOBAL_ARGS) \
+			install \
+			--prefix="/usr" \
+			--root="$(PKG_INSTALL_DIR)" \
+			$(PYTHON3_PKG_SETUP_ARGS) \
+			, \
 		$(PYTHON3_PKG_SETUP_VARS) \
 	)
 endef
 
-Py3Build/Configure=$(Py3Build/Configure/Default)
-Py3Build/Compile=$(Py3Build/Compile/Default)
+define Py3Build/Compile/Default
+	$(call Py3Build/InstallBuildDepends)
+	$(call Python3/Run, \
+		$(PKG_BUILD_DIR), \
+		-m build \
+			--no-isolation \
+			--outdir "$(PYTHON3_PKG_BUILD_DIR)"/openwrt-build \
+			--wheel \
+			$(foreach setting,$(PYTHON3_PKG_BUILD_CONFIG_SETTINGS),--config-setting=$(setting)) \
+			$(PYTHON3_PKG_BUILD_ARGS) \
+			"$(PYTHON3_PKG_BUILD_DIR)" \
+			, \
+		$(PYTHON3_PKG_BUILD_VARS) \
+	)
+endef
 
-PYTHON3_PKG_BUILD ?= 1
+define Py3Build/Install/Default
+	$(call Python3/Run, \
+		$(PKG_BUILD_DIR), \
+		-m installer \
+			--destdir "$(PKG_INSTALL_DIR)" \
+			--no-compile-bytecode \
+			--prefix /usr \
+			"$(PYTHON3_PKG_BUILD_DIR)"/openwrt-build/$(PYTHON3_PKG_WHEEL_NAME)-$(PYTHON3_PKG_WHEEL_VERSION)-*.whl \
+			, \
+		$(PYTHON3_PKG_INSTALL_VARS) \
+	)
+endef
+
+Py3Build/Compile=$(Py3Build/Compile/Default)
+Py3Build/Install=$(Py3Build/Install/Default)
+
+ifeq ($(strip $(PYTHON3_PKG_FORCE_DISTUTILS_SETUP)),1)
+  Py3Build/Compile=$(Py3Build/Compile/Distutils)
+  Py3Build/Install:=:
+endif
 
 ifeq ($(strip $(PYTHON3_PKG_BUILD)),1)
   ifeq ($(PY3),stdlib)
@@ -239,4 +290,5 @@ ifeq ($(strip $(PYTHON3_PKG_BUILD)),1)
   endif
   Hooks/Configure/Post+=Py3Build/CheckHostPipVersionMatch
   Build/Compile=$(Py3Build/Compile)
+  Build/Install=$(Py3Build/Install)
 endif

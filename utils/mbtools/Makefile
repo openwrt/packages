@@ -10,11 +10,11 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=mbtools
 PKG_SOURCE_DATE:=2014-10-29
 PKG_SOURCE_VERSION:=149e9c69cec180f18cf8781cf5285b97352bf719
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/webstack/mbtools
-PKG_MIRROR_HASH:=3f6a452d59a62b4f582020ebf1e371f0f0c94d99b1b056af3c4e124426a7a772
+PKG_MIRROR_HASH:=cd2ed34f194262d9e4eecf67cf1d0c9ac55e05795367a6014f11325b6bae9552
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=BSD-3-Clause
@@ -31,7 +31,7 @@ define Package/mbtools
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Modbus tools
-  DEPENDS:=+glib2 +libmodbus $(INTL_DEPENDS)
+  DEPENDS:=+glib2 +libmodbus
 endef
 
 define Package/mbtools/description
@@ -39,13 +39,6 @@ define Package/mbtools/description
   received by a slave/server (writing of registers). mbcollect is able to act
   as client or server (in TCP or RTU)
 endef
-
-ifneq ($(INTL_FULL),)
-TARGET_LDFLAGS += \
-	-L$(INTL_PREFIX)/lib \
-	-Wl,-rpath-link=$(STAGING_DIR)/usr/lib
-
-endif
 
 define Package/mbtools/install
 	$(INSTALL_DIR) $(1)/usr/bin

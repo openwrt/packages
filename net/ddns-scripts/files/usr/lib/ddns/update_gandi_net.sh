@@ -20,14 +20,23 @@ json_add_array rrset_values
 json_add_string "" "$__IP"
 json_close_array
 
+# Log the curl command
+write_log 7 "curl -s -X PUT \"$__ENDPOINT/domains/$domain/records/$username/$__RRTYPE\" \
+	-H \"Authorization: Apikey $password\" \
+	-H \"Content-Type: application/json\" \
+	-d \"$(json_dump)\" \
+	--connect-timeout 30"
+
 __STATUS=$(curl -s -X PUT "$__ENDPOINT/domains/$domain/records/$username/$__RRTYPE" \
 	-H "Authorization: Apikey $password" \
 	-H "Content-Type: application/json" \
 	-d "$(json_dump)" \
+	--connect-timeout 30 \
 	-w "%{http_code}\n" -o $DATFILE 2>$ERRFILE)
 
-if [ $? -ne 0 ]; then
-	write_log 14 "Curl failed: $(cat $ERRFILE)"
+local __ERRNO=$?
+if [ $__ERRNO -ne 0 ]; then
+	write_log 14 "Curl failed with $__ERRNO: $(cat $ERRFILE)"
 	return 1
 elif [ -z $__STATUS ] || [ $__STATUS != 201 ]; then
 	write_log 14 "LiveDNS failed: $__STATUS \ngandi.net answered: $(cat $DATFILE)"

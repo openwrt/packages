@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=uw-imap
 PKG_VERSION:=2007f
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_SOURCE:=imap-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
@@ -21,6 +21,7 @@ PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE.txt
+PKG_CPE_ID:=cpe:/a:uw-imap_project:uw-imap
 
 PKG_FIXUP:=autoreconf
 
@@ -31,7 +32,7 @@ define Package/uw-imap
   CATEGORY:=Libraries
   TITLE:=University of Washington IMAP toolkit
   URL:=https://www.washington.edu/imap/
-  DEPENDS:=+libpthread +libopenssl
+  DEPENDS:= +USE_GLIBC:libcrypt-compat +libpthread +libopenssl
 endef
 
 define Package/uw-imap/description

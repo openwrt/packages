@@ -1,0 +1,18 @@
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -1,5 +1,5 @@
+ [build-system]
+-requires = ["hatchling", "hatch-vcs"]
++requires = []
+ build-backend = "hatchling.build"
+ 
+ [project]
+@@ -7,7 +7,7 @@ name = "docker"
+ dynamic = ["version"]
+ description = "A Python library for the Docker Engine API."
+ readme = "README.md"
+-license = "Apache-2.0"
++license = { text = "Apache-2.0" }
+ requires-python = ">=3.8"
+ maintainers = [
+     { name = "Docker Inc.", email = "no-reply@docker.com" },

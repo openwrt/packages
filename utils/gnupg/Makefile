@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnupg
 PKG_VERSION:=1.4.23
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://gnupg.org/ftp/gcrypt/gnupg
@@ -17,6 +17,7 @@ PKG_HASH:=c9462f17e651b6507848c08c430c791287cd75491f8b5a8b50c6ed46b12678ba
 
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:gnupg:gnupg
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
@@ -87,7 +88,7 @@ CONFIGURE_ARGS += \
 MAKE_FLAGS += \
 	SUBDIRS="m4 intl zlib util mpi cipher tools g10 keyserver ${checks}" \
 
-TARGET_CFLAGS += -DEXTERN_UNLESS_MAIN_MODULE=static
+TARGET_CFLAGS += -fcommon
 
 define Package/gnupg/install
 	$(INSTALL_DIR) $(1)/usr/bin

@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
-PKG_VERSION:=8.1.2
+PKG_VERSION:=8.4.15
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
@@ -15,11 +15,11 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:php:php
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://www.php.net/distributions/
-PKG_HASH:=6b448242fd360c1a9f265b7263abf3da25d28f2b2b0f5465533b69be51a391dd
+PKG_SOURCE_URL:=https://www.php.net/distributions/
+PKG_HASH:=a060684f614b8344f9b34c334b6ba8db1177555997edb5b1aceab0a4b807da7e
 
 PKG_BUILD_PARALLEL:=1
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16
 
 PHP8_MODULES= \
 	bcmath \
@@ -28,12 +28,12 @@ PHP8_MODULES= \
 	exif \
 	fileinfo filter ftp \
 	gettext gd gmp \
-	iconv imap intl \
+	iconv intl \
 	ldap \
 	mbstring mysqli mysqlnd \
 	opcache openssl \
 	pcntl pdo pdo-mysql pdo-pgsql pdo-sqlite pgsql phar \
-	session shmop simplexml snmp soap sockets sqlite3 sysvmsg sysvsem sysvshm \
+	session shmop simplexml snmp soap sockets sodium sqlite3 sysvmsg sysvsem sysvshm \
 	tokenizer \
 	xml xmlreader xmlwriter \
 	zip
@@ -94,7 +94,7 @@ endef
 
 define Package/php8-cli
   $(call Package/php8/Default)
-  DEPENDS+= +PACKAGE_php8-mod-intl:libstdcpp
+  DEPENDS+= +PACKAGE_php8-mod-intl:libstdcpp +riscv64:libatomic
   TITLE+= (CLI)
 endef
 
@@ -105,7 +105,7 @@ endef
 
 define Package/php8-cgi
   $(call Package/php8/Default)
-  DEPENDS+= +PACKAGE_php8-mod-intl:libstdcpp
+  DEPENDS+= +PACKAGE_php8-mod-intl:libstdcpp +riscv64:libatomic
   TITLE+= (CGI & FastCGI)
 endef
 
@@ -127,7 +127,7 @@ endef
 
 define Package/php8-fpm
   $(call Package/php8/Default)
-  DEPENDS+= +PACKAGE_php8-mod-intl:libstdcpp
+  DEPENDS+= +PACKAGE_php8-mod-intl:libstdcpp +riscv64:libatomic
   TITLE+= (FPM)
 endef
 
@@ -159,6 +159,7 @@ define Package/apache-mod-php8
   CATEGORY:=Network
   DEPENDS+=PACKAGE_apache-mod-php8:apache \
 	   +PACKAGE_php8-mod-intl:libstdcpp \
+	   +riscv64:libatomic \
 	   +libpcre2 +zlib
   TITLE:=PHP8 module for Apache Web Server
 endef
@@ -189,10 +190,17 @@ CONFIGURE_ARGS+= \
 	\
 	--without-valgrind \
 	--with-external-pcre \
+	--$(if $(CONFIG_PCRE2_JIT_ENABLED),with,without)-pcre-jit \
 	--with-zlib="$(STAGING_DIR)/usr"
 
 ifeq ($(CONFIG_LIBC_USE_GLIBC),y)
 TARGET_LDFLAGS += -ldl
+endif
+ifeq ($(CONFIG_USE_MUSL),y)
+TARGET_CFLAGS += -D_LARGEFILE64_SOURCE
+endif
+ifneq ($(findstring riscv64,$(CONFIG_ARCH)),)
+TARGET_LDFLAGS += -latomic
 endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-bcmath),)
@@ -270,23 +278,19 @@ else
 endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-iconv),)
-  CONFIGURE_ARGS+= --with-iconv=shared,"$(ICONV_PREFIX)"
+  ifeq ($(CONFIG_BUILD_NLS),y)
+    CONFIGURE_VARS+= iconv_impl_name="gnu_libiconv"
+    CONFIGURE_ARGS+= --with-iconv=shared,"$(ICONV_PREFIX)"
+  else
+    CONFIGURE_VARS+= ac_cv_func_iconv=yes
+    CONFIGURE_ARGS+= --with-iconv=shared
+  endif
 else
   CONFIGURE_ARGS+= --without-iconv
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-imap),)
-  CONFIGURE_ARGS+= \
-		--with-imap=shared,"$(STAGING_DIR)/usr" \
-		--with-kerberos=no \
-		--with-imap-ssl="$(STAGING_DIR)/usr"
-else
-  CONFIGURE_ARGS+= --without-imap
-endif
-
 ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-intl),)
   CONFIGURE_ARGS+= --enable-intl=shared
-  TARGET_CXXFLAGS+= -std=c++0x
 else
   CONFIGURE_ARGS+= --disable-intl
 endif
@@ -325,7 +329,7 @@ else
   CONFIGURE_ARGS+= --disable-opcache
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-openssl)$(CONFIG_PACKAGE_php8-mod-ftp)$(CONFIG_PACKAGE_php8-mod-imap)$(CONFIG_PACKAGE_php8-mod-snmp),)
+ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-openssl)$(CONFIG_PACKAGE_php8-mod-ftp)$(CONFIG_PACKAGE_php8-mod-snmp),)
   CONFIGURE_ARGS+= \
 	--with-openssl=shared \
 	--with-kerberos=no \
@@ -393,6 +397,9 @@ endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-snmp),)
   CONFIGURE_ARGS+= --with-snmp=shared,"$(STAGING_DIR)/usr"
+  CONFIGURE_VARS+= \
+    ac_cv_have_decl_usmHMAC192SHA256AuthProtocol=no \
+    ac_cv_have_decl_usmHMAC384SHA512AuthProtocol=no
 else
   CONFIGURE_ARGS+= --without-snmp
 endif
@@ -407,6 +414,12 @@ ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-sockets),)
   CONFIGURE_ARGS+= --enable-sockets=shared
 else
   CONFIGURE_ARGS+= --disable-sockets
+endif
+
+ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-sodium),)
+  CONFIGURE_ARGS+= --with-sodium=shared,"$(STAGING_DIR)/usr"
+else
+  CONFIGURE_ARGS+= --without-sodium
 endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-sqlite3),)
@@ -485,10 +498,9 @@ endif
 CONFIGURE_VARS+= \
 	ac_cv_c_bigendian_php=$(if $(CONFIG_BIG_ENDIAN),yes,no) \
 	php_cv_cc_rpath="no" \
-	iconv_impl_name="gnu_libiconv" \
 	ac_cv_php_xml2_config_path="$(STAGING_DIR)/host/bin/xml2-config" \
 	ac_cv_u8t_decompose=yes \
-	ac_cv_have_pcre2_jit=no
+	php_cv_have_pcre2_jit=$(if $(CONFIG_PCRE2_JIT_ENABLED),yes,no)
 
 define Package/php8/conffiles
 /etc/php.ini
@@ -589,6 +601,8 @@ define BuildModule
   define Package/php8-mod-$(1)
     $(call Package/php8/Default)
 
+    DEPENDS+=+riscv64:libatomic
+
     ifneq ($(3),)
       DEPENDS+=$(3)
     endif
@@ -632,7 +646,6 @@ $(eval $(call BuildModule,gd,GD graphics,+PACKAGE_php8-mod-gd:libgd-full))
 $(eval $(call BuildModule,gettext,Gettext,+PACKAGE_php8-mod-gettext:libintl-full))
 $(eval $(call BuildModule,gmp,GMP,+PACKAGE_php8-mod-gmp:libgmp))
 $(eval $(call BuildModule,iconv,iConv,$(ICONV_DEPENDS)))
-$(eval $(call BuildModule,imap,IMAP,+PACKAGE_php8-mod-imap:libopenssl +PACKAGE_libpam:libpam +PACKAGE_php8-mod-imap:uw-imap))
 $(eval $(call BuildModule,intl,Internationalization Functions,+PACKAGE_php8-mod-intl:icu +PHP8_FULLICUDATA:icu-full-data))
 $(eval $(call BuildModule,ldap,LDAP,+PACKAGE_php8-mod-ldap:libopenldap +PACKAGE_php8-mod-ldap:libsasl2))
 $(eval $(call BuildModule,mbstring,MBString,+PACKAGE_php8-mod-mbstring:oniguruma))
@@ -651,8 +664,9 @@ $(eval $(call BuildModule,session,Session))
 $(eval $(call BuildModule,shmop,Shared Memory))
 $(eval $(call BuildModule,simplexml,SimpleXML,+@PHP8_LIBXML +PACKAGE_php8-mod-simplexml:libxml2))
 $(eval $(call BuildModule,snmp,SNMP,+PACKAGE_php8-mod-snmp:libnetsnmp +PACKAGE_php8-mod-snmp:libopenssl))
-$(eval $(call BuildModule,soap,SOAP,+@PHP8_LIBXML +PACKAGE_php8-mod-soap:libxml2))
+$(eval $(call BuildModule,soap,SOAP,+@PHP8_LIBXML +PACKAGE_php8-mod-soap:libxml2 +php8-mod-session))
 $(eval $(call BuildModule,sockets,Sockets))
+$(eval $(call BuildModule,sodium,Sodium,+PACKAGE_php8-mod-sodium:libsodium,30))
 $(eval $(call BuildModule,sqlite3,SQLite3,+PACKAGE_php8-mod-sqlite3:libsqlite3))
 $(eval $(call BuildModule,sysvmsg,System V messages))
 $(eval $(call BuildModule,sysvsem,System V shared memory))

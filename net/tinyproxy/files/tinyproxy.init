@@ -24,10 +24,10 @@ write_upstream() {
 	[ -n "$target" ] && target=' "'"$target"'"'
 
 	[ "$type" = "proxy" ] && [ -n "$via" ] && \
-		echo "upstream $via$target"
+		echo "upstream http $via$target"
 
 	[ "$type" = "reject" ] && [ -n "$target" ] && \
-		echo "no upstream$target"
+		echo "upstream none$target"
 }
 
 write_reversepath() {
@@ -64,6 +64,14 @@ proxy_string() {
 		touch "$_value"
 		chmod 666 "$_value"
 	}
+}
+
+proxy_m_string() {
+	local SECTION=$1
+	local OPTION=$2
+
+	config_get _value "$SECTION" "$OPTION"
+	[ -n "$_value" ] && echo "${ALIAS:-${OPTION}} ""$_value"
 }
 
 proxy_flag() {
@@ -118,6 +126,8 @@ start_proxy() {
 	proxy_string "$1" StatHost StatHost 127.0.0.1
 	proxy_string "$1" StatFile
 	proxy_string "$1" LogFile
+
+	proxy_m_string "$1" BasicAuth
 
 	proxy_flag "$1" Syslog
 

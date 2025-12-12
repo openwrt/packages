@@ -8,15 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-eventlet
-PKG_VERSION:=0.30.2
+PKG_VERSION:=0.40.3
 PKG_RELEASE:=1
 
 PYPI_NAME:=eventlet
-PKG_HASH:=1811b122d9a45eb5bafba092d36911bca825f835cb648a862bbf984030acff9d
+PKG_HASH:=290852db0065d78cec17a821b78c8a51cafb820a792796a354592ae4d5fceeb0
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
+
+PKG_BUILD_DEPENDS:= \
+	python3/host \
+	python-setuptools/host \
+	python-hatch-vcs/host \
+	python-hatchling/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -30,10 +36,8 @@ define Package/python3-eventlet
   URL:=https://eventlet.net/
   DEPENDS:= \
 	+python3-light \
-	+python3-six \
 	+python3-dns \
 	+python3-greenlet \
-	+python3-distutils \
 	+python3-email \
 	+python3-logging \
 	+python3-openssl \

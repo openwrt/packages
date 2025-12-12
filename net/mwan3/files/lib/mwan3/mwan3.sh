@@ -1,12 +1,8 @@
 #!/bin/sh
 
 . "${IPKG_INSTROOT}/usr/share/libubox/jshn.sh"
+. "${IPKG_INSTROOT}/lib/mwan3/common.sh"
 
-IPS="ipset"
-IPT4="iptables -t mangle -w"
-IPT6="ip6tables -t mangle -w"
-IPT4R="iptables-restore -T mangle -w -n"
-IPT6R="ip6tables-restore -T mangle -w -n"
 CONNTRACK_FILE="/proc/net/nf_conntrack"
 IPv6_REGEX="([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|"
 IPv6_REGEX="${IPv6_REGEX}([0-9a-fA-F]{1,4}:){1,7}:|"
@@ -47,7 +43,7 @@ mwan3_update_dev_to_table()
 		config_get family "$1" family ipv4
 		network_get_device device "$1"
 		[ -z "$device" ] && return
-		config_get enabled "$1" enabled
+		config_get_bool enabled "$1" enabled
 		[ "$enabled" -eq 0 ] && return
 		curr_table=$(eval "echo	 \"\$mwan3_dev_tbl_${family}\"")
 		export "mwan3_dev_tbl_$family=${curr_table}${device}=$_tid "
@@ -118,7 +114,7 @@ mwan3_set_custom_ipset_v4()
 
 	for custom_network_v4 in $($IP4 route list table "$1" | awk '{print $1}' | grep -E "$IPv4_REGEX"); do
 		LOG notice "Adding network $custom_network_v4 from table $1 to mwan3_custom_v4 ipset"
-		mwan3_push_update -! add mwan3_custom_v4 "$custom_network_v4"
+		mwan3_push_update -! add mwan3_custom_ipv4 "$custom_network_v4"
 	done
 }
 
@@ -128,7 +124,7 @@ mwan3_set_custom_ipset_v6()
 
 	for custom_network_v6 in $($IP6 route list table "$1" | awk '{print $1}' | grep -E "$IPv6_REGEX"); do
 		LOG notice "Adding network $custom_network_v6 from table $1 to mwan3_custom_v6 ipset"
-		mwan3_push_update -! add mwan3_custom_v6 "$custom_network_v6"
+		mwan3_push_update -! add mwan3_custom_ipv6 "$custom_network_v6"
 	done
 }
 
@@ -136,25 +132,29 @@ mwan3_set_custom_ipset()
 {
 	local update=""
 
-	mwan3_push_update -! create mwan3_custom_v4 hash:net
+	mwan3_push_update -! create mwan3_custom_ipv4 hash:net
+	mwan3_push_update flush mwan3_custom_ipv4
 	config_list_foreach "globals" "rt_table_lookup" mwan3_set_custom_ipset_v4
 
-	mwan3_push_update -! create mwan3_custom_v6 hash:net family inet6
-	config_list_foreach "globals" "rt_table_lookup" mwan3_set_custom_ipset_v6
+	if [ $NO_IPV6 -eq 0 ]; then
+		mwan3_push_update -! create mwan3_custom_ipv6 hash:net family inet6
+		mwan3_push_update flush mwan3_custom_ipv6
+		config_list_foreach "globals" "rt_table_lookup" mwan3_set_custom_ipset_v6
+	fi
 
-	mwan3_push_update -! create mwan3_connected list:set
-	mwan3_push_update -! add mwan3_connected mwan3_custom_v4
-	mwan3_push_update -! add mwan3_connected mwan3_custom_v6
+	echo "$update" > "${MWAN3_STATUS_IPTABLES_LOG_DIR}/ipset-set_custom_ipset.dump"
 	error=$(echo "$update" | $IPS restore 2>&1) || LOG error "set_custom_ipset: $error"
 }
 
 
 mwan3_set_connected_ipv4()
 {
-	local connected_network_v4 candidate_list cidr_list
-	$IPS -! create mwan3_connected_v4 hash:net
-	$IPS create mwan3_connected_v4_temp hash:net ||
-		LOG notice "failed to create ipset mwan3_connected_v4_temp"
+	local connected_network_v4 error
+	local candidate_list cidr_list
+	local update=""
+
+	mwan3_push_update -! create mwan3_connected_ipv4 hash:net
+	mwan3_push_update flush mwan3_connected_ipv4
 
 	candidate_list=""
 	cidr_list=""
@@ -172,22 +172,16 @@ mwan3_set_connected_ipv4()
 	done
 
 	for connected_network_v4 in $cidr_list; do
-		$IPS -! add mwan3_connected_v4_temp "$connected_network_v4"
+		mwan3_push_update -! add mwan3_connected_ipv4 "$connected_network_v4"
 	done
 	for connected_network_v4 in $candidate_list; do
-		ipset -q test mwan3_connected_v4_temp "$connected_network_v4" ||
-			$IPS -! add mwan3_connected_v4_temp "$connected_network_v4"
+		mwan3_push_update -! add mwan3_connected_ipv4 "$connected_network_v4"
 	done
 
-	$IPS add mwan3_connected_v4_temp 224.0.0.0/3 ||
-		LOG notice "failed to add 224.0.0.0/3 to mwan3_connected_v4_temp"
+	mwan3_push_update add mwan3_connected_ipv4 224.0.0.0/3
 
-	$IPS swap mwan3_connected_v4_temp mwan3_connected_v4 ||
-		LOG notice "failed to swap mwan3_connected_v4_temp and mwan3_connected_v4"
-	$IPS destroy mwan3_connected_v4_temp ||
-		LOG notice "failed to destroy ipset mwan3_connected_v4_temp"
-	$IPS -! add mwan3_connected mwan3_connected_v4
-
+	echo "$update" > "${MWAN3_STATUS_IPTABLES_LOG_DIR}/ipset-set_connected_ipv4.dump"
+	error=$(echo "$update" | $IPS restore 2>&1) || LOG error "set_connected_ipv4: $error"
 }
 
 mwan3_set_connected_ipv6()
@@ -196,14 +190,14 @@ mwan3_set_connected_ipv6()
 	local update=""
 	[ $NO_IPV6 -eq 0 ] || return
 
-	mwan3_push_update -! create mwan3_connected_v6 hash:net family inet6
-	mwan3_push_update flush mwan3_connected_v6
+	mwan3_push_update -! create mwan3_connected_ipv6 hash:net family inet6
+	mwan3_push_update flush mwan3_connected_ipv6
 
 	for connected_network_v6 in $($IP6 route | awk '{print $1}' | grep -E "$IPv6_REGEX"); do
-		mwan3_push_update -! add mwan3_connected_v6 "$connected_network_v6"
+		mwan3_push_update -! add mwan3_connected_ipv6 "$connected_network_v6"
 	done
 
-	mwan3_push_update -! add mwan3_connected mwan3_connected_v6
+	echo "$update" > "${MWAN3_STATUS_IPTABLES_LOG_DIR}/ipset-set_connected_ipv6.dump"
 	error=$(echo "$update" | $IPS restore 2>&1) || LOG error "set_connected_ipv6: $error"
 }
 
@@ -212,18 +206,33 @@ mwan3_set_connected_ipset()
 	local error
 	local update=""
 
-	mwan3_push_update -! create mwan3_connected list:set
-	mwan3_push_update flush mwan3_connected
-
-	mwan3_push_update -! create mwan3_dynamic_v4 hash:net
-	mwan3_push_update -! add mwan3_connected mwan3_dynamic_v4
+	mwan3_push_update -! create mwan3_connected_ipv4 hash:net
+	mwan3_push_update flush mwan3_connected_ipv4
 
 	if [ $NO_IPV6 -eq 0 ]; then
-		mwan3_push_update -! create mwan3_dynamic_v6 hash:net family inet6
-		mwan3_push_update -! add mwan3_connected mwan3_dynamic_v6
+		mwan3_push_update -! create mwan3_connected_ipv6 hash:net family inet6
+		mwan3_push_update flush mwan3_connected_ipv6
 	fi
 
+	echo "$update" > "${MWAN3_STATUS_IPTABLES_LOG_DIR}/ipset-set_connected_ipset.dump"
 	error=$(echo "$update" | $IPS restore 2>&1) || LOG error "set_connected_ipset: $error"
+}
+
+mwan3_set_dynamic_ipset()
+{
+	local error
+	local update=""
+
+	mwan3_push_update -! create mwan3_dynamic_ipv4 list:set
+	mwan3_push_update flush mwan3_dynamic_ipv4
+
+	if [ $NO_IPV6 -eq 0 ]; then
+		mwan3_push_update -! create mwan3_dynamic_ipv6 hash:net family inet6
+		mwan3_push_update flush mwan3_dynamic_ipv6
+	fi
+
+	echo "$update" > "${MWAN3_STATUS_IPTABLES_LOG_DIR}/ipset-set_dynamic_ipset.dump"
+	error=$(echo "$update" | $IPS restore 2>&1) || LOG error "set_dynamic_ipset: $error"
 }
 
 mwan3_set_general_rules()
@@ -246,7 +255,8 @@ mwan3_set_general_rules()
 
 mwan3_set_general_iptables()
 {
-	local IPT current update error
+	local IPT current update error family
+
 	for IPT in "$IPT4" "$IPT6"; do
 		[ "$IPT" = "$IPT6" ] && [ $NO_IPV6 -ne 0 ] && continue
 		current="$($IPT -S)"$'\n'
@@ -255,13 +265,22 @@ mwan3_set_general_iptables()
 			mwan3_push_update -N mwan3_ifaces_in
 		fi
 
-		if [ -n "${current##*-N mwan3_connected*}" ]; then
-			mwan3_push_update -N mwan3_connected
-			$IPS -! create mwan3_connected list:set
-			mwan3_push_update -A mwan3_connected \
-					  -m set --match-set mwan3_connected dst \
-					  -j MARK --set-xmark $MMX_DEFAULT/$MMX_MASK
+		if [ "$IPT" = "$IPT6" ]; then
+			family="ipv6"
+		else
+			family="ipv4"
 		fi
+
+		for chain in custom connected dynamic; do
+			echo "${current}" | grep -q "\-N mwan3_${chain}_${family}$"
+			local ret="$?"
+			if [ "$ret" = 1 ]; then
+				mwan3_push_update -N mwan3_${chain}_${family}
+				mwan3_push_update -A mwan3_${chain}_${family} \
+					-m set --match-set mwan3_${chain}_${family} dst \
+					-j MARK --set-xmark $MMX_DEFAULT/$MMX_MASK
+			fi
+		done
 
 		if [ -n "${current##*-N mwan3_rules*}" ]; then
 			mwan3_push_update -N mwan3_rules
@@ -299,17 +318,24 @@ mwan3_set_general_iptables()
 			mwan3_push_update -A mwan3_hook \
 					  -m mark --mark 0x0/$MMX_MASK \
 					  -j mwan3_ifaces_in
-			mwan3_push_update -A mwan3_hook \
-					  -m mark --mark 0x0/$MMX_MASK \
-					  -j mwan3_connected
+
+			for chain in custom connected dynamic; do
+				mwan3_push_update -A mwan3_hook \
+					-m mark --mark 0x0/$MMX_MASK \
+					-j mwan3_${chain}_${family}
+			done
+
 			mwan3_push_update -A mwan3_hook \
 					  -m mark --mark 0x0/$MMX_MASK \
 					  -j mwan3_rules
 			mwan3_push_update -A mwan3_hook \
 					  -j CONNMARK --save-mark --nfmask "$MMX_MASK" --ctmask "$MMX_MASK"
-			mwan3_push_update -A mwan3_hook \
-					  -m mark ! --mark $MMX_DEFAULT/$MMX_MASK \
-					  -j mwan3_connected
+
+			for chain in custom connected dynamic; do
+				mwan3_push_update -A mwan3_hook \
+					-m mark ! --mark $MMX_DEFAULT/$MMX_MASK \
+					-j mwan3_${chain}_${family}
+			done
 		fi
 
 		if [ -n "${current##*-A PREROUTING -j mwan3_hook*}" ]; then
@@ -320,10 +346,12 @@ mwan3_set_general_iptables()
 		fi
 		mwan3_push_update COMMIT
 		mwan3_push_update ""
+
+		echo "$update" > "${MWAN3_STATUS_IPTABLES_LOG_DIR}/iptables-set_general_iptables-${family}.dump"
 		if [ "$IPT" = "$IPT4" ]; then
-			error=$(echo "$update" | $IPT4R 2>&1) || LOG error "set_general_iptables: $error"
+			error=$(echo "$update" | $IPT4R 2>&1) || LOG error "set_general_iptables (${family}): $error"
 		else
-			error=$(echo "$update" | $IPT6R 2>&1) || LOG error "set_general_iptables: $error"
+			error=$(echo "$update" | $IPT6R 2>&1) || LOG error "set_general_iptables (${family}): $error"
 		fi
 	done
 }
@@ -359,12 +387,14 @@ mwan3_create_iface_iptables()
 		mwan3_push_update -F "mwan3_iface_in_$1"
 	fi
 
-	mwan3_push_update -A "mwan3_iface_in_$1" \
-			  -i "$2" \
-			  -m set --match-set mwan3_connected src \
-			  -m mark --mark "0x0/$MMX_MASK" \
-			  -m comment --comment "default" \
-			  -j MARK --set-xmark "$MMX_DEFAULT/$MMX_MASK"
+	for chain in custom connected dynamic; do
+		mwan3_push_update -A "mwan3_iface_in_$1" \
+			-i "$2" \
+			-m set --match-set mwan3_${chain}_${family} src \
+			-m mark --mark "0x0/$MMX_MASK" \
+			-m comment --comment "default" \
+			-j MARK --set-xmark "$MMX_DEFAULT/$MMX_MASK"
+	done
 	mwan3_push_update -A "mwan3_iface_in_$1" \
 			  -i "$2" \
 			  -m mark --mark "0x0/$MMX_MASK" \
@@ -382,13 +412,14 @@ mwan3_create_iface_iptables()
 
 	mwan3_push_update COMMIT
 	mwan3_push_update ""
-	error=$(echo "$update" | $IPTR 2>&1) || LOG error "create_iface_iptables: $error"
 
+	echo "$update" > "${MWAN3_STATUS_IPTABLES_LOG_DIR}/iptables-create_iface_iptables-${1}.dump"
+	error=$(echo "$update" | $IPTR 2>&1) || LOG error "create_iface_iptables (${1}): $error"
 }
 
 mwan3_delete_iface_iptables()
 {
-	local IPT
+	local IPT update
 	config_get family "$1" family ipv4
 
 	if [ "$family" = "ipv4" ]; then
@@ -400,12 +431,19 @@ mwan3_delete_iface_iptables()
 		IPT="$IPT6"
 	fi
 
-	$IPT -D mwan3_ifaces_in \
-	     -m mark --mark 0x0/$MMX_MASK \
-	     -j "mwan3_iface_in_$1" &> /dev/null
-	$IPT -F "mwan3_iface_in_$1" &> /dev/null
-	$IPT -X "mwan3_iface_in_$1" &> /dev/null
+	update="*mangle"
 
+	mwan3_push_update -D mwan3_ifaces_in \
+		-m mark --mark 0x0/$MMX_MASK \
+		-j "mwan3_iface_in_$1" &> /dev/null
+	mwan3_push_update -F "mwan3_iface_in_$1" &> /dev/null
+	mwan3_push_update -X "mwan3_iface_in_$1" &> /dev/null
+
+	mwan3_push_update COMMIT
+	mwan3_push_update ""
+
+	echo "$update" > "${MWAN3_STATUS_IPTABLES_LOG_DIR}/iptables-delete_iface_iptables-${1}.dump"
+	error=$(echo "$update" | $IPTR 2>&1) || LOG error "delete_iface_iptables (${1}): $error"
 }
 
 mwan3_extra_tables_routes()
@@ -445,7 +483,7 @@ mwan3_create_iface_route()
 			# if 'connected' was called after 'ifup'
 			[ -n "$tbl" ] && [ -z "${tbl##*$route_line$'\n'*}" ] && continue
 			$IP route add table $id $route_line ||
-				LOG warn "failed to add $route_line to table $id"
+				LOG debug "Route '$route_line' already added to table $id"
 		fi
 
 	done
@@ -511,7 +549,7 @@ mwan3_delete_iface_rules()
 		return
 	fi
 
-	for rule_id in $(ip rule list | awk '$1 % 1000 == '$id' && $1 > 1000 && $1 < 4000 {print substr($1,0,4)}'); do
+	for rule_id in $(ip rule list | awk -F : '$1 % 1000 == '$id' && $1 > 1000 && $1 < 4000 {print $1}'); do
 		$IP rule del pref $rule_id
 	done
 }
@@ -524,7 +562,7 @@ mwan3_delete_iface_ipset_entries()
 
 	[ -n "$id" ] || return 0
 
-	for setname in $(ipset -n list | grep ^mwan3_sticky_); do
+	for setname in $(ipset -n list | grep ^mwan3_rule_); do
 		for entry in $(ipset list "$setname" | grep "$(mwan3_id2mask id MMX_MASK | awk '{ printf "0x%08x", $1; }')" | cut -d ' ' -f 1); do
 			$IPS del "$setname" $entry ||
 				LOG notice "failed to delete $entry from $setname"
@@ -623,8 +661,9 @@ mwan3_set_policy()
 	fi
 	mwan3_push_update COMMIT
 	mwan3_push_update ""
-	error=$(echo "$update" | $IPTR 2>&1) || LOG error "set_policy ($1): $error"
 
+	echo "$update" > "${MWAN3_STATUS_IPTABLES_LOG_DIR}/iptables-set_policy-${1}.dump"
+	error=$(echo "$update" | $IPTR 2>&1) || LOG error "set_policy ($1): $error"
 }
 
 mwan3_create_policies_iptables()
@@ -671,6 +710,8 @@ mwan3_create_policies_iptables()
 		esac
 		mwan3_push_update COMMIT
 		mwan3_push_update ""
+
+		echo "$update" > "${MWAN3_STATUS_IPTABLES_LOG_DIR}/iptables-create_policies_iptables-${1}.dump"
 		if [ "$IPT" = "$IPT4" ]; then
 			error=$(echo "$update" | $IPT4R 2>&1) || LOG error "create_policies_iptables ($1): $error"
 		else
@@ -694,17 +735,22 @@ mwan3_set_policies_iptables()
 
 mwan3_set_sticky_iptables()
 {
+	local interface="${1}"
+	local rule="${2}"
+	local ipv="${3}"
+	local policy="${4}"
+
 	local id iface
 	for iface in $(echo "$current" | grep "^-A $policy" | cut -s -d'"' -f2 | awk '{print $1}'); do
-		if [ "$iface" = "$1" ]; then
+		if [ "$iface" = "$interface" ]; then
 
-			mwan3_get_iface_id id "$1"
+			mwan3_get_iface_id id "$iface"
 
 			[ -n "$id" ] || return 0
-			if [ -z "${current##*-N mwan3_iface_in_$1$'\n'*}" ]; then
+			if [ -z "${current##*-N mwan3_iface_in_${iface}$'\n'*}" ]; then
 				mwan3_push_update -I "mwan3_rule_$rule" \
 						  -m mark --mark "$(mwan3_id2mask id MMX_MASK)/$MMX_MASK" \
-						  -m set ! --match-set "mwan3_sticky_$rule" src,src \
+						  -m set ! --match-set "mwan3_rule_${ipv}_${rule}" src,src \
 						  -j MARK --set-xmark "0x0/$MMX_MASK"
 				mwan3_push_update -I "mwan3_rule_$rule" \
 						  -m mark --mark "0/$MMX_MASK" \
@@ -712,6 +758,28 @@ mwan3_set_sticky_iptables()
 			fi
 		fi
 	done
+}
+
+mwan3_set_sticky_ipset()
+{
+	local rule="$1"
+	local mmx="$2"
+	local timeout="$3"
+
+	local error
+	local update=""
+
+	mwan3_push_update -! create "mwan3_rule_ipv4_$rule" \
+		hash:ip,mark markmask "$mmx" \
+		timeout "$timeout"
+
+	[ $NO_IPV6 -eq 0 ] &&
+		mwan3_push_update -! create "mwan3_rule_ipv6_$rule" \
+			hash:ip,mark markmask "$mmx" \
+			timeout "$timeout" family inet6
+
+	echo "$update" > "${MWAN3_STATUS_IPTABLES_LOG_DIR}/ipset-set_sticky_ipset-${rule}.dump"
+	error=$(echo "$update" | $IPS restore 2>&1) || LOG error "set_sticky_ipset (${rule}): $error"
 }
 
 mwan3_set_user_iptables_rule()
@@ -797,17 +865,7 @@ mwan3_set_user_iptables_rule()
 		rule_policy=1
 		policy="mwan3_policy_$use_policy"
 		if [ "$sticky" -eq 1 ]; then
-			$IPS -! create "mwan3_sticky_v4_$rule" \
-			     hash:ip,mark markmask "$MMX_MASK" \
-			     timeout "$timeout"
-			[ $NO_IPV6 -eq 0 ] &&
-				$IPS -! create "mwan3_sticky_v6_$rule" \
-				     hash:ip,mark markmask "$MMX_MASK" \
-				     timeout "$timeout" family inet6
-			$IPS -! create "mwan3_sticky_$rule" list:set
-			$IPS -! add "mwan3_sticky_$rule" "mwan3_sticky_v4_$rule"
-			[ $NO_IPV6 -eq 0 ] &&
-				$IPS -! add "mwan3_sticky_$rule" "mwan3_sticky_v6_$rule"
+			mwan3_set_sticky_ipset "$rule" "$MMX_MASK" "$timeout"
 		fi
 	fi
 
@@ -821,7 +879,7 @@ mwan3_set_user_iptables_rule()
 		fi
 
 		mwan3_push_update -F "mwan3_rule_$1"
-		config_foreach mwan3_set_sticky_iptables interface $ipv
+		config_foreach mwan3_set_sticky_iptables interface "$rule" "$ipv" "$policy"
 
 
 		mwan3_push_update -A "mwan3_rule_$1" \
@@ -829,10 +887,10 @@ mwan3_set_user_iptables_rule()
 				  -j "$policy"
 		mwan3_push_update -A "mwan3_rule_$1" \
 				  -m mark ! --mark 0xfc00/0xfc00 \
-				  -j SET --del-set "mwan3_sticky_$rule" src,src
+				  -j SET --del-set "mwan3_rule_${ipv}_${rule}" src,src
 		mwan3_push_update -A "mwan3_rule_$1" \
 				  -m mark ! --mark 0xfc00/0xfc00 \
-				  -j SET --add-set "mwan3_sticky_$rule" src,src
+				  -j SET --add-set "mwan3_rule_${ipv}_${rule}" src,src
 		policy="mwan3_rule_$1"
 	fi
 	if [ "$global_logging" = "1" ] && [ "$rule_logging" = "1" ]; then
@@ -924,7 +982,9 @@ mwan3_set_user_rules()
 
 		mwan3_push_update COMMIT
 		mwan3_push_update ""
-		error=$(echo "$update" | $IPTR 2>&1) || LOG error "set_user_rules: $error"
+
+		echo "$update" > "${MWAN3_STATUS_IPTABLES_LOG_DIR}/iptables-set_user_rules-${ipv}.dump"
+		error=$(echo "$update" | $IPTR 2>&1) || LOG error "set_user_rules (${ipv}): $error"
 	done
 
 
@@ -936,7 +996,7 @@ mwan3_interface_hotplug_shutdown()
 	interface="$1"
 	ifdown="$2"
 	[ -f $MWAN3TRACK_STATUS_DIR/$interface/STATUS ] && {
-		status=$(cat $MWAN3TRACK_STATUS_DIR/$interface/STATUS)
+		readfile status $MWAN3TRACK_STATUS_DIR/$interface/STATUS
 	}
 
 	[ "$status" != "online" ] && [ "$ifdown" != 1 ] && return
@@ -1016,17 +1076,19 @@ mwan3_set_iface_hotplug_state() {
 
 mwan3_get_iface_hotplug_state() {
 	local iface=$1
-
-	cat "$MWAN3_STATUS_DIR/iface_state/$iface" 2>/dev/null || echo "offline"
+	local state=offline
+	readfile state "$MWAN3_STATUS_DIR/iface_state/$iface"
+	echo "$state"
 }
 
 mwan3_report_iface_status()
 {
-	local device result tracking IP IPT error
+	local device result tracking IP IPT
+	local status online uptime result
 
 	mwan3_get_iface_id id "$1"
 	network_get_device device "$1"
-	config_get enabled "$1" enabled 0
+	config_get_bool enabled "$1" enabled 0
 	config_get family "$1" family ipv4
 
 	if [ "$family" = "ipv4" ]; then
@@ -1039,40 +1101,39 @@ mwan3_report_iface_status()
 		IPT="$IPT6"
 	fi
 
-	if [ -z "$id" ] || [ -z "$device" ]; then
-		result="offline"
+	if [ -f "$MWAN3TRACK_STATUS_DIR/${1}/STATUS" ]; then
+		readfile status "$MWAN3TRACK_STATUS_DIR/${1}/STATUS"
 	else
-		error=0
-		[ -n "$($IP rule | awk '$1 == "'$((id+1000)):'"')" ] ||
-			error=$((error+1))
-		[ -n "$($IP rule | awk '$1 == "'$((id+2000)):'"')" ] ||
-			error=$((error+2))
-		[ -n "$($IP rule | awk '$1 == "'$((id+3000)):'"')" ] ||
-			error=$((error+4))
-		[ -n "$($IPT -S mwan3_iface_in_$1 2> /dev/null)" ] ||
-			error=$((error+8))
-		[ -n "$($IP route list table $id default dev $device 2> /dev/null)" ] ||
-			error=$((error+16))
+		status="unknown"
 	fi
 
-	if [ "$result" = "offline" ]; then
-		:
-	elif [ $error -eq 0 ]; then
-		online=$(get_online_time "$1")
+	if [ "$status" = "online" ]; then
+		get_online_time online "$1"
 		network_get_uptime uptime "$1"
 		online="$(printf '%02dh:%02dm:%02ds\n' $((online/3600)) $((online%3600/60)) $((online%60)))"
 		uptime="$(printf '%02dh:%02dm:%02ds\n' $((uptime/3600)) $((uptime%3600/60)) $((uptime%60)))"
 		result="$(mwan3_get_iface_hotplug_state $1) $online, uptime $uptime"
-	elif [ $error -gt 0 ] && [ $error -ne 31 ]; then
-		result="error (${error})"
-	elif [ "$enabled" = "1" ]; then
-		result="offline"
 	else
-		result="disabled"
+		result=0
+		[ -n "$($IP rule | awk '$1 == "'$((id+1000)):'"')" ] ||
+			result=$((result+1))
+		[ -n "$($IP rule | awk '$1 == "'$((id+2000)):'"')" ] ||
+			result=$((result+2))
+		[ -n "$($IP rule | awk '$1 == "'$((id+3000)):'"')" ] ||
+			result=$((result+4))
+		[ -n "$($IPT -S mwan3_iface_in_$1 2> /dev/null)" ] ||
+			result=$((result+8))
+		[ -n "$($IP route list table $id default dev $device 2> /dev/null)" ] ||
+			result=$((result+16))
+		[ "$result" = "0" ] && result=""
 	fi
 
-	tracking="$(mwan3_get_mwan3track_status $1)"
-	echo " interface $1 is $result and tracking is $tracking"
+	mwan3_get_mwan3track_status tracking $1
+	if [ -n "$result" ]; then
+		echo " interface $1 is $status and tracking is $tracking ($result)"
+	else
+		echo " interface $1 is $status and tracking is $tracking"
+	fi
 }
 
 mwan3_report_policies()
@@ -1117,15 +1178,15 @@ mwan3_report_policies_v6()
 
 mwan3_report_connected_v4()
 {
-	if [ -n "$($IPT4 -S mwan3_connected 2> /dev/null)" ]; then
-		$IPS -o save list mwan3_connected_v4 | grep add | cut -d " " -f 3
+	if [ -n "$($IPT4 -S mwan3_connected_ipv4 2> /dev/null)" ]; then
+		$IPS -o save list mwan3_connected_ipv4 | grep add | cut -d " " -f 3
 	fi
 }
 
 mwan3_report_connected_v6()
 {
-	if [ -n "$($IPT6 -S mwan3_connected 2> /dev/null)" ]; then
-		$IPS -o save list mwan3_connected_v6 | grep add | cut -d " " -f 3
+	if [ -n "$($IPT6 -S mwan3_connected_ipv6 2> /dev/null)" ]; then
+		$IPS -o save list mwan3_connected_ipv6 | grep add | cut -d " " -f 3
 	fi
 }
 

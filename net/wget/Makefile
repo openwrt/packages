@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wget
-PKG_VERSION:=1.21.2
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=1.25.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/$(PKG_NAME)
-PKG_HASH:=e6d4c76be82c676dd7e8c61a29b2ac8510ae108a810b5d1d18fc9a1d2c9a2497
+PKG_HASH:=766e48423e79359ea31e41db9e5c289675947a7fcf2efdcedb726ac9d0da3784
 
-PKG_MAINTAINER:=Peter Wagner <tripolar@gmx.at>
+PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:gnu:wget
@@ -28,7 +28,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/wget/Default
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libpcre +zlib
+  DEPENDS:=+libpcre2 +zlib
   SUBMENU:=File Transfer
   TITLE:=Non-interactive network downloader
   URL:=https://www.gnu.org/software/wget/index.html
@@ -49,7 +49,7 @@ $(call Package/wget/Default)
   DEPENDS+= +libopenssl +librt
   TITLE+= (with SSL support)
   VARIANT:=ssl
-  ALTERNATIVES:=300:/usr/bin/wget:/usr/libexec/wget-ssl
+  ALTERNATIVES:=400:/usr/bin/wget:/usr/libexec/wget-ssl
 endef
 
 define Package/wget-ssl/description
@@ -72,7 +72,6 @@ endef
 CONFIGURE_ARGS+= \
 	--disable-rpath \
 	--disable-iri \
-	--disable-pcre2 \
 	--with-included-libunistring \
 	--without-libuuid \
 	--without-libpsl

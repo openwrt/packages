@@ -17,12 +17,6 @@ PKG_BUILD_DEPENDS:= hwinfo/host
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
 
-define Host/Configure
-	# copy uuid.h to another location in host build dir as that's where this package expects it
-	$(INSTALL_DIR) $(STAGING_DIR_HOST)/include/uuid/
-	$(CP) $(STAGING_DIR_HOST)/include/e2fsprogs/uuid/uuid.h $(STAGING_DIR_HOST)/include/uuid/uuid.h
-endef
-
 define Host/Compile
 	# Build using host compiler and let it generate the files we need
 	# CFLAGS, CPPFLAGS & LDFLAGS need to be passed with CC because they are being ingored

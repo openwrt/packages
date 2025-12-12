@@ -1,0 +1,34 @@
+--- a/src/apinger.c
++++ b/src/apinger.c
+@@ -786,7 +786,6 @@ struct alarm_cfg *a;
+ time_t tm;
+ int i,qp,really_lost;
+ char *buf1,*buf2;
+-int err=0;
+ 
+ 	if (config->status_file==NULL) return;
+ 	
+@@ -849,12 +848,10 @@ int err=0;
+ 			}
+ 		}
+ 		buf2[i]=0;
+-		fprintf(f,"Received packets buffer: %s %s\n",buf2,buf1);
+ 		if (t->recently_lost!=really_lost){
+-			fprintf(f,"   lost packet count mismatch (%i!=%i)!\n",t->recently_lost,really_lost);
+-			logit("%s: Lost packet count mismatch (%i!=%i)!",t->name,t->recently_lost,really_lost);
+-			logit("%s: Received packets buffer: %s %s\n",t->name,buf2,buf1);
+-			err=1;
++			logit("Target \"%s\": Lost packet count mismatch (%i(recently_lost) != %i(really_lost))!",t->name,t->recently_lost,really_lost);
++			logit("Target \"%s\": Received packets buffer: %s %s\n",t->name,buf2,buf1);
++			t->recently_lost = really_lost = 0;
+ 		}
+ 		free(buf1);
+ 		free(buf2);
+@@ -862,7 +859,6 @@ int err=0;
+ 		fprintf(f,"\n");
+ 	}
+ 	fclose(f);
+-	if (err) abort();
+ }
+ 
+ #ifdef FORKED_RECEIVER

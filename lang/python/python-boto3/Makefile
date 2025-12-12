@@ -1,11 +1,11 @@
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=boto3
-PKG_VERSION:=1.9.135
-PKG_RELEASE:=2
+PKG_NAME:=python-boto3
+PKG_VERSION:=1.28.7
+PKG_RELEASE:=1
 
-PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=5e5805992e873e5687b5ef3b4c56c386ccb4df1c3364f8b8601d289e2f275be1
+PYPI_NAME:=boto3
+PKG_HASH:=ef6a465d3b25b89bcd00ff69675b33917166145e544735dcb9978091f5b0b752
 
 PKG_MAINTAINER:=Daniel Danzberger <daniel@dd-wrt.com>
 PKG_LICENSE:=Apache-2.0
@@ -19,17 +19,21 @@ define Package/python3-boto3
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=AWS SDK for Python (Boto3)
-  URL:=https://aws.amazon.com/sdk-for-python/
-  DEPENDS:=+python3 \
-	+python3-jmespath \
+  TITLE:=AWS SDK
+  URL:=https://github.com/boto/boto3
+  DEPENDS:= \
+	+python3-light \
+	+python3-decimal \
+	+python3-logging \
 	+python3-botocore \
+	+python3-jmespath \
 	+python3-s3transfer
 endef
 
 define Package/python3-boto3/description
-Boto3 is the Amazon Web Services (AWS) Software Development Kit (SDK) for Python,
-which allows Python developers to write software that makes use of services like Amazon S3 and Amazon EC2.
+Boto3 is the Amazon Web Services (AWS) Software Development Kit (SDK)
+for Python, which allows Python developers to write software that makes
+use of services like Amazon S3 and Amazon EC2.
 endef
 
 $(eval $(call Py3Package,python3-boto3))

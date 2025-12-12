@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mblaze
 PKG_VERSION:=1.2
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://leahneukirchen.org/releases
@@ -12,7 +12,7 @@ PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
 PKG_MAINTAINER:=Michal Vasilek <michal.vasilek@nic.cz>
-PKG_LICENSE:=Public Domain, MIT
+PKG_LICENSE:=Public-Domain MIT
 PKG_LICENSE_FILES:=COPYING
 
 include $(INCLUDE_DIR)/package.mk

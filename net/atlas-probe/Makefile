@@ -8,14 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=atlas-probe
-PKG_VERSION:=2.4.1
-PKG_RELEASE:=1
+PKG_VERSION:=2.6.3
+PKG_RELEASE:=3
 
-PKG_SOURCE:=ripe-atlas-probe-busybox-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/RIPE-NCC/ripe-atlas-probe-busybox/archive/v$(PKG_VERSION)
-PKG_HASH:=e684bf617cdc502c20f97028726a93a4a0d21ad9f618b50eb07f999f1604ae65
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/ripe-atlas-probe-busybox-$(PKG_VERSION)
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_VERSION:=$(PKG_VERSION)
+PKG_SOURCE_URL:=https://github.com/RIPE-NCC/ripe-atlas-probe-busybox
+PKG_MIRROR_HASH:=5cb9c17f381e57105bb4ff7c83923619478f970ab9b43ff90a2ed9b1c3879fe0
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later

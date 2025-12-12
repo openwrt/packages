@@ -8,15 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openldap
-PKG_VERSION:=2.6.0
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=2.6.10
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tgz
-PKG_SOURCE_URL:=https://gpl.savoirfairelinux.net/pub/mirrors/openldap/openldap-release/ \
-	http://mirror.eu.oneandone.net/software/openldap/openldap-release/ \
-	http://mirror.switch.ch/ftp/software/mirror/OpenLDAP/openldap-release/ \
+PKG_SOURCE_URL:=https://mirror.eu.oneandone.net/software/openldap/openldap-release/ \
 	https://www.openldap.org/software/download/OpenLDAP/openldap-release/
-PKG_HASH:=b71c580eac573e9aba15d95f33dd4dd08f2ed4f0d7fc09e08ad4be7ed1e41a4f
+PKG_HASH:=c065f04aad42737aebd60b2fe4939704ac844266bc0aeaa1609f0cad987be516
 PKG_LICENSE:=OLDAP-2.8
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:openldap:openldap
@@ -44,7 +42,7 @@ define Package/libopenldap/Default
   CATEGORY:=Network
   SUBMENU:=OpenLDAP
   TITLE:=LDAP directory suite
-  URL:=http://www.openldap.org/
+  URL:=https://www.openldap.org/
   MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 endef
 
@@ -53,6 +51,10 @@ define Package/libopenldap
   MENU:=1
   DEPENDS:=+libopenssl +libsasl2 +libpthread +libuuid +OPENLDAP_DB47:libdb47 +OPENLDAP_ICU:icu
   TITLE+= (libraries)
+endef
+
+define Package/libopenldap/config
+  source "$(SOURCE)/Config.in"
 endef
 
 define Package/openldap/config
@@ -96,14 +98,12 @@ TARGET_CFLAGS += $(FPIC) -lpthread \
 	-DURANDOM_DEVICE=\\\"/dev/urandom\\\"
 
 CONFIGURE_ARGS += \
-	--enable-shared \
-	--enable-static \
 	--enable-dynamic \
 	--enable-syslog \
 	--with-cyrus-sasl \
 	--with-threads \
 	--with-tls \
-	--with-yielding_select="yes" \
+	--with-yielding-select="yes" \
 	--enable-null \
 	--disable-relay
 

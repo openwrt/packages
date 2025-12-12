@@ -1,0 +1,18 @@
+#!/bin/sh
+# shellcheck disable=SC3037,SC3043
+
+readonly pbrFunctionsFile='/etc/init.d/pbr'
+if [ -s "$pbrFunctionsFile" ]; then
+# shellcheck source=../../etc/init.d/pbr
+	. "$pbrFunctionsFile"
+else
+	printf "%b: pbr init.d file (%s) not found! \n" '\033[0;31mERROR\033[0m' "$pbrFunctionsFile"
+fi
+
+if netifd 'check'; then
+	rc_procd stop_service 'on_netifd_install'
+	netifd 'install'
+	rc_procd start_service 'on_netifd_install'
+fi
+
+exit 0

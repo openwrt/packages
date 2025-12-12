@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rsyslog
-PKG_VERSION:=8.2110.0
+PKG_VERSION:=8.2506.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
 	https://fossies.org/linux/misc \
 	https://www.rsyslog.com/files/download/rsyslog
-PKG_HASH:=3f904ec137ca6412e8273f7896d962ecb589f7d0c589bdf16b1709ec27e24f31
+PKG_HASH:=6d6fd0257c95e756765d4d585a833d54dd3a0e5eeb8308b862a81b368a74bb7b
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-3.0-or-later
@@ -36,7 +36,8 @@ define Package/rsyslog
 	+RSYSLOG_gssapi_krb5:krb5-libs +RSYSLOG_elasticsearch:libcurl \
 	+RSYSLOG_libdbi:libdbi +libestr +libfastjson +RSYSLOG_gnutls:libgnutls \
 	+RSYSLOG_mmdblookup:libmaxminddb +RSYSLOG_mysql:libmysqlclient \
-	+RSYSLOG_openssl:libopenssl +RSYSLOG_pgsql:libpq +libuuid +zlib
+	+RSYSLOG_omhttp:libcurl +RSYSLOG_openssl:libopenssl \
+	+RSYSLOG_pgsql:libpq +libuuid +zlib
   MENU:=1
 endef
 
@@ -71,81 +72,12 @@ define Package/rsyslog/install
 	$(INSTALL_CONF) ./files/rsyslog.conf $(1)/etc
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/rsyslog.init $(1)/etc/init.d/rsyslog
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_CONF) ./files/20_rsyslog $(1)/etc/uci-defaults
 endef
 
 define Package/rsyslog/config
-	config RSYSLOG_gssapi_krb5
-		depends on PACKAGE_rsyslog
-		bool "Enable GSSAPI Kerberos 5 support"
-		default n
-		help
-			Enable GSSAPI Kerberos 5 support in rsyslog
-	config RSYSLOG_mysql
-		depends on PACKAGE_rsyslog
-		bool "Enable MySQL support"
-		default n
-		help
-			Enable MySQL support in rsyslog
-	config RSYSLOG_pgsql
-		depends on PACKAGE_rsyslog
-		bool "Enable PostgreSQL support"
-		default n
-		help
-			Enable PostgreSQL support in rsyslog
-	config RSYSLOG_libdbi
-		depends on PACKAGE_rsyslog
-		bool "Enable libdbi support"
-		default n
-		help
-			Enable libdbi support in rsyslog
-	config RSYSLOG_elasticsearch
-		depends on PACKAGE_rsyslog
-		bool "Enable ElasticSearch module support"
-		default n
-		help
-			Enable ElasticSearch output module in rsyslog
-	config RSYSLOG_omhttp
-		depends on PACKAGE_rsyslog
-		bool "Enable HTTP output module support"
-		default n
-		help
-			Enable HTTP output module in rsyslog
-	config RSYSLOG_openssl
-		depends on PACKAGE_rsyslog
-		bool "Enable OpenSSL support"
-		default n
-		help
-			Enable OpenSSL support in rsyslog
-	config RSYSLOG_gnutls
-		depends on PACKAGE_rsyslog
-		bool "Enable GnuTLS support"
-		default n
-		help
-			Enable GnuTLS support in rsyslog
-	config RSYSLOG_mail
-		depends on PACKAGE_rsyslog
-		bool "Enable Mail support"
-		default n
-		help
-			Enable mail support in rsyslog
-	config RSYSLOG_mmjsonparse
-		depends on PACKAGE_rsyslog
-		bool "Enable JSON parsing module support"
-		default n
-		help
-			Enable JSON parsing support in rsyslog
-	config RSYSLOG_mmdblookup
-		depends on PACKAGE_rsyslog
-		bool "Enable MaxMind DB lookup helper support"
-		default n
-		help
-			Enable MaxMind DB lookup helper support in rsyslog
-	config RSYSLOG_imfile
-		depends on PACKAGE_rsyslog
-		bool "Enable file input module support"
-		default n
-		help
-			Enable input file module in rsyslog
+  source "$(SOURCE)/Config.in"
 endef
 
 $(eval $(call BuildPackage,rsyslog))

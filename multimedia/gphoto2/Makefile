@@ -9,18 +9,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gphoto2
-PKG_VERSION:=2.5.26
+PKG_VERSION:=2.5.32
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@SF/gphoto
-PKG_HASH:=7653213b05329c1dc2779efea3eff00504e12011436587aedc9aaa1e8665ab2f
+PKG_HASH:=4e379a0f12f72b49ee5ee2283ffd806b5d12d099939d75197a3f4bbc7f27a1a1
 
 PKG_MAINTAINER:=Leonardo Medici <leonardo_medici@me.com>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=COPYING
 
-PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
@@ -32,7 +31,7 @@ define Package/gphoto2
   CATEGORY:=Multimedia
   TITLE:=Gphoto Digital Camera Control
   URL:=http://www.gphoto.org/
-  DEPENDS:=+libgphoto2 +libpopt +libpthread +libreadline +libncurses +libexif +libjpeg
+  DEPENDS:=+libgphoto2 +libpopt +libreadline +libncurses +libexif +libjpeg
 endef
 
 define Package/gphoto2/description

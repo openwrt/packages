@@ -2,3 +2,5 @@ config owrt owrt
     option use_uci 0
 
 config mosquitto mosquitto
+
+config persistence persistence

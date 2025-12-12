@@ -7,20 +7,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hamlib
-PKG_VERSION:=3.3
+PKG_VERSION:=4.6.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/hamlib
-PKG_HASH:=c90b53949c767f049733b442cd6e0a48648b55d99d4df5ef3f852d985f45e880
+PKG_HASH:=90d6f1dba59417c00f8f4545131c7efd31930cd0e178598980a8210425e3852e
 
 PKG_MAINTAINER:=Vasilis Tsiligiannis <acinonyx@openwrt.gr>
-PKG_LICENSE:=GPLv2
+PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
 
-PKG_FIXUP:=autoreconf
-PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -41,6 +40,10 @@ define Package/hamlib
   SECTION:=utils
   CATEGORY:=Utilities
   DEPENDS:=+libhamlib
+endef
+
+define Package/hamlib/conffiles
+/etc/config/rigctld
 endef
 
 define Package/hamlib/description
@@ -82,14 +85,18 @@ CONFIGURE_ARGS+= \
 	--disable-winradio \
 	--without-readline \
 	--without-cxx-binding \
+	--with-libusb \
 	--with-pic \
-
-CONFIGURE_VARS+= \
-	LIBUSB_LIBS="-lusb-1.0" \
 
 define Package/hamlib/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/{rig,rot}* $(1)/usr/bin/
+
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/rigctld.init $(1)/etc/init.d/rigctld
+
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/rigctld.conf $(1)/etc/config/rigctld
 endef
 
 define Package/libhamlib/install

@@ -8,12 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=evtest
-PKG_VERSION:=1.34
-PKG_RELEASE:=3
+PKG_VERSION:=1.35
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://cgit.freedesktop.org/evtest/snapshot
-PKG_HASH:=e49f1f160b30c8f7c2a4caef5ab655f1caf816483d19fdedd6db2d251d7ab80e
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_VERSION:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE_URL:=https://gitlab.freedesktop.org/libevdev/evtest
+PKG_MIRROR_HASH:=4298a31fe197f89eb980d469e3dc34022485d7d8220ad12debc8ab8e80cdc9a6
 
 PKG_MAINTAINER:=Pushpal Sidhu <psidhu.devel@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -23,6 +24,8 @@ PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
+
+CONFIGURE_VARS += ac_cv_path_ASCIIDOC="" ac_cv_path_XMLTO=""
 
 define Package/evtest
   SECTION:=utils

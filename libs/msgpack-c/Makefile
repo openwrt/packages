@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=msgpack-c
-PKG_VERSION:=4.0.0
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=6.1.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/msgpack/msgpack-c/tar.gz/c-$(PKG_VERSION)?
-PKG_HASH:=656ebe4566845e7bda9c097b625ba59ac72ddfd45df6017172d46d9ac7365aa3
+PKG_HASH:=c23c4070dbe01f46044bf70c5349f29453d655935b6dc710714c008bca0825a7
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-c-$(PKG_VERSION)
 
 PKG_LICENSE:=BSL-1.0
@@ -46,7 +46,7 @@ endef
 
 define Package/msgpack-c/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libmsgpackc.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libmsgpack-c.so* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,msgpack-c))

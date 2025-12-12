@@ -1,0 +1,35 @@
+#!/bin/sh
+
+grep -qv -e '^\s*#' -e '^\s*$' /etc/rsyslog.conf 2>/dev/null && exit 0
+[ "$(uci -q get rsyslog.syslog)" == "syslog" ] && exit 0
+
+uci -q import rsyslog << EOI
+config syslog 'syslog'
+	option tcp_input_port '514'
+	option udp_input '1'
+	option tcp_input '0'
+	option udp_input_port '514'
+	option default_template 'RSYSLOG_TraditionalFileFormat'
+	list modules 'imuxsock'
+	list modules 'imklog'
+
+config selector
+	option source '*.info;mail.none;authpriv.none;cron.none'
+	option destination '/var/log/messages'
+
+config selector
+	option source 'authpriv.*'
+	option destination '/var/log/secure'
+
+config selector
+	option source 'mail.*'
+	option destination '/var/log/maillog'
+
+config selector
+	option source 'cron.*'
+	option destination '/var/log/cron'
+
+config selector
+	option source 'local7.*'
+	option destination '/var/log/boot.log'
+EOI

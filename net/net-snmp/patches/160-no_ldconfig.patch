@@ -1,6 +1,6 @@
 --- a/configure
 +++ b/configure
-@@ -15602,7 +15602,7 @@ linux* | k*bsd*-gnu | kopensolaris*-gnu
+@@ -16599,7 +16599,7 @@ linux* | k*bsd*-gnu | kopensolaris*-gnu
    need_version=no
    library_names_spec='$libname$release$shared_ext$versuffix $libname$release$shared_ext$major $libname$shared_ext'
    soname_spec='$libname$release$shared_ext$major'

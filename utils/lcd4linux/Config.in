@@ -76,9 +76,9 @@ config LCD4LINUX_CUSTOM_DRIVER_D4D
 	prompt "D4D"
 	select LCD4LINUX_CUSTOM_NEEDS_libgd
 
-config LCD4LINUX_CUSTOM_DRIVER_dpf
+config LCD4LINUX_CUSTOM_DRIVER_DPF
 	bool
-	prompt "dpf"
+	prompt "DPF"
 	select LCD4LINUX_CUSTOM_NEEDS_libusb
 	select LCD4LINUX_CUSTOM_NEEDS_libgd
 

@@ -1,0 +1,37 @@
+#!/bin/sh /etc/rc.common
+
+USE_PROCD=1
+
+START=90
+
+SERVICE_NAME=bt-agent
+SERVICE_PID_FILE=/var/run/$SERVICE_NAME.pid
+
+DAEMON=/usr/bin/$SERVICE_NAME
+
+AGENT_PIN_FILE=/tmp/btagent.cfg
+AGENT_CAPABILITIES=NoInputNoOutput
+
+handle_bt_agent() {
+	local config="$1"
+	local custom="$2"
+	
+	local macAdr
+	local pinCode	
+	config_get macAdr "$config" mac
+	config_get pinCode "$config" pin
+	echo "$macAdr, $pinCode" >> $AGENT_PIN_FILE
+}
+
+start_service()
+{
+	config_load btagent
+	config_foreach handle_bt_agent btagent
+	
+	procd_open_instance
+	procd_set_param command "$DAEMON"
+	procd_append_param command "-c" "$AGENT_CAPABILITIES"
+	procd_append_param command "-p" "$AGENT_PIN_FILE"
+	procd_set_param pidfile $SERVICE_PID_FILE
+	procd_close_instance
+}

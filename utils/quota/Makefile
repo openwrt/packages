@@ -6,16 +6,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=quota
-PKG_VERSION:=4.06
-PKG_RELEASE:=1
+PKG_VERSION:=4.10
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/linuxquota
-PKG_HASH:=2f3e03039f378d4f0d97acdb49daf581dcaad64d2e1ddf129495fd579fbd268d
+PKG_HASH:=a04a0cafca29c15be8b6ac660e06188bccb802c19efe2e7c19ed7f3d667ecf5e
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:jan_kara:linux_diskquota
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1

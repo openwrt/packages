@@ -1,0 +1,10 @@
+--- a/GNUmakefile
++++ b/GNUmakefile
+@@ -21,7 +21,6 @@ install: ${PROG} ${PAM_DOAS} ${MAN}
+ 	mkdir -p -m 0755 ${DESTDIR}${MANDIR}/man1
+ 	mkdir -p -m 0755 ${DESTDIR}${MANDIR}/man5
+ 	cp -f ${PROG} ${DESTDIR}${BINDIR}
+-	chown ${BINOWN}:${BINGRP} ${DESTDIR}${BINDIR}/${PROG}
+ 	chmod ${BINMODE} ${DESTDIR}${BINDIR}/${PROG}
+ 	[ -n "${PAM_DOAS}" ] && cp ${PAM_DOAS} ${DESTDIR}${PAMDIR}/doas || true
+ 	[ -n "${PAM_DOAS}" ] && chmod 0644 ${DESTDIR}${PAMDIR}/doas || true

@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dnslookup
-PKG_VERSION:=1.5.1
-PKG_RELEASE:=$(AUTORELESE)
+PKG_VERSION:=1.11.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ameshkov/dnslookup/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=b09fc07d917cfe3d5b08bdf2e92aa9ee63928d86e3477724656dae5a50683c45
+PKG_HASH:=31967c89406aa6da5f69c563815e58478b530c8e55f0d995065a363f68d5e535
 
 PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
 PKG_LICENSE:=MIT
@@ -18,7 +18,7 @@ PKG_LICENSE_FILES:=LICENSE
 
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16
 
 GO_PKG:=github.com/ameshkov/dnslookup
 GO_PKG_LDFLAGS_X:=main.VersionString=v$(PKG_VERSION)

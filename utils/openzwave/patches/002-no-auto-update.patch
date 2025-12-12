@@ -1,0 +1,11 @@
+--- a/config/options.xml
++++ b/config/options.xml
+@@ -63,7 +63,7 @@
+   <!-- <Option name="EnforceSecureReception" value="false" /> -->
+   
+   <!-- Should OZW automatically download new Config File Versions. Default is true -->
+-  <!-- <Option name="AutoUpdateConfigFile" value="false" /> -->
++  <Option name="AutoUpdateConfigFile" value="false" />
+   
+   <!-- When we have a new config file for a device, This determine when a device is reloaded 
+   so the new connfig file is affected on the device -->

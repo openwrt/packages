@@ -7,20 +7,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nspr
-PKG_VERSION:=4.32
+PKG_VERSION:=4.36
 PKG_RELEASE:=1
 PKG_MAINTAINER:=Lucian Cristian <lucian.cristian@gmail.com>
-PKG_LICENCE:=MPL-2.0
+PKG_LICENSE:=MPL-2.0
+PKG_CPE_ID:=cpe:/a:mozilla:netscape_portable_runtime
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
     https://download.cdn.mozilla.net/pub/$(PKG_NAME)/releases/v$(PKG_VERSION)/src/ \
     https://archive.mozilla.org/pub/$(PKG_NAME)/releases/v$(PKG_VERSION)/src/
-PKG_HASH:=bb6bf4f534b9559cf123dcdc6f9cd8167de950314a90a88b2a329c16836e7f6c
+PKG_HASH:=55dec317f1401cd2e5dba844d340b930ab7547f818179a4002bce62e6f1c6895
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
+PKG_BUILD_FLAGS:=lto
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -35,7 +37,9 @@ endif
 
 export MUSL=$(if $(CONFIG_LIBC_USE_GLIBC),0,1)
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed $(FPIC)
-TARGET_CFLAGS += -flto
+ifneq ($(CONFIG_USE_MUSL),)
+  TARGET_CFLAGS += -D_LARGEFILE64_SOURCE
+endif
 
 CONFIGURE_ARGS += \
     --build=$(GNU_HOST_NAME) \

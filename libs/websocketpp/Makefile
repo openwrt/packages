@@ -15,6 +15,7 @@ PKG_HASH:=6ce889d85ecdc2d8fa07408d6787e7352510750daa66b5ad44aacb47bea76755
 PKG_MAINTAINER:=Bruno Randolf <br1@einfach.org>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:zaphoyd:websocketpp
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk

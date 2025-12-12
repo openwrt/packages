@@ -1,5 +1,6 @@
 #
-# Copyright (C) 2006-2011, 2015-2018 OpenWrt.org
+# Copyright (C) 2006-2011 OpenWrt.org
+# Copyright (C) 2015-2016, 2018-2023 Jeffery To
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,11 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-twisted
-PKG_VERSION:=22.1.0
+PKG_VERSION:=25.5.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=Twisted
-PKG_HASH:=b7971ec9805b0f80e1dcb1a3721d7bfad636d5f909de687430ce373979d67b61
+PYPI_SOURCE_NAME:=twisted
+PKG_HASH:=1deb272358cb6be1e3e8fc6f9c8b36f78eb0fa7c2233d2dbe11ec6fee04ea316
 
 PKG_BUILD_DEPENDS:=libtirpc
 
@@ -20,6 +22,8 @@ PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 PKG_CPE_ID:=cpe:/a:twistedmatrix:twisted
+
+PKG_BUILD_DEPENDS:=python-hatchling/host python-hatch-fancy-pypi-readme/host python-incremental/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -39,11 +43,9 @@ define Package/python3-twisted
       +python3-bcrypt \
       +python3-constantly \
       +python3-cryptography \
+      +python3-hyperlink \
       +python3-idna \
       +python3-incremental \
-      +python3-hyperlink \
-      +python3-pkg-resources \
-      +python3-pyasn1 \
       +python3-pyopenssl \
       +python3-service-identity \
       +python3-typing-extensions \
@@ -52,17 +54,14 @@ endef
 
 define Package/python3-twisted/description
 Twisted is a networking engine written in Python, supporting numerous
-protocols. It contains a web server, numerous chat clients, chat servers,
-mail servers, and more.
-endef
-
-define Build/Configure
-	$(SED) 's/^version = attr: twisted.__version__$$$$/version = $(PKG_VERSION)/' $(PKG_BUILD_DIR)/setup.cfg
+protocols. It contains a web server, numerous chat clients, chat
+servers, mail servers, and more.
 endef
 
 define Py3Package/python3-twisted/filespec
 +|$(PYTHON3_PKG_DIR)
 -|$(PYTHON3_PKG_DIR)/twisted/conch/scripts/tkconch.py
+-|$(PYTHON3_PKG_DIR)/twisted/test
 endef
 
 define Py3Package/python3-twisted/install

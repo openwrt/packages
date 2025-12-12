@@ -1,6 +1,6 @@
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -113,12 +113,7 @@ endif()
+@@ -107,12 +107,7 @@ endif()
  set (CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules ${CMAKE_MODULE_PATH})
  
  # Make a version file containing the current version from git.

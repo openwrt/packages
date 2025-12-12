@@ -4,26 +4,29 @@
 #
 
 include $(TOPDIR)/rules.mk
+include $(INCLUDE_DIR)/nls.mk
 
 PKG_NAME:=atop
+PKG_VERSION:=2.12.0
 PKG_RELEASE:=1
-PKG_VERSION:=2.6.0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.atoptool.nl/download/
-PKG_HASH:=9ec2ca3a571692f7efaa095f99a5106432bcb71cc22cd6c49597ef0481058f72
+PKG_HASH:=0d09ecc90c14e6ef41c22e3c57c142c3e4fb9cf3c94379077a33c961d5343086
 
 PKG_MAINTAINER:=Toni Uhlig <matzeton@googlemail.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:atop_project:atop
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/atop
   SECTION:=admin
   CATEGORY:=Administration
   TITLE:=System and process monitor for Linux
-  DEPENDS:=+zlib +libncurses
+  DEPENDS:=+zlib +libncurses +glib2
   URL:=https://www.atoptool.nl/
 endef
 
@@ -42,9 +45,6 @@ define Package/atop/description
   with the optional kernel module netatop, it even shows
   network activity per process/thread.
 endef
-
-MAKE_FLAGS += \
-	CFLAGS+="-Wno-misleading-indentation -Wno-unused-const-variable -Wno-format-truncation"
 
 define Package/atop/install
 	$(INSTALL_DIR) $(1)/usr/bin

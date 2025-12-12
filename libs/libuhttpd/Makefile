@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libuhttpd
-PKG_VERSION:=3.12.1
-PKG_RELEASE:=3
+PKG_VERSION:=3.14.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL=https://github.com/zhaojh329/libuhttpd/releases/download/v$(PKG_VERSION)
-PKG_HASH:=c234dd3d491c4daa047e28870c6e740529b2eff2dd027dafb6bf02d8dba286b0
+PKG_HASH:=ce2abbc599a922c4bac12f1cdf3e9c9740f387f819a54ca01e9fed60905baa40
 
 PKG_MAINTAINER:=Jianhui Zhao <zhaojh329@gmail.com>
 PKG_LICENSE:=MIT
@@ -41,6 +41,7 @@ Package/libuhttpd-mbedtls=$(call Package/libuhttpd/Default,mbedtls,+PACKAGE_libu
 Package/libuhttpd-nossl=$(call Package/libuhttpd/Default,nossl)
 
 CMAKE_OPTIONS += -DBUILD_EXAMPLE=OFF
+TARGET_CFLAGS += -Wno-error=deprecated-declarations
 
 ifeq ($(BUILD_VARIANT),openssl)
   CMAKE_OPTIONS += -DUSE_OPENSSL=ON

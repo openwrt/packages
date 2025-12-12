@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mtools
-PKG_VERSION:=4.0.35
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=4.0.45
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@GNU/mtools
-PKG_HASH:=34769e173751d2f0d891a08c76c80427e929b8ee43438019b8666cc3d7a44749
+PKG_HASH:=0b008a96bd0efe0e542fa4383d469af66bc4a93394990b103730a8160a67d618
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -23,14 +23,15 @@ define Package/mtools
   SUBMENU:=Disc
   TITLE:=Collection of utilities to access MS-DOS disks
   URL:=https://www.gnu.org/software/mtools
-  DEPENDS:=+libbsd
 endef
 
 define Package/mtools/description
   Mtools is a collection of utilities to access MS-DOS disks from GNU and Unix without mounting them.
 endef
 
-CONFIGURE_VARS += ac_cv_have_x="have_x=no"
+CONFIGURE_VARS += \
+	ac_cv_have_x="have_x=no" \
+	ac_cv_lib_bsd_main=no
 
 define Package/mtools/install
 	$(INSTALL_DIR) $(1)/usr/bin

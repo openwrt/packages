@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=conntrack-tools
-PKG_VERSION:=1.4.6
-PKG_RELEASE:=3
+PKG_VERSION:=1.4.8
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.netfilter.org/projects/conntrack-tools/files
-PKG_HASH:=590859cc848245dbfd9c6487761dd303b3a1771e007f4f42213063ca56205d5f
+PKG_HASH:=067677f4c5f6564819e78ed3a9d4a8980935ea9273f3abb22a420ea30ab5ded6
 
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 PKG_LICENSE:=GPL-2.0-or-later

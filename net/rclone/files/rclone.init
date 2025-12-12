@@ -47,16 +47,18 @@ start_service() {
 	config_get proxy_addr proxy proxy_addr
 
 	if [ "${addr_type}" = "local" ]; then
-		addr="$(uci get network.loopback.ipaddr)"
+		addr="$(uci get network.loopback.ipaddr | cut -d' ' -f1)"
 	elif [ "${addr_type}" = "lan" ]; then
-		addr="$(uci get network.lan.ipaddr)"
+		addr="$(uci get network.lan.ipaddr | cut -d' ' -f1)"
 	else
 		addr=""
 	fi
+	addr="${addr%/*}"
 
 	local config_dir="${config_path%/*}"
 	[ -d "$config_dir" ] || mkdir -p "$config_dir"
 	touch "${config_path}"
+	chown rclone "${config_dir}"
 	chown rclone "${config_path}"
 
 	[ -d "/lib/upgrade/keep.d" ] || mkdir -p "/lib/upgrade/keep.d/"
@@ -88,11 +90,6 @@ start_service() {
 	procd_set_param group rclone
 
 	procd_close_instance
-}
-
-reload_service() {
-	stop
-	start
 }
 
 service_triggers() {

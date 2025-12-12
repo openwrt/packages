@@ -1,0 +1,24 @@
+#!/bin/sh
+
+. /lib/functions.sh
+
+[ "${PLUTO_VERB}" != "route-client" ] && [ "${PLUTO_VERB}" != "up-client" ] && exit 0
+
+CONNECTION=${PLUTO_CONNECTION%/*}
+[ -z "$CONNECTION" ] && exit 0
+
+update_peeraddr=$(uci_get libreswan $CONNECTION update_peeraddr)
+[ "$update_peeraddr" != "1" ] && exit 0
+
+interface=$(uci_get libreswan $CONNECTION interface)
+[ -z "$interface" ] && exit 0
+
+proto=$(uci_get network "$interface" proto)
+[ "$proto" != "vti" ] && exit 0
+
+peeraddr=$(uci_get network "$interface" peeraddr)
+[ "$peeraddr" == "$PLUTO_PEER" ] && exit 0
+
+uci_set network "$interface" peeraddr "$PLUTO_PEER"
+uci_commit network
+ifup "$interface"

@@ -5,26 +5,8 @@ STOP=50
 
 USE_PROCD=1
 
-vnstat_option() {
-	sed -ne "s/^[[:space:]]*$1[[:space:]]*['\"]\([^'\"]*\)['\"].*/\1/p" \
-		/etc/vnstat.conf
-}
-
 init_database() {
-	local lib database_count
-
-	lib="$(vnstat_option DatabaseDir)"
-	[ -n "$lib" ] || lib="/var/lib/vnstat"
-
-	database_count="$(ls "$lib" 2>/dev/null | wc -l)"
-
-	# only init database when folder is empty, as it would prevent import of legacy databases
-	if [ "$database_count" -eq "0" ]; then
-		/usr/sbin/vnstatd --initdb >/dev/null
-	else
-		# if vnstat.db doesn't exist, there are legacy databases to import
-		[ ! -f "$lib/vnstat.db" ] && echo -n "1"
-	fi
+	/usr/sbin/vnstatd --initdb >/dev/null
 }
 
 init_ifaces() {
@@ -33,19 +15,14 @@ init_ifaces() {
 	init_iface() {
 		local ifn="$1"
 
-		/usr/bin/vnstat --add -i "$ifn" >/dev/null
+		/usr/bin/vnstat --add --force -i "$ifn" >/dev/null
 	}
 
 	config_list_foreach "$cfg" interface init_iface
 }
 
 start_service() {
-	local options needs_import
-
-	needs_import="$(init_database)"
-
-	# --noadd would prevent import of legacy databases
-	[ -z "$needs_import" ] && options="--noadd --noexit"
+	init_database
 
 	config_load vnstat
 	config_foreach init_ifaces vnstat
@@ -53,7 +30,7 @@ start_service() {
 	procd_open_instance
 	procd_set_param stdout 1
 	procd_set_param stderr 1
-	procd_set_param command /usr/sbin/vnstatd --nodaemon $options
+	procd_set_param command /usr/sbin/vnstatd --nodaemon --noadd --startempty --noremove
 	procd_set_param file /etc/vnstat.conf
 	procd_set_param respawn
 	procd_close_instance

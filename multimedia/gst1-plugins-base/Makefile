@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gst1-plugins-base
-PKG_VERSION:=1.18.5
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=1.26.4
+PKG_RELEASE:=1
 
 PKG_SOURCE:=gst-plugins-base-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gst-plugins-base
-PKG_HASH:=960b7af4585700db0fdd5b843554e11e2564fed9e061f591fae88a7be6446fa3
+PKG_HASH:=d6fcca7be4253e5d8541c6e3e07729120a16e1dc356f9a14a4a83a901120742f
 PKG_BUILD_DIR:=$(BUILD_DIR)/gst-plugins-base-$(PKG_VERSION)
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
@@ -21,8 +21,6 @@ PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
 PKG_LICENSE:=LGPL-2.1-or-later GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING.LIB COPYING
 PKG_CPE_ID:=cpe:/a:gstreamer:gst-plugins-base
-
-PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -38,13 +36,13 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_gst1-mod-playback \
 	CONFIG_PACKAGE_gst1-mod-gio \
 	CONFIG_PACKAGE_gst1-mod-ogg \
+	CONFIG_PACKAGE_gst1-mod-opengl \
 	CONFIG_PACKAGE_gst1-mod-opus \
 	CONFIG_PACKAGE_gst1-mod-tcp \
 	CONFIG_PACKAGE_gst1-mod-theora \
 	CONFIG_PACKAGE_gst1-mod-typefind \
-	CONFIG_PACKAGE_gst1-mod-videoconvert \
+	CONFIG_PACKAGE_gst1-mod-videoconvertscale \
 	CONFIG_PACKAGE_gst1-mod-videorate \
-	CONFIG_PACKAGE_gst1-mod-videoscale \
 	CONFIG_PACKAGE_gst1-mod-videotestsrc \
 	CONFIG_PACKAGE_gst1-mod-volume \
 	CONFIG_PACKAGE_gst1-mod-vorbis \
@@ -98,16 +96,24 @@ define Package/gstreamer1-plugins-base/config
     comment "Modules"
 
    $(foreach mod,$(GST_BASE_MODULES), \
-    config PACKAGE_gst1-mod-$(mod)
-      prompt "GStreamer $(mod) module"
+    config PACKAGE_gst1-mod-$(firstword $(subst :, ,$(mod)))
+      prompt "GStreamer $(firstword $(subst :, ,$(mod))) module"
+    $(if $(wordlist 2,$(words $(subst :, ,$(mod))),$(subst :, ,$(mod))),\
+    $(foreach confdep,$(wordlist 2,$(words $(subst :, ,$(mod))),$(subst :, ,$(mod))),\
+      depends on $(confdep)
+    ))
 
    )
 
     comment "Libraries"
 
    $(foreach lib,$(GST_BASE_LIBS), \
-    config PACKAGE_libgst1$(lib)
-      prompt "GStreamer $(lib) library"
+    config PACKAGE_libgst1$(firstword $(subst :, ,$(lib)))
+      prompt "GStreamer $(firstword $(subst :, ,$(lib))) library"
+    $(if $(wordlist 2,$(words $(subst :, ,$(lib))),$(subst :, ,$(lib))),\
+    $(foreach confdep,$(wordlist 2,$(words $(subst :, ,$(lib))),$(subst :, ,$(lib))),\
+      depends on $(confdep)
+    ))
 
    )
 
@@ -121,7 +127,6 @@ GST_VERSION:=1.0
 
 MESON_ARGS += \
 	-Daudioresample_format=int \
-	-Dgl=disabled \
 	\
 	$(call GST_COND_SELECT,adder) \
 	$(call GST_COND_SELECT,app) \
@@ -133,6 +138,7 @@ MESON_ARGS += \
 	$(call GST_COND_SELECT,compositor) \
 	$(call GST_COND_SELECT,encoding) \
 	$(call GST_COND_SELECT,gio) \
+	-Dgl=$(if $(CONFIG_PACKAGE_libgst1gl),en,dis)abled \
 	$(call GST_COND_SELECT,overlaycomposition) \
 	$(call GST_COND_SELECT,pbtypes) \
 	$(call GST_COND_SELECT,playback) \
@@ -140,9 +146,8 @@ MESON_ARGS += \
 	$(call GST_COND_SELECT,subparse) \
 	$(call GST_COND_SELECT,tcp) \
 	-Dtypefind=$(if $(CONFIG_PACKAGE_gst1-mod-typefindfunctions),en,dis)abled \
-	$(call GST_COND_SELECT,videoconvert) \
+	$(call GST_COND_SELECT,videoconvertscale) \
 	$(call GST_COND_SELECT,videorate) \
-	$(call GST_COND_SELECT,videoscale) \
 	$(call GST_COND_SELECT,videotestsrc) \
 	$(call GST_COND_SELECT,volume) \
 	\
@@ -190,6 +195,14 @@ define Build/InstallDev
 			--target-directory=$(1)/usr/lib/gstreamer-$(GST_VERSION)/ \
 		) \
 	fi
+	if [ -d $(PKG_INSTALL_DIR)/usr/lib/gstreamer-$(GST_VERSION)/include/gst/gl ]; then \
+		$(INSTALL_DIR) $(1)/usr/lib/gstreamer-$(GST_VERSION)/include/gst/gl; \
+		( cd $(PKG_INSTALL_DIR); $(FIND) \
+			./usr/lib/gstreamer-$(GST_VERSION)/include/gst/gl -name *.h -print0 | \
+			xargs --null --no-run-if-empty $(CP) \
+			--target-directory=$(1)/usr/lib/gstreamer-$(GST_VERSION)/include/gst/gl \
+		) \
+	fi
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	( cd $(PKG_INSTALL_DIR); $(CP) \
 		./usr/lib/pkgconfig/gstreamer*-$(GST_VERSION).pc \
@@ -214,7 +227,7 @@ define GstBuildLibrary
 
   GST_DEPENDS += +libgst1$(1)
 
-  GST_BASE_LIBS+= $(1)
+  GST_BASE_LIBS+= $(1)$(if $(5),:$(subst $(space),:,$(5)))
 
   define Package/libgst1$(1)
     $(call Package/gstreamer1-base/Default)
@@ -240,15 +253,16 @@ define GstBuildLibrary
   $$(eval $$(call BuildPackage,libgst1$(1)))
 endef
 
-$(eval $(call GstBuildLibrary,allocators,allocators,,))
+$(eval $(call GstBuildLibrary,allocators,allocators,,+libdrm))
 $(eval $(call GstBuildLibrary,app,app,,))
 $(eval $(call GstBuildLibrary,audio,audio,tag,))
 $(eval $(call GstBuildLibrary,fft,FFT,,))
+$(eval $(call GstBuildLibrary,gl,gl,allocators video,+libmesa +libwayland +libgudev,HAVE_MESA))
 $(eval $(call GstBuildLibrary,pbutils,utils,audio tag video,))
 $(eval $(call GstBuildLibrary,riff,RIFF media,audio tag,,))
 $(eval $(call GstBuildLibrary,rtp,RTP,,))
 $(eval $(call GstBuildLibrary,rtsp,RTSP,,))
-$(eval $(call GstBuildLibrary,sdp,SDP,rtp,))
+$(eval $(call GstBuildLibrary,sdp,SDP,pbutils rtp,))
 $(eval $(call GstBuildLibrary,tag,tag support,,))
 $(eval $(call GstBuildLibrary,video,video,,))
 
@@ -261,7 +275,7 @@ define GstBuildPlugin
 
   GST_DEPENDS += +gst1-mod-$(1)
 
-  GST_BASE_MODULES+= $(1)
+  GST_BASE_MODULES+= $(1)$(if $(6),:$(subst $(space),:,$(6)))
 
   define Package/gst1-mod-$(1)
     $(call Package/gstreamer1-base/Default)
@@ -297,6 +311,7 @@ $(eval $(call GstBuildPlugin,audiotestsrc,audio test,audio tag controller,,))
 $(eval $(call GstBuildPlugin,compositor,video compositor,video,,))
 $(eval $(call GstBuildPlugin,encoding,encoding plugin,pbutils video,,))
 $(eval $(call GstBuildPlugin,gio,GIO,,,))
+$(eval $(call GstBuildPlugin,opengl,GL,gl controller,,+libgraphene +libjpeg +libpng,HAVE_MESA))
 $(eval $(call GstBuildPlugin,overlaycomposition,overlay composition,video,,))
 $(eval $(call GstBuildPlugin,pbtypes,pbtypes,video,,))
 $(eval $(call GstBuildPlugin,playback,playback,pbutils,,))
@@ -304,11 +319,10 @@ $(eval $(call GstBuildPlugin,subparse,subparse,video,,))
 $(eval $(call GstBuildPlugin,rawparse,parse raw media,audio video,,))
 $(eval $(call GstBuildPlugin,tcp,TCP,net,,))
 $(eval $(call GstBuildPlugin,typefindfunctions,'typefind' functions,audio pbutils tag video,,))
-$(eval $(call GstBuildPlugin,videoconvert,video format conversion,video,,))
+$(eval $(call GstBuildPlugin,videoconvertscale,video format conversion and scaling,video,,))
 $(eval $(call GstBuildPlugin,videorate,Adjusts video frames,video,,))
-$(eval $(call GstBuildPlugin,videoscale,Resizes video,video,,))
-$(eval $(call GstBuildPlugin,videotestsrc,video test,video,,+liboil))
-$(eval $(call GstBuildPlugin,volume,volume,audio controller,,+liboil))
+$(eval $(call GstBuildPlugin,videotestsrc,video test,video,,))
+$(eval $(call GstBuildPlugin,volume,volume,audio controller,,))
 
 $(eval $(call GstBuildPlugin,alsa,ALSA audio source/sink,audio tag,,+alsa-lib))
 $(eval $(call GstBuildPlugin,ivorbisdec,Integer Vorbis decoder plugin for devices without floating point,audio tag,,+libvorbisidec))

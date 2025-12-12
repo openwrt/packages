@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2020 Jeffery To
+# Copyright (C) 2018-2022 Jeffery To
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -32,7 +32,7 @@ include $(GO_INCLUDE_DIR)/golang-values.mk
 #
 #   * Files in any 'testdata' directory
 #
-#   * go.mod and go.sum, in any directory
+#   * go.mod, go.sum and go.work, in any directory
 #
 #   e.g. GO_PKG_INSTALL_EXTRA:=example.toml marshal_test.toml
 #
@@ -198,9 +198,12 @@ GO_PKG_TARGET_VARS= \
 	GOOS="$(GO_OS)" \
 	GOARCH="$(GO_ARCH)" \
 	GO386="$(GO_386)" \
+	GOAMD64="$(GO_AMD64)" \
 	GOARM="$(GO_ARM)" \
+	GOARM64="$(GO_ARM64)" \
 	GOMIPS="$(GO_MIPS)" \
 	GOMIPS64="$(GO_MIPS64)" \
+	GOPPC64="$(GO_PPC64)" \
 	CGO_ENABLED=1 \
 	CC="$(TARGET_CC)" \
 	CXX="$(TARGET_CXX)" \
@@ -213,7 +216,8 @@ GO_PKG_BUILD_VARS= \
 	GOPATH="$(GO_PKG_BUILD_DIR)" \
 	GOCACHE="$(GO_BUILD_CACHE_DIR)" \
 	GOMODCACHE="$(GO_MOD_CACHE_DIR)" \
-	GOENV=off
+	GOENV=off \
+	GOTOOLCHAIN=local
 
 GO_PKG_VARS= \
 	$(GO_PKG_TARGET_VARS) \
@@ -236,17 +240,18 @@ GO_PKG_CUSTOM_LDFLAGS= \
 
 GO_PKG_INSTALL_ARGS= \
 	-v \
+	-buildvcs=false \
 	-trimpath \
 	-ldflags "all=$(GO_PKG_DEFAULT_LDFLAGS)" \
-	$(if $(GO_PKG_DEFAULT_GCFLAGS),-gcflags "all=$(GO_PKG_DEFAULT_GCFLAGS)") \
-	$(if $(GO_PKG_DEFAULT_ASMFLAGS),-asmflags "all=$(GO_PKG_DEFAULT_ASMFLAGS)") \
-	$(if $(filter $(GO_PKG_ENABLE_PIE),1),-buildmode pie) \
+	$(if $(strip $(GO_PKG_DEFAULT_GCFLAGS)),-gcflags "all=$(GO_PKG_DEFAULT_GCFLAGS)") \
+	$(if $(strip $(GO_PKG_DEFAULT_ASMFLAGS)),-asmflags "all=$(GO_PKG_DEFAULT_ASMFLAGS)") \
+	$(if $(GO_PKG_ENABLE_PIE),-buildmode pie) \
 	$(if $(filter $(GO_ARCH),arm),-installsuffix "v$(GO_ARM)") \
 	$(if $(filter $(GO_ARCH),mips mipsle),-installsuffix "$(GO_MIPS)") \
 	$(if $(filter $(GO_ARCH),mips64 mips64le),-installsuffix "$(GO_MIPS64)") \
-	$(if $(GO_PKG_GCFLAGS),-gcflags "$(GO_PKG_GCFLAGS) $(GO_PKG_DEFAULT_GCFLAGS)") \
-	$(if $(GO_PKG_CUSTOM_LDFLAGS),-ldflags "$(GO_PKG_CUSTOM_LDFLAGS) $(GO_PKG_DEFAULT_LDFLAGS)") \
-	$(if $(GO_PKG_TAGS),-tags "$(GO_PKG_TAGS)")
+	$(if $(strip $(GO_PKG_GCFLAGS)),-gcflags "$(GO_PKG_GCFLAGS) $(GO_PKG_DEFAULT_GCFLAGS)") \
+	$(if $(strip $(GO_PKG_CUSTOM_LDFLAGS)),-ldflags "$(GO_PKG_CUSTOM_LDFLAGS) $(GO_PKG_DEFAULT_LDFLAGS)") \
+	$(if $(strip $(GO_PKG_TAGS)),-tags "$(GO_PKG_TAGS)")
 
 define GoPackage/Build/Configure
 	$(GO_GENERAL_BUILD_CONFIG_VARS) \

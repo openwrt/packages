@@ -1,0 +1,78 @@
+From 57fd993799a2b081c826f6fc8def32d28d526bfb Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?J=C3=A9r=C3=A9mie=20Galarneau?=
+ <jeremie.galarneau@efficios.com>
+Date: Tue, 17 Jan 2023 16:57:35 -0500
+Subject: [PATCH] compat: off64_t is not defined by musl
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+This helps compile with latest musl, where off64_t is not defined unless
+_LARGEFILE64_SOURCE is defined. On glibc, _LARGEFILE64_SOURCE is defined
+if _GNU_SOURCE is defined, so the problem is only seen with musl.
+
+Since the project uses AC_SYS_LARGEFILE, which from the autoconf doc:
+"arrange for 64-bit file offsets, known as large-file support."
+
+As such, it is safe to assume off_t is 64-bit wide. This is checked by a
+static_assert to catch any platform where autoconf would let a 32-bit
+off_t slip.
+
+Reported-by: Khem Raj <raj.khem@gmail.com>
+Signed-off-by: Jérémie Galarneau <jeremie.galarneau@efficios.com>
+Change-Id: If2c6007a8c85bc3f3065002af8a7538b882fb4a8
+---
+ src/common/compat/compat-fcntl.cpp |  2 +-
+ src/common/compat/fcntl.hpp        | 11 +++++------
+ 2 files changed, 6 insertions(+), 7 deletions(-)
+
+--- a/src/common/compat/compat-fcntl.c
++++ b/src/common/compat/compat-fcntl.c
+@@ -13,7 +13,7 @@
+ #ifdef __linux__
+ 
+ LTTNG_HIDDEN
+-int compat_sync_file_range(int fd, off64_t offset, off64_t nbytes,
++int compat_sync_file_range(int fd, off_t offset, off_t nbytes,
+ 		unsigned int flags)
+ {
+ #ifdef HAVE_SYNC_FILE_RANGE
+--- a/src/common/compat/fcntl.h
++++ b/src/common/compat/fcntl.h
+@@ -8,21 +8,21 @@
+ #ifndef _COMPAT_FCNTL_H
+ #define _COMPAT_FCNTL_H
+ 
++#include <assert.h>
+ #include <fcntl.h>
+ #include <sys/types.h>
+ 
+ #include <common/compat/errno.h>
+ 
+-#if (defined(__CYGWIN__))
+-typedef long long off64_t;
+-#endif
++static_assert(sizeof(off_t) == sizeof(int64_t),
++	      "Build system is misconfigured, off_t must be 64-bit wide");
+ 
+ #if (defined(__FreeBSD__) || defined(__sun__))
+ typedef off64_t loff_t;
+ #endif
+ 
+ #ifdef __linux__
+-extern int compat_sync_file_range(int fd, off64_t offset, off64_t nbytes,
++extern int compat_sync_file_range(int fd, off_t offset, off_t nbytes,
+ 		unsigned int flags);
+ #define lttng_sync_file_range(fd, offset, nbytes, flags) \
+ 	compat_sync_file_range(fd, offset, nbytes, flags)
+@@ -37,8 +37,8 @@ extern int compat_sync_file_range(int fd
+ #define SYNC_FILE_RANGE_WAIT_BEFORE   0
+ #define SYNC_FILE_RANGE_WRITE         0
+ 
+-static inline int lttng_sync_file_range(int fd, off64_t offset,
+-		off64_t nbytes, unsigned int flags)
++static inline int lttng_sync_file_range(int fd, off_t offset,
++		off_t nbytes, unsigned int flags)
+ {
+ 	return -ENOSYS;
+ }

@@ -7,8 +7,14 @@
 
 define Package/python3-multiprocessing
 $(call Package/python3/Default)
-  TITLE:=Python $(PYTHON3_VERSION) multiprocessing
+  TITLE+= multiprocessing module
   DEPENDS:=+python3-light
+endef
+
+define Package/python3-multiprocessing/description
+$(call Package/python3/Default/description)
+
+This package contains the multiprocessing module.
 endef
 
 $(eval $(call Py3BasePackage,python3-multiprocessing, \

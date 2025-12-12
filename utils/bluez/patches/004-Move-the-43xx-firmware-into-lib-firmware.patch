@@ -7,14 +7,14 @@ Subject: [PATCH 4/4] Move the 43xx firmware into /lib/firmware
  tools/hciattach_bcm43xx.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
---- a/tools/hciattach_bcm43xx.c
-+++ b/tools/hciattach_bcm43xx.c
-@@ -31,7 +31,7 @@
- #include "hciattach.h"
+--- a/tools/hciattach.h
++++ b/tools/hciattach.h
+@@ -41,7 +41,7 @@
+ #define HCI_UART_VND_DETECT	5
  
  #ifndef FIRMWARE_DIR
 -#define FIRMWARE_DIR "/etc/firmware"
 +#define FIRMWARE_DIR "/lib/firmware/brcm"
  #endif
  
- #define FW_EXT ".hcd"
+ int read_hci_event(int fd, unsigned char *buf, int size);

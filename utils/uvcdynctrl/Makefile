@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=uvcdynctrl
 PKG_VERSION:=0.2.5
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=libwebcam-src-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/libwebcam
@@ -22,7 +22,7 @@ PKG_LICENSE_FILES:=uvcdynctrl/COPYING
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
-include $(INCLUDE_DIR)/cmake.mk
+include $(INCLUDE_DIR)/meson.mk
 
 define Package/uvcdynctrl
   SECTION:=utils

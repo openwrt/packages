@@ -5,17 +5,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dawn
-PKG_SOURCE_DATE:=2022-01-17
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_SOURCE_DATE:=2025-11-07
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/berlin-open-wireless-lab/DAWN.git
-PKG_SOURCE_VERSION:=7a72674063dd34bd21f39c7be8aadb867db67658
-PKG_MIRROR_HASH:=4fbca0139c8c3fc08bf430887c9f0835d6b4645cc316b96f2d58c2d8ceb89f24
+PKG_SOURCE_VERSION:=7414c34a08c7cbbd5f292e0e25e53f1edbfc751a
+PKG_MIRROR_HASH:=9663f6e75e9bf8cb2c38df6348ee6163c472d3c0cd1c10eedeab60ddb824dc0e
 
 PKG_MAINTAINER:=Nick Hainke <vincent@systemli.org>
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=LICENSE
+
+PKG_BUILD_FLAGS:=no-lto
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
@@ -23,6 +25,7 @@ include $(INCLUDE_DIR)/cmake.mk
 define Package/dawn
   SECTION:=net
   CATEGORY:=Network
+  SUBMENU:=Wireless
   TITLE:=Decentralized wifi controller
   URL:=https://github.com/berlin-open-wireless-lab/DAWN.git
   DEPENDS:=$(DRV_DEPENDS) +libubus +libubox +libblobmsg-json +libuci +libgcrypt +libiwinfo +umdns

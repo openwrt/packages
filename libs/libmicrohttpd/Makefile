@@ -8,16 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmicrohttpd
-PKG_VERSION:=0.9.73
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=1.0.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/libmicrohttpd
-PKG_HASH:=a37b2f1b88fd1bfe74109586be463a434d34e773530fc2a74364cfcf734c032e
+PKG_HASH:=df324fcd0834175dab07483133902d9774a605bfa298025f69883288fd20a8c7
 
 PKG_MAINTAINER:=Alexander Couzens <lynxis@fe80.eu>
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:gnu:libmicrohttpd
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
@@ -27,12 +28,12 @@ include $(INCLUDE_DIR)/package.mk
 define Package/libmicrohttpd/default
   SECTION:=libs
   CATEGORY:=Libraries
-  TITLE:=GNU libmicrohttpd is a library that runs an HTTP server.
   URL:=https://www.gnu.org/software/libmicrohttpd/
 endef
 
 define Package/libmicrohttpd-no-ssl
 $(call Package/libmicrohttpd/default)
+  TITLE:=GNU libmicrohttpd is an embbeded HTTP server library
   VARIANT:=nossl
   DEFAULT_VARIANT:=1
   PROVIDES:=libmicrohttpd
@@ -40,9 +41,9 @@ endef
 
 define Package/libmicrohttpd-ssl
 $(call Package/libmicrohttpd/default)
-  TITLE+= with SSL support
+  TITLE:=GNU libmicrohttpd is an embbeded HTTP and HTTPS server library
   VARIANT:=ssl
-  DEPENDS:=+libgcrypt +libgnutls +libgpg-error
+  DEPENDS:=+libgnutls
   PROVIDES:=libmicrohttpd
 endef
 
@@ -56,14 +57,15 @@ CONFIGURE_ARGS += \
 	--disable-rpath \
 	--disable-doc \
 	--disable-examples \
-	--disable-poll \
 	--enable-epoll \
 	--with-pic
 
 ifeq ($(BUILD_VARIANT),ssl)
 CONFIGURE_ARGS += \
 	--enable-https \
-	--with-gnutls
+	--with-gnutls \
+	--enable-md5=tlslib \
+	--enable-sha256=tlslib
 else
 CONFIGURE_ARGS += \
 	--disable-https \

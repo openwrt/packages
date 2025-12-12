@@ -1,8 +1,8 @@
 --- a/python/wscript
 +++ b/python/wscript
-@@ -73,9 +73,9 @@ def configure(conf):
-         for module, package in selftest_pkgs.items():
-             find_third_party_module(conf, module, package)
+@@ -90,9 +90,9 @@ def configure(conf):
+                                       "'python3-iso8601'. Please install "
+                                       "one of the packages.")
  
 -    if not Options.options.without_ad_dc:
 -        for module, package in ad_dc_pkgs.items():

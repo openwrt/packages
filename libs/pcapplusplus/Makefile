@@ -32,7 +32,7 @@ endef
 
 define Build/Compile
 	cd $(PKG_BUILD_DIR)/PcapPlusPlus; ./configure-linux.sh --install-dir /usr
-	make -C $(PKG_BUILD_DIR)/PcapPlusPlus CXXFLAGS="$(TARGET_CXXFLAGS) -fPIC" CFLAGS="$(TARGET_CFLAGS) -fPIC" CXX=$(TARGET_CXX) CC=$(TARGET_CC) AR=$(TARGET_AR) libs
+	make -C $(PKG_BUILD_DIR)/PcapPlusPlus CXXFLAGS="$(TARGET_CXXFLAGS) -fPIC" CFLAGS="$(TARGET_CFLAGS) -fPIC" CXX="$(TARGET_CXX)" CC="$(TARGET_CC)" AR=$(TARGET_AR) libs
 endef
 
 define Build/InstallDev

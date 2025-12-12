@@ -1,0 +1,73 @@
+From 9e205f47847ab9ef5887b79c077ef8468d769af0 Mon Sep 17 00:00:00 2001
+From: Dan Williams <dan@ioncontrol.co>
+Date: Sat, 12 Apr 2025 23:17:45 -0500
+Subject: [PATCH] modem-helpers: fix checking of CDMA/EVDO access technology
+
+Missing ! for strncmp() meant the test was backwards and would
+erroneously report 1xRTT and EVDOr0 when those access technologies
+were not in use.
+
+Signed-off-by: Dan Williams <dan@ioncontrol.co>
+---
+ src/mm-modem-helpers.c         |  6 +++---
+ src/tests/test-modem-helpers.c | 25 +++++++++++++++++++++++++
+ 2 files changed, 28 insertions(+), 3 deletions(-)
+
+--- a/src/mm-modem-helpers.c
++++ b/src/mm-modem-helpers.c
+@@ -4160,11 +4160,11 @@ mm_string_to_access_tech (const gchar *s
+      * are included in other strings too.
+      */
+     len = strlen (string);
+-    if (strncmp (string, "EVDO", 4) && (len >= 4 && !isalnum (string[4])))
++    if (!strncmp (string, "EVDO", 4) && (len >= 4 && !isalnum (string[4])))
+         act |= MM_MODEM_ACCESS_TECHNOLOGY_EVDO0;
+-    if (strncmp (string, "CDMA", 4) && (len >= 4 && !isalnum (string[4])))
++    if (!strncmp (string, "CDMA", 4) && (len >= 4 && !isalnum (string[4])))
+         act |= MM_MODEM_ACCESS_TECHNOLOGY_1XRTT;
+-    if (strncmp (string, "CDMA-EVDO", 9) && (len >= 9 && !isalnum (string[9])))
++    if (!strncmp (string, "CDMA-EVDO", 9) && (len >= 9 && !isalnum (string[9])))
+         act |= MM_MODEM_ACCESS_TECHNOLOGY_1XRTT | MM_MODEM_ACCESS_TECHNOLOGY_EVDO0;
+ 
+     return act;
+--- a/src/tests/test-modem-helpers.c
++++ b/src/tests/test-modem-helpers.c
+@@ -4866,6 +4866,29 @@ test_mnc_length (void)
+ 
+ /*****************************************************************************/
+ 
++typedef struct {
++    const gchar                   *str;
++    const MMModemAccessTechnology  act;
++} TestActData;
++
++static const TestActData test_act_data[] = {
++    { "EDGE",      MM_MODEM_ACCESS_TECHNOLOGY_EDGE },
++    /* Ensure WCDMA does not get counted as 3GPP2 CDMA */
++    { "WCDMA",     MM_MODEM_ACCESS_TECHNOLOGY_UMTS },
++    { "CDMA-EVDO", MM_MODEM_ACCESS_TECHNOLOGY_1XRTT | MM_MODEM_ACCESS_TECHNOLOGY_EVDO0 },
++};
++
++static void
++test_string_to_access_tech (void)
++{
++    guint i;
++
++    for (i = 0; i < G_N_ELEMENTS (test_act_data); i++)
++        g_assert_cmpint (mm_string_to_access_tech (test_act_data[i].str), ==, test_act_data[i].act);
++}
++
++/*****************************************************************************/
++
+ #define TESTCASE(t, d) g_test_create_case (#t, 0, d, NULL, (GTestFixtureFunc) t, NULL)
+ 
+ int main (int argc, char **argv)
+@@ -5111,6 +5134,8 @@ int main (int argc, char **argv)
+     g_test_suite_add (suite, TESTCASE (test_spn_to_utf8, NULL));
+     g_test_suite_add (suite, TESTCASE (test_mnc_length, NULL));
+ 
++    g_test_suite_add (suite, TESTCASE (test_string_to_access_tech, NULL));
++
+     result = g_test_run ();
+ 
+     reg_test_data_free (reg_data);

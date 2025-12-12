@@ -1,6 +1,6 @@
 --- /dev/null
 +++ b/extensions/LUA/byte_array.c
-@@ -0,0 +1,145 @@
+@@ -0,0 +1,161 @@
 +/*
 + *	Copyright (C) 2010 University of Basel <http://cn.cs.unibas.ch/>
 + *	by Andre Graf <andre@dergraf.org>
@@ -110,11 +110,25 @@
 +static int32_t byte_array_to_string(lua_State *L)
 +{
 +	lua_packet_segment * array = checkbytearray(L, 1);
-+	uint8_t buf[(array->length * 3) + 255];
 +	uint8_t hexval[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
-+	char res[255 + (array->length * 3)]; /* make sure the buffer is big enough*/
++	uint8_t * buf;
++	char * res;
 +	int32_t i, n;
 +	uint8_t *ptr = array->start + array->offset;
++
++	buf = kcalloc((array->length * 3) + 255, sizeof(*buf), GFP_KERNEL);
++
++	if (!buf) {
++		return luaL_error(L, "byte_array_to_string, failed alloc buf buffer");
++	}
++
++	/* make sure the buffer is big enough*/
++	res = kcalloc((array->length * 3) + 255, sizeof(*res), GFP_KERNEL);
++
++	if (!res) {
++		kfree(buf);
++		return luaL_error(L, "byte_array_to_string, failed alloc res buffer");
++	}
 +
 +	for (i = 0; i < array->length; i++) {
 +		buf[i * 3] = hexval[(ptr[i] >> 4) & 0xF];
@@ -126,6 +140,8 @@
 +	n = sprintf(res, "byte_array: length: %d  value: %s", array->length, buf);
 +
 +	lua_pushlstring(L, res, n);
++	kfree(res);
++	kfree(buf);
 +
 +	return 1;
 +}
@@ -1022,7 +1038,7 @@
 +#endif /* CONTROLLER_H_ */
 --- /dev/null
 +++ b/extensions/LUA/Kbuild
-@@ -0,0 +1,49 @@
+@@ -0,0 +1,51 @@
 +# -*- Makefile -*-
 +
 +# Adding debug options
@@ -1047,6 +1063,8 @@
 +			prot_buf_dynamic.o \
 +
 +
++# Enable <stddef.h> <stdarg.h>
++EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
 +# Adding Lua Support
 +EXTRA_CFLAGS += -I$(src)/lua -I$(src)/lua/include 
 +xt_LUA-y += lua/lapi.o \
@@ -1137,7 +1155,7 @@
 +	struct xt_lua_tginfo *info = (void *)target->data;
 +
 +	info->state_id = 0;
-+	strncpy(info->function, "process_packet\0", sizeof("process_packet\0"));
++	strcpy(info->function, "process_packet\0");
 +}
 +
 +static int
@@ -1345,16 +1363,13 @@
 +#include <linux/string.h>
 --- /dev/null
 +++ b/extensions/LUA/lua/lapi.c
-@@ -0,0 +1,1086 @@
+@@ -0,0 +1,1083 @@
 +/*
 +** $Id: lapi.c,v 2.55.1.5 2008/07/04 18:41:18 roberto Exp $
 +** Lua API
 +** See Copyright Notice in lua.h
 +*/
 +
-+#include <stdarg.h>
-+#include <math.h>
-+#include <assert.h>
 +#include <string.h>
 +
 +#define lapi_c
@@ -2453,14 +2468,12 @@
 +#endif
 --- /dev/null
 +++ b/extensions/LUA/lua/lauxlib.c
-@@ -0,0 +1,674 @@
+@@ -0,0 +1,672 @@
 +/*
 +** $Id: lauxlib.c,v 1.159.1.3 2008/01/21 13:20:51 roberto Exp $
 +** Auxiliary functions for building Lua libraries
 +** See Copyright Notice in lua.h
 +*/
-+
-+#include <stdarg.h>
 +
 +#if !defined(__KERNEL__)
 +#include <ctype.h>
@@ -4887,7 +4900,7 @@
 +#endif
 --- /dev/null
 +++ b/extensions/LUA/lua/ldebug.c
-@@ -0,0 +1,637 @@
+@@ -0,0 +1,636 @@
 +/*
 +** $Id: ldebug.c,v 2.29.1.6 2008/05/08 16:56:26 roberto Exp $
 +** Debug Interface
@@ -4895,7 +4908,6 @@
 +*/
 +
 +
-+#include <stdarg.h>
 +#include <stddef.h>
 +#include <string.h>
 +
@@ -5301,7 +5313,7 @@
 +      case OP_FORLOOP:
 +      case OP_FORPREP:
 +        checkreg(pt, a+3);
-+        /* go through */
++        fallthrough;
 +      case OP_JMP: {
 +        int dest = pc+1+b;
 +        /* not full check and jump is forward and do not skip `lastpc'? */
@@ -6204,7 +6216,7 @@
 +
 +static void DumpString(const TString* s, DumpState* D)
 +{
-+ if (s==NULL || getstr(s)==NULL)
++ if (s==NULL)
 + {
 +  size_t size=0;
 +  DumpVar(size,D);
@@ -7716,6 +7728,7 @@
 +        }
 +        else if (sep == -1) return '[';
 +        else luaX_lexerror(ls, "invalid long string delimiter", TK_STRING);
++        fallthrough;
 +      }
 +      case '=': {
 +        next(ls);
@@ -7809,10 +7822,9 @@
 +  lua_assert(ls->lookahead.token == TK_EOS);
 +  ls->lookahead.token = llex(ls, &ls->lookahead.seminfo);
 +}
-+
 --- /dev/null
 +++ b/extensions/LUA/lua/llex.h
-@@ -0,0 +1,81 @@
+@@ -0,0 +1,83 @@
 +/*
 +** $Id: llex.h,v 1.58.1.1 2007/12/27 13:02:25 roberto Exp $
 +** Lexical Analyzer
@@ -7825,6 +7837,8 @@
 +#include "lobject.h"
 +#include "lzio.h"
 +
++/* prevent conflict with definition from asm/current.h */
++#undef current
 +
 +#define FIRST_RESERVED	257
 +
@@ -7896,7 +7910,7 @@
 +#endif
 --- /dev/null
 +++ b/extensions/LUA/lua/llimits.h
-@@ -0,0 +1,125 @@
+@@ -0,0 +1,124 @@
 +/*
 +** $Id: llimits.h,v 1.69.1.1 2007/12/27 13:02:25 roberto Exp $
 +** Limits, basic types, and some other `installation-dependent' definitions
@@ -7907,7 +7921,6 @@
 +#define llimits_h
 +
 +#include <stddef.h>
-+#include <limits.h>
 +
 +#include "lua.h"
 +
@@ -8165,14 +8178,12 @@
 +
 --- /dev/null
 +++ b/extensions/LUA/lua/lobject.c
-@@ -0,0 +1,215 @@
+@@ -0,0 +1,213 @@
 +/*
 +** $Id: lobject.c,v 2.22.1.1 2007/12/27 13:02:25 roberto Exp $
 +** Some generic functions over Lua objects
 +** See Copyright Notice in lua.h
 +*/
-+
-+#include <stdarg.h>
 +
 +#include <ctype.h>
 +#include <stdio.h>
@@ -11992,7 +12003,7 @@
 +}
 --- /dev/null
 +++ b/extensions/LUA/lua/ltable.c
-@@ -0,0 +1,588 @@
+@@ -0,0 +1,587 @@
 +/*
 +** $Id: ltable.c,v 2.32.1.2 2007/12/28 15:32:23 roberto Exp $
 +** Lua tables (hash)
@@ -12013,7 +12024,6 @@
 +** Hence even when the load factor reaches 100%, performance remains good.
 +*/
 +
-+#include <math.h>
 +#include <string.h>
 +
 +#define ltable_c
@@ -12471,7 +12481,7 @@
 +      lua_number2int(k, n);
 +      if (luai_numeq(cast_num(k), nvalue(key))) /* index is int? */
 +        return luaH_getnum(t, k);  /* use specialized version */
-+      /* else go through */
++      fallthrough;
 +    }
 +    default: {
 +      Node *n = mainposition(t, key);
@@ -12766,7 +12776,7 @@
 +  if (!lua_isstring(L, -1))
 +    luaL_error(L, "invalid value (%s) at index %d in table for "
 +                  LUA_QL("concat"), luaL_typename(L, -1), i);
-+    luaL_addvalue(b);
++  luaL_addvalue(b);
 +}
 +
 +
@@ -13051,7 +13061,7 @@
 +#endif
 --- /dev/null
 +++ b/extensions/LUA/lua/luaconf.h
-@@ -0,0 +1,797 @@
+@@ -0,0 +1,803 @@
 +/*
 +** $Id: luaconf.h,v 1.82.1.7 2008/02/11 16:25:08 roberto Exp $
 +** Configuration file for Lua
@@ -13067,8 +13077,12 @@
 +#if !defined(__KERNEL__)
 +#include <limits.h>
 +#else
++#include <linux/kernel.h>
++
++#undef UCHAR_MAX
++#undef BUFSIZ
++#undef NO_FPU
 +#define UCHAR_MAX	255
-+#define SHRT_MAX        32767
 +#define BUFSIZ 		8192
 +#define NO_FPU
 +#endif
@@ -13691,6 +13705,8 @@
 +*/
 +#if defined(__KERNEL__)
 +#undef LUA_USE_ULONGJMP
++#define setjmp __builtin_setjmp
++#define longjmp __builtin_longjmp
 +#endif
 +
 +#if defined(__cplusplus)
@@ -13851,7 +13867,7 @@
 +
 --- /dev/null
 +++ b/extensions/LUA/lua/lua.h
-@@ -0,0 +1,387 @@
+@@ -0,0 +1,386 @@
 +/*
 +** $Id: lua.h,v 1.218.1.5 2008/08/06 13:30:12 roberto Exp $
 +** Lua - An Extensible Extension Language
@@ -13863,7 +13879,6 @@
 +#ifndef lua_h
 +#define lua_h
 +
-+#include <stdarg.h>
 +#include <stddef.h>
 +
 +#include "luaconf.h"
@@ -15639,7 +15654,7 @@
 +RANLIB = ranlib
 +SED = /bin/sed
 +SET_MAKE = 
-+SHELL = /bin/bash
++SHELL = /bin/sh
 +STRIP = strip
 +VERSION = 1.21
 +abs_builddir = /home/andre/Dropbox/xtables-addons/extensions/LUA
@@ -17211,7 +17226,7 @@
 +
 --- /dev/null
 +++ b/extensions/LUA/prot_buf_ip.c
-@@ -0,0 +1,209 @@
+@@ -0,0 +1,210 @@
 +/*
 + *	Copyright (C) 2010 University of Basel <http://cn.cs.unibas.ch/>
 + *	by Andre Graf <andre@dergraf.org>
@@ -17231,6 +17246,7 @@
 + */
 +
 +#if defined(__KERNEL__)
++	#include <linux/bitops.h>
 +	#include <net/checksum.h>
 +	#include <net/tcp.h>
 +#endif
@@ -17469,7 +17485,7 @@
 +}
 --- /dev/null
 +++ b/extensions/LUA/prot_buf_tcp.c
-@@ -0,0 +1,188 @@
+@@ -0,0 +1,189 @@
 +/*
 + *	Copyright (C) 2010 University of Basel <http://cn.cs.unibas.ch/>
 + *	by Andre Graf <andre@dergraf.org>
@@ -17489,6 +17505,7 @@
 + */
 +
 +#if defined(__KERNEL__)
++	#include <linux/bitops.h>
 +	#include <net/checksum.h>
 +	#include <net/tcp.h>
 +#endif
@@ -17750,7 +17767,7 @@
 +}
 --- /dev/null
 +++ b/extensions/LUA/prot_buf_udp.c
-@@ -0,0 +1,53 @@
+@@ -0,0 +1,54 @@
 +/*
 + *	Copyright (C) 2010 University of Basel <http://cn.cs.unibas.ch/>
 + *	by Andre Graf <andre@dergraf.org>
@@ -17770,6 +17787,7 @@
 + */
 +
 +#if defined(__KERNEL__)
++	#include <linux/bitops.h>
 +	#include <net/checksum.h>
 +#endif
 +
@@ -17867,7 +17885,7 @@
 +#include <linux/kernel.h>
 +#include <linux/slab.h>
 +#include <linux/module.h>
-+#include <asm/uaccess.h>
++#include <linux/uaccess.h>
 +#include <net/ip.h>
 +#include <linux/netfilter/x_tables.h>
 +#include "xt_LUA.h"
@@ -17912,10 +17930,10 @@
 + * XT_CONTINUE inside the *register_lua_packet_lib* function.
 + */
 +
-+spinlock_t lock = SPIN_LOCK_UNLOCKED;
++DEFINE_SPINLOCK(lock);
 +
 +static uint32_t 
-+lua_tg(struct sk_buff *pskb, const struct xt_target_param *par)
++lua_tg(struct sk_buff *pskb, const struct xt_action_param *par)
 +{
 +	uint32_t  verdict;
 +	lua_packet_segment *p;
@@ -17927,7 +17945,7 @@
 +
 +	L = lua_envs[info->state_id]->L;
 +
-+	if (!skb_make_writable(pskb, pskb->len))
++	if (skb_ensure_writable(pskb, pskb->len))
 +		return NF_DROP;
 +
 +	/* call the function provided by --function parameter or the default 'process_packet' defined in Lua */
@@ -17936,11 +17954,11 @@
 +	/* push the lua_packet_segment as a parameter */
 +	p = (lua_packet_segment *)lua_newuserdata(L, sizeof(lua_packet_segment));
 +	if (pskb->mac_header)
-+		p->start = pskb->mac_header;
++		p->start = skb_mac_header(pskb);
 +	else if (pskb->network_header)
-+		p->start = pskb->network_header;
++		p->start = skb_network_header(pskb);
 +	else if (pskb->transport_header)
-+		p->start = pskb->transport_header;
++		p->start = skb_transport_header(pskb);
 +	p->offset = 0;
 +	p->length = (unsigned long)pskb->tail - (unsigned long)p->start;
 +	p->changes = NULL;
@@ -17984,7 +18002,7 @@
 +	int32_t ret;
 +	struct lua_env * env = kmalloc(sizeof(struct lua_env), GFP_KERNEL);
 +
-+	if (!script_size > 0) {
++	if (!script_size) {
 +		pr_debug("LUA [%d]: script_size %lu < 0\n", state_id, script_size);
 +		return false;
 +	}
@@ -18056,16 +18074,16 @@
 + * some workqueue initialization. So far this is done each time this function
 + * is called, subject to change.
 + */
-+static bool
++static int
 +lua_tg_checkentry(const struct xt_tgchk_param *par)
 +{
 +	const struct xt_lua_tginfo *info = par->targinfo;
 +
 +	if (load_script_into_state(info->state_id, info->script_size, (char *)info->buf)) {
 +		lua_state_refs[info->state_id]++;
-+		return true;
++		return 0;
 +	}
-+	return false;
++	return -EINVAL;
 +}
 +
 +/*::*
@@ -18134,7 +18152,7 @@
 +
 --- a/extensions/Kbuild
 +++ b/extensions/Kbuild
-@@ -28,6 +28,7 @@ obj-${build_pknock}      += pknock/
+@@ -29,6 +29,7 @@ obj-${build_pknock}      += pknock/
  obj-${build_psd}         += xt_psd.o
  obj-${build_quota2}      += xt_quota2.o
  obj-${build_rtsp}        += rtsp/
@@ -18144,14 +18162,14 @@
  -include ${M}/Kbuild.*
 --- a/extensions/Mbuild
 +++ b/extensions/Mbuild
-@@ -23,3 +23,4 @@ obj-${build_pknock}      += pknock/
+@@ -24,3 +24,4 @@ obj-${build_pknock}      += pknock/
  obj-${build_psd}         += libxt_psd.so
  obj-${build_quota2}      += libxt_quota2.so
  obj-${build_gradm}       += libxt_gradm.so
 +obj-${build_LUA}         += LUA/
 --- a/mconfig
 +++ b/mconfig
-@@ -24,3 +24,4 @@ build_pknock=m
+@@ -25,3 +25,4 @@ build_pknock=m
  build_psd=m
  build_quota2=m
  build_rtsp=m

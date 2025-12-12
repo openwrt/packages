@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netdata
-PKG_VERSION:=1.30.1
-PKG_RELEASE:=2
+PKG_VERSION:=1.33.1
+PKG_RELEASE:=4
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>, Daniel Engberg <daniel.engberg.lists@pyret.net>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -17,13 +17,14 @@ PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:my-netdata:netdata
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/netdata/netdata/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=e05f8b59d283fb2844280455b9481a2f9104730fd77f535312ff2fec40a6bc11
+PKG_SOURCE_URL:=https://github.com/netdata/netdata/releases/download/v$(PKG_VERSION)
+PKG_HASH:=20ba8695d87187787b27128ac3aab9b09aa29ca6b508c48542e0f7d50ec9322b
+PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)-v$(PKG_VERSION)
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16 gc-sections
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -43,9 +44,7 @@ define Package/netdata/description
   python3-urllib3
 endef
 
-TARGET_CFLAGS := $(filter-out -O%,$(TARGET_CFLAGS))
-TARGET_CFLAGS += -ffunction-sections -fdata-sections -O3
-TARGET_LDFLAGS += -Wl,--gc-sections
+TARGET_CFLAGS := $(filter-out -O%,$(TARGET_CFLAGS)) -O3
 
 CONFIGURE_ARGS += \
 	--with-zlib \
@@ -56,13 +55,20 @@ CONFIGURE_ARGS += \
 	--without-libcap \
 	--disable-https \
 	--disable-dbengine \
+	--disable-compression \
 	--disable-plugin-nfacct \
 	--disable-plugin-freeipmi \
 	--disable-plugin-cups \
 	--disable-plugin-xenstat \
 	--disable-backend-prometheus-remote-write \
 	--disable-unit-tests \
+	--disable-ml \
 	--disable-cloud
+
+define Build/Configure
+	$(SED) 's/m4_esyscmd(\[git describe .*\])/$(PKG_VERSION)/' $(PKG_BUILD_DIR)/configure.ac
+	$(Build/Configure/Default)
+endef
 
 define Package/netdata/conffiles
 /etc/netdata/

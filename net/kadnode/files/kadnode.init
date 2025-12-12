@@ -15,8 +15,7 @@ boot()
 
 xappend() {
 	local name="$2" value="$1"
-	OPTS="$OPTS--${name//_/-} ${value//'/\\'}
-"
+	OPTS="$OPTS\n--${name//_/-} ${value//'/\\'}"
 }
 
 append_opts_list() {
@@ -56,7 +55,7 @@ start_instance() {
 	OPTS=""
 
 	append_opts "$cfg" lpd_addr dns_server dns_port verbosity peerfile config \
-		query_tld user port ifname cmd_port
+		query_tld user port ifname cmd_port dht_isolation_prefix
 
 	append_opts_list "$cfg" announce peer tls_client_cert tls_server_cert bob_load_key
 
@@ -67,7 +66,7 @@ start_instance() {
 		xappend "" "cmd_disable_stdin"
 	fi
 
-	echo "$OPTS" > $CONFIG_FILE
+	echo -e "$OPTS" > $CONFIG_FILE
 
 	procd_open_instance
 	procd_set_param command $PROG

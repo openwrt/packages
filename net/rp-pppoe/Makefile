@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rp-pppoe
-PKG_VERSION:=3.14
-PKG_RELEASE:=3
+PKG_VERSION:=4.0
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://dianne.skoll.ca/projects/rp-pppoe/download
-PKG_HASH:=7825232f64ab4d618ef074d62d145ae43d6edc91b9a718c6130a4742bac40e2a
+PKG_SOURCE_URL:=https://downloads.uls.co.za/rp-pppoe/
+PKG_HASH:=41ac34e5db4482f7a558780d3b897bdbb21fae3fef4645d2852c3c0c19d81cea
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=LGPL-2.0-or-later
@@ -79,7 +79,6 @@ endef
 
 define Package/rp-pppoe-server/conffiles
 /etc/ppp/pppoe-server-options
-/etc/ppp/options
 /etc/ppp/pap-secrets
 /etc/ppp/chap-secrets
 /etc/default/pppoe-server
@@ -132,7 +131,7 @@ define Package/rp-pppoe-server/install
 	$(INSTALL_DIR) $(1)/etc/init.d $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/pppoe-server.init $(1)/etc/init.d/pppoe-server
 	$(INSTALL_DIR) $(1)/etc/ppp
-	$(INSTALL_CONF) ./files/ppp/{options,pap-secrets,pppoe-server-options} $(1)/etc/ppp/
+	$(INSTALL_CONF) ./files/ppp/{pap-secrets,pppoe-server-options} $(1)/etc/ppp/
 	$(INSTALL_DIR) $(1)/etc/ppp/plugins
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/pppoe-server $(1)/usr/sbin/

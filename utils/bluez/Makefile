@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bluez
-PKG_VERSION:=5.62
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=5.83
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/bluetooth/
-PKG_HASH:=38090a5b750e17fc08d3e52178ed8d3254c5f4bd2c48830d5c1955b88e3bc0c2
+PKG_HASH:=108522d909d220581399bfec93daab62035539ceef3dda3e79970785c63bd24c
 
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
@@ -22,13 +22,14 @@ PKG_CPE_ID:=cpe:/a:bluez:bluez
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
+PKG_BUILD_FLAGS:=gc-sections
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
 define Package/bluez/Default
   TITLE:=Bluetooth
-  URL:=http://www.bluez.org/
+  URL:=https://www.bluez.org/
 endef
 
 define Package/bluez-libs
@@ -45,6 +46,14 @@ $(call Package/bluez/Default)
   CATEGORY:=Utilities
   TITLE+= utilities
   DEPENDS:=+bluez-libs
+endef
+
+define Package/bluez-utils-btmon
+$(call Package/bluez/Default)
+  SECTION:=utils
+  CATEGORY:=Utilities
+  TITLE+= utilities
+  DEPENDS:=+bluez-libs +glib2
 endef
 
 define Package/bluez-utils-extra
@@ -71,12 +80,8 @@ define Package/bluez-daemon/conffiles
 /etc/config/bluetooth
 endef
 
-TARGET_CFLAGS += -D_GNU_SOURCE -ffunction-sections -fdata-sections
-TARGET_LDFLAGS += -Wl,--gc-sections
-
 CONFIGURE_ARGS += \
 	--enable-static \
-	--enable-shared \
 	--enable-client \
 	--enable-datafiles \
 	--enable-experimental \
@@ -111,10 +116,8 @@ endef
 define Package/bluez-utils/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/tools/bdaddr $(1)/usr/bin/
-#	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/bccmd $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/bluemoon $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/btattach $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/btmon $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ciptool $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/hciattach $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/hciconfig $(1)/usr/bin/
@@ -125,6 +128,11 @@ define Package/bluez-utils/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/l2test $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/rctest $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/rfcomm $(1)/usr/bin/
+endef
+
+define Package/bluez-utils-btmon/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/btmon $(1)/usr/bin/
 endef
 
 define Package/bluez-utils-extra/install
@@ -153,5 +161,6 @@ endef
 
 $(eval $(call BuildPackage,bluez-libs))
 $(eval $(call BuildPackage,bluez-utils))
+$(eval $(call BuildPackage,bluez-utils-btmon))
 $(eval $(call BuildPackage,bluez-utils-extra))
 $(eval $(call BuildPackage,bluez-daemon))

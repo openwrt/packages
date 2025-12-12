@@ -1,0 +1,67 @@
+--- a/pkg/firewall/config.go
++++ b/pkg/firewall/config.go
+@@ -31,7 +31,7 @@ func parseConfigFromBytes(data []byte) (
+ 
+ 	// Default the filter table name to filter
+ 	if conf.FilterTableName == "" {
+-		conf.FilterTableName = "filter"
++		conf.FilterTableName = "fw4"
+ 	}
+ 
+ 	// Default the forwarding chain name to forward
+@@ -41,12 +41,12 @@ func parseConfigFromBytes(data []byte) (
+ 
+ 	// Default the nat table name to nat
+ 	if conf.NatTableName == "" {
+-		conf.NatTableName = "nat"
++		conf.NatTableName = "fw4"
+ 	}
+ 
+ 	// Default the postrouting chain name to postrouting
+ 	if conf.PostRoutingNatChainName == "" {
+-		conf.PostRoutingNatChainName = "postrouting"
++		conf.PostRoutingNatChainName = "srcnat"
+ 	}
+ 
+ 	// Parse previous result.
+--- a/pkg/portmap/config.go
++++ b/pkg/portmap/config.go
+@@ -56,16 +56,16 @@ func parseConfigFromBytes(data []byte, i
+ 
+ 	// Set default values
+ 	if conf.NatTableName == "" {
+-		conf.NatTableName = "nat"
++		conf.NatTableName = "fw4"
+ 	}
+ 	if conf.RawTableName == "" {
+-		conf.RawTableName = "raw"
++		conf.RawTableName = "fw4"
+ 	}
+ 	if conf.PostRoutingNatChainName == "" {
+-		conf.PostRoutingNatChainName = "postrouting"
++		conf.PostRoutingNatChainName = "srcnat"
+ 	}
+ 	if conf.PreRoutingNatChainName == "" {
+-		conf.PreRoutingNatChainName = "prerouting"
++		conf.PreRoutingNatChainName = "dstnat"
+ 	}
+ 	if conf.OutputNatChainName == "" {
+ 		conf.OutputNatChainName = "output"
+@@ -76,14 +76,14 @@ func parseConfigFromBytes(data []byte, i
+ 	}
+ 
+ 	if conf.RawTableName == "" {
+-		conf.RawTableName = "raw"
++		conf.RawTableName = "fw4"
+ 	}
+ 	if conf.PreRoutingRawChainName == "" {
+-		conf.PreRoutingRawChainName = "prerouting"
++		conf.PreRoutingRawChainName = "dstnat"
+ 	}
+ 
+ 	if conf.FilterTableName == "" {
+-		conf.FilterTableName = "filter"
++		conf.FilterTableName = "fw4"
+ 	}
+ 	if conf.ForwardFilterChainName == "" {
+ 		conf.ForwardFilterChainName = "forward"

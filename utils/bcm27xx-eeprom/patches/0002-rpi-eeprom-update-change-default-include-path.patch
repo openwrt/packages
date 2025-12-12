@@ -1,0 +1,62 @@
+From fc552b1e5c503c530763e40d2b83df55c5c2e9a3 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=C3=81lvaro=20Fern=C3=A1ndez=20Rojas?= <noltari@gmail.com>
+Date: Wed, 25 Mar 2020 20:58:35 +0100
+Subject: [PATCH] rpi-eeprom-update: change default include path
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
+---
+ rpi-eeprom-update | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+--- a/rpi-eeprom-update
++++ b/rpi-eeprom-update
+@@ -6,8 +6,8 @@ set -e
+ 
+ script_dir=$(cd "$(dirname "$0")" && pwd)
+ 
+-if [ -f /etc/default/rpi-eeprom-update ]; then
+-   . /etc/default/rpi-eeprom-update
++if [ -f /etc/bcm27xx-eeprom.conf ]; then
++   . /etc/bcm27xx-eeprom.conf
+ fi
+ 
+ LOCAL_MODE=0
+@@ -466,7 +466,7 @@ checkDependencies() {
+       echo "Run with -h for more information."
+       echo
+       echo "To enable flashrom programming of the EEPROM"
+-      echo "Add these the following entries to /etc/default/rpi-eeprom-update"
++      echo "Add these the following entries to /etc/bcm27xx-eeprom.conf"
+       echo "RPI_EEPROM_USE_FLASHROM=1"
+       echo "CM4_ENABLE_RPI_EEPROM_UPDATE=1"
+       echo 
+@@ -553,7 +553,7 @@ The system should then boot normally.
+ 
+ If /boot does not correspond to the boot partition and this
+ is not a NOOBS system, then the mount point for BOOTFS should be defined
+-in /etc/default/rpi-eeprom-update by defining the BOOTFS variable.
++in /etc/bcm27xx-eeprom.conf by defining the BOOTFS variable.
+ 
+ A backup of the current EEPROM config file is written to ${FIRMWARE_BACKUP_DIR}
+ before applying the update.
+@@ -585,7 +585,7 @@ Options:
+    -u Install the specified VL805 (USB EEPROM) image file.
+ 
+ Environment:
+-Environment variables should be defined in /etc/default/rpi-eeprom-update
++Environment variables should be defined in /etc/bcm27xx-eeprom.conf
+ 
+ EEPROM_CONFIG_HOOK
+ 
+@@ -657,7 +657,7 @@ must first be enabled by removing ENABLE
+ via usbboot.
+ 
+ After enabling self-update set the CM4_ENABLE_RPI_EEPROM_UPDATE=1 environment
+-variable or define it in /etc/default/rpi-eeprom-update.
++variable or define it in /etc/bcm27xx-eeprom.conf.
+ 
+ N.B. If there is a power failure during SELF_UPDATE the EEPROM write may fail and
+ usbboot must be used to flash the bootloader EEPROM. SELF_UPDATE is not recommended

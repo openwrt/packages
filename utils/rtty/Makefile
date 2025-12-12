@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtty
-PKG_VERSION:=8.0.0
-PKG_RELEASE:=2
+PKG_VERSION:=9.0.4
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL=https://github.com/zhaojh329/rtty/releases/download/v$(PKG_VERSION)
-PKG_HASH:=b9c555005b76c1ad0f5af891964375bbdf50ee22b9a9f53ddd48d2cdb4e53b49
+PKG_HASH:=3bfc5db341c40e451544a218b7ef2cc59329ce04c50824b8ce6e5b805504c9bd
 
 PKG_MAINTAINER:=Jianhui Zhao <zhaojh329@gmail.com>
 PKG_LICENSE:=MIT
@@ -28,7 +28,7 @@ define Package/rtty/Default
   CATEGORY:=Utilities
   SUBMENU:=Terminal
   URL:=https://github.com/zhaojh329/rtty
-  DEPENDS:=+libev $(2)
+  DEPENDS:= +USE_GLIBC:libcrypt-compat +libev $(2)
   VARIANT:=$(1)
   PROVIDES:=rtty
 endef

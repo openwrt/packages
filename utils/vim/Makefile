@@ -8,22 +8,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vim
-PKG_VERSION:=8.2
-PKG_RELEASE:=5
-VIMVER:=82
+PKG_VERSION:=9.1.1918
+PKG_XXD_VERSION:=2025.08.24
+PKG_RELEASE:=2
+VIMVER:=91
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://ftp.vim.org/pub/vim/unix
-PKG_HASH:=f087f821831b4fece16a0461d574ccd55a8279f64d635510a1e10225966ced3b
-PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/vim/vim.git
+PKG_SOURCE_VERSION=v$(PKG_VERSION)
+PKG_MIRROR_HASH:=51c2d2492d884c879c61b1451f4690f221b2dbccacfe3ddf8abde4d6fcc5e2bf
+
+PKG_MAINTAINER:=Marko Ratkaj <markoratkaj@gmail.com>
+PKG_LICENSE:=Vim
+PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:vim:vim
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)$(VIMVER)
 PKG_BUILD_PARALLEL:=1
-
-HOST_BUILD_DEPENDS:=libiconv/host
-HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/$(PKG_NAME)$(VIMVER)
-HOST_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
@@ -45,12 +45,15 @@ endef
 define Package/vim-full
   $(call Package/vim/Default)
   TITLE+= (Normal)
+  PROVIDES:=vim
+  CONFLICTS:=vim
 endef
-
 
 define Package/vim-fuller
   $(call Package/vim/Default)
   TITLE+= (Big)
+  PROVIDES:=vim vim-full
+  CONFLICTS:=vim vim-full
 endef
 
 define Package/vim-runtime
@@ -68,6 +71,7 @@ define Package/xxd
   CATEGORY:=Utilities
   TITLE:=make a hexdump or do the reverse
   URL:=http://www.vim.org/
+  VERSION:=$(PKG_XXD_VERSION)
 endef
 
 define Package/vim-full/conffiles
@@ -90,7 +94,6 @@ define Package/vim-full/description
  (Normal build)
 endef
 
-
 define Package/vim-fuller/description
  Vim is an almost compatible version of the UNIX editor Vi.
  (Big build)
@@ -111,15 +114,6 @@ define Package/xxd/description
  a hex dump back to its original binary form.
 endef
 
-HOST_CONFIGURE_ARGS += \
-	--disable-acl \
-	--disable-gpm \
-	--disable-nls \
-	--disable-selinux \
-	--enable-gui=no \
-	--with-features=normal \
-	--without-x
-
 CONFIGURE_ARGS += \
 	--disable-gui \
 	--disable-gtktest \
@@ -129,9 +123,11 @@ CONFIGURE_ARGS += \
 	--disable-cscope \
 	--disable-gpm \
 	--disable-acl \
+	--disable-libsodium \
 	--disable-selinux \
 	--with-tlib=ncurses \
-	--with-compiledby="non-existent-hostname-compiled"
+	--with-compiledby="non-existent-hostname-compiled" \
+	--with-wayland=no
 
 CONFIGURE_VARS += \
 	ac_cv_header_elf_h=no \
@@ -186,8 +182,6 @@ define Build/Compile/vim-fuller
 endef
 endif
 
-
-
 ifneq ($(CONFIG_PACKAGE_xxd),)
 define Build/Compile/xxd
 	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) \
@@ -225,7 +219,6 @@ define Package/vim-full/install
 	$(INSTALL_CONF) ./files/vimrc.full $(1)/usr/share/vim/vimrc
 endef
 
-
 define Package/vim-fuller/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/vim_big $(1)/usr/bin/vim
@@ -234,8 +227,6 @@ define Package/vim-fuller/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/vim/vim$(VIMVER) $(1)/usr/share/vim
 	$(INSTALL_CONF) ./files/vimrc.full $(1)/usr/share/vim/vimrc
 endef
-
-
 
 define Package/vim-runtime/install
 	$(CP) $(PKG_INSTALL_DIR)/* $(1)
@@ -257,4 +248,3 @@ $(eval $(call BuildPackage,vim-fuller))
 $(eval $(call BuildPackage,vim-runtime))
 $(eval $(call BuildPackage,vim-help))
 $(eval $(call BuildPackage,xxd))
-$(eval $(call HostBuild))

@@ -8,19 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=haveged
-PKG_VERSION:=1.9.17
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=1.9.19
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/jirka-h/haveged/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=02d9b7c801fbcf16bed43c27bf6ece570b79f4d94561f3eb30883fb5f89c526d
+PKG_HASH:=acbb05776668657012273be9bb3310e3140b79959aa4538e4cca8d30d40c0b8f
 PKG_BUILD_DIR:=$(BUILD_DIR)/haveged-$(PKG_VERSION)
 PKG_LICENSE:=GPLv3
 
 PKG_MAINTAINER:=Hannu Nyman <hannu.nyman@iki.fi>
 
 PKG_BUILD_PARALLEL:=1
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16
 
 include $(INCLUDE_DIR)/package.mk
 

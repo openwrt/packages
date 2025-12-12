@@ -1,0 +1,37 @@
+Subject: Various spelling fixes.
+Author: Romain Francoise <rfrancoise@debian.org>
+Last-Updated: 2020-09-06
+
+--- a/antigetopt.c
++++ b/antigetopt.c
+@@ -142,7 +142,7 @@ chain_start:
+ #define UNK_LONG_ERRSTRING "unrecognized option `--%s'\n"
+ #define ARG_SHORT_ERRSTRING "option requires an argument -- %c\n"
+ #define ARG_LONG_ERRSTRING "option `--%s' requires an argument\n"
+-#define AMB_ERRSTRING "option `--%s' is ambiguos\n"
++#define AMB_ERRSTRING "option `--%s' is ambiguous\n"
+ #define IERR_ERRSTRING "internal error. ago_gnu_error() called with " \
+ 			   "a bad error code (%d)\n"
+ void ago_gnu_error(char *pname, int error)
+--- a/statistics.c
++++ b/statistics.c
+@@ -30,7 +30,7 @@ void	print_statistics(int signal_id)
+ 			lossrate = 100;
+ 
+ 	fprintf(stderr, "\n--- %s hping statistic ---\n", targetname);
+-	fprintf(stderr, "%d packets tramitted, %d packets received, "
++	fprintf(stderr, "%d packets transmitted, %d packets received, "
+ 			"%d%% packet loss\n", sent_pkt, recv_pkt, lossrate);
+ 	if (out_of_sequence_pkt)
+ 		fprintf(stderr, "%d out of sequence packets received\n",
+--- a/ars.c
++++ b/ars.c
+@@ -361,7 +361,7 @@ void *ars_add_data(struct ars_packet *pk
+ 	static void *ptr = "zzappt"; /* we can't return NULL for size == 0 */
+ 
+ 	if (size < 0) {
+-		ars_set_error(pkt, "Tryed to add a DATA layer with size < 0");
++		ars_set_error(pkt, "Tried to add a DATA layer with size < 0");
+ 		return NULL;
+ 	}
+ 	retval = ars_add_generic(pkt, size, ARS_TYPE_DATA);

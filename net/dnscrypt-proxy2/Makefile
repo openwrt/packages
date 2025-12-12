@@ -8,21 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dnscrypt-proxy2
-PKG_VERSION:=2.1.1
+PKG_VERSION:=2.1.15
 PKG_RELEASE:=1
 
 PKG_SOURCE:=dnscrypt-proxy-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/DNSCrypt/dnscrypt-proxy/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=cc4a2f274ce48c3731ff981e940e6475d912fb356a80481e91725e81d67bde14
+PKG_HASH:=57da91dd2a3992a1528e764bcfe9b48088c63c933c0c571a2cac3d27ac8c7546
 PKG_BUILD_DIR:=$(BUILD_DIR)/dnscrypt-proxy-$(PKG_VERSION)
 
-PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=ISC
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16
 
 GO_PKG:=github.com/DNSCrypt/dnscrypt-proxy
 
@@ -31,11 +31,13 @@ include ../../lang/golang/golang-package.mk
 
 GO_MOD_ARGS:=
 GO_PKG_BUILD_VARS+= GO111MODULE=off
+GO_PKG_INSTALL_EXTRA:= dnscrypt-proxy/static/
 
 define Package/dnscrypt-proxy2
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Flexible DNS proxy with encrypted DNS protocols
+  SUBMENU:=IP Addresses and Names
   URL:=https://github.com/DNSCrypt/dnscrypt-proxy
   DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle
   CONFLICTS:=dnscrypt-proxy

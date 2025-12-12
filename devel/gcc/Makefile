@@ -1,30 +1,32 @@
 #
-# Copyright (C) 2008 OpenWrt.org
+# Copyright (C) 2002-2003 Erik Andersen <andersen@uclibc.org>
+# Copyright (C) 2004 Manuel Novoa III <mjn3@uclibc.org>
+# Copyright (C) 2005-2006 Felix Fietkau <nbd@nbd.name>
+# Copyright (C) 2006-2014 OpenWrt.org
 #
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
 #
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 include $(TOPDIR)/rules.mk
-define Package/gcc/description
-	Build a native toolchain for compiling on target
-	device.
-endef
-
-
-define Package/gcc
-  SECTION:=devel
-  CATEGORY:=Development
-  TITLE:=gcc
-  MAINTAINER:=Noble Pepper <gccmaintain@noblepepper.com>
-  DEPENDS:= +binutils +libstdcpp @!arc
-  MENU:=1
-endef
 
 PKG_NAME:=gcc
-# PKG_VERSION=7.3.0
-PKG_VERSION=7.4.0
+GCC_VERSION:=$(call qstrip,$(CONFIG_GCC_VERSION))
+PKG_VERSION:=$(firstword $(subst +, ,$(GCC_VERSION)))
+GCC_MAJOR_VERSION:=$(word 1,$(subst ., ,$(PKG_VERSION)))
 PKG_RELEASE:=7
+GCC_DIR:=$(PKG_NAME)-$(PKG_VERSION)
+
 PKG_SOURCE_URL:=@GNU/gcc/gcc-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_INSTALL:=1
@@ -33,28 +35,57 @@ PKG_BUILD_PARALLEL:=1
 
 PKG_CPE_ID:=cpe:/a:gnu:gcc
 
-ifeq ($(PKG_VERSION),7.3.0)
-	PKG_HASH:=832ca6ae04636adbb430e865a1451adf6979ab44ca1c8374f61fba65645ce15c
-endif
-ifeq ($(PKG_VERSION),7.4.0)
-	PKG_HASH:=eddde28d04f334aec1604456e536416549e9b1aa137fc69204e65eb0c009fe51
+ifeq ($(PKG_VERSION),8.4.0)
+	PKG_HASH:=e30a6e52d10e1f27ed55104ad233c30bd1e99cfb5ff98ab022dc941edd1b2dd4
 endif
 
+ifeq ($(PKG_VERSION),10.3.0)
+	PKG_HASH:=64f404c1a650f27fc33da242e1f2df54952e3963a49e06e73f6940f3223ac344
+endif
+
+ifeq ($(PKG_VERSION),11.3.0)
+	PKG_HASH:=b47cf2818691f5b1e21df2bb38c795fac2cfbd640ede2d0a5e1c89e338a3ac39
+endif
+
+ifeq ($(PKG_VERSION),12.3.0)
+	PKG_HASH:=949a5d4f99e786421a93b532b22ffab5578de7321369975b91aec97adfda8c3b
+endif
+
+ifeq ($(PKG_VERSION),13.3.0)
+  PKG_HASH:=0845e9621c9543a13f484e94584a49ffc0129970e9914624235fc1d061a0c083
+endif
+
+ifeq ($(PKG_VERSION),14.3.0)
+	PKG_HASH:=e0dc77297625631ac8e50fa92fffefe899a4eb702592da5c32ef04e2293aca3a
+endif
+
+PATCH_DIR:=patches-$(GCC_MAJOR_VERSION).x
+
+include $(INCLUDE_DIR)/package.mk
+
+define Package/gcc
+  SECTION:=devel
+  CATEGORY:=Development
+  TITLE:=gcc
+  MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+  DEPENDS:= +binutils +libstdcpp +libzstd @!arc
+  MENU:=1
+endef
 
 define Package/gcc/config
   source "$(SOURCE)/Config.in"
 endef
 
 ifeq ($(CONFIG_INCLUDE_STATIC_LIBC),y)
-	COPY_STATIC_LIBC=cp -a $(TOOLCHAIN_DIR)/lib/libc.a $(1)/usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)
+	COPY_STATIC_LIBC=cp -a $(TOOLCHAIN_ROOT_DIR)/lib/libc.a $(1)/usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)
 endif
 
 ifeq ($(CONFIG_INCLUDE_STATIC_LIBPTHREAD),y)
-	COPY_STATIC_LIBPTHREAD=cp -a $(TOOLCHAIN_DIR)/lib/libpthread.a $(1)/usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)
+	COPY_STATIC_LIBPTHREAD=cp -a $(TOOLCHAIN_ROOT_DIR)/lib/libpthread.a $(1)/usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)
 endif
 
 ifeq ($(CONFIG_INCLUDE_STATIC_LIBSTDC),y)
-	COPY_STATIC_LIBSTDC=cp -a $(TOOLCHAIN_DIR)/lib/libstdc++.a $(1)/usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)
+	COPY_STATIC_LIBSTDC=cp -a $(TOOLCHAIN_ROOT_DIR)/lib/libstdc++.a $(1)/usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)
 endif
 
 ifeq ($(CONFIG_INCLUDE_STATIC_LINK_SPEC),y)
@@ -62,16 +93,15 @@ ifeq ($(CONFIG_INCLUDE_STATIC_LINK_SPEC),y)
 	REMOVE_STATIC_SPEC=rm /usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)/specs
 endif
 
-include $(INCLUDE_DIR)/package.mk
 TARGET_LANGUAGES:="c,c++"
 BUGURL=https://dev.openwrt.org/
 PKGVERSION=OpenWrt GCC $(PKG_VERSION)
 TARGET_CPPFLAGS += -D_GLIBCXX_INCLUDE_NEXT_C_HEADERS
 
-# not using sstrip here as this fucks up the .so's somehow
-STRIP:=$(TOOLCHAIN_DIR)/bin/$(TARGET_CROSS)strip
+# not using sstrip here as this messes up the .so's somehow
+STRIP:=$(firstword $(TOOLCHAIN_BIN_DIRS))/$(TARGET_CROSS)strip
 RSTRIP:= \
-	NM="$(TOOLCHAIN_DIR)/bin/$(TARGET_CROSS)nm" \
+	NM="$(firstword $(TOOLCHAIN_BIN_DIRS))/$(TARGET_CROSS)nm" \
 	STRIP="$(STRIP)" \
 	STRIP_KMOD="$(STRIP) --strip-debug" \
 	$(SCRIPT_DIR)/rstrip.sh
@@ -81,6 +111,7 @@ ifneq ($(CONFIG_SOFT_FLOAT),y)
 		ARM_FLOAT_OPTION:= --with-float=hard
 	endif
 endif
+
 GMPSRC=gmp-6.1.0
 
 define Download/gmp
@@ -110,7 +141,7 @@ $(eval $(call Download,mpfr))
 
 define Build/Prepare
 	$(PKG_UNPACK)
-# 	we have to download and unpack additional stuff before patching
+#	we have to download and unpack additional stuff before patching
 	tar -C $(PKG_BUILD_DIR) -xvjf $(DL_DIR)/$(GMPSRC).tar.bz2
 	ln -sf $(PKG_BUILD_DIR)/$(GMPSRC) $(PKG_BUILD_DIR)/gmp
 	tar -C $(PKG_BUILD_DIR) -xvzf $(DL_DIR)/$(MPCSRC).tar.gz
@@ -125,7 +156,7 @@ define Build/Prepare
 	cp $(PKG_BUILD_DIR)/config.sub $(PKG_BUILD_DIR)/mpc/
 endef
 
-CONFIGURE_ARGS +=  CXXFLAGS_FOR_TARGET="-g -O2 -D_GLIBCXX_INCLUDE_NEXT_C_HEADERS"
+CONFIGURE_ARGS += CXXFLAGS_FOR_TARGET="-g -O2 -D_GLIBCXX_INCLUDE_NEXT_C_HEADERS"
 
 define Build/Configure
 	(cd $(PKG_BUILD_DIR); rm -f config.cache; \
@@ -197,10 +228,10 @@ define Package/gcc/install
 	ln -s $(REAL_GNU_TARGET_NAME)-gcc $(1)/usr/bin/cc
 	ln -s $(REAL_GNU_TARGET_NAME)-gcc $(1)/usr/bin/$(REAL_GNU_TARGET_NAME)-gcc-$(PKG_VERSION)
 	cp -ar $(PKG_INSTALL_DIR)/usr/lib/gcc $(1)/usr/lib
-	cp -ar $(TOOLCHAIN_DIR)/include $(1)/usr
-	cp -a $(TOOLCHAIN_DIR)/lib/*.{o,so*} $(1)/usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)
-	cp -a $(TOOLCHAIN_DIR)/lib/*nonshared*.a  $(1)/usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)
-	cp -a $(TOOLCHAIN_DIR)/lib/libm.a  $(1)/usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)
+	cp -ar $(TOOLCHAIN_ROOT_DIR)/include $(1)/usr
+	cp -a $(TOOLCHAIN_ROOT_DIR)/lib/*.{o,so*} $(1)/usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)
+	cp -a $(TOOLCHAIN_ROOT_DIR)/lib/*nonshared*.a  $(1)/usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)
+	cp -a $(TOOLCHAIN_ROOT_DIR)/lib/libm.a  $(1)/usr/lib/$(PKG_NAME)/$(REAL_GNU_TARGET_NAME)/$(PKG_VERSION)
 	$(COPY_STATIC_LIBC)
 	$(COPY_STATIC_LIBPTHREAD)
 	$(COPY_STATIC_LIBSTDC)
@@ -212,14 +243,18 @@ define Package/gcc/install
 	chmod +x $(1)/usr/bin/gcc_env.sh
 endef
 
+ifeq ($(CONFIG_INCLUDE_STATIC_LINK_SPEC),y)
 define Package/gcc/postinst
-	#!/bin/sh
-	$(INSTALL_STATIC_SPEC)
+#!/bin/sh
+
+$(INSTALL_STATIC_SPEC)
 endef
 
 define Package/gcc/postrm
-	#!/bin/sh
-	$(REMOVE_STATIC_SPEC)
+#!/bin/sh
+
+$(REMOVE_STATIC_SPEC)
 endef
+endif
 
 $(eval $(call BuildPackage,gcc))

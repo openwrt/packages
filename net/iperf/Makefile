@@ -8,17 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=iperf
-PKG_VERSION:=2.1.3
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=2.2.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_HASH:=dfe2197e2842fe9c9d9677bf1cb20a5a9ccfcb9a9de79f9927c39f73204ba003
+PKG_HASH:=754ab0a7e28033dbea81308ef424bc7df4d6e2fe31b60cc536b61b51fefbd8fb
 PKG_SOURCE_URL:=@SF/iperf2
 
 PKG_MAINTAINER:=Felix Fietkau <nbd@nbd.name>
 PKG_LICENSE:=BSD-3-Clause
+PKG_CPE_ID:=cpe:/a:iperf_project:iperf
 
 PKG_BUILD_PARALLEL:=1
+PKG_BUILD_FLAGS:=lto
 
 PKG_CONFIG_DEPENDS:=CONFIG_IPERF_ENABLE_MULTICAST
 
@@ -45,11 +47,11 @@ define Package/iperf/config
 endef
 
 CONFIGURE_ARGS += \
+	--enable-fastsampling \
 	$(call autoconf_bool,CONFIG_IPERF_ENABLE_MULTICAST,multicast) \
 	$(call autoconf_bool,CONFIG_IPV6,ipv6)
 
-TARGET_CFLAGS += -flto
-TARGET_CXXFLAGS += -fno-rtti -static-libstdc++ -flto -std=c++11
+TARGET_CXXFLAGS += -fno-rtti -static-libstdc++ -std=c++11
 TARGET_LDFLAGS += $(if $(CONFIG_USE_GLIBC),-lpthread -lm)
 
 define Package/iperf/install

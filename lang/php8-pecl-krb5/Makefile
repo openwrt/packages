@@ -8,13 +8,13 @@ include $(TOPDIR)/rules.mk
 PECL_NAME:=krb5
 PECL_LONGNAME:=Bindings for the Kerberos library
 
-PKG_VERSION:=1.1.4
+PKG_VERSION:=1.2.4
 PKG_RELEASE:=1
-PKG_HASH:=8aba35bb9f2892be9092e8717d3e13604a817cdfb478dbc3855a226abc6c5979
+PKG_HASH:=8dab1d0c61873f85b11be53d908e572eac124399c3837aa311374cecb5e13c9e
 
 PKG_NAME:=php8-pecl-krb5
 PKG_SOURCE:=$(PECL_NAME)-$(PKG_VERSION).tgz
-PKG_SOURCE_URL:=http://pecl.php.net/get/
+PKG_SOURCE_URL:=https://pecl.php.net/get/
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 

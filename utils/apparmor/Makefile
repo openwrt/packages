@@ -3,20 +3,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apparmor
-PKG_VERSION:=3.0.3
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=3.0.13
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=https://gitlab.com/apparmor/apparmor/-/archive/v$(PKG_VERSION)
-PKG_HASH:=66db49cc578e6a85ba2fc350507ad1741d2534cdfc7ed71a81261f84d6e2262d
-PKG_BUILD_DIR := $(BUILD_DIR)/$(PKG_NAME)-v$(PKG_VERSION)
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+PKG_SOURCE_URL:=https://gitlab.com/apparmor/apparmor
+PKG_MIRROR_HASH:=0f47852e1559607c2e62919a781d2f8226acbdb0df00b025be7ebc79e5c9bc8b
 
+PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
 
-PKG_BUILD_DEPENDS:=swig/host
-HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=setuptools-scm
+PKG_BUILD_DEPENDS:=swig/host python-setuptools-scm/host
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -131,10 +130,6 @@ define Build/Compile
 endef
 
 define Build/Install
-	# Make sure we have python's setup tools installed
-	$(if $(PYTHON3_PKG_HOST_PIP_INSTALL_ARGS), \
-		$(call HostPython3/PipInstall,$(PYTHON3_PKG_HOST_PIP_INSTALL_ARGS)) \
-	)
 	$(INSTALL_DIR) $(PKG_INSTALL_DIR)-libapparmor $(PKG_INSTALL_DIR)-utils $(PKG_INSTALL_DIR)-profiles
 	# Installing libapparmor
 	+$(MAKE_VARS) PYTHON=$(HOST_PYTHON) VERSION=$(PYTHON3_VERSION) \

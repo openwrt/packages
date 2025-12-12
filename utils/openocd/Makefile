@@ -8,22 +8,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openocd
-PKG_SOURCE_VERSION:=v0.11.0
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=0.12.0
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 PKG_SOURCE_URL:=https://git.code.sf.net/p/openocd/code
-PKG_MIRROR_HASH:=ec31ce908d951c6c7e173c7474269f3f105d7a7b3991afbe8f54f8d96646c725
-
-PKG_LICENSE:=GPL-2.0-only
-PKG_LICENSE_FILES:=COPYING
+PKG_MIRROR_HASH:=7fa2476feff229e6c7674dc27f949f8a573335abfa0b19cf27b9acf3937678f6
 
 PKG_MAINTAINER:=Paul Fertser <fercerpav@gmail.com>
+PKG_LICENSE:=GPL-2.0-only
+PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:openocd:open_on-chip_debugger
 
-PKG_BUILD_PARALLEL:=1
-PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
+PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 PKG_CONFIG_DEPENDS:=CONFIG_PACKAGE_openocd_with_usb
 
@@ -36,10 +36,10 @@ define Package/openocd
   TITLE:=OpenOCD Utility
   URL:=http://openocd.sf.net/
   DEPENDS:=+libusb-1.0 \
-	+libusb-compat \
 	+libftdi1 \
 	+hidapi \
-	+libgpiod
+	+libgpiod \
+	+libjaylink
 endef
 
 define Package/openocd/description
@@ -63,6 +63,7 @@ endef
 define Build/Prepare
 	$(call Build/Prepare/Default)
 	-$(RM) $(PKG_BUILD_DIR)/guess-rev.sh
+	-$(RM) $(PKG_BUILD_DIR)/jimtcl/configure.ac
 endef
 
 CONFIGURE_ARGS += \
@@ -72,6 +73,10 @@ CONFIGURE_ARGS += \
 	--enable-dummy \
 	--enable-sysfsgpio \
 	--enable-linuxgpiod
+
+ifeq ($(CONFIG_TARGET_bcm27xx),y)
+	CONFIGURE_ARGS += --enable-bcm2835gpio
+endif
 
 TARGET_CFLAGS += -DRELSTR=\\\"-$(PKG_VERSION)-$(PKG_RELEASE)-OpenWrt\\\"
 

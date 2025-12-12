@@ -1,14 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=crun
-PKG_VERSION:=1.4.1
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=1.17
+PKG_RELEASE:=3
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/containers/crun.git
-PKG_SOURCE_DATE:=2022-01-24
-PKG_SOURCE_VERSION:=47279c5370d3ebbd9cf2fb1b36a79225be0080e5
-PKG_MIRROR_HASH:=02fbbc755cf6b16e7aea2ee18436c6f9de8eb97be14972406252bbc8374f56bb
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/containers/crun/tar.gz/$(PKG_VERSION)?
+PKG_HASH:=f106f6adb752af5e0a867e226440e9ddaaf2d7400149d181f171b78ca19ad5e5
 
 PKG_BUILD_DEPENDS:=argp-standalone
 PKG_BUILD_PARALLEL:=1
@@ -18,6 +16,7 @@ PKG_INSTALL:=1
 PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:crun_project:crun
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -26,12 +25,24 @@ define Package/crun
   CATEGORY:=Utilities
   TITLE:=crun
   URL:=https://github.com/containers/crun
-  DEPENDS:=@!arc +libseccomp +libcap
+  DEPENDS:=@!arc +libseccomp +libcap +libgcrypt
 endef
 
 define Package/crun/description
   A fast and low-memory footprint OCI Container Runtime fully written in C.
 endef
+
+LIBOCISPEC_COMMIT:=68211ccc41201c45ad276b04c7f67d61e80b1f7a
+
+define Download/libocispec
+  PROTO:=git
+  URL:=https://github.com/containers/libocispec.git
+  SOURCE_VERSION:=$(LIBOCISPEC_COMMIT)
+  MIRROR_HASH:=688d00600dbdf46d4b52acc8e43313b14471026ccff8c3cc5983e2f5dfd15571
+  FILE:=libocispec-$(LIBOCISPEC_COMMIT).tar.xz
+  SUBDIR:=libocispec
+endef
+$(eval $(call Download,libocispec))
 
 CONFIGURE_ARGS+= \
 	--disable-systemd \
@@ -43,7 +54,8 @@ CONFIGURE_ARGS+= \
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
-	$(SED) '/#include <git-version.h>/d' $(PKG_BUILD_DIR)/src/crun.c
+	$(SED) '/#include <git-version.h>/d' $(PKG_BUILD_DIR)/src/{crun.c,libcrun/container.c}
+	xzcat $(DL_DIR)/libocispec-$(LIBOCISPEC_COMMIT).tar.xz | $(HOST_TAR) -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
 endef
 
 define Build/Configure

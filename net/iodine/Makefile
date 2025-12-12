@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=iodine
-PKG_VERSION:=0.7.0
-PKG_RELEASE:=4
+PKG_VERSION:=0.8.0
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://code.kryo.se/iodine/
-PKG_HASH:=ad2b40acf1421316ec15800dcde0f587ab31d7d6f891fa8b9967c4ded93c013e
+PKG_HASH:=546e92cf8617f7970ea81c850b1063eb189c68c406d0c6a67e02c55e72e714c6
 
 PKG_MAINTAINER:=Uwe Kleine-König <uwe+openwrt@kleine-koenig.org>
 PKG_LICENSE:=ISC

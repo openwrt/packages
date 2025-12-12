@@ -1,0 +1,48 @@
+From 7d669a90212e105b0f669aa2ab38c987b187baab Mon Sep 17 00:00:00 2001
+From: Hongxu Jia <hongxu.jia@windriver.com>
+Date: Wed, 21 May 2025 13:09:25 +0800
+Subject: [PATCH] fix lttng-tools fails to compile with libxml2 2.14.0+
+
+Description:
+| In file included from /srv/pokybuild/yocto-worker/qemux86-alt/build/build/tmp/work/core2-32-poky-linux/lttng-tools/2.13.15/recipe-sysroot/usr/include/libxml2/libxml/parser.h:25,
+|                  from ../../../../lttng-tools-2.13.15/src/common/config/session-config.c:29:
+| /srv/pokybuild/yocto-worker/qemux86-alt/build/build/tmp/work/core2-32-poky-linux/lttng-tools/2.13.15/recipe-sysroot/usr/include/libxml2/libxml/encoding.h:173:7: note: declared here
+|   173 |     } input XML_DEPRECATED_MEMBER;
+|       |       ^~~~~
+| ../../../../lttng-tools-2.13.15/src/common/config/session-config.c:432:15: error: called object is not a function or function pointer
+|   432 |         ret = handler->input(out_str, &out_len, (const xmlChar *) in_str, &in_len);
+|       |               ^~~~~~~
+| At top level:
+| cc1: note: unrecognized command-line option '-Wno-incomplete-setjmp-declaration' may have been intended to silence earlier diagnostics
+
+According to [1][2], the UTF-8 handler is
+```
+static xmlCharEncError
+UTF8ToUTF8(void *vctxt ATTRIBUTE_UNUSED,
+           unsigned char* out, int *outlen,
+           const unsigned char* in, int *inlen,
+           int flush ATTRIBUTE_UNUSED)
+```
+
+Update input.func with setting ATTRIBUTE_UNUSED params with NULL and 0
+
+[1] https://gitlab.gnome.org/GNOME/libxml2/-/commit/38f475072aefe032fff1dc058df3e56c1e7062fa
+[2] https://gitlab.gnome.org/GNOME/libxml2/-/commit/69b83bb68e2a8ed0013f80c51b9a358714b00c9a#478024cc18a2cc8dbaed34076e9775f6827f413d_2188_2201
+
+Signed-off-by: Marko, Peter <Peter.Marko@siemens.com>
+Signed-off-by: Hongxu Jia <hongxu.jia@windriver.com>
+---
+ src/common/config/session-config.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/src/common/config/session-config.c
++++ b/src/common/config/session-config.c
+@@ -429,7 +429,7 @@ static xmlChar *encode_string(const char
+ 		goto end;
+ 	}
+ 
+-	ret = handler->input(out_str, &out_len, (const xmlChar *) in_str, &in_len);
++	ret = handler->input.func(NULL, out_str, &out_len, (const xmlChar *) in_str, &in_len, 0);
+ 	if (ret < 0) {
+ 		xmlFree(out_str);
+ 		out_str = NULL;

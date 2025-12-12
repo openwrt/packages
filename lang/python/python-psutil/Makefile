@@ -8,17 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-psutil
-PKG_VERSION:=5.8.0
+PKG_VERSION:=5.9.5
 PKG_RELEASE:=1
 
 PYPI_NAME:=psutil
-PKG_HASH:=0c9ccb99ab76025f2f0bbecf341d4656e9c1351db8cc8a03ccd62e318ab4b5c6
+PKG_HASH:=5410638e4df39c54d957fc51ce03048acd8e6d60abc0f5107af51e5fb566eb3c
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
-PKG_LICENSE:=BSD 3-Clause
+PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
-
-HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=setuptools-scm
+PKG_CPE_ID:=cpe:/a:psutil_project:psutil
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -28,7 +27,7 @@ define Package/python3-psutil
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=psutil (process and system utilities)
+  TITLE:=Process and system monitoring
   URL:=https://github.com/giampaolo/psutil
   DEPENDS:=+python3-light
 endef

@@ -8,7 +8,7 @@
  #include "Server.h"
  
  #include "Admin.h"
-@@ -6561,6 +6562,10 @@ UINT SiWriteConfigurationFile(SERVER *s)
+@@ -6593,6 +6594,10 @@ UINT SiWriteConfigurationFile(SERVER *s)
  	{
  		return 0;
  	}

@@ -8,23 +8,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lz4
-PKG_VERSION:=1.9.3
+PKG_VERSION:=1.10.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/lz4/lz4/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=030644df4611007ff7dc962d981f390361e6c97a34e5cbc393ddfbe019ffe2c1
+PKG_SOURCE_URL:=https://github.com/lz4/lz4/releases/download/v$(PKG_VERSION)
+PKG_HASH:=537512904744b35e232912055ccf8ec66d768639ff3abe5788d90d792ec5f48b
 
 PKG_MAINTAINER:=Darik Horn <dajhorn@vanadac.com>
+PKG_CPE_ID:=cpe:/a:lz4_project:lz4
 
-PKG_INSTALL:=1
-PKG_BUILD_PARALLEL:=1
 PKG_CONFIG_DEPENDS:=CONFIG_PACKAGE_lz4
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/meson.mk
 
-MESON_BUILD_DIR:=$(PKG_BUILD_DIR)/contrib/meson/openwrt-build
+MESON_BUILD_DIR:=$(PKG_BUILD_DIR)/build/meson/openwrt-build
 
 define Package/lz4/Default
   SUBMENU:=Compression
@@ -67,12 +66,12 @@ define Package/lz4/description
 endef
 
 MESON_ARGS += \
-	-Ddebug_level=0 \
-	-Dbacktrace=false \
-	-Dbin_programs=$(if $(CONFIG_PACKAGE_lz4),true,false) \
-	-Dbin_tests=false \
-	-Dbin_contrib=false \
-	-Dbin_examples=false \
+	-Ddebug-level=0 \
+	-Dunstable=false \
+	-Dprograms=$(if $(CONFIG_PACKAGE_lz4),true,false) \
+	-Dtests=false \
+	-Dcontrib=false \
+	-Dexamples=false \
 	-Db_lto=false
 
 ifeq ($(CONFIG_LZ4_OPTIMIZE_SPEED),y)

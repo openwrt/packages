@@ -2,18 +2,19 @@ include $(TOPDIR)/rules.mk
 
 
 PKG_NAME:=kadnode
-PKG_VERSION:=2.3.0
-PKG_RELEASE:=3
+PKG_VERSION:=2.4.1
+PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=https://codeload.github.com/mwarning/KadNode/tar.gz/v$(PKG_VERSION)?
-PKG_SOURCE:=kadnode-$(PKG_VERSION).tar.gz
-PKG_HASH:=abb2ca66fb525fab53157d5486bbb43e3a522a4bdc9280a3dcb8cb403ee08583
-PKG_BUILD_DIR:=$(BUILD_DIR)/KadNode-$(PKG_VERSION)
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/mwarning/KadNode
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+PKG_MIRROR_HASH:=3583e409862982db88545fde721ed59cfc78df8c59ab1a715a621ad657e05248
 
 PKG_MAINTAINER:=Moritz Warning <moritzwarning@web.de>
 PKG_LICENSE:=MIT
 
 PKG_BUILD_PARALLEL:=1
+PKG_BUILD_FLAGS:=gc-sections
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -70,10 +71,6 @@ FEATURES += debug
 endif
 
 MAKE_FLAGS += FEATURES="$(FEATURES)"
-
-# Make binary smaller
-TARGET_CFLAGS += -ffunction-sections -fdata-sections
-TARGET_LDFLAGS += -Wl,--gc-sections
 
 define Package/kadnode/conffiles
 /etc/config/kadnode

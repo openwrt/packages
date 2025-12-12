@@ -12,9 +12,9 @@ Unbound may be useful on consumer grade embedded hardware. It is fully DNSSEC an
 This package builds on Unbounds capabilities with OpenWrt UCI. Not every Unbound option is in UCI, but rather, UCI simplifies the combination of related options. Unbounds native options are bundled and balanced within a smaller set of choices. Options include resources, DNSSEC, access control, and some TTL tweaking. The UCI also provides an escape option and works at the raw `unbound.conf` level.
 
 ## HOW TO: Ad Blocking
-The UCI scripts will work with [net/adblock](https://github.com/openwrt/packages/blob/master/net/adblock/files/README.md), if it is installed and enabled. Its all detected and integrated automatically. In brief, the adblock scripts create distinct local-zone files that are simply included in the unbound conf file during UCI generation. If you don't want this, then disable adblock or reconfigure adblock to not send these files to Unbound.
+The UCI scripts will work with [net/adblock](https://github.com/openwrt/packages/blob/master/net/adblock/files/README.md) and/or [net/adblock-fast](https://github.com/openwrt/packages/blob/master/net/adblock-fast/files/README.md), if they are installed and enabled. It's all detected and integrated automatically. In brief, the [net/adblock](https://github.com/openwrt/packages/blob/master/net/adblock/files/README.md) or [net/adblock-fast](https://github.com/openwrt/packages/blob/master/net/adblock-fast/files/README.md) create distinct local-zone files that are simply included in the unbound conf file during UCI generation. If you don't want this, then disable or reconfigure respective package to not send these files to Unbound.
 
-A few tweaks may be needed to enhance the realiability and effectiveness. Ad Block option for delay time may need to be set for upto one minute (adb_triggerdelay), because of boot up race conditions with interfaces calling Unbound restarts. Also many smart devices (TV, microwave, or refigerator) will also use public DNS servers either as a bypass or for certain connections in general. If you wish to force exclusive DNS to your router, then you will need a firewall rule for example:
+With [net/adblock](https://github.com/openwrt/packages/blob/master/net/adblock/files/README.md) package specifically, a few additional tweaks may be needed to enhance the realiability and effectiveness. Ad Block option for delay time may need to be set for upto one minute (adb_triggerdelay), because of boot up race conditions with interfaces calling Unbound restarts. Also many smart devices (TV, microwave, or refigerator) will also use public DNS servers either as a bypass or for certain connections in general. If you wish to force exclusive DNS to your router, then you will need a firewall rule for example:
 
 **/etc/config/firewall**:
 ```
@@ -208,6 +208,7 @@ One instance is supported currently.
 | dns64_prefix | 64:ff9b::/96 | subnet | DNS64 RFC6052 IPv4 in IPv6 well known prefix. | dns64-prefix: |
 | dhcp_link | none | program | Link to a DHCP server with supported scripts. See HOW TO above. | local-zone: local-data: forward-zone: |
 | dhcp4_slaac6 | 0 | boolean | Infer SLAAC IE64 IPv6 addresses from DHCPv4 MAC in DHCP link scripts. | - |
+| exclude_ipv6_ga | 0 | boolean | If exclude IPv6 global addresses from local data. | local-data: |
 | domain | lan | domain | This will suffix DHCP host records and be the default search domain. | local-zone: |
 | domain_insecure | (empty) | domain | **List** domains that you wish to skip DNSSEC. It is one way around NTP chicken and egg. Your DHCP domains are automatically included. | domain-insecure: |
 | domain_type | static | state | This allows you to lock down or allow forwarding of the local zone.<br>`static`: no forwarding like dnsmasq default<br>`refuse`: answer overtly with REFUSED<br>`deny`: covertly drop all queries<br>`transparent`: may continue forwarding or recusion | local-zone: |

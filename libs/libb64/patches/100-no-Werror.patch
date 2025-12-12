@@ -1,0 +1,11 @@
+--- a/src/Makefile
++++ b/src/Makefile
+@@ -15,7 +15,7 @@ TARGETS = $(LIBRARIES)
+ 
+ LINK.o = gcc
+ 
+-CFLAGS += -Werror -pedantic
++CFLAGS += -pedantic
+ CFLAGS += -I../include
+ 
+ vpath %.h ../include/b64

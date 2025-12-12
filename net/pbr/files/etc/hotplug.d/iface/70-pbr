@@ -1,0 +1,6 @@
+#!/bin/sh
+# shellcheck disable=SC1091,SC3060
+if [ -x /etc/init.d/pbr ] && /etc/init.d/pbr enabled; then
+	logger -t pbr "Sending reload signal to pbr for $INTERFACE due to $ACTION of $INTERFACE${DEVICE:+ ($DEVICE)}"
+	/etc/init.d/pbr on_interface_reload "$INTERFACE" "$ACTION"
+fi

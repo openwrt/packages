@@ -8,22 +8,25 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libcap-ng
-PKG_VERSION:=0.8.2
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=0.8.4
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://people.redhat.com/sgrubb/libcap-ng
-PKG_HASH:=52c083b77c2b0d8449dee141f9c3eba76e6d4c5ad44ef05df25891126cb85ae9
+PKG_HASH:=68581d3b38e7553cb6f6ddf7813b1fc99e52856f21421f7b477ce5abd2605a8a
 
 PKG_MAINTAINER:=Lucian CRISTIAN <lucian.cristian@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later LGPL-2.1-or-later
 PKG_LICENSE_FILES:=License
+PKG_CPE_ID:=cpe:/a:libcap-ng_project:libcap-ng
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
+PKG_BUILD_FLAGS:=lto
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 
 define Package/libcap-ng/Default
   TITLE:=POSIX capabilities library
@@ -54,7 +57,6 @@ define Package/libcap-ng-bin/description
 endef
 
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed $(FPIC)
-TARGET_CFLAGS += -flto
 
 CONFIGURE_VARS += \
     ac_cv_prog_swig_found=no
@@ -63,6 +65,15 @@ CONFIGURE_ARGS += \
     --prefix=/usr \
     --without-python \
     --without-python3
+
+HOST_CONFIGURE_VARS += \
+    ac_cv_prog_swig_found=no
+
+HOST_CONFIGURE_ARGS += \
+    --without-python \
+    --without-python3
+
+HOST_PKG_BUILD_FLAGS:=lto
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
@@ -88,3 +99,4 @@ endef
 
 $(eval $(call BuildPackage,libcap-ng))
 $(eval $(call BuildPackage,libcap-ng-bin))
+$(eval $(call HostBuild))

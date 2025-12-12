@@ -246,7 +246,7 @@
 +#endif /* _NETFILTER_MIME_H */
 --- /dev/null
 +++ b/extensions/rtsp/nf_conntrack_rtsp.c
-@@ -0,0 +1,756 @@
+@@ -0,0 +1,758 @@
 +/*
 + * RTSP extension for IP connection tracking
 + * (C) 2003 by Tom Marshall <tmarshall at real.com>
@@ -983,7 +983,9 @@
 +			sprintf(tmpname, "rtsp-%d", i);
 +		}
 +
-+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,6,0)
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,3,0)
++		strscpy(hlpr->name, tmpname, sizeof(hlpr->name));
++#elif LINUX_VERSION_CODE >= KERNEL_VERSION(3,6,0)
 +		strlcpy(hlpr->name, tmpname, sizeof(hlpr->name));
 +#else
 +		hlpr->name = tmpname;
@@ -1725,7 +1727,7 @@
 +module_exit(fini);
 --- a/extensions/Kbuild
 +++ b/extensions/Kbuild
-@@ -27,6 +27,7 @@ obj-${build_lscan}       += xt_lscan.o
+@@ -28,6 +28,7 @@ obj-${build_lscan}       += xt_lscan.o
  obj-${build_pknock}      += pknock/
  obj-${build_psd}         += xt_psd.o
  obj-${build_quota2}      += xt_quota2.o
@@ -1735,7 +1737,7 @@
  -include ${M}/Kbuild.*
 --- a/mconfig
 +++ b/mconfig
-@@ -23,3 +23,4 @@ build_lscan=m
+@@ -24,3 +24,4 @@ build_lscan=m
  build_pknock=m
  build_psd=m
  build_quota2=m

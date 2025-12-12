@@ -6,21 +6,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rclone
-PKG_VERSION:=1.57.0
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=1.72.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/rclone/rclone/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=294f7a6b0874509997d3a9ffae7c74f0c45b687df0ac7d7742f284ad3814fe55
+PKG_HASH:=5a2eccbc3519224377c0fbbf4469c6e8125c37616ac28cf3c3ec091ccfbbe0c5
 
 PKG_LICENSE:=MIT
-PKG_LICENSE_FILE:=LICENSE
+PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Elon Huang <elonhhuang@gmail.com> \
 		Tianling Shen <cnsztl@immortalwrt.org>
+PKG_CPE_ID:=cpe:/a:rclone:rclone
 
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
-PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16
 
 GO_PKG:=github.com/rclone/rclone
 GO_PKG_EXCLUDES:=test
@@ -43,11 +44,12 @@ endef
 
 define Package/rclone
   $(call Package/rclone/Default)
-  DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle +fuse-utils
+  DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle +fuse3-utils
   USERID:=rclone:rclone
 endef
 
 define Package/rclone-config
+  $(call Package/rclone/Default)
   TITLE+= (Config Scripts)
   DEPENDS:=+rclone
 endef

@@ -254,7 +254,7 @@ start_service() {
 	config_load "$CONFIGURATION"
 	local enabled
 
-	config_get enabled general enabled
+	config_get_bool enabled general enabled
 	if [ "$enabled" != "1" ]; then
 		echo "dcwapd is disabled in UCI"
 		return 1

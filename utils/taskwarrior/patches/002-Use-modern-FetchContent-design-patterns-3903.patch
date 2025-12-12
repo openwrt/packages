@@ -1,0 +1,68 @@
+From 236b57f321374f3556aeaf8baf9f231388497fc3 Mon Sep 17 00:00:00 2001
+From: Cristian Le <github@lecris.me>
+Date: Wed, 9 Jul 2025 03:39:54 +0200
+Subject: [PATCH] Use modern FetchContent design patterns (#3903)
+
+* Add higher bound to the CMake policies
+* Add the latest cmake to ubuntu22.04 image
+---
+ CMakeLists.txt                      |  2 +-
+ doc/CMakeLists.txt                  |  2 +-
+ performance/CMakeLists.txt          |  2 +-
+ scripts/CMakeLists.txt              |  2 +-
+ src/CMakeLists.txt                  |  2 +-
+ src/columns/CMakeLists.txt          |  2 +-
+ src/commands/CMakeLists.txt         |  2 +-
+ src/taskchampion-cpp/CMakeLists.txt | 48 +++++++++++++++++++++++++++--
+ test/CMakeLists.txt                 |  2 +-
+ test/docker/ubuntu2204              |  9 +++++-
+ 10 files changed, 61 insertions(+), 12 deletions(-)
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-cmake_minimum_required (VERSION 3.0)
++cmake_minimum_required (VERSION 3.24...4.0)
+ set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
+ 
+ include (CheckFunctionExists)
+--- a/doc/CMakeLists.txt
++++ b/doc/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-cmake_minimum_required (VERSION 3.0)
++cmake_minimum_required (VERSION 3.22...4.0)
+ message ("-- Configuring man pages")
+ set (man_FILES task-color.5 task-sync.5 taskrc.5 task.1)
+ foreach (man_FILE ${man_FILES})
+--- a/scripts/CMakeLists.txt
++++ b/scripts/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-cmake_minimum_required (VERSION 3.0)
++cmake_minimum_required (VERSION 3.22...4.0)
+ install (DIRECTORY bash fish vim hooks
+          DESTINATION ${TASK_DOCDIR}/scripts)
+ install (FILES zsh/_task
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-cmake_minimum_required (VERSION 3.0)
++cmake_minimum_required (VERSION 3.22...4.0)
+ include_directories (${CMAKE_SOURCE_DIR}
+                      ${CMAKE_SOURCE_DIR}/src
+                      ${CMAKE_SOURCE_DIR}/src/commands
+--- a/src/columns/CMakeLists.txt
++++ b/src/columns/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-cmake_minimum_required (VERSION 3.0)
++cmake_minimum_required (VERSION 3.22...4.0)
+ include_directories (${CMAKE_SOURCE_DIR}
+                      ${CMAKE_SOURCE_DIR}/src
+                      ${CMAKE_SOURCE_DIR}/src/commands
+--- a/src/commands/CMakeLists.txt
++++ b/src/commands/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-cmake_minimum_required (VERSION 3.0)
++cmake_minimum_required (VERSION 3.22...4.0)
+ include_directories (${CMAKE_SOURCE_DIR}
+                      ${CMAKE_SOURCE_DIR}/src
+                      ${CMAKE_SOURCE_DIR}/src/commands

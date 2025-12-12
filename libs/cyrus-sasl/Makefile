@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cyrus-sasl
-PKG_VERSION:=2.1.27
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_VERSION:=2.1.28
+PKG_RELEASE:=4
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://www.cyrusimap.org/releases/
-PKG_HASH:=26866b1549b00ffd020f188a43c258017fa1c382b3ddadd8201536f72efb05d5
+PKG_SOURCE_URL:=https://github.com/cyrusimap/cyrus-sasl/releases/download/cyrus-sasl-2.1.28/
+PKG_HASH:=7ccfc6abd01ed67c1a0924b353e526f1b766b21f42d4562ee635a8ebfc5bb38c
 
 PKG_LICENSE:=BSD-4c BSD
 PKG_LICENSE_FILES:=COPYING cmulocal/COPYING saslauthd/COPYING
@@ -37,7 +37,7 @@ endef
 
 define Package/libsasl2
   $(call Package/libsasl2/Default)
-  DEPENDS:=+libopenssl
+  DEPENDS:=+USE_GLIBC:libcrypt-compat +libopenssl
   TITLE+= (libraries)
 endef
 
@@ -45,6 +45,12 @@ define Package/libsasl2-sasldb
   $(call Package/libsasl2/Default)
   DEPENDS:=+libsasl2 +libdb47
   TITLE+= (sasldb libraries)
+endef
+
+define Package/libsasl2-utils
+  $(call Package/libsasl2/Default)
+  DEPENDS:=+libsasl2 +libdb47
+  TITLE+= (sasldb utilities)
 endef
 
 TARGET_CFLAGS += $(FPIC)
@@ -132,5 +138,11 @@ define Package/libsasl2-sasldb/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/sasl2/libsasldb.so* $(1)/usr/lib/sasl2/
 endef
 
+define Package/libsasl2-utils/install
+	$(INSTALL_DIR) $(1)/usr/sbin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/sbin/{pluginviewer,sasldblistusers2,saslpasswd2} $(1)/usr/sbin/
+endef
+
 $(eval $(call BuildPackage,libsasl2))
 $(eval $(call BuildPackage,libsasl2-sasldb))
+$(eval $(call BuildPackage,libsasl2-utils))

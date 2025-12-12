@@ -6,11 +6,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-paho-mqtt
 PKG_VERSION:=1.6.1
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=2
 
-PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>, Alexandru Ardelean <ardeleanalex@gmail.com>
-PKG_LICENSE:=EPL-1.0 Eclipse Distribution License v1.0
-PKG_LICENSE_FILES:=epl-v10 edl-v10
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>, Alexandru Ardelean <ardeleanalex@gmail.com>
+PKG_LICENSE:=EPL-2.0 Eclipse Distribution License v1.0
+PKG_LICENSE_FILES:=epl-v20 edl-v10 LICENSE.txt
 
 PYPI_NAME:=paho-mqtt
 PKG_HASH:=2a8291c81623aec00372b5a85558a372c747cbca8e9934dfe218638b8eefc26f
@@ -25,7 +25,7 @@ define Package/python3-paho-mqtt
   SUBMENU:=Python
   TITLE:=MQTT version 5.0/3.1.1 client class
   URL:=http://eclipse.org/paho
-  DEPENDS:=+python3-light
+  DEPENDS:=+python3-light +python3-uuid
 endef
 
 define Package/python3-paho-mqtt/description

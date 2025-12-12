@@ -9,14 +9,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pv
-PKG_VERSION:=1.6.6
-PKG_RELEASE:=1
+PKG_VERSION:=1.9.31
+PKG_RELEASE:=2
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.ivarch.com/programs/sources
-PKG_HASH:=608ef935f7a377e1439c181c4fc188d247da10d51a19ef79bcdee5043b0973f1
-PKG_LICENSE:=Artistic-2.0
-PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
+PKG_HASH:=a35e92ec4ac0e8f380e8e840088167ae01014bfa008a3a9d6506b848079daedf
+PKG_LICENSE:=GPL-3.0-or-later
+PKG_LICENSE_FILES:=docs/COPYING
+PKG_MAINTAINER:=
 
 PKG_INSTALL:=1
 
@@ -27,6 +28,7 @@ define Package/pv
   CATEGORY:=Utilities
   TITLE:=Shell pipeline element to meter data passing through
   URL:=https://www.ivarch.com/programs/pv.shtml
+  DEPENDS:=+libncursesw
 endef
 
 define Package/pv/description
@@ -36,6 +38,8 @@ define Package/pv/description
  through, how long it has taken, how near to completion it is, and an
  estimate of how long it will be until completion.
 endef
+
+CONFIGURE_ARGS += --with-ncurses
 
 define Package/pv/install
 	$(INSTALL_DIR) $(1)/usr/bin

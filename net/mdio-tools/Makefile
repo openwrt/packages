@@ -1,12 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mdio-tools
-PKG_RELEASE:=1
+PKG_VERSION:=1.3.1
+PKG_RELEASE:=3
 
 PKG_SOURCE_URL:=https://github.com/wkz/mdio-tools
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=1.0.1
-PKG_MIRROR_HASH:=36bc20b91034a2bbc627a4d4b58c3b46279f5bb65bf2067347a751bb0f9a0371
+PKG_SOURCE_VERSION:=f74eaf38dbda441df4fcaeb21ca4465957953a2f
+PKG_MIRROR_HASH:=faa3ad7dd254361c6a9f044aa134982cbeec0423149726e82363833b9f0e0f11
 
 PKG_FIXUP:=autoreconf
 
@@ -22,7 +23,7 @@ define Package/mdio-tools
   CATEGORY:=Utilities
   TITLE:=mdio-tools Linux MDIO register access
   URL:=https://github.com/wkz/mdio-tools.git
-  DEPENDS:=+libmnl
+  DEPENDS:=+kmod-mdio-netlink +libmnl
 endef
 
 define Package/mdio-tools/description
@@ -32,6 +33,7 @@ endef
 define Package/mdio-tools/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/mdio/mdio $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/mvls/mvls $(1)/usr/bin/
 endef
 
 define Build/Prepare

@@ -44,7 +44,7 @@ local line_vars = {
 		type = "bitrate"
 	},
 	{
-		name = "latn",
+		name = "interleave_delay",
 		type = "latency"
 	}
 }
@@ -52,19 +52,19 @@ local line_vars = {
 local errors = {
 	{
 		name = "uas",
-		type = "gauge"
+		type = "count"
 	},
 	{
 		name = "rx_corrupted",
-		type = "gauge"
+		type = "errors"
 	},
 	{
 		name = "rx_retransmitted",
-		type = "gauge"
+		type = "errors"
 	},
 	{
 		name = "tx_retransmitted",
-		type = "gauge"
+		type = "errors"
 	}
 }
 
@@ -80,14 +80,6 @@ local erb_vars = {
 }
 
 local general_vars = {
-	{
-		name = "profile",
-		type = "gauge"
-	},
-	{
-		name = "mode",
-		type = "gauge"
-	},
 	{
 		name = "state_num",
 		type = "gauge"
@@ -117,6 +109,13 @@ local function get_values(hostname, variables, metrics, direction)
 		if metrics and metrics[name] ~= nil then
 			local value = metrics[name]
 			local metric = build_metric(name, direction)
+			if information["type"] == "bool" then
+				if metrics[name] == true then
+					value = 1
+				else
+					value = 0
+				end
+			end
 
 			local t = {
 				host = host,

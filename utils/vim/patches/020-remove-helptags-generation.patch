@@ -1,0 +1,10 @@
+--- a/runtime/doc/Makefile
++++ b/runtime/doc/Makefile
+@@ -24,7 +24,6 @@ all: tags vim.man evim.man vimdiff.man v
+ # Use Vim to generate the tags file.  Can only be used when Vim has been
+ # compiled.  Supports multiple languages.
+ vimtags: $(DOCS)
+-	@$(VIMPROG) --clean -esX -V1 -u doctags.vim
+ 
+ # Use "doctags" to generate the tags file.  Only works for English!
+ tags: doctags $(DOCS)

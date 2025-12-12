@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xl2tpd
-PKG_VERSION:=1.3.16
-PKG_RELEASE:=2
+PKG_VERSION:=1.3.18
+PKG_RELEASE:=3
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=LICENSE
@@ -19,7 +19,7 @@ PKG_SOURCE_URL:=https://github.com/xelerance/xl2tpd.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_MIRROR_HASH:=bbb5e21967ec036bb59e18d2a8792b29d7525a1ba13de49f0b80325ab7bce2c6
+PKG_MIRROR_HASH:=f4faa15357063a2ac11e427adbcac6b51c755cc294f1a26fe4eb0c008840df31
 
 PKG_INSTALL:=1
 
@@ -61,6 +61,7 @@ ifneq (0,0)
 endif
 
 define Package/xl2tpd/conffiles
+/etc/config/xl2tp
 /etc/xl2tpd/xl2tpd.conf
 /etc/xl2tpd/xl2tp-secrets
 /etc/ppp/options.xl2tpd
@@ -73,6 +74,10 @@ define Package/xl2tpd/install
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/xl2tpd.init $(1)/etc/init.d/xl2tpd
+
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/xl2tp.config \
+		$(1)/etc/config/xl2tp
 
 	$(INSTALL_DIR) $(1)/etc/xl2tpd
 	$(INSTALL_DATA) ./files/xl2tpd.conf $(1)/etc/xl2tpd/

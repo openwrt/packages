@@ -8,6 +8,10 @@
 
 socket = require("socket")
 
+-- get configs
+
+local omit_zero_values = os.getenv("OMIT_ZERO_VALUES") == "1"
+
 -- Parsing
 
 function space_split(s)
@@ -32,20 +36,30 @@ end
 -- Metric printing
 
 function print_metric(metric, labels, value)
-  local label_string = ""
-  if labels then
-    for label,value in pairs(labels) do
-      label_string =  label_string .. label .. '="' .. value .. '",'
-    end
-    label_string = "{" .. string.sub(label_string, 1, -2) .. "}"
+  if type(value) == "nil" then
+    return
   end
-  output(string.format("%s%s %s", metric, label_string, value))
+  out:write(metric)
+  if labels then
+    out:write("{")
+    coma = ""
+    for label,value in pairs(labels) do
+      out:write(coma, label, '="', value, '"')
+      coma = ","
+    end
+    out:write("}")
+  end
+  out:write(" ", value, "\n")
 end
 
 function metric(name, mtype, labels, value)
-  output("# TYPE " .. name .. " " .. mtype)
+  out:write("# TYPE ", name, " ", mtype, "\n")
+  -- omit_zero_vales config supress time series always being zero
+  local printall = not (mtype == "counter" and omit_zero_values)
   local outputter = function(labels, value)
-    print_metric(name, labels, value)
+    if printall or tonumber(value) ~= 0 then
+      print_metric(name, labels, value)
+    end
   end
   if value then
     outputter(labels, value)
@@ -59,7 +73,7 @@ function timed_scrape(collector)
   local status, err = pcall(collector.scrape)
   if not status then
     success = 0
-    print(err)
+    io.stderr:write(err .. '\n')
   end
   return (socket.gettime() - start_time), success
 end
@@ -79,22 +93,21 @@ end
 
 -- Web server-specific functions
 
-function http_ok_header()
-  output("HTTP/1.0 200 OK\r\nServer: lua-metrics\r\nContent-Type: text/plain; version=0.0.4\r\n\r")
-end
-
-function http_not_found()
-  output("HTTP/1.0 404 Not Found\r\nServer: lua-metrics\r\nContent-Type: text/plain\r\n\r\nERROR: File Not Found.")
-end
-
-function serve(request)
-  local q = request:match("^GET /metrics%??([^ ]*) HTTP/1%.[01]$")
-  if q == nil then
-    http_not_found()
+function handle_request(env)
+  -- use buffered output instead uhttpd.send()
+  out = io.open("/proc/self/fd/1", "a+")
+  out:setvbuf("full")
+  if env.PATH_INFO ~= '/metrics' then
+    out:write("Status: 404 Not Found\r\n")
+    out:write("Server: lua-metrics\r\n")
+    out:write("Content-Type: text/plain\r\n\r\n")
+    out:write("ERROR: File Not Found.")
   else
-    http_ok_header()
+    out:write("Status: 200 OK\r\n")
+    out:write("Server: lua-metrics\r\n")
+    out:write("Content-Type: text/plain; version=0.0.4\r\n\r\n")
     local cols = {}
-    for c in q:gmatch("collect[^=]*=([^&]+)") do
+    for c in env.QUERY_STRING:gmatch("collect[^=]*=([^&]+)") do
       cols[#cols+1] = c
     end
     if #cols == 0 then
@@ -102,20 +115,10 @@ function serve(request)
     end
     run_all_collectors(cols)
   end
-  client:close()
-  return true
+  out:flush()
 end
 
 -- Main program
-
-for k,v in ipairs(arg) do
-  if (v == "-p") or (v == "--port") then
-    port = arg[k+1]
-  end
-  if (v == "-b") or (v == "--bind") then
-    bind = arg[k+1]
-  end
-end
 
 col_mods = {}
 col_names = {}
@@ -127,22 +130,7 @@ for c in ls_fd:lines() do
 end
 ls_fd:close()
 
-if port then
-  server = assert(socket.bind(bind, port))
-
-  while 1 do
-    client = server:accept()
-    client:settimeout(60)
-    local request, err = client:receive()
-
-    if not err then
-      output = function (str) client:send(str.."\n") end
-      if not serve(request) then
-        break
-      end
-    end
-  end
-else
-  output = print
+if arg ~= nil then
+  out = io.output()
   run_all_collectors(col_names)
 end

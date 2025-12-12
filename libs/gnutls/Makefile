@@ -1,27 +1,28 @@
+# SPDX-Identifier-License: GPL-2.0-only
 #
 # Copyright (C) 2005-2016 OpenWrt.org
-#
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
 #
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gnutls
-PKG_VERSION:=3.7.1
-PKG_RELEASE:=2
-PKG_USE_MIPS16:=0
+PKG_VERSION:=3.8.10
+PKG_RELEASE:=1
+PKG_BUILD_FLAGS:=no-mips16
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://www.gnupg.org/ftp/gcrypt/gnutls/v3.7
-PKG_HASH:=3777d7963eca5e06eb315686163b7b3f5045e2baac5e54e038ace9835e5cac6f
-PKG_FIXUP:=autoreconf gettext-version
+PKG_SOURCE_URL:=https://www.gnupg.org/ftp/gcrypt/gnutls/v3.8
+PKG_HASH:=db7fab7cce791e7727ebbef2334301c821d79a550ec55c9ef096b610b03eb6b7
+
 PKG_MAINTAINER:=Nikos Mavrogiannopoulos <nmav@gnutls.org>
 PKG_LICENSE:=LGPL-2.1-or-later
+PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:gnu:gnutls
 
-PKG_INSTALL:=1
+PKG_BUILD_DEPENDS:=gettext-full/host
 PKG_BUILD_PARALLEL:=1
+PKG_FIXUP:=autoreconf gettext-version
+PKG_INSTALL:=1
 PKG_LIBTOOL_PATHS:=. lib
 
 PKG_CONFIG_DEPENDS:= \
@@ -103,7 +104,7 @@ endef
 define Package/libgnutls-dane
 $(call Package/gnutls/Default)
   TITLE+= (libgnutls-dane library)
-  DEPENDS:= +libgnutls +libunbound
+  DEPENDS:= +libgnutls +PACKAGE_libgnutls-dane:libunbound
 endef
 
 define Package/libgnutls/description
@@ -131,9 +132,13 @@ CONFIGURE_ARGS+= \
 	--without-idn \
 	--with-default-trust-store-dir=/etc/ssl/certs/ \
 	--with-included-unistring \
+	--with-included-libunistring \
 	--with-librt-prefix="$(LIBRT_ROOT_DIR)/" \
 	--with-pic \
-	--with-system-priority-file=""
+	--with-system-priority-file="" \
+	--without-brotli \
+	--without-zlib \
+	--without-zstd
 
 ifneq ($(CONFIG_GNUTLS_EXT_LIBTASN1),y)
 CONFIGURE_ARGS += --with-included-libtasn1

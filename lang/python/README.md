@@ -369,3 +369,30 @@ HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=setuptools-scm
 ```
 
 The Python package will be installed in `$(STAGING_DIR_HOSTPKG)/lib/pythonX.Y/site-packages`.
+
+#### Non-Python packages installing host-side Python packages
+
+Non-Python packages can also install host-side Python packages using the same mechanism:
+
+* Set `HOST_PYTHON3_PACKAGE_BUILD_DEPENDS` (see above for details).
+
+* Include `python3-package.mk` (set `PYTHON3_PKG_BUILD:=0` to avoid using the default Python package build recipes).
+
+* Call `Py3Build/InstallBuildDepends` to initiate the installation.
+
+For example:
+
+```
+PYTHON3_PKG_BUILD:=0
+HOST_PYTHON3_PACKAGE_BUILD_DEPENDS:=setuptools-scm
+
+include $(INCLUDE_DIR)/package.mk
+include ../../lang/python/python3-package.mk
+# If outside of the packages feed:
+# include $(TOPDIR)/feeds/packages/lang/python/python3-package.mk
+
+define Build/Compile
+	$(call Py3Build/InstallBuildDepends)
+	$(call Build/Compile/Default)
+endef
+```

@@ -1,0 +1,32 @@
+From ca48d3964d26f5e3b38d73655f19b1836b16bd2d Mon Sep 17 00:00:00 2001
+From: Alexander Kanavin <alex@linutronix.de>
+Date: Tue, 18 Jan 2022 11:53:41 +0100
+Subject: [PATCH] src/Makefile: build util.c separately for makeguids
+
+util.c needs to be built twice when cross-compiling:
+for the build machine to be able to link with
+makeguids which then runs during the same build,
+and then for the actual target.
+
+Signed-off-by: Alexander Kanavin <alex@linutronix.de>
+---
+ src/Makefile | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+--- a/src/Makefile
++++ b/src/Makefile
+@@ -28,10 +28,13 @@ EFIVAR_OBJECTS = $(patsubst %.S,%.o,$(pa
+ EFISECDB_SOURCES = efisecdb.c guid-symbols.c secdb-dump.c util.c
+ EFISECDB_OBJECTS = $(patsubst %.S,%.o,$(patsubst %.c,%.o,$(EFISECDB_SOURCES)))
+ GENERATED_SOURCES = include/efivar/efivar-guids.h guid-symbols.c
+-MAKEGUIDS_SOURCES = makeguids.c util.c
++MAKEGUIDS_SOURCES = makeguids.c util-makeguids.c
+ MAKEGUIDS_OBJECTS = $(patsubst %.S,%.o,$(patsubst %.c,%.o,$(MAKEGUIDS_SOURCES)))
+ MAKEGUIDS_OUTPUT = $(GENERATED_SOURCES) guids.lds
+ 
++util-makeguids.c : util.c
++	cp util.c util-makeguids.c
++
+ ALL_SOURCES=$(LIBEFISEC_SOURCES) $(LIBEFIBOOT_SOURCES) $(LIBEFIVAR_SOURCES) \
+ 	    $(MAKEGUIDS_SOURCES) $(GENERATED_SOURCES) $(EFIVAR_SOURCES) \
+ 	    $(sort $(wildcard include/efivar/*.h))

@@ -1,0 +1,62 @@
+#!/bin/sh
+# shellcheck disable=SC3037,SC3043
+
+readonly pbrFunctionsFile='/etc/init.d/pbr'
+if [ -s "$pbrFunctionsFile" ]; then
+# shellcheck source=../../etc/init.d/pbr
+	. "$pbrFunctionsFile"
+else
+	printf "%b: pbr init.d file (%s) not found! \n" '\033[0;31mERROR\033[0m' "$pbrFunctionsFile"
+fi
+
+# shellcheck disable=SC2317
+pbr_iface_setup() {
+	local iface="${1}"
+	local proto
+	config_get proto "${iface}" proto
+	case "${iface}" in
+		(lan|loopback) return 0 ;;
+	esac
+	case "${proto}" in
+		(gre*|nebula|relay|vti*|vxlan|xfrm) return 0 ;;
+		(none)
+			uci_add network route "${iface}_rt"
+			uci_set network "${iface}_rt" interface "${iface}"
+			uci_set network "${iface}_rt" target '0.0.0.0/0'
+			uci_add route6 network "${iface}_rt6"
+			uci_set network "${iface}_rt6" interface "${iface}"
+			uci_set network "${iface}_rt6" target '::/0'
+		;;
+	esac
+	echo -en "Setting up ${packageName} routing tables for ${iface}... "
+	uci_set 'network' "${iface}" 'ip4table' "${packageName}_${iface%6}"
+	uci_set 'network' "${iface}" 'ip6table' "${packageName}_${iface%6}"
+	if ! grep -q -E -e "^[0-9]+\s+${packageName}_${iface%6}$" /etc/iproute2/rt_tables; then
+		sed -i -e "\$a $(($(sort -r -n /etc/iproute2/rt_tables | grep -o -E -m 1 "^[0-9]+")+1))\t${packageName}_${iface%6}" \
+			/etc/iproute2/rt_tables
+	fi
+	echo -e "${__OK__}"
+}
+
+config_load network
+config_foreach pbr_iface_setup interface
+network_flush_cache
+network_find_wan iface
+network_find_wan6 iface6
+# shellcheck disable=SC2154
+[ -n "$iface" ] && uci -q batch << EOF
+set network.default='rule'
+set network.default.lookup='${packageName}_${iface%6}'
+set network.default.priority='80000'
+EOF
+[ -n "$iface6" ] && uci -q batch << EOF
+set network.default6='rule6'
+set network.default6.lookup='${packageName}_${iface6%6}'
+set network.default6.priority='80000'
+EOF
+uci_commit network
+echo -en "Restarting network... "
+/etc/init.d/network restart
+echo -e "${__OK__}"
+
+exit 0
