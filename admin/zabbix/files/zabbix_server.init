@@ -1,0 +1,41 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008-2025 OpenWrt.org
+
+START=59
+
+USE_PROCD=1
+
+NAME=zabbix_server
+PROG=/usr/sbin/${NAME}
+CONFIG=/etc/zabbix_server.conf
+
+start_service() {
+	if [ -z "${CONFIG}" ]; then
+		logger "Missing configuration '${CONFIG}'"
+		exit 1
+	fi
+
+	# Get enabled config option
+	config_load "$NAME"
+	config_get_bool enabled general enabled 0
+
+	# shellcheck disable=SC2154
+	if [ "$enabled" -eq 0 ]; then
+		logger "service not enabled in /etc/config/$NAME"
+		exit 1
+	fi
+
+	mkdir -p /var/run/zabbix
+	chown zabbix:zabbix /var/run/zabbix
+	chown zabbix:zabbix ${CONFIG}
+
+	procd_open_instance
+	procd_set_param command ${PROG} -c ${CONFIG} -f
+	procd_set_param user zabbix
+	procd_set_param limits nofile="16384 100000"
+	procd_set_param file /etc/zabbix_server.conf
+	procd_set_param respawn
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_close_instance
+}
