@@ -51,13 +51,14 @@ endef
 define Package/acme-acmesh-dnsapi
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+acme-acmesh
+  DEPENDS:=+acme-common
   TITLE:=DNS API integration for ACME (Letsencrypt) client
   PKGARCH:=all
 endef
 
 define Package/acme-acmesh-dnsapi/description
  This package provides DNS API integration for ACME (Letsencrypt) client.
+ scripts are from acme.sh
 endef
 
 define Package/acme-acmesh-dnsapi/install
