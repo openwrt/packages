@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=postgresql
 PKG_VERSION:=17.5
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=PostgreSQL
 PKG_CPE_ID:=cpe:/a:postgresql:postgresql
@@ -119,7 +119,9 @@ PGSQL_CONFIG_VARS:= \
 	pgac_cv_snprintf_size_t_support=yes \
 	USE_DEV_URANDOM=1 \
 	ac_cv_file__dev_urandom="/dev/urandom" \
-	ZIC=zic
+	ZIC=zic \
+	pgac_cv_prog_cc_LDFLAGS_EX_BE__Wl___export_dynamic=yes \
+	pgac_cv_prog_cc_LDFLAGS__Wl___as_needed=yes
 
 TARGET_CONFIGURE_OPTS+=$(PGSQL_CONFIG_VARS)
 
