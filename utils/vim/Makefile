@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=vim
 PKG_VERSION:=9.1.1918
 PKG_XXD_VERSION:=2025.08.24
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 VIMVER:=91
 
 PKG_SOURCE_PROTO:=git
@@ -47,13 +47,17 @@ define Package/vim-full
   TITLE+= (Normal)
   PROVIDES:=vim
   CONFLICTS:=vim
+  DEPENDS:=vim-runtime
+  EXTRA_DEPENDS:=vim-runtime (=$(PKG_VERSION)-r$(PKG_RELEASE))
 endef
 
 define Package/vim-fuller
   $(call Package/vim/Default)
-  TITLE+= (Big)
+  TITLE+= (Huge)
   PROVIDES:=vim vim-full
   CONFLICTS:=vim vim-full
+  DEPENDS:=vim-runtime
+  EXTRA_DEPENDS:=vim-runtime (=$(PKG_VERSION)-r$(PKG_RELEASE))
 endef
 
 define Package/vim-runtime
@@ -74,13 +78,15 @@ define Package/xxd
   VERSION:=$(PKG_XXD_VERSION)
 endef
 
-define Package/vim-full/conffiles
-/usr/share/vim/vimrc
+define Package/vim/conffiles
 /root/.vimrc
 endef
 
-define Package/vim/conffiles
-/usr/share/vim/vimrc
+define Package/vim-full/conffiles
+/root/.vimrc
+endef
+
+define Package/vim-fuller/conffiles
 /root/.vimrc
 endef
 
@@ -96,7 +102,7 @@ endef
 
 define Package/vim-fuller/description
  Vim is an almost compatible version of the UNIX editor Vi.
- (Big build)
+ (Huge build)
 endef
 
 define Package/vim-runtime/description
@@ -115,18 +121,17 @@ define Package/xxd/description
 endef
 
 CONFIGURE_ARGS += \
-	--disable-gui \
-	--disable-gtktest \
-	--disable-xim \
-	--without-x \
-	--disable-netbeans \
-	--disable-cscope \
-	--disable-gpm \
 	--disable-acl \
+	--disable-gtktest \
 	--disable-libsodium \
+	--disable-netbeans \
 	--disable-selinux \
-	--with-tlib=ncurses \
+	--enable-cscope=no \
+	--enable-gpm=no \
+	--enable-gui=no \
+	--enable-xim=no \
 	--with-compiledby="non-existent-hostname-compiled" \
+	--with-tlib=ncurses \
 	--with-wayland=no
 
 CONFIGURE_VARS += \
@@ -134,8 +139,8 @@ CONFIGURE_VARS += \
 	vim_cv_getcwd_broken=no \
 	vim_cv_memmove_handles_overlap=yes \
 	vim_cv_stat_ignores_slash=yes \
-	vim_cv_tgetent=zero \
 	vim_cv_terminfo=yes \
+	vim_cv_tgetent=zero \
 	vim_cv_toupper_broken=no \
 	vim_cv_tty_group=root \
 	vim_cv_tty_mode=0620
@@ -155,7 +160,7 @@ define Build/Compile/vim
 		--with-features=tiny \
 	)
 	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) \
-		DESTDIR="$(PKG_INSTALL_DIR)" all
+		DESTDIR="$(PKG_INSTALL_DIR)/vim_tiny" all
 	$(CP) $(PKG_BUILD_DIR)/src/$(PKG_NAME) $(PKG_BUILD_DIR)/vim_tiny
 endef
 endif
@@ -166,7 +171,7 @@ define Build/Compile/vim-full
 		--with-features=normal \
 	)
 	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) \
-		DESTDIR="$(PKG_INSTALL_DIR)" all
+		DESTDIR="$(PKG_INSTALL_DIR)/vim_normal" all
 	$(CP) $(PKG_BUILD_DIR)/src/$(PKG_NAME) $(PKG_BUILD_DIR)/vim_normal
 endef
 endif
@@ -174,11 +179,11 @@ endif
 ifneq ($(CONFIG_PACKAGE_vim-fuller),)
 define Build/Compile/vim-fuller
 	$(call Build/Configure/Default, \
-		--with-features=big \
+		--with-features=huge \
 	)
 	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) \
-		DESTDIR="$(PKG_INSTALL_DIR)" all
-	$(CP) $(PKG_BUILD_DIR)/src/$(PKG_NAME) $(PKG_BUILD_DIR)/vim_big
+		DESTDIR="$(PKG_INSTALL_DIR)/vim_huge" all
+	$(CP) $(PKG_BUILD_DIR)/src/$(PKG_NAME) $(PKG_BUILD_DIR)/vim_huge
 endef
 endif
 
@@ -190,10 +195,10 @@ endef
 endif
 
 define Build/Compile/vim-runtime
-	$(MAKE) -C $(PKG_BUILD_DIR)/src DESTDIR="$(PKG_INSTALL_DIR)" installrtbase
-	(cd $(PKG_INSTALL_DIR) && tar -cf $(PKG_BUILD_DIR)/docs.tar ./usr/share/vim/vim$(VIMVER)/doc)
-	rm -rf $(PKG_INSTALL_DIR)/usr/share/vim/vim$(VIMVER)/doc
-	rm -rf $(PKG_INSTALL_DIR)/usr/man
+	$(MAKE) -C $(PKG_BUILD_DIR)/src DESTDIR="$(PKG_INSTALL_DIR)/vim_runtime" installrtbase
+	(cd $(PKG_INSTALL_DIR)/vim_runtime && tar -cf $(PKG_BUILD_DIR)/docs.tar ./usr/share/vim/vim$(VIMVER)/doc)
+	rm -rf $(PKG_INSTALL_DIR)/vim_runtime/usr/share/vim/vim$(VIMVER)/doc
+	rm -rf $(PKG_INSTALL_DIR)/vim_runtime/usr/man
 endef
 
 define Build/Compile
@@ -208,7 +213,7 @@ define Package/vim/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/vim_tiny $(1)/usr/bin/vim
 	$(INSTALL_DIR) $(1)/usr/share/vim
-	$(INSTALL_CONF) ./files/vimrc $(1)/usr/share/vim/
+	$(INSTALL_CONF) ./files/defaults.vim $(1)/usr/share/vim
 endef
 
 define Package/vim-full/install
@@ -216,20 +221,18 @@ define Package/vim-full/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/vim_normal $(1)/usr/bin/vim
 	$(INSTALL_DIR) $(1)/usr/share/vim
 	$(LN) vim $(1)/usr/bin/vimdiff
-	$(INSTALL_CONF) ./files/vimrc.full $(1)/usr/share/vim/vimrc
 endef
 
 define Package/vim-fuller/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/vim_big $(1)/usr/bin/vim
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/vim_huge $(1)/usr/bin/vim
 	$(INSTALL_DIR) $(1)/usr/share/vim
 	$(LN) vim $(1)/usr/bin/vimdiff
-	$(CP) $(PKG_INSTALL_DIR)/usr/share/vim/vim$(VIMVER) $(1)/usr/share/vim
-	$(INSTALL_CONF) ./files/vimrc.full $(1)/usr/share/vim/vimrc
 endef
 
 define Package/vim-runtime/install
-	$(CP) $(PKG_INSTALL_DIR)/* $(1)
+	$(CP) $(PKG_INSTALL_DIR)/vim_runtime/* $(1)
+	$(INSTALL_DIR) $(1)/usr/share/vim/vim$(VIMVER)/pack/dist/opt/netrw
 	rm -rf $(1)/usr/share/vim/vim$(VIMVER)/doc
 endef
 
