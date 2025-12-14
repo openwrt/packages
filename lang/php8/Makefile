@@ -63,7 +63,12 @@ endef
 define Package/php8/config
 	config PHP8_LIBXML
 		bool "PHP8 LIBXML support"
-		depends on PACKAGE_php8-cli || PACKAGE_php8-cgi
+		default y
+
+	config PHP8_DOM
+		bool "PHP8 DOM support"
+    depends on PHP8_LIBXML
+		default y
 
 	config PHP8_SYSTEMTZDATA
 		bool "Use system timezone data instead of php's built-in database"
@@ -249,7 +254,7 @@ else
   CONFIGURE_ARGS+= --without-curl
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-dom),)
+ifeq ($(CONFIG_PHP8_DOM),y)
   CONFIGURE_ARGS+= --enable-dom=shared
 else
   CONFIGURE_ARGS+= --disable-dom
@@ -399,8 +404,12 @@ else
   CONFIGURE_ARGS+= --disable-shmop
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-simplexml),)
-  CONFIGURE_ARGS+= --enable-simplexml=shared
+ifeq ($(CONFIG_PHP8_LIBXML),y)
+  ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-simplexml),)
+    CONFIGURE_ARGS+= --enable-simplexml=shared
+  else
+    CONFIGURE_ARGS+= --disable-simplexml
+  endif
 else
   CONFIGURE_ARGS+= --disable-simplexml
 endif
@@ -414,8 +423,12 @@ else
   CONFIGURE_ARGS+= --without-snmp
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-soap),)
-  CONFIGURE_ARGS+= --enable-soap=shared
+ifeq ($(CONFIG_PHP8_LIBXML),y)
+  ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-soap),)
+    CONFIGURE_ARGS+= --enable-soap=shared
+  else
+    CONFIGURE_ARGS+= --disable-soap
+  endif
 else
   CONFIGURE_ARGS+= --disable-soap
 endif
@@ -471,14 +484,22 @@ else
   CONFIGURE_ARGS+= --disable-xml
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-xmlreader),)
-  CONFIGURE_ARGS+= --enable-xmlreader=shared,"$(STAGING_DIR)/usr"
+ifeq ($(CONFIG_PHP8_LIBXML),y)
+  ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-xmlreader),)
+    CONFIGURE_ARGS+= --enable-xmlreader=shared,"$(STAGING_DIR)/usr"
+  else
+    CONFIGURE_ARGS+= --disable-xmlreader
+  endif
 else
   CONFIGURE_ARGS+= --disable-xmlreader
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-xmlwriter),)
-  CONFIGURE_ARGS+= --enable-xmlwriter=shared,"$(STAGING_DIR)/usr"
+ifeq ($(CONFIG_PHP8_LIBXML),y)
+  ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-xmlwriter),)
+    CONFIGURE_ARGS+= --enable-xmlwriter=shared,"$(STAGING_DIR)/usr"
+  else
+    CONFIGURE_ARGS+= --disable-xmlwriter
+  endif
 else
   CONFIGURE_ARGS+= --disable-xmlwriter
 endif
@@ -489,7 +510,7 @@ else
   CONFIGURE_ARGS+= --without-zip
 endif
 
-ifneq ($(SDK)$(CONFIG_PHP8_LIBXML),)
+ifeq ($(CONFIG_PHP8_LIBXML),y)
   CONFIGURE_ARGS+= --with-libxml
 else
   CONFIGURE_ARGS+= --without-libxml
@@ -647,7 +668,7 @@ $(eval $(call BuildModule,bcmath,Bcmath))
 $(eval $(call BuildModule,calendar,Calendar))
 $(eval $(call BuildModule,ctype,Ctype))
 $(eval $(call BuildModule,curl,cURL,+PACKAGE_php8-mod-curl:libcurl))
-$(eval $(call BuildModule,dom,DOM,+@PHP8_LIBXML +PACKAGE_php8-mod-dom:libxml2))
+$(eval $(call BuildModule,dom,DOM,@PHP8_LIBXML @PHP8_DOM +PACKAGE_php8-mod-dom:libxml2))
 $(eval $(call BuildModule,exif,EXIF))
 $(eval $(call BuildModule,fileinfo,Fileinfo))
 $(eval $(call BuildModule,filter,Filter))
@@ -672,9 +693,9 @@ $(eval $(call BuildModule,pgsql,PostgreSQL,+PACKAGE_php8-mod-pgsql:libpq))
 $(eval $(call BuildModule,phar,Phar Archives))
 $(eval $(call BuildModule,session,Session))
 $(eval $(call BuildModule,shmop,Shared Memory))
-$(eval $(call BuildModule,simplexml,SimpleXML,+@PHP8_LIBXML +PACKAGE_php8-mod-simplexml:libxml2))
+$(eval $(call BuildModule,simplexml,SimpleXML,@PHP8_LIBXML +PACKAGE_php8-mod-simplexml:libxml2))
 $(eval $(call BuildModule,snmp,SNMP,+PACKAGE_php8-mod-snmp:libnetsnmp +PACKAGE_php8-mod-snmp:libopenssl))
-$(eval $(call BuildModule,soap,SOAP,+@PHP8_LIBXML +PACKAGE_php8-mod-soap:libxml2 +php8-mod-session))
+$(eval $(call BuildModule,soap,SOAP,@PHP8_LIBXML +PACKAGE_php8-mod-soap:libxml2 +php8-mod-session))
 $(eval $(call BuildModule,sockets,Sockets))
 $(eval $(call BuildModule,sodium,Sodium,+PACKAGE_php8-mod-sodium:libsodium,30))
 $(eval $(call BuildModule,sqlite3,SQLite3,+PACKAGE_php8-mod-sqlite3:libsqlite3))
@@ -683,6 +704,6 @@ $(eval $(call BuildModule,sysvsem,System V shared memory))
 $(eval $(call BuildModule,sysvshm,System V semaphore))
 $(eval $(call BuildModule,tokenizer,Tokenizer))
 $(eval $(call BuildModule,xml,XML,+PHP8_LIBXML:libxml2 +!PHP8_LIBXML:libexpat))
-$(eval $(call BuildModule,xmlreader,XMLReader,+@PHP8_LIBXML +PACKAGE_php8-mod-dom:php8-mod-dom +PACKAGE_php8-mod-xmlreader:libxml2))
-$(eval $(call BuildModule,xmlwriter,XMLWriter,+@PHP8_LIBXML +PACKAGE_php8-mod-xmlwriter:libxml2))
+$(eval $(call BuildModule,xmlreader,XMLReader,@PHP8_LIBXML @PHP8_DOM +PACKAGE_php8-mod-dom:php8-mod-dom +PACKAGE_php8-mod-xmlreader:libxml2))
+$(eval $(call BuildModule,xmlwriter,XMLWriter,@PHP8_LIBXML +PACKAGE_php8-mod-xmlwriter:libxml2))
 $(eval $(call BuildModule,zip,ZIP,+PACKAGE_php8-mod-zip:libzip))
