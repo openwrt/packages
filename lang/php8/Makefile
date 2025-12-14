@@ -40,7 +40,8 @@ PHP8_MODULES= \
 
 PKG_CONFIG_DEPENDS:= \
 	$(patsubst %,CONFIG_PACKAGE_php8-mod-%,$(PHP8_MODULES)) \
-	CONFIG_PHP8_LIBXML CONFIG_PHP8_SYSTEMTZDATA CONFIG_PACKAGE_apache-mod-php8
+	CONFIG_PHP8_LIBXML CONFIG_PHP8_SYSTEMTZDATA CONFIG_PHP8_GETTEXT \
+  CONFIG_PHP8_FULLICUDATA CONFIG_PHP8_INTL CONFIG_PACKAGE_apache-mod-php8
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -72,6 +73,21 @@ define Package/php8/config
 			Enabling this feature automatically selects the zoneinfo-core package
 			which contains data for UTC timezone. To use other timezones you have
 			to install the corresponding zoneinfo-... package(s).
+
+	config PHP8_GETTEXT
+		bool "Enable gettext"
+		default y
+
+	config PHP8_INTL
+		bool "Enable Internationalization"
+    depends on PHP8_GETTEXT
+		default y
+
+	config PHP8_FULLICUDATA
+		bool "Add dependency to full ICU Data"
+		depends on PHP8_INTL
+		default n
+
 endef
 
 define Package/php8
@@ -94,7 +110,7 @@ endef
 
 define Package/php8-cli
   $(call Package/php8/Default)
-  DEPENDS+= +PACKAGE_php8-mod-intl:libstdcpp +riscv64:libatomic
+  DEPENDS+= +PHP8_GETTEXT:libstdcpp +riscv64:libatomic
   TITLE+= (CLI)
 endef
 
@@ -105,7 +121,7 @@ endef
 
 define Package/php8-cgi
   $(call Package/php8/Default)
-  DEPENDS+= +PACKAGE_php8-mod-intl:libstdcpp +riscv64:libatomic
+  DEPENDS+= +PHP8_GETTEXT:libstdcpp +riscv64:libatomic
   TITLE+= (CGI & FastCGI)
 endef
 
@@ -127,20 +143,13 @@ endef
 
 define Package/php8-fpm
   $(call Package/php8/Default)
-  DEPENDS+= +PACKAGE_php8-mod-intl:libstdcpp +riscv64:libatomic
+  DEPENDS+= +PHP8_GETTEXT:libstdcpp +riscv64:libatomic
   TITLE+= (FPM)
 endef
 
 define Package/php8-fpm/description
   $(call Package/php8/Default/description)
   This package contains the FastCGI Process Manager of the PHP8 interpreter.
-endef
-
-define Package/php8-mod-intl/config
-  config PHP8_FULLICUDATA
-	bool "Add dependency to full ICU Data"
-	depends on PACKAGE_php8-mod-intl
-	default n
 endef
 
 define Package/php8-mod-intl/description
@@ -158,7 +167,7 @@ define Package/apache-mod-php8
   SECTION:=net
   CATEGORY:=Network
   DEPENDS+=PACKAGE_apache-mod-php8:apache \
-	   +PACKAGE_php8-mod-intl:libstdcpp \
+	   +PHP8_GETTEXT:libstdcpp \
 	   +riscv64:libatomic \
 	   +libpcre2 +zlib
   TITLE:=PHP8 module for Apache Web Server
@@ -201,6 +210,19 @@ TARGET_CFLAGS += -D_LARGEFILE64_SOURCE
 endif
 ifneq ($(findstring riscv64,$(CONFIG_ARCH)),)
 TARGET_LDFLAGS += -latomic
+endif
+
+
+ifeq ($(CONFIG_PHP8_GETTEXT),y)
+  CONFIGURE_ARGS+= --with-gettext=shared,"$(STAGING_DIR)/usr/lib/libintl-full"
+else
+  CONFIGURE_ARGS+= --without-gettext
+endif
+
+ifeq ($(CONFIG_PHP8_INTL),y)
+  CONFIGURE_ARGS+= --enable-intl=shared
+else
+  CONFIGURE_ARGS+= --disable-intl
 endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-bcmath),)
@@ -265,12 +287,6 @@ else
   CONFIGURE_ARGS+= --disable-gd
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-gettext),)
-  CONFIGURE_ARGS+= --with-gettext=shared,"$(STAGING_DIR)/usr/lib/libintl-full"
-else
-  CONFIGURE_ARGS+= --without-gettext
-endif
-
 ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-gmp),)
   CONFIGURE_ARGS+= --with-gmp=shared,"$(STAGING_DIR)/usr"
 else
@@ -287,12 +303,6 @@ ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-iconv),)
   endif
 else
   CONFIGURE_ARGS+= --without-iconv
-endif
-
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-intl),)
-  CONFIGURE_ARGS+= --enable-intl=shared
-else
-  CONFIGURE_ARGS+= --disable-intl
 endif
 
 ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-ldap),)
@@ -643,10 +653,10 @@ $(eval $(call BuildModule,fileinfo,Fileinfo))
 $(eval $(call BuildModule,filter,Filter))
 $(eval $(call BuildModule,ftp,FTP,+PACKAGE_php8-mod-ftp:libopenssl))
 $(eval $(call BuildModule,gd,GD graphics,+PACKAGE_php8-mod-gd:libgd-full))
-$(eval $(call BuildModule,gettext,Gettext,+PACKAGE_php8-mod-gettext:libintl-full))
+$(eval $(call BuildModule,gettext,Gettext,@PHP8_GETTEXT +PACKAGE_php8-mod-gettext:libintl-full))
 $(eval $(call BuildModule,gmp,GMP,+PACKAGE_php8-mod-gmp:libgmp))
 $(eval $(call BuildModule,iconv,iConv,$(ICONV_DEPENDS)))
-$(eval $(call BuildModule,intl,Internationalization Functions,+PACKAGE_php8-mod-intl:icu +PHP8_FULLICUDATA:icu-full-data))
+$(eval $(call BuildModule,intl,Internationalization Functions,@PHP8_INTL +PACKAGE_php8-mod-intl:icu +PHP8_FULLICUDATA:icu-full-data))
 $(eval $(call BuildModule,ldap,LDAP,+PACKAGE_php8-mod-ldap:libopenldap +PACKAGE_php8-mod-ldap:libsasl2))
 $(eval $(call BuildModule,mbstring,MBString,+PACKAGE_php8-mod-mbstring:oniguruma))
 $(eval $(call BuildModule,mysqli,MySQL Improved Extension,+PACKAGE_php8-mod-mysqli:php8-mod-mysqlnd,30))
