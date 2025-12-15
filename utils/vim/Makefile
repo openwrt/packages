@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=vim
 PKG_VERSION:=9.1.1918
 PKG_XXD_VERSION:=2025.08.24
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 VIMVER:=91
 
 PKG_SOURCE_PROTO:=git
@@ -222,7 +222,7 @@ endef
 define Package/vim-fuller/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/vim_big $(1)/usr/bin/vim
-	$(INSTALL_DIR) $(1)/usr/share/vim
+	$(INSTALL_DIR) $(1)/usr/share/vim/vim$(VIMVER)/pack/dist/opt/netrw
 	$(LN) vim $(1)/usr/bin/vimdiff
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/vim/vim$(VIMVER) $(1)/usr/share/vim
 	$(INSTALL_CONF) ./files/vimrc.full $(1)/usr/share/vim/vimrc
