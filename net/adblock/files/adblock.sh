@@ -531,7 +531,7 @@ f_rmdns() {
 f_uci() {
 	local config="${1}"
 
-	if [ -n "${config}" ]; then
+	if [ -n "$(uci -q changes "${config}")" ]; then
 		uci_commit "${config}"
 		case "${config}" in
 			"firewall")
@@ -1027,11 +1027,11 @@ f_switch() {
 	elif [ "${status}" = "paused" ] && [ "${mode}" = "resume" ]; then
 		if [ "${adb_dnsshift}" = "0" ] && [ -f "${adb_backupdir}/${adb_dnsfile}" ]; then
 			mv -f "${adb_backupdir}/${adb_dnsfile}" "${adb_finaldir}/${adb_dnsfile}"
-			f_count "switch" "${adb_finaldir}/${adb_dnsfile}"
+			f_count "final" "${adb_finaldir}/${adb_dnsfile}"
 			done="true"
 		elif [ "${adb_dnsshift}" = "1" ] && [ ! -L "${adb_finaldir}/${adb_dnsfile}" ]; then
 			ln -fs "${adb_finaldir}/${adb_dnsfile}" "${adb_dnsdir}/${adb_dnsfile}"
-			f_count "switch" "${adb_finaldir}/${adb_dnsfile}"
+			f_count "final" "${adb_finaldir}/${adb_dnsfile}"
 			done="true"
 		fi
 	fi
@@ -1040,7 +1040,7 @@ f_switch() {
 		f_jsnup "${mode}"
 		f_log "info" "${mode} adblock service"
 	else
-		f_count "switch" "${adb_finaldir}/${adb_dnsfile}"
+		f_count "final" "${adb_finaldir}/${adb_dnsfile}"
 		f_jsnup "${status}"
 	fi
 	f_rmtemp
