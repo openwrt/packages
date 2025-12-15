@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=go2rtc
-PKG_VERSION:=1.9.12
+PKG_VERSION:=1.9.13
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/AlexxIT/go2rtc.git
-PKG_MIRROR_HASH:=097ddc9a9837c2705c0a7da2ae7dd671673697048955240b82b3db9eb370deb5
+PKG_MIRROR_HASH:=74ee944e3b3855d9afc0d60f833b99f3378f78d20714e4b759da41c98126fa57
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
 
 PKG_LICENSE:=MIT
@@ -23,12 +23,22 @@ GO_PKG_EXCLUDES:=examples/
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
 
+# NOTE: Since version 1.9.9 project contains some arch-dependent code,
+#       which should be selected by magic go comments or file endings,
+#       which unfortunately sometimes breaks on openwrt for some targets.
+#	So I mark package as broken for some of known bad targets.
+#
+#       MIPS - only mipsel variant supported
+#       RV64 - currently selection broken
+#
+GO2RTC_DEPENDS:=@mips:BROKEN @mips64:BROKEN @riscv64:BROKEN
+
 define Package/go2rtc
   SECTION:=multimedia
   CATEGORY:=Multimedia
   TITLE:=go2rtc camera streaming
   URL:=https://github.com/AlexxIT/go2rtc
-  DEPENDS:=$(GO_ARCH_DEPENDS) +ffmpeg
+  DEPENDS:=$(GO_ARCH_DEPENDS) $(GO2RTC_DEPENDS) +ffmpeg
   USERID:=go2rtc:go2rtc
 endef
 
