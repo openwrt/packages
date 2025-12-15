@@ -88,7 +88,7 @@ f_load() {
 	adb_ver="$(printf "%s" "${adb_packages}" | "${adb_jsoncmd}" -ql1 -e '@.packages.adblock')"
 	adb_sysver="$("${adb_ubuscmd}" -S call system board 2>/dev/null |
 		"${adb_jsoncmd}" -ql1 -e '@.model' -e '@.release.target' -e '@.release.distribution' -e '@.release.version' -e '@.release.revision' |
-		"${adb_awkcmd}" 'BEGIN{RS="";FS="\n"}{printf "%s, %s, %s %s %s %s",$1,$2,$3,$4,$5,$6}')"
+		"${adb_awkcmd}" 'BEGIN{RS="";FS="\n"}{printf "%s, %s, %s %s (%s)",$1,$2,$3,$4,$5}')"
 	f_conf
 
 	if [ -z "${adb_cores}" ]; then
@@ -450,7 +450,7 @@ f_rmdns() {
 f_uci() {
 	local config="${1}"
 
-	if [ -n "${config}" ]; then
+	if [ -n "$(uci -q changes "${config}")" ]; then
 		uci_commit "${config}"
 		case "${config}" in
 			"firewall")
@@ -924,14 +924,15 @@ f_tld() {
 # suspend/resume adblock processing
 #
 f_switch() {
-	local status entry done="false" mode="${1}"
+	local status done="false" mode="${1}"
 
 	json_init
 	json_load_file "${adb_rtfile}" >/dev/null 2>&1
 	json_select "data" >/dev/null 2>&1
 	json_get_var status "adblock_status"
 	f_env
-	if [ "${mode}" = "suspend" ] && [ "${status}" = "enabled" ]; then
+
+	if [ "${status}" = "enabled" ] && [ "${mode}" = "suspend" ]; then
 		if [ "${adb_dnsshift}" = "0" ] && [ -f "${adb_finaldir}/${adb_dnsfile}" ]; then
 			mv -f "${adb_finaldir}/${adb_dnsfile}" "${adb_backupdir}/${adb_dnsfile}"
 			printf "%b" "${adb_dnsheader}" >"${adb_finaldir}/${adb_dnsfile}"
@@ -941,14 +942,14 @@ f_switch() {
 			printf "%b" "${adb_dnsheader}" >"${adb_dnsdir}/${adb_dnsfile}"
 			done="true"
 		fi
-	elif [ "${mode}" = "resume" ] && [ "${status}" = "paused" ]; then
+	elif [ "${status}" = "paused" ] && [ "${mode}" = "resume" ]; then
 		if [ "${adb_dnsshift}" = "0" ] && [ -f "${adb_backupdir}/${adb_dnsfile}" ]; then
 			mv -f "${adb_backupdir}/${adb_dnsfile}" "${adb_finaldir}/${adb_dnsfile}"
-			f_count "resume" "${adb_finaldir}/${adb_dnsfile}"
+			f_count "final" "${adb_finaldir}/${adb_dnsfile}"
 			done="true"
 		elif [ "${adb_dnsshift}" = "1" ] && [ ! -L "${adb_finaldir}/${adb_dnsfile}" ]; then
 			ln -fs "${adb_finaldir}/${adb_dnsfile}" "${adb_dnsdir}/${adb_dnsfile}"
-			f_count "resume" "${adb_finaldir}/${adb_dnsfile}"
+			f_count "final" "${adb_finaldir}/${adb_dnsfile}"
 			done="true"
 		fi
 	fi
@@ -956,11 +957,11 @@ f_switch() {
 		f_dnsup
 		f_jsnup "${mode}"
 		f_log "info" "${mode} adblock service"
-		f_rmtemp
 	else
-		f_jsnup "stopped"
-		f_rmdns
+		f_count "final" "${adb_finaldir}/${adb_dnsfile}"
+		f_jsnup "${status}"
 	fi
+	f_rmtemp
 }
 
 # query blocklist for certain (sub-)domains
