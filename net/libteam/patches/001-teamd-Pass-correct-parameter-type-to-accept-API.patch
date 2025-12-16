@@ -1,0 +1,34 @@
+From 4eb54a811bef43da2be9cc84009567e5d6ca9741 Mon Sep 17 00:00:00 2001
+From: Khem Raj <raj.khem@gmail.com>
+Date: Sat, 11 May 2024 23:15:59 -0700
+Subject: [PATCH] teamd: Pass correct parameter type to accept API
+
+accept() expects sockaddr as second parameter
+
+int accept (int, struct sockaddr *__restrict, socklen_t *__restrict);
+
+Fixes build with gcc-16 on musl systems
+| ../../git/teamd/teamd_usock.c: In function 'callback_usock':
+| ../../git/teamd/teamd_usock.c:280:40: error: passing argument 2 of 'accept' from incompatible pointer type [-Wincompatible-pointer-types]
+|   280 |         sock = accept(ctx->usock.sock, &addr, &alen);
+|       |                                        ^~~~~
+|       |                                        |
+|       |                                        struct sockaddr_un *
+
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
+Signed-off-by: Jiri Pirko <jiri@nvidia.com>
+---
+ teamd/teamd_usock.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/teamd/teamd_usock.c
++++ b/teamd/teamd_usock.c
+@@ -277,7 +277,7 @@ static int callback_usock(struct teamd_c
+ 	int err;
+ 
+ 	alen = sizeof(addr);
+-	sock = accept(ctx->usock.sock, &addr, &alen);
++	sock = accept(ctx->usock.sock, (struct sockaddr *)&addr, &alen);
+ 	if (sock == -1) {
+ 		teamd_log_err("usock: Failed to accept connection.");
+ 		return -errno;
