@@ -107,13 +107,13 @@ odhcpd_zonedata() {
       cp "$dns_ls_new" "$dns_ls_old"
 
       # Determine common elements (in joined data+ptr records) 
-      cat "${dns_ls_add}.0" "${dns_ls_del}.0" | tr '\n' $'\034' | sed -E 's/(PTR[^'$'\034'']+)'$'\034''/\1\n/g' | \
+      cat "${dns_ls_add}.0" "${dns_ls_del}.0" | tr '\n' $'\034' | sed -E 's/( IN PTR [^'$'\034'']+)'$'\034''/\1\n/g' | \
           sort | uniq -d > "${dns_ls_com}"
 
       # Filter out common records from del and add lists
-      tr '\n' $'\034' <"${dns_ls_del}.0" | sed -E 's/(PTR[^'$'\034'']+)'$'\034''/\1\n/g' | \
+      tr '\n' $'\034' <"${dns_ls_del}.0" | sed -E 's/( IN PTR [^'$'\034'']+)'$'\034''/\1\n/g' | \
           grep -vF --file="${dns_ls_com}" | sed -E 's/'$'\034''/\n/g; s/^ //' >"${dns_ls_del}"
-      tr '\n' $'\034' <"${dns_ls_add}.0" | sed -E 's/(PTR[^'$'\034'']+)'$'\034''/\1\n/g' | \
+      tr '\n' $'\034' <"${dns_ls_add}.0" | sed -E 's/( IN PTR [^'$'\034'']+)'$'\034''/\1\n/g' | \
           grep -vF --file="${dns_ls_com}" | sed -E 's/'$'\034''/\n/g; s/^ //' >"${dns_ls_add}"
 
       # Apply only real changes
