@@ -1,7 +1,8 @@
 const root = "/sys/class/net/";
 const devices = fs.lsdir(root);
+const dev_length = length(devices);
 
-if (length(devices) < 1)
+if (dev_length < 1)
 	return false;
 
 const m_info = gauge("node_network_info");
@@ -25,24 +26,27 @@ const metrics = {
 	tx_queue_len:		gauge("node_network_transmit_queue_length"),
 };
 
-for (let device in devices) {
-	const devroot = root + device + "/";
+for (let i = 0; i < dev_length; i++) {
+	const devroot = root + devices[i] + "/";
 
 	m_info({
-		device,
+		device: devices[i],
 		address:	oneline(devroot + "address"),
 		broadcast:	oneline(devroot + "broadcast"),
 		duplex:		oneline(devroot + "duplex"),
 		operstate:	oneline(devroot + "operstate"),
 		ifalias:	oneline(devroot + "ifalias"),
 	}, 1);
+}
 
-	for (let m in metrics) {
-		let line = oneline(devroot + m);
-		metrics[m]({ device }, line);
+for (let m in metrics) {
+	for (let i = 0; i < dev_length; i++) {
+		metrics[m]({ device: devices[i] }, oneline(root + devices[i] + "/" + m));
 	}
+}
 
-	const speed = int(oneline(devroot + "speed"));
+for (let i = 0; i < dev_length; i++) {
+	const speed = int(oneline(root + devices[i] + "/" + "speed"));
 	if (speed > 0)
-			m_speed({ device }, speed * 1000 * 1000 / 8);
+			m_speed({ device: devices[i] }, speed * 1000 * 1000 / 8);
 }
