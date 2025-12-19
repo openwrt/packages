@@ -702,6 +702,7 @@ EOF
 
 	procd_open_instance
 	procd_set_param command $PROG -q -f -cf $config_file -lf $lease_file $dhcp_ifs
+	procd_set_param netdev $dhcp_ifs
 	procd_close_instance
 }
 
