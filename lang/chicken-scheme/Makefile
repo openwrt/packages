@@ -41,7 +41,7 @@ $(call Package/chicken-scheme/Default)
 endef
 
 define Package/chicken-scheme-interpreter/description
-  Chicken is an implementation of the Scheme language. It is portable, efficient, and supports 
+  Chicken is an implementation of the Scheme language. It is portable, efficient, and supports
   the R5RS and R7RS (work in progress) standards, and many extensions.
   Chicken can be used as a scripting language to automate tasks.
   This package contains the interpreter, 'csi', only --
@@ -93,11 +93,11 @@ define Package/chicken-scheme-full
 $(call Package/chicken-scheme/Default)
   TITLE+=full package
   # csc depends on gcc; chicken-install uses the 'install' command from coreutils
-  EXTRA_DEPENDS:= gcc, coreutils-install
+  DEPENDS:=gcc coreutils-install
 endef
 
 define Package/chicken-scheme-full/description
-  Chicken is an implementation of the Scheme language. It is portable, efficient, and supports 
+  Chicken is an implementation of the Scheme language. It is portable, efficient, and supports
   the R5RS and R7RS (work in progress) standards, and many extensions.
   Chicken can be used as a scripting language to automate tasks.
   This package contains the interpreter, 'csi'; the compiler, 'csc';
