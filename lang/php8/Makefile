@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
 PKG_VERSION:=8.4.15
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 PKG_LICENSE:=PHP-3.01
@@ -704,6 +704,6 @@ $(eval $(call BuildModule,sysvsem,System V shared memory))
 $(eval $(call BuildModule,sysvshm,System V semaphore))
 $(eval $(call BuildModule,tokenizer,Tokenizer))
 $(eval $(call BuildModule,xml,XML,+PHP8_LIBXML:libxml2 +!PHP8_LIBXML:libexpat))
-$(eval $(call BuildModule,xmlreader,XMLReader,@PHP8_LIBXML @PHP8_DOM +PACKAGE_php8-mod-dom:php8-mod-dom +PACKAGE_php8-mod-xmlreader:libxml2))
+$(eval $(call BuildModule,xmlreader,XMLReader,@PHP8_LIBXML @PHP8_DOM +PACKAGE_php8-mod-xmlreader:php8-mod-dom +PACKAGE_php8-mod-xmlreader:libxml2))
 $(eval $(call BuildModule,xmlwriter,XMLWriter,@PHP8_LIBXML +PACKAGE_php8-mod-xmlwriter:libxml2))
 $(eval $(call BuildModule,zip,ZIP,+PACKAGE_php8-mod-zip:libzip))
