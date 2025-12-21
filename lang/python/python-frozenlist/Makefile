@@ -8,11 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-frozenlist
-PKG_VERSION:=1.4.0
+PKG_VERSION:=1.8.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=frozenlist
-PKG_HASH:=09163bdf0b2907454042edb19f887c6d33806adc71fbd54afc14908bfdc22251
+PKG_BUILD_DEPENDS:=python-setuptools/host python-expandvars/host
+PKG_HASH:=3ede829ed8d842f6cd48fc7081d7a41001a56f1f38603f9d49bf3020d59a31ad
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
