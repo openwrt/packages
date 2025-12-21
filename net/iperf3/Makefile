@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=iperf
 PKG_VERSION:=3.20
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://downloads.es.net/pub/iperf
@@ -28,25 +28,22 @@ include $(INCLUDE_DIR)/package.mk
 
 DISABLE_NLS:=
 
-define Package/iperf3/default
+define Package/iperf3
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Internet Protocol bandwidth measuring tool
   URL:=https://github.com/esnet/iperf
-endef
-
-define Package/iperf3
-$(call Package/iperf3/default)
-  VARIANT:=nossl
   DEPENDS:=+libiperf3
 endef
 
-define Package/iperf3-ssl
-$(call Package/iperf3/default)
-  TITLE+= with iperf_auth support
-  VARIANT:=ssl
-  DEPENDS:=+libopenssl +libatomic
-  CONFLICTS:=iperf3
+define Package/iperf3/config
+menu "Configuration"
+	depends on PACKAGE_iperf3
+
+config PACKAGE_iperf3_SSL_SUPPORT
+	bool "SSL support (iperf_auth)"
+	default n
+endmenu
 endef
 
 define Package/libiperf3
@@ -54,14 +51,24 @@ define Package/libiperf3
   CATEGORY:=Libraries
   TITLE:=Internet Protocol bandwidth measuring library
   URL:=https://github.com/esnet/iperf
-  DEPENDS+=+libatomic
+  DEPENDS:=+libatomic +PACKAGE_iperf3_SSL_SUPPORT:libopenssl
+endef
+
+define Package/libiperf3/config
+menu "Configuration"
+	depends on PACKAGE_libiperf3
+
+config PACKAGE_iperf3_SSL_SUPPORT
+	bool "SSL support (iperf_auth)"
+	default n
+endmenu
 endef
 
 TARGET_CFLAGS += -D_GNU_SOURCE
 TARGET_LDFLAGS += -latomic
 
-ifeq ($(BUILD_VARIANT),ssl)
-	CONFIGURE_ARGS += --with-openssl="$(STAGING_DIR)/usr" --disable-shared
+ifeq ($(CONFIG_PACKAGE_iperf3_SSL_SUPPORT),y)
+	CONFIGURE_ARGS += --with-openssl="$(STAGING_DIR)/usr"
 else
 	CONFIGURE_ARGS += --without-openssl
 endif
@@ -87,18 +94,7 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/* $(1)/usr/include/
 endef
 
-# autoreconf fails if the README file isn't present
-define Build/Prepare
-	$(call Build/Prepare/Default)
-	touch $(PKG_BUILD_DIR)/README
-endef
-
 define Package/iperf3/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/iperf3 $(1)/usr/bin/
-endef
-
-define Package/iperf3-ssl/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/iperf3 $(1)/usr/bin/
 endef
@@ -109,5 +105,4 @@ define Package/libiperf3/install
 endef
 
 $(eval $(call BuildPackage,iperf3))
-$(eval $(call BuildPackage,iperf3-ssl))
 $(eval $(call BuildPackage,libiperf3))
