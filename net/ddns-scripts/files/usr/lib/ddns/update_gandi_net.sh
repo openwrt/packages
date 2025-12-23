@@ -22,13 +22,13 @@ json_close_array
 
 # Log the curl command
 write_log 7 "curl -s -X PUT \"$__ENDPOINT/domains/$domain/records/$username/$__RRTYPE\" \
-	-H \"Authorization: Apikey $password\" \
+	-H \"Authorization: Bearer $password\" \
 	-H \"Content-Type: application/json\" \
 	-d \"$(json_dump)\" \
 	--connect-timeout 30"
 
 __STATUS=$(curl -s -X PUT "$__ENDPOINT/domains/$domain/records/$username/$__RRTYPE" \
-	-H "Authorization: Apikey $password" \
+	-H "Authorization: Bearer $password" \
 	-H "Content-Type: application/json" \
 	-d "$(json_dump)" \
 	--connect-timeout 30 \
