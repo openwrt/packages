@@ -15,7 +15,7 @@ PKG_HASH:=dcea5167414f7c805557de2d7a47a9b3147bcbf617b91f5f0f4afe5e6543026b
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=Copyright.txt
-PKG_MAINTAINER:=Aleksey Vasilenko <aleksey.vasilenko@gmail.com>
+PKG_MAINTAINER:=
 PKG_CPE_ID:=cpe:/a:graphicsmagick:graphicsmagick
 
 PKG_BUILD_PARALLEL:=1

@@ -17,7 +17,7 @@ PKG_HASH:=0cdf3b44e327439ea6677e61e06f28a0f82ea080af2dcbd665bc5a945b167012
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE.txt
-PKG_MAINTAINER:=Aleksey Vasilenko <aleksey.vasilenko@gmail.com>
+PKG_MAINTAINER:=
 PKG_CPE_ID:=cpe:/a:erlang:erlang
 
 PKG_BUILD_DEPENDS:=erlang/host openssl unixodbc/host
