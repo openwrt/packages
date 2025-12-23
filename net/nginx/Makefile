@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nginx
 PKG_VERSION:=1.26.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=nginx-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://nginx.org/download/
@@ -96,9 +96,7 @@ define Package/nginx/default
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
   TITLE:=Nginx web server
-  URL:=http://nginx.org/
-  DEPENDS:=+libopenssl +libpthread
-  PROVIDES:=nginx
+  URL:=https://nginx.org/
 endef
 
 define Package/nginx/description
@@ -113,11 +111,19 @@ endef
 define Package/nginx-ssl
   $(Package/nginx/default)
   TITLE += with SSL support
-  VARIANT:=ssl
-  DEPENDS+= +USE_GLIBC:libcrypt-compat +NGINX_PCRE:libpcre2 \
-	+NGINX_PCRE:nginx-ssl-util +!NGINX_PCRE:nginx-ssl-util-nopcre \
-	+NGINX_HTTP_GZIP:zlib +NGINX_DAV:libxml2
+  DEPENDS:= \
+    +USE_GLIBC:libcrypt-compat \
+    +libopenssl \
+    +NGINX_PCRE:libpcre2 \
+    +libpthread \
+    +NGINX_DAV:libxml2 \
+    +NGINX_PCRE:nginx-ssl-util \
+    +!NGINX_PCRE:nginx-ssl-util-nopcre \
+    +NGINX_HTTP_GZIP:zlib
   EXTRA_DEPENDS:=nginx-ssl-util$(if $(CONFIG_NGINX_PCRE),,-nopcre) (>=1.5-r1)
+  PROVIDES:=nginx
+  VARIANT:=ssl
+  DEFAULT_VARIANT:=1
   CONFLICTS:=nginx-full
 endef
 
@@ -164,10 +170,17 @@ endef
 define Package/nginx-full
   $(Package/nginx/default)
   TITLE += with ALL config selected
-  DEPENDS+= +USE_GLIBC:libcrypt-compat +libpcre2 +nginx-ssl-util +zlib +libxml2
+  DEPENDS:= \
+    +USE_GLIBC:libcrypt-compat \
+    +libopenssl \
+    +libpcre2 \
+    +libpthread \
+    +libxml2 \
+    +nginx-ssl-util \
+    +zlib
   EXTRA_DEPENDS:=nginx-ssl-util (>=1.5-r1)
+  PROVIDES=nginx
   VARIANT:=full
-  PROVIDES += nginx-ssl
 endef
 
 Package/nginx-full/description = $(Package/nginx/description) \
@@ -186,9 +199,7 @@ define Package/nginx-mod-luci
   SUBMENU:=Web Servers/Proxies
   TITLE:=Support file for Nginx
   URL:=http://nginx.org/
-  DEPENDS:=+uwsgi +uwsgi-luci-support +nginx-ssl +nginx-mod-ubus
-  # TODO: add PROVIDES when removing nginx-mod-luci-ssl
-  # PROVIDES:=nginx-mod-luci-ssl
+  DEPENDS:=+uwsgi +uwsgi-luci-support +nginx +nginx-mod-ubus
 endef
 
 define Package/nginx-mod-luci/description
@@ -220,14 +231,14 @@ endef
 
 define Package/nginx-mod-lua-resty-lrucache
   $(call Package/nginx/default)
-  DEPENDS:=@HAS_LUAJIT_ARCH +luajit2
   TITLE:=Nginx Lua OpenResty lrucache module
+  DEPENDS:=@HAS_LUAJIT_ARCH +luajit2
 endef
 
 define Package/nginx-mod-lua-resty-core
   $(call Package/nginx/default)
-  DEPENDS:=+nginx-mod-lua-resty-lrucache
   TITLE:=Nginx Lua OpenResty core module
+  DEPENDS:=+nginx-mod-lua-resty-lrucache
 endef
 
 define Package/nginx-mod-lua-resty-lrucache/install
@@ -386,12 +397,12 @@ endef
 
 # $(1) module name
 # $(2) module additional dependency
-# $(3) module so name (stripped of the finaly _module.so)
+# $(3) module so name (stripped of the finally _module.so)
 # $(4) module description
 define BuildModule
   define Package/nginx-mod-$(1)
     $(call Package/nginx/default)
-    DEPENDS:=+nginx-ssl $(2)
+    DEPENDS:=+nginx $(2)
     TITLE:=Nginx $(1) module
   endef
 
@@ -493,7 +504,7 @@ $(eval $(call BuildModule,stream,+@NGINX_STREAM_CORE_MODULE, \
 	ngx_stream, Add support for NGINX request streaming.))
 $(eval $(call BuildModule,lua,+nginx-mod-lua-resty-core,ngx_http_lua, \
 	Enable Lua module (luajit2 based, OpenResty patches)))
-$(eval $(call BuildModule,ubus,+libubus +libjson-c +libblobmsg-json +@NGINX_UBUS, \
+$(eval $(call BuildModule,ubus,+libubus +libjson-c +libblobmsg-json, \
 	ngx_http_ubus,Enable UBUS api support directly from the server.))
 $(eval $(call BuildModule,dav-ext,+@NGINX_DAV +libxml2,ngx_http_dav_ext, \
 	Enable the WebDAV methods PROPFIND OPTIONS LOCK UNLOCK.))
