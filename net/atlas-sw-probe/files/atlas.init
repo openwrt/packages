@@ -82,17 +82,8 @@ create_key() {
 		exit 1
 	fi
 
-	if [ -n "$(which ssh-keygen)" ]; then
-		ssh-keygen -t rsa -b 2048 -f $probe_key -N ""
-		sed -i "s/ \S*$/ "$username"/" $probe_pub_key
-	elif [ -n "$(which dropbearkey)" ] && [ -n "$(which dropbearconvert)" ]; then
-		local public_key
-
-		public_key="$(dropbearkey -t rsa -f /etc/atlas/probe_key_dropbear -s 2048 | sed -n 2p)"
-		public_key="$(echo "$public_key" | sed "s/ \S*$/ "$username"/")"
-		echo $public_key > $probe_pub_key
-		dropbearconvert dropbear openssh /etc/atlas/probe_key_dropbear $probe_key
-		rm /etc/atlas/probe_key_dropbear
+	if [ -f /usr/libexec/ssh-keygen-openssh -a -x /usr/libexec/ssh-keygen-openssh ]; then
+		/usr/libexec/ssh-keygen-openssh -t rsa -b 4096 -f $probe_key -N "" -c "$username"
 	else
 		print_msg "Can't find a way to generate key."
 		exit 1
@@ -102,10 +93,8 @@ create_key() {
 	[ -f $PRIV_KEY_FILE ] || ln -s $probe_key $PRIV_KEY_FILE
 	[ -f $PUB_KEY_FILE ] || ln -s $probe_pub_key $PUB_KEY_FILE
 
-	#Fix permission
-	chown atlas $probe_key $probe_pub_key
-	chgrp atlas $probe_key $probe_pub_key
-	chmod 644 $probe_key $probe_pub_key
+	#Fix ownership
+	chown atlas:atlas $probe_key $probe_pub_key
 
 	print_msg "Key generated successfully. Use the get_key command to show the public key and get instruction on how to register your probe."
 }
