@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008-2014 OpenWrt.org
+# Copyright (C) 2008-2025 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -60,15 +60,15 @@ $(eval $(foreach a,$(DIR_BIN),ALTS_$(a):=300:/bin/$(a):/usr/libexec/$(a)-coreuti
 $(eval $(foreach a,$(DIR_USR_BIN),ALTS_$(a):=300:/usr/bin/$(a):/usr/libexec/$(a)-coreutils$(newline)))
 $(eval $(foreach a,$(DIR_USR_SBIN),ALTS_$(a):=300:/usr/sbin/$(a):/usr/libexec/$(a)-coreutils$(newline)))
 
-DEPENDS_sort = +libpthread
-DEPENDS_timeout = +librt
-DEPENDS_expr = +libgmp
-DEPENDS_factor = +libgmp
 DEPENDS_cp = +libacl
 DEPENDS_dir = +libacl +libcap
+DEPENDS_expr = +libgmp
+DEPENDS_factor = +libgmp
 DEPENDS_install = +libacl
 DEPENDS_ls = +libacl +libcap
 DEPENDS_mv = +libacl
+DEPENDS_sort = +libpthread
+DEPENDS_timeout = +librt
 DEPENDS_vdir = +libacl +libcap
 
 FILES_stdbuf := usr/lib/coreutils/libstdbuf.so
@@ -77,7 +77,7 @@ define Package/coreutils/Default
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=The GNU core utilities
-  URL:=http://www.gnu.org/software/coreutils/
+  URL:=https://www.gnu.org/software/coreutils/
 endef
 
 define Package/coreutils
@@ -118,7 +118,6 @@ CONFIGURE_VARS += \
 
 CONFIGURE_ARGS += \
 	--disable-xattr \
-	--enable-install-program=su \
 	--enable-threads=posix \
 	--enable-acl \
 	--disable-assert \
@@ -128,8 +127,7 @@ CONFIGURE_ARGS += \
 	--without-linux-crypto \
 	--without-openssl \
 	--$(if $(CONFIG_USE_MUSL),with,without)-included-regex \
-	--without-selinux \
-	--with-gmp
+	--without-selinux
 
 TARGET_CFLAGS += -std=c17
 
