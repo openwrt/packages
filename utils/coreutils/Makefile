@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=coreutils
-PKG_VERSION:=9.7
+PKG_VERSION:=9.9
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/coreutils
-PKG_HASH:=e8bb26ad0293f9b5a1fc43fb42ba970e312c66ce92c1b0b16713d7500db251bf
+PKG_HASH:=19bcb6ca867183c57d77155eae946c5eced88183143b45ca51ad7d26c628ca75
 
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -26,12 +26,12 @@ PKG_BUILD_PARALLEL:=1
 include $(INCLUDE_DIR)/package.mk
 
 COREUTILS_APPLETS := \
-	base32 base64 basename basenc b2sum cat chcon chgrp chmod chown chroot	\
+	base32 base64 basename basenc b2sum cat chgrp chmod chown chroot	\
 	cksum comm cp csplit cut date dd df dir dircolors dirname du echo env	\
 	expand expr factor false fmt fold groups head hostid id install join	\
 	kill link ln logname ls md5sum mkdir mkfifo mknod mktemp mv nice nl	\
 	nohup nproc numfmt od paste pathchk pinky pr printenv printf ptx pwd	\
-	readlink realpath rm rmdir runcon seq sha1sum sha224sum sha256sum	\
+	readlink realpath rm rmdir seq sha1sum sha224sum sha256sum		\
 	sha384sum sha512sum shred shuf sleep sort split stat stdbuf stty sum	\
 	sync tac tail tee test timeout touch tr true truncate tsort tty uname	\
 	unexpand uniq unlink uptime users vdir wc who whoami yes
@@ -42,9 +42,9 @@ DIR_BIN := \
 	touch true uname
 
 DIR_USR_BIN := \
-	basename chcon cksum comm cut dirname du env expand expr factor fold	\
+	basename cksum comm cut dirname du env expand expr factor fold		\
 	groups head hostid id install logname md5sum mkfifo nl nohup nproc od	\
-	paste printf readlink realpath runcon seq sha1sum sha256sum sha512sum	\
+	paste printf readlink realpath seq sha1sum sha256sum sha512sum		\
 	shred shuf sort split sum tac tail tee test timeout tr truncate tty	\
 	unexpand uniq unlink uptime users wc who whoami yes
 
@@ -60,6 +60,7 @@ $(eval $(foreach a,$(DIR_BIN),ALTS_$(a):=300:/bin/$(a):/usr/libexec/$(a)-coreuti
 $(eval $(foreach a,$(DIR_USR_BIN),ALTS_$(a):=300:/usr/bin/$(a):/usr/libexec/$(a)-coreutils$(newline)))
 $(eval $(foreach a,$(DIR_USR_SBIN),ALTS_$(a):=300:/usr/sbin/$(a):/usr/libexec/$(a)-coreutils$(newline)))
 
+DEPENDS_basenc = +libgmp
 DEPENDS_cp = +libacl
 DEPENDS_dir = +libacl +libcap
 DEPENDS_expr = +libgmp
@@ -129,7 +130,7 @@ CONFIGURE_ARGS += \
 	--$(if $(CONFIG_USE_MUSL),with,without)-included-regex \
 	--without-selinux
 
-TARGET_CFLAGS += -std=c17
+TARGET_CFLAGS += -std=gnu17
 
 define Package/coreutils/install
 	true
