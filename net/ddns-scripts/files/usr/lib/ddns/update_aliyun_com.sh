@@ -113,10 +113,53 @@ json_get_var __RECORD_COUNT TotalCount
 # select the first DNS record
 json_select DomainRecords
 json_select Record
-json_select 1
-# get the record id of the first DNS record
-json_get_var __RECORD_ID RecordId
-json_get_var __RECORD_VALUE Value
+
+# Log the original parameter
+write_log 7 "param_enc: `echo ${param_enc}`"
+paramEnc=${param_enc}
+
+# Initialize variables
+specRecordId=""
+found_match=false
+
+# Extract RecordId from parameters
+if [ -n "$(echo "${paramEnc}" | grep RecordId)" ]; then
+	specRecordId=$(echo "$paramEnc" | grep -o 'RecordId=[^&]*' | cut -d'=' -f2)
+fi
+
+# If RecordId is successfully extracted, try to match it
+if [ -n "$specRecordId" ]; then
+	write_log 7 "specRecordId: ${specRecordId}"
+	idx=1
+	while json_is_a $idx object
+	do
+		json_select $idx
+		json_get_var tmp RecordId
+		write_log 7 "The $idx Domain RecordId: ${tmp}"
+		if [ "$tmp" = "$specRecordId" ]; then
+			__RECORD_ID=$specRecordId
+			json_get_var __RECORD_VALUE Value
+			write_log 7 "The $idx Domain Record Value: ${__RECORD_VALUE}"
+			found_match=true
+			break
+		fi
+		idx=$((idx+1))
+		json_select ..
+	done
+fi
+
+# Fallback to default logic if no match found
+if [ "$found_match" = false ]; then
+	write_log 7 "Using default logic to select record"
+	# If multiple records are found, only use the first one
+	if [ "$__RECORD_COUNT" -gt 1 ]; then
+		write_log 4 "WARNING: found multiple records of $__HOST, only use the first one"
+	fi
+	json_select 1
+	# Get the record id of the first DNS record
+	json_get_var __RECORD_ID RecordId
+	json_get_var __RECORD_VALUE Value
+fi
 
 # dont update if the ip has not changed
 [ "$__RECORD_VALUE" = "$__IP" ] && {
