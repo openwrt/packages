@@ -254,12 +254,12 @@ endef
 $(eval $(call BuildPackage,lighttpd))
 
 $(eval $(call BuildPlugin,auth,Authentication,$(cryptolibdep),20))
-$(eval $(call BuildPlugin,authn_dbi,DBI-based authentication,lighttpd-mod-auth libdbi $(cryptolibdep),20))
+$(eval $(call BuildPlugin,authn_dbi,DBI-based authentication,lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_dbi:libdbi $(cryptolibdep),20))
 $(eval $(call BuildPlugin,authn_file,File-based authentication,lighttpd-mod-auth $(cryptolibdep),20))
-$(eval $(call BuildPlugin,authn_gssapi,Kerberos-based authentication,lighttpd-mod-auth krb5-libs $(cryptolibdep),20))
-$(eval $(call BuildPlugin,authn_ldap,LDAP-based authentication,lighttpd-mod-auth libopenldap,20))
-$(eval $(call BuildPlugin,authn_pam,PAM-based authentication,lighttpd-mod-auth libpam,20))
-$(eval $(call BuildPlugin,authn_sasl,SASL-based authentication,lighttpd-mod-auth libsasl2,20))
+$(eval $(call BuildPlugin,authn_gssapi,Kerberos-based authentication,lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_gssapi:krb5-libs $(cryptolibdep),20))
+$(eval $(call BuildPlugin,authn_ldap,LDAP-based authentication,lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_ldap:libopenldap,20))
+$(eval $(call BuildPlugin,authn_pam,PAM-based authentication,lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_pam:libpam,20))
+$(eval $(call BuildPlugin,authn_sasl,SASL-based authentication,lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_sasl:libsasl2,20))
 
 $(eval $(call BuildPlugin,accesslog,Access logging,,30))
 $(eval $(call BuildPlugin,ajp13,AJP13 Tomcat connector,,30))
