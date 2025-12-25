@@ -1,9 +1,0 @@
-{
-	"bool": [
-		"ReportBytes",
-		"ReportByDevice",
-		"ValuesAbsolute",
-		"ValuesPercentage",
-		"ReportIO"
-	]
-}

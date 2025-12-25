@@ -1,8 +1,0 @@
-{
-	"string": [
-		"SocketFile",
-		"SocketGroup",
-		"SocketPerms",
-		"MaxConns"
-	]
-}
