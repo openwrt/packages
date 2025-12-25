@@ -1,0 +1,66 @@
+name: Test Formalities
+
+on:
+  pull_request_target:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  formalities:
+    name: Test Formalities
+    uses: openwrt/actions-shared-workflows/.github/workflows/formal.yml@main
+    with:
+      post_comment: true
+
+  check_formality_status:
+    name: Check Formality Status
+    runs-on: ubuntu-slim
+    needs: formalities
+    if: always()
+
+    steps:
+      - name: Trigger build
+        if: needs.formalities.result == 'success'
+        env:
+          # Token needs actions: write
+          TOKEN: ${{ secrets.FORMAL_TOKEN }}
+          BASE_REF: ${{ github.base_ref }}
+          DISPATCH_URL: https://api.github.com/repos/${{ github.repository }}/actions/workflows/multi-arch-test-build.yml/dispatches
+          # Workflow is running in target context, so we need to get head ref
+          # from the event
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          PR_NAME: ${{ github.event.pull_request.title }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          JSON_PAYLOAD=$(jq -n \
+            --arg head_ref "$HEAD_REF" \
+            --arg base_ref "$BASE_REF" \
+            --arg pr_number "$PR_NUMBER" \
+            --arg pr_name "$PR_NAME" \
+            '{ref: $head_ref, inputs: {base_ref: $base_ref, pr_number: $pr_number, pr_name: $pr_name}}')
+
+          curl -LsS \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "$DISPATCH_URL" \
+            -d "$JSON_PAYLOAD"
+
+      - name: Add 'not following guidelines' label
+        if: needs.formalities.result == 'failure'
+        uses: buildsville/add-remove-label@v2.0.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          labels: "not following guidelines"
+          type: add
+
+      - name: Remove 'not following guidelines' label
+        if: needs.formalities.result == 'success'
+        uses: buildsville/add-remove-label@v2.0.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          labels: "not following guidelines"
+          type: remove

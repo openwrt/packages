@@ -1,18 +1,401 @@
 name: Test and Build
 
 on:
-  pull_request:
+  workflow_dispatch:
+    inputs:
+      base_ref:
+        description: 'Base ref of the PR to build against'
+        required: true
+        type: 'string'
+      pr_name:
+        description: 'PR name to use as run-name'
+        required: true
+        type: 'string'
+      pr_number:
+        description: 'PR number to build'
+        required: true
+        type: 'string'
 
 permissions:
   contents: read
-  pull-requests: write
+  statuses: write
+
+run-name: ${{ inputs.pr_name }}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  formalities:
-    name: Test Formalities
-    uses: openwrt/actions-shared-workflows/.github/workflows/formal.yml@main
-
   build:
-    name: Feeds Package Test Build
-    needs: formalities
-    uses: openwrt/actions-shared-workflows/.github/workflows/multi-arch-test-build.yml@main
+    name: Test ${{ matrix.arch }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: aarch64_generic
+            target: armsr-armv8
+            runtime_test: true
+
+          - arch: arm_cortex-a15_neon-vfpv4
+            target: armsr-armv7
+            runtime_test: true
+
+          - arch: arm_cortex-a9_vfpv3-d16
+            target: mvebu-cortexa9
+            runtime_test: false
+
+          - arch: i386_pentium-mmx
+            target: x86-geode
+            runtime_test: true
+
+          - arch: mips_24kc
+            target: ath79-generic
+            runtime_test: true
+
+          - arch: mipsel_24kc
+            target: mt7621
+            runtime_test: false
+
+          - arch: powerpc_464fp
+            target: apm821xx-nand
+            runtime_test: false
+
+          - arch: powerpc_8548
+            target: mpc85xx-p1010
+            runtime_test: false
+
+          # Workaround: riscv64_riscv64 was renamed to riscv64_generic
+          - arch: ${{ (inputs.base_ref == 'openwrt-24.10' || inputs.base_ref == 'openwrt-23.05') && 'riscv64_riscv64' || 'riscv64_generic' }}
+            target: sifiveu-generic
+            runtime_test: false
+
+          - arch: x86_64
+            target: x86-64
+            runtime_test: true
+
+    steps:
+      - name: Check PR status
+        id: check_pr
+        uses: actions/github-script@v8
+        env:
+          PR_NUMBER: ${{ inputs.pr_number }}
+        with:
+          script: |
+            const pr_number = process.env.PR_NUMBER;
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr_number,
+            });
+
+            if (pr.state !== 'open') {
+              core.setFailed(`Pull Request #${pr_number} is not open (state: ${pr.state}). Aborting build.`);
+              return;
+            }
+            core.setOutput('head_sha', pr.head.sha);
+
+      - name: Set build status as pending
+        env:
+          # Token needs statuses: write
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CONTEXT: ${{ github.workflow }} / Build / ${{ matrix.arch }}
+          OUTCOME: pending
+          STATUS_URL: https://api.github.com/repos/${{ github.repository }}/statuses/${{ steps.check_pr.outputs.head_sha }}
+          TARGET_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/job/${{ job.check_run_id }}?pr=${{ inputs.pr_number }}
+        run: |
+          curl -LsS \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "$STATUS_URL" \
+            -d '{"state":"'"$OUTCOME"'","target_url":"'"$TARGET_URL"'","context":"'"$CONTEXT"'"}'
+
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Determine branch name
+        env:
+          BASE_REF: ${{ inputs.base_ref }}
+        run: |
+          BRANCH="$BASE_REF"
+          case "$BRANCH" in
+            main|master|openwrt-[0-9]*\.[0-9]*)
+              ;;
+            *)
+              BRANCH="master"
+              ;;
+          esac
+          echo "Building for $BRANCH"
+          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
+
+      - name: Determine changed packages
+        run: |
+          # only detect packages with changes
+          PKG_ROOTS=$(find . -name Makefile | \
+            grep -v ".*/src/Makefile" | \
+            sed -e 's@./\(.*\)/Makefile@\1/@')
+          CHANGES=$(git diff --diff-filter=d --name-only origin/$BRANCH...)
+
+          for ROOT in $PKG_ROOTS; do
+            for CHANGE in $CHANGES; do
+              if [[ "$CHANGE" == "$ROOT"* ]]; then
+                PACKAGES+=$(echo "$ROOT" | sed -e 's@\(.*/\)*\(.*\)/@\2 @')
+                break
+              fi
+            done
+          done
+
+          # fallback to test packages if nothing explicitly changes this is
+          # should run if other mechanics in packages.git changed
+          REPOSITORY_NAME=${GITHUB_REPOSITORY#*/}
+          if [ "$REPOSITORY_NAME" = "routing" ]; then
+            PACKAGES="${PACKAGES:-bird2 cjdns olsrd}"
+          elif [ "$REPOSITORY_NAME" = "telephony" ]; then
+            PACKAGES="${PACKAGES:-asterisk siproxd freeswitch}"
+          else
+            PACKAGES="${PACKAGES:-vim attendedsysupgrade-common bmon}"
+          fi
+
+          echo "Building $PACKAGES"
+          echo "PACKAGES=$PACKAGES" >> $GITHUB_ENV
+
+      - name: Build
+        id: build
+        uses: openwrt/gh-action-sdk@v10
+        env:
+          ARCH: ${{ matrix.arch }}-${{ env.BRANCH }}
+          FEEDNAME: packages_ci
+          INDEX: 1
+          V: s
+
+      - name: Set final build status
+        env:
+          # Token needs statuses: write
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CONTEXT: ${{ github.workflow }} / Build / ${{ matrix.arch }}
+          JOB_URL: https://api.github.com/repos/${{ github.repository }}/actions/jobs/${{ job.check_run_id }}
+          OUTCOME: ${{ steps.build.outcome }}
+          STATUS_URL: https://api.github.com/repos/${{ github.repository }}/statuses/${{ steps.check_pr.outputs.head_sha }}
+          TARGET_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/job/${{ job.check_run_id }}?pr=${{ inputs.pr_number }}
+        run: |
+          case $OUTCOME in
+            success)
+              description='Successful in'
+              state='success'
+              ;;
+            *)
+              description='Failing after'
+              state='failure'
+              ;;
+          esac
+
+          start_time_iso=$(curl -LsS -H "Authorization: Bearer $TOKEN" -H "X-GitHub-Api-Version: 2022-11-28" "$JOB_URL" | jq -r .started_at)
+          start_time=$(date -d "$start_time_iso" +%s)
+          end_time=$(date +%s)
+          duration=$((end_time - start_time))
+
+          if (( duration > 3600 )); then
+            description=$(printf '%s %dh %dm %ds' "$description" $((duration/3600)) $((duration%3600/60)) $((duration%60)))
+          elif (( duration > 60 )); then
+            description=$(printf '%s %dm %ds' "$description" $((duration/60)) $((duration%60)))
+          else
+            description=$(printf '%s %ds' "$description" $duration)
+          fi
+
+          curl -LsS \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "$STATUS_URL" \
+            -d '{"state":"'"$state"'","target_url":"'"$TARGET_URL"'","context":"'"$CONTEXT"'","description":"'"$description"'"}'
+
+      - name: Move created packages to project dir
+        if: always()
+        run: cp -v bin/packages/${{ matrix.arch }}/packages_ci/* . || true
+
+      - name: Collect metadata
+        if: always()
+        run: |
+          MERGE_ID=$(git rev-parse --short HEAD)
+          echo "MERGE_ID=$MERGE_ID" >> $GITHUB_ENV
+          echo "BASE_ID=$(git rev-parse --short HEAD^1)" >> $GITHUB_ENV
+          echo "HEAD_ID=$(git rev-parse --short HEAD^2)" >> $GITHUB_ENV
+          PRNUMBER=${GITHUB_REF_NAME%/merge}
+          echo "PRNUMBER=$PRNUMBER" >> $GITHUB_ENV
+          echo "ARCHIVE_NAME=${{matrix.arch}}-PR$PRNUMBER-$MERGE_ID" >> $GITHUB_ENV
+
+      - name: Generate metadata
+        if: always()
+        run: |
+          cat << _EOF_ > PKG-INFO
+          Metadata-Version: 2.1
+          Name: ${{env.ARCHIVE_NAME}}
+          Version: $BRANCH
+          Author: $GITHUB_ACTOR
+          Home-page: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/pull/$PRNUMBER
+          Download-URL: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+          Summary: $PACKAGES
+          Platform: ${{ matrix.arch }}
+
+          Packages for OpenWrt $BRANCH running on ${{matrix.arch}}, built from PR $PRNUMBER
+          at commit $HEAD_ID, against $BRANCH at commit $BASE_ID, with merge SHA $MERGE_ID.
+
+          Modified packages:
+          _EOF_
+          for p in $PACKAGES
+          do
+            echo "  "$p >> PKG-INFO
+          done
+          echo >> PKG-INFO
+          echo Full file listing: >> PKG-INFO
+          ls -al *.ipk >> PKG-INFO || true
+          ls -al *.apk >> PKG-INFO || true
+          cat PKG-INFO
+
+      - name: Store packages
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{env.ARCHIVE_NAME}}-packages
+          path: |
+            Packages
+            Packages.*
+            *.ipk
+            packages.adb
+            *.apk
+            PKG-INFO
+
+      - name: Store logs
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{env.ARCHIVE_NAME}}-logs
+          path: |
+            logs/
+            PKG-INFO
+
+      - name: Remove logs
+        if: always()
+        run: sudo rm -rf logs/ || true
+
+      - name: Check if any packages were built
+        run: |
+          if [ -n "$(find . -maxdepth 1 -type f -name '*.apk' -print -quit)" ]; then
+            echo "Found *.apk files"
+            HAVE_PKGS=true
+            PKG_MANAGER=apk
+          elif [ -n "$(find . -maxdepth 1 -type f -name '*.ipk' -print -quit)" ]; then
+            echo "Found *.ipk files"
+            HAVE_PKGS=true
+            PKG_MANAGER=opkg
+          else
+            echo "No *.apk or *.ipk files found"
+            HAVE_PKGS=false
+          fi
+          echo "HAVE_PKGS=$HAVE_PKGS" >> $GITHUB_ENV
+          echo "PKG_MANAGER=$PKG_MANAGER" >> $GITHUB_ENV
+
+      - name: Set test status as pending
+        id: test_status
+        if: ${{ matrix.runtime_test && fromJSON(env.HAVE_PKGS) }}
+        env:
+          # Token needs statuses: write
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CONTEXT: ${{ github.workflow }} / Test / ${{ matrix.arch }}
+          OUTCOME: pending
+          STATUS_URL: https://api.github.com/repos/${{ github.repository }}/statuses/${{ steps.check_pr.outputs.head_sha }}
+          TARGET_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/job/${{ job.check_run_id }}?pr=${{ inputs.pr_number }}
+        run: |
+          curl -LsS \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "$STATUS_URL" \
+            -d '{"state":"'"$OUTCOME"'","target_url":"'"$TARGET_URL"'","context":"'"$CONTEXT"'"}'
+
+          start_time=$(date +%s)
+          echo "start_time=$start_time" >> $GITHUB_OUTPUT
+
+      - name: Register QEMU
+        if: ${{ matrix.runtime_test && fromJSON(env.HAVE_PKGS) }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-user-static binfmt-support
+          sudo update-binfmts --import
+
+      - name: Checkout
+        if: ${{ matrix.runtime_test && fromJSON(env.HAVE_PKGS) }}
+        uses: actions/checkout@v6
+        with:
+          repository: openwrt/actions-shared-workflows
+          path: dockerfiles_feeds
+          sparse-checkout: |
+            .github/scripts/ci_helpers.sh
+            .github/dockerfiles_feeds/Dockerfile
+            .github/dockerfiles_feeds/entrypoint.sh
+          sparse-checkout-cone-mode: false
+
+      - name: Build Docker container
+        if: ${{ matrix.runtime_test && fromJSON(env.HAVE_PKGS) }}
+        run: |
+          docker build --platform linux/${{ matrix.arch }} -t test-container \
+            --build-arg ARCH dockerfiles_feeds/.github/dockerfiles_feeds/
+        env:
+          ARCH: ${{ matrix.arch }}-${{ env.BRANCH }}
+
+      - name: Test via Docker container
+        id: test
+        if: ${{ matrix.runtime_test && fromJSON(env.HAVE_PKGS) }}
+        run: |
+          docker run --platform linux/${{ matrix.arch }} --rm -v $GITHUB_WORKSPACE:/ci \
+            -v $GITHUB_WORKSPACE/dockerfiles_feeds:/dockerfiles_feeds \
+            -e CI_HELPER=/dockerfiles_feeds/scripts/ci_helpers.sh \
+            -e PKG_MANAGER=${{ env.PKG_MANAGER }} \
+            test-container
+
+      - name: Set final test status
+        if: ${{ always() && matrix.runtime_test && steps.test.outcome != 'skipped' }}
+        env:
+          # Token needs statuses: write
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CONTEXT: ${{ github.workflow }} / Test / ${{ matrix.arch }}
+          OUTCOME: ${{ steps.test.outcome }}
+          START_TIME: ${{ steps.test_status.outputs.start_time }}
+          STATUS_URL: https://api.github.com/repos/${{ github.repository }}/statuses/${{ steps.check_pr.outputs.head_sha }}
+          TARGET_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/job/${{ job.check_run_id }}?pr=${{ inputs.pr_number }}
+        run: |
+          case $OUTCOME in
+            success)
+              description='Successful in'
+              state='success'
+              ;;
+            *)
+              description='Failing after'
+              state='failure'
+              ;;
+          esac
+
+          end_time=$(date +%s)
+          duration=$((end_time - START_TIME))
+
+          if (( duration > 3600 )); then
+            description=$(printf '%s %dh %dm %ds' "$description" $((duration/3600)) $((duration%3600/60)) $((duration%60)))
+          elif (( duration > 60 )); then
+            description=$(printf '%s %dm %ds' "$description" $((duration/60)) $((duration%60)))
+          else
+            description=$(printf '%s %ds' "$description" $duration)
+          fi
+
+          curl -LsS \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "$STATUS_URL" \
+            -d '{"state":"'"$state"'","target_url":"'"$TARGET_URL"'","context":"'"$CONTEXT"'","description":"'"$description"'"}'
