@@ -4,13 +4,13 @@ Date: Wed, 17 Dec 2025 18:28:37 -0500
 Subject: [PATCH] zabbix_agentd: Tweak config file for OpenWrt
 
 Note: original patch had no header, header added 2025-12-16, while
-bumping package version.
+bumping package version. Modified 2025-12-25.
 
 1. Use syslog not a file for logging
-2. Do not use PidFile
-3. Only start in passive agent by default
+2. Place PidFile under /var/run/zabbix
+3. Only start passive agent by default
 4. Do not do active checks by default
-5. Use the system hostname as hostname.
+5. Use the system hostname as hostname (except on zabbix server)
 6. Include configurations under /etc/zabbix_agentd.conf.d/
 
 Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
@@ -30,8 +30,8 @@ Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
 -# Mandatory: no
 -# Default:
 -# PidFile=/tmp/zabbix_agentd.pid
-+# We do not need PidFile with procd
-+# PidFile=/var/run/zabbix_agentd.pid
++# Zabbix always creates a PidFile. Make sure it is where we want it.
++PidFile=/var/run/zabbix/zabbix_agentd.pid
 +
 +# use syslog
 +LogType=system
