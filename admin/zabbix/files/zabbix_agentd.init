@@ -13,6 +13,9 @@ start_service() {
 
 	[ -f ${CONFIG} ] || return 1
 
+	mkdir -p /var/run/zabbix
+	chown zabbix:zabbix /var/run/zabbix
+
 	procd_open_instance
 	procd_set_param command ${PROG} -c ${CONFIG} -f
 	procd_set_param respawn
