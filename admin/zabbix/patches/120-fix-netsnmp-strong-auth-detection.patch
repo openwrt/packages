@@ -1,0 +1,11 @@
+--- a/m4/netsnmp.m4
++++ b/m4/netsnmp.m4
+@@ -168,6 +168,7 @@ AC_DEFUN([LIBNETSNMP_CHECK_CONFIG],[
+ 		]], [[
+ struct snmp_session session;
+ session.securityAuthProto = usmHMAC384SHA512AuthProtocol;
++return (int)(long)session.securityAuthProto;
+ 		]])],[
+ 		AC_DEFINE(HAVE_NETSNMP_STRONG_AUTH, 1, [Define to 1 if strong SHA auth protocols are supported.])
+ 		AC_MSG_RESULT(yes)
+
