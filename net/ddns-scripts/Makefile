@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ddns-scripts
 PKG_VERSION:=2.8.2
-PKG_RELEASE:=81
+PKG_RELEASE:=82
 
 PKG_LICENSE:=GPL-2.0
 
@@ -141,22 +141,6 @@ define Package/ddns-scripts-digitalocean/description
   'option username' the dns record name to update (eg. A-record: <home>.example.com)
   'option param_opt' the id of the dns record to update (check using chrome inspector in the DO dns tab)
   'option password' the api token generated in the DO panel
-endef
-
-define Package/ddns-scripts-ovh
-  $(call Package/ddns-scripts/Default)
-  TITLE:=Extension for OVH Dynhost
-  DEPENDS:=ddns-scripts +curl +openssl-util
-  PROVIDES:=ddns-scripts_ovh-dynhost
-endef
-
-define Package/ddns-scripts-ovh/description
-  Dynamic DNS Client scripts extension for ovh.com DynHost API.
-  The script directly updates a DNS record using the OVH DynHost API.
-  It requires:
-  'option domain' the dns domain to update the record for (eg. A-record: home.<example.com>)
-  'option username' the dynhost user
-  'option password' the dynhost password
 endef
 
 define Package/ddns-scripts-dnspod
@@ -438,7 +422,6 @@ define Package/ddns-scripts-services/install
 	rm $(1)/usr/share/ddns/default/freedns.42.pl.json
 	rm $(1)/usr/share/ddns/default/godaddy.com-v1.json
 	rm $(1)/usr/share/ddns/default/digitalocean.com-v2.json
-	rm $(1)/usr/share/ddns/default/ovh.com.json
 	rm $(1)/usr/share/ddns/default/dnspod.cn.json
 	rm $(1)/usr/share/ddns/default/dnspod.cn-v3.json
 	rm $(1)/usr/share/ddns/default/no-ip.com.json
@@ -572,24 +555,6 @@ define Package/ddns-scripts-digitalocean/install
 endef
 
 define Package/ddns-scripts-digitalocean/prerm
-#!/bin/sh
-if [ -z "$${IPKG_INSTROOT}" ]; then
-	/etc/init.d/ddns stop
-fi
-exit 0
-endef
-
-define Package/ddns-scripts-ovh/install
-	$(INSTALL_DIR) $(1)/usr/lib/ddns
-	$(INSTALL_BIN) ./files/usr/lib/ddns/update_ovh_com.sh \
-		$(1)/usr/lib/ddns
-
-	$(INSTALL_DIR) $(1)/usr/share/ddns/default
-	$(INSTALL_DATA) ./files/usr/share/ddns/default/ovh.com.json \
-		$(1)/usr/share/ddns/default
-endef
-
-define Package/ddns-scripts-ovh/prerm
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
 	/etc/init.d/ddns stop
@@ -890,7 +855,6 @@ $(eval $(call BuildPackage,ddns-scripts-gcp))
 $(eval $(call BuildPackage,ddns-scripts-freedns))
 $(eval $(call BuildPackage,ddns-scripts-godaddy))
 $(eval $(call BuildPackage,ddns-scripts-digitalocean))
-$(eval $(call BuildPackage,ddns-scripts-ovh))
 $(eval $(call BuildPackage,ddns-scripts-dnspod))
 $(eval $(call BuildPackage,ddns-scripts-dnspod-v3))
 $(eval $(call BuildPackage,ddns-scripts-noip))
