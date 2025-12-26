@@ -1,5 +1,23 @@
+From dff0c180819449c742ed77b2cb542b5a95c1f0d5 Mon Sep 17 00:00:00 2001
+From: gns <wangbingzhen.riscv@isrc.iscas.ac.cn>
+Date: Thu, 27 Nov 2025 20:48:19 +0800
+Subject: [PATCH] Add RISC-V 64 support
+
+This backports RISC-V 64 support from openresty/luajit2 PR #236.
+
+The patch adds comprehensive RISC-V64 JIT implementation including:
+- Architecture detection and definitions
+- DynASM RISC-V support
+- JIT compiler, assembler, and emitter implementations
+- FFI calling conventions and Linux-specific support
+
+Original work by gns from PLCT Lab, ISCAS.
+See: https://github.com/openresty/luajit2/pull/236
+
+Co-authored-by: Heinrich Schuchardt <heinrich.schuchardt@canonical.com>
+---
 diff --git a/Makefile b/Makefile
-index c41b3345..dd33fedc 100644
+index c41b334..dd33fed 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -101,6 +101,7 @@ FILES_JITLIB= bc.lua bcsave.lua dump.lua p.lua v.lua zone.lua \
@@ -12,7 +30,7 @@ index c41b3345..dd33fedc 100644
  ifeq (,$(findstring Windows,$(OS)))
 diff --git a/dynasm/dasm_riscv.h b/dynasm/dasm_riscv.h
 new file mode 100644
-index 00000000..b2739fdb
+index 0000000..b2739fd
 --- /dev/null
 +++ b/dynasm/dasm_riscv.h
 @@ -0,0 +1,435 @@
@@ -453,7 +471,7 @@ index 00000000..b2739fdb
 +
 diff --git a/dynasm/dasm_riscv.lua b/dynasm/dasm_riscv.lua
 new file mode 100644
-index 00000000..4c8518f1
+index 0000000..4c8518f
 --- /dev/null
 +++ b/dynasm/dasm_riscv.lua
 @@ -0,0 +1,979 @@
@@ -1438,7 +1456,7 @@ index 00000000..4c8518f1
 +
 diff --git a/dynasm/dasm_riscv32.lua b/dynasm/dasm_riscv32.lua
 new file mode 100644
-index 00000000..f194ce1d
+index 0000000..f194ce1
 --- /dev/null
 +++ b/dynasm/dasm_riscv32.lua
 @@ -0,0 +1,12 @@
@@ -1456,7 +1474,7 @@ index 00000000..f194ce1d
 +return require("dasm_riscv")
 diff --git a/dynasm/dasm_riscv64.lua b/dynasm/dasm_riscv64.lua
 new file mode 100644
-index 00000000..25274395
+index 0000000..2527439
 --- /dev/null
 +++ b/dynasm/dasm_riscv64.lua
 @@ -0,0 +1,12 @@
@@ -1473,7 +1491,7 @@ index 00000000..25274395
 +riscv64 = true -- Using a global is an ugly, but effective solution.
 +return require("dasm_riscv")
 diff --git a/src/Makefile b/src/Makefile
-index 456ee40f..f53dd421 100644
+index 456ee40..f53dd42 100644
 --- a/src/Makefile
 +++ b/src/Makefile
 @@ -52,6 +52,7 @@ CCOPT_arm=
@@ -1513,7 +1531,7 @@ index 456ee40f..f53dd421 100644
  endif
  
 diff --git a/src/host/buildvm.c b/src/host/buildvm.c
-index 3bfa039a..6c45c4b9 100644
+index 3bfa039..6c45c4b 100644
 --- a/src/host/buildvm.c
 +++ b/src/host/buildvm.c
 @@ -69,6 +69,8 @@ static int collect_reloc(BuildCtx *ctx, uint8_t *addr, int idx, int type);
@@ -1526,7 +1544,7 @@ index 3bfa039a..6c45c4b9 100644
  #error "No support for this architecture (yet)"
  #endif
 diff --git a/src/host/buildvm_asm.c b/src/host/buildvm_asm.c
-index 4affc153..7ecec51d 100644
+index 4affc15..7ecec51 100644
 --- a/src/host/buildvm_asm.c
 +++ b/src/host/buildvm_asm.c
 @@ -208,6 +208,34 @@ static void emit_asm_wordreloc(BuildCtx *ctx, uint8_t *p, int n,
@@ -1575,7 +1593,7 @@ index 4affc153..7ecec51d 100644
    emit_asm_align(ctx, 4);
  
 diff --git a/src/jit/bcsave.lua b/src/jit/bcsave.lua
-index 5084ab3e..74bcaf55 100644
+index 5084ab3..74bcaf5 100644
 --- a/src/jit/bcsave.lua
 +++ b/src/jit/bcsave.lua
 @@ -103,6 +103,7 @@ local map_arch = {
@@ -1588,7 +1606,7 @@ index 5084ab3e..74bcaf55 100644
  local map_os = {
 diff --git a/src/jit/dis_riscv.lua b/src/jit/dis_riscv.lua
 new file mode 100644
-index 00000000..8de563a7
+index 0000000..8de563a
 --- /dev/null
 +++ b/src/jit/dis_riscv.lua
 @@ -0,0 +1,979 @@
@@ -2573,7 +2591,7 @@ index 00000000..8de563a7
 +}
 diff --git a/src/jit/dis_riscv64.lua b/src/jit/dis_riscv64.lua
 new file mode 100644
-index 00000000..fd6ce276
+index 0000000..fd6ce27
 --- /dev/null
 +++ b/src/jit/dis_riscv64.lua
 @@ -0,0 +1,16 @@
@@ -2595,7 +2613,7 @@ index 00000000..fd6ce276
 +}
 \ No newline at end of file
 diff --git a/src/lib_jit.c b/src/lib_jit.c
-index 122b7cfe..ee892c83 100644
+index 122b7cf..ee892c8 100644
 --- a/src/lib_jit.c
 +++ b/src/lib_jit.c
 @@ -697,6 +697,104 @@ JIT_PARAMDEF(JIT_PARAMINIT)
@@ -2734,7 +2752,7 @@ index 122b7cfe..ee892c83 100644
  #error "Missing CPU detection for this architecture"
  #endif
 diff --git a/src/lj_alloc.c b/src/lj_alloc.c
-index cb704f7b..9039d805 100644
+index cb704f7..9039d80 100644
 --- a/src/lj_alloc.c
 +++ b/src/lj_alloc.c
 @@ -365,7 +365,7 @@ static void *CALL_MREMAP_(void *ptr, size_t osz, size_t nsz, int flags)
@@ -2747,7 +2765,7 @@ index cb704f7b..9039d805 100644
  #else
  #define CALL_MREMAP_MV		CALL_MREMAP_MAYMOVE
 diff --git a/src/lj_arch.h b/src/lj_arch.h
-index cb312273..5d635a00 100644
+index cb31227..5d635a0 100644
 --- a/src/lj_arch.h
 +++ b/src/lj_arch.h
 @@ -33,6 +33,8 @@
@@ -2801,7 +2819,7 @@ index cb312273..5d635a00 100644
  #endif
  
 diff --git a/src/lj_asm.c b/src/lj_asm.c
-index 4e3e9c74..51b35ba9 100644
+index 4e3e9c7..51b35ba 100644
 --- a/src/lj_asm.c
 +++ b/src/lj_asm.c
 @@ -227,6 +227,8 @@ static Reg rset_pickrandom(ASMState *as, RegSet rs)
@@ -2824,7 +2842,7 @@ index 4e3e9c74..51b35ba9 100644
  #endif
 diff --git a/src/lj_asm_riscv64.h b/src/lj_asm_riscv64.h
 new file mode 100644
-index 00000000..2ee63fa1
+index 0000000..2ee63fa
 --- /dev/null
 +++ b/src/lj_asm_riscv64.h
 @@ -0,0 +1,2037 @@
@@ -4866,7 +4884,7 @@ index 00000000..2ee63fa1
 +  lj_mcode_patch(J, mcarea, 1);
 +}
 diff --git a/src/lj_ccall.c b/src/lj_ccall.c
-index ed1a291e..6eb1d9c0 100644
+index ed1a291..6eb1d9c 100644
 --- a/src/lj_ccall.c
 +++ b/src/lj_ccall.c
 @@ -687,6 +687,146 @@
@@ -5344,7 +5362,7 @@ index ed1a291e..6eb1d9c0 100644
      UNUSED(isfp);
  #endif
 diff --git a/src/lj_ccall.h b/src/lj_ccall.h
-index c830e300..2f30383a 100644
+index c830e30..2f30383 100644
 --- a/src/lj_ccall.h
 +++ b/src/lj_ccall.h
 @@ -157,6 +157,23 @@ typedef union FPRArg {
@@ -5372,7 +5390,7 @@ index c830e300..2f30383a 100644
  #error "Missing calling convention definitions for this architecture"
  #endif
 diff --git a/src/lj_ccallback.c b/src/lj_ccallback.c
-index b0a159e2..2052a570 100644
+index b0a159e..2052a57 100644
 --- a/src/lj_ccallback.c
 +++ b/src/lj_ccallback.c
 @@ -102,6 +102,10 @@ static MSize CALLBACK_OFS2SLOT(MSize ofs)
@@ -5469,7 +5487,7 @@ index b0a159e2..2052a570 100644
  	(LJ_ABI_SOFTFP || ctype_isinteger_or_bool(ctr->info)))
 diff --git a/src/lj_emit_riscv.h b/src/lj_emit_riscv.h
 new file mode 100644
-index 00000000..5cbfe95e
+index 0000000..5cbfe95
 --- /dev/null
 +++ b/src/lj_emit_riscv.h
 @@ -0,0 +1,574 @@
@@ -6048,7 +6066,7 @@ index 00000000..5cbfe95e
 +
 +#define emit_spsub(as, ofs)	emit_addptr(as, RID_SP, -(ofs))
 diff --git a/src/lj_frame.h b/src/lj_frame.h
-index bcc14fad..ff04d0df 100644
+index bcc14fa..ff04d0d 100644
 --- a/src/lj_frame.h
 +++ b/src/lj_frame.h
 @@ -287,6 +287,15 @@ enum { LJ_CONT_TAILCALL, LJ_CONT_FFI_CALLBACK };  /* Special continuations. */
@@ -6068,7 +6086,7 @@ index bcc14fad..ff04d0df 100644
  #error "Missing CFRAME_* definitions for this architecture"
  #endif
 diff --git a/src/lj_gdbjit.c b/src/lj_gdbjit.c
-index 9e68932a..7d677c7c 100644
+index 9e68932..7d677c7 100644
 --- a/src/lj_gdbjit.c
 +++ b/src/lj_gdbjit.c
 @@ -306,6 +306,9 @@ enum {
@@ -6108,7 +6126,7 @@ index 9e68932a..7d677c7c 100644
  #error "Unsupported target architecture"
  #endif
 diff --git a/src/lj_jit.h b/src/lj_jit.h
-index c622b7ed..9948e3c0 100644
+index c622b7e..9948e3c 100644
 --- a/src/lj_jit.h
 +++ b/src/lj_jit.h
 @@ -68,6 +68,46 @@
@@ -6159,7 +6177,7 @@ index c622b7ed..9948e3c0 100644
  
  #define JIT_F_CPUSTRING		""
 diff --git a/src/lj_mcode.c b/src/lj_mcode.c
-index 0a9ced69..295c64af 100644
+index 0a9ced6..295c64a 100644
 --- a/src/lj_mcode.c
 +++ b/src/lj_mcode.c
 @@ -38,6 +38,12 @@
@@ -6194,7 +6212,7 @@ index 0a9ced69..295c64af 100644
    __clear_cache(start, end);
  #else
 diff --git a/src/lj_target.h b/src/lj_target.h
-index 6548816a..160be2a7 100644
+index 6548816..160be2a 100644
 --- a/src/lj_target.h
 +++ b/src/lj_target.h
 @@ -55,7 +55,7 @@ typedef uint32_t RegSP;
@@ -6217,7 +6235,7 @@ index 6548816a..160be2a7 100644
  #endif
 diff --git a/src/lj_target_riscv.h b/src/lj_target_riscv.h
 new file mode 100644
-index 00000000..22948dc5
+index 0000000..22948dc
 --- /dev/null
 +++ b/src/lj_target_riscv.h
 @@ -0,0 +1,542 @@
@@ -6764,7 +6782,7 @@ index 00000000..22948dc5
 +
 +#endif
 diff --git a/src/lj_vm.h b/src/lj_vm.h
-index 9cc42613..77494472 100644
+index 9cc4261..7749447 100644
 --- a/src/lj_vm.h
 +++ b/src/lj_vm.h
 @@ -37,6 +37,9 @@ LJ_ASMF int lj_vm_cpuid(uint32_t f, uint32_t res[4]);
@@ -6778,7 +6796,7 @@ index 9cc42613..77494472 100644
  #if LJ_HASJIT
  LJ_ASMF double lj_vm_foldfpm(double x, int op);
 diff --git a/src/lj_vmmath.c b/src/lj_vmmath.c
-index 2c9b96cc..a31a4adf 100644
+index 2c9b96c..a31a4ad 100644
 --- a/src/lj_vmmath.c
 +++ b/src/lj_vmmath.c
 @@ -69,7 +69,8 @@ double lj_vm_foldarith(double x, double y, int op)
@@ -6793,7 +6811,7 @@ index 2c9b96cc..a31a4adf 100644
    uint32_t y, ua, ub;
 diff --git a/src/vm_riscv64.dasc b/src/vm_riscv64.dasc
 new file mode 100644
-index 00000000..934dfe91
+index 0000000..934dfe9
 --- /dev/null
 +++ b/src/vm_riscv64.dasc
 @@ -0,0 +1,4810 @@
