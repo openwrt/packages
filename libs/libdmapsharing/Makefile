@@ -37,7 +37,7 @@ define Package/libdmapsharing
   URL:=https://www.flyn.org/projects/libdmapsharing/
 endef
 
-define Package/libdmapsharing/decription
+define Package/libdmapsharing/description
   Libdmapsharing is a DMAP library implementation in C
 endef
 

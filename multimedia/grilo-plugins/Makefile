@@ -35,7 +35,7 @@ define Package/grilo-plugins
   TITLE:=Plugins for the Grilo framework
 endef
 
-define Package/grilo/decription
+define Package/grilo/description
   Grilo is a framework that provides access to different sources of
   multimedia content, using a pluggable system. This package contains
   plugins to get information from a number of sources.

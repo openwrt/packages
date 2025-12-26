@@ -44,7 +44,7 @@ MESON_ARGS += \
 	-Dinstalled_tests=false \
 	-Dsysprof=disabled
 
-define package/libsoup3/decription
+define package/libsoup3/description
 Libsoup is an HTTP library implementation in C
 endef
 

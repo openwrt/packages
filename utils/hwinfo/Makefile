@@ -19,7 +19,7 @@ include $(INCLUDE_DIR)/host-build.mk
 
 define Host/Compile
 	# Build using host compiler and let it generate the files we need
-	# CFLAGS, CPPFLAGS & LDFLAGS need to be passed with CC because they are being ingored
+	# CFLAGS, CPPFLAGS & LDFLAGS need to be passed with CC because they are being ignored
 	CC="$(HOSTCC) $(HOST_CFLAGS) $(HOST_CPPFLAGS) $(HOST_LDFLAGS)" $(MAKE) \
 		-C $(HOST_BUILD_DIR)/src/isdn/cdb
 	CC="$(HOSTCC) $(HOST_CFLAGS) $(HOST_CPPFLAGS) $(HOST_LDFLAGS)" $(MAKE) \

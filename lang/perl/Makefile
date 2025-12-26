@@ -59,7 +59,7 @@ define Package/perl
   SUBMENU:=Perl
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=The Perl intepreter
+  TITLE:=The Perl interpreter
   URL:=http://www.perl.com/
   DEPENDS:= +USE_GLIBC:libcrypt-compat +USE_GLIBC:libbsd +PERL_THREADS:libpthread @!arc
 endef

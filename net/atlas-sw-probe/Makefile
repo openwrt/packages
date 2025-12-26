@@ -103,7 +103,7 @@ define Package/atlas-sw-probe/install
 	# Enable sending interface traffic statistics as Atlas measurement results
 	echo "RXTXRPT=yes" > $(1)/$(SCRIPTS_DIR)/state/config.txt
 
-	# Fix permision
+	# Fix permission
 	chmod 755 $(1)/$(SCRIPTS_DIR)/bin
 
 	# Add registration instruction

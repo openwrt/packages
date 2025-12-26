@@ -5,7 +5,7 @@
 # See /LICENSE for more information.
 #
 
-# Warning by default OpenWrt does not have a root password which is necessery for NETCONF server.
+# Warning by default OpenWrt does not have a root password which is necessary for NETCONF server.
 
 include $(TOPDIR)/rules.mk
 
