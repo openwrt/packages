@@ -35,7 +35,7 @@ endef
 
 define Package/libgcrypt/description
  This is a general purpose cryptographic library based on the code from
- GnuPG. It provides functions for all cryptograhic building blocks:
+ GnuPG. It provides functions for all cryptographic building blocks:
  symmetric ciphers (AES, DES, Arcfour, CAST5), hash algorithms (MD5, SHA-1,
  RIPE-MD160, SHA-224/256, SHA-384/512), MACs (HMAC for all hash
  algorithms), public key algorithms (RSA, DSA), large integer functions,

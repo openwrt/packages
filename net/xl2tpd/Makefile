@@ -37,7 +37,7 @@ endef
 define Package/xl2tpd/description
 l2tpd is the open source implementation of the L2TP tunneling protocol (RFC2661).
 It does implement both LAC and LNS role in a L2TP networking architecture. The
-main goal of this protocol is to tunnel PPP frame trough an IP network.
+main goal of this protocol is to tunnel PPP frame through an IP network.
 endef
 
 ifneq (0,0)

@@ -207,7 +207,7 @@ endef
 
 #$(eval $(call BuildTemplate,SUFFIX,DESCRIPTION,EXTENSION,MODULE,DEPENDS))
 
-$(eval $(call BuildTemplate,compat-xtables,API compatibilty layer,,compat_xtables,+IPV6:kmod-ip6tables))
+$(eval $(call BuildTemplate,compat-xtables,API compatibility layer,,compat_xtables,+IPV6:kmod-ip6tables))
 
 $(eval $(call BuildTemplate,account,ACCOUNT,xt_ACCOUNT,ACCOUNT/xt_ACCOUNT,+kmod-ipt-compat-xtables))
 $(eval $(call BuildTemplate,asn,asn,xt_asn,xt_asn,))

@@ -57,7 +57,7 @@ define Package/gstreamer1-libs/description
  $(call Package/gstreamer1/description/Default)
  .
  This meta package contains only dependencies on the other GStreamer
- componenents.
+ components.
 endef
 
 define Package/gstreamer1-libs

@@ -42,7 +42,7 @@ define Package/libzstd/config
 		depends on PACKAGE_libzstd
 		default y
 		help
-			This enables additional optmizations using the -O3 compilation flag.
+			This enables additional optimizations using the -O3 compilation flag.
 endef
 
 define Package/zstd

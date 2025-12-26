@@ -225,7 +225,7 @@ endef
 
 define Package/erlang-parsetools/description
 $(call Package/erlang/Default/description)
- This package incluides the following tools:
+ This package includes the following tools:
   yecc, LALR-1 Parser Generator.
   leex, Lexical analyzer generator for Erlang.
 endef

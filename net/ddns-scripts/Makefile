@@ -127,7 +127,7 @@ endef
 
 define Package/ddns-scripts-digitalocean
   $(call Package/ddns-scripts/Default)
-  TITLE:=Extention for digitalocean.com API v2
+  TITLE:=Extension for digitalocean.com API v2
   DEPENDS:=ddns-scripts +curl
   PROVIDES:=ddns-scripts_digitalocean.com-v2
 endef

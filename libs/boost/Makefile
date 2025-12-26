@@ -237,7 +237,7 @@ define Package/boost/config
 		config boost-use-name-tags
 			bool "Use tagged names."
 			help
-				Add name tags the lib files, to diferentiate each library version:
+				Add name tags the lib files, to differentiate each library version:
 				  "-mt" for multi-threading.
 				  "-d" for debugging.
 				  "-s" for runtime static link".

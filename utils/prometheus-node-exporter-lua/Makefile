@@ -54,7 +54,7 @@ endef
 define Package/prometheus-node-exporter-lua/description
   Provides node metrics as Prometheus scraping endpoint.
 
-  This service is a lightweight rewrite in LUA of the offical Prometheus node_exporter.
+  This service is a lightweight rewrite in LUA of the official Prometheus node_exporter.
 endef
 
 # Additional optional exporters:

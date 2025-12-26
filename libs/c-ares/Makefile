@@ -28,7 +28,7 @@ include $(INCLUDE_DIR)/cmake.mk
 define Package/libcares
   SECTION:=libs
   CATEGORY:=Libraries
-  TITLE:=Library for asyncronous DNS Requests (including name resolves)
+  TITLE:=Library for asynchronous DNS Requests (including name resolves)
   URL:=https://c-ares.org/
   MAINTAINER:=Karl Palsson <karlp@etactica.com>
 endef

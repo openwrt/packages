@@ -238,7 +238,7 @@ define Package/ffmpeg/Default/description
  FFmpeg is a a software package that can record, convert and stream digital
  audio and video in numerous formats.
 
- FFmpeg licensing / patent issues are complex. It is the reponsibility of the
+ FFmpeg licensing / patent issues are complex. It is the responsibility of the
  user to understand any requirements in this regard with its usage. See:
  https://ffmpeg.org/legal.html for further information.
 endef
@@ -381,7 +381,7 @@ endef
 
 # Strip off FPU notation
 REAL_CPU_TYPE:=$(call qstrip,$(firstword $(subst +, ,$(CONFIG_CPU_TYPE))))
-# Fixup cpu types recogized by ffmpeg configure
+# Fixup cpu types recognized by ffmpeg configure
 REAL_CPU_TYPE:=$(subst octeonplus,octeon+,$(REAL_CPU_TYPE))
 
 FFMPEG_CONFIGURE:= \
