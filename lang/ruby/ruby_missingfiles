@@ -28,20 +28,19 @@ function list_staging_files {
 		-not -path "*/usr/lib/ruby/gems/*/cache/*" \
 		-not -name "*test_case.rb" \
 		-not -name "*.rdoc" \
-		-not -name "*.doc" \
 		-not -name "*.md" \
-		-not -name "*.txt" \
-		-not -name "BSDL" \
-		-not -name "COPYING" \
+		-not -name "*.mk" \
+		-not -name "*.doc" \
+		\( -name "LICENSE.txt" -or -not -name "*.txt" \) \
 		-not -name "*.travis.yml" \
 		-not -name "Rakefile" \
 		-not -path "*/ext/java/*" \
-		-not -name "gem.build_complete" \
 		-not -regex ".*/usr/lib/ruby/gems/[^/]*/gems/[^/]*/benchmark/.*" \
 		-not -regex ".*/usr/lib/ruby/gems/[^/]*/gems/[^/]*/evaluation/.*" \
 		-not -regex ".*/usr/lib/ruby/gems/[^/]*/gems/[^/]*/sample/.*" \
 		-not -regex ".*/usr/lib/ruby/gems/[^/]*/gems/[^/]*/test/.*" \
 		-not -regex ".*/usr/lib/ruby/gems/[^/]*/gems/[^/]*/doc/.*" \
+		-not -regex ".*/usr/lib/ruby/gems/[^/]*/gems/fiddle[^/]*/ext/.*" \
 		-not -type d \
 		-print | sort | sed -e 's,^\./,/,'
 }
