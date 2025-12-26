@@ -10,7 +10,19 @@ permissions:
 jobs:
   formalities:
     name: Test Formalities
-    uses: openwrt/actions-shared-workflows/.github/workflows/formal.yml@main
+    runs-on: ubuntu-slim
+    steps:
+      - name: HyperStickler
+        uses: georgesapkin/hyperstickler@v1-beta.3
+        with:
+          check_signoff: true
+          feedback_url: 'https://github.com/openwrt/actions-shared-workflows/issues'
+          guideline_url: 'https://openwrt.org/submitting-patches#submission_guidelines'
+          # This still needs a fine-grained token related to:
+          # https://github.com/openwrt/packages/pull/28011
+          # job_step: 2
+          # post_comment: true
+          # warn_on_no_modify: true
 
   build:
     name: Feeds Package Test Build
