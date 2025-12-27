@@ -74,6 +74,8 @@ require_ignore=%w{
 	rubygems/defaults/operating_system
 	rubygems/net/http
 	rubygems/timeout
+	simplecov
+	sexp
 	sorted_set
 	stackprof
 	tracer
@@ -88,6 +90,15 @@ require_ignore=%w{
 	xml/parser
 	xmlparser
 	xmlscan/scanner
+}
+# builtin requires
+require_ignore+=%w{
+	enumerator
+	thread
+	fiber
+	rational
+	complex
+	set
 }
 # Keep track of which of these ignores really matters
 require_ignore_that_matched={}
