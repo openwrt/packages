@@ -1,0 +1,36 @@
+From be735c1b5e12117039ac64f802e30b075987dd22 Mon Sep 17 00:00:00 2001
+From: Matthijs Mekking <matthijs@isc.org>
+Date: Thu, 11 Dec 2025 15:14:55 +0100
+Subject: [PATCH 4/4] fixup! Check if adding new zone can replace an automatic
+ empty zone
+
+---
+ bin/tests/system/addzone/tests.sh | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+
+--- a/bin/tests/system/addzone/tests.sh
++++ b/bin/tests/system/addzone/tests.sh
+@@ -84,6 +84,23 @@ n=$((n + 1))
+ if [ $ret != 0 ]; then echo_i "failed"; fi
+ status=$((status + ret))
+ 
++echo_i "deleting zone which replaced an automatic empty zone ($n)"
++ret=0
++$DIG $DIGOPTS @10.53.0.6 a.168.192.in-addr.arpa a >dig.out.pre.$n || ret=1
++grep 'status: NOERROR' dig.out.pre.$n >/dev/null || ret=1
++grep '^a.168.192.in-addr.arpa' dig.out.pre.$n >/dev/null || ret=1
++$RNDCCMD 10.53.0.6 delzone '168.192.in-addr.arpa' 2>&1 | sed 's/^/I:ns6 /'
++_check_removing_new_zone() (
++  DIGOPTS2="+tcp +nosea +nostat +nocmd +norec +noauth +noadd +nostats +dnssec -p ${PORT}"
++  $DIG $DIGOPTS2 @10.53.0.6 168.192.in-addr.arpa SOA >dig.out.ns6.$n \
++    && grep 'status: NOERROR' dig.out.ns6.$n >/dev/null \
++    && grep '168\.192\.in-addr\.arpa\..86400.IN.SOA.168\.192\.IN-ADDR\.ARPA\. \. 0 28800 7200 604800 86400' dig.out.ns6.$n >/dev/null
++)
++retry_quiet 10 _check_removing_new_zone || ret=1
++n=$((n + 1))
++if [ $ret != 0 ]; then echo_i "failed"; fi
++status=$((status + ret))
++
+ echo_i "adding new zone which replaces an automatic empty zone with bad file ($n)"
+ ret=0
+ $DIG $DIGOPTS @10.53.0.6 10.in-addr.arpa SOA >dig.out.pre.$n || ret=1
