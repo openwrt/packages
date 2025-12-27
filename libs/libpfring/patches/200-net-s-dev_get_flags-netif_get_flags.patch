@@ -1,0 +1,29 @@
+--- a/kernel/pf_ring.c
++++ b/kernel/pf_ring.c
+@@ -5468,7 +5468,7 @@ static int is_netdev_promisc(struct net_
+   debug_printk(1, "checking promisc for %s\n", netdev->name);
+ 
+   rtnl_lock();
+-  if_flags = (short) dev_get_flags(netdev);
++  if_flags = (short) netif_get_flags(netdev);
+   rtnl_unlock();
+ 
+   return !!(if_flags & IFF_PROMISC);
+@@ -5483,7 +5483,7 @@ static void set_netdev_promisc(struct ne
+ 
+   rtnl_lock();
+ 
+-  if_flags = (short) dev_get_flags(netdev);
++  if_flags = (short) netif_get_flags(netdev);
+   if(!(if_flags & IFF_PROMISC)) {
+     if_flags |= IFF_PROMISC;
+ #if(LINUX_VERSION_CODE < KERNEL_VERSION(5,0,0) && \
+@@ -5506,7 +5506,7 @@ static void unset_netdev_promisc(struct
+ 
+   rtnl_lock();
+ 
+-  if_flags = (short) dev_get_flags(netdev);
++  if_flags = (short) netif_get_flags(netdev);
+   if(if_flags & IFF_PROMISC) {
+     if_flags &= ~IFF_PROMISC;
+ #if(LINUX_VERSION_CODE < KERNEL_VERSION(5,0,0) && \
