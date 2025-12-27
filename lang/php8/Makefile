@@ -230,25 +230,25 @@ else
   CONFIGURE_ARGS+= --disable-intl
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-bcmath),)
+ifneq ($(CONFIG_PACKAGE_php8-mod-bcmath),)
   CONFIGURE_ARGS+= --enable-bcmath=shared
 else
   CONFIGURE_ARGS+= --disable-bcmath
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-calendar),)
+ifneq ($(CONFIG_PACKAGE_php8-mod-calendar),)
   CONFIGURE_ARGS+= --enable-calendar=shared
 else
   CONFIGURE_ARGS+= --disable-calendar
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-ctype),)
+ifneq ($(CONFIG_PACKAGE_php8-mod-ctype),)
   CONFIGURE_ARGS+= --enable-ctype=shared
 else
   CONFIGURE_ARGS+= --disable-ctype
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-curl),)
+ifneq ($(CONFIG_PACKAGE_php8-mod-curl),)
   CONFIGURE_ARGS+= --with-curl=shared
 else
   CONFIGURE_ARGS+= --without-curl
@@ -260,31 +260,31 @@ else
   CONFIGURE_ARGS+= --disable-dom
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-exif),)
+ifneq ($(CONFIG_PACKAGE_php8-mod-exif),)
   CONFIGURE_ARGS+= --enable-exif=shared
 else
   CONFIGURE_ARGS+= --disable-exif
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-fileinfo),)
+ifneq ($(CONFIG_PACKAGE_php8-mod-fileinfo),)
   CONFIGURE_ARGS+= --enable-fileinfo=shared,"$(STAGING_DIR)/usr"
 else
   CONFIGURE_ARGS+= --disable-fileinfo
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-filter),)
+ifneq ($(CONFIG_PACKAGE_php8-mod-filter),)
   CONFIGURE_ARGS+= --enable-filter=shared,"$(STAGING_DIR)/usr"
 else
   CONFIGURE_ARGS+= --disable-filter
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-ftp),)
+ifneq ($(CONFIG_PACKAGE_php8-mod-ftp),)
   CONFIGURE_ARGS+= --enable-ftp=shared
 else
   CONFIGURE_ARGS+= --disable-ftp
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-gd),)
+ifneq ($(CONFIG_PACKAGE_php8-mod-gd),)
   CONFIGURE_ARGS+= \
 	--enable-gd=shared,"$(STAGING_DIR)/usr" \
 	--with-external-gd
@@ -292,13 +292,13 @@ else
   CONFIGURE_ARGS+= --disable-gd
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-gmp),)
+ifneq ($(CONFIG_PACKAGE_php8-mod-gmp),)
   CONFIGURE_ARGS+= --with-gmp=shared,"$(STAGING_DIR)/usr"
 else
   CONFIGURE_ARGS+= --without-gmp
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-iconv),)
+ifneq ($(CONFIG_PACKAGE_php8-mod-iconv),)
   ifeq ($(CONFIG_BUILD_NLS),y)
     CONFIGURE_VARS+= iconv_impl_name="gnu_libiconv"
     CONFIGURE_ARGS+= --with-iconv=shared,"$(ICONV_PREFIX)"
@@ -310,7 +310,7 @@ else
   CONFIGURE_ARGS+= --without-iconv
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-ldap),)
+ifneq ($(CONFIG_PACKAGE_php8-mod-ldap),)
   CONFIGURE_ARGS+= \
 	--with-ldap=shared,"$(STAGING_DIR)/usr" \
 	--with-ldap-sasl
@@ -318,7 +318,7 @@ else
   CONFIGURE_ARGS+= --without-ldap
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-mbstring),)
+ifneq ($(CONFIG_PACKAGE_php8-mod-mbstring),)
   CONFIGURE_ARGS+= \
 	--enable-mbstring=shared \
 	--enable-mbregex
@@ -326,25 +326,25 @@ else
   CONFIGURE_ARGS+= --disable-mbstring
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-mysqli),)
+ifneq ($(CONFIG_PACKAGE_php8-mod-mysqli),)
   CONFIGURE_ARGS+= --with-mysqli=shared
 else
   CONFIGURE_ARGS+= --without-mysqli
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-mysqlnd),)
+ifneq ($(CONFIG_PACKAGE_php8-mod-mysqlnd),)
   CONFIGURE_ARGS+= --enable-mysqlnd=shared
 else
   CONFIGURE_ARGS+= --disable-mysqlnd
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-opcache),)
+ifneq ($(CONFIG_PACKAGE_php8-mod-opcache),)
   CONFIGURE_ARGS+= --enable-opcache=shared
 else
   CONFIGURE_ARGS+= --disable-opcache
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-openssl)$(CONFIG_PACKAGE_php8-mod-ftp)$(CONFIG_PACKAGE_php8-mod-snmp),)
+ifneq ($(CONFIG_PACKAGE_php8-mod-openssl)$(CONFIG_PACKAGE_php8-mod-ftp)$(CONFIG_PACKAGE_php8-mod-snmp),)
   CONFIGURE_ARGS+= \
 	--with-openssl=shared \
 	--with-kerberos=no \
@@ -353,25 +353,25 @@ else
   CONFIGURE_ARGS+= --without-openssl
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-pcntl),)
+ifneq ($(CONFIG_PACKAGE_php8-mod-pcntl),)
   CONFIGURE_ARGS+= --enable-pcntl=shared
 else
   CONFIGURE_ARGS+= --disable-pcntl
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-pdo),)
+ifneq ($(CONFIG_PACKAGE_php8-mod-pdo),)
   CONFIGURE_ARGS+= --enable-pdo=shared
-  ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-pdo-mysql),)
+  ifneq ($(CONFIG_PACKAGE_php8-mod-pdo-mysql),)
     CONFIGURE_ARGS+= --with-pdo-mysql=shared
   else
     CONFIGURE_ARGS+= --without-pdo-mysql
   endif
-  ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-pdo-pgsql),)
+  ifneq ($(CONFIG_PACKAGE_php8-mod-pdo-pgsql),)
     CONFIGURE_ARGS+= --with-pdo-pgsql=shared,"$(STAGING_DIR)/usr"
   else
     CONFIGURE_ARGS+= --without-pdo-pgsql
   endif
-  ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-pdo-sqlite),)
+  ifneq ($(CONFIG_PACKAGE_php8-mod-pdo-sqlite),)
     CONFIGURE_ARGS+= --with-pdo-sqlite=shared
   else
     CONFIGURE_ARGS+= --without-pdo-sqlite
@@ -380,32 +380,32 @@ else
   CONFIGURE_ARGS+= --disable-pdo
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-pgsql),)
+ifneq ($(CONFIG_PACKAGE_php8-mod-pgsql),)
   CONFIGURE_ARGS+= --with-pgsql=shared,"$(STAGING_DIR)/usr"
 else
   CONFIGURE_ARGS+= --without-pgsql
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-phar),)
+ifneq ($(CONFIG_PACKAGE_php8-mod-phar),)
   CONFIGURE_ARGS+= --enable-phar=shared
 else
   CONFIGURE_ARGS+= --disable-phar
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-session),)
+ifneq ($(CONFIG_PACKAGE_php8-mod-session),)
   CONFIGURE_ARGS+= --enable-session=shared
 else
   CONFIGURE_ARGS+= --disable-session
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-shmop),)
+ifneq ($(CONFIG_PACKAGE_php8-mod-shmop),)
   CONFIGURE_ARGS+= --enable-shmop=shared
 else
   CONFIGURE_ARGS+= --disable-shmop
 endif
 
 ifeq ($(CONFIG_PHP8_LIBXML),y)
-  ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-simplexml),)
+  ifneq ($(CONFIG_PACKAGE_php8-mod-simplexml),)
     CONFIGURE_ARGS+= --enable-simplexml=shared
   else
     CONFIGURE_ARGS+= --disable-simplexml
@@ -414,7 +414,7 @@ else
   CONFIGURE_ARGS+= --disable-simplexml
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-snmp),)
+ifneq ($(CONFIG_PACKAGE_php8-mod-snmp),)
   CONFIGURE_ARGS+= --with-snmp=shared,"$(STAGING_DIR)/usr"
   CONFIGURE_VARS+= \
     ac_cv_have_decl_usmHMAC192SHA256AuthProtocol=no \
@@ -424,7 +424,7 @@ else
 endif
 
 ifeq ($(CONFIG_PHP8_LIBXML),y)
-  ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-soap),)
+  ifneq ($(CONFIG_PACKAGE_php8-mod-soap),)
     CONFIGURE_ARGS+= --enable-soap=shared
   else
     CONFIGURE_ARGS+= --disable-soap
@@ -433,49 +433,49 @@ else
   CONFIGURE_ARGS+= --disable-soap
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-sockets),)
+ifneq ($(CONFIG_PACKAGE_php8-mod-sockets),)
   CONFIGURE_ARGS+= --enable-sockets=shared
 else
   CONFIGURE_ARGS+= --disable-sockets
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-sodium),)
+ifneq ($(CONFIG_PACKAGE_php8-mod-sodium),)
   CONFIGURE_ARGS+= --with-sodium=shared,"$(STAGING_DIR)/usr"
 else
   CONFIGURE_ARGS+= --without-sodium
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-sqlite3),)
+ifneq ($(CONFIG_PACKAGE_php8-mod-sqlite3),)
   CONFIGURE_ARGS+= --with-sqlite3=shared
 else
   CONFIGURE_ARGS+= --without-sqlite3
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-sysvmsg),)
+ifneq ($(CONFIG_PACKAGE_php8-mod-sysvmsg),)
   CONFIGURE_ARGS+= --enable-sysvmsg=shared
 else
   CONFIGURE_ARGS+= --disable-sysvmsg
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-sysvsem),)
+ifneq ($(CONFIG_PACKAGE_php8-mod-sysvsem),)
   CONFIGURE_ARGS+= --enable-sysvsem=shared
 else
   CONFIGURE_ARGS+= --disable-sysvsem
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-sysvshm),)
+ifneq ($(CONFIG_PACKAGE_php8-mod-sysvshm),)
   CONFIGURE_ARGS+= --enable-sysvshm=shared
 else
   CONFIGURE_ARGS+= --disable-sysvshm
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-tokenizer),)
+ifneq ($(CONFIG_PACKAGE_php8-mod-tokenizer),)
   CONFIGURE_ARGS+= --enable-tokenizer=shared
 else
   CONFIGURE_ARGS+= --disable-tokenizer
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-xml),)
+ifneq ($(CONFIG_PACKAGE_php8-mod-xml),)
   CONFIGURE_ARGS+= --enable-xml=shared,"$(STAGING_DIR)/usr"
   ifneq ($(CONFIG_PHP8_LIBXML),y)
     CONFIGURE_ARGS+= --with-expat
@@ -485,7 +485,7 @@ else
 endif
 
 ifeq ($(CONFIG_PHP8_LIBXML),y)
-  ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-xmlreader),)
+  ifneq ($(CONFIG_PACKAGE_php8-mod-xmlreader),)
     CONFIGURE_ARGS+= --enable-xmlreader=shared,"$(STAGING_DIR)/usr"
   else
     CONFIGURE_ARGS+= --disable-xmlreader
@@ -495,7 +495,7 @@ else
 endif
 
 ifeq ($(CONFIG_PHP8_LIBXML),y)
-  ifneq ($(SDK)$(CONFIG_PACKAGE_php8-mod-xmlwriter),)
+  ifneq ($(CONFIG_PACKAGE_php8-mod-xmlwriter),)
     CONFIGURE_ARGS+= --enable-xmlwriter=shared,"$(STAGING_DIR)/usr"
   else
     CONFIGURE_ARGS+= --disable-xmlwriter
