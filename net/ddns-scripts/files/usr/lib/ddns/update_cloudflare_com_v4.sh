@@ -214,40 +214,7 @@ else
 	}
 fi
 
-# If dns_record_id is specified, grab the stored IP for that specific record
-# So that the IP checking behavior below works even for domains with multiple IPs
-if [ -n "$dns_record_id" ]; then
-	__RUNPROG="$__PRGBASE --request GET '$__URLBASE/zones/$__ZONEID/dns_records/$__RECID'"
-	cloudflare_transfer || return 1
-fi
-
-# extract current stored IP
-__DATA=$(grep -o '"content":\s*"[^"]*' $DATFILE | grep -o '[^"]*$' | head -1)
-
-# check data
-[ $use_ipv6 -eq 0 ] \
-	&& __DATA=$(printf "%s" "$__DATA" | grep -m 1 -o "$IPV4_REGEX") \
-	|| __DATA=$(printf "%s" "$__DATA" | grep -m 1 -o "$IPV6_REGEX")
-
-# we got data so verify
-[ -n "$__DATA" ] && {
-	# expand IPv6 for compare
-	if [ $use_ipv6 -eq 1 ]; then
-		expand_ipv6 $__IP __IPV6
-		expand_ipv6 $__DATA __DATA
-		[ "$__DATA" = "$__IPV6" ] && {		# IPv6 no update needed
-			write_log 7 "IPv6 at CloudFlare.com already up to date"
-			return 0
-		}
-	else
-		[ "$__DATA" = "$__IP" ] && {		# IPv4 no update needed
-			write_log 7 "IPv4 at CloudFlare.com already up to date"
-			return 0
-		}
-	fi
-}
-
-# update is needed
+# update is needed (assume always when called, as check is now in get_registered_ip)
 # let's build data to send
 
 # use file to work around " needed for json
@@ -260,4 +227,3 @@ __RUNPROG="$__PRGBASE --request PATCH --data @$DATFILE '$__URLBASE/zones/$__ZONE
 cloudflare_transfer || return 1
 
 return 0
-

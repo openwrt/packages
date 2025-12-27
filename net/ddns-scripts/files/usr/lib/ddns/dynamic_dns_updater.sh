@@ -180,6 +180,8 @@ trap "trap_handler 15" 15	# SIGTERM	Termination
 # - GNU Wget or cURL installed for sending updates to DDNS service
 # - BIND host installed to detect Registered IP
 #
+# use_api_check		use API for IP verification instead of DNS (for proxied providers like Cloudflare); default 0
+#
 ################################################################################
 
 load_all_config_options "ddns" "$SECTION_ID"
@@ -196,6 +198,7 @@ ERR_LAST=$?	# save return code - equal 0 if SECTION_ID found
 [ -z "$force_dnstcp" ]	  && force_dnstcp=0	# default UDP
 [ -z "$ip_source" ]	  && ip_source="network"
 [ -z "$is_glue" ]	  && is_glue=0		# default the ddns record is not a glue record
+[ -z "$use_api_check" ] && use_api_check=0	# use API for IP check (e.g., for proxied records)
 [ "$ip_source" = "network" -a -z "$ip_network" -a $use_ipv6 -eq 0 ] && ip_network="wan"  # IPv4: default wan
 [ "$ip_source" = "network" -a -z "$ip_network" -a $use_ipv6 -eq 1 ] && ip_network="wan6" # IPv6: default wan6
 [ "$ip_source" = "web" -a -z "$ip_url" -a $use_ipv6 -eq 0 ] && ip_url="http://checkip.dyndns.com"

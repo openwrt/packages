@@ -988,87 +988,180 @@ get_registered_ip() {
 	# set correct regular expression
 	[ $use_ipv6 -eq 0 ] && __REGEX="$IPV4_REGEX" || __REGEX="$IPV6_REGEX"
 
-	if [ -n "$BIND_HOST" ]; then
-		__PROG="$BIND_HOST"
-		[ $use_ipv6 -eq 0 ] && __PROG="$__PROG -t A"  || __PROG="$__PROG -t AAAA"
-		if [ $force_ipversion -eq 1 ]; then			# force IP version
-			[ $use_ipv6 -eq 0 ] && __PROG="$__PROG -4"  || __PROG="$__PROG -6"
+	# Ensure use_api_check defaults to 0 if not set
+	[ -z "$use_api_check" ] && use_api_check=0
+
+	# Determine method (API or DNS)
+	if [ "$service_name" = "cloudflare.com-v4" ] && [ $use_api_check -eq 1 ]; then
+		write_log 7 "Using Cloudflare API for registered IP (handles proxied records)"
+		__PROG="cloudflare_api"
+	else
+		# Original DNS tool selection
+		if [ -n "$BIND_HOST" ]; then
+			__PROG="$BIND_HOST"
+			[ $force_ipversion -ne 0 ] && \
+				write_log 5 "BIND host - no support to 'force IP Version' (ignored)"
+			[ $force_dnstcp -ne 0 ] && __PROG="$__PROG -t"
+			[ -n "$dns_server" ] && __PROG="$__PROG @$dns_server"
+			__RUNPROG="$__PROG $lookup_host >$DATFILE 2>$ERRFILE"
+			__PROG="BIND host"
+		elif [ -n "$KNOT_HOST" ]; then
+			__PROG="$KNOT_HOST"
+			[ $force_ipversion -ne 0 ] && \
+				write_log 5 "Knot host - no support to 'force IP Version' (ignored)"
+			[ $force_dnstcp -ne 0 ] && __PROG="$__PROG -t tcp"
+			[ -n "$dns_server" ] && __PROG="$__PROG -s $dns_server"
+			__RUNPROG="$__PROG $lookup_host >$DATFILE 2>$ERRFILE"
+			__PROG="Knot host"
+		elif [ -n "$DRILL" ]; then
+			__PROG="$DRILL"
+			[ $force_ipversion -ne 0 ] && \
+				write_log 5 "drill - no support to 'force IP Version' (ignored)"
+			[ $force_dnstcp -ne 0 ] && __PROG="$__PROG -T"
+			[ -n "$dns_server" ] && __PROG="$__PROG @$dns_server"
+			__RUNPROG="$__PROG $lookup_host >$DATFILE 2>$ERRFILE"
+			__PROG="drill"
+		elif [ -n "$HOSTIP" ]; then
+			__PROG="$HOSTIP"
+			[ $force_dnstcp -ne 0 ] && \
+				write_log 14 "hostip - no support for 'DNS over TCP'"
+			# is IP given as dns_server ?
+			__IP=$(echo $dns_server | grep -m 1 -o "$IPV4_REGEX")
+			[ -z "$__IP" ] && __IP=$(echo $dns_server | grep -m 1 -o "$IPV6_REGEX")
+			# we got NO ip for dns_server, so build command
+			[ -z "$__IP" -a -n "$dns_server" ] && {
+				__IP="\`$HOSTIP"
+				[ $use_ipv6 -eq 1 -a $force_ipversion -eq 1 ] && __IP="$__IP -6"
+				__IP="$__IP $dns_server | grep -m 1 -o"
+				[ $use_ipv6 -eq 1 -a $force_ipversion -eq 1 ] \
+					&& __IP="$__IP '$IPV6_REGEX'" \
+					|| __IP="$__IP '$IPV4_REGEX'"
+				__IP="$__IP \`"
+			}
+			[ $use_ipv6 -eq 1 ] && __PROG="$__PROG -6"
+			[ -n "$dns_server" ] && __PROG="$__PROG -r $__IP"
+			__RUNPROG="$__PROG $lookup_host >$DATFILE 2>$ERRFILE"
+			__PROG="hostip"
+		elif [ -n "$NSLOOKUP" ]; then
+			NSLOOKUP_MUSL=$($(command -v nslookup) localhost 2>&1 | grep -F "(null)")	# not empty busybox compiled with musl
+			[ $force_dnstcp -ne 0 ] && \
+				write_log 14 "Busybox nslookup - no support for 'DNS over TCP'"
+			[ -n "$NSLOOKUP_MUSL" -a -n "$dns_server" ] && \
+				write_log 14 "Busybox compiled with musl - nslookup don't support the use of DNS Server"
+			[ $force_ipversion -ne 0 ] && \
+				write_log 5 "Busybox nslookup - no support to 'force IP Version' (ignored)"
+			__RUNPROG="$NSLOOKUP $lookup_host $dns_server >$DATFILE 2>$ERRFILE"
+			__PROG="BusyBox nslookup"
+		else	# there must be an error
+			write_log 12 "Error in 'get_registered_ip()' - no supported Name Server lookup software accessible"
 		fi
-		[ $force_dnstcp -eq 1 ] && __PROG="$__PROG -T"	# force TCP
-		[ $is_glue -eq 1 ] && __PROG="$__PROG -v" # use verbose output to get additional section
-
-		__RUNPROG="$__PROG $lookup_host $dns_server >$DATFILE 2>$ERRFILE"
-		__PROG="BIND host"
-	elif [ -n "$KNOT_HOST" ]; then
-		__PROG="$KNOT_HOST"
-		[ $use_ipv6 -eq 0 ] && __PROG="$__PROG -t A"  || __PROG="$__PROG -t AAAA"
-		if [ $force_ipversion -eq 1 ]; then			# force IP version
-			[ $use_ipv6 -eq 0 ] && __PROG="$__PROG -4"  || __PROG="$__PROG -6"
-		fi
-		[ $force_dnstcp -eq 1 ] && __PROG="$__PROG -T"	# force TCP
-
-		__RUNPROG="$__PROG $lookup_host $dns_server >$DATFILE 2>$ERRFILE"
-		__PROG="Knot host"
-	elif [ -n "$DRILL" ]; then
-		__PROG="$DRILL -V0"			# drill options name @server type
-		if [ $force_ipversion -eq 1 ]; then			# force IP version
-			[ $use_ipv6 -eq 0 ] && __PROG="$__PROG -4"  || __PROG="$__PROG -6"
-		fi
-		[ $force_dnstcp -eq 1 ] && __PROG="$__PROG -t" || __PROG="$__PROG -u"	# force TCP
-		__PROG="$__PROG $lookup_host"
-		[ -n "$dns_server" ] && __PROG="$__PROG @$dns_server"
-		[ $use_ipv6 -eq 0 ] && __PROG="$__PROG A"  || __PROG="$__PROG AAAA"
-
-		__RUNPROG="$__PROG >$DATFILE 2>$ERRFILE"
-		__PROG="drill"
-	elif [ -n "$HOSTIP" ]; then	# hostip package installed
-		__PROG="$HOSTIP"
-		[ $force_dnstcp -ne 0 ] && \
-			write_log 14 "hostip - no support for 'DNS over TCP'"
-
-		# is IP given as dns_server ?
-		__IP=$(echo $dns_server | grep -m 1 -o "$IPV4_REGEX")
-		[ -z "$__IP" ] && __IP=$(echo $dns_server | grep -m 1 -o "$IPV6_REGEX")
-
-		# we got NO ip for dns_server, so build command
-		[ -z "$__IP" -a -n "$dns_server" ] && {
-			__IP="\`$HOSTIP"
-			[ $use_ipv6 -eq 1 -a $force_ipversion -eq 1 ] && __IP="$__IP -6"
-			__IP="$__IP $dns_server | grep -m 1 -o"
-			[ $use_ipv6 -eq 1 -a $force_ipversion -eq 1 ] \
-				&& __IP="$__IP '$IPV6_REGEX'" \
-				|| __IP="$__IP '$IPV4_REGEX'"
-			__IP="$__IP \`"
-		}
-
-		[ $use_ipv6 -eq 1 ] && __PROG="$__PROG -6"
-		[ -n "$dns_server" ] && __PROG="$__PROG -r $__IP"
-		__RUNPROG="$__PROG $lookup_host >$DATFILE 2>$ERRFILE"
-		__PROG="hostip"
-	elif [ -n "$NSLOOKUP" ]; then	# last use BusyBox nslookup
-		NSLOOKUP_MUSL=$($(command -v nslookup) localhost 2>&1 | grep -F "(null)")	# not empty busybox compiled with musl
-		[ $force_dnstcp -ne 0 ] && \
-			write_log 14 "Busybox nslookup - no support for 'DNS over TCP'"
-		[ -n "$NSLOOKUP_MUSL" -a -n "$dns_server" ] && \
-			write_log 14 "Busybox compiled with musl - nslookup don't support the use of DNS Server"
-		[ $force_ipversion -ne 0 ] && \
-			write_log 5 "Busybox nslookup - no support to 'force IP Version' (ignored)"
-
-		__RUNPROG="$NSLOOKUP $lookup_host $dns_server >$DATFILE 2>$ERRFILE"
-		__PROG="BusyBox nslookup"
-	else	# there must be an error
-		write_log 12 "Error in 'get_registered_ip()' - no supported Name Server lookup software accessible"
 	fi
 
 	while : ; do
-		write_log 7 "#> $__RUNPROG"
-		eval $__RUNPROG
-		__ERR=$?
+		if [ "$__PROG" = "cloudflare_api" ]; then
+			# Setup curl base
+			local __URLBASE="https://api.cloudflare.com/client/v4"
+			local __PRGBASE="$CURL -RsS -o $DATFILE --stderr $ERRFILE"
+			if [ -n "$bind_network" ]; then
+				local __DEVICE
+				network_get_device __DEVICE $bind_network || write_log 13 "Can not detect local device using 'network_get_device $bind_network' - Error: '$?'"
+				write_log 7 "Force communication via device '$__DEVICE'"
+				__PRGBASE="$__PRGBASE --interface $__DEVICE"
+			fi
+			if [ $force_ipversion -eq 1 ]; then
+				[ $use_ipv6 -eq 0 ] && __PRGBASE="$__PRGBASE -4" || __PRGBASE="$__PRGBASE -6"
+			fi
+			if [ "$cacert" = "IGNORE" ]; then
+				__PRGBASE="$__PRGBASE --insecure"
+			elif [ -f "$cacert" ]; then
+				__PRGBASE="$__PRGBASE --cacert $cacert"
+			elif [ -d "$cacert" ]; then
+				__PRGBASE="$__PRGBASE --capath $cacert"
+			elif [ -n "$cacert" ]; then
+				write_log 14 "No valid certificate(s) found at '$cacert' for HTTPS communication"
+			fi
+			if [ -z "$proxy" ]; then
+				__PRGBASE="$__PRGBASE --noproxy '*'"
+			elif [ -z "$CURL_PROXY" ]; then
+				write_log 13 "cURL: libcurl compiled without Proxy support"
+			fi
+			if [ "$username" = "Bearer" ]; then
+				write_log 7 "Found Username 'Bearer' using Password as Bearer Authorization Token"
+				__PRGBASE="$__PRGBASE --header 'Authorization: Bearer $password' "
+			else
+				__PRGBASE="$__PRGBASE --header 'X-Auth-Email: $username' "
+				__PRGBASE="$__PRGBASE --header 'X-Auth-Key: $password' "
+			fi
+			__PRGBASE="$__PRGBASE --header 'Content-Type: application/json' "
+
+			# Parse domain
+			local __HOST __DOMAIN __TYPE
+			if echo "$domain" | grep -Fq '@'; then
+				__HOST=$(printf %s "$domain" | cut -d@ -f1)
+				__DOMAIN=$(printf %s "$domain" | cut -d@ -f2)
+			else
+				__DOMAIN=$domain
+			fi
+			[ -z "$__HOST" ] && __HOST=$__DOMAIN || __HOST="${__HOST}.${__DOMAIN}"
+			[ $use_ipv6 -eq 0 ] && __TYPE="A" || __TYPE="AAAA"
+
+			# Assume success initially
+			__ERR=0
+
+			# Get zone ID
+			__RUNPROG="$__PRGBASE --request GET '$__URLBASE/zones?name=$__DOMAIN'"
+			write_log 7 "#> $__RUNPROG"
+			eval $__RUNPROG || __ERR=$?
+			if [ $__ERR -eq 0 ]; then
+				local __ZONEID
+				if [ -n "$zone_id" ]; then
+					__ZONEID=$(jsonfilter -i $DATFILE -e "@.result[@.id='$zone_id'].id")
+					[ -z "$__ZONEID" ] && { write_log 4 "Invalid zone_id for $__DOMAIN"; __ERR=127; }
+				else
+					__ZONEID=$(jsonfilter -i $DATFILE -e "@.result.*.id" | head -1)
+					[ -z "$__ZONEID" ] && { write_log 4 "Could not detect zone ID for $__DOMAIN"; __ERR=127; }
+				fi
+			fi
+
+			# Get record ID if zone succeeded
+			if [ $__ERR -eq 0 ]; then
+				__RUNPROG="$__PRGBASE --request GET '$__URLBASE/zones/$__ZONEID/dns_records?name=$__HOST&type=$__TYPE'"
+				write_log 7 "#> $__RUNPROG"
+				eval $__RUNPROG || __ERR=$?
+				if [ $__ERR -eq 0 ]; then
+					local __RECID
+					if [ -n "$dns_record_id" ]; then
+						__RECID=$(jsonfilter -i $DATFILE -e "@.result[@.id='$dns_record_id'].id")
+						[ -z "$__RECID" ] && { write_log 4 "Invalid dns_record_id for $__HOST"; __ERR=127; }
+					else
+						__RECID=$(jsonfilter -i $DATFILE -e "@.result.*.id" | head -1)
+						[ -z "$__RECID" ] && { write_log 4 "Could not detect record ID for $__HOST"; __ERR=127; }
+					fi
+				fi
+			fi
+
+			# Get record content if record ID succeeded
+			if [ $__ERR -eq 0 ]; then
+				__RUNPROG="$__PRGBASE --request GET '$__URLBASE/zones/$__ZONEID/dns_records/$__RECID'"
+				write_log 7 "#> $__RUNPROG"
+				eval $__RUNPROG || __ERR=$?
+			fi
+		else
+			write_log 7 "#> $__RUNPROG"
+			eval $__RUNPROG
+			__ERR=$?
+		fi
+
 		if [ $__ERR -ne 0 ]; then
 			write_log 3 "$__PROG error: '$__ERR'"
 			write_log 7 "$(cat $ERRFILE)"
 		else
-			if [ -n "$BIND_HOST" -o -n "$KNOT_HOST" ]; then
+			if [ "$__PROG" = "cloudflare_api" ]; then
+				__DATA=$(grep -o '"content":\s*"[^"]*' $DATFILE | grep -o '[^"]*$' | head -1)
+				[ $use_ipv6 -eq 0 ] \
+					&& __DATA=$(printf "%s" "$__DATA" | grep -m 1 -o "$IPV4_REGEX") \
+					|| __DATA=$(printf "%s" "$__DATA" | grep -m 1 -o "$IPV6_REGEX")
+			elif [ -n "$BIND_HOST" -o -n "$KNOT_HOST" ]; then
 				if [ $is_glue -eq 1 ]; then
 					__DATA=$(cat $DATFILE | grep "^$lookup_host" | grep -om1 "$__REGEX" )
 				else
@@ -1090,29 +1183,30 @@ get_registered_ip() {
 			write_log 4 "NO valid IP found"
 			__ERR=127
 		fi
-		[ -z "$IPFILE" ] || echo "" > $IPFILE
+		
+	[ -z "$IPFILE" ] || echo "" > $IPFILE
 
-		[ -n "$LUCI_HELPER" ] && return $__ERR	# no retry if called by LuCI helper script
-		[ -n "$2" ] && return $__ERR		# $2 is given -> no retry
-		[ $VERBOSE -gt 1 ] && {
-			# VERBOSE > 1 then NO retry
-			write_log 4 "Get registered/public IP for '$lookup_host' failed - Verbose Mode: $VERBOSE - NO retry on error"
-			return $__ERR
-		}
+	[ -n "$LUCI_HELPER" ] && return $__ERR	# no retry if called by LuCI helper script
+	[ -n "$2" ] && return $__ERR		# $2 is given -> no retry
+	[ $VERBOSE -gt 1 ] && {
+		# VERBOSE > 1 then NO retry
+		write_log 4 "Get registered/public IP for '$lookup_host' failed - Verbose Mode: $VERBOSE - NO retry on error"
+		return $__ERR
+	}
 
-		__CNT=$(( $__CNT + 1 ))	# increment error counter
-		# if error count > retry_max_count leave here
-		[ $retry_max_count -gt 0 -a $__CNT -gt $retry_max_count ] && \
-			write_log 14 "Get registered/public IP for '$lookup_host' failed after $retry_max_count retries"
+	__CNT=$(( $__CNT + 1 ))	# increment error counter
+	# if error count > retry_max_count leave here
+	[ $retry_max_count -gt 0 -a $__CNT -gt $retry_max_count ] && \
+		write_log 14 "Get registered/public IP for '$lookup_host' failed after $retry_max_count retries"
 
-		write_log 4 "Get registered/public IP for '$lookup_host' failed - retry $__CNT/$retry_max_count in $RETRY_SECONDS seconds"
-		sleep $RETRY_SECONDS &
-		PID_SLEEP=$!
-		wait $PID_SLEEP	# enable trap-handler
-		PID_SLEEP=0
-	done
-	# we should never come here there must be a programming error
-	write_log 12 "Error in 'get_registered_ip()' - program coding error"
+	write_log 4 "Get registered/public IP for '$lookup_host' failed - retry $__CNT/$retry_max_count in $RETRY_SECONDS seconds"
+	sleep $RETRY_SECONDS &
+	PID_SLEEP=$!
+	wait $PID_SLEEP	# enable trap-handler
+	PID_SLEEP=0
+done
+# we should never come here there must be a programming error
+write_log 12 "Error in 'get_registered_ip()' - program coding error"
 }
 
 get_uptime() {

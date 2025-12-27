@@ -30,6 +30,7 @@ Commands:
 
 Parameters:
  -6                  => use_ipv6=1          (default 0)
+ -a                  => use_api_check=1      (default 0; use API for IP verification on proxied providers)
  -d DNS-SERVER       => dns_server=SERVER[:PORT]
  -f                  => force_ipversion=1   (default 0)
  -g                  => is_glue=1           (default 0)
@@ -76,6 +77,7 @@ use_https=0		# not needed but must be set
 while getopts ":6d:fghi:l:n:p:s:S:tu:Lv:V" OPT; do
 	case "$OPT" in
 		6)	use_ipv6=1;;
+		a)	use_api_check=1;;
 		d)	dns_server="$OPTARG";;
 		f)	force_ipversion=1;;
 		g)	is_glue=1;;
