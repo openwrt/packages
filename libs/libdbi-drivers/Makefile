@@ -73,7 +73,7 @@ else
 	CONFIGURE_ARGS += --without-mysql
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_libdbd-pgsql),)
+ifneq ($(CONFIG_PACKAGE_libdbd-pgsql),)
 	CONFIGURE_ARGS += \
 		--with-pgsql \
 		--with-pgsql-incdir=$(STAGING_DIR)/usr/include \
@@ -82,7 +82,7 @@ else
 	CONFIGURE_ARGS += --without-pgsql
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_libdbd-sqlite3),)
+ifneq ($(CONFIG_PACKAGE_libdbd-sqlite3),)
 	CONFIGURE_ARGS += \
 		--with-sqlite3 \
 		--with-sqlite3-incdir=$(STAGING_DIR)/usr/include \

@@ -762,7 +762,7 @@ PKG_DICTIONARIES:= \
 	microsoft \
 	wispr \
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-cache-redis),)
+ifneq ($(CONFIG_PACKAGE_freeradius3-mod-cache-redis),)
   CONFIGURE_ARGS+= \
 		--with-rlm_cache_redis \
 		--with-rlm_cache_redis-include-dir="$(STAGING_DIR)/usr/include" \
@@ -771,7 +771,7 @@ else
   CONFIGURE_ARGS+= --without-rlm_cache_redis
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-eap-fast),)
+ifneq ($(CONFIG_PACKAGE_freeradius3-mod-eap-fast),)
   CONFIGURE_ARGS+= \
 		--with-rlm_eap_fast \
 		--with-rlm_eap_fast-include-dir="$(STAGING_DIR)/usr/include" \
@@ -781,7 +781,7 @@ else
   CONFIGURE_ARGS+= --without-rlm_eap_fast
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-eap-peap),)
+ifneq ($(CONFIG_PACKAGE_freeradius3-mod-eap-peap),)
   CONFIGURE_ARGS+= \
 		--with-rlm_eap_peap \
 		--with-rlm_eap_peap-include-dir="$(STAGING_DIR)/usr/include" \
@@ -791,7 +791,7 @@ else
   CONFIGURE_ARGS+= --without-rlm_eap_peap
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-eap-pwd),)
+ifneq ($(CONFIG_PACKAGE_freeradius3-mod-eap-pwd),)
   CONFIGURE_ARGS+= \
 		--with-rlm_eap_pwd \
 		--with-rlm_eap_pwd-include-dir="$(STAGING_DIR)/usr/include" \
@@ -801,7 +801,7 @@ else
   CONFIGURE_ARGS+= --without-rlm_eap_pwd
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-eap-tls),)
+ifneq ($(CONFIG_PACKAGE_freeradius3-mod-eap-tls),)
   CONFIGURE_ARGS+= \
 		--with-rlm_eap_tls \
 		--with-rlm_eap_tls-include-dir="$(STAGING_DIR)/usr/include" \
@@ -811,7 +811,7 @@ else
   CONFIGURE_ARGS+= --without-rlm_eap_tls
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-eap-ttls),)
+ifneq ($(CONFIG_PACKAGE_freeradius3-mod-eap-ttls),)
   CONFIGURE_ARGS+= \
 		--with-rlm_eap_ttls \
 		--with-rlm_eap_ttls-include-dir="$(STAGING_DIR)/usr/include" \
@@ -821,7 +821,7 @@ else
   CONFIGURE_ARGS+= --without-rlm_eap_ttls
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-ippool),)
+ifneq ($(CONFIG_PACKAGE_freeradius3-mod-ippool),)
   CONFIGURE_ARGS+= --with-rlm_ippool \
 		--with-rlm_ippool-include-dir="$(STAGING_DIR)/usr/include" \
 		--with-rlm_ippool-lib-dir="$(STAGING_DIR)/usr/lib"
@@ -829,7 +829,7 @@ else
   CONFIGURE_ARGS+= --without-rlm_ippool
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-json),)
+ifneq ($(CONFIG_PACKAGE_freeradius3-mod-json),)
   CONFIGURE_ARGS+= --with-rlm_json \
 		--with-rlm_json-include-dir="$(STAGING_DIR)/usr/include" \
 		--with-rlm_json-lib-dir="$(STAGING_DIR)/usr/lib"
@@ -837,7 +837,7 @@ else
   CONFIGURE_ARGS+= --without-rlm_json
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-krb5),)
+ifneq ($(CONFIG_PACKAGE_freeradius3-mod-krb5),)
   CONFIGURE_ARGS+= \
 		--with-rlm_krb5 \
 		--with-rlm-krb5-dir="$(STAGING_DIR)/host/bin/krb5-config"
@@ -845,7 +845,7 @@ else
   CONFIGURE_ARGS+= --without-rlm_krb5
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-ldap),)
+ifneq ($(CONFIG_PACKAGE_freeradius3-mod-ldap),)
   CONFIGURE_ARGS+= --with-rlm_ldap \
 		--with-rlm_ldap-include-dir="$(STAGING_DIR)/usr/include" \
 		--with-rlm_ldap-lib-dir="$(STAGING_DIR)/usr/lib"
@@ -853,7 +853,7 @@ else
   CONFIGURE_ARGS+= --without-rlm_ldap
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-python3),)
+ifneq ($(CONFIG_PACKAGE_freeradius3-mod-python3),)
   CFLAGS+= -fPIC
   CONFIGURE_ARGS+= \
 		--with-modules="rlm_python3" \
@@ -862,13 +862,13 @@ else
   CONFIGURE_ARGS+= --without-rlm_python3
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-radutmp),)
+ifneq ($(CONFIG_PACKAGE_freeradius3-mod-radutmp),)
   CONFIGURE_ARGS+= --with-rlm_radutmp
 else
   CONFIGURE_ARGS+= --without-rlm_radutmp
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-redis),)
+ifneq ($(CONFIG_PACKAGE_freeradius3-mod-redis),)
   CONFIGURE_ARGS+= \
 		--with-rlm_redis \
 		--with-rlm_redis-include-dir="$(STAGING_DIR)/usr/include" \
@@ -877,7 +877,7 @@ else
   CONFIGURE_ARGS+= --without-rlm_redis
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-rediswho),)
+ifneq ($(CONFIG_PACKAGE_freeradius3-mod-rediswho),)
   CONFIGURE_ARGS+= \
 		--with-rlm_rediswho \
 		--with-rlm_rediswho-include-dir="$(STAGING_DIR)/usr/include" \
@@ -886,19 +886,19 @@ else
   CONFIGURE_ARGS+= --without-rlm_rediswho
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-rest),)
+ifneq ($(CONFIG_PACKAGE_freeradius3-mod-rest),)
   CONFIGURE_ARGS+= --with-rlm_rest
 else
   CONFIGURE_ARGS+= --without-rlm_rest
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-sql),)
+ifneq ($(CONFIG_PACKAGE_freeradius3-mod-sql),)
   CONFIGURE_ARGS+= --with-rlm_sql
 else
   CONFIGURE_ARGS+= --without-rlm_sql
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-sql-mysql),)
+ifneq ($(CONFIG_PACKAGE_freeradius3-mod-sql-mysql),)
   CONFIGURE_ARGS+= \
 		--with-rlm_sql_mysql \
 		--with-mysql-include-dir="$(STAGING_DIR)/usr/include/mysql"
@@ -906,19 +906,19 @@ else
   CONFIGURE_ARGS+= --without-rlm_sql_mysql
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-sql-postgresql),)
+ifneq ($(CONFIG_PACKAGE_freeradius3-mod-sql-postgresql),)
   CONFIGURE_ARGS+= --with-rlm_sql_postgresql
 else
   CONFIGURE_ARGS+= --without-rlm_sql_postgresql
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-sql-sqlite),)
+ifneq ($(CONFIG_PACKAGE_freeradius3-mod-sql-sqlite),)
   CONFIGURE_ARGS+= --with-rlm_sql_sqlite
 else
   CONFIGURE_ARGS+= --without-rlm_sql_sqlite
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-sql-unixodbc),)
+ifneq ($(CONFIG_PACKAGE_freeradius3-mod-sql-unixodbc),)
   CONFIGURE_ARGS+= \
 		--with-rlm_sql_unixodbc \
 		--with-rlm_sql_unixodbc-include-dir="$(STAGING_DIR)/usr/include" \
@@ -927,19 +927,19 @@ else
   CONFIGURE_ARGS+= --without-rlm_sql_unixodbc
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-sqlcounter),)
+ifneq ($(CONFIG_PACKAGE_freeradius3-mod-sqlcounter),)
   CONFIGURE_ARGS+= --with-rlm_sqlcounter
 else
   CONFIGURE_ARGS+= --without-rlm_sqlcounter
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-sqlippool),)
+ifneq ($(CONFIG_PACKAGE_freeradius3-mod-sqlippool),)
   CONFIGURE_ARGS+= --with-rlm_sqlippool
 else
   CONFIGURE_ARGS+= --without-rlm_sqlippool
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-unbound),)
+ifneq ($(CONFIG_PACKAGE_freeradius3-mod-unbound),)
   CONFIGURE_ARGS+= \
 		--with-rlm_unbound \
 		--with-rlm_unbound-include-dir="$(STAGING_DIR)/usr/include" \
@@ -948,7 +948,7 @@ else
   CONFIGURE_ARGS+= --without-rlm_unbound
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_freeradius3-mod-unix),)
+ifneq ($(CONFIG_PACKAGE_freeradius3-mod-unix),)
   CONFIGURE_ARGS+= --with-rlm_unix
 else
   CONFIGURE_ARGS+= --without-rlm_unix
