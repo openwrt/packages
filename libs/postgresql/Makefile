@@ -14,8 +14,7 @@ PKG_CPE_ID:=cpe:/a:postgresql:postgresql
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=\
 	https://ftp.postgresql.org/pub/source/v$(PKG_VERSION) \
-	http://ftp.postgresql.org/pub/source/v$(PKG_VERSION) \
-	ftp://ftp.postgresql.org/pub/source/v$(PKG_VERSION)
+	http://ftp.postgresql.org/pub/source/v$(PKG_VERSION)
 
 PKG_HASH:=fcb7ab38e23b264d1902cb25e6adafb4525a6ebcbd015434aeef9eda80f528d8
 
