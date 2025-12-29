@@ -3,7 +3,7 @@ include $(INCLUDE_DIR)/openssl-module.mk
 
 PKG_NAME:=gost_engine
 PKG_VERSION:=3.0.3
-PKG_RELEASE:=11
+PKG_RELEASE:=12
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
@@ -61,9 +61,9 @@ CMAKE_OPTIONS += -DOPENSSL_ENGINES_DIR=/usr/lib/$(ENGINES_DIR)
 
 define Package/libopenssl-gost_engine/install
 	$(INSTALL_DIR) $(1)/usr/lib $(1)/usr/lib/$(ENGINES_DIR) $(1)/etc/ssl/modules.cnf.d
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libgost.so \
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libgost.so \
 			$(1)/usr/lib/
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/$(ENGINES_DIR)/gost.so \
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/$(ENGINES_DIR)/gost.so \
 			$(1)/usr/lib/$(ENGINES_DIR)/
 	$(INSTALL_DATA) ./files/gost.cnf $(1)/etc/ssl/modules.cnf.d/
 endef

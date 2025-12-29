@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tinycdb
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_SOURCE_URL:=http://www.corpit.ru/mjt/tinycdb/
 PKG_VERSION:=0.78
 PKG_HASH:=50678f432d8ada8d69f728ec11c3140e151813a7847cf30a62d86f3a720ed63c
@@ -45,7 +45,7 @@ endef
 
 define Package/tinycdb/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/libcdb.so.$(ABI_VERSION) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libcdb.so.$(ABI_VERSION) $(1)/usr/lib
 endef
 
 define Build/Compile
