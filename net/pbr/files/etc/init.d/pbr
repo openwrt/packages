@@ -32,7 +32,7 @@ fi
 
 readonly packageName='pbr'
 readonly PKG_VERSION='dev-test'
-readonly packageCompat='19'
+readonly packageCompat='20'
 readonly serviceName="$packageName $PKG_VERSION"
 readonly packageConfigFile="/etc/config/${packageName}"
 readonly packageDebugFile="/var/run/${packageName}.debug"
@@ -142,6 +142,7 @@ supported_interface=
 verbosity=
 uplink_ip_rules_priority=
 uplink_mark=
+prefixlength=
 nft_rule_counter=
 nft_set_auto_merge=
 nft_set_counter=
@@ -365,6 +366,7 @@ is_wg_server() { local p lp; network_get_protocol p "$1"; uci_get_listen_port lp
 is_xray() { [ -n "$(get_xray_traffic_port "$1")" ]; }
 dnsmasq_kill() { pidof dnsmasq >/dev/null && kill -HUP $(pidof dnsmasq); }
 dnsmasq_restart() { output 3 'Restarting dnsmasq '; if /etc/init.d/dnsmasq restart >/dev/null 2>&1; then output_okn; else output_failn; fi; }
+exists_lockfile() { [ -e "$packageLockFile" ]; }
 # shellcheck disable=SC2155
 get_ss_traffic_ports() { local i="$(jsonfilter -i "$ssConfigFile" -q -e "@.inbounds[*].port")"; echo "${i:-443}"; }
 # shellcheck disable=SC2155
@@ -574,6 +576,7 @@ load_package_config() {
 	config_get      nft_set_policy            'config' 'nft_set_policy'          'performance'
 	config_get      nft_set_timeout           'config' 'nft_set_timeout'
 	config_get_bool nft_user_set_counter      'config' 'nft_user_set_counter'     '0'
+	config_get      prefixlength              'config' 'prefixlength'             '1'
 	config_get      procd_boot_trigger_delay  'config' 'procd_boot_trigger_delay' '5000'
 	config_get      procd_reload_delay        'config' 'procd_reload_delay'       '0'
 	config_get      resolver_instance         'config' 'resolver_instance'        '*'
@@ -1907,14 +1910,16 @@ interface_routing() {
 					try ip -4 route replace default via "$gw4" dev "$dev" table "$tid" || ipv4_error=1
 				fi
 				# try ip -4 rule replace fwmark "${mark}/${fw_mask}" lookup 'main' suppress_prefixlength 0 priority "$((priority - 1000))" || ipv4_error=1
-				{
-					for prio in $(ip -4 rule show | awk '/lookup main/ && /suppress_prefixlength 0/ {gsub(":", "", $1); print $1}'); do
-						rule="$(ip -4 rule show | awk -v p="$prio" '($1==p":"){ $1=""; sub(/^ /,""); print }')"
-						[ -n "$rule" ] || continue
-						rule="${rule/lookup main/lookup $tid}"
-						ip -4 rule replace priority "$prio" $rule >/dev/null 2>&1 || ipv4_error=1
-					done
-				}
+				ip -4 rule del lookup 'main' suppress_prefixlength "$prefixlength" priority "$priority" >/dev/null 2>&1
+				try ip -4 rule add lookup 'main' suppress_prefixlength "$prefixlength" priority "$((priority - 1))" || ipv4_error=1
+				# {
+					# for prio in $(ip -4 rule show | awk '/lookup main/ && /suppress_prefixlength 0/ {gsub(":", "", $1); print $1}'); do
+						# rule="$(ip -4 rule show | awk -v p="$prio" '($1==p":"){ $1=""; sub(/^ /,""); print }')"
+						# [ -n "$rule" ] || continue
+						# rule="${rule/lookup main/lookup $tid}"
+						# ip -4 rule replace priority "$prio" $rule >/dev/null 2>&1 || ipv4_error=1
+					# done
+				# }
 				try ip -4 rule replace fwmark "${mark}/${fw_mask}" table "$tid" priority "$priority" || ipv4_error=1
 			fi
 			try nft add chain inet "$nftTable" "${nftPrefix}_mark_${mark}" || ipv4_error=1
@@ -1938,14 +1943,16 @@ interface_routing() {
 						try ip -6 route replace default dev "$dev6" table "$tid" || ipv6_error=1
 					fi
 					# try ip -6 rule replace fwmark "${mark}/${fw_mask}" lookup 'main' suppress_prefixlength 0 priority "$((priority - 1000))" || ipv6_error=1
-					{
-						for prio in $(ip -6 rule show | awk '/lookup main/ && /suppress_prefixlength 0/ {gsub(":", "", $1); print $1}'); do
-							rule="$(ip -6 rule show | awk -v p="$prio" '($1==p":"){ $1=""; sub(/^ /,""); print }')"
-							[ -n "$rule" ] || continue
-							rule="${rule/lookup main/lookup $tid}"
-							ip -6 rule replace priority "$prio" $rule >/dev/null 2>&1 || ipv6_error=1
-						done
-					}
+					ip -6 rule del lookup 'main' suppress_prefixlength "$prefixlength" priority "$priority" >/dev/null 2>&1
+					try ip -6 rule add lookup 'main' suppress_prefixlength "$prefixlength" priority "$((priority - 1))" || ipv6_error=1
+					# {
+						# for prio in $(ip -6 rule show | awk '/lookup main/ && /suppress_prefixlength 0/ {gsub(":", "", $1); print $1}'); do
+							# rule="$(ip -6 rule show | awk -v p="$prio" '($1==p":"){ $1=""; sub(/^ /,""); print }')"
+							# [ -n "$rule" ] || continue
+							# rule="${rule/lookup main/lookup $tid}"
+							# ip -6 rule replace priority "$prio" $rule >/dev/null 2>&1 || ipv6_error=1
+						# done
+					# }
 					try ip -6 rule replace fwmark "${mark}/${fw_mask}" table "$tid" priority "$priority" || ipv6_error=1
 				fi
 			fi
@@ -1976,8 +1983,10 @@ interface_routing() {
 		;;
 		delete|destroy)
 			is_netifd_interface "$iface" && return 0
+			ip -4 rule del table 'main' suppress_prefixlength "$prefixlength" prio "$((priority - 1))" >/dev/null 2>&1
 			ip -4 rule del table 'main' prio "$((priority - 1000))" >/dev/null 2>&1
 			ip -4 rule del table "$tid" prio "$priority" >/dev/null 2>&1
+			ip -6 rule del table 'main' suppress_prefixlength "$prefixlength" prio "$((priority - 1))" >/dev/null 2>&1
 			ip -6 rule del table 'main' prio "$((priority - 1000))" >/dev/null 2>&1
 			ip -6 rule del table "$tid" prio "$priority" >/dev/null 2>&1
 			ip -4 rule flush table "$tid" >/dev/null 2>&1
@@ -2004,14 +2013,16 @@ interface_routing() {
 					try ip -4 route replace default via "$gw4" dev "$dev" table "$tid" || ipv4_error=1
 				fi
 				# try ip -4 rule replace fwmark "${mark}/${fw_mask}" lookup 'main' suppress_prefixlength 0 priority "$((priority - 1000))" || ipv4_error=1
-				{
-					for prio in $(ip -4 rule show | awk '/lookup main/ && /suppress_prefixlength 0/ {gsub(":", "", $1); print $1}'); do
-						rule="$(ip -4 rule show | awk -v p="$prio" '($1==p":"){ $1=""; sub(/^ /,""); print }')"
-						[ -n "$rule" ] || continue
-						rule="${rule/lookup main/lookup $tid}"
-						ip -4 rule replace priority "$prio" $rule >/dev/null 2>&1 || ipv4_error=1
-					done
-				}
+				ip -4 rule del lookup 'main' suppress_prefixlength "$prefixlength" priority "$priority" >/dev/null 2>&1
+				try ip -4 rule add lookup 'main' suppress_prefixlength "$prefixlength" priority "$((priority - 1))" || ipv4_error=1
+				# {
+					# for prio in $(ip -4 rule show | awk '/lookup main/ && /suppress_prefixlength 0/ {gsub(":", "", $1); print $1}'); do
+						# rule="$(ip -4 rule show | awk -v p="$prio" '($1==p":"){ $1=""; sub(/^ /,""); print }')"
+						# [ -n "$rule" ] || continue
+						# rule="${rule/lookup main/lookup $tid}"
+						# ip -4 rule replace priority "$prio" $rule >/dev/null 2>&1 || ipv4_error=1
+					# done
+				# }
 				try ip -4 rule replace fwmark "${mark}/${fw_mask}" table "$tid" priority "$priority" || ipv4_error=1
 			fi
 			if [ -n "$ipv6_enabled" ]; then
@@ -2032,14 +2043,16 @@ interface_routing() {
 						try ip -6 route replace default dev "$dev6" table "$tid" || ipv6_error=1
 					fi
 					# try ip -6 rule replace fwmark "${mark}/${fw_mask}" lookup 'main' suppress_prefixlength 0 priority "$((priority - 1000))" || ipv6_error=1
-					{
-						for prio in $(ip -6 rule show | awk '/lookup main/ && /suppress_prefixlength 0/ {gsub(":", "", $1); print $1}'); do
-							rule="$(ip -6 rule show | awk -v p="$prio" '($1==p":"){ $1=""; sub(/^ /,""); print }')"
-							[ -n "$rule" ] || continue
-							rule="${rule/lookup main/lookup $tid}"
-							ip -6 rule replace priority "$prio" $rule >/dev/null 2>&1 || ipv6_error=1
-						done
-					}
+					ip -6 rule del lookup 'main' suppress_prefixlength "$prefixlength" priority "$priority" >/dev/null 2>&1
+					try ip -6 rule add lookup 'main' suppress_prefixlength "$prefixlength" priority "$((priority - 1))" || ipv6_error=1
+					# {
+						# for prio in $(ip -6 rule show | awk '/lookup main/ && /suppress_prefixlength 0/ {gsub(":", "", $1); print $1}'); do
+							# rule="$(ip -6 rule show | awk -v p="$prio" '($1==p":"){ $1=""; sub(/^ /,""); print }')"
+							# [ -n "$rule" ] || continue
+							# rule="${rule/lookup main/lookup $tid}"
+							# ip -6 rule replace priority "$prio" $rule >/dev/null 2>&1 || ipv6_error=1
+						# done
+					# }
 					try ip -6 rule replace fwmark "${mark}/${fw_mask}" table "$tid" priority "$priority" || ipv6_error=1
 				fi
 			fi
@@ -2321,7 +2334,7 @@ boot() {
 }
 
 on_interface_reload() {
-	if [ ! -e "$packageLockFile" ]; then
+	if ! exists_lockfile; then
 		logger -t "$packageName" "Reload on interface change aborted: service is stopped."
 		return 0
 	else
@@ -2559,6 +2572,7 @@ stop_service() {
 	local i nft_file_mode
 	json init
 	! is_service_running && [ "$(get_rt_tables_next_id)" = "$(get_rt_tables_non_pbr_next_id)" ] && return 0
+	rm -f "$packageLockFile"
 	[ "$1" = 'quiet' ] && quiet_mode 'on'
 	load_environment 'on_stop'
 	if nft_file 'exists'; then
@@ -2590,7 +2604,6 @@ stop_service() {
 			output "$serviceName (nft mode) stopped "; output_okn;
 		fi
 	fi
-	rm -f "$packageLockFile"
 }
 
 version() { echo "$PKG_VERSION"; }
@@ -2691,6 +2704,7 @@ load_validate_config() {
 		'ignored_interface:list(or(tor, uci("network", "@interface")))' \
 		'supported_interface:list(or(ignore, tor, regex("xray_.*"), uci("network", "@interface")))' \
 		'procd_boot_trigger_delay:range(1000,10000):5000' \
+		'prefixlength:uinteger:1' \
 		'lan_device:list(or(network)):br-lan' \
 		'procd_reload_delay:uinteger:0' \
 		'uplink_interface:network:wan' \
