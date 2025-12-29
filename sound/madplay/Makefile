@@ -13,7 +13,7 @@ PKG_RELEASE:=10
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/mad \
-	ftp://ftp.mars.org/pub/mpeg/
+	https://ftp.mars.org/pub/mpeg/
 PKG_HASH:=5a79c7516ff7560dffc6a14399a389432bc619c905b13d3b73da22fa65acede0
 
 PKG_MAINTAINER:=Simon Peter <probono@puredarwin.org>
