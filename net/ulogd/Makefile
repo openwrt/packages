@@ -127,7 +127,7 @@ CONFIGURE_ARGS += \
 	--enable-nfct \
 	--enable-nflog
 
-ifneq ($(DEVELOPER)$(SDK)$(CONFIG_PACKAGE_ulogd-mod-dbi),)
+ifneq ($(DEVELOPER)$(CONFIG_PACKAGE_ulogd-mod-dbi),)
 	CONFIGURE_ARGS += --with-dbi \
 		--with-dbi-inc=$(STAGING_DIR)/usr/include/dbi \
 		--with-dbi-lib=$(STAGING_DIR)/usr/lib
@@ -135,7 +135,7 @@ else
 	CONFIGURE_ARGS += --without-dbi
 endif
 
-ifneq ($(DEVELOPER)$(SDK)$(CONFIG_PACKAGE_ulogd-mod-mysql),)
+ifneq ($(DEVELOPER)$(CONFIG_PACKAGE_ulogd-mod-mysql),)
 	CONFIGURE_ARGS += \
 		--with-mysql-inc=$(STAGING_DIR)/usr/include/mysql \
 		--with-mysql-lib=$(STAGING_DIR)/usr/lib/mysql
@@ -143,13 +143,13 @@ else
 	CONFIGURE_ARGS += --without-mysql
 endif
 
-ifneq ($(DEVELOPER)$(SDK)$(CONFIG_PACKAGE_ulogd-mod-pgsql),)
+ifneq ($(DEVELOPER)$(CONFIG_PACKAGE_ulogd-mod-pgsql),)
 	CONFIGURE_ARGS += --with-pgsql="$(STAGING_DIR)/usr"
 else
 	CONFIGURE_ARGS += --without-pgsql
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_ulogd-mod-sqlite),)
+ifneq ($(CONFIG_PACKAGE_ulogd-mod-sqlite),)
 	CONFIGURE_ARGS += --with-sqlite="$(STAGING_DIR)/usr"
 else
 	CONFIGURE_ARGS += --without-sqlite

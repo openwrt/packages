@@ -127,7 +127,7 @@ else
 endif
 
 # enable ntfsprogs and extras
-ifneq ($(CONFIG_PACKAGE_ntfs-3g-utils)$(SDK)$(DEVELOPER),)
+ifneq ($(CONFIG_PACKAGE_ntfs-3g-utils)$(DEVELOPER),)
 	CONFIGURE_ARGS += --enable-ntfsprogs --enable-extras
 else
 	CONFIGURE_ARGS += --disable-ntfsprogs --disable-extras
