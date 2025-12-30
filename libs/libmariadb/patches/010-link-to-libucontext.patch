@@ -12,7 +12,7 @@ providing these system calls on platforms not supporting them out of
 the box - like musl based platforms.
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -263,11 +263,19 @@ IF(UNIX)
+@@ -264,11 +264,19 @@ IF(UNIX)
    SEARCH_LIBRARY(LIBPTHREAD pthread_getspecific "pthread;pthreads")
    SEARCH_LIBRARY(LIBNSL gethostbyname_r "nsl_r;nsl")
    SEARCH_LIBRARY(LIBSOCKET setsockopt socket)
