@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=uspot
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Thibaut VARÈNE <hacks@slashdirt.org>
@@ -24,12 +24,12 @@ define Package/uspot
   SECTION:=net
   CATEGORY:=Network
   TITLE:=uspot hotspot daemon
-  EXTRA_DEPENDS:=ucode (>= 2023.11.07)
   DEPENDS:=+conntrack \
 	   +libblobmsg-json +liblucihttp-ucode +libradcli +libubox +libubus +libuci \
 	   +uspotfilter \
 	   +ucode +ucode-mod-log +ucode-mod-math +ucode-mod-nl80211 +ucode-mod-rtnl +uhttpd-mod-ucode +ucode-mod-uloop \
 	   +ucode-mod-bpf +ucode-mod-struct +kmod-sched-core +kmod-sched-bpf $(BPF_DEPENDS)
+  EXTRA_DEPENDS:=ucode (>=2023.11.07)
 endef
 
 define Package/uspot/description
@@ -64,8 +64,8 @@ define Package/uspotfilter
   SECTION:=net
   CATEGORY:=Network
   TITLE:=uspot firewall interface
-  EXTRA_DEPENDS:=ucode (>= 2023.11.07)
   DEPENDS:=+conntrack +nftables-json +ucode +ucode-mod-rtnl +ucode-mod-uloop +ucode-mod-log
+  EXTRA_DEPENDS:=ucode (>=2023.11.07)
   PKGARCH:=all
 endef
 
