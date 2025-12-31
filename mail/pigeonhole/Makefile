@@ -11,7 +11,7 @@ PKG_NAME:=dovecot-pigeonhole
 PKG_VERSION_PLUGIN:=0.5.21
 PKG_VERSION_DOVECOT:=$(shell make --no-print-directory -C ../dovecot/ val.PKG_VERSION V=s)
 PKG_VERSION:=$(PKG_VERSION_DOVECOT).$(PKG_VERSION_PLUGIN)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 DOVECOT_VERSION:=2.3
 
@@ -34,7 +34,7 @@ define Package/dovecot-pigeonhole
   SECTION:=mail
   CATEGORY:=Mail
   DEPENDS:=+dovecot
-  EXTRA_DEPENDS:=dovecot (>= $(PKG_VERSION_DOVECOT))
+  EXTRA_DEPENDS:=dovecot (>=$(PKG_VERSION_DOVECOT))
   TITLE:=Mail filtering facilities for Dovecot
   URL:=https://pigeonhole.dovecot.org/
 endef
@@ -56,7 +56,7 @@ define Package/dovecot-pigeonhole/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/dovecot/* $(1)/usr/lib/dovecot/
 	$(CP) $(PKG_INSTALL_DIR)/usr/libexec/dovecot/* $(1)/usr/libexec/dovecot/
-	find $(1)/usr/lib/dovecot/ -name "*.a" -o -name "*.la" | xargs rm
+	find $(1)/usr/lib/dovecot/ -name "*.a" -o -name "*.la" | $(XARGS) rm
 endef
 
 $(eval $(call BuildPackage,dovecot-pigeonhole))
