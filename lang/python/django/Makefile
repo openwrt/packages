@@ -12,6 +12,7 @@ PKG_VERSION:=5.1.14
 PKG_RELEASE:=1
 
 PYPI_NAME:=Django
+PYPI_SOURCE_NAME:=django
 PKG_HASH:=b98409fb31fdd6e8c3a6ba2eef3415cc5c0020057b43b21ba7af6eff5f014831
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>, Peter Stadler <peter.stadler@student.uibk.ac.at>
