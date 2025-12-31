@@ -81,6 +81,7 @@ define Package/php8/config
 
 	config PHP8_GETTEXT
 		bool "Enable gettext"
+		select PACKAGE_icu
 		default y
 
 	config PHP8_INTL
