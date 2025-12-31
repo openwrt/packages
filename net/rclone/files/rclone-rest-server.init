@@ -1,0 +1,49 @@
+#!/bin/sh /etc/rc.common
+# shellcheck shell=ash
+# cspell:words rclone httpasswd restic
+
+# shellcheck disable=SC2034
+START=99
+USE_PROCD=1
+
+PROG=/usr/bin/rclone
+
+start_instance() {
+	local cfg="$1"
+	local var
+	local val
+
+	config_get_bool val "$cfg" 'enabled' '0'
+	[ "$val" = 0 ] && return 1
+
+	procd_open_instance "$cfg"
+	config_get remote "$cfg" "remote" bad-remote
+        config_get path "$cfg" "path" invalid-path
+	config_get rclone_config "$cfg" "rclone_config" invalid-config
+
+	# shellcheck disable=SC2154
+	procd_set_param command "$PROG" serve restic "$remote":"$path" --config "$rclone_config"
+	for var in append_only private_repos; do
+		config_get_bool val "$cfg" "$var" 0
+		# shellcheck disable=SC3060
+		[ "$val" = 0 ] || procd_append_param command "--${var//_/-}"
+	done
+	for var in addr httpasswd cert key min_tls_version; do
+		config_get val "$cfg" "$var"
+		# shellcheck disable=SC3060
+		[ -z "$val" ] || procd_append_param command "--${var//_/-}" "$val"
+	done
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_set_param respawn
+	procd_close_instance
+}
+
+service_triggers() {
+	procd_add_reload_trigger rclone-rest-server
+}
+
+start_service() {
+	config_load rclone-rest-server
+	config_foreach start_instance rclone-rest-server
+}

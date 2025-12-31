@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rclone
 PKG_VERSION:=1.72.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/rclone/rclone/tar.gz/v$(PKG_VERSION)?
@@ -54,13 +54,28 @@ define Package/rclone-config
   DEPENDS:=+rclone
 endef
 
+define Package/rclone-config-rest-server
+  $(call Package/rclone/Default)
+  TITLE+= (As Restic Rest-Server)
+  DEPENDS:=+rclone
+
 define Package/rclone/description
   Rclone ("rsync for cloud storage") is a command line program to sync
   files and directories to and from different cloud storage providers.
 endef
 
+define Package/rclone-config-rest-server/description
+  Rclone ("rsync for cloud storage") can act as a 'rest-server' for restic
+  backups (https://restic.readthedocs.io). This package provides an UCI
+  configuration for using Rclone this way.
+endef
+
 define Package/rclone-config/conffiles
 /etc/config/rclone
+endef
+
+define Package/rclone-config-rest-server/conffiles
+/etc/config/rclone-rest-server
 endef
 
 define Package/rclone/install
@@ -76,6 +91,14 @@ define Package/rclone-config/install
 	$(INSTALL_BIN) $(CURDIR)/files/rclone.init $(1)/etc/init.d/rclone
 endef
 
+define Package/rclone-config-rest-server/install
+	$(INSTALL_DIR) $(1)/etc/config/
+	$(INSTALL_CONF) $(CURDIR)/files/rclone-rest-server.config $(1)/etc/config/rclone-rest-server
+	$(INSTALL_DIR) $(1)/etc/init.d/
+	$(INSTALL_BIN) $(CURDIR)/files/rclone-rest-server.init $(1)/etc/init.d/rclone-rest-server
+endef
+
 $(eval $(call GoBinPackage,rclone))
 $(eval $(call BuildPackage,rclone))
 $(eval $(call BuildPackage,rclone-config))
+$(eval $(call BuildPackage,rclone-config-rest-server))
