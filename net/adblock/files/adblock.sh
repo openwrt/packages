@@ -89,7 +89,7 @@ f_load() {
 	adb_fver="$(printf "%s" "${adb_packages}" | "${adb_jsoncmd}" -ql1 -e '@.packages["luci-app-adblock"]')"
 	adb_sysver="$("${adb_ubuscmd}" -S call system board 2>/dev/null |
 		"${adb_jsoncmd}" -ql1 -e '@.model' -e '@.release.target' -e '@.release.distribution' -e '@.release.version' -e '@.release.revision' |
-		"${adb_awkcmd}" 'BEGIN{RS="";FS="\n"}{printf "%s, %s, %s %s %s %s",$1,$2,$3,$4,$5,$6}')"
+		"${adb_awkcmd}" 'BEGIN{RS="";FS="\n"}{printf "%s, %s, %s %s (%s)",$1,$2,$3,$4,$5}')"
 	f_conf
 
 	if [ -z "${adb_cores}" ]; then
@@ -186,16 +186,93 @@ f_conf() {
 		option_cb() {
 			local option="${1}" value="${2//\"/\\\"}"
 
-			eval "${option}=\"${value}\""
+			case "${option}" in
+				*[!a-zA-Z0-9_]*)
+					;;
+				*)
+					eval "${option}=\"\${value}\""
+					;;
+			esac
 		}
 		list_cb() {
 			local append option="${1}" value="${2//\"/\\\"}"
 
-			eval "append=\"\${${option}}\""
-			eval "${option}=\"${append}${value} \""
+			case "${option}" in
+				*[!a-zA-Z0-9_]*)
+					;;
+				*)
+					eval "append=\"\${${option}}\""
+					eval "${option}=\"${append}${value} \""
+					;;
+			esac
 		}
 	}
 	config_load adblock
+}
+
+# domain validation
+#
+f_chkdom() {
+	local type prefix column separator check
+
+	case "${1}" in
+		"feed"|"local")
+			type="${1}"
+			case "${2}" in
+				[0-9])
+					prefix=""
+					column="${2}"
+					separator="${3:-[[:space:]]+}"
+					;;
+				*)
+					prefix="${2}"
+					column="${3}"
+					separator="${4:-[[:space:]]+}"
+					;;
+			esac
+			;;
+		"google")
+			type="${1}"
+			prefix=""
+			column="${2}"
+			separator="${3:-[[:space:]]+}"
+			;;
+	esac
+
+	check="${adb_lookupdomain//./\\.}"
+	"${adb_awkcmd}" -v type="${type}" -v pre="${prefix}" -v col="${column}" -v chk="${check}" -F "${separator}" '
+	{
+		domain = $col
+		# remove carriage returns and trim the input
+		gsub(/\r|^[[:space:]]+|[[:space:]]+$/, "", domain)
+		# add www. for google safe search
+		if (type=="google" && domain ~ /^\.+/) { sub(/^\.+/, "", domain); domain="www."domain }
+		# check optional search prefix
+		if (pre != "" && $1 != pre) next
+		# skip empty lines, comments and special domains
+		if (domain == "" || domain ~ ("^(#|localhost|loopback|" chk ")")) next
+		# no domain with trailing dot
+		if (substr(domain, length(domain), 1) == ".") next
+		# check total length (253 characters)
+		if (length(domain) > 253) next
+		n = split(domain, L, ".")
+		valid = 1
+		for (i = 1; i <= n; i++) {
+			l = L[i]
+			len = length(l)
+			# label length 1–63
+			if (len < 1 || len > 63) { valid = 0; break }
+			# no leading/trailing hyphen
+			if (l ~ /^-/ || l ~ /-$/) { valid = 0; break }
+			# ASCII + hyphen
+			if (l !~ /^[A-Za-z0-9-]+$/) { valid = 0; break }
+		}
+		# TLD must start with a letter or "xn--"
+		if (valid && L[n] !~ /^[A-Za-z]/ && L[n] !~ /^xn--/) valid = 0
+		if (valid) print tolower(domain)
+	}'
+
+	f_log "debug" "f_chkdom ::: name: ${src_name}, type: ${type}, prefix: ${prefix:-"-"}, column: ${column:-"-"}, separator: ${separator:-"-"}"
 }
 
 # status helper function
@@ -454,7 +531,7 @@ f_rmdns() {
 f_uci() {
 	local config="${1}"
 
-	if [ -n "${config}" ]; then
+	if [ -n "$(uci -q changes "${config}")" ]; then
 		uci_commit "${config}"
 		case "${config}" in
 			"firewall")
@@ -703,12 +780,11 @@ f_list() {
 			;;
 		"blocklist" | "allowlist")
 			src_name="${mode}"
-			rset="/^(([[:alnum:]_-]{1,63}\\.)*[[:alpha:]][[:alnum:]-]{1,62}([[:space:]]|$))/{print tolower(\$1)}"
 			case "${src_name}" in
 				"blocklist")
 					if [ -f "${adb_blocklist}" ]; then
 						file_name="${adb_tmpfile}.${src_name}"
-						"${adb_awkcmd}" "${rset}" "${adb_blocklist}" >"${adb_tmpdir}/tmp.raw.${src_name}"
+						f_chkdom local 1 < "${adb_blocklist}" >"${adb_tmpdir}/tmp.raw.${src_name}"
 						if [ -s "${adb_allowlist}" ]; then
 							"${adb_awkcmd}" 'NR==FNR{member[$1];next}!($1 in member)' "${adb_allowlist}" "${adb_tmpdir}/tmp.raw.${src_name}" >"${adb_tmpdir}/tmp.deduplicate.${src_name}"
 						else
@@ -727,9 +803,9 @@ f_list() {
 				"allowlist")
 					if [ -f "${adb_allowlist}" ] && [ "${adb_dnsallow}" != "0" ]; then
 						file_name="${adb_tmpdir}/tmp.raw.${src_name}"
-						[ "${adb_lookupdomain}" != "localhost" ] && printf "%s\n" "${adb_lookupdomain}" | "${adb_awkcmd}" "${rset}" >"${file_name}"
-						"${adb_awkcmd}" "${rset}" "${adb_allowlist}" >>"${file_name}"
-						"${adb_awkcmd}" "${rset}" "${file_name}" >"${adb_tmpdir}/tmp.rem.${src_name}"
+						[ "${adb_lookupdomain}" != "localhost" ] && { printf "%s\n" "${adb_lookupdomain}" | f_chkdom local 1; } >"${file_name}"
+						f_chkdom local 1 < "${adb_allowlist}" >>"${file_name}"
+						f_chkdom local 1 < "${file_name}" >"${adb_tmpdir}/tmp.rem.${src_name}"
 						eval "${adb_dnsallow}" "${file_name}" >"${adb_tmpdir}/tmp.add.${src_name}"
 						out_rc="${?}"
 						if [ "${adb_jail}" = "1" ] && [ "${adb_dnsstop}" != "0" ]; then
@@ -748,7 +824,6 @@ f_list() {
 			fi
 			case "${src_name}" in
 				"google")
-					rset="/^(\\.([[:alnum:]_-]{1,63}\\.)*[[:alnum:]-]{2,63}([[:space:]]|$))/{printf \"%s\n%s\n\",tolower(\"www\"\$1),tolower(substr(\$1,2,length(\$1)))}"
 					safe_url="https://www.google.com/supported_domains"
 					safe_cname="forcesafesearch.google.com"
 					if [ -s "${adb_backupdir}/safesearch.${src_name}.gz" ]; then
@@ -759,7 +834,7 @@ f_list() {
 							"${adb_gzipcmd}" -cf "${adb_tmpdir}/tmp.load.safesearch.${src_name}" >"${adb_backupdir}/safesearch.${src_name}.gz"
 						fi
 					fi
-					[ -s "${adb_tmpdir}/tmp.load.safesearch.${src_name}" ] && safe_domains="$("${adb_awkcmd}" "${rset}" "${adb_tmpdir}/tmp.load.safesearch.${src_name}")"
+					[ -s "${adb_tmpdir}/tmp.load.safesearch.${src_name}" ] && safe_domains="$(f_chkdom google 1 < "${adb_tmpdir}/tmp.load.safesearch.${src_name}")"
 					;;
 				"bing")
 					safe_cname="strict.bing.com"
@@ -810,9 +885,14 @@ f_list() {
 		"prepare")
 			file_name="${src_tmpfile}"
 			if [ -s "${src_tmpload}" ]; then
-				"${adb_awkcmd}" "${src_rset}" "${src_tmpload}" | "${adb_sedcmd}" "s/\r//g" |
-					{ [ "${adb_tld}" = "1" ] && "${adb_awkcmd}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' || "${adb_catcmd}"; } |
-					"${adb_sortcmd}" ${adb_srtopts} -u >"${src_tmpfile}" 2>/dev/null
+				if [ "${adb_tld}" = "1" ]; then
+					f_chkdom ${src_rset} < "${src_tmpload}" |
+						"${adb_awkcmd}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' |
+						"${adb_sortcmd}" ${adb_srtopts} -u >"${src_tmpfile}" 2>/dev/null
+				else
+					f_chkdom ${src_rset} < "${src_tmpload}" |
+						"${adb_sortcmd}" ${adb_srtopts} -u >"${src_tmpfile}" 2>/dev/null
+				fi
 				out_rc="${?}"
 				if [ "${out_rc}" = "0" ] && [ -s "${src_tmpfile}" ]; then
 					f_list backup
@@ -947,11 +1027,11 @@ f_switch() {
 	elif [ "${status}" = "paused" ] && [ "${mode}" = "resume" ]; then
 		if [ "${adb_dnsshift}" = "0" ] && [ -f "${adb_backupdir}/${adb_dnsfile}" ]; then
 			mv -f "${adb_backupdir}/${adb_dnsfile}" "${adb_finaldir}/${adb_dnsfile}"
-			f_count "switch" "${adb_finaldir}/${adb_dnsfile}"
+			f_count "final" "${adb_finaldir}/${adb_dnsfile}"
 			done="true"
 		elif [ "${adb_dnsshift}" = "1" ] && [ ! -L "${adb_finaldir}/${adb_dnsfile}" ]; then
 			ln -fs "${adb_finaldir}/${adb_dnsfile}" "${adb_dnsdir}/${adb_dnsfile}"
-			f_count "switch" "${adb_finaldir}/${adb_dnsfile}"
+			f_count "final" "${adb_finaldir}/${adb_dnsfile}"
 			done="true"
 		fi
 	fi
@@ -960,7 +1040,7 @@ f_switch() {
 		f_jsnup "${mode}"
 		f_log "info" "${mode} adblock service"
 	else
-		f_count "switch" "${adb_finaldir}/${adb_dnsfile}"
+		f_count "final" "${adb_finaldir}/${adb_dnsfile}"
 		f_jsnup "${status}"
 	fi
 	f_rmtemp
@@ -1024,9 +1104,14 @@ f_query() {
 			for file in "${adb_backupdir}/adb_list".*.gz "${adb_blocklist}" "${adb_allowlist}"; do
 				suffix="${file##*.}"
 				if [ "${suffix}" = "gz" ]; then
-					"${adb_zcatcmd}" "${file}" 2>/dev/null |
-						{ [ "${adb_tld}" = "1" ] && "${adb_awkcmd}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' || "${adb_catcmd}"; } |
-						"${adb_awkcmd}" -v f="${file##*/}" "BEGIN{rc=1};/^($search|.*\\.${search})$/{i++;if(i<=3){printf \"  + %-30s%s\n\",f,\$1;rc=0}else if(i==4){printf \"  + %-30s%s\n\",f,\"[...]\"}};END{exit rc}"
+					if [ "${adb_tld}" = "1" ]; then
+						"${adb_zcatcmd}" "${file}" 2>/dev/null |
+							"${adb_awkcmd}" 'BEGIN{FS="."}{for(f=NF;f>1;f--)printf "%s.",$f;print $1}' |
+							"${adb_awkcmd}" -v f="${file##*/}" "BEGIN{rc=1};/^($search|.*\\.${search})$/{i++;if(i<=3){printf \"  + %-30s%s\n\",f,\$1;rc=0}else if(i==4){printf \"  + %-30s%s\n\",f,\"[...]\"}};END{exit rc}"
+					else
+						"${adb_zcatcmd}" "${file}" 2>/dev/null |
+							"${adb_awkcmd}" -v f="${file##*/}" "BEGIN{rc=1};/^($search|.*\\.${search})$/{i++;if(i<=3){printf \"  + %-30s%s\n\",f,\$1;rc=0}else if(i==4){printf \"  + %-30s%s\n\",f,\"[...]\"}};END{exit rc}"
+					fi
 					rc="${?}"
 				else
 					"${adb_awkcmd}" -v f="${file##*/}" "BEGIN{rc=1};/^($search|.*\\.${search})$/{i++;if(i<=3){printf \"  + %-30s%s\n\",f,\$1;rc=0}else if(i==4){printf \"  + %-30s%s\n\",f,\"[...]\"}};END{exit rc}" "${file}"
@@ -1233,7 +1318,8 @@ f_main() {
 
 		# basic pre-checks
 		#
-		if [ -z "${src_url}" ] || [ -z "${src_rset}" ]; then
+		if [ -z "${src_url}" ] || [ -z "${src_rset}" ] ||
+			[ "${src_rset%% *}" != "feed" ]; then
 			f_list remove
 			continue
 		fi

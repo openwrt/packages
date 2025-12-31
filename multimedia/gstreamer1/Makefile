@@ -101,7 +101,7 @@ endef
 define Package/libgstreamer1
   $(call Package/gstreamer1/Default)
   TITLE+= library (core)
-  DEPENDS+= +glib2 +libpthread +libxml2 +(powerpc||mips||mipsel):libatomic
+  DEPENDS+= +glib2 +libpthread +libxml2 +(armeb||powerpc||mips||mipsel):libatomic
   HIDDEN:=1
 endef
 

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2017 OpenWrt.org
+# Copyright (C) 2007-2025 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-urllib3
-PKG_VERSION:=2.5.0
-PKG_RELEASE:=2
+PKG_VERSION:=2.6.1
+PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=MIT
@@ -17,7 +17,7 @@ PKG_LICENSE_FILES:=LICENSE.txt
 PKG_CPE_ID:=cpe:/a:python:urllib3
 
 PYPI_NAME:=urllib3
-PKG_HASH:=3fc47733c7e419d4bc3f6b3dc2b4f890bb743906a30d56ba4a5bfa4bbff92760
+PKG_HASH:=5379eb6e1aba4088bae84f8242960017ec8d8e3decf30480b3a1abdaa9671a3f
 
 PKG_BUILD_DEPENDS:= \
 	python-hatch-vcs/host \
