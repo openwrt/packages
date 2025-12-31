@@ -156,6 +156,10 @@ get)
 		set -- "$@" --days "$days"
 	fi
 
+	if [ "$cert_profile" ]; then
+		set -- "$@" --cert-profile "$cert_profile"
+	fi
+
 	case "$validation_method" in
 	"dns")
 		set -- "$@" --dns "$dns"
