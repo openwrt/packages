@@ -93,12 +93,28 @@ define Package/php8/config
 	config PHP8_GETTEXT
 		bool "Enable gettext"
 		default y
+		help
+			Note that this option depends in ICU library which is built without data
+			by default. This is to satisfy programs build and run dependencies but to
+			keep the installed footprint small on the target system(s).
+			However, the data is required to make the ICU library useful - and thus
+			directly affects PHPs ICU extension, too - so consider to also
+			select PHP8_FULLICUDATA.
+			Further without the gettext module, this option does not provide a PHP8
+			programmer the gettext functionality (it only adds gettext for internal
+			use by php-cli, php-cgi, etc.). Therefore please consider adding the
+			php8-mod-gettext to provide this functionality to PHP8 consumers.
 
 	config PHP8_INTL
 		bool "Enable Internationalization"
 		depends on PHP8_GETTEXT
 		default y if PHP8_GETTEXT
 		default n
+		help
+			Without the intl module, this option does not provide a PHP8
+			programmer the intl functionality (it only adds intl for internal
+			use by php-cli, php-cgi, etc.). Therefore please consider adding the
+			php8-mod-intl to provide this functionality to PHP8 consumers.
 
 	config PHP8_FULLICUDATA
 		bool "Add dependency to full ICU Data"
@@ -169,6 +185,11 @@ define Package/php8-fpm/description
   This package contains the FastCGI Process Manager of the PHP8 interpreter.
 endef
 
+define Package/php8-mod-gettext/description
+  Note that this package works best in combination with the intl module, so
+  please consider also selecting/installing php8-mod-intl.
+endef
+
 define Package/php8-mod-intl/description
   Note that this package depends in ICU library which is built without data
   by default. This is to satisfy programs build and run dependencies but to
@@ -185,8 +206,8 @@ define Package/apache-mod-php8
   CATEGORY:=Network
   DEPENDS+=PACKAGE_apache-mod-php8:apache \
      +PHP8_INTL:libstdcpp \
-	   +riscv64:libatomic \
-	   +libpcre2 +zlib
+     +riscv64:libatomic \
+     +libpcre2 +zlib
   TITLE:=PHP8 module for Apache Web Server
 endef
 
