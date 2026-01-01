@@ -73,8 +73,13 @@ define Package/php8/config
 
 	config PHP8_DOM
 		bool "PHP8 DOM support"
-    depends on PHP8_LIBXML
+		depends on PHP8_LIBXML
 		default y
+		help
+			Without the mod-dom, this option does not provide a PHP8
+			programmer the XML DOM functionality (it only adds DOM for internal
+			use by php-cli, php-cgi, etc.). Therefore please consider adding the
+			php8-mod-dom to provide this functionality to PHP8 consumers.
 
 	config PHP8_SYSTEMTZDATA
 		bool "Use system timezone data instead of php's built-in database"
@@ -711,6 +716,6 @@ $(eval $(call BuildModule,sysvsem,System V shared memory))
 $(eval $(call BuildModule,sysvshm,System V semaphore))
 $(eval $(call BuildModule,tokenizer,Tokenizer))
 $(eval $(call BuildModule,xml,XML,+PHP8_LIBXML:libxml2 +!PHP8_LIBXML:libexpat))
-$(eval $(call BuildModule,xmlreader,XMLReader,@PHP8_LIBXML @PHP8_DOM +PACKAGE_php8-mod-xmlreader:php8-mod-dom +PACKAGE_php8-mod-xmlreader:libxml2))
+$(eval $(call BuildModule,xmlreader,XMLReader,@PHP8_LIBXML +PACKAGE_php8-mod-xmlreader:php8-mod-dom +PACKAGE_php8-mod-xmlreader:libxml2))
 $(eval $(call BuildModule,xmlwriter,XMLWriter,@PHP8_LIBXML +PACKAGE_php8-mod-xmlwriter:libxml2))
 $(eval $(call BuildModule,zip,ZIP,+PACKAGE_php8-mod-zip:libzip))
