@@ -7,7 +7,7 @@ config PHP8_LIBXML
 
 config PHP8_DOM
 	bool "PHP8 DOM support"
-	depends on PHP8_LIBXML
+	select PHP8_LIBXML
 	default y
 	help
 	  Without php8-mod-dom, this option does not provide a PHP8
@@ -35,7 +35,6 @@ config PHP8_GETTEXT
 
 config PHP8_INTL
 	bool "Enable Internationalization"
-	depends on PHP8_GETTEXT
 	default y
 	help
 	  Note that this option depends in ICU library which is built without data
@@ -51,7 +50,6 @@ config PHP8_INTL
 
 config PHP8_FULLICUDATA
 	bool "Add dependency to full ICU Data"
-	depends on PHP8_INTL
 	default n
 
 endmenu
