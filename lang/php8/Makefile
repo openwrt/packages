@@ -130,6 +130,11 @@ define Package/php8-fpm/description
   This package contains the FastCGI Process Manager of the PHP8 interpreter.
 endef
 
+define Package/php8-mod-gettext/description
+  Note that this package works best in combination with the intl module, so
+  please consider also selecting/installing php8-mod-intl.
+endef
+
 define Package/php8-mod-intl/description
   Note that this package depends in ICU library which is built without data
   by default. This is to satisfy programs build and run dependencies but to
@@ -145,9 +150,9 @@ define Package/apache-mod-php8
   SECTION:=net
   CATEGORY:=Network
   DEPENDS+=PACKAGE_apache-mod-php8:apache \
-	   +PHP8_GETTEXT:libstdcpp \
-	   +riscv64:libatomic \
-	   +libpcre2 +zlib
+    +PHP8_INTL:libstdcpp \
+    +riscv64:libatomic \
+    +libpcre2 +zlib
   TITLE:=PHP8 module for Apache Web Server
 endef
 
