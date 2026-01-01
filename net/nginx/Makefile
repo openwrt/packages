@@ -33,6 +33,7 @@ PKG_MOD_EXTRA := \
 	lua-resty-lrucache \
 	rtmp \
 	dav-ext \
+	fancyindex \
 	naxsi \
 	brotli \
 	headers-more \
@@ -55,6 +56,7 @@ PKG_CONFIG_DEPENDS := \
 	CONFIG_NGINX_HTTP_SSI \
 	CONFIG_NGINX_HTTP_USERID \
 	CONFIG_NGINX_HTTP_ACCESS \
+	CONFIG_NGINX_HTTP_ADDITION \
 	CONFIG_NGINX_HTTP_AUTH_BASIC \
 	CONFIG_NGINX_HTTP_AUTH_REQUEST \
 	CONFIG_NGINX_HTTP_AUTOINDEX \
@@ -328,6 +330,14 @@ define Download/nginx-mod-dav-ext
   PROTO:=git
 endef
 
+define Download/nginx-mod-fancyindex
+  SOURCE_DATE:=2023-01-20
+  SOURCE_VERSION:=cbc0d3fca4f06414612de441399393d4b3bbb315
+  URL:=https://github.com/aperezdc/ngx-fancyindex.git
+  MIRROR_HASH:=692e5b23a84c38dea178319dc9f40f1176175f399fd9d78e18ac290e0fd6f
+  PROTO:=git
+endef
+
 define Download/nginx-mod-ubus
   SOURCE_DATE:=2020-09-06
   SOURCE_VERSION:=b2d7260dcb428b2fb65540edb28d7538602b4a26
@@ -482,6 +492,7 @@ CONFIGURE_ARGS += \
 	$(if $(call IsEnabled,NGINX_STUB_STATUS),--with-http_stub_status_module) \
 	$(if $(call IsEnabled,NGINX_FLV),--with-http_flv_module) \
 	$(if $(call IsEnabled,NGINX_DAV),--with-http_dav_module) \
+	$(if $(call IsEnabled,NGINX_HTTP_ADDITION),--with-http_addition_module) \
 	$(if $(call IsEnabled,NGINX_HTTP_AUTH_REQUEST),--with-http_auth_request_module) \
 	$(if $(call IsEnabled,NGINX_HTTP_QUIC),--with-http_v3_module) \
 	$(if $(call IsEnabled,NGINX_HTTP_V2),--with-http_v2_module) \
@@ -508,6 +519,8 @@ $(eval $(call BuildModule,ubus,+libubus +libjson-c +libblobmsg-json, \
 	ngx_http_ubus,Enable UBUS api support directly from the server.))
 $(eval $(call BuildModule,dav-ext,+@NGINX_DAV +libxml2,ngx_http_dav_ext, \
 	Enable the WebDAV methods PROPFIND OPTIONS LOCK UNLOCK.))
+$(eval $(call BuildModule,fancyindex,+@NGINX_HTTP_ADDITION,ngx_http_fancyindex, \
+	Nginx Fancy Index module.))
 $(eval $(call BuildModule,headers-more,,ngx_http_headers_more_filter, \
 	Set and clear input and output headers...more than "add"!))
 $(eval $(call BuildModule,rtmp,,ngx_rtmp, \

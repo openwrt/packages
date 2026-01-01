@@ -180,6 +180,11 @@ config NGINX_HTTP_QUIC
 	prompt "Enable QUIC support"
 	default n
 
+config NGINX_HTTP_ADDITION
+	bool
+	prompt "Enable HTTP Addition (filter that adds text before and after a response)"
+	default n
+
 config NGINX_PCRE
 	bool
 	prompt "Enable PCRE library usage"
