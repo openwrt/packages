@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
 PKG_VERSION:=8.4.16
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 PKG_LICENSE:=PHP-3.01
@@ -46,6 +46,8 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PHP8_INTL \
 	CONFIG_PHP8_LIBXML \
 	CONFIG_PHP8_SYSTEMTZDATA
+
+PKG_BUILD_DEPENDS:= PHP8_INTL:icu
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -88,7 +90,7 @@ endef
 
 define Package/php8-cli
   $(call Package/php8/Default)
-  DEPENDS+= +PHP8_GETTEXT:libstdcpp +riscv64:libatomic
+  DEPENDS+= +PHP8_INTL:libstdcpp +riscv64:libatomic
   TITLE+= (CLI)
 endef
 
@@ -99,7 +101,7 @@ endef
 
 define Package/php8-cgi
   $(call Package/php8/Default)
-  DEPENDS+= +PHP8_GETTEXT:libstdcpp +riscv64:libatomic
+  DEPENDS+= +PHP8_INTL:libstdcpp +riscv64:libatomic
   TITLE+= (CGI & FastCGI)
 endef
 
@@ -121,7 +123,7 @@ endef
 
 define Package/php8-fpm
   $(call Package/php8/Default)
-  DEPENDS+= +PHP8_GETTEXT:libstdcpp +riscv64:libatomic
+  DEPENDS+= +PHP8_INTL:libstdcpp +riscv64:libatomic
   TITLE+= (FPM)
 endef
 
