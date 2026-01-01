@@ -7,7 +7,6 @@ ifeq ($(origin GO_INCLUDE_DIR),undefined)
   GO_INCLUDE_DIR:=$(dir $(lastword $(MAKEFILE_LIST)))
 endif
 
-
 # Unset environment variables
 # There are more magic variables to track down, but ain't nobody got time for that
 
@@ -163,6 +162,8 @@ BOOTSTRAP_GO_VALID_OS_ARCH:= \
                  solaris_amd64 \
   windows_386    windows_amd64
 
+GO_DEFAULT_VERSION:=1.25
+
 # GOOS / GOARCH
 
 go_arch=$(subst \
@@ -284,11 +285,9 @@ else ifeq ($(GO_ARCH),ppc64)
 
 endif
 
-
 # Target Go
 
 GO_ARCH_DEPENDS:=@(aarch64||arm||i386||i686||loongarch64||mips||mips64||mips64el||mipsel||riscv64||x86_64)
-
 
 # ASLR/PIE
 
@@ -320,7 +319,6 @@ ifneq ($(filter $(GO_OS_ARCH),$(GO_PIE_SUPPORTED_OS_ARCH)),)
   GO_TARGET_PIE_INSTALL_SUFFIX:=$(call go_pie_install_suffix,$(GO_OS_ARCH))
 endif
 
-
 # Spectre mitigations
 
 GO_SPECTRE_SUPPORTED_ARCH:=amd64
@@ -332,7 +330,6 @@ endif
 ifneq ($(filter $(GO_ARCH),$(GO_SPECTRE_SUPPORTED_ARCH)),)
   GO_TARGET_SPECTRE_SUPPORTED:=1
 endif
-
 
 # General build info
 

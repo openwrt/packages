@@ -9,7 +9,6 @@ endif
 
 include $(GO_INCLUDE_DIR)/golang-values.mk
 
-
 # Variables (all optional, except GO_PKG) to be set in package
 # Makefiles:
 #
@@ -122,7 +121,6 @@ include $(GO_INCLUDE_DIR)/golang-values.mk
 # GoPackage/Build/Compile) belong to Debian's dh-golang completely.
 # https://salsa.debian.org/go-team/packages/dh-golang
 
-
 GO_PKG_BUILD_PKG?=$(strip $(GO_PKG))/...
 GO_PKG_INSTALL_BIN_PATH?=/usr/bin
 
@@ -177,8 +175,11 @@ define GoPackage/GoSubMenu
   CATEGORY:=Languages
 endef
 
+GO_HOST_VERSION:=$(GO_DEFAULT_VERSION)
+
 GO_PKG_BUILD_CONFIG_VARS= \
 	GO_PKG="$(strip $(GO_PKG))" \
+	GO_HOST_VERSION="$(strip $(GO_HOST_VERSION))" \
 	GO_INSTALL_EXTRA="$(strip $(GO_PKG_INSTALL_EXTRA))" \
 	GO_INSTALL_ALL="$(strip $(GO_PKG_INSTALL_ALL))" \
 	GO_SOURCE_ONLY="$(strip $(GO_PKG_SOURCE_ONLY))" \
@@ -288,10 +289,14 @@ define GoPackage/Package/Install
 	$(call GoPackage/Package/Install/Src,$(1))
 endef
 
-
 ifneq ($(strip $(GO_PKG)),)
   ifeq ($(GO_TARGET_SPECTRE_SUPPORTED),1)
     PKG_CONFIG_DEPENDS+=CONFIG_GOLANG_SPECTRE
+  endif
+
+  _GO_HOST_VERSION:=$(patsubst golang%/host,%,$(filter golang%/host,$(PKG_BUILD_DEPENDS)))
+  ifneq ($(_GO_HOST_VERSION),)
+    GO_HOST_VERSION:=$(_GO_HOST_VERSION)
   endif
 
   Build/Configure=$(call GoPackage/Build/Configure)
