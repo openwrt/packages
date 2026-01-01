@@ -27,11 +27,27 @@ config PHP8_SYSTEMTZDATA
 config PHP8_GETTEXT
 	bool "Enable gettext"
 	default y
+	help
+	  Without php8-mod-gettext, this option does not provide a PHP8
+	  programmer the gettext functionality (it only adds gettext for internal
+	  use by php-cli, php-cgi, etc.). Therefore please consider adding
+	  php8-mod-gettext to provide this functionality to PHP8 consumers.
 
 config PHP8_INTL
 	bool "Enable Internationalization"
 	depends on PHP8_GETTEXT
 	default y
+	help
+	  Note that this option depends in ICU library which is built without data
+	  by default. This is to satisfy programs build and run dependencies but to
+	  keep the installed footprint small on the target system(s).
+	  However, the data is required to make the ICU library useful - and thus
+	  directly affects PHPs intl extension, too - so consider to also
+	  select PHP8_FULLICUDATA.
+	  Without php8-mod-intl, this option does not provide a PHP8
+	  programmer the intl functionality (it only adds intl for internal
+	  use by php-cli, php-cgi, etc.). Therefore please consider adding
+	  php8-mod-intl to provide this functionality to PHP8 consumers.
 
 config PHP8_FULLICUDATA
 	bool "Add dependency to full ICU Data"
