@@ -9,6 +9,11 @@ config PHP8_DOM
 	bool "PHP8 DOM support"
 	depends on PHP8_LIBXML
 	default y
+	help
+	  Without php8-mod-dom, this option does not provide a PHP8
+	  programmer the XML DOM functionality (it only adds DOM for internal
+	  use by php-cli, php-cgi, etc.). Therefore please consider adding
+	  php8-mod-dom to provide this functionality to PHP8 consumers.
 
 config PHP8_SYSTEMTZDATA
 	bool "Use system timezone data instead of php's built-in database"
