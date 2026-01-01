@@ -19,14 +19,10 @@ endef
 # $(1) source go root
 # $(2) additional environment variables (optional)
 define GoCompiler/Default/Make
-	( \
-		cd "$(1)/src" ; \
-		$(2) \
-		$(BASH) make.bash \
+	cd "$(1)/src" ; \
+	$(2) $(BASH) make.bash \
 		$(if $(findstring s,$(OPENWRT_VERBOSE)),-v) \
-		--no-banner \
-		; \
-	)
+		--no-banner
 endef
 
 # $(1) destination prefix
