@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
 PKG_VERSION:=8.4.16
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 PKG_LICENSE:=PHP-3.01
@@ -47,6 +47,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PHP8_INTL \
 	CONFIG_PHP8_SYSTEMTZDATA
 
+PKG_BUILD_DEPENDS:= PHP8_GETTEXT:icu
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -90,12 +91,13 @@ define Package/php8/config
 
 	config PHP8_INTL
 		bool "Enable Internationalization"
-    depends on PHP8_GETTEXT
-		default y
+		depends on PHP8_GETTEXT
+		default y if PHP8_GETTEXT
+		default n
 
 	config PHP8_FULLICUDATA
 		bool "Add dependency to full ICU Data"
-		depends on PHP8_INTL
+		depends on PHP8_GETTEXT && PHP8_INTL && PACKAGE_php8-mod-intl
 		default n
 
 endef
@@ -120,7 +122,7 @@ endef
 
 define Package/php8-cli
   $(call Package/php8/Default)
-  DEPENDS+= +PHP8_GETTEXT:libstdcpp +riscv64:libatomic
+  DEPENDS+= +PHP8_INTL:libstdcpp +riscv64:libatomic
   TITLE+= (CLI)
 endef
 
@@ -131,7 +133,7 @@ endef
 
 define Package/php8-cgi
   $(call Package/php8/Default)
-  DEPENDS+= +PHP8_GETTEXT:libstdcpp +riscv64:libatomic
+  DEPENDS+= +PHP8_INTL:libstdcpp +riscv64:libatomic
   TITLE+= (CGI & FastCGI)
 endef
 
@@ -177,7 +179,7 @@ define Package/apache-mod-php8
   SECTION:=net
   CATEGORY:=Network
   DEPENDS+=PACKAGE_apache-mod-php8:apache \
-	   +PHP8_GETTEXT:libstdcpp \
+     +PHP8_INTL:libstdcpp \
 	   +riscv64:libatomic \
 	   +libpcre2 +zlib
   TITLE:=PHP8 module for Apache Web Server
@@ -682,7 +684,7 @@ $(eval $(call BuildModule,gd,GD graphics,+PACKAGE_php8-mod-gd:libgd-full))
 $(eval $(call BuildModule,gettext,Gettext,@PHP8_GETTEXT +PACKAGE_php8-mod-gettext:libintl-full))
 $(eval $(call BuildModule,gmp,GMP,+PACKAGE_php8-mod-gmp:libgmp))
 $(eval $(call BuildModule,iconv,iConv,$(ICONV_DEPENDS)))
-$(eval $(call BuildModule,intl,Internationalization Functions,@PHP8_INTL +PACKAGE_php8-mod-intl:icu +PHP8_FULLICUDATA:icu-full-data))
+$(eval $(call BuildModule,intl,Internationalization Functions,@PHP8_GETTEXT @PHP8_INTL +PACKAGE_php8-mod-intl:php8-mod-gettext +PHP8_FULLICUDATA:icu-full-data +!PHP8_FULLICUDATA:icu))
 $(eval $(call BuildModule,ldap,LDAP,+PACKAGE_php8-mod-ldap:libopenldap +PACKAGE_php8-mod-ldap:libsasl2))
 $(eval $(call BuildModule,mbstring,MBString,+PACKAGE_php8-mod-mbstring:oniguruma))
 $(eval $(call BuildModule,mysqli,MySQL Improved Extension,+PACKAGE_php8-mod-mysqli:php8-mod-mysqlnd,30))
