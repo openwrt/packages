@@ -28,7 +28,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/idn/Default
   SECTION:=net
   CATEGORY:=Network
-  URL:=http://www.gnu.org/software/libidn/
+  URL:=https://www.gnu.org/software/libidn/
 endef
 
 define Package/idn/Default/description

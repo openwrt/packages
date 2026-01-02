@@ -25,7 +25,7 @@ define Package/libmpeg2
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=MPEG-1 & -2 decoding library
-  URL:=http://libmpeg2.sourceforge.net/
+  URL:=https://libmpeg2.sourceforge.io/
 endef
 
 define Package/libmpeg2/description

@@ -30,7 +30,7 @@ define Package/xupnpd
   CATEGORY:=Multimedia
   DEPENDS:= +USE_GLIBC:libcrypt-compat +liblua +libopenssl
   TITLE:=eXtensible UPnP agent
-  URL:=http://xupnpd.org/
+  URL:=https://github.com/clark15b/xupnpd
 endef
 
 define Package/xupnpd/conffiles

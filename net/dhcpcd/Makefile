@@ -30,7 +30,7 @@ define Package/dhcpcd
   SECTION:=net
   CATEGORY:=Network
   TITLE:=DHCPv4/IPv4LL/IPv6RS/DHCPv6 quad stack client
-  URL:=http://roy.marples.name/projects/dhcpcd
+  URL:=https://roy.marples.name/projects/dhcpcd
   USERID:=dhcpcd:dhcpcd
 endef
 

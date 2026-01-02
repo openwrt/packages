@@ -12,7 +12,7 @@ PKG_VERSION:=4.33
 PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://dist.schmorp.de/libev/Attic/
+PKG_SOURCE_URL:=https://dist.schmorp.de/libev/Attic/
 PKG_HASH:=507eb7b8d1015fbec5b935f34ebed15bf346bed04a11ab82b8eee848c4205aea
 PKG_LICENSE:=BSD-2-Clause GPL-2.0-or-later
 PKG_LICENSE_FILES:=LICENSE
@@ -29,7 +29,7 @@ define Package/libev
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=High-performance event loop
-  URL:=http://software.schmorp.de/pkg/libev.html
+  URL:=https://software.schmorp.de/pkg/libev.html
 endef
 
 define Package/libev/description

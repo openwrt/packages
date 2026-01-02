@@ -28,7 +28,7 @@ define Package/perl-io-html
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Open an HTML file with automatic charset detection
-  URL:=http://search.cpan.org/dist/IO-HTML/
+  URL:=https://metacpan.org/dist/IO-HTML/
   DEPENDS:=perl +perlbase-encode +perlbase-essential
 endef
 

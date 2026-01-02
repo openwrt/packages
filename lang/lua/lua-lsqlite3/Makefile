@@ -12,7 +12,7 @@ PKG_VERSION:=0.9.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=lsqlite3_fsl09y.zip
-PKG_SOURCE_URL:=http://lua.sqlite.org/index.cgi/zip/
+PKG_SOURCE_URL:=https://lua.sqlite.org/home/zip/
 PKG_HASH:=d38402aa7640055d260c1246c36e6d6d31b425a25a805431f13695694466b722
 
 PKG_LICENSE:=MIT
@@ -27,7 +27,7 @@ define Package/lsqlite3/default
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Lua wrapper for the SQLite3 library
-  URL:=http://lua.sqlite.org
+  URL:=https://lua.sqlite.org/home/home
   DEPENDS:=+libsqlite3
 endef
 

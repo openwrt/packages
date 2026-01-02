@@ -24,7 +24,7 @@ define Package/smcroute
 	CATEGORY:=Network
 	SUBMENU:=Routing and Redirection
 	TITLE:=Static Multicast Routing Daemon
-	URL:=http://troglobit.com/smcroute.html
+	URL:=https://troglobit.com/projects/smcroute/
 	MAINTAINER:=Moritz Warning <moritzwarning@web.de>
 endef
 

@@ -31,7 +31,7 @@ define Package/netifyd
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Netify Agent
-  URL:=http://www.netify.ai/
+  URL:=https://www.netify.ai/
   DEPENDS:=+ca-bundle +libatomic +libcurl +libmnl +libnetfilter-conntrack +libpcap +zlib +libpthread
   # Explicitly depend on libstdcpp rather than $(CXX_DEPENDS).  At the moment
   # std::unordered_map is only available via libstdcpp which is required for

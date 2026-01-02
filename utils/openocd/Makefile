@@ -34,7 +34,7 @@ define Package/openocd
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=OpenOCD Utility
-  URL:=http://openocd.sf.net/
+  URL:=https://openocd.org/
   DEPENDS:=+libusb-1.0 \
 	+libftdi1 \
 	+hidapi \

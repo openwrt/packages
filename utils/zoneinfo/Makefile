@@ -13,12 +13,12 @@ PKG_VERSION:=2025c
 PKG_RELEASE:=1
 
 #As i couldn't find real license used "Public Domain"
-#as reference to http://www.iana.org/time-zones/repository/tz-link.html
+#as reference to https://data.iana.org/time-zones/tz-link.html
 PKG_LICENSE:=Public-Domain
 
 PKG_SOURCE:=tzdata$(PKG_VERSION).tar.gz
 PKG_SOURCE_CODE:=tzcode$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://www.iana.org/time-zones/repository/releases
+PKG_SOURCE_URL:=https://data.iana.org/time-zones/releases
 PKG_HASH:=4aa79e4effee53fc4029ffe5f6ebe97937282ebcdf386d5d2da91ce84142f957
 
 include $(INCLUDE_DIR)/package.mk

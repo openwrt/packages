@@ -48,7 +48,7 @@ define Package/gnutls/Default
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=GNU TLS
-  URL:=http://www.gnutls.org/
+  URL:=https://gnutls.org/
 endef
 
 define Package/gnutls/Default/description

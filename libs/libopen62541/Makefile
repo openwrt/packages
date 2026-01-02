@@ -38,13 +38,13 @@ define Package/libopen62541
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=An OPC UA library
-  URL:=https://open62541.org/
+  URL:=https://www.open62541.org/
   DEPENDS:=+librt +zlib +libstdcpp +libpthread +libatomic \
 		+LIBOPEN62541_MBDEDTLS:libmbedtls +LIBOPEN62541_OPENSSL:libopenssl
 endef
 
 define Package/libopen62541/description
- open62541 (http://open62541.org) is an open source and free implementation of
+ open62541 (https://www.open62541.org) is an open source and free implementation of
  OPC UA (OPC Unified Architecture) written in the common subset of the C99 and
  C++98 languages. The library is usable with all major compilers and provides
  the necessary tools to implement dedicated OPC UA clients and servers, or to

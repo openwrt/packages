@@ -22,7 +22,7 @@ define Package/kafs-client
 	SUBMENU:=Filesystem
 	DEPENDS:=+keyutils +krb5-libs +kmod-fs-afs +kmod-crypto-user
 	TITLE:=kafs client library
-	URL:=http://git.infradead.org/users/dhowells/kafs-client.git
+	URL:=https://gitlab.com/linux-afs/kafs-client
 endef
 
 define Package/kafs-client/description

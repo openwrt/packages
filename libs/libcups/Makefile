@@ -23,7 +23,7 @@ PKG_CPE_ID:=cpe:/a:apple:cups
 include $(INCLUDE_DIR)/package.mk
 
 define Package/libcups/Default
-  URL:=http://www.cups.org/
+  URL:=https://www.cups.org/
   SUBMENU:=Printing
 endef
 

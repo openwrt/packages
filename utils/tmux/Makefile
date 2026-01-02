@@ -26,7 +26,7 @@ define Package/tmux
   SUBMENU:=Terminal
   TITLE:=Terminal multiplexer
   DEPENDS:=+libncurses +libevent2-core +libpthread +librt
-  URL:=http://tmux.github.io/
+  URL:=https://github.com/tmux/tmux/wiki
 endef
 
 define Package/tmux/description

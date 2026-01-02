@@ -32,7 +32,7 @@ define Package/snort3
     +PACKAGE_vectorscan:vectorscan
   USERID:=snort=975:snort=975
   TITLE:=Lightweight Network Intrusion Detection System
-  URL:=http://www.snort.org/
+  URL:=https://snort.org/
   MENU:=1
 endef
 

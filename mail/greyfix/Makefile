@@ -11,7 +11,7 @@ PKG_NAME:=greyfix
 PKG_VERSION:=0.4.0
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=http://www.kim-minh.com/pub/greyfix
+PKG_SOURCE_URL:=https://www.kim-minh.com/pub/greyfix
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_HASH:=26013edce3a38d586282bfc22eb91bd22df54e3558ea1b3dae54d3e7a769e4fe
 
@@ -27,7 +27,7 @@ define Package/greyfix
   CATEGORY:=Mail
   DEPENDS:=+libdb47
   TITLE:=Greyfix - greylisting with Postfix.
-  URL:=http://www.kim-minh.com/pub/greyfix/
+  URL:=https://www.kim-minh.com/pub/greyfix/
 endef
 
 define Package/greyfix/description

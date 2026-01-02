@@ -22,7 +22,7 @@ define Package/bossa
   CATEGORY:=Utilities
   DEPENDS:=+libstdcpp
   TITLE:=Utility to flash ARM microcontrollers
-  URL:=http://www.shumatech.com/web/products/bossa
+  URL:=https://www.shumatech.com/web/products/bossa
 endef
 
 define Package/bossa/description

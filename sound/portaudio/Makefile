@@ -30,7 +30,7 @@ define Package/portaudio
   CATEGORY:=Sound
   DEPENDS:=+alsa-lib
   TITLE:=Portable cross-platform audio I/O
-  URL:=http://www.portaudio.com/
+  URL:=https://www.portaudio.com/
 endef
 
 define Package/portaudio/description

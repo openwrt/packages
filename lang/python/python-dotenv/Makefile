@@ -20,7 +20,7 @@ define Package/python3-dotenv
   CATEGORY:=Languages
   SUBMENU:=Python
   TITLE:=Add .env support to your django/flask apps in development and deployments
-  URL:=http://github.com/theskumar/python-dotenv
+  URL:=https://github.com/theskumar/python-dotenv
   DEPENDS:=+python3-click +python3-light +python3-logging
 endef
 

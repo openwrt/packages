@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tinycdb
 PKG_RELEASE:=2
-PKG_SOURCE_URL:=http://www.corpit.ru/mjt/tinycdb/
+PKG_SOURCE_URL:=https://www.corpit.ru/mjt/tinycdb/
 PKG_VERSION:=0.78
 PKG_HASH:=50678f432d8ada8d69f728ec11c3140e151813a7847cf30a62d86f3a720ed63c
 PKG_MAINTAINER:=Denis Shulyaka <Shulyaka@gmail.com>
@@ -35,7 +35,7 @@ define Package/tinycdb
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=a Constant DataBase
-  URL:=http://www.corpit.ru/mjt/tinycdb.html
+  URL:=https://www.corpit.ru/mjt/tinycdb.html
   ABI_VERSION=1
 endef
 

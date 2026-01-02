@@ -27,7 +27,7 @@ define Package/ntripclient
   CATEGORY:=Network
   SUBMENU:=NTRIP
   TITLE:=Ntrip Version 2.0 Command Line Client
-  URL:=http://igs.bkg.bund.de/ntrip/download
+  URL:=https://igs.bkg.bund.de/ntrip/download
 endef
 
 define Package/ntripclient/description

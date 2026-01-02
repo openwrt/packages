@@ -119,7 +119,7 @@ define Package/strongswan/Default
   SECTION:=net
   CATEGORY:=Network
   TITLE:=StrongSwan
-  URL:=http://www.strongswan.org/
+  URL:=https://strongswan.org/
 endef
 
 define Package/strongswan/description/Default

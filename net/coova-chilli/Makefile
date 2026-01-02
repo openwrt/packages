@@ -65,7 +65,7 @@ define Package/coova-chilli/config
 endef
 
 define KernelPackage/ipt-coova
-  URL:=http://www.coova.org/CoovaChilli
+  URL:=https://coova.github.io/CoovaChilli/
   SUBMENU:=Netfilter Extensions
   DEPENDS:=+kmod-ipt-core +libxtables
   TITLE:=Coova netfilter module

@@ -33,7 +33,7 @@ define Package/openvpn-easy-rsa
   TITLE:=CLI utility to build and manage a PKI CA.
   SECTION:=net
   CATEGORY:=Network
-  URL:=http://openvpn.net
+  URL:=https://openvpn.net/community/
   SUBMENU:=VPN
   DEPENDS:=+openssl-util
   PKGARCH:=all

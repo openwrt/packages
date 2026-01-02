@@ -21,7 +21,7 @@ define Package/udptunnel
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Tunnel UDP packets over a TCP connection
-  URL:=http://www.cs.columbia.edu/~lennox/udptunnel/
+  URL:=https://www.cs.columbia.edu/~lennox/udptunnel/
 endef
 
 define Package/udptunnel/description 

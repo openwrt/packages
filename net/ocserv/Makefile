@@ -37,7 +37,7 @@ define Package/ocserv
   CATEGORY:=Network
   SUBMENU:=VPN
   TITLE:=OpenConnect VPN server
-  URL:=http://www.infradead.org/ocserv/
+  URL:=https://ocserv.openconnect-vpn.net/
   MAINTAINER:=Nikos Mavrogiannopoulos <n.mavrogiannopoulos@gmail.com>
   DEPENDS:= +USE_GLIBC:libcrypt-compat +OCSERV_RADIUS:libradcli +OCSERV_SECCOMP:libseccomp +libgnutls +certtool +libncurses +libreadline +OCSERV_PAM:libpam +OCSERV_PROTOBUF:libprotobuf-c +OCSERV_LIBOATH:liboath +libev +kmod-tun
   USERID:=ocserv=72:ocserv=72

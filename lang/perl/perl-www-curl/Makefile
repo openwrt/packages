@@ -29,7 +29,7 @@ define Package/perl-www-curl
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Perl bindings to libcurl
-  URL:=http://search.cpan.org/dist/WWW-Curl/
+  URL:=https://metacpan.org/dist/WWW-Curl/
   DEPENDS:=perl +libcurl +perlbase-essential +perlbase-xsloader
 endef
 

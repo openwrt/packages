@@ -24,7 +24,7 @@ define Package/httptunnel
  TITLE:=Bidirectional data stream tunnelled in HTTP requests.
  SECTION:=net
  CATEGORY:=Network
- URL:=http://github.com/larsbrinkhoff/httptunnel.git
+ URL:=https://github.com/larsbrinkhoff/httptunnel
 endef
 
 define Package/httptunnel/description

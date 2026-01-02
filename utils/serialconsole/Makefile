@@ -29,7 +29,7 @@ define Package/serialconsole
   CATEGORY:=Utilities
   SUBMENU:=Terminal
   TITLE:=Serial Console - minimal terminal program
-  URL:=http://sourceforge.net/projects/serialconsole/
+  URL:=https://serialconsole.sourceforge.io/
 endef
 
 define Package/serialconsole/description

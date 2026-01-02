@@ -3,7 +3,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=hs20
 PKG_RELEASE:=10
 
-PKG_SOURCE_URL:=http://w1.fi/hostap.git
+PKG_SOURCE_URL:=https://git.w1.fi/hostap.git
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_DATE:=2020-06-08
 PKG_SOURCE_VERSION:=5a8b366233f5585e68a4ffbb604fbb4a848eb325
@@ -20,7 +20,7 @@ PKG_LICENSE:=BSD-3-Clause
 PKG_CPE_ID:=cpe:/a:w1.fi:hostapd
 
 define Download/dm-ddf-dtd
-  URL:=http://www.openmobilealliance.org/tech/DTD
+  URL:=https://www.openmobilealliance.org/tech/DTD
   FILE:=dm_ddf-v1_3.dtd
   HASH:=9b3e1dc66a2d38fc6e1300e9fb6f06f95d042206dabc94ae989739feaeb0733e
 endef
@@ -48,7 +48,7 @@ define Package/hs20-common
   CATEGORY:=Network
   SUBMENU:=WirelessAPD
   TITLE:=Hotspot 2.0 OSU common files
-  URL:=http://hostap.epitest.fi/
+  URL:=https://hostap.epitest.fi/
 endef
 
 define Package/hs20-common/description
@@ -62,7 +62,7 @@ define Package/hs20-client
   CATEGORY:=Network
   SUBMENU:=WirelessAPD
   TITLE:=Hotspot 2.0 OSU client
-  URL:=http://hostap.epitest.fi/
+  URL:=https://hostap.epitest.fi/
   DEPENDS:=+hs20-common +libopenssl +libcurl +libxml2
 endef
 
@@ -76,7 +76,7 @@ define Package/hs20-server
   CATEGORY:=Network
   SUBMENU:=WirelessAPD
   TITLE:=Hotspot 2.0 OSU server
-  URL:=http://hostap.epitest.fi/
+  URL:=https://hostap.epitest.fi/
   DEPENDS:=+hs20-common +libopenssl +libsqlite3 +libxml2 +php8 +php8-cgi +php8-mod-xml +php8-mod-pdo-sqlite +openssl-util +sqlite3-cli +uhttpd +xxd
 endef
 

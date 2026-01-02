@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 PKG_LICENSE:=MIT
 
 PKG_MIRROR_HASH:=a64d8299c7c875bd2183f82f9a71f6fcc7610ee7377add0b6069fea3d7355073
-PKG_SOURCE_URL:=https://github.com/keplerproject/luafilesystem.git
+PKG_SOURCE_URL:=https://github.com/lunarmodules/luafilesystem.git
 PKG_SOURCE_VERSION:=v$(subst .,_,$(PKG_VERSION))
 PKG_SOURCE_PROTO:=git
 
@@ -24,7 +24,7 @@ define Package/luafilesystem
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=LuaFileSystem
-  URL:=http://keplerproject.github.com/luafilesystem/
+  URL:=https://lunarmodules.github.io/luafilesystem/
   MAINTAINER:=W. Michael Petullo <mike@flyn.org>
   DEPENDS:=+liblua
 endef
