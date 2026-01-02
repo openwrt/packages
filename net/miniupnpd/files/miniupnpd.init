@@ -44,42 +44,42 @@ conf_rule_add() {
 upnpd() {
 	config_load "upnpd"
 	local enabled
-	config_get enabled config enabled 0
+	config_get enabled settings enabled 0
 	if [ "$enabled" != "1" ]; then
 		log "Service disabled, enabled UCI option not set"
 		return 1
 	fi
 	# Daemon
 	local enable_protocols allow_cgnat stun_host allow_third_party_mapping ipv6_disable system_uptime log_output lease_file config_file
-	config_get enable_protocols config enable_protocols all
-	config_get allow_cgnat config allow_cgnat 0
-	config_get stun_host config stun_host stun.nextcloud.com
-	config_get allow_third_party_mapping config allow_third_party_mapping 0
-	config_get ipv6_disable config ipv6_disable 0
-	config_get system_uptime config system_uptime 1
-	config_get log_output config log_output
-	config_get lease_file config lease_file /var/run/miniupnpd.leases
-	config_get config_file config config_file
+	config_get enable_protocols settings enable_protocols all
+	config_get allow_cgnat settings allow_cgnat 0
+	config_get stun_host settings stun_host stun.nextcloud.com
+	config_get allow_third_party_mapping settings allow_third_party_mapping 0
+	config_get ipv6_disable settings ipv6_disable 0
+	config_get system_uptime settings system_uptime 1
+	config_get log_output settings log_output
+	config_get lease_file settings lease_file /var/run/miniupnpd.leases
+	config_get config_file settings config_file
 
 	# UPnP IGD
 	local upnp_igd_compat download_kbps upload_kbps friendly_name model_number serial_number presentation_url uuid http_port notify_interval
-	config_get upnp_igd_compat config upnp_igd_compat igdv1
-	config_get download_kbps config download_kbps
-	config_get upload_kbps config upload_kbps
-	config_get friendly_name config friendly_name "OpenWrt UPnP IGD & PCP"
-	config_get model_number config model_number
-	config_get serial_number config serial_number
-	config_get presentation_url config presentation_url
-	config_get uuid config uuid
-	config_get http_port config http_port 5000
-	config_get notify_interval config notify_interval
+	config_get upnp_igd_compat settings upnp_igd_compat igdv1
+	config_get download_kbps settings download_kbps
+	config_get upload_kbps settings upload_kbps
+	config_get friendly_name settings friendly_name "OpenWrt UPnP IGD & PCP"
+	config_get model_number settings model_number
+	config_get serial_number settings serial_number
+	config_get presentation_url settings presentation_url
+	config_get uuid settings uuid
+	config_get http_port settings http_port 5000
+	config_get notify_interval settings notify_interval
 
 	# External network interface
 	local external_iface external_iface6 external_zone external_ip
-	config_get external_iface config external_iface
-	config_get external_iface6 config external_iface6
-	config_get external_zone config external_zone
-	config_get external_ip config external_ip
+	config_get external_iface settings external_iface
+	config_get external_iface6 settings external_iface6
+	config_get external_zone settings external_zone
+	config_get external_ip settings external_ip
 
 	local conf ifname ifname6
 	. /lib/functions/network.sh
@@ -159,7 +159,7 @@ upnpd() {
 			[ -z "$uuid" ] && {
 				log "Generate UPnP IGD UUID"
 				uuid="$(cat /proc/sys/kernel/random/uuid)"
-				uci set upnpd.config.uuid="$uuid"
+				uci set upnpd.settings.uuid="$uuid"
 				uci commit upnpd
 			}
 			[ "$uuid" != "nocli" ] && echo "uuid=$uuid" || log "uuid=nocli deprecated, set to 00000000-0000-0000-0000-000000000000 instead"
