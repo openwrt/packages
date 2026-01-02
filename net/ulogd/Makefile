@@ -12,7 +12,7 @@ PKG_VERSION:=2.0.9
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://netfilter.org/projects/ulogd/files/
+PKG_SOURCE_URL:=https://netfilter.org/pub/ulogd/
 PKG_HASH:=523a651fe0a9f25b0cd87d5d35fc37d9382e7eecfcf61e48d5505ff3cf80eda5
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
@@ -35,7 +35,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/ulogd/Default
   SECTION:=net
   CATEGORY:=Network
-  URL:=https://www.netfilter.org/projects/ulogd/index.html
+  URL:=https://netfilter.org/projects/ulogd/
 endef
 
 define Package/ulogd

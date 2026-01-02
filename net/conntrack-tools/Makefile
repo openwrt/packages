@@ -12,7 +12,7 @@ PKG_VERSION:=1.4.8
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://www.netfilter.org/projects/conntrack-tools/files
+PKG_SOURCE_URL:=https://netfilter.org/pub/conntrack-tools/
 PKG_HASH:=067677f4c5f6564819e78ed3a9d4a8980935ea9273f3abb22a420ea30ab5ded6
 
 PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>

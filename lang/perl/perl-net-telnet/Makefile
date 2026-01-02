@@ -28,7 +28,7 @@ define Package/perl-net-telnet
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Telnet client
-  URL:=http://search.cpan.org/dist/Net-Telnet/
+  URL:=https://metacpan.org/dist/Net-Telnet/
   DEPENDS:=perl +perlbase-essential +perlbase-socket +perlbase-symbol
 endef
 

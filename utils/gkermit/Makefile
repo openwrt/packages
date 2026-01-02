@@ -24,7 +24,7 @@ define Package/gkermit
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=gkermit
-  URL:=http://www.columbia.edu/kermit/gkermit.html
+  URL:=https://www.columbia.edu/kermit/gkermit.html
 endef
 
 define Package/gkermit/description

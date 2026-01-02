@@ -25,7 +25,7 @@ define Package/bison
   SECTION:=devel
   CATEGORY:=Development
   TITLE:=bison
-  URL:=http://www.gnu.org/software/bison/
+  URL:=https://www.gnu.org/software/bison/
 endef
 
 define Package/bison/description

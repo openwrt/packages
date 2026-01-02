@@ -30,7 +30,7 @@ define Package/setools/Default
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=SELinux policy analysis tool
-  URL:=http://selinuxproject.org/page/Main_Page
+  URL:=https://github.com/selinuxproject
   DEPENDS:=+python3-light +python3-logging +python3-setools
 endef
 
@@ -44,7 +44,7 @@ define Package/python3-setools
   CATEGORY:=Languages
   SUBMENU:=Python
   TITLE:=SETools Python bindings
-  URL:=http://selinuxproject.org/page/Main_Page
+  URL:=https://github.com/selinuxproject
   DEPENDS:=+python3-light +python3-logging +python3-pkg-resources +libselinux +libsepol
 endef
 

@@ -16,7 +16,7 @@ PKG_VERSION:=0.3.7
 PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.anytun.org/download/
+PKG_SOURCE_URL:=https://anytun.org/download/
 PKG_HASH:=076318c771c908386c4408dda0769171542da701785302903641ce23fd33a295
 PKG_MAINTAINER:=Christian Pointner <equinox@spreadspace.org>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -30,7 +30,7 @@ define Package/uanytun/template
   SUBMENU:=VPN
   DEPENDS:=+kmod-tun
   TITLE:=micro anycast tunneling daemon
-  URL:=http://www.anytun.org/
+  URL:=https://anytun.org/
 endef
 
 

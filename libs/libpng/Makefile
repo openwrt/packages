@@ -28,7 +28,7 @@ define Package/libpng
   CATEGORY:=Libraries
   DEPENDS:=+zlib
   TITLE:=A PNG format files handling library
-  URL:=http://www.libpng.org/pub/png/libpng.html
+  URL:=https://www.libpng.org/pub/png/libpng.html
 endef
 
 CMAKE_OPTIONS += \
