@@ -29,7 +29,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/libmodbus
   SECTION:=libs
   CATEGORY:=Libraries
-  URL:=http://www.libmodbus.org
+  URL:=https://libmodbus.org
   TITLE:=libmodbus
 endef
 

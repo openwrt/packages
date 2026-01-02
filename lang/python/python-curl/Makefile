@@ -28,7 +28,7 @@ define Package/python3-curl
   SECTION:=lang
   SUBMENU:=Python
   TITLE:=Python module interface to the cURL library
-  URL:=http://pycurl.io/
+  URL:=https://github.com/pycurl/pycurl
   DEPENDS:=+libcurl +python3
 endef
 

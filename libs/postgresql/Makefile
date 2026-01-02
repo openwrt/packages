@@ -12,9 +12,7 @@ PKG_LICENSE:=PostgreSQL
 PKG_CPE_ID:=cpe:/a:postgresql:postgresql
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=\
-	https://ftp.postgresql.org/pub/source/v$(PKG_VERSION) \
-	http://ftp.postgresql.org/pub/source/v$(PKG_VERSION)
+PKG_SOURCE_URL:=https://ftp.postgresql.org/pub/source/v$(PKG_VERSION)
 
 PKG_HASH:=fcb7ab38e23b264d1902cb25e6adafb4525a6ebcbd015434aeef9eda80f528d8
 
@@ -32,7 +30,7 @@ define Package/libpq
   CATEGORY:=Libraries
   DEPENDS:=+libpthread
   TITLE:=PostgreSQL client library
-  URL:=http://www.postgresql.org/
+  URL:=https://www.postgresql.org/
   SUBMENU:=Database
 endef
 
@@ -45,7 +43,7 @@ define Package/pgsql-cli
   CATEGORY:=Utilities
   DEPENDS:=+libncursesw +libpq +libreadline +librt +zlib
   TITLE:=Command Line Interface (CLI) to PostgreSQL databases
-  URL:=http://www.postgresql.org/
+  URL:=https://www.postgresql.org/
   SUBMENU:=Database
 endef
 
@@ -58,7 +56,7 @@ define Package/pgsql-cli-extra
   CATEGORY:=Utilities
   DEPENDS:=+libncursesw +libpq +libreadline +librt +zlib
   TITLE:=Command Line extras for PostgreSQL databases
-  URL:=http://www.postgresql.org/
+  URL:=https://www.postgresql.org/
   SUBMENU:=Database
 endef
 
@@ -71,7 +69,7 @@ define Package/pgsql-server
   CATEGORY:=Utilities
   DEPENDS:=+pgsql-cli +blockd
   TITLE:=PostgreSQL databases Server
-  URL:=http://www.postgresql.org/
+  URL:=https://www.postgresql.org/
   SUBMENU:=Database
   USERID:=postgres=5432:postgres=5432
 endef

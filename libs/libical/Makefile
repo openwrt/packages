@@ -29,7 +29,7 @@ define Package/libical
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=An implementation of iCalendar protocols and data formats
-  URL:=http://libical.github.io/libical/
+  URL:=https://libical.github.io/libical/
   DEPENDS:=+libpthread
 endef
 

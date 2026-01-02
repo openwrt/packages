@@ -129,7 +129,7 @@ define Package/lcd4linux/Default
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=LCD display utility
-  URL:=http://lcd4linux.bulix.org/
+  URL:=https://github.com/feckert/lcd4linux
 endef
 
 define Package/lcd4linux/Default/description

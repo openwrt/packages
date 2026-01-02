@@ -31,7 +31,7 @@ define Package/iperf
   CATEGORY:=Network
   DEPENDS:= +libstdcpp +libpthread
   TITLE:=Internet Protocol bandwidth measuring tool
-  URL:=http://sourceforge.net/projects/iperf2/
+  URL:=https://sourceforge.net/projects/iperf2/
 endef
 
 define Package/iperf/description

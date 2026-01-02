@@ -23,7 +23,7 @@ define Package/serdisplib
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=serdisplib
-  URL:=http://serdisplib.sourceforge.net/
+  URL:=https://serdisplib.sourceforge.net/
 endef
 
 define Package/serdisplib/description
@@ -37,7 +37,7 @@ define Package/serdisplib-tools
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=serdisplib tools
-  URL:=http://serdisplib.sourceforge.net/
+  URL:=https://serdisplib.sourceforge.net/
   DEPENDS:=+serdisplib +libgd
 endef
 

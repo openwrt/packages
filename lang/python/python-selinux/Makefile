@@ -35,7 +35,7 @@ define Package/python3-selinux
   CATEGORY:=Languages
   TITLE:=SELinux runtime library bindings
   DEPENDS:=+python3-light +libselinux
-  URL:=http://selinuxproject.org/page/Main_Page
+  URL:=https://github.com/selinuxproject
 endef
 
 define Package/python3-selinux/description

@@ -25,7 +25,7 @@ define Package/opentracker
   SECTION:=net
   CATEGORY:=Network
   TITLE:=opentracker
-  URL:=http://erdgeist.org/arts/software/opentracker/
+  URL:=https://erdgeist.org/arts/software/opentracker/
   DEPENDS:=+zlib +libpthread
   PROVIDES:=opentracker6
 endef

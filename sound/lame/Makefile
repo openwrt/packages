@@ -32,7 +32,7 @@ PKG_INSTALL=1
 define Package/lame/Default
   SECTION:=sound
   CATEGORY:=Sound
-  URL:=http://sourceforge.net/projects/lame
+  URL:=https://lame.sourceforge.io/
 endef
 
 define Package/lame

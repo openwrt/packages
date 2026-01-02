@@ -15,7 +15,7 @@ PKG_LICENSE:=GPL-2.0 BSD-ISC
 PKG_LICENSE_FILES:=COPYING.GPL LICENSE
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://unix4lyfe.org/darkstat
+PKG_SOURCE_URL:=https://unix4lyfe.org/darkstat
 PKG_HASH:=aeaf909585f7f43dc032a75328fdb62114e58405b06a92a13c0d3653236dedd7
 
 PKG_INSTALL:=1
@@ -27,7 +27,7 @@ define Package/darkstat
   CATEGORY:=Network
   DEPENDS:=+libpcap +zlib
   TITLE:=Network bandwidth monitor
-  URL:=http://unix4lyfe.org/darkstat/
+  URL:=https://unix4lyfe.org/darkstat/
 endef
 
 define Package/darkstat/description

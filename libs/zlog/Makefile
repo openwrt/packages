@@ -21,7 +21,7 @@ define Package/zlog
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Pure C logging library
-  URL:=http://hardysimpson.github.io/zlog/
+  URL:=https://hardysimpson.github.io/zlog/
 endef
 
 define Package/zlog/description

@@ -26,7 +26,7 @@ define Package/prometheus-statsd-exporter
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=StatsD to Prometheus metrics exporter
-  URL:=http://prometheus.io
+  URL:=https://prometheus.io
   DEPENDS:=$(GO_ARCH_DEPENDS)
 endef
 

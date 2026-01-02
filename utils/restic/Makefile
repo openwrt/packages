@@ -25,7 +25,7 @@ include ../../lang/golang/golang-package.mk
 
 define Package/restic
   TITLE:=restic backup program
-  URL:=http://github.com/restic/restic
+  URL:=https://github.com/restic/restic
   DEPENDS:=$(GO_ARCH_DEPENDS)
   SECTION:=utils
   CATEGORY:=Utilities

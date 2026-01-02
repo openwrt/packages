@@ -40,7 +40,7 @@ include $(INCLUDE_DIR)/nls.mk
 define Package/libaprutil/Default
   SECTION:=libs
   CATEGORY:=Libraries
-  URL:=http://apr.apache.org/
+  URL:=https://apr.apache.org/
 endef
 
 define Package/libaprutil

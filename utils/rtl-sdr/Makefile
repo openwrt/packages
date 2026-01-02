@@ -24,7 +24,7 @@ include $(INCLUDE_DIR)/cmake.mk
 
 define Package/rtl-sdr/Default
   TITLE:=Software Defined Radio with Realtek RTL2832U
-  URL:=http://sdr.osmocom.org/trac/wiki/rtl-sdr
+  URL:=https://osmocom.org/projects/rtl-sdr
 endef
 
 define Package/rtl-sdr/Default/description

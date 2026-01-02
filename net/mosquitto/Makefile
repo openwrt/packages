@@ -27,7 +27,7 @@ define Package/mosquitto/default
   SECTION:=net
   CATEGORY:=Network
   TITLE:=mosquitto - an MQTT message broker
-  URL:=http://www.mosquitto.org/
+  URL:=https://mosquitto.org/
   MAINTAINER:=Karl Palsson <karlp@etactica.com>
   DEPENDS:= +librt
   USERID:=mosquitto=200:mosquitto=200

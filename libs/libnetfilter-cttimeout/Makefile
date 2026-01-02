@@ -12,7 +12,7 @@ PKG_VERSION:=1.0.0
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://www.netfilter.org/projects/libnetfilter_cttimeout/files/
+PKG_SOURCE_URL:=https://netfilter.org/pub/libnetfilter_cttimeout/
 PKG_HASH:=aeab12754f557cba3ce2950a2029963d817490df7edb49880008b34d7ff8feba
 
 PKG_FIXUP:=autoreconf
@@ -28,7 +28,7 @@ define Package/libnetfilter-cttimeout
   CATEGORY:=Libraries
   DEPENDS:=+libmnl
   TITLE:=API to the in-kernel connection tracking timeout infrastructure
-  URL:=http://www.netfilter.org/projects/libnetfilter_cttimeout/
+  URL:=https://netfilter.org/projects/libnetfilter_cttimeout/
   ABI_VERSION:=1
 endef
 

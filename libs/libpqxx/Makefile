@@ -21,7 +21,7 @@ define Package/libpqxx
 	CATEGORY:=Libraries
 	DEPENDS:=+libpq +libstdcpp
 	TITLE:=PostgreSQL client library (C++ interface)
-	URL:=http://pqxx.org/development/libpqxx
+	URL:=https://pqxx.org/libpqxx
 	SUBMENU:=Database
 endef
 

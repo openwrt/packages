@@ -36,7 +36,7 @@ include $(INCLUDE_DIR)/meson.mk
 define Package/glib2/default
   SECTION:=libs
   CATEGORY:=Libraries
-  URL:=http://www.gtk.org/
+  URL:=https://www.gtk.org/
 endef
 
 define Package/glib2-core

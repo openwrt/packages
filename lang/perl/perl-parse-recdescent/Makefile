@@ -31,7 +31,7 @@ define Package/perl-parse-recdescent
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Generate Recursive-Descent Parsers
-  URL:=http://search.cpan.org/dist/Parse-RecDescent/
+  URL:=https://metacpan.org/dist/Parse-RecDescent/
   DEPENDS:=perl +perlbase-essential +perlbase-test +perlbase-text
 endef
 

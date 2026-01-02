@@ -60,7 +60,7 @@ define Package/perl
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=The Perl interpreter
-  URL:=http://www.perl.com/
+  URL:=https://www.perl.org/
   DEPENDS:= +USE_GLIBC:libcrypt-compat +USE_GLIBC:libbsd +PERL_THREADS:libpthread @!arc
 endef
 

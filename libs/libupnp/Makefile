@@ -23,7 +23,7 @@ include $(INCLUDE_DIR)/cmake.mk
 define Package/libupnp/Default
   SECTION:=libs
   CATEGORY:=Libraries
-  URL:=http://pupnp.sourceforge.net/
+  URL:=https://pupnp.github.io/pupnp/
 endef
 
 define Package/libupnp

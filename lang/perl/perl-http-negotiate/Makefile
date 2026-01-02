@@ -28,7 +28,7 @@ define Package/perl-http-negotiate
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Choose a variant to serve
-  URL:=http://search.cpan.org/dist/HTTP-Negotiate/
+  URL:=https://metacpan.org/dist/HTTP-Negotiate/
   DEPENDS:=perl +perl-http-message +perlbase-essential
 endef
 

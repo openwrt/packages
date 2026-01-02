@@ -33,7 +33,7 @@ define Package/openvpn/Default
   TITLE:=Open source VPN solution using $(2)
   SECTION:=net
   CATEGORY:=Network
-  URL:=http://openvpn.net
+  URL:=https://openvpn.net/community/
   SUBMENU:=VPN
   MENU:=1
   DEPENDS:=+kmod-tun \

@@ -28,7 +28,7 @@ define Package/perl-lockfile-simple
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Simple advisory file locking
-  URL:=http://search.cpan.org/dist/LockFile-Simple/
+  URL:=https://metacpan.org/dist/LockFile-Simple/
   DEPENDS:=perl +perlbase-essential +perlbase-sys
 endef
 

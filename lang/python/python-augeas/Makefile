@@ -29,7 +29,7 @@ define Package/python3-augeas
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Python bindings for Augeas
-  URL:=http://augeas.net
+  URL:=https://augeas.net
   DEPENDS:=+python3-light +python3-cffi +augeas
 endef
 

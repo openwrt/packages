@@ -12,7 +12,7 @@ PKG_VERSION:=1.1.7
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://bitmath.org/code/mtdev/
+PKG_SOURCE_URL:=https://bitmath.se/org/code/mtdev/
 PKG_HASH:=a107adad2101fecac54ac7f9f0e0a0dd155d954193da55c2340c97f2ff1d814e
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
@@ -28,7 +28,7 @@ define Package/mtdev
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Multitouch Protocol Translation Library
-  URL:=http://bitmath.org/code/mtdev/
+  URL:=https://bitmath.se/org/code/mtdev/
 endef
 
 define Package/mtdev/description

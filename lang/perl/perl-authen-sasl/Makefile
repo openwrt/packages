@@ -29,7 +29,7 @@ define Package/perl-authen-sasl
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Generic network authentication protocol framework.
-  URL:=http://search.cpan.org/dist/$(PKG_SOURCE_NAME)/
+  URL:=https://metacpan.org/dist/Authen-SASL/
   DEPENDS:=perl +perlbase-digest
 endef
 

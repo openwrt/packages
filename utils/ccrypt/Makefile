@@ -26,7 +26,7 @@ define Package/ccrypt
   CATEGORY:=Utilities
   SUBMENU:=Encryption
   TITLE:=utility for encrypting/decrypting files and streams
-  URL:=http://ccrypt.sourceforge.net/
+  URL:=https://ccrypt.sourceforge.net/
   DEPENDS:= +USE_GLIBC:libcrypt-compat
 endef
 

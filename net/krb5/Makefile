@@ -42,7 +42,7 @@ define Package/krb5-libs
 	TITLE:=Kerberos
 	DEPENDS:=+libncurses +libss +libcomerr
 	TITLE:=Kerberos 5 Shared Libraries
-	URL:=http://web.mit.edu/kerberos/
+	URL:=https://web.mit.edu/kerberos/
 endef
 
 define Package/krb5-server

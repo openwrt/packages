@@ -10,7 +10,7 @@ PKG_VERSION:=2.4.6
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://downloads.us.xiph.org/releases/libshout/
+PKG_SOURCE_URL:=https://downloads.xiph.org/releases/libshout/
 PKG_HASH:=39cbd4f0efdfddc9755d88217e47f8f2d7108fa767f9d58a2ba26a16d8f7c910
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
@@ -28,7 +28,7 @@ define Package/libshout/default
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Shoutcast client library
-  URL:=http://www.icecast.org
+  URL:=https://www.icecast.org
   DEPENDS:= +libvorbisidec +libpthread
 endef
 

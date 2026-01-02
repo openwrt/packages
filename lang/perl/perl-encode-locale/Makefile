@@ -28,7 +28,7 @@ define Package/perl-encode-locale
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Determine the locale encoding
-  URL:=http://search.cpan.org/dist/Encode-Locale/
+  URL:=https://metacpan.org/dist/Encode-Locale/
   DEPENDS:=perl +perlbase-base +perlbase-encode +perlbase-essential
 endef
 

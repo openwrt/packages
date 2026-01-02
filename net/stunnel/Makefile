@@ -17,8 +17,7 @@ PKG_LICENSE_FILES:=COPYING.md COPYRIGHT.md
 PKG_CPE_ID:=cpe:/a:stunnel:stunnel
 
 PKG_SOURCE_URL:= \
-	http://ftp.nluug.nl/pub/networking/stunnel/ \
-	http://www.usenix.org.uk/mirrors/stunnel/ \
+	https://www.usenix.org.uk/mirrors/stunnel/ \
 	https://www.stunnel.org/downloads/ \
 	https://www.usenix.org.uk/mirrors/stunnel/archive/$(word 1, $(subst .,$(space),$(PKG_VERSION))).x/
 
@@ -37,7 +36,7 @@ define Package/stunnel
   CATEGORY:=Network
   DEPENDS:=+libopenssl +zlib +libpthread
   TITLE:=SSL TCP Wrapper
-  URL:=http://www.stunnel.org/
+  URL:=https://www.stunnel.org/
 endef
 
 define Package/stunnel/description

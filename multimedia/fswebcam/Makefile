@@ -12,7 +12,7 @@ PKG_VERSION:=20200725
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://www.sanslogic.co.uk/fswebcam/files
+PKG_SOURCE_URL:=https://www.sanslogic.co.uk/fswebcam/files
 PKG_HASH:=cff0cbd91457133847e40944db3ee0b6f81d06506cef260687bde8348c8a0ce4
 
 PKG_LICENSE:=GPL-2.0
@@ -27,7 +27,7 @@ define Package/fswebcam
   SECTION:=multimedia
   CATEGORY:=Multimedia
   TITLE:=fswebcam
-  URL:=http://www.sanslogic.co.uk/fswebcam/
+  URL:=https://www.sanslogic.co.uk/fswebcam/
   DEPENDS:=+libgd
 endef
 

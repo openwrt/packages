@@ -27,7 +27,7 @@ define Package/dfu-util
   CATEGORY:=Utilities
   DEPENDS:=+libusb-1.0
   TITLE:=Device Firmware Upgrade Utilities
-  URL:=http://dfu-util.sourceforge.net/
+  URL:=https://dfu-util.sourceforge.net/
   MAINTAINER:=Bruno Randolf <br1@einfach.org>
 endef
 

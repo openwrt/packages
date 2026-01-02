@@ -28,7 +28,7 @@ define Package/libsispmctl
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Silver Shield PM Control for Linux library
-  URL:=http://sispmctl.sourceforge.net
+  URL:=https://sispmctl.sourceforge.net
   DEPENDS:=+libusb-compat
 endef
 
@@ -36,7 +36,7 @@ define Package/sispmctl
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Silver Shield PM Control for Linux
-  URL:=http://sispmctl.sourceforge.net
+  URL:=https://sispmctl.sourceforge.net
   DEPENDS:=+libsispmctl
 endef
 

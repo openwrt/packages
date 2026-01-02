@@ -29,7 +29,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/byobu/Default
   SECTION:=utils
   CATEGORY:=Utilities
-  URL:=http://byobu.org/
+  URL:=https://www.byobu.org/
   PKGARCH:=all
 endef
 

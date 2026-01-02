@@ -23,7 +23,7 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
 define Package/faad2/Default
-  URL:=http://www.audiocoding.com/faad2.html
+  URL:=https://github.com/knik0/faad2
   TITLE:=Freeware Advanced Audio Decoder
 endef
 

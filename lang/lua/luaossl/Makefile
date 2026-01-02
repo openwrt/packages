@@ -29,7 +29,7 @@ define Package/luaossl/default
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Comprehensive binding to OpenSSL for $(1)
-  URL:=http://25thandclement.com/~william/projects/luaossl.html
+  URL:=https://25thandclement.com/~william/projects/luaossl.html
   DEPENDS:=+libopenssl
 endef
 

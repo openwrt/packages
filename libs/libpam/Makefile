@@ -32,7 +32,7 @@ define Package/libpam
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=the Linux-PAM libraries and modules.
-  URL:=http://www.kernel.org/pub/linux/libs/pam
+  URL:=https://github.com/linux-pam/linux-pam
   DEPENDS:= +USE_GLIBC:libcrypt-compat
 endef
 

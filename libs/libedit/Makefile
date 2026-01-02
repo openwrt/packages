@@ -31,7 +31,7 @@ define Package/libedit
 	SECTION:=libs
 	CATEGORY:=Libraries
 	TITLE:=BSD editline and history library
-	URL:=http://thrysoee.dk/editline/
+	URL:=https://thrysoee.dk/editline/
 	DEPENDS:=+libncurses
 endef
 
