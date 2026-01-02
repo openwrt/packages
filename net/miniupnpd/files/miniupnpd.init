@@ -7,38 +7,39 @@ USE_PROCD=1
 PROG=/usr/sbin/miniupnpd
 [ -x "$(command -v nft)" ] && FW="fw4" || FW="fw3"
 
-upnpd_get_port_range() {
-	local var="$1"; shift
-	local val
-
-	config_get val "$@"
-
-	case "$val" in
-		[0-9]*[:-][0-9]*)
-			export -n -- "${var}_start=${val%%[:-]*}"
-			export -n -- "${var}_end=${val##*[:-]}"
-		;;
-		[0-9]*)
-			export -n -- "${var}_start=$val"
-			export -n -- "${var}_end="
-		;;
-	esac
+is_port_or_range() {
+	[ "$1" = "0" ] && return 1
+	[ "$1" -ge "1" ] 2>/dev/null && [ "$1" -le "65535" ] 2>/dev/null && return 0
+	[ "$2" = "port0inrange" ] && local minport=0 || local minport=1
+	[ "${1%%-*}" -ge "$minport" ] 2>/dev/null && [ "${1%%-*}" -le "65535" ] 2>/dev/null &&
+		[ "${1##*-}" -ge "$minport" ] 2>/dev/null && [ "${1##*-}" -le "65535" ] 2>/dev/null &&
+		[ "${1##*-}" -ge "${1%%-*}" ] 2>/dev/null && return 0 || return 1
 }
 
-conf_rule_add() {
+upnpd_add_acl_entry() {
 	local cfg="$1"
-	local action int_addr
-	local ext_start ext_end int_start int_end comment
-	config_get action "$cfg" action "deny"                # allow or deny
-	upnpd_get_port_range "ext" "$cfg" ext_ports "0-65535" # external ports: x, x-y, x:y
-	config_get int_addr "$cfg" int_addr "0.0.0.0/0"       # ip or network and subnet mask (internal)
-	upnpd_get_port_range "int" "$cfg" int_ports "0-65535" # internal ports: x, x-y, x:y or range
-	config_get comment "$cfg" comment "ACL"		      # comment
-
-	# Make a single IP IP/32 so that miniupnpd.conf can use it.
-	[ "${int_addr%/*}" = "$int_addr" ] && int_addr="$int_addr/32"
-
-	echo "$action $ext_start${ext_end:+-}$ext_end $int_addr $int_start${int_end:+-}$int_end #$comment"
+	local comment int_addr int_port ext_port descr_filter action
+	config_get comment "$cfg" comment "unspecified" # comment
+	config_get int_addr "$cfg" int_addr "0.0.0.0/0" # IPv4 or network and subnet mask (internal)
+	config_get int_port "$cfg" int_port "1-65535"   # internal port/range: x or x-y
+	config_get ext_port "$cfg" ext_port "1-65535"   # external port/range: x or x-y
+	config_get descr_filter "$cfg" descr_filter     # description regex filter (must be built in)
+	config_get action "$cfg" action                 # accept/reject/ignore
+	! is_port_or_range "$int_port" port0inrange &&
+		log "ACL entry: Invalid port or port range ($int_port) in int_port ignored" daemon.warn && int_port=1-65535
+	! is_port_or_range "$ext_port" port0inrange &&
+		log "ACL entry: Invalid port or port range ($ext_port) in ext_port ignored" daemon.warn && ext_port=1-65535
+	[ "$descr_filter" != "" ] && descr_filter=" \"$descr_filter\""
+	if [ "$action" = "accept" ]; then
+		action=allow
+	elif [ "$action" = "reject" ]; then
+		action=deny
+	elif [ "$action" != "ignore" ]; then
+		log "ACL entry: Entry with invalid action ($action) ignored" daemon.warn
+		action=ignore
+	fi
+	[ "$action" = "ignore" ] && return 0
+	echo "$action $ext_port $int_addr $int_port${descr_filter} # $comment"
 }
 
 upnpd() {
@@ -183,8 +184,9 @@ upnpd() {
 
 		echo "# Enable internal networks / access control"
 		config_foreach upnpd_add_int_network_and_preset internal_network pre-acl
-		config_foreach conf_rule_add perm_rule
+		config_foreach upnpd_add_acl_entry acl_entry
 		config_foreach upnpd_add_int_network_and_preset internal_network post-acl
+		echo "deny 1-65535 0.0.0.0/0 1-65535 # Reject ACL by default"
 
 		} > "$tmpconf"
 	fi
@@ -255,18 +257,8 @@ upnpd_add_int_network_and_preset() {
 	[ "$subnet" = "" ] && log "Cannot get IPv4 subnet for network $interface, access_preset ignored" daemon.warn && return 0
 	if [ "$2" = "pre-acl" ]; then
 		for rejectport in $reject_ports; do
-			if [ "$rejectport" -ge "1" ] 2>/dev/null && [ "$rejectport" -le "65535" ] 2>/dev/null ||
-				{
-					[ "${rejectport%%-*}" -ge "1" ] 2>/dev/null &&
-						[ "${rejectport%%-*}" -le "65535" ] 2>/dev/null &&
-						[ "${rejectport##*-}" -ge "1" ] 2>/dev/null &&
-						[ "${rejectport##*-}" -le "65535" ] 2>/dev/null &&
-						[ "${rejectport##*-}" -ge "${rejectport%%-*}" ] 2>/dev/null
-				}; then
-				echo "deny $rejectport $subnet $rejectport # Reject port $rejectport on $interface"
-			else
+			is_port_or_range "$rejectport" && echo "deny $rejectport $subnet $rejectport # Reject port $rejectport on $interface" ||
 				log "Invalid port or port range ($rejectport) in reject_ports ignored" daemon.warn
-			fi
 		done
 	fi
 	if { [ "$2" = "post-acl" ] && [ "$ignore_acl" = "0" ]; } ||
@@ -283,18 +275,8 @@ upnpd_add_int_network_and_preset() {
 			log "Invalid access_preset ($access_preset) ignored" daemon.warn
 		fi
 		for acceptport in $acceptpresetports $accept_ports; do
-			if [ "$acceptport" -ge "1" ] 2>/dev/null && [ "$acceptport" -le "65535" ] 2>/dev/null ||
-				{
-					[ "${acceptport%%-*}" -ge "1" ] 2>/dev/null &&
-						[ "${acceptport%%-*}" -le "65535" ] 2>/dev/null &&
-						[ "${acceptport##*-}" -ge "1" ] 2>/dev/null &&
-						[ "${acceptport##*-}" -le "65535" ] 2>/dev/null &&
-						[ "${acceptport##*-}" -ge "${acceptport%%-*}" ] 2>/dev/null
-				}; then
-				echo "allow $acceptport $subnet $acceptport # Accept port $acceptport on $interface"
-			else
+			is_port_or_range "$acceptport" && echo "allow $acceptport $subnet $acceptport # Accept port $acceptport on $interface" ||
 				log "Invalid port or port range ($acceptport) in accept_ports ignored" daemon.warn
-			fi
 		done
 	fi
 	if [ "$2" = "pre-acl" ] && [ "$ignore_acl" = "1" ]; then
