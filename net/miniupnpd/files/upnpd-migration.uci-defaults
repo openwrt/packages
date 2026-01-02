@@ -145,6 +145,90 @@ if [ "$(uci -q get upnpd.config.notify_interval)" -le "900" ] 2>/dev/null; then
 	uci delete upnpd.config.notify_interval
 fi
 
+# Migrate ACL to new section, note that an empty ACL is now rejected alone
+# a) Empty/unmodified ACL: Enable appropriate preset, add/update template entries
+# b) Modified ACL:
+#    - Add missing entry action to avoid adding inverted actions when changing via LuCI
+#    - Update entry action allow/deny -> accept/reject
+#    - Update entry port options to only use the LuCI (and daemon) supported hyphen (-) as port range separator
+#    - Not using a preset, add template entries
+if uci -q get upnpd.@acl_entry[0] >/dev/null; then
+	log "Error migrating ACL, as the new UCI section already exists" daemon.err
+elif ! uci -q get upnpd.@perm_rule[0] >/dev/null; then
+	log "Empty ACL: Enable preset, add templates, empty ACL now rejected alone"
+	access_preset=accept-all-ports
+	ignore_acl=1
+	addtemplateentries=1
+elif ! uci -q get upnpd.@perm_rule[2] >/dev/null &&
+	[ "$(uci -q get upnpd.@perm_rule[0].int_addr)" = "0.0.0.0/0" ] &&
+	[ "$(uci -q get upnpd.@perm_rule[0].int_ports)" = "1024-65535" ] &&
+	[ "$(uci -q get upnpd.@perm_rule[0].ext_ports)" = "1024-65535" ] &&
+	[ "$(uci -q get upnpd.@perm_rule[0].action)" = "allow" ] &&
+	[ "$(uci -q get upnpd.@perm_rule[1].int_addr)" = "0.0.0.0/0" ] &&
+	[ "$(uci -q get upnpd.@perm_rule[1].int_ports)" = "0-65535" ] &&
+	[ "$(uci -q get upnpd.@perm_rule[1].ext_ports)" = "0-65535" ] &&
+	[ "$(uci -q get upnpd.@perm_rule[1].action)" = "deny" ]; then
+	log "Unmodified ACL: Enable preset, update templates, empty ACL rejected"
+	access_preset=accept-high-ports
+	ignore_acl=1
+	addtemplateentries=1
+	uci delete upnpd.@perm_rule[-1]
+	uci delete upnpd.@perm_rule[-1]
+else
+	log "Modified ACL: Migrate entries/section, empty ACL now rejected alone"
+	addtemplateentries=1
+	entrynr=0
+	while uci -q get upnpd.@perm_rule[$entrynr] >/dev/null; do
+		comment="$(uci -q get upnpd.@perm_rule[$entrynr].comment)"
+		int_addr="$(uci -q get upnpd.@perm_rule[$entrynr].int_addr)"
+		int_port="$(uci -q get upnpd.@perm_rule[$entrynr].int_ports)"
+		ext_port="$(uci -q get upnpd.@perm_rule[$entrynr].ext_ports)"
+		action="$(uci -q get upnpd.@perm_rule[$entrynr].action)"
+		echo "$int_port" | grep -q ":" &&
+			log "ACL entry: Update int_port to use hyphen (-) as port range separator" &&
+			int_port="$(echo "$int_port" | tr ":" "-")"
+		echo "$ext_port" | grep -q ":" &&
+			log "ACL entry: Update ext_port to use hyphen (-) as port range separator" &&
+			ext_port="$(echo "$ext_port" | tr ":" "-")"
+		[ "$action" = "" ] && log "ACL entry: Add missing action option" && action=reject
+		[ "$action" = "allow" ] && action=accept
+		[ "$action" = "deny" ] && action=reject
+		uci batch >/dev/null <<-EOF
+			add upnpd acl_entry
+			set upnpd.@acl_entry[-1].comment="${comment:-unspecified}"
+			set upnpd.@acl_entry[-1].int_addr="${int_addr:-0.0.0.0/0}"
+			set upnpd.@acl_entry[-1].int_port="$int_port"
+			set upnpd.@acl_entry[-1].ext_port="$ext_port"
+			set upnpd.@acl_entry[-1].action="$action"
+		EOF
+		entrynr=$((entrynr + 1))
+	done
+	if [ "${int_addr:-0.0.0.0/0}" = "0.0.0.0/0" ] && [ "${int_port:-0-65535}" = "0-65535" ] &&
+		[ "${ext_port:-0-65535}" = "0-65535" ] && [ "$action" = "reject" ]; then
+		log "ACL entry: Remove no longer useful reject by default entry"
+		uci delete upnpd.@acl_entry[-1]
+	fi
+	while uci -q delete upnpd.@perm_rule[-1]; do :; done
+fi
+if [ "$addtemplateentries" = "1" ]; then
+	uci batch >/dev/null <<-EOF
+		add upnpd acl_entry
+		add upnpd acl_entry
+		set upnpd.@acl_entry[-2].comment="High ports"
+		set upnpd.@acl_entry[-2].int_addr="0.0.0.0/0"
+		set upnpd.@acl_entry[-2].int_port="1024-65535"
+		set upnpd.@acl_entry[-2].ext_port="1024-65535"
+		set upnpd.@acl_entry[-2].action="ignore"
+		set upnpd.@acl_entry[-1].comment="Low/system ports"
+		set upnpd.@acl_entry[-1].int_addr="0.0.0.0/0"
+		set upnpd.@acl_entry[-1].int_port="1-1023"
+		set upnpd.@acl_entry[-1].ext_port="1-1023"
+		set upnpd.@acl_entry[-1].action="ignore"
+	EOF
+	uci -q get upnpd.@acl_entry[-3] >/dev/null &&
+		uci reorder upnpd.@acl_entry[-2]=0 && uci reorder upnpd.@acl_entry[-1]=1
+fi
+
 # Migrate internal_iface option to new internal_network section
 if ! uci -q get upnpd.@internal_network[0] >/dev/null; then
 	ifnr=0
@@ -152,6 +236,8 @@ if ! uci -q get upnpd.@internal_network[0] >/dev/null; then
 		log "Create new internal_network section for $interface"
 		uci add upnpd internal_network >/dev/null
 		uci set upnpd.@internal_network[$ifnr].interface="$interface"
+		[ "$access_preset" != "" ] && uci set upnpd.@internal_network[$ifnr].access_preset="$access_preset"
+		[ "$ignore_acl" = "1" ] && uci set upnpd.@internal_network[$ifnr].ignore_acl="1"
 		ifnr=$((ifnr + 1))
 	done
 	uci -q delete upnpd.config.internal_iface
