@@ -134,7 +134,7 @@ upnpd() {
 			[ "$allow_cgnat" = "1" ] && echo "ext_perform_stun=yes"
 			[ "$allow_cgnat" = "allow-filtered" ] && echo "ext_perform_stun=allow-filtered"
 			# Alternatively, as allow-filtered detects the public IPv4 required by various clients, e.g. PCP/NAT-PMP
-			# [ "$allow_cgnat" = "allow-private-ext-ipv4" ] && external_ip=203.1.2.3
+			[ "$allow_cgnat" = "allow-private-ext-ipv4" ] && echo "ext_allow_private_ipv4=yes"
 			echo "ext_stun_host=${stun_host%%:*}"
 			[ "${stun_host%%:*}" != "${stun_host##*:}" ] && echo "ext_stun_port=${stun_host##*:}"
 		fi
