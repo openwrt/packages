@@ -1,0 +1,450 @@
+--- a/minissdp.c
++++ b/minissdp.c
+@@ -1274,7 +1274,7 @@ ProcessSSDPData(int s, const char *bufr,
+ 					else
+ 						snprintf(ver_str, sizeof(ver_str), "%d", known_service_types[i].version);
+ #endif
+-					syslog(LOG_INFO, "Single search found");
++					syslog(LOG_DEBUG, "Single search found");
+ #ifdef DELAY_MSEARCH_RESPONSE
+ 					delay = random() / (1 + RAND_MAX / (1000 * mx_value));
+ #ifdef DEBUG
+@@ -1303,7 +1303,7 @@ ProcessSSDPData(int s, const char *bufr,
+ #ifdef DELAY_MSEARCH_RESPONSE
+ 				unsigned int delay_increment = (mx_value * 1000) / 15;
+ #endif
+-				syslog(LOG_INFO, "ssdp:all found");
++				syslog(LOG_DEBUG, "ssdp:all found");
+ 				for(i=0; known_service_types[i].s; i++)
+ 				{
+ #ifdef DELAY_MSEARCH_RESPONSE
+@@ -1361,7 +1361,7 @@ ProcessSSDPData(int s, const char *bufr,
+ #endif
+ 				if(0 == memcmp(st, uuidvalue_igd, l))
+ 				{
+-					syslog(LOG_INFO, "ssdp:uuid (IGD) found");
++					syslog(LOG_DEBUG, "ssdp:uuid (IGD) found");
+ 					SendSSDPResponse(s, sender, st, st_len, "",
+ 					                 announced_host, http_port,
+ #ifdef ENABLE_HTTPS
+@@ -1371,7 +1371,7 @@ ProcessSSDPData(int s, const char *bufr,
+ 				}
+ 				else if(0 == memcmp(st, uuidvalue_wan, l))
+ 				{
+-					syslog(LOG_INFO, "ssdp:uuid (WAN) found");
++					syslog(LOG_DEBUG, "ssdp:uuid (WAN) found");
+ 					SendSSDPResponse(s, sender, st, st_len, "",
+ 					                 announced_host, http_port,
+ #ifdef ENABLE_HTTPS
+@@ -1381,7 +1381,7 @@ ProcessSSDPData(int s, const char *bufr,
+ 				}
+ 				else if(0 == memcmp(st, uuidvalue_wcd, l))
+ 				{
+-					syslog(LOG_INFO, "ssdp:uuid (WCD) found");
++					syslog(LOG_DEBUG, "ssdp:uuid (WCD) found");
+ 					SendSSDPResponse(s, sender, st, st_len, "",
+ 					                 announced_host, http_port,
+ #ifdef ENABLE_HTTPS
+@@ -1646,4 +1646,3 @@ SubmitServicesToMiniSSDPD(const char * h
+ 	syslog(LOG_DEBUG, "%d service submitted to MiniSSDPd", i);
+ 	return 0;
+ }
+-
+--- a/miniupnpd.8
++++ b/miniupnpd.8
+@@ -42,10 +42,10 @@ and do not filter out low priority messa
+ report system uptime instead of daemon uptime to clients.
+ .TP
+ .B \-S0
+-disable "secure" mode so clients can only add mappings to other IPs
++disable UPnP IGD secure mode, allow adding port maps for non-requesting IP addresses
+ .TP
+ .B \-N
+-enable NAT-PMP and PCP functionality.
++enable PCP/NAT-PMP protocols.
+ .TP
+ .BI \-u " uuid"
+ set the uuid of the UPnP Internet Gateway Device.
+@@ -83,7 +83,7 @@ examples :
+ sets the value of BOOTID.UPNP.ORG SSDP header
+ .TP
+ .B \-1
+-force reporting IGDv1 in rootDesc when compiled as IGDv2 *use with care*
++force reporting IGDv1 in rootDesc when compiled as IGDv2
+ .SH "SEE ALSO"
+ minissdpd(1) miniupnpc(3)
+ .SH BUGS
+--- a/miniupnpd.c
++++ b/miniupnpd.c
+@@ -859,7 +859,7 @@ set_startup_time(void)
+ 			}
+ 			else
+ 			{
+-				syslog(LOG_INFO, "system uptime is %lu seconds", uptime);
++				syslog(LOG_DEBUG, "system uptime is %lu seconds", uptime);
+ 			}
+ 			fclose(f);
+ 			startup_time -= uptime;
+@@ -2098,6 +2098,22 @@ init(int argc, char * * argv, struct run
+ 		pidfilename = NULL;
+ #endif
+ 
++syslog(LOG_NOTICE, "MiniUPnP daemon version " MINIUPNPD_VERSION " starting, enabled protocols: %s%s%s, ext_ifname=%s BOOTID=%u",
++	GETFLAG(ENABLEUPNPMASK) ? "UPnP IGD" : "",
++#ifdef ENABLE_NATPMP
++	GETFLAG(ENABLEUPNPMASK) && GETFLAG(ENABLENATPMPMASK) ? " & " : "",
++#ifdef ENABLE_PCP
++	GETFLAG(ENABLENATPMPMASK) ? "PCP/NAT-PMP" : "",
++#else
++	GETFLAG(ENABLENATPMPMASK) ? "NAT-PMP" : "",
++#endif
++#else
++	"", "",
++#endif
++	ext_if_name, upnp_bootid);
++syslog(LOG_INFO, "More information at https://miniupnp.tuxfamily.org/ or http://miniupnp.free.fr/");
++syslog(LOG_NOTICE, "Extra logging by setting log level to info (-v) or debug (-vv)");
++
+ #ifdef USE_SYSTEMD
+ 	if (systemd_flag) {
+ 		int r = sd_notify(0,
+@@ -2190,14 +2206,14 @@ print_usage:
+ #if defined(USE_PF) || defined(USE_IPF)
+ 			"\t-L sets packet log in pf and ipf on.\n"
+ #endif
+-			"\t-S0 disable \"secure\" mode so clients can add mappings to other ips\n"
++			"\t-S0 disable UPnP IGD secure mode, allow adding port maps for non-requesting IP addresses\n"
+ 			"\t-U causes miniupnpd to report system uptime instead "
+ 			"of daemon uptime.\n"
+ #ifdef ENABLE_NATPMP
+ #ifdef ENABLE_PCP
+-			"\t-N enables NAT-PMP and PCP functionality.\n"
++			"\t-N enable PCP/NAT-PMP protocols.\n"
+ #else
+-			"\t-N enables NAT-PMP functionality.\n"
++			"\t-N enable NAT-PMP protocol.\n"
+ #endif
+ #endif
+ 			"\t-B sets bitrates reported by daemon in bits per second.\n"
+@@ -2217,7 +2233,7 @@ print_usage:
+ 			"\t  \"deny 0-65535 0.0.0.0/0 0-65535\"\n"
+ 			"\t-b sets the value of BOOTID.UPNP.ORG SSDP header\n"
+ #ifdef IGD_V2
+-			"\t-1 force reporting IGDv1 in rootDesc *use with care*\n"
++			"\t-1 force reporting IGDv1 in rootDesc\n"
+ #endif
+ 			"\t-v enables LOG_INFO messages, -vv LOG_DEBUG as well (default with -d)\n"
+ 			"\t-h / --help prints this help and quits.\n"
+@@ -2398,21 +2414,9 @@ main(int argc, char * * argv)
+ 		return 0;
+ 	}
+ 
+-	syslog(LOG_INFO, "version " MINIUPNPD_VERSION " starting%s%sext if %s BOOTID=%u",
+-#ifdef ENABLE_NATPMP
+-#ifdef ENABLE_PCP
+-	       GETFLAG(ENABLENATPMPMASK) ? " NAT-PMP/PCP " : " ",
+-#else
+-	       GETFLAG(ENABLENATPMPMASK) ? " NAT-PMP " : " ",
+-#endif
+-#else
+-	       " ",
+-#endif
+-	       GETFLAG(ENABLEUPNPMASK) ? "UPnP-IGD " : "",
+-	       ext_if_name, upnp_bootid);
+ #ifdef ENABLE_IPV6
+ 	if (strcmp(ext_if_name6, ext_if_name) != 0) {
+-		syslog(LOG_INFO, "specific IPv6 ext if %s", ext_if_name6);
++		syslog(LOG_NOTICE, "ext_ifname6=%s", ext_if_name6);
+ 	}
+ #endif
+ 
+@@ -2456,7 +2460,7 @@ main(int argc, char * * argv)
+ 			return 1;
+ 		}
+ 		v.port = listen_port;
+-		syslog(LOG_NOTICE, "HTTP listening on port %d", v.port);
++		syslog(LOG_NOTICE, "Listening for UPnP IGD (SOAP/HTTP) traffic on port %d/TCP", v.port);
+ #if defined(V6SOCKETS_ARE_V6ONLY) && defined(ENABLE_IPV6)
+ 		if(!GETFLAG(IPV6DISABLEDMASK))
+ 		{
+@@ -2482,7 +2486,7 @@ main(int argc, char * * argv)
+ 			return 1;
+ 		}
+ 		v.https_port = listen_port;
+-		syslog(LOG_NOTICE, "HTTPS listening on port %d", v.https_port);
++		syslog(LOG_NOTICE, "Listening for UPnP IGD (SOAP/HTTPS) traffic on port %d/TCP", v.https_port);
+ #if defined(V6SOCKETS_ARE_V6ONLY) && defined(ENABLE_IPV6)
+ 		shttpsl_v4 =  OpenAndConfHTTPSocket(&listen_port, 0);
+ 		if(shttpsl_v4 < 0)
+@@ -2496,11 +2500,11 @@ main(int argc, char * * argv)
+ 		if(!GETFLAG(IPV6DISABLEDMASK)) {
+ 			if(find_ipv6_addr(lan_addrs.lh_first ? lan_addrs.lh_first->ifname : NULL,
+ 			                  ipv6_addr_for_http_with_brackets, sizeof(ipv6_addr_for_http_with_brackets)) > 0) {
+-				syslog(LOG_NOTICE, "HTTP IPv6 address given to control points : %s",
++				syslog(LOG_NOTICE, "IPv6 enabled with address: %s",
+ 				       ipv6_addr_for_http_with_brackets);
+ 			} else {
+ 				memcpy(ipv6_addr_for_http_with_brackets, "[::1]", 6);
+-				syslog(LOG_WARNING, "no HTTP IPv6 address, disabling IPv6");
++				syslog(LOG_WARNING, "No IPv6 address, disable support");
+ 				SETFLAG(IPV6DISABLEDMASK);
+ 			}
+ 		}
+@@ -2571,22 +2575,22 @@ main(int argc, char * * argv)
+ 	}
+ 
+ #ifdef ENABLE_NATPMP
+-	/* open socket for NAT PMP traffic */
++	/* open socket for NAT-PMP traffic */
+ 	if(GETFLAG(ENABLENATPMPMASK))
+ 	{
+ 		if(OpenAndConfNATPMPSockets(snatpmp) < 0)
+ #ifdef ENABLE_PCP
+ 		{
+-			syslog(LOG_ERR, "Failed to open sockets for NAT-PMP/PCP.");
++			syslog(LOG_ERR, "Failed to open sockets for PCP/NAT-PMP.");
+ 		} else {
+-			syslog(LOG_NOTICE, "Listening for NAT-PMP/PCP traffic on port %u",
++			syslog(LOG_NOTICE, "Listening for PCP/NAT-PMP traffic on port %u/UDP",
+ 			       NATPMP_PORT);
+ 		}
+ #else
+ 		{
+-			syslog(LOG_ERR, "Failed to open sockets for NAT PMP.");
++			syslog(LOG_ERR, "Failed to open sockets for NAT-PMP.");
+ 		} else {
+-			syslog(LOG_NOTICE, "Listening for NAT-PMP traffic on port %u",
++			syslog(LOG_NOTICE, "Listening for NAT-PMP traffic on port %u/UDP",
+ 			       NATPMP_PORT);
+ 		}
+ #endif
+@@ -2695,6 +2699,24 @@ main(int argc, char * * argv)
+ 	}
+ #endif /* HAS_LIBCAP_NG */
+ 
++if (GETFLAG(ENABLEUPNPMASK) && !GETFLAG(SECUREMODEMASK))
++	syslog(LOG_WARNING, "WARNING: secure_mode=no, allow adding port maps for non-requesting IP addresses via UPnP IGD");
++#ifdef ENABLE_PCP
++if (GETFLAG(ENABLENATPMPMASK) && GETFLAG(PCP_ALLOWTHIRDPARTYMASK))
++	syslog(LOG_WARNING, "WARNING: pcp_allow_thirdparty=yes, allow adding port maps for non-requesting IP addresses via PCP");
++#endif
++if (GETFLAG(ENABLEUPNPMASK)) {
++#ifdef IGD_V2
++	if (GETFLAG(FORCEIGDDESCV1MASK)) {
++		syslog(LOG_NOTICE, "UPnP IGD compatiblity mode set to IGDv1 (IPv4 only)");
++	} else {
++		syslog(LOG_NOTICE, "UPnP IGD compatiblity mode set to IGDv2");
++	}
++#else
++	syslog(LOG_NOTICE, "UPnP IGD compatiblity mode set to IGDv1 (IPv4 only)");
++#endif
++}
++
+ #ifdef USE_SYSTEMD
+ 	if (v.systemd_notify) {
+ 		upnp_update_status();
+@@ -3162,7 +3184,7 @@ main(int argc, char * * argv)
+ 		/* process SSDP packets */
+ 		if(sudp >= 0 && FD_ISSET(sudp, &readset))
+ 		{
+-			/*syslog(LOG_INFO, "Received UDP Packet");*/
++			/*syslog(LOG_DEBUG, "Received UDP Packet");*/
+ #ifdef ENABLE_HTTPS
+ 			ProcessSSDPRequest(sudp, (unsigned short)v.port, (unsigned short)v.https_port);
+ #else
+@@ -3172,7 +3194,7 @@ main(int argc, char * * argv)
+ #ifdef ENABLE_IPV6
+ 		if(sudpv6 >= 0 && FD_ISSET(sudpv6, &readset))
+ 		{
+-			syslog(LOG_INFO, "Received UDP Packet (IPv6)");
++			/*syslog(LOG_DEBUG, "Received UDP Packet (IPv6)");*/
+ #ifdef ENABLE_HTTPS
+ 			ProcessSSDPRequest(sudpv6, (unsigned short)v.port, (unsigned short)v.https_port);
+ #else
+--- a/miniupnpd.conf
++++ b/miniupnpd.conf
+@@ -88,7 +88,8 @@
+ # 120s and 86400s (24h) are suggested values from PCP-base
+ #min_lifetime=120
+ #max_lifetime=86400
+-# allow THIRD_PARTY Option for MAP and PEER Opcodes (default is no)
++# PCP allow third-party mapping option (default no)
++# Allow adding port maps for non-requesting IP addresses
+ #pcp_allow_thirdparty=yes
+ 
+ # table names for netfilter nft. Default is "filter" for both
+@@ -131,8 +132,8 @@
+ #bitrate_up=1000000
+ #bitrate_down=10000000
+ 
+-# Secure Mode, UPnP clients can only add mappings to their own IP
+-# Enabled by default
++# UPnP IGD secure mode (default yes)
++# Allow adding port maps for requesting IP addresses only
+ #secure_mode=no
+ 
+ # Default presentation URL is HTTP address on port 80
+--- a/natpmp.c
++++ b/natpmp.c
+@@ -231,7 +231,7 @@ void ProcessIncomingNATPMPPacket(int s,
+ 		syslog(LOG_ERR, "inet_ntop(natpmp): %m");
+ 	}
+ 
+-	syslog(LOG_INFO, "NAT-PMP request received from %s:%hu %dbytes",
++	syslog(LOG_DEBUG, "NAT-PMP request received from %s:%hu %d bytes",
+ 	       senderaddrstr, ntohs(senderaddr->sin_port), n);
+ 
+ 	if(n<2 || ((((req[1]-1)&~1)==0) && n<12)) {
+@@ -260,7 +260,7 @@ void ProcessIncomingNATPMPPacket(int s,
+ 		resp[3] = 1;	/* unsupported version */
+ 	} else switch(req[1]) {
+ 	case 0:	/* Public address request */
+-		syslog(LOG_INFO, "NAT-PMP public address request");
++		syslog(LOG_DEBUG, "NAT-PMP public address request");
+ 		FillPublicAddressResponse(resp, senderaddr->sin_addr.s_addr);
+ 		resplen = 12;
+ 		break;
+@@ -340,7 +340,7 @@ void ProcessIncomingNATPMPPacket(int s,
+ 						eport_first = eport;
+ 					} else if(eport == eport_first) { /* no eport available */
+ 						if(any_eport_allowed == 0) { /* all eports rejected by permissions */
+-							syslog(LOG_ERR, "No allowed eport for NAT-PMP %hu %s->%s:%hu",
++							syslog(LOG_INFO, "No allowed eport for NAT-PMP %hu %s->%s:%hu",
+ 							       eport, proto_itoa(proto), senderaddrstr, iport);
+ 							resp[3] = 2;	/* Not Authorized/Refused */
+ 						} else { /* at least one eport allowed (but none available) */
+--- a/netfilter_nft/nftnlrdr_misc.c
++++ b/netfilter_nft/nftnlrdr_misc.c
+@@ -104,7 +104,7 @@ nft_mnl_connect(void)
+ 		return -1;
+ 	}
+ 	mnl_portid = mnl_socket_get_portid(mnl_sock);
+-	syslog(LOG_INFO, "mnl_socket bound, port_id=%u", mnl_portid);
++	syslog(LOG_DEBUG, "mnl_socket bound, port_id=%u", mnl_portid);
+ 	return 0;
+ }
+ 
+--- a/netfilter_nft/nftpinhole.c
++++ b/netfilter_nft/nftpinhole.c
+@@ -159,7 +159,6 @@ find_pinhole(const char * ifname,
+ 		   (0 == memcmp(&daddr, &p->daddr6, sizeof(struct in6_addr)))) {
+ 
+ 			if (sscanf(p->desc, PINEHOLE_LABEL_FORMAT_SKIPDESC, &uid, &ts) != 2) {
+-				syslog(LOG_DEBUG, "rule with label '%s' is not a IGD pinhole", p->desc);
+ 				continue;
+ 			}
+ 
+@@ -397,7 +396,6 @@ get_pinhole_info(unsigned short uid,
+ 			if (timestamp) {
+ 				int uid_temp;
+ 				if (sscanf(p->desc, PINEHOLE_LABEL_FORMAT_SKIPDESC, &uid_temp, &ts) != 2) {
+-					syslog(LOG_DEBUG, "rule with label '%s' is not a IGD pinhole", p->desc);
+ 					continue;
+ 				}
+ 
+@@ -461,7 +459,6 @@ clean_pinhole_list(unsigned int * next_t
+ 			continue;
+ 
+ 		if (sscanf(p->desc, PINEHOLE_LABEL_FORMAT_SKIPDESC, &uid, &ts) != 2) {
+-			syslog(LOG_DEBUG, "rule with label '%s' is not a IGD pinhole", p->desc);
+ 			continue;
+ 		}
+ 
+--- a/pcpserver.c
++++ b/pcpserver.c
+@@ -1087,7 +1087,7 @@ static void CreatePCPMap(pcp_info_t *pcp
+ 	else
+ 		r = CreatePCPMap_NAT(pcp_msg_info);
+ 	pcp_msg_info->result_code = r;
+-	syslog(r == PCP_SUCCESS ? LOG_INFO : LOG_ERR,
++	syslog(LOG_INFO,
+ 	      "PCP MAP: %s mapping %s %hu->%s:%hu '%s'",
+ 	       r == PCP_SUCCESS ? "added" : "failed to add",
+ 	       proto_itoa(pcp_msg_info->protocol),
+--- a/pf/pfpinhole.c
++++ b/pf/pfpinhole.c
+@@ -246,12 +246,10 @@ int find_pinhole(const char * ifname,
+ 		   (0 == memcmp(&daddr, &RULE.dst.addr.v.a.addr.v6, sizeof(struct in6_addr)))) {
+ #ifdef USE_LIBPFCTL
+ 			if(sscanf(RULE.label[0], PINEHOLE_LABEL_FORMAT_SKIPDESC, &uid, &ts) != 2) {
+-				syslog(LOG_DEBUG, "rule with label '%s' is not a IGD pinhole", RULE.label[0]);
+ 				continue;
+ 			}
+ #else /* USE_LIBPFCTL */
+ 			if(sscanf(RULE.label, PINEHOLE_LABEL_FORMAT_SKIPDESC, &uid, &ts) != 2) {
+-				syslog(LOG_DEBUG, "rule with label '%s' is not a IGD pinhole", RULE.label);
+ 				continue;
+ 			}
+ #endif /* USE_LIBPFCTL */
+@@ -563,7 +561,6 @@ int clean_pinhole_list(unsigned int * ne
+ 			return -1;
+ 		}
+ 		if(sscanf(RULE.label[0], PINEHOLE_LABEL_FORMAT_SKIPDESC, &uid, &ts) != 2) {
+-			syslog(LOG_DEBUG, "rule with label '%s' is not a IGD pinhole", RULE.label[0]);
+ 			continue;
+ 		}
+ #else /* USE_LIBPFCTL */
+@@ -574,7 +571,6 @@ int clean_pinhole_list(unsigned int * ne
+ 			return -1;
+ 		}
+ 		if(sscanf(RULE.label, PINEHOLE_LABEL_FORMAT_SKIPDESC, &uid, &ts) != 2) {
+-			syslog(LOG_DEBUG, "rule with label '%s' is not a IGD pinhole", RULE.label);
+ 			continue;
+ 		}
+ #endif /* USE_LIBPFCTL */
+--- a/upnphttp.c
++++ b/upnphttp.c
+@@ -513,7 +513,7 @@ ProcessHTTPPOST_upnphttp(struct upnphttp
+ 		if(h->req_soapActionOff > 0)
+ 		{
+ 			/* we can process the request */
+-			syslog(LOG_INFO, "SOAPAction: %.*s",
++			syslog(LOG_DEBUG, "SOAPAction: %.*s",
+ 			       h->req_soapActionLen, h->req_buf + h->req_soapActionOff);
+ 			ExecuteSoapAction(h,
+ 				h->req_buf + h->req_soapActionOff,
+@@ -818,7 +818,7 @@ ProcessHttpQuery_upnphttp(struct upnphtt
+ 	for(i = 0; i<15 && *p != '\r'; i++)
+ 		HttpVer[i] = *(p++);
+ 	HttpVer[i] = '\0';
+-	syslog(LOG_INFO, "HTTP REQUEST from %s : %s %s (%s)",
++	syslog(LOG_DEBUG, "HTTP REQUEST from %s : %s %s (%s)",
+ 	       h->clientaddr_str, HttpCommand, HttpUrl, HttpVer);
+ 	ParseHttpHeaders(h);
+ 	if(h->req_HostOff > 0 && h->req_HostLen > 0) {
+--- a/upnpredirect.c
++++ b/upnpredirect.c
+@@ -641,7 +641,7 @@ get_upnp_rules_state_list(int max_rules_
+ 	{
+ 		if(tmp->to_remove)
+ 		{
+-			syslog(LOG_NOTICE, "remove port mapping %hu %s because it has expired",
++			syslog(LOG_INFO, "remove port mapping %hu %s because it has expired",
+ 			       tmp->eport, proto_itoa(tmp->proto));
+ 			_upnp_delete_redir(tmp->eport, tmp->proto);
+ 			*p = tmp->next;
+--- a/upnpsoap.c
++++ b/upnpsoap.c
+@@ -847,7 +847,7 @@ GetSpecificPortMappingEntry(struct upnph
+ 	}
+ 	else
+ 	{
+-		syslog(LOG_INFO, "%s: rhost='%s' %s %s found => %s:%u desc='%s' duration=%u",
++		syslog(LOG_DEBUG, "%s: rhost='%s' %s %s found => %s:%u desc='%s' duration=%u",
+ 		       action,
+ 		       r_host ? r_host : "NULL", ext_port, protocol, int_ip,
+ 		       (unsigned int)iport, desc, leaseduration);
+@@ -1112,7 +1112,7 @@ GetGenericPortMappingEntry(struct upnpht
+ 		return;
+ 	}
+ 
+-	syslog(LOG_INFO, "%s: index=%d", action, (int)index);
++	syslog(LOG_DEBUG, "%s: index=%d", action, (int)index);
+ 
+ 	rhost[0] = '\0';
+ 	r = upnp_get_redirection_infos_by_index((int)index, &eport, protocol, &iport,
+@@ -2486,4 +2486,3 @@ SoapError(struct upnphttp * h, int errCo
+ 	BuildResp2_upnphttp(h, 500, "Internal Server Error", body, bodylen);
+ 	SendRespAndClose_upnphttp(h);
+ }
+-
