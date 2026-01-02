@@ -37,7 +37,7 @@ define Package/perl-xml-parser
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Perl XML Parser
-  URL:=http://search.cpan.org/dist/XML-Parser/
+  URL:=https://metacpan.org/dist/XML-Parser/
   DEPENDS:=perl +libexpat +perlbase-dynaloader +perlbase-essential
 endef
 

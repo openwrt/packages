@@ -12,7 +12,7 @@ PKG_VERSION:=2.3.12
 PKG_RELEASE:=5
 
 PKG_SOURCE:=unixODBC-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.unixodbc.org
+PKG_SOURCE_URL:=https://www.unixodbc.org
 PKG_HASH:=f210501445ce21bf607ba51ef8c125e10e22dffdffec377646462df5f01915ec
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>

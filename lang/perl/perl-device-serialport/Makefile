@@ -28,7 +28,7 @@ define Package/perl-device-serialport
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=A POSIX-based version of the Win32::SerialPort module
-  URL:=http://search.cpan.org/dist/Device-SerialPort/
+  URL:=https://metacpan.org/dist/Device-SerialPort/
   DEPENDS:=perl +perlbase-essential +perlbase-io +perlbase-posix +perlbase-test +perlbase-xsloader
 endef
 

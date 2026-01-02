@@ -29,7 +29,7 @@ include $(INCLUDE_DIR)/cmake.mk
 
 define Package/libzmq/default
   TITLE:=ZeroMQ - Message Queue engine
-  URL:=http://www.zeromq.org/
+  URL:=https://www.zeromq.org/
   SECTION:=libs
   CATEGORY:=Libraries
   DEPENDS:=+libuuid +libstdcpp

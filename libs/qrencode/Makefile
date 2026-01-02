@@ -54,7 +54,7 @@ define Package/qrencode
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=qrencode binary for producing qr codes
-  URL:=http://fukuchi.org/works/qrencode/
+  URL:=https://fukuchi.org/works/qrencode/
   DEPENDS:=+libqrencode
 endef
 

@@ -12,7 +12,7 @@ PKG_VERSION:=1.8.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.nlnetlabs.nl/downloads/ldns
+PKG_SOURCE_URL:=https://www.nlnetlabs.nl/downloads/ldns
 PKG_HASH:=c3f72dd1036b2907e3a56e6acf9dfb2e551256b3c1bbd9787942deeeb70e7860
 
 PKG_MAINTAINER:=Eric Luehrsen <ericluehrsen@gmail.com>
@@ -27,7 +27,7 @@ PKG_BUILD_PARALLEL:=1
 include $(INCLUDE_DIR)/package.mk
 
 define Package/libldns/Default
-  URL:=http://www.nlnetlabs.nl/projects/ldns/
+  URL:=https://www.nlnetlabs.nl/projects/ldns/about/
   DEPENDS:=+libopenssl
 endef
 
