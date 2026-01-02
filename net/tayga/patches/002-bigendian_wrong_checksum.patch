@@ -1,6 +1,6 @@
 --- a/nat64.c
 +++ b/nat64.c
-@@ -129,6 +129,11 @@ static void log_pkt6(int err, struct pkt
+@@ -127,6 +127,11 @@ static void log_pkt6(int err, struct pkt
  		type, saddr, daddr, (p->header_len + p->data_len),p->data_proto,msg);
  }
  
@@ -9,10 +9,10 @@
 +	return htons(b << 8);
 +}
 +
- static uint16_t ip_checksum(void *d, int c)
+ static uint16_t ip_checksum(void *d, uint32_t c)
  {
  	uint32_t sum = 0xffff;
-@@ -140,7 +145,7 @@ static uint16_t ip_checksum(void *d, int
+@@ -138,7 +143,7 @@ static uint16_t ip_checksum(void *d, uin
  	}
  
  	if (c)
@@ -21,7 +21,7 @@
  
  	while (sum > 0xffff)
  		sum = (sum & 0xffff) + (sum >> 16);
-@@ -296,10 +301,12 @@ static int xlate_payload_4to6(struct pkt
+@@ -294,10 +299,12 @@ static int xlate_payload_4to6(struct pkt
  		cksum = ones_add(p->icmp->cksum, cksum);
  		if (p->icmp->type == 8) {
  			p->icmp->type = 128;
@@ -36,7 +36,7 @@
  		}
  		return ERROR_NONE;
  	/* UDP */
-@@ -892,10 +899,12 @@ static int xlate_payload_6to4(struct pkt
+@@ -889,10 +896,12 @@ static int xlate_payload_6to4(struct pkt
  		cksum = ones_add(p->icmp->cksum, cksum);
  		if (p->icmp->type == 128) {
  			p->icmp->type = 8;
