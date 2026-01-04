@@ -22,7 +22,7 @@ define Package/tayga
   DEPENDS:=+ip @IPV6 +kmod-tun
   TITLE:=Out-of-kernel stateless NAT64 implementation
   URL:=https://github.com/apalrd/tayga/
-  MAINTAINER:=Ondrej Caletka <ondrej@caletka.cz>
+  MAINTAINER:=Goetz Goerisch <ggoerisch@gmail.com>
 endef
 
 define Package/tayga/description
