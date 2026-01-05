@@ -50,39 +50,36 @@ endef
 # which is not viable when doing cross compilation and default to no in many
 # cases.  Grep for 'cross.compil' in aclocal.m4 and config-bot.h for details
 #
-# bash_cv_job_control_missing: Job control is needed for bash to be used as the
-# default shell
+# bash_cv_dev_fd: The test is done on build system but OpenWrt currently does
+# not have /dev/fd, it provides /proc/self/fd/ instead
 #
 # bash_cv_getcwd_malloc: The replacement by bash does not work well with
 # overlayfs.  See "bash getcwd errors when running under OverlayFS"
 # http://permalink.gmane.org/gmane.linux.embedded.yocto.general/25204
 #
-# bash_cv_dev_fd: The test is done on build system but OpenWrt currently does
-# not have /dev/fd, it provides /proc/self/fd/ instead
+# bash_cv_job_control_missing: Job control is needed for bash to be used as the
+# default shell
 #
 # bash_cv_sys_named_pipes: Required for process substitution
 CONFIGURE_VARS += \
+	CFLAGS_FOR_BUILD="-std=gnu17" \
 	ac_cv_rl_prefix="$(STAGING_DIR)/usr" \
 	ac_cv_rl_version="8.0" \
+	bash_cv_dev_fd=whacky \
+	bash_cv_func_sigsetjmp=present \
 	bash_cv_getcwd_malloc=yes \
 	bash_cv_job_control_missing=present \
-	bash_cv_dev_fd=whacky \
-	bash_cv_sys_named_pipes=present \
-	CFLAGS_FOR_BUILD="-std=gnu17" \
-
-# The following are some other tests that cannot run when cross-compiling
-CONFIGURE_VARS += \
-	bash_cv_func_sigsetjmp=present \
 	bash_cv_printf_a_format=yes \
+	bash_cv_sys_named_pipes=present
 
-CONFIGURE_ARGS+= \
-	--with-curses \
-	--without-bash-malloc \
+CONFIGURE_ARGS += \
 	--bindir=/bin \
 	--disable-rpath \
 	--enable-direxpand-default \
 	--enable-job-control \
-	--enable-readline
+	--enable-readline \
+	--with-curses \
+	--without-bash-malloc
 
 TARGET_CFLAGS += -std=gnu17
 
