@@ -1,0 +1,10 @@
+--- a/src/lib/log/logger_level_impl.cc
++++ b/src/lib/log/logger_level_impl.cc
+@@ -10,6 +10,7 @@
+ #include <string.h>
+ #include <iostream>
+ #include <boost/lexical_cast.hpp>
++#include <boost/static_assert.hpp>
+ 
+ #include <log4cplus/logger.h>
+ 
