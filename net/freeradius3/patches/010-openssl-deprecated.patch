@@ -26,7 +26,7 @@
  
  #if OPENSSL_VERSION_NUMBER >= 0x30000000L
  #  include <openssl/provider.h>
-@@ -2929,7 +2930,7 @@ int cbtls_verify(int ok, X509_STORE_CTX
+@@ -2943,7 +2944,7 @@ int cbtls_verify(int ok, X509_STORE_CTX
  	int		my_ok = ok;
  
  	ASN1_INTEGER	*sn = NULL;
@@ -35,7 +35,7 @@
  	VALUE_PAIR	**certs;
  	char **identity;
  #ifdef HAVE_OPENSSL_OCSP_H
-@@ -3021,7 +3022,7 @@ int cbtls_verify(int ok, X509_STORE_CTX
+@@ -3035,7 +3036,7 @@ int cbtls_verify(int ok, X509_STORE_CTX
  	 *	Get the Expiration Date
  	 */
  	buf[0] = '\0';
@@ -44,7 +44,7 @@
  	if (certs && (lookup <= 1) && asn_time &&
  	    (asn_time->length < (int) sizeof(buf))) {
  		memcpy(buf, (char*) asn_time->data, asn_time->length);
-@@ -3034,7 +3035,7 @@ int cbtls_verify(int ok, X509_STORE_CTX
+@@ -3048,7 +3049,7 @@ int cbtls_verify(int ok, X509_STORE_CTX
  	 *	Get the Valid Since Date
  	 */
  	buf[0] = '\0';
@@ -53,7 +53,7 @@
  	if (certs && (lookup <= 1) && asn_time &&
  	    (asn_time->length < (int) sizeof(buf))) {
  		memcpy(buf, (char*) asn_time->data, asn_time->length);
-@@ -3638,10 +3639,12 @@ static int set_ecdh_curve(SSL_CTX *ctx,
+@@ -3655,10 +3656,12 @@ static int set_ecdh_curve(SSL_CTX *ctx,
   */
  int tls_global_init(TLS_UNUSED bool spawn_flag, TLS_UNUSED bool check)
  {
@@ -65,8 +65,8 @@
 +#endif
  
  #if OPENSSL_VERSION_NUMBER >= 0x30000000L
- 	EVP_set_default_properties(NULL, "fips=no");
-@@ -3745,6 +3748,7 @@ int tls_global_version_check(char const
+ 	EVP_set_default_properties(NULL, "-fips");
+@@ -3762,6 +3765,7 @@ int tls_global_version_check(char const
   */
  void tls_global_cleanup(void)
  {
@@ -74,7 +74,7 @@
  #if OPENSSL_VERSION_NUMBER < 0x10000000L
  	ERR_remove_state(0);
  #elif OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
-@@ -3770,6 +3774,7 @@ void tls_global_cleanup(void)
+@@ -3787,6 +3791,7 @@ void tls_global_cleanup(void)
  	ERR_free_strings();
  	EVP_cleanup();
  	CRYPTO_cleanup_all_ex_data();

@@ -11,13 +11,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=boost
-PKG_VERSION:=1.89.0
-PKG_SOURCE_VERSION:=1_89_0
+PKG_VERSION:=1.90.0
+PKG_SOURCE_VERSION:=1_90_0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_SOURCE_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://archives.boost.io/release/$(PKG_VERSION)/source @SF/$(PKG_NAME)/$(PKG_NAME)/$(PKG_VERSION)
-PKG_HASH:=85a33fa22621b4f314f8e85e1a5e2a9363d22e4f4992925d4bb3bc631b5a0c7a
+PKG_HASH:=49551aff3b22cbc5c5a9ed3dbc92f0e23ea50a0f7325b0d198b705e8ee3fc305
 
 PKG_MAINTAINER:=Carlos M. Ferreira <carlosmf.pt@gmail.com>
 PKG_LICENSE:=BSL-1.0
@@ -42,7 +42,7 @@ define Package/boost/Default
 endef
 
 define Package/boost/description
-This package provides the Boost v1.89.0 libraries.
+This package provides the Boost v1.90.0 libraries.
 Boost is a set of free, peer-reviewed, portable C++ source libraries.
 
 This package provides the following run-time libraries:
@@ -79,7 +79,7 @@ This package provides the following run-time libraries:
  - wave
 
 There are many more header-only libraries supported by Boost.
-See more at http://www.boost.org/doc/libs/1_89_0/
+See more at http://www.boost.org/doc/libs/1_90_0/
 endef
 
 PKG_BUILD_DEPENDS:=boost/host
@@ -237,7 +237,7 @@ define Package/boost/config
 		config boost-use-name-tags
 			bool "Use tagged names."
 			help
-				Add name tags the lib files, to diferentiate each library version:
+				Add name tags the lib files, to differentiate each library version:
 				  "-mt" for multi-threading.
 				  "-d" for debugging.
 				  "-s" for runtime static link".
@@ -338,7 +338,7 @@ endef
 $(eval $(call DefineBoostLibrary,atomic))
 $(eval $(call DefineBoostLibrary,charconv,,,,libquadmath))
 $(eval $(call DefineBoostLibrary,chrono))
-$(eval $(call DefineBoostLibrary,cobalt,container context date_time))
+$(eval $(call DefineBoostLibrary,cobalt,container context date_time,,,libopenssl))
 $(eval $(call DefineBoostLibrary,container))
 $(eval $(call DefineBoostLibrary,context,chrono ,,!boost-context-exclude))
 $(eval $(call DefineBoostLibrary,contract,atomic chrono container date_time thread))
@@ -355,7 +355,7 @@ $(eval $(call DefineBoostLibrary,log,chrono date_time thread filesystem regex se
 $(eval $(call DefineBoostLibrary,math, container random))
 #$(eval $(call DefineBoostLibrary,mpi,,)) # OpenMPI does no exist in OpenWRT at this time.
 $(eval $(call DefineBoostLibrary,nowide))
-$(eval $(call DefineBoostLibrary,program_options))
+$(eval $(call DefineBoostLibrary,program_options,container))
 $(eval $(call DefineBoostLibrary,python3,container graph,,,python3-base))
 $(eval $(call DefineBoostLibrary,random))
 $(eval $(call DefineBoostLibrary,regex,,,,icu))

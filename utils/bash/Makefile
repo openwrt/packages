@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2015 OpenWrt.org
+# Copyright (C) 2007-2026 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bash
-PKG_VERSION:=5.2.37
+PKG_VERSION:=5.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/bash
-PKG_HASH:=9599b22ecd1d5787ad7d3b7bf0c59f312b3396d1e281175dd1f8a4014da621ff
+PKG_HASH:=0d5cd86965f869a26cf64f4b71be7b96f90a3ba8b3d74e27e8e9d9d5550f31ba
 
-PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
+PKG_MAINTAINER:=Wei-Ting Yang <williamatcg@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:gnu:bash
@@ -60,7 +60,7 @@ endef
 # bash_cv_dev_fd: The test is done on build system but OpenWrt currently does
 # not have /dev/fd, it provides /proc/self/fd/ instead
 #
-# bash_cv_sys_named_pipes: Required for process substituion
+# bash_cv_sys_named_pipes: Required for process substitution
 CONFIGURE_VARS += \
 	ac_cv_rl_prefix="$(STAGING_DIR)/usr" \
 	ac_cv_rl_version="8.0" \
@@ -102,4 +102,3 @@ define Package/bash/install
 endef
 
 $(eval $(call BuildPackage,bash))
-

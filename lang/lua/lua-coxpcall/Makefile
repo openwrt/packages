@@ -35,7 +35,7 @@ endef
 
 define Package/lua-coxpcall/description
   Coxpcall encapsulates the protected calls with a coroutine based loop,
-  so errors can be dealed without the usual pcall/xpcall issues with coroutines.
+  so errors can be dealt without the usual pcall/xpcall issues with coroutines.
 endef
 
 TARGET_CFLAGS += $(FPIC)

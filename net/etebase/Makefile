@@ -27,7 +27,7 @@ define Package/etebase
 	SUBMENU:=Web Servers/Proxies
 	TITLE:=End-to-end encrypted backend
 	URL:=https://www.etebase.com/
-	DEPENDS:=+nginx-ssl +uwsgi +uwsgi-syslog-plugin +uwsgi-python3-plugin +python3-light \
+	DEPENDS:=+nginx +uwsgi +uwsgi-syslog-plugin +uwsgi-python3-plugin +python3-light \
 		+python3-asgiref +python3-cffi +python3-django-cors-headers +python3-django \
 		+python3-django-restframework +python3-drf-nested-routers +python3-msgpack \
 		+python3-pycparser +python3-pynacl +python3-pytz +python3-six +python3-sqlparse

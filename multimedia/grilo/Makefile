@@ -31,7 +31,7 @@ define Package/grilo
   DEPENDS:=+glib2 +libsoup3 +libxml2
 endef
 
-define Package/grilo/decription
+define Package/grilo/description
   Grilo is a framework that provides access to different sources of
   multimedia content, using a pluggable system.
 endef

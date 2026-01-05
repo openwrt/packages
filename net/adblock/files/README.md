@@ -63,11 +63,11 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * Full IPv4 and IPv6 support
 * Provides top level domain compression ('tld compression'), this feature removes thousands of needless host entries from the blocklist and lowers the memory footprint for the DNS backend
 * Provides a 'DNS Blocklist Shift', where the generated final DNS blocklist is moved to the backup directory and only a soft link to this file is set in memory. As long as your backup directory is located on an external drive, you should activate this option to save valuable RAM.
-* Source parsing by fast & flexible regex rulesets, all rules and feed information are placed in an external JSON file ('/etc/adblock/adblock.feeds')
+* Feed parsing by a very fast & secure domain validator, all domain rules and feed information are placed in an external JSON file ('/etc/adblock/adblock.feeds')
 * Overall duplicate removal in generated blocklist file 'adb_list.overall'
 * Additional local allowlist for manual overrides, located in '/etc/adblock/adblock.allowlist' (only exact matches).
 * Additional local blocklist for manual overrides, located in '/etc/adblock/adblock.blocklist'
-* Quality checks during blocklist update to ensure a reliable DNS backend service
+* Connection checks during blocklist update to ensure a reliable DNS backend service
 * Minimal status & error logging to syslog, enable debug logging to receive more output
 * Procd based init system support ('start', 'stop', 'restart', 'reload', 'enable', 'disable', 'running', 'status', 'suspend', 'resume', 'query', 'report')
 * Auto-Startup via procd network interface trigger or via classic time based startup
@@ -76,7 +76,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * Provides a detailed DNS Query Report with DNS related information about client requests, top (blocked) domains and more
 * Provides a powerful query function to quickly find blocked (sub-)domains, e.g. to allow certain domains
 * Includes an option to generate an additional, restrictive 'adb_list.jail' to block access to all domains except those listed in the allowlist file. You can use this restrictive blocklist manually e.g. for guest wifi or kidsafe configurations
-* Includes an option to force DNS requests to the local resolver
+* Contains an option to route DNS queries to the local resolver via corresponding firewall rules
 * Automatic blocklist backup & restore, these backups will be used in case of download errors and during startup
 * Send notification E-Mails, see example configuration below
 * Add new adblock feeds on your own with the 'Custom Feed Editor' in LuCI or via CLI, see example below
@@ -215,15 +215,16 @@ To get the status in the CLI, just call _/etc/init.d/adblock status_ or _/etc/in
 ~# /etc/init.d/adblock status
 ::: adblock runtime information
   + adblock_status  : enabled
-  + adblock_version : 4.4.2-r1
-  + blocked_domains : 914 804
-  + active_feeds    : 1hosts, adguard, adguard_tracking, certpl, doh_blocklist, hagezi, stevenblack, winspy
-  + dns_backend     : unbound (1.23.0-r1), /mnt/data/adblock/backup, 355.97 MB
+  + frontend_ver    : 4.4.5-r1
+  + backend_ver     : 4.4.5-r1
+  + blocked_domains : 575 335
+  + active_feeds    : 1hosts, adguard, adguard_tracking, bitcoin, certpl, doh_blocklist, hagezi, phishing_army, smarttv_tracking, stevenblack, winspy
+  + dns_backend     : unbound (1.24.2-r1), /mnt/data/adblock/backup, 232.20 MB
   + run_ifaces      : trigger: wan , report: br-lan
   + run_directories : base: /mnt/data/adblock, dns: /var/lib/unbound, backup: /mnt/data/adblock/backup, report: /mnt/data/adblock/report, jail: /tmp
-  + run_flags       : shift: ✔, custom feed: ✘, force: ✔, flush: ✘, tld: ✔, search: ✘, report: ✔, mail: ✔, jail: ✘
-  + last_run        : mode: restart, 2025-05-27T20:02:02+02:00, duration: 0m 26s, 1413.00 MB available
-  + system_info     : cores: 4, fetch: wget, Bananapi BPI-R3, mediatek/filogic, OpenWrt SNAPSHOT r29655-4dc10ec711 
+  + run_flags       : shift: ✔, custom feed: ✘, force: ✔, flush: ✘, tld: ✔, search: ✔, report: ✔, mail: ✔, jail: ✘
+  + last_run        : mode: reload, 2025-12-13T15:55:59+01:00, duration: 0m 46s, 1411.57 MB available
+  + system_info     : cores: 4, fetch: curl, Bananapi BPI-R3, mediatek/filogic, OpenWrt SNAPSHOT (r32305-52fa3728e5)
 ```
 
 <a id="best-practise-and-tweaks"></a>
@@ -311,16 +312,21 @@ A valid JSON source object contains the following information, e.g.:
 
 ```
 	[...]
-	"adguard": {
-		"url": "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
-		"rule": "BEGIN{FS=\"[|^]\"}/^\\|\\|([[:alnum:]_-]{1,63}\\.)+[[:alpha:]]+\\^(\\$third-party)?$/{print tolower($3)}",
-		"size": "L",
-		"descr": "general"
+	"stevenblack": {
+		"url": "https://raw.githubusercontent.com/StevenBlack/hosts/master/",
+		"rule": "feed 0.0.0.0 2",
+		"size": "VAR",
+		"descr": "compilation"
 	},
 	[...]
 ```
 
-Add an unique feed name (no spaces, no special chars) and make the required changes: adapt at least the URL, the regex rule, the size and the description for a new feed.  
+Add an unique feed name (no spaces, no special chars) and make the required changes: adapt at least the URL, check/change the rule, the size and the description for a new feed.  
+The rule consist of max. 4 individual, space separated parameters:
+1. type: always 'feed' (required)
+2. prefix: an optional search term (a string literal, no regex) to identify valid domain list entries, e.g. '0.0.0.0'
+3. column: the domain column within the feed file, e.g. '2' (required)
+4. separator: an optional field separator, default is the character class '[[:space:]]'
 
 ## Support
 Please join the adblock discussion in this [forum thread](https://forum.openwrt.org/t/adblock-support-thread/507) or contact me by mail <dev@brenken.org>

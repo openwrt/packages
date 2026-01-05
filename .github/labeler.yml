@@ -1,3 +1,9 @@
+# GitHub/CI
+"GitHub/CI":
+- changed-files:
+  - any-glob-to-any-file:
+    - ".github/**"
+
 # branches
 "OpenWrt 23.05 (end of support)":
 - base-branch:
@@ -5,3 +11,6 @@
 "OpenWrt 24.10":
 - base-branch:
   - "openwrt-24.10"
+"OpenWrt 25.12":
+- base-branch:
+  - "openwrt-25.12"

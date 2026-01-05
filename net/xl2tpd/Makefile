@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=xl2tpd
 PKG_VERSION:=1.3.18
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=LICENSE
@@ -37,7 +37,7 @@ endef
 define Package/xl2tpd/description
 l2tpd is the open source implementation of the L2TP tunneling protocol (RFC2661).
 It does implement both LAC and LNS role in a L2TP networking architecture. The
-main goal of this protocol is to tunnel PPP frame trough an IP network.
+main goal of this protocol is to tunnel PPP frame through an IP network.
 endef
 
 ifneq (0,0)
