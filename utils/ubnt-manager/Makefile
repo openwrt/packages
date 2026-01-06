@@ -14,13 +14,13 @@ include $(INCLUDE_DIR)/package.mk
 define Package/ubnt-manager
   SECTION:=utils
   CATEGORY:=Utilities
-  TITLE:=Managment app for Ubiquiti devices
+  TITLE:=Management app for Ubiquiti devices
   PKGARCH:=all
   DEPENDS:=dropbear
 endef
 
 define Package/ubnt-manager/description
-Managment app for Ubiquiti devices.
+Management app for Ubiquiti devices.
 endef
 
 define Package/ubnt-manager/conffiles

@@ -104,19 +104,19 @@ config_watchcat() {
 		;;
 	ping_reboot)
 		procd_open_instance "watchcat_${1}"
-		procd_set_param command /usr/bin/watchcat.sh "ping_reboot" "$period" "$forcedelay" \"$pinghosts\" "$pingperiod" "$pingsize" "$addressfamily" "$interface"
+		procd_set_param command /usr/bin/watchcat.sh "ping_reboot" "$period" "$forcedelay" "$pinghosts" "$pingperiod" "$pingsize" "$addressfamily" "$interface"
 		procd_set_param respawn "${respawn_threshold:-3600}" "${respawn_timeout:-5}" "${respawn_retry:-5}"
 		procd_close_instance
 		;;
 	restart_iface)
 		procd_open_instance "watchcat_${1}"
-		procd_set_param command /usr/bin/watchcat.sh "restart_iface" "$period" \"$pinghosts\" "$pingperiod" "$pingsize" "$interface" "$mmifacename" "$unlockbands" "$addressfamily"
+		procd_set_param command /usr/bin/watchcat.sh "restart_iface" "$period" "$pinghosts" "$pingperiod" "$pingsize" "$interface" "$mmifacename" "$unlockbands" "$addressfamily"
 		procd_set_param respawn "${respawn_threshold:-3600}" "${respawn_timeout:-5}" "${respawn_retry:-5}"
 		procd_close_instance
 		;;
 	run_script)
 		procd_open_instance "watchcat_${1}"
-		procd_set_param command /usr/bin/watchcat.sh "run_script" "$period" \"$pinghosts\" "$pingperiod" "$pingsize" "$interface" "$addressfamily" "$script"
+		procd_set_param command /usr/bin/watchcat.sh "run_script" "$period" "$pinghosts" "$pingperiod" "$pingsize" "$interface" "$addressfamily" "$script"
 		procd_set_param respawn "${respawn_threshold:-3600}" "${respawn_timeout:-5}" "${respawn_retry:-5}"
 		procd_close_instance
 		;;

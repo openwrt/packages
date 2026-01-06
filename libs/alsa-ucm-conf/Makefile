@@ -30,7 +30,7 @@ define Package/alsa-ucm-conf
 endef
 
 define Package/alsa-ucm-conf/description
- This is a set of configuration files needed for some ALS utilities like alsactl.
+ This is a set of configuration files needed for some ALSA utilities like alsactl.
 endef
 
 define Build/Configure

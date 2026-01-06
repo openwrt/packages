@@ -172,5 +172,5 @@ config LIBCURL_NTLM
 
 config LIBCURL_HTTP_AUTH
 	bool "Enable HTTP authentication support"
-	default n
+	default y
 endif

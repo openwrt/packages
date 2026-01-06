@@ -1,6 +1,6 @@
 --- a/src/Mayaqua/CMakeLists.txt
 +++ b/src/Mayaqua/CMakeLists.txt
-@@ -96,7 +96,7 @@ if(UNIX)
+@@ -103,7 +103,7 @@ if(UNIX)
    find_package(Threads REQUIRED)
  
    # In some cases libiconv is not included in libc
