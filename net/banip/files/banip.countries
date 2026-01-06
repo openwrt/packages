@@ -1,249 +1,242 @@
-af;Afghanistan
-ax;Åland Islands
-al;Albania
-dz;Algeria
-as;American Samoa
-ad;Andorra
-ao;Angola
-ai;Anguilla
-aq;Antarctica
-ag;Antigua & Barbuda
-ar;Argentina
-am;Armenia
-aw;Aruba
-au;Australia
-at;Austria
-az;Azerbaijan
-bs;Bahamas
-bh;Bahrain
-bd;Bangladesh
-bb;Barbados
-by;Belarus
-be;Belgium
-bz;Belize
-bj;Benin
-bm;Bermuda
-bt;Bhutan
-bo;Bolivia
-ba;Bosnia
-bw;Botswana
-bv;Bouvet Island
-br;Brazil
-io;British Indian Ocean Territory
-vg;British Virgin Islands
-bn;Brunei
-bg;Bulgaria
-bf;Burkina Faso
-bi;Burundi
-kh;Cambodia
-cm;Cameroon
-ca;Canada
-cv;Cape Verde
-bq;Caribbean Netherlands
-ky;Cayman Islands
-cf;Central African Republic
-td;Chad
-cl;Chile
-cn;China
-cx;Christmas Island
-cc;Cocos (Keeling) Islands
-co;Colombia
-km;Comoros
-cg;Congo - Brazzaville
-cd;Congo - Kinshasa
-ck;Cook Islands
-cr;Costa Rica
-ci;Côte d’Ivoire
-hr;Croatia
-cu;Cuba
-cw;Curaçao
-cy;Cyprus
-cz;Czechia
-dk;Denmark
-dj;Djibouti
-dm;Dominica
-do;Dominican Republic
-ec;Ecuador
-eg;Egypt
-sv;El Salvador
-gq;Equatorial Guinea
-er;Eritrea
-ee;Estonia
-sz;Eswatini
-et;Ethiopia
-fk;Falkland Islands
-fo;Faroe Islands
-fj;Fiji
-fi;Finland
-fr;France
-gf;French Guiana
-pf;French Polynesia
-tf;French Southern Territories
-ga;Gabon
-gm;Gambia
-ge;Georgia
-de;Germany
-gh;Ghana
-gi;Gibraltar
-gr;Greece
-gl;Greenland
-gd;Grenada
-gp;Guadeloupe
-gu;Guam
-gt;Guatemala
-gg;Guernsey
-gn;Guinea
-gw;Guinea-Bissau
-gy;Guyana
-ht;Haiti
-hm;Heard & McDonald Islands
-hn;Honduras
-hk;Hong Kong
-hu;Hungary
-is;Iceland
-in;India
-id;Indonesia
-ir;Iran
-iq;Iraq
-ie;Ireland
-im;Isle of Man
-il;Israel
-it;Italy
-jm;Jamaica
-jp;Japan
-je;Jersey
-jo;Jordan
-kz;Kazakhstan
-ke;Kenya
-ki;Kiribati
-kw;Kuwait
-kg;Kyrgyzstan
-la;Laos
-lv;Latvia
-lb;Lebanon
-ls;Lesotho
-lr;Liberia
-ly;Libya
-li;Liechtenstein
-lt;Lithuania
-lu;Luxembourg
-mo;Macau
-mg;Madagascar
-mw;Malawi
-my;Malaysia
-mv;Maldives
-ml;Mali
-mt;Malta
-mh;Marshall Islands
-mq;Martinique
-mr;Mauritania
-mu;Mauritius
-yt;Mayotte
-mx;Mexico
-fm;Micronesia
-md;Moldova
-mc;Monaco
-mn;Mongolia
-me;Montenegro
-ms;Montserrat
-ma;Morocco
-mz;Mozambique
-mm;Myanmar
-na;Namibia
-nr;Nauru
-np;Nepal
-nl;Netherlands
-nc;New Caledonia
-nz;New Zealand
-ni;Nicaragua
-ne;Niger
-ng;Nigeria
-nu;Niue
-nf;Norfolk Island
-mp;Northern Mariana Islands
-kp;North Korea
-mk;North Macedonia
-no;Norway
-om;Oman
-pk;Pakistan
-pw;Palau
-ps;Palestine
-pa;Panama
-pg;Papua New Guinea
-py;Paraguay
-pe;Peru
-ph;Philippines
-pn;Pitcairn Islands
-pl;Poland
-pt;Portugal
-pr;Puerto Rico
-qa;Qatar
-re;Réunion
-ro;Romania
-ru;Russia
-rw;Rwanda
-ws;Samoa
-sm;San Marino
-st;São Tomé & Príncipe
-sa;Saudi Arabia
-sn;Senegal
-rs;Serbia
-sc;Seychelles
-sl;Sierra Leone
-sg;Singapore
-sx;Sint Maarten
-sk;Slovakia
-si;Slovenia
-sb;Solomon Islands
-so;Somalia
-za;South Africa
-gs;South Georgia & South Sandwich Islands
-kr;South Korea
-ss;South Sudan
-es;Spain
-lk;Sri Lanka
-bl;St. Barthélemy
-sh;St. Helena
-kn;St. Kitts & Nevis
-lc;St. Lucia
-mf;St. Martin
-pm;St. Pierre & Miquelon
-vc;St. Vincent & Grenadines
-sd;Sudan
-sr;Suriname
-sj;Svalbard & Jan Mayen
-se;Sweden
-ch;Switzerland
-sy;Syria
-tw;Taiwan
-tj;Tajikistan
-tz;Tanzania
-th;Thailand
-tl;Timor-Leste
-tg;Togo
-tk;Tokelau
-to;Tonga
-tt;Trinidad & Tobago
-tn;Tunisia
-tr;Turkey
-tm;Turkmenistan
-tc;Turks & Caicos Islands
-tv;Tuvalu
-ug;Uganda
-ua;Ukraine
-ae;United Arab Emirates
-gb;United Kingdom
-us;United States
-uy;Uruguay
-um;U.S. Outlying Islands
-vi;U.S. Virgin Islands
-uz;Uzbekistan
-vu;Vanuatu
-va;Vatican City
-ve;Venezuela
-vn;Vietnam
-wf;Wallis & Futuna
-eh;Western Sahara
-ye;Yemen
-zm;Zambia
-zw;Zimbabwe
+af	APNIC	Afghanistan
+ap	AFRINIC	ARIPO
+ax	RIPE	Åland Islands
+al	RIPE	Albania
+dz	AFRINIC	Algeria
+as	APNIC	American Samoa
+ad	RIPE	Andorra
+ao	AFRINIC	Angola
+ai	ARIN	Anguilla
+aq	ARIN	Antarctica
+ag	ARIN	Antigua & Barbuda
+ar	LACNIC	Argentina
+am	RIPE	Armenia
+aw	LACNIC	Aruba
+au	APNIC	Australia
+at	RIPE	Austria
+az	RIPE	Azerbaijan
+bs	ARIN	Bahamas
+bh	RIPE	Bahrain
+bd	APNIC	Bangladesh
+bb	ARIN	Barbados
+by	RIPE	Belarus
+be	RIPE	Belgium
+bz	LACNIC	Belize
+bj	AFRINIC	Benin
+bm	ARIN	Bermuda
+bt	APNIC	Bhutan
+bo	LACNIC	Bolivia
+bq	LACNIC	Bonaire
+ba	RIPE	Bosnia & Herzegowina
+bw	AFRINIC	Botswana
+br	LACNIC	Brazil
+io	APNIC	British Indian Ocean Territory
+bn	APNIC	Brunei
+bg	RIPE	Bulgaria
+bf	AFRINIC	Burkina Faso
+bi	AFRINIC	Burundi
+kh	APNIC	Cambodia
+cm	AFRINIC	Cameroon
+ca	ARIN	Canada
+cv	AFRINIC	Cape Verde
+ky	ARIN	Cayman Islands
+cf	AFRINIC	Central African Republic
+td	AFRINIC	Chad
+cl	LACNIC	Chile
+cn	APNIC	China
+cc	APNIC	Cocos Islands
+co	LACNIC	Colombia
+km	AFRINIC	Comoros
+cg	AFRINIC	Congo - Brazzaville
+cd	AFRINIC	Congo - Kinshasa
+ck	APNIC	Cook Islands
+cr	LACNIC	Costa Rica
+ci	AFRINIC	Côte D'ivoire
+hr	RIPE	Croatia
+cu	LACNIC	Cuba
+cw	LACNIC	Curaçao
+cy	RIPE	Cyprus
+cz	RIPE	Czechia
+dk	RIPE	Denmark
+dj	AFRINIC	Djibouti
+dm	ARIN	Dominica
+do	LACNIC	Dominican Republic
+ec	LACNIC	Ecuador
+eg	AFRINIC	Egypt
+sv	LACNIC	El Salvador
+gq	AFRINIC	Equatorial Guinea
+er	AFRINIC	Eritrea
+ee	RIPE	Estonia
+sz	AFRINIC	Eswatini
+et	AFRINIC	Ethiopia
+eu	RIPE	European Union
+fk	LACNIC	Falkland Islands
+fo	RIPE	Faroe Islands
+fj	APNIC	Fiji
+fi	RIPE	Finland
+fr	RIPE	France
+gf	LACNIC	French Guiana
+pf	APNIC	French Polynesia
+ga	AFRINIC	Gabon
+gm	AFRINIC	Gambia
+ge	RIPE	Georgia
+de	RIPE	Germany
+gh	AFRINIC	Ghana
+gi	RIPE	Gibraltar
+gr	RIPE	Greece
+gl	RIPE	Greenland
+gd	ARIN	Grenada
+gp	ARIN	Guadeloupe
+gu	APNIC	Guam
+gt	LACNIC	Guatemala
+gg	RIPE	Guernsey
+gn	AFRINIC	Guinea
+gw	AFRINIC	Guinea-Bissau
+gy	LACNIC	Guyana
+ht	LACNIC	Haiti
+hn	LACNIC	Honduras
+hk	APNIC	Hong Kong
+hu	RIPE	Hungary
+is	RIPE	Iceland
+in	APNIC	India
+id	APNIC	Indonesia
+ir	RIPE	Iran
+iq	RIPE	Iraq
+ie	RIPE	Ireland
+im	RIPE	Isle of Man
+il	RIPE	Israel
+it	RIPE	Italy
+jm	ARIN	Jamaica
+jp	APNIC	Japan
+je	RIPE	Jersey
+jo	RIPE	Jordan
+kz	RIPE	Kazakhstan
+ke	AFRINIC	Kenya
+ki	APNIC	Kiribati
+kw	RIPE	Kuwait
+kg	RIPE	Kyrgyzstan
+la	APNIC	Lao
+lv	RIPE	Latvia
+lb	RIPE	Lebanon
+ls	AFRINIC	Lesotho
+lr	AFRINIC	Liberia
+ly	AFRINIC	Libya
+li	RIPE	Liechtenstein
+lt	RIPE	Lithuania
+lu	RIPE	Luxembourg
+mo	APNIC	Macao
+mg	AFRINIC	Madagascar
+mw	AFRINIC	Malawi
+my	APNIC	Malaysia
+mv	APNIC	Maldives
+ml	AFRINIC	Mali
+mt	RIPE	Malta
+mh	APNIC	Marshall Islands
+ma	AFRINIC	Marocco
+mq	ARIN	Martinique
+mr	AFRINIC	Mauritania
+mu	AFRINIC	Mauritius
+yt	AFRINIC	Mayotte
+mx	LACNIC	Mexico
+fm	APNIC	Micronesia
+md	RIPE	Moldova
+mc	RIPE	Monaco
+mn	APNIC	Mongolia
+me	RIPE	Montenegro
+ms	ARIN	Montserrat
+mz	AFRINIC	Mozambique
+mm	APNIC	Myanmar
+na	AFRINIC	Namibia
+nr	APNIC	Nauru
+np	APNIC	Nepal
+nl	RIPE	Netherlands
+nc	APNIC	New Caledonia
+nz	APNIC	New Zealand
+ni	LACNIC	Nicaragua
+ne	AFRINIC	Niger
+ng	AFRINIC	Nigeria
+nu	APNIC	Niue
+nf	APNIC	Norfolk Island
+kp	APNIC	North Korea
+mk	RIPE	North Macedonia
+mp	APNIC	Northern Mariana Islands
+no	RIPE	Norway
+om	RIPE	Oman
+pk	APNIC	Pakistan
+pw	APNIC	Palau
+ps	RIPE	Palestine
+pa	LACNIC	Panama
+pg	APNIC	Papua New Guinea
+py	LACNIC	Paraguay
+pe	LACNIC	Peru
+ph	APNIC	Philippines
+pl	RIPE	Poland
+pt	RIPE	Portugal
+pr	ARIN	Puerto Rico
+qa	RIPE	Qatar
+re	AFRINIC	Reunion
+ro	RIPE	Romania
+ru	RIPE	Russian Federation
+rw	AFRINIC	Rwanda
+bl	ARIN	Saint Barthélemy
+kn	ARIN	Saint Kitts & Nevis
+lc	ARIN	Saint Lucia
+mf	ARIN	Saint Martin
+pm	ARIN	Saint Pierre & Miquelon
+vc	ARIN	Saint Vincent & the Grenadines
+ws	APNIC	Samoa
+sm	RIPE	San Marino
+st	AFRINIC	Sao Tome & Principe
+sa	RIPE	Saudi Arabia
+sn	AFRINIC	Senegal
+rs	RIPE	Serbia
+sc	AFRINIC	Seychelles
+sl	AFRINIC	Sierra Leone
+sg	APNIC	Singapore
+sx	LACNIC	Sint Maarten
+sk	RIPE	Slovakia
+si	RIPE	Slovenia
+sb	APNIC	Solomon Islands
+so	AFRINIC	Somalia
+za	AFRINIC	South Africa
+kr	APNIC	South Korea
+ss	AFRINIC	South Sudan
+es	RIPE	Spain
+lk	APNIC	Sri Lanka
+sd	AFRINIC	Sudan
+sr	LACNIC	Suriname
+se	RIPE	Sweden
+ch	RIPE	Switzerland
+sy	RIPE	Syrian
+tw	APNIC	Taiwan
+tj	RIPE	Tajikistan
+tz	AFRINIC	Tanzania
+th	APNIC	Thailand
+tl	APNIC	Timor-Leste
+tg	AFRINIC	Togo
+tk	APNIC	Tokelau
+to	APNIC	Tonga
+tt	LACNIC	Trinidad & Tobago
+tn	AFRINIC	Tunisia
+tr	RIPE	Türkey
+tm	RIPE	Turkmenistan
+tc	ARIN	Turks & Caicos Islands
+tv	APNIC	Tuvalu
+ug	AFRINIC	Uganda
+ua	RIPE	Ukraine
+ae	RIPE	United Arab Emirates
+gb	RIPE	United Kingdom
+us	ARIN	United States
+um	ARIN	United States Minor Outlying Islands
+uy	LACNIC	Uruguay
+uz	RIPE	Uzbekistan
+vu	APNIC	Vanuatu
+va	RIPE	Vatikan City
+ve	LACNIC	Venezuela
+vn	APNIC	Vietnam
+vg	ARIN	Virgin Islands (British)
+vi	ARIN	Virgin Islands (U.S.)
+wf	APNIC	Wallis & Futuna Islands
+ye	RIPE	Yemen
+zm	AFRINIC	Zambia
+zw	AFRINIC	Zimbabwe

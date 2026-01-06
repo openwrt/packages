@@ -1,19 +1,13 @@
-#
-# Copyright (C) 2006-2016 OpenWrt.org
-#
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
-#
-
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=udpxy
-PKG_VERSION:=1.0-25.1
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/pcherenkov/udpxy/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=a1a16e60895c6b2fd151321db47f5d5373843116f1b98ed9749e6c25a6c44497
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/pcherenkov/udpxy
+PKG_SOURCE_DATE:=2024-03-03
+PKG_SOURCE_VERSION:=23b434374d76e5de74138d44cbb8bda1b32dcfe0
+PKG_MIRROR_HASH:=719dd6f667f2f92e2b0d911e6bc5dd191e4ee719dd199f648e89832de960f16a
 
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later

@@ -9,11 +9,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libuecc
 PKG_VERSION:=7
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=Matthias Schiffer <mschiffer@universe-factory.net>
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://github.com/NeoRaider/libuecc/releases/download/v$(PKG_VERSION)
+PKG_SOURCE_URL:=https://github.com/neocturne/libuecc/releases/download/v$(PKG_VERSION)
 PKG_HASH:=b94aef08eab5359d0facaa7ead2ce81b193eef0c61379d9835213ebc0a46257a
 
 PKG_LICENSE:=BSD-2-Clause
@@ -26,7 +26,7 @@ define Package/libuecc
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Very small Elliptic Curve Cryptography library
-  URL:=https://github.com/NeoRaider/libuecc/
+  URL:=https://github.com/neocturne/libuecc/
 endef
 
 TARGET_CFLAGS += -ffunction-sections -fdata-sections

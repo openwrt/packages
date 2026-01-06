@@ -1,0 +1,18 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+STOP=10
+
+USE_PROCD=1
+WFB_INIT="/usr/sbin/wfb-ng.sh"
+
+start_service() {
+        if [ -x $WFB_INIT ]; then
+                procd_open_instance wfb-ng
+                procd_set_param command $WFB_INIT
+                procd_set_param respawn
+                procd_set_param stdout 1
+                procd_set_param stderr 1
+                procd_close_instance
+        fi
+}

@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tar
-PKG_VERSION:=1.34
-PKG_RELEASE:=2
+PKG_VERSION:=1.35
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/tar
-PKG_HASH:=63bebd26879c5e1eea4352f0d03c991f966aeb3ddeb3c7445c902568d5411d28
+PKG_HASH:=4d62ff37342ec7aed748535323930c7cf94acf71c3591882b26a7ea50f3edc16
 
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -35,8 +35,12 @@ include $(INCLUDE_DIR)/package.mk
 define Package/tar
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+PACKAGE_TAR_POSIX_ACL:libacl +PACKAGE_TAR_XATTR:libattr +PACKAGE_TAR_BZIP2:bzip2
-  EXTRA_DEPENDS:=$(if $(CONFIG_PACKAGE_TAR_XZ),xz)
+  DEPENDS:= \
+    +PACKAGE_TAR_BZIP2:bzip2 \
+    +PACKAGE_TAR_POSIX_ACL:libacl \
+    +PACKAGE_TAR_XATTR:libattr \
+    +PACKAGE_TAR_ZSTD:libzstd \
+    +PACKAGE_TAR_XZ:xz
   TITLE:=GNU tar
   URL:=https://www.gnu.org/software/tar/
   MENU:=1
@@ -44,36 +48,31 @@ define Package/tar
 endef
 
 define Package/tar/config
-	if PACKAGE_tar
-		config PACKAGE_TAR_POSIX_ACL
-			bool "tar: Enable POSIX ACL support"
-			default y if USE_FS_ACL_ATTR
-			default n
+	config PACKAGE_TAR_POSIX_ACL
+		bool "tar: Enable POSIX ACL support"
+		default y if USE_FS_ACL_ATTR
+		default n
 
-		config PACKAGE_TAR_XATTR
-			bool "tar: Enable extended attribute (xattr) support"
-			default y if USE_FS_ACL_ATTR
-			default n
+	config PACKAGE_TAR_XATTR
+		bool "tar: Enable extended attribute (xattr) support"
+		default y if USE_FS_ACL_ATTR
+		default n
 
-		config PACKAGE_TAR_BZIP2
-			bool "tar: Enable seamless bzip2 support"
-			default y
+	config PACKAGE_TAR_BZIP2
+		bool "tar: Enable seamless bzip2 support"
+		default y
 
-		config PACKAGE_TAR_GZIP
-			bool "tar: Enable seamless gzip support. Needed for sysupgrade."
-			default y
+	config PACKAGE_TAR_GZIP
+		bool "tar: Enable seamless gzip support. Needed for sysupgrade."
+		default y
 
-		config PACKAGE_TAR_XZ
-			bool "tar: Enable seamless xz support"
-			select PACKAGE_xz-utils
-			select PACKAGE_xz
-			default y
+	config PACKAGE_TAR_XZ
+		bool "tar: Enable seamless xz support"
+		default y
 
-		config PACKAGE_TAR_ZSTD
-			bool "tar: Enable seamless zstd support"
-			select PACKAGE_libzstd
-			default y
-	endif
+	config PACKAGE_TAR_ZSTD
+		bool "tar: Enable seamless zstd support"
+		default y
 endef
 
 define Package/tar/description

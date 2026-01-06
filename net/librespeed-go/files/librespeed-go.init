@@ -12,6 +12,7 @@ mount_jail_file() {
 	local cfg="$1"
 	local isdir="${2:-0}"
 	local rw="${3:-0}"
+	local reload="${4:-0}"
 
 	local value
 	config_get value "config" "$cfg"
@@ -31,6 +32,8 @@ mount_jail_file() {
 	else
 		procd_add_jail_mount "$value"
 	fi
+
+	[ "$reload" = "0" ] || procd_append_param file "$value"
 }
 
 start_service() {
@@ -74,8 +77,8 @@ start_service() {
 
 	mount_jail_file "assets_path" "1"
 	mount_jail_file "database_file" "0" "1"
-	mount_jail_file "tls_cert_file"
-	mount_jail_file "tls_key_file"
+	mount_jail_file "tls_cert_file" "0" "0" "1"
+	mount_jail_file "tls_key_file" "0" "0" "1"
 
 	procd_close_instance
 }

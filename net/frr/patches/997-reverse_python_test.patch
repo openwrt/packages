@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -839,7 +839,6 @@ fi
+@@ -954,7 +954,6 @@ AC_DEFINE_UNQUOTED([DFLT_NAME], ["$DFLT_
  #
  
  AS_IF([test "$host" = "$build"], [

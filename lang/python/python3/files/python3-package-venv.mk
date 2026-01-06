@@ -7,8 +7,14 @@
 
 define Package/python3-venv
 $(call Package/python3/Default)
-  TITLE:=Python $(PYTHON3_VERSION) venv module
+  TITLE+= venv module
   DEPENDS:=+python3
+endef
+
+define Package/python3-venv/description
+$(call Package/python3/Default/description)
+
+This package contains the venv module.
 endef
 
 $(eval $(call Py3BasePackage,python3-venv, \

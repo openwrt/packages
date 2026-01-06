@@ -17,11 +17,9 @@ performance penalty in that case).
  libpagekite/pkproto.c   |  4 ++--
  3 files changed, 11 insertions(+), 11 deletions(-)
 
-diff --git a/libpagekite/pklogging.c b/libpagekite/pklogging.c
-index 6129c30..1b1835c 100644
 --- a/libpagekite/pklogging.c
 +++ b/libpagekite/pklogging.c
-@@ -208,9 +208,9 @@ void pk_dump_conn(char* prefix, struct pk_conn* conn)
+@@ -208,9 +208,9 @@ void pk_dump_conn(char* prefix, struct p
    if (conn->sockfd < 0) return;
  
    pk_log(PK_LOG_MANAGER_DEBUG, "%s/sockfd: %d", prefix, conn->sockfd);
@@ -34,7 +32,7 @@ index 6129c30..1b1835c 100644
    pk_log(PK_LOG_MANAGER_DEBUG, "%s/read_bytes: %d", prefix, conn->read_bytes);
    pk_log(PK_LOG_MANAGER_DEBUG, "%s/read_kb: %d", prefix, conn->read_kb);
    pk_log(PK_LOG_MANAGER_DEBUG, "%s/sent_kb: %d", prefix, conn->sent_kb);
-@@ -281,8 +281,8 @@ void pk_dump_state(struct pk_manager* pkm)
+@@ -281,8 +281,8 @@ void pk_dump_state(struct pk_manager* pk
    pk_log(LL, "pk_manager/kite_max: %d", pkm->kite_max);
    pk_log(LL, "pk_manager/tunnel_max: %d", pkm->tunnel_max);
    pk_log(LL, "pk_manager/be_conn_max: %d", pkm->be_conn_max);
@@ -45,11 +43,9 @@ index 6129c30..1b1835c 100644
    pk_log(LL, "pk_manager/enable_timer: %d", 0 < pkm->enable_timer);
    pk_log(LL, "pk_manager/fancy_pagekite_net_rejection_url: %s", pkm->fancy_pagekite_net_rejection_url);
    pk_log(LL, "pk_manager/want_spare_frontends: %d", pkm->want_spare_frontends);
-diff --git a/libpagekite/pkmanager.c b/libpagekite/pkmanager.c
-index 2e526c5..007f078 100644
 --- a/libpagekite/pkmanager.c
 +++ b/libpagekite/pkmanager.c
-@@ -1070,8 +1070,8 @@ static void pkm_tick_cb(EV_P_ ev_async* w, int revents)
+@@ -1070,8 +1070,8 @@ static void pkm_tick_cb(EV_P_ ev_async*
      pkm->timer.repeat = pkm->next_tick;
      ev_timer_again(pkm->loop, &(pkm->timer));
      pk_log(PK_LOG_MANAGER_INFO,
@@ -60,7 +56,7 @@ index 2e526c5..007f078 100644
             pkm->status, pk_state.live_tunnels, PK_VERSION);
  
      /* We slow down exponentially by default... */
-@@ -1122,8 +1122,8 @@ static void pkm_tick_cb(EV_P_ ev_async* w, int revents)
+@@ -1122,8 +1122,8 @@ static void pkm_tick_cb(EV_P_ ev_async*
            fe->last_ping = now;
            pkc_write(&(fe->conn), ping, pingsize);
            pk_log(PK_LOG_TUNNEL_DATA,
@@ -71,8 +67,6 @@ index 2e526c5..007f078 100644
            next_tick = 1 + pkm->housekeeping_interval_min;
          }
        }
-diff --git a/libpagekite/pkproto.c b/libpagekite/pkproto.c
-index fda41d2..02a47c7 100644
 --- a/libpagekite/pkproto.c
 +++ b/libpagekite/pkproto.c
 @@ -577,7 +577,7 @@ int pk_make_salt(char* salt) {
@@ -84,7 +78,7 @@ index fda41d2..02a47c7 100644
  
    PK_TRACE_FUNCTION;
  
-@@ -606,7 +606,7 @@ char* pk_sign(const char* token, const char* secret, time_t ts,
+@@ -606,7 +606,7 @@ char* pk_sign(const char* token, const c
  
    /* Optionally embed a timestamp to the resolution of 10 minutes */
    if (ts > 0) {
@@ -93,6 +87,3 @@ index fda41d2..02a47c7 100644
      buffer[0] = 't';
    }
    else tsbuf[0] = '\0';
--- 
-2.37.3
-

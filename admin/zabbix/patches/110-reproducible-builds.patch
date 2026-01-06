@@ -1,7 +1,7 @@
---- a/src/libs/zbxcommon/str.c
-+++ b/src/libs/zbxcommon/str.c
-@@ -49,7 +49,7 @@ static const char	help_message_footer[]
- void	zbx_version(void)
+--- a/src/libs/zbxcommon/misc.c
++++ b/src/libs/zbxcommon/misc.c
+@@ -223,7 +223,7 @@ static const char	copyright_message[] =
+ void	zbx_print_version(const char *title_message)
  {
  	printf("%s (Zabbix) %s\n", title_message, ZABBIX_VERSION);
 -	printf("Revision %s %s, compilation time: %s %s\n\n", ZABBIX_REVISION, ZABBIX_REVDATE, __DATE__, __TIME__);

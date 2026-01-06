@@ -2,7 +2,7 @@
 
 preinit_btrfs_scan() {
 	if grep -q btrfs /proc/filesystems; then
-		 btrfs device scan
+		btrfs device scan -d > /dev/kmsg
 	fi
 }
 

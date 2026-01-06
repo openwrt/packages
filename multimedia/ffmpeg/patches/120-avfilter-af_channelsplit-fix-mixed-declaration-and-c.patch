@@ -1,0 +1,30 @@
+From 613c85a8f5b296c2b79fc0abfd98fccf962bb334 Mon Sep 17 00:00:00 2001
+From: Marvin Scholz <epirat07@gmail.com>
+Date: Fri, 12 Jul 2024 17:47:14 +0200
+Subject: [PATCH] avfilter/af_channelsplit: fix mixed declaration and code
+
+Fix a "mixing declarations and code is incompatible with standards
+before C99" warning.
+---
+ libavfilter/af_channelsplit.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+--- a/libavfilter/af_channelsplit.c
++++ b/libavfilter/af_channelsplit.c
+@@ -156,6 +156,7 @@ static int query_formats(AVFilterContext
+ 
+ static int filter_frame(AVFilterLink *outlink, AVFrame *buf)
+ {
++    AVFrame *buf_out;
+     AVFilterContext *ctx = outlink->src;
+     ChannelSplitContext *s = ctx->priv;
+     const int i = FF_OUTLINK_IDX(outlink);
+@@ -164,7 +165,7 @@ static int filter_frame(AVFilterLink *ou
+ 
+     av_assert1(channel >= 0);
+ 
+-    AVFrame *buf_out = av_frame_clone(buf);
++    buf_out = av_frame_clone(buf);
+     if (!buf_out)
+         return AVERROR(ENOMEM);
+ 

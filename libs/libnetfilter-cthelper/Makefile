@@ -12,13 +12,12 @@ PKG_VERSION:=1.0.0
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:= \
-	http://www.netfilter.org/projects/libnetfilter_cthelper/files/ \
-	ftp://ftp.netfilter.org/pub/libnetfilter_cthelper/
+PKG_SOURCE_URL:=http://www.netfilter.org/projects/libnetfilter_cthelper/files/
 PKG_HASH:=07618e71c4d9a6b6b3dc1986540486ee310a9838ba754926c7d14a17d8fccf3d
 
 PKG_FIXUP:=autoreconf
 PKG_LICENSE:=GPL-2.0+
+PKG_CPE_ID:=cpe:/a:netfilter:libnetfilter_cthelper
 
 PKG_INSTALL:=1
 

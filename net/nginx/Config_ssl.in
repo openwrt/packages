@@ -175,6 +175,11 @@ config NGINX_HTTP_V2
 	prompt "Enable HTTP_V2 module"
 	default y
 
+config NGINX_HTTP_QUIC
+	bool
+	prompt "Enable QUIC support"
+	default n
+
 config NGINX_PCRE
 	bool
 	prompt "Enable PCRE library usage"
@@ -193,6 +198,11 @@ config NGINX_HTTP_SECURE_LINK
 config NGINX_HTTP_SUB
 	bool
 	prompt "Enable HTTP sub module"
+	default n
+
+config NGINX_STREAM_REAL_IP
+	bool
+	prompt "Enable STREAM real ip module"
 	default n
 
 endmenu

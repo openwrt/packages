@@ -1,6 +1,6 @@
 --- a/gst/gstplugin.c
 +++ b/gst/gstplugin.c
-@@ -854,15 +854,8 @@ _priv_gst_plugin_load_file_for_registry
+@@ -866,15 +866,8 @@ _priv_gst_plugin_load_file_for_registry
    }
  #endif
  

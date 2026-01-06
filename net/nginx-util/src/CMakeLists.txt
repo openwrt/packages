@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.30)
 
 PROJECT(nginx-util CXX)
 SET(CMAKE_CXX_STANDARD 17)
@@ -27,7 +27,7 @@ FIND_LIBRARY(ubus NAMES ubus)
 INCLUDE_DIRECTORIES(${ubus_include_dir})
 
 ADD_EXECUTABLE(nginx-ssl-util nginx-util.cpp)
-TARGET_LINK_LIBRARIES(nginx-ssl-util ${uci} ${ubox} ${ubus} pthread ssl crypto pcre)
+TARGET_LINK_LIBRARIES(nginx-ssl-util ${uci} ${ubox} ${ubus} pthread ssl crypto pcre2-8)
 INSTALL(TARGETS nginx-ssl-util RUNTIME DESTINATION bin)
 
 ADD_EXECUTABLE(nginx-ssl-util-nopcre nginx-util.cpp)
@@ -51,7 +51,7 @@ INSTALL(TARGETS px5g RUNTIME DESTINATION bin)
 
 ADD_EXECUTABLE(nginx-ssl-util-noubus nginx-util.cpp)
 TARGET_COMPILE_DEFINITIONS(nginx-ssl-util-noubus PUBLIC -DNO_UBUS)
-TARGET_LINK_LIBRARIES(nginx-ssl-util-noubus ${uci} ${ubox} pthread ssl crypto pcre)
+TARGET_LINK_LIBRARIES(nginx-ssl-util-noubus ${uci} ${ubox} pthread ssl crypto pcre2-8)
 INSTALL(TARGETS nginx-ssl-util-noubus RUNTIME DESTINATION bin)
 
 ADD_EXECUTABLE(nginx-ssl-util-nopcre-noubus nginx-util.cpp)

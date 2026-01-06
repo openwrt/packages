@@ -8,14 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=conserver
-PKG_VERSION:=8.2.6
-PKG_RELEASE:=2
+PKG_VERSION:=8.2.7
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/conserver/conserver/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=1c8b86f123d2d8e3ce568b782087b43dfac9cf6ffd5a9bdfcfdc6718d749a923
+PKG_HASH:=b88f1880f4090b42370e075ca9c8a6062fb553ee33f155b204714c43dc71cef3
 
-PKG_MAINTAINER:=Bjørn Mork <bjorn@mork.no>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 
@@ -31,6 +30,18 @@ define Package/conserver
   TITLE:=Connect multiple user to a serial console with logging
   URL:=http://www.conserver.com/
   DEPENDS:=+libopenssl
+  MAINTAINER:=Bjørn Mork <bjorn@mork.no>
+  VARIANT:=default
+  CONFLICTS:=conserver-ipmi
+endef
+
+define Package/conserver-ipmi
+  $(call Package/conserver)
+  TITLE:=Conserver with IPMI support
+  PROVIDES:=conserver
+  DEPENDS+=+libipmiconsole
+  VARIANT:=ipmi
+  CONFLICTS:=
 endef
 
 define Package/conserver/description
@@ -48,11 +59,21 @@ define Package/conserver/description
  any of the equipment from home or wherever.
 endef
 
+define Package/conserver-ipmi/description
+ $(call Package/conserver/description)
+ .
+ This variant is built with support for IPMI serial-over-LAN consoles,
+ adding a large dependency on FreeIPMI
+endef
+
+
 define Package/conserver/conffiles
 /etc/conserver/conserver.cf
 /etc/conserver/conserver.passwd
 /etc/conserver/console.cf
 endef
+
+Package/conserver-ipmi/conffiles=$(Package/conserver/conffiles)
 
 CONFIGURE_ARGS += \
 	--with-openssl \
@@ -60,6 +81,10 @@ CONFIGURE_ARGS += \
 	--sysconfdir=/etc/conserver \
 	--with-port=3109 \
 	--with-logfile=/var/log/conserver/server.log
+
+ifeq ($(BUILD_VARIANT),ipmi)
+	CONFIGURE_ARGS += --with-freeipmi
+endif
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
@@ -80,4 +105,7 @@ define Package/conserver/install
 	$(INSTALL_BIN) ./files/conserver.init $(1)/etc/init.d/conserver
 endef
 
+Package/conserver-ipmi/install=$(Package/conserver/install)
+
 $(eval $(call BuildPackage,conserver))
+$(eval $(call BuildPackage,conserver-ipmi))

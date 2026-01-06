@@ -25,7 +25,6 @@ include $(INCLUDE_DIR)/package.mk
 define KernelPackage/macremapper
   SUBMENU:=Network Support
   URL:=https://www.edgewaterwireless.com
-  VERSION:=$(LINUX_VERSION)-$(BOARD)-$(PKG_RELEASE)
   TITLE:=Dual Channel Wi-Fi macremapper Module
   DEPENDS:= +kmod-cfg80211 +kmod-br-netfilter
   FILES:=$(PKG_BUILD_DIR)/kernelmod/$(PKG_NAME).$(LINUX_KMOD_SUFFIX)

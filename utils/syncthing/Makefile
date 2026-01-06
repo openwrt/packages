@@ -1,16 +1,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=syncthing
-PKG_VERSION:=1.23.2
+PKG_VERSION:=2.0.12
 PKG_RELEASE:=1
 
 PKG_SOURCE:=syncthing-source-v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/syncthing/syncthing/releases/download/v$(PKG_VERSION)
-PKG_HASH:=3d0eca0e6f4eaaeba4879918b3f54f47d59fb5f4288a83af821d509271ada189
+PKG_HASH:=56004ae6d974aa387c3c6a734eb98aafd5d6159fc657a1f4c618e0b1814fadae
 
 PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/$(PKG_NAME)
 
-PKG_MAINTAINER:=Paul Spooren <mail@aparcar.org>
+PKG_MAINTAINER:=Van Waholtz <brvphoenix@gmail.com>, George Sapkin <george@sapk.in>
 PKG_LICENSE:=MPL-2.0
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:syncthing:syncthing
@@ -26,13 +26,13 @@ GO_PKG_BUILD_PKG:=\
 	$(if $(CONFIG_PACKAGE_strelaysrv),$(GO_PKG)/cmd/strelaysrv/)
 GO_PKG_INSTALL_EXTRA:=^gui/
 
+GO_PKG_TAGS:=noupgrade
 GO_PKG_LDFLAGS_X:=\
 	$(GO_PKG)/lib/build.Version=v$(PKG_VERSION) \
 	$(GO_PKG)/lib/build.Stamp=$(SOURCE_DATE_EPOCH) \
 	$(GO_PKG)/lib/build.User=openwrt \
 	$(GO_PKG)/lib/build.Host=openwrt \
-	$(GO_PKG)/lib/build.Tags=noupgrade
-GO_PKG_TAGS:=noupgrade
+	$(GO_PKG)/lib/build.Tags=$(GO_PKG_TAGS)
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
@@ -42,12 +42,12 @@ define Package/syncthing/Default
   DEPENDS:=$(GO_ARCH_DEPENDS)
   SECTION:=utils
   CATEGORY:=Utilities
+  USERID:=syncthing=499:syncthing=499
 endef
 
 define Package/syncthing
   $(call Package/syncthing/Default)
   TITLE:=Continuous file synchronization program
-  USERID:=syncthing=499:syncthing=499
 endef
 
 define Package/stdiscosrv
@@ -83,11 +83,17 @@ define Package/syncthing/description
 endef
 
 define Package/stdiscosrv/description
-  Relay server for syncthing
+  Syncthing relies on a discovery server to find peers on the internet.
+  Anyone can run a discovery server and point Syncthing installations to
+  it. The Syncthing project also maintains a global cluster for public
+  use.
 endef
 
 define Package/strelaysrv/description
-  Relay server for syncthing
+  Syncthing relies on a network of community-contributed relay servers.
+  Anyone can run a relay server, and it will automatically join the relay
+  pool and be available to Syncthing users. The current list of relays can
+  be found at https://relays.syncthing.net/.
 endef
 
 define SyncthingInstall

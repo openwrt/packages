@@ -18,7 +18,7 @@ Signed-off-by: Christopher Larson <chris_larson@mentor.com>
 
 --- a/configure
 +++ b/configure
-@@ -769,7 +769,13 @@ case $host_cpu in
+@@ -771,7 +771,13 @@ case $host_cpu in
          AS_EXT=".asm"
          ASFLAGS="$ASFLAGS -DARCH_X86_64=1 -I\$(SRCPATH)/common/x86/"
          stack_alignment=16
@@ -33,7 +33,7 @@ Signed-off-by: Christopher Larson <chris_larson@mentor.com>
          if [ "$SYS" = MACOSX ]; then
              ASFLAGS="$ASFLAGS -f macho64 -DPREFIX"
              if cc_check '' "-arch x86_64"; then
-@@ -788,7 +794,11 @@ case $host_cpu in
+@@ -790,7 +796,11 @@ case $host_cpu in
                  RCFLAGS="--target=pe-x86-64 $RCFLAGS"
              fi
          else

@@ -16,7 +16,7 @@ INCLUDE_ONLY=1
 
 proto_pppossh_init_config() {
 	ppp_generic_init_config
-	config_add_string server sshuser ipaddr peeraddr ssh_options
+	config_add_string server sshuser ipaddr peeraddr ssh_options peer_pppd_options
 	config_add_array 'identity:list(string)'
 	config_add_int port use_hostdep
 	available=1
@@ -28,10 +28,10 @@ proto_pppossh_setup() {
 	local iface="$2"
 	local user="$(id -nu)"
 	local home=$(sh -c "echo ~$user")
-	local server port sshuser ipaddr peeraddr ssh_options identity use_hostdep
+	local server port sshuser ipaddr peeraddr ssh_options peer_pppd_options identity use_hostdep
 	local ip fn errmsg opts pty
 
-	json_get_vars port sshuser ipaddr peeraddr ssh_options use_hostdep
+	json_get_vars port sshuser ipaddr peeraddr ssh_options peer_pppd_options use_hostdep
 	json_get_var server server && {
 		[ -z "$use_hostdep" ] && use_hostdep=1
 		for ip in $(resolveip -t 5 "$server"); do
@@ -60,7 +60,7 @@ proto_pppossh_setup() {
 	opts="$opts ${port:+-p $port}"
 	opts="$opts ${ssh_options}"
 	opts="$opts $sshuser@$server"
-	pty="exec env 'HOME=$home' $SSH $opts pppd nodetach notty noauth"
+	pty="exec env 'HOME=$home' $SSH $opts pppd nodetach notty noauth $peer_pppd_options"
 
 	ppp_generic_setup "$config" noauth pty "$pty" "$ipaddr:$peeraddr"
 }

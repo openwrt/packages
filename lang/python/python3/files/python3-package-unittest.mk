@@ -7,8 +7,14 @@
 
 define Package/python3-unittest
 $(call Package/python3/Default)
-  TITLE:=Python $(PYTHON3_VERSION) unittest module
+  TITLE+= unittest module
   DEPENDS:=+python3-light
+endef
+
+define Package/python3-unittest/description
+$(call Package/python3/Default/description)
+
+This package contains the unittest module.
 endef
 
 $(eval $(call Py3BasePackage,python3-unittest, \

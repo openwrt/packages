@@ -8,13 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python3-bottle
-PKG_VERSION:=0.12.25
+PKG_VERSION:=0.13.4
 PKG_RELEASE:=1
 
 PYPI_NAME:=bottle
-PKG_HASH:=e1a9c94970ae6d710b3fb4526294dfeb86f2cb4a81eff3a4b98dc40fb0e5e021
+PKG_HASH:=787e78327e12b227938de02248333d788cfe45987edca735f8f88e03472c3f47
 
-PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
+PKG_BUILD_DEPENDS:=python-setuptools/host
+
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:bottlepy:bottle

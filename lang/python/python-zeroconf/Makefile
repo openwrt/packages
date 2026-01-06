@@ -8,15 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-zeroconf
-PKG_VERSION:=0.38.1
+PKG_VERSION:=0.131.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=zeroconf
-PKG_HASH:=10c501b25d8881b656e56c34674d98fe6bc752240a572e74f918bc849c93ba9c
+PKG_HASH:=90c431e99192a044a5e0217afd7ca0ca9824af93190332e6f7baf4da5375f331
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
-PKG_LICENSE:=Apache-2.0
+PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
+
+PKG_BUILD_DEPENDS:=python-cython/host python-poetry-core/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -27,9 +29,10 @@ define Package/python3-zeroconf
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=Multicast DNS Service Discovery Library
-  URL:=https://github.com/jstasiak/python-zeroconf
+  URL:=https://github.com/python-zeroconf/python-zeroconf
   DEPENDS:= \
 	  +python3-light \
+	  +python3-asyncio \
 	  +python3-logging \
 	  +python3-ifaddr
 endef

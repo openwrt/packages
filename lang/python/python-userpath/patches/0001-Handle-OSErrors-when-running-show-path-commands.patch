@@ -1,0 +1,31 @@
+From 9175a0a97c7bc2eeb995e53d50a07be6a7e834f0 Mon Sep 17 00:00:00 2001
+From: Jeffery To <jeffery.to@gmail.com>
+Date: Thu, 9 Nov 2023 14:20:58 +0800
+Subject: [PATCH] Handle OSErrors when running show path commands
+
+Bash may not always be installed, for example on OpenWrt, and attempting
+to call the show path commands for Bash will cause a FileNotFoundError
+to be raised.
+
+This wraps the subprocess call with a try statement and returns the
+empty string in the case of an OSError.
+---
+ userpath/utils.py | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+--- a/userpath/utils.py
++++ b/userpath/utils.py
+@@ -30,8 +30,11 @@ def ensure_parent_dir_exists(path):
+ 
+ 
+ def get_flat_output(command, sep=os.pathsep, **kwargs):
+-    process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **kwargs)
+-    output = process.communicate()[0].decode(locale.getpreferredencoding(False)).strip()
++    try:
++        process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **kwargs)
++        output = process.communicate()[0].decode(locale.getpreferredencoding(False)).strip()
++    except OSError:
++        return ''
+ 
+     # We do this because the output may contain new lines.
+     lines = [line.strip() for line in output.splitlines()]

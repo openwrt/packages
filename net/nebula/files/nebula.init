@@ -1,5 +1,5 @@
 #!/bin/sh /etc/rc.common
-# Copyright 2021 Stan Grishin (stangri@melmac.ca)
+# Copyright 2021-2023 Stan Grishin (stangri@melmac.ca)
 # shellcheck disable=SC3043,SC3060
 
 # shellcheck disable=SC2034
@@ -10,7 +10,6 @@ USE_PROCD=1
 readonly PKG_VERSION='dev-test'
 readonly packageName='nebula-service'
 readonly serviceName="$packageName $PKG_VERSION"
-readonly sharedMemoryOutput="/dev/shm/$packageName-output"
 readonly PROG=/usr/sbin/nebula
 readonly _OK_='\033[0;32m\xe2\x9c\x93\033[0m'
 readonly _FAIL_='\033[0;31m\xe2\x9c\x97\033[0m'
@@ -21,6 +20,7 @@ version() { echo "Version: $PKG_VERSION"; }
 
 output() {
 	local msg memmsg logmsg
+	local sharedMemoryOutput="/dev/shm/$packageName-output"
 	[ -t 1 ] && printf "%b" "$@"
 	msg="${1//$serviceName /service }";
 	if [ "$(printf "%b" "$msg" | wc -l)" -gt 0 ]; then

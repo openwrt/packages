@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-execnet
-PKG_VERSION:=1.8.0
-PKG_RELEASE:=2
+PKG_VERSION:=2.0.2
+PKG_RELEASE:=1
 
 PYPI_NAME:=execnet
-PKG_HASH:=b73c5565e517f24b62dea8a5ceac178c661c4309d3aa0c3e420856c072c411b4
+PKG_HASH:=cc59bc4423742fd71ad227122eb0dd44db51efb3dc4095b45ac9a08c770096af
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_DEPENDS:=python-setuptools-scm/host
+PKG_BUILD_DEPENDS:=python-hatchling/host python-hatch-vcs/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -28,15 +28,14 @@ define Package/python3-execnet
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=Library for distributed interact mechanism
+  TITLE:=Rapid multi-Python deployment
   URL:=https://execnet.readthedocs.io
-  DEPENDS:= +python3-light +python3-apipkg
+  DEPENDS:=+python3-light
 endef
 
 define Package/python3-execnet/description
-  The execnet provides a share-nothing model with channel-send/receive communication for
-  distributing execution across many Python interpreters across version, platform and network
-  barriers.complex functional testing for applications and libraries.
+execnet provides carefully tested means to ad-hoc interact with Python
+interpreters across version, platform and network barriers.
 endef
 
 $(eval $(call Py3Package,python3-execnet))

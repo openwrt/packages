@@ -93,24 +93,15 @@
  #endif
  
  #include <sys/types.h>
-@@ -29,14 +29,14 @@ static char sccsid[] = "@(#) fix_options
+@@ -29,7 +29,7 @@ static char sccsid[] = "@(#) fix_options
  
  /* fix_options - get rid of IP-level socket options */
  
 -fix_options(request)
--struct request_info *request;
-+void    fix_options(request)
-+struct  request_info *request;
++void fix_options(request)
+ struct request_info *request;
  {
  #ifdef IP_OPTIONS
-     unsigned char optbuf[BUFFER_SIZE / 3], *cp;
-     char    lbuf[BUFFER_SIZE], *lp;
- #if !defined(__GLIBC__)
--    int     optsize = sizeof(optbuf), ipproto;
-+    unsigned int  optsize = sizeof(optbuf), ipproto;
- #else /* __GLIBC__ */
-     size_t  optsize = sizeof(optbuf);
-     int     ipproto;
 --- a/fromhost.c
 +++ b/fromhost.c
 @@ -11,7 +11,7 @@
@@ -545,24 +536,6 @@
  #endif
  
  /* System libraries. */
-@@ -77,7 +77,7 @@ struct request_info *request;
-     static struct sockaddr_in client;
-     static struct sockaddr_in server;
- #if !defined (__GLIBC__)
--    int     len;
-+    unsigned int  len;
- #else /* __GLIBC__ */
-     size_t  len;
- #endif /* __GLIBC__ */
-@@ -229,7 +229,7 @@ int     fd;
-     char    buf[BUFSIZ];
-     struct sockaddr_in sin;
- #if !defined(__GLIBC__)
--    int     size = sizeof(sin);
-+    unsigned int  size = sizeof(sin);
- #else /* __GLIBC__ */
-     size_t  size = sizeof(sin);
- #endif /* __GLIBC__ */
 --- a/tcpd.c
 +++ b/tcpd.c
 @@ -11,7 +11,7 @@

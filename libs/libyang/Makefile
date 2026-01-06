@@ -8,16 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libyang
-PKG_VERSION:=2.0.112
+PKG_VERSION:=3.13.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/CESNET/libyang/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=184dd67c66c1ad968a2ee4d0950fb6b103834917b04b17af9c7bca80967636ee
+PKG_HASH:=5cd5018f39c830f97d70616c003990287ce5e820ae2792763a49e2a1f63af8d6
 
-PKG_MAINTAINER:=Jakov Smolic <jakov.smolic@sartura.hr>
+PKG_MAINTAINER:=
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:cesnet:libyang
 
 CMAKE_INSTALL:=1
 CMAKE_BINARY_SUBDIR:=build
@@ -30,7 +31,7 @@ define Package/libyang
   CATEGORY:=Libraries
   TITLE:=YANG data modeling language library
   URL:=https://github.com/CESNET/libyang
-  DEPENDS:=+libpcre2 +libpthread
+  DEPENDS:=+libpcre2 +libpthread +libxxhash
 endef
 
 define Package/yanglint

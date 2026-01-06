@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zsh
 PKG_VERSION:=5.9
-PKG_RELEASE:=1
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/zsh
@@ -18,11 +18,20 @@ PKG_HASH:=9b8d1ecedd5b5e81fbf1918e876752a7dd948e05c1a0dba10ab863842d45acd5
 PKG_MAINTAINER:=Vadim A. Misbakh-Soloviov <openwrt-zsh@mva.name>
 PKG_LICENSE:=ZSH
 PKG_LICENSE_FILES:=LICENCE
-PKG_CPE_ID:=cpe:/a:zsh_project:zsh
+PKG_CPE_ID:=cpe:/a:zsh:zsh
 
+PKG_FIXUP:=autoreconf
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 PKG_BUILD_FLAGS:=gc-sections lto
+
+# zsh include custom macro in the default aclocal.m4
+# When autoreconf PKG_FIXUP is used, if PKG_REMOVE_FILES
+# is not defined, it's set to remove the file aclocak.m4
+# by default resulting in problem with the custom macro
+# AC_PROG_LN
+# To prevent this, declare empty PKG_REMOVE_FILES
+PKG_REMOVE_FILES:=
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -31,7 +40,7 @@ define Package/zsh
   CATEGORY:=Utilities
   SUBMENU:=Shells
   TITLE:=The Z shell
-  DEPENDS:=+libcap +libncurses +libncursesw +libpcre +librt
+  DEPENDS:=+libcap +libncurses +libncursesw +libpcre2 +librt
   URL:=https://www.zsh.org/
 endef
 
@@ -57,6 +66,8 @@ define Build/Configure
 		--enable-fndir=$(CONFIGURE_PREFIX)/share/zsh/$(PKG_VERSION)/functions \
 		--enable-site-fndir=$(CONFIGURE_PREFIX)/share/zsh/site-functions \
 		--enable-function-subdirs \
+		--enable-etcdir=/etc/zsh \
+		--enable-zprofile=/etc/zsh/zprofile \
 		--with-tcsetpgrp \
 		--with-term-lib="ncursesw", \
 		zsh_cv_shared_environ=yes \
@@ -100,12 +111,14 @@ endef
 define Package/zsh/install
 	$(INSTALL_DIR) $(1)/bin
 	$(INSTALL_DIR) $(1)/$(CONFIGURE_PREFIX)/bin
+	$(INSTALL_DIR) $(1)/etc/zsh
 	$(INSTALL_DIR) $(1)/$(CONFIGURE_PREFIX)/share/zsh/$(PKG_VERSION)
 	$(INSTALL_DIR) $(1)/$(CONFIGURE_PREFIX)/lib/zsh/$(PKG_VERSION)/zsh
 	$(INSTALL_DIR) $(1)/$(CONFIGURE_PREFIX)/lib/zsh/$(PKG_VERSION)/zsh/net
 	$(INSTALL_DIR) $(1)/$(CONFIGURE_PREFIX)/lib/zsh/$(PKG_VERSION)/zsh/param
 
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/$(CONFIGURE_PREFIX)/bin/zsh $(1)/$(CONFIGURE_PREFIX)/bin/
+	$(INSTALL_DATA) ./files/zprofile $(1)/etc/zsh
 	$(CP) $(PKG_INSTALL_DIR)/$(CONFIGURE_PREFIX)/share/zsh/$(PKG_VERSION)/* $(1)/$(CONFIGURE_PREFIX)/share/zsh/$(PKG_VERSION)/
 	$(CP) $(PKG_INSTALL_DIR)/$(CONFIGURE_PREFIX)/lib/zsh/$(PKG_VERSION)/zsh/* $(1)/$(CONFIGURE_PREFIX)/lib/zsh/$(PKG_VERSION)/zsh/
 	$(CP) $(PKG_INSTALL_DIR)/$(CONFIGURE_PREFIX)/lib/zsh/$(PKG_VERSION)/zsh/net/* $(1)/$(CONFIGURE_PREFIX)/lib/zsh/$(PKG_VERSION)/zsh/net/

@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dfu-programmer
-PKG_VERSION:=1.0.0
+PKG_VERSION:=1.1.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/$(PKG_NAME)/$(PKG_NAME)/releases/download/v$(PKG_VERSION)/
-PKG_HASH:=867eaf0a8cd10123715491807ab99cecb54dc6f09dddade4b2a42b0b0ef9e6b0
+PKG_HASH:=844e469be559657bc52c9d9d03c30846acd11ffbb1ddd42438fa8af1d2b8587d
 
 PKG_MAINTAINER:=Stefan Hellermann <stefan@the2masters.de>
 PKG_LICENSE:=GPL-2.0

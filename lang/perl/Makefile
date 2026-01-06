@@ -11,22 +11,15 @@ include perlver.mk
 
 PKG_NAME:=perl
 PKG_VERSION:=$(PERL_VERSION)
-PKG_RELEASE:=9
+PKG_RELEASE:=3
 
-PKG_SOURCE_URL:=\
-		https://cpan.metacpan.org/src/5.0 \
-		https://cpan.uib.no/src/5.0 \
-		https://mirrors.rit.edu/CPAN/src/5.0 \
-		https://mirror.transip.net/CPAN/src/5.0 \
-		https://mirrors.sonic.net/cpan/src/5.0 \
-		https://www.cpan.org/src/5.0
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=fea7162d4cca940a387f0587b93f6737d884bf74d8a9d7cfd978bc12cd0b202d
+PKG_SOURCE_URL:=https://www.cpan.org/src/5.0
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_HASH:=c740348f357396327a9795d3e8323bafd0fe8a5c7835fc1cbaba0cc8dfe7161f
 
 PKG_LICENSE:=GPL-1.0-or-later Artistic-1.0-Perl
 PKG_LICENSE_FILES:=Copying Artistic README
-PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>, \
-		Philip Prindeville <philipp@redfish-solutions.com>
+PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>, Philip Prindeville <philipp@redfish-solutions.com>
 PKG_CPE_ID:=cpe:/a:perl:perl
 
 # Build settings
@@ -66,9 +59,9 @@ define Package/perl
   SUBMENU:=Perl
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=The Perl intepreter
+  TITLE:=The Perl interpreter
   URL:=http://www.perl.com/
-  DEPENDS:=+USE_GLIBC:libbsd +PERL_THREADS:libpthread @!arc
+  DEPENDS:= +USE_GLIBC:libcrypt-compat +USE_GLIBC:libbsd +PERL_THREADS:libpthread @!arc
 endef
 
 define Package/perl/description
@@ -99,6 +92,21 @@ endef
 
 # Target perl
 define Build/Configure
+	# We don't want to pass -Ilib to host perl in the target build (as lib
+	# contains the target libraries, and files may currently be written
+	# while being imported in parallel builds). We do however need the
+	# target versions of the Config modules at the beginning of the include
+	# path for the build scripts' use.
+	#
+	# Create an alternative lib_build directory that will be added to the
+	# include path instead of lib (using hostperl-wrapper), containing only
+	# the config modules.
+	$(INSTALL_DIR) $(PKG_BUILD_DIR)/lib_build
+	ln -sf ../lib/Config.pm ../lib/Config_heavy.pl ../lib/Config_git.pl $(PKG_BUILD_DIR)/lib_build/
+
+	install -m0755 files/hostperl-wrapper $(PKG_BUILD_DIR)/hostperl-wrapper
+	sed -i "s'@HOST_PERL@'$(HOST_PERL_PREFIX)/bin/perl'g" $(PKG_BUILD_DIR)/hostperl-wrapper
+
 	$(PERL_CMD) files/perlconfig.pl -Dowrt:target_cc='$(TARGET_CC)' \
 	                                -Dowrt:gccversion=$(CONFIG_GCC_VERSION) \
 	                                -Dowrt:target_cross='$(TARGET_CROSS)' \
@@ -109,7 +117,7 @@ define Build/Configure
 	                                -Dowrt:threads=$(if $(CONFIG_PERL_THREADS),yes,no) \
 	                                -Dowrt:staging_dir='$(STAGING_DIR)' \
 	                                -Dowrt:host_perl_prefix='$(HOST_PERL_PREFIX)' \
-	                                -Dsysroot='$(TOOLCHAIN_DIR)' \
+	                                -Dsysroot='$(TOOLCHAIN_ROOT_DIR)' \
 	                                files/version.config \
 	                                files/base.config \
 	                                files/$(patsubst i386,i486,$(ARCH)).config \
@@ -124,6 +132,8 @@ define Build/Configure
 endef
 
 define Build/Compile
+	# make depend is required to avoid race conditions: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=996953
+	+$(MAKE) -C $(PKG_BUILD_DIR) depend
 	+$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR)
 endef
 

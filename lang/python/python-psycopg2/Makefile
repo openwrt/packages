@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-psycopg2
-PKG_VERSION:=2.8.6
+PKG_VERSION:=2.9.7
 PKG_RELEASE:=1
 
 PYPI_NAME:=psycopg2
-PKG_HASH:=fb23f6c71107c37fd667cb4ea363ddeb936b348bbd6449278eb92c189699f543
+PKG_HASH:=f00cc35bd7119f1fed17b85bd1007855194dde2cbd8de01ab8ebb17487440ad8
 
 PKG_MAINTAINER:=Daniel Danzberger <daniel@dd-wrt.com>
 PKG_LICENSE:=LGPL-3.0-or-later
@@ -28,13 +28,19 @@ define Package/python3-psycopg2
   CATEGORY:=Languages
   TITLE:=PostgreSQL database adapter
   URL:=https://www.psycopg.org/
-  DEPENDS:=+python3 +libpq
+  DEPENDS:= \
+    +python3-light \
+    +python3-decimal \
+    +python3-logging \
+    +python3-uuid \
+    +libpq
 endef
 
 define Package/python3-psycopg2/description
- Psycopg is the most popular PostgreSQL adapter for the Python programming language
+Psycopg is the most popular PostgreSQL adapter for the Python
+programming language
 endef
 
 $(eval $(call Py3Package,python3-psycopg2))
 $(eval $(call BuildPackage,python3-psycopg2))
-
+$(eval $(call BuildPackage,python3-psycopg2-src))

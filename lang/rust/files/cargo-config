@@ -1,8 +1,0 @@
-[target.@RUSTC_TARGET_ARCH@]
-linker = "@TARGET_CC_NOCACHE@"
-rustflags = ["-Ctarget-feature=-crt-static", "-Clink-args=@RUSTC_LDFLAGS@"]
-
-[profile.stripped]
-inherits = "release"
-opt-level = "s"
-strip = true

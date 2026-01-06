@@ -9,16 +9,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lxc
-PKG_VERSION:=5.0.2
-PKG_RELEASE:=2
+PKG_VERSION:=6.0.5
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://linuxcontainers.org/downloads/lxc/
-PKG_HASH:=bea08d2e49efcee34fa58acd2bc95c0adc64d291c07f4cfaf4ac1d8ac5a36f45
+PKG_HASH:=2e540c60b9dd49e7ee1a4efa5e9c743b05df911b81b375ed5043d9dd7ee0b48a
 
 PKG_MAINTAINER:=Marko Ratkaj <markoratkaj@gmail.com>
 PKG_LICENSE:=LGPL-2.1-or-later BSD-2-Clause GPL-2.0
 PKG_LICENSE_FILES:=COPYING LICENSE.GPL2 LICENSE.LGPL2.1
+PKG_CPE_ID:=cpe:/a:linuxcontainers:lxc
 PKG_BUILD_FLAGS:=no-mips16
 
 include $(INCLUDE_DIR)/package.mk
@@ -49,7 +50,7 @@ LXC_SCRIPTS += \
 
 DEPENDS_APPLETS = +libpthread +libcap +liblxc
 
-DEPENDS_create = +lxc-configs +lxc-hooks +lxc-templates +flock +getopt
+DEPENDS_create = +lxc-configs +lxc-hooks +lxc-templates +flock +getopt +tar
 
 define Package/lxc/Default
   SECTION:=utils
@@ -102,6 +103,11 @@ define Package/lxc-unprivileged/install
 	$(INSTALL_DATA) ./files/lxc-unprivileged.defaults $(1)/etc/uci-defaults/lxc-unprivileged
 endef
 
+define Package/lxc-unprivileged/conffiles
+/etc/subgid
+/etc/subuid
+endef
+
 define Package/lxc/config
   source "$(SOURCE)/Config.in"
 endef
@@ -136,7 +142,7 @@ define Package/liblxc
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=LXC userspace library
-  DEPENDS+= +libcap +libpthread +LXC_SECCOMP:libseccomp +libopenssl
+  DEPENDS+= +libcap +libpthread +LXC_SECCOMP:libseccomp +libopenssl +libdbus
 endef
 
 define Package/lxc-init

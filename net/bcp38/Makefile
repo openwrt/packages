@@ -7,8 +7,8 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bcp38
 PKG_VERSION:=5
-PKG_RELEASE:=11
-PKG_LICENCE:=GPL-3.0-or-later
+PKG_RELEASE:=12
+PKG_LICENSE:=GPL-3.0-or-later
 
 include $(INCLUDE_DIR)/package.mk
 

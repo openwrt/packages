@@ -43,7 +43,7 @@ Signed-off-by: Daniel F. Dickinson <cshored@thecshore.com>
 +    while ( $pos <= length($keydata) ) {
 +        $partlen = unpack('N',  substr $keydata, $pos, 4) or last;
 +        $data = unpack('s>*',  substr $keydata, $pos + 4, 4) or last;
-+	$pos = $pos + 4 + $partlen;
++    $pos = $pos + 4 + $partlen;
 +        push @keyparts, $data;
 +    }
 +    return ( $algorithm, @keyparts );
@@ -54,18 +54,18 @@ Signed-off-by: Daniel F. Dickinson <cshored@thecshore.com>
 +# If the file cannot be parsed it will be undef
 +# Returns (restrictions, algorithm, PEMkey, comment)
 +sub ssh_parse_line($) {
-+   my $ssh_line = shift;
-+   my @ssh_parts = split / /, $ssh_line, 5;
-+   if (scalar @ssh_parts < 4)  {
-+      @ssh_parts = ('', @ssh_parts);
-+   }
-+   if (scalar @ssh_parts > 4) {
-+      @ssh_parts = @ssh_parts[0,3]
-+   }
-+   if (scalar @ssh_parts < 4) {
-+      @ssh_parts = undef;
-+   }
-+   return ( @ssh_parts );
++    my $ssh_line = shift;
++    my @ssh_parts = split / /, $ssh_line, 5;
++    if (scalar @ssh_parts < 4)  {
++        @ssh_parts = ('', @ssh_parts);
++    }
++    if (scalar @ssh_parts > 4) {
++        @ssh_parts = @ssh_parts[0,3]
++    }
++    if (scalar @ssh_parts < 4) {
++        @ssh_parts = undef;
++    }
++    return ( @ssh_parts );
 +}
 +
 +# ----------------------------------------------------------------------
@@ -95,7 +95,7 @@ Signed-off-by: Daniel F. Dickinson <cshored@thecshore.com>
      my $in = shift;
      -f $in or die "file not found: $in\n";
      my $fh;
--    open( $fh, "ssh-keygen -l -f $in |" ) or die "could not fork: $!\n";
+-    open( $fh, "ssh-keygen -l -f $in 2>&1 |" ) or die "could not fork: $!\n";
 +    open( $fh, $in ) or die "could not open $in: $!\n";
      my $output = <$fh>;
      chomp $output;

@@ -7,8 +7,14 @@
 
 define Package/python3-asyncio
 $(call Package/python3/Default)
-  TITLE:=Python $(PYTHON3_VERSION) asyncio module
+  TITLE+= asyncio module
   DEPENDS:=+python3-light
+endef
+
+define Package/python3-asyncio/description
+$(call Package/python3/Default/description)
+
+This package contains the asyncio module.
 endef
 
 $(eval $(call Py3BasePackage,python3-asyncio, \

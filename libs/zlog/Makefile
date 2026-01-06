@@ -1,30 +1,28 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zlog
-PKG_VERSION:=1.2.15
-PKG_RELEASE:=2
+PKG_VERSION:=1.2.17
+PKG_RELEASE:=3
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/HardySimpson/$(PKG_NAME)/archive/refs/tags/$(PKG_VERSION).tar.gz?
-PKG_HASH:=00037ab8d52772a95d645f1dcfd2c292b7cea326b54e63e219a5b7fdcb7e6508
-PKG_MAINTAINER:=Marko Ratkaj <markoratkaj@gmail.com>
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/HardySimpson/zlog
+PKG_SOURCE_VERSION:=$(PKG_VERSION)
+PKG_MIRROR_HASH:=501d89c6883de14e8e6c53e1597f425814b3b467b31da04c50390d4924efecf3
 
-PKG_INSTALL:=1
-PKG_BUILD_PARALLEL:=1
+PKG_MAINTAINER:=
+PKG_LICENSE:=Apache-2.0
+PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:zlog_project:zlog
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/zlog
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Pure C logging library
   URL:=http://hardysimpson.github.io/zlog/
-  LICENSE:=LGPL-2.1-or-later
-  LICENSE_FILES:=COPYING
 endef
-
-MAKE_FLAGS+= \
-	PREFIX="$(PKG_INSTALL_DIR)/usr"
 
 define Package/zlog/description
   zlog is a reliable, high-performance, thread safe, flexible, clear-model, pure C logging library.

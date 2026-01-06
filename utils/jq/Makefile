@@ -8,47 +8,72 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=jq
-PKG_VERSION:=1.6
+PKG_VERSION:=1.8.1
 PKG_RELEASE:=2
-PKG_LICENSE:=BSD
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/stedolan/jq.git
-PKG_SOURCE_DATE:=2018-11-02
-PKG_SOURCE_VERSION:=2e01ff1fb69609540b2bdc4e62a60499f2b2fb8e
-PKG_MIRROR_HASH:=ee52d2dce67dfbea633020d11a908d5818145a2bf87e5a0a17c0ff6885a428a7
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://github.com/jqlang/jq/releases/download/$(PKG_NAME)-$(PKG_VERSION)/
+PKG_HASH:=2be64e7129cecb11d5906290eba10af694fb9e3e7f9fc208a311dc33ca837eb0
+
 PKG_MAINTAINER:=Marko Ratkaj <markoratkaj@gmail.com>
+PKG_LICENSE:=MIT
+PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:jqlang:jq
 
-PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 
-ifdef CONFIG_USE_MIPS16
-  TARGET_CFLAGS += -fno-ipa-sra
-endif
+define Package/jq/Default
+  SECTION:=utils
+  CATEGORY:=Utilities
+  TITLE:=Lightweight and flexible command-line JSON processor
+  URL:=https://jqlang.github.io/jq/
+endef
 
-TARGET_CFLAGS += -std=c99 -D_GNU_SOURCE
+define Package/jq
+  $(call Package/jq/Default)
+  TITLE+= (noregex)
+  VARIANT:=noregex
+  DEFAULT_VARIANT:=1
+endef
+
+define Package/jq/description
+  Lightweight and flexible command-line JSON processor.
+  This package was compiled without ONIGURUMA regex library. match/test/sub and related functions are not available.
+endef
+
+define Package/jq-full
+  $(call Package/jq/Default)
+  TITLE+= (full)
+  DEPENDS+=+oniguruma
+  VARIANT:=full
+  PROVIDES:=jq
+endef
+
+define Package/jq-full/description
+  Lightweight and flexible command-line JSON processor.
+  This package was compiled with ONIGURUMA regex library and has full regex support.
+endef
 
 CONFIGURE_ARGS+= \
 	--disable-docs \
 	--disable-valgrind \
-	--without-oniguruma
 
-define Package/jq
-  SECTION:=utils
-  CATEGORY:=Utilities
-  TITLE:=Lightweight and flexible command-line JSON processor.
-  URL:=https://stedolan.github.io/jq/
-endef
-
-define Package/jq/description
-	Lightweight and flexible command-line JSON processor.
-endef
+ifeq ($(BUILD_VARIANT),full)
+  CONFIGURE_ARGS += --with-oniguruma
+else
+  CONFIGURE_ARGS += --without-oniguruma
+endif
 
 define Package/jq/install
 	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_DIR) $(1)/usr/lib
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libjq.so* $(1)/usr/lib/
 endef
 
+Package/jq-full/install = $(Package/jq/install)
+
 $(eval $(call BuildPackage,jq))
+$(eval $(call BuildPackage,jq-full))

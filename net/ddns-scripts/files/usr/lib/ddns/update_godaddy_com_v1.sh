@@ -68,11 +68,11 @@ godaddy_transfer() {
 		}
 
 		__CNT=$(( $__CNT + 1 ))	# increment error counter
-		# if error count > retry_count leave here
-		[ $retry_count -gt 0 -a $__CNT -gt $retry_count ] && \
-			write_log 14 "Transfer failed after $retry_count retries"
+		# if error count > retry_max_count leave here
+		[ $retry_max_count -gt 0 -a $__CNT -gt $retry_max_count ] && \
+			write_log 14 "Transfer failed after $retry_max_count retries"
 
-		write_log 4 "Transfer failed - retry $__CNT/$retry_count in $RETRY_SECONDS seconds"
+		write_log 4 "Transfer failed - retry $__CNT/$retry_max_count in $RETRY_SECONDS seconds"
 		sleep $RETRY_SECONDS &
 		PID_SLEEP=$!
 		wait $PID_SLEEP	# enable trap-handler
@@ -93,8 +93,8 @@ __PRGBASE="$CURL -RsS -w '%{http_code}' -o $DATFILE --stderr $ERRFILE"
 # force network/interface-device to use for communication
 if [ -n "$bind_network" ]; then
 	local __DEVICE
-	network_get_physdev __DEVICE $bind_network || \
-		write_log 13 "Can not detect local device using 'network_get_physdev $bind_network' - Error: '$?'"
+	network_get_device __DEVICE $bind_network || \
+		write_log 13 "Can not detect local device using 'network_get_device $bind_network' - Error: '$?'"
 	write_log 7 "Force communication via device '$__DEVICE'"
 	__PRGBASE="$__PRGBASE --interface $__DEVICE"
 fi

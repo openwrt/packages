@@ -8,16 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pip
-PKG_VERSION:=23.1.2
+PKG_VERSION:=23.3.1
 PKG_RELEASE:=1
 
 PYPI_NAME:=pip
-PKG_HASH:=0e7c86f486935893c708287b30bd050a36ac827ec7fe5e43fe7cb198dd835fba
+PKG_HASH:=1fcaa041308d01f14575f6d0d2ea4b75a3e2871fe4f9c694976f908768e14174
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.txt
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
-CPE_ID:=cpe:/a:python:pip
+PKG_CPE_ID:=cpe:/a:pypa:pip
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

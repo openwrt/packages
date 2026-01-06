@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=c-ares
-PKG_VERSION:=1.18.1
+PKG_VERSION:=1.34.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://c-ares.org/download
-PKG_HASH:=1a7d52a8a84a9fbffb1be9133c0f6e17217d91ea5a6fa61f6b4729cda78ebbcf
+PKG_SOURCE_URL:=https://github.com/c-ares/c-ares/releases/download/v$(PKG_VERSION)
+PKG_HASH:=912dd7cc3b3e8a79c52fd7fb9c0f4ecf0aaa73e45efda880266a2d6e26b84ef5
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE.md
@@ -28,8 +28,8 @@ include $(INCLUDE_DIR)/cmake.mk
 define Package/libcares
   SECTION:=libs
   CATEGORY:=Libraries
-  TITLE:=Library for asyncronous DNS Requests (including name resolves)
-  URL:=http://c-ares.haxx.se/
+  TITLE:=Library for asynchronous DNS Requests (including name resolves)
+  URL:=https://c-ares.org/
   MAINTAINER:=Karl Palsson <karlp@etactica.com>
 endef
 
@@ -42,11 +42,15 @@ Netware, Android and many more operating systems.
 endef
 
 CMAKE_OPTIONS += \
-	-DCARES_STATIC=OFF \
-	-DCARES_SHARED=ON \
 	-DCARES_STATIC_PIC=ON \
-	-DCARES_BUILD_TESTS=OFF \
 	-DCARES_BUILD_TOOLS=OFF
+
+define Build/InstallDev
+	$(call Build/InstallDev/cmake,$(1))
+	$(SED) 's,/usr/bin,$$$${prefix}/lib,g' $(1)/usr/lib/pkgconfig/libcares.pc
+	$(SED) 's,/usr/include,$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/libcares.pc
+	$(SED) 's,/usr/lib,$$$${prefix}/lib,g' $(1)/usr/lib/pkgconfig/libcares.pc
+endef
 
 define Package/libcares/install
 	$(INSTALL_DIR) $(1)/usr/lib

@@ -6,16 +6,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libgee
-PKG_VERSION:=0.20.6
+PKG_VERSION:=0.20.8
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=@GNOME/libgee/0.20
-PKG_HASH:=1bf834f5e10d60cc6124d74ed3c1dd38da646787fbf7872220b8b4068e476d4d
+PKG_SOURCE_URL:=@GNOME/libgee/$(basename $(PKG_VERSION))
+PKG_HASH:=189815ac143d89867193b0c52b7dc31f3aa108a15f04d6b5dca2b6adfad0b0ee
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:gnome:libgee
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
@@ -32,7 +33,7 @@ define Package/libgee
   URL:=https://wiki.gnome.org/Libgee
 endef
 
-define Package/libgee/decription
+define Package/libgee/description
   Libgee is an utility library providing GObject-based interfaces and classes
 endef
 

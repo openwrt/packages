@@ -1,0 +1,236 @@
+--- a/nginx-mod-njs/auto/types
++++ b/nginx-mod-njs/auto/types
+@@ -11,113 +11,37 @@
+ #     printf("%d", (int) sizeof(TYPE));
+ 
+ 
+-njs_feature="sizeof(int)"
+-njs_feature_name=NJS_INT_SIZE
+-njs_feature_run=value
+-njs_feature_incs=
+-njs_feature_libs=
+-njs_feature_test="#include <stdio.h>
+-
+-                  int main() {
+-                      printf(\"%d\", (int) sizeof(int));
+-                      return 0;
+-                  }"
+-. auto/feature
+-
+-
+-njs_feature="sizeof(u_int)"
+-njs_feature_name=NJS_UINT_SIZE
+-njs_feature_run=value
+-njs_feature_incs=
+-njs_feature_libs=
+-njs_feature_test="#include <sys/types.h>
+-                  #include <stdio.h>
+-
+-                  int main() {
+-                      printf(\"%d\", (int) sizeof(u_int));
+-                      return 0;
+-                  }"
+-. auto/feature
+-
+-
+-njs_feature="sizeof(void *)"
+-njs_feature_name=NJS_PTR_SIZE
+-njs_feature_run=value
+-njs_feature_incs=
+-njs_feature_libs=
+-njs_feature_test="#include <stdio.h>
+-
+-                  int main() {
+-                      printf(\"%d\", (int) sizeof(void *));
+-                      return 0;
+-                  }"
+-. auto/feature
+-
+-
+-njs_feature="sizeof(uintptr_t)"
+-njs_feature_name=NJS_UINTPTR_T_SIZE
+-njs_feature_run=value
+-njs_feature_incs=
+-njs_feature_libs=
+-njs_feature_test="#include <stdint.h>
+-                  #include <stdio.h>
+-
+-                  int main() {
+-                      printf(\"%d\", (int) sizeof(uintptr_t));
+-                      return 0;
+-                  }"
+-. auto/feature
++njs_type="int"; . auto/types_util/sizeof
++njs_param=NJS_INT_SIZE; njs_value=$njs_size; . auto/types_util/value
+ 
+ 
+-case "$njs_feature_value" in
++njs_type="u_int"; . auto/types_util/sizeof
++njs_param=NJS_UINT_SIZE; njs_value=$njs_size; . auto/types_util/value
++
++
++njs_type="void *"; . auto/types_util/sizeof
++njs_param=NJS_PTR_SIZE; njs_value=$njs_size; . auto/types_util/value
++
++
++njs_type="uintptr_t"; . auto/types_util/sizeof
++njs_param=NJS_UINTPTR_T_SIZE; njs_value=$njs_size; . auto/types_util/value
++
++case "$njs_value" in
+     8) NJS_64BIT=1 ;;
+     *) NJS_64BIT=0 ;;
+ esac
+ 
+ 
+-njs_feature="sizeof(size_t)"
+-njs_feature_name=NJS_SIZE_T_SIZE
+-njs_feature_run=value
+-njs_feature_incs=
+-njs_feature_libs=
+-njs_feature_test="#include <stdio.h>
+-
+-                  int main() {
+-                      printf(\"%d\", (int) sizeof(size_t));
+-                      return 0;
+-                  }"
+-. auto/feature
+-
+-
+-njs_feature="sizeof(off_t)"
+-njs_feature_name=NJS_OFF_T_SIZE
+-njs_feature_run=value
+-njs_feature_incs=
+-njs_feature_libs=
+-njs_feature_test="#define _FILE_OFFSET_BITS  64
+-                  #include <unistd.h>
+-                  #include <stdio.h>
+-
+-                  int main() {
+-                      printf(\"%d\", (int) sizeof(off_t));
+-                      return 0;
+-                  }"
+-. auto/feature
+-
+-
+-njs_feature="sizeof(time_t)"
+-njs_feature_name=NJS_TIME_T_SIZE
+-njs_feature_run=value
+-njs_feature_incs=
+-njs_feature_libs=
+-njs_feature_test="#include <time.h>
+-                  #include <stdio.h>
+-
+-                  int main(void) {
+-                      printf(\"%d\", (int) sizeof(time_t));
+-                      return 0;
+-                  }"
+-. auto/feature
++njs_type="size_t"; . auto/types_util/sizeof
++njs_param=NJS_SIZE_T_SIZE; njs_value=$njs_size; . auto/types_util/value
++
++
++njs_type="off_t"; . auto/types_util/sizeof
++njs_param=NJS_OFF_T_SIZE; njs_value=$njs_size; . auto/types_util/value
++
++
++njs_type="time_t"; . auto/types_util/sizeof
++njs_param=NJS_TIME_T_SIZE; njs_value=$njs_size; . auto/types_util/value
+ 
+ 
+ # Ensuring that double type is always evaluated at standard
+--- /dev/null
++++ b/nginx-mod-njs/auto/types_util/sizeof
+@@ -0,0 +1,78 @@
++
++# Copyright (C) Igor Sysoev
++# Copyright (C) Nginx, Inc.
++
++
++printf "checking for sizeof($njs_type) ..."
++
++cat << END >> $NJS_AUTOCONF_ERR
++
++----------------------------------------
++checking for sizeof($njs_type)
++
++END
++
++njs_size=
++
++cat << END > $NJS_AUTOTEST.c
++
++#include <sys/types.h>
++#include <time.h>
++#include <stdio.h>
++#include <stdint.h>
++
++volatile char object_code_block[] = {
++	'\n', 'e', '4', 'V', 'A',
++	'0', 'x', ('0' + sizeof($njs_type)),
++	'Y', '3', 'p', 'M', '\n'
++};
++
++int main(void) {
++    printf("dummy use of object_code_block to avoid gc-section: %c", object_code_block[0]);
++    return 0;
++}
++
++END
++
++
++njs_test="$CC $CFLAGS $NJS_CFLAGS $NJS_CC_OPT $NJS_TEST_CFLAGS \
++          -o $NJS_AUTOTEST $NJS_AUTOTEST.c \
++          $NJS_LD_OPT $NJS_TEST_LIBS"
++
++eval "$njs_test >> $NJS_AUTOCONF_ERR 2>&1"
++
++
++if [ -x $NJS_AUTOTEST ]; then
++    njs_size=`sed -ne 's/^e4VA0x\(.\)Y3pM$/\1/p' < $NJS_AUTOTEST`
++    echo " $njs_size"
++fi
++
++
++case $njs_size in
++    4)
++        njs_max_value=2147483647
++        njs_max_len='(sizeof("-2147483648") - 1)'
++    ;;
++
++    8)
++        njs_max_value=9223372036854775807LL
++        njs_max_len='(sizeof("-9223372036854775808") - 1)'
++    ;;
++
++    *)
++        echo
++        echo "$0: error: can not detect $njs_type size"
++
++        echo "----------"    >> $NJS_AUTOCONF_ERR
++        cat $NJS_AUTOTEST.c  >> $NJS_AUTOCONF_ERR
++        echo "----------"    >> $NJS_AUTOCONF_ERR
++        echo $njs_test       >> $NJS_AUTOCONF_ERR
++        echo "----------"    >> $NJS_AUTOCONF_ERR
++
++        rm -rf $NJS_AUTOTEST*
++
++        exit 1
++esac
++
++
++rm -rf $NJS_AUTOTEST*
+--- /dev/null
++++ b/nginx-mod-njs/auto/types_util/value
+@@ -0,0 +1,12 @@
++
++# Copyright (C) Igor Sysoev
++# Copyright (C) Nginx, Inc.
++
++
++cat << END >> $NJS_AUTO_CONFIG_H
++
++#ifndef $njs_param
++#define $njs_param  $njs_value
++#endif
++
++END

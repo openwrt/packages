@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=exim
-PKG_VERSION:=4.96
+PKG_VERSION:=4.99
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ftp.exim.org/pub/exim/exim4/
-PKG_HASH:=299a56927b2eb3477daafd3c5bda02bc67e5c4e5898a7aeaf2740875278cf1a3
+PKG_HASH:=5df38b042ffa9a9c8d31b20bc8481558070e361b06f657608622a62a327adcba
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 
 PKG_LICENSE:=GPL-2.0-or-later
@@ -45,7 +45,7 @@ LOOKUPS:= \
 define Package/exim/Default
   SECTION:=mail
   CATEGORY:=Mail
-  DEPENDS:=+libdb47 +libpcre2 $(ICONV_DEPENDS) +BUILD_NLS:libidn2 +BUILD_NLS:libidn
+  DEPENDS:= +USE_GLIBC:libcrypt-compat +libdb47 +libpcre2 $(ICONV_DEPENDS) +BUILD_NLS:libidn2 +BUILD_NLS:libidn
   TITLE:=Exim message transfer agent
   URL:=http://www.exim.org/
   USERID:=exim=42:exim=42
@@ -138,7 +138,7 @@ define Package/exim/conffiles
 endef
 
 HOST_CFLAGS += -std=c99
-TARGET_CFLAGS += $(FPIC) -DNO_IP_OPTIONS -D_FILE_OFFSET_BITS=64
+TARGET_CFLAGS += $(FPIC) -DNO_IP_OPTIONS -D_FILE_OFFSET_BITS=64 -DNO_EXECINFO
 
 MAKE_VARS += build=Linux-$$(ARCH)
 MAKE_FLAGS += AR="$$(TARGET_AR) r"
@@ -152,7 +152,7 @@ define Build/Configure
 	$(SED) 's%# EXIM_GROUP=.*%EXIM_GROUP=42%' $(PKG_BUILD_DIR)/Local/Makefile
 	$(SED) 's%# EXIM_USER=.*%EXIM_USER=42%' $(PKG_BUILD_DIR)/Local/Makefile
 	$(SED) 's%# INCLUDE=.*%INCLUDE=-I$(STAGING_DIR)/usr/include -I$(STAGING_DIR)/usr/include%' $(PKG_BUILD_DIR)/Local/Makefile
-	$(SED) 's%# HAVE_IPV6=YES%HAVE_IPV6=YES%' $(PKG_BUILD_DIR)/Local/Makefile
+	$(SED) 's%# HAVE_IPV6=yes%HAVE_IPV6=yes%' $(PKG_BUILD_DIR)/Local/Makefile
 	$(SED) 's%# WITH_CONTENT_SCAN=yes%WITH_CONTENT_SCAN=yes%' $(PKG_BUILD_DIR)/Local/Makefile
 	$(SED) 's%# SUPPORT_MAILDIR=yes%SUPPORT_MAILDIR=yes%' $(PKG_BUILD_DIR)/Local/Makefile
 	$(SED) 's%# SUPPORT_MAILSTORE=yes%SUPPORT_MAILSTORE=yes%' $(PKG_BUILD_DIR)/Local/Makefile

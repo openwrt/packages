@@ -1,0 +1,76 @@
+#!/bin/sh
+
+. /lib/functions.sh
+
+FW4="$(command -v fw4)"
+[ -n "$FW4" ] && exit 0
+
+CONNECTION="${PLUTO_CONNECTION//\//_}"
+[ -z "$CONNECTION" ] && exit 0
+
+IPT_LEGACY="$(command -v iptables-legacy)"
+IPT="$(command -v iptables)"
+BIN="${IPT_LEGACY:-$IPT}"
+[ -z "$BIN" ] && exit 0
+
+LIBRESWAN_INPUT="libreswan_input"
+LIBRESWAN_FORWARD="libreswan_forward"
+LIBRESWAN_OUTPUT="libreswan_output"
+LIBRESWAN_NFLOG_INPUT="libreswan_nflog_input"
+LIBRESWAN_NFLOG_OUTPUT="libreswan_nflog_output"
+LIBRESWAN_POSTROUTING="libreswan_postrouting"
+
+FW_DIR="/tmp/libreswan/firewall.d"
+LIBRESWAN_RULES_FILE="$FW_DIR/libreswan.rules"
+RULES_DIR="$FW_DIR/rules"
+
+IPV4_RULES_FILE="$RULES_DIR/${CONNECTION}-ipv4.rules"
+IPV6_RULES_FILE="$RULES_DIR/${CONNECTION}-ipv6.rules"
+
+reload_firewall() {
+	[ ! -d "$RULES_DIR" ] && return 0
+
+	cat $RULES_DIR/*.rules > "$LIBRESWAN_RULES_FILE" 2>/dev/null
+	/etc/init.d/firewall reload
+}
+
+up_rules() {
+	[ -z "$PLUTO_PEER_CLIENT" ] && return 0
+
+	[ ! -d "$RULES_DIR" ] && mkdir -p "$RULES_DIR"
+	[ "$PLUTO_PEER_CLIENT" = "0.0.0.0/0" ] && [ "$PLUTO_MY_CLIENT" = "0.0.0.0/0" ] && return 0
+
+	cat << EOF > $IPV4_RULES_FILE
+$BIN -t filter -A $LIBRESWAN_INPUT -m policy --dir in --pol ipsec -s $PLUTO_PEER_CLIENT -d $PLUTO_MY_CLIENT -m comment --comment "$PLUTO_CONNECTION" -j ACCEPT
+$BIN -t filter -A $LIBRESWAN_FORWARD -s $PLUTO_PEER_CLIENT -d $PLUTO_MY_CLIENT -m comment --comment "$PLUTO_CONNECTION" -j ACCEPT
+$BIN -t filter -A $LIBRESWAN_OUTPUT -m policy --dir out --pol ipsec -s $PLUTO_MY_CLIENT -d $PLUTO_PEER_CLIENT -m comment --comment "$PLUTO_CONNECTION" -j ACCEPT
+$BIN -t nat -A $LIBRESWAN_POSTROUTING -m policy --dir out --pol ipsec -s $PLUTO_MY_CLIENT -d $PLUTO_PEER_CLIENT -m comment --comment "$PLUTO_CONNECTION" -j ACCEPT
+EOF
+	if [ -n "$NFLOG" ]; then
+		cat << EOF > $IPV4_RULES_FILE
+$BIN -t filter -A $LIBRESWAN_NFLOG_INPUT -m policy --dir in --pol ipsec -s $PLUTO_PEER_CLIENT -d $PLUTO_MY_CLIENT -j NFLOG --nflog-group $NFLOG --nflog-prefix $PLUTO_CONNECTION
+$BIN -t filter -A $LIBRESWAN_NFLOG_OUTPUT -m policy --dir out --pol ipsec -s $PLUTO_MY_CLIENT -d $PLUTO_PEER_CLIENT -j NFLOG --nflog-group $NFLOG --nflog-prefix $PLUTO_CONNECTION
+EOF
+
+	fi
+
+	reload_firewall
+
+	return 0
+}
+
+down_rules() {
+	if [ -f "$IPV4_RULES_FILE" ]; then
+		rm -rf "$IPV4_RULES_FILE"
+		reload_firewall
+	fi
+
+	return 0
+}
+
+case "${PLUTO_VERB}" in
+	up-host|up-client) up_rules ;;
+	down-host|down-client) down_rules ;;
+	up-host-v6|down-host-v6) ;;
+	up-client|down-client-v6) ;;
+esac

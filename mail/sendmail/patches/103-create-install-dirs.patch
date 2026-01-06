@@ -1,15 +1,15 @@
 --- a/sendmail/Makefile.m4
 +++ b/sendmail/Makefile.m4
-@@ -71,6 +71,7 @@ install-set-user-id: bldCURRENT_PRODUCT
- 	${INSTALL} -c -o ${S`'BINOWN} -g ${S`'BINGRP} -m ${S`'BINMODE} bldCURRENT_PRODUCT ${DESTDIR}${M`'BINDIR}
+@@ -69,6 +69,7 @@ install-set-user-id: bldCURRENT_PRODUCT
+ 	${INSTALL} -c -m ${S`'BINMODE} bldCURRENT_PRODUCT ${DESTDIR}${M`'BINDIR}
  	for i in ${sendmailTARGET_LINKS}; do \
  		rm -f $$i; \
 +		mkdir -p $$(dirname $$i); \
  		${LN} ${LNOPTS} ${M`'BINDIR}/sendmail $$i; \
  	done
  
-@@ -79,6 +80,7 @@ install-sm-mta: bldCURRENT_PRODUCT
- 	${INSTALL} -c -o ${M`'BINOWN} -g ${M`'BINGRP} -m ${M`'BINMODE} bldCURRENT_PRODUCT ${DESTDIR}${M`'BINDIR}/sm-mta
+@@ -77,6 +78,7 @@ install-sm-mta: bldCURRENT_PRODUCT
+ 	${INSTALL} -c -m ${M`'BINMODE} bldCURRENT_PRODUCT ${DESTDIR}${M`'BINDIR}/sm-mta
  	for i in confMTA_LINKS; do \
  		rm -f $$i; \
 +		mkdir -p $$(dirname $$i); \

@@ -1,3 +1,17 @@
-url: http://localhost:8000
-tunnel: <Tunnel-UUID>
-credentials-file: /etc/cloudflared/<Tunnel-UUID>.json
+# https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/do-more-with-tunnels/local-management/configuration-file/
+
+# NOTICE
+# Cloudflare recommends setting up a remotely-managed tunnel.
+# Remotely-managed configurations are stored on Cloudflare,
+# which allows you to manage the tunnel from any machine
+# using the dashboard, API, or Terraform.
+
+#tunnel: <Tunnel-UUID>
+#credentials-file: /etc/cloudflared/<Tunnel-UUID>.json
+#
+#ingress:
+#  - hostname: luci.example.com
+#    service: http://localhost:80
+#  - hostname: ssh.example.com
+#    service: ssh://localhost:22
+#  - service: http_status:404

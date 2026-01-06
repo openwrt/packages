@@ -7,11 +7,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-bleak
-PKG_VERSION:=0.20.1
-PKG_RELEASE:=1
+PKG_VERSION:=0.21.1
+PKG_RELEASE:=2
 
 PYPI_NAME:=bleak
-PKG_HASH:=db599f5f100e252e9cdd4020c8657daca0371a3c697e87432abc702f3774cb4c
+PKG_HASH:=ec4a1a2772fb315b992cbaa1153070c7e26968a52b0e2727035f443a1af5c18f
 
 PKG_MAINTAINER:=Quintin Hill <stuff@quintin.me.uk>
 PKG_LICENSE:=MIT
@@ -30,7 +30,7 @@ define Package/python3-bleak
   TITLE:=Bluetooth Low Energy platform Agnostic Klient
   URL:=https://github.com/hbldh/bleak
   DEPENDS:=+python3-light +python3-async-timeout +python3-asyncio \
-	+python3-dbus-fast +python3-ctypes +python3-logging
+	+python3-dbus-fast +python3-ctypes +python3-typing-extensions +python3-logging
 endef
 
 define Package/python3-bleak/description

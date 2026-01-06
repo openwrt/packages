@@ -1,18 +1,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=aardvark-dns
-PKG_VERSION:=1.6.0
+PKG_VERSION:=1.12.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/containers/aardvark-dns/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=f3a2ff2d7baf07d8bf2785b6f1c9618db8aa188bd738b7f5cf1b0a31848232f5
+PKG_HASH:=19317d97525c19135b31f76101b9c13bf2b009cecfc11f467b2ab30fb2641867
 
 PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:containers:aardvark-dns
 
 PKG_BUILD_DEPENDS:=rust/host
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/rust/rust-package.mk

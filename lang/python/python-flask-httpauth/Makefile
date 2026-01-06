@@ -7,12 +7,12 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=python3-flask-httpauth
-PKG_VERSION:=4.2.0
+PKG_NAME:=python-flask-httpauth
+PKG_VERSION:=4.8.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=Flask-HTTPAuth
-PKG_HASH:=8c7e49e53ce7dc14e66fe39b9334e4b7ceb8d0b99a6ba1c3562bb528ef9da84a
+PKG_HASH:=66568a05bc73942c65f1e2201ae746295816dc009edd84b482c44c758d75097a
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=MIT
@@ -26,7 +26,7 @@ define Package/python3-flask-httpauth
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=Basic and Digest HTTP authentication for Flask routes
+  TITLE:=HTTP authentication for Flask routes
   URL:=https://github.com/miguelgrinberg/flask-httpauth
   DEPENDS:= \
 	+python3-light \

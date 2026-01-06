@@ -1,0 +1,8 @@
+logging_level = "info"
+[Network]
+interface = br-lan
+
+[Hosts]
+; ip = mac_address
+; 192.168.1.2 = aa:bb:cc:dd:ee:ff
+; 192.168.1.3 = 00:11:22:33:44:55

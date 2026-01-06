@@ -17,10 +17,10 @@ include ./openvswitch.mk
 #
 PKG_NAME:=openvswitch
 PKG_VERSION:=$(ovs_version)
-PKG_RELEASE:=3
+PKG_RELEASE:=2
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.openvswitch.org/releases/
-PKG_HASH:=e03bfab7ca82d81a7d3a36de4f390a3b5210e3f39657671f922877cd4ea6dc73
+PKG_HASH:=e1b3fa472676626853f22d63f959e5ad061e1bf57e1bbd444d0ed88f947ef8b1
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
@@ -83,6 +83,7 @@ ovs_kmod_openvswitch_depends:=\
 	  +IPV6:kmod-nf-conntrack6 \
 	  +kmod-nsh \
 	  +kmod-ipt-conntrack-extra \
+	  +kmod-sched-act-sample \
 
 ovs_kmod_openvswitch_files:=$(ovs_kmod_upstream_dir)/openvswitch.ko
 $(eval $(call OvsKmodPackageTemplate,openvswitch))
@@ -251,6 +252,7 @@ CONFIGURE_ARGS+= \
 CONFIGURE_VARS += \
 	$(if $(CONFIG_OPENVSWITCH_WITH_LIBUNBOUND),,ac_cv_lib_unbound_ub_ctx_create=no) \
 	ovs_cv_flake8=no \
+	ovs_cv_groff=no \
 	ovs_cv_python3=$(PYTHON3) \
 	ovs_cv_python3_host=$(HOST_PYTHON3_BIN) \
 	SPHINXBUILD=none \

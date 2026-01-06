@@ -1,0 +1,77 @@
+#!/bin/sh /etc/rc.common
+
+USE_PROCD=1
+START=99
+
+prog_name="antiblock"
+tmp_folder="/tmp/$prog_name"
+blacklist_file="$tmp_folder/blacklist"
+
+routes_parse() {
+	local _config="$1"
+
+	local _enabled
+	config_get_bool _enabled "${_config}" "enabled" "1"
+	if [ "${_enabled}" -eq "1" ]; then
+		local _gateway
+		local _domains_path
+
+		config_get _gateway "${_config}" gateway
+		config_get _domains_path "${_config}" domains_path
+
+		procd_append_param command -r "${_gateway} ${_domains_path}"
+	fi
+}
+
+blacklist_parse() {
+	[ "${_blacklist_count}" -eq "0" ] && mkdir -p $tmp_folder && >$blacklist_file
+	_blacklist_count=$(expr "${_blacklist_count}" + 1)
+	echo "$1" >>$blacklist_file
+}
+
+start_service() {
+	config_load "$prog_name"
+
+	local _enabled
+	config_get_bool _enabled "config" "enabled" "0"
+	[ "${_enabled}" -eq "0" ] && return 1
+
+	echo "AntiBlock start"
+
+	local _log
+	local _stat
+	local _test
+
+	config_get_bool _log "config" "log" "0"
+	config_get_bool _stat "config" "stat" "0"
+	config_get_bool _test "config" "test" "0"
+
+	_blacklist_count=0
+	config_list_foreach "config" blacklist blacklist_parse
+
+	procd_open_instance "$prog_name"
+
+	procd_set_param command "/usr/bin/$prog_name"
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+
+	config_foreach routes_parse route
+
+	local _listen
+	_listen="$(uci -q get network.lan.ipaddr):53"
+	procd_append_param command -l "${_listen}"
+
+	procd_append_param command -o "$tmp_folder"
+	[ "${_blacklist_count}" -ne "0" ] && procd_append_param command -b "$blacklist_file"
+	[ "${_log}" -ne "0" ] && mkdir -p $tmp_folder && procd_append_param command --log
+	[ "${_stat}" -ne "0" ] && mkdir -p $tmp_folder && procd_append_param command --stat
+	[ "${_test}" -ne "0" ] && procd_append_param command --test
+
+	procd_close_instance
+
+	/etc/init.d/dnsmasq restart >/dev/null 2>&1
+}
+
+service_triggers() {
+	procd_add_reload_trigger "$prog_name"
+}

@@ -7,8 +7,14 @@
 
 define Package/python3-xml
 $(call Package/python3/Default)
-  TITLE:=Python $(PYTHON3_VERSION) xml libs
+  TITLE+= XML modules
   DEPENDS:=+python3-light +python3-urllib
+endef
+
+define Package/python3-xml/description
+$(call Package/python3/Default/description)
+
+This package contains the XML modules.
 endef
 
 $(eval $(call Py3BasePackage,python3-xml, \

@@ -11,12 +11,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=knxd
-PKG_VERSION:=0.14.58
-PKG_RELEASE:=1
+PKG_VERSION:=0.14.71
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/knxd/knxd/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=4c58ca24c3b382649356b8d794453927f0722739eb5ca654a1bd8de0006b0404
+PKG_HASH:=42bae5bdb8d4fe1e0fa83db60e6b5df00a665a240139b50dd60c97dd8be8277b
 
 PKG_MAINTAINER:=Othmar Truniger <github@truniger.ch>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -33,7 +33,7 @@ define Package/knxd
   SECTION:=net
   CATEGORY:=Network
   TITLE:=EIB KNX daemon
-  DEPENDS:=+libusb-1.0 +libev +libfmt
+  DEPENDS:=+libusb-1.0 +libev +libfmt +libinih
 endef
 
 define Package/knxd/description

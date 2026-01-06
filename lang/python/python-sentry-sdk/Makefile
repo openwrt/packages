@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-sentry-sdk
-PKG_VERSION:=1.5.4
+PKG_VERSION:=1.29.2
 PKG_RELEASE:=1
 
 PYPI_NAME:=sentry-sdk
-PKG_HASH:=f7e54567937ebcbe938c4df1075ec891587faeb7c74184b88cf2894e47c86116
+PKG_HASH:=a99ee105384788c3f228726a88baf515fe7b5f1d2d0f215a03d194369f158df7
 
-PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
-PKG_LICENSE:=BSD-2-Clause
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
+PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 
 include ../pypi.mk
@@ -26,17 +26,16 @@ define Package/python3-sentry-sdk
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
-  TITLE:=Python Client for Sentry
+  TITLE:=Client for Sentry
   URL:=https://github.com/getsentry/sentry-python
   DEPENDS:= \
+	+python3 \
 	+python3-certifi \
-	+python3-light \
-	+python3-logging \
 	+python3-urllib3
 endef
 
 define Package/python3-sentry-sdk/description
-  Python Sentry-Python is an SDK for Sentry.
+This is the official Python SDK for Sentry.
 endef
 
 $(eval $(call Py3Package,python3-sentry-sdk))

@@ -9,7 +9,7 @@ Patch-Name: disable-pip-version-check.patch
 
 --- a/src/pip/_internal/cli/cmdoptions.py
 +++ b/src/pip/_internal/cli/cmdoptions.py
-@@ -892,7 +892,7 @@ disable_pip_version_check: Callable[...,
+@@ -895,7 +895,7 @@ disable_pip_version_check: Callable[...,
      "--disable-pip-version-check",
      dest="disable_pip_version_check",
      action="store_true",

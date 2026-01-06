@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gstreamer1
-PKG_VERSION:=1.22.3
+PKG_VERSION:=1.26.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=gstreamer-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://gstreamer.freedesktop.org/src/gstreamer
-PKG_HASH:=9ffeab95053f9f6995eb3b3da225e88f21c129cd60da002d3f795db70d6d5974
+PKG_HASH:=fe440e41804fabe036e06493b98680e2a8ce76d49879e3cdd6890d72e0614d75
 PKG_BUILD_DIR:=$(BUILD_DIR)/gstreamer-$(PKG_VERSION)
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org> \
@@ -57,7 +57,7 @@ define Package/gstreamer1-libs/description
  $(call Package/gstreamer1/description/Default)
  .
  This meta package contains only dependencies on the other GStreamer
- componenents.
+ components.
 endef
 
 define Package/gstreamer1-libs
@@ -101,7 +101,7 @@ endef
 define Package/libgstreamer1
   $(call Package/gstreamer1/Default)
   TITLE+= library (core)
-  DEPENDS+= +glib2 +libpthread +libxml2
+  DEPENDS+= +glib2 +libpthread +libxml2 +(armeb||powerpc||mips||mipsel):libatomic
   HIDDEN:=1
 endef
 

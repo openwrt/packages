@@ -3,7 +3,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=micrond
 PKG_VERSION:=1
 PKG_RELEASE:=2
-PKG_LICENSE:=BSD-2-clause
+PKG_LICENSE:=BSD-2-Clause
 
 include $(INCLUDE_DIR)/package.mk
 

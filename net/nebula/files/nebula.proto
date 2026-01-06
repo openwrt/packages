@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright 2021 Stan Grishin (stangri@melmac.ca)
+# Copyright 2021-2023 Stan Grishin (stangri@melmac.ca)
 # shellcheck disable=SC1091,SC2039,SC2034,SC3043
 readonly PKG_VERSION='dev-test'
 readonly PROG=/usr/sbin/nebula
@@ -17,7 +17,7 @@ readonly packageName='nebula-proto'
 log() { logger -t "$packageName" "$*"; }
 # https://gist.github.com/pkuczynski/8665367
 # shellcheck disable=SC2086,SC2155
-parse_yaml() {
+yaml_parse() {
 	local prefix=$2
 	local s='[[:space:]]*' w='[a-zA-Z0-9_-]*' fs="$(echo @|tr @ '\034'|tr -d '\015')"
 	sed -ne "s|^\($s\)\($w\)$s:$s\"\(.*\)\"$s\$|\1$fs\2$fs\3|p" \
@@ -48,11 +48,16 @@ proto_nebula_setup() {
 	proto_init_update "${interface}" 1
 
 	[ -s "$config_file" ] || { log "Config file not found or empty!"; return 1; }
-	eval "$(parse_yaml "$config_file" "yaml_")"
+	eval "$(yaml_parse "$config_file" "yaml_")"
+	yaml_tun_dev="${yaml_tun_dev%"${yaml_tun_dev##*[![:space:]]}"}"
 	[ "$yaml_tun_dev" = "$interface" ] || { log "Tunnel device in config file (${yaml_tun_dev}) doesn't match interface name (${interface})!"; return 1; }
 
 	log "Setting up ${interface} from $(basename "$config_file")."
 	proto_run_command "$interface" "$PROG" -config "$config_file"
+	# TODO: if lighthouse, open local port 4242
+	# TODO: else get local subnet from local_range variable, if not,
+	# TODO: iterate over each lighthouse/hosts and append /24
+	# TODO: ip route add "$yaml_local_range" "$yaml_tun_dev"
 	proto_add_data
 	json_add_array firewall
 		json_add_object ""
@@ -67,7 +72,7 @@ proto_nebula_setup() {
 	json_close_array
 	proto_close_data
 	addresses="$(ip -4 a list dev "$interface" 2>/dev/null | grep inet | awk '{print $2}' | awk -F "/" '{print $1}')"
-	log "Running ${interface} from $(basename "$config_file") with addresses: ${addresses}."
+	log "Running ${interface} from $(basename "$config_file")${addresses+:  with addresses: $addresses}."
 	for address in ${addresses}; do
 		case "${address}" in
 			*:*/*)

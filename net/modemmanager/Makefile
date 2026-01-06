@@ -8,12 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=modemmanager
-PKG_SOURCE_VERSION:=1.20.6
-PKG_RELEASE:=1
+PKG_VERSION:=1.24.0
+PKG_RELEASE:=8
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://gitlab.freedesktop.org/mobile-broadband/ModemManager.git
-PKG_MIRROR_HASH:=e90103e2e42bb826bbbac83937a9a69f50348cd6ce0d8da655a12b65494ce7c9
+PKG_SOURCE_VERSION:=$(PKG_VERSION)
+PKG_MIRROR_HASH:=b81e0fc5a112fa52dd7ec72cdb684e10b04755a3492ea392cf6cde5688bb0e03
 
 PKG_MAINTAINER:=Nicholas Smith <nicholas@nbembedded.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -53,6 +54,24 @@ define Package/modemmanager/description
   Select Utilities/usb-modeswitch if needed.
 endef
 
+define Package/modemmanager-rpcd
+  SECTION:=net
+  CATEGORY:=Network
+  TITLE:=RPC interface for ModemManager for rpcd
+  URL:=https://www.freedesktop.org/wiki/Software/ModemManager
+  DEPENDS:= \
+	modemmanager \
+	+lua-cjson
+endef
+
+define Package/modemmanager-rpcd/description
+  ModemManager is a D-Bus-activated service which allows controlling mobile
+  broadband modems.
+
+  This package enables an rpcd interface for getting information from
+  ModemManager using e.g. ubus.
+endef
+
 MESON_ARGS += \
 	-Dudev=false \
 	-Dudevdir=/lib/udev \
@@ -64,6 +83,7 @@ MESON_ARGS += \
 	-Dintrospection=false \
 	-Dman=false \
 	-Dbash_completion=false \
+	-Dbuiltin_plugins=true \
 	-Db_lto=true \
 	-Dmbim=$(if $(CONFIG_MODEMMANAGER_WITH_MBIM),true,false) \
 	-Dqmi=$(if $(CONFIG_MODEMMANAGER_WITH_QMI),true,false) \
@@ -80,6 +100,8 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/ModemManager.pc $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/mm-glib.pc $(1)/usr/lib/pkgconfig
+	$(INSTALL_DIR) $(1)/usr/share/dbus-1/interfaces
+	$(CP) $(PKG_BUILD_DIR)/introspection/org.freedesktop.ModemManager1.* $(1)/usr/share/dbus-1/interfaces
 endef
 
 define Package/modemmanager/install
@@ -89,6 +111,7 @@ define Package/modemmanager/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/ModemManager $(1)/usr/sbin
 	$(INSTALL_BIN) ./files/usr/sbin/ModemManager-wrapper $(1)/usr/sbin
+	$(INSTALL_BIN) ./files/usr/sbin/ModemManager-monitor $(1)/usr/sbin
 
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mmcli $(1)/usr/bin
@@ -96,43 +119,53 @@ define Package/modemmanager/install
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libmm-glib.so.* $(1)/usr/lib
 
-	$(INSTALL_DIR) $(1)/usr/lib/ModemManager
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ModemManager/libmm-shared-*.so* $(1)/usr/lib/ModemManager
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ModemManager/libmm-plugin-*.so* $(1)/usr/lib/ModemManager
-
 	$(INSTALL_DIR) $(1)/usr/lib/ModemManager/connection.d
-	$(INSTALL_BIN) ./files/10-report-down $(1)/usr/lib/ModemManager/connection.d
+	$(INSTALL_BIN) ./files/usr/lib/ModemManager/connection.d/10-report-down \
+		$(1)/usr/lib/ModemManager/connection.d
 
 	$(INSTALL_DIR) $(1)/etc/dbus-1/system.d
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/dbus-1/system.d/org.freedesktop.ModemManager1.conf $(1)/etc/dbus-1/system.d
+	chmod 644 $(1)/etc/dbus-1/system.d/org.freedesktop.ModemManager1.conf
 
 	$(INSTALL_DIR) $(1)/usr/share/dbus-1/system-services
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/dbus-1/system-services/org.freedesktop.ModemManager1.service $(1)/usr/share/dbus-1/system-services
 
 	$(INSTALL_DIR) $(1)/usr/share/ModemManager
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/ModemManager/*.conf $(1)/usr/share/ModemManager
-	$(INSTALL_DATA) ./files/modemmanager.common $(1)/usr/share/ModemManager
+	$$(if $$(wildcard $(PKG_INSTALL_DIR)/usr/share/ModemManager/*.conf),$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/ModemManager/*.conf $(1)/usr/share/ModemManager,)
+	$(INSTALL_DATA) ./files/usr/share/ModemManager/modemmanager.common \
+		$(1)/usr/share/ModemManager
 
 	$(INSTALL_DIR) $(1)/usr/share/ModemManager/fcc-unlock.available.d
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/share/ModemManager/fcc-unlock.available.d/* $(1)/usr/share/ModemManager/fcc-unlock.available.d
 
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/modemmanager.init $(1)/etc/init.d/modemmanager
-
-	$(INSTALL_DIR) $(1)/etc/hotplug.d/usb
-	$(INSTALL_DATA) ./files/25-modemmanager-usb $(1)/etc/hotplug.d/usb
+	$(INSTALL_BIN) ./files/etc/init.d/modemmanager \
+		$(1)/etc/init.d/modemmanager
 
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/net
-	$(INSTALL_DATA) ./files/25-modemmanager-net $(1)/etc/hotplug.d/net
+	$(INSTALL_DATA) ./files/etc/hotplug.d/net/25-modemmanager-net \
+		$(1)/etc/hotplug.d/net
 
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/tty
-	$(INSTALL_DATA) ./files/25-modemmanager-tty $(1)/etc/hotplug.d/tty
+	$(INSTALL_DATA) ./files/etc/hotplug.d/tty/25-modemmanager-tty \
+		$(1)/etc/hotplug.d/tty
 
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/wwan
-	$(INSTALL_DATA) ./files/25-modemmanager-wwan $(1)/etc/hotplug.d/wwan
+	$(INSTALL_DATA) ./files/etc/hotplug.d/wwan/25-modemmanager-wwan \
+		$(1)/etc/hotplug.d/wwan
 
+ifeq ($(CONFIG_MODEMMANAGER_WITH_NETIFD),y)
 	$(INSTALL_DIR) $(1)/lib/netifd/proto
-	$(INSTALL_BIN) ./files/modemmanager.proto $(1)/lib/netifd/proto/modemmanager.sh
+	$(INSTALL_BIN) ./files/lib/netifd/proto/modemmanager.sh \
+		$(1)/lib/netifd/proto
+endif
+endef
+
+define Package/modemmanager-rpcd/install
+	$(INSTALL_DIR) $(1)/usr/libexec/rpcd
+	$(INSTALL_BIN) ./files/usr/libexec/rpcd/modemmanager \
+		$(1)/usr/libexec/rpcd/
 endef
 
 $(eval $(call BuildPackage,modemmanager))
+$(eval $(call BuildPackage,modemmanager-rpcd))

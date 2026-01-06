@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=python-appdirs
 PKG_VERSION:=1.4.4
 PKG_RELEASE:=1
-PKG_MAINTAINER:=Karel Kočí <cynerd@email.cz>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com> 
 
 PYPI_NAME:=appdirs
 PKG_HASH:=7d5d0167b2b1ba821647616af46a749d1c653740dd0d2415100fe26e27afdf41

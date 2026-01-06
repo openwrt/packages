@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apcupsd
 PKG_VERSION:=3.14.14
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_MAINTAINER:=Othmar Truniger <github@truniger.ch>
 PKG_LICENSE:=GPL-2.0
@@ -27,7 +27,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/apcupsd
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libpthread +libusb-compat
+  DEPENDS:=+libpthread +libusb-compat +libstdcpp
   TITLE:=UPS control software
   URL:=http://www.apcupsd.org/
 endef
@@ -35,7 +35,7 @@ endef
 define Package/apcupsd-cgi
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libpthread +libgd
+  DEPENDS:=+libpthread +libgd +libstdcpp
   TITLE:=UPS control software CGI module
   URL:=http://www.apcupsd.org/
 endef
@@ -57,7 +57,7 @@ endef
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
 		DESTDIR="$(PKG_INSTALL_DIR)" \
-		LD="$(TARGET_CC)" \
+		LD="$(TARGET_CXX)" \
 		all install
 endef
 

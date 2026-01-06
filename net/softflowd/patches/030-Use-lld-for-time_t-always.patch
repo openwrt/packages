@@ -83,7 +83,7 @@ Signed-off-by: Sebastian Kemper <sebastian_ml@gmx.net>
 
 --- a/softflowd.c
 +++ b/softflowd.c
-@@ -306,14 +306,14 @@ format_flow (struct FLOW *flow) {
+@@ -316,14 +316,14 @@ format_flow (struct FLOW *flow) {
    snprintf (buf, sizeof (buf),
              "seq:%" PRIu64 " [%s]:%hu <> [%s]:%hu proto:%u "
              "octets>:%u packets>:%u octets<:%u packets<:%u "
@@ -101,7 +101,7 @@ Signed-off-by: Sebastian Kemper <sebastian_ml@gmx.net>
              flow->tcp_flags[1], flow->ip6_flowlabel[0],
              flow->ip6_flowlabel[1], flow->vlanid[0], flow->vlanid[1],
              format_ethermac (flow->ethermac[0]),
-@@ -1170,8 +1170,8 @@ dump_flows (struct FLOWTRACK *ft, FILE *
+@@ -1194,8 +1194,8 @@ dump_flows (struct FLOWTRACK *ft, FILE *
                 expiry->expires_at == 0 ? " (FORCED)" : "");
      } else {
        fprintf (out,

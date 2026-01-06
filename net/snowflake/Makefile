@@ -1,13 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=snowflake
-PKG_VERSION:=2.5.1
+PKG_VERSION:=2.11.0
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL=https://git.torproject.org/pluggable-transports/snowflake.git
+PKG_SOURCE_URL=https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake.git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_MIRROR_HASH:=7f36f48ab07ac9a3944202613b024072f3ad0ad55b495fde611ee30223410fdf
+PKG_MIRROR_HASH:=527006b3d71134267fac3a8c86be71a99bf7dbb2f969916c60f16bec8c245294
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -17,7 +17,7 @@ PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=no-mips16
 
-GO_PKG:=git.torproject.org/pluggable-transports/snowflake.git/v2
+GO_PKG:=gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/v2
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
@@ -39,11 +39,6 @@ endef
 define Package/snowflake-client
 $(call Package/snowflake/Default)
   TITLE+= Client
-endef
-
-define Package/snowflake-distinctcounter
-$(call Package/snowflake/Default)
-  TITLE+= Distinct Counter
 endef
 
 define Package/snowflake-probetest
@@ -81,12 +76,6 @@ $(call Package/snowflake/description/Default)
 This package contains the Snowflake client which provides the bridge to TOR.
 endef
 
-define Package/snowflake-distinctcounter/description
-$(call Package/snowflake/description/Default)
-
-This package provides the Snowflake distinct counter service.
-endef
-
 define Package/snowflake-probetest/description
 $(call Package/snowflake/description/Default)
 
@@ -115,11 +104,6 @@ define Package/snowflake-client/install
 	$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/client $(1)/usr/bin/snowflake-client
 endef
 
-define Package/snowflake-distinctcounter/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/distinctcounter $(1)/usr/bin/snowflake-distinctcounter
-endef
-
 define Package/snowflake-probetest/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/probetest $(1)/usr/bin/snowflake-probetest
@@ -138,7 +122,6 @@ endef
 
 $(eval $(call BuildPackage,snowflake-broker))
 $(eval $(call BuildPackage,snowflake-client))
-$(eval $(call BuildPackage,snowflake-distinctcounter))
 $(eval $(call BuildPackage,snowflake-probetest))
 $(eval $(call BuildPackage,snowflake-proxy))
 $(eval $(call BuildPackage,snowflake-server))

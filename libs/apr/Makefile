@@ -8,19 +8,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=apr
-PKG_VERSION:=1.7.0
-PKG_RELEASE:=4
+PKG_VERSION:=1.7.6
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=@APACHE/apr/
-PKG_HASH:=e2e148f0b2e99b8e5c6caa09f6d4fb4dd3e83f744aa72a952f94f5a14436f7ea
+PKG_HASH:=49030d92d2575da735791b496dc322f3ce5cff9494779ba8cc28c7f46c5deb32
 
 PKG_MAINTAINER:=Thomas Heil <heil@terminal-consulting.de>
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_CPE_ID:=cpe:/a:apache:apr
+PKG_CPE_ID:=cpe:/a:apache:portable_runtime
 
 PKG_BUILD_PARALLEL:=1
 
@@ -33,7 +33,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/libapr
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+libpthread +librt +libuuid
+  DEPENDS:= +USE_GLIBC:libcrypt-compat +libpthread +librt +libuuid
   TITLE:=Apache Portable Runtime Library
   URL:=https://apr.apache.org/
 endef

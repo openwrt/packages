@@ -8,12 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dump1090
-PKG_VERSION:=4.0
+PKG_VERSION:=10.2
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/flightaware/dump1090/tar.gz/v${PKG_VERSION}?
-PKG_HASH:=49ace5a06da3d51384de83a4199d043c6093ad475909c58317cedece0e9590d1
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+PKG_SOURCE_URL:=https://github.com/flightaware/dump1090
+PKG_MIRROR_HASH:=3763c053ae3d7ddf4eee339a88a8f3e5e4af51296d120c0d501330ee260a090e
 
 PKG_MAINTAINER:=Álvaro Fernández Rojas <noltari@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -53,9 +54,14 @@ define Package/view1090/description
 endef
 
 MAKE_FLAGS += \
+	DUMP1090_VERSION=$(PKG_VERSION) \
 	BLADERF=no \
 	CFLAGS="$(TARGET_CFLAGS)" \
 	UNAME="Linux"
+
+ifeq ($(CONFIG_SOFT_FLOAT),y)
+MAKE_FLAGS += CPUFEATURES=no
+endif
 
 TARGET_LDFLAGS += -Wl,--as-needed
 

@@ -7,11 +7,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pillow
-PKG_VERSION:=9.5.0
-PKG_RELEASE:=2
+PKG_VERSION:=10.1.0
+PKG_RELEASE:=1
 
 PYPI_NAME:=Pillow
-PKG_HASH:=bf548479d336726d7a0eceb6e767e179fbde37833ae42794602631a070d630f1
+PKG_HASH:=e6bf8de6c36ed96c86ea3b6e1d5273c53f46ef518a062464cd7ef5dd2cf92e38
+
+PKG_BUILD_DEPENDS:=python-setuptools-scm/host
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=HPND

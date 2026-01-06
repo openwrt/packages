@@ -1,0 +1,59 @@
+From a2cc51bb142c16eac5598237d2edb46f095607be Mon Sep 17 00:00:00 2001
+From: Mingjie Shen <mjshen137@gmail.com>
+Date: Tue, 5 Dec 2023 03:41:24 -0500
+Subject: [PATCH] udev_device.c: fix TOCTOU race condition (#57)
+
+Separately checking the state of a file before operating on it may allow
+an attacker to modify the file between the two operations.
+
+Reference: CWE-367.
+---
+ udev_device.c | 18 ++++++++++--------
+ 1 file changed, 10 insertions(+), 8 deletions(-)
+
+--- a/udev_device.c
++++ b/udev_device.c
+@@ -267,16 +267,17 @@ const char *udev_device_get_sysattr_valu
+ 
+     snprintf(path, sizeof(path), "%s/%s", udev_device_get_syspath(udev_device), sysattr);
+ 
+-    if (lstat(path, &st) != 0 || !S_ISREG(st.st_mode)) {
+-        return NULL;
+-    }
+-
+     file = fopen(path, "r");
+ 
+     if (!file) {
+         return NULL;
+     }
+ 
++    if (fstat(fileno(file), &st) != 0 || !S_ISREG(st.st_mode)) {
++        fclose(file);
++        return NULL;
++    }
++
+     // TODO dynamic allocation of data
+     len = fread(data, 1, sizeof(data) - 1, file);
+ 
+@@ -309,16 +310,17 @@ int udev_device_set_sysattr_value(struct
+ 
+     snprintf(path, sizeof(path), "%s/%s", udev_device_get_syspath(udev_device), sysattr);
+ 
+-    if (lstat(path, &st) != 0 || !S_ISREG(st.st_mode)) {
+-        return -1;
+-    }
+-
+     file = fopen(path, "w");
+ 
+     if (!file) {
+         return -1;
+     }
+ 
++    if (fstat(fileno(file), &st) != 0 || !S_ISREG(st.st_mode)) {
++        fclose(file);
++        return -1;
++    }
++
+     len = strlen(value);
+ 
+     if (fwrite(value, 1, len, file) != len) {

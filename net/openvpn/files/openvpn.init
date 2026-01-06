@@ -10,6 +10,7 @@ STOP=10
 USE_PROCD=1
 PROG=/usr/sbin/openvpn
 
+PATH_INSTANCE_DIR="/etc/openvpn"
 LIST_SEP="
 "
 
@@ -144,6 +145,9 @@ openvpn_add_instance() {
 	local security="$4"
 	local up="$5"
 	local down="$6"
+	local route_up="$7"
+	local route_pre_down="$8"
+	local ipchange="$9"
 	local client=$(grep -qEx "client|tls-client" "$dir/$conf" && echo 1)
 
 	procd_open_instance "$name"
@@ -151,14 +155,24 @@ openvpn_add_instance() {
 		--syslog "openvpn($name)" \
 		--status "/var/run/openvpn.$name.status" \
 		--cd "$dir" \
-		--config "$conf" \
-		--up "/usr/libexec/openvpn-hotplug up $name" \
-		--down "/usr/libexec/openvpn-hotplug down $name" \
-		--route-up "/usr/libexec/openvpn-hotplug route-up $name" \
-		--route-pre-down "/usr/libexec/openvpn-hotplug route-pre-down $name" \
-		${client:+--ipchange "/usr/libexec/openvpn-hotplug ipchange $name"} \
-		${up:+--setenv user_up "$up"} \
-		${down:+--setenv user_down "$down"} \
+		--config "$conf"
+	# external scripts can only be called on script-security 2 or higher
+	if [ "${security:-2}" -lt 2 ]; then
+		logger -t "openvpn(${name})" "not adding hotplug scripts due to script-security ${security:-2}"
+	else
+		procd_append_param command \
+			--up "/usr/libexec/openvpn-hotplug up $name" \
+			--down "/usr/libexec/openvpn-hotplug down $name" \
+			--route-up "/usr/libexec/openvpn-hotplug route-up $name" \
+			--route-pre-down "/usr/libexec/openvpn-hotplug route-pre-down $name" \
+			${client:+--ipchange "/usr/libexec/openvpn-hotplug ipchange $name"} \
+			${up:+--setenv user_up "$up"} \
+			${down:+--setenv user_down "$down"} \
+			${route_up:+--setenv user_route_up "$route_up"} \
+			${route_pre_down:+--setenv user_route_pre_down "$route_pre_down"} \
+			${client:+${ipchange:+--setenv user_ipchange "$ipchange"}}
+	fi
+	procd_append_param command \
 		--script-security "${security:-2}" \
 		$(openvpn_get_dev "$name" "$conf") \
 		$(openvpn_get_credentials "$name" "$conf")
@@ -171,7 +185,7 @@ openvpn_add_instance() {
 	procd_close_instance
 }
 
-start_instance() {
+start_uci_instance() {
 	local s="$1"
 
 	config_get config "$s" config
@@ -182,18 +196,25 @@ start_instance() {
 		return 1
 	}
 
-	local up down script_security
+	local up down route_up route_pre_down ipchange script_security
 	config_get up "$s" up
 	config_get down "$s" down
+	config_get route_up "$s" route_up
+	config_get route_pre_down "$s" route_pre_down
+	config_get ipchange "$s" ipchange
 	config_get script_security "$s" script_security
 
 	[ ! -d "/var/run" ] && mkdir -p "/var/run"
 
 	if [ ! -z "$config" ]; then
 		append UCI_STARTED "$config" "$LIST_SEP"
+		[ -n "$script_security" ] || get_openvpn_option "$config" script_security script-security
 		[ -n "$up" ] || get_openvpn_option "$config" up up
 		[ -n "$down" ] || get_openvpn_option "$config" down down
-		openvpn_add_instance "$s" "${config%/*}" "$config" "$script_security" "$up" "$down"
+		[ -n "$route_up" ] || get_openvpn_option "$config" route_up route-up
+		[ -n "$route_pre_down" ] || get_openvpn_option "$config" route_pre_down route-pre-down
+		[ -n "$ipchange" ] || get_openvpn_option "$config" ipchange ipchange
+		openvpn_add_instance "$s" "${config%/*}" "$config" "$script_security" "$up" "$down" "$route_up" "$route_pre_down" "$ipchange"
 		return
 	fi
 
@@ -203,7 +224,47 @@ start_instance() {
 	append_params "$s" $OPENVPN_PARAMS
 	append_list "$s" $OPENVPN_LIST
 
-	openvpn_add_instance "$s" "/var/etc" "openvpn-$s.conf" "$script_security" "$up" "$down"
+	openvpn_add_instance "$s" "/var/etc" "openvpn-$s.conf" "$script_security" "$up" "$down" "$route_up" "$route_pre_down" "$ipchange"
+}
+
+start_path_instances() {
+	local path name
+
+	for path in ${PATH_INSTANCE_DIR}/*.conf; do
+		[ -f "$path" ] && {
+			name="${path##*/}"
+			name="${name%.conf}"
+			start_path_instance "$name"
+		}
+	done
+}
+
+start_path_instance() {
+	local name="$1"
+
+	local path name up down route_up route_pre_down ipchange
+
+	path="${PATH_INSTANCE_DIR}/${name}.conf"
+
+	# don't start configs again that are already started by uci
+	if echo "$UCI_STARTED" | grep -qxF "$path"; then
+		logger -t openvpn "$name.conf already started"
+		return
+	fi
+
+	# don't start configs which are set to disabled in uci
+	if echo "$UCI_DISABLED" | grep -qxF "$path"; then
+		logger -t openvpn "$name.conf is disabled in /etc/config/openvpn"
+		return
+	fi
+
+	get_openvpn_option "$path" up up || up=""
+	get_openvpn_option "$path" down down || down=""
+	get_openvpn_option "$path" route_up route-up || route_up=""
+	get_openvpn_option "$path" route_pre_down route-pre-down || route_pre_down=""
+	get_openvpn_option "$path" ipchange ipchange || ipchange=""
+
+	openvpn_add_instance "$name" "${path%/*}" "$path" "" "$up" "$down" "$route_up" "$route_pre_down" "$ipchange"
 }
 
 start_service() {
@@ -225,31 +286,20 @@ start_service() {
 	config_load 'openvpn'
 
 	if [ -n "$instance" ]; then
-		[ "$instance_found" -gt 0 ] || return
-		start_instance "$instance"
+		if [ "$instance_found" -gt 0 ]; then
+			start_uci_instance "$instance"
+		elif [ -f "${PATH_INSTANCE_DIR}/${instance}.conf" ]; then
+			start_path_instance "$instance"
+		fi
 	else
-		config_foreach start_instance 'openvpn'
+		config_foreach start_uci_instance 'openvpn'
 
-		local path name up down
-		for path in /etc/openvpn/*.conf; do
-			if [ -f "$path" ]; then
-				name="${path##*/}"; name="${name%.conf}"
-
-				# don't start configs again that are already started by uci
-				if echo "$UCI_STARTED" | grep -qxF "$path"; then
-					continue
-
-				# don't start configs which are set to disabled in uci
-				elif echo "$UCI_DISABLED" | grep -qxF "$path"; then
-					logger -t openvpn "$name.conf is disabled in /etc/config/openvpn"
-					continue
-				fi
-
-				get_openvpn_option "$path" up up || up=""
-				get_openvpn_option "$path" down down || down=""
-				openvpn_add_instance "$name" "${path%/*}" "$path" "" "$up" "$down"
-			fi
-		done
+		auto="$(uci_get openvpn globals autostart 1)"
+		if [ "$auto" = "1" ]; then
+			start_path_instances
+		else
+			logger -t openvpn "Autostart for configs in '$PATH_INSTANCE_DIR/*.conf' disabled"
+		fi
 	fi
 }
 

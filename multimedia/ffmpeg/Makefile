@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ffmpeg
-PKG_VERSION:=5.1.2
+PKG_VERSION:=6.1.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://ffmpeg.org/releases/
-PKG_HASH:=619e706d662c8420859832ddc259cd4d4096a48a2ce1eefd052db9e440eef3dc
+PKG_HASH:=bc5f1e4a4d283a6492354684ee1124129c52293bcfc6a9169193539fbece3487
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>, \
 		Ian Leonard <antonlacon@gmail.com>
 
@@ -69,6 +69,7 @@ FFMPEG_CUSTOM_DECODERS:= \
 
 FFMPEG_CUSTOM_MUXERS:= \
 	ac3 \
+	avi \
 	ffm \
 	h264 \
 	hevc \
@@ -230,14 +231,14 @@ include $(INCLUDE_DIR)/package.mk
 define Package/ffmpeg/Default
  TITLE:=FFmpeg
  URL:=https://ffmpeg.org/
- DEPENDS+= +libpthread
+ DEPENDS+= +libatomic
 endef
 
 define Package/ffmpeg/Default/description
  FFmpeg is a a software package that can record, convert and stream digital
  audio and video in numerous formats.
 
- FFmpeg licensing / patent issues are complex. It is the reponsibility of the
+ FFmpeg licensing / patent issues are complex. It is the responsibility of the
  user to understand any requirements in this regard with its usage. See:
  https://ffmpeg.org/legal.html for further information.
 endef
@@ -347,6 +348,7 @@ define Package/libffmpeg-full
 $(call Package/libffmpeg/Default)
  TITLE+= (full)
  DEPENDS+= +alsa-lib +libgnutls +PACKAGE_libopus:libopus \
+    +PACKAGE_libv4l:libv4l \
     +SOFT_FLOAT:shine \
     +!SOFT_FLOAT:lame-lib \
     +PACKAGE_libx264:libx264 \
@@ -378,18 +380,18 @@ endef
 
 
 # Strip off FPU notation
-REAL_CPU_TYPE:=$(firstword $(subst +, ,$(CONFIG_CPU_TYPE)))
-# Fixup cpu types recogized by ffmpeg configure
+REAL_CPU_TYPE:=$(call qstrip,$(firstword $(subst +, ,$(CONFIG_CPU_TYPE))))
+# Fixup cpu types recognized by ffmpeg configure
 REAL_CPU_TYPE:=$(subst octeonplus,octeon+,$(REAL_CPU_TYPE))
 
 FFMPEG_CONFIGURE:= \
-	CFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS) $(FPIC)" \
+	CFLAGS="$(TARGET_CFLAGS) $(TARGET_CPPFLAGS) $(FPIC) -Wno-error=incompatible-pointer-types" \
 	LDFLAGS="$(TARGET_LDFLAGS)" \
 	./configure \
 	--enable-cross-compile \
 	--cross-prefix="$(TARGET_CROSS)" \
 	--arch="$(ARCH)" \
-	$(if $(REAL_CPU_TYPE),--cpu=$(call qstrip,$(REAL_CPU_TYPE)),) \
+	$(if $(REAL_CPU_TYPE),--cpu=$(REAL_CPU_TYPE),) \
 	--target-os=linux \
 	--prefix="/usr" \
 	--pkg-config="pkg-config" \
@@ -474,7 +476,8 @@ ifeq ($(BUILD_VARIANT),full)
 			$(call FFMPEG_DISABLE,muxer,$(FFMPEG_PATENTED_MUXERS)) \
 			$(call FFMPEG_DISABLE,demuxer,$(FFMPEG_PATENTED_DEMUXERS)) \
 			$(call FFMPEG_DISABLE,parser,$(FFMPEG_PATENTED_PARSERS))) \
-		$(if $(CONFIG_PACKAGE_libopus),--enable-libopus)
+		$(if $(CONFIG_PACKAGE_libopus),--enable-libopus) \
+		$(if $(CONFIG_PACKAGE_libv4l),--enable-libv4l2)
   ifeq ($(CONFIG_SOFT_FLOAT),y)
 	FFMPEG_CONFIGURE+= \
 		--enable-small \
@@ -531,6 +534,12 @@ ifeq ($(BUILD_VARIANT),custom)
 	--disable-programs \
 	--disable-avfilter \
 	--disable-swresample
+  endif
+
+  ifneq ($(CONFIG_PACKAGE_ffmpeg-custom),n)
+      FFMPEG_CONFIGURE+= \
+	--enable-avfilter \
+	--enable-ffmpeg
   endif
 
   FFMPEG_CONFIGURE+= \
@@ -648,6 +657,11 @@ define Build/InstallDev/custom
 ifeq ($(CONFIG_FFMPEG_CUSTOM_PROGRAMS),y)
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avfilter,swresample}.{a,so*} $(1)/usr/lib/
 endif
+ifeq ($(BUILD_VARIANT),custom)
+  ifneq ($(CONFIG_PACKAGE_ffmpeg-custom),n)
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libavfilter.{a,so*} $(1)/usr/lib/
+  endif
+endif
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/lib{avcodec,avdevice,avformat,avutil}.pc $(1)/usr/lib/pkgconfig/
 ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_libx264),y)
@@ -729,6 +743,11 @@ ifeq ($(CONFIG_FFMPEG_CUSTOM_SELECT_libx264),y)
 endif
 ifeq ($(CONFIG_FFMPEG_CUSTOM_PROGRAMS),y)
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{avfilter,swresample}.so.* $(1)/usr/lib/
+endif
+ifeq ($(BUILD_VARIANT),custom)
+  ifneq ($(CONFIG_PACKAGE_ffmpeg-custom),n)
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libavfilter.so.* $(1)/usr/lib/
+  endif
 endif
 endef
 

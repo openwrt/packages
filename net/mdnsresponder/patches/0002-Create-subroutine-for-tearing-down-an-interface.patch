@@ -1,0 +1,54 @@
+From 40ef0241afbb49f84e76afd65eb3ee17466bb582 Mon Sep 17 00:00:00 2001
+From: Nate Karstens <nate.karstens@garmin.com>
+Date: Wed, 28 Jun 2017 17:30:00 -0500
+Subject: [PATCH 2/8] Create subroutine for tearing down an interface
+
+Creates a subroutine for tearing down an interface.
+
+Upstream-Status: Submitted [dts@apple.com]
+
+Signed-off-by: Nate Karstens <nate.karstens@garmin.com>
+Signed-off-by: Alex Kiernan <alex.kiernan@gmail.com>
+---
+ mDNSPosix/mDNSPosix.c | 22 ++++++++++++++++------
+ 1 file changed, 16 insertions(+), 6 deletions(-)
+
+--- a/mDNSPosix/mDNSPosix.c
++++ b/mDNSPosix/mDNSPosix.c
+@@ -1043,6 +1043,19 @@ mDNSlocal void FreePosixNetworkInterface
+     gRecentInterfaces = intf;
+ }
+ 
++mDNSlocal void TearDownInterface(mDNS *const m, PosixNetworkInterface *intf)
++{
++    mDNS_DeregisterInterface(m, &intf->coreIntf, NormalActivation);
++    if (gMDNSPlatformPosixVerboseLevel > 0) fprintf(stderr, "Deregistered interface %s\n", intf->intfName);
++    FreePosixNetworkInterface(intf);
++
++    num_registered_interfaces--;
++    if (num_registered_interfaces == 0) {
++        num_pkts_accepted = 0;
++        num_pkts_rejected = 0;
++    }
++}
++
+ // Grab the first interface, deregister it, free it, and repeat until done.
+ mDNSlocal void ClearInterfaceList(mDNS *const m)
+ {
+@@ -1051,13 +1064,10 @@ mDNSlocal void ClearInterfaceList(mDNS *
+     while (m->HostInterfaces)
+     {
+         PosixNetworkInterface *intf = (PosixNetworkInterface*)(m->HostInterfaces);
+-        mDNS_DeregisterInterface(m, &intf->coreIntf, NormalActivation);
+-        if (gMDNSPlatformPosixVerboseLevel > 0) fprintf(stderr, "Deregistered interface %s\n", intf->intfName);
+-        FreePosixNetworkInterface(intf);
++        TearDownInterface(m, intf);
+     }
+-    num_registered_interfaces = 0;
+-    num_pkts_accepted = 0;
+-    num_pkts_rejected = 0;
++
++    assert(num_registered_interfaces == 0);
+ }
+ 
+ mDNSlocal int SetupIPv6Socket(int fd)

@@ -1,0 +1,88 @@
+Description: fix multiple build issues with gcc 14.
+ Multiple callbacks are cast due to otherwise incompatible pointer
+ types.  The target pointer cb->proc cannot really see its type adjusted
+ for two reasons.  First, it is declared in the libsasl2, and changing
+ it might cause an ABI/API breakage.  Second, the different callbacks
+ also have different function signatures anyway.
+ .
+ Another issue seems to be a casting error while trying to set an IV:
+ .
+ 	XS.xs:1886:40: error:
+	        initialization of ‘IV’ {aka ‘long int’} from ‘int *’
+                makes integer from pointer without a cast [-Wint-conversion]
+ 	 1886 |                                 XPUSHi((int *)value);
+ 	      |                                        ^
+ 	/usr/lib/x86_64-linux-gnu/perl/5.38/CORE/pp.h:428:23: note: in definition of macro ‘TARGi’
+ 	  428 |         IV TARGi_iv = i;                                                \
+ 	      |                       ^
+ 	XS.xs:1886:33: note: in expansion of macro ‘XPUSHi’
+ 	 1886 |                                 XPUSHi((int *)value);
+ 	      |                                 ^~~~~~
+ .
+ It is unclear to me what was the motivation for the initial wrong type.
+
+Author: Étienne Mollier <emollier@debian.org>
+Bug-Debian: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1075146
+Forwarded: no
+Last-Update: 2024-07-26
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/XS.xs
++++ b/XS.xs
+@@ -892,39 +892,39 @@ void AddCallback(SV *action, struct _per
+ 		case SASL_CB_USER:
+ 		case SASL_CB_AUTHNAME:
+ 		case SASL_CB_LANGUAGE:
+-				 cb->proc = PerlCallback;
++				 cb->proc = (int (*)(void))PerlCallback;
+ 			break;
+ 
+ 		case SASL_CB_PASS:
+-				cb->proc = PerlCallbackSecret;
++				cb->proc = (int (*)(void))PerlCallbackSecret;
+ 			break;
+ 
+ 		case SASL_CB_GETREALM:
+-				cb->proc = PerlCallbackRealm;
++				cb->proc = (int (*)(void))PerlCallbackRealm;
+ 			break;
+ 
+ 		case SASL_CB_ECHOPROMPT:
+ 		case SASL_CB_NOECHOPROMPT:
+ 			break;
+ 		case SASL_CB_PROXY_POLICY:
+-				cb->proc = PerlCallbackAuthorize;
++				cb->proc = (int (*)(void))PerlCallbackAuthorize;
+ 			break;
+ 
+ 		case SASL_CB_CANON_USER:
+-				cb->proc = PerlCallbackCanonUser;
++				cb->proc = (int (*)(void))PerlCallbackCanonUser;
+ 			break;
+ #ifdef SASL2
+ 		case SASL_CB_SERVER_USERDB_CHECKPASS:
+-				cb->proc = PerlCallbackServerCheckPass;
++				cb->proc = (int (*)(void))PerlCallbackServerCheckPass;
+ 			break;
+ 
+ 		case SASL_CB_SERVER_USERDB_SETPASS:
+-				cb->proc = PerlCallbackServerSetPass;
++				cb->proc = (int (*)(void))PerlCallbackServerSetPass;
+ 			break;
+ #else
+ 		// SASL 1 Servercallbacks:
+ 		case SASL_CB_SERVER_GETSECRET:
+-				cb->proc = PerlCallbackGetSecret;
++				cb->proc = (int (*)(void))PerlCallbackGetSecret;
+ 			break;
+ 		case SASL_CB_SERVER_PUTSECRET:
+ 				// Not implemented yet maybe TODO, if ever needed
+@@ -1883,7 +1883,7 @@ PPCODE:
+ 			break;
+ 			case SASL_SSF:
+ 			case SASL_MAXOUTBUF:
+-				XPUSHi((int *)value);
++				XPUSHi((long int)value);
+ 			break;
+ #ifdef SASL2
+ 			case SASL_IPLOCALPORT:

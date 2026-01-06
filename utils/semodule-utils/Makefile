@@ -6,46 +6,76 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=semodule-utils
-PKG_VERSION:=3.3
+PKG_VERSION:=3.8.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/SELinuxProject/selinux/releases/download/$(PKG_VERSION)
-PKG_HASH:=3098ec5e5f04a1dbbf4aa569b63a4570750a9fe0d4da14ce45954aa300a17063
+PKG_HASH:=7705b0db059c53a21d6a77c0b50f6c467d91a0ea92ff875f1c93527cd2762395
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=GPL-2.0-only
-PKG_LICENSE_FILES:=COPYING
+PKG_LICENSE_FILES:=LICENSE
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
-HOST_BUILD_DEPENDS:=libsemanage/host
 
 include $(INCLUDE_DIR)/package.mk
-include $(INCLUDE_DIR)/host-build.mk
 
-define Package/semodule-utils
+define Package/semodule-utils/Default
   SECTION:=utils
   CATEGORY:=Utilities
   DEPENDS:=+libsepol
-  TITLE:=SELinux policy utilities for dealing with modules
+  TITLE:=SELinux policy module utility
   URL:=http://selinuxproject.org/page/Main_Page
 endef
 
+define Package/semodule-utils/Default/description
+semodule-utils is a collection of utilities for dealing with policy
+modules.
+endef
+
+define Package/semodule-utils
+$(call Package/semodule-utils/Default)
+  TITLE+= meta-package
+  DEPENDS:= \
+    semodule-expand \
+    semodule-link \
+    semodule-package \
+    semodule-unpackage
+endef
+
 define Package/semodule-utils/description
-	Semodule-utils is a collection of utilities for dealing with
-	policy modules.
+$(call Package/semodule-utils/Default/description)
+
+This is a meta-package that installs all of the semodule-utils tools.
 endef
 
-HOST_MAKE_FLAGS += \
-	PREFIX=$(STAGING_DIR_HOSTPKG) \
-	SBINDIR=$(STAGING_DIR_HOSTPKG)/sbin \
-	ETCDIR=$(STAGING_DIR_HOSTPKG)/etc
+Package/semodule-utils/install:=:
 
-define Package/semodule-utils/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
+define BuildUtil
+  define Package/semodule-$(1)
+  $(call Package/semodule-utils/Default)
+    TITLE+= semodule_$(1)
+  endef
+
+  define Package/semodule-$(1)/description
+$(call Package/semodule-utils/Default/description)
+
+This contains the semodule_$(1) tool.
+  endef
+
+  define Package/semodule-$(1)/install
+	$$(INSTALL_DIR) $$(1)/usr/bin
+	$$(INSTALL_BIN) $$(PKG_INSTALL_DIR)/usr/bin/semodule_$(1) $$(1)/usr/bin/
+  endef
+
+  $$(eval $$(call BuildPackage,semodule-$(1)))
 endef
 
-$(eval $(call HostBuild))
 $(eval $(call BuildPackage,semodule-utils))
+
+$(eval $(call BuildUtil,expand))
+$(eval $(call BuildUtil,link))
+$(eval $(call BuildUtil,package))
+$(eval $(call BuildUtil,unpackage))

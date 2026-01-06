@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=speedtestcpp
-PKG_VERSION:=1.20.2
+PKG_VERSION:=1.20.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/oskarirauta/speedtestcpp/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=7d5c85f1d9a46f7d8a3ac4261ef1f92e53c511430bae096f7ec6f12a33d38904
+PKG_HASH:=8154e2161c56c0ac1275e57c34f448aaf98fb49937ff824ce975d95984395025
 
 PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
 PKG_LICENSE:=MIT

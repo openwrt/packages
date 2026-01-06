@@ -1,11 +1,11 @@
 # banIP - ban incoming and outgoing IPs via named nftables Sets
-# Copyright (c) 2018-2023 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2018-2025 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=banip
-PKG_VERSION:=0.8.7
+PKG_VERSION:=1.6.0
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_MAINTAINER:=Dirk Brenken <dev@brenken.org>
@@ -16,7 +16,7 @@ define Package/banip
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=banIP blocks IPs via named nftables Sets
-	DEPENDS:=+jshn +jsonfilter +firewall4 +ca-bundle +logd +rpcd +rpcd-mod-rpcsys
+	DEPENDS:=+jshn +jsonfilter +firewall4 +gawk +ca-bundle +rpcd +rpcd-mod-rpcsys
 	PKGARCH:=all
 endef
 
@@ -63,6 +63,12 @@ define Package/banip/install
 	$(INSTALL_CONF) ./files/banip.countries $(1)/etc/banip
 	$(INSTALL_CONF) ./files/banip.feeds $(1)/etc/banip
 	$(INSTALL_CONF) ./files/banip.custom.feeds $(1)/etc/banip
+
+	$(INSTALL_DIR) $(1)/www/cgi-bin
+	$(INSTALL_BIN) ./files/banip.cgi $(1)/www/cgi-bin/banip
+
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/95-banip-housekeeping $(1)/etc/uci-defaults
 endef
 
 $(eval $(call BuildPackage,banip))

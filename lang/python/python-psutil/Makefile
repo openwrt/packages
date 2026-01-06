@@ -8,17 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-psutil
-PKG_VERSION:=5.9.0
-PKG_RELEASE:=2
+PKG_VERSION:=5.9.5
+PKG_RELEASE:=1
 
 PYPI_NAME:=psutil
-PKG_HASH:=869842dbd66bb80c3217158e629d6fceaecc3a3166d3d1faee515b05dd26ca25
+PKG_HASH:=5410638e4df39c54d957fc51ce03048acd8e6d60abc0f5107af51e5fb566eb3c
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
-PKG_LICENSE:=BSD 3-Clause
+PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
-
-PKG_BUILD_DEPENDS:=python-setuptools-scm/host
+PKG_CPE_ID:=cpe:/a:psutil_project:psutil
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -28,7 +27,7 @@ define Package/python3-psutil
   SUBMENU:=Python
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=psutil (process and system utilities)
+  TITLE:=Process and system monitoring
   URL:=https://github.com/giampaolo/psutil
   DEPENDS:=+python3-light
 endef
@@ -37,9 +36,6 @@ define Package/python3-psutil/description
   psutil is a cross-platform library for retrieving information
   on running processes and system utilization.
 endef
-
-PYTHON3_VARS += \
-	TARGET_SYS_PLATFORM=linux
 
 $(eval $(call Py3Package,python3-psutil))
 $(eval $(call BuildPackage,python3-psutil))

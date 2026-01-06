@@ -1,0 +1,20 @@
+From 42ac641452aa56afa04f7bad5a55f790ee639852 Mon Sep 17 00:00:00 2001
+From: "Christian W. Zuckschwerdt" <christian@zuckschwerdt.org>
+Date: Sun, 30 Mar 2025 12:05:53 +0200
+Subject: [PATCH] build: Update for compat with newer CMake (closes #3245)
+
+---
+ CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,7 +1,7 @@
+ ########################################################################
+ # Project setup
+ ########################################################################
+-cmake_minimum_required(VERSION 2.6)
++cmake_minimum_required(VERSION 2.6...3.10)
+ # Fix behavior of CMAKE_C_STANDARD when targeting macOS.
+ if(POLICY CMP0025)
+     cmake_policy(SET CMP0025 NEW)

@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libdeflate
-PKG_VERSION:=1.18
+PKG_VERSION:=1.24
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/ebiggers/libdeflate/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=225d982bcaf553221c76726358d2ea139bb34913180b20823c782cede060affd
+PKG_SOURCE_URL:=https://github.com/ebiggers/libdeflate/releases/download/v$(PKG_VERSION)
+PKG_HASH:=a0dda1c4b804742066db07b9510876edd09cc0ca06cdc32c5dfe1b2016a26463
 
 PKG_LICENSE:=COPYING
 PKG_LICENSE_FILES:=MIT

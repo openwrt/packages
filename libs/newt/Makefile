@@ -10,12 +10,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=newt
-PKG_VERSION:=0.52.23
+PKG_VERSION:=0.52.24
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://releases.pagure.org/newt
-PKG_HASH:=caa372907b14ececfe298f0d512a62f41d33b290610244a58aed07bbc5ada12a
+PKG_HASH:=5ded7e221f85f642521c49b1826c8de19845aa372baf5d630a51774b544fbdbb
 
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=LGPL-2.0-only

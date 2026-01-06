@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=klish
 PKG_VERSION:=2.2.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://libcode.org/attachments/download/82
@@ -49,7 +49,7 @@ define Package/klish/description
  klish is able to run using clish XML configuration files although
  current clish users may expect some changes in behavior.
  Konf and konfd are klish utilities that are used to store configuration
- informations in a way which is similar to what's found on CISCO devices.
+ information in a way which is similar to what's found on CISCO devices.
  More information about these tools is to be found on the klish web site.
 endef
 

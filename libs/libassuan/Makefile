@@ -1,22 +1,24 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libassuan
-PKG_VERSION:=2.5.5
-PKG_RELEASE:=3
+PKG_VERSION:=3.0.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://gnupg.org/ftp/gcrypt/$(PKG_NAME)
-PKG_HASH:=8e8c2fcc982f9ca67dcbb1d95e2dc746b1739a4668bc20b3a3c5be632edb34e4
+PKG_HASH:=d2931cdad266e633510f9970e1a2f346055e351bb19f9b78912475b8074c36f6
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
-PKG_LICENSE:=GPL-3.0-or-later
-PKG_LICENSE_FILES:=COPYING
+PKG_LICENSE:=LGPL-2.1-or-later
+PKG_LICENSE_FILES:=COPYING COPYING.LIB
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
+
+CONFIGURE_VARS += ac_cv_path_GPGRT_CONFIG="$(STAGING_DIR)/usr/bin/gpgrt-config"
 
 define Package/libassuan
   SECTION:=libs

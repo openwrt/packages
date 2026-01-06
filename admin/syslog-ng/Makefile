@@ -1,17 +1,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=syslog-ng
-PKG_VERSION:=4.2.0
-PKG_RELEASE:=1
+PKG_VERSION:=4.10.2
+PKG_RELEASE:=2
 
-PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=LGPL-2.1-or-later GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING LGPL.txt GPL.txt
-PKG_CPE_ID:=cpe:/a:balabit:syslog-ng
+PKG_CPE_ID:=cpe:/a:oneidentity:syslog-ng
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/syslog-ng/syslog-ng/releases/download/$(PKG_NAME)-$(PKG_VERSION)/
-PKG_HASH:=092bd17fd47002c988aebdf81d0ed3f3cfd0e82b388d2453bcaa5e67934f4dda
+PKG_HASH:=841503de6c2486e66fd08f0c62ac2568fc8ed1021297f855e8acd58ad7caff76
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -21,6 +21,7 @@ PKG_BUILD_DEPENDS:= \
 
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_IPV6 \
+	CONFIG_LIBCURL_ZLIB
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -33,7 +34,8 @@ define Package/syslog-ng
   CATEGORY:=Administration
   TITLE:=A powerful syslog daemon
   URL:=https://www.syslog-ng.com/products/open-source-log-management/
-  DEPENDS:=+libpcre +glib2 +libopenssl +libpthread +librt +zlib +libdbi +libjson-c +libcurl +libuuid +SYSLOGNG_LOGROTATE:logrotate
+  DEPENDS:=+libpcre2 +glib2 +libopenssl +libpthread +librt +libdbi +libjson-c +libcurl +libuuid +ivykis +SYSLOGNG_LOGROTATE:logrotate +LIBCURL_ZLIB:zlib
+  ALTERNATIVES:=300:/sbin/logread:/usr/libexec/logread.sh
 endef
 
 define Package/syslog-ng/description
@@ -89,11 +91,15 @@ CONFIGURE_ARGS +=  \
 	--disable-sql \
 	--disable-linux-caps \
 	--with-jsonc=system \
+	--with-ivykis=system \
+	--enable-cpp=no \
+	--disable-example-modules \
 	--enable-json=yes \
-	--enable-http=yes \
+	$(if $(CONFIG_LIBCURL_ZLIB),--enable-http=yes,--enable-http=no) \
 	--disable-smtp \
 	--disable-mqtt \
 	--disable-redis \
+	--disable-stackdump \
 	--disable-dependency-tracking \
 	--disable-python \
 	--disable-geoip2 \
@@ -121,8 +127,8 @@ define Package/syslog-ng/install
 	$(INSTALL_DATA) ./files/syslog-ng.conf $(1)/etc
 	touch $(1)/etc/syslog-ng.d/.keep
 
-	$(INSTALL_DIR) $(1)/sbin
-	$(INSTALL_BIN) ./files/logread $(1)/sbin
+	$(INSTALL_DIR) $(1)/usr/libexec
+	$(INSTALL_BIN) ./files/logread.sh $(1)/usr/libexec/logread.sh
 
 	$(INSTALL_DIR) $(1)/usr/share/syslog-ng/include/
 	$(CP) -r ./files/scl $(1)/usr/share/syslog-ng/include/

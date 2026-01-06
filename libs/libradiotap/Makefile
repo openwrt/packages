@@ -6,13 +6,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libradiotap
-PKG_VERSION:=2020-06-22
-PKG_RELEASE:=5
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/radiotap/radiotap-library.git
-PKG_SOURCE_VERSION:=94984dd829a605a2d7af55241145c159607f3b30
-PKG_MIRROR_HASH:=00398c48cac5bf34e6e363b650233353413e232fd2fc7851ccd0a52a20122e1c
+PKG_SOURCE_URL:=https://github.com/radiotap/radiotap-library
+PKG_SOURCE_DATE:=2023-10-09
+PKG_SOURCE_VERSION:=ee71d224e0faeb9ec4e198d587d4e5aac60d4afe
+PKG_MIRROR_HASH:=c829fcbaaef8ab15467b241fca331d484825bb8de1bf3a59bf29727345ec88d3
 
 PKG_MAINTAINER:=Nick Hainke <vincent@systemli.org>
 PKG_LICENSE:=ISC

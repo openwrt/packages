@@ -154,14 +154,16 @@ is_aead() {
 	return 1
 }
 
-add_esp_proposal() {
+config_esp_proposal() {
+	local conf="$1"
+
 	local encryption_algorithm
 	local hash_algorithm
 	local dh_group
 
-	config_get encryption_algorithm "$1" encryption_algorithm
-	config_get hash_algorithm "$1" hash_algorithm
-	config_get dh_group "$1" dh_group
+	config_get encryption_algorithm "$conf" encryption_algorithm
+	config_get hash_algorithm "$conf" hash_algorithm
+	config_get dh_group "$conf" dh_group
 
 	# check for AEAD and clobber hash_algorithm if set
 	if is_aead "$encryption_algorithm" && [ -n "$hash_algorithm" ]; then
@@ -173,27 +175,29 @@ add_esp_proposal() {
 		crypto="${crypto:+${crypto},}${encryption_algorithm}${hash_algorithm:+-${hash_algorithm}}${dh_group:+-${dh_group}}"
 }
 
-parse_esp_proposal() {
+iter_esp_proposal() {
 	local conf="$1"
 	local var="$2"
 
 	local crypto=""
 
-	config_list_foreach "$conf" crypto_proposal add_esp_proposal
+	config_list_foreach "$conf" crypto_proposal config_esp_proposal
 
 	export -n "$var=$crypto"
 }
 
-add_ike_proposal() {
+config_ike_proposal() {
+	local conf="$1"
+
 	local encryption_algorithm
 	local hash_algorithm
 	local dh_group
 	local prf_algorithm
 
-	config_get encryption_algorithm "$1" encryption_algorithm
-	config_get hash_algorithm "$1" hash_algorithm
-	config_get dh_group "$1" dh_group
-	config_get prf_algorithm "$1" prf_algorithm
+	config_get encryption_algorithm "$conf" encryption_algorithm
+	config_get hash_algorithm "$conf" hash_algorithm
+	config_get dh_group "$conf" dh_group
+	config_get prf_algorithm "$conf" prf_algorithm
 
 	# check for AEAD and clobber hash_algorithm if set
 	if is_aead "$encryption_algorithm" && [ -n "$hash_algorithm" ]; then
@@ -205,20 +209,20 @@ add_ike_proposal() {
 		crypto="${crypto:+${crypto},}${encryption_algorithm}${hash_algorithm:+-${hash_algorithm}}${prf_algorithm:+-${prf_algorithm}}${dh_group:+-${dh_group}}"
 }
 
-parse_ike_proposal() {
+iter_ike_proposal() {
 	local conf="$1"
 	local var="$2"
 
 	local crypto=""
 
-	config_list_foreach "$conf" crypto_proposal add_ike_proposal
+	config_list_foreach "$conf" crypto_proposal config_ike_proposal
 
 	export -n "$var=$crypto"
 }
 
 config_child() {
 	# Generic ipsec conn section shared by tunnel and transport
-	local config_name="$1"
+	local conf="$1"
 	local mode="$2"
 
 	local hw_offload
@@ -240,30 +244,32 @@ config_child() {
 	local lifebytes
 	local rekeypackets
 	local lifepackets
+	local replay_window
 
-	config_get startaction "$1" startaction "route"
-	config_get local_nat "$1" local_nat ""
-	config_get updown "$1" updown ""
-	config_get firewall "$1" firewall ""
-	config_get lifetime "$1" lifetime ""
-	config_get dpdaction "$1" dpdaction "none"
-	config_get closeaction "$1" closeaction "none"
-	config_get if_id "$1" if_id ""
-	config_get rekeytime "$1" rekeytime ""
-	config_get_bool ipcomp "$1" ipcomp 0
-	config_get interface "$1" interface ""
-	config_get hw_offload "$1" hw_offload ""
-	config_get priority "$1" priority ""
-	config_get rekeybytes "$1" rekeybytes ""
-	config_get lifebytes "$1" lifebytes ""
-	config_get rekeypackets "$1" rekeypackets ""
-	config_get lifepackets "$1" lifepackets ""
+	config_get startaction "$conf" startaction "route"
+	config_get local_nat "$conf" local_nat ""
+	config_get updown "$conf" updown ""
+	config_get firewall "$conf" firewall ""
+	config_get lifetime "$conf" lifetime ""
+	config_get dpdaction "$conf" dpdaction "none"
+	config_get closeaction "$conf" closeaction "none"
+	config_get if_id "$conf" if_id ""
+	config_get rekeytime "$conf" rekeytime ""
+	config_get_bool ipcomp "$conf" ipcomp 0
+	config_get interface "$conf" interface ""
+	config_get hw_offload "$conf" hw_offload ""
+	config_get priority "$conf" priority ""
+	config_get rekeybytes "$conf" rekeybytes ""
+	config_get lifebytes "$conf" lifebytes ""
+	config_get rekeypackets "$conf" rekeypackets ""
+	config_get lifepackets "$conf" lifepackets ""
+	config_get replay_window "$conf" replay_window ""
 
-	config_list_foreach "$1" local_subnet append_var local_subnet ","
-	config_list_foreach "$1" remote_subnet append_var remote_subnet ","
+	config_list_foreach "$conf" local_subnet append_var local_subnet ","
+	config_list_foreach "$conf" remote_subnet append_var remote_subnet ","
 
 	local esp_proposal
-	parse_esp_proposal "$1" esp_proposal
+	iter_esp_proposal "$conf" esp_proposal
 
 	# translate from ipsec to swanctl
 	case "$startaction" in
@@ -329,7 +335,7 @@ config_child() {
 
 	[ -n "$local_nat" ] && local_subnet="$local_nat"
 
-	swanctl_xappend3 "$config_name {"
+	swanctl_xappend3 "$conf {"
 
 	[ -n "$local_subnet" ] && swanctl_xappend4 "local_ts = $local_subnet"
 	[ -n "$remote_subnet" ] && swanctl_xappend4 "remote_ts = $remote_subnet"
@@ -366,6 +372,7 @@ config_child() {
 
 	[ -n "$updown" ] && swanctl_xappend4 "updown = $updown"
 	[ -n "$dpdaction" ] && swanctl_xappend4 "dpd_action = $dpdaction"
+	[ -n "$replay_window" ] && swanctl_xappend4 "replay_window = $replay_window"
 
         swanctl_xappend3 "}"
 }
@@ -380,6 +387,7 @@ config_transport() {
 
 config_pool() {
 	local conf="$1"
+
 	local addrs
 	local dns
 	local nbns
@@ -390,15 +398,15 @@ config_pool() {
 	local split_include
 	local split_exclude
 
-	config_get addrs "$1" addrs
-	config_list_foreach "$1" dns append_var dns ","
-	config_list_foreach "$1" nbns append_var nbns ","
-	config_list_foreach "$1" dhcp append_var dhcp ","
-	config_list_foreach "$1" netmask append_var netmask ","
-	config_list_foreach "$1" server append_var server ","
-	config_list_foreach "$1" subnet append_var subnet ","
-	config_list_foreach "$1" split_include append_var split_include ","
-	config_list_foreach "$1" split_exclude append_var split_exclude ","
+	config_get addrs "$conf" addrs
+	config_list_foreach "$conf" dns append_var dns ","
+	config_list_foreach "$conf" nbns append_var nbns ","
+	config_list_foreach "$conf" dhcp append_var dhcp ","
+	config_list_foreach "$conf" netmask append_var netmask ","
+	config_list_foreach "$conf" server append_var server ","
+	config_list_foreach "$conf" subnet append_var subnet ","
+	config_list_foreach "$conf" split_include append_var split_include ","
+	config_list_foreach "$conf" split_exclude append_var split_exclude ","
 
 	swanctl_xappend1 "$conf {"
 	[ -n "$addrs" ] && swanctl_xappend2 "addrs = $addrs"
@@ -413,18 +421,36 @@ config_pool() {
 	swanctl_xappend1 "}"
 }
 
-config_connection() {
-	local config_name="$1"
+config_mschapv2_secret() {
+	local conf="$1"
+
+	local id
+	local secret
+
+	config_get id "$conf" id
+	config_get secret "$conf" secret
+
+	swanctl_xappend1 "eap-${conf} {"
+	swanctl_xappend2 "id = $id"
+	swanctl_xappend2 "secret = $secret"
+	swanctl_xappend1 "}"
+}
+
+config_remote() {
+	local conf="$1"
 
 	local enabled
 	local gateway
 	local local_sourceip
 	local local_ip
+	local local_identifier
 	local remote_gateway
+	local remote_identifier
 	local pre_shared_key
 	local auth_method
 	local keyingtries
 	local dpddelay
+	local encap
 	local inactivity
 	local keyexchange
 	local fragmentation
@@ -433,33 +459,41 @@ config_connection() {
 	local local_key
 	local ca_cert
 	local rekeytime
+	local overtime
+	local send_cert
+	local send_certreq
 	local remote_ca_certs
 	local pools
+	local eap_id
 
-	config_get_bool enabled "$1" enabled 0
+	config_get_bool enabled "$conf" enabled 0
 	[ $enabled -eq 0 ] && return
 
-	config_get gateway "$1" gateway
-	config_get pre_shared_key "$1" pre_shared_key
-	config_get auth_method "$1" authentication_method
-	config_get local_identifier "$1" local_identifier ""
-	config_get remote_identifier "$1" remote_identifier ""
-	config_get local_ip "$1" local_ip "%any"
-	config_get keyingtries "$1" keyingtries "3"
-	config_get dpddelay "$1" dpddelay "30s"
-	config_get inactivity "$1" inactivity
-	config_get keyexchange "$1" keyexchange "ikev2"
-	config_get fragmentation "$1" fragmentation "yes"
-	config_get_bool mobike "$1" mobike 1
-	config_get local_cert "$1" local_cert ""
-	config_get local_key "$1" local_key ""
-	config_get ca_cert "$1" ca_cert ""
-	config_get rekeytime "$1" rekeytime
-	config_get overtime "$1" overtime
+	config_get gateway "$conf" gateway
+	config_get pre_shared_key "$conf" pre_shared_key
+	config_get auth_method "$conf" authentication_method
+	config_get local_identifier "$conf" local_identifier ""
+	config_get remote_identifier "$conf" remote_identifier ""
+	config_get local_ip "$conf" local_ip "%any"
+	config_get keyingtries "$conf" keyingtries "3"
+	config_get dpddelay "$conf" dpddelay "30s"
+	config_get_bool encap "$conf" encap 0
+	config_get inactivity "$conf" inactivity
+	config_get keyexchange "$conf" keyexchange "ikev2"
+	config_get fragmentation "$conf" fragmentation "yes"
+	config_get_bool mobike "$conf" mobike 1
+	config_get local_cert "$conf" local_cert ""
+	config_get local_key "$conf" local_key ""
+	config_get ca_cert "$conf" ca_cert ""
+	config_get rekeytime "$conf" rekeytime
+	config_get overtime "$conf" overtime
+	config_get send_cert "$conf" send_cert
+	config_get_bool send_certreq "$conf" send_certreq 1
+	config_get eap_id "$conf" eap_id "%any"
 
-	config_list_foreach "$1" local_sourceip append_var local_sourceip ","
-	config_list_foreach "$1" remote_ca_certs append_var remote_ca_certs ","
-	config_list_foreach "$1" pools append_var pools ","
+	config_list_foreach "$conf" local_sourceip append_var local_sourceip ","
+	config_list_foreach "$conf" remote_ca_certs append_var remote_ca_certs ","
+	config_list_foreach "$conf" pools append_var pools ","
 
 	case "$fragmentation" in
 	0)
@@ -485,7 +519,7 @@ config_connection() {
 	fi
 
 	local ike_proposal
-	parse_ike_proposal "$1" ike_proposal
+	iter_ike_proposal "$conf" ike_proposal
 
 	[ -n "$firewall" ] && fatal "Firewall not supported"
 
@@ -505,9 +539,9 @@ config_connection() {
 		fi
 	fi
 
-	swanctl_xappend0 "# config for $config_name"
+	swanctl_xappend0 "# config for $conf"
 	swanctl_xappend0 "connections {"
-	swanctl_xappend1 "$config_name {"
+	swanctl_xappend1 "$conf {"
 	swanctl_xappend2 "local_addrs = $local_ip"
 	swanctl_xappend2 "remote_addrs = $remote_gateway"
 
@@ -515,11 +549,14 @@ config_connection() {
 	[ -n "$fragmentation" ] && swanctl_xappend2 "fragmentation = $fragmentation"
 	[ -n "$pools" ] && swanctl_xappend2 "pools = $pools"
 
+	local local_auth_method="$auth_method"
+	[ "$auth_method" = "eap-mschapv2" ] && local_auth_method="pubkey"
+
 	swanctl_xappend2 "local {"
-	swanctl_xappend3 "auth = $auth_method"
+	swanctl_xappend3 "auth = $local_auth_method"
 
 	[ -n "$local_identifier" ] && swanctl_xappend3 "id = \"$local_identifier\""
-	[ "$auth_method" = pubkey ] && [ -n "$local_cert" ] && \
+	[ "$local_auth_method" = pubkey ] && [ -n "$local_cert" ] && \
 	    swanctl_xappend3 "certs = $local_cert"
 	swanctl_xappend2 "}"
 
@@ -527,13 +564,14 @@ config_connection() {
 	swanctl_xappend3 "auth = $auth_method"
 	[ -n "$remote_identifier" ] && swanctl_xappend3 "id = \"$remote_identifier\""
 	[ -n "$remote_ca_certs" ] && swanctl_xappend3 "cacerts = \"$remote_ca_certs\""
+	[ "$auth_method" = eap-mschapv2 ] && swanctl_xappend3 "eap_id = $eap_id"
 	swanctl_xappend2 "}"
 
 	swanctl_xappend2 "children {"
 
-	config_list_foreach "$1" tunnel config_tunnel
+	config_list_foreach "$conf" tunnel config_tunnel
 
-	config_list_foreach "$1" transport config_transport
+	config_list_foreach "$conf" transport config_transport
 
 	swanctl_xappend2 "}"
 
@@ -550,6 +588,9 @@ config_connection() {
 		;;
 	esac
 
+	[ -n "$send_cert" ] && swanctl_xappend2 "send_cert = $send_cert"
+	[ $send_certreq -eq 1 ] && swanctl_xappend2 "send_certreq = yes" || swanctl_xappend2 "send_certreq = no"
+
 	[ $mobike -eq 1 ] && swanctl_xappend2 "mobike = yes" || swanctl_xappend2 "mobike = no"
 
 	if [ -n "$rekeytime" ]; then
@@ -563,6 +604,7 @@ config_connection() {
 
 	swanctl_xappend2 "proposals = $ike_proposal"
 	[ -n "$dpddelay" ] && swanctl_xappend2 "dpd_delay = $dpddelay"
+	[ $encap -eq 1 ] && swanctl_xappend2 "encap = yes" || swanctl_xappend2 "encap = no"
 	[ "$keyingtries" = "%forever" ] && swanctl_xappend2 "keyingtries = 0" || swanctl_xappend2 "keyingtries = $keyingtries"
 
 	swanctl_xappend1 "}"
@@ -573,7 +615,7 @@ config_connection() {
 
 		if [ -n "$ca_cert" ]; then
 			swanctl_xappend0 "authorities {"
-			swanctl_xappend1 "$config_name {"
+			swanctl_xappend1 "$conf {"
 			swanctl_xappend2 "cacert = $ca_cert"
 			swanctl_xappend1 "}"
 			swanctl_xappend0 "}"
@@ -583,7 +625,7 @@ config_connection() {
 		swanctl_xappend0 ""
 
 		swanctl_xappend0 "secrets {"
-		swanctl_xappend1 "ike-$config_name {"
+		swanctl_xappend1 "ike-$conf {"
 		swanctl_xappend2 "secret = $pre_shared_key"
 		if [ -n "$local_identifier" ]; then
 			swanctl_xappend2 "id1 = $local_identifier"
@@ -593,13 +635,12 @@ config_connection() {
 		fi
 		swanctl_xappend1 "}"
 		swanctl_xappend0 "}"
+	elif [ "$auth_method" = eap-mschapv2 ]; then
+		# EAP-MSCHAPv2 secrets are handled in config_mschapv2_secrets globally
+		:  # empty command
 	else
 		fatal "AuthenticationMode $auth_mode not supported"
 	fi
-
-	swanctl_xappend0 "pools {"
-	config_list_foreach "$1" pools config_pool
-	swanctl_xappend0 "}"
 
 	swanctl_xappend0 ""
 }
@@ -609,18 +650,20 @@ do_preamble() {
 }
 
 config_ipsec() {
+	local conf="$1"
+
 	local rtinstall_enabled
 	local routing_table
 	local routing_table_id
 	local interface
 	local interface_list
 
-	config_get debug "$1" debug 0
-	config_get_bool rtinstall_enabled "$1" rtinstall_enabled 1
+	config_get debug "$conf" debug 0
+	config_get_bool rtinstall_enabled "$conf" rtinstall_enabled 1
 	[ $rtinstall_enabled -eq 1 ] && install_routes=yes || install_routes=no
 
 	# prepare extra charon config option ignore_routing_tables
-	for routing_table in $(config_get "$1" "ignore_routing_tables"); do
+	for routing_table in $(config_get "$conf" "ignore_routing_tables"); do
 		if [ "$routing_table" -ge 0 ] 2>/dev/null; then
 			routing_table_id=$routing_table
 		else
@@ -630,7 +673,7 @@ config_ipsec() {
 		[ -n "$routing_table_id" ] && append routing_tables_ignored "$routing_table_id"
 	done
 
-	config_list_foreach "$1" interface append_var interface_list
+	config_list_foreach "$conf" interface append_var interface_list
 
 	if [ -z "$interface_list" ]; then
 		WAIT_FOR_INTF=0
@@ -673,7 +716,18 @@ prepare_env() {
 
 	config_load ipsec
 	config_foreach config_ipsec ipsec
-	config_foreach config_connection remote
+	config_foreach config_remote remote
+	
+	swanctl_xappend0 "# Global config"
+	swanctl_xappend0 ""
+	
+	swanctl_xappend0 "pools {"
+	config_foreach config_pool pools
+	swanctl_xappend0 "}"
+
+	swanctl_xappend0 "secrets {"
+	config_foreach config_mschapv2_secret mschapv2_secrets
+	swanctl_xappend0 "}"
 
 	do_postamble
 }
@@ -702,6 +756,16 @@ stop_service() {
 service_triggers() {
 	procd_add_reload_trigger "ipsec"
 	config load "ipsec"
+
+	config_foreach service_trigger_ipsec ipsec
+}
+
+service_trigger_ipsec() {
+	local interface interface_list
+	config_list_foreach "$1" interface append_var interface_list
+	for interface in $interface_list; do
+		procd_add_reload_interface_trigger $interface
+	done
 }
 
 start_service() {

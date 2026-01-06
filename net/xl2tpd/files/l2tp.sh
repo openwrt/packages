@@ -4,8 +4,33 @@
 
 [ -n "$INCLUDE_ONLY" ] || {
 	. /lib/functions.sh
+	. /lib/functions/network.sh
 	. ../netifd-proto.sh
 	init_proto "$@"
+}
+
+proto_l2tp_select_ipaddr()
+{
+	local subnets=$1
+	local res
+	local res_mask
+
+	for subnet in $subnets; do
+		local addr="${subnet%%/*}"
+		local mask="${subnet#*/}"
+
+		if [ -n "$res_mask" -a "$mask" != 32 ]; then
+			[ "$mask" -gt "$res_mask" ] || [ "$res_mask" = 32 ] && {
+				res="$addr"
+				res_mask="$mask"
+			}
+		elif [ -z "$res_mask" ]; then
+			res="$addr"
+			res_mask="$mask"
+		fi
+	done
+
+	echo "$res"
 }
 
 proto_l2tp_init_config() {
@@ -17,6 +42,8 @@ proto_l2tp_init_config() {
 	proto_config_add_int "mtu"
 	proto_config_add_int "checkup_interval"
 	proto_config_add_string "server"
+	proto_config_add_string "hostname"
+	proto_config_add_string "unnumbered"
 	available=1
 	no_device=1
 	no_proto_task=1
@@ -26,9 +53,9 @@ proto_l2tp_init_config() {
 proto_l2tp_setup() {
 	local interface="$1"
 	local optfile="/tmp/l2tp/options.${interface}"
-	local ip serv_addr server host
+	local ip serv_addr server host hostname
 
-	json_get_var server server
+	json_get_vars server hostname
 	host="${server%:*}"
 	for ip in $(resolveip -t 5 "$host"); do
 		( proto_add_host_dependency "$interface" "$ip" )
@@ -40,6 +67,8 @@ proto_l2tp_setup() {
 		proto_setup_failed "$interface"
 		exit 1
 	}
+
+	hostname="${hostname:+hostname=$hostname}"
 
 	# Start and wait for xl2tpd
 	if [ ! -p /var/run/xl2tpd/l2tp-control -o -z "$(pidof xl2tpd)" ]; then
@@ -57,8 +86,8 @@ proto_l2tp_setup() {
 		done
 	fi
 
-	local ipv6 keepalive username password pppd_options mtu
-	json_get_vars ipv6 keepalive username password pppd_options mtu
+	local ipv6 keepalive username password pppd_options mtu unnumbered localip
+	json_get_vars ipv6 keepalive username password pppd_options mtu unnumbered
 	[ "$ipv6" = 1 ] || ipv6=""
 
 	local interval="${keepalive##*[, ]}"
@@ -68,6 +97,18 @@ proto_l2tp_setup() {
 	username="${username:+user \"$username\" password \"$password\"}"
 	ipv6="${ipv6:++ipv6}"
 	mtu="${mtu:+mtu $mtu mru $mtu}"
+
+	[ -n "$unnumbered" ] && {
+		local subnets
+		( proto_add_host_dependency "$interface" "" "$unnumbered" )
+		network_get_subnets subnets "$unnumbered"
+		localip=$(proto_l2tp_select_ipaddr "$subnets")
+		[ -n "$localip" ] || {
+			proto_block_restart "$interface"
+			return
+		}
+		localip="${localip:+$localip:}"
+	}
 
 	mkdir -p /tmp/l2tp
 	cat <<EOF >"$optfile"
@@ -85,10 +126,11 @@ $keepalive
 $username
 $ipv6
 $mtu
+$localip
 $pppd_options
 EOF
 
-	xl2tpd-control add-lac l2tp-${interface} pppoptfile=${optfile} lns=${server} || {
+	xl2tpd-control add-lac l2tp-${interface} pppoptfile=${optfile} lns=${server} ${hostname} || {
 		echo "xl2tpd-control: Add l2tp-$interface failed" >&2
 		proto_setup_failed "$interface"
 		exit 1

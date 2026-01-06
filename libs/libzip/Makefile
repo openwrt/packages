@@ -6,17 +6,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libzip
-PKG_VERSION:=1.9.2
+PKG_VERSION:=1.11.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://libzip.org/download/
-PKG_HASH:=c93e9852b7b2dc931197831438fee5295976ee0ba24f8524a8907be5c2ba5937
+PKG_HASH:=8a247f57d1e3e6f6d11413b12a6f28a9d388de110adc0ec608d893180ed7097b
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:libzip:libzip
 
 CMAKE_INSTALL:=1
 

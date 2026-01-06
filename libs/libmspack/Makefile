@@ -8,19 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmspack
-PKG_VERSION:=0.10.1alpha
+PKG_REALVERSION:=0.11alpha
+PKG_VERSION:=0.11_alpha
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://www.cabextract.org.uk/$(PKG_NAME)/
-PKG_HASH:=bac862dee6e0fc10d92c70212441d9f8ad9b0222edc9a708c3ead4adb1b24a8e
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_REALVERSION).tar.gz
+PKG_SOURCE_URL:=https://www.cabextract.org.uk/$(PKG_NAME)
+PKG_HASH:=70dd1fb2f0aecc36791b71a1e1840e62173079eadaa081192d1c323a0eeea21b
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_REALVERSION)
 
 PKG_MAINTAINER:=Florian Eckert <fe@dev.tdt.de>
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING.LIB
 
-PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 

@@ -5,14 +5,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-intelhex
-PKG_VERSION:=2.2.1
-PKG_RELEASE:=4
+PKG_VERSION:=2.3.0
+PKG_RELEASE:=1
 
-PYPI_NAME:=IntelHex
-PYPI_SOURCE_NAME:=intelhex
-PKG_HASH:=009d8511e0d50639230c39af9607deee771cf026f67ef7507a8c3fd4fa927832
+PYPI_NAME:=intelhex
+PKG_HASH:=892b7361a719f4945237da8ccf754e9513db32f5628852785aea108dcd250093
 
-PKG_MAINTAINER:=Karel Kočí <cynerd@email.cz>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com> 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.txt
 
@@ -24,8 +23,8 @@ define Package/python3-intelhex
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
-  TITLE:=python3-intelhex
-  URL:=https://github.com/bialix/intelhex
+  TITLE:=Intel HEX files manipulations
+  URL:=https://github.com/python-intelhex/intelhex
   DEPENDS:=+python3-light
 endef
 

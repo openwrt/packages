@@ -8,13 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-flask-session
-PKG_VERSION:=0.3.2
+PKG_VERSION:=0.8.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=Flask-Session
-PKG_HASH:=0768e2bbf06f963ec1aa711bde7aa32dc39ff70f89b495d6db687d899eae4423
+PYPI_SOURCE_NAME:=flask_session
+PKG_HASH:=20e045eb01103694e70be4a49f3a80dbb1b57296a22dc6f44bbf3f83ef0742ff
 
-PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 

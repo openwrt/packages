@@ -1,11 +1,11 @@
 --- a/samples/knot.sample.conf.in
 +++ b/samples/knot.sample.conf.in
-@@ -25,6 +25,8 @@ template:
-   - id: default
-     storage: "@storage_dir@"
-     file: "%s.zone"
-+    max-journal-db-size: 20M
-+    max-timer-db-size: 5M
+@@ -13,6 +13,8 @@ log:
  
- zone:
- #    # Primary zone
+ database:
+     storage: "@storage_dir@"
++    journal-db-max-size: 20M
++    timer-db-max-size: 5M
+ 
+ remote:
+ #  - id: secondary

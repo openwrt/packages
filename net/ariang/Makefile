@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ariang
-PKG_VERSION:=1.3.2
+PKG_VERSION:=1.3.11
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).zip
 PKG_SOURCE_URL:=https://github.com/mayswind/AriaNg/releases/download/$(PKG_VERSION)
-PKG_HASH:=2186dacf57c9d1650e00084c0454f2227e910f3203d89c6190f547b40cac7243
+PKG_HASH:=deaaebaf8d59901f0fbdb839daceb1f2768b3d65425e393202786fa2c804bcf9
 UNPACK_CMD=unzip -q -d $(1) $(DL_DIR)/$(PKG_SOURCE)
 
 PKG_MAINTAINER:=Ansuel Smith <ansuelsmth@gmail.com>
@@ -56,6 +56,8 @@ define Package/ariang/install
 		$(PKG_BUILD_DIR)/LICENSE \
 		$(PKG_BUILD_DIR)/favicon.* \
 		$(PKG_BUILD_DIR)/robots.txt \
+		$(PKG_BUILD_DIR)/tileicon.png \
+		$(PKG_BUILD_DIR)/touchicon.png \
 		$(1)/www/ariang
 endef
 

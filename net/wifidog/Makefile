@@ -9,12 +9,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wifidog
 PKG_VERSION:=1.3.0
-PKG_RELEASE:=8
+PKG_RELEASE:=9
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/wifidog/wifidog-gateway
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
-PKG_MIRROR_HASH:=9ffd9f3ae54baceb723abb7a04e27a9b6a3ff1479f8a3bfda9b8a496e8b4050f
+PKG_MIRROR_HASH:=08853132ce047f32750b074270018b5356ee5e19348dfda816ed8b0ae0bc9685
 
 PKG_MAINTAINER:=Michael Haas <haas@computerlinguist.org>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -68,7 +68,7 @@ Package/wifidog-tls/conffiles = $(Package/wifidog/conffiles)
 ifeq ($(BUILD_VARIANT),tls)
 
 CONFIGURE_ARGS += \
-  --enable-cyassl
+  --enable-wolfssl
 
 endif
 

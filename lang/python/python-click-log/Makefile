@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=python-click-log
 PKG_VERSION:=0.4.0
 PKG_RELEASE:=1
-PKG_MAINTAINER:=Karel Kočí <cynerd@email.cz>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com> 
 
 PYPI_NAME:=click-log
 PKG_HASH:=3970f8570ac54491237bcdb3d8ab5e3eef6c057df29f8c3d1151a51a9c23b975

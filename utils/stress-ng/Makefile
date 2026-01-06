@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=stress-ng
-PKG_VERSION:=0.15.06
+PKG_VERSION:=0.19.04
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ColinIanKing/stress-ng/tar.gz/refs/tags/V$(PKG_VERSION)?
-PKG_HASH:=c38cefcf0a83f6c65aed7c36e57a9a1ee8373418ef71cf089a75b0661dcd4623
+PKG_HASH:=3761ae901b2a81dcdb3f5363b8d98f288c03ae320a697b6d7ffef01a48845f05
 
 PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=GPL-2.0-only
@@ -19,6 +19,8 @@ PKG_LICENSE_FILES:=COPYING
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+# For MIPS there is some inline assembly, and this won't compile without '-mno-mips16'
+PKG_BUILD_FLAGS:=no-mips16
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -27,7 +29,8 @@ define Package/stress-ng
   CATEGORY:=Utilities
   TITLE:=stress-ng is a stress test utility
   URL:=https://github.com/ColinIanKing/stress-ng
-  DEPENDS:=+zlib +libbsd +libaio +libsctp +libkmod +libatomic +libjpeg
+  DEPENDS:=+zlib +libbsd +libaio +libsctp +libkmod +libatomic +libjpeg +USE_GLIBC:libcrypt-compat
+  PROVIDES:=stress
 endef
 
 define Package/stress-ng/description

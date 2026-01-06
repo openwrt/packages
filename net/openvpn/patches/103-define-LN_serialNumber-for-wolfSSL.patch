@@ -1,0 +1,12 @@
+--- a/src/openvpn/ssl_verify_openssl.c
++++ b/src/openvpn/ssl_verify_openssl.c
+@@ -267,6 +267,9 @@ backend_x509_get_username(char *common_n
+             return FAILURE;
+         }
+     }
++#if defined(ENABLE_CRYPTO_WOLFSSL)
++ #define LN_serialNumber "serialNumber"
++#endif
+     else if (strcmp(LN_serialNumber, x509_username_field) == 0)
+     {
+         ASN1_INTEGER *asn1_i = X509_get_serialNumber(peer_cert);

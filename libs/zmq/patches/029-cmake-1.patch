@@ -1,0 +1,36 @@
+From 34f7fa22022bed9e0e390ed3580a1c83ac4a2834 Mon Sep 17 00:00:00 2001
+From: rp42 <rp42@users.noreply.github.com>
+Date: Mon, 30 Dec 2024 11:01:39 +0000
+Subject: [PATCH] cmake_minimum_required() before project()
+
+ * Without this CMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded (MT) Windows builds still produced incompatible MultiThreadedDLL (MD) output.
+
+ * Resolves following warning:
+
+CMake Warning (dev) at CMakeLists.txt:2 (project):
+  cmake_minimum_required() should be called prior to this top-level project()
+  call.
+
+ * Use ${CMAKE_HOST_SYSTEM_NAME} as ${CMAKE_SYSTEM_NAME} not set before project().
+---
+ CMakeLists.txt | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,12 +1,13 @@
+ # CMake build script for ZeroMQ
+-project(ZeroMQ)
+ 
+-if(${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
++if(${CMAKE_HOST_SYSTEM_NAME} STREQUAL Darwin)
+   cmake_minimum_required(VERSION 3.0.2)
+ else()
+   cmake_minimum_required(VERSION 2.8.12)
+ endif()
+ 
++project(ZeroMQ)
++
+ include(CheckIncludeFiles)
+ include(CheckCCompilerFlag)
+ include(CheckCXXCompilerFlag)

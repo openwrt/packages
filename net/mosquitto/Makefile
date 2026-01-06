@@ -9,17 +9,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mosquitto
-PKG_VERSION:=2.0.15
+PKG_VERSION:=2.0.22
 PKG_RELEASE:=1
+
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://mosquitto.org/files/source/
+PKG_HASH:=2f752589ef7db40260b633fbdb536e9a04b446a315138d64a7ff3c14e2de6b68
+
 PKG_LICENSE:=EPL-2.0
 PKG_LICENSE_FILES:=LICENSE.txt
 PKG_CPE_ID:=cpe:/a:eclipse:mosquitto
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://mosquitto.org/files/source/
-PKG_HASH:=4735b1d32e3f91c7a8896741d88a3022e89730a1ee897946decfa0df27039ac6
-
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/cmake.mk
 
 define Package/mosquitto/default
   SECTION:=net
@@ -130,7 +132,7 @@ define Package/libmosquitto/default/description
 use by any third party software that wants to communicate with _any_
 MQTT server.
 
-Should be useable for communicating with any MQTT v3.1/3.1.1/5 compatible
+Should be usable for communicating with any MQTT v3.1/3.1.1/5 compatible
 server, in addition to Mosquitto.
 endef
 
@@ -163,9 +165,9 @@ Package/mosquitto-nossl/conffiles = $(Package/mosquitto-ssl/conffiles)
 
 define Package/mosquitto/install/default
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/mosquitto $(1)/usr/sbin/mosquitto
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/mosquitto $(1)/usr/sbin
 	$(INSTALL_DIR) $(1)/etc/mosquitto
-	$(INSTALL_CONF) $(PKG_BUILD_DIR)/mosquitto.conf $(1)/etc/mosquitto/mosquitto.conf
+	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/usr/etc/mosquitto/mosquitto.conf $(1)/etc/mosquitto
 	$(CP) ./files/* $(1)/
 endef
 
@@ -177,69 +179,69 @@ define Package/mosquitto-ssl/install
 	$(call Package/mosquitto/install/default,$(1))
 ifeq ($(CONFIG_MOSQUITTO_PASSWD),y)
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/apps/mosquitto_passwd/mosquitto_passwd $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mosquitto_passwd $(1)/usr/bin
 endif
 ifeq ($(CONFIG_MOSQUITTO_DYNAMIC_SECURITY),y)
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/plugins/dynamic-security/mosquitto_dynamic_security.so $(1)/usr/lib
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/mosquitto_dynamic_security.so $(1)/usr/lib
 endif
 endef
 
 define Package/mosquitto-client-nossl/install
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/client/mosquitto_pub $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/client/mosquitto_sub $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/client/mosquitto_rr $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mosquitto_pub $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mosquitto_sub $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mosquitto_rr $(1)/usr/bin
 endef
 define Package/mosquitto-client-ssl/install
 	$(call Package/mosquitto-client-nossl/install,$(1))
 ifeq ($(CONFIG_MOSQUITTO_CTRL),y)
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/apps/mosquitto_ctrl/mosquitto_ctrl $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/mosquitto_ctrl $(1)/usr/bin
 endif
 endef
 
 # This installs files into ./staging_dir/. so that you can cross compile from the host
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) $(PKG_BUILD_DIR)/include/*.h $(1)/usr/include
-	$(CP) $(PKG_BUILD_DIR)/lib/cpp/mosquittopp.h $(1)/usr/include
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/*.h $(1)/usr/include
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_BUILD_DIR)/lib/libmosquitto.so.1 $(1)/usr/lib/
-	$(CP) $(PKG_BUILD_DIR)/lib/cpp/libmosquittopp.so.1 $(1)/usr/lib/
-	$(LN) libmosquitto.so.1 $(1)/usr/lib/libmosquitto.so
-	$(LN) libmosquittopp.so.1 $(1)/usr/lib/libmosquittopp.so
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libmosquitto.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libmosquittopp.so* $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(CP) $(PKG_BUILD_DIR)/libmosquitto.pc.in $(1)/usr/lib/pkgconfig/libmosquitto.pc
-	sed -i -e "s#@CMAKE_INSTALL_PREFIX@#/usr#" \
-	       -e "s#@VERSION@#$(PKG_VERSION)#" \
-	    $(1)/usr/lib/pkgconfig/libmosquitto.pc
-	$(CP) $(PKG_BUILD_DIR)/libmosquittopp.pc.in $(1)/usr/lib/pkgconfig/libmosquittopp.pc
-	sed -i -e "s#@CMAKE_INSTALL_PREFIX@#/usr#" \
-	       -e "s#@VERSION@#$(PKG_VERSION)#" \
-	    $(1)/usr/lib/pkgconfig/libmosquittopp.pc
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/*.pc $(1)/usr/lib/pkgconfig
 endef
 
 # This installs files on the target.  Compare with Build/InstallDev
 define Package/libmosquitto-ssl/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/libmosquitto.so.1 $(1)/usr/lib/
-	$(LN) libmosquitto.so.1 $(1)/usr/lib/libmosquitto.so
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/libmosquitto.so.* $(1)/usr/lib/
 endef
 Package/libmosquitto-nossl/install = $(Package/libmosquitto-ssl/install)
 
 define Package/libmosquittopp/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/lib/cpp/libmosquittopp.so.1 $(1)/usr/lib/
-	$(LN) libmosquittopp.so.1 $(1)/usr/lib/libmosquittopp.so
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/libmosquittopp.so.* $(1)/usr/lib/
 endef
 
 # Applies to all...
-MAKE_FLAGS += WITH_DOCS=no UNAME=Linux
+CMAKE_OPTIONS += \
+	-DDOCUMENTATION=OFF \
+	-DWITH_ADNS=OFF \
+	-DWITH_BUNDLED_DEPS=ON \
+	-DWITH_DLT=OFF \
+	-DWITH_PERSISTENCE=ON \
+	-DWITH_PIC=ON \
+	-DWITH_SOCKS=ON \
+	-DWITH_SRV=ON \
+	-DWITH_SYSTEMD=OFF \
+	-DWITH_SYS_TREE=ON \
+	-DWITH_THREADING=ON
+
 ifeq ($(BUILD_VARIANT),nossl)
-	MAKE_FLAGS += WITH_TLS=no WITH_WEBSOCKETS=no
+	CMAKE_OPTIONS += -DWITH_TLS=OFF -DWITH_WEBSOCKETS=OFF
 else
-	MAKE_FLAGS += WITH_WEBSOCKETS=$(if $(CONFIG_MOSQUITTO_LWS),"yes","no")
-	MAKE_FLAGS += WITH_TLS_PSK=$(if $(CONFIG_OPENSSL_WITH_PSK),"yes","no")
+	CMAKE_OPTIONS += -DWITH_TLS_PSK=O$(if $(CONFIG_OPENSSL_WITH_PSK),N,FF)
+	CMAKE_OPTIONS += -DWITH_WEBSOCKETS=O$(if $(CONFIG_MOSQUITTO_LWS),N,FF)
 endif
 
 $(eval $(call BuildPackage,mosquitto-ssl))

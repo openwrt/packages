@@ -38,7 +38,7 @@ apinger_status() {
 		if [ -f "$status_file" ]; then
 			_IFS="$IFS"
 			IFS="|"
-			while read -r address srcip target received sent timestamp latency loss alarm; do
+			while read -r address srcip target sent received timestamp latency loss alarm; do
 				json_add_object targets
 				json_add_string interface "$iface"
 				json_add_string target "$target"

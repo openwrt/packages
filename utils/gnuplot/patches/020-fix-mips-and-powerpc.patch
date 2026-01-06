@@ -1,0 +1,21 @@
+From 83a9b3da7681f582d231f285e2936e7524ac8e0d Mon Sep 17 00:00:00 2001
+From: krant <aleksey.vasilenko@gmail.com>
+Date: Thu, 1 Feb 2024 15:04:00 +0200
+Subject: [PATCH] Fix MIPS and PowerPC where FE_UNDERFLOW is undefined
+
+Signed-off-by: krant <aleksey.vasilenko@gmail.com>
+---
+ src/complexfun.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/src/complexfun.c
++++ b/src/complexfun.c
+@@ -86,7 +86,7 @@
+ 	int_error(NO_CARET, "%s: error present on entry (errno %d %s)", who, errno, strerror(errno));
+ #endif
+ 
+-#ifdef HAVE_FENV_H
++#if defined(HAVE_FENV_H) && defined(FE_UNDERFLOW)
+ #define handle_underflow( who, var ) \
+     if (errno) { \
+ 	if (fetestexcept(FE_UNDERFLOW)) { \

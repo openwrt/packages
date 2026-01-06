@@ -43,7 +43,7 @@ mwan3_update_dev_to_table()
 		config_get family "$1" family ipv4
 		network_get_device device "$1"
 		[ -z "$device" ] && return
-		config_get enabled "$1" enabled
+		config_get_bool enabled "$1" enabled
 		[ "$enabled" -eq 0 ] && return
 		curr_table=$(eval "echo	 \"\$mwan3_dev_tbl_${family}\"")
 		export "mwan3_dev_tbl_$family=${curr_table}${device}=$_tid "
@@ -549,7 +549,7 @@ mwan3_delete_iface_rules()
 		return
 	fi
 
-	for rule_id in $(ip rule list | awk '$1 % 1000 == '$id' && $1 > 1000 && $1 < 4000 {print substr($1,0,4)}'); do
+	for rule_id in $(ip rule list | awk -F : '$1 % 1000 == '$id' && $1 > 1000 && $1 < 4000 {print $1}'); do
 		$IP rule del pref $rule_id
 	done
 }
@@ -996,7 +996,7 @@ mwan3_interface_hotplug_shutdown()
 	interface="$1"
 	ifdown="$2"
 	[ -f $MWAN3TRACK_STATUS_DIR/$interface/STATUS ] && {
-		status=$(cat $MWAN3TRACK_STATUS_DIR/$interface/STATUS)
+		readfile status $MWAN3TRACK_STATUS_DIR/$interface/STATUS
 	}
 
 	[ "$status" != "online" ] && [ "$ifdown" != 1 ] && return
@@ -1076,17 +1076,19 @@ mwan3_set_iface_hotplug_state() {
 
 mwan3_get_iface_hotplug_state() {
 	local iface=$1
-
-	cat "$MWAN3_STATUS_DIR/iface_state/$iface" 2>/dev/null || echo "offline"
+	local state=offline
+	readfile state "$MWAN3_STATUS_DIR/iface_state/$iface"
+	echo "$state"
 }
 
 mwan3_report_iface_status()
 {
-	local device result tracking IP IPT error
+	local device result tracking IP IPT
+	local status online uptime result
 
 	mwan3_get_iface_id id "$1"
 	network_get_device device "$1"
-	config_get enabled "$1" enabled 0
+	config_get_bool enabled "$1" enabled 0
 	config_get family "$1" family ipv4
 
 	if [ "$family" = "ipv4" ]; then
@@ -1099,40 +1101,39 @@ mwan3_report_iface_status()
 		IPT="$IPT6"
 	fi
 
-	if [ -z "$id" ] || [ -z "$device" ]; then
-		result="offline"
+	if [ -f "$MWAN3TRACK_STATUS_DIR/${1}/STATUS" ]; then
+		readfile status "$MWAN3TRACK_STATUS_DIR/${1}/STATUS"
 	else
-		error=0
-		[ -n "$($IP rule | awk '$1 == "'$((id+1000)):'"')" ] ||
-			error=$((error+1))
-		[ -n "$($IP rule | awk '$1 == "'$((id+2000)):'"')" ] ||
-			error=$((error+2))
-		[ -n "$($IP rule | awk '$1 == "'$((id+3000)):'"')" ] ||
-			error=$((error+4))
-		[ -n "$($IPT -S mwan3_iface_in_$1 2> /dev/null)" ] ||
-			error=$((error+8))
-		[ -n "$($IP route list table $id default dev $device 2> /dev/null)" ] ||
-			error=$((error+16))
+		status="unknown"
 	fi
 
-	if [ "$result" = "offline" ]; then
-		:
-	elif [ $error -eq 0 ]; then
-		online=$(get_online_time "$1")
+	if [ "$status" = "online" ]; then
+		get_online_time online "$1"
 		network_get_uptime uptime "$1"
 		online="$(printf '%02dh:%02dm:%02ds\n' $((online/3600)) $((online%3600/60)) $((online%60)))"
 		uptime="$(printf '%02dh:%02dm:%02ds\n' $((uptime/3600)) $((uptime%3600/60)) $((uptime%60)))"
 		result="$(mwan3_get_iface_hotplug_state $1) $online, uptime $uptime"
-	elif [ $error -gt 0 ] && [ $error -ne 31 ]; then
-		result="error (${error})"
-	elif [ "$enabled" = "1" ]; then
-		result="offline"
 	else
-		result="disabled"
+		result=0
+		[ -n "$($IP rule | awk '$1 == "'$((id+1000)):'"')" ] ||
+			result=$((result+1))
+		[ -n "$($IP rule | awk '$1 == "'$((id+2000)):'"')" ] ||
+			result=$((result+2))
+		[ -n "$($IP rule | awk '$1 == "'$((id+3000)):'"')" ] ||
+			result=$((result+4))
+		[ -n "$($IPT -S mwan3_iface_in_$1 2> /dev/null)" ] ||
+			result=$((result+8))
+		[ -n "$($IP route list table $id default dev $device 2> /dev/null)" ] ||
+			result=$((result+16))
+		[ "$result" = "0" ] && result=""
 	fi
 
-	tracking="$(mwan3_get_mwan3track_status $1)"
-	echo " interface $1 is $result and tracking is $tracking"
+	mwan3_get_mwan3track_status tracking $1
+	if [ -n "$result" ]; then
+		echo " interface $1 is $status and tracking is $tracking ($result)"
+	else
+		echo " interface $1 is $status and tracking is $tracking"
+	fi
 }
 
 mwan3_report_policies()

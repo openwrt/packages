@@ -1,0 +1,21 @@
+--- a/tacacs-F4.0.4.28/pwlib.c
++++ b/tacacs-F4.0.4.28/pwlib.c
+@@ -354,7 +354,7 @@ etc_passwd_file_verify(char *user, char
+ 	 * password expiration routines work correctly.
+ 	 */
+ 	if (spwd->sp_expire > 0) {
+-	    long secs = spwd->sp_expire * 24 * 60 * 60;
++	    time_t secs = spwd->sp_expire * 24 * 60 * 60;
+ 	    char *p = ctime(&secs);
+ 
+ 	    memcpy(buf, p + 4, 7);
+--- a/tacacs-F4.0.4.28/tac_plus.h
++++ b/tacacs-F4.0.4.28/tac_plus.h
+@@ -418,6 +418,7 @@ char	*cfg_get_host_key(char *);
+ int	cfg_get_host_noenablepwd(char *);
+ #endif
+ char	*cfg_get_host_prompt(char *);
++int	cfg_get_logauthor(void);
+ char	*cfg_get_login_secret(char *, int);
+ #ifdef MSCHAP
+ char	*cfg_get_mschap_secret(char *, int);

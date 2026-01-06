@@ -1,6 +1,6 @@
 --- a/Makefile.in
 +++ b/Makefile.in
-@@ -73,7 +73,7 @@ EGREP = @EGREP@
+@@ -75,7 +75,7 @@ EGREP = @EGREP@
  SED = @SED@
  
  INSTALL = $(SHELL) $(scriptdir)/install-sh -c

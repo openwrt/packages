@@ -4,6 +4,9 @@ Date: Fri, 10 Jun 2022 23:14:27 -0700
 Subject: [PATCH] add meson
 
 Signed-off-by: Rosen Penev <rosenp@gmail.com>
+
+[update version string to 1.9.4]
+
 ---
  meson.build       | 43 +++++++++++++++++++++++++++++++++++++++++++
  meson_options.txt | 11 +++++++++++
@@ -15,7 +18,7 @@ Signed-off-by: Rosen Penev <rosenp@gmail.com>
 +++ b/meson.build
 @@ -0,0 +1,43 @@
 +project('irqbalance', 'c',
-+  version : '1.9.0',
++  version : '1.9.4',
 +  default_options : ['warning_level=1']
 +)
 +

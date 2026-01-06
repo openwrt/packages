@@ -1,0 +1,50 @@
+From a9da732718bd917a50aa25a6ae59e791c2c30380 Mon Sep 17 00:00:00 2001
+From: Florian Eckert <fe@dev.tdt.de>
+Date: Tue, 2 Sep 2025 13:53:05 +0200
+Subject: [PATCH] Fix pthread_t format warning for fprintf
+
+This change fixes the following compilation build warning:
+
+logger.c:117:47: warning: format '%li' expects argument of type 'long int', but argument 7 has type 'pthread_t' {aka 'struct __pthread *'} [-Wformat=]
+  117 |                fprintf(log_fp, "%s %s %s[%d.%li]: %s\n", time_buf, hostname,
+      |                                             ~~^
+      |                                               |
+      |                                               long int
+  118 |                        log_ident, getpid(), pthread_self(), message);
+      |                                             ~~~~~~~~~~~~~~
+      |                                             |
+      |                                             pthread_t {aka struct __pthread *}
+logger.c:124:47: warning: format '%li' expects argument of type 'long int', but argument 7 has type 'pthread_t' {aka 'struct __pthread *'} [-Wformat=]
+  124 |                fprintf(stderr, "%s %s %s[%d.%li]: %s\n", time_buf, hostname,
+      |                                             ~~^
+      |                                               |
+      |                                               long int
+  125 |                        log_ident, getpid(), pthread_self(), message);
+      |                                             ~~~~~~~~~~~~~~
+      |                                             |
+      |                                             pthread_t {aka struct __pthread *}
+
+Signed-off-by: Florian Eckert <fe@dev.tdt.de>
+---
+ logger.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/logger.c
++++ b/logger.c
+@@ -115,14 +115,14 @@ void logger(int severity, const char *fm
+           if (log_fp)
+           {
+                fprintf(log_fp, "%s %s %s[%d.%li]: %s\n", time_buf, hostname,
+-                       log_ident, getpid(), pthread_self(), message);
++                       log_ident, getpid(), (unsigned long int) pthread_self(), message);
+                fflush(log_fp);
+           }
+           else if (log_syslog_is_open)
+                syslog(severity, "%s", message);
+           else
+                fprintf(stderr, "%s %s %s[%d.%li]: %s\n", time_buf, hostname,
+-                       log_ident, getpid(), pthread_self(), message);
++                       log_ident, getpid(), (unsigned long int) pthread_self(), message);
+      }
+      va_end(args);
+ }

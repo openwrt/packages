@@ -1,0 +1,337 @@
+#!/bin/sh /etc/rc.common
+
+. "${IPKG_INSTROOT}/lib/functions/network.sh"
+
+START=90
+STOP=10
+
+USE_PROCD=1
+
+PROG="/usr/libexec/ipsec/pluto"
+IPSEC_BIN="/usr/sbin/ipsec"
+
+IPSEC_DIR="/var/run/ipsec"
+IPSEC_CONF="$IPSEC_DIR/setup.conf"
+IPSEC_CONF_DIR="$IPSEC_DIR/conf.d"
+
+IPSEC_AUTO="${IPSEC_BIN} auto"
+
+extra_command "start_tunnel" "Start ipsec tunnel"
+extra_command "stop_tunnel" "Stop ipsec tunnel"
+extra_command "reload_tunnel" "Reload/restart ipsec tunnel"
+
+set_var() {
+	export "$1=$2"
+}
+
+get_var() {
+	local var
+
+	var=$(eval echo "\"\${${1}}\"")
+	[ "$var" = "1" ] && return 0
+
+	return 1
+}
+
+set_restart_flag() {
+	set_var "RESTART_IPSEC" 1
+}
+
+restart_flag() {
+	get_var RESTART_IPSEC
+}
+
+set_replace_flag() {
+	set_var "REPLACE_${1}" 1
+}
+
+replace_flag() {
+	get_var "REPLACE_${1}"
+}
+
+checkconfig() {
+	${IPSEC_BIN} addconn --checkconfig || return 1
+	mkdir -p /var/run/pluto
+}
+
+expand_ike() {
+	local id="$1"
+	local encryption_algorithm hash_algorithm dh_group proposal
+
+	config_get encryption_algorithm "${id}" encryption_algorithm
+	config_get hash_algorithm "${id}" hash_algorithm
+	config_get dh_group "${id}" dh_group
+
+	encryption_algorithm="${encryption_algorithm% *}"
+	proposal="${encryption_algorithm:+${encryption_algorithm}${hash_algorithm:+-${hash_algorithm}${dh_group:+;${dh_group%% *}}}}"
+	append ike_proposal "$proposal" ","
+}
+
+expand_phase2alg() {
+	local id="$1"
+	local encryption_algorithm hash_algorithm dh_group
+
+	config_get encryption_algorithm "${id}" encryption_algorithm
+	config_get hash_algorithm "${id}" hash_algorithm
+	config_get dh_group "${id}" dh_group
+
+	phase2alg_proposal="${encryption_algorithm:+${encryption_algorithm// /+}${hash_algorithm:+-${hash_algorithm// /+}${dh_group:+-${dh_group// /+}}}}"
+}
+
+generate_tunnel_config() {
+	local id=$1
+	local config_file="$IPSEC_CONF_DIR/$id.conf"
+	local secret_file="$IPSEC_CONF_DIR/$id.secret"
+	local tmp_config_file="/tmp/$id.conf"
+	local tmp_secret_file="/tmp/$id.secret"
+	local ikey mark_in okey mark_out ifid
+
+	config_get auto "$id" auto
+	config_get left "$id" left
+	config_get left_interface "$id" left_interface
+	[ -n "$left_interface" ] && network_get_ipaddr left "$left_interface"
+	config_get right "$id" right
+	config_get leftid "$id" leftid "$left"
+	config_get rightid "$id" rightid "$right"
+	config_get leftsourceip "$id" leftsourceip
+	config_get rightsourceip "$id" rightsourceip
+	config_get leftsubnets "$id" leftsubnets
+	config_get rightsubnets "$id" rightsubnets
+	config_get_bool ikev2 "$id" ikev2
+	[ "$ikev2" = "1" ] && ikev2=yes || ikev2=no
+	config_get_bool rekey "$id" rekey
+	[ "$rekey" = "1" ] && rekey=yes || rekey=no
+	config_get ikelifetime "$id" ikelifetime
+	config_get rekeymargin "$id" rekeymargin
+	config_get dpdaction "$id" dpdaction
+	config_get dpdtimeout "$id" dpdtimeout
+	config_get dpddelay "$id" dpddelay
+	config_get phase2 "$id" phase2
+	config_get phase2alg "$id" phase2alg
+	config_get nflog "$id" nflog 0
+	[ "$nflog" = "0" ] && unset nflog
+
+	config_list_foreach "$id" ike expand_ike
+	config_list_foreach "$id" phase2alg expand_phase2alg
+
+	config_get authby "$id" authby
+	config_get psk "$id" psk
+
+	if [ -n "$leftsubnets" ]; then
+		[[ "$leftsubnets" =~ 0.0.0.0* ]] && leftsubnets="0.0.0.0/0"
+		leftsubnets="{${leftsubnets// /,}}"
+	fi
+
+	if [ -n "$rightsubnets" ]; then
+		[[ "$rightsubnets" =~ 0.0.0.0* ]] && rightsubnets="0.0.0.0/0"
+		rightsubnets="{${rightsubnets// /,}}"
+	fi
+
+	config_get interface "$id" interface
+
+	cat << EOF > "$tmp_secret_file"
+$leftid $rightid : PSK "$psk"
+EOF
+
+	cat << EOF > "$tmp_config_file"
+conn $id
+	auto=${auto}
+	authby=${authby}
+	ikev2=${ikev2}
+	left=${left%% *}
+	${leftid:+leftid=${leftid}}
+	${leftsourceip:+leftsourceip=${leftsourceip}}
+	${leftsubnets:+leftsubnets=${leftsubnets}}
+	right=${right%% *}
+	${rightid:+rightid=${rightid}}
+	${rightsourceip:+rightsourceip=${rightsourceip}}
+	${rightsubnets:+rightsubnets=${rightsubnets}}
+	${dpdaction:+dpdaction=${dpdaction}}
+	${dpdtimeout:+dpdtimeout=${dpdtimeout}}
+	${dpddelay:+dpddelay=${dpddelay}}
+	${ikelifetime:+ikelifetime=${ikelifetime}}
+	${rekey:+rekey=${rekey}}
+	${rekeymargin:+rekeymargin=${rekeymargin}}
+	${rekeyfuzz:+rekeyfuzz=${rekeyfuzz}}
+	${phase2:+phase2=${phase2}}
+	${ike_proposal:+ike=${ike_proposal}}
+	${phase2alg_proposal:+phase2alg=${phase2alg_proposal}}
+	${nflog:+nflog=${nflog}}
+EOF
+
+	if [ -n "$interface" ]; then
+		proto=$(uci_get network "$interface" proto)
+		case "$proto" in
+			vti)
+				ikey=$(uci_get network "$interface" ikey)
+				okey=$(uci_get network "$interface" okey)
+				mark_in=$(printf "0x%x" $ikey)
+				mark_out=$(printf "0x%x" $okey)
+				echo -e "${mark_in:+\tmark-in=${mark_in}}" >> "$tmp_config_file"
+				echo -e "${mark_out:+\tmark-out=${mark_out}}" >> "$tmp_config_file"
+				echo -e "${interface:+\tvti-interface=${interface}}" >> "$tmp_config_file"
+				;;
+			xfrm)
+				ifid=$(uci_get network "$interface" ifid)
+				echo -e "${ifid:+\tipsec-interface=${ifid}}" >> "$tmp_config_file"
+				;;
+		esac
+	fi
+
+
+	[ -f "$config_file" ] && {
+		cmp "$config_file" "$tmp_config_file" 2>/dev/null && rm -f "$tmp_config_file"
+	}
+
+	[ -f "$secret_file" ] && {
+		cmp "$secret_file" "$tmp_secret_file" 2>/dev/null && rm -f "$tmp_secret_file"
+	}
+
+	[ -f "$tmp_config_file" ] && mv "$tmp_config_file" "$config_file" && set_replace_flag "$id"
+	[ -f "$tmp_secret_file" ] && mv "$tmp_secret_file" "$secret_file" && set_replace_flag "$id"
+
+	unset ike_proposal phase2alg_proposal
+}
+
+generate_daemon_config() {
+	local tmp_config_file="/tmp/setup.conf"
+
+	config_get_bool debug globals debug 0
+	[ "$debug" = "0" ] && debug=none || debug=all
+	config_get_bool uniqueids globals uniqueids 0
+	[ "$uniqueids" = "0" ] && uniqueids=no || uniqueids=yes
+	config_get listen globals listen
+	config_get listen_interface globals listen_interface
+	[ -n "$listen_interface" ] && network_get_ipaddr listen "$listen_interface"
+	config_get virtual_private globals virtual_private
+	[ -z "$virtual_private" ] && virtual_private='10.0.0.0/8 192.168.0.0/16 172.16.0.0/12 25.0.0.0/8 100.64.0.0/10 !100.64.0.0/24'
+	config_get nflog_all globals nflog_all 0
+	[ "$nflog_all" = "0" ] && unset nflog_all
+
+	[ ! -d $IPSEC_DIR ] && mkdir -p $IPSEC_DIR
+	[ ! -d $IPSEC_CONF_DIR ] && mkdir -p $IPSEC_CONF_DIR
+
+	cat << EOF > "$tmp_config_file"
+config setup
+	${debug:+plutodebug=${debug}}
+	${uniqueids:+uniqueids=${uniqueids}}
+	${listen:+listen=${listen}}
+	${virtual_private:+virtual-private=%v4:${virtual_private// /,%v4:}}
+	${nflog_all:+nflog-all=${nflog_all}}
+EOF
+
+	if ! cmp "$IPSEC_CONF" "$tmp_config_file" 2>/dev/null; then
+		mv "$tmp_config_file" "$IPSEC_CONF"
+		set_restart_flag 1
+	else
+		rm -f "$tmp_config_file"
+	fi
+
+	return 0
+}
+
+clean_config() {
+	rm -f $IPSEC_CONF_DIR/*.conf $IPSEC_CONF_DIR/*.secret
+}
+
+config_cb() {
+	local var="CONFIG_${1}_SECTIONS"
+	export $var
+	append "$var" "$2"
+}
+
+generate_config() {
+	config_load libreswan
+	generate_daemon_config
+	config_foreach generate_tunnel_config tunnel
+}
+
+regenerate_config() {
+	clean_config
+	generate_config
+}
+
+active_conns() {
+	local active_conns file _file
+
+	active_conns=$(${IPSEC_BIN} --trafficstatus | awk -F'[":/]' '{print $3}' | sort -u)
+
+	for file in $IPSEC_CONF_DIR/*.conf; do
+		_file="${file##*/}"
+		list_contains active_conns "${_file%%.*}" || append active_conns "${_file%%.*}"
+	done
+
+	echo "$active_conns"
+}
+
+start_service() {
+	generate_config
+	checkconfig || return 1
+
+	${IPSEC_BIN} _stackmanager start
+
+	procd_open_instance
+	procd_set_param command $PROG --nofork
+	procd_set_param respawn
+	procd_close_instance
+}
+
+stop_service() {
+	${IPSEC_BIN} whack --shutdown
+	${IPSEC_BIN} _stackmanager stop
+}
+
+stop_tunnel() {
+	${IPSEC_AUTO} --delete "$1" > /dev/null 2>&1
+	rm -f ${IPSEC_CONF_DIR}/$1.*
+}
+
+start_tunnel() {
+	generate_tunnel_config "$1"
+	${IPSEC_AUTO} --add "$1" > /dev/null 2>&1
+	${IPSEC_AUTO} --rereadsecrets
+	${IPSEC_AUTO} --up "$1" > /dev/null 2>&1 &
+}
+
+reload_tunnel() {
+	generate_tunnel_config "$1"
+
+	replace_flag "$1" || return 0
+
+	${IPSEC_AUTO} --rereadsecrets
+	${IPSEC_AUTO} --replace "$1" > /dev/null 2>&1
+	${IPSEC_AUTO} --up "$1" > /dev/null 2>&1 &
+}
+
+reload_service() {
+	local active_tunnels uci_tunnels
+	uci_tunnels="$@"
+
+	config_load libreswan
+	generate_daemon_config
+
+	if restart_flag; then
+		restart
+		return 0
+	fi
+
+	[ -z "$uci_tunnels" ] && config_get uci_tunnels tunnel SECTIONS
+
+	active_tunnels="$(active_conns)"
+
+	for tunnel in $active_tunnels; do
+		list_contains uci_tunnels "$tunnel" || stop_tunnel "$tunnel"
+	done
+
+	for tunnel in $uci_tunnels; do
+		if list_contains active_tunnels "$tunnel"; then
+			reload_tunnel "$tunnel"
+		else
+			start_tunnel "$tunnel"
+		fi
+	done
+}
+
+service_triggers() {
+	procd_add_reload_trigger 'libreswan'
+}

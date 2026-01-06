@@ -1,0 +1,41 @@
+--- a/extensions/LUA/prot_buf_helpers.c
++++ b/extensions/LUA/prot_buf_helpers.c
+@@ -23,6 +23,8 @@
+ 
+ #include "controller.h"
+ 
++int32_t get_header_size(struct protocol_buf * prot_buf);
++
+ int32_t get_header_size(struct protocol_buf * prot_buf)
+ {
+ 	int32_t bit_counter = 0;
+@@ -213,4 +215,4 @@ free1: kfree(changes);
+ failure:
+ 	if (!changes) luaL_error(L, "couldnt allocate memory inside 'get_allocated_field_changes'");
+ 	return NULL; /* only to omit warnings */
+-}
+\ No newline at end of file
++}
+--- a/extensions/LUA/prot_buf_tftp.c
++++ b/extensions/LUA/prot_buf_tftp.c
+@@ -27,6 +27,8 @@ static const struct protocol_field tftp_
+ 	PROT_FIELD_SENTINEL,
+ };
+ 
++struct field_changes * tftp_get_field_changes(lua_State *L, lua_packet_segment * seg);
++
+ struct field_changes * tftp_get_field_changes(lua_State *L, lua_packet_segment * seg)
+ {
+ 	/* depending on the value stored inside the 'opcode'-field we have to change
+--- a/extensions/LUA/prot_buf_dynamic.c
++++ b/extensions/LUA/prot_buf_dynamic.c
+@@ -242,6 +242,9 @@ static int32_t get_free_protocol_index(l
+  * cleanup routine. Be aware, before running this function you must be 
+  * sure that no references to the dynamic protocol buffers were available.
+  * It's recomended to close the Lua state before calling the function. */
++
++void free_dynamic_prot_buf(struct protocol_buf * prot_buf);
++
+ void free_dynamic_prot_buf(struct protocol_buf * prot_buf)
+ {
+ 	struct protocol_field * field = prot_buf->protocol_fields;

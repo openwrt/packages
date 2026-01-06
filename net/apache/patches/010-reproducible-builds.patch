@@ -18,7 +18,7 @@ Last-Update: 2015-08-11
 -#endif
 +static const char server_built[] = "";
  
- AP_DECLARE(const char *) ap_get_server_built()
+ AP_DECLARE(const char *) ap_get_server_built(void)
  {
 --- a/server/Makefile.in
 +++ b/server/Makefile.in

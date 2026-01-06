@@ -1,0 +1,21 @@
+From fa532b05d48e856c774837b83a3323dafcc8c33e Mon Sep 17 00:00:00 2001
+From: Andras Gemes <andrasgemes@outlook.com>
+Date: Fri, 20 Jan 2023 14:58:35 +0100
+Subject: [PATCH 5/9] airodump-ng/dump_write: remove unused PCRE include
+
+---
+ src/airodump-ng/dump_write.c | 3 ---
+ 1 file changed, 3 deletions(-)
+
+--- a/src/airodump-ng/dump_write.c
++++ b/src/airodump-ng/dump_write.c
+@@ -45,9 +45,6 @@
+ #include <unistd.h> // ftruncate
+ #include <sys/types.h> // ftruncate
+ #include <sys/time.h>
+-#ifdef HAVE_PCRE
+-#include <pcre.h>
+-#endif
+ 
+ #include "aircrack-ng/defs.h"
+ #include "airodump-ng.h"

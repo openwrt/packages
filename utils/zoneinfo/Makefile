@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2023 OpenWrt.org
+# Copyright (C) 2007-2025 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,24 +9,24 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zoneinfo
-PKG_VERSION:=2023c
-PKG_RELEASE:=2
+PKG_VERSION:=2025c
+PKG_RELEASE:=1
 
 #As i couldn't find real license used "Public Domain"
-#as referense to http://www.iana.org/time-zones/repository/tz-link.html
-PKG_LICENSE:=Public Domain
+#as reference to http://www.iana.org/time-zones/repository/tz-link.html
+PKG_LICENSE:=Public-Domain
 
 PKG_SOURCE:=tzdata$(PKG_VERSION).tar.gz
 PKG_SOURCE_CODE:=tzcode$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://www.iana.org/time-zones/repository/releases
-PKG_HASH:=3f510b5d1b4ae9bb38e485aa302a776b317fb3637bdb6404c4adf7b6cadd965c
+PKG_SOURCE_URL:=https://www.iana.org/time-zones/repository/releases
+PKG_HASH:=4aa79e4effee53fc4029ffe5f6ebe97937282ebcdf386d5d2da91ce84142f957
 
 include $(INCLUDE_DIR)/package.mk
 
 define Download/tzcode
    FILE=$(PKG_SOURCE_CODE)
    URL=$(PKG_SOURCE_URL)
-   HASH:=46d17f2bb19ad73290f03a203006152e0fa0d7b11e5b71467c4a823811b214e7
+   HASH:=697ebe6625444aef5080f58e49d03424bbb52e08bf483d3ddb5acf10cbd15740
 endef
 
 $(eval $(call Download,tzcode))

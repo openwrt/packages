@@ -1038,7 +1038,7 @@
 +#endif /* CONTROLLER_H_ */
 --- /dev/null
 +++ b/extensions/LUA/Kbuild
-@@ -0,0 +1,49 @@
+@@ -0,0 +1,51 @@
 +# -*- Makefile -*-
 +
 +# Adding debug options
@@ -1063,6 +1063,8 @@
 +			prot_buf_dynamic.o \
 +
 +
++# Enable <stddef.h> <stdarg.h>
++EXTRA_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
 +# Adding Lua Support
 +EXTRA_CFLAGS += -I$(src)/lua -I$(src)/lua/include 
 +xt_LUA-y += lua/lapi.o \
@@ -1361,16 +1363,13 @@
 +#include <linux/string.h>
 --- /dev/null
 +++ b/extensions/LUA/lua/lapi.c
-@@ -0,0 +1,1086 @@
+@@ -0,0 +1,1083 @@
 +/*
 +** $Id: lapi.c,v 2.55.1.5 2008/07/04 18:41:18 roberto Exp $
 +** Lua API
 +** See Copyright Notice in lua.h
 +*/
 +
-+#include <stdarg.h>
-+#include <math.h>
-+#include <assert.h>
 +#include <string.h>
 +
 +#define lapi_c
@@ -7825,7 +7824,7 @@
 +}
 --- /dev/null
 +++ b/extensions/LUA/lua/llex.h
-@@ -0,0 +1,81 @@
+@@ -0,0 +1,83 @@
 +/*
 +** $Id: llex.h,v 1.58.1.1 2007/12/27 13:02:25 roberto Exp $
 +** Lexical Analyzer
@@ -7838,6 +7837,8 @@
 +#include "lobject.h"
 +#include "lzio.h"
 +
++/* prevent conflict with definition from asm/current.h */
++#undef current
 +
 +#define FIRST_RESERVED	257
 +
@@ -7909,7 +7910,7 @@
 +#endif
 --- /dev/null
 +++ b/extensions/LUA/lua/llimits.h
-@@ -0,0 +1,125 @@
+@@ -0,0 +1,124 @@
 +/*
 +** $Id: llimits.h,v 1.69.1.1 2007/12/27 13:02:25 roberto Exp $
 +** Limits, basic types, and some other `installation-dependent' definitions
@@ -7920,7 +7921,6 @@
 +#define llimits_h
 +
 +#include <stddef.h>
-+#include <limits.h>
 +
 +#include "lua.h"
 +
@@ -12003,7 +12003,7 @@
 +}
 --- /dev/null
 +++ b/extensions/LUA/lua/ltable.c
-@@ -0,0 +1,588 @@
+@@ -0,0 +1,587 @@
 +/*
 +** $Id: ltable.c,v 2.32.1.2 2007/12/28 15:32:23 roberto Exp $
 +** Lua tables (hash)
@@ -12024,7 +12024,6 @@
 +** Hence even when the load factor reaches 100%, performance remains good.
 +*/
 +
-+#include <math.h>
 +#include <string.h>
 +
 +#define ltable_c
@@ -13062,7 +13061,7 @@
 +#endif
 --- /dev/null
 +++ b/extensions/LUA/lua/luaconf.h
-@@ -0,0 +1,797 @@
+@@ -0,0 +1,803 @@
 +/*
 +** $Id: luaconf.h,v 1.82.1.7 2008/02/11 16:25:08 roberto Exp $
 +** Configuration file for Lua
@@ -13078,8 +13077,12 @@
 +#if !defined(__KERNEL__)
 +#include <limits.h>
 +#else
++#include <linux/kernel.h>
++
++#undef UCHAR_MAX
++#undef BUFSIZ
++#undef NO_FPU
 +#define UCHAR_MAX	255
-+#define SHRT_MAX        32767
 +#define BUFSIZ 		8192
 +#define NO_FPU
 +#endif
@@ -13702,6 +13705,8 @@
 +*/
 +#if defined(__KERNEL__)
 +#undef LUA_USE_ULONGJMP
++#define setjmp __builtin_setjmp
++#define longjmp __builtin_longjmp
 +#endif
 +
 +#if defined(__cplusplus)
@@ -15649,7 +15654,7 @@
 +RANLIB = ranlib
 +SED = /bin/sed
 +SET_MAKE = 
-+SHELL = /bin/bash
++SHELL = /bin/sh
 +STRIP = strip
 +VERSION = 1.21
 +abs_builddir = /home/andre/Dropbox/xtables-addons/extensions/LUA
@@ -17221,7 +17226,7 @@
 +
 --- /dev/null
 +++ b/extensions/LUA/prot_buf_ip.c
-@@ -0,0 +1,209 @@
+@@ -0,0 +1,210 @@
 +/*
 + *	Copyright (C) 2010 University of Basel <http://cn.cs.unibas.ch/>
 + *	by Andre Graf <andre@dergraf.org>
@@ -17241,6 +17246,7 @@
 + */
 +
 +#if defined(__KERNEL__)
++	#include <linux/bitops.h>
 +	#include <net/checksum.h>
 +	#include <net/tcp.h>
 +#endif
@@ -17479,7 +17485,7 @@
 +}
 --- /dev/null
 +++ b/extensions/LUA/prot_buf_tcp.c
-@@ -0,0 +1,188 @@
+@@ -0,0 +1,189 @@
 +/*
 + *	Copyright (C) 2010 University of Basel <http://cn.cs.unibas.ch/>
 + *	by Andre Graf <andre@dergraf.org>
@@ -17499,6 +17505,7 @@
 + */
 +
 +#if defined(__KERNEL__)
++	#include <linux/bitops.h>
 +	#include <net/checksum.h>
 +	#include <net/tcp.h>
 +#endif
@@ -17760,7 +17767,7 @@
 +}
 --- /dev/null
 +++ b/extensions/LUA/prot_buf_udp.c
-@@ -0,0 +1,53 @@
+@@ -0,0 +1,54 @@
 +/*
 + *	Copyright (C) 2010 University of Basel <http://cn.cs.unibas.ch/>
 + *	by Andre Graf <andre@dergraf.org>
@@ -17780,6 +17787,7 @@
 + */
 +
 +#if defined(__KERNEL__)
++	#include <linux/bitops.h>
 +	#include <net/checksum.h>
 +#endif
 +
@@ -17877,7 +17885,7 @@
 +#include <linux/kernel.h>
 +#include <linux/slab.h>
 +#include <linux/module.h>
-+#include <asm/uaccess.h>
++#include <linux/uaccess.h>
 +#include <net/ip.h>
 +#include <linux/netfilter/x_tables.h>
 +#include "xt_LUA.h"
@@ -17922,10 +17930,10 @@
 + * XT_CONTINUE inside the *register_lua_packet_lib* function.
 + */
 +
-+spinlock_t lock = SPIN_LOCK_UNLOCKED;
++DEFINE_SPINLOCK(lock);
 +
 +static uint32_t 
-+lua_tg(struct sk_buff *pskb, const struct xt_target_param *par)
++lua_tg(struct sk_buff *pskb, const struct xt_action_param *par)
 +{
 +	uint32_t  verdict;
 +	lua_packet_segment *p;
@@ -17937,7 +17945,7 @@
 +
 +	L = lua_envs[info->state_id]->L;
 +
-+	if (!skb_make_writable(pskb, pskb->len))
++	if (skb_ensure_writable(pskb, pskb->len))
 +		return NF_DROP;
 +
 +	/* call the function provided by --function parameter or the default 'process_packet' defined in Lua */
@@ -17946,11 +17954,11 @@
 +	/* push the lua_packet_segment as a parameter */
 +	p = (lua_packet_segment *)lua_newuserdata(L, sizeof(lua_packet_segment));
 +	if (pskb->mac_header)
-+		p->start = pskb->mac_header;
++		p->start = skb_mac_header(pskb);
 +	else if (pskb->network_header)
-+		p->start = pskb->network_header;
++		p->start = skb_network_header(pskb);
 +	else if (pskb->transport_header)
-+		p->start = pskb->transport_header;
++		p->start = skb_transport_header(pskb);
 +	p->offset = 0;
 +	p->length = (unsigned long)pskb->tail - (unsigned long)p->start;
 +	p->changes = NULL;
@@ -18066,16 +18074,16 @@
 + * some workqueue initialization. So far this is done each time this function
 + * is called, subject to change.
 + */
-+static bool
++static int
 +lua_tg_checkentry(const struct xt_tgchk_param *par)
 +{
 +	const struct xt_lua_tginfo *info = par->targinfo;
 +
 +	if (load_script_into_state(info->state_id, info->script_size, (char *)info->buf)) {
 +		lua_state_refs[info->state_id]++;
-+		return true;
++		return 0;
 +	}
-+	return false;
++	return -EINVAL;
 +}
 +
 +/*::*

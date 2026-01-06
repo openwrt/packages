@@ -10,7 +10,7 @@ Last-Update: 2021-07-28
 
 --- a/src/EDITME
 +++ b/src/EDITME
-@@ -873,6 +873,21 @@ HEADERS_CHARSET="ISO-8859-1"
+@@ -998,6 +998,21 @@ HEADERS_CHARSET="ISO-8859-1"
  
  
  #------------------------------------------------------------------------------
@@ -45,7 +45,7 @@ Last-Update: 2021-07-28
  #define CONFIGURE_FILE
 --- a/src/globals.c
 +++ b/src/globals.c
-@@ -117,6 +117,10 @@ int     dsn_ret                = 0;
+@@ -120,6 +120,10 @@ int     dsn_ret                = 0;
  const pcre2_code  *regex_DSN         = NULL;
  uschar *dsn_advertise_hosts    = NULL;
  
@@ -58,7 +58,7 @@ Last-Update: 2021-07-28
  BOOL    gnutls_allow_auto_pkcs11 = FALSE;
 --- a/src/globals.h
 +++ b/src/globals.h
-@@ -155,6 +155,9 @@ extern int      dsn_ret;               /
+@@ -164,6 +164,9 @@ extern int      dsn_ret;               /
  extern const pcre2_code  *regex_DSN;         /* For recognizing DSN settings */
  extern uschar  *dsn_advertise_hosts;   /* host for which TLS is advertised */
  
@@ -70,8 +70,8 @@ Last-Update: 2021-07-28
  
 --- a/src/local_scan.c
 +++ b/src/local_scan.c
-@@ -7,58 +7,133 @@
- /* See the file NOTICE for conditions of use and distribution. */
+@@ -8,58 +8,133 @@
+ /* SPDX-License-Identifier: GPL-2.0-or-later */
  
  
 -/******************************************************************************
@@ -248,7 +248,7 @@ Last-Update: 2021-07-28
  /* End of local_scan.c */
 --- a/src/local_scan.h
 +++ b/src/local_scan.h
-@@ -27,6 +27,7 @@ settings, and the store functions. */
+@@ -30,6 +30,7 @@ settings, and the store functions. */
  
  #include <stdarg.h>
  #include <sys/types.h>
@@ -256,7 +256,7 @@ Last-Update: 2021-07-28
  #include "config.h"
  #include "mytypes.h"
  #include "store.h"
-@@ -166,6 +167,9 @@ extern header_line *header_list;       /
+@@ -179,6 +180,9 @@ extern header_line *header_list;       /
  extern BOOL    host_checking;          /* Set when checking a host */
  extern uschar *interface_address;      /* Interface for incoming call */
  extern int     interface_port;         /* Port number for incoming call */
@@ -266,16 +266,17 @@ Last-Update: 2021-07-28
  extern uschar *message_id;             /* Internal id of message being handled */
  extern uschar *received_protocol;      /* Name of incoming protocol */
  extern int     recipients_count;       /* Number of recipients */
-@@ -236,4 +240,6 @@ extern pid_t    child_open_exim2_functio
+@@ -249,5 +253,7 @@ extern pid_t    child_open_exim2_functio
  extern pid_t    child_open_function(uschar **, uschar **, int, int *, int *, BOOL, const uschar *);
  #endif
  
 +#pragma GCC visibility pop
 +
+ #endif	/* whole file */
  /* End of local_scan.h */
 --- a/src/readconf.c
 +++ b/src/readconf.c
-@@ -212,6 +212,9 @@ static optionlist optionlist_config[] =
+@@ -218,6 +218,9 @@ static optionlist optionlist_config[] =
    { "local_from_prefix",        opt_stringptr,   {&local_from_prefix} },
    { "local_from_suffix",        opt_stringptr,   {&local_from_suffix} },
    { "local_interfaces",         opt_stringptr,   {&local_interfaces} },
@@ -287,7 +288,7 @@ Last-Update: 2021-07-28
  #endif
 --- a/src/string.c
 +++ b/src/string.c
-@@ -418,6 +418,7 @@ return ss;
+@@ -459,6 +459,7 @@ return ss;
  
  #if (defined(HAVE_LOCAL_SCAN) || defined(EXPAND_DLFUNC)) \
  	&& !defined(MACRO_PREDEF) && !defined(COMPILE_UTILITY)
@@ -295,7 +296,7 @@ Last-Update: 2021-07-28
  /*************************************************
  *            Copy and save string                *
  *************************************************/
-@@ -463,6 +464,7 @@ string_copyn_function(const uschar * s,
+@@ -504,6 +505,7 @@ string_copyn_function(const uschar * s,
  {
  return string_copyn(s, n);
  }

@@ -1,0 +1,35 @@
+From a8accffb95267490b50401c8b65ec18db57b5ef5 Mon Sep 17 00:00:00 2001
+From: Nate Karstens <nate.karstens@garmin.com>
+Date: Wed, 9 Aug 2017 09:16:58 -0500
+Subject: [PATCH 7/8] Mark deleted interfaces as being changed
+
+Netlink notification handling ignores messages for deleted links,
+RTM_DELLINK. It does handle RTM_GETLINK. According to libnl docu-
+mentation (http://www.infradead.org/~tgr/libnl/doc/route.html)
+RTM_DELLINK can be sent by the kernel, but RTM_GETLINK cannot.
+There was likely a mixup in the original implementation, so this
+change replaces handling for RTM_GETLINK with RTM_DELLINK.
+
+Testing and Verification Instructions:
+  1. Use ip-link to add and remove a VLAN interface and verify
+     that mDNSResponder handles the deleted link.
+
+Upstream-Status: Submitted [dts@apple.com]
+
+Signed-off-by: Nate Karstens <nate.karstens@garmin.com>
+Signed-off-by: Alex Kiernan <alex.kiernan@gmail.com>
+---
+ mDNSPosix/mDNSPosix.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/mDNSPosix/mDNSPosix.c
++++ b/mDNSPosix/mDNSPosix.c
+@@ -1714,7 +1714,7 @@ mDNSlocal void          ProcessRoutingNo
+ #endif
+ 
+         // Process the NetLink message
+-        if (pNLMsg->nlmsg_type == RTM_GETLINK || pNLMsg->nlmsg_type == RTM_NEWLINK)
++        if (pNLMsg->nlmsg_type == RTM_DELLINK || pNLMsg->nlmsg_type == RTM_NEWLINK)
+             AddInterfaceIndexToList(changedInterfaces, ((struct ifinfomsg*) NLMSG_DATA(pNLMsg))->ifi_index);
+         else if (pNLMsg->nlmsg_type == RTM_DELADDR || pNLMsg->nlmsg_type == RTM_NEWADDR)
+             AddInterfaceIndexToList(changedInterfaces, ((struct ifaddrmsg*) NLMSG_DATA(pNLMsg))->ifa_index);

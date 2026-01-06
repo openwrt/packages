@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libtheora
-PKG_VERSION:=1.1.1
+PKG_VERSION:=1.2.0
 PKG_RELEASE:=1
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://downloads.xiph.org/releases/theora/
-PKG_HASH:=b6ae1ee2fa3d42ac489287d3ec34c5885730b1296f0801ae577a35193d3affbc
+PKG_HASH:=ebdf77a8f5c0a8f7a9e42323844fa09502b34eb1d1fece7b5f54da41fe2122ec
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING LICENSE
@@ -42,14 +42,15 @@ features supported by the decoder to improve over what is
 is possible with VP3.
 endef
 
-define Build/Configure
-	$(call Build/Configure/Default, \
-		--disable-examples \
-		--disable-oggtest \
-		--disable-vorbistest \
-		--disable-sdltest \
-	)
-endef
+CONFIGURE_ARGS += \
+	--disable-examples \
+	--disable-oggtest \
+	--disable-vorbistest \
+	--disable-sdltest
+
+ifneq ($(findstring armeb,$(CONFIG_ARCH)),)
+CONFIGURE_ARGS += --disable-asm
+endif
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/theora/

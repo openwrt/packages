@@ -8,19 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=micropython
-PKG_VERSION:=1.20.0
+PKG_VERSION:=1.23.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/micropython/micropython/releases/download/v$(PKG_VERSION)
-PKG_HASH:=098ef8e40abdc62551b5460d0ffe9489074240c0cb5589ca3c3a425551beb9bf
+PKG_HASH:=0ab283c2fc98d466c1ff26692bee46abaeeab55d488a36fc3cb6372cb8fb390d
 
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:micropython:micropython
 
 PKG_BUILD_DEPENDS:=python3/host
-PKG_BUILD_FLAGS:=no-mips16
+PKG_BUILD_FLAGS:=no-mips16 no-mold
 PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/host-build.mk
@@ -70,14 +71,20 @@ $(call Package/micropython/Default/description)
 This version is built without TLS and mip.
 endef
 
-MAKE_FLAGS += BUILD_VERBOSE=1
+MAKE_FLAGS += BUILD_VERBOSE=1 STRIP=
 
 ifneq ($(CONFIG_DEBUG),)
   MAKE_FLAGS += DEBUG=1
 endif
 
 ifeq ($(BUILD_VARIANT),nossl)
-  MAKE_FLAGS += MICROPY_PY_USSL=0 FROZEN_MANIFEST=variants/standard/manifest-nossl.py
+  MAKE_FLAGS += MICROPY_PY_SSL=0 FROZEN_MANIFEST=variants/standard/manifest-nossl.py
+endif
+
+# Work around "variable might be clobbered" warning leading to build error
+# https://github.com/micropython/micropython/issues/12838
+ifeq ($(ARCH),riscv64)
+  MAKE_FLAGS += CFLAGS_EXTRA=-Wno-error=clobbered
 endif
 
 MAKE_PATH = ports/unix
@@ -89,20 +96,20 @@ define Build/Configure
 endef
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(2)/lib/micropython-$(PKG_VERSION)/mpy-cross
+	$(INSTALL_DIR) $(2)/lib/micropython/mpy-cross
 	$(CP) \
 		$(PKG_BUILD_DIR)/mpy-cross/mpy_cross \
-		$(2)/lib/micropython-$(PKG_VERSION)/mpy-cross/
+		$(2)/lib/micropython/mpy-cross/
 
-	$(INSTALL_DIR) $(2)/lib/micropython-$(PKG_VERSION)/mpy-cross/build
+	$(INSTALL_DIR) $(2)/lib/micropython/mpy-cross/build
 	$(INSTALL_BIN) \
 		$(PKG_BUILD_DIR)/mpy-cross/build/mpy-cross \
-		$(2)/lib/micropython-$(PKG_VERSION)/mpy-cross/build/
+		$(2)/lib/micropython/mpy-cross/build/
 
-	$(INSTALL_DIR) $(2)/lib/micropython-$(PKG_VERSION)/tools
+	$(INSTALL_DIR) $(2)/lib/micropython/tools
 	$(INSTALL_DATA) \
 		$(PKG_BUILD_DIR)/tools/manifestfile.py \
-		$(2)/lib/micropython-$(PKG_VERSION)/tools/
+		$(2)/lib/micropython/tools/
 endef
 
 define Package/micropython/Default/install

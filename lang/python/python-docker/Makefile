@@ -1,15 +1,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-docker
-PKG_VERSION:=6.0.1
-PKG_RELEASE:=3
+PKG_VERSION:=7.1.0
+PKG_RELEASE:=2
 
 PYPI_NAME:=docker
-PKG_HASH:=896c4282e5c7af5c45e8b683b0b0c33932974fe6e50fc6906a0a83616ab3da97
+PKG_HASH:=ad8c70e6e3f8926cb8a92619b832b4ea5299e2831c14284663184e200546fa6c
 
 PKG_MAINTAINER:=Javier Marcet <javier@marcet.info>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:docker:docker-py
 
 PKG_BUILD_DEPENDS:=python-setuptools-scm/host
 
@@ -24,8 +25,8 @@ define Package/python3-docker
   TITLE:=A Python library for the Docker Engine API
   URL:=https://github.com/docker/docker-py
   DEPENDS:=\
-	  +python3-light +python3-distutils +python3-logging \
-	  +python3-openssl +python3-packaging +python3-paramiko +python3-six \
+	  +python3-light +python3-logging +python3-openssl \
+	  +python3-packaging +python3-paramiko +python3-six \
 	  +python3-requests +python3-urllib3 +python3-websocket-client
 endef
 

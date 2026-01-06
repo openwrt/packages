@@ -1,199 +1,30 @@
-name: Test Build
+name: Test and Build
 
 on:
   pull_request:
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+permissions:
+  contents: read
+  pull-requests: write
 
 jobs:
-  build:
-    name: Test ${{ matrix.arch }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - arch: aarch64_cortex-a53
-            target: mvebu-cortexa53
-            runtime_test: true
-
-          - arch: arm_cortex-a15_neon-vfpv4
-            target: armvirt-32
-            runtime_test: true
-
-          - arch: arm_cortex-a9_vfpv3-d16
-            target: mvebu-cortexa9
-            runtime_test: false
-
-          - arch: i386_pentium-mmx
-            target: x86-geode
-            runtime_test: true
-
-          - arch: mips_24kc
-            target: ath79-generic
-            runtime_test: true
-
-          - arch: mipsel_24kc
-            target: mt7621
-            runtime_test: false
-
-          - arch: powerpc_464fp
-            target: apm821xx-nand
-            runtime_test: false
-
-          - arch: powerpc_8548
-            target: mpc85xx-p1010
-            runtime_test: false
-
-          - arch: riscv64_riscv64
-            target: sifiveu-generic
-            runtime_test: false
-
-          - arch: x86_64
-            target: x86-64
-            runtime_test: true
-
+  formalities:
+    name: Test Formalities
+    runs-on: ubuntu-slim
     steps:
-      - uses: actions/checkout@v3
+      - name: HyperStickler
+        uses: georgesapkin/hyperstickler@v1-beta.3
         with:
-          fetch-depth: 0
+          check_signoff: true
+          feedback_url: 'https://github.com/openwrt/actions-shared-workflows/issues'
+          guideline_url: 'https://openwrt.org/submitting-patches#submission_guidelines'
+          # This still needs a fine-grained token related to:
+          # https://github.com/openwrt/packages/pull/28011
+          # job_step: 2
+          # post_comment: true
+          # warn_on_no_modify: true
 
-      - name: Determine branch name
-        run: |
-          BRANCH="${GITHUB_BASE_REF#refs/heads/}"
-          echo "Building for $BRANCH"
-          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
-
-      - name: Determine changed packages
-        run: |
-          # only detect packages with changes
-          PKG_ROOTS=$(find . -name Makefile | \
-            grep -v ".*/src/Makefile" | \
-            sed -e 's@./\(.*\)/Makefile@\1/@')
-          CHANGES=$(git diff --diff-filter=d --name-only origin/$BRANCH...)
-
-          for ROOT in $PKG_ROOTS; do
-            for CHANGE in $CHANGES; do
-              if [[ "$CHANGE" == "$ROOT"* ]]; then
-                PACKAGES+=$(echo "$ROOT" | sed -e 's@.*/\(.*\)/@\1 @')
-                break
-              fi
-            done
-          done
-
-          # fallback to test packages if nothing explicitly changes this is
-          # should run if other mechanics in packages.git changed
-          PACKAGES="${PACKAGES:-vim attendedsysupgrade-common bmon}"
-
-          echo "Building $PACKAGES"
-          echo "PACKAGES=$PACKAGES" >> $GITHUB_ENV
-
-      - name: Generate build keys
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y signify-openbsd
-          signify-openbsd -G -n -c 'DO NOT USE - OpenWrt packages feed CI' -p packages_ci.pub -s packages_ci.sec
-          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-          echo "KEY_BUILD<<$EOF" >> $GITHUB_ENV
-          cat packages_ci.sec >> $GITHUB_ENV
-          echo "$EOF" >> $GITHUB_ENV
-
-      - name: Build
-        uses: openwrt/gh-action-sdk@v5
-        env:
-          ARCH: ${{ matrix.arch }}-${{ env.BRANCH }}
-          FEEDNAME: packages_ci
-          INDEX: 1
-          KEY_BUILD: ${{ env.KEY_BUILD }}
-
-      - name: Move created packages to project dir
-        run: cp bin/packages/${{ matrix.arch }}/packages_ci/* . || true
-
-      - name: Collect metadata
-        run: |
-          MERGE_ID=$(git rev-parse --short HEAD)
-          echo "MERGE_ID=$MERGE_ID" >> $GITHUB_ENV
-          echo "BASE_ID=$(git rev-parse --short HEAD^1)" >> $GITHUB_ENV
-          echo "HEAD_ID=$(git rev-parse --short HEAD^2)" >> $GITHUB_ENV
-          PRNUMBER=${GITHUB_REF_NAME%/merge}
-          echo "PRNUMBER=$PRNUMBER" >> $GITHUB_ENV
-          echo "ARCHIVE_NAME=${{matrix.arch}}-PR$PRNUMBER-$MERGE_ID" >> $GITHUB_ENV
-
-      - name: Generate metadata
-        run: |
-          cat << _EOF_ > PKG-INFO
-          Metadata-Version: 2.1
-          Name: ${{env.ARCHIVE_NAME}}
-          Version: $BRANCH
-          Author: $GITHUB_ACTOR
-          Home-page: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/pull/$PRNUMBER
-          Download-URL: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
-          Summary: $PACKAGES
-          Platform: ${{ matrix.arch }}
-
-          Packages for OpenWrt $BRANCH running on ${{matrix.arch}}, built from PR $PRNUMBER
-          at commit $HEAD_ID, against $BRANCH at commit $BASE_ID, with merge SHA $MERGE_ID.
-
-          Modified packages:
-          _EOF_
-          for p in $PACKAGES
-          do
-            echo "  "$p >> PKG-INFO
-          done
-          echo >> PKG-INFO
-          echo Full file listing: >> PKG-INFO
-          ls -al *.ipk >> PKG-INFO || true
-          cat PKG-INFO
-
-      - name: Store packages
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{env.ARCHIVE_NAME}}-packages
-          path: |
-            Packages
-            Packages.*
-            *.ipk
-            PKG-INFO
-
-      - name: Store logs
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{env.ARCHIVE_NAME}}-logs
-          path: |
-            logs/
-            PKG-INFO
-
-      - name: Remove logs
-        run: sudo rm -rf logs/ || true
-
-      - name: Check if any packages were built
-        run: |
-          if [ -n "$(find . -maxdepth 1 -type f -name '*.ipk' -print -quit)" ]; then
-            echo "Found *.ipk files"
-            HAVE_IPKS=true
-          else
-            echo "No *.ipk files found"
-            HAVE_IPKS=false
-          fi
-          echo "HAVE_IPKS=$HAVE_IPKS" >> $GITHUB_ENV
-
-      - name: Register QEMU
-        if: ${{ matrix.runtime_test && fromJSON(env.HAVE_IPKS) }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y qemu-user-static binfmt-support
-          sudo update-binfmts --import
-
-      - name: Build Docker container
-        if: ${{ matrix.runtime_test && fromJSON(env.HAVE_IPKS) }}
-        run: |
-          docker build -t test-container --build-arg ARCH .github/workflows/
-        env:
-          ARCH: ${{ matrix.arch }}-${{ env.BRANCH }}
-
-      - name: Test via Docker container
-        if: ${{ matrix.runtime_test && fromJSON(env.HAVE_IPKS) }}
-        run: |
-          docker run --rm -v $GITHUB_WORKSPACE:/ci test-container
+  build:
+    name: Feeds Package Test Build
+    needs: formalities
+    uses: openwrt/actions-shared-workflows/.github/workflows/multi-arch-test-build.yml@main

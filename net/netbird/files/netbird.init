@@ -9,6 +9,10 @@ start_service() {
 	procd_open_instance
 	procd_set_param command /usr/bin/netbird
 	procd_append_param command service run
+
+	procd_set_param env NB_STATE_DIR="/root/.config/netbird"
+	procd_append_param env NB_DISABLE_SSH_CONFIG="1"
+
 	procd_set_param pidfile /var/run/netbird.pid
 	procd_close_instance
 }

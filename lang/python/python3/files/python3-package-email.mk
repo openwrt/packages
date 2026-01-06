@@ -7,8 +7,14 @@
 
 define Package/python3-email
 $(call Package/python3/Default)
-  TITLE:=Python $(PYTHON3_VERSION) email module
+  TITLE+= email module
   DEPENDS:=+python3-light
+endef
+
+define Package/python3-email/description
+$(call Package/python3/Default/description)
+
+This package contains the email module.
 endef
 
 $(eval $(call Py3BasePackage,python3-email, \

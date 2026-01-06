@@ -16,7 +16,7 @@ PKG_HASH:=bad6603bb14d279193107714b288be206cac565dfa49aa5b105294dd5c4aab93
 
 PKG_LICENSE:=Artistic-1.0-cl8
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pluggy
-PKG_VERSION:=1.0.0
+PKG_VERSION:=1.3.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=pluggy
-PKG_HASH:=4224373bacce55f955a878bf9cfa763c1e360858e330072059e10bad68531159
+PKG_HASH:=cf61ae8f126ac6f7c451172cf30e3e43d3ca77615509771b3a984a0730651e12
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>, Jeffery To <jeffery.to@gmail.com>
 PKG_LICENSE:=MIT

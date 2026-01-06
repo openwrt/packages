@@ -8,12 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libtorrent
-PKG_VERSION:=0.13.8
-PKG_RELEASE:=2
+PKG_VERSION:=0.15.5
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/rakshasa/libtorrent/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=0f6c2e7ffd3a1723ab47fdac785ec40f85c0a5b5a42c1d002272205b988be722
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/rakshasa/libtorrent
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+PKG_MIRROR_HASH:=f5baa923bf45b84a2d1a8bc279815fc5d4f460e581e2d0e3070b97f134301378
 
 PKG_MAINTAINER:=Rosen Penev <rosenp@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -45,15 +46,15 @@ endef
 CONFIGURE_ARGS += \
 	--enable-shared \
 	--enable-static \
-	--enable-aligned \
-	--enable-openssl \
+	--disable-aligned \
 	--disable-debug \
 	--disable-instrumentation \
 	--with-epoll \
 	--with-zlib=$(STAGING_DIR)/usr \
 	--without-kqueue
 
-TARGET_CXXFLAGS += -faligned-new
+CONFIGURE_VARS = \
+	ax_cv_cxx_compile_cxx17=yes
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include

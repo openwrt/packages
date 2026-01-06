@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=grilo-plugins
-PKG_VERSION:=0.3.14
-PKG_RELEASE:=2
+PKG_VERSION:=0.3.17
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=@GNOME/grilo-plugins/0.3/
-PKG_HASH:=686844b34ec73b24931ff6cc4f6033f0072947a6db60acdc7fb3eaf157a581c8
+PKG_SOURCE_URL:=@GNOME/grilo-plugins/$(basename $(PKG_VERSION))
+PKG_HASH:=483c03f2ce06f96d42b85768fdc494c076d58474bf8e3c326f5a050fd4a2f03c
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -35,7 +35,7 @@ define Package/grilo-plugins
   TITLE:=Plugins for the Grilo framework
 endef
 
-define Package/grilo/decription
+define Package/grilo/description
   Grilo is a framework that provides access to different sources of
   multimedia content, using a pluggable system. This package contains
   plugins to get information from a number of sources.
@@ -55,10 +55,8 @@ MESON_ARGS += \
 	-Denable-lua-factory=no \
 	-Denable-magnatune=$(if $(CONFIG_PACKAGE_grilo-plugins-magnatune),yes,no) \
 	-Denable-metadata-store=$(if $(CONFIG_PACKAGE_grilo-plugins-metadata-store),yes,no) \
-	-Denable-opensubtitles=$(if $(CONFIG_PACKAGE_grilo-plugins-opensubtitles),yes,no) \
 	-Denable-optical-media=no \
 	-Denable-podcasts=no \
-	-Denable-raitv=$(if $(CONFIG_PACKAGE_grilo-plugins-raitv),yes,no) \
 	-Denable-shoutcast=$(if $(CONFIG_PACKAGE_grilo-plugins-shoutcast),yes,no) \
 	-Denable-thetvdb=no \
 	-Denable-tmdb=$(if $(CONFIG_PACKAGE_grilo-plugins-tmdb),yes,no) \
@@ -99,7 +97,5 @@ $(eval $(call BuildPlugin,dmap,DAAP and DPAP sharing,daap dpap,libdmapsharing,30
 $(eval $(call BuildPlugin,gravatar,Gravatar provider,gravatar,,30))
 $(eval $(call BuildPlugin,magnatune,Magnatune sharing,magnatune,,30))
 $(eval $(call BuildPlugin,metadata-store,Metadata Store,metadatastore,,30))
-$(eval $(call BuildPlugin,opensubtitles,Open subtitles provider,opensubtitles,,30))
-$(eval $(call BuildPlugin,raitv,Rai.tv sharing,raitv,,30))
 $(eval $(call BuildPlugin,shoutcast,SHOUTcast sharing,shoutcast,,30))
 $(eval $(call BuildPlugin,tmdb,TMDb,tmdb,+json-glib,30))

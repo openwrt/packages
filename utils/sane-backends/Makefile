@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sane-backends
-PKG_VERSION:=1.0.32
-PKG_RELEASE:=3
+PKG_VERSION:=1.4.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://gitlab.com/sane-project/backends/uploads/104f09c07d35519cc8e72e604f11643f
-PKG_HASH:=3a28c237c0a72767086202379f6dc92dbb63ec08dfbab22312cba80e238bb114
+PKG_SOURCE_URL:=https://gitlab.com/-/project/429008/uploads/843c156420e211859e974f78f64c3ea3/
+PKG_HASH:=f99205c903dfe2fb8990f0c531232c9a00ec9c2c66ac7cb0ce50b4af9f407a72
 
 PKG_MAINTAINER:=Luiz Angelo Daros de Luca <luizluca@gmail.com>
 PKG_LICENSE:=GPL-2.0 GPL-2.0-or-later
@@ -23,6 +23,7 @@ PKG_CPE_ID:=cpe:/a:sane-backends_project:sane-backends
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -345,6 +346,7 @@ $(eval $(call SaneBackend,kvs20xx,Panasonic KV-S20xxC USB/SCSI ADF scanners,+lib
 $(eval $(call SaneBackend,kvs40xx,Panasonic KV-S40xxC USB/SCSI ADF scanners,+libpthread +libusb-1.0))
 $(eval $(call SaneBackend,leo,LEO Technologies scanners))
 $(eval $(call SaneBackend,lexmark,Lexmark X1100/X1200 Series scanners,+libusb-1.0))
+$(eval $(call SaneBackend,lexmark_x2600,Lexmark X26xx Series series scanners,+libusb-1.0))
 $(eval $(call SaneBackend,ma1509,Mustek BearPaw 1200F USB scanner,+libusb-1.0))
 $(eval $(call SaneBackend,magicolor,KONICA MINOLTA magicolor scanners,+libusb-1.0))
 $(eval $(call SaneBackend,matsushita,Panasonic KV-SS high speed scanners))

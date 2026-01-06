@@ -5,13 +5,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cloudreve
-PKG_VERSION:=3.7.1
+PKG_VERSION:=4.9.2
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/cloudreve/Cloudreve.git
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
-PKG_MIRROR_HASH:=b70601111e727d879a709884bc28237861216b99abac02b6f542f5984ddd8c0d
+PKG_MIRROR_HASH:=d88edc8af20a5cce662689a297123d1b4d504b0ca0499942068bdbb3c9ec8ea7
 
 PKG_LICENSE:=GPL-3.0-only
 PKG_LICENSE_FILES:=LICENSE
@@ -21,10 +21,10 @@ PKG_BUILD_DEPENDS:=golang/host node/host node-yarn/host
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=no-mips16
 
-GO_PKG:=github.com/cloudreve/Cloudreve/v3
+GO_PKG:=github.com/cloudreve/Cloudreve/v4
 GO_PKG_LDFLAGS_X:= \
-	$(GO_PKG)/pkg/conf.BackendVersion=$(PKG_VERSION) \
-	$(GO_PKG)/pkg/conf.LastCommit=$(PKG_VERSION)
+	$(GO_PKG)/application/constants.BackendVersion=$(PKG_VERSION) \
+	$(GO_PKG)/application/constants.LastCommit=$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
@@ -35,7 +35,7 @@ define Package/cloudreve
   SUBMENU:=Cloud Manager
   TITLE:=A project helps you build your own cloud in minutes
   URL:=https://cloudreve.org
-  DEPENDS:=@(aarch64||arm||i386||i686||x86_64) +ca-bundle
+  DEPENDS:=@(aarch64||arm||i386||i686||riscv64||x86_64) +ca-bundle
 endef
 
 define Package/cloudreve/description
@@ -47,7 +47,10 @@ define Build/Compile
 	( \
 		pushd $(PKG_BUILD_DIR)/assets ; \
 		yarn install ; \
+		yarn version --new-version $(PKG_VERSION) --no-git-tag-version ; \
 		yarn run build ; \
+		cd .. ; \
+		zip -r - assets/build > application/statics/assets.zip ; \
 		popd ; \
 		$(call GoPackage/Build/Compile) ; \
 	)

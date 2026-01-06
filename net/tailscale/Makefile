@@ -8,50 +8,40 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tailscale
-PKG_VERSION:=1.42.0
+PKG_VERSION:=1.92.3
 PKG_RELEASE:=1
 
-PKG_SOURCE:=tailscale-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/tailscale/tailscale/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=09de9bacda98de8d733cff162572b7eac857d13db783776ba2a2450a44ecc5e9
+PKG_HASH:=805b2eb3526e14c61c09b7e14ee2ad5bd17ce25ff13961342302737c138041d4
 
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
+PKG_MAINTAINER:=Zephyr Lykos <self@mochaa.ws>, \
+		Sandro Jäckel <sandro.jaeckel@gmail.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:tailscale:tailscale
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/tailscale-$(PKG_VERSION)
 PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=no-mips16
 
-GO_PKG:=\
-	tailscale.com/cmd/tailscale \
-	tailscale.com/cmd/tailscaled
+GO_PKG:=tailscale.com/cmd/tailscaled
 GO_PKG_LDFLAGS:=-X 'tailscale.com/version.longStamp=$(PKG_VERSION)-$(PKG_RELEASE) (OpenWrt)'
 GO_PKG_LDFLAGS_X:=tailscale.com/version.shortStamp=$(PKG_VERSION)
+GO_PKG_TAGS:=ts_include_cli,ts_omit_aws,ts_omit_bird,ts_omit_completion,ts_omit_kube,ts_omit_systray,ts_omit_taildrop,ts_omit_tap,ts_omit_tpm
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk
 
-define Package/tailscale/Default
+define Package/tailscale
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=VPN
   TITLE:=Zero config VPN
   URL:=https://tailscale.com
-  DEPENDS:=$(GO_ARCH_DEPENDS)
-endef
-
-define Package/tailscaled
-  $(call Package/tailscale/Default)
-  TITLE+= (daemon)
-  DEPENDS+= +ca-bundle +kmod-tun
-endef
-
-define Package/tailscale
-  $(call Package/tailscale/Default)
-  TITLE+= (utility)
-  DEPENDS+= +tailscaled
+  DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle +kmod-tun
+  PROVIDES:=tailscaled
 endef
 
 define Package/tailscale/description
@@ -59,46 +49,17 @@ define Package/tailscale/description
   and cloud instances. Even when separated by firewalls or subnets.
 endef
 
-Package/tailscaled/description:=$(Package/tailscale/description)
-
-define Package/tailscaled/conffiles
+define Package/tailscale/conffiles
 /etc/config/tailscale
-/etc/tailscale/tailscaled.state
-endef
-
-GO_IPTABLES_VERSION:=0.6.0
-GO_IPTABLES_FILE:=$(PKG_NAME)-go-iptables-$(GO_IPTABLES_VERSION).tar.gz
-
-define Download/go-iptables
-  URL:=https://codeload.github.com/coreos/go-iptables/tar.gz/v$(GO_IPTABLES_VERSION)?
-  URL_FILE:=$(GO_IPTABLES_FILE)
-  FILE:=$(GO_IPTABLES_FILE)
-  HASH:=a784cc17fcb17879f073eae47bc4c2e899f59f6906dac5a0aa7a9cc9f95ea66d
-endef
-
-define Build/Prepare
-	$(PKG_UNPACK)
-	[ ! -d ./src/ ] || $(CP) ./src/. $(PKG_BUILD_DIR)
-	$(eval $(call Download,go-iptables))
-	( \
-		mkdir -p $(PKG_BUILD_DIR)/patched/ ; \
-		gzip -dc $(DL_DIR)/$(GO_IPTABLES_FILE) | $(HOST_TAR) -C $(PKG_BUILD_DIR)/patched $(TAR_OPTIONS) ; \
-		mv $(PKG_BUILD_DIR)/patched/go-iptables-$(GO_IPTABLES_VERSION) $(PKG_BUILD_DIR)/patched/go-iptables ; \
-	)
-	$(Build/Patch)
+/etc/tailscale/
 endef
 
 define Package/tailscale/install
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/tailscale $(1)/usr/sbin
-endef
-
-define Package/tailscaled/install
 	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/init.d $(1)/etc/config
 	$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/tailscaled $(1)/usr/sbin
+	$(LN) tailscaled $(1)/usr/sbin/tailscale
 	$(INSTALL_BIN) ./files//tailscale.init $(1)/etc/init.d/tailscale
 	$(INSTALL_DATA) ./files//tailscale.conf $(1)/etc/config/tailscale
 endef
 
 $(eval $(call BuildPackage,tailscale))
-$(eval $(call BuildPackage,tailscaled))

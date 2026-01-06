@@ -9,11 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-flask-login
-PKG_VERSION:=0.5.0
-PKG_RELEASE:=2
+PKG_VERSION:=0.6.3
+PKG_RELEASE:=1
 
 PYPI_NAME:=Flask-Login
-PKG_HASH:=6d33aef15b5bcead780acc339464aae8a6e28f13c90d8b1cf9de8b549d1c0b4b
+PYTHON3_PKG_WHEEL_NAME:=flask_login
+PKG_HASH:=5e23d14a607ef12806c699590b89d0f0e0d67baeec599d75947bf9c147330333
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=MIT
@@ -27,9 +28,9 @@ define Package/python3-flask-login
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
-  TITLE:=User session management plugin for Flask
+  TITLE:=User authentication and session management for Flask
   URL:=https://github.com/maxcountryman/flask-login
-  DEPENDS:=+python3-light +python3-flask
+  DEPENDS:=+python3-light +python3-urllib +python3-flask +python3-werkzeug
 endef
 
 define Package/python3-flask-login/description

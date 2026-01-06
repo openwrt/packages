@@ -1,0 +1,27 @@
+{
+	"bounding": [
+		"CAP_NET_ADMIN",
+		"CAP_NET_RAW",
+		"CAP_IPC_LOCK"
+	],
+	"effective": [
+		"CAP_NET_ADMIN",
+		"CAP_NET_RAW",
+		"CAP_IPC_LOCK"
+	],
+	"ambient": [
+		"CAP_NET_ADMIN",
+		"CAP_NET_RAW",
+		"CAP_IPC_LOCK"
+	],
+	"permitted": [
+		"CAP_NET_ADMIN",
+		"CAP_NET_RAW",
+		"CAP_IPC_LOCK"
+	],
+	"inheritable": [
+		"CAP_NET_ADMIN",
+		"CAP_NET_RAW",
+		"CAP_IPC_LOCK"
+	]
+}

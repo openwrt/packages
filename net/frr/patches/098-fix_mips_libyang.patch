@@ -1,6 +1,6 @@
 --- a/lib/northbound.h
 +++ b/lib/northbound.h
-@@ -593,11 +593,7 @@ struct frr_yang_module_info {
+@@ -747,11 +747,7 @@ struct frr_yang_module_info {
  
  		/* Priority - lower priorities are processed first. */
  		uint32_t priority;
@@ -11,4 +11,4 @@
 -#endif
  };
  
- /* Northbound error codes. */
+ /* Default priority. */

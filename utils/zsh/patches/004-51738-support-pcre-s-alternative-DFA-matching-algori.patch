@@ -1,0 +1,156 @@
+From b4d1c756f50909b4a13e5c8fe5f26f71e9d54f63 Mon Sep 17 00:00:00 2001
+From: Oliver Kiddle <opk@zsh.org>
+Date: Sat, 13 May 2023 00:59:00 +0200
+Subject: [PATCH] 51738: support pcre's alternative DFA matching algorithm
+
+---
+ ChangeLog           |  3 +++
+ Doc/Zsh/mod_pcre.yo |  6 ++++-
+ Src/Modules/pcre.c  | 53 ++++++++++++++++++++++++++++++---------------
+ Test/V07pcre.ztst   |  5 +++++
+ 4 files changed, 49 insertions(+), 18 deletions(-)
+
+# diff --git a/ChangeLog b/ChangeLog
+# index 2835a9405..18bc4a698 100644
+# --- a/ChangeLog
+# +++ b/ChangeLog
+# @@ -1,5 +1,8 @@
+#  2023-05-13  Oliver Kiddle  <opk@zsh.org>
+ 
+# +	* 51738: Doc/Zsh/mod_pcre.yo, Src/Modules/pcre.c,
+# +	Test/V07pcre.ztst: support pcre's DFA matching algorithm
+# +
+#  	* 51728: Doc/Zsh/mod_pcre.yo, Src/Modules/pcre.c,
+#  	Test/V07pcre.ztst: assign pcre named capture groups to a hash
+ 
+--- a/Doc/Zsh/mod_pcre.yo
++++ b/Doc/Zsh/mod_pcre.yo
+@@ -25,7 +25,7 @@ may result in faster matching.
+ )
+ findex(pcre_match)
+ item(tt(pcre_match) [ tt(-v) var(var) ] [ tt(-a) var(arr) ] \
+-[ tt(-A) var(assoc) ] [ tt(-n) var(offset) ] [ tt(-b) ] var(string))(
++[ tt(-A) var(assoc) ] [ tt(-n) var(offset) ] [ tt(-bd) ] var(string))(
+ Returns successfully if tt(string) matches the previously-compiled
+ PCRE.
+ 
+@@ -69,6 +69,10 @@ print -l $accum)
+ )
+ enditem()
+ 
++The option tt(-d) uses the alternative breadth-first DFA search algorithm of
++pcre. This sets tt(match), or the array given with tt(-a), to all the matches
++found from the same start point in the subject.
++
+ The tt(zsh/pcre) module makes available the following test condition:
+ 
+ startitem()
+--- a/Src/Modules/pcre.c
++++ b/Src/Modules/pcre.c
+@@ -305,30 +305,29 @@ bin_pcre_match(char *nam, char **args, O
+     pcre2_match_data *pcre_mdata = NULL;
+     char *matched_portion = NULL;
+     char *plaintext = NULL;
+-    char *receptacle = NULL;
+-    char *named = ".pcre.match";
++    char *receptacle;
++    char *named = NULL;
+     int return_value = 1;
+     /* The subject length and offset start are both int values in pcre_exec */
+     int subject_len;
+     int offset_start = 0;
+     int want_offset_pair = 0;
++    int use_dfa = 0;
+ 
+     if (pcre_pattern == NULL) {
+ 	zwarnnam(nam, "no pattern has been compiled");
+ 	return 1;
+     }
+ 
+-    matched_portion = "MATCH";
+-    receptacle = "match";
+-    if(OPT_HASARG(ops,c='a')) {
+-	receptacle = OPT_ARG(ops,c);
+-    }
+-    if(OPT_HASARG(ops,c='v')) {
+-	matched_portion = OPT_ARG(ops,c);
+-    }
+-    if (OPT_HASARG(ops, c='A')) {
+-	named = OPT_ARG(ops, c);
++    if (!(use_dfa = OPT_ISSET(ops, 'd'))) {
++	matched_portion = OPT_HASARG(ops, c='v') ? OPT_ARG(ops, c) : "MATCH";
++	named = OPT_HASARG(ops, c='A') ? OPT_ARG(ops, c) : ".pcre.match";
++    } else if (OPT_HASARG(ops, c='v') || OPT_HASARG(ops, c='A')) {
++	zwarnnam(nam, "-d cannot be combined with -%c", c);
++	return 1;
+     }
++    receptacle = OPT_HASARG(ops, 'a') ? OPT_ARG(ops, 'a') : "match";
++
+     if(OPT_HASARG(ops,c='n')) { /* The offset position to start the search, in bytes. */
+ 	if ((offset_start = getposint(OPT_ARG(ops,c), nam)) < 0)
+ 	    return 1;
+@@ -341,7 +340,25 @@ bin_pcre_match(char *nam, char **args, O
+ 
+     if (offset_start > 0 && offset_start >= subject_len)
+ 	ret = PCRE2_ERROR_NOMATCH;
+-    else {
++    else if (use_dfa) {
++	PCRE2_SIZE old, wscount = 128, capcount = 128;
++	void *workspace = zhalloc(sizeof(int) * wscount);
++	pcre_mdata = pcre2_match_data_create(capcount, NULL);
++	do {
++	    ret = pcre2_dfa_match(pcre_pattern, (PCRE2_SPTR) plaintext, subject_len,
++		offset_start, 0, pcre_mdata, NULL, (int *) workspace, wscount);
++	    if (ret == PCRE2_ERROR_DFA_WSSIZE) {
++		old = wscount;
++		wscount += wscount / 2;
++		workspace = hrealloc(workspace, sizeof(int) * old, sizeof(int) * wscount);
++	    } else if (ret == 0) {
++		capcount += capcount / 2;
++		pcre2_match_data_free(pcre_mdata);
++		pcre_mdata = pcre2_match_data_create(capcount, NULL);
++	    } else
++		break;
++	} while(1);
++    } else {
+ 	pcre_mdata = pcre2_match_data_create_from_pattern(pcre_pattern, NULL);
+ 	ret = pcre2_match(pcre_pattern, (PCRE2_SPTR) plaintext, subject_len,
+ 		offset_start, 0, pcre_mdata, NULL);
+@@ -350,12 +367,14 @@ bin_pcre_match(char *nam, char **args, O
+     if (ret==0) return_value = 0;
+     else if (ret == PCRE2_ERROR_NOMATCH) /* no match */;
+     else if (ret>0) {
+-	zpcre_get_substrings(pcre_pattern, plaintext, pcre_mdata, ret, matched_portion,
+-		receptacle, named, want_offset_pair, 0, 0);
++	zpcre_get_substrings(pcre_pattern, plaintext, pcre_mdata, ret,
++		matched_portion, receptacle, named, want_offset_pair, use_dfa, 0);
+ 	return_value = 0;
+     }
+     else {
+-	zwarnnam(nam, "error in pcre2_match [%d]", ret);
++	PCRE2_UCHAR buffer[256];
++	pcre2_get_error_message(ret, buffer, sizeof(buffer));
++	zwarnnam(nam, "error in pcre matching for /%s/: %s", plaintext, buffer);
+     }
+     
+     if (pcre_mdata)
+@@ -466,7 +485,7 @@ static struct conddef cotab[] = {
+ 
+ static struct builtin bintab[] = {
+     BUILTIN("pcre_compile", 0, bin_pcre_compile, 1, 1, 0, "aimxs",  NULL),
+-    BUILTIN("pcre_match",   0, bin_pcre_match,   1, 1, 0, "A:a:v:n:b",    NULL),
++    BUILTIN("pcre_match",   0, bin_pcre_match,   1, 1, 0, "A:a:v:n:bd",    NULL),
+     BUILTIN("pcre_study",   0, bin_pcre_study,   0, 0, 0, NULL,    NULL)
+ };
+ 
+--- a/Test/V07pcre.ztst
++++ b/Test/V07pcre.ztst
+@@ -208,3 +208,8 @@
+ >  [package]=name-12345
+ >  [version]=12345
+ >)
++
++  pcre_compile 'cat(er(pillar)?)?'
++  pcre_match -d 'the caterpillar catchment' && print $match
++0:pcre_match -d
++>caterpillar cater cat

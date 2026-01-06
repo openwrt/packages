@@ -74,10 +74,11 @@ Then call the script as follows in order to get the necessary cron jobs created:
 All commands:
  
 ```
-wifi_schedule.sh cron|start|stop|forcestop|recheck|getmodules|savemodules|help
+wifi_schedule.sh cron|start|startup|stop|forcestop|recheck|getmodules|savemodules|help
 
     cron: Create cronjob entries.
     start: Start wifi.
+    startup: Checks current timewindow and enables/disables WIFI accordingly.
     stop: Stop wifi gracefully, i.e. check if there are stations associated and if so keep retrying.
     forcestop: Stop wifi immediately.
     recheck: Recheck if wifi can be disabled now.
@@ -85,3 +86,6 @@ wifi_schedule.sh cron|start|stop|forcestop|recheck|getmodules|savemodules|help
     savemodules: Saves a list of automatic determined modules to UCI
     help: This description.
 ```
+
+## Startup Script: `/etc/init.d/wifi_schedule`
+Makes sure time window is checked and WIFI is enabled or disabled accordingly when powering on the router.

@@ -1,6 +1,6 @@
 --- a/configure
 +++ b/configure
-@@ -7633,7 +7633,7 @@ releaseversion='${PACKAGE}-${VERSION}'
+@@ -7621,7 +7621,7 @@ fi
  # Set platform-specific modules and symbols
  os_libs=
  os_dltools='curl wget lynx svn'

@@ -8,16 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=minidlna
-PKG_VERSION:=1.3.2
+PKG_VERSION:=1.3.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/minidlna
-PKG_HASH:=222ce45a1a60c3ce3de17527955d38e5ff7a4592d61db39577e6bf88e0ae1cb0
+PKG_HASH:=39026c6d4a139b9180192d1c37225aa3376fdf4f1a74d7debbdbb693d996afa4
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0-or-later BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING LICENCE.miniupnpd
+PKG_CPE_ID:=cpe:/a:readymedia_project:readymedia
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1

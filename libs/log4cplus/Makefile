@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=log4cplus
-PKG_VERSION:=2.0.8
-PKG_RELEASE:=2
+PKG_VERSION:=2.1.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)
-PKG_HASH:=f5949e713cf8635fc554384ab99b04716e3430f28eed6dd7d71ad03d959b91a0
+PKG_HASH:=a1d8e67a207f90a9dd4f82b28a1f3ac6dead5a80c2bed071277a9e865698a82b
 
 PKG_MAINTAINER:=BangLang Huang <banglang.huang@foxmail.com>, Rosy Song <rosysong@rosinson.com>
 PKG_LICENSE:=BSD-2-Clause Apache-2.0

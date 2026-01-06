@@ -1,0 +1,28 @@
+From 87de1cfe4d7f306d25ed12505f188203874dd9b6 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 10 Oct 2025 01:34:17 +0100
+Subject: [PATCH 8/8] namecache: build flat namecache plugin
+
+---
+ src/plugin/namecache/meson.build | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+--- a/src/plugin/namecache/meson.build
++++ b/src/plugin/namecache/meson.build
+@@ -29,6 +29,16 @@ shared_module(
+     install_dir: get_option('libdir') / 'gnunet',
+ )
+ 
++shared_module(
++    'gnunet_plugin_namecache_flat',
++    ['plugin_namecache_flat.c'],
++    install_rpath: rpath_option,
++    dependencies: [libgnunetutil_dep, libgnunetgnsrecord_dep],
++    include_directories: [incdir, configuration_inc],
++    install: true,
++    install_dir: get_option('libdir') / 'gnunet',
++)
++
+ if pq_dep.found()
+     shared_module(
+         'gnunet_plugin_namecache_postgres',

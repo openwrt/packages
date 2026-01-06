@@ -40,12 +40,13 @@ start_service() {
 	procd_set_param command "$PROG"
 	procd_set_param env XDG_DATA_HOME="/usr/share"
 
+	append_env "config" "/etc/v2raya"
+	append_env "log_file" "/var/log/v2raya/v2raya.log"
+
 	append_env_arg "config" "address" "0.0.0.0:2017"
-	append_env_arg "config" "config" "/etc/v2raya"
 	append_env_arg "config" "ipv6_support" "auto"
 	append_env_arg "config" "nftables_support" "auto"
 	append_env_arg "config" "log_level" "info"
-	append_env_arg "config" "log_file" "/var/log/v2raya/v2raya.log"
 	append_env_arg "config" "log_max_days" "3"
 	append_env_arg "config" "v2ray_bin"
 	append_env_arg "config" "v2ray_confdir"
@@ -62,11 +63,6 @@ start_service() {
 	procd_set_param stderr 1
 
 	procd_close_instance
-}
-
-reload_service() {
-	stop
-	start
 }
 
 service_triggers() {

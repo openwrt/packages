@@ -1,0 +1,29 @@
+From 2663712e8fa8f37e0bb873185e2d4526dc644764 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?St=C3=A9phane=20Graber?= <stgraber@stgraber.org>
+Date: Sat, 5 Apr 2025 01:11:18 -0400
+Subject: [PATCH] start: Re-introduce first SET_DUMPABLE call
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Without it, we're running into issues with complex hooks like nvidia.
+
+Signed-off-by: Stéphane Graber <stgraber@stgraber.org>
+---
+ src/lxc/start.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+--- a/src/lxc/start.c
++++ b/src/lxc/start.c
+@@ -1130,6 +1130,11 @@ static int do_start(void *data)
+ 		if (ret < 0)
+ 			goto out_warn_father;
+ 
++		ret = prctl(PR_SET_DUMPABLE, prctl_arg(1), prctl_arg(0),
++			    prctl_arg(0), prctl_arg(0));
++		if (ret < 0)
++			goto out_warn_father;
++
+ 		/* set{g,u}id() clears deathsignal */
+ 		ret = lxc_set_death_signal(SIGKILL, handler->monitor_pid, status_fd);
+ 		if (ret < 0) {

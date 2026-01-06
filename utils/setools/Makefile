@@ -6,36 +6,109 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=setools
-PKG_VERSION:=4.4.0
-PKG_RELEASE:=2
+PKG_VERSION:=4.5.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://github.com/SELinuxProject/setools/releases/download/$(PKG_VERSION)
-PKG_HASH:=f3786677e40b7f16a226f48f233dcf835e700739614a7dbed2ff61cc9607814e
-PKG_BUILD_DIR:=$(BUILD_DIR)/setools
+PKG_HASH:=25e47d00bbffd6046f55409c9ba3b08d9b1d5788cc159ea247d9e0ced8e482e7
 
 PKG_BUILD_DEPENDS:=python-cython/host # Cython>=0.27
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
-PKG_LICENSE:=GPL-2.0-or-later LGPL-2.1-or-later
+PKG_LICENSE:=GPL-2.0-only LGPL-2.1-only
 PKG_LICENSE_FILES:=COPYING COPYING.GPL COPYING.LGPL
 PKG_CPE_ID:=cpe:/a:selinuxproject:setools
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python3-package.mk
 
-define Package/setools
+TAR_OPTIONS+= --strip-components 1
+TAR_CMD=$(HOST_TAR) -C $(1) $(TAR_OPTIONS)
+
+define Package/setools/Default
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+python3 +python3-pkg-resources +python3-networkx +libselinux +libsepol
-  TITLE:=Policy analysis tools for SELinux
+  TITLE:=SELinux policy analysis tool
   URL:=http://selinuxproject.org/page/Main_Page
+  DEPENDS:=+python3-light +python3-logging +python3-setools
+endef
+
+define Package/setools/Default/description
+SETools is a collection of tools and libraries designed to facilitate
+SELinux policy analysis.
+endef
+
+define Package/python3-setools
+  SECTION:=lang
+  CATEGORY:=Languages
+  SUBMENU:=Python
+  TITLE:=SETools Python bindings
+  URL:=http://selinuxproject.org/page/Main_Page
+  DEPENDS:=+python3-light +python3-logging +python3-pkg-resources +libselinux +libsepol
+endef
+
+define Package/python3-setools/description
+$(call Package/setools/Default/description)
+
+This contains the SETools Python binding.
+endef
+
+Py3Package/python3-setools/install:=:
+
+define Package/setools
+$(call Package/setools/Default)
+  TITLE+= meta-package
+  DEPENDS:= \
+    setools-sechecker \
+    setools-sediff \
+    setools-sedta \
+    setools-seinfo \
+    setools-seinfoflow \
+    setools-sesearch
 endef
 
 define Package/setools/description
-  SETools is a collection of tools and libraries designed to facilitate
-  SELinux policy analysis.
+$(call Package/setools/Default/description)
+
+This is a meta-package that installs all of the SETools tools.
 endef
 
-$(eval $(call Py3Package,setools))
+Package/setools/install:=:
+
+define BuildUtil
+  define Package/setools-$(1)
+  $(call Package/setools/Default)
+    TITLE+= $(1)
+    DEPENDS+= $(2)
+  endef
+
+  define Package/setools-$(1)/description
+$(call Package/setools/Default/description)
+
+This contains the $(1) tool.
+  endef
+
+  define Py3Package/setools-$(1)/install
+	$$(INSTALL_DIR) $$(1)/usr/bin
+	$$(INSTALL_BIN) $$(PKG_INSTALL_DIR)/usr/bin/$(1) $$(1)/usr/bin/
+  endef
+
+  Py3Package/setools-$(1)/filespec:=
+
+  $$(eval $$(call Py3Package,setools-$(1)))
+  $$(eval $$(call BuildPackage,setools-$(1)))
+endef
+
+$(eval $(call Py3Package,python3-setools))
+$(eval $(call BuildPackage,python3-setools))
+$(eval $(call BuildPackage,python3-setools-src))
+
 $(eval $(call BuildPackage,setools))
+
+$(eval $(call BuildUtil,sechecker))
+$(eval $(call BuildUtil,sediff))
+$(eval $(call BuildUtil,sedta,+python3-networkx))
+$(eval $(call BuildUtil,seinfo))
+$(eval $(call BuildUtil,seinfoflow,+python3-networkx))
+$(eval $(call BuildUtil,sesearch))

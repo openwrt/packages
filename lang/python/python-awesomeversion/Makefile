@@ -8,15 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-awesomeversion
-PKG_VERSION:=21.8.1
+PKG_VERSION:=23.5.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=awesomeversion
-PKG_HASH:=a72f3fff12df257e30f5e25a8550fc4da62e7591d5fdb70714f5c96827c37645
+PKG_HASH:=a505558316010d2d10d487226f79c1157204af00fa462fdcf948e347011dd491
 
-PKG_MAINTAINER:=Josef Schlehofer <josef.schlehofer@nic.cz>
+PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENCE.md
+
+PKG_BUILD_DEPENDS:=python-poetry-core/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -26,15 +28,14 @@ define Package/python3-awesomeversion
   SECTION:=lang
   CATEGORY:=Languages
   SUBMENU:=Python
-  TITLE:=AwesomeVersion
+  TITLE:=Make anything a version object
   URL:=https://github.com/ludeeus/awesomeversion
-  DEPENDS:= \
-      +python3-light \
-      +python3-logging
+  DEPENDS:=+python3-light
 endef
 
 define Package/python3-awesomeversion/description
-  Make anything a version object, and compare against a vast selection of other version formats.
+Make anything a version object, and compare against a vast selection of
+other version formats.
 endef
 
 $(eval $(call Py3Package,python3-awesomeversion))

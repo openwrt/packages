@@ -1,11 +1,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-dotenv
-PKG_VERSION:=0.21.0
+PKG_VERSION:=1.0.1
 PKG_RELEASE:=1
 
 PYPI_NAME:=python-dotenv
-PKG_HASH:=b77d08274639e3d34145dfa6c7008e66df0f04b7be7a75fd0d5292c191d79045
+PKG_HASH:=e324ee90a023d808f1959c46bcbc04446a10ced277783dc6ee09987c37ec10ca
 
 PKG_MAINTAINER:=Javier Marcet <javier@marcet.info>
 PKG_LICENSE:=BSD-3-Clause

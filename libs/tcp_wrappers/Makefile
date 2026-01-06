@@ -12,11 +12,12 @@ PKG_VERSION:=7.6
 PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=ftp://ftp.porcupine.org/pub/security
+PKG_SOURCE_URL:=http://ftp.porcupine.org/pub/security
 PKG_HASH:=9543d7adedf78a6de0b221ccbbd1952e08b5138717f4ade814039bb489a4315d
 
-PKG_LICENSE:=BSD
-PKG_LICENE_FILES:=DISCLAIMER
+PKG_LICENSE:=TCP-wrappers
+PKG_LICENSE_FILES:=DISCLAIMER
+PKG_CPE_ID:=cpe:/a:libwrap_project:libwrap
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)_$(PKG_VERSION)
 
@@ -26,11 +27,11 @@ define Package/libwrap
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Security wrapper library for TCP services
-  URL:=ftp://ftp.porcupine.org/pub/security/index.html
+  URL:=http://ftp.porcupine.org/pub/security/index.html
   MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 endef
 
-TARGET_CFLAGS += $(FPIC) -Wall
+TARGET_CFLAGS += $(FPIC) -Wall -std=gnu17
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \

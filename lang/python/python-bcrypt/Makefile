@@ -6,16 +6,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-bcrypt
-PKG_VERSION:=3.2.2
+PKG_VERSION:=5.0.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=bcrypt
-PKG_HASH:=433c410c2177057705da2a9f2cd01dd157493b2a7ac14c8593a16b3dab6b6bfb
+PKG_HASH:=f748f7c2d6fd375cc93d3fba7ef4a9e3a092421b8dbf34d8d4dc06be9492dfdd
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
+PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
-PKG_BUILD_DEPENDS:=libffi/host python-cffi/host  # cffi>=1.1
+PKG_BUILD_DEPENDS:=python-setuptools-rust/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
@@ -27,11 +28,12 @@ define Package/python3-bcrypt
   SUBMENU:=Python
   TITLE:=Modern password hashing
   URL:=https://github.com/pyca/bcrypt/
-  DEPENDS:=+python3-light +python3-cffi
+  DEPENDS:=+python3-light $(RUST_ARCH_DEPENDS)
 endef
 
 define Package/python3-bcrypt/description
-  Good password hashing for your software and your servers.
+Acceptable password hashing for your software and your servers (but you
+should really use argon2id or scrypt)
 endef
 
 $(eval $(call Py3Package,python3-bcrypt))

@@ -1,0 +1,75 @@
+From f1ec1982725d60045c0d871f3e613f2880046c22 Mon Sep 17 00:00:00 2001
+From: Nicholas Marriott <nicholas.marriott@gmail.com>
+Date: Wed, 1 Feb 2023 15:31:30 +0000
+Subject: [PATCH] Fix bugs in PCRE2 code - don't walk off the end of the match
+ list if NOMATCH is returned, and don't stop on empty matches. From Thomas
+ Hurst.
+
+---
+ pcre.c | 45 ++++++++++++++++++++++++++-------------------
+ 1 file changed, 26 insertions(+), 19 deletions(-)
+
+--- a/pcre.c
++++ b/pcre.c
+@@ -66,7 +66,7 @@ int
+ re_block(struct re *re, const void *buf, size_t len, struct rmlist *rml,
+     char **cause)
+ {
+-	int			 res;
++	int			 res, ret;
+ 	pcre2_match_data	*pmd;
+ 	PCRE2_SIZE		*ovector;
+ 	u_int			 i, j;
+@@ -85,27 +85,34 @@ re_block(struct re *re, const void *buf,
+ 	}
+ 
+ 	pmd = pcre2_match_data_create_from_pattern(re->pcre2, NULL);
+-	res = pcre2_match(re->pcre2, buf, len, 0, 0, pmd, NULL);
+-	if (res < 0 && res != PCRE2_ERROR_NOMATCH) {
+-		xasprintf(cause, "%s: regexec failed", re->str);
+-		pcre2_match_data_free(pmd);
+-		return (-1);
+-	}
++	if (pmd == NULL)
++		fatalx("pcre2_match_data_create_from_pattern failed");
+ 
+-	if (rml != NULL) {
+-		ovector = pcre2_get_ovector_pointer(pmd);
+-		for (i = 0; i < res; i++) {
+-			j = i * 2;
+-			if (ovector[j + 1] <= ovector[j])
+-				break;
+-			rml->list[i].valid = 1;
+-			rml->list[i].so = ovector[j];
+-			rml->list[i].eo = ovector[j + 1];
++	res = pcre2_match(re->pcre2, buf, len, 0, 0, pmd, NULL);
++	if (res > 0) {
++		if (rml != NULL) {
++			if (res > NPMATCH)
++				res = NPMATCH;
++			ovector = pcre2_get_ovector_pointer(pmd);
++			for (i = 0; i < res; i++) {
++				j = i * 2;
++				if (ovector[j + 1] < ovector[j])
++					break;
++				rml->list[i].valid = 1;
++				rml->list[i].so = ovector[j];
++				rml->list[i].eo = ovector[j + 1];
++			}
++			rml->valid = 1;
+ 		}
+-		rml->valid = 1;
++		ret = 1;
++	} else if (res == PCRE2_ERROR_NOMATCH)
++		ret = 0;
++	else {
++		xasprintf(cause, "%s: regexec failed", re->str);
++		ret = -1;
+ 	}
+-
+-	return (res != PCRE2_ERROR_NOMATCH);
++	pcre2_match_data_free(pmd);
++	return (ret);
+ }
+ 
+ void

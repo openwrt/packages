@@ -17,7 +17,8 @@ PKG_HASH:=e6761ca932ffc6d09bd6b11ff018bdaf70b287ce518b3282d29e0270e88420bb
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0-or-later
-PKG_LICENSE:=LICENSE.txt
+PKG_LICENSE_FILES:=LICENSE.txt
+PKG_CPE_ID:=cpe:/a:picocom_project:picocom
 
 include $(INCLUDE_DIR)/package.mk
 

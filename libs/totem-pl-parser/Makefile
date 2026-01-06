@@ -10,7 +10,7 @@ PKG_VERSION:=3.26.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=totem-pl-parser-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=https://download.gnome.org/sources/totem-pl-parser/3.26/
+PKG_SOURCE_URL:=@GNOME/totem-pl-parser/$(basename $(PKG_VERSION))
 PKG_HASH:=c0df0f68d5cf9d7da43c81c7f13f11158358368f98c22d47722f3bd04bd3ac1c
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
@@ -31,7 +31,7 @@ define Package/totem-pl-parser
   URL:=https://gitlab.gnome.org/GNOME/totem-pl-parser
 endef
 
-define Package/totem-pl-parser/decription
+define Package/totem-pl-parser/description
   totem-pl-parser is a simple GObject-based library to parse a host of playlist formats
 endef
 

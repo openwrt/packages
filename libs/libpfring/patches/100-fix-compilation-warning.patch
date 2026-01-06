@@ -1,6 +1,6 @@
 --- a/kernel/pf_ring.c
 +++ b/kernel/pf_ring.c
-@@ -3940,7 +3940,7 @@ static int hash_pkt_cluster(ring_cluster_element *cluster_ptr,
+@@ -4079,7 +4079,7 @@ static int hash_pkt_cluster(ring_cluster
        break;
      }
      /* else, fall through, because it's like 2-tuple for non-TCP packets */
@@ -9,22 +9,3 @@
    case cluster_per_flow_2_tuple:
    case cluster_per_inner_flow_2_tuple:
      flags |= mask_2_tuple;
-@@ -5485,8 +5485,7 @@ static int ring_release(struct socket *sock)
-     remove_cluster_referee(pfr);
- 
-   if((pfr->zc_device_entry != NULL)
--     && pfr->zc_device_entry->zc_dev.dev
--     && pfr->zc_device_entry->zc_dev.dev->name) {
-+     && pfr->zc_device_entry->zc_dev.dev) {
-     pfring_release_zc_dev(pfr);
-   }
- 
-@@ -5617,8 +5616,6 @@ static int ring_bind(struct socket *sock, struct sockaddr *sa, int addr_len)
-     return(-EINVAL);
-   if(sa->sa_family != PF_RING)
-     return(-EINVAL);
--  if(sa->sa_data == NULL)
--    return(-EINVAL);
- 
-   memcpy(name, sa->sa_data, sizeof(sa->sa_data));
- 

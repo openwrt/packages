@@ -1,0 +1,41 @@
+From 642fa9ac91c8c1d1cac835550fe5421358e048c1 Mon Sep 17 00:00:00 2001
+From: Daniel Golle <daniel@makrotopia.org>
+Date: Fri, 10 Oct 2025 00:55:57 +0100
+Subject: [PATCH 4/8] meson: convert cURL SSL library detection to compile-time
+ test
+
+Use compile-time test instead of relying on testing the cURL SSL library
+at runtime. This is done to make cross-compilation possible again.
+---
+ meson.build | 12 +++++++++---
+ 1 file changed, 9 insertions(+), 3 deletions(-)
+
+--- a/meson.build
++++ b/meson.build
+@@ -477,17 +477,23 @@ if cc.check_header('gnutls/dane.h')
+ endif
+ curl_ssl_check = '''#include <curl/curl.h>
+   int main(int argc, char **argv) {
+-    return (CURLSSLSET_OK != curl_global_sslset(CURLSSLBACKEND_GNUTLS, NULL, NULL));
++    #ifndef CURLSSLSET_OK
++      #error "cURL SSL backend configuration not supported"
++    #endif
++    #ifndef CURLSSLBACKEND_GNUTLS
++      #error "cURL GnuTLS backend not available"
++    #endif
++    return 0;
+     }
+   '''
+ 
+-result = cc.run(
++curl_gnutls_available = cc.compiles(
+     curl_ssl_check,
+     name: 'cURL gnutls check',
+     dependencies: curl_dep,
+ )
+ private_config.set('curl_gnutls', 0)
+-if result.returncode() == 0
++if curl_gnutls_available
+     private_config.set('curl_gnutls', 1)
+ endif
+ 

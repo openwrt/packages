@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gptfdisk
-PKG_VERSION:=1.0.9
+PKG_VERSION:=1.0.10
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/$(PKG_NAME)
-PKG_HASH:=dafead2693faeb8e8b97832b23407f6ed5b3219bc1784f482dd855774e2d50c2
+PKG_HASH:=2abed61bc6d2b9ec498973c0440b8b804b7a72d7144069b5a9209b2ad693a282
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0-or-later
@@ -75,6 +75,7 @@ endef
 
 TARGET_CXXFLAGS += -std=c++11 -fno-rtti
 TARGET_LDFLAGS += -Wl,--as-needed
+MAKE_FLAGS += TARGET=linux
 
 define Package/gdisk/install
 	$(INSTALL_DIR) $(1)/usr/bin

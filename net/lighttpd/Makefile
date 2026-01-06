@@ -8,16 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lighttpd
-PKG_VERSION:=1.4.71
-PKG_RELEASE:=1
+PKG_VERSION:=1.4.82
+PKG_RELEASE:=2
 # release candidate ~rcX testing; remove for release
 #PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://download.lighttpd.net/lighttpd/releases-1.4.x
-PKG_HASH:=b8b6915da20396fdc354df3324d5e440169b2e5ea7859e3a775213841325afac
+PKG_HASH:=abfe74391f9cbd66ab154ea07e64f194dbe7e906ef4ed47eb3b0f3b46246c962
 
-PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
+PKG_MAINTAINER:=Glenn Strauss <gstrauss@gluelogic.com>
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:lighttpd:lighttpd
@@ -48,13 +48,17 @@ PKG_CONFIG_DEPENDS:= \
   CONFIG_LIGHTTPD_PCRE2 \
   CONFIG_LIGHTTPD_CRYPTOLIB_NONE \
   CONFIG_LIGHTTPD_CRYPTOLIB_NETTLE \
+  CONFIG_LIGHTTPD_CRYPTOLIB_GNUTLS \
   CONFIG_LIGHTTPD_CRYPTOLIB_MBEDTLS \
+  CONFIG_LIGHTTPD_CRYPTOLIB_OPENSSL \
   CONFIG_LIGHTTPD_CRYPTOLIB_WOLFSSL
 
 PKG_BUILD_DEPENDS:= \
   LIGHTTPD_PCRE2:pcre2 \
   LIGHTTPD_CRYPTOLIB_NETTLE:nettle \
+  LIGHTTPD_CRYPTOLIB_GNUTLS:gnutls \
   LIGHTTPD_CRYPTOLIB_MBEDTLS:mbedtls \
+  LIGHTTPD_CRYPTOLIB_OPENSSL:openssl \
   LIGHTTPD_CRYPTOLIB_WOLFSSL:wolfssl
 
 include $(INCLUDE_DIR)/package.mk
@@ -64,10 +68,16 @@ include $(INCLUDE_DIR)/meson.mk
 # (separate from lighttpd TLS modules, which are each standalone)
 cryptolibdep= \
   +LIGHTTPD_CRYPTOLIB_NETTLE:libnettle \
+  +LIGHTTPD_CRYPTOLIB_GNUTLS:libgnutls \
   +LIGHTTPD_CRYPTOLIB_MBEDTLS:libmbedtls \
+  +LIGHTTPD_CRYPTOLIB_OPENSSL:libopenssl \
   +LIGHTTPD_CRYPTOLIB_WOLFSSL:libwolfssl
 ifdef CONFIG_LIGHTTPD_CRYPTOLIB_MBEDTLS
   TARGET_CPPFLAGS += -DFORCE_MBEDTLS_CRYPTO
+else ifdef CONFIG_LIGHTTPD_CRYPTOLIB_GNUTLS
+  TARGET_CPPFLAGS += -DFORCE_GNUTLS_CRYPTO
+else ifdef CONFIG_LIGHTTPD_CRYPTOLIB_OPENSSL
+  TARGET_CPPFLAGS += -DFORCE_OPENSSL_CRYPTO
 else ifdef CONFIG_LIGHTTPD_CRYPTOLIB_WOLFSSL
   TARGET_CPPFLAGS += -DFORCE_WOLFSSL_CRYPTO
 endif
@@ -131,8 +141,14 @@ if PACKAGE_lighttpd
 		config LIGHTTPD_CRYPTOLIB_NETTLE
 			bool "libnettle"
 
+		config LIGHTTPD_CRYPTOLIB_GNUTLS
+			bool "libgnutls"
+
 		config LIGHTTPD_CRYPTOLIB_MBEDTLS
 			bool "libmbedtls"
+
+		config LIGHTTPD_CRYPTOLIB_OPENSSL
+			bool "libopenssl"
 
 		config LIGHTTPD_CRYPTOLIB_WOLFSSL
 			bool "libwolfssl"
@@ -152,25 +168,25 @@ MESON_ARGS += \
 	-Dwith_bzip=disabled \
 	-Dwith_dbi=$(if $(CONFIG_PACKAGE_lighttpd-mod-authn_dbi)$(CONFIG_PACKAGE_lighttpd-mod-vhostdb_dbi),enabled,disabled) \
 	-Dwith_fam=disabled \
-	-Dwith_gnutls=$(if $(CONFIG_PACKAGE_lighttpd-mod-gnutls),true,false) \
+	-Dwith_gnutls=$(if $(CONFIG_PACKAGE_lighttpd-mod-gnutls)$(CONFIG_LIGHTTPD_CRYPTOLIB_GNUTLS),true,false) \
 	-Dwith_krb5=$(if $(CONFIG_PACKAGE_lighttpd-mod-authn_gssapi),enabled,disabled) \
 	-Dwith_ldap=$(if $(CONFIG_PACKAGE_lighttpd-mod-authn_ldap)$(CONFIG_PACKAGE_lighttpd-mod-vhostdb_ldap),enabled,disabled) \
 	-Dwith_libunwind=disabled \
 	-Dwith_lua=$(if $(CONFIG_PACKAGE_lighttpd-mod-magnet),true,false) \
 	-Dlua_version=lua \
 	-Dwith_maxminddb=$(if $(CONFIG_PACKAGE_lighttpd-mod-maxminddb),enabled,disabled) \
-	-Dwith_mbedtls=$(if $(CONFIG_PACKAGE_lighttpd-mod-mbedtls),true,false) \
+	-Dwith_mbedtls=$(if $(CONFIG_PACKAGE_lighttpd-mod-mbedtls)$(CONFIG_LIGHTTPD_CRYPTOLIB_MBEDTLS),true,false) \
 	-Dwith_mysql=$(if $(CONFIG_PACKAGE_lighttpd-mod-vhostdb_mysql),enabled,disabled) \
 	-Dwith_nettle=$(if $(CONFIG_LIGHTTPD_CRYPTOLIB_NETTLE),true,false) \
 	-Dwith_nss=$(if $(CONFIG_PACKAGE_lighttpd-mod-nss),true,false) \
-	-Dwith_openssl=$(if $(CONFIG_PACKAGE_lighttpd-mod-openssl),true,false) \
+	-Dwith_openssl=$(if $(CONFIG_PACKAGE_lighttpd-mod-openssl)$(CONFIG_LIGHTTPD_CRYPTOLIB_OPENSSL),true,false) \
 	-Dwith_pam=$(if $(CONFIG_PACKAGE_lighttpd-mod-authn_pam),enabled,disabled) \
 	-Dwith_pcre2=$(if $(CONFIG_LIGHTTPD_PCRE2),true,false) \
 	-Dwith_pgsql=$(if $(CONFIG_PACKAGE_lighttpd-mod-vhostdb_pgsql),enabled,disabled) \
 	-Dwith_sasl=$(if $(CONFIG_PACKAGE_lighttpd-mod-authn_sasl),enabled,disabled) \
 	-Dwith_webdav_locks=$(if $(CONFIG_PACKAGE_lighttpd-mod-webdav),enabled,disabled) \
 	-Dwith_webdav_props=$(if $(CONFIG_PACKAGE_lighttpd-mod-webdav),enabled,disabled) \
-	-Dwith_wolfssl=$(if $(CONFIG_PACKAGE_lighttpd-mod-wolfssl),true,false) \
+	-Dwith_wolfssl=$(if $(CONFIG_PACKAGE_lighttpd-mod-wolfssl)$(CONFIG_LIGHTTPD_CRYPTOLIB_WOLFSSL),true,false) \
 	-Dwith_xattr=false \
 	-Dwith_zlib=$(if $(CONFIG_PACKAGE_lighttpd-mod-deflate),enabled,disabled) \
 	-Dwith_zstd=disabled
@@ -215,7 +231,7 @@ define BuildPlugin
 /etc/lighttpd/conf.d/$(4)-$(1).conf
   endef
 
- ifneq ($(SDK)$(CONFIG_PACKAGE_lighttpd-mod-$(1)),)
+ ifneq ($(CONFIG_PACKAGE_lighttpd-mod-$(1)),)
   define Package/lighttpd-mod-$(1)/install
 	$(INSTALL_DIR) $$(1)/usr/lib/lighttpd
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lighttpd/mod_$(1).so $$(1)/usr/lib/lighttpd
@@ -238,12 +254,12 @@ endef
 $(eval $(call BuildPackage,lighttpd))
 
 $(eval $(call BuildPlugin,auth,Authentication,$(cryptolibdep),20))
-$(eval $(call BuildPlugin,authn_dbi,DBI-based authentication,lighttpd-mod-auth libdbi $(cryptolibdep),20))
+$(eval $(call BuildPlugin,authn_dbi,DBI-based authentication,lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_dbi:libdbi $(cryptolibdep),20))
 $(eval $(call BuildPlugin,authn_file,File-based authentication,lighttpd-mod-auth $(cryptolibdep),20))
-$(eval $(call BuildPlugin,authn_gssapi,Kerberos-based authentication,lighttpd-mod-auth krb5-libs $(cryptolibdep),20))
-$(eval $(call BuildPlugin,authn_ldap,LDAP-based authentication,lighttpd-mod-auth libopenldap,20))
-$(eval $(call BuildPlugin,authn_pam,PAM-based authentication,lighttpd-mod-auth libpam,20))
-$(eval $(call BuildPlugin,authn_sasl,SASL-based authentication,lighttpd-mod-auth libsasl2,20))
+$(eval $(call BuildPlugin,authn_gssapi,Kerberos-based authentication,lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_gssapi:krb5-libs $(cryptolibdep),20))
+$(eval $(call BuildPlugin,authn_ldap,LDAP-based authentication,lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_ldap:libopenldap,20))
+$(eval $(call BuildPlugin,authn_pam,PAM-based authentication,lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_pam:libpam,20))
+$(eval $(call BuildPlugin,authn_sasl,SASL-based authentication,lighttpd-mod-auth +PACKAGE_lighttpd-mod-authn_sasl:libsasl2,20))
 
 $(eval $(call BuildPlugin,accesslog,Access logging,,30))
 $(eval $(call BuildPlugin,ajp13,AJP13 Tomcat connector,,30))
@@ -267,7 +283,7 @@ $(eval $(call BuildPlugin,vhostdb_dbi,Virtual Host Database (DBI),lighttpd-mod-v
 $(eval $(call BuildPlugin,vhostdb_ldap,Virtual Host Database (LDAP),lighttpd-mod-vhostdb +PACKAGE_lighttpd-mod-vhostdb_ldap:libopenldap,30))
 $(eval $(call BuildPlugin,vhostdb_mysql,Virtual Host Database (MariaDB),lighttpd-mod-vhostdb +PACKAGE_lighttpd-mod-vhostdb_mysql:libmariadb,30))
 $(eval $(call BuildPlugin,vhostdb_pgsql,Virtual Host Database (PostgreSQL),lighttpd-mod-vhostdb +PACKAGE_lighttpd-mod-vhostdb_pgsql:libpq,30))
-$(eval $(call BuildPlugin,webdav,WebDAV,+PACKAGE_lighttpd-mod-webdav:libsqlite3 +PACKAGE_lighttpd-mod-webdav:libuuid +PACKAGE_lighttpd-mod-webdav:libxml2,30))
+$(eval $(call BuildPlugin,webdav,WebDAV,+PACKAGE_lighttpd-mod-webdav:libsqlite3 +PACKAGE_lighttpd-mod-webdav:libxml2,30))
 $(eval $(call BuildPlugin,webdav_min,WebDAV,,30))
 $(eval $(call BuildPlugin,wolfssl,TLS using wolfssl,@LIGHTTPD_SSL +PACKAGE_lighttpd-mod-wolfssl:libwolfssl,30))
 $(eval $(call BuildPlugin,wstunnel,Websocket tunneling,$(cryptolibdep),30))
@@ -287,7 +303,7 @@ define BuiltinPlugin
 /etc/lighttpd/conf.d/$(4)-$(1).conf
   endef
 
- ifneq ($(SDK)$(CONFIG_PACKAGE_lighttpd-mod-$(1)),)
+ ifneq ($(CONFIG_PACKAGE_lighttpd-mod-$(1)),)
   define Package/lighttpd-mod-$(1)/install
 	$(INSTALL_DIR) $$(1)/etc/lighttpd/conf.d
 	if [ -f $(PKG_BUILD_DIR)/doc/config/conf.d/$(1).conf ]; then \

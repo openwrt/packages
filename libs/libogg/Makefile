@@ -37,7 +37,7 @@ define Package/libogg/description
 Ogg project codecs use the Ogg bitstream format to arrange the raw,
 compressed bitstream into a more robust, useful form.  For example,
 the Ogg bitstream makes seeking, time stamping and error recovery
-possible, as well as mixing several sepearate, concurrent media
+possible, as well as mixing several separate, concurrent media
 streams into a single physical bitstream.
 endef
 

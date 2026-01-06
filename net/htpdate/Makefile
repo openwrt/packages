@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=htpdate
-PKG_VERSION:=1.1.1
-PKG_RELEASE:=5
+PKG_VERSION:=1.3.7
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://www.vervest.org/htp/archive/c/
-PKG_HASH:=0d75f91cb61f8869c8298d198fa52b9a139ae505b366e9d4d331af8bc1c04880
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://www.vervest.org/htp/archive/c/
+PKG_HASH:=88c52fe475308ee95f560fd7cf68c75bc6e9a6abf56be7fed203a7f762fe7ab2
 
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=
@@ -25,7 +25,7 @@ define Package/htpdate
   SECTION:=net
   CATEGORY:=Network
   TITLE:=an HTP (Hypertext Time Protocol) implementation
-  URL:=http://www.vervest.com/htp/
+  URL:=https://www.vervest.org/htp/
   MAINTAINER:=Tijs Van Buggenhout <tvbuggen@netzerk.be>, \
               Marcin Jurkowski <marcin1j@gmail.com>
 endef
@@ -58,4 +58,3 @@ define Package/htpdate/install
 endef
 
 $(eval $(call BuildPackage,htpdate))
-

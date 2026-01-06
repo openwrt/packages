@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tdb
-PKG_VERSION:=1.4.3
-PKG_RELEASE:=2
+PKG_VERSION:=1.4.14
+PKG_RELEASE:=1
 PKG_LICENSE:=GPL-2.0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.samba.org/ftp/tdb/
-PKG_HASH:=c8058393dfa15f47e11ebd2f1d132693f0b3b3b8bf22d0201bfb305026f88a1b
+PKG_HASH:=144f407d42ed7a0ec1470a40ef17ad41133fe910bce865dd9fe084d49c907526
 
 PKG_BUILD_DEPENDS:=python3/host
 PKG_INSTALL:=1
@@ -31,7 +31,7 @@ define Package/tdb
   CATEGORY:=Libraries
   TITLE:=Trivial Database
   URL:=http://sourceforge.net/projects/tdb/
-  MAINTAINER:=Dmitry V. Zimin <pfzim@mail.ru>
+  MAINTAINER:=
 endef
 
 define Package/tdb/description

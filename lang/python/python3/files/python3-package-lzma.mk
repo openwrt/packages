@@ -7,8 +7,14 @@
 
 define Package/python3-lzma
 $(call Package/python3/Default)
-  TITLE:=Python $(PYTHON3_VERSION) lzma module
+  TITLE+= lzma module
   DEPENDS:=+python3-light +liblzma
+endef
+
+define Package/python3-lzma/description
+$(call Package/python3/Default/description)
+
+This package contains the lzma module.
 endef
 
 $(eval $(call Py3BasePackage,python3-lzma, \

@@ -26,6 +26,17 @@
 #include <libubox/uloop.h>
 #include <libubus.h>
 
+#define GL_TARGET_XE300  1
+#define GL_TARGET_XE3000 2
+
+#if GL_TARGET == GL_TARGET_XE300
+#define MCU_PORT "/dev/ttyUSB0"
+#elif GL_TARGET ==  GL_TARGET_XE3000
+#define MCU_PORT "/dev/ttyS1"
+#else
+#error Please define GL_TARGET!
+#endif /* GL_TARGET */
+
 static struct ustream_fd stream;
 static struct ubus_auto_conn conn;
 static struct blob_buf b;
@@ -39,6 +50,9 @@ struct Battery
 	bool set;
 } battery;
 
+#if GL_TARGET == GL_TARGET_XE300
+// MCU status returns something like:
+// {OK},100,275,1,0
 static bool
 process(char *read)
 {
@@ -66,6 +80,65 @@ process(char *read)
 		return false;
 	return true;
 }
+#elif GL_TARGET == GL_TARGET_XE3000
+static bool
+get_int_value(const char *read, const char *key, int *int_value, char **new_end)
+{
+	char *from = NULL;
+
+	from = strstr(read, key);
+	if ((!from) || (from != read))
+	{
+		return false;
+	}
+	from = (char *)read + strlen(key);
+	*int_value = strtol(from, new_end, 10);
+	if (from == *new_end)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+// MCU status returns something like:
+// {"code":0,"capacity":100,"temp":28,"chg_state":1,"charge_cycle":0}
+static bool
+process(char *read)
+{
+	int int_value = 0;
+	char *to = NULL;
+
+	if ((read[0] != '{') ||
+		(!get_int_value(&read[1], "\"code\":", &int_value, &to)) ||
+		(int_value != 0))
+	{
+		return false;
+	}
+	if (!get_int_value(to + 1, "\"capacity\":", &int_value, &to))
+	{
+		return false;
+	}
+	battery.soc = int_value;
+	if (!get_int_value(to + 1, "\"temp\":", &int_value, &to))
+	{
+		return false;
+	}
+	battery.temperature = (float) int_value;
+	if (!get_int_value(to + 1, "\"chg_state\":", &int_value, &to))
+	{
+		return false;
+	}
+	battery.charging = (bool) int_value;
+	if (!get_int_value(to + 1, "\"charge_cycle\":", &int_value, &to))
+	{
+		return false;
+	}
+	battery.cycles = (uint16_t) int_value;
+
+	return true;
+}
+#endif /* GL_TARGET */
 
 static int
 consume(struct ustream *s, char **a)
@@ -79,7 +152,7 @@ consume(struct ustream *s, char **a)
 
 	battery.set = process(*a);
 	if (!battery.set)
-		ULOG_ERR("failed to parse message from serial: %s", a);
+		ULOG_ERR("failed to parse message from serial: %s", *a);
 
 	ustream_consume(s, eol - *a);
 	*a = eol;
@@ -202,7 +275,7 @@ main(int argc, char **argv)
 	conn.cb = ubus_connect_handler;
 	ubus_auto_connect(&conn);
 
-	if (serial_open("/dev/ttyUSB0") < 0)
+	if (serial_open(MCU_PORT) < 0)
 		return -1;
 
 	serial_query_timer.cb = serial_query_handler;

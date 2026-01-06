@@ -18,11 +18,11 @@ validate_login_section() {
 
 validate_pptpd_section() {
 	uci_load_validate pptpd service "$1" "$2" \
-		'enabled:uinteger' \
+		'enabled:bool:1' \
 		'localip:string' \
 		'remoteip:string' \
 		'mppe:list(string):required no40 no56 stateless' \
-		'logwtmp:uinteger'
+		'logwtmp:bool:0'
 }
 
 setup_login() {
@@ -62,6 +62,7 @@ setup_config() {
 start_service() {
 	config_load pptpd
 	validate_pptpd_section pptpd setup_config || return
+	sed -i -E "/^\w+\s+pptp-server\s+.+$/d" $CHAP_SECRETS
 	config_foreach validate_login_section login setup_login
 
 	ln -sfn $CHAP_SECRETS /etc/ppp/chap-secrets

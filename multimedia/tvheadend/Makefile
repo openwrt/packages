@@ -1,22 +1,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tvheadend
-PKG_VERSION:=2022-11-20
-PKG_RELEASE:=3
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/tvheadend/tvheadend.git
-PKG_MIRROR_HASH:=9c1bb3eea3f3539454d17e4c6aabc774a104a772aa34ed39f248521cf6488ce5
-PKG_SOURCE_VERSION:=0ff96106aa2e0f9a384c3a2662ca005797a6b399
-PKG_SOURCE_DATE:=2022-11-20
+PKG_SOURCE_URL:=https://github.com/tvheadend/tvheadend
+PKG_MIRROR_HASH:=48dd4296dfdd56965a70fd202eb40e0fb9e88eb5fe05e4b2544687466df0033a
+PKG_SOURCE_VERSION:=0f74b0ab0a3b96d87da04d9c778142ecfb370a1d
+PKG_SOURCE_DATE:=2025-06-04
 
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=LICENSE.md
 
 PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
-
 PKG_BUILD_FLAGS:=no-mips16
+PKG_BUILD_DEPENDS:=gettext-full/host
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -36,7 +35,6 @@ define Package/tvheadend
 	$(ICONV_DEPENDS) \
 	+zlib \
 	+TVHEADEND_AVAHI_SUPPORT:libavahi-client \
-	+TVHEADEND_REGEX_PCRE:libpcre \
 	+TVHEADEND_REGEX_PCRE2:libpcre2 \
 	+BUILD_PATENTED&&TVHEADEND_CSA:libdvbcsa
 
@@ -54,7 +52,7 @@ endef
 define Package/tvheadend/description
   Tvheadend is a TV streaming server and recorder for Linux, FreeBSD and Android
   supporting DVB-S, DVB-S2, DVB-C, DVB-T, ATSC, IPTV, SAT>IP and HDHomeRun as input sources.
-  Tvheadend offers the HTTP (VLC, MPlayer), HTSP (Kodi, Movian) and SAT>IP streaming.
+  Tvheadend supports streaming to clients via HTTP (VLC, MPlayer), HTSP (Kodi, Movian), SAT>IP and TVHeadEnd emulation.
 endef
 
 define Package/tvheadend/config
@@ -76,17 +74,18 @@ endif
 ifeq ($(CONFIG_TVHEADEND_TRACE),)
 	CONFIGURE_ARGS += --disable-trace
 endif
+ifneq ($(CONFIG_TVHEADEND_MEMORYINFO),)
+	CONFIGURE_ARGS += --enable-slow_memoryinfo
+endif
 
-ifneq ($(CONFIG_TVHEADEND_REGEX_PCRE2),)
-	CONFIGURE_ARGS += --disable-pcre --enable-pcre2
+ifeq ($(CONFIG_TVHEADEND_REGEX_PCRE2),)
+	CONFIGURE_ARGS += --disable-pcre2
 else
-ifneq ($(CONFIG_TVHEADEND_REGEX_PCRE),)
-	CONFIGURE_ARGS += --enable-pcre --disable-pcre2
-else
-ifneq ($(CONFIG_TVHEADEND_REGEX_POSIX),)
-	CONFIGURE_ARGS += --disable-pcre --disable-pcre2
+	CONFIGURE_ARGS += --enable-pcre2
 endif
-endif
+
+ifeq ($(CONFIG_TVHEADEND_TIMESHIFT),)
+	CONFIGURE_ARGS += --disable-timeshift
 endif
 
 ifeq ($(CONFIG_TVHEADEND_AVAHI_SUPPORT),)
@@ -95,13 +94,13 @@ else
 	CONFIGURE_ARGS += --enable-avahi
 endif
 
-ifeq ($(CONFIG_TVHEADEND_IMAGECACHE),)
-	CONFIGURE_ARGS += --disable-imagecache
-else
-	CONFIGURE_ARGS += --enable-imagecache
-endif
-
 ## TV sources
+
+# Bug in tvheadend. Can't be disabled.
+#ifeq ($(CONFIG_TVHEADEND_TSFILE),)
+#	CONFIGURE_ARGS += --disable-tsfile
+#endif
+
 ifeq ($(CONFIG_TVHEADEND_LINUXDVB_SUPPORT),)
 	CONFIGURE_ARGS += --disable-linuxdvb
 endif
@@ -123,12 +122,29 @@ ifeq ($(CONFIG_TVHEADEND_SATIP_CLIENT),)
 endif
 
 ifeq ($(CONFIG_TVHEADEND_HDHOMERUN_CLIENT),)
-	CONFIGURE_ARGS += --disable-hdhomerun_static
+ifeq ($(CONFIG_TVHEADEND_HDHOMERUN_SERVER),)
+	CONFIGURE_ARGS += --disable-hdhomerun_static --disable-hdhomerun_client --disable-hdhomerun_server
 else
-	CONFIGURE_ARGS += --enable-hdhomerun_client
+	CONFIGURE_ARGS += --enable-hdhomerun_static --disable-hdhomerun_client --enable-hdhomerun_server
+endif
+else
+	CONFIGURE_ARGS += --enable-hdhomerun_static --enable-hdhomerun_client
+ifeq ($(CONFIG_TVHEADEND_HDHOMERUN_SERVER),)
+	CONFIGURE_ARGS += --disable-hdhomerun_server
+else
+	CONFIGURE_ARGS += --enable-hdhomerun_server
+endif
 endif
 
 ## Descrambling
+ifeq ($(CONFIG_TVHEADEND_LINUXDVB_SUPPORT),)
+	CONFIGURE_ARGS += --disable-ddci
+else
+ifeq ($(CONFIG_TVHEADEND_DVB_DDCI),)
+	CONFIGURE_ARGS += --disable-ddci
+endif
+endif
+
 ifeq ($(CONFIG_BUILD_PATENTED),)
 	CONFIGURE_ARGS += --disable-tvhcsa --disable-dvbcsa --disable-constcw --disable-cwc --disable-capmt --disable-cccam
 else
@@ -201,6 +217,7 @@ CONFIGURE_ARGS += \
 	--arch=$(ARCH) \
 	--disable-libsystemd_daemon \
 	--disable-dbus_1 \
+	--disable-pcre \
 	--disable-libav \
 	--disable-ffmpeg_static \
 	--disable-libx264 \

@@ -24,25 +24,21 @@ config OPENVPN_mbedtls_ENABLE_FRAGMENT
 	bool "Enable internal fragmentation support (--fragment)"
 	default y
 
-config OPENVPN_mbedtls_ENABLE_MULTIHOME
-	bool "Enable multi-homed UDP server support (--multihome)"
-	default y
-
 config OPENVPN_mbedtls_ENABLE_PORT_SHARE
 	bool "Enable TCP server port-share support (--port-share)"
-	default y
-
-config OPENVPN_mbedtls_ENABLE_DEF_AUTH
-	bool "Enable deferred authentication"
-	default y
-
-config OPENVPN_mbedtls_ENABLE_PF
-	bool "Enable internal packet filter"
 	default y
 
 config OPENVPN_mbedtls_ENABLE_IPROUTE2
 	bool "Enable support for iproute2"
 	default n
+
+config OPENVPN_mbedtls_ENABLE_DCO
+	depends on !OPENVPN_mbedtls_ENABLE_IPROUTE2
+	bool "Enable support for data channel offload"
+	default y if !OPENVPN_mbedtls_ENABLE_IPROUTE2
+	help
+	  enable data channel offload support
+	  using the ovpn-dco-v2 kernel module
 
 config OPENVPN_mbedtls_ENABLE_SMALL
 	bool "Enable size optimization"

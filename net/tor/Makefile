@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tor
-PKG_VERSION:=0.4.7.13
+PKG_VERSION:=0.4.8.21
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://dist.torproject.org/ \
 	https://archive.torproject.org/tor-package-archive
-PKG_HASH:=2079172cce034556f110048e26083ce9bea751f3154b0ad2809751815b11ea9d
-PKG_MAINTAINER:=Hauke Mehrtens <hauke@hauke-m.de> \
-		Peter Wagner <tripolar@gmx.at>
+PKG_HASH:=eaf6f5b73091b95576945eade98816ddff7cd005befe4d94718a6f766b840903
+PKG_MAINTAINER:=Rui Salvaterra <rsalvaterra@gmail.com>
+PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:torproject:tor
 
@@ -113,6 +113,7 @@ endef
 
 define Package/tor/conffiles
 /etc/tor/torrc
+/etc/tor/torrc.d/*
 /var/lib/tor/fingerprint
 /var/lib/tor/keys/*
 /etc/config/tor

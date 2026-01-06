@@ -13,7 +13,7 @@
  
  static u_int32_t hash_rnd;
  static bool hash_rnd_initted;
-@@ -577,6 +581,14 @@ coova_mt_proc_write(struct file *file, c
+@@ -582,6 +586,14 @@ coova_mt_proc_write(struct file *file, c
  	return size + 1;
  }
  
@@ -28,7 +28,7 @@
  static const struct file_operations coova_mt_fops = {
  	.open    = coova_seq_open,
  	.read    = seq_read,
-@@ -584,6 +596,7 @@ static const struct file_operations coov
+@@ -589,6 +601,7 @@ static const struct file_operations coov
  	.release = seq_release_private,
  	.owner   = THIS_MODULE,
  };
