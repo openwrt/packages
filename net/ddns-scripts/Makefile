@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ddns-scripts
 PKG_VERSION:=2.8.2
-PKG_RELEASE:=83
+PKG_RELEASE:=84
 
 PKG_LICENSE:=GPL-2.0
 
@@ -127,7 +127,7 @@ endef
 define Package/ddns-scripts-namesilo
   $(call Package/ddns-scripts/Default)
   TITLE:=Extension for namesilo.com API v1
-  DEPENDS:=ddns-scripts +wget-ssl
+  DEPENDS:=ddns-scripts +curl
   PROVIDES:=ddns-scripts_namesilo.com-v1
 endef
 
