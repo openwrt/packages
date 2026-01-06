@@ -8,13 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fswebcam
-PKG_VERSION:=20140113
-PKG_RELEASE:=2
+PKG_VERSION:=20200725
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=http://www.firestorm.cx/fswebcam/files \
-	http://www.sanslogic.co.uk/fswebcam/files
-PKG_HASH:=444d6a8a82102e09e935540c64a731021de36db03e1e74181f41ca6f39aa6474
+PKG_SOURCE_URL:=http://www.sanslogic.co.uk/fswebcam/files
+PKG_HASH:=cff0cbd91457133847e40944db3ee0b6f81d06506cef260687bde8348c8a0ce4
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=LICENCE

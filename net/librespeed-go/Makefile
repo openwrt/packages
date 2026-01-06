@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=librespeed-go
 PKG_VERSION:=1.1.5
-PKG_RELEASE:=3
+PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/librespeed/speedtest-go/tar.gz/v$(PKG_VERSION)?
@@ -39,14 +39,15 @@ define Package/librespeed-go
 endef
 
 define Package/librespeed-go/description
-  No Flash, No Java, No WebSocket, No Bullshit.
-
   This is a very lightweight speed test implemented in JavaScript,
   using XMLHttpRequest and Web Workers.
+
+  No Flash, No Java, No WebSocket, No Bullshit.
 endef
 
 define Package/librespeed-go/conffiles
 /etc/librespeed-go
+/etc/config/librespeed-go
 endef
 
 define Build/Prepare

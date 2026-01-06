@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ccrypt
 PKG_VERSION:=1.11
-PKG_RELEASE:=2
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/ccrypt
@@ -27,9 +27,12 @@ define Package/ccrypt
   SUBMENU:=Encryption
   TITLE:=utility for encrypting/decrypting files and streams
   URL:=http://ccrypt.sourceforge.net/
+  DEPENDS:= +USE_GLIBC:libcrypt-compat
 endef
 
 CONFIGURE_ARGS += --disable-emacs
+
+EXTRA_CFLAGS += -std=c17
 
 define Package/ccrypt/install
 	$(INSTALL_DIR) $(1)/usr/bin

@@ -1,0 +1,32 @@
+From 7216d51cae92bfd1c4d59d959ecf90898183912b Mon Sep 17 00:00:00 2001
+From: Christian Marangi <ansuelsmth@gmail.com>
+Date: Tue, 25 Nov 2025 16:12:27 +0100
+Subject: [PATCH] CMakeLists: permit to disable PAM support
+
+Introduce a CMake option ENABLE_PAM to force disable PAM support even if
+it's detected.
+
+Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
+---
+ CMakeLists.txt | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -100,6 +100,7 @@ set(MAX_PSPOLL_THREAD_COUNT 6 CACHE STRI
+ set(TIMEOUT_STEP 100 CACHE STRING "Number of microseconds tasks are repeated until timeout elapses")
+ set(YANG_MODULE_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/yang/modules/libnetconf2" CACHE STRING "Directory where to copy the YANG modules to")
+ set(CLIENT_SEARCH_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/yang/modules" CACHE STRING "Default NC client YANG module search directory")
++option(ENABLE_PAM "Detect and use PAM" ON)
+ 
+ #
+ # sources
+@@ -282,7 +283,7 @@ if(ENABLE_SSH_TLS)
+ 
+     # libpam
+     find_package(LibPAM)
+-    if(LibPAM_FOUND)
++    if(LibPAM_FOUND AND ENABLE_PAM)
+         set(HAVE_LIBPAM TRUE)
+ 
+         target_link_libraries(netconf2 ${LIBPAM_LIBRARIES})

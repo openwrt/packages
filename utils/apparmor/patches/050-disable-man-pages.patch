@@ -20,7 +20,7 @@
  install-arch: arch
 --- a/parser/Makefile
 +++ b/parser/Makefile
-@@ -195,7 +195,7 @@ extra_docs: pdf
+@@ -197,7 +197,7 @@ extra_docs: pdf
  indep: docs
  	$(Q)$(MAKE) -C po all
  
@@ -29,7 +29,7 @@
  
  .PHONY: coverage
  coverage:
-@@ -396,7 +396,6 @@ endif
+@@ -406,7 +406,6 @@ endif
  
  .PHONY: install
  install:

@@ -61,23 +61,46 @@ mwan3_get_src_ip()
 	unset "$1"
 	config_get family "$interface" family ipv4
 	if [ "$family" = "ipv4" ]; then
-		addr_cmd_1='network_get_ipaddr'
-		addr_cmd_2='false'
+		addr_cmd='network_get_ipaddr'
 		default_ip="0.0.0.0"
-		sed_str='s/ *inet \([^ \/]*\).*/\1/;T; pq'
+		sed_str='s/ *inet \([^ \/]*\).*/\1/;T;p;q'
 		IP="$IP4"
 	elif [ "$family" = "ipv6" ]; then
-		addr_cmd_1='network_get_preferred_ipaddr6'
-		addr_cmd_2='network_get_ipaddr6'
+		addr_cmd='network_get_ipaddr6'
 		default_ip="::"
-		sed_str='s/ *inet6 \([^ \/]*\).* scope.*/\1/;T; pq'
+		sed_str='s/ *inet6 \([^ \/]*\).* scope.*/\1/;T;p;q'
 		IP="$IP6"
 	fi
 
-	$addr_cmd_1 _src_ip "$true_iface" 2>&1 || $addr_cmd_2 _src_ip "$true_iface"
+	$addr_cmd _src_ip "$true_iface"
 	if [ -z "$_src_ip" ]; then
-		network_get_device device $true_iface
-		_src_ip=$($IP address ls dev $device 2>/dev/null | sed -ne "$sed_str")
+		if [ "$family" = "ipv6" ]; then
+			# on IPv6-PD interfaces (like PPPoE interfaces) we don't
+			# have a real address, just a prefix, that can be delegated
+			# to interfaces, because using :: (the fallback above) or
+			# the local address (fe80:... which will be returned from
+			# the sed_str expression defined above) will not work
+			# (reliably, if at all) try to find an address which we can
+			# use instead
+			network_get_prefix6 _src_ip "$true_iface"
+			if [ -n "$_src_ip" ]; then
+				# got a prefix like 2001:xxxx:yyyy::/48, clean it up to
+				# only contain the prefix -> 2001:xxxx:yyyy
+				_src_ip=$(echo "$_src_ip" | sed -e 's;:*/.*$;;')
+				# find an interface with a delegated address, and use
+				# it, this would be sth like 2001:xxxx:yyyy:zzzz:...
+				# we just select the first address that matches the prefix
+				# NOTE: is there a better/more reliable way to get a
+				#       usable address to use as source for pings here?
+				local pfx_sed
+				pfx_sed='s/ *inet6 \('"$_src_ip"':[0-6a-f:]\+\).* scope.*/\1/'
+				_src_ip=$($IP address ls | sed -ne "${pfx_sed};T;p;q")
+			fi
+		fi
+		if [ -z "$_src_ip" ]; then
+			network_get_device device $true_iface
+			_src_ip=$($IP address ls dev $device 2>/dev/null | sed -ne "$sed_str")
+		fi
 		if [ -n "$_src_ip" ]; then
 			LOG warn "no src $family address found from netifd for interface '$true_iface' dev '$device' guessing $_src_ip"
 		else
@@ -88,30 +111,48 @@ mwan3_get_src_ip()
 	export "$1=$_src_ip"
 }
 
+readfile() {
+	[ -f "$2" ] || return 1
+	# read returns 1 on EOF
+	read -d'\0' $1 <"$2" || :
+}
+
 mwan3_get_mwan3track_status()
 {
-	local track_ips pid
+	local interface=$2
+	local track_ips pid cmdline started
 	mwan3_list_track_ips()
 	{
 		track_ips="$1 $track_ips"
 	}
-	config_list_foreach "$1" track_ip mwan3_list_track_ips
+	config_list_foreach "$interface" track_ip mwan3_list_track_ips
 
-	if [ -n "$track_ips" ]; then
-		pid="$(pgrep -f "mwan3track $1$")"
-		if [ -n "$pid" ]; then
-			if [ "$(cat /proc/"$(pgrep -P $pid)"/cmdline)" = "sleep${MAX_SLEEP}" ]; then
-				tracking="paused"
-			else
-				tracking="active"
-			fi
-		else
-			tracking="down"
-		fi
-	else
-		tracking="disabled"
+	if [ -z "$track_ips" ]; then
+		export -n "$1=disabled"
+		return
 	fi
-	echo "$tracking"
+	readfile pid $MWAN3TRACK_STATUS_DIR/$interface/PID 2>/dev/null
+	if [ -z "$pid" ]; then
+		export -n "$1=down"
+		return
+	fi
+	readfile cmdline /proc/$pid/cmdline 2>/dev/null
+	if [ $cmdline != "/bin/sh/usr/sbin/mwan3track${interface}" ]; then
+		export -n "$1=down"
+		return
+	fi
+	readfile started $MWAN3TRACK_STATUS_DIR/$interface/STARTED
+	case "$started" in
+		0)
+			export -n "$1=paused"
+			;;
+		1)
+			export -n "$1=active"
+			;;
+		*)
+			export -n "$1=down"
+			;;
+	esac
 }
 
 mwan3_init()
@@ -125,7 +166,7 @@ mwan3_init()
 
 	# mwan3's MARKing mask (at least 3 bits should be set)
 	if [ -e "${MWAN3_STATUS_DIR}/mmx_mask" ]; then
-		MMX_MASK=$(cat "${MWAN3_STATUS_DIR}/mmx_mask")
+		readfile MMX_MASK "${MWAN3_STATUS_DIR}/mmx_mask"
 		MWAN3_INTERFACE_MAX=$(uci_get_state mwan3 globals iface_max)
 	else
 		config_get MMX_MASK globals mmx_mask '0x3F00'
@@ -192,16 +233,21 @@ mwan3_count_one_bits()
 }
 
 get_uptime() {
-	local uptime=$(cat /proc/uptime)
-	echo "${uptime%%.*}"
+	local _tmp
+	readfile _tmp /proc/uptime
+	if [ $# -eq 0 ]; then
+		echo "${_tmp%%.*}"
+	else
+		export -n "$1=${_tmp%%.*}"
+	fi
 }
 
 get_online_time() {
 	local time_n time_u iface
-	iface="$1"
-	time_u="$(cat "$MWAN3TRACK_STATUS_DIR/${iface}/ONLINE" 2>/dev/null)"
+	iface="$2"
+	readfile time_u "$MWAN3TRACK_STATUS_DIR/${iface}/ONLINE" 2>/dev/null
 	[ -z "${time_u}" ] || [ "${time_u}" = "0" ] || {
-		time_n="$(get_uptime)"
-		echo $((time_n-time_u))
+		get_uptime time_n
+		export -n "$1=$((time_n-time_u))"
 	}
 }

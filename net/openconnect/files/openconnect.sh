@@ -16,6 +16,7 @@ append_args() {
 proto_openconnect_init_config() {
 	proto_config_add_string "server"
 	proto_config_add_int "port"
+	proto_config_add_string "uri"
 	proto_config_add_int "mtu"
 	proto_config_add_int "juniper"
 	proto_config_add_int "reconnect_timeout"
@@ -36,6 +37,7 @@ proto_openconnect_init_config() {
 	proto_config_add_string "csd_wrapper"
 	proto_config_add_string "proxy"
 	proto_config_add_array 'form_entry:regex("[^:]+:[^=]+=.*")'
+	proto_config_add_string "script"
 	no_device=1
 	available=1
 }
@@ -46,6 +48,7 @@ proto_openconnect_add_form_entry() {
 
 proto_openconnect_setup() {
 	local config="$1"
+	local tmpfile="/tmp/openconnect-server.$$.tmp"
 
 	json_get_vars \
 		authgroup \
@@ -64,28 +67,44 @@ proto_openconnect_setup() {
 		proxy \
 		reconnect_timeout \
 		server \
+		uri \
 		serverhash \
 		token_mode \
 		token_script \
 		token_secret \
 		usergroup \
 		username \
+		script \
 
 	ifname="vpn-$config"
 
 	logger -t openconnect "initializing..."
 
 	[ -n "$interface" ] && {
+		local trials=5
+
+		[ -n $uri ] && server=$(echo $uri | awk -F[/:] '{print $4}')
+
 		logger -t "openconnect" "adding host dependency for $server at $config"
-		for ip in $(resolveip -t 10 "$server"); do
-			logger -t "openconnect" "adding host dependency for $ip at $config"
-			proto_add_host_dependency "$config" "$ip" "$interface"
+		while ! resolveip -t 10 "$server" > "$tmpfile" && [ "$trials" -gt 0 ]; do
+			sleep 5
+			trials=$((trials - 1))
 		done
+
+		if [ -s "$tmpfile" ]; then
+			for ip in $(cat "$tmpfile"); do
+				logger -t "openconnect" "adding host dependency for $ip at $config"
+				proto_add_host_dependency "$config" "$ip" "$interface"
+			done
+		fi
+		rm -f "$tmpfile"
 	}
 
 	[ -n "$port" ] && port=":$port"
+	[ -z "$uri" ] && uri="$server$port"
 
-	append_args "$server$port" -i "$ifname" --non-inter --syslog --script /lib/netifd/vpnc-script
+	append_args "$uri" -i "$ifname" --non-inter --syslog
+	[ -n "$script" ] && append_args --script "$script"
 	[ "$pfs" = 1 ] && append_args --pfs
 	[ "$no_dtls" = 1 ] && append_args --no-dtls
 	[ -n "$mtu" ] && append_args --mtu "$mtu"

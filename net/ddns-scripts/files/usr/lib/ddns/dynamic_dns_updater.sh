@@ -23,7 +23,7 @@ Usage:
 
 Commands:
 start                Start SECTION or NETWORK or all
-stop                 Stop NETWORK or all
+stop                 Stop SECTION or NETWORK or all
 
 Parameters:
  -n NETWORK          Start/Stop sections in background monitoring NETWORK, force VERBOSE=0
@@ -79,7 +79,11 @@ case "$1" in
 		fi
 		;;
 	stop)
-		if [ -n "$INTERFACE" ]; then
+		if [ -n "$SECTION_ID" ]; then
+			stop_section_processes "$SECTION_ID"
+			exit 0
+		fi
+		if [ -n "$NETWORK" ]; then
 			stop_daemon_for_all_ddns_sections "$NETWORK"
 			exit 0
 		else
@@ -88,8 +92,8 @@ case "$1" in
 		fi
 		exit 1
 		;;
-	reload)
-		killall -1 dynamic_dns_updater.sh 2>/dev/null
+	kill)
+		killall dynamic_dns_updater.sh 2>/dev/null
 		exit $?
 		;;
 	*)	usage_err "unknown command - $1";;
@@ -98,6 +102,7 @@ esac
 # set file names
 PIDFILE="$ddns_rundir/$SECTION_ID.pid"	# Process ID file
 UPDFILE="$ddns_rundir/$SECTION_ID.update"	# last update successful send (system uptime)
+CHKFILE="$ddns_rundir/$SECTION_ID.nextcheck" # next check (system uptime + check interval)
 DATFILE="$ddns_rundir/$SECTION_ID.dat"	# save stdout data of WGet and other extern programs called
 ERRFILE="$ddns_rundir/$SECTION_ID.err"	# save stderr output of WGet and other extern programs called
 IPFILE="$ddns_rundir/$SECTION_ID.ip"	#
@@ -152,8 +157,9 @@ trap "trap_handler 15" 15	# SIGTERM	Termination
 # ip_script	full path and name of your script to detect current IP
 # ip_interface	physical interface to use for detecting
 #
-# check_interval	check for changes every  !!! checks below 10 minutes make no sense because the Internet
-# check_unit		'days' 'hours' 'minutes' !!! needs about 5-10 minutes to sync an IP-change for an DNS entry
+# check_interval	check for changes every
+# check_interval_min	check_interval minimum value (used to be check_interval's minimum value of 300 seconds)
+# check_unit		'days' 'hours' 'minutes'
 #
 # force_interval	force to send an update to your service if no change was detected
 # force_unit		'days' 'hours' 'minutes' !!! force_interval="0" runs this script once for use i.e. with cron
@@ -266,16 +272,16 @@ esac
 
 [ -n "$update_url" ] && {
 	# only check if update_url is given, update_scripts have to check themselves
-	[ -z "$domain" ] && $(echo "$update_url" | grep "\[DOMAIN\]" >/dev/null 2>&1) && \
-		write_log 14 "Service section not configured correctly! Missing 'domain'"
-	[ -z "$username" ] && $(echo "$update_url" | grep "\[USERNAME\]" >/dev/null 2>&1) && \
-		write_log 14 "Service section not configured correctly! Missing 'username'"
-	[ -z "$password" ] && $(echo "$update_url" | grep "\[PASSWORD\]" >/dev/null 2>&1) && \
-		write_log 14 "Service section not configured correctly! Missing 'password'"
-	[ -z "$param_enc" ] && $(echo "$update_url" | grep "\[PARAMENC\]" >/dev/null 2>&1) && \
-		write_log 14 "Service section not configured correctly! Missing 'param_enc'"
-	[ -z "$param_opt" ] && $(echo "$update_url" | grep "\[PARAMOPT\]" >/dev/null 2>&1) && \
-		write_log 14 "Service section not configured correctly! Missing 'param_opt'"
+	[ -z "$domain" ] && [ "${update_url##*'[DOMAIN]'}" != "$update_url" ] && \
+		write_log 14 "Service section missing 'domain'"
+	[ -z "$username" ] && [ "${update_url##*'[USERNAME]'}" != "$update_url" ] && \
+		write_log 14 "Service section missing 'username'"
+	[ -z "$password" ] && [ "${update_url##*'[PASSWORD]'}" != "$update_url" ] && \
+		write_log 14 "Service section missing 'password'"
+	[ -z "$param_enc" ] && [ "${update_url##*'[PARAMENC]'}" != "$update_url" ] && \
+		write_log 14 "Service section missing 'param_enc'"
+	[ -z "$param_opt" ] && [ "${update_url##*'[PARAMOPT]'}" != "$update_url" ] && \
+		write_log 14 "Service section missing 'param_opt'"
 }
 
 # verify ip_source 'script' if script is configured and executable
@@ -287,9 +293,10 @@ fi
 
 # compute update interval in seconds
 get_seconds CHECK_SECONDS ${check_interval:-10} ${check_unit:-"minutes"} # default 10 min
+get_seconds CHECK_SECONDS_MIN ${check_interval_min:-5} ${check_unit:-"minutes"}
 get_seconds FORCE_SECONDS ${force_interval:-72} ${force_unit:-"hours"}	 # default 3 days
 get_seconds RETRY_SECONDS ${retry_interval:-60} ${retry_unit:-"seconds"} # default 60 sec
-[ $CHECK_SECONDS -lt 300 ] && CHECK_SECONDS=300		# minimum 5 minutes
+[ $CHECK_SECONDS -lt 300 ] && CHECK_SECONDS=$CHECK_SECONDS_MIN		 # minimum 5 minutes
 [ $FORCE_SECONDS -gt 0 -a $FORCE_SECONDS -lt $CHECK_SECONDS ] && FORCE_SECONDS=$CHECK_SECONDS	# FORCE_SECONDS >= CHECK_SECONDS or 0
 write_log 7 "check interval: $CHECK_SECONDS seconds"
 write_log 7 "force interval: $FORCE_SECONDS seconds"
@@ -321,9 +328,6 @@ else
 	EPOCH_TIME="date -d @$EPOCH_TIME +'$ddns_dateformat'"
 	write_log 7 "last update: $(eval $EPOCH_TIME)"
 fi
-
-# verify DNS server
-[ -n "$dns_server" ] && verify_dns "$dns_server"
 
 # verify Proxy server and set environment
 [ -n "$proxy" ] && {
@@ -396,7 +400,10 @@ while : ; do
 
 	# now we wait for check interval before testing if update was recognized
 	[ $DRY_RUN -eq 0 ] && {
-		write_log 7 "Waiting $CHECK_SECONDS seconds (Check Interval)"
+		get_uptime NOW_TIME
+		echo $(($NOW_TIME + $CHECK_SECONDS)) > $CHKFILE   # save the next scheduled check time
+		NEXT_CHECK_TIME=$( date -d @$(( $(date +%s) + $CHECK_SECONDS )) +"$ddns_dateformat" )
+		write_log 7 "Waiting $CHECK_SECONDS seconds (Check Interval); Next check at $NEXT_CHECK_TIME"
 		sleep $CHECK_SECONDS &
 		PID_SLEEP=$!
 		wait $PID_SLEEP	# enable trap-handler

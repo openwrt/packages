@@ -9,16 +9,32 @@
 #   Space or comma separated list of features to activate
 #
 #   e.g. RUST_HOST_FEATURES:=enable-foo,with-bar
+#
+#
+# RUST_HOST_LOCKED - Assert that `Cargo.lock` will remain unchanged
+#                    (Enabled by default)
+#
+#   Disable it if you want to have up-to-date dependencies
+#
+#   e.g. RUST_HOST_LOCKED:=0
 
 ifeq ($(origin RUST_INCLUDE_DIR),undefined)
   RUST_INCLUDE_DIR:=$(dir $(lastword $(MAKEFILE_LIST)))
 endif
 include $(RUST_INCLUDE_DIR)/rust-values.mk
 
+RUST_HOST_LOCKED ?= 1
+
 CARGO_HOST_VARS= \
 	$(CARGO_HOST_CONFIG_VARS) \
 	CC=$(HOSTCC_NOCACHE) \
 	MAKEFLAGS="$(HOST_JOBS)"
+
+CARGO_HOST_ARGS=
+
+ifeq ($(strip $(RUST_HOST_LOCKED)),1)
+  CARGO_HOST_ARGS+= --locked
+endif
 
 # $(1) path to the package (optional)
 # $(2) additional arguments to cargo (optional)
@@ -28,8 +44,9 @@ define Host/Compile/Cargo
 		--profile $(CARGO_HOST_PROFILE) \
 		$(if $(RUST_HOST_FEATURES),--features "$(RUST_HOST_FEATURES)") \
 		--root $(HOST_INSTALL_DIR) \
-		--path "$(HOST_BUILD_DIR)/$(if $(strip $(1)),$(strip $(1)))" \
+		--path "$(HOST_BUILD_DIR)/$(if $(strip $(1)),$(strip $(1)),$(strip $(HOST_MAKE_PATH)))" \
 		$(if $(filter --jobserver%,$(HOST_JOBS)),,-j1) \
+		$(CARGO_HOST_ARGS) \
 		$(2)
 endef
 

@@ -1,0 +1,43 @@
+--- a/etc/nanomq.conf
++++ b/etc/nanomq.conf
+@@ -21,39 +21,13 @@ listeners.tcp {
+     bind = "0.0.0.0:1883"
+ }
+ 
+-# listeners.ssl {
+-# 	bind = "0.0.0.0:8883"
+-# 	keyfile = "/etc/certs/key.pem"
+-# 	certfile = "/etc/certs/cert.pem"
+-# 	cacertfile = "/etc/certs/cacert.pem"
+-# 	verify_peer = false
+-# 	fail_if_no_peer_cert = false
+-# }
+-
+ listeners.ws {
+     bind = "0.0.0.0:8083/mqtt"
+ }
+ 
+-http_server {
+-    port = 8081
+-    limit_conn = 2
+-    username = admin
+-    password = public
+-    auth_type = basic
+-    jwt {
+-        public.keyfile = "/etc/certs/jwt/jwtRS256.key.pub"
+-    }
+-}
+-
+ log {
+-    to = [file, console]
++    to = [console]
+     level = warn
+-    dir = "/tmp"
+-    file = "nanomq.log"
+-    rotation {
+-        size = 10MB
+-        count = 5
+-    }
+ }
+ 
+ auth {

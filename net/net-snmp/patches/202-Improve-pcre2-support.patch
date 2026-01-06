@@ -22,7 +22,7 @@ declarations occur before statements.
 -    ndx_match = pcre2_match_data_create(30, NULL);
 -    found_ndx = pcre2_get_ovector_pointer(ndx_match);
 +    pcre2_match_data *ndx_match = pcre2_match_data_create(30, NULL);
- #elif HAVE_PCRE_H
+ #elif defined(HAVE_PCRE_H)
      int found_ndx[30];
  #endif
 @@ -122,22 +119,20 @@ swrun_count_processes_by_regex( char *na
@@ -55,7 +55,7 @@ declarations occur before statements.
  #endif
 --- a/agent/mibgroup/if-mib/data_access/interface.c
 +++ b/agent/mibgroup/if-mib/data_access/interface.c
-@@ -844,12 +844,8 @@ int netsnmp_access_interface_max_reached
+@@ -828,12 +828,8 @@ int netsnmp_access_interface_max_reached
  int netsnmp_access_interface_include(const char *name)
  {
      netsnmp_include_if_list *if_ptr;
@@ -70,7 +70,7 @@ declarations occur before statements.
  #elif defined(HAVE_PCRE_H)
      int                      found_ndx[3];
  #endif
-@@ -867,8 +863,8 @@ int netsnmp_access_interface_include(con
+@@ -851,8 +847,8 @@ int netsnmp_access_interface_include(con
  
      for (if_ptr = include_list; if_ptr; if_ptr = if_ptr->next) {
  #if defined(HAVE_PCRE2_H)
@@ -81,7 +81,7 @@ declarations occur before statements.
                  pcre2_match_data_free(ndx_match);
                  return TRUE;
          }
-@@ -1000,11 +996,13 @@ _parse_include_if_config(const char *tok
+@@ -984,11 +980,13 @@ _parse_include_if_config(const char *tok
      netsnmp_include_if_list *if_ptr, *if_new;
      char                    *name, *st;
  #if defined(HAVE_PCRE2_H)
@@ -99,7 +99,7 @@ declarations occur before statements.
  #elif defined(HAVE_PCRE_H)
      const char              *pcre_error;
      int                     pcre_error_offset;
-@@ -1038,10 +1036,14 @@ _parse_include_if_config(const char *tok
+@@ -1022,10 +1020,14 @@ _parse_include_if_config(const char *tok
              goto err;
          }
  #if defined(HAVE_PCRE2_H)

@@ -1,7 +1,7 @@
 --- a/Makefile
 +++ b/Makefile
-@@ -72,7 +72,7 @@ endif
- CPPFLAGS += $(DEFS) $(INCLUDES)
+@@ -75,7 +75,7 @@ CPPFLAGS += $(DEFS) $(INCLUDES)
+ BASHCOMPDIR ?= $(shell $(PKG_CONFIG) --variable=completionsdir bash-completion 2>/dev/null || echo /etc/bash_completion.d)
  
  ##############################################################################
 -all: Makefile.depend whois mkpasswd pos
@@ -13,7 +13,7 @@
  	nice afl-fuzz -i ../afl_in -o ../afl_out -- ./whois
  
  ##############################################################################
--install: install-whois install-mkpasswd install-pos
+-install: install-whois install-mkpasswd install-pos install-bashcomp
 +install: install-whois
  
  install-whois: whois

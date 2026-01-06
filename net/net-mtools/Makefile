@@ -1,13 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=net-mtools
-PKG_VERSION:=2.3
+PKG_VERSION:=3.2
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=https://github.com/troglobit/mtools
-PKG_SOURCE_VERSION:=db665a4303c38cee908eba4dac50873c3f1d899c
-PKG_MIRROR_HASH:=687e3743e46c8ddd23f03168b4021ed08b1a858b2a6743db3b62cb3d4c3592a0
+PKG_SOURCE_VERSION:=262053773a43eb38cb708b9f0877ece0fe5b55d2
+PKG_MIRROR_HASH:=bf0d24919a0f9dd5f902a2cb3de133705e25c8d84e637e508a0d512d52c8ef9d
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -19,7 +19,7 @@ define Package/net-mtools
 endef
 
 define Package/net-mtools/description
-  The tools msend and mreceive can be particulary useful
+  The tools msend and mreceive can be particularly useful
   when debugging multicast setups.
 
   msend continuously sends UDP packets to the multicast

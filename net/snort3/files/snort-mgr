@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: GPL-2.0
 # shellcheck disable=SC2039,SC2155  # "local" not defined in POSIX sh
 
+set -o nounset
+
 PROG="$(command -v snort)"
 MAIN="/usr/share/snort/main.uc"
 CONF_DIR=$(uci -q get snort.snort.temp_dir || echo "/var/snort.d")
@@ -52,7 +54,7 @@ nft_rm_table() {
 
 nft_add_table() {
 	if [ "$(uci -q get snort.snort.method)" = "nfq" ]; then
-		local options
+		local options=''
 		$VERBOSE && options='-e'
 		print nftables | nft $options -f $STDIN
 		$VERBOSE && nft list table inet snort
@@ -73,7 +75,7 @@ setup() {
 teardown() {
 	# Merely cleans up after.
 	nft_rm_table
-	[ -e "$CONF" ] && rm "$CONF"
+	[ -e "$CONF" ] && rm "${CONF:?}"
 }
 
 resetup() {
@@ -110,18 +112,18 @@ check() {
 	local test_conf="${CONF_DIR}/test_conf.lua"
 	_SNORT_WITHOUT_RULES="$no_rules" print snort > "${test_conf}" || die "Errors during generation of snort config"
 	if $PROG -T $warn -c "${test_conf}" 2> $OUT ; then
-		rm "${test_conf}"
+		rm "${test_conf:?}"
 	else
 		die "Errors in snort config tests.  Examine ${test_conf} for issues"
 	fi
 
 	if [ "$(uci -q get snort.snort.method)" = "nfq" ]; then
-		local options
+		local options=''
 		local test_nft="${CONF_DIR}/test_conf.nft"
 		print nftables > "${test_nft}" || die "Errors during generation of nftables config"
 		$VERBOSE && options='-e'
 		if nft $options --check -f "${test_nft}" ; then
-			rm "${test_nft}"
+			rm "${test_nft:?}"
 		else
 			die "Errors in nftables config tests.  Examine ${test_nft} for issues"
 		fi
@@ -129,28 +131,38 @@ check() {
 
 }
 
+_date_range=''
+_operator=''
+_date=''
+
+_parse_date_range() {
+	local date_spec="$1"
+	case "$date_spec" in
+		('')    _operator='>' ; _date=''                   ;;
+		(-*)    _operator='<' ; _date="${date_spec:1}"     ;;
+		(=*)    _operator='~' ; _date="${date_spec:1}"     ;;
+		(+*)    _operator='>' ; _date="${date_spec:1}"     ;;
+		(today) _operator='>' ; _date=$(date +'%y/%m/%d-') ;;
+		(*)     die "Invalid date specification '${date_spec}', did you forget the +/- prefix?" ;;
+	esac
+	if [ -z "$_date" ]; then
+		_date_range=''
+	else
+		local op=$_operator
+		[ "$op" = "~" ] && op='contains'
+		_date_range=" where date $op '$_date'"
+	fi
+}
+
 _filter_by_date() {
 	# Grab all the alert_json files in the log directory, scan them
 	# for matching timestamps and return those lines that match.
+
 	local log_dir="$1"
-
-	local operator date
-	case "$DATE_SPEC" in
-		('')    operator='>' ; date=''                   ;;
-		(-*)    operator='<' ; date="${DATE_SPEC:1}"     ;;
-		(+*)    operator='>' ; date="${DATE_SPEC:1}"     ;;
-		(today) operator='>' ; date=$(date +'%y/%m/%d-') ;;
-		(*)     die "Invalid date specification '${DATE_SPEC}', did you forget the +/- prefix?" ;;
-	esac
-
-	# We need to create a single json array because 'jsonfilter -a' is
-	# severely broken.
-	awk '
-		BEGIN { print "[" }
-		{ print $0"," }
-		END { print "{}]" }
-	' "${log_dir}"/*alert_json.txt \
-	| jsonfilter -e '$[@.timestamp '${operator}' "'"${date}"'"]'
+	local operator="$2"
+	local date="$3"
+	cat "${log_dir}"/*alert_json.txt \
+	| jsonfilter -a -e '$[@.timestamp '${operator}' "'"${date}"'"]'
 }
 
 report() {
@@ -172,8 +184,9 @@ report() {
 	#-- Collect the inputs --
 	local msg src srcP dst dstP dir gid sid
 	local tmp=$(mktemp -t snort.rep.XXXXXX)
-	_filter_by_date "${log_dir}" | while read -r line; do
-		unset -v src dst srcP dstP
+	_parse_date_range "$DATE_SPEC"
+	_filter_by_date "${log_dir}" "${_operator}" "${_date}" | while read -r line; do
+		src='' && dst='' && srcP='' && dstP=''
 		eval "$(jsonfilter -s "$line" \
 			-e 'msg=$.msg' \
 			-e 'src=$.src_addr' \
@@ -196,7 +209,7 @@ report() {
 	[ "$NLINES" = 0 ] && output="cat" || output="head -n $NLINES"
 
 	local lines=$($SORT "$tmp" | uniq -c | $SORT -nr | $output)
-	rm "$tmp"
+	rm "${tmp:?}"
 	if [ -z "$lines" ]; then
 		echo -n "There were no incidents "
 		[ -z "$PATTERN" ] && echo "reported." || echo "matching pattern '$PATTERN'."
@@ -208,11 +221,14 @@ report() {
 	local mlen=$(echo "$lines" | awk -F'#' '{print $1}' | wc -L)
 	local slen=$(echo "$lines" | awk -F'#' '{print $2}' | wc -L)
 
-	echo "Events involving ${PATTERN:-all IPs} - $(date -Is)"
+	local match=''
+	[ -n "$PATTERN" ] && match=" involving '${PATTERN}'"
+	echo "Events${match}${_date_range} (run at $(date -Is))"
 	printf "%-*s %3s %5s %-3s %-*s %s\n" "$mlen"  "  Count Message" "gid" "sid" "Dir" "$slen" "Source" "Destination"
 	echo "$lines" | awk -F'#' '{printf "%-'"$mlen"'s %3d %5d %s %-'"$slen"'s %s\n", $1, $5, $6, $4, $2, $3}'
 
-	printf "%7d incidents shown of %d logged\n" "$n_incidents" "$n_total"
+	local pct=$(awk -v n=$n_incidents -v t=$n_total 'END{printf "%.2f", 100*n/t}' /dev/null)
+	printf "%7d incidents shown of %d logged (%s%%)\n" "$n_incidents" "$n_total" "$pct"
 
 	#-- Lookup rules and references, if requested. --
 	if $VERBOSE; then
@@ -254,7 +270,7 @@ report() {
 		echo 'Hosts by name:'
 		local IP
 		local peerdns=$(ifstatus wan | jsonfilter -e '$["dns-server"][0]')
-		echo "$lines" | awk -F'#' '{printf "%s\n%s\n", $2, $3}' | sed 's/(.*//' | sort -u \
+		echo "$lines" | awk -F'#' '{printf "%s\n%s\n", $2, $3}' | sed 's/(.*//' | $SORT -u \
 		| while read -r IP; do
 			[ -z "$IP" ] && continue
 			n=$(nslookup "$IP" | awk '/name = / {n=$NF} END{print n}')
@@ -286,7 +302,7 @@ status() {
 #-------------------------------------------------------------------------------
 
 usage() {
-	local msg="$1"
+	local msg="${1:-}"
 	[ -n "$msg" ] && printf "ERROR: %s\n\n" "$msg"
 
 	cat <<USAGE
@@ -314,12 +330,15 @@ Usage:
       pattern = A case-insensitive grep pattern used to filter output.
 
     The date specification for '-d' can be either literal 'today'
-    or a snort-formatted date prefixed by '-' or '+', meaning 'before'
-    and 'after', respectively.  Snort date reporting has the format
+    or a snort-formatted date prefixed by '-', '=' or '+', meaning 'before',
+    'on' and 'after', respectively.  Snort date reporting has the format
     'YY/MM/DD-hh:mm:ss.ssssss', and you can use any prefix as a date.
-    For example,
-      > snort-mgr --date-spec +23/12/20-09 report
-    will process all incidents from from 2023-12-20 at 0900 and later.
+
+    For example, to show incidents from 2023-12-20 at 0900 and later:
+      > snort-mgr report --date-spec +23/12/20-09
+
+    and to report all of the incidents between 1300-1400 on all dates:
+      > snort-mgr report --date-spec =-13:
 
 
   $0 update-rules [-t/--testing]
@@ -362,7 +381,7 @@ USAGE
 	exit 1
 }
 
-while [ -n "$1" ]; do
+while [ "${1:-}" ]; do
 	case "$1" in
 		-h|--help)
 			usage

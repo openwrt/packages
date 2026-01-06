@@ -1,18 +1,18 @@
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -192,7 +192,6 @@ endif()
- # libicu is highly recommended for RSCALE support
- #  libicu can be found at http://www.icu-project.org
- #  RSCALE info at https://tools.ietf.org/html/rfc7529
--find_package(ICU)
+@@ -211,7 +211,6 @@ if(NOT DEFINED ENV{ICU_ROOT} AND APPLE)
+   #Use the homebrew version. MacOS provided ICU doesn't provide development files
+   set(ICU_ROOT "/usr/local/opt/icu4c")
+ endif()
+-find_package(ICU COMPONENTS uc i18n data)
  set_package_properties(ICU PROPERTIES
    TYPE RECOMMENDED
    PURPOSE "For RSCALE (RFC7529) support"
-@@ -216,7 +215,6 @@ if(ICU_I18N_FOUND)
+@@ -253,7 +252,6 @@ if(NOT "$ENV{BerkeleyDB_ROOT_DIR}")
+     set(BerkeleyDB_ROOT_DIR "/usr/local/opt/berkeley-db")
+   endif()
  endif()
- 
- # compile in Berkeley DB support
--find_package(BDB)
- set_package_properties(BDB PROPERTIES
+-find_package(BerkeleyDB)
+ set_package_properties(BerkeleyDB PROPERTIES
    TYPE OPTIONAL
    PURPOSE "For Berkeley DB storage support"

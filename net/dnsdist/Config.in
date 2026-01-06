@@ -28,14 +28,6 @@ menu "Configuration"
 			"Enables DNS over HTTPS Support for dnsdist"
 		default y
 
-	config DNSDIST_DNS_OVER_HTTPS_OUTGOING
-	depends on DNSDIST_OPENSSL
-	depends on !DNSDIST_NOSSL
-		bool "Outgoing DNS over HTTPS Support"
-		help
-			"Enables Outgoing DNS over HTTPS Support for dnsdist"
-		default y
-
 	config DNSDIST_DNS_OVER_TLS
 	depends on !DNSDIST_NOSSL
 		bool "DNS over TLS Support"

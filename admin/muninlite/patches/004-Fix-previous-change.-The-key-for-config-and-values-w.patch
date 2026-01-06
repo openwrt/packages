@@ -1,0 +1,31 @@
+From c2b8d7315d9c9c466537ef60dcdb5bd6733ea809 Mon Sep 17 00:00:00 2001
+From: Daniel Alder <daald@users.noreply.github.com>
+Date: Thu, 14 Dec 2023 13:26:47 +0100
+Subject: [PATCH 4/5] Fix previous change. The key for config and values was
+ the mountpoint
+
+I accidently changed this to dev. This also works but breaks existing history
+---
+ plugins/df | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/plugins/df
++++ b/plugins/df
+@@ -6,7 +6,7 @@ graph_category disk
+ graph_info This graph shows disk usage on the machine."
+   df -PT | grep '^/' | grep -vwE "$DF_IGNORE_FILESYSTEM_REGEX" | while read dev type blocks used avail pct mp
+   do
+-    PNAME=$(clean_fieldname "$dev")
++    PNAME=$(clean_fieldname "$mp")
+     echo "$PNAME.label $mp"
+     echo "$PNAME.info $dev -> $mp"
+     echo "$PNAME.warning 92"
+@@ -16,7 +16,7 @@ graph_info This graph shows disk usage o
+ fetch_df() {
+   df -PT | grep '^/' | grep -vwE "$DF_IGNORE_FILESYSTEM_REGEX" | while read dev type blocks used avail pct mp
+   do
+-    PNAME=$(clean_fieldname "$dev")
++    PNAME=$(clean_fieldname "$mp")
+     echo "$PNAME.value" "${pct%\%}"
+   done
+ }

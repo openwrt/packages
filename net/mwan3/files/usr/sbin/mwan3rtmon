@@ -95,12 +95,22 @@ mwan3_rtmon_route_handle()
 	fi
 	route_line=$(echo "$route_line" | sed -ne "$MWAN3_ROUTE_LINE_EXP")
 
+	if [ "$action" = "del" ]; then
+		if mwan3_get_routes | grep -qxF "$route_line"; then
+			LOG debug "deleted but route still exists - $route_line"
+			return
+		fi
+	fi
+
 	handle_route() {
 		local error
 		local iface=$1
 		tbl=$($IP route list table $tid 2>/dev/null)$'\n'
 
-		if [ -n "$iface" ] && [ "$(mwan3_get_mwan3track_status $iface)" != "active" ]; then
+		local status
+		mwan3_get_mwan3track_status status $iface
+
+		if [ -n "$iface" ] && [ "$status" != "active" ]; then
 			LOG debug "interface $iface is disabled - skipping '$route_line'";
 			return
 		fi

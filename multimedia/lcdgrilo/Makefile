@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lcdgrilo
-PKG_VERSION:=0.0.12
+PKG_VERSION:=0.0.13
 PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.flyn.org/projects/lcdgrilo
-PKG_HASH:=2e5028fff7a90b1a3688c466f048e978a52d9a4da20a382546d5e5bd42e2fc6a
+PKG_HASH:=844ecd404986f1a998bd0992341a329913ab981a1fd94172537ca9aa25769b15
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -35,7 +35,7 @@ define Package/lcdgrilo
   URL:=https://www.flyn.org/projects/lcdgrilo/
 endef
 
-define Package/lcdgrilo/decription
+define Package/lcdgrilo/description
 	A simple Grilo-based audio player meant to run on a Raspberry Pi with a PiFace CAD
 endef
 

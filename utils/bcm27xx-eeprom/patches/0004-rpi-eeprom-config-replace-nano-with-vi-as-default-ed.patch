@@ -24,7 +24,7 @@ Signed-off-by: Álvaro Fernández Rojas <noltari@gmail.com>
      if 'EDITOR' in os.environ:
          editor = os.environ['EDITOR']
  
-@@ -484,7 +484,7 @@ Operating modes:
+@@ -515,7 +515,7 @@ Operating modes:
  
     To cancel the pending update run 'sudo rpi-eeprom-update -r'
  

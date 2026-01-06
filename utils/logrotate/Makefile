@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=logrotate
-PKG_VERSION:=3.17.0
-PKG_RELEASE:=2
+PKG_VERSION:=3.22.0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://github.com/logrotate/logrotate/releases/download/$(PKG_VERSION)
-PKG_HASH:=58cc2178ff57faa3c0490181cce041345aeca6cff18dba1c5cd1398bf1c19294
+PKG_HASH:=42b4080ee99c9fb6a7d12d8e787637d057a635194e25971997eebbe8d5e57618
 
 PKG_MAINTAINER:=Christian Beier <cb@shoutrlabs.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
-PKG_CPE_ID:=cpe:/a:gentoo:logrotate
+PKG_CPE_ID:=cpe:/a:logrotate_project:logrotate
 
 include $(INCLUDE_DIR)/package.mk
 

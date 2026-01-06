@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gummiboot
 PKG_VERSION:=48.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://dev.alpinelinux.org/archive/gummiboot/
@@ -44,14 +44,14 @@ CONFIGURE_ARGS += \
 	--disable-manpages
 
 define Build/Compile
-	+$(MAKE_VARS) EFI_CFLAGS="-I$(TOOLCHAIN_DIR)/include $(TARGET_CFLAGS)" \
+	+$(MAKE_VARS) EFI_CFLAGS="$(patsubst %,-I%,$(TOOLCHAIN_INC_DIRS)) $(TARGET_CFLAGS)" \
 	$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR)/$(MAKE_PATH) \
 		$(MAKE_FLAGS) \
 		$(1);
 endef
 
 define Build/Install
-	$(MAKE_VARS) EFI_CFLAGS="-I$(TOOLCHAIN_DIR)/include $(TARGET_CFLAGS)" \
+	$(MAKE_VARS) EFI_CFLAGS="$(patsubst %,-I%,$(TOOLCHAIN_INC_DIRS)) $(TARGET_CFLAGS)" \
 	$(MAKE) -C $(PKG_BUILD_DIR)/$(MAKE_PATH) \
 		$(MAKE_INSTALL_FLAGS) install
 endef

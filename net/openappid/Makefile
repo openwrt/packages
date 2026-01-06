@@ -6,13 +6,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openappid
-PKG_VERSION:=20220617
-URL_CODE:=26425
+PKG_VERSION:=20230609
+URL_CODE:=33380
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.snort.org/downloads/openappid/$(URL_CODE)?
-PKG_HASH:=8513877ce2264bb22119d911c2cf11f73735c866e2ca0d061c35eef6740d51f9
+PKG_HASH:=3046c5af1dd81a104f13d8e895226ef64bca7fa358238fb5f29c659081eaee2a
 
 PKG_MAINTAINER:=John Audia <thereadgraysky@proton.me>
 PKG_LICENSE:=GPL-2.0-only
@@ -42,11 +42,9 @@ define Build/Compile
 endef
 
 define Package/openappid/install
-	$(INSTALL_DIR) $(1)/usr/lib/openappid/custom/{libs,lua,port}
 	$(INSTALL_DIR) $(1)/usr/lib/openappid/odp
 	$(CP) $(PKG_BUILD_DIR)/lua $(1)/usr/lib/openappid/odp
 	$(CP) $(PKG_BUILD_DIR)/libs $(1)/usr/lib/openappid/odp
-	$(CP) $(PKG_BUILD_DIR)/port $(1)/usr/lib/openappid/odp
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/appMapping.data $(1)/usr/lib/openappid/odp
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/LICENSE $(1)/usr/lib/openappid/odp
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/README $(1)/usr/lib/openappid/odp

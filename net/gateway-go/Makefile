@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gateway-go
-PKG_VERSION:=0.2.0
+PKG_VERSION:=2.0.10
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/OpenIoTHub/gateway-go/tar.gz/v${PKG_VERSION}?
-PKG_HASH:=7d04d923ae39c2c9ffb4c5de2a3f335798ff167992a6d89d9538d0bf3867b6f8
+PKG_HASH:=95de453e76a22ae69a1bc9c32d6930278980c98decbe7a511fd9870bcdf90d2d
 
 PKG_MAINTAINER:=Yu Fang <newfarry@126.com>
 PKG_LICENSE:=MIT
@@ -20,9 +20,9 @@ PKG_BUILD_FLAGS:=no-mips16
 GO_PKG:=github.com/OpenIoTHub/gateway-go
 
 GO_PKG_LDFLAGS_X:=\
-	main.version=v$(PKG_VERSION) \
-	main.commit=$(PKG_VERSION)  \
-	main.builtBy=openwrt \
+	github.com/OpenIoTHub/gateway-go/info.Version=v$(PKG_VERSION) \
+	github.com/OpenIoTHub/gateway-go/info.Commit=$(PKG_VERSION)  \
+	github.com/OpenIoTHub/gateway-go/info.BuiltBy=openwrt \
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/golang/golang-package.mk

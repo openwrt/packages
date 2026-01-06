@@ -1,0 +1,33 @@
+if PACKAGE_srt
+
+comment "Encryption support"
+
+choice
+	prompt "Selected Encryption library"
+	default SRT_OPENSSL
+
+	config SRT_OPENSSL
+		bool "OpenSSL"
+
+	config SRT_MBEDTLS
+		bool "mbed TLS"
+
+	config SRT_GNUTLS
+		bool "GNUTLS"
+
+	config SRT_NOENCRYPTION
+		bool "No encryption support"
+
+endchoice
+
+comment "Options"
+
+config SRT_MONOTONIC_CLOCK
+	bool "Monotonic clock"
+	default y
+
+config SRT_BONDING
+	bool "Bonding"
+	default n
+
+endif

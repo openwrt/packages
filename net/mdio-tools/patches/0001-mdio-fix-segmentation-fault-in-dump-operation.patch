@@ -1,0 +1,34 @@
+From d7e314e45c112198d15220333b869604478a2e49 Mon Sep 17 00:00:00 2001
+From: Aleksander Jan Bajkowski <olek2@wp.pl>
+Date: Sun, 28 Sep 2025 23:31:00 +0200
+Subject: [PATCH] mdio: fix segmentation fault in dump operation
+
+Return an ENOMEM error when the buffer is too small to
+perform the operation.
+
+Before:
+$ mdio mt7530-0 0x05:31 dump 0x0+512
+Segmentation fault
+
+After:
+$ mdio mt7530-0 0x05:31 dump 0x0+512
+ERROR: Dump operation failed (-12)
+
+Fixes: 882488711ca0 ("mdio: Add common dump operation to read ranges of registers")
+Signed-off-by: Aleksander Jan Bajkowski <olek2@wp.pl>
+---
+ src/mdio/mdio.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+--- a/src/mdio/mdio.c
++++ b/src/mdio/mdio.c
+@@ -613,6 +613,9 @@ int mdio_xfer_timeout(const char *bus, s
+ 	struct nlmsghdr *nlh;
+ 	int err;
+ 
++	if (prog->len * sizeof(*prog->insns) > len)
++		return -ENOMEM;
++
+ 	nlh = msg_init(MDIO_GENL_XFER, NLM_F_REQUEST | NLM_F_ACK);
+ 	if (!nlh)
+ 		return -ENOMEM;

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lcdproc
 PKG_VERSION:=0.5.9
-PKG_RELEASE:=8
+PKG_RELEASE:=9
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/lcdproc/lcdproc/releases/download/v$(PKG_VERSION)/
@@ -132,6 +132,7 @@ MAKE_FLAGS += \
         CFLAGS="$(TARGET_CFLAGS)" \
         LDFLAGS="$(TARGET_LDFLAGS)"
 
+TARGET_CFLAGS += -D__GNU_LIBRARY__
 
 define Package/lcdproc-clients/install
 	$(INSTALL_DIR) $(1)/usr/bin

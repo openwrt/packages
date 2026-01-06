@@ -249,7 +249,10 @@ start_instance() {
 	append_params "$s" logfile debug
 
 	SERVICE_PID_FILE="/var/run/tinc.$s.pid"
-	service_start $BIN -c "$TMP_TINC/$s" $ARGS --pidfile="$SERVICE_PID_FILE"
+	# consequences of option -n "%s"
+	# tinc will display this warning Both netname and configuration directory given, using the latter...
+	# BUT the exported variable NETNAME will be set with the right value when run tinc-up script
+	service_start $BIN -c "$TMP_TINC/$s" -n "$s" $ARGS --pidfile="$SERVICE_PID_FILE"
 }
 
 stop_instance() {

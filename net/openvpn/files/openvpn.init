@@ -155,17 +155,24 @@ openvpn_add_instance() {
 		--syslog "openvpn($name)" \
 		--status "/var/run/openvpn.$name.status" \
 		--cd "$dir" \
-		--config "$conf" \
-		--up "/usr/libexec/openvpn-hotplug up $name" \
-		--down "/usr/libexec/openvpn-hotplug down $name" \
-		--route-up "/usr/libexec/openvpn-hotplug route-up $name" \
-		--route-pre-down "/usr/libexec/openvpn-hotplug route-pre-down $name" \
-		${client:+--ipchange "/usr/libexec/openvpn-hotplug ipchange $name"} \
-		${up:+--setenv user_up "$up"} \
-		${down:+--setenv user_down "$down"} \
-		${route_up:+--setenv user_route_up "$route_up"} \
-		${route_pre_down:+--setenv user_route_pre_down "$route_pre_down"} \
-		${client:+${ipchange:+--setenv user_ipchange "$ipchange"}} \
+		--config "$conf"
+	# external scripts can only be called on script-security 2 or higher
+	if [ "${security:-2}" -lt 2 ]; then
+		logger -t "openvpn(${name})" "not adding hotplug scripts due to script-security ${security:-2}"
+	else
+		procd_append_param command \
+			--up "/usr/libexec/openvpn-hotplug up $name" \
+			--down "/usr/libexec/openvpn-hotplug down $name" \
+			--route-up "/usr/libexec/openvpn-hotplug route-up $name" \
+			--route-pre-down "/usr/libexec/openvpn-hotplug route-pre-down $name" \
+			${client:+--ipchange "/usr/libexec/openvpn-hotplug ipchange $name"} \
+			${up:+--setenv user_up "$up"} \
+			${down:+--setenv user_down "$down"} \
+			${route_up:+--setenv user_route_up "$route_up"} \
+			${route_pre_down:+--setenv user_route_pre_down "$route_pre_down"} \
+			${client:+${ipchange:+--setenv user_ipchange "$ipchange"}}
+	fi
+	procd_append_param command \
 		--script-security "${security:-2}" \
 		$(openvpn_get_dev "$name" "$conf") \
 		$(openvpn_get_credentials "$name" "$conf")
@@ -281,7 +288,7 @@ start_service() {
 	if [ -n "$instance" ]; then
 		if [ "$instance_found" -gt 0 ]; then
 			start_uci_instance "$instance"
-		else
+		elif [ -f "${PATH_INSTANCE_DIR}/${instance}.conf" ]; then
 			start_path_instance "$instance"
 		fi
 	else
@@ -299,4 +306,3 @@ start_service() {
 service_triggers() {
 	procd_add_reload_trigger openvpn
 }
-

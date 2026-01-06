@@ -1,0 +1,76 @@
+From 61795c19742a28af946647c7c3cea6ba0f6e5e61 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Bj=C3=B8rn=20Mork?= <bjorn@mork.no>
+Date: Thu, 21 Sep 2023 15:39:31 +0200
+Subject: [PATCH] libipmiconsole: set minimum stacksize to avoid SEGFAULT with
+ musl
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+libipmiconsole SEGFAULTs with musl because the default stacksize
+is too small.
+
+This fix is inspired by
+
+  mail/sendmail/patches/102-pthreads-stack-size.patch
+
+having the following description:
+
+  "This patch increases the stack size for pthreads from 80 KB, the default
+   stack size for musl libc, to 2 MB. The default stack size for glibc is 8 MB.
+
+   OpenDKIM, an application that depends on libmilter, segfaults if the stack
+   size for pthreads is left unchanged at the musl default value of 80 KB.
+   Apparently, OpenDKIM allocates blocks of 64 KB multiple times, which causes
+   libmilter and therefore OpenDKIM to crash:
+   https://git.alpinelinux.org/cgit/aports/commit/?id=95724d1bd53ae87f72e6388cb7323dbd8f84be9d
+
+   This patch follows the patch suggested by an Alpine Linux user in bug report
+   above. Also, a bug report has been filed upstream:
+   https://sourceforge.net/p/opendkim/bugs/258/
+  "
+
+Signed-off-by: Bjørn Mork <bjorn@mork.no>
+---
+ libipmiconsole/ipmiconsole_engine.c | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+--- a/libipmiconsole/ipmiconsole_engine.c
++++ b/libipmiconsole/ipmiconsole_engine.c
+@@ -126,6 +126,8 @@ struct _ipmiconsole_poll_data {
+ 
+ #define IPMICONSOLE_PIPE_BUFLEN 1024
+ 
++#define IPMICONSOLE_MIN_STACKSIZE 2*1024*1024
++
+ static int
+ _ipmiconsole_garbage_collector_create (void)
+ {
+@@ -149,6 +151,13 @@ _ipmiconsole_garbage_collector_create (v
+       goto cleanup;
+     }
+ 
++  if ((perr = pthread_attr_setstacksize(&attr, IPMICONSOLE_MIN_STACKSIZE)))
++    {
++      IPMICONSOLE_DEBUG (("pthread_attr_setstacksize: %s", strerror (perr)));
++      errno = perr;
++      goto cleanup;
++    }
++
+   if ((perr = pthread_create (&thread, &attr, ipmiconsole_garbage_collector, NULL)))
+     {
+       IPMICONSOLE_DEBUG (("pthread_create: %s", strerror (perr)));
+@@ -1280,6 +1289,13 @@ ipmiconsole_engine_thread_create (void)
+     }
+   *index = console_engine_thread_count;
+ 
++  if ((perr = pthread_attr_setstacksize(&attr, IPMICONSOLE_MIN_STACKSIZE)))
++    {
++      IPMICONSOLE_DEBUG (("pthread_attr_setstacksize: %s", strerror (perr)));
++      errno = perr;
++      goto cleanup;
++    }
++
+   if ((perr = pthread_create (&thread, &attr, _ipmiconsole_engine, index)))
+     {
+       IPMICONSOLE_DEBUG (("pthread_create: %s", strerror (perr)));

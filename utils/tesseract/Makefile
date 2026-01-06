@@ -7,16 +7,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tesseract
-PKG_VERSION:=5.3.3
+PKG_VERSION:=5.4.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/tesseract-ocr/tesseract/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=dc4329f85f41191b2d813b71b528ba6047745813474e583ccce8795ff2ff5681
+PKG_HASH:=c4bc2a81c12a472f445b7c2fb4705a08bd643ef467f51ec84f0e148bd368051b
 
 PKG_MAINTAINER:=Valentin Kivachuk <vk18496@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:tesseract_project:tesseract
 
 CMAKE_BINARY_SUBDIR:=openwrt-build
 
@@ -38,6 +39,7 @@ CMAKE_OPTIONS += \
 	-DAUTO_OPTIMIZE=OFF \
 	-DBUILD_SHARED_LIBS=ON \
 	-DBUILD_TRAINING_TOOLS=OFF \
+	-DHAVE_NEON=$(if $(or $(findstring aarch64,$(CONFIG_ARCH)),$(findstring neon,$(CONFIG_CPU_TYPE))),TRUE,FALSE) \
 	-DDISABLE_CURL=ON
 
 define Build/InstallDev

@@ -8,27 +8,61 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=erlang
-PKG_VERSION:=26.2.1
+PKG_VERSION:=28.0.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=otp_src_$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:= https://github.com/erlang/otp/releases/download/OTP-$(PKG_VERSION)/
-PKG_HASH:=80d66bafbae409481a4e1badcb4a6275b07a8e9af82980c08d7a8add483232a9
+PKG_SOURCE_URL:=https://github.com/erlang/otp/releases/download/OTP-$(PKG_VERSION)
+PKG_HASH:=0cdf3b44e327439ea6677e61e06f28a0f82ea080af2dcbd665bc5a945b167012
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE.txt
-PKG_MAINTAINER:=Arnaud Sautaux <arnaud.sautaux@infoteam.ch>
+PKG_MAINTAINER:=
 PKG_CPE_ID:=cpe:/a:erlang:erlang
 
-PKG_BUILD_DEPENDS:=erlang/host openssl
+PKG_BUILD_DEPENDS:=erlang/host openssl unixodbc/host
 PKG_BUILD_FLAGS:=no-mips16
 PKG_ASLR_PIE:=0
 
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/otp_src_$(PKG_VERSION)
 PKG_BUILD_DIR:=$(BUILD_DIR)/otp_src_$(PKG_VERSION)
 
+HOST_BUILD_PARALLEL:=1
+PKG_BUILD_PARALLEL:=1
+
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
+
+define Package/erlang/config
+config ERLANG_JIT
+    bool
+    depends on (x86_64||aarch64)
+    default y
+
+config ERLANG_SCTP
+    bool "SCTP protocol support"
+    default n
+endef
+
+## Host
+HOST_CONFIGURE_ARGS += \
+	--without-wx \
+	--with-ssl="$(STAGING_DIR_HOST)" \
+	--without-javac
+
+## Target
+CONFIGURE_ARGS += \
+	--with-odbc \
+	--without-javac \
+	--enable-shared-zlib \
+	--enable-dynamic-ssl-lib \
+	--$(if $(CONFIG_ERLANG_JIT),enable,disable)-jit \
+	--$(if $(CONFIG_ERLANG_SCTP),enable,disable)-sctp
+
+CONFIGURE_VARS += \
+	SHLIB_LD="$(TARGET_CC)" \
+	TARGET_ARCH="$(TARGET_ARCH)" \
+	erl_xcomp_sysroot="$(STAGING_DIR)"
 
 define Package/erlang/Default
   SUBMENU:=Erlang
@@ -39,292 +73,300 @@ define Package/erlang/Default
 endef
 
 define Package/erlang/Default/description
- Erlang/OTP is a general-purpose programming language and runtime
- environment. Erlang has built-in support for concurrency, distribution
- and fault tolerance.
+ Erlang/OTP is a general-purpose programming language and runtime environment.
 endef
 
 define Package/erlang
 $(call Package/erlang/Default)
-  DEPENDS+= +libncurses +librt +zlib +libstdcpp
-  PROVIDES:= erlang-erts=14.2.1 erlang-kernel=9.2 erlang-sasl=4.2.1 erlang-stdlib=5.2
+  DEPENDS+= +libncurses +librt +zlib +ERLANG_SCTP:libsctp +ERLANG_JIT:libstdcpp
+  PROVIDES:= erlang-erts erlang-kernel erlang-stdlib
 endef
 
 define Package/erlang/description
 $(call Package/erlang/Default/description)
- .
- This package contains the runtime implementation and a minimal set of
- modules (erts, kernel, sasl & stdlib).
+ This package contains the runtime implementation and a minimal set of modules
+ (erts, kernel & stdlib).
 endef
-
 
 define Package/erlang-asn1
 $(call Package/erlang/Default)
   TITLE:=Abstract Syntax Notation One (ASN.1) support
-  VERSION:=5.2.1
-  DEPENDS+= +erlang +erlang-syntax-tools
+  DEPENDS+= +erlang
 endef
 
 define Package/erlang-asn1/description
 $(call Package/erlang/Default/description)
- .
- This Erlang/OTP package provides Abstract Syntax Notation One (ASN.1)
- support.
+ This package provides Abstract Syntax Notation One (ASN.1) support.
 endef
-
 
 define Package/erlang-compiler
 $(call Package/erlang/Default)
   TITLE:=Byte code compiler
-  VERSION:=8.4.1
   DEPENDS+= +erlang
 endef
 
 define Package/erlang-compiler/description
 $(call Package/erlang/Default/description)
- .
- This Erlang/OTP package provides a byte code compiler for Erlang which
- produces highly compact code.
+ This package provides a byte code compiler for Erlang which produces highly
+ compact code.
 endef
-
 
 define Package/erlang-crypto
 $(call Package/erlang/Default)
   TITLE:=Cryptography support
-  VERSION:=5.4
   DEPENDS+= +erlang +libopenssl
 endef
 
 define Package/erlang-crypto/description
 $(call Package/erlang/Default/description)
- .
- This Erlang/OTP package provides functions for computation of message
- digests, and encryption and decryption functions.
+ This package provides functions for computation of message digests,
+ and encryption and decryption functions.
 endef
 
-
-define Package/erlang-inets
+define Package/erlang-diameter
 $(call Package/erlang/Default)
-  TITLE:=Internet clients and servers
-  VERSION:=9.1
+  TITLE:=Diameter protocol
   DEPENDS+= +erlang
 endef
 
-define Package/erlang-inets/description
+define Package/erlang-diameter/description
 $(call Package/erlang/Default/description)
- .
- This Erlang/OTP package provides a container for Internet clients and
- servers. Currently a FTP client, a HTTP client and server, and a tftp
- client and server have been incorporated in Inets.
+ This package implements Diameter protocol as defined by RFC 6733.
 endef
 
-
-define Package/erlang-mnesia
+define Package/erlang-eldap
 $(call Package/erlang/Default)
-  TITLE:=Distributed database
-  VERSION:=4.23
-  DEPENDS+= +erlang
-endef
-
-define Package/erlang-mnesia/description
-$(call Package/erlang/Default/description)
- .
- This Erlang/OTP package provides a distributed DataBase Management
- System (DBMS), appropriate for telecommunications applications and
- other Erlang applications which require continuous operation and
- exhibit soft real-time properties.
-endef
-
-
-define Package/erlang-runtime-tools
-$(call Package/erlang/Default)
-  TITLE:=Low-profile debugging/tracing tools
-  VERSION:=2.0.1
-  DEPENDS+= +erlang
-endef
-
-define Package/erlang-runtime-tools/description
-$(call Package/erlang/Default/description)
- .
- This Erlang/OTP package provides low footprint tracing/debugging tools
- suitable for inclusion in a production system.
-endef
-
-
-define Package/erlang-snmp
-$(call Package/erlang/Default)
-  TITLE:=Simple Network Management Protocol (SNMP) support
-  VERSION:=5.15
+  TITLE:=Erlang LDAP Client
   DEPENDS+= +erlang +erlang-asn1
 endef
 
-define Package/erlang-snmp/description
+define Package/erlang-eldap/description
 $(call Package/erlang/Default/description)
- .
- This Erlang/OTP package provides Simple Network Management Protocol
- (SNMP) support including a MIB compiler and tools for creating SNMP
- agents.
+ This package provides client api to the Lightweight Directory Access Protocol
+ (LDAP).
 endef
-
-
-define Package/erlang-public-key
-$(call Package/erlang/Default)
-  TITLE:=Public Key support
-  VERSION:=1.15
-  DEPENDS+= +erlang +erlang-crypto +erlang-asn1
-endef
-
-define Package/erlang-public-key/description
-$(call Package/erlang/Default/description)
- .
- This Erlang/OTP package provides functions to handle public-key infrastructure.
-endef
-
-
-define Package/erlang-ssh
-$(call Package/erlang/Default)
-  TITLE:=Secure Shell (SSH) support
-  VERSION:=5.1.1
-  DEPENDS+= +erlang +erlang-crypto
-endef
-
-define Package/erlang-ssh/description
-$(call Package/erlang/Default/description)
- .
- This Erlang/OTP package provides an implementation of the Secure Shell
- protocol, with SSH & SFTP support.
-endef
-
-
-define Package/erlang-ssl
-$(call Package/erlang/Default)
-  TITLE:=Secure Sockets Layer (SSL) support
-  VERSION:=11.1
-  DEPENDS+= +erlang +erlang-crypto
-endef
-
-define Package/erlang-ssl/description
-$(call Package/erlang/Default/description)
- .
- This Erlang/OTP package provides support for secure communication over
- sockets.
-endef
-
-
-define Package/erlang-syntax-tools
-$(call Package/erlang/Default)
-  TITLE:=Abstract Erlang syntax trees handling support
-  VERSION:=3.1
-  DEPENDS+= +erlang
-endef
-
-define Package/erlang-syntax-tools/description
-$(call Package/erlang/Default/description)
- .
- This Erlang/OTP package provides support for handling abstract Erlang
- syntax trees.
-endef
-
-
-define Package/erlang-tools
-$(call Package/erlang/Default)
-  TITLE:=Erlang tools support
-  VERSION:=3.6
-  DEPENDS+= +erlang
-endef
-
-define Package/erlang-tools/description
-$(call Package/erlang/Default/description)
- .
- This Erlang/OTP package provides support for misc tools.
-endef
-
-
-define Package/erlang-reltool
-$(call Package/erlang/Default)
-  TITLE:=Erlang reltool support
-  VERSION:=1.0
-  DEPENDS+= +erlang
-endef
-
-define Package/erlang-reltool/description
-$(call Package/erlang/Default/description)
- .
- This Erlang/OTP package provides support for release management.
-endef
-
 
 define Package/erlang-erl-interface
 $(call Package/erlang/Default)
   TITLE:=Erlang erl_interface support
-  VERSION:=5.5
   DEPENDS+= +erlang
 endef
 
 define Package/erlang-erl-interface/description
 $(call Package/erlang/Default/description)
- .
- This Erlang/OTP package provides support for erlang interoperability with other languages.
+ This package provides support for Erlang interoperability with other languages.
 endef
 
-define Package/erlang-os_mon
+define Package/erlang-ftp
 $(call Package/erlang/Default)
-  TITLE:=Erlang OS Monitoring Application
-  VERSION:=2.9.1
+  TITLE:=Erlang FTP Client
+  DEPENDS+= +erlang +erlang-runtime-tools
+endef
+
+define Package/erlang-ftp/description
+$(call Package/erlang/Default/description)
+ This package implements File Transfer Protocol client.
+endef
+
+define Package/erlang-inets
+$(call Package/erlang/Default)
+  TITLE:=Internet clients and servers
+  DEPENDS+= +erlang +erlang-public-key
+endef
+
+define Package/erlang-inets/description
+$(call Package/erlang/Default/description)
+ This package provides an HTTP client and server.
+endef
+
+define Package/erlang-mnesia
+$(call Package/erlang/Default)
+  TITLE:=Distributed database
   DEPENDS+= +erlang
 endef
 
-define Package/erlang-os_mon/description
+define Package/erlang-mnesia/description
 $(call Package/erlang/Default/description)
- .
- This Erlang/OTP package provides the following services:
+ This package provides a distributed DataBase Management System (DBMS),
+ appropriate for telecommunications applications and other Erlang applications
+ which require continuous operation and exhibit soft real-time properties.
+endef
+
+define Package/erlang-odbc
+$(call Package/erlang/Default)
+  TITLE:=Erlang ODBC application
+  DEPENDS+= +erlang +libodbc
+endef
+
+define Package/erlang-odbc/description
+$(call Package/erlang/Default/description)
+ This package provides an Erlang interface to communicate with relational
+ SQL-databases.
+endef
+
+define Package/erlang-os-mon
+$(call Package/erlang/Default)
+  TITLE:=OS Monitoring Application
+  DEPENDS+= +erlang +erlang-sasl
+endef
+
+define Package/erlang-os-mon/description
+$(call Package/erlang/Default/description)
+ This package provides the following services:
   cpu_sup CPU load and utilization supervision
-  disksup Disk supervision
   memsup Memory supervision
+endef
+
+define Package/erlang-parsetools
+$(call Package/erlang/Default)
+  TITLE:=A set of parsing and lexical analysis tools
+  DEPENDS+= +erlang
+endef
+
+define Package/erlang-parsetools/description
+$(call Package/erlang/Default/description)
+ This package includes the following tools:
+  yecc, LALR-1 Parser Generator.
+  leex, Lexical analyzer generator for Erlang.
+endef
+
+define Package/erlang-public-key
+$(call Package/erlang/Default)
+  TITLE:=Public Key support
+  DEPENDS+= +erlang +erlang-asn1
+endef
+
+define Package/erlang-public-key/description
+$(call Package/erlang/Default/description)
+ This package provides functions to handle public-key infrastructure.
+endef
+
+define Package/erlang-reltool
+$(call Package/erlang/Default)
+  TITLE:=Erlang reltool support
+  DEPENDS+= +erlang +erlang-tools +erlang-sasl
+endef
+
+define Package/erlang-reltool/description
+$(call Package/erlang/Default/description)
+ This package provides support for release management.
+endef
+
+define Package/erlang-runtime-tools
+$(call Package/erlang/Default)
+  TITLE:=Low-profile debugging/tracing tools
+  DEPENDS+= +erlang +erlang-mnesia
+endef
+
+define Package/erlang-runtime-tools/description
+$(call Package/erlang/Default/description)
+ This package provides low footprint tracing/debugging tools suitable
+ for inclusion in a production system.
+endef
+
+define Package/erlang-sasl
+$(call Package/erlang/Default)
+  TITLE:=The System Architecture Support Libraries
+  DEPENDS+= +erlang
+endef
+
+define Package/erlang-sasl/description
+$(call Package/erlang/Default/description)
+ The SASL application provides support for:
+  Error logging.
+  Alarm handling.
+  Release handling.
+  Report browsing.
+endef
+
+define Package/erlang-snmp
+$(call Package/erlang/Default)
+  TITLE:=Simple Network Management Protocol (SNMP) support
+  DEPENDS+= +erlang +erlang-asn1 +erlang-runtime-tools
+endef
+
+define Package/erlang-snmp/description
+$(call Package/erlang/Default/description)
+ This package provides Simple Network Management Protocol (SNMP) support
+ including a MIB compiler and tools for creating SNMP agents.
+endef
+
+define Package/erlang-ssh
+$(call Package/erlang/Default)
+  TITLE:=Secure Shell (SSH) support
+  DEPENDS+= +erlang +erlang-public-key +erlang-runtime-tools
+endef
+
+define Package/erlang-ssh/description
+$(call Package/erlang/Default/description)
+ This package provides an implementation of the Secure Shell protocol,
+ with SSH & SFTP support.
+endef
+
+define Package/erlang-ssl
+$(call Package/erlang/Default)
+  TITLE:=Secure Sockets Layer (SSL) support
+  DEPENDS+= +erlang +erlang-crypto +erlang-inets +erlang-runtime-tools
+endef
+
+define Package/erlang-ssl/description
+$(call Package/erlang/Default/description)
+ This package provides support for secure communication over sockets.
+endef
+
+define Package/erlang-syntax-tools
+$(call Package/erlang/Default)
+  TITLE:=Abstract Erlang syntax trees handling support
+  DEPENDS+= +erlang +erlang-compiler
+endef
+
+define Package/erlang-syntax-tools/description
+$(call Package/erlang/Default/description)
+ This package provides support for handling abstract Erlang syntax trees.
+endef
+
+define Package/erlang-tftp
+$(call Package/erlang/Default)
+  TITLE:=Trivial FTP application
+  DEPENDS+= +erlang
+endef
+
+define Package/erlang-tftp/description
+$(call Package/erlang/Default/description)
+ This package implements the following IETF standards:
+  RFC 1350, The TFTP Protocol (revision 2).
+  RFC 2347, TFTP Option Extension.
+  RFC 2348, TFTP Blocksize Option.
+  RFC 2349, TFTP Timeout Interval and Transfer Size Options.
+endef
+
+define Package/erlang-tools
+$(call Package/erlang/Default)
+  TITLE:=Erlang tools support
+  DEPENDS+= +erlang +erlang-runtime-tools +erlang-compiler
+endef
+
+define Package/erlang-tools/description
+$(call Package/erlang/Default/description)
+ This package provides support for misc tools.
 endef
 
 define Package/erlang-xmerl
 $(call Package/erlang/Default)
-  TITLE:=Erlang XML export
-  VERSION:=1.3.34
+  TITLE:=XML 1.0 support
   DEPENDS+= +erlang
 endef
 
 define Package/erlang-xmerl/description
 $(call Package/erlang/Default/description)
- .
- This Erlang/OTP package provides functions for exporting XML data to an external format
+ This package provides functions for exporting XML data to an external format.
 endef
-
-# Host
-
-HOST_CONFIGURE_ARGS += \
-	--with-ssl="$(STAGING_DIR_HOST)" \
-	--without-javac
-
-# Target
-
-CONFIGURE_ARGS += \
-	--without-javac \
-	--enable-dynamic-ssl-lib
-
-CONFIGURE_VARS += \
-	SHLIB_LD="$(TARGET_CC)" \
-	TARGET_ARCH="$(TARGET_ARCH)" \
-	ac_cv_func_mmap_fixed_mapped=yes \
-	ac_cv_path_WX_CONFIG_PATH=no \
-	erl_xcomp_getaddrinfo=no \
-	erl_xcomp_sysroot="$(STAGING_DIR)"
-
-EXTRA_CFLAGS+=-D_GNU_SOURCE
-EXTRA_LDFLAGS+=-lz
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
-		noboot
-	$(MAKE) -C $(PKG_BUILD_DIR) \
+		MAKEFLAGS=$(PKG_JOBS) \
 		INSTALL_PREFIX="$(PKG_INSTALL_DIR)" \
-		install
+		noboot install
 endef
 
 define Package/erlang/install
@@ -333,7 +375,7 @@ define Package/erlang/install
 		$(CP) $(PKG_INSTALL_DIR)/usr/bin/$$$$f $(1)/usr/bin/ ; \
 	done
 	$(INSTALL_DIR) $(1)/usr/lib/erlang/bin
-	for f in erl erlc escript run_erl start start.boot start.script start_clean.boot start_erl start_sasl.boot no_dot_erlang.boot to_erl; do \
+	for f in epmd erl erlc escript run_erl start start.boot start.script start_clean.boot start_erl start_sasl.boot no_dot_erlang.boot to_erl; do \
 		$(CP) $(PKG_INSTALL_DIR)/usr/lib/erlang/bin/$$$$f $(1)/usr/lib/erlang/bin/ ; \
 	done
 	$(INSTALL_DIR) $(1)/usr/lib/erlang/lib
@@ -385,16 +427,23 @@ $(eval $(call BuildPackage,erlang))
 $(eval $(call BuildModule,asn1,asn1))
 $(eval $(call BuildModule,compiler,compiler))
 $(eval $(call BuildModule,crypto,crypto))
+$(eval $(call BuildModule,diameter,diameter))
+$(eval $(call BuildModule,eldap,eldap))
+$(eval $(call BuildModule,erl-interface,erl_interface))
+$(eval $(call BuildModule,ftp,ftp))
 $(eval $(call BuildModule,inets,inets))
 $(eval $(call BuildModule,mnesia,mnesia))
-$(eval $(call BuildModule,runtime-tools,runtime_tools))
-$(eval $(call BuildModule,snmp,snmp))
+$(eval $(call BuildModule,odbc,odbc))
+$(eval $(call BuildModule,os-mon,os-mon))
+$(eval $(call BuildModule,parsetools,parsetools))
 $(eval $(call BuildModule,public-key,public_key))
+$(eval $(call BuildModule,reltool,reltool))
+$(eval $(call BuildModule,runtime-tools,runtime_tools))
+$(eval $(call BuildModule,sasl,sasl))
+$(eval $(call BuildModule,snmp,snmp))
 $(eval $(call BuildModule,ssh,ssh))
 $(eval $(call BuildModule,ssl,ssl))
 $(eval $(call BuildModule,syntax-tools,syntax_tools))
+$(eval $(call BuildModule,tftp,tftp))
 $(eval $(call BuildModule,tools,tools))
-$(eval $(call BuildModule,reltool,reltool))
-$(eval $(call BuildModule,erl-interface,erl_interface))
-$(eval $(call BuildModule,os_mon,os_mon))
 $(eval $(call BuildModule,xmerl,xmerl))

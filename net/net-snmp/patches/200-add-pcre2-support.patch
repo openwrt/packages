@@ -22,7 +22,7 @@ Subject: [PATCH] add pcre2 support
  #include "swrun.h"
  #include "swrun_private.h"
  
--#if HAVE_PCRE_H
+-#ifdef HAVE_PCRE_H
 +#if defined(HAVE_PCRE2_H)
 +#define PCRE2_CODE_UNIT_WIDTH 8
 +#include <pcre2.h>
@@ -34,7 +34,7 @@ Subject: [PATCH] add pcre2 support
  #endif /* NETSNMP_FEATURE_REMOVE_SWRUN_MAX_PROCESSES */
  
  #ifndef NETSNMP_FEATURE_REMOVE_SWRUN_COUNT_PROCESSES_BY_REGEX
--#if HAVE_PCRE_H
+-#ifdef HAVE_PCRE_H
 +#if defined(HAVE_PCRE2_H) || defined(HAVE_PCRE_H)
  int
  swrun_count_processes_by_regex( char *name, netsnmp_regex_ptr regexp )
@@ -47,7 +47,7 @@ Subject: [PATCH] add pcre2 support
 +    int *found_ndx;
 +    ndx_match = pcre2_match_data_create(30, NULL);
 +    found_ndx = pcre2_get_ovector_pointer(ndx_match);
-+#elif HAVE_PCRE_H
++#elif defined(HAVE_PCRE_H)
      int found_ndx[30];
 +#endif
      int found;
@@ -91,20 +91,20 @@ Subject: [PATCH] add pcre2 support
  #include "if-mib/ifTable/ifTable.h"
  #include "if-mib/data_access/interface.h"
  #include "interface_private.h"
--#if HAVE_PCRE_H
+-#if defined(HAVE_PCRE_H)
 +
 +#if defined(HAVE_PCRE2_H)
 +#define PCRE2_CODE_UNIT_WIDTH 8
 +#include <pcre2.h>
 +#elif defined(HAVE_PCRE_H)
  #include <pcre.h>
- #elif HAVE_REGEX_H
+ #elif defined(HAVE_REGEX_H)
  #include <sys/types.h>
-@@ -840,7 +844,13 @@ int netsnmp_access_interface_max_reached
+@@ -824,7 +828,13 @@ int netsnmp_access_interface_max_reached
  int netsnmp_access_interface_include(const char *name)
  {
      netsnmp_include_if_list *if_ptr;
--#if HAVE_PCRE_H
+-#ifdef HAVE_PCRE_H
 +#if defined(HAVE_PCRE2_H) 
 +    //pcre_exec->pcre2_match
 +    //ovector->pcre2_match_data
@@ -115,11 +115,11 @@ Subject: [PATCH] add pcre2 support
      int                      found_ndx[3];
  #endif
  
-@@ -856,7 +866,13 @@ int netsnmp_access_interface_include(con
+@@ -840,7 +850,13 @@ int netsnmp_access_interface_include(con
  
  
      for (if_ptr = include_list; if_ptr; if_ptr = if_ptr->next) {
--#if HAVE_PCRE_H
+-#if defined(HAVE_PCRE_H)
 +#if defined(HAVE_PCRE2_H)
 +        if (pcre2_match(if_ptr->regex_ptr, name, strlen(name), 0, 0, 
 +                                ndx_match, NULL) >= 0)  {
@@ -130,7 +130,7 @@ Subject: [PATCH] add pcre2 support
          if (pcre_exec(if_ptr->regex_ptr, NULL, name, strlen(name), 0, 0,
                        found_ndx, 3) >= 0)
              return TRUE;
-@@ -869,6 +885,9 @@ int netsnmp_access_interface_include(con
+@@ -853,6 +869,9 @@ int netsnmp_access_interface_include(con
  #endif
      }
  
@@ -140,11 +140,11 @@ Subject: [PATCH] add pcre2 support
      return FALSE;
  }
  
-@@ -980,7 +999,13 @@ _parse_include_if_config(const char *tok
+@@ -964,7 +983,13 @@ _parse_include_if_config(const char *tok
  {
      netsnmp_include_if_list *if_ptr, *if_new;
      char                    *name, *st;
--#if HAVE_PCRE_H
+-#if defined(HAVE_PCRE_H)
 +#if defined(HAVE_PCRE2_H)
 +    //we can only get the message upon calling pcre2_error_message.
 +    // so an additional variable is required.
@@ -154,12 +154,12 @@ Subject: [PATCH] add pcre2 support
 +#elif defined(HAVE_PCRE_H)
      const char              *pcre_error;
      int                     pcre_error_offset;
- #elif HAVE_REGEX_H
-@@ -1012,7 +1037,15 @@ _parse_include_if_config(const char *tok
+ #elif defined(HAVE_REGEX_H)
+@@ -996,7 +1021,15 @@ _parse_include_if_config(const char *tok
              config_perror("Out of memory");
              goto err;
          }
--#if HAVE_PCRE_H
+-#if defined(HAVE_PCRE_H)
 +#if defined(HAVE_PCRE2_H)
 +        if_new->regex_ptr = pcre2_compile(if_new->name, PCRE2_ZERO_TERMINATED, 0,
 +                         &pcre2_err_code, &pcre2_error_offset, NULL);
@@ -172,7 +172,7 @@ Subject: [PATCH] add pcre2 support
          if_new->regex_ptr = pcre_compile(if_new->name, 0,  &pcre_error,
                                           &pcre_error_offset, NULL);
          if (!if_new->regex_ptr) {
-@@ -1048,7 +1081,7 @@ _parse_include_if_config(const char *tok
+@@ -1032,7 +1065,7 @@ _parse_include_if_config(const char *tok
  
  err:
      if (if_new) {
@@ -181,14 +181,14 @@ Subject: [PATCH] add pcre2 support
          free(if_new->regex_ptr);
  #endif
          free(if_new->name);
-@@ -1063,7 +1096,7 @@ _free_include_if_config(void)
+@@ -1047,7 +1080,7 @@ _free_include_if_config(void)
  
      while (if_ptr) {
          if_next = if_ptr->next;
--#if HAVE_PCRE_H
+-#if defined(HAVE_PCRE_H)
 +#if defined(HAVE_PCRE2_H) || defined(HAVE_PCRE_H)
          free(if_ptr->regex_ptr);
- #elif HAVE_REGEX_H
+ #elif defined(HAVE_REGEX_H)
          regfree(if_ptr->regex_ptr);
 --- a/agent/mibgroup/struct.h
 +++ b/agent/mibgroup/struct.h
@@ -196,7 +196,7 @@ Subject: [PATCH] add pcre2 support
  
  struct myproc {
      char            name[STRMAX];
--#if HAVE_PCRE_H
+-#ifdef HAVE_PCRE_H
 +#if defined(HAVE_PCRE2_H) || defined(HAVE_PCRE_H)
      netsnmp_regex_ptr regexp;
  #endif
@@ -207,11 +207,11 @@ Subject: [PATCH] add pcre2 support
  #  include <time.h>
  # endif
  #endif
--#if HAVE_PCRE_H
+-#ifdef HAVE_PCRE_H
 +#ifdef HAVE_PCRE2_H
 +#define PCRE2_CODE_UNIT_WIDTH 8
 +#include <pcre2.h>
-+#elif HAVE_PCRE_H
++#elif defined(HAVE_PCRE_H)
  #include <pcre.h>
  #endif
  
@@ -228,7 +228,7 @@ Subject: [PATCH] add pcre2 support
      for (ptmp = procwatch; ptmp != NULL;) {
          ptmp2 = ptmp;
          ptmp = ptmp->next;
--#if HAVE_PCRE_H
+-#ifdef HAVE_PCRE_H
 +#if defined(HAVE_PCRE2_H) || defined(HAVE_PCRE_H)
          free(ptmp2->regexp.regex_ptr);
  #endif
@@ -237,7 +237,7 @@ Subject: [PATCH] add pcre2 support
      if (*procp == NULL)
          return;                 /* memory alloc error */
      numprocs++;
--#if HAVE_PCRE_H
+-#ifdef HAVE_PCRE_H
 +#if defined(HAVE_PCRE2_H) || defined(HAVE_PCRE_H)
      (*procp)->regexp.regex_ptr = NULL;
  #endif
@@ -246,7 +246,7 @@ Subject: [PATCH] add pcre2 support
          cptr = skip_not_white(cptr);
          if ((cptr = skip_white(cptr))) {
              (*procp)->min = atoi(cptr);
--#if HAVE_PCRE_H
+-#ifdef HAVE_PCRE_H
 +#if defined(HAVE_PCRE2_H) || defined(HAVE_PCRE_H)
              cptr = skip_not_white(cptr);
              if ((cptr = skip_white(cptr))) {
@@ -262,7 +262,7 @@ Subject: [PATCH] add pcre2 support
 +                if ((*procp)->regexp.regex_ptr == NULL) {
 +                    config_perror(pcre2_error_msg);
 +                }
-+#elif HAVE_PCRE_H
++#elif defined(HAVE_PCRE_H)
                  const char *pcre_error;
                  int pcre_error_offset;
  
@@ -289,14 +289,14 @@ Subject: [PATCH] add pcre2 support
    return swrun_count_processes_by_name( procname );
  }
  
--#if HAVE_PCRE_H
+-#ifdef HAVE_PCRE_H
 +#if defined(HAVE_PCRE2_H) || defined(HAVE_PCRE_H)
  netsnmp_feature_require(swrun_count_processes_by_regex);
  int
  sh_count_procs_by_regex(char *procname, netsnmp_regex_ptr regexp)
 --- a/agent/mibgroup/ucd-snmp/proc.h
 +++ b/agent/mibgroup/ucd-snmp/proc.h
-@@ -12,7 +12,7 @@ config_require(util_funcs)
+@@ -12,7 +12,7 @@ config_require(util_funcs);
       extern WriteMethod fixProcError;
       int sh_count_myprocs(struct myproc *);
       int             sh_count_procs(char *);
@@ -340,10 +340,10 @@ Subject: [PATCH] add pcre2 support
  if test "x$with_pcre" != "xno"; then
    AC_CHECK_HEADER([pcre.h], [
        AC_DEFINE([HAVE_PCRE_H], [1], [Define to 1 if you have <pcre.h>.])
-@@ -121,3 +147,4 @@ NETSNMP_SEARCH_LIBS([pcre_exec], [pcre],
-   ],,, LAGENTLIBS)
- AC_SUBST(LAGENTLIBS)
- AC_SUBST(LMIBLIBS)
+@@ -123,3 +149,4 @@ if test "x$with_pcre" != "xno"; then
+   AC_SUBST(LAGENTLIBS)
+   AC_SUBST(LMIBLIBS)
+ fi
 +fi
 --- a/configure.d/config_project_with_enable
 +++ b/configure.d/config_project_with_enable
@@ -364,24 +364,24 @@ Subject: [PATCH] add pcre2 support
  extern          "C" {
  #endif
  
--#if HAVE_PCRE_H
+-#if defined(HAVE_PCRE_H)
 +#if defined(HAVE_PCRE2_H)
 +#define PCRE2_CODE_UNIT_WIDTH 8
 +#include <pcre2.h>
 +#elif defined(HAVE_PCRE_H)
  #include <pcre.h>
- #elif HAVE_REGEX_H
+ #elif defined(HAVE_REGEX_H)
  #include <regex.h>
 @@ -211,7 +214,9 @@ typedef struct _conf_if_list {
      typedef netsnmp_conf_if_list conf_if_list; /* backwards compat */
  
  typedef struct _include_if_list {
--#if HAVE_PCRE_H
+-#if defined(HAVE_PCRE_H)
 +#if defined(HAVE_PCRE2_H)
 +    pcre2_code              *regex_ptr;
 +#elif defined(HAVE_PCRE_H)
      pcre                    *regex_ptr;
- #elif HAVE_REGEX_H
+ #elif defined(HAVE_REGEX_H)
      regex_t                 *regex_ptr;
 --- a/include/net-snmp/data_access/swrun.h
 +++ b/include/net-snmp/data_access/swrun.h

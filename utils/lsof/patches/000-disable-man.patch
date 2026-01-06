@@ -1,6 +1,6 @@
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -208,13 +208,8 @@ EXTRA_DIST += 00.README.FIRST 00CREDITS
+@@ -212,11 +212,6 @@ EXTRA_DIST += 00.README.FIRST 00CREDITS
  # Testing
  EXTRA_DIST += tests/00README tests/TestDB tests/CkTestDB tests/Makefile tests/LsofTest.h check.bash
  
@@ -12,7 +12,3 @@
  # Fix distcheck error
  clean-local:
  	rm -rf lsof.man
- distclean-local:
--	rm -rf lockf_owner.h lockf.h
-\ No newline at end of file
-+	rm -rf lockf_owner.h lockf.h

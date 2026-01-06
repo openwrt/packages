@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2016 OpenWrt.org
+# Copyright (C) 2010-2025 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=grep
-PKG_VERSION:=3.11
+PKG_VERSION:=3.12
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/grep
-PKG_HASH:=1db2aedde89d0dea42b16d9528f894c8d15dae4e190b59aecc78f5a951276eab
+PKG_HASH:=2649b27c0e90e632eadcd757be06c6e9a4f48d941de51e7c0f83ff76408a07b9
 
 PKG_MAINTAINER:=Julen Landa Alustiza <julen@zokormazo.info>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -23,9 +23,10 @@ PKG_CPE_ID:=cpe:/a:gnu:grep
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
-MAKE_FLAGS += SHELL="/bin/sh"
-
 include $(INCLUDE_DIR)/package.mk
+
+MAKE_FLAGS += SHELL="/bin/sh"
+TARGET_CFLAGS += -std=c17
 
 define Package/grep
   SECTION:=utils

@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libcap-ng
-PKG_VERSION:=0.8.3
+PKG_VERSION:=0.8.4
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://people.redhat.com/sgrubb/libcap-ng
-PKG_HASH:=bed6f6848e22bb2f83b5f764b2aef0ed393054e803a8e3a8711cb2a39e6b492d
+PKG_HASH:=68581d3b38e7553cb6f6ddf7813b1fc99e52856f21421f7b477ce5abd2605a8a
 
 PKG_MAINTAINER:=Lucian CRISTIAN <lucian.cristian@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later LGPL-2.1-or-later
@@ -26,6 +26,7 @@ PKG_FIXUP:=autoreconf
 PKG_BUILD_FLAGS:=lto
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 
 define Package/libcap-ng/Default
   TITLE:=POSIX capabilities library
@@ -65,6 +66,15 @@ CONFIGURE_ARGS += \
     --without-python \
     --without-python3
 
+HOST_CONFIGURE_VARS += \
+    ac_cv_prog_swig_found=no
+
+HOST_CONFIGURE_ARGS += \
+    --without-python \
+    --without-python3
+
+HOST_PKG_BUILD_FLAGS:=lto
+
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/*.h $(1)/usr/include/
@@ -89,3 +99,4 @@ endef
 
 $(eval $(call BuildPackage,libcap-ng))
 $(eval $(call BuildPackage,libcap-ng-bin))
+$(eval $(call HostBuild))

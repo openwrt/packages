@@ -1,0 +1,164 @@
+From e79f81f5cd626ad77ec64de4325f6645cf253c5e Mon Sep 17 00:00:00 2001
+From: Nate Karstens <nate.karstens@garmin.com>
+Date: Thu, 13 Jul 2017 09:00:00 -0500
+Subject: [PATCH 5/8] Use list for changed interfaces
+
+Uses a linked list to store the index of changed network interfaces
+instead of a bitfield. This allows for network interfaces with an
+index greater than 31 (an index of 36 was seen on Android).
+
+Upstream-Status: Submitted [dts@apple.com]
+
+Signed-off-by: Nate Karstens <nate.karstens@garmin.com>
+Signed-off-by: Alex Kiernan <alex.kiernan@gmail.com>
+---
+ mDNSPosix/mDNSPosix.c | 58 ++++++++++++++++++++++++++++++++-----------
+ 1 file changed, 43 insertions(+), 15 deletions(-)
+
+--- a/mDNSPosix/mDNSPosix.c
++++ b/mDNSPosix/mDNSPosix.c
+@@ -74,6 +74,14 @@ struct IfChangeRec
+ };
+ typedef struct IfChangeRec IfChangeRec;
+ 
++// Used to build a list of network interface indices
++struct NetworkInterfaceIndex
++{
++    int if_index;
++    struct NetworkInterfaceIndex *Next;
++};
++typedef struct NetworkInterfaceIndex NetworkInterfaceIndex;
++
+ // Note that static data is initialized to zero in (modern) C.
+ static PosixEventSource *gEventSources;             // linked list of PosixEventSource's
+ static sigset_t gEventSignalSet;                // Signals which event loop listens for
+@@ -1621,6 +1629,23 @@ mDNSlocal mStatus OpenIfNotifySocket(int
+     return err;
+ }
+ 
++mDNSlocal void AddInterfaceIndexToList(GenLinkedList *list, int if_index)
++{
++    NetworkInterfaceIndex *item;
++
++    for (item = (NetworkInterfaceIndex*)list->Head; item != NULL; item = item->Next)
++    {
++        if (if_index == item->if_index) return;
++    }
++
++    item = mdns_malloc(sizeof *item);
++    if (item == NULL) return;
++
++    item->if_index = if_index;
++    item->Next = NULL;
++    AddToTail(list, item);
++}
++
+ #if MDNS_DEBUGMSGS
+ mDNSlocal void      PrintNetLinkMsg(const struct nlmsghdr *pNLMsg)
+ {
+@@ -1648,14 +1673,13 @@ mDNSlocal void      PrintNetLinkMsg(cons
+ }
+ #endif
+ 
+-mDNSlocal mDNSu32       ProcessRoutingNotification(int sd)
++mDNSlocal void          ProcessRoutingNotification(int sd, GenLinkedList *changedInterfaces)
+ // Read through the messages on sd and if any indicate that any interface records should
+ // be torn down and rebuilt, return affected indices as a bitmask. Otherwise return 0.
+ {
+     ssize_t readCount;
+     char buff[4096];
+     struct nlmsghdr         *pNLMsg = (struct nlmsghdr*) buff;
+-    mDNSu32 result = 0;
+ 
+     // The structure here is more complex than it really ought to be because,
+     // unfortunately, there's no good way to size a buffer in advance large
+@@ -1691,9 +1715,9 @@ mDNSlocal mDNSu32       ProcessRoutingNo
+ 
+         // Process the NetLink message
+         if (pNLMsg->nlmsg_type == RTM_GETLINK || pNLMsg->nlmsg_type == RTM_NEWLINK)
+-            result |= 1 << ((struct ifinfomsg*) NLMSG_DATA(pNLMsg))->ifi_index;
++            AddInterfaceIndexToList(changedInterfaces, ((struct ifinfomsg*) NLMSG_DATA(pNLMsg))->ifi_index);
+         else if (pNLMsg->nlmsg_type == RTM_DELADDR || pNLMsg->nlmsg_type == RTM_NEWADDR)
+-            result |= 1 << ((struct ifaddrmsg*) NLMSG_DATA(pNLMsg))->ifa_index;
++            AddInterfaceIndexToList(changedInterfaces, ((struct ifaddrmsg*) NLMSG_DATA(pNLMsg))->ifa_index);
+ 
+         // Advance pNLMsg to the next message in the buffer
+         if ((pNLMsg->nlmsg_flags & NLM_F_MULTI) != 0 && pNLMsg->nlmsg_type != NLMSG_DONE)
+@@ -1704,8 +1728,6 @@ mDNSlocal mDNSu32       ProcessRoutingNo
+         else
+             break;  // all done!
+     }
+-
+-    return result;
+ }
+ 
+ #else // USES_NETLINK
+@@ -1737,14 +1759,13 @@ mDNSlocal void      PrintRoutingSocketMs
+ }
+ #endif
+ 
+-mDNSlocal mDNSu32       ProcessRoutingNotification(int sd)
++mDNSlocal void          ProcessRoutingNotification(int sd, GenLinkedList *changedInterfaces)
+ // Read through the messages on sd and if any indicate that any interface records should
+ // be torn down and rebuilt, return affected indices as a bitmask. Otherwise return 0.
+ {
+     ssize_t readCount;
+     char buff[4096];
+     struct ifa_msghdr       *pRSMsg = (struct ifa_msghdr*) buff;
+-    mDNSu32 result = 0;
+ 
+     readCount = read(sd, buff, sizeof buff);
+     if (readCount < (ssize_t) sizeof(struct ifa_msghdr))
+@@ -1759,12 +1780,10 @@ mDNSlocal mDNSu32       ProcessRoutingNo
+         pRSMsg->ifam_type == RTM_IFINFO)
+     {
+         if (pRSMsg->ifam_type == RTM_IFINFO)
+-            result |= 1 << ((struct if_msghdr*) pRSMsg)->ifm_index;
++            AddInterfaceIndexToList(changedInterfaces, ((struct if_msghdr*) pRSMsg)->ifm_index);
+         else
+-            result |= 1 << pRSMsg->ifam_index;
++            AddInterfaceIndexToList(changedInterfaces, pRSMsg->ifam_index);
+     }
+-
+-    return result;
+ }
+ 
+ #endif // USES_NETLINK
+@@ -1774,7 +1793,8 @@ mDNSlocal void InterfaceChangeCallback(i
+ {
+     IfChangeRec     *pChgRec = (IfChangeRec*) context;
+     fd_set readFDs;
+-    mDNSu32 changedInterfaces = 0;
++    GenLinkedList changedInterfaces;
++    NetworkInterfaceIndex *changedInterface;
+     struct timeval zeroTimeout = { 0, 0 };
+ 
+     (void)fd; // Unused
+@@ -1782,17 +1802,25 @@ mDNSlocal void InterfaceChangeCallback(i
+     FD_ZERO(&readFDs);
+     FD_SET(pChgRec->NotifySD, &readFDs);
+ 
++    InitLinkedList(&changedInterfaces, offsetof(NetworkInterfaceIndex, Next));
++
+     do
+     {
+-        changedInterfaces |= ProcessRoutingNotification(pChgRec->NotifySD);
++        ProcessRoutingNotification(pChgRec->NotifySD, &changedInterfaces);
+     }
+     while (0 < select(pChgRec->NotifySD + 1, &readFDs, (fd_set*) NULL, (fd_set*) NULL, &zeroTimeout));
+ 
+     // Currently we rebuild the entire interface list whenever any interface change is
+     // detected. If this ever proves to be a performance issue in a multi-homed
+     // configuration, more care should be paid to changedInterfaces.
+-    if (changedInterfaces)
++    if (changedInterfaces.Head != NULL)
+         mDNSPlatformPosixRefreshInterfaceList(pChgRec->mDNS);
++
++    while ((changedInterface = (NetworkInterfaceIndex*)changedInterfaces.Head) != NULL)
++    {
++        RemoveFromList(&changedInterfaces, changedInterface);
++        mdns_free(changedInterface);
++    }
+ }
+ 
+ // Register with either a Routing Socket or RtNetLink to listen for interface changes.

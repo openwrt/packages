@@ -4,13 +4,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openthread-br
-PKG_SOURCE_DATE:=2023-08-01
-PKG_SOURCE_VERSION:=1738d8cd8b42106c2ef1262fbbac2f06beab83ba
+PKG_SOURCE_DATE:=2025-06-12
+PKG_SOURCE_VERSION:=2f3c799c7463c8f674754e65c53f78bc0bbcbd58
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=https://github.com/openthread/ot-br-posix.git
-PKG_MIRROR_HASH:=7eb740d1a0663aae7969940f8a8b06879524dd62ae7842f46a160cae54ee8417
+PKG_MIRROR_HASH:=fae1c7c88102f88bac32f8ee25e044b9a8781eef6b9acef39388e1e11a44a195
 
 PKG_MAINTAINER:=Stijn Tintel <stijn@linux-ipv6.be>
 PKG_LICENSE:=BSD-3-Clause
@@ -32,8 +32,10 @@ define Package/openthread-br
   SECTION:=net
   TITLE:=OpenThread Border Router
   DEPENDS:= \
+	+kmod-tun \
 	+libblobmsg-json \
 	+libjson-c \
+	+cJSON \
 	+libncurses \
 	+libnetfilter-queue \
 	+libreadline \
@@ -53,26 +55,23 @@ define Package/openthread-br/conffiles
 endef
 
 CMAKE_OPTIONS += \
-	-DOT_BORDER_ROUTER:BOOL=ON \
-	-DOT_BORDER_ROUTING_NAT64:BOOL=ON \
-	-DOT_CHANNEL_MANAGER:BOOL=ON \
-	-DOT_CHANNEL_MONITOR:BOOL=ON \
-	-DOT_COMMISSIONER:BOOL=ON \
-	-DOT_ECDSA:BOOL=ON \
-	-DOT_FIREWALL:BOOL=OFF \
-	-DOT_SERVICE:BOOL=ON \
-	-DOT_SRP_CLIENT:BOOL=ON \
-	-DOT_SRP_SERVER:BOOL=ON \
-	-DOTBR_BACKBONE_ROUTER:BOOL=ON \
-	-DOTBR_BORDER_ROUTING:BOOL=ON \
-	-DOTBR_DNSSD_DISCOVERY_PROXY:BOOL=ON \
-	-DOTBR_DUA_ROUTING:BOOL=ON \
+	-DOT_BORDER_ROUTER=ON \
+	-DOT_CHANNEL_MANAGER=ON \
+	-DOT_CHANNEL_MONITOR=ON \
+	-DOT_FIREWALL=OFF \
+	-DOT_NAT64_BORDER_ROUTING=OFF \
+	-DOT_TARGET_OPENWRT=ON \
+	-DOTBR_BACKBONE_ROUTER=ON \
+	-DOTBR_BORDER_ROUTING=ON \
+	-DOTBR_DNSSD_DISCOVERY_PROXY=ON \
+	-DOTBR_DUA_ROUTING=ON \
 	-DOTBR_MDNS=mDNSResponder \
-	-DOTBR_OPENWRT:BOOL=ON \
-	-DOTBR_REST:BOOL=ON \
-	-DOTBR_SRP_ADVERTISING_PROXY:BOOL=ON \
-	-DOTBR_SRP_SERVER_AUTO_ENABLE:BOOL=ON \
-	-DOTBR_TREL:BOOL=ON
+	-DOTBR_NAT64=OFF \
+	-DOTBR_OPENWRT=ON \
+	-DOTBR_REST=ON \
+	-DOTBR_SRP_ADVERTISING_PROXY=ON \
+	-DOTBR_SRP_SERVER_AUTO_ENABLE=ON \
+	-DOTBR_TREL=ON
 
 TARGET_CFLAGS += -DOPENTHREAD_POSIX_CONFIG_DAEMON_SOCKET_BASENAME=\\\"/var/run/openthread-%s\\\"
 
@@ -96,8 +95,7 @@ define Package/openthread-br/install
 	$(INSTALL_DIR) \
 		$(1)/etc/init.d \
 		$(1)/lib/netifd/proto \
-		$(1)/usr/sbin \
-		$(1)/var/lib/thread
+		$(1)/usr/sbin
 	$(INSTALL_BIN) ./files/openthread-proto.sh $(1)/lib/netifd/proto/openthread.sh
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/* $(1)/usr/sbin
 endef

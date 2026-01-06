@@ -1,0 +1,23 @@
+From f4cecb1e26a97f2b5b0405a316e1d05a907baf37 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Christoph=20Gr=C3=BCninger?= <foss@grueninger.de>
+Date: Fri, 17 Oct 2025 01:29:46 +0200
+Subject: [PATCH] [cmake] Increase minimum required version of CMake to 3.10
+ (#1013)
+
+CMake 3.31 and newer warn that versions older than 3.10 are deprecated.
+[context modified]
+---
+ CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -4,7 +4,7 @@
+ # http://www.portaudio.com/trac/wiki/TutorialDir/Compile/CMake
+ #
+ 
+-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
++cmake_minimum_required(VERSION 3.10)
+ 
+ # Check if the user is building PortAudio stand-alone or as part of a larger
+ # project. If this is part of a larger project (i.e. the CMakeLists.txt has

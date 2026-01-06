@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libdbi-drivers
 PKG_VERSION:=0.9.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/libdbi-drivers
@@ -73,7 +73,7 @@ else
 	CONFIGURE_ARGS += --without-mysql
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_libdbd-pgsql),)
+ifneq ($(CONFIG_PACKAGE_libdbd-pgsql),)
 	CONFIGURE_ARGS += \
 		--with-pgsql \
 		--with-pgsql-incdir=$(STAGING_DIR)/usr/include \
@@ -82,7 +82,7 @@ else
 	CONFIGURE_ARGS += --without-pgsql
 endif
 
-ifneq ($(SDK)$(CONFIG_PACKAGE_libdbd-sqlite3),)
+ifneq ($(CONFIG_PACKAGE_libdbd-sqlite3),)
 	CONFIGURE_ARGS += \
 		--with-sqlite3 \
 		--with-sqlite3-incdir=$(STAGING_DIR)/usr/include \

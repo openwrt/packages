@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wget
-PKG_VERSION:=1.21.4
+PKG_VERSION:=1.25.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/$(PKG_NAME)
-PKG_HASH:=81542f5cefb8faacc39bbbc6c82ded80e3e4a88505ae72ea51df27525bcde04c
+PKG_HASH:=766e48423e79359ea31e41db9e5c289675947a7fcf2efdcedb726ac9d0da3784
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-3.0-or-later
@@ -49,7 +49,7 @@ $(call Package/wget/Default)
   DEPENDS+= +libopenssl +librt
   TITLE+= (with SSL support)
   VARIANT:=ssl
-  ALTERNATIVES:=300:/usr/bin/wget:/usr/libexec/wget-ssl
+  ALTERNATIVES:=400:/usr/bin/wget:/usr/libexec/wget-ssl
 endef
 
 define Package/wget-ssl/description

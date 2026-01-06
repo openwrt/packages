@@ -8,18 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libffi
-PKG_VERSION:=3.4.2
-PKG_RELEASE:=2
+PKG_VERSION:=3.4.7
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/libffi/libffi/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=0acbca9fd9c0eeed7e5d9460ae2ea945d3f1f3d48e13a4c54da12c7e0d23c313
+PKG_SOURCE_URL:=https://github.com/libffi/libffi/releases/download/v$(PKG_VERSION)
+PKG_HASH:=138607dee268bdecf374adf9144c00e839e38541f75f24a1fcf18b78fda48b2d
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:libffi_project:libffi
 
-PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=no-mips16
@@ -31,7 +30,7 @@ define Package/libffi
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Foreign Function Interface (FFI) library
-  URL:=http://sourceware.org/libffi/
+  URL:=https://sourceware.org/libffi/
   MAINTAINER:=Peter Wagner <tripolar@gmx.at>
 endef
 
@@ -50,7 +49,6 @@ endef
 
 HOST_CONFIGURE_ARGS += \
 	--disable-shared \
-	--disable-debug \
 	--disable-docs \
 	--disable-multi-os-directory \
 	--disable-raw-api \
@@ -58,7 +56,6 @@ HOST_CONFIGURE_ARGS += \
 	--with-pic
 
 CONFIGURE_ARGS += \
-	--disable-debug \
 	--disable-docs \
 	--disable-multi-os-directory \
 	--disable-raw-api \

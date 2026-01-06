@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rtl_433
-PKG_VERSION:=22.11
+PKG_VERSION:=25.02
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/merbanan/rtl_433/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=61a9163d69cc4b1da46aebbcaf969bd180a055a6b90f42ad281218cc4fbefb86
+PKG_HASH:=5a409ea10e6d3d7d4aa5ea91d2d6cc92ebb2d730eb229c7b37ade65458223432
 
 PKG_MAINTAINER:=Jasper Scholte <NightNL@outlook.com>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -54,7 +54,11 @@ define Package/rtl_433-ssl/description
   This package includes OpenSSL support which allows you to send data to influxDB/MQTT using TLS.
 endef
 
-CMAKE_OPTIONS += -DENABLE_SOAPYSDR=NO
+define Package/conffiles
+/etc/config/rtl_433
+endef
+
+CMAKE_OPTIONS += -DFORCED_GIT_DIR=$(PKG_BUILD_DIR)/.git -DENABLE_SOAPYSDR=NO
 ifeq ($(BUILD_VARIANT),ssl)
   CMAKE_OPTIONS += -DENABLE_OPENSSL=ON
 else
@@ -68,9 +72,14 @@ define Build/InstallDev
 endef
 
 define Package/rtl_433/install
-	$(INSTALL_DIR) $(1)/etc/rtl_433
-	$(CP) $(PKG_INSTALL_DIR)/usr/etc/rtl_433/*.conf $(1)/etc/rtl_433
-	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_DIR) \
+		$(1)/etc/config \
+		$(1)/etc/init.d \
+		$(1)/etc/rtl_433 \
+		$(1)/usr/bin
+	$(INSTALL_CONF) ./files/rtl_433.conf $(1)/etc/config/rtl_433
+	$(INSTALL_BIN) ./files/rtl_433.init $(1)/etc/init.d/rtl_433
+	$(CP) $(PKG_INSTALL_DIR)/etc/rtl_433/*.conf $(1)/etc/rtl_433
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/rtl_433 $(1)/usr/bin
 endef
 

@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=iptraf-ng
-PKG_VERSION:=1.1.4
+PKG_VERSION:=1.2.1
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://infrastructure.fedoraproject.org/infra/hosted-content/$(PKG_NAME)/$(PKG_NAME)
-PKG_HASH:=79140cf07c0cceb1b5723242847a73aa86f5e4f9dccfe8970fda6801d347eb09
+PKG_SOURCE:=v$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://src.fedoraproject.org/repo/pkgs/iptraf-ng/v$(PKG_VERSION).tar.gz/sha512/44d36fc92cdbf379f62cb63638663c3ee610225b9c28d60ee55e62e358f398a6b0db281129327b3472e45fb553ee3dd605af09c129f2233f8839ae3dbd799384
+PKG_HASH:=9f5cef584065420dea1ba32c86126aede1fa9bd25b0f8362b0f9fd9754f00870
 
 PKG_LICENSE:=GPL-2.0
 PKG_LICENSE_FILES:=LICENSE
@@ -29,7 +29,7 @@ define Package/iptraf-ng
   CATEGORY:=Network
   DEPENDS:=+libncurses
   TITLE:=A console-based network monitoring program
-  URL:=https://infrastructure.fedoraproject.org/infra/hosted-content/iptraf-ng/
+  URL:=https://github.com/iptraf-ng/iptraf-ng
 endef
 
 define Package/iptraf-ng/description
@@ -53,12 +53,11 @@ MAKE_FLAGS += \
 	CPPFLAGS="$(TARGET_CPPFLAGS) -D_GNU_SOURCE" \
 	NCURSES_CFLAGS="$(TARGET_CFLAGS)" \
 	NCURSES_LDFLAGS="$(TARGET_LDFLAGS) -lncurses -lpanel" \
-	iptraf-ng rvnamed-ng
+	iptraf-ng
 
 define Package/iptraf-ng/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/iptraf-ng $(1)/usr/bin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/rvnamed-ng $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,iptraf-ng))

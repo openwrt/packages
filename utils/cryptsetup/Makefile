@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cryptsetup
-PKG_VERSION:=2.6.1
+PKG_VERSION:=2.8.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=@KERNEL/linux/utils/cryptsetup/v2.6
-PKG_HASH:=410ded65a1072ab9c8e41added37b9729c087fef4d2db02bb4ef529ad6da4693
+PKG_SOURCE_URL:=@KERNEL/linux/utils/cryptsetup/v$(subst $(space),.,$(wordlist 1, 2, $(subst .,$(space),$(PKG_VERSION))))
+PKG_HASH:=cc9e2d37c25a871cea37520b28d532207b0c1670fb10fc54d68071f63f5243a2
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-2.0-or-later LGPL-2.1-or-later
@@ -56,13 +56,36 @@ define Package/cryptsetup-ssh/description
   Experimental SSH token support for cryptsetup.
 endef
 
+define Package/integritysetup
+  SECTION:=utils
+  CATEGORY:=Utilities
+  SUBMENU:=Encryption
+  TITLE:=integritysetup
+  DEPENDS:=+cryptsetup
+  URL:=https://gitlab.com/cryptsetup/cryptsetup/
+endef
+
+define Package/integritysetup/description
+  Manage dm-integrity (block level integrity) volumes
+endef
+
+define Package/veritysetup
+  SECTION:=utils
+  CATEGORY:=Utilities
+  SUBMENU:=Encryption
+  TITLE:=veritysetup
+  DEPENDS:=+cryptsetup
+  URL:=https://gitlab.com/cryptsetup/cryptsetup/
+endef
+
+define Package/veritysetup/description
+  Manage dm-verity (block level verification) volumes
+endef
+
 CONFIGURE_ARGS += \
 	--disable-asciidoc \
-	--disable-cryptsetup-reencrypt \
-	--disable-integritysetup \
 	--disable-selinux \
 	--disable-rpath \
-	--disable-veritysetup \
 	--disable-udev \
 	--with-default-luks-format=LUKS2 \
 	--with-luks2-lock-path=/var/run/cryptsetup \
@@ -102,5 +125,17 @@ define Package/cryptsetup-ssh/install
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/cryptsetup-ssh $(1)/usr/sbin
 endef
 
+define Package/integritysetup/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/integritysetup $(1)/usr/sbin
+endef
+
+define Package/veritysetup/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/veritysetup $(1)/usr/sbin
+endef
+
 $(eval $(call BuildPackage,cryptsetup))
 $(eval $(call BuildPackage,cryptsetup-ssh))
+$(eval $(call BuildPackage,integritysetup))
+$(eval $(call BuildPackage,veritysetup))

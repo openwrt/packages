@@ -14,7 +14,7 @@ PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/blocktrron/cudy-bdinfo-decrypt.git
 PKG_SOURCE_DATE:=2023-06-01
 PKG_SOURCE_VERSION:=5a60308c0fff610c4698207387d7153aba5fd62b
-PKG_MIRROR_HASH:=aefcd37e4b059d92226d2bc97b1b199f6a360c4935a6e92c930998b510275838
+PKG_MIRROR_HASH:=92fba88358cf150a3be7dd982b2fdf90b9a730de415c39af99b6ac70bc907b53
 
 PKG_MAINTAINER:=David Bauer <mail@david-bauer.net>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -30,7 +30,7 @@ endef
 
 define Package/cudy-bdinfo/description
 This program can be used to obtain information stored on the
-bdinfo parition found on routers from Shenzhen Cudy Technology.
+bdinfo partition found on routers from Shenzhen Cudy Technology.
 endef
 
 define Package/cudy-bdinfo/install

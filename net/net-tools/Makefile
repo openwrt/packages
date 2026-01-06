@@ -10,7 +10,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=net-tools
 PKG_VERSION:=2.10
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://sourceforge.net/projects/net-tools/files/
@@ -35,6 +35,22 @@ define Package/mii-tool/description
 	or mii chipset-based ethernet devices. It traditionally had been
 	distributed in the net-tools package. This is a single distribution
 	optimized for embedded systems and fully automated cross/-sysroot-builds
+endef
+
+define Package/net-tools-netstat
+  SECTION:=net
+  CATEGORY:=Network
+  TITLE:=net-tools - netstat utility
+  URL:=http://net-tools.sourceforge.net/
+  PROVIDES:=netstat
+  ALTERNATIVES:=300:/sbin/netstat:/usr/libexec/net-tools-netstat
+endef
+
+define Package/net-tools-netstat/description
+	Replace busybox version of the netstat command with the full net-tools
+	version. This is normally not needed as busybox is smaller and provides
+	sufficient functionality, but some users may want or need the full
+	functionality of the net-tools variant.
 endef
 
 define Package/net-tools-route
@@ -64,10 +80,16 @@ define Package/mii-tool/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/mii-tool $(1)/usr/sbin/
 endef
 
+define Package/net-tools-netstat/install
+	$(INSTALL_DIR) $(1)/usr/libexec
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/netstat $(1)/usr/libexec/net-tools-netstat
+endef
+
 define Package/net-tools-route/install
 	$(INSTALL_DIR) $(1)/usr/libexec
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/route $(1)/usr/libexec/net-tools-route
 endef
 
 $(eval $(call BuildPackage,mii-tool))
+$(eval $(call BuildPackage,net-tools-netstat))
 $(eval $(call BuildPackage,net-tools-route))

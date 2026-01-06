@@ -1,7 +1,5 @@
-#
-# emailrelay secrets file
-#
-#see http://emailrelay.sourceforge.net/reference.html for reference
+# E-MailRelay secrets file
+# See https://emailrelay.sourceforge.net/index.html#reference_md_Authentication
 
 #Mostly used options:
 #

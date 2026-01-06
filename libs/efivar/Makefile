@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=efivar
 PKG_VERSION:=38
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://github.com/rhboot/efivar/releases/download/$(PKG_VERSION)
@@ -15,7 +15,9 @@ PKG_HASH:=f018ed6e49c5f1c16d336d9fd7687ce87023276591921db1e49a314ad6515349
 
 PKG_LICENSE:=LGPL-2.1-only
 PKG_LICENSE_FILES:=COPYING
+PKG_MAINTAINER:=Oskari Rauta <oskari.rauta@gmail.com>
 
+PKG_BUILD_FLAGS:=no-mold
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 

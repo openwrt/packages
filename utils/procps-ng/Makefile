@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=procps-ng
-PKG_VERSION:=4.0.4
+PKG_VERSION:=4.0.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/procps-ng
-PKG_HASH:=22870d6feb2478adb617ce4f09a787addaf2d260c5a8aa7b17d889a962c5e42e
+PKG_HASH:=c2e6d193cc78f84cd6ddb72aaf6d5c6a9162f0470e5992092057f5ff518562fa
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0-or-later
@@ -66,7 +66,7 @@ endef
 define Package/procps-ng/description
   procps is a set of command line and full-screen utilities that provide information out of the pseudo-filesystem
   most commonly located at /proc. This filesystem provides a simple interface to the kernel data structures.
-  The programs of procps generally concentrate on the structures that describe the processess running on the system.
+  The programs of procps generally concentrate on the structures that describe the processes running on the system.
 
   NOTE: some utilities provided by procps-ng packages (ps, uptime, kill, ...) are installed as busybox applets, by default.
   Conflicting applets should be removed from the build to avoid file conflicts.

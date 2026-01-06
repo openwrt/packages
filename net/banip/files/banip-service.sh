@@ -1,6 +1,6 @@
 #!/bin/sh
 # banIP main service script - ban incoming and outgoing IPs via named nftables Sets
-# Copyright (c) 2018-2023 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2018-2025 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # (s)hellcheck exceptions
@@ -9,14 +9,13 @@
 ban_action="${1}"
 ban_starttime="$(date "+%s")"
 ban_funlib="/usr/lib/banip-functions.sh"
-[ -z "${ban_ver}" ] && . "${ban_funlib}"
+[ -z "${ban_bver}" ] && . "${ban_funlib}"
 
 # load config and set banIP environment
 #
 [ "${ban_action}" = "boot" ] && sleep "$(uci_get banip global ban_triggerdelay "20")"
 f_conf
-f_log "info" "start banIP processing (${ban_action})"
-f_log "debug" "f_system    ::: system: ${ban_sysver:-"n/a"}, version: ${ban_ver:-"n/a"}, memory: ${ban_memory:-"0"}, cpu_cores: ${ban_cores}"
+f_log "info" "start banIP processing (${ban_action}, ${ban_bver:-"n/a"})"
 f_genstatus "processing"
 f_tmp
 f_getfetch
@@ -24,55 +23,46 @@ f_getif
 f_getdev
 f_getuplink
 f_mkdir "${ban_backupdir}"
-f_mkfile "${ban_blocklist}"
 f_mkfile "${ban_allowlist}"
+f_mkfile "${ban_blocklist}"
+f_rmdir "${ban_errordir}"
 
-# firewall check
+# firewall/fw4 pre-check
 #
-if [ "${ban_action}" != "reload" ]; then
-	if [ -x "${ban_fw4cmd}" ]; then
-		cnt="0"
-		while [ "${cnt}" -lt "30" ] && ! /etc/init.d/firewall status >/dev/null 2>&1; do
-			cnt="$((cnt + 1))"
-			sleep 1
-		done
-		if ! /etc/init.d/firewall status >/dev/null 2>&1; then
-			f_log "err" "error in nft based firewall/fw4"
-		fi
-	else
-		f_log "err" "no nft based firewall/fw4"
-	fi
+if ! /etc/init.d/firewall status >/dev/null 2>&1; then
+	f_log "info" "the main firewall is not running"
 fi
 
-# init nft namespace
+# init banIP nftables namespace
 #
-if [ "${ban_action}" != "reload" ] || ! "${ban_nftcmd}" -t list set inet banIP allowlistv4MAC >/dev/null 2>&1; then
-	if f_nftinit "${ban_tmpfile}".init.nft; then
-		f_log "info" "initialize nft namespace"
-	else
-		f_log "err" "can't initialize nft namespace"
-	fi
+if [ "${ban_action}" != "reload" ] || ! "${ban_nftcmd}" list chain inet banIP pre-routing >/dev/null 2>&1; then
+	f_nftinit "${ban_tmpfile}".init.nft
 fi
+
+# start banIP processing
+#
+f_log "info" "start banIP download processes"
+f_getfeed
+[ "${ban_deduplicate}" = "1" ] && printf "\n" >"${ban_tmpfile}.deduplicate"
 
 # handle downloads
 #
-f_log "info" "start banIP download processes"
-if [ "${ban_allowlistonly}" = "1" ]; then
-	ban_feed=""
-else
-	f_getfeed
-fi
-[ "${ban_deduplicate}" = "1" ] && printf "\n" >"${ban_tmpfile}.deduplicate"
-
 cnt="1"
 for feed in allowlist ${ban_feed} blocklist; do
 	# local feeds (sequential processing)
 	#
 	if [ "${feed}" = "allowlist" ] || [ "${feed}" = "blocklist" ]; then
 		for proto in 4MAC 6MAC 4 6; do
-			[ "${feed}" = "blocklist" ] && wait
-			f_down "${feed}" "${proto}"
+			f_down "${feed}" "${proto}" "-" "-" "inout"
 		done
+		continue
+	fi
+
+	# skip external feeds in allowlistonly mode
+	#
+	if [ "${ban_allowlistonly}" = "1" ] &&
+		! printf "%s" "${ban_feedin}" | "${ban_grepcmd}" -q "allowlist" &&
+		! printf "%s" "${ban_feedout}" | "${ban_grepcmd}" -q "allowlist"; then
 		continue
 	fi
 
@@ -84,7 +74,7 @@ for feed in allowlist ${ban_feed} blocklist; do
 		uci_commit "banip"
 		continue
 	fi
-	json_objects="url_4 rule_4 url_6 rule_6 flag"
+	json_objects="url_4 rule_4 url_6 rule_6 chain flag"
 	for object in ${json_objects}; do
 		eval json_get_var feed_"${object}" '${object}' >/dev/null 2>&1
 	done
@@ -99,35 +89,42 @@ for feed in allowlist ${ban_feed} blocklist; do
 		continue
 	fi
 
-	# handle IPv4/IPv6 feeds with the same/single download URL
-	#
-	if [ "${feed_url_4}" = "${feed_url_6}" ]; then
-		if [ "${ban_protov4}" = "1" ] && [ -n "${feed_url_4}" ] && [ -n "${feed_rule_4}" ]; then
-			(f_down "${feed}" "4" "${feed_url_4}" "${feed_rule_4}" "${feed_flag}") &
-			feed_url_6="local"
-			wait
-		fi
-		if [ "${ban_protov6}" = "1" ] && [ -n "${feed_url_6}" ] && [ -n "${feed_rule_6}" ]; then
-			(f_down "${feed}" "6" "${feed_url_6}" "${feed_rule_6}" "${feed_flag}") &
-			hold="$((cnt % ban_cores))"
-			[ "${hold}" = "0" ] && wait
-			cnt="$((cnt + 1))"
-		fi
-		continue
-	fi
-	# handle IPv4/IPv6 feeds with separated download URLs
+	# handle IPv4/IPv6 feeds
 	#
 	if [ "${ban_protov4}" = "1" ] && [ -n "${feed_url_4}" ] && [ -n "${feed_rule_4}" ]; then
-		(f_down "${feed}" "4" "${feed_url_4}" "${feed_rule_4}" "${feed_flag}") &
-		hold="$((cnt % ban_cores))"
-		[ "${hold}" = "0" ] && wait
-		cnt="$((cnt + 1))"
+		if [ "${feed}" = "country" ] && [ "${ban_countrysplit}" = "1" ]; then
+			for country in ${ban_country}; do
+				f_down "${feed}.${country}" "4" "${feed_url_4}" "${feed_rule_4}" "${feed_chain:-"in"}" "${feed_flag}"
+			done
+		elif [ "${feed}" = "asn" ] && [ "${ban_asnsplit}" = "1" ]; then
+			for asn in ${ban_asn}; do
+				f_down "${feed}.${asn}" "4" "${feed_url_4}" "${feed_rule_4}" "${feed_chain:-"in"}" "${feed_flag}"
+			done
+		else
+			if [ "${feed_url_4}" = "${feed_url_6}" ]; then
+				feed_url_6="local"
+				f_down "${feed}" "4" "${feed_url_4}" "${feed_rule_4}" "${feed_chain:-"in"}" "${feed_flag}"
+			else
+				(f_down "${feed}" "4" "${feed_url_4}" "${feed_rule_4}" "${feed_chain:-"in"}" "${feed_flag}") &
+				[ "${cnt}" -gt "${ban_cores}" ] && wait -n
+				cnt="$((cnt + 1))"
+			fi
+		fi
 	fi
 	if [ "${ban_protov6}" = "1" ] && [ -n "${feed_url_6}" ] && [ -n "${feed_rule_6}" ]; then
-		(f_down "${feed}" "6" "${feed_url_6}" "${feed_rule_6}" "${feed_flag}") &
-		hold="$((cnt % ban_cores))"
-		[ "${hold}" = "0" ] && wait
-		cnt="$((cnt + 1))"
+		if [ "${feed}" = "country" ] && [ "${ban_countrysplit}" = "1" ]; then
+			for country in ${ban_country}; do
+				f_down "${feed}.${country}" "6" "${feed_url_6}" "${feed_rule_6}" "${feed_chain:-"in"}" "${feed_flag}"
+			done
+		elif [ "${feed}" = "asn" ] && [ "${ban_asnsplit}" = "1" ]; then
+			for asn in ${ban_asn}; do
+				f_down "${feed}.${asn}" "6" "${feed_url_6}" "${feed_rule_6}" "${feed_chain:-"in"}" "${feed_flag}"
+			done
+		else
+			(f_down "${feed}" "6" "${feed_url_6}" "${feed_rule_6}" "${feed_chain:-"in"}" "${feed_flag}") &
+			[ "${cnt}" -gt "${ban_cores}" ] && wait -n
+			cnt="$((cnt + 1))"
+		fi
 	fi
 done
 wait
@@ -141,22 +138,22 @@ f_log "info" "start banIP domain lookup"
 cnt="1"
 for list in allowlist blocklist; do
 	(f_lookup "${list}") &
-	hold="$((cnt % ban_cores))"
-	[ "${hold}" = "0" ] && wait
+	[ "${cnt}" -gt "${ban_cores}" ] && wait -n
 	cnt="$((cnt + 1))"
 done
 wait
 
 # end processing
 #
-if [ "${ban_mailnotification}" = "1" ] && [ -n "${ban_mailreceiver}" ] && [ -x "${ban_mailcmd}" ]; then
-	(
-		sleep 5
+f_log "info" "finish banIP processing"
+(
+	sleep 5
+	if [ "${ban_mailnotification}" = "1" ] && [ -n "${ban_mailreceiver}" ] && [ -x "${ban_mailcmd}" ]; then
 		f_mail
-	) &
-fi
-json_cleanup
-rm -rf "${ban_lock}"
+	fi
+	json_cleanup
+	rm -rf "${ban_lock}"
+) &
 
 # start detached log service (infinite loop)
 #

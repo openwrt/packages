@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=iperf
-PKG_VERSION:=3.16
+PKG_VERSION:=3.20
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://downloads.es.net/pub/iperf
-PKG_HASH:=cc740c6bbea104398cc3e466befc515a25896ec85e44a662d5f4a767b9cf713e
+PKG_HASH:=3acc572d1ecca4e0b20359c7bf0132ddc80d982efeee20c86f6726a9a6094388
 
 PKG_MAINTAINER:=Felix Fietkau <nbd@nbd.name>
 PKG_LICENSE:=BSD-3-Clause
@@ -65,6 +65,8 @@ ifeq ($(BUILD_VARIANT),ssl)
 else
 	CONFIGURE_ARGS += --without-openssl
 endif
+
+CONFIGURE_ARGS += --without-sctp
 
 MAKE_FLAGS += noinst_PROGRAMS=
 

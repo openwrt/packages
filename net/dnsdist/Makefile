@@ -1,14 +1,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dnsdist
-PKG_VERSION:=1.8.3
-PKG_RELEASE:=2
+PKG_VERSION:=2.0.1
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://downloads.powerdns.com/releases/
-PKG_HASH:=858323f2ed5181488bb7558fbf4f84ec7198600b070b2c5375d15d40695727f4
+PKG_HASH:=144e2356d07d6577a570782a6f79f426125344221dbdc4ddaaa7f9d468d51900
 
-PKG_MAINTAINER:=Peter van Dijk <peter.van.dijk@powerdns.com>
+PKG_MAINTAINER:=Peter van Dijk <peter.van.dijk@powerdns.com>, Remi Gacogne <remi.gacogne@powerdns.com>
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:powerdns:dnsdist
@@ -16,7 +16,7 @@ PKG_CPE_ID:=cpe:/a:powerdns:dnsdist
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
-PKG_BUILD_DEPENDS:=boost
+PKG_BUILD_DEPENDS:=boost python-yaml/host
 
 PKG_CONFIG_DEPENDS:= \
   CONFIG_DNSDIST_GNUTLS \
@@ -75,9 +75,8 @@ define Package/dnsdist
 	  +DNSDIST_LIBEDIT:libedit \
 	  +DNSDIST_DNSTAP:libfstrm \
 	  +DNSDIST_GNUTLS:libgnutls \
-	  +DNSDIST_DNS_OVER_HTTPS:libh2o-evloop \
+	  +DNSDIST_DNS_OVER_HTTPS:libnghttp2 \
 	  +DNSDIST_NET_SNMP:libnetsnmp \
-	  +DNSDIST_DNS_OVER_HTTPS_OUTGOING:libnghttp2 \
 	  +DNSDIST_OPENSSL:libopenssl \
 	  +DNSDIST_SODIUM:libsodium \
 	  +DNSDIST_LMDB:lmdb \
@@ -95,7 +94,6 @@ define Package/dnsdist-full
 	  +libedit \
 	  +libfstrm \
 	  +libgnutls \
-	  +libh2o-evloop \
 	  +libnetsnmp \
 	  +libnghttp2 \
 	  +libopenssl \
@@ -151,6 +149,7 @@ CONFIGURE_ARGS+= \
 	--with-pic \
 	--with-lua=luajit \
 	--with-libcap \
+	--without-xsk \
 	$(if $(call IsEnabled,DNSDIST_PIE),,--disable-hardening) \
 	$(if $(call IsEnabled,DNSDIST_SODIUM),--enable-dnscrypt --with-libsodium,--disable-dnscrypt --without-libsodium) \
 	$(if $(call IsEnabled,DNSDIST_DNSTAP),--enable-dnstap=yes,--enable-dnstap=no) \
@@ -165,7 +164,7 @@ CONFIGURE_ARGS+= \
 	$(if $(call IsEnabled,DNSDIST_IPCIPHER),--enable,--disable)-ipcipher \
 	$(if $(call IsEnabled,DNSDIST_EBPF),--with,--without)-ebpf \
 	$(if $(call IsEnabled,DNSDIST_DNS_OVER_HTTPS),--enable-dns-over-https,) \
-	$(if $(call IsEnabled,DNSDIST_DNS_OVER_HTTPS_OUTGOING),--with,--without)-nghttp2
+	PYTHON=python3
 
 $(eval $(call BuildPackage,dnsdist))
 $(eval $(call BuildPackage,dnsdist-full))

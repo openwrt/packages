@@ -8,9 +8,9 @@ PKG_MAINTAINER:=Nuno Gonçalves <nunojpg@gmail.com>
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=https://github.com/nunojpg/esp2net.git
-PKG_SOURCE_DATE:=2023-06-20
-PKG_SOURCE_VERSION:=be514c7a50bd8f3aac146ba267856d66cad1abd9
-PKG_MIRROR_HASH:=bb2d180887c14ee3e6bec51ccaae195274a09e4be108a7e69e2126df5245c0b7
+PKG_SOURCE_DATE:=2025-09-02
+PKG_SOURCE_VERSION:=4b39dfc679fdf757c48d170e9c0cf0cb5bd53da5
+PKG_MIRROR_HASH:=e26860e32a3cd8773f5b6262c0be19dbdcd3eba07b1339ed93d9699dcbffaf49
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk

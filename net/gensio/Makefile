@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gensio
-PKG_VERSION:=2.7.6
+PKG_VERSION:=2.8.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/ser2net
-PKG_HASH:=7574fb710ddd6580d53ea44af4ddfc57f28dbcdc646d842f7ed8ccc1235fdf89
+PKG_HASH:=28807dce0373f04271d44e1cdd38aa9486f3dd3060867b9acd370ece10404f62
 
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
@@ -98,7 +98,7 @@ define Package/gensio/Default/description
  I/O types. You create a gensio object (or a gensio), and you can use
  that gensio without having to know too much about what is going on
  underneath. You can stack gensio on top of another one to add protocol
- funcionality. For instance, you can create a TCP gensio, stack SSL on
+ functionality. For instance, you can create a TCP gensio, stack SSL on
  top of that, and stack Telnet on top of that. It supports a number of
  network I/O and serial ports.  Gensio can be used for sending and
  receiving ports, and it also supports establishing encrypted and

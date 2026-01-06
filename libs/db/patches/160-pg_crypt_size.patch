@@ -1,0 +1,29 @@
+--- a/src/dbinc/db_page.h
++++ b/src/dbinc/db_page.h
+@@ -256,6 +256,17 @@ typedef struct __pg_crypto {
+ 	 */
+ } PG_CRYPTO;
+ 
++/*
++ * With most compilers sizeof(PG_CRYPTO) == 38.  However some ABIs
++ * require it to be padded to 40 bytes.  The padding must be excluded
++ * from our size calculations due to the 16-byte alignment requirement
++ * for crypto.
++ *
++ * A similar problem applies to PG_CHKSUM, but it's too late to change
++ * that.
++ */
++#define SIZEOF_PG_CRYPTO 38
++
+ typedef struct _db_page {
+ 	DB_LSN	  lsn;		/* 00-07: Log sequence number. */
+ 	db_pgno_t pgno;		/* 08-11: Current page number. */
+@@ -291,7 +302,7 @@ typedef struct _db_page {
+  */
+ #define	P_INP(dbp, pg)							\
+ 	((db_indx_t *)((u_int8_t *)(pg) + SIZEOF_PAGE +			\
+-	(F_ISSET((dbp), DB_AM_ENCRYPT) ? sizeof(PG_CRYPTO) :		\
++	(F_ISSET((dbp), DB_AM_ENCRYPT) ? SIZEOF_PG_CRYPTO :		\
+ 	(F_ISSET((dbp), DB_AM_CHKSUM) ? sizeof(PG_CHKSUM) : 0))))
+ 
+ #define	P_IV(dbp, pg)							\

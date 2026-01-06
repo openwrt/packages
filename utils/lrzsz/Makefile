@@ -41,12 +41,7 @@ define Package/lrzsz/description
   from a variety of programs running under various operating systems.
 endef
 
-# to stop automake from running, the bundled autohell crap is too old
-define Build/Configure
-	touch $(PKG_BUILD_DIR)/*
-	touch $(PKG_BUILD_DIR)/*/*
-	$(call Build/Configure/Default)
-endef
+TARGET_CFLAGS += -std=gnu11
 
 define Package/lrzsz/install
 	$(INSTALL_DIR) $(1)/usr/bin

@@ -22,6 +22,7 @@ parse_broker() {
 	config_get hook_script "$section" hook_script
 	config_get bind_interface "$section" bind_interface
 	config_get group "$section" group
+	config_get broker_selection "$section" broker_selection
 	
 	[ $enabled -eq 0 ] && return
 
@@ -37,6 +38,20 @@ parse_broker() {
 		unset _bind_interface
 		network_get_device _bind_interface "${bind_interface}" || _bind_interface="${bind_interface}"
 		append broker_opts "-I ${_bind_interface}"
+	}
+	[ ! -z "${broker_selection}" ] && {
+		# Set broker selection.
+		case "${broker_selection}" in
+			usage)
+				append broker_opts "-a"
+			;;
+			first)
+				append broker_opts "-g"
+			;;
+			random)
+				append broker_opts "-r"
+			;;
+		esac
 	}
 
 	if [ -z "$uuid" ]; then

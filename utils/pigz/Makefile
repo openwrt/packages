@@ -1,15 +1,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pigz
-PKG_VERSION:=2.7
+PKG_VERSION:=2.8
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://zlib.net/pigz
-PKG_HASH:=b4c9e60344a08d5db37ca7ad00a5b2c76ccb9556354b722d56d55ca7e8b1c707
+PKG_HASH:=eb872b4f0e1f0ebe59c9f7bd8c506c4204893ba6a8492de31df416f0d5170fd0
 
 PKG_MAINTAINER:=Ken Wong <xinxijishuwyq@gmail.com>
-PKG_LICENSE:=CUSTOM
+PKG_LICENSE:=Zlib
 PKG_LICENSE_FILES:=README
 PKG_CPE_ID:=cpe:/a:zlib:pigz
 
@@ -32,4 +32,3 @@ define Package/pigz/install
 endef
 
 $(eval $(call BuildPackage,pigz))
-

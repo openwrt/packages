@@ -9,11 +9,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=qemu
-PKG_VERSION:=8.1.2
+PKG_VERSION:=10.1.3
 PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_HASH:=541526a764576eb494d2ff5ec46aeb253e62ea29035d1c23c0a8af4e6cd4f087
-PKG_SOURCE_URL:=http://download.qemu.org/
+PKG_SOURCE_URL:=https://download.qemu.org/
+PKG_HASH:=fbaa7a0d7a9a1deb5695b125916746ec28fe0de6275d4454f3e3bbaf8b339b53
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=LICENSE tcg/LICENSE
 PKG_MAINTAINER:=Yousong Zhou <yszhou4tech@gmail.com>
@@ -24,11 +24,13 @@ PKG_INSTALL:=1
 PKG_BUILD_FLAGS:=no-mips16
 
 PKG_BUILD_DEPENDS+=spice-protocol
+PKG_BUILD_DEPENDS+=python3/host
 
 include $(INCLUDE_DIR)/nls.mk
 include $(INCLUDE_DIR)/package.mk
+include ../../lang/python/python3-host.mk
 
-QEMU_DEPS_IN_GUEST := @(TARGET_x86_64||TARGET_armsr||TARGET_malta)
+QEMU_DEPS_IN_GUEST := @(TARGET_x86||TARGET_x86_64||TARGET_armsr||TARGET_malta)
 QEMU_DEPS_IN_HOST := @(TARGET_x86_64||TARGET_armsr_armv8||TARGET_sunxi)
 QEMU_DEPS_IN_HOST += +libstdcpp
 QEMU_DEPS_IN_HOST += $(ICONV_DEPENDS)
@@ -154,7 +156,7 @@ define Package/qemu-keymaps
   CATEGORY:=Utilities
   SUBMENU:=Virtualization
   TITLE:=QEMU reverse keymaps for use with -k argument
-  URL:=http://www.qemu.org
+  URL:=https://www.qemu.org
   DEPENDS:=$(QEMU_DEPS_IN_HOST)
 endef
 
@@ -336,7 +338,6 @@ CONFIGURE_ARGS +=			\
 
 # accel
 CONFIGURE_ARGS +=			\
-	--disable-hax			\
 	--disable-hvf			\
 	--disable-whpx			\
 	--disable-xen			\
@@ -354,6 +355,7 @@ CONFIGURE_ARGS +=			\
 	--$(if $(CONFIG_QEMU_UI_VNC),enable,disable)-vnc			\
 	--$(if $(CONFIG_QEMU_UI_VNC_JPEG),enable,disable)-vnc-jpeg		\
 	--$(if $(CONFIG_QEMU_UI_VNC_SASL),enable,disable)-vnc-sasl		\
+	--disable-dbus-display		\
 	--disable-vte			\
 	--enable-curses			\
 	--enable-iconv			\
@@ -362,7 +364,6 @@ CONFIGURE_ARGS +=			\
 CONFIGURE_ARGS +=			\
 	--enable-coroutine-pool		\
 	--enable-crypto-afalg		\
-	--enable-live-block-migration	\
 	--enable-membarrier		\
 	--enable-replication		\
 	--enable-lto			\
@@ -378,6 +379,7 @@ CONFIGURE_ARGS +=			\
 #
 CONFIGURE_ARGS +=			\
 	--audio-drv-list=''		\
+	--disable-af-xdp                \
 	--disable-attr			\
 	--disable-auth-pam		\
 	--disable-brlapi		\
@@ -401,6 +403,7 @@ CONFIGURE_ARGS +=			\
 	--disable-libpmem		\
 	--disable-libssh		\
 	--$(if $(CONFIG_QEMU_DEV_USB),enable,disable)-libusb		\
+	--disable-libkeyutils           \
 	--disable-linux-aio		\
 	--disable-linux-io-uring	\
 	--disable-lzfse			\
@@ -413,11 +416,16 @@ CONFIGURE_ARGS +=			\
 	--disable-numa			\
 	--disable-opengl		\
 	--disable-plugins		\
-	--disable-pvrdma		\
 	--disable-qom-cast-debug	\
 	--disable-rbd			\
 	--disable-rdma			\
-	--disable-sanitizers		\
+	--disable-rust			\
+	--disable-rutabaga-gfx          \
+	--disable-asan			\
+	--disable-tsan			\
+	--disable-ubsan			\
+	--disable-fuzzing		\
+	--disable-safe-stack		\
 	--$(if $(CONFIG_QEMU_SECCOMP),enable,disable)-seccomp		\
 	--disable-smartcard		\
 	--disable-snappy		\

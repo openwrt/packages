@@ -15,8 +15,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wifischedule
-PKG_VERSION:=1.0.5
-PKG_RELEASE:=2
+PKG_VERSION:=1.1.0
+PKG_RELEASE:=0
 PKG_LICENSE:=PRPL
 
 PKG_MAINTAINER:=Nils Koenig <openwrt@newk.it> 

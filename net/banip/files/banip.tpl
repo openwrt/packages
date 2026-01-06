@@ -1,5 +1,5 @@
 # banIP mail template/include - ban incoming and outgoing IPs via named nftables Sets
-# Copyright (c) 2018-2024 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2018-2025 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # info preparation
@@ -15,10 +15,9 @@ fi
 banip_info="$(/etc/init.d/banip status 2>/dev/null)"
 report_info="$("${ban_catcmd}" "${ban_reportdir}/ban_report.txt" 2>/dev/null)"
 log_info="$(${logread_cmd})"
-system_info="$(
-	strings /etc/banner 2>/dev/null
-	"${ban_ubuscmd}" call system board | "${ban_awkcmd}" 'BEGIN{FS="[{}\"]"}{if($2=="kernel"||$2=="hostname"||$2=="system"||$2=="model"||$2=="description")printf "  + %-12s: %s\n",$2,$4}'
-)"
+system_info="$(strings /etc/banner 2>/dev/null
+	"${ban_ubuscmd}" call system board |
+	"${ban_awkcmd}" 'BEGIN{FS="[{}\"]"}{if($2=="kernel"||$2=="hostname"||$2=="system"||$2=="model"||$2=="description")printf "  + %-12s: %s\n",$2,$4}')"
 
 # content header
 #

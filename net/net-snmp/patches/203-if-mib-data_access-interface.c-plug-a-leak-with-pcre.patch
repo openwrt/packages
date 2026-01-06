@@ -9,7 +9,7 @@ Subject: [PATCH] if-mib/data_access/interface.c: plug a leak with pcre2
 
 --- a/agent/mibgroup/if-mib/data_access/interface.c
 +++ b/agent/mibgroup/if-mib/data_access/interface.c
-@@ -845,7 +845,7 @@ int netsnmp_access_interface_include(con
+@@ -829,7 +829,7 @@ int netsnmp_access_interface_include(con
  {
      netsnmp_include_if_list *if_ptr;
  #if defined(HAVE_PCRE2_H)
@@ -18,7 +18,7 @@ Subject: [PATCH] if-mib/data_access/interface.c: plug a leak with pcre2
  #elif defined(HAVE_PCRE_H)
      int                      found_ndx[3];
  #endif
-@@ -860,6 +860,9 @@ int netsnmp_access_interface_include(con
+@@ -844,6 +844,9 @@ int netsnmp_access_interface_include(con
           */
          return TRUE;
  

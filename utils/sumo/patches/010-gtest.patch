@@ -1,6 +1,6 @@
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -270,7 +270,6 @@ if (SUMO_LIBRARIES AND WIN32)
+@@ -366,7 +366,6 @@ if (SUMO_LIBRARIES AND WIN32)
      file(GLOB TEXTTEST_EXECUTABLE "${SUMO_LIBRARIES}/TextTest-*/texttest.exe")
  else ()
      # for Linux and Mac only

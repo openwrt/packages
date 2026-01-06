@@ -418,3 +418,56 @@ cisco-client-compat = |CISCO_COMPAT|
 #custom-header = "X-My-Header: hi there"
 
 expose-iroutes = true
+
+# Log Level. Ocserv sends the logging messages to standard error
+# as well as the system log. The log level can be overridden in the
+# command line with the -d option. All messages at the configured
+# level and lower will be displayed.
+# Supported levels (default 0):
+#   0 default (Same as basic)
+#   1 basic
+#   2 info
+#   3 debug
+#   4 http
+#   8 sensitive
+#   9 TLS
+#log-level = 2
+
+# This option will enable the X-CSTP-Client-Bypass-Protocol (disabled by default).
+# If the server has not configured an IPv6 or IPv4 address pool, enabling this option
+# will instruct the client to bypass the server for that IP protocol. The option is
+# currently only understood by Anyconnect clients.
+client-bypass-protocol = false
+
+# The following options are related to server camouflage (hidden service)
+
+# This option allows you to enable the camouflage feature of ocserv that makes it look
+# like a web server to unauthorized parties.
+# With "camouflage" enabled, connection to the VPN can be established only if the client provided a specific
+# "secret string" in the connection URL, e.g. "https://example.com/?mysecretkey",
+# otherwise the server will return HTTP error for all requests.
+camouflage = false
+
+# The URL prefix that should be set on the client (after '?' sign) to pass through the camouflage check,
+# e.g. in case of 'mysecretkey', the server URL on the client should be like "https://example.com/?mysecretkey".
+camouflage_secret = "mysecretkey"
+
+# Defines the realm (browser prompt) for HTTP authentication.
+# If no realm is set, the server will return 404 Not found error instead of 401 Unauthorized.
+# Better change it from the default value to avoid fingerprinting.
+camouflage_realm = "Restricted Content"
+
+# HTTP headers
+included-http-headers = Strict-Transport-Security: max-age=31536000 ; includeSubDomains
+included-http-headers = X-Frame-Options: deny
+included-http-headers = X-Content-Type-Options: nosniff
+included-http-headers = Content-Security-Policy: default-src 'none'
+included-http-headers = X-Permitted-Cross-Domain-Policies: none
+included-http-headers = Referrer-Policy: no-referrer
+included-http-headers = Clear-Site-Data: "cache","cookies","storage"
+included-http-headers = Cross-Origin-Embedder-Policy: require-corp
+included-http-headers = Cross-Origin-Opener-Policy: same-origin
+included-http-headers = Cross-Origin-Resource-Policy: same-origin
+included-http-headers = X-XSS-Protection: 0
+included-http-headers = Pragma: no-cache
+included-http-headers = Cache-control: no-store, no-cache

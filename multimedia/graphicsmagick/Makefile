@@ -5,17 +5,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=graphicsmagick
-PKG_VERSION:=1.3.42
+PKG_VERSION:=1.3.45
 PKG_RELEASE:=1
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/GraphicsMagick-$(PKG_VERSION)
 PKG_SOURCE:=GraphicsMagick-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@SF/graphicsmagick
-PKG_HASH:=484fccfd2b2faf6c2ba9151469ece5072bcb91ba4ed73e75ed3d8e46c759d557
+PKG_HASH:=dcea5167414f7c805557de2d7a47a9b3147bcbf617b91f5f0f4afe5e6543026b
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=Copyright.txt
-PKG_MAINTAINER:=Aleksey Vasilenko <aleksey.vasilenko@gmail.com>
+PKG_MAINTAINER:=
 PKG_CPE_ID:=cpe:/a:graphicsmagick:graphicsmagick
 
 PKG_BUILD_PARALLEL:=1
@@ -31,7 +31,7 @@ define Package/graphicsmagick/Default
   SECTION:=multimedia
   CATEGORY:=Multimedia
   TITLE:=Graphics manipulation tools
-  URL:=https://www.graphicsmagick.org/
+  URL:=http://www.graphicsmagick.org/
   DEPENDS:=graphicsmagick
 endef
 
@@ -57,11 +57,13 @@ CONFIGURE_ARGS += \
 	--without-bzlib \
 	--without-dps \
 	--without-fpx \
+	--without-gs \
 	--without-jbig \
 	--without-webp \
 	--with-jpeg \
 	--without-jp2 \
 	--without-lcms2 \
+	--without-libzip \
 	--without-lzma \
 	--with-png \
 	--with-tiff \

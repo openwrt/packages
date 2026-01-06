@@ -21,6 +21,13 @@ config globals 'globals'
 #	list registry_mirrors 'https://<my-docker-mirror-host>'
 #	list registry_mirrors 'https://hub.docker.com'
 
+# If your organization uses a proxy server to connect to the internet, you may need to configure the proxy.
+# See https://docs.docker.com/engine/daemon/proxy/ for more details
+config proxies 'proxies'
+#	option http_proxy 'http://proxy.example.com:3128'
+#	option https_proxy 'https://proxy.example.com:3129'
+#	option no_proxy '*.test.example.com,.example.org,127.0.0.0/8'
+
 # Docker doesn't work well out of the box with fw4. This is because Docker relies on a compatibility layer that
 # naively translates iptables rules. For the best compatibility replace the following dependencies:
 # `firewall4` -> `firewall`

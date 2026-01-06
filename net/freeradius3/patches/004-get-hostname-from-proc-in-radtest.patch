@@ -1,10 +1,10 @@
 --- a/src/main/radtest.in
 +++ b/src/main/radtest.in
-@@ -112,7 +112,7 @@ if [ "$7" ]
+@@ -117,7 +117,7 @@ if [ "$7" ]
  then
  	nas=$7
  else
--	nas=`hostname`
+-	nas=`(hostname || uname -n) 2>/dev/null | sed 1q`
 +	nas=$(cat /proc/sys/kernel/hostname)
  fi
  

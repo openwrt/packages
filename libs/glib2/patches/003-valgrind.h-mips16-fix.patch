@@ -1,6 +1,6 @@
 --- a/glib/valgrind.h
 +++ b/glib/valgrind.h
-@@ -158,7 +158,7 @@
+@@ -159,7 +159,7 @@
  #  define PLAT_s390x_linux 1
  #elif defined(__linux__) && defined(__mips__) && (__mips==64)
  #  define PLAT_mips64_linux 1

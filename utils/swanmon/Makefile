@@ -9,12 +9,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=swanmon
 PKG_VERSION:=0.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/TDT-AG/swanmon
 PKG_SOURCE_VERSION:=296096e172005cae855c316f859265aba8b2e472
-PKG_MIRROR_HASH:=96b9c988cae8e2c34dc8b483e32b3c619fd3a027be33ece80c93972ab437e10a
+PKG_MIRROR_HASH:=f69f27e976f35ad15bd95e8f06b950b48bca957f0fe3e00c2cf8c381cbf05bc3
 
 PKG_MAINTAINER:=Lukas Voegl <lvoegl@tdt.de>
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -24,6 +24,7 @@ PKG_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/swanmon
   SECTION:=utils

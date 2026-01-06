@@ -1,0 +1,64 @@
+--- a/libs/src/sio/sprint.c
++++ b/libs/src/sio/sprint.c
+@@ -6,6 +6,11 @@
+ 
+ 
+ #include "config.h"
++
++#ifndef _GNU_SOURCE
++#define _GNU_SOURCE
++#endif
++
+ #include <stdlib.h>
+ #include <string.h>
+ #include <ctype.h>
+--- a/xinetd/redirect.c
++++ b/xinetd/redirect.c
+@@ -24,9 +24,6 @@
+ #ifdef HAVE_ARPA_INET_H
+ #include <arpa/inet.h>
+ #endif
+-#ifdef HAVE_SYS_SIGNAL_H
+-#include <sys/signal.h>
+-#endif
+ 
+ #include "redirect.h"
+ #include "service.h"
+--- a/xinetd/sconf.c
++++ b/xinetd/sconf.c
+@@ -311,7 +311,7 @@ void sc_dump( struct service_config *scp
+       tabprint( fd, tab_level+1, "Nice = %d\n", SC_NICE(scp) ) ;
+ 
+    if ( SC_SPECIFIED( scp, A_CPS ) )
+-      tabprint( fd, tab_level+1, "CPS = max conn:%lu wait:%lu\n", 
++      tabprint( fd, tab_level+1, "CPS = max conn:%" PRId64 " wait:%" PRId64 "\n", 
+          SC_TIME_CONN_MAX(scp), SC_TIME_WAIT(scp) );
+ 
+    if ( SC_SPECIFIED( scp, A_PER_SOURCE ) )
+--- a/xinetd/sensor.c
++++ b/xinetd/sensor.c
+@@ -76,7 +76,7 @@ void process_sensor( const struct servic
+ 	       if (SC_DENY_TIME(SVC_CONF(sp)) == -1)
+                     strcpy(time_buf, "-1");
+                else
+-                    strx_nprint(time_buf, 38, "%ld",
++                    strx_nprint(time_buf, 38, "%" PRId64,
+                        (time_t)nowtime+(60*SC_DENY_TIME(SVC_CONF(sp))));
+ 
+ 	       tmp = new_string(time_buf);
+--- a/xinetd/util.c
++++ b/xinetd/util.c
+@@ -18,11 +18,10 @@
+  * The following ifdef is for TIOCNOTTY
+  */
+ #ifndef NO_TERMIOS
+-#ifdef HAVE_SYS_TERMIOS_H
+-#include <sys/termios.h>
+-#endif
+ #ifdef HAVE_TERMIOS_H
+ #include <termios.h>
++#elif defined(HAVE_SYS_TERMIOS_H)
++#include <sys/termios.h>
+ #endif
+ #else
+ #include <sys/ioctl.h>

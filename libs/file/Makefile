@@ -8,17 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=file
-PKG_VERSION:=5.44
+PKG_VERSION:=5.45
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.openpkg.org/components/cache/file/ \
-	ftp://ftp.astron.com/pub/file/
-PKG_HASH:=3751c7fba8dbc831cb8d7cc8aff21035459b8ce5155ef8b0880a27d028475f3b
+	http://ftp.astron.com/pub/file/
+PKG_HASH:=fc97f51029bb0e2c9f4e3bffefdaf678f0e039ee872b9de5c002a6d09c784d82
 
 PKG_MAINTAINER:=Marko Ratkaj <markoratkaj@gmail.com>
 PKG_LICENSE:=BSD-2-Clause
 PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:file_project:file
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
@@ -50,14 +51,12 @@ TARGET_CFLAGS += $(FPIC)
 TARGET_LDFLAGS += -Wl,--gc-sections,--as-needed
 
 CONFIGURE_ARGS += \
-	--enable-shared \
 	--enable-static \
 	--enable-bzlib \
 	--enable-xzlib \
 	--enable-zlib \
 	--disable-libseccomp \
 	--disable-lzlib \
-	--disable-rpath \
 	--disable-warnings \
 	--disable-zstdlib \
 	--without-pic

@@ -8,19 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=augeas
-PKG_VERSION:=1.12.0
-PKG_RELEASE:=3
+PKG_VERSION:=1.14.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://download.augeas.net/
-PKG_HASH:=321942c9cc32185e2e9cb72d0a70eea106635b50269075aca6714e3ec282cb87
+PKG_SOURCE_URL:=https://github.com/hercules-team/augeas/releases/download/release-$(PKG_VERSION)
+PKG_HASH:=368bfdd782e4b9c7163baadd621359c82b162734864b667051ff6bcb57b9edff
 
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
+
+PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:augeas:augeas
-PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk

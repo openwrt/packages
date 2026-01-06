@@ -1,0 +1,81 @@
+#!/bin/sh /etc/rc.common
+START=10
+USE_PROCD=1
+EXTRA_COMMANDS='firewall'
+
+firewall() {
+    local INTF PORT_REDIRECT TIMEOUT
+    config_load "simple-captive-portal"
+    config_get INTF main interface
+    [ -z "${INTF}" ] && exit 0
+    config_get PORT_REDIRECT main port_redirect 8888
+    config_get TIMEOUT main timeout 86400
+
+    /usr/sbin/nft -f- <<EOF
+table inet simple-captive-portal
+flush table inet simple-captive-portal
+table inet simple-captive-portal {
+    set guest_macs {
+        type ether_addr
+        timeout ${TIMEOUT}s
+    }
+
+    chain prerouting {
+        type nat hook prerouting priority mangle; policy drop;
+        iif != ${INTF} accept
+        ether saddr @guest_macs accept
+        tcp dport 80 redirect to ${PORT_REDIRECT}
+        fib daddr . iif type { local, broadcast, multicast } accept
+        reject
+    }
+}
+EOF
+}
+
+boot() {
+    BOOT=1
+    start "$@"
+}
+
+start_service() {
+    # firewall() called by hotplug on boot
+    [ -z "${BOOT}" ] && firewall
+
+    local INTF PORT_REDIRECT PORT_PORTAL
+    config_load "simple-captive-portal"
+    config_get INTF main interface
+    [ -z "${INTF}" ] && exit 0
+    config_get PORT_REDIRECT main port_redirect 8888
+    config_get PORT_PORTAL main port_portal 8889
+
+    procd_open_instance redirect
+    procd_set_param command /usr/sbin/uhttpd -f -c /dev/null -k0 -h /etc/simple-captive-portal/ -l / -L /usr/share/simple-captive-portal/redirect.lua -p "${PORT_REDIRECT}"
+    procd_set_param env PORT_PORTAL=${PORT_PORTAL}
+    procd_add_jail simple-captive-portal-redirect log procfs sysfs ronly
+    procd_add_jail_mount /etc/simple-captive-portal/
+    procd_add_jail_mount /usr/share/simple-captive-portal/redirect.lua
+    procd_add_jail_mount /usr/lib/uhttpd_lua.so
+    procd_set_param user nobody
+    procd_set_param no_new_privs
+    procd_set_param respawn
+    procd_set_param stdout 1
+    procd_set_param stderr 1
+    procd_close_instance
+
+    procd_open_instance portal
+    procd_set_param command /usr/sbin/uhttpd -f -c /dev/null -k0 -h /etc/simple-captive-portal/ -l /connect -L /usr/share/simple-captive-portal/portal.lua -p "${PORT_PORTAL}"
+    procd_add_jail simple-captive-portal-portal log procfs sysfs ronly
+    procd_add_jail_mount /etc/simple-captive-portal/
+    procd_add_jail_mount /usr/lib/lua/luci/ip.so
+    procd_add_jail_mount /usr/share/simple-captive-portal/portal.lua
+    procd_add_jail_mount /usr/lib/uhttpd_lua.so
+    procd_add_jail_mount /usr/sbin/nft
+    procd_add_jail_mount /bin/sh
+    procd_set_param capabilities /usr/share/simple-captive-portal/capabilities.json
+    procd_set_param user nobody
+    procd_set_param no_new_privs
+    procd_set_param respawn
+    procd_set_param stdout 1
+    procd_set_param stderr 1
+    procd_close_instance
+}

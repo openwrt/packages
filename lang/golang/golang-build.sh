@@ -120,7 +120,7 @@ build() {
 	if [ "$GO_GO_GENERATE" = 1 ]; then
 		log "Calling go generate"
 		# shellcheck disable=SC2086
-		GOOS='' GOARCH='' GO386='' GOARM='' GOMIPS='' GOMIPS64='' \
+		GOOS='' GOARCH='' GO386='' GOARM='' GOARM64='' GOMIPS='' GOMIPS64='' GORISCV64=''\
 		go generate -v $targets
 		log
 	fi

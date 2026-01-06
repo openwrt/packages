@@ -1,0 +1,11 @@
+--- a/wscript_configure_system_gnutls
++++ b/wscript_configure_system_gnutls
+@@ -36,7 +36,7 @@ if (gnutls_version > parse_version('3.6.
+ 
+ # GNUTLS_CB_TLS_SERVER_END_POINT is available with
+ # 3.7.2
+-if (gnutls_version >= parse_version('3.7.2')):
++if (gnutls_version > parse_version('3.7.2')):
+       conf.DEFINE('HAVE_GNUTLS_CB_TLS_SERVER_END_POINT', 1)
+ 
+ # Check if gnutls has fips mode support

@@ -1,0 +1,23 @@
+--- a/ext/POSIX/POSIX.xs
++++ b/ext/POSIX/POSIX.xs
+@@ -28,11 +28,7 @@ static int not_here(const char *s);
+ #include <sys/errno2.h>
+ #endif
+ #include <float.h>
+-#ifdef I_FENV
+-#if !(defined(__vax__) && defined(__NetBSD__))
+ #include <fenv.h>
+-#endif
+-#endif
+ #include <limits.h>
+ #include <locale.h>
+ #include <math.h>
+@@ -182,7 +178,7 @@ static int not_here(const char *s);
+ #endif
+ 
+ /* We will have an emulation. */
+-#ifndef FE_TONEAREST
++#ifndef FE_TOWARDZERO
+ #  define FE_TOWARDZERO	0
+ #  define FE_TONEAREST	1
+ #  define FE_UPWARD	2

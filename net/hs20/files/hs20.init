@@ -170,7 +170,7 @@ EOF
 start_service() {
 	local enabled
 	config_load hs20
-	config_get enabled server enabled
+	config_get_bool enabled server enabled
 
 	[ "$enabled" != "1" ] && [ "$enabled" != "true" ] && exit 0
 	echo "starting"

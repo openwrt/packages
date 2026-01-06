@@ -1,16 +1,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=syncthing
-PKG_VERSION:=1.27.1
-PKG_RELEASE:=2
+PKG_VERSION:=2.0.12
+PKG_RELEASE:=1
 
 PKG_SOURCE:=syncthing-source-v$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/syncthing/syncthing/releases/download/v$(PKG_VERSION)
-PKG_HASH:=5c7b0456e50c8a2e4c9767727c4139558ba95573a276273a1730a903e0a73834
+PKG_HASH:=56004ae6d974aa387c3c6a734eb98aafd5d6159fc657a1f4c618e0b1814fadae
 
 PKG_BUILD_DIR=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/$(PKG_NAME)
 
-PKG_MAINTAINER:=Paul Spooren <mail@aparcar.org>, Van Waholtz <brvphoenix@gmail.com>
+PKG_MAINTAINER:=Van Waholtz <brvphoenix@gmail.com>, George Sapkin <george@sapk.in>
 PKG_LICENSE:=MPL-2.0
 PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:syncthing:syncthing
@@ -42,12 +42,12 @@ define Package/syncthing/Default
   DEPENDS:=$(GO_ARCH_DEPENDS)
   SECTION:=utils
   CATEGORY:=Utilities
+  USERID:=syncthing=499:syncthing=499
 endef
 
 define Package/syncthing
   $(call Package/syncthing/Default)
   TITLE:=Continuous file synchronization program
-  USERID:=syncthing=499:syncthing=499
 endef
 
 define Package/stdiscosrv
@@ -83,11 +83,17 @@ define Package/syncthing/description
 endef
 
 define Package/stdiscosrv/description
-  Relay server for syncthing
+  Syncthing relies on a discovery server to find peers on the internet.
+  Anyone can run a discovery server and point Syncthing installations to
+  it. The Syncthing project also maintains a global cluster for public
+  use.
 endef
 
 define Package/strelaysrv/description
-  Relay server for syncthing
+  Syncthing relies on a network of community-contributed relay servers.
+  Anyone can run a relay server, and it will automatically join the relay
+  pool and be available to Syncthing users. The current list of relays can
+  be found at https://relays.syncthing.net/.
 endef
 
 define SyncthingInstall

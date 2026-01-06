@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=i2c-tools
-PKG_VERSION:=4.3
-PKG_RELEASE:=3
+PKG_VERSION:=4.4
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/software/utils/i2c-tools
-PKG_HASH:=1f899e43603184fac32f34d72498fc737952dbc9c97a8dd9467fadfdf4600cf9
+PKG_HASH:=8b15f0a880ab87280c40cfd7235cfff28134bf14d5646c07518b1ff6642a2473
 
 PKG_MAINTAINER:=Daniel Golle <daniel@makrotopia.org>
 PKG_LICENSE:=GPL-2.0-or-later LGPL-2.1-or-later
@@ -22,6 +22,7 @@ PKG_CPE_ID:=cpe:/a:i2c-tools_project:i2c-tools
 
 PKG_BUILD_PARALLEL:=1
 PYTHON3_PKG_BUILD:=0
+PKG_BUILD_DEPENDS:=python-setuptools/host
 
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python3-package.mk

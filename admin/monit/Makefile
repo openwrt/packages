@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=monit
-PKG_VERSION:=5.33.0
+PKG_VERSION:=5.35.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://bitbucket.org/tildeslash/monit/downloads/
-PKG_HASH:=1ace889c0183473a9d70160df6533bb6e1338dc1354f5928507803e1e2a863b5
+PKG_HASH:=4dfef54329e63d9772a9e1c36ac99bc41173b79963dc0d8235f2c32f4b9e078f
 
 PKG_MAINTAINER:=Yaroslav Petrov <info@lank.me>
 PKG_LICENSE:=AGPL-3.0
@@ -61,6 +61,7 @@ $(call Package/monit/Default/description)
 endef
 
 CONFIGURE_ARGS += \
+	--with-piddir="/var/run" \
 	--without-pam \
 	ac_cv_ipv6=$(if $(CONFIG_IPV6),yes,no) \
 	libmonit_cv_setjmp_available=yes \

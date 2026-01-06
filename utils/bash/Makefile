@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2015 OpenWrt.org
+# Copyright (C) 2007-2026 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bash
-PKG_VERSION:=5.2.15
+PKG_VERSION:=5.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/bash
-PKG_HASH:=13720965b5f4fc3a0d4b61dd37e7565c741da9a5be24edc2ae00182fc1b3588c
+PKG_HASH:=0d5cd86965f869a26cf64f4b71be7b96f90a3ba8b3d74e27e8e9d9d5550f31ba
 
-PKG_MAINTAINER:=Marcel Denia <naoir@gmx.net>
+PKG_MAINTAINER:=Wei-Ting Yang <williamatcg@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:gnu:bash
@@ -31,7 +31,7 @@ define Package/bash
   SUBMENU:=Shells
   TITLE:=The GNU Bourne Again SHell
   DEPENDS:=+libncurses +libreadline
-  URL:=http://www.gnu.org/software/bash/
+  URL:=https://www.gnu.org/software/bash/
 endef
 
 define Package/bash/description
@@ -60,7 +60,7 @@ endef
 # bash_cv_dev_fd: The test is done on build system but OpenWrt currently does
 # not have /dev/fd, it provides /proc/self/fd/ instead
 #
-# bash_cv_sys_named_pipes: Required for process substituion
+# bash_cv_sys_named_pipes: Required for process substitution
 CONFIGURE_VARS += \
 	ac_cv_rl_prefix="$(STAGING_DIR)/usr" \
 	ac_cv_rl_version="8.0" \
@@ -68,6 +68,7 @@ CONFIGURE_VARS += \
 	bash_cv_job_control_missing=present \
 	bash_cv_dev_fd=whacky \
 	bash_cv_sys_named_pipes=present \
+	CFLAGS_FOR_BUILD="-std=gnu17" \
 
 # The following are some other tests that cannot run when cross-compiling
 CONFIGURE_VARS += \
@@ -82,6 +83,8 @@ CONFIGURE_ARGS+= \
 	--enable-direxpand-default \
 	--enable-job-control \
 	--enable-readline
+
+TARGET_CFLAGS += -std=gnu17
 
 define Package/bash/postinst
 #!/bin/sh

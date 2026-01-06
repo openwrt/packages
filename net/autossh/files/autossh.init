@@ -34,15 +34,15 @@ start_instance() {
 	config_get path            "$section" path
 	config_get pidfile         "$section" pidfile
 
-	if [ -z "$localport" ]; then
-		echo "autossh: localport option is required"
+	if [ -n "$localport" ] && [ -n "$remoteport" ]; then
+		if [ -n "$remotehost" ]; then
+			forwarding="-L ${localport}:${remotehost}:${remoteport}"
+		else
+			forwarding="-R ${remoteport}:${localhost}:${localport}"
+		fi
+	elif [ -n "$localport" ] || [ -n "$remoteport" ]; then
+		echo "autossh: both localport and remoteport options are required"
 		return 1
-	fi
-
-	if [ -n "$remotehost" ]; then
-		forwarding="-L ${localport}:${remotehost}:${remoteport}"
-	else
-		forwarding="-R ${remoteport}:${localhost}:${localport}"
 	fi
 
 	procd_open_instance "$section"

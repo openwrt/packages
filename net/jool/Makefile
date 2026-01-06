@@ -8,20 +8,21 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=jool
-PKG_VERSION:=4.1.10
-PKG_RELEASE:=1
+PKG_VERSION:=4.1.14
+PKG_RELEASE:=3
 
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/NICMx/Jool.git
-PKG_SOURCE_VERSION:=47334c9124b7a2e3253fb279e6c33acb9c2b09a6
-PKG_MIRROR_HASH:=ef34f68eb911c97016180ed09e852625a3c0fe49f7d7574382a03db75c23b60e
+PKG_SOURCE_VERSION:=5afde37abf68df63c4beda091dfbeb2967d3ce80
+PKG_MIRROR_HASH:=af483e5d35cea029dca11fc20c048334b9b9e84cfdca10921bfdd9d63779aadd
 
 PKG_BUILD_DIR=$(KERNEL_BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=!USE_GLIBC:argp-standalone
+PKG_FLAGS:=nonshared
 
 PKG_FIXUP:=autoreconf
 
@@ -102,7 +103,7 @@ endef
 define Package/jool-tools-netfilter
   $(call Package/jool/Default)
   TITLE:=Jool userspace control programs
-  DEPENDS:=+libnl +kmod-jool-netfilter
+  DEPENDS:=+libnl +libnl-genl +kmod-jool-netfilter +ethtool
 endef
 
 define Package/jool-tools-netfilter/description
@@ -134,6 +135,9 @@ define Package/jool-tools-netfilter/install
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/jool.init $(1)/etc/init.d/jool
+
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/net
+	$(INSTALL_BIN) ./files/jool-disable-fraglist-gro.sh $(1)/etc/hotplug.d/net/90-jool-disable-fraglist-gro.sh
 
 	$(INSTALL_DIR) $(1)/etc/jool
 	$(INSTALL_CONF) ./files/jool-nat64.conf.json $(1)/etc/jool/jool-nat64.conf.json

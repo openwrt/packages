@@ -1,6 +1,6 @@
 --- a/src/conf.c
 +++ b/src/conf.c
-@@ -126,7 +126,7 @@ const char *config_get_config_dir()
+@@ -129,7 +129,7 @@ const char *config_get_config_dir()
  #ifdef __APPLE__
  	base_config_dir = strdup("/var/db");
  #else

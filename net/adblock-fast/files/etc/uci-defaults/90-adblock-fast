@@ -2,6 +2,7 @@
 # Copyright 2023 MOSSDeF, Stan Grishin (stangri@melmac.ca)
 # shellcheck disable=SC2015,SC3043,SC3060
 
+
 readonly adbFunctionsFile='/etc/init.d/adblock-fast'
 if [ -s "$adbFunctionsFile" ]; then
 # shellcheck source=../../etc/init.d/adblock-fast
@@ -123,5 +124,51 @@ if [ -s '/etc/config/simple-adblock' ] \
 	done
 	output_okn
 fi
+
+# Transition to list names
+_find_name() { grep -B1 "$1" "/etc/config/${packageName}-opkg" | head -1 | cut -d "'" -f2; }
+
+add_name() {
+	local cfg="$1"
+	local url name label
+	config_get url "$cfg" 'url'
+	config_get name "$cfg" 'name'
+	if [ -z "$name" ]; then
+		label="${url##*//}"
+		label="${label%%/*}";
+		output "Finding name for ${label}: "
+		name="$(_find_name "$url")"
+		if [ -n "$name" ]; then
+			uci_set "$packageName" "$cfg" 'name' "$name"
+			output "$name "
+			output_okn
+		else
+			output "Unknown "
+			output_failn
+		fi
+	else
+		output "Name for ${label} already set to ${name} "
+		output_okn
+	fi
+}
+
+if [ -s "/etc/config/${packageName}-opkg" ] && ! grep -q 'option name' "/etc/config/${packageName}"; then
+	config_load "$packageName"
+	config_foreach add_name 'file_url'
+fi
+
+# migrate to 1.2.0
+oldval="$(uci_get "$packageName" 'config' 'debug')"
+if [ -n "$oldval" ]; then
+	uci_set "$packageName" 'config' 'debug_init_script' "$oldval"
+	uci_remove "$packageName" 'config' 'debug'
+fi
+oldval="$(uci_get "$packageName" 'config' 'proc_debug')"
+if [ -n "$oldval" ]; then
+	uci_set "$packageName" 'config' 'debug_performance' "$oldval"
+	uci_remove "$packageName" 'config' 'proc_debug'
+fi
+
+uci_changes "$packageName" && uci_commit "$packageName"
 
 exit 0

@@ -11,13 +11,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=boost
-PKG_VERSION:=1.84.0
-PKG_SOURCE_VERSION:=1_84_0
+PKG_VERSION:=1.90.0
+PKG_SOURCE_VERSION:=1_90_0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)_$(PKG_SOURCE_VERSION).tar.bz2
-PKG_SOURCE_URL:=@SF/$(PKG_NAME)/$(PKG_NAME)/$(PKG_VERSION) https://boostorg.jfrog.io/artifactory/main/release/$(PKG_VERSION)/source/
-PKG_HASH:=cc4b893acf645c9d4b698e9a0f08ca8846aa5d6c68275c14c3e7949c24109454
+PKG_SOURCE_URL:=https://archives.boost.io/release/$(PKG_VERSION)/source @SF/$(PKG_NAME)/$(PKG_NAME)/$(PKG_VERSION)
+PKG_HASH:=49551aff3b22cbc5c5a9ed3dbc92f0e23ea50a0f7325b0d198b705e8ee3fc305
 
 PKG_MAINTAINER:=Carlos M. Ferreira <carlosmf.pt@gmail.com>
 PKG_LICENSE:=BSL-1.0
@@ -42,13 +42,14 @@ define Package/boost/Default
 endef
 
 define Package/boost/description
-This package provides the Boost v1.84.0 libraries.
+This package provides the Boost v1.90.0 libraries.
 Boost is a set of free, peer-reviewed, portable C++ source libraries.
 
 This package provides the following run-time libraries:
  - atomic
+ - charconv
  - chrono
- - cobalt (new)
+ - cobalt
  - container
  - context
  - contract
@@ -71,7 +72,6 @@ This package provides the following run-time libraries:
  - regex
  - serialization and wserialization
  - stackstrace
- - system
  - thread
  - timer
  - type_erasure
@@ -79,7 +79,7 @@ This package provides the following run-time libraries:
  - wave
 
 There are many more header-only libraries supported by Boost.
-See more at http://www.boost.org/doc/libs/1_84_0/
+See more at http://www.boost.org/doc/libs/1_90_0/
 endef
 
 PKG_BUILD_DEPENDS:=boost/host
@@ -237,7 +237,7 @@ define Package/boost/config
 		config boost-use-name-tags
 			bool "Use tagged names."
 			help
-				Add name tags the lib files, to diferentiate each library version:
+				Add name tags the lib files, to differentiate each library version:
 				  "-mt" for multi-threading.
 				  "-d" for debugging.
 				  "-s" for runtime static link".
@@ -297,7 +297,7 @@ define Package/boost-test
 	$(call Package/boost/Default)
 	TITLE+= (test)
 	HIDDEN:=1
-	DEPENDS+=+boost-system +boost-timer
+	DEPENDS+=+boost-timer
 endef
 
 define Build/Configure
@@ -335,38 +335,38 @@ define DefineBoostLibrary
   endef
 endef
 
-$(eval $(call DefineBoostLibrary,atomic,system))
-$(eval $(call DefineBoostLibrary,chrono,system))
-$(eval $(call DefineBoostLibrary,cobalt,system container))
+$(eval $(call DefineBoostLibrary,atomic))
+$(eval $(call DefineBoostLibrary,charconv,,,,libquadmath))
+$(eval $(call DefineBoostLibrary,chrono))
+$(eval $(call DefineBoostLibrary,cobalt,container context date_time,,,libopenssl))
 $(eval $(call DefineBoostLibrary,container))
-$(eval $(call DefineBoostLibrary,context,chrono system,,!boost-context-exclude))
-$(eval $(call DefineBoostLibrary,contract,system))
-$(eval $(call DefineBoostLibrary,coroutine,system chrono context thread,,!boost-coroutine-exclude))
+$(eval $(call DefineBoostLibrary,context,chrono ,,!boost-context-exclude))
+$(eval $(call DefineBoostLibrary,contract,atomic chrono container date_time thread))
+$(eval $(call DefineBoostLibrary,coroutine,chrono context thread,,!boost-coroutine-exclude))
 $(eval $(call DefineBoostLibrary,date_time))
 #$(eval $(call DefineBoostLibrary,exception,,))
 $(eval $(call DefineBoostLibrary,fiber,coroutine filesystem,,!boost-fiber-exclude))
-$(eval $(call DefineBoostLibrary,filesystem,system atomic))
-$(eval $(call DefineBoostLibrary,graph,regex))
-$(eval $(call DefineBoostLibrary,iostreams,,,,zlib liblzma libbz2 libzstd))
+$(eval $(call DefineBoostLibrary,filesystem,atomic))
+$(eval $(call DefineBoostLibrary,graph))
+$(eval $(call DefineBoostLibrary,iostreams,random regex,,,zlib liblzma libbz2 libzstd))
 $(eval $(call DefineBoostLibrary,json,container))
-$(eval $(call DefineBoostLibrary,locale,system chrono thread,,,icu))
-$(eval $(call DefineBoostLibrary,log,system chrono date_time thread filesystem regex))
-$(eval $(call DefineBoostLibrary,math))
+$(eval $(call DefineBoostLibrary,locale,chrono thread charconv,,,icu))
+$(eval $(call DefineBoostLibrary,log,chrono date_time thread filesystem regex serialization))
+$(eval $(call DefineBoostLibrary,math, container random))
 #$(eval $(call DefineBoostLibrary,mpi,,)) # OpenMPI does no exist in OpenWRT at this time.
 $(eval $(call DefineBoostLibrary,nowide))
-$(eval $(call DefineBoostLibrary,program_options))
-$(eval $(call DefineBoostLibrary,python3,,,,python3-base))
-$(eval $(call DefineBoostLibrary,random,system))
+$(eval $(call DefineBoostLibrary,program_options,container))
+$(eval $(call DefineBoostLibrary,python3,container graph,,,python3-base))
+$(eval $(call DefineBoostLibrary,random))
 $(eval $(call DefineBoostLibrary,regex,,,,icu))
 $(eval $(call DefineBoostLibrary,serialization))
 $(eval $(call DefineBoostLibrary,wserialization,serialization))
 $(eval $(call DefineBoostLibrary,stacktrace))
-$(eval $(call DefineBoostLibrary,system))
-$(eval $(call DefineBoostLibrary,thread,system chrono atomic))
+$(eval $(call DefineBoostLibrary,thread,chrono atomic container date_time))
 $(eval $(call DefineBoostLibrary,timer,chrono))
-$(eval $(call DefineBoostLibrary,type_erasure,chrono system thread))
+$(eval $(call DefineBoostLibrary,type_erasure,chrono thread))
 $(eval $(call DefineBoostLibrary,url))
-$(eval $(call DefineBoostLibrary,wave,date_time thread filesystem))
+$(eval $(call DefineBoostLibrary,wave,date_time thread filesystem container serialization regex))
 
 include $(INCLUDE_DIR)/host-build.mk
 
@@ -376,7 +376,7 @@ define Host/Compile
 
 	( cd $(HOST_BUILD_DIR) ; \
 		./bootstrap.sh --prefix=$(STAGING_DIR_HOSTPKG) \
-			--with-libraries=context,filesystem,program_options,regex,system ;\
+			--with-libraries=context,filesystem,program_options,regex ;\
 		./b2 --ignore-site-config install )
 endef
 

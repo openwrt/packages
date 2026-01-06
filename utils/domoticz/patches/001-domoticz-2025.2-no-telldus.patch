@@ -1,0 +1,41 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -32,6 +32,7 @@ option(USE_PYTHON "Use Python for Plugin
+ option(INCLUDE_LINUX_I2C "Include I2C support" YES)
+ option(INCLUDE_SPI "Include SPI support" YES)
+ option(WITH_LIBUSB "Enable libusb support" YES)
++option(WITH_TELLDUSCORE "Enable Telldus support" YES)
+ 
+ # Link static or shared, external dependencies
+ option(USE_LUA_STATIC "Link LUA static" YES)
+@@ -783,17 +784,19 @@ ELSE()
+   message(STATUS "GPIO is not available")
+ ENDIF()
+ 
+-find_path(TELLDUSCORE_INCLUDE NAMES telldus-core.h)
+-IF(TELLDUSCORE_INCLUDE)
+-  message(STATUS "Found telldus-core (telldus-core.h) at : ${TELLDUSCORE_INCLUDE}")
+-  find_library(TELLDUS_LIBRARIES NAMES libtelldus-core.so)
+-  IF(TELLDUS_LIBRARIES)
+-    message(STATUS "Found libtelldus-core at : ${TELLDUS_LIBRARIES}, adding telldus support")
+-    add_definitions(-DWITH_TELLDUSCORE)
+-  ENDIF(TELLDUS_LIBRARIES)
+-ELSE()
+-  message(STATUS "Not found telldus-core (telldus-core.h), not adding tellstick support")
+-ENDIF(TELLDUSCORE_INCLUDE)
++IF(WITH_TELLDUSCORE)
++  find_path(TELLDUSCORE_INCLUDE NAMES telldus-core.h)
++  IF(TELLDUSCORE_INCLUDE)
++    message(STATUS "Found telldus-core (telldus-core.h) at : ${TELLDUSCORE_INCLUDE}")
++    find_library(TELLDUS_LIBRARIES NAMES libtelldus-core.so)
++    IF(TELLDUS_LIBRARIES)
++      message(STATUS "Found libtelldus-core at : ${TELLDUS_LIBRARIES}, adding telldus support")
++      add_definitions(-DWITH_TELLDUSCORE)
++    ENDIF(TELLDUS_LIBRARIES)
++  ELSE()
++    message(STATUS "Not found telldus-core (telldus-core.h), not adding tellstick support")
++  ENDIF(TELLDUSCORE_INCLUDE)
++ENDIF(WITH_TELLDUSCORE)
+ 
+ # Handle resolving
+ check_function_exists(res_init HAVE_LIBC_RESOLV)

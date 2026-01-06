@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=telldus-core
 PKG_VERSION:=2.1.2
-PKG_RELEASE:=8
+PKG_RELEASE:=9
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.telldus.com/TellStick/Software/telldus-core/
@@ -40,7 +40,7 @@ define Package/telldus-core
 	CATEGORY:=Utilities
 	TITLE:=Telldus TellStick USB interface
 	URL:=https://telldus.com
-	DEPENDS:=+confuse +libftdi +libstdcpp
+	DEPENDS:=+confuse +libftdi1 +libstdcpp
 endef
 
 define Package/telldus-core/description

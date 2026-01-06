@@ -1,0 +1,23 @@
+From 764b6202402e9e5687ff873330e5ad6be6f69df7 Mon Sep 17 00:00:00 2001
+From: Alex Kiernan <alex.kiernan@gmail.com>
+Date: Mon, 5 Dec 2022 22:49:49 +0000
+Subject: [PATCH] mDNSCore: Fix broken debug parameter
+
+Upstream-Status: Pending
+Signed-off-by: Alex Kiernan <alex.kiernan@gmail.com>
+
+---
+ mDNSCore/mDNS.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/mDNSCore/mDNS.c
++++ b/mDNSCore/mDNS.c
+@@ -10249,7 +10249,7 @@ mDNSlocal void mDNSCoreReceiveNoUnicastA
+ #else
+                             const DNSServRef dnsserv = qptr->qDNSServer;
+ #endif
+-                            debugf("mDNSCoreReceiveNoUnicastAnswers making negative cache entry TTL %d for %##s (%s)", negttl, currentQName, DNSTypeName(q.qtype));
++                            debugf("mDNSCoreReceiveNoUnicastAnswers making negative cache entry TTL %d for %##s (%s)", negttl, currentQName->c, DNSTypeName(q.qtype));
+                             // Create a negative record for the current name in the CNAME chain.
+                             MakeNegativeCacheRecord(m, &m->rec.r, currentQName, currentQNameHash, q.qtype, q.qclass, negttl, mDNSInterface_Any,
+                                 dnsserv, response->h.flags);

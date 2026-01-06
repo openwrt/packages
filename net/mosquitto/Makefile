@@ -9,12 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mosquitto
-PKG_VERSION:=2.0.18
-PKG_RELEASE:=2
+PKG_VERSION:=2.0.22
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://mosquitto.org/files/source/
-PKG_HASH:=d665fe7d0032881b1371a47f34169ee4edab67903b2cd2b4c083822823f4448a
+PKG_HASH:=2f752589ef7db40260b633fbdb536e9a04b446a315138d64a7ff3c14e2de6b68
 
 PKG_LICENSE:=EPL-2.0
 PKG_LICENSE_FILES:=LICENSE.txt
@@ -132,7 +132,7 @@ define Package/libmosquitto/default/description
 use by any third party software that wants to communicate with _any_
 MQTT server.
 
-Should be useable for communicating with any MQTT v3.1/3.1.1/5 compatible
+Should be usable for communicating with any MQTT v3.1/3.1.1/5 compatible
 server, in addition to Mosquitto.
 endef
 

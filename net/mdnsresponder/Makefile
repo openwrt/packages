@@ -8,17 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mDNSResponder
-PKG_VERSION:=IETF104
-PKG_RELEASE:=5
+PKG_VERSION:=2200.100.94.0.2
+PKG_RELEASE:=2
 
-PKG_SOURCE:=mDNSResponder-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://opensource.apple.com/tarballs/mDNSResponder/IETF/
-PKG_HASH:=b3a76fd35cf2d561546c2fbeaea1e5998b7e04b8330afb918ea5fbdeb202162c
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_VERSION:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE_URL:=https://github.com/apple-oss-distributions/mDNSResponder
+PKG_MIRROR_HASH:=6d019ca318d189233b10e7d4a51ec6952547a87c3b81646c094021490d5990a7
+
 PKG_MAINTAINER:=
 PKG_LICENSE:=Apache-2.0
 PKG_CPE_ID:=cpe:/a:apple:mdnsresponder
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/mDNSResponder-$(PKG_VERSION)
 
 PKG_BUILD_PARALLEL:=0
 PKG_INSTALL:=1
@@ -54,7 +54,6 @@ $(call Package/mDNSResponder/Default/description)
  This package contains mDNS client utilities:
  - dns-sd
  - mDNSClient
- - mDNSIdentify
  - mDNSNetMonitor
  - mDNSProxyResponder
  - mDNSResponder
@@ -96,6 +95,7 @@ MAKE_FLAGS += \
 	MANPATH="$(PKG_INSTALL_DIR)/usr/man" \
 	STARTUPSCRIPTDIR="$(PKG_INSTALL_DIR)/etc/init.d" \
 	RUNLEVELSCRIPTSDIR="$(PKG_INSTALL_DIR)/etc/rc.d" \
+	tls=no \
 	os=linux-uclibc
 MAKE_PATH = mDNSPosix
 
@@ -132,7 +132,6 @@ define Package/mdns-utils/install
 	$(INSTALL_DIR) $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/dns-sd $(1)/usr/bin/
 	$(CP) $(PKG_BUILD_DIR)/mDNSPosix/build/prod/mDNSClientPosix $(1)/usr/bin/mDNSClient
-	$(CP) $(PKG_BUILD_DIR)/mDNSPosix/build/prod/mDNSIdentify $(1)/usr/bin/mDNSIdentify
 	$(CP) $(PKG_BUILD_DIR)/mDNSPosix/build/prod/mDNSNetMonitor $(1)/usr/bin/mDNSNetMonitor
 	$(CP) $(PKG_BUILD_DIR)/mDNSPosix/build/prod/mDNSProxyResponderPosix $(1)/usr/bin/mDNSProxyResponder
 	$(CP) $(PKG_BUILD_DIR)/mDNSPosix/build/prod/mDNSResponderPosix $(1)/usr/bin/mDNSResponder

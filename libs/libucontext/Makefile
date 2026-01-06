@@ -1,20 +1,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libucontext
-PKG_VERSION:=1.2
+PKG_VERSION:=1.3.2
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/kaniini/libucontext/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=2657e087c493263e7bbbde152a5bc08ce22dc5a7970887ac4fd251b90b58401f
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/kaniini/libucontext
+PKG_SOURCE_VERSION:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_MIRROR_HASH:=eef55c05aca03c6d62672838638f49daa95ab8f9bf87126df32cedfe150e333c
 
 PKG_MAINTAINER:=Volker Christian <me@vchrist.at>
 PKG_LICENSE:=ISC
 PKG_LICENSE_FILES:=LICENSE
 
 PKG_BUILD_FLAGS:=no-mips16
-PKG_BUILD_PARALLEL:=1
-PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/meson.mk
@@ -36,7 +35,7 @@ define Package/libucontext-tests
 endef
 
 define Package/libucontext/description
-  Thie package is a development package aimed to be linked to
+  This package is a development package aimed to be linked to
   libraries/applications which need the SYS-V ucontext API.
 endef
 

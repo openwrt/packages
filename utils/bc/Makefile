@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bc
-PKG_VERSION:=1.06.95
+PKG_VERSION:=1.08.2
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)_$(PKG_VERSION).orig.tar.gz
-PKG_SOURCE_URL:=@DEBIAN/pool/main/b/bc
-PKG_HASH:=5e1471869dd27ba4120dd3942d2f4ec6646cf917fb056be9ae0d3a8259668d47
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=@GNU/bc
+PKG_HASH:=ae470fec429775653e042015edc928d07c8c3b2fc59765172a330d3d87785f86
 
-PKG_MAINTAINER:=Bruno Randolf <br1@einfach.org>
-PKG_LICENSE:=GPL-2.0
+PKG_MAINTAINER:=
+PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:gnu:bc
 
@@ -25,7 +25,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/bc/Default
   SECTION:=utils
   CATEGORY:=Utilities
-  URL:=http://packages.debian.org/bc
+  URL:=https://www.gnu.org/software/bc/
 endef
 
 define Package/bc

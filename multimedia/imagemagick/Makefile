@@ -6,15 +6,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=imagemagick
-PKG_VERSION:=7.1.1
-PKG_REVISION:=27
+PKG_VERSION:=7.1.2.1
 PKG_RELEASE:=1
-PKG_MAINTAINER:=Aleksey Vasilenko <aleksey.vasilenko@gmail.com>
+PKG_MAINTAINER:=
 
-PKG_SOURCE:=ImageMagick-$(PKG_VERSION)-$(PKG_REVISION).tar.gz
+_PKGVER:=$(basename $(PKG_VERSION))
+_PKGREV:=$(_PKGVER)-$(subst .,,$(suffix $(PKG_VERSION)))
+
+PKG_SOURCE:=ImageMagick-$(_PKGREV).tar.xz
 PKG_SOURCE_URL:=https://imagemagick.org/archive
-PKG_HASH:=df0af0386df5bb3333ac9b1173ac4c893dcdd20b28100128e857f3d8f6466e1a
-PKG_BUILD_DIR:=$(BUILD_DIR)/ImageMagick-$(PKG_VERSION)-$(PKG_REVISION)
+PKG_HASH:=ead4b5d33efab77ec84335a0be9c34a0fa7e3693456bf05e76d3fa492ad6ebbb
+PKG_BUILD_DIR:=$(BUILD_DIR)/ImageMagick-$(_PKGREV)
 PKG_FIXUP:=autoreconf
 
 PKG_LICENSE:=Apache-2.0
@@ -30,12 +32,12 @@ define Package/imagemagick/Default
   SECTION:=multimedia
   CATEGORY:=Multimedia
   TITLE:=Image manipulation tools
-  URL:=https://www.imagemagick.org/
+  URL:=https://imagemagick.org/
 endef
 
 define Package/imagemagick
   $(call Package/imagemagick/Default)
-  DEPENDS:=+libltdl +libpthread +zlib +libfreetype +libpng +libjpeg +libtiff +libstdcpp
+  DEPENDS:=+libltdl +libpthread +zlib +libfreetype +libpng +libjpeg +libtiff +libzip
 endef
 
 define Package/imagemagick/description
@@ -57,19 +59,20 @@ define Package/imagemagick/conffiles
 /etc/ImageMagick-7/type-apple.xml
 /etc/ImageMagick-7/type-dejavu.xml
 /etc/ImageMagick-7/type-ghostscript.xml
+/etc/ImageMagick-7/type-urw-base35-type1.xml
 /etc/ImageMagick-7/type-urw-base35.xml
 /etc/ImageMagick-7/type-windows.xml
 /etc/ImageMagick-7/type.xml
 endef
 
 CONFIGURE_ARGS += \
-	--disable-static \
+	--disable-cipher \
 	--disable-docs \
+	--disable-hdri \
+	--disable-static \
 	--enable-dependency-tracking \
 	--with-modules \
-	--disable-hdri \
 	--with-quantum-depth=8 \
-	--disable-cipher \
 	--without-bzlib \
 	--without-djvu \
 	--without-fontconfig \
@@ -82,14 +85,17 @@ CONFIGURE_ARGS += \
 	--without-magick-plus-plus \
 	--without-openexr \
 	--without-openjp2 \
+	--without-pango \
 	--without-raqm \
 	--without-raw \
 	--without-webp \
-	--without-x \
-	--without-zstd \
-	--without-pango \
 	--without-wmf \
-	--without-xml
+	--without-x \
+	--without-xml \
+	--without-zstd
+
+## Avoid linking with libstdcpp
+TARGET_LDFLAGS+= -Wl,--as-needed
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
@@ -115,7 +121,7 @@ define Build/InstallDev
 		$(1)/usr/bin/*-config
 endef
 
-IMlibdir:=usr/lib/ImageMagick-$(PKG_VERSION)
+IMlibdir:=usr/lib/ImageMagick-$(_PKGVER)
 define Package/imagemagick/install
 	$(INSTALL_DIR) $(1)/etc $(1)/usr/bin $(1)/$(IMlibdir)
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so.* $(1)/usr/lib/

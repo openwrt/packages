@@ -8,18 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libuv
-PKG_VERSION:=1.45.0
+PKG_VERSION:=1.48.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://dist.libuv.org/dist/v$(PKG_VERSION)/
-PKG_HASH:=f5b07f65a1e8166e47983a7ed1f42fae0bee08f7458142170c37332fc676a748
+PKG_SOURCE_URL:=https://dist.libuv.org/dist/v$(PKG_VERSION)/
+PKG_HASH:=7f1db8ac368d89d1baf163bac1ea5fe5120697a73910c8ae6b2fffb3551d59fb
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-v$(PKG_VERSION)
 
 PKG_MAINTAINER:=Marko Ratkaj <markoratkaj@gmail.com>
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
-PKG_CPE_ID:=cpe:/a:libuv_project:libuv
+PKG_CPE_ID:=cpe:/a:libuv:libuv
 
 CMAKE_BINARY_SUBDIR:=out/cmake
 
@@ -29,7 +29,7 @@ include $(INCLUDE_DIR)/cmake.mk
 define Package/libuv
   SECTION:=libs
   CATEGORY:=Libraries
-  TITLE:=Cross-platform asychronous I/O library
+  TITLE:=Cross-platform asynchronous I/O library
   URL:=https://libuv.org/
   DEPENDS:=+libpthread +librt
   ABI_VERSION:=1

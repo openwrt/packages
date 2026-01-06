@@ -1,4 +1,62 @@
 #!/bin/sh
+. /lib/functions.sh
 
-grep -q '/etc/init.d/acme' /etc/crontabs/root 2>/dev/null && exit 0
-echo "0 0 * * * /etc/init.d/acme start" >>/etc/crontabs/root
+# Create a symlink to webroot
+if [ -d /www/ ] && [ ! -L /www/.well-known/acme-challenge ] && [ ! -d /www/.well-known/acme-challenge/ ]; then
+	mkdir -p /www/.well-known/
+	ln -s /var/run/acme/challenge/.well-known/acme-challenge /www/.well-known/acme-challenge
+fi
+
+# migrate deprecated opts
+# shellcheck disable=SC2155
+handle_cert() {
+	local section="$1"
+	local use_staging=$(uci_get acme "$section" use_staging)
+	if [ -n "$use_staging" ]; then
+		uci_remove acme "$section" use_staging
+		local staging=$(uci_get acme "$section" staging)
+		if [ -z "$staging" ]; then
+			uci_set acme "$section" staging "$use_staging"
+		fi
+	fi
+
+	local keylength=$(uci_get acme "$section" keylength)
+	if [ -n "$keylength" ]; then
+		uci_remove acme "$section" keylength
+		local key_type=$(uci_get acme "$section" key_type)
+		if [ -z "$key_type" ]; then
+			case $keylength in
+			ec-*) key_type=${keylength/-/} ;;
+			*) key_type=rsa$keylength ;;
+			esac
+			uci_set acme "$section" key_type "$key_type"
+		fi
+	fi
+
+	local standalone=$(uci_get acme "$section" standalone)
+	[ -n "$standalone" ] && uci_remove acme "$section" standalone
+	local dns=$(uci_get acme "$section" dns)
+	local validation_method=$(uci_get acme "$section" validation_method)
+	if [ -z "$validation_method" ]; then
+		if [ -n "$dns" ]; then
+			validation_method="dns"
+		elif [ "$standalone" = 1 ]; then
+			validation_method="standalone"
+		else
+			validation_method="webroot"
+		fi
+		uci_set acme "$section" validation_method "$validation_method"
+	fi
+}
+
+config_load acme
+config_foreach handle_cert cert
+uci_commit
+
+# Migrate '/etc/init.d/acme start' to '/etc/init.d/acme renew'
+grep -q '/etc/init.d/acme start' /etc/crontabs/root 2>/dev/null && {
+	grep -q '/etc/init.d/acme' /etc/crontabs/root 2>/dev/null || echo "0 0 * * * /etc/init.d/acme renew" >>/etc/crontabs/root
+	sed '/0 0 * * * \/etc\/init.d\/acme start/d' /etc/crontabs/root
+}
+
+exit 0

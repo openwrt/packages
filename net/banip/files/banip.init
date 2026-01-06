@@ -1,6 +1,6 @@
 #!/bin/sh /etc/rc.common
 # banIP init script - ban incoming and outgoing IPs via named nftables Sets
-# Copyright (c) 2018-2024 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2018-2025 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # (s)hellcheck exceptions
@@ -11,8 +11,7 @@ USE_PROCD=1
 
 extra_command "report" "[text|json|mail] Print banIP related Set statistics"
 extra_command "search" "[<IPv4 address>|<IPv6 address>] Check if an element exists in a banIP Set"
-extra_command "survey" "[<Set name>] List all elements of a given banIP Set"
-extra_command "lookup" "Lookup the IPs of domain names in the local lists and update them"
+extra_command "content" "[<Set name>] [true|false] Listing of all or only elements with hits of a given banIP Set"
 
 ban_init="/etc/init.d/banip"
 ban_service="/usr/bin/banip-service.sh"
@@ -20,17 +19,28 @@ ban_funlib="/usr/lib/banip-functions.sh"
 ban_pidfile="/var/run/banip.pid"
 ban_lock="/var/run/banip.lock"
 
-[ "${action}" = "boot" ] && "${ban_init}" running && exit 0
-{ [ "${action}" = "stop" ] || [ "${action}" = "report" ] || [ "${action}" = "search" ] || [ "${action}" = "survey" ] || [ "${action}" = "lookup" ]; } && ! "${ban_init}" running && exit 0
-[ ! -r "${ban_funlib}" ] && { [ "${action}" = "boot" ] || [ "${action}" = "start" ] || [ "${action}" = "restart" ] || [ "${action}" = "reload" ] || [ "${action}" = "stop" ] || [ "${action}" = "report" ] || [ "${action}" = "search" ] || [ "${action}" = "survey" ] || [ "${action}" = "lookup" ] || [ "${action}" = "status" ]; } && exit 1
-[ -d "${ban_lock}" ] && { [ "${action}" = "boot" ] || [ "${action}" = "start" ] || [ "${action}" = "restart" ] || [ "${action}" = "reload" ] || [ "${action}" = "lookup" ]; } && exit 1
-[ ! -d "${ban_lock}" ] && { [ "${action}" = "boot" ] || [ "${action}" = "start" ] || [ "${action}" = "restart" ] || [ "${action}" = "reload" ] || [ "${action}" = "lookup" ]; } && mkdir -p "${ban_lock}"
-{ [ "${action}" = "boot" ] || [ "${action}" = "start" ] || [ "${action}" = "restart" ] || [ "${action}" = "reload" ] || [ "${action}" = "stop" ] || [ "${action}" = "report" ] || [ "${action}" = "search" ] || [ "${action}" = "survey" ] || [ "${action}" = "lookup" ] || [ "${action}" = "status" ]; } && . "${ban_funlib}"
-[ ! -d "${ban_lock}" ] && { [ "${action}" = "boot" ] || [ "${action}" = "start" ] || [ "${action}" = "restart" ] || [ "${action}" = "reload" ] || [ "${action}" = "lookup" ]; } && exit 1
+if [ -z "${IPKG_INSTROOT}" ]; then
+	if [ "${action}" = "boot" ] && "${ban_init}" running; then
+		exit 0
+	elif { [ "${action}" = "stop" ] || [ "${action}" = "report" ] || [ "${action}" = "search" ] ||
+		[ "${action}" = "content" ] || [ "${action}" = "lookup" ]; } && ! "${ban_init}" running; then
+		exit 0
+	fi
+	if [ ! -d "${ban_lock}" ] &&
+		{ [ "${action}" = "boot" ] || [ "${action}" = "start" ] || [ "${action}" = "restart" ] ||
+		[ "${action}" = "reload" ] || [ "${action}" = "lookup" ] || [ "${action}" = "search" ]; }; then
+		mkdir -p "${ban_lock}"	
+	elif [ -d "${ban_lock}" ] &&
+		{ [ "${action}" = "boot" ] || [ "${action}" = "start" ] || [ "${action}" = "restart" ] ||
+		[ "${action}" = "reload" ] || [ "${action}" = "lookup" ] || [ "${action}" = "search" ]; }; then
+		exit 1
+	fi
+	. "${ban_funlib}"
+fi
 
 boot() {
 	: >"${ban_pidfile}"
-	rc_procd start_service "boot"
+	rc_procd start_service boot
 }
 
 start_service() {
@@ -41,7 +51,7 @@ start_service() {
 		procd_set_param pidfile "${ban_pidfile}"
 		procd_set_param nice "$(uci_get banip global ban_nicelimit "0")"
 		procd_set_param limits nofile="$(uci_get banip global ban_filelimit "1024")"
-		procd_set_param stdout 1
+		procd_set_param stdout 0
 		procd_set_param stderr 1
 		procd_close_instance
 	else
@@ -52,7 +62,7 @@ start_service() {
 
 reload_service() {
 	f_rmpid
-	rc_procd start_service "reload"
+	rc_procd start_service reload
 }
 
 stop_service() {
@@ -64,7 +74,7 @@ stop_service() {
 
 restart() {
 	stop_service
-	rc_procd start_service "restart"
+	rc_procd start_service restart
 }
 
 status() {
@@ -81,23 +91,11 @@ report() {
 
 search() {
 	f_search "${1}"
-}
-
-survey() {
-	f_survey "${1}"
-}
-
-lookup() {
-	local list hold cnt="1"
-
-	for list in allowlist blocklist; do
-		(f_lookup "${list}") &
-		hold="$((cnt % ban_cores))"
-		[ "${hold}" = "0" ] && wait
-		cnt="$((cnt + 1))"
-	done
-	wait
 	rm -rf "${ban_lock}"
+}
+
+content() {
+	f_content "${1}" "${2:-"false"}"
 }
 
 service_triggers() {
@@ -108,9 +106,6 @@ service_triggers() {
 
 	PROCD_RELOAD_DELAY="$((delay * 1000))"
 	for iface in ${trigger}; do
-		procd_add_interface_trigger "interface.*.up" "${iface}" "${ban_init}" reload
+		procd_add_interface_trigger "interface.*.up" "${iface}" "${ban_init}" start
 	done
-
-	PROCD_RELOAD_DELAY="$((2 * 1000))"
-	procd_add_reload_trigger "banip"
 }

@@ -9,12 +9,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=yajl
 PKG_VERSION:=2.1.0
-PKG_RELEASE:=2
+PKG_RELEASE:=4
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/lloyd/yajl
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
-PKG_MIRROR_HASH:=0cd74320be0270a07931e42d2f14f87a8b3fb664ecb5db58b0e838886211ab1f
+PKG_MIRROR_HASH:=cd8a319a51947100a22173b20f26e5db0db764eb122c81cde87afa30ddbd1fb8
 
 PKG_MAINTAINER:=Charles Southerland <charlie@stuphlabs.com>
 PKG_LICENSE:=ISC
@@ -24,6 +24,7 @@ PKG_CPE_ID:=cpe:/a:yajl_project:yajl
 CMAKE_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/cmake.mk
 
 define Package/yajl
@@ -46,4 +47,10 @@ define Package/yajl/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libyajl.so* $(1)/usr/lib/
 endef
 
+define Host/Install
+	$(call Host/Install/Default)
+	mv $(1)/share/pkgconfig/yajl.pc $(1)/lib/pkgconfig/yajl.pc
+endef
+
 $(eval $(call BuildPackage,yajl))
+$(eval $(call HostBuild))

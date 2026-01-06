@@ -27,9 +27,9 @@ Signed-off-by: Yousong Zhou <yszhou4tech@gmail.com>
  Description: Open vSwitch library
  Version: @VERSION@
  Libs: -L${libdir} -lopenvswitch
--Libs.private: @LIBS@
+-Libs.private: @LIBS@ @SSL_LIBS@ @CAPNG_LDADD@ @LIBBPF_LDADD@
 +Libs.private: @LIBS@ @SSL_LIBS@ @CAPNG_LDADD@ @LIBBPF_LDADD@ @LIBUNBOUND_LDADD@ @LIBUNWIND_LDADD@
- Cflags: -I${includedir}/openvswitch
+ Cflags: -I${includedir}
 --- a/m4/openvswitch.m4
 +++ b/m4/openvswitch.m4
 @@ -677,7 +677,8 @@ AC_DEFUN([OVS_CHECK_UNBOUND],

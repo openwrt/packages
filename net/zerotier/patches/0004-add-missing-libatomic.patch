@@ -1,9 +1,8 @@
-From b3879d721734862aa64433f7faf124a0862da029 Mon Sep 17 00:00:00 2001
+From 3c4f6d71dde297be573e28d3027e2ce51c82c238 Mon Sep 17 00:00:00 2001
 From: Moritz Warning <moritzwarning@web.de>
-Date: Sun, 27 Aug 2023 22:27:12 +0200
-Subject: [PATCH 4/5] add missing libatomic
+Date: Fri, 12 Sep 2025 11:15:43 +0200
+Subject: [PATCH 4/6] add missing libatomic
 
-Signed-off-by: Moritz Warning <moritzwarning@web.de>
 ---
  make-linux.mk | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
@@ -12,10 +11,10 @@ Signed-off-by: Moritz Warning <moritzwarning@web.de>
 +++ b/make-linux.mk
 @@ -11,7 +11,7 @@ endif
  
- INCLUDES?=-Izeroidc/target -isystem ext -Iext/prometheus-cpp-lite-1.0/core/include -Iext-prometheus-cpp-lite-1.0/3rdparty/http-client-lite/include -Iext/prometheus-cpp-lite-1.0/simpleapi/include
+ INCLUDES?=-Irustybits/target -isystem ext -Iext/prometheus-cpp-lite-1.0/core/include -Iext-prometheus-cpp-lite-1.0/3rdparty/http-client-lite/include -Iext/prometheus-cpp-lite-1.0/simpleapi/include
  DEFS?=
 -LDLIBS?=
 +LDLIBS?=-latomic
  DESTDIR?=
+ EXTRA_DEPS?=
  
- include objects.mk

@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-hatch-requirements-txt
-PKG_VERSION:=0.4.0
+PKG_VERSION:=0.4.1
 PKG_RELEASE:=1
 
 PYPI_NAME:=hatch-requirements-txt
 PYPI_SOURCE_NAME:=hatch_requirements_txt
-PKG_HASH:=800509946e85d9e56d73242fab223ec36db50372e870a04e2dd1fd9bad98455d
+PKG_HASH:=2c686e5758fd05bb55fa7d0c198fdd481f8d3aaa3c693260f5c0d74ce3547d20
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE

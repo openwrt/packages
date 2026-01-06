@@ -1,0 +1,57 @@
+--- a/src/rrd_cgi.c
++++ b/src/rrd_cgi.c
+@@ -4,8 +4,14 @@
+  * rrd_cgi.c  RRD Web Page Generator
+  *****************************************************************************/
+ 
++#ifndef _GNU_SOURCE
++#define _GNU_SOURCE
++#endif
++
+ #include "rrd_tool.h"
+ #include <cgi.h>
++#include <stdlib.h>
++#include <strings.h>
+ #include <time.h>
+ 
+ 
+@@ -345,7 +351,7 @@ int main(int argc, char *argv[]) {
+ 
+ 	if (!filter) {
+ 		printf ("Content-Type: text/html\n" 
+-				"Content-Length: %d\n", 
++				"Content-Length: %zd\n", 
+ 				strlen(buffer));
+ 
+ 		if (labs(goodfor) > 0) {
+--- a/src/rrd_graph.c
++++ b/src/rrd_graph.c
+@@ -5,6 +5,10 @@
+  * rrd__graph.c  make creates ne rrds
+  ****************************************************************************/
+ 
++#ifndef _GNU_SOURCE
++#define _GNU_SOURCE
++#endif
++
+ #include "rrd_tool.h"
+ 
+ #ifdef WIN32
+@@ -2475,7 +2479,7 @@ copyImage(gdImagePtr gif, char *image, i
+       }
+       gdImageDestroy(img); 
+      }
+-     close(fi); 
++     fclose(fi); 
+    } else {
+      rrd_set_error("Error Opeing %s: %s",image,  strerror(errno));
+    }
+@@ -3308,7 +3312,7 @@ im.unit = 0; /* do not display unit if n
+ 	case GF_VRULE:
+ 	    if(sscanf(
+ 		&argv[i][argstart],
+-		"%lu#%2x%2x%2x:%n",
++		"%ld#%2x%2x%2x:%n",
+ 		&im.gdes[im.gdes_c-1].xrule,
+ 		&col_red,
+ 		&col_green,

@@ -1,0 +1,32 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -310,6 +310,8 @@ include_directories(${PROJECT_BINARY_DIR
+                     ${PROJECT_BINARY_DIR}
+                     ${PROJECT_SOURCE_DIR})
+ 
++find_package(Intl)
++
+ add_subdirectory(sbuild)
+ add_subdirectory(bin)
+ add_subdirectory(etc)
+--- a/sbuild/CMakeLists.txt
++++ b/sbuild/CMakeLists.txt
+@@ -208,6 +208,7 @@ add_library(sbuild STATIC
+             ${public_chroot_facet_cc_sources})
+ target_link_libraries(sbuild
+                       PRIVATE
++                        Intl::Intl
+                         ${CMAKE_THREAD_LIBS_INIT}
+                         ${PAM_LIBRARY}
+                         ${UUID_LIBRARY}
+--- a/sbuild/sbuild-basic-keyfile.tcc
++++ b/sbuild/sbuild-basic-keyfile.tcc
+@@ -214,7 +214,7 @@ sbuild::basic_keyfile<K, P>::get_locale_
+     }
+   catch (std::runtime_error const& e) // Invalid locale
+     {
+-      localename = std::locale::classic();
++      localename = std::locale::classic().name();
+     }
+   std::string::size_type pos;
+   bool status = false;

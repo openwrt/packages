@@ -35,12 +35,23 @@ FRR_DEFAULT_PROFILE="traditional" # traditional / datacenter
 # - keep zebra first
 # - watchfrr does NOT belong in this list
 
-DAEMONS="zebra bgpd ripd ripngd ospfd ospf6d isisd babeld pathd pimd ldpd nhrpd eigrpd sharpd pbrd staticd bfdd fabricd vrrpd"
+DAEMONS="mgmtd zebra bgpd ripd ripngd ospfd ospf6d isisd babeld pimd pim6d ldpd nhrpd eigrpd sharpd pbrd staticd bfdd fabricd vrrpd pathd"
+
 RELOAD_SCRIPT="$D_PATH/frr-reload.py"
 
 #
 # general helpers
 #
+is_user_root () {
+#	if [[ ! -z $FRR_NO_ROOT  &&  "${FRR_NO_ROOT}" == "yes" ]]; then
+#		return 0
+#	fi
+
+	[ "${EUID:-$(id -u)}" -eq 0 ] || {
+		log_failure_msg "Only users having EUID=0 can start/stop daemons"
+		return 1
+	}
+}
 
 debug() {
 	[ -n "$watchfrr_debug" ] || return 0
@@ -93,13 +104,12 @@ daemon_list() {
 	for daemon in $DAEMONS; do
 		eval cfg=\$$daemon
 		eval inst=\$${daemon}_instances
-		[ "$daemon" = zebra -o "$daemon" = staticd ] && cfg=yes
+		[ "$daemon" = zebra -o "$daemon" = staticd -o "$daemon" = mgmtd ] && cfg=yes
 		if [ -n "$cfg" -a "$cfg" != "no" -a "$cfg" != "0" ]; then
 			if ! daemon_prep "$daemon" "$inst"; then
 				continue
 			fi
 			debug "$daemon enabled"
-#			enabled="$enabled $daemon"
 
 			if [ -n "$inst" ]; then
 				debug "$daemon multi-instance $inst"
@@ -185,9 +195,15 @@ daemon_prep() {
 
 daemon_start() {
 	local dmninst daemon inst args instopt wrap bin
+
+	is_user_root || exit 1
+
+	all=false
+	[ "$1" = "--all" ] && { all=true; shift; }
+
 	daemon_inst "$1"
 
-	ulimit -n $MAX_FDS > /dev/null 2> /dev/null
+	[ "$MAX_FDS" != "" ] && ulimit -n "$MAX_FDS" > /dev/null 2> /dev/null
 	daemon_prep "$daemon" "$inst" || return 1
 	if test ! -d "$V_PATH"; then
 		mkdir -p "$V_PATH"
@@ -199,9 +215,15 @@ daemon_start() {
 	instopt="${inst:+-n $inst}"
 	eval args="\$${daemon}_options"
 
-	if eval "$all_wrap $wrap $bin $nsopt -d $frr_global_options $instopt $args"; then
+	cmd="$all_wrap $wrap $bin $nsopt -d $frr_global_options $instopt $args"
+	log_success_msg "Starting $daemon with command: '$cmd'"
+	if eval "$cmd"; then
 		log_success_msg "Started $dmninst"
-		vtysh_b "$daemon"
+		if $all; then
+			debug "Skipping startup of vtysh until all have started"
+		else
+			vtysh_b "$daemon"
+		fi
 	else
 		log_failure_msg "Failed to start $dmninst!"
 	fi
@@ -211,16 +233,22 @@ daemon_stop() {
 	local dmninst daemon inst pidfile vtyfile pid cnt fail
 	daemon_inst "$1"
 
+	is_user_root || exit 1
+
+	all=false
+	[ "$2" = "--reallyall" ] && all=true
+
 	pidfile="$V_PATH/$daemon${inst:+-$inst}.pid"
 	vtyfile="$V_PATH/$daemon${inst:+-$inst}.vty"
 
 	[ -r "$pidfile" ] || fail="pid file not found"
-	[ -z "$fail" ] && pid="`cat \"$pidfile\"`"
+	$all && [ -n "$fail" ] && return 0
+	[ -z "$fail" ] && pid="$(cat "$pidfile")"
 	[ -z "$fail" -a -z "$pid" ] && fail="pid file is empty"
 	[ -n "$fail" ] || kill -0 "$pid" 2>/dev/null || fail="pid $pid not running"
 
 	if [ -n "$fail" ]; then
-		log_failure_msg "Cannot stop $dmninst: $fail"
+		[ "$2" = "--quiet" ] || log_failure_msg "Cannot stop $dmninst: $fail"
 		return 1
 	fi
 
@@ -228,15 +256,25 @@ daemon_stop() {
 	kill -2 "$pid"
 	cnt=1200
 	while kill -0 "$pid" 2>/dev/null; do
-		sleep 1
+#
+#	hack to have sub second delay and speed up the restart
+#
+	start=$(cut -d ' ' -f 1 /proc/uptime | awk '{print int($1 * 1000)}')
+	while :; do
+	    now=$(cut -d ' ' -f 1 /proc/uptime | awk '{print int($1 * 1000)}')
+	    elapsed=$((now - start))
+	    if [ $elapsed -ge 100 ]; then  # 100 milliseconds
+		break
+	    fi
+	done
 		[ $(( cnt -= 1 )) -gt 0 ] || break
 	done
 	if kill -0 "$pid" 2>/dev/null; then
-		log_failure_msg "Failed to stop $dmninst, pid $pid still running"
+		[ "$2" = "--quiet" ] || log_failure_msg "Failed to stop $dmninst, pid $pid still running"
 		still_running=1
 		return 1
 	else
-		log_success_msg "Stopped $dmninst"
+		[ "$2" = "--quiet" ] || log_success_msg "Stopped $dmninst"
 		rm -f "$pidfile"
 		return 0
 	fi
@@ -249,7 +287,7 @@ daemon_status() {
 	pidfile="$V_PATH/$daemon${inst:+-$inst}.pid"
 
 	[ -r "$pidfile" ] || return 3
-	pid="`cat \"$pidfile\"`"
+	pid="$(cat "$pidfile")"
 	[ -z "$pid" ] && return 1
 	kill -0 "$pid" 2>/dev/null || return 1
 	return 0
@@ -341,7 +379,7 @@ if [ -z "$FRR_PATHSPACE" ]; then
 	load_old_config "/etc/sysconfig/frr"
 fi
 
-if { declare -p watchfrr_options 2>/dev/null || true; } | grep -q '^declare \-a'; then
+if { declare -p watchfrr_options 2>/dev/null || true; } | grep -q '^declare -a'; then
 	log_warning_msg "watchfrr_options contains a bash array value." \
 		"The configured value is intentionally ignored since it is likely wrong." \
 		"Please remove or fix the setting."
@@ -373,12 +411,12 @@ frrcommon_main() {
 	cmd="$1"
 	shift
 
-	if [ "$1" = "all" -o -z "$1" ]; then
+	if [ "$1" = "all" ] || [ -z "$1" ]; then
 		case "$cmd" in
 		start)	all_start;;
 		stop)	all_stop;;
 		restart)
-			all_stop
+			all_stop --quiet
 			all_start
 			;;
 		*)	$cmd "$@";;

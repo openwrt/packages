@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=diffutils
-PKG_VERSION:=3.8
+PKG_VERSION:=3.10
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/diffutils
-PKG_HASH:=a6bdd7d1b31266d11c4f4de6c1b748d4607ab0231af5188fc2533d0ae2438fec
+PKG_HASH:=90e5e93cc724e4ebe12ede80df1634063c7a855692685919bfe60b556c9bd09e
 
 PKG_MAINTAINER:=Roger D <rogerdammit@gmail.com>
 PKG_LICENSE:=GPL-3.0
@@ -30,7 +30,7 @@ define Package/diffutils
   CATEGORY:=Development
   DEPENDS:=+USE_GLIBC:librt
   TITLE:=diffutils
-  URL:=http://www.gnu.org/software/diffutils/
+  URL:=https://www.gnu.org/software/diffutils/
   ALTERNATIVES:=\
     200:/usr/bin/cmp:/usr/libexec/cmp-gnu \
     200:/usr/bin/diff:/usr/libexec/diff-gnu

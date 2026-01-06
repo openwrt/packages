@@ -110,9 +110,12 @@ for (let radio in x) {
 			m_station_rx_packets(labels, info["rx_packets"]);
 			m_station_tx_packets(labels, info["tx_packets"]);
 			m_station_signal(labels, info["signal"]);
-			m_station_rx_bitrate(labels, info["rx_bitrate"]["bitrate32"] * 100);
-			m_station_tx_bitrate(labels, info["tx_bitrate"]["bitrate32"] * 100);
-			m_station_exp_tp(labels, info["expected_throughput"]);
+			if (info["rx_bitrate"] && info["rx_bitrate"]["bitrate32"])
+				m_station_rx_bitrate(labels, info["rx_bitrate"]["bitrate32"] * 100);
+			if (info["tx_bitrate"] && info["tx_bitrate"]["bitrate32"])
+				m_station_tx_bitrate(labels, info["tx_bitrate"]["bitrate32"] * 100);
+			if (info["expected_throughput"])
+				m_station_exp_tp(labels, info["expected_throughput"]);
 		}
 	}
 }

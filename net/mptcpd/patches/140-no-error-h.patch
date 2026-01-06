@@ -1,0 +1,30 @@
+--- a/src/mptcpize.c
++++ b/src/mptcpize.c
+@@ -18,7 +18,7 @@
+ #include <argp.h>
+ #include <dlfcn.h>
+ #include <errno.h>
+-#include <error.h>
++//#include <error.h>
+ #include <fcntl.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+@@ -36,6 +36,18 @@
+ #define PRELOAD_VAR		"LD_PRELOAD="
+ #define MPTCPWRAP_ENV		"LD_PRELOAD="PKGLIBDIR"/libmptcpwrap.so.0.0."LIBREVISION
+ 
++#define error(status, errnum, fmt, ...) do { \
++    if (errnum) { \
++        errno = errnum; \
++        perror(fmt); \
++    } else { \
++        fprintf(stderr, "%s\n", fmt); \
++    } \
++    if (status) \
++        exit(status); \
++} while(0)
++
++
+ /* Program documentation. */
+ static char args_doc[] = "CMD";
+ 

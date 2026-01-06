@@ -1,7 +1,7 @@
-From 871bc03884e8dd4a4b50d05022e347e72f4733d9 Mon Sep 17 00:00:00 2001
+From f0ada26ef03a37aa4b8c97246b93ab3bdf1db580 Mon Sep 17 00:00:00 2001
 From: Yousong Zhou <yszhou4tech@gmail.com>
 Date: Mon, 11 May 2020 10:46:09 +0800
-Subject: [PATCH] configure: allow disable fortify_source
+Subject: [PATCH 1/4] configure: allow disable fortify_source
 
 Tell build system of qemu to not add _FORTIFY_SOURCE options and let the
 OpenWrt base build system decide flavor of fortify_source to use
@@ -11,9 +11,9 @@ OpenWrt base build system decide flavor of fortify_source to use
 
 --- a/configure
 +++ b/configure
-@@ -823,6 +823,8 @@ for opt do
+@@ -791,6 +791,8 @@ for opt do
    ;;
-   --gdb=*) gdb_bin="$optarg"
+   --disable-rust) rust=disabled
    ;;
 +  --disable-fortify-source) fortify_source="no"
 +  ;;

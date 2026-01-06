@@ -8,15 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rng-tools
-PKG_VERSION:=6.15
+PKG_VERSION:=6.17
 PKG_RELEASE:=2
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/nhorman/rng-tools
-PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_MIRROR_HASH:=745a465062065104e2222ffc1b1bb3e0ce14626d44ee2176cb2a5c3723e3163a
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://codeload.github.com/nhorman/rng-tools/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=4aa50994232da74499b60b3ebf79118e30a1943be375b7d931dcf18df5442fd3
 
-PKG_MAINTAINER:=Nathaniel Wesley Filardo <nwfilardo@gmail.com>
+PKG_MAINTAINER:=
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:rng-tools_project:rng-tools
@@ -33,7 +32,8 @@ define Package/rng-tools
   CATEGORY:=Utilities
   TITLE:=Daemon for adding entropy to kernel entropy pool
   URL:=https://github.com/nhorman/rng-tools
-  DEPENDS:=+libopenssl
+  USERID:=rngd=209:rngd=209
+  DEPENDS:=+libopenssl +libcap +libcurl +jansson
 endef
 
 define Package/rng-tools/description
@@ -42,10 +42,15 @@ define Package/rng-tools/description
   to use a hardware source like /dev/hwrng if present
 endef
 
+TARGET_CFLAGS += -fno-stack-protector -fomit-frame-pointer
+TARGET_LDFLAGS += -Wl,-z,norelro
+
 CONFIGURE_ARGS += \
 	--without-nistbeacon \
 	--without-pkcs11 \
-	--without-rtlsdr
+	--without-rtlsdr \
+	--disable-werror \
+	--disable-debug
 
 ifndef CONFIG_USE_GLIBC
 	CONFIGURE_VARS += LIBS="-largp"
@@ -54,6 +59,14 @@ endif
 define Build/Prepare
 	$(call Build/Prepare/Default)
 	(cd $(PKG_BUILD_DIR); ln -s README.md README)
+endef
+
+define Build/Compile
+	$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) \
+		DESTDIR="$(PKG_INSTALL_DIR)" \
+		CFLAGS="$(TARGET_CFLAGS)" \
+		LDFLAGS="$(TARGET_LDFLAGS)" \
+		MALLOC_CHECK_=0
 endef
 
 define Package/rng-tools/install

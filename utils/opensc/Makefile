@@ -8,9 +8,9 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=opensc
-PKG_VERSION:=0.24.0
+PKG_VERSION:=0.26.1
 PKG_RELEASE:=1
-PKG_HASH:=24d03c69287291da32a30c4c38a304ad827f56cb85d83619e1f5403ab6480ef8
+PKG_HASH:=f16291a031d86e570394762e9f35eaf2fcbc2337a49910f3feae42d54e1688cb
 
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
@@ -62,7 +62,7 @@ define Package/libpkcs11-spy
   DEPENDS:=+libopenssl +libpthread
 endef
 
-define Package/libpkcs11-spy/dscription
+define Package/libpkcs11-spy/description
   PKCS#11 spying wrapper
 endef
 
@@ -108,6 +108,7 @@ TOOLS:= \
 	cardos-tool \
 	cryptoflex-tool \
 	dnie-tool \
+	dtrust-tool \
 	egk-tool \
 	eidenv \
 	gids-tool \
@@ -115,8 +116,9 @@ TOOLS:= \
 	iasecc-tool \
 	netkey-tool \
 	openpgp-tool \
-	opensc-tool \
+	opensc-asn1 \
 	opensc-explorer:+libncurses:+libreadline \
+	opensc-tool \
 	piv-tool \
 	pkcs11-register \
 	pkcs11-tool \
@@ -135,7 +137,6 @@ PROFILES:= \
 	epass2003 \
 	flex \
 	gids \
-	gpk \
 	ias_adele_admin1 \
 	ias_adele_admin2 \
 	ias_adele_common \
@@ -143,7 +144,6 @@ PROFILES:= \
 	iasecc_generic_oberthur \
 	iasecc_generic_pki \
 	iasecc \
-	incrypto34 \
 	isoApplet \
 	muscle \
 	myeid \
@@ -155,8 +155,7 @@ PROFILES:= \
 	rutoken \
 	sc-hsm \
 	setcos \
-	starcos \
-	westcos
+	starcos
 
 $(foreach file,$(TOOLS),$(eval $(call ToolGen,$(file))))
 $(foreach file,$(PROFILES),$(eval $(call ProfileGen,$(file))))

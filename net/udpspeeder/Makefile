@@ -9,11 +9,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=UDPspeeder
 PKG_VERSION:=20230206.0
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/wangyu-/$(PKG_NAME)/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=c6b0c45e971360b25cd49be0369e94b2fb12f649d39c7e60c172c14a9e3a4e0d
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_VERSION:=$(PKG_VERSION)
+PKG_SOURCE_URL:=https://github.com/wangyu-/UDPspeeder
+PKG_MIRROR_HASH:=8196a07089112a164ea07cc95806f79075bd1b12cc7af5316e2793421bb2cfbf
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
@@ -38,11 +39,10 @@ endef
 MAKE_FLAGS += cross
 
 define Build/Prepare
-	$(PKG_UNPACK)
+	$(Build/Prepare/Default)
 	sed -i 's/cc_cross=.*/cc_cross=$(TARGET_CXX)/g' $(PKG_BUILD_DIR)/makefile
 	sed -i '/\gitversion/d' $(PKG_BUILD_DIR)/makefile
 	echo 'const char * const gitversion = "$(PKG_VERSION)";' > $(PKG_BUILD_DIR)/git_version.h
-	$(Build/Patch)
 endef
 
 define Package/UDPspeeder/install

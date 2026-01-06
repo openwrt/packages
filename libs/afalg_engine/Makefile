@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=afalg_engine
-PKG_VERSION:=1.2.0-beta.1
-PKG_RELEASE:=5
+PKG_VERSION:=1.2.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/cotequeiroz/afalg_engine/archive/v$(PKG_VERSION)
-PKG_HASH:=6f0da98a3c12eaf50331ac7cd81f7b8800abf54b96fd73bd3e37cc50fd3d2ba8
+PKG_HASH:=6fe451cf37b0c9911445e46bfe96926aad5dc486c9cb81ecf7b87bb3ffff1c1a
 
 PKG_MAINTAINER:=Eneas U de Queiroz <cotequeiroz@gmail.com>
 PKG_LICENSE:=Apache-2.0
@@ -26,6 +26,8 @@ PKG_CONFIG_DEPENDS:= \
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 include $(INCLUDE_DIR)/openssl-module.mk
+
+TARGET_CFLAGS += -Wno-deprecated-declarations
 
 $(eval $(call Package/openssl/add-engine,afalg,libopenssl-afalg_sync))
 define Package/libopenssl-afalg_sync
@@ -44,7 +46,7 @@ define Package/libopenssl-afalg_sync/description
     It is different than the AF_ALG engine that ships with OpenSSL:
      - it is faster
      - it uses sync calls, instead of async
-     - it suports more algorithms
+     - it supports more algorithms
 endef
 
 define Package/libopenssl-afalg_sync/config

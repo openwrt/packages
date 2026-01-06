@@ -7,23 +7,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lynx
-PKG_VERSION:=2.8.9rel.1
-PKG_RELEASE:=2
+PKG_VERSION:=2.9.2
+PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Leonid Esman <leonid.esman@gmail.com>
 PKG_CPE_ID:=cpe:/a:lynx:lynx
 PKG_SOURCE:=$(PKG_NAME)$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=https://invisible-mirror.net/archives/lynx/tarballs/ \
-                https://ftp.icm.edu.pl/packages/lynx/tarballs/ \
-                http://ftp.oregonstate.edu/pub/blfs/conglomeration/lynx/ \
-                https://ftp.osuosl.org/pub/blfs/conglomeration/lynx/ \
                 https://fossies.org/linux/www/
-PKG_HASH:=387f193d7792f9cfada14c60b0e5c0bff18f227d9257a39483e14fa1aaf79595
+PKG_HASH:=7374b89936d991669e101f4e97f2c9592036e1e8cdaa7bafc259a77ab6fb07ce
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)$(PKG_VERSION)
-# try current development version
-# URL for current development version - http://invisible-island.net/datafiles/release/lynx-cur.tar.bz2
-
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -32,35 +26,40 @@ define Package/lynx
 	SECTION:=net
 	CATEGORY:=Network
 	DEPENDS:=+libncursesw +zlib +libopenssl +ca-bundle
-	URL:=http://lynx.invisible-island.net/
+	URL:=https://lynx.invisible-island.net/
 endef
 
 define Package/lynx/description
 	Classic non-graphical (text-mode) web browser
 endef
 
-# customize as you need
-CONFIGURE_ARGS += --with-zlib --with-ssl \
-		  --with-build-cc="$(HOSTCC)" \
-		  --with-build-cflags="$(HOST_CFLAGS)" \
-		  --with-build-cppflags="$(HOST_CPPFLAGS)" \
-		  --with-build-ldflags="$(HOST_LDFLAGS)" \
-		  --enable-ipv6 \
-		  --with-screen=ncursesw \
-		  --enable-widec \
-		  --enable-locale-charset \
-		  --enable-charset-choice \
-		  --enable-cjk \
-		  --enable-japanese-utf8 \
-		  --enable-nsl-fork \
-		--disable-config-info --disable-echo \
-		--disable-dired --disable-trace \
-		--disable-finger --disable-gopher --disable-news --disable-wais \
-		--disable-prettysrc --disable-scrollbar --disable-gzip-help \
-		--disable-idna --disable-syslog --disable-font-switch
+CONFIGURE_ARGS += \
+	--with-ssl \
+	--with-build-cc="$(HOSTCC)" \
+	--with-build-cflags="$(HOST_CFLAGS)" \
+	--with-build-cppflags="$(HOST_CPPFLAGS)" \
+	--with-build-ldflags="$(HOST_LDFLAGS)" \
+	--enable-ipv6 \
+	--with-screen=ncursesw \
+	--enable-widec \
+	--enable-charset-choice \
+	--enable-nsl-fork \
+	--disable-config-info \
+	--disable-dired \
+	--disable-trace \
+	--disable-finger \
+	--disable-gopher \
+	--disable-news \
+	--disable-wais \
+	--disable-prettysrc \
+	--disable-scrollbar \
+	--disable-idna \
+	--without-bzlib
 
-CONFIGURE_VARS += cf_cv_ncurses_header="ncursesw/curses.h" \
-		  ac_cv_path_NCURSES_CONFIG=""
+CONFIGURE_VARS += \
+	ac_cv_lib_bsd_arc4random=no \
+	cf_cv_ncurses_header="ncursesw/curses.h" \
+	ac_cv_path_NCURSES_CONFIG=""
 
 define Package/lynx/install
 	$(INSTALL_DIR) $(1)/usr/bin
@@ -71,4 +70,3 @@ define Package/lynx/install
 endef
 
 $(eval $(call BuildPackage,lynx))
-

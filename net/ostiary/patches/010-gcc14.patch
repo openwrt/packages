@@ -1,0 +1,11 @@
+--- a/ost_main.c
++++ b/ost_main.c
+@@ -788,7 +788,7 @@ void Hup_Handler(int sig)
+ int main(int argc, char *argv[])
+ {
+   int i, listen_sock, clnt_sock, success;
+-  size_t struct_len;
++  socklen_t struct_len;
+   char hash_out_buf[HASH_TEXT_SIZE]; /* for debug output */
+ #if HAVE_SIGACTION
+   struct sigaction sigact;

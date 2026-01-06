@@ -9,12 +9,12 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libopen62541
 PKG_VERSION:=1.3.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/open62541/open62541.git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_MIRROR_HASH:=1587eba9e697591a342d91df02acb7460e74617895f810c006ad3d7e4bce21b8
+PKG_MIRROR_HASH:=4e1513dfea70c2be52cc9c096386063e9e20ef757912a197f78e669a7e9dfb3d
 
 PKG_LICENSE:=MPL-2.0
 PKG_LICENSE_FILES:=LICENSE
@@ -102,7 +102,7 @@ endif
 
 define Package/libopen62541/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/libopen62541.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libopen62541.so* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,libopen62541))

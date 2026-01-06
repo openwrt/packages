@@ -1,12 +1,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tunneldigger-broker
+PKG_VERSION:=0.4.0
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=https://github.com/wlanslovenija/tunneldigger.git
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=v0.4.0
-PKG_MIRROR_HASH:=c67a0e626cec571823085a7a28bc72fcaa077669cac52c441b0dde02d676e16c
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+PKG_MIRROR_HASH:=76f97b34356ced346804e04a14b66f6bb9e315d62c4706897a2b670bccc83af9
 
 PKG_MAINTAINER:=Nick Hainke <vincent@systemli.org>
 PKG_LICENSE:=AGPL-3.0

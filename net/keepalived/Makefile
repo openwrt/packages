@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=keepalived
-PKG_VERSION:=2.2.8
-PKG_RELEASE:=5
+PKG_VERSION:=2.3.3
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.keepalived.org/software
-PKG_HASH:=85882eb62974f395d4c631be990a41a839594a7e62fbfebcb5649a937a7a1bb6
+PKG_HASH:=2288c5c7609fa452782b7acefa19acce742d0204dc17f54d36da46b10f8b590c
 
 PKG_CPE_ID:=cpe:/a:keepalived:keepalived
 PKG_LICENSE:=GPL-2.0-or-later
@@ -84,6 +84,7 @@ endef
 
 CONFIGURE_ARGS+= \
 	--enable-json \
+	--enable-reproducible-build \
 	--with-init=SYSV \
 	--disable-track-process \
 	--runstatedir="/var/run"
@@ -216,6 +217,8 @@ endif
 	$(INSTALL_DIR) $(1)/etc/keepalived
 	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/keepalived/keepalived.conf.sample \
 		$(1)/etc/keepalived/keepalived.conf
+	$(INSTALL_CONF) $(PKG_INSTALL_DIR)/etc/keepalived/keepalived.config-opts \
+		$(1)/etc/keepalived/
 
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/etc/uci-defaults/keepalived \
@@ -236,10 +239,16 @@ endif
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/keepalived
 	$(INSTALL_DATA) ./files/hotplug-user \
 		$(1)/etc/hotplug.d/keepalived/01-user
+	$(INSTALL_DATA) ./files/etc/hotplug.d/keepalived/01-ubus \
+		$(1)/etc/hotplug.d/keepalived/01-ubus
 
 	$(INSTALL_DIR) $(1)/usr/libexec/rpcd
 	$(INSTALL_BIN) ./files/usr/libexec/rpcd/keepalived \
 		$(1)/usr/libexec/rpcd/keepalived
+
+	$(INSTALL_DIR) $(1)/usr/libexec/keepalived/rpc
+	$(INSTALL_DATA) ./files/usr/libexec/keepalived/rpc/status.sh \
+		$(1)/usr/libexec/keepalived/rpc/status.sh
 
 ifneq ($(CONFIG_KEEPALIVED_SNMP_VRRP)$(CONFIG_KEEPALIVED_SNMP_CHECKER)$(CONFIG_KEEPALIVED_SNMP_RFC2)$(CONFIG_KEEPALIVED_SNMP_RFC3),)
 	$(INSTALL_DIR) $(1)/usr/share/snmp/mibs
@@ -318,7 +327,21 @@ define Package/keepalived-sync/install
 		$(1)/usr/libexec/keepalived/rpc/sync.sh
 
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/keepalived
-	$(CP) ./files/etc/hotplug.d/keepalived/* \
+	$(CP) ./files/etc/hotplug.d/keepalived/501-rpcd \
+		$(1)/etc/hotplug.d/keepalived
+	$(CP) ./files/etc/hotplug.d/keepalived/505-system \
+		$(1)/etc/hotplug.d/keepalived
+	$(CP) ./files/etc/hotplug.d/keepalived/511-firewall \
+		$(1)/etc/hotplug.d/keepalived
+	$(CP) ./files/etc/hotplug.d/keepalived/551-dnsmasq \
+		$(1)/etc/hotplug.d/keepalived
+	$(CP) ./files/etc/hotplug.d/keepalived/555-dropbear \
+		$(1)/etc/hotplug.d/keepalived
+	$(CP) ./files/etc/hotplug.d/keepalived/600-uhttpd \
+		$(1)/etc/hotplug.d/keepalived
+	$(CP) ./files/etc/hotplug.d/keepalived/700-luci \
+		$(1)/etc/hotplug.d/keepalived
+	$(CP) ./files/etc/hotplug.d/keepalived/810-files \
 		$(1)/etc/hotplug.d/keepalived
 endef
 
