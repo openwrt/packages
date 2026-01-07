@@ -1,0 +1,18 @@
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -1,14 +1,9 @@
+ [build-system]
+ requires = [
+-  # NOTE: The following build dependencies are necessary for initial
+-  # NOTE: provisioning of the in-tree build backend located under
+-  # NOTE: `packaging/pep517_backend/`.
+-  "expandvars",
+   "setuptools >= 47",  # Minimum required for `version = attr:`
+   "tomli; python_version < '3.11'",
+ ]
+-backend-path = ["packaging"]  # requires `pip >= 20` or `pep517 >= 0.6.0`
+-build-backend = "pep517_backend.hooks"  # wraps `setuptools.build_meta`
++build-backend = "setuptools.build_meta"
+ 
+ [tool.local.cythonize]
+ # This attr can contain multiple globs
