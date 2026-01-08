@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-urllib3
-PKG_VERSION:=2.6.1
+PKG_VERSION:=2.6.3
 PKG_RELEASE:=1
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
@@ -17,7 +17,7 @@ PKG_LICENSE_FILES:=LICENSE.txt
 PKG_CPE_ID:=cpe:/a:python:urllib3
 
 PYPI_NAME:=urllib3
-PKG_HASH:=5379eb6e1aba4088bae84f8242960017ec8d8e3decf30480b3a1abdaa9671a3f
+PKG_HASH:=1b62b6884944a57dbe321509ab94fd4d3b307075e0c2eae991ac71ee15ad38ed
 
 PKG_BUILD_DEPENDS:= \
 	python-hatch-vcs/host \
