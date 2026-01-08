@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fuse-overlayfs
-PKG_VERSION:=1.15
+PKG_VERSION:=1.16
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/containers/fuse-overlayfs/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=e4fbbdacbeffb560715e6c74c128aee07a7053a1fec78dc904bcc0a88e2efd67
+PKG_HASH:=45968517603389ead067222d234bc8d8ed33e4b4f8ba16216bdd3e6aedcccea9
 
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 PKG_LICENSE:=GPL-3.0-or-later
