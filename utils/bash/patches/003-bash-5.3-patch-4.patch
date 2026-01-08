@@ -1,0 +1,29 @@
+From edff796a305b09fd991fd8e965d4c83bff91ee39 Mon Sep 17 00:00:00 2001
+From: Chet Ramey <chet.ramey@case.edu>
+Date: Wed, 26 Nov 2025 12:46:21 -0500
+Subject: Bash-5.3 patch 4: fix issue with source when read(2) returns fewer
+ characters than fstat(2) says are available
+
+--- a/builtins/evalfile.c
++++ b/builtins/evalfile.c
+@@ -160,8 +160,10 @@ file_error_and_exit:
+       nr = read (fd, string, file_size);
+       if (nr >= 0)
+ 	string[nr] = '\0';
++#if 0
+       if (nr != file_size)
+ 	nr = -1;		/* XXX - didn't get the whole file */
++#endif
+     }
+   else
+     nr = zmapfd (fd, &string, 0);
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 3
++#define PATCHLEVEL 4
+ 
+ #endif /* _PATCHLEVEL_H_ */

@@ -1,0 +1,39 @@
+From a80c21e8b7ff113878ecece1db730fd40bc0ff55 Mon Sep 17 00:00:00 2001
+From: Chet Ramey <chet.ramey@case.edu>
+Date: Wed, 26 Nov 2025 12:50:54 -0500
+Subject: Bash-5.3 patch 7: fix issue where nofork command substitutions can
+ affect redirections in the calling shell
+
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 6
++#define PATCHLEVEL 7
+ 
+ #endif /* _PATCHLEVEL_H_ */
+--- a/subst.c
++++ b/subst.c
+@@ -206,6 +206,8 @@ extern int wordexp_only;
+ extern int singlequote_translations;
+ extern int extended_quote;
+ 
++extern REDIRECT *exec_redirection_undo_list, *redirection_undo_list;
++
+ #if !defined (HAVE_WCSDUP) && defined (HANDLE_MULTIBYTE)
+ extern wchar_t *wcsdup (const wchar_t *);
+ #endif
+@@ -7000,6 +7002,11 @@ function_substitute (char *string, int q
+       add_unwind_protect (uw_restore_pipestatus_array, psa);
+     }
+ #endif
++
++  unwind_protect_pointer (redirection_undo_list);
++  redirection_undo_list = NULL;
++  unwind_protect_pointer (exec_redirection_undo_list);
++  exec_redirection_undo_list = NULL;
+   
+   subst_assign_varlist = 0;
+ 
