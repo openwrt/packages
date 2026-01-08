@@ -724,14 +724,15 @@ reload_service() {
 }
 
 add_interface_trigger() {
-	local cfg=$1
-	local trigger ignore
+	local cfg="$1"
+	local net ignore ifname
 
-	config_get trigger "$cfg" interface
+	config_get net "$cfg" interface
 	config_get_bool ignore "$cfg" ignore 0
 
-	if [ -n "$trigger" ] && [ $ignore -eq 0 ]; then
-		procd_add_reload_interface_trigger "$trigger"
+	if [ -n "$net" ] && [ $ignore -eq 0 ]; then
+		network_get_device ifname "$net"
+		procd_add_reload_interface_trigger "$ifname"
 	fi
 }
 
