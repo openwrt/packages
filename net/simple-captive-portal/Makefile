@@ -29,6 +29,7 @@ define Package/simple-captive-portal/install
 	$(INSTALL_BIN) ./files/etc/init.d/simple-captive-portal $(1)/etc/init.d/simple-captive-portal
 	$(INSTALL_DIR) $(1)/etc/simple-captive-portal/
 	$(INSTALL_DATA) ./files/etc/simple-captive-portal/index.html $(1)/etc/simple-captive-portal/index.html
+	$(INSTALL_DATA) ./files/etc/simple-captive-portal/connected.html $(1)/etc/simple-captive-portal/connected.html
 	$(INSTALL_DIR) $(1)/usr/share/simple-captive-portal/
 	$(INSTALL_DATA) ./files/usr/share/simple-captive-portal/capabilities.json $(1)/usr/share/simple-captive-portal/capabilities.json
 	$(INSTALL_DATA) ./files/usr/share/simple-captive-portal/portal.lua $(1)/usr/share/simple-captive-portal/portal.lua
