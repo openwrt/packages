@@ -1,0 +1,57 @@
+From 25c37d4804a9dbe0824ba805cc2b7cb94d243682 Mon Sep 17 00:00:00 2001
+From: Chet Ramey <chet.ramey@case.edu>
+Date: Wed, 23 Jul 2025 15:52:32 -0400
+Subject: Bash-5.3 patch 3: remove internal quoting that causes failures when
+ expanding nested array subscripts in an arithmetic context
+
+--- a/patchlevel.h
++++ b/patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 2
++#define PATCHLEVEL 3
+ 
+ #endif /* _PATCHLEVEL_H_ */
+--- a/subst.c
++++ b/subst.c
+@@ -3795,9 +3795,9 @@ pos_params (const char *string, int star
+ #define EXP_CHAR(s) (s == '$' || s == '`' || s == CTLESC || s == '~')
+ #endif
+ 
+-/* We don't perform process substitution in arithmetic expressions, so don't
+-   bother checking for it. */
+-#define ARITH_EXP_CHAR(s) (s == '$' || s == '`' || s == CTLESC || s == '~')
++/* We don't perform process substitution or tilde expansion in arithmetic
++   expressions, so don't bother checking for them. */
++#define ARITH_EXP_CHAR(s) (s == '$' || s == '`' || s == CTLESC)
+ 
+ /* If there are any characters in STRING that require full expansion,
+    then call FUNC to expand STRING; otherwise just perform quote
+@@ -12215,6 +12215,14 @@ string_quote_removal (const char *string
+ 	      *r++ = '\\';
+ 	      break;
+ 	    }
++#if defined (ARRAY_VARS)
++	  /* The only special characters that matter here are []~, since those
++	     are backslash-quoted in expand_array_subscript but not dequoted
++	     by the statement following this one. */
++	  if ((quoted & Q_ARITH) && (c == LBRACK || c == RBRACK || c == '~'))
++	    ;		/* placeholder here */
++	  else
++#endif
+ 	  if (((quoted & (Q_HERE_DOCUMENT|Q_DOUBLE_QUOTES)) || dquote) && (sh_syntaxtab[c] & CBSDQUOTE) == 0)
+ 	    *r++ = '\\';
+ 	  /* FALLTHROUGH */
+--- a/tests/quotearray.right
++++ b/tests/quotearray.right
+@@ -44,7 +44,7 @@ declare -A assoc=(["\` echo >&2 foo\`"]=
+ foo
+ 0
+ 0
+-./quotearray1.sub: line 68: 0\],b\[1: arithmetic syntax error: invalid arithmetic operator (error token is "\],b\[1")
++./quotearray1.sub: line 68: 0],b[1: arithmetic syntax error: invalid arithmetic operator (error token is "],b[1")
+ declare -a array
+ 0
+ 0
