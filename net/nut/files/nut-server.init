@@ -201,7 +201,7 @@ build_ups_config() {
 	config_list_foreach "$ups" override defoverride override
 	config_list_foreach "$ups" default defoverride default
 
-	other() {
+	do_other() {
 		# shellcheck disable=SC2317
 		local othervar="$1"
 		# shellcheck disable=SC2317
@@ -219,8 +219,13 @@ build_ups_config() {
 		fi
 	}
 
-	config_list_foreach "$ups" other other other
-	config_list_foreach "$ups" otherflag other otherflag
+	# For each entry in the list "other", get the variable "other_${entry}",
+	# and if not empty, write "${entry} = ${value of other_${entry}}" to the config file.
+	config_list_foreach "$ups" other do_other other
+
+	# For each entry in the list "otherflag", get the variable "otherflag_${entry}",
+	# and if true, write "${entry}" to the config file.
+	config_list_foreach "$ups" otherflag do_other otherflag
 	echo "" >>$UPS_C
 	haveupscfg=1
 }
