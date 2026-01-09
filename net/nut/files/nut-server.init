@@ -211,10 +211,10 @@ build_ups_config() {
 
 		# shellcheck disable=SC2317
 		if [ "$othervarflag" = "otherflag" ]; then
-			config_get_bool otherval "${othervarflag}_${othervar}" value
+			config_get_bool otherval "${ups}" "${othervarflag}_${othervar}" value
 			[ "$otherval" = "1" ] && echo "${othervar}" >>"$UPS_C"
 		else
-			config_get otherval "${othervarflag}_${othervar}" value
+			config_get otherval "${ups}" "${othervarflag}_${othervar}" value
 			[ -n "$otherval" ] && echo "${othervar} = $otherval" >>"$UPS_C"
 		fi
 	}
