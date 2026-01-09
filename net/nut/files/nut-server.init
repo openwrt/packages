@@ -195,7 +195,7 @@ build_driver_config() {
 	config_list_foreach "$cfg" override defoverride override
 	config_list_foreach "$cfg" default defoverride default
 
-	other() {
+	do_other() {
 		local othervar="$1"
 		local othervarflag="$2"
 		local otherval
@@ -209,8 +209,13 @@ build_driver_config() {
 		fi
 	}
 
-	config_list_foreach "$cfg" other other other
-	config_list_foreach "$cfg" otherflag other otherflag
+	# For each entry in the list "other", get the variable "other_${entry}",
+	# and if not empty, write "${entry} = ${value of other_${entry}}" to the config file.
+	config_list_foreach "$cfg" other do_other other
+
+	# For each entry in the list "otherflag", get the variable "otherflag_${entry}",
+	# and if true, write "${entry}" to the config file.
+	config_list_foreach "$cfg" otherflag do_other otherflag
 	echo "" >>$UPS_C
 	havedriver=1
 }
