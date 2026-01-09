@@ -1,11 +1,14 @@
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 
+# cspell:words TOPDIR PYPI Radicale conffiles dateutil defusedxml passlib
+# cspell:words setuptools vobject
+
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=radicale3
 PKG_VERSION:=3.5.10
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_LICENSE_FILES:=COPYING.md
@@ -26,13 +29,20 @@ define Package/radicale3
   URL:=https://radicale.org/
   TITLE:=Radicale 3.x CalDAV/CardDAV server
   USERID:=radicale3=226:radicale3=226
-  DEPENDS:=+python3 +python3-dateutil +python3-vobject +python3-setuptools +python3-defusedxml +python3-passlib +python3-requests +python3-pika
+  DEPENDS:=+python3 +python3-dateutil +python3-vobject +python3-setuptools \
+    +python3-defusedxml +python3-passlib +python3-requests +python3-pika
   PROVIDES:=radicale radicale2
 endef
 
 define Package/radicale3/description
-  The Radicale Project is a CalDAV (calendar) and CardDAV (contact) server. It aims to be a light solution, easy to use, easy to install, easy to configure. As a consequence, it requires few software dependencies and is pre-configured to work out-of-the-box.
-  The Radicale Project runs on most of the UNIX-like platforms (Linux, BSD, MacOS X) and Windows. It is known to work with Evolution, Lightning, iPhone and Android clients. It is free and open-source software, released under GPL version 3.
+  The Radicale Project is a CalDAV (calendar) and CardDAV (contact) server.
+  It aims to be a light solution, easy to use, easy to install, easy to
+  configure. As a consequence, it requires few software dependencies and is
+  pre-configured to work out-of-the-box.
+  The Radicale Project runs on most of the UNIX-like platforms
+  (Linux, BSD, MacOS X) and Windows. It is known to work with Evolution,
+  Lightning, iPhone and Android clients. It is free and open-source software,
+  released under GPL version 3.
 
   This package contains the python files.
 endef
