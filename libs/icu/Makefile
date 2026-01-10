@@ -40,7 +40,7 @@ define Package/icu
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=International Components for Unicode
-  URL:=http://icu-project.org
+  URL:=https://icu.unicode.org/
   DEPENDS:=+libstdcpp +libpthread
   ABI_VERSION:=$(MAJOR_VERSION)
 endef
@@ -54,7 +54,7 @@ define Package/icu-full-data
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Full ICU Data
-  URL:=http://icu-project.org
+  URL:=https://icu.unicode.org/
   DEPENDS:=+icu
   ABI_VERSION:=$(MAJOR_VERSION)
 endef
@@ -62,14 +62,14 @@ endef
 define Package/icu-full-data/description
   ICU makes use of a wide variety of data tables to provide many of its services. Examples include converter mapping tables, collation rules, transliteration rules, break iterator rules and dictionaries, and other locale data.
   This package contains the complete data library provided by ICU.
-  A custom data library can be generated at http://apps.icu-project.org/datacustom/
+A custom data library can be generated at https://unicode-org.github.io/icu/userguide/icu_data/
 endef
 
 define Package/icu-data-tools
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=ICU Data manipulation tools
-  URL:=http://icu-project.org
+  URL:=https://icu.unicode.org/
   DEPENDS:=+icu
 endef
 

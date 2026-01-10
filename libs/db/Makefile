@@ -29,7 +29,7 @@ define Package/libdb47
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Berkeley DB library
-  URL:=http://www.oracle.com/us/products/database/berkeley-db
+  URL:=https://www.oracle.com/database/technologies/related/berkeleydb.html
   PROVIDES:=libdb47-full
   ABI_VERSION:=5
 endef
@@ -43,7 +43,7 @@ define Package/libdb47xx
   CATEGORY:=Libraries
   DEPENDS:=+libdb47 +libstdcpp
   TITLE:=Berkeley DB library for C++
-  URL:=http://www.oracle.com/us/products/database/berkeley-db
+  URL:=https://www.oracle.com/database/technologies/related/berkeleydb.html
   PROVIDES:=libdb47xx-full
   ABI_VERSION:=5
 endef
