@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
 PKG_VERSION:=8.4.16
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 PKG_LICENSE:=PHP-3.01
@@ -61,38 +61,7 @@ define Package/php8/Default/description
 endef
 
 define Package/php8/config
-	config PHP8_LIBXML
-		bool "PHP8 LIBXML support"
-		default y
-
-	config PHP8_DOM
-		bool "PHP8 DOM support"
-    depends on PHP8_LIBXML
-		default y
-
-	config PHP8_SYSTEMTZDATA
-		bool "Use system timezone data instead of php's built-in database"
-		depends on PACKAGE_php8-cli || PACKAGE_php8-cgi || PACKAGE_apache-mod-php8
-		default y
-		help
-			Enabling this feature automatically selects the zoneinfo-core package
-			which contains data for UTC timezone. To use other timezones you have
-			to install the corresponding zoneinfo-... package(s).
-
-	config PHP8_GETTEXT
-		bool "Enable gettext"
-		default y
-
-	config PHP8_INTL
-		bool "Enable Internationalization"
-    depends on PHP8_GETTEXT
-		default y
-
-	config PHP8_FULLICUDATA
-		bool "Add dependency to full ICU Data"
-		depends on PHP8_INTL
-		default n
-
+  source "$(SOURCE)/Config.in"
 endef
 
 define Package/php8
