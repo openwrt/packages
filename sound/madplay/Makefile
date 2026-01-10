@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=madplay
 PKG_VERSION:=0.15.2b
-PKG_RELEASE:=10
+PKG_RELEASE:=11
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/mad \
@@ -52,6 +52,8 @@ CONFIGURE_ARGS += \
 
 CONFIGURE_VARS += \
 	lt_prog_compiler_pic="$(FPIC)"
+
+TARGET_CFLAGS += -D__GNU_LIBRARY__
 
 MAKE_FLAGS += CFLAGS="$(TARGET_CFLAGS)"
 
