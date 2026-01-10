@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
 PKG_VERSION:=8.4.16
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 PKG_LICENSE:=PHP-3.01
@@ -40,8 +40,14 @@ PHP8_MODULES= \
 
 PKG_CONFIG_DEPENDS:= \
 	$(patsubst %,CONFIG_PACKAGE_php8-mod-%,$(PHP8_MODULES)) \
-	CONFIG_PHP8_LIBXML CONFIG_PHP8_SYSTEMTZDATA CONFIG_PHP8_GETTEXT \
-  CONFIG_PHP8_FULLICUDATA CONFIG_PHP8_INTL CONFIG_PACKAGE_apache-mod-php8
+	CONFIG_PACKAGE_apache-mod-php8 \
+	CONFIG_PHP8_LIBXML \
+	CONFIG_PHP8_FULLICUDATA \
+	CONFIG_PHP8_GETTEXT \
+	CONFIG_PHP8_INTL \
+	CONFIG_PHP8_SYSTEMTZDATA
+
+PKG_BUILD_DEPENDS:= PHP8_GETTEXT:icu
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -67,8 +73,13 @@ define Package/php8/config
 
 	config PHP8_DOM
 		bool "PHP8 DOM support"
-    depends on PHP8_LIBXML
+		depends on PHP8_LIBXML
 		default y
+		help
+			Without the mod-dom, this option does not provide a PHP8
+			programmer the XML DOM functionality (it only adds DOM for internal
+			use by php-cli, php-cgi, etc.). Therefore please consider adding the
+			php8-mod-dom to provide this functionality to PHP8 consumers.
 
 	config PHP8_SYSTEMTZDATA
 		bool "Use system timezone data instead of php's built-in database"
@@ -82,15 +93,32 @@ define Package/php8/config
 	config PHP8_GETTEXT
 		bool "Enable gettext"
 		default y
+		help
+			Note that this option depends in ICU library which is built without data
+			by default. This is to satisfy programs build and run dependencies but to
+			keep the installed footprint small on the target system(s).
+			However, the data is required to make the ICU library useful - and thus
+			directly affects PHPs ICU extension, too - so consider to also
+			select PHP8_FULLICUDATA.
+			Further without the gettext module, this option does not provide a PHP8
+			programmer the gettext functionality (it only adds gettext for internal
+			use by php-cli, php-cgi, etc.). Therefore please consider adding the
+			php8-mod-gettext to provide this functionality to PHP8 consumers.
 
 	config PHP8_INTL
 		bool "Enable Internationalization"
-    depends on PHP8_GETTEXT
-		default y
+		depends on PHP8_GETTEXT
+		default y if PHP8_GETTEXT
+		default n
+		help
+			Without the intl module, this option does not provide a PHP8
+			programmer the intl functionality (it only adds intl for internal
+			use by php-cli, php-cgi, etc.). Therefore please consider adding the
+			php8-mod-intl to provide this functionality to PHP8 consumers.
 
 	config PHP8_FULLICUDATA
 		bool "Add dependency to full ICU Data"
-		depends on PHP8_INTL
+		depends on PHP8_GETTEXT && PHP8_INTL && PACKAGE_php8-mod-intl
 		default n
 
 endef
@@ -115,7 +143,7 @@ endef
 
 define Package/php8-cli
   $(call Package/php8/Default)
-  DEPENDS+= +PHP8_GETTEXT:libstdcpp +riscv64:libatomic
+  DEPENDS+= +PHP8_INTL:libstdcpp +riscv64:libatomic
   TITLE+= (CLI)
 endef
 
@@ -126,7 +154,7 @@ endef
 
 define Package/php8-cgi
   $(call Package/php8/Default)
-  DEPENDS+= +PHP8_GETTEXT:libstdcpp +riscv64:libatomic
+  DEPENDS+= +PHP8_INTL:libstdcpp +riscv64:libatomic
   TITLE+= (CGI & FastCGI)
 endef
 
@@ -157,6 +185,11 @@ define Package/php8-fpm/description
   This package contains the FastCGI Process Manager of the PHP8 interpreter.
 endef
 
+define Package/php8-mod-gettext/description
+  Note that this package works best in combination with the intl module, so
+  please consider also selecting/installing php8-mod-intl.
+endef
+
 define Package/php8-mod-intl/description
   Note that this package depends in ICU library which is built without data
   by default. This is to satisfy programs build and run dependencies but to
@@ -172,9 +205,9 @@ define Package/apache-mod-php8
   SECTION:=net
   CATEGORY:=Network
   DEPENDS+=PACKAGE_apache-mod-php8:apache \
-	   +PHP8_GETTEXT:libstdcpp \
-	   +riscv64:libatomic \
-	   +libpcre2 +zlib
+     +PHP8_INTL:libstdcpp \
+     +riscv64:libatomic \
+     +libpcre2 +zlib
   TITLE:=PHP8 module for Apache Web Server
 endef
 
@@ -677,7 +710,7 @@ $(eval $(call BuildModule,gd,GD graphics,+PACKAGE_php8-mod-gd:libgd-full))
 $(eval $(call BuildModule,gettext,Gettext,@PHP8_GETTEXT +PACKAGE_php8-mod-gettext:libintl-full))
 $(eval $(call BuildModule,gmp,GMP,+PACKAGE_php8-mod-gmp:libgmp))
 $(eval $(call BuildModule,iconv,iConv,$(ICONV_DEPENDS)))
-$(eval $(call BuildModule,intl,Internationalization Functions,@PHP8_INTL +PACKAGE_php8-mod-intl:icu +PHP8_FULLICUDATA:icu-full-data))
+$(eval $(call BuildModule,intl,Internationalization Functions,@PHP8_GETTEXT @PHP8_INTL +PACKAGE_php8-mod-intl:php8-mod-gettext +PHP8_FULLICUDATA:icu-full-data +!PHP8_FULLICUDATA:icu))
 $(eval $(call BuildModule,ldap,LDAP,+PACKAGE_php8-mod-ldap:libopenldap +PACKAGE_php8-mod-ldap:libsasl2))
 $(eval $(call BuildModule,mbstring,MBString,+PACKAGE_php8-mod-mbstring:oniguruma))
 $(eval $(call BuildModule,mysqli,MySQL Improved Extension,+PACKAGE_php8-mod-mysqli:php8-mod-mysqlnd,30))
@@ -704,6 +737,6 @@ $(eval $(call BuildModule,sysvsem,System V shared memory))
 $(eval $(call BuildModule,sysvshm,System V semaphore))
 $(eval $(call BuildModule,tokenizer,Tokenizer))
 $(eval $(call BuildModule,xml,XML,+PHP8_LIBXML:libxml2 +!PHP8_LIBXML:libexpat))
-$(eval $(call BuildModule,xmlreader,XMLReader,@PHP8_LIBXML @PHP8_DOM +PACKAGE_php8-mod-xmlreader:php8-mod-dom +PACKAGE_php8-mod-xmlreader:libxml2))
+$(eval $(call BuildModule,xmlreader,XMLReader,@PHP8_LIBXML +PACKAGE_php8-mod-xmlreader:php8-mod-dom +PACKAGE_php8-mod-xmlreader:libxml2))
 $(eval $(call BuildModule,xmlwriter,XMLWriter,@PHP8_LIBXML +PACKAGE_php8-mod-xmlwriter:libxml2))
 $(eval $(call BuildModule,zip,ZIP,+PACKAGE_php8-mod-zip:libzip))
