@@ -1737,7 +1737,7 @@
  -include ${M}/Kbuild.*
 --- a/mconfig
 +++ b/mconfig
-@@ -24,3 +24,4 @@ build_lscan=m
+@@ -26,3 +26,4 @@ build_lscan=m
  build_pknock=m
  build_psd=m
  build_quota2=m
