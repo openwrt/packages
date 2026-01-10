@@ -19,7 +19,8 @@ HOST_BUILD_DEPENDS:= \
 	python3/host \
 	python-build/host \
 	python-installer/host \
-	python-wheel/host
+	python-wheel/host \
+	python-setuptools/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
