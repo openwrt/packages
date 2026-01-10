@@ -8,7 +8,7 @@ PYPI_NAME:=zope.event
 PYPI_SOURCE_NAME:=zope_event
 PKG_HASH:=6052a3e0cb8565d3d4ef1a3a7809336ac519bc4fe38398cb8d466db09adef4f0
 
-PKG_BUILD_DEPENDS:=python3/host python-setuptools/host
+PKG_BUILD_DEPENDS:=python3/host python-setuptools
 
 PKG_LICENSE:=ZPL-2.1
 PKG_LICENSE_FILES:=LICENSE.txt
