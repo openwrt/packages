@@ -1,28 +1,23 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Copyright (C) 2020, 2022 Jeffery To
 #
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
-#
+# SPDX-License-Identifier: GPL-2.0-only
 
 nl="
 "
 
 log() {
-	# shellcheck disable=SC2039
 	local IFS=" "
 	printf '%s\n' "$*"
 }
 
 log_error() {
-	# shellcheck disable=SC2039
 	local IFS=" "
 	printf 'Error: %s\n' "$*" >&2
 }
 
 link_contents() {
-	# shellcheck disable=SC2039
 	local src="$1" dest="$2" IFS="$nl" dirs dir base
 
 	if [ -n "$(find "$src" -mindepth 1 -maxdepth 1 -name "*.go" -not -type d)" ]; then
@@ -52,7 +47,6 @@ link_contents() {
 }
 
 configure() {
-	# shellcheck disable=SC2039
 	local files code testdata gomod pattern extra IFS file dest
 
 	cd "$BUILD_DIR" || return 1
@@ -99,7 +93,20 @@ configure() {
 }
 
 build() {
-	# shellcheck disable=SC2039
+	if [ -n "$GO_HOST_VERSION" ]; then
+		if  [[ ! "$GO_HOST_VERSION" =~ ^[0-9]{1}.[0-9]{1,2}$ ]]; then
+			log_error "GO_HOST_VERSION is not a valid go MAJOR.MINOR version: $GO_HOST_VERSION"
+			exit 1
+		elif [ ! -f "$(which "go${GO_HOST_VERSION}")" ]; then
+			log_error "go${GO_HOST_VERSION} not found."
+			exit 1
+		else
+			log "Using $("go${GO_HOST_VERSION}" version) from $(which "go${GO_HOST_VERSION}")"
+		fi
+	else
+		log "Using host $(go version) from $(which go)"
+	fi
+
 	local modargs pattern targets retval
 
 	cd "$GO_BUILD_DIR" || return 1
@@ -111,7 +118,7 @@ build() {
 
 	log "Finding targets"
 	# shellcheck disable=SC2086
-	targets="$(go list $modargs $GO_BUILD_PKG)"
+	targets="$("go${GO_HOST_VERSION}" list $modargs $GO_BUILD_PKG)"
 	for pattern in $GO_EXCLUDES; do
 		targets="$(printf '%s\n' "$targets" | grep -v "$pattern")"
 	done
@@ -121,7 +128,7 @@ build() {
 		log "Calling go generate"
 		# shellcheck disable=SC2086
 		GOOS='' GOARCH='' GO386='' GOARM='' GOARM64='' GOMIPS='' GOMIPS64='' GORISCV64=''\
-		go generate -v $targets
+		"go${GO_HOST_VERSION}" generate -v $targets
 		log
 	fi
 
@@ -132,7 +139,7 @@ build() {
 	log "Building targets"
 	mkdir -p "$GO_BUILD_DIR/bin" "$GO_BUILD_CACHE_DIR"
 	# shellcheck disable=SC2086
-	go install $modargs "$@" $targets
+	"go${GO_HOST_VERSION}" install $modargs "$@" $targets
 	retval="$?"
 	log
 
@@ -149,14 +156,12 @@ build() {
 }
 
 install_bin() {
-	# shellcheck disable=SC2039
 	local dest="$1"
 	install -d -m0755 "$dest/$GO_INSTALL_BIN_PATH"
 	install -m0755 "$GO_BUILD_BIN_DIR"/* "$dest/$GO_INSTALL_BIN_PATH/"
 }
 
 install_src() {
-	# shellcheck disable=SC2039
 	local dest="$1" dir="${GO_PKG%/*}"
 	install -d -m0755 "$dest/$GO_BUILD_DEPENDS_PATH/src/$dir"
 	cp -fpR "$GO_BUILD_DIR/src/$GO_PKG" "$dest/$GO_BUILD_DEPENDS_PATH/src/$dir/"
@@ -177,7 +182,6 @@ cache_cleanup() {
 
 	return 0
 }
-
 
 if [ "$#" -lt 1 ]; then
 	log_error "Missing command"

@@ -1,16 +1,13 @@
 #
 # Copyright (C) 2020, 2022 Jeffery To
 #
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
-#
+# SPDX-License-Identifier: GPL-2.0-only
 
 ifeq ($(origin GO_INCLUDE_DIR),undefined)
   GO_INCLUDE_DIR:=$(dir $(lastword $(MAKEFILE_LIST)))
 endif
 
 include $(GO_INCLUDE_DIR)/golang-values.mk
-
 
 # these variables have the same meanings as in golang-package.mk
 GO_HOST_INSTALL_EXTRA?=$(GO_PKG_INSTALL_EXTRA)
@@ -24,7 +21,6 @@ GO_HOST_LDFLAGS?=$(GO_PKG_LDFLAGS)
 GO_HOST_LDFLAGS_X?=$(GO_PKG_LDFLAGS_X)
 GO_HOST_TAGS?=$(GO_PKG_TAGS)
 GO_HOST_INSTALL_BIN_PATH?=/bin
-
 
 # need to repeat this here in case golang-package.mk is not included
 GO_PKG_BUILD_PKG?=$(strip $(GO_PKG))/...
@@ -198,7 +194,6 @@ define GoHost/Host/Uninstall
 		rm -f "$(GO_HOST_SRC_STAGING_FILES_LIST)" ; \
 	fi
 endef
-
 
 ifneq ($(strip $(GO_PKG)),)
   Host/Configure=$(call GoHost/Host/Configure)

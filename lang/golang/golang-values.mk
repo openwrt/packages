@@ -1,14 +1,11 @@
 #
 # Copyright (C) 2018-2023 Jeffery To
 #
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
-#
+# SPDX-License-Identifier: GPL-2.0-only
 
 ifeq ($(origin GO_INCLUDE_DIR),undefined)
   GO_INCLUDE_DIR:=$(dir $(lastword $(MAKEFILE_LIST)))
 endif
-
 
 # Unset environment variables
 # There are more magic variables to track down, but ain't nobody got time for that
@@ -124,6 +121,48 @@ unexport \
 unexport \
   GOBOOTSTRAP_TOOLEXEC
 
+HOST_GO_VALID_OS_ARCH:= \
+  android_386  android_amd64  android_arm  android_arm64 \
+  freebsd_386  freebsd_amd64  freebsd_arm  freebsd_arm64 \
+  linux_386    linux_amd64    linux_arm    linux_arm64 \
+  openbsd_386  openbsd_amd64  openbsd_arm  openbsd_arm64 \
+  netbsd_386   netbsd_amd64   netbsd_arm   netbsd_arm64 \
+  windows_386  windows_amd64  windows_arm  windows_arm64 \
+  \
+  plan9_386    plan9_amd64    plan9_arm \
+  \
+  darwin_amd64 darwin_arm64 \
+  ios_amd64    ios_arm64 \
+  \
+  dragonfly_amd64 \
+  illumos_amd64 \
+  solaris_amd64 \
+  \
+  aix_ppc64 \
+  js_wasm \
+  wasip1_wasm \
+  \
+  freebsd_riscv64 \
+  openbsd_riscv64 \
+  \
+  linux_ppc64 linux_ppc64le \
+  linux_mips linux_mipsle linux_mips64 linux_mips64le \
+  linux_loong64 linux_riscv64 linux_s390x \
+  \
+  openbsd_mips64
+
+BOOTSTRAP_GO_VALID_OS_ARCH:= \
+  darwin_386     darwin_amd64 \
+  dragonfly_386  dragonfly_amd64 \
+  freebsd_386    freebsd_amd64    freebsd_arm \
+  linux_386      linux_amd64      linux_arm \
+  netbsd_386     netbsd_amd64     netbsd_arm \
+  openbsd_386    openbsd_amd64 \
+  plan9_386      plan9_amd64 \
+                 solaris_amd64 \
+  windows_386    windows_amd64
+
+GO_DEFAULT_VERSION:=1.25
 
 # GOOS / GOARCH
 
@@ -246,11 +285,9 @@ else ifeq ($(GO_ARCH),ppc64)
 
 endif
 
-
 # Target Go
 
 GO_ARCH_DEPENDS:=@(aarch64||arm||i386||i686||loongarch64||mips||mips64||mips64el||mipsel||riscv64||x86_64)
-
 
 # ASLR/PIE
 
@@ -282,7 +319,6 @@ ifneq ($(filter $(GO_OS_ARCH),$(GO_PIE_SUPPORTED_OS_ARCH)),)
   GO_TARGET_PIE_INSTALL_SUFFIX:=$(call go_pie_install_suffix,$(GO_OS_ARCH))
 endif
 
-
 # Spectre mitigations
 
 GO_SPECTRE_SUPPORTED_ARCH:=amd64
@@ -294,7 +330,6 @@ endif
 ifneq ($(filter $(GO_ARCH),$(GO_SPECTRE_SUPPORTED_ARCH)),)
   GO_TARGET_SPECTRE_SUPPORTED:=1
 endif
-
 
 # General build info
 
