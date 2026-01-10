@@ -8,19 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=coova-chilli
-PKG_VERSION:=1.7
+PKG_VERSION:=1.8
 PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/coova/coova-chilli
-PKG_SOURCE_VERSION:=$(PKG_VERSION)
-PKG_MIRROR_HASH:=adf30c6c61d803770d2f9bcc225e85465edd816396bcf409cc503832cd45c2a3
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
+PKG_SOURCE_URL:=https://github.com/coova/coova-chilli/releases/download/$(PKG_VERSION)
+PKG_HASH:=d49f531ba4017b3126aec84dc5e9bfb813e0ba772a78eded1db519ebc67d369e
 
 PKG_MAINTAINER:=Jaehoon You <teslamint@gmail.com>
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
-PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=0
 
@@ -44,7 +42,7 @@ define Package/coova-chilli
   SUBMENU:=Captive Portals
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+kmod-tun +librt +COOVACHILLI_MINIPORTAL:haserl \
+  DEPENDS:=+kmod-tun +COOVACHILLI_MINIPORTAL:haserl \
   +COOVACHILLI_WOLFSSL:libwolfssl +COOVACHILLI_OPENSSL:libopenssl \
   +COOVACHILLI_JSONINTERFACE:libjson-c
   TITLE:=Wireless LAN HotSpot controller (Coova Chilli Version)
