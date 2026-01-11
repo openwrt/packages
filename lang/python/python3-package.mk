@@ -22,6 +22,23 @@ PYTHON3PATH:=$(PYTHON3_LIB_DIR):$(STAGING_DIR)/$(PYTHON3_PKG_DIR):$(PKG_INSTALL_
 
 -include $(PYTHON3_LIB_DIR)/openwrt/Makefile-vars
 
+# Error if shebang to host python interpreter would exceed 127 characters
+# (124 characters plus shebang and newline)
+# This is used to alert user when python-installer would fail to correctly
+# set a Python program's shebang line.
+# See https://github.com/openwrt/packages/issues/28310
+PYTHON3_PKG_HOST_BIN_MAX_PATH_LEN:=124
+
+define CheckHostPythonShebang
+	set -e; \
+	HOST_PYTHON3_BIN="$(HOST_PYTHON3_BIN)"; \
+	if \
+		[ $$$${#HOST_PYTHON3_BIN} -gt $(PYTHON3_PKG_HOST_BIN_MAX_PATH_LEN) ]; then \
+		echo >&2 "Path to host python too long; python program install would fail";\
+		exit 1; \
+	fi
+endef
+
 # These configure args are needed in detection of path to Python header files
 # using autotools.
 CONFIGURE_ARGS += \
@@ -264,6 +281,7 @@ define Py3Build/Compile/Default
 endef
 
 define Py3Build/Install/Default
+	$(call CheckHostPythonShebang)
 	$(call Python3/Run, \
 		$(PKG_BUILD_DIR), \
 		-m installer \
