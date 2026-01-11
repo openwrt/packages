@@ -17,32 +17,32 @@ UPS_C=/var/etc/nut/ups.conf
 
 USE_PROCD=1
 
-get_write_driver_config() {
-	local cfg="$1"
+get_write_ups_config() {
+	local ups="$1"
 	local var="$2"
 	local def="$3"
 	local flag="$4"
 	local val
 
 	[ -z "$flag" ] && {
-		config_get val "$cfg" "$var" "$def"
+		config_get val "$ups" "$var" "$def"
 		[ -n "$val" ] && [ "$val" != "0" ] && echo "$var = $val" >>"$UPS_C"
 	}
 
 	[ -n "$flag" ] && {
-		config_get_bool val "$cfg" "$var" "$def"
+		config_get_bool val "$ups" "$var" "$def"
 		[ "$val" = 1 ] && echo "$var" >>"$UPS_C"
 	}
 }
 
-upsd_statepath() {
+srv_statepath() {
 	local statepath
 
 	config_get statepath upsd statepath /var/run/nut
 	STATEPATH="$statepath"
 }
 
-upsd_runas() {
+srv_runas() {
 	local runas
 
 	[ -n "$RUNAS" ] && return 0
@@ -52,51 +52,51 @@ upsd_runas() {
 }
 
 listen_address() {
-	local cfg="$1"
+	local srv="$1"
 
-	config_get address "$cfg" address "::1"
-	config_get port "$cfg" port
+	config_get address "$srv" address "::1"
+	config_get port "$srv" port
 	# shellcheck disable=SC2154
 	echo "LISTEN $address $port" >>"$UPSD_C"
 }
 
-upsd_config() {
-	local cfg="$1"
+srv_config() {
+	local srv="$1"
 	local maxage maxconn certfile runas statepath
 
 	# Note runas support requires you make sure USB device file is readable by
 	# the runas user
-	config_get runas "$cfg" runas nut
+	config_get runas "$srv" runas nut
 	RUNAS="$runas"
 
-	config_get statepath "$cfg" statepath /var/run/nut
+	config_get statepath "$srv" statepath /var/run/nut
 	STATEPATH="$statepath"
 
-	config_get maxage "$cfg" maxage
+	config_get maxage "$srv" maxage
 	[ -n "$maxage" ] && echo "MAXAGE $maxage" >>"$UPSD_C"
 
 	[ -n "$statepath" ] && echo "STATEPATH $statepath" >>"$UPSD_C"
 
-	config_get maxconn "$cfg" maxconn
+	config_get maxconn "$srv" maxconn
 	[ -n "$maxconn" ] && echo "MAXCONN $maxconn" >>"$UPSD_C"
 
 	#NOTE: certs only apply to SSL-enabled version
-	config_get certfile "$cfg" certfile
+	config_get certfile "$srv" certfile
 	[ -n "$certfile" ] && echo "CERTFILE $certfile" >>"$UPSD_C"
 }
 
 nut_user_add() {
-	local cfg="$1"
+	local user="$1"
 	local a
 	local val
 
-	config_get val "$cfg" username "$1"
+	config_get val "$user" username "$1"
 	echo "[$val]" >> "$USERS_C"
 
-	config_get val "$cfg" password
+	config_get val "$user" password
 	echo "  password = $val" >> "$USERS_C"
 
-	config_get val "$cfg" actions
+	config_get val "$user" actions
 	for a in $val; do
 		echo "  actions = $a" >> "$USERS_C"
 	done
@@ -108,9 +108,9 @@ nut_user_add() {
 		echo "  instcmds = $val" >> "$USERS_C"
 	}
 
-	config_list_foreach "$cfg" instcmd instcmd
+	config_list_foreach "$user" instcmd instcmd
 
-	config_get val "$cfg" upsmon
+	config_get val "$user" upsmon
 	if [ -n "$val" ]; then
 		echo "  upsmon $val" >> "$USERS_C"
 	fi
@@ -128,66 +128,62 @@ build_server_config() {
 
 	config_foreach nut_user_add user
 	config_foreach listen_address listen_address
-	config_foreach upsd_config upsd
+	config_foreach srv_config upsd
 	echo "MODE=netserver" >>/var/etc/nut/nut.conf
 
 	chmod 0640 "$USERS_C"
 	chmod 0640 "$UPSD_C"
 	chmod 0644 /var/etc/nut/nut.conf
 
-	[ -d "${STATEPATH}" ] || {
-		mkdir -p "${STATEPATH}"
-		chmod 0750 "${STATEPATH}"
-	}
-
 	if [ -n "$RUNAS" ]; then
-		chown "$RUNAS":"$(id -gn "$RUNAS")" "${STATEPATH}"
 		chgrp "$(id -gn "$RUNAS")" "$USERS_C"
 		chgrp "$(id -gn "$RUNAS")" "$UPSD_C"
 	fi
-	haveserver=1
+	havesrvcfg=1
 }
 
-build_driver_config() {
-	local cfg="$1"
+build_ups_config() {
+	local ups="$1"
 
-	echo "[$cfg]" >>"$UPS_C"
+	echo "[$ups]" >>"$UPS_C"
 
-	get_write_driver_config "$cfg" bus
-	get_write_driver_config "$cfg" cable
-	get_write_driver_config "$cfg" community
-	get_write_driver_config "$cfg" desc
-	get_write_driver_config "$cfg" driver "usbhid-ups"
-	get_write_driver_config "$cfg" ignorelb 0 1
-	get_write_driver_config "$cfg" interruptonly 0 1
-	get_write_driver_config "$cfg" interruptsize
-	get_write_driver_config "$cfg" maxreport
-	get_write_driver_config "$cfg" maxstartdelay
-	get_write_driver_config "$cfg" mfr
-	get_write_driver_config "$cfg" model
-	get_write_driver_config "$cfg" nolock 0 1
-	get_write_driver_config "$cfg" notransferoids 0 1
-	get_write_driver_config "$cfg" offdelay
-	get_write_driver_config "$cfg" ondelay
-	get_write_driver_config "$cfg" pollfreq
-	get_write_driver_config "$cfg" port "auto"
-	get_write_driver_config "$cfg" product
-	get_write_driver_config "$cfg" productid
-	get_write_driver_config "$cfg" retrydelay
-	get_write_driver_config "$cfg" sdorder
-	get_write_driver_config "$cfg" sdtime
-	get_write_driver_config "$cfg" serial
-	get_write_driver_config "$cfg" snmp_version
-	get_write_driver_config "$cfg" snmp_retries
-	get_write_driver_config "$cfg" snmp_timeout
-	get_write_driver_config "$cfg" synchronous
-	get_write_driver_config "$cfg" vendor
-	get_write_driver_config "$cfg" vendorid
+	get_write_ups_config "$ups" bus
+	get_write_ups_config "$ups" cable
+	get_write_ups_config "$ups" community
+	get_write_ups_config "$ups" desc
+	get_write_ups_config "$ups" driver "usbhid-ups"
+	get_write_ups_config "$ups" ignorelb 0 1
+	get_write_ups_config "$ups" interruptonly 0 1
+	get_write_ups_config "$ups" interruptsize
+	get_write_ups_config "$ups" maxreport
+	get_write_ups_config "$ups" maxstartdelay
+	get_write_ups_config "$ups" mfr
+	get_write_ups_config "$ups" model
+	get_write_ups_config "$ups" nolock 0 1
+	get_write_ups_config "$ups" notransferoids 0 1
+	get_write_ups_config "$ups" offdelay
+	get_write_ups_config "$ups" ondelay
+	get_write_ups_config "$ups" pollfreq
+	get_write_ups_config "$ups" port "auto"
+	get_write_ups_config "$ups" product
+	get_write_ups_config "$ups" productid
+	get_write_ups_config "$ups" retrydelay
+	get_write_ups_config "$ups" sdorder
+	get_write_ups_config "$ups" sdtime
+	get_write_ups_config "$ups" serial
+	get_write_ups_config "$ups" shutdown_delay
+	get_write_ups_config "$ups" snmp_version
+	get_write_ups_config "$ups" snmp_retries
+	get_write_ups_config "$ups" snmp_timeout
+	get_write_ups_config "$ups" synchronous
+	get_write_ups_config "$ups" usd
+	get_write_ups_config "$ups" vendor
+	get_write_ups_config "$ups" vendorid
 
 	# Params specific to NetXML driver
-	get_write_driver_config "$cfg" login
-	get_write_driver_config "$cfg" password
-	get_write_driver_config "$cfg" subscribe 0 1
+	get_write_ups_config "$ups" login
+	get_write_ups_config "$ups" password
+	get_write_ups_config "$ups" subscribe 0 1
 
 	# shellcheck disable=SC2317
 	defoverride() {
@@ -199,11 +195,11 @@ build_driver_config() {
 		overtype="$(echo "$overvar" | tr '_' '.')"
 
 		config_get overval "${defover}_${overvar}" value
-			[ -n "$overval" ] && echo "${defover}.${overtype} = $overval" >>"$UPS_C"
+		[ -n "$overval" ] && echo "${defover}.${overtype} = $overval" >>"$UPS_C"
 	}
 
-	config_list_foreach "$cfg" override defoverride override
-	config_list_foreach "$cfg" default defoverride default
+	config_list_foreach "$ups" override defoverride override
+	config_list_foreach "$ups" default defoverride default
 
 	other() {
 		# shellcheck disable=SC2317
@@ -223,23 +219,23 @@ build_driver_config() {
 		fi
 	}
 
-	config_list_foreach "$cfg" other other other
-	config_list_foreach "$cfg" otherflag other otherflag
+	config_list_foreach "$ups" other other other
+	config_list_foreach "$ups" otherflag other otherflag
 	echo "" >>$UPS_C
-	havedriver=1
+	haveupscfg=1
 }
 
 build_global_driver_config() {
 	local cfg="$1"
 
 	# Global driver config
-	get_write_driver_config "$cfg" chroot
-	get_write_driver_config "$cfg" driverpath
-	get_write_driver_config "$cfg" maxstartdelay
-	get_write_driver_config "$cfg" maxretry
-	get_write_driver_config "$cfg" retrydelay
-	get_write_driver_config "$cfg" pollinterval
-	get_write_driver_config "$cfg" synchronous
+	get_write_ups_config "$cfg" chroot
+	get_write_ups_config "$cfg" driverpath
+	get_write_ups_config "$cfg" maxstartdelay
+	get_write_ups_config "$cfg" maxretry
+	get_write_ups_config "$cfg" retrydelay
+	get_write_ups_config "$cfg" pollinterval
+	get_write_ups_config "$cfg" synchronous
 	config_get runas "$cfg" user nut
 	RUNAS="$runas"
 
@@ -256,33 +252,41 @@ build_config() {
 
 	config_load nut_server
 
-	upsd_runas
+	srv_runas
+	srv_statepath
+
+	[ -d "${STATEPATH}" ] || {
+		mkdir -p "${STATEPATH}"
+	}
+	chmod 0770 "${STATEPATH}"
+
+	if [ -n "$RUNAS" ]; then
+		chown root:"$(id -gn "$RUNAS")" "${STATEPATH}"
+	fi
+
+	SRV_RUNAS="$RUNAS"
 	config_foreach build_global_driver_config driver_global
-	config_foreach build_driver_config driver
-	upsd_statepath
+	if [ "$SRV_RUNAS" != "$RUNAS" ]; then
+		echo "WARNING: for proper communication drivers and server must 'runas' the same user" | logger -t nut-server
+	fi
+
+	config_foreach build_ups_config driver
+
 	build_server_config
 	[ -n "$RUNAS" ] && chgrp "$(id -gn "$RUNAS")" "$UPS_C"
 }
 
-start_driver_instance() {
-	local cfg="$1"
+start_ups_driver() {
+	local ups="$1"
 	local requested="$2"
 	local driver
 	local STATEPATH=/var/run/nut
 	local RUNAS=nut
 
-	[ "$havedriver" != 1 ] && return
-
 	# If wanting a specific instance, only start it
-	if [ "$requested" != "$cfg" ] && [ "$requested" != "" ]; then
+	if [ "$requested" != "$ups" ] && [ "$requested" != "" ]; then
 		return 0
 	fi
-
-	mkdir -p "$(dirname "$UPS_C")"
-	chmod 0755 "$UPS_C"
-
-	upsd_statepath
-	build_config
 
 	# Avoid hotplug inadvertently restarting driver during
 	# forced shutdown
@@ -291,18 +295,19 @@ start_driver_instance() {
 		return 0
 	fi
 
-	if [ -n "$RUNAS" ]; then
-		chown "$RUNAS":"$(id -gn "$RUNAS")" "${STATEPATH}"
-		chgrp "$(id -gn "$RUNAS")" "$UPS_C"
-	fi
+	srv_statepath
+	srv_runas
 
-	config_get driver "$cfg" driver "usbhid-ups"
-	procd_open_instance "$cfg"
+	config_get driver "$ups" driver "usbhid-ups"
+	procd_open_instance "$ups"
 	procd_set_param respawn
-	procd_set_param stderr 0
-	procd_set_param stdout 1
-	procd_set_param command /lib/nut/"${driver}" -D -a "$cfg" ${RUNAS:+-u "$RUNAS"}
+	procd_set_param stderr 1
+	procd_set_param stdout 0 # Subset of stderr
+	procd_set_param env NUT_QUIET_INIT_UPSNOTIFY=true
+	procd_set_param env NUT_STATEPATH="${STATEPATH}"
+	procd_set_param command /lib/nut/"${driver}" -FF -a "$ups" ${RUNAS:+-u "$RUNAS"}
 	procd_close_instance
+	haveupscfg=1
 }
 
 interface_triggers() {
@@ -333,47 +338,237 @@ interface_triggers() {
 }
 
 start_server_instance() {
-	local cfg="$1"
+	local srv="$1"
 
-	[ "$haveserver" != 1 ] && return
-	interface_triggers "check_interface_up" || return
-
-	procd_open_instance "$cfg"
+	procd_open_instance "$srv"
 	procd_set_param respawn
-	procd_set_param stderr 0
-	procd_set_param stdout 1
-	procd_set_param command /usr/sbin/upsd -D ${RUNAS:+-u "$RUNAS"}
+	procd_set_param stderr 1
+	procd_set_param stdout 0 # Subset of stderr
+	procd_set_param env NUT_QUIET_INIT_UPSNOTIFY=true
+	procd_set_param env NUT_STATEPATH="$STATEPATH"
+	procd_set_param command /usr/sbin/upsd -FF ${RUNAS:+-u "$RUNAS"}
 	procd_close_instance
 }
 
+# shellcheck disable=SC2120
 start_service() {
 	local STATEPATH=/var/run/nut
+	local haveupscfg=0
+	local havesrvcfg=0
 
 	# Avoid hotplug inadvertently restarting driver during
 	# forced shutdown
 	[ -f /var/run/killpower ] && return 0
 
+	srv_statepath
 	config_load nut_server
 	build_config
 
+	should_start_srv=1
+	[ "$havesrvcfg" = "1" ] || should_start_srv=0
+	# Avoid crashloop on server (upsd) when no ups is configured; make sure server
+	# is not running if no ups is found in configuration
+	[ "$haveupscfg" = "1" ] || should_start_srv=0
+	interface_triggers "check_interface_up" || should_start_srv=0
+
+	[ "$should_start_srv" = "1" ] || return 0
+
 	case $@ in
 	"")
-		config_foreach start_driver_instance driver "$@"
+		config_foreach start_ups_driver driver
 		start_server_instance upsd
 		;;
 	*upsd*)
 		start_server_instance upsd
 		;;
 	*)
-		config_foreach start_driver_instance driver "$@"
+		config_foreach start_ups_driver driver "$@"
 		;;
 	esac
 }
 
+reload_ups_driver() {
+	local ups="$1"
+	local requested="$2"
+	local driver
+
+	# If wanting a specific instance, only reload that instance
+	if [ "$requested" != "$ups" ] && [ "$requested" != "" ]; then
+		return 0
+	fi
+
+	# Avoid hotplug inadvertently restarting driver during
+	# forced shutdown
+	[ -f /var/run/killpower ] && return 0
+	if [ -d /var/run/nut ] && [ -f /var/run/nut/disable-hotplug ]; then
+		return 0
+	fi
+
+	config_get driver "$ups" driver "usbhid-ups"
+
+	srv_statepath
+
+	# Try to reload, otherwise exit politely, then stop and restart procd instance
+	if procd_running nut-server "$ups"; then
+		if [ -s "${STATEPATH}/${driver}-${ups}".pid ]; then
+			# should be respawned by procd
+			/lib/nut/"${driver}" -c reload-or-exit -a "${ups}" 2>&1 | logger -t nut-server
+		elif pgrep "${driver}" >/dev/null 2>/dev/null; then
+			procd_send_signal nut-server "${driver}" TERM 2>&1 | logger -t nut-server
+		fi
+	fi
+	/etc/init.d/nut-server start "$ups" 2>&1 | logger -t nut-server
+}
+
 reload_service() {
-	stop_service "$@"
-	sleep 2
-	start_service "$@"
+	local should_stop_srv
+	local STATEPATH=/var/run/nut
+	local havesrvcfg=0
+	local haveupscfg=0
+
+	# Avoid hotplug inadvertently restarting driver during forced shutdown
+	[ -f /var/run/killpower ] && return 0
+
+	config_load nut_server
+	build_config
+
+	should_stop_srv=0
+	[ "$havesrvcfg" = "1" ] || should_stop_srv=1
+	# Avoid crashloop on server (upsd) when no ups is configured; make sure server
+	# is not running if no ups is found in configuration
+	[ "$haveupscfg" = "1" ] || should_stop_srv=1
+	interface_triggers "check_interface_up" || should_stop_srv=1
+
+	if [ "$should_stop_srv" != "0" ]; then
+		if procd_running nut-server upsd >/dev/null 2>&1; then
+			procd_kill nut-server upsd 2>&1 | logger -t nut-server
+		fi
+		config_foreach stop_ups_driver driver
+	fi
+
+	if (
+		local nut_server_active
+
+		# shellcheck disable=SC1091
+		. /usr/share/libubox/jshn.sh
+		json_init
+		json_add_string name "nut-server"
+
+		nut_server_active=$(_procd_ubus_call list | jsonfilter -l 1 -e "@['nut-server']")
+		[ "$nut_server_active" = "{ }" ] && return 0
+	); then
+		logger -t nut-server "nut-server active with no instances"
+		/etc/init.d/nut-server start 2>&1 | logger -t nut-server
+	elif procd_running nut-server; then
+		if procd_running nut-server upsd; then
+			# Try to signal server (upsd) to reload configuration
+			if [ -s "${STATEPATH}/upsd.pid" ]; then
+				upsd -c reload 2>&1 | logger -t nut-server
+			elif pgrep upsd >/dev/null 2>/dev/null; then
+				procd_send_signal nut-server upsd HUP 2>&1 | logger -t nut-server
+			fi
+		else
+			/etc/init.d/nut-server start "upsd" 2>&1 | logger -t nut-server
+		fi
+		config_foreach reload_ups_driver driver
+	else
+		/etc/init.d/nut-server start 2>&1 | logger -t nut-server
+	fi
+}
+
+stop_ups_driver() {
+	local ups="$1" # The ups (driver instance)
+	local requested="$2"
+	local driver
+
+	# If wanting a specific instance, only stop it
+	if [ "$requested" != "$ups" ] && [ "$requested" != "" ]; then
+		return 0
+	fi
+
+	srv_statepath
+	build_ups_config "$ups"
+
+	if [ "$haveupscfg" != "1" ]; then
+		if procd_running nut-server upsd >/dev/null 2>&1; then
+			procd_kill nut-server upsd 2>&1 | logger -t nut-server
+		fi
+		return 0
+	fi
+
+	config_get driver "$ups" driver "usbhid-ups"
+
+	if procd_running nut-server "$ups"; then
+		if [ -s "${STATEPATH}/${driver}-${ups}".pid ]; then
+			/lib/nut/"${driver}" -c exit -a "${ups}" 2>&1 | logger -t nut-server
+		elif pgrep "${driver}" >/dev/null 2>/dev/null; then
+			procd_send_signal nut-server "${driver}" TERM 2>&1 | logger -t nut-server
+		fi
+		if procd_running nut-server upsd >/dev/null 2>&1; then
+			procd_kill nut-server upsd 2>&1 | logger -t nut-server
+		fi
+	fi
+}
+
+server_active() {
+	# subshell so as not to pollute initscript environment
+	(
+		local nut_server_active
+
+		# shellcheck disable=SC1091
+		. /usr/share/libubox/jshn.sh
+		json_init
+		json_add_string name "nut-server"
+
+		nut_server_active=$(_procd_ubus_call list | jsonfilter -l 1 -e "@['nut-server']")
+		[ "$nut_server_active" = "{ }" ] && return 0
+	)
+}
+
+stop_service() {
+	config_load nut_server
+	srv_statepath
+
+	case $@ in
+	"")
+		if server_active; then
+			logger -t nut-server "nut-server active with no instances"
+			procd_kill nut-server 2>&1 | logger -t nut-server
+		elif procd_running nut-server; then # if have at least one instance
+			if procd_running nut-server upsd; then
+				# Try to exit politely, then stop procd instance
+				if [ -s "${STATEPATH}/upsd.pid" ]; then
+					upsd -c stop 2>&1 | logger -t nut-server
+				elif pgrep upsd >/dev/null 2>/dev/null; then
+					procd_send_signal nut-server upsd TERM 2>&1 | logger -t nut-server
+				fi
+				if procd_running nut-server upsd >/dev/null 2>&1; then
+					procd_kill nut-server upsd 2>&1 | logger -t nut-server
+				fi
+			fi
+			config_foreach stop_ups_driver driver
+			if server_active >/dev/null 2>&1; then
+				procd_kill nut-server 2>&1 | logger -t nut-server
+			fi
+		fi
+		;;
+	*upsd*)
+		if procd_running nut-server upsd; then
+			# Try to exit politely, then stop procd instance
+			if [ -s "${STATEPATH}/upsd.pid" ]; then
+				upsd -c stop 2>&1 | logger -t nut-server
+			elif pgrep upsd >/dev/null 2>/dev/null; then
+				procd_send_signal nut-server upsd TERM 2>&1 | logger -t nut-server
+			fi
+			if procd_running nut-server upsd >/dev/null 2>&1; then
+				procd_kill nut-server upsd 2>&1 | logger -t nut-server
+			fi
+		fi
+		;;
+	*)
+		config_foreach stop_ups_driver driver "$@"
+		;;
+	esac
 }
 
 service_triggers() {
