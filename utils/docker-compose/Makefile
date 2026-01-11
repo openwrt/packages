@@ -29,7 +29,7 @@ define Package/docker-compose
   CATEGORY:=Utilities
   TITLE:=Docker Compose
   URL:=https://github.com/docker/compose
-  DEPENDS:=$(GO_ARCH_DEPENDS)
+  DEPENDS:=$(GO_ARCH_DEPENDS) +docker||+podman
 endef
 
 define Package/docker-compose/description
