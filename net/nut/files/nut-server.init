@@ -4,6 +4,10 @@
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
+
+# shellcheck shell=ash
+
+# shellcheck disable=SC2034
 START=70
 STOP=30
 
@@ -52,6 +56,7 @@ listen_address() {
 
     config_get address "$cfg" address "::1"
     config_get port "$cfg" port
+    # shellcheck disable=SC2154
     echo "LISTEN $address $port" >>"$UPSD_C"
 }
 
@@ -97,7 +102,9 @@ nut_user_add() {
 	done
 
 	instcmd() {
+		# shellcheck disable=2317
 		local val="$1"
+		# shellcheck disable=2317
 		echo "  instcmds = $val" >> "$USERS_C"
 	}
 
@@ -182,24 +189,31 @@ build_driver_config() {
         get_write_driver_config "$cfg" password
         get_write_driver_config "$cfg" subscribe 0 1
 
+	# shellcheck disable=SC2317
 	defoverride() {
 		local overvar="$1"
 		local defover="$2"
-		local overtype="$(echo "$overvar" | tr '_' '.')"
+		local overtype
 		local overval
 
+		overtype="$(echo "$overvar" | tr '_' '.')"
+
 		config_get overval "${defover}_${overvar}" value
-		[ -n "$overval" ] && echo "${defover}.${overtype} = $overval" >>"$UPS_C"
+			[ -n "$overval" ] && echo "${defover}.${overtype} = $overval" >>"$UPS_C"
 	}
 
 	config_list_foreach "$cfg" override defoverride override
 	config_list_foreach "$cfg" default defoverride default
 
 	other() {
+		# shellcheck disable=SC2317
 		local othervar="$1"
+		# shellcheck disable=SC2317
 		local othervarflag="$2"
+		# shellcheck disable=SC2317
 		local otherval
 
+		# shellcheck disable=SC2317
 		if [ "$othervarflag" = "otherflag" ]; then
 			config_get_bool otherval "${othervarflag}_${othervar}" value
 			[ "$otherval" = "1" ] && echo "${othervar}" >>"$UPS_C"
@@ -260,7 +274,7 @@ start_driver_instance() {
 	[ "$havedriver" != 1 ] && return
 
 	# If wanting a specific instance, only start it
-	if [ "$requested" != "$cfg" ] && [ "$request" != "" ]; then
+	if [ "$requested" != "$cfg" ] && [ "$requested" != "" ]; then
 		return 0
 	fi
 
@@ -297,6 +311,7 @@ interface_triggers() {
 
 	config_get triggerlist upsd triggerlist
 
+	# shellcheck disable=SC1091
 	. /lib/functions/network.sh
 
 	if [ -n "$triggerlist" ]; then
