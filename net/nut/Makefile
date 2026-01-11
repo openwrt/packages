@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nut
 PKG_VERSION:=2.8.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://www.networkupstools.org/source/2.8/
@@ -578,8 +578,8 @@ CONFIGURE_ARGS += \
 	--with-statepath=/var/run/nut \
 	--with-pidpath=/var/run \
 	--with-drvpath=/lib/nut \
-	--with-user=root \
-	--with-group=root \
+	--with-user=nut \
+	--with-group=nut \
 	$(if $(CONFIG_PACKAGE_nut-web-cgi),--with-gd-includes="`pkg-config --cflags gdlib`") \
 	$(if $(CONFIG_PACKAGE_nut-web-cgi),--with-gd-libs="`pkg-config --libs gdlib`")
 
