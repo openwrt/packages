@@ -72,8 +72,20 @@ conf_section() {
 		conf_getline "$cfg" "$cfgfile" ssl 0 1
 		if [ "$value" -eq 1 ]; then
 			conf_getline "$cfg" "$cfgfile" certificate
+			if [ "$value" != "" ]; then
+				chgrp radicale3 "$value"
+				chmod g+r "$value"
+			fi
 			conf_getline "$cfg" "$cfgfile" key
+			if [ "$value" != "" ]; then
+				chgrp radicale3 "$value"
+				chmod g+r "$value"
+			fi
 			conf_getline "$cfg" "$cfgfile" certificate_authority
+			if [ "$value" != "" ]; then
+				chgrp radicale3 "$value"
+				chmod g+r "$value"
+			fi
 			conf_getline "$cfg" "$cfgfile" protocol
 			conf_getline "$cfg" "$cfgfile" ciphers
 		fi
