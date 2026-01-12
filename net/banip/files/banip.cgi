@@ -1,6 +1,6 @@
 #!/bin/sh
 # banIP cgi remote logging script - ban incoming and outgoing IPs via named nftables Sets
-# Copyright (c) 2018-2025 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2018-2026 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # (s)hellcheck exceptions
