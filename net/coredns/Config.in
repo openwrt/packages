@@ -70,6 +70,11 @@ config COREDNS_PLUGIN_FANOUT
 	default n
 	select COREDNS_REQUIRE_GO_GET
 
+config COREDNS_PLUGIN_FINALIZE
+	bool "Finalize plugin"
+	default n
+	select COREDNS_REQUIRE_GO_GET
+
 config COREDNS_REQUIRE_GO_GET
 	bool
 	default n
