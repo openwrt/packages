@@ -19,7 +19,10 @@ PKG_LICENSE_FILES:=COPYING
 
 include $(INCLUDE_DIR)/package.mk
 
-CONFIGURE_ARGS+=--disable-static
+CONFIGURE_ARGS+=\
+	--disable-static \
+	--disable-dbus \
+	--disable-zmq
 
 define Package/libteam/default
   SECTION:=libs
