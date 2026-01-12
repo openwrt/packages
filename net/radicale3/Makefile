@@ -18,6 +18,8 @@ PYPI_NAME:=Radicale
 PYPI_SOURCE_NAME:=radicale
 PKG_HASH:=569f2a8cf990faf9bb25b7442f36ddd439526b95db81d8878952d77836ab3d4c
 
+PKG_MAINTAINER:=Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
+
 include ../../lang/python/pypi.mk
 include $(INCLUDE_DIR)/package.mk
 include ../../lang/python/python3-package.mk
