@@ -4,6 +4,10 @@ PKG_NAME:=hostlog
 PKG_VERSION:=1.0.0
 PKG_RELEASE:=1
 
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/kixorz/hostlog.git
+PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/hostlog-$(PKG_VERSION)
 PKG_MAINTAINER:=Adam Konrad <git@adamkonrad.com>
 PKG_LICENSE:=MIT
 
@@ -13,7 +17,7 @@ PKG_BUILD_PARALLEL:=1
 GO_PKG:=hostlog
 
 include $(INCLUDE_DIR)/package.mk
-include $(TOPDIR)/feeds/packages/lang/golang/golang-package.mk
+include ../../lang/golang/golang-package.mk
 
 define Package/hostlog
   SECTION:=utils
