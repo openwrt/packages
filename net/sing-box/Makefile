@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sing-box
 PKG_VERSION:=1.12.14
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/SagerNet/sing-box/tar.gz/v$(PKG_VERSION)?
@@ -45,6 +45,14 @@ define Package/sing-box/description
   ShadowTLS, Tor, trojan, VLess, VMess, WireGuard and so on.
 endef
 
+define Package/sing-box-minimal
+  $(Package/sing-box-default)
+  TITLE+= (minimal)
+  PROVIDES:=sing-box
+  VARIANT:=minimal
+  CONFLICTS:=sing-box
+endef
+
 define Package/sing-box-tiny
   $(Package/sing-box-default)
   TITLE+= (tiny)
@@ -53,6 +61,7 @@ define Package/sing-box-tiny
   CONFLICTS:=sing-box
 endef
 
+Package/sing-box-minimal/description:=$(Package/sing-box/description)
 Package/sing-box-tiny/description:=$(Package/sing-box/description)
 
 define Package/sing-box/config
@@ -113,6 +122,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_SINGBOX_WITH_V2RAY_API \
 	CONFIG_SINGBOX_WITH_WIREGUARD
 
+ifneq ($(BUILD_VARIANT),minimal)
 ifeq ($(BUILD_VARIANT),tiny)
 ifeq ($(CONFIG_SMALL_FLASH),)
 GO_PKG_TAGS:=with_gvisor
@@ -133,12 +143,14 @@ GO_PKG_TAGS:=$(subst $(space),$(comma),$(strip \
 	$(if $(CONFIG_SINGBOX_WITH_WIREGUARD),with_wireguard) \
 ))
 endif
+endif
 
 define Package/sing-box/conffiles
 /etc/config/sing-box
 /etc/sing-box/
 endef
 
+Package/sing-box-minimal/conffiles=$(Package/sing-box/conffiles)
 Package/sing-box-tiny/conffiles=$(Package/sing-box/conffiles)
 
 define Package/sing-box/install
@@ -154,7 +166,9 @@ define Package/sing-box/install
 	$(INSTALL_BIN) ./files/sing-box.init $(1)/etc/init.d/sing-box
 endef
 
+Package/sing-box-minimal/install=$(Package/sing-box/install)
 Package/sing-box-tiny/install=$(Package/sing-box/install)
 
 $(eval $(call BuildPackage,sing-box))
+$(eval $(call BuildPackage,sing-box-minimal))
 $(eval $(call BuildPackage,sing-box-tiny))
