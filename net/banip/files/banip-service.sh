@@ -1,6 +1,6 @@
 #!/bin/sh
 # banIP main service script - ban incoming and outgoing IPs via named nftables Sets
-# Copyright (c) 2018-2025 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2018-2026 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # (s)hellcheck exceptions
@@ -18,10 +18,10 @@ f_conf
 f_log "info" "start banIP processing (${ban_action}, ${ban_bver:-"n/a"})"
 f_genstatus "processing"
 f_tmp
-f_getfetch
+f_getdl
 f_getif
 f_getdev
-f_getuplink
+f_getup
 f_mkdir "${ban_backupdir}"
 f_mkfile "${ban_allowlist}"
 f_mkfile "${ban_blocklist}"
@@ -74,7 +74,7 @@ for feed in allowlist ${ban_feed} blocklist; do
 		uci_commit "banip"
 		continue
 	fi
-	json_objects="url_4 rule_4 url_6 rule_6 chain flag"
+	json_objects="url_4 url_6 rule chain flag"
 	for object in ${json_objects}; do
 		eval json_get_var feed_"${object}" '${object}' >/dev/null 2>&1
 	done
@@ -82,46 +82,47 @@ for feed in allowlist ${ban_feed} blocklist; do
 
 	# skip incomplete feeds
 	#
-	if { { [ -n "${feed_url_4}" ] && [ -z "${feed_rule_4}" ]; } || { [ -z "${feed_url_4}" ] && [ -n "${feed_rule_4}" ]; }; } ||
-		{ { [ -n "${feed_url_6}" ] && [ -z "${feed_rule_6}" ]; } || { [ -z "${feed_url_6}" ] && [ -n "${feed_rule_6}" ]; }; } ||
-		{ [ -z "${feed_url_4}" ] && [ -z "${feed_rule_4}" ] && [ -z "${feed_url_6}" ] && [ -z "${feed_rule_6}" ]; }; then
+	if { [ -z "$feed_url_4" ] && [ -z "$feed_url_6" ]; } || \
+		{ { [ -n "$feed_url_4" ] || [ -n "$feed_url_6" ]; } && [ -z "$feed_rule" ]; }; then 
 		f_log "info" "skip incomplete feed '${feed}'"
 		continue
 	fi
 
 	# handle IPv4/IPv6 feeds
 	#
-	if [ "${ban_protov4}" = "1" ] && [ -n "${feed_url_4}" ] && [ -n "${feed_rule_4}" ]; then
+	if [ "${ban_protov4}" = "1" ] && [ -n "${feed_url_4}" ] && [ -n "${feed_rule}" ]; then
+		feed_ipv="4"
 		if [ "${feed}" = "country" ] && [ "${ban_countrysplit}" = "1" ]; then
 			for country in ${ban_country}; do
-				f_down "${feed}.${country}" "4" "${feed_url_4}" "${feed_rule_4}" "${feed_chain:-"in"}" "${feed_flag}"
+				f_down "${feed}.${country}" "${feed_ipv}" "${feed_url_4}" "${feed_rule}" "${feed_chain:-"in"}" "${feed_flag}"
 			done
 		elif [ "${feed}" = "asn" ] && [ "${ban_asnsplit}" = "1" ]; then
 			for asn in ${ban_asn}; do
-				f_down "${feed}.${asn}" "4" "${feed_url_4}" "${feed_rule_4}" "${feed_chain:-"in"}" "${feed_flag}"
+				f_down "${feed}.${asn}" "${feed_ipv}" "${feed_url_4}" "${feed_rule}" "${feed_chain:-"in"}" "${feed_flag}"
 			done
 		else
 			if [ "${feed_url_4}" = "${feed_url_6}" ]; then
 				feed_url_6="local"
-				f_down "${feed}" "4" "${feed_url_4}" "${feed_rule_4}" "${feed_chain:-"in"}" "${feed_flag}"
+				f_down "${feed}" "${feed_ipv}" "${feed_url_4}" "${feed_rule}" "${feed_chain:-"in"}" "${feed_flag}"
 			else
-				(f_down "${feed}" "4" "${feed_url_4}" "${feed_rule_4}" "${feed_chain:-"in"}" "${feed_flag}") &
+				(f_down "${feed}" "${feed_ipv}" "${feed_url_4}" "${feed_rule}" "${feed_chain:-"in"}" "${feed_flag}") &
 				[ "${cnt}" -gt "${ban_cores}" ] && wait -n
 				cnt="$((cnt + 1))"
 			fi
 		fi
 	fi
-	if [ "${ban_protov6}" = "1" ] && [ -n "${feed_url_6}" ] && [ -n "${feed_rule_6}" ]; then
+	if [ "${ban_protov6}" = "1" ] && [ -n "${feed_url_6}" ] && [ -n "${feed_rule}" ]; then
+		feed_ipv="6"
 		if [ "${feed}" = "country" ] && [ "${ban_countrysplit}" = "1" ]; then
 			for country in ${ban_country}; do
-				f_down "${feed}.${country}" "6" "${feed_url_6}" "${feed_rule_6}" "${feed_chain:-"in"}" "${feed_flag}"
+				f_down "${feed}.${country}" "${feed_ipv}" "${feed_url_6}" "${feed_rule}" "${feed_chain:-"in"}" "${feed_flag}"
 			done
 		elif [ "${feed}" = "asn" ] && [ "${ban_asnsplit}" = "1" ]; then
 			for asn in ${ban_asn}; do
-				f_down "${feed}.${asn}" "6" "${feed_url_6}" "${feed_rule_6}" "${feed_chain:-"in"}" "${feed_flag}"
+				f_down "${feed}.${asn}" "${feed_ipv}" "${feed_url_6}" "${feed_rule}" "${feed_chain:-"in"}" "${feed_flag}"
 			done
 		else
-			(f_down "${feed}" "6" "${feed_url_6}" "${feed_rule_6}" "${feed_chain:-"in"}" "${feed_flag}") &
+			(f_down "${feed}" "${feed_ipv}" "${feed_url_6}" "${feed_rule}" "${feed_chain:-"in"}" "${feed_flag}") &
 			[ "${cnt}" -gt "${ban_cores}" ] && wait -n
 			cnt="$((cnt + 1))"
 		fi

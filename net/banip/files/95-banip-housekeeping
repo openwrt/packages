@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2015-2025 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2015-2026 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # (s)hellcheck exceptions
@@ -33,4 +33,10 @@ for option in ${old_options}; do
 	uci -q delete "${config}.global.${option}"
 done
 [ -n "$(uci -q changes "${config}")" ] && uci -q commit "${config}"
+
+custom_feed="/etc/banip/banip.custom.feeds"
+if grep -q '"rule_4"' "${custom_feed}"; then
+	mv -f "${custom_feed}" "${custom_feed}.backup.$(date "+%Y%m%d%H%M%S")"
+	: > "${custom_feed}"
+fi
 exit 0
