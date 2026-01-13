@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=hostlog
-PKG_VERSION:=1.0.0
+PKG_VERSION:=1.0.1
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
@@ -39,5 +39,5 @@ define Package/hostlog/install
 	$(INSTALL_CONF) ./files/hostlog.config $(1)/etc/config/hostlog
 endef
 
-$(eval $(call GoPackage,$(Package/hostlog)))
+$(eval $(call GoBinPackage,hostlog))
 $(eval $(call BuildPackage,hostlog))
