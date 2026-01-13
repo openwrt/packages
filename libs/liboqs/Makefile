@@ -60,7 +60,7 @@ define Build/InstallDev
 		$(1)/usr/include/oqs/
 
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/liboqs.so.* \
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/liboqs.so* \
 		$(1)/usr/lib/
 
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
