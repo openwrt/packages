@@ -299,6 +299,24 @@ define Package/ddns-scripts-scaleway/description
   'option param_opt' (Optional) The TTL of the RR
 endef
 
+define Package/ddns-scripts-spaceship
+  $(call Package/ddns-scripts/Default)
+  TITLE:=Extension for spaceship.com API v1
+  DEPENDS:=ddns-scripts +curl
+  PROVIDES:=ddns_scripts_spaceship.com-v1
+endef
+
+define Package/ddns-scripts-spaceship/description
+  Dynamic DNS client script extension for spaceship.com API v1. (requires curl)
+  NOTE: This script requires ca-certificate or ca-bundle to be installed.
+  It requires:
+  'option username' your access key for spaceship.com API v1 (with 'dnsrecords:write' permission)
+  'option password' your private secret, created with the access key
+  'option domain' the base domain to update (eg. host.<example.com>)
+  'option param_opt' the name of the DNS record to update (eg. <host>.example.com) (optional)
+  'option param_enc' the TTL in seconds of the DNS record to update (must be between 60-3600(1m-1h)) (optional)
+endef
+
 define Package/ddns-scripts-transip
   $(call Package/ddns-scripts/Default)
   TITLE:=Extension for TransIP API
@@ -786,6 +804,23 @@ fi
 exit 0
 endef
 
+define Package/ddns-scripts-spaceship/install
+	$(INSTALL_DIR) $(1)/usr/lib/ddns
+	$(INSTALL_BIN) ./files/usr/lib/ddns/update_spaceship_com_v1.sh \
+		$(1)/usr/lib/ddns
+
+	$(INSTALL_DIR) $(1)/usr/share/ddns/default
+	$(INSTALL_DATA) ./files/usr/share/ddns/default/spaceship.com-v1.json \
+		$(1)/usr/share/ddns/default
+endef
+
+define Package/ddns-scripts-spaceship/prerm
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	/etc/init.d/ddns stop
+fi
+exit 0
+endef
 
 define Package/ddns-scripts-transip/install
 	$(INSTALL_DIR) $(1)/usr/lib/ddns
@@ -900,6 +935,7 @@ $(eval $(call BuildPackage,ddns-scripts-gandi))
 $(eval $(call BuildPackage,ddns-scripts-beget))
 $(eval $(call BuildPackage,ddns-scripts-pdns))
 $(eval $(call BuildPackage,ddns-scripts-scaleway))
+$(eval $(call BuildPackage,ddns-scripts-spaceship))
 $(eval $(call BuildPackage,ddns-scripts-transip))
 $(eval $(call BuildPackage,ddns-scripts-ns1))
 $(eval $(call BuildPackage,ddns-scripts-one))
