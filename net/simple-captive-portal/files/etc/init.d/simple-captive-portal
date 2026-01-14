@@ -92,6 +92,11 @@ EOF
     procd_close_instance
 }
 
+stop_service() {
+    # Delete the rule that blocks traffic
+    /usr/sbin/nft delete chain inet simple-captive-portal prerouting &> /dev/null
+}
+
 flush_guests() {
     /usr/sbin/nft flush set inet simple-captive-portal guest_macs
 }
