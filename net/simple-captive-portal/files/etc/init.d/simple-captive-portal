@@ -11,6 +11,10 @@ add_interface() {
     [ -z "${1}" ] || /usr/sbin/nft add element inet simple-captive-portal portal_ifs { "${1}" }
 }
 
+service_triggers() {
+    procd_add_reload_trigger "simple-captive-portal"
+}
+
 start_service() {
     local INTF INTF_COUNT PORT_REDIRECT PORT_PORTAL TIMEOUT
     config_load "simple-captive-portal"
