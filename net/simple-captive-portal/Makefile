@@ -23,8 +23,6 @@ endef
 define Package/simple-captive-portal/install
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/etc/config/simple-captive-portal $(1)/etc/config/simple-captive-portal
-	$(INSTALL_DIR) $(1)/etc/hotplug.d/net/
-	$(INSTALL_DATA) ./files/etc/hotplug.d/net/00-simple-captive-portal $(1)/etc/hotplug.d/net/00-simple-captive-portal
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/etc/init.d/simple-captive-portal $(1)/etc/init.d/simple-captive-portal
 	$(INSTALL_DIR) $(1)/etc/simple-captive-portal/
