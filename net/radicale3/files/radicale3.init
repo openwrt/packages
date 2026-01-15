@@ -147,7 +147,7 @@ add_missing_sections() {
 			echo "[$section]" >> "$cfgfile"
 			case $section in
 			server)
-				echo "hosts = 0.0.0.0:5232, [::]:5232" >> "$cfgfile"
+				echo "hosts = 127.0.0.1:5232, [::1]:5232" >> "$cfgfile"
 				;;
 			auth)
 				echo "type = htpasswd" >> "$cfgfile"
