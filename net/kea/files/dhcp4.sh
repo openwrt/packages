@@ -548,7 +548,7 @@ static_host_add() {
 
 	getvar s_renewal_time "${pfx}_renewal_time"
 
-	config_get renewal_time "$cfg" "renewal_time" "$s_renewal_time"
+	config_get renewal_time "$cfg" "renewal_time"
 
 	json_select "$index"		# why "$index" and not "$pfx"?
 	json_select "reservations"
@@ -603,8 +603,11 @@ static_host_add() {
 		fi
 
 		always="$(is_force_send "$force_send" "renewal-time")"
-		## option_data "name:dhcp-renewal-time" "data:int=$renewal_time" $always
-		option_data "name:dhcp-renewal-time" "data:string=$renewal_time" $always
+		if [ -n "$renewal_time" ]; then
+			option_data "name:dhcp-renewal-time" "data:string=$renewal_time" $always
+		elif [ -n "$always" ]; then
+			option_data "name:dhcp-renewal-time" "data:string=$s_renewal_time" $always
+		fi
 
 		### need special handling for list dhcp_option 'option:xxx,yyy'
 		config_list_foreach "$cfg" "dhcp_option" append_dhcp_options
