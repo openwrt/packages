@@ -56,7 +56,6 @@ define Package/zabbix/Default
   SUBMENU:=Zabbix
   TITLE:=Zabbix
   URL:=https://www.zabbix.com/
-  USERID:=zabbix=53:zabbix=53
   DEPENDS+=$(ICONV_DEPENDS) +libpcre2 +zlib
 endef
 
@@ -67,6 +66,7 @@ define Package/zabbix-agentd
   PROVIDES:=zabbix-agentd
   VARIANT:=nossl
   DEFAULT_VARIANT:=1
+  USERID:=zabbix-agent=53:zabbix-agent=53
 endef
 
 define Package/zabbix-agentd-openssl
@@ -75,6 +75,7 @@ define Package/zabbix-agentd-openssl
   DEPENDS+= +libevent2-pthreads +libopenssl
   PROVIDES:=zabbix-agentd
   VARIANT:=openssl
+  USERID:=zabbix-agent=53:zabbix-agent=53
 endef
 
 define Package/zabbix-agentd-gnutls
@@ -83,6 +84,7 @@ define Package/zabbix-agentd-gnutls
   DEPENDS+= +libevent2-pthreads +libgnutls
   PROVIDES:=zabbix-agentd
   VARIANT:=gnutls
+  USERID:=zabbix-agent=53:zabbix-agent=53
 endef
 
 define Package/zabbix-extra-mac80211
@@ -161,6 +163,7 @@ define Package/zabbix-server/Default
     +libevent2-pthreads \
     +libevent2-extra \
     +fping
+  USERID:=zabbix-server=70:zabbix-server=70
 endef
 
 define Package/zabbix-server

@@ -45,7 +45,7 @@ Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
  
 +# Although procd does not require a pid file, zabbix uses the pidfile to
 +# shut down correctly on receipt of a TERM or INT signal.
-+PidFile=/var/run/zabbix/zabbix_server.pid
++PidFile=/var/run/zabbix-server/zabbix_server.pid
 +
  ### Option: SocketDir
  #	IPC socket directory.
