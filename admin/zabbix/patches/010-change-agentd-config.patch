@@ -31,7 +31,7 @@ Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
 -# Default:
 -# PidFile=/tmp/zabbix_agentd.pid
 +# Zabbix always creates a PidFile. Make sure it is where we want it.
-+PidFile=/var/run/zabbix/zabbix_agentd.pid
++PidFile=/var/run/zabbix-agent/zabbix_agentd.pid
 +
 +# use syslog
 +LogType=system

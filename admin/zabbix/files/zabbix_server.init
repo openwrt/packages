@@ -27,12 +27,12 @@ start_service() {
 		return 1
 	fi
 
-	mkdir -p /var/run/zabbix
-	chown zabbix:zabbix /var/run/zabbix
+	mkdir -p /var/run/zabbix-server
+	chown zabbix-server:zabbix-server /var/run/zabbix-server
 
 	procd_open_instance
 	procd_set_param command ${PROG} -c ${CONFIG} -f
-	procd_set_param user zabbix
+	procd_set_param user zabbix-server
 	procd_set_param limits nofile="16384 100000"
 	procd_set_param file ${CONFIG}
 	procd_set_param respawn
