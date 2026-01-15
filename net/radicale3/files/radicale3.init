@@ -207,7 +207,7 @@ build_config() {
 	rm -f "$tmpconf" "$tmpusers"
 }
 
-start_service() {
+prepare_config() {
 	# If custom config (/etc/radicale3/config) absent, build it from UCI
 	if [ ! -f /etc/radicale3/config ]; then
 		build_config
@@ -221,6 +221,10 @@ start_service() {
 		# We assume user handles directory creation if using manual config,
 		# but we could attempt it if we parsed it. simpler to leave it for now.
 	fi
+}
+
+start_service() {
+	prepare_config
 
 	procd_open_instance
 	procd_set_param command "$PROG" --config "$CFG_FILE"
@@ -232,8 +236,12 @@ start_service() {
 }
 
 reload_service() {
-	stop
-	start
+	prepare_config
+	if pgrep radicale3 >/dev/null 2>/dev/null; then
+		procd_send_signal radicale3 '*' HUP
+	else
+		start_service
+	fi
 }
 
 service_triggers() {
