@@ -1,6 +1,6 @@
 --- a/sepolicy/sepolicy.py
 +++ b/sepolicy/sepolicy.py
-@@ -685,7 +685,6 @@ if __name__ == '__main__':
+@@ -686,7 +686,6 @@ if __name__ == '__main__':
      gen_booleans_args(subparsers)
      gen_communicate_args(subparsers)
      gen_generate_args(subparsers)
