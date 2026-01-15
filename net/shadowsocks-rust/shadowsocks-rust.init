@@ -1,0 +1,210 @@
+#!/bin/sh /etc/rc.common
+#
+# Copyright (C) 2017-2019 Yousong Zhou <yszhou4tech@gmail.com>
+# Copyright (C) 2026 Jove Yu <yushijun110@gmail.com>
+#
+# This is free software, licensed under the GNU General Public License v3.
+# See /LICENSE for more information.
+
+. /usr/share/libubox/jshn.sh
+
+USE_PROCD=1
+START=99
+
+confdir=/var/etc/shadowsocks-rust
+ssrules_uc="/usr/share/shadowsocks-rust/ssrules.uc"
+ssrules_nft="/etc/nftables.d/90-shadowsocks-rust-ssrules.nft"
+
+gen_server_conf() {
+    local server_cfg="$1"
+    local jsonpath="$2"
+    local method
+
+    validate_server_section "$server_cfg" || return 1
+    [ "$disabled" = "1" ] && return 1
+    json_init
+    [ -z "$server" ] || json_add_string server "$server"
+    [ -z "$server_port" ] || json_add_int server_port "$server_port"
+    [ -z "$password" ] || json_add_string password "$password"
+    [ -z "$method" ] || json_add_string method "$method"
+    [ -z "$plugin" ] || json_add_string plugin "$plugin"
+    [ -z "$plugin_opts" ] || json_add_string plugin_opts "$plugin_opts"
+    [ -z "$timeout" ] || json_add_int timeout "$timeout"
+    json_add_array locals
+
+    add_local_to_json() {
+        local local_cfg="$1"
+        validate_local_section "$local_cfg" || return
+        [ "$disabled" = "1" ] && return
+        [ "$server" = "$server_cfg" ] || return
+
+        json_add_object
+        [ -z "$protocol" ] || json_add_string protocol "$protocol"
+        [ -z "$mode" ] || json_add_string mode "$mode"
+        [ -z "$local_address" ] || json_add_string local_address "$local_address"
+        [ -z "$local_port" ] || json_add_int local_port "$local_port"
+        if [ "$protocol" = "tunnel" ]; then
+            [ -z "$forward_address" ] || json_add_string forward_address "$forward_address"
+            [ -z "$forward_port" ] || json_add_int forward_port "$forward_port"
+        elif [ "$protocol" = "dns" ]; then
+            [ -z "$local_dns_address" ] || json_add_string local_dns_address "$local_dns_address"
+            [ -z "$local_dns_port" ] || json_add_int local_dns_port "$local_dns_port"
+            [ -z "$remote_dns_address" ] || json_add_string remote_dns_address "$remote_dns_address"
+            [ -z "$remote_dns_port" ] || json_add_int remote_dns_port "$remote_dns_port"
+            [ -z "$client_cache_size" ] || json_add_int client_cache_size "$client_cache_size"
+        elif [ "$protocol" = "redir" ]; then
+            json_add_string tcp_redir "tproxy"
+            json_add_string udp_redir "tproxy"
+        elif [ "$protocol" = "tun" ]; then
+            [ -z "$tun_interface_name" ] || json_add_string tun_interface_name "$tun_interface_name"
+            [ -z "$tun_interface_address" ] || json_add_string tun_interface_address "$tun_interface_address"
+        fi
+        json_close_object
+    }
+
+    config_foreach add_local_to_json local
+    json_close_array
+    json_dump > $jsonpath
+}
+
+start_server() {
+    local cfg="$1"
+    local jsonpath="$confdir/sslocal.$cfg.json"
+
+    if gen_server_conf "$cfg" "$jsonpath"; then
+        procd_open_instance "ssserver.$cfg"
+        procd_set_param command /usr/bin/sslocal -c "$jsonpath"
+        procd_set_param respawn
+        procd_set_param file "/etc/config/shadowsocks-rust"
+        procd_set_param stdout 1
+        procd_set_param stderr 1
+        procd_close_instance
+    fi
+}
+
+start_service() {
+    mkdir -p "$confdir"
+    config_load shadowsocks-rust
+    config_foreach start_server server
+    ss_rules
+}
+
+stop_service() {
+    ss_rules_nft_reset
+    rm -rf "$confdir"
+}
+
+ss_rules_nft_gen() {
+    [ -s "$ssrules_uc" ] || return 1
+    validate_rules_section "rules" || return 1
+    [ "$disabled" = "1" ] && return 1
+
+    if [ -n "$redir_tcp" ]; then
+        config_get local_port_tcp "$redir_tcp" local_port
+    fi
+    if [ -n "$redir_udp" ]; then
+        config_get local_port_udp "$redir_udp" local_port
+    fi
+    
+    [ -n "$local_port_tcp" ] || [ -n "$local_port_udp" ] || return 1
+
+    local tmp="/tmp/ssrules"
+    json_init
+    json_add_string o_remote_servers ""
+    json_add_int o_redir_tcp_port "$local_port_tcp"
+    json_add_int o_redir_udp_port "$local_port_udp"
+    json_add_string o_ifnames "$ifnames"
+    json_add_string o_local_default "$local_default"
+    json_add_string o_src_bypass "$src_ips_bypass"
+    json_add_string o_src_forward "$src_ips_forward"
+    json_add_string o_src_checkdst "$src_ips_checkdst"
+    json_add_string o_src_default "$src_default"
+    json_add_string o_dst_bypass "$dst_ips_bypass"
+    json_add_string o_dst_forward "$dst_ips_forward"
+    json_add_string o_dst_bypass_file "$dst_ips_bypass_file"
+    json_add_string o_dst_forward_file "$dst_ips_forward_file"
+    json_add_string o_dst_default "$dst_default"
+    json_add_string o_nft_tcp_extra "$nft_tcp_extra"
+    json_add_string o_nft_udp_extra "$nft_udp_extra"
+    json_dump -i >"$tmp.json"
+
+    if utpl -S -F "$tmp.json" "$ssrules_uc" >"$tmp.nft" \
+        && ! cmp -s "$tmp.nft" "$ssrules_nft"; then
+        echo "table inet chk {include \"$tmp.nft\";}" >"$tmp.nft.chk"
+        if nft -f "$tmp.nft.chk" -c; then
+            mv "$tmp.nft" "$ssrules_nft"
+            fw4 restart
+        fi
+        rm -f "$tmp.nft.chk"
+    fi
+    rm -f "$tmp.json"
+    rm -f "$tmp.nft"
+}
+
+ss_rules_nft_reset() {
+    if [ -f "$ssrules_nft" ]; then
+        rm -f "$ssrules_nft"
+        fw4 restart
+    fi
+}
+
+ss_rules() {
+    if ! ss_rules_nft_gen; then
+        ss_rules_nft_reset
+    fi
+}
+
+service_triggers() {
+    procd_add_reload_trigger shadowsocks-rust
+}
+
+validate_server_section() {
+    uci_validate_section shadowsocks-rust server "$1" \
+        'disabled:bool:0' \
+        'server:host' \
+        'server_port:port' \
+        'password:string' \
+        'method:string' \
+        'plugin:string' \
+        'plugin_opts:string' \
+        'timeout:uinteger:60'
+}
+
+validate_local_section() {
+    uci_validate_section shadowsocks-rust 'local' "$1" \
+        'disabled:bool:0' \
+        'server:uci("shadowsocks-rust", "@server")' \
+        'protocol:or("socks", "http", "redir", "tunnel", "dns", "tun"):socks' \
+        'local_address:ipaddr:0.0.0.0' \
+        'local_port:port' \
+        'forward_address:host' \
+        'forward_port:port' \
+        'local_dns_address:host' \
+        'local_dns_port:port' \
+        'remote_dns_address:host' \
+        'remote_dns_port:port' \
+        'client_cache_size:uinteger:10' \
+        'tun_interface_name:string:tun0' \
+        'tun_interface_address:cidr' \
+        'mode:or("tcp_only", "udp_only", "tcp_and_udp"):tcp_only'
+}
+
+validate_rules_section() {
+    uci_validate_section shadowsocks-rust rules "$1" \
+        'disabled:bool:0' \
+        'redir_tcp:uci("shadowsocks-rust", "@local")' \
+        'redir_udp:uci("shadowsocks-rust", "@local")' \
+        'src_ips_bypass:or(ipaddr,cidr)' \
+        'src_ips_forward:or(ipaddr,cidr)' \
+        'src_ips_checkdst:or(ipaddr,cidr)' \
+        'dst_ips_bypass_file:file' \
+        'dst_ips_bypass:or(ipaddr,cidr)' \
+        'dst_ips_forward_file:file' \
+        'dst_ips_forward:or(ipaddr,cidr)' \
+        'src_default:or("bypass", "forward", "checkdst"):checkdst' \
+        'dst_default:or("bypass", "forward"):bypass' \
+        'local_default:or("bypass", "forward", "checkdst"):bypass' \
+        'nft_tcp_extra:string' \
+        'nft_udp_extra:string' \
+        'ifnames:maxlength(15)'
+}
