@@ -91,18 +91,21 @@ define Package/zabbix-extra-mac80211
   $(call Package/zabbix/Default)
   TITLE+= discovery/userparameters for mac80211
   DEPENDS = +zabbix-agentd @PACKAGE_MAC80211_DEBUGFS @KERNEL_DEBUG_FS
+  BUILD_VARIANT:=no-configure
 endef
 
 define Package/zabbix-extra-network
   $(call Package/zabbix/Default)
   TITLE+= discovery/userparameters for network
   DEPENDS = +zabbix-agentd +libubus-lua +lua
+  BUILD_VARIANT:=no-configure
 endef
 
 define Package/zabbix-extra-wifi
   $(call Package/zabbix/Default)
   TITLE+= discovery/userparameters for wifi
   DEPENDS = +zabbix-agentd +libiwinfo-lua +libubus-lua +lua
+  BUILD_VARIANT:=no-configure
 endef
 
 define Package/zabbix-sender
@@ -208,6 +211,7 @@ define Package/zabbix-server-frontend
     +ZABBIX_POSTGRESQL:php8-mod-pgsql \
     +ZABBIX_MYSQL:php8-mod-mysqli \
     @(!ZABBIX_SQLITE)
+  BUILD_VARIANT:=no-configure
 endef
 
 define Package/zabbix-proxy/Default
@@ -263,6 +267,8 @@ As it uses libiwinfo, it works with all wifi devices supported by openwrt.
 See https://openwrt.org/docs/guide-user/services/network_monitoring/zabbix for ready to use zabbix templates.
 endef
 
+ifneq ($(BUILD_VARIANT),no-configure)
+
 CONFIGURE_ARGS+= \
 	--enable-agent \
 	$(if $(CONFIG_ZABBIX_SQLITE),--disable-server,--enable-server) \
@@ -282,6 +288,20 @@ endif
 
 ifeq ($(BUILD_VARIANT),gnutls)
 	CONFIGURE_ARGS+= --with-gnutls="$(STAGING_DIR)/usr"
+endif
+
+else
+
+define Build/Prepare
+	true
+endef
+define Build/Configure
+	true
+endef
+define Build/Compile
+	true
+endef
+
 endif
 
 MAKE_FLAGS += ARCH="linux"
@@ -352,25 +372,21 @@ Package/zabbix-proxy-openssl/conffiles = $(Package/zabbix-proxy/conffiles)
 Package/zabbix-proxy-gnutls/conffiles = $(Package/zabbix-proxy/conffiles)
 
 ifdef CONFIG_PACKAGE_zabbix-extra-mac80211
-define Build/Prepare/zabbix-extra-mac80211
+define Build/Prepare
+	$(call Build/Prepare/Default)
 	mkdir -p $(PKG_BUILD_DIR)/zabbix-extra-mac80211
 	$(CP) ./files/zabbix_helper_mac80211.c $(PKG_BUILD_DIR)/zabbix-extra-mac80211/
 endef
 
-define Build/Compile/zabbix-extra-mac80211
-	$(TARGET_CC) $(TARGET_CFLAGS) $(PKG_BUILD_DIR)/zabbix-extra-mac80211/zabbix_helper_mac80211.c -o $(PKG_BUILD_DIR)/zabbix-extra-mac80211/zabbix_helper_mac80211
-endef
-endif
-
-define Build/Prepare
-	$(call Build/Prepare/Default)
-	$(call Build/Prepare/zabbix-extra-mac80211)
+define Build/Configure
+	$(call Build/Configure/Default)
 endef
 
 define Build/Compile
 	$(call Build/Compile/Default)
-	$(call Build/Compile/zabbix-extra-mac80211)
+	$(TARGET_CC) $(TARGET_CFLAGS) $(PKG_BUILD_DIR)/zabbix-extra-mac80211/zabbix_helper_mac80211.c -o $(PKG_BUILD_DIR)/zabbix-extra-mac80211/zabbix_helper_mac80211
 endef
+endif
 
 define Package/zabbix-agentd/install
 	$(INSTALL_DIR) $(1)/etc/zabbix_agentd.conf.d
