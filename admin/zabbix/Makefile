@@ -59,32 +59,32 @@ define Package/zabbix/Default
   DEPENDS+=$(ICONV_DEPENDS) +libpcre2 +zlib
 endef
 
-define Package/zabbix-agentd
+define Package/zabbix-agentd/Default
   $(call Package/zabbix/Default)
   TITLE+= agentd
   DEPENDS+= +libevent2-pthreads
   PROVIDES:=zabbix-agentd
+  USERID:=zabbix-agent=53:zabbix-agent=53
+endef
+
+define Package/zabbix-agentd
+  $(call Package/zabbix-agentd/Default)
   VARIANT:=nossl
   DEFAULT_VARIANT:=1
-  USERID:=zabbix-agent=53:zabbix-agent=53
 endef
 
 define Package/zabbix-agentd-openssl
-  $(call Package/zabbix/Default)
-  TITLE+= agentd (with OpenSSL)
+  $(call Package/zabbix-agentd/Default)
+  TITLE+= (with OpenSSL)
   DEPENDS+= +libevent2-pthreads +libopenssl
-  PROVIDES:=zabbix-agentd
   VARIANT:=openssl
-  USERID:=zabbix-agent=53:zabbix-agent=53
 endef
 
 define Package/zabbix-agentd-gnutls
-  $(call Package/zabbix/Default)
-  TITLE+= agentd (with GnuTLS)
+  $(call Package/zabbix-agentd/Default)
+  TITLE+= (with GnuTLS)
   DEPENDS+= +libevent2-pthreads +libgnutls
-  PROVIDES:=zabbix-agentd
   VARIANT:=gnutls
-  USERID:=zabbix-agent=53:zabbix-agent=53
 endef
 
 define Package/zabbix-extra-mac80211
