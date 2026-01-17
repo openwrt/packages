@@ -52,37 +52,37 @@ upsd_runas() {
 }
 
 listen_address() {
-    local cfg="$1"
+	local cfg="$1"
 
-    config_get address "$cfg" address "::1"
-    config_get port "$cfg" port
-    # shellcheck disable=SC2154
-    echo "LISTEN $address $port" >>"$UPSD_C"
+	config_get address "$cfg" address "::1"
+	config_get port "$cfg" port
+	# shellcheck disable=SC2154
+	echo "LISTEN $address $port" >>"$UPSD_C"
 }
 
 upsd_config() {
-    local cfg="$1"
-    local maxage maxconn certfile runas statepath
+	local cfg="$1"
+	local maxage maxconn certfile runas statepath
 
-    # Note runas support requires you make sure USB device file is readable by
-    # the runas user
-    config_get runas "$cfg" runas nut
-    RUNAS="$runas"
+	# Note runas support requires you make sure USB device file is readable by
+	# the runas user
+	config_get runas "$cfg" runas nut
+	RUNAS="$runas"
 
-    config_get statepath "$cfg" statepath /var/run/nut
-    STATEPATH="$statepath"
+	config_get statepath "$cfg" statepath /var/run/nut
+	STATEPATH="$statepath"
 
-    config_get maxage "$cfg" maxage
-    [ -n "$maxage" ] && echo "MAXAGE $maxage" >>"$UPSD_C"
+	config_get maxage "$cfg" maxage
+	[ -n "$maxage" ] && echo "MAXAGE $maxage" >>"$UPSD_C"
 
-    [ -n "$statepath" ] && echo "STATEPATH $statepath" >>"$UPSD_C"
+	[ -n "$statepath" ] && echo "STATEPATH $statepath" >>"$UPSD_C"
 
-    config_get maxconn "$cfg" maxconn
-    [ -n "$maxconn" ] && echo "MAXCONN $maxconn" >>"$UPSD_C"
+	config_get maxconn "$cfg" maxconn
+	[ -n "$maxconn" ] && echo "MAXCONN $maxconn" >>"$UPSD_C"
 
-    #NOTE: certs only apply to SSL-enabled version
-    config_get certfile "$cfg" certfile
-    [ -n "$certfile" ] && echo "CERTFILE $certfile" >>"$UPSD_C"
+	#NOTE: certs only apply to SSL-enabled version
+	config_get certfile "$cfg" certfile
+	[ -n "$certfile" ] && echo "CERTFILE $certfile" >>"$UPSD_C"
 }
 
 nut_user_add() {
@@ -98,7 +98,7 @@ nut_user_add() {
 
 	config_get val "$cfg" actions
 	for a in $val; do
-	    echo "  actions = $a" >> "$USERS_C"
+		echo "  actions = $a" >> "$USERS_C"
 	done
 
 	instcmd() {
@@ -112,12 +112,12 @@ nut_user_add() {
 
 	config_get val "$cfg" upsmon
 	if [ -n "$val" ]; then
-	    echo "  upsmon $val" >> "$USERS_C"
+		echo "  upsmon $val" >> "$USERS_C"
 	fi
 }
 
 build_server_config() {
-        mkdir -p "$(dirname "$UPSD_C")"
+	mkdir -p "$(dirname "$UPSD_C")"
 	chmod 0640 "$UPS_C"
 	rm -f "$USERS_C"
 	rm -f "$UPSD_C"
@@ -185,9 +185,9 @@ build_driver_config() {
 	get_write_driver_config "$cfg" vendorid
 
 	# Params specific to NetXML driver
-        get_write_driver_config "$cfg" login
-        get_write_driver_config "$cfg" password
-        get_write_driver_config "$cfg" subscribe 0 1
+	get_write_driver_config "$cfg" login
+	get_write_driver_config "$cfg" password
+	get_write_driver_config "$cfg" subscribe 0 1
 
 	# shellcheck disable=SC2317
 	defoverride() {
@@ -249,7 +249,7 @@ build_global_driver_config() {
 build_config() {
 	local STATEPATH=/var/run/nut
 
-        mkdir -p "$(dirname "$UPS_C")"
+	mkdir -p "$(dirname "$UPS_C")"
 	rm -f "$UPS_C"
 	echo "# Config file automatically generated from UCI config" > "$UPS_C"
 	chmod 0640 "$UPS_C"
@@ -284,11 +284,11 @@ start_driver_instance() {
 	upsd_statepath
 	build_config
 
-	# Avoid hotplug inadvertenly restarting driver during
+	# Avoid hotplug inadvertently restarting driver during
 	# forced shutdown
 	[ -f /var/run/killpower ] && return 0
 	if [ -d /var/run/nut ] && [ -f /var/run/nut/disable-hotplug ]; then
-	       return 0
+		return 0
 	fi
 
 	if [ -n "$RUNAS" ]; then
@@ -349,7 +349,7 @@ start_server_instance() {
 start_service() {
 	local STATEPATH=/var/run/nut
 
-	# Avoid hotplug inadvertenly restarting driver during
+	# Avoid hotplug inadvertently restarting driver during
 	# forced shutdown
 	[ -f /var/run/killpower ] && return 0
 
