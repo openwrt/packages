@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=php
 PKG_VERSION:=8.4.16
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_MAINTAINER:=Michael Heimpold <mhei@heimpold.de>
 PKG_LICENSE:=PHP-3.01
@@ -76,16 +76,12 @@ define Package/php8
   DEPENDS:=+libpcre2 +zlib \
            +PHP8_LIBXML:libxml2 \
            +PHP8_SYSTEMTZDATA:zoneinfo-core
-  CONFLICTS:=php7
 endef
 
 define Package/php8/description
   $(call Package/php8/Default/description)
   This package contains only the PHP config file. You must actually choose
   your PHP flavour (cli, cgi or fastcgi).
-
-  Please note, that installing php5 and php8 in parallel on the same target
-  is not supported in OpenWrt/LEDE.
 endef
 
 define Package/php8-cli
@@ -325,10 +321,7 @@ else
 endif
 
 ifneq ($(CONFIG_PACKAGE_php8-mod-openssl)$(CONFIG_PACKAGE_php8-mod-ftp)$(CONFIG_PACKAGE_php8-mod-snmp),)
-  CONFIGURE_ARGS+= \
-	--with-openssl=shared \
-	--with-kerberos=no \
-	--with-openssl-dir="$(STAGING_DIR)/usr"
+  CONFIGURE_ARGS+= --with-openssl=shared
 else
   CONFIGURE_ARGS+= --without-openssl
 endif
