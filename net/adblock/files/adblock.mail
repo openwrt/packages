@@ -1,6 +1,6 @@
 #!/bin/sh
 # send mail script for adblock notifications
-# Copyright (c) 2015-2025 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2015-2026 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # Please note: you have to manually install and configure the package 'msmtp' before using this script
@@ -16,7 +16,7 @@ adb_mailreceiver="$(uci_get adblock global adb_mailreceiver)"
 adb_mailtopic="$(uci_get adblock global adb_mailtopic "adblock notification")"
 adb_mailprofile="$(uci_get adblock global adb_mailprofile "adb_notify")"
 
-[ -z "${adb_mailreceiver}" ] && f_log "err" "please set the mail receiver with the 'adb_mailreceiver' option"
+[ -z "${adb_mailreceiver}" ] && f_log "info" "please set the mail receiver with the 'adb_mailreceiver' option"
 [ "${adb_debug}" = "1" ] && debug="--debug"
 
 adb_mailhead="From: ${adb_mailsender}\nTo: ${adb_mailreceiver}\nSubject: ${adb_mailtopic}\nReply-to: ${adb_mailsender}\nMime-Version: 1.0\nContent-Type: text/html;charset=utf-8\nContent-Disposition: inline\n\n"
@@ -48,8 +48,9 @@ if [ -x "${adb_mailcmd}" ]; then
 	if [ "${?}" = "0" ]; then
 		f_log "info" "mail successfully sent to '${adb_mailreceiver}'"
 	else
-		f_log "err" "failed to send mail to '${adb_mailreceiver}' with rc '${?}'"
+		f_log "info" "failed to send mail to '${adb_mailreceiver}' with rc '${?}'"
 	fi
 else
-	f_log "err" "msmtp mail daemon not found"
+	f_log "info" "msmtp mail daemon not found"
 fi
+exit 0
