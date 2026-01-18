@@ -3,12 +3,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=telegraf
-PKG_VERSION:=1.37.0
+PKG_VERSION:=1.37.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/influxdata/telegraf/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=1f05448f5026bff30f8a2b7ec04936c7967b7bb28d86d09f15a617c02071bb77
+PKG_HASH:=14e9ba382999a5065a86344af73891b977aa8bbedf39f17d1f549b3e7575b645
 
 PKG_MAINTAINER:=Niklas Thorild <niklas@thorild.se>
 PKG_LICENSE:=MIT
@@ -23,7 +23,7 @@ GO_PKG_BUILD_PKG:=github.com/influxdata/telegraf/cmd/telegraf
 GO_PKG_LDFLAGS_X := \
   github.com/influxdata/telegraf/internal.Version=$(PKG_VERSION) \
   github.com/influxdata/telegraf/internal.Branch=HEAD \
-  github.com/influxdata/telegraf/internal.Commit=f80cc596
+  github.com/influxdata/telegraf/internal.Commit=3352c0d5
 
 ifeq ($(CONFIG_mips)$(CONFIG_mipsel),y)
   TARGET_LDFLAGS += -static
