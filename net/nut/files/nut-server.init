@@ -438,7 +438,9 @@ reload_service() {
 	interface_triggers "check_interface_up" || should_stop_srv=1
 
 	if [ "$should_stop_srv" != "0" ]; then
-		procd_kill nut-server upsd 2>&1 | logger -t nut-server
+		if procd_running nut-server upsd >/dev/null 2>&1; then
+			procd_kill nut-server upsd 2>&1 | logger -t nut-server
+		fi
 		config_foreach stop_ups_driver driver
 	fi
 
@@ -486,7 +488,9 @@ stop_ups_driver() {
 	build_ups_config "$ups"
 
 	if [ "$haveupscfg" != "1" ]; then
-		procd_kill nut-server "$ups" 2>&1 | logger -t nut-server
+		if procd_running nut-server upsd >/dev/null 2>&1; then
+			procd_kill nut-server upsd 2>&1 | logger -t nut-server
+		fi
 		return 0
 	fi
 
@@ -498,8 +502,25 @@ stop_ups_driver() {
 		elif pgrep "${driver}" >/dev/null 2>/dev/null; then
 			procd_send_signal nut-server "${driver}" TERM 2>&1 | logger -t nut-server
 		fi
-		procd_kill nut-server "$ups" 2>&1 | logger -t nut-server
+		if procd_running nut-server upsd >/dev/null 2>&1; then
+			procd_kill nut-server upsd 2>&1 | logger -t nut-server
+		fi
 	fi
+}
+
+server_active() {
+	# subshell so as not to pollute initscript environment
+	(
+		local nut_server_active
+
+		# shellcheck disable=SC1091
+		. /usr/share/libubox/jshn.sh
+		json_init
+		json_add_string name "nut-server"
+
+		nut_server_active=$(_procd_ubus_call list | jsonfilter -l 1 -e "@['nut-server']")
+		[ "$nut_server_active" = "{ }" ] && return 0
+	)
 }
 
 stop_service() {
@@ -508,20 +529,10 @@ stop_service() {
 
 	case $@ in
 	"")
-		if (
-			local nut_server_active
-
-			# shellcheck disable=SC1091
-			. /usr/share/libubox/jshn.sh
-			json_init
-			json_add_string name "nut-server"
-
-			nut_server_active=$(_procd_ubus_call list | jsonfilter -l 1 -e "@['nut-server']")
-			[ "$nut_server_active" = "{ }" ] && return 0
-		); then
+		if server_active; then
 			logger -t nut-server "nut-server active with no instances"
 			procd_kill nut-server 2>&1 | logger -t nut-server
-		elif procd_running nut-server; then
+		elif procd_running nut-server; then # if have at least one instance
 			if procd_running nut-server upsd; then
 				# Try to exit politely, then stop procd instance
 				if [ -s "${STATEPATH}/upsd.pid" ]; then
@@ -529,10 +540,14 @@ stop_service() {
 				elif pgrep upsd >/dev/null 2>/dev/null; then
 					procd_send_signal nut-server upsd TERM 2>&1 | logger -t nut-server
 				fi
-				procd_kill nut-server upsd 2>&1 | logger -t nut-server
+				if procd_running nut-server upsd >/dev/null 2>&1; then
+					procd_kill nut-server upsd 2>&1 | logger -t nut-server
+				fi
 			fi
 			config_foreach stop_ups_driver driver
-			procd_kill nut-server 2>&1 | logger -t nut-server
+			if server_active >/dev/null 2>&1; then
+				procd_kill nut-server 2>&1 | logger -t nut-server
+			fi
 		fi
 		;;
 	*upsd*)
@@ -543,7 +558,9 @@ stop_service() {
 			elif pgrep upsd >/dev/null 2>/dev/null; then
 				procd_send_signal nut-server upsd TERM 2>&1 | logger -t nut-server
 			fi
-			procd_kill nut-server upsd 2>&1 | logger -t nut-server
+			if procd_running nut-server upsd >/dev/null 2>&1; then
+				procd_kill nut-server upsd 2>&1 | logger -t nut-server
+			fi
 		fi
 		;;
 	*)
