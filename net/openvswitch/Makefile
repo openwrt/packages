@@ -80,7 +80,6 @@ ovs_kmod_openvswitch_depends:=\
 	  +kmod-nf-nat \
 	  +IPV6:kmod-nf-nat6 \
 	  +kmod-nf-conntrack \
-	  +IPV6:kmod-nf-conntrack6 \
 	  +kmod-nsh \
 	  +kmod-ipt-conntrack-extra \
 	  +kmod-sched-act-sample \
