@@ -84,8 +84,7 @@ define KernelPackage/jool-netfilter
 	DEPENDS:= \
 		@IPV6 \
 		+kmod-crypto-md5 \
-		+kmod-nf-conntrack \
-		+kmod-nf-conntrack6
+		+kmod-nf-conntrack
 	FILES:= \
 		$(PKG_BUILD_DIR)/src/mod/common/jool_common.$(LINUX_KMOD_SUFFIX) \
 		$(PKG_BUILD_DIR)/src/mod/nat64/jool.$(LINUX_KMOD_SUFFIX) \
