@@ -5,7 +5,9 @@ Subject: [PATCH] Make zabbix_server config suitable for OpenWrt
 
 1. Log to (default ephemeral) syslog, not a file (and don't rotate)
 2. Update PidFile path so correct permissions can be set for access by
-   Zabbix server running without privileges.
+   Zabbix server running without privileges
+3. If started as root, drop privileges to zabbix-server user (instead of
+   zabbix)
 
 Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
 ---
@@ -50,3 +52,12 @@ Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
  ### Option: SocketDir
  #	IPC socket directory.
  #		Directory to store IPC sockets used by internal Zabbix services.
+@@ -698,7 +704,7 @@ LogSlowQueries=3000
+ #
+ # Mandatory: no
+ # Default:
+-# User=zabbix
++User=zabbix-server
+ 
+ ### Option: SSLCertLocation
+ #	Location of SSL client certificates.
