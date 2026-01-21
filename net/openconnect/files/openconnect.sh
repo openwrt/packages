@@ -88,7 +88,7 @@ proto_openconnect_setup() {
 		[ -n $uri ] && server=$(echo $uri | awk -F[/:] '{print $4}')
 
 		logger -t "openconnect" "adding host dependency for $server at $config"
-		while resolveip -t 10 "$server" > "$tmpfile" && [ "$trials" -gt 0 ]; do
+		while ! resolveip -t 10 "$server" > "$tmpfile" && [ "$trials" -gt 0 ]; do
 			sleep 5
 			trials=$((trials - 1))
 		done
