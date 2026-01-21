@@ -171,10 +171,12 @@ build_ups_config() {
 	get_write_ups_config "$ups" sdorder
 	get_write_ups_config "$ups" sdtime
 	get_write_ups_config "$ups" serial
+	get_write_ups_config "$ups" shutdown_delay
 	get_write_ups_config "$ups" snmp_version
 	get_write_ups_config "$ups" snmp_retries
 	get_write_ups_config "$ups" snmp_timeout
 	get_write_ups_config "$ups" synchronous
+	get_write_ups_config "$ups" usd
 	get_write_ups_config "$ups" vendor
 	get_write_ups_config "$ups" vendorid
 
