@@ -179,11 +179,11 @@ endef
 
 # Some packages like docker use go directly and don't process vars like GO, so
 # just add selected version to path and insert it into several used vars.
-GO_PATH= \
+GO_BIN_PATH:= \
 	PATH=$(STAGING_DIR_HOSTPKG)/lib/go-$(GO_HOST_VERSION)/bin:$(PATH)
 
 GO_PKG_BUILD_CONFIG_VARS= \
-	$(GO_PATH) \
+	$(GO_BIN_PATH) \
 	GO_PKG="$(strip $(GO_PKG))" \
 	GO_INSTALL_EXTRA="$(strip $(GO_PKG_INSTALL_EXTRA))" \
 	GO_INSTALL_ALL="$(strip $(GO_PKG_INSTALL_ALL))" \
@@ -224,7 +224,7 @@ GO_PKG_BUILD_VARS= \
 	GOTOOLCHAIN=local
 
 GO_PKG_VARS= \
-	$(GO_PATH) \
+	$(GO_BIN_PATH) \
 	$(GO_PKG_TARGET_VARS) \
 	$(GO_PKG_BUILD_VARS)
 
