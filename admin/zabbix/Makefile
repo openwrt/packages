@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
 PKG_VERSION:=7.0.22
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.zabbix.com/zabbix/sources/stable/$(basename $(PKG_VERSION))/ \
@@ -91,21 +91,21 @@ define Package/zabbix-extra-mac80211
   $(call Package/zabbix/Default)
   TITLE+= discovery/userparameters for mac80211
   DEPENDS = +zabbix-agentd @PACKAGE_MAC80211_DEBUGFS @KERNEL_DEBUG_FS
-  BUILD_VARIANT:=no-configure
+  VARIANT:=no-configure
 endef
 
 define Package/zabbix-extra-network
   $(call Package/zabbix/Default)
   TITLE+= discovery/userparameters for network
   DEPENDS = +zabbix-agentd +libubus-lua +lua
-  BUILD_VARIANT:=no-configure
+  VARIANT:=no-configure
 endef
 
 define Package/zabbix-extra-wifi
   $(call Package/zabbix/Default)
   TITLE+= discovery/userparameters for wifi
   DEPENDS = +zabbix-agentd +libiwinfo-lua +libubus-lua +lua
-  BUILD_VARIANT:=no-configure
+  VARIANT:=no-configure
 endef
 
 define Package/zabbix-sender
