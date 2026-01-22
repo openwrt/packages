@@ -1,0 +1,342 @@
+#
+# Copyright (C) 2018-2023, Jeffery To
+# Copyright (C) 2025-2026, George Sapkin
+#
+# SPDX-License-Identifier: GPL-2.0-only
+
+include $(TOPDIR)/rules.mk
+
+PKG_NAME:=golang1.25
+GO_VERSION_MAJOR_MINOR:=1.25
+GO_VERSION_PATCH:=6
+GO_BOOTSTRAP_VERSION:=bootstrap
+PKG_HASH:=58cbf771e44d76de6f56d19e33b77d745a1e489340922875e46585b975c2b059
+
+PKG_VERSION:=$(GO_VERSION_MAJOR_MINOR)$(if $(GO_VERSION_PATCH),.$(GO_VERSION_PATCH))
+PKG_RELEASE:=1
+
+GO_SOURCE_URLS:=https://go.dev/dl/ \
+                https://dl.google.com/go/ \
+                https://golang.google.cn/dl/ \
+                https://mirrors.nju.edu.cn/golang/ \
+                https://mirrors.ustc.edu.cn/golang/
+
+PKG_SOURCE:=go$(PKG_VERSION).src.tar.gz
+PKG_SOURCE_URL:=$(GO_SOURCE_URLS)
+
+PKG_MAINTAINER:=George Sapkin <george@sapk.in>
+PKG_LICENSE:=BSD-3-Clause
+PKG_LICENSE_FILES:=LICENSE
+PKG_CPE_ID:=cpe:/a:golang:go
+
+PKG_BUILD_DEPENDS:=$(PKG_NAME)/host
+PKG_BUILD_DIR:=$(BUILD_DIR)/go-$(PKG_VERSION)
+PKG_BUILD_PARALLEL:=1
+PKG_BUILD_FLAGS:=no-mips16
+
+PKG_GO_PREFIX:=/usr
+PKG_GO_VERSION_ID:=$(GO_VERSION_MAJOR_MINOR)
+
+HOST_BUILD_DEPENDS:=golang$(if $(filter bootstrap,$(GO_BOOTSTRAP_VERSION)),-)$(GO_BOOTSTRAP_VERSION)/host
+HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/go-$(PKG_VERSION)
+HOST_BUILD_PARALLEL:=1
+
+HOST_GO_PREFIX:=$(STAGING_DIR_HOSTPKG)
+HOST_GO_VERSION_ID:=$(GO_VERSION_MAJOR_MINOR)
+HOST_GO_ROOT:=$(HOST_GO_PREFIX)/lib/go-$(HOST_GO_VERSION_ID)
+
+HOST_GO_VALID_OS_ARCH:= \
+  android_386  android_amd64  android_arm  android_arm64 \
+  freebsd_386  freebsd_amd64  freebsd_arm  freebsd_arm64 \
+  linux_386    linux_amd64    linux_arm    linux_arm64 \
+  openbsd_386  openbsd_amd64  openbsd_arm  openbsd_arm64 \
+  netbsd_386   netbsd_amd64   netbsd_arm   netbsd_arm64 \
+  windows_386  windows_amd64  windows_arm  windows_arm64 \
+  \
+  plan9_386    plan9_amd64    plan9_arm \
+  \
+  darwin_amd64 darwin_arm64 \
+  ios_amd64    ios_arm64 \
+  \
+  dragonfly_amd64 \
+  illumos_amd64 \
+  solaris_amd64 \
+  \
+  aix_ppc64 \
+  js_wasm \
+  wasip1_wasm \
+  \
+  freebsd_riscv64 \
+  openbsd_riscv64 \
+  \
+  linux_ppc64 linux_ppc64le \
+  linux_mips linux_mipsle linux_mips64 linux_mips64le \
+  linux_loong64 linux_riscv64 linux_s390x \
+  \
+  openbsd_mips64
+
+BOOTSTRAP_DIR:=$(HOST_GO_PREFIX)/lib/go-$(GO_BOOTSTRAP_VERSION)
+
+include $(INCLUDE_DIR)/host-build.mk
+include $(INCLUDE_DIR)/package.mk
+include ../golang-compiler.mk
+include ../golang-package.mk
+
+PKG_UNPACK:=$(HOST_TAR) -C "$(PKG_BUILD_DIR)" --strip-components=1 -xzf "$(DL_DIR)/$(PKG_SOURCE)"
+HOST_UNPACK:=$(HOST_TAR) -C "$(HOST_BUILD_DIR)" --strip-components=1 -xzf "$(DL_DIR)/$(PKG_SOURCE)"
+
+# don't strip ELF executables in test data
+RSTRIP:=:
+STRIP:=:
+
+ifeq ($(GO_TARGET_SPECTRE_SUPPORTED),1)
+  PKG_CONFIG_DEPENDS+=CONFIG_GOLANG_SPECTRE
+endif
+
+define Package/$(PKG_NAME)/Default
+$(call GoPackage/GoSubMenu)
+  TITLE:=Go programming language
+  URL:=https://go.dev/
+  DEPENDS:=$(GO_ARCH_DEPENDS)
+endef
+
+define Package/$(PKG_NAME)/Default/description
+The Go programming language is an open source project to make
+programmers more productive.
+
+Go is expressive, concise, clean, and efficient. Its concurrency
+mechanisms make it easy to write programs that get the most out of
+multicore and networked machines, while its novel type system enables
+flexible and modular program construction. Go compiles quickly to
+machine code yet has the convenience of garbage collection and the power
+of run-time reflection. It's a fast, statically typed, compiled language
+that feels like a dynamically typed, interpreted language.
+endef
+
+ifeq ($(GO_DEFAULT_VERSION),$(GO_VERSION_MAJOR_MINOR))
+  ALT_PRIORITY:=500
+else
+  ALT_PRIORITY:=100
+endif
+
+# go tool requires source present:
+# https://github.com/golang/go/issues/4635
+define Package/$(PKG_NAME)
+$(call Package/$(PKG_NAME)/Default)
+  TITLE+= (compiler)
+  DEPENDS+= +$(PKG_NAME)-src
+  EXTRA_DEPENDS:=golang$(1)-src (=$(PKG_VERSION)-r$(PKG_RELEASE))
+  PROVIDES:=@golang
+  $(if $(filter $(GO_DEFAULT_VERSION),$(GO_VERSION_MAJOR_MINOR)),DEFAULT_VARIANT:=1)
+  ALTERNATIVES:=\
+      $(ALT_PRIORITY):/usr/bin/go:/usr/lib/go-$(1)/bin/go \
+      $(ALT_PRIORITY):/usr/bin/gofmt:/usr/lib/go-$(1)/bin/gofmt
+endef
+
+define Package/$(PKG_NAME)/description
+$(call Package/$(PKG_NAME)/Default/description)
+
+This package provides an assembler, compiler, linker, and compiled
+libraries for the Go programming language.
+endef
+
+define Package/$(PKG_NAME)/config
+  source "$(SOURCE)/../Config.in"
+endef
+
+define Package/$(PKG_NAME)-doc
+$(call Package/$(PKG_NAME)/Default)
+  TITLE+= (documentation)
+  PROVIDES:=@golang-doc
+  $(if $(filter $(GO_DEFAULT_VERSION),$(GO_VERSION_MAJOR_MINOR)),DEFAULT_VARIANT:=1)
+endef
+
+define Package/$(PKG_NAME)-doc/description
+$(call Package/$(PKG_NAME)/Default/description)
+
+This package provides the documentation for the Go programming language.
+endef
+
+define Package/$(PKG_NAME)-src
+$(call Package/$(PKG_NAME)/Default)
+  TITLE+= (source files)
+  DEPENDS+= +libstdcpp +libtiff
+  PROVIDES:=@golang-src
+  $(if $(filter $(GO_DEFAULT_VERSION),$(GO_VERSION_MAJOR_MINOR)),DEFAULT_VARIANT:=1)
+endef
+
+define Package/$(PKG_NAME)-src/description
+$(call Package/$(PKG_NAME)/Default/description)
+
+This package provides the Go programming language source files needed
+for cross-compilation.
+endef
+
+# Host
+
+ifeq ($(GO_HOST_PIE_SUPPORTED),1)
+  HOST_GO_ENABLE_PIE:=1
+endif
+
+# When using GO_LDFLAGS to set buildmode=pie, the PIE install suffix does not
+# apply (we also delete the std lib during Host/Install)
+
+$(eval $(call GoCompiler/AddProfile,Host,$(HOST_BUILD_DIR),$(HOST_GO_PREFIX),$(HOST_GO_VERSION_ID),$(GO_HOST_OS_ARCH),$(HOST_GO_INSTALL_SUFFIX)))
+
+HOST_GO_VARS= \
+	GOHOSTARCH="$(GO_HOST_ARCH)" \
+	GOCACHE="$(GO_BUILD_CACHE_DIR)" \
+	GOENV=off \
+	CC="$(HOSTCC_NOCACHE)" \
+	CXX="$(HOSTCXX_NOCACHE)"
+
+define Host/Configure
+	$(call GoCompiler/Bootstrap/CheckHost,$(BOOTSTRAP_GO_VALID_OS_ARCH))
+	$(call GoCompiler/Host/CheckHost,$(HOST_GO_VALID_OS_ARCH))
+
+	mkdir -p "$(GO_BUILD_CACHE_DIR)"
+endef
+
+define Host/Compile
+	$(call GoCompiler/Host/Make, \
+		GOROOT_BOOTSTRAP="$(BOOTSTRAP_DIR)" \
+		$(if $(HOST_GO_ENABLE_PIE),GO_LDFLAGS="-buildmode pie") \
+		$(HOST_GO_VARS) \
+	)
+endef
+
+# If host and target OS/arch are the same, # when go compiles a program, it will
+# use the host std lib, so remove it now and force go to rebuild std for target
+# later
+define Host/Install
+	$(call Host/Uninstall)
+
+	$(call GoCompiler/Host/Install/Bin)
+	$(call GoCompiler/Host/Install/Src)
+	$(call GoCompiler/Host/Install/BinLinks)
+
+	rm -rf "$(HOST_GO_ROOT)/pkg/$(GO_HOST_OS_ARCH)$(if $(HOST_GO_INSTALL_SUFFIX),_$(HOST_GO_INSTALL_SUFFIX))"
+
+	$(INSTALL_DIR) "$(HOST_GO_ROOT)/openwrt"
+	$(INSTALL_BIN) ../go-gcc-helper "$(HOST_GO_ROOT)/openwrt/"
+	$(LN) go-gcc-helper "$(HOST_GO_ROOT)/openwrt/gcc"
+	$(LN) go-gcc-helper "$(HOST_GO_ROOT)/openwrt/g++"
+endef
+
+define Host/Uninstall
+	rm -rf "$(HOST_GO_ROOT)/openwrt"
+
+	$(call GoCompiler/Host/Uninstall/BinLinks)
+	$(call GoCompiler/Host/Uninstall)
+endef
+
+# Target
+
+ifeq ($(GO_PKG_ENABLE_PIE),1)
+  PKG_GO_INSTALL_SUFFIX:=$(GO_TARGET_PIE_INSTALL_SUFFIX)
+endif
+
+$(eval $(call GoCompiler/AddProfile,Package,$(PKG_BUILD_DIR),$(PKG_GO_PREFIX),$(PKG_GO_VERSION_ID),$(GO_OS_ARCH),$(PKG_GO_INSTALL_SUFFIX)))
+
+PKG_GO_ZBOOTSTRAP_MODS:= \
+	s/defaultGO386 = `[^`]*`/defaultGO386 = `$(or $(GO_386),sse2)`/; \
+	s/defaultGOAMD64 = `[^`]*`/defaultGOAMD64 = `$(or $(GO_AMD64),v1)`/; \
+	s/defaultGOARM = `[^`]*`/defaultGOARM = `$(or $(GO_ARM),7)`/; \
+	s/defaultGOARM64 = `[^`]*`/defaultGOARM64 = `$(or $(GO_ARM64),v8.0)`/; \
+	s/defaultGOMIPS = `[^`]*`/defaultGOMIPS = `$(or $(GO_MIPS),hardfloat)`/; \
+	s/defaultGOMIPS64 = `[^`]*`/defaultGOMIPS64 = `$(or $(GO_MIPS64),hardfloat)`/; \
+	s/defaultGOPPC64 = `[^`]*`/defaultGOPPC64 = `$(or $(GO_PPC64),power8)`/;
+
+PKG_GO_ZBOOTSTRAP_PATH:=$(PKG_BUILD_DIR)/src/internal/buildcfg/zbootstrap.go
+
+PKG_GO_VARS= \
+	GOHOSTARCH="$(GO_HOST_ARCH)" \
+	GOCACHE="$(GO_BUILD_CACHE_DIR)" \
+	GOENV=off \
+	GO_GCC_HELPER_PATH="$$$$PATH" \
+	CC=gcc \
+	CXX=g++ \
+	PKG_CONFIG=pkg-config \
+	PATH="$(HOST_GO_ROOT)/openwrt:$$$$PATH"
+
+PKG_GO_GCFLAGS= \
+	$(if $(GO_PKG_ENABLE_SPECTRE),-spectre all)
+
+PKG_GO_ASMFLAGS= \
+	$(if $(GO_PKG_ENABLE_SPECTRE),-spectre all)
+
+PKG_GO_LDFLAGS= \
+	-buildid '$(SOURCE_DATE_EPOCH)' \
+	-linkmode external \
+	-extldflags '$(patsubst -z%,-Wl$(comma)-z$(comma)%,$(TARGET_LDFLAGS))' \
+	$(if $(CONFIG_NO_STRIP)$(CONFIG_DEBUG),,-s -w)
+
+PKG_GO_INSTALL_ARGS= \
+	-buildvcs=false \
+	-trimpath \
+	-ldflags "all=$(PKG_GO_LDFLAGS)" \
+	$(if $(PKG_GO_GCFLAGS),-gcflags "all=$(PKG_GO_GCFLAGS)") \
+	$(if $(PKG_GO_ASMFLAGS),-asmflags "all=$(PKG_GO_ASMFLAGS)") \
+	$(if $(filter $(GO_PKG_ENABLE_PIE),1),-buildmode pie)
+
+define Build/Configure
+	mkdir -p "$(GO_BUILD_CACHE_DIR)"
+endef
+
+define Build/Compile
+	@echo "Building target Go first stage"
+
+	$(call GoCompiler/Package/Make, \
+		GOROOT_BOOTSTRAP="$(HOST_GO_ROOT)" \
+		GO_GCC_HELPER_CC="$(HOSTCC)" \
+		GO_GCC_HELPER_CXX="$(HOSTCXX)" \
+		$(PKG_GO_VARS) \
+	)
+
+	$(SED) '$(PKG_GO_ZBOOTSTRAP_MODS)' "$(PKG_GO_ZBOOTSTRAP_PATH)"
+
+	if echo 'int main() { return 0; }' | $(TARGET_CC) -o $(PKG_BUILD_DIR)/test-ldso -x c - > /dev/null 2>&1; then \
+		LDSO=$$$$( \
+			readelf -l $(PKG_BUILD_DIR)/test-ldso | \
+			sed -n -e 's/^.*interpreter: \(.*\)[]]/\1/p' \
+		) ; \
+	fi ; \
+	$(SED) "s,defaultGO_LDSO = \`[^\`]*\`,defaultGO_LDSO = \`$$$$LDSO\`," "$(PKG_GO_ZBOOTSTRAP_PATH)"
+
+	@echo "Building target Go second stage"
+
+	cd "$(PKG_BUILD_DIR)/bin" ; \
+	export $(GO_PKG_TARGET_VARS) ; \
+	$(CP) go go-host ; \
+	GO_GCC_HELPER_CC="$(TARGET_CC)" \
+	GO_GCC_HELPER_CXX="$(TARGET_CXX)" \
+	$(PKG_GO_VARS) \
+	./go-host install -a $(PKG_GO_INSTALL_ARGS) std cmd ; \
+	retval="$$$$?" ; \
+	rm -f go-host ; \
+	exit "$$$$retval"
+endef
+
+define Package/$(PKG_NAME)/install
+	$(call GoCompiler/Package/Install/Bin,$(1)$(PKG_GO_PREFIX))
+endef
+
+define Package/$(PKG_NAME)-doc/install
+	$(call GoCompiler/Package/Install/Doc,$(1)$(PKG_GO_PREFIX))
+endef
+
+define Package/$(PKG_NAME)-src/install
+	$(call GoCompiler/Package/Install/Src,$(1)$(PKG_GO_PREFIX))
+endef
+
+# src/debug contains ELF executables as test data and they reference these
+# libraries we need to call this in Package/$(1)/extra_provides to pass
+# CheckDependencies in include/package-pack.mk
+define Package/$(PKG_NAME)-src/extra_provides
+	echo 'libc.so.6'
+endef
+
+$(eval $(call HostBuild))
+$(eval $(call BuildPackage,$(PKG_NAME)))
+$(eval $(call BuildPackage,$(PKG_NAME)-doc))
+$(eval $(call BuildPackage,$(PKG_NAME)-src))

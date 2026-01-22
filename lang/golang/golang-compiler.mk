@@ -81,8 +81,8 @@ endef
 # $(2) go version id
 define GoCompiler/Default/Install/BinLinks
 	$(INSTALL_DIR) "$(1)/bin"
-	$(LN) "../lib/go-$(2)/bin/go" "$(1)/bin/go"
-	$(LN) "../lib/go-$(2)/bin/gofmt" "$(1)/bin/gofmt"
+	$(LN) "../lib/go-$(2)/bin/go" "$(1)/bin/go$(2)"
+	$(LN) "../lib/go-$(2)/bin/gofmt" "$(1)/bin/gofmt$(2)"
 endef
 
 # $(1) source go root
@@ -126,9 +126,10 @@ define GoCompiler/Default/Uninstall
 endef
 
 # $(1) destination prefix
+# $(2) go version id
 define GoCompiler/Default/Uninstall/BinLinks
-	rm -f "$(1)/bin/go"
-	rm -f "$(1)/bin/gofmt"
+	rm -f "$(1)/bin/go$(2)"
+	rm -f "$(1)/bin/gofmt$(2)"
 endef
 
 
@@ -177,7 +178,7 @@ define GoCompiler/AddProfile
 
   # $$(1) override install prefix (optional)
   define GoCompiler/$(1)/Uninstall/BinLinks
-	$$(call GoCompiler/Default/Uninstall/BinLinks,$$(or $$(1),$(3)))
+	$$(call GoCompiler/Default/Uninstall/BinLinks,$$(or $$(1),$(3)),$(4))
   endef
 
 endef
