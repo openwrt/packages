@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Copyright (C) 2018, 2020 Jeffery To
 #
@@ -8,7 +8,6 @@ me=go-gcc-helper
 name="${0##*/}"
 
 log() {
-	# shellcheck disable=SC2039
 	local IFS=" "
 	printf '%s\n' "$me: $*"
 }

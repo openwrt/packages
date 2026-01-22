@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Copyright (C) 2020, 2022 Jeffery To
 #
@@ -8,19 +8,16 @@ nl="
 "
 
 log() {
-	# shellcheck disable=SC2039
 	local IFS=" "
 	printf '%s\n' "$*"
 }
 
 log_error() {
-	# shellcheck disable=SC2039
 	local IFS=" "
 	printf 'Error: %s\n' "$*" >&2
 }
 
 link_contents() {
-	# shellcheck disable=SC2039
 	local src="$1" dest="$2" IFS="$nl" dirs dir base
 
 	if [ -n "$(find "$src" -mindepth 1 -maxdepth 1 -name "*.go" -not -type d)" ]; then
@@ -50,7 +47,6 @@ link_contents() {
 }
 
 configure() {
-	# shellcheck disable=SC2039
 	local files code testdata gomod pattern extra IFS file dest
 
 	cd "$BUILD_DIR" || return 1
@@ -97,7 +93,6 @@ configure() {
 }
 
 build() {
-	# shellcheck disable=SC2039
 	local modargs pattern targets retval
 
 	cd "$GO_BUILD_DIR" || return 1
@@ -147,14 +142,12 @@ build() {
 }
 
 install_bin() {
-	# shellcheck disable=SC2039
 	local dest="$1"
 	install -d -m0755 "$dest/$GO_INSTALL_BIN_PATH"
 	install -m0755 "$GO_BUILD_BIN_DIR"/* "$dest/$GO_INSTALL_BIN_PATH/"
 }
 
 install_src() {
-	# shellcheck disable=SC2039
 	local dest="$1" dir="${GO_PKG%/*}"
 	install -d -m0755 "$dest/$GO_BUILD_DEPENDS_PATH/src/$dir"
 	cp -fpR "$GO_BUILD_DIR/src/$GO_PKG" "$dest/$GO_BUILD_DEPENDS_PATH/src/$dir/"

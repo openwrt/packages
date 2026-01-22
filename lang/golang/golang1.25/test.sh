@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: GPL-2.0-only
 
-[ "$1" = golang ] || exit 0
+case "$1" in
+	golang*doc|golang*src) exit ;;
+esac
 
 go version | grep -F " go$PKG_VERSION "
