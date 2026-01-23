@@ -11,7 +11,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/attendedsysupgrade-common
   SECTION:=utils
   CATEGORY:=Base system
-  TITLE:=Common files neede by attendedsysupgrade packages
+  TITLE:=Common files needed by attendedsysupgrade packages
   MAINTAINER:=Paul Spooren <mail@aparcar.org>
   DEPENDS:=+rpcd +rpcd-mod-rpcsys
   PKGARCH:=all

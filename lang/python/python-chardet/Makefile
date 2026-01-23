@@ -9,13 +9,19 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-chardet
 PKG_VERSION:=5.2.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_LICENSE:=LGPL-2.1
 
 PYPI_NAME:=chardet
 PKG_HASH:=1b3b6ff479a8c414bc3fa2c0852995695c4a026dcd6d0633b2dd092ca39c1cf7
 
-HOST_BUILD_DEPENDS:=python3/host python-build/host python-installer/host python-wheel/host
+HOST_BUILD_DEPENDS:= \
+	python3/host \
+	python-build/host \
+	python-installer/host \
+	python-wheel/host \
+	python-setuptools/host
+PKG_BUILD_DEPENDS:=python-setuptools/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

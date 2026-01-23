@@ -35,7 +35,7 @@ define Package/lcdgrilo
   URL:=https://www.flyn.org/projects/lcdgrilo/
 endef
 
-define Package/lcdgrilo/decription
+define Package/lcdgrilo/description
 	A simple Grilo-based audio player meant to run on a Raspberry Pi with a PiFace CAD
 endef
 

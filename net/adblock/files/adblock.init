@@ -1,5 +1,5 @@
 #!/bin/sh /etc/rc.common
-# Copyright (c) 2015-2025 Dirk Brenken (dev@brenken.org)
+# Copyright (c) 2015-2026 Dirk Brenken (dev@brenken.org)
 # This is free software, licensed under the GNU General Public License v3.
 
 # (s)hellcheck exceptions
@@ -93,7 +93,7 @@ status_service() {
 			json_get_var value "${key}" >/dev/null 2>&1
 			if [ "${key}" = "active_feeds" ]; then
 				json_get_values values "${key}" >/dev/null 2>&1
-				value="${values// /, }"
+				value="${values}"
 			fi
 			printf "  + %-15s : %s\n" "${key}" "${value:-"-"}"
 		done

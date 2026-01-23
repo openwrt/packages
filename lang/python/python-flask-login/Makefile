@@ -9,11 +9,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-flask-login
-PKG_VERSION:=0.6.2
+PKG_VERSION:=0.6.3
 PKG_RELEASE:=1
 
 PYPI_NAME:=Flask-Login
-PKG_HASH:=c0a7baa9fdc448cdd3dd6f0939df72eec5177b2f7abe6cb82fc934d29caac9c3
+PYTHON3_PKG_WHEEL_NAME:=flask_login
+PKG_HASH:=5e23d14a607ef12806c699590b89d0f0e0d67baeec599d75947bf9c147330333
 
 PKG_MAINTAINER:=Jan Pavlinec <jan.pavlinec1@gmail.com>
 PKG_LICENSE:=MIT

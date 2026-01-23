@@ -1,0 +1,27 @@
+# travelmate mail template/include - a wlan connection manager for travel router
+# Copyright (c) 2016-2025 Dirk Brenken (dev@brenken.org)
+# This is free software, licensed under the GNU General Public License v3.
+
+# info preparation
+#
+local travelmate_status station_info system_info mail_text
+
+travelmate_status="$(/etc/init.d/travelmate status 2>/dev/null)"
+system_info="$(strings /etc/banner 2>/dev/null
+	"${trm_ubuscmd}" call system board |
+	"${trm_awkcmd}" 'BEGIN{FS="[{}\"]"}{if($2=="kernel"||$2=="hostname"||$2=="system"||$2=="model"||$2=="description")printf "  + %-12s: %s\n",$2,$4}')"
+station_info="$("${trm_jsoncmd}" -i "${trm_rtfile}" -q -l1 -e '@.data.station_id')"
+
+# content header
+#
+mail_text="$(printf "%s\n" "<html><body><pre style='font-family:monospace;padding:20;background-color:#f3eee5;white-space:pre-wrap;overflow-x:auto;' >")"
+
+# content body
+#
+mail_text="$(printf "%s\n" "${mail_text}\n<strong>++\n++ System Information ++\n++</strong>\n${system_info:-"-"}")"
+mail_text="$(printf "%s\n" "${mail_text}\n\n<strong>++\n++ Travelmate Status ++\n++</strong>\n${travelmate_status:-"-"}")"
+[ -n "${station_info}" ] && mail_text="$(printf "%s\n" "${mail_text}\n\n<strong>++\n++ Connection Status ++\n++</strong>\ntravelmate connection to ${station_info}")"
+
+# content footer
+#
+mail_text="$(printf "%s\n" "${mail_text}</pre></body></html>")"

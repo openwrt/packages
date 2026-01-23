@@ -36,7 +36,7 @@ define Package/lcdringer
   URL:=https://www.flyn.org/projects/lcdringer/
 endef
 
-define Package/lcdringer/decription
+define Package/lcdringer/description
 	A simple Jabber-initiated ringer meant to run on a Raspberry Pi with a PiFace CAD
 endef
 

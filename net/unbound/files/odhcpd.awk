@@ -190,6 +190,9 @@ function ipv6_ptr( ipv6, arpa, ary, end, m, n, new6, sz, start ) {
 ##############################################################################
 
 function slaac_eui64( mac,    ary, glbit, eui64 ) {
+  # Remove any colons from mac
+  gsub(":", "", mac) ;
+
   if ( length(mac) >= 12 ) {
     # RFC2373 and use DHCPv4 registered MAC to find SLAAC addresses
     split( mac , ary , "" ) ;

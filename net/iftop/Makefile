@@ -19,7 +19,7 @@ define Package/iftop
   SECTION:=net
   CATEGORY:=Network
   DEPENDS:=+libpcap +libncurses +libpthread
-  TITLE:=display bandwith usage on an interface
+  TITLE:=display bandwidth usage on an interface
   URL:=http://www.ex-parrot.com/~pdw/iftop/
 endef
 

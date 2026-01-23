@@ -34,7 +34,7 @@ endef
 
 define Package/foolsm/description
   foolsm is a link state monitor for carrying out actions when a link
-  transistions from the up to down state or vice versa.
+  transitions from the up to down state or vice versa.
 endef
 
 define Package/foolsm/conffiles

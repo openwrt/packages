@@ -31,7 +31,7 @@ define Package/totem-pl-parser
   URL:=https://gitlab.gnome.org/GNOME/totem-pl-parser
 endef
 
-define Package/totem-pl-parser/decription
+define Package/totem-pl-parser/description
   totem-pl-parser is a simple GObject-based library to parse a host of playlist formats
 endef
 

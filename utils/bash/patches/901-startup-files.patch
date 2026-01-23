@@ -1,6 +1,6 @@
 --- a/config-top.h
 +++ b/config-top.h
-@@ -97,20 +97,20 @@
+@@ -92,20 +92,20 @@
  #define DEFAULT_BASHRC "~/.bashrc"
  
  /* System-wide .bashrc file for interactive shells. */

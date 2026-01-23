@@ -9,7 +9,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=jool
 PKG_VERSION:=4.1.14
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILES:=COPYING
@@ -84,8 +84,7 @@ define KernelPackage/jool-netfilter
 	DEPENDS:= \
 		@IPV6 \
 		+kmod-crypto-md5 \
-		+kmod-nf-conntrack \
-		+kmod-nf-conntrack6
+		+kmod-nf-conntrack
 	FILES:= \
 		$(PKG_BUILD_DIR)/src/mod/common/jool_common.$(LINUX_KMOD_SUFFIX) \
 		$(PKG_BUILD_DIR)/src/mod/nat64/jool.$(LINUX_KMOD_SUFFIX) \

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2017 OpenWrt.org
+# Copyright (C) 2006-2025 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -26,6 +26,7 @@ PKG_LICENSE_FILES:=LICENSE
 PKG_CPE_ID:=cpe:/a:nmap:nmap
 
 PKG_BUILD_PARALLEL:=1
+PKG_BUILD_DEPENDS:=python-setuptools/host
 PKG_INSTALL:=1
 PYTHON3_PKG_BUILD:=0
 PYTHON3_PKG_FORCE_DISTUTILS_SETUP:=1

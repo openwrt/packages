@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-setuptools-scm
-PKG_VERSION:=8.1.0
+PKG_VERSION:=9.2.2
 PKG_RELEASE:=1
 
 PYPI_NAME:=setuptools-scm
 PYPI_SOURCE_NAME:=setuptools_scm
-PKG_HASH:=42dea1b65771cba93b7a515d65a65d8246e560768a66b9106a592c8e7f26c8a7
+PKG_HASH:=1c674ab4665686a0887d7e24c03ab25f24201c213e82ea689d2f3e169ef7ef57
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
@@ -22,6 +22,7 @@ PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 PKG_HOST_ONLY:=1
 HOST_BUILD_DEPENDS:= \
 	python3/host \
+	python-setuptools/host \
 	python-build/host \
 	python-installer/host \
 	python-wheel/host \

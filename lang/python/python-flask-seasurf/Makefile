@@ -8,11 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-flask-seasurf
-PKG_VERSION:=1.1.1
+PKG_VERSION:=2.0.0
 PKG_RELEASE:=1
 
 PYPI_NAME:=Flask-SeaSurf
-PKG_HASH:=54537008c769ac0ada8237877327c3e7ed74dcd8b01e74a9120ee0232c5951a9
+PYTHON3_PKG_WHEEL_NAME:=flask_seasurf
+PKG_HASH:=8e4003be1580ea8663d6bd3adf272f549ca4d735848895192618ed1945d5ad3c
 
 PKG_MAINTAINER:=Josef Schlehofer <pepe.schlehofer@gmail.com>
 PKG_LICENSE:=BSD-3-Clause

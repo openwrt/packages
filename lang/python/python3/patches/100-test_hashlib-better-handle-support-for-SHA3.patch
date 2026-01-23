@@ -1,0 +1,67 @@
+From 5ae0915cc9a314f446bf4baa3b3001253d39a158 Mon Sep 17 00:00:00 2001
+From: Christian Marangi <ansuelsmth@gmail.com>
+Date: Mon, 24 Nov 2025 15:51:33 +0100
+Subject: [PATCH] test_hashlib: better handle support for SHA3
+
+It's possible that the SSL library supports only SHA3 algo and doesn't
+have SHAKE one.
+
+The current test wrongly detect this and set both HASH and HASHXOF to
+None expecting to have the extra SHA3 attributes present but this should
+only be true for SHAKE algo.
+
+To better handle this, move the HASH condition to a dedicated try-expect
+condition and check if HASHXOF is None in the relevant code effectively
+checking if SHA3 is supported by the SSL library but SHAKE algo needs to
+use the sha3module one.
+
+Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
+---
+ Lib/test/test_hashlib.py | 20 +++++++++++++++-----
+ 1 file changed, 15 insertions(+), 5 deletions(-)
+
+--- a/Lib/test/test_hashlib.py
++++ b/Lib/test/test_hashlib.py
+@@ -40,9 +40,13 @@ else:
+ openssl_hashlib = import_fresh_module('hashlib', fresh=['_hashlib'])
+ 
+ try:
+-    from _hashlib import HASH, HASHXOF, openssl_md_meth_names, get_fips_mode
++    from _hashlib import HASH
+ except ImportError:
+     HASH = None
++
++try:
++    from _hashlib import HASHXOF, openssl_md_meth_names, get_fips_mode
++except ImportError:
+     HASHXOF = None
+     openssl_md_meth_names = frozenset()
+ 
+@@ -558,9 +562,14 @@ class HashLibTestCase(unittest.TestCase)
+         constructors = self.constructors_to_test[name]
+         for hash_object_constructor in constructors:
+             m = hash_object_constructor()
+-            if HASH is not None and isinstance(m, HASH):
+-                # _hashopenssl's variant does not have extra SHA3 attributes
+-                continue
++            if name.startswith('shake_'):
++                if HASHXOF is not None and isinstance(m, HASHXOF):
++                    # _hashopenssl's variant does not have extra SHA3 attributes
++                    continue
++            else:
++                if HASH is not None and isinstance(m, HASH):
++                    # _hashopenssl's variant does not have extra SHA3 attributes
++                    continue
+             self.assertEqual(capacity + rate, 1600)
+             self.assertEqual(m._capacity_bits, capacity)
+             self.assertEqual(m._rate_bits, rate)
+@@ -1057,7 +1066,8 @@ class HashLibTestCase(unittest.TestCase)
+     def test_hash_disallow_instantiation(self):
+         # internal types like _hashlib.HASH are not constructable
+         support.check_disallow_instantiation(self, HASH)
+-        support.check_disallow_instantiation(self, HASHXOF)
++        if HASHXOF is not None:
++            support.check_disallow_instantiation(self, HASHXOF)
+ 
+     def test_readonly_types(self):
+         for algorithm, constructors in self.constructors_to_test.items():

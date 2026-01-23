@@ -8,11 +8,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-automat
-PKG_VERSION:=22.10.0
+PKG_VERSION:=25.4.16
 PKG_RELEASE:=1
 
-PYPI_NAME:=Automat
-PKG_HASH:=e56beb84edad19dcc11d30e8d9b895f75deeb5ef5e96b84a467066b3b84bb04e
+PYPI_NAME:=automat
+PKG_HASH:=0017591a5477066e90d26b0e696ddc143baafd87b588cfac8100bc6be9634de0
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
@@ -32,8 +32,7 @@ define Package/python3-automat
   URL:=https://github.com/glyph/Automat
   DEPENDS:= \
       +python3-light \
-      +python3-attrs \
-      +python3-six
+      +python3-attrs
 endef
 
 define Package/python3-automat/description

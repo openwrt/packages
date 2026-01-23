@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=perl-www-curl
 PKG_VERSION:=4.17
-PKG_RELEASE:=7
+PKG_RELEASE:=8
 
 PKG_SOURCE_URL:=https://www.cpan.org/authors/id/S/SZ/SZBALINT/
 PKG_SOURCE:=WWW-Curl-$(PKG_VERSION).tar.gz

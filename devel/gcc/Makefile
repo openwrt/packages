@@ -115,7 +115,7 @@ endif
 GMPSRC=gmp-6.1.0
 
 define Download/gmp
-  URL:=ftp://gcc.gnu.org/pub/gcc/infrastructure/
+  URL:=https://gcc.gnu.org/pub/gcc/infrastructure/
   FILE:=$(GMPSRC).tar.bz2
   HASH:=498449a994efeba527885c10405993427995d3f86b8768d8cdf8d9dd7c6b73e8
 endef
@@ -124,7 +124,7 @@ $(eval $(call Download,gmp))
 MPCSRC=mpc-1.0.3
 
 define Download/mpc
-  URL:=ftp://gcc.gnu.org/pub/gcc/infrastructure/
+  URL:=https://gcc.gnu.org/pub/gcc/infrastructure/
   FILE:=$(MPCSRC).tar.gz
   HASH:=617decc6ea09889fb08ede330917a00b16809b8db88c29c31bfbb49cbf88ecc3
 endef
@@ -133,7 +133,7 @@ $(eval $(call Download,mpc))
 MPFRSRC=mpfr-3.1.4
 
 define Download/mpfr
-  URL:=ftp://gcc.gnu.org/pub/gcc/infrastructure/
+  URL:=https://gcc.gnu.org/pub/gcc/infrastructure/
   FILE:=$(MPFRSRC).tar.bz2
   HASH:=d3103a80cdad2407ed581f3618c4bed04e0c92d1cf771a65ead662cc397f7775
 endef

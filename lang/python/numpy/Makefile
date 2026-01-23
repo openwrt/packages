@@ -79,7 +79,7 @@ define Package/python3-numpy
 	   +NUMPY_OPENBLAS_SUPPORT:openblas
 endef
 
-# We need to duplicate the omitted arhitectures same as openblas
+# We need to duplicate the omitted architectures same as openblas
 define Package/python3-numpy/config
 menu "Configuration"
 depends on !powerpc

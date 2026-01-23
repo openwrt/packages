@@ -1,4 +1,6 @@
 #!/bin/sh
+#
+# SPDX-License-Identifier: GPL-2.0-only
 
 # Migrate old config format only
 OLD_CONFIG_FILE=$(uci -q get adguardhome.config.config)

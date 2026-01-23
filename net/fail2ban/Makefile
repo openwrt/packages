@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=fail2ban
 PKG_VERSION:=1.1.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/fail2ban/fail2ban/tar.gz/$(PKG_VERSION)?
@@ -30,7 +30,6 @@ define Package/fail2ban
   +nftables \
   +python3-light \
   +python3-ctypes \
-  +python3-distutils \
   +python3-email \
   +python3-logging \
   +python3-sqlite3 \

@@ -468,7 +468,7 @@ $(eval $(call BuildPackage,perlbase-dynaloader))
 define Package/perlbase-encode
 $(call Package/perlbase-template)
 TITLE:=Encode perl module
-DEPENDS+=+perlbase-essential +perlbase-mime +perlbase-utf8 +perlbase-xsloader
+DEPENDS+=+perlbase-essential +perlbase-mime +perlbase-storable +perlbase-utf8 +perlbase-xsloader
 endef
 
 define Package/perlbase-encode/install

@@ -22,6 +22,7 @@ PKG_HOST_ONLY:=1
 HOST_BUILD_DEPENDS:= \
 	python3/host \
 	python-build/host \
+	python-setuptools/host \
 	python-installer/host \
 	python-editables/host \
 	python-packaging/host \

@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-incremental
 PKG_VERSION:=24.7.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=incremental
 PKG_HASH:=fb4f1d47ee60efe87d4f6f0ebb5f70b9760db2b2574c59c8e8912be4ebd464c9
@@ -32,7 +32,7 @@ define Package/python3-incremental
   SUBMENU:=Python
   TITLE:=Versions your Python projects
   URL:=https://github.com/twisted/incremental
-  DEPENDS:=+python3-light +python3-distutils +python3-pkg-resources
+  DEPENDS:=+python3-light +python3-pkg-resources
 endef
 
 define Package/python3-incremental/description

@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sysrepo
-PKG_VERSION:=2.0.53
-PKG_RELEASE:=2
+PKG_VERSION:=3.7.11
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/sysrepo/sysrepo/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=fe09da5f40fb53e3fb97268a134cc0ed3003f0018d0d117c73e81e1553a11f30
+PKG_HASH:=c897206797427c79c4646baa1d8abe539bbc70af884ac869e827ff9f09d7fcc8
 
-PKG_MAINTAINER:=Jakov Smolic <jakov.smolic@sartura.hr>
+PKG_MAINTAINER:=
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
@@ -76,11 +76,11 @@ define Package/libsysrepo/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libsysrepo.so* $(1)/usr/lib/
 
 	$(INSTALL_DIR) $(1)/etc/sysrepo/yang
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/modules/ietf-netconf-with-defaults.yang $(1)/etc/sysrepo/yang/
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/modules/ietf-netconf-notifications.yang $(1)/etc/sysrepo/yang/
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/modules/ietf-netconf.yang $(1)/etc/sysrepo/yang/
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/modules/ietf-origin.yang $(1)/etc/sysrepo/yang/
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/modules/sysrepo.yang $(1)/etc/sysrepo/yang/
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/modules/ietf-netconf-with-defaults@2011-06-01.yang $(1)/etc/sysrepo/yang/
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/modules/ietf-netconf-notifications@2012-02-06.yang $(1)/etc/sysrepo/yang/
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/modules/ietf-netconf@2013-09-29.yang $(1)/etc/sysrepo/yang/
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/modules/ietf-origin@2018-02-14.yang $(1)/etc/sysrepo/yang/
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/modules/sysrepo@2024-10-25.yang $(1)/etc/sysrepo/yang/
 
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/libsysrepo.default $(1)/etc/uci-defaults/95_libsysrepo

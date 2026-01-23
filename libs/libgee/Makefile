@@ -33,7 +33,7 @@ define Package/libgee
   URL:=https://wiki.gnome.org/Libgee
 endef
 
-define Package/libgee/decription
+define Package/libgee/description
   Libgee is an utility library providing GObject-based interfaces and classes
 endef
 

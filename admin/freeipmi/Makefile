@@ -54,7 +54,7 @@ Assorted IPMI-related tools:
  * ipmi-sensors - display IPMI sensor information
  * ipmi-sensors-config - configure sensors
  * ipmiconsole - IPMI console utility
- * ipmiping - send IPMI Get Authentication Capabilitiy request
+ * ipmiping - send IPMI Get Authentication Capability request
  * ipmipower - IPMI power control utility
  * pef-config - configure PEF values
  * rmcpping - send RMCP Ping to network hosts

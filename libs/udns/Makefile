@@ -30,8 +30,8 @@ define Package/libudns
 endef
 
 define Package/libudns/description
-  UDNS is a stub DNS resolver library with ability to perform both syncronous
-  and asyncronous DNS queries.
+  UDNS is a stub DNS resolver library with ability to perform both synchronous
+  and asynchronous DNS queries.
 endef
 
 define Build/InstallDev

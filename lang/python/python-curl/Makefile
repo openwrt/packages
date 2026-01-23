@@ -5,15 +5,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pycurl
-PKG_VERSION:=7.45.2
-PKG_RELEASE:=3
+PKG_VERSION:=7.45.7
+PKG_RELEASE:=1
 
 PYPI_NAME:=$(PKG_NAME)
-PKG_HASH:=5730590be0271364a5bddd9e245c9cc0fb710c4cbacbdd95264a3122d23224ca
+PKG_HASH:=9d43013002eab2fd6d0dcc671cd1e9149e2fc1c56d5e796fad94d076d6cb69ef
 
 PKG_MAINTAINER:=Waldemar Konik <informatyk74@interia.pl>
 PKG_LICENSE:=LGPL-2.1
 PKG_LICENSE_FILES:=COPYING-LGPL
+
+PKG_BUILD_DEPENDS:= \
+	python3/host \
+	python-setuptools/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

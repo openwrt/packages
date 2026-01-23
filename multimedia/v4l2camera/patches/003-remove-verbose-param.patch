@@ -1,0 +1,39 @@
+From 7de505f51e0715f882d00e9aa7cf30df7db52949 Mon Sep 17 00:00:00 2001
+From: Michel Promonet <michel.promonet@free.fr>
+Date: Sat, 21 Sep 2024 23:34:32 +0200
+Subject: [PATCH] remove verbose param
+
+---
+ CMakeLists.txt | 2 +-
+ src/main.cpp   | 4 ++--
+ v4l2rtspserver | 2 +-
+ 3 files changed, 4 insertions(+), 4 deletions(-)
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-cmake_minimum_required(VERSION 3.0)
++cmake_minimum_required(VERSION 3.5)
+ 
+ option (WITH_COMPRESS "Enable compression" ON)
+ option (BUILD_UI "Build ui" ON)
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -152,7 +152,7 @@ int main(int argc, char* argv[])
+ 	std::string videoDev, audioDev;
+ 	getline(is, videoDev, ',');						
+ 	getline(is, audioDev);	
+-	V4L2DeviceParameters param(videoDev.c_str(), videoformatList, width, height, fps, ioTypeIn, verbose);
++	V4L2DeviceParameters param(videoDev.c_str(), videoformatList, width, height, fps, ioTypeIn);
+ 	std::unique_ptr<V4l2Capture> videoCapture(V4l2Capture::create(param));
+ 	if (!videoCapture)
+ 	{	
+@@ -162,7 +162,7 @@ int main(int argc, char* argv[])
+ 	{	
+ #ifdef HAVE_ALSA	
+ 		std::string audioDevice = V4l2RTSPServer::getV4l2Alsa(audioDev);
+-		ALSACaptureParameters param(audioDevice.c_str(), audioFmtList, audioFreq, audioNbChannels, verbose);
++		ALSACaptureParameters param(audioDevice.c_str(), audioFmtList, audioFreq, audioNbChannels);
+ 		audioCapture.reset(ALSACapture::createNew(param));
+ #endif	
+ 

@@ -24,7 +24,7 @@ fi
 
 readonly packageName='adblock-fast'
 readonly PKG_VERSION='dev-test'
-readonly packageCompat='8'
+readonly packageCompat='9'
 readonly serviceName="$packageName $PKG_VERSION"
 readonly packageMemoryThreshold='33554432'
 readonly packageConfigFile="/etc/config/${packageName}"
@@ -2008,6 +2008,7 @@ start_service() {
 		json set status 'statusFail'
 		json add error 'errorOhSnap'
 		status_service 'on_start_failure'
+		resolver 'revert'
 	fi
 
 	adb_config_cache 'create'

@@ -1,0 +1,22 @@
+From eda722063c6774f7adce0e75cccf4c1493b9e3cd Mon Sep 17 00:00:00 2001
+From: Dengfeng Liu <liudf0716@gmail.com>
+Date: Sat, 14 Dec 2024 10:14:52 +0800
+Subject: [PATCH] refactor: disable debug support by default in CMake
+ configuration
+
+Signed-off-by: Dengfeng Liu <liudf0716@gmail.com>
+---
+ CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -10,7 +10,7 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
+ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules" ${CMAKE_MODULE_PATH})
+ 
+ # Options
+-option(AW_DEBUG "Build with debug support" ON)
++option(AW_DEBUG "Build with debug support" OFF)
+ option(AW_FW3 "Build with iptables support" OFF)
+ 
+ # Required packages

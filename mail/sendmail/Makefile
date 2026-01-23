@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sendmail
-PKG_VERSION:=8.18.1
-PKG_RELEASE:=2
+PKG_VERSION:=8.18.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME).$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://ftp.sendmail.org
-PKG_HASH:=cbf1f309c38e4806f7cf3ead24260f17d1fe8fb63256d13edb3cdd1a098f0770
+PKG_HASH:=1a085faa8ace52cffde2f5e9bc611bdb5f81481caaabf46f0437b719ca089d2f
 PKG_MAINTAINER:=W. Michael Petullo <mike@flyn.org>
 
 PKG_LICENSE:=Sendmail

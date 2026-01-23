@@ -56,7 +56,7 @@ define Package/libusbmuxd-utils
   $(call Package/libusbmuxd/Default)
   SECTION:=utils
   CATEGORY:=Utilities
-  TITLE+= utilies
+  TITLE+= utilities
   DEPENDS:=+libusbmuxd
   LICENSE:=GPL-2.0-or-later
 endef

@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openelp
-PKG_VERSION:=0.9.2
+PKG_VERSION:=0.9.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/cottsay/openelp/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=1427a2fe6f22856a66b9c687d7f14b7915abeeed64951ae596084f9366ec4256
+PKG_HASH:=e7db49d22fc86449271e3c58ac0cbaf971bf4936d8c27dd268ecd5057643e947
 
 PKG_MAINTAINER:=Scott K Logan <logans@cottsay.net>
 PKG_LICENSE:=BSD-3-Clause

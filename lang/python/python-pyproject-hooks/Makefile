@@ -8,18 +8,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pyproject-hooks
-PKG_VERSION:=1.0.0
-PKG_RELEASE:=2
+PKG_VERSION:=1.2.0
+PKG_RELEASE:=1
 
 PYPI_NAME:=pyproject_hooks
-PKG_HASH:=f271b298b97f5955d53fb12b72c1fb1948c22c1a6b70b315c54cedaca0264ef5
+PKG_HASH:=1e859bd5c40fae9448642dd871adf459e5e2084186e8d2c2a79a824c970da1f8
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
 
 PKG_HOST_ONLY:=1
-HOST_BUILD_DEPENDS:=python3/host python-flit-core/host python-installer/host
+HOST_BUILD_DEPENDS:= \
+	python3/host \
+	python-flit-core/host \
+	python-installer/host
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

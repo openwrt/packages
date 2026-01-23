@@ -23,7 +23,7 @@ endef
 define Package/safe-search/description
 This package prevents adult content from appearing in search results by
 configuring dnsmasq to force all devices on your network to use Google and
-Bing's Safe Search IP addresses. This is designed to be approperiate for most
+Bing's Safe Search IP addresses. This is designed to be appropriate for most
 businesses and families. The default filtering rules do not interfere with
 normal web browsing.
 endef

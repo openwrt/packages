@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=flent
 PKG_VERSION:=2.2.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PYPI_NAME:=flent
 PKG_HASH:=04fc21de858863560423e79c822f405225f829afd8e5d62293099fbef341f9e8
@@ -26,7 +26,6 @@ define Package/flent
     +python3-light \
     +python3-uuid \
     +python3-logging \
-    +python3-distutils \
     +python3-defusedxml \
     +flent-tools \
     +netperf \

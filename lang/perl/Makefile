@@ -11,7 +11,7 @@ include perlver.mk
 
 PKG_NAME:=perl
 PKG_VERSION:=$(PERL_VERSION)
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE_URL:=https://www.cpan.org/src/5.0
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -59,7 +59,7 @@ define Package/perl
   SUBMENU:=Perl
   SECTION:=lang
   CATEGORY:=Languages
-  TITLE:=The Perl intepreter
+  TITLE:=The Perl interpreter
   URL:=http://www.perl.com/
   DEPENDS:= +USE_GLIBC:libcrypt-compat +USE_GLIBC:libbsd +PERL_THREADS:libpthread @!arc
 endef

@@ -98,7 +98,7 @@ define Package/gensio/Default/description
  I/O types. You create a gensio object (or a gensio), and you can use
  that gensio without having to know too much about what is going on
  underneath. You can stack gensio on top of another one to add protocol
- funcionality. For instance, you can create a TCP gensio, stack SSL on
+ functionality. For instance, you can create a TCP gensio, stack SSL on
  top of that, and stack Telnet on top of that. It supports a number of
  network I/O and serial ports.  Gensio can be used for sending and
  receiving ports, and it also supports establishing encrypted and

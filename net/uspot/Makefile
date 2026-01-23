@@ -1,16 +1,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=uspot
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_LICENSE:=GPL-2.0
 PKG_MAINTAINER:=Thibaut VARÈNE <hacks@slashdirt.org>
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/f00b4r0/uspot.git
-PKG_SOURCE_DATE:=2025-08-07
-PKG_SOURCE_VERSION:=8599a968877b55b0ce29f37d4b2d78036b257787
-PKG_MIRROR_HASH:=554da4ea779ea69c20ef424f7e880156d463e35240b5099ded8453c455d2f617
+PKG_SOURCE_DATE:=2025-11-20
+PKG_SOURCE_VERSION:=389e48df4fa3de06b3cd8a8daf3c4007dcd45fdd
+PKG_MIRROR_HASH:=1c6102ea3e79b0611c17575e950b9bc0ad16a865dc58a587cbbfe7202ce92c34
 
 CMAKE_SOURCE_SUBDIR:=src
 PKG_BUILD_DEPENDS:=bpf-headers
@@ -24,12 +24,12 @@ define Package/uspot
   SECTION:=net
   CATEGORY:=Network
   TITLE:=uspot hotspot daemon
-  EXTRA_DEPENDS:=ucode (>= 2023.11.07)
   DEPENDS:=+conntrack \
 	   +libblobmsg-json +liblucihttp-ucode +libradcli +libubox +libubus +libuci \
 	   +uspotfilter \
 	   +ucode +ucode-mod-log +ucode-mod-math +ucode-mod-nl80211 +ucode-mod-rtnl +uhttpd-mod-ucode +ucode-mod-uloop \
 	   +ucode-mod-bpf +ucode-mod-struct +kmod-sched-core +kmod-sched-bpf $(BPF_DEPENDS)
+  EXTRA_DEPENDS:=ucode (>=2023.11.07)
 endef
 
 define Package/uspot/description
@@ -64,8 +64,8 @@ define Package/uspotfilter
   SECTION:=net
   CATEGORY:=Network
   TITLE:=uspot firewall interface
-  EXTRA_DEPENDS:=ucode (>= 2023.11.07)
   DEPENDS:=+conntrack +nftables-json +ucode +ucode-mod-rtnl +ucode-mod-uloop +ucode-mod-log
+  EXTRA_DEPENDS:=ucode (>=2023.11.07)
   PKGARCH:=all
 endef
 

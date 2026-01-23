@@ -86,7 +86,7 @@ access to OCSP providers.  Dirmngr is invoked internally by 'gpg',
 endef
 
 define Package/gnupg2-utils/description
- Key management utilies for GnuPG (version 2).
+ Key management utilities for GnuPG (version 2).
  This package is needed to import keys from a keyserver.
 endef
 

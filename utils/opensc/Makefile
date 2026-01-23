@@ -62,7 +62,7 @@ define Package/libpkcs11-spy
   DEPENDS:=+libopenssl +libpthread
 endef
 
-define Package/libpkcs11-spy/dscription
+define Package/libpkcs11-spy/description
   PKCS#11 spying wrapper
 endef
 

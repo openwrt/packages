@@ -46,7 +46,7 @@ define Package/libopenssl-afalg_sync/description
     It is different than the AF_ALG engine that ships with OpenSSL:
      - it is faster
      - it uses sync calls, instead of async
-     - it suports more algorithms
+     - it supports more algorithms
 endef
 
 define Package/libopenssl-afalg_sync/config

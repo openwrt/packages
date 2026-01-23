@@ -137,11 +137,11 @@ write_empty_zone() {
 	local zpath
 	zpath="$1"
 
-	cat > "$zpath" <<\EOF
+	cat > "$zpath" <<EOF
 ;
-; BIND empty zone created by isc-dhcp-server
+; BIND empty zone created by isc-dhcp-server at $(date)
 ;
-$TTL	604800
+\$TTL	604800
 @	IN	SOA	localhost. root.localhost. (
 			      1		; Serial
 			 604800		; Refresh
@@ -154,7 +154,7 @@ EOF
 }
 
 create_empty_zone() {
-	local zone error zpath
+	local zone error zpath command
 	zone="$1"
 	zpath="$dyndir/db.$zone"
 
@@ -167,7 +167,15 @@ create_empty_zone() {
 	chown bind:bind "$zpath" || return 1
 	chmod 0664 "$zpath" || return 1
 
-	if ! error=$(rndc addzone $zone "{
+	# if the zone doesn't exist, we need to add it, otherwise we need to
+	# create it.
+	if ! rndc zonestatus $zone >/dev/null 2>&1; then
+		command="addzone"
+	else
+		command="modzone"
+	fi
+
+	if ! error=$(rndc $command $zone "{
 		type primary;
 		file \"$zpath\";
 		update-policy {
@@ -318,7 +326,7 @@ static_srvhost_add() {
 	config_get weight "$cfg" "weight"
 	[ -n "$weight" ] || return 0
 
-	update "$srv.$domain." IN SRV "$priority" "$weight" "$port" "$target.$domain"
+	update "$srv.$domain." IN SRV "$priority" "$weight" "$port" "$target.$domain."
 }
 
 static_srvhosts() {

@@ -8,15 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zabbix
-PKG_VERSION:=7.0.12
+PKG_VERSION:=7.0.22
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://cdn.zabbix.com/zabbix/sources/stable/$(basename $(PKG_VERSION))/ \
 	https://cdn.zabbix.com/zabbix/sources/oldstable/$(basename $(PKG_VERSION))/
-PKG_HASH:=6069ed604aa5e33fe631ccc68b782654a697071952a1cf365151655a0a122b05
+PKG_HASH:=7a74794b2124607d8036be36cc104da056a2fb653811c84acbe29f3f6d97860a
 
-PKG_MAINTAINER:=Etienne CHAMPETIER <champetier.etienne@gmail.com>
+PKG_MAINTAINER:=Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
 PKG_LICENSE:=AGPL-3.0-only
 PKG_LICENSE_FILES:=COPYING
 PKG_CPE_ID:=cpe:/a:zabbix:zabbix
@@ -56,32 +56,34 @@ define Package/zabbix/Default
   SUBMENU:=Zabbix
   TITLE:=Zabbix
   URL:=https://www.zabbix.com/
-  USERID:=zabbix=53:zabbix=53
   DEPENDS+=$(ICONV_DEPENDS) +libpcre2 +zlib
 endef
 
-define Package/zabbix-agentd
+define Package/zabbix-agentd/Default
   $(call Package/zabbix/Default)
   TITLE+= agentd
   DEPENDS+= +libevent2-pthreads
   PROVIDES:=zabbix-agentd
+  USERID:=zabbix-agent=53:zabbix-agent=53
+endef
+
+define Package/zabbix-agentd
+  $(call Package/zabbix-agentd/Default)
   VARIANT:=nossl
   DEFAULT_VARIANT:=1
 endef
 
 define Package/zabbix-agentd-openssl
-  $(call Package/zabbix/Default)
-  TITLE+= agentd (with OpenSSL)
+  $(call Package/zabbix-agentd/Default)
+  TITLE+= (with OpenSSL)
   DEPENDS+= +libevent2-pthreads +libopenssl
-  PROVIDES:=zabbix-agentd
   VARIANT:=openssl
 endef
 
 define Package/zabbix-agentd-gnutls
-  $(call Package/zabbix/Default)
-  TITLE+= agentd (with GnuTLS)
+  $(call Package/zabbix-agentd/Default)
+  TITLE+= (with GnuTLS)
   DEPENDS+= +libevent2-pthreads +libgnutls
-  PROVIDES:=zabbix-agentd
   VARIANT:=gnutls
 endef
 
@@ -89,18 +91,21 @@ define Package/zabbix-extra-mac80211
   $(call Package/zabbix/Default)
   TITLE+= discovery/userparameters for mac80211
   DEPENDS = +zabbix-agentd @PACKAGE_MAC80211_DEBUGFS @KERNEL_DEBUG_FS
+  BUILD_VARIANT:=no-configure
 endef
 
 define Package/zabbix-extra-network
   $(call Package/zabbix/Default)
   TITLE+= discovery/userparameters for network
   DEPENDS = +zabbix-agentd +libubus-lua +lua
+  BUILD_VARIANT:=no-configure
 endef
 
 define Package/zabbix-extra-wifi
   $(call Package/zabbix/Default)
   TITLE+= discovery/userparameters for wifi
   DEPENDS = +zabbix-agentd +libiwinfo-lua +libubus-lua +lua
+  BUILD_VARIANT:=no-configure
 endef
 
 define Package/zabbix-sender
@@ -161,6 +166,7 @@ define Package/zabbix-server/Default
     +libevent2-pthreads \
     +libevent2-extra \
     +fping
+  USERID:=zabbix-server=70:zabbix-server=70
 endef
 
 define Package/zabbix-server
@@ -189,13 +195,15 @@ endef
 define Package/zabbix-server-frontend
   $(call Package/zabbix/Default)
   TITLE+= server-frontend
-  DEPENDS += +php8 \
+  DEPENDS += @PACKAGE_php8 \
     +php8-cgi \
     +php8-mod-gd \
     +php8-mod-bcmath \
     +php8-mod-ctype \
+    +php8-mod-filter \
     +php8-mod-xmlreader \
     +php8-mod-xmlwriter \
+    +php8-mod-openssl \
     +php8-mod-session \
     +php8-mod-sockets \
     +php8-mod-mbstring \
@@ -203,6 +211,7 @@ define Package/zabbix-server-frontend
     +ZABBIX_POSTGRESQL:php8-mod-pgsql \
     +ZABBIX_MYSQL:php8-mod-mysqli \
     @(!ZABBIX_SQLITE)
+  BUILD_VARIANT:=no-configure
 endef
 
 define Package/zabbix-proxy/Default
@@ -258,6 +267,8 @@ As it uses libiwinfo, it works with all wifi devices supported by openwrt.
 See https://openwrt.org/docs/guide-user/services/network_monitoring/zabbix for ready to use zabbix templates.
 endef
 
+ifneq ($(BUILD_VARIANT),no-configure)
+
 CONFIGURE_ARGS+= \
 	--enable-agent \
 	$(if $(CONFIG_ZABBIX_SQLITE),--disable-server,--enable-server) \
@@ -277,6 +288,20 @@ endif
 
 ifeq ($(BUILD_VARIANT),gnutls)
 	CONFIGURE_ARGS+= --with-gnutls="$(STAGING_DIR)/usr"
+endif
+
+else
+
+define Build/Prepare
+	true
+endef
+define Build/Configure
+	true
+endef
+define Build/Compile
+	true
+endef
+
 endif
 
 MAKE_FLAGS += ARCH="linux"
@@ -334,6 +359,8 @@ Package/zabbix-agentd-gnutls/conffiles = $(Package/zabbix-agentd/conffiles)
 
 define Package/zabbix-server/conffiles
 /etc/zabbix_server.conf
+/etc/config/zabbix_server
+/etc/sysctl.d/90-zabbix-discovery-workers.conf
 endef
 Package/zabbix-server-openssl/conffiles = $(Package/zabbix-server/conffiles)
 Package/zabbix-server-gnutls/conffiles = $(Package/zabbix-server/conffiles)
@@ -345,25 +372,21 @@ Package/zabbix-proxy-openssl/conffiles = $(Package/zabbix-proxy/conffiles)
 Package/zabbix-proxy-gnutls/conffiles = $(Package/zabbix-proxy/conffiles)
 
 ifdef CONFIG_PACKAGE_zabbix-extra-mac80211
-define Build/Prepare/zabbix-extra-mac80211
+define Build/Prepare
+	$(call Build/Prepare/Default)
 	mkdir -p $(PKG_BUILD_DIR)/zabbix-extra-mac80211
 	$(CP) ./files/zabbix_helper_mac80211.c $(PKG_BUILD_DIR)/zabbix-extra-mac80211/
 endef
 
-define Build/Compile/zabbix-extra-mac80211
-	$(TARGET_CC) $(TARGET_CFLAGS) $(PKG_BUILD_DIR)/zabbix-extra-mac80211/zabbix_helper_mac80211.c -o $(PKG_BUILD_DIR)/zabbix-extra-mac80211/zabbix_helper_mac80211
-endef
-endif
-
-define Build/Prepare
-	$(call Build/Prepare/Default)
-	$(call Build/Prepare/zabbix-extra-mac80211)
+define Build/Configure
+	$(call Build/Configure/Default)
 endef
 
 define Build/Compile
 	$(call Build/Compile/Default)
-	$(call Build/Compile/zabbix-extra-mac80211)
+	$(TARGET_CC) $(TARGET_CFLAGS) $(PKG_BUILD_DIR)/zabbix-extra-mac80211/zabbix_helper_mac80211.c -o $(PKG_BUILD_DIR)/zabbix-extra-mac80211/zabbix_helper_mac80211
 endef
+endif
 
 define Package/zabbix-agentd/install
 	$(INSTALL_DIR) $(1)/etc/zabbix_agentd.conf.d
@@ -422,9 +445,25 @@ Package/zabbix-get-gnutls/install = $(Package/zabbix-get/install)
 define Package/zabbix-server/install
 	$(call Package/zabbix/install/sbin,$(1),server)
 	$(call Package/zabbix/install/etc,$(1),server)
+	$(call Package/zabbix/install/init.d,$(1),server)
+
+	$(INSTALL_DIR) $(1)/etc/sysctl.d
+	$(INSTALL_CONF) ./files/zabbix-discovery-workers.conf.sysctl $(1)/etc/sysctl.d/90-zabbix-discovery-workers.conf
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/zabbix_server.config $(1)/etc/config/zabbix_server
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/zabbix_server.defaults $(1)/etc/uci-defaults/90_zabbix_server
 endef
 Package/zabbix-server-openssl/install = $(Package/zabbix-server/install)
 Package/zabbix-server-gnutls/install = $(Package/zabbix-server/install)
+
+define Package/zabbix-server/postinst
+#!/bin/sh
+[ -n "$${IPKG_INSTROOT}" ] || (. /etc/uci-defaults/90_zabbix_server) && rm -f /etc/uci-defaults/90_zabbix_server
+exit 0
+endef
+Package/zabbix-server-openssl/postinst = $(Package/zabbix-server/postinst)
+Package/zabbix-server-gnutls/postinst = $(Package/zabbix-server/postinst)
 
 define Package/zabbix-server-frontend/install
 	$(INSTALL_DIR) $(1)/www/zabbix

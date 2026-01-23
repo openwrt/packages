@@ -49,7 +49,7 @@ automatically (re)connnects to configured APs/hotspots as they become available.
   to make sure that the AP is always accessible
 
 ## Prerequisites
-* [OpenWrt](https://openwrt.org), tested/compatible with current stable 23.x and latest OpenWrt snapshot
+* [OpenWrt](https://openwrt.org), tested/compatible with current stable and latest OpenWrt snapshot
 * The `luci-app-travelmate` ensures these packages are present:
   * 'dnsmasq' as dns backend
   * 'iw' for wlan scanning
@@ -92,7 +92,8 @@ automatically (re)connnects to configured APs/hotspots as they become available.
 | trm_debug          | 0, disabled                        | set to 1 to get the full debug output (logread -e "trm-")                                             |
 | trm_iface          | -, not set                         | uplink- and procd trigger network interface, configured by the 'Interface Wizard'                     |
 | trm_laniface       | -, lan                             | logical LAN network interface, default is 'lan'                                                       |
-| trm_radio          | -, not set                         | restrict travelmate to a single radio or change the overall scanning order ('radio1 radio0')          |
+| trm_radio          | -, not set                         | restrict travelmate to certain radio(s)                                                               |
+| trm_revradio       | 0, disabled                        | change the radio processing order, e.g. 'radio1 radio0'                                               |
 | trm_scanmode       | -, active                          | send active probe requests or passively listen for beacon frames with 'passive'                       |
 | trm_captive        | 1, enabled                         | check the internet availability and handle captive portal redirections                                |
 | trm_netcheck       | 0, disabled                        | treat missing internet availability as an error                                                       |
@@ -178,11 +179,7 @@ Finally enable E-Mail support in Travelmate and add a valid E-Mail receiver addr
 
 ## Captive Portal auto-logins
 For automated captive portal logins you can reference an external shell script per uplink. All login scripts should be executable and located in '/etc/travelmate' with the extension '.login'. The package ships multiple ready to run auto-login scripts:  
-    * 'wifionice.login' for ICE hotspots (DE)
-    * 'db-bahn.login' for german DB railway hotspots via portal login API (still WIP, only tested at Hannover central station)
-    * 'chs-hotel.login' for german chs hotels
-    * 'h-hotels.login' for Telekom hotspots in h+hotels (DE)
-    * 'julianahoeve.login' for Julianahoeve beach resort (NL)
+    * 'wifibahn.login' for german DB railway hotspots
     * 'telekom.login' for telekom hotspots (DE)
     * 'vodafone.login' for vodafone hotspots (DE)
     * 'generic-user-pass.login' a template to demonstrate the optional parameter handling in login scripts
@@ -204,16 +201,17 @@ Hopefully more scripts for different captive portals will be provided by the com
 <pre><code>
 root@2go:~# /etc/init.d/travelmate status
 ::: travelmate runtime information
-  + travelmate_status  : connected (net ok/96)
-  + travelmate_version : 2.2.1-r1
+  + travelmate_status  : connected, net ok/100
+  + frontend_ver       : 2.3.0-r1
+  + backend_ver        : 2.3.0-r1
   + station_id         : radio0/GlutenfreiVerbunden/-
-  + station_mac        : 1E:24:62:C3:2E:4B
-  + station_interfaces : trm_wwan, -
-  + station_subnet     : 10.168.20.0 (lan: 10.168.1.0)
-  + run_flags          : scan: passive, captive: ✔, proactive: ✔, netcheck: ✘, autoadd: ✘, randomize: ✔
-  + ext_hooks          : ntp: ✔, vpn: ✘, mail: ✘
-  + last_run           : 2025.10.18-21:03:41
-  + system             : Cudy TR3000 v1, mediatek/filogic, OpenWrt SNAPSHOT r31445-2a44808374 
+  + station_mac        : 42:40:45:EC:B3:D1
+  + station_interfaces : wwan, -
+  + station_subnet     : 10.168.20.0 (lan: 10.200.1.0)
+  + run_flags          : scan: active, captive: ✔, proactive: ✔, netcheck: ✘, autoadd: ✘, randomize: ✔
+  + ext_hooks          : ntp: ✔, vpn: ✘, mail: ✔
+  + last_run           : 2025.12.11-09:08:24
+  + system             : Cudy TR3000 v1, mediatek/filogic, OpenWrt SNAPSHOT (r32287-1c7ec8ab19)
 </code></pre>
 
 To debug travelmate runtime problems, please always enable the 'trm\_debug' flag, restart Travelmate and check the system log afterwards (_logread -e "trm-"_)

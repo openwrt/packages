@@ -8,18 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=liblo
-PKG_VERSION:=0.31
+PKG_VERSION:=0.34
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@SF/liblo
-PKG_HASH:=2b4f446e1220dcd624ecd8405248b08b7601e9a0d87a0b94730c2907dbccc750
+PKG_HASH:=69aa0cd365dba5ea7799b850a7da659ad303e6074bbd67f4ab84e4d6f5f6c3a4
 
 PKG_MAINTAINER:=
 PKG_LICENSE:=LGPL-2.1-or-later
 PKG_LICENSE_FILES:=COPYING
 
-CMAKE_INSTALL:=1
 CMAKE_SOURCE_SUBDIR:=cmake
 PKG_CONFIG_DEPENDS:=CONFIG_PACKAGE_liblo-utils
 
@@ -54,6 +53,12 @@ CMAKE_OPTIONS += \
 	-DWITH_CPP_TESTS=OFF \
 	-DWITH_STATIC=OFF \
 	-DTHREADING=ON
+
+define Build/InstallDev
+	$(call Build/InstallDev/cmake,$(1))
+	$(SED) 's,/usr/include,$$$${prefix}/include,g' $(1)/usr/lib/pkgconfig/liblo.pc
+	$(SED) 's,/usr/lib,$$$${exec_prefix}/lib,g' $(1)/usr/lib/pkgconfig/liblo.pc
+endef
 
 define Package/liblo/install
 	$(INSTALL_DIR) $(1)/usr/lib

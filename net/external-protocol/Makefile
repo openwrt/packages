@@ -23,7 +23,7 @@ define Package/external-protocol/description
   netbird for example. External protocol is supposed
   to be managed with external software, not directly.
 
-  external protocol works automaticly on the background
+  external protocol works automatically on the background
   and sets up netifd details when interface comes up or
   goes down. This allows one to easily add interface to
   a firewall zone.

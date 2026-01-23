@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=domoticz
 PKG_VERSION:=2025.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/domoticz/domoticz/tar.gz/$(PKG_VERSION)?
@@ -47,7 +47,6 @@ define Package/domoticz
 	+libopenzwave \
 	+libsqlite3 \
 	+libstdcpp \
-	+telldus-core \
 	+zlib
 endef
 
@@ -72,7 +71,8 @@ CMAKE_OPTIONS += \
 	-DUSE_STATIC_OPENZWAVE=no \
 	-DUSE_OPENSSL_STATIC=no \
 	-DUSE_PYTHON=yes \
-	-DWITH_LIBUSB=no
+	-DWITH_LIBUSB=no \
+	-DWITH_TELLDUSCORE=no
 
 TARGET_CXXFLAGS += -DWITH_GPIO
 

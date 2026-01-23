@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.openpkg.org/components/cache/file/ \
-	ftp://ftp.astron.com/pub/file/
+	http://ftp.astron.com/pub/file/
 PKG_HASH:=fc97f51029bb0e2c9f4e3bffefdaf678f0e039ee872b9de5c002a6d09c784d82
 
 PKG_MAINTAINER:=Marko Ratkaj <markoratkaj@gmail.com>

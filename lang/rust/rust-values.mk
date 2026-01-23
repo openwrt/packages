@@ -35,7 +35,7 @@ ifeq ($(HOST_OS),Darwin)
   endif
 endif
 
-# mips64 openwrt has a specific targed in rustc
+# mips64 openwrt has a specific target in rustc
 ifeq ($(ARCH),mips64)
   RUSTC_TARGET_ARCH:=$(REAL_GNU_TARGET_NAME)
 else

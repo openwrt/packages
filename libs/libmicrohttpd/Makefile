@@ -33,7 +33,7 @@ endef
 
 define Package/libmicrohttpd-no-ssl
 $(call Package/libmicrohttpd/default)
-  TITLE:=GNU libmicrohttpd is an embbeded HTTP server library
+  TITLE:=GNU libmicrohttpd is an embedded HTTP server library
   VARIANT:=nossl
   DEFAULT_VARIANT:=1
   PROVIDES:=libmicrohttpd
@@ -41,7 +41,7 @@ endef
 
 define Package/libmicrohttpd-ssl
 $(call Package/libmicrohttpd/default)
-  TITLE:=GNU libmicrohttpd is an embbeded HTTP and HTTPS server library
+  TITLE:=GNU libmicrohttpd is an embedded HTTP and HTTPS server library
   VARIANT:=ssl
   DEPENDS:=+libgnutls
   PROVIDES:=libmicrohttpd

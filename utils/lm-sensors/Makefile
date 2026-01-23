@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lm-sensors
 PKG_VERSION:=3.6.2
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_VERSION_SUBST=$(subst .,-,$(PKG_VERSION))
 PKG_SOURCE_URL:=https://codeload.github.com/hramrach/lm-sensors/tar.gz/V$(PKG_VERSION_SUBST)?
@@ -110,6 +110,7 @@ define Build/Compile
 		LINUX="$(LINUX_DIR)" \
 		CC="$(TARGET_CC)" \
 		CFLAGS="$(TARGET_CFLAGS)" \
+		LDFLAGS="$(TARGET_LDFLAGS)" \
 		CPPFLAGS="$(TARGET_CPPFLAGS)" \
 		STAGING_DIR="$(STAGING_DIR)" \
 		PREFIX="/usr" \
