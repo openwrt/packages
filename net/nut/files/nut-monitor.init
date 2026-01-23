@@ -246,10 +246,12 @@ reload_service() {
 		if procd_running nut-monitor upsmon; then
 			if [ -s "$PIDFILE" ]; then
 				upsmon -c reload 2>&1 | logger -t nut-monitor
-				return 0
+				# We don't care about the exit code
+				return
 			elif pgrep upsmon >/dev/null 2>/dev/null; then
 				procd_send_signal nut-monitor upsmon HUP 2>&1 | logger -t nut-monitor
-				return 0
+				# We don't care about the exit code
+				return
 			fi
 		else
 			/etc/init.d/nut-monitor start
