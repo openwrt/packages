@@ -59,7 +59,7 @@ adb_etagparm=""
 adb_geoparm=""
 adb_geourl="http://ip-api.com/json"
 adb_repiface=""
-adb_replisten="53"
+adb_repport="53"
 adb_repchunkcnt="5"
 adb_repchunksize="1"
 adb_represolve="0"
@@ -92,7 +92,7 @@ f_cmd() {
 # load adblock environment
 #
 f_load() {
-	local bg_pid iface port ports cpu core
+	local bg_pid iface port filter tcpdump_filter cpu core
 
 	adb_packages="$("${adb_ubuscmd}" -S call rpc-sys packagelist '{ "all": true }' 2>/dev/null)"
 	adb_bver="$(printf "%s" "${adb_packages}" | "${adb_jsoncmd}" -ql1 -e '@.packages.adblock')"
@@ -127,26 +127,21 @@ f_load() {
 	fi
 
 	if [ "${adb_report}" = "1" ] && [ ! -x "${adb_dumpcmd}" ]; then
-		f_log "info" "Please install the package 'tcpdump' or 'tcpdump-mini' to use the reporting feature"
+		f_log "info" "please install the package 'tcpdump' or 'tcpdump-mini' to use the reporting feature"
 	elif [ -x "${adb_dumpcmd}" ]; then
-		bg_pid="$("${adb_pgrepcmd}" -f "^${adb_dumpcmd}.*adb_report\\.pcap$" | "${adb_awkcmd}" '{ORS=" "; print $1}')"
-		if [ "${adb_report}" = "0" ] || { [ -n "${bg_pid}" ] && [ "${adb_action}" = "stop" ]; }; then
-			if [ -n "${bg_pid}" ]; then
-				kill -HUP "${bg_pid}" 2>/dev/null
+		bg_pid="$("${adb_pgrepcmd}" -nf "${adb_reportdir}/adb_report.pcap")"
+		if [ "${adb_report}" = "0" ] || { [ -n "${bg_pid}" ] && { [ "${adb_action}" = "stop" ] || [ "${adb_action}" = "restart" ]; }; }; then
+			if kill -HUP "${bg_pid}" 2>/dev/null; then
 				while kill -0 "${bg_pid}" 2>/dev/null; do
 					sleep 1
 				done
-				unset bg_pid
 			fi
+			bg_pid="$("${adb_pgrepcmd}" -nf "${adb_reportdir}/adb_report.pcap")"
 			rm -f "${adb_reportdir}"/adb_report.pcap*
 		fi
 
 		if [ "${adb_report}" = "1" ] && [ -z "${bg_pid}" ] && [ "${adb_action}" != "report" ] && [ "${adb_action}" != "stop" ]; then
 			[ ! -d "${adb_reportdir}" ] && mkdir -p "${adb_reportdir}"
-
-			for port in ${adb_replisten}; do
-				[ -z "${ports}" ] && ports="port ${port}" || ports="${ports} or port ${port}"
-			done
 			if [ -z "${adb_repiface}" ]; then
 				network_get_device iface "lan"
 				[ -z "${iface}" ] && network_get_physdev iface "lan"
@@ -156,12 +151,22 @@ f_load() {
 					f_uci "adblock"
 				fi
 			fi
-
+			for port in ${adb_repport}; do
+				[ -n "${filter}" ] && filter="${filter} or "
+				filter="${filter}(udp port ${port}) or (tcp port ${port})"
+			done
+			tcpdump_filter="(${filter}) and greater 28"
 			if [ -n "${adb_repiface}" ] && [ -d "${adb_reportdir}" ]; then
-				("${adb_dumpcmd}" --immediate-mode -nn -p -s0 -l -i ${adb_repiface} ${ports} -C${adb_repchunksize} -W${adb_repchunkcnt} -w "${adb_reportdir}/adb_report.pcap" >/dev/null 2>&1 &)
-				bg_pid="$("${adb_pgrepcmd}" -f "^${adb_dumpcmd}.*adb_report\\.pcap$" | "${adb_awkcmd}" '{ORS=" "; print $1}')"
+				(
+					"${adb_dumpcmd}" --immediate-mode -nn -p -s0 -i "${adb_repiface}" \
+					"${tcpdump_filter}" \
+					-C "${adb_repchunksize}" -W "${adb_repchunkcnt}" \
+					-w "${adb_reportdir}/adb_report.pcap" >/dev/null 2>&1 &
+				)
+				bg_pid="$("${adb_pgrepcmd}" -nf "${adb_reportdir}/adb_report.pcap")"
+				f_log "info" "tcpdump backgound process started (interface: '${adb_repiface}', port: ${adb_repport}, pid: ${bg_pid})"
 			else
-				f_log "info" "Please set the name of the reporting network device 'adb_repiface' manually"
+				f_log "info" "please set the name of the reporting network device 'adb_repiface' manually"
 			fi
 		fi
 	fi
@@ -539,17 +544,12 @@ f_uci() {
 
 	if [ -n "$(uci -q changes "${config}")" ]; then
 		uci_commit "${config}"
-		case "${config}" in
-			"firewall")
-				"/etc/init.d/firewall" reload >/dev/null 2>&1
-				;;
-			"resolver")
-				printf "%b" "${adb_dnsheader}" >"${adb_finaldir}/${adb_dnsfile}"
-				adb_cnt="0"
-				f_jsnup "processing"
-				"/etc/init.d/${adb_dns}" reload >/dev/null 2>&1
-				;;
-		esac
+		if [ "${config}" = "resolver" ]; then
+			printf "%b" "${adb_dnsheader}" >"${adb_finaldir}/${adb_dnsfile}"
+			adb_cnt="0"
+			f_jsnup "processing"
+			"/etc/init.d/${adb_dns}" reload >/dev/null 2>&1
+		fi
 	fi
 }
 
@@ -1520,55 +1520,99 @@ f_report() {
 	report_srt="${adb_reportdir}/adb_report.srt"
 	report_jsn="${adb_reportdir}/adb_report.jsn"
 	report_txt="${adb_reportdir}/adb_mailreport.txt"
+	top_tmpclients="${adb_reportdir}/top_clients.tmp"
+	top_tmpdomains="${adb_reportdir}/top_domains.tmp"
+	top_tmpblocked="${adb_reportdir}/top_blocked.tmp"
 	map_jsn="${adb_reportdir}/adb_map.jsn"
 
-	# build json file
+
+	# build report
 	#
 	if [ "${action}" != "json" ]; then
 		: >"${report_raw}" >"${report_srt}" >"${report_txt}" >"${report_jsn}"
+		: >"${top_tmpclients}" >"${top_tmpdomains}" >"${top_tmpblocked}"
 		[ "${adb_represolve}" = "1" ] && resolve=""
 		for file in "${adb_reportdir}/adb_report.pcap"*; do
 			(
-				if [ "${adb_repiface}" = "any" ]; then
-					"${adb_dumpcmd}" "${resolve}" --immediate-mode -T domain -tttt -r "${file}" 2>/dev/null |
-						"${adb_awkcmd}" -v cnt="${cnt}" '!/\.lan\. |PTR\? | SOA\? | Flags /&&/ A[A]*\? |NXDomain|0\.0\.0\.0|[0-9]\/[0-9]\/[0-9]/{sub(/\.[0-9]+$/,"",$6);
-						type=substr($(NF-1),length($(NF-1)));
-						if(type=="."&&$(NF-2)!="CNAME")
-							{domain=substr($(NF-1),1,length($(NF-1))-1);type="RQ"}
-						else
-							{if($(NF-2)~/NXDomain/||$(NF-1)=="0.0.0.0"){type="NX"}else{type="OK"};domain=""};
-							if(int($9)>0)
-								printf "%08d\t%s\t%s\t%s\t%-25s\t%s\n",$9,type,$1,substr($2,1,8),$6,domain}' >>"${report_raw}"
-				else
-					"${adb_dumpcmd}" "${resolve}" --immediate-mode -T domain -tttt -r "${file}" 2>/dev/null |
-						"${adb_awkcmd}" -v cnt="${cnt}" '!/\.lan\. |PTR\? | SOA\? | Flags /&&/ A[A]*\? |NXDomain|0\.0\.0\.0|[0-9]\/[0-9]\/[0-9]/{sub(/\.[0-9]+$/,"",$4);
-						type=substr($(NF-1),length($(NF-1)));
-						if(type=="."&&$(NF-2)!="CNAME")
-							{domain=substr($(NF-1),1,length($(NF-1))-1);type="RQ"}
-						else
-							{if($(NF-2)~/NXDomain/||$(NF-1)=="0.0.0.0"){type="NX"}else{type="OK"};domain=""};
-							if(int($7)>0)
-								printf "%08d\t%s\t%s\t%s\t%-25s\t%s\n",$7,type,$1,substr($2,1,8),$4,domain}' >>"${report_raw}"
-				fi
+				"${adb_dumpcmd}" ${resolve} --immediate-mode -tttt -T domain -r "${file}" 2>/dev/null |
+				"${adb_awkcmd}" '
+					BEGIN {
+						pending = 0
+					}
+					# ignore Reverse DNS
+					/\.in-addr\.arpa/ || /\.ip6\.arpa/ { next }
+					# domain request parser
+					/\+[[:space:]]+(A\?|AAAA\?)/ {
+						# drop unresolved previous query
+						if (pending)
+							pending = 0
+						date = $1
+						split($2, t, ":")
+						time = t[1] ":" t[2] ":" substr(t[3],1,2)
+						client = $4
+						sub(/\.[0-9]+$/, "", client)
+						domain = $(NF-1)
+						sub(/[,\.]+$/, "", domain)
+						if (domain ~ /\.lan$/) next
+						qtype = $(NF-2)
+						sub(/\?$/, "", qtype)
+						last_date = date
+						last_time = time
+						last_client = client
+						last_domain = domain
+						last_qtype  = qtype
+						pending  = 1
+						next
+					}
+					# ok answer
+					/[0-9]+[[:space:]]+[0-9]+\/[0-9]+\/[0-9]+[[:space:]]+(A|AAAA|CNAME)[[:space:]]/ {
+						if (pending) {
+							printf "%s\t%s\t%s\t%s\t%s\tOK\n",
+							last_date, last_time, last_client, last_qtype, last_domain
+							pending = 0
+						}
+						next
+					}
+					# nxdomain answer
+					/ NXDomain/ {
+						if (pending) {
+							printf "%s\t%s\t%s\t%s\t%s\tNX\n",
+							last_date, last_time, last_client, last_qtype, last_domain
+							pending = 0
+						}
+						next
+					}
+					# servfail answer
+					/ ServFail/ {
+						if (pending) {
+							printf "%s\t%s\t%s\t%s\t%s\tSF\n",
+							last_date, last_time, last_client, last_qtype, last_domain
+							pending = 0
+						}
+						next
+					}
+					END {
+    					# no fallback
+					}
+				' >> "${report_raw}"
 			) &
 			[ "${cnt}" -gt "${adb_cores}" ] && wait -n
 			cnt="$((cnt + 1))"
 		done
 		wait
 		if [ -s "${report_raw}" ]; then
-			"${adb_sortcmd}" ${adb_srtopts} -k3,3 -k4,4 -k1,1 -k2,2 -u -r "${report_raw}" |
-				"${adb_awkcmd}" '{currA=($1+0);currB=$1;currC=$2;if(reqA==currB){reqA=0;printf "%-90s\t%s\n",d,$2}else if(currC=="RQ"){reqA=currA;d=$3"\t"$4"\t"$5"\t"$6}}' |
-				"${adb_grepcmd}" -v "RQ" | "${adb_sortcmd}" ${adb_srtopts} -u -r >"${report_srt}"
-			: >"${report_raw}"
+			"${adb_sortcmd}" ${adb_srtopts} -ru "${report_raw}" > "${report_srt}"
+			rm -f "${report_raw}"
 		fi
 
+		# build json
+		#
 		if [ -s "${report_srt}" ]; then
 			start="$("${adb_awkcmd}" 'END{printf "%s_%s",$1,$2}' "${report_srt}")"
 			end="$("${adb_awkcmd}" 'NR==1{printf "%s_%s",$1,$2}' "${report_srt}")"
 			total="$(f_count tld "${report_srt}" "var")"
-			blocked="$("${adb_awkcmd}" '{if($5=="NX")cnt++}END{printf "%s",cnt}' "${report_srt}")"
-			percent="$("${adb_awkcmd}" -v t="${total}" -v b="${blocked}" 'BEGIN{printf "%.2f%s",b/t*100,"%"}')"
-			: >"${report_jsn}"
+			blocked="$("${adb_awkcmd}" '{if($6=="NX")cnt++}END{printf "%s",cnt}' "${report_srt}")"
+			percent="$("${adb_awkcmd}" -v t="${total}" -v b="${blocked}" 'BEGIN{ if(t>0) printf "%.2f%s",b/t*100,"%"; else printf "0.00%%"}')"
 			{
 				printf "%s\n" "{ "
 				printf "\t%s\n" "\"start_date\": \"${start%_*}\", "
@@ -1578,33 +1622,137 @@ f_report() {
 				printf "\t%s\n" "\"total\": \"${total}\", "
 				printf "\t%s\n" "\"blocked\": \"${blocked}\", "
 				printf "\t%s\n" "\"percent\": \"${percent}\", "
-			} >>"${report_jsn}"
+			} >"${report_jsn}"
+
+			# build top list counters
+			#
+			"${adb_awkcmd}" '
+				{
+					client = $3
+					qtype = $4
+					domain = $5
+					rc = $6
+					# normalize domain
+					gsub(/[\.]+$/, "", domain)
+					domain = tolower(domain)
+					# total client counter
+					clients[client]++
+					# remember OK per domain
+					if (rc == "OK") {
+						ok_domain[domain] = 1
+						ok_rr[domain SUBSEP qtype] = 1
+					}
+					# remember NX per domain
+					if (rc == "NX") {
+						nx_domain[domain]++
+						nx_rr[domain SUBSEP qtype]++
+					}
+					# total queries per domain
+					all_domain[domain]++
+				}
+				END {
+					# top clients
+					for (c in clients)
+						printf "%d %s\n", clients[c], c > "'"${top_tmpclients}"'"
+					# domains & blocked domains
+					for (d in all_domain) {
+					if (ok_domain[d]) {
+						printf "%d %s\n", all_domain[d], d > "'"${top_tmpdomains}"'"
+						continue
+					}
+					if (nx_domain[d]) {
+						printf "%d %s\n", nx_domain[d], d > "'"${top_tmpblocked}"'"
+					}
+				}
+			}' "${report_srt}"
+
+			# build json top lists
+			#
 			top_list="top_clients top_domains top_blocked"
 			for top in ${top_list}; do
-				printf "\t%s" "\"${top}\": [ " >>"${report_jsn}"
+				printf "\t\"%s\": [ " "${top}" >>"${report_jsn}"
 				case "${top}" in
-					"top_clients")
-						"${adb_awkcmd}" '{print $3}' "${report_srt}" | "${adb_sortcmd}" ${adb_srtopts} | uniq -c |
-							"${adb_sortcmd}" ${adb_srtopts} -nr |
-							"${adb_awkcmd}" "{ORS=\" \";if(NR==1)printf \"\n\t\t{\n\t\t\t\\\"count\\\": \\\"%s\\\",\n\t\t\t\\\"address\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2; else if(NR<=${top_count})printf \",\n\t\t{\n\t\t\t\\\"count\\\": \\\"%s\\\",\n\t\t\t\\\"address\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2}" >>"${report_jsn}"
-						;;
-					"top_domains")
-						"${adb_awkcmd}" '{if($5!="NX")print $4}' "${report_srt}" | "${adb_sortcmd}" ${adb_srtopts} | uniq -c |
-							"${adb_sortcmd}" ${adb_srtopts} -nr |
-							"${adb_awkcmd}" "{ORS=\" \";if(NR==1)printf \"\n\t\t{\n\t\t\t\\\"count\\\": \\\"%s\\\",\n\t\t\t\\\"address\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2; else if(NR<=${top_count})printf \",\n\t\t{\n\t\t\t\\\"count\\\": \\\"%s\\\",\n\t\t\t\\\"address\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2}" >>"${report_jsn}"
-						;;
-					"top_blocked")
-						"${adb_awkcmd}" '{if($5=="NX")print $4}' "${report_srt}" |
-							"${adb_sortcmd}" ${adb_srtopts} | uniq -c | "${adb_sortcmd}" ${adb_srtopts} -nr |
-							"${adb_awkcmd}" "{ORS=\" \";if(NR==1)printf \"\n\t\t{\n\t\t\t\\\"count\\\": \\\"%s\\\",\n\t\t\t\\\"address\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2; else if(NR<=${top_count})printf \",\n\t\t{\n\t\t\t\\\"count\\\": \\\"%s\\\",\n\t\t\t\\\"address\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2}" >>"${report_jsn}"
-						;;
+					top_clients)
+						"${adb_sortcmd}" ${adb_srtopts} -nr "${top_tmpclients}" |
+						"${adb_awkcmd}" -v top_count="${top_count}" '
+							BEGIN { ORS=""; OFS="" }
+							NR==1 {
+								printf "\n\t\t{\n\t\t\t\"count\": \"%s\",\n\t\t\t\"address\": \"%s\"\n\t\t}", $1, $2
+							}
+							NR>1 && NR<=top_count {
+								printf ",\n\t\t{\n\t\t\t\"count\": \"%s\",\n\t\t\t\"address\": \"%s\"\n\t\t}", $1, $2
+							}
+						' >>"${report_jsn}"
+					;;
+					top_domains)
+						"${adb_sortcmd}" ${adb_srtopts} -nr "${top_tmpdomains}" |
+						"${adb_awkcmd}" -v top_count="${top_count}" '
+							BEGIN { ORS=""; OFS="" }
+							NR==1 {
+								printf "\n\t\t{\n\t\t\t\"count\": \"%s\",\n\t\t\t\"address\": \"%s\"\n\t\t}", $1, $2
+							}
+							NR>1 && NR<=top_count {
+								printf ",\n\t\t{\n\t\t\t\"count\": \"%s\",\n\t\t\t\"address\": \"%s\"\n\t\t}", $1, $2
+							}
+						' >>"${report_jsn}"
+					;;
+					top_blocked)
+						"${adb_sortcmd}" ${adb_srtopts} -nr "${top_tmpblocked}" |
+						"${adb_awkcmd}" -v top_count="${top_count}" '
+							BEGIN { ORS=""; OFS="" }
+							NR==1 {
+								printf "\n\t\t{\n\t\t\t\"count\": \"%s\",\n\t\t\t\"address\": \"%s\"\n\t\t}", $1, $2
+							}
+							NR>1 && NR<=top_count {
+								printf ",\n\t\t{\n\t\t\t\"count\": \"%s\",\n\t\t\t\"address\": \"%s\"\n\t\t}", $1, $2
+							}
+						' >>"${report_jsn}"
+					;;
 				esac
-				printf "\n\t%s\n" "]," >>"${report_jsn}"
+				printf "\n\t],\n" >>"${report_jsn}"
 			done
+			rm -f "${top_tmpclients}" "${top_tmpdomains}" "${top_tmpblocked}"
+
+			# build json request list
+			#
 			search="${search//./\\.}"
 			search="${search//[+*~%\$&\"\' ]/}"
-			"${adb_awkcmd}" "BEGIN{i=0;printf \"\t\\\"requests\\\": [\n\"}/(${search})/{i++;if(i==1)printf \"\n\t\t{\n\t\t\t\\\"date\\\": \\\"%s\\\",\n\t\t\t\\\"time\\\": \\\"%s\\\",\n\t\t\t\\\"client\\\": \\\"%s\\\",\n\t\t\t\\\"domain\\\": \\\"%s\\\",\n\t\t\t\\\"rc\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2,\$3,\$4,\$5;else if(i<=${res_count})printf \",\n\t\t{\n\t\t\t\\\"date\\\": \\\"%s\\\",\n\t\t\t\\\"time\\\": \\\"%s\\\",\n\t\t\t\\\"client\\\": \\\"%s\\\",\n\t\t\t\\\"domain\\\": \\\"%s\\\",\n\t\t\t\\\"rc\\\": \\\"%s\\\"\n\t\t}\",\$1,\$2,\$3,\$4,\$5}END{printf \"\n\t]\n}\n\"}" "${adb_reportdir}/adb_report.srt" >>"${report_jsn}"
-			: >"${report_srt}"
+			"${adb_awkcmd}" "
+				BEGIN {
+					i = 0
+					printf \"\t\\\"requests\\\": [\n\"
+				}
+				# Only process lines that match the search AND have exactly 6 fields
+				(/(${search})/ && NF == 6) {
+					i++
+					if (i == 1) {
+						printf \"\n\t\t{\
+						\n\t\t\t\\\"date\\\": \\\"%s\\\",\
+						\n\t\t\t\\\"time\\\": \\\"%s\\\",\
+						\n\t\t\t\\\"client\\\": \\\"%s\\\",\
+						\n\t\t\t\\\"type\\\": \\\"%s\\\",\
+						\n\t\t\t\\\"domain\\\": \\\"%s\\\",\
+						\n\t\t\t\\\"rc\\\": \\\"%s\\\"\
+						\n\t\t}\",
+						\$1, \$2, \$3, \$4, \$5, \$6
+					}
+					else if (i <= ${res_count}) {
+						printf \",\n\t\t{\
+						\n\t\t\t\\\"date\\\": \\\"%s\\\",\
+						\n\t\t\t\\\"time\\\": \\\"%s\\\",\
+						\n\t\t\t\\\"client\\\": \\\"%s\\\",\
+						\n\t\t\t\\\"type\\\": \\\"%s\\\",\
+						\n\t\t\t\\\"domain\\\": \\\"%s\\\",\
+						\n\t\t\t\\\"rc\\\": \\\"%s\\\"\
+						\n\t\t}\",
+						\$1, \$2, \$3, \$4, \$5, \$6
+					}
+				}
+				END {
+					printf \"\n\t]\n}\n\"
+				}
+			" "${adb_reportdir}/adb_report.srt" >> "${report_jsn}"
+			rm -f "${report_srt}"
 		fi
 
 		# retrieve/prepare map data
@@ -1687,19 +1835,19 @@ f_report() {
 				done
 			elif json_get_type status "${top}" && [ "${top}" = "requests" ] && [ "${status}" = "array" ]; then
 				printf "%s\n%s\n%s\n" ":::" "::: Latest DNS Queries" ":::" >>"${report_txt}"
-				printf "%-15s%-15s%-45s%-80s%s\n" "Date" "Time" "Client" "Domain" "Answer" >>"${report_txt}"
+				printf "%-11s%-9s%-40s%-5s%-70s%s\n" "Date" "Time" "Client" "Type" "Domain" "Answer" >>"${report_txt}"
 				json_select "${top}"
 				index="1"
 				while json_get_type status "${index}" && [ "${status}" = "object" ]; do
 					json_get_values item "${index}"
-					printf "%-15s%-15s%-45s%-80s%s\n" ${item} >>"${report_txt}"
+					printf "%-11s%-9s%-40s%-5s%-70s%s\n" ${item} >>"${report_txt}"
 					index="$((index + 1))"
 				done
 			fi
 			json_select ".."
 		done
 		content="$("${adb_catcmd}" "${report_txt}" 2>/dev/null)"
-		: >"${report_txt}"
+		rm -f "${report_txt}"
 	fi
 
 	# report output
@@ -1719,7 +1867,7 @@ f_report() {
 			;;
 		"mail")
 			[ "${adb_mail}" = "1" ] && [ -x "${adb_mailservice}" ] && "${adb_mailservice}" "${content}" >/dev/null 2>&1
-			: >"${report_txt}"
+			rm -f "${report_txt}"
 			;;
 	esac
 }

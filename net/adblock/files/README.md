@@ -66,6 +66,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * Overall duplicate removal in generated blocklist file 'adb_list.overall'
 * Additional local allowlist for manual overrides, located in '/etc/adblock/adblock.allowlist' (only exact matches).
 * Additional local blocklist for manual overrides, located in '/etc/adblock/adblock.blocklist'
+* Implements Firewall‑Based DNS Control to force DNS interfaces/ports and to redirect to external unfiltered/filtered DNS server
 * Connection checks during blocklist update to ensure a reliable DNS backend service
 * Minimal status & error logging to syslog, enable debug logging to receive more output
 * Procd based init system support ('start', 'stop', 'restart', 'reload', 'enable', 'disable', 'running', 'status', 'suspend', 'resume', 'query', 'report')
@@ -75,6 +76,7 @@ A lot of people already use adblocker plugins within their desktop browsers, but
 * Provides a detailed DNS Query Report with DNS related information about client requests, top (blocked) domains and more
 * Provides a powerful query function to quickly find blocked (sub-)domains, e.g. to allow certain domains
 * Contains an option to route DNS queries to the local resolver via corresponding firewall rules
+* Implements a jail mode - only domains on the allowlist are permitted, all other DNS requests are rejected
 * Automatic blocklist backup & restore, these backups will be used in case of download errors and during startup
 * Send notification E-Mails, see example configuration below
 * Add new adblock feeds on your own with the 'Custom Feed Editor' in LuCI or via CLI, see example below
@@ -155,7 +157,7 @@ Available commands:
 | adb_map            | 0, disabled                        | enable a GeoIP Map with blocked domains                                                        |
 | adb_reportdir      | /tmp/adblock-report                | path for DNS related report files                                                              |
 | adb_repiface       | -, auto-detected                   | name of the reporting interface or 'any' used by tcpdump                                       |
-| adb_replisten      | 53                                 | space separated list of reporting port(s) used by tcpdump                                      |
+| adb_repport        | 53                                 | list of reporting port(s) used by tcpdump                                                      |
 | adb_repchunkcnt    | 5                                  | report chunk count used by tcpdump                                                             |
 | adb_repchunksize   | 1                                  | report chunk size used by tcpdump in MB                                                        |
 | adb_represolve     | 0, disabled                        | resolve reporting IP addresses using reverse DNS (PTR) lookups                                 |
@@ -178,7 +180,7 @@ Available commands:
 | adb_nftdevallow    | -, not set                         | entire interfaces or VLANs will be routed to the unfiltered DNS server                         |
 | adb_allowdnsv4     | -, not set                         | IPv4 DNS resolver applied to MACs and interfaces using the unfiltered DNS policy               |
 | adb_allowdnsv6     | -, not set                         | IPv6 DNS resolver applied to MACs and interfaces using the unfiltered DNS policy               |
-| adb_nftblock       | 0, disabled                        | routes MACs or interfaces to an filtered external DNS resolver, bypassing local adblock        |
+| adb_nftblock       | 0, disabled                        | routes MACs or interfaces to a filtered external DNS resolver, bypassing local adblock         |
 | adb_nftmacblock    | -, not set                         | listed MAC addresses will always use the configured filtered DNS server                        |
 | adb_nftdevblock    | -, not set                         | entire interfaces or VLANs will be routed to the filtered DNS server                           |
 | adb_blockdnsv4     | -, not set                         | IPv4 DNS resolver applied to MACs and interfaces using the filtered DNS policy                 |
@@ -239,11 +241,12 @@ To get the status in the CLI, just call _/etc/init.d/adblock status_ or _/etc/in
 ## Best practise and tweaks
 
 **Recommendation for low memory systems**  
-Adblock does use RAM by default and never writes to the flash space of the router. To reduce the memory pressure on low memory systems (i.e. those with 128-256MB RAM), you should optimize your configuration with the following options:  
+adblock uses RAM by design and avoids writing to flash. On devices with 128–256 MB RAM, you can reduce memory pressure with the following optimizations:  
 
-* point 'adb_basedir', 'adb_backupdir' and 'adb_reportdir' to an external usb drive or ssd
-* set 'adb_cores' to '1' (only useful on a multicore system) to force sequential feed processing
-* enable the 'adb_dnsshift' option to shift the blocklist to the backup directory and only set a soft link to this file in memory
+* use external storage: point 'adb_basedir', 'adb_backupdir' and 'adb_reportdir' to an USB drive or SSD
+* limit CPU processing to one core: set 'adb_cores' to '1' to reduce peak memory usage during feed processing
+* enable blocklist shifting: activate 'adb_dnsshift' to store the blocklist in the backup directory and expose it via a symlink in RAM.
+* Firewall DNS redirection: use nftables based DNS routing to external filtered DNS serves and only use a minimal set of local blocklists
 
 **Sensible choice of blocklists**  
 The following feeds are just my personal recommendation as an initial setup:  
@@ -287,7 +290,7 @@ force DNS ensures that all DNS traffic on your network by specific devices or en
 * also prevents DNS bypassing by clients with hardcoded DNS settings on other ports, e.g. on port 853
 This mode guarantees that adblock’s filtering pipeline is always applied.  
 
-adblock's firewall rules are based on nftables in a separate isolated nftables table (inet adblock) and chains (prerouting), with MAC addresses stored in an nftables set. The configuration is carried out centrally in LuCI on the ‘Firewall Settings’ tab in adblock.  
+adblock's firewall rules are based on nftables in a separate isolated nftables table (inet adblock) and chains (prerouting), with MAC addresses stored in a nftables set. The configuration is carried out centrally in LuCI on the ‘Firewall Settings’ tab in adblock.  
 
 **Jail mode (allowlist-only):**  
 Enforces a strict allowlist‑only DNS policy in which only domains listed in the allowlist file are resolved, while every other query is rejected. This mode is intended for highly restrictive environments and depends on a carefully maintained allowlist, typically managed manually.  
