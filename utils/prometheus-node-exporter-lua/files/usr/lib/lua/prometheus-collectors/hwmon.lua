@@ -39,7 +39,7 @@ local function scrape()
     for sensor_path in fs.glob(hwmon_path .. "/temp*_input") do
       local sensor = string.gsub(fs.basename(sensor_path), "_input$", "")
       local temp = get_contents(sensor_path) / 1000
-      metric_temp_celsius({chip=chip, sensor=sensor}, temp)
+      metric_temp_celsius({chip=chip, sensor=sensor, chip_name=chip_name}, temp)
     end
 
     -- Produce node_hwmon_pwm
