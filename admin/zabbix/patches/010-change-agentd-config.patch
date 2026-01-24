@@ -4,7 +4,7 @@ Date: Wed, 17 Dec 2025 18:28:37 -0500
 Subject: [PATCH] zabbix_agentd: Tweak config file for OpenWrt
 
 Note: original patch had no header, header added 2025-12-16, while
-bumping package version. Modified 2025-12-25.
+bumping package version. Modified 2025-12-25. Modified 2026-01-21.
 
 1. Use syslog not a file for logging
 2. Place PidFile under /var/run/zabbix
@@ -12,6 +12,7 @@ bumping package version. Modified 2025-12-25.
 4. Do not do active checks by default
 5. Use the system hostname as hostname (except on zabbix server)
 6. Include configurations under /etc/zabbix_agentd.conf.d/
+7. Drop privileges to the zabbix-agent user (instead of zabbix)
 
 Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
 ---
@@ -73,6 +74,15 @@ Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
  ### Option: HostnameItem
  #	Item used for generating Hostname if it is undefined. Ignored if Hostname is defined.
  #	Does not support UserParameters or aliases.
+@@ -315,7 +309,7 @@ Hostname=Zabbix server
+ #
+ # Mandatory: no
+ # Default:
+-# User=zabbix
++User=zabbix-agent
+ 
+ ####### USER-DEFINED MONITORED PARAMETERS #######
+ 
 @@ -545,5 +539,5 @@ Hostname=Zabbix server
  # Include=
  
