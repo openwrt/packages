@@ -28,7 +28,7 @@ define Package/sslh
   CATEGORY:=Network
   SUBMENU:=Routing and Redirection
   TITLE:=SSL/SSH multiplexer
-  DEPENDS:=+libconfig +libcap +libpcre2
+  DEPENDS:=+libconfig +libcap +libpcre2 +libproxyprotocol
   URL:=https://rutschle.net/tech/sslh/README.html
 endef
 
