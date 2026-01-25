@@ -130,9 +130,10 @@ f_load() {
 		f_log "info" "please install the package 'tcpdump' or 'tcpdump-mini' to use the reporting feature"
 	elif [ -x "${adb_dumpcmd}" ]; then
 		bg_pid="$("${adb_pgrepcmd}" -nf "${adb_reportdir}/adb_report.pcap")"
-		if [ "${adb_report}" = "0" ] || { [ -n "${bg_pid}" ] && { [ "${adb_action}" = "stop" ] || [ "${adb_action}" = "restart" ]; }; }; then
+		if [ -n "${bg_pid}" ] && { [ "${adb_report}" = "0" ] || [ "${adb_action}" = "stop" ] || [ "${adb_action}" = "restart" ]; }; then
 			if kill -HUP "${bg_pid}" 2>/dev/null; then
-				while kill -0 "${bg_pid}" 2>/dev/null; do
+				for cnt in 1 2 3; do
+					kill -0 "${bg_pid}" >/dev/null 2>&1 || break
 					sleep 1
 				done
 			fi
