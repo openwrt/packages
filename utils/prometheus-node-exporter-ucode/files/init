@@ -17,6 +17,7 @@ start_service() {
 	config_get interface "main" listen_interface "loopback"
 	config_get port "main" listen_port 9101
 	config_get keepalive "main" http_keepalive 70
+	config_get add_jails "main" add_jail ""
 
 	[ "$interface" = "*" ] || {
 		network_get_ipaddr  bind4 "$interface"
@@ -47,6 +48,12 @@ start_service() {
 	procd_add_jail_mount "/usr/lib/libnl*.so*"
 	procd_add_jail_mount "/usr/share/ucode/node-exporter"
 	procd_add_jail_mount "/etc/config"
+
+	for add_jail in $add_jails; do
+		if [ -e "$add_jail" ]; then
+			procd_add_jail_mount "$add_jail"
+		fi
+	done
 
 	# TODO breaks the dsl collector?
 	#procd_set_param user nobody
