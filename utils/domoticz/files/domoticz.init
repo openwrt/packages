@@ -51,7 +51,7 @@ start_domoticz() {
 	for DIR in data generated_scripts; do
 		[ -d /var/lib/domoticz/dzVents/$DIR ] || {
 			mkdir -p /var/lib/domoticz/dzVents/$DIR
-			chown domoticz.domoticz /var/lib/domoticz/dzVents/$DIR
+			chown domoticz:domoticz /var/lib/domoticz/dzVents/$DIR
 		}
 	done
 	procd_append_param command -userdata "$userdata"
