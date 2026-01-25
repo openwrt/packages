@@ -2,6 +2,7 @@ config prometheus-node-exporter-ucode 'main'
 	option listen_interface 'loopback'
 	option listen_port '9101'
 	option http_keepalive '70'
+	#list add_jail '/path/to/jail'
 
 config collector 'wifi'
 	option stations '1'
