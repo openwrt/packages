@@ -206,7 +206,7 @@ EOF
 }
 
 create_empty_zone() {
-	local zone error zpath
+	local zone error zpath command
 	zone="$1"
 	zpath="$dyndir/db.$zone"
 
@@ -219,7 +219,20 @@ create_empty_zone() {
 	chown bind:bind "$zpath" || return 1
 	chmod 0664 "$zpath" || return 1
 
-	if ! error=$(rndc modzone $zone "{
+	# if the zone doesn't exist, or a RFC-1918 in-addr.arpa zone, then
+	# we need to add it, otherwise we need to modify it.
+	if ! rndc zonestatus $zone >/dev/null 2>&1; then
+		command="addzone"
+	else
+		command="modzone"
+	fi
+
+	case "$zone" in
+	10.in-addr.arpa|1[6789].172.in-addr.arpa|2[0-9].172.in-addr.arpa|3[01].172.in-addr.arpa|168.192.in-addr.arpa)
+		command="addzone" ;;
+	esac
+
+	if ! error=$(rndc $command $zone "{
 		type primary;
 		file \"$zpath\";
 		update-policy {
