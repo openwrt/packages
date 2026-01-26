@@ -79,7 +79,7 @@ igmp_add_firewall_routing() {
 	config_get_bool ssdp $1 ssdp 0
 
 	if [ $ssdp -gt 0 ]; then
-		local ssdp_target="ACCEPT"
+		ssdp_target="ACCEPT"
 	fi
 
 	json_add_object ""
