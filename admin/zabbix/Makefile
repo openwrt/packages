@@ -60,7 +60,7 @@ define Package/zabbix/Default
 endef
 
 define Package/zabbix-agentd/Default
-  $(call Package/zabbix/Default)
+	$(call Package/zabbix/Default)
   TITLE+= agentd
   DEPENDS+= +libevent2-pthreads
   PROVIDES:=zabbix-agentd
@@ -68,48 +68,48 @@ define Package/zabbix-agentd/Default
 endef
 
 define Package/zabbix-agentd
-  $(call Package/zabbix-agentd/Default)
+	$(call Package/zabbix-agentd/Default)
   VARIANT:=nossl
   DEFAULT_VARIANT:=1
 endef
 
 define Package/zabbix-agentd-openssl
-  $(call Package/zabbix-agentd/Default)
+	$(call Package/zabbix-agentd/Default)
   TITLE+= (with OpenSSL)
   DEPENDS+= +libevent2-pthreads +libopenssl
   VARIANT:=openssl
 endef
 
 define Package/zabbix-agentd-gnutls
-  $(call Package/zabbix-agentd/Default)
+	$(call Package/zabbix-agentd/Default)
   TITLE+= (with GnuTLS)
   DEPENDS+= +libevent2-pthreads +libgnutls
   VARIANT:=gnutls
 endef
 
 define Package/zabbix-extra-mac80211
-  $(call Package/zabbix/Default)
+	$(call Package/zabbix/Default)
   TITLE+= discovery/userparameters for mac80211
   DEPENDS = +zabbix-agentd @PACKAGE_MAC80211_DEBUGFS @KERNEL_DEBUG_FS
   VARIANT:=no-configure
 endef
 
 define Package/zabbix-extra-network
-  $(call Package/zabbix/Default)
+	$(call Package/zabbix/Default)
   TITLE+= discovery/userparameters for network
   DEPENDS = +zabbix-agentd +libubus-lua +lua
   VARIANT:=no-configure
 endef
 
 define Package/zabbix-extra-wifi
-  $(call Package/zabbix/Default)
+	$(call Package/zabbix/Default)
   TITLE+= discovery/userparameters for wifi
   DEPENDS = +zabbix-agentd +libiwinfo-lua +libubus-lua +lua
   VARIANT:=no-configure
 endef
 
 define Package/zabbix-sender
-  $(call Package/zabbix/Default)
+	$(call Package/zabbix/Default)
   TITLE+= sender
   PROVIDES:=zabbix-sender
   VARIANT:=nossl
@@ -117,7 +117,7 @@ define Package/zabbix-sender
 endef
 
 define Package/zabbix-sender-openssl
-  $(call Package/zabbix/Default)
+	$(call Package/zabbix/Default)
   TITLE+= sender (with OpenSSL)
   DEPENDS+= +libopenssl
   PROVIDES:=zabbix-sender
@@ -125,7 +125,7 @@ define Package/zabbix-sender-openssl
 endef
 
 define Package/zabbix-sender-gnutls
-  $(call Package/zabbix/Default)
+	$(call Package/zabbix/Default)
   TITLE+= sender (with GnuTLS)
   DEPENDS+= +libgnutls
   PROVIDES:=zabbix-sender
@@ -133,7 +133,7 @@ define Package/zabbix-sender-gnutls
 endef
 
 define Package/zabbix-get
-  $(call Package/zabbix/Default)
+	$(call Package/zabbix/Default)
   TITLE+= get
   PROVIDES:=zabbix-get
   VARIANT:=nossl
@@ -149,7 +149,7 @@ define Package/zabbix-get-openssl
 endef
 
 define Package/zabbix-get-gnutls
-  $(call Package/zabbix/Default)
+	$(call Package/zabbix/Default)
   TITLE+= get (with GnuTLS)
   DEPENDS+= +libgnutls
   PROVIDES:=zabbix-get
@@ -157,7 +157,7 @@ define Package/zabbix-get-gnutls
 endef
 
 define Package/zabbix-server/Default
-  $(call Package/zabbix/Default)
+	$(call Package/zabbix/Default)
   TITLE+= server
   DEPENDS += +ZABBIX_POSTGRESQL:libpq \
     +ZABBIX_MYSQL:libmariadbclient \
@@ -170,14 +170,14 @@ define Package/zabbix-server/Default
 endef
 
 define Package/zabbix-server
-  $(call Package/zabbix-server/Default)
+	$(call Package/zabbix-server/Default)
   PROVIDES:=zabbix-server
   VARIANT:=nossl
   DEFAULT_VARIANT:=1
 endef
 
 define Package/zabbix-server-openssl
-  $(call Package/zabbix-server/Default)
+	$(call Package/zabbix-server/Default)
   TITLE+= (with OpenSSL)
   PROVIDES:=zabbix-server
   DEPENDS+= +libopenssl
@@ -185,7 +185,7 @@ define Package/zabbix-server-openssl
 endef
 
 define Package/zabbix-server-gnutls
-  $(call Package/zabbix-server/Default)
+	$(call Package/zabbix-server/Default)
   TITLE+= (with GnuTLS)
   PROVIDES:=zabbix-server
   DEPENDS+= +libgnutls
@@ -193,7 +193,7 @@ define Package/zabbix-server-gnutls
 endef
 
 define Package/zabbix-server-frontend
-  $(call Package/zabbix/Default)
+	$(call Package/zabbix/Default)
   TITLE+= server-frontend
   DEPENDS += @PACKAGE_php8 \
     +php8-cgi \
@@ -211,11 +211,11 @@ define Package/zabbix-server-frontend
     +ZABBIX_POSTGRESQL:php8-mod-pgsql \
     +ZABBIX_MYSQL:php8-mod-mysqli \
     @(!ZABBIX_SQLITE)
-  BUILD_VARIANT:=no-configure
+  VARIANT:=no-configure
 endef
 
 define Package/zabbix-proxy/Default
-  $(call Package/zabbix/Default)
+	$(call Package/zabbix/Default)
   TITLE+= proxy
   DEPENDS += +ZABBIX_POSTGRESQL:libpq \
     +ZABBIX_MYSQL:libmariadbclient \
@@ -227,14 +227,14 @@ define Package/zabbix-proxy/Default
 endef
 
 define Package/zabbix-proxy
-  $(call Package/zabbix-proxy/Default)
+	$(call Package/zabbix-proxy/Default)
   PROVIDES:=zabbix-proxy
   VARIANT:=nossl
   DEFAULT_VARIANT:=1
 endef
 
 define Package/zabbix-proxy-openssl
-  $(call Package/zabbix-proxy/Default)
+	$(call Package/zabbix-proxy/Default)
   TITLE+= (with OpenSSL)
   PROVIDES:=zabbix-proxy
   DEPENDS+= +libopenssl
@@ -242,7 +242,7 @@ define Package/zabbix-proxy-openssl
 endef
 
 define Package/zabbix-proxy-gnutls
-  $(call Package/zabbix-proxy/Default)
+	$(call Package/zabbix-proxy/Default)
   TITLE+= (with GnuTLS)
   PROVIDES:=zabbix-proxy
   DEPENDS+= +libgnutls
