@@ -211,7 +211,7 @@ define Package/zabbix-server-frontend
     +ZABBIX_POSTGRESQL:php8-mod-pgsql \
     +ZABBIX_MYSQL:php8-mod-mysqli \
     @(!ZABBIX_SQLITE)
-  BUILD_VARIANT:=no-configure
+  VARIANT:=no-configure
 endef
 
 define Package/zabbix-proxy/Default
