@@ -13,7 +13,7 @@ PKG_HASH:=5674bad4e93876c0b0d3197e314d7f942d39018bf31e2b833f6788a6813c3fb8
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.txt
-PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
+PKG_MAINTAINER:=
 PKG_CPE_ID:=cpe:/a:python:python-gnupg
 
 include ../pypi.mk

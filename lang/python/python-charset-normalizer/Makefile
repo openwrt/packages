@@ -16,7 +16,7 @@ PKG_HASH:=f30c3cb33b24454a82faecaf01b19c18562b1e89558fb6c56de4d9118a032fd5
 
 PKG_LICENSE:=MIT
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
+PKG_MAINTAINER:=
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

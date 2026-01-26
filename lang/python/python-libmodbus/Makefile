@@ -10,7 +10,7 @@ PKG_HASH:=7989af81f57cc7593c86b2d74201978e931bc80f6bbe62564273477fc7059c20
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
+PKG_MAINTAINER:=
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk
