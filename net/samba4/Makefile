@@ -64,12 +64,30 @@ endef
 define Package/samba4-libs
   $(call Package/samba4/Default)
   TITLE+= libs
-  DEPENDS:= +USE_GLIBC:libcrypt-compat +libtirpc +libreadline +libpopt +libcap +zlib +libgnutls +libtasn1 +libuuid +libopenssl +libpthread +KERNEL_IO_URING:liburing \
+  DEPENDS:= \
+	+libcap \
+	+libgnutls \
+	+libopenssl \
+	+libpopt \
+	+libpthread \
+	+libreadline \
+	+libtasn1 \
+	+libtirpc \
+	+libuuid \
+	+zlib \
+	+KERNEL_IO_URING:liburing \
 	+PACKAGE_icu:icu \
 	+PACKAGE_libpam:libpam \
-	+SAMBA4_SERVER_VFS:attr \
+	+SAMBA4_SERVER_AD_DC:acl \
+	+(SAMBA4_SERVER_AD_DC||SAMBA4_SERVER_VFS):attr \
+	+SAMBA4_SERVER_AD_DC:jansson \
+	+SAMBA4_SERVER_AD_DC:libarchive \
 	+SAMBA4_SERVER_AVAHI:libavahi-client \
-	+SAMBA4_SERVER_AD_DC:python3-cryptodome +SAMBA4_SERVER_AD_DC:python3-markdown +SAMBA4_SERVER_AD_DC:python3-dns +SAMBA4_SERVER_AD_DC:libopenldap +SAMBA4_SERVER_AD_DC:jansson +SAMBA4_SERVER_AD_DC:libarchive +SAMBA4_SERVER_AD_DC:acl +SAMBA4_SERVER_AD_DC:attr
+	+SAMBA4_SERVER_AD_DC:libopenldap \
+	+SAMBA4_SERVER_AD_DC:python3-cryptodome \
+	+SAMBA4_SERVER_AD_DC:python3-dns \
+	+SAMBA4_SERVER_AD_DC:python3-markdown \
+	+USE_GLIBC:libcrypt-compat
 endef
 
 define Package/samba4-server
@@ -168,61 +186,68 @@ CONFIGURE_ARGS:=configure $(CONFIGURE_ARGS)
 HOST_CONFIGURE_ARGS:=configure $(HOST_CONFIGURE_ARGS)
 
 CONFIGURE_ARGS += \
-		--hostcc="$(HOSTCC)" \
-		--cross-compile \
-		--cross-answers=cross-answers.txt \
-		--disable-cups \
-		--disable-iprint \
-		--disable-cephfs \
-		--disable-fault-handling \
-		--disable-glusterfs \
-		--disable-spotlight \
-		--enable-fhs \
-		--without-automount \
-		--without-iconv \
-		--without-lttng \
-		--without-pam \
-		--without-systemd \
-		--without-utmp \
-		--without-dmapi \
-		--without-fam \
-		--without-gettext \
-		--without-regedit \
-		--without-gpgme
+	--cross-compile \
+	--cross-answers=cross-answers.txt \
+	--disable-cephfs \
+	--disable-cups \
+	--disable-fault-handling \
+	--disable-glusterfs \
+	--disable-iprint \
+	--disable-spotlight \
+	--enable-fhs \
+	--hostcc="$(HOSTCC)" \
+	--with-lockdir=/var/lock \
+	--with-logfilebase=/var/log \
+	--with-piddir=/var/run \
+	--with-privatedir=/etc/samba \
+	--without-automount \
+	--without-dmapi \
+	--without-fam \
+	--without-gettext \
+	--without-gpgme \
+	--without-iconv \
+	--without-lttng \
+	--without-pam \
+	--without-regedit \
+	--without-systemd \
+	--without-utmp
 
 HOST_CONFIGURE_ARGS += \
-		--hostcc="$(HOSTCC)" \
-		--disable-cups \
-		--disable-iprint \
-		--disable-cephfs \
-		--disable-fault-handling \
-		--disable-glusterfs \
-		--disable-spotlight \
-		--disable-rpath \
-		--disable-rpath-install \
-		--disable-rpath-private-install \
-		--enable-fhs \
-		--without-automount \
-		--without-iconv \
-		--without-lttng \
-		--without-pam \
-		--without-systemd \
-		--without-utmp \
-		--without-dmapi \
-		--without-fam \
-		--without-gettext \
-		--without-regedit \
-		--without-gpgme
-
-HOST_CONFIGURE_ARGS += --disable-avahi --without-quotas --without-acl-support --without-winbind \
-	--without-ad-dc --without-json --without-libarchive --disable-python --nopyc --nopyo \
-	--without-ads --without-ldap --without-ldb-lmdb
-
-CONFIGURE_ARGS += \
-		--with-lockdir=/var/lock \
-		--with-logfilebase=/var/log \
-		--with-piddir=/var/run \
-		--with-privatedir=/etc/samba
+	--enable-fhs \
+	--disable-avahi \
+	--disable-cups \
+	--disable-cephfs \
+	--disable-fault-handling \
+	--disable-glusterfs \
+	--disable-iprint \
+	--disable-python \
+	--disable-rpath \
+	--disable-rpath-install \
+	--disable-rpath-private-install \
+	--disable-spotlight \
+	--hostcc="$(HOSTCC)" \
+	--nopyc \
+	--nopyo \
+	--without-acl-support \
+	--without-ad-dc \
+	--without-ads \
+	--without-automount \
+	--without-dmapi \
+	--without-fam \
+	--without-gettext \
+	--without-gpgme \
+	--without-iconv \
+	--without-json \
+	--without-ldap \
+	--without-ldb-lmdb \
+	--without-libarchive \
+	--without-lttng \
+	--without-pam \
+	--without-quotas \
+	--without-regedit \
+	--without-systemd \
+	--without-utmp \
+	--without-winbind
 
 # features
 ifeq ($(CONFIG_SAMBA4_SERVER_QUOTAS),y)
@@ -237,10 +262,23 @@ else
 endif
 
 ifeq ($(CONFIG_SAMBA4_SERVER_AD_DC),y)
-	CONFIGURE_ARGS += --without-winbind --without-ldb-lmdb --with-acl-support
+	CONFIGURE_ARGS += \
+		--with-acl-support \
+		--without-ldb-lmdb \
+		--without-winbind
 else
-	CONFIGURE_ARGS += --without-winbind --without-ads --without-ldap --without-ldb-lmdb --without-ad-dc \
-		--without-json --without-libarchive --disable-python --nopyc --nopyo --without-acl-support
+	CONFIGURE_ARGS += \
+		--disable-python \
+		--nopyc \
+		--nopyo \
+		--without-acl-support \
+		--without-ads \
+		--without-ad-dc \
+		--without-json \
+		--without-ldap \
+		--without-ldb-lmdb \
+		--without-libarchive \
+		--without-winbind
 endif
 
 SAMBA4_PDB_MODULES :=pdb_smbpasswd,pdb_tdbsam,
@@ -314,7 +352,7 @@ HOST_CONFIGURE_VARS+= \
 CONFIGURE_VARS += \
 	PATH="$(STAGING_DIR_HOSTPKG)/bin:$(STAGING_DIR_HOSTPKG)/usr/bin:$(PATH)"
 
-# we need hostpkg bin and target config	
+# we need hostpkg bin and target config
 ifeq ($(CONFIG_SAMBA4_SERVER_AD_DC),y)
 	CONFIGURE_VARS += \
 		PYTHON_CONFIG="$(STAGING_DIR)/host/bin/$(PYTHON3)-config"
