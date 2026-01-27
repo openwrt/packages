@@ -69,7 +69,6 @@ define Package/samba4-libs
 	+libgnutls \
 	+libopenssl \
 	+libpopt \
-	+libpthread \
 	+libreadline \
 	+libtasn1 \
 	+libtirpc \
