@@ -3,7 +3,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=samba
 PKG_VERSION:=4.22.7
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= \
@@ -65,6 +65,7 @@ define Package/samba4-libs
   $(call Package/samba4/Default)
   TITLE+= libs
   DEPENDS:= \
+	+(arm||armeb||mips||mipsel||powerpc):libatomic \
 	+libcap \
 	+libgnutls \
 	+libopenssl \
@@ -147,7 +148,8 @@ define Package/samba4-utils/description
 endef
 
 TARGET_CFLAGS += $(FPIC) -std=gnu17
-TARGET_LDFLAGS += -Wl,--as-needed
+TARGET_LDFLAGS += -Wl,--as-needed $(if $(filter arm armeb mips mipsel powerpc,$(ARCH)),-latomic)
+
 # dont mess with sambas private rpath!
 RSTRIP:=:
 
@@ -205,6 +207,7 @@ CONFIGURE_ARGS += \
 	--without-gettext \
 	--without-gpgme \
 	--without-iconv \
+	--without-kernel-keyring \
 	--without-lttng \
 	--without-pam \
 	--without-regedit \
