@@ -89,11 +89,8 @@ start_p910nd() {
 		fi
 		procd_close_instance
 	else
-		if [ "$enabled" -le 0 ]; then
-			logger "Not enabled, daemon won't be started"
-		fi
 		if [ ! -e "$device" ]; then
-			logger "Device path does not exist, daemon won't be started"
+			logger "Device path $device does not exist, daemon won't be started"
 		fi
 	fi
 
