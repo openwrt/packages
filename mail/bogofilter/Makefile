@@ -39,7 +39,7 @@ define Package/bogofilter
   DEPENDS:=+libsqlite3
   TITLE:=bogofilter
   MAINTAINER:=W. Michael Petullo <mike@flyn.org>
-  URL:=http://bogofilter.sourceforge.net/
+  URL:=https://bogofilter.sourceforge.io/
 endef
 
 define Package/bogofilter/description

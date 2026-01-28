@@ -30,7 +30,7 @@ define Package/netatalk/Default
   SUBMENU:=Filesystem
   TITLE:=Apple Filing Protocol
   PROVIDES:=netatalk
-  URL:=http://netatalk.sourceforge.net
+  URL:=https://netatalk.io
   DEPENDS:=+libevent2 +libdb47 +libgcrypt +iniparser
 endef
 

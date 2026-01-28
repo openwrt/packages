@@ -29,7 +29,7 @@ define Package/avahi/Default
   SECTION:=net
   CATEGORY:=Network
   TITLE:=An mDNS/DNS-SD implementation
-  URL:=http://www.avahi.org/
+  URL:=https://www.avahi.org/
 endef
 
 define Package/avahi/Default/description

@@ -27,7 +27,7 @@ define Package/spawn-fcgi
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Tool to spawn fastcgi applications
-  URL:=http://redmine.lighttpd.net/projects/spawn-fcgi
+  URL:=https://redmine.lighttpd.net/projects/spawn-fcgi
 endef
 
 define Package/spawn-fcgi/description

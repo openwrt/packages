@@ -27,7 +27,7 @@ define Package/luaexpat
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=LuaExpat
-  URL:=http://matthewwild.co.uk/projects/luaexpat/
+  URL:=https://lunarmodules.github.io/luaexpat/
   MAINTAINER:=W. Michael Petullo <mike@flyn.org>
   DEPENDS:=+lua +libexpat
 endef

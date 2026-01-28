@@ -54,7 +54,7 @@ define Package/gnunet/description
  GNUnet is a peer-to-peer framework focusing on security. The first and
  primary application for GNUnet is anonymous file-sharing.  GNUnet is
  currently developed by a worldwide group of independent free software
- developers.  GNUnet is a GNU package (http://www.gnu.org/).
+ developers.  GNUnet is a GNU package (https://www.gnu.org/).
 
  This is an ALPHA release.  There are known and significant bugs as
  well as many missing features in this release.

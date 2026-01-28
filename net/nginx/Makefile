@@ -198,7 +198,7 @@ define Package/nginx-mod-luci
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
   TITLE:=Support file for Nginx
-  URL:=http://nginx.org/
+  URL:=https://nginx.org/
   DEPENDS:=+uwsgi +uwsgi-luci-support +nginx +nginx-mod-ubus
 endef
 

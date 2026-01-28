@@ -31,7 +31,7 @@ define Package/sbc
   CATEGORY:=Libraries
   TITLE:=sbc encoding library
   DEPENDS:=+libsndfile
-  URL:=http://www.bluez.org
+  URL:=https://www.bluez.org
 endef
 
 define Package/sbc/description

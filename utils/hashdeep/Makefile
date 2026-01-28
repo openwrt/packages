@@ -22,7 +22,7 @@ define Package/hashdeep
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Recursively compute hashsums or piecewise hashings
-  URL:=http://md5deep.sourceforge.net/
+  URL:=https://github.com/jessek/hashdeep
   DEPENDS:=+libstdcpp
 endef
 
