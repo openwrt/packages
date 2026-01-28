@@ -37,7 +37,7 @@ define Package/rsyslog
 	+RSYSLOG_libdbi:libdbi +libestr +libfastjson +RSYSLOG_gnutls:libgnutls \
 	+RSYSLOG_mmdblookup:libmaxminddb +RSYSLOG_mysql:libmysqlclient \
 	+RSYSLOG_omhttp:libcurl +RSYSLOG_openssl:libopenssl \
-	+RSYSLOG_pgsql:libpq +libuuid +zlib
+	+RSYSLOG_pgsql:libpq +libuuid +zlib +RSYSLOG_mmnormalize:liblognorm
   MENU:=1
 endef
 
@@ -61,7 +61,8 @@ CONFIGURE_ARGS+= \
 	$(if $(CONFIG_RSYSLOG_mail),--enable-mail) \
 	$(if $(CONFIG_RSYSLOG_mmjsonparse),--enable-mmjsonparse) \
 	$(if $(CONFIG_RSYSLOG_mmdblookup),--enable-mmdblookup) \
-	$(if $(CONFIG_RSYSLOG_imfile),--enable-imfile)
+	$(if $(CONFIG_RSYSLOG_imfile),--enable-imfile) \
+	$(if $(CONFIG_RSYSLOG_mmnormalize),--enable-mmnormalize)
 
 define Package/rsyslog/install
 	$(INSTALL_DIR) $(1)/usr/sbin
