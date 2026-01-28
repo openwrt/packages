@@ -24,7 +24,7 @@ fi
 
 readonly packageName='adblock-fast'
 readonly PKG_VERSION='dev-test'
-readonly packageCompat='9'
+readonly packageCompat='11'
 readonly serviceName="$packageName $PKG_VERSION"
 readonly packageMemoryThreshold='33554432'
 readonly packageConfigFile="/etc/config/${packageName}"
@@ -32,55 +32,62 @@ readonly dnsmasqUnifiedFile="/var/run/${packageName}/${packageName}.dnsmasq"
 readonly dnsmasqAddnhostsFile="/var/run/${packageName}/dnsmasq.addnhosts"
 readonly dnsmasqAddnhostsCache="/var/run/${packageName}/dnsmasq.addnhosts.cache"
 readonly dnsmasqAddnhostsGzip="${packageName}.dnsmasq.addnhosts.gz"
-readonly dnsmasqAddnhostsFilter='s|^|127.0.0.1 |;s|$||'
-readonly dnsmasqAddnhostsFilterIPv6='s|^|:: |;s|$||'
-readonly dnsmasqAddnhostsStripToDomainsFilter='s|^127.0.0.1 ||;s|^:: ||;'
+readonly dnsmasqAddnhostsOutputFormatFilter='s|^|127.0.0.1 |;s|$||'
+readonly dnsmasqAddnhostsOutputFormatFilterIPv6='s|^|:: |;s|$||'
+readonly dnsmasqAddnhostsOutputParseFilter='s|^127.0.0.1 ||;s|^:: ||;'
 readonly dnsmasqConfFile="$dnsmasqUnifiedFile"
 readonly dnsmasqConfCache="/var/run/${packageName}/dnsmasq.conf.cache"
 readonly dnsmasqConfGzip="${packageName}.dnsmasq.conf.gz"
-readonly dnsmasqConfFilter='s|^|local=/|;s|$|/|'
-readonly dnsmasqConfStripToDomainsFilter='s|local=/||;s|/$||;'
+readonly dnsmasqConfOutputFormatFilter='s|^|local=/|;s|$|/|'
+readonly dnsmasqConfOutputParseFilter='s|local=/||;s|/$||;'
 readonly dnsmasqIpsetFile="$dnsmasqUnifiedFile"
 readonly dnsmasqIpsetCache="/var/run/${packageName}/dnsmasq.ipset.cache"
 readonly dnsmasqIpsetGzip="${packageName}.dnsmasq.ipset.gz"
-readonly dnsmasqIpsetFilter='s|^|ipset=/|;s|$|/adb|'
-readonly dnsmasqIpsetStripToDomainsFilter='s|ipset=/||;s|/adb$||;'
+readonly dnsmasqIpsetOutputFormatFilter='s|^|ipset=/|;s|$|/adb|'
+readonly dnsmasqIpsetOutputParseFilter='s|ipset=/||;s|/adb$||;'
 readonly dnsmasqNftsetFile="$dnsmasqUnifiedFile"
 readonly dnsmasqNftsetCache="/var/run/${packageName}/dnsmasq.nftset.cache"
 readonly dnsmasqNftsetGzip="${packageName}.dnsmasq.nftset.gz"
-readonly dnsmasqNftsetFilter='s|^|nftset=/|;s|$|/4#inet#fw4#adb4|'
-readonly dnsmasqNftsetFilterIPv6='s|^|nftset=/|;s|$|/4#inet#fw4#adb4,6#inet#fw4#adb6|'
-readonly dnsmasqNftsetStripToDomainsFilter='s|nftset=/||;s|/4#.*$||;'
+readonly dnsmasqNftsetOutputFormatFilter='s|^|nftset=/|;s|$|/4#inet#fw4#adb4|'
+readonly dnsmasqNftsetOutputFormatFilterIPv6='s|^|nftset=/|;s|$|/4#inet#fw4#adb4,6#inet#fw4#adb6|'
+readonly dnsmasqNftsetOutputParseFilter='s|nftset=/||;s|/4#.*$||;'
 readonly dnsmasqServersFile="/var/run/${packageName}/dnsmasq.servers"
 readonly dnsmasqServersCache="/var/run/${packageName}/dnsmasq.servers.cache"
 readonly dnsmasqServersGzip="${packageName}.dnsmasq.servers.gz"
-readonly dnsmasqServersFilter='s|^|server=/|;s|$|/|'
+readonly dnsmasqServersOutputFormatFilter='s|^|server=/|;s|$|/|'
 readonly dnsmasqServersAllowFilter='s|(.*)|server=/\1/#|'
 readonly dnsmasqServersBlockedCountFilter='\|/#|d'
-readonly dnsmasqServersStripToDomainsFilter='s|server=/||;s|/.*$||;'
+readonly dnsmasqServersOutputParseFilter='s|server=/||;s|/.*$||;'
 readonly smartdnsDomainSetFile="/var/run/${packageName}/smartdns.domainset"
 readonly smartdnsDomainSetCache="/var/run/${packageName}/smartdns.domainset.cache"
 readonly smartdnsDomainSetConfig="/var/run/${packageName}/smartdns.domainset.conf"
 readonly smartdnsDomainSetGzip="${packageName}.smartdns.domainset.gz"
 readonly smartdnsDomainSetFilter=''
-readonly smartdnsDomainSetStripToDomainsFilter=''
+readonly smartdnsDomainSetOutputParseFilter=''
 readonly smartdnsIpsetFile="/var/run/${packageName}/smartdns.ipset"
 readonly smartdnsIpsetCache="/var/run/${packageName}/smartdns.ipset.cache"
 readonly smartdnsIpsetConfig="/var/run/${packageName}/smartdns.ipset.conf"
 readonly smartdnsIpsetGzip="${packageName}.smartdns.ipset.gz"
 readonly smartdnsIpsetFilter=''
-readonly smartdnsIpsetStripToDomainsFilter=''
+readonly smartdnsIpsetOutputParseFilter=''
 readonly smartdnsNftsetFile="/var/run/${packageName}/smartdns.nftset"
 readonly smartdnsNftsetCache="/var/run/${packageName}/smartdns.nftset.cache"
 readonly smartdnsNftsetConfig="/var/run/${packageName}/smartdns.nftset.conf"
 readonly smartdnsNftsetGzip="${packageName}.smartdns.nftset.gz"
 readonly smartdnsNftsetFilter=''
-readonly smartdnsNftsetStripToDomainsFilter=''
+readonly smartdnsNftsetOutputParseFilter=''
 readonly unboundFile="/var/lib/unbound/adb_list.${packageName}"
 readonly unboundCache="/var/run/${packageName}/unbound.cache"
 readonly unboundGzip="${packageName}.unbound.gz"
-readonly unboundFilter='s|^|local-zone: "|;s|$|." always_nxdomain|'
-readonly unboundStripToDomainsFilter='s|^local-zone: "||;s|." always_nxdomain$||;'
+readonly unboundOutputFormatFilter='s|^|local-zone: "|;s|$|." always_nxdomain|'
+readonly unboundOutputParseFilter='s|^local-zone: "||;s|." always_nxdomain$||;'
+# Grep pattern generators (for invalid entry removal)
+readonly dnsmasqConfGrepPattern='s|^|^local=/|;s|$|/$|'
+readonly dnsmasqIpsetGrepPattern='s|^|^ipset=/|;s|$|/adb$|'
+readonly dnsmasqNftsetGrepPattern='s|^|^nftset=/|;s|$|/4#.*$|'
+readonly dnsmasqServersGrepPattern='s|^|^server=/|;s|$|/$|'
+readonly dnsmasqAddnhostsGrepPatternIPv4='s|^|^127\.0\.0\.1 |'
+readonly dnsmasqAddnhostsGrepPatternIPv6='s|^|^:: |'
 readonly ALLOWED_TMP="/var/${packageName}.allowed.tmp"
 readonly A_TMP="/var/${packageName}.a.tmp"
 readonly B_TMP="/var/${packageName}.b.tmp"
@@ -90,6 +97,8 @@ readonly runningConfigFile="/dev/shm/${packageName}"
 readonly runningStatusFile="/dev/shm/${packageName}.status.json"
 readonly runningStatusFileLock="/var/lock/${packageName}.lock"
 readonly hostsFilter='/localhost/d;/^#/d;/^[^0-9]/d;s/^0\.0\.0\.0.//;s/^127\.0\.0\.1.//;s/[[:space:]]*#.*$//;s/[[:cntrl:]]$//;s/[[:space:]]//g;/[`~!@#\$%\^&\*()=+;:"'\'',<>?/\|[{}]/d;/]/d;/\./!d;/^$/d;/[^[:alnum:]_.-]/d;'
+# Restrictive filter (commented out due to over-filtering)
+#readonly domainsFilter='/^#/d;s/[[:space:]]*#.*|[[:space:]]*$|[[:cntrl:]]$//g;/^[[:space:]]*$/d;/^-|^\.|\.\.|-$|\.$|^[0-9.]+$|^[^[:alnum:]]|[`~!@#\$%\^&\*()=+;:"'"'"',<>?/\|{}]/d;/\./!d'
 readonly domainsFilter='/^#/d;s/[[:space:]]*#.*|[[:space:]]*$|[[:cntrl:]]$//g;/^[[:space:]]*$/d;/^[^[:alnum:]._-]|[`~!@#\$%\^&\*()=+;:"'"'"',<>?/\|{}]/d'
 readonly adBlockPlusFilter='/^#/d;/^!/d;s/[[:space:]]*#.*$//;s/^||//;s/\^$//;s/[[:space:]]*$//;s/[[:cntrl:]]$//;/[[:space:]]/d;/[`~!@#\$%\^&\*()=+;:"'\'',<>?/\|[{}]/d;/]/d;/\./!d;/^$/d;/[^[:alnum:]_.-]/d;'
 readonly dnsmasqFileFilter='\|^server=/[[:alnum:]_.-].*/|!d;s|server=/||;s|/.*$||'
@@ -320,28 +329,28 @@ debug_log() { local __i __j; for __i in "$@"; do eval "__j=\$$__i"; logger -t "$
 dns_set_output_values() {
 	case "$1" in
 		dnsmasq.addnhosts)
-			outputFilter="$dnsmasqAddnhostsFilter"
+			outputFilter="$dnsmasqAddnhostsOutputFormatFilter"
 			outputFile="$dnsmasqAddnhostsFile"
 			outputCache="$dnsmasqAddnhostsCache"
 			outputGzip="${compressed_cache_dir}/${dnsmasqAddnhostsGzip}"
-			stripToDomainsFilter="$dnsmasqAddnhostsStripToDomainsFilter"
+			outputParseFilter="$dnsmasqAddnhostsOutputParseFilter"
 			if [ -n "$ipv6_enabled" ]; then
 				outputFilterIPv6="$dnsmasqAddnhostsFilterIPv6"
 			fi
 		;;
 		dnsmasq.conf)
-			outputFilter="$dnsmasqConfFilter"
+			outputFilter="$dnsmasqConfOutputFormatFilter"
 			outputFile="$dnsmasqConfFile"
 			outputCache="$dnsmasqConfCache"
 			outputGzip="${compressed_cache_dir}/${dnsmasqConfGzip}"
-			stripToDomainsFilter="$dnsmasqConfStripToDomainsFilter"
+			outputParseFilter="$dnsmasqConfOutputParseFilter"
 		;;
 		dnsmasq.ipset)
-			outputFilter="$dnsmasqIpsetFilter"
+			outputFilter="$dnsmasqIpsetOutputFormatFilter"
 			outputFile="$dnsmasqIpsetFile"
 			outputCache="$dnsmasqIpsetCache"
 			outputGzip="${compressed_cache_dir}/${dnsmasqIpsetGzip}"
-			stripToDomainsFilter="$dnsmasqIpsetStripToDomainsFilter"
+			outputParseFilter="$dnsmasqIpsetOutputParseFilter"
 		;;
 		dnsmasq.nftset)
 			if [ -n "$ipv6_enabled" ]; then
@@ -352,14 +361,14 @@ dns_set_output_values() {
 			outputFile="$dnsmasqNftsetFile"
 			outputCache="$dnsmasqNftsetCache"
 			outputGzip="${compressed_cache_dir}/${dnsmasqNftsetGzip}"
-			stripToDomainsFilter="$dnsmasqNftsetStripToDomainsFilter"
+			outputParseFilter="$dnsmasqNftsetOutputParseFilter"
 		;;
 		dnsmasq.servers)
 			outputFilter="$dnsmasqServersFilter"
 			outputFile="$dnsmasqServersFile"
 			outputCache="$dnsmasqServersCache"
 			outputGzip="${compressed_cache_dir}/${dnsmasqServersGzip}"
-			stripToDomainsFilter="$dnsmasqServersStripToDomainsFilter"
+			outputParseFilter="$dnsmasqServersOutputParseFilter"
 			outputAllowFilter="$dnsmasqServersAllowFilter"
 			outputBlockedCountFilter="$dnsmasqServersBlockedCountFilter"
 		;;
@@ -369,7 +378,7 @@ dns_set_output_values() {
 			outputCache="$smartdnsDomainSetCache"
 			outputGzip="${compressed_cache_dir}/${smartdnsDomainSetGzip}"
 			outputConfig="$smartdnsDomainSetConfig"
-			stripToDomainsFilter="$smartdnsDomainSetStripToDomainsFilter"
+			outputParseFilter="$smartdnsDomainSetOutputParseFilter"
 		;;
 		smartdns.ipset)
 			outputFilter="$smartdnsIpsetFilter"
@@ -377,7 +386,7 @@ dns_set_output_values() {
 			outputCache="$smartdnsIpsetCache"
 			outputGzip="${compressed_cache_dir}/${smartdnsIpsetGzip}"
 			outputConfig="$smartdnsIpsetConfig"
-			stripToDomainsFilter="$smartdnsIpsetStripToDomainsFilter"
+			outputParseFilter="$smartdnsIpsetOutputParseFilter"
 		;;
 		smartdns.nftset)
 			outputFilter="$smartdnsNftsetFilter"
@@ -385,14 +394,14 @@ dns_set_output_values() {
 			outputCache="$smartdnsNftsetCache"
 			outputGzip="${compressed_cache_dir}/${smartdnsNftsetGzip}"
 			outputConfig="$smartdnsNftsetConfig"
-			stripToDomainsFilter="$smartdnsNftsetStripToDomainsFilter"
+			outputParseFilter="$smartdnsNftsetOutputParseFilter"
 		;;
 		unbound.adb_list)
 			outputFilter="$unboundFilter"
 			outputFile="$unboundFile"
 			outputCache="$unboundCache"
 			outputGzip="${compressed_cache_dir}/${unboundGzip}"
-			stripToDomainsFilter="$unboundStripToDomainsFilter"
+			outputParseFilter="$unboundOutputParseFilter"
 		;;
 	esac
 	resolver 'on_load'
@@ -709,6 +718,7 @@ get_text() {
 		warningFreeRamCheckFail) printf "Can't detect free RAM";;
 		warningSanityCheckTLD) printf "Sanity check discovered TLDs in %s" "$@";;
 		warningSanityCheckLeadingDot) printf "Sanity check discovered leading dots in %s" "$@";;
+		warningInvalidDomainsRemoved) printf "Removed %s invalid domain entries from block-list (domains starting with -/./numbers or containing invalid patterns)" "$@";;
 
 		*) printf "Unknown error/warning '%s'" "$@";;
 	esac
@@ -788,12 +798,13 @@ load_package_config() {
 	config_get_bool config_update_enabled    'config' 'config_update_enabled'   '0'
 	config_get_bool debug_init_script        'config' 'debug_init_script'       '0'
 	config_get_bool debug_performance        'config' 'debug_performance'       '0'
+	config_get_bool dnsmasq_sanity_check     'config' 'dnsmasq_sanity_check'    '1'
+	config_get_bool dnsmasq_validity_check   'config' 'dnsmasq_validity_check'  '0'
 	config_get_bool enabled                  'config' 'enabled'                 '0'
 	config_get_bool force_dns                'config' 'force_dns'               '1'
 	config_get_bool ipv6_enabled             'config' 'ipv6_enabled'            '0'
 	config_get_bool parallel_downloads       'config' 'parallel_downloads'      '1'
 	config_get_bool procd_trigger_wan6       'config' 'procd_trigger_wan6'      '0'
-	config_get_bool sanity_check             'config' 'sanity_check'            '1'
 	config_get_bool update_config_sizes      'config' 'update_config_sizes'     '1'
 	config_get      allowed_domain           'config' 'allowed_domain'
 	config_get      blocked_domain           'config' 'blocked_domain'
@@ -823,12 +834,13 @@ load_package_config() {
 	[ "$config_update_enabled" = '1' ]   || unset config_update_enabled
 	[ "$debug_init_script" = '1' ]       || unset debug_init_script
 	[ "$debug_performance" = '1' ]       || unset debug_performance
+	[ "$dnsmasq_sanity_check" = '1' ]    || unset dnsmasq_sanity_check
+	[ "$dnsmasq_validity_check" = '1' ]  || unset dnsmasq_validity_check
 	[ "$enabled" = '1' ]                 || unset enabled
 	[ "$force_dns" = '1' ]               || unset force_dns
 	[ "$ipv6_enabled" = '1' ]            || unset ipv6_enabled
 	[ "$parallel_downloads" = '1' ]      || unset parallel_downloads
 	[ "$procd_trigger_wan6" = '1' ]      || unset procd_trigger_wan6
-	[ "$sanity_check" = '1' ]            || unset sanity_check
 	[ "$update_config_sizes" = '1' ]     || unset update_config_sizes
 
 	dns_set_output_values "$dns"
@@ -1811,8 +1823,71 @@ download_lists() {
 		;;
 	esac
 
-	output 2 '[PROC] Removing temporary files '
-	json set message "$(get_text 'statusProcessing'): removing temporary files"
+	# Validate and remove invalid domain entries (RFC 1123 compliant)
+	if [ -n "$dnsmasq_validity_check" ]; then
+		case "$dns" in
+			dnsmasq.conf|dnsmasq.ipset|dnsmasq.nftset|dnsmasq.servers|dnsmasq.addnhosts)
+				start_time=$(date +%s)
+				step_title='Validating domain entries'
+				output 2 "[PROC] ${step_title} "
+				json set message "$(get_text 'statusProcessing'): ${step_title}"
+				invalid_file="/tmp/${packageName}.invalid.tmp"
+				rm -f "$invalid_file"
+				# Fast validation: remove entries where domain:
+				# - starts with dash or dot (invalid per RFC)
+				# - is all numeric with dots (IP-like, invalid for domain)
+				# - has consecutive dots
+				# - ends with dash or dot (invalid per RFC)
+				sed "$outputParseFilter" "$outputFile" | \
+					grep -E '^-|^\.|^[0-9.]+$|\.\.|-$|\.$' > "$invalid_file" 2>/dev/null || true
+				if [ -s "$invalid_file" ]; then
+					invalid_count=$(wc -l < "$invalid_file" 2>/dev/null || echo 0)
+					if [ "$invalid_count" -gt 0 ]; then
+						# Create pattern file for grep -vFf (fastest removal method)
+						# Use appropriate prefix based on dns type
+						case "$dns" in
+							dnsmasq.conf)
+								sed "$dnsmasqConfGrepPattern" "$invalid_file" > "${invalid_file}.pat" 2>/dev/null
+							;;
+							dnsmasq.ipset)
+								sed "$dnsmasqIpsetGrepPattern" "$invalid_file" > "${invalid_file}.pat" 2>/dev/null
+							;;
+							dnsmasq.nftset)
+								sed "$dnsmasqNftsetGrepPattern" "$invalid_file" > "${invalid_file}.pat" 2>/dev/null
+							;;
+							dnsmasq.servers)
+								sed "$dnsmasqServersGrepPattern" "$invalid_file" > "${invalid_file}.pat" 2>/dev/null
+							;;
+							dnsmasq.addnhosts)
+								# Create patterns for both IPv4 and IPv6 formats
+								{ sed "$dnsmasqAddnhostsGrepPatternIPv4" "$invalid_file"; sed "$dnsmasqAddnhostsGrepPatternIPv6" "$invalid_file"; } > "${invalid_file}.pat" 2>/dev/null
+							;;
+						esac
+						# Remove invalid entries
+						grep -vFf "${invalid_file}.pat" "$outputFile" > "${outputFile}.valid" 2>/dev/null && \
+							mv "${outputFile}.valid" "$outputFile" 2>/dev/null
+						# Report (limit to first 20 for performance)
+						logger -t "$packageName" "Removed $invalid_count invalid entries from ${dns}."
+						json add warning 'warningInvalidDomainsRemoved' "$invalid_count"
+						rm -f "${invalid_file}.pat"
+					fi
+					rm -f "$invalid_file"
+				fi
+				if [ "${invalid_count:-0}" -gt 0 ]; then
+					output_warn
+				else
+					output_ok
+				fi
+				end_time=$(date +%s)
+				elapsed=$(( end_time - start_time ))
+				logger_debug "[PERF-DEBUG] ${step_title} took ${elapsed}s"
+			;;
+		esac
+	fi
+
+	step_title='Removing temporary files'
+	output 2 "[PROC] ${step_title} "
+	json set message "$(get_text 'statusProcessing'): ${step_title}"
 	if rm -f "/tmp/${packageName}_tmp."* "$ALLOWED_TMP" "$A_TMP" "$B_TMP" "$SED_TMP" "$outputCache"; then
 		output_ok
 	else
@@ -2428,7 +2503,7 @@ check() {
 				output 2 "[PROC] Found $c matches for '$string' in '$outputFile'.\n"
 			fi
 			if [ "$c" -le 20 ]; then
-				grep "$string" "$outputFile" | sed "$stripToDomainsFilter"
+				grep "$string" "$outputFile" | sed "$outputParseFilter"
 			fi
 		else
 			output 1 "The '$string' is not found in current block-list ('$outputFile').\n"
@@ -2454,7 +2529,7 @@ check_tld() {
 			output 2 "[PROC] Found $c matches for TLDs in '$outputFile'.\n"
 		fi
 		if [ "$c" -le 20 ]; then
-			grep -vE '\.|server:' "$outputFile" | sed "$stripToDomainsFilter"
+			grep -vE '\.|server:' "$outputFile" | sed "$outputParseFilter"
 		fi
 	else
 		output 1 "No TLD was found in current block-list ('$outputFile').\n"
@@ -2485,7 +2560,7 @@ check_leading_dot() {
 			output 2 "[PROC] Found $c matches for leading-dot domains in '$outputFile'.\n"
 		fi
 		if [ "$c" -le 20 ]; then
-			grep "$string" "$outputFile" | sed "$stripToDomainsFilter"
+			grep "$string" "$outputFile" | sed "$outputParseFilter"
 		fi
 	else
 		output 1 "No leading-dot domain was found in current block-list ('$outputFile').\n"
@@ -2656,7 +2731,8 @@ load_validate_config() {
 		'smartdns_instance:list(or(integer, string)):*' \
 		'heartbeat_domain:or("-", string):heartbeat.melmac.ca' \
 		'heartbeat_sleep_timeout:range(1,60):10' \
-		'sanity_check:bool:1' \
+		'dnsmasq_sanity_check:bool:1' \
+		'dnsmasq_validity_check:bool:0' \
 		'update_config_sizes:bool:1' \
 		'allowed_domain:list(string)' \
 		'blocked_domain:list(string)' \
