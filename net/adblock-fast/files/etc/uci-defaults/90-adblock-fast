@@ -169,6 +169,13 @@ if [ -n "$oldval" ]; then
 	uci_remove "$packageName" 'config' 'proc_debug'
 fi
 
+# migrate sanity_check to dnsmasq_sanity_check
+if [ -z "$(uci_get "$packageName" 'config' 'dnsmasq_sanity_check')" ] && [ -n "$(uci_get "$packageName" 'config' 'sanity_check')" ]; then
+	oldval="$(uci_get "$packageName" 'config' 'sanity_check')"
+	uci_set "$packageName" 'config' 'dnsmasq_sanity_check' "$oldval"
+	uci_remove "$packageName" 'config' 'sanity_check'
+fi
+
 uci_changes "$packageName" && uci_commit "$packageName"
 
 exit 0
