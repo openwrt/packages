@@ -16,7 +16,7 @@ PKG_HASH:=09163bdf0b2907454042edb19f887c6d33806adc71fbd54afc14908bfdc22251
 
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
+PKG_MAINTAINER:=
 
 include ../pypi.mk
 include $(INCLUDE_DIR)/package.mk

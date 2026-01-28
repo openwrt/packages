@@ -12,7 +12,7 @@ PYPI_NAME:=Werkzeug
 PYPI_SOURCE_NAME:=werkzeug
 PKG_HASH:=60723ce945c19328679790e3282cc758aa4a6040e4bb330f53d30fa546d44746
 
-PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
+PKG_MAINTAINER:=
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE.rst
 PKG_CPE_ID:=cpe:/a:palletsprojects:werkzeug
