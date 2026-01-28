@@ -92,7 +92,7 @@ f_cmd() {
 # load adblock environment
 #
 f_load() {
-	local bg_pid iface port filter tcpdump_filter cpu core
+	local bg_pid port filter tcpdump_filter cpu core
 
 	adb_packages="$("${adb_ubuscmd}" -S call rpc-sys packagelist '{ "all": true }' 2>/dev/null)"
 	adb_bver="$(printf "%s" "${adb_packages}" | "${adb_jsoncmd}" -ql1 -e '@.packages.adblock')"
@@ -144,13 +144,10 @@ f_load() {
 		if [ "${adb_report}" = "1" ] && [ -z "${bg_pid}" ] && [ "${adb_action}" != "report" ] && [ "${adb_action}" != "stop" ]; then
 			[ ! -d "${adb_reportdir}" ] && mkdir -p "${adb_reportdir}"
 			if [ -z "${adb_repiface}" ]; then
-				network_get_device iface "lan"
-				[ -z "${iface}" ] && network_get_physdev iface "lan"
-				if [ -n "${iface}" ]; then
-					adb_repiface="${iface}"
-					uci_set adblock global adb_repiface "${adb_repiface}"
-					f_uci "adblock"
-				fi
+				network_get_device adb_repiface "lan"
+				[ -z "${adb_repiface}" ] && network_get_physdev adb_repiface "lan"
+				uci_set adblock global adb_repiface "${adb_repiface:-"any"}"
+				f_uci "adblock"
 			fi
 			for port in ${adb_repport}; do
 				[ -n "${filter}" ] && filter="${filter} or "
@@ -164,10 +161,11 @@ f_load() {
 					-C "${adb_repchunksize}" -W "${adb_repchunkcnt}" \
 					-w "${adb_reportdir}/adb_report.pcap" >/dev/null 2>&1 &
 				)
+				sleep 1
 				bg_pid="$("${adb_pgrepcmd}" -nf "${adb_reportdir}/adb_report.pcap")"
-				f_log "info" "tcpdump backgound process started (interface: '${adb_repiface}', port: ${adb_repport}, pid: ${bg_pid})"
+				f_log "info" "tcpdump backgound process started (interface: ${adb_repiface}, port: ${adb_repport}, dir: ${adb_reportdir}, pid: ${bg_pid})"
 			else
-				f_log "info" "please set the name of the reporting network device 'adb_repiface' manually"
+				f_log "info" "please set the reporting interface 'adb_repiface' and reporting directory 'adb_reportdir' manually"
 			fi
 		fi
 	fi
@@ -1526,7 +1524,6 @@ f_report() {
 	top_tmpblocked="${adb_reportdir}/top_blocked.tmp"
 	map_jsn="${adb_reportdir}/adb_map.jsn"
 
-
 	# build report
 	#
 	if [ "${action}" != "json" ]; then
@@ -1536,7 +1533,7 @@ f_report() {
 		for file in "${adb_reportdir}/adb_report.pcap"*; do
 			(
 				"${adb_dumpcmd}" ${resolve} --immediate-mode -tttt -T domain -r "${file}" 2>/dev/null |
-				"${adb_awkcmd}" '
+				"${adb_awkcmd}" -v repiface="${adb_repiface}" '
 					BEGIN {
 						pending = 0
 					}
@@ -1550,16 +1547,23 @@ f_report() {
 						date = $1
 						split($2, t, ":")
 						time = t[1] ":" t[2] ":" substr(t[3],1,2)
+						interface = repiface
 						client = $4
+						if (repiface == "any") {
+							interface = $3
+							client = $6
+						}
 						sub(/\.[0-9]+$/, "", client)
 						domain = $(NF-1)
 						sub(/[,\.]+$/, "", domain)
 						if (domain ~ /\.lan$/) next
+						if (domain !~ /\./) next
 						qtype = $(NF-2)
 						sub(/\?$/, "", qtype)
 						last_date = date
 						last_time = time
 						last_client = client
+						last_interface = interface
 						last_domain = domain
 						last_qtype  = qtype
 						pending  = 1
@@ -1568,8 +1572,8 @@ f_report() {
 					# ok answer
 					/[0-9]+[[:space:]]+[0-9]+\/[0-9]+\/[0-9]+[[:space:]]+(A|AAAA|CNAME)[[:space:]]/ {
 						if (pending) {
-							printf "%s\t%s\t%s\t%s\t%s\tOK\n",
-							last_date, last_time, last_client, last_qtype, last_domain
+							printf "%s\t%s\t%s\t%s\t%s\t%s\tOK\n",
+							last_date, last_time, last_client, last_interface, last_qtype, last_domain
 							pending = 0
 						}
 						next
@@ -1577,8 +1581,8 @@ f_report() {
 					# nxdomain answer
 					/ NXDomain/ {
 						if (pending) {
-							printf "%s\t%s\t%s\t%s\t%s\tNX\n",
-							last_date, last_time, last_client, last_qtype, last_domain
+							printf "%s\t%s\t%s\t%s\t%s\t%s\tNX\n",
+							last_date, last_time, last_client, last_interface, last_qtype, last_domain
 							pending = 0
 						}
 						next
@@ -1586,14 +1590,14 @@ f_report() {
 					# servfail answer
 					/ ServFail/ {
 						if (pending) {
-							printf "%s\t%s\t%s\t%s\t%s\tSF\n",
-							last_date, last_time, last_client, last_qtype, last_domain
+							printf "%s\t%s\t%s\t%s\t%s\t%s\tSF\n",
+							last_date, last_time, last_client, last_interface, last_qtype, last_domain
 							pending = 0
 						}
 						next
 					}
 					END {
-    					# no fallback
+						# no fallback
 					}
 				' >> "${report_raw}"
 			) &
@@ -1612,7 +1616,7 @@ f_report() {
 			start="$("${adb_awkcmd}" 'END{printf "%s_%s",$1,$2}' "${report_srt}")"
 			end="$("${adb_awkcmd}" 'NR==1{printf "%s_%s",$1,$2}' "${report_srt}")"
 			total="$(f_count tld "${report_srt}" "var")"
-			blocked="$("${adb_awkcmd}" '{if($6=="NX")cnt++}END{printf "%s",cnt}' "${report_srt}")"
+			blocked="$("${adb_awkcmd}" '{if($7=="NX")cnt++}END{printf "%s",cnt}' "${report_srt}")"
 			percent="$("${adb_awkcmd}" -v t="${total}" -v b="${blocked}" 'BEGIN{ if(t>0) printf "%.2f%s",b/t*100,"%"; else printf "0.00%%"}')"
 			{
 				printf "%s\n" "{ "
@@ -1630,9 +1634,10 @@ f_report() {
 			"${adb_awkcmd}" '
 				{
 					client = $3
-					qtype = $4
-					domain = $5
-					rc = $6
+					iface = $4
+					qtype = $5
+					domain = $6
+					rc = $7
 					# normalize domain
 					gsub(/[\.]+$/, "", domain)
 					domain = tolower(domain)
@@ -1723,30 +1728,31 @@ f_report() {
 					i = 0
 					printf \"\t\\\"requests\\\": [\n\"
 				}
-				# Only process lines that match the search AND have exactly 6 fields
-				(/(${search})/ && NF == 6) {
+				(/(${search})/ && NF == 7) {
 					i++
 					if (i == 1) {
 						printf \"\n\t\t{\
 						\n\t\t\t\\\"date\\\": \\\"%s\\\",\
 						\n\t\t\t\\\"time\\\": \\\"%s\\\",\
 						\n\t\t\t\\\"client\\\": \\\"%s\\\",\
+						\n\t\t\t\\\"iface\\\": \\\"%s\\\",\
 						\n\t\t\t\\\"type\\\": \\\"%s\\\",\
 						\n\t\t\t\\\"domain\\\": \\\"%s\\\",\
 						\n\t\t\t\\\"rc\\\": \\\"%s\\\"\
 						\n\t\t}\",
-						\$1, \$2, \$3, \$4, \$5, \$6
+						\$1, \$2, \$3, \$4, \$5, \$6, \$7
 					}
 					else if (i <= ${res_count}) {
 						printf \",\n\t\t{\
 						\n\t\t\t\\\"date\\\": \\\"%s\\\",\
 						\n\t\t\t\\\"time\\\": \\\"%s\\\",\
 						\n\t\t\t\\\"client\\\": \\\"%s\\\",\
+						\n\t\t\t\\\"iface\\\": \\\"%s\\\",\
 						\n\t\t\t\\\"type\\\": \\\"%s\\\",\
 						\n\t\t\t\\\"domain\\\": \\\"%s\\\",\
 						\n\t\t\t\\\"rc\\\": \\\"%s\\\"\
 						\n\t\t}\",
-						\$1, \$2, \$3, \$4, \$5, \$6
+						\$1, \$2, \$3, \$4, \$5, \$6, \$7
 					}
 				}
 				END {
@@ -1836,12 +1842,12 @@ f_report() {
 				done
 			elif json_get_type status "${top}" && [ "${top}" = "requests" ] && [ "${status}" = "array" ]; then
 				printf "%s\n%s\n%s\n" ":::" "::: Latest DNS Queries" ":::" >>"${report_txt}"
-				printf "%-11s%-9s%-40s%-5s%-70s%s\n" "Date" "Time" "Client" "Type" "Domain" "Answer" >>"${report_txt}"
+				printf "%-11s%-9s%-40s%-15s%-5s%-70s%s\n" "Date" "Time" "Client" "Interface" "Type" "Domain" "Answer" >>"${report_txt}"
 				json_select "${top}"
 				index="1"
 				while json_get_type status "${index}" && [ "${status}" = "object" ]; do
 					json_get_values item "${index}"
-					printf "%-11s%-9s%-40s%-5s%-70s%s\n" ${item} >>"${report_txt}"
+					printf "%-11s%-9s%-40s%-15s%-5s%-70s%s\n" ${item} >>"${report_txt}"
 					index="$((index + 1))"
 				done
 			fi
