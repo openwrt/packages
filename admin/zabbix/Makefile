@@ -27,7 +27,8 @@ PKG_BUILD_PARALLEL:=1
 PKG_CONFIG_DEPENDS:= \
   CONFIG_ZABBIX_MYSQL \
   CONFIG_ZABBIX_POSTGRESQL \
-  CONFIG_ZABBIX_SQLITE
+  CONFIG_ZABBIX_SQLITE \
+  CONFIG_ZABBIX_SNMP
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
@@ -48,6 +49,14 @@ choice
         config ZABBIX_SQLITE
                 bool "SQLite"
 endchoice
+
+config ZABBIX_SNMP
+        bool "Enable SNMP support"
+        depends on PACKAGE_zabbix-server || PACKAGE_zabbix-server-openssl || PACKAGE_zabbix-server-gnutls || PACKAGE_zabbix-proxy || PACKAGE_zabbix-proxy-openssl || PACKAGE_zabbix-proxy-gnutls
+        default n
+        help
+          Enable SNMP support for Zabbix server and proxy.
+          This requires libnetsnmp package.
 endef
 
 define Package/zabbix/Default
@@ -172,6 +181,7 @@ endef
 define Package/zabbix-server
   $(call Package/zabbix-server/Default)
   PROVIDES:=zabbix-server
+  DEPENDS+= +ZABBIX_SNMP:libnetsnmp
   VARIANT:=nossl
   DEFAULT_VARIANT:=1
 endef
@@ -180,7 +190,7 @@ define Package/zabbix-server-openssl
   $(call Package/zabbix-server/Default)
   TITLE+= (with OpenSSL)
   PROVIDES:=zabbix-server
-  DEPENDS+= +libopenssl
+  DEPENDS+= +libopenssl +ZABBIX_SNMP:libnetsnmp
   VARIANT:=openssl
 endef
 
@@ -188,7 +198,7 @@ define Package/zabbix-server-gnutls
   $(call Package/zabbix-server/Default)
   TITLE+= (with GnuTLS)
   PROVIDES:=zabbix-server
-  DEPENDS+= +libgnutls
+  DEPENDS+= +libgnutls +ZABBIX_SNMP:libnetsnmp
   VARIANT:=gnutls
 endef
 
@@ -229,6 +239,7 @@ endef
 define Package/zabbix-proxy
   $(call Package/zabbix-proxy/Default)
   PROVIDES:=zabbix-proxy
+  DEPENDS+= +ZABBIX_SNMP:libnetsnmp
   VARIANT:=nossl
   DEFAULT_VARIANT:=1
 endef
@@ -237,7 +248,7 @@ define Package/zabbix-proxy-openssl
   $(call Package/zabbix-proxy/Default)
   TITLE+= (with OpenSSL)
   PROVIDES:=zabbix-proxy
-  DEPENDS+= +libopenssl
+  DEPENDS+= +libopenssl +ZABBIX_SNMP:libnetsnmp
   VARIANT:=openssl
 endef
 
@@ -245,7 +256,7 @@ define Package/zabbix-proxy-gnutls
   $(call Package/zabbix-proxy/Default)
   TITLE+= (with GnuTLS)
   PROVIDES:=zabbix-proxy
-  DEPENDS+= +libgnutls
+  DEPENDS+= +libgnutls +ZABBIX_SNMP:libnetsnmp
   VARIANT:=gnutls
 endef
 
@@ -278,6 +289,7 @@ CONFIGURE_ARGS+= \
 	$(if $(CONFIG_ZABBIX_MYSQL),--with-mysql) \
 	$(if $(CONFIG_ZABBIX_POSTGRESQL),--with-postgresql) \
 	$(if $(CONFIG_ZABBIX_SQLITE),--with-sqlite3=$(STAGING_DIR)/usr) \
+	$(if $(CONFIG_ZABBIX_SNMP),--with-net-snmp) \
 	--with-libevent=$(STAGING_DIR)/usr/include \
 	--with-libpcre2=$(STAGING_DIR)/usr/include \
 	--with-zlib=$(STAGING_DIR)/usr/include
