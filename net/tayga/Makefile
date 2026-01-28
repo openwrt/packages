@@ -4,11 +4,15 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tayga
 PKG_VERSION:=0.9.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/apalrd/tayga/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=64da04887e59207be0f62082e63dca98b1e770283fa37102ccb0a3e8d2acedc5
+#PKG_SOURCE_URL:=https://codeload.github.com/apalrd/tayga/tar.gz/$(PKG_VERSION)?
+PKG_MIRROR_HASH:=e2ab807e774e17efb1e4110470992d54ef0f0c8132fc9a1abb00cdcdfb2f2187
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/apalrd/tayga.git
+PKG_SOURCE_VERSION:=97930df66fd7352f208480070edaeb8043846d6b
+PKG_SOURCE_DATE:=2026-01-27
 PKG_LICENSE:=GPL-2.0-or-later
 PKG_LICENSE_FILES:=COPYING
 
