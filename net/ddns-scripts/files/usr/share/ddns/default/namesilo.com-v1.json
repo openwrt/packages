@@ -1,0 +1,9 @@
+{
+	"name": "namesilo.com-v1",
+	"ipv4": {
+		"url": "update_namesilo_com_v1.sh"
+	},
+	"ipv6": {
+		"url": "update_namesilo_com_v1.sh"
+	}
+}
