@@ -573,25 +573,24 @@ proto_modemmanager_setup() {
 	local modempath modemstatus bearercount bearerpath connectargs bearerstatus beareriface
 	local bearermethod_ipv4 bearermethod_ipv6 auth cliauth
 	local operatorname operatorid registration accesstech signalquality
-	local allowedmode preferredmode
 
 	local device apn allowedauth username password pincode
 	local iptype plmn metric signalrate allow_roaming
-	local force_connection
+	local allowedmode preferredmode force_connection
+	local sourcefilter
+	json_get_vars device apn allowedauth username password pincode
+	json_get_vars iptype plmn metric signalrate allow_roaming
+	json_get_vars allowedmode preferredmode force_connection
+	json_get_vars sourcefilter
 
 	local init_epsbearer
 	local init_iptype init_allowedauth
 	local init_password init_user init_apn
-
-	local address prefix gateway mtu dns1 dns2
-
-	json_get_vars device apn allowedauth username password
-	json_get_vars pincode iptype sourcefilter plmn metric signalrate allow_roaming
-	json_get_vars allowedmode preferredmode force_connection
-
 	json_get_vars init_epsbearer
 	json_get_vars init_iptype init_allowedauth
 	json_get_vars init_password init_user init_apn
+
+	local address prefix gateway mtu dns1 dns2
 
 	# validate sysfs path given in config
 	[ -n "${device}" ] || {
