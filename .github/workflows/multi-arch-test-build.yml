@@ -13,8 +13,9 @@ jobs:
     runs-on: ubuntu-slim
     steps:
       - name: HyperStickler
-        uses: georgesapkin/hyperstickler@v1-beta.3
+        uses: georgesapkin/hyperstickler@v1-rc.1
         with:
+          check_branch: false
           check_signoff: true
           feedback_url: 'https://github.com/openwrt/actions-shared-workflows/issues'
           guideline_url: 'https://openwrt.org/submitting-patches#submission_guidelines'
