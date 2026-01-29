@@ -1,9 +1,7 @@
 #
 # Copyright (C) 2018, 2020-2021, 2023 Jeffery To
 #
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
-#
+# SPDX-License-Identifier: GPL-2.0-only
 
 ifeq ($(origin GO_INCLUDE_DIR),undefined)
   GO_INCLUDE_DIR:=$(dir $(lastword $(MAKEFILE_LIST)))
@@ -21,14 +19,10 @@ endef
 # $(1) source go root
 # $(2) additional environment variables (optional)
 define GoCompiler/Default/Make
-	( \
-		cd "$(1)/src" ; \
-		$(2) \
-		$(BASH) make.bash \
+	cd "$(1)/src" ; \
+	$(2) $(BASH) make.bash \
 		$(if $(findstring s,$(OPENWRT_VERBOSE)),-v) \
-		--no-banner \
-		; \
-	)
+		--no-banner
 endef
 
 # $(1) destination prefix
@@ -87,8 +81,8 @@ endef
 # $(2) go version id
 define GoCompiler/Default/Install/BinLinks
 	$(INSTALL_DIR) "$(1)/bin"
-	$(LN) "../lib/go-$(2)/bin/go" "$(1)/bin/go"
-	$(LN) "../lib/go-$(2)/bin/gofmt" "$(1)/bin/gofmt"
+	$(LN) "../lib/go-$(2)/bin/go" "$(1)/bin/go$(2)"
+	$(LN) "../lib/go-$(2)/bin/gofmt" "$(1)/bin/gofmt$(2)"
 endef
 
 # $(1) source go root
@@ -132,9 +126,10 @@ define GoCompiler/Default/Uninstall
 endef
 
 # $(1) destination prefix
+# $(2) go version id
 define GoCompiler/Default/Uninstall/BinLinks
-	rm -f "$(1)/bin/go"
-	rm -f "$(1)/bin/gofmt"
+	rm -f "$(1)/bin/go$(2)"
+	rm -f "$(1)/bin/gofmt$(2)"
 endef
 
 
@@ -183,7 +178,7 @@ define GoCompiler/AddProfile
 
   # $$(1) override install prefix (optional)
   define GoCompiler/$(1)/Uninstall/BinLinks
-	$$(call GoCompiler/Default/Uninstall/BinLinks,$$(or $$(1),$(3)))
+	$$(call GoCompiler/Default/Uninstall/BinLinks,$$(or $$(1),$(3)),$(4))
   endef
 
 endef

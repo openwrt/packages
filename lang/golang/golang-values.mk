@@ -1,9 +1,7 @@
 #
 # Copyright (C) 2018-2023 Jeffery To
 #
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
-#
+# SPDX-License-Identifier: GPL-2.0-only
 
 ifeq ($(origin GO_INCLUDE_DIR),undefined)
   GO_INCLUDE_DIR:=$(dir $(lastword $(MAKEFILE_LIST)))
@@ -124,6 +122,12 @@ unexport \
 unexport \
   GOBOOTSTRAP_TOOLEXEC
 
+
+GO_DEFAULT_VERSION:=1.25
+GO_HOST_VERSION:=$(patsubst golang%/host,%,$(filter golang%/host,$(PKG_BUILD_DEPENDS)))
+ifeq ($(GO_HOST_VERSION),)
+  GO_HOST_VERSION:=$(GO_DEFAULT_VERSION)
+endif
 
 # GOOS / GOARCH
 

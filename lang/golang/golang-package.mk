@@ -1,9 +1,7 @@
 #
 # Copyright (C) 2018-2022 Jeffery To
 #
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
-#
+# SPDX-License-Identifier: GPL-2.0-only
 
 ifeq ($(origin GO_INCLUDE_DIR),undefined)
   GO_INCLUDE_DIR:=$(dir $(lastword $(MAKEFILE_LIST)))
@@ -179,7 +177,13 @@ define GoPackage/GoSubMenu
   CATEGORY:=Languages
 endef
 
+# Some packages like docker use go directly and don't process vars like GO, so
+# just add selected version to path and insert it into several used vars.
+GO_BIN_PATH:= \
+	PATH=$(STAGING_DIR_HOSTPKG)/lib/go-$(GO_HOST_VERSION)/bin:$(PATH)
+
 GO_PKG_BUILD_CONFIG_VARS= \
+	$(GO_BIN_PATH) \
 	GO_PKG="$(strip $(GO_PKG))" \
 	GO_INSTALL_EXTRA="$(strip $(GO_PKG_INSTALL_EXTRA))" \
 	GO_INSTALL_ALL="$(strip $(GO_PKG_INSTALL_ALL))" \
@@ -220,6 +224,7 @@ GO_PKG_BUILD_VARS= \
 	GOTOOLCHAIN=local
 
 GO_PKG_VARS= \
+	$(GO_BIN_PATH) \
 	$(GO_PKG_TARGET_VARS) \
 	$(GO_PKG_BUILD_VARS)
 
@@ -256,7 +261,7 @@ GO_PKG_INSTALL_ARGS= \
 define GoPackage/Build/Configure
 	$(GO_GENERAL_BUILD_CONFIG_VARS) \
 	$(GO_PKG_BUILD_CONFIG_VARS) \
-	$(SHELL) $(GO_INCLUDE_DIR)/golang-build.sh configure
+	$(SHELL) $(GO_INCLUDE_DIR)golang-build.sh configure
 endef
 
 # $(1) additional arguments for go command line (optional)
@@ -264,7 +269,7 @@ define GoPackage/Build/Compile
 	$(GO_GENERAL_BUILD_CONFIG_VARS) \
 	$(GO_PKG_BUILD_CONFIG_VARS) \
 	$(GO_PKG_VARS) \
-	$(SHELL) $(GO_INCLUDE_DIR)/golang-build.sh build $(GO_PKG_INSTALL_ARGS) $(1)
+	$(SHELL) $(GO_INCLUDE_DIR)golang-build.sh build $(GO_PKG_INSTALL_ARGS) $(1)
 endef
 
 define GoPackage/Build/InstallDev
@@ -274,13 +279,13 @@ endef
 define GoPackage/Package/Install/Bin
 	$(GO_GENERAL_BUILD_CONFIG_VARS) \
 	$(GO_PKG_BUILD_CONFIG_VARS) \
-	$(SHELL) $(GO_INCLUDE_DIR)/golang-build.sh install_bin "$(1)"
+	$(SHELL) $(GO_INCLUDE_DIR)golang-build.sh install_bin "$(1)"
 endef
 
 define GoPackage/Package/Install/Src
 	$(GO_GENERAL_BUILD_CONFIG_VARS) \
 	$(GO_PKG_BUILD_CONFIG_VARS) \
-	$(SHELL) $(GO_INCLUDE_DIR)/golang-build.sh install_src "$(1)"
+	$(SHELL) $(GO_INCLUDE_DIR)golang-build.sh install_src "$(1)"
 endef
 
 define GoPackage/Package/Install
