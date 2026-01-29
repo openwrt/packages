@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=compose
 PKG_VERSION:=5.0.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
@@ -29,7 +29,7 @@ define Package/docker-compose
   CATEGORY:=Utilities
   TITLE:=Docker Compose
   URL:=https://github.com/docker/compose
-  DEPENDS:=$(GO_ARCH_DEPENDS) +docker
+  DEPENDS:=$(GO_ARCH_DEPENDS) +docker||+podman
 endef
 
 define Package/docker-compose/description
