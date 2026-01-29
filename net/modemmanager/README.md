@@ -28,6 +28,7 @@ Once installed, you can configure the 2G/3G/4G modem connections directly in
         option allow_roaming '1'
         option force_connection '1'
         option init_epsbearer '<none|default|custom>'
+        option timeout     '120'
 
 Only 'device' and 'proto' are mandatory options, the remaining ones are all
 optional.
@@ -44,6 +45,10 @@ The 'plmn' option allows to set the network operator MCCMNC.
 
 The 'signalrate' option set's the signal refresh rate (in seconds) for the device.
 You can call signal info with command: mmcli -m 0 --signal-get
+
+The 'timeout' option set's the command timeout (in seconds) for every 'mmcli'
+call in the modemmanager protohandler. The default value is 120 seconds, if
+no value is configurated.
 
 The 'force_connection' option is designed to ensure that the modem automatically
 attempts to reconnect regardless of any errors encountered during the
