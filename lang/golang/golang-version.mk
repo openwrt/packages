@@ -79,6 +79,7 @@ endef
 define Package/$(PKG_NAME)-doc
   $(call Package/$(PKG_NAME)/Default)
   TITLE+= (documentation)
+  PKGARCH:=all
   PROVIDES:=@golang-doc
   $(if $(filter $(GO_DEFAULT_VERSION),$(GO_VERSION_MAJOR_MINOR)),DEFAULT_VARIANT:=1)
 endef
@@ -93,6 +94,7 @@ define Package/$(PKG_NAME)-src
   $(call Package/$(PKG_NAME)/Default)
   TITLE+= (source files)
   DEPENDS+= +libstdcpp +libtiff
+  PKGARCH:=all
   PROVIDES:=@golang-src
   $(if $(filter $(GO_DEFAULT_VERSION),$(GO_VERSION_MAJOR_MINOR)),DEFAULT_VARIANT:=1)
 endef
