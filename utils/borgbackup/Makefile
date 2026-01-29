@@ -35,6 +35,7 @@ define Package/borgbackup
       +python3-logging \
       +python3-lzma \
       +python3-msgpack \
+      +python3-openssl \
       +python3-packaging \
       +python3-pyfuse3 \
       +python3-readline \
