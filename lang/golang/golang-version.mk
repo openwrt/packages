@@ -1,6 +1,6 @@
 #
-# Copyright (C) 2018-2023, Jeffery To
-# Copyright (C) 2025-2026, George Sapkin
+# Copyright (C) 2018-2023 Jeffery To
+# Copyright (C) 2025-2026 George Sapkin
 #
 # SPDX-License-Identifier: GPL-2.0-only
 
@@ -17,9 +17,8 @@ include ../golang-values.mk
 PKG_UNPACK:=$(HOST_TAR) -C "$(PKG_BUILD_DIR)" --strip-components=1 -xzf "$(DL_DIR)/$(PKG_SOURCE)"
 HOST_UNPACK:=$(HOST_TAR) -C "$(HOST_BUILD_DIR)" --strip-components=1 -xzf "$(DL_DIR)/$(PKG_SOURCE)"
 
-# don't strip ELF executables in test data
-RSTRIP:=:
-STRIP:=:
+# Don't strip ELF executables in test data
+RSTRIP:=$(subst $(SCRIPT_DIR)/rstrip.sh,go-strip-helper $(SCRIPT_DIR)/rstrip.sh,$(RSTRIP))
 
 ifeq ($(GO_TARGET_SPECTRE_SUPPORTED),1)
   PKG_CONFIG_DEPENDS+=CONFIG_GOLANG_SPECTRE
@@ -79,6 +78,7 @@ endef
 define Package/$(PKG_NAME)-doc
   $(call Package/$(PKG_NAME)/Default)
   TITLE+= (documentation)
+  PKGARCH:=all
   PROVIDES:=@golang-doc
   $(if $(filter $(GO_DEFAULT_VERSION),$(GO_VERSION_MAJOR_MINOR)),DEFAULT_VARIANT:=1)
 endef
@@ -89,9 +89,24 @@ define Package/$(PKG_NAME)-doc/description
   This package provides the documentation for the Go programming language.
 endef
 
+define Package/$(PKG_NAME)-misc
+  $(call Package/$(PKG_NAME)/Default)
+  TITLE+= (misc source files)
+  PKGARCH:=all
+  PROVIDES:=@golang-misc
+  $(if $(filter $(GO_DEFAULT_VERSION),$(GO_VERSION_MAJOR_MINOR)),DEFAULT_VARIANT:=1)
+endef
+
+define Package/$(PKG_NAME)-misc/description
+  $(call Package/$(PKG_NAME)/Default/description)
+
+  This package provides the Go compiler miscellaneous sources.
+endef
+
 define Package/$(PKG_NAME)-src
   $(call Package/$(PKG_NAME)/Default)
   TITLE+= (source files)
+  PKGARCH:=all
   PROVIDES:=@golang-src
   $(if $(filter $(GO_DEFAULT_VERSION),$(GO_VERSION_MAJOR_MINOR)),DEFAULT_VARIANT:=1)
 endef
@@ -101,6 +116,22 @@ define Package/$(PKG_NAME)-src/description
 
   This package provides the Go programming language source files needed for
   cross-compilation.
+endef
+
+define Package/$(PKG_NAME)-tests
+  $(call Package/$(PKG_NAME)/Default)
+  TITLE+= (compiler tests)
+  DEPENDS+= +golang$(GO_VERSION_MAJOR_MINOR)-src
+  EXTRA_DEPENDS:=golang$(GO_VERSION_MAJOR_MINOR)-src (=$(PKG_VERSION)-r$(PKG_RELEASE))
+  PKGARCH:=all
+  PROVIDES:=@golang-tests
+  $(if $(filter $(GO_DEFAULT_VERSION),$(GO_VERSION_MAJOR_MINOR)),DEFAULT_VARIANT:=1)
+endef
+
+define Package/$(PKG_NAME)-tests/description
+  $(call Package/$(PKG_NAME)/Default/description)
+
+  This package provides the Go compiler tests for stdlib.
 endef
 
 
@@ -149,7 +180,7 @@ define Host/Install
 	rm -rf "$(HOST_GO_ROOT)/pkg/$(GO_HOST_OS_ARCH)"
 
 	$(INSTALL_DIR) "$(HOST_GO_ROOT)/openwrt"
-	$(INSTALL_BIN) ../go-gcc-helper "$(HOST_GO_ROOT)/openwrt/"
+	$(INSTALL_BIN) ../go-gcc-helper "$(HOST_GO_ROOT)/openwrt"
 	$(LN) go-gcc-helper "$(HOST_GO_ROOT)/openwrt/gcc"
 	$(LN) go-gcc-helper "$(HOST_GO_ROOT)/openwrt/g++"
 endef
@@ -242,19 +273,27 @@ define Build/Compile
 endef
 
 define Package/$(PKG_NAME)/install
-	$(call GoCompiler/Package/Install/Bin,$(1)$(PKG_GO_PREFIX))
+	$(call GoCompiler/Package/Install/Bin,$(1)$(PKG_GO_PREFIX),target)
 endef
 
 define Package/$(PKG_NAME)-doc/install
 	$(call GoCompiler/Package/Install/Doc,$(1)$(PKG_GO_PREFIX))
 endef
 
+define Package/$(PKG_NAME)-misc/install
+	$(call GoCompiler/Package/Install/Misc,$(1)$(PKG_GO_PREFIX))
+endef
+
 define Package/$(PKG_NAME)-src/install
-	$(call GoCompiler/Package/Install/Src,$(1)$(PKG_GO_PREFIX))
+	$(call GoCompiler/Package/Install/Src,$(1)$(PKG_GO_PREFIX),target)
+endef
+
+define Package/$(PKG_NAME)-tests/install
+	$(call GoCompiler/Package/Install/Tests,$(1)$(PKG_GO_PREFIX))
 endef
 
 # src/debug contains ELF executables as test data and they reference these
 # libraries we need to call this to pass CheckDependencies in package-pack.mk
-define Package/$(PKG_NAME)-src/extra_provides
+define Package/$(PKG_NAME)-tests/extra_provides
 	echo 'libc.so.6' libstdc++.so.6' libtiff.so.6' | tr ' ' '\n'
 endef
