@@ -1,6 +1,6 @@
 #
-# Copyright (C) 2018-2023, Jeffery To
-# Copyright (C) 2025-2026, George Sapkin
+# Copyright (C) 2018-2023 Jeffery To
+# Copyright (C) 2025-2026 George Sapkin
 #
 # SPDX-License-Identifier: GPL-2.0-only
 
@@ -13,7 +13,7 @@ GO_BOOTSTRAP_VERSION:=bootstrap
 PKG_HASH:=58cbf771e44d76de6f56d19e33b77d745a1e489340922875e46585b975c2b059
 
 PKG_VERSION:=$(GO_VERSION_MAJOR_MINOR)$(if $(GO_VERSION_PATCH),.$(GO_VERSION_PATCH))
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 GO_SOURCE_URLS:=https://go.dev/dl/ \
                 https://dl.google.com/go/ \
@@ -78,4 +78,6 @@ include ../golang-version.mk
 $(eval $(call HostBuild))
 $(eval $(call BuildPackage,$(PKG_NAME)))
 $(eval $(call BuildPackage,$(PKG_NAME)-doc))
+$(eval $(call BuildPackage,$(PKG_NAME)-misc))
 $(eval $(call BuildPackage,$(PKG_NAME)-src))
+$(eval $(call BuildPackage,$(PKG_NAME)-tests))
