@@ -529,9 +529,9 @@ modemmanager_init_epsbearer() {
 	local apn="$4"
 
 	if [ "$eps" = "none" ]; then
-		echo "Deleting inital EPS bearer..."
+		echo "Deleting inital EPS bearer"
 	else
-		echo "Setting '$eps' inital EPS bearer apn to '$apn'..."
+		echo "Setting '$eps' inital EPS bearer apn to '$apn'"
 	fi
 
 	mmcli --modem="${device}" \
@@ -697,13 +697,13 @@ proto_modemmanager_setup() {
 		modemmanager_set_plmn "$device" "$interface" "" "$force_connection"
 		[ "$?" -ne "0" ] && return 1
 	else
-		echo "starting network registration with plmn '${plmn}'..."
+		echo "starting network registration with plmn '${plmn}'"
 		modemmanager_set_plmn "$device" "$interface" "$plmn" "$force_connection"
 		[ "$?" -ne "0" ] && return 1
 	fi
 
 	# setup connect args; APN mandatory (even if it may be empty)
-	echo "starting connection with apn '${apn}'..."
+	echo "starting connection with apn '${apn}'"
 
 	# setup allow-roaming parameter
 	if [ -n "${allow_roaming}" ] && [ "${allow_roaming}" -eq 0 ];then
