@@ -282,6 +282,7 @@ proto_modemmanager_init_config() {
 	proto_config_add_boolean lowpower
 	proto_config_add_boolean allow_roaming
 	proto_config_add_boolean force_connection
+	proto_config_add_int timeout
 	proto_config_add_string init_epsbearer
 	proto_config_add_string init_iptype
 	proto_config_add_string 'init_allowedauth:list(string)'
@@ -527,6 +528,7 @@ modemmanager_init_epsbearer() {
 	local device="$2"
 	local connectargs="$3"
 	local apn="$4"
+	local timeout="$5"
 
 	if [ "$eps" = "none" ]; then
 		echo "Deleting inital EPS bearer"
@@ -535,7 +537,7 @@ modemmanager_init_epsbearer() {
 	fi
 
 	mmcli --modem="${device}" \
-		--timeout 120 \
+		--timeout "${timeout}" \
 		--3gpp-set-initial-eps-bearer-settings="${connectargs}" || {
 		proto_notify_error "${interface}" MM_INIT_EPS_BEARER_SET_FAILED
 		proto_block_restart "${interface}"
@@ -552,9 +554,10 @@ modemmanager_set_plmn() {
 	local interface="$2"
 	local plmn="$3"
 	local force_connection="$4"
+	local timeout="$5"
 
 	mmcli --modem="${device}" \
-		--timeout 120 \
+		--timeout "${timeout}" \
 		--3gpp-register-in-operator="${plmn}" || {
 		if [ -n "${force_connection}" ] && [ "${force_connection}" -eq 1 ]; then
 			echo "3GPP operator registration failed -> attempting restart"
@@ -577,11 +580,11 @@ proto_modemmanager_setup() {
 	local device apn allowedauth username password pincode
 	local iptype plmn metric signalrate allow_roaming
 	local allowedmode preferredmode force_connection
-	local sourcefilter
+	local sourcefilter timeout
 	json_get_vars device apn allowedauth username password pincode
 	json_get_vars iptype plmn metric signalrate allow_roaming
 	json_get_vars allowedmode preferredmode force_connection
-	json_get_vars sourcefilter
+	json_get_vars sourcefilter timeout
 
 	local init_epsbearer
 	local init_iptype init_allowedauth
@@ -611,20 +614,23 @@ proto_modemmanager_setup() {
 	}
 	echo "modem available at ${modempath}"
 
+	[ -z "${timeout}" ] && timeout="120"
+	echo "setting command timeout to '${timeout}'"
+
 	modemmanager_check_pin_state "$device" "$interface" "${modemstatus}" "$pincode"
 	[ "$?" -ne "0" ] && return 1
 
 	# always cleanup before attempting a new connection, just in case
 	modemmanager_cleanup_connection "${modemstatus}"
 
-	mmcli --modem="${device}" --timeout 120 --enable || {
+	mmcli --modem="${device}" --timeout "${timeout}" --enable || {
 		proto_notify_error "${interface}" MM_MODEM_DISABLED
 		return 1
 	}
 
 	# set initial eps bearer settings
 	if [ -z "${init_epsbearer}" ]; then
-		modemmanager_init_epsbearer "none" "$device" "" "$apn"
+		modemmanager_init_epsbearer "none" "$device" "" "$apn" "${timeout}"
 	else
 		case "$init_epsbearer" in
 			"default")
@@ -639,7 +645,8 @@ proto_modemmanager_setup() {
 				append_param "${username:+user=${username}}"
 				append_param "${password:+password=${password}}"
 				modemmanager_init_epsbearer "default" \
-					"$device" "${connectargs}" "$apn"
+					"$device" "${connectargs}" "$apn" \
+					"${timeout}"
 				;;
 			"custom")
 				cliauth=""
@@ -653,7 +660,8 @@ proto_modemmanager_setup() {
 				append_param "${init_username:+user=${init_username}}"
 				append_param "${init_password:+password=${init_password}}"
 				modemmanager_init_epsbearer "custom" \
-					"$device" "${connectargs}" "$init_apn"
+					"$device" "${connectargs}" "$init_apn" \
+					"${timeout}"
 				;;
 		esac
 		# check error for init_epsbearer function call
@@ -694,11 +702,11 @@ proto_modemmanager_setup() {
 	fi
 
 	if [ -z "${plmn}" ]; then
-		modemmanager_set_plmn "$device" "$interface" "" "$force_connection"
+		modemmanager_set_plmn "$device" "$interface" "" "$force_connection" "${timeout}"
 		[ "$?" -ne "0" ] && return 1
 	else
 		echo "starting network registration with plmn '${plmn}'"
-		modemmanager_set_plmn "$device" "$interface" "$plmn" "$force_connection"
+		modemmanager_set_plmn "$device" "$interface" "$plmn" "$force_connection" "${timeout}"
 		[ "$?" -ne "0" ] && return 1
 	fi
 
@@ -727,7 +735,7 @@ proto_modemmanager_setup() {
 	append_param "${username:+user=${username}}"
 	append_param "${password:+password=${password}}"
 
-	mmcli --modem="${device}" --timeout 120 --simple-connect="${connectargs}" || {
+	mmcli --modem="${device}" --timeout "${timeout}" --simple-connect="${connectargs}" || {
 		if [ -n "${force_connection}" ] && [ "${force_connection}" -eq 1 ]; then
 			echo "Connection failed -> attempting restart"
 			proto_notify_error "${interface}" MM_INTERFACE_RESTART
