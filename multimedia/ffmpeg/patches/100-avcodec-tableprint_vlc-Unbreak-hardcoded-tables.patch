@@ -1,0 +1,24 @@
+From 1d47ae65bf6df91246cbe25c997b25947f7a4d1d Mon Sep 17 00:00:00 2001
+From: Andreas Rheinhardt <andreas.rheinhardt@outlook.com>
+Date: Thu, 4 Dec 2025 18:42:02 +0100
+Subject: [PATCH] avcodec/tableprint_vlc: Unbreak hardcoded tables
+
+Forgotten in d8ffec5bf9a2803f55cc0822a97b7815f24bee83.
+Fixes issue #21102.
+
+Signed-off-by: Andreas Rheinhardt <andreas.rheinhardt@outlook.com>
+---
+ libavcodec/tableprint_vlc.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/libavcodec/tableprint_vlc.h
++++ b/libavcodec/tableprint_vlc.h
+@@ -27,7 +27,7 @@
+ #define av_log(a, ...) while(0)
+ #define ff_dlog(a, ...) while(0)
+ #define AVUTIL_MEM_H
+-#define av_malloc(s) NULL
++#define av_mallocz(s) NULL
+ #define av_malloc_array(a, b) NULL
+ #define av_realloc_f(p, o, n) NULL
+ #define av_free(p) while(0)
