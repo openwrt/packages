@@ -1,0 +1,63 @@
+From 9675bd17ae35744696c90b423b0c19905349c8a1 Mon Sep 17 00:00:00 2001
+From: "Daniel F. Dickinson" <dfdpublic@wildtechgarden.ca>
+Date: Wed, 17 Dec 2025 06:39:16 -0500
+Subject: [PATCH] Make zabbix_server config suitable for OpenWrt
+
+1. Log to (default ephemeral) syslog, not a file (and don't rotate)
+2. Update PidFile path so correct permissions can be set for access by
+   Zabbix server running without privileges
+3. If started as root, drop privileges to zabbix-server user (instead of
+   zabbix)
+
+Signed-off-by: Daniel F. Dickinson <dfdpublic@wildtechgarden.ca>
+---
+ conf/zabbix_server.conf | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+--- a/conf/zabbix_server.conf
++++ b/conf/zabbix_server.conf
+@@ -27,6 +27,7 @@
+ # Mandatory: no
+ # Default:
+ # LogType=file
++LogType=system
+ 
+ ### Option: LogFile
+ #	Log file name for LogType 'file' parameter.
+@@ -35,7 +36,7 @@
+ # Default:
+ # LogFile=
+ 
+-LogFile=/tmp/zabbix_server.log
++# LogFile=/tmp/zabbix_server.log
+ 
+ ### Option: LogFileSize
+ #	Maximum size of log file in MB.
+@@ -45,6 +46,7 @@ LogFile=/tmp/zabbix_server.log
+ # Range: 0-1024
+ # Default:
+ # LogFileSize=1
++LogFileSize=0
+ 
+ ### Option: DebugLevel
+ #	Specifies debug level:
+@@ -67,6 +69,10 @@ LogFile=/tmp/zabbix_server.log
+ # Default:
+ # PidFile=/tmp/zabbix_server.pid
+ 
++# Although procd does not require a pid file, zabbix uses the pidfile to
++# shut down correctly on receipt of a TERM or INT signal.
++PidFile=/var/run/zabbix-server/zabbix_server.pid
++
+ ### Option: SocketDir
+ #	IPC socket directory.
+ #		Directory to store IPC sockets used by internal Zabbix services.
+@@ -698,7 +704,7 @@ LogSlowQueries=3000
+ #
+ # Mandatory: no
+ # Default:
+-# User=zabbix
++User=zabbix-server
+ 
+ ### Option: SSLCertLocation
+ #	Location of SSL client certificates.
