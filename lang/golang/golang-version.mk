@@ -92,7 +92,6 @@ endef
 define Package/$(PKG_NAME)-src
   $(call Package/$(PKG_NAME)/Default)
   TITLE+= (source files)
-  DEPENDS+= +libstdcpp +libtiff
   PROVIDES:=@golang-src
   $(if $(filter $(GO_DEFAULT_VERSION),$(GO_VERSION_MAJOR_MINOR)),DEFAULT_VARIANT:=1)
 endef
@@ -255,8 +254,7 @@ define Package/$(PKG_NAME)-src/install
 endef
 
 # src/debug contains ELF executables as test data and they reference these
-# libraries we need to call this in Package/$(GO_VERSION_MAJOR_MINOR)/extra_provides to pass
-# CheckDependencies in package-pack.mk
+# libraries we need to call this to pass CheckDependencies in package-pack.mk
 define Package/$(PKG_NAME)-src/extra_provides
-	echo 'libc.so.6'
+	echo 'libc.so.6' libstdc++.so.6' libtiff.so.6' | tr ' ' '\n'
 endef
