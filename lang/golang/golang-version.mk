@@ -228,14 +228,6 @@ define Build/Compile
 
 	$(SED) '$(PKG_GO_ZBOOTSTRAP_MODS)' "$(PKG_GO_ZBOOTSTRAP_PATH)"
 
-	if echo 'int main() { return 0; }' | $(TARGET_CC) -o $(PKG_BUILD_DIR)/test-ldso -x c - > /dev/null 2>&1; then \
-		LDSO=$$$$( \
-			readelf -l $(PKG_BUILD_DIR)/test-ldso | \
-			sed -n -e 's/^.*interpreter: \(.*\)[]]/\1/p' \
-		) ; \
-	fi ; \
-	$(SED) "s,defaultGO_LDSO = \`[^\`]*\`,defaultGO_LDSO = \`$$$$LDSO\`," "$(PKG_GO_ZBOOTSTRAP_PATH)"
-
 	@echo "Building target Go second stage"
 
 	cd "$(PKG_BUILD_DIR)/bin" ; \
