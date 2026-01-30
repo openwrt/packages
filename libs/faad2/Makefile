@@ -6,13 +6,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=faad2
-PKG_VERSION:=2.11.1
-PKG_RELEASE:=2
+PKG_VERSION:=2.11.2
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=$(PKG_VERSION)
 PKG_SOURCE_URL:=https://github.com/knik0/faad2
-PKG_MIRROR_HASH:=8dfc89b418293a91c0fc0d11013205449669ce973f5e951500c1e11e3ac61970
+PKG_MIRROR_HASH:=20c27395021788c4a0cea6f9a56579f3d92835932784491eec7bc80ede38d02f
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -58,15 +58,6 @@ define Package/libfaad2/description
 $(call Package/faad2/Default/description)
   This package contains the library.
 endef
-
-TARGET_CFLAGS += \
-	$(if $(CONFIG_BUILD_PATENTED),,-DLC_ONLY_DECODER -DDISABLE_SBR) \
-	$(if $(CONFIG_SOFT_FLOAT),-DFIXED_POINT)
-
-CONFIGURE_ARGS += \
-	--without-drm \
-	--without-mpeg4ip \
-	--without-xmms
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
