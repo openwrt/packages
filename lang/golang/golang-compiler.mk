@@ -57,7 +57,7 @@ endef
 # 1: source go root
 # 2: destination prefix
 # 3: go version id
-# 4: GOOS_GOARCH
+# 4: GOOS_GOARCH with / as a separator
 # 5: install suffix (optional)
 # 6: if target, package architecture-specific sources
 define GoCompiler/Default/Install/Bin
@@ -76,19 +76,21 @@ define GoCompiler/Default/Install/Bin
 
 	$(INSTALL_DIR) "$(2)/lib/go-$(3)/bin"
 
+	$(eval GO_HOST_OS_ARCH_PATH:=$(subst /,_,$(4)))
+
   ifeq ($(4),$(GO_HOST_OS_ARCH))
 	$(INSTALL_BIN) -p "$(1)/bin"/* "$(2)/lib/go-$(3)/bin/"
   else
-	$(INSTALL_BIN) -p "$(1)/bin/$(4)"/* "$(2)/lib/go-$(3)/bin/"
+	$(INSTALL_BIN) -p "$(1)/bin/$(GO_HOST_OS_ARCH_PATH)"/* "$(2)/lib/go-$(3)/bin/"
   endif
 
-	if [ -d "$(1)/pkg/$(4)$(if $(5),_$(5))" ]; then \
+	if [ -d "$(1)/pkg/$(GO_HOST_OS_ARCH_PATH)$(if $(5),_$(5))" ]; then \
 		$(INSTALL_DIR) "$(2)/lib/go-$(3)/pkg" ; \
-		$(CP) "$(1)/pkg/$(4)$(if $(5),_$(5))" "$(2)/lib/go-$(3)/pkg/" ; \
+		$(CP) "$(1)/pkg/$(GO_HOST_OS_ARCH_PATH)$(if $(5),_$(5))" "$(2)/lib/go-$(3)/pkg/" ; \
 	fi
 
-	$(INSTALL_DIR) "$(2)/lib/go-$(3)/pkg/tool/$(4)"
-	$(INSTALL_BIN) -p "$(1)/pkg/tool/$(4)"/* "$(2)/lib/go-$(3)/pkg/tool/$(4)/"
+	$(INSTALL_DIR) "$(2)/lib/go-$(3)/pkg/tool/$(GO_HOST_OS_ARCH_PATH)"
+	$(INSTALL_BIN) -p "$(1)/pkg/tool/$(GO_HOST_OS_ARCH_PATH)"/* "$(2)/lib/go-$(3)/pkg/tool/$(GO_HOST_OS_ARCH_PATH)/"
 endef
 
 # 1: destination prefix
@@ -163,7 +165,7 @@ endef
 # 2: source go root
 # 3: destination prefix
 # 4: go version id
-# 5: GOOS_GOARCH
+# 5: GOOS_GOARCH with / as a separator
 # 6: install suffix (optional)
 define GoCompiler/AddProfile
 

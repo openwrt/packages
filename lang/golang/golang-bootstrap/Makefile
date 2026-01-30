@@ -37,35 +37,56 @@ HOST_GO_PREFIX:=$(STAGING_DIR_HOSTPKG)
 HOST_GO_VERSION_ID:=bootstrap
 HOST_GO_ROOT:=$(HOST_GO_PREFIX)/lib/go-$(HOST_GO_VERSION_ID)
 
+# From go tool dist list
 HOST_GO_VALID_OS_ARCH:= \
-  android_386  android_amd64  android_arm  android_arm64 \
-  freebsd_386  freebsd_amd64  freebsd_arm  freebsd_arm64 \
-  linux_386    linux_amd64    linux_arm    linux_arm64 \
-  openbsd_386  openbsd_amd64  openbsd_arm  openbsd_arm64 \
-  netbsd_386   netbsd_amd64   netbsd_arm   netbsd_arm64 \
-  windows_386  windows_amd64  windows_arm  windows_arm64 \
-  \
-  plan9_386    plan9_amd64    plan9_arm \
-  \
-  darwin_amd64 darwin_arm64 \
-  ios_amd64    ios_arm64 \
-  \
-  dragonfly_amd64 \
-  illumos_amd64 \
-  solaris_amd64 \
-  \
-  aix_ppc64 \
-  js_wasm \
-  wasip1_wasm \
-  \
-  freebsd_riscv64 \
-  openbsd_riscv64 \
-  \
-  linux_ppc64 linux_ppc64le \
-  linux_mips linux_mipsle linux_mips64 linux_mips64le \
-  linux_loong64 linux_riscv64 linux_s390x \
-  \
-  openbsd_mips64
+  aix/ppc64 \
+  android/386 \
+  android/amd64 \
+  android/arm \
+  android/arm64 \
+  darwin/amd64 \
+  darwin/arm64 \
+  dragonfly/amd64 \
+  freebsd/386 \
+  freebsd/amd64 \
+  freebsd/arm \
+  freebsd/arm64 \
+  freebsd/riscv64 \
+  illumos/amd64 \
+  ios/amd64 \
+  ios/arm64 \
+  js/wasm \
+  linux/386 \
+  linux/amd64 \
+  linux/arm \
+  linux/arm64 \
+  linux/loong64 \
+  linux/mips \
+  linux/mips64 \
+  linux/mips64le \
+  linux/mipsle \
+  linux/ppc64 \
+  linux/ppc64le \
+  linux/riscv64 \
+  linux/s390x \
+  netbsd/386 \
+  netbsd/amd64 \
+  netbsd/arm \
+  netbsd/arm64 \
+  openbsd/386 \
+  openbsd/amd64 \
+  openbsd/arm \
+  openbsd/arm64 \
+  openbsd/ppc64 \
+  plan9/386 \
+  plan9/amd64 \
+  plan9/arm \
+  solaris/amd64 \
+  wasip1/wasm \
+  windows/386 \
+  windows/amd64 \
+  windows/arm \
+  windows/arm64
 
 BOOTSTRAP_SOURCE:=go1.4-bootstrap-20171003.tar.gz
 BOOTSTRAP_SOURCE_URL:=$(GO_SOURCE_URLS)
@@ -74,15 +95,26 @@ BOOTSTRAP_HASH:=f4ff5b5eb3a3cae1c993723f3eab519c5bae18866b5e5f96fe1102f0cb5c3e52
 BOOTSTRAP_BUILD_DIR:=$(HOST_BUILD_DIR)/.go_bootstrap
 
 BOOTSTRAP_GO_VALID_OS_ARCH:= \
-  darwin_386     darwin_amd64 \
-  dragonfly_386  dragonfly_amd64 \
-  freebsd_386    freebsd_amd64    freebsd_arm \
-  linux_386      linux_amd64      linux_arm \
-  netbsd_386     netbsd_amd64     netbsd_arm \
-  openbsd_386    openbsd_amd64 \
-  plan9_386      plan9_amd64 \
-                 solaris_amd64 \
-  windows_386    windows_amd64
+  darwin/386 \
+  darwin/amd64 \
+  dragonfly/386 \
+  dragonfly/amd64 \
+  freebsd/386 \
+  freebsd/amd64 \
+  freebsd/arm \
+  linux/386 \
+  linux/amd64 \
+  linux/arm \
+  netbsd/386 \
+  netbsd/amd64 \
+  netbsd/arm \
+  openbsd/386 \
+  openbsd/amd64 \
+  plan9/386 \
+  plan9/amd64 \
+  solaris/amd64 \
+  windows/386 \
+  windows/amd64
 
 BOOTSTRAP_1_17_SOURCE:=go1.17.13.src.tar.gz
 BOOTSTRAP_1_17_SOURCE_URL:=$(GO_SOURCE_URLS)
