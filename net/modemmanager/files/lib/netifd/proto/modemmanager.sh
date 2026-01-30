@@ -307,10 +307,11 @@ modemmanager_set_allowed_mode() {
 	local allowedmode="$3"
 
 	echo "setting allowed mode to '${allowedmode}'"
-	mmcli --modem="${device}" --set-allowed-modes="${allowedmode}" || {
-		proto_notify_error "${interface}" MM_INVALID_ALLOWED_MODES_LIST
-		proto_block_restart "${interface}"
-		return 1
+	mmcli --modem="${device}" \
+		--set-allowed-modes="${allowedmode}" \
+		>/dev/null 2>&1 || {
+			echo "Ignoring failure to set allowed modes for device '${device}': modem may not support this operation"
+			return
 	}
 }
 
@@ -516,10 +517,10 @@ modemmanager_set_preferred_mode() {
 	echo "setting preferred mode to '${preferredmode}' (${allowedmode})"
 	mmcli --modem="${device}" \
 		--set-preferred-mode="${preferredmode}" \
-		--set-allowed-modes="${allowedmode}" || {
-		proto_notify_error "${interface}" MM_FAILED_SETTING_PREFERRED_MODE
-		proto_block_restart "${interface}"
-		return 1
+		--set-allowed-modes="${allowedmode}" \
+		>/dev/null 2>&1 || {
+			echo "Ignoring failure to set preferred mode for device '${device}: modem may not support this operation"
+			return
 	}
 }
 
@@ -538,10 +539,10 @@ modemmanager_init_epsbearer() {
 
 	mmcli --modem="${device}" \
 		--timeout "${timeout}" \
-		--3gpp-set-initial-eps-bearer-settings="${connectargs}" || {
-		proto_notify_error "${interface}" MM_INIT_EPS_BEARER_SET_FAILED
-		proto_block_restart "${interface}"
-		return 1
+		--3gpp-set-initial-eps-bearer-settings="${connectargs}" \
+		>/dev/null 2>&1	|| {
+			echo "Ignoring failure to set initial EPS bearer settings for device '${device}': modem may not support this operation"
+			return
 	}
 
 	# Wait here so that the modem can set the init EPS bearer
@@ -697,8 +698,6 @@ proto_modemmanager_setup() {
 					"$interface" "${allowedmode}" "${preferredmode}"
 				;;
 		esac
-		# check error for allowed_mode and preferred_mode function call
-		[ "$?" -ne "0" ] && return 1
 	fi
 
 	if [ -z "${plmn}" ]; then
