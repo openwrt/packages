@@ -172,13 +172,13 @@ endif
 $(eval $(call GoCompiler/AddProfile,Package,$(PKG_BUILD_DIR),$(PKG_GO_PREFIX),$(PKG_GO_VERSION_ID),$(GO_OS_ARCH),$(PKG_GO_INSTALL_SUFFIX)))
 
 PKG_GO_ZBOOTSTRAP_MODS?= \
-	s/defaultGO386 = `[^`]*`/defaultGO386 = `$(or $(GO_386),sse2)`/; \
-	s/defaultGOAMD64 = `[^`]*`/defaultGOAMD64 = `$(or $(GO_AMD64),v1)`/; \
-	s/defaultGOARM = `[^`]*`/defaultGOARM = `$(or $(GO_ARM),7)`/; \
-	s/defaultGOARM64 = `[^`]*`/defaultGOARM64 = `$(or $(GO_ARM64),v8.0)`/; \
-	s/defaultGOMIPS = `[^`]*`/defaultGOMIPS = `$(or $(GO_MIPS),hardfloat)`/; \
-	s/defaultGOMIPS64 = `[^`]*`/defaultGOMIPS64 = `$(or $(GO_MIPS64),hardfloat)`/; \
-	s/defaultGOPPC64 = `[^`]*`/defaultGOPPC64 = `$(or $(GO_PPC64),power8)`/;
+	s/DefaultGO386 = `[^`]*`/DefaultGO386 = `$(or $(GO_386),sse2)`/; \
+	s/DefaultGOAMD64 = `[^`]*`/DefaultGOAMD64 = `$(or $(GO_AMD64),v1)`/; \
+	s/DefaultGOARM = `[^`]*`/DefaultGOARM = `$(or $(GO_ARM),7)`/; \
+	s/DefaultGOARM64 = `[^`]*`/DefaultGOARM64 = `$(or $(GO_ARM64),v8.0)`/; \
+	s/DefaultGOMIPS = `[^`]*`/DefaultGOMIPS = `$(or $(GO_MIPS),hardfloat)`/; \
+	s/DefaultGOMIPS64 = `[^`]*`/DefaultGOMIPS64 = `$(or $(GO_MIPS64),hardfloat)`/; \
+	s/DefaultGOPPC64 = `[^`]*`/DefaultGOPPC64 = `$(or $(GO_PPC64),power8)`/;
 
 PKG_GO_ZBOOTSTRAP_PATH:=$(PKG_BUILD_DIR)/src/internal/buildcfg/zbootstrap.go
 
