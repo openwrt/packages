@@ -9,10 +9,12 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=golang1.25
 GO_VERSION_MAJOR_MINOR:=1.25
 GO_VERSION_PATCH:=6
+GO_VERSION_RC:=
 GO_BOOTSTRAP_VERSION:=bootstrap
 PKG_HASH:=58cbf771e44d76de6f56d19e33b77d745a1e489340922875e46585b975c2b059
 
-PKG_VERSION:=$(GO_VERSION_MAJOR_MINOR)$(if $(GO_VERSION_PATCH),.$(GO_VERSION_PATCH))
+PKG_VERSION:=$(GO_VERSION_MAJOR_MINOR)$(if $(GO_VERSION_RC),.0)$(if $(GO_VERSION_PATCH),.$(GO_VERSION_PATCH))
+PKG_FILE_VERSION:=$(GO_VERSION_MAJOR_MINOR)$(if $(GO_VERSION_RC),rc$(GO_VERSION_RC))$(if $(GO_VERSION_PATCH),.$(GO_VERSION_PATCH))
 PKG_RELEASE:=2
 
 GO_SOURCE_URLS:=https://go.dev/dl/ \
@@ -21,7 +23,7 @@ GO_SOURCE_URLS:=https://go.dev/dl/ \
                 https://mirrors.nju.edu.cn/golang/ \
                 https://mirrors.ustc.edu.cn/golang/
 
-PKG_SOURCE:=go$(PKG_VERSION).src.tar.gz
+PKG_SOURCE:=go$(PKG_FILE_VERSION).src.tar.gz
 PKG_SOURCE_URL:=$(GO_SOURCE_URLS)
 
 PKG_MAINTAINER:=George Sapkin <george@sapk.in>
