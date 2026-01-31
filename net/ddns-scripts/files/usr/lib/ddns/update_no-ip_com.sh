@@ -10,13 +10,13 @@
 # so we send a dummy (localhost) and a seconds later we send the correct IP addr
 #
 local __DUMMY
-local __UPDURL6="http://[USERNAME]:[PASSWORD]@dynupdate6.noip.com/nic/update?hostname=[DOMAIN]&myip=[IP]"
-local __UPDURL="http://[USERNAME]:[PASSWORD]@dynupdate.noip.com/nic/update?hostname=[DOMAIN]&myip=[IP]"
+local __UPDURL6="http://[USERNAME]:[PASSWORD]@dynupdate6.no-ip.com/nic/update?hostname=[DOMAIN]&myip=[IP]"
+local __UPDURL="http://[USERNAME]:[PASSWORD]@dynupdate.no-ip.com/nic/update?hostname=[DOMAIN]&myip=[IP]"
 # inside url we need username and password
 [ -z "$username" ] && write_log 14 "Service section not configured correctly! Missing 'username'"
 [ -z "$password" ] && write_log 14 "Service section not configured correctly! Missing 'password'"
 
-# set IP version dependend dummy (localhost)
+# set IP version dependent dummy (localhost)
 [ $use_ipv6 -eq 0 ] && __DUMMY="127.0.0.1" || __DUMMY="::1"
 [ $use_ipv6 -eq 0 ] && __UPDURL=$__UPDURL || __UPDURL=$__UPDURL6
 
