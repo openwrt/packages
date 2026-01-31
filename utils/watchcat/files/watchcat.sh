@@ -122,6 +122,7 @@ watchcat_monitor_network() {
 
 	ping_family="$(get_ping_family_flag "$address_family")"
 
+	about_to_restart_iface=1
 	while true; do
 		# account for the time ping took to return. With a ping time of 5s, ping might take more than that, so it is important to avoid even more delay.
 		time_now="$(cat /proc/uptime)"
@@ -134,6 +135,7 @@ watchcat_monitor_network() {
 		time_now="${time_now%%.*}"
 		time_lastcheck="$time_now"
 
+		end_result=1
 		for host in $ping_hosts; do
 			if [ "$iface" != "" ]; then
 				ping_result="$(
@@ -149,16 +151,31 @@ watchcat_monitor_network() {
 
 			if [ "$ping_result" -eq 0 ]; then
 				time_lastcheck_withinternet="$time_now"
-			else
-				if [ "$script" != "" ]; then
-					logger -p daemon.info -t "watchcat[$$]" "Could not reach $host via \"$iface\" for \"$((time_now - time_lastcheck_withinternet))\" seconds. Running script after reaching \"$failure_period\" seconds"
-				elif [ "$iface" != "" ]; then
-					logger -p daemon.info -t "watchcat[$$]" "Could not reach $host via \"$iface\" for \"$((time_now - time_lastcheck_withinternet))\" seconds. Restarting \"$iface\" after reaching \"$failure_period\" seconds"
-				else
-					logger -p daemon.info -t "watchcat[$$]" "Could not reach $host for \"$((time_now - time_lastcheck_withinternet))\" seconds. Restarting networking after reaching \"$failure_period\" seconds"
+				end_result=0
+				if [ "$about_to_restart_iface" -eq 0 ]; then
+					if [ "$script" != "" ]; then
+						logger -p daemon.info -t "watchcat[$$]" "$host replies to ping, running script cancelled"
+					elif [ "$iface" != "" ]; then
+						logger -p daemon.info -t "watchcat[$$]" "$host replies to ping, restarting \"$iface\" cancelled"
+					else
+						logger -p daemon.info -t "watchcat[$$]" "$host replies to ping, restarting networking cancelled"
+					fi
+					about_to_restart_iface=1
 				fi
+			else
+				logger -p daemon.info -t "watchcat[$$]" "Could not reach $host for \"$((time_now - time_lastcheck_withinternet))\" seconds."
 			fi
 		done
+		if [ "$end_result" -ne 0 ]; then
+			if [ "$script" != "" ]; then
+				logger -p daemon.info -t "watchcat[$$]" "Could not reach any configured host via \"$iface\" for \"$((time_now - time_lastcheck_withinternet))\" seconds. Running script after reaching \"$failure_period\" seconds"
+			elif [ "$iface" != "" ]; then
+				logger -p daemon.info -t "watchcat[$$]" "Could not reach any configured host via \"$iface\" for \"$((time_now - time_lastcheck_withinternet))\" seconds. Restarting \"$iface\" after reaching \"$failure_period\" seconds"
+			else
+				logger -p daemon.info -t "watchcat[$$]" "Could not reach any configured host for \"$((time_now - time_lastcheck_withinternet))\" seconds. Restarting networking after reaching \"$failure_period\" seconds"
+			fi
+			about_to_restart_iface=0
+		fi
 
 		[ "$((time_now - time_lastcheck_withinternet))" -ge "$failure_period" ] && {
 			if [ "$script" != "" ]; then
@@ -176,6 +193,7 @@ watchcat_monitor_network() {
 			/etc/init.d/watchcat start
 			# Restart timer cycle.
 			time_lastcheck_withinternet="$time_now"
+			about_to_restart_iface=1
 		}
 
 	done
