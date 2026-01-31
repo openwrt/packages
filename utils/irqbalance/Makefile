@@ -5,13 +5,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=irqbalance
-PKG_VERSION:=1.9.4
+PKG_VERSION:=1.9.5
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/Irqbalance/irqbalance.git
 PKG_SOURCE_VERSION:=v$(PKG_VERSION)
-PKG_MIRROR_HASH:=0521b15bb15ad46704ccf65f7ae683a47d54e7bae57fbe4e2a4341da6d424e58
+PKG_MIRROR_HASH:=a9d53209c5e31503cdc61518ca5887bb01cf1dab546928272a9aa7051713e4be
 
 PKG_MAINTAINER:=Hannu Nyman <hannu.nyman@iki.fi>
 PKG_LICENSE:=GPL-2.0-or-later
@@ -43,11 +43,14 @@ endef
 
 MESON_ARGS += \
 	-Dcapng=disabled \
+	-Dnuma=disabled \
+	-Dsystemd=disabled \
+	-Dthermal=disabled \
 	-Dui=disabled
 
 define Package/irqbalance/install
 	$(INSTALL_DIR) $(1)/usr/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/irqbalance $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/irqbalance $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/irqbalance.init $(1)/etc/init.d/irqbalance
 	$(INSTALL_DIR) $(1)/etc/config
