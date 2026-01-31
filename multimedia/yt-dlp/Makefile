@@ -1,11 +1,13 @@
+# SPDX-License-Identifier: GPL-2.0-only
+
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=yt-dlp
-PKG_VERSION:=2025.12.8
+PKG_VERSION:=2026.1.29
 PKG_RELEASE:=1
 
 PYPI_NAME:=yt-dlp
-PKG_HASH:=b773c81bb6b71cb2c111cfb859f453c7a71cf2ef44eff234ff155877184c3e4f
+PKG_HASH:=12b489eb16828cc3fff1723f244992ebae8a5bf1ad75c8e9f01d729ae237ebb9
 PYPI_SOURCE_NAME:=yt_dlp
 
 PKG_MAINTAINER:=George Sapkin <george@sapk.in>
