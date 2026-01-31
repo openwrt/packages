@@ -23,11 +23,12 @@ igmp_header() {
 }
 
 igmp_add_phyint() {
-	local network direction altnets device up
+	local network direction altnets acl_items device up
 
 	config_get network $1 network
 	config_get direction $1 direction
 	config_get altnets $1 altnet
+	config_get acl_items $1 acl
 
 	local status="$(ubus -S call "network.interface.$network" status)"
 	[ -n "$status" ] || return
@@ -51,6 +52,20 @@ igmp_add_phyint() {
 		local altnet
 		for altnet in $altnets; do
 			echo -e "\taltnet $altnet" >> /var/etc/igmpproxy.conf
+		done
+	fi
+
+	if [ -n "$acl_items" ]; then
+		local acl_item
+		for acl_item in $acl_items; do
+			case "$acl_item" in
+				!*)
+					echo -e "\tblacklist ${acl_item#!}" >> /var/etc/igmpproxy.conf
+					;;
+				*)
+					echo -e "\twhitelist ${acl_item}" >> /var/etc/igmpproxy.conf
+					;;
+			esac
 		done
 	fi
 }
