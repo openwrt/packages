@@ -570,6 +570,7 @@ define Package/strongswan-swanctl/install
 	$(INSTALL_DIR) $(1)/etc/swanctl/x509{,aa,ac,ca,crl,ocsp}
 	$(CP) $(PKG_INSTALL_DIR)/etc/swanctl/swanctl.conf $(1)/etc/swanctl/
 	echo "include /var/swanctl/swanctl.conf" >> $(1)/etc/swanctl/swanctl.conf
+	echo "include /var/swanctl/conf.d/*.conf" >> $(1)/etc/swanctl/swanctl.conf
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/swanctl $(1)/usr/sbin/
 	$(INSTALL_BIN) ./files/swanctl.init $(1)/etc/init.d/swanctl
