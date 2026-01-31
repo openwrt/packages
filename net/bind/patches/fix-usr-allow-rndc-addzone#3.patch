@@ -1,0 +1,42 @@
+From 6cea04633d2461456d30cbdd69695ca0da540b4f Mon Sep 17 00:00:00 2001
+From: Mark Andrews <marka@isc.org>
+Date: Tue, 9 Dec 2025 15:51:34 +1100
+Subject: [PATCH 3/4] Document rndc addzone with automatic empty zones
+
+---
+ bin/rndc/rndc.rst | 27 ++++++++++++++-------------
+ 1 file changed, 14 insertions(+), 13 deletions(-)
+
+--- a/bin/rndc/rndc.rst
++++ b/bin/rndc/rndc.rst
+@@ -129,18 +129,19 @@ Currently supported commands are:
+ .. option:: addzone zone [class [view]] configuration
+ 
+    This command adds a zone while the server is running. This command
+-   requires the ``allow-new-zones`` option to be set to ``yes``. The
+-   configuration string specified on the command line is the zone
+-   configuration text that would ordinarily be placed in :iscman:`named.conf`.
++   requires the ``allow-new-zones`` option to be set to ``yes``.
++   The configuration string specified on the command line is the
++   zone configuration text that would ordinarily be placed in
++   :iscman:`named.conf`.  Automatic empty zones will be replaced.
+ 
+-   The configuration is saved in a file called ``viewname.nzf`` (or, if
+-   :iscman:`named` is compiled with liblmdb, an LMDB database file called
+-   ``viewname.nzd``). ``viewname`` is the name of the view, unless the view
+-   name contains characters that are incompatible with use as a file
+-   name, in which case a cryptographic hash of the view name is used
+-   instead. When :iscman:`named` is restarted, the file is loaded into
+-   the view configuration so that zones that were added can persist
+-   after a restart.
++   The configuration is saved in a file called ``viewname.nzf``
++   (or, if :iscman:`named` is compiled with liblmdb, an LMDB database
++   file called ``viewname.nzd``). ``viewname`` is the name of the
++   view, unless the view name contains characters that are incompatible
++   with use as a file name, in which case a cryptographic hash of
++   the view name is used instead. When :iscman:`named` is restarted,
++   the file is loaded into the view configuration so that zones
++   that were added can persist after a restart.
+ 
+    This sample ``addzone`` command adds the zone ``example.com`` to
+    the default view:
