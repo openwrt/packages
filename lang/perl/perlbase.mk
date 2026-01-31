@@ -2,7 +2,7 @@ define Package/perlbase-template
 SUBMENU:=Perl
 SECTION:=lang
 CATEGORY:=Languages
-URL:=http://www.cpan.org/
+URL:=https://www.cpan.org/
 DEPENDS:=perl
 endef
 

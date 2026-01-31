@@ -12,7 +12,7 @@ PKG_VERSION:=8.2.7
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/conserver/conserver/tar.gz/v$(PKG_VERSION)?
+PKG_SOURCE_URL:=https://codeload.github.com/bstansell/conserver/tar.gz/v$(PKG_VERSION)?
 PKG_HASH:=b88f1880f4090b42370e075ca9c8a6062fb553ee33f155b204714c43dc71cef3
 
 PKG_LICENSE:=BSD-3-Clause
@@ -28,7 +28,7 @@ define Package/conserver
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Connect multiple user to a serial console with logging
-  URL:=http://www.conserver.com/
+  URL:=https://conserver.com/
   DEPENDS:=+libopenssl
   MAINTAINER:=Bjørn Mork <bjorn@mork.no>
   VARIANT:=default

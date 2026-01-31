@@ -26,7 +26,7 @@ define Package/pciutils
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Linux PCI Utilities
-  URL:=http://mj.ucw.cz/pciutils.shtml
+  URL:=https://mj.ucw.cz/sw/pciutils/
   DEPENDS:=+libkmod +libpci +pciids
 endef
 
@@ -39,7 +39,7 @@ define Package/libpci
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Linux PCI Libraries
-  URL:=http://mj.ucw.cz/pciutils.shtml
+  URL:=https://mj.ucw.cz/sw/pciutils/
 endef
 
 TARGET_CFLAGS += $(FPIC)

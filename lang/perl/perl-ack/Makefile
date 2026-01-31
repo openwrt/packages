@@ -35,7 +35,7 @@ define Package/perl-ack
   SECTION:=lang
   CATEGORY:=Languages
   TITLE:=grep-like text finder
-  URL:=http://search.cpan.org/dist/ack/
+  URL:=https://metacpan.org/dist/ack/
   DEPENDS:=perl +perl-file-next +perlbase-filetest +perlbase-if \
     +perlbase-list +perlbase-pod +perlbase-test +perlbase-text \
     +perlbase-term

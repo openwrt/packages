@@ -30,7 +30,7 @@ define Package/alpine/Default
   CATEGORY:=Mail
   DEPENDS:= +USE_GLIBC:libcrypt-compat +libopenssl +libncurses +libpthread +libpam $(ICONV_DEPENDS) $(INTL_DEPENDS)
   TITLE:=Alternatively Licensed Program for Internet News and Email
-  URL:=http://alpine.x10host.com/alpine/
+  URL:=https://alpineapp.email/
 endef
 
 define Package/alpine/Default/description

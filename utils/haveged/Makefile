@@ -29,13 +29,13 @@ define Package/haveged
   CATEGORY:=Utilities
   DEPENDS:=+libhavege
   TITLE:=Feeds the kernel entropy pool by timing CPU loops.
-  URL:=http://www.issihosts.com/haveged/
+  URL:=https://www.issihosts.com/haveged/
 endef
 
 define Package/libhavege
   CATEGORY:=Libraries
   TITLE:=Library for haveged
-  URL:=http://www.issihosts.com/haveged/
+  URL:=https://www.issihosts.com/haveged/
 endef
 
 CONFIGURE_ARGS+= \

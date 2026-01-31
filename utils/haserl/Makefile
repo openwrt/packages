@@ -30,7 +30,7 @@ define Package/haserl
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=A CGI wrapper to embed shell scripts in HTML documents
-  URL:=http://haserl.sourceforge.net/
+  URL:=https://haserl.sourceforge.net/
   MENU:=1
   DEPENDS:= +HASERL_with_lua:liblua
 endef

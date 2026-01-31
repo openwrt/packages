@@ -12,7 +12,7 @@ PKG_VERSION:=1.0.3
 PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=https://netfilter.org/projects/libnetfilter_acct/files
+PKG_SOURCE_URL:=https://netfilter.org/pub/libnetfilter_acct/
 PKG_HASH:=4250ceef3efe2034f4ac05906c3ee427db31b9b0a2df41b2744f4bf79a959a1a
 
 PKG_LICENSE:=LGPL-2.1-or-later
@@ -28,7 +28,7 @@ define Package/libnetfilter-acct
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=API to extended accounting infrastructure
-  URL:=http://www.netfilter.org/projects/libnetfilter_acct/
+  URL:=https://netfilter.org/projects/libnetfilter_acct/
   DEPENDS:=+libmnl
 endef
 

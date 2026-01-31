@@ -79,7 +79,7 @@ This package provides the following run-time libraries:
  - wave
 
 There are many more header-only libraries supported by Boost.
-See more at http://www.boost.org/doc/libs/1_90_0/
+See more at https://www.boost.org/doc/libs/1_90_0/
 endef
 
 PKG_BUILD_DEPENDS:=boost/host

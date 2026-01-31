@@ -30,7 +30,7 @@ define Package/augeas
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=A configuration editing tool
-  URL:=http://augeas.net
+  URL:=https://augeas.net
   DEPENDS:=+libxml2 +libreadline +libncurses
 endef
 
@@ -46,7 +46,7 @@ define Package/augeas-lenses
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Augeas lenses
-  URL:=http://augeas.net
+  URL:=https://augeas.net
   DEPENDS:=+augeas
 endef
 
@@ -61,7 +61,7 @@ define Package/augeas-lenses-tests
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Augeas lenses tests
-  URL:=http://augeas.net
+  URL:=https://augeas.net
   DEPENDS:=+augeas
 endef
 
