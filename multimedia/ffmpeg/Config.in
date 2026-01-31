@@ -383,6 +383,9 @@ config FFMPEG_CUSTOM_DEMUXER_mpegps
 config FFMPEG_CUSTOM_DEMUXER_mpegts
 	bool "MPEG-2 (TS)"
 
+config FFMPEG_CUSTOM_DEMUXER_hls
+	bool "hls"
+
 config FFMPEG_CUSTOM_DEMUXER_mpc
 	bool "Musepack"
 
@@ -465,6 +468,12 @@ config FFMPEG_CUSTOM_PROTOCOL_file
 
 config FFMPEG_CUSTOM_PROTOCOL_http
 	bool "http:"
+
+config FFMPEG_CUSTOM_PROTOCOL_https
+	bool "https:"
+
+config FFMPEG_CUSTOM_PROTOCOL_crypto
+	bool "crypto:"
 
 config FFMPEG_CUSTOM_PROTOCOL_icecast
 	bool "icecast:"
