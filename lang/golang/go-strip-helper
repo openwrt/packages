@@ -1,0 +1,16 @@
+#!/bin/sh
+#
+# Copyright (C) 2026 George Sapkin
+#
+# SPDX-License-Identifier: GPL-2.0-only
+
+for last; do :; done
+
+case "$last" in
+	*-doc|*-misc|*-src|*-tests)
+		echo "Not stripping: $last"
+		exit 0
+		;;
+esac
+
+"$@"

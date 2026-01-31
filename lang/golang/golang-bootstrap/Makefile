@@ -1,6 +1,6 @@
 #
-# Copyright (C) 2018-2023, Jeffery To
-# Copyright (C) 2025-2026, George Sapkin
+# Copyright (C) 2018-2023 Jeffery To
+# Copyright (C) 2025-2026 George Sapkin
 #
 # SPDX-License-Identifier: GPL-2.0-only
 
@@ -111,9 +111,8 @@ BOOTSTRAP_UNPACK:=$(HOST_TAR) -C "$(BOOTSTRAP_BUILD_DIR)" --strip-components=1 -
 BOOTSTRAP_1_17_UNPACK:=$(HOST_TAR) -C "$(BOOTSTRAP_1_17_BUILD_DIR)" --strip-components=1 -xzf "$(DL_DIR)/$(BOOTSTRAP_1_17_SOURCE)"
 BOOTSTRAP_1_20_UNPACK:=$(HOST_TAR) -C "$(BOOTSTRAP_1_20_BUILD_DIR)" --strip-components=1 -xzf "$(DL_DIR)/$(BOOTSTRAP_1_20_SOURCE)"
 
-# don't strip ELF executables in test data
+# Don't strip ELF executables in test data
 RSTRIP:=:
-STRIP:=:
 
 ifeq ($(GO_TARGET_SPECTRE_SUPPORTED),1)
   PKG_CONFIG_DEPENDS+=CONFIG_GOLANG_SPECTRE
@@ -253,13 +252,17 @@ define Host/Install
 
 	rm -rf "$(HOST_GO_ROOT)/pkg/$(GO_HOST_OS_ARCH)"
 
+	$(INSTALL_DIR) "$(STAGING_DIR_HOSTPKG)/bin"
+	$(INSTALL_BIN) ../go-strip-helper "$(STAGING_DIR_HOSTPKG)/bin"
+
 	$(INSTALL_DIR) "$(HOST_GO_ROOT)/openwrt"
-	$(INSTALL_BIN) ../go-gcc-helper "$(HOST_GO_ROOT)/openwrt/"
+	$(INSTALL_BIN) ../go-gcc-helper "$(HOST_GO_ROOT)/openwrt"
 	$(LN) go-gcc-helper "$(HOST_GO_ROOT)/openwrt/gcc"
 	$(LN) go-gcc-helper "$(HOST_GO_ROOT)/openwrt/g++"
 endef
 
 define Host/Uninstall
+	rm -f "$(STAGING_DIR_HOSTPKG)/bin/go-strip-helper"
 	rm -rf "$(HOST_GO_ROOT)/openwrt"
 
 	$(call GoCompiler/Host/Uninstall)

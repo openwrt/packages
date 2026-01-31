@@ -1,5 +1,6 @@
 #
 # Copyright (C) 2018-2023 Jeffery To
+# Copyright (C) 2025-2026 George Sapkin
 #
 # SPDX-License-Identifier: GPL-2.0-only
 
@@ -249,6 +250,30 @@ else ifeq ($(GO_ARCH),ppc64)
   GO_PPC64:=power8
 
 endif
+
+GO_GENERATED_FILES := \
+  src/cmd/cgo/zdefaultcc.go \
+  src/cmd/go/internal/cfg/zdefaultcc.go \
+  src/cmd/internal/objabi/zbootstrap.go \
+  src/go/build/zcgo.go \
+  src/internal/buildcfg/zbootstrap.go \
+  src/internal/runtime/sys/zversion.go \
+  src/time/tzdata/zzipdata.go
+
+GO_LEGAL_FILES := \
+  CONTRIBUTING.md \
+  LICENSE \
+  PATENTS \
+  README.md \
+  SECURITY.md
+
+GO_BIN_FILES := \
+  $(GO_GENERATED_FILES) \
+  $(GO_LEGAL_FILES)
+
+GO_HOST_SRC_FILTERS := ! -name '*.bat' -a ! -name '*.rc'
+GO_TARGET_SRC_FILTERS := ! -ipath '*/testdata/*' -a ! -name '*_test.go' -a ! -name '*.bat' -a ! -name '*.rc'
+GO_TARGET_TEST_FILTERS := -ipath '*/testdata/*' -o -name '*_test.go'
 
 
 # Target Go
