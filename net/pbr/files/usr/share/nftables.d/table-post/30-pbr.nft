@@ -1,4 +1,0 @@
-chain pbr_dstnat {}
-chain pbr_forward {}
-chain pbr_output {}
-chain pbr_prerouting {}
