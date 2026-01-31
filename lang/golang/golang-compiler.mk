@@ -1,5 +1,6 @@
 #
 # Copyright (C) 2018, 2020-2021, 2023 Jeffery To
+# Copyright (C) 2025-2026 George Sapkin
 #
 # SPDX-License-Identifier: GPL-2.0-only
 
@@ -29,16 +30,14 @@ endef
 # 2: go version id
 define GoCompiler/Default/Install/make-dirs
 	$(INSTALL_DIR) "$(1)/lib/go-$(2)"
-	$(INSTALL_DIR) "$(1)/share/go-$(2)"
 endef
 
 # 1: source go root
 # 2: destination prefix
 # 3: go version id
 # 4: file/directory name
-define GoCompiler/Default/Install/install-share-data
-	$(CP) "$(1)/$(4)" "$(2)/share/go-$(3)/"
-	$(LN) "../../share/go-$(3)/$(4)" "$(2)/lib/go-$(3)/"
+define GoCompiler/Default/Install/install-lib-data
+	$(CP) "$(1)/$(4)" "$(2)/lib/go-$(3)/"
 endef
 
 # 1: source go root
@@ -49,14 +48,14 @@ endef
 define GoCompiler/Default/Install/Bin
 	$(call GoCompiler/Default/Install/make-dirs,$(2),$(3))
 
-	$(call GoCompiler/Default/Install/install-share-data,$(1),$(2),$(3),api)
+	$(call GoCompiler/Default/Install/install-lib-data,$(1),$(2),$(3),api)
 
 	$(INSTALL_DATA) -p "$(1)/go.env" "$(2)/lib/go-$(3)/"
 	$(INSTALL_DATA) -p "$(1)/VERSION" "$(2)/lib/go-$(3)/"
 
 	for file in CONTRIBUTING.md LICENSE PATENTS README.md SECURITY.md; do \
 		if [ -f "$(1)/$$$$file" ]; then \
-			$(INSTALL_DATA) -p "$(1)/$$$$file" "$(2)/share/go-$(3)/" ; \
+			$(INSTALL_DATA) -p "$(1)/$$$$file" "$(2)/lib/go-$(3)/" ; \
 		fi ; \
 	done
 
@@ -91,7 +90,7 @@ endef
 define GoCompiler/Default/Install/Doc
 	$(call GoCompiler/Default/Install/make-dirs,$(2),$(3))
 
-	$(call GoCompiler/Default/Install/install-share-data,$(1),$(2),$(3),doc)
+	$(call GoCompiler/Default/Install/install-lib-data,$(1),$(2),$(3),doc)
 endef
 
 # 1: source go root
@@ -100,21 +99,19 @@ endef
 define GoCompiler/Default/Install/Src
 	$(call GoCompiler/Default/Install/make-dirs,$(2),$(3))
 
-	$(call GoCompiler/Default/Install/install-share-data,$(1),$(2),$(3),lib)
-	$(call GoCompiler/Default/Install/install-share-data,$(1),$(2),$(3),misc)
-	$(call GoCompiler/Default/Install/install-share-data,$(1),$(2),$(3),src)
-	$(call GoCompiler/Default/Install/install-share-data,$(1),$(2),$(3),test)
+	$(call GoCompiler/Default/Install/install-lib-data,$(1),$(2),$(3),lib)
+	$(call GoCompiler/Default/Install/install-lib-data,$(1),$(2),$(3),misc)
+	$(call GoCompiler/Default/Install/install-lib-data,$(1),$(2),$(3),src)
+	$(call GoCompiler/Default/Install/install-lib-data,$(1),$(2),$(3),test)
 
 	$(FIND) \
-		"$(2)/share/go-$(3)/src/" \
+		"$(2)/lib/go-$(3)/src/" \
 		\! -type d -a \( -name "*.bat" -o -name "*.rc" \) \
 		-delete
 
 	if [ -d "$(1)/pkg/include" ]; then \
 		$(INSTALL_DIR) "$(2)/lib/go-$(3)/pkg" ; \
-		$(INSTALL_DIR) "$(2)/share/go-$(3)/pkg" ; \
-		$(CP) "$(1)/pkg/include" "$(2)/share/go-$(3)/pkg/" ; \
-		$(LN) "../../../share/go-$(3)/pkg/include" "$(2)/lib/go-$(3)/pkg/" ; \
+		$(CP) "$(1)/pkg/include" "$(2)/lib/go-$(3)/pkg/" ; \
 	fi
 endef
 
@@ -122,7 +119,6 @@ endef
 # 2: go version id
 define GoCompiler/Default/Uninstall
 	rm -rf "$(1)/lib/go-$(2)"
-	rm -rf "$(1)/share/go-$(2)"
 endef
 
 # 1: destination prefix
