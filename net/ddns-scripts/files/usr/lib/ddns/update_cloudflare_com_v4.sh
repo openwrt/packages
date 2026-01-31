@@ -6,6 +6,10 @@
 #.based on Ben Kulbertis cloudflare-update-record.sh found at http://gist.github.com/benkulbertis
 #.and on George Johnson's cf-ddns.sh found at https://github.com/gstuartj/cf-ddns.sh
 #.2016-2018 Christian Schoenebeck <christian dot schoenebeck at gmail dot com>
+#
+# 2026 Wayne King
+# Added GET_REGISTERED_IP mode to retrieve the actual backend IP from Cloudflare API
+# (DNS lookups return Cloudflare's proxy IP, not the actual registered IP)
 # CloudFlare API documentation, section DNS at https://developers.cloudflare.com/api/resources/dns/
 #
 # This script is parsed by dynamic_dns_functions.sh inside send_update() function
@@ -212,6 +216,22 @@ else
 		write_log 4 "Could not detect 'record id' for host.domain.tld: '$__HOST'"
 		return 127
 	}
+fi
+
+# Check if we are being called for GET_REGISTERED_IP mode
+# This is set by get_registered_ip() in dynamic_dns_functions.sh
+if [ -n "$GET_REGISTERED_IP" ]; then
+	__RUNPROG="$__PRGBASE --request GET '$__URLBASE/zones/$__ZONEID/dns_records/$__RECID'"
+	cloudflare_transfer || return 1
+	__DATA=$(jsonfilter -i "$DATFILE" -e "@.result.content" 2>/dev/null)
+	if [ -n "$__DATA" ]; then
+		write_log 7 "Registered IP '$__DATA' detected via Cloudflare API"
+		REGISTERED_IP="$__DATA"
+		return 0
+	else
+		write_log 4 "Could not extract IP from Cloudflare API response"
+		return 127
+	fi
 fi
 
 # If dns_record_id is specified, grab the stored IP for that specific record
