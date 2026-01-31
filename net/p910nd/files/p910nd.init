@@ -88,7 +88,12 @@ start_p910nd() {
 			MDNS_INSTANCE_NAME="$mdns_ty" procd_add_mdns "$@"
 		fi
 		procd_close_instance
+	else
+		if [ ! -e "$device" ]; then
+			logger "Device path $device does not exist, daemon won't be started"
+		fi
 	fi
+
 }
 
 service_triggers()
