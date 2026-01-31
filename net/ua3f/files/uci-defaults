@@ -1,0 +1,10 @@
+#!/bin/sh
+
+[ -e "/etc/config/ucitrack" ] && {
+    uci -q delete ucitrack.@ua3f[-1]
+    uci -q add ucitrack ua3f
+    uci -q set ucitrack.@ua3f[-1].init=ua3f
+    uci -q commit ucitrack
+}
+
+exit 0
