@@ -7,11 +7,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-ble2mqtt
-PKG_VERSION:=0.2.2
+PKG_VERSION:=0.2.4
 PKG_RELEASE:=1
 
 PYPI_NAME:=ble2mqtt
-PKG_HASH:=6c8abb4fe3d8ba77e42f23e4acdfbb99e337ed5bdea05db4e1b92d455186c8e6
+PKG_HASH:=423a3a3e414f086ec2120e4886c7787f2a00fc54d5c5d56775797b51949e7799
 
 PKG_MAINTAINER:=Quintin Hill <stuff@quintin.me.uk>
 PKG_LICENSE:=MIT
