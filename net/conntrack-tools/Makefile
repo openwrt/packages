@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=conntrack-tools
 PKG_VERSION:=1.4.8
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://www.netfilter.org/projects/conntrack-tools/files
@@ -77,5 +77,49 @@ define Package/conntrackd/install
 	$(INSTALL_BIN) ./files/conntrackd.init $(1)/etc/init.d/conntrackd
 endef
 
+define Package/nfct
+$(call Package/conntrack-tools/default)
+  TITLE:=Netfilter user space helpers configuration tool
+endef
+
+define Package/nfct/description
+ nfct is the command line tool that allows you to configure the Connection Tracking System.
+endef
+
+define Package/nfct/install
+	$(INSTALL_DIR) \
+		$(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/nfct $(1)/usr/sbin
+endef
+
 $(eval $(call BuildPackage,conntrack))
 $(eval $(call BuildPackage,conntrackd))
+$(eval $(call BuildPackage,nfct))
+
+
+define BuildHelper
+  define Package/conntrackd-ct-helper-$(1)
+    $$(call Package/conntrack-tools/default)
+    DEPENDS:=+conntrackd +libnfnetlink +libnetfilter-conntrack
+    TITLE:=Connection tracking userspace helper ($(2))
+  endef
+
+  define Package/conntrackd-ct-helper-$(1)/install
+	$(INSTALL_DIR) \
+		$$(1)/usr/lib/conntrack-tools
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/conntrack-tools/ct_helper_$(1).so $$(1)/usr/lib/conntrack-tools/
+  endef
+
+  $$(eval $$(call BuildPackage,conntrackd-ct-helper-$(1)))
+endef
+
+$(eval $(call BuildHelper,amanda,Amanda))
+$(eval $(call BuildHelper,dhcpv6,DHCPv6))
+$(eval $(call BuildHelper,ftp,FTP))
+$(eval $(call BuildHelper,mdns,MDNS))
+$(eval $(call BuildHelper,rpc,ONC-RPC))
+$(eval $(call BuildHelper,sane,SANE))
+$(eval $(call BuildHelper,slp,Service Location Protocol))
+$(eval $(call BuildHelper,ssdp,SSDP))
+$(eval $(call BuildHelper,tftp,TFTP))
+$(eval $(call BuildHelper,tns,TNS))
