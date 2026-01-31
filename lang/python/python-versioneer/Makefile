@@ -16,7 +16,7 @@ PKG_HASH:=5ab283b9857211d61b53318b7c792cf68e798e765ee17c27ade9f6c924235731
 
 PKG_LICENSE:=Unlicense
 PKG_LICENSE_FILES:=LICENSE
-PKG_MAINTAINER:=Jeffery To <jeffery.to@gmail.com>
+PKG_MAINTAINER:=
 
 PKG_HOST_ONLY:=1
 HOST_BUILD_DEPENDS:=python3/host python-build/host python-installer/host python-wheel/host
