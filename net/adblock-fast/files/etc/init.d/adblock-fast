@@ -397,7 +397,7 @@ dns_set_output_values() {
 			outputParseFilter="$smartdnsNftsetOutputParseFilter"
 		;;
 		unbound.adb_list)
-			outputFilter="$unboundFilter"
+			outputFilter="$unboundOutputFormatFilter"
 			outputFile="$unboundFile"
 			outputCache="$unboundCache"
 			outputGzip="${compressed_cache_dir}/${unboundGzip}"
