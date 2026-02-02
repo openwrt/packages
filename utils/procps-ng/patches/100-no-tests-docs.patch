@@ -14,7 +14,7 @@
  LDADD = ./library/libproc2.la $(CYGWINFLAGS)
 --- a/configure.ac
 +++ b/configure.ac
-@@ -434,8 +434,5 @@ AC_CHECK_FUNCS([__fpending alarm atexit
+@@ -445,8 +445,5 @@ AC_CHECK_FUNCS([__fpending alarm atexit
  
  AC_CONFIG_FILES([Makefile
                   local/Makefile
