@@ -8,7 +8,11 @@ HOST_GO_PREFIX:=$(STAGING_DIR_HOSTPKG)
 HOST_GO_VERSION_ID:=$(GO_VERSION_MAJOR_MINOR)
 HOST_GO_ROOT:=$(HOST_GO_PREFIX)/lib/go-$(HOST_GO_VERSION_ID)
 
-BOOTSTRAP_DIR:=$(HOST_GO_PREFIX)/lib/go-$(GO_BOOTSTRAP_VERSION)
+ifeq ($(CONFIG_GOLANG_BUILD_BOOTSTRAP),y)
+  BOOTSTRAP_DIR:=$(HOST_GO_PREFIX)/lib/go-$(GO_BOOTSTRAP_VERSION)
+else
+  BOOTSTRAP_DIR:=$(call qstrip,$(CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT))
+endif
 
 include ../golang-compiler.mk
 include ../golang-package.mk
@@ -57,6 +61,7 @@ define Package/$(PKG_NAME)
   TITLE+= (compiler)
   DEPENDS+= +golang$(GO_VERSION_MAJOR_MINOR)-src
   EXTRA_DEPENDS:=golang$(GO_VERSION_MAJOR_MINOR)-src (=$(PKG_VERSION)-r$(PKG_RELEASE))
+  MDEPENDS:=+golang-bootstrap
   PROVIDES:=@golang
   $(if $(filter $(GO_DEFAULT_VERSION),$(GO_VERSION_MAJOR_MINOR)),DEFAULT_VARIANT:=1)
   ALTERNATIVES:=\
@@ -69,10 +74,6 @@ define Package/$(PKG_NAME)/description
 
   This package provides an assembler, compiler, linker, and compiled libraries
   for the Go programming language.
-endef
-
-define Package/$(PKG_NAME)/config
-  source "$(SOURCE)/../Config.in"
 endef
 
 define Package/$(PKG_NAME)-doc
